@@ -17,11 +17,11 @@
 =#
 
 """
-    add_variable(model::MOI.ModelLike, config::TestConfig)
+    add_variable(model::MOI.ModelLike, config::Config)
 
 Test adding a single variable.
 """
-function add_variable(model::MOI.ModelLike, config::TestConfig)
+function add_variable(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
@@ -31,11 +31,11 @@ end
 unittests["add_variable"] = add_variable
 
 """
-    add_variables(model::MOI.ModelLike, config::TestConfig)
+    add_variables(model::MOI.ModelLike, config::Config)
 
 Test adding multiple variables.
 """
-function add_variables(model::MOI.ModelLike, config::TestConfig)
+function add_variables(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
@@ -45,11 +45,11 @@ end
 unittests["add_variables"] = add_variables
 
 """
-    delete_variable(model::MOI.ModelLike, config::TestConfig)
+    delete_variable(model::MOI.ModelLike, config::Config)
 
 Tess adding, and then deleting, a single variable.
 """
-function delete_variable(model::MOI.ModelLike, config::TestConfig)
+function delete_variable(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
@@ -61,11 +61,11 @@ end
 unittests["delete_variable"] = delete_variable
 
 """
-    delete_variables(model::MOI.ModelLike, config::TestConfig)
+    delete_variables(model::MOI.ModelLike, config::Config)
 
 Test adding, and then deleting, multiple variables.
 """
-function delete_variables(model::MOI.ModelLike, config::TestConfig)
+function delete_variables(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
@@ -89,11 +89,11 @@ end
 unittests["delete_variables"] = delete_variable
 
 """
-    delete_nonnegative_variables(model::MOI.ModelLike, config::TestConfig)
+    delete_nonnegative_variables(model::MOI.ModelLike, config::Config)
 
 Test adding, and then deleting, nonnegative variables.
 """
-function delete_nonnegative_variables(model::MOI.ModelLike, config::TestConfig)
+function delete_nonnegative_variables(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
@@ -117,13 +117,13 @@ end
 unittests["delete_nonnegative_variables"] = delete_nonnegative_variables
 
 """
-    update_dimension_nonnegative_variables(model::MOI.ModelLike, config::TestConfig)
+    update_dimension_nonnegative_variables(model::MOI.ModelLike, config::Config)
 
 Test adding, and then deleting one by one, nonnegative variables.
 """
 function update_dimension_nonnegative_variables(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
 )
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -150,11 +150,11 @@ unittests["update_dimension_nonnegative_variables"] =
     update_dimension_nonnegative_variables
 
 """
-    delete_soc_variables(model::MOI.ModelLike, config::TestConfig)
+    delete_soc_variables(model::MOI.ModelLike, config::Config)
 
 Test adding, and then deleting, second-order cone variables.
 """
-function delete_soc_variables(model::MOI.ModelLike, config::TestConfig)
+function delete_soc_variables(model::MOI.ModelLike, config::Config)
     MOI.supports_add_constrained_variables(model, MOI.SecondOrderCone) || return
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -175,11 +175,11 @@ end
 unittests["delete_soc_variables"] = delete_soc_variables
 
 """
-    getvariable(model::MOI.ModelLike, config::TestConfig)
+    getvariable(model::MOI.ModelLike, config::Config)
 
 Test getting variables by name.
 """
-function getvariable(model::MOI.ModelLike, config::TestConfig)
+function getvariable(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -197,11 +197,11 @@ end
 unittests["getvariable"] = getvariable
 
 """
-    variablenames(model::MOI.ModelLike, config::TestConfig)
+    variablenames(model::MOI.ModelLike, config::Config)
 
 Test getting and setting variable names.
 """
-function variablenames(model::MOI.ModelLike, config::TestConfig)
+function variablenames(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     v = MOI.add_variable(model)
     @test MOI.get(model, MOI.VariableName(), v) == ""
@@ -217,12 +217,12 @@ end
 unittests["variablenames"] = variablenames
 
 """
-    solve_with_upperbound(model::MOI.ModelLike, config::TestConfig)
+    solve_with_upperbound(model::MOI.ModelLike, config::Config)
 
 Test setting the upper bound of a variable, confirm that it solves correctly,
 and if `config.duals=true`, check that the dual is computed correctly.
 """
-function solve_with_upperbound(model::MOI.ModelLike, config::TestConfig)
+function solve_with_upperbound(model::MOI.ModelLike, config::Config)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -256,12 +256,12 @@ end
 unittests["solve_with_upperbound"] = solve_with_upperbound
 
 """
-    solve_with_lowerbound(model::MOI.ModelLike, config::TestConfig)
+    solve_with_lowerbound(model::MOI.ModelLike, config::Config)
 
 Test setting the lower bound of a variable, confirm that it solves correctly,
 and if `config.duals=true`, check that the dual is computed correctly.
 """
-function solve_with_lowerbound(model::MOI.ModelLike, config::TestConfig)
+function solve_with_lowerbound(model::MOI.ModelLike, config::Config)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -293,11 +293,11 @@ end
 unittests["solve_with_lowerbound"] = solve_with_lowerbound
 
 """
-    solve_integer_edge_cases(model::MOI.ModelLike, config::TestConfig)
+    solve_integer_edge_cases(model::MOI.ModelLike, config::Config)
 
 Test a variety of edge cases related to binary and integer variables.
 """
-function solve_integer_edge_cases(model::MOI.ModelLike, config::TestConfig)
+function solve_integer_edge_cases(model::MOI.ModelLike, config::Config)
     @testset "integer with lower bound" begin
         MOI.empty!(model)
         @test MOI.is_empty(model)

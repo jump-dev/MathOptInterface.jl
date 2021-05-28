@@ -334,7 +334,7 @@ end
     bridged = MOIB.full_bridge_optimizer(model, Float64)
     MOIT.unittest(
         bridged,
-        MOIT.TestConfig(solve = false),
+        MOIT.Config(solve = false),
         [
             # SOC and quadratic constraints not supported
             "solve_qcp_edge_cases",
@@ -1155,7 +1155,7 @@ end
     # set hence it makes some tests of `contlineartest` fail so we disable it.
     MOIB.remove_bridge(bridged, MOIB.Constraint.ScalarSlackBridge{T})
     exclude = ["partial_start"] # `VariablePrimalStart` not supported.
-    MOIT.contlineartest(bridged, MOIT.TestConfig{T}(solve = false), exclude)
+    MOIT.contlineartest(bridged, MOIT.Config{T}(solve = false), exclude)
 end
 
 @testset "SDPAModel with bridges and caching" begin
@@ -1189,9 +1189,9 @@ end
 @testset "Continuous Conic with SDPAModel{Float64}" begin
     model = SDPAModel{Float64}()
     bridged = MOIB.full_bridge_optimizer(model, Float64)
-    MOIT.psds0vtest(bridged, MOIT.TestConfig(solve = false))
+    MOIT.psds0vtest(bridged, MOIT.Config(solve = false))
     #exclude = ["exp", "dualexp", "pow", "dualpow", "logdet", "rootdets"]
-    #MOIT.contconictest(bridged, MOIT.TestConfig(solve=false), exclude)
+    #MOIT.contconictest(bridged, MOIT.Config(solve=false), exclude)
 end
 
 # Model not supporting RotatedSecondOrderCone

@@ -9,7 +9,7 @@ const MOIB = MathOptInterface.Bridges
 include("../utilities.jl")
 
 mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-config = MOIT.TestConfig()
+config = MOIT.Config()
 
 @testset "NormInfinity" begin
     bridged_mock = MOIB.Constraint.NormInfinity{Float64}(mock)

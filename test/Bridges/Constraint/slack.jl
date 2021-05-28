@@ -9,7 +9,7 @@ const MOIB = MathOptInterface.Bridges
 include("../utilities.jl")
 
 mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-config = MOIT.TestConfig()
+config = MOIT.Config()
 
 @testset "Scalar slack" begin
     MOI.empty!(mock)
@@ -93,7 +93,7 @@ config = MOIT.TestConfig()
             ],
         ),
     )
-    MOIT.linear2test(bridged_mock, MOIT.TestConfig(duals = false, basis = true))
+    MOIT.linear2test(bridged_mock, MOIT.Config(duals = false, basis = true))
     c1 = MOI.get(
         bridged_mock,
         MOI.ListOfConstraintIndices{
@@ -118,7 +118,7 @@ config = MOIT.TestConfig()
             (MOI.SingleVariable, MOI.LessThan{Float64}) => [0],
         ),
     )
-    MOIT.linear11test(bridged_mock, MOIT.TestConfig(duals = false))
+    MOIT.linear11test(bridged_mock, MOIT.Config(duals = false))
 
     c1 = MOI.get(
         bridged_mock,

@@ -181,7 +181,7 @@ end
 
 function hs071test_template(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
     evaluator::HS071,
 )
     atol = config.atol
@@ -338,7 +338,7 @@ end
 
 function feasibility_sense_test_template(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
     set_has_objective::Bool,
     evaluator::FeasibilitySenseEvaluator,
 )
@@ -427,7 +427,7 @@ end
 
 function nlp_objective_and_moi_objective_test(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
 )
     atol = config.atol
     rtol = config.rtol
@@ -495,15 +495,12 @@ const nlptests = Dict(
 @moitestset nlp
 
 """
-    test_linear_mixed_complementarity(model::MOI.ModelLike, config::TestConfig)
+    test_linear_mixed_complementarity(model::MOI.ModelLike, config::Config)
 
 Test the solution of the linear mixed-complementarity problem:
 `F(x) complements x`, where `F(x) = M * x .+ q` and `0 <= x <= 10`.
 """
-function test_linear_mixed_complementarity(
-    model::MOI.ModelLike,
-    config::TestConfig,
-)
+function test_linear_mixed_complementarity(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 4)
     MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.Interval(0.0, 10.0))
@@ -551,7 +548,7 @@ const mixed_complementaritytests = Dict(
 @moitestset mixed_complementarity
 
 """
-    test_qp_complementarity_constraint(model::MOI.ModelLike, config::TestConfig)
+    test_qp_complementarity_constraint(model::MOI.ModelLike, config::Config)
 
 Test the solution of the quadratic program with complementarity constraints:
 
@@ -581,7 +578,7 @@ which rewrites, with auxiliary variables
 """
 function test_qp_complementarity_constraint(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
 )
     MOI.empty!(model)
     x = MOI.add_variables(model, 8)

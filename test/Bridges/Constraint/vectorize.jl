@@ -9,7 +9,7 @@ const MOIB = MathOptInterface.Bridges
 include(joinpath(dirname(@__DIR__), "utilities.jl"))
 
 mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-config = MOIT.TestConfig()
+config = MOIT.Config()
 
 @testset "Vectorize" begin
     bridged_mock = MOI.Bridges.Constraint.Vectorize{Float64}(mock)

@@ -11,7 +11,7 @@ const MOIB = MathOptInterface.Bridges
 include("../utilities.jl")
 
 mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-config = MOIT.TestConfig()
+config = MOIT.Config()
 
 @testset "GreaterToInterval" begin
     bridged_mock = MOIB.Constraint.GreaterToInterval{Float64}(mock)

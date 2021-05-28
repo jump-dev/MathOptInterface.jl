@@ -6,7 +6,7 @@ const MOIU = MOI.Utilities
 
 @testset "Basic Constraint Tests" begin
     mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
-    config = MOIT.TestConfig()
+    config = MOIT.Config()
     MOIT.basic_constraint_tests(mock, config)
 end
 
@@ -18,7 +18,7 @@ end
     MOI.set(mock, MOI.Silent(), true)
     MOI.set(mock, MOI.TimeLimitSec(), nothing)
     MOI.set(mock, MOI.NumberOfThreads(), nothing)
-    config = MOIT.TestConfig()
+    config = MOIT.Config()
     for model in [
         mock,
         MOIU.CachingOptimizer(
@@ -672,7 +672,7 @@ end
 @testset "modifications" begin
     # `UniversalFallback` needed for `MOI.Silent`
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-    config = MOIT.TestConfig()
+    config = MOIT.Config()
     @testset "delete_variables_in_a_batch" begin
         MOIU.set_mock_optimize!(
             mock,

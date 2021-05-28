@@ -17,7 +17,7 @@ include("../utilities.jl")
     #      z3 == 1 ==> x1 >= 5
     #      z1 + z2 >= 1
     model = MOIU.MockOptimizer(MOIU.Model{Float64}())
-    config = MOIT.TestConfig()
+    config = MOIT.Config()
 
     x1 = MOI.add_variable(model)
     x2 = MOI.add_variable(model)
@@ -160,7 +160,7 @@ end
 
 @testset "Basic constraint test" begin
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-    config = MOIT.TestConfig()
+    config = MOIT.Config()
     for BC in [MOI.LessThan{Float64}, MOI.GreaterThan{Float64}]
         bridged_mock = MOIB.Constraint.IndicatortoSOS1{
             Float64,
@@ -184,7 +184,7 @@ end
 
 @testset "Model equality" begin
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-    config = MOIT.TestConfig()
+    config = MOIT.Config()
     bridged_mock = MOIB.Constraint.IndicatortoSOS1{
         Float64,
         MOI.LessThan{Float64},
@@ -290,7 +290,7 @@ end
 
 @testset "Getting primal attributes" begin
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-    config = MOIT.TestConfig()
+    config = MOIT.Config()
     (z, bin_cons) = MOI.add_constrained_variable(mock, MOI.ZeroOne())
     x = MOI.add_variable(mock)
     f = MOI.VectorAffineFunction(

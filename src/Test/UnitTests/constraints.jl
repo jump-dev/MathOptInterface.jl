@@ -1,9 +1,9 @@
 """
-    getconstraint(model::MOI.ModelLike, config::TestConfig)
+    getconstraint(model::MOI.ModelLike, config::Config)
 
 Test getting constraints by name.
 """
-function getconstraint(model::MOI.ModelLike, config::TestConfig)
+function getconstraint(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -33,13 +33,13 @@ end
 unittests["getconstraint"] = getconstraint
 
 """
-    solve_affine_lessthan(model::MOI.ModelLike, config::TestConfig)
+    solve_affine_lessthan(model::MOI.ModelLike, config::Config)
 
 Add an ScalarAffineFunction-in-LessThan constraint. If `config.solve=true`
 confirm that it solves correctly, and if `config.duals=true`, check that the
 duals are computed correctly.
 """
-function solve_affine_lessthan(model::MOI.ModelLike, config::TestConfig)
+function solve_affine_lessthan(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -70,13 +70,13 @@ end
 unittests["solve_affine_lessthan"] = solve_affine_lessthan
 
 """
-    solve_affine_greaterthan(model::MOI.ModelLike, config::TestConfig)
+    solve_affine_greaterthan(model::MOI.ModelLike, config::Config)
 
 Add an ScalarAffineFunction-in-GreaterThan constraint. If `config.solve=true`
 confirm that it solves correctly, and if `config.duals=true`, check that the
 duals are computed correctly.
 """
-function solve_affine_greaterthan(model::MOI.ModelLike, config::TestConfig)
+function solve_affine_greaterthan(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -107,13 +107,13 @@ end
 unittests["solve_affine_greaterthan"] = solve_affine_greaterthan
 
 """
-    solve_affine_equalto(model::MOI.ModelLike, config::TestConfig)
+    solve_affine_equalto(model::MOI.ModelLike, config::Config)
 
 Add an ScalarAffineFunction-in-EqualTo constraint. If `config.solve=true`
 confirm that it solves correctly, and if `config.duals=true`, check that the
 duals are computed correctly.
 """
-function solve_affine_equalto(model::MOI.ModelLike, config::TestConfig)
+function solve_affine_equalto(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -144,13 +144,13 @@ end
 unittests["solve_affine_equalto"] = solve_affine_equalto
 
 """
-    solve_affine_interval(model::MOI.ModelLike, config::TestConfig)
+    solve_affine_interval(model::MOI.ModelLike, config::Config)
 
 Add an ScalarAffineFunction-in-Interval constraint. If `config.solve=true`
 confirm that it solves correctly, and if `config.duals=true`, check that the
 duals are computed correctly.
 """
-function solve_affine_interval(model::MOI.ModelLike, config::TestConfig)
+function solve_affine_interval(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -183,7 +183,7 @@ unittests["solve_affine_interval"] = solve_affine_interval
 # Taken from https://github.com/JuliaOpt/MathOptInterfaceMosek.jl/issues/41
 """
     solve_duplicate_terms_scalar_affine(model::MOI.ModelLike,
-                                        config::TestConfig)
+                                        config::Config)
 
 Add a `ScalarAffineFunction`-in-`LessThan` constraint with duplicate terms in
 the function. If `config.solve=true` confirm that it solves correctly, and if
@@ -191,7 +191,7 @@ the function. If `config.solve=true` confirm that it solves correctly, and if
 """
 function solve_duplicate_terms_scalar_affine(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
 )
     MOI.empty!(model)
     x = MOI.add_variable(model)
@@ -222,7 +222,7 @@ unittests["solve_duplicate_terms_scalar_affine"] =
 
 """
     solve_duplicate_terms_vector_affine(model::MOI.ModelLike,
-                                        config::TestConfig)
+                                        config::Config)
 
 Add a `VectorAffineFunction`-in-`Nonpositives` constraint with duplicate terms
 in the function. If `config.solve=true` confirm that it solves correctly, and if
@@ -230,7 +230,7 @@ in the function. If `config.solve=true` confirm that it solves correctly, and if
 """
 function solve_duplicate_terms_vector_affine(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
 )
     MOI.empty!(model)
     x = MOI.add_variable(model)
@@ -263,14 +263,14 @@ unittests["solve_duplicate_terms_vector_affine"] =
     solve_duplicate_terms_vector_affine
 
 """
-    solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
+    solve_qcp_edge_cases(model::MOI.ModelLike, config::Config)
 
 Test various edge cases relating to quadratically constrainted programs (i.e.,
 with a ScalarQuadraticFunction-in-Set constraint.
 
 If `config.solve=true` confirm that it solves correctly.
 """
-function solve_qcp_edge_cases(model::MOI.ModelLike, config::TestConfig)
+function solve_qcp_edge_cases(model::MOI.ModelLike, config::Config)
     if !MOI.supports_constraint(
         model,
         MOI.ScalarQuadraticFunction{Float64},
@@ -368,7 +368,7 @@ end
 unittests["solve_qcp_edge_cases"] = solve_qcp_edge_cases
 
 """
-    solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::TestConfig)
+    solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::Config)
 
 Test various edge cases relating to deleting affine constraints. This requires
     + ScalarAffineFunction-in-LessThan; and
@@ -376,10 +376,7 @@ Test various edge cases relating to deleting affine constraints. This requires
 
 If `config.solve=true` confirm that it solves correctly.
 """
-function solve_affine_deletion_edge_cases(
-    model::MOI.ModelLike,
-    config::TestConfig,
-)
+function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variable(model)
     # helpers. The function 1.0x + 0.0
@@ -448,7 +445,7 @@ function solve_affine_deletion_edge_cases(
 end
 unittests["solve_affine_deletion_edge_cases"] = solve_affine_deletion_edge_cases
 
-function solve_zero_one_with_bounds_1(model::MOI.ModelLike, config::TestConfig)
+function solve_zero_one_with_bounds_1(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -470,7 +467,7 @@ function solve_zero_one_with_bounds_1(model::MOI.ModelLike, config::TestConfig)
 end
 unittests["solve_zero_one_with_bounds_1"] = solve_zero_one_with_bounds_1
 
-function solve_zero_one_with_bounds_2(model::MOI.ModelLike, config::TestConfig)
+function solve_zero_one_with_bounds_2(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -492,7 +489,7 @@ function solve_zero_one_with_bounds_2(model::MOI.ModelLike, config::TestConfig)
 end
 unittests["solve_zero_one_with_bounds_2"] = solve_zero_one_with_bounds_2
 
-function solve_zero_one_with_bounds_3(model::MOI.ModelLike, config::TestConfig)
+function solve_zero_one_with_bounds_3(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -513,13 +510,13 @@ end
 unittests["solve_zero_one_with_bounds_3"] = solve_zero_one_with_bounds_3
 
 """
-    solve_start_soc(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+    solve_start_soc(model::MOI.ModelLike, config::Config{T}) where {T}
 
 Test combining the [`MOI.VariablePrimalStart`](@ref),
 [`MOI.ConstraintPrimalStart`](@ref) and [`MOI.ConstraintDualStart`](@ref)
 attributes with a `MOI.VectorAffineFunction{T}`-in-`MOI.SecondOrderCone`.
 """
-function solve_start_soc(model::MOI.ModelLike, config::TestConfig{T}) where {T}
+function solve_start_soc(model::MOI.ModelLike, config::Config{T}) where {T}
     if !MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},

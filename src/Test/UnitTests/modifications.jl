@@ -1,12 +1,12 @@
 const modificationtests = Dict{String,Function}()
 
 """
-    set_function_single_variable(model::MOI.ModelLike, config::TestConfig)
+    set_function_single_variable(model::MOI.ModelLike, config::Config)
 
 Test that modifying the function of a `SingleVariable`-in-`LessThan` constraint
 throws a [`SettingSingleVariableFunctionNotAllowed`](@ref) error.
 """
-function set_function_single_variable(model::MOI.ModelLike, config::TestConfig)
+function set_function_single_variable(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -29,16 +29,13 @@ end
 modificationtests["set_function_single_variable"] = set_function_single_variable
 
 """
-    solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::TestConfig)
+    solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::Config)
 
 Test set modification SingleVariable-in-LessThan constraint. If
 `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function solve_set_singlevariable_lessthan(
-    model::MOI.ModelLike,
-    config::TestConfig,
-)
+function solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -74,7 +71,7 @@ modificationtests["solve_set_singlevariable_lessthan"] =
     solve_set_singlevariable_lessthan
 
 """
-    solve_transform_singlevariable_lessthan(model::MOI.ModelLike, config::TestConfig)
+    solve_transform_singlevariable_lessthan(model::MOI.ModelLike, config::Config)
 
 Test set transformation of a SingleVariable-in-LessThan constraint. If
 `config.solve=true` confirm that it solves correctly, and if
@@ -82,7 +79,7 @@ Test set transformation of a SingleVariable-in-LessThan constraint. If
 """
 function solve_transform_singlevariable_lessthan(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
 )
     MOI.empty!(model)
     MOIU.loadfromstring!(
@@ -121,16 +118,13 @@ modificationtests["solve_transform_singlevariable_lessthan"] =
     solve_transform_singlevariable_lessthan
 
 """
-    solve_set_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConfig)
+    solve_set_scalaraffine_lessthan(model::MOI.ModelLike, config::Config)
 
 Test modifying set of ScalarAffineFunction-in-LessThan constraint. If
 `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function solve_set_scalaraffine_lessthan(
-    model::MOI.ModelLike,
-    config::TestConfig,
-)
+function solve_set_scalaraffine_lessthan(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -165,16 +159,13 @@ modificationtests["solve_set_scalaraffine_lessthan"] =
     solve_set_scalaraffine_lessthan
 
 """
-    solve_coef_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConfig)
+    solve_coef_scalaraffine_lessthan(model::MOI.ModelLike, config::Config)
 
 Test modifying a variable coefficient in a ScalarAffineFunction-in-LessThan
 constraint. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function solve_coef_scalaraffine_lessthan(
-    model::MOI.ModelLike,
-    config::TestConfig,
-)
+function solve_coef_scalaraffine_lessthan(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -208,16 +199,13 @@ modificationtests["solve_coef_scalaraffine_lessthan"] =
     solve_coef_scalaraffine_lessthan
 
 """
-    solve_func_scalaraffine_lessthan(model::MOI.ModelLike, config::TestConfig)
+    solve_func_scalaraffine_lessthan(model::MOI.ModelLike, config::Config)
 
 Test setting the function in a ScalarAffineFunction-in-LessThan
 constraint. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function solve_func_scalaraffine_lessthan(
-    model::MOI.ModelLike,
-    config::TestConfig,
-)
+function solve_func_scalaraffine_lessthan(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -258,16 +246,13 @@ modificationtests["solve_func_scalaraffine_lessthan"] =
     solve_func_scalaraffine_lessthan
 
 """
-    solve_func_vectoraffine_nonneg(model::MOI.ModelLike, config::TestConfig)
+    solve_func_vectoraffine_nonneg(model::MOI.ModelLike, config::Config)
 
 Test setting the function in a VectorAffineFunction-in-Nonnegatives
 constraint. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function solve_func_vectoraffine_nonneg(
-    model::MOI.ModelLike,
-    config::TestConfig,
-)
+function solve_func_vectoraffine_nonneg(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -319,16 +304,13 @@ modificationtests["solve_func_vectoraffine_nonneg"] =
     solve_func_vectoraffine_nonneg
 
 """
-    solve_const_vectoraffine_nonpos(model::MOI.ModelLike, config::TestConfig)
+    solve_const_vectoraffine_nonpos(model::MOI.ModelLike, config::Config)
 
 Test modifying the constant term in a VectorAffineFunction-in-Nonpositives
 constraint. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function solve_const_vectoraffine_nonpos(
-    model::MOI.ModelLike,
-    config::TestConfig,
-)
+function solve_const_vectoraffine_nonpos(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -370,7 +352,7 @@ modificationtests["solve_const_vectoraffine_nonpos"] =
     solve_const_vectoraffine_nonpos
 
 """
-    solve_multirow_vectoraffine_nonpos(model::MOI.ModelLike, config::TestConfig)
+    solve_multirow_vectoraffine_nonpos(model::MOI.ModelLike, config::Config)
 
 Test modifying the variable coefficients in a
 VectorAffineFunction-in-Nonpositives constraint. If `config.solve=true` confirm
@@ -378,7 +360,7 @@ that it solves correctly.
 """
 function solve_multirow_vectoraffine_nonpos(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
 )
     MOI.empty!(model)
     MOIU.loadfromstring!(
@@ -420,12 +402,12 @@ modificationtests["solve_multirow_vectoraffine_nonpos"] =
     solve_multirow_vectoraffine_nonpos
 
 """
-    solve_const_scalar_objective(model::MOI.ModelLike, config::TestConfig)
+    solve_const_scalar_objective(model::MOI.ModelLike, config::Config)
 
 Test the constant of a scalaraffine objective. If `config.solve=true` confirm
 that it solves correctly.
 """
-function solve_const_scalar_objective(model::MOI.ModelLike, config::TestConfig)
+function solve_const_scalar_objective(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -457,12 +439,12 @@ end
 modificationtests["solve_const_scalar_objective"] = solve_const_scalar_objective
 
 """
-    solve_coef_scalar_objective(model::MOI.ModelLike, config::TestConfig)
+    solve_coef_scalar_objective(model::MOI.ModelLike, config::Config)
 
 Test modifying a variable coefficient in a scalaraffine objective. If
 `config.solve=true` confirm that it solves correctly.
 """
-function solve_coef_scalar_objective(model::MOI.ModelLike, config::TestConfig)
+function solve_coef_scalar_objective(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -495,7 +477,7 @@ modificationtests["solve_coef_scalar_objective"] = solve_coef_scalar_objective
 
 function delete_variable_with_single_variable_obj(
     model::MOI.ModelLike,
-    config::TestConfig,
+    config::Config,
 )
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
@@ -528,13 +510,13 @@ modificationtests["delete_variable_with_single_variable_obj"] =
     delete_variable_with_single_variable_obj
 
 """
-    delete_variables_in_a_batch(model::MOI.ModelLike, config::TestConfig)
+    delete_variables_in_a_batch(model::MOI.ModelLike, config::Config)
 
 Test deleting many variables in a batch (i.e. using the delete method which
 takes a vector of variable references). If `config.solve=true` confirm that it
 solves correctly.
 """
-function delete_variables_in_a_batch(model::MOI.ModelLike, config::TestConfig)
+function delete_variables_in_a_batch(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     MOI.empty!(model)

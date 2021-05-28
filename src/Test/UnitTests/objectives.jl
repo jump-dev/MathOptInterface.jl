@@ -15,11 +15,11 @@
 =#
 
 """
-    max_sense(model::MOI.ModelLike, config::TestConfig)
+    max_sense(model::MOI.ModelLike, config::Config)
 
 Test setting objective sense to MAX_SENSE.
 """
-function max_sense(model::MOI.ModelLike, config::TestConfig)
+function max_sense(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
@@ -29,11 +29,11 @@ end
 unittests["max_sense"] = max_sense
 
 """
-    min_sense(model::MOI.ModelLike, config::TestConfig)
+    min_sense(model::MOI.ModelLike, config::Config)
 
 Test setting objective sense to MIN_SENSE.
 """
-function min_sense(model::MOI.ModelLike, config::TestConfig)
+function min_sense(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
@@ -43,11 +43,11 @@ end
 unittests["min_sense"] = min_sense
 
 """
-    feasibility_sense(model::MOI.ModelLike, config::TestConfig)
+    feasibility_sense(model::MOI.ModelLike, config::Config)
 
 Test setting objective sense to FEASIBILITY_SENSE.
 """
-function feasibility_sense(model::MOI.ModelLike, config::TestConfig)
+function feasibility_sense(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
@@ -57,11 +57,11 @@ end
 unittests["feasibility_sense"] = feasibility_sense
 
 """
-    get_objective_function(model::MOI.ModelLike, config::TestConfig)
+    get_objective_function(model::MOI.ModelLike, config::Config)
 
 Test get objective function.
 """
-function get_objective_function(model::MOI.ModelLike, config::TestConfig)
+function get_objective_function(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     obj_attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
@@ -90,13 +90,13 @@ end
 unittests["get_objective_function"] = get_objective_function
 
 """
-    solve_constant_obj(model::MOI.ModelLike, config::TestConfig)
+    solve_constant_obj(model::MOI.ModelLike, config::Config)
 
 Test constant in linear objective,  if `config.solve=true` confirm that it
 solves correctly, and if `config.duals=true`, check that the duals are computed
 correctly.
 """
-function solve_constant_obj(model::MOI.ModelLike, config::TestConfig)
+function solve_constant_obj(model::MOI.ModelLike, config::Config)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -127,13 +127,13 @@ end
 unittests["solve_constant_obj"] = solve_constant_obj
 
 """
-    solve_blank_obj(model::MOI.ModelLike, config::TestConfig)
+    solve_blank_obj(model::MOI.ModelLike, config::Config)
 
 Test blank linear objective,  if `config.solve=true` confirm that it
 solves correctly, and if `config.duals=true`, check that the duals are computed
 correctly.
 """
-function solve_blank_obj(model::MOI.ModelLike, config::TestConfig)
+function solve_blank_obj(model::MOI.ModelLike, config::Config)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -166,13 +166,13 @@ end
 unittests["solve_blank_obj"] = solve_blank_obj
 
 """
-    solve_singlevariable_obj(model::MOI.ModelLike, config::TestConfig)
+    solve_singlevariable_obj(model::MOI.ModelLike, config::Config)
 
 Test SingleVariable objective,  if `config.solve=true` confirm that it
 solves correctly, and if `config.duals=true`, check that the duals are computed
 correctly.
 """
-function solve_singlevariable_obj(model::MOI.ModelLike, config::TestConfig)
+function solve_singlevariable_obj(model::MOI.ModelLike, config::Config)
     atol, rtol = config.atol, config.rtol
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -201,14 +201,14 @@ end
 unittests["solve_singlevariable_obj"] = solve_singlevariable_obj
 
 """
-    solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
+    solve_qp_edge_cases(model::MOI.ModelLike, config::Config)
 
 Test various edge cases relating to quadratic programs (i.e., with a quadratic
 objective function).
 
 If `config.solve=true` confirm that it solves correctly.
 """
-function solve_qp_edge_cases(model::MOI.ModelLike, config::TestConfig)
+function solve_qp_edge_cases(model::MOI.ModelLike, config::Config)
     obj_attr = MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}()
     MOI.supports(model, obj_attr) || return
     MOI.empty!(model)
@@ -311,13 +311,13 @@ end
 unittests["solve_qp_edge_cases"] = solve_qp_edge_cases
 
 """
-    solve_qp_zero_offdiag(model::MOI.ModelLike, config::TestConfig)
+    solve_qp_zero_offdiag(model::MOI.ModelLike, config::Config)
 
 Test quadratic program with a zero off-diagonal term.
 
 If `config.solve=true` confirm that it solves correctly.
 """
-function solve_qp_zero_offdiag(model::MOI.ModelLike, config::TestConfig)
+function solve_qp_zero_offdiag(model::MOI.ModelLike, config::Config)
     obj_attr = MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}()
     MOI.supports(model, obj_attr) || return
     MOI.empty!(model)
@@ -358,12 +358,12 @@ end
 unittests["solve_qp_zero_offdiag"] = solve_qp_zero_offdiag
 
 """
-    solve_duplicate_terms_obj(model::MOI.ModelLike, config::TestConfig)
+    solve_duplicate_terms_obj(model::MOI.ModelLike, config::Config)
 
 Test duplicate terms in linear objective, if `config.solve=true` confirm that it
 solves correctly.
 """
-function solve_duplicate_terms_obj(model::MOI.ModelLike, config::TestConfig)
+function solve_duplicate_terms_obj(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)

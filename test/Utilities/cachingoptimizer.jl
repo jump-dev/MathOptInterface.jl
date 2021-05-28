@@ -554,7 +554,7 @@ for state in (MOIU.NO_OPTIMIZER, MOIU.EMPTY_OPTIMIZER, MOIU.ATTACHED_OPTIMIZER)
             MOIT.copytest(m, MOIU.Model{Float64}())
         end
 
-        config = MOIT.TestConfig(solve = false)
+        config = MOIT.Config(solve = false)
         @testset "Unit" begin
             MOIT.unittest(m, config)
         end

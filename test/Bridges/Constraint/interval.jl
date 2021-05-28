@@ -9,8 +9,8 @@ const MOIB = MathOptInterface.Bridges
 include("../utilities.jl")
 
 mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-config = MOIT.TestConfig()
-config_with_basis = MOIT.TestConfig(basis = true)
+config = MOIT.Config()
+config_with_basis = MOIT.Config(basis = true)
 
 @testset "Split" begin
     T = Float64
@@ -181,7 +181,7 @@ end
             (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => zeros(T, 1),
         ),
     )
-    MOIT.linear13test(bridged_mock, MOIT.TestConfig{T}())
+    MOIT.linear13test(bridged_mock, MOIT.Config{T}())
 
     ci = first(
         MOI.get(

@@ -10,7 +10,7 @@ const MOIBC = MathOptInterface.Bridges.Constraint
 include("../utilities.jl")
 
 mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-config = MOIT.TestConfig(duals = false)
+config = MOIT.Config(duals = false)
 
 @testset "RSOCtoNonConvexQuad" begin
     @test MOIBC.RSOCtoNonConvexQuadBridge{Float64} ==

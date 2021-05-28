@@ -40,7 +40,7 @@ end
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
         eval_objective_value = false,
     )
-    config = MOI.Test.TestConfig(optimal_status = MOI.LOCALLY_SOLVED)
+    config = MOI.Test.Config(optimal_status = MOI.LOCALLY_SOLVED)
     MOI.Utilities.set_mock_optimize!(
         mock,
         (mock) -> begin
@@ -79,7 +79,7 @@ end
     mock = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
     )
-    config = MOI.Test.TestConfig(optimal_status = MOI.LOCALLY_SOLVED)
+    config = MOI.Test.Config(optimal_status = MOI.LOCALLY_SOLVED)
     MOI.Utilities.set_mock_optimize!(
         mock,
         (mock) -> MOI.Utilities.mock_optimize!(
@@ -95,7 +95,7 @@ end
     mock = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
     )
-    config = MOI.Test.TestConfig(optimal_status = MOI.LOCALLY_SOLVED)
+    config = MOI.Test.Config(optimal_status = MOI.LOCALLY_SOLVED)
     MOI.Utilities.set_mock_optimize!(
         mock,
         (mock) -> MOI.Utilities.mock_optimize!(
