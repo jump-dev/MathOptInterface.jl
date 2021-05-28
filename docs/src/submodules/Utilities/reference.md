@@ -149,6 +149,7 @@ Utilities.all_coefficients
 Utilities.unsafe_add
 Utilities.isapprox_zero
 Utilities.modify_function
+Utilities.zero_with_output_dimension
 ```
 
 The following functions can be used to canonicalize a function:
