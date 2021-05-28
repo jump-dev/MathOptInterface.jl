@@ -1253,7 +1253,6 @@ end
 
 """
     ConstraintBasisStatus(result_index::Int = 1)
-    ConstraintBasisStatus()
 
 A constraint attribute for the `BasisStatusCode` of some constraint in result
 `result_index`, with respect to an available optimal solution basis. If
@@ -1582,6 +1581,8 @@ The values indicate how to interpret the result vector.
 A model attribute for the [`ResultStatusCode`](@ref) of the primal result
 `result_index`. If `result_index` is omitted, it defaults to 1.
 
+See [`ResultCount`](@ref) for information on how the results are ordered.
+
 If `result_index` is larger than the value of [`ResultCount`](@ref) then
 `NO_SOLUTION` is returned.
 """
@@ -1595,6 +1596,8 @@ end
 
 A model attribute for the `ResultStatusCode` of the dual result `result_index`.
 If `result_index` is omitted, it defaults to 1.
+
+See [`ResultCount`](@ref) for information on how the results are ordered.
 
 If `result_index` is larger than the value of [`ResultCount`](@ref) then
 `NO_SOLUTION` is returned.
