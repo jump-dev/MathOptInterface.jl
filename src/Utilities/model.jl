@@ -1016,11 +1016,7 @@ macro model(
     else
         :(GenericModel{$T,$func_typed})
     end
-    model_code = if is_optimizer
-        :(const $esc_model_name{$T} = $generic)
-    else
-        :(const $esc_model_name{$T} = $generic)
-    end
+    model_code = :(const $esc_model_name{$T} = $generic)
     expr = Expr(:block)
     if length(scalar_sets) >= 2
         push!(expr.args, struct_of_constraint_code(scname, scalar_sets))
