@@ -1008,8 +1008,8 @@ A model attribute for the number of results available.
 ## Order of solutions
 
 A number of attributes contain an index, `result_index`, which is used to refer
-to on of the available results. `result_index` must be an integer between `1`
-and the number of available results.
+to one of the available results. Thus, `result_index` must be an integer between
+`1` and the number of available results.
 
 As a general rule, the first result (`result_index=1`) is the most important
 result (e.g., an optimal solution or an infeasibility certificate). Other
@@ -1019,7 +1019,7 @@ search for the first result.
 If a (local) optimal solution is available, i.e., [`TerminationStatus`](@ref) is
 `OPTIMAL` or `LOCALLY_SOLVED`, the first result must correspond to the (locally)
 optimal solution. Other results may be alternative optimal solutions, or they
-may be other suboptimal solutions. Use [`ObjectiveValue`](@ref) to distingiush
+may be other suboptimal solutions; use [`ObjectiveValue`](@ref) to distingiush
 between them.
 
 If a primal or dual infeasibility certificate is available, i.e.,
