@@ -924,24 +924,28 @@ struct ObjectiveFunctionType <: AbstractModelAttribute end
 ## Optimizer attributes
 
 """
-    ObjectiveValue(resultidx::Int=1)
+    ObjectiveValue(result_index::Int = 1)
 
-A model attribute for the objective value of the `result_index`th primal result.
+A model attribute for the objective value of the primal solution `result_index`.
+
+See [`ResultCount`](@ref) for information on how the results are ordered.
 """
 struct ObjectiveValue <: AbstractModelAttribute
     result_index::Int
-    (::Type{ObjectiveValue})(result_index = 1) = new(result_index)
+    ObjectiveValue(result_index::Int = 1) = new(result_index)
 end
 
 """
-    DualObjectiveValue(result_index::Int=1)
+    DualObjectiveValue(result_index::Int = 1)
 
 A model attribute for the value of the objective function of the dual problem
 for the `result_index`th dual result.
+
+See [`ResultCount`](@ref) for information on how the results are ordered.
 """
 struct DualObjectiveValue <: AbstractModelAttribute
     result_index::Int
-    (::Type{DualObjectiveValue})(result_index = 1) = new(result_index)
+    DualObjectiveValue(result_index::Int = 1) = new(result_index)
 end
 
 """
@@ -1000,6 +1004,29 @@ struct RawSolver <: AbstractModelAttribute end
     ResultCount()
 
 A model attribute for the number of results available.
+
+## Order of solutions
+
+A number of attributes contain an index, `result_index`, which is used to refer
+to one of the available results. Thus, `result_index` must be an integer between
+`1` and the number of available results.
+
+As a general rule, the first result (`result_index=1`) is the most important
+result (e.g., an optimal solution or an infeasibility certificate). Other
+results will typically be alternate solutions that the solver found during the
+search for the first result.
+
+If a (local) optimal solution is available, i.e., [`TerminationStatus`](@ref) is
+`OPTIMAL` or `LOCALLY_SOLVED`, the first result must correspond to the (locally)
+optimal solution. Other results may be alternative optimal solutions, or they
+may be other suboptimal solutions; use [`ObjectiveValue`](@ref) to distingiush
+between them.
+
+If a primal or dual infeasibility certificate is available, i.e.,
+[`TerminationStatus`](@ref) is `INFEASIBLE` or `DUAL_INFEASIBLE` and the
+corresponding [`PrimalStatus`](@ref) or [`DualStatus`](@ref) is
+`INFEASIBILITY_CERTIFICATE`, then the first result must be a certificate. Other
+results may be alternate certificates, or infeasible points.
 """
 struct ResultCount <: AbstractModelAttribute end
 
@@ -1062,15 +1089,16 @@ struct VariablePrimalStart <: AbstractVariableAttribute end
 
 """
     VariablePrimal(result_index::Int = 1)
-    VariablePrimal()
 
 A variable attribute for the assignment to some primal variable's value in
 result `result_index`. If `result_index` is omitted, it is 1 by default.
+
+See [`ResultCount`](@ref) for information on how the results are ordered.
 """
 struct VariablePrimal <: AbstractVariableAttribute
     result_index::Int
+    VariablePrimal(result_index::Int = 1) = new(result_index)
 end
-VariablePrimal() = VariablePrimal(1)
 
 """
     CallbackVariablePrimal(callback_data)
@@ -1188,50 +1216,57 @@ A constraint attribute for the initial assignment to some constraint's dual valu
 struct ConstraintDualStart <: AbstractConstraintAttribute end
 
 """
-    ConstraintPrimal(result_index::Int)
-    ConstraintPrimal()
+    ConstraintPrimal(result_index::Int = 1)
 
 A constraint attribute for the assignment to some constraint's primal value(s)
 in result `result_index`. If `result_index` is omitted, it is 1 by default.
 
+See [`ResultCount`](@ref) for information on how the results are ordered.
+
+## Example
+
 Given a constraint `function-in-set`, the `ConstraintPrimal` is the value of the
-function evaluated at the primal solution of the variables. For example, given
-the constraint `ScalarAffineFunction([x,y], [1, 2], 3)`-in-`Interval(0, 20)` and
-a primal solution of `(x,y) = (4,5)`, the `ConstraintPrimal` solution of the
-constraint is `1 * 4 + 2 * 5 + 3 = 17`.
+function evaluated at the primal solution of the variables.
+
+For example, given the constraint
+`ScalarAffineFunction([x,y], [1, 2], 3)`-in-`Interval(0, 20)` and a primal
+solution of `(x,y) = (4,5)`, the `ConstraintPrimal` solution of the constraint
+is `1 * 4 + 2 * 5 + 3 = 17`.
 """
 struct ConstraintPrimal <: AbstractConstraintAttribute
     result_index::Int
+    ConstraintPrimal(result_index::Int = 1) = new(result_index)
 end
-ConstraintPrimal() = ConstraintPrimal(1)
 
 """
-    ConstraintDual(result_index::Int)
-    ConstraintDual()
+    ConstraintDual(result_index::Int = 1)
 
 A constraint attribute for the assignment to some constraint's dual value(s) in
 result `result_index`. If `result_index` is omitted, it is 1 by default.
+
+See [`ResultCount`](@ref) for information on how the results are ordered.
 """
 struct ConstraintDual <: AbstractConstraintAttribute
     result_index::Int
+    ConstraintDual(result_index::Int = 1) = new(result_index)
 end
-ConstraintDual() = ConstraintDual(1)
 
 """
-    ConstraintBasisStatus(result_index)
-    ConstraintBasisStatus()
+    ConstraintBasisStatus(result_index::Int = 1)
 
 A constraint attribute for the `BasisStatusCode` of some constraint in result
 `result_index`, with respect to an available optimal solution basis. If
 `result_index` is omitted, it is 1 by default.
+
+See [`ResultCount`](@ref) for information on how the results are ordered.
 
 **For the basis status of a variable, query the corresponding `SingleVariable`
 constraint that enforces the variable's bounds.**
 """
 struct ConstraintBasisStatus <: AbstractConstraintAttribute
     result_index::Int
+    ConstraintBasisStatus(result_index::Int = 1) = new(result_index)
 end
-ConstraintBasisStatus() = ConstraintBasisStatus(1)
 
 """
     CanonicalConstraintFunction()
@@ -1541,34 +1576,36 @@ The values indicate how to interpret the result vector.
 )
 
 """
-    PrimalStatus(result_index)
-    PrimalStatus()
+    PrimalStatus(result_index::Int = 1)
 
-A model attribute for the `ResultStatusCode` of the primal result
+A model attribute for the [`ResultStatusCode`](@ref) of the primal result
 `result_index`. If `result_index` is omitted, it defaults to 1.
+
+See [`ResultCount`](@ref) for information on how the results are ordered.
 
 If `result_index` is larger than the value of [`ResultCount`](@ref) then
 `NO_SOLUTION` is returned.
 """
 struct PrimalStatus <: AbstractModelAttribute
     result_index::Int
+    PrimalStatus(result_index::Int = 1) = new(result_index)
 end
-PrimalStatus() = PrimalStatus(1)
 
 """
-    DualStatus(result_index)
-    DualStatus()
+    DualStatus(result_index::Int = 1)
 
 A model attribute for the `ResultStatusCode` of the dual result `result_index`.
 If `result_index` is omitted, it defaults to 1.
+
+See [`ResultCount`](@ref) for information on how the results are ordered.
 
 If `result_index` is larger than the value of [`ResultCount`](@ref) then
 `NO_SOLUTION` is returned.
 """
 struct DualStatus <: AbstractModelAttribute
     result_index::Int
+    DualStatus(result_index::Int = 1) = new(result_index)
 end
-DualStatus() = DualStatus(1)
 
 # Cost of bridging constrained variable in S
 struct VariableBridgingCost{S<:AbstractSet} <: AbstractModelAttribute end
