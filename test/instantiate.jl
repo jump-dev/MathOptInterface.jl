@@ -6,6 +6,9 @@ const MOI = MathOptInterface
 
 struct DummyOptimizer <: MOI.AbstractOptimizer end
 MOI.is_empty(::DummyOptimizer) = true
+function MOI.default_cache(::DummyOptimizer, ::Type{T}) where {T}
+    return MOI.Utilities.Model{T}()
+end
 
 function _test_instantiate(T)
     function f()
@@ -37,12 +40,8 @@ function _test_instantiate(T)
     @test optimizer isa DummyOptimizer
     optimizer = MOI.instantiate(optimizer_constructor, with_bridge_type = T)
     @test optimizer isa MOI.Bridges.LazyBridgeOptimizer{
-        MOI.Utilities.CachingOptimizer{
-            DummyOptimizer,
-            MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}},
-        },
+        MOI.Utilities.CachingOptimizer{DummyOptimizer,MOI.Utilities.Model{T}},
     }
-
     err = ErrorException(
         "The provided `optimizer_constructor` returned a non-empty optimizer.",
     )

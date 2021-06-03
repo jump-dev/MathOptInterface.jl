@@ -121,9 +121,22 @@ function instantiate(
         return optimizer
     end
     if !supports_incremental_interface(optimizer)
-        universal_fallback =
-            Utilities.UniversalFallback(Utilities.Model{with_bridge_type}())
-        optimizer = Utilities.CachingOptimizer(universal_fallback, optimizer)
+        cache = default_cache(optimizer, with_bridge_type)
+        optimizer = Utilities.CachingOptimizer(cache, optimizer)
     end
     return Bridges.full_bridge_optimizer(optimizer, with_bridge_type)
+end
+
+"""
+    default_cache(optimizer::ModelLike, ::Type{T}) where {T}
+
+Return a new instance of the default model type to be used as cache for
+`optimizer` in a [`Utilities.CachingOptimizer`](@ref) for holding constraints
+of coefficient type `T`. By default, this returns
+`Utilities.UniversalFallback(Utilities.Model{T}())`. If copying from a instance
+of a given model type is faster for `optimizer` then a new method returning
+an instance of this model type should be defined.
+"""
+function default_cache(::ModelLike, ::Type{T}) where {T}
+    return Utilities.UniversalFallback(Utilities.Model{T}())
 end

@@ -60,6 +60,7 @@ AbstractOptimizer
 OptimizerWithAttributes
 optimize!
 instantiate
+default_cache
 ```
 
 ## Optimizer attributes
