@@ -70,26 +70,26 @@ mutable struct MutableSparseMatrixCSC{Tv,Ti<:Integer,I<:AbstractIndexing}
     end
 end
 
-function MOI.empty!(A::MutableSparseMatrixCSC)
+function MOI.empty!(A::MutableSparseMatrixCSC{Tv,Ti}) where {Tv,Ti}
     A.m = 0
     A.n = 0
     resize!(A.colptr, 1)
-    A.colptr[1] = 0
+    A.colptr[1] = zero(Ti)
     empty!(A.rowval)
     empty!(A.nzval)
     return
 end
 
-function add_column(A::MutableSparseMatrixCSC)
+function add_column(A::MutableSparseMatrixCSC{Tv,Ti}) where {Tv,Ti}
     A.n += 1
-    push!(A.colptr, 0)
+    push!(A.colptr, zero(Ti))
     return
 end
 
 function set_number_of_rows(A::MutableSparseMatrixCSC, num_rows)
     A.m = num_rows
     for i in 3:length(A.colptr)
-        A.colptr[i] += A.colptr[i-1]
+        A.colptr[i] += A.colptr[i - 1]
     end
     resize!(A.rowval, A.colptr[end])
     resize!(A.nzval, A.colptr[end])
@@ -98,7 +98,7 @@ end
 
 function final_touch(A::MutableSparseMatrixCSC)
     for i in length(A.colptr):-1:2
-        A.colptr[i] = _shift(A.colptr[i-1], ZeroBasedIndexing(), A.indexing)
+        A.colptr[i] = _shift(A.colptr[i - 1], ZeroBasedIndexing(), A.indexing)
     end
     A.colptr[1] = _first_index(A.indexing)
     return
@@ -113,7 +113,7 @@ function allocate_terms(
     func::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
 )
     for term in func.terms
-        A.colptr[index_map[_variable(term)].value+1] += 1
+        A.colptr[index_map[_variable(term)].value + 1] += 1
     end
     return
 end
