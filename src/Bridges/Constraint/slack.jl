@@ -49,11 +49,11 @@ end
 
 # Attributes, Bridge acting as a constraint
 function MOI.supports(
-    ::MOI.ModelLike,
-    ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{<:AbstractSlackBridge},
-)
-    return true
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    ::Type{<:AbstractSlackBridge{T,VF,ZS,F,S}},
+) where {T,VF,ZS,F,S}
+    return MOI.supports(model, attr, MOI.ConstraintIndex{VF,S})
 end
 
 function MOI.get(
