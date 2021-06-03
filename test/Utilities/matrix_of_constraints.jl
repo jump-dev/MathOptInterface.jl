@@ -40,7 +40,8 @@ function _test(
     bridged::Bool,
     Indexing,
 )
-    optimizer = matrix_instance(Float64, ConstantsType, ProductOfSetsType, Indexing)
+    optimizer =
+        matrix_instance(Float64, ConstantsType, ProductOfSetsType, Indexing)
     _inner(model::MOI.Bridges.LazyBridgeOptimizer) = _inner(model.model)
     _inner(model::MOI.Utilities.CachingOptimizer) = _inner(model.optimizer)
     _inner(model::MOI.Utilities.MockOptimizer) = _inner(model.inner_model)
@@ -138,7 +139,12 @@ function _lp(model, ::MOI.Test.Config{T}) where {T}
     return MOI.add_constraint(model, 5fx - 4fy, MOI.Interval(T(6), T(7)))
 end
 
-function matrix_instance(T::Type, ConstantsType, ProductOfSetsType::Type, Indexing)
+function matrix_instance(
+    T::Type,
+    ConstantsType,
+    ProductOfSetsType::Type,
+    Indexing,
+)
     return MOIU.GenericOptimizer{
         T,
         MOIU.MatrixOfConstraints{
@@ -148,29 +154,6 @@ function matrix_instance(T::Type, ConstantsType, ProductOfSetsType::Type, Indexi
             ProductOfSetsType,
         },
     }()
-end
-
-function test_get_by_name(T::Type, SetsType::Type)
-    model = matrix_instance(T, MOI.Utilities.Box{T}, SetsType, MOI.Utilities.OneBasedIndexing)
-    MOI.empty!(model)
-    x = MOI.add_variable(model)
-    fx = MOI.SingleVariable(x)
-    c = MOI.add_constraint(model, one(T) * fx, MOI.EqualTo(one(T)))
-    MOI.set(model, MOI.ConstraintName(), c, "c")
-    @test "c" == MOI.get(model, MOI.ConstraintName(), c)
-    @test c == MOI.get(model, MOI.ConstraintIndex, "c")
-    @test c == MOI.get(model, typeof(c), "c")
-end
-function test_get_by_name()
-    for T in [Int, Float64]
-        for SetsType in [MixLP{T}, OrdLP{T}]
-            test_get_by_name(T, SetsType)
-        end
-    end
-end
-
-@testset "Get constraint by name" begin
-    test_get_by_name()
 end
 
 MOIU.@mix_of_scalar_sets(
@@ -358,4 +341,32 @@ MOIU.@product_of_sets(NonnegNonpos, MOI.Nonnegatives, MOI.Nonpositives)
     ) do optimizer
         return _lin3_query(optimizer, [(F, MOI.Nonnegatives)])
     end
+end
+
+function test_get_by_name(T::Type, SetsType::Type)
+    model = matrix_instance(
+        T,
+        MOI.Utilities.Box{T},
+        SetsType,
+        MOI.Utilities.OneBasedIndexing,
+    )
+    MOI.empty!(model)
+    x = MOI.add_variable(model)
+    fx = MOI.SingleVariable(x)
+    c = MOI.add_constraint(model, one(T) * fx, MOI.EqualTo(one(T)))
+    MOI.set(model, MOI.ConstraintName(), c, "c")
+    @test "c" == MOI.get(model, MOI.ConstraintName(), c)
+    @test c == MOI.get(model, MOI.ConstraintIndex, "c")
+    @test c == MOI.get(model, typeof(c), "c")
+end
+function test_get_by_name()
+    for T in [Int, Float64]
+        for SetsType in [MixLP{T}, OrdLP{T}]
+            test_get_by_name(T, SetsType)
+        end
+    end
+end
+
+@testset "Get constraint by name" begin
+    test_get_by_name()
 end
