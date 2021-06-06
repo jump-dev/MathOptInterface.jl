@@ -26,7 +26,7 @@ on the value of `supports`).
 
 ```julia
 # ============================ /test/MOI_wrapper.jl ============================
-module TestFoobar
+module TestFooBar
 
 import FooBar
 using MathOptInterface
