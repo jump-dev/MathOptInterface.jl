@@ -115,28 +115,37 @@ function test_sets_dimension()
 end
 
 function test_sets_DimensionMismatch()
-    @test_throws DimensionMismatch MOI.Reals(0)
-    @test_throws DimensionMismatch MOI.Zeros(0)
-    @test_throws DimensionMismatch MOI.Nonnegatives(0)
-    @test_throws DimensionMismatch MOI.Nonpositives(0)
-    @test_throws DimensionMismatch MOI.NormInfinityCone(0)
-    @test_throws DimensionMismatch MOI.NormOneCone(0)
-    @test_throws DimensionMismatch MOI.SecondOrderCone(0)
-    @test_throws DimensionMismatch MOI.RotatedSecondOrderCone(1)
-    @test_throws DimensionMismatch MOI.GeometricMeanCone(1)
-    @test_throws DimensionMismatch MOI.RelativeEntropyCone(1)
-    @test_throws DimensionMismatch MOI.RelativeEntropyCone(4)
-    @test_throws DimensionMismatch MOI.NormSpectralCone(1, 0)
-    @test_throws DimensionMismatch MOI.NormSpectralCone(0, 1)
-    @test_throws DimensionMismatch MOI.NormNuclearCone(1, 0)
-    @test_throws DimensionMismatch MOI.NormNuclearCone(0, 1)
-    @test_throws DimensionMismatch MOI.PositiveSemidefiniteConeTriangle(0)
-    @test_throws DimensionMismatch MOI.PositiveSemidefiniteConeSquare(0)
-    @test_throws DimensionMismatch MOI.LogDetConeTriangle(0)
-    @test_throws DimensionMismatch MOI.LogDetConeSquare(0)
-    @test_throws DimensionMismatch MOI.RootDetConeTriangle(0)
-    @test_throws DimensionMismatch MOI.RootDetConeSquare(0)
-    @test_throws DimensionMismatch MOI.Complements(0)
+    for (S, min_dimension) in (
+        (MOI.Reals, 0),
+        (MOI.Zeros, 0),
+        (MOI.Nonnegatives, 0),
+        (MOI.Nonpositives, 0),
+        (MOI.NormInfinityCone, 1),
+        (MOI.NormOneCone, 1),
+        (MOI.SecondOrderCone, 1),
+        (MOI.RotatedSecondOrderCone, 2),
+        (MOI.GeometricMeanCone, 2),
+        (MOI.Complements, 0),
+        (MOI.RelativeEntropyCone, 1),
+        (MOI.PositiveSemidefiniteConeTriangle, 0),
+        (MOI.PositiveSemidefiniteConeSquare, 0),
+        (MOI.LogDetConeTriangle, 0),
+        (MOI.LogDetConeSquare, 0),
+        (MOI.RootDetConeTriangle, 0),
+        (MOI.RootDetConeSquare, 0),
+    )
+        @test_throws DimensionMismatch S(min_dimension-1)
+        @test S(min_dimension) isa S
+    end
+    @test_throws DimensionMismatch MOI.NormSpectralCone(-1, 0)
+    @test_throws DimensionMismatch MOI.NormSpectralCone(0, -1)
+    @test MOI.NormSpectralCone(0, 0) isa MOI.NormSpectralCone
+    @test_throws DimensionMismatch MOI.NormNuclearCone(-1, 0)
+    @test_throws DimensionMismatch MOI.NormNuclearCone(0, -1)
+    @test MOI.NormNuclearCone(0, 0) isa MOI.NormNuclearCone
+    # Other dimension checks
+    @test_throws DimensionMismatch MOI.RelativeEntropyCone(2)
+    @test_throws DimensionMismatch MOI.Complements(-3)
     @test_throws DimensionMismatch MOI.Complements(3)
     return
 end
