@@ -146,6 +146,7 @@ function MOI.modify(
 end
 
 function _add_variable(::VectorOfConstraints) end
+function _add_variables(::VectorOfConstraints, ::Int64) end
 
 # Deletion of variables in vector of variables
 

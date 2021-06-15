@@ -25,7 +25,7 @@ function default_status_test(model::MOI.ModelLike)
     @test MOI.get(model, MOI.DualStatus()) == MOI.NO_SOLUTION
 end
 
-function nametest(model::MOI.ModelLike)
+function nametest(model::MOI.ModelLike; delete::Bool=true)
     @testset "Variables" begin
         MOI.empty!(model)
         x = MOI.add_variables(model, 2)
@@ -69,7 +69,7 @@ function nametest(model::MOI.ModelLike)
         MOI.set(model, MOI.ConstraintName(), c1, "c1")
         @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "c1")
     end
-    @testset "Name test with $(typeof(model))" begin
+    @testset "Name" begin
         MOI.empty!(model)
         @test MOI.supports_incremental_interface(model, true) #=copy_names=#
         @test MOI.supports(model, MOI.Name())
@@ -218,25 +218,30 @@ function nametest(model::MOI.ModelLike)
                 @test MOI.get(model, typeof(ca), nameb) === nothing
             end
         end
-        MOI.delete(model, v[2])
-        @test MOI.get(model, MOI.VariableIndex, "Var2") === nothing
-        MOI.delete(model, c)
-        @test MOI.get(model, typeof(c), "Con1") === nothing
-        @test MOI.get(model, MOI.ConstraintIndex, "Con1") === nothing
-        MOI.delete(model, x)
-        @test MOI.get(model, MOI.VariableIndex, "Varx") === nothing
-        @test MOI.get(model, MOI.ConstraintIndex, "Con3") === nothing
-        @test MOI.get(model, typeof(c2), "Con2") === c2
-        @test MOI.get(model, MOI.ConstraintIndex, "Con2") === c2
-        MOI.delete(model, y)
-        @test MOI.get(model, typeof(cy), "Con4") === nothing
-        @test MOI.get(model, MOI.ConstraintIndex, "Con4") === nothing
-        for i in 1:4
-            @test MOI.get(model, MOI.VariableIndex, "Vary$i") === nothing
+        if delete
+            MOI.delete(model, v[2])
+            @test MOI.get(model, MOI.VariableIndex, "Var2") === nothing
+
+            MOI.delete(model, c)
+            @test MOI.get(model, typeof(c), "Con1") === nothing
+            @test MOI.get(model, MOI.ConstraintIndex, "Con1") === nothing
+
+            MOI.delete(model, x)
+            @test MOI.get(model, MOI.VariableIndex, "Varx") === nothing
+            @test MOI.get(model, MOI.ConstraintIndex, "Con3") === nothing
+            @test MOI.get(model, typeof(c2), "Con2") === c2
+            @test MOI.get(model, MOI.ConstraintIndex, "Con2") === c2
+
+            MOI.delete(model, y)
+            @test MOI.get(model, typeof(cy), "Con4") === nothing
+            @test MOI.get(model, MOI.ConstraintIndex, "Con4") === nothing
+            for i in 1:4
+                @test MOI.get(model, MOI.VariableIndex, "Vary$i") === nothing
+            end
+            MOI.set(model, MOI.ConstraintName(), c2, "Con4")
+            @test MOI.get(model, typeof(c2), "Con4") === c2
+            @test MOI.get(model, MOI.ConstraintIndex, "Con4") === c2
         end
-        MOI.set(model, MOI.ConstraintName(), c2, "Con4")
-        @test MOI.get(model, typeof(c2), "Con4") === c2
-        @test MOI.get(model, MOI.ConstraintIndex, "Con4") === c2
     end
     @testset "Duplicate names" begin
         @testset "Variables" begin
@@ -252,8 +257,10 @@ function nametest(model::MOI.ModelLike)
             @test MOI.get(model, MOI.VariableIndex, "y") == y
             MOI.set(model, MOI.VariableName(), z, "x")
             @test_throws ErrorException MOI.get(model, MOI.VariableIndex, "x")
-            MOI.delete(model, x)
-            @test MOI.get(model, MOI.VariableIndex, "x") == z
+            if delete
+                MOI.delete(model, x)
+                @test MOI.get(model, MOI.VariableIndex, "x") == z
+            end
         end
         @testset "ScalarAffineFunction" begin
             MOI.empty!(model)
@@ -272,14 +279,16 @@ function nametest(model::MOI.ModelLike)
             @test MOI.get(model, MOI.ConstraintIndex, "y") == c[2]
             MOI.set(model, MOI.ConstraintName(), c[3], "x")
             @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "x")
-            MOI.delete(model, c[1])
-            @test MOI.get(model, MOI.ConstraintIndex, "x") == c[3]
+            if delete
+                MOI.delete(model, c[1])
+                @test MOI.get(model, MOI.ConstraintIndex, "x") == c[3]
+            end
         end
     end
 end
 
 # Taken from https://github.com/jump-dev/MathOptInterfaceUtilities.jl/issues/41
-function validtest(model::MOI.ModelLike)
+function validtest(model::MOI.ModelLike; delete::Bool=true)
     MOI.empty!(model)
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     v = MOI.add_variables(model, 2)
@@ -287,8 +296,10 @@ function validtest(model::MOI.ModelLike)
     @test MOI.is_valid(model, v[2])
     x = MOI.add_variable(model)
     @test MOI.is_valid(model, x)
-    MOI.delete(model, x)
-    @test !MOI.is_valid(model, x)
+    if delete
+        MOI.delete(model, x)
+        @test !MOI.is_valid(model, x)
+    end
     cf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], v), 0.0)
     @test MOI.supports_constraint(model, typeof(cf), MOI.LessThan{Float64})
     c = MOI.add_constraint(model, cf, MOI.LessThan(1.0))

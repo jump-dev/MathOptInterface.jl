@@ -66,7 +66,7 @@ mutable struct MutableSparseMatrixCSC{Tv,Ti<:Integer,I<:AbstractIndexing}
     rowval::Vector{Ti}
     nzval::Vector{Tv}
     function MutableSparseMatrixCSC{Tv,Ti,I}() where {Tv,Ti<:Integer,I}
-        return new{Tv,Ti,I}(I(), 0, 0, Ti[], Ti[], Tv[])
+        return new{Tv,Ti,I}(I(), 0, 0, [zero(Ti)], Ti[], Tv[])
     end
 end
 
@@ -85,6 +85,14 @@ function add_column(A::MutableSparseMatrixCSC{Tv,Ti}) where {Tv,Ti}
     push!(A.colptr, zero(Ti))
     return
 end
+function add_columns(A::MutableSparseMatrixCSC{Tv,Ti}, n) where {Tv,Ti}
+    A.n += n
+    for _ in 1:n
+        push!(A.colptr, zero(Ti))
+    end
+    return
+end
+
 
 function set_number_of_rows(A::MutableSparseMatrixCSC, num_rows)
     A.m = num_rows
@@ -159,3 +167,25 @@ function Base.convert(
         A.nzval,
     )
 end
+
+function extract_function(
+    A::MutableSparseMatrixCSC{T},
+    row::Integer,
+) where {T}
+    func = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
+    for col in 1:A.n
+        range = A.colptr[col]:(A.colptr[col+1]-1)
+        idx = searchsortedfirst(range, row, by = i -> A.rowval[i])
+        if idx <= length(range) && A.rowval[range[idx]] == row
+            push!(func.terms, MOI.ScalarAffineTerm(A.nzval[range[idx]], MOI.VariableIndex(col)))
+        end
+    end
+    return func
+end
+#function extract_function(
+#    A::MutableSparseMatrixCSC{T},
+#    rows::AbstractVector{<:Integer},
+#    func = MOI.VectorAffineFunction(MOI.VectorAffineTerm{T}[], zero(T))
+#) where {T}
+#    return func
+#end

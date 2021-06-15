@@ -370,3 +370,143 @@ end
 @testset "Get constraint by name" begin
     test_get_by_name()
 end
+
+MOIU.@struct_of_constraints_by_function_types(
+    VoVorSAff,
+    MOI.VectorOfVariables,
+    MOI.ScalarAffineFunction{T},
+)
+
+function test_nametest()
+    T = Float64
+    Indexing = MOIU.OneBasedIndexing
+    ConstantsType = MOIU.Box{T}
+    for ProductOfSetsType in [MixLP{Float64}, OrdLP{Float64}]
+        model = MOIU.GenericOptimizer{
+            T,
+            VoVorSAff{T}{
+                MOIU.VectorOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives},
+                MOIU.MatrixOfConstraints{
+                    T,
+                    MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
+                    ConstantsType,
+                    ProductOfSetsType,
+                },
+            },
+        }()
+        MOI.Test.nametest(
+            model,
+            delete = false,
+        )
+    end
+end
+
+@testset "test_nametest" begin
+    test_nametest()
+end
+
+
+MOIU.@struct_of_constraints_by_function_types(
+    VoVorVAff,
+    MOI.VectorOfVariables,
+    MOI.VectorAffineFunction{T},
+)
+
+MOIU.@product_of_sets(Zeros, MOI.Zeros)
+
+function test_empty()
+    T = Float64
+    Indexing = MOIU.OneBasedIndexing
+    model = MOIU.GenericOptimizer{
+        T,
+        VoVorVAff{T}{
+            MOIU.VectorOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives},
+            MOIU.MatrixOfConstraints{
+                T,
+                MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
+                Vector{T},
+                Zeros{Float64},
+            },
+        },
+    }()
+    MOI.Test.emptytest(model)
+end
+
+@testset "test_empty" begin
+    test_empty()
+end
+
+function test_valid()
+    T = Float64
+    Indexing = MOIU.OneBasedIndexing
+    ConstantsType = MOIU.Box{T}
+    for ProductOfSetsType in [MixLP{Float64}, OrdLP{Float64}]
+        model = matrix_instance(T, ConstantsType, ProductOfSetsType, Indexing)
+        MOI.Test.validtest(model, delete = false)
+    end
+end
+
+@testset "test_valid" begin
+    test_valid()
+end
+
+function test_supports_constraint(T::Type=Float64, BadT::Type=Float32)
+    Indexing = MOIU.OneBasedIndexing
+    ConstantsType = MOIU.Box{T}
+    for ProductOfSetsType in [MixLP{Float64}, OrdLP{Float64}]
+        model = MOIU.GenericOptimizer{
+            T,
+            VoVorSAff{T}{
+                MOIU.VectorOfConstraints{MOI.VectorOfVariables,MOI.Zeros},
+                MOIU.MatrixOfConstraints{
+                    T,
+                    MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
+                    ConstantsType,
+                    ProductOfSetsType,
+                },
+            },
+        }()
+        MOI.Test.supports_constrainttest(model, T, BadT)
+    end
+end
+
+@testset "test_supports_constraint" begin
+    test_supports_constraint()
+end
+
+MOIU.@struct_of_constraints_by_function_types(
+    VoVorSAfforVAff,
+    MOI.VectorOfVariables,
+    MOI.ScalarAffineFunction{T},
+    MOI.VectorAffineFunction{T},
+)
+
+function test_copy()
+    T = Float64
+    Indexing = MOIU.OneBasedIndexing
+    for ScalarSetsType in [MixLP{T}, OrdLP{T}]
+        model = MOIU.GenericOptimizer{
+            T,
+            VoVorSAfforVAff{T}{
+                MOIU.VectorOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives},
+                MOIU.MatrixOfConstraints{
+                    T,
+                    MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
+                    MOIU.Box{T},
+                    ScalarSetsType,
+                },
+                MOIU.MatrixOfConstraints{
+                    T,
+                    MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
+                    Vector{T},
+                    Zeros{T},
+                },
+            },
+        }()
+        MOI.Test.copytest(model, MOIU.Model{T}())
+    end
+end
+
+@testset "test_copy" begin
+    test_copy()
+end

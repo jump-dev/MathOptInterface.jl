@@ -1,7 +1,18 @@
 abstract type StructOfConstraints <: MOI.ModelLike end
 
 function _add_variable(model::StructOfConstraints)
+    model.num_variables += 1
     return broadcastcall(_add_variable, model)
+end
+function _add_variables(model::StructOfConstraints, n)
+    model.num_variables += n
+    return broadcastcall(Base.Fix2(_add_variables, n), model)
+end
+
+function final_touch(::Nothing, index_map) end
+function final_touch(model::StructOfConstraints, index_map)
+    broadcastcall(Base.Fix2(final_touch, index_map), model)
+    return
 end
 
 function _throw_if_cannot_delete(model::StructOfConstraints, vis, fast_in_vis)
@@ -130,6 +141,7 @@ function MOI.is_empty(model::StructOfConstraints)
 end
 
 function MOI.empty!(model::StructOfConstraints)
+    model.num_variables = 0
     broadcastcall(model) do constrs
         if constrs !== nothing
             MOI.empty!(constrs)
@@ -176,10 +188,30 @@ struct SymbolFun <: SymbolFS
     s::Union{Symbol,Expr}
     typed::Bool
 end
+SymbolFun(s::Symbol) = SymbolFun(s, false)
+function SymbolFun(s::Expr)
+    if Meta.isexpr(s, :curly)
+        @assert length(s.args) == 2
+        @assert s.args[2] == :T
+        return SymbolFun(s.args[1], true)
+    else
+        return SymbolFun(s, false)
+    end
+end
 
 struct SymbolSet <: SymbolFS
     s::Union{Symbol,Expr}
     typed::Bool
+end
+SymbolSet(s::Symbol) = SymbolSet(s, false)
+function SymbolSet(s::Expr)
+    if Meta.isexpr(s, :curly)
+        @assert length(s.args) == 2
+        @assert s.args[2] == :T
+        return SymbolSet(s.args[1], true)
+    else
+        return SymbolSet(s, false)
+    end
 end
 
 _typed(s::SymbolFS) = s.typed ? Expr(:curly, esc(s.s), esc(:T)) : esc(s.s)
@@ -216,7 +248,9 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
         append!(typed_struct.args, field_types)
     end
     code = quote
-        mutable struct $typed_struct <: StructOfConstraints end
+        mutable struct $typed_struct <: StructOfConstraints
+            num_variables::Int64
+        end
 
         function $MOIU.broadcastcall(f::Function, model::$struct_name)
             $(Expr(:block, _callfield.(Ref(:f), types)...))
@@ -250,6 +284,7 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
             )::$(field_type) where {$T}
                 if model.$field === nothing
                     model.$field = $(field_type)()
+                    $MOI.Utilities._add_variables(model.$field, model.num_variables)
                 end
                 return model.$field
             end
@@ -278,7 +313,7 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
         # If there is no field type, the default constructor is sufficient and
         # adding this constructor will make a `StackOverflow`.
         constructor_code = :(function $typed_struct() where {$T}
-            return $typed_struct($([:(nothing) for _ in field_types]...))
+            return $typed_struct(0, $([:(nothing) for _ in field_types]...))
         end)
         if type_parametrized
             append!(constructor_code.args[1].args, field_types)
@@ -286,4 +321,13 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
         push!(code.args, constructor_code)
     end
     return code
+end
+
+macro struct_of_constraints_by_function_types(name, func_types...)
+    funcs = SymbolFun.(func_types)
+    return struct_of_constraint_code(esc(name), funcs)
+end
+macro struct_of_constraints_by_set_types(name, set_types...)
+    sets = SymbolSet.(set_types)
+    return struct_of_constraint_code(esc(name), sets)
 end

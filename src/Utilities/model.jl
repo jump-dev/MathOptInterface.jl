@@ -14,12 +14,6 @@ function MOI.get(model::AbstractModel, ::MOI.NumberOfVariables)::Int64
     end
 end
 
-# Use `-Inf` and `Inf` for `AbstractFloat` subtypes.
-_no_lower_bound(::Type{T}) where {T} = zero(T)
-_no_lower_bound(::Type{T}) where {T<:AbstractFloat} = typemin(T)
-_no_upper_bound(::Type{T}) where {T} = zero(T)
-_no_upper_bound(::Type{T}) where {T<:AbstractFloat} = typemax(T)
-
 """
     function _add_variable end
 
@@ -30,11 +24,11 @@ variable has been added. This is similar to
 function _add_variable end
 
 function _add_variable(::Nothing) end
+function _add_variables(::Nothing, ::Int64) end
 function MOI.add_variable(model::AbstractModel{T}) where {T}
     vi = VI(model.num_variables_created += 1)
     push!(model.single_variable_mask, 0x0)
-    push!(model.lower_bound, _no_lower_bound(T))
-    push!(model.upper_bound, _no_upper_bound(T))
+    add_free(model.variable_bounds)
     if model.variable_indices !== nothing
         push!(model.variable_indices, vi)
     end
@@ -481,36 +475,6 @@ function throw_if_upper_bound_set(variable, S2, mask, T)
     return _throw_if_upper_bound_set(variable, S2, upper_mask, T)
 end
 
-# Sets setting lower bound:
-extract_lower_bound(set::MOI.EqualTo) = set.value
-function extract_lower_bound(
-    set::Union{MOI.GreaterThan,MOI.Interval,MOI.Semicontinuous,MOI.Semiinteger},
-)
-    return set.lower
-end
-# 0xcb = 0x80 | 0x40 | 0x8 | 0x2 | 0x1
-const LOWER_BOUND_MASK = 0xcb
-
-# Sets setting upper bound:
-extract_upper_bound(set::MOI.EqualTo) = set.value
-function extract_upper_bound(
-    set::Union{MOI.LessThan,MOI.Interval,MOI.Semicontinuous,MOI.Semiinteger},
-)
-    return set.upper
-end
-# 0xcd = 0x80 | 0x40 | 0x8 | 0x4 | 0x1
-const UPPER_BOUND_MASK = 0xcd
-
-const SUPPORTED_VARIABLE_SCALAR_SETS{T} = Union{
-    MOI.EqualTo{T},
-    MOI.GreaterThan{T},
-    MOI.LessThan{T},
-    MOI.Interval{T},
-    MOI.Integer,
-    MOI.ZeroOne,
-    MOI.Semicontinuous{T},
-    MOI.Semiinteger{T},
-}
 function MOI.supports_constraint(
     ::AbstractModel{T},
     ::Type{MOI.SingleVariable},
@@ -537,12 +501,7 @@ function MOI.add_constraint(
     throw_if_lower_bound_set(f.variable, typeof(s), mask, T)
     throw_if_upper_bound_set(f.variable, typeof(s), mask, T)
     # No error should be thrown now, we can modify `model`.
-    if !iszero(flag & LOWER_BOUND_MASK)
-        model.lower_bound[index] = extract_lower_bound(s)
-    end
-    if !iszero(flag & UPPER_BOUND_MASK)
-        model.upper_bound[index] = extract_upper_bound(s)
-    end
+    merge_bounds(model.variable_bounds, index, s)
     model.single_variable_mask[index] = mask | flag
     return CI{MOI.SingleVariable,typeof(s)}(index)
 end
@@ -571,10 +530,10 @@ function _delete_constraint(
     flag = single_variable_flag(S)
     model.single_variable_mask[ci.value] &= ~flag
     if !iszero(flag & LOWER_BOUND_MASK)
-        model.lower_bound[ci.value] = _no_lower_bound(T)
+        model.variable_bounds.lower[ci.value] = _no_lower_bound(T)
     end
     if !iszero(flag & UPPER_BOUND_MASK)
-        model.upper_bound[ci.value] = _no_upper_bound(T)
+        model.variable_bounds.upper[ci.value] = _no_upper_bound(T)
     end
     return
 end
@@ -614,13 +573,7 @@ function MOI.set(
     set::S,
 ) where {T,S<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}
     MOI.throw_if_not_valid(model, ci)
-    flag = single_variable_flag(typeof(set))
-    if !iszero(flag & LOWER_BOUND_MASK)
-        model.lower_bound[ci.value] = extract_lower_bound(set)
-    end
-    if !iszero(flag & UPPER_BOUND_MASK)
-        model.upper_bound[ci.value] = extract_upper_bound(set)
-    end
+    merge_bounds(model.variable_bounds, ci.value, set)
     return
 end
 
@@ -722,49 +675,13 @@ function MOI.get(
     return MOI.get(model.constraints, attr, ci)
 end
 
-function _get_single_variable_set(
-    model::AbstractModel,
-    ::Type{<:MOI.EqualTo},
-    index,
-)
-    return MOI.EqualTo(model.lower_bound[index])
-end
-function _get_single_variable_set(
-    model::AbstractModel,
-    S::Type{<:Union{MOI.GreaterThan,MOI.EqualTo}},
-    index,
-)
-    # Lower and upper bounds are equal for `EqualTo`, we can take either of them.
-    return S(model.lower_bound[index])
-end
-function _get_single_variable_set(
-    model::AbstractModel,
-    S::Type{<:MOI.LessThan},
-    index,
-)
-    return S(model.upper_bound[index])
-end
-function _get_single_variable_set(
-    model::AbstractModel,
-    S::Type{<:Union{MOI.Interval,MOI.Semicontinuous,MOI.Semiinteger}},
-    index,
-)
-    return S(model.lower_bound[index], model.upper_bound[index])
-end
-function _get_single_variable_set(
-    ::AbstractModel,
-    S::Type{<:Union{MOI.Integer,MOI.ZeroOne}},
-    index,
-)
-    return S()
-end
 function MOI.get(
     model::AbstractModel,
     ::MOI.ConstraintSet,
     ci::CI{MOI.SingleVariable,S},
 ) where {S}
     MOI.throw_if_not_valid(model, ci)
-    return _get_single_variable_set(model, S, ci.value)
+    return set_from_constants(model.variable_bounds, S, ci.value)
 end
 
 function MOI.is_empty(model::AbstractModel)
@@ -785,8 +702,7 @@ function MOI.empty!(model::AbstractModel{T}) where {T}
     model.num_variables_created = 0
     model.variable_indices = nothing
     model.single_variable_mask = UInt8[]
-    model.lower_bound = T[]
-    model.upper_bound = T[]
+    empty!(model.variable_bounds)
     empty!(model.var_to_name)
     model.name_to_var = nothing
     empty!(model.con_to_name)
@@ -1057,8 +973,8 @@ for (loop_name, loop_super_type) in [
         * `F`-in-`S` constraints that are supported by `C`.
 
         The lower (resp. upper) bound of a variable of index `VariableIndex(i)`
-        is at the `i`th index of the vector stored in the field `lower_bound`
-        (resp. `upper_bound`). When no lower (resp. upper) bound is set, it is
+        is at the `i`th index of the vector stored in the field `variable_bounds.lower`
+        (resp. `variable_bounds.upper`). When no lower (resp. upper) bound is set, it is
         `typemin(T)` (resp. `typemax(T)`) if `T <: AbstractFloat`.
         """
         mutable struct $name{T,C} <: $super_type{T}
@@ -1078,12 +994,8 @@ for (loop_name, loop_super_type) in [
             # Union of flags of `S` such that a `SingleVariable`-in-`S`
             # constraint was added to the model and not deleted yet.
             single_variable_mask::Vector{UInt8}
-            # Lower bound set by `SingleVariable`-in-`S` where `S`is
-            # `GreaterThan{T}`, `EqualTo{T}` or `Interval{T}`.
-            lower_bound::Vector{T}
-            # Lower bound set by `SingleVariable`-in-`S` where `S`is
-            # `LessThan{T}`, `EqualTo{T}` or `Interval{T}`.
-            upper_bound::Vector{T}
+            # Bounds set by `SingleVariable`-in-`S`:
+            variable_bounds::Box{T}
             constraints::C
             var_to_name::Dict{MOI.VariableIndex,String}
             # If `nothing`, the dictionary hasn't been constructed yet.
@@ -1103,8 +1015,7 @@ for (loop_name, loop_super_type) in [
                     0,
                     nothing,
                     UInt8[],
-                    T[],
-                    T[],
+                    Box{T}(),
                     C(),
                     Dict{MOI.VariableIndex,String}(),
                     nothing,
