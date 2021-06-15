@@ -224,13 +224,29 @@ MOI.get(b::ScalarSlackBridge, ::MOI.ListOfVariableIndices) = [b.slack]
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.ConstraintBasisStatus,
-    bridge::ScalarSlackBridge,
-)
+    bridge::ScalarSlackBridge{T,F,S},
+) where {T,F,S<:MOI.Interval}
     return MOI.get(
         model,
         MOI.VariableBasisStatus(),
         MOI.VariableIndex(bridge.slack_in_set.value),
     )
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    ::MOI.ConstraintBasisStatus,
+    bridge::ScalarSlackBridge,
+)
+    status = MOI.get(
+        model,
+        MOI.VariableBasisStatus(),
+        MOI.VariableIndex(bridge.slack_in_set.value),
+    )
+    if status == MOI.NONBASIC_AT_LOWER || status == MOI.NONBASIC_AT_UPPER
+        return MOI.NONBASIC
+    end
+    return status
 end
 
 function MOI.set(
