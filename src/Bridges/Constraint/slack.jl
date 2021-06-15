@@ -226,7 +226,11 @@ function MOI.get(
     ::MOI.ConstraintBasisStatus,
     bridge::ScalarSlackBridge,
 )
-    return MOI.get(model, MOI.ConstraintBasisStatus(), bridge.slack_in_set)
+    return MOI.get(
+        model,
+        MOI.VariableBasisStatus(),
+        MOI.VariableIndex(bridge.slack_in_set.value),
+    )
 end
 
 function MOI.set(
