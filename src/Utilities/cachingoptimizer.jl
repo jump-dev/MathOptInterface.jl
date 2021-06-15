@@ -203,6 +203,7 @@ errors can be thrown.
 """
 function attach_optimizer(model::CachingOptimizer)
     @assert model.state == EMPTY_OPTIMIZER
+    final_touch(model, nothing)
     indexmap = MOI.copy_to(model.optimizer, model.model_cache)::IndexMap
     model.state = ATTACHED_OPTIMIZER
     model.model_to_optimizer_map = indexmap
