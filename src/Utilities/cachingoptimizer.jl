@@ -270,6 +270,7 @@ function MOI.empty!(m::CachingOptimizer)
     MOI.empty!(m.model_cache)
     if m.state == ATTACHED_OPTIMIZER
         MOI.empty!(m.optimizer)
+        m.state = EMPTY_OPTIMIZER
     end
     m.model_to_optimizer_map = IndexMap()
     m.optimizer_to_model_map = IndexMap()
