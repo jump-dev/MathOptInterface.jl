@@ -1273,7 +1273,13 @@ A constraint attribute for the `BasisStatusCode` of some constraint in result
 
 See [`ResultCount`](@ref) for information on how the results are ordered.
 
+## Notes
+
 For the basis status of a variable, query [`VariableBasisStatus`](@ref).
+
+`ConstraintBasisStatus` does not apply to `SingleVariable` constraints. You
+can infer the basis status of a [`SingleVariable`](@ref) constraint by looking
+at the result of [`VariableBasisStatus`](@ref).
 """
 struct ConstraintBasisStatus <: AbstractConstraintAttribute
     result_index::Int
