@@ -1286,6 +1286,18 @@ struct ConstraintBasisStatus <: AbstractConstraintAttribute
     ConstraintBasisStatus(result_index::Int = 1) = new(result_index)
 end
 
+function get_fallback(
+    ::ModelLike,
+    ::ConstraintBasisStatus,
+    ::ConstraintIndex{SingleVariable,<:AbstractScalarSet},
+)
+    error(
+        "Querying the basis status of a `SingleVariable` constraint is not ",
+        "supported. Use [`VariableBasisStatus`](@ref) instead.",
+    )
+end
+
+
 """
     CanonicalConstraintFunction()
 

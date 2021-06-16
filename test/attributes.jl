@@ -140,6 +140,14 @@ function test_no_constraint_name()
     )
 end
 
+function test_ConstraintBasisStatus_fallback()
+    model = DummyModel()
+    x = MOI.add_variable(model)
+    c = MOI.add_constriant(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    MOI.optimize!(model)
+    @test_throws ErrorException MOI.get(model, MOI.ConstraintBasisStatus(), c)
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")
