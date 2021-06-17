@@ -141,11 +141,15 @@ function test_no_constraint_name()
 end
 
 function test_ConstraintBasisStatus_fallback()
-    model = DummyModel()
-    x = MOI.add_variable(model)
-    c = MOI.add_constriant(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
-    MOI.optimize!(model)
-    @test_throws ErrorException MOI.get(model, MOI.ConstraintBasisStatus(), c)
+    model = DummyModelWithAdd()
+    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}(1)
+    @test_throws(
+        ErrorException(
+            "Querying the basis status of a `SingleVariable` constraint is " *
+            "not supported. Use [`VariableBasisStatus`](@ref) instead.",
+        ),
+        MOI.get(model, MOI.ConstraintBasisStatus(), c),
+    )
 end
 
 function runtests()
