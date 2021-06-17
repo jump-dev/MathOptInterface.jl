@@ -141,9 +141,9 @@ function test_no_constraint_name()
 end
 
 function test_ConstraintBasisStatus_fallback()
-    model = DummyModel()
+    model = DummyModelWithAdd()
     x = MOI.add_variable(model)
-    c = MOI.add_constriant(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
     MOI.optimize!(model)
     @test_throws ErrorException MOI.get(model, MOI.ConstraintBasisStatus(), c)
 end
