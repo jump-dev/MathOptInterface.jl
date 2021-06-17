@@ -349,6 +349,14 @@ end
     in mode MANUAL
     with model cache $(MOIU.Model{Float64})
     with optimizer nothing""")
+
+    MOI.empty!(s)
+    MOIU.reset_optimizer(m, s)
+    @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
+    MOIU.attach_optimizer(m)
+    @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
+    MOI.empty!(m)
+    @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
 end
 
 @testset "CachingOptimizer AUTOMATIC mode" begin
@@ -486,6 +494,9 @@ end
     in mode AUTOMATIC
     with model cache $(MOIU.Model{Float64})
     with optimizer $(MOIU.MockOptimizer{MOIU.Model{Float64}})""")
+
+    MOI.empty!(m)
+    @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
 end
 
 @testset "Constructor with optimizer" begin
