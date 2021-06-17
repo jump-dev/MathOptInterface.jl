@@ -496,12 +496,7 @@ function _collect_bounds(bounds, model, S, names)
     return
 end
 
-function write_bounds(
-    io::IO,
-    model::Model,
-    ordered_names,
-    names,
-)
+function write_bounds(io::IO, model::Model, ordered_names, names)
     println(io, "BOUNDS")
     bounds = Dict{String,Tuple{Float64,Float64,VType}}(
         n => (-Inf, Inf, VTYPE_CONTINUOUS) for n in ordered_names
