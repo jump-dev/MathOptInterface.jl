@@ -61,6 +61,7 @@ The `.constants::BT` type must implement:
  * `Base.resize(::BT)`
  * [`MOI.Utilities.load_constants`](@ref)
  * [`MOI.Utilities.set_from_constants`](@ref)
+ * [`MOI.Utilities.add_constants_to_functions`](@ref)
 
 The `.sets::ST` type must implement:
 
@@ -474,6 +475,11 @@ function load_constants(
     copyto!(b, offset + 1, func.constants)
     return
 end
+function add_constants_to_functions(b::Vector, rows, func::MOI.VectorAffineFunction)
+    for (i, row) in enumerate(rows)
+        func.constants[i] = b[row]
+    end
+end
 # FIXME does not work for all sets
 set_from_constants(::Vector, ::Type{S}, rows) where {S} = S(length(rows))
 
@@ -484,7 +490,10 @@ function MOI.get(
 )
     @assert model.final_touch
     MOI.throw_if_not_valid(model, ci)
-    return extract_function(model.coefficients, rows(model, ci))
+    r = rows(model, ci)
+    func = extract_function(model.coefficients, r)
+    add_constants_to_functions(model.constants, r, func)
+    return func
 end
 
 function MOI.get(

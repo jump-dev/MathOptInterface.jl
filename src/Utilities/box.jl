@@ -101,6 +101,8 @@ function merge_bounds(b::Box, index, set)
     end
 end
 
+function add_constants_to_functions(::Box, index, ::MOI.ScalarAffineFunction) end
+
 function set_from_constants(
     b::Box,
     ::Type{<:MOI.EqualTo},

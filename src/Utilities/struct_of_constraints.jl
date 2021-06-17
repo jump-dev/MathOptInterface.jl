@@ -309,17 +309,13 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
             end
         ),
     )
-    if !isempty(field_types)
-        # If there is no field type, the default constructor is sufficient and
-        # adding this constructor will make a `StackOverflow`.
-        constructor_code = :(function $typed_struct() where {$T}
-            return $typed_struct(0, $([:(nothing) for _ in field_types]...))
-        end)
-        if type_parametrized
-            append!(constructor_code.args[1].args, field_types)
-        end
-        push!(code.args, constructor_code)
+    constructor_code = :(function $typed_struct() where {$T}
+        return $typed_struct(0, $([:(nothing) for _ in field_types]...))
+    end)
+    if type_parametrized
+        append!(constructor_code.args[1].args, field_types)
     end
+    push!(code.args, constructor_code)
     return code
 end
 

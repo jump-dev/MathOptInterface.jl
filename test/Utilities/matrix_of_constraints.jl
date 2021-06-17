@@ -481,9 +481,8 @@ MOIU.@struct_of_constraints_by_function_types(
     MOI.VectorAffineFunction{T},
 )
 
-function test_copy()
+function test_copy(Indexing)
     T = Float64
-    Indexing = MOIU.OneBasedIndexing
     for ScalarSetsType in [MixLP{T}, OrdLP{T}]
         model = MOIU.GenericOptimizer{
             T,
@@ -508,5 +507,6 @@ function test_copy()
 end
 
 @testset "test_copy" begin
-    test_copy()
+    test_copy(MOIU.ZeroBasedIndexing)
+    test_copy(MOIU.OneBasedIndexing)
 end
