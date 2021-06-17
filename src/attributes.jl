@@ -1291,12 +1291,11 @@ function get_fallback(
     ::ConstraintBasisStatus,
     ::ConstraintIndex{SingleVariable,<:AbstractScalarSet},
 )
-    error(
+    return error(
         "Querying the basis status of a `SingleVariable` constraint is not ",
         "supported. Use [`VariableBasisStatus`](@ref) instead.",
     )
 end
-
 
 """
     CanonicalConstraintFunction()
