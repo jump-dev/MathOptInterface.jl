@@ -182,6 +182,17 @@ function test_min_objective()
     )
 end
 
+function test_objconst()
+    return _test_model_equality(
+        """
+    variables: x
+    minobjective: 1.1 * x + 1.2
+""",
+        ["x"],
+        String[],
+    )
+end
+
 function test_default_rhs_greater()
     return _test_model_equality(
         """
