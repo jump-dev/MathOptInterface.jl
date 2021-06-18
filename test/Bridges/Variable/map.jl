@@ -86,11 +86,8 @@ v2, c2 = MOIB.Variable.add_keys_for_bridge(map, () -> b2, set2)
     @test collect(values(map)) == [b1, b2]
 end
 
-struct _ZeroDimSet <: MOI.AbstractVectorSet
-    dimension::Int
-end
 b3 = VariableDummyBridge(3)
-set3 = _ZeroDimSet(0)
+set3 = MOI.Zeros(0)
 v3, c3 = MOIB.Variable.add_keys_for_bridge(map, () -> b3, set3)
 @testset "Vector set of length 0" begin
     @test isempty(v3)
