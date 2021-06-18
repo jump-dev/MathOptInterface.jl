@@ -303,7 +303,8 @@ end
 
 # For affine and quadratic functions, terms are compressed in a dictionary using `_dicts` and then the dictionaries are compared with `dict_compare`
 function dict_compare(d1::Dict, d2::Dict{<:Any,T}, compare::Function) where {T}
-    return all(kv -> compare(kv.second, Base.get(d2, kv.first, zero(T))), d1)
+    return all(kv -> compare(kv.second, Base.get(d2, kv.first, zero(T))), d1) &&
+        all(kv -> compare(kv.second, Base.get(d1, kv.first, zero(T))), d2)
 end
 
 # Build a dictionary where the duplicate keys are summed

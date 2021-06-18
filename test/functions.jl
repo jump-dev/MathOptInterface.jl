@@ -139,6 +139,9 @@ function test_isapprox_ScalarAffineFunction()
     @test g ≈ f
     f.terms[2] = MOI.ScalarAffineTerm(3, y)
     @test !(g ≈ f)
+    pop!(f.terms)
+    @test !(g ≈ f)
+    @test !(f ≈ g)
 end
 
 function test_isapprox_VectorAffineFunction()
@@ -157,6 +160,9 @@ function test_isapprox_VectorAffineFunction()
     @test !(f ≈ g)
     push!(f.terms, MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(-6, y)))
     @test f ≈ g
+    pop!(g.terms)
+    @test !(g ≈ f)
+    @test !(f ≈ g)
 end
 
 function test_isapprox_ScalarQuadraticFunction()
@@ -177,6 +183,9 @@ function test_isapprox_ScalarQuadraticFunction()
     @test !(f ≈ g)
     push!(f.quadratic_terms, MOI.ScalarQuadraticTerm(-2, y, x))
     @test f ≈ g
+    pop!(g.quadratic_terms)
+    @test !(g ≈ f)
+    @test !(f ≈ g)
 end
 
 function test_isapprox_VectorQuadraticFunction()
@@ -203,6 +212,11 @@ function test_isapprox_VectorQuadraticFunction()
     @test f ≈ g
     f.quadratic_terms[1] =
         MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(1, x, x))
+    @test !(f ≈ g)
+    f.quadratic_terms[1] =
+        MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(1, x, x))
+    pop!(f.quadratic_terms)
+    @test !(g ≈ f)
     @test !(f ≈ g)
 end
 
