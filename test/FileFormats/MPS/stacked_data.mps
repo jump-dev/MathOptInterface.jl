@@ -25,6 +25,7 @@ COLUMNS
 RHS
     rhs       con1      1              con2      6
     rhs       con3      3              con4      8
+    rhs       obj       -2.5
 RANGES
     ranges    con1      -4             con2      4
     ranges    con3      4

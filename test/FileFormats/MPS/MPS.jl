@@ -125,7 +125,7 @@ function test_stacked_data()
         model_2,
         """
 variables: x, y, z
-minobjective: x + y + z
+minobjective: x + y + z + 2.5
 con1: 1.0 * x in Interval(1.0, 5.0)
 con2: 1.0 * x in Interval(2.0, 6.0)
 con3: 1.0 * x in Interval(3.0, 7.0)
