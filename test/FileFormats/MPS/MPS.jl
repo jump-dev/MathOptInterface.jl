@@ -114,7 +114,7 @@ function test_maximization()
         MOI.SingleVariable(x),
     )
     @test sprint(MPS.write_columns, model, ["x"], Dict(x => "x")) ==
-          "COLUMNS\n    x         OBJ       -1\n"
+          "COLUMNS\n    x         OBJ       1\n"
 end
 
 function test_stacked_data()
@@ -125,7 +125,7 @@ function test_stacked_data()
         model_2,
         """
 variables: x, y, z
-minobjective: x + y + z
+maxobjective: x + y + z
 con1: 1.0 * x in Interval(1.0, 5.0)
 con2: 1.0 * x in Interval(2.0, 6.0)
 con3: 1.0 * x in Interval(3.0, 7.0)
@@ -277,6 +277,18 @@ c1: 1.1 * x in Interval(1.0, 2.0)
     )
 end
 
+function test_objsense_max()
+    return _test_model_equality(
+        """
+variables: x
+maxobjective: 1.2x
+c1: 1.0 * x >= 0.0
+""",
+        ["x"],
+        ["c1"],
+    )
+end
+
 function test_MARKER_INT()
     model = MPS.Model()
     MOIU.loadfromstring!(
@@ -376,6 +388,7 @@ a_really_long_name <= 2.0
     MOI.write_to_file(model, MPS_TEST_FILE)
     @test read(MPS_TEST_FILE, String) ==
           "NAME          \n" *
+          "OBJSENSE MIN\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           "COLUMNS\n" *
@@ -421,6 +434,7 @@ function test_names_with_spaces()
     MOI.set(model, MOI.ConstraintName(), c, "c c")
     @test sprint(write, model) ==
           "NAME          \n" *
+          "OBJSENSE MIN\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           " E  c_c\n" *
@@ -450,6 +464,7 @@ function test_sos_constraints()
     )
     @test sprint(write, model) ==
           "NAME          \n" *
+          "OBJSENSE MIN\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           "COLUMNS\n" *
