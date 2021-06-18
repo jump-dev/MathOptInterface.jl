@@ -53,7 +53,7 @@ struct Config{T<:Real}
      * `optimal_status = MOI.OPTIMAL`: Set to `MOI.LOCALLY_SOLVED` if the solver
        cannot prove global optimality.
      * `basis::Bool = false`: Set to `true` if the solver supports
-       [`MOI.ConstraintBasisStatus`](@ref)
+       [`MOI.ConstraintBasisStatus`](@ref) and [`MOI.VariableBasisStatus`](@ref).
     """
     function Config{T}(;
         atol::Real = Base.rtoldefault(T),

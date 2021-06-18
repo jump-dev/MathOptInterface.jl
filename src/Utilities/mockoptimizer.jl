@@ -47,6 +47,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     eval_variable_constraint_dual::Bool
     condual::Dict{MOI.ConstraintIndex,Dict{Int,Any}}
     con_basis::Dict{MOI.ConstraintIndex,Dict{Int,MOI.BasisStatusCode}}
+    var_basis::Dict{MOI.VariableIndex,Dict{Int,MOI.BasisStatusCode}}
     # The attributes set by `MOI.optimize!` cannot be set to `model`.
     # We detect them with `is_set_by_optimize` and store them in the following:
     optimizer_attributes::Dict{MOI.AbstractOptimizerAttribute,Any}
@@ -101,6 +102,7 @@ function MockOptimizer(
         eval_variable_constraint_dual,
         Dict{MOI.ConstraintIndex,Dict{Int,Any}}(),
         Dict{MOI.ConstraintIndex,Dict{Int,MOI.BasisStatusCode}}(),
+        Dict{MOI.VariableIndex,Dict{Int,MOI.BasisStatusCode}}(),
         Dict{MOI.AbstractOptimizerAttribute,Any}(),
         Dict{MOI.AbstractModelAttribute,Any}(),
         Dict{MOI.AbstractSubmittable,Vector{Tuple}}(),
@@ -300,6 +302,7 @@ function MOI.set(
 )
     return _safe_set_result(mock.condual, attr, idx, value)
 end
+
 function MOI.set(
     mock::MockOptimizer,
     attr::MOI.ConstraintBasisStatus,
@@ -307,6 +310,15 @@ function MOI.set(
     value,
 )
     return _safe_set_result(mock.con_basis, attr, idx, value)
+end
+
+function MOI.set(
+    mock::MockOptimizer,
+    attr::MOI.VariableBasisStatus,
+    idx::MOI.VariableIndex,
+    value,
+)
+    return _safe_set_result(mock.var_basis, attr, idx, value)
 end
 
 function MOI.set(
@@ -550,6 +562,16 @@ end
 
 function MOI.get(
     mock::MockOptimizer,
+    attr::MOI.VariableBasisStatus,
+    idx::MOI.VariableIndex,
+)
+    MOI.check_result_index_bounds(mock, attr)
+    MOI.throw_if_not_valid(mock, idx)
+    return _safe_get_result(mock.var_basis, attr, idx, "basis status")
+end
+
+function MOI.get(
+    mock::MockOptimizer,
     ::MOI.ConstraintConflictStatus,
     idx::MOI.ConstraintIndex,
 )
@@ -614,6 +636,7 @@ function MOI.empty!(mock::MockOptimizer)
     empty!(mock.callback_variable_primal)
     empty!(mock.condual)
     empty!(mock.con_basis)
+    empty!(mock.var_basis)
     empty!(mock.optimizer_attributes)
     empty!(mock.model_attributes)
     empty!(mock.submitted)
@@ -635,6 +658,7 @@ function MOI.is_empty(mock::MockOptimizer)
            isempty(mock.primal_status) &&
            isempty(mock.dual_status) &&
            isempty(mock.con_basis) &&
+           isempty(mock.var_basis) &&
            isempty(mock.optimizer_attributes) &&
            isempty(mock.model_attributes) &&
            isempty(mock.submitted)
@@ -654,8 +678,11 @@ function MOI.delete(mock::MockOptimizer, index::MOI.VariableIndex)
     end
     MOI.delete(mock.inner_model, xor_index(index))
     delete!(mock.varprimal, index)
-    return delete!(mock.callback_variable_primal, index)
+    delete!(mock.callback_variable_primal, index)
+    delete!(mock.var_basis, index)
+    return
 end
+
 function MOI.delete(mock::MockOptimizer, indices::Vector{MOI.VariableIndex})
     if !mock.delete_allowed && !isempty(indices)
         throw(MOI.DeleteNotAllowed(first(indices)))
@@ -668,8 +695,11 @@ function MOI.delete(mock::MockOptimizer, indices::Vector{MOI.VariableIndex})
     for index in indices
         delete!(mock.varprimal, index)
         delete!(mock.callback_variable_primal, index)
+        delete!(mock.var_basis, index)
     end
+    return
 end
+
 function MOI.delete(mock::MockOptimizer, index::MOI.ConstraintIndex)
     if !mock.delete_allowed
         throw(MOI.DeleteNotAllowed(index))
@@ -680,7 +710,8 @@ function MOI.delete(mock::MockOptimizer, index::MOI.ConstraintIndex)
     end
     MOI.delete(mock.inner_model, xor_index(index))
     delete!(mock.condual, index)
-    return delete!(mock.con_basis, index)
+    delete!(mock.con_basis, index)
+    return
 end
 
 function MOI.modify(
@@ -855,7 +886,13 @@ If `termstatus` is missing, it is assumed to be `MOI.OPTIMAL`.
 If `primstatus` is missing, it is assumed to be `MOI.FEASIBLE_POINT`.
 If `dual_status` is missing, it is assumed to be `MOI.FEASIBLE_POINT` if there is a primal solution and `primstatus` is not `MOI.INFEASIBLE_POINT`, otherwise it is `MOI.INFEASIBILITY_CERTIFICATE`.
 The dual values are set to the values specified by `conduals`. Each pair is of the form `(F,S)=>[...]` where `[...]` is the the vector of dual values for the constraints `F`-in-`S` in the order returned by `ListOfConstraintIndices{F,S}`.
-The bases status are set to the status specified by `con_basis`. A vector of pairs, each of the form `(F,S)=>[...]`, where `[...]` is the the vector of basis status for the constraints `F`-in-`S` in the order returned by `ListOfConstraintIndices{F,S}`.
+
+The bases status are set to the status specified by `con_basis` and `var_basis`.
+`con_basis` must be a vector of pairs, each of the form `(F,S)=>[...]`, where
+`[...]` is the the vector of basis status for the constraints `F`-in-`S` in the
+order returned by `ListOfConstraintIndices{F,S}`.
+`var_basis` is a vector of statuses, corresponding the status of the variables
+returned by `ListOfVariableIndices`.
 """
 function mock_optimize!(
     mock::MockOptimizer,
@@ -863,6 +900,7 @@ function mock_optimize!(
     primal,
     dual...;
     con_basis = [],
+    var_basis = [],
 )
     MOI.set(mock, MOI.TerminationStatus(), termstatus)
     MOI.set(mock, MOI.ResultCount(), 1)
@@ -871,7 +909,14 @@ function mock_optimize!(
     for con_basis_pair in con_basis
         mock_basis_status!(mock, con_basis_pair)
     end
+    if length(var_basis) > 0
+        variables = MOI.get(mock, MOI.ListOfVariableIndices())
+        @assert length(var_basis) == length(variables)
+        MOI.set.(mock, MOI.VariableBasisStatus(), variables, var_basis)
+    end
+    return
 end
+
 # Default termination status
 function mock_optimize!(mock::MockOptimizer, primdual...; kws...)
     return mock_optimize!(mock, MOI.OPTIMAL, primdual...; kws...)

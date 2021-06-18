@@ -67,6 +67,7 @@ config_with_basis = MOIT.Config(basis = true)
                         MOI.GreaterThan{Float64},
                     ) => [MOI.BASIC, MOI.NONBASIC],
                 ],
+                var_basis = [MOI.BASIC, MOI.NONBASIC_AT_LOWER],
             ),
         )
         MOIT.linear2test(bridged_mock, config_with_basis)
