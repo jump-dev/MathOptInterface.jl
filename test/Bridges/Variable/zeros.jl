@@ -149,7 +149,7 @@ end
     s = """
     variables: x
     x >= 0.0
-    con1: x + 0.0 == 0.0
+    con1: 0.0 == 0.0
     con2: x + 0.0 >= 1.0
     minobjective: x
     """
