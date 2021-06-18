@@ -277,6 +277,18 @@ c1: 1.1 * x in Interval(1.0, 2.0)
     )
 end
 
+function test_objsense_max()
+    return _test_model_equality(
+        """
+variables: x
+maxobjective: 1.2x
+c1: 1.0 * x >= 0.0
+""",
+        ["x"],
+        ["c1"],
+    )
+end
+
 function test_MARKER_INT()
     model = MPS.Model()
     MOIU.loadfromstring!(
