@@ -171,6 +171,11 @@ function Base.write(io::IO, model::Model)
         names[x] = n
     end
     write_model_name(io, model)
+    if MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
+        println(io, "OBJSENSE MAX")
+    else
+        println(io, "OBJSENSE MIN")
+    end
     write_rows(io, model)
     write_columns(io, model, ordered_names, names)
     write_rhs(io, model)
@@ -246,19 +251,15 @@ function list_of_integer_variables(model::Model, names)
     return integer_variables
 end
 
-function extract_terms(
+function _extract_terms(
     v_names::Dict{MOI.VariableIndex,String},
     coefficients::Dict{String,Vector{Tuple{String,Float64}}},
     row_name::String,
     func::MOI.ScalarAffineFunction,
-    multiplier::Float64 = 1.0,
 )
     for term in func.terms
         variable_name = v_names[term.variable]
-        push!(
-            coefficients[variable_name],
-            (row_name, multiplier * term.coefficient),
-        )
+        push!(coefficients[variable_name], (row_name, term.coefficient))
     end
     return
 end
@@ -275,7 +276,7 @@ function _collect_coefficients(
     )
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         func = MOI.get(model, MOI.ConstraintFunction(), index)
-        extract_terms(v_names, coefficients, row_name, func)
+        _extract_terms(v_names, coefficients, row_name, func)
     end
     return
 end
@@ -289,14 +290,11 @@ function write_columns(io::IO, model::Model, ordered_names, names)
         _collect_coefficients(model, S, names, coefficients)
     end
     # Build objective
-    # MPS doesn't support maximization so we flip the sign on the objective
-    # coefficients.
-    s = MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE ? -1.0 : 1.0
     obj_func = MOI.get(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
-    extract_terms(names, coefficients, "OBJ", obj_func, s)
+    _extract_terms(names, coefficients, "OBJ", obj_func)
     integer_variables = list_of_integer_variables(model, names)
     println(io, "COLUMNS")
     int_open = false
@@ -619,6 +617,7 @@ end
 
 mutable struct TempMPSModel
     name::String
+    is_minimization::Bool
     obj_name::String
     c::Vector{Float64}
     col_lower::Vector{Float64}
@@ -639,6 +638,7 @@ end
 function TempMPSModel()
     return TempMPSModel(
         "",
+        true,
         "",
         Float64[],  # c
         Float64[],  # col_lower
@@ -660,6 +660,7 @@ end
 @enum(
     Headers,
     HEADER_NAME,
+    HEADER_OBJSENSE,
     HEADER_ROWS,
     HEADER_COLUMNS,
     HEADER_RHS,
@@ -671,27 +672,21 @@ end
 )
 
 # Headers(s) gets called _alot_ (on every line), so we try very hard to be
-# efficient.]
+# efficient.
 function Headers(s::AbstractString)
     N = length(s)
-    if N > 7 || N < 3
-        return HEADER_UNKNOWN
-    elseif N == 3
-        x = first(s)
+    x = first(s)
+    if N == 3
         if (x == 'R' || x == 'r') && uppercase(s) == "RHS"
             return HEADER_RHS
         elseif (x == 'S' || x == 's') && uppercase(s) == "SOS"
             return HEADER_SOS
         end
     elseif N == 4
-        x = first(s)
         if (x == 'R' || x == 'r') && uppercase(s) == "ROWS"
             return HEADER_ROWS
         end
-    elseif N == 5
-        return HEADER_UNKNOWN
     elseif N == 6
-        x = first(s)
         if (x == 'R' || x == 'r') && uppercase(s) == "RANGES"
             return HEADER_RANGES
         elseif (x == 'B' || x == 'b') && uppercase(s) == "BOUNDS"
@@ -700,9 +695,12 @@ function Headers(s::AbstractString)
             return HEADER_ENDATA
         end
     elseif N == 7
-        x = first(s)
         if (x == 'C' || x == 'c') && (uppercase(s) == "COLUMNS")
             return HEADER_COLUMNS
+        end
+    elseif N == 12
+        if (x == 'O' || x == 'o') && startswith(uppercase(s), "OBJSENSE")
+            return HEADER_OBJSENSE
         end
     end
     return HEADER_UNKNOWN
@@ -731,12 +729,18 @@ function Base.read!(io::IO, model::Model)
             continue  # Skip blank lines and comments.
         end
         h = Headers(line)
-        if h != HEADER_UNKNOWN
+        if h == HEADER_OBJSENSE
+            items = line_to_items(line)
+            @assert length(items) == 2
+            sense = uppercase(items[2])
+            @assert sense == "MAX" || sense == "MIN"
+            data.is_minimization = sense == "MIN"
+            continue
+        elseif h != HEADER_UNKNOWN
             header = h
             continue
-        else
-            # Carry on with the previous header
         end
+        # Otherwise, carry on with the previous header
         # TODO: split into hard fields based on column indices.
         items = line_to_items(line)
         if header == HEADER_NAME
@@ -819,7 +823,11 @@ function _add_variable(model, data, variable_map, i, name)
 end
 
 function _add_objective(model, data, variable_map)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    if data.is_minimization
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    else
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    end
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),

@@ -1,4 +1,5 @@
 NAME
+OBJSENSE MIN
 ROWS
  N  obj
  G  con1
