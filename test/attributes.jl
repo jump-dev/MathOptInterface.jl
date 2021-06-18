@@ -140,6 +140,13 @@ function test_no_constraint_name()
     )
 end
 
+function test_get_fallback()
+    model = DummyModelWithAdd()
+    @test_throws(ArgumentError, MOI.get(model, MOI.SolveTimeSec()))
+    output = Ref{Cdouble}()
+    @test_throws(ArgumentError, MOI.get!(output, model, MOI.SolveTimeSec()))
+end
+
 function test_ConstraintBasisStatus_fallback()
     model = DummyModelWithAdd()
     c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}(1)

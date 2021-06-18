@@ -295,10 +295,13 @@ end
 function get(model::ModelLike, attr::AnyAttribute, args...)
     return get_fallback(model, attr, args...)
 end
+
 function get_fallback(model::ModelLike, attr::AnyAttribute, args...)
     return throw(
         ArgumentError(
-            "ModelLike of type $(typeof(model)) does not support accessing the attribute $attr",
+            "Unable to get `$(attr)` with the provided arguments. Either " *
+            "$(typeof(model)) does not support the attribute, or the " *
+            "provided arguments are incorrect.",
         ),
     )
 end
@@ -306,14 +309,19 @@ end
 """
     get!(output, model::ModelLike, args...)
 
-An in-place version of `get`.
-The signature matches that of `get` except that the the result is placed in the vector `output`.
+An in-place version of [`get`](@ref).
+
+The signature matches that of [`get`](@ref) except that the the result is placed
+in the vector `output`.
 """
 function get! end
+
 function get!(output, model::ModelLike, attr::AnyAttribute, args...)
     return throw(
         ArgumentError(
-            "ModelLike of type $(typeof(model)) does not support accessing the attribute $attr",
+            "Unable to get `$(attr)` with the provided arguments. Either " *
+            "$(typeof(model)) does not support the attribute, or the " *
+            "provided arguments are incorrect.",
         ),
     )
 end
