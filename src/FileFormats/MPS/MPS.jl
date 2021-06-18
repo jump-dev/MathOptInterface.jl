@@ -172,10 +172,10 @@ function Base.write(io::IO, model::Model)
     end
     write_model_name(io, model)
     write_rows(io, model)
-    discovered_columns = write_columns(io, model, ordered_names, names)
+    write_columns(io, model, ordered_names, names)
     write_rhs(io, model)
     write_ranges(io, model)
-    write_bounds(io, model, discovered_columns, ordered_names, names)
+    write_bounds(io, model, ordered_names, names)
     write_sos(io, model, names)
     println(io, "ENDATA")
     return
@@ -251,7 +251,6 @@ function extract_terms(
     coefficients::Dict{String,Vector{Tuple{String,Float64}}},
     row_name::String,
     func::MOI.ScalarAffineFunction,
-    discovered_columns::Set{String},
     multiplier::Float64 = 1.0,
 )
     for term in func.terms
@@ -260,7 +259,6 @@ function extract_terms(
             coefficients[variable_name],
             (row_name, multiplier * term.coefficient),
         )
-        push!(discovered_columns, variable_name)
     end
     return
 end
@@ -270,7 +268,6 @@ function _collect_coefficients(
     S,
     v_names::Dict{MOI.VariableIndex,String},
     coefficients::Dict{String,Vector{Tuple{String,Float64}}},
-    discovered_columns::Set{String},
 )
     for index in MOI.get(
         model,
@@ -278,7 +275,7 @@ function _collect_coefficients(
     )
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         func = MOI.get(model, MOI.ConstraintFunction(), index)
-        extract_terms(v_names, coefficients, row_name, func, discovered_columns)
+        extract_terms(v_names, coefficients, row_name, func)
     end
     return
 end
@@ -287,17 +284,9 @@ function write_columns(io::IO, model::Model, ordered_names, names)
     coefficients = Dict{String,Vector{Tuple{String,Float64}}}(
         n => Tuple{String,Float64}[] for n in ordered_names
     )
-    # Many MPS readers (e.g., CPLEX and GAMS) will error if a variable (column)
-    # appears in the BOUNDS section but did not appear in the COLUMNS section.
-    # This is likely because such variables are meaningless - they don't appear
-    # in the objective or constraints and so can be trivially removed.
-    # To avoid generating MPS files that crash existing readers, we cache the
-    # names of all variables seen in COLUMNS into `discovered_columns`, and then
-    # pass this set to `write_bounds` so that it can act appropriately.
-    discovered_columns = Set{String}()
     # Build constraint coefficients
     for (S, _) in SET_TYPES
-        _collect_coefficients(model, S, names, coefficients, discovered_columns)
+        _collect_coefficients(model, S, names, coefficients)
     end
     # Build objective
     # MPS doesn't support maximization so we flip the sign on the objective
@@ -307,7 +296,7 @@ function write_columns(io::IO, model::Model, ordered_names, names)
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
-    extract_terms(names, coefficients, "OBJ", obj_func, discovered_columns, s)
+    extract_terms(names, coefficients, "OBJ", obj_func, s)
     integer_variables = list_of_integer_variables(model, names)
     println(io, "COLUMNS")
     int_open = false
@@ -320,6 +309,11 @@ function write_columns(io::IO, model::Model, ordered_names, names)
             println(io, Card(f2 = "MARKER", f3 = "'MARKER'", f5 = "'INTEND'"))
             int_open = false
         end
+        if length(coefficients[variable]) == 0
+            # Every variable must appear in the COLUMNS section! Add a 0
+            # objective coefficient instead.
+            println(io, Card(f2 = variable, f3 = "OBJ", f4 = "0"))
+        end
         for (constraint, coefficient) in coefficients[variable]
             println(
                 io,
@@ -331,7 +325,7 @@ function write_columns(io::IO, model::Model, ordered_names, names)
             )
         end
     end
-    return discovered_columns
+    return
 end
 
 # ==============================================================================
@@ -502,13 +496,7 @@ function _collect_bounds(bounds, model, S, names)
     return
 end
 
-function write_bounds(
-    io::IO,
-    model::Model,
-    discovered_columns::Set{String},
-    ordered_names,
-    names,
-)
+function write_bounds(io::IO, model::Model, ordered_names, names)
     println(io, "BOUNDS")
     bounds = Dict{String,Tuple{Float64,Float64,VType}}(
         n => (-Inf, Inf, VTYPE_CONTINUOUS) for n in ordered_names
@@ -524,13 +512,7 @@ function write_bounds(
     end
     for var_name in ordered_names
         lower, upper, vtype = bounds[var_name]
-        if !(var_name in discovered_columns)
-            @warn(
-                "Variable $var_name is mentioned in BOUNDS, but is not " *
-                "mentioned in the COLUMNS section. We are ignoring it."
-            )
-            continue
-        elseif vtype == VTYPE_BINARY
+        if vtype == VTYPE_BINARY
             println(io, Card(f1 = "BV", f2 = "bounds", f3 = var_name))
             # Only add bounds if they are tighter than the implicit bounds of a
             # binary variable.
@@ -628,6 +610,13 @@ function Sense(s::String)
         return SENSE_UNKNOWN
     end
 end
+
+struct _SOSConstraint
+    type::Int
+    weights::Vector{Float64}
+    columns::Vector{String}
+end
+
 mutable struct TempMPSModel
     name::String
     obj_name::String
@@ -644,6 +633,7 @@ mutable struct TempMPSModel
     name_to_row::Dict{String,Int}
     row_to_name::Vector{String}
     intorg_flag::Bool  # A flag used to parse COLUMNS section.
+    sos_constraints::Vector{_SOSConstraint}
 end
 
 function TempMPSModel()
@@ -663,6 +653,7 @@ function TempMPSModel()
         Dict{String,Int}(),
         String[],
         false,
+        _SOSConstraint[],
     )
 end
 
@@ -764,7 +755,7 @@ function Base.read!(io::IO, model::Model)
         elseif header == HEADER_BOUNDS
             parse_bounds_line(data, items)
         elseif header == HEADER_SOS
-            error("TODO(odow): implement parsing of SOS constraints.")
+            parse_sos_line(data, items)
         else
             @assert header == HEADER_ENDATA
             break
@@ -800,6 +791,13 @@ function copy_to(model::Model, data::TempMPSModel)
             _add_linear_constraint(model, data, variable_map, j, c_name, set)
         end
         # `else` is a free constraint. Don't add it.
+    end
+    for sos in data.sos_constraints
+        MOI.add_constraint(
+            model,
+            MOI.VectorOfVariables([variable_map[x] for x in sos.columns]),
+            sos.type == 1 ? MOI.SOS1(sos.weights) : MOI.SOS2(sos.weights),
+        )
     end
     return
 end
@@ -1179,6 +1177,21 @@ function parse_bounds_line(data::TempMPSModel, items::Vector{String})
         )
     else
         error("Malformed BOUNDS line: $(join(items, " "))")
+    end
+    return
+end
+
+function parse_sos_line(data, items)
+    if length(items) != 2
+        error("Malformed SOS line: $(join(items, " "))")
+    elseif items[1] == "S1"
+        push!(data.sos_constraints, _SOSConstraint(1, Float64[], String[]))
+    elseif items[1] == "S2"
+        push!(data.sos_constraints, _SOSConstraint(2, Float64[], String[]))
+    else
+        sos = data.sos_constraints[end]
+        push!(sos.columns, items[1])
+        push!(sos.weights, parse(Float64, items[2]))
     end
     return
 end

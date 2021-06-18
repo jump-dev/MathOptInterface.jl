@@ -389,8 +389,9 @@ a_really_long_name <= 2.0
 end
 
 function test_unused_variable()
-    # In this test, `x` will not be written to the file since it does not
-    # appear in the objective or in the constriants.
+    # In this test, `x` will be written to the file with a 0 objective
+    # coefficient since it does not appear in the objective or in the
+    # constraints.
     model = MPS.Model()
     MOIU.loadfromstring!(
         model,
@@ -405,7 +406,7 @@ x >= 0.0
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
     model2 = MPS.Model()
     MOI.read_from_file(model2, MPS_TEST_FILE)
-    @test MOI.get(model2, MOI.NumberOfVariables()) == 1
+    @test MOI.get(model2, MOI.NumberOfVariables()) == 2
 end
 
 function test_names_with_spaces()
@@ -431,6 +432,55 @@ function test_names_with_spaces()
           "BOUNDS\n" *
           " FR bounds    x[1,_2]\n" *
           "ENDATA\n"
+end
+
+function test_sos_constraints()
+    model = MPS.Model()
+    x = MOI.add_variables(model, 3)
+    MOI.set.(model, MOI.VariableName(), x, ["x1", "x2", "x3"])
+    MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables(x),
+        MOI.SOS1([1.0, 2.0, 3.0]),
+    )
+    MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables(reverse(x)),
+        MOI.SOS2([1.2, 2.3, 3.4]),
+    )
+    @test sprint(write, model) ==
+          "NAME          \n" *
+          "ROWS\n" *
+          " N  OBJ\n" *
+          "COLUMNS\n" *
+          "    x1        OBJ       0\n" *
+          "    x2        OBJ       0\n" *
+          "    x3        OBJ       0\n" *
+          "RHS\n" *
+          "RANGES\n" *
+          "BOUNDS\n" *
+          " FR bounds    x1\n" *
+          " FR bounds    x2\n" *
+          " FR bounds    x3\n" *
+          "SOS\n" *
+          " S1 SOS1\n" *
+          "    x1        1\n" *
+          "    x2        2\n" *
+          "    x3        3\n" *
+          " S2 SOS2\n" *
+          "    x3        1.2\n" *
+          "    x2        2.3\n" *
+          "    x1        3.4\n" *
+          "ENDATA\n"
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    new_model = MPS.Model()
+    Base.read!(io, new_model)
+    constraints = MOI.get(new_model, MOI.ListOfConstraintTypesPresent())
+    @test (MOI.VectorOfVariables, MOI.SOS1{Float64}) in constraints
+    @test (MOI.VectorOfVariables, MOI.SOS2{Float64}) in constraints
+    return
 end
 
 function runtests()
