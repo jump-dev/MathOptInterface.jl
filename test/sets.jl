@@ -114,8 +114,40 @@ function test_sets_dimension()
     @test MOI.dimension(MOI.Complements(10)) == 10
 end
 
-function test_sets_complement()
-    @test_throws ArgumentError MOI.Complements(3)
+function test_sets_DimensionMismatch()
+    for (S, min_dimension) in (
+        (MOI.Reals, 0),
+        (MOI.Zeros, 0),
+        (MOI.Nonnegatives, 0),
+        (MOI.Nonpositives, 0),
+        (MOI.NormInfinityCone, 1),
+        (MOI.NormOneCone, 1),
+        (MOI.SecondOrderCone, 1),
+        (MOI.RotatedSecondOrderCone, 2),
+        (MOI.GeometricMeanCone, 2),
+        (MOI.Complements, 0),
+        (MOI.RelativeEntropyCone, 1),
+        (MOI.PositiveSemidefiniteConeTriangle, 0),
+        (MOI.PositiveSemidefiniteConeSquare, 0),
+        (MOI.LogDetConeTriangle, 0),
+        (MOI.LogDetConeSquare, 0),
+        (MOI.RootDetConeTriangle, 0),
+        (MOI.RootDetConeSquare, 0),
+    )
+        @test_throws DimensionMismatch S(min_dimension - 1)
+        @test S(min_dimension) isa S
+    end
+    @test_throws DimensionMismatch MOI.NormSpectralCone(-1, 0)
+    @test_throws DimensionMismatch MOI.NormSpectralCone(0, -1)
+    @test MOI.NormSpectralCone(0, 0) isa MOI.NormSpectralCone
+    @test_throws DimensionMismatch MOI.NormNuclearCone(-1, 0)
+    @test_throws DimensionMismatch MOI.NormNuclearCone(0, -1)
+    @test MOI.NormNuclearCone(0, 0) isa MOI.NormNuclearCone
+    # Other dimension checks
+    @test_throws DimensionMismatch MOI.RelativeEntropyCone(2)
+    @test_throws DimensionMismatch MOI.Complements(-3)
+    @test_throws DimensionMismatch MOI.Complements(3)
+    return
 end
 
 function _dual_set_test(set1, set2)
