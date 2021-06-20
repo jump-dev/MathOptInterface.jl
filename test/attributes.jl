@@ -1,6 +1,5 @@
 module TestAttributes
 
-using Core: Argument
 using Test
 using MathOptInterface
 const MOI = MathOptInterface
