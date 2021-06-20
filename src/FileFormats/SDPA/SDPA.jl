@@ -164,8 +164,7 @@ function Base.write(io::IO, model::Model{T}) where {T}
     end
     println(io)
 
-    max_index_dim =
-        MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(max_dim))
+    max_index_dim = MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(max_dim))
     index_map = Vector{Tuple{Int,Int}}(undef, max_index_dim)
     k = 0
     for col in 1:max_dim
