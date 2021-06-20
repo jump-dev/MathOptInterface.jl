@@ -158,7 +158,7 @@ function test_UnsupportedSubmittable()
     @test_throws(
         MOI.UnsupportedSubmittable(
             sub,
-            "submit(::$(typeof(model)),::$(typeof(sub))) is not supported.",
+            "submit(::$(typeof(model)), ::$(typeof(sub))) is not supported.",
         ),
         MOI.submit(model, sub, 1),
     )

@@ -472,7 +472,7 @@ function submit(model::ModelLike, sub::AbstractSubmittable, args...)
         throw(
             UnsupportedSubmittable(
                 sub,
-                "submit(::$(typeof(model)),::$(typeof(sub))) is not supported.",
+                "submit(::$(typeof(model)), ::$(typeof(sub))) is not supported.",
             ),
         )
     end
