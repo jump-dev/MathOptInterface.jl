@@ -2492,15 +2492,6 @@ function Base.:/(f::Union{MOI.SingleVariable,MOI.VectorOfVariables}, g::Number)
     return operate(/, typeof(g), f, g)
 end
 
-## sum
-function operate(
-    ::typeof(sum),
-    ::Type{T},
-    vis::Vector{MOI.VariableIndex},
-) where {T}
-    return MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), vis), zero(T))
-end
-
 #################### Concatenation of MOI functions: `vcat` ####################
 """
     fill_vector(vector::Vector, ::Type{T}, fill_func::Function,
