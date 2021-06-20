@@ -125,7 +125,7 @@ function test_stacked_data()
         model_2,
         """
 variables: x, y, z
-maxobjective: x + y + z
+maxobjective: x + y + z + 2.5
 con1: 1.0 * x in Interval(1.0, 5.0)
 con2: 1.0 * x in Interval(2.0, 6.0)
 con3: 1.0 * x in Interval(3.0, 7.0)
@@ -176,6 +176,17 @@ function test_min_objective()
         """
     variables: x
     minobjective: x
+""",
+        ["x"],
+        String[],
+    )
+end
+
+function test_objconst()
+    return _test_model_equality(
+        """
+    variables: x
+    minobjective: 1.1 * x + 1.2
 """,
         ["x"],
         String[],

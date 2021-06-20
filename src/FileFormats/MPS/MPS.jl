@@ -177,8 +177,8 @@ function Base.write(io::IO, model::Model)
         println(io, "OBJSENSE MIN")
     end
     write_rows(io, model)
-    write_columns(io, model, ordered_names, names)
-    write_rhs(io, model)
+    obj_const = write_columns(io, model, ordered_names, names)
+    write_rhs(io, model, obj_const)
     write_ranges(io, model)
     write_bounds(io, model, ordered_names, names)
     write_sos(io, model, names)
@@ -323,7 +323,7 @@ function write_columns(io::IO, model::Model, ordered_names, names)
             )
         end
     end
-    return
+    return obj_func.constant
 end
 
 # ==============================================================================
@@ -335,7 +335,7 @@ value(set::MOI.GreaterThan) = set.lower
 value(set::MOI.EqualTo) = set.value
 value(set::MOI.Interval) = set.upper  # See the note in the RANGES section.
 
-function _write_rhs(io, model, S, sense_char)
+function _write_rhs(io, model, S)
     for index in MOI.get(
         model,
         MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64},S}(),
@@ -353,10 +353,22 @@ function _write_rhs(io, model, S, sense_char)
     end
 end
 
-function write_rhs(io::IO, model::Model)
+function write_rhs(io::IO, model::Model, obj_const)
     println(io, "RHS")
-    for (set_type, sense_char) in SET_TYPES
-        _write_rhs(io, model, set_type, sense_char)
+    for (set_type, _) in SET_TYPES
+        _write_rhs(io, model, set_type)
+    end
+    # Objective constants are added to the RHS as a negative offset.
+    # https://www.ibm.com/docs/en/icos/20.1.0?topic=standard-records-in-mps-format
+    if !iszero(obj_const)
+        println(
+            io,
+            Card(
+                f2 = "rhs",
+                f3 = "OBJ",
+                f4 = sprint(print_shortest, -obj_const),
+            ),
+        )
     end
     return
 end
@@ -620,6 +632,7 @@ mutable struct TempMPSModel
     is_minimization::Bool
     obj_name::String
     c::Vector{Float64}
+    obj_constant::Float64
     col_lower::Vector{Float64}
     col_upper::Vector{Float64}
     row_lower::Vector{Float64}
@@ -641,6 +654,7 @@ function TempMPSModel()
         true,
         "",
         Float64[],  # c
+        0.0,        # obj_constant
         Float64[],  # col_lower
         Float64[],  # col_upper
         Float64[],  # row_lower
@@ -836,7 +850,7 @@ function _add_objective(model, data, variable_map)
                 MOI.ScalarAffineTerm(data.c[i], variable_map[v]) for
                 (i, v) in enumerate(data.col_to_name) if !iszero(data.c[i])
             ],
-            0.0,
+            -data.obj_constant,
         ),
     )
     return
@@ -1020,6 +1034,10 @@ function parse_single_rhs(
     value::Float64,
     items::Vector{String},
 )
+    if row_name == data.obj_name
+        data.obj_constant = value
+        return
+    end
     row = get(data.name_to_row, row_name, nothing)
     if row === nothing
         error("ROW name $(row_name) not recognised. Is it in the ROWS field?")
