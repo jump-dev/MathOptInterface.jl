@@ -140,6 +140,36 @@ function test_no_constraint_name()
     )
 end
 
+function test_get_fallback()
+    model = DummyModelWithAdd()
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, x, MOI.EqualTo(0.0))
+    err = ArgumentError(
+        "$(typeof(model)) does not support getting the attribute " *
+        "$(MOI.SolveTimeSec()).",
+    )
+    @test_throws(err, MOI.get(model, MOI.SolveTimeSec()))
+    output = Ref{Cdouble}()
+    @test_throws(err, MOI.get!(output, model, MOI.SolveTimeSec()))
+    errv = ArgumentError(
+        "$(typeof(model)) does not support getting the attribute " *
+        "$(MOI.VariablePrimal()).",
+    )
+    @test_throws(errv, MOI.get(model, MOI.VariablePrimal(), x))
+    errc = ArgumentError(
+        "$(typeof(model)) does not support getting the attribute " *
+        "$(MOI.ConstraintPrimal()).",
+    )
+    @test_throws(errc, MOI.get(model, MOI.ConstraintPrimal(), c))
+    @test_throws(
+        ArgumentError(
+            "Unable to get attribute $(MOI.VariablePrimal()): invalid " *
+            "arguments $((c,)).",
+        ),
+        MOI.get(model, MOI.VariablePrimal(), c),
+    )
+end
+
 function test_ConstraintBasisStatus_fallback()
     model = DummyModelWithAdd()
     c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}(1)

@@ -295,10 +295,46 @@ end
 function get(model::ModelLike, attr::AnyAttribute, args...)
     return get_fallback(model, attr, args...)
 end
-function get_fallback(model::ModelLike, attr::AnyAttribute, args...)
+
+function get_fallback(
+    model::ModelLike,
+    attr::Union{AbstractModelAttribute,AbstractOptimizerAttribute},
+)
     return throw(
         ArgumentError(
-            "ModelLike of type $(typeof(model)) does not support accessing the attribute $attr",
+            "$(typeof(model)) does not support getting the attribute $(attr).",
+        ),
+    )
+end
+
+function get_fallback(
+    model::ModelLike,
+    attr::AbstractVariableAttribute,
+    ::VariableIndex,
+)
+    return throw(
+        ArgumentError(
+            "$(typeof(model)) does not support getting the attribute $(attr).",
+        ),
+    )
+end
+
+function get_fallback(
+    model::ModelLike,
+    attr::AbstractConstraintAttribute,
+    ::ConstraintIndex,
+)
+    return throw(
+        ArgumentError(
+            "$(typeof(model)) does not support getting the attribute $(attr).",
+        ),
+    )
+end
+
+function get_fallback(::ModelLike, attr::AnyAttribute, args...)
+    return throw(
+        ArgumentError(
+            "Unable to get attribute $(attr): invalid arguments $(args).",
         ),
     )
 end
@@ -306,16 +342,14 @@ end
 """
     get!(output, model::ModelLike, args...)
 
-An in-place version of `get`.
-The signature matches that of `get` except that the the result is placed in the vector `output`.
+An in-place version of [`get`](@ref).
+
+The signature matches that of [`get`](@ref) except that the the result is placed
+in the vector `output`.
 """
-function get! end
 function get!(output, model::ModelLike, attr::AnyAttribute, args...)
-    return throw(
-        ArgumentError(
-            "ModelLike of type $(typeof(model)) does not support accessing the attribute $attr",
-        ),
-    )
+    output .= get(model, attr, args...)
+    return
 end
 
 """
