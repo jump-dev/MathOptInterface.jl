@@ -140,6 +140,18 @@ function test_no_constraint_name()
     )
 end
 
+function test_ConstraintBasisStatus_fallback()
+    model = DummyModelWithAdd()
+    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}(1)
+    @test_throws(
+        ErrorException(
+            "Querying the basis status of a `SingleVariable` constraint is " *
+            "not supported. Use [`VariableBasisStatus`](@ref) instead.",
+        ),
+        MOI.get(model, MOI.ConstraintBasisStatus(), c),
+    )
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

@@ -188,18 +188,16 @@ A Mathematical Programming System (MPS) model
 julia> MOI.copy_to(dest, src)
 MathOptInterface.Utilities.IndexMap with 0 entries
 
-julia> io = IOBuffer()
-IOBuffer(data=UInt8[...], readable=true, writable=true, seekable=true, append=false, size=0, maxsize=Inf, ptr=1, mark=-1)
+julia> io = IOBuffer();
 
 julia> write(io, dest)
 
-julia> seekstart(io)
-IOBuffer(data=UInt8[...], readable=true, writable=true, seekable=true, append=false, size=61, maxsize=Inf, ptr=1, mark=-1)
+julia> seekstart(io);
 
 julia> src_2 = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MPS)
 A Mathematical Programming System (MPS) model
 
-julia> read!(io, src_2)
+julia> read!(io, src_2);
 ```
 
 ## Validating MOF files
