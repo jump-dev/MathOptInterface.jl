@@ -152,6 +152,18 @@ function test_ConstraintBasisStatus_fallback()
     )
 end
 
+function test_UnsupportedSubmittable()
+    model = DummyModelWithAdd()
+    sub = MOI.LazyConstraint{Int}(1)
+    @test_throws(
+        MOI.UnsupportedSubmittable(
+            sub,
+            "submit(::$(typeof(model)), ::$(typeof(sub))) is not supported.",
+        ),
+        MOI.submit(model, sub, 1),
+    )
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")
