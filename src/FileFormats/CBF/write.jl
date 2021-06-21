@@ -43,7 +43,10 @@ function _cone_string(data::_CBFDataStructure, ::Type{MOI.PowerCone{Float64}})
     return s
 end
 
-function _cone_string(data::_CBFDataStructure, ::Type{MOI.DualPowerCone{Float64}})
+function _cone_string(
+    data::_CBFDataStructure,
+    ::Type{MOI.DualPowerCone{Float64}},
+)
     s = "@$(data.dual_power_cones):POW*"
     data.dual_power_cones += 1
     return s
@@ -107,10 +110,7 @@ function _add_cones(
     ::Type{F},
     ::Type{S},
 ) where {F,S}
-    for ci in MOI.get(
-        model,
-        MOI.ListOfConstraintIndices{F,S}(),
-    )
+    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
         _add_function(data, f, S)
         set = MOI.get(model, MOI.ConstraintSet(), ci)
@@ -125,10 +125,7 @@ function _add_cones(
     F::Type{MOI.VectorOfVariables},
     S::Type{MOI.PositiveSemidefiniteConeTriangle},
 )
-    for ci in MOI.get(
-        model,
-        MOI.ListOfConstraintIndices{F,S}(),
-    )
+    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         set = MOI.get(model, MOI.ConstraintSet(), ci)
         push!(data.psd_side_dims, set.side_dimension)
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
@@ -150,10 +147,7 @@ function _add_cones(
     F::Type{MOI.VectorAffineFunction{Float64}},
     S::Type{MOI.PositiveSemidefiniteConeTriangle},
 )
-    for ci in MOI.get(
-        model,
-        MOI.ListOfConstraintIndices{F,S}(),
-    )
+    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         set = MOI.get(model, MOI.ConstraintSet(), ci)
         push!(data.psd_side_dims, set.side_dimension)
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
@@ -231,10 +225,7 @@ end
 
 function _write_POWCONES(io::IO, model::Model, S, keyword)
     cons = vcat(
-        MOI.get(
-            model,
-            MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S}(),
-        ),
+        MOI.get(model, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S}()),
         MOI.get(
             model,
             MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64},S}(),
