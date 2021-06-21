@@ -22,7 +22,7 @@ MOI.Utilities.@model(
     ),
     (MOI.PowerCone, MOI.DualPowerCone),
     (),
-    (MOI.ScalarAffineFunction,),
+    (),
     (MOI.VectorOfVariables,),
     (MOI.VectorAffineFunction,)
 )
@@ -50,20 +50,12 @@ function MOI.supports(
     return false
 end
 
-struct Options end
-
-get_options(m::Model) = get(m.ext, :CBF_OPTIONS, Options())
-
 """
     Model()
 
 Create an empty instance of `FileFormats.CBF.Model`.
 """
-function Model()
-    model = Model{Float64}()
-    model.ext[:CBF_OPTIONS] = Options()
-    return model
-end
+Model() = Model{Float64}()
 
 Base.show(io::IO, ::Model) = print(io, "A Conic Benchmark Format (CBF) model")
 

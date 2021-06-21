@@ -115,9 +115,9 @@ end
 function test_read_nonempty()
     model = CBF.Model()
     MOI.add_variable(model)
-    @test_throws Exception MOI.read_from_file(
-        model,
-        joinpath(MODELS_DIR, "example1.cbf"),
+    @test_throws(
+        ErrorException("Cannot read in file because model is not empty."),
+        MOI.read_from_file(model, joinpath(MODELS_DIR, "example_A.cbf")),
     )
 end
 
