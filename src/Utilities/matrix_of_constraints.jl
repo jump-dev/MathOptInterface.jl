@@ -60,8 +60,8 @@ The `.constants::BT` type must implement:
  * `Base.empty!(::BT)`
  * `Base.resize(::BT)`
  * [`MOI.Utilities.load_constants`](@ref)
+ * [`MOI.Utilities.function_constants`](@ref)
  * [`MOI.Utilities.set_from_constants`](@ref)
- * [`MOI.Utilities.constants`](@ref)
 
 The `.sets::ST` type must implement:
 
@@ -173,6 +173,17 @@ The constants are loaded in three steps:
     constraint or set for scalar constraint.
 """
 function load_constants end
+
+"""
+    function_constants(constants, rows)
+
+This function returns the function constants that were loaded with
+[`load_constants`](@ref) at the rows `rows`.
+
+This function should be implemented to be usable as storage of constants for
+[`MatrixOfConstraints`](@ref).
+"""
+function function_constants end
 
 """
     set_from_constants(constants, S::Type, rows)::S
@@ -475,7 +486,7 @@ function load_constants(
     copyto!(b, offset + 1, func.constants)
     return
 end
-constants(b::Vector, rows) = b[rows]
+function_constants(b::Vector, rows) = b[rows]
 
 # FIXME does not work for all sets
 set_from_constants(::Vector, ::Type{S}, rows) where {S} = S(length(rows))
@@ -491,7 +502,7 @@ function MOI.get(
     return extract_function(
         model.coefficients,
         r,
-        constants(model.constants, r),
+        function_constants(model.constants, r),
     )
 end
 

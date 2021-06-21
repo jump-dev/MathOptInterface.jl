@@ -100,7 +100,7 @@ function merge_bounds(b::Box, index, set)
     end
 end
 
-constants(::Box{T}, row) where {T} = zero(T)
+function_constants(::Box{T}, row) where {T} = zero(T)
 
 function set_from_constants(b::Box, ::Type{<:MOI.EqualTo}, index)
     return MOI.EqualTo(b.lower[index])

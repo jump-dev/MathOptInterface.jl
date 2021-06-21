@@ -108,8 +108,8 @@ Utilities.OneBasedIndexing
 
 ```@docs
 Utilities.load_constants
+Utilities.function_constants
 Utilities.set_from_constants
-Utilities.constants
 ```
 
 ```@docs
