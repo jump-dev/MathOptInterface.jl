@@ -170,18 +170,6 @@ function test_read_corrupt()
     end
 end
 
-function test_write_quadratic()
-    model = CBF.Model()
-    MOIU.loadfromstring!(
-        model,
-        """
-        variables: x
-        minobjective: 1 * x * x
-        """,
-    )
-    @test_throws Exception MOI.write_to_file(model, CBF_TEST_FILE)
-end
-
 const _WRITE_READ_MODELS = [
     (
         "min SingleVariable",
