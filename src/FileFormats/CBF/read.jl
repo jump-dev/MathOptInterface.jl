@@ -87,7 +87,7 @@ function _cbf_to_moi_cone(
             return MOI.DualPowerCone{Float64}(first(alpha) / sum(alpha))
         end
     end
-    error("CBF cone name $cone_str is not recognized or supported.")
+    return error("CBF cone name $cone_str is not recognized or supported.")
 end
 
 function _read_VER(io::IO)
@@ -239,7 +239,8 @@ end
 
 function _read_FCOORD(io::IO, data::_CBFReadData)
     for _ in 1:_read(io, Int)
-        row_idx, psd_var_idx, i, j, coef = _read(io, Int, Int, Int, Int, Float64)
+        row_idx, psd_var_idx, i, j, coef =
+            _read(io, Int, Int, Int, Int, Float64)
         if i != j
             coef += coef # scale off-diagonals
         end
@@ -247,7 +248,7 @@ function _read_FCOORD(io::IO, data::_CBFReadData)
             data.row_terms[row_idx+1],
             MOI.ScalarAffineTerm{Float64}(
                 coef,
-                data.psd_vars[psd_var_idx+1][_mat_to_vec_idx(i+1, j+1)],
+                data.psd_vars[psd_var_idx+1][_mat_to_vec_idx(i + 1, j + 1)],
             ),
         )
     end
@@ -276,7 +277,7 @@ end
 function _read_HCOORD(io::IO, data::_CBFReadData)
     for _ in 1:_read(io, Int)
         psd_idx, var_idx, i, j, coef = _read(io, Int, Int, Int, Int, Float64)
-        row_idx = data.psd_row_starts[psd_idx+1] + _mat_to_vec_idx(i+1, j+1)
+        row_idx = data.psd_row_starts[psd_idx+1] + _mat_to_vec_idx(i + 1, j + 1)
         push!(
             data.psd_row_terms[row_idx],
             MOI.ScalarAffineTerm{Float64}(coef, data.scalar_vars[var_idx+1]),
@@ -288,12 +289,11 @@ end
 function _read_DCOORD(io::IO, data::_CBFReadData)
     for _ in 1:_read(io, Int)
         psd_idx, i, j, coef = _read(io, Int, Int, Int, Float64)
-        row_idx = data.psd_row_starts[psd_idx+1] + _mat_to_vec_idx(i+1, j+1)
+        row_idx = data.psd_row_starts[psd_idx+1] + _mat_to_vec_idx(i + 1, j + 1)
         data.psd_row_constants[row_idx] += coef
     end
     return
 end
-
 
 """
     Base.read!(io::IO, model::FileFormats.CBF.Model)
@@ -360,8 +360,7 @@ function Base.read!(io::IO, model::Model)
             # Reverse order of indices.
             MOI.VectorAffineFunction(
                 [
-                    MOI.VectorAffineTerm{Float64}(4 - l, t) for l in 1:cone_dim
-                    for t in data.row_terms[row_idx+l]
+                    MOI.VectorAffineTerm{Float64}(4 - l, t) for l in 1:cone_dim for t in data.row_terms[row_idx+l]
                 ],
                 data.row_constants[row_idx.+(3:-1:1)],
             )
