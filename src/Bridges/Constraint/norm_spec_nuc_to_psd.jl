@@ -210,14 +210,13 @@ function bridge_constraint(
         [U[trimap(i, i)] for i in 1:column_dim],
         [V[trimap(i, i)] for i in 1:row_dim],
     )
+    rhs = MOI.ScalarAffineFunction(
+        MOI.ScalarAffineTerm.(one(T), diag_vars),
+        zero(T),
+    )
     ge_index = MOIU.normalize_and_add_constraint(
         model,
-        MOIU.operate(
-            -,
-            T,
-            f_scalars[1],
-            MOIU.operate!(/, T, MOIU.operate(sum, T, diag_vars), T(2)),
-        ),
+        MOIU.operate(-, T, f_scalars[1], MOIU.operate!(/, T, rhs, T(2))),
         MOI.GreaterThan(zero(T)),
         allow_modify_function = true,
     )

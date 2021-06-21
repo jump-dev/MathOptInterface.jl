@@ -23,9 +23,10 @@ function bridge_constraint(
     d = MOI.dimension(s)
     v_dim = div(d - 1, 2)
     y = MOI.add_variables(model, v_dim)
+    rhs = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), y), zero(T))
     ge_index = MOIU.normalize_and_add_constraint(
         model,
-        MOIU.operate(-, T, f_scalars[1], MOIU.operate(sum, T, y)),
+        MOIU.operate(-, T, f_scalars[1], rhs),
         MOI.GreaterThan(zero(T)),
         allow_modify_function = true,
     )

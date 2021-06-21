@@ -199,8 +199,8 @@ function subsum(
     l::Vector{MOI.VariableIndex},
     ::Type{T},
 ) where {T}
-    n = length(l)
-    f = MOIU.operate!(-, T, t, MOIU.operate(sum, T, l))
+    rhs = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), l), zero(T))
+    f = MOIU.operate!(-, T, t, rhs)
     return MOIU.normalize_and_add_constraint(
         model,
         f,
