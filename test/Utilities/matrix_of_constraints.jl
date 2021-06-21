@@ -1,8 +1,22 @@
+module TestMatrixOfConstraints
+
 using SparseArrays, Test
+
 import MathOptInterface
 const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIU = MOI.Utilities
+
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
 
 function _test_matrix_equal(A::SparseMatrixCSC, B::SparseMatrixCSC)
     @test A.m == B.m
@@ -172,10 +186,11 @@ MOIU.@product_of_sets(
     MOI.Interval{T},
 )
 
-@testset "contlinear $Indexing" for Indexing in [
-    MOIU.OneBasedIndexing,
-    MOIU.ZeroBasedIndexing,
-]
+function test_contlinear()
+    test_contlinear(MOIU.OneBasedIndexing)
+    return test_contlinear(MOIU.ZeroBasedIndexing)
+end
+function test_contlinear(Indexing)
     A2 = sparse([1, 1], [1, 2], ones(2))
     b2 = MOI.Utilities.Box([-Inf], [1.0])
     Alp = sparse(
@@ -253,10 +268,12 @@ MOIU.@product_of_sets(Nonneg, MOI.Nonnegatives)
 MOIU.@product_of_sets(NonposNonneg, MOI.Nonpositives, MOI.Nonnegatives)
 MOIU.@product_of_sets(NonnegNonpos, MOI.Nonnegatives, MOI.Nonpositives)
 
-@testset "contconic $Indexing" for Indexing in [
-    MOIU.OneBasedIndexing,
-    MOIU.ZeroBasedIndexing,
-]
+function test_contconic()
+    test_contconic(MOIU.OneBasedIndexing)
+    return test_contconic(MOIU.ZeroBasedIndexing)
+end
+
+function test_contconic(Indexing)
     function _lin3_query(optimizer, con_types)
         @test con_types ==
               MOI.get(optimizer, MOI.ListOfConstraintTypesPresent())
@@ -367,10 +384,6 @@ function test_get_by_name()
     end
 end
 
-@testset "Get constraint by name" begin
-    test_get_by_name()
-end
-
 MOIU.@struct_of_constraints_by_function_types(
     VoVorSAff,
     MOI.VectorOfVariables,
@@ -385,7 +398,10 @@ function test_nametest()
         model = MOIU.GenericOptimizer{
             T,
             VoVorSAff{T}{
-                MOIU.VectorOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives},
+                MOIU.VectorOfConstraints{
+                    MOI.VectorOfVariables,
+                    MOI.Nonpositives,
+                },
                 MOIU.MatrixOfConstraints{
                     T,
                     MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
@@ -394,17 +410,9 @@ function test_nametest()
                 },
             },
         }()
-        MOI.Test.nametest(
-            model,
-            delete = false,
-        )
+        MOI.Test.nametest(model, delete = false)
     end
 end
-
-@testset "test_nametest" begin
-    test_nametest()
-end
-
 
 MOIU.@struct_of_constraints_by_function_types(
     VoVorVAff,
@@ -429,11 +437,7 @@ function test_empty()
             },
         },
     }()
-    MOI.Test.emptytest(model)
-end
-
-@testset "test_empty" begin
-    test_empty()
+    return MOI.Test.emptytest(model)
 end
 
 function test_valid()
@@ -446,11 +450,7 @@ function test_valid()
     end
 end
 
-@testset "test_valid" begin
-    test_valid()
-end
-
-function test_supports_constraint(T::Type=Float64, BadT::Type=Float32)
+function test_supports_constraint(T::Type = Float64, BadT::Type = Float32)
     Indexing = MOIU.OneBasedIndexing
     ConstantsType = MOIU.Box{T}
     for ProductOfSetsType in [MixLP{Float64}, OrdLP{Float64}]
@@ -470,10 +470,6 @@ function test_supports_constraint(T::Type=Float64, BadT::Type=Float32)
     end
 end
 
-@testset "test_supports_constraint" begin
-    test_supports_constraint()
-end
-
 MOIU.@struct_of_constraints_by_function_types(
     VoVorSAfforVAff,
     MOI.VectorOfVariables,
@@ -487,7 +483,10 @@ function test_copy(Indexing)
         model = MOIU.GenericOptimizer{
             T,
             VoVorSAfforVAff{T}{
-                MOIU.VectorOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives},
+                MOIU.VectorOfConstraints{
+                    MOI.VectorOfVariables,
+                    MOI.Nonnegatives,
+                },
                 MOIU.MatrixOfConstraints{
                     T,
                     MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
@@ -506,7 +505,11 @@ function test_copy(Indexing)
     end
 end
 
-@testset "test_copy" begin
+function test_copy()
     test_copy(MOIU.ZeroBasedIndexing)
-    test_copy(MOIU.OneBasedIndexing)
+    return test_copy(MOIU.OneBasedIndexing)
 end
+
+end
+
+TestMatrixOfConstraints.runtests()

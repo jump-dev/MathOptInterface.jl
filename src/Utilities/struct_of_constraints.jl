@@ -284,7 +284,10 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
             )::$(field_type) where {$T}
                 if model.$field === nothing
                     model.$field = $(field_type)()
-                    $MOI.Utilities._add_variables(model.$field, model.num_variables)
+                    $MOI.Utilities._add_variables(
+                        model.$field,
+                        model.num_variables,
+                    )
                 end
                 return model.$field
             end

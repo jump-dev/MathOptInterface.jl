@@ -106,6 +106,8 @@ Utilities.OneBasedIndexing
 
 ```@docs
 Utilities.load_constants
+Utilities.set_from_constants
+Utilities.constants
 ```
 
 ```@docs

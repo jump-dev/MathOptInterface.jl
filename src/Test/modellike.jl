@@ -25,7 +25,7 @@ function default_status_test(model::MOI.ModelLike)
     @test MOI.get(model, MOI.DualStatus()) == MOI.NO_SOLUTION
 end
 
-function nametest(model::MOI.ModelLike; delete::Bool=true)
+function nametest(model::MOI.ModelLike; delete::Bool = true)
     @testset "Variables" begin
         MOI.empty!(model)
         x = MOI.add_variables(model, 2)
@@ -288,7 +288,7 @@ function nametest(model::MOI.ModelLike; delete::Bool=true)
 end
 
 # Taken from https://github.com/jump-dev/MathOptInterfaceUtilities.jl/issues/41
-function validtest(model::MOI.ModelLike; delete::Bool=true)
+function validtest(model::MOI.ModelLike; delete::Bool = true)
     MOI.empty!(model)
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     v = MOI.add_variables(model, 2)

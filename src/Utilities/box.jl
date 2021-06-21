@@ -29,7 +29,6 @@ const SUPPORTED_VARIABLE_SCALAR_SETS{T} = Union{
     MOI.Semiinteger{T},
 }
 
-
 """
     struct Box{T}
         lower::Vector{T}
@@ -101,13 +100,9 @@ function merge_bounds(b::Box, index, set)
     end
 end
 
-function add_constants_to_functions(::Box, index, ::MOI.ScalarAffineFunction) end
+constants(::Box{T}, row) where {T} = zero(T)
 
-function set_from_constants(
-    b::Box,
-    ::Type{<:MOI.EqualTo},
-    index,
-)
+function set_from_constants(b::Box, ::Type{<:MOI.EqualTo}, index)
     return MOI.EqualTo(b.lower[index])
 end
 function set_from_constants(
@@ -118,11 +113,7 @@ function set_from_constants(
     # Lower and upper bounds are equal for `EqualTo`, we can take either of them.
     return S(b.lower[index])
 end
-function set_from_constants(
-    b::Box,
-    S::Type{<:MOI.LessThan},
-    index,
-)
+function set_from_constants(b::Box, S::Type{<:MOI.LessThan}, index)
     return S(b.upper[index])
 end
 function set_from_constants(
