@@ -116,13 +116,19 @@ err = ArgumentError(
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), cx) == 0.0
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), c1) == 0.0
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), c2) == 1.0
-
+    bridge = MathOptInterface.Bridges.Variable.ZerosBridge{Float64}
+    attr = MOI.ConstraintDual()
     err = ArgumentError(
-        "Bridge of type `MathOptInterface.Bridges.Variable.ZerosBridge{Float64}`" *
-        " does not support accessing the attribute" *
-        " `MathOptInterface.ConstraintDual(1)`.",
+        "Bridge of type `$(typeof(bridge))` does not support accessing " *
+        "the attribute `$attr`. If you encountered this error " *
+        "unexpectedly, it probably means your model has been " *
+        "reformulated using the bridge, and you are attempting to query " *
+        "an attribute that we haven't implemented yet for this bridge. " *
+        "Please open an issue at https://github.com/jump-dev/MathOptInterface.jl/issues/new " *
+        "and provide a reproducible example explaining what you were " *
+        "trying to do.",
     )
-    @test_throws err MOI.get(bridged_mock, MOI.ConstraintDual(), cyz)
+    @test_throws err MOI.get(bridged_mock, attr, cyz)
 end
 
 @testset "Query" begin

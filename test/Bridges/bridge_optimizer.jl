@@ -158,10 +158,23 @@ bridged_mock = MOIB.Constraint.LessToGreater{Float64}(
 )
 
 @testset "Unsupported constraint attribute" begin
+    bridge = MOI.Bridges.Constraint.SplitIntervalBridge{
+        Float64,
+        MOI.SingleVariable,
+        MOI.Interval{Float64},
+        MOI.GreaterThan{Float64},
+        MOI.LessThan{Float64},
+    }
     attr = MOIT.UnknownConstraintAttribute()
     err = ArgumentError(
-        "Bridge of type `$(MOI.Bridges.Constraint.SplitIntervalBridge{Float64,MOI.SingleVariable,MOI.Interval{Float64},MOI.GreaterThan{Float64},MOI.LessThan{Float64}})` " *
-        "does not support accessing the attribute `$attr`.",
+        "Bridge of type `$(typeof(bridge))` does not support accessing " *
+        "the attribute `$attr`. If you encountered this error " *
+        "unexpectedly, it probably means your model has been " *
+        "reformulated using the bridge, and you are attempting to query " *
+        "an attribute that we haven't implemented yet for this bridge. " *
+        "Please open an issue at https://github.com/jump-dev/MathOptInterface.jl/issues/new " *
+        "and provide a reproducible example explaining what you were " *
+        "trying to do.",
     )
     x = MOI.add_variable(bridged_mock)
     ci = MOI.add_constraint(
