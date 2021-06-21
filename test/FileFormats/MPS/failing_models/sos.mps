@@ -8,7 +8,7 @@ BOUNDS
  FR bounds    x
  FR bounds    y
 SOS
- S1 sos_a
+ S1 sos_a     ERROR
     x         1
     y         2
 ENDATA

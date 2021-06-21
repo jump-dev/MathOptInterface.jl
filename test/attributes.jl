@@ -140,6 +140,60 @@ function test_no_constraint_name()
     )
 end
 
+function test_get_fallback()
+    model = DummyModelWithAdd()
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, x, MOI.EqualTo(0.0))
+    err = ArgumentError(
+        "$(typeof(model)) does not support getting the attribute " *
+        "$(MOI.SolveTimeSec()).",
+    )
+    @test_throws(err, MOI.get(model, MOI.SolveTimeSec()))
+    output = Ref{Cdouble}()
+    @test_throws(err, MOI.get!(output, model, MOI.SolveTimeSec()))
+    errv = ArgumentError(
+        "$(typeof(model)) does not support getting the attribute " *
+        "$(MOI.VariablePrimal()).",
+    )
+    @test_throws(errv, MOI.get(model, MOI.VariablePrimal(), x))
+    errc = ArgumentError(
+        "$(typeof(model)) does not support getting the attribute " *
+        "$(MOI.ConstraintPrimal()).",
+    )
+    @test_throws(errc, MOI.get(model, MOI.ConstraintPrimal(), c))
+    @test_throws(
+        ArgumentError(
+            "Unable to get attribute $(MOI.VariablePrimal()): invalid " *
+            "arguments $((c,)).",
+        ),
+        MOI.get(model, MOI.VariablePrimal(), c),
+    )
+end
+
+function test_ConstraintBasisStatus_fallback()
+    model = DummyModelWithAdd()
+    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}(1)
+    @test_throws(
+        ErrorException(
+            "Querying the basis status of a `SingleVariable` constraint is " *
+            "not supported. Use [`VariableBasisStatus`](@ref) instead.",
+        ),
+        MOI.get(model, MOI.ConstraintBasisStatus(), c),
+    )
+end
+
+function test_UnsupportedSubmittable()
+    model = DummyModelWithAdd()
+    sub = MOI.LazyConstraint{Int}(1)
+    @test_throws(
+        MOI.UnsupportedSubmittable(
+            sub,
+            "submit(::$(typeof(model)), ::$(typeof(sub))) is not supported.",
+        ),
+        MOI.submit(model, sub, 1),
+    )
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

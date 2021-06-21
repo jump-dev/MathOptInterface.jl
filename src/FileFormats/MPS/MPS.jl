@@ -171,11 +171,16 @@ function Base.write(io::IO, model::Model)
         names[x] = n
     end
     write_model_name(io, model)
+    if MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
+        println(io, "OBJSENSE MAX")
+    else
+        println(io, "OBJSENSE MIN")
+    end
     write_rows(io, model)
-    discovered_columns = write_columns(io, model, ordered_names, names)
-    write_rhs(io, model)
+    obj_const = write_columns(io, model, ordered_names, names)
+    write_rhs(io, model, obj_const)
     write_ranges(io, model)
-    write_bounds(io, model, discovered_columns, ordered_names, names)
+    write_bounds(io, model, ordered_names, names)
     write_sos(io, model, names)
     println(io, "ENDATA")
     return
@@ -246,21 +251,15 @@ function list_of_integer_variables(model::Model, names)
     return integer_variables
 end
 
-function extract_terms(
+function _extract_terms(
     v_names::Dict{MOI.VariableIndex,String},
     coefficients::Dict{String,Vector{Tuple{String,Float64}}},
     row_name::String,
     func::MOI.ScalarAffineFunction,
-    discovered_columns::Set{String},
-    multiplier::Float64 = 1.0,
 )
     for term in func.terms
         variable_name = v_names[term.variable]
-        push!(
-            coefficients[variable_name],
-            (row_name, multiplier * term.coefficient),
-        )
-        push!(discovered_columns, variable_name)
+        push!(coefficients[variable_name], (row_name, term.coefficient))
     end
     return
 end
@@ -270,7 +269,6 @@ function _collect_coefficients(
     S,
     v_names::Dict{MOI.VariableIndex,String},
     coefficients::Dict{String,Vector{Tuple{String,Float64}}},
-    discovered_columns::Set{String},
 )
     for index in MOI.get(
         model,
@@ -278,7 +276,7 @@ function _collect_coefficients(
     )
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         func = MOI.get(model, MOI.ConstraintFunction(), index)
-        extract_terms(v_names, coefficients, row_name, func, discovered_columns)
+        _extract_terms(v_names, coefficients, row_name, func)
     end
     return
 end
@@ -287,27 +285,16 @@ function write_columns(io::IO, model::Model, ordered_names, names)
     coefficients = Dict{String,Vector{Tuple{String,Float64}}}(
         n => Tuple{String,Float64}[] for n in ordered_names
     )
-    # Many MPS readers (e.g., CPLEX and GAMS) will error if a variable (column)
-    # appears in the BOUNDS section but did not appear in the COLUMNS section.
-    # This is likely because such variables are meaningless - they don't appear
-    # in the objective or constraints and so can be trivially removed.
-    # To avoid generating MPS files that crash existing readers, we cache the
-    # names of all variables seen in COLUMNS into `discovered_columns`, and then
-    # pass this set to `write_bounds` so that it can act appropriately.
-    discovered_columns = Set{String}()
     # Build constraint coefficients
     for (S, _) in SET_TYPES
-        _collect_coefficients(model, S, names, coefficients, discovered_columns)
+        _collect_coefficients(model, S, names, coefficients)
     end
     # Build objective
-    # MPS doesn't support maximization so we flip the sign on the objective
-    # coefficients.
-    s = MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE ? -1.0 : 1.0
     obj_func = MOI.get(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
-    extract_terms(names, coefficients, "OBJ", obj_func, discovered_columns, s)
+    _extract_terms(names, coefficients, "OBJ", obj_func)
     integer_variables = list_of_integer_variables(model, names)
     println(io, "COLUMNS")
     int_open = false
@@ -320,6 +307,11 @@ function write_columns(io::IO, model::Model, ordered_names, names)
             println(io, Card(f2 = "MARKER", f3 = "'MARKER'", f5 = "'INTEND'"))
             int_open = false
         end
+        if length(coefficients[variable]) == 0
+            # Every variable must appear in the COLUMNS section! Add a 0
+            # objective coefficient instead.
+            println(io, Card(f2 = variable, f3 = "OBJ", f4 = "0"))
+        end
         for (constraint, coefficient) in coefficients[variable]
             println(
                 io,
@@ -331,7 +323,7 @@ function write_columns(io::IO, model::Model, ordered_names, names)
             )
         end
     end
-    return discovered_columns
+    return obj_func.constant
 end
 
 # ==============================================================================
@@ -343,7 +335,7 @@ value(set::MOI.GreaterThan) = set.lower
 value(set::MOI.EqualTo) = set.value
 value(set::MOI.Interval) = set.upper  # See the note in the RANGES section.
 
-function _write_rhs(io, model, S, sense_char)
+function _write_rhs(io, model, S)
     for index in MOI.get(
         model,
         MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64},S}(),
@@ -361,10 +353,22 @@ function _write_rhs(io, model, S, sense_char)
     end
 end
 
-function write_rhs(io::IO, model::Model)
+function write_rhs(io::IO, model::Model, obj_const)
     println(io, "RHS")
-    for (set_type, sense_char) in SET_TYPES
-        _write_rhs(io, model, set_type, sense_char)
+    for (set_type, _) in SET_TYPES
+        _write_rhs(io, model, set_type)
+    end
+    # Objective constants are added to the RHS as a negative offset.
+    # https://www.ibm.com/docs/en/icos/20.1.0?topic=standard-records-in-mps-format
+    if !iszero(obj_const)
+        println(
+            io,
+            Card(
+                f2 = "rhs",
+                f3 = "OBJ",
+                f4 = sprint(print_shortest, -obj_const),
+            ),
+        )
     end
     return
 end
@@ -502,13 +506,7 @@ function _collect_bounds(bounds, model, S, names)
     return
 end
 
-function write_bounds(
-    io::IO,
-    model::Model,
-    discovered_columns::Set{String},
-    ordered_names,
-    names,
-)
+function write_bounds(io::IO, model::Model, ordered_names, names)
     println(io, "BOUNDS")
     bounds = Dict{String,Tuple{Float64,Float64,VType}}(
         n => (-Inf, Inf, VTYPE_CONTINUOUS) for n in ordered_names
@@ -524,13 +522,7 @@ function write_bounds(
     end
     for var_name in ordered_names
         lower, upper, vtype = bounds[var_name]
-        if !(var_name in discovered_columns)
-            @warn(
-                "Variable $var_name is mentioned in BOUNDS, but is not " *
-                "mentioned in the COLUMNS section. We are ignoring it."
-            )
-            continue
-        elseif vtype == VTYPE_BINARY
+        if vtype == VTYPE_BINARY
             println(io, Card(f1 = "BV", f2 = "bounds", f3 = var_name))
             # Only add bounds if they are tighter than the implicit bounds of a
             # binary variable.
@@ -628,10 +620,19 @@ function Sense(s::String)
         return SENSE_UNKNOWN
     end
 end
+
+struct _SOSConstraint
+    type::Int
+    weights::Vector{Float64}
+    columns::Vector{String}
+end
+
 mutable struct TempMPSModel
     name::String
+    is_minimization::Bool
     obj_name::String
     c::Vector{Float64}
+    obj_constant::Float64
     col_lower::Vector{Float64}
     col_upper::Vector{Float64}
     row_lower::Vector{Float64}
@@ -644,13 +645,16 @@ mutable struct TempMPSModel
     name_to_row::Dict{String,Int}
     row_to_name::Vector{String}
     intorg_flag::Bool  # A flag used to parse COLUMNS section.
+    sos_constraints::Vector{_SOSConstraint}
 end
 
 function TempMPSModel()
     return TempMPSModel(
         "",
+        true,
         "",
         Float64[],  # c
+        0.0,        # obj_constant
         Float64[],  # col_lower
         Float64[],  # col_upper
         Float64[],  # row_lower
@@ -663,12 +667,14 @@ function TempMPSModel()
         Dict{String,Int}(),
         String[],
         false,
+        _SOSConstraint[],
     )
 end
 
 @enum(
     Headers,
     HEADER_NAME,
+    HEADER_OBJSENSE,
     HEADER_ROWS,
     HEADER_COLUMNS,
     HEADER_RHS,
@@ -680,27 +686,21 @@ end
 )
 
 # Headers(s) gets called _alot_ (on every line), so we try very hard to be
-# efficient.]
+# efficient.
 function Headers(s::AbstractString)
     N = length(s)
-    if N > 7 || N < 3
-        return HEADER_UNKNOWN
-    elseif N == 3
-        x = first(s)
+    x = first(s)
+    if N == 3
         if (x == 'R' || x == 'r') && uppercase(s) == "RHS"
             return HEADER_RHS
         elseif (x == 'S' || x == 's') && uppercase(s) == "SOS"
             return HEADER_SOS
         end
     elseif N == 4
-        x = first(s)
         if (x == 'R' || x == 'r') && uppercase(s) == "ROWS"
             return HEADER_ROWS
         end
-    elseif N == 5
-        return HEADER_UNKNOWN
     elseif N == 6
-        x = first(s)
         if (x == 'R' || x == 'r') && uppercase(s) == "RANGES"
             return HEADER_RANGES
         elseif (x == 'B' || x == 'b') && uppercase(s) == "BOUNDS"
@@ -709,9 +709,12 @@ function Headers(s::AbstractString)
             return HEADER_ENDATA
         end
     elseif N == 7
-        x = first(s)
         if (x == 'C' || x == 'c') && (uppercase(s) == "COLUMNS")
             return HEADER_COLUMNS
+        end
+    elseif N == 12
+        if (x == 'O' || x == 'o') && startswith(uppercase(s), "OBJSENSE")
+            return HEADER_OBJSENSE
         end
     end
     return HEADER_UNKNOWN
@@ -740,12 +743,18 @@ function Base.read!(io::IO, model::Model)
             continue  # Skip blank lines and comments.
         end
         h = Headers(line)
-        if h != HEADER_UNKNOWN
+        if h == HEADER_OBJSENSE
+            items = line_to_items(line)
+            @assert length(items) == 2
+            sense = uppercase(items[2])
+            @assert sense == "MAX" || sense == "MIN"
+            data.is_minimization = sense == "MIN"
+            continue
+        elseif h != HEADER_UNKNOWN
             header = h
             continue
-        else
-            # Carry on with the previous header
         end
+        # Otherwise, carry on with the previous header
         # TODO: split into hard fields based on column indices.
         items = line_to_items(line)
         if header == HEADER_NAME
@@ -764,7 +773,7 @@ function Base.read!(io::IO, model::Model)
         elseif header == HEADER_BOUNDS
             parse_bounds_line(data, items)
         elseif header == HEADER_SOS
-            error("TODO(odow): implement parsing of SOS constraints.")
+            parse_sos_line(data, items)
         else
             @assert header == HEADER_ENDATA
             break
@@ -801,6 +810,13 @@ function copy_to(model::Model, data::TempMPSModel)
         end
         # `else` is a free constraint. Don't add it.
     end
+    for sos in data.sos_constraints
+        MOI.add_constraint(
+            model,
+            MOI.VectorOfVariables([variable_map[x] for x in sos.columns]),
+            sos.type == 1 ? MOI.SOS1(sos.weights) : MOI.SOS2(sos.weights),
+        )
+    end
     return
 end
 
@@ -821,7 +837,11 @@ function _add_variable(model, data, variable_map, i, name)
 end
 
 function _add_objective(model, data, variable_map)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    if data.is_minimization
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    else
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    end
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -830,7 +850,7 @@ function _add_objective(model, data, variable_map)
                 MOI.ScalarAffineTerm(data.c[i], variable_map[v]) for
                 (i, v) in enumerate(data.col_to_name) if !iszero(data.c[i])
             ],
-            0.0,
+            -data.obj_constant,
         ),
     )
     return
@@ -1014,6 +1034,10 @@ function parse_single_rhs(
     value::Float64,
     items::Vector{String},
 )
+    if row_name == data.obj_name
+        data.obj_constant = value
+        return
+    end
     row = get(data.name_to_row, row_name, nothing)
     if row === nothing
         error("ROW name $(row_name) not recognised. Is it in the ROWS field?")
@@ -1179,6 +1203,21 @@ function parse_bounds_line(data::TempMPSModel, items::Vector{String})
         )
     else
         error("Malformed BOUNDS line: $(join(items, " "))")
+    end
+    return
+end
+
+function parse_sos_line(data, items)
+    if length(items) != 2
+        error("Malformed SOS line: $(join(items, " "))")
+    elseif items[1] == "S1"
+        push!(data.sos_constraints, _SOSConstraint(1, Float64[], String[]))
+    elseif items[1] == "S2"
+        push!(data.sos_constraints, _SOSConstraint(2, Float64[], String[]))
+    else
+        sos = data.sos_constraints[end]
+        push!(sos.columns, items[1])
+        push!(sos.weights, parse(Float64, items[2]))
     end
     return
 end

@@ -86,10 +86,11 @@ config = MOIT.Config()
             con_basis = [
                 (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                     [MOI.NONBASIC],
-                (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                    [MOI.BASIC, MOI.NONBASIC],
-                (MOI.SingleVariable, MOI.LessThan{Float64}) =>
-                    [MOI.NONBASIC],
+            ],
+            var_basis = [
+                MOI.BASIC,
+                MOI.NONBASIC_AT_LOWER,
+                MOI.NONBASIC_AT_UPPER,
             ],
         ),
     )

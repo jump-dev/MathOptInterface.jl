@@ -70,19 +70,19 @@ mutable struct MutableSparseMatrixCSC{Tv,Ti<:Integer,I<:AbstractIndexing}
     end
 end
 
-function MOI.empty!(A::MutableSparseMatrixCSC)
+function MOI.empty!(A::MutableSparseMatrixCSC{Tv,Ti}) where {Tv,Ti}
     A.m = 0
     A.n = 0
     resize!(A.colptr, 1)
-    A.colptr[1] = 0
+    A.colptr[1] = zero(Ti)
     empty!(A.rowval)
     empty!(A.nzval)
     return
 end
 
-function add_column(A::MutableSparseMatrixCSC)
+function add_column(A::MutableSparseMatrixCSC{Tv,Ti}) where {Tv,Ti}
     A.n += 1
-    push!(A.colptr, 0)
+    push!(A.colptr, zero(Ti))
     return
 end
 

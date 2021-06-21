@@ -108,10 +108,21 @@ dimension(s::AbstractVectorSet) = s.dimension # .dimension field is conventional
 """
     Reals(dimension)
 
-The set ``\\mathbb{R}^{dimension}`` (containing all points) of dimension `dimension`.
+The set ``\\mathbb{R}^{dimension}`` (containing all points) of dimension
+`dimension`.
 """
 struct Reals <: AbstractVectorSet
     dimension::Int
+    function Reals(dimension::Base.Integer)
+        if !(dimension >= 0)
+            throw(
+                DimensionMismatch(
+                    "Dimension of Reals must be >= 0, not $(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::Reals) = Zeros(dimension(s))
@@ -120,10 +131,21 @@ dual_set_type(::Type{Reals}) = Zeros
 """
     Zeros(dimension)
 
-The set ``\\{ 0 \\}^{dimension}`` (containing only the origin) of dimension `dimension`.
+The set ``\\{ 0 \\}^{dimension}`` (containing only the origin) of dimension
+`dimension`.
 """
 struct Zeros <: AbstractVectorSet
     dimension::Int
+    function Zeros(dimension::Base.Integer)
+        if !(dimension >= 0)
+            throw(
+                DimensionMismatch(
+                    "Dimension of Zeros must be >= 0, not $(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::Zeros) = Reals(dimension(s))
@@ -132,10 +154,21 @@ dual_set_type(::Type{Zeros}) = Reals
 """
     Nonnegatives(dimension)
 
-The nonnegative orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\ge 0 \\}`` of dimension `dimension`.
+The nonnegative orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\ge 0 \\}`` of
+dimension `dimension`.
 """
 struct Nonnegatives <: AbstractVectorSet
     dimension::Int
+    function Nonnegatives(dimension::Base.Integer)
+        if !(dimension >= 0)
+            throw(
+                DimensionMismatch(
+                    "Dimension of Nonnegatives must be >= 0, not $(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::Nonnegatives) = copy(s)
@@ -144,10 +177,21 @@ dual_set_type(::Type{Nonnegatives}) = Nonnegatives
 """
     Nonpositives(dimension)
 
-The nonpositive orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\le 0 \\}`` of dimension `dimension`.
+The nonpositive orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\le 0 \\}`` of
+dimension `dimension`.
 """
 struct Nonpositives <: AbstractVectorSet
     dimension::Int
+    function Nonpositives(dimension::Base.Integer)
+        if !(dimension >= 0)
+            throw(
+                DimensionMismatch(
+                    "Dimension of Nonpositives must be >= 0, not $(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::Nonpositives) = copy(s)
@@ -230,6 +274,17 @@ The ``\\ell_\\infty``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\g
 """
 struct NormInfinityCone <: AbstractVectorSet
     dimension::Int
+    function NormInfinityCone(dimension::Base.Integer)
+        if !(dimension >= 1)
+            throw(
+                DimensionMismatch(
+                    "Dimension of NormInfinityCone must be >= 1, not " *
+                    "$(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::NormInfinityCone) = NormOneCone(dimension(s))
@@ -242,6 +297,16 @@ The ``\\ell_1``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lV
 """
 struct NormOneCone <: AbstractVectorSet
     dimension::Int
+    function NormOneCone(dimension::Base.Integer)
+        if !(dimension >= 1)
+            throw(
+                DimensionMismatch(
+                    "Dimension of NormOneCone must be >= 1, not $(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::NormOneCone) = NormInfinityCone(dimension(s))
@@ -254,6 +319,17 @@ The second-order cone (or Lorenz cone or ``\\ell_2``-norm cone) ``\\{ (t,x) \\in
 """
 struct SecondOrderCone <: AbstractVectorSet
     dimension::Int
+    function SecondOrderCone(dimension::Base.Integer)
+        if !(dimension >= 1)
+            throw(
+                DimensionMismatch(
+                    "Dimension of SecondOrderCone must be >= 1, not " *
+                    "$(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::SecondOrderCone) = copy(s)
@@ -266,6 +342,17 @@ The rotated second-order cone ``\\{ (t,u,x) \\in \\mathbb{R}^{dimension} : 2tu \
 """
 struct RotatedSecondOrderCone <: AbstractVectorSet
     dimension::Int
+    function RotatedSecondOrderCone(dimension::Base.Integer)
+        if !(dimension >= 2)
+            throw(
+                DimensionMismatch(
+                    "Dimension of RotatedSecondOrderCone must be >= 2, not " *
+                    "$(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 dual_set(s::RotatedSecondOrderCone) = copy(s)
@@ -274,15 +361,29 @@ dual_set_type(::Type{RotatedSecondOrderCone}) = RotatedSecondOrderCone
 """
     GeometricMeanCone(dimension)
 
-The geometric mean cone ``\\{ (t,x) \\in \\mathbb{R}^{n+1} : x \\ge 0, t \\le \\sqrt[n]{x_1 x_2 \\cdots x_n} \\}`` of dimension `dimension```{}=n+1``.
+The geometric mean cone
+``\\{ (t,x) \\in \\mathbb{R}^{n+1} : x \\ge 0, t \\le \\sqrt[n]{x_1 x_2 \\cdots x_n} \\}``,
+where `dimension = n + 1 >= 2`.
 
-### Duality note
+## Duality note
 
 The dual of the geometric mean cone is
-``\\{ (u, v) \\in \\mathbb{R}^{n+1} : u \\le 0, v \\ge 0, -u \\le n \\sqrt[n]{\\prod_i v_i} \\}`` of dimension `dimension```{}=n+1``.
+``\\{ (u, v) \\in \\mathbb{R}^{n+1} : u \\le 0, v \\ge 0, -u \\le n \\sqrt[n]{\\prod_i v_i} \\}``,
+where `dimension = n + 1 >= 2`.
 """
 struct GeometricMeanCone <: AbstractVectorSet
     dimension::Int
+    function GeometricMeanCone(dimension::Base.Integer)
+        if !(dimension >= 2)
+            throw(
+                DimensionMismatch(
+                    "Dimension of GeometricMeanCone must be >= 2, not " *
+                    "$(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 """
@@ -342,7 +443,9 @@ end
 """
     RelativeEntropyCone(dimension)
 
-The relative entropy cone ``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : u \\ge \\sum_{i=1}^n w_i \\log (\\frac{w_i}{v_i}), v_i \\ge 0, w_i \\ge 0 \\}`` of dimension `dimension```{}=2n+1``.
+The relative entropy cone
+``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : u \\ge \\sum_{i=1}^n w_i \\log(\\frac{w_i}{v_i}), v_i \\ge 0, w_i \\ge 0 \\}``,
+where `dimension = 2n + 1 >= 1`.
 
 ### Duality note
 
@@ -351,17 +454,44 @@ The dual of the relative entropy cone is
 """
 struct RelativeEntropyCone <: AbstractVectorSet
     dimension::Int
+    function RelativeEntropyCone(dimension::Base.Integer)
+        if !(dimension >= 1 && isodd(dimension))
+            throw(
+                DimensionMismatch(
+                    "Dimension of RelativeEntropyCone must be an odd integer " *
+                    ">= 1, not $(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
 end
 
 """
     NormSpectralCone(row_dim, column_dim)
 
-The epigraph of the matrix spectral norm (maximum singular value function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sigma_1(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
-The matrix X is vectorized by stacking the columns, matching the behavior of Julia's `vec` function.
+The epigraph of the matrix spectral norm (maximum singular value function)
+``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sigma_1(X) \\}``,
+where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row
+dimension `row_dim` and column dimension `column_dim`.
+
+The matrix X is vectorized by stacking the columns, matching the behavior of
+Julia's `vec` function.
 """
 struct NormSpectralCone <: AbstractVectorSet
     row_dim::Int
     column_dim::Int
+    function NormSpectralCone(row_dim::Base.Integer, column_dim::Base.Integer)
+        if !(row_dim >= 0 && column_dim >= 0)
+            throw(
+                DimensionMismatch(
+                    "Dimensions of NormSpectralCone must be >= 0, not " *
+                    "($(row_dim), $(column_dim)).",
+                ),
+            )
+        end
+        return new(row_dim, column_dim)
+    end
 end
 
 dual_set(s::NormSpectralCone) = NormNuclearCone(s.row_dim, s.column_dim)
@@ -370,12 +500,28 @@ dual_set_type(::Type{NormSpectralCone}) = NormNuclearCone
 """
     NormNuclearCone(row_dim, column_dim)
 
-The epigraph of the matrix nuclear norm (sum of singular values function) ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sum_i \\sigma_i(X) \\}`` where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row dimension `row_dim` and column dimension `column_dim`.
-The matrix X is vectorized by stacking the columns, matching the behavior of Julia's `vec` function.
+The epigraph of the matrix nuclear norm (sum of singular values function)
+``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sum_i \\sigma_i(X) \\}``,
+where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row
+dimension `row_dim` and column dimension `column_dim`.
+
+The matrix X is vectorized by stacking the columns, matching the behavior of
+Julia's `vec` function.
 """
 struct NormNuclearCone <: AbstractVectorSet
     row_dim::Int
     column_dim::Int
+    function NormNuclearCone(row_dim::Base.Integer, column_dim::Base.Integer)
+        if !(row_dim >= 0 && column_dim >= 0)
+            throw(
+                DimensionMismatch(
+                    "Dimension of NormNuclearCone must be >= 0, not " *
+                    "($(row_dim), $(column_dim)).",
+                ),
+            )
+        end
+        return new(row_dim, column_dim)
+    end
 end
 
 dual_set(s::NormNuclearCone) = NormSpectralCone(s.row_dim, s.column_dim)
@@ -554,12 +700,24 @@ end
     PositiveSemidefiniteConeTriangle(side_dimension) <: AbstractSymmetricMatrixSetTriangle
 
 The (vectorized) cone of symmetric positive semidefinite matrices, with
-`side_dimension` rows and columns. See
-[`AbstractSymmetricMatrixSetTriangle`](@ref) for more details on the vectorized
-form.
+`side_dimension` rows and columns.
+
+See [`AbstractSymmetricMatrixSetTriangle`](@ref) for more details on the
+vectorized form.
 """
 struct PositiveSemidefiniteConeTriangle <: AbstractSymmetricMatrixSetTriangle
     side_dimension::Int
+    function PositiveSemidefiniteConeTriangle(side_dimension::Base.Integer)
+        if !(side_dimension >= 0)
+            throw(
+                DimensionMismatch(
+                    "Side dimension of PositiveSemidefiniteConeTriangle must " *
+                    "be >= 0, not $(side_dimension).",
+                ),
+            )
+        end
+        return new(side_dimension)
+    end
 end
 
 dual_set(s::PositiveSemidefiniteConeTriangle) = copy(s)
@@ -570,13 +728,18 @@ end
 """
     PositiveSemidefiniteConeSquare(side_dimension) <: AbstractSymmetricMatrixSetSquare
 
-The cone of symmetric positive semidefinite matrices, with side length `side_dimension`.
- See [`AbstractSymmetricMatrixSetSquare`](@ref) for more details on the vectorized
-form.
+The cone of symmetric positive semidefinite matrices, with side length
+`side_dimension`.
 
-The entries of the matrix are given column by column (or equivalently, row by row).
+See [`AbstractSymmetricMatrixSetSquare`](@ref) for more details on the
+vectorized form.
+
+The entries of the matrix are given column by column (or equivalently, row by
+row).
+
 The matrix is both constrained to be symmetric and to be positive semidefinite.
-That is, if the functions in entries ``(i, j)`` and ``(j, i)`` are different, then a constraint will be added to make sure that the entries are equal.
+That is, if the functions in entries ``(i, j)`` and ``(j, i)`` are different,
+then a constraint will be added to make sure that the entries are equal.
 
 ### Examples
 
@@ -587,12 +750,26 @@ Constraining the matrix
   -z & 0\\\\
 \\end{bmatrix}
 ```
-to be symmetric positive semidefinite can be achieved by constraining the vector ``(1, -z, -y, 0)`` (or ``(1, -y, -z, 0)``)
-to belong to the `PositiveSemidefiniteConeSquare(2)`.
-It both constrains ``y = z`` and ``(1, -y, 0)`` (or ``(1, -z, 0)``) to be in `PositiveSemidefiniteConeTriangle(2)`.
+to be symmetric positive semidefinite can be achieved by constraining the vector
+``(1, -z, -y, 0)`` (or ``(1, -y, -z, 0)``) to belong to the
+`PositiveSemidefiniteConeSquare(2)`.
+
+It both constrains ``y = z`` and ``(1, -y, 0)`` (or ``(1, -z, 0)``) to be in
+`PositiveSemidefiniteConeTriangle(2)`.
 """
 struct PositiveSemidefiniteConeSquare <: AbstractSymmetricMatrixSetSquare
     side_dimension::Int
+    function PositiveSemidefiniteConeSquare(side_dimension::Base.Integer)
+        if !(side_dimension >= 0)
+            throw(
+                DimensionMismatch(
+                    "Side dimension of PositiveSemidefiniteConeSquare must " *
+                    "be >= 0, not $(side_dimension).",
+                ),
+            )
+        end
+        return new(side_dimension)
+    end
 end
 
 function _dual_set_square_error()
@@ -615,11 +792,27 @@ end
 """
     LogDetConeTriangle(side_dimension)
 
-The log-determinant cone ``\\{ (t, u, X) \\in \\mathbb{R}^{2 + d(d+1)/2} : t \\le u \\log(\\det(X/u)), u > 0 \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeTriangle`.
-The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
+The log-determinant cone
+``\\{ (t, u, X) \\in \\mathbb{R}^{2 + d(d+1)/2} : t \\le u \\log(\\det(X/u)), u > 0 \\}``,
+where the matrix `X` is represented in the same symmetric packed format as in
+the `PositiveSemidefiniteConeTriangle`.
+
+The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
+number of rows or columns.
 """
 struct LogDetConeTriangle <: AbstractVectorSet
     side_dimension::Int
+    function LogDetConeTriangle(side_dimension::Base.Integer)
+        if !(side_dimension >= 0)
+            throw(
+                DimensionMismatch(
+                    "Side dimension of LogDetConeTriangle must be >= 0, not " *
+                    "$(side_dimension).",
+                ),
+            )
+        end
+        return new(side_dimension)
+    end
 end
 
 function dimension(s::LogDetConeTriangle)
@@ -629,12 +822,30 @@ end
 """
     LogDetConeSquare(side_dimension)
 
-The log-determinant cone ``\\{ (t, u, X) \\in \\mathbb{R}^{2 + d^2} : t \\le u \\log(\\det(X/u)), X \\text{ symmetric}, u > 0 \\}`` where the matrix `X` is represented in the same format as in the `PositiveSemidefiniteConeSquare`.
-Similarly to `PositiveSemidefiniteConeSquare`, constraints are added to ensures that `X` is symmetric.
-The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
+The log-determinant cone
+``\\{ (t, u, X) \\in \\mathbb{R}^{2 + d^2} : t \\le u \\log(\\det(X/u)), X \\text{ symmetric}, u > 0 \\}``,
+where the matrix `X` is represented in the same format as in the
+[`PositiveSemidefiniteConeSquare`](@ref).
+
+Similarly to [`PositiveSemidefiniteConeSquare`](@ref), constraints are added to
+ensure that `X` is symmetric.
+
+The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
+number of rows or columns.
 """
 struct LogDetConeSquare <: AbstractVectorSet
     side_dimension::Int
+    function LogDetConeSquare(side_dimension::Base.Integer)
+        if !(side_dimension >= 0)
+            throw(
+                DimensionMismatch(
+                    "Side dimension of LogDetConeSquare must be >= 0, not " *
+                    "$(side_dimension).",
+                ),
+            )
+        end
+        return new(side_dimension)
+    end
 end
 
 dimension(s::LogDetConeSquare) = 2 + s.side_dimension^2
@@ -642,11 +853,27 @@ dimension(s::LogDetConeSquare) = 2 + s.side_dimension^2
 """
     RootDetConeTriangle(side_dimension)
 
-The root-determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\det(X)^{1/d} \\}`` where the matrix `X` is represented in the same symmetric packed format as in the `PositiveSemidefiniteConeTriangle`.
-The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
+The root-determinant cone
+``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\det(X)^{1/d} \\}``,
+where the matrix `X` is represented in the same symmetric packed format as in
+the [`PositiveSemidefiniteConeTriangle`](@ref).
+
+The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
+number of rows or columns.
 """
 struct RootDetConeTriangle <: AbstractVectorSet
     side_dimension::Int
+    function RootDetConeTriangle(side_dimension::Base.Integer)
+        if !(side_dimension >= 0)
+            throw(
+                DimensionMismatch(
+                    "Side dimension of RootDetConeTriangle must be >= 0, not " *
+                    "$(side_dimension).",
+                ),
+            )
+        end
+        return new(side_dimension)
+    end
 end
 
 function dimension(s::RootDetConeTriangle)
@@ -656,12 +883,30 @@ end
 """
     RootDetConeSquare(side_dimension)
 
-The root-determinant cone ``\\{ (t, X) \\in \\mathbb{R}^{1 + d^2} : t \\le \\det(X)^{1/d}, X \\text{ symmetric} \\}`` where the matrix `X` is represented in the same format as in the `PositiveSemidefiniteConeSquare`.
-Similarly to `PositiveSemidefiniteConeSquare`, constraints are added to ensure that `X` is symmetric.
-The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its number of rows or columns.
+The root-determinant cone
+``\\{ (t, X) \\in \\mathbb{R}^{1 + d^2} : t \\le \\det(X)^{1/d}, X \\text{ symmetric} \\}``,
+where the matrix `X` is represented in the same format as
+[`PositiveSemidefiniteConeSquare`](@ref).
+
+Similarly to [`PositiveSemidefiniteConeSquare`](@ref), constraints are added to
+ensure that `X` is symmetric.
+
+The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
+number of rows or columns.
 """
 struct RootDetConeSquare <: AbstractVectorSet
     side_dimension::Int
+    function RootDetConeSquare(side_dimension::Base.Integer)
+        if !(side_dimension >= 0)
+            throw(
+                DimensionMismatch(
+                    "Side dimension of RootDetConeSquare must be >= 0, not " *
+                    "$(side_dimension).",
+                ),
+            )
+        end
+        return new(side_dimension)
+    end
 end
 
 dimension(s::RootDetConeSquare) = 1 + s.side_dimension^2
@@ -799,7 +1044,7 @@ function Base.:(==)(
 end
 
 """
-    Complements(dimension::Int)
+    Complements(dimension::Base.Integer)
 
 The set corresponding to a mixed complementarity constraint.
 
@@ -852,17 +1097,15 @@ defines the complementarity problem where `0 <= x_1 ⟂ x_3 >= 0` and
 """
 struct Complements <: AbstractVectorSet
     dimension::Int
-    # Need an explicit Int64 here, because JSON parses Int as Int64, even on
-    # 32-bit machines.
-    function Complements(dimension::Union{Int,Int64})
-        if !iseven(dimension)
+    function Complements(dimension::Base.Integer)
+        if !(dimension >= 0 && iseven(dimension))
             throw(
-                ArgumentError(
-                    "The dimension of a Complements set must be even.",
+                DimensionMismatch(
+                    "Dimension of Complements must be even, not $(dimension).",
                 ),
             )
         end
-        return new(convert(Int, dimension))
+        return new(dimension)
     end
 end
 

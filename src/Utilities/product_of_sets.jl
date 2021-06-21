@@ -209,7 +209,7 @@ function rows(
 ) where {T,S}
     @assert sets.final_touch
     i = set_index(sets, S)
-    return (i == 1 ? 0 : sets.num_rows[i-1]) + ci.value + 1
+    return (i == 1 ? 0 : sets.num_rows[i-1]) + ci.value
 end
 
 function rows(
@@ -219,18 +219,18 @@ function rows(
     @assert sets.final_touch
     i = set_index(sets, S)
     offset = i == 1 ? 0 : sets.num_rows[i-1]
-    return (ci.value + offset) .+ (1:sets.dimension[(i, ci.value)])
+    return (offset + ci.value - 1) .+ (1:sets.dimension[(i, ci.value)])
 end
 
 function add_set(sets::OrderedProductOfSets, i)
     @assert !sets.final_touch
     sets.num_rows[i] += 1
-    return sets.num_rows[i] - 1
+    return sets.num_rows[i]
 end
 
 function add_set(sets::OrderedProductOfSets, i, dim)
     @assert !sets.final_touch
-    ci = sets.num_rows[i]
+    ci = sets.num_rows[i] + 1
     sets.dimension[(i, ci)] = dim
     sets.num_rows[i] += dim
     return ci
@@ -275,14 +275,14 @@ end
 Base.IteratorSize(::_UnevenIterator) = Base.SizeUnknown()
 
 function Base.iterate(it::_UnevenIterator, cur = it.start)
-    if cur >= it.stop
+    if cur > it.stop
         return nothing
     end
     return (cur, cur + it.dimension[(it.i, cur)])
 end
 
 function Base.in(x::Int64, it::_UnevenIterator)
-    return it.start <= x < it.stop && haskey(it.dimension, (it.i, x))
+    return it.start <= x <= it.stop && haskey(it.dimension, (it.i, x))
 end
 
 function _range_iterator(
@@ -292,7 +292,7 @@ function _range_iterator(
     stop::Int,
     ::Type{MOI.ScalarAffineFunction{T}},
 ) where {T}
-    return start:(stop-1)
+    return start:stop
 end
 
 function _range_iterator(
@@ -314,7 +314,7 @@ function _range_iterator(
     if i === nothing || F != _affine_function_type(T, S)
         return
     end
-    return _range_iterator(sets, i, 0, _num_rows(sets, S), F)
+    return _range_iterator(sets, i, 1, _num_rows(sets, S), F)
 end
 
 _length(::Nothing) = 0

@@ -309,9 +309,10 @@ end
 abstract type AbstractWithType{F,S,V,DI,DD} <: AD{CI{F,S},V} end
 
 """
-    WithType{D<:DoubleDict, F<:MOI.AbstractFunction, S<:MOI.AbstractSet}
+    WithType{F,S,V,DI,DD}
 
-Used to specialize methods and iterators for a given contraint type CI{F,S}.
+Used to specialize methods and iterators for a given contraint type `CI{F,S}`
+returning elements of type `V`.
 """
 mutable struct WithType{F,S,V,DI,DD} <: AbstractWithType{F,S,V,DI,DD}
     dict::DD

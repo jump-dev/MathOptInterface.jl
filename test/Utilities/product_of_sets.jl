@@ -262,13 +262,13 @@ function test_vector_ListOfConstraintIndices()
     VAF = MOI.VectorAffineFunction{Float64}
     @test MOI.get(sets, MOI.ListOfConstraintIndices{VAF,MOI.Zeros}()) ==
           MOI.ConstraintIndex{VAF,MOI.Zeros}[]
-    for (x, S) in zip([[0], [0, 2]], MOI.Utilities.set_types(sets)[1:2])
+    for (x, S) in zip([[1], [1, 3]], MOI.Utilities.set_types(sets)[1:2])
         ci = MOI.get(sets, MOI.ListOfConstraintIndices{VAF,S}())
         @test ci == MOI.ConstraintIndex{VAF,S}.(x)
     end
     F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
     @test MOI.get(sets, MOI.ListOfConstraintIndices{F,S}()) ==
-          [MOI.ConstraintIndex{F,S}(0)]
+          [MOI.ConstraintIndex{F,S}(1)]
     return
 end
 
@@ -288,7 +288,7 @@ function test_vector_ListOfConstraintIndices2()
     S = MOI.Utilities.set_types(sets)[2]
     VAF = MOI.VectorAffineFunction{Float64}
     indices = MOI.get(sets, MOI.ListOfConstraintIndices{VAF,S}())
-    @test indices == MOI.ConstraintIndex{VAF,S}.([0, 2, 5, 7])
+    @test indices == MOI.ConstraintIndex{VAF,S}.([1, 3, 6, 8])
 end
 
 end

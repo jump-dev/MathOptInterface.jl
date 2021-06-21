@@ -199,6 +199,11 @@ with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64
 with optimizer MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}
 ```
 
+!!! info
+    Calling `MOI.empty!(model)` also resets the state to `EMPTY_OPTIMIZER`.
+    So after emptying a model, the modification will only be applied to the
+    cache.
+
 Use [`Utilities.drop_optimizer`](@ref) to go from any state to `NO_OPTIMIZER`:
 ```jldoctest pathoptimizer
 julia> MOI.Utilities.drop_optimizer(model)

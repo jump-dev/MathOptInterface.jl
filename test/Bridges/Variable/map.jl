@@ -92,7 +92,6 @@ v3, c3 = MOIB.Variable.add_keys_for_bridge(map, () -> b3, set3)
 @testset "Vector set of length 0" begin
     @test isempty(v3)
     @test c3.value == 0
-
     bridges = collect(values(map))
     @test sort([b.id for b in bridges]) == 1:2
     elements = sort(collect(map), by = el -> el.second.id)

@@ -308,10 +308,46 @@ end
 function get(model::ModelLike, attr::AnyAttribute, args...)
     return get_fallback(model, attr, args...)
 end
-function get_fallback(model::ModelLike, attr::AnyAttribute, args...)
+
+function get_fallback(
+    model::ModelLike,
+    attr::Union{AbstractModelAttribute,AbstractOptimizerAttribute},
+)
     return throw(
         ArgumentError(
-            "ModelLike of type $(typeof(model)) does not support accessing the attribute $attr",
+            "$(typeof(model)) does not support getting the attribute $(attr).",
+        ),
+    )
+end
+
+function get_fallback(
+    model::ModelLike,
+    attr::AbstractVariableAttribute,
+    ::VariableIndex,
+)
+    return throw(
+        ArgumentError(
+            "$(typeof(model)) does not support getting the attribute $(attr).",
+        ),
+    )
+end
+
+function get_fallback(
+    model::ModelLike,
+    attr::AbstractConstraintAttribute,
+    ::ConstraintIndex,
+)
+    return throw(
+        ArgumentError(
+            "$(typeof(model)) does not support getting the attribute $(attr).",
+        ),
+    )
+end
+
+function get_fallback(::ModelLike, attr::AnyAttribute, args...)
+    return throw(
+        ArgumentError(
+            "Unable to get attribute $(attr): invalid arguments $(args).",
         ),
     )
 end
@@ -319,16 +355,14 @@ end
 """
     get!(output, model::ModelLike, args...)
 
-An in-place version of `get`.
-The signature matches that of `get` except that the the result is placed in the vector `output`.
+An in-place version of [`get`](@ref).
+
+The signature matches that of [`get`](@ref) except that the the result is placed
+in the vector `output`.
 """
-function get! end
 function get!(output, model::ModelLike, attr::AnyAttribute, args...)
-    return throw(
-        ArgumentError(
-            "ModelLike of type $(typeof(model)) does not support accessing the attribute $attr",
-        ),
-    )
+    output .= get(model, attr, args...)
+    return
 end
 
 """
@@ -482,7 +516,12 @@ function submit(model::ModelLike, sub::AbstractSubmittable, args...)
             ),
         )
     else
-        throw(UnsupportedSubmittable(sub))
+        throw(
+            UnsupportedSubmittable(
+                sub,
+                "submit(::$(typeof(model)), ::$(typeof(sub))) is not supported.",
+            ),
+        )
     end
 end
 
@@ -1147,8 +1186,9 @@ is_set_by_optimize(::CallbackVariablePrimal) = true
 """
     BasisStatusCode
 
-An Enum of possible values for the `ConstraintBasisStatus` attribute, explaining
-the status of a given element with respect to an optimal solution basis.
+An Enum of possible values for the [`ConstraintBasisStatus`](@ref) and
+[`VariableBasisStatus`](@ref) attributes, explaining the status of a given
+element with respect to an optimal solution basis.
 
 Possible values are:
 
@@ -1159,17 +1199,18 @@ Possible values are:
 * `SUPER_BASIC`: element is not in the basis but is also not at one of its
   bounds
 
-Notes
+## Notes
 
 * `NONBASIC_AT_LOWER` and `NONBASIC_AT_UPPER` should be used only for
   constraints with the `Interval` set. In this case, they are necessary to
   distinguish which side of the constraint is active. One-sided constraints
   (e.g., `LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
-  `NONBASIC_AT_*` values.
+  `NONBASIC_AT_*` values. This restriction does not apply to [`VariableBasisStatus`](@ref),
+  which should return `NONBASIC_AT_*` regardless of whether the alternative
+  bound exists.
 
-* In general, `SUPER_BASIC` usually occurs when the problem is nonlinear. For
-  linear programs, `SUPER_BASIC` variables only occur if the solver returns a
-  solution that is not at a vertex of the feasible region.
+* In linear programs, `SUPER_BASIC` occurs when a variable with no bounds is not
+  in the basis.
 """
 @enum(
     BasisStatusCode,
@@ -1179,6 +1220,17 @@ Notes
     NONBASIC_AT_UPPER,
     SUPER_BASIC
 )
+
+"""
+    VariableBasisStatus(result_index::Int = 1)
+
+A variable attribute for the `BasisStatusCode` of a variable in result
+`result_index`, with respect to an available optimal solution basis.
+"""
+struct VariableBasisStatus <: AbstractVariableAttribute
+    result_index::Int
+    VariableBasisStatus(result_index::Int = 1) = new(result_index)
+end
 
 ## Constraint attributes
 
@@ -1294,8 +1346,13 @@ A constraint attribute for the `BasisStatusCode` of some constraint in result
 
 See [`ResultCount`](@ref) for information on how the results are ordered.
 
-**For the basis status of a variable, query the corresponding `SingleVariable`
-constraint that enforces the variable's bounds.**
+## Notes
+
+For the basis status of a variable, query [`VariableBasisStatus`](@ref).
+
+`ConstraintBasisStatus` does not apply to `SingleVariable` constraints. You
+can infer the basis status of a [`SingleVariable`](@ref) constraint by looking
+at the result of [`VariableBasisStatus`](@ref).
 """
 struct ConstraintBasisStatus <: AbstractConstraintAttribute
     result_index::Int
@@ -1303,6 +1360,17 @@ struct ConstraintBasisStatus <: AbstractConstraintAttribute
 end
 
 attribute_value_type(::ConstraintBasisStatus) = BasisStatusCode
+
+function get_fallback(
+    ::ModelLike,
+    ::ConstraintBasisStatus,
+    ::ConstraintIndex{SingleVariable,<:AbstractScalarSet},
+)
+    return error(
+        "Querying the basis status of a `SingleVariable` constraint is not ",
+        "supported. Use [`VariableBasisStatus`](@ref) instead.",
+    )
+end
 
 """
     CanonicalConstraintFunction()
@@ -1725,6 +1793,7 @@ function is_set_by_optimize(
         ConstraintPrimal,
         ConstraintDual,
         ConstraintBasisStatus,
+        VariableBasisStatus,
     },
 )
     return true

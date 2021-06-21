@@ -56,9 +56,8 @@ MOIU.set_mock_optimize!(
         con_basis = [
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
                 [MOI.NONBASIC],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                [MOI.BASIC, MOI.NONBASIC],
         ],
+        var_basis = [MOI.BASIC, MOI.NONBASIC_AT_LOWER],
     ),
 )
 MOIT.linear2test(mock, config)
@@ -70,8 +69,8 @@ MOIU.set_mock_optimize!(
         con_basis = [
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
                 [MOI.NONBASIC],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [MOI.BASIC],
         ],
+        var_basis = [MOI.BASIC],
     ),
     (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
         mock,
@@ -79,8 +78,8 @@ MOIU.set_mock_optimize!(
         con_basis = [
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
                 [MOI.BASIC],
-            (MOI.SingleVariable, MOI.LessThan{Float64}) => [MOI.NONBASIC],
         ],
+        var_basis = [MOI.NONBASIC_AT_UPPER],
     ),
 )
 MOIT.linear3test(mock, config)
@@ -178,9 +177,8 @@ MOIU.set_mock_optimize!(
                 [MOI.NONBASIC, MOI.NONBASIC],
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
                 [MOI.BASIC],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                [MOI.BASIC, MOI.BASIC],
         ],
+        var_basis = [MOI.BASIC, MOI.BASIC],
     ),
 )
 MOIT.linear9test(mock, config)
@@ -192,9 +190,8 @@ MOIU.set_mock_optimize!(
         con_basis = [
             (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) =>
                 [MOI.NONBASIC_AT_UPPER],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                [MOI.BASIC, MOI.BASIC],
         ],
+        var_basis = [MOI.BASIC, MOI.BASIC],
         (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [-1],
     ),
     (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -203,9 +200,8 @@ MOIU.set_mock_optimize!(
         con_basis = [
             (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) =>
                 [MOI.NONBASIC_AT_LOWER],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                [MOI.BASIC, MOI.BASIC],
         ],
+        var_basis = [MOI.BASIC, MOI.BASIC],
         (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [1],
     ),
     (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -215,9 +211,8 @@ MOIU.set_mock_optimize!(
         con_basis = [
             (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) =>
                 [MOI.NONBASIC_AT_LOWER],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                [MOI.BASIC, MOI.BASIC],
         ],
+        var_basis = [MOI.BASIC, MOI.BASIC],
     ),
     (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
         mock,
@@ -226,9 +221,8 @@ MOIU.set_mock_optimize!(
         con_basis = [
             (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) =>
                 [MOI.NONBASIC_AT_UPPER],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                [MOI.BASIC, MOI.BASIC],
         ],
+        var_basis = [MOI.BASIC, MOI.BASIC],
     ),
 )
 MOIT.linear10test(mock, config)
@@ -240,9 +234,8 @@ MOIU.set_mock_optimize!(
         con_basis = [
             (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) =>
                 [MOI.BASIC],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                [MOI.NONBASIC, MOI.NONBASIC],
         ],
+        var_basis = [MOI.NONBASIC_AT_LOWER, MOI.NONBASIC_AT_LOWER],
         (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [0],
     ),
 )
@@ -289,10 +282,8 @@ MOIU.set_mock_optimize!(
         con_basis = [
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
                 [MOI.NONBASIC],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                [MOI.NONBASIC, MOI.BASIC, MOI.BASIC],
-            (MOI.SingleVariable, MOI.LessThan{Float64}) => [MOI.NONBASIC],
         ],
+        var_basis = [MOI.NONBASIC_AT_LOWER, MOI.BASIC, MOI.NONBASIC_AT_UPPER],
         (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1],
         (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2, 0, 0],
         (MOI.SingleVariable, MOI.LessThan{Float64}) => [-2],
