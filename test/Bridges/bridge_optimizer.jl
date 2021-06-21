@@ -167,7 +167,7 @@ bridged_mock = MOIB.Constraint.LessToGreater{Float64}(
     }
     attr = MOIT.UnknownConstraintAttribute()
     err = ArgumentError(
-        "Bridge of type `$(typeof(bridge))` does not support accessing " *
+        "Bridge of type `$(bridge)` does not support accessing " *
         "the attribute `$attr`. If you encountered this error " *
         "unexpectedly, it probably means your model has been " *
         "reformulated using the bridge, and you are attempting to query " *
