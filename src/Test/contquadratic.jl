@@ -1,13 +1,17 @@
-# Continuous quadratic problems
+"""
+    test_quadratic_integration(model::MOI.ModelLike, config::Config)
 
-function qp1test(model::MOI.ModelLike, config::Config)
+Test the problem:
+```
+Min x^2 + xy + y^2 + yz + z^2
+st  x + 2y + 3z >= 4 (c1)
+    x +  y      >= 1 (c2)
+    x, y, z in R
+```
+"""
+function test_quadratic_integration(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
-    # homogeneous quadratic objective
-    # Min x^2 + xy + y^2 + yz + z^2
-    # st  x + 2y + 3z >= 4 (c1)
-    #     x +  y      >= 1 (c2)
-    #     x, y, z \in R
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     MOI.supports(
         model,
@@ -96,17 +100,40 @@ function qp1test(model::MOI.ModelLike, config::Config)
                 rtol
         end
     end
+    return
 end
 
-function qp2test(model::MOI.ModelLike, config::Config)
+function setup_test(
+    ::typeof(test_quadratic_integration),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [4 / 7, 3 / 7, 6 / 7],
+            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
+                [5 / 7, 6 / 7],
+        ),
+    )
+    return
+end
+
+"""
+    test_quadratic_duplicate_terms(model::MOI.ModelLike, config::Config)
+
+Test the problem:
+```
+Min x^2 + xy + y^2 + yz + z^2
+st  x + 2y + 3z >= 4 (c1)
+    x +  y      >= 1 (c2)
+    x, y, z in R
+```
+"""
+function test_quadratic_duplicate_terms(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
-    # Same as `qp1` but with duplicate terms then change the objective and sense
-    # simple quadratic objective
-    # Min x^2 + xy + y^2 + yz + z^2
-    # st  x + 2y + 3z >= 4 (c1)
-    #     x +  y      >= 1 (c2)
-    #     x, y, z \in R
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -232,15 +259,45 @@ function qp2test(model::MOI.ModelLike, config::Config)
                 rtol
         end
     end
+    return
 end
 
-function qp3test(model::MOI.ModelLike, config::Config)
+function setup_test(
+    ::typeof(test_quadratic_duplicate_terms),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [4 / 7, 3 / 7, 6 / 7],
+            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
+                [5 / 7, 6 / 7],
+        ),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [4 / 7, 3 / 7, 6 / 7],
+            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
+                [10 / 7, 12 / 7],
+        ),
+    )
+    return
+end
+
+"""
+    test_quadratic_nonhomogeneous(model::MOI.ModelLike, config::Config)
+
+Test the problem:
+```
+minimize 2 x^2 + y^2 + xy + x + y + 1
+    s.t.  x, y >= 0
+          x + y = 1
+```
+"""
+function test_quadratic_nonhomogeneous(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
-    # non-homogeneous quadratic objective
-    #    minimize 2 x^2 + y^2 + xy + x + y + 1
-    #       s.t.  x, y >= 0
-    #             x + y = 1
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -296,7 +353,8 @@ function qp3test(model::MOI.ModelLike, config::Config)
             rtol
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-            # The dual constraint gives [λ_vc1 + λ_c1, λ_vc2 + λ_c1] = [4 1; 1 2] * x + [1, 1] = [11, 11] / 4
+            # The dual constraint gives
+            # [λ_vc1 + λ_c1, λ_vc2 + λ_c1] = [4 1; 1 2] * x + [1, 1] = [11, 11] / 4
             # since `vc1` and `vc2` are not active, `λ_vc1` and `λ_vc2` are
             # zero so `λ_c1 = 11/4`.
             @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ 11 / 4 atol = atol rtol =
@@ -312,7 +370,8 @@ function qp3test(model::MOI.ModelLike, config::Config)
     #       s.t.  x, y >= 0
     #             x + y = 1
     # (x,y) = (1,0), obj = 3
-    # First clear the objective, this is needed if a `Bridges.Objective.SlackBridge` is used.
+    # First clear the objective, this is needed if a
+    # `Bridges.Objective.SlackBridge` is used.
     MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     objf =
@@ -343,26 +402,51 @@ function qp3test(model::MOI.ModelLike, config::Config)
                 rtol
         end
     end
+    return
 end
 
-const qptests = Dict("qp1" => qp1test, "qp2" => qp2test, "qp3" => qp3test)
+function setup_test(
+    ::typeof(test_quadratic_nonhomogeneous),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [1 / 4, 3 / 4],
+            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
+                [11 / 4],
+        ),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [1.0, 0.0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
+                [-2.0],
+        ),
+    )
+    return
+end
 
-@moitestset qp
+"""
+    test_quadratic_constraint_integration(model::MOI.ModelLike, config::Config)
 
-#=
-    Quadratically constrained (convex) programs
-=#
-
-function qcp1test(model::MOI.ModelLike, config::Config)
+Test the problem:
+```
+Max x  + y
+st -x  + y >= 0 (c1[1])
+    x  + y >= 0 (c1[2])
+    x² + y <= 2 (c2)
+Optimal solution
+x = 1/2, y = 7/4
+```
+"""
+function test_quadratic_constraint_integration(
+    model::MOI.ModelLike,
+    config::Config,
+)
     atol = config.atol
     rtol = config.rtol
-    # quadratic constraint
-    # Max x  + y
-    # st -x  + y >= 0 (c1[1])
-    #     x  + y >= 0 (c1[2])
-    #     x² + y <= 2 (c2)
-    # Optimal solution
-    # x = 1/2, y = 7/4
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -469,13 +553,40 @@ function qcp1test(model::MOI.ModelLike, config::Config)
     # @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
     #
     # @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol=atol rtol=rtol
+    return
 end
 
-function qcp2test(model::MOI.ModelLike, config::Config)
+function setup_test(
+    ::typeof(test_quadratic_constraint_integration),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [1 / 2, 7 / 4],
+            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+                [zeros(2)],
+            (MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}) =>
+                [-1.0],
+        ),
+    )
+    return
+end
+
+"""
+    test_quadratic_constraint_basic(model::MOI.ModelLike, config::Config)
+
+Test the problem:
+```
+ Max x
+s.t. x^2 <= 2 (c)
+```
+"""
+function test_quadratic_constraint_basic(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
-    # Max x
-    # s.t. x^2 <= 2 (c)
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -535,13 +646,44 @@ function qcp2test(model::MOI.ModelLike, config::Config)
                 atol rtol = rtol
         end
     end
+    return
 end
 
-function qcp3test(model::MOI.ModelLike, config::Config)
+function setup_test(
+    ::typeof(test_quadratic_constraint_basic),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [√2],
+            (MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}) =>
+                [-1 / (2 * √2)],
+        ),
+    )
+    return
+end
+
+"""
+    test_quadratic_constraint_minimize(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Test the problem:
+```
+ Min -x
+s.t.  x^2 <= 2
+```
+"""
+function test_quadratic_constraint_minimize(
+    model::MOI.ModelLike,
+    config::Config,
+)
     atol = config.atol
     rtol = config.rtol
-    # Min -x
-    # s.t. x^2 <= 2
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -604,9 +746,34 @@ function qcp3test(model::MOI.ModelLike, config::Config)
                 atol rtol = rtol
         end
     end
+    return
 end
 
-function _qcp4test(model::MOI.ModelLike, config::Config, less_than::Bool)
+function setup_test(
+    ::typeof(test_quadratic_constraint_minimize),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [√2],
+            (MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}) =>
+                [-1 / (2 * √2)],
+        ),
+    )
+    return
+end
+
+"""
+
+"""
+function _test_quadratic_constraint_helper(
+    model::MOI.ModelLike,
+    config::Config,
+    less_than::Bool,
+)
     atol = config.atol
     rtol = config.rtol
     # Max  x
@@ -687,35 +854,77 @@ function _qcp4test(model::MOI.ModelLike, config::Config, less_than::Bool)
                 rtol
         end
     end
+    return
 end
 
-function qcp4test(model::MOI.ModelLike, config::Config)
-    return _qcp4test(model, config, true)
-end
-function qcp5test(model::MOI.ModelLike, config::Config)
-    return _qcp4test(model, config, false)
-end
-
-const qcptests = Dict(
-    "qcp1" => qcp1test,
-    "qcp2" => qcp2test,
-    "qcp3" => qcp3test,
-    "qcp4" => qcp4test,
-    "qcp5" => qcp5test,
+function test_quadratic_constraint_LessThan(
+    model::MOI.ModelLike,
+    config::Config,
 )
+    _test_quadratic_constraint_helper(model, config, true)
+    return
+end
 
-@moitestset qcp
+function setup_test(
+    ::typeof(test_quadratic_constraint_LessThan),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [1.0, 1.0],
+            (MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}) =>
+                [-1 / 3],
+        ),
+    )
+    return
+end
 
-#=
-    Quadratically constrained (non-convex) programs
-=#
+function test_quadratic_constraint_GreaterThan(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    _test_quadratic_constraint_helper(model, config, false)
+    return
+end
 
-function ncqcp1test(model::MOI.ModelLike, config::Config)
+function setup_test(
+    ::typeof(test_quadratic_constraint_GreaterThan),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [1.0, 1.0],
+            (MOI.ScalarQuadraticFunction{Float64}, MOI.GreaterThan{Float64}) => [1 / 3],
+        ),
+    )
+    return
+end
+
+"""
+    test_nonconvex_quadratic_constraint_integration(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Test the problem:
+```
+Max 2x + y
+s.t. x * y <= 4 (c)
+     x, y >= 1
+```
+"""
+function test_nonconvex_quadratic_constraint_integration(
+    model::MOI.ModelLike,
+    config::Config,
+)
     atol = config.atol
     rtol = config.rtol
-    # Max 2x + y
-    # s.t. x * y <= 4 (c)
-    #      x, y >= 1
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -780,15 +989,42 @@ function ncqcp1test(model::MOI.ModelLike, config::Config)
         @test MOI.get(model, MOI.ConstraintPrimal(), vc2) ≈ 1.0 atol = atol rtol =
             rtol
     end
+    return
 end
 
-function ncqcp2test(model::MOI.ModelLike, config::Config)
+function setup_test(
+    ::typeof(test_nonconvex_quadratic_constraint_integration),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [4.0, 1.0], MOI.FEASIBLE_POINT),
+    )
+    return
+end
+
+"""
+    test_nonconvex_quadratic_constraint_basic(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Test the problem:
+```
+Find x, y
+s.t. x * y == 4 (c)
+     x * x == 4 (c2)
+     x, y >= 0
+```
+"""
+function test_nonconvex_quadratic_constraint_basic(
+    model::MOI.ModelLike,
+    config::Config,
+)
     atol = config.atol
     rtol = config.rtol
-    # Find x, y
-    # s.t. x * y == 4 (c)
-    #      x * x == 4 (c2)
-    #      x, y >= 0
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports_constraint(
         model,
@@ -847,23 +1083,36 @@ function ncqcp2test(model::MOI.ModelLike, config::Config)
         @test MOI.get(model, MOI.ConstraintPrimal(), vc2) ≈ 2.0 atol = atol rtol =
             rtol
     end
+    return
 end
 
-const ncqcptests = Dict("ncqcp1" => ncqcp1test, "ncqcp2" => ncqcp2test)
+function setup_test(
+    ::typeof(test_nonconvex_quadratic_constraint_basic),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [2.0, 2.0], MOI.FEASIBLE_POINT),
+    )
+    return
+end
 
-@moitestset ncqcp
+"""
+    test_socp_basic(model::MOI.ModelLike, config::Config)
 
-#=
-    SOCP
-=#
-
-function socp1test(model::MOI.ModelLike, config::Config)
+Test the problem:
+```
+min t
+s.t. x + y >= 1 (c1)
+     x^2 + y^2 <= t^2 (c2)
+     t >= 0 (bound)
+```
+"""
+function test_socp_basic(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
-    # min t
-    # s.t. x + y >= 1 (c1)
-    #      x^2 + y^2 <= t^2 (c2)
-    #      t >= 0 (bound)
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -966,17 +1215,24 @@ function socp1test(model::MOI.ModelLike, config::Config)
                 rtol
         end
     end
+    return
 end
 
-const socptests = Dict("socp1" => socp1test)
-
-@moitestset socp
-
-const contquadratictests = Dict(
-    "qp" => qptest,
-    "qcp" => qcptest,
-    "ncqcp" => ncqcptest,
-    "socp" => socptest,
+function setup_test(
+    ::typeof(test_socp_basic),
+    model::MOIU.MockOptimizer,
+    ::Config,
 )
-
-@moitestset contquadratic true
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [1 / 2, 1 / 2, 1 / √2],
+            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
+                [1 / √2],
+            (MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}) =>
+                [-1 / √2],
+        ),
+    )
+    return
+end

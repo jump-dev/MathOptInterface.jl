@@ -92,7 +92,7 @@ config = MOIT.Config()
                 ) => [[0.25, 1.0, -1 / √2]],
             ),
         )
-        MOIT.qcp1test(bridged_mock, config)
+        MOIT.test_quadratic_constraint_integration(bridged_mock, config)
         MOIU.set_mock_optimize!(
             mock,
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -104,8 +104,8 @@ config = MOIT.Config()
                 ) => [[1 / √2, 1 / (2 * √2), -1 / √2]],
             ),
         )
-        MOIT.qcp2test(bridged_mock, config)
-        MOIT.qcp3test(bridged_mock, config)
+        MOIT.test_quadratic_constraint_basic(bridged_mock, config)
+        MOIT.test_quadratic_constraint_minimize(bridged_mock, config)
         @testset "Bridge deletion" begin
             ci = first(
                 MOI.get(
@@ -138,7 +138,7 @@ config = MOIT.Config()
                 ) => [[1.0, 1 / 3, -1 / √2, -1 / √6]],
             ),
         )
-        MOIT.qcp4test(bridged_mock, config)
-        MOIT.qcp5test(bridged_mock, config)
+        MOIT.test_quadratic_constraint_LessThan(bridged_mock, config)
+        MOIT.test_quadratic_constraint_GreaterThan(bridged_mock, config)
     end
 end

@@ -213,7 +213,7 @@ end
                 (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [5 / 7, 6 / 7],
             ),
         )
-        MOIT.qp1test(bridged_mock, config)
+        MOIT.test_quadratic_integration(bridged_mock, config)
     end
     @testset "QP2" begin
         MOIU.set_mock_optimize!(
@@ -229,7 +229,7 @@ end
                 (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [10 / 7, 12 / 7],
             ),
         )
-        MOIT.qp2test(bridged_mock, config)
+        MOIT.test_quadratic_duplicate_terms(bridged_mock, config)
     end
     @testset "QP3" begin
         MOIU.set_mock_optimize!(
@@ -249,6 +249,6 @@ end
                 (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [1.0],
             ),
         )
-        MOIT.qp3test(bridged_mock, config)
+        MOIT.test_quadratic_nonhomogeneous(bridged_mock, config)
     end
 end
