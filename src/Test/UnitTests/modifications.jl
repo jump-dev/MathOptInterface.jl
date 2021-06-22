@@ -58,7 +58,7 @@ function test_modification_set_singlevariable_lessthan(
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(x.value)
     @test c.value == x.value
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 1.0,
@@ -68,7 +68,7 @@ function test_modification_set_singlevariable_lessthan(
     )
     MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(2.0))
     @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.LessThan(2.0)
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 2.0,
@@ -128,7 +128,7 @@ function test_modification_transform_singlevariable_lessthan(
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(x.value)
     @test c.value == x.value
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 1.0,
@@ -140,7 +140,7 @@ function test_modification_transform_singlevariable_lessthan(
     @test !MOI.is_valid(model, c)
     @test MOI.is_valid(model, c2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 2.0,
@@ -199,7 +199,7 @@ function test_modification_set_scalaraffine_lessthan(
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex, "c")
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 1.0,
@@ -209,7 +209,7 @@ function test_modification_set_scalaraffine_lessthan(
     )
     MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(2.0))
     @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.LessThan(2.0)
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 2.0,
@@ -272,7 +272,7 @@ function test_modification_coef_scalaraffine_lessthan(
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex, "c")
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 1.0,
@@ -281,7 +281,7 @@ function test_modification_coef_scalaraffine_lessthan(
         constraint_dual = [(c, -1.0)],
     )
     MOI.modify(model, c, MOI.ScalarCoefficientChange(x, 2.0))
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.5,
@@ -344,7 +344,7 @@ function test_modification_func_scalaraffine_lessthan(
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
     c = MOI.get(model, MOI.ConstraintIndex, "c")
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 1.0,
@@ -360,7 +360,7 @@ function test_modification_func_scalaraffine_lessthan(
     )
     foo = MOI.get(model, MOI.ConstraintFunction(), c)
     @test foo ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.5,
@@ -424,7 +424,7 @@ function test_modification_func_vectoraffine_nonneg(
     x = MOI.get(model, MOI.VariableIndex, "x")
     y = MOI.get(model, MOI.VariableIndex, "y")
     c = MOI.get(model, MOI.ConstraintIndex, "c")
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.0,
@@ -451,7 +451,7 @@ function test_modification_func_vectoraffine_nonneg(
         ],
         [-1.0, -1.5],
     )
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 2.5,
@@ -517,7 +517,7 @@ function test_modification_const_vectoraffine_nonpos(
         ),
         MOI.Nonpositives(2),
     )
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.0,
@@ -525,7 +525,7 @@ function test_modification_const_vectoraffine_nonpos(
         constraint_primal = [(c, [0.0, 0.0])],
     )
     MOI.modify(model, c, MOI.VectorConstantChange([-1.0, -1.5]))
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 2.5,
@@ -590,7 +590,7 @@ function test_modification_multirow_vectoraffine_nonpos(
         ),
         MOI.Nonpositives(2),
     )
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.5,
@@ -598,7 +598,7 @@ function test_modification_multirow_vectoraffine_nonpos(
         constraint_primal = [(c, [-0.5, 0.0])],
     )
     MOI.modify(model, c, MOI.MultirowChange(x, [(1, 4.0), (2, 3.0)]))
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.25,
@@ -649,7 +649,7 @@ function test_modification_const_scalar_objective(
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 3.0,
@@ -660,7 +660,7 @@ function test_modification_const_scalar_objective(
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarConstantChange(3.0),
     )
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 4.0,
@@ -707,7 +707,7 @@ function test_modification_coef_scalar_objective(
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 1.0,
@@ -718,7 +718,7 @@ function test_modification_coef_scalar_objective(
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarCoefficientChange(x, 3.0),
     )
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 3.0,
@@ -771,7 +771,7 @@ function test_modification_delete_variable_with_single_variable_obj(
     )
     @test c.value == x.value
     MOI.delete(model, y)
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 1.0,

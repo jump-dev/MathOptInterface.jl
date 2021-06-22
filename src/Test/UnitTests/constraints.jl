@@ -58,7 +58,7 @@ function solve_affine_lessthan(model::MOI.ModelLike, config::Config)
         },
         "c",
     )
-    return test_model_solution(
+    return _test_model_solution(
         model,
         config;
         objective_value = 0.5,
@@ -95,7 +95,7 @@ function solve_affine_greaterthan(model::MOI.ModelLike, config::Config)
         },
         "c",
     )
-    return test_model_solution(
+    return _test_model_solution(
         model,
         config;
         objective_value = 0.5,
@@ -132,7 +132,7 @@ function solve_affine_equalto(model::MOI.ModelLike, config::Config)
         },
         "c",
     )
-    return test_model_solution(
+    return _test_model_solution(
         model,
         config;
         objective_value = 0.5,
@@ -169,7 +169,7 @@ function solve_affine_interval(model::MOI.ModelLike, config::Config)
         },
         "c",
     )
-    return test_model_solution(
+    return _test_model_solution(
         model,
         config;
         objective_value = 6.0,
@@ -205,7 +205,7 @@ function solve_duplicate_terms_scalar_affine(
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x, x]), 0.0)
     c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
-    return test_model_solution(
+    return _test_model_solution(
         model,
         config;
         objective_value = 0.5,
@@ -244,7 +244,7 @@ function solve_duplicate_terms_vector_affine(
         [-1.0],
     )
     c = MOI.add_constraint(model, f, MOI.Nonpositives(1))
-    return test_model_solution(
+    return _test_model_solution(
         model,
         config;
         objective_value = 0.5,
@@ -309,7 +309,7 @@ function solve_qcp_edge_cases(model::MOI.ModelLike, config::Config)
             ),
             MOI.LessThan(1.0),
         )
-        test_model_solution(
+        _test_model_solution(
             model,
             config;
             objective_value = 1.5,
@@ -351,7 +351,7 @@ function solve_qcp_edge_cases(model::MOI.ModelLike, config::Config)
             ),
             MOI.LessThan(1.0),
         )
-        test_model_solution(
+        _test_model_solution(
             model,
             config;
             objective_value = 0.5 + (√13 - 1) / 2,
@@ -392,7 +392,7 @@ function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::Config)
     )
     # test adding a VectorAffineFunction -in- LessThan
     c1 = MOI.add_constraint(model, vaf, MOI.Nonpositives(1))
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.0,
@@ -400,7 +400,7 @@ function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::Config)
     )
     # test adding a ScalarAffineFunction -in- LessThan
     c2 = MOI.add_constraint(model, saf, MOI.LessThan(1.0))
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.0,
@@ -414,7 +414,7 @@ function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::Config)
     catch err
         @test err.index == c1
     end
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 1.0,
@@ -422,7 +422,7 @@ function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::Config)
     )
     # add a different VectorAffineFunction constraint
     c3 = MOI.add_constraint(model, vaf2, MOI.Nonpositives(1))
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 1.0,
@@ -430,7 +430,7 @@ function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::Config)
     )
     # delete the ScalarAffineFunction
     MOI.delete(model, c2)
-    return test_model_solution(
+    return _test_model_solution(
         model,
         config;
         objective_value = 2.0,
@@ -452,7 +452,7 @@ function solve_zero_one_with_bounds_1(model::MOI.ModelLike, config::Config)
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    return test_model_solution(
+    return _test_model_solution(
         model,
         config;
         objective_value = 2.0,
@@ -474,7 +474,7 @@ function solve_zero_one_with_bounds_2(model::MOI.ModelLike, config::Config)
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    return test_model_solution(
+    return _test_model_solution(
         model,
         config;
         objective_value = 0.0,
@@ -540,7 +540,7 @@ function solve_start_soc(model::MOI.ModelLike, config::Config{T}) where {T}
     end
     if config.solve
         MOI.optimize!(model)
-        MOI.Test.test_model_solution(
+        MOI.Test._test_model_solution(
             model,
             config;
             objective_value = o,

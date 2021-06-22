@@ -226,7 +226,7 @@ function test_solve_with_upperbound(model::MOI.ModelLike, config::Config)
         x.value,
     )
     @test c2.value == x.value
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 2.0,
@@ -282,7 +282,7 @@ function test_solve_with_lowerbound(model::MOI.ModelLike, config::Config)
     @test c1.value == x.value
     c2 = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(x.value)
     @test c2.value == x.value
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 2.0,
@@ -337,7 +337,7 @@ x in Integer()
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 4.0,
@@ -383,7 +383,7 @@ x in Integer()
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = -2.0,
@@ -429,7 +429,7 @@ x in ZeroOne()
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = -2.0,
@@ -475,7 +475,7 @@ x in ZeroOne()
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.0,

@@ -98,7 +98,7 @@ function test_ObjectiveFunction_constant(model::MOI.ModelLike, config::Config)
     # We test this after the creation of every `SingleVariable` constraint
     # to ensure a good coverage of corner cases.
     @test c.value == x.value
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 3.0,
@@ -153,7 +153,7 @@ function test_ObjectiveFunction_blank(model::MOI.ModelLike, config::Config)
         x.value,
     )
     @test c.value == x.value
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.0,
@@ -209,7 +209,7 @@ function test_ObjectiveFunction_SingleVariable(
         x.value,
     )
     @test c.value == x.value
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 1.0,
@@ -279,7 +279,7 @@ function test_qp_ObjectiveFunction_edge_cases(
             0.0,  # constant
         ),
     )
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 5.0,
@@ -296,7 +296,7 @@ function test_qp_ObjectiveFunction_edge_cases(
             0.0,  # constant
         ),
     )
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 7.0,
@@ -309,15 +309,11 @@ function test_qp_ObjectiveFunction_edge_cases(
         obj_attr,
         MOI.ScalarQuadraticFunction(
             MOI.ScalarAffineTerm{Float64}[],  # affine terms
-            MOI.ScalarQuadraticTerm.(
-                [2.0, 2.0],
-                [x[1], x[1]],
-                [x[1], x[1]],
-            ),  # quad
+            MOI.ScalarQuadraticTerm.([2.0, 2.0], [x[1], x[1]], [x[1], x[1]]),  # quad
             0.0,  # constant
         ),
     )
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 2.0,
@@ -338,7 +334,7 @@ function test_qp_ObjectiveFunction_edge_cases(
             0.0,  # constant
         ),
     )
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 7.0,
@@ -421,7 +417,7 @@ function test_qp_ObjectiveFunction_zero_ofdiag(
             0.0,  # constant
         ),
     )
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 5.0,
@@ -470,7 +466,7 @@ function test_ObjectiveFunction_duplicate_terms(
             0.0,
         ),
     )
-    test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 3.0,

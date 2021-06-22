@@ -6,20 +6,92 @@ const MOIU = MOI.Utilities
 
 using Test
 
-include("config.jl")
+struct Config{T<:Real}
+    atol::T
+    rtol::T
+    solve::Bool
+    query_number_of_constraints::Bool
+    query::Bool
+    modify_lhs::Bool
+    duals::Bool
+    dual_objective_value::Bool
+    infeas_certificates::Bool
+    optimal_status::MOI.TerminationStatusCode
+    basis::Bool
 
-include("modellike.jl")
+    """
+        Config{T}(;
+            atol::Real = Base.rtoldefault(T),
+            rtol::Real = Base.rtoldefault(T),
+            solve::Bool = true,
+            query_number_of_constraints::Bool = true,
+            query::Bool = true,
+            modify_lhs::Bool = true,
+            duals::Bool = true,
+            dual_objective_value::Bool = duals,
+            infeas_certificates::Bool = true,
+            optimal_status = MOI.OPTIMAL,
+            basis::Bool = false,
+        )
 
-include("contlinear.jl")
-include("contconic.jl")
-include("contquadratic.jl")
+    Return an object that is used to configure various tests.
 
-include("intlinear.jl")
-include("intconic.jl")
+    ## Keywords
 
-include("nlp.jl")
+     * `atol::Real = Base.rtoldefault(T)`: Control the absolute tolerance used
+        when comparing solutions.
+     * `rtol::Real = Base.rtoldefault(T)`: Control the relative tolerance used
+        when comparing solutions.
+     * `solve::Bool = true`: Set to `false` to skip tests requiring a call to
+       [`MOI.optimize!`](@ref)
+     * `query_number_of_constraints::Bool = true`: Set to `false` to skip tests
+       requiring a call to [`MOI.NumberOfConstraints`](@ref).
+     * `query::Bool = true`: Set to `false` to skip tests requiring a call to
+       [`MOI.get`](@ref) for [`MOI.ConstraintFunction`](@ref) and
+       [`MOI.ConstraintSet`](@ref)
+     * `modify_lhs::Bool = true`:
+     * `duals::Bool = true`: Set to `false` to skip tests querying
+       [`MOI.ConstraintDual`](@ref).
+     * `dual_objective_value::Bool = duals`: Set to `false` to skip tests
+       querying [`MOI.DualObjectiveValue`](@ref).
+     * `infeas_certificates::Bool = true`: Set to `false` to skip tests querying
+       primal and dual infeasibility certificates.
+     * `optimal_status = MOI.OPTIMAL`: Set to `MOI.LOCALLY_SOLVED` if the solver
+       cannot prove global optimality.
+     * `basis::Bool = false`: Set to `true` if the solver supports
+       [`MOI.ConstraintBasisStatus`](@ref) and [`MOI.VariableBasisStatus`](@ref).
+    """
+    function Config{T}(;
+        atol::Real = Base.rtoldefault(T),
+        rtol::Real = Base.rtoldefault(T),
+        solve::Bool = true,
+        query_number_of_constraints::Bool = true,
+        query::Bool = true,
+        modify_lhs::Bool = true,
+        duals::Bool = true,
+        dual_objective_value::Bool = duals,
+        infeas_certificates::Bool = true,
+        optimal_status = MOI.OPTIMAL,
+        basis::Bool = false,
+    ) where {T<:Real}
+        return new(
+            atol,
+            rtol,
+            solve,
+            query_number_of_constraints,
+            query,
+            modify_lhs,
+            duals,
+            dual_objective_value,
+            infeas_certificates,
+            optimal_status,
+            basis,
+        )
+    end
+    Config(; kwargs...) = Config{Float64}(; kwargs...)
+end
 
-include("UnitTests/unit_tests.jl")
+@deprecate TestConfig Config
 
 """
     setup_test(::typeof(f), model::MOI.ModelLike, config::Config)
@@ -119,5 +191,145 @@ function runtests(
         end
     end
 end
+
+"""
+    _test_model_solution(
+        model::MOI.ModelLike,
+        config::Config;
+        objective_value   = nothing,
+        variable_primal   = nothing,
+        constraint_primal = nothing,
+        constraint_dual   = nothing,
+    )
+
+Solve, and then test, various aspects of a model.
+
+First, check that `TerminationStatus == MOI.OPTIMAL`.
+
+If `objective_value` is not nothing, check that the attribute `ObjectiveValue()`
+is approximately `objective_value`.
+
+If `variable_primal` is not nothing, check that the attribute  `PrimalStatus` is
+`MOI.FEASIBLE_POINT`. Then for each `(index, value)` in `variable_primal`, check
+that the primal value of the variable `index` is approximately `value`.
+
+If `constraint_primal` is not nothing, check that the attribute  `PrimalStatus` is
+`MOI.FEASIBLE_POINT`. Then for each `(index, value)` in `constraint_primal`, check
+that the primal value of the constraint `index` is approximately `value`.
+
+Finally, if `config.duals = true`, and if `constraint_dual` is not nothing,
+check that the attribute  `DualStatus` is `MOI.FEASIBLE_POINT`. Then for each
+`(index, value)` in `constraint_dual`, check that the dual of the constraint
+`index` is approximately `value`.
+
+### Example
+
+```julia
+MOIU.loadfromstring!(model, \"\"\"
+    variables: x
+    minobjective: 2.0x + 1.0
+    c: x >= 1.0
+\"\"\")
+x = MOI.get(model, MOI.VariableIndex, "x")
+c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
+_test_model_solution(
+    model,
+    config;
+    objective_value   = 3.0,
+    variable_primal   = [(x, 1.0)],
+    constraint_primal = [(c, 1.0)],
+    constraint_dual   = [(c, 2.0)],
+)
+```
+"""
+function _test_model_solution(
+    model,
+    config;
+    objective_value = nothing,
+    variable_primal = nothing,
+    constraint_primal = nothing,
+    constraint_dual = nothing,
+)
+    if !config.solve
+        return
+    end
+    atol, rtol = config.atol, config.rtol
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    if objective_value !== nothing
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ objective_value atol = atol rtol =
+            rtol
+    end
+    if variable_primal !== nothing
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        for (index, solution_value) in variable_primal
+            @test MOI.get(model, MOI.VariablePrimal(), index) ≈ solution_value atol =
+                atol rtol = rtol
+        end
+    end
+    if constraint_primal !== nothing
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        for (index, solution_value) in constraint_primal
+            @test MOI.get(model, MOI.ConstraintPrimal(), index) ≈ solution_value atol =
+                atol rtol = rtol
+        end
+    end
+    if config.duals
+        if constraint_dual !== nothing
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+            for (index, solution_value) in constraint_dual
+                @test MOI.get(model, MOI.ConstraintDual(), index) ≈
+                      solution_value atol = atol rtol = rtol
+            end
+        end
+    end
+    return
+end
+
+macro moitestset(setname, subsets = false)
+    testname = Symbol(string(setname) * "test")
+    testdict = Symbol(string(testname) * "s")
+    if subsets
+        runtest = :(f(model, config, exclude))
+    else
+        runtest = :(f(model, config))
+    end
+    return esc(
+        :(
+            function $testname(
+                model::$MOI.ModelLike,
+                config::$MOI.Test.Config,
+                exclude::Vector{String} = String[],
+            )
+                for (name, f) in $testdict
+                    if name in exclude
+                        continue
+                    end
+                    @testset "$name" begin
+                        $runtest
+                    end
+                end
+            end
+        ),
+    )
+end
+const unittests = Dict{String,Function}()
+@moitestset unit
+
+include("modellike.jl")
+include("contlinear.jl")
+include("contconic.jl")
+include("contquadratic.jl")
+include("intlinear.jl")
+include("intconic.jl")
+include("nlp.jl")
+
+include("UnitTests/attributes.jl")
+include("UnitTests/basic_constraint_tests.jl")
+include("UnitTests/constraints.jl")
+include("UnitTests/modifications.jl")
+include("UnitTests/objectives.jl")
+include("UnitTests/solve.jl")
+include("UnitTests/variables.jl")
 
 end # module

@@ -20,7 +20,7 @@ function test_ObjectiveBound_edge_cases(model::MOI.ModelLike, config::Config)
 """,
         )
         x = MOI.get(model, MOI.VariableIndex, "x")
-        test_model_solution(
+        _test_model_solution(
             model,
             config;
             objective_value = 3.0,
@@ -41,7 +41,7 @@ function test_ObjectiveBound_edge_cases(model::MOI.ModelLike, config::Config)
 """,
         )
         x = MOI.get(model, MOI.VariableIndex, "x")
-        test_model_solution(
+        _test_model_solution(
             model,
             config;
             objective_value = 3.0,
@@ -61,7 +61,7 @@ function test_ObjectiveBound_edge_cases(model::MOI.ModelLike, config::Config)
 """,
         )
         x = MOI.get(model, MOI.VariableIndex, "x")
-        test_model_solution(
+        _test_model_solution(
             model,
             config;
             objective_value = 2.0,
@@ -81,7 +81,7 @@ function test_ObjectiveBound_edge_cases(model::MOI.ModelLike, config::Config)
 """,
         )
         x = MOI.get(model, MOI.VariableIndex, "x")
-        test_model_solution(
+        _test_model_solution(
             model,
             config;
             objective_value = 4.0,
@@ -100,35 +100,19 @@ function setup_test(
         model,
         (mock::MOIU.MockOptimizer) -> begin
             MOI.set(mock, MOI.ObjectiveBound(), 3.0)
-            MOIU.mock_optimize!(
-                mock,
-                MOI.OPTIMAL,
-                (MOI.FEASIBLE_POINT, [2.0]),
-            )
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [2.0]))
         end,
         (mock::MOIU.MockOptimizer) -> begin
             MOI.set(mock, MOI.ObjectiveBound(), 3.0)
-            MOIU.mock_optimize!(
-                mock,
-                MOI.OPTIMAL,
-                (MOI.FEASIBLE_POINT, [1.0]),
-            )
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0]))
         end,
         (mock::MOIU.MockOptimizer) -> begin
             MOI.set(mock, MOI.ObjectiveBound(), 2.0)
-            MOIU.mock_optimize!(
-                mock,
-                MOI.OPTIMAL,
-                (MOI.FEASIBLE_POINT, [1.5]),
-            )
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.5]))
         end,
         (mock::MOIU.MockOptimizer) -> begin
             MOI.set(mock, MOI.ObjectiveBound(), 4.0)
-            MOIU.mock_optimize!(
-                mock,
-                MOI.OPTIMAL,
-                (MOI.FEASIBLE_POINT, [1.5]),
-            )
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.5]))
         end,
     )
     return
@@ -168,7 +152,8 @@ function setup_test(
 )
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE),
     )
     return
 end
@@ -319,8 +304,7 @@ function test_result_index(model::MOI.ModelLike, config::Config)
         return MOI.ResultIndexBoundsError{typeof(attr)}(attr, result_count)
     end
     result_index = result_count + 1
-    @test MOI.get(model, MOI.ObjectiveValue(1)) ≈ 1.0 atol = atol rtol =
-        rtol
+    @test MOI.get(model, MOI.ObjectiveValue(1)) ≈ 1.0 atol = atol rtol = rtol
     @test_throws result_err(MOI.ObjectiveValue(result_index)) MOI.get(
         model,
         MOI.ObjectiveValue(result_index),
@@ -335,8 +319,7 @@ function test_result_index(model::MOI.ModelLike, config::Config)
     end
     @test MOI.get(model, MOI.PrimalStatus(1)) == MOI.FEASIBLE_POINT
     @test MOI.get(model, MOI.PrimalStatus(result_index)) == MOI.NO_SOLUTION
-    @test MOI.get(model, MOI.VariablePrimal(1), x) ≈ 1.0 atol = atol rtol =
-        rtol
+    @test MOI.get(model, MOI.VariablePrimal(1), x) ≈ 1.0 atol = atol rtol = rtol
     @test_throws result_err(MOI.VariablePrimal(result_index)) MOI.get(
         model,
         MOI.VariablePrimal(result_index),
@@ -351,8 +334,7 @@ function test_result_index(model::MOI.ModelLike, config::Config)
     )
     if config.duals
         @test MOI.get(model, MOI.DualStatus(1)) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.DualStatus(result_index)) ==
-                MOI.NO_SOLUTION
+        @test MOI.get(model, MOI.DualStatus(result_index)) == MOI.NO_SOLUTION
         @test MOI.get(model, MOI.ConstraintDual(1), c) ≈ 1.0 atol = atol rtol =
             rtol
         @test_throws result_err(MOI.ConstraintDual(result_index)) MOI.get(
@@ -430,8 +412,7 @@ function setup_test(
             MOI.INFEASIBLE,
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                [2.0, 1.0],
+            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [-1.0],
         ),
@@ -486,8 +467,7 @@ function setup_test(
             MOI.INFEASIBLE,
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                [2.0, 1.0],
+            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [1.0],
         ),
@@ -543,9 +523,9 @@ function setup_test(
             MOI.INFEASIBLE,
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                [2.0, 1.0],
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0],
+            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
+                [-1.0],
         ),
     )
     return
@@ -599,9 +579,9 @@ function setup_test(
             MOI.INFEASIBLE,
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                [2.0, 1.0],
-            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [1.0],
+            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
+                [1.0],
         ),
     )
     return
@@ -655,9 +635,9 @@ function setup_test(
             MOI.INFEASIBLE,
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                [2.0, 1.0],
-            (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [-1.0],
+            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) =>
+                [-1.0],
         ),
     )
     return
@@ -711,9 +691,9 @@ function setup_test(
             MOI.INFEASIBLE,
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                [2.0, 1.0],
-            (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [1.0],
+            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) =>
+                [1.0],
         ),
     )
     return
@@ -767,7 +747,8 @@ function setup_test(
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
             (MOI.SingleVariable, MOI.LessThan{Float64}) => [-2.0, -1.0],
-            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [1.0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
+                [1.0],
         ),
     )
     return
@@ -815,7 +796,9 @@ function test_DualStatus_INFEASIBILITY_CERTIFICATE_SingleVariable_LessThan_max(
 end
 
 function setup_test(
-    ::typeof(test_DualStatus_INFEASIBILITY_CERTIFICATE_SingleVariable_LessThan_max),
+    ::typeof(
+        test_DualStatus_INFEASIBILITY_CERTIFICATE_SingleVariable_LessThan_max,
+    ),
     model::MOIU.MockOptimizer,
     ::Config,
 )
@@ -827,7 +810,8 @@ function setup_test(
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
             (MOI.SingleVariable, MOI.LessThan{Float64}) => [-2.0, -1.0],
-            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [1.0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
+                [1.0],
         ),
     )
     return
@@ -868,16 +852,10 @@ function setup_test(
 )
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0]),
-        ),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0]),
-        ),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
     )
     return
 end

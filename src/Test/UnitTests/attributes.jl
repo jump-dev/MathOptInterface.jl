@@ -123,7 +123,7 @@ function test_attribute_RawStatusString(model::MOI.ModelLike, config::Config)
         MOI.ObjectiveFunction{MOI.SingleVariable}(),
         MOI.SingleVariable(x),
     )
-    test_model_solution(
+    _test_model_solution(
         model,
         config,
         objective_value = 0.0,
@@ -171,7 +171,7 @@ function test_attribute_SolveTimeSec(model::MOI.ModelLike, config::Config)
         MOI.ObjectiveFunction{MOI.SingleVariable}(),
         MOI.SingleVariable(x),
     )
-    test_model_solution(
+    _test_model_solution(
         model,
         config,
         objective_value = 0.0,
