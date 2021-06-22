@@ -27,7 +27,7 @@ bridged_mock = MOIB.Variable.Free{Float64}(mock)
             (MOI.FEASIBLE_POINT, [0.25, 0.0]),
         ),
     )
-    MOIT.test_solve_multirow_vectoraffine_nonpos(bridged_mock, config)
+    MOIT.test_modification_multirow_vectoraffine_nonpos(bridged_mock, config)
 
     MOI.set(
         bridged_mock,
