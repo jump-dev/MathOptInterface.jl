@@ -39,7 +39,6 @@ function nametest(model::MOI.ModelLike)
         MOI.set(model, MOI.VariableName(), x[1], "x1")
         @test_throws ErrorException MOI.get(model, MOI.VariableIndex, "x1")
     end
-
     @testset "Variable bounds" begin
         MOI.empty!(model)
         x = MOI.add_variable(model)
@@ -54,7 +53,6 @@ function nametest(model::MOI.ModelLike)
             MOI.set(model, MOI.ConstraintName(), c1, "c1"),
         )
     end
-
     @testset "Affine constraints" begin
         MOI.empty!(model)
         x = MOI.add_variable(model)
@@ -71,7 +69,6 @@ function nametest(model::MOI.ModelLike)
         MOI.set(model, MOI.ConstraintName(), c1, "c1")
         @test_throws ErrorException MOI.get(model, MOI.ConstraintIndex, "c1")
     end
-
     @testset "Name test with $(typeof(model))" begin
         MOI.empty!(model)
         @test MOI.supports_incremental_interface(model, true) #=copy_names=#
@@ -84,7 +81,6 @@ function nametest(model::MOI.ModelLike)
         MOI.set(model, MOI.Name(), "Name2")
         @test MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet())
         @test MOI.get(model, MOI.Name()) == "Name2"
-
         @test MOI.get(model, MOI.NumberOfVariables()) == 0
         @test MOI.get(
             model,
@@ -93,7 +89,6 @@ function nametest(model::MOI.ModelLike)
                 MOI.LessThan{Float64},
             }(),
         ) == 0
-
         @test MOI.supports(model, MOI.VariableName(), MOI.VariableIndex)
         v = MOI.add_variables(model, 2)
         @test MOI.get(model, MOI.VariableName(), v[1]) == ""
@@ -104,40 +99,32 @@ function nametest(model::MOI.ModelLike)
             @test MOI.get(model, MOI.VariableName(), yi) == ""
         end
         @test MOI.get(model, MOI.ConstraintName(), cy) == ""
-
         MOI.set(model, MOI.VariableName(), v[1], "")
         MOI.set(model, MOI.VariableName(), v[2], "") # Shouldn't error with duplicate empty name
         MOI.set(model, MOI.VariableName(), x, "")
         for yi in y
             MOI.set(model, MOI.VariableName(), yi, "")
         end
-
         MOI.set(model, MOI.VariableName(), v[1], "Var1")
         MOI.set(model, MOI.VariableName(), v[2], "Var1")
         # Lookup must fail when there are multiple variables with the same name.
         @test_throws Exception MOI.get(model, MOI.VariableIndex, "Var1")
-
         MOI.set(model, MOI.VariableName(), v[2], "Var2")
-
         @test MOI.get(model, MOI.VariableIndex, "Var1") == v[1]
         @test MOI.get(model, MOI.VariableIndex, "Var2") == v[2]
         @test MOI.get(model, MOI.VariableIndex, "Var3") === nothing
-
         MOI.set(model, MOI.VariableName(), x, "Var1")
         @test_throws Exception MOI.get(model, MOI.VariableIndex, "Var1")
-
         MOI.set(model, MOI.VariableName(), x, "Varx")
         @test MOI.get(model, MOI.VariableIndex, "Var1") == v[1]
         @test MOI.get(model, MOI.VariableIndex, "Var2") == v[2]
         @test MOI.get(model, MOI.VariableIndex, "Varx") == x
         @test MOI.get(model, MOI.VariableIndex, "Var3") === nothing
-
         vynames = ["VarX", "Var2", "Vary1", "Vary2", "Vary3", "Vary4"]
         MOI.set(model, MOI.VariableName(), [v; y], vynames)
         @test MOI.get(model, MOI.VariableName(), v) == vynames[1:2]
         @test MOI.get(model, MOI.VariableName(), y) == vynames[3:6]
         @test MOI.get(model, MOI.VariableName(), [v; y]) == vynames
-
         @test MOI.supports_constraint(
             model,
             MOI.ScalarAffineFunction{Float64},
@@ -164,24 +151,20 @@ function nametest(model::MOI.ModelLike)
         @test MOI.get(model, MOI.ConstraintName(), c) == ""
         @test MOI.get(model, MOI.ConstraintName(), c2) == ""
         @test MOI.get(model, MOI.ConstraintName(), cy) == ""
-
         @test MOI.supports(model, MOI.ConstraintName(), typeof(c))
         MOI.set(model, MOI.ConstraintName(), c, "")
         @test MOI.supports(model, MOI.ConstraintName(), typeof(c2))
         MOI.set(model, MOI.ConstraintName(), c2, "") # Shouldn't error with duplicate empty name
         @test MOI.supports(model, MOI.ConstraintName(), typeof(cy))
         MOI.set(model, MOI.ConstraintName(), cy, "")
-
         MOI.set(model, MOI.ConstraintName(), c, "Con0")
         @test MOI.get(model, MOI.ConstraintName(), c) == "Con0"
         MOI.set(model, MOI.ConstraintName(), c2, "Con0")
         # Lookup must fail when multiple constraints have the same name.
         @test_throws Exception MOI.get(model, MOI.ConstraintIndex, "Con0")
         @test_throws Exception MOI.get(model, typeof(c), "Con0")
-
         MOI.set(model, MOI.ConstraintName(), [c], ["Con1"])
         @test MOI.get(model, MOI.ConstraintName(), [c]) == ["Con1"]
-
         @test MOI.get(
             model,
             MOI.ConstraintIndex{
@@ -216,14 +199,11 @@ function nametest(model::MOI.ModelLike)
         ) === nothing
         @test MOI.get(model, MOI.ConstraintIndex, "Con1") == c
         @test MOI.get(model, MOI.ConstraintIndex, "Con2") === nothing
-
         MOI.set(model, MOI.ConstraintName(), [c2, cy], ["Con2", "Con2"])
         @test_throws Exception MOI.get(model, MOI.ConstraintIndex, "Con2")
         @test_throws Exception MOI.get(model, typeof(c2), "Con2")
         @test_throws Exception MOI.get(model, typeof(cy), "Con2")
-
         MOI.set(model, MOI.ConstraintName(), cy, "Con4")
-
         for (i, ca) in zip([1, 2, 4], [c, c2, cy])
             namea = "Con$i"
             @test MOI.get(model, MOI.ConstraintName(), ca) == namea
@@ -238,20 +218,16 @@ function nametest(model::MOI.ModelLike)
                 @test MOI.get(model, typeof(ca), nameb) === nothing
             end
         end
-
         MOI.delete(model, v[2])
         @test MOI.get(model, MOI.VariableIndex, "Var2") === nothing
-
         MOI.delete(model, c)
         @test MOI.get(model, typeof(c), "Con1") === nothing
         @test MOI.get(model, MOI.ConstraintIndex, "Con1") === nothing
-
         MOI.delete(model, x)
         @test MOI.get(model, MOI.VariableIndex, "Varx") === nothing
         @test MOI.get(model, MOI.ConstraintIndex, "Con3") === nothing
         @test MOI.get(model, typeof(c2), "Con2") === c2
         @test MOI.get(model, MOI.ConstraintIndex, "Con2") === c2
-
         MOI.delete(model, y)
         @test MOI.get(model, typeof(cy), "Con4") === nothing
         @test MOI.get(model, MOI.ConstraintIndex, "Con4") === nothing
@@ -392,13 +368,9 @@ function emptytest(model::MOI.ModelLike)
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     @test !MOI.is_empty(model)
-
     MOI.empty!(model)
-
     @test MOI.is_empty(model)
-
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     @test MOI.get(
         model,
@@ -409,7 +381,6 @@ function emptytest(model::MOI.ModelLike)
         MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}(),
     ) == 0
     @test isempty(MOI.get(model, MOI.ListOfConstraintTypesPresent()))
-
     @test !MOI.is_valid(model, v[1])
     @test !MOI.is_valid(model, vc)
     @test !MOI.is_valid(model, c)
@@ -558,17 +529,14 @@ function start_values_unset_test(model::MOI.ModelLike, config)
     )
     F2 = MOI.VectorAffineFunction{Float64}
     S2 = MOI.Nonnegatives
-
     vpattr = MOI.VariablePrimalStart()
     cpattr = MOI.ConstraintPrimalStart()
     cdattr = MOI.ConstraintDualStart()
-
     @testset "Newly created variables have start values set to nothing" begin
         @test !(vpattr in MOI.get(model, MOI.ListOfVariableAttributesSet()))
         @test MOI.get(model, vpattr, x) === nothing
         @test MOI.get(model, vpattr, y) === nothing
         @test MOI.get(model, vpattr, z) === nothing
-
         @test cpattr ∉
               MOI.get(model, MOI.ListOfConstraintAttributesSet{F1,S1}())
         @test MOI.get(model, cpattr, a) === nothing
@@ -576,7 +544,6 @@ function start_values_unset_test(model::MOI.ModelLike, config)
         @test cpattr ∉
               MOI.get(model, MOI.ListOfConstraintAttributesSet{F2,S2}())
         @test MOI.get(model, cpattr, c) === nothing
-
         @test cdattr ∉
               MOI.get(model, MOI.ListOfConstraintAttributesSet{F1,S1}())
         @test MOI.get(model, cdattr, a) === nothing
@@ -585,7 +552,6 @@ function start_values_unset_test(model::MOI.ModelLike, config)
               MOI.get(model, MOI.ListOfConstraintAttributesSet{F2,S2}())
         @test MOI.get(model, cdattr, c) === nothing
     end
-
     @testset "Allows unsetting by nothing" begin
         # First set the attributes to some values.
         MOI.set.((model,), (vpattr,), (x, y, z), (0.0, 1.0, 2.0))
@@ -593,7 +559,6 @@ function start_values_unset_test(model::MOI.ModelLike, config)
         MOI.set.((model,), (cdattr,), (a, b), (0.0, 1.0))
         MOI.set(model, cpattr, c, [2.0])
         MOI.set(model, cdattr, c, [2.0])
-
         @test vpattr ∈ MOI.get(model, MOI.ListOfVariableAttributesSet())
         @test cpattr ∈
               MOI.get(model, MOI.ListOfConstraintAttributesSet{F1,S1}())
@@ -603,19 +568,16 @@ function start_values_unset_test(model::MOI.ModelLike, config)
               MOI.get(model, MOI.ListOfConstraintAttributesSet{F1,S1}())
         @test cdattr ∈
               MOI.get(model, MOI.ListOfConstraintAttributesSet{F2,S2}())
-
         @test all(MOI.get.((model,), (vpattr,), (x, y, z)) .== (0.0, 1.0, 2.0))
         @test all(MOI.get.((model,), (cpattr,), (a, b)) .== (0.0, 1.0))
         @test all(MOI.get.((model,), (cdattr,), (a, b)) .== (0.0, 1.0))
         @test MOI.get(model, cpattr, c) == [2.0]
         @test MOI.get(model, cdattr, c) == [2.0]
-
         MOI.set(model, vpattr, y, nothing)
         MOI.set(model, cpattr, a, nothing)
         MOI.set(model, cdattr, a, nothing)
         MOI.set(model, cpattr, c, nothing)
         MOI.set(model, cdattr, c, nothing)
-
         # The tests below are commented because it was decided to not pin a
         # determined behaviour, there are two possibilities about the behaviour
         # of ListOfConstraintAttributesSet and ListOfVariableAttributesSet:
@@ -629,7 +591,6 @@ function start_values_unset_test(model::MOI.ModelLike, config)
         # Ref.: https://github.com/jump-dev/MathOptInterface.jl/pull/1136#discussion_r496466058
         #@test cpattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
         #@test cdattr ∉ MOI.get(model, MOI.ListOfConstraintAttributesSet{F2, S2}())
-
         @test all(
             MOI.get.((model,), (vpattr,), (x, y, z)) .=== (0.0, nothing, 2.0),
         )
@@ -637,12 +598,10 @@ function start_values_unset_test(model::MOI.ModelLike, config)
         @test all(MOI.get.((model,), (cdattr,), (a, b)) .=== (nothing, 1.0))
         @test MOI.get(model, cpattr, c) === nothing
         @test MOI.get(model, cdattr, c) === nothing
-
         MOI.set(model, vpattr, x, nothing)
         MOI.set(model, vpattr, z, nothing)
         MOI.set(model, cpattr, b, nothing)
         MOI.set(model, cdattr, b, nothing)
-
         # The three tests below are commented for the same reason the two
         # commented tests above.
         #@test vpattr ∉ MOI.get(model, MOI.ListOfVariableAttributesSet())
@@ -667,11 +626,9 @@ function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
     )
     F2 = MOI.VectorAffineFunction{Float64}
     S2 = MOI.Nonnegatives
-
     vpattr = MOI.VariablePrimalStart()
     cpattr = MOI.ConstraintPrimalStart()
     cdattr = MOI.ConstraintDualStart()
-
     @testset "Supports" begin
         @test MOI.supports(dest, vpattr, MOI.VariableIndex)
         @test MOI.supports(dest, cpattr, MOI.ConstraintIndex{F1,S1})
@@ -679,10 +636,8 @@ function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
         @test MOI.supports(dest, cdattr, MOI.ConstraintIndex{F1,S1})
         @test MOI.supports(dest, cdattr, MOI.ConstraintIndex{F2,S2})
     end
-
     @testset "Attribute set to no indices" begin
         dict = MOI.copy_to(dest, src, copy_names = false)
-
         @test !(vpattr in MOI.get(dest, MOI.ListOfVariableAttributesSet()))
         @test MOI.get(dest, vpattr, dict[x]) === nothing
         @test MOI.get(dest, vpattr, dict[y]) === nothing
@@ -706,7 +661,6 @@ function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
         )
         @test MOI.get(dest, cdattr, dict[c]) === nothing
     end
-
     @testset "Attribute set to some indices" begin
         MOI.set(src, vpattr, x, 1.0)
         MOI.set(src, vpattr, z, 3.0)
@@ -714,9 +668,7 @@ function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
         MOI.set(src, cpattr, b, 2.0)
         MOI.set(src, cdattr, b, 2.0)
         MOI.set(src, cdattr, c, [3.0])
-
         dict = MOI.copy_to(dest, src, copy_names = false)
-
         @test vpattr in MOI.get(dest, MOI.ListOfVariableAttributesSet())
         @test MOI.get(dest, vpattr, dict[x]) == 1.0
         @test MOI.get(dest, vpattr, dict[y]) === nothing
@@ -780,7 +732,6 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
         ),
     )
     MOI.set(src, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     @test MOI.supports(
         dest,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -801,9 +752,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
         MOI.VectorAffineFunction{Float64},
         MOI.Zeros,
     )
-
     dict = MOI.copy_to(dest, src, copy_names = copy_names)
-
     dest_name(src_name) = copy_names ? src_name : ""
     @test !MOI.supports(dest, MOI.Name()) ||
           MOI.get(dest, MOI.Name()) == dest_name("ModelName")
@@ -860,7 +809,6 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
     @test (MOI.VectorOfVariables, MOI.Nonnegatives) in loc
     @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in loc
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
-
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[csv]) ==
           MOI.SingleVariable(dict[w])
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csv]) == MOI.EqualTo(2.0)
@@ -888,7 +836,6 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
         [-3.0, -2.0],
     )
     @test MOI.get(dest, MOI.ConstraintSet(), dict[cva]) == MOI.Zeros(2)
-
     @test MOI.get(
         dest,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -928,7 +875,6 @@ function supports_constrainttest(
         MOI.EqualTo{BadT},
     )
     @test !MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{BadT})
-
     @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
     @test !MOI.supports_constraint(
         model,
@@ -962,7 +908,6 @@ function orderedindicestest(model::MOI.ModelLike)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v2, v3]
     v4 = MOI.add_variable(model)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v2, v3, v4]
-
     # Note: there are too many combinations to test, so we're just going to
     # check SingleVariable-in-LessThan and hope it works for the rest
     c1 = MOI.add_constraint(model, MOI.SingleVariable(v2), MOI.LessThan(1.0))

@@ -10,7 +10,6 @@ function _lin1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     #            y +  z == 2
     #       x>=0 y>=0 z>=0
     # Opt obj = -11, soln x = 1, y = 0, z = 2
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -35,13 +34,10 @@ function _lin1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         MOI.VectorAffineFunction{Float64},
         MOI.Zeros,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
-
     vov = MOI.VectorOfVariables(v)
     if vecofvars
         vc = MOI.add_constraint(model, vov, MOI.Nonnegatives(3))
@@ -52,7 +48,6 @@ function _lin1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             MOI.Nonnegatives(3),
         )
     end
-
     c = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -88,7 +83,6 @@ function _lin1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         MOI.Nonnegatives,
     ) in loc
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -98,33 +92,25 @@ function _lin1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -11 atol = atol rtol = rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -11 atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [1, 0, 2] atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [1, 0, 2] atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ zeros(2) atol = atol rtol =
             rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), vc) ≈ [0, 2, 0] atol =
                 atol rtol = rtol
@@ -161,7 +147,6 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     #       s zero
     # Opt solution = -82
     # x = -4, y = -3, z = 16, s == 0
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -193,13 +178,10 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         MOI.VectorAffineFunction{Float64},
         MOI.Zeros,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-
     if vecofvars
         ys, vc = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
         y = ys[1]
@@ -209,10 +191,8 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         vc = MOI.add_constraint(model, func, MOI.Nonpositives(1))
     end
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
-
     z, s = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 4
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -222,7 +202,6 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     c = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -237,7 +216,6 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         ),
         MOI.Zeros(3),
     )
-
     if vecofvars
         # test fallback
         vz = MOI.add_constraint(model, [z], MOI.Nonnegatives(1))
@@ -261,7 +239,6 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             MOI.Zeros(1),
         )
     end
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -287,25 +264,19 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             }(),
         ) == 1
     end
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -82 atol = atol rtol = rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -82 atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ -4 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ -3 atol = atol rtol =
@@ -314,7 +285,6 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), s) ≈ 0 atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ zeros(3) atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [-3] atol = atol rtol =
@@ -323,7 +293,6 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), vs) ≈ [0] atol = atol rtol =
             rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ [7, 2, -4] atol =
                 atol rtol = rtol
@@ -355,7 +324,6 @@ function lin3test(model::MOI.ModelLike, config::Config)
     # min 0
     # s.t. -1 + x ∈ R₊
     #       1 + x ∈ R₋
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -372,12 +340,9 @@ function lin3test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction{Float64},
         MOI.Nonnegatives,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x = MOI.add_variable(model)
-
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -394,7 +359,6 @@ function lin3test(model::MOI.ModelLike, config::Config)
         ),
         MOI.Nonpositives(1),
     )
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -411,12 +375,9 @@ function lin3test(model::MOI.ModelLike, config::Config)
             }(),
         ) == 1
     end
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         if config.infeas_certificates
             @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
             @test MOI.get(model, MOI.ResultCount()) > 0
@@ -447,7 +408,6 @@ function lin4test(model::MOI.ModelLike, config::Config)
     # min 0
     # s.t. -1 + x ∈ R₊
     #           x ∈ R₋
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -460,13 +420,10 @@ function lin4test(model::MOI.ModelLike, config::Config)
         MOI.Nonnegatives,
     )
     @test MOI.supports_add_constrained_variables(model, MOI.Nonpositives)
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     xs, cx = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
     x = xs[1]
-
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -475,7 +432,6 @@ function lin4test(model::MOI.ModelLike, config::Config)
         ),
         MOI.Nonnegatives(1),
     )
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -489,12 +445,9 @@ function lin4test(model::MOI.ModelLike, config::Config)
             MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}(),
         ) == 1
     end
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         if config.infeas_certificates
             @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
             @test MOI.get(model, MOI.ResultCount()) > 0
@@ -533,7 +486,6 @@ function _norminf1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     #  st  x == 1
     #      y == 1/2
     #      x >= ||(y,z)||_∞
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -554,12 +506,9 @@ function _norminf1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         MOI.VectorOfVariables,
         MOI.NormInfinityCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x, y, z = MOI.add_variables(model, 3)
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -569,7 +518,6 @@ function _norminf1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-
     ceq1 = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -596,7 +544,6 @@ function _norminf1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             MOI.NormInfinityCone(3),
         )
     end
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -621,39 +568,31 @@ function _norminf1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},
         MOI.NormInfinityCone,
     ) in loc
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1.5 atol = atol rtol = rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 1.5 atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 0.5 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), z) ≈ 1 atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), ceq1) ≈ [0] atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), ceq2) ≈ [0] atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), ccone) ≈ [1.0, 0.5, 1.0] atol =
             atol rtol = rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), ceq1) ≈ [-1] atol = atol rtol =
                 rtol
@@ -685,7 +624,6 @@ function norminf2test(model::MOI.ModelLike, config::Config)
     # s.t. -2 + y ∈ R₊
     #      -1 + x ∈ R₋
     #       (x,y) ∈ NormInf₂
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -707,12 +645,9 @@ function norminf2test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction{Float64},
         MOI.NormInfinityCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x, y = MOI.add_variables(model, 2)
-
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -737,7 +672,6 @@ function norminf2test(model::MOI.ModelLike, config::Config)
         ),
         MOI.NormInfinityCone(2),
     )
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -761,21 +695,16 @@ function norminf2test(model::MOI.ModelLike, config::Config)
             }(),
         ) == 1
     end
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
-
         @test MOI.get(model, MOI.PrimalStatus()) in
               (MOI.NO_SOLUTION, MOI.INFEASIBLE_POINT)
         if config.duals && config.infeas_certificates
             @test MOI.get(model, MOI.DualStatus()) ==
                   MOI.INFEASIBILITY_CERTIFICATE
         end
-
         # TODO test dual feasibility and objective sign
     end
 end
@@ -788,7 +717,6 @@ function norminf3test(model::MOI.ModelLike, config::Config)
     #  st  (-1 + x, 2 .+ y) in NormInf(1 + n)
     #      (1 .+ y) in Nonnegatives(n)
     # let n = 3. optimal solution: y .= -1, x = 2
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
@@ -797,20 +725,16 @@ function norminf3test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction{Float64},
         MOI.NormInfinityCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x = MOI.add_variable(model)
     y = MOI.add_variables(model, 3)
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.SingleVariable}(),
         MOI.SingleVariable(x),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     norminf_vaf = MOI.VectorAffineFunction(
         MOI.VectorAffineTerm.(1:4, MOI.ScalarAffineTerm.(1.0, vcat(x, y))),
         [-1.0, 2, 2, 2],
@@ -821,7 +745,6 @@ function norminf3test(model::MOI.ModelLike, config::Config)
         ones(3),
     )
     nonneg = MOI.add_constraint(model, nonneg_vaf, MOI.Nonnegatives(3))
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -842,35 +765,27 @@ function norminf3test(model::MOI.ModelLike, config::Config)
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) in loc
     @test (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) in loc
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2 atol = atol rtol = rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2 atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 2 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ fill(-1.0, 3) atol =
             atol rtol = rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), norminf) ≈ ones(4) atol =
             atol rtol = rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), nonneg) ≈ zeros(3) atol =
             atol rtol = rtol
-
         if config.duals
             dual_nonneg = MOI.get(model, MOI.ConstraintDual(), nonneg)
             @test minimum(dual_nonneg) >= -atol
@@ -898,7 +813,6 @@ function _normone1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     #  st  x == 1
     #      y == 1/2
     #      x >= ||(y,z)||_1
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -915,12 +829,9 @@ function _normone1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         )
     end
     @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.NormOneCone)
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x, y, z = MOI.add_variables(model, 3)
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -930,7 +841,6 @@ function _normone1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-
     ceq1 = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -957,7 +867,6 @@ function _normone1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             MOI.NormOneCone(3),
         )
     end
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -982,39 +891,31 @@ function _normone1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},
         MOI.NormOneCone,
     ) in loc
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1 atol = atol rtol = rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 1 atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 0.5 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), z) ≈ 0.5 atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), ceq1) ≈ [0] atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), ceq2) ≈ [0] atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), ccone) ≈ [1.0, 0.5, 0.5] atol =
             atol rtol = rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), ceq1) ≈ [-1] atol = atol rtol =
                 rtol
@@ -1046,7 +947,6 @@ function normone2test(model::MOI.ModelLike, config::Config)
     # s.t. -2 + y ∈ R₊
     #      -1 + x ∈ R₋
     #       (x,y) ∈ NormOne₂
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -1068,12 +968,9 @@ function normone2test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction{Float64},
         MOI.NormOneCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x, y = MOI.add_variables(model, 2)
-
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -1098,7 +995,6 @@ function normone2test(model::MOI.ModelLike, config::Config)
         ),
         MOI.NormOneCone(2),
     )
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -1122,21 +1018,16 @@ function normone2test(model::MOI.ModelLike, config::Config)
             }(),
         ) == 1
     end
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
-
         @test MOI.get(model, MOI.PrimalStatus()) in
               (MOI.NO_SOLUTION, MOI.INFEASIBLE_POINT)
         if config.duals && config.infeas_certificates
             @test MOI.get(model, MOI.DualStatus()) ==
                   MOI.INFEASIBILITY_CERTIFICATE
         end
-
         # TODO test dual feasibility and objective sign
     end
 end
@@ -1149,7 +1040,6 @@ function normone3test(model::MOI.ModelLike, config::Config)
     #  st  (-1 + x, 2 .+ y) in NormOne(1 + n)
     #      (1 .+ y) in Nonnegatives(n)
     # let n = 3. optimal solution: y .= -1, x = 4
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
@@ -1158,20 +1048,16 @@ function normone3test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction{Float64},
         MOI.NormOneCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x = MOI.add_variable(model)
     y = MOI.add_variables(model, 3)
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.SingleVariable}(),
         MOI.SingleVariable(x),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     norminf_vaf = MOI.VectorAffineFunction(
         MOI.VectorAffineTerm.(1:4, MOI.ScalarAffineTerm.(1.0, vcat(x, y))),
         [-1.0, 2, 2, 2],
@@ -1182,7 +1068,6 @@ function normone3test(model::MOI.ModelLike, config::Config)
         ones(3),
     )
     nonneg = MOI.add_constraint(model, nonneg_vaf, MOI.Nonnegatives(3))
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -1203,35 +1088,27 @@ function normone3test(model::MOI.ModelLike, config::Config)
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) in loc
     @test (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) in loc
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 4 atol = atol rtol = rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 4 atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 4 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ fill(-1.0, 3) atol =
             atol rtol = rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), norminf) ≈ vcat(3, ones(3)) atol =
             atol rtol = rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), nonneg) ≈ zeros(3) atol =
             atol rtol = rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), norminf) ≈
                   vcat(1, fill(-1, 3)) atol = atol rtol = rtol
@@ -1257,7 +1134,6 @@ function _soc1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     # max 0x + 1y + 1z
     #  st  x == 1
     #      x >= ||(y,z)||
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -1274,10 +1150,8 @@ function _soc1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         )
     end
     @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     if vecofvars
         xyz, csoc = MOI.add_constrained_variables(model, MOI.SecondOrderCone(3))
         x, y, z = xyz
@@ -1290,7 +1164,6 @@ function _soc1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             MOI.SecondOrderCone(3),
         )
     end
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1300,7 +1173,6 @@ function _soc1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-
     ceq = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -1309,7 +1181,6 @@ function _soc1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         ),
         MOI.Zeros(1),
     )
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -1334,37 +1205,29 @@ function _soc1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},
         MOI.SecondOrderCone,
     ) in loc
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ √2 atol = atol rtol = rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ √2 atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1 / √2 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), z) ≈ 1 / √2 atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), ceq) ≈ [0.0] atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), csoc) ≈
               [1.0, 1 / √2, 1 / √2] atol = atol rtol = rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), ceq) ≈ [-√2] atol = atol rtol =
                 rtol
@@ -1393,7 +1256,6 @@ function _soc2test(model::MOI.ModelLike, config::Config, nonneg::Bool)
     # s.t.  -1/√2 + y ∈ R₊
     #        1 - t ∈ {0}
     #      (t,x,y) ∈ SOC₃
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -1423,19 +1285,15 @@ function _soc2test(model::MOI.ModelLike, config::Config, nonneg::Bool)
         MOI.VectorAffineFunction{Float64},
         MOI.SecondOrderCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x, y, t = MOI.add_variables(model, 3)
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     if nonneg
         cnon = MOI.add_constraint(
             model,
@@ -1474,7 +1332,6 @@ function _soc2test(model::MOI.ModelLike, config::Config, nonneg::Bool)
         ),
         MOI.SecondOrderCone(3),
     )
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -1498,40 +1355,32 @@ function _soc2test(model::MOI.ModelLike, config::Config, nonneg::Bool)
             }(),
         ) == 1
     end
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -1 / √2 atol = atol rtol =
             rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -1 / √2 atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ -1 / √2 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1 / √2 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ 1 atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), cnon) ≈ [0.0] atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), ceq) ≈ [0.0] atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), csoc) ≈
               [1.0, -1 / √2, 1 / √2] atol = atol rtol = rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), cnon) ≈
                   [nonneg ? 1.0 : -1.0] atol = atol rtol = rtol
@@ -1563,7 +1412,6 @@ function soc3test(model::MOI.ModelLike, config::Config)
     # s.t. -2 + y ∈ R₊
     #      -1 + x ∈ R₋
     #       (x,y) ∈ SOC₂
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -1585,12 +1433,9 @@ function soc3test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction{Float64},
         MOI.SecondOrderCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x, y = MOI.add_variables(model, 2)
-
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -1615,7 +1460,6 @@ function soc3test(model::MOI.ModelLike, config::Config)
         ),
         MOI.SecondOrderCone(2),
     )
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -1639,21 +1483,16 @@ function soc3test(model::MOI.ModelLike, config::Config)
             }(),
         ) == 1
     end
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
-
         @test MOI.get(model, MOI.PrimalStatus()) in
               (MOI.NO_SOLUTION, MOI.INFEASIBLE_POINT)
         if config.duals && config.infeas_certificates
             @test MOI.get(model, MOI.DualStatus()) ==
                   MOI.INFEASIBILITY_CERTIFICATE
         end
-
         # TODO test dual feasibility and objective sign
     end
 end
@@ -1673,7 +1512,6 @@ function soc4test(model::MOI.ModelLike, config::Config)
     #      (x[1],x[4],x[5]) ∈ SOC₃
     # Like SOCINT1 but with copies of variables and integrality relaxed
     # Tests out-of-order indices in cones
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -1690,12 +1528,9 @@ function soc4test(model::MOI.ModelLike, config::Config)
         MOI.VectorOfVariables,
         MOI.SecondOrderCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x = MOI.add_variables(model, 5)
-
     c1 = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -1712,7 +1547,6 @@ function soc4test(model::MOI.ModelLike, config::Config)
         MOI.VectorOfVariables([x[1], x[4], x[5]]),
         MOI.SecondOrderCone(3),
     )
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -1726,7 +1560,6 @@ function soc4test(model::MOI.ModelLike, config::Config)
             MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
         ) == 1
     end
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1738,30 +1571,23 @@ function soc4test(model::MOI.ModelLike, config::Config)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ -√5 atol = atol rtol = rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -√5 atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈
               [1.0, 2 / √5, 1 / √5, 2 / √5, 1 / √5] atol = atol rtol = rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ zeros(3) atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ [1.0, 2 / √5, 1 / √5] atol =
             atol rtol = rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ [-√5, -2.0, -1.0] atol =
                 atol rtol = rtol
@@ -1796,7 +1622,6 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::Config, abvars::Bool)
     #     [1.0] - [      ] SOCRotated
     #     [0.0] - [-y    ] SOCRotated
     #     [0.0] - [    -z] SOCRotated
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -1820,10 +1645,8 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::Config, abvars::Bool)
             MOI.RotatedSecondOrderCone,
         )
     end
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     if abvars
         abx, rsoc =
             MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(4))
@@ -1851,7 +1674,6 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::Config, abvars::Bool)
             MOI.RotatedSecondOrderCone(4),
         )
     end
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -1866,7 +1688,6 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::Config, abvars::Bool)
             }(),
         ) == 1
     end
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1875,22 +1696,17 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::Config, abvars::Bool)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ √2 atol = atol rtol = rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ √2 atol = atol rtol =
                 rtol
         end
-
         if abvars
             @test MOI.get(model, MOI.VariablePrimal(), a) ≈ 0.5 atol = atol rtol =
                 rtol
@@ -1899,27 +1715,22 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::Config, abvars::Bool)
         end
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [1 / √2, 1 / √2] atol =
             atol rtol = rtol
-
         if abvars
             @test MOI.get(model, MOI.ConstraintPrimal(), vc1) ≈ 0.5 atol = atol rtol =
                 rtol
             @test MOI.get(model, MOI.ConstraintPrimal(), vc2) ≈ 1.0 atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.ConstraintPrimal(), rsoc) ≈
               [0.5, 1.0, 1 / √2, 1 / √2] atol = atol rtol = rtol
-
         if config.duals
             @test MOI.get(model, MOI.DualStatus(1)) == MOI.FEASIBLE_POINT
-
             if abvars
                 @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ -√2 atol =
                     atol rtol = rtol
                 @test MOI.get(model, MOI.ConstraintDual(), vc2) ≈ -1 / √2 atol =
                     atol rtol = rtol
             end
-
             @test MOI.get(model, MOI.ConstraintDual(), rsoc) ≈
                   [√2, 1 / √2, -1.0, -1.0] atol = atol rtol = rtol
         end
@@ -1952,7 +1763,6 @@ function rotatedsoc2test(model::MOI.ModelLike, config::Config)
     #       (x,y,z) ∈ SOCRotated
     b = [-2, -1, 1 / 2]
     c = [0.0, 0.0, 0.0]
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -1978,13 +1788,10 @@ function rotatedsoc2test(model::MOI.ModelLike, config::Config)
         model,
         MOI.RotatedSecondOrderCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x, rsoc =
         MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(3))
-
     vc1 = MOI.add_constraint(model, MOI.SingleVariable(x[1]), MOI.LessThan(1.0))
     @test vc1.value == x[1].value
     vc2 = MOI.add_constraint(model, MOI.SingleVariable(x[2]), MOI.EqualTo(0.5))
@@ -1995,7 +1802,6 @@ function rotatedsoc2test(model::MOI.ModelLike, config::Config)
         MOI.GreaterThan(2.0),
     )
     @test vc3.value == x[3].value
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -2020,7 +1826,6 @@ function rotatedsoc2test(model::MOI.ModelLike, config::Config)
             }(),
         ) == 1
     end
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2029,12 +1834,9 @@ function rotatedsoc2test(model::MOI.ModelLike, config::Config)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) in
               [MOI.INFEASIBLE, MOI.INFEASIBLE_OR_UNBOUNDED]
-
         if config.duals
             if config.infeas_certificates
                 @test MOI.get(model, MOI.DualStatus()) in [
@@ -2042,19 +1844,13 @@ function rotatedsoc2test(model::MOI.ModelLike, config::Config)
                     MOI.NEARLY_INFEASIBILITY_CERTIFICATE,
                 ]
             end
-
             y1 = MOI.get(model, MOI.ConstraintDual(), vc1)
             @test y1 < -atol # Should be strictly negative
-
             y2 = MOI.get(model, MOI.ConstraintDual(), vc2)
-
             y3 = MOI.get(model, MOI.ConstraintDual(), vc3)
             @test y3 > atol # Should be strictly positive
-
             y = [y1, y2, y3]
-
             vardual = MOI.get(model, MOI.ConstraintDual(), rsoc)
-
             @test vardual ≈ -y atol = atol rtol = rtol
             @test 2 * vardual[1] * vardual[2] ≥ vardual[3]^2 - atol
             @test dot(b, y) > atol
@@ -2075,7 +1871,6 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
     #      t2 == 1
     # [t1/√2, t2/√2, x] in SOC4
     # [x1/√2, u/√2,  v] in SOC3
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -2103,15 +1898,12 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
         MOI.VectorAffineFunction{Float64},
         MOI.RotatedSecondOrderCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x, cx = MOI.add_constrained_variables(model, MOI.Nonnegatives(n))
     u = MOI.add_variable(model)
     v = MOI.add_variable(model)
     t = MOI.add_variables(model, 2)
-
     ct1 = MOI.add_constraint(model, MOI.SingleVariable(t[1]), MOI.EqualTo(1.0))
     @test ct1.value == t[1].value
     ct2 = MOI.add_constraint(model, MOI.SingleVariable(t[2]), MOI.EqualTo(1.0))
@@ -2120,7 +1912,6 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
     @test cu1.value == u.value
     cu2 = MOI.add_constraint(model, MOI.SingleVariable(u), MOI.LessThan(ub))
     @test cu2.value == u.value
-
     c1 = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -2143,7 +1934,6 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
         ),
         MOI.RotatedSecondOrderCone(3),
     )
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -2179,32 +1969,25 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
             }(),
         ) == 2
     end
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v)], 0.0),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ √ub atol = atol rtol = rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ √ub atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [1.0; zeros(n - 1)] atol =
             atol rtol = rtol
         @test MOI.get(model, MOI.VariablePrimal(), u) ≈ ub atol = atol rtol =
@@ -2213,7 +1996,6 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ ones(2) atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ [1.0; zeros(n - 1)] atol =
             atol rtol = rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cu1) ≈ ub atol = atol rtol =
@@ -2224,12 +2006,10 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), ct2) ≈ 1.0 atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈
               [1 / √2; 1 / √2; 1.0; zeros(n - 1)] atol = atol rtol = rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈
               [1 / √2, ub / √2, √ub] atol = atol rtol = rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ zeros(n) atol =
                 atol rtol = rtol
@@ -2241,7 +2021,6 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
                 atol rtol = rtol
             @test MOI.get(model, MOI.ConstraintDual(), ct2) ≈ -√ub / 4 atol =
                 atol rtol = rtol
-
             @test MOI.get(model, MOI.ConstraintDual(), c1) ≈
                   [√ub / (2 * √2); √ub / (2 * √2); -√ub / 2; zeros(n - 1)] atol =
                 atol rtol = rtol
@@ -2274,7 +2053,6 @@ function rotatedsoc4test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
     # with equality iff x = y.
     # We conclude that the optimal solution is x = y = t = u = 1
     # with objective value 2.
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -2290,10 +2068,8 @@ function rotatedsoc4test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
         model,
         MOI.RotatedSecondOrderCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     v, cv = MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(4))
     t, u, x, y = v
     ft = MOI.SingleVariable(t)
@@ -2304,25 +2080,19 @@ function rotatedsoc4test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
     func = 1.0fx + 1.0fy
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{typeof(func)}(), func)
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol = atol rtol = rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2.0 atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ 1.0 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), u) ≈ 1.0 atol = atol rtol =
@@ -2331,12 +2101,10 @@ function rotatedsoc4test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1.0 atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), cv) ≈ ones(4) atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2.0 atol = atol rtol =
             rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), cv) ≈
                   [1.0, 1.0, -1.0, -1.0] atol = atol rtol = rtol
@@ -2372,7 +2140,6 @@ function _geomean1test(model::MOI.ModelLike, config::Config, vecofvars, n = 3)
     # (xyz)^(1/3) ≤ (x+y+z)/3 = 1
     # Therefore xyz ≤ 1
     # This can be attained using x = y = z = 1 so it is optimal.
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -2397,13 +2164,10 @@ function _geomean1test(model::MOI.ModelLike, config::Config, vecofvars, n = 3)
         MOI.ScalarAffineFunction{Float64},
         MOI.LessThan{Float64},
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     t = MOI.add_variable(model)
     x = MOI.add_variables(model, n)
-
     vov = MOI.VectorOfVariables([t; x])
     if vecofvars
         gmc = MOI.add_constraint(model, vov, MOI.GeometricMeanCone(n + 1))
@@ -2419,7 +2183,6 @@ function _geomean1test(model::MOI.ModelLike, config::Config, vecofvars, n = 3)
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.0),
         MOI.LessThan(Float64(n)),
     )
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -2437,7 +2200,6 @@ function _geomean1test(model::MOI.ModelLike, config::Config, vecofvars, n = 3)
             }(),
         ) == 1
     end
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2446,25 +2208,18 @@ function _geomean1test(model::MOI.ModelLike, config::Config, vecofvars, n = 3)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1 atol = atol rtol = rtol
-
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ 1 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ ones(n) atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), gmc) ≈ ones(n + 1) atol =
             atol rtol = rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ n atol = atol rtol =
             rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈
                   vcat(-1.0, fill(inv(n), n)) atol = atol rtol = rtol
@@ -2490,7 +2245,6 @@ function _geomean2test(model::MOI.ModelLike, config::Config, vecofvars)
     # st  (t,x_1,x_2,...,x_9) ∈ GeometricMeanCone(10)
     #     x_1 == x_2, ..., x_9 == 1
     # the optimal solution is 1 with optimal value 1
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -2510,15 +2264,12 @@ function _geomean2test(model::MOI.ModelLike, config::Config, vecofvars)
             MOI.GeometricMeanCone,
         )
     end
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     n = 9
     t = MOI.add_variable(model)
     x = MOI.add_variables(model, n)
     @test MOI.get(model, MOI.NumberOfVariables()) == n + 1
-
     vov = MOI.VectorOfVariables([t; x])
     if vecofvars
         gmc = MOI.add_constraint(model, vov, MOI.GeometricMeanCone(n + 1))
@@ -2529,7 +2280,6 @@ function _geomean2test(model::MOI.ModelLike, config::Config, vecofvars)
             MOI.GeometricMeanCone(n + 1),
         )
     end
-
     cx = Vector{
         MOI.ConstraintIndex{
             MOI.ScalarAffineFunction{Float64},
@@ -2546,7 +2296,6 @@ function _geomean2test(model::MOI.ModelLike, config::Config, vecofvars)
             MOI.EqualTo(1.0),
         )
     end
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -2564,7 +2313,6 @@ function _geomean2test(model::MOI.ModelLike, config::Config, vecofvars)
             }(),
         ) == n
     end
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2573,24 +2321,18 @@ function _geomean2test(model::MOI.ModelLike, config::Config, vecofvars)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1.0 atol = atol rtol = rtol
-
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ 1.0 atol = atol rtol =
             rtol
         @test MOI.get.(model, MOI.VariablePrimal(), x) ≈ ones(n) atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), gmc) ≈ ones(n + 1) atol =
             atol rtol = rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ ones(n) atol = atol rtol =
             rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈
                   vcat(-1, fill(inv(n), n)) atol = atol rtol = rtol
@@ -2616,7 +2358,6 @@ function _geomean3test(model::MOI.ModelLike, config::Config, vecofvars)
     # st  (t,x) ∈ GeometricMeanCone(2)
     #     x <= 2
     # the optimal solution is (t, x) = (2, 2) with objective value 4
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -2636,14 +2377,11 @@ function _geomean3test(model::MOI.ModelLike, config::Config, vecofvars)
             MOI.GeometricMeanCone,
         )
     end
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     t = MOI.add_variable(model)
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
-
     vov = MOI.VectorOfVariables([t; x])
     if vecofvars
         gmc = MOI.add_constraint(model, vov, MOI.GeometricMeanCone(2))
@@ -2659,7 +2397,6 @@ function _geomean3test(model::MOI.ModelLike, config::Config, vecofvars)
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
         MOI.LessThan(2.0),
     )
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -2677,7 +2414,6 @@ function _geomean3test(model::MOI.ModelLike, config::Config, vecofvars)
             }(),
         ) == 1
     end
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2686,24 +2422,18 @@ function _geomean3test(model::MOI.ModelLike, config::Config, vecofvars)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 4.0 atol = atol rtol = rtol
-
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ 2.0 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 2.0 atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), gmc) ≈ [2.0; 2.0] atol =
             atol rtol = rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 2.0 atol = atol rtol =
             rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈ [-2.0, 2.0] atol =
                 atol rtol = rtol
@@ -2739,7 +2469,6 @@ function _exp1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     #  st  y e^(x/y) <= z, y > 0 (i.e (x, y, z) are in the exponential primal cone)
     #      x == 1
     #      y == 2
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -2764,13 +2493,10 @@ function _exp1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         MOI.ScalarAffineFunction{Float64},
         MOI.EqualTo{Float64},
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
-
     vov = MOI.VectorOfVariables(v)
     if vecofvars
         vc = MOI.add_constraint(model, vov, MOI.ExponentialCone())
@@ -2781,7 +2507,6 @@ function _exp1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             MOI.ExponentialCone(),
         )
     end
-
     cx = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[1])], 0.0),
@@ -2792,50 +2517,39 @@ function _exp1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[2])], 0.0),
         MOI.EqualTo(2.0),
     )
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, v), 0.0),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 + 2exp(1 / 2) atol = atol rtol =
             rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 3 + 2exp(1 / 2) atol =
                 atol rtol = rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [1.0, 2.0, 2exp(1 / 2)] atol =
             atol rtol = rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈
               [1.0, 2.0, 2exp(1 / 2)] atol = atol rtol = rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 1 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cy) ≈ 2 atol = atol rtol =
             rtol
-
         if config.duals
             u, v, w = MOI.get(model, MOI.ConstraintDual(), vc)
             @test u ≈ -exp(1 / 2) atol = atol rtol = rtol
             @test v ≈ -exp(1 / 2) / 2 atol = atol rtol = rtol
             @test w ≈ 1 atol = atol rtol = rtol
-
             @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ 1 + exp(1 / 2) atol =
                 atol rtol = rtol
             @test MOI.get(model, MOI.ConstraintDual(), cy) ≈ 1 + exp(1 / 2) / 2 atol =
@@ -2856,7 +2570,6 @@ function exp2test(model::MOI.ModelLike, config::Config)
     # A problem where ECOS was failing
     atol = config.atol
     rtol = config.rtol
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -2883,13 +2596,10 @@ function exp2test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction{Float64},
         MOI.Nonnegatives,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     v = MOI.add_variables(model, 9)
     @test MOI.get(model, MOI.NumberOfVariables()) == 9
-
     ec1 = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -2961,37 +2671,29 @@ function exp2test(model::MOI.ModelLike, config::Config)
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[7])], 0.0),
         MOI.EqualTo(0.0),
     )
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[6])], 0.0),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ exp(-0.3) atol = atol rtol =
             rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ exp(-0.3) atol =
                 atol rtol = rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈
               [0.0, -0.3, 0.0, exp(-0.3), exp(-0.3), exp(-0.3), 0.0, 1.0, 0.0] atol =
             atol rtol = rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), ec1) ≈
               [-0.3, 1.0, exp(-0.3)] atol = atol rtol = rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), ec2) ≈
@@ -3006,7 +2708,6 @@ function exp2test(model::MOI.ModelLike, config::Config)
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c5) ≈ 0.0 atol = atol rtol =
             rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), ec1) ≈
                   [-exp(-0.3) / 2, -1.3exp(-0.3) / 2, 0.5] atol = atol rtol =
@@ -3034,7 +2735,6 @@ function exp3test(model::MOI.ModelLike, config::Config)
     # A problem where ECOS was failing
     atol = config.atol
     rtol = config.rtol
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -3056,14 +2756,11 @@ function exp3test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction{Float64},
         MOI.ExponentialCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
-
     xc = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0),
@@ -3079,45 +2776,36 @@ function exp3test(model::MOI.ModelLike, config::Config)
         ),
         MOI.ExponentialCone(),
     )
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ log(5) atol = atol rtol =
             rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ log(5) atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ log(5) atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 5.0 atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), xc) ≈ 2log(5) atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), yc) ≈ 5 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), ec) ≈ [log(5), 1.0, 5.0] atol =
             atol rtol = rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), xc) ≈ 0.0 atol = atol rtol =
                 rtol
@@ -3148,7 +2836,6 @@ function _dualexp1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     # x_2 + v == 1
     # w == 1
     # (u, v, w) ∈ DualExponentialCone
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -3173,14 +2860,11 @@ function _dualexp1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         MOI.ScalarAffineFunction{Float64},
         MOI.EqualTo{Float64},
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     v = MOI.add_variables(model, 3)
     x = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 5
-
     vov = MOI.VectorOfVariables(v)
     if vecofvars
         vc = MOI.add_constraint(model, vov, MOI.DualExponentialCone())
@@ -3191,7 +2875,6 @@ function _dualexp1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             MOI.DualExponentialCone(),
         )
     end
-
     cu = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
@@ -3213,54 +2896,43 @@ function _dualexp1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[3])], 0.0),
         MOI.EqualTo(1.0),
     )
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 + 2exp(1 / 2) atol = atol rtol =
             rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 3 + 2exp(1 / 2) atol =
                 atol rtol = rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈
               [-exp(1 / 2), -exp(1 / 2) / 2, 1.0] atol = atol rtol = rtol
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈
               [1 + exp(1 / 2), 1 + exp(1 / 2) / 2] atol = atol rtol = rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈
               [-exp(1 / 2), -exp(1 / 2) / 2, 1.0] atol = atol rtol = rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), cu) ≈ 1 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cv) ≈ 1 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cw) ≈ 1 atol = atol rtol =
             rtol
-
         if config.duals
             x, y, z = MOI.get(model, MOI.ConstraintDual(), vc)
             @test x ≈ 1.0 atol = atol rtol = rtol
             @test y ≈ 2.0 atol = atol rtol = rtol
             @test z ≈ 2exp(1 / 2) atol = atol rtol = rtol
-
             @test MOI.get(model, MOI.ConstraintDual(), cu) ≈ -1 atol = atol rtol =
                 rtol
             @test MOI.get(model, MOI.ConstraintDual(), cv) ≈ -2 atol = atol rtol =
@@ -3303,7 +2975,6 @@ function _pow1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
     @test MOI.supports(model, MOI.ObjectiveSense())
-
     if vecofvars
         @test MOI.supports_constraint(
             model,
@@ -3322,15 +2993,11 @@ function _pow1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         MOI.ScalarAffineFunction{Float64},
         MOI.EqualTo{Float64},
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
-
     vov = MOI.VectorOfVariables(v)
-
     if vecofvars
         vc = MOI.add_constraint(model, vov, MOI.PowerCone(a))
     else
@@ -3340,7 +3007,6 @@ function _pow1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             MOI.PowerCone(a),
         )
     end
-
     cx = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[1])], 0.0),
@@ -3351,39 +3017,30 @@ function _pow1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[2])], 0.0),
         MOI.EqualTo(1.0),
     )
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[3])], 0.0),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2^0.9 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0, 1.0, 2^0.9] atol =
             atol rtol = rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [2.0, 1.0, 2^0.9] atol =
             atol rtol = rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 2.0 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cy) ≈ 1.0 atol = atol rtol =
             rtol
-
         if config.duals
             # Only real solution of u^10 - u^9 / 2^0.1 = -(0.1*0.9^9)/2
             u_value = 0.839729692
@@ -3392,7 +3049,6 @@ function _pow1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             @test u ≈ u_value atol = atol rtol = rtol
             @test v ≈ v_value atol = atol rtol = rtol
             @test w ≈ -1 atol = atol rtol = rtol
-
             @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ -u_value atol =
                 atol rtol = rtol
             @test MOI.get(model, MOI.ConstraintDual(), cy) ≈ -v_value atol =
@@ -3426,7 +3082,6 @@ function _dualpow1test(
     #      x_2 + v == 0
     #      w == 1
     #     (u, v, w) ∈ DualPowerCone(exponent)
-
     # By the Weighted AM–GM inequality, you have
     # 0.9a + 0.1b >= a^0.9 b^0.1
     # with equality if and only if a == b
@@ -3436,14 +3091,12 @@ function _dualpow1test(
     # Here the best you can do is u + v == 1 and for that inequality must hold so u = 9v
     # hence you get v = 0.1 and u = 0.9.
     # The same works for other values of exponent as key word argument
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
     @test MOI.supports(model, MOI.ObjectiveSense())
-
     if vecofvars
         @test MOI.supports_constraint(
             model,
@@ -3462,16 +3115,12 @@ function _dualpow1test(
         MOI.ScalarAffineFunction{Float64},
         MOI.EqualTo{Float64},
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     v = MOI.add_variables(model, 3)
     x = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 5
-
     vov = MOI.VectorOfVariables(v)
-
     if vecofvars
         vc = MOI.add_constraint(model, vov, MOI.DualPowerCone(exponent))
     else
@@ -3481,7 +3130,6 @@ function _dualpow1test(
             MOI.DualPowerCone(exponent),
         )
     end
-
     cu = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
@@ -3503,7 +3151,6 @@ function _dualpow1test(
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[3])], 0.0),
         MOI.EqualTo(1.0),
     )
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -3513,41 +3160,32 @@ function _dualpow1test(
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1.0 atol = atol rtol = rtol
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈
               [exponent, (1 - exponent), 1.0] atol = atol rtol = rtol
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈
               [-exponent, -(1 - exponent)] atol = atol rtol = rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈
               [exponent, (1 - exponent), 1.0] atol = atol rtol = rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), cu) ≈ 0.0 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cv) ≈ 0.0 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cw) ≈ 1.0 atol = atol rtol =
             rtol
-
         if config.duals
             x, y, z = MOI.get(model, MOI.ConstraintDual(), vc)
             @test x ≈ 1.0 atol = atol rtol = rtol
             @test y ≈ 1.0 atol = atol rtol = rtol
             @test z ≈ -1 atol = atol rtol = rtol
-
             @test MOI.get(model, MOI.ConstraintDual(), cu) ≈ -1.0 atol = atol rtol =
                 rtol
             @test MOI.get(model, MOI.ConstraintDual(), cv) ≈ -1.0 atol = atol rtol =
@@ -3577,7 +3215,6 @@ function relentr1test(model::MOI.ModelLike, config::Config)
     #  st  u >= 2*log(2/1) + 3*log(3/5)  (i.e. (u, 1, 5, 2, 3) in RelativeEntropyCone(5))
     # Optimal solution is:
     # u = 2*log(2/1) + 3*log(3/5) ≈ -0.1461825
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
@@ -3586,13 +3223,10 @@ function relentr1test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction{Float64},
         MOI.RelativeEntropyCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     u = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-
     relentr = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -3601,26 +3235,20 @@ function relentr1test(model::MOI.ModelLike, config::Config)
         ),
         MOI.RelativeEntropyCone(5),
     )
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.SingleVariable}(),
         MOI.SingleVariable(u),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         u_opt = 2 * log(2) + 3 * log(3 / 5)
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ u_opt atol = atol rtol =
             rtol
@@ -3628,12 +3256,10 @@ function relentr1test(model::MOI.ModelLike, config::Config)
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ u_opt atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), u) ≈ u_opt atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), relentr) ≈
               [u_opt, 1, 5, 2, 3] atol = atol rtol = rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), relentr) ≈
                   [1, 2, 0.6, log(0.5) - 1, log(5 / 3) - 1] atol = atol rtol =
@@ -3654,7 +3280,6 @@ function normspec1test(model::MOI.ModelLike, config::Config)
     #  st  t >= sigma_1([1 1 0; 1 -1 1]) (i.e (t, 1, 1, 1, -1, 0, 1]) is in NormSpectralCone(2, 3))
     # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
     # t = sqrt(3)
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
@@ -3663,13 +3288,10 @@ function normspec1test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction{Float64},
         MOI.NormSpectralCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-
     data = Float64[1, 1, 1, -1, 0, 1]
     spec = MOI.add_constraint(
         model,
@@ -3679,38 +3301,30 @@ function normspec1test(model::MOI.ModelLike, config::Config)
         ),
         MOI.NormSpectralCone(2, 3),
     )
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.SingleVariable}(),
         MOI.SingleVariable(t),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         rt3 = sqrt(3)
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ rt3 atol = atol rtol = rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ rt3 atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ rt3 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), spec) ≈ vcat(rt3, data) atol =
             atol rtol = rtol
-
         if config.duals
             invrt3 = inv(rt3)
             @test MOI.get(model, MOI.ConstraintDual(), spec) ≈
@@ -3728,7 +3342,6 @@ function normspec2test(model::MOI.ModelLike, config::Config)
     #  st  t >= sigma_1([1 1; 1 -1; 0 1]) (i.e (t, 1, 1, 0, 1, -1, 1]) is in NormSpectralCone(3, 2))
     # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
     # t = sqrt(3)
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
@@ -3737,13 +3350,10 @@ function normspec2test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction{Float64},
         MOI.NormSpectralCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-
     data = Float64[1, 1, 0, 1, -1, 1]
     spec = MOI.add_constraint(
         model,
@@ -3753,38 +3363,30 @@ function normspec2test(model::MOI.ModelLike, config::Config)
         ),
         MOI.NormSpectralCone(3, 2),
     )
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.SingleVariable}(),
         MOI.SingleVariable(t),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         rt3 = sqrt(3)
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ rt3 atol = atol rtol = rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ rt3 atol = atol rtol =
                 rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ rt3 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), spec) ≈ vcat(rt3, data) atol =
             atol rtol = rtol
-
         if config.duals
             invrt3 = inv(rt3)
             @test MOI.get(model, MOI.ConstraintDual(), spec) ≈
@@ -3806,7 +3408,6 @@ function normnuc1test(model::MOI.ModelLike, config::Config)
     #  st  t >= sum_i sigma_i([1 1 0; 1 -1 1]) (i.e (t, 1, 1, 1, -1, 0, 1]) is in NormNuclearCone(2, 3))
     # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
     # t = sqrt(3) + sqrt(2)
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
@@ -3815,13 +3416,10 @@ function normnuc1test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction{Float64},
         MOI.NormNuclearCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-
     data = Float64[1, 1, 1, -1, 0, 1]
     nuc = MOI.add_constraint(
         model,
@@ -3831,26 +3429,20 @@ function normnuc1test(model::MOI.ModelLike, config::Config)
         ),
         MOI.NormNuclearCone(2, 3),
     )
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.SingleVariable}(),
         MOI.SingleVariable(t),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         rt3 = sqrt(3)
         rt2 = sqrt(2)
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ rt3 + rt2 atol = atol rtol =
@@ -3859,12 +3451,10 @@ function normnuc1test(model::MOI.ModelLike, config::Config)
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ rt3 + rt2 atol =
                 atol rtol = rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ rt3 + rt2 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), nuc) ≈
               vcat(rt3 + rt2, data) atol = atol rtol = rtol
-
         if config.duals
             invrt2 = inv(rt2)
             invrt3 = inv(rt3)
@@ -3883,7 +3473,6 @@ function normnuc2test(model::MOI.ModelLike, config::Config)
     #  st  t >= sum_i sigma_i([1 1; 1 -1; 0 1]) (i.e (t, 1, 1, 0, 1, -1, 1]) is in NormNuclearCone(3, 2))
     # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
     # t = sqrt(3) + sqrt(2)
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
@@ -3892,13 +3481,10 @@ function normnuc2test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction{Float64},
         MOI.NormNuclearCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-
     data = Float64[1, 1, 0, 1, -1, 1]
     nuc = MOI.add_constraint(
         model,
@@ -3908,26 +3494,20 @@ function normnuc2test(model::MOI.ModelLike, config::Config)
         ),
         MOI.NormNuclearCone(3, 2),
     )
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.SingleVariable}(),
         MOI.SingleVariable(t),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         rt3 = sqrt(3)
         rt2 = sqrt(2)
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ rt3 + rt2 atol = atol rtol =
@@ -3936,12 +3516,10 @@ function normnuc2test(model::MOI.ModelLike, config::Config)
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ rt3 + rt2 atol =
                 atol rtol = rtol
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ rt3 + rt2 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), nuc) ≈
               vcat(rt3 + rt2, data) atol = atol rtol = rtol
-
         if config.duals
             invrt2 = inv(rt2)
             invrt3 = inv(rt3)
@@ -3973,7 +3551,6 @@ function _psd0test(
     #     ⎛ 1   1 ⎞
     # X = ⎜       ⎟           y = 2
     #     ⎝ 1   1 ⎠
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -3994,13 +3571,10 @@ function _psd0test(
         MOI.ScalarAffineFunction{Float64},
         MOI.EqualTo{Float64},
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     X = MOI.add_variables(model, square ? 4 : 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 4 : 3)
-
     vov = MOI.VectorOfVariables(X)
     if vecofvars
         cX = MOI.add_constraint(model, vov, psdcone(2))
@@ -4011,13 +3585,11 @@ function _psd0test(
             psdcone(2),
         )
     end
-
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, X[2])], 0.0),
         MOI.EqualTo(1.0),
     )
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -4035,7 +3607,6 @@ function _psd0test(
             }(),
         ) == 1
     end
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -4047,32 +3618,25 @@ function _psd0test(
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2 atol = atol rtol = rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2 atol = atol rtol =
                 rtol
         end
-
         Xv = square ? ones(4) : ones(3)
         @test MOI.get(model, MOI.VariablePrimal(), X) ≈ Xv atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cX) ≈ Xv atol = atol rtol =
             rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ 2 atol = atol rtol =
                 rtol
-
             cXv = square ? [1, -2, 0, 1] : [1, -1, 1]
             @test MOI.get(model, MOI.ConstraintDual(), cX) ≈ cXv atol = atol rtol =
                 rtol
@@ -4171,7 +3735,6 @@ function _psd1test(
     # With (2) we get
     α = √(3 - 2obj - 4x2) / 2
     β = k * α
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -4197,15 +3760,12 @@ function _psd1test(
         MOI.VectorOfVariables,
         MOI.SecondOrderCone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     X = MOI.add_variables(model, square ? 9 : 6)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 9 : 6)
     x = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 12 : 9)
-
     vov = MOI.VectorOfVariables(X)
     if vecofvars
         cX = MOI.add_constraint(model, vov, psdcone(3))
@@ -4221,7 +3781,6 @@ function _psd1test(
         MOI.VectorOfVariables(x),
         MOI.SecondOrderCone(3),
     )
-
     c1 = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
@@ -4244,7 +3803,6 @@ function _psd1test(
         ),
         MOI.EqualTo(1 / 2),
     )
-
     objXidx = square ? [1:2; 4:6; 8:9] : [1:3; 5:6]
     objXcoefs = square ? [2.0, 1.0, 1.0, 2.0, 1.0, 1.0, 2.0] : 2 * ones(5)
     MOI.set(
@@ -4256,7 +3814,6 @@ function _psd1test(
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -4278,25 +3835,19 @@ function _psd1test(
             MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
         ) == 1
     end
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ obj atol = atol rtol = rtol
         if config.dual_objective_value
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ obj atol = atol rtol =
                 rtol
         end
-
         Xv =
             square ? [α^2, α * β, α^2, α * β, β^2, α * β, α^2, α * β, α^2] :
             [α^2, α * β, β^2, α^2, α * β, α^2]
@@ -4305,7 +3856,6 @@ function _psd1test(
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ xv atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), cX) ≈ Xv atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ xv atol = atol rtol =
@@ -4314,7 +3864,6 @@ function _psd1test(
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ 0.5 atol = atol rtol =
             rtol
-
         if config.duals
             cX0 = 1 + (√2 - 1) * y2
             cX1 = 1 - y2
@@ -4351,7 +3900,6 @@ function psdt2test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Caused getdual to fail on SCS and Mosek
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -4378,13 +3926,10 @@ function psdt2test(model::MOI.ModelLike, config::Config)
         MOI.ScalarAffineFunction{Float64},
         MOI.EqualTo{Float64},
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x = MOI.add_variables(model, 7)
     @test MOI.get(model, MOI.NumberOfVariables()) == 7
-
     η = 10.0
     c1 = MOI.add_constraint(
         model,
@@ -4442,7 +3987,6 @@ function psdt2test(model::MOI.ModelLike, config::Config)
         ),
         MOI.EqualTo(0.0),
     )
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -4473,7 +4017,6 @@ function psdt2test(model::MOI.ModelLike, config::Config)
             }(),
         ) == 1
     end
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -4482,20 +4025,15 @@ function psdt2test(model::MOI.ModelLike, config::Config)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈
               [2η / 3, 0, η / 3, 0, 0, 0, η * δ * (1 - 1 / √3) / 2] atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ -η atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈
@@ -4507,7 +4045,6 @@ function psdt2test(model::MOI.ModelLike, config::Config)
         ] atol = atol rtol = rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c4) ≈ 0.0 atol = atol rtol =
             rtol
-
         if config.duals
             @test MOI.get(model, MOI.ConstraintDual(), c1) ≈
                   δ * (1 - 1 / √3) / 2 atol = atol rtol = rtol
@@ -4532,21 +4069,16 @@ function _psd3test(model::MOI.ModelLike, psdcone, config::Config{T}) where {T}
     # s.t. [x 1 1]
     #      [1 x 1] ⪰ 0
     #      [1 1 x]
-
     atol = config.atol
     rtol = config.rtol
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{T}, psdcone)
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     x = MOI.add_variable(model)
     fx = MOI.SingleVariable(x)
-
     if psdcone == MOI.PositiveSemidefiniteConeTriangle
         func = MOIU.operate(vcat, T, fx, one(T), fx, one(T), one(T), fx)
     else
@@ -4565,31 +4097,23 @@ function _psd3test(model::MOI.ModelLike, psdcone, config::Config{T}) where {T}
             fx,
         )
     end
-
     c = MOI.add_constraint(model, func, psdcone(3))
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.SingleVariable}(),
         MOI.SingleVariable(x),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         if config.duals
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ one(T) atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈
               ones(T, MOI.output_dimension(func)) atol = atol rtol = rtol
         if config.duals
@@ -4672,7 +4196,6 @@ function _det1test(
     #           |         |
     #           |_________|
     #            -Q22 ≥ -1
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -4700,15 +4223,12 @@ function _det1test(
         MOI.VectorAffineFunction{Float64},
         MOI.Nonnegatives,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
     Q = MOI.add_variables(model, square ? 4 : 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 5 : 4)
-
     if use_logdet
         u = MOI.add_variable(model)
         vc = MOI.add_constraint(model, MOI.SingleVariable(u), MOI.EqualTo(1.0))
@@ -4726,7 +4246,6 @@ function _det1test(
             detcone(2),
         )
     end
-
     c = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -4738,7 +4257,6 @@ function _det1test(
         ),
         MOI.Nonnegatives(2),
     )
-
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -4756,7 +4274,6 @@ function _det1test(
             }(),
         ) == 1
     end
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -4765,25 +4282,18 @@ function _det1test(
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         expectedobjval = use_logdet ? 0.0 : 1.0
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ expectedobjval atol = atol rtol =
             rtol
-
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ expectedobjval atol =
             atol rtol = rtol
-
         if use_logdet
             @test MOI.get(model, MOI.VariablePrimal(), u) ≈ 1.0 atol = atol rtol =
                 rtol
         end
-
         Qv = MOI.get(model, MOI.VariablePrimal(), Q)
         @test Qv[1] ≈ 1.0 atol = atol rtol = rtol
         @test Qv[2] ≈ 0.0 atol = atol rtol = rtol
@@ -4791,18 +4301,15 @@ function _det1test(
             @test Qv[3] ≈ 0.0 atol = atol rtol = rtol
         end
         @test Qv[end] ≈ 1.0 atol = atol rtol = rtol
-
         tQv = MOI.get(model, MOI.ConstraintPrimal(), cX)
         @test tQv[1] ≈ expectedobjval atol = atol rtol = rtol
         @test tQv[(use_logdet ? 3 : 2):end] ≈ Qv atol = atol rtol = rtol
-
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ [0.0, 0.0] atol = atol rtol =
             rtol
         if use_logdet
             @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ 1.0 atol = atol rtol =
                 rtol
         end
-
         if config.duals
             if use_logdet
                 @test MOI.get(model, MOI.ConstraintDual(), c) ≈ [1, 1] atol =
@@ -4848,10 +4355,8 @@ function _det2test(model::MOI.ModelLike, config::Config, detcone)
     # det(mat) = 5, so:
     # rootdet(mat) ≈ 1.709976
     # logdet(mat)  ≈ 1.609438
-
     mat = Float64[3 2 1; 2 2 1; 1 1 3]
     matL = Float64[3, 2, 2, 1, 1, 3]
-
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
@@ -4860,20 +4365,16 @@ function _det2test(model::MOI.ModelLike, config::Config, detcone)
         MOI.VectorAffineFunction{Float64},
         detcone,
     )
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.SingleVariable}(),
         MOI.SingleVariable(t),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-
     constant_mat = square ? vec(mat) : matL
     constant_vec = use_logdet ? vcat(0, 1, constant_mat) : vcat(0, constant_mat)
     vaf = MOI.VectorAffineFunction(
@@ -4887,22 +4388,16 @@ function _det2test(model::MOI.ModelLike, config::Config, detcone)
             MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},detcone}(),
         ) == 1
     end
-
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         expected_objval = use_logdet ? log(5) : (5^inv(3))
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ expected_objval atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), t) ≈ expected_objval atol =
             atol rtol = rtol
-
         det_value = MOI.get(model, MOI.ConstraintPrimal(), det_constraint)
         @test det_value[1] ≈ expected_objval atol = atol rtol = rtol
         if use_logdet
@@ -4910,7 +4405,6 @@ function _det2test(model::MOI.ModelLike, config::Config, detcone)
         end
         @test det_value[(use_logdet ? 3 : 2):end] ≈ (square ? vec(mat) : matL) atol =
             atol rtol = rtol
-
         if config.duals
             psd_dual =
                 square ? [1, -1, 0, -1, 1.6, -0.2, 0, -0.2, 0.4] :

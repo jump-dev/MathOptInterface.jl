@@ -132,7 +132,6 @@ function MOI.eval_hessian_lagrangian(d::HS071, H, x, σ, μ)
     H[8] = σ * (x[1])               # 4,2
     H[9] = σ * (x[1])               # 4,3
     H[10] = 0                         # 4,4
-
     # First constraint
     H[2] += μ[1] * (x[3] * x[4])  # 2,1
     H[4] += μ[1] * (x[2] * x[4])  # 3,1
@@ -140,7 +139,6 @@ function MOI.eval_hessian_lagrangian(d::HS071, H, x, σ, μ)
     H[7] += μ[1] * (x[2] * x[3])  # 4,1
     H[8] += μ[1] * (x[1] * x[3])  # 4,2
     H[9] += μ[1] * (x[1] * x[2])  # 4,3
-
     # Second constraint
     H[1] += μ[2] * 2  # 1,1
     H[3] += μ[2] * 2  # 2,2
@@ -170,7 +168,6 @@ function MOI.eval_hessian_lagrangian_product(d::HS071, h, x, v, σ, μ)
         μ[1] * (x[2] * x[4] * v[1] + x[1] * x[4] * v[2] + x[1] * x[2] * v[4])
     h[4] +=
         μ[1] * (x[2] * x[3] * v[1] + x[1] * x[3] * v[2] + x[1] * x[2] * v[3])
-
     # Second constraint
     h[1] += μ[2] * 2.0 * v[1]
     h[2] += μ[2] * 2.0 * v[2]
@@ -186,7 +183,6 @@ function hs071test_template(
 )
     atol = config.atol
     rtol = config.rtol
-
     @test MOI.supports(model, MOI.NLPBlock())
     @test MOI.supports_constraint(
         model,
@@ -199,22 +195,16 @@ function hs071test_template(
         MOI.GreaterThan{Float64},
     )
     @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     lb = [25.0, 40.0]
     ub = [Inf, 40.0]
-
     block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, true)
-
     v = MOI.add_variables(model, 4)
     @test MOI.get(model, MOI.NumberOfVariables()) == 4
-
     l = [1.0, 1.0, 1.0, 1.0]
     u = [5.0, 5.0, 5.0, 5.0]
     start = [1, 5, 5, 1]
-
     for i in 1:4
         cub = MOI.add_constraint(
             model,
@@ -232,29 +222,20 @@ function hs071test_template(
         @test clb.value == v[i].value
         MOI.set(model, MOI.VariablePrimalStart(), v[i], start[i])
     end
-
     MOI.set(model, MOI.NLPBlock(), block_data)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-
     # TODO: config.query tests
     if config.solve
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.ResultCount()) >= 1
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 17.014017145179164 atol =
             atol rtol = rtol
-
         optimal_v =
             [1.0, 4.7429996418092970, 3.8211499817883077, 1.3794082897556983]
-
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ optimal_v atol = atol rtol =
             rtol
-
         # TODO: Duals? Maybe better to test on a convex instance.
     end
 end
@@ -344,43 +325,30 @@ function feasibility_sense_test_template(
 )
     atol = config.atol
     rtol = config.rtol
-
     @test MOI.supports(model, MOI.NLPBlock())
     @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     lb = [1.0]
     ub = [1.0]
-
     block_data = MOI.NLPBlockData(
         MOI.NLPBoundsPair.(lb, ub),
         evaluator,
         set_has_objective,
     )
-
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-
     # Avoid starting at zero because it's a critial point.
     MOI.set(model, MOI.VariablePrimalStart(), x, 1.5)
-
     MOI.set(model, MOI.NLPBlock(), block_data)
     MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
-
     # TODO: config.query tests
     if config.solve
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.ResultCount()) >= 1
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol = atol rtol = rtol
-
         @test abs(MOI.get(model, MOI.VariablePrimal(), x)) ≈ 1.0 atol = atol rtol =
             rtol
     end
@@ -431,46 +399,33 @@ function nlp_objective_and_moi_objective_test(
 )
     atol = config.atol
     rtol = config.rtol
-
     @test MOI.supports(model, MOI.NLPBlock())
     @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
-
     MOI.empty!(model)
     @test MOI.is_empty(model)
-
     lb = [1.0]
     ub = [2.0]
-
     block_data = MOI.NLPBlockData(
         MOI.NLPBoundsPair.(lb, ub),
         FeasibilitySenseEvaluator(true),
         true,
     )
-
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-
     # Avoid starting at zero because it's a critial point.
     MOI.set(model, MOI.VariablePrimalStart(), x, 1.5)
-
     MOI.set(model, MOI.NLPBlock(), block_data)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f_x = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
     # This objective function should be ignored.
     MOI.set(model, MOI.ObjectiveFunction{typeof(f_x)}(), f_x)
-
     # TODO: config.query tests
     if config.solve
         MOI.optimize!(model)
-
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-
         @test MOI.get(model, MOI.ResultCount()) >= 1
-
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol = atol rtol = rtol
-
         @test 1.0 ≤ MOI.get(model, MOI.VariablePrimal(), x) ≤ 2.0
     end
 end

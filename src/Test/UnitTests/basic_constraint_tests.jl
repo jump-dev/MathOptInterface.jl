@@ -325,14 +325,11 @@ function basic_constraint_test_helper(
     x = MOI.add_variables(model, N)
     constraint_function = func(x)
     F, S = typeof(constraint_function), typeof(set)
-
     @test MOI.supports_constraint(model, F, S)
-
     @testset "add_constraint" begin
         @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 0
         c = MOI.add_constraint(model, constraint_function, set)
         @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
-
         if name
             @testset "ConstraintName" begin
                 if F == MOI.SingleVariable
@@ -352,7 +349,6 @@ function basic_constraint_test_helper(
                 end
             end
         end
-
         if get_constraint_function
             @testset "ConstraintFunction" begin
                 func = MOI.get(model, MOI.ConstraintFunction(), c)
@@ -366,14 +362,12 @@ function basic_constraint_test_helper(
             end
         end
     end
-
     @testset "ListOfConstraintIndices" begin
         c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         @test length(c_indices) ==
               MOI.get(model, MOI.NumberOfConstraints{F,S}()) ==
               1
     end
-
     if F != MOI.SingleVariable && F != MOI.VectorOfVariables
         # We can't add multiple variable constraints as these are
         # interpreted as bounds etc.
@@ -389,12 +383,10 @@ function basic_constraint_test_helper(
                   3
         end
     end
-
     @testset "is_valid" begin
         c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         @test all(MOI.is_valid.(model, c_indices))
     end
-
     if delete
         @testset "delete" begin
             c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
