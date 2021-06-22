@@ -405,13 +405,13 @@ end
 
 Test the nonlinear HS071 problem with a hessian vector product.
 """
-function hs071_hessian_vector_product_test(model, config)
+function test_nonlinear_hs071_hessian_vector_product(model, config)
     _test_HS071(model, config, HS071(false, true))
     return
 end
 
 function setup_test(
-    ::typeof(hs071_hessian_vector_product_test),
+    ::typeof(test_nonlinear_hs071_hessian_vector_product),
     model::MOIU.MockOptimizer,
     config::Config,
 )
@@ -739,5 +739,44 @@ function test_nonlinear_HS071_internal(::MOI.ModelLike, ::Config)
     v = [1.0, 1.1, 1.2, 1.3]
     MOI.eval_hessian_lagrangian_product(d, Hv, x, v, 1.0, [1.0, 1.0])
     @test Hv == [15.1, 8.0, 8.1, 12.2]
+    return
+end
+
+"""
+    test_nonlinear_Feasibility_internal(::MOI.ModelLike, ::Config)
+
+A test for the correctness of the FeasibilitySenseEvaluator evaluator.
+
+This is mainly for the internal purpose of checking their correctness as
+written. External solvers can exclude this test without consequence.
+"""
+function test_nonlinear_Feasibility_internal(::MOI.ModelLike, ::Config)
+    d = MOI.Test.FeasibilitySenseEvaluator(true)
+    @test MOI.objective_expr(d) == :()
+    @test MOI.constraint_expr(d, 1) == :(x[$(MOI.VariableIndex(1))]^2 == 1.0)
+    @test_throws AssertionError MOI.constraint_expr(d, 2)
+    MOI.initialize(d, [:Grad, :Jac, :ExprGraph, :Hess])
+    @test :Hess in MOI.features_available(d)
+    x = [1.5]
+    # f(x)
+    @test MOI.eval_objective(d, x) == 0.0
+    # g(x)
+    g = zeros(1)
+    MOI.eval_constraint(d, g, x)
+    @test g == [1.5^2]
+    # f'(x)
+    ∇f = fill(NaN, length(x))
+    MOI.eval_objective_gradient(d, ∇f, x)
+    @test ∇f == [0.0]
+    # Jacobian
+    Js = MOI.jacobian_structure(d)
+    J = fill(NaN, length(Js))
+    MOI.eval_constraint_jacobian(d, J, x)
+    @test J == [3.0]
+    # Hessian-lagrangian
+    Hs = MOI.hessian_lagrangian_structure(d)
+    H = fill(NaN, length(Hs))
+    MOI.eval_hessian_lagrangian(d, H, x, 1.0, [1.1])
+    @test H == [2.2]
     return
 end
