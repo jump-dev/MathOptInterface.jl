@@ -140,7 +140,7 @@ end
 function setup_test(
     ::typeof(test_integer_integration),
     model::MOI.Utilities.MockOptimizer,
-    ::Config
+    ::Config,
 )
     MOIU.set_mock_optimize!(
         model,
@@ -180,23 +180,11 @@ function test_SOS1_integration(model::MOI.ModelLike, config::Config)
     @test MOI.is_empty(model)
     v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
-    vc1 = MOI.add_constraint(
-        model,
-        MOI.SingleVariable(v[1]),
-        MOI.LessThan(1.0),
-    )
+    vc1 = MOI.add_constraint(model, MOI.SingleVariable(v[1]), MOI.LessThan(1.0))
     @test vc1.value == v[1].value
-    vc2 = MOI.add_constraint(
-        model,
-        MOI.SingleVariable(v[2]),
-        MOI.LessThan(1.0),
-    )
+    vc2 = MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.LessThan(1.0))
     @test vc2.value == v[2].value
-    vc3 = MOI.add_constraint(
-        model,
-        MOI.SingleVariable(v[3]),
-        MOI.LessThan(2.0),
-    )
+    vc3 = MOI.add_constraint(model, MOI.SingleVariable(v[3]), MOI.LessThan(2.0))
     @test vc3.value == v[3].value
     c1 = MOI.add_constraint(
         model,
@@ -211,10 +199,7 @@ function test_SOS1_integration(model::MOI.ModelLike, config::Config)
     if config.query_number_of_constraints
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{
-                MOI.VectorOfVariables,
-                MOI.SOS1{Float64},
-            }(),
+            MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SOS1{Float64}}(),
         ) == 2
     end
     #=
@@ -226,10 +211,8 @@ function test_SOS1_integration(model::MOI.ModelLike, config::Config)
     p = sortperm(cs_sos.weights)
     @test cs_sos.weights[p] ≈ [1.0, 2.0] atol = atol rtol = rtol
     @test cf_sos.variables[p] == v[[1, 3]]
-    objf = MOI.ScalarAffineFunction(
-        MOI.ScalarAffineTerm.([2.0, 1.0, 1.0], v),
-        0.0,
-    )
+    objf =
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0, 1.0], v), 0.0)
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -238,30 +221,25 @@ function test_SOS1_integration(model::MOI.ModelLike, config::Config)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
     if config.solve
-        @test MOI.get(model, MOI.TerminationStatus()) ==
-                MOI.OPTIMIZE_NOT_CALLED
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) ==
-                config.optimal_status
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.ResultCount()) >= 1
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 atol = atol rtol =
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 atol = atol rtol = rtol
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0, 1, 2] atol = atol rtol =
             rtol
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0, 1, 2] atol =
-            atol rtol = rtol
     end
     MOI.delete(model, c1)
     MOI.delete(model, c2)
     if config.solve
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) ==
-                config.optimal_status
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.ResultCount()) >= 1
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 5 atol = atol rtol =
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 5 atol = atol rtol = rtol
+        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [1, 1, 2] atol = atol rtol =
             rtol
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [1, 1, 2] atol =
-            atol rtol = rtol
     end
     return
 end
@@ -269,7 +247,7 @@ end
 function setup_test(
     ::typeof(test_SOS1_integration),
     model::MOI.Utilities.MockOptimizer,
-    ::Config
+    ::Config,
 )
     MOIU.set_mock_optimize!(
         model,
@@ -324,11 +302,7 @@ function test_SOS2_integration(model::MOI.ModelLike, config::Config)
         @test vc.value == v[i].value
         push!(
             bin_constraints,
-            MOI.add_constraint(
-                model,
-                MOI.SingleVariable(v[i]),
-                MOI.ZeroOne(),
-            ),
+            MOI.add_constraint(model, MOI.SingleVariable(v[i]), MOI.ZeroOne()),
         )
         @test bin_constraints[i].value == v[i].value
     end
@@ -366,8 +340,7 @@ function test_SOS2_integration(model::MOI.ModelLike, config::Config)
     cs_sos = MOI.get(model, MOI.ConstraintSet(), c)
     cf_sos = MOI.get(model, MOI.ConstraintFunction(), c)
     p = sortperm(cs_sos.weights)
-    @test cs_sos.weights[p] ≈ [1.0, 2.0, 4.0, 5.0, 7.0] atol = atol rtol =
-        rtol
+    @test cs_sos.weights[p] ≈ [1.0, 2.0, 4.0, 5.0, 7.0] atol = atol rtol = rtol
     @test cf_sos.variables[p] == v[[8, 7, 5, 4, 6]]
     objf = MOI.ScalarAffineFunction(
         MOI.ScalarAffineTerm.([1.0, 1.0], [v[9], v[10]]),
@@ -381,33 +354,30 @@ function test_SOS2_integration(model::MOI.ModelLike, config::Config)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
     if config.solve
-        @test MOI.get(model, MOI.TerminationStatus()) ==
-                MOI.OPTIMIZE_NOT_CALLED
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) ==
-                config.optimal_status
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.ResultCount()) >= 1
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 15.0 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈
-                [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 3.0, 12.0] atol =
-            atol rtol = rtol
+              [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 3.0, 12.0] atol = atol rtol =
+            rtol
     end
     for cref in bin_constraints
         MOI.delete(model, cref)
     end
     if config.solve
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) ==
-                config.optimal_status
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.ResultCount()) >= 1
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 30.0 atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈
-                [0.0, 0.0, 2.0, 2.0, 0.0, 2.0, 0.0, 0.0, 6.0, 24.0] atol =
-            atol rtol = rtol
+              [0.0, 0.0, 2.0, 2.0, 0.0, 2.0, 0.0, 0.0, 6.0, 24.0] atol = atol rtol =
+            rtol
     end
     return
 end
@@ -415,7 +385,7 @@ end
 function setup_test(
     ::typeof(test_SOS2_integration),
     model::MOI.Utilities.MockOptimizer,
-    ::Config
+    ::Config,
 )
     MOIU.set_mock_optimize!(
         model,
@@ -518,12 +488,13 @@ end
 function setup_test(
     ::typeof(test_integer_solve_twice),
     model::MOI.Utilities.MockOptimizer,
-    ::Config
+    ::Config,
 )
     # FIXME [1, 0...] is not the correct optimal solution but it passes the test
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0; zeros(10)]),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [1.0; zeros(10)]),
     )
     return
 end
@@ -612,11 +583,12 @@ end
 function setup_test(
     ::typeof(test_integer_knapsack),
     model::MOI.Utilities.MockOptimizer,
-    ::Config
+    ::Config,
 )
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 0, 0, 1, 1]),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [1, 0, 0, 1, 1]),
     )
     return
 end
