@@ -113,7 +113,7 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) ->
             MOI.set(mock, MOI.TerminationStatus(), MOI.INFEASIBLE),
     )
-    MOIT.semiinttest(bridged_mock, config)
+    MOIT.test_Semiinteger_integration(bridged_mock, config)
 
     ci = first(
         MOI.get(
