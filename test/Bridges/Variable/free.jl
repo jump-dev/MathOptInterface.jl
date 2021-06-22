@@ -13,7 +13,7 @@ config = MOIT.Config()
 
 bridged_mock = MOIB.Variable.Free{Float64}(mock)
 
-@testset "solve_multirow_vectoraffine_nonpos" begin
+@testset "test_solve_multirow_vectoraffine_nonpos" begin
     MOIU.set_mock_optimize!(
         mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -27,7 +27,7 @@ bridged_mock = MOIB.Variable.Free{Float64}(mock)
             (MOI.FEASIBLE_POINT, [0.25, 0.0]),
         ),
     )
-    MOIT.solve_multirow_vectoraffine_nonpos(bridged_mock, config)
+    MOIT.test_solve_multirow_vectoraffine_nonpos(bridged_mock, config)
 
     MOI.set(
         bridged_mock,

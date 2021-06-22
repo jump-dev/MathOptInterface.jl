@@ -168,7 +168,7 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.0, 0.0]),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 0.75]),
     )
-    MOIT.solve_func_vectoraffine_nonneg(bridged_mock, config)
+    MOIT.test_solve_func_vectoraffine_nonneg(bridged_mock, config)
 
     # VectorOfVariables-in-Nonnegatives
     # VectorOfVariables-in-Nonpositives

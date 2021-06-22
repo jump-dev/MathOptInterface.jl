@@ -100,7 +100,7 @@ end
                 [-1.0],
         ),
     )
-    MOIT.solve_set_scalaraffine_lessthan(bridged_mock, config)
+    MOIT.test_solve_set_scalaraffine_lessthan(bridged_mock, config)
 
     MOIU.set_mock_optimize!(
         mock,
@@ -121,7 +121,7 @@ end
                 [-0.5],
         ),
     )
-    MOIT.solve_coef_scalaraffine_lessthan(bridged_mock, config)
+    MOIT.test_solve_coef_scalaraffine_lessthan(bridged_mock, config)
 
     ci = first(
         MOI.get(
