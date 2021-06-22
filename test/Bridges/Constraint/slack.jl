@@ -94,7 +94,10 @@ config = MOIT.Config()
             ],
         ),
     )
-    MOIT.linear2test(bridged_mock, MOIT.Config(duals = false, basis = true))
+    MOIT.test_linear_integration_2(
+        bridged_mock,
+        MOIT.Config(duals = false, basis = true),
+    )
     c1 = MOI.get(
         bridged_mock,
         MOI.ListOfConstraintIndices{
@@ -119,7 +122,7 @@ config = MOIT.Config()
             (MOI.SingleVariable, MOI.LessThan{Float64}) => [0],
         ),
     )
-    MOIT.linear11test(bridged_mock, MOIT.Config(duals = false))
+    MOIT.test_linear_transform(bridged_mock, MOIT.Config(duals = false))
 
     c1 = MOI.get(
         bridged_mock,
@@ -253,7 +256,7 @@ end
             (MOI.VectorOfVariables, MOI.Nonpositives) => [[1.0]],
         ),
     )
-    MOIT.linear7test(bridged_mock, config)
+    MOIT.test_linear_VectorAffineFunction(bridged_mock, config)
 
     c1 = MOI.get(
         bridged_mock,

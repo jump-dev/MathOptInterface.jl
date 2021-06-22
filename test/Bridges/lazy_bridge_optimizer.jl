@@ -1152,10 +1152,14 @@ end
     # is equivalent to
     # `Constraint.VectorizeBridge` -> `Constraint.VectorSlackBridge`
     # however, `Variable.VectorizeBridge` do not support modification of the
-    # set hence it makes some tests of `contlineartest` fail so we disable it.
+    # set hence it makes some tests fail so we disable it.
     MOIB.remove_bridge(bridged, MOIB.Constraint.ScalarSlackBridge{T})
-    exclude = ["partial_start"] # `VariablePrimalStart` not supported.
-    MOIT.contlineartest(bridged, MOIT.Config{T}(solve = false), exclude)
+    MOI.Test.runtests(
+        bridged,
+        MOIT.Config{T}(solve = false),
+        include = ["test_linear_"],
+        exclude = ["VariablePrimalStart"],
+    )
 end
 
 @testset "SDPAModel with bridges and caching" begin

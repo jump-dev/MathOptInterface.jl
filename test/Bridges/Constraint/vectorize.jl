@@ -44,7 +44,7 @@ config = MOIT.Config()
                 [[0], [1]],
         ),
     )
-    MOIT.linear2test(bridged_mock, config)
+    MOIT.test_linear_integration_2(bridged_mock, config)
 
     MOIU.set_mock_optimize!(
         mock,
@@ -52,7 +52,7 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, 0]),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, -100]),
     )
-    MOIT.linear4test(bridged_mock, config)
+    MOIT.test_linear_LessThan_and_GreaterThan(bridged_mock, config)
 
     MOIU.set_mock_optimize!(
         mock,
@@ -61,7 +61,7 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [4, 0]),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2]),
     )
-    MOIT.linear5test(mock, config)
+    MOIT.test_linear_integration_modification(mock, config)
 
     MOIU.set_mock_optimize!(
         mock,
@@ -69,7 +69,7 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, 0]),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, -100]),
     )
-    MOIT.linear6test(mock, config)
+    MOIT.test_linear_modify_GreaterThan_and_LessThan_constraints(mock, config)
 
     MOIU.set_mock_optimize!(
         mock,
@@ -90,7 +90,7 @@ config = MOIT.Config()
     )
     # linear14 has double variable bounds for the z variable
     mock.eval_variable_constraint_dual = false
-    MOIT.linear14test(bridged_mock, config)
+    MOIT.test_linear_integration_delete_variables(bridged_mock, config)
     mock.eval_variable_constraint_dual = true
 
     mock.optimize! =

@@ -570,8 +570,12 @@ for state in (MOIU.NO_OPTIMIZER, MOIU.EMPTY_OPTIMIZER, MOIU.ATTACHED_OPTIMIZER)
             MOIT.unittest(m, config)
         end
         @testset "Continuous Linear" begin
-            exclude = ["partial_start"] # VariablePrimalStart not supported.
-            MOIT.contlineartest(m, config, exclude)
+            MOI.Test.runtests(
+                m,
+                config,
+                include = ["test_linear_"],
+                exclue = ["VariablePrimalStart"],
+            )
         end
     end
 end

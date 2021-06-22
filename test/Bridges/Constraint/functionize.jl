@@ -70,7 +70,7 @@ config_with_basis = MOIT.Config(basis = true)
                 var_basis = [MOI.BASIC, MOI.NONBASIC_AT_LOWER],
             ),
         )
-        MOIT.linear2test(bridged_mock, config_with_basis)
+        MOIT.test_linear_integration_2(bridged_mock, config_with_basis)
 
         cis = MOI.get(
             bridged_mock,

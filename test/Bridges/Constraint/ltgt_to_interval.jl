@@ -34,7 +34,10 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) ->
             MOIU.mock_optimize!(mock, [100.0, -100.0]),
     )
-    MOIT.linear6test(bridged_mock, config)
+    MOIT.test_linear_modify_GreaterThan_and_LessThan_constraints(
+        bridged_mock,
+        config,
+    )
 
     ci = first(
         MOI.get(

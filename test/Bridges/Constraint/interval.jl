@@ -85,7 +85,7 @@ end
             var_basis = [MOI.BASIC, MOI.BASIC],
         ),
     )
-    MOIT.linear10test(bridged_mock, config_with_basis)
+    MOIT.test_linear_integration_Interval(bridged_mock, config_with_basis)
     MOIU.set_mock_optimize!(
         mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -106,7 +106,7 @@ end
                 [0],
         ),
     )
-    MOIT.linear10btest(bridged_mock, config_with_basis)
+    MOIT.test_linear_Interval_inactive(bridged_mock, config_with_basis)
 
     ci = first(
         MOI.get(
@@ -176,7 +176,7 @@ end
             (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => zeros(T, 1),
         ),
     )
-    MOIT.linear13test(bridged_mock, MOIT.Config{T}())
+    MOIT.test_linear_FEASIBILITY_SENSE(bridged_mock, MOIT.Config{T}())
 
     ci = first(
         MOI.get(

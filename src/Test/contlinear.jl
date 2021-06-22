@@ -1,13 +1,16 @@
-# Continuous linear problems
+"""
+    test_linear_integration(model::MOI.ModelLike, config::Config{T}) where {T}
 
-# Basic solver, query, resolve
-function linear1test(model::MOI.ModelLike, config::Config{T}) where {T}
+This test checks the integration of a sequence of common operations for linear
+programs, including adding and deleting variables, and modifying variable
+bounds and the objective function.
+"""
+function test_linear_integration(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
-    # simple 2 variable, 1 constraint problem
-    # min -x
-    # st   x + y <= 1   (x + y - 1 ∈ Nonpositives)
-    #       x, y >= 0   (x, y ∈ Nonnegatives)
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -31,9 +34,6 @@ function linear1test(model::MOI.ModelLike, config::Config{T}) where {T}
     )
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{T})
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{T})
-    #@test MOI.get(model, MOI.SupportsAddConstraintAfterSolve())
-    #@test MOI.get(model, MOI.SupportsAddVariableAfterSolve())
-    #@test MOI.get(model, MOI.SupportsDeleteConstraint())
     MOI.empty!(model)
     @test MOI.is_empty(model)
     v = MOI.add_variables(model, 2)
@@ -69,7 +69,8 @@ function linear1test(model::MOI.ModelLike, config::Config{T}) where {T}
             MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}(),
         ) == 2
     end
-    # note: adding some redundant zero coefficients to catch solvers that don't handle duplicate coefficients correctly:
+    # Note: adding some redundant zero coefficients to catch solvers that don't
+    # handle duplicate coefficients correctly:
     objf = MOI.ScalarAffineFunction{T}(
         MOI.ScalarAffineTerm{
             T,
@@ -115,7 +116,6 @@ function linear1test(model::MOI.ModelLike, config::Config{T}) where {T}
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol = atol rtol =
                 rtol
-            # reduced costs
             @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ 0 atol = atol rtol =
                 rtol
             @test MOI.get(model, MOI.ConstraintDual(), vc2) ≈ 1 atol = atol rtol =
@@ -299,7 +299,8 @@ function linear1test(model::MOI.ModelLike, config::Config{T}) where {T}
     # s.t. x + y + z == 2 (c)
     # x,y >= 0, z = 0
     MOI.delete(model, c)
-    # note: adding some redundant zero coefficients to catch solvers that don't handle duplicate coefficients correctly:
+    # Note: adding some redundant zero coefficients to catch solvers that don't
+    # handle duplicate coefficients correctly:
     cf = MOI.ScalarAffineFunction{T}(
         MOI.ScalarAffineTerm{
             T,
@@ -494,8 +495,18 @@ function linear1test(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# add_variable (one by one)
-function linear2test(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_program(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test solving a simple linear program.
+"""
+function test_linear_integration_2(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
     # Min -x
@@ -577,7 +588,6 @@ function linear2test(model::MOI.ModelLike, config::Config{T}) where {T}
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol = atol rtol =
                 rtol
-            # reduced costs
             @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ 0 atol = atol rtol =
                 rtol
             @test MOI.get(model, MOI.ConstraintDual(), vc2) ≈ 1 atol = atol rtol =
@@ -592,8 +602,18 @@ function linear2test(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# Issue #40 from Gurobi.jl
-function linear3test(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_inactive_bounds(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+This test checks solving a linear program with bounds that are not binding.
+"""
+function test_linear_inactive_bounds(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
     # min  x
@@ -714,8 +734,18 @@ function linear3test(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# Modify GreaterThan{T} and LessThan{T} sets as bounds
-function linear4test(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_LessThan_and_GreaterThan(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test solving a linear program with variabless containing lower and upper bounds.
+"""
+function test_linear_LessThan_and_GreaterThan(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
@@ -794,12 +824,20 @@ function linear4test(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# Change coeffs, del constr, del var
-function linear5test(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_integration_modification(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test a range of problem modifications for a linear program.
+"""
+function test_linear_integration_modification(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
-    #@test MOI.get(model, MOI.SupportsDeleteVariable())
-    #####################################
     # Start from simple LP
     # Solve it
     # Copy and solve again
@@ -949,8 +987,18 @@ function linear5test(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# Modify GreaterThan{T} and LessThan{T} sets as linear constraints
-function linear6test(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_modify_GreaterThan_and_LessThan_constraints(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test modifying linear constraints.
+"""
+function test_linear_modify_GreaterThan_and_LessThan_constraints(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
@@ -1052,8 +1100,18 @@ function linear6test(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# Modify constants in Nonnegatives and Nonpositives
-function linear7test(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_VectorAffineFunction(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test solving a linear program provided in vector-form.
+"""
+function test_linear_VectorAffineFunction(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
     # Min  x - y
@@ -1198,8 +1256,18 @@ function linear7test(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# infeasible problem
-function linear8atest(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_INFEASIBLE(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test solving an infeasible linear program.
+"""
+function test_linear_INFEASIBLE(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
     # min x
@@ -1277,8 +1345,18 @@ function linear8atest(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# unbounded problem
-function linear8btest(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_DUAL_INFEASIBLE(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test solving a problem that is dual infeasible (unbounded).
+"""
+function test_linear_DUAL_INFEASIBLE(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
     # min -x-y
@@ -1347,8 +1425,18 @@ function linear8btest(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# unbounded problem with unique ray
-function linear8ctest(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_DUAL_INFEASIBLE_2(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test solving a linear program that is dual infeasible (unbounded).
+"""
+function test_linear_DUAL_INFEASIBLE_2(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
     # min -x-y
@@ -1419,8 +1507,19 @@ function linear8ctest(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# add_constraints
-function linear9test(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_add_constraints(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test solving a linear program constructed using the plural `add_constraints`
+function.
+"""
+function test_linear_add_constraints(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
     #   maximize 1000 x + 350 y
@@ -1518,8 +1617,19 @@ function linear9test(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# ranged constraints
-function linear10test(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_integration_Interval(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+This test checks a variety of properties of a model with
+ScalarAffineFunction-in-Interval constraints.
+"""
+function test_linear_integration_Interval(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
     #   maximize x + y
@@ -1586,7 +1696,8 @@ function linear10test(model::MOI.ModelLike, config::Config{T}) where {T}
                 rtol
         end
         if config.basis
-            # There are multiple optimal bases. Either x or y can be in the optimal basis.
+            # There are multiple optimal bases. Either x or y can be in the
+            # optimal basis.
             @test (
                 MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.BASIC ||
                 MOI.get(model, MOI.VariableBasisStatus(), y) == MOI.BASIC
@@ -1623,7 +1734,8 @@ function linear10test(model::MOI.ModelLike, config::Config{T}) where {T}
                 rtol
         end
         if config.basis
-            # There are multiple optimal bases. Either x or y can be in the optimal basis."
+            # There are multiple optimal bases. Either x or y can be in the
+            # optimal basis.
             @test (
                 MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.BASIC ||
                 MOI.get(model, MOI.VariableBasisStatus(), y) == MOI.BASIC
@@ -1650,7 +1762,8 @@ function linear10test(model::MOI.ModelLike, config::Config{T}) where {T}
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2 atol = atol rtol =
             rtol
         if config.basis
-            # There are multiple optimal bases. Either x or y can be in the optimal basis.
+            # There are multiple optimal bases. Either x or y can be in the
+            # optimal basis.
             @test (
                 MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.BASIC ||
                 MOI.get(model, MOI.VariableBasisStatus(), y) == MOI.BASIC
@@ -1683,7 +1796,8 @@ function linear10test(model::MOI.ModelLike, config::Config{T}) where {T}
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 12 atol = atol rtol =
             rtol
         if config.basis
-            # There are multiple optimal bases. Either x or y can be in the optimal basis.
+            # There are multiple optimal bases. Either x or y can be in the
+            # optimal basis.
             @test (
                 MOI.get(model, MOI.VariableBasisStatus(), x) == MOI.BASIC ||
                 MOI.get(model, MOI.VariableBasisStatus(), y) == MOI.BASIC
@@ -1694,8 +1808,19 @@ function linear10test(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# inactive ranged constraints
-function linear10btest(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_Interval_inactive(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+This test checks linear programs with a non-binding
+ScalarAffineFunction-in-Interval constraint.
+"""
+function test_linear_Interval_inactive(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
     #   minimize x + y
@@ -1775,41 +1900,51 @@ function linear10btest(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# changing constraint sense
-function linear11test(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_transform(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+This test checks calling `MOI.transform` to flip the sense of constraints.
+
+It starts with:
+```
+min x + y
+st   x + y >= 1
+     x + y >= 2
+     sol: x+y = 2 (degenerate)
+```
+with the dual problem:
+```
+max  w + 2z
+st   w +  z == 1
+     w +  z == 1
+     w, z >= 0
+sol: z = 1, w = 0
+```
+Then it tranforms problem into:
+```
+min x + y
+st   x + y >= 1
+     x + y <= 2
+sol: x+y = 1 (degenerate)
+```
+with the dual problem:
+```
+max  w + 2z
+st   w +  z == 1
+     w +  z == 1
+     w >= 0, z <= 0
+sol: w = 1, z = 0
+```
+"""
+function test_linear_transform(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
-    # simple 2 variable, 1 constraint problem
-    #
-    # starts with
-    #
-    # min x + y
-    # st   x + y >= 1
-    #      x + y >= 2
-    # sol: x+y = 2 (degenerate)
-    #
-    # with dual
-    #
-    # max  w + 2z
-    # st   w +  z == 1
-    #      w +  z == 1
-    #      w, z >= 0
-    # sol: z = 1, w = 0
-    #
-    # tranforms problem into:
-    #
-    # min x + y
-    # st   x + y >= 1
-    #      x + y <= 2
-    # sol: x+y = 1 (degenerate)
-    #
-    # with dual
-    #
-    # max  w + 2z
-    # st   w +  z == 1
-    #      w +  z == 1
-    #      w >= 0, z <= 0
-    # sol: w = 1, z = 0
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -1878,14 +2013,28 @@ function linear11test(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# infeasible problem with 2 linear constraints
-function linear12test(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_INFEASIBLE_2(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test solving an infeasible linear program.
+
+The model is
+```
+ min  x
+s.t. 2x - 3y <= -7
+           y <=  2
+      x,   y >= 0
+```
+"""
+function test_linear_INFEASIBLE_2(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
-    # min x
-    # s.t. 2x-3y <= -7
-    #      y <= 2
-    # x,y >= 0
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -1946,7 +2095,6 @@ function linear12test(model::MOI.ModelLike, config::Config{T}) where {T}
               MOI.get(model, MOI.TerminationStatus()) ==
               MOI.INFEASIBLE_OR_UNBOUNDED
         if config.duals && config.infeas_certificates
-            # solver returned an infeasibility ray
             @test MOI.get(model, MOI.ResultCount()) >= 1
             @test MOI.get(model, MOI.DualStatus()) ==
                   MOI.INFEASIBILITY_CERTIFICATE
@@ -1963,13 +2111,27 @@ function linear12test(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# feasibility problem
-function linear13test(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_FEASIBILITY_SENSE(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test solving a linear program with no objective function.
+
+The problem is
+```
+Find x, y
+s.t. 2x + 3y >= 1
+     x - y == 0
+```
+"""
+function test_linear_FEASIBILITY_SENSE(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
-    # find x, y
-    # s.t. 2x + 3y >= 1
-    #      x - y == 0
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports_constraint(
         model,
@@ -2029,8 +2191,18 @@ function linear13test(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# Deletion of vector of variables
-function linear14test(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_integration_delete_variables(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+This function tests calling `delete(::ModelLike, ::Vector{VariableIndex})`.
+"""
+function test_linear_integration_delete_variables(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
     # max x + 2y + 3z + 4
@@ -2121,7 +2293,6 @@ function linear14test(model::MOI.ModelLike, config::Config{T}) where {T}
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol = atol rtol =
                 rtol
-            # reduced costs
             @test MOI.get(model, MOI.ConstraintDual(), clbx) ≈ 2 atol = atol rtol =
                 rtol
             @test MOI.get(model, MOI.ConstraintDual(), clby) ≈ 0 atol = atol rtol =
@@ -2161,20 +2332,29 @@ function linear14test(model::MOI.ModelLike, config::Config{T}) where {T}
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1 atol = atol rtol =
                 rtol
-            # reduced costs
             @test MOI.get(model, MOI.ConstraintDual(), clby) ≈ 0 atol = atol rtol =
                 rtol
         end
     end
 end
 
-# Empty vector affine function rows (LQOI Issue #48)
-function linear15test(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_VectorAffineFunction_empty_row(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+This test checks solving a problem given a `VectorAffineFunction` with an empty
+row equivalent to `0 == 0`.
+
+Models not supporting `VectorAffineFunction`-in-`Zeros` should use a bridge.
+"""
+function test_linear_VectorAffineFunction_empty_row(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
-    # minimize 0
-    # s.t. 0 == 0
-    #      x == 1
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -2185,9 +2365,9 @@ function linear15test(model::MOI.ModelLike, config::Config{T}) where {T}
     MOI.empty!(model)
     @test MOI.is_empty(model)
     x = MOI.add_variables(model, 1)
-    # Create a VectorAffineFunction with two rows, but only
-    # one term, belonging to the second row. The first row,
-    # which is empty, is essentially a constraint that 0 == 0.
+    # Create a VectorAffineFunction with two rows, but only one term, belonging
+    # to the second row. The first row, which is empty, is essentially a
+    # constraint that 0 == 0.
     c = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction{T}(
@@ -2223,15 +2403,32 @@ function linear15test(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# This test can be passed by solvers that don't support VariablePrimalStart
-# because copy_to drops start information with a warning.
-function partial_start_test(model::MOI.ModelLike, config::Config{T}) where {T}
+"""
+    test_linear_VariablePrimalStart_partial(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+This test checks solving a problem with a partial solution provided via
+VariablePrimalStart.
+
+This test can be passed by solvers that don't support VariablePrimalStart
+because copy_to drops start information with a warning.
+
+The problem is
+```
+ max 2x + y
+s.t. x + y <= 1
+     x, y >= 0
+```
+where `x` starts at `one(T)`. Start point for `y` is unspecified.
+"""
+function test_linear_VariablePrimalStart_partial(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
-    # maximize 2x + y
-    # s.t. x + y <= 1
-    #      x, y >= 0
-    #      x starts at one(T). Start point for y is unspecified.
     MOI.empty!(model)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
@@ -2262,27 +2459,3 @@ function partial_start_test(model::MOI.ModelLike, config::Config{T}) where {T}
             rtol
     end
 end
-
-const contlineartests = Dict(
-    "linear1" => linear1test,
-    "linear2" => linear2test,
-    "linear3" => linear3test,
-    "linear4" => linear4test,
-    "linear5" => linear5test,
-    "linear6" => linear6test,
-    "linear7" => linear7test,
-    "linear8a" => linear8atest,
-    "linear8b" => linear8btest,
-    "linear8c" => linear8ctest,
-    "linear9" => linear9test,
-    "linear10" => linear10test,
-    "linear10b" => linear10btest,
-    "linear11" => linear11test,
-    "linear12" => linear12test,
-    "linear13" => linear13test,
-    "linear14" => linear14test,
-    "linear15" => linear15test,
-    "partial_start" => partial_start_test,
-)
-
-@moitestset contlinear

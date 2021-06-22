@@ -98,7 +98,10 @@ end
                 [-1.0],
         ),
     )
-    MOIT.linear6test(bridged_mock, config)
+    MOIT.test_linear_modify_GreaterThan_and_LessThan_constraints(
+        bridged_mock,
+        config,
+    )
 
     loc = MOI.get(bridged_mock, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
@@ -158,7 +161,7 @@ end
         )
     end
     set_mock_optimize_linear7Test!(mock)
-    MOIT.linear7test(bridged_mock, config)
+    MOIT.test_linear_VectorAffineFunction(bridged_mock, config)
 
     x, y = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
 
@@ -195,7 +198,7 @@ end
         (mock::MOIU.MockOptimizer) ->
             MOIU.mock_optimize!(mock, [0.5, 0.5, 0.0, 0.0]),
     )
-    MOIT.linear11test(bridged_mock, config)
+    MOIT.test_linear_transform(bridged_mock, config)
 
     vis = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
     @test vis == MOI.VariableIndex.([-1, -2])

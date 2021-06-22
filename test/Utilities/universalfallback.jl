@@ -297,7 +297,7 @@ end
     MOIT.modificationtest(uf, config)
 end
 @testset "Continuous Linear" begin
-    MOIT.contlineartest(uf, config)
+    MOI.Test.runtests(uf, config, include = ["test_linear_"])
 end
 
 @testset "Duplicate names" begin

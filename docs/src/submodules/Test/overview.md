@@ -82,7 +82,7 @@ function test_modification()
 end
 
 function test_contlinear()
-    MOI.Test.contlineartest(BRIDGED, CONFIG)
+    MOI.Test.runtests(OPTIMIZER, CONFIG, include = ["test_linear_"])
 end
 
 function test_contquadratictest()
@@ -90,7 +90,7 @@ function test_contquadratictest()
 end
 
 function test_contconic()
-    MOI.Test.contlineartest(BRIDGED, CONFIG)
+    MOI.Test.contconictest(BRIDGED, CONFIG)
 end
 
 function test_intconic()

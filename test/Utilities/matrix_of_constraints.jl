@@ -187,7 +187,7 @@ MOIU.@product_of_sets(
     F = MOI.ScalarAffineFunction{Float64}
     @testset "$SetType" for SetType in [MixLP{Float64}, OrdLP{Float64}]
         _test(
-            MOIT.linear2test,
+            MOIT.test_linear_integration_2,
             MOI.Utilities.Box{Float64},
             SetType,
             A2,
