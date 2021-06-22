@@ -20,13 +20,3 @@ MOI.Test.runtests(
         "test_qp_complementarity_constraint",
     ],
 )
-
-MOI.Test.runtests(
-    MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}())),
-    MOI.Test.Config(modify_lhs = false),
-    # Oops! Name clash.
-    exclude = [
-        "test_linear_mixed_complementarity",
-        "test_qp_complementarity_constraint",
-    ],
-)

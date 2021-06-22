@@ -65,14 +65,14 @@ config = MOIT.Config()
             MOIU.mock_optimize!(mock, [4, 5, 1])
         end,
     )
-    MOIT.int1test(bridged_mock, config)
+    MOIT.test_integer_integration(bridged_mock, config)
 
     MOIU.set_mock_optimize!(
         mock,
         (mock::MOIU.MockOptimizer) ->
             MOIU.mock_optimize!(mock, [1.0; zeros(10)]),
     )
-    MOIT.int3test(bridged_mock, config)
+    MOIT.test_integer_solve_twice(bridged_mock, config)
 
     ci = first(
         MOI.get(

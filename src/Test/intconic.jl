@@ -96,7 +96,7 @@ function setup_test(
     model::MOI.Utilities.MockOptimizer,
     config::Config,
 )
-    MOIU.set_mock_optimize(
+    MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1.0, 0.0]),
     )
