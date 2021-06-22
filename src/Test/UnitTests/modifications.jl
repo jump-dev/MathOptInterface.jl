@@ -33,13 +33,19 @@ function test_modification_set_function_single_variable(
 end
 
 """
-    test_solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::Config)
+    test_modification_set_singlevariable_lessthan(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Test set modification SingleVariable-in-LessThan constraint. If
 `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function test_solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::Config)
+function test_modification_set_singlevariable_lessthan(
+    model::MOI.ModelLike,
+    config::Config,
+)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -74,7 +80,7 @@ function test_solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::Co
 end
 
 function setup_test(
-    ::typeof(test_solve_set_singlevariable_lessthan),
+    ::typeof(test_modification_set_singlevariable_lessthan),
     model::MOIU.MockOptimizer,
     ::Config,
 )
@@ -97,13 +103,16 @@ function setup_test(
 end
 
 """
-    test_solve_transform_singlevariable_lessthan(model::MOI.ModelLike, config::Config)
+    test_modification_transform_singlevariable_lessthan(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Test set transformation of a SingleVariable-in-LessThan constraint. If
 `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function test_solve_transform_singlevariable_lessthan(
+function test_modification_transform_singlevariable_lessthan(
     model::MOI.ModelLike,
     config::Config,
 )
@@ -143,7 +152,7 @@ function test_solve_transform_singlevariable_lessthan(
 end
 
 function setup_test(
-    ::typeof(test_solve_transform_singlevariable_lessthan),
+    ::typeof(test_modification_transform_singlevariable_lessthan),
     model::MOIU.MockOptimizer,
     ::Config,
 )
@@ -166,13 +175,19 @@ function setup_test(
 end
 
 """
-    test_solve_set_scalaraffine_lessthan(model::MOI.ModelLike, config::Config)
+    test_modification_set_scalaraffine_lessthan(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Test modifying set of ScalarAffineFunction-in-LessThan constraint. If
 `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function test_solve_set_scalaraffine_lessthan(model::MOI.ModelLike, config::Config)
+function test_modification_set_scalaraffine_lessthan(
+    model::MOI.ModelLike,
+    config::Config,
+)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -206,7 +221,7 @@ function test_solve_set_scalaraffine_lessthan(model::MOI.ModelLike, config::Conf
 end
 
 function setup_test(
-    ::typeof(test_solve_set_scalaraffine_lessthan),
+    ::typeof(test_modification_set_scalaraffine_lessthan),
     model::MOIU.MockOptimizer,
     ::Config,
 )
@@ -217,27 +232,35 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [1.0]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
+                [-1.0],
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [2.0]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
+                [-1.0],
         ),
     )
     return
 end
 
 """
-    test_solve_coef_scalaraffine_lessthan(model::MOI.ModelLike, config::Config)
+    test_modification_coef_scalaraffine_lessthan(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Test modifying a variable coefficient in a ScalarAffineFunction-in-LessThan
 constraint. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function test_solve_coef_scalaraffine_lessthan(model::MOI.ModelLike, config::Config)
+function test_modification_coef_scalaraffine_lessthan(
+    model::MOI.ModelLike,
+    config::Config,
+)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -270,7 +293,7 @@ function test_solve_coef_scalaraffine_lessthan(model::MOI.ModelLike, config::Con
 end
 
 function setup_test(
-    ::typeof(test_solve_coef_scalaraffine_lessthan),
+    ::typeof(test_modification_coef_scalaraffine_lessthan),
     model::MOIU.MockOptimizer,
     ::Config,
 )
@@ -281,27 +304,35 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [1.0]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
+                [-1.0],
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [0.5]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-0.5],
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
+                [-0.5],
         ),
     )
     return
 end
 
 """
-    test_solve_func_scalaraffine_lessthan(model::MOI.ModelLike, config::Config)
+    test_modification_func_scalaraffine_lessthan(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Test setting the function in a ScalarAffineFunction-in-LessThan
 constraint. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function test_solve_func_scalaraffine_lessthan(model::MOI.ModelLike, config::Config)
+function test_modification_func_scalaraffine_lessthan(
+    model::MOI.ModelLike,
+    config::Config,
+)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -341,7 +372,7 @@ function test_solve_func_scalaraffine_lessthan(model::MOI.ModelLike, config::Con
 end
 
 function setup_test(
-    ::typeof(test_solve_func_scalaraffine_lessthan),
+    ::typeof(test_modification_func_scalaraffine_lessthan),
     model::MOIU.MockOptimizer,
     ::Config,
 )
@@ -352,27 +383,35 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [1.0]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0],
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
+                [-1.0],
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [0.5]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-0.5],
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
+                [-0.5],
         ),
     )
     return
 end
 
 """
-    test_solve_func_vectoraffine_nonneg(model::MOI.ModelLike, config::Config)
+    test_modification_func_vectoraffine_nonneg(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Test setting the function in a VectorAffineFunction-in-Nonnegatives
 constraint. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function test_solve_func_vectoraffine_nonneg(model::MOI.ModelLike, config::Config)
+function test_modification_func_vectoraffine_nonneg(
+    model::MOI.ModelLike,
+    config::Config,
+)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -423,7 +462,7 @@ function test_solve_func_vectoraffine_nonneg(model::MOI.ModelLike, config::Confi
 end
 
 function setup_test(
-    ::typeof(test_solve_func_vectoraffine_nonneg),
+    ::typeof(test_modification_func_vectoraffine_nonneg),
     model::MOIU.MockOptimizer,
     ::Config,
 )
@@ -444,13 +483,19 @@ function setup_test(
 end
 
 """
-    test_solve_const_vectoraffine_nonpos(model::MOI.ModelLike, config::Config)
+    test_modification_const_vectoraffine_nonpos(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Test modifying the constant term in a VectorAffineFunction-in-Nonpositives
 constraint. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function test_solve_const_vectoraffine_nonpos(model::MOI.ModelLike, config::Config)
+function test_modification_const_vectoraffine_nonpos(
+    model::MOI.ModelLike,
+    config::Config,
+)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -491,7 +536,7 @@ function test_solve_const_vectoraffine_nonpos(model::MOI.ModelLike, config::Conf
 end
 
 function setup_test(
-    ::typeof(test_solve_const_vectoraffine_nonpos),
+    ::typeof(test_modification_const_vectoraffine_nonpos),
     model::MOIU.MockOptimizer,
     ::Config,
 )
@@ -512,13 +557,16 @@ function setup_test(
 end
 
 """
-    test_solve_multirow_vectoraffine_nonpos(model::MOI.ModelLike, config::Config)
+    test_modification_multirow_vectoraffine_nonpos(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Test modifying the variable coefficients in a
 VectorAffineFunction-in-Nonpositives constraint. If `config.solve=true` confirm
 that it solves correctly.
 """
-function test_solve_multirow_vectoraffine_nonpos(
+function test_modification_multirow_vectoraffine_nonpos(
     model::MOI.ModelLike,
     config::Config,
 )
@@ -561,17 +609,14 @@ function test_solve_multirow_vectoraffine_nonpos(
 end
 
 function setup_test(
-    ::typeof(test_solve_multirow_vectoraffine_nonpos),
+    ::typeof(test_modification_multirow_vectoraffine_nonpos),
     model::MOIU.MockOptimizer,
     ::Config,
 )
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [0.5]),
-        ),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.5])),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
@@ -582,12 +627,18 @@ function setup_test(
 end
 
 """
-    test_solve_const_scalar_objective(model::MOI.ModelLike, config::Config)
+    test_modification_const_scalar_objective(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Test the constant of a scalaraffine objective. If `config.solve=true` confirm
 that it solves correctly.
 """
-function test_solve_const_scalar_objective(model::MOI.ModelLike, config::Config)
+function test_modification_const_scalar_objective(
+    model::MOI.ModelLike,
+    config::Config,
+)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -619,33 +670,33 @@ function test_solve_const_scalar_objective(model::MOI.ModelLike, config::Config)
 end
 
 function setup_test(
-    ::typeof(test_solve_const_scalar_objective),
+    ::typeof(test_modification_const_scalar_objective),
     model::MOIU.MockOptimizer,
     ::Config,
 )
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0]),
-        ),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0]),
-        ),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
     )
     return
 end
 
 """
-    test_solve_coef_scalar_objective(model::MOI.ModelLike, config::Config)
+    test_modification_coef_scalar_objective(
+        model::MOI.ModelLike,
+        config::Config
+    )
 
 Test modifying a variable coefficient in a scalaraffine objective. If
 `config.solve=true` confirm that it solves correctly.
 """
-function test_solve_coef_scalar_objective(model::MOI.ModelLike, config::Config)
+function test_modification_coef_scalar_objective(
+    model::MOI.ModelLike,
+    config::Config,
+)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -677,27 +728,29 @@ function test_solve_coef_scalar_objective(model::MOI.ModelLike, config::Config)
 end
 
 function setup_test(
-    ::typeof(test_solve_coef_scalar_objective),
+    ::typeof(test_modification_coef_scalar_objective),
     model::MOIU.MockOptimizer,
     ::Config,
 )
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0]),
-        ),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0]),
-        ),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
     )
     return
 end
 
-function test_delete_variable_with_single_variable_obj(
+"""
+    test_modification_delete_variable_with_single_variable_obj(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Test deleting a variable that is the objective function.
+"""
+function test_modification_delete_variable_with_single_variable_obj(
     model::MOI.ModelLike,
     config::Config,
 )
@@ -730,7 +783,7 @@ function test_delete_variable_with_single_variable_obj(
 end
 
 function setup_test(
-    ::typeof(test_delete_variable_with_single_variable_obj),
+    ::typeof(test_modification_delete_variable_with_single_variable_obj),
     model::MOIU.MockOptimizer,
     ::Config,
 )
@@ -748,13 +801,19 @@ function setup_test(
 end
 
 """
-    test_delete_variables_in_a_batch(model::MOI.ModelLike, config::Config)
+    test_modification_delete_variables_in_a_batch(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Test deleting many variables in a batch (i.e. using the delete method which
 takes a vector of variable references). If `config.solve=true` confirm that it
 solves correctly.
 """
-function test_delete_variables_in_a_batch(model::MOI.ModelLike, config::Config)
+function test_modification_delete_variables_in_a_batch(
+    model::MOI.ModelLike,
+    config::Config,
+)
     atol = config.atol
     rtol = config.rtol
     MOI.empty!(model)
@@ -789,7 +848,7 @@ function test_delete_variables_in_a_batch(model::MOI.ModelLike, config::Config)
 end
 
 function setup_test(
-    ::typeof(test_delete_variables_in_a_batch),
+    ::typeof(test_modification_delete_variables_in_a_batch),
     model::MOIU.MockOptimizer,
     ::Config,
 )

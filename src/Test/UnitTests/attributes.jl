@@ -31,15 +31,10 @@ function test_Silent(model::MOI.ModelLike, config::Config)
     return
 end
 
-function setup_test(
-    ::typeof(test_Silent),
-    model::MOIU.MockOptimizer,
-    ::Config,
-)
+function setup_test(::typeof(test_Silent), model::MOIU.MockOptimizer, ::Config)
     MOI.set(model, MOI.Silent(), true)
     return
 end
-
 
 """
     test_TimeLimitSec(model::MOI.ModelLike, config::Config)
@@ -141,11 +136,7 @@ function setup_test(
                 MOI.RawStatusString(),
                 "Mock solution set by `mock_optimize!`.",
             )
-            MOIU.mock_optimize!(
-                mock,
-                MOI.OPTIMAL,
-                (MOI.FEASIBLE_POINT, [0.0]),
-            )
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.0]))
         end,
     )
     return
@@ -189,11 +180,7 @@ function setup_test(
         model,
         (mock::MOIU.MockOptimizer) -> begin
             MOI.set(mock, MOI.SolveTimeSec(), 0.0)
-            MOIU.mock_optimize!(
-                mock,
-                MOI.OPTIMAL,
-                (MOI.FEASIBLE_POINT, [0.0]),
-            )
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.0]))
         end,
     )
     return

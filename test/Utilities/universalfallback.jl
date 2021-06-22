@@ -293,16 +293,9 @@ end
 @testset "Unit" begin
     MOIT.unittest(uf, config)
 end
-@testset "Modification" begin
-    MOIT.modificationtest(uf, config)
-end
-@testset "Continuous Linear" begin
-    MOI.Test.runtests(
-        uf,
-        config,
-        include = ["test_linear_"],
-        exclude = ["linear_mixed_complementarity"],
-    )
+
+@testset "MOI.Test.runtests" begin
+    MOI.Test.runtests(uf, config, exclude = ["_complementarity"])
 end
 
 @testset "Duplicate names" begin
