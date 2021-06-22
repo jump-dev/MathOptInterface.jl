@@ -101,7 +101,8 @@ function bridge_constraint(
     f_scalars = MOIU.eachscalar(f)
     d = MOI.dimension(s)
     y = MOI.add_variables(model, d - 1)
-    ge = MOIU.operate(-, T, f_scalars[1], MOIU.operate(sum, T, y))
+    rhs = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), y), zero(T))
+    ge = MOIU.operate(-, T, f_scalars[1], rhs)
     lb = f_scalars[2:d]
     ub = MOIU.operate(-, T, lb)
     lb = MOIU.operate!(+, T, lb, MOI.VectorOfVariables(y))
