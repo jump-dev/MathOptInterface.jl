@@ -297,7 +297,12 @@ end
     MOIT.modificationtest(uf, config)
 end
 @testset "Continuous Linear" begin
-    MOI.Test.runtests(uf, config, include = ["test_linear_"])
+    MOI.Test.runtests(
+        uf,
+        config,
+        include = ["test_linear_"],
+        exclude = ["linear_mixed_complementarity"],
+    )
 end
 
 @testset "Duplicate names" begin

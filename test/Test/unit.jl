@@ -33,8 +33,6 @@ end
                 "solve_blank_obj",
                 "solve_constant_obj",
                 "solve_singlevariable_obj",
-                "solve_with_lowerbound",
-                "solve_with_upperbound",
                 "solve_affine_lessthan",
                 "solve_affine_greaterthan",
                 "solve_affine_equalto",
@@ -46,7 +44,6 @@ end
                 "solve_qcp_edge_cases",
                 "solve_affine_deletion_edge_cases",
                 "solve_duplicate_terms_obj",
-                "solve_integer_edge_cases",
                 "solve_objbound_edge_cases",
                 "raw_status_string",
                 "solve_time",
@@ -118,40 +115,6 @@ end
             ),
         )
         MOIT.solve_singlevariable_obj(mock, config)
-    end
-    @testset "solve_with_lowerbound" begin
-        MOIU.set_mock_optimize!(
-            mock,
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-                mock,
-                MOI.OPTIMAL,
-                (MOI.FEASIBLE_POINT, [1]),
-                MOI.FEASIBLE_POINT,
-                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0],
-                (MOI.SingleVariable, MOI.LessThan{Float64}) => [0.0],
-            ),
-        )
-        # x has two variable constraints
-        mock.eval_variable_constraint_dual = false
-        MOIT.solve_with_lowerbound(mock, config)
-        mock.eval_variable_constraint_dual = true
-    end
-    @testset "solve_with_upperbound" begin
-        MOIU.set_mock_optimize!(
-            mock,
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-                mock,
-                MOI.OPTIMAL,
-                (MOI.FEASIBLE_POINT, [1]),
-                MOI.FEASIBLE_POINT,
-                (MOI.SingleVariable, MOI.LessThan{Float64}) => [-2.0],
-                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0.0],
-            ),
-        )
-        # x has two variable constraints
-        mock.eval_variable_constraint_dual = false
-        MOIT.solve_with_upperbound(mock, config)
-        mock.eval_variable_constraint_dual = true
     end
     @testset "solve_affine_lessthan" begin
         MOIU.set_mock_optimize!(
@@ -330,32 +293,6 @@ end
             ),
         )
         MOIT.solve_affine_deletion_edge_cases(mock, config)
-    end
-    @testset "solve_integer_edge_cases" begin
-        MOIU.set_mock_optimize!(
-            mock,
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-                mock,
-                MOI.OPTIMAL,
-                (MOI.FEASIBLE_POINT, [2.0]),
-            ),
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-                mock,
-                MOI.OPTIMAL,
-                (MOI.FEASIBLE_POINT, [1.0]),
-            ),
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-                mock,
-                MOI.OPTIMAL,
-                (MOI.FEASIBLE_POINT, [1.0]),
-            ),
-            (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-                mock,
-                MOI.OPTIMAL,
-                (MOI.FEASIBLE_POINT, [0.0]),
-            ),
-        )
-        MOIT.solve_integer_edge_cases(mock, config)
     end
     @testset "solve_objbound_edge_cases" begin
         MOIU.set_mock_optimize!(

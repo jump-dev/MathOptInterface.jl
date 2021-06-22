@@ -461,7 +461,7 @@ end
         bridged_mock,
         MOIT.Config(solve = false),
         include = ["test_linear_"],
-        exclude = ["VariablePrimalStart"],
+        exclude = ["VariablePrimalStart", "linear_mixed_complementarity"],
     )
 end
 
