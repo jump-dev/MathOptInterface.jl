@@ -13,13 +13,13 @@ config = MOIT.Config()
 
 bridged_mock = MOIB.Objective.Functionize{Float64}(mock)
 
-@testset "solve_singlevariable_obj" begin
+@testset "test_ObjectiveFunction_SingleVariable" begin
     MOIU.set_mock_optimize!(
         mock,
         (mock::MOIU.MockOptimizer) ->
             MOIU.mock_optimize!(mock, [1.0], MOI.FEASIBLE_POINT),
     )
-    MOIT.solve_singlevariable_obj(bridged_mock, config)
+    MOIT.test_ObjectiveFunction_SingleVariable(bridged_mock, config)
     @test MOI.get(mock, MOI.ObjectiveFunctionType()) ==
           MOI.ScalarAffineFunction{Float64}
     @test MOI.get(bridged_mock, MOI.ObjectiveFunctionType()) ==
@@ -42,7 +42,7 @@ end
 
 # Tests that the `ObjectiveValue` attribute passed has the correct
 # `result_index`.
-@testset "solve_result_index" begin
+@testset "test_result_index" begin
     MOIU.set_mock_optimize!(
         mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -53,5 +53,5 @@ end
             (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0],
         ),
     )
-    MOIT.solve_result_index(bridged_mock, config)
+    MOIT.test_result_index(bridged_mock, config)
 end

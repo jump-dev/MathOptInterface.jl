@@ -22,7 +22,7 @@ bridged_mock = MOIB.Objective.Slack{Float64}(mock)
     @test_throws err MOI.set(bridged_mock, MOI.ObjectiveFunction{F}(), zero(F))
 end
 
-@testset "solve_qp_edge_cases" begin
+@testset "test_qp_ObjectiveFunction_edge_cases" begin
     MOIU.set_mock_optimize!(
         mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -46,7 +46,7 @@ end
             (MOI.FEASIBLE_POINT, [1.0, 2.0, 7.0]),
         ),
     )
-    MOIT.solve_qp_edge_cases(bridged_mock, config)
+    MOIT.test_qp_ObjectiveFunction_edge_cases(bridged_mock, config)
 
     @test MOIB.is_objective_bridged(bridged_mock)
     @test MOI.get(bridged_mock, MOI.ObjectiveFunctionType()) ==
