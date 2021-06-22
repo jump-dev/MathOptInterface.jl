@@ -63,7 +63,7 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) ->
             MOI.set(mock, MOI.TerminationStatus(), MOI.INFEASIBLE),
     )
-    MOIT.semiconttest(bridged_mock, config)
+    MOIT.test_Semicontinuous_integration(bridged_mock, config)
 
     ci = first(
         MOI.get(

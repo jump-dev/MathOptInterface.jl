@@ -36,7 +36,7 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) ->
             MOIU.mock_optimize!(mock, [1, 0, 0, 1, 1]),
     )
-    MOIT.knapsacktest(bridged_mock, config)
+    MOIT.test_integer_knapsack(bridged_mock, config)
 
     ci = first(
         MOI.get(
