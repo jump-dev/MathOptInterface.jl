@@ -1,5 +1,19 @@
-const VI = MOI.VariableIndex
+"""
+    HS071(
+        enable_hessian::Bool,
+        enable_hessian_vector_product::Bool = false,
+    )
 
+An AbstractNLPEvaluator for the problem:
+```
+min x1 * x4 * (x1 + x2 + x3) + x3
+st  x1 * x2 * x3 * x4 >= 25
+    x1^2 + x2^2 + x3^2 + x4^2 = 40
+    1 <= x1, x2, x3, x4 <= 5
+```
+Start at (1,5,5,1)
+End at (1.000..., 4.743..., 3.821..., 1.379...)
+"""
 struct HS071 <: MOI.AbstractNLPEvaluator
     enable_hessian::Bool
     enable_hessian_vector_product::Bool
@@ -10,14 +24,6 @@ struct HS071 <: MOI.AbstractNLPEvaluator
         return new(enable_hessian, enable_hessian_vector_product)
     end
 end
-
-# hs071
-# min x1 * x4 * (x1 + x2 + x3) + x3
-# st  x1 * x2 * x3 * x4 >= 25
-#     x1^2 + x2^2 + x3^2 + x4^2 = 40
-#     1 <= x1, x2, x3, x4 <= 5
-# Start at (1,5,5,1)
-# End at (1.000..., 4.743..., 3.821..., 1.379...)
 
 function MOI.initialize(d::HS071, requested_features::Vector{Symbol})
     for feat in requested_features
@@ -39,35 +45,47 @@ function MOI.features_available(d::HS071)
     return features
 end
 
-function MOI.objective_expr(d::HS071)
+function MOI.objective_expr(::HS071)
     return :(
-        x[$(VI(1))] * x[$(VI(4))] * (x[$(VI(1))] + x[$(VI(2))] + x[$(VI(3))]) +
-        x[$(VI(3))]
+        x[$(MOI.VariableIndex(1))] *
+        x[$(MOI.VariableIndex(4))] *
+        (
+            x[$(MOI.VariableIndex(1))] +
+            x[$(MOI.VariableIndex(2))] +
+            x[$(MOI.VariableIndex(3))]
+        ) + x[$(MOI.VariableIndex(3))]
     )
 end
 
-function MOI.constraint_expr(d::HS071, i::Int)
+function MOI.constraint_expr(::HS071, i::Int)
     if i == 1
-        return :(x[$(VI(1))] * x[$(VI(2))] * x[$(VI(3))] * x[$(VI(4))] >= 25.0)
+        return :(
+            x[$(MOI.VariableIndex(1))] *
+            x[$(MOI.VariableIndex(2))] *
+            x[$(MOI.VariableIndex(3))] *
+            x[$(MOI.VariableIndex(4))] >= 25.0
+        )
     elseif i == 2
         return :(
-            x[$(VI(1))]^2 + x[$(VI(2))]^2 + x[$(VI(3))]^2 + x[$(VI(4))]^2 ==
-            40.0
+            x[$(MOI.VariableIndex(1))]^2 +
+            x[$(MOI.VariableIndex(2))]^2 +
+            x[$(MOI.VariableIndex(3))]^2 +
+            x[$(MOI.VariableIndex(4))]^2 == 40.0
         )
     else
         error("Out of bounds constraint.")
     end
 end
 
-MOI.eval_objective(d::HS071, x) = x[1] * x[4] * (x[1] + x[2] + x[3]) + x[3]
+MOI.eval_objective(::HS071, x) = x[1] * x[4] * (x[1] + x[2] + x[3]) + x[3]
 
-function MOI.eval_constraint(d::HS071, g, x)
+function MOI.eval_constraint(::HS071, g, x)
     g[1] = x[1] * x[2] * x[3] * x[4]
     g[2] = x[1]^2 + x[2]^2 + x[3]^2 + x[4]^2
     return
 end
 
-function MOI.eval_objective_gradient(d::HS071, grad_f, x)
+function MOI.eval_objective_gradient(::HS071, grad_f, x)
     grad_f[1] = x[1] * x[4] + x[4] * (x[1] + x[2] + x[3])
     grad_f[2] = x[1] * x[4]
     grad_f[3] = x[1] * x[4] + 1
@@ -75,7 +93,7 @@ function MOI.eval_objective_gradient(d::HS071, grad_f, x)
     return
 end
 
-function MOI.jacobian_structure(d::HS071)
+function MOI.jacobian_structure(::HS071)
     return Tuple{Int64,Int64}[
         (1, 1),
         (1, 2),
@@ -87,7 +105,7 @@ function MOI.jacobian_structure(d::HS071)
         (2, 4),
     ]
 end
-# lower triangle only
+
 function MOI.hessian_lagrangian_structure(d::HS071)
     @assert d.enable_hessian
     return Tuple{Int64,Int64}[
@@ -104,7 +122,7 @@ function MOI.hessian_lagrangian_structure(d::HS071)
     ]
 end
 
-function MOI.eval_constraint_jacobian(d::HS071, J, x)
+function MOI.eval_constraint_jacobian(::HS071, J, x)
     # Constraint (row) 1
     J[1] = x[2] * x[3] * x[4]  # 1,1
     J[2] = x[1] * x[3] * x[4]  # 1,2
@@ -176,11 +194,81 @@ function MOI.eval_hessian_lagrangian_product(d::HS071, h, x, v, σ, μ)
     return
 end
 
-function hs071test_template(
-    model::MOI.ModelLike,
-    config::Config,
-    evaluator::HS071,
+"""
+    FeasibilitySenseEvaluator(enable_hessian::Bool)
+
+An AbstractNLPEvaluator for the problem:
+```
+Test for FEASIBILITY_SENSE.
+Find x satisfying x^2 == 1.
+```
+"""
+struct FeasibilitySenseEvaluator <: MOI.AbstractNLPEvaluator
+    enable_hessian::Bool
+end
+
+function MOI.initialize(
+    d::FeasibilitySenseEvaluator,
+    requested_features::Vector{Symbol},
 )
+    for feat in requested_features
+        if !(feat in MOI.features_available(d))
+            error("Unsupported feature $feat")
+            # TODO: implement Jac-vec and Hess-vec products
+            # for solvers that need them
+        end
+    end
+    return
+end
+
+function MOI.features_available(d::FeasibilitySenseEvaluator)
+    if d.enable_hessian
+        return [:Grad, :Jac, :Hess, :ExprGraph]
+    else
+        return [:Grad, :Jac, :ExprGraph]
+    end
+end
+
+MOI.objective_expr(::FeasibilitySenseEvaluator) = :()
+
+function MOI.constraint_expr(::FeasibilitySenseEvaluator, i::Int)
+    @assert i == 1
+    return :(x[$(MOI.VariableIndex(1))]^2 == 1)
+end
+
+MOI.eval_objective(d::FeasibilitySenseEvaluator, x) = 0.0
+
+function MOI.eval_constraint(::FeasibilitySenseEvaluator, g, x)
+    g[1] = x[1]^2
+    return
+end
+
+function MOI.eval_objective_gradient(::FeasibilitySenseEvaluator, grad_f, x)
+    grad_f[1] = 0.0
+    return
+end
+
+function MOI.jacobian_structure(::FeasibilitySenseEvaluator)
+    return Tuple{Int64,Int64}[(1, 1)]
+end
+
+function MOI.hessian_lagrangian_structure(d::FeasibilitySenseEvaluator)
+    @assert d.enable_hessian
+    return Tuple{Int64,Int64}[(1, 1)]
+end
+
+function MOI.eval_constraint_jacobian(::FeasibilitySenseEvaluator, J, x)
+    J[1] = 2 * x[1]
+    return
+end
+
+function MOI.eval_hessian_lagrangian(d::FeasibilitySenseEvaluator, H, x, σ, μ)
+    @assert d.enable_hessian
+    H[1] = 2 * μ[1] # 1,1
+    return
+end
+
+function _test_HS071(model::MOI.ModelLike, config::Config, evaluator::HS071)
     atol = config.atol
     rtol = config.rtol
     @test MOI.supports(model, MOI.NLPBlock())
@@ -238,162 +326,115 @@ function hs071test_template(
             rtol
         # TODO: Duals? Maybe better to test on a convex instance.
     end
+    return
 end
 
-function hs071_test(model, config)
-    return hs071test_template(model, config, HS071(true))
+"""
+    test_nonlinear_hs071(model::MOI.ModelLike, config::Config)
+
+Test the nonlinear HS071 problem.
+"""
+function test_nonlinear_hs071(model::MOI.ModelLike, config::Config)
+    _test_HS071(model, config, HS071(true))
+    return
 end
 
-function hs071_no_hessian_test(model, config)
-    return hs071test_template(model, config, HS071(false))
-end
-
-function hs071_hessian_vector_product_test(model, config)
-    return hs071test_template(model, config, HS071(false, true))
-end
-
-# Test for FEASIBILITY_SENSE.
-# Find x satisfying x^2 == 1.
-struct FeasibilitySenseEvaluator <: MOI.AbstractNLPEvaluator
-    enable_hessian::Bool
-end
-
-function MOI.initialize(
-    d::FeasibilitySenseEvaluator,
-    requested_features::Vector{Symbol},
-)
-    for feat in requested_features
-        if !(feat in MOI.features_available(d))
-            error("Unsupported feature $feat")
-            # TODO: implement Jac-vec and Hess-vec products
-            # for solvers that need them
-        end
-    end
-end
-
-function MOI.features_available(d::FeasibilitySenseEvaluator)
-    if d.enable_hessian
-        return [:Grad, :Jac, :Hess, :ExprGraph]
-    else
-        return [:Grad, :Jac, :ExprGraph]
-    end
-end
-
-MOI.objective_expr(d::FeasibilitySenseEvaluator) = :()
-
-function MOI.constraint_expr(d::FeasibilitySenseEvaluator, i::Int)
-    if i == 1
-        return :(x[$(VI(1))]^2 == 1)
-    else
-        error("Out of bounds constraint.")
-    end
-end
-
-MOI.eval_objective(d::FeasibilitySenseEvaluator, x) = 0.0
-
-function MOI.eval_constraint(d::FeasibilitySenseEvaluator, g, x)
-    return g[1] = x[1]^2
-end
-
-function MOI.eval_objective_gradient(d::FeasibilitySenseEvaluator, grad_f, x)
-    return grad_f[1] = 0.0
-end
-
-function MOI.jacobian_structure(d::FeasibilitySenseEvaluator)
-    return Tuple{Int64,Int64}[(1, 1)]
-end
-
-function MOI.hessian_lagrangian_structure(d::FeasibilitySenseEvaluator)
-    @assert d.enable_hessian
-    return Tuple{Int64,Int64}[(1, 1)]
-end
-
-function MOI.eval_constraint_jacobian(d::FeasibilitySenseEvaluator, J, x)
-    return J[1] = 2x[1]
-end
-
-function MOI.eval_hessian_lagrangian(d::FeasibilitySenseEvaluator, H, x, σ, μ)
-    @assert d.enable_hessian
-    return H[1] = 2μ[1] # 1,1
-end
-
-function feasibility_sense_test_template(
-    model::MOI.ModelLike,
+function setup_test(
+    ::typeof(test_nonlinear_hs071),
+    model::MOIU.MockOptimizer,
     config::Config,
-    set_has_objective::Bool,
-    evaluator::FeasibilitySenseEvaluator,
 )
-    atol = config.atol
-    rtol = config.rtol
-    @test MOI.supports(model, MOI.NLPBlock())
-    @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
-    lb = [1.0]
-    ub = [1.0]
-    block_data = MOI.NLPBlockData(
-        MOI.NLPBoundsPair.(lb, ub),
-        evaluator,
-        set_has_objective,
-    )
-    x = MOI.add_variable(model)
-    @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    # Avoid starting at zero because it's a critial point.
-    MOI.set(model, MOI.VariablePrimalStart(), x, 1.5)
-    MOI.set(model, MOI.NLPBlock(), block_data)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
-    # TODO: config.query tests
-    if config.solve
-        MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-        @test MOI.get(model, MOI.ResultCount()) >= 1
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol = atol rtol = rtol
-        @test abs(MOI.get(model, MOI.VariablePrimal(), x)) ≈ 1.0 atol = atol rtol =
-            rtol
-    end
-end
-
-function feasibility_sense_with_objective_and_hessian_test(model, config)
-    return feasibility_sense_test_template(
+    MOI.Utilities.set_mock_optimize!(
         model,
-        config,
-        true,
-        FeasibilitySenseEvaluator(true),
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(
+                mock,
+                config.optimal_status,
+                [
+                    1.0,
+                    4.7429996418092970,
+                    3.8211499817883077,
+                    1.379408289755698,
+                ],
+            )
+            MOI.set(mock, MOI.ObjectiveValue(), 17.014017145179164)
+        end,
     )
+    return
 end
 
-function feasibility_sense_with_objective_and_no_hessian_test(model, config)
-    return feasibility_sense_test_template(
-        model,
-        config,
-        true,
-        FeasibilitySenseEvaluator(false),
-    )
+"""
+    test_nonlinear_hs071_no_hessian(model::MOI.ModelLike, config::Config)
+
+Test the nonlinear HS071 problem without hessians.
+"""
+function test_nonlinear_hs071_no_hessian(model, config)
+    _test_HS071(model, config, HS071(false))
+    return
 end
 
-function feasibility_sense_with_no_objective_and_with_hessian_test(
-    model,
-    config,
+function setup_test(
+    ::typeof(test_nonlinear_hs071_no_hessian),
+    model::MOIU.MockOptimizer,
+    config::Config,
 )
-    return feasibility_sense_test_template(
+    MOI.Utilities.set_mock_optimize!(
         model,
-        config,
-        false,
-        FeasibilitySenseEvaluator(true),
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(
+                mock,
+                config.optimal_status,
+                [
+                    1.0,
+                    4.7429996418092970,
+                    3.8211499817883077,
+                    1.379408289755698,
+                ],
+            )
+            MOI.set(mock, MOI.ObjectiveValue(), 17.014017145179164)
+        end,
     )
+    return
 end
 
-function feasibility_sense_with_no_objective_and_no_hessian_test(model, config)
-    return feasibility_sense_test_template(
-        model,
-        config,
-        false,
-        FeasibilitySenseEvaluator(false),
+"""
+    test_nonlinear_hs071_hessian_vector_product(
+        model::MOI.ModelLike,
+        config::Config,
     )
+
+Test the nonlinear HS071 problem with a hessian vector product.
+"""
+function hs071_hessian_vector_product_test(model, config)
+    _test_HS071(model, config, HS071(false, true))
+    return
 end
 
-function nlp_objective_and_moi_objective_test(
+function setup_test(
+    ::typeof(hs071_hessian_vector_product_test),
+    model::MOIU.MockOptimizer,
+    config::Config,
+)
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(
+                mock,
+                config.optimal_status,
+                [
+                    1.0,
+                    4.7429996418092970,
+                    3.8211499817883077,
+                    1.379408289755698,
+                ],
+            )
+            MOI.set(mock, MOI.ObjectiveValue(), 17.014017145179164)
+        end,
+    )
+    return
+end
+
+function test_nonlinear_objective_and_moi_objective_test(
     model::MOI.ModelLike,
     config::Config,
 )
@@ -426,36 +467,36 @@ function nlp_objective_and_moi_objective_test(
         @test MOI.get(model, MOI.ResultCount()) >= 1
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ 0.0 atol = atol rtol = rtol
-        @test 1.0 ≤ MOI.get(model, MOI.VariablePrimal(), x) ≤ 2.0
+        xv = MOI.get(model, MOI.VariablePrimal(), x)
+        @test abs(xv) ≈ 1.0 atol = atol rtol = rtol
     end
 end
 
-const nlptests = Dict(
-    "hs071" => hs071_test,
-    "hs071_no_hessian" => hs071_no_hessian_test,
-    "hs071_hessian_vector_product_test" =>
-        hs071_hessian_vector_product_test,
-    "feasibility_sense_with_objective_and_hessian" =>
-        feasibility_sense_with_objective_and_hessian_test,
-    "feasibility_sense_with_objective_and_no_hessian" =>
-        feasibility_sense_with_objective_and_no_hessian_test,
-    "feasibility_sense_with_no_objective_and_with_hessian" =>
-        feasibility_sense_with_no_objective_and_with_hessian_test,
-    "feasibility_sense_with_no_objective_and_no_hessian" =>
-        feasibility_sense_with_no_objective_and_no_hessian_test,
-    "nlp_objective_and_moi_objective" =>
-        nlp_objective_and_moi_objective_test,
+function setup_test(
+    ::typeof(test_nonlinear_objective_and_moi_objective_test),
+    model::MOIU.MockOptimizer,
+    config::Config,
 )
-
-@moitestset nlp
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(mock, config.optimal_status, [-1.0]),
+            MOI.set(mock, MOI.ObjectiveValue(), 0.0)
+        end,
+    )
+    return
+end
 
 """
-    test_linear_mixed_complementarity(model::MOI.ModelLike, config::Config)
+    test_nonlinear_mixed_complementarity(model::MOI.ModelLike, config::Config)
 
 Test the solution of the linear mixed-complementarity problem:
 `F(x) complements x`, where `F(x) = M * x .+ q` and `0 <= x <= 10`.
 """
-function test_linear_mixed_complementarity(model::MOI.ModelLike, config::Config)
+function test_nonlinear_mixed_complementarity(
+    model::MOI.ModelLike,
+    config::Config,
+)
     MOI.empty!(model)
     x = MOI.add_variables(model, 4)
     MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.Interval(0.0, 10.0))
@@ -493,17 +534,30 @@ function test_linear_mixed_complementarity(model::MOI.ModelLike, config::Config)
             rtol = config.rtol,
         )
     end
+    return
 end
 
-const mixed_complementaritytests = Dict(
-    "test_linear_mixed_complementarity" =>
-        test_linear_mixed_complementarity,
+function setup_test(
+    ::typeof(test_nonlinear_mixed_complementarity),
+    model::MOIU.MockOptimizer,
+    config::Config,
 )
-
-@moitestset mixed_complementarity
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        (mock) -> MOI.Utilities.mock_optimize!(
+            mock,
+            config.optimal_status,
+            [2.8, 0.0, 0.8, 1.2],
+        ),
+    )
+    return
+end
 
 """
-    test_qp_complementarity_constraint(model::MOI.ModelLike, config::Config)
+    test_nonlinear_qp_complementarity_constraint(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Test the solution of the quadratic program with complementarity constraints:
 
@@ -531,7 +585,7 @@ which rewrites, with auxiliary variables
 
 ```
 """
-function test_qp_complementarity_constraint(
+function test_nonlinear_qp_complementarity_constraint(
     model::MOI.ModelLike,
     config::Config,
 )
@@ -603,11 +657,87 @@ function test_qp_complementarity_constraint(
             rtol = config.rtol,
         )
     end
+    return
 end
 
-const math_program_complementarity_constraintstests = Dict(
-    "test_qp_complementarity_constraint" =>
-        test_qp_complementarity_constraint,
+function setup_test(
+    ::typeof(test_nonlinear_qp_complementarity_constraint),
+    model::MOIU.MockOptimizer,
+    config::Config,
 )
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(
+                mock,
+                config.optimal_status,
+                [1.0, 0.0, 3.5, 0.0, 0.0, 0.0, 3.0, 6.0],
+            )
+            MOI.set(mock, MOI.ObjectiveValue(), 17.0)
+        end,
+    )
+    return
+end
 
-@moitestset math_program_complementarity_constraints
+"""
+    test_nonlinear_HS071_internal(::MOI.ModelLike, ::Config)
+
+A test for the correctness of the HS071 evaluator.
+
+This is mainly for the internal purpose of checking their correctness as
+written. External solvers can exclude this test without consequence.
+"""
+function test_nonlinear_HS071_internal(::MOI.ModelLike, ::Config)
+    d = MOI.Test.HS071(true, true)
+    @test MOI.objective_expr(d) == :(
+        x[$(MOI.VariableIndex(1))] *
+        x[$(MOI.VariableIndex(4))] *
+        (
+            x[$(MOI.VariableIndex(1))] +
+            x[$(MOI.VariableIndex(2))] +
+            x[$(MOI.VariableIndex(3))]
+        ) + x[$(MOI.VariableIndex(3))]
+    )
+    @test MOI.constraint_expr(d, 1) == :(
+        x[$(MOI.VariableIndex(1))] *
+        x[$(MOI.VariableIndex(2))] *
+        x[$(MOI.VariableIndex(3))] *
+        x[$(MOI.VariableIndex(4))] >= 25.0
+    )
+    @test MOI.constraint_expr(d, 2) == :(
+        x[$(MOI.VariableIndex(1))]^2 +
+        x[$(MOI.VariableIndex(2))]^2 +
+        x[$(MOI.VariableIndex(3))]^2 +
+        x[$(MOI.VariableIndex(4))]^2 == 40.0
+    )
+    @test_throws ErrorException MOI.constraint_expr(d, 3)
+    MOI.initialize(d, [:Grad, :Jac, :ExprGraph, :Hess, :HessVec])
+    @test :HessVec in MOI.features_available(d)
+    x = ones(4)
+    # f(x)
+    @test MOI.eval_objective(d, x) == 4.0
+    # g(x)
+    g = zeros(2)
+    MOI.eval_constraint(d, g, x)
+    @test g == [1.0, 4.0]
+    # f'(x)
+    ∇f = fill(NaN, length(x))
+    MOI.eval_objective_gradient(d, ∇f, x)
+    @test ∇f == [4.0, 1.0, 2.0, 3.0]
+    # Jacobian
+    Js = MOI.jacobian_structure(d)
+    J = fill(NaN, length(Js))
+    MOI.eval_constraint_jacobian(d, J, x)
+    @test J == [1, 1, 1, 1, 2, 2, 2, 2]
+    # Hessian-lagrangian
+    Hs = MOI.hessian_lagrangian_structure(d)
+    H = fill(NaN, length(Hs))
+    MOI.eval_hessian_lagrangian(d, H, x, 1.0, [1.0, 1.0])
+    @test H == [4, 2, 2, 2, 1, 2, 5, 2, 2, 2]
+    # Hessian-lagrangian-product
+    Hv = fill(NaN, length(x))
+    v = [1.0, 1.1, 1.2, 1.3]
+    MOI.eval_hessian_lagrangian_product(d, Hv, x, v, 1.0, [1.0, 1.0])
+    @test Hv == [15.1, 8.0, 8.1, 12.2]
+    return
+end

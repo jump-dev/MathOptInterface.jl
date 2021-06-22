@@ -14,9 +14,14 @@ end
 MOI.Test.runtests(
     MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}())),
     MOI.Test.Config(basis = true),
-    # Oops! Name clash.
-    exclude = [
-        "test_linear_mixed_complementarity",
-        "test_qp_complementarity_constraint",
-    ],
+    exclude = ["test_nonlinear_"],
+)
+
+MOI.Test.runtests(
+    MOIU.MockOptimizer(
+        MOIU.UniversalFallback(MOIU.Model{Float64}()),
+        eval_objective_value = false,
+    ),
+    MOI.Test.Config(optimal_status = MOI.LOCALLY_SOLVED),
+    include = ["test_nonlinear_"],
 )
