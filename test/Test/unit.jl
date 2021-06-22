@@ -13,11 +13,6 @@ end
 @testset "Unit Tests" begin
     # `UniversalFallback` needed for `MOI.Silent`
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-    # Optimizers attributes have to be set to default value since the mock
-    # optimizer doesn't handle this
-    MOI.set(mock, MOI.Silent(), true)
-    MOI.set(mock, MOI.TimeLimitSec(), nothing)
-    MOI.set(mock, MOI.NumberOfThreads(), nothing)
     config = MOIT.Config()
     for model in [
         mock,
@@ -45,8 +40,6 @@ end
                 "solve_affine_deletion_edge_cases",
                 "solve_duplicate_terms_obj",
                 "solve_objbound_edge_cases",
-                "raw_status_string",
-                "solve_time",
                 "solve_zero_one_with_bounds_1",
                 "solve_zero_one_with_bounds_2",
                 "solve_zero_one_with_bounds_3",
@@ -331,40 +324,6 @@ end
             end,
         )
         MOIT.solve_objbound_edge_cases(mock, config)
-    end
-
-    @testset "raw_status_string" begin
-        MOIU.set_mock_optimize!(
-            mock,
-            (mock::MOIU.MockOptimizer) -> begin
-                MOI.set(
-                    mock,
-                    MOI.RawStatusString(),
-                    "Mock solution set by `mock_optimize!`.",
-                )
-                MOIU.mock_optimize!(
-                    mock,
-                    MOI.OPTIMAL,
-                    (MOI.FEASIBLE_POINT, [0.0]),
-                )
-            end,
-        )
-        MOIT.raw_status_string(mock, config)
-    end
-
-    @testset "solve_time" begin
-        MOIU.set_mock_optimize!(
-            mock,
-            (mock::MOIU.MockOptimizer) -> begin
-                MOI.set(mock, MOI.SolveTimeSec(), 0.0)
-                MOIU.mock_optimize!(
-                    mock,
-                    MOI.OPTIMAL,
-                    (MOI.FEASIBLE_POINT, [0.0]),
-                )
-            end,
-        )
-        MOIT.solve_time(mock, config)
     end
 
     @testset "solve_zero_one_with_bounds" begin
