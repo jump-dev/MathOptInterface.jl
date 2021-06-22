@@ -27,7 +27,6 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::Config)
             @test MOI.get(model, MOI.ObjectiveBound()) <= 3.0
         end
     end
-
     @testset "Max IP with constant" begin
         MOI.empty!(model)
         @test MOI.is_empty(model)
@@ -51,7 +50,6 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::Config)
             @test MOI.get(model, MOI.ObjectiveBound()) >= 3.0
         end
     end
-
     @testset "Min LP with constant" begin
         MOI.empty!(model)
         @test MOI.is_empty(model)
@@ -74,7 +72,6 @@ function solve_objbound_edge_cases(model::MOI.ModelLike, config::Config)
             @test MOI.get(model, MOI.ObjectiveBound()) <= 2.0
         end
     end
-
     @testset "Max LP with constant" begin
         MOI.empty!(model)
         @test MOI.is_empty(model)

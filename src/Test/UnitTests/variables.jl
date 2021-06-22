@@ -338,7 +338,6 @@ function solve_integer_edge_cases(model::MOI.ModelLike, config::Config)
             variable_primal = [(x, 1.0)],
         )
     end
-
     @testset "binary with upper" begin
         MOI.empty!(model)
         @test MOI.is_empty(model)
@@ -359,7 +358,6 @@ function solve_integer_edge_cases(model::MOI.ModelLike, config::Config)
             variable_primal = [(x, 1.0)],
         )
     end
-
     @testset "binary with 0 upper" begin
         MOI.empty!(model)
         @test MOI.is_empty(model)

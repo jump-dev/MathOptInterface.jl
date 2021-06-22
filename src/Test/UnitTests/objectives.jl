@@ -226,7 +226,6 @@ function solve_qp_edge_cases(model::MOI.ModelLike, config::Config)
         MOI.GreaterThan(2.0),
     )
     @test vc2.value == x[2].value
-
     @testset "Basic model" begin
         # min x^2 + y^2 | x>=1, y>=2
         MOI.set(

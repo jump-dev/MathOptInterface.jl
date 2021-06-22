@@ -197,17 +197,14 @@ function solve_duplicate_terms_scalar_affine(
     x = MOI.add_variable(model)
     objective_function =
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{typeof(objective_function)}(),
         objective_function,
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-
     f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x, x]), 0.0)
     c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
-
     return test_model_solution(
         model,
         config;
@@ -236,20 +233,17 @@ function solve_duplicate_terms_vector_affine(
     x = MOI.add_variable(model)
     objective_function =
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
-
     MOI.set(
         model,
         MOI.ObjectiveFunction{typeof(objective_function)}(),
         objective_function,
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-
     f = MOI.VectorAffineFunction(
         MOI.VectorAffineTerm.(1, MOI.ScalarAffineTerm.([1.0, 1.0], [x, x])),
         [-1.0],
     )
     c = MOI.add_constraint(model, f, MOI.Nonpositives(1))
-
     return test_model_solution(
         model,
         config;
