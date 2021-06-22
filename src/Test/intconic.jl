@@ -1,13 +1,17 @@
-# Integer conic problems
+"""
+    test_Integer_SecondOrderCone(model::MOI.ModelLike, config::Config)
 
-function intsoc1test(model::MOI.ModelLike, config::Config)
+Run an integration test on the problem:
+```
+ min    - 2y - 1z
+s.t.   x           == 1
+      [x,  y,   z] in SecondOrderCone()
+           y,   z  in ZeroOne()
+```
+"""
+function test_Integer_SecondOrderCone(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
-    # Problem SINTSOC1
-    # min 0x - 2y - 1z
-    #  st  x            == 1
-    #      x >= ||(y,z)||
-    #      (y,z) binary
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -87,10 +91,14 @@ function intsoc1test(model::MOI.ModelLike, config::Config)
     end
 end
 
-const intsoctests = Dict("intsoc1" => intsoc1test)
-
-@moitestset intsoc
-
-const intconictests = Dict("intsoc" => intsoctest)
-
-@moitestset intconic true
+function setup_test(
+    ::typeof(test_Integer_SecondOrderCone),
+    model::MOI.Utilities.MockOptimizer,
+    config::Config,
+)
+    MOIU.set_mock_optimize(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 1.0, 0.0]),
+    )
+    return
+end
