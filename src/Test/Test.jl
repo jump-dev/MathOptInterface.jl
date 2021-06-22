@@ -28,7 +28,7 @@ Overload this method to modify `model` before running the test function `f` on
 `model` with `config`.
 
 This function should either return `nothing`, or return a function which, when
-called with zero arguments, undoes the setup to return the model to it's
+called with zero arguments, undoes the setup to return the model to its
 previous state.
 
 This is most useful when writing new tests of the tests for MOI, but can also be
