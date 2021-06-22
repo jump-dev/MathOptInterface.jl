@@ -246,10 +246,9 @@ function final_touch(sets::OrderedProductOfSets)
 end
 
 function _num_rows(sets::OrderedProductOfSets, ::Type{S}) where {S}
-    @assert sets.final_touch
     i = set_index(sets, S)
-    if i == 1
-        return sets.num_rows[1]
+    if !sets.final_touch || i == 1
+        return sets.num_rows[i]
     end
     return sets.num_rows[i] - sets.num_rows[i-1]
 end
@@ -258,7 +257,6 @@ function MOI.get(
     sets::OrderedProductOfSets{T},
     ::MOI.ListOfConstraintTypesPresent,
 ) where {T}
-    @assert sets.final_touch
     return Tuple{DataType,DataType}[
         (_affine_function_type(T, S), S) for
         S in set_types(sets) if _num_rows(sets, S) > 0
@@ -325,7 +323,6 @@ function MOI.get(
     sets::OrderedProductOfSets,
     ::MOI.NumberOfConstraints{F,S},
 ) where {F,S}
-    @assert sets.final_touch
     r = _range_iterator(sets, F, S)
     return _length(r)
 end
@@ -334,7 +331,6 @@ function MOI.get(
     sets::OrderedProductOfSets,
     ::MOI.ListOfConstraintIndices{F,S},
 ) where {F,S}
-    @assert sets.final_touch
     rows = _range_iterator(sets, F, S)
     if rows === nothing
         return MOI.ConstraintIndex{F,S}[]
@@ -346,7 +342,6 @@ function MOI.is_valid(
     sets::OrderedProductOfSets,
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
-    @assert sets.final_touch
     r = _range_iterator(sets, F, S)
     return r !== nothing && ci.value in r
 end

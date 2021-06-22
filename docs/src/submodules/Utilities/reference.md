@@ -33,6 +33,8 @@ Utilities.UniversalFallback
 Utilities.@model
 Utilities.GenericModel
 Utilities.GenericOptimizer
+Utilities.@struct_of_constraints_by_function_types
+Utilities.@struct_of_constraints_by_set_types
 Utilities.struct_of_constraint_code
 ```
 
@@ -106,6 +108,8 @@ Utilities.OneBasedIndexing
 
 ```@docs
 Utilities.load_constants
+Utilities.function_constants
+Utilities.set_from_constants
 ```
 
 ```@docs

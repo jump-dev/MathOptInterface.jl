@@ -1,7 +1,18 @@
 abstract type StructOfConstraints <: MOI.ModelLike end
 
 function _add_variable(model::StructOfConstraints)
+    model.num_variables += 1
     return broadcastcall(_add_variable, model)
+end
+function _add_variables(model::StructOfConstraints, n)
+    model.num_variables += n
+    return broadcastcall(Base.Fix2(_add_variables, n), model)
+end
+
+function final_touch(::Nothing, index_map) end
+function final_touch(model::StructOfConstraints, index_map)
+    broadcastcall(Base.Fix2(final_touch, index_map), model)
+    return
 end
 
 function _throw_if_cannot_delete(model::StructOfConstraints, vis, fast_in_vis)
@@ -130,6 +141,7 @@ function MOI.is_empty(model::StructOfConstraints)
 end
 
 function MOI.empty!(model::StructOfConstraints)
+    model.num_variables = 0
     broadcastcall(model) do constrs
         if constrs !== nothing
             MOI.empty!(constrs)
@@ -176,10 +188,30 @@ struct SymbolFun <: SymbolFS
     s::Union{Symbol,Expr}
     typed::Bool
 end
+SymbolFun(s::Symbol) = SymbolFun(s, false)
+function SymbolFun(s::Expr)
+    if Meta.isexpr(s, :curly)
+        @assert length(s.args) == 2
+        @assert s.args[2] == :T
+        return SymbolFun(s.args[1], true)
+    else
+        return SymbolFun(s, false)
+    end
+end
 
 struct SymbolSet <: SymbolFS
     s::Union{Symbol,Expr}
     typed::Bool
+end
+SymbolSet(s::Symbol) = SymbolSet(s, false)
+function SymbolSet(s::Expr)
+    if Meta.isexpr(s, :curly)
+        @assert length(s.args) == 2
+        @assert s.args[2] == :T
+        return SymbolSet(s.args[1], true)
+    else
+        return SymbolSet(s, false)
+    end
 end
 
 _typed(s::SymbolFS) = s.typed ? Expr(:curly, esc(s.s), esc(:T)) : esc(s.s)
@@ -198,14 +230,18 @@ _mapreduce_field(s::SymbolFS) = :(cur = op(cur, f(model.$(_field(s)))))
 """
     struct_of_constraint_code(struct_name, types, field_types = nothing)
 
-Given a vector of `n` `SymbolFun` or `SymbolSet` in `types`, creates a
-struct of name `struct_name` that is a subtype of
-`StructOfConstraint{T, C1, C2, ..., Cn}` if `field_types` is `nothing` and
-a subtype of `StructOfConstraint{T}` otherwise.
+Given a vector of `n` `SymbolFun` or `SymbolSet` in `types`, defines
+a subtype of `StructOfConstraints` of name `name` and which type parameters
+`{T, F1, F2, ..., Fn}` if `field_types` is `nothing` and
+a `{T}` otherwise.
 It contains `n` field where the `i`th field has type `Ci` if `field_types` is
 `nothing` and type `field_types[i]` otherwise.
 If `types` is vector of `SymbolFun` (resp. `SymbolSet`) then the constraints
 of that function (resp. set) type are stored in the corresponding field.
+
+This function is used by the macros [`@model`](@ref),
+[`@struct_of_constraints_by_function_types`](@ref) and
+[`@struct_of_constraints_by_set_types`](@ref).
 """
 function struct_of_constraint_code(struct_name, types, field_types = nothing)
     T = esc(:T)
@@ -216,7 +252,9 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
         append!(typed_struct.args, field_types)
     end
     code = quote
-        mutable struct $typed_struct <: StructOfConstraints end
+        mutable struct $typed_struct <: StructOfConstraints
+            num_variables::Int64
+        end
 
         function $MOIU.broadcastcall(f::Function, model::$struct_name)
             $(Expr(:block, _callfield.(Ref(:f), types)...))
@@ -250,6 +288,10 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
             )::$(field_type) where {$T}
                 if model.$field === nothing
                     model.$field = $(field_type)()
+                    $MOI.Utilities._add_variables(
+                        model.$field,
+                        model.num_variables,
+                    )
                 end
                 return model.$field
             end
@@ -274,16 +316,40 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
             end
         ),
     )
-    if !isempty(field_types)
-        # If there is no field type, the default constructor is sufficient and
-        # adding this constructor will make a `StackOverflow`.
-        constructor_code = :(function $typed_struct() where {$T}
-            return $typed_struct($([:(nothing) for _ in field_types]...))
-        end)
-        if type_parametrized
-            append!(constructor_code.args[1].args, field_types)
-        end
-        push!(code.args, constructor_code)
+    constructor_code = :(function $typed_struct() where {$T}
+        return $typed_struct(0, $([:(nothing) for _ in field_types]...))
+    end)
+    if type_parametrized
+        append!(constructor_code.args[1].args, field_types)
     end
+    push!(code.args, constructor_code)
     return code
+end
+
+"""
+    Utilities.@struct_of_constraints_by_function_types(name, func_types...)
+
+Given a vector of `n` function types `(F1, F2,..., Fn)` in `func_types`, defines
+a subtype of `StructOfConstraints` of name `name` and which type parameters
+`{T, C1, C2, ..., Cn}`.
+It contains `n` field where the `i`th field has type `Ci` and stores the
+constraints of function type `Fi`.
+"""
+macro struct_of_constraints_by_function_types(name, func_types...)
+    funcs = SymbolFun.(func_types)
+    return struct_of_constraint_code(esc(name), funcs)
+end
+
+"""
+    Utilities.@struct_of_constraints_by_set_types(name, func_types...)
+
+Given a vector of `n` set types `(S1, S2,..., Sn)` in `func_types`, defines
+a subtype of `StructOfConstraints` of name `name` and which type parameters
+`{T, C1, C2, ..., Cn}`.
+It contains `n` field where the `i`th field has type `Ci` and stores the
+constraints of set type `Si`.
+"""
+macro struct_of_constraints_by_set_types(name, set_types...)
+    sets = SymbolSet.(set_types)
+    return struct_of_constraint_code(esc(name), sets)
 end
