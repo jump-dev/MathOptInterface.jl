@@ -38,7 +38,10 @@ config = MOIT.Config()
             )
 
         MOIT.test_conic_NormInfinityCone_VectorOfVariables(bridged_mock, config)
-        MOIT.test_conic_NormInfinityCone_VectorAffineFunction(bridged_mock, config)
+        MOIT.test_conic_NormInfinityCone_VectorAffineFunction(
+            bridged_mock,
+            config,
+        )
 
         var_names = ["x", "y", "z"]
 

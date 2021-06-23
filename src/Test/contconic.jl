@@ -1096,7 +1096,6 @@ function setup_test(
     return
 end
 
-
 function _test_conic_NormOneCone_helper(
     model::MOI.ModelLike,
     config::Config,
@@ -3533,7 +3532,6 @@ function setup_test(
     return
 end
 
-
 function test_conic_DualExponentialCone_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config,
@@ -3566,7 +3564,6 @@ function setup_test(
     )
     return
 end
-
 
 """
 ```
@@ -3709,11 +3706,10 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [2.0, 1.0, 2^0.9],
-            (MOI.VectorOfVariables, MOI.PowerCone{Float64}) => [
-                [u_value, v_value, -1],
-            ],
+            (MOI.VectorOfVariables, MOI.PowerCone{Float64}) =>
+                [[u_value, v_value, -1]],
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-            [-u_value, -v_value],
+                [-u_value, -v_value],
         ),
     )
     return
@@ -3739,11 +3735,10 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [2.0, 1.0, 2^0.9],
-            (MOI.VectorAffineFunction{Float64}, MOI.PowerCone{Float64}) => [
-                [u_value, v_value, -1],
-            ],
+            (MOI.VectorAffineFunction{Float64}, MOI.PowerCone{Float64}) =>
+                [[u_value, v_value, -1]],
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-            [-u_value, -v_value],
+                [-u_value, -v_value],
         ),
     )
     return
@@ -4150,9 +4145,8 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [sqrt(3)],
-            (MOI.VectorAffineFunction{Float64}, MOI.NormSpectralCone) => [
-                Float64[1, 0, -invrt3, 0, invrt3, 0, -invrt3],
-            ],
+            (MOI.VectorAffineFunction{Float64}, MOI.NormSpectralCone) =>
+                [Float64[1, 0, -invrt3, 0, invrt3, 0, -invrt3]],
         ),
     )
     return
@@ -4248,9 +4242,8 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [sqrt(3)],
-            (MOI.VectorAffineFunction{Float64}, MOI.NormSpectralCone) => [
-                Float64[1, 0, 0, 0, -invrt3, invrt3, -invrt3],
-            ],
+            (MOI.VectorAffineFunction{Float64}, MOI.NormSpectralCone) =>
+                [Float64[1, 0, 0, 0, -invrt3, invrt3, -invrt3]],
         ),
     )
     return
@@ -4350,9 +4343,8 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [sqrt(2) + sqrt(3)],
-            (MOI.VectorAffineFunction{Float64}, MOI.NormNuclearCone) => [
-                Float64[1, -invrt2, -invrt3, -invrt2, invrt3, 0, -invrt3],
-            ],
+            (MOI.VectorAffineFunction{Float64}, MOI.NormNuclearCone) =>
+                [Float64[1, -invrt2, -invrt3, -invrt2, invrt3, 0, -invrt3]],
         ),
     )
     return
@@ -4452,9 +4444,8 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [sqrt(2) + sqrt(3)],
-            (MOI.VectorAffineFunction{Float64}, MOI.NormNuclearCone) => [
-                Float64[1, -invrt2, -invrt2, 0, -invrt3, invrt3, -invrt3],
-            ],
+            (MOI.VectorAffineFunction{Float64}, MOI.NormNuclearCone) =>
+                [Float64[1, -invrt2, -invrt2, 0, -invrt3, invrt3, -invrt3]],
         ),
     )
     return
@@ -5128,7 +5119,9 @@ function _test_det_cone_helper_ellipsoid(
     use_VectorOfVariables::Bool,
     detcone,
 )
-    F = use_VectorOfVariables ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64}
+    F =
+        use_VectorOfVariables ? MOI.VectorOfVariables :
+        MOI.VectorAffineFunction{Float64}
     if !MOI.supports_constraint(model, F, detcone)
         return
     end
