@@ -94,7 +94,8 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [0.5]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-0.5],
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
+                [-0.5],
         ),
     )
     return
@@ -162,7 +163,8 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [0.5]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [0.5],
+            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
+                [0.5],
         ),
     )
     return
@@ -299,7 +301,8 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [2.0]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [-1.5],
+            (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) =>
+                [-1.5],
         ),
     )
     return
@@ -356,7 +359,8 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [0.5]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-0.5],
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
+                [-0.5],
         ),
     )
     return
@@ -462,11 +466,7 @@ function test_qcp_duplicate_diagonal(model::MOI.ModelLike, config::Config)
         model,
         MOI.ScalarQuadraticFunction(
             MOI.ScalarAffineTerm.([1.0], [x[2]]),  # affine terms
-            MOI.ScalarQuadraticTerm.(
-                [2.0, 2.0],
-                [x[1], x[1]],
-                [x[1], x[1]],
-            ),  # quad
+            MOI.ScalarQuadraticTerm.([2.0, 2.0], [x[1], x[1]], [x[1], x[1]]),  # quad
             0.0,  # constant
         ),
         MOI.LessThan(1.0),
@@ -661,31 +661,16 @@ function setup_test(
 )
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [0.0]),
-        ),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [0.0]),
-        ),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0]),
-        ),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0]),
-        ),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [2.0]),
-        ),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.0])),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.0])),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [2.0])),
     )
     return
 end
@@ -728,7 +713,7 @@ function setup_test(
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) ->
-                MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
     )
     return
 end
@@ -771,7 +756,7 @@ function setup_test(
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) ->
-                MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.0])),
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.0])),
     )
     return
 end
@@ -811,8 +796,7 @@ function setup_test(
 )
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, MOI.INFEASIBLE),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.INFEASIBLE),
     )
     return
 end

@@ -570,10 +570,7 @@ for state in (MOIU.NO_OPTIMIZER, MOIU.EMPTY_OPTIMIZER, MOIU.ATTACHED_OPTIMIZER)
             m,
             config,
             include = ["test_linear_"],
-            exclude = [
-                "VariablePrimalStart",
-                "linear_mixed_complementarity",
-            ],
+            exclude = ["VariablePrimalStart", "linear_mixed_complementarity"],
         )
     end
 end

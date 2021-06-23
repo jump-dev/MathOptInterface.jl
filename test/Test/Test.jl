@@ -30,4 +30,3 @@ MOI.Test.runtests(
     MOI.Test.Config(optimal_status = MOI.LOCALLY_SOLVED),
     include = ["test_nonlinear_"],
 )
-
