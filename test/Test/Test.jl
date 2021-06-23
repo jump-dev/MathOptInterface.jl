@@ -11,6 +11,11 @@ const MOIU = MOI.Utilities
     include(file)
 end
 
+MOI.Test.basic_constraint_tests(
+    MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}())),
+    MOI.Test.Config(),
+)
+
 MOI.Test.runtests(
     MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}())),
     MOI.Test.Config(basis = true),
@@ -25,3 +30,4 @@ MOI.Test.runtests(
     MOI.Test.Config(optimal_status = MOI.LOCALLY_SOLVED),
     include = ["test_nonlinear_"],
 )
+

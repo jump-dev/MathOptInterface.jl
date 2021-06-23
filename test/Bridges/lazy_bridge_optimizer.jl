@@ -332,13 +332,21 @@ end
 @testset "Unit" begin
     model = LPModel{Float64}()
     bridged = MOIB.full_bridge_optimizer(model, Float64)
-    MOIT.unittest(
+    MOI.Test.runtests(
         bridged,
         MOIT.Config(solve = false),
-        [
-            # SOC and quadratic constraints not supported
-            "solve_qcp_edge_cases",
-            "delete_soc_variables",
+        # TODO(odow): we should reconsider how we test all this.
+        exclude = [
+            "_quadratic_",
+            "_qcp_",
+            "_socp_",
+            "_soc_",
+            "_SOS1_",
+            "_SOS2_",
+            "_Indicator_",
+            "_nonlinear_",
+            "_SecondOrderCone",
+            "_VariablePrimalStart",
         ],
     )
 end

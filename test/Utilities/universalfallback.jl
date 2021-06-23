@@ -285,16 +285,9 @@ end
         @test MOI.get(uf, typeof(cx), "EqualTo") === nothing
     end
 end
-config = MOIT.Config(solve = false)
-@testset "empty" begin
-    MOI.empty!(uf)
-    @test MOI.is_empty(uf)
-end
-@testset "Unit" begin
-    MOIT.unittest(uf, config)
-end
 
 @testset "MOI.Test.runtests" begin
+    config = MOIT.Config(solve = false)
     MOI.Test.runtests(uf, config, exclude = ["_complementarity"])
 end
 

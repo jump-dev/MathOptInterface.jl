@@ -566,20 +566,15 @@ for state in (MOIU.NO_OPTIMIZER, MOIU.EMPTY_OPTIMIZER, MOIU.ATTACHED_OPTIMIZER)
         end
 
         config = MOIT.Config(solve = false)
-        @testset "Unit" begin
-            MOIT.unittest(m, config)
-        end
-        @testset "Continuous Linear" begin
-            MOI.Test.runtests(
-                m,
-                config,
-                include = ["test_linear_"],
-                exclude = [
-                    "VariablePrimalStart",
-                    "linear_mixed_complementarity",
-                ],
-            )
-        end
+        MOI.Test.runtests(
+            m,
+            config,
+            include = ["test_linear_"],
+            exclude = [
+                "VariablePrimalStart",
+                "linear_mixed_complementarity",
+            ],
+        )
     end
 end
 

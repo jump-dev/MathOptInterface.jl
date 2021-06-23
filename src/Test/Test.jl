@@ -313,8 +313,6 @@ macro moitestset(setname, subsets = false)
         ),
     )
 end
-const unittests = Dict{String,Function}()
-@moitestset unit
 
 include("modellike.jl")
 include("contlinear.jl")

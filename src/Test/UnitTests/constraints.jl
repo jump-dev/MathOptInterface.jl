@@ -1,9 +1,9 @@
 """
-    getconstraint(model::MOI.ModelLike, config::Config)
+    test_get_ConstraintIndex(model::MOI.ModelLike, config::Config)
 
 Test getting constraints by name.
 """
-function getconstraint(model::MOI.ModelLike, config::Config)
+function test_get_ConstraintIndex(model::MOI.ModelLike, ::Config)
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -29,17 +29,30 @@ function getconstraint(model::MOI.ModelLike, config::Config)
     c2 = MOI.get(model, MOI.ConstraintIndex{F,MOI.LessThan{Float64}}, "c2")
     @test MOI.get(model, MOI.ConstraintIndex, "c2") == c2
     @test MOI.is_valid(model, c2)
+    return
 end
-unittests["getconstraint"] = getconstraint
 
 """
-    solve_affine_lessthan(model::MOI.ModelLike, config::Config)
+    test_constraint_ScalarAffineFunction_LessThan(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Add an ScalarAffineFunction-in-LessThan constraint. If `config.solve=true`
 confirm that it solves correctly, and if `config.duals=true`, check that the
 duals are computed correctly.
 """
-function solve_affine_lessthan(model::MOI.ModelLike, config::Config)
+function test_constraint_ScalarAffineFunction_LessThan(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    if !MOI.supports_constraint(
+        model,
+        MOI.ScalarAffineFunction{Float64},
+        MOI.LessThan{Float64},
+    )
+        return
+    end
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -58,7 +71,7 @@ function solve_affine_lessthan(model::MOI.ModelLike, config::Config)
         },
         "c",
     )
-    return _test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.5,
@@ -66,17 +79,48 @@ function solve_affine_lessthan(model::MOI.ModelLike, config::Config)
         constraint_primal = [(c, 1.0)],
         constraint_dual = [(c, -0.5)],
     )
+    return
 end
-unittests["solve_affine_lessthan"] = solve_affine_lessthan
+
+function setup_test(
+    ::typeof(test_constraint_ScalarAffineFunction_LessThan),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, [0.5]),
+            MOI.FEASIBLE_POINT,
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-0.5],
+        ),
+    )
+    return
+end
 
 """
-    solve_affine_greaterthan(model::MOI.ModelLike, config::Config)
+    test_constraint_ScalarAffineFunction_GreaterThan(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Add an ScalarAffineFunction-in-GreaterThan constraint. If `config.solve=true`
 confirm that it solves correctly, and if `config.duals=true`, check that the
 duals are computed correctly.
 """
-function solve_affine_greaterthan(model::MOI.ModelLike, config::Config)
+function test_constraint_ScalarAffineFunction_GreaterThan(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    if !MOI.supports_constraint(
+        model,
+        MOI.ScalarAffineFunction{Float64},
+        MOI.GreaterThan{Float64},
+    )
+        return
+    end
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -95,7 +139,7 @@ function solve_affine_greaterthan(model::MOI.ModelLike, config::Config)
         },
         "c",
     )
-    return _test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.5,
@@ -103,17 +147,48 @@ function solve_affine_greaterthan(model::MOI.ModelLike, config::Config)
         constraint_primal = [(c, 1.0)],
         constraint_dual = [(c, 0.5)],
     )
+    return
 end
-unittests["solve_affine_greaterthan"] = solve_affine_greaterthan
+
+function setup_test(
+    ::typeof(test_constraint_ScalarAffineFunction_GreaterThan),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, [0.5]),
+            MOI.FEASIBLE_POINT,
+            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [0.5],
+        ),
+    )
+    return
+end
 
 """
-    solve_affine_equalto(model::MOI.ModelLike, config::Config)
+    test_constraint_ScalarAffineFunction_EqualTo(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Add an ScalarAffineFunction-in-EqualTo constraint. If `config.solve=true`
 confirm that it solves correctly, and if `config.duals=true`, check that the
 duals are computed correctly.
 """
-function solve_affine_equalto(model::MOI.ModelLike, config::Config)
+function test_constraint_ScalarAffineFunction_EqualTo(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    if !MOI.supports_constraint(
+        model,
+        MOI.ScalarAffineFunction{Float64},
+        MOI.EqualTo{Float64},
+    )
+        return
+    end
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -132,7 +207,7 @@ function solve_affine_equalto(model::MOI.ModelLike, config::Config)
         },
         "c",
     )
-    return _test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.5,
@@ -140,17 +215,49 @@ function solve_affine_equalto(model::MOI.ModelLike, config::Config)
         constraint_primal = [(c, 1.0)],
         constraint_dual = [(c, 0.5)],
     )
+    return
 end
-unittests["solve_affine_equalto"] = solve_affine_equalto
+
+function setup_test(
+    ::typeof(test_constraint_ScalarAffineFunction_EqualTo),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, [0.5]),
+            MOI.FEASIBLE_POINT,
+            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
+                [0.5],
+        ),
+    )
+    return
+end
 
 """
-    solve_affine_interval(model::MOI.ModelLike, config::Config)
+    test_constraint_ScalarAffineFunction_Interval(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Add an ScalarAffineFunction-in-Interval constraint. If `config.solve=true`
 confirm that it solves correctly, and if `config.duals=true`, check that the
 duals are computed correctly.
 """
-function solve_affine_interval(model::MOI.ModelLike, config::Config)
+function test_constraint_ScalarAffineFunction_Interval(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    if !MOI.supports_constraint(
+        model,
+        MOI.ScalarAffineFunction{Float64},
+        MOI.Interval{Float64},
+    )
+        return
+    end
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -169,7 +276,7 @@ function solve_affine_interval(model::MOI.ModelLike, config::Config)
         },
         "c",
     )
-    return _test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 6.0,
@@ -177,19 +284,40 @@ function solve_affine_interval(model::MOI.ModelLike, config::Config)
         constraint_primal = [(c, 4.0)],
         constraint_dual = [(c, -1.5)],
     )
+    return
 end
-unittests["solve_affine_interval"] = solve_affine_interval
 
-# Taken from https://github.com/JuliaOpt/MathOptInterfaceMosek.jl/issues/41
+function setup_test(
+    ::typeof(test_constraint_ScalarAffineFunction_Interval),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, [2.0]),
+            MOI.FEASIBLE_POINT,
+            (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [-1.5],
+        ),
+    )
+    return
+end
+
 """
-    solve_duplicate_terms_scalar_affine(model::MOI.ModelLike,
-                                        config::Config)
+    test_constraint_ScalarAffineFunction_duplicate(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Add a `ScalarAffineFunction`-in-`LessThan` constraint with duplicate terms in
 the function. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
+
+Taken from https://github.com/JuliaOpt/MathOptInterfaceMosek.jl/issues/41
 """
-function solve_duplicate_terms_scalar_affine(
+function test_constraint_ScalarAffineFunction_duplicate(
     model::MOI.ModelLike,
     config::Config,
 )
@@ -205,7 +333,7 @@ function solve_duplicate_terms_scalar_affine(
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], [x, x]), 0.0)
     c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
-    return _test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.5,
@@ -213,19 +341,38 @@ function solve_duplicate_terms_scalar_affine(
         constraint_primal = [(c, 1.0)],
         constraint_dual = [(c, -0.5)],
     )
+    return
 end
-unittests["solve_duplicate_terms_scalar_affine"] =
-    solve_duplicate_terms_scalar_affine
+
+function setup_test(
+    ::typeof(test_constraint_ScalarAffineFunction_duplicate),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, [0.5]),
+            MOI.FEASIBLE_POINT,
+            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-0.5],
+        ),
+    )
+    return
+end
 
 """
-    solve_duplicate_terms_vector_affine(model::MOI.ModelLike,
-                                        config::Config)
+    test_constraint_VectorAffineFunction_duplicate(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Add a `VectorAffineFunction`-in-`Nonpositives` constraint with duplicate terms
 in the function. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
-function solve_duplicate_terms_vector_affine(
+function test_constraint_VectorAffineFunction_duplicate(
     model::MOI.ModelLike,
     config::Config,
 )
@@ -244,7 +391,7 @@ function solve_duplicate_terms_vector_affine(
         [-1.0],
     )
     c = MOI.add_constraint(model, f, MOI.Nonpositives(1))
-    return _test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.5,
@@ -252,19 +399,36 @@ function solve_duplicate_terms_vector_affine(
         constraint_primal = [(c, [0.0])],
         constraint_dual = [(c, [-0.5])],
     )
+    return
 end
-unittests["solve_duplicate_terms_vector_affine"] =
-    solve_duplicate_terms_vector_affine
+
+function setup_test(
+    ::typeof(test_constraint_VectorAffineFunction_duplicate),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, [0.5]),
+            MOI.FEASIBLE_POINT,
+            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) =>
+                [[-0.5]],
+        ),
+    )
+    return
+end
 
 """
-    solve_qcp_edge_cases(model::MOI.ModelLike, config::Config)
+    test_qcp_duplicate_diagonal(model::MOI.ModelLike, config::Config)
 
-Test various edge cases relating to quadratically constrainted programs (i.e.,
-with a ScalarQuadraticFunction-in-Set constraint.
+Test a QCP problem with a duplicate diagonal term.
 
-If `config.solve=true` confirm that it solves correctly.
+The problem is `max x + 2y | y + x^2 + x^2 <= 1, x >= 0.5, y >= 0.5`.
 """
-function solve_qcp_edge_cases(model::MOI.ModelLike, config::Config)
+function test_qcp_duplicate_diagonal(model::MOI.ModelLike, config::Config)
     if !MOI.supports_constraint(
         model,
         MOI.ScalarQuadraticFunction{Float64},
@@ -272,97 +436,145 @@ function solve_qcp_edge_cases(model::MOI.ModelLike, config::Config)
     )
         return
     end
-    @testset "Duplicate on-diagonal" begin
-        # max x + 2y | y + x^2 + x^2 <= 1, x >= 0.5, y >= 0.5
-        MOI.empty!(model)
-        x = MOI.add_variables(model, 2)
-        MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-        MOI.set(
-            model,
-            MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0),
-        )
-        vc1 = MOI.add_constraint(
-            model,
-            MOI.SingleVariable(x[1]),
-            MOI.GreaterThan(0.5),
-        )
-        # We test this after the creation of every `SingleVariable` constraint
-        # to ensure a good coverage of corner cases.
-        @test vc1.value == x[1].value
-        vc2 = MOI.add_constraint(
-            model,
-            MOI.SingleVariable(x[2]),
-            MOI.GreaterThan(0.5),
-        )
-        @test vc2.value == x[2].value
-        MOI.add_constraint(
-            model,
-            MOI.ScalarQuadraticFunction(
-                MOI.ScalarAffineTerm.([1.0], [x[2]]),  # affine terms
-                MOI.ScalarQuadraticTerm.(
-                    [2.0, 2.0],
-                    [x[1], x[1]],
-                    [x[1], x[1]],
-                ),  # quad
-                0.0,  # constant
-            ),
-            MOI.LessThan(1.0),
-        )
-        _test_model_solution(
-            model,
-            config;
-            objective_value = 1.5,
-            variable_primal = [(x[1], 0.5), (x[2], 0.5)],
-        )
-    end
-    @testset "Duplicate off-diagonal" begin
-        # max x + 2y | x^2 + 0.25y*x + 0.25x*y + 0.5x*y + y^2 <= 1, x >= 0.5, y >= 0.5
-        MOI.empty!(model)
-        x = MOI.add_variables(model, 2)
-        MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-        MOI.set(
-            model,
-            MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0),
-        )
-        vc1 = MOI.add_constraint(
-            model,
-            MOI.SingleVariable(x[1]),
-            MOI.GreaterThan{Float64}(0.5),
-        )
-        @test vc1.value == x[1].value
-        vc2 = MOI.add_constraint(
-            model,
-            MOI.SingleVariable(x[2]),
-            MOI.GreaterThan{Float64}(0.5),
-        )
-        @test vc2.value == x[2].value
-        MOI.add_constraint(
-            model,
-            MOI.ScalarQuadraticFunction(
-                MOI.ScalarAffineTerm{Float64}[],  # affine terms
-                MOI.ScalarQuadraticTerm.(
-                    [2.0, 0.25, 0.25, 0.5, 2.0],
-                    [x[1], x[1], x[2], x[1], x[2]],
-                    [x[1], x[2], x[1], x[2], x[2]],
-                ),  # quad
-                0.0,  # constant
-            ),
-            MOI.LessThan(1.0),
-        )
-        _test_model_solution(
-            model,
-            config;
-            objective_value = 0.5 + (√13 - 1) / 2,
-            variable_primal = [(x[1], 0.5), (x[2], (√13 - 1) / 4)],
-        )
-    end
+    MOI.empty!(model)
+    x = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0),
+    )
+    vc1 = MOI.add_constraint(
+        model,
+        MOI.SingleVariable(x[1]),
+        MOI.GreaterThan(0.5),
+    )
+    # We test this after the creation of every `SingleVariable` constraint
+    # to ensure a good coverage of corner cases.
+    @test vc1.value == x[1].value
+    vc2 = MOI.add_constraint(
+        model,
+        MOI.SingleVariable(x[2]),
+        MOI.GreaterThan(0.5),
+    )
+    @test vc2.value == x[2].value
+    MOI.add_constraint(
+        model,
+        MOI.ScalarQuadraticFunction(
+            MOI.ScalarAffineTerm.([1.0], [x[2]]),  # affine terms
+            MOI.ScalarQuadraticTerm.(
+                [2.0, 2.0],
+                [x[1], x[1]],
+                [x[1], x[1]],
+            ),  # quad
+            0.0,  # constant
+        ),
+        MOI.LessThan(1.0),
+    )
+    _test_model_solution(
+        model,
+        config;
+        objective_value = 1.5,
+        variable_primal = [(x[1], 0.5), (x[2], 0.5)],
+    )
+    return
 end
-unittests["solve_qcp_edge_cases"] = solve_qcp_edge_cases
+
+function setup_test(
+    ::typeof(test_qcp_duplicate_diagonal),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, [0.5, 0.5]),
+        ),
+    )
+    return
+end
 
 """
-    solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::Config)
+    test_qcp_duplicate_off_diagonal(model::MOI.ModelLike, config::Config)
+
+Test a QCP problem with a duplicate off-diagonal term.
+
+The problem is
+`max x + 2y | x^2 + 0.25y*x + 0.25x*y + 0.5x*y + y^2 <= 1, x >= 0.5, y >= 0.5`.
+"""
+function test_qcp_duplicate_off_diagonal(model::MOI.ModelLike, config::Config)
+    if !MOI.supports_constraint(
+        model,
+        MOI.ScalarQuadraticFunction{Float64},
+        MOI.LessThan{Float64},
+    )
+        return
+    end
+    MOI.empty!(model)
+    x = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0),
+    )
+    vc1 = MOI.add_constraint(
+        model,
+        MOI.SingleVariable(x[1]),
+        MOI.GreaterThan{Float64}(0.5),
+    )
+    @test vc1.value == x[1].value
+    vc2 = MOI.add_constraint(
+        model,
+        MOI.SingleVariable(x[2]),
+        MOI.GreaterThan{Float64}(0.5),
+    )
+    @test vc2.value == x[2].value
+    MOI.add_constraint(
+        model,
+        MOI.ScalarQuadraticFunction(
+            MOI.ScalarAffineTerm{Float64}[],  # affine terms
+            MOI.ScalarQuadraticTerm.(
+                [2.0, 0.25, 0.25, 0.5, 2.0],
+                [x[1], x[1], x[2], x[1], x[2]],
+                [x[1], x[2], x[1], x[2], x[2]],
+            ),  # quad
+            0.0,  # constant
+        ),
+        MOI.LessThan(1.0),
+    )
+    _test_model_solution(
+        model,
+        config;
+        objective_value = 0.5 + (√13 - 1) / 2,
+        variable_primal = [(x[1], 0.5), (x[2], (√13 - 1) / 4)],
+    )
+    return
+end
+
+function setup_test(
+    ::typeof(test_qcp_duplicate_off_diagonal),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, [0.5, (√13 - 1) / 4]),
+        ),
+    )
+    return
+end
+
+"""
+    test_modification_affine_deletion_edge_cases(
+        model::MOI.ModelLike,
+        config::Config,
+    )
 
 Test various edge cases relating to deleting affine constraints. This requires
     + ScalarAffineFunction-in-LessThan; and
@@ -370,7 +582,10 @@ Test various edge cases relating to deleting affine constraints. This requires
 
 If `config.solve=true` confirm that it solves correctly.
 """
-function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::Config)
+function test_modification_affine_deletion_edge_cases(
+    model::MOI.ModelLike,
+    config::Config,
+)
     MOI.empty!(model)
     x = MOI.add_variable(model)
     # helpers. The function 1.0x + 0.0
@@ -430,16 +645,60 @@ function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::Config)
     )
     # delete the ScalarAffineFunction
     MOI.delete(model, c2)
-    return _test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 2.0,
         constraint_primal = [(c3, [0.0])],
     )
+    return
 end
-unittests["solve_affine_deletion_edge_cases"] = solve_affine_deletion_edge_cases
 
-function solve_zero_one_with_bounds_1(model::MOI.ModelLike, config::Config)
+function setup_test(
+    ::typeof(test_modification_affine_deletion_edge_cases),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, [0.0]),
+        ),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, [0.0]),
+        ),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, [1.0]),
+        ),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, [1.0]),
+        ),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, [2.0]),
+        ),
+    )
+    return
+end
+
+"""
+    test_constraint_ZeroOne_bounds(model::MOI.ModelLike, config::Config)
+
+Test a problem with a bounded ZeroOne variable.
+"""
+function test_constraint_ZeroOne_bounds(model::MOI.ModelLike, config::Config)
+    if !MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+        return
+    end
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -452,16 +711,37 @@ function solve_zero_one_with_bounds_1(model::MOI.ModelLike, config::Config)
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    return _test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 2.0,
         variable_primal = [(x, 1.0)],
     )
+    return
 end
-unittests["solve_zero_one_with_bounds_1"] = solve_zero_one_with_bounds_1
 
-function solve_zero_one_with_bounds_2(model::MOI.ModelLike, config::Config)
+function setup_test(
+    ::typeof(test_constraint_ZeroOne_bounds),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+                MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+    )
+    return
+end
+
+"""
+    test_constraint_ZeroOne_bounds_2(model::MOI.ModelLike, config::Config)
+
+Test a problem with a ZeroOne and binding fractional upper bound.
+"""
+function test_constraint_ZeroOne_bounds_2(model::MOI.ModelLike, config::Config)
+    if !MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+        return
+    end
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -474,16 +754,37 @@ function solve_zero_one_with_bounds_2(model::MOI.ModelLike, config::Config)
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    return _test_model_solution(
+    _test_model_solution(
         model,
         config;
         objective_value = 0.0,
         variable_primal = [(x, 0.0)],
     )
+    return
 end
-unittests["solve_zero_one_with_bounds_2"] = solve_zero_one_with_bounds_2
 
-function solve_zero_one_with_bounds_3(model::MOI.ModelLike, config::Config)
+function setup_test(
+    ::typeof(test_constraint_ZeroOne_bounds_2),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+                MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.0])),
+    )
+    return
+end
+
+"""
+    test_constraint_ZeroOne_bounds_3(model::MOI.ModelLike, config::Config)
+
+Test a problem with a ZeroOne and infeasible fractional bounds.
+"""
+function test_constraint_ZeroOne_bounds_3(model::MOI.ModelLike, config::Config)
+    if !MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+        return
+    end
     MOI.empty!(model)
     MOIU.loadfromstring!(
         model,
@@ -500,22 +801,43 @@ function solve_zero_one_with_bounds_3(model::MOI.ModelLike, config::Config)
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
     end
+    return
 end
-unittests["solve_zero_one_with_bounds_3"] = solve_zero_one_with_bounds_3
+
+function setup_test(
+    ::typeof(test_constraint_ZeroOne_bounds_3),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.INFEASIBLE),
+    )
+    return
+end
 
 """
-    solve_start_soc(model::MOI.ModelLike, config::Config{T}) where {T}
+    test_constraint_PrimalStart_DualStart_SecondOrderCone(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
 
 Test combining the [`MOI.VariablePrimalStart`](@ref),
 [`MOI.ConstraintPrimalStart`](@ref) and [`MOI.ConstraintDualStart`](@ref)
 attributes with a `MOI.VectorAffineFunction{T}`-in-`MOI.SecondOrderCone`.
 """
-function solve_start_soc(model::MOI.ModelLike, config::Config{T}) where {T}
+function test_constraint_PrimalStart_DualStart_SecondOrderCone(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     if !MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
         MOI.SecondOrderCone,
     )
+        return
+    elseif !config.solve
         return
     end
     MOI.empty!(model)
@@ -538,17 +860,33 @@ function solve_start_soc(model::MOI.ModelLike, config::Config{T}) where {T}
     if MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
         MOI.set(model, MOI.ConstraintDualStart(), c, T[2, -2])
     end
-    if config.solve
-        MOI.optimize!(model)
-        MOI.Test._test_model_solution(
-            model,
-            config;
-            objective_value = o,
-            variable_primal = [(x, o)],
-            constraint_primal = [(c, [o, o])],
-            constraint_dual = [(c, [o, -o])],
-        )
-    end
+    MOI.optimize!(model)
+    MOI.Test._test_model_solution(
+        model,
+        config;
+        objective_value = o,
+        variable_primal = [(x, o)],
+        constraint_primal = [(c, [o, o])],
+        constraint_dual = [(c, [o, -o])],
+    )
     return
 end
-unittests["solve_start_soc"] = solve_start_soc
+
+function setup_test(
+    ::typeof(test_constraint_PrimalStart_DualStart_SecondOrderCone),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, [1.0]),
+            MOI.FEASIBLE_POINT,
+            (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
+                [[1.0, -1.0]],
+        ),
+    )
+    return
+end

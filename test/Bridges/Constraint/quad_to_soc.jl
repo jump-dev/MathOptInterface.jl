@@ -52,7 +52,8 @@ config = MOIT.Config()
                 (MOI.FEASIBLE_POINT, [0.5, (√13 - 1) / 4]),
             ),
         )
-        MOIT.solve_qcp_edge_cases(bridged_mock, config)
+        MOIT.test_qcp_duplicate_diagonal(bridged_mock, config)
+        MOIT.test_qcp_duplicate_off_diagonal(bridged_mock, config)
         ci = first(
             MOI.get(
                 mock,
