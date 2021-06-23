@@ -35,7 +35,7 @@ config = MOIT.Config()
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [-3, -1],
         )
-    MOIT.lin1vtest(bridged_mock, config)
+    MOIT.test_conic_linear_VectorOfVariables(bridged_mock, config)
     ci = first(
         MOI.get(
             bridged_mock,
@@ -100,7 +100,7 @@ config = MOIT.Config()
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [-3, -1],
         )
-    MOIT.lin1ftest(bridged_mock, config)
+    MOIT.test_conic_linear_VectorAffineFunction(bridged_mock, config)
 
     ci = first(
         MOI.get(
@@ -181,7 +181,7 @@ config = MOIT.Config()
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [7, 2, -4],
         )
-    MOIT.lin2vtest(bridged_mock, config)
+    MOIT.test_conic_linear_VectorOfVariables_2(bridged_mock, config)
 
     # VectorAffineFunction-in-Nonnegatives
     # VectorAffineFunction-in-Nonpositives
@@ -197,5 +197,5 @@ config = MOIT.Config()
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [7, 2, -4, 7],
         )
-    MOIT.lin2ftest(bridged_mock, config)
+    MOIT.test_conic_linear_VectorAffineFunction_2(bridged_mock, config)
 end

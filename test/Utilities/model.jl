@@ -239,14 +239,9 @@ end
     MOI.Test.runtests(
         MOIU.Model{Float64}(),
         MOIT.Config(solve = false),
-        include = ["test_linear_"],
+        include = ["test_linear_", "test_conic_"],
         exclude = ["VariablePrimalStart", "linear_mixed_complementarity"],
     )
-end
-
-@testset "Continuous Conic tests" begin
-    config = MOIT.Config(solve = false)
-    MOIT.contconictest(MOIU.Model{Float64}(), config)
 end
 
 @testset "Quadratic functions" begin

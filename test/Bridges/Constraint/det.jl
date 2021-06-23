@@ -33,8 +33,14 @@ config = MOIT.Config()
                 ) => [psd_dual],
             )
 
-        MOIT.logdett1vtest(bridged_mock, config)
-        MOIT.logdett1ftest(bridged_mock, config)
+        MOIT.test_conic_LogDetConeTriangle_VectorOfVariables(
+            bridged_mock,
+            config,
+        )
+        MOIT.test_conic_LogDetConeTriangle_VectorAffineFunction(
+            bridged_mock,
+            config,
+        )
 
         # set primal/dual start is not yet implemented for LogDet bridge
         ci = first(
@@ -106,7 +112,7 @@ config = MOIT.Config()
                 ) => [psd_dual],
             )
 
-        MOIT.logdett2test(bridged_mock, config)
+        MOIT.test_conic_LogDetConeTriangle(bridged_mock, config)
 
         # set primal/dual start is not yet implemented for LogDet bridge
         ci = first(
@@ -155,8 +161,14 @@ end
                 ) => [psd_dual],
             )
 
-        MOIT.rootdett1vtest(bridged_mock, config)
-        MOIT.rootdett1ftest(bridged_mock, config)
+        MOIT.test_conic_RootDetConeTriangle_VectorOfVariables(
+            bridged_mock,
+            config,
+        )
+        MOIT.test_conic_RootDetConeTriangle_VectorAffineFunction(
+            bridged_mock,
+            config,
+        )
 
         # set primal/dual start is not yet implemented for RootDet bridge
         ci = first(
@@ -227,7 +239,7 @@ end
                 ) => [psd_dual],
             )
 
-        MOIT.rootdett2test(bridged_mock, config)
+        MOIT.test_conic_RootDetConeTriangle(bridged_mock, config)
 
         # set primal/dual start is not yet implemented for RootDet bridge
         ci = first(

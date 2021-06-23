@@ -22,7 +22,7 @@ config = MOIT.Config()
                 (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
                     [[7, 2, -4]],
             )
-        MOIT.lin2vtest(bridged_mock, config)
+        MOIT.test_conic_linear_VectorOfVariables_2(bridged_mock, config)
 
         @test MOI.get(mock, MOI.NumberOfVariables()) == 4
         @test MOI.get(bridged_mock, MOI.NumberOfVariables()) == 4
@@ -143,7 +143,7 @@ config = MOIT.Config()
                 MOI.INFEASIBILITY_CERTIFICATE,
             ),
         )
-        MOIT.lin4test(bridged_mock, config)
+        MOIT.test_conic_linear_INFEASIBLE_2(bridged_mock, config)
 
         @test MOI.get(mock, MOI.NumberOfVariables()) == 1
         @test length(MOI.get(mock, MOI.ListOfVariableIndices())) == 1

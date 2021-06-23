@@ -209,7 +209,7 @@ end
             (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) =>
                 [[-3, -1]],
         )
-    MOIT.lin1vtest(bridged_mock, config)
+    MOIT.test_conic_linear_VectorOfVariables(bridged_mock, config)
 
     ci = first(
         MOI.get(

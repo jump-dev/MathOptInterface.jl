@@ -40,7 +40,7 @@ config = MOIT.Config()
                 exps_duals,
         )
 
-    MOIT.relentr1test(bridged_mock, config)
+    MOIT.test_conic_RelativeEntropyCone(bridged_mock, config)
 
     var_names = ["u"]
     MOI.set(

@@ -37,8 +37,8 @@ config = MOIT.Config()
                     [[-1], [-1]],
             )
 
-        MOIT.norminf1vtest(bridged_mock, config)
-        MOIT.norminf1ftest(bridged_mock, config)
+        MOIT.test_conic_NormInfinityCone_VectorOfVariables(bridged_mock, config)
+        MOIT.test_conic_NormInfinityCone_VectorAffineFunction(bridged_mock, config)
 
         var_names = ["x", "y", "z"]
 
@@ -171,7 +171,7 @@ config = MOIT.Config()
         )
     end
 
-    @testset "norminf3test" begin
+    @testset "test_conic_NormInfinityCone_3" begin
         mock.optimize! =
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
                 mock,
@@ -179,7 +179,7 @@ config = MOIT.Config()
                 (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
                     [vcat(fill(inv(3), 3), zeros(3)), fill(inv(3), 3)],
             )
-        MOIT.norminf3test(bridged_mock, config)
+        MOIT.test_conic_NormInfinityCone_3(bridged_mock, config)
 
         var_names = ["x", "y1", "y2", "y3"]
 
@@ -327,8 +327,8 @@ end
                     [[-1], [0]],
             )
 
-        MOIT.normone1vtest(bridged_mock, config)
-        MOIT.normone1ftest(bridged_mock, config)
+        MOIT.test_conic_NormOneCone_VectorOfVariables(bridged_mock, config)
+        MOIT.test_conic_NormOneCone_VectorAffineFunction(bridged_mock, config)
 
         var_names = ["x", "y", "z"]
         MOI.set(
@@ -452,7 +452,7 @@ end
         )
     end
 
-    @testset "normone3test" begin
+    @testset "test_conic_NormOneCone" begin
         mock.optimize! =
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
                 mock,
@@ -460,7 +460,7 @@ end
                 (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
                     [vcat(ones(4), zeros(3)), ones(3)],
             )
-        MOIT.normone3test(bridged_mock, config)
+        MOIT.test_conic_NormOneCone(bridged_mock, config)
 
         var_names = ["x", "y1", "y2", "y3"]
 

@@ -299,7 +299,7 @@ MOIU.@product_of_sets(NonnegNonpos, MOI.Nonnegatives, MOI.Nonpositives)
     b = [-1.0, 1.0]
     F = MOI.VectorAffineFunction{Float64}
     _test(
-        MOIT.lin3test,
+        MOIT.test_conic_linear_INFEASIBLE,
         Vector{Float64},
         NonnegNonpos{Float64},
         A,
@@ -314,7 +314,7 @@ MOIU.@product_of_sets(NonnegNonpos, MOI.Nonnegatives, MOI.Nonpositives)
     end
     b = [1.0, -1.0]
     _test(
-        MOIT.lin3test,
+        MOIT.test_conic_linear_INFEASIBLE,
         Vector{Float64},
         NonposNonneg{Float64},
         A,
@@ -331,7 +331,7 @@ MOIU.@product_of_sets(NonnegNonpos, MOI.Nonnegatives, MOI.Nonpositives)
     A = sparse([1, 2], [1, 1], [1.0, -1.0])
     b = -ones(2)
     _test(
-        MOIT.lin3test,
+        MOIT.test_conic_linear_INFEASIBLE,
         Vector{Float64},
         Nonneg{Float64},
         A,

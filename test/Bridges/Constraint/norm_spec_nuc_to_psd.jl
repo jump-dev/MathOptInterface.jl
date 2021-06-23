@@ -56,7 +56,7 @@ config = MOIT.Config()
             ) => [psd_dual],
         )
 
-    MOIT.normspec1test(bridged_mock, config)
+    MOIT.test_conic_NormSpectralCone(bridged_mock, config)
 
     var_names = ["t"]
     MOI.set(
@@ -203,7 +203,7 @@ end
             ) => [psd_dual],
         )
 
-    MOIT.normnuc1test(bridged_mock, config)
+    MOIT.test_conic_NormNuclearCone(bridged_mock, config)
 
     greater = MOI.get(
         mock,
