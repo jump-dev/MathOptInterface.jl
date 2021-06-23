@@ -34,7 +34,10 @@ config = MOIT.Config()
             (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
                 [[3 / 2, 1 / 2, -1.0, -1.0]],
         )
-    MOIT.rotatedsoc1vtest(bridged_mock, config)
+    MOIT.rotatedtest_conic_SecondOrderCone_VectorOfVariables(
+        bridged_mock,
+        config,
+    )
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
@@ -42,7 +45,10 @@ config = MOIT.Config()
             (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
                 [[3 / 2, 1 / 2, -1.0, -1.0]],
         )
-    MOIT.rotatedsoc1ftest(bridged_mock, config)
+    MOIT.rotatedtest_conic_SecondOrderCone_VectorAffineFunction(
+        bridged_mock,
+        config,
+    )
     ci = first(
         MOI.get(
             bridged_mock,
@@ -93,7 +99,7 @@ end
             (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [[1 - 1 / √2, 1 + 1 / √2, -1]],
             (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
         )
-    MOIT.soc1vtest(bridged_mock, config)
+    MOIT.test_conic_SecondOrderCone_VectorOfVariables(bridged_mock, config)
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
@@ -101,7 +107,7 @@ end
             (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [[1 - 1 / √2, 1 + 1 / √2, -1]],
             (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
         )
-    MOIT.soc1ftest(bridged_mock, config)
+    MOIT.test_conic_SecondOrderCone_VectorAffineFunction(bridged_mock, config)
     ci = first(
         MOI.get(
             bridged_mock,

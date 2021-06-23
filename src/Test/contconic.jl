@@ -1421,6 +1421,13 @@ let n = 3. optimal solution: y .= -1, x = 4
 ```
 """
 function test_conic_NormOneCone(model::MOI.ModelLike, config::Config)
+    if !MOI.supports_constraint(
+        model,
+        MOI.VectorAffineFunction{Float64},
+        MOI.NormOneCone,
+    )
+        return
+    end
     atol = config.atol
     rtol = config.rtol
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
@@ -1521,17 +1528,26 @@ function setup_test(
     return
 end
 
-function _soc1test(
+"""
+Problem SOC1
+max 0x + 1y + 1z
+ st  x == 1
+     x >= ||(y,z)||
+"""
+function _test_conic_SecondOrderCone_helper(
     model::MOI.ModelLike,
     config::Config,
     use_VectorOfVariables::Bool,
 )
+    if !MOI.supports_constraint(
+        model,
+        MOI.VectorAffineFunction{Float64},
+        MOI.SecondOrderCone,
+    )
+        return
+    end
     atol = config.atol
     rtol = config.rtol
-    # Problem SOC1
-    # max 0x + 1y + 1z
-    #  st  x == 1
-    #      x >= ||(y,z)||
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -1636,14 +1652,84 @@ function _soc1test(
     end
 end
 
-function soc1vtest(model::MOI.ModelLike, config::Config)
-    return _soc1test(model, config, true)
-end
-function soc1ftest(model::MOI.ModelLike, config::Config)
-    return _soc1test(model, config, false)
+"""
+    test_conic_SecondOrderCone_VectorOfVariables(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Test a SecondOrderCone in standard conic form.
+"""
+function test_conic_SecondOrderCone_VectorOfVariables(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    _test_conic_SecondOrderCone_helper(model, config, true)
+    return
 end
 
-function _soc2test(model::MOI.ModelLike, config::Config, nonneg::Bool)
+function setup_test(
+    ::typeof(test_conic_SecondOrderCone_VectorOfVariables),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [1.0, 1 / √2, 1 / √2],
+            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
+        ),
+    )
+    return
+end
+
+"""
+    test_conic_SecondOrderCone_VectorAffineFunction(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Test a SecondOrderCone in geometric conic form.
+"""
+function test_conic_SecondOrderCone_VectorAffineFunction(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    _test_conic_SecondOrderCone_helper(model, config, false)
+    return
+end
+
+function setup_test(
+    ::typeof(test_conic_SecondOrderCone_VectorAffineFunction),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [1.0, 1 / √2, 1 / √2],
+            (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
+                [[√2, -1, -1]],
+            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
+        ),
+    )
+    return
+end
+
+function _test_conic_SecondOrderCone_helper_2(
+    model::MOI.ModelLike,
+    config::Config,
+    nonneg::Bool,
+)
+    if !MOI.supports_constraint(
+        model,
+        MOI.VectorAffineFunction{Float64},
+        MOI.SecondOrderCone,
+    )
+        return
+    end
     atol = config.atol
     rtol = config.rtol
     # Problem SOC2
@@ -1789,28 +1875,108 @@ function _soc2test(model::MOI.ModelLike, config::Config, nonneg::Bool)
                 atol rtol = rtol
         end
     end
+    return
 end
 
-function soc2ntest(model::MOI.ModelLike, config::Config)
-    return _soc2test(model, config, true)
-end
-function soc2ptest(model::MOI.ModelLike, config::Config)
-    return _soc2test(model, config, false)
+"""
+    test_conic_SecondOrderCone_Nonnegatives(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Test a SecondOrderCone with Nonnegatives constraints.
+"""
+function test_conic_SecondOrderCone_Nonnegatives(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    _test_conic_SecondOrderCone_helper_2(model, config, true)
+    return
 end
 
-function soc3test(model::MOI.ModelLike, config::Config)
+function setup_test(
+    ::typeof(test_conic_SecondOrderCone_Nonnegatives),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [-1 / √2, 1 / √2, 1.0],
+            (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
+                [[√2, 1, -1]],
+            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[√2]],
+            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+                [[1.0]],
+        ),
+    )
+    return
+end
+
+"""
+    test_conic_SecondOrderCone_Nonpositives(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Test a SecondOrderCone with Nonpositives constraints.
+"""
+function test_conic_SecondOrderCone_Nonpositives(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    _test_conic_SecondOrderCone_helper_2(model, config, false)
+    return
+end
+
+function setup_test(
+    ::typeof(test_conic_SecondOrderCone_Nonpositives),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [-1 / √2, 1 / √2, 1.0],
+            (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
+                [[√2, 1, -1]],
+            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[√2]],
+            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) =>
+                [[-1.0]],
+        ),
+    )
+    return
+end
+
+"""
+    test_conic_SecondOrderCone_INFEASIBLE(model::MOI.ModelLike, config::Config)
+
+Problem SOC3 - Infeasible
+min 0
+s.t. y ≥ 2
+     x ≤ 1
+     |y| ≤ x
+in conic form:
+min 0
+s.t. -2 + y ∈ R₊
+     -1 + x ∈ R₋
+      (x,y) ∈ SOC₂
+"""
+function test_conic_SecondOrderCone_INFEASIBLE(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    if !MOI.supports_constraint(
+        model,
+        MOI.VectorAffineFunction{Float64},
+        MOI.SecondOrderCone,
+    )
+        return
+    end
     atol = config.atol
     rtol = config.rtol
-    # Problem SOC3 - Infeasible
-    # min 0
-    # s.t. y ≥ 2
-    #      x ≤ 1
-    #      |y| ≤ x
-    # in conic form:
-    # min 0
-    # s.t. -2 + y ∈ R₊
-    #      -1 + x ∈ R₋
-    #       (x,y) ∈ SOC₂
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -1894,23 +2060,58 @@ function soc3test(model::MOI.ModelLike, config::Config)
         end
         # TODO test dual feasibility and objective sign
     end
+    return
 end
 
-function soc4test(model::MOI.ModelLike, config::Config)
+function setup_test(
+    ::typeof(test_conic_SecondOrderCone_INFEASIBLE),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.INFEASIBLE,
+            MOI.INFEASIBLE_POINT,
+            MOI.INFEASIBILITY_CERTIFICATE,
+        ),
+    )
+    return
+end
+
+"""
+    test_conic_SecondOrderCone_out_of_order(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Problem SOC4
+min 0x[1] - 2x[2] - 1x[3]
+ st  x[1]                                == 1 (c1a)
+             x[2]         - x[4]         == 0 (c1b)
+                     x[3]         - x[5] == 0 (c1c)
+     x[1] >= ||(x[4],x[5])||                  (c2)
+in conic form:
+min  c^Tx
+s.t. Ax + b ∈ {0}₃
+     (x[1],x[4],x[5]) ∈ SOC₃
+Like SOCINT1 but with copies of variables and integrality relaxed
+Tests out-of-order indices in cones
+"""
+function test_conic_SecondOrderCone_out_of_order(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    if !MOI.supports_constraint(
+        model,
+        MOI.VectorAffineFunction{Float64},
+        MOI.SecondOrderCone,
+    )
+        return
+    end
     atol = config.atol
     rtol = config.rtol
-    # Problem SOC4
-    # min 0x[1] - 2x[2] - 1x[3]
-    #  st  x[1]                                == 1 (c1a)
-    #              x[2]         - x[4]         == 0 (c1b)
-    #                      x[3]         - x[5] == 0 (c1c)
-    #      x[1] >= ||(x[4],x[5])||                  (c2)
-    # in conic form:
-    # min  c^Tx
-    # s.t. Ax + b ∈ {0}₃
-    #      (x[1],x[4],x[5]) ∈ SOC₃
-    # Like SOCINT1 but with copies of variables and integrality relaxed
-    # Tests out-of-order indices in cones
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -1994,18 +2195,25 @@ function soc4test(model::MOI.ModelLike, config::Config)
                 atol rtol = rtol
         end
     end
+    return
 end
 
-const soctests = Dict(
-    "soc1v" => soc1vtest,
-    "soc1f" => soc1ftest,
-    "soc2n" => soc2ntest,
-    "soc2p" => soc2ptest,
-    "soc3" => soc3test,
-    "soc4" => soc4test,
+function setup_test(
+    ::typeof(test_conic_SecondOrderCone_out_of_order),
+    model::MOIU.MockOptimizer,
+    ::Config,
 )
-
-@moitestset soc
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [1.0, 2 / √5, 1 / √5, 2 / √5, 1 / √5],
+            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
+                [[-√5, -2.0, -1.0]],
+        ),
+    )
+    return
+end
 
 function _rotatedsoc1test(model::MOI.ModelLike, config::Config, abvars::Bool)
     atol = config.atol
@@ -2136,10 +2344,16 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::Config, abvars::Bool)
     end
 end
 
-function rotatedsoc1vtest(model::MOI.ModelLike, config::Config)
+function rotatedtest_conic_SecondOrderCone_VectorOfVariables(
+    model::MOI.ModelLike,
+    config::Config,
+)
     return _rotatedsoc1test(model, config, true)
 end
-function rotatedsoc1ftest(model::MOI.ModelLike, config::Config)
+function rotatedtest_conic_SecondOrderCone_VectorAffineFunction(
+    model::MOI.ModelLike,
+    config::Config,
+)
     return _rotatedsoc1test(model, config, false)
 end
 
@@ -2257,7 +2471,12 @@ function rotatedsoc2test(model::MOI.ModelLike, config::Config)
     end
 end
 
-function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
+function rotatedtest_conic_SecondOrderCone_INFEASIBLE(
+    model::MOI.ModelLike,
+    config::Config;
+    n = 2,
+    ub = 3.0,
+)
     atol = config.atol
     rtol = config.rtol
     # Problem SOCRotated3
@@ -2429,7 +2648,12 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
     end
 end
 
-function rotatedsoc4test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
+function rotatedtest_conic_SecondOrderCone_out_of_order(
+    model::MOI.ModelLike,
+    config::Config;
+    n = 2,
+    ub = 3.0,
+)
     atol = config.atol
     rtol = config.rtol
     # Problem SOCRotated4
@@ -2514,11 +2738,12 @@ function rotatedsoc4test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
 end
 
 const rsoctests = Dict(
-    "rotatedsoc1v" => rotatedsoc1vtest,
-    "rotatedsoc1f" => rotatedsoc1ftest,
+    "rotatedsoc1v" => rotatedtest_conic_SecondOrderCone_VectorOfVariables,
+    "rotatedsoc1f" =>
+        rotatedtest_conic_SecondOrderCone_VectorAffineFunction,
     "rotatedsoc2" => rotatedsoc2test,
-    "rotatedsoc3" => rotatedsoc3test,
-    "rotatedsoc4" => rotatedsoc4test,
+    "rotatedsoc3" => rotatedtest_conic_SecondOrderCone_INFEASIBLE,
+    "rotatedsoc4" => rotatedtest_conic_SecondOrderCone_out_of_order,
 )
 
 @moitestset rsoc

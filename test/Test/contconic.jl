@@ -7,63 +7,6 @@ const MOIU = MOI.Utilities
 mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
 config = MOIT.Config()
 
-@testset "SOC" begin
-    mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            [1.0, 1 / √2, 1 / √2],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
-        )
-    MOIT.soc1vtest(mock, config)
-    mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            [1.0, 1 / √2, 1 / √2],
-            (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
-                [[√2, -1, -1]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
-        )
-    MOIT.soc1ftest(mock, config)
-    mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            [-1 / √2, 1 / √2, 1.0],
-            (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
-                [[√2, 1, -1]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[√2]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
-                [[1.0]],
-        )
-    MOIT.soc2ntest(mock, config)
-    mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            [-1 / √2, 1 / √2, 1.0],
-            (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
-                [[√2, 1, -1]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[√2]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) =>
-                [[-1.0]],
-        )
-    MOIT.soc2ptest(mock, config)
-    mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.INFEASIBLE,
-            MOI.INFEASIBLE_POINT,
-            MOI.INFEASIBILITY_CERTIFICATE,
-        )
-    MOIT.soc3test(mock, config)
-    mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            [1.0, 2 / √5, 1 / √5, 2 / √5, 1 / √5],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
-                [[-√5, -2.0, -1.0]],
-        )
-    MOIT.soc4test(mock, config)
-end
-
 @testset "RSOC" begin
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -75,7 +18,7 @@ end
         )
     # double variable bounds on a and b variables
     mock.eval_variable_constraint_dual = false
-    MOIT.rotatedsoc1vtest(mock, config)
+    MOIT.rotatedtest_conic_SecondOrderCone_VectorOfVariables(mock, config)
     mock.eval_variable_constraint_dual = true
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -83,7 +26,7 @@ end
             [1 / √2, 1 / √2],
             (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [[√2, 1 / √2, -1.0, -1.0]],
         )
-    MOIT.rotatedsoc1ftest(mock, config)
+    MOIT.rotatedtest_conic_SecondOrderCone_VectorAffineFunction(mock, config)
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
@@ -120,7 +63,7 @@ end
         )
     # double variable bounds on u
     mock.eval_variable_constraint_dual = false
-    MOIT.rotatedsoc3test(mock, config)
+    MOIT.rotatedtest_conic_SecondOrderCone_INFEASIBLE(mock, config)
     mock.eval_variable_constraint_dual = true
 
     mock.optimize! =
@@ -132,7 +75,7 @@ end
             (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) =>
                 [[1.0, 1.0, -1.0, -1.0]],
         )
-    MOIT.rotatedsoc4test(mock, config)
+    MOIT.rotatedtest_conic_SecondOrderCone_out_of_order(mock, config)
 end
 
 @testset "GeoMean" begin

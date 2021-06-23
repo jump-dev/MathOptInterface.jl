@@ -20,7 +20,7 @@ bridged_mock = MOIB.Variable.SOCtoRSOC{Float64}(mock)
             [1 / √2 + 1 / 2, 1 / √2 - 1 / 2, 1 / √2],
             (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
         )
-    MOIT.soc1vtest(bridged_mock, config)
+    MOIT.test_conic_SecondOrderCone_VectorOfVariables(bridged_mock, config)
 
     ceqs = MOI.get(
         mock,

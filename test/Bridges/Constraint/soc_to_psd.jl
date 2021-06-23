@@ -36,8 +36,8 @@ config = MOIT.Config()
             ) => [[√2 / 2, -1 / 2, √2 / 4, -1 / 2, √2 / 4, √2 / 4]],
             (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
         )
-    MOIT.soc1vtest(bridged_mock, config)
-    MOIT.soc1ftest(bridged_mock, config)
+    MOIT.test_conic_SecondOrderCone_VectorOfVariables(bridged_mock, config)
+    MOIT.test_conic_SecondOrderCone_VectorAffineFunction(bridged_mock, config)
 
     ci = first(
         MOI.get(
@@ -96,7 +96,10 @@ end
                 MOI.PositiveSemidefiniteConeTriangle,
             ) => [[√2, -1 / 2, √2 / 8, -1 / 2, √2 / 8, √2 / 8]],
         )
-    MOIT.rotatedsoc1vtest(bridged_mock, config)
+    MOIT.rotatedtest_conic_SecondOrderCone_VectorOfVariables(
+        bridged_mock,
+        config,
+    )
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
@@ -106,7 +109,10 @@ end
                 MOI.PositiveSemidefiniteConeTriangle,
             ) => [[√2, -1 / 2, √2 / 8, -1 / 2, √2 / 8, √2 / 8]],
         )
-    MOIT.rotatedsoc1ftest(bridged_mock, config)
+    MOIT.rotatedtest_conic_SecondOrderCone_VectorAffineFunction(
+        bridged_mock,
+        config,
+    )
 
     ci = first(
         MOI.get(

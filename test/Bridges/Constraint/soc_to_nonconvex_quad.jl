@@ -44,7 +44,10 @@ config = MOIT.Config(duals = false)
     mock.optimize! =
         (mock::MOIU.MockOptimizer) ->
             MOIU.mock_optimize!(mock, [0.5, 1.0, 1 / √2, 1 / √2])
-    MOIT.rotatedsoc1vtest(bridged_mock, config)
+    MOIT.rotatedtest_conic_SecondOrderCone_VectorOfVariables(
+        bridged_mock,
+        config,
+    )
 
     ci = first(
         MOI.get(
@@ -98,7 +101,7 @@ end
     mock.optimize! =
         (mock::MOIU.MockOptimizer) ->
             MOIU.mock_optimize!(mock, [1.0, 1 / √2, 1 / √2])
-    MOIT.soc1vtest(bridged_mock, config)
+    MOIT.test_conic_SecondOrderCone_VectorOfVariables(bridged_mock, config)
 
     ci = first(
         MOI.get(

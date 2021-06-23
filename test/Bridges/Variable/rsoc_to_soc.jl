@@ -21,7 +21,7 @@ bridged_mock = MOIB.Variable.RSOCtoSOC{Float64}(mock)
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
                 [-1.0],
         )
-    MOIT.rotatedsoc4test(bridged_mock, config)
+    MOIT.rotatedtest_conic_SecondOrderCone_out_of_order(bridged_mock, config)
 
     ceqs = MOI.get(
         mock,

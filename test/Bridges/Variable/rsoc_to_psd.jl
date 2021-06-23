@@ -125,7 +125,7 @@ end
                 [[1.0, -0.5, 0.25, -0.5, 0.25, 0.25]],
         )
     mock.eval_variable_constraint_dual = false
-    MOIT.rotatedsoc4test(bridged_mock, config)
+    MOIT.rotatedtest_conic_SecondOrderCone_out_of_order(bridged_mock, config)
     mock.eval_variable_constraint_dual = true
 
     @testset "Test mock model" begin
