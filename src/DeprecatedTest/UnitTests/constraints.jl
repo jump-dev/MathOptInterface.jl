@@ -540,7 +540,7 @@ function solve_start_soc(model::MOI.ModelLike, config::Config{T}) where {T}
     end
     if config.solve
         MOI.optimize!(model)
-        MOI.Test.test_model_solution(
+        test_model_solution(
             model,
             config;
             objective_value = o,

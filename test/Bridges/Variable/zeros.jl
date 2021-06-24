@@ -2,7 +2,7 @@ using Test
 
 using MathOptInterface
 const MOI = MathOptInterface
-const MOIT = MathOptInterface.Test
+const MOIT = MathOptInterface.DeprecatedTest
 const MOIU = MathOptInterface.Utilities
 const MOIB = MathOptInterface.Bridges
 
@@ -90,7 +90,7 @@ err = ErrorException(
 
 err = ArgumentError(
     "Variable bridge of type `MathOptInterface.Bridges.Variable.ZerosBridge{Float64}`" *
-    " does not support accessing the attribute `MathOptInterface.Test.UnknownVariableAttribute()`.",
+    " does not support accessing the attribute `MathOptInterface.DeprecatedTest.UnknownVariableAttribute()`.",
 )
 @test_throws err MOI.get(bridged_mock, MOIT.UnknownVariableAttribute(), y)
 

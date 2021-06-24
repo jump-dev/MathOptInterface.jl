@@ -165,7 +165,7 @@ Project.toml
 The best way to implement an interface to MathOptInterface is via
 [test-driven development](https://en.wikipedia.org/wiki/Test-driven_development).
 
-The [`MOI.Test` submodule](@ref test_module) contains a large test suite to help
+The [`MOI.DeprecatedTest` submodule](@ref test_module) contains a large test suite to help
 check that you have implemented things correctly.
 
 Follow the guide [How to test a solver](@ref) to set up the tests for your

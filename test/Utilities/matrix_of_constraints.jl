@@ -4,7 +4,7 @@ using SparseArrays, Test
 
 import MathOptInterface
 const MOI = MathOptInterface
-const MOIT = MOI.Test
+const MOIT = MOI.DeprecatedTest
 const MOIU = MOI.Utilities
 
 function runtests()
@@ -141,7 +141,7 @@ function _test(
     return
 end
 
-function _lp(model, ::MOI.Test.Config{T}) where {T}
+function _lp(model, ::MOI.DeprecatedTest.Config{T}) where {T}
     MOI.empty!(model)
     x = MOI.add_variable(model)
     fx = one(T) * MOI.SingleVariable(x)
@@ -410,7 +410,7 @@ function test_nametest()
                 },
             },
         }()
-        MOI.Test.nametest(model, delete = false)
+        MOI.DeprecatedTest.nametest(model, delete = false)
     end
 end
 
@@ -437,7 +437,7 @@ function test_empty()
             },
         },
     }()
-    return MOI.Test.emptytest(model)
+    return MOI.DeprecatedTest.emptytest(model)
 end
 
 function test_valid()
@@ -446,7 +446,7 @@ function test_valid()
     ConstantsType = MOIU.Box{T}
     for ProductOfSetsType in [MixLP{Float64}, OrdLP{Float64}]
         model = matrix_instance(T, ConstantsType, ProductOfSetsType, Indexing)
-        MOI.Test.validtest(model, delete = false)
+        MOI.DeprecatedTest.validtest(model, delete = false)
     end
 end
 
@@ -466,7 +466,7 @@ function test_supports_constraint(T::Type = Float64, BadT::Type = Float32)
                 },
             },
         }()
-        MOI.Test.supports_constrainttest(model, T, BadT)
+        MOI.DeprecatedTest.supports_constrainttest(model, T, BadT)
     end
 end
 
@@ -501,7 +501,7 @@ function test_copy(Indexing)
                 },
             },
         }()
-        MOI.Test.copytest(model, MOIU.Model{T}())
+        MOI.DeprecatedTest.copytest(model, MOIU.Model{T}())
     end
 end
 

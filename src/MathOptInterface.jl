@@ -175,12 +175,13 @@ end
 
 # submodules
 include("Utilities/Utilities.jl") # MOI.Utilities
-include("Test/Test.jl")           # MOI.Test
+# include("Test/Test.jl")           # MOI.Test
 include("Bridges/Bridges.jl")     # MOI.Bridges
 include("Benchmarks/Benchmarks.jl")
 include("FileFormats/FileFormats.jl")
 
 include("instantiate.jl")
 include("deprecate.jl")
+include("DeprecatedTest/DeprecatedTest.jl")
 
 end

@@ -43,7 +43,7 @@ const OPTIMIZER = MOI.instantiate(OPTIMIZER_CONSTRUCTOR)
 const BRIDGED = MOI.instantiate(
     OPTIMIZER_CONSTRUCTOR, with_bridge_type = Float64
 )
-const CONFIG = MOI.Test.Config(
+const CONFIG = MOI.DeprecatedTest.Config(
     # Modify tolerances as necessary.
     atol = 1e-6,
     rtol = 1e-6,
@@ -68,9 +68,9 @@ function test_supports_incremental_interface()
 end
 
 function test_unittest()
-    # Test all the functions included in dictionary `MOI.Test.unittests`,
+    # Test all the functions included in dictionary `MOI.DeprecatedTest.unittests`,
     # except functions "number_threads" and "solve_qcp_edge_cases."
-    MOI.Test.unittest(
+    MOI.DeprecatedTest.unittest(
         BRIDGED,
         CONFIG,
         ["number_threads", "solve_qcp_edge_cases"]
@@ -78,51 +78,51 @@ function test_unittest()
 end
 
 function test_modification()
-    MOI.Test.modificationtest(BRIDGED, CONFIG)
+    MOI.DeprecatedTest.modificationtest(BRIDGED, CONFIG)
 end
 
 function test_contlinear()
-    MOI.Test.contlineartest(BRIDGED, CONFIG)
+    MOI.DeprecatedTest.contlineartest(BRIDGED, CONFIG)
 end
 
 function test_contquadratictest()
-    MOI.Test.contquadratictest(OPTIMIZER, CONFIG)
+    MOI.DeprecatedTest.contquadratictest(OPTIMIZER, CONFIG)
 end
 
 function test_contconic()
-    MOI.Test.contlineartest(BRIDGED, CONFIG)
+    MOI.DeprecatedTest.contlineartest(BRIDGED, CONFIG)
 end
 
 function test_intconic()
-    MOI.Test.intconictest(BRIDGED, CONFIG)
+    MOI.DeprecatedTest.intconictest(BRIDGED, CONFIG)
 end
 
 function test_default_objective_test()
-    MOI.Test.default_objective_test(OPTIMIZER)
+    MOI.DeprecatedTest.default_objective_test(OPTIMIZER)
 end
 
 function test_default_status_test()
-    MOI.Test.default_status_test(OPTIMIZER)
+    MOI.DeprecatedTest.default_status_test(OPTIMIZER)
 end
 
 function test_nametest()
-    MOI.Test.nametest(OPTIMIZER)
+    MOI.DeprecatedTest.nametest(OPTIMIZER)
 end
 
 function test_validtest()
-    MOI.Test.validtest(OPTIMIZER)
+    MOI.DeprecatedTest.validtest(OPTIMIZER)
 end
 
 function test_emptytest()
-    MOI.Test.emptytest(OPTIMIZER)
+    MOI.DeprecatedTest.emptytest(OPTIMIZER)
 end
 
 function test_orderedindicestest()
-    MOI.Test.orderedindicestest(OPTIMIZER)
+    MOI.DeprecatedTest.orderedindicestest(OPTIMIZER)
 end
 
 function test_scalar_function_constant_not_zero()
-    MOI.Test.scalar_function_constant_not_zero(OPTIMIZER)
+    MOI.DeprecatedTest.scalar_function_constant_not_zero(OPTIMIZER)
 end
 
 # This function runs all functions in this module starting with `test_`.
@@ -141,14 +141,14 @@ end # module TestFooBar
 TestFooBar.runtests()
 ```
 
-Test functions like `MOI.Test.unittest` and `MOI.Test.modificationtest` are
-wrappers around corresponding dictionaries `MOI.Test.unittests` and
-`MOI.Test.modificationtests`. Exclude tests by passing a vector of strings
+Test functions like `MOI.DeprecatedTest.unittest` and `MOI.DeprecatedTest.modificationtest` are
+wrappers around corresponding dictionaries `MOI.DeprecatedTest.unittests` and
+`MOI.DeprecatedTest.modificationtests`. Exclude tests by passing a vector of strings
 corresponding to the test keys you want to exclude as the third positional
 argument to the test function.
 
 !!! tip
-     Print a list of all keys using `println.(keys(MOI.Test.unittests))`
+     Print a list of all keys using `println.(keys(MOI.DeprecatedTest.unittests))`
 
 The optimizer `BRIDGED` constructed with [`instantiate`](@ref)
 automatically bridges constraints that are not supported by `OPTIMIZER`
@@ -162,7 +162,7 @@ To test that a specific problem can be solved without bridges, a specific test
 can be added with `OPTIMIZER` instead of `BRIDGED`. For example:
 ```julia
 function test_interval_constraints()
-    MOI.Test.linear10test(OPTIMIZER, CONFIG)
+    MOI.DeprecatedTest.linear10test(OPTIMIZER, CONFIG)
 end
 ```
 checks that `OPTIMIZER` implements support for
@@ -176,7 +176,7 @@ To give an example, ECOS errored calling [`optimize!`](@ref) twice in a row.
 We could add a test to ECOS.jl, but that would only stop us from re-introducing
 the bug to ECOS.jl in the future.
 
-Instead, if we add a test to `MOI.Test`, then all solvers will also check that
+Instead, if we add a test to `MOI.DeprecatedTest`, then all solvers will also check that
 they handle a double optimize call!
 
 For this test, we care about correctness, rather than performance. therefore, we
@@ -217,7 +217,7 @@ To resolve this issue, follow these steps (tested on Julia v1.5):
    ```
 2. Add a test for the test you just wrote. (We test the tests!)
    a. Add the name of the test (`"solve_twice"`) to the end of the array in
-      `MOI.Test.unittest(...)` ([link](https://github.com/jump-dev/MathOptInterface.jl/blob/7543afe4b5151cf36bbd18181c1bb5c83266ae2f/test/Test/unit.jl#L51-L52)).
+      `MOI.DeprecatedTest.unittest(...)` ([link](https://github.com/jump-dev/MathOptInterface.jl/blob/7543afe4b5151cf36bbd18181c1bb5c83266ae2f/test/Test/unit.jl#L51-L52)).
     b. Add a test for the test towards the end of the "Unit Tests" test set
        ([link](https://github.com/jump-dev/MathOptInterface.jl/blob/7543afe4b5151cf36bbd18181c1bb5c83266ae2f/test/Test/unit.jl#L394)).
        The test should look something like
@@ -235,7 +235,7 @@ To resolve this issue, follow these steps (tested on Julia v1.5):
                 (MOI.FEASIBLE_POINT, [1.0]),
                 )
             )
-            MOI.Test.solve_twice(mock, config)
+            MOI.DeprecatedTest.solve_twice(mock, config)
         end
         ```
         In the above `mock` is a `MOI.Utilities.MockOptimizer` that is defined
