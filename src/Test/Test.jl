@@ -6,88 +6,79 @@ const MOIU = MOI.Utilities
 
 using Test
 
-struct Config{T<:Real}
+# Be wary of adding new fields to this Config struct. Always think: can it be
+# achieved a different way?
+mutable struct Config{T<:Real}
     atol::T
     rtol::T
-    solve::Bool
-    query_number_of_constraints::Bool
-    query::Bool
-    modify_lhs::Bool
-    duals::Bool
-    dual_objective_value::Bool
-    infeas_certificates::Bool
+    supports_optimize::Bool
     optimal_status::MOI.TerminationStatusCode
-    basis::Bool
+    excluded_attributes::Vector{Any}
 end
 
 """
-    Config{T}(;
+    Config(
+        ::Type{T} = Float64;
         atol::Real = Base.rtoldefault(T),
         rtol::Real = Base.rtoldefault(T),
-        solve::Bool = true,
-        query_number_of_constraints::Bool = true,
-        query::Bool = true,
-        modify_lhs::Bool = true,
-        duals::Bool = true,
-        dual_objective_value::Bool = duals,
-        infeas_certificates::Bool = true,
-        optimal_status = MOI.OPTIMAL,
-        basis::Bool = false,
-    )
+        supports_optimize::Bool = true,
+        optimal_status::MOI.TerminationStatusCode = MOI.OPTIMAL,
+        excluded_attributes::Vector{Any} = Any[],
+    ) where {T}
 
 Return an object that is used to configure various tests.
 
-## Keywords
+## Configuration arguments
 
   * `atol::Real = Base.rtoldefault(T)`: Control the absolute tolerance used
     when comparing solutions.
   * `rtol::Real = Base.rtoldefault(T)`: Control the relative tolerance used
     when comparing solutions.
-  * `solve::Bool = true`: Set to `false` to skip tests requiring a call to
-    [`MOI.optimize!`](@ref)
-  * `query_number_of_constraints::Bool = true`: Set to `false` to skip tests
-    requiring a call to [`MOI.NumberOfConstraints`](@ref).
-  * `query::Bool = true`: Set to `false` to skip tests requiring a call to
-    [`MOI.get`](@ref) for [`MOI.ConstraintFunction`](@ref) and
-    [`MOI.ConstraintSet`](@ref)
-  * `modify_lhs::Bool = true`:
-  * `duals::Bool = true`: Set to `false` to skip tests querying
-    [`MOI.ConstraintDual`](@ref).
-  * `dual_objective_value::Bool = duals`: Set to `false` to skip tests
-    querying [`MOI.DualObjectiveValue`](@ref).
-  * `infeas_certificates::Bool = true`: Set to `false` to skip tests querying
-    primal and dual infeasibility certificates.
+  * `supports_optimize::Bool = true`: Set to `false` to skip tests requiring a
+    call to [`MOI.optimize!`](@ref)
   * `optimal_status = MOI.OPTIMAL`: Set to `MOI.LOCALLY_SOLVED` if the solver
     cannot prove global optimality.
-  * `basis::Bool = false`: Set to `true` if the solver supports
-    [`MOI.ConstraintBasisStatus`](@ref) and [`MOI.VariableBasisStatus`](@ref).
+
+## Examples
+
+For a nonlinear solver that finds local optima and does not support finding
+dual variables or constraint names:
+```julia
+Config(
+    Float64;
+    optimal_status = MOI.LOCALLY_SOLVED,
+    excluded_attributes = Any[
+        MOI.ConstraintDual(),
+        MOI.VariableName(),
+        MOI.ConstraintName(),
+    ],
+)
+```
 """
 function Config(
     ::Type{T} = Float64;
     atol::Real = Base.rtoldefault(T),
     rtol::Real = Base.rtoldefault(T),
-    solve::Bool = true,
-    query_number_of_constraints::Bool = true,
-    query::Bool = true,
-    modify_lhs::Bool = true,
-    duals::Bool = true,
-    dual_objective_value::Bool = duals,
-    infeas_certificates::Bool = true,
-    optimal_status = MOI.OPTIMAL,
-    basis::Bool = false,
+    supports_optimize::Bool = true,
+    optimal_status::MOI.TerminationStatusCode = MOI.OPTIMAL,
+    excluded_attributes::Vector{Any} = Any[],
 ) where {T<:Real}
     return Config{T}(
         atol,
         rtol,
-        solve,
-        query_number_of_constraints,
-        query,
-        modify_lhs,
-        duals,
-        dual_objective_value,
-        infeas_certificates,
+        supports_optimize,
         optimal_status,
-        basis,
+        excluded_attributes,
+    )
+end
+
+function Base.copy(c::Config{T}) where {T}
+    return Config{T}(
+        config.atol,
+        config.rtol,
+        config.supports_optimize,
+        config.optimal_status,
+        copy(config.excluded_attributes),
     )
 end
 
@@ -95,14 +86,15 @@ end
     setup_test(::typeof(f), model::MOI.ModelLike, config::Config)
 
 Overload this method to modify `model` before running the test function `f` on
-`model` with `config`.
+`model` with `config`. You can also modify the fields in `config` (e.g., to
+loosen the default tolerances).
 
 This function should either return `nothing`, or return a function which, when
 called with zero arguments, undoes the setup to return the model to its
-previous state.
+previous state. You do not need to undo any modifications to `config`.
 
-This is most useful when writing new tests of the tests for MOI, but can also be
-used to set test-specific tolerances, etc.
+This function is most useful when writing new tests of the tests for MOI, but it
+can also be used to set test-specific tolerances, etc.
 
 See also: [`runtests`](@ref)
 
@@ -181,10 +173,11 @@ function runtests(
         end
         @testset "$(name)" begin
             test_function = getfield(@__MODULE__, name_sym)
-            tear_down = setup_test(test_function, model, config)
+            c = copy(config)
+            tear_down = setup_test(test_function, model, c)
             # Make sure to empty the model before every test!
             MOI.empty!(model)
-            test_function(model, config)
+            test_function(model, c)
             if tear_down !== nothing
                 tear_down()
             end
@@ -193,6 +186,10 @@ function runtests(
     return
 end
 
+###
+### The following are helpful utilities for writing tests in MOI.Test.
+###
+
 """
     Base.isapprox(x, y, config::Config)
 
@@ -200,6 +197,25 @@ A three argument version of `isapprox` for use in MOI.Test.
 """
 function Base.isapprox(x, y, config::Config)
     return Base.isapprox(x, y, atol = config.atol, rtol = config.rtol)
+end
+
+"""
+    _supports(config::Config, attribute::MOI.AbstractAttribute)
+
+Return `true` if the `attribute` is supported by the `config`.
+
+This is helpful when writing tests.
+
+## Example
+
+```julia
+if MOI.Test._supports(config, MOI.Silent())
+    @test MOI.get(model, MOI.Silent()) == true
+end
+```
+"""
+function _supports(config::Config, attribute::MOI.AbstractAttribute)
+    return !(attribute in config.excluded_attributes)
 end
 
 """
@@ -264,18 +280,20 @@ function _test_model_solution(
     constraint_primal = nothing,
     constraint_dual = nothing,
 ) where {T}
-    if !config.solve
+    if !config.supports_optimize
         return
     end
     MOI.optimize!(model)
+    # No need to check supports. Everyone _must_ implement ObjectiveValue.
     @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-    if objective_value !== nothing
+    if objective_value !== nothing && _supports(config, MOI.ObjectiveValue())
         @test isapprox(
             MOI.get(model, MOI.ObjectiveValue()),
             objective_value,
             config,
         )
     end
+    # No need to check supports. Everyone _must_ implement VariablePrimal.
     if variable_primal !== nothing
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         for (index, solution_value) in variable_primal
@@ -286,7 +304,8 @@ function _test_model_solution(
             )
         end
     end
-    if constraint_primal !== nothing
+    if constraint_primal !== nothing &&
+       _supports(config, MOI.ConstraintPrimal())
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         for (index, solution_value) in constraint_primal
             @test isapprox(
@@ -296,7 +315,7 @@ function _test_model_solution(
             )
         end
     end
-    if config.duals && constraint_dual !== nothing
+    if constraint_dual !== nothing && _supports(config, MOI.ConstraintDual())
         @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         for (index, solution_value) in constraint_dual
             @test isapprox(
