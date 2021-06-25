@@ -161,6 +161,7 @@ function runtests(
     config::Config;
     include::Vector{String} = String[],
     exclude::Vector{String} = String[],
+    warn_unsupported::Bool = false,
 )
     for name_sym in names(@__MODULE__; all = true)
         name = string(name_sym)
@@ -177,7 +178,11 @@ function runtests(
             tear_down = setup_test(test_function, model, c)
             # Make sure to empty the model before every test!
             MOI.empty!(model)
-            test_function(model, c)
+            try
+                test_function(model, c)
+            catch err
+                _error_handler(err, name, warn_unsupported)
+            end
             if tear_down !== nothing
                 tear_down()
             end
@@ -185,6 +190,30 @@ function runtests(
     end
     return
 end
+
+function _error_handler(
+    err::MOI.UnsupportedConstraint{F,S},
+    name::String,
+    warn_unsupported::Bool,
+) where {F,S}
+    if warn_unsupported
+        @warn("Skipping: $(name) due to unsupported constraint of $F-in-$S")
+    end
+    return
+end
+
+function _error_handler(
+    err::MOI.UnsupportedAttribute{T},
+    name::String,
+    warn_unsupported::Bool,
+) where {T}
+    if warn_unsupported
+        @warn("Skipping: $(name) due to unsupported attribute $T")
+    end
+    return
+end
+
+_error_handler(err, ::String, ::Bool) = rethrow(err)
 
 ###
 ### The following are helpful utilities for writing tests in MOI.Test.
@@ -195,8 +224,12 @@ end
 
 A three argument version of `isapprox` for use in MOI.Test.
 """
-function Base.isapprox(x, y, config::Config)
-    return Base.isapprox(x, y, atol = config.atol, rtol = config.rtol)
+function Base.isapprox(x::T, y::T, config::Config{T}) where {T}
+    return Base.isapprox(x, y; atol = config.atol, rtol = config.rtol)
+end
+
+function Base.isapprox(x::Vector{T}, y::Vector{T}, config::Config{T}) where {T}
+    return Base.isapprox(x, y; atol = config.atol, rtol = config.rtol)
 end
 
 """
@@ -326,6 +359,16 @@ function _test_model_solution(
         end
     end
     return
+end
+
+###
+### Include all the test files!
+###
+
+for file in readdir(@__DIR__)
+    if startswith(file, "test_")
+        include(file)
+    end
 end
 
 end # module
