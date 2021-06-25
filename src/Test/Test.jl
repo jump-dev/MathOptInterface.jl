@@ -72,7 +72,7 @@ function Config(
     )
 end
 
-function Base.copy(c::Config{T}) where {T}
+function Base.copy(config::Config{T}) where {T}
     return Config{T}(
         config.atol,
         config.rtol,
