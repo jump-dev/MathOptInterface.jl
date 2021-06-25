@@ -41,18 +41,13 @@ const BRIDGED = MOI.instantiate(
     with_bridge_type = Float64,
 )
 
+# See the docstring of MOI.Test.Config for other arguments.
 const CONFIG = MOI.Test.Config(
     # Modify tolerances as necessary.
     atol = 1e-6,
     rtol = 1e-6,
-    # Set false if dual solutions are not generated
-    duals = true,
-    # Set false if infeasibility certificates are not generated
-    infeas_certificates = true,
     # Use MOI.LOCALLY_SOLVED for local solvers.
     optimal_status = MOI.OPTIMAL,
-    # Set true if basis information is available
-    basis = false,
 )
 
 """
@@ -98,6 +93,7 @@ test as a function with a name beginning with `test_`.
 """
 function test_SolverName()
     @test MOI.get(FooBar.Optimizer(), MOI.SolverName()) == "FooBar"
+    return
 end
 
 end # module TestFooBar
@@ -165,18 +161,18 @@ add a new test to [src/Test/UnitTests/solve.jl](https://github.com/jump-dev/Math
 The test should be something like
 ```julia
 """
-    test_solve_twice(model::MOI.ModelLike, config::Config)
+    test_unit_optimize!_twice(model::MOI.ModelLike, config::Config)
 
 Test that calling `MOI.optimize!` twice does not error.
 
 This problem was first detected in ECOS.jl PR#72:
 https://github.com/jump-dev/ECOS.jl/pull/72
 """
-function test_solve_twice(
+function test_unit_optimize!_twice(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    if !config.solve
+    if !config.supports_optimize
         # Use `config` to modify the behavior of the tests. Since this test is
         # concerned with `optimize!`, we should skip the test if
         # `config.solve == false`.
@@ -217,9 +213,9 @@ We also need to write a test for the test. Place this function immediately below
 the test you just wrote in the same file:
 ```julia
 function setup_test(
-    ::typeof(test_solve_twice),
+    ::typeof(test_unit_optimize!_twice),
     model::MOI.Utilities.MockOptimizer,
-    config::Config,
+    ::Config,
 )
     MOI.Utilities.set_mock_optimize!(
         model,

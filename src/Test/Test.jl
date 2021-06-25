@@ -200,7 +200,7 @@ function Base.isapprox(x, y, config::Config)
 end
 
 """
-    _supports(config::Config, attribute::MOI.AbstractAttribute)
+    _supports(config::Config, attribute::MOI.AnyAttribute)
 
 Return `true` if the `attribute` is supported by the `config`.
 
@@ -214,7 +214,7 @@ if MOI.Test._supports(config, MOI.Silent())
 end
 ```
 """
-function _supports(config::Config, attribute::MOI.AbstractAttribute)
+function _supports(config::Config, attribute::MOI.AnyAttribute)
     return !(attribute in config.excluded_attributes)
 end
 
