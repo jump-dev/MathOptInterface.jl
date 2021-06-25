@@ -63,6 +63,7 @@ makedocs(
             ],
             "Test" => [
                 "Overview" => "submodules/Test/overview.md",
+                "API Reference" => "submodules/Test/reference.md",
             ],
         ],
     ],
