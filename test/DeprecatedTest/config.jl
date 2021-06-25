@@ -1,7 +1,7 @@
 using Test
 import MathOptInterface
 const MOI = MathOptInterface
-const MOIT = MOI.Test
+const MOIT = MOI.DeprecatedTest
 const MOIU = MOI.Utilities
 
 function atest(model::MOI.ModelLike, config::MOIT.Config{T}) where {T<:Real}

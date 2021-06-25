@@ -1,4 +1,4 @@
-module Test
+module DeprecatedTest
 
 using MathOptInterface
 const MOI = MathOptInterface

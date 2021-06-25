@@ -107,7 +107,7 @@ macro moitestset(setname, subsets = false)
         :(
             function $testname(
                 model::$MOI.ModelLike,
-                config::$MOI.Test.Config,
+                config::$MOI.DeprecatedTest.Config,
                 exclude::Vector{String} = String[],
             )
                 for (name, f) in $testdict

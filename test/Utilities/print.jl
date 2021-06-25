@@ -523,7 +523,7 @@ function test_nlp()
         MOI.set(model, MOI.VariableName(), v[i], "x[$i]")
     end
     lb, ub = [25.0, 40.0], [Inf, 40.0]
-    evaluator = MOI.Test.HS071(true)
+    evaluator = MOI.DeprecatedTest.HS071(true)
     block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, true)
     MOI.set(model, MOI.NLPBlock(), block_data)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)

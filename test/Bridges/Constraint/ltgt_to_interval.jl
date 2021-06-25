@@ -4,7 +4,7 @@ using Test
 
 using MathOptInterface
 const MOI = MathOptInterface
-const MOIT = MathOptInterface.Test
+const MOIT = MathOptInterface.DeprecatedTest
 const MOIU = MathOptInterface.Utilities
 const MOIB = MathOptInterface.Bridges
 

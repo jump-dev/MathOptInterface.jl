@@ -1,7 +1,7 @@
 using Test
 import MathOptInterface
 const MOI = MathOptInterface
-const MOIT = MOI.Test
+const MOIT = MOI.DeprecatedTest
 const MOIU = MOI.Utilities
 
 function bound_vectors_test(::Type{T}, nolb, noub) where {T}
