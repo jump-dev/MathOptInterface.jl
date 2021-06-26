@@ -510,6 +510,22 @@ function test_copy()
     return test_copy(MOIU.OneBasedIndexing)
 end
 
+function test_modif()
+    model =
+        matrix_instance(Int, MOIU.Box{Int}, OrdLP{Int}, MOIU.OneBasedIndexing)
+    x = MOI.add_variable(model)
+    fx = MOI.SingleVariable(x)
+    func = 2fx
+    set = MOI.EqualTo(1)
+    c = MOI.add_constraint(model, func, set)
+    MOIU.final_touch(model, nothing)
+    @test_throws MOI.DeleteNotAllowed(c) MOI.delete(model, c)
+    err = MOI.AddConstraintNotAllowed{typeof(func),typeof(set)}(
+        MOIU._MODIF_NOT_ALLOWED,
+    )
+    @test_throws err MOI.add_constraint(model, func, set)
+end
+
 end
 
 TestMatrixOfConstraints.runtests()
