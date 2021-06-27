@@ -128,6 +128,7 @@ setup_test(::Any, ::MOI.ModelLike, ::Config) = nothing
         config::Config;
         include::Vector{String} = String[],
         exclude::Vector{String} = String[],
+        warn_unsupported::Bool = false,
     )
 
 Run all tests in `MathOptInterface.Test` on `model`.
@@ -141,6 +142,13 @@ Run all tests in `MathOptInterface.Test` on `model`.
  * If `exclude` is not empty, skip tests that contain an element from `exclude`
    in their name.
  * `exclude` takes priority over `include`.
+ * If `warn_unsupported` is `false`, `runtests` will silently skip tests that
+   fail with `UnsupportedConstraint` or `UnsupportedAttribute`. When
+   `warn_unsupported` is `true`, a warning will be printed. For most cases the
+   default behavior (`false`) is what you want, since these tests likely test
+   functionality that is not supported by `model`. However, it can be useful to
+   run  `warn_unsupported = true` to check you are not skipping tests due to a
+   missing `supports_constraint` method or equivalent.
 
 See also: [`setup_test`](@ref).
 
@@ -153,6 +161,7 @@ MathOptInterface.Test.runtests(
     config;
     include = ["test_linear_"],
     exclude = ["VariablePrimalStart"],
+    warn_unsupported = true,
 )
 ```
 """
@@ -192,7 +201,7 @@ function runtests(
 end
 
 function _error_handler(
-    err::MOI.UnsupportedConstraint{F,S},
+    ::MOI.UnsupportedConstraint{F,S},
     name::String,
     warn_unsupported::Bool,
 ) where {F,S}
@@ -203,7 +212,7 @@ function _error_handler(
 end
 
 function _error_handler(
-    err::MOI.UnsupportedAttribute{T},
+    ::MOI.UnsupportedAttribute{T},
     name::String,
     warn_unsupported::Bool,
 ) where {T}
