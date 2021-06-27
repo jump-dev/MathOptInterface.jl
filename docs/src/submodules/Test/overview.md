@@ -178,6 +178,14 @@ function test_unit_optimize!_twice(
         # `config.solve == false`.
         return
     end
+    # Use the `@requires` macro to check conditions that the test function
+    # requires in order to run. Models failing this `@requires` check will
+    # silently skip the test.
+    @requires MOI.supports_constraint(
+        model,
+        MOI.SingleVariable,
+        MOI.GreaterThan{Float64},
+    )
     # If needed, you can test that the model is empty at the start of the test.
     # You can assume that this will be the case for tests run via `runtests`.
     # User's calling tests individually need to call `MOI.empty!` themselves.

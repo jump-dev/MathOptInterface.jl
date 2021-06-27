@@ -16,4 +16,6 @@ Functions to help test implementations of MOI. See
 Test.Config
 Test.runtests
 Test.setup_test
+Test.@requires
+Test.RequirementUnmet
 ```

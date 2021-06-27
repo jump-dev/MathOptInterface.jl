@@ -128,6 +128,7 @@ setup_test(::Any, ::MOI.ModelLike, ::Config) = nothing
         config::Config;
         include::Vector{String} = String[],
         exclude::Vector{String} = String[],
+        warn_unsupported::Bool = false,
     )
 
 Run all tests in `MathOptInterface.Test` on `model`.
@@ -141,6 +142,13 @@ Run all tests in `MathOptInterface.Test` on `model`.
  * If `exclude` is not empty, skip tests that contain an element from `exclude`
    in their name.
  * `exclude` takes priority over `include`.
+ * If `warn_unsupported` is `false`, `runtests` will silently skip tests that
+   fail with `UnsupportedConstraint` or `UnsupportedAttribute`. When
+   `warn_unsupported` is `true`, a warning will be printed. For most cases the
+   default behavior (`false`) is what you want, since these tests likely test
+   functionality that is not supported by `model`. However, it can be useful to
+   run  `warn_unsupported = true` to check you are not skipping tests due to a
+   missing `supports_constraint` method or equivalent.
 
 See also: [`setup_test`](@ref).
 
@@ -153,6 +161,7 @@ MathOptInterface.Test.runtests(
     config;
     include = ["test_linear_"],
     exclude = ["VariablePrimalStart"],
+    warn_unsupported = true,
 )
 ```
 """
@@ -161,6 +170,7 @@ function runtests(
     config::Config;
     include::Vector{String} = String[],
     exclude::Vector{String} = String[],
+    warn_unsupported::Bool = false,
 )
     for name_sym in names(@__MODULE__; all = true)
         name = string(name_sym)
@@ -177,7 +187,11 @@ function runtests(
             tear_down = setup_test(test_function, model, c)
             # Make sure to empty the model before every test!
             MOI.empty!(model)
-            test_function(model, c)
+            try
+                test_function(model, c)
+            catch err
+                _error_handler(err, name, warn_unsupported)
+            end
             if tear_down !== nothing
                 tear_down()
             end
@@ -185,6 +199,57 @@ function runtests(
     end
     return
 end
+
+"""
+    RequirementUnmet(msg::String) <: Exception
+
+An error for throwing in tests to indicate that the model does not support some
+requirement expected by the test function.
+"""
+struct RequirementUnmet <: Exception
+    msg::String
+end
+
+function Base.show(io::IO, err::RequirementUnmet)
+    print(io, "RequirementUnmet: $(err.msg)")
+    return
+end
+
+"""
+    @requires(x)
+
+Check that the condition `x` is `true`. Otherwise, throw an [`RequirementUnmet`](@ref)
+error to indicate that the model does not support something required by the test
+function.
+
+## Examples
+
+```julia
+@requires MOI.supports(model, MOI.Silent())
+@test MOI.get(model, MOI.Silent())
+```
+"""
+macro requires(x)
+    msg = string(x)
+    return quote
+        if !$(esc(x))
+            throw(RequirementUnmet($msg))
+        end
+    end
+end
+
+function _error_handler(
+    err::Union{MOI.NotAllowedError,MOI.UnsupportedError,RequirementUnmet},
+    name::String,
+    warn_unsupported::Bool,
+)
+    if warn_unsupported
+        @warn("Skipping $(name): $(err)")
+    end
+    return
+end
+
+_error_handler(err, ::String, ::Bool) = rethrow(err)
 
 ###
 ### The following are helpful utilities for writing tests in MOI.Test.
@@ -195,8 +260,8 @@ end
 
 A three argument version of `isapprox` for use in MOI.Test.
 """
-function Base.isapprox(x, y, config::Config)
-    return Base.isapprox(x, y, atol = config.atol, rtol = config.rtol)
+function Base.isapprox(x, y, config::Config{T}) where {T}
+    return Base.isapprox(x, y; atol = config.atol, rtol = config.rtol)
 end
 
 """
@@ -326,6 +391,16 @@ function _test_model_solution(
         end
     end
     return
+end
+
+###
+### Include all the test files!
+###
+
+for file in readdir(@__DIR__)
+    if startswith(file, "test_")
+        include(file)
+    end
 end
 
 end # module
