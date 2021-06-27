@@ -68,6 +68,7 @@ end
 Test adding, and then deleting, nonnegative variables.
 """
 function test_variable_delete_Nonnegatives(model::MOI.ModelLike, ::Config)
+    @requires MOI.supports_add_constrained_variables(model, MOI.Nonnegatives)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v, cv = MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -94,6 +95,7 @@ end
 Test adding, and then deleting one by one, nonnegative variables.
 """
 function test_variable_delete_Nonnegatives_row(model::MOI.ModelLike, ::Config)
+    @requires MOI.supports_add_constrained_variables(model, MOI.Nonnegatives)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v, cv = MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -118,6 +120,7 @@ end
 Test adding, and then deleting, second-order cone variables.
 """
 function test_variable_delete_SecondOrderCone(model::MOI.ModelLike, ::Config)
+    @requires MOI.supports_add_constrained_variables(model, MOI.SecondOrderCone)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v, cv = MOI.add_constrained_variables(model, MOI.SecondOrderCone(3))
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
@@ -156,13 +159,10 @@ end
 
 Test getting and setting variable names.
 """
-function test_variable_VariableName(model::MOI.ModelLike, config::Config)
-    if !_supports(config, MOI.VariableName())
-        return
-    end
+function test_variable_VariableName(model::MOI.ModelLike, ::Config)
+    @requires MOI.supports(model, MOI.VariableName(), MOI.VariableIndex)
     v = MOI.add_variable(model)
     @test MOI.get(model, MOI.VariableName(), v) == ""
-    @test MOI.supports(model, MOI.VariableName(), typeof(v))
     MOI.set(model, MOI.VariableName(), v, "x")
     @test MOI.get(model, MOI.VariableName(), v) == "x"
     MOI.set(model, MOI.VariableName(), v, "y")

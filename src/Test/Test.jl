@@ -200,24 +200,51 @@ function runtests(
     return
 end
 
-function _error_handler(
-    ::MOI.UnsupportedConstraint{F,S},
-    name::String,
-    warn_unsupported::Bool,
-) where {F,S}
-    if warn_unsupported
-        @warn("Skipping: $(name) due to unsupported constraint of $F-in-$S")
-    end
+"""
+    RequirementUnmet(msg::String) <: Exception
+
+An error for throwing in tests to indicate that the model does not support some
+requirement expected by the test function.
+"""
+struct RequirementUnmet <: Exception
+    msg::String
+end
+
+function Base.show(io::IO, err::RequirementUnmet)
+    print(io, "RequirementUnmet: $(err.msg)")
     return
 end
 
+"""
+    @requires(x)
+
+Check that the condition `x` is `true`. Otherwise, throw an [`RequirementUnmet`](@ref)
+error to indicate that the model does not support something required by the test
+function.
+
+## Examples
+
+```julia
+@requires MOI.supports(model, MOI.Silent())
+@test MOI.get(model, MOI.Silent())
+```
+"""
+macro requires(x)
+    msg = string(x)
+    return quote
+        if !$(esc(x))
+            throw(RequirementUnmet($msg))
+        end
+    end
+end
+
 function _error_handler(
-    ::MOI.UnsupportedAttribute{T},
+    err::Union{MOI.NotAllowedError,MOI.UnsupportedError,RequirementUnmet},
     name::String,
     warn_unsupported::Bool,
-) where {T}
+)
     if warn_unsupported
-        @warn("Skipping: $(name) due to unsupported attribute $T")
+        @warn("Skipping $(name): $(err)")
     end
     return
 end
@@ -233,11 +260,7 @@ _error_handler(err, ::String, ::Bool) = rethrow(err)
 
 A three argument version of `isapprox` for use in MOI.Test.
 """
-function Base.isapprox(x::T, y::T, config::Config{T}) where {T}
-    return Base.isapprox(x, y; atol = config.atol, rtol = config.rtol)
-end
-
-function Base.isapprox(x::Vector{T}, y::Vector{T}, config::Config{T}) where {T}
+function Base.isapprox(x, y, config::Config{T}) where {T}
     return Base.isapprox(x, y; atol = config.atol, rtol = config.rtol)
 end
 
