@@ -741,12 +741,12 @@ function test_constraint_ConstraintPrimalStart(
         [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(one(T), x))],
         [0.0],
     )
-    MOI.add_constraint(model, f, MOI.Nonnegatives(1))
-    @test MOI.get(model, MOI.ConstraintPrimalStart()) === nothing
-    MOI.set(model, MOI.ConstraintPrimalStart(), [-one(T)])
-    @test MOI.get(model, MOI.ConstraintPrimalStart()) === [-one(T)]
-    MOI.set(model, MOI.ConstraintPrimalStart(), nothing)
-    @test MOI.get(model, MOI.ConstraintPrimalStart()) === nothing
+    c = MOI.add_constraint(model, f, MOI.Nonnegatives(1))
+    @test MOI.get(model, MOI.ConstraintPrimalStart(), c) === nothing
+    MOI.set(model, MOI.ConstraintPrimalStart(), c, [-one(T)])
+    @test MOI.get(model, MOI.ConstraintPrimalStart(), c) == [-one(T)]
+    MOI.set(model, MOI.ConstraintPrimalStart(), c, nothing)
+    @test MOI.get(model, MOI.ConstraintPrimalStart(), c) === nothing
     return
 end
 
@@ -772,11 +772,11 @@ function test_constraint_ConstraintDualStart(
         [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(one(T), x))],
         [0.0],
     )
-    MOI.add_constraint(model, f, MOI.Nonnegatives(1))
-    @test MOI.get(model, MOI.ConstraintDualStart()) === nothing
-    MOI.set(model, MOI.ConstraintDualStart(), [-one(T)])
-    @test MOI.get(model, MOI.ConstraintDualStart()) === [-one(T)]
-    MOI.set(model, MOI.ConstraintDualStart(), nothing)
-    @test MOI.get(model, MOI.ConstraintDualStart()) === nothing
+    c = MOI.add_constraint(model, f, MOI.Nonnegatives(1))
+    @test MOI.get(model, MOI.ConstraintDualStart(), c) === nothing
+    MOI.set(model, MOI.ConstraintDualStart(), c, [-one(T)])
+    @test MOI.get(model, MOI.ConstraintDualStart(), c) == [-one(T)]
+    MOI.set(model, MOI.ConstraintDualStart(), c, nothing)
+    @test MOI.get(model, MOI.ConstraintDualStart(), c) === nothing
     return
 end
