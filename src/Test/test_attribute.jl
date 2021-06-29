@@ -33,7 +33,7 @@ Test that the [`MOI.RawStatusString`](@ref) attribute is implemented for
 `model`.
 """
 function test_attribute_RawStatusString(model::MOI.ModelLike, config::Config)
-    if !config.supports_optimize || !_supports(config, MOI.RawStatusString())
+    if !config.supports_optimize || !_supports(config, MOI.RawStatusString)
         return
     end
     MOI.add_variable(model)
@@ -94,7 +94,7 @@ end
 Test that the [`MOI.SolverName`](@ref) attribute is implemented for `model`.
 """
 function test_attribute_SolverName(model::MOI.ModelLike, config::Config)
-    if _supports(config, MOI.SolverName())
+    if _supports(config, MOI.SolverName)
         @test MOI.get(model, MOI.SolverName()) isa AbstractString
     end
     return
@@ -106,7 +106,7 @@ end
 Test that the [`MOI.SolveTimeSec`](@ref) attribute is implemented for `model`.
 """
 function test_attribute_SolveTimeSec(model::MOI.ModelLike, config::Config)
-    if !config.supports_optimize || !_supports(config, MOI.SolveTimeSec())
+    if !config.supports_optimize || !_supports(config, MOI.SolveTimeSec)
         return
     end
     MOI.add_variable(model)

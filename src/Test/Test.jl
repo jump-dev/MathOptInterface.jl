@@ -13,7 +13,7 @@ mutable struct Config{T<:Real}
     rtol::T
     supports_optimize::Bool
     optimal_status::MOI.TerminationStatusCode
-    excluded_attributes::Vector{Any}
+    exclude::Vector{Any}
 end
 
 """
@@ -23,7 +23,7 @@ end
         rtol::Real = Base.rtoldefault(T),
         supports_optimize::Bool = true,
         optimal_status::MOI.TerminationStatusCode = MOI.OPTIMAL,
-        excluded_attributes::Vector{Any} = Any[],
+        exclude::Vector{Any} = Any[],
     ) where {T}
 
 Return an object that is used to configure various tests.
@@ -38,6 +38,12 @@ Return an object that is used to configure various tests.
     call to [`MOI.optimize!`](@ref)
   * `optimal_status = MOI.OPTIMAL`: Set to `MOI.LOCALLY_SOLVED` if the solver
     cannot prove global optimality.
+  * `exclude = Vector{Any}`: Pass attributes or functions to `exclude` to skip
+    parts of tests that require certain functionality. Common arguments include:
+     - `MOI.delete` to skip deletion-related tests
+     - `MOI.ConstraintDual` to skip dual-related tests
+     - `MOI.VariableName` to skip setting variable names
+     - `MOI.ConstraintName` to skip setting constraint names
 
 ## Examples
 
@@ -47,10 +53,11 @@ dual variables or constraint names:
 Config(
     Float64;
     optimal_status = MOI.LOCALLY_SOLVED,
-    excluded_attributes = Any[
-        MOI.ConstraintDual(),
-        MOI.VariableName(),
-        MOI.ConstraintName(),
+    exclude = Any[
+        MOI.ConstraintDual,
+        MOI.VariableName,
+        MOI.ConstraintName,
+        MOI.delete,
     ],
 )
 ```
@@ -61,14 +68,14 @@ function Config(
     rtol::Real = Base.rtoldefault(T),
     supports_optimize::Bool = true,
     optimal_status::MOI.TerminationStatusCode = MOI.OPTIMAL,
-    excluded_attributes::Vector{Any} = Any[],
+    exclude::Vector{Any} = Any[],
 ) where {T<:Real}
     return Config{T}(
         atol,
         rtol,
         supports_optimize,
         optimal_status,
-        excluded_attributes,
+        exclude,
     )
 end
 
@@ -78,7 +85,7 @@ function Base.copy(config::Config{T}) where {T}
         config.rtol,
         config.supports_optimize,
         config.optimal_status,
-        copy(config.excluded_attributes),
+        copy(config.exclude),
     )
 end
 
@@ -274,14 +281,12 @@ This is helpful when writing tests.
 ## Example
 
 ```julia
-if MOI.Test._supports(config, MOI.Silent())
+if MOI.Test._supports(config, MOI.Silent)
     @test MOI.get(model, MOI.Silent()) == true
 end
 ```
 """
-function _supports(config::Config, attribute::MOI.AnyAttribute)
-    return !(attribute in config.excluded_attributes)
-end
+_supports(config::Config, T::Any)::Bool = !(T in config.exclude)
 
 """
     _test_model_solution(

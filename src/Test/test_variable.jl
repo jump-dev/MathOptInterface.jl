@@ -143,9 +143,7 @@ end
 Test getting variables by name.
 """
 function test_variable_get_VariableIndex(model::MOI.ModelLike, config::Config)
-    if !_supports(config, MOI.VariableName())
-        return
-    end
+    @requires MOI.supports(model, MOI.VariableName(), MOI.VariableIndex)
     variable = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), variable, "x")
     x = MOI.get(model, MOI.VariableIndex, "x")
