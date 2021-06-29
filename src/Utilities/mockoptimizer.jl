@@ -151,7 +151,6 @@ function MOI.add_constraint(
     return xor_index(ci)
 end
 
-
 function MOI.add_constraint(
     mock::MockOptimizer,
     func::MOI.SingleVariable,
@@ -164,7 +163,8 @@ function MOI.add_constraint(
         ci = MOI.add_constraint(mock.inner_model, xor_indices(func), set)
         return xor_index(ci)
     catch err
-        if (err isa MOI.LowerBoundAlreadySet) || (err isa MOI.UpperBoundAlreadySet)
+        if (err isa MOI.LowerBoundAlreadySet) ||
+           (err isa MOI.UpperBoundAlreadySet)
             throw(typeof(err)(xor_index(err.vi)))
         else
             rethrow(err)
