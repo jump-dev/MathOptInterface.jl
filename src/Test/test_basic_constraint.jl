@@ -17,7 +17,7 @@ end
 function _function(
     ::Type{T},
     ::Type{MOI.ScalarAffineFunction},
-    x::Vector{MOI.VariableIndex}
+    x::Vector{MOI.VariableIndex},
 ) where {T}
     return MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), x), zero(T))
 end
@@ -25,7 +25,7 @@ end
 function _function(
     ::Type{T},
     ::Type{MOI.ScalarQuadraticFunction},
-    x::Vector{MOI.VariableIndex}
+    x::Vector{MOI.VariableIndex},
 ) where {T}
     return MOI.ScalarQuadraticFunction(
         MOI.ScalarAffineTerm.(one(T), x),
@@ -37,7 +37,7 @@ end
 function _function(
     ::Type{T},
     ::Type{MOI.VectorAffineFunction},
-    x::Vector{MOI.VariableIndex}
+    x::Vector{MOI.VariableIndex},
 ) where {T}
     return MOI.VectorAffineFunction(
         MOI.VectorAffineTerm.(1:length(x), MOI.ScalarAffineTerm.(one(T), x)),
@@ -48,7 +48,7 @@ end
 function _function(
     ::Type{T},
     ::Type{MOI.VectorQuadraticFunction},
-    x::Vector{MOI.VariableIndex}
+    x::Vector{MOI.VariableIndex},
 ) where {T}
     return MOI.VectorQuadraticFunction(
         MOI.VectorAffineTerm.(1:length(x), MOI.ScalarAffineTerm.(one(T), x)),
@@ -92,8 +92,12 @@ _set(::Type{MOI.DualPowerCone}) = MOI.DualPowerCone(0.5)
 _set(::Type{MOI.RelativeEntropyCone}) = MOI.RelativeEntropyCone(3)
 _set(::Type{MOI.NormSpectralCone}) = MOI.NormSpectralCone(2, 3)
 _set(::Type{MOI.NormNuclearCone}) = MOI.NormNuclearCone(2, 3)
-_set(::Type{MOI.PositiveSemidefiniteConeTriangle}) = MOI.PositiveSemidefiniteConeTriangle(3)
-_set(::Type{MOI.PositiveSemidefiniteConeSquare}) = MOI.PositiveSemidefiniteConeSquare(3)
+function _set(::Type{MOI.PositiveSemidefiniteConeTriangle})
+    return MOI.PositiveSemidefiniteConeTriangle(3)
+end
+function _set(::Type{MOI.PositiveSemidefiniteConeSquare})
+    return MOI.PositiveSemidefiniteConeSquare(3)
+end
 _set(::Type{MOI.LogDetConeTriangle}) = MOI.LogDetConeTriangle(3)
 _set(::Type{MOI.LogDetConeSquare}) = MOI.LogDetConeSquare(3)
 _set(::Type{MOI.RootDetConeTriangle}) = MOI.RootDetConeTriangle(3)
@@ -187,7 +191,7 @@ function _basic_constraint_test_helper(
     if _supports(config, MOI.delete)
         MOI.delete(model, c_indices[1])
         @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) ==
-                length(c_indices) - 1
+              length(c_indices) - 1
         @test !MOI.is_valid(model, c_indices[1])
         @test_throws(
             MOI.InvalidIndex(c_indices[1]),
@@ -259,4 +263,3 @@ for s in [
         end
     end
 end
-

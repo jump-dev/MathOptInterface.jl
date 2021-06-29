@@ -70,13 +70,7 @@ function Config(
     optimal_status::MOI.TerminationStatusCode = MOI.OPTIMAL,
     exclude::Vector{Any} = Any[],
 ) where {T<:Real}
-    return Config{T}(
-        atol,
-        rtol,
-        supports_optimize,
-        optimal_status,
-        exclude,
-    )
+    return Config{T}(atol, rtol, supports_optimize, optimal_status, exclude)
 end
 
 function Base.copy(config::Config{T}) where {T}
