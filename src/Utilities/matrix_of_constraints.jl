@@ -316,7 +316,7 @@ function _add_set(sets, i, func::MOI.AbstractVectorFunction)
     return add_set(sets, i, MOI.output_dimension(func))
 end
 
-const _MODIF_NOT_ALLOWED = """
+const _MATRIXOFCONSTRAINTS_MODIFY_NOT_ALLOWED_ERROR_MESSAGE = """
 MatrixOfConstraints does not allow modifications to be made to the model once
 `MOI.Utilities.final_touch` has been called. This is called at the end of
 `MOI.copy_to` and in `MOI.Utilities.attach_optimizer` (which is called by
@@ -356,7 +356,7 @@ function MOI.add_constraint(
         throw(MOI.UnsupportedConstraint{F,S}())
     end
     if model.final_touch
-        throw(MOI.AddConstraintNotAllowed{F,S}(_MODIF_NOT_ALLOWED))
+        throw(MOI.AddConstraintNotAllowed{F,S}(_MATRIXOFCONSTRAINTS_MODIFY_NOT_ALLOWED_ERROR_MESSAGE))
     end
     return _add_constraint(model, i, IdentityMap(), func, set)
 end

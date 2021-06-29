@@ -521,7 +521,7 @@ function test_modif()
     MOIU.final_touch(model, nothing)
     @test_throws MOI.DeleteNotAllowed(c) MOI.delete(model, c)
     err = MOI.AddConstraintNotAllowed{typeof(func),typeof(set)}(
-        MOIU._MODIF_NOT_ALLOWED,
+        MOIU._MATRIXOFCONSTRAINTS_MODIFY_NOT_ALLOWED_ERROR_MESSAGE,
     )
     @test_throws err MOI.add_constraint(model, func, set)
 end
