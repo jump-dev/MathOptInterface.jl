@@ -834,3 +834,106 @@ function setup_test(
     )
     return
 end
+
+"""
+    test_modification_affine_deletion_edge_cases(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Test various edge cases relating to deleting affine constraints. This requires
+    + ScalarAffineFunction-in-LessThan; and
+    + VectorAffineFunction-in-Nonpositives.
+"""
+function test_modification_affine_deletion_edge_cases(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    MOI.empty!(model)
+    x = MOI.add_variable(model)
+    # helpers. The function 1.0x + 0.0
+    saf = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
+    vaf = MOI.VectorAffineFunction(
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
+        [0.0],
+    )
+    vaf2 = MOI.VectorAffineFunction(
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
+        [-2.0],
+    )
+    # max x
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        saf,
+    )
+    # test adding a VectorAffineFunction -in- LessThan
+    c1 = MOI.add_constraint(model, vaf, MOI.Nonpositives(1))
+    _test_model_solution(
+        model,
+        config;
+        objective_value = 0.0,
+        constraint_primal = [(c1, [0.0])],
+    )
+    # test adding a ScalarAffineFunction -in- LessThan
+    c2 = MOI.add_constraint(model, saf, MOI.LessThan(1.0))
+    _test_model_solution(
+        model,
+        config;
+        objective_value = 0.0,
+        constraint_primal = [(c1, [0.0]), (c2, 0.0)],
+    )
+    # now delete the VectorAffineFunction
+    MOI.delete(model, c1)
+    @test_throws MOI.InvalidIndex{typeof(c1)} MOI.delete(model, c1)
+    try
+        MOI.delete(model, c1)
+    catch err
+        @test err.index == c1
+    end
+    _test_model_solution(
+        model,
+        config;
+        objective_value = 1.0,
+        constraint_primal = [(c2, 1.0)],
+    )
+    # add a different VectorAffineFunction constraint
+    c3 = MOI.add_constraint(model, vaf2, MOI.Nonpositives(1))
+    _test_model_solution(
+        model,
+        config;
+        objective_value = 1.0,
+        constraint_primal = [(c2, 1.0), (c3, [-1.0])],
+    )
+    # delete the ScalarAffineFunction
+    MOI.delete(model, c2)
+    _test_model_solution(
+        model,
+        config;
+        objective_value = 2.0,
+        constraint_primal = [(c3, [0.0])],
+    )
+    return
+end
+
+function setup_test(
+    ::typeof(test_modification_affine_deletion_edge_cases),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.0])),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.0])),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [2.0])),
+    )
+    return
+end
