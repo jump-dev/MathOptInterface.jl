@@ -209,11 +209,7 @@ function test_model_SingleVariable_ConstraintName(
     ::Config,
 )
     x = MOI.add_variable(model)
-    c = MOI.add_constraint(
-        model,
-        MOI.SingleVariable(x),
-        MOI.GreaterThan(0.0),
-    )
+    c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
     @test_throws(
         MOI.SingleVariableConstraintNameError(),
         MOI.set(model, MOI.ConstraintName(), c, "c1"),
@@ -342,10 +338,7 @@ function test_model_Name_VariableName_ConstraintName(
     )
     c2 = MOI.add_constraint(
         model,
-        MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([-1.0, 1.0], v),
-            0.0,
-        ),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1.0, 1.0], v), 0.0),
         MOI.EqualTo(0.0),
     )
     @test MOI.get(model, MOI.ConstraintName(), c) == ""
@@ -453,10 +446,7 @@ end
 
 Test duplicate variable names.
 """
-function test_model_duplicate_VariableName(
-    model::MOI.ModelLike,
-    config::Config,
-)
+function test_model_duplicate_VariableName(model::MOI.ModelLike, config::Config)
     (x, y, z) = MOI.add_variables(model, 3)
     MOI.set(model, MOI.VariableName(), x, "x")
     MOI.set(model, MOI.VariableName(), y, "x")
@@ -489,7 +479,8 @@ function test_model_duplicate_ScalarAffineFunction_ConstraintName(
 )
     x = MOI.add_variables(model, 3)
     fs = [
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, xi)], 0.0) for xi in x
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, xi)], 0.0) for
+        xi in x
     ]
     c = MOI.add_constraints(model, fs, MOI.GreaterThan(0.0))
     MOI.set(model, MOI.ConstraintName(), c[1], "x")
@@ -508,7 +499,6 @@ function test_model_duplicate_ScalarAffineFunction_ConstraintName(
     end
     return
 end
-
 
 """
     test_model_is_valid(model::MOI.ModelLike, config::Config)
@@ -617,10 +607,7 @@ end
 
 Test `MOI.copy_to` when an attribute is unsupported.
 """
-function test_model_copy_to_UnsupportedAttribute(
-    model::MOI.ModelLike,
-    ::Config,
-)
+function test_model_copy_to_UnsupportedAttribute(model::MOI.ModelLike, ::Config)
     # ModelAttribute
     @test !MOI.supports(model, UnknownModelAttribute())
     @test_throws(
@@ -650,11 +637,7 @@ function test_model_supports_constraint_SingleVariable_EqualTo(
     model::MOI.ModelLike,
     ::Config{T},
 ) where {T}
-    @requires MOI.supports_constraint(
-        model,
-        MOI.SingleVariable,
-        MOI.EqualTo{T},
-    )
+    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{T})
     # Pick a "bad" coefficient type that should fail tests.
     @test !MOI.supports_constraint(
         model,
@@ -699,11 +682,7 @@ function test_model_supports_constraint_VectorOfVariables_Nonnegatives(
         MOI.VectorOfVariables,
         UnknownVectorSet,
     )
-    @test !MOI.supports_constraint(
-        model,
-        MOI.VectorOfVariables,
-        MOI.EqualTo{T},
-    )
+    @test !MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.EqualTo{T})
     return
 end
 
@@ -817,7 +796,11 @@ function test_model_LowerBoundAlreadySet(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{T})
+    @requires MOI.supports_constraint(
+        model,
+        MOI.SingleVariable,
+        MOI.GreaterThan{T},
+    )
     @requires _supports(config, MOI.delete)
     x = MOI.add_variable(model)
     f = MOI.SingleVariable(x)
