@@ -356,7 +356,11 @@ function MOI.add_constraint(
         throw(MOI.UnsupportedConstraint{F,S}())
     end
     if model.final_touch
-        throw(MOI.AddConstraintNotAllowed{F,S}(_MATRIXOFCONSTRAINTS_MODIFY_NOT_ALLOWED_ERROR_MESSAGE))
+        throw(
+            MOI.AddConstraintNotAllowed{F,S}(
+                _MATRIXOFCONSTRAINTS_MODIFY_NOT_ALLOWED_ERROR_MESSAGE,
+            ),
+        )
     end
     return _add_constraint(model, i, IdentityMap(), func, set)
 end
