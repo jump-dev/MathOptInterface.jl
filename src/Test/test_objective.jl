@@ -135,7 +135,7 @@ function test_objective_ObjectiveFunction_blank(
     model::MOI.ModelLike,
     config::Config,
 )
-    if _supports(config, MOI.optimize!)
+    if !_supports(config, MOI.optimize!)
         return
     end
     obj_attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
