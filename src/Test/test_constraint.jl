@@ -718,3 +718,65 @@ function setup_test(
     )
     return
 end
+
+"""
+    test_constraint_ConstraintPrimalStart(
+        model::MOI.ModelLike,
+        ::Config{T},
+    ) where {T}
+
+Test the `ConstraintPrimalStart` attribute.
+"""
+function test_constraint_ConstraintPrimalStart(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorAffineFunction{T},
+        MOI.Nonnegatives,
+    )
+    x = MOI.add_variable(model)
+    f = MOI.VectorAffineFunction(
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(one(T), x))],
+        [0.0],
+    )
+    MOI.add_constraint(model, f, MOI.Nonnegatives(1))
+    @test MOI.get(model, MOI.ConstraintPrimalStart()) === nothing
+    MOI.set(model, MOI.ConstraintPrimalStart(), [-one(T)])
+    @test MOI.get(model, MOI.ConstraintPrimalStart()) === [-one(T)]
+    MOI.set(model, MOI.ConstraintPrimalStart(), nothing)
+    @test MOI.get(model, MOI.ConstraintPrimalStart()) === nothing
+    return
+end
+
+"""
+    test_constraint_ConstraintDualStart(
+        model::MOI.ModelLike,
+        ::Config{T},
+    ) where {T}
+
+Test the `ConstraintDualStart` attribute.
+"""
+function test_constraint_ConstraintDualStart(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorAffineFunction{T},
+        MOI.Nonnegatives,
+    )
+    x = MOI.add_variable(model)
+    f = MOI.VectorAffineFunction(
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(one(T), x))],
+        [0.0],
+    )
+    MOI.add_constraint(model, f, MOI.Nonnegatives(1))
+    @test MOI.get(model, MOI.ConstraintDualStart()) === nothing
+    MOI.set(model, MOI.ConstraintDualStart(), [-one(T)])
+    @test MOI.get(model, MOI.ConstraintDualStart()) === [-one(T)]
+    MOI.set(model, MOI.ConstraintDualStart(), nothing)
+    @test MOI.get(model, MOI.ConstraintDualStart()) === nothing
+    return
+end
