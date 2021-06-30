@@ -50,3 +50,22 @@ Attributes can be set in different ways:
 * or it is set to contain the result of the optimization during
   [`optimize!`](@ref) like [`VariablePrimal`](@ref).
 
+The following attributes are available for models:
+
+ * [`Name`](@ref)
+
+ * [`ObjectiveFunction`](@ref)
+ * [`ObjectiveFunctionType`](@ref)
+ * [`ObjectiveSense`](@ref)
+
+ * [`NumberOfVariables`](@ref)
+ * [`ListOfVariableIndices`](@ref)
+
+ * [`ListOfConstraintTypesPresent`](@ref)
+ * [`NumberOfConstraints`](@ref)
+ * [`ListOfConstraintIndices`](@ref)
+
+ * [`ListOfOptimizerAttributesSet`](@ref)
+ * [`ListOfModelAttributesSet`](@ref)
+ * [`ListOfVariableAttributesSet`](@ref)
+ * [`ListOfConstraintAttributesSet`](@ref)
