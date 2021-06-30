@@ -424,3 +424,19 @@ function setup_test(
     )
     return
 end
+
+"""
+    test_variable_VariablePrimalStart(model::MOI.ModelLike, ::Config)
+
+Test VariablePrimalStart
+"""
+function test_model_VariablePrimalStart(model::MOI.ModelLike, ::Config)
+    @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    x = MOI.add_variable(model)
+    @test MOI.get(model, MOI.VariablePrimalStart(), x) === nothing
+    MOI.set(model, MOI.VariablePrimalStart(), x, 1.0)
+    @test MOI.get(model, MOI.VariablePrimalStart(), x) == 1.0
+    MOI.set(model, MOI.VariablePrimalStart(), x, nothing)
+    @test MOI.get(model, MOI.VariablePrimalStart(), x) === nothing
+    return
+end

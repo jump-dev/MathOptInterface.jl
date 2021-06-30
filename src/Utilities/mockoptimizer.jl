@@ -19,6 +19,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     add_con_allowed::Bool # If false, the optimizer throws AddConstraintNotAllowed
     modify_allowed::Bool # If false, the optimizer throws Modify...NotAllowed
     delete_allowed::Bool # If false, the optimizer throws DeleteNotAllowed
+    scalar_function_constant_non_zero::Bool
     optimize!::Function
     solved::Bool
     hasprimal::Bool
@@ -71,6 +72,7 @@ function MockOptimizer(
     eval_objective_value = true,
     eval_dual_objective_value = true,
     eval_variable_constraint_dual = true,
+    scalar_function_constant_non_zero = false,
 )
     return MockOptimizer(
         inner_model,
@@ -83,6 +85,7 @@ function MockOptimizer(
         add_con_allowed,
         true,
         true,
+        scalar_function_constant_non_zero,
         (::MockOptimizer) -> begin end,
         false,
         false,
@@ -129,6 +132,46 @@ function MOI.add_constraint(
         throw(MOI.AddConstraintNotAllowed{typeof(func),typeof(set)}())
     end
 end
+
+function MOI.add_constraint(
+    mock::MockOptimizer,
+    func::MOI.ScalarAffineFunction{T},
+    set::MOI.AbstractSet,
+) where {T}
+    if !mock.add_con_allowed
+        throw(MOI.AddConstraintNotAllowed{typeof(func),typeof(set)}())
+    elseif mock.scalar_function_constant_non_zero && !iszero(func.constant)
+        throw(
+            MOI.ScalarFunctionConstantNotZero{T,typeof(func),typeof(set)}(
+                func.constant,
+            ),
+        )
+    end
+    ci = MOI.add_constraint(mock.inner_model, xor_indices(func), set)
+    return xor_index(ci)
+end
+
+function MOI.add_constraint(
+    mock::MockOptimizer,
+    func::MOI.SingleVariable,
+    set::MOI.AbstractSet,
+)
+    if !mock.add_con_allowed
+        throw(MOI.AddConstraintNotAllowed{typeof(func),typeof(set)}())
+    end
+    try
+        ci = MOI.add_constraint(mock.inner_model, xor_indices(func), set)
+        return xor_index(ci)
+    catch err
+        if (err isa MOI.LowerBoundAlreadySet) ||
+           (err isa MOI.UpperBoundAlreadySet)
+            throw(typeof(err)(xor_index(err.vi)))
+        else
+            rethrow(err)
+        end
+    end
+end
+
 function MOI.optimize!(mock::MockOptimizer)
     mock.solved = true
     mock.hasprimal = true
