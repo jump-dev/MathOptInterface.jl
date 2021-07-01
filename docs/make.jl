@@ -23,6 +23,10 @@ makedocs(
             "background/motivation.md",
             "background/duality.md",
         ],
+        "Tutorials" => [
+            "tutorials/example.md",
+            "tutorials/implementing.md",
+        ],
         "Manual" => [
             "manual/standard_form.md",
             "manual/models.md",
@@ -30,8 +34,6 @@ makedocs(
             "manual/constraints.md",
             "manual/solutions.md",
             "manual/modification.md",
-            "manual/example.md",
-            "manual/implementing.md",
         ],
         "API Reference" => [
             "reference/standard_form.md",

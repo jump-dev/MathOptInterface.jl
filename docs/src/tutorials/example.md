@@ -7,7 +7,7 @@ end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
 
-# A complete example: solving a knapsack problem
+# Solving a problem using MathOptInterface
 
 In this example, we want to solve a binary-constrained knapsack problem:
 ```math
