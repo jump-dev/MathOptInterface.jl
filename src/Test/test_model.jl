@@ -837,7 +837,11 @@ function test_model_UpperBoundAlreadySet(
     x = MOI.add_variable(model)
     f = MOI.SingleVariable(x)
     ub = zero(T)
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.LessThan{T})
+    @requires MOI.supports_constraint(
+        model,
+        MOI.SingleVariable,
+        MOI.LessThan{T},
+    )
     sets = [
         MOI.EqualTo(ub),
         MOI.Interval(ub, ub),

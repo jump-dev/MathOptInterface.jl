@@ -321,7 +321,11 @@ function test_quadratic_nonhomogeneous(model::MOI.ModelLike, config::Config)
         model,
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
     )
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
+    @requires MOI.supports_constraint(
+        model,
+        MOI.SingleVariable,
+        MOI.GreaterThan{Float64},
+    )
     @requires MOI.supports_constraint(
         model,
         MOI.ScalarAffineFunction{Float64},
