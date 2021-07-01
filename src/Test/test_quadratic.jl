@@ -11,17 +11,15 @@ st  x + 2y + 3z >= 4 (c1)
 """
 function test_quadratic_integration(model::MOI.ModelLike, config::Config)
     @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
-    MOI.supports(
+    @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
     )
-    MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.ScalarAffineFunction{Float64},
         MOI.GreaterThan{Float64},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
     cf1 =
@@ -148,8 +146,6 @@ function test_quadratic_duplicate_terms(model::MOI.ModelLike, config::Config)
         MOI.ScalarAffineFunction{Float64},
         MOI.GreaterThan{Float64},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
     c1f =
@@ -325,14 +321,12 @@ function test_quadratic_nonhomogeneous(model::MOI.ModelLike, config::Config)
         model,
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
     )
-    MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
-    MOI.supports_constraint(
+    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
+    @requires MOI.supports_constraint(
         model,
         MOI.ScalarAffineFunction{Float64},
         MOI.EqualTo{Float64},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     c1 = MOI.add_constraint(
@@ -489,8 +483,6 @@ function test_quadratic_constraint_integration(
         MOI.ScalarQuadraticFunction{Float64},
         MOI.LessThan{Float64},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -631,8 +623,6 @@ function test_quadratic_constraint_basic(model::MOI.ModelLike, config::Config)
         MOI.ScalarQuadraticFunction{Float64},
         MOI.LessThan{Float64},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
     cf = MOI.ScalarQuadraticFunction(
@@ -726,8 +716,6 @@ function test_quadratic_constraint_minimize(
         MOI.ScalarQuadraticFunction{Float64},
         MOI.LessThan{Float64},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
     cf = MOI.ScalarQuadraticFunction(
@@ -819,8 +807,6 @@ function _test_quadratic_constraint_helper(
         MOI.ScalarQuadraticFunction{Float64},
         typeof(quad_set),
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -959,8 +945,6 @@ function test_quadratic_nonconvex_constraint_integration(
         MOI.ScalarQuadraticFunction{Float64},
         MOI.LessThan{Float64},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -1048,8 +1032,6 @@ function test_quadratic_nonconvex_constraint_basic(
         MOI.ScalarQuadraticFunction{Float64},
         MOI.EqualTo{Float64},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -1145,8 +1127,6 @@ function test_quadratic_SecondOrderCone_basic(
         MOI.SingleVariable,
         MOI.GreaterThan{Float64},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     t = MOI.add_variable(model)

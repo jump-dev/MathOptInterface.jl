@@ -285,7 +285,6 @@ function test_solve_SingleVariable_ConstraintDual_MAX_SENSE(
 )
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
-    MOI.empty!(model)
     x = MOI.add_variable(model)
     xl = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
     xu = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
@@ -339,7 +338,6 @@ function test_solve_result_index(model::MOI.ModelLike, config::Config)
     @requires _supports(config, MOI.optimize!)
     atol = config.atol
     rtol = config.rtol
-    MOI.empty!(model)
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -427,7 +425,6 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_EqualTo_upper(
 )
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
-    MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     clb =
         MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
@@ -484,7 +481,6 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_EqualTo_lower(
 )
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
-    MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     clb =
         MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
@@ -596,7 +592,6 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_GreaterThan(
 )
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
-    MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     clb =
         MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
@@ -653,7 +648,6 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_Interval_upper(
 )
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
-    MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     clb =
         MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
@@ -710,7 +704,6 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_Interval_lower(
 )
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
-    MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     clb =
         MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
@@ -767,7 +760,6 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_SingleVariable_LessThan
 )
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
-    MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     clb = MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.LessThan(0.0))
     c = MOI.add_constraint(
@@ -825,7 +817,6 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_SingleVariable_LessThan
 )
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
-    MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     clb = MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.LessThan(0.0))
     c = MOI.add_constraint(
@@ -888,7 +879,6 @@ function test_solve_optimize_twice(
     config::Config{T},
 ) where {T}
     @requires _supports(config, MOI.optimize!)
-    MOI.empty!(model)
     x = MOI.add_variable(model)
     MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(one(T)))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)

@@ -781,8 +781,6 @@ function test_modification_delete_variables_in_a_batch(
     model::MOI.ModelLike,
     config::Config,
 )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     MOIU.loadfromstring!(
         model,
         """
@@ -849,7 +847,6 @@ function test_modification_affine_deletion_edge_cases(
     model::MOI.ModelLike,
     config::Config,
 )
-    MOI.empty!(model)
     x = MOI.add_variable(model)
     # helpers. The function 1.0x + 0.0
     saf = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)

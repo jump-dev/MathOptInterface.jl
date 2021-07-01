@@ -11,9 +11,13 @@ MOI.Test.runtests(
     MOI.Test.Config(),
     exclude = [
         "test_model_ScalarFunctionConstantNotZero",
-        "test_model_copy_to_",
-        "test_model_supports_constraint_",
+        "test_model_copy_to_UnsupportedAttribute",
+        "test_model_copy_to_UnsupportedConstraint",
+        "test_model_supports_constraint_ScalarAffineFunction_EqualTo",
+        "test_model_supports_constraint_SingleVariable_EqualTo",
+        "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
     ],
+    warn_unsupported = true,
 )
 
 # Run the previously excluded tests, this time without UniversalFallback.
@@ -26,7 +30,10 @@ MOI.Test.runtests(
     MOI.Test.Config(),
     include = [
         "test_model_ScalarFunctionConstantNotZero",
-        "test_model_copy_to_",
-        "test_model_supports_constraint_",
+        "test_model_copy_to_UnsupportedAttribute",
+        "test_model_copy_to_UnsupportedConstraint",
+        "test_model_supports_constraint_ScalarAffineFunction_EqualTo",
+        "test_model_supports_constraint_SingleVariable_EqualTo",
+        "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
     ],
 )

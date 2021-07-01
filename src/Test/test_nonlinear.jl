@@ -281,8 +281,6 @@ function _test_HS071(model::MOI.ModelLike, config::Config, evaluator::HS071)
         MOI.GreaterThan{Float64},
     )
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     lb = [25.0, 40.0]
     ub = [Inf, 40.0]
     block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, true)
@@ -458,8 +456,6 @@ function test_nonlinear_objective_and_moi_objective_test(
 )
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     lb = [1.0]
     ub = [2.0]
     block_data = MOI.NLPBlockData(
@@ -521,7 +517,6 @@ function test_nonlinear_mixed_complementarity(
         MOI.VectorAffineFunction{Float64},
         MOI.Complements,
     )
-    MOI.empty!(model)
     x = MOI.add_variables(model, 4)
     MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.Interval(0.0, 10.0))
     MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
@@ -614,7 +609,6 @@ function test_nonlinear_qp_complementarity_constraint(
         MOI.VectorOfVariables,
         MOI.Complements,
     )
-    MOI.empty!(model)
     x = MOI.add_variables(model, 8)
     MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
     MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
