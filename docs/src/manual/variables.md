@@ -61,7 +61,7 @@ The following attributes are available for variables:
 * [`VariablePrimalStart`](@ref)
 * [`VariablePrimal`](@ref)
 
-Get and set these attributes using [`get`(@ref) and [`set`](@ref).
+Get and set these attributes using [`get`](@ref) and [`set`](@ref).
 
 ```jldoctest variables
 julia> MOI.set(model, MOI.VariableName(), x, "var_x")
