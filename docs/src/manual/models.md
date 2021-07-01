@@ -18,8 +18,8 @@ Notably missing from the model API is the method to solve an optimization
 problem. `ModelLike` objects may store an instance (e.g., in memory or backed by
 a file format) without being linked to a particular solver. In addition to the
 model API, MOI defines [`AbstractOptimizer`](@ref) and provides methods to solve
-the model and interact with solutions. See the [Optimizers](@ref) section for
-more details.
+the model and interact with solutions. See the [Solutions](@ref manual_solutions)
+section for more details.
 
 !!! info
     Throughout the rest of the manual, `model` is used as a generic `ModelLike`,
@@ -54,7 +54,7 @@ There are four types of attributes:
  * Variable attributes (subtypes of [`AbstractVariableAttribute`](@ref)) refer
    to properties of an individual variable.
 
-Some attributes are constants that can be queried by the user but not modified,
+Some attributes are values that can be queried by the user but not modified,
 while other attributes can be modified by the user.
 
 All interactions with attributes occur through the [`get`](@ref) and [`set`](@ref)
