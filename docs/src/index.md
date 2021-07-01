@@ -29,8 +29,11 @@ you know where to look for certain things.
 * The **Background** section contains articles on the motivation and theory
   behind MathOptInterface. Look here if you want to understand _why_, rather
   than _how_.
+* The **Tutorials** section contains articles on how to use and implement the
+  MathOptInteraface API. Look here if you want to write a model in MOI, or write
+  an interface to a new solver.
 * The **Manual** contains short code-snippets that explain how to use the MOI
-  API. Look here if you want to write a model in MOI.
+  API. Look here for more details on particular areas of MOI.
 * The **API Reference** contains a complete list of functions and types that
   comprise the MOI API. Look here is you want to know how to use (or implement)
   a particular function.
