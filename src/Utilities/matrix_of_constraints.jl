@@ -316,6 +316,18 @@ function _add_set(sets, i, func::MOI.AbstractVectorFunction)
     return add_set(sets, i, MOI.output_dimension(func))
 end
 
+const _MATRIXOFCONSTRAINTS_MODIFY_NOT_ALLOWED_ERROR_MESSAGE = """
+MatrixOfConstraints does not allow modifications to be made to the model once
+`MOI.Utilities.final_touch` has been called. This is called at the end of
+`MOI.copy_to` and in `MOI.Utilities.attach_optimizer` (which is called by
+`MOI.optimize!` in a `MOI.Utilities.CachingOptimizer`). In order to be able to
+apply modifications to this model, you should add a layer
+`MOI.Utilities.CachingOptimizer(MOI.Utilities.Model{Float64}(), model)`
+where `model` is the current model. This will automatically empty `model` when
+modifications are done after `MOI.Utilities.final_touch` is called and copy the
+model again in `MOI.Utilities.attach_optimizer`.
+"""
+
 function _add_constraint(
     model::MatrixOfConstraints,
     i::Int,
@@ -342,6 +354,13 @@ function MOI.add_constraint(
     i = set_index(model.sets, S)
     if i === nothing || F != _affine_function_type(T, S)
         throw(MOI.UnsupportedConstraint{F,S}())
+    end
+    if model.final_touch
+        throw(
+            MOI.AddConstraintNotAllowed{F,S}(
+                _MATRIXOFCONSTRAINTS_MODIFY_NOT_ALLOWED_ERROR_MESSAGE,
+            ),
+        )
     end
     return _add_constraint(model, i, IdentityMap(), func, set)
 end
@@ -434,6 +453,11 @@ end
 
 function final_touch(model::MatrixOfConstraints, index_map)
     if model.final_touch
+        # If `default_copy_to` calls `final_touch`, then `index_map` is not
+        # `nothing` and `final_touch` should be `false`.
+        # When `CachingOptimizer` calls this, `index_map` is `nothing`
+        # and `final_touch` might be `true`.
+        # So we are always in a case where `index_map` is `nothing`.
         @assert index_map === nothing
         return
     end
