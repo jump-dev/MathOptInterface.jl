@@ -7,7 +7,7 @@ end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
 
-# Solutions
+# [Solutions](@id manual_solutions)
 
 ## Solving and retrieving the results
 
