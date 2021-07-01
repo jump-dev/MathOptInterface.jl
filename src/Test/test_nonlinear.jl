@@ -323,7 +323,7 @@ function _test_HS071(model::MOI.ModelLike, config::Config, evaluator::HS071)
         @test isapprox(
             MOI.get(model, MOI.VariablePrimal(), v),
             [1.0, 4.7429996418092970, 3.8211499817883077, 1.3794082897556983],
-            config
+            config,
         )
         # TODO: Duals? Maybe better to test on a convex instance.
     end
@@ -669,16 +669,8 @@ function test_nonlinear_qp_complementarity_constraint(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         x_val = MOI.get.(model, MOI.VariablePrimal(), x)
-        @test isapprox(
-            x_val,
-            [1.0, 0.0, 3.5, 0.0, 0.0, 0.0, 3.0, 6.0],
-            config,
-        )
-        @test isapprox(
-            MOI.get(model, MOI.ObjectiveValue()),
-            17.0,
-            config,
-        )
+        @test isapprox(x_val, [1.0, 0.0, 3.5, 0.0, 0.0, 0.0, 3.0, 6.0], config)
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 17.0, config)
     end
     return
 end
