@@ -639,9 +639,7 @@ function _test_conic_NormInfinityCone_helper(
     else
         MOI.VectorAffineFunction{Float64}
     end
-    if !MOI.supports_constraint(model, F, MOI.NormInfinityCone)
-        return
-    end
+    @requires MOI.supports_constraint(model, F, MOI.NormInfinityCone)
     atol = config.atol
     rtol = config.rtol
     # Problem NormInf1
@@ -1394,13 +1392,11 @@ let n = 3. optimal solution: y .= -1, x = 4
 ```
 """
 function test_conic_NormOneCone(model::MOI.ModelLike, config::Config)
-    if !MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
         MOI.NormOneCone,
     )
-        return
-    end
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
@@ -1511,13 +1507,11 @@ function _test_conic_SecondOrderCone_helper(
     config::Config,
     use_VectorOfVariables::Bool,
 )
-    if !MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
         MOI.SecondOrderCone,
     )
-        return
-    end
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
@@ -1697,13 +1691,11 @@ function _test_conic_SecondOrderCone_helper_2(
     config::Config,
     nonneg::Bool,
 )
-    if !MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
         MOI.SecondOrderCone,
     )
-        return
-    end
     atol = config.atol
     rtol = config.rtol
     # Problem SOC2
@@ -1941,13 +1933,11 @@ function test_conic_SecondOrderCone_INFEASIBLE(
     model::MOI.ModelLike,
     config::Config,
 )
-    if !MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
         MOI.SecondOrderCone,
     )
-        return
-    end
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
@@ -2071,13 +2061,11 @@ function test_conic_SecondOrderCone_out_of_order(
     model::MOI.ModelLike,
     config::Config,
 )
-    if !MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
         MOI.SecondOrderCone,
     )
-        return
-    end
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
@@ -2709,7 +2697,7 @@ function setup_test(
             (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0.0],
             (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1 / (2 * √ub)],
             (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [
-                [√ub / (2 * √2) √ub / (2 * √2) -√ub / 2 zeros(n - 1)],
+                vcat(√ub / (2 * √2), √ub / (2 * √2), -√ub / 2, zeros(n - 1)),
                 [√ub / √2, 1 / √(2 * ub), -1.0],
             ],
         ),
@@ -3320,9 +3308,7 @@ function _test_conic_Exponential_helper(
     else
         MOI.VectorAffineFunction{Float64}
     end
-    if !MOI.supports_constraint(model, F, MOI.ExponentialCone)
-        return
-    end
+    @requires MOI.supports_constraint(model, F, MOI.ExponentialCone)
     atol = config.atol
     rtol = config.rtol
     # Problem EXP1 - ExpPrimal
@@ -3493,13 +3479,11 @@ end
 Test an exponential cone problem that ECOS failed.
 """
 function test_conic_Exponential_hard_2(model::MOI.ModelLike, config::Config)
-    if !MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
         MOI.ExponentialCone,
     )
-        return
-    end
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
@@ -3695,13 +3679,11 @@ end
 Test an exponential problem that ECOS failed.
 """
 function test_conic_Exponential_hard(model::MOI.ModelLike, config::Config)
-    if !MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
         MOI.ExponentialCone,
     )
-        return
-    end
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
@@ -3815,9 +3797,7 @@ function _test_conic_DualExponentialCone_helper(
     else
         MOI.VectorAffineFunction{Float64}
     end
-    if !MOI.supports_constraint(model, F, MOI.DualExponentialCone)
-        return
-    end
+    @requires MOI.supports_constraint(model, F, MOI.DualExponentialCone)
     atol = config.atol
     rtol = config.rtol
     # Problem dual exp
@@ -4024,9 +4004,7 @@ function _test_conic_PowerCone_helper(
     else
         MOI.VectorAffineFunction{Float64}
     end
-    if !MOI.supports_constraint(model, F, MOI.PowerCone{Float64})
-        return
-    end
+    @requires MOI.supports_constraint(model, F, MOI.PowerCone{Float64})
     atol = config.atol
     rtol = config.rtol
     a = 0.9
@@ -4213,9 +4191,7 @@ function _test_conic_DualPowerCone_helper(
     else
         MOI.VectorAffineFunction{Float64}
     end
-    if !MOI.supports_constraint(model, F, MOI.DualPowerCone{Float64})
-        return
-    end
+    @requires MOI.supports_constraint(model, F, MOI.DualPowerCone{Float64})
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
@@ -4405,13 +4381,11 @@ function test_conic_RelativeEntropyCone(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    if !MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
         MOI.RelativeEntropyCone,
     )
-        return
-    end
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
@@ -4500,13 +4474,11 @@ function test_conic_NormSpectralCone(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    if !MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
         MOI.NormSpectralCone,
     )
-        return
-    end
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
@@ -4596,13 +4568,11 @@ function test_conic_NormSpectralCone_2(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    if !MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
         MOI.NormSpectralCone,
     )
-        return
-    end
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
@@ -4692,13 +4662,11 @@ function test_conic_NormNuclearCone(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    if !MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
         MOI.NormNuclearCone,
     )
-        return
-    end
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
@@ -4792,13 +4760,11 @@ function test_conic_NormNuclearCone_2(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    if !MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
         MOI.NormNuclearCone,
     )
-        return
-    end
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
@@ -5931,9 +5897,7 @@ function _test_det_cone_helper_ellipsoid(
     F =
         use_VectorOfVariables ? MOI.VectorOfVariables :
         MOI.VectorAffineFunction{Float64}
-    if !MOI.supports_constraint(model, F, detcone)
-        return
-    end
+    @requires MOI.supports_constraint(model, F, detcone)
     atol = config.atol
     rtol = config.rtol
     square = detcone == MOI.LogDetConeSquare || detcone == MOI.RootDetConeSquare
@@ -6087,13 +6051,11 @@ logdet(mat)  ≈ 1.609438
 ```
 """
 function _test_det_cone_helper(model::MOI.ModelLike, config::Config, detcone)
-    if !MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
         detcone,
     )
-        return
-    end
     atol = config.atol
     rtol = config.rtol
     square = detcone == MOI.LogDetConeSquare || detcone == MOI.RootDetConeSquare
