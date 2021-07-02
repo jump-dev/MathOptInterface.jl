@@ -1013,3 +1013,41 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
         ),
     )
 end
+
+"""
+    test_ListOfConstraintAttributesSet(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test issue #1429: ConstraintName should only be included in
+`ListOfConstraintAttributesSet` if it actually is set.
+"""
+function test_ListOfConstraintAttributesSet(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(zero(T)))
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(T), x)], zero(T)),
+        MOI.EqualTo(one(T)),
+    )
+    MOI.set(model, MOI.ConstraintName(), c, "c")
+    @test MOI.get(
+        model,
+        MOI.ListOfConstraintAttributesSet{
+            MOI.ScalarAffineFunction{T},
+            MOI.EqualTo{T},
+        }(),
+    ) == [MOI.ConstraintName()]
+    @test MOI.get(
+        model,
+        MOI.ListOfConstraintAttributesSet{
+            MOI.SingleVariable,
+            MOI.GreaterThan{T},
+        }(),
+    ) == []
+    return
+end

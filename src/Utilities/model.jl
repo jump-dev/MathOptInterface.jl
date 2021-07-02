@@ -322,9 +322,12 @@ end
 
 function MOI.get(
     model::AbstractModel,
-    ::MOI.ListOfConstraintAttributesSet,
-)::Vector{MOI.AbstractConstraintAttribute}
-    return isempty(model.con_to_name) ? [] : [MOI.ConstraintName()]
+    ::MOI.ListOfConstraintAttributesSet{F,S},
+) where {F,S}
+    if any(k -> k isa MOI.ConstraintIndex{F,S}, keys(model.con_to_name))
+        return MOI.AbstractConstraintAttribute[MOI.ConstraintName()]
+    end
+    return MOI.AbstractConstraintAttribute[]
 end
 
 # Objective
