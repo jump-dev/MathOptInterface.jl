@@ -3554,7 +3554,7 @@ function test_linear_Indicator_integration(model::MOI.ModelLike, config::Config)
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 28.75, config)
         @test isapprox(MOI.get(model, MOI.VariablePrimal(), x1), 1.25, config)
@@ -3647,7 +3647,7 @@ function test_linear_Indicator_ON_ONE(model::MOI.ModelLike, config::Config)
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 28.0, config)
         @test isapprox(MOI.get(model, MOI.VariablePrimal(), x1), 2.0, config)
@@ -3762,7 +3762,7 @@ function test_linear_Indicator_ON_ZERO(model::MOI.ModelLike, config::Config)
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 28.75, config)
         @test isapprox(MOI.get(model, MOI.VariablePrimal(), x1), 1.25, config)
@@ -3879,7 +3879,7 @@ function test_linear_Indicator_constant_term(
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 28.75, config)
         @test isapprox(MOI.get(model, MOI.VariablePrimal(), x1), 1.25, config)

@@ -145,7 +145,7 @@ function test_objective_ObjectiveFunction_blank(
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(0.0, x)], 0.0)
     MOI.set(model, obj_attr, f)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
     @test MOI.get(model, MOI.ObjectiveValue()) == 0.0
     return
 end

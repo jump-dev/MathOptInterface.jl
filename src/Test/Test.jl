@@ -294,7 +294,7 @@ _supports(config::Config, T::Any)::Bool = !(T in config.exclude)
 
 Solve, and then test, various aspects of a model.
 
-First, check that `TerminationStatus == MOI.OPTIMAL`.
+First, check that `TerminationStatus == config.optimal_status`.
 
 If `objective_value` is not nothing, check that the attribute `ObjectiveValue()`
 is approximately `objective_value`.
