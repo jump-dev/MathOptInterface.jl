@@ -95,6 +95,7 @@ function test_objective_ObjectiveFunction_constant(
     x = MOI.add_variable(model)
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 1.0)
     MOI.set(model, obj_attr, f)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
     _test_model_solution(
         model,
