@@ -889,7 +889,7 @@ function test_solve_optimize_twice(
     )
     MOI.optimize!(model)
     MOI.optimize!(model)
-    MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+    MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
     MOI.get(model, MOI.VariablePrimal(), x) == one(T)
     return
 end
