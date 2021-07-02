@@ -613,11 +613,11 @@ end
        """,
     )
     @test MOI.get(
-        src,
+        model,
         MOI.ListOfConstraintAttributesSet{MOI.SingleVariable,MOI.Integer}(),
     ) == []
     @test MOI.get(
-        src,
+        model,
         MOI.ListOfConstraintAttributesSet{
             MOI.ScalarAffineFunction{Float64},
             MOI.EqualTo{Float64},
