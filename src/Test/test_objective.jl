@@ -233,9 +233,7 @@ function test_objective_qp_ObjectiveFunction_edge_cases(
     config::Config,
 )
     obj_attr = MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}()
-    if !MOI.supports(model, obj_attr)
-        return
-    end
+    @requires MOI.supports(model, obj_attr)
     x = MOI.add_variables(model, 2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     vc1 = MOI.add_constraint(
@@ -371,10 +369,7 @@ function test_objective_qp_ObjectiveFunction_zero_ofdiag(
     config::Config,
 )
     obj_attr = MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}()
-    if !MOI.supports(model, obj_attr)
-        return
-    end
-    MOI.empty!(model)
+    @requires MOI.supports(model, obj_attr)
     x = MOI.add_variables(model, 2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     vc1 = MOI.add_constraint(

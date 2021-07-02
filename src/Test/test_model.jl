@@ -138,7 +138,6 @@ end
 Test that the default ObjectiveSense is FEASIBILITY_SENSE.
 """
 function test_model_default_ObjectiveSense(model::MOI.ModelLike, ::Config)
-    @test MOI.is_empty(model)
     MOI.get(model, MOI.ObjectiveSense()) == MOI.FEASIBILITY_SENSE
     return
 end
@@ -149,7 +148,6 @@ end
 Test that the default TerminationStatus is OPTIMIZE_NOT_CALLED.
 """
 function test_model_default_TerminationStatus(model::MOI.ModelLike, ::Config)
-    @test MOI.is_empty(model)
     MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
     return
 end
@@ -160,7 +158,6 @@ end
 Test that the default PrimalStatus is NO_SOLUTION.
 """
 function test_model_default_PrimalStatus(model::MOI.ModelLike, ::Config)
-    @test MOI.is_empty(model)
     MOI.get(model, MOI.PrimalStatus()) == MOI.NO_SOLUTION
     return
 end
@@ -171,7 +168,6 @@ end
 Test that the default DualStatus is NO_SOLUTION.
 """
 function test_model_default_DualStatus(model::MOI.ModelLike, ::Config)
-    @test MOI.is_empty(model)
     MOI.get(model, MOI.DualStatus()) == MOI.NO_SOLUTION
     return
 end
@@ -285,7 +281,6 @@ function test_model_Name_VariableName_ConstraintName(
             MOI.LessThan{Float64},
         }(),
     ) == 0
-    @test MOI.supports(model, MOI.VariableName(), MOI.VariableIndex)
     v = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.VariableName(), v[1]) == ""
     x, cx = MOI.add_constrained_variable(model, MOI.GreaterThan(0.0))
@@ -321,7 +316,7 @@ function test_model_Name_VariableName_ConstraintName(
     @test MOI.get(model, MOI.VariableName(), v) == vynames[1:2]
     @test MOI.get(model, MOI.VariableName(), y) == vynames[3:6]
     @test MOI.get(model, MOI.VariableName(), [v; y]) == vynames
-    @test MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.ScalarAffineFunction{Float64},
         MOI.LessThan{Float64},
@@ -331,7 +326,7 @@ function test_model_Name_VariableName_ConstraintName(
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], v), 0.0),
         MOI.LessThan(1.0),
     )
-    @test MOI.supports_constraint(
+    @requires MOI.supports_constraint(
         model,
         MOI.ScalarAffineFunction{Float64},
         MOI.EqualTo{Float64},
@@ -344,11 +339,11 @@ function test_model_Name_VariableName_ConstraintName(
     @test MOI.get(model, MOI.ConstraintName(), c) == ""
     @test MOI.get(model, MOI.ConstraintName(), c2) == ""
     @test MOI.get(model, MOI.ConstraintName(), cy) == ""
-    @test MOI.supports(model, MOI.ConstraintName(), typeof(c))
+    @requires MOI.supports(model, MOI.ConstraintName(), typeof(c))
     MOI.set(model, MOI.ConstraintName(), c, "")
-    @test MOI.supports(model, MOI.ConstraintName(), typeof(c2))
+    @requires MOI.supports(model, MOI.ConstraintName(), typeof(c2))
     MOI.set(model, MOI.ConstraintName(), c2, "") # Shouldn't error with duplicate empty name
-    @test MOI.supports(model, MOI.ConstraintName(), typeof(cy))
+    @requires MOI.supports(model, MOI.ConstraintName(), typeof(cy))
     MOI.set(model, MOI.ConstraintName(), cy, "")
     MOI.set(model, MOI.ConstraintName(), c, "Con0")
     @test MOI.get(model, MOI.ConstraintName(), c) == "Con0"
@@ -519,7 +514,7 @@ function test_model_is_valid(model::MOI.ModelLike, config::Config)
         @test !MOI.is_valid(model, x)
     end
     cf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 1.0], v), 0.0)
-    @test MOI.supports_constraint(model, typeof(cf), MOI.LessThan{Float64})
+    @requires MOI.supports_constraint(model, typeof(cf), MOI.LessThan{Float64})
     c = MOI.add_constraint(model, cf, MOI.LessThan(1.0))
     @test MOI.is_valid(model, c)
     @test !MOI.is_valid(
@@ -694,7 +689,6 @@ sorted by creation time.
 """
 function test_model_ordered_indices(model::MOI.ModelLike, ::Config)
     @requires MOI.supports_incremental_interface(model, false)
-    MOI.empty!(model)
     v1 = MOI.add_variable(model)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v1]
     v2 = MOI.add_variable(model)
@@ -840,12 +834,14 @@ function test_model_UpperBoundAlreadySet(
     model::MOI.ModelLike,
     ::Config{T},
 ) where {T}
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     f = MOI.SingleVariable(x)
     ub = zero(T)
-    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.LessThan{T})
+    @requires MOI.supports_constraint(
+        model,
+        MOI.SingleVariable,
+        MOI.LessThan{T},
+    )
     sets = [
         MOI.EqualTo(ub),
         MOI.Interval(ub, ub),

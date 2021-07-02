@@ -38,8 +38,6 @@ function test_linear_integration(
         MOI.SingleVariable,
         MOI.GreaterThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     v = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
     cf = MOI.ScalarAffineFunction{T}(
@@ -573,8 +571,6 @@ function test_linear_integration_2(
         MOI.SingleVariable,
         MOI.GreaterThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -715,8 +711,6 @@ function test_linear_inactive_bounds(
         MOI.SingleVariable,
         MOI.LessThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
     vc = MOI.add_constraint(
@@ -869,8 +863,6 @@ function test_linear_LessThan_and_GreaterThan(
         MOI.SingleVariable,
         MOI.LessThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     # Min  x - y
@@ -994,8 +986,6 @@ function test_linear_integration_modification(
         MOI.ScalarAffineFunction{T},
         MOI.LessThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -1159,8 +1149,6 @@ function test_linear_modify_GreaterThan_and_LessThan_constraints(
         MOI.ScalarAffineFunction{T},
         MOI.LessThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     # Min  x - y
@@ -1302,8 +1290,6 @@ function test_linear_VectorAffineFunction(
         MOI.VectorAffineFunction{T},
         MOI.Nonpositives,
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     # Min  x - y
@@ -1459,8 +1445,6 @@ function test_linear_INFEASIBLE(
         MOI.SingleVariable,
         MOI.GreaterThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     c = MOI.add_constraint(
@@ -1567,8 +1551,6 @@ function test_linear_DUAL_INFEASIBLE(
         MOI.SingleVariable,
         MOI.GreaterThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     MOI.add_constraint(
@@ -1662,8 +1644,6 @@ function test_linear_DUAL_INFEASIBLE_2(
         MOI.SingleVariable,
         MOI.GreaterThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     MOI.add_constraint(
@@ -1772,8 +1752,6 @@ function test_linear_add_constraints(
         MOI.SingleVariable,
         MOI.GreaterThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     vc12 = MOI.add_constraints(
@@ -1895,8 +1873,6 @@ function test_linear_integration_Interval(
         MOI.SingleVariable,
         MOI.GreaterThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     vc = MOI.add_constraints(
@@ -2141,8 +2117,6 @@ function test_linear_Interval_inactive(
         MOI.SingleVariable,
         MOI.GreaterThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     vc = MOI.add_constraints(
@@ -2284,8 +2258,6 @@ function test_linear_transform(
         MOI.ScalarAffineFunction{T},
         MOI.LessThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     v = MOI.add_variables(model, 2)
     c1 = MOI.add_constraint(
         model,
@@ -2387,8 +2359,6 @@ function test_linear_INFEASIBLE_2(
         MOI.SingleVariable,
         MOI.GreaterThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     c1 = MOI.add_constraint(
@@ -2501,8 +2471,6 @@ function test_linear_FEASIBILITY_SENSE(
         MOI.ScalarAffineFunction{T},
         MOI.GreaterThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     c1 = MOI.add_constraint(
@@ -2607,8 +2575,6 @@ function test_linear_integration_delete_variables(
         MOI.SingleVariable,
         MOI.LessThan{T},
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x, y, z = MOI.add_variables(model, 3)
     c = MOI.add_constraint(
         model,
@@ -2792,8 +2758,6 @@ function test_linear_VectorAffineFunction_empty_row(
         MOI.VectorAffineFunction{T},
         MOI.Zeros,
     )
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variables(model, 1)
     # Create a VectorAffineFunction with two rows, but only one term, belonging
     # to the second row. The first row, which is empty, is essentially a
@@ -2875,8 +2839,6 @@ function test_linear_VariablePrimalStart_partial(
 ) where {T}
     atol = config.atol
     rtol = config.rtol
-    MOI.empty!(model)
-    @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     MOI.set(model, MOI.VariablePrimalStart(), x, one(T))
