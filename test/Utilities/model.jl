@@ -593,3 +593,34 @@ end
     bound_vectors_test(Int, 0, 0)
     bound_vectors_test(Float64, -Inf, Inf)
 end
+
+@testset "ListOfConstraintAttributesSet" begin
+    model = MOI.Utilities.Model{Float64}()
+    MOI.Utilities.loadfromstring!(
+        model,
+        """
+        variables: a, b, c, d
+        minobjective: a + b + c + d
+        a >= 1.0
+        b <= 2.0
+        c == 3.0
+        d in Interval(-4.0, 4.0)
+        a in Integer()
+        b in ZeroOne()
+        c7: a + b >= -1.1
+        c8: a + b <= 2.2
+        c8: c + d == 2.2
+       """,
+    )
+    @test MOI.get(
+        model,
+        MOI.ListOfConstraintAttributesSet{MOI.SingleVariable,MOI.Integer}(),
+    ) == []
+    @test MOI.get(
+        model,
+        MOI.ListOfConstraintAttributesSet{
+            MOI.ScalarAffineFunction{Float64},
+            MOI.EqualTo{Float64},
+        }(),
+    ) == [MOI.ConstraintName()]
+end
