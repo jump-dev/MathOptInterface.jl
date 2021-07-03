@@ -128,10 +128,32 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
+    attr::MOI.ConstraintPrimal,
     bridge::ScalarizeBridge,
 )
     return MOI.get.(model, attr, bridge.scalar_constraints) .+ bridge.constants
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::ScalarizeBridge,
+)
+    values = MOI.get.(model, attr, bridge.scalar_constraints)
+    any(value -> value === nothing, values) && return nothing
+    return values .+ bridge.constants
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::ScalarizeBridge,
+    ::Nothing,
+)
+    for ci in bridge.scalar_constraints
+        MOI.set(model, attr, ci, nothing)
+    end
+    return
 end
 
 function MOI.set(
@@ -147,10 +169,20 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
+    attr::MOI.ConstraintDual,
     bridge::ScalarizeBridge,
 )
     return MOI.get.(model, attr, bridge.scalar_constraints)
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDualStart,
+    bridge::ScalarizeBridge,
+)
+    values = MOI.get.(model, attr, bridge.scalar_constraints)
+    any(value -> value === nothing, values) && return nothing
+    return values
 end
 
 function MOI.set(

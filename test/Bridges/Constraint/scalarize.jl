@@ -198,4 +198,15 @@ config = MOIT.Config()
                 [7, 2, -4, 7],
         )
     MOIT.lin2ftest(bridged_mock, config)
+
+    @testset "constraint_ConstraintPrimalStart" begin
+        MOI.Test.test_constraint_ConstraintPrimalStart(
+            bridged_mock,
+            MOI.Test.Config(),
+        )
+        MOI.Test.test_constraint_ConstraintDualStart(
+            bridged_mock,
+            MOI.Test.Config(),
+        )
+    end
 end
