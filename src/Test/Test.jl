@@ -11,7 +11,6 @@ using Test
 mutable struct Config{T<:Real}
     atol::T
     rtol::T
-    supports_optimize::Bool
     optimal_status::MOI.TerminationStatusCode
     exclude::Vector{Any}
 end
@@ -21,7 +20,6 @@ end
         ::Type{T} = Float64;
         atol::Real = Base.rtoldefault(T),
         rtol::Real = Base.rtoldefault(T),
-        supports_optimize::Bool = true,
         optimal_status::MOI.TerminationStatusCode = MOI.OPTIMAL,
         exclude::Vector{Any} = Any[],
     ) where {T}
@@ -34,13 +32,12 @@ Return an object that is used to configure various tests.
     when comparing solutions.
   * `rtol::Real = Base.rtoldefault(T)`: Control the relative tolerance used
     when comparing solutions.
-  * `supports_optimize::Bool = true`: Set to `false` to skip tests requiring a
-    call to [`MOI.optimize!`](@ref)
   * `optimal_status = MOI.OPTIMAL`: Set to `MOI.LOCALLY_SOLVED` if the solver
     cannot prove global optimality.
   * `exclude = Vector{Any}`: Pass attributes or functions to `exclude` to skip
     parts of tests that require certain functionality. Common arguments include:
      - `MOI.delete` to skip deletion-related tests
+     - `MOI.optimize!` to skip optimize-related tests
      - `MOI.ConstraintDual` to skip dual-related tests
      - `MOI.VariableName` to skip setting variable names
      - `MOI.ConstraintName` to skip setting constraint names
@@ -66,18 +63,16 @@ function Config(
     ::Type{T} = Float64;
     atol::Real = Base.rtoldefault(T),
     rtol::Real = Base.rtoldefault(T),
-    supports_optimize::Bool = true,
     optimal_status::MOI.TerminationStatusCode = MOI.OPTIMAL,
     exclude::Vector{Any} = Any[],
 ) where {T<:Real}
-    return Config{T}(atol, rtol, supports_optimize, optimal_status, exclude)
+    return Config{T}(atol, rtol, optimal_status, exclude)
 end
 
 function Base.copy(config::Config{T}) where {T}
     return Config{T}(
         config.atol,
         config.rtol,
-        config.supports_optimize,
         config.optimal_status,
         copy(config.exclude),
     )
@@ -344,7 +339,7 @@ function _test_model_solution(
     constraint_primal = nothing,
     constraint_dual = nothing,
 ) where {T}
-    if !config.supports_optimize
+    if !_supports(config, MOI.optimize!)
         return
     end
     MOI.optimize!(model)

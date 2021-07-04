@@ -172,12 +172,6 @@ function test_unit_optimize!_twice(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    if !config.supports_optimize
-        # Use `config` to modify the behavior of the tests. Since this test is
-        # concerned with `optimize!`, we should skip the test if
-        # `config.solve == false`.
-        return
-    end
     # Use the `@requires` macro to check conditions that the test function
     # requires in order to run. Models failing this `@requires` check will
     # silently skip the test.
@@ -186,6 +180,7 @@ function test_unit_optimize!_twice(
         MOI.SingleVariable,
         MOI.GreaterThan{Float64},
     )
+    @requires _supports(config, MOI.optimize!)
     # If needed, you can test that the model is empty at the start of the test.
     # You can assume that this will be the case for tests run via `runtests`.
     # User's calling tests individually need to call `MOI.empty!` themselves.

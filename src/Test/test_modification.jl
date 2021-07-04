@@ -795,7 +795,7 @@ function test_modification_delete_variables_in_a_batch(
     @test MOI.is_valid(model, x)
     @test MOI.is_valid(model, y)
     @test MOI.is_valid(model, z)
-    if config.supports_optimize
+    if _supports(config, MOI.optimize!)
         MOI.optimize!(model)
         @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 6.0, config)
     end
@@ -803,7 +803,7 @@ function test_modification_delete_variables_in_a_batch(
     @test !MOI.is_valid(model, x)
     @test MOI.is_valid(model, y)
     @test !MOI.is_valid(model, z)
-    if config.supports_optimize
+    if _supports(config, MOI.optimize!)
         MOI.optimize!(model)
         @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 2.0, config)
     end
