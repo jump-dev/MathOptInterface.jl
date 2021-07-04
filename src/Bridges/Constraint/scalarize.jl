@@ -140,7 +140,9 @@ function MOI.get(
     bridge::ScalarizeBridge,
 )
     values = MOI.get.(model, attr, bridge.scalar_constraints)
-    any(value -> value === nothing, values) && return nothing
+    if any(value -> value === nothing, values)
+        return
+    end
     return values .+ bridge.constants
 end
 
@@ -181,7 +183,9 @@ function MOI.get(
     bridge::ScalarizeBridge,
 )
     values = MOI.get.(model, attr, bridge.scalar_constraints)
-    any(value -> value === nothing, values) && return nothing
+    if any(value -> value === nothing, values)
+        return
+    end
     return values
 end
 
