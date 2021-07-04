@@ -270,6 +270,7 @@ end
 
 function _test_HS071(model::MOI.ModelLike, config::Config, evaluator::HS071)
     @requires MOI.supports(model, MOI.NLPBlock())
+    @requires _supports(config, MOI.optimize!)
     @requires MOI.supports_constraint(
         model,
         MOI.SingleVariable,
@@ -308,23 +309,21 @@ function _test_HS071(model::MOI.ModelLike, config::Config, evaluator::HS071)
     end
     MOI.set(model, MOI.NLPBlock(), block_data)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    if _supports(config, MOI.optimize!)
-        MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-        @test MOI.get(model, MOI.ResultCount()) >= 1
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test isapprox(
-            MOI.get(model, MOI.ObjectiveValue()),
-            17.014017145179164,
-            config,
-        )
-        @test isapprox(
-            MOI.get(model, MOI.VariablePrimal(), v),
-            [1.0, 4.7429996418092970, 3.8211499817883077, 1.3794082897556983],
-            config,
-        )
-        # TODO: Duals? Maybe better to test on a convex instance.
-    end
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test MOI.get(model, MOI.ResultCount()) >= 1
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+    @test isapprox(
+        MOI.get(model, MOI.ObjectiveValue()),
+        17.014017145179164,
+        config,
+    )
+    @test isapprox(
+        MOI.get(model, MOI.VariablePrimal(), v),
+        [1.0, 4.7429996418092970, 3.8211499817883077, 1.3794082897556983],
+        config,
+    )
+    # TODO: Duals? Maybe better to test on a convex instance.
     return
 end
 
@@ -455,6 +454,7 @@ function test_nonlinear_objective_and_moi_objective_test(
     config::Config,
 )
     @requires MOI.supports(model, MOI.NLPBlock())
+    @requires _supports(config, MOI.optimize!)
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
     lb = [1.0]
     ub = [2.0]
@@ -472,15 +472,13 @@ function test_nonlinear_objective_and_moi_objective_test(
     f_x = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
     # This objective function should be ignored.
     MOI.set(model, MOI.ObjectiveFunction{typeof(f_x)}(), f_x)
-    if _supports(config, MOI.optimize!)
-        MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-        @test MOI.get(model, MOI.ResultCount()) >= 1
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 0.0, config)
-        xv = MOI.get(model, MOI.VariablePrimal(), x)
-        @test isapprox(abs(xv), 1.0, config)
-    end
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test MOI.get(model, MOI.ResultCount()) >= 1
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+    @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 0.0, config)
+    xv = MOI.get(model, MOI.VariablePrimal(), x)
+    @test isapprox(abs(xv), 1.0, config)
     return
 end
 
@@ -517,6 +515,7 @@ function test_nonlinear_mixed_complementarity(
         MOI.VectorAffineFunction{Float64},
         MOI.Complements,
     )
+    @requires _supports(config, MOI.optimize!)
     x = MOI.add_variables(model, 4)
     MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.Interval(0.0, 10.0))
     MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
@@ -542,12 +541,10 @@ function test_nonlinear_mixed_complementarity(
         MOI.Complements(8),
     )
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-    if _supports(config, MOI.optimize!)
-        MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-        x_val = MOI.get.(model, MOI.VariablePrimal(), x)
-        @test isapprox(x_val, [2.8, 0.0, 0.8, 1.2], config)
-    end
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    x_val = MOI.get.(model, MOI.VariablePrimal(), x)
+    @test isapprox(x_val, [2.8, 0.0, 0.8, 1.2], config)
     return
 end
 
@@ -609,6 +606,7 @@ function test_nonlinear_qp_complementarity_constraint(
         MOI.VectorOfVariables,
         MOI.Complements,
     )
+    @requires _supports(config, MOI.optimize!)
     x = MOI.add_variables(model, 8)
     MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
     MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
@@ -659,13 +657,11 @@ function test_nonlinear_qp_complementarity_constraint(
         MOI.Complements(6),
     )
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-    if _supports(config, MOI.optimize!)
-        MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-        x_val = MOI.get.(model, MOI.VariablePrimal(), x)
-        @test isapprox(x_val, [1.0, 0.0, 3.5, 0.0, 0.0, 0.0, 3.0, 6.0], config)
-        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 17.0, config)
-    end
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    x_val = MOI.get.(model, MOI.VariablePrimal(), x)
+    @test isapprox(x_val, [1.0, 0.0, 3.5, 0.0, 0.0, 0.0, 3.0, 6.0], config)
+    @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 17.0, config)
     return
 end
 
