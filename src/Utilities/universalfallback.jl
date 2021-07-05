@@ -306,7 +306,7 @@ function _get(
 end
 
 function _get(
-    uf,
+    uf::UniversalFallback,
     attr::MOI.CanonicalConstraintFunction,
     ci::MOI.ConstraintIndex,
 )
@@ -445,8 +445,19 @@ function MOI.get(
     listattr::MOI.ListOfConstraintAttributesSet{F,S},
 ) where {F,S}
     list = MOI.get(uf.model, listattr)
-    for attr in keys(uf.conattr)
-        push!(list, attr)
+    for (attr, dict) in uf.conattr
+        if any(k -> k isa MOI.ConstraintIndex{F,S}, keys(dict))
+            push!(list, attr)
+        end
+    end
+    # ConstraintName isn't stored in conattr, but in the .con_to_name dictionary
+    # instead. Only add it to `list` if it isn't already, and if a constraint
+    # of the right type has a name set. This avoids, for example, returning
+    # ConstraintName for SingleVariable constraints.
+    if !(MOI.ConstraintName() in list)
+        if any(k -> k isa MOI.ConstraintIndex{F,S}, keys(uf.con_to_name))
+            push!(list, MOI.ConstraintName())
+        end
     end
     return list
 end
@@ -648,7 +659,7 @@ function _set(uf::UniversalFallback, attr::MOI.AbstractModelAttribute, value)
 end
 
 function _set(
-    uf,
+    uf::UniversalFallback,
     attr::MOI.AbstractVariableAttribute,
     vi::MOI.VariableIndex,
     value,
@@ -661,7 +672,7 @@ function _set(
 end
 
 function _set(
-    uf,
+    uf::UniversalFallback,
     attr::MOI.AbstractConstraintAttribute,
     ci::MOI.ConstraintIndex,
     value,
