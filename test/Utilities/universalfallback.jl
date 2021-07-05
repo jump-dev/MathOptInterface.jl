@@ -212,6 +212,8 @@ function test_unsupported_objective_attributes()
         0.0,
     )
     @test MOI.get(uf, attr) ≈ new_obj
+    @test attr in MOI.get(uf, MOI.ListOfModelAttributesSet())
+    @test MOI.get(uf, MOI.ObjectiveFunctionType()) == MOI.ScalarAffineFunction{Float64}
     return
 end
 

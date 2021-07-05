@@ -766,11 +766,8 @@ end
 
 function constraints(
     uf::UniversalFallback,
-    ci::MOI.ConstraintIndex{F,S},
+    ::MOI.ConstraintIndex{F,S},
 ) where {F,S}
-    if !MOI.supports_constraint(uf, F, S)
-        throw(MOI.InvalidIndex(ci))
-    end
     return constraints(uf, F, S)
 end
 
