@@ -143,34 +143,43 @@ function test_model_default_ObjectiveSense(model::MOI.ModelLike, ::Config)
 end
 
 """
-    test_model_default_TerminationStatus(model::MOI.ModelLike, ::Config)
+    test_model_default_TerminationStatus(model::MOI.AbstractOptimizer, ::Config)
 
 Test that the default TerminationStatus is OPTIMIZE_NOT_CALLED.
 """
-function test_model_default_TerminationStatus(model::MOI.ModelLike, ::Config)
+function test_model_default_TerminationStatus(
+    model::MOI.AbstractOptimizer,
+    ::Config,
+)
     MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
     return
 end
 
+test_model_default_TerminationStatus(::MOI.ModelLike, ::Config) = nothing
+
 """
-    test_model_default_PrimalStatus(model::MOI.ModelLike, ::Config)
+    test_model_default_PrimalStatus(model::MOI.AbstractOptimizer, ::Config)
 
 Test that the default PrimalStatus is NO_SOLUTION.
 """
-function test_model_default_PrimalStatus(model::MOI.ModelLike, ::Config)
+function test_model_default_PrimalStatus(model::MOI.AbstractOptimizer, ::Config)
     MOI.get(model, MOI.PrimalStatus()) == MOI.NO_SOLUTION
     return
 end
 
+test_model_default_PrimalStatus(::MOI.ModelLike, ::Config) = nothing
+
 """
-    test_model_default_DualStatus(model::MOI.ModelLike, ::Config)
+    test_model_default_DualStatus(model::MOI.AbstractOptimizer, ::Config)
 
 Test that the default DualStatus is NO_SOLUTION.
 """
-function test_model_default_DualStatus(model::MOI.ModelLike, ::Config)
+function test_model_default_DualStatus(model::MOI.AbstractOptimizer, ::Config)
     MOI.get(model, MOI.DualStatus()) == MOI.NO_SOLUTION
     return
 end
+
+test_model_default_DualStatus(::MOI.ModelLike, ::Config) = nothing
 
 """
     test_model_VariableName(model::MOI.ModelLike, ::Config)
@@ -1015,7 +1024,7 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
 end
 
 """
-    test_ListOfConstraintAttributesSet(
+    test_model_ListOfConstraintAttributesSet(
         model::MOI.ModelLike,
         config::Config{T},
     ) where {T}
@@ -1023,7 +1032,7 @@ end
 Test issue #1429: ConstraintName should only be included in
 `ListOfConstraintAttributesSet` if it actually is set.
 """
-function test_ListOfConstraintAttributesSet(
+function test_model_ListOfConstraintAttributesSet(
     model::MOI.ModelLike,
     ::Config{T},
 ) where {T}
