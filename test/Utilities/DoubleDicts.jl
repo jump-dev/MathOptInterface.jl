@@ -1,16 +1,24 @@
-# include("C:/Users/joaquimgarcia/.julia/dev/MathOptInterface/test/Utilities/DoubleDicts.jl")
-# include("C:/Users/joaquimgarcia/.julia/dev/MathOptInterface/src/Utilities/DoubleDicts.jl")
+module TestDoubleDicts
 
-using MathOptInterface, Test
+using Test
+
+using MathOptInterface
 const MOI = MathOptInterface
-const CI{F,S} = MOI.ConstraintIndex{F,S}
 
 const DoubleDicts = MathOptInterface.Utilities.DoubleDicts
 
-const CI_I = CI{MOI.SingleVariable,MOI.Integer}
-const CI_B = CI{MOI.SingleVariable,MOI.ZeroOne}
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
 
-function test_iterator(dict)
+function _test_iterator(dict)
     kk, vv = [], []
     for (k, v) in dict
         push!(kk, k)
@@ -21,20 +29,22 @@ function test_iterator(dict)
     @test length(vv) == length(values(dict))
     @test isempty(setdiff(vv, values(dict)))
     @test dict == Dict(kk .=> vv)
+    return
 end
 
-function basic_functionality(dict, k_values, v_values)
+function _test_basic_functionality(dict, k_values, v_values)
     @test_throws ErrorException sizehint!(dict, 1)
 
     @test isempty(dict)
     @test length(dict) == 0
+    _test_iterator(dict)
 
     dict[k_values[1]] = v_values[1]
     delete!(dict, k_values[1])
-    test_iterator(dict)
+    _test_iterator(dict)
 
     dict[k_values[3]] = v_values[3]
-    test_iterator(dict)
+    _test_iterator(dict)
 
     empty!(dict)
     @test isempty(dict)
@@ -55,7 +65,7 @@ function basic_functionality(dict, k_values, v_values)
         end
     end
 
-    test_iterator(dict)
+    _test_iterator(dict)
 
     delete!(dict, k_values[1])
     @test !haskey(dict, k_values[1])
@@ -73,7 +83,7 @@ function basic_functionality(dict, k_values, v_values)
         dict[k] = v
     end
 
-    test_iterator(dict)
+    _test_iterator(dict)
 
     empty!(dict)
     @test isempty(dict)
@@ -100,11 +110,11 @@ function basic_functionality(dict, k_values, v_values)
 
     idict[k_values[2]] = v_values[2]
     @test haskey(idict, k_values[2])
-    test_iterator(idict)
+    _test_iterator(idict)
 
     delete!(idict, k_values[2])
     @test !haskey(idict, k_values[2])
-    test_iterator(idict)
+    _test_iterator(idict)
 
     @test !isempty(idict)
     @test isempty(bdict)
@@ -117,29 +127,30 @@ function basic_functionality(dict, k_values, v_values)
     length(bdict) == 1
 
     edict = DoubleDicts.with_type(dict, MOI.SingleVariable, MOI.EqualTo{Bool})
-    ek = CI{MOI.SingleVariable,MOI.EqualTo{Bool}}(1)
+    ek = MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Bool}}(1)
     delete!(edict, ek)
     @test_throws KeyError edict[ek]
     sizehint!(edict, 0)
     @test length(edict) == 0
     @test_throws KeyError edict[ek]
     delete!(edict, ek)
-    return test_iterator(edict)
+    _test_iterator(edict)
+    return
 end
 
-@testset "DoubleDict" begin
+function test_DoubleDict()
     dict = DoubleDicts.DoubleDict{Float64}()
-    keys = [CI_I(1), CI_I(2), CI_B(1)]
+    keys = [MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(1), MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(2), MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(1)]
     vals = [1.0, 2.0, 1.0]
-    basic_functionality(dict, keys, vals)
+    _test_basic_functionality(dict, keys, vals)
+    return
 end
 
-@testset "IndexDoubleDict" begin
+function test_IndexDoubleDict()
     dict = DoubleDicts.IndexDoubleDict()
-    keys = [CI_I(1), CI_I(2), CI_B(1)]
+    keys = [MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(1), MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(2), MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(1)]
     vals = keys
-    basic_functionality(dict, keys, vals)
-
+    _test_basic_functionality(dict, keys, vals)
     src = DoubleDicts.IndexDoubleDict()
     for (k, v) in zip(keys, vals)
         dict[k] = v
@@ -149,15 +160,21 @@ end
     for (k, v) in src
         @test dest[v] == k
     end
+    return
 end
 
-@testset "FunctionSetDoubleDict" begin
+function test_FunctionSetDoubleDict()
     dict = DoubleDicts.FunctionSetDoubleDict()
-    keys = [CI_I(1), CI_I(2), CI_B(1)]
+    keys = [MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(1), MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(2), MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(1)]
     vals = [
         (MOI.SingleVariable(MOI.VariableIndex(1)), MOI.Integer()),
         (MOI.SingleVariable(MOI.VariableIndex(2)), MOI.Integer()),
         (MOI.SingleVariable(MOI.VariableIndex(1)), MOI.ZeroOne()),
     ]
-    basic_functionality(dict, keys, vals)
+    _test_basic_functionality(dict, keys, vals)
+    return
 end
+
+end  # module
+
+TestDoubleDicts.runtests()
