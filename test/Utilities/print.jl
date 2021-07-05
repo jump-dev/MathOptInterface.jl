@@ -1,10 +1,21 @@
 module TestPrint
 
+using Test
+
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
-using Test
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
 
 const LATEX = MIME("text/latex")
 const PLAIN = MIME("text/plain")
@@ -523,7 +534,7 @@ function test_nlp()
         MOI.set(model, MOI.VariableName(), v[i], "x[$i]")
     end
     lb, ub = [25.0, 40.0], [Inf, 40.0]
-    evaluator = MOI.DeprecatedTest.HS071(true)
+    evaluator = MOI.Test.HS071(true)
     block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, true)
     MOI.set(model, MOI.NLPBlock(), block_data)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -573,14 +584,28 @@ function test_nlp()
     return
 end
 
-function runtests()
-    for name in names(@__MODULE__; all = true)
-        if startswith("$(name)", "test_")
-            @testset "$(name)" begin
-                getfield(@__MODULE__, name)()
-            end
-        end
-    end
+function test_print_with_acronym()
+    @test sprint(MOIU.print_with_acronym, "MathOptInterface") == "MOI"
+    @test sprint(
+        MOIU.print_with_acronym,
+        "MathOptInterface.MathOptInterface",
+    ) == "MOI.MOI"
+    @test sprint(
+        MOIU.print_with_acronym,
+        "MathOptInterface.Utilities.MathOptInterface",
+    ) == "MOIU.MOI"
+    @test sprint(MOIU.print_with_acronym, "MathOptInterfaceXXBridges") ==
+          "MOIXXBridges"
+    @test sprint(MOIU.print_with_acronym, "MathOptInterface.BridgesXX") ==
+          "MOIBXX"
+    @test sprint(MOIU.print_with_acronym, "MathOptInterface.Test.x") == "MOIT.x"
+    @test sprint(MOIU.print_with_acronym, "MathOptInterface.x.Test") ==
+          "MOI.x.Test"
+    @test sprint(MOIU.print_with_acronym, "MathOptInterface.Utilities.Test") ==
+          "MOIU.Test"
+    @test sprint(MOIU.print_with_acronym, "MathOptInterface.Utilities.Test") ==
+          "MOIU.Test"
+    return
 end
 
 end
