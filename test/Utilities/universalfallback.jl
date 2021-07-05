@@ -86,7 +86,6 @@ function test_MOI_Test()
     return
 end
 
-
 function _test_Optimizer_Model_attributes(uf, model, attr, listattr)
     @test !MOI.supports(model, attr)
     @test MOI.supports(uf, attr)
@@ -179,7 +178,7 @@ function test_variable_attributes()
         MOI.ListOfVariableAttributesSet(),
         MOI.VariableIndex,
         MOI.add_variable,
-        MOI.add_variables(uf, 3)...
+        MOI.add_variables(uf, 3)...,
     )
     return
 end
@@ -315,10 +314,7 @@ function test_duplicate_names()
     uf = MOI.Utilities.UniversalFallback(model)
     x = MOI.add_variable(uf)
     # These are both intercepted by the fallback.
-    f = MOI.ScalarAffineFunction{Float64}(
-        [MOI.ScalarAffineTerm(1.0, x)],
-        0.0,
-    )
+    f = MOI.ScalarAffineFunction{Float64}([MOI.ScalarAffineTerm(1.0, x)], 0.0)
     x_eq = MOI.add_constraint(uf, f, MOI.EqualTo(1.0))
     x_gt = MOI.add_constraint(uf, f, MOI.GreaterThan(1.0))
     MOI.set(uf, MOI.ConstraintName(), x_eq, "a name")
@@ -373,7 +369,7 @@ function test_show()
     @test sprint(show, uf) == MOI.Utilities.replace_acronym("""
     $(MOI.Utilities.UniversalFallback{ModelForUniversalFallback{Float64}})
     fallback for $(ModelForUniversalFallback{Float64})""")
-        return
+    return
 end
 
 end  # module
