@@ -118,17 +118,13 @@ function test_keys_values()
     d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
     key = CleverDicts.add_item(d, "first")
     key2 = CleverDicts.add_item(d, "second")
-    @test collect(keys(d)) == [
-        MathOptInterface.VariableIndex(1),
-        MathOptInterface.VariableIndex(2),
-    ]
+    @test collect(keys(d)) ==
+          [MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2)]
     @test collect(values(d)) == ["first", "second"]
     delete!(d, key)
     key3 = CleverDicts.add_item(d, "third")
-    @test collect(keys(d)) == [
-        MathOptInterface.VariableIndex(2),
-        MathOptInterface.VariableIndex(3),
-    ]
+    @test collect(keys(d)) ==
+          [MathOptInterface.VariableIndex(2), MathOptInterface.VariableIndex(3)]
     @test collect(values(d)) == ["second", "third"]
     return
 end
@@ -143,10 +139,8 @@ function test_iterate()
         push!(my_keys, k)
         push!(my_values, v)
     end
-    @test my_keys == [
-        MathOptInterface.VariableIndex(1),
-        MathOptInterface.VariableIndex(2),
-    ]
+    @test my_keys ==
+          [MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2)]
     @test my_values == ["first", "second"]
     delete!(d, key)
     key3 = CleverDicts.add_item(d, "third")
@@ -156,10 +150,8 @@ function test_iterate()
         push!(my_keys, k)
         push!(my_values, v)
     end
-    @test my_keys == [
-        MathOptInterface.VariableIndex(2),
-        MathOptInterface.VariableIndex(3),
-    ]
+    @test my_keys ==
+          [MathOptInterface.VariableIndex(2), MathOptInterface.VariableIndex(3)]
     @test my_values == ["second", "third"]
     return
 end
@@ -174,10 +166,8 @@ function test_iterate_ii()
         push!(my_keys, k)
         push!(my_values, v)
     end
-    @test my_keys == [
-        MathOptInterface.VariableIndex(1),
-        MathOptInterface.VariableIndex(2),
-    ]
+    @test my_keys ==
+          [MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2)]
     @test my_values == ["first", "second"]
     delete!(d, key)
     @test d[CleverDicts.LinearIndex(1)] == "second"
@@ -188,10 +178,8 @@ function test_iterate_ii()
         push!(my_keys, k)
         push!(my_values, v)
     end
-    @test my_keys == [
-        MathOptInterface.VariableIndex(2),
-        MathOptInterface.VariableIndex(3),
-    ]
+    @test my_keys ==
+          [MathOptInterface.VariableIndex(2), MathOptInterface.VariableIndex(3)]
     @test my_values == ["second", "third"]
     return
 end
