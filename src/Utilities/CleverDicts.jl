@@ -5,6 +5,22 @@ module CleverDicts
 # solvers using `CleverDicts` to implement it themselves.
 
 import MathOptInterface
+import OrderedCollections
+
+"""
+    index_to_key(::Type{K}, index::Int)
+
+Create a new key associated with the integer value `index`.
+"""
+function index_to_key end
+
+"""
+    key_to_index(key::K)
+
+Map `key` to an integer valued index, assuming that there have been no
+deletions.
+"""
+function key_to_index end
 
 function index_to_key(::Type{MathOptInterface.VariableIndex}, index::Int64)
     return MathOptInterface.VariableIndex(index)
@@ -20,8 +36,6 @@ end
 key_to_index(key::MathOptInterface.Index) = key.value
 
 # Now, on with `CleverDicts`.
-
-import OrderedCollections
 
 """
     CleverDict{K, V}
@@ -88,32 +102,19 @@ mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
         )
     end
 end
+
 function CleverDict{K,V}(n::Integer = 0) where {K,V}
     return CleverDict{K,V}(key_to_index, index_to_key, n)
 end
-
-"""
-    index_to_key(::Type{K}, index::Int)
-
-Create a new key associated with the integer value `index`.
-"""
-function index_to_key end
-
-"""
-    key_to_index(key::K)
-
-Map `key` to an integer valued index, assuming that there have been no
-deletions.
-"""
-function key_to_index end
 
 _is_dense(c::CleverDict) = c.is_dense
 
 function _inverse_hash(c::CleverDict{K}, index::Integer) where {K}
     return c.inverse_hash(Int64(index))::K
 end
+
 function _inverse_hash(
-    c::CleverDict{K,V,F,typeof(index_to_key)},
+    ::CleverDict{K,V,F,typeof(index_to_key)},
     index::Integer,
 ) where {K,V,F<:Function}
     return index_to_key(K, Int64(index))::K
@@ -158,11 +159,10 @@ function Base.haskey(c::CleverDict{K}, key::K) where {K}
 end
 
 function Base.keys(c::CleverDict)
-    return if _is_dense(c)
-        [_inverse_hash(c, index) for index in c.set]
-    else
-        collect(keys(c.dict))
+    if _is_dense(c)
+        return [_inverse_hash(c, index) for index in c.set]
     end
+    return collect(keys(c.dict))
 end
 
 function Base.get(c::CleverDict, key, default)
@@ -171,9 +171,8 @@ function Base.get(c::CleverDict, key, default)
             return default
         end
         return c.vector[c.hash(key)::Int64]
-    else
-        return get(c.dict, key, default)
     end
+    return get(c.dict, key, default)
 end
 
 function Base.getindex(c::CleverDict, key)
@@ -182,9 +181,8 @@ function Base.getindex(c::CleverDict, key)
             throw(KeyError(key))
         end
         return c.vector[c.hash(key)::Int64]
-    else
-        return c.dict[key]
     end
+    return c.dict[key]
 end
 
 function Base.setindex!(c::CleverDict{K,V}, value::V, key::K)::V where {K,V}
@@ -237,7 +235,7 @@ function Base.delete!(c::CleverDict{K}, k::K) where {K}
     if !isempty(c.vector)
         empty!(c.vector)
     end
-    return
+    return c
 end
 
 struct LinearIndex
@@ -276,51 +274,48 @@ end
 Base.haskey(::CleverDict, key) = false
 
 # Here, we implement the iterate functions for our `CleverDict`. For either
-# backend (`OrderedDict` or `Vector`+`BitSet`) we return the same State type
+# backend (`OrderedDict` or `Vector`+`BitSet`) we return the same _State type
 # so that `iterate` returns the same
 # type regardless of the backing datastructure. To help inference, we convert
 # the return type. Don't use a type-assertion because this doesn't support `V`
 # being an abstract type.
 
-struct State
+struct _State
     int::Int64
     uint::UInt64
     # ::Integer is needed for 32-bit machines.
-    State(i::Integer) = new(Int64(i), UInt64(0))
-    State(i::Integer, j::UInt64) = new(Int64(i), j)
+    _State(i::Integer) = new(Int64(i), UInt64(0))
+    _State(i::Integer, j::UInt64) = new(Int64(i), j)
 end
 
 function Base.iterate(
     c::CleverDict{K,V},
-)::Union{Nothing,Tuple{Pair{K,V},State}} where {K,V}
+)::Union{Nothing,Tuple{Pair{K,V},_State}} where {K,V}
     if _is_dense(c)
         itr = iterate(c.set)
         if itr === nothing
-            return nothing
-        else
-            el, i = itr
-            new_el = _inverse_hash(c, el) => c.vector[el]::V
-            @static if VERSION >= v"1.4.0"
-                return new_el, State(i[2], i[1])
-            else
-                return new_el, State(i)
-            end
+            return
         end
-    else
-        itr = iterate(c.dict)
-        if itr === nothing
-            return nothing
+        el, i = itr
+        new_el = _inverse_hash(c, el) => c.vector[el]::V
+        @static if VERSION >= v"1.4.0"
+            return new_el, _State(i[2], i[1])
         else
-            el, i = itr
-            return convert(Pair{K,V}, el), State(i)
+            return new_el, _State(i)
         end
     end
+    itr = iterate(c.dict)
+    if itr === nothing
+        return
+    end
+    el, i = itr
+    return convert(Pair{K,V}, el), _State(i)
 end
 
 function Base.iterate(
     c::CleverDict{K,V},
-    s::State,
-)::Union{Nothing,Tuple{Pair{K,V},State}} where {K,V}
+    s::_State,
+)::Union{Nothing,Tuple{Pair{K,V},_State}} where {K,V}
     # Note that BitSet is defined by machine Int, so we need to cast any `.int`
     # fields to `Int` for 32-bit machines.
     if _is_dense(c)
@@ -330,25 +325,22 @@ function Base.iterate(
             itr = iterate(c.set, Int(s.int))
         end
         if itr === nothing
-            return nothing
-        else
-            el, i = itr
-            new_el = _inverse_hash(c, el) => c.vector[el]::V
-            @static if VERSION >= v"1.4.0"
-                return new_el, State(i[2], i[1])
-            else
-                return new_el, State(i)
-            end
+            return
         end
-    else
-        itr = iterate(c.dict, Int(s.int))
-        if itr === nothing
-            return nothing
+        el, i = itr
+        new_el = _inverse_hash(c, el) => c.vector[el]::V
+        @static if VERSION >= v"1.4.0"
+            return new_el, _State(i[2], i[1])
         else
-            el, i = itr
-            return convert(Pair{K,V}, el), State(i)
+            return new_el, _State(i)
         end
     end
+    itr = iterate(c.dict, Int(s.int))
+    if itr === nothing
+        return
+    end
+    el, i = itr
+    return convert(Pair{K,V}, el), _State(i)
 end
 
 # we do not have to implement values and keys functions because they can rely
@@ -400,6 +392,7 @@ function Base.convert(
 ) where {K,V}
     return d
 end
+
 function Base.convert(
     ::Type{CleverDict{K,V,typeof(key_to_index),typeof(index_to_key)}},
     src::AbstractDict{K,V},
