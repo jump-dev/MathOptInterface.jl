@@ -202,8 +202,8 @@ Utilities.side_dimension_for_vectorized_dimension
 ## DoubleDicts
 
 ```@docs
-DoubleDict
-DoubleDictInner
-IndexDoubleDict
-IndexDoubleDictInner
+Utilities.DoubleDicts.DoubleDict
+Utilities.DoubleDicts.DoubleDictInner
+Utilities.DoubleDicts.IndexDoubleDict
+Utilities.DoubleDicts.IndexDoubleDictInner
 ```

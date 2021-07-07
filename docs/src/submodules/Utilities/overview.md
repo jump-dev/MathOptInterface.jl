@@ -495,13 +495,14 @@ end
 ## DoubleDicts
 
 When writing MOI interfaces, we often need to handle situations in which we map
-[`MOI.ConstraintIndex`](@ref)s to different values. For example, to a string
-for [`MOI.ConstraintName`](@ref).
+[`ConstraintIndex`](@ref)s to different values. For example, to a string
+for [`ConstraintName`](@ref).
 
 One option is to use a dictionary like `Dict{MOI.ConstraintIndex,String}`.
 However, this incurs a performance cost because the key is not a concrete type.
 
 The DoubleDicts submodule helps this situation by providing two types main
-types [`DoubleDict`](@ref) and [`IndexDoubleDict`](@ref). These types act like
-normal dictionaries, but internally they use more efficient dictionaries
-specialized to the type of the function-set pair.
+types [`Utilities.DoubleDicts.DoubleDict`](@ref) and
+[`Utilities.DoubleDicts.IndexDoubleDict`](@ref). These types act like normal
+dictionaries, but internally they use more efficient dictionaries specialized to
+the type of the function-set pair.
