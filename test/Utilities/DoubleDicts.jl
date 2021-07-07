@@ -140,7 +140,11 @@ end
 
 function test_DoubleDict()
     dict = DoubleDicts.DoubleDict{Float64}()
-    keys = [MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(1), MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(2), MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(1)]
+    keys = [
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(1),
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(2),
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(1),
+    ]
     vals = [1.0, 2.0, 1.0]
     _test_basic_functionality(dict, keys, vals)
     return
@@ -148,7 +152,11 @@ end
 
 function test_IndexDoubleDict()
     dict = DoubleDicts.IndexDoubleDict()
-    keys = [MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(1), MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(2), MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(1)]
+    keys = [
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(1),
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(2),
+        MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(1),
+    ]
     vals = keys
     _test_basic_functionality(dict, keys, vals)
     src = DoubleDicts.IndexDoubleDict()
