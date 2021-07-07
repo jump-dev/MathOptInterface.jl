@@ -198,3 +198,13 @@ The following utilities are useful when working with symmetric matrix cones.
 Utilities.is_diagonal_vectorized_index
 Utilities.side_dimension_for_vectorized_dimension
 ```
+
+
+## DoubleDicts
+
+```@docs
+DoubleDict
+DoubleDictInner
+IndexDoubleDict
+IndexDoubleDictInner
+```

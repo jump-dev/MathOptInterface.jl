@@ -90,8 +90,8 @@ function _test_basic_functionality(dict, k_values, v_values)
     @test length(dict) == 0
 
     dict[k_values[1]] = v_values[1]
-    idict = DoubleDicts.with_type(dict, MOI.SingleVariable, MOI.Integer)
-    bdict = DoubleDicts.with_type(dict, MOI.SingleVariable, MOI.ZeroOne)
+    idict = dict[MOI.SingleVariable, MOI.Integer]
+    bdict = dict[MOI.SingleVariable, MOI.ZeroOne]
     idict_ = dict[MOI.SingleVariable, MOI.Integer]
     @test idict.dict === idict_.dict
     sizehint!(idict, 2)
@@ -126,7 +126,7 @@ function _test_basic_functionality(dict, k_values, v_values)
     bdict[k_values[3]] = v_values[3]
     length(bdict) == 1
 
-    edict = DoubleDicts.with_type(dict, MOI.SingleVariable, MOI.EqualTo{Bool})
+    edict = dict[MOI.SingleVariable, MOI.EqualTo{Bool}]
     ek = MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Bool}}(1)
     delete!(edict, ek)
     @test_throws KeyError edict[ek]
@@ -160,18 +160,6 @@ function test_IndexDoubleDict()
     for (k, v) in src
         @test dest[v] == k
     end
-    return
-end
-
-function test_FunctionSetDoubleDict()
-    dict = DoubleDicts.FunctionSetDoubleDict()
-    keys = [MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(1), MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(2), MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(1)]
-    vals = [
-        (MOI.SingleVariable(MOI.VariableIndex(1)), MOI.Integer()),
-        (MOI.SingleVariable(MOI.VariableIndex(2)), MOI.Integer()),
-        (MOI.SingleVariable(MOI.VariableIndex(1)), MOI.ZeroOne()),
-    ]
-    _test_basic_functionality(dict, keys, vals)
     return
 end
 
