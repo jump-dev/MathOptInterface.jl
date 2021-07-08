@@ -9,7 +9,16 @@ abstract type AbstractDoubleDict{V} <: AbstractDict{MOI.ConstraintIndex,V} end
 abstract type AbstractDoubleDictInner{F,S,V} <:
               AbstractDict{MOI.ConstraintIndex{F,S},V} end
 
-_inner(d::AbstractDoubleDictInner) = d.inner
+"""
+    typed_value(dict::AbstractDoubleDictInner{F,S,V}, value) where {F,S,V}
+
+Convert the `value` stored inside `dict` to the equivalent on the outer
+`DoubleDict`. This is useful when the value type `V` of the inner dict is
+different to the outer dict. (See, e.g., [`IndexDoubleDict`](@ref).)
+"""
+function typed_value(::AbstractDoubleDictInner{F,S,V}, value::V) where {F,S,V}
+    return value
+end
 
 """
     DoubleDict{V}
@@ -83,31 +92,9 @@ mutable struct IndexDoubleDictInner{F,S} <:
     end
 end
 
-# _typed_value
-
-@inline function _typed_value(::DoubleDictInner{F,S,V}, v::V) where {F,S,V}
-    return v
-end
-
-@inline function _typed_value(::IndexDoubleDictInner{F,S}, v::Int64) where {F,S}
+function typed_value(::IndexDoubleDictInner{F,S}, v::Int64) where {F,S}
     return MOI.ConstraintIndex{F,S}(v)
 end
-
-# _reverse_dict
-
-# reversing IndexDoubleDict is ok because they map CI to CI
-function MOI.Utilities._reverse_dict(
-    dest::IndexDoubleDict,
-    src::IndexDoubleDict,
-)
-    for (key, value) in src.dict
-        dest.dict[key] = MOI.Utilities._reverse_dict(value)
-    end
-    return
-end
-# reversing other double dict types is not ok because the map CI fo K
-# so it wont be a double dict anymore, double dict keys are always CIs.
-# We keep the default fallback
 
 # Base.sizehint!
 
@@ -122,7 +109,7 @@ function Base.sizehint!(::AbstractDoubleDict, ::Integer)
 end
 
 function Base.sizehint!(d::AbstractDoubleDictInner, n::Integer)
-    return sizehint!(_inner(d), n)
+    return sizehint!(d.inner, n)
 end
 
 # Base.length
@@ -135,7 +122,7 @@ function Base.length(d::AbstractDoubleDict)
     return len
 end
 
-Base.length(d::AbstractDoubleDictInner) = length(_inner(d))
+Base.length(d::AbstractDoubleDictInner) = length(d.inner)
 
 # Base.haskey
 
@@ -150,7 +137,7 @@ function Base.haskey(
     d::AbstractDoubleDictInner{F,S},
     key::MOI.ConstraintIndex{F,S},
 ) where {F,S}
-    return haskey(_inner(d), key.value)
+    return haskey(d.inner, key.value)
 end
 
 # Base.get
@@ -185,11 +172,10 @@ function Base.getindex(
     d::AbstractDoubleDictInner{F,S},
     key::MOI.ConstraintIndex{F,S},
 ) where {F,S}
-    inner = _inner(d)
-    if !haskey(inner, key.value)
+    if !haskey(d.inner, key.value)
         throw(KeyError(key))
     end
-    return _typed_value(d, inner[key.value])
+    return typed_value(d, d.inner[key.value])
 end
 
 function Base.getindex(d::IndexDoubleDict, ::Type{F}, ::Type{S}) where {F,S}
@@ -213,7 +199,7 @@ function Base.setindex!(
     value::V,
     key::MOI.ConstraintIndex{F,S},
 ) where {F,S,V}
-    _inner(d)[key.value] = value
+    d.inner[key.value] = value
     return value
 end
 
@@ -232,7 +218,7 @@ function Base.setindex!(
     value::MOI.ConstraintIndex{F,S},
     key::MOI.ConstraintIndex{F,S},
 ) where {F,S}
-    _inner(d)[key.value] = value.value
+    d.inner[key.value] = value.value
     return value
 end
 
@@ -244,7 +230,7 @@ function Base.empty!(d::AbstractDoubleDict)
 end
 
 function Base.empty!(d::AbstractDoubleDictInner)
-    empty!(_inner(d))
+    empty!(d.inner)
     return d
 end
 
@@ -262,7 +248,7 @@ function Base.delete!(
     d::AbstractDoubleDictInner{F,S},
     key::MOI.ConstraintIndex{F,S},
 ) where {F,S}
-    delete!(_inner(d), key.value)
+    delete!(d.inner, key.value)
     return d
 end
 
@@ -272,7 +258,7 @@ function Base.isempty(d::AbstractDoubleDict)
     return isempty(d.dict) || all(isempty, values(d.dict))
 end
 
-Base.isempty(d::AbstractDoubleDictInner) = isempty(_inner(d))
+Base.isempty(d::AbstractDoubleDictInner) = isempty(d.inner)
 
 # Base.values
 
@@ -285,7 +271,7 @@ function Base.values(d::AbstractDoubleDict{V})::Vector{V} where {V}
 end
 
 function Base.values(d::DoubleDictInner{F,S,V})::Vector{V} where {F,S,V}
-    return V[v for v in values(_inner(d))]
+    return V[v for v in values(d.inner)]
 end
 
 function Base.values(d::IndexDoubleDict)
@@ -297,7 +283,7 @@ function Base.values(d::IndexDoubleDict)
 end
 
 function Base.values(d::IndexDoubleDictInner{F,S}) where {F,S}
-    return MOI.ConstraintIndex{F,S}.(values(_inner(d)))
+    return MOI.ConstraintIndex{F,S}.(values(d.inner))
 end
 
 # Base.keys
@@ -311,7 +297,7 @@ function Base.keys(d::AbstractDoubleDict)
 end
 
 function Base.keys(d::AbstractDoubleDictInner{F,S}) where {F,S}
-    return MOI.ConstraintIndex{F,S}.(keys(_inner(d)))
+    return MOI.ConstraintIndex{F,S}.(keys(d.inner))
 end
 
 # Base.iterate
@@ -336,18 +322,18 @@ function Base.iterate(d::AbstractDoubleDict)
         inner_next = iterate(inner)
     end
     (k, v), inner_state = inner_next
-    result = MOI.ConstraintIndex{F,S}(k) => _typed_value(getindex(d, F, S), v)
+    result = MOI.ConstraintIndex{F,S}(k) => typed_value(getindex(d, F, S), v)
     return result, (inner_state, outer_next)
 end
 
 function Base.iterate(d::AbstractDoubleDictInner{F,S}) where {F,S}
-    next = iterate(_inner(d))
+    next = iterate(d.inner)
     if next === nothing
         return
     end
     (k, v), inner_state = next
-    result = MOI.ConstraintIndex{F,S}(k) => _typed_value(d, v)
-    return result, (_inner(d), inner_state)
+    result = MOI.ConstraintIndex{F,S}(k) => typed_value(d, v)
+    return result, (d.inner, inner_state)
 end
 
 function Base.iterate(d::AbstractDoubleDict, state)
@@ -366,7 +352,7 @@ function Base.iterate(d::AbstractDoubleDict, state)
         inner_next = iterate(inner)
     end
     (k, v), inner_state = inner_next
-    result = MOI.ConstraintIndex{F,S}(k) => _typed_value(getindex(d, F, S), v)
+    result = MOI.ConstraintIndex{F,S}(k) => typed_value(getindex(d, F, S), v)
     return result, (inner_state, outer_next)
 end
 
@@ -377,7 +363,7 @@ function Base.iterate(d::AbstractDoubleDictInner{F,S}, state) where {F,S}
         return
     end
     ((k, v), next_inner_state) = next
-    result = MOI.ConstraintIndex{F,S}(k) => _typed_value(d, v)
+    result = MOI.ConstraintIndex{F,S}(k) => typed_value(d, v)
     return result, (inner, next_inner_state)
 end
 
