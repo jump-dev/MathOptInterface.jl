@@ -1,9 +1,24 @@
-using SparseArrays, Test
+module TestSets
+
+using SparseArrays
+using Test
 using MathOptInterface
+
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
-@testset "Diagonal element" begin
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
+
+function test_diagonal_element()
     k = 0
     for j in 1:10
         for i in 1:j
@@ -16,23 +31,19 @@ const MOIU = MOI.Utilities
         vec_dim = MOI.dimension(set)
         @test MOIU.side_dimension_for_vectorized_dimension(vec_dim) == side_dim
     end
+    return
 end
 
-@testset "Side dimension" begin
+function test_side_dimension()
     for side_dim in 1:10
         set = MOI.PositiveSemidefiniteConeTriangle(side_dim)
         vec_dim = MOI.dimension(set)
         @test MOIU.side_dimension_for_vectorized_dimension(vec_dim) == side_dim
     end
+    return
 end
 
-@testset "Constant" begin
-    @test MOI.constant(MOI.EqualTo(3)) == 3
-    @test MOI.constant(MOI.GreaterThan(6)) == 6
-    @test MOI.constant(MOI.LessThan(2)) == 2
-end
-
-@testset "Shifts" begin
+function test_shifts()
     @test MOIU.supports_shift_constant(MOI.EqualTo{Int})
     @test MOIU.shift_constant(MOI.EqualTo(3), 1) == MOI.EqualTo(4)
     @test MOIU.supports_shift_constant(MOI.GreaterThan{Int})
@@ -43,27 +54,10 @@ end
     @test MOIU.shift_constant(MOI.Interval(-2, 3), 1) == MOI.Interval(-1, 4)
     @test MOIU.supports_shift_constant(MOI.ZeroOne) == false
     @test_throws MethodError MOIU.shift_constant(MOI.ZeroOne(), 1.0)
+    return
 end
 
-@testset "Dimension" begin
-    @test MOI.dimension(MOI.EqualTo(3.0)) === 1
-    @test MOI.dimension(MOI.Reals(8)) === 8
-    @test MOI.dimension(MOI.NormInfinityCone(5)) === 5
-    @test MOI.dimension(MOI.NormOneCone(5)) === 5
-    @test MOI.dimension(MOI.DualExponentialCone()) === 3
-    @test MOI.dimension(MOI.RelativeEntropyCone(5)) === 5
-    @test MOI.dimension(MOI.NormSpectralCone(2, 3)) === 7
-    @test MOI.dimension(MOI.NormNuclearCone(2, 3)) === 7
-    @test MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(4)) === 10
-    @test MOI.dimension(MOI.PositiveSemidefiniteConeSquare(5)) === 25
-    @test MOI.dimension(MOI.RootDetConeTriangle(6)) === 22
-    @test MOI.dimension(MOI.LogDetConeTriangle(6)) === 23
-    @test MOI.dimension(MOI.RootDetConeSquare(4)) === 17
-    @test MOI.dimension(MOI.LogDetConeSquare(4)) === 18
-    @test MOI.dimension(MOI.SOS2(collect(1:6))) === 6
-end
-
-@testset "Set dot" begin
+function test_set_dot()
     vec = zeros(6)
     @test MOIU.set_dot(vec, vec, MOI.SecondOrderCone(6)) == 0
     @test MOIU.set_dot(vec, vec, MOI.PositiveSemidefiniteConeTriangle(3)) == 0
@@ -126,7 +120,7 @@ end
     @test MOIU.set_dot(sp_vec, sp_vec, MOI.LogDetConeTriangle(3)) == 1
 end
 
-@testset "dot coefficients" begin
+function test_dot_coefficients()
     vec = zeros(6)
     @test MOIU.dot_coefficients(vec, MOI.SecondOrderCone(6)) == vec
     @test MOIU.dot_coefficients(vec, MOI.PositiveSemidefiniteConeTriangle(3)) ==
@@ -180,3 +174,7 @@ end
     sp_vec[5] = 1
     @test MOIU.dot_coefficients(sp_vec, MOI.LogDetConeTriangle(3)) == sp_vec
 end
+
+end  # module
+
+TestSets.runtests()
