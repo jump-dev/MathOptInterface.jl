@@ -1,10 +1,23 @@
-using Test
-using MathOptInterface
-const MOI = MathOptInterface
-const MOIU = MOI.Utilities
+module TestLazyIterators
 
-@testset "EmptyVector{$T}" for T in [Int, Float64]
-    v = MOIU.EmptyVector{T}()
+using MathOptInterface
+using Test
+
+const MOI = MathOptInterface
+
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
+
+function _test_EmptyVector(T)
+    v = MOI.Utilities.EmptyVector{T}()
     @test size(v) == (0,)
     @test length(v) == 0
     @test isempty(v)
@@ -13,10 +26,14 @@ const MOIU = MOI.Utilities
     c = collect(v)
     @test c isa Vector{T}
     @test isempty(c)
+    return
 end
 
-@testset "LazyMap{$T}" for T in [Int, Float64]
-    v = MOIU.LazyMap{T}(x -> x^2, [2, 3])
+test_EmptyVector_Int() = _test_EmptyVector(Int)
+test_EmptyVector_Float64() = _test_EmptyVector(Float64)
+
+function _test_LazyMap(T)
+    v = MOI.Utilities.LazyMap{T}(x -> x^2, [2, 3])
     @test size(v) == (2,)
     @test length(v) == 2
     @test !isempty(v)
@@ -24,4 +41,12 @@ end
     c = collect(v)
     @test c isa Vector{T}
     @test c == [4, 9]
+    return
 end
+
+test_LazyMap_Int() = _test_LazyMap(Int)
+test_LazyMap_Float64() = _test_LazyMap(Float64)
+
+end  # module
+
+TestLazyIterators.runtests()
