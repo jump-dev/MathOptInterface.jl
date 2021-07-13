@@ -1,7 +1,11 @@
 struct EmptyVector{T} <: AbstractVector{T} end
+
 Base.size(::EmptyVector) = (0,)
+
 Base.isempty(::EmptyVector) = true
+
 Base.eltype(::EmptyVector{T}) where {T} = T
+
 Base.iterate(::EmptyVector) = nothing
 
 """
@@ -18,21 +22,28 @@ struct LazyMap{T,VT,F}
     f::F
     data::VT
 end
+
 function LazyMap{T}(f, data) where {T}
     return LazyMap{T,typeof(data),typeof(f)}(f, data)
 end
+
 Base.size(it::LazyMap) = size(it.data)
+
 Base.length(it::LazyMap) = length(it.data)
+
 function Base.iterate(it::LazyMap, args...)
     elem_state = iterate(it.data, args...)
     if elem_state === nothing
-        return nothing
+        return
     else
         return it.f(elem_state[1]), elem_state[2]
     end
 end
+
 Base.IteratorSize(it::LazyMap) = Base.IteratorSize(it.data)
+
 Base.eltype(::LazyMap{T}) where {T} = T
+
 function Iterators.reverse(it::LazyMap{T}) where {T}
     return LazyMap{T}(it.f, Iterators.reverse(it.data))
 end
