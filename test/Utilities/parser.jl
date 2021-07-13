@@ -22,7 +22,10 @@ function _struct_isequal(a::T, b::T) where {T}
 end
 
 function test__parse_function()
-    @test _struct_isequal(MOIU._parse_function(:x), MOIU._ParsedSingleVariable(:x))
+    @test _struct_isequal(
+        MOIU._parse_function(:x),
+        MOIU._ParsedSingleVariable(:x),
+    )
     @test _struct_isequal(
         MOIU._parse_function(:([x, y, z])),
         MOIU._ParsedVectorOfVariables([:x, :y, :z]),
