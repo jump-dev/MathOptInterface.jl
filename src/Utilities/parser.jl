@@ -87,7 +87,10 @@ function _parse_function(ex)
                     )
                     append!(
                         quadratic_terms,
-                        _ParsedVectorQuadraticTerm.(outindex, f.quadratic_terms),
+                        _ParsedVectorQuadraticTerm.(
+                            outindex,
+                            f.quadratic_terms,
+                        ),
                     )
                     push!(constant, f.constant)
                 end
