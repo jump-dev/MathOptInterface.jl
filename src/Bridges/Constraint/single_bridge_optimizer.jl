@@ -44,6 +44,22 @@ function MOIB.is_bridged(b::SingleBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     return MOIB.supports_bridging_constrained_variable(b, S)
 end
 
+MOIB.is_bridged(::SingleBridgeOptimizer, ::MOI.VariableIndex) = false
+function MOIB.is_bridged(
+    b::SingleBridgeOptimizer,
+    ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
+) where {S}
+    return MOIB.is_bridged(b, MOI.SingleVariable, S) &&
+           haskey(Constraint.bridges(b), ci)
+end
+function MOIB.is_bridged(
+    b::SingleBridgeOptimizer,
+    ci::MOI.ConstraintIndex{MOI.VectorOfVariables,S},
+) where {S}
+    return MOIB.is_bridged(b, MOI.VectorOfVariables, S) &&
+           haskey(Constraint.bridges(b), ci)
+end
+
 function MOIB.supports_bridging_constrained_variable(
     b::SingleBridgeOptimizer,
     S::Type{<:MOI.AbstractSet},
