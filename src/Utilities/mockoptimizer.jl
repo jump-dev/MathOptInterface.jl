@@ -1115,7 +1115,7 @@ function _set_mock_primal(
 end
 
 function _set_mock_primal(mock::MockOptimizer, primal::MOI.ResultStatusCode)
-    MOI.set(mock, MOI.PrimalStatus(), MOI.primal)
+    MOI.set(mock, MOI.PrimalStatus(), primal)
     return
 end
 
