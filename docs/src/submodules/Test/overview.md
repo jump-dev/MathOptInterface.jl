@@ -161,8 +161,10 @@ MOI.Test.test_category_name_that_failed(model, config)
 You can look-up the source code of the test that failed by searching for it
 in the `src/Test/test_category.jl` file.
 
-Each test function also has a docstring that explains what the test is
-for: `? MOI.Test.test_category_name_that_failed`.
+!!! tip
+    Each test function also has a docstring that explains what the test is
+    for. Use `? MOI.Test.test_category_name_that_failed` from the REPL to
+    read it.
 
 ## How to add a test
 
