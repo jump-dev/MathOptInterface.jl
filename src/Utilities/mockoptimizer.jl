@@ -1057,9 +1057,8 @@ function mock_optimize!(
     _set_mock_dual(mock, dual_status_constraint_duals...)
     for con_basis_pair in con_basis
         F, S = con_basis_pair.first
-        for (i, ci) in enumerate(
-            MOI.get(mock, MOI.ListOfConstraintIndices{F,S}())
-        )
+        indices = MOI.get(mock, MOI.ListOfConstraintIndices{F,S}())
+        for (i, ci) in enumerate(indices)
             MOI.set(
                 mock,
                 MOI.ConstraintBasisStatus(),
