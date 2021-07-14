@@ -1,4 +1,81 @@
+"""
+    abstract type SetMapBridge{T,S2,S1,F,G} <: AbstractBridge end
+
+Consider two type of sets `S1`, `S2` and a linear mapping `A` that
+the image of a set of type `S1` under `A` is a set of type `S2`.
+A `SetMapBridge{T,S2,S1,F,G}` is a bridge that maps `G`-in-`S2` constraints
+into `F`-in-`S1` by mapping the function through `A`.
+
+The linear map `A` is described by [`map_set`](@ref), [`map_function`](@ref).
+Implementing a method for these two functions is sufficient to bridge
+constraints. In order for the getters and setters of dual solutions,
+starting values, etc...  to work as well a method for the following
+functions should be implemented as well: [`inverse_map_set`](@ref),
+[`inverse_map_function`](@ref), [`adjoint_map_function`](@ref) and
+[`inverse_adjoint_map_function`](@ref). See the docstrings of the function
+to see which feature would be missing it it was not implemented for a given
+bridge.
+"""
 abstract type SetMapBridge{T,S2,S1,F,G} <: AbstractBridge end
+
+"""
+    map_set(::Type{BT}, set) where {BT}
+
+Return the image of `set` through the linear map `A` defined in
+[`SetMapBridge`](@ref). This is used for bridging the constraint and setting
+the [`MathOptInterface.ConstraintSet`](@ref).
+"""
+function map_set end
+
+"""
+    inverse_map_set(::Type{BT}, set) where {BT}
+
+Return the preimage of `set` through the linear map `A` defined in
+[`SetMapBridge`](@ref). This is used for getting the
+[`MathOptInterface.ConstraintSet`](@ref).
+"""
+function inverse_map_set end
+
+"""
+    map_function(::Type{BT}, func) where {BT}
+
+Return the image of `func` through the linear map `A` defined in
+[`SetMapBridge`](@ref). This is used for bridging the constraint, setting
+the [`MathOptInterface.ConstraintFunction`](@ref) and
+[`MathOptInterface.ConstraintPrimalStart`](@ref) and
+modifying the function with [`MathOptInterface.modify`](@ref).
+"""
+function map_function end
+
+"""
+    inverse_map_function(::Type{BT}, func) where {BT}
+
+Return the image of `func` through the inverse of the linear map `A` defined in
+[`SetMapBridge`](@ref). This is used for getting the
+[`MathOptInterface.ConstraintFunction`](@ref),
+the [`MathOptInterface.ConstraintPrimal`](@ref) and the
+[`MathOptInterface.ConstraintPrimalStart`](@ref).
+"""
+function inverse_map_function end
+
+"""
+    adjoint_map_function(::Type{BT}, func) where {BT}
+
+Return the image of `func` through the adjoint of the linear map `A` defined in
+[`SetMapBridge`](@ref). This is used for getting the
+[`MathOptInterface.ConstraintDual`](@ref) and
+[`MathOptInterface.ConstraintDualStart`](@ref).
+"""
+function adjoint_map_function end
+
+"""
+    adjoint_map_function(::Type{BT}, func) where {BT}
+
+Return the image of `func` through the inverse of the adjoint of the linear map
+`A` defined in [`SetMapBridge`](@ref). This is used for setting the
+[`MathOptInterface.ConstraintDualStart`](@ref).
+"""
+function inverse_adjoint_map_function end
 
 function bridge_constraint(
     BT::Type{<:SetMapBridge{T,S2,S1,F,G}},
