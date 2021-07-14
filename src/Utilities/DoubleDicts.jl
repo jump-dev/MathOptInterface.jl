@@ -16,9 +16,7 @@ Convert the `value` stored inside `dict` to the equivalent on the outer
 `DoubleDict`. This is useful when the value type `V` of the inner dict is
 different to the outer dict. (See, e.g., [`IndexDoubleDict`](@ref).)
 """
-function typed_value(::AbstractDoubleDictInner{F,S,V}, value::V) where {F,S,V}
-    return value
-end
+typed_value(::AbstractDoubleDictInner, value) = value
 
 """
     DoubleDict{V}
@@ -164,10 +162,7 @@ function Base.get(
     key::MOI.ConstraintIndex{F,S},
     default,
 ) where {F,S}
-    if !haskey(d, key)
-        return default
-    end
-    return typed_value(d, d.inner[key.value])
+    return typed_value(d, get(d.inner, key.value, default))
 end
 
 # Base.getindex
@@ -184,10 +179,10 @@ function Base.getindex(
     d::AbstractDoubleDictInner{F,S},
     key::MOI.ConstraintIndex{F,S},
 ) where {F,S}
-    if !haskey(d, key)
+    x = get(d.inner, key.value) do
         throw(KeyError(key))
     end
-    return typed_value(d, d.inner[key.value])
+    return typed_value(d, x)
 end
 
 # Base.setindex!
