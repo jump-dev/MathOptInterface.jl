@@ -180,7 +180,7 @@ function Base.getindex(
     key::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     x = get(d.inner, key.value) do
-        throw(KeyError(key))
+        return throw(KeyError(key))
     end
     return typed_value(d, x)
 end
