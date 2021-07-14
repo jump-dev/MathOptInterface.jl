@@ -103,7 +103,7 @@ bridged_mock = MOIB.Variable.SOCtoRSOC{Float64}(mock)
             @test_throws err MOI.delete(bridged_mock, xyz[i])
         end
 
-        test_delete_bridged_variables(
+        _test_delete_bridged_variables(
             bridged_mock,
             xyz,
             MOI.SecondOrderCone,

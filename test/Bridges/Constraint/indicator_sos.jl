@@ -258,7 +258,7 @@ end
         [("w", MOI.LessThan{Float64}(0.0)), ("z", MOI.ZeroOne())],
     )
 
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         2,

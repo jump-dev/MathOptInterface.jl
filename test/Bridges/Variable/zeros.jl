@@ -171,7 +171,7 @@ end
 end
 
 @testset "Delete" begin
-    test_delete_bridged_variables(
+    _test_delete_bridged_variables(
         bridged_mock,
         yz,
         MOI.Zeros,

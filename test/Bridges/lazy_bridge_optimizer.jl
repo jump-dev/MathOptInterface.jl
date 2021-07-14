@@ -639,7 +639,7 @@ end
         end
         @testset "Combining two briges" begin
             x, cx = MOI.add_constrained_variable(bridged, MOI.LessThan(one(T)))
-            test_delete_bridged_variable(
+            _test_delete_bridged_variable(
                 bridged,
                 x,
                 MOI.LessThan{T},
@@ -1431,7 +1431,7 @@ end
         MOI.delete(bridged, y)
         @test MOI.get(bridged, MOI.NumberOfVariables()) == 4
         @test !MOI.is_valid(bridged, y)
-        test_delete_bridged_variables(
+        _test_delete_bridged_variables(
             bridged,
             x,
             MOI.RotatedSecondOrderCone,

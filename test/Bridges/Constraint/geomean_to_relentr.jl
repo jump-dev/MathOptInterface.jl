@@ -163,7 +163,7 @@ config = MOIT.Config()
             end
         end
 
-        test_delete_bridge(
+        _test_delete_bridge(
             bridged_mock,
             ci,
             4,
@@ -331,7 +331,7 @@ config = MOIT.Config()
             end
         end
 
-        test_delete_bridge(
+        _test_delete_bridge(
             bridged_mock,
             ci,
             10,
@@ -478,7 +478,7 @@ config = MOIT.Config()
             end
         end
 
-        test_delete_bridge(
+        _test_delete_bridge(
             bridged_mock,
             ci,
             2,

@@ -56,7 +56,7 @@ config = MOIT.Config(duals = false)
         ),
     )
 
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         4,
@@ -110,7 +110,7 @@ end
         ),
     )
 
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         3,

@@ -256,13 +256,13 @@ end
 
     @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) ==
           [(MOI.ScalarAffineFunction{Int}, MOI.Interval{Int})]
-    test_num_constraints(
+    _test_num_constraints(
         model,
         MOI.ScalarAffineFunction{Int},
         MOI.GreaterThan{Int},
         0,
     )
-    test_num_constraints(
+    _test_num_constraints(
         model,
         MOI.ScalarAffineFunction{Int},
         MOI.Interval{Int},
@@ -283,13 +283,13 @@ end
         (MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}),
         (MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}),
     ]
-    test_num_constraints(
+    _test_num_constraints(
         model,
         MOI.ScalarAffineFunction{Int},
         MOI.GreaterThan{Int},
         1,
     )
-    test_num_constraints(
+    _test_num_constraints(
         model,
         MOI.ScalarAffineFunction{Int},
         MOI.Interval{Int},
@@ -323,19 +323,19 @@ end
             (MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}),
             (MOI.SingleVariable, MOI.Interval{Int}),
         ])
-        test_num_constraints(
+        _test_num_constraints(
             model,
             MOI.ScalarAffineFunction{Int},
             MOI.GreaterThan{Int},
             1,
         )
-        test_num_constraints(
+        _test_num_constraints(
             model,
             MOI.ScalarAffineFunction{Int},
             MOI.Interval{Int},
             1,
         )
-        test_num_constraints(model, MOI.SingleVariable, MOI.Interval{Int}, i)
+        _test_num_constraints(model, MOI.SingleVariable, MOI.Interval{Int}, i)
         @test (@inferred MOI.get(
             model,
             MOI.ListOfConstraintIndices{
@@ -369,25 +369,25 @@ end
             (MOI.SingleVariable, MOI.Interval{Int}),
             (MOI.VectorOfVariables, MOI.Nonnegatives),
         ])
-        test_num_constraints(
+        _test_num_constraints(
             model,
             MOI.ScalarAffineFunction{Int},
             MOI.GreaterThan{Int},
             1,
         )
-        test_num_constraints(
+        _test_num_constraints(
             model,
             MOI.ScalarAffineFunction{Int},
             MOI.Interval{Int},
             1,
         )
-        test_num_constraints(
+        _test_num_constraints(
             model,
             MOI.SingleVariable,
             MOI.Interval{Int},
             n + 2,
         )
-        test_num_constraints(model, MOI.VectorOfVariables, MOI.Nonnegatives, i)
+        _test_num_constraints(model, MOI.VectorOfVariables, MOI.Nonnegatives, i)
         @test (@inferred MOI.get(
             model,
             MOI.ListOfConstraintIndices{
@@ -424,20 +424,20 @@ end
         (MOI.SingleVariable, MOI.Interval{Int}),
         (MOI.VectorOfVariables, MOI.Nonnegatives),
     ])
-    test_num_constraints(
+    _test_num_constraints(
         model,
         MOI.ScalarAffineFunction{Int},
         MOI.GreaterThan{Int},
         0,
     )
-    test_num_constraints(
+    _test_num_constraints(
         model,
         MOI.ScalarAffineFunction{Int},
         MOI.Interval{Int},
         1,
     )
-    test_num_constraints(model, MOI.SingleVariable, MOI.Interval{Int}, n + 2)
-    test_num_constraints(model, MOI.VectorOfVariables, MOI.Nonnegatives, n)
+    _test_num_constraints(model, MOI.SingleVariable, MOI.Interval{Int}, n + 2)
+    _test_num_constraints(model, MOI.VectorOfVariables, MOI.Nonnegatives, n)
     @test (@inferred MOI.get(
         model,
         MOI.ListOfConstraintIndices{

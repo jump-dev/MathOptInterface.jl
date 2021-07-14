@@ -129,7 +129,7 @@ config = MOIT.Config()
               Float64[4, 0, 4, 0, 0, 4, 1, 1, 0, 4, 1, -1, 1, 0, 4]
     end
 
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         1,
@@ -293,7 +293,7 @@ end
               Float64[4, 0, 4, 0, 0, 4, 0.5, 0.5, 0, 4, 0.5, -0.5, 0.5, 0, 4]
     end
 
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         1,

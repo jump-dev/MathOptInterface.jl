@@ -47,7 +47,7 @@ config = MOIT.Config()
 
     @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), ci) == 1
 
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         5,

@@ -193,7 +193,7 @@ end
         )
     end
 
-    test_delete_objective(
+    _test_delete_objective(
         bridged_mock,
         2,
         (
