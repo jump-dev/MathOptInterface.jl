@@ -128,6 +128,7 @@ MOIU.set_mock_optimize!(
         mock,
         MOI.INFEASIBLE,
         MOI.NO_SOLUTION,
+        MOI.INFEASIBILITY_CERTIFICATE,
         (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1],
     ),
 )
@@ -253,6 +254,7 @@ MOIU.set_mock_optimize!(
         mock,
         MOI.INFEASIBLE,
         MOI.NO_SOLUTION,
+        MOI.INFEASIBILITY_CERTIFICATE,
         (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
             [-1, -1],
     ),
