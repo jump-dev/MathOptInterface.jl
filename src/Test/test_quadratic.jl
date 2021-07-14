@@ -1099,13 +1099,19 @@ end
 """
     test_quadratic_SecondOrderCone_basic(model::MOI.ModelLike, config::Config)
 
-Test the problem:
+Test the non-convex formulation of a SecondOrderCone constraint:
 ```
 min t
 s.t. x + y >= 1 (c1)
      x^2 + y^2 <= t^2 (c2)
      t >= 0 (bound)
 ```
+
+This is a useful test because some solvers have support for detecting that it is
+actually a convex problem due to the `t >= 0` bound.
+
+If your solver does not have this support (and therefore fails this test), you
+can safely exclude it.
 """
 function test_quadratic_SecondOrderCone_basic(
     model::MOI.ModelLike,
