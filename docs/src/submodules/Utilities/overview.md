@@ -524,13 +524,10 @@ use instead:
 function function_barrier(
     dest,
     src,
-    index_map,
-    ::Type{F},
-    ::Type{S},
+    index_map::MOI.Utilities.DoubleDicts.IndexDoubleDictInner{F,S},
 ) where {F,S}
-    type_stable_map = index_map[F, S]
     for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
-        dest_ci = type_stable_map[ci]
+        dest_ci = index_map[ci]
         # ...
     end
     return
@@ -538,6 +535,6 @@ end
 
 index_map = MOI.copy_to(dest, src)
 for (F, S) in MOI.get(src, MOI.ListOfConstraintTypesPresent())
-    function_barrier(dest, src, index_map, F, S)
+    function_barrier(dest, src, index_map[F, S])
 end
 ```
