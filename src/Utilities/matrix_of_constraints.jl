@@ -450,6 +450,7 @@ function _load_constraints(
 end
 
 _add_variable(model::MatrixOfConstraints) = add_column(model.coefficients)
+
 function _add_variables(model::MatrixOfConstraints, n)
     return add_columns(model.coefficients, n)
 end
@@ -527,6 +528,7 @@ function load_constants(
     copyto!(b, offset + 1, func.constants)
     return
 end
+
 function_constants(b::Vector, rows) = b[rows]
 
 # FIXME does not work for all sets
@@ -534,7 +536,7 @@ set_from_constants(::Vector, ::Type{S}, rows) where {S} = S(length(rows))
 
 function MOI.get(
     model::MatrixOfConstraints,
-    attr::Union{MOI.CanonicalConstraintFunction,MOI.ConstraintFunction},
+    ::Union{MOI.CanonicalConstraintFunction,MOI.ConstraintFunction},
     ci::MOI.ConstraintIndex,
 )
     @assert model.final_touch
@@ -549,7 +551,7 @@ end
 
 function MOI.get(
     model::MatrixOfConstraints,
-    attr::MOI.ConstraintSet,
+    ::MOI.ConstraintSet,
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     @assert model.final_touch
