@@ -1,117 +1,104 @@
 using Base.Meta: isexpr
 
-# A parser for a simple human-readable of an MOI model.
-# This should be thought of as a compact way to write small models
-# for tests, and not an exchange format.
-#
-# variables: x, y, z
-# minobjective: 2x + 3y
-# con1: x + y <= 1
-# con2: [x,y] in Set
-# x >= 0.0
-#
-# special labels: variables, minobjective, maxobjective
-# everything else denotes a constraint with a name
-#
-# "x - y" does NOT currently parse, needs to be written as "x + -1.0*y"
-# "x^2" does NOT currently parse, needs to be written as "x*x"
-
-struct ParsedScalarAffineTerm
+struct _ParsedScalarAffineTerm
     coefficient::Float64
     variable::Symbol
 end
 
-struct ParsedScalarAffineFunction
-    terms::Vector{ParsedScalarAffineTerm}
+struct _ParsedScalarAffineFunction
+    terms::Vector{_ParsedScalarAffineTerm}
     constant::Float64
 end
 
-struct ParsedVectorAffineTerm
+struct _ParsedVectorAffineTerm
     output_index::Int64
-    scalar_term::ParsedScalarAffineTerm
+    scalar_term::_ParsedScalarAffineTerm
 end
 
-struct ParsedVectorAffineFunction
-    terms::Vector{ParsedVectorAffineTerm}
+struct _ParsedVectorAffineFunction
+    terms::Vector{_ParsedVectorAffineTerm}
     constant::Vector{Float64}
 end
 
-struct ParsedScalarQuadraticTerm
+struct _ParsedScalarQuadraticTerm
     coefficient::Float64
     variable_1::Symbol
     variable_2::Symbol
 end
 
-struct ParsedScalarQuadraticFunction
-    affine_terms::Vector{ParsedScalarAffineTerm}
-    quadratic_terms::Vector{ParsedScalarQuadraticTerm}
+struct _ParsedScalarQuadraticFunction
+    affine_terms::Vector{_ParsedScalarAffineTerm}
+    quadratic_terms::Vector{_ParsedScalarQuadraticTerm}
     constant::Float64
 end
 
-struct ParsedVectorQuadraticTerm
+struct _ParsedVectorQuadraticTerm
     output_index::Int64
-    scalar_term::ParsedScalarQuadraticTerm
+    scalar_term::_ParsedScalarQuadraticTerm
 end
 
-struct ParsedVectorQuadraticFunction
-    affine_terms::Vector{ParsedVectorAffineTerm}
-    quadratic_terms::Vector{ParsedVectorQuadraticTerm}
+struct _ParsedVectorQuadraticFunction
+    affine_terms::Vector{_ParsedVectorAffineTerm}
+    quadratic_terms::Vector{_ParsedVectorQuadraticTerm}
     constant::Vector{Float64}
 end
 
-struct ParsedSingleVariable
+struct _ParsedSingleVariable
     variable::Symbol
 end
 
-struct ParsedVectorOfVariables
+struct _ParsedVectorOfVariables
     variables::Vector{Symbol}
 end
 
 # Not written with any considerations for performance
-function parsefunction(ex)
+function _parse_function(ex)
     if isa(ex, Symbol)
-        return ParsedSingleVariable(ex)
+        return _ParsedSingleVariable(ex)
     elseif isexpr(ex, :vect)
         if all(s -> isa(s, Symbol), ex.args)
-            return ParsedVectorOfVariables(copy(ex.args))
+            return _ParsedVectorOfVariables(copy(ex.args))
         else
-            singlefunctions = parsefunction.(ex.args)
-            affine_terms = ParsedVectorAffineTerm[]
-            quadratic_terms = ParsedVectorQuadraticTerm[]
+            singlefunctions = _parse_function.(ex.args)
+            affine_terms = _ParsedVectorAffineTerm[]
+            quadratic_terms = _ParsedVectorQuadraticTerm[]
             constant = Float64[]
             for (outindex, f) in enumerate(singlefunctions)
-                if isa(f, ParsedSingleVariable)
+                if isa(f, _ParsedSingleVariable)
                     push!(
                         affine_terms,
-                        ParsedVectorAffineTerm(
+                        _ParsedVectorAffineTerm(
                             outindex,
-                            ParsedScalarAffineTerm(1.0, f.variable),
+                            _ParsedScalarAffineTerm(1.0, f.variable),
                         ),
                     )
                     push!(constant, 0.0)
-                elseif isa(f, ParsedScalarAffineFunction)
+                elseif isa(f, _ParsedScalarAffineFunction)
                     append!(
                         affine_terms,
-                        ParsedVectorAffineTerm.(outindex, f.terms),
+                        _ParsedVectorAffineTerm.(outindex, f.terms),
                     )
                     push!(constant, f.constant)
                 else
-                    @assert isa(f, ParsedScalarQuadraticFunction)
+                    @assert isa(f, _ParsedScalarQuadraticFunction)
                     append!(
                         affine_terms,
-                        ParsedVectorAffineTerm.(outindex, f.affine_terms),
+                        _ParsedVectorAffineTerm.(outindex, f.affine_terms),
                     )
                     append!(
                         quadratic_terms,
-                        ParsedVectorQuadraticTerm.(outindex, f.quadratic_terms),
+                        _ParsedVectorQuadraticTerm.(
+                            outindex,
+                            f.quadratic_terms,
+                        ),
                     )
                     push!(constant, f.constant)
                 end
             end
             if length(quadratic_terms) == 0
-                return ParsedVectorAffineFunction(affine_terms, constant)
+                return _ParsedVectorAffineFunction(affine_terms, constant)
             else
-                return ParsedVectorQuadraticFunction(
+                return _ParsedVectorQuadraticFunction(
                     affine_terms,
                     quadratic_terms,
                     constant,
@@ -132,8 +119,8 @@ function parsefunction(ex)
         if ex.args[1] != :+
             error("Expected `+`, got `$(ex.args[1])`.")
         end
-        affine_terms = ParsedScalarAffineTerm[]
-        quadratic_terms = ParsedScalarQuadraticTerm[]
+        affine_terms = _ParsedScalarAffineTerm[]
+        quadratic_terms = _ParsedScalarQuadraticTerm[]
         constant = 0.0
         for subex in ex.args[2:end]
             if isexpr(subex, :call) && subex.args[1] == :*
@@ -143,7 +130,7 @@ function parsefunction(ex)
                     @assert isa(subex.args[3], Symbol)
                     push!(
                         affine_terms,
-                        ParsedScalarAffineTerm(subex.args[2], subex.args[3]),
+                        _ParsedScalarAffineTerm(subex.args[2], subex.args[3]),
                     )
                 else
                     # constant * variable * variable for quadratic
@@ -158,7 +145,7 @@ function parsefunction(ex)
                     end
                     push!(
                         quadratic_terms,
-                        ParsedScalarQuadraticTerm(
+                        _ParsedScalarQuadraticTerm(
                             coefficient,
                             subex.args[3],
                             subex.args[4],
@@ -166,16 +153,16 @@ function parsefunction(ex)
                     )
                 end
             elseif isa(subex, Symbol)
-                push!(affine_terms, ParsedScalarAffineTerm(1.0, subex))
+                push!(affine_terms, _ParsedScalarAffineTerm(1.0, subex))
             else
                 @assert isa(subex, Number)
                 constant += subex
             end
         end
         if length(quadratic_terms) == 0
-            return ParsedScalarAffineFunction(affine_terms, constant)
+            return _ParsedScalarAffineFunction(affine_terms, constant)
         else
-            return ParsedScalarQuadraticFunction(
+            return _ParsedScalarQuadraticFunction(
                 affine_terms,
                 quadratic_terms,
                 constant,
@@ -185,12 +172,12 @@ function parsefunction(ex)
 end
 
 # see tests for examples
-function separatelabel(ex)
+function _separate_label(ex)
     if isexpr(ex, :call) && ex.args[1] == :(:)
         # A line like `variables: x`.
         return ex.args[2], ex.args[3]
     elseif isexpr(ex, :tuple)
-        # A line like `variables: x, y`. Parsed as `((variables:x), y)`
+        # A line like `variables: x, y`. _Parsed as `((variables:x), y)`
         ex = copy(ex)
         @assert isexpr(ex.args[1], :call) && ex.args[1].args[1] == :(:)
         label = ex.args[1].args[2]
@@ -212,7 +199,7 @@ function separatelabel(ex)
     end
 end
 
-function parsedtoMOI(model, s::Symbol)
+function _parsed_to_moi(model, s::Symbol)
     index = MOI.get(model, MOI.VariableIndex, String(s))
     if index === nothing
         error("Invalid variable name $s.")
@@ -220,25 +207,26 @@ function parsedtoMOI(model, s::Symbol)
     return index
 end
 
-# Used for Vector{Symbol}, Vector{ParsedScalarAffineTerm}, Vector{ParsedVectorAffineTerm},
-# Vector{ParsedScalarQuadraticTerm} and Vector{ParsedVectorQuadraticTerm}
-parsedtoMOI(model, s::Vector) = parsedtoMOI.(model, s)
+# Used for Vector{Symbol}, Vector{_ParsedScalarAffineTerm},
+# Vector{_ParsedVectorAffineTerm}, Vector{_ParsedScalarQuadraticTerm} and
+# Vector{_ParsedVectorQuadraticTerm}.
+_parsed_to_moi(model, s::Vector) = _parsed_to_moi.(model, s)
 
-parsedtoMOI(model, s::Union{Float64,Int64}) = s
+_parsed_to_moi(model, s::Union{Float64,Int64}) = s
 
 for typename in [
-    :ParsedScalarAffineTerm,
-    :ParsedScalarAffineFunction,
-    :ParsedVectorAffineTerm,
-    :ParsedVectorAffineFunction,
-    :ParsedScalarQuadraticTerm,
-    :ParsedScalarQuadraticFunction,
-    :ParsedVectorQuadraticTerm,
-    :ParsedVectorQuadraticFunction,
-    :ParsedSingleVariable,
-    :ParsedVectorOfVariables,
+    :_ParsedScalarAffineTerm,
+    :_ParsedScalarAffineFunction,
+    :_ParsedVectorAffineTerm,
+    :_ParsedVectorAffineFunction,
+    :_ParsedScalarQuadraticTerm,
+    :_ParsedScalarQuadraticFunction,
+    :_ParsedVectorQuadraticTerm,
+    :_ParsedVectorQuadraticFunction,
+    :_ParsedSingleVariable,
+    :_ParsedVectorOfVariables,
 ]
-    moiname = Meta.parse(replace(string(typename), "Parsed" => "MOI."))
+    moiname = Meta.parse(replace(string(typename), "_Parsed" => "MOI."))
     fields = fieldnames(eval(typename))
     constructor = Expr(
         :call,
@@ -246,20 +234,62 @@ for typename in [
         [
             Expr(
                 :call,
-                :parsedtoMOI,
+                :_parsed_to_moi,
                 :model,
                 Expr(:., :f, Base.Meta.quot(field)),
             ) for field in fields
         ]...,
     )
-    @eval parsedtoMOI(model, f::$typename) = $constructor
+    @eval _parsed_to_moi(model, f::$typename) = $constructor
 end
 
-function loadfromstring!(model, s)
-    parsedlines = filter(ex -> ex != nothing, Meta.parse.(split(s, "\n")))
+# Ideally, this should be load_from_string
+"""
+    loadfromstring!(model, s)
 
+A utility function to aid writing tests.
+
+## WARNING
+
+This function is not intended for widespread use! It is mainly used as a tool to
+simplify writing tests in MathOptInterface. Do not use it as an exchange format
+for storing or transmitting problem instances. Use the FileFormats submodule
+instead.
+
+## Example
+
+```
+MOI.Utilities.loadfromstring!(
+    model,
+    \"\"\"
+    variables: x, y, z
+    minobjective: 2x + 3y
+    con1: x + y <= 1
+    con2: [x, y] in MOI.Nonnegatives(2)
+    x >= 0.0
+    \"\"\"
+)
+```
+
+## Notes
+
+Special labels are:
+ - variables
+ - minobjective
+ - maxobjectives
+Everything else denotes a constraint with a name.
+
+Do not name `SingleVariable` constraints.
+
+## Exceptions
+
+ * `x - y` does NOT currently parse. Instead, write `x + -1.0 * y`.
+ * `x^2` does NOT currently parse. Instead, write `x * x`.
+"""
+function loadfromstring!(model, s)
+    parsedlines = filter(ex -> ex !== nothing, Meta.parse.(split(s, "\n")))
     for line in parsedlines
-        label, ex = separatelabel(line)
+        label, ex = _separate_label(line)
         if label == :variables
             if isexpr(ex, :tuple)
                 for v in ex.args
@@ -272,17 +302,17 @@ function loadfromstring!(model, s)
                 MOI.set(model, MOI.VariableName(), vindex, String(ex))
             end
         elseif label == :maxobjective
-            f = parsedtoMOI(model, parsefunction(ex))
+            f = _parsed_to_moi(model, _parse_function(ex))
             MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
             MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
         elseif label == :minobjective
-            f = parsedtoMOI(model, parsefunction(ex))
+            f = _parsed_to_moi(model, _parse_function(ex))
             MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
             MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
         else
             # constraint
             @assert isexpr(ex, :call)
-            f = parsedtoMOI(model, parsefunction(ex.args[2]))
+            f = _parsed_to_moi(model, _parse_function(ex.args[2]))
             if ex.args[1] == :in
                 # Could be safer here
                 set = Core.eval(MOI, ex.args[3])
