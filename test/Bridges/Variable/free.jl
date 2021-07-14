@@ -117,7 +117,7 @@ end
     @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), cy) == [-100.0]
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), cy) == [0.0]
 
-    test_delete_bridged_variable(
+    _test_delete_bridged_variable(
         bridged_mock,
         vis[1],
         MOI.Reals,
@@ -127,7 +127,7 @@ end
             (MOI.VectorOfVariables, MOI.Nonpositives, 0),
         ),
     )
-    test_delete_bridged_variable(
+    _test_delete_bridged_variable(
         bridged_mock,
         vis[2],
         MOI.Reals,
@@ -270,7 +270,7 @@ end
         MOIU.test_models_equal(bridged_mock, model, var_names, ["c1", "c2"])
     end
 
-    test_delete_bridged_variable(
+    _test_delete_bridged_variable(
         bridged_mock,
         vis[1],
         MOI.Reals,
@@ -282,7 +282,7 @@ end
         used_bridges = 0,
         used_constraints = 0,
     )
-    test_delete_bridged_variable(
+    _test_delete_bridged_variable(
         bridged_mock,
         vis[2],
         MOI.Reals,

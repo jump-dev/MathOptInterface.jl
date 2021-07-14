@@ -96,7 +96,7 @@ bridged_mock = MOIB.Variable.RSOCtoPSD{Float64}(mock)
         MOIU.test_models_equal(bridged_mock, model, var_names, ["cxy", "c"])
     end
 
-    test_delete_bridged_variables(
+    _test_delete_bridged_variables(
         bridged_mock,
         xy,
         MOI.RotatedSecondOrderCone,
@@ -242,7 +242,7 @@ end
             @test_throws err MOI.delete(bridged_mock, v[i])
         end
 
-        test_delete_bridged_variables(
+        _test_delete_bridged_variables(
             bridged_mock,
             v,
             MOI.RotatedSecondOrderCone,

@@ -54,7 +54,7 @@ config = MOIT.Config()
         @test MOI.get(bridged_mock, attr, ci) ≈ 2.0
     end
 
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         2,
@@ -138,7 +138,7 @@ end
         @test MOI.get(bridged_mock, attr, ci) ≈ 2.0
     end
 
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         1,
@@ -179,7 +179,7 @@ end
             }(),
         ),
     )
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         2,
@@ -220,7 +220,7 @@ end
         @test MOI.get(bridged_mock, attr, ci) ≈ [1.0, 2.0]
     end
 
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         2,
@@ -298,7 +298,7 @@ end
         @test MOI.get(bridged_mock, attr, ci) ≈ [1.0, 2.0]
     end
 
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         1,

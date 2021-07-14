@@ -63,7 +63,7 @@ config = MOIT.Config()
         @test MOI.get(bridged_mock, attr, ci) ≈ value
     end
 
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         2,
@@ -129,7 +129,7 @@ end
         @test MOI.get(bridged_mock, attr, ci) ≈ value
     end
 
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         3,

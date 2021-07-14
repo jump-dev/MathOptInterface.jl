@@ -37,7 +37,7 @@ bridged_mock = MOIB.Objective.Functionize{Float64}(mock)
     MOI.set(bridged_mock, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     @test MOI.get(mock, MOI.ObjectiveSense()) == MOI.MAX_SENSE
     @test MOI.get(bridged_mock, MOI.ObjectiveSense()) == MOI.MAX_SENSE
-    test_delete_objective(bridged_mock, 1, tuple())
+    _test_delete_objective(bridged_mock, 1, tuple())
 end
 
 # Tests that the `ObjectiveValue` attribute passed has the correct

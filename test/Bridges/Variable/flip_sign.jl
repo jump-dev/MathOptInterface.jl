@@ -151,7 +151,7 @@ config = MOIT.Config()
         @test MOI.get(bridged_mock, MOI.NumberOfVariables()) == 1
         vis = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
         @test vis == [MOI.VariableIndex(-1)]
-        test_delete_bridged_variable(
+        _test_delete_bridged_variable(
             bridged_mock,
             vis[1],
             MOI.Nonpositives,
@@ -164,7 +164,7 @@ config = MOIT.Config()
         MOI.empty!(bridged_mock)
         vis, ci =
             MOI.add_constrained_variables(bridged_mock, MOI.Nonpositives(4))
-        test_delete_bridged_variable(
+        _test_delete_bridged_variable(
             bridged_mock,
             vis[2],
             MOI.Nonpositives,

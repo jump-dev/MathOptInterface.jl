@@ -236,7 +236,7 @@ end
     @test MOI.get(mock, MOI.VariablePrimalStart(), z) == -4
     @test MOI.get(bridged_mock, MOI.VariablePrimalStart(), y) == 1
 
-    test_delete_bridged_variable(
+    _test_delete_bridged_variable(
         bridged_mock,
         y,
         MOI.LessThan{Float64},

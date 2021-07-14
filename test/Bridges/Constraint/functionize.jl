@@ -26,7 +26,7 @@ config_with_basis = MOIT.Config(basis = true)
     @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.GreaterThan(0.0)
     MOI.set(bridged_mock, MOI.ConstraintSet(), ci, MOI.GreaterThan(1.0))
     @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.GreaterThan(1.0)
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         2,
@@ -103,7 +103,7 @@ config_with_basis = MOIT.Config(basis = true)
 
         @testset "delete" begin
             for (i, ci) in enumerate(cis)
-                test_delete_bridge(
+                _test_delete_bridge(
                     bridged_mock,
                     ci,
                     2,
@@ -134,7 +134,7 @@ end
     @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.PowerCone(0.1)
     MOI.set(bridged_mock, MOI.ConstraintSet(), ci, MOI.PowerCone(0.2))
     @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.PowerCone(0.2)
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         3,
@@ -192,7 +192,7 @@ end
             @test MOI.get(bridged_mock, attr, ci) == [1.0, 2.0]
         end
 
-        test_delete_bridge(
+        _test_delete_bridge(
             bridged_mock,
             ci,
             2,
