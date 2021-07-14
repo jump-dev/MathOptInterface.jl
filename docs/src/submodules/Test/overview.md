@@ -128,10 +128,27 @@ end
 ## How to debug a failing test
 
 When writing a solver, it's likely that you will initially fail many tests!
-Some failures will be bugs, but other failure you may choose to exclude.
+Some failures will be bugs, but other failures you may choose to exclude.
 
-Add excludes by either passing a string to `MOI.Test.runtests`, or by passing
-attributes or functions to `MOI.Test.Config`.
+There are two ways to exclude tests:
+
+ - Exclude tests whose names contain a string using:
+   ```julia
+   MOI.Test.runtests(
+       model,
+       config;
+       exclude = String["test_to_exclude", "test_conic_"],
+   )
+   ```
+   This will exclude tests whose name contains either of the two strings
+   provided.
+
+ - Exclude tests which rely on specific functionality using:
+   ```julia
+   MOI.Test.Config(exclude = Any[MOI.VariableName, MOI.optimize!])
+   ```
+   This will exclude tests which use the `MOI.VariableName` attribute,
+   or which call `MOI.optimize!`.
 
 Each test that fails can be independently called as:
 ```julia
