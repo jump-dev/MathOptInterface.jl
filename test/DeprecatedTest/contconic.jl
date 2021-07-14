@@ -226,7 +226,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.INFEASIBLE,
-            tuple(),
+            MOI.NO_SOLUTION,
             (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1],
             (MOI.SingleVariable, MOI.EqualTo{Float64}) => [-1],
             (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1],

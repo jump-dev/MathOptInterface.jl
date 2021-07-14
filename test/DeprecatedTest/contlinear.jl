@@ -127,7 +127,7 @@ MOIU.set_mock_optimize!(
     (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
         mock,
         MOI.INFEASIBLE,
-        tuple(),
+        MOI.NO_SOLUTION,
         (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1],
     ),
 )
@@ -252,7 +252,7 @@ MOIU.set_mock_optimize!(
     (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
         mock,
         MOI.INFEASIBLE,
-        tuple(),
+        MOI.NO_SOLUTION,
         (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
             [-1, -1],
     ),
