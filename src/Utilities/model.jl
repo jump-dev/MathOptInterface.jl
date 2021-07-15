@@ -28,7 +28,7 @@ function _add_variables(::Nothing, ::Int64) end
 function MOI.add_variable(model::AbstractModel{T}) where {T}
     vi = VI(model.num_variables_created += 1)
     push!(model.single_variable_mask, 0x0)
-    add_free(model.variable_bounds)
+    __add_free(model.variable_bounds)
     if model.variable_indices !== nothing
         push!(model.variable_indices, vi)
     end
@@ -410,73 +410,6 @@ function MOI.get(
 end
 
 # Constraints
-single_variable_flag(::Type{<:MOI.EqualTo}) = 0x1
-single_variable_flag(::Type{<:MOI.GreaterThan}) = 0x2
-single_variable_flag(::Type{<:MOI.LessThan}) = 0x4
-single_variable_flag(::Type{<:MOI.Interval}) = 0x8
-single_variable_flag(::Type{MOI.Integer}) = 0x10
-single_variable_flag(::Type{MOI.ZeroOne}) = 0x20
-single_variable_flag(::Type{<:MOI.Semicontinuous}) = 0x40
-single_variable_flag(::Type{<:MOI.Semiinteger}) = 0x80
-# If a set is added here, a line should be added in
-# `MOI.delete(::AbstractModel, ::MOI.VariableIndex)`
-
-function flag_to_set_type(flag::UInt8, ::Type{T}) where {T}
-    if flag == 0x1
-        return MOI.EqualTo{T}
-    elseif flag == 0x2
-        return MOI.GreaterThan{T}
-    elseif flag == 0x4
-        return MOI.LessThan{T}
-    elseif flag == 0x8
-        return MOI.Interval{T}
-    elseif flag == 0x10
-        return MOI.Integer
-    elseif flag == 0x20
-        return MOI.ZeroOne
-    elseif flag == 0x40
-        return MOI.Semicontinuous{T}
-    else
-        @assert flag == 0x80
-        return MOI.Semiinteger{T}
-    end
-end
-
-# Julia doesn't infer `S1` correctly, so we use a function barrier to improve
-# inference.
-function _throw_if_lower_bound_set(variable, S2, mask, T)
-    S1 = flag_to_set_type(mask, T)
-    throw(MOI.LowerBoundAlreadySet{S1,S2}(variable))
-    return
-end
-
-function throw_if_lower_bound_set(variable, S2, mask, T)
-    lower_mask = mask & LOWER_BOUND_MASK
-    if iszero(lower_mask)
-        return  # No lower bound set.
-    elseif iszero(single_variable_flag(S2) & LOWER_BOUND_MASK)
-        return  # S2 isn't related to the lower bound.
-    end
-    return _throw_if_lower_bound_set(variable, S2, lower_mask, T)
-end
-
-# Julia doesn't infer `S1` correctly, so we use a function barrier to improve
-# inference.
-function _throw_if_upper_bound_set(variable, S2, mask, T)
-    S1 = flag_to_set_type(mask, T)
-    throw(MOI.UpperBoundAlreadySet{S1,S2}(variable))
-    return
-end
-
-function throw_if_upper_bound_set(variable, S2, mask, T)
-    upper_mask = mask & UPPER_BOUND_MASK
-    if iszero(upper_mask)
-        return  # No upper bound set.
-    elseif iszero(single_variable_flag(S2) & UPPER_BOUND_MASK)
-        return  # S2 isn't related to the upper bound.
-    end
-    return _throw_if_upper_bound_set(variable, S2, upper_mask, T)
-end
 
 function MOI.supports_constraint(
     ::AbstractModel{T},
@@ -504,7 +437,7 @@ function MOI.add_constraint(
     throw_if_lower_bound_set(f.variable, typeof(s), mask, T)
     throw_if_upper_bound_set(f.variable, typeof(s), mask, T)
     # No error should be thrown now, we can modify `model`.
-    merge_bounds(model.variable_bounds, index, s)
+    _merge_bounds(model.variable_bounds, index, s)
     model.single_variable_mask[index] = mask | flag
     return CI{MOI.SingleVariable,typeof(s)}(index)
 end
@@ -576,7 +509,7 @@ function MOI.set(
     set::S,
 ) where {T,S<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}
     MOI.throw_if_not_valid(model, ci)
-    merge_bounds(model.variable_bounds, ci.value, set)
+    _merge_bounds(model.variable_bounds, ci.value, set)
     return
 end
 
