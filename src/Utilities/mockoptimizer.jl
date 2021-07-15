@@ -915,62 +915,6 @@ function final_touch(uf::MockOptimizer, index_map)
     return final_touch(uf.inner_model, index_map)
 end
 
-# Allocate-Load Interface
-function supports_allocate_load(mock::MockOptimizer, copy_names::Bool)
-    return supports_allocate_load(mock.inner_model, copy_names)
-end
-
-function allocate_variables(mock::MockOptimizer, nvars)
-    return xor_index.(allocate_variables(mock.inner_model, nvars))
-end
-
-function allocate(mock::MockOptimizer, attr::MOI.AnyAttribute, value)
-    return allocate(mock.inner_model, attr, xor_indices(value))
-end
-
-function allocate(
-    mock::MockOptimizer,
-    attr::MOI.AnyAttribute,
-    idx::MOI.Index,
-    value,
-)
-    return allocate(mock.inner_model, attr, xor_index(idx), xor_indices(value))
-end
-
-function allocate_constraint(
-    mock::MockOptimizer,
-    f::MOI.AbstractFunction,
-    s::MOI.AbstractSet,
-)
-    return xor_index(allocate_constraint(mock.inner_model, xor_indices(f), s))
-end
-
-function load_variables(mock::MockOptimizer, nvars)
-    return load_variables(mock.inner_model, nvars)
-end
-
-function load(mock::MockOptimizer, attr::MOI.AnyAttribute, value)
-    return load(mock.inner_model, attr, xor_indices(value))
-end
-
-function load(
-    mock::MockOptimizer,
-    attr::MOI.AnyAttribute,
-    idx::MOI.Index,
-    value,
-)
-    return load(mock.inner_model, attr, xor_index(idx), xor_indices(value))
-end
-
-function load_constraint(
-    mock::MockOptimizer,
-    ci::CI,
-    f::MOI.AbstractFunction,
-    s::MOI.AbstractSet,
-)
-    return load_constraint(mock.inner_model, xor_index(ci), xor_indices(f), s)
-end
-
 """
     set_mock_optimize!(mock::MockOptimizer, opt::Function...)
 
