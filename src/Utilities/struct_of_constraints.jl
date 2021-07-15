@@ -321,27 +321,41 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
         end
         push!(code.args, constraints_code)
     end
-    is_func = any(types) do t
-        t isa Union{SymbolFun,_UnionSymbolFS{SymbolFun}}
+    if !isempty(types)
+        is_func = any(types) do t
+            t isa Union{SymbolFun,_UnionSymbolFS{SymbolFun}}
+        end
+        is_set = any(types) do t
+            t isa Union{SymbolSet,_UnionSymbolFS{SymbolSet}}
+        end
+        @assert xor(is_func, is_set)
+        if is_func
+            SuperF = :(Union{$(_typed.(types)...)})
+        else
+            SuperF = :(MOI.AbstractFunction)
+        end
+        if is_set
+            :(Union{$(_typed.(types)...)})
+        else
+            SuperS = :(MOI.AbstractSet)
+        end
+        push!(
+            code.args,
+            :(
+                function $MOI.supports_constraint(
+                    model::$struct_name{$T},
+                    ::Type{F},
+                    ::Type{S},
+                ) where {$T,F<:$SuperF,S<:$SuperS}
+                    return $MOI.supports_constraint(
+                        constraints(model, F, S),
+                        F,
+                        S,
+                    )
+                end
+            ),
+        )
     end
-    is_set = any(types) do t
-        t isa Union{SymbolSet,_UnionSymbolFS{SymbolSet}}
-    end
-    @assert xor(is_func, is_set)
-    SuperF = is_func ? :(Union{$(_typed.(types)...)}) : :(MOI.AbstractFunction)
-    SuperS = is_func ? :(MOI.AbstractSet) : :(Union{$(_typed.(types)...)})
-    push!(
-        code.args,
-        :(
-            function $MOI.supports_constraint(
-                model::$struct_name{$T},
-                ::Type{F},
-                ::Type{S},
-            ) where {$T,F<:$SuperF,S<:$SuperS}
-                return $MOI.supports_constraint(constraints(model, F, S), F, S)
-            end
-        ),
-    )
     constructor_code = :(function $typed_struct() where {$T}
         return $typed_struct(0, $([:(nothing) for _ in field_types]...))
     end)
@@ -360,6 +374,7 @@ a subtype of `StructOfConstraints` of name `name` and which type parameters
 `{T, C1, C2, ..., Cn}`.
 It contains `n` field where the `i`th field has type `Ci` and stores the
 constraints of function type `Fi`.
+
 The expression `Fi` can also be a union in which case any constraint for which
 the function type is in the union is stored in the field with type `Ci`.
 """
@@ -378,6 +393,9 @@ It contains `n` field where the `i`th field has type `Ci` and stores the
 constraints of set type `Si`.
 The expression `Si` can also be a union in which case any constraint for which
 the set type is in the union is stored in the field with type `Ci`.
+This can be useful if `Ci` is a [`MatrixOfConstraints`](@ref) in order to
+concatenate the coefficients of constraints of several different set types in
+the same matrix.
 """
 macro struct_of_constraints_by_set_types(name, set_types...)
     sets = _parse_expr.(SymbolSet, set_types)
