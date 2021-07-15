@@ -43,6 +43,7 @@ Bridges.Constraint.add_all_bridges
 
 ```@docs
 Bridges.Constraint.SetMap
+Bridges.Constraint.SetMapBridge
 Bridges.Constraint.map_set
 Bridges.Constraint.inverse_map_set
 Bridges.Constraint.map_function
