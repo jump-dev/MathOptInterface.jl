@@ -114,14 +114,7 @@ function test_MOI_Test()
             MOI.Test.runtests(
                 model,
                 MOI.Test.Config(exclude = Any[MOI.optimize!]),
-                exclude = String[
-                    # This test is optional.
-                    "test_model_ScalarFunctionConstantNotZero",
-                    # MockOptimizer doesnt' support these
-                    "test_attribute_SolverName",
-                    "test_constraint_ConstraintDualStart",
-                    "test_constraint_ConstraintPrimalStart",
-                ],
+                exclude = ["test_attribute_SolverName"],
             )
         end
     end

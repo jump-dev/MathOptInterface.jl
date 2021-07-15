@@ -87,15 +87,7 @@ struct SetNotSupportedBySolvers <: MOI.AbstractSet end
 function test_MOI_Test()
     MOI.Test.runtests(
         MOI.Utilities.Model{Float64}(),
-        MOI.Test.Config(exclude = Any[MOI.optimize!]),
-        exclude = String[
-            # This test is optional.
-            "test_model_ScalarFunctionConstantNotZero",
-            # Unsupported attributes
-            "test_constraint_ConstraintPrimalStart",
-            "test_constraint_ConstraintDualStart",
-            "test_attribute_SolverName",
-        ],
+        MOI.Test.Config(exclude = Any[MOI.optimize!,]),
     )
     return
 end

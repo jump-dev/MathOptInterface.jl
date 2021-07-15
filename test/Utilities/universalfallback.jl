@@ -71,8 +71,6 @@ function test_MOI_Test()
         model,
         MOI.Test.Config(exclude = Any[MOI.optimize!]),
         exclude = String[
-            # This test is optional.
-            "test_model_ScalarFunctionConstantNotZero",
             # UniversalFallback fails all these tests because it supports
             # everything...
             "test_attribute_",
