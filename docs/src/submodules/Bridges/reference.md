@@ -39,6 +39,18 @@ Bridges.Constraint.SingleBridgeOptimizer
 Bridges.Constraint.add_all_bridges
 ```
 
+### [SetMap bridges](@id constraint_set_map)
+
+```@docs
+Bridges.Constraint.SetMapBridge
+Bridges.Constraint.map_set
+Bridges.Constraint.inverse_map_set
+Bridges.Constraint.map_function
+Bridges.Constraint.inverse_map_function
+Bridges.Constraint.adjoint_map_function
+Bridges.Constraint.inverse_adjoint_map_function
+```
+
 ### [Bridges implemented](@id constraint_bridges_ref)
 
 ```@docs
