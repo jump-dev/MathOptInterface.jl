@@ -265,9 +265,6 @@ function test_linear_integration(
         end
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [-1, 0, 2] atol = atol rtol =
             rtol
-        if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-        end
     end
     # put lb of x back to 0 and fix z to zero to get :
     # max x + 2z
@@ -1511,6 +1508,7 @@ function setup_test(
             mock,
             MOI.INFEASIBLE,
             MOI.NO_SOLUTION,
+            MOI.INFEASIBILITY_CERTIFICATE,
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
                 [-1],
         ),
@@ -2432,6 +2430,7 @@ function setup_test(
             mock,
             MOI.INFEASIBLE,
             MOI.NO_SOLUTION,
+            MOI.INFEASIBILITY_CERTIFICATE,
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
                 [-1, -1],
         ),

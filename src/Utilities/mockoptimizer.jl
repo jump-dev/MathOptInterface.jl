@@ -23,7 +23,6 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     optimize!::Function
     solved::Bool
     hasprimal::Bool
-    hasdual::Bool
     result_count::Int
     terminationstatus::MOI.TerminationStatusCode
     conflictstatus::MOI.ConflictStatusCode
@@ -91,7 +90,6 @@ function MockOptimizer(
         true,
         scalar_function_constant_non_zero,
         (::MockOptimizer) -> begin end,
-        false,
         false,
         false,
         1,
@@ -179,7 +177,6 @@ end
 function MOI.optimize!(mock::MockOptimizer)
     mock.solved = true
     mock.hasprimal = true
-    mock.hasdual = true
     mock.optimize!(mock)
     return
 end
@@ -720,7 +717,6 @@ function MOI.empty!(mock::MockOptimizer)
     empty!(mock.conattribute)
     mock.solved = false
     mock.hasprimal = false
-    mock.hasdual = false
     mock.terminationstatus = MOI.OPTIMIZE_NOT_CALLED
     empty!(mock.objective_value)
     empty!(mock.dual_objective_value)
@@ -745,7 +741,6 @@ function MOI.is_empty(mock::MockOptimizer)
            mock.attribute == 0 &&
            !mock.solved &&
            !mock.hasprimal &&
-           !mock.hasdual &&
            mock.terminationstatus == MOI.OPTIMIZE_NOT_CALLED &&
            isempty(mock.objective_value) &&
            isempty(mock.dual_objective_value) &&
@@ -967,9 +962,8 @@ solution.
    `MOI.ListOfVariableIndices`.
 
  * `dual_status`: corresponds to the `MOI.DualStatus` attribute. If not
-   provided, it defaults to `MOI.FEASIBLE_POINT` if there is a primal solution
-   and the primal status is not `MOI.INFEASIBLE_POINT`, otherwise it defaults to
-   `MOI.INFEASIBILITY_CERTIFICATE`.
+   provided, it defaults to `MOI.FEASIBLE_POINT` if constriant duals are
+   provided and `MOI.NO_SOLUTION` otherwise.
 
  * `constraint_duals`: the remaining positional arguments are passed as pairs.
    Each pair is of the form `(F, S) => result`, where `result` is the the vector
@@ -1073,7 +1067,7 @@ end
 # _set_mock_dual
 
 function _set_mock_dual(mock::MockOptimizer)
-    mock.hasdual = false
+    MOI.set(mock, MOI.DualStatus(), MOI.NO_SOLUTION)
     return
 end
 
@@ -1094,12 +1088,6 @@ end
 
 # fallback for no status
 function _set_mock_dual(mock::MockOptimizer, args::Pair...)
-    if !mock.hasprimal
-        _set_mock_dual(mock, MOI.INFEASIBLE_POINT, args...)
-    elseif MOI.get(mock, MOI.PrimalStatus()) == MOI.INFEASIBLE_POINT
-        _set_mock_dual(mock, MOI.INFEASIBLE_POINT, args...)
-    else
-        _set_mock_dual(mock, MOI.FEASIBLE_POINT, args...)
-    end
+    _set_mock_dual(mock, MOI.FEASIBLE_POINT, args...)
     return
 end
