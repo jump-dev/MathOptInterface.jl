@@ -95,6 +95,7 @@ Utilities.allocate_terms
 Utilities.set_number_of_rows
 Utilities.load_terms
 Utilities.final_touch
+Utilities.extract_function
 ```
 
 ```@docs

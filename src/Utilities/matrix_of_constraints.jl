@@ -151,6 +151,23 @@ No more modification is allowed unless `MOI.empty!` is called.
 """
 function final_touch end
 
+"""
+    extract_function(coefficients, row::Integer, constant::T) where {T}
+
+Return the `MOI.ScalarAffineFunction{T}` function corresponding to row `row` in
+`coefficients`.
+
+    extract_function(
+        coefficients,
+        rows::UnitRange,
+        constants::Vector{T},
+    ) where{T}
+
+Return the `MOI.VectorAffineFunction{T}` function corresponding to rows `rows`
+in `coefficients`.
+"""
+function extract_function end
+
 ###
 ### Interface for the .constants field
 ###

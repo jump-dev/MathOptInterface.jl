@@ -81,6 +81,40 @@ function test_VectorAffine_ZeroBased()
     @test A.colptr == [0, 1, 3, 5]
 end
 
+function test_extract_function()
+    A = MOI.Utilities.MutableSparseMatrixCSC{
+        Float64,
+        Int,
+        MOI.Utilities.ZeroBasedIndexing,
+    }()
+    MOI.empty!(A)
+    x = MOI.VariableIndex.(1:3)
+    f = MOI.VectorAffineFunction(
+        vcat(
+            MOI.VectorAffineTerm.(1, MOI.ScalarAffineTerm.(1.0, x)),
+            MOI.VectorAffineTerm.(2, MOI.ScalarAffineTerm.([2.0, 3.0], x[2:3])),
+        ),
+        [0.5, 1.2],
+    )
+
+    index_map = MOI.Utilities.IndexMap()
+    MOI.Utilities.add_columns(A, 3)
+    for i in 1:3
+        index_map[x[i]] = x[i]
+    end
+    MOI.Utilities.allocate_terms(A, index_map, f)
+    MOI.Utilities.set_number_of_rows(A, 2)
+    MOI.Utilities.load_terms(A, index_map, f, 0)
+    MOI.Utilities.final_touch(A)
+    row_1 = MOI.Utilities.extract_function(A, 1, 0.5)
+    @test row_1 ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.5)
+    @test MOI.Utilities.extract_function(A, 1:2, [0.5, 1.2]) ≈ f
+    empty_f = MOI.Utilities.extract_function(A, 1:0, Float64[])
+    @test empty_f ≈
+          MOI.VectorAffineFunction(MOI.VectorAffineTerm{Float64}[], Float64[])
+    return
+end
+
 function test_VectorAffine_OneBased()
     A = MOI.Utilities.MutableSparseMatrixCSC{
         Float64,
