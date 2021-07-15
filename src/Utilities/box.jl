@@ -1,4 +1,46 @@
 """
+    struct Box{T}
+        lower::Vector{T}
+        upper::Vector{T}
+    end
+
+Stores the constants of scalar constraints with the lower bound of the set in
+`lower` and the upper bound in `upper`.
+"""
+struct Box{T}
+    set_mask::Vector{UInt8}
+    lower::Vector{T}
+    upper::Vector{T}
+end
+
+Box{T}() where {T} = Box{T}(UInt8[], T[], T[])
+
+function Base.:(==)(a::Box, b::Box)
+    return a.set_mask == b.set_mask && a.lower == b.lower && a.upper == b.upper
+end
+
+function Base.empty!(b::Box)
+    empty!(b.set_mask)
+    empty!(b.lower)
+    empty!(b.upper)
+    return b
+end
+
+function Base.resize!(b::Box, n)
+    resize!(b.set_mask, n)
+    resize!(b.lower, n)
+    resize!(b.upper, n)
+    return
+end
+
+function _add_variable(b::Box{T}) where {T}
+    push!(b.set_mask, 0x00)
+    push!(b.lower, _no_lower_bound(T))
+    push!(b.upper, _no_upper_bound(T))
+    return
+end
+
+"""
     SUPPORTED_VARIABLE_SCALAR_SETS{T}
 
 The union of scalar sets for `SingleVariable` constraints supported by
@@ -16,22 +58,20 @@ const SUPPORTED_VARIABLE_SCALAR_SETS{T} = Union{
 }
 
 # 0xcb = 0x80 | 0x40 | 0x8 | 0x2 | 0x1
-const LOWER_BOUND_MASK = 0xcb
+const _LOWER_BOUND_MASK = 0xcb
 # 0xcd = 0x80 | 0x40 | 0x8 | 0x4 | 0x1
-const UPPER_BOUND_MASK = 0xcd
+const _UPPER_BOUND_MASK = 0xcd
 
-single_variable_flag(::Type{<:MOI.EqualTo}) = 0x1
-single_variable_flag(::Type{<:MOI.GreaterThan}) = 0x2
-single_variable_flag(::Type{<:MOI.LessThan}) = 0x4
-single_variable_flag(::Type{<:MOI.Interval}) = 0x8
-single_variable_flag(::Type{MOI.Integer}) = 0x10
-single_variable_flag(::Type{MOI.ZeroOne}) = 0x20
-single_variable_flag(::Type{<:MOI.Semicontinuous}) = 0x40
-single_variable_flag(::Type{<:MOI.Semiinteger}) = 0x80
-# If a set is added here, a line should be added in
-# `MOI.delete(::AbstractModel, ::MOI.VariableIndex)`
+_single_variable_flag(::Type{<:MOI.EqualTo}) = 0x1
+_single_variable_flag(::Type{<:MOI.GreaterThan}) = 0x2
+_single_variable_flag(::Type{<:MOI.LessThan}) = 0x4
+_single_variable_flag(::Type{<:MOI.Interval}) = 0x8
+_single_variable_flag(::Type{MOI.Integer}) = 0x10
+_single_variable_flag(::Type{MOI.ZeroOne}) = 0x20
+_single_variable_flag(::Type{<:MOI.Semicontinuous}) = 0x40
+_single_variable_flag(::Type{<:MOI.Semiinteger}) = 0x80
 
-function flag_to_set_type(flag::UInt8, ::Type{T}) where {T}
+function _flag_to_set_type(flag::UInt8, ::Type{T}) where {T}
     if flag == 0x1
         return MOI.EqualTo{T}
     elseif flag == 0x2
@@ -54,38 +94,38 @@ end
 
 # Julia doesn't infer `S1` correctly, so we use a function barrier to improve
 # inference.
-function _throw_if_lower_bound_set(variable, S2, mask, T)
-    S1 = flag_to_set_type(mask, T)
+function _throw_if_lower_bound_set_inner(variable, S2, mask, T)
+    S1 = _flag_to_set_type(mask, T)
     throw(MOI.LowerBoundAlreadySet{S1,S2}(variable))
     return
 end
 
-function throw_if_lower_bound_set(variable, S2, mask, T)
-    lower_mask = mask & LOWER_BOUND_MASK
+function _throw_if_lower_bound_set(variable, S2, mask, T)
+    lower_mask = mask & _LOWER_BOUND_MASK
     if iszero(lower_mask)
         return  # No lower bound set.
-    elseif iszero(single_variable_flag(S2) & LOWER_BOUND_MASK)
+    elseif iszero(_single_variable_flag(S2) & _LOWER_BOUND_MASK)
         return  # S2 isn't related to the lower bound.
     end
-    return _throw_if_lower_bound_set(variable, S2, lower_mask, T)
+    return _throw_if_lower_bound_set_inner(variable, S2, lower_mask, T)
 end
 
 # Julia doesn't infer `S1` correctly, so we use a function barrier to improve
 # inference.
-function _throw_if_upper_bound_set(variable, S2, mask, T)
-    S1 = flag_to_set_type(mask, T)
+function _throw_if_upper_bound_set_inner(variable, S2, mask, T)
+    S1 = _flag_to_set_type(mask, T)
     throw(MOI.UpperBoundAlreadySet{S1,S2}(variable))
     return
 end
 
-function throw_if_upper_bound_set(variable, S2, mask, T)
-    upper_mask = mask & UPPER_BOUND_MASK
+function _throw_if_upper_bound_set(variable, S2, mask, T)
+    upper_mask = mask & _UPPER_BOUND_MASK
     if iszero(upper_mask)
         return  # No upper bound set.
-    elseif iszero(single_variable_flag(S2) & UPPER_BOUND_MASK)
+    elseif iszero(_single_variable_flag(S2) & _UPPER_BOUND_MASK)
         return  # S2 isn't related to the upper bound.
     end
-    return _throw_if_upper_bound_set(variable, S2, upper_mask, T)
+    return _throw_if_upper_bound_set_inner(variable, S2, upper_mask, T)
 end
 
 function _lower_bound(
@@ -104,58 +144,120 @@ end
 
 _upper_bound(set::MOI.EqualTo) = set.value
 
-"""
-    struct Box{T}
-        lower::Vector{T}
-        upper::Vector{T}
-    end
-
-Stores the constants of scalar constraints with the lower bound of the set in
-`lower` and the upper bound in `upper`.
-"""
-struct Box{T}
-    lower::Vector{T}
-    upper::Vector{T}
-end
-
-Box{T}() where {T} = Box{T}(T[], T[])
-
-Base.:(==)(a::Box, b::Box) = a.lower == b.lower && a.upper == b.upper
-
-function Base.empty!(b::Box)
-    empty!(b.lower)
-    empty!(b.upper)
-    return b
-end
-
-function Base.resize!(b::Box, n)
-    resize!(b.lower, n)
-    resize!(b.upper, n)
-    return
-end
-
 # Use `-Inf` and `Inf` for `AbstractFloat` subtypes.
 _no_lower_bound(::Type{T}) where {T} = zero(T)
 _no_lower_bound(::Type{T}) where {T<:AbstractFloat} = typemin(T)
 _no_upper_bound(::Type{T}) where {T} = zero(T)
 _no_upper_bound(::Type{T}) where {T<:AbstractFloat} = typemax(T)
 
+function MOI.add_constraint(
+    b::Box{T},
+    f::MOI.SingleVariable,
+    set::S,
+) where {T,S}
+    flag = _single_variable_flag(S)
+    mask = b.set_mask[f.variable.value]
+    _throw_if_lower_bound_set(f.variable, S, mask, T)
+    _throw_if_upper_bound_set(f.variable, S, mask, T)
+    if !iszero(flag & _LOWER_BOUND_MASK)
+        b.lower[f.variable.value] = _lower_bound(set)
+    end
+    if !iszero(flag & _UPPER_BOUND_MASK)
+        b.upper[f.variable.value] = _upper_bound(set)
+    end
+    b.set_mask[f.variable.value] = mask | flag
+    return MOI.ConstraintIndex{MOI.SingleVariable,S}(f.variable.value)
+end
+
+function MOI.delete(
+    b::Box{T},
+    ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
+) where {T,S}
+    flag = _single_variable_flag(S)
+    b.set_mask[ci.value] &= ~flag
+    if !iszero(flag & _LOWER_BOUND_MASK)
+        b.lower[ci.value] = _no_lower_bound(T)
+    end
+    if !iszero(flag & _UPPER_BOUND_MASK)
+        b.upper[ci.value] = _no_upper_bound(T)
+    end
+    return
+end
+
+function MOI.is_valid(
+    b::Box,
+    ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
+) where {S}
+    if !(1 <= ci.value <= length(b.set_mask))
+        return false
+    end
+    return !iszero(b.set_mask[ci.value] & _single_variable_flag(S))
+end
+
+function MOI.get(
+    b::Box,
+    ::MOI.NumberOfConstraints{MOI.SingleVariable,S},
+) where {S}
+    flag = _single_variable_flag(S)
+    return count(mask -> !iszero(flag & mask), b.set_mask)
+end
+
+function _add_constraint_type(list, b::Box, S::Type{<:MOI.AbstractScalarSet})
+    flag = _single_variable_flag(S)::UInt8
+    if any(mask -> !iszero(flag & mask), b.set_mask)
+        push!(list, (MOI.SingleVariable, S))
+    end
+    return
+end
+
+function MOI.get(b::Box{T}, ::MOI.ListOfConstraintTypesPresent) where {T}
+    list = Tuple{DataType,DataType}[]
+    _add_constraint_type(list, b, MOI.EqualTo{T})
+    _add_constraint_type(list, b, MOI.GreaterThan{T})
+    _add_constraint_type(list, b, MOI.LessThan{T})
+    _add_constraint_type(list, b, MOI.Interval{T})
+    _add_constraint_type(list, b, MOI.Semicontinuous{T})
+    _add_constraint_type(list, b, MOI.Semiinteger{T})
+    _add_constraint_type(list, b, MOI.Integer)
+    _add_constraint_type(list, b, MOI.ZeroOne)
+    return list
+end
+
+function MOI.get(
+    b::Box,
+    ::MOI.ListOfConstraintIndices{MOI.SingleVariable,S},
+) where {S}
+    list = MOI.ConstraintIndex{MOI.SingleVariable,S}[]
+    flag = _single_variable_flag(S)
+    for (index, mask) in enumerate(b.set_mask)
+        if !iszero(mask & flag)
+            push!(list, MOI.ConstraintIndex{MOI.SingleVariable,S}(index))
+        end
+    end
+    return list
+end
+
+###
+### MatrixOfConstraints API
+###
+
 function load_constants(
     b::Box{T},
     offset,
     set::SUPPORTED_VARIABLE_SCALAR_SETS{T},
 ) where {T}
-    flag = single_variable_flag(typeof(set))
-    if iszero(flag & LOWER_BOUND_MASK)
+    flag = _single_variable_flag(typeof(set))
+    if iszero(flag & _LOWER_BOUND_MASK)
         b.lower[offset+1] = _no_lower_bound(T)
     else
         b.lower[offset+1] = _lower_bound(set)
     end
-    if iszero(flag & UPPER_BOUND_MASK)
+    if iszero(flag & _UPPER_BOUND_MASK)
         b.upper[offset+1] = _no_upper_bound(T)
     else
         b.upper[offset+1] = _upper_bound(set)
     end
+    b.set_mask[offset+1] |= flag
     return
 end
 
@@ -192,23 +294,4 @@ function set_from_constants(
     index,
 )
     return S()
-end
-
-# Function used in MOI.Utilities.AbstractModel.
-
-function _merge_bounds(b::Box, index, set)
-    flag = single_variable_flag(typeof(set))
-    if !iszero(flag & LOWER_BOUND_MASK)
-        b.lower[index] = _lower_bound(set)
-    end
-    if !iszero(flag & UPPER_BOUND_MASK)
-        b.upper[index] = _upper_bound(set)
-    end
-    return
-end
-
-function _add_free(b::Box{T}) where {T}
-    push!(b.lower, _no_lower_bound(T))
-    push!(b.upper, _no_upper_bound(T))
-    return
 end
