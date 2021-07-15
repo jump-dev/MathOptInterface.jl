@@ -42,13 +42,14 @@ Bridges.Constraint.add_all_bridges
 ### [SetMap bridges](@id constraint_set_map)
 
 ```@docs
+Bridges.Variable.SetMapBridge
 Bridges.Constraint.SetMapBridge
-Bridges.Constraint.map_set
-Bridges.Constraint.inverse_map_set
-Bridges.Constraint.map_function
-Bridges.Constraint.inverse_map_function
-Bridges.Constraint.adjoint_map_function
-Bridges.Constraint.inverse_adjoint_map_function
+Bridges.map_set
+Bridges.inverse_map_set
+Bridges.map_function
+Bridges.inverse_map_function
+Bridges.adjoint_map_function
+Bridges.inverse_adjoint_map_function
 ```
 
 ### [Bridges implemented](@id constraint_bridges_ref)
