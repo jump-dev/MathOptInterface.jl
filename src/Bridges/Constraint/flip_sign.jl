@@ -14,25 +14,6 @@ abstract type FlipSignBridge{
     G<:MOI.AbstractFunction,
 } <: SetMapBridge{T,S2,S1,F,G} end
 
-function MOIB.map_function(::Type{<:FlipSignBridge{T}}, func) where {T}
-    return MOIU.operate(-, T, func)
-end
-
-# The map is an involution
-function MOIB.inverse_map_function(BT::Type{<:FlipSignBridge}, func)
-    return MOIB.map_function(BT, func)
-end
-
-# The map is symmetric
-function MOIB.adjoint_map_function(BT::Type{<:FlipSignBridge}, func)
-    return MOIB.map_function(BT, func)
-end
-
-# The map is a symmetric involution
-function MOIB.inverse_adjoint_map_function(BT::Type{<:FlipSignBridge}, func)
-    return MOIB.map_function(BT, func)
-end
-
 function MOI.delete(
     model::MOI.ModelLike,
     bridge::FlipSignBridge,
@@ -166,17 +147,6 @@ mutable struct NonnegToNonposBridge{
     G<:MOI.AbstractVectorFunction,
 } <: FlipSignBridge{T,MOI.Nonnegatives,MOI.Nonpositives,F,G}
     constraint::CI{F,MOI.Nonpositives}
-end
-
-function MOIB.map_set(::Type{<:NonnegToNonposBridge}, set::MOI.Nonnegatives)
-    return MOI.Nonpositives(set.dimension)
-end
-
-function MOIB.inverse_map_set(
-    ::Type{<:NonnegToNonposBridge},
-    set::MOI.Nonpositives,
-)
-    return MOI.Nonnegatives(set.dimension)
 end
 
 function concrete_bridge_type(

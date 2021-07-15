@@ -122,12 +122,32 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.VariablePrimal,
+    attr::Union{MOI.VariablePrimal,MOI.VariablePrimalStart},
     bridge::SetMapBridge,
     i::MOIB.IndexInVector,
 )
     value = MOI.get(model, attr, bridge.variables)
-    return MOIB.map_function(typeof(bridge), value)[i.value]
+    return MOIB.map_function(typeof(bridge), value, i)
+end
+
+function MOI.supports(
+    model::MOI.ModelLike,
+    attr::MOI.VariablePrimalStart,
+    ::Type{<:SetMapBridge},
+)
+    return MOI.supports(model, attr, MOI.VariableIndex)
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.VariablePrimalStart,
+    bridge::SetMapBridge,
+    value,
+    i::MOIB.IndexInVector,
+)
+    bridged_value = MOIB.inverse_map_function(typeof(bridge), value)
+    MOI.set(model, attr, bridge.variables[i.value], bridged_value)
+    return
 end
 
 function MOIB.bridged_function(
