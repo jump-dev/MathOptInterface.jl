@@ -1,7 +1,7 @@
 """
     RSOCtoSOCBridge{T, F, G}
 
-The `RotatedSecondOrderCone` is `SecondOrderCone` representable; see [1, p. 104].
+The `RotatedSecondOrderCone` is `SecondOrderCone` representable; see [BN01, p. 104].
 Indeed, we have ``2tu = (t/√2 + u/√2)^2 - (t/√2 - u/√2)^2`` hence
 ```math
 2tu \\ge \\lVert x \\rVert_2^2
@@ -12,9 +12,9 @@ is equivalent to
 ```
 We can therefore use the transformation ``(t, u, x) \\mapsto (t/√2+u/√2, t/√2-u/√2, x)``.
 Note that the linear transformation is a symmetric involution (i.e. it is its own transpose and its own inverse).
-That means in particular that the norm is of constraint primal and duals are preserved by the tranformation.
+That means in particular that the norm of constraint primal and dual values are preserved by the tranformation.
 
-[1] Ben-Tal, Aharon, and Arkadi Nemirovski. *Lectures on modern convex optimization: analysis, algorithms, and engineering applications*. Society for Industrial and Applied Mathematics, 2001.
+[BN01] Ben-Tal, Aharon, and Nemirovski, Arkadi. *Lectures on modern convex optimization: analysis, algorithms, and engineering applications*. Society for Industrial and Applied Mathematics, 2001.
 """
 struct RSOCtoSOCBridge{T,F,G} <:
        SetMapBridge{T,MOI.SecondOrderCone,MOI.RotatedSecondOrderCone,F,G}
