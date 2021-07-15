@@ -907,7 +907,6 @@ for (loop_name, loop_super_type) in [
                     zero(MOI.ScalarAffineFunction{T}),
                     0,
                     nothing,
-                    UInt8[],
                     Box{T}(),
                     C(),
                     Dict{MOI.VariableIndex,String}(),
