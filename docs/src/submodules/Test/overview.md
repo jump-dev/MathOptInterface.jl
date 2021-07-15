@@ -48,6 +48,9 @@ const CONFIG = MOI.Test.Config(
     rtol = 1e-6,
     # Use MOI.LOCALLY_SOLVED for local solvers.
     optimal_status = MOI.OPTIMAL,
+    # Pass attributes or MOI functions to `exclude` to skip tests that
+    # rely on this functionality.
+    exclude = Any[MOI.VariableName, MOI.delete],
 )
 
 """
@@ -121,6 +124,47 @@ end
     supported by the solver and let bridges transform the constraint to the
     appropriate form. For this reason it is expected that tests may not pass if
     `OPTIMIZER` is used instead of `BRIDGED`.
+
+## How to debug a failing test
+
+When writing a solver, it's likely that you will initially fail many tests!
+Some failures will be bugs, but other failures you may choose to exclude.
+
+There are two ways to exclude tests:
+
+ - Exclude tests whose names contain a string using:
+   ```julia
+   MOI.Test.runtests(
+       model,
+       config;
+       exclude = String["test_to_exclude", "test_conic_"],
+   )
+   ```
+   This will exclude tests whose name contains either of the two strings
+   provided.
+
+ - Exclude tests which rely on specific functionality using:
+   ```julia
+   MOI.Test.Config(exclude = Any[MOI.VariableName, MOI.optimize!])
+   ```
+   This will exclude tests which use the `MOI.VariableName` attribute,
+   or which call `MOI.optimize!`.
+
+Each test that fails can be independently called as:
+```julia
+model = FooBar.Optimizer()
+config = MOI.Test.Config()
+MOI.empty!(model)
+MOI.Test.test_category_name_that_failed(model, config)
+```
+
+You can look-up the source code of the test that failed by searching for it
+in the `src/Test/test_category.jl` file.
+
+!!! tip
+    Each test function also has a docstring that explains what the test is
+    for. Use `? MOI.Test.test_category_name_that_failed` from the REPL to
+    read it.
 
 ## How to add a test
 
