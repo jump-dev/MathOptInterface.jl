@@ -188,30 +188,10 @@ struct SymbolFun <: SymbolFS
     s::Union{Symbol,Expr}
     typed::Bool
 end
-SymbolFun(s::Symbol) = SymbolFun(s, false)
-function SymbolFun(s::Expr)
-    if Meta.isexpr(s, :curly)
-        @assert length(s.args) == 2
-        @assert s.args[2] == :T
-        return SymbolFun(s.args[1], true)
-    else
-        return SymbolFun(s, false)
-    end
-end
 
 struct SymbolSet <: SymbolFS
     s::Union{Symbol,Expr}
     typed::Bool
-end
-SymbolSet(s::Symbol) = SymbolSet(s, false)
-function SymbolSet(s::Expr)
-    if Meta.isexpr(s, :curly)
-        @assert length(s.args) == 2
-        @assert s.args[2] == :T
-        return SymbolSet(s.args[1], true)
-    else
-        return SymbolSet(s, false)
-    end
 end
 
 _typed(s::SymbolFS) = s.typed ? Expr(:curly, esc(s.s), esc(:T)) : esc(s.s)
@@ -223,21 +203,61 @@ function _field(s::SymbolFS)
     return Symbol(replace(Unicode.lowercase(string(s.s)), "." => "_"))
 end
 
-_callfield(f, s::SymbolFS) = :($f(model.$(_field(s))))
+# Represents a union of function or set types
+struct _UnionSymbolFS{S<:SymbolFS}
+    s::Vector{S}
+end
 
-_mapreduce_field(s::SymbolFS) = :(cur = op(cur, f(model.$(_field(s)))))
+function _typed(s::_UnionSymbolFS)
+    tt = _typed.(s.s)
+    return Expr(:curly, :Union, tt...)
+end
+
+_field(s::_UnionSymbolFS) = _field(s.s[1])
+
+function _mapreduce_field(s::Union{SymbolFS,_UnionSymbolFS})
+    return :(cur = op(cur, f(model.$(_field(s)))))
+end
+
+_callfield(f, s::Union{SymbolFS,_UnionSymbolFS}) = :($f(model.$(_field(s))))
+
+function _parse_expr(::Type{S}, expr::Symbol) where {S<:SymbolFS}
+    return S(expr, false)
+end
+
+function _parse_expr(::Type{S}, expr::Expr) where {S<:SymbolFS}
+    if Meta.isexpr(expr, :curly)
+        @assert length(expr.args) >= 1
+        if expr.args[1] == :Union
+            # `Union{:A, :B}` parses as
+            # `Expr(:curly, :Union, :A, :B)`
+            @assert length(expr.args) >= 3
+            return _UnionSymbolFS{S}(_parse_expr.(S, expr.args[2:end]))
+        else
+            # Typed set, e.g. `MOI.EqualTo{T}` parses as:
+            # `Expr(:curly, :(MOI.EqualTo), :T)`
+            @assert length(expr.args) == 2
+            @assert expr.args[2] == :T
+            return S(expr.args[1], true)
+        end
+    else
+        return S(expr, false)
+    end
+end
 
 """
     struct_of_constraint_code(struct_name, types, field_types = nothing)
 
-Given a vector of `n` `SymbolFun` or `SymbolSet` in `types`, defines
-a subtype of `StructOfConstraints` of name `name` and which type parameters
+Given a vector of `n` `Union{SymbolFun,_UnionSymbolFS{SymbolFun}}` or
+`Union{SymbolSet,_UnionSymbolFS{SymbolSet}}` in `types`, defines a subtype of
+`StructOfConstraints` of name `name` and which type parameters
 `{T, F1, F2, ..., Fn}` if `field_types` is `nothing` and
 a `{T}` otherwise.
 It contains `n` field where the `i`th field has type `Ci` if `field_types` is
 `nothing` and type `field_types[i]` otherwise.
-If `types` is vector of `SymbolFun` (resp. `SymbolSet`) then the constraints
-of that function (resp. set) type are stored in the corresponding field.
+If `types` is vector of `Union{SymbolFun,_UnionSymbolFS{SymbolFun}}` (resp.
+`Union{SymbolSet,_UnionSymbolFS{SymbolSet}}`) then the constraints of that
+function (resp. set) type are stored in the corresponding field.
 
 This function is used by the macros [`@model`](@ref),
 [`@struct_of_constraints_by_function_types`](@ref) and
@@ -278,8 +298,8 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
     for (t, field_type) in zip(types, field_types)
         field = _field(t)
         push!(code.args[2].args[3].args, :($field::Union{Nothing,$field_type}))
-        fun = t isa SymbolFun ? esc(t.s) : :(MOI.AbstractFunction)
-        set = t isa SymbolFun ? :(MOI.AbstractSet) : esc(t.s)
+        fun = t isa SymbolFun ? _typed(t) : :(MOI.AbstractFunction)
+        set = t isa SymbolFun ? :(MOI.AbstractSet) : _typed(t)
         constraints_code = :(
             function $MOIU.constraints(
                 model::$typed_struct,
@@ -301,7 +321,13 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
         end
         push!(code.args, constraints_code)
     end
-    is_func = eltype(types) <: SymbolFun
+    is_func = any(types) do t
+        t isa Union{SymbolFun,_UnionSymbolFS{SymbolFun}}
+    end
+    is_set = any(types) do t
+        t isa Union{SymbolSet,_UnionSymbolFS{SymbolSet}}
+    end
+    @assert xor(is_func, is_set)
     SuperF = is_func ? :(Union{$(_typed.(types)...)}) : :(MOI.AbstractFunction)
     SuperS = is_func ? :(MOI.AbstractSet) : :(Union{$(_typed.(types)...)})
     push!(
@@ -334,9 +360,11 @@ a subtype of `StructOfConstraints` of name `name` and which type parameters
 `{T, C1, C2, ..., Cn}`.
 It contains `n` field where the `i`th field has type `Ci` and stores the
 constraints of function type `Fi`.
+The expression `Fi` can also be a union in which case any constraint for which
+the function type is in the union is stored in the field with type `Ci`.
 """
 macro struct_of_constraints_by_function_types(name, func_types...)
-    funcs = SymbolFun.(func_types)
+    funcs = _parse_expr.(SymbolFun, func_types)
     return struct_of_constraint_code(esc(name), funcs)
 end
 
@@ -348,8 +376,10 @@ a subtype of `StructOfConstraints` of name `name` and which type parameters
 `{T, C1, C2, ..., Cn}`.
 It contains `n` field where the `i`th field has type `Ci` and stores the
 constraints of set type `Si`.
+The expression `Si` can also be a union in which case any constraint for which
+the set type is in the union is stored in the field with type `Ci`.
 """
 macro struct_of_constraints_by_set_types(name, set_types...)
-    sets = SymbolSet.(set_types)
+    sets = _parse_expr.(SymbolSet, set_types)
     return struct_of_constraint_code(esc(name), sets)
 end

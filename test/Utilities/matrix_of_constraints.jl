@@ -526,6 +526,65 @@ function test_modif()
     @test_throws err MOI.add_constraint(model, func, set)
 end
 
+MOIU.@struct_of_constraints_by_set_types(
+    ZerosOrNot,
+    MOI.Zeros,
+    Union{MOI.Nonnegatives,MOI.Nonpositives},
+)
+
+function test_multicone()
+    T = Int
+    Indexing = MOIU.OneBasedIndexing
+    model = MOIU.GenericOptimizer{
+        T,
+        ZerosOrNot{T}{
+            MOIU.MatrixOfConstraints{
+                T,
+                MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
+                Vector{T},
+                Zeros{T},
+            },
+            MOIU.MatrixOfConstraints{
+                T,
+                MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
+                Vector{T},
+                NonnegNonpos{T},
+            },
+        },
+    }()
+    #return model
+    x = MOI.add_variable(model)
+    fx = MOI.SingleVariable(x)
+    y = MOI.add_variable(model)
+    fy = MOI.SingleVariable(y)
+    MOI.add_constraint(
+        model,
+        MOIU.vectorize([T(5) * fx + T(2)]),
+        MOI.Zeros(1),
+    )
+    MOI.add_constraint(
+        model,
+        MOIU.vectorize([T(3) * fy + T(1)]),
+        MOI.Nonnegatives(1),
+    )
+    MOI.add_constraint(
+        model,
+        MOIU.vectorize([T(6), T(7) * fx, T(4)]),
+        MOI.Nonpositives(1),
+    )
+    MOIU.final_touch(model, nothing)
+    _test_matrix_equal(
+        model.constraints.moi_zeros.coefficients,
+        sparse([1], [1], T[5], 1, 2)
+    )
+    @test model.constraints.moi_zeros.constants == T[2]
+    _test_matrix_equal(
+        model.constraints.moi_nonnegatives.coefficients,
+        sparse([1, 3], [2, 1], T[3, 7], 4, 2)
+    )
+    @test model.constraints.moi_nonnegatives.constants == T[1, 6, 0, 4]
+end
+
 end
 
 TestMatrixOfConstraints.runtests()
