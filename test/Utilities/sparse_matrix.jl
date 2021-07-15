@@ -110,7 +110,8 @@ function test_extract_function()
     @test row_1 ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.5)
     @test MOI.Utilities.extract_function(A, 1:2, [0.5, 1.2]) ≈ f
     empty_f = MOI.Utilities.extract_function(A, 1:0, Float64[])
-    @test isempty(empty_f)
+    @test empty_f ≈
+          MOI.VectorAffineFunction(MOI.VectorAffineTerm{Float64}[], Float64[])
     return
 end
 
