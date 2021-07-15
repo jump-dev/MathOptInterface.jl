@@ -6,76 +6,22 @@ the image of a set of type `S1` under `A` is a set of type `S2`.
 A `SetMapBridge{T,S2,S1,F,G}` is a bridge that maps `G`-in-`S2` constraints
 into `F`-in-`S1` by mapping the function through `A`.
 
-The linear map `A` is described by [`map_set`](@ref), [`map_function`](@ref).
+The linear map `A` is described by
+[`MathOptInterface.Bridges.map_set`](@ref),
+[`MathOptInterface.Bridges.map_function`](@ref).
 Implementing a method for these two functions is sufficient to bridge
 constraints. In order for the getters and setters of dual solutions,
 starting values, etc...  to work as well a method for the following
-functions should be implemented as well: [`inverse_map_set`](@ref),
-[`inverse_map_function`](@ref), [`adjoint_map_function`](@ref) and
-[`inverse_adjoint_map_function`](@ref). See the docstrings of the function
+functions should be implemented as well:
+[`MathOptInterface.Bridges.inverse_map_set`](@ref),
+[`MathOptInterface.Bridges.inverse_map_function`](@ref),
+[`MathOptInterface.Bridges.adjoint_map_function`](@ref) and
+[`MathOptInterface.Bridges.inverse_adjoint_map_function`](@ref).
+See the docstrings of the function
 to see which feature would be missing it it was not implemented for a given
 bridge.
 """
 abstract type SetMapBridge{T,S2,S1,F,G} <: AbstractBridge end
-
-"""
-    map_set(::Type{BT}, set) where {BT}
-
-Return the image of `set` through the linear map `A` defined in
-[`SetMapBridge`](@ref). This is used for bridging the constraint and setting
-the [`MathOptInterface.ConstraintSet`](@ref).
-"""
-function map_set end
-
-"""
-    inverse_map_set(::Type{BT}, set) where {BT}
-
-Return the preimage of `set` through the linear map `A` defined in
-[`SetMapBridge`](@ref). This is used for getting the
-[`MathOptInterface.ConstraintSet`](@ref).
-"""
-function inverse_map_set end
-
-"""
-    map_function(::Type{BT}, func) where {BT}
-
-Return the image of `func` through the linear map `A` defined in
-[`SetMapBridge`](@ref). This is used for bridging the constraint, setting
-the [`MathOptInterface.ConstraintFunction`](@ref) and
-[`MathOptInterface.ConstraintPrimalStart`](@ref) and
-modifying the function with [`MathOptInterface.modify`](@ref).
-"""
-function map_function end
-
-"""
-    inverse_map_function(::Type{BT}, func) where {BT}
-
-Return the image of `func` through the inverse of the linear map `A` defined in
-[`SetMapBridge`](@ref). This is used for getting the
-[`MathOptInterface.ConstraintFunction`](@ref),
-the [`MathOptInterface.ConstraintPrimal`](@ref) and the
-[`MathOptInterface.ConstraintPrimalStart`](@ref).
-"""
-function inverse_map_function end
-
-"""
-    adjoint_map_function(::Type{BT}, func) where {BT}
-
-Return the image of `func` through the adjoint of the linear map `A` defined in
-[`SetMapBridge`](@ref). This is used for getting the
-[`MathOptInterface.ConstraintDual`](@ref) and
-[`MathOptInterface.ConstraintDualStart`](@ref).
-"""
-function adjoint_map_function end
-
-"""
-    adjoint_map_function(::Type{BT}, func) where {BT}
-
-Return the image of `func` through the inverse of the adjoint of the linear map
-`A` defined in [`SetMapBridge`](@ref). This is used for setting the
-[`MathOptInterface.ConstraintDualStart`](@ref).
-"""
-function inverse_adjoint_map_function end
 
 function bridge_constraint(
     BT::Type{<:SetMapBridge{T,S2,S1,F,G}},
@@ -83,8 +29,8 @@ function bridge_constraint(
     func::G,
     set::S1,
 ) where {T,S2,S1,F,G}
-    mapped_func = map_function(BT, func)
-    constraint = MOI.add_constraint(model, mapped_func, map_set(BT, set))
+    mapped_func = MOIB.map_function(BT, func)
+    constraint = MOI.add_constraint(model, mapped_func, MOIB.map_set(BT, set))
     return BT(constraint)
 end
 
@@ -142,7 +88,7 @@ function MOI.get(
     bridge::SetMapBridge{T,S2,S1,F,G},
 ) where {T,S2,S1,F,G}
     mapped_func = MOI.get(model, attr, bridge.constraint)
-    func = inverse_map_function(typeof(bridge), mapped_func)
+    func = MOIB.inverse_map_function(typeof(bridge), mapped_func)
     return MOIU.convert_approx(G, func)
 end
 
@@ -152,7 +98,7 @@ function MOI.get(
     bridge::SetMapBridge,
 )
     set = MOI.get(model, attr, bridge.constraint)
-    return inverse_map_set(typeof(bridge), set)
+    return MOIB.inverse_map_set(typeof(bridge), set)
 end
 
 function MOI.set(
@@ -161,7 +107,12 @@ function MOI.set(
     bridge::SetMapBridge{T,S2,S1},
     new_set::S1,
 ) where {T,S2,S1}
-    MOI.set(model, attr, bridge.constraint, map_set(typeof(bridge), new_set))
+    MOI.set(
+        model,
+        attr,
+        bridge.constraint,
+        MOIB.map_set(typeof(bridge), new_set),
+    )
     return
 end
 
@@ -179,7 +130,7 @@ function MOI.get(
     bridge::SetMapBridge,
 )
     value = MOI.get(model, attr, bridge.constraint)
-    return inverse_map_function(typeof(bridge), value)
+    return MOIB.inverse_map_function(typeof(bridge), value)
 end
 
 function MOI.set(
@@ -188,7 +139,7 @@ function MOI.set(
     bridge::SetMapBridge,
     value,
 )
-    mapped_value = map_function(typeof(bridge), value)
+    mapped_value = MOIB.map_function(typeof(bridge), value)
     MOI.set(model, attr, bridge.constraint, mapped_value)
     return
 end
@@ -199,7 +150,7 @@ function MOI.get(
     bridge::SetMapBridge,
 )
     value = MOI.get(model, attr, bridge.constraint)
-    return adjoint_map_function(typeof(bridge), value)
+    return MOIB.adjoint_map_function(typeof(bridge), value)
 end
 
 function MOI.set(
@@ -208,7 +159,7 @@ function MOI.set(
     bridge::SetMapBridge,
     value,
 )
-    mapped_value = inverse_adjoint_map_function(typeof(bridge), value)
+    mapped_value = MOIB.inverse_adjoint_map_function(typeof(bridge), value)
     MOI.set(model, attr, bridge.constraint, mapped_value)
     return
 end
@@ -219,7 +170,7 @@ function MOI.modify(
     change::MOI.VectorConstantChange,
 )
     # By linearity of the map, we can just change the constant
-    constant = map_function(typeof(bridge), change.new_constant)
+    constant = MOIB.map_function(typeof(bridge), change.new_constant)
     MOI.modify(model, bridge.constraint, MOI.VectorConstantChange(constant))
     return
 end

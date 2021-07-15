@@ -36,14 +36,6 @@ function concrete_bridge_type(
     return RSOCtoSOCBridge{T,rotate_function_type(G, T),G}
 end
 
-function map_set(::Type{<:RSOCtoSOCBridge}, set::MOI.RotatedSecondOrderCone)
-    return MOI.SecondOrderCone(MOI.dimension(set))
-end
-
-function inverse_map_set(::Type{<:RSOCtoSOCBridge}, set::MOI.SecondOrderCone)
-    return MOI.RotatedSecondOrderCone(MOI.dimension(set))
-end
-
 """
     SOCtoRSOCBridge{T, F, G}
 
@@ -61,54 +53,4 @@ function concrete_bridge_type(
     ::Type{MOI.SecondOrderCone},
 ) where {T}
     return SOCtoRSOCBridge{T,rotate_function_type(G, T),G}
-end
-
-function map_set(::Type{<:SOCtoRSOCBridge}, set::MOI.SecondOrderCone)
-    return MOI.RotatedSecondOrderCone(MOI.dimension(set))
-end
-
-function inverse_map_set(
-    ::Type{<:SOCtoRSOCBridge},
-    set::MOI.RotatedSecondOrderCone,
-)
-    return MOI.SecondOrderCone(MOI.dimension(set))
-end
-
-function map_function(
-    ::Type{<:Union{RSOCtoSOCBridge{T},SOCtoRSOCBridge{T}}},
-    func,
-) where {T}
-    scalars = MOIU.eachscalar(func)
-    t = scalars[1]
-    u = scalars[2]
-    x = scalars[3:end]
-    s2 = √T(2)
-    ts = MOIU.operate!(/, T, t, s2)
-    us = MOIU.operate!(/, T, u, s2)
-    # Cannot use `operate!` here since `ts` and `us` are needed for the next
-    # line
-    y = ts - us
-    z = MOIU.operate!(+, T, ts, us)
-    return MOIU.operate(vcat, T, z, y, x)
-end
-# The map is an involution
-function inverse_map_function(
-    BT::Type{<:Union{RSOCtoSOCBridge,SOCtoRSOCBridge}},
-    func,
-)
-    return map_function(BT, func)
-end
-# The map is symmetric
-function adjoint_map_function(
-    BT::Type{<:Union{RSOCtoSOCBridge,SOCtoRSOCBridge}},
-    func,
-)
-    return map_function(BT, func)
-end
-# The map is a symmetric involution
-function inverse_adjoint_map_function(
-    BT::Type{<:Union{RSOCtoSOCBridge,SOCtoRSOCBridge}},
-    func,
-)
-    return map_function(BT, func)
 end

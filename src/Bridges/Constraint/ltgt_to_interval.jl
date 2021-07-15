@@ -20,10 +20,12 @@ abstract type AbstractToIntervalBridge{
 } <: SetMapBridge{T,MOI.Interval{T},S1,F,F} end
 
 # The function map is the identity. It is also an involution, symmetric, and a symmetric involution.
-map_function(::Type{<:AbstractToIntervalBridge{T}}, func) where {T} = func
-inverse_map_function(::Type{<:AbstractToIntervalBridge}, func) = func
-adjoint_map_function(::Type{<:AbstractToIntervalBridge}, func) = func
-inverse_adjoint_map_function(::Type{<:AbstractToIntervalBridge}, func) = func
+MOIB.map_function(::Type{<:AbstractToIntervalBridge{T}}, func) where {T} = func
+MOIB.inverse_map_function(::Type{<:AbstractToIntervalBridge}, func) = func
+MOIB.adjoint_map_function(::Type{<:AbstractToIntervalBridge}, func) = func
+function MOIB.inverse_adjoint_map_function(::Type{<:AbstractToIntervalBridge}, func)
+    return func
+end
 
 # FIXME are these modify functions necessary?
 function MOI.modify(
@@ -56,11 +58,11 @@ struct GreaterToIntervalBridge{T,F<:MOI.AbstractScalarFunction} <:
     constraint::CI{F,MOI.Interval{T}}
 end
 
-function map_set(::Type{<:GreaterToIntervalBridge}, set::MOI.GreaterThan)
+function MOIB.map_set(::Type{<:GreaterToIntervalBridge}, set::MOI.GreaterThan)
     return MOI.Interval(set.lower, typemax(set.lower))
 end
 
-function inverse_map_set(::Type{<:GreaterToIntervalBridge}, set::MOI.Interval)
+function MOIB.inverse_map_set(::Type{<:GreaterToIntervalBridge}, set::MOI.Interval)
     return MOI.GreaterThan(set.lower)
 end
 
@@ -84,11 +86,11 @@ struct LessToIntervalBridge{T,F<:MOI.AbstractScalarFunction} <:
     constraint::CI{F,MOI.Interval{T}}
 end
 
-function map_set(::Type{<:LessToIntervalBridge}, set::MOI.LessThan)
+function MOIB.map_set(::Type{<:LessToIntervalBridge}, set::MOI.LessThan)
     return MOI.Interval(typemin(set.upper), set.upper)
 end
 
-function inverse_map_set(::Type{<:LessToIntervalBridge}, set::MOI.Interval)
+function MOIB.inverse_map_set(::Type{<:LessToIntervalBridge}, set::MOI.Interval)
     return MOI.LessThan(set.upper)
 end
 

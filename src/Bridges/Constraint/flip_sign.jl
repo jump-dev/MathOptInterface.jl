@@ -14,19 +14,23 @@ abstract type FlipSignBridge{
     G<:MOI.AbstractFunction,
 } <: SetMapBridge{T,S2,S1,F,G} end
 
-function map_function(::Type{<:FlipSignBridge{T}}, func) where {T}
+function MOIB.map_function(::Type{<:FlipSignBridge{T}}, func) where {T}
     return MOIU.operate(-, T, func)
 end
 
 # The map is an involution
-inverse_map_function(BT::Type{<:FlipSignBridge}, func) = map_function(BT, func)
+function MOIB.inverse_map_function(BT::Type{<:FlipSignBridge}, func)
+    return MOIB.map_function(BT, func)
+end
 
 # The map is symmetric
-adjoint_map_function(BT::Type{<:FlipSignBridge}, func) = map_function(BT, func)
+function MOIB.adjoint_map_function(BT::Type{<:FlipSignBridge}, func)
+    return MOIB.map_function(BT, func)
+end
 
 # The map is a symmetric involution
-function inverse_adjoint_map_function(BT::Type{<:FlipSignBridge}, func)
-    return map_function(BT, func)
+function MOIB.inverse_adjoint_map_function(BT::Type{<:FlipSignBridge}, func)
+    return MOIB.map_function(BT, func)
 end
 
 function MOI.delete(
@@ -91,11 +95,11 @@ struct GreaterToLessBridge{
     constraint::CI{F,MOI.LessThan{T}}
 end
 
-function map_set(::Type{<:GreaterToLessBridge}, set::MOI.GreaterThan)
+function MOIB.map_set(::Type{<:GreaterToLessBridge}, set::MOI.GreaterThan)
     return MOI.LessThan(-set.lower)
 end
 
-function inverse_map_set(::Type{<:GreaterToLessBridge}, set::MOI.LessThan)
+function MOIB.inverse_map_set(::Type{<:GreaterToLessBridge}, set::MOI.LessThan)
     return MOI.GreaterThan(-set.upper)
 end
 
@@ -126,11 +130,14 @@ struct LessToGreaterBridge{
     constraint::CI{F,MOI.GreaterThan{T}}
 end
 
-function map_set(::Type{<:LessToGreaterBridge}, set::MOI.LessThan)
+function MOIB.map_set(::Type{<:LessToGreaterBridge}, set::MOI.LessThan)
     return MOI.GreaterThan(-set.upper)
 end
 
-function inverse_map_set(::Type{<:LessToGreaterBridge}, set::MOI.GreaterThan)
+function MOIB.inverse_map_set(
+    ::Type{<:LessToGreaterBridge},
+    set::MOI.GreaterThan,
+)
     return MOI.LessThan(-set.lower)
 end
 
@@ -161,11 +168,14 @@ mutable struct NonnegToNonposBridge{
     constraint::CI{F,MOI.Nonpositives}
 end
 
-function map_set(::Type{<:NonnegToNonposBridge}, set::MOI.Nonnegatives)
+function MOIB.map_set(::Type{<:NonnegToNonposBridge}, set::MOI.Nonnegatives)
     return MOI.Nonpositives(set.dimension)
 end
 
-function inverse_map_set(::Type{<:NonnegToNonposBridge}, set::MOI.Nonpositives)
+function MOIB.inverse_map_set(
+    ::Type{<:NonnegToNonposBridge},
+    set::MOI.Nonpositives,
+)
     return MOI.Nonnegatives(set.dimension)
 end
 
@@ -196,11 +206,14 @@ mutable struct NonposToNonnegBridge{
     constraint::CI{F,MOI.Nonnegatives}
 end
 
-function map_set(::Type{<:NonposToNonnegBridge}, set::MOI.Nonpositives)
+function MOIB.map_set(::Type{<:NonposToNonnegBridge}, set::MOI.Nonpositives)
     return MOI.Nonnegatives(set.dimension)
 end
 
-function inverse_map_set(::Type{<:NonposToNonnegBridge}, set::MOI.Nonnegatives)
+function MOIB.inverse_map_set(
+    ::Type{<:NonposToNonnegBridge},
+    set::MOI.Nonnegatives,
+)
     return MOI.Nonpositives(set.dimension)
 end
 
