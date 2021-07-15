@@ -28,7 +28,7 @@ function _add_variables(::Nothing, ::Int64) end
 function MOI.add_variable(model::AbstractModel{T}) where {T}
     vi = VI(model.num_variables_created += 1)
     push!(model.single_variable_mask, 0x0)
-    __add_free(model.variable_bounds)
+    _add_free(model.variable_bounds)
     if model.variable_indices !== nothing
         push!(model.variable_indices, vi)
     end
