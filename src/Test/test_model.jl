@@ -742,11 +742,10 @@ end
         config::Config,
     )
 
-Test that `MOI.ScalarFunctionConstantNotZero` is thrown when a constraint with
-a function with nonzero constant is added.
+Test adding a linear constraint with a non-zero function constant.
 
-**This test is optional because solvers could choose to support scalar functions
-with nonzero constants.**
+This should either work, or error with `MOI.ScalarFunctionConstantNotZero` if
+the model does not support it.
 
 To skip this test, pass `MOI.ScalarFunctionConstantNotZero` to the `exclude`
 argument of [`Config`](@ref).
@@ -756,33 +755,30 @@ function test_model_ScalarFunctionConstantNotZero(
     config::Config,
 )
     @requires _supports(config, MOI.ScalarFunctionConstantNotZero)
-    err = MOI.ScalarFunctionConstantNotZero{
-        Float64,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.EqualTo{Float64},
-    }(
-        1.0,
-    )
-    @test_throws err begin
-        MOI.add_constraint(
-            model,
-            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 1.0),
-            MOI.EqualTo(2.0),
+    function _error(S, value)
+        return MOI.ScalarFunctionConstantNotZero{
+            Float64,
+            MOI.ScalarAffineFunction{Float64},
+            S,
+        }(
+            value,
         )
     end
-    err = MOI.ScalarFunctionConstantNotZero{
-        Float64,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.GreaterThan{Float64},
-    }(
-        2.0,
-    )
-    @test_throws err begin
-        MOI.add_constraint(
-            model,
-            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 2.0),
-            MOI.GreaterThan(1.0),
-        )
+    try
+        f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 1.0)
+        c = MOI.add_constraint(model, f, MOI.EqualTo(2.0))
+        @requires _supports(config, MOI.ConstraintFunction)
+        @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ f
+    catch err
+        @test err == _error(MOI.EqualTo{Float64}, 1.0)
+    end
+    try
+        f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 2.0)
+        c = MOI.add_constraint(model, f, MOI.GreaterThan(1.0))
+        @requires _supports(config, MOI.ConstraintFunction)
+        @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ f
+    catch err
+        @test err == _error(MOI.GreaterThan{Float64}, 2.0)
     end
     return
 end

@@ -728,6 +728,11 @@ function test_constraint_ConstraintPrimalStart(
         MOI.VectorAffineFunction{T},
         MOI.Nonnegatives,
     )
+    @requires MOI.supports(
+        model,
+        MOI.ConstraintPrimalStart(),
+        MOI.ConstraintIndex{MOI.VectorAffineFunction{T},MOI.Nonnegatives},
+    )
     x = MOI.add_variable(model)
     f = MOI.VectorAffineFunction(
         [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(one(T), x))],
@@ -758,6 +763,11 @@ function test_constraint_ConstraintDualStart(
         model,
         MOI.VectorAffineFunction{T},
         MOI.Nonnegatives,
+    )
+    @requires MOI.supports(
+        model,
+        MOI.ConstraintDualStart(),
+        MOI.ConstraintIndex{MOI.VectorAffineFunction{T},MOI.Nonnegatives},
     )
     x = MOI.add_variable(model)
     f = MOI.VectorAffineFunction(

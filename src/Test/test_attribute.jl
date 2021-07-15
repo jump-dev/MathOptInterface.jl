@@ -1,10 +1,10 @@
 """
-    test_attribute_NumberThreads(model::MOI.ModelLike, config::Config)
+    test_attribute_NumberThreads(model::MOI.AbstractOptimizer, config::Config)
 
 Test that the [`MOI.NumberOfThreads`](@ref) attribute is implemented for
 `model`.
 """
-function test_attribute_NumberThreads(model::MOI.ModelLike, ::Config)
+function test_attribute_NumberThreads(model::MOI.AbstractOptimizer, ::Config)
     @requires MOI.supports(model, MOI.NumberOfThreads())
     # Get the current value to restore it at the end of the test
     value = MOI.get(model, MOI.NumberOfThreads())
@@ -16,6 +16,7 @@ function test_attribute_NumberThreads(model::MOI.ModelLike, ::Config)
     @test value == MOI.get(model, MOI.NumberOfThreads())
     return
 end
+test_attribute_NumberThreads(::MOI.ModelLike, ::Config) = nothing
 
 function setup_test(
     ::typeof(test_attribute_NumberThreads),
@@ -27,12 +28,15 @@ function setup_test(
 end
 
 """
-    test_attribute_RawStatusString(model::MOI.ModelLike, config::Config)
+    test_attribute_RawStatusString(model::MOI.AbstractOptimizer, config::Config)
 
 Test that the [`MOI.RawStatusString`](@ref) attribute is implemented for
 `model`.
 """
-function test_attribute_RawStatusString(model::MOI.ModelLike, config::Config)
+function test_attribute_RawStatusString(
+    model::MOI.AbstractOptimizer,
+    config::Config,
+)
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.RawStatusString)
     MOI.add_variable(model)
@@ -40,6 +44,7 @@ function test_attribute_RawStatusString(model::MOI.ModelLike, config::Config)
     @test MOI.get(model, MOI.RawStatusString()) isa AbstractString
     return
 end
+test_attribute_RawStatusString(::MOI.ModelLike, ::Config) = nothing
 
 function setup_test(
     ::typeof(test_attribute_RawStatusString),
@@ -60,11 +65,11 @@ function setup_test(
 end
 
 """
-    test_attribute_Silent(model::MOI.ModelLike, config::Config)
+    test_attribute_Silent(model::MOI.AbstractOptimizer, config::Config)
 
 Test that the [`MOI.Silent`](@ref) attribute is implemented for `model`.
 """
-function test_attribute_Silent(model::MOI.ModelLike, ::Config)
+function test_attribute_Silent(model::MOI.AbstractOptimizer, ::Config)
     @requires MOI.supports(model, MOI.Silent())
     # Get the current value to restore it at the end of the test
     value = MOI.get(model, MOI.Silent())
@@ -77,6 +82,7 @@ function test_attribute_Silent(model::MOI.ModelLike, ::Config)
     @test value == MOI.get(model, MOI.Silent())
     return
 end
+test_attribute_Silent(::MOI.ModelLike, ::Config) = nothing
 
 function setup_test(
     ::typeof(test_attribute_Silent),
@@ -88,23 +94,27 @@ function setup_test(
 end
 
 """
-    test_attribute_SolverName(model::MOI.ModelLike, config::Config)
+    test_attribute_SolverName(model::MOI.AbstractOptimizer, config::Config)
 
 Test that the [`MOI.SolverName`](@ref) attribute is implemented for `model`.
 """
-function test_attribute_SolverName(model::MOI.ModelLike, config::Config)
+function test_attribute_SolverName(model::MOI.AbstractOptimizer, config::Config)
     if _supports(config, MOI.SolverName)
         @test MOI.get(model, MOI.SolverName()) isa AbstractString
     end
     return
 end
+test_attribute_SolverName(::MOI.ModelLike, ::Config) = nothing
 
 """
-    test_attribute_SolveTimeSec(model::MOI.ModelLike, config::Config)
+    test_attribute_SolveTimeSec(model::MOI.AbstractOptimizer, config::Config)
 
 Test that the [`MOI.SolveTimeSec`](@ref) attribute is implemented for `model`.
 """
-function test_attribute_SolveTimeSec(model::MOI.ModelLike, config::Config)
+function test_attribute_SolveTimeSec(
+    model::MOI.AbstractOptimizer,
+    config::Config,
+)
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.SolveTimeSec)
     MOI.add_variable(model)
@@ -112,6 +122,7 @@ function test_attribute_SolveTimeSec(model::MOI.ModelLike, config::Config)
     @test MOI.get(model, MOI.SolveTimeSec()) >= 0.0
     return
 end
+test_attribute_SolveTimeSec(::MOI.ModelLike, ::Config) = nothing
 
 function setup_test(
     ::typeof(test_attribute_SolveTimeSec),
@@ -126,11 +137,11 @@ function setup_test(
 end
 
 """
-    test_attribute_TimeLimitSec(model::MOI.ModelLike, config::Config)
+    test_attribute_TimeLimitSec(model::MOI.AbstractOptimizer, config::Config)
 
 Test that the [`MOI.TimeLimitSec`](@ref) attribute is implemented for `model`.
 """
-function test_attribute_TimeLimitSec(model::MOI.ModelLike, ::Config)
+function test_attribute_TimeLimitSec(model::MOI.AbstractOptimizer, ::Config)
     @requires MOI.supports(model, MOI.TimeLimitSec())
     # Get the current value to restore it at the end of the test
     value = MOI.get(model, MOI.TimeLimitSec())
@@ -142,6 +153,7 @@ function test_attribute_TimeLimitSec(model::MOI.ModelLike, ::Config)
     @test value == MOI.get(model, MOI.TimeLimitSec()) # Equality should hold
     return
 end
+test_attribute_TimeLimitSec(::MOI.ModelLike, ::Config) = nothing
 
 function setup_test(
     ::typeof(test_attribute_TimeLimitSec),
