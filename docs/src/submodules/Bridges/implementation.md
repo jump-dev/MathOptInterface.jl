@@ -50,7 +50,7 @@ get(::Bridges.AbstractBridge, ::ListOfConstraintIndices)
 
 Implementing a constraint bridge relying on linear transformation between two
 sets is easier thanks to the [SetMap interface](constraint_set_map).
-The bridge simply needs to be a subtype of [`Bridges.Constraint.SetMap`] and
+The bridge simply needs to be a subtype of [`Bridges.Constraint.SetMapBridge`] and
 the linear transformation is represented with [`Bridges.Constraint.map_set`](@ref),
 [`Bridges.Constraint.map_function`](@ref),
 [`Bridges.Constraint.inverse_map_set`](@ref),

@@ -42,7 +42,6 @@ Bridges.Constraint.add_all_bridges
 ### [SetMap bridges](@id constraint_set_map)
 
 ```@docs
-Bridges.Constraint.SetMap
 Bridges.Constraint.SetMapBridge
 Bridges.Constraint.map_set
 Bridges.Constraint.inverse_map_set
