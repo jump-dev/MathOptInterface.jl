@@ -109,6 +109,8 @@ function test_extract_function()
     row_1 = MOI.Utilities.extract_function(A, 1, 0.5)
     @test row_1 ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.5)
     @test MOI.Utilities.extract_function(A, 1:2, [0.5, 1.2]) ≈ f
+    empty_f = MOI.Utilities.extract_function(A, 1:0, Float64[])
+    @test isempty(empty_f)
     return
 end
 
