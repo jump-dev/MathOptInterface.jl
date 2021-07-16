@@ -77,13 +77,13 @@ function filter_variables(
     end
     return g, t
 end
+
 function _delete_variable(
     model::AbstractModel{T},
     vi::MOI.VariableIndex,
 ) where {T}
     MOI.throw_if_not_valid(model, vi)
-    # TODO(odow): is there a better way?
-    model.variable_bounds[vi.value].set_mask = 0x00
+    MOI.delete(model.variable_bounds, vi)
     if model.variable_indices === nothing
         model.variable_indices =
             Set(MOI.get(model, MOI.ListOfVariableIndices()))

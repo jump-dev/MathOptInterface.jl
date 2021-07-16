@@ -184,6 +184,12 @@ function MOI.delete(
     return
 end
 
+function MOI.delete(b::Box, x::MOI.VariableIndex)
+    # To "delete" the variable, set it to 0x00 (free).
+    b.set_mask[x.value] = 0x00
+    return
+end
+
 function MOI.is_valid(
     b::Box,
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},

@@ -116,6 +116,17 @@ function test_delete_constraint_LessThan()
     return
 end
 
+function test_delete_variable()
+    a = MOI.Utilities.Box{Int}()
+    MOI.Utilities._add_variable(a)
+    @test a == MOI.Utilities.Box{Int}([0x00], Int[0], Int[0])
+    f = MOI.SingleVariable(MOI.VariableIndex(1))
+    c = MOI.add_constraint(a, f, MOI.LessThan(3))
+    MOI.delete(a, MOI.VariableIndex(1))
+    @test a == MOI.Utilities.Box{Int}([0x00], Int[0], Int[3])
+    return
+end
+
 function test_delete_constraint_GreaterThan()
     a = MOI.Utilities.Box{Int}()
     MOI.Utilities._add_variable(a)
