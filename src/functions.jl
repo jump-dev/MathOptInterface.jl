@@ -1,14 +1,5 @@
 # Functions
 
-import MutableArithmetics
-
-"""
-    AbstractFunction
-
-Abstract supertype for function objects.
-"""
-abstract type AbstractFunction <: MutableArithmetics.AbstractMutable end
-
 """
     output_dimension(f::AbstractFunction)
 
@@ -17,12 +8,6 @@ has a vector output.
 """
 function output_dimension end
 
-"""
-    AbstractScalarFunction
-
-Abstract supertype for scalar-valued function objects.
-"""
-abstract type AbstractScalarFunction <: AbstractFunction end
 output_dimension(::AbstractScalarFunction) = 1
 
 Base.broadcastable(f::AbstractScalarFunction) = Ref(f)
@@ -42,8 +27,15 @@ abstract type AbstractVectorFunction <: AbstractFunction end
 The function that extracts the scalar variable referenced by `variable`, a `VariableIndex`.
 This function is naturally be used for single variable bounds or integrality constraints.
 """
-struct SingleVariable <: AbstractScalarFunction
-    variable::VariableIndex
+const SingleVariable = VariableIndex
+VariableIndex(vi::VariableIndex) = vi
+function Base.getproperty(vi::VariableIndex, s::Symbol)
+    if s == :value
+        return getfield(vi, s)
+    else
+        @assert s == :variable
+        return vi
+    end
 end
 
 """

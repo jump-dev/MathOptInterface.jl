@@ -27,7 +27,7 @@ index_value(ci::ConstraintIndex) = ci.value
 A type-safe wrapper for `Int64` for use in referencing variables in a model.
 To allow for deletion, indices need not be consecutive.
 """
-struct VariableIndex
+struct VariableIndex <: AbstractScalarFunction
     value::Int64
 end
 index_value(vi::VariableIndex) = vi.value

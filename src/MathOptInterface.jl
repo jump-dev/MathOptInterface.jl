@@ -159,6 +159,22 @@ is_valid(dest, index_map[x]) # true
 """
 function copy_to end
 
+import MutableArithmetics
+
+"""
+    AbstractFunction
+
+Abstract supertype for function objects.
+"""
+abstract type AbstractFunction <: MutableArithmetics.AbstractMutable end
+
+"""
+    AbstractScalarFunction
+
+Abstract supertype for scalar-valued function objects.
+"""
+abstract type AbstractScalarFunction <: AbstractFunction end
+
 include("error.jl")
 include("indextypes.jl")
 include("functions.jl")

@@ -156,10 +156,6 @@ end
 
 # Functions
 
-function map_indices(index_map::F, f::MOI.SingleVariable) where {F<:Function}
-    return MOI.SingleVariable(index_map(f.variable))
-end
-
 function map_indices(index_map::F, f::MOI.VectorOfVariables) where {F<:Function}
     return MOI.VectorOfVariables(index_map.(f.variables))
 end
