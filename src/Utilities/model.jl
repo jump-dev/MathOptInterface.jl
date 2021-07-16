@@ -6,12 +6,8 @@ abstract type AbstractOptimizer{T} <: MOI.AbstractOptimizer end
 const AbstractModel{T} = Union{AbstractModelLike{T},AbstractOptimizer{T}}
 
 # Variables
-function MOI.get(model::AbstractModel, ::MOI.NumberOfVariables)::Int64
-    if model.variable_indices === nothing
-        return model.num_variables_created
-    else
-        return length(model.variable_indices)
-    end
+function MOI.get(model::AbstractModel, attr::MOI.NumberOfVariables)::Int64
+    return MOI.get(model.variable_bounds, attr)
 end
 
 """
@@ -27,14 +23,9 @@ function _add_variable(::Nothing) end
 function _add_variables(::Nothing, ::Int64) end
 
 function MOI.add_variable(model::AbstractModel)
-    model.num_variables_created += 1
-    vi = MOI.VariableIndex(model.num_variables_created)
-    if model.variable_indices !== nothing
-        push!(model.variable_indices, vi)
-    end
-    _add_variable(model.variable_bounds)
+    x = MOI.add_variable(model.variable_bounds)
     _add_variable(model.constraints)
-    return vi
+    return x
 end
 
 function MOI.add_variables(model::AbstractModel, n::Integer)
@@ -84,11 +75,6 @@ function _delete_variable(
 ) where {T}
     MOI.throw_if_not_valid(model, vi)
     MOI.delete(model.variable_bounds, vi)
-    if model.variable_indices === nothing
-        model.variable_indices =
-            Set(MOI.get(model, MOI.ListOfVariableIndices()))
-    end
-    delete!(model.variable_indices, vi)
     model.name_to_var = nothing
     delete!(model.var_to_name, vi)
     model.name_to_con = nothing
@@ -141,8 +127,6 @@ end
 
 function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
     if isempty(vis)
-        # In `keep`, we assume that `model.variable_indices !== nothing` so
-        # at least one variable need to be deleted.
         return
     end
     _throw_if_cannot_delete(model.constraints, vis, Set(vis))
@@ -152,7 +136,7 @@ function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
     for vi in vis
         _delete_variable(model, vi)
     end
-    keep(vi::MOI.VariableIndex) = vi in model.variable_indices
+    keep = x -> MOI.is_valid(model, x)
     model.objective = filter_variables(keep, model.objective)
     model.name_to_con = nothing
     return
@@ -169,22 +153,12 @@ function MOI.is_valid(model::AbstractModel, ci::MOI.ConstraintIndex)
     return MOI.is_valid(model.constraints, ci)
 end
 
-function MOI.is_valid(model::AbstractModel, vi::VI)
-    if model.variable_indices === nothing
-        return 1 ≤ vi.value ≤ model.num_variables_created
-    else
-        return in(vi, model.variable_indices)
-    end
+function MOI.is_valid(model::AbstractModel, x::MOI.VariableIndex)
+    return MOI.is_valid(model.variable_bounds, x)
 end
 
-function MOI.get(model::AbstractModel, ::MOI.ListOfVariableIndices)
-    if model.variable_indices === nothing
-        return VI.(1:model.num_variables_created)
-    else
-        vis = collect(model.variable_indices)
-        sort!(vis, by = vi -> vi.value) # It needs to be sorted by order of creation
-        return vis
-    end
+function MOI.get(model::AbstractModel, attr::MOI.ListOfVariableIndices)
+    return MOI.get(model.variable_bounds, attr)
 end
 
 # Names
@@ -588,7 +562,6 @@ function MOI.is_empty(model::AbstractModel)
            !model.objectiveset &&
            isempty(model.objective.terms) &&
            iszero(model.objective.constant) &&
-           iszero(model.num_variables_created) &&
            MOI.is_empty(model.constraints)
 end
 function MOI.empty!(model::AbstractModel{T}) where {T}
@@ -597,8 +570,6 @@ function MOI.empty!(model::AbstractModel{T}) where {T}
     model.sense = MOI.FEASIBILITY_SENSE
     model.objectiveset = false
     model.objective = zero(MOI.ScalarAffineFunction{T})
-    model.num_variables_created = 0
-    model.variable_indices = nothing
     empty!(model.variable_bounds)
     empty!(model.var_to_name)
     model.name_to_var = nothing
@@ -884,12 +855,7 @@ for (loop_name, loop_super_type) in [
                 MOI.ScalarAffineFunction{T},
                 MOI.ScalarQuadraticFunction{T},
             }
-            num_variables_created::Int64
-            # If nothing, no variable has been deleted so the indices of the
-            # variables are VI.(1:num_variables_created)
-            variable_indices::Union{Nothing,Set{VI}}
-            # Bounds set by `SingleVariable`-in-`S`:
-            variable_bounds::Box{T}
+            variable_bounds::SingleVariableConstraints{T}
             constraints::C
             var_to_name::Dict{MOI.VariableIndex,String}
             # If `nothing`, the dictionary hasn't been constructed yet.
@@ -906,9 +872,7 @@ for (loop_name, loop_super_type) in [
                     MOI.FEASIBILITY_SENSE,
                     false,
                     zero(MOI.ScalarAffineFunction{T}),
-                    0,
-                    nothing,
-                    Box{T}(),
+                    SingleVariableConstraints{T}(),
                     C(),
                     Dict{MOI.VariableIndex,String}(),
                     nothing,

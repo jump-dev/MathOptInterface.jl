@@ -1,50 +1,51 @@
-"""
-    struct Box{T}
-        lower::Vector{T}
-        upper::Vector{T}
-    end
+abstract type AbstractVectorBounds end
 
-Stores the constants of scalar constraints with the lower bound of the set in
-`lower` and the upper bound in `upper`.
-"""
-struct Box{T}
-    set_mask::Vector{UInt8}
-    lower::Vector{T}
-    upper::Vector{T}
+function set_from_constants(
+    b::AbstractVectorBounds,
+    ::Type{<:MOI.EqualTo},
+    index,
+)
+    return MOI.EqualTo(b.lower[index])
 end
 
-Box{T}() where {T} = Box{T}(UInt8[], T[], T[])
-
-function Base.:(==)(a::Box, b::Box)
-    return a.set_mask == b.set_mask && a.lower == b.lower && a.upper == b.upper
+function set_from_constants(
+    b::AbstractVectorBounds,
+    S::Type{<:Union{MOI.GreaterThan,MOI.EqualTo}},
+    index,
+)
+    # Lower and upper bounds are equal for `EqualTo`, we can take either of them.
+    return S(b.lower[index])
 end
 
-function Base.empty!(b::Box)
-    empty!(b.set_mask)
-    empty!(b.lower)
-    empty!(b.upper)
-    return b
+function set_from_constants(
+    b::AbstractVectorBounds,
+    S::Type{<:MOI.LessThan},
+    index,
+)
+    return S(b.upper[index])
 end
 
-function Base.resize!(b::Box, n)
-    resize!(b.set_mask, n)
-    resize!(b.lower, n)
-    resize!(b.upper, n)
-    return
+function set_from_constants(
+    b::AbstractVectorBounds,
+    S::Type{<:Union{MOI.Interval,MOI.Semicontinuous,MOI.Semiinteger}},
+    index,
+)
+    return S(b.lower[index], b.upper[index])
 end
 
-function _add_variable(b::Box{T}) where {T}
-    push!(b.set_mask, 0x00)
-    push!(b.lower, _no_lower_bound(T))
-    push!(b.upper, _no_upper_bound(T))
-    return
+function set_from_constants(
+    ::AbstractVectorBounds,
+    S::Type{<:Union{MOI.Integer,MOI.ZeroOne}},
+    index,
+)
+    return S()
 end
 
 """
     SUPPORTED_VARIABLE_SCALAR_SETS{T}
 
 The union of scalar sets for `SingleVariable` constraints supported by
-`Utilities.Box` (and therefore in `Utilities.Model`).
+`Utilities.MatrixBounds` and `Utilities.SingleVariableConstraints`.
 """
 const SUPPORTED_VARIABLE_SCALAR_SETS{T} = Union{
     MOI.EqualTo{T},
@@ -150,8 +151,91 @@ _no_lower_bound(::Type{T}) where {T<:AbstractFloat} = typemin(T)
 _no_upper_bound(::Type{T}) where {T} = zero(T)
 _no_upper_bound(::Type{T}) where {T<:AbstractFloat} = typemax(T)
 
+###
+### SingleVariableConstraints
+###
+### For use in MOI.Utilities.Model
+###
+
+"""
+    struct SingleVariableConstraints{T} <: AbstractVectorBounds
+        variable_indices::Union{Nothing,Set{MOI.VariableIndex}}
+        set_mask::Vector{UInt8}
+        lower::Vector{T}
+        upper::Vector{T}
+    end
+
+A struct for storing SingleVariable-related constraints. Used in `MOI.Model`.
+"""
+mutable struct SingleVariableConstraints{T} <: AbstractVectorBounds
+    variable_indices::Union{Nothing,Set{MOI.VariableIndex}}
+    set_mask::Vector{UInt8}
+    lower::Vector{T}
+    upper::Vector{T}
+end
+
+function SingleVariableConstraints{T}() where {T}
+    return SingleVariableConstraints{T}(nothing, UInt8[], T[], T[])
+end
+
+function Base.:(==)(a::SingleVariableConstraints, b::SingleVariableConstraints)
+    return a.variable_indices == a.variable_indices &&
+           a.set_mask == b.set_mask &&
+           a.lower == b.lower &&
+           a.upper == b.upper
+end
+
+function Base.empty!(b::SingleVariableConstraints)
+    b.variable_indices = nothing
+    empty!(b.set_mask)
+    empty!(b.lower)
+    empty!(b.upper)
+    return b
+end
+
+function Base.resize!(b::SingleVariableConstraints, n)
+    resize!(b.set_mask, n)
+    resize!(b.lower, n)
+    resize!(b.upper, n)
+    return
+end
+
+function MOI.add_variable(b::SingleVariableConstraints{T}) where {T}
+    push!(b.set_mask, 0x00)
+    push!(b.lower, _no_lower_bound(T))
+    push!(b.upper, _no_upper_bound(T))
+    x = MOI.VariableIndex(length(b.set_mask))
+    if b.variable_indices !== nothing
+        push!(b.variable_indices, x)
+    end
+    return x
+end
+
+function MOI.get(b::SingleVariableConstraints, ::MOI.ListOfVariableIndices)
+    if b.variable_indices === nothing
+        return MOI.VariableIndex.(1:length(b.set_mask))
+    end
+    x = collect(b.variable_indices)
+    sort!(x, by = x -> x.value)
+    return x
+end
+
+function MOI.is_valid(b::SingleVariableConstraints, x::MOI.VariableIndex)
+    if b.variable_indices === nothing
+        return 1 <= x.value <= length(b.set_mask)
+    end
+    return x in b.variable_indices
+end
+
+function MOI.get(b::SingleVariableConstraints, ::MOI.NumberOfVariables)::Int64
+    if b.variable_indices === nothing
+        return length(b.set_mask)
+    end
+    return length(b.variable_indices)
+end
+
 function MOI.add_constraint(
-    b::Box{T},
+    b::SingleVariableConstraints{T},
     f::MOI.SingleVariable,
     set::S,
 ) where {T,S}
@@ -170,7 +254,7 @@ function MOI.add_constraint(
 end
 
 function MOI.delete(
-    b::Box{T},
+    b::SingleVariableConstraints{T},
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
 ) where {T,S}
     flag = _single_variable_flag(S)
@@ -184,14 +268,18 @@ function MOI.delete(
     return
 end
 
-function MOI.delete(b::Box, x::MOI.VariableIndex)
+function MOI.delete(b::SingleVariableConstraints, x::MOI.VariableIndex)
     # To "delete" the variable, set it to 0x00 (free).
     b.set_mask[x.value] = 0x00
+    if b.variable_indices === nothing
+        b.variable_indices = Set(MOI.get(b, MOI.ListOfVariableIndices()))
+    end
+    delete!(b.variable_indices, x)
     return
 end
 
 function MOI.is_valid(
-    b::Box,
+    b::SingleVariableConstraints,
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
 ) where {S}
     if !(1 <= ci.value <= length(b.set_mask))
@@ -201,7 +289,7 @@ function MOI.is_valid(
 end
 
 function MOI.set(
-    b::Box,
+    b::SingleVariableConstraints,
     ::MOI.ConstraintSet,
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
     set::S,
@@ -217,14 +305,18 @@ function MOI.set(
 end
 
 function MOI.get(
-    b::Box,
+    b::SingleVariableConstraints,
     ::MOI.NumberOfConstraints{MOI.SingleVariable,S},
 ) where {S}
     flag = _single_variable_flag(S)
     return count(mask -> !iszero(flag & mask), b.set_mask)
 end
 
-function _add_constraint_type(list, b::Box, S::Type{<:MOI.AbstractScalarSet})
+function _add_constraint_type(
+    list,
+    b::SingleVariableConstraints,
+    S::Type{<:MOI.AbstractScalarSet},
+)
     flag = _single_variable_flag(S)::UInt8
     if any(mask -> !iszero(flag & mask), b.set_mask)
         push!(list, (MOI.SingleVariable, S))
@@ -232,7 +324,10 @@ function _add_constraint_type(list, b::Box, S::Type{<:MOI.AbstractScalarSet})
     return
 end
 
-function MOI.get(b::Box{T}, ::MOI.ListOfConstraintTypesPresent) where {T}
+function MOI.get(
+    b::SingleVariableConstraints{T},
+    ::MOI.ListOfConstraintTypesPresent,
+) where {T}
     list = Tuple{DataType,DataType}[]
     _add_constraint_type(list, b, MOI.EqualTo{T})
     _add_constraint_type(list, b, MOI.GreaterThan{T})
@@ -246,7 +341,7 @@ function MOI.get(b::Box{T}, ::MOI.ListOfConstraintTypesPresent) where {T}
 end
 
 function MOI.get(
-    b::Box,
+    b::SingleVariableConstraints,
     ::MOI.ListOfConstraintIndices{MOI.SingleVariable,S},
 ) where {S}
     list = MOI.ConstraintIndex{MOI.SingleVariable,S}[]
@@ -260,11 +355,42 @@ function MOI.get(
 end
 
 ###
-### MatrixOfConstraints API
+### MatrixBounds
 ###
 
+"""
+    struct MatrixBounds{T} <: AbstractVectorBounds
+        lower::Vector{T}
+        upper::Vector{T}
+    end
+
+A struct for the .constants field in MatrixOfConstraints.
+"""
+struct MatrixBounds{T} <: AbstractVectorBounds
+    lower::Vector{T}
+    upper::Vector{T}
+end
+
+MatrixBounds{T}() where {T} = MatrixBounds{T}(T[], T[])
+
+function Base.:(==)(a::MatrixBounds, b::MatrixBounds)
+    return a.lower == b.lower && a.upper == b.upper
+end
+
+function Base.empty!(b::MatrixBounds)
+    empty!(b.lower)
+    empty!(b.upper)
+    return b
+end
+
+function Base.resize!(b::MatrixBounds, n)
+    resize!(b.lower, n)
+    resize!(b.upper, n)
+    return
+end
+
 function load_constants(
-    b::Box{T},
+    b::MatrixBounds{T},
     offset,
     set::SUPPORTED_VARIABLE_SCALAR_SETS{T},
 ) where {T}
@@ -279,41 +405,7 @@ function load_constants(
     else
         b.upper[offset+1] = _upper_bound(set)
     end
-    b.set_mask[offset+1] |= flag
     return
 end
 
-function_constants(::Box{T}, row) where {T} = zero(T)
-
-function set_from_constants(b::Box, ::Type{<:MOI.EqualTo}, index)
-    return MOI.EqualTo(b.lower[index])
-end
-
-function set_from_constants(
-    b::Box,
-    S::Type{<:Union{MOI.GreaterThan,MOI.EqualTo}},
-    index,
-)
-    # Lower and upper bounds are equal for `EqualTo`, we can take either of them.
-    return S(b.lower[index])
-end
-
-function set_from_constants(b::Box, S::Type{<:MOI.LessThan}, index)
-    return S(b.upper[index])
-end
-
-function set_from_constants(
-    b::Box,
-    S::Type{<:Union{MOI.Interval,MOI.Semicontinuous,MOI.Semiinteger}},
-    index,
-)
-    return S(b.lower[index], b.upper[index])
-end
-
-function set_from_constants(
-    ::Box,
-    S::Type{<:Union{MOI.Integer,MOI.ZeroOne}},
-    index,
-)
-    return S()
-end
+function_constants(::MatrixBounds{T}, row) where {T} = zero(T)

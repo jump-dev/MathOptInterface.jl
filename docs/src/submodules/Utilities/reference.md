@@ -113,7 +113,7 @@ Utilities.set_from_constants
 ```
 
 ```@docs
-Utilities.Box
+Utilities.MatrixBounds
 ```
 
 ### `.sets`
