@@ -323,10 +323,10 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
     end
     if !isempty(types)
         is_func = any(types) do t
-            t isa Union{SymbolFun,_UnionSymbolFS{SymbolFun}}
+            return t isa Union{SymbolFun,_UnionSymbolFS{SymbolFun}}
         end
         is_set = any(types) do t
-            t isa Union{SymbolSet,_UnionSymbolFS{SymbolSet}}
+            return t isa Union{SymbolSet,_UnionSymbolFS{SymbolSet}}
         end
         @assert xor(is_func, is_set)
         if is_func

@@ -557,11 +557,7 @@ function test_multicone()
     fx = MOI.SingleVariable(x)
     y = MOI.add_variable(model)
     fy = MOI.SingleVariable(y)
-    MOI.add_constraint(
-        model,
-        MOIU.vectorize([T(5) * fx + T(2)]),
-        MOI.Zeros(1),
-    )
+    MOI.add_constraint(model, MOIU.vectorize([T(5) * fx + T(2)]), MOI.Zeros(1))
     MOI.add_constraint(
         model,
         MOIU.vectorize([T(3) * fy + T(1)]),
@@ -575,12 +571,12 @@ function test_multicone()
     MOIU.final_touch(model, nothing)
     _test_matrix_equal(
         model.constraints.moi_zeros.coefficients,
-        sparse([1], [1], T[5], 1, 2)
+        sparse([1], [1], T[5], 1, 2),
     )
     @test model.constraints.moi_zeros.constants == T[2]
     _test_matrix_equal(
         model.constraints.moi_nonnegatives.coefficients,
-        sparse([1, 3], [2, 1], T[3, 7], 4, 2)
+        sparse([1, 3], [2, 1], T[3, 7], 4, 2),
     )
     @test model.constraints.moi_nonnegatives.constants == T[1, 6, 0, 4]
 end
