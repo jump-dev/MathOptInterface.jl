@@ -656,10 +656,10 @@ function setup_test(
             [1, 0],
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
                 [-1],
-            con_basis = [
+            constraint_basis_status = [
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [MOI.NONBASIC],
             ],
-            var_basis = [MOI.BASIC, MOI.NONBASIC_AT_LOWER],
+            variable_basis_status = [MOI.BASIC, MOI.NONBASIC_AT_LOWER],
         ),
     )
     return
@@ -813,18 +813,18 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [3],
-            con_basis = [
+            constraint_basis_status = [
                 (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [MOI.NONBASIC],
             ],
-            var_basis = [MOI.BASIC],
+            variable_basis_status = [MOI.BASIC],
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0],
-            con_basis = [
+            constraint_basis_status = [
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [MOI.BASIC],
             ],
-            var_basis = [MOI.NONBASIC_AT_UPPER],
+            variable_basis_status = [MOI.NONBASIC_AT_UPPER],
         ),
     )
     return
@@ -1826,11 +1826,11 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [650 / 11, 400 / 11],
-            con_basis = [
+            constraint_basis_status = [
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [MOI.NONBASIC, MOI.NONBASIC],
                 (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [MOI.BASIC],
             ],
-            var_basis = [MOI.BASIC, MOI.BASIC],
+            variable_basis_status = [MOI.BASIC, MOI.BASIC],
         ),
     )
     return
@@ -2039,20 +2039,20 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [5.0, 5.0],
-            con_basis = [
+            constraint_basis_status = [
                 (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [MOI.NONBASIC_AT_UPPER],
             ],
-            var_basis = [MOI.BASIC, MOI.BASIC],
+            variable_basis_status = [MOI.BASIC, MOI.BASIC],
             (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) =>
                 [-1],
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [2.5, 2.5],
-            con_basis = [
+            constraint_basis_status = [
                 (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [MOI.NONBASIC_AT_LOWER],
             ],
-            var_basis = [MOI.BASIC, MOI.BASIC],
+            variable_basis_status = [MOI.BASIC, MOI.BASIC],
             (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) =>
                 [1],
         ),
@@ -2061,20 +2061,20 @@ function setup_test(
             [1.0, 1.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) =>
                 [1],
-            con_basis = [
+            constraint_basis_status = [
                 (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [MOI.NONBASIC_AT_LOWER],
             ],
-            var_basis = [MOI.BASIC, MOI.BASIC],
+            variable_basis_status = [MOI.BASIC, MOI.BASIC],
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [6.0, 6.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) =>
                 [-1],
-            con_basis = [
+            constraint_basis_status = [
                 (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [MOI.NONBASIC_AT_UPPER],
             ],
-            var_basis = [MOI.BASIC, MOI.BASIC],
+            variable_basis_status = [MOI.BASIC, MOI.BASIC],
         ),
     )
     return
@@ -2184,10 +2184,13 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0.0, 0.0],
-            con_basis = [
+            constraint_basis_status = [
                 (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [MOI.BASIC],
             ],
-            var_basis = [MOI.NONBASIC_AT_LOWER, MOI.NONBASIC_AT_LOWER],
+            variable_basis_status = [
+                MOI.NONBASIC_AT_LOWER,
+                MOI.NONBASIC_AT_LOWER,
+            ],
             (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) =>
                 [0],
         ),
@@ -2698,10 +2701,10 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0, 1 / 2, 1],
-            con_basis = [
+            constraint_basis_status = [
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [MOI.NONBASIC],
             ],
-            var_basis = [
+            variable_basis_status = [
                 MOI.NONBASIC_AT_LOWER,
                 MOI.BASIC,
                 MOI.NONBASIC_AT_UPPER,
