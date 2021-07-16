@@ -14,21 +14,6 @@ abstract type FlipSignBridge{
     G<:MOI.AbstractFunction,
 } <: SetMapBridge{T,S2,S1,F,G} end
 
-function map_function(::Type{<:FlipSignBridge{T}}, func) where {T}
-    return MOIU.operate(-, T, func)
-end
-
-# The map is an involution
-inverse_map_function(BT::Type{<:FlipSignBridge}, func) = map_function(BT, func)
-
-# The map is symmetric
-adjoint_map_function(BT::Type{<:FlipSignBridge}, func) = map_function(BT, func)
-
-# The map is a symmetric involution
-function inverse_adjoint_map_function(BT::Type{<:FlipSignBridge}, func)
-    return map_function(BT, func)
-end
-
 function MOI.delete(
     model::MOI.ModelLike,
     bridge::FlipSignBridge,
@@ -91,11 +76,11 @@ struct GreaterToLessBridge{
     constraint::CI{F,MOI.LessThan{T}}
 end
 
-function map_set(::Type{<:GreaterToLessBridge}, set::MOI.GreaterThan)
+function MOIB.map_set(::Type{<:GreaterToLessBridge}, set::MOI.GreaterThan)
     return MOI.LessThan(-set.lower)
 end
 
-function inverse_map_set(::Type{<:GreaterToLessBridge}, set::MOI.LessThan)
+function MOIB.inverse_map_set(::Type{<:GreaterToLessBridge}, set::MOI.LessThan)
     return MOI.GreaterThan(-set.upper)
 end
 
@@ -126,11 +111,14 @@ struct LessToGreaterBridge{
     constraint::CI{F,MOI.GreaterThan{T}}
 end
 
-function map_set(::Type{<:LessToGreaterBridge}, set::MOI.LessThan)
+function MOIB.map_set(::Type{<:LessToGreaterBridge}, set::MOI.LessThan)
     return MOI.GreaterThan(-set.upper)
 end
 
-function inverse_map_set(::Type{<:LessToGreaterBridge}, set::MOI.GreaterThan)
+function MOIB.inverse_map_set(
+    ::Type{<:LessToGreaterBridge},
+    set::MOI.GreaterThan,
+)
     return MOI.LessThan(-set.lower)
 end
 
@@ -161,14 +149,6 @@ mutable struct NonnegToNonposBridge{
     constraint::CI{F,MOI.Nonpositives}
 end
 
-function map_set(::Type{<:NonnegToNonposBridge}, set::MOI.Nonnegatives)
-    return MOI.Nonpositives(set.dimension)
-end
-
-function inverse_map_set(::Type{<:NonnegToNonposBridge}, set::MOI.Nonpositives)
-    return MOI.Nonnegatives(set.dimension)
-end
-
 function concrete_bridge_type(
     ::Type{<:NonnegToNonposBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
@@ -196,11 +176,14 @@ mutable struct NonposToNonnegBridge{
     constraint::CI{F,MOI.Nonnegatives}
 end
 
-function map_set(::Type{<:NonposToNonnegBridge}, set::MOI.Nonpositives)
+function MOIB.map_set(::Type{<:NonposToNonnegBridge}, set::MOI.Nonpositives)
     return MOI.Nonnegatives(set.dimension)
 end
 
-function inverse_map_set(::Type{<:NonposToNonnegBridge}, set::MOI.Nonnegatives)
+function MOIB.inverse_map_set(
+    ::Type{<:NonposToNonnegBridge},
+    set::MOI.Nonnegatives,
+)
     return MOI.Nonpositives(set.dimension)
 end
 
