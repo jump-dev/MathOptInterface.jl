@@ -209,13 +209,6 @@ end
 # convenient shorthands TODO: document
 function add_constraint(
     model::ModelLike,
-    v::VariableIndex,
-    set::AbstractScalarSet,
-)
-    return add_constraint(model, SingleVariable(v), set)
-end
-function add_constraint(
-    model::ModelLike,
     v::Vector{VariableIndex},
     set::AbstractVectorSet,
 )
