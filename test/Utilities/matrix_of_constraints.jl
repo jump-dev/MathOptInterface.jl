@@ -192,13 +192,17 @@ function test_contlinear()
 end
 function test_contlinear(Indexing)
     A2 = sparse([1, 1], [1, 2], ones(2))
-    b2 = MOI.Utilities.Box([-Inf], [1.0])
+    b2 = MOI.Utilities.Box([0x04], [-Inf], [1.0])
     Alp = sparse(
         [1, 1, 2, 3, 4, 4],
         [1, 2, 1, 2, 1, 2],
         Float64[3, 2, 1, -1, 5, -4],
     )
-    blp = MOI.Utilities.Box([5, 0, -Inf, 6], [5, Inf, 0, 7])
+    blp = MOI.Utilities.Box(
+        [0x01, 0x02, 0x04, 0x08],
+        [5, 0, -Inf, 6],
+        [5, Inf, 0, 7],
+    )
     F = MOI.ScalarAffineFunction{Float64}
     @testset "$SetType" for SetType in [MixLP{Float64}, OrdLP{Float64}]
         _test(
