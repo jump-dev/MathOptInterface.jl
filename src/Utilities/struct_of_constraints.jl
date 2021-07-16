@@ -335,7 +335,7 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
             SuperF = :(MOI.AbstractFunction)
         end
         if is_set
-            :(Union{$(_typed.(types)...)})
+            SuperS = :(Union{$(_typed.(types)...)})
         else
             SuperS = :(MOI.AbstractSet)
         end
