@@ -23,7 +23,10 @@ abstract type AbstractToIntervalBridge{
 MOIB.map_function(::Type{<:AbstractToIntervalBridge{T}}, func) where {T} = func
 MOIB.inverse_map_function(::Type{<:AbstractToIntervalBridge}, func) = func
 MOIB.adjoint_map_function(::Type{<:AbstractToIntervalBridge}, func) = func
-function MOIB.inverse_adjoint_map_function(::Type{<:AbstractToIntervalBridge}, func)
+function MOIB.inverse_adjoint_map_function(
+    ::Type{<:AbstractToIntervalBridge},
+    func,
+)
     return func
 end
 
@@ -62,7 +65,10 @@ function MOIB.map_set(::Type{<:GreaterToIntervalBridge}, set::MOI.GreaterThan)
     return MOI.Interval(set.lower, typemax(set.lower))
 end
 
-function MOIB.inverse_map_set(::Type{<:GreaterToIntervalBridge}, set::MOI.Interval)
+function MOIB.inverse_map_set(
+    ::Type{<:GreaterToIntervalBridge},
+    set::MOI.Interval,
+)
     return MOI.GreaterThan(set.lower)
 end
 

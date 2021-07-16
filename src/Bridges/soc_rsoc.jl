@@ -1,4 +1,5 @@
-const _SOCtoRSOCMap{T} = Union{Constraint.SOCtoRSOCBridge{T},Variable.RSOCtoSOCBridge{T}}
+const _SOCtoRSOCMap{T} =
+    Union{Constraint.SOCtoRSOCBridge{T},Variable.RSOCtoSOCBridge{T}}
 
 function map_set(::Type{<:_SOCtoRSOCMap}, set::MOI.SecondOrderCone)
     return MOI.RotatedSecondOrderCone(MOI.dimension(set))
@@ -11,19 +12,14 @@ function inverse_map_set(
     return MOI.SecondOrderCone(MOI.dimension(set))
 end
 
-const _RSOCtoSOCMap{T} = Union{Constraint.RSOCtoSOCBridge{T},Variable.SOCtoRSOCBridge{T}}
+const _RSOCtoSOCMap{T} =
+    Union{Constraint.RSOCtoSOCBridge{T},Variable.SOCtoRSOCBridge{T}}
 
-function map_set(
-    ::Type{<:_RSOCtoSOCMap},
-    set::MOI.RotatedSecondOrderCone,
-)
+function map_set(::Type{<:_RSOCtoSOCMap}, set::MOI.RotatedSecondOrderCone)
     return MOI.SecondOrderCone(MOI.dimension(set))
 end
 
-function inverse_map_set(
-    ::Type{<:_RSOCtoSOCMap},
-    set::MOI.SecondOrderCone,
-)
+function inverse_map_set(::Type{<:_RSOCtoSOCMap}, set::MOI.SecondOrderCone)
     return MOI.RotatedSecondOrderCone(MOI.dimension(set))
 end
 
@@ -63,14 +59,17 @@ function map_function(::Type{<:_RSOCMap{T}}, func) where {T}
     z = MOIU.operate!(+, T, ts, us)
     return MOIU.operate(vcat, T, z, y, x)
 end
+
 # The map is an involution
 function inverse_map_function(BT::Type{<:_RSOCMap}, func)
     return map_function(BT, func)
 end
+
 # The map is symmetric
 function adjoint_map_function(BT::Type{<:_RSOCMap}, func)
     return map_function(BT, func)
 end
+
 # The map is a symmetric involution
 function inverse_adjoint_map_function(BT::Type{<:_RSOCMap}, func)
     return map_function(BT, func)

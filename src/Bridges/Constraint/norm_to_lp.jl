@@ -19,15 +19,18 @@ function concrete_bridge_type(
     return NormInfinityBridge{T,F,G}
 end
 
-function map_set(::Type{<:NormInfinityBridge}, set::MOI.NormInfinityCone)
+function MOIB.map_set(::Type{<:NormInfinityBridge}, set::MOI.NormInfinityCone)
     return MOI.Nonnegatives(2 * (MOI.dimension(set) - 1))
 end
 
-function inverse_map_set(::Type{<:NormInfinityBridge}, set::MOI.Nonnegatives)
+function MOIB.inverse_map_set(
+    ::Type{<:NormInfinityBridge},
+    set::MOI.Nonnegatives,
+)
     return MOI.NormInfinityCone(div(MOI.dimension(set), 2) + 1)
 end
 
-function map_function(::Type{<:NormInfinityBridge{T}}, func) where {T}
+function MOIB.map_function(::Type{<:NormInfinityBridge{T}}, func) where {T}
     scalars = MOIU.eachscalar(func)
     t = scalars[1]
     lb = scalars[2:end]
@@ -39,7 +42,10 @@ function map_function(::Type{<:NormInfinityBridge{T}}, func) where {T}
     return f_new
 end
 
-function inverse_map_function(::Type{<:NormInfinityBridge{T}}, func) where {T}
+function MOIB.inverse_map_function(
+    ::Type{<:NormInfinityBridge{T}},
+    func,
+) where {T}
     scalars = MOIU.eachscalar(func)
     t = MOIU.operate!(/, T, sum(scalars), T(length(scalars)))
     d = div(length(scalars), 2)
@@ -54,7 +60,7 @@ end
 # Given a_i is dual on t - x_i >= 0 and b_i is dual on t + x_i >= 0,
 # the dual on (t, x) in NormInfinityCone is (u, v) in NormOneCone, where
 # v_i = -a_i + b_i and u = sum(a) + sum(b).
-function adjoint_map_function(::Type{<:NormInfinityBridge}, func)
+function MOIB.adjoint_map_function(::Type{<:NormInfinityBridge}, func)
     scalars = MOIU.eachscalar(func)
     t = sum(scalars)
     d = div(length(scalars), 2)
@@ -62,7 +68,7 @@ function adjoint_map_function(::Type{<:NormInfinityBridge}, func)
     return vcat(t, x)
 end
 
-function inverse_adjoint_map_function(
+function MOIB.inverse_adjoint_map_function(
     ::Type{<:NormInfinityBridge{T}},
     func::AbstractVector{T},
 ) where {T}

@@ -65,6 +65,7 @@ function MOI.get(
 ) where {T,S1<:MOI.AbstractScalarSet}
     return 1
 end
+
 function MOI.get(
     ::SetMapBridge{T,S1},
     ::MOI.NumberOfConstraints{MOI.VectorOfVariables,S1},
@@ -78,6 +79,7 @@ function MOI.get(
 ) where {T,S1<:MOI.AbstractScalarSet}
     return [bridge.constraint]
 end
+
 function MOI.get(
     bridge::SetMapBridge{T,S1},
     ::MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S1},
@@ -96,8 +98,8 @@ end
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintSet,
-    bridge::SetMapBridge{T},
-) where {T}
+    bridge::SetMapBridge,
+)
     set = MOI.get(model, attr, bridge.constraint)
     return MOIB.map_set(typeof(bridge), set)
 end

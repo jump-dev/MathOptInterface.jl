@@ -1377,10 +1377,10 @@ end
         fy = MOI.SingleVariable(y)
         flip = MOIB.bridge(bridged, y)
         @test flip isa MOIB.Variable.NonposToNonnegBridge
-        Z = flip.flipped_variables
+        Z = flip.variables
         z = Z[1]
         fz = MOI.SingleVariable(z)
-        vov_ci = flip.flipped_constraint
+        vov_ci = flip.constraint
         functionize = MOIB.bridge(bridged, vov_ci)
         @test functionize isa MOIB.Constraint.VectorFunctionizeBridge
         aff_ci = functionize.constraint

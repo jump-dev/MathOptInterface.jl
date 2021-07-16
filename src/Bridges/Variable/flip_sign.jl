@@ -19,10 +19,7 @@ Transforms constrained variables in `Nonpositives` into constrained variables in
 struct NonposToNonnegBridge{T} <:
        FlipSignBridge{T,MOI.Nonpositives,MOI.Nonnegatives}
     variables::Vector{MOI.VariableIndex}
-    constraint::MOI.ConstraintIndex{
-        MOI.VectorOfVariables,
-        MOI.Nonnegatives,
-    }
+    constraint::MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
 end
 
 function MOI.delete(
