@@ -29,6 +29,8 @@ Bridges.debug_supports_constraint
 Bridges.debug_supports
 Bridges.bridged_variable_function
 Bridges.unbridged_variable_function
+Bridges.bridged_function
+Bridges.Variable.unbridged_map
 ```
 
 ## Constraint bridges
