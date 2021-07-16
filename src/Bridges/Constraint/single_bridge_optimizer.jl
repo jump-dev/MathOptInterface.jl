@@ -103,3 +103,5 @@ function MOIB.bridge_type(
 end
 
 MOIB.bridging_cost(::SingleBridgeOptimizer, args...) = 1.0
+
+MOIB.recursive_model(b::SingleBridgeOptimizer) = b.model
