@@ -19,6 +19,47 @@ end
 
 include("utilities.jl")
 
+include("identity_bridge.jl")
+
+function test_recursive_model_variable(::Type{T}) where {T}
+    model = MOIU.UniversalFallback(MOIU.Model{T}())
+    b = MOIB.Variable.SingleBridgeOptimizer{IdentityBridges.VariableBridge{T}}(
+        model,
+    )
+    x, cx = MOI.add_constrained_variable(b, MOI.EqualTo(one(T)))
+    @test MOIB.is_bridged(b, x)
+    @test MOIB.is_bridged(b, cx)
+end
+
+test_recursive_model_variable(Int)
+
+function test_recursive_model_constraint(::Type{T}) where {T}
+    model = MOIU.UniversalFallback(MOIU.Model{T}())
+    b = MOIB.Constraint.SingleBridgeOptimizer{
+        IdentityBridges.ConstraintBridge{T},
+    }(
+        model,
+    )
+    x = MOI.add_variable(b)
+    fx = MOI.SingleVariable(x)
+    func = one(T) * fx
+    set = MOI.EqualTo(zero(T))
+    c = MOI.add_constraint(b, func, set)
+    @test MOIB.is_bridged(b, c)
+    @test MOI.get(b, MOI.ConstraintFunction(), c) ≈ func
+    new_func = T(2) * fx
+    MOI.set(b, MOI.ConstraintFunction(), c, new_func)
+    @test MOI.get(b, MOI.ConstraintFunction(), c) == new_func
+    @test MOI.get(b, MOI.ConstraintSet(), c) == set
+    new_set = MOI.EqualTo(one(T))
+    MOI.set(b, MOI.ConstraintSet(), c, new_set)
+    @test MOI.get(b, MOI.ConstraintSet(), c) == new_set
+    MOI.set(b, MOI.ConstraintDualStart(), c, one(T))
+    @test MOI.get(b, MOI.ConstraintDualStart(), c) == one(T)
+end
+
+test_recursive_model_constraint(Int)
+
 struct DummyModelAttribute <: MOI.AbstractModelAttribute end
 struct DummyEvaluator <: MOI.AbstractNLPEvaluator end
 struct DummyVariableAttribute <: MOI.AbstractVariableAttribute end

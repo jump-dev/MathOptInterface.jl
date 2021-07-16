@@ -15,6 +15,8 @@ abstract type AbstractBridgeOptimizer <: MOI.AbstractOptimizer end
 
 # AbstractBridgeOptimizer interface
 
+function recursive_model end
+
 function supports_constraint_bridges end
 
 """
@@ -1128,7 +1130,11 @@ function MOI.get(
         if is_variable_bridged(b, ci)
             return Variable.function_for(Variable.bridges(b), ci)
         else
-            func = call_in_context(b, ci, br -> MOI.get(b, attr, br))
+            func = call_in_context(
+                b,
+                ci,
+                br -> MOI.get(recursive_model(b), attr, br),
+            )
             return unbridged_constraint_function(b, func)
         end
     else
@@ -1180,7 +1186,11 @@ function MOI.get(
 )
     if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
-        set = call_in_context(b, ci, bridge -> MOI.get(b, attr, bridge))
+        set = call_in_context(
+            b,
+            ci,
+            bridge -> MOI.get(recursive_model(b), attr, bridge),
+        )
     else
         set = MOI.get(b.model, attr, ci)
     end
@@ -1209,7 +1219,11 @@ function MOI.get(
 )
     if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
-        func = call_in_context(b, ci, bridge -> MOI.get(b, attr, bridge))
+        func = call_in_context(
+            b,
+            ci,
+            bridge -> MOI.get(recursive_model(b), attr, bridge),
+        )
     else
         func = MOI.get(b.model, attr, ci)
     end
@@ -1242,7 +1256,11 @@ function _set_substituted(
 )
     if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
-        call_in_context(b, ci, bridge -> MOI.set(b, attr, bridge, value))
+        call_in_context(
+            b,
+            ci,
+            bridge -> MOI.set(recursive_model(b), attr, bridge, value),
+        )
     else
         MOI.set(b.model, attr, ci, value)
     end
@@ -1424,7 +1442,7 @@ function MOI.supports_constraint(
 end
 
 function add_bridged_constraint(b, BridgeType, f, s)
-    bridge = Constraint.bridge_constraint(BridgeType, b, f, s)
+    bridge = Constraint.bridge_constraint(BridgeType, recursive_model(b), f, s)
     ci = Constraint.add_key_for_bridge(Constraint.bridges(b), bridge, f, s)
     Variable.register_context(Variable.bridges(b), ci)
     return ci

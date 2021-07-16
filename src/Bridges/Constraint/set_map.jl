@@ -92,6 +92,16 @@ function MOI.get(
     return MOIU.convert_approx(G, func)
 end
 
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintFunction,
+    bridge::SetMapBridge{T,S2,S1,F,G},
+    func::G,
+) where {T,S2,S1,F,G}
+    MOI.set(model, attr, bridge.constraint, map_function(typeof(bridge), func))
+    return
+end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintSet,
