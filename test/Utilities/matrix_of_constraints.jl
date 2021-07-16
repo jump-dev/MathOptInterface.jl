@@ -63,18 +63,20 @@ function _new_VectorSets()
     }()
 end
 
-
 function test_ScalarSets_basic()
     model = _new_ScalarSets()
     @test MOI.is_empty(model)
     src = MOI.Utilities.Model{Float64}()
-    MOI.Utilities.loadfromstring!(src, """
-    variables: x, y
-    minobjective: x + y
-    x >= 1.0
-    y == 2.1
-    c: x + 2.0 * y <= 3.0
-    """)
+    MOI.Utilities.loadfromstring!(
+        src,
+        """
+variables: x, y
+minobjective: x + y
+x >= 1.0
+y == 2.1
+c: x + 2.0 * y <= 3.0
+""",
+    )
     index_map = MOI.copy_to(model, src)
     @test MOI.is_empty(model) == false
     for (k, v) in index_map
@@ -153,11 +155,14 @@ end
 function test_ScalarSets_get_ConstraintFunction()
     model = _new_ScalarSets()
     src = MOI.Utilities.Model{Float64}()
-    MOI.Utilities.loadfromstring!(src, """
-    variables: x, y
-    minobjective: x + y
-    c: x + 2.0 * y <= 3.0
-    """)
+    MOI.Utilities.loadfromstring!(
+        src,
+        """
+variables: x, y
+minobjective: x + y
+c: x + 2.0 * y <= 3.0
+""",
+    )
     index_map = MOI.copy_to(model, src)
     c = MOI.get(model, MOI.ConstraintIndex, "c")
     c_f = MOI.get(model, MOI.ConstraintFunction(), c)
@@ -190,18 +195,20 @@ end
 function test_ScalarSets_get_ConstraintSet()
     model = _new_ScalarSets()
     src = MOI.Utilities.Model{Float64}()
-    MOI.Utilities.loadfromstring!(src, """
-    variables: x, y
-    minobjective: x + y
-    c: 2.0 * x + y >= 4.0
-    """)
+    MOI.Utilities.loadfromstring!(
+        src,
+        """
+variables: x, y
+minobjective: x + y
+c: 2.0 * x + y >= 4.0
+""",
+    )
     index_map = MOI.copy_to(model, src)
     c = MOI.get(model, MOI.ConstraintIndex, "c")
     c_set = MOI.get(model, MOI.ConstraintSet(), c)
     @test c_set == MOI.get(src, MOI.ConstraintSet(), index_map[c])
     return
 end
-
 
 function test_VectorSets_get_ConstraintSet()
     model = _new_VectorSets()
@@ -225,13 +232,16 @@ function test_add_after_final_touch()
     model = _new_ScalarSets()
     @test MOI.is_empty(model)
     src = MOI.Utilities.Model{Float64}()
-    MOI.Utilities.loadfromstring!(src, """
-    variables: x, y
-    minobjective: x + y
-    x >= 1.0
-    y == 2.1
-    c: x + 2.0 * y <= 3.0
-    """)
+    MOI.Utilities.loadfromstring!(
+        src,
+        """
+variables: x, y
+minobjective: x + y
+x >= 1.0
+y == 2.1
+c: x + 2.0 * y <= 3.0
+""",
+    )
     index_map = MOI.copy_to(model, src)
     x = MOI.get(src, MOI.VariableIndex, "x")
     @test_throws(
@@ -251,10 +261,13 @@ end
 function test_UnsupportedConstraint()
     model = _new_ScalarSets()
     src = MOI.Utilities.Model{Float64}()
-    MOI.Utilities.loadfromstring!(src, """
-    variables: x, y
-    c: [x, y] in Nonnegatives(2)
-    """)
+    MOI.Utilities.loadfromstring!(
+        src,
+        """
+variables: x, y
+c: [x, y] in Nonnegatives(2)
+""",
+    )
     @test_throws MOI.UnsupportedConstraint MOI.copy_to(model, src)
     return
 end
