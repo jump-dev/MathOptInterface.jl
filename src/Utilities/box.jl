@@ -200,6 +200,22 @@ function MOI.is_valid(
     return !iszero(b.set_mask[ci.value] & _single_variable_flag(S))
 end
 
+function MOI.set(
+    b::Box,
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
+    set::S,
+) where {S}
+    flag = _single_variable_flag(S)
+    if !iszero(flag & _LOWER_BOUND_MASK)
+        b.lower[ci.value] = _lower_bound(set)
+    end
+    if !iszero(flag & _UPPER_BOUND_MASK)
+        b.upper[ci.value] = _upper_bound(set)
+    end
+    return
+end
+
 function MOI.get(
     b::Box,
     ::MOI.NumberOfConstraints{MOI.SingleVariable,S},

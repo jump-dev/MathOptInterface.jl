@@ -139,6 +139,18 @@ function test_delete_constraint_GreaterThan()
     return
 end
 
+function test_set_ConstraintSet()
+    a = MOI.Utilities.Box{Int}()
+    MOI.Utilities._add_variable(a)
+    @test a == MOI.Utilities.Box{Int}([0x00], Int[0], Int[0])
+    f = MOI.SingleVariable(MOI.VariableIndex(1))
+    c = MOI.add_constraint(a, f, MOI.GreaterThan(3))
+    @test a == MOI.Utilities.Box{Int}([0x02], Int[3], Int[0])
+    MOI.set(a, MOI.ConstraintSet(), c, MOI.GreaterThan(2))
+    @test a == MOI.Utilities.Box{Int}([0x02], Int[2], Int[0])
+    return
+end
+
 function test_NumberOfConstraints()
     b = MOI.Utilities.Box(
         [0x08, 0x02, 0x04, 0x06],

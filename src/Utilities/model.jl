@@ -487,14 +487,15 @@ function MOI.set(
 )
     return throw(MOI.SettingSingleVariableFunctionNotAllowed())
 end
+
 function MOI.set(
     model::AbstractModel{T},
-    ::MOI.ConstraintSet,
+    attr::MOI.ConstraintSet,
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
     set::S,
 ) where {T,S<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}
     MOI.throw_if_not_valid(model, ci)
-    _merge_bounds(model.variable_bounds, ci.value, set)
+    MOI.set(model.variable_bounds, attr, ci, set)
     return
 end
 
