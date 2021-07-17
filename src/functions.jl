@@ -30,10 +30,10 @@ This function is naturally be used for single variable bounds or integrality con
 const SingleVariable = VariableIndex
 VariableIndex(vi::VariableIndex) = vi
 function Base.getproperty(vi::VariableIndex, s::Symbol)
-    if s == :value
+    if s === :value
         return getfield(vi, s)
     else
-        @assert s == :variable
+        @assert s === :variable
         return vi
     end
 end
