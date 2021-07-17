@@ -52,7 +52,7 @@ function _test_errors_UnsupportedConstraint(f)
     catch err
         @test sprint(showerror, err) ==
               "$(MOI.UnsupportedConstraint{MOI.SingleVariable,MOI.EqualTo{Int}}):" *
-              " `$MOI.SingleVariable`-in-`$MOI.EqualTo{$Int}` constraint is" *
+              " `$MOI.VariableIndex`-in-`$MOI.EqualTo{$Int}` constraint is" *
               " not supported by the model."
     end
     return
@@ -90,7 +90,7 @@ function test_errors_add_constraint()
     catch err
         @test sprint(showerror, err) ==
               "$(MOI.AddConstraintNotAllowed{MOI.SingleVariable,MOI.EqualTo{Float64}}):" *
-              " Adding `$MOI.SingleVariable`-in-`$MOI.EqualTo{Float64}`" *
+              " Adding `$MOI.VariableIndex`-in-`$MOI.EqualTo{Float64}`" *
               " constraints cannot be performed. You may want to use a" *
               " `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
               " `reset_optimizer` before doing this operation if the" *
