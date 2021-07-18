@@ -56,7 +56,7 @@ end
 function MOI.supports_constraint(
     ::AbstractDummyModel,
     ::Type{MOI.VectorOfVariables},
-    ::Type{MOI.Zeros},
+    ::Type{MOI.ZeroCone},
 )
     return true
 end
@@ -517,15 +517,15 @@ function test_create_variables_using_supports_add_constrained_variable()
     @test typeof(c2) == typeof(dest.constraintIndices[2])
 
     b, cb = MOI.add_constrained_variables(src, MOI.NonnegativeCone(2))
-    c3 = MOI.add_constraint(src, b, MOI.Zeros(2))
+    c3 = MOI.add_constraint(src, b, MOI.ZeroCone(2))
 
-    d, cd = MOI.add_constrained_variables(src, MOI.Zeros(2))
+    d, cd = MOI.add_constrained_variables(src, MOI.ZeroCone(2))
     c4 = MOI.add_constraint(src, d, MOI.NonpositiveCone(2))
 
     dest = OrderConstrainedVariablesModel()
     bridged_dest = MOI.Bridges.full_bridge_optimizer(dest, Float64)
     @test MOIU.sorted_variable_sets_by_cost(bridged_dest, src) == [
-        (MOI.VectorOfVariables, MOI.Zeros),
+        (MOI.VectorOfVariables, MOI.ZeroCone),
         (MOI.VectorOfVariables, MOI.NonnegativeCone),
         (MOI.VectorOfVariables, MOI.NonpositiveCone),
     ]
@@ -553,16 +553,16 @@ function test_create_variables_using_supports_add_constrained_variable()
         bridged_dest,
         MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.NonpositiveCone}(),
     ) == 1.0
-    @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Zeros)
-    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Zeros}()) == 1.0
+    @test MOI.supports_add_constrained_variables(bridged_dest, MOI.ZeroCone)
+    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.ZeroCone}()) == 1.0
     @test MOI.supports_constraint(
         bridged_dest,
         MOI.VectorOfVariables,
-        MOI.Zeros,
+        MOI.ZeroCone,
     )
     @test MOI.get(
         bridged_dest,
-        MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.Zeros}(),
+        MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.ZeroCone}(),
     ) == 2.0
     index_map = MOI.copy_to(bridged_dest, src)
     @test length(dest.constraintIndices) == 4
@@ -570,7 +570,7 @@ function test_create_variables_using_supports_add_constrained_variable()
     dest = ReverseOrderConstrainedVariablesModel()
     bridged_dest = MOI.Bridges.full_bridge_optimizer(dest, Float64)
     @test MOIU.sorted_variable_sets_by_cost(bridged_dest, src) == [
-        (MOI.VectorOfVariables, MOI.Zeros),
+        (MOI.VectorOfVariables, MOI.ZeroCone),
         (MOI.VectorOfVariables, MOI.NonpositiveCone),
         (MOI.VectorOfVariables, MOI.NonnegativeCone),
     ]
@@ -598,16 +598,16 @@ function test_create_variables_using_supports_add_constrained_variable()
         bridged_dest,
         MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.NonpositiveCone}(),
     ) == 1.0
-    @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Zeros)
-    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Zeros}()) == 1.0
+    @test MOI.supports_add_constrained_variables(bridged_dest, MOI.ZeroCone)
+    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.ZeroCone}()) == 1.0
     @test MOI.supports_constraint(
         bridged_dest,
         MOI.VectorOfVariables,
-        MOI.Zeros,
+        MOI.ZeroCone,
     )
     @test MOI.get(
         bridged_dest,
-        MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.Zeros}(),
+        MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.ZeroCone}(),
     ) == 3.0
     index_map = MOI.copy_to(bridged_dest, src)
     @test length(dest.constraintIndices) == 4

@@ -1,7 +1,7 @@
 """
     ZerosBridge{T} <: Bridges.Variable.AbstractBridge
 
-Transforms constrained variables in [`MathOptInterface.Zeros`](@ref) to zeros,
+Transforms constrained variables in [`MathOptInterface.ZeroCone`](@ref) to zeros,
 which ends up creating no variables in the underlying model.
 
 The bridged variables are therefore similar to parameters with zero values.
@@ -22,12 +22,12 @@ end
 function bridge_constrained_variable(
     ::Type{ZerosBridge{T}},
     model::MOI.ModelLike,
-    set::MOI.Zeros,
+    set::MOI.ZeroCone,
 ) where {T}
     return ZerosBridge{T}(MOI.dimension(set))
 end
 
-function supports_constrained_variable(::Type{<:ZerosBridge}, ::Type{MOI.Zeros})
+function supports_constrained_variable(::Type{<:ZerosBridge}, ::Type{MOI.ZeroCone})
     return true
 end
 
@@ -52,7 +52,7 @@ MOI.delete(::MOI.ModelLike, ::ZerosBridge) = nothing
 # Attributes, Bridge acting as a constraint
 
 function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::ZerosBridge)
-    return MOI.Zeros(bridge.n)
+    return MOI.ZeroCone(bridge.n)
 end
 
 function MOI.get(

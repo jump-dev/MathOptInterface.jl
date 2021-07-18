@@ -11,11 +11,11 @@ include("../utilities.jl")
 mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
 config = MOIT.Config()
 
-bridged_mock = MOIB.Variable.Zeros{Float64}(mock)
+bridged_mock = MOIB.Variable.ZeroCone{Float64}(mock)
 
 x, cx = MOI.add_constrained_variable(bridged_mock, MOI.GreaterThan(0.0))
 MOI.set(bridged_mock, MOI.VariableName(), x, "x")
-yz, cyz = MOI.add_constrained_variables(bridged_mock, MOI.Zeros(2))
+yz, cyz = MOI.add_constrained_variables(bridged_mock, MOI.ZeroCone(2))
 MOI.set(bridged_mock, MOI.VariableName(), yz, ["y", "z"])
 MOI.set(bridged_mock, MOI.ConstraintName(), cyz, "cyz")
 y, z = yz
@@ -35,7 +35,7 @@ end
     s = """
     variables: x, y, z
     x >= 0.0
-    cyz: [y, z] in MathOptInterface.Zeros(2)
+    cyz: [y, z] in MathOptInterface.ZeroCone(2)
     minobjective: x
     """
     model = MOIU.Model{Float64}()
@@ -139,15 +139,15 @@ end
     @test MOI.get(bridged_mock, MOI.ListOfVariableIndices()) == [x, y, z]
     @test MOI.get(
         mock,
-        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Zeros}(),
+        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.ZeroCone}(),
     ) == 0
     @test MOI.get(
         bridged_mock,
-        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Zeros}(),
+        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.ZeroCone}(),
     ) == 1
     @test MOI.get(
         bridged_mock,
-        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Zeros}(),
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.ZeroCone}(),
     ) == [cyz]
 end
 
@@ -174,7 +174,7 @@ end
     _test_delete_bridged_variables(
         bridged_mock,
         yz,
-        MOI.Zeros,
+        MOI.ZeroCone,
         3,
         ((MOI.SingleVariable, MOI.GreaterThan{Float64}, 1),),
     )

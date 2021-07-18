@@ -110,7 +110,7 @@ nonpositive) real numbers.
 | ``\alpha \le x_i \le \beta``  | `SingleVariable`             | `Interval`        |
 | ``Ax + b \in \mathbb{R}_+^n`` | `VectorAffineFunction`       | `NonnegativeCone` |
 | ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `NonpositiveCone` |
-| ``Ax + b = 0``                | `VectorAffineFunction`       | `Zeros`           |
+| ``Ax + b = 0``                | `VectorAffineFunction`       | `ZeroCone`        |
 
 By convention, solvers are not expected to support nonzero constant terms in the
 [`ScalarAffineFunction`](@ref)s the first four rows above, because they are

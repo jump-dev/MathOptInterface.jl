@@ -287,7 +287,7 @@ end
     Interval,
     Semiinteger,
     Semicontinuous,
-    Zeros,
+    ZeroCone,
     Reals,
     NonnegativeCone,
     NonpositiveCone,
@@ -367,8 +367,8 @@ end
 
 # ========== Non-typed vector sets ==========
 
-function set_to_moi(::Val{:Zeros}, object::Object)
-    return MOI.Zeros(object["dimension"])
+function set_to_moi(::Val{:ZeroCone}, object::Object)
+    return MOI.ZeroCone(object["dimension"])
 end
 
 function set_to_moi(::Val{:Reals}, object::Object)

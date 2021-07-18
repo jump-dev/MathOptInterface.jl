@@ -25,9 +25,9 @@ config_with_basis = MOIT.Config(basis = true)
             (MOI.SingleVariable, MOI.EqualTo{T}),
             (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}),
             (MOI.ScalarQuadraticFunction{T}, MOI.EqualTo{T}),
-            (MOI.VectorOfVariables, MOI.Zeros),
-            (MOI.VectorAffineFunction{T}, MOI.Zeros),
-            (MOI.VectorQuadraticFunction{T}, MOI.Zeros),
+            (MOI.VectorOfVariables, MOI.ZeroCone),
+            (MOI.VectorAffineFunction{T}, MOI.ZeroCone),
+            (MOI.VectorQuadraticFunction{T}, MOI.ZeroCone),
         ],
     )
 end
@@ -198,7 +198,7 @@ end
         ),
     )
 end
-@testset "Zeros" begin
+@testset "ZeroCone" begin
     bridged_mock = MOIB.Constraint.SplitInterval{Float64}(mock)
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -216,7 +216,7 @@ end
             bridged_mock,
             MOI.ListOfConstraintIndices{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
+                MOI.ZeroCone,
             }(),
         ),
     )

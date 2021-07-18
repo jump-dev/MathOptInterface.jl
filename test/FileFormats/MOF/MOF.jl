@@ -544,7 +544,7 @@ function test_Zeros()
         """
 variables: x, y, z
 minobjective: x
-c1: [x, y, z] in Zeros(3)
+c1: [x, y, z] in ZeroCone(3)
 """,
         ["x", "y", "z"],
         ["c1"],
@@ -624,7 +624,7 @@ function test_vectoraffine_in_zeros()
         """
 variables: x, y
 minobjective: x
-c1: [1.0x + -3.0, 2.0y + -4.0] in Zeros(2)
+c1: [1.0x + -3.0, 2.0y + -4.0] in ZeroCone(2)
 """,
         ["x", "y"],
         ["c1"],

@@ -28,7 +28,7 @@ mutable struct _CBFDataStructure
     end
 end
 
-_cone_string(::Any, ::Type{MOI.Zeros}) = "L="
+_cone_string(::Any, ::Type{MOI.ZeroCone}) = "L="
 _cone_string(::Any, ::Type{MOI.Reals}) = "F"
 _cone_string(::Any, ::Type{MOI.NonnegativeCone}) = "L+"
 _cone_string(::Any, ::Type{MOI.NonpositiveCone}) = "L-"
@@ -180,7 +180,7 @@ end
 function _CBFDataStructure(model::Model)
     data = _CBFDataStructure()
     for S in (
-        MOI.Zeros,
+        MOI.ZeroCone,
         MOI.Reals,
         MOI.NonnegativeCone,
         MOI.NonpositiveCone,

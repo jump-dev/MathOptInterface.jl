@@ -37,7 +37,7 @@ MOI.Utilities.@model(
     ),
     (
         MOI.Reals,
-        MOI.Zeros,
+        MOI.ZeroCone,
         MOI.NonnegativeCone,
         MOI.NonpositiveCone,
         MOI.SecondOrderCone,

@@ -147,7 +147,7 @@ Generate a new [`OrderedProductOfSets`](@ref) subtype.
 ```julia
 @product_of_sets(
     LinearOrthants,
-    MOI.Zeros,
+    MOI.ZeroCone,
     MOI.NonnegativeCone,
     MOI.NonpositiveCone,
     MOI.ZeroOne,

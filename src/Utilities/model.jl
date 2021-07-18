@@ -833,7 +833,7 @@ The model describing an linear program would be:
 @model(LPModel,                                                   # Name of model
       (),                                                         # untyped scalar sets
       (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval), #   typed scalar sets
-      (MOI.Zeros, MOI.NonnegativeCone, MOI.NonpositiveCone),      # untyped vector sets
+      (MOI.ZeroCone, MOI.NonnegativeCone, MOI.NonpositiveCone),      # untyped vector sets
       (),                                                         #   typed vector sets
       (),                                                         # untyped scalar functions
       (MOI.ScalarAffineFunction,),                                #   typed scalar functions
@@ -868,13 +868,13 @@ struct LPModelFunctionConstraints{T} <: MOIU.StructOfConstraints
     }
     moi_vectorofvariables::LPModelVectorConstraints{
         T,
-        MOIU.VectorOfConstraints{MOI.VectorOfVariables, MOI.Zeros},
+        MOIU.VectorOfConstraints{MOI.VectorOfVariables, MOI.ZeroCone},
         MOIU.VectorOfConstraints{MOI.VectorOfVariables, MOI.NonnegativeCone},
         MOIU.VectorOfConstraints{MOI.VectorOfVariables, MOI.NonpositiveCone}
     }
     moi_vectoraffinefunction::LPModelVectorConstraints{
         T,
-        MOIU.VectorOfConstraints{MOI.VectorAffineFunction{T}, MOI.Zeros},
+        MOIU.VectorOfConstraints{MOI.VectorAffineFunction{T}, MOI.ZeroCone},
         MOIU.VectorOfConstraints{MOI.VectorAffineFunction{T}, MOI.NonnegativeCone},
         MOIU.VectorOfConstraints{MOI.VectorAffineFunction{T}, MOI.NonpositiveCone}
     }
@@ -1049,7 +1049,7 @@ const LessThanIndicatorSetZero{T} =
     ),
     (
         MOI.Reals,
-        MOI.Zeros,
+        MOI.ZeroCone,
         MOI.NonnegativeCone,
         MOI.NonpositiveCone,
         MOI.Complements,

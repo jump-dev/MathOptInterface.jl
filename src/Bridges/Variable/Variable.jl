@@ -32,7 +32,7 @@ end
 include("set_map.jl")
 
 include("zeros.jl")
-const Zeros{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{ZerosBridge{T},OT}
+const ZeroCone{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{ZerosBridge{T},OT}
 
 include("free.jl")
 const Free{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{FreeBridge{T},OT}

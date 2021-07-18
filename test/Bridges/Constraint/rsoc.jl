@@ -91,7 +91,7 @@ end
             mock,
             [1.0, 1 / √2, 1 / √2],
             (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [[1 - 1 / √2, 1 + 1 / √2, -1]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-√2]],
         )
     MOIT.soc1vtest(bridged_mock, config)
     mock.optimize! =
@@ -99,7 +99,7 @@ end
             mock,
             [1.0, 1 / √2, 1 / √2],
             (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [[1 - 1 / √2, 1 + 1 / √2, -1]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-√2]],
         )
     MOIT.soc1ftest(bridged_mock, config)
     ci = first(

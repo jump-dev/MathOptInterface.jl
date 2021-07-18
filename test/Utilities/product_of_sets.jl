@@ -234,7 +234,7 @@ function test_vector_NumberOfConstraints()
     MOI.Utilities.final_touch(sets)
     @test MOI.get(
         sets,
-        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}(),
+        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.ZeroCone}(),
     ) == 0
     for (x, S) in zip([2, 1], MOI.Utilities.set_types(sets)[1:2])
         @test MOI.get(
@@ -260,8 +260,8 @@ function test_vector_ListOfConstraintIndices()
     MOI.Utilities.add_set(sets, 3)
     MOI.Utilities.final_touch(sets)
     VAF = MOI.VectorAffineFunction{Float64}
-    @test MOI.get(sets, MOI.ListOfConstraintIndices{VAF,MOI.Zeros}()) ==
-          MOI.ConstraintIndex{VAF,MOI.Zeros}[]
+    @test MOI.get(sets, MOI.ListOfConstraintIndices{VAF,MOI.ZeroCone}()) ==
+          MOI.ConstraintIndex{VAF,MOI.ZeroCone}[]
     for (x, S) in zip([[1], [1, 3]], MOI.Utilities.set_types(sets)[1:2])
         ci = MOI.get(sets, MOI.ListOfConstraintIndices{VAF,S}())
         @test ci == MOI.ConstraintIndex{VAF,S}.(x)

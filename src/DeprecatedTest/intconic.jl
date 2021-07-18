@@ -16,7 +16,7 @@ function intsoc1test(model::MOI.ModelLike, config::Config)
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Zeros,
+        MOI.ZeroCone,
     )
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
     @test MOI.supports_constraint(
@@ -42,7 +42,7 @@ function intsoc1test(model::MOI.ModelLike, config::Config)
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
             [-1.0],
         ),
-        MOI.Zeros(1),
+        MOI.ZeroCone(1),
     )
     csoc = MOI.add_constraint(
         model,
@@ -54,7 +54,7 @@ function intsoc1test(model::MOI.ModelLike, config::Config)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
+                MOI.ZeroCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -64,7 +64,7 @@ function intsoc1test(model::MOI.ModelLike, config::Config)
     end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
+    @test (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) in loc
     @test (MOI.VectorOfVariables, MOI.SecondOrderCone) in loc
     bin1 = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.ZeroOne())
     # We test this after the creation of every `SingleVariable` constraint

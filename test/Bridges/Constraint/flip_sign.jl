@@ -192,7 +192,7 @@ end
             [1.0, 0.0, 2.0],
             (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) =>
                 [[0.0, -2.0, 0.0]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) =>
                 [[-3.0, -1.0]],
         )
     MOIT.lin1vtest(bridged_mock, config)

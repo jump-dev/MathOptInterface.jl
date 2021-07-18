@@ -32,7 +32,7 @@ function _lin1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Zeros,
+        MOI.ZeroCone,
     )
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -57,7 +57,7 @@ function _lin1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             ),
             [-3.0, -2.0],
         ),
-        MOI.Zeros(2),
+        MOI.ZeroCone(2),
     )
     if config.query_number_of_constraints
         @test MOI.get(
@@ -72,7 +72,7 @@ function _lin1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
+                MOI.ZeroCone,
             }(),
         ) == 1
     end
@@ -82,7 +82,7 @@ function _lin1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},
         MOI.NonnegativeCone,
     ) in loc
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
+    @test (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) in loc
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -132,7 +132,7 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     rtol = config.rtol
     #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64},
     #[
-    #    (MOI.VectorAffineFunction{Float64},MOI.Zeros),
+    #    (MOI.VectorAffineFunction{Float64},MOI.ZeroCone),
     #    (MOI.VectorOfVariables,MOI.NonnegativeCone),
     #    (MOI.VectorOfVariables,MOI.NonpositiveCone)
     #])
@@ -160,7 +160,7 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             MOI.NonnegativeCone,
         )
         @test MOI.supports_add_constrained_variables(model, MOI.NonpositiveCone)
-        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
+        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.ZeroCone)
     else
         @test MOI.supports_constraint(
             model,
@@ -176,7 +176,7 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Zeros,
+        MOI.ZeroCone,
     )
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -214,7 +214,7 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             ),
             [4.0, 3.0, -12.0],
         ),
-        MOI.Zeros(3),
+        MOI.ZeroCone(3),
     )
     if vecofvars
         # test fallback
@@ -231,12 +231,12 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     end
     vov = MOI.VectorOfVariables([s])
     if vecofvars
-        vs = MOI.add_constraint(model, vov, MOI.Zeros(1))
+        vs = MOI.add_constraint(model, vov, MOI.ZeroCone(1))
     else
         vs = MOI.add_constraint(
             model,
             MOI.VectorAffineFunction{Float64}(vov),
-            MOI.Zeros(1),
+            MOI.ZeroCone(1),
         )
     end
     if config.query_number_of_constraints
@@ -244,7 +244,7 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
+                MOI.ZeroCone,
             }(),
         ) == 2 - vecofvars
         @test MOI.get(
@@ -493,12 +493,12 @@ function _norminf1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     )
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
-        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
+        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.ZeroCone)
     else
         @test MOI.supports_constraint(
             model,
             MOI.VectorAffineFunction{Float64},
-            MOI.Zeros,
+            MOI.ZeroCone,
         )
     end
     @test MOI.supports_constraint(
@@ -524,7 +524,7 @@ function _norminf1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
             [-1.0],
         ),
-        MOI.Zeros(1),
+        MOI.ZeroCone(1),
     )
     ceq2 = MOI.add_constraint(
         model,
@@ -532,7 +532,7 @@ function _norminf1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))],
             [-0.5],
         ),
-        MOI.Zeros(1),
+        MOI.ZeroCone(1),
     )
     vov = MOI.VectorOfVariables([x, y, z])
     if vecofvars
@@ -549,7 +549,7 @@ function _norminf1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
+                MOI.ZeroCone,
             }(),
         ) == 2
         @test MOI.get(
@@ -563,7 +563,7 @@ function _norminf1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
+    @test (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) in loc
     @test (
         vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},
         MOI.NormInfinityCone,
@@ -820,12 +820,12 @@ function _normone1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     )
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
-        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
+        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.ZeroCone)
     else
         @test MOI.supports_constraint(
             model,
             MOI.VectorAffineFunction{Float64},
-            MOI.Zeros,
+            MOI.ZeroCone,
         )
     end
     @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.NormOneCone)
@@ -847,7 +847,7 @@ function _normone1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
             [-1.0],
         ),
-        MOI.Zeros(1),
+        MOI.ZeroCone(1),
     )
     ceq2 = MOI.add_constraint(
         model,
@@ -855,7 +855,7 @@ function _normone1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))],
             [-0.5],
         ),
-        MOI.Zeros(1),
+        MOI.ZeroCone(1),
     )
     vov = MOI.VectorOfVariables([x, y, z])
     if vecofvars
@@ -872,7 +872,7 @@ function _normone1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
+                MOI.ZeroCone,
             }(),
         ) == 2
         @test MOI.get(
@@ -886,7 +886,7 @@ function _normone1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
+    @test (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) in loc
     @test (
         vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},
         MOI.NormOneCone,
@@ -1149,7 +1149,7 @@ function _soc1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             MOI.SecondOrderCone,
         )
     end
-    @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
+    @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.ZeroCone)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     if vecofvars
@@ -1179,14 +1179,14 @@ function _soc1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
             [-1.0],
         ),
-        MOI.Zeros(1),
+        MOI.ZeroCone(1),
     )
     if config.query_number_of_constraints
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
+                MOI.ZeroCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -1200,7 +1200,7 @@ function _soc1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
+    @test (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) in loc
     @test (
         vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},
         MOI.SecondOrderCone,
@@ -1265,7 +1265,7 @@ function _soc2test(model::MOI.ModelLike, config::Config, nonneg::Bool)
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Zeros,
+        MOI.ZeroCone,
     )
     if nonneg
         @test MOI.supports_constraint(
@@ -1319,7 +1319,7 @@ function _soc2test(model::MOI.ModelLike, config::Config, nonneg::Bool)
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(-1.0, t))],
             [1.0],
         ),
-        MOI.Zeros(1),
+        MOI.ZeroCone(1),
     )
     csoc = MOI.add_constraint(
         model,
@@ -1344,7 +1344,7 @@ function _soc2test(model::MOI.ModelLike, config::Config, nonneg::Bool)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
+                MOI.ZeroCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -1521,7 +1521,7 @@ function soc4test(model::MOI.ModelLike, config::Config)
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Zeros,
+        MOI.ZeroCone,
     )
     @test MOI.supports_constraint(
         model,
@@ -1540,7 +1540,7 @@ function soc4test(model::MOI.ModelLike, config::Config)
             ),
             [-1.0, 0.0, 0.0],
         ),
-        MOI.Zeros(3),
+        MOI.ZeroCone(3),
     )
     c2 = MOI.add_constraint(
         model,
@@ -1552,7 +1552,7 @@ function soc4test(model::MOI.ModelLike, config::Config)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
+                MOI.ZeroCone,
             }(),
         ) == 1
         @test MOI.get(

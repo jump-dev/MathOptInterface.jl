@@ -2,8 +2,8 @@ _lower_set(set::MOI.Interval) = MOI.GreaterThan(set.lower)
 _upper_set(set::MOI.Interval) = MOI.LessThan(set.upper)
 _lower_set(set::MOI.EqualTo) = MOI.GreaterThan(set.value)
 _upper_set(set::MOI.EqualTo) = MOI.LessThan(set.value)
-_lower_set(set::MOI.Zeros) = MOI.NonnegativeCone(set.dimension)
-_upper_set(set::MOI.Zeros) = MOI.NonpositiveCone(set.dimension)
+_lower_set(set::MOI.ZeroCone) = MOI.NonnegativeCone(set.dimension)
+_upper_set(set::MOI.ZeroCone) = MOI.NonpositiveCone(set.dimension)
 
 """
     SplitIntervalBridge{T, F, S, LS, US}
@@ -12,7 +12,7 @@ The `SplitIntervalBridge` splits a `F`-in-`S` constraint into a `F`-in-`LS` and
 a `F`-in-`US` constraint where we have either:
 * `S = MOI.Interval{T}`, `LS = MOI.GreaterThan{T}` and `US = MOI.LessThan{T}`,
 * `S = MOI.EqualTo{T}`, `LS = MOI.GreaterThan{T}` and `US = MOI.LessThan{T}`, or
-* `S = MOI.Zeros`, `LS = MOI.NonnegativeCone` and `US = MOI.NonpositiveCone`.
+* `S = MOI.ZeroCone`, `LS = MOI.NonnegativeCone` and `US = MOI.NonpositiveCone`.
 
 For instance, if `F` is `MOI.ScalarAffineFunction` and `S` is `MOI.Interval`,
 it transforms the constraint ``l ≤ ⟨a, x⟩ + α ≤ u`` into the constraints
@@ -51,7 +51,7 @@ end
 function MOI.supports_constraint(
     ::Type{SplitIntervalBridge{T}},
     F::Type{<:MOI.AbstractVectorFunction},
-    ::Type{MOI.Zeros},
+    ::Type{MOI.ZeroCone},
 ) where {T}
     return MOIU.is_coefficient_type(F, T)
 end
@@ -77,9 +77,9 @@ end
 function concrete_bridge_type(
     ::Type{<:SplitIntervalBridge{T}},
     F::Type{<:MOI.AbstractVectorFunction},
-    ::Type{MOI.Zeros},
+    ::Type{MOI.ZeroCone},
 ) where {T}
-    return SplitIntervalBridge{T,F,MOI.Zeros,MOI.NonnegativeCone,MOI.NonpositiveCone}
+    return SplitIntervalBridge{T,F,MOI.ZeroCone,MOI.NonnegativeCone,MOI.NonpositiveCone}
 end
 
 # Attributes, Bridge acting as a model
@@ -286,7 +286,7 @@ end
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintSet,
-    bridge::SplitIntervalBridge{T,F,MOI.Zeros},
+    bridge::SplitIntervalBridge{T,F,MOI.ZeroCone},
 ) where {T,F}
-    return MOI.Zeros(MOI.get(model, attr, bridge.lower).dimension)
+    return MOI.ZeroCone(MOI.get(model, attr, bridge.lower).dimension)
 end

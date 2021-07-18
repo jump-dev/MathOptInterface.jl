@@ -117,7 +117,7 @@ end
 function test_sets_DimensionMismatch()
     for (S, min_dimension) in (
         (MOI.Reals, 0),
-        (MOI.Zeros, 0),
+        (MOI.ZeroCone, 0),
         (MOI.NonnegativeCone, 0),
         (MOI.NonpositiveCone, 0),
         (MOI.NormInfinityCone, 1),
@@ -181,8 +181,8 @@ function test_sets_dual_nonnegatives()
 end
 
 function test_sets_dual_zeroreal()
-    zeros3 = MOI.Zeros(3)
-    zeros4 = MOI.Zeros(4)
+    zeros3 = MOI.ZeroCone(3)
+    zeros4 = MOI.ZeroCone(4)
     reals3 = MOI.Reals(3)
     reals4 = MOI.Reals(4)
     _dual_set_test(zeros3, reals3)

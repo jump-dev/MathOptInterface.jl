@@ -30,7 +30,7 @@ end
 function MOI.supports_constraint(
     ::AbstractDummyModel,
     ::Type{MOI.VectorOfVariables},
-    ::Type{MOI.Zeros},
+    ::Type{MOI.ZeroCone},
 )
     return true
 end

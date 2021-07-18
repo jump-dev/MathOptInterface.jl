@@ -16,7 +16,7 @@ function _constant_not_zero_test(::Type{T}) where {T}
     func2 = one(T) * fx
     @test nothing === MOI.throw_if_scalar_and_constant_not_zero(func2, S)
     func = MOI.Utilities.operate(vcat, T, func1, func2)
-    @test nothing === MOI.throw_if_scalar_and_constant_not_zero(func, MOI.Zeros)
+    @test nothing === MOI.throw_if_scalar_and_constant_not_zero(func, MOI.ZeroCone)
 end
 
 function test_constraints_ConstantNotZero()

@@ -649,7 +649,7 @@ function test_model_supports_constraint_SingleVariable_EqualTo(
         MOI.EqualTo{UInt8},
     )
     # Scalar-in-vector
-    @test !MOI.supports_constraint(model, MOI.SingleVariable, MOI.Zeros)
+    @test !MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroCone)
     return
 end
 

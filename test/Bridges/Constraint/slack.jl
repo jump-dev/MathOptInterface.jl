@@ -211,7 +211,7 @@ end
         2,
         (
             (MOI.VectorOfVariables, MOI.NonpositiveCone, 0),
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros, 0),
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone, 0),
         ),
     )
 
@@ -247,7 +247,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [100, -100, 100, -100],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) =>
                 [[1.0], [1.0]],
             (MOI.VectorOfVariables, MOI.NonnegativeCone) => [[1.0]],
             (MOI.VectorOfVariables, MOI.NonpositiveCone) => [[1.0]],
@@ -282,7 +282,7 @@ end
     @test (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) in loc
     loc = MOI.get(mock, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 3
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
+    @test (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) in loc
     @test (MOI.VectorOfVariables, MOI.NonnegativeCone) in loc
     @test (MOI.VectorOfVariables, MOI.NonpositiveCone) in loc
 
@@ -290,7 +290,7 @@ end
         for F in [MOI.VectorAffineFunction{T}, MOI.VectorQuadraticFunction{T}]
             @test MOIB.added_constraint_types(
                 MOIB.Constraint.VectorSlackBridge{T,F,S},
-            ) == [(F, MOI.Zeros)]
+            ) == [(F, MOI.ZeroCone)]
         end
     end
 end

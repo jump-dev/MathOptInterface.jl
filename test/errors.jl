@@ -111,7 +111,7 @@ function test_errors_add_constraint()
     )
     @test_throws(
         MOI.AddConstraintNotAllowed,
-        MOI.add_constraint(model, [vi, vi], MOI.Zeros(2)),
+        MOI.add_constraint(model, [vi, vi], MOI.ZeroCone(2)),
     )
     @test_throws(
         MOI.AddConstraintNotAllowed,

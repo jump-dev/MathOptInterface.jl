@@ -131,7 +131,7 @@ MOIU.@model(
     (),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
     (
-        MOI.Zeros,
+        MOI.ZeroCone,
         MOI.NonnegativeCone,
         MOI.NonpositiveCone,
         MOI.NormInfinityCone,

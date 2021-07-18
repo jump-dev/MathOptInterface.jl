@@ -30,7 +30,7 @@ function MOI.supports_constraint(
     F::Type{<:MOI.AbstractVectorFunction},
     ::Type{<:MOIU.VectorLinearSet},
 ) where {T}
-    # If `F` is `MOI.VectorAffineFunction{Complex{Float64}}`, `S` is `MOI.Zeros` and `T` is `Float64`,
+    # If `F` is `MOI.VectorAffineFunction{Complex{Float64}}`, `S` is `MOI.ZeroCone` and `T` is `Float64`,
     # it would create a set `MOI.EqualTo{Float64}` which is incorrect hence we say
     # we only support it if the coefficient type of `F` is `T`.
     return MOIU.is_coefficient_type(F, T)

@@ -47,7 +47,7 @@ If the dual cone is not defined it returns an error.
 
 ```jldocstest
 julia> dual_set(Reals(4))
-Zeros(4)
+ZeroCone(4)
 
 julia> dual_set(SecondOrderCone(5))
 SecondOrderCone(5)
@@ -70,7 +70,7 @@ Return the type of dual set of sets of type `S`, as returned by
 
 ```jldocstest
 julia> dual_set_type(Reals)
-Zeros
+ZeroCone
 
 julia> dual_set_type(SecondOrderCone)
 SecondOrderCone
@@ -125,22 +125,22 @@ struct Reals <: AbstractVectorSet
     end
 end
 
-dual_set(s::Reals) = Zeros(dimension(s))
-dual_set_type(::Type{Reals}) = Zeros
+dual_set(s::Reals) = ZeroCone(dimension(s))
+dual_set_type(::Type{Reals}) = ZeroCone
 
 """
-    Zeros(dimension)
+    ZeroCone(dimension)
 
 The set ``\\{ 0 \\}^{dimension}`` (containing only the origin) of dimension
 `dimension`.
 """
-struct Zeros <: AbstractVectorSet
+struct ZeroCone <: AbstractVectorSet
     dimension::Int
-    function Zeros(dimension::Base.Integer)
+    function ZeroCone(dimension::Base.Integer)
         if !(dimension >= 0)
             throw(
                 DimensionMismatch(
-                    "Dimension of Zeros must be >= 0, not $(dimension).",
+                    "Dimension of ZeroCone must be >= 0, not $(dimension).",
                 ),
             )
         end
@@ -148,8 +148,8 @@ struct Zeros <: AbstractVectorSet
     end
 end
 
-dual_set(s::Zeros) = Reals(dimension(s))
-dual_set_type(::Type{Zeros}) = Reals
+dual_set(s::ZeroCone) = Reals(dimension(s))
+dual_set_type(::Type{ZeroCone}) = Reals
 
 """
     NonnegativeCone(dimension)
@@ -1113,7 +1113,7 @@ end
 function Base.copy(
     set::Union{
         Reals,
-        Zeros,
+        ZeroCone,
         NonnegativeCone,
         NonpositiveCone,
         GreaterThan,
@@ -1166,7 +1166,7 @@ function supports_dimension_update(::Type{<:AbstractVectorSet})
     return false
 end
 function supports_dimension_update(
-    ::Type{<:Union{Reals,Zeros,NonnegativeCone,NonpositiveCone}},
+    ::Type{<:Union{Reals,ZeroCone,NonnegativeCone,NonpositiveCone}},
 )
     return true
 end
@@ -1178,7 +1178,7 @@ Returns a set with the dimension modified to `new_dim`.
 """
 function update_dimension end
 function update_dimension(
-    set::Union{Reals,Zeros,NonnegativeCone,NonpositiveCone},
+    set::Union{Reals,ZeroCone,NonnegativeCone,NonpositiveCone},
     new_dim,
 )
     return typeof(set)(new_dim)

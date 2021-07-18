@@ -50,7 +50,7 @@ cannot_unbridge_err = ErrorException(
 end
 
 b2 = VariableDummyBridge(2)
-set2 = MOI.Zeros(4)
+set2 = MOI.ZeroCone(4)
 F2 = MOI.VectorOfVariables
 S2 = typeof(set2)
 v2, c2 = MOIB.Variable.add_keys_for_bridge(map, () -> b2, set2)
@@ -87,7 +87,7 @@ v2, c2 = MOIB.Variable.add_keys_for_bridge(map, () -> b2, set2)
 end
 
 b3 = VariableDummyBridge(3)
-set3 = MOI.Zeros(0)
+set3 = MOI.ZeroCone(0)
 v3, c3 = MOIB.Variable.add_keys_for_bridge(map, () -> b3, set3)
 @testset "Vector set of length 0" begin
     @test isempty(v3)

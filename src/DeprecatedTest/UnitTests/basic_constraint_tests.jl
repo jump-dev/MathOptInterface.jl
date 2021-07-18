@@ -55,8 +55,8 @@ const BasicConstraintTests = Dict(
         (dummy_vectorofvariables, 2, MOI.SOS1([1.0, 2.0])),
     (MOI.VectorOfVariables, MOI.SOS2{Float64}) =>
         (dummy_vectorofvariables, 2, MOI.SOS2([1.0, 2.0])),
-    (MOI.VectorOfVariables, MOI.Zeros) =>
-        (dummy_vectorofvariables, 2, MOI.Zeros(2)),
+    (MOI.VectorOfVariables, MOI.ZeroCone) =>
+        (dummy_vectorofvariables, 2, MOI.ZeroCone(2)),
     (MOI.VectorOfVariables, MOI.NonpositiveCone) =>
         (dummy_vectorofvariables, 2, MOI.NonpositiveCone(2)),
     (MOI.VectorOfVariables, MOI.NonnegativeCone) =>
@@ -116,8 +116,8 @@ const BasicConstraintTests = Dict(
         (dummy_scalar_quadratic, 1, MOI.EqualTo(1.0)),
     (MOI.ScalarQuadraticFunction{Float64}, MOI.Interval{Float64}) =>
         (dummy_scalar_quadratic, 1, MOI.Interval(1.0, 2.0)),
-    (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
-        (dummy_vector_affine, 2, MOI.Zeros(2)),
+    (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) =>
+        (dummy_vector_affine, 2, MOI.ZeroCone(2)),
     (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) =>
         (dummy_vector_affine, 2, MOI.NonpositiveCone(2)),
     (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
@@ -157,8 +157,8 @@ const BasicConstraintTests = Dict(
         2,
         MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.GreaterThan(3.0)),
     ),
-    (MOI.VectorQuadraticFunction{Float64}, MOI.Zeros) =>
-        (dummy_vector_quadratic, 2, MOI.Zeros(2)),
+    (MOI.VectorQuadraticFunction{Float64}, MOI.ZeroCone) =>
+        (dummy_vector_quadratic, 2, MOI.ZeroCone(2)),
     (MOI.VectorQuadraticFunction{Float64}, MOI.NonpositiveCone) =>
         (dummy_vector_quadratic, 2, MOI.NonpositiveCone(2)),
     (MOI.VectorQuadraticFunction{Float64}, MOI.NonnegativeCone) =>

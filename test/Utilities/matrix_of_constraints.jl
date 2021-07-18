@@ -420,7 +420,7 @@ MOIU.@struct_of_constraints_by_function_types(
     MOI.VectorAffineFunction{T},
 )
 
-MOIU.@product_of_sets(Zeros, MOI.Zeros)
+MOIU.@product_of_sets(ZeroCone, MOI.ZeroCone)
 
 function test_empty()
     T = Float64
@@ -433,7 +433,7 @@ function test_empty()
                 T,
                 MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
                 Vector{T},
-                Zeros{Float64},
+                ZeroCone{Float64},
             },
         },
     }()
@@ -457,7 +457,7 @@ function test_supports_constraint(T::Type = Float64, BadT::Type = Float32)
         model = MOIU.GenericOptimizer{
             T,
             VoVorSAff{T}{
-                MOIU.VectorOfConstraints{MOI.VectorOfVariables,MOI.Zeros},
+                MOIU.VectorOfConstraints{MOI.VectorOfVariables,MOI.ZeroCone},
                 MOIU.MatrixOfConstraints{
                     T,
                     MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
@@ -497,7 +497,7 @@ function test_copy(Indexing)
                     T,
                     MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
                     Vector{T},
-                    Zeros{T},
+                    ZeroCone{T},
                 },
             },
         }()
@@ -528,7 +528,7 @@ end
 
 MOIU.@struct_of_constraints_by_set_types(
     ZerosOrNot,
-    MOI.Zeros,
+    MOI.ZeroCone,
     Union{MOI.NonnegativeCone,MOI.NonpositiveCone},
 )
 
@@ -542,7 +542,7 @@ function test_multicone()
                 T,
                 MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
                 Vector{T},
-                Zeros{T},
+                ZeroCone{T},
             },
             MOIU.MatrixOfConstraints{
                 T,
@@ -557,7 +557,7 @@ function test_multicone()
     fx = MOI.SingleVariable(x)
     y = MOI.add_variable(model)
     fy = MOI.SingleVariable(y)
-    MOI.add_constraint(model, MOIU.vectorize([T(5) * fx + T(2)]), MOI.Zeros(1))
+    MOI.add_constraint(model, MOIU.vectorize([T(5) * fx + T(2)]), MOI.ZeroCone(1))
     MOI.add_constraint(
         model,
         MOIU.vectorize([T(3) * fy + T(1)]),

@@ -2181,7 +2181,7 @@ function linear15test(model::MOI.ModelLike, config::Config{T}) where {T}
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @test MOI.supports(model, MOI.ObjectiveSense())
-    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{T}, MOI.Zeros)
+    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{T}, MOI.ZeroCone)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     x = MOI.add_variables(model, 1)
@@ -2194,7 +2194,7 @@ function linear15test(model::MOI.ModelLike, config::Config{T}) where {T}
             MOI.VectorAffineTerm{T}.(2, MOI.ScalarAffineTerm{T}.([one(T)], x)),
             zeros(2),
         ),
-        MOI.Zeros(2),
+        MOI.ZeroCone(2),
     )
     MOI.set(
         model,

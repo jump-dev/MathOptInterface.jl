@@ -97,7 +97,7 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             ones(3),
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[2]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[2]],
         )
     MOIT.psdt0vtest(bridged_mock, config)
 
@@ -124,6 +124,6 @@ config = MOIT.Config()
         bridged_mock,
         ci,
         3,
-        ((MOI.VectorAffineFunction{Float64}, MOI.Zeros, 0),),
+        ((MOI.VectorAffineFunction{Float64}, MOI.ZeroCone, 0),),
     )
 end

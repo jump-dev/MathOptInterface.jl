@@ -615,11 +615,11 @@
                 }
             }, {
                 "description": "{0}^{dimension}",
-                "examples": ["{\"type\": \"Zeros\", \"dimension\": 3}"],
+                "examples": ["{\"type\": \"ZeroCone\", \"dimension\": 3}"],
                 "required": ["dimension"],
                 "properties": {
                     "type": {
-                        "const": "Zeros"
+                        "const": "ZeroCone"
                     },
                     "dimension": {
                         "type": "integer",

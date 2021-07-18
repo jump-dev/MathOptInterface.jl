@@ -61,7 +61,7 @@ function _cbf_to_moi_cone(
     if cone_str == "F"
         return MOI.Reals(cone_dim)
     elseif cone_str == "L="
-        return MOI.Zeros(cone_dim)
+        return MOI.ZeroCone(cone_dim)
     elseif cone_str == "L-"
         return MOI.NonpositiveCone(cone_dim)
     elseif cone_str == "L+"

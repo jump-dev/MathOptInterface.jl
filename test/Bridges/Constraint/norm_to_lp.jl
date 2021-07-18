@@ -33,7 +33,7 @@ config = MOIT.Config()
                 [1.0, 0.5, 1.0],
                 (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                     [[0.0, 1.0, 0.0, 0.0]],
-                (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
+                (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) =>
                     [[-1], [-1]],
             )
 
@@ -62,7 +62,7 @@ config = MOIT.Config()
                 mock,
                 MOI.ListOfConstraintIndices{
                     MOI.VectorAffineFunction{Float64},
-                    MOI.Zeros,
+                    MOI.ZeroCone,
                 }(),
             )
             @test length(zeros) == 2
@@ -72,8 +72,8 @@ config = MOIT.Config()
             s = """
             variables: x, y, z
             nonneg: [x + -1.0y, x + -1.0z, x + y, x + z] in MathOptInterface.NonnegativeCone(4)
-            x_eq: [-1.0 + x] in MathOptInterface.Zeros(1)
-            y_eq: [-0.5 + y] in MathOptInterface.Zeros(1)
+            x_eq: [-1.0 + x] in MathOptInterface.ZeroCone(1)
+            y_eq: [-0.5 + y] in MathOptInterface.ZeroCone(1)
             maxobjective: y + z
             """
             model = MOIU.Model{Float64}()
@@ -106,7 +106,7 @@ config = MOIT.Config()
                 bridged_mock,
                 MOI.ListOfConstraintIndices{
                     MOI.VectorAffineFunction{Float64},
-                    MOI.Zeros,
+                    MOI.ZeroCone,
                 }(),
             )
             @test length(zeros) == 2
@@ -116,8 +116,8 @@ config = MOIT.Config()
             s = """
             variables: x, y, z
             norminf: [1.0x, y, z] in MathOptInterface.NormInfinityCone(3)
-            x_eq: [-1.0 + x] in MathOptInterface.Zeros(1)
-            y_eq: [-0.5 + y] in MathOptInterface.Zeros(1)
+            x_eq: [-1.0 + x] in MathOptInterface.ZeroCone(1)
+            y_eq: [-0.5 + y] in MathOptInterface.ZeroCone(1)
             maxobjective: y + z
             """
             model = MOIU.Model{Float64}()
@@ -323,7 +323,7 @@ end
                 [1.0, 0.5, 0.5, 0.5, 0.5],
                 (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                     [[1.0, 1.0, 1.0, 0.0, 0.0]],
-                (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
+                (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) =>
                     [[-1], [0]],
             )
 
@@ -355,7 +355,7 @@ end
                 mock,
                 MOI.ListOfConstraintIndices{
                     MOI.VectorAffineFunction{Float64},
-                    MOI.Zeros,
+                    MOI.ZeroCone,
                 }(),
             )
             @test length(zeros) == 2
@@ -365,8 +365,8 @@ end
             s = """
             variables: x, y, z, u, v
             nonneg: [x + -1.0u + -1.0v, u + -1.0y, v + -1.0z, u + y, v + z] in MathOptInterface.NonnegativeCone(5)
-            x_eq: [-1.0 + x] in MathOptInterface.Zeros(1)
-            y_eq: [-0.5 + y] in MathOptInterface.Zeros(1)
+            x_eq: [-1.0 + x] in MathOptInterface.ZeroCone(1)
+            y_eq: [-0.5 + y] in MathOptInterface.ZeroCone(1)
             maxobjective: y + z
             """
             model = MOIU.Model{Float64}()
@@ -393,7 +393,7 @@ end
                 bridged_mock,
                 MOI.ListOfConstraintIndices{
                     MOI.VectorAffineFunction{Float64},
-                    MOI.Zeros,
+                    MOI.ZeroCone,
                 }(),
             )
             @test length(zeros) == 2
@@ -403,8 +403,8 @@ end
             s = """
             variables: x, y, z
             normone: [1.0x, y, z] in MathOptInterface.NormOneCone(3)
-            x_eq: [-1.0 + x] in MathOptInterface.Zeros(1)
-            y_eq: [-0.5 + y] in MathOptInterface.Zeros(1)
+            x_eq: [-1.0 + x] in MathOptInterface.ZeroCone(1)
+            y_eq: [-0.5 + y] in MathOptInterface.ZeroCone(1)
             maxobjective: y + z
             """
             model = MOIU.Model{Float64}()

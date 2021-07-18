@@ -12,7 +12,7 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1.0, 0.0, 2.0],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-3, -1]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-3, -1]],
         )
     MOIT.lin1vtest(mock, config)
     mock.optimize! =
@@ -21,14 +21,14 @@ config = MOIT.Config()
             [1.0, 0.0, 2.0],
             (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [[0, 2, 0]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-3, -1]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-3, -1]],
         )
     MOIT.lin1ftest(mock, config)
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [-4, -3, 16, 0],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[7, 2, -4]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[7, 2, -4]],
         )
     MOIT.lin2vtest(mock, config)
     mock.optimize! =
@@ -37,7 +37,7 @@ config = MOIT.Config()
             [-4, -3, 16, 0],
             (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) => [[0]],
             (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) => [[0]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) =>
                 [[7, 2, -4], [7]],
         )
     MOIT.lin2ftest(mock, config)
@@ -77,7 +77,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1, 0.5, 1],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [-1]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-1], [-1]],
             (MOI.VectorOfVariables, MOI.NormInfinityCone) => [[1, 0, -1]],
         )
     MOIT.norminf1vtest(mock, config)
@@ -85,7 +85,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1, 0.5, 1],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [-1]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-1], [-1]],
             (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) =>
                 [[1, 0, -1]],
         )
@@ -114,7 +114,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1, 0.5, 0.5],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [0]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-1], [0]],
             (MOI.VectorOfVariables, MOI.NormOneCone) => [[1, -1, -1]],
         )
     MOIT.normone1vtest(mock, config)
@@ -122,7 +122,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1, 0.5, 0.5],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [0]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-1], [0]],
             (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) =>
                 [[1, -1, -1]],
         )
@@ -151,7 +151,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1.0, 1 / √2, 1 / √2],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-√2]],
         )
     MOIT.soc1vtest(mock, config)
     mock.optimize! =
@@ -160,7 +160,7 @@ end
             [1.0, 1 / √2, 1 / √2],
             (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
                 [[√2, -1, -1]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-√2]],
         )
     MOIT.soc1ftest(mock, config)
     mock.optimize! =
@@ -169,7 +169,7 @@ end
             [-1 / √2, 1 / √2, 1.0],
             (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
                 [[√2, 1, -1]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[√2]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[√2]],
             (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [[1.0]],
         )
@@ -180,7 +180,7 @@ end
             [-1 / √2, 1 / √2, 1.0],
             (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
                 [[√2, 1, -1]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[√2]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[√2]],
             (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) =>
                 [[-1.0]],
         )
@@ -197,7 +197,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1.0, 2 / √5, 1 / √5, 2 / √5, 1 / √5],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) =>
                 [[-√5, -2.0, -1.0]],
         )
     MOIT.soc4test(mock, config)

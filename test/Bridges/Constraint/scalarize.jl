@@ -22,12 +22,12 @@ config = MOIT.Config()
                 MOI.VectorOfVariables,
                 MOI.VectorAffineFunction{Float64},
                 MOI.VectorQuadraticFunction{Float64},
-            ] for S in [MOI.NonnegativeCone, MOI.NonpositiveCone, MOI.Zeros]
+            ] for S in [MOI.NonnegativeCone, MOI.NonpositiveCone, MOI.ZeroCone]
         ],
     )
 
     # VectorOfVariables-in-NonnegativeCone
-    # VectorAffineFunction-in-Zeros
+    # VectorAffineFunction-in-ZeroCone
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
@@ -41,7 +41,7 @@ config = MOIT.Config()
             bridged_mock,
             MOI.ListOfConstraintIndices{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
+                MOI.ZeroCone,
             }(),
         ),
     )
@@ -90,7 +90,7 @@ config = MOIT.Config()
     )
 
     # VectorAffineFunction-in-NonnegativeCone
-    # VectorAffineFunction-in-Zeros
+    # VectorAffineFunction-in-ZeroCone
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
@@ -107,7 +107,7 @@ config = MOIT.Config()
             bridged_mock,
             MOI.ListOfConstraintIndices{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
+                MOI.ZeroCone,
             }(),
         ),
     )
@@ -172,8 +172,8 @@ config = MOIT.Config()
 
     # VectorOfVariables-in-NonnegativeCone
     # VectorOfVariables-in-NonpositiveCone
-    # VectorOfVariables-in-Zeros
-    # VectorAffineFunction-in-Zeros
+    # VectorOfVariables-in-ZeroCone
+    # VectorAffineFunction-in-ZeroCone
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
@@ -185,7 +185,7 @@ config = MOIT.Config()
 
     # VectorAffineFunction-in-NonnegativeCone
     # VectorAffineFunction-in-NonpositiveCone
-    # VectorAffineFunction-in-Zeros
+    # VectorAffineFunction-in-ZeroCone
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
