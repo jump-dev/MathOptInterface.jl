@@ -1033,10 +1033,7 @@ function Base.copy(set::Indicator{A,S}) where {A,S}
     return Indicator{A}(copy(set.set))
 end
 
-function Base.:(==)(
-    set1::Indicator{A,S},
-    set2::Indicator{A,S},
-) where {A,S}
+function Base.:(==)(set1::Indicator{A,S}, set2::Indicator{A,S}) where {A,S}
     return set1.set == set2.set
 end
 

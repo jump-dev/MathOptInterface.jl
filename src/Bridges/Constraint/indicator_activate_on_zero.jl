@@ -42,11 +42,8 @@ function bridge_constraint(
     z1_z2 = MOIU.operate(+, T, f_scalars[1], MOI.SingleVariable(z2))
     dcons = MOIU.normalize_and_add_constraint(model, z1_z2, MOI.EqualTo(one(T)))
     f2 = MOIU.operate(vcat, T, MOI.SingleVariable(z2), f_scalars[2])
-    ci = MOI.add_constraint(
-        model,
-        f2,
-        MOI.Indicator{MOI.ACTIVATE_ON_ONE}(s.set),
-    )
+    ci =
+        MOI.add_constraint(model, f2, MOI.Indicator{MOI.ACTIVATE_ON_ONE}(s.set))
     return IndicatorActiveOnFalseBridge{T,F,S}(z2, zo_cons, dcons, ci)
 end
 
