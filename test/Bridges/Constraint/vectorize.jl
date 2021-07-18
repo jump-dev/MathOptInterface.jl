@@ -39,7 +39,7 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1, 0],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[-1]],
+            (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) => [[-1]],
             (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [[0], [1]],
         ),
@@ -76,7 +76,7 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0, 1 / 2, 1],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) =>
                 [[-1], [-2]],
             (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [[2], [0], [0]],
@@ -84,7 +84,7 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[-1]],
+            (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) => [[-1]],
             (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) => [[0]],
         ),
     )

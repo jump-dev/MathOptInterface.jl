@@ -290,7 +290,7 @@ end
     Zeros,
     Reals,
     NonnegativeCone,
-    Nonpositives,
+    NonpositiveCone,
     SecondOrderCone,
     RotatedSecondOrderCone,
     GeometricMeanCone,
@@ -379,8 +379,8 @@ function set_to_moi(::Val{:NonnegativeCone}, object::Object)
     return MOI.NonnegativeCone(object["dimension"])
 end
 
-function set_to_moi(::Val{:Nonpositives}, object::Object)
-    return MOI.Nonpositives(object["dimension"])
+function set_to_moi(::Val{:NonpositiveCone}, object::Object)
+    return MOI.NonpositiveCone(object["dimension"])
 end
 
 function set_to_moi(::Val{:SecondOrderCone}, object::Object)

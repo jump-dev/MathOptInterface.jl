@@ -329,7 +329,7 @@ end
         config::Config,
     )
 
-Add a `VectorAffineFunction`-in-`Nonpositives` constraint with duplicate terms
+Add a `VectorAffineFunction`-in-`NonpositiveCone` constraint with duplicate terms
 in the function.
 """
 function test_constraint_VectorAffineFunction_duplicate(
@@ -349,7 +349,7 @@ function test_constraint_VectorAffineFunction_duplicate(
         MOI.VectorAffineTerm.(1, MOI.ScalarAffineTerm.([1.0, 1.0], [x, x])),
         [-1.0],
     )
-    c = MOI.add_constraint(model, f, MOI.Nonpositives(1))
+    c = MOI.add_constraint(model, f, MOI.NonpositiveCone(1))
     _test_model_solution(
         model,
         config;
@@ -373,7 +373,7 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [0.5]),
             MOI.FEASIBLE_POINT,
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) =>
                 [[-0.5]],
         ),
     )

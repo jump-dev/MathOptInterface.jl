@@ -149,7 +149,7 @@ Generate a new [`OrderedProductOfSets`](@ref) subtype.
     LinearOrthants,
     MOI.Zeros,
     MOI.NonnegativeCone,
-    MOI.Nonpositives,
+    MOI.NonpositiveCone,
     MOI.ZeroOne,
 )
 ```

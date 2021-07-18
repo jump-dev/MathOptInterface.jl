@@ -36,7 +36,7 @@ config = MOIT.Config()
             mock,
             [-4, -3, 16, 0],
             (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) => [[0]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[0]],
+            (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) => [[0]],
             (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
                 [[7, 2, -4], [7]],
         )
@@ -181,7 +181,7 @@ end
             (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
                 [[√2, 1, -1]],
             (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[√2]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) =>
                 [[-1.0]],
         )
     MOIT.soc2ptest(mock, config)
@@ -537,7 +537,7 @@ end
             [2η / 3, 0, η / 3, 0, 0, 0, η * δ * (1 - 1 / √3) / 2],
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
                 [δ * (1 - 1 / √3) / 2],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[
+            (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) => [[
                 0,
                 -α / √3 + δ / (2 * √6) * (2 * √2 - 1),
                 0,

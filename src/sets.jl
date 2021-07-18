@@ -175,18 +175,18 @@ dual_set(s::NonnegativeCone) = copy(s)
 dual_set_type(::Type{NonnegativeCone}) = NonnegativeCone
 
 """
-    Nonpositives(dimension)
+    NonpositiveCone(dimension)
 
 The nonpositive orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\le 0 \\}`` of
 dimension `dimension`.
 """
-struct Nonpositives <: AbstractVectorSet
+struct NonpositiveCone <: AbstractVectorSet
     dimension::Int
-    function Nonpositives(dimension::Base.Integer)
+    function NonpositiveCone(dimension::Base.Integer)
         if !(dimension >= 0)
             throw(
                 DimensionMismatch(
-                    "Dimension of Nonpositives must be >= 0, not $(dimension).",
+                    "Dimension of NonpositiveCone must be >= 0, not $(dimension).",
                 ),
             )
         end
@@ -194,8 +194,8 @@ struct Nonpositives <: AbstractVectorSet
     end
 end
 
-dual_set(s::Nonpositives) = copy(s)
-dual_set_type(::Type{Nonpositives}) = Nonpositives
+dual_set(s::NonpositiveCone) = copy(s)
+dual_set_type(::Type{NonpositiveCone}) = NonpositiveCone
 
 """
     GreaterThan{T <: Real}(lower::T)
@@ -1115,7 +1115,7 @@ function Base.copy(
         Reals,
         Zeros,
         NonnegativeCone,
-        Nonpositives,
+        NonpositiveCone,
         GreaterThan,
         LessThan,
         EqualTo,
@@ -1166,7 +1166,7 @@ function supports_dimension_update(::Type{<:AbstractVectorSet})
     return false
 end
 function supports_dimension_update(
-    ::Type{<:Union{Reals,Zeros,NonnegativeCone,Nonpositives}},
+    ::Type{<:Union{Reals,Zeros,NonnegativeCone,NonpositiveCone}},
 )
     return true
 end
@@ -1178,7 +1178,7 @@ Returns a set with the dimension modified to `new_dim`.
 """
 function update_dimension end
 function update_dimension(
-    set::Union{Reals,Zeros,NonnegativeCone,Nonpositives},
+    set::Union{Reals,Zeros,NonnegativeCone,NonpositiveCone},
     new_dim,
 )
     return typeof(set)(new_dim)

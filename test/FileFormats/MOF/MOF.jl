@@ -568,7 +568,7 @@ function test_Nonpositives()
         """
 variables: x, y, z
 minobjective: x
-c1: [x, y, z] in Nonpositives(3)
+c1: [x, y, z] in NonpositiveCone(3)
 """,
         ["x", "y", "z"],
         ["c1"],

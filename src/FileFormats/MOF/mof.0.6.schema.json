@@ -641,11 +641,11 @@
                 }
             }, {
                 "description": "R₋^{dimension}",
-                "examples": ["{\"type\": \"Nonpositives\", \"dimension\": 3}"],
+                "examples": ["{\"type\": \"NonpositiveCone\", \"dimension\": 3}"],
                 "required": ["dimension"],
                 "properties": {
                     "type": {
-                        "const": "Nonpositives"
+                        "const": "NonpositiveCone"
                     },
                     "dimension": {
                         "type": "integer",

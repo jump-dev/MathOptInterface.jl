@@ -72,7 +72,7 @@ This is used in the vectorize and scalarize bridges.
 
 See also: [`ScalarLinearSet`](@ref).
 """
-const VectorLinearSet = Union{MOI.Zeros,MOI.NonnegativeCone,MOI.Nonpositives}
+const VectorLinearSet = Union{MOI.Zeros,MOI.NonnegativeCone,MOI.NonpositiveCone}
 
 """
     vector_set_type(::Type{S}) where {S}
@@ -84,7 +84,7 @@ This is used in the vectorize and scalarize bridges.
 See also: [`scalar_set_type`](@ref).
 """
 vector_set_type(::Type{<:MOI.EqualTo}) = MOI.Zeros
-vector_set_type(::Type{<:MOI.LessThan}) = MOI.Nonpositives
+vector_set_type(::Type{<:MOI.LessThan}) = MOI.NonpositiveCone
 vector_set_type(::Type{<:MOI.GreaterThan}) = MOI.NonnegativeCone
 
 """
@@ -98,7 +98,7 @@ This is used in the vectorize and scalarize bridges.
 See also: [`vector_set_type`](@ref).
 """
 scalar_set_type(::Type{<:MOI.Zeros}, T::Type) = MOI.EqualTo{T}
-scalar_set_type(::Type{<:MOI.Nonpositives}, T::Type) = MOI.LessThan{T}
+scalar_set_type(::Type{<:MOI.NonpositiveCone}, T::Type) = MOI.LessThan{T}
 scalar_set_type(::Type{<:MOI.NonnegativeCone}, T::Type) = MOI.GreaterThan{T}
 
 """

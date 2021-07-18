@@ -136,17 +136,17 @@ end
         T,
         F<:MOI.AbstractVectorFunction,
         G<:MOI.AbstractVectorFunction
-    } <: FlipSignBridge{T, MOI.NonnegativeCone, MOI.Nonpositives, F, G}
+    } <: FlipSignBridge{T, MOI.NonnegativeCone, MOI.NonpositiveCone, F, G}
 
-Transforms a `G`-in-`NonnegativeCone` constraint into a `F`-in-`Nonpositives`
+Transforms a `G`-in-`NonnegativeCone` constraint into a `F`-in-`NonpositiveCone`
 constraint.
 """
 mutable struct NonnegToNonposBridge{
     T,
     F<:MOI.AbstractVectorFunction,
     G<:MOI.AbstractVectorFunction,
-} <: FlipSignBridge{T,MOI.NonnegativeCone,MOI.Nonpositives,F,G}
-    constraint::CI{F,MOI.Nonpositives}
+} <: FlipSignBridge{T,MOI.NonnegativeCone,MOI.NonpositiveCone,F,G}
+    constraint::CI{F,MOI.NonpositiveCone}
 end
 
 function concrete_bridge_type(
@@ -163,20 +163,20 @@ end
         T,
         F<:MOI.AbstractVectorFunction,
         G<:MOI.AbstractVectorFunction,
-    } <: FlipSignBridge{T, MOI.Nonpositives, MOI.NonnegativeCone, F, G}
+    } <: FlipSignBridge{T, MOI.NonpositiveCone, MOI.NonnegativeCone, F, G}
 
-Transforms a `G`-in-`Nonpositives` constraint into a `F`-in-`NonnegativeCone`
+Transforms a `G`-in-`NonpositiveCone` constraint into a `F`-in-`NonnegativeCone`
 constraint.
 """
 mutable struct NonposToNonnegBridge{
     T,
     F<:MOI.AbstractVectorFunction,
     G<:MOI.AbstractVectorFunction,
-} <: FlipSignBridge{T,MOI.Nonpositives,MOI.NonnegativeCone,F,G}
+} <: FlipSignBridge{T,MOI.NonpositiveCone,MOI.NonnegativeCone,F,G}
     constraint::CI{F,MOI.NonnegativeCone}
 end
 
-function MOIB.map_set(::Type{<:NonposToNonnegBridge}, set::MOI.Nonpositives)
+function MOIB.map_set(::Type{<:NonposToNonnegBridge}, set::MOI.NonpositiveCone)
     return MOI.NonnegativeCone(set.dimension)
 end
 
@@ -184,13 +184,13 @@ function MOIB.inverse_map_set(
     ::Type{<:NonposToNonnegBridge},
     set::MOI.NonnegativeCone,
 )
-    return MOI.Nonpositives(set.dimension)
+    return MOI.NonpositiveCone(set.dimension)
 end
 
 function concrete_bridge_type(
     ::Type{<:NonposToNonnegBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
-    ::Type{MOI.Nonpositives},
+    ::Type{MOI.NonpositiveCone},
 ) where {T}
     F = MOIU.promote_operation(-, T, G)
     return NonposToNonnegBridge{T,F,G}

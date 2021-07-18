@@ -133,7 +133,7 @@ MOIU.@model(
     (
         MOI.Zeros,
         MOI.NonnegativeCone,
-        MOI.Nonpositives,
+        MOI.NonpositiveCone,
         MOI.NormInfinityCone,
         MOI.NormOneCone,
         MOI.SecondOrderCone,

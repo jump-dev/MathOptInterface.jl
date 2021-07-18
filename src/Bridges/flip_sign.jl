@@ -2,10 +2,10 @@ const _NonnegToNonposMap{T} =
     Union{Variable.NonposToNonnegBridge{T},Constraint.NonnegToNonposBridge{T}}
 
 function map_set(::Type{<:_NonnegToNonposMap}, set::MOI.NonnegativeCone)
-    return MOI.Nonpositives(set.dimension)
+    return MOI.NonpositiveCone(set.dimension)
 end
 
-function inverse_map_set(::Type{<:_NonnegToNonposMap}, set::MOI.Nonpositives)
+function inverse_map_set(::Type{<:_NonnegToNonposMap}, set::MOI.NonpositiveCone)
     return MOI.NonnegativeCone(set.dimension)
 end
 

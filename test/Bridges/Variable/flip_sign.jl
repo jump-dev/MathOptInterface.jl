@@ -89,7 +89,7 @@ config = MOIT.Config()
             bridged_mock,
             MOI.ListOfConstraintIndices{
                 MathOptInterface.VectorOfVariables,
-                MathOptInterface.Nonpositives,
+                MathOptInterface.NonpositiveCone,
             }(),
         )[1]
         MOI.set(bridged_mock, MOI.ConstraintName(), con_v, "cv")
@@ -116,7 +116,7 @@ config = MOIT.Config()
         @testset "Test Bridged model" begin
             s = """
             variables: x, z, w, v
-            cv: [v] in MathOptInterface.Nonpositives(1)
+            cv: [v] in MathOptInterface.NonpositiveCone(1)
             cw: [w] in MathOptInterface.Zeros(1)
             cz: [z] in MathOptInterface.NonnegativeCone(1)
             cex: [1*x + -1*w + 4.0, 1*v + 3.0, 1*x + 1*z + -12.0] in MathOptInterface.Zeros(3)
@@ -154,7 +154,7 @@ config = MOIT.Config()
         _test_delete_bridged_variable(
             bridged_mock,
             vis[1],
-            MOI.Nonpositives,
+            MOI.NonpositiveCone,
             1,
             ((MOI.VectorOfVariables, MOI.NonnegativeCone, 0),),
         )
@@ -163,11 +163,11 @@ config = MOIT.Config()
     @testset "Delete in vector" begin
         MOI.empty!(bridged_mock)
         vis, ci =
-            MOI.add_constrained_variables(bridged_mock, MOI.Nonpositives(4))
+            MOI.add_constrained_variables(bridged_mock, MOI.NonpositiveCone(4))
         _test_delete_bridged_variable(
             bridged_mock,
             vis[2],
-            MOI.Nonpositives,
+            MOI.NonpositiveCone,
             4,
             ((MOI.VectorOfVariables, MOI.NonnegativeCone, 0),),
             used_bridges = 0,

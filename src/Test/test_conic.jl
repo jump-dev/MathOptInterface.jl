@@ -237,7 +237,7 @@ function _test_conic_linear_helper_2(
         )
         @requires MOI.supports_add_constrained_variables(
             model,
-            MOI.Nonpositives,
+            MOI.NonpositiveCone,
         )
         @requires MOI.supports_constraint(
             model,
@@ -253,7 +253,7 @@ function _test_conic_linear_helper_2(
         @requires MOI.supports_constraint(
             model,
             MOI.VectorAffineFunction{Float64},
-            MOI.Nonpositives,
+            MOI.NonpositiveCone,
         )
     end
     @requires MOI.supports_constraint(
@@ -264,12 +264,12 @@ function _test_conic_linear_helper_2(
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
     if use_VectorOfVariables
-        ys, vc = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+        ys, vc = MOI.add_constrained_variables(model, MOI.NonpositiveCone(1))
         y = ys[1]
     else
         y = MOI.add_variable(model)
         func = MOI.VectorAffineFunction{Float64}(MOI.VectorOfVariables([y]))
-        vc = MOI.add_constraint(model, func, MOI.Nonpositives(1))
+        vc = MOI.add_constraint(model, func, MOI.NonpositiveCone(1))
     end
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
     z, s = MOI.add_variables(model, 2)
@@ -333,7 +333,7 @@ function _test_conic_linear_helper_2(
             MOI.NumberOfConstraints{
                 use_VectorOfVariables ? MOI.VectorOfVariables :
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonpositives,
+                MOI.NonpositiveCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -447,7 +447,7 @@ function setup_test(
             mock,
             [-4, -3, 16, 0],
             (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) => [[0]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[0]],
+            (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) => [[0]],
             (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
                 [[7, 2, -4], [7]],
         ),
@@ -477,7 +477,7 @@ function test_conic_linear_INFEASIBLE(model::MOI.ModelLike, config::Config)
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonpositives,
+        MOI.NonpositiveCone,
     )
     @requires MOI.supports_constraint(
         model,
@@ -499,7 +499,7 @@ function test_conic_linear_INFEASIBLE(model::MOI.ModelLike, config::Config)
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
             [1.0],
         ),
-        MOI.Nonpositives(1),
+        MOI.NonpositiveCone(1),
     )
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
@@ -513,7 +513,7 @@ function test_conic_linear_INFEASIBLE(model::MOI.ModelLike, config::Config)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonpositives,
+                MOI.NonpositiveCone,
             }(),
         ) == 1
     end
@@ -568,9 +568,9 @@ function test_conic_linear_INFEASIBLE_2(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction{Float64},
         MOI.NonnegativeCone,
     )
-    @requires MOI.supports_add_constrained_variables(model, MOI.Nonpositives)
+    @requires MOI.supports_add_constrained_variables(model, MOI.NonpositiveCone)
 
-    xs, cx = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+    xs, cx = MOI.add_constrained_variables(model, MOI.NonpositiveCone(1))
     x = xs[1]
     MOI.add_constraint(
         model,
@@ -590,7 +590,7 @@ function test_conic_linear_INFEASIBLE_2(model::MOI.ModelLike, config::Config)
         ) == 1
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}(),
+            MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.NonpositiveCone}(),
         ) == 1
     end
     if _supports(config, MOI.optimize!)
@@ -869,7 +869,7 @@ function test_conic_NormInfinityCone_INFEASIBLE(
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonpositives,
+        MOI.NonpositiveCone,
     )
     @requires MOI.supports_constraint(
         model,
@@ -892,7 +892,7 @@ function test_conic_NormInfinityCone_INFEASIBLE(
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
             [-1.0],
         ),
-        MOI.Nonpositives(1),
+        MOI.NonpositiveCone(1),
     )
     MOI.add_constraint(
         model,
@@ -914,7 +914,7 @@ function test_conic_NormInfinityCone_INFEASIBLE(
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonpositives,
+                MOI.NonpositiveCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -1296,7 +1296,7 @@ function test_conic_NormOneCone_INFEASIBLE(model::MOI.ModelLike, config::Config)
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonpositives,
+        MOI.NonpositiveCone,
     )
     @requires MOI.supports_constraint(
         model,
@@ -1319,7 +1319,7 @@ function test_conic_NormOneCone_INFEASIBLE(model::MOI.ModelLike, config::Config)
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
             [-1.0],
         ),
-        MOI.Nonpositives(1),
+        MOI.NonpositiveCone(1),
     )
     MOI.add_constraint(
         model,
@@ -1341,7 +1341,7 @@ function test_conic_NormOneCone_INFEASIBLE(model::MOI.ModelLike, config::Config)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonpositives,
+                MOI.NonpositiveCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -1728,7 +1728,7 @@ function _test_conic_SecondOrderCone_helper_2(
         @requires MOI.supports_constraint(
             model,
             MOI.VectorAffineFunction{Float64},
-            MOI.Nonpositives,
+            MOI.NonpositiveCone,
         )
     end
     @requires MOI.supports_constraint(
@@ -1760,7 +1760,7 @@ function _test_conic_SecondOrderCone_helper_2(
                 [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(-1.0, y))],
                 [1 / √2],
             ),
-            MOI.Nonpositives(1),
+            MOI.NonpositiveCone(1),
         )
     end
     ceq = MOI.add_constraint(
@@ -1787,7 +1787,7 @@ function _test_conic_SecondOrderCone_helper_2(
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                nonneg ? MOI.NonnegativeCone : MOI.Nonpositives,
+                nonneg ? MOI.NonnegativeCone : MOI.NonpositiveCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -1885,7 +1885,7 @@ end
         config::Config,
     )
 
-Test a SecondOrderCone with Nonpositives constraints.
+Test a SecondOrderCone with NonpositiveCone constraints.
 """
 function test_conic_SecondOrderCone_Nonpositives(
     model::MOI.ModelLike,
@@ -1908,7 +1908,7 @@ function setup_test(
             (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
                 [[√2, 1, -1]],
             (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[√2]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) =>
                 [[-1.0]],
         ),
     )
@@ -1954,7 +1954,7 @@ function test_conic_SecondOrderCone_INFEASIBLE(
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonpositives,
+        MOI.NonpositiveCone,
     )
     @requires MOI.supports_constraint(
         model,
@@ -1977,7 +1977,7 @@ function test_conic_SecondOrderCone_INFEASIBLE(
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
             [-1.0],
         ),
-        MOI.Nonpositives(1),
+        MOI.NonpositiveCone(1),
     )
     MOI.add_constraint(
         model,
@@ -1999,7 +1999,7 @@ function test_conic_SecondOrderCone_INFEASIBLE(
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonpositives,
+                MOI.NonpositiveCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -5521,7 +5521,7 @@ function test_conic_PositiveSemidefiniteConeTriangle(
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonpositives,
+        MOI.NonpositiveCone,
     )
     @requires MOI.supports_constraint(
         model,
@@ -5548,7 +5548,7 @@ function test_conic_PositiveSemidefiniteConeTriangle(
             MOI.VectorAffineTerm.(1:6, MOI.ScalarAffineTerm.(-1.0, x[1:6])),
             zeros(6),
         ),
-        MOI.Nonpositives(6),
+        MOI.NonpositiveCone(6),
     )
     α = 0.8
     δ = 0.9
@@ -5605,7 +5605,7 @@ function test_conic_PositiveSemidefiniteConeTriangle(
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonpositives,
+                MOI.NonpositiveCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -5686,7 +5686,7 @@ function setup_test(
             [2η / 3, 0, η / 3, 0, 0, 0, η * δ * (1 - 1 / √3) / 2],
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
                 [δ * (1 - 1 / √3) / 2],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[
+            (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) => [[
                 0,
                 -α / √3 + δ / (2 * √6) * (2 * √2 - 1),
                 0,

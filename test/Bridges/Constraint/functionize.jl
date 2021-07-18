@@ -146,11 +146,11 @@ end
         config,
         include = [
             (F, S) for F in [MOI.VectorOfVariables],
-            S in [MOI.NonnegativeCone, MOI.Nonpositives]
+            S in [MOI.NonnegativeCone, MOI.NonpositiveCone]
         ],
     )
 
-    for T in [Int, Float64], S in [MOI.NonnegativeCone, MOI.Nonpositives]
+    for T in [Int, Float64], S in [MOI.NonnegativeCone, MOI.NonpositiveCone]
         @test MOIB.added_constraint_types(
             MOIB.Constraint.VectorFunctionizeBridge{T,S},
         ) == [(MOI.VectorAffineFunction{T}, S)]

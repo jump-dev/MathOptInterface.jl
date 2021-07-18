@@ -31,7 +31,7 @@ end
 _cone_string(::Any, ::Type{MOI.Zeros}) = "L="
 _cone_string(::Any, ::Type{MOI.Reals}) = "F"
 _cone_string(::Any, ::Type{MOI.NonnegativeCone}) = "L+"
-_cone_string(::Any, ::Type{MOI.Nonpositives}) = "L-"
+_cone_string(::Any, ::Type{MOI.NonpositiveCone}) = "L-"
 _cone_string(::Any, ::Type{MOI.SecondOrderCone}) = "Q"
 _cone_string(::Any, ::Type{MOI.RotatedSecondOrderCone}) = "QR"
 _cone_string(::Any, ::Type{MOI.ExponentialCone}) = "EXP"
@@ -183,7 +183,7 @@ function _CBFDataStructure(model::Model)
         MOI.Zeros,
         MOI.Reals,
         MOI.NonnegativeCone,
-        MOI.Nonpositives,
+        MOI.NonpositiveCone,
         MOI.SecondOrderCone,
         MOI.RotatedSecondOrderCone,
         MOI.ExponentialCone,

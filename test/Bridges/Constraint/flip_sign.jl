@@ -183,14 +183,14 @@ end
         bridged_mock,
         ci,
         2,
-        ((MOI.VectorAffineFunction{Float64}, MOI.Nonpositives, 1),),
+        ((MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone, 1),),
     )
 
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1.0, 0.0, 2.0],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) =>
                 [[0.0, -2.0, 0.0]],
             (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
                 [[-3.0, -1.0]],
@@ -224,7 +224,7 @@ end
         bridged_mock,
         ci,
         2,
-        ((MOI.VectorAffineFunction{Float64}, MOI.Nonpositives, 0),),
+        ((MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone, 0),),
     )
 end
 
@@ -239,7 +239,7 @@ end
                 MOI.VectorOfVariables,
                 MOI.VectorAffineFunction{Float64},
                 MOI.VectorQuadraticFunction{Float64},
-            ] for S in [MOI.Nonpositives]
+            ] for S in [MOI.NonpositiveCone]
         ],
     )
 
@@ -284,7 +284,7 @@ end
             bridged_mock,
             MOI.ListOfConstraintIndices{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonpositives,
+                MOI.NonpositiveCone,
             }(),
         ),
     )

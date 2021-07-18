@@ -18,7 +18,7 @@ function _precompile_()
     )
     vector_sets = (
         MOI.NonnegativeCone,
-        MOI.Nonpositives,
+        MOI.NonpositiveCone,
         MOI.Zeros,
         MOI.Reals,
         MOI.SecondOrderCone,

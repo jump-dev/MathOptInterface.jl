@@ -109,7 +109,7 @@ nonpositive) real numbers.
 | ``x_i = \beta``               | `SingleVariable`             | `EqualTo`         |
 | ``\alpha \le x_i \le \beta``  | `SingleVariable`             | `Interval`        |
 | ``Ax + b \in \mathbb{R}_+^n`` | `VectorAffineFunction`       | `NonnegativeCone` |
-| ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositives`    |
+| ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `NonpositiveCone` |
 | ``Ax + b = 0``                | `VectorAffineFunction`       | `Zeros`           |
 
 By convention, solvers are not expected to support nonzero constant terms in the

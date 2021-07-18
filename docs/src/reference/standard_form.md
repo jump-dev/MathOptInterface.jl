@@ -76,7 +76,7 @@ List of recognized vector sets.
 Reals
 Zeros
 NonnegativeCone
-Nonpositives
+NonpositiveCone
 NormInfinityCone
 NormOneCone
 SecondOrderCone

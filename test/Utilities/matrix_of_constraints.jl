@@ -265,8 +265,8 @@ function test_contlinear(Indexing)
 end
 
 MOIU.@product_of_sets(Nonneg, MOI.NonnegativeCone)
-MOIU.@product_of_sets(NonposNonneg, MOI.Nonpositives, MOI.NonnegativeCone)
-MOIU.@product_of_sets(NonnegNonpos, MOI.NonnegativeCone, MOI.Nonpositives)
+MOIU.@product_of_sets(NonposNonneg, MOI.NonpositiveCone, MOI.NonnegativeCone)
+MOIU.@product_of_sets(NonnegNonpos, MOI.NonnegativeCone, MOI.NonpositiveCone)
 
 function test_contconic()
     test_contconic(MOIU.OneBasedIndexing)
@@ -326,7 +326,7 @@ function test_contconic(Indexing)
     ) do optimizer
         return _lin3_query(
             optimizer,
-            [(F, MOI.NonnegativeCone), (F, MOI.Nonpositives)],
+            [(F, MOI.NonnegativeCone), (F, MOI.NonpositiveCone)],
         )
     end
     b = [1.0, -1.0]
@@ -341,7 +341,7 @@ function test_contconic(Indexing)
     ) do optimizer
         return _lin3_query(
             optimizer,
-            [(F, MOI.Nonpositives), (F, MOI.NonnegativeCone)],
+            [(F, MOI.NonpositiveCone), (F, MOI.NonnegativeCone)],
         )
     end
     # Here, we test that it works of some constraints are bridged but not all.
@@ -400,7 +400,7 @@ function test_nametest()
             VoVorSAff{T}{
                 MOIU.VectorOfConstraints{
                     MOI.VectorOfVariables,
-                    MOI.Nonpositives,
+                    MOI.NonpositiveCone,
                 },
                 MOIU.MatrixOfConstraints{
                     T,
@@ -529,7 +529,7 @@ end
 MOIU.@struct_of_constraints_by_set_types(
     ZerosOrNot,
     MOI.Zeros,
-    Union{MOI.NonnegativeCone,MOI.Nonpositives},
+    Union{MOI.NonnegativeCone,MOI.NonpositiveCone},
 )
 
 function test_multicone()
@@ -566,7 +566,7 @@ function test_multicone()
     MOI.add_constraint(
         model,
         MOIU.vectorize([T(6), T(7) * fx, T(4)]),
-        MOI.Nonpositives(1),
+        MOI.NonpositiveCone(1),
     )
     MOIU.final_touch(model, nothing)
     _test_matrix_equal(

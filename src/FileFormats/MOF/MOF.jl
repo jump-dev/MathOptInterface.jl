@@ -39,7 +39,7 @@ MOI.Utilities.@model(
         MOI.Reals,
         MOI.Zeros,
         MOI.NonnegativeCone,
-        MOI.Nonpositives,
+        MOI.NonpositiveCone,
         MOI.SecondOrderCone,
         MOI.RotatedSecondOrderCone,
         MOI.GeometricMeanCone,

@@ -36,7 +36,7 @@ bridged_mock = MOIB.Variable.Free{Float64}(mock)
             mock,
             MOI.ListOfConstraintIndices{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonpositives,
+                MOI.NonpositiveCone,
             }(),
         ),
         ["c"],
@@ -65,7 +65,7 @@ bridged_mock = MOIB.Variable.Free{Float64}(mock)
         s = """
         variables: xpos, xneg
         nonneg: [xpos, xneg] in MathOptInterface.NonnegativeCone(2)
-        c: [4.0xpos + -4.0xneg + -1.0, 3.0xpos + -3.0xneg + -1.0] in MathOptInterface.Nonpositives(2)
+        c: [4.0xpos + -4.0xneg + -1.0, 3.0xpos + -3.0xneg + -1.0] in MathOptInterface.NonpositiveCone(2)
         maxobjective: xpos + -1.0xneg
         """
         model = MOIU.Model{Float64}()
@@ -75,7 +75,7 @@ bridged_mock = MOIB.Variable.Free{Float64}(mock)
     @testset "Bridged model" begin
         s = """
         variables: x
-        c: [4.0x + -1.0, 3.0x + -1.0] in MathOptInterface.Nonpositives(2)
+        c: [4.0x + -1.0, 3.0x + -1.0] in MathOptInterface.NonpositiveCone(2)
         maxobjective: 1.0x
         """
         model = MOIU.Model{Float64}()
@@ -124,7 +124,7 @@ end
         2,
         (
             (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
-            (MOI.VectorOfVariables, MOI.Nonpositives, 0),
+            (MOI.VectorOfVariables, MOI.NonpositiveCone, 0),
         ),
     )
     _test_delete_bridged_variable(
@@ -134,7 +134,7 @@ end
         1,
         (
             (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
-            (MOI.VectorOfVariables, MOI.Nonpositives, 0),
+            (MOI.VectorOfVariables, MOI.NonpositiveCone, 0),
         ),
     )
 end
@@ -152,7 +152,7 @@ end
                 [100, 0, 0, 100],
                 (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                     [[1.0]],
-                (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) =>
+                (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) =>
                     [[-1.0]],
             ),
         )
@@ -277,7 +277,7 @@ end
         2,
         (
             (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
-            (MOI.VectorOfVariables, MOI.Nonpositives, 0),
+            (MOI.VectorOfVariables, MOI.NonpositiveCone, 0),
         ),
         used_bridges = 0,
         used_constraints = 0,
@@ -289,7 +289,7 @@ end
         1,
         (
             (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
-            (MOI.VectorOfVariables, MOI.Nonpositives, 0),
+            (MOI.VectorOfVariables, MOI.NonpositiveCone, 0),
         ),
     )
 end

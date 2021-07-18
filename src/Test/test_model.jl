@@ -294,7 +294,7 @@ function test_model_Name_VariableName_ConstraintName(
     @test MOI.get(model, MOI.VariableName(), v[1]) == ""
     x, cx = MOI.add_constrained_variable(model, MOI.GreaterThan(0.0))
     @test MOI.get(model, MOI.VariableName(), x) == ""
-    y, cy = MOI.add_constrained_variables(model, MOI.Nonpositives(4))
+    y, cy = MOI.add_constrained_variables(model, MOI.NonpositiveCone(4))
     for yi in y
         @test MOI.get(model, MOI.VariableName(), yi) == ""
     end
@@ -880,7 +880,7 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
     x = MOI.add_variable(model)
     cx = MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
     y = MOI.add_variables(model, 4)
-    cy = MOI.add_constraint(model, y, MOI.Nonpositives(4))
+    cy = MOI.add_constraint(model, y, MOI.NonpositiveCone(4))
     @test MOI.is_valid(model, x)
     @test MOI.is_valid(model, y[1])
     @test MOI.is_valid(model, y[2])
@@ -892,10 +892,10 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
     @test MOI.get(model, MOI.ConstraintSet(), cx) == MOI.GreaterThan(0.0)
     @test MOI.get(model, MOI.ConstraintFunction(), cy) ==
           MOI.VectorOfVariables(y)
-    @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(4)
+    @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.NonpositiveCone(4)
     @test Set(MOI.get(model, MOI.ListOfConstraintTypesPresent())) == Set([
         (MOI.SingleVariable, MOI.GreaterThan{Float64}),
-        (MOI.VectorOfVariables, MOI.Nonpositives),
+        (MOI.VectorOfVariables, MOI.NonpositiveCone),
     ])
     @test MOI.get(
         model,
@@ -906,7 +906,7 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
     ) == [cx]
     @test MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonpositives}(),
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.NonpositiveCone}(),
     ) == [cy]
     MOI.delete(model, y[3])
     @test MOI.is_valid(model, x)
@@ -920,10 +920,10 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
     @test MOI.get(model, MOI.ConstraintSet(), cx) == MOI.GreaterThan(0.0)
     @test MOI.get(model, MOI.ConstraintFunction(), cy) ==
           MOI.VectorOfVariables(y[[1, 2, 4]])
-    @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(3)
+    @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.NonpositiveCone(3)
     @test Set(MOI.get(model, MOI.ListOfConstraintTypesPresent())) == Set([
         (MOI.SingleVariable, MOI.GreaterThan{Float64}),
-        (MOI.VectorOfVariables, MOI.Nonpositives),
+        (MOI.VectorOfVariables, MOI.NonpositiveCone),
     ])
     @test MOI.get(
         model,
@@ -934,7 +934,7 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
     ) == [cx]
     @test MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonpositives}(),
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.NonpositiveCone}(),
     ) == [cy]
     MOI.delete(model, y[1])
     @test MOI.is_valid(model, x)
@@ -948,10 +948,10 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
     @test MOI.get(model, MOI.ConstraintSet(), cx) == MOI.GreaterThan(0.0)
     @test MOI.get(model, MOI.ConstraintFunction(), cy) ==
           MOI.VectorOfVariables(y[[2, 4]])
-    @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(2)
+    @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.NonpositiveCone(2)
     @test Set(MOI.get(model, MOI.ListOfConstraintTypesPresent())) == Set([
         (MOI.SingleVariable, MOI.GreaterThan{Float64}),
-        (MOI.VectorOfVariables, MOI.Nonpositives),
+        (MOI.VectorOfVariables, MOI.NonpositiveCone),
     ])
     @test MOI.get(
         model,
@@ -962,7 +962,7 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
     ) == [cx]
     @test MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonpositives}(),
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.NonpositiveCone}(),
     ) == [cy]
     MOI.delete(model, x)
     @test !MOI.is_valid(model, x)
@@ -974,9 +974,9 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
     @test MOI.is_valid(model, cy)
     @test MOI.get(model, MOI.ConstraintFunction(), cy) ==
           MOI.VectorOfVariables(y[[2, 4]])
-    @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(2)
+    @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.NonpositiveCone(2)
     @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) ==
-          [(MOI.VectorOfVariables, MOI.Nonpositives)]
+          [(MOI.VectorOfVariables, MOI.NonpositiveCone)]
     @test isempty(
         MOI.get(
             model,
@@ -988,7 +988,7 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
     )
     @test MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonpositives}(),
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.NonpositiveCone}(),
     ) == [cy]
     MOI.delete(model, y[[2, 4]])
     @test !MOI.is_valid(model, x)
@@ -1013,7 +1013,7 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
             model,
             MOI.ListOfConstraintIndices{
                 MOI.VectorOfVariables,
-                MOI.Nonpositives,
+                MOI.NonpositiveCone,
             }(),
         ),
     )

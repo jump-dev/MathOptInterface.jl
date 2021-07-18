@@ -119,7 +119,7 @@ function test_sets_DimensionMismatch()
         (MOI.Reals, 0),
         (MOI.Zeros, 0),
         (MOI.NonnegativeCone, 0),
-        (MOI.Nonpositives, 0),
+        (MOI.NonpositiveCone, 0),
         (MOI.NormInfinityCone, 1),
         (MOI.NormOneCone, 1),
         (MOI.SecondOrderCone, 1),
@@ -163,8 +163,8 @@ function _self_dual_set_test(set)
 end
 
 function test_sets_dual_nonpositives()
-    nonpositives3 = MOI.Nonpositives(3)
-    nonpositives4 = MOI.Nonpositives(4)
+    nonpositives3 = MOI.NonpositiveCone(3)
+    nonpositives4 = MOI.NonpositiveCone(4)
     _self_dual_set_test(nonpositives3)
     @test MOI.dual_set(nonpositives3) != nonpositives4
     _self_dual_set_test(nonpositives4)

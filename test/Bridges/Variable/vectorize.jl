@@ -134,7 +134,7 @@ end
 
     @testset "get `UnknownVariableAttribute``" begin
         err = ArgumentError(
-            "Variable bridge of type `$(MathOptInterface.Bridges.Variable.VectorizeBridge{Float64,MathOptInterface.Nonpositives})`" *
+            "Variable bridge of type `$(MathOptInterface.Bridges.Variable.VectorizeBridge{Float64,MathOptInterface.NonpositiveCone})`" *
             " does not support accessing the attribute `MathOptInterface.DeprecatedTest.UnknownVariableAttribute()`.",
         )
         @test_throws err MOI.get(
@@ -188,14 +188,14 @@ end
                 mock,
                 MOI.ListOfConstraintIndices{
                     MOI.VectorOfVariables,
-                    MOI.Nonpositives,
+                    MOI.NonpositiveCone,
                 }(),
             ),
             ["zc"],
         )
         s = """
         variables: x, z
-        zc: [z] in MathOptInterface.Nonpositives(1)
+        zc: [z] in MathOptInterface.NonpositiveCone(1)
         xc: 2.0x <= 4.0
         ec: [x, 1.0, z + 5.0] in MathOptInterface.ExponentialCone()
         """
@@ -241,6 +241,6 @@ end
         y,
         MOI.LessThan{Float64},
         2,
-        ((MOI.VectorOfVariables, MOI.Nonpositives, 0),),
+        ((MOI.VectorOfVariables, MOI.NonpositiveCone, 0),),
     )
 end

@@ -306,7 +306,7 @@ modificationtests["solve_func_vectoraffine_nonneg"] =
 """
     solve_const_vectoraffine_nonpos(model::MOI.ModelLike, config::Config)
 
-Test modifying the constant term in a VectorAffineFunction-in-Nonpositives
+Test modifying the constant term in a VectorAffineFunction-in-NonpositiveCone
 constraint. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
@@ -330,7 +330,7 @@ function solve_const_vectoraffine_nonpos(model::MOI.ModelLike, config::Config)
             ],
             [0.0, 0.0],
         ),
-        MOI.Nonpositives(2),
+        MOI.NonpositiveCone(2),
     )
     test_model_solution(
         model,
@@ -355,7 +355,7 @@ modificationtests["solve_const_vectoraffine_nonpos"] =
     solve_multirow_vectoraffine_nonpos(model::MOI.ModelLike, config::Config)
 
 Test modifying the variable coefficients in a
-VectorAffineFunction-in-Nonpositives constraint. If `config.solve=true` confirm
+VectorAffineFunction-in-NonpositiveCone constraint. If `config.solve=true` confirm
 that it solves correctly.
 """
 function solve_multirow_vectoraffine_nonpos(
@@ -380,7 +380,7 @@ function solve_multirow_vectoraffine_nonpos(
             ],
             [-1.0, -1.0],
         ),
-        MOI.Nonpositives(2),
+        MOI.NonpositiveCone(2),
     )
     test_model_solution(
         model,

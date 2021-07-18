@@ -22,7 +22,7 @@ config = MOIT.Config()
                 MOI.VectorOfVariables,
                 MOI.VectorAffineFunction{Float64},
                 MOI.VectorQuadraticFunction{Float64},
-            ] for S in [MOI.NonnegativeCone, MOI.Nonpositives, MOI.Zeros]
+            ] for S in [MOI.NonnegativeCone, MOI.NonpositiveCone, MOI.Zeros]
         ],
     )
 
@@ -171,7 +171,7 @@ config = MOIT.Config()
     MOIT.solve_func_vectoraffine_nonneg(bridged_mock, config)
 
     # VectorOfVariables-in-NonnegativeCone
-    # VectorOfVariables-in-Nonpositives
+    # VectorOfVariables-in-NonpositiveCone
     # VectorOfVariables-in-Zeros
     # VectorAffineFunction-in-Zeros
     mock.optimize! =
@@ -184,7 +184,7 @@ config = MOIT.Config()
     MOIT.lin2vtest(bridged_mock, config)
 
     # VectorAffineFunction-in-NonnegativeCone
-    # VectorAffineFunction-in-Nonpositives
+    # VectorAffineFunction-in-NonpositiveCone
     # VectorAffineFunction-in-Zeros
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
