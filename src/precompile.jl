@@ -54,7 +54,7 @@ function precompile_variables(model)
     )
     Base.precompile(get, (model, VariablePrimal, VariableIndex))
     Base.precompile(get, (model, VariablePrimal, Vector{VariableIndex}))
-    return Base.precompile(add_constrained_variables, (model, Reals))
+    return Base.precompile(add_constrained_variables, (model, RealCone))
 end
 
 function precompile_model(model, constraints)
@@ -82,5 +82,5 @@ function precompile_model(model, constraints)
     for (F, S) in constraints
         precompile_constraint(model, F, S)
     end
-    return Base.precompile(Tuple{typeof(add_constrained_variables),model,Reals})
+    return Base.precompile(Tuple{typeof(add_constrained_variables),model,RealCone})
 end

@@ -1,7 +1,7 @@
 """
     FreeBridge{T} <: Bridges.Variable.AbstractBridge
 
-Transforms constrained variables in [`MOI.Reals`](@ref) to the difference of
+Transforms constrained variables in [`MOI.RealCone`](@ref) to the difference of
 constrained variables in [`MOI.NonnegativeCone`](@ref).
 """
 struct FreeBridge{T} <: AbstractBridge
@@ -12,7 +12,7 @@ end
 function bridge_constrained_variable(
     ::Type{FreeBridge{T}},
     model::MOI.ModelLike,
-    set::MOI.Reals,
+    set::MOI.RealCone,
 ) where {T}
     variables, constraint = MOI.add_constrained_variables(
         model,
@@ -21,7 +21,7 @@ function bridge_constrained_variable(
     return FreeBridge{T}(variables, constraint)
 end
 
-function supports_constrained_variable(::Type{<:FreeBridge}, ::Type{MOI.Reals})
+function supports_constrained_variable(::Type{<:FreeBridge}, ::Type{MOI.RealCone})
     return true
 end
 

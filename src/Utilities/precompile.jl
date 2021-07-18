@@ -20,7 +20,7 @@ function _precompile_()
         MOI.NonnegativeCone,
         MOI.NonpositiveCone,
         MOI.ZeroCone,
-        MOI.Reals,
+        MOI.RealCone,
         MOI.SecondOrderCone,
         MOI.RotatedSecondOrderCone,
         MOI.PositiveSemidefiniteConeSquare,

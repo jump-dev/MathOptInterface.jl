@@ -628,11 +628,11 @@
                 }
             }, {
                 "description": "R^{dimension}",
-                "examples": ["{\"type\": \"Reals\", \"dimension\": 3}"],
+                "examples": ["{\"type\": \"RealCone\", \"dimension\": 3}"],
                 "required": ["dimension"],
                 "properties": {
                     "type": {
-                        "const": "Reals"
+                        "const": "RealCone"
                     },
                     "dimension": {
                         "type": "integer",

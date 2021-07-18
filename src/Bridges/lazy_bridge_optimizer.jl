@@ -189,10 +189,10 @@ function node(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     variable_node = add_variable_node(b.graph)
     b.variable_node[(S,)] = variable_node
     push!(b.variable_types, (S,))
-    if is_bridged(b, MOI.Reals)
+    if is_bridged(b, MOI.RealCone)
         FF = functionized_type(b, F)
         if FF !== nothing
-            # We assume the distance of the variable node `MOI.Reals` is `1`,
+            # We assume the distance of the variable node `MOI.RealCone` is `1`,
             # i.e. it is bridged by `Variable.FreeBridge` and then
             # the distance of `MOI.NonnegativeCone` is zero.
             # We also use the functionize bridge which has cost 1.

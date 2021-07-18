@@ -20,7 +20,7 @@ end
 end
 
 struct NoFreeModel <: MOI.ModelLike end
-MOI.supports_add_constrained_variables(::NoFreeModel, ::Type{MOI.Reals}) = false
+MOI.supports_add_constrained_variables(::NoFreeModel, ::Type{MOI.RealCone}) = false
 
 @testset "supports_add_constrained_variable" begin
     optimizer = MOIU.MockOptimizer(MOIU.Model{Float64}())
@@ -47,7 +47,7 @@ MOI.supports_add_constrained_variables(::NoFreeModel, ::Type{MOI.Reals}) = false
         nofree_optimizer,
         MOI.NonnegativeCone,
     )
-    @test !MOI.supports_add_constrained_variables(nofree_optimizer, MOI.Reals)
+    @test !MOI.supports_add_constrained_variables(nofree_optimizer, MOI.RealCone)
 end
 
 @testset "Optimizer attributes" begin

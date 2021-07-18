@@ -102,7 +102,7 @@ end
 
     loc = MOI.get(bridged_mock, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
-    @test !((MOI.VectorOfVariables, MOI.Reals) in loc)
+    @test !((MOI.VectorOfVariables, MOI.RealCone) in loc)
     @test (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) in loc
     @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in loc
     @test MOI.get(mock, MOI.NumberOfVariables()) == 4
@@ -110,17 +110,17 @@ end
     vis = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
     @test vis == MOI.VariableIndex.([-1, -2])
 
-    cx = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Reals}(vis[1].value)
+    cx = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.RealCone}(vis[1].value)
     @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), cx) == [100.0]
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), cx) == [0.0]
-    cy = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Reals}(vis[2].value)
+    cy = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.RealCone}(vis[2].value)
     @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), cy) == [-100.0]
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), cy) == [0.0]
 
     _test_delete_bridged_variable(
         bridged_mock,
         vis[1],
-        MOI.Reals,
+        MOI.RealCone,
         2,
         (
             (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
@@ -130,7 +130,7 @@ end
     _test_delete_bridged_variable(
         bridged_mock,
         vis[2],
-        MOI.Reals,
+        MOI.RealCone,
         1,
         (
             (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
@@ -162,10 +162,10 @@ end
 
     x, y = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
 
-    cx = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Reals}(x.value)
+    cx = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.RealCone}(x.value)
     @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), cx) == [100.0]
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), cx) == [0.0]
-    cy = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Reals}(y.value)
+    cy = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.RealCone}(y.value)
     @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), cy) == [-100.0]
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), cy) == [0.0]
 
@@ -273,7 +273,7 @@ end
     _test_delete_bridged_variable(
         bridged_mock,
         vis[1],
-        MOI.Reals,
+        MOI.RealCone,
         2,
         (
             (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
@@ -285,7 +285,7 @@ end
     _test_delete_bridged_variable(
         bridged_mock,
         vis[2],
-        MOI.Reals,
+        MOI.RealCone,
         1,
         (
             (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),

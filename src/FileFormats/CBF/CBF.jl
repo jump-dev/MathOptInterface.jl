@@ -10,7 +10,7 @@ MOI.Utilities.@model(
     (MOI.Integer,),
     (),
     (
-        MOI.Reals,
+        MOI.RealCone,
         MOI.ZeroCone,
         MOI.NonnegativeCone,
         MOI.NonpositiveCone,

@@ -48,7 +48,7 @@ to belong to a set of type `S` either on creation of the variable with
 [`add_constraint`](@ref).
 
 By default, this function falls back to
-`supports_add_constrained_variables(model, Reals) &&
+`supports_add_constrained_variables(model, RealCone) &&
 supports_constraint(model, MOI.SingleVariable, S)` which is the correct
 definition for most models.
 
@@ -68,7 +68,7 @@ function supports_add_constrained_variable(
     model::ModelLike,
     S::Type{<:AbstractScalarSet},
 )
-    return supports_add_constrained_variables(model, Reals) &&
+    return supports_add_constrained_variables(model, RealCone) &&
            supports_constraint(model, SingleVariable, S)
 end
 
@@ -104,8 +104,8 @@ variables to belong to a set of type `S` either on creation of the vector of
 variables with [`add_constrained_variables`](@ref) or after the variable is
 created with [`add_constraint`](@ref).
 
-By default, if `S` is `Reals` then this function returns `true` and otherwise,
-it falls back to `supports_add_constrained_variables(model, Reals) &&
+By default, if `S` is `RealCone` then this function returns `true` and otherwise,
+it falls back to `supports_add_constrained_variables(model, RealCone) &&
 supports_constraint(model, MOI.VectorOfVariables, S)` which is the correct
 definition for most models.
 
@@ -113,8 +113,8 @@ definition for most models.
 
 In the standard conic form (see [Duality](@ref)), the variables are grouped into
 several cones and the constraints are affine equality constraints.
-If `Reals` is not one of the cones supported by the solvers then it needs
-to implement `supports_add_constrained_variables(::Optimizer, ::Type{Reals}) = false`
+If `RealCone` is not one of the cones supported by the solvers then it needs
+to implement `supports_add_constrained_variables(::Optimizer, ::Type{RealCone}) = false`
 as free variables are not supported.
 The solvers should then implement
 `supports_add_constrained_variables(::Optimizer, ::Type{<:SupportedCones}) = true`
@@ -145,10 +145,10 @@ function supports_add_constrained_variables(
     model::ModelLike,
     S::Type{<:AbstractVectorSet},
 )
-    return supports_add_constrained_variables(model, Reals) &&
+    return supports_add_constrained_variables(model, RealCone) &&
            supports_constraint(model, VectorOfVariables, S)
 end
-supports_add_constrained_variables(::ModelLike, ::Type{Reals}) = true
+supports_add_constrained_variables(::ModelLike, ::Type{RealCone}) = true
 
 """
     add_constrained_variables(

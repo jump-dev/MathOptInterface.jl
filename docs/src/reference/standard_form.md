@@ -73,7 +73,7 @@ Semiinteger
 
 List of recognized vector sets.
 ```@docs
-Reals
+RealCone
 Zeros
 NonnegativeCone
 NonpositiveCone

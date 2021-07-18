@@ -59,7 +59,7 @@ function _cbf_to_moi_cone(
     cone_dim::Int,
 )
     if cone_str == "F"
-        return MOI.Reals(cone_dim)
+        return MOI.RealCone(cone_dim)
     elseif cone_str == "L="
         return MOI.ZeroCone(cone_dim)
     elseif cone_str == "L-"

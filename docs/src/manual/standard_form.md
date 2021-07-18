@@ -71,7 +71,7 @@ The one-dimensional set types implemented in MathOptInterface.jl are:
 
 The vector-valued set types implemented in MathOptInterface.jl are:
 
-* [`Reals(dimension)`](@ref MathOptInterface.Reals):
+* [`RealCone(dimension)`](@ref MathOptInterface.RealCone):
   ``\mathbb{R}^\mbox{dimension}``
 * [`ZeroCone(dimension)`](@ref MathOptInterface.ZeroCone): ``0^\mbox{dimension}``
 * [`NonnegativeCone(dimension)`](@ref MathOptInterface.NonnegativeCone):

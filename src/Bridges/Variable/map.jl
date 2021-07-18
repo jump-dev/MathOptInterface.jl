@@ -223,7 +223,7 @@ function list_of_constraint_types(map::Map)
     for i in eachindex(map.bridges)
         if map.bridges[i] !== nothing
             S = map.sets[i]
-            if S != MOI.Reals
+            if S != MOI.RealCone
                 F = MOIU.variable_function_type(S)
                 push!(list, (F, S))
             end

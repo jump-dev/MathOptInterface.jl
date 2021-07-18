@@ -288,7 +288,7 @@ end
     Semiinteger,
     Semicontinuous,
     ZeroCone,
-    Reals,
+    RealCone,
     NonnegativeCone,
     NonpositiveCone,
     SecondOrderCone,
@@ -371,8 +371,8 @@ function set_to_moi(::Val{:ZeroCone}, object::Object)
     return MOI.ZeroCone(object["dimension"])
 end
 
-function set_to_moi(::Val{:Reals}, object::Object)
-    return MOI.Reals(object["dimension"])
+function set_to_moi(::Val{:RealCone}, object::Object)
+    return MOI.RealCone(object["dimension"])
 end
 
 function set_to_moi(::Val{:NonnegativeCone}, object::Object)

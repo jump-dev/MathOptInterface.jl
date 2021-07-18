@@ -34,11 +34,11 @@ end
 
 MOIB.supports_constraint_bridges(::SingleBridgeOptimizer) = true
 
-# If `BT` bridges `MOI.Reals` (such as `Constraint.FunctionizeBridge` bridge,
+# If `BT` bridges `MOI.RealCone` (such as `Constraint.FunctionizeBridge` bridge,
 # without this method, it creates a `StackOverflow` with
 # `is_bridged`, `supports_bridging_constrained_variable`
 # and `supports_add_constrained_variables`.
-MOIB.is_bridged(::SingleBridgeOptimizer, ::Type{MOI.Reals}) = false
+MOIB.is_bridged(::SingleBridgeOptimizer, ::Type{MOI.RealCone}) = false
 
 function MOIB.is_bridged(b::SingleBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     return MOIB.supports_bridging_constrained_variable(b, S)
@@ -52,7 +52,7 @@ function MOIB.supports_bridging_constrained_variable(
         b,
         MOIU.variable_function_type(S),
         S,
-    ) && MOI.supports_add_constrained_variables(b, MOI.Reals)
+    ) && MOI.supports_add_constrained_variables(b, MOI.RealCone)
 end
 
 function MOIB.supports_bridging_constraint(

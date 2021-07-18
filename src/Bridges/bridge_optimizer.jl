@@ -1617,8 +1617,8 @@ end
 
 # Variables
 function MOI.add_variable(b::AbstractBridgeOptimizer)
-    if is_bridged(b, MOI.Reals)
-        variables, constraint = MOI.add_constrained_variables(b, MOI.Reals(1))
+    if is_bridged(b, MOI.RealCone)
+        variables, constraint = MOI.add_constrained_variables(b, MOI.RealCone(1))
         @assert isone(length(variables))
         return first(variables)
     else
@@ -1627,8 +1627,8 @@ function MOI.add_variable(b::AbstractBridgeOptimizer)
 end
 
 function MOI.add_variables(b::AbstractBridgeOptimizer, n)
-    if is_bridged(b, MOI.Reals)
-        variables, constraint = MOI.add_constrained_variables(b, MOI.Reals(n))
+    if is_bridged(b, MOI.RealCone)
+        variables, constraint = MOI.add_constrained_variables(b, MOI.RealCone(n))
         return variables
     else
         return MOI.add_variables(b.model, n)
@@ -1638,12 +1638,12 @@ end
 # Split in two to avoid ambiguity
 function MOI.supports_add_constrained_variables(
     b::AbstractBridgeOptimizer,
-    ::Type{MOI.Reals},
+    ::Type{MOI.RealCone},
 )
-    if is_bridged(b, MOI.Reals)
-        return supports_bridging_constrained_variable(b, MOI.Reals)
+    if is_bridged(b, MOI.RealCone)
+        return supports_bridging_constrained_variable(b, MOI.RealCone)
     else
-        return MOI.supports_add_constrained_variables(b.model, MOI.Reals)
+        return MOI.supports_add_constrained_variables(b.model, MOI.RealCone)
     end
 end
 
@@ -1665,7 +1665,7 @@ function MOI.add_constrained_variables(
     if !is_bridged(b, typeof(set))
         return MOI.add_constrained_variables(b.model, set)
     end
-    if set isa MOI.Reals || is_variable_bridged(b, typeof(set))
+    if set isa MOI.RealCone || is_variable_bridged(b, typeof(set))
         BridgeType = Variable.concrete_bridge_type(b, typeof(set))
         return Variable.add_keys_for_bridge(
             Variable.bridges(b),

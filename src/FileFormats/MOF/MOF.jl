@@ -36,7 +36,7 @@ MOI.Utilities.@model(
         MOI.Semiinteger,
     ),
     (
-        MOI.Reals,
+        MOI.RealCone,
         MOI.ZeroCone,
         MOI.NonnegativeCone,
         MOI.NonpositiveCone,

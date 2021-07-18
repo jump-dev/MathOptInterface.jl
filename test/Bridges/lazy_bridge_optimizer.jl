@@ -91,7 +91,7 @@ end
 function MOI.supports_constraint(
     ::StandardLPModel,
     ::Type{MOI.VectorOfVariables},
-    ::Type{MOI.Reals},
+    ::Type{MOI.RealCone},
 )
     return false
 end
@@ -387,7 +387,7 @@ end
 function MOI.supports_constraint(
     ::SDPAModel{T},
     ::Type{MOI.VectorOfVariables},
-    ::Type{MOI.Reals},
+    ::Type{MOI.RealCone},
 ) where {T}
     return false
 end
@@ -403,7 +403,7 @@ function MOI.supports_add_constrained_variables(
 )
     return true
 end
-MOI.supports_add_constrained_variables(::SDPAModel, ::Type{MOI.Reals}) = false
+MOI.supports_add_constrained_variables(::SDPAModel, ::Type{MOI.RealCone}) = false
 function MOI.supports(
     ::SDPAModel{T},
     ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}},
@@ -498,30 +498,30 @@ end
             @test !MOI.supports_constraint(
                 model,
                 MOI.VectorOfVariables,
-                MOI.Reals,
+                MOI.RealCone,
             )
             @test !MOI.supports_constraint(
                 bridged,
                 MOI.VectorOfVariables,
-                MOI.Reals,
+                MOI.RealCone,
             )
-            @test !MOI.supports_add_constrained_variables(bridged, MOI.Reals)
+            @test !MOI.supports_add_constrained_variables(bridged, MOI.RealCone)
             @test_throws MOI.UnsupportedConstraint{
                 MOI.VectorOfVariables,
-                MOI.Reals,
+                MOI.RealCone,
             } MOI.add_variable(bridged)
             @test_throws MOI.UnsupportedConstraint{
                 MOI.VectorOfVariables,
-                MOI.Reals,
+                MOI.RealCone,
             } MOI.add_variables(bridged, 2)
             MOIB.add_bridge(bridged, MOIB.Variable.FreeBridge{T})
             @test !MOI.supports_constraint(
                 bridged,
                 MOI.VectorOfVariables,
-                MOI.Reals,
+                MOI.RealCone,
             )
-            @test MOI.supports_add_constrained_variables(bridged, MOI.Reals)
-            @test MOIB.bridge_type(bridged, MOI.Reals) ==
+            @test MOI.supports_add_constrained_variables(bridged, MOI.RealCone)
+            @test MOIB.bridge_type(bridged, MOI.RealCone) ==
                   MOIB.Variable.FreeBridge{T}
         end
         @testset "Vectorize" begin
@@ -1552,7 +1552,7 @@ MOIU.@model(
         MOI.Semiinteger,
     ),
     (
-        MOI.Reals,
+        MOI.RealCone,
         MOI.ZeroCone,
         MOI.NonnegativeCone,
         MOI.NonpositiveCone,
@@ -1598,7 +1598,7 @@ MOIU.@model(
         MOI.Semiinteger,
     ),
     (
-        MOI.Reals,
+        MOI.RealCone,
         MOI.ZeroCone,
         MOI.NonnegativeCone,
         MOI.NonpositiveCone,

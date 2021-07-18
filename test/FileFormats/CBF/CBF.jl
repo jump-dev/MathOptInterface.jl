@@ -29,7 +29,7 @@ function _set_var_and_con_names(model::MOI.ModelLike)
         push!(single_variable_constraints, (x, MOI.Integer()))
     end
     for S in [
-            MOI.Reals,
+            MOI.RealCone,
             MOI.ZeroCone,
             MOI.NonnegativeCone,
             MOI.NonpositiveCone,
@@ -216,11 +216,11 @@ const _WRITE_READ_MODELS = [
 """,
     ),
     (
-        "VectorOfVariables in Reals",
+        "VectorOfVariables in RealCone",
         """
     variables: x, y
     minobjective: x
-    c1: [x, y] in Reals(2)
+    c1: [x, y] in RealCone(2)
 """,
     ),
     (
@@ -248,11 +248,11 @@ const _WRITE_READ_MODELS = [
 """,
     ),
     (
-        "VectorAffineFunction in Reals",
+        "VectorAffineFunction in RealCone",
         """
     variables: x, y
     minobjective: 1.2x
-    c1: [1x, 2y] in Reals(2)
+    c1: [1x, 2y] in RealCone(2)
 """,
     ),
     (

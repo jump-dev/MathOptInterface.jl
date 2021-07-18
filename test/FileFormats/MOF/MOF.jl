@@ -532,7 +532,7 @@ function test_Reals()
         """
 variables: x, y, z
 minobjective: x
-c1: [x, y, z] in Reals(3)
+c1: [x, y, z] in RealCone(3)
 """,
         ["x", "y", "z"],
         ["c1"],

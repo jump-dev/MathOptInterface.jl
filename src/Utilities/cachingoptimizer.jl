@@ -408,9 +408,9 @@ end
 # Split in two to solve ambiguity
 function MOI.supports_add_constrained_variables(
     m::CachingOptimizer,
-    ::Type{MOI.Reals},
+    ::Type{MOI.RealCone},
 )
-    return _supports_add_constrained_variables(m, MOI.Reals)
+    return _supports_add_constrained_variables(m, MOI.RealCone)
 end
 
 function MOI.supports_add_constrained_variables(

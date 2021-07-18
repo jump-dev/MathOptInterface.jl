@@ -49,7 +49,7 @@ end
 
 function MOI.supports_add_constrained_variables(
     ::NoFreeVariables,
-    ::Type{MOI.Reals},
+    ::Type{MOI.RealCone},
 )
     return false
 end
@@ -639,7 +639,7 @@ function test_nonempty_model()
 end
 
 function _constrained_variables_test(model)
-    @test !MOI.supports_add_constrained_variables(model, MOI.Reals)
+    @test !MOI.supports_add_constrained_variables(model, MOI.RealCone)
     @test MOI.supports_add_constrained_variable(model, MOI.ZeroOne)
     @test !MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
     @test MOI.supports_add_constrained_variables(model, MOI.NonnegativeCone)

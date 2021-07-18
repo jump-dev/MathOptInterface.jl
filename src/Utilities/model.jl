@@ -1048,7 +1048,7 @@ const LessThanIndicatorSetZero{T} =
         MOI.Semiinteger,
     ),
     (
-        MOI.Reals,
+        MOI.RealCone,
         MOI.ZeroCone,
         MOI.NonnegativeCone,
         MOI.NonpositiveCone,

@@ -19,7 +19,7 @@ Return the [`output_dimension`](@ref) that an [`AbstractFunction`](@ref) should 
 ### Examples
 
 ```julia-repl
-julia> dimension(Reals(4))
+julia> dimension(RealCone(4))
 4
 
 julia> dimension(LessThan(3.0))
@@ -46,7 +46,7 @@ If the dual cone is not defined it returns an error.
 ### Examples
 
 ```jldocstest
-julia> dual_set(Reals(4))
+julia> dual_set(RealCone(4))
 ZeroCone(4)
 
 julia> dual_set(SecondOrderCone(5))
@@ -69,7 +69,7 @@ Return the type of dual set of sets of type `S`, as returned by
 ### Examples
 
 ```jldocstest
-julia> dual_set_type(Reals)
+julia> dual_set_type(RealCone)
 ZeroCone
 
 julia> dual_set_type(SecondOrderCone)
@@ -106,18 +106,18 @@ abstract type AbstractVectorSet <: AbstractSet end
 dimension(s::AbstractVectorSet) = s.dimension # .dimension field is conventional, overwrite this method if not applicable
 
 """
-    Reals(dimension)
+    RealCone(dimension)
 
 The set ``\\mathbb{R}^{dimension}`` (containing all points) of dimension
 `dimension`.
 """
-struct Reals <: AbstractVectorSet
+struct RealCone <: AbstractVectorSet
     dimension::Int
-    function Reals(dimension::Base.Integer)
+    function RealCone(dimension::Base.Integer)
         if !(dimension >= 0)
             throw(
                 DimensionMismatch(
-                    "Dimension of Reals must be >= 0, not $(dimension).",
+                    "Dimension of RealCone must be >= 0, not $(dimension).",
                 ),
             )
         end
@@ -125,8 +125,8 @@ struct Reals <: AbstractVectorSet
     end
 end
 
-dual_set(s::Reals) = ZeroCone(dimension(s))
-dual_set_type(::Type{Reals}) = ZeroCone
+dual_set(s::RealCone) = ZeroCone(dimension(s))
+dual_set_type(::Type{RealCone}) = ZeroCone
 
 """
     ZeroCone(dimension)
@@ -148,8 +148,8 @@ struct ZeroCone <: AbstractVectorSet
     end
 end
 
-dual_set(s::ZeroCone) = Reals(dimension(s))
-dual_set_type(::Type{ZeroCone}) = Reals
+dual_set(s::ZeroCone) = RealCone(dimension(s))
+dual_set_type(::Type{ZeroCone}) = RealCone
 
 """
     NonnegativeCone(dimension)
@@ -1112,7 +1112,7 @@ end
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
-        Reals,
+        RealCone,
         ZeroCone,
         NonnegativeCone,
         NonpositiveCone,
@@ -1166,7 +1166,7 @@ function supports_dimension_update(::Type{<:AbstractVectorSet})
     return false
 end
 function supports_dimension_update(
-    ::Type{<:Union{Reals,ZeroCone,NonnegativeCone,NonpositiveCone}},
+    ::Type{<:Union{RealCone,ZeroCone,NonnegativeCone,NonpositiveCone}},
 )
     return true
 end
@@ -1178,7 +1178,7 @@ Returns a set with the dimension modified to `new_dim`.
 """
 function update_dimension end
 function update_dimension(
-    set::Union{Reals,ZeroCone,NonnegativeCone,NonpositiveCone},
+    set::Union{RealCone,ZeroCone,NonnegativeCone,NonpositiveCone},
     new_dim,
 )
     return typeof(set)(new_dim)
