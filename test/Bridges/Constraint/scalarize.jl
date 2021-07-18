@@ -22,11 +22,11 @@ config = MOIT.Config()
                 MOI.VectorOfVariables,
                 MOI.VectorAffineFunction{Float64},
                 MOI.VectorQuadraticFunction{Float64},
-            ] for S in [MOI.Nonnegatives, MOI.Nonpositives, MOI.Zeros]
+            ] for S in [MOI.NonnegativeCone, MOI.Nonpositives, MOI.Zeros]
         ],
     )
 
-    # VectorOfVariables-in-Nonnegatives
+    # VectorOfVariables-in-NonnegativeCone
     # VectorAffineFunction-in-Zeros
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -59,7 +59,7 @@ config = MOIT.Config()
             bridged_mock,
             MOI.ListOfConstraintIndices{
                 MOI.VectorOfVariables,
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ),
     )
@@ -67,7 +67,7 @@ config = MOIT.Config()
     MOI.delete(bridged_mock, func.variables[2])
     new_func = MOI.VectorOfVariables(func.variables[[1, 3]])
     @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) == new_func
-    @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.Nonnegatives(2)
+    @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.NonnegativeCone(2)
 
     @testset "$attr" for attr in [
         MOI.ConstraintPrimalStart(),
@@ -89,7 +89,7 @@ config = MOIT.Config()
         ),
     )
 
-    # VectorAffineFunction-in-Nonnegatives
+    # VectorAffineFunction-in-NonnegativeCone
     # VectorAffineFunction-in-Zeros
     mock.optimize! =
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -137,7 +137,7 @@ config = MOIT.Config()
             bridged_mock,
             MOI.ListOfConstraintIndices{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ),
     )
@@ -170,7 +170,7 @@ config = MOIT.Config()
     )
     MOIT.solve_func_vectoraffine_nonneg(bridged_mock, config)
 
-    # VectorOfVariables-in-Nonnegatives
+    # VectorOfVariables-in-NonnegativeCone
     # VectorOfVariables-in-Nonpositives
     # VectorOfVariables-in-Zeros
     # VectorAffineFunction-in-Zeros
@@ -183,7 +183,7 @@ config = MOIT.Config()
         )
     MOIT.lin2vtest(bridged_mock, config)
 
-    # VectorAffineFunction-in-Nonnegatives
+    # VectorAffineFunction-in-NonnegativeCone
     # VectorAffineFunction-in-Nonpositives
     # VectorAffineFunction-in-Zeros
     mock.optimize! =

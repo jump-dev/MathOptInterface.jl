@@ -33,7 +33,7 @@ function _set_var_and_con_names(model::MOI.ModelLike)
             model,
             MOI.ListOfConstraintIndices{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ),
         MOI.get(
@@ -119,7 +119,7 @@ function test_delete()
         MOI.add_constraint(
             model,
             MOIU.vectorize([one(T) * fy]),
-            MOI.Nonnegatives(1),
+            MOI.NonnegativeCone(1),
         )
         err = ErrorException(
             "Non-contiguous variable indices not supported. This might be due to deleted variables.",
@@ -232,11 +232,11 @@ const _WRITE_READ_MODELS = [
 """,
     ),
     (
-        "VectorAffineFunction in Nonnegatives",
+        "VectorAffineFunction in NonnegativeCone",
         """
     variables: x, y
     minobjective: 1.2x
-    c1: [1.1 * x, y + 1] in Nonnegatives(2)
+    c1: [1.1 * x, y + 1] in NonnegativeCone(2)
 """,
     ),
     (
@@ -280,7 +280,7 @@ const _EXAMPLE_MODELS = [
     minobjective: 1x + -2y + -1z
     c1: [1x, 1y, 1z] in PositiveSemidefiniteConeTriangle(2)
     c2: [1z, 1x, 2.1] in PositiveSemidefiniteConeTriangle(2)
-    c3: [1x + 1y + 1z + -1, -1x + -1y + -1z + 8] in Nonnegatives(2)
+    c3: [1x + 1y + 1z + -1, -1x + -1y + -1z + 8] in NonnegativeCone(2)
     x in Integer()
     y in Integer()
     z in Integer()

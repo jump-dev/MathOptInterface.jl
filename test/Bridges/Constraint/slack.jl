@@ -234,7 +234,7 @@ end
             (F, S) for F in [
                 MOI.VectorAffineFunction{Float64},
                 MOI.VectorQuadraticFunction{Float64},
-            ], S in [MOI.Nonnegatives, MOI.Nonpositives]
+            ], S in [MOI.NonnegativeCone, MOI.Nonpositives]
         ],
     )
 
@@ -249,7 +249,7 @@ end
             [100, -100, 100, -100],
             (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
                 [[1.0], [1.0]],
-            (MOI.VectorOfVariables, MOI.Nonnegatives) => [[1.0]],
+            (MOI.VectorOfVariables, MOI.NonnegativeCone) => [[1.0]],
             (MOI.VectorOfVariables, MOI.Nonpositives) => [[1.0]],
         ),
     )
@@ -259,7 +259,7 @@ end
         bridged_mock,
         MOI.ListOfConstraintIndices{
             MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
+            MOI.NonnegativeCone,
         }(),
     )
     @test length(c1) == 1
@@ -278,15 +278,15 @@ end
 
     loc = MOI.get(bridged_mock, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) in loc
+    @test (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) in loc
     @test (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) in loc
     loc = MOI.get(mock, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 3
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
-    @test (MOI.VectorOfVariables, MOI.Nonnegatives) in loc
+    @test (MOI.VectorOfVariables, MOI.NonnegativeCone) in loc
     @test (MOI.VectorOfVariables, MOI.Nonpositives) in loc
 
-    for T in [Int, Float64], S in [MOI.Nonnegatives, MOI.Nonpositives]
+    for T in [Int, Float64], S in [MOI.NonnegativeCone, MOI.Nonpositives]
         for F in [MOI.VectorAffineFunction{T}, MOI.VectorQuadraticFunction{T}]
             @test MOIB.added_constraint_types(
                 MOIB.Constraint.VectorSlackBridge{T,F,S},

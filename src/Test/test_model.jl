@@ -678,7 +678,7 @@ function test_model_supports_constraint_VectorOfVariables_Nonnegatives(
     @requires MOI.supports_constraint(
         model,
         MOI.VectorOfVariables,
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     # Pick a "bad" coefficient type that should fail tests.
     @test !MOI.supports_constraint(

@@ -480,7 +480,7 @@ function test_quadratic_constraint_integration(
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     @requires MOI.supports_constraint(
         model,
@@ -499,14 +499,14 @@ function test_quadratic_constraint_integration(
             ),
             [0.0, 0.0],
         ),
-        MOI.Nonnegatives(2),
+        MOI.NonnegativeCone(2),
     )
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ) == 1
     end
@@ -598,7 +598,7 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1 / 2, 7 / 4],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [zeros(2)],
             (MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}) =>
                 [-1.0],

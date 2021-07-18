@@ -20,13 +20,13 @@ function _lin1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         @test MOI.supports_constraint(
             model,
             MOI.VectorOfVariables,
-            MOI.Nonnegatives,
+            MOI.NonnegativeCone,
         )
     else
         @test MOI.supports_constraint(
             model,
             MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
+            MOI.NonnegativeCone,
         )
     end
     @test MOI.supports_constraint(
@@ -40,12 +40,12 @@ function _lin1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
     vov = MOI.VectorOfVariables(v)
     if vecofvars
-        vc = MOI.add_constraint(model, vov, MOI.Nonnegatives(3))
+        vc = MOI.add_constraint(model, vov, MOI.NonnegativeCone(3))
     else
         vc = MOI.add_constraint(
             model,
             MOI.VectorAffineFunction{Float64}(vov),
-            MOI.Nonnegatives(3),
+            MOI.NonnegativeCone(3),
         )
     end
     c = MOI.add_constraint(
@@ -65,7 +65,7 @@ function _lin1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             MOI.NumberOfConstraints{
                 vecofvars ? MOI.VectorOfVariables :
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -80,7 +80,7 @@ function _lin1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     @test length(loc) == 2
     @test (
         vecofvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{Float64},
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     ) in loc
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
     MOI.set(
@@ -133,7 +133,7 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     #@test MOI.supportsproblem(model, MOI.ScalarAffineFunction{Float64},
     #[
     #    (MOI.VectorAffineFunction{Float64},MOI.Zeros),
-    #    (MOI.VectorOfVariables,MOI.Nonnegatives),
+    #    (MOI.VectorOfVariables,MOI.NonnegativeCone),
     #    (MOI.VectorOfVariables,MOI.Nonpositives)
     #])
     # mixed cones
@@ -157,7 +157,7 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         @test MOI.supports_constraint(
             model,
             MOI.VectorOfVariables,
-            MOI.Nonnegatives,
+            MOI.NonnegativeCone,
         )
         @test MOI.supports_add_constrained_variables(model, MOI.Nonpositives)
         @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
@@ -165,7 +165,7 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
         @test MOI.supports_constraint(
             model,
             MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
+            MOI.NonnegativeCone,
         )
         @test MOI.supports_constraint(
             model,
@@ -218,7 +218,7 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     )
     if vecofvars
         # test fallback
-        vz = MOI.add_constraint(model, [z], MOI.Nonnegatives(1))
+        vz = MOI.add_constraint(model, [z], MOI.NonnegativeCone(1))
     else
         vz = MOI.add_constraint(
             model,
@@ -226,7 +226,7 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
                 [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z))],
                 [0.0],
             ),
-            MOI.Nonnegatives(1),
+            MOI.NonnegativeCone(1),
         )
     end
     vov = MOI.VectorOfVariables([s])
@@ -260,7 +260,7 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             MOI.NumberOfConstraints{
                 vecofvars ? MOI.VectorOfVariables :
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ) == 1
     end
@@ -338,7 +338,7 @@ function lin3test(model::MOI.ModelLike, config::Config)
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -349,7 +349,7 @@ function lin3test(model::MOI.ModelLike, config::Config)
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
             [-1.0],
         ),
-        MOI.Nonnegatives(1),
+        MOI.NonnegativeCone(1),
     )
     MOI.add_constraint(
         model,
@@ -364,7 +364,7 @@ function lin3test(model::MOI.ModelLike, config::Config)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -417,7 +417,7 @@ function lin4test(model::MOI.ModelLike, config::Config)
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     @test MOI.supports_add_constrained_variables(model, MOI.Nonpositives)
     MOI.empty!(model)
@@ -430,14 +430,14 @@ function lin4test(model::MOI.ModelLike, config::Config)
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
             [-1.0],
         ),
-        MOI.Nonnegatives(1),
+        MOI.NonnegativeCone(1),
     )
     if config.query_number_of_constraints
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -633,7 +633,7 @@ function norminf2test(model::MOI.ModelLike, config::Config)
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     @test MOI.supports_constraint(
         model,
@@ -654,7 +654,7 @@ function norminf2test(model::MOI.ModelLike, config::Config)
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))],
             [-2.0],
         ),
-        MOI.Nonnegatives(1),
+        MOI.NonnegativeCone(1),
     )
     MOI.add_constraint(
         model,
@@ -677,7 +677,7 @@ function norminf2test(model::MOI.ModelLike, config::Config)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -715,7 +715,7 @@ function norminf3test(model::MOI.ModelLike, config::Config)
     # Problem NormInf3
     # min x
     #  st  (-1 + x, 2 .+ y) in NormInf(1 + n)
-    #      (1 .+ y) in Nonnegatives(n)
+    #      (1 .+ y) in NonnegativeCone(n)
     # let n = 3. optimal solution: y .= -1, x = 2
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
@@ -744,7 +744,7 @@ function norminf3test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineTerm.(1:3, MOI.ScalarAffineTerm.(1.0, y)),
         ones(3),
     )
-    nonneg = MOI.add_constraint(model, nonneg_vaf, MOI.Nonnegatives(3))
+    nonneg = MOI.add_constraint(model, nonneg_vaf, MOI.NonnegativeCone(3))
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -757,14 +757,14 @@ function norminf3test(model::MOI.ModelLike, config::Config)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ) == 1
     end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) in loc
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) in loc
+    @test (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) in loc
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
@@ -956,7 +956,7 @@ function normone2test(model::MOI.ModelLike, config::Config)
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     @test MOI.supports_constraint(
         model,
@@ -977,7 +977,7 @@ function normone2test(model::MOI.ModelLike, config::Config)
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))],
             [-2.0],
         ),
-        MOI.Nonnegatives(1),
+        MOI.NonnegativeCone(1),
     )
     MOI.add_constraint(
         model,
@@ -1000,7 +1000,7 @@ function normone2test(model::MOI.ModelLike, config::Config)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -1038,7 +1038,7 @@ function normone3test(model::MOI.ModelLike, config::Config)
     # Problem NormOne3
     # min x
     #  st  (-1 + x, 2 .+ y) in NormOne(1 + n)
-    #      (1 .+ y) in Nonnegatives(n)
+    #      (1 .+ y) in NonnegativeCone(n)
     # let n = 3. optimal solution: y .= -1, x = 4
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
@@ -1067,7 +1067,7 @@ function normone3test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineTerm.(1:3, MOI.ScalarAffineTerm.(1.0, y)),
         ones(3),
     )
-    nonneg = MOI.add_constraint(model, nonneg_vaf, MOI.Nonnegatives(3))
+    nonneg = MOI.add_constraint(model, nonneg_vaf, MOI.NonnegativeCone(3))
     if config.query_number_of_constraints
         @test MOI.get(
             model,
@@ -1080,14 +1080,14 @@ function normone3test(model::MOI.ModelLike, config::Config)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ) == 1
     end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) in loc
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) in loc
+    @test (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) in loc
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
@@ -1271,7 +1271,7 @@ function _soc2test(model::MOI.ModelLike, config::Config, nonneg::Bool)
         @test MOI.supports_constraint(
             model,
             MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
+            MOI.NonnegativeCone,
         )
     else
         @test MOI.supports_constraint(
@@ -1301,7 +1301,7 @@ function _soc2test(model::MOI.ModelLike, config::Config, nonneg::Bool)
                 [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))],
                 [-1 / √2],
             ),
-            MOI.Nonnegatives(1),
+            MOI.NonnegativeCone(1),
         )
     else
         cnon = MOI.add_constraint(
@@ -1337,7 +1337,7 @@ function _soc2test(model::MOI.ModelLike, config::Config, nonneg::Bool)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                nonneg ? MOI.Nonnegatives : MOI.Nonpositives,
+                nonneg ? MOI.NonnegativeCone : MOI.Nonpositives,
             }(),
         ) == 1
         @test MOI.get(
@@ -1421,7 +1421,7 @@ function soc3test(model::MOI.ModelLike, config::Config)
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     @test MOI.supports_constraint(
         model,
@@ -1442,7 +1442,7 @@ function soc3test(model::MOI.ModelLike, config::Config)
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))],
             [-2.0],
         ),
-        MOI.Nonnegatives(1),
+        MOI.NonnegativeCone(1),
     )
     MOI.add_constraint(
         model,
@@ -1465,7 +1465,7 @@ function soc3test(model::MOI.ModelLike, config::Config)
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -1882,7 +1882,7 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
         MOI.SingleVariable,
         MOI.EqualTo{Float64},
     )
-    @test MOI.supports_add_constrained_variables(model, MOI.Nonnegatives)
+    @test MOI.supports_add_constrained_variables(model, MOI.NonnegativeCone)
     @test MOI.supports_constraint(
         model,
         MOI.SingleVariable,
@@ -1900,7 +1900,7 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
     )
     MOI.empty!(model)
     @test MOI.is_empty(model)
-    x, cx = MOI.add_constrained_variables(model, MOI.Nonnegatives(n))
+    x, cx = MOI.add_constrained_variables(model, MOI.NonnegativeCone(n))
     u = MOI.add_variable(model)
     v = MOI.add_variable(model)
     t = MOI.add_variables(model, 2)
@@ -1941,7 +1941,7 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
         ) == 2
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}(),
+            MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.NonnegativeCone}(),
         ) == 1
         @test MOI.get(
             model,
@@ -2594,7 +2594,7 @@ function exp2test(model::MOI.ModelLike, config::Config)
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -2642,7 +2642,7 @@ function exp2test(model::MOI.ModelLike, config::Config)
             ),
             zeros(3),
         ),
-        MOI.Nonnegatives(3),
+        MOI.NonnegativeCone(3),
     )
     c3 = MOI.add_constraint(
         model,
@@ -2656,7 +2656,7 @@ function exp2test(model::MOI.ModelLike, config::Config)
             ),
             zeros(3),
         ),
-        MOI.Nonnegatives(3),
+        MOI.NonnegativeCone(3),
     )
     c4 = MOI.add_constraint(
         model,
@@ -4221,7 +4221,7 @@ function _det1test(
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -4255,7 +4255,7 @@ function _det1test(
             ),
             ones(2),
         ),
-        MOI.Nonnegatives(2),
+        MOI.NonnegativeCone(2),
     )
     if config.query_number_of_constraints
         @test MOI.get(
@@ -4270,7 +4270,7 @@ function _det1test(
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ) == 1
     end

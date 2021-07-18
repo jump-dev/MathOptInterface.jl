@@ -654,11 +654,11 @@
                 }
             }, {
                 "description": "R₊^{dimension}",
-                "examples": ["{\"type\": \"Nonnegatives\", \"dimension\": 3}"],
+                "examples": ["{\"type\": \"NonnegativeCone\", \"dimension\": 3}"],
                 "required": ["dimension"],
                 "properties": {
                     "type": {
-                        "const": "Nonnegatives"
+                        "const": "NonnegativeCone"
                     },
                     "dimension": {
                         "type": "integer",

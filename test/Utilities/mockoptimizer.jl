@@ -32,7 +32,7 @@ MOI.supports_add_constrained_variables(::NoFreeModel, ::Type{MOI.Reals}) = false
         optimizer,
         MOIT.UnknownScalarSet{Float64},
     )
-    @test MOI.supports_add_constrained_variables(optimizer, MOI.Nonnegatives)
+    @test MOI.supports_add_constrained_variables(optimizer, MOI.NonnegativeCone)
     @test !MOI.supports_add_constrained_variables(
         optimizer,
         MOIT.UnknownVectorSet,
@@ -45,7 +45,7 @@ MOI.supports_add_constrained_variables(::NoFreeModel, ::Type{MOI.Reals}) = false
     )
     @test !MOI.supports_add_constrained_variables(
         nofree_optimizer,
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     @test !MOI.supports_add_constrained_variables(nofree_optimizer, MOI.Reals)
 end

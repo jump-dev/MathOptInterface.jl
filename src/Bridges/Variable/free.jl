@@ -2,11 +2,11 @@
     FreeBridge{T} <: Bridges.Variable.AbstractBridge
 
 Transforms constrained variables in [`MOI.Reals`](@ref) to the difference of
-constrained variables in [`MOI.Nonnegatives`](@ref).
+constrained variables in [`MOI.NonnegativeCone`](@ref).
 """
 struct FreeBridge{T} <: AbstractBridge
     variables::Vector{MOI.VariableIndex}
-    constraint::MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
+    constraint::MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.NonnegativeCone}
 end
 
 function bridge_constrained_variable(
@@ -16,7 +16,7 @@ function bridge_constrained_variable(
 ) where {T}
     variables, constraint = MOI.add_constrained_variables(
         model,
-        MOI.Nonnegatives(2MOI.dimension(set)),
+        MOI.NonnegativeCone(2MOI.dimension(set)),
     )
     return FreeBridge{T}(variables, constraint)
 end
@@ -26,7 +26,7 @@ function supports_constrained_variable(::Type{<:FreeBridge}, ::Type{MOI.Reals})
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:FreeBridge})
-    return [(MOI.Nonnegatives,)]
+    return [(MOI.NonnegativeCone,)]
 end
 
 function MOIB.added_constraint_types(::Type{FreeBridge{T}}) where {T}
@@ -44,14 +44,14 @@ end
 
 function MOI.get(
     ::FreeBridge,
-    ::MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives},
+    ::MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.NonnegativeCone},
 )
     return 1
 end
 
 function MOI.get(
     bridge::FreeBridge,
-    ::MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonnegatives},
+    ::MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.NonnegativeCone},
 )
     return [bridge.constraint]
 end

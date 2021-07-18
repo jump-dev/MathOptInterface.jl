@@ -59,8 +59,8 @@ const BasicConstraintTests = Dict(
         (dummy_vectorofvariables, 2, MOI.Zeros(2)),
     (MOI.VectorOfVariables, MOI.Nonpositives) =>
         (dummy_vectorofvariables, 2, MOI.Nonpositives(2)),
-    (MOI.VectorOfVariables, MOI.Nonnegatives) =>
-        (dummy_vectorofvariables, 2, MOI.Nonnegatives(2)),
+    (MOI.VectorOfVariables, MOI.NonnegativeCone) =>
+        (dummy_vectorofvariables, 2, MOI.NonnegativeCone(2)),
     (MOI.VectorOfVariables, MOI.NormInfinityCone) =>
         (dummy_vectorofvariables, 3, MOI.NormInfinityCone(3)),
     (MOI.VectorOfVariables, MOI.NormOneCone) =>
@@ -120,8 +120,8 @@ const BasicConstraintTests = Dict(
         (dummy_vector_affine, 2, MOI.Zeros(2)),
     (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) =>
         (dummy_vector_affine, 2, MOI.Nonpositives(2)),
-    (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
-        (dummy_vector_affine, 2, MOI.Nonnegatives(2)),
+    (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
+        (dummy_vector_affine, 2, MOI.NonnegativeCone(2)),
     (MOI.VectorAffineFunction{Float64}, MOI.Complements) =>
         (dummy_vector_affine, 2, MOI.Complements(2)),
     (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) =>
@@ -161,8 +161,8 @@ const BasicConstraintTests = Dict(
         (dummy_vector_quadratic, 2, MOI.Zeros(2)),
     (MOI.VectorQuadraticFunction{Float64}, MOI.Nonpositives) =>
         (dummy_vector_quadratic, 2, MOI.Nonpositives(2)),
-    (MOI.VectorQuadraticFunction{Float64}, MOI.Nonnegatives) =>
-        (dummy_vector_quadratic, 2, MOI.Nonnegatives(2)),
+    (MOI.VectorQuadraticFunction{Float64}, MOI.NonnegativeCone) =>
+        (dummy_vector_quadratic, 2, MOI.NonnegativeCone(2)),
     (MOI.VectorQuadraticFunction{Float64}, MOI.NormInfinityCone) =>
         (dummy_vector_quadratic, 3, MOI.NormInfinityCone(3)),
     (MOI.VectorQuadraticFunction{Float64}, MOI.NormOneCone) =>

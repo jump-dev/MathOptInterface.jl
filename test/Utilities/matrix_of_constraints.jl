@@ -264,9 +264,9 @@ function test_contlinear(Indexing)
     end
 end
 
-MOIU.@product_of_sets(Nonneg, MOI.Nonnegatives)
-MOIU.@product_of_sets(NonposNonneg, MOI.Nonpositives, MOI.Nonnegatives)
-MOIU.@product_of_sets(NonnegNonpos, MOI.Nonnegatives, MOI.Nonpositives)
+MOIU.@product_of_sets(Nonneg, MOI.NonnegativeCone)
+MOIU.@product_of_sets(NonposNonneg, MOI.Nonpositives, MOI.NonnegativeCone)
+MOIU.@product_of_sets(NonnegNonpos, MOI.NonnegativeCone, MOI.Nonpositives)
 
 function test_contconic()
     test_contconic(MOIU.OneBasedIndexing)
@@ -326,7 +326,7 @@ function test_contconic(Indexing)
     ) do optimizer
         return _lin3_query(
             optimizer,
-            [(F, MOI.Nonnegatives), (F, MOI.Nonpositives)],
+            [(F, MOI.NonnegativeCone), (F, MOI.Nonpositives)],
         )
     end
     b = [1.0, -1.0]
@@ -341,7 +341,7 @@ function test_contconic(Indexing)
     ) do optimizer
         return _lin3_query(
             optimizer,
-            [(F, MOI.Nonpositives), (F, MOI.Nonnegatives)],
+            [(F, MOI.Nonpositives), (F, MOI.NonnegativeCone)],
         )
     end
     # Here, we test that it works of some constraints are bridged but not all.
@@ -356,7 +356,7 @@ function test_contconic(Indexing)
         true,
         Indexing,
     ) do optimizer
-        return _lin3_query(optimizer, [(F, MOI.Nonnegatives)])
+        return _lin3_query(optimizer, [(F, MOI.NonnegativeCone)])
     end
 end
 
@@ -428,7 +428,7 @@ function test_empty()
     model = MOIU.GenericOptimizer{
         T,
         VoVorVAff{T}{
-            MOIU.VectorOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives},
+            MOIU.VectorOfConstraints{MOI.VectorOfVariables,MOI.NonnegativeCone},
             MOIU.MatrixOfConstraints{
                 T,
                 MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
@@ -485,7 +485,7 @@ function test_copy(Indexing)
             VoVorSAfforVAff{T}{
                 MOIU.VectorOfConstraints{
                     MOI.VectorOfVariables,
-                    MOI.Nonnegatives,
+                    MOI.NonnegativeCone,
                 },
                 MOIU.MatrixOfConstraints{
                     T,
@@ -529,7 +529,7 @@ end
 MOIU.@struct_of_constraints_by_set_types(
     ZerosOrNot,
     MOI.Zeros,
-    Union{MOI.Nonnegatives,MOI.Nonpositives},
+    Union{MOI.NonnegativeCone,MOI.Nonpositives},
 )
 
 function test_multicone()
@@ -561,7 +561,7 @@ function test_multicone()
     MOI.add_constraint(
         model,
         MOIU.vectorize([T(3) * fy + T(1)]),
-        MOI.Nonnegatives(1),
+        MOI.NonnegativeCone(1),
     )
     MOI.add_constraint(
         model,

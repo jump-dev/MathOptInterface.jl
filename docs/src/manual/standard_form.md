@@ -74,7 +74,7 @@ The vector-valued set types implemented in MathOptInterface.jl are:
 * [`Reals(dimension)`](@ref MathOptInterface.Reals):
   ``\mathbb{R}^\mbox{dimension}``
 * [`Zeros(dimension)`](@ref MathOptInterface.Zeros): ``0^\mbox{dimension}``
-* [`Nonnegatives(dimension)`](@ref MathOptInterface.Nonnegatives):
+* [`NonnegativeCone(dimension)`](@ref MathOptInterface.NonnegativeCone):
   ``\{ x \in \mathbb{R}^\mbox{dimension} : x \ge 0 \}``
 * [`Nonpositives(dimension)`](@ref MathOptInterface.Nonpositives):
   ``\{ x \in \mathbb{R}^\mbox{dimension} : x \le 0 \}``

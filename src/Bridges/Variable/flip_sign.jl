@@ -11,15 +11,15 @@ abstract type FlipSignBridge{T,S1<:MOI.AbstractSet,S2<:MOI.AbstractSet} <:
 
 """
     NonposToNonnegBridge{T} <:
-        FlipSignBridge{T, MOI.Nonpositives, MOI.Nonnegatives}
+        FlipSignBridge{T, MOI.Nonpositives, MOI.NonnegativeCone}
 
 Transforms constrained variables in `Nonpositives` into constrained variables in
-`Nonnegatives`.
+`NonnegativeCone`.
 """
 struct NonposToNonnegBridge{T} <:
-       FlipSignBridge{T,MOI.Nonpositives,MOI.Nonnegatives}
+       FlipSignBridge{T,MOI.Nonpositives,MOI.NonnegativeCone}
     variables::Vector{MOI.VariableIndex}
-    constraint::MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
+    constraint::MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.NonnegativeCone}
 end
 
 function MOI.delete(

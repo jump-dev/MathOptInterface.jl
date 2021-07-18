@@ -84,7 +84,7 @@ config = MOIT.Config()
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
                 mock,
                 [1 / 2, 7 / 4],
-                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+                (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                     [zeros(2)],
                 (
                     MOI.VectorAffineFunction{Float64},

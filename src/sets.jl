@@ -152,18 +152,18 @@ dual_set(s::Zeros) = Reals(dimension(s))
 dual_set_type(::Type{Zeros}) = Reals
 
 """
-    Nonnegatives(dimension)
+    NonnegativeCone(dimension)
 
 The nonnegative orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\ge 0 \\}`` of
 dimension `dimension`.
 """
-struct Nonnegatives <: AbstractVectorSet
+struct NonnegativeCone <: AbstractVectorSet
     dimension::Int
-    function Nonnegatives(dimension::Base.Integer)
+    function NonnegativeCone(dimension::Base.Integer)
         if !(dimension >= 0)
             throw(
                 DimensionMismatch(
-                    "Dimension of Nonnegatives must be >= 0, not $(dimension).",
+                    "Dimension of NonnegativeCone must be >= 0, not $(dimension).",
                 ),
             )
         end
@@ -171,8 +171,8 @@ struct Nonnegatives <: AbstractVectorSet
     end
 end
 
-dual_set(s::Nonnegatives) = copy(s)
-dual_set_type(::Type{Nonnegatives}) = Nonnegatives
+dual_set(s::NonnegativeCone) = copy(s)
+dual_set_type(::Type{NonnegativeCone}) = NonnegativeCone
 
 """
     Nonpositives(dimension)
@@ -1089,7 +1089,7 @@ There are three solutions:
 The function `F` can also be defined in terms of single variables. For example,
 the problem:
 
-    [x_3, x_4] -in- Nonnegatives(2)
+    [x_3, x_4] -in- NonnegativeCone(2)
     [x_1, x_2, x_3, x_4] -in- Complements(4)
 
 defines the complementarity problem where `0 <= x_1 ⟂ x_3 >= 0` and
@@ -1114,7 +1114,7 @@ function Base.copy(
     set::Union{
         Reals,
         Zeros,
-        Nonnegatives,
+        NonnegativeCone,
         Nonpositives,
         GreaterThan,
         LessThan,
@@ -1157,7 +1157,7 @@ Return a `Bool` indicating whether the elimination of any dimension of
 By default, this function returns `false` so it should only be implemented
 for sets that supports dimension update.
 
-For instance, `supports_dimension_update(MOI.Nonnegatives}` is `true` because
+For instance, `supports_dimension_update(MOI.NonnegativeCone}` is `true` because
 the elimination of any dimension of the `n`-dimensional nonnegative orthant
 gives the `n-1`-dimensional nonnegative orthant. However
 `supports_dimension_update(MOI.ExponentialCone}` is `false`.
@@ -1166,7 +1166,7 @@ function supports_dimension_update(::Type{<:AbstractVectorSet})
     return false
 end
 function supports_dimension_update(
-    ::Type{<:Union{Reals,Zeros,Nonnegatives,Nonpositives}},
+    ::Type{<:Union{Reals,Zeros,NonnegativeCone,Nonpositives}},
 )
     return true
 end
@@ -1178,7 +1178,7 @@ Returns a set with the dimension modified to `new_dim`.
 """
 function update_dimension end
 function update_dimension(
-    set::Union{Reals,Zeros,Nonnegatives,Nonpositives},
+    set::Union{Reals,Zeros,NonnegativeCone,Nonpositives},
     new_dim,
 )
     return typeof(set)(new_dim)

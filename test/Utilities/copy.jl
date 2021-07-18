@@ -143,7 +143,7 @@ function test_issue_849()
     a = MOI.add_variable(model)
     b, c = MOI.add_variables(model, 2)
     x, cx = MOI.add_constrained_variable(model, MOI.GreaterThan(0.0))
-    y, cy = MOI.add_constrained_variables(model, MOI.Nonnegatives(1))
+    y, cy = MOI.add_constrained_variables(model, MOI.NonnegativeCone(1))
     nlp_data = MOI.NLPBlockData(
         [MOI.NLPBoundsPair(0.0, 1.0) for i in 1:5],
         DummyEvaluator(),
@@ -268,7 +268,7 @@ end
 function test_ConstrainedVariablesModel_allocate_true()
     src = MOIU.Model{Int}()
     x = MOI.add_variables(src, 3)
-    cx = MOI.add_constraint(src, [x[1], x[3], x[1], x[2]], MOI.Nonnegatives(4))
+    cx = MOI.add_constraint(src, [x[1], x[3], x[1], x[2]], MOI.NonnegativeCone(4))
     y, cy = MOI.add_constrained_variables(src, MOI.Nonpositives(3))
     dest = ConstrainedVariablesModel(true, Bool[])
     idxmap = MOI.copy_to(dest, src)
@@ -284,7 +284,7 @@ end
 function test_ConstrainedVariablesModel_allocate_false()
     src = MOIU.Model{Int}()
     x = MOI.add_variables(src, 3)
-    cx = MOI.add_constraint(src, [x[1], x[3], x[1], x[2]], MOI.Nonnegatives(4))
+    cx = MOI.add_constraint(src, [x[1], x[3], x[1], x[2]], MOI.NonnegativeCone(4))
     y, cy = MOI.add_constrained_variables(src, MOI.Nonpositives(3))
     dest = ConstrainedVariablesModel(false, Bool[])
     idxmap = MOI.copy_to(dest, src)
@@ -362,14 +362,14 @@ end
 function MOI.supports_constraint(
     ::OrderConstrainedVariablesModel,
     ::Type{MOI.VectorOfVariables},
-    ::Type{MOI.Nonnegatives},
+    ::Type{MOI.NonnegativeCone},
 )
     return false
 end
 
 function MOI.supports_add_constrained_variables(
     ::OrderConstrainedVariablesModel,
-    ::Type{MOI.Nonnegatives},
+    ::Type{MOI.NonnegativeCone},
 )
     return true
 end
@@ -377,7 +377,7 @@ end
 function MOI.supports_constraint(
     ::OrderConstrainedVariablesModel,
     ::Type{MOI.VectorOfVariables},
-    ::Type{MOI.Nonnegatives},
+    ::Type{MOI.NonnegativeCone},
 )
     return true
 end
@@ -392,14 +392,14 @@ end
 function MOI.supports_constraint(
     ::ReverseOrderConstrainedVariablesModel,
     ::Type{MOI.VectorOfVariables},
-    ::Type{MOI.Nonnegatives},
+    ::Type{MOI.NonnegativeCone},
 )
     return true
 end
 
 function MOI.supports_add_constrained_variables(
     ::ReverseOrderConstrainedVariablesModel,
-    ::Type{MOI.Nonnegatives},
+    ::Type{MOI.NonnegativeCone},
 )
     return false
 end
@@ -407,7 +407,7 @@ end
 function MOI.supports_constraint(
     ::ReverseOrderConstrainedVariablesModel,
     ::Type{MOI.VectorOfVariables},
-    ::Type{MOI.Nonnegatives},
+    ::Type{MOI.NonnegativeCone},
 )
     return false
 end
@@ -422,7 +422,7 @@ end
 function MOI.supports_constraint(
     ::OrderConstrainedVariablesModel,
     ::Type{MOI.VectorAffineFunction{Float64}},
-    ::Type{MOI.Nonnegatives},
+    ::Type{MOI.NonnegativeCone},
 )
     return true
 end
@@ -504,7 +504,7 @@ function test_create_variables_using_supports_add_constrained_variable()
     # With vectors
     src = MOIU.Model{Float64}()
     a, c1 = MOI.add_constrained_variables(src, MOI.Nonpositives(3))
-    c2 = MOI.add_constraint(src, a, MOI.Nonnegatives(3))
+    c2 = MOI.add_constraint(src, a, MOI.NonnegativeCone(3))
 
     dest = OrderConstrainedVariablesModel()
     index_map = MOI.copy_to(dest, src)
@@ -516,7 +516,7 @@ function test_create_variables_using_supports_add_constrained_variable()
     @test typeof(c1) == typeof(dest.constraintIndices[1])
     @test typeof(c2) == typeof(dest.constraintIndices[2])
 
-    b, cb = MOI.add_constrained_variables(src, MOI.Nonnegatives(2))
+    b, cb = MOI.add_constrained_variables(src, MOI.NonnegativeCone(2))
     c3 = MOI.add_constraint(src, b, MOI.Zeros(2))
 
     d, cd = MOI.add_constrained_variables(src, MOI.Zeros(2))
@@ -526,20 +526,20 @@ function test_create_variables_using_supports_add_constrained_variable()
     bridged_dest = MOI.Bridges.full_bridge_optimizer(dest, Float64)
     @test MOIU.sorted_variable_sets_by_cost(bridged_dest, src) == [
         (MOI.VectorOfVariables, MOI.Zeros),
-        (MOI.VectorOfVariables, MOI.Nonnegatives),
+        (MOI.VectorOfVariables, MOI.NonnegativeCone),
         (MOI.VectorOfVariables, MOI.Nonpositives),
     ]
-    @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Nonnegatives)
-    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Nonnegatives}()) ==
+    @test MOI.supports_add_constrained_variables(bridged_dest, MOI.NonnegativeCone)
+    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.NonnegativeCone}()) ==
           0.0
     @test MOI.supports_constraint(
         bridged_dest,
         MOI.VectorOfVariables,
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     @test MOI.get(
         bridged_dest,
-        MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.Nonnegatives}(),
+        MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.NonnegativeCone}(),
     ) == 0.0
     @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Nonpositives)
     @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Nonpositives}()) ==
@@ -572,19 +572,19 @@ function test_create_variables_using_supports_add_constrained_variable()
     @test MOIU.sorted_variable_sets_by_cost(bridged_dest, src) == [
         (MOI.VectorOfVariables, MOI.Zeros),
         (MOI.VectorOfVariables, MOI.Nonpositives),
-        (MOI.VectorOfVariables, MOI.Nonnegatives),
+        (MOI.VectorOfVariables, MOI.NonnegativeCone),
     ]
-    @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Nonnegatives)
-    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Nonnegatives}()) ==
+    @test MOI.supports_add_constrained_variables(bridged_dest, MOI.NonnegativeCone)
+    @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.NonnegativeCone}()) ==
           2.0
     @test MOI.supports_constraint(
         bridged_dest,
         MOI.VectorOfVariables,
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     @test MOI.get(
         bridged_dest,
-        MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.Nonnegatives}(),
+        MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.NonnegativeCone}(),
     ) == 1.0
     @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Nonpositives)
     @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Nonpositives}()) ==

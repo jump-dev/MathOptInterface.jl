@@ -7,7 +7,7 @@ const MOIB = MOI.Bridges
 # Model similar to SDPA format, it gives a good example because it does not
 # support a lot hence need a lot of bridges
 MOIU.@model(SDPAModel,
-            (), (MOI.EqualTo,), (MOI.Nonnegatives, MOI.PositiveSemidefiniteConeTriangle), (),
+            (), (MOI.EqualTo,), (MOI.NonnegativeCone, MOI.PositiveSemidefiniteConeTriangle), (),
             (), (MOI.ScalarAffineFunction,), (MOI.VectorOfVariables,), ())
 MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.GreaterThan{T}}) where {T} = false
 MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.LessThan{T}}) where {T} = false

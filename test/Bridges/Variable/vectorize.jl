@@ -41,14 +41,14 @@ bridged_mock = MOIB.Variable.Vectorize{Float64}(mock)
                 mock,
                 MOI.ListOfConstraintIndices{
                     MOI.VectorOfVariables,
-                    MOI.Nonnegatives,
+                    MOI.NonnegativeCone,
                 }(),
             ),
             ["cy"],
         )
         s = """
         variables: y
-        cy: [y] in MathOptInterface.Nonnegatives(1)
+        cy: [y] in MathOptInterface.NonnegativeCone(1)
         c: 2.0y >= 3.0
         """
         model = MOIU.Model{Float64}()

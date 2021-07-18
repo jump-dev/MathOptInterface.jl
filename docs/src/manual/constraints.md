@@ -14,8 +14,8 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 Use [`add_constraint`](@ref) to add a single constraint.
 
 ```jldoctest constraints; setup=:(model = MOI.Utilities.Model{Float64}(); x = MOI.add_variables(model, 2))
-julia> c = MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Nonnegatives(2))
-MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables,MathOptInterface.Nonnegatives}(1)
+julia> c = MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.NonnegativeCone(2))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables,MathOptInterface.NonnegativeCone}(1)
 ```
 
 [`add_constraint`](@ref) returns a [`ConstraintIndex`](@ref) type, which should
@@ -98,19 +98,19 @@ nonpositive) real numbers.
 
 ### Linear constraints
 
-| Mathematical Constraint       | MOI Function                 | MOI Set        |
-|-------------------------------|------------------------------|----------------|
-| ``a^Tx \le \beta``            | `ScalarAffineFunction`       | `LessThan`     |
-| ``a^Tx \ge \alpha``           | `ScalarAffineFunction`       | `GreaterThan`  |
-| ``a^Tx = \beta``              | `ScalarAffineFunction`       | `EqualTo`      |
-| ``\alpha \le a^Tx \le \beta`` | `ScalarAffineFunction`       | `Interval`     |
-| ``x_i \le \beta``             | `SingleVariable`             | `LessThan`     |
-| ``x_i \ge \alpha``            | `SingleVariable`             | `GreaterThan`  |
-| ``x_i = \beta``               | `SingleVariable`             | `EqualTo`      |
-| ``\alpha \le x_i \le \beta``  | `SingleVariable`             | `Interval`     |
-| ``Ax + b \in \mathbb{R}_+^n`` | `VectorAffineFunction`       | `Nonnegatives` |
-| ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositives` |
-| ``Ax + b = 0``                | `VectorAffineFunction`       | `Zeros`        |
+| Mathematical Constraint       | MOI Function                 | MOI Set           |
+|-------------------------------|------------------------------|-------------------|
+| ``a^Tx \le \beta``            | `ScalarAffineFunction`       | `LessThan`        |
+| ``a^Tx \ge \alpha``           | `ScalarAffineFunction`       | `GreaterThan`     |
+| ``a^Tx = \beta``              | `ScalarAffineFunction`       | `EqualTo`         |
+| ``\alpha \le a^Tx \le \beta`` | `ScalarAffineFunction`       | `Interval`        |
+| ``x_i \le \beta``             | `SingleVariable`             | `LessThan`        |
+| ``x_i \ge \alpha``            | `SingleVariable`             | `GreaterThan`     |
+| ``x_i = \beta``               | `SingleVariable`             | `EqualTo`         |
+| ``\alpha \le x_i \le \beta``  | `SingleVariable`             | `Interval`        |
+| ``Ax + b \in \mathbb{R}_+^n`` | `VectorAffineFunction`       | `NonnegativeCone` |
+| ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositives`    |
+| ``Ax + b = 0``                | `VectorAffineFunction`       | `Zeros`           |
 
 By convention, solvers are not expected to support nonzero constant terms in the
 [`ScalarAffineFunction`](@ref)s the first four rows above, because they are

@@ -57,7 +57,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1 / 2, 7 / 4],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [zeros(2)],
             (MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}) =>
                 [-1.0],

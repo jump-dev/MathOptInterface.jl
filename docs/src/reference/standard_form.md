@@ -75,7 +75,7 @@ List of recognized vector sets.
 ```@docs
 Reals
 Zeros
-Nonnegatives
+NonnegativeCone
 Nonpositives
 NormInfinityCone
 NormOneCone

@@ -37,7 +37,7 @@ function test_errors_inconsistent_vectorscalar()
     )
     @test_throws(
         MOI.ErrorException,
-        MOI.add_constraint(model, func, MOI.Nonnegatives(2))
+        MOI.add_constraint(model, func, MOI.NonnegativeCone(2))
     )
     return
 end
@@ -79,7 +79,7 @@ function test_errors_UnsupportedConstraint_shortcut()
         MOI.add_constraint(model, vi, MOI.EqualTo(0))
     end
     @test_throws MOI.UnsupportedConstraint begin
-        MOI.add_constraint(model, [vi, vi], MOI.Nonnegatives(2))
+        MOI.add_constraint(model, [vi, vi], MOI.NonnegativeCone(2))
     end
     @test_throws MOI.UnsupportedConstraint begin
         MOI.add_constraints(model, [vi, vi], [MOI.EqualTo(0), MOI.EqualTo(0)])

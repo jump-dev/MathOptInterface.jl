@@ -146,11 +146,11 @@ end
         config,
         include = [
             (F, S) for F in [MOI.VectorOfVariables],
-            S in [MOI.Nonnegatives, MOI.Nonpositives]
+            S in [MOI.NonnegativeCone, MOI.Nonpositives]
         ],
     )
 
-    for T in [Int, Float64], S in [MOI.Nonnegatives, MOI.Nonpositives]
+    for T in [Int, Float64], S in [MOI.NonnegativeCone, MOI.Nonpositives]
         @test MOIB.added_constraint_types(
             MOIB.Constraint.VectorFunctionizeBridge{T,S},
         ) == [(MOI.VectorAffineFunction{T}, S)]
@@ -161,7 +161,7 @@ end
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
                 mock,
                 [1.0, 0.0, 2.0],
-                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+                (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                     [[0, 2, 0]],
                 (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
                     [[-3, -1]],
@@ -172,7 +172,7 @@ end
                 bridged_mock,
                 MOI.ListOfConstraintIndices{
                     MOI.VectorOfVariables,
-                    MOI.Nonnegatives,
+                    MOI.NonnegativeCone,
                 }(),
             ),
         )
@@ -181,7 +181,7 @@ end
         new_func = MOI.VectorOfVariables(func.variables[[1, 3]])
         @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) == new_func
         @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) ==
-              MOI.Nonnegatives(2)
+              MOI.NonnegativeCone(2)
 
         @testset "$attr" for attr in [
             MOI.ConstraintPrimalStart(),
@@ -196,7 +196,7 @@ end
             bridged_mock,
             ci,
             2,
-            ((MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0),),
+            ((MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone, 0),),
         )
     end
 end

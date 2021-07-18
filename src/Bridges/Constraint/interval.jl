@@ -2,7 +2,7 @@ _lower_set(set::MOI.Interval) = MOI.GreaterThan(set.lower)
 _upper_set(set::MOI.Interval) = MOI.LessThan(set.upper)
 _lower_set(set::MOI.EqualTo) = MOI.GreaterThan(set.value)
 _upper_set(set::MOI.EqualTo) = MOI.LessThan(set.value)
-_lower_set(set::MOI.Zeros) = MOI.Nonnegatives(set.dimension)
+_lower_set(set::MOI.Zeros) = MOI.NonnegativeCone(set.dimension)
 _upper_set(set::MOI.Zeros) = MOI.Nonpositives(set.dimension)
 
 """
@@ -12,7 +12,7 @@ The `SplitIntervalBridge` splits a `F`-in-`S` constraint into a `F`-in-`LS` and
 a `F`-in-`US` constraint where we have either:
 * `S = MOI.Interval{T}`, `LS = MOI.GreaterThan{T}` and `US = MOI.LessThan{T}`,
 * `S = MOI.EqualTo{T}`, `LS = MOI.GreaterThan{T}` and `US = MOI.LessThan{T}`, or
-* `S = MOI.Zeros`, `LS = MOI.Nonnegatives` and `US = MOI.Nonpositives`.
+* `S = MOI.Zeros`, `LS = MOI.NonnegativeCone` and `US = MOI.Nonpositives`.
 
 For instance, if `F` is `MOI.ScalarAffineFunction` and `S` is `MOI.Interval`,
 it transforms the constraint ``l ≤ ⟨a, x⟩ + α ≤ u`` into the constraints
@@ -79,7 +79,7 @@ function concrete_bridge_type(
     F::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.Zeros},
 ) where {T}
-    return SplitIntervalBridge{T,F,MOI.Zeros,MOI.Nonnegatives,MOI.Nonpositives}
+    return SplitIntervalBridge{T,F,MOI.Zeros,MOI.NonnegativeCone,MOI.Nonpositives}
 end
 
 # Attributes, Bridge acting as a model

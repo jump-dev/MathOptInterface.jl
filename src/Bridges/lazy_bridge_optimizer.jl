@@ -194,7 +194,7 @@ function node(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
         if FF !== nothing
             # We assume the distance of the variable node `MOI.Reals` is `1`,
             # i.e. it is bridged by `Variable.FreeBridge` and then
-            # the distance of `MOI.Nonnegatives` is zero.
+            # the distance of `MOI.NonnegativeCone` is zero.
             # We also use the functionize bridge which has cost 1.
             # And we add `+1` as we treat constrained variables as constraints.
             set_variable_constraint_node(

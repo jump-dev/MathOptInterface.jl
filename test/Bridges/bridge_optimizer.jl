@@ -132,7 +132,7 @@ MOIU.@model(
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
     (
         MOI.Zeros,
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
         MOI.Nonpositives,
         MOI.NormInfinityCone,
         MOI.NormOneCone,
@@ -357,17 +357,17 @@ end
         )) == scon_indices
     end
 
-    vcon_indices = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}[]
+    vcon_indices = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.NonnegativeCone}[]
     for (i, v) in enumerate(z)
         f = MOI.VectorOfVariables([v])
-        c = MOI.add_constraint(model, f, MOI.Nonnegatives(1))
+        c = MOI.add_constraint(model, f, MOI.NonnegativeCone(1))
         push!(vcon_indices, c)
 
         @test Set(MOI.get(model, MOI.ListOfConstraintTypesPresent())) == Set([
             (MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}),
             (MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}),
             (MOI.SingleVariable, MOI.Interval{Int}),
-            (MOI.VectorOfVariables, MOI.Nonnegatives),
+            (MOI.VectorOfVariables, MOI.NonnegativeCone),
         ])
         _test_num_constraints(
             model,
@@ -387,7 +387,7 @@ end
             MOI.Interval{Int},
             n + 2,
         )
-        _test_num_constraints(model, MOI.VectorOfVariables, MOI.Nonnegatives, i)
+        _test_num_constraints(model, MOI.VectorOfVariables, MOI.NonnegativeCone, i)
         @test (@inferred MOI.get(
             model,
             MOI.ListOfConstraintIndices{
@@ -411,7 +411,7 @@ end
             model,
             MOI.ListOfConstraintIndices{
                 MOI.VectorOfVariables,
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         )) == vcon_indices
     end
@@ -422,7 +422,7 @@ end
     @test Set(MOI.get(model, MOI.ListOfConstraintTypesPresent())) == Set([
         (MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}),
         (MOI.SingleVariable, MOI.Interval{Int}),
-        (MOI.VectorOfVariables, MOI.Nonnegatives),
+        (MOI.VectorOfVariables, MOI.NonnegativeCone),
     ])
     _test_num_constraints(
         model,
@@ -437,7 +437,7 @@ end
         1,
     )
     _test_num_constraints(model, MOI.SingleVariable, MOI.Interval{Int}, n + 2)
-    _test_num_constraints(model, MOI.VectorOfVariables, MOI.Nonnegatives, n)
+    _test_num_constraints(model, MOI.VectorOfVariables, MOI.NonnegativeCone, n)
     @test (@inferred MOI.get(
         model,
         MOI.ListOfConstraintIndices{
@@ -452,7 +452,7 @@ end
     )) == scon_indices
     @test (@inferred MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonnegatives}(),
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.NonnegativeCone}(),
     )) == vcon_indices
 end
 

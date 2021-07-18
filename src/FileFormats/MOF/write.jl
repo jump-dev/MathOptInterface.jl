@@ -264,7 +264,7 @@ head_name(::Type{<:MOI.Semicontinuous}) = "Semicontinuous"
 # ========== Non-typed vector sets ==========
 head_name(::Type{MOI.Zeros}) = "Zeros"
 head_name(::Type{MOI.Reals}) = "Reals"
-head_name(::Type{MOI.Nonnegatives}) = "Nonnegatives"
+head_name(::Type{MOI.NonnegativeCone}) = "NonnegativeCone"
 head_name(::Type{MOI.Nonpositives}) = "Nonpositives"
 head_name(::Type{MOI.SecondOrderCone}) = "SecondOrderCone"
 head_name(::Type{MOI.RotatedSecondOrderCone}) = "RotatedSecondOrderCone"

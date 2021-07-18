@@ -12,7 +12,7 @@ MOI.Utilities.@model(
     (
         MOI.Reals,
         MOI.Zeros,
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
         MOI.Nonpositives,
         MOI.SecondOrderCone,
         MOI.RotatedSecondOrderCone,

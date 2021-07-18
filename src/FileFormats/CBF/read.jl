@@ -65,7 +65,7 @@ function _cbf_to_moi_cone(
     elseif cone_str == "L-"
         return MOI.Nonpositives(cone_dim)
     elseif cone_str == "L+"
-        return MOI.Nonnegatives(cone_dim)
+        return MOI.NonnegativeCone(cone_dim)
     elseif cone_str == "Q"
         @assert cone_dim >= 2
         return MOI.SecondOrderCone(cone_dim)

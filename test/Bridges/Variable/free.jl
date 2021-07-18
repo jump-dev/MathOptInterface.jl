@@ -57,14 +57,14 @@ bridged_mock = MOIB.Variable.Free{Float64}(mock)
                 mock,
                 MOI.ListOfConstraintIndices{
                     MOI.VectorOfVariables,
-                    MOI.Nonnegatives,
+                    MOI.NonnegativeCone,
                 }(),
             ),
             ["nonneg"],
         )
         s = """
         variables: xpos, xneg
-        nonneg: [xpos, xneg] in MathOptInterface.Nonnegatives(2)
+        nonneg: [xpos, xneg] in MathOptInterface.NonnegativeCone(2)
         c: [4.0xpos + -4.0xneg + -1.0, 3.0xpos + -3.0xneg + -1.0] in MathOptInterface.Nonpositives(2)
         maxobjective: xpos + -1.0xneg
         """
@@ -123,7 +123,7 @@ end
         MOI.Reals,
         2,
         (
-            (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
+            (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
             (MOI.VectorOfVariables, MOI.Nonpositives, 0),
         ),
     )
@@ -133,7 +133,7 @@ end
         MOI.Reals,
         1,
         (
-            (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
+            (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
             (MOI.VectorOfVariables, MOI.Nonpositives, 0),
         ),
     )
@@ -150,7 +150,7 @@ end
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
                 mock,
                 [100, 0, 0, 100],
-                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+                (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                     [[1.0]],
                 (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) =>
                     [[-1.0]],
@@ -240,14 +240,14 @@ end
                 mock,
                 MOI.ListOfConstraintIndices{
                     MOI.VectorOfVariables,
-                    MOI.Nonnegatives,
+                    MOI.NonnegativeCone,
                 }(),
             ),
             ["nonneg"],
         )
         s = """
         variables: v1pos, v2pos, v1neg, v2neg
-        nonneg: [v1pos, v2pos, v1neg, v2neg] in MathOptInterface.Nonnegatives(4)
+        nonneg: [v1pos, v2pos, v1neg, v2neg] in MathOptInterface.NonnegativeCone(4)
         c1: v1pos + -1.0v1neg + v2pos + -1.0v2neg >= 1.0
         c2: v1pos + -1.0v1neg + v2pos + -1.0v2neg <= 2.0
         minobjective: v1pos + -1.0v1neg + v2pos + -1.0v2neg
@@ -276,7 +276,7 @@ end
         MOI.Reals,
         2,
         (
-            (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
+            (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
             (MOI.VectorOfVariables, MOI.Nonpositives, 0),
         ),
         used_bridges = 0,
@@ -288,7 +288,7 @@ end
         MOI.Reals,
         1,
         (
-            (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
+            (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
             (MOI.VectorOfVariables, MOI.Nonpositives, 0),
         ),
     )

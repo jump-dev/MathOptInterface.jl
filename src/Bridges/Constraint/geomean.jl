@@ -54,7 +54,7 @@ struct GeoMeanBridge{T,F,G,H} <: AbstractBridge
     xij::Vector{MOI.VariableIndex}
     tubc::CI{F,MOI.LessThan{T}}
     socrc::Vector{CI{G,MOI.RotatedSecondOrderCone}}
-    nonneg::Union{Nothing,CI{H,MOI.Nonnegatives}}
+    nonneg::Union{Nothing,CI{H,MOI.NonnegativeCone}}
 end
 
 function bridge_constraint(
@@ -81,7 +81,7 @@ function bridge_constraint(
             allow_modify_function = true,
         )
         nonneg =
-            MOI.add_constraint(model, f_scalars[2:end], MOI.Nonnegatives(1))
+            MOI.add_constraint(model, f_scalars[2:end], MOI.NonnegativeCone(1))
         return GeoMeanBridge{T,F,G,H}(d, xij, tubc, socrc, nonneg)
     end
 
@@ -147,7 +147,7 @@ function MOIB.added_constraint_types(
     return [
         (F, MOI.LessThan{T}),
         (G, MOI.RotatedSecondOrderCone),
-        (G, MOI.Nonnegatives),
+        (G, MOI.NonnegativeCone),
     ]
 end
 
@@ -184,7 +184,7 @@ end
 
 function MOI.get(
     b::GeoMeanBridge{T,F,G},
-    ::MOI.NumberOfConstraints{G,MOI.Nonnegatives},
+    ::MOI.NumberOfConstraints{G,MOI.NonnegativeCone},
 ) where {T,F,G}
     return (b.d > 2 ? 0 : 1)
 end
@@ -205,9 +205,9 @@ end
 
 function MOI.get(
     b::GeoMeanBridge{T,F,G,H},
-    ::MOI.ListOfConstraintIndices{H,MOI.Nonnegatives},
+    ::MOI.ListOfConstraintIndices{H,MOI.NonnegativeCone},
 ) where {T,F,G,H}
-    return (b.d > 2 ? MOI.ConstraintIndex{H,MOI.Nonnegatives}[] : [b.nonneg])
+    return (b.d > 2 ? MOI.ConstraintIndex{H,MOI.NonnegativeCone}[] : [b.nonneg])
 end
 
 # References

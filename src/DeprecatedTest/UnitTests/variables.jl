@@ -97,7 +97,7 @@ function delete_nonnegative_variables(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
-    v, cv = MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
+    v, cv = MOI.add_constrained_variables(model, MOI.NonnegativeCone(2))
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
     MOI.delete(model, v)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
@@ -106,7 +106,7 @@ function delete_nonnegative_variables(model::MOI.ModelLike, config::Config)
     @test !MOI.is_valid(model, v[2])
     @test_throws MOI.InvalidIndex(v[2]) MOI.delete(model, v[2])
     @test !MOI.is_valid(model, cv)
-    v, cv = MOI.add_constrained_variables(model, MOI.Nonnegatives(1))
+    v, cv = MOI.add_constrained_variables(model, MOI.NonnegativeCone(1))
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
     MOI.delete(model, v[1])
     @test !MOI.is_valid(model, v[1])
@@ -128,7 +128,7 @@ function update_dimension_nonnegative_variables(
     MOI.empty!(model)
     @test MOI.is_empty(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
-    v, cv = MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
+    v, cv = MOI.add_constrained_variables(model, MOI.NonnegativeCone(2))
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
     MOI.delete(model, v[1])
     @test !MOI.is_valid(model, v[1])
@@ -137,7 +137,7 @@ function update_dimension_nonnegative_variables(
     @test MOI.is_valid(model, v[2])
     @test MOI.get(model, MOI.ConstraintFunction(), cv) ==
           MOI.VectorOfVariables([v[2]])
-    @test MOI.get(model, MOI.ConstraintSet(), cv) == MOI.Nonnegatives(1)
+    @test MOI.get(model, MOI.ConstraintSet(), cv) == MOI.NonnegativeCone(1)
     MOI.delete(model, v[2])
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     @test !MOI.is_valid(model, v[1])

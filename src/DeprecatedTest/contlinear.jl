@@ -7,7 +7,7 @@ function linear1test(model::MOI.ModelLike, config::Config{T}) where {T}
     # simple 2 variable, 1 constraint problem
     # min -x
     # st   x + y <= 1   (x + y - 1 ∈ Nonpositives)
-    #       x, y >= 0   (x, y ∈ Nonnegatives)
+    #       x, y >= 0   (x, y ∈ NonnegativeCone)
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -1052,7 +1052,7 @@ function linear6test(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# Modify constants in Nonnegatives and Nonpositives
+# Modify constants in NonnegativeCone and Nonpositives
 function linear7test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
@@ -1081,7 +1081,7 @@ function linear7test(model::MOI.ModelLike, config::Config{T}) where {T}
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     @test MOI.supports_constraint(
         model,
@@ -1110,7 +1110,7 @@ function linear7test(model::MOI.ModelLike, config::Config{T}) where {T}
             [MOI.VectorAffineTerm{T}(1, MOI.ScalarAffineTerm{T}(one(T), x))],
             [zero(T)],
         ),
-        MOI.Nonnegatives(1),
+        MOI.NonnegativeCone(1),
     )
     c2 = MOI.add_constraint(
         model,
@@ -1150,7 +1150,7 @@ function linear7test(model::MOI.ModelLike, config::Config{T}) where {T}
                 ],
                 [-T(100)],
             ),
-            MOI.Nonnegatives(1),
+            MOI.NonnegativeCone(1),
         )
     end
     if config.solve

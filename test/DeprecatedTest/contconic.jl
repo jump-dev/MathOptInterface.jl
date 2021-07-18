@@ -19,7 +19,7 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1.0, 0.0, 2.0],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [[0, 2, 0]],
             (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-3, -1]],
         )
@@ -35,7 +35,7 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [-4, -3, 16, 0],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0]],
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) => [[0]],
             (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[0]],
             (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
                 [[7, 2, -4], [7]],
@@ -104,7 +104,7 @@ end
             [2, -1, -1, -1],
             (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) =>
                 [vcat(1, fill(-inv(3), 3))],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [fill(inv(3), 3)],
         )
     MOIT.norminf3test(mock, config)
@@ -141,7 +141,7 @@ end
             [4, -1, -1, -1],
             (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) =>
                 [vcat(1, fill(-1, 3))],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [ones(3)],
         )
     MOIT.normone3test(mock, config)
@@ -170,7 +170,7 @@ end
             (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
                 [[√2, 1, -1]],
             (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[√2]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [[1.0]],
         )
     MOIT.soc2ntest(mock, config)
@@ -245,7 +245,7 @@ end
             [1.0; zeros(n - 1); ub; √ub; ones(2)],
             (MOI.SingleVariable, MOI.EqualTo{Float64}) =>
                 [-√ub / 4, -√ub / 4],
-            (MOI.VectorOfVariables, MOI.Nonnegatives) => [zeros(n)],
+            (MOI.VectorOfVariables, MOI.NonnegativeCone) => [zeros(n)],
             (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0.0],
             (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1 / (2 * √ub)],
             (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [
@@ -359,7 +359,7 @@ end
                 [-1.0, exp(-0.3) * 0.3],
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
                 [-exp(-0.3) * 0.3],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) => [
                 [0.0, exp(-0.3), exp(-0.3) / 2],
                 [0.0, 0.0, exp(-0.3) / 2],
             ],
@@ -581,7 +581,7 @@ end
             mock,
             [0, 1, 0, 1, 1],
             (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [[1, 1]],
             (MOI.VectorOfVariables, MOI.LogDetConeTriangle) =>
                 [[-1, -2, 1, 0, 1]],
@@ -593,7 +593,7 @@ end
             mock,
             [0, 1, 0, 1, 1],
             (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [[1, 1]],
             (MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle) =>
                 [[-1, -2, 1, 0, 1]],
@@ -612,7 +612,7 @@ end
             mock,
             [0, 1, 0, 0, 1, 1],
             (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [[1, 1]],
             (MOI.VectorOfVariables, MOI.LogDetConeSquare) =>
                 [[-1, -2, 1, 0, 0, 1]],
@@ -624,7 +624,7 @@ end
             mock,
             [0, 1, 0, 0, 1, 1],
             (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [[1, 1]],
             (MOI.VectorAffineFunction{Float64}, MOI.LogDetConeSquare) =>
                 [[-1, -2, 1, 0, 0, 1]],
@@ -644,7 +644,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1, 1, 0, 1],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [[0.5, 0.5]],
             (MOI.VectorOfVariables, MOI.RootDetConeTriangle) =>
                 [[-1.0, 0.5, 0.0, 0.5]],
@@ -654,7 +654,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1, 1, 0, 1],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [[0.5, 0.5]],
             (MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle) =>
                 [[-1.0, 0.5, 0.0, 0.5]],
@@ -672,7 +672,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1, 1, 0, 0, 1],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [[0.5, 0.5]],
             (MOI.VectorOfVariables, MOI.RootDetConeSquare) =>
                 [[-1.0, 0.5, 0.0, 0.0, 0.5]],
@@ -682,7 +682,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1, 1, 0, 0, 1],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [[0.5, 0.5]],
             (MOI.VectorAffineFunction{Float64}, MOI.RootDetConeSquare) =>
                 [[-1.0, 0.5, 0.0, 0.0, 0.5]],

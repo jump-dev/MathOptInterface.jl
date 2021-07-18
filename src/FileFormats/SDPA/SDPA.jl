@@ -11,7 +11,7 @@ MOI.Utilities.@model(
     Model,
     (),
     (),
-    (MOI.Nonnegatives, MOI.PositiveSemidefiniteConeTriangle),
+    (MOI.NonnegativeCone, MOI.PositiveSemidefiniteConeTriangle),
     (),
     (),
     (),
@@ -110,7 +110,7 @@ function Base.write(io::IO, model::Model{T}) where {T}
         end
     end
 
-    nonneg = model_cons(MOI.VectorAffineFunction{T}, MOI.Nonnegatives)
+    nonneg = model_cons(MOI.VectorAffineFunction{T}, MOI.NonnegativeCone)
     psd = model_cons(
         MOI.VectorAffineFunction{T},
         MOI.PositiveSemidefiniteConeTriangle,
@@ -252,7 +252,7 @@ function Base.read!(io::IO, model::Model{T}) where {T}
         if block_dim > 0
             return MOI.PositiveSemidefiniteConeTriangle(block_dim)
         else
-            return MOI.Nonnegatives(-block_dim)
+            return MOI.NonnegativeCone(-block_dim)
         end
     end
     objective_read = false

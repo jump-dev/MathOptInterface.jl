@@ -3,9 +3,9 @@
 
 Transforms a constrained variable in `scalar_set_type(S, T)` where
 `S <: VectorLinearSet` into a constrained vector of one variable in `S`. For
-instance, `VectorizeBridge{Float64, MOI.Nonnegatives}` transforms a constrained
+instance, `VectorizeBridge{Float64, MOI.NonnegativeCone}` transforms a constrained
 variable in `MOI.GreaterThan{Float64}` into a constrained vector of one
-variable in `MOI.Nonnegatives`.
+variable in `MOI.NonnegativeCone`.
 """
 mutable struct VectorizeBridge{T,S} <: AbstractBridge
     variable::MOI.VariableIndex

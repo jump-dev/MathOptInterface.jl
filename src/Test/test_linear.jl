@@ -1283,7 +1283,7 @@ function test_linear_VectorAffineFunction(
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     @requires MOI.supports_constraint(
         model,
@@ -1310,7 +1310,7 @@ function test_linear_VectorAffineFunction(
             [MOI.VectorAffineTerm{T}(1, MOI.ScalarAffineTerm{T}(one(T), x))],
             [zero(T)],
         ),
-        MOI.Nonnegatives(1),
+        MOI.NonnegativeCone(1),
     )
     c2 = MOI.add_constraint(
         model,
@@ -1350,7 +1350,7 @@ function test_linear_VectorAffineFunction(
                 ],
                 [-T(100)],
             ),
-            MOI.Nonnegatives(1),
+            MOI.NonnegativeCone(1),
         )
     end
     if _supports(config, MOI.optimize!)

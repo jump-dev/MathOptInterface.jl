@@ -1,12 +1,12 @@
 const _NonnegToNonposMap{T} =
     Union{Variable.NonposToNonnegBridge{T},Constraint.NonnegToNonposBridge{T}}
 
-function map_set(::Type{<:_NonnegToNonposMap}, set::MOI.Nonnegatives)
+function map_set(::Type{<:_NonnegToNonposMap}, set::MOI.NonnegativeCone)
     return MOI.Nonpositives(set.dimension)
 end
 
 function inverse_map_set(::Type{<:_NonnegToNonposMap}, set::MOI.Nonpositives)
-    return MOI.Nonnegatives(set.dimension)
+    return MOI.NonnegativeCone(set.dimension)
 end
 
 const _FlipSignMap{T} =

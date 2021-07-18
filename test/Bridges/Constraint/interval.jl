@@ -204,7 +204,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1.0, 0.0, 2.0],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [[0.0, 0.0]],
             (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) =>
                 [[-3, -1]],
@@ -226,7 +226,7 @@ end
         ci,
         3,
         (
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0),
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone, 0),
             (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives, 0),
         ),
     )

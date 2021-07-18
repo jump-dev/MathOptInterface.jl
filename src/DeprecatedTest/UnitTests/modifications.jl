@@ -248,7 +248,7 @@ modificationtests["solve_func_scalaraffine_lessthan"] =
 """
     solve_func_vectoraffine_nonneg(model::MOI.ModelLike, config::Config)
 
-Test setting the function in a VectorAffineFunction-in-Nonnegatives
+Test setting the function in a VectorAffineFunction-in-NonnegativeCone
 constraint. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
@@ -259,7 +259,7 @@ function solve_func_vectoraffine_nonneg(model::MOI.ModelLike, config::Config)
         """
     variables: x, y
     minobjective: 1.0x + 2.0y
-    c: [1.0x, 2.0y] in Nonnegatives(2)
+    c: [1.0x, 2.0y] in NonnegativeCone(2)
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")

@@ -136,23 +136,23 @@ end
         T,
         F<:MOI.AbstractVectorFunction,
         G<:MOI.AbstractVectorFunction
-    } <: FlipSignBridge{T, MOI.Nonnegatives, MOI.Nonpositives, F, G}
+    } <: FlipSignBridge{T, MOI.NonnegativeCone, MOI.Nonpositives, F, G}
 
-Transforms a `G`-in-`Nonnegatives` constraint into a `F`-in-`Nonpositives`
+Transforms a `G`-in-`NonnegativeCone` constraint into a `F`-in-`Nonpositives`
 constraint.
 """
 mutable struct NonnegToNonposBridge{
     T,
     F<:MOI.AbstractVectorFunction,
     G<:MOI.AbstractVectorFunction,
-} <: FlipSignBridge{T,MOI.Nonnegatives,MOI.Nonpositives,F,G}
+} <: FlipSignBridge{T,MOI.NonnegativeCone,MOI.Nonpositives,F,G}
     constraint::CI{F,MOI.Nonpositives}
 end
 
 function concrete_bridge_type(
     ::Type{<:NonnegToNonposBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
-    ::Type{MOI.Nonnegatives},
+    ::Type{MOI.NonnegativeCone},
 ) where {T}
     F = MOIU.promote_operation(-, T, G)
     return NonnegToNonposBridge{T,F,G}
@@ -163,26 +163,26 @@ end
         T,
         F<:MOI.AbstractVectorFunction,
         G<:MOI.AbstractVectorFunction,
-    } <: FlipSignBridge{T, MOI.Nonpositives, MOI.Nonnegatives, F, G}
+    } <: FlipSignBridge{T, MOI.Nonpositives, MOI.NonnegativeCone, F, G}
 
-Transforms a `G`-in-`Nonpositives` constraint into a `F`-in-`Nonnegatives`
+Transforms a `G`-in-`Nonpositives` constraint into a `F`-in-`NonnegativeCone`
 constraint.
 """
 mutable struct NonposToNonnegBridge{
     T,
     F<:MOI.AbstractVectorFunction,
     G<:MOI.AbstractVectorFunction,
-} <: FlipSignBridge{T,MOI.Nonpositives,MOI.Nonnegatives,F,G}
-    constraint::CI{F,MOI.Nonnegatives}
+} <: FlipSignBridge{T,MOI.Nonpositives,MOI.NonnegativeCone,F,G}
+    constraint::CI{F,MOI.NonnegativeCone}
 end
 
 function MOIB.map_set(::Type{<:NonposToNonnegBridge}, set::MOI.Nonpositives)
-    return MOI.Nonnegatives(set.dimension)
+    return MOI.NonnegativeCone(set.dimension)
 end
 
 function MOIB.inverse_map_set(
     ::Type{<:NonposToNonnegBridge},
-    set::MOI.Nonnegatives,
+    set::MOI.NonnegativeCone,
 )
     return MOI.Nonpositives(set.dimension)
 end

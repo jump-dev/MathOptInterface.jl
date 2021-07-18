@@ -31,7 +31,7 @@ function _set_var_and_con_names(model::MOI.ModelLike)
     for S in [
             MOI.Reals,
             MOI.Zeros,
-            MOI.Nonnegatives,
+            MOI.NonnegativeCone,
             MOI.Nonpositives,
             MOI.SecondOrderCone,
             MOI.RotatedSecondOrderCone,
@@ -224,11 +224,11 @@ const _WRITE_READ_MODELS = [
 """,
     ),
     (
-        "VectorOfVariables in Nonnegatives",
+        "VectorOfVariables in NonnegativeCone",
         """
     variables: x, y
     minobjective: x
-    c1: [x, y] in Nonnegatives(2)
+    c1: [x, y] in NonnegativeCone(2)
 """,
     ),
     (
@@ -256,11 +256,11 @@ const _WRITE_READ_MODELS = [
 """,
     ),
     (
-        "VectorAffineFunction in Nonnegatives",
+        "VectorAffineFunction in NonnegativeCone",
         """
     variables: x, y
     minobjective: 1.2x
-    c1: [1.1 * x, y + 1] in Nonnegatives(2)
+    c1: [1.1 * x, y + 1] in NonnegativeCone(2)
 """,
     ),
     (
@@ -408,7 +408,7 @@ const _EXAMPLE_MODELS = [
     variables: X, Y, Z, x, y
     minobjective: 1 + x + y + X + Z
     c1: [X, Y, Z] in PositiveSemidefiniteConeTriangle(2)
-    c2: [2Y + -1x + -1y] in Nonnegatives(1)
+    c2: [2Y + -1x + -1y] in NonnegativeCone(1)
     c3: [3y + -1, x + y, 3x + -1] in PositiveSemidefiniteConeTriangle(2)
 """,
     ),
@@ -418,7 +418,7 @@ const _EXAMPLE_MODELS = [
     variables: a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p
     maxobjective: a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + -1
     c1: [b] in Zeros(1)
-    c2: [c] in Nonnegatives(1)
+    c2: [c] in NonnegativeCone(1)
     c3: [d] in Nonpositives(1)
     c4: [e, f, g] in SecondOrderCone(3)
     c5: [h, i, j] in RotatedSecondOrderCone(3)

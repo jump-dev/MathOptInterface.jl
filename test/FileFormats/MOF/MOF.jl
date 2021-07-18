@@ -556,7 +556,7 @@ function test_Nonnegatives()
         """
 variables: x, y, z
 minobjective: x
-c1: [x, y, z] in Nonnegatives(3)
+c1: [x, y, z] in NonnegativeCone(3)
 """,
         ["x", "y", "z"],
         ["c1"],
@@ -636,7 +636,7 @@ function test_vectorquadratic_in_nonnegatives()
         """
 variables: x, y
 minobjective: x
-c1: [1.0*x*x + -2.0x + 1.0, 2.0y + -4.0] in Nonnegatives(2)
+c1: [1.0*x*x + -2.0x + 1.0, 2.0y + -4.0] in NonnegativeCone(2)
 """,
         ["x", "y"],
         ["c1"],

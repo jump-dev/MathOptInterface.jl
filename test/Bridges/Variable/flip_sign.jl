@@ -63,7 +63,7 @@ config = MOIT.Config()
             mock,
             MOI.ListOfConstraintIndices{
                 MathOptInterface.VectorOfVariables,
-                MathOptInterface.Nonnegatives,
+                MathOptInterface.NonnegativeCone,
             }(),
         )
         con_ex = MOI.get(
@@ -98,8 +98,8 @@ config = MOIT.Config()
             s = """
             variables: x, y, z, w
             cw: [w] in MathOptInterface.Zeros(1)
-            cy: [y] in MathOptInterface.Nonnegatives(1)
-            cz: [z] in MathOptInterface.Nonnegatives(1)
+            cy: [y] in MathOptInterface.NonnegativeCone(1)
+            cz: [z] in MathOptInterface.NonnegativeCone(1)
             cex: [1*x + -1*w + 4.0, -1*y + 3.0, 1*x + 1*z + -12.0] in MathOptInterface.Zeros(3)
             minobjective: 3*x + -2*y + -4*z
             """
@@ -118,7 +118,7 @@ config = MOIT.Config()
             variables: x, z, w, v
             cv: [v] in MathOptInterface.Nonpositives(1)
             cw: [w] in MathOptInterface.Zeros(1)
-            cz: [z] in MathOptInterface.Nonnegatives(1)
+            cz: [z] in MathOptInterface.NonnegativeCone(1)
             cex: [1*x + -1*w + 4.0, 1*v + 3.0, 1*x + 1*z + -12.0] in MathOptInterface.Zeros(3)
             minobjective: 3*x + 2*v + -4*z
             """
@@ -156,7 +156,7 @@ config = MOIT.Config()
             vis[1],
             MOI.Nonpositives,
             1,
-            ((MOI.VectorOfVariables, MOI.Nonnegatives, 0),),
+            ((MOI.VectorOfVariables, MOI.NonnegativeCone, 0),),
         )
     end
 
@@ -169,7 +169,7 @@ config = MOIT.Config()
             vis[2],
             MOI.Nonpositives,
             4,
-            ((MOI.VectorOfVariables, MOI.Nonnegatives, 0),),
+            ((MOI.VectorOfVariables, MOI.NonnegativeCone, 0),),
             used_bridges = 0,
             used_constraints = 0,
         )
