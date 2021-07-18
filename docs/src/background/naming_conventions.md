@@ -26,5 +26,6 @@ following conventions:
   and convex programming only have such names.
 * As much as possible, the names should follow established conventions in the 
   domain where this set is used: for instance, convex sets should have names 
-  close to those of CVX, and constraint-programming sets should follow 
-  MiniZinc's constraints.
+  close to those of [CVX](http://web.cvxr.com/cvx/doc/), and 
+  constraint-programming sets should follow 
+  [MiniZinc](https://www.minizinc.org/doc-latest/en/)'s constraints.
