@@ -551,7 +551,7 @@ function indicator1_test(model::MOI.ModelLike, config::Config)
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
     )
     x1 = MOI.add_variable(model)
     x2 = MOI.add_variable(model)
@@ -566,7 +566,7 @@ function indicator1_test(model::MOI.ModelLike, config::Config)
         ],
         [0.0, 0.0],
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
+    iset1 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
     MOI.add_constraint(model, f1, iset1)
     f2 = MOI.VectorAffineFunction(
         [
@@ -576,7 +576,7 @@ function indicator1_test(model::MOI.ModelLike, config::Config)
         ],
         [0.0, 0.0],
     )
-    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
+    iset2 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
     MOI.add_constraint(model, f2, iset2)
     # Additional regular constraint.
     MOI.add_constraint(
@@ -648,7 +648,7 @@ function indicator2_test(model::MOI.ModelLike, config::Config)
         ],
         [0.0, 0.0],
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
+    iset1 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
     MOI.add_constraint(model, f1, iset1)
     f2 = MOI.VectorAffineFunction(
         [
@@ -658,7 +658,7 @@ function indicator2_test(model::MOI.ModelLike, config::Config)
         ],
         [0.0, 0.0],
     )
-    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
+    iset2 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
     MOI.add_constraint(model, f2, iset2)
     # additional regular constraint
     MOI.add_constraint(
@@ -737,7 +737,7 @@ function indicator3_test(model::MOI.ModelLike, config::Config)
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
     )
     x1 = MOI.add_variable(model)
     x2 = MOI.add_variable(model)
@@ -754,7 +754,7 @@ function indicator3_test(model::MOI.ModelLike, config::Config)
         ],
         [0.0, 0.0],
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO}(MOI.LessThan(8.0))
+    iset1 = MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(MOI.LessThan(8.0))
     MOI.add_constraint(model, f1, iset1)
     f2 = MOI.VectorAffineFunction(
         [
@@ -764,7 +764,7 @@ function indicator3_test(model::MOI.ModelLike, config::Config)
         ],
         [0.0, 0.0],
     )
-    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
+    iset2 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
     MOI.add_constraint(model, f2, iset2)
     # Additional regular constraint.
     MOI.add_constraint(
@@ -842,7 +842,7 @@ function indicator4_test(model::MOI.ModelLike, config::Config)
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
     )
     x1 = MOI.add_variable(model)
     x2 = MOI.add_variable(model)
@@ -857,7 +857,7 @@ function indicator4_test(model::MOI.ModelLike, config::Config)
         ],
         [0.0, -1.0],
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(7.0))
+    iset1 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(7.0))
     MOI.add_constraint(model, f1, iset1)
     f2 = MOI.VectorAffineFunction(
         [
@@ -867,7 +867,7 @@ function indicator4_test(model::MOI.ModelLike, config::Config)
         ],
         [0.0, 1.0],
     )
-    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(10.0))
+    iset2 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(10.0))
     MOI.add_constraint(model, f2, iset2)
     # Additional regular constraint.
     MOI.add_constraint(

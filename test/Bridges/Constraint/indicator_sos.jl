@@ -35,7 +35,7 @@ include("../utilities.jl")
         ],
         [0.0, 0.0],
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
+    iset1 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
 
     f2 = MOI.VectorAffineFunction(
         [
@@ -45,7 +45,7 @@ include("../utilities.jl")
         ],
         [0.0, 0.0],
     )
-    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.EqualTo(9.0))
+    iset2 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.EqualTo(9.0))
 
     f3 = MOI.VectorAffineFunction(
         [
@@ -54,7 +54,7 @@ include("../utilities.jl")
         ],
         [0.0, 0.0],
     )
-    iset3 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.GreaterThan(5.0))
+    iset3 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.GreaterThan(5.0))
 
     BT1 = MOIB.Constraint.concrete_bridge_type(
         MOIB.Constraint.IndicatorSOS1Bridge{Float64},
@@ -175,7 +175,7 @@ end
             include = [
                 (
                     MOI.VectorAffineFunction{Float64},
-                    MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,BC},
+                    MOI.Indicator{MOI.ACTIVATE_ON_ONE,BC},
                 ),
             ],
         )
@@ -204,7 +204,7 @@ end
         ],
         [0.0, 0.0],
     )
-    iset = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
+    iset = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
     ci = MOI.add_constraint(bridged_mock, f, iset)
     @test length(MOI.get(mock, MOI.ListOfVariableIndices())) == 3
     MOI.set(
@@ -300,7 +300,7 @@ end
         ],
         [0.0, 0.0],
     )
-    iset = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
+    iset = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
     BT = MOIB.Constraint.concrete_bridge_type(
         MOIB.Constraint.IndicatorSOS1Bridge{Float64},
         typeof(f),
@@ -326,7 +326,7 @@ end
         MOI.get(mock, MOI.ConstraintPrimalStart(), bridge1) .≈
         (1.0, affine_value - w_value),
     )
-    iseteq = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.EqualTo(8.0))
+    iseteq = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.EqualTo(8.0))
     BT = MOIB.Constraint.concrete_bridge_type(
         MOIB.Constraint.IndicatorSOS1Bridge{Float64},
         typeof(f),

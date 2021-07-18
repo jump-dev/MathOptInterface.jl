@@ -1539,7 +1539,7 @@ function MOIB.Constraint.concrete_bridge_type(
 end
 
 const LessThanIndicatorSetOne{T} =
-    MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}
+    MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}
 MOIU.@model(
     ModelNoZeroIndicator,
     (MOI.ZeroOne, MOI.Integer),
@@ -1843,12 +1843,12 @@ end
     @test !MOI.supports_constraint(
         mock_indicator,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{Float64}},
     )
     @test MOI.supports_constraint(
         full_bridged_mock_indicator,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{Float64}},
     )
 
     mock_sos_indicator = MOIU.MockOptimizer(ModelNoIndicator{Float64}())
@@ -1857,22 +1857,22 @@ end
     @test !MOI.supports_constraint(
         mock_sos_indicator,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
     )
     @test !MOI.supports_constraint(
         mock_sos_indicator,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.EqualTo{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.EqualTo{Float64}},
     )
     @test MOI.supports_constraint(
         full_bridged_mock_sos_indicator,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
     )
     @test MOI.supports_constraint(
         full_bridged_mock_sos_indicator,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.EqualTo{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.EqualTo{Float64}},
     )
 
     @testset "Unslack" begin
