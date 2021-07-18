@@ -887,9 +887,9 @@ for (loop_name, loop_super_type) in [
 end
 
 const LessThanIndicatorSetOne{T} =
-    MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}
+    MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}
 const LessThanIndicatorSetZero{T} =
-    MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{T}}
+    MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{T}}
 
 @model(
     Model,

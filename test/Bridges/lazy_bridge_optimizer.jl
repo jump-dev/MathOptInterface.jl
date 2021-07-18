@@ -1535,8 +1535,8 @@ function MOI.Bridges.Constraint.concrete_bridge_type(
     return BridgeAddingNoConstraint{T}
 end
 
-const LessThanIndicatorSetOne{T} =
-    MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}
+const LessThanIndicatorOne{T} =
+    MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}
 
 MOI.Utilities.@model(
     ModelNoZeroIndicator,
@@ -1576,7 +1576,7 @@ MOI.Utilities.@model(
         MOI.DualPowerCone,
         MOI.SOS1,
         MOI.SOS2,
-        LessThanIndicatorSetOne,
+        LessThanIndicatorOne,
     ),
     (),
     (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
@@ -1865,12 +1865,12 @@ function test_supports()
     @test !MOI.supports_constraint(
         mock_indicator,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{Float64}},
     )
     @test MOI.supports_constraint(
         full_bridged_mock_indicator,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{Float64}},
     )
 
     mock_sos_indicator =
@@ -1880,22 +1880,22 @@ function test_supports()
     @test !MOI.supports_constraint(
         mock_sos_indicator,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
     )
     @test !MOI.supports_constraint(
         mock_sos_indicator,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.EqualTo{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.EqualTo{Float64}},
     )
     @test MOI.supports_constraint(
         full_bridged_mock_sos_indicator,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
     )
     @test MOI.supports_constraint(
         full_bridged_mock_sos_indicator,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.EqualTo{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.EqualTo{Float64}},
     )
     for T in [Float64, Int]
         no_variable_mock = MOI.Utilities.MockOptimizer(NoVariableModel{T}())

@@ -64,7 +64,7 @@ MOI.Utilities.@model(
     (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
 )
 
-# IndicatorSet is handled by UniversalFallback.
+# Indicator is handled by UniversalFallback.
 
 const Model = MOI.Utilities.UniversalFallback{InnerModel{Float64}}
 

@@ -143,19 +143,19 @@ const BasicConstraintTests = Dict(
     (MOI.VectorAffineFunction{Float64}, MOI.PositiveSemidefiniteConeSquare) => (dummy_vector_affine, 9, MOI.PositiveSemidefiniteConeSquare(3)),
     (
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
     ) => (
         dummy_vector_affine,
         2,
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(3.0)),
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(3.0)),
     ),
     (
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{Float64}},
     ) => (
         dummy_vector_affine,
         2,
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.GreaterThan(3.0)),
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.GreaterThan(3.0)),
     ),
     (MOI.VectorQuadraticFunction{Float64}, MOI.Zeros) =>
         (dummy_vector_quadratic, 2, MOI.Zeros(2)),

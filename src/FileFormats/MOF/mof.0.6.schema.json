@@ -769,11 +769,11 @@
                 }
             }, {
                 "description": "If `activate_on=one`: (y, x) ∈ {0,1}×Rᴺ: y = 0 ⟹ x ∈ S, otherwise when `activate_on=zero`: (y, x) ∈ {0,1}×Rᴺ: y = 1 ⟹ x ∈ S.",
-                "examples": ["{\"type\": \"IndicatorSet\", \"set\": {\"type\": \"LessThan\", \"upper\": 2.0}, \"activate_on\": \"one\"}"],
+                "examples": ["{\"type\": \"Indicator\", \"set\": {\"type\": \"LessThan\", \"upper\": 2.0}, \"activate_on\": \"one\"}"],
                 "required": ["set", "activate_on"],
                 "properties": {
                     "type": {
-                        "const": "IndicatorSet"
+                        "const": "Indicator"
                     },
                     "set": {
                         "oneOf": [{

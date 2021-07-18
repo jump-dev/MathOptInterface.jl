@@ -768,7 +768,7 @@ function test_IndicatorSet()
         """
 variables: x, y
 minobjective: x
-c1: [x, y] in IndicatorSet{ACTIVATE_ON_ONE}(GreaterThan(1.0))
+c1: [x, y] in Indicator{ACTIVATE_ON_ONE}(GreaterThan(1.0))
 """,
         ["x", "y"],
         ["c1"],
@@ -778,7 +778,7 @@ c1: [x, y] in IndicatorSet{ACTIVATE_ON_ONE}(GreaterThan(1.0))
         """
 variables: x, y
 minobjective: x
-c1: [x, y] in IndicatorSet{ACTIVATE_ON_ZERO}(GreaterThan(1.0))
+c1: [x, y] in Indicator{ACTIVATE_ON_ZERO}(GreaterThan(1.0))
 """,
         ["x", "y"],
         ["c1"],
