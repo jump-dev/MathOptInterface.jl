@@ -371,7 +371,7 @@ function qcp1test(model::MOI.ModelLike, config::Config)
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     @test MOI.supports_constraint(
         model,
@@ -392,14 +392,14 @@ function qcp1test(model::MOI.ModelLike, config::Config)
             ),
             [0.0, 0.0],
         ),
-        MOI.Nonnegatives(2),
+        MOI.NonnegativeCone(2),
     )
     if config.query_number_of_constraints
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ) == 1
     end

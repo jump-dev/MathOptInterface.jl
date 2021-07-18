@@ -34,7 +34,7 @@ config = MOIT.Config()
                 MOI.VectorAffineFunction{Float64},
                 MOI.PositiveSemidefiniteConeTriangle,
             ) => [[√2 / 2, -1 / 2, √2 / 4, -1 / 2, √2 / 4, √2 / 4]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-√2]],
         )
     MOIT.soc1vtest(bridged_mock, config)
     MOIT.soc1ftest(bridged_mock, config)

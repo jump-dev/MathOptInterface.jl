@@ -23,7 +23,7 @@ config = MOIT.Config()
                 mock,
                 var_primal,
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1],
-                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+                (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                     [[1, 1]],
                 (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone) =>
                     exp_duals,
@@ -146,7 +146,7 @@ end
             (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
                 mock,
                 var_primal,
-                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+                (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                     [[0.5, 0.5]],
                 (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone) => [geomean_dual],
                 (

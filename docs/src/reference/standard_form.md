@@ -73,10 +73,10 @@ Semiinteger
 
 List of recognized vector sets.
 ```@docs
-Reals
+RealCone
 Zeros
-Nonnegatives
-Nonpositives
+NonnegativeCone
+NonpositiveCone
 NormInfinityCone
 NormOneCone
 SecondOrderCone

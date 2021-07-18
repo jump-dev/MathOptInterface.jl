@@ -17,10 +17,10 @@ function _precompile_()
         MOI.ScalarQuadraticFunction{T},
     )
     vector_sets = (
-        MOI.Nonnegatives,
-        MOI.Nonpositives,
-        MOI.Zeros,
-        MOI.Reals,
+        MOI.NonnegativeCone,
+        MOI.NonpositiveCone,
+        MOI.ZeroCone,
+        MOI.RealCone,
         MOI.SecondOrderCone,
         MOI.RotatedSecondOrderCone,
         MOI.PositiveSemidefiniteConeSquare,

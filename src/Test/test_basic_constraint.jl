@@ -77,9 +77,9 @@ function _set(::Type{T}, ::Type{MOI.Semiinteger}) where {T}
 end
 _set(::Type{T}, ::Type{MOI.SOS1}) where {T} = MOI.SOS1(convert.(T, 1:2))
 _set(::Type{T}, ::Type{MOI.SOS2}) where {T} = MOI.SOS2(convert.(T, 1:2))
-_set(::Type{MOI.Zeros}) = MOI.Zeros(2)
-_set(::Type{MOI.Nonpositives}) = MOI.Nonpositives(2)
-_set(::Type{MOI.Nonnegatives}) = MOI.Nonnegatives(2)
+_set(::Type{MOI.ZeroCone}) = MOI.ZeroCone(2)
+_set(::Type{MOI.NonpositiveCone}) = MOI.NonpositiveCone(2)
+_set(::Type{MOI.NonnegativeCone}) = MOI.NonnegativeCone(2)
 _set(::Type{MOI.NormInfinityCone}) = MOI.NormInfinityCone(3)
 _set(::Type{MOI.NormOneCone}) = MOI.NormOneCone(3)
 _set(::Type{MOI.SecondOrderCone}) = MOI.SecondOrderCone(3)
@@ -223,9 +223,9 @@ for s in [
     :Semiinteger,
     :SOS1,
     :SOS2,
-    :Zeros,
-    :Nonpositives,
-    :Nonnegatives,
+    :ZeroCone,
+    :NonpositiveCone,
+    :NonnegativeCone,
     :NormInfinityCone,
     :NormOneCone,
     :SecondOrderCone,

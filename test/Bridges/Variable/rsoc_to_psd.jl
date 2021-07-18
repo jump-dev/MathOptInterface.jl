@@ -58,7 +58,7 @@ bridged_mock = MOIB.Variable.RSOCtoPSD{Float64}(mock)
             mock,
             MOI.ListOfConstraintIndices{
                 MOI.VectorOfVariables,
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         )
         @test length(nonneg) == 1
@@ -66,7 +66,7 @@ bridged_mock = MOIB.Variable.RSOCtoPSD{Float64}(mock)
 
         s = """
         variables: a, b
-        cab: [a, b] in MathOptInterface.Nonnegatives(2)
+        cab: [a, b] in MathOptInterface.NonnegativeCone(2)
         c: a + 0.5b <= 1.0
         maxobjective: 0.5b
         """
@@ -102,7 +102,7 @@ bridged_mock = MOIB.Variable.RSOCtoPSD{Float64}(mock)
         MOI.RotatedSecondOrderCone,
         2,
         (
-            (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
+            (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
             (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle, 0),
             (MOI.SingleVariable, MOI.EqualTo{Float64}, 0),
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
@@ -248,7 +248,7 @@ end
             MOI.RotatedSecondOrderCone,
             4,
             (
-                (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
+                (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
                 (
                     MOI.VectorOfVariables,
                     MOI.PositiveSemidefiniteConeTriangle,

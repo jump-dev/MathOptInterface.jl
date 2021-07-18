@@ -480,7 +480,7 @@ function test_quadratic_constraint_integration(
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     @requires MOI.supports_constraint(
         model,
@@ -499,14 +499,14 @@ function test_quadratic_constraint_integration(
             ),
             [0.0, 0.0],
         ),
-        MOI.Nonnegatives(2),
+        MOI.NonnegativeCone(2),
     )
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         ) == 1
     end
@@ -598,7 +598,7 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1 / 2, 7 / 4],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                 [zeros(2)],
             (MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64}) =>
                 [-1.0],
@@ -1276,7 +1276,7 @@ function test_quadratic_Integer_SecondOrderCone(
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.Zeros,
+        MOI.ZeroCone,
     )
     @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
     @requires MOI.supports_constraint(
@@ -1300,7 +1300,7 @@ function test_quadratic_Integer_SecondOrderCone(
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
             [-1.0],
         ),
-        MOI.Zeros(1),
+        MOI.ZeroCone(1),
     )
     MOI.add_constraint(
         model,
@@ -1312,7 +1312,7 @@ function test_quadratic_Integer_SecondOrderCone(
             model,
             MOI.NumberOfConstraints{
                 MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
+                MOI.ZeroCone,
             }(),
         ) == 1
         @test MOI.get(
@@ -1322,7 +1322,7 @@ function test_quadratic_Integer_SecondOrderCone(
     end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
+    @test (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) in loc
     @test (MOI.VectorOfVariables, MOI.SecondOrderCone) in loc
     bin1 = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.ZeroOne())
     # We test this after the creation of every `SingleVariable` constraint

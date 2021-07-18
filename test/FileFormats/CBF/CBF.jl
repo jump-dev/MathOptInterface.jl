@@ -29,10 +29,10 @@ function _set_var_and_con_names(model::MOI.ModelLike)
         push!(single_variable_constraints, (x, MOI.Integer()))
     end
     for S in [
-            MOI.Reals,
-            MOI.Zeros,
-            MOI.Nonnegatives,
-            MOI.Nonpositives,
+            MOI.RealCone,
+            MOI.ZeroCone,
+            MOI.NonnegativeCone,
+            MOI.NonpositiveCone,
             MOI.SecondOrderCone,
             MOI.RotatedSecondOrderCone,
             MOI.PositiveSemidefiniteConeTriangle,
@@ -208,67 +208,67 @@ const _WRITE_READ_MODELS = [
 """,
     ),
     (
-        "VectorOfVariables in Zeros",
+        "VectorOfVariables in ZeroCone",
         """
     variables: x, y
     minobjective: x
-    c1: [x, y] in Zeros(2)
+    c1: [x, y] in ZeroCone(2)
 """,
     ),
     (
-        "VectorOfVariables in Reals",
+        "VectorOfVariables in RealCone",
         """
     variables: x, y
     minobjective: x
-    c1: [x, y] in Reals(2)
+    c1: [x, y] in RealCone(2)
 """,
     ),
     (
-        "VectorOfVariables in Nonnegatives",
+        "VectorOfVariables in NonnegativeCone",
         """
     variables: x, y
     minobjective: x
-    c1: [x, y] in Nonnegatives(2)
+    c1: [x, y] in NonnegativeCone(2)
 """,
     ),
     (
-        "VectorOfVariables in Nonpositives",
+        "VectorOfVariables in NonpositiveCone",
         """
     variables: x, y
     minobjective: x
-    c1: [y, x] in Nonpositives(2)
+    c1: [y, x] in NonpositiveCone(2)
 """,
     ),
     (
-        "VectorAffineFunction in Zeros",
+        "VectorAffineFunction in ZeroCone",
         """
     variables: x, y
     minobjective: 1.2x
-    c1: [x + 2y + -1.1, 0] in Zeros(2)
+    c1: [x + 2y + -1.1, 0] in ZeroCone(2)
 """,
     ),
     (
-        "VectorAffineFunction in Reals",
+        "VectorAffineFunction in RealCone",
         """
     variables: x, y
     minobjective: 1.2x
-    c1: [1x, 2y] in Reals(2)
+    c1: [1x, 2y] in RealCone(2)
 """,
     ),
     (
-        "VectorAffineFunction in Nonnegatives",
+        "VectorAffineFunction in NonnegativeCone",
         """
     variables: x, y
     minobjective: 1.2x
-    c1: [1.1 * x, y + 1] in Nonnegatives(2)
+    c1: [1.1 * x, y + 1] in NonnegativeCone(2)
 """,
     ),
     (
-        "VectorAffineFunction in Nonpositives",
+        "VectorAffineFunction in NonpositiveCone",
         """
     variables: x
     minobjective: 1.2x
-    c1: [-1.1 * x + 1] in Nonpositives(1)
+    c1: [-1.1 * x + 1] in NonpositiveCone(1)
 """,
     ),
     (
@@ -398,7 +398,7 @@ const _EXAMPLE_MODELS = [
     variables: U, V, W, X, Y, Z, x, y, z
     minobjective: y + 2U + 2V + 2W + 2Y + 2Z
     c1: [U, V, W, X, Y, Z] in PositiveSemidefiniteConeTriangle(3)
-    c2: [y + U + W + Z + -1, x + z + U + 2V + W + 2X + 2Y + Z + -0.5] in Zeros(2)
+    c2: [y + U + W + Z + -1, x + z + U + 2V + W + 2X + 2Y + Z + -0.5] in ZeroCone(2)
     c3: [y, x, z] in SecondOrderCone(3)
 """,
     ),
@@ -408,7 +408,7 @@ const _EXAMPLE_MODELS = [
     variables: X, Y, Z, x, y
     minobjective: 1 + x + y + X + Z
     c1: [X, Y, Z] in PositiveSemidefiniteConeTriangle(2)
-    c2: [2Y + -1x + -1y] in Nonnegatives(1)
+    c2: [2Y + -1x + -1y] in NonnegativeCone(1)
     c3: [3y + -1, x + y, 3x + -1] in PositiveSemidefiniteConeTriangle(2)
 """,
     ),
@@ -417,9 +417,9 @@ const _EXAMPLE_MODELS = [
         """
     variables: a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p
     maxobjective: a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + -1
-    c1: [b] in Zeros(1)
-    c2: [c] in Nonnegatives(1)
-    c3: [d] in Nonpositives(1)
+    c1: [b] in ZeroCone(1)
+    c2: [c] in NonnegativeCone(1)
+    c3: [d] in NonpositiveCone(1)
     c4: [e, f, g] in SecondOrderCone(3)
     c5: [h, i, j] in RotatedSecondOrderCone(3)
     c6: [m, l, k] in ExponentialCone()

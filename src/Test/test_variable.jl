@@ -68,9 +68,9 @@ end
 Test adding, and then deleting, nonnegative variables.
 """
 function test_variable_delete_Nonnegatives(model::MOI.ModelLike, ::Config)
-    @requires MOI.supports_add_constrained_variables(model, MOI.Nonnegatives)
+    @requires MOI.supports_add_constrained_variables(model, MOI.NonnegativeCone)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
-    v, cv = MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
+    v, cv = MOI.add_constrained_variables(model, MOI.NonnegativeCone(2))
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
     MOI.delete(model, v)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
@@ -79,7 +79,7 @@ function test_variable_delete_Nonnegatives(model::MOI.ModelLike, ::Config)
     @test !MOI.is_valid(model, v[2])
     @test_throws MOI.InvalidIndex(v[2]) MOI.delete(model, v[2])
     @test !MOI.is_valid(model, cv)
-    v, cv = MOI.add_constrained_variables(model, MOI.Nonnegatives(1))
+    v, cv = MOI.add_constrained_variables(model, MOI.NonnegativeCone(1))
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
     MOI.delete(model, v[1])
     @test !MOI.is_valid(model, v[1])
@@ -95,9 +95,9 @@ end
 Test adding, and then deleting one by one, nonnegative variables.
 """
 function test_variable_delete_Nonnegatives_row(model::MOI.ModelLike, ::Config)
-    @requires MOI.supports_add_constrained_variables(model, MOI.Nonnegatives)
+    @requires MOI.supports_add_constrained_variables(model, MOI.NonnegativeCone)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
-    v, cv = MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
+    v, cv = MOI.add_constrained_variables(model, MOI.NonnegativeCone(2))
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
     MOI.delete(model, v[1])
     @test !MOI.is_valid(model, v[1])

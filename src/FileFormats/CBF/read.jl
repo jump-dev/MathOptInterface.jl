@@ -59,13 +59,13 @@ function _cbf_to_moi_cone(
     cone_dim::Int,
 )
     if cone_str == "F"
-        return MOI.Reals(cone_dim)
+        return MOI.RealCone(cone_dim)
     elseif cone_str == "L="
-        return MOI.Zeros(cone_dim)
+        return MOI.ZeroCone(cone_dim)
     elseif cone_str == "L-"
-        return MOI.Nonpositives(cone_dim)
+        return MOI.NonpositiveCone(cone_dim)
     elseif cone_str == "L+"
-        return MOI.Nonnegatives(cone_dim)
+        return MOI.NonnegativeCone(cone_dim)
     elseif cone_str == "Q"
         @assert cone_dim >= 2
         return MOI.SecondOrderCone(cone_dim)
@@ -360,7 +360,8 @@ function Base.read!(io::IO, model::Model)
             # Reverse order of indices.
             MOI.VectorAffineFunction(
                 [
-                    MOI.VectorAffineTerm{Float64}(4 - l, t) for l in 1:cone_dim for t in data.row_terms[row_idx+l]
+                    MOI.VectorAffineTerm{Float64}(4 - l, t) for
+                    l in 1:cone_dim for t in data.row_terms[row_idx+l]
                 ],
                 data.row_constants[row_idx.+(3:-1:1)],
             )

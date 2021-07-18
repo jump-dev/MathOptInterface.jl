@@ -6,8 +6,8 @@ The `NormInfinityCone` is representable with LP constraints, since
 ``t \\ge x_i`` and ``t \\ge -x_i`` for all ``i``.
 """
 struct NormInfinityBridge{T,F,G} <:
-       SetMapBridge{T,MOI.Nonnegatives,MOI.NormInfinityCone,F,G}
-    constraint::CI{F,MOI.Nonnegatives}
+       SetMapBridge{T,MOI.NonnegativeCone,MOI.NormInfinityCone,F,G}
+    constraint::CI{F,MOI.NonnegativeCone}
 end
 
 function concrete_bridge_type(
@@ -20,12 +20,12 @@ function concrete_bridge_type(
 end
 
 function MOIB.map_set(::Type{<:NormInfinityBridge}, set::MOI.NormInfinityCone)
-    return MOI.Nonnegatives(2 * (MOI.dimension(set) - 1))
+    return MOI.NonnegativeCone(2 * (MOI.dimension(set) - 1))
 end
 
 function MOIB.inverse_map_set(
     ::Type{<:NormInfinityBridge},
-    set::MOI.Nonnegatives,
+    set::MOI.NonnegativeCone,
 )
     return MOI.NormInfinityCone(div(MOI.dimension(set), 2) + 1)
 end
@@ -73,7 +73,7 @@ function MOIB.inverse_adjoint_map_function(
     func::AbstractVector{T},
 ) where {T}
     # This is used by `MOI.ConstraintDualStart`.
-    # The result should belong to `MOI.Nonnegatives` and the sum of the elements should
+    # The result should belong to `MOI.NonnegativeCone` and the sum of the elements should
     # be `t`.
     # Only one of dual of the upper and lower bound should be active so one of the two
     # duals is zero. We know which one since they should be nonnegative.
@@ -95,7 +95,7 @@ The `NormOneCone` is representable with LP constraints, since
 """
 struct NormOneBridge{T,F,G} <: AbstractBridge
     y::Vector{MOI.VariableIndex}
-    nn_index::CI{F,MOI.Nonnegatives}
+    nn_index::CI{F,MOI.NonnegativeCone}
 end
 
 function bridge_constraint(
@@ -114,7 +114,7 @@ function bridge_constraint(
     lb = MOIU.operate!(+, T, lb, MOI.VectorOfVariables(y))
     ub = MOIU.operate!(+, T, ub, MOI.VectorOfVariables(y))
     f_new = MOIU.operate(vcat, T, ge, ub, lb)
-    nn_index = MOI.add_constraint(model, f_new, MOI.Nonnegatives(2d - 1))
+    nn_index = MOI.add_constraint(model, f_new, MOI.NonnegativeCone(2d - 1))
     return NormOneBridge{T,F,G}(y, nn_index)
 end
 
@@ -131,7 +131,7 @@ function MOIB.added_constrained_variable_types(::Type{<:NormOneBridge})
 end
 
 function MOIB.added_constraint_types(::Type{<:NormOneBridge{T,F}}) where {T,F}
-    return [(F, MOI.Nonnegatives)]
+    return [(F, MOI.NonnegativeCone)]
 end
 
 function concrete_bridge_type(
@@ -154,14 +154,14 @@ MOI.get(b::NormOneBridge, ::MOI.NumberOfVariables) = length(b.y)
 MOI.get(b::NormOneBridge, ::MOI.ListOfVariableIndices) = copy(b.y)
 function MOI.get(
     b::NormOneBridge{T,F},
-    ::MOI.NumberOfConstraints{F,MOI.Nonnegatives},
+    ::MOI.NumberOfConstraints{F,MOI.NonnegativeCone},
 ) where {T,F}
     return 1
 end
 
 function MOI.get(
     b::NormOneBridge{T,F},
-    ::MOI.ListOfConstraintIndices{F,MOI.Nonnegatives},
+    ::MOI.ListOfConstraintIndices{F,MOI.NonnegativeCone},
 ) where {T,F}
     return [b.nn_index]
 end

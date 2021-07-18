@@ -1283,12 +1283,12 @@ function test_linear_VectorAffineFunction(
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
-        MOI.Nonpositives,
+        MOI.NonpositiveCone,
     )
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
@@ -1310,7 +1310,7 @@ function test_linear_VectorAffineFunction(
             [MOI.VectorAffineTerm{T}(1, MOI.ScalarAffineTerm{T}(one(T), x))],
             [zero(T)],
         ),
-        MOI.Nonnegatives(1),
+        MOI.NonnegativeCone(1),
     )
     c2 = MOI.add_constraint(
         model,
@@ -1318,7 +1318,7 @@ function test_linear_VectorAffineFunction(
             [MOI.VectorAffineTerm{T}(1, MOI.ScalarAffineTerm{T}(one(T), y))],
             [zero(T)],
         ),
-        MOI.Nonpositives(1),
+        MOI.NonpositiveCone(1),
     )
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -1350,7 +1350,7 @@ function test_linear_VectorAffineFunction(
                 ],
                 [-T(100)],
             ),
-            MOI.Nonnegatives(1),
+            MOI.NonnegativeCone(1),
         )
     end
     if _supports(config, MOI.optimize!)
@@ -1382,7 +1382,7 @@ function test_linear_VectorAffineFunction(
                 ],
                 [T(100)],
             ),
-            MOI.Nonpositives(1),
+            MOI.NonpositiveCone(1),
         )
     end
     if _supports(config, MOI.optimize!)
@@ -2739,7 +2739,7 @@ end
 This test checks solving a problem given a `VectorAffineFunction` with an empty
 row equivalent to `0 == 0`.
 
-Models not supporting `VectorAffineFunction`-in-`Zeros` should use a bridge.
+Models not supporting `VectorAffineFunction`-in-`ZeroCone` should use a bridge.
 """
 function test_linear_VectorAffineFunction_empty_row(
     model::MOI.ModelLike,
@@ -2756,7 +2756,7 @@ function test_linear_VectorAffineFunction_empty_row(
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
-        MOI.Zeros,
+        MOI.ZeroCone,
     )
     x = MOI.add_variables(model, 1)
     # Create a VectorAffineFunction with two rows, but only one term, belonging
@@ -2768,7 +2768,7 @@ function test_linear_VectorAffineFunction_empty_row(
             MOI.VectorAffineTerm{T}.(2, MOI.ScalarAffineTerm{T}.([one(T)], x)),
             zeros(2),
         ),
-        MOI.Zeros(2),
+        MOI.ZeroCone(2),
     )
     MOI.set(
         model,
@@ -2807,7 +2807,8 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0.0],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[0.0, 0.0]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) =>
+                [[0.0, 0.0]],
         ),
     )
     return

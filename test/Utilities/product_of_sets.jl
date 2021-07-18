@@ -128,15 +128,15 @@ end
 
 MOI.Utilities.@product_of_sets(
     _VectorSets,
-    MOI.Nonpositives,
-    MOI.Nonnegatives,
+    MOI.NonpositiveCone,
+    MOI.NonnegativeCone,
     MOI.EqualTo{T},
 )
 
 function test_vector_set_index()
     sets = _VectorSets{Float64}()
-    @test MOI.Utilities.set_index(sets, MOI.Nonpositives) == 1
-    @test MOI.Utilities.set_index(sets, MOI.Nonnegatives) == 2
+    @test MOI.Utilities.set_index(sets, MOI.NonpositiveCone) == 1
+    @test MOI.Utilities.set_index(sets, MOI.NonnegativeCone) == 2
     @test MOI.Utilities.set_index(sets, MOI.EqualTo{Float64}) == 3
     @test MOI.Utilities.set_index(sets, MOI.LessThan{Float64}) === nothing
 end
@@ -144,14 +144,14 @@ end
 function test_vector_set_types()
     sets = _VectorSets{Float64}()
     @test MOI.Utilities.set_types(sets) ==
-          [MOI.Nonpositives, MOI.Nonnegatives, MOI.EqualTo{Float64}]
+          [MOI.NonpositiveCone, MOI.NonnegativeCone, MOI.EqualTo{Float64}]
 end
 
 function test_vector_basic()
     sets = _VectorSets{Float64}()
     nonneg_i = MOI.Utilities.add_set(
         sets,
-        MOI.Utilities.set_index(sets, MOI.Nonnegatives),
+        MOI.Utilities.set_index(sets, MOI.NonnegativeCone),
         2,
     )
     equalto_i = MOI.Utilities.add_set(
@@ -160,8 +160,8 @@ function test_vector_basic()
     )
     MOI.Utilities.final_touch(sets)
     VAF = MOI.VectorAffineFunction{Float64}
-    @test !MOI.is_valid(sets, MOI.ConstraintIndex{VAF,MOI.Nonnegatives}(12345))
-    nonneg_ci = MOI.ConstraintIndex{VAF,MOI.Nonnegatives}(nonneg_i)
+    @test !MOI.is_valid(sets, MOI.ConstraintIndex{VAF,MOI.NonnegativeCone}(12345))
+    nonneg_ci = MOI.ConstraintIndex{VAF,MOI.NonnegativeCone}(nonneg_i)
     @test MOI.is_valid(sets, nonneg_ci)
     @test MOI.Utilities.rows(sets, nonneg_ci) == 1:2
     SAF = MOI.ScalarAffineFunction{Float64}
@@ -220,7 +220,7 @@ function test_vector_ConstraintTypesPresent()
     MOI.Utilities.add_set(sets, 3)
     MOI.Utilities.final_touch(sets)
     @test MOI.get(sets, MOI.ListOfConstraintTypesPresent()) == [
-        (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives),
+        (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone),
         (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}),
     ]
 end
@@ -234,7 +234,7 @@ function test_vector_NumberOfConstraints()
     MOI.Utilities.final_touch(sets)
     @test MOI.get(
         sets,
-        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Zeros}(),
+        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.ZeroCone}(),
     ) == 0
     for (x, S) in zip([2, 1], MOI.Utilities.set_types(sets)[1:2])
         @test MOI.get(
@@ -260,8 +260,8 @@ function test_vector_ListOfConstraintIndices()
     MOI.Utilities.add_set(sets, 3)
     MOI.Utilities.final_touch(sets)
     VAF = MOI.VectorAffineFunction{Float64}
-    @test MOI.get(sets, MOI.ListOfConstraintIndices{VAF,MOI.Zeros}()) ==
-          MOI.ConstraintIndex{VAF,MOI.Zeros}[]
+    @test MOI.get(sets, MOI.ListOfConstraintIndices{VAF,MOI.ZeroCone}()) ==
+          MOI.ConstraintIndex{VAF,MOI.ZeroCone}[]
     for (x, S) in zip([[1], [1, 3]], MOI.Utilities.set_types(sets)[1:2])
         ci = MOI.get(sets, MOI.ListOfConstraintIndices{VAF,S}())
         @test ci == MOI.ConstraintIndex{VAF,S}.(x)

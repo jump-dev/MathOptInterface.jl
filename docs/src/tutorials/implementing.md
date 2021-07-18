@@ -451,7 +451,7 @@ If this is the case, implement:
 By default, MathOptInterface assumes solvers support free variables. If your
 solver does not support free variables, define:
 ```julia
-MOI.supports_add_constrained_variables(::Optimizer, ::Type{Reals}) = false
+MOI.supports_add_constrained_variables(::Optimizer, ::Type{RealCone}) = false
 ```
 
 ### Incremental and `copy_to`

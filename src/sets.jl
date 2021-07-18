@@ -19,7 +19,7 @@ Return the [`output_dimension`](@ref) that an [`AbstractFunction`](@ref) should 
 ### Examples
 
 ```julia-repl
-julia> dimension(Reals(4))
+julia> dimension(RealCone(4))
 4
 
 julia> dimension(LessThan(3.0))
@@ -46,8 +46,8 @@ If the dual cone is not defined it returns an error.
 ### Examples
 
 ```jldocstest
-julia> dual_set(Reals(4))
-Zeros(4)
+julia> dual_set(RealCone(4))
+ZeroCone(4)
 
 julia> dual_set(SecondOrderCone(5))
 SecondOrderCone(5)
@@ -69,8 +69,8 @@ Return the type of dual set of sets of type `S`, as returned by
 ### Examples
 
 ```jldocstest
-julia> dual_set_type(Reals)
-Zeros
+julia> dual_set_type(RealCone)
+ZeroCone
 
 julia> dual_set_type(SecondOrderCone)
 SecondOrderCone
@@ -106,18 +106,18 @@ abstract type AbstractVectorSet <: AbstractSet end
 dimension(s::AbstractVectorSet) = s.dimension # .dimension field is conventional, overwrite this method if not applicable
 
 """
-    Reals(dimension)
+    RealCone(dimension)
 
 The set ``\\mathbb{R}^{dimension}`` (containing all points) of dimension
 `dimension`.
 """
-struct Reals <: AbstractVectorSet
+struct RealCone <: AbstractVectorSet
     dimension::Int
-    function Reals(dimension::Base.Integer)
+    function RealCone(dimension::Base.Integer)
         if !(dimension >= 0)
             throw(
                 DimensionMismatch(
-                    "Dimension of Reals must be >= 0, not $(dimension).",
+                    "Dimension of RealCone must be >= 0, not $(dimension).",
                 ),
             )
         end
@@ -125,22 +125,22 @@ struct Reals <: AbstractVectorSet
     end
 end
 
-dual_set(s::Reals) = Zeros(dimension(s))
-dual_set_type(::Type{Reals}) = Zeros
+dual_set(s::RealCone) = ZeroCone(dimension(s))
+dual_set_type(::Type{RealCone}) = ZeroCone
 
 """
-    Zeros(dimension)
+    ZeroCone(dimension)
 
 The set ``\\{ 0 \\}^{dimension}`` (containing only the origin) of dimension
 `dimension`.
 """
-struct Zeros <: AbstractVectorSet
+struct ZeroCone <: AbstractVectorSet
     dimension::Int
-    function Zeros(dimension::Base.Integer)
+    function ZeroCone(dimension::Base.Integer)
         if !(dimension >= 0)
             throw(
                 DimensionMismatch(
-                    "Dimension of Zeros must be >= 0, not $(dimension).",
+                    "Dimension of ZeroCone must be >= 0, not $(dimension).",
                 ),
             )
         end
@@ -148,22 +148,22 @@ struct Zeros <: AbstractVectorSet
     end
 end
 
-dual_set(s::Zeros) = Reals(dimension(s))
-dual_set_type(::Type{Zeros}) = Reals
+dual_set(s::ZeroCone) = RealCone(dimension(s))
+dual_set_type(::Type{ZeroCone}) = RealCone
 
 """
-    Nonnegatives(dimension)
+    NonnegativeCone(dimension)
 
 The nonnegative orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\ge 0 \\}`` of
 dimension `dimension`.
 """
-struct Nonnegatives <: AbstractVectorSet
+struct NonnegativeCone <: AbstractVectorSet
     dimension::Int
-    function Nonnegatives(dimension::Base.Integer)
+    function NonnegativeCone(dimension::Base.Integer)
         if !(dimension >= 0)
             throw(
                 DimensionMismatch(
-                    "Dimension of Nonnegatives must be >= 0, not $(dimension).",
+                    "Dimension of NonnegativeCone must be >= 0, not $(dimension).",
                 ),
             )
         end
@@ -171,22 +171,22 @@ struct Nonnegatives <: AbstractVectorSet
     end
 end
 
-dual_set(s::Nonnegatives) = copy(s)
-dual_set_type(::Type{Nonnegatives}) = Nonnegatives
+dual_set(s::NonnegativeCone) = copy(s)
+dual_set_type(::Type{NonnegativeCone}) = NonnegativeCone
 
 """
-    Nonpositives(dimension)
+    NonpositiveCone(dimension)
 
 The nonpositive orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\le 0 \\}`` of
 dimension `dimension`.
 """
-struct Nonpositives <: AbstractVectorSet
+struct NonpositiveCone <: AbstractVectorSet
     dimension::Int
-    function Nonpositives(dimension::Base.Integer)
+    function NonpositiveCone(dimension::Base.Integer)
         if !(dimension >= 0)
             throw(
                 DimensionMismatch(
-                    "Dimension of Nonpositives must be >= 0, not $(dimension).",
+                    "Dimension of NonpositiveCone must be >= 0, not $(dimension).",
                 ),
             )
         end
@@ -194,8 +194,8 @@ struct Nonpositives <: AbstractVectorSet
     end
 end
 
-dual_set(s::Nonpositives) = copy(s)
-dual_set_type(::Type{Nonpositives}) = Nonpositives
+dual_set(s::NonpositiveCone) = copy(s)
+dual_set_type(::Type{NonpositiveCone}) = NonpositiveCone
 
 """
     GreaterThan{T <: Real}(lower::T)
@@ -1089,7 +1089,7 @@ There are three solutions:
 The function `F` can also be defined in terms of single variables. For example,
 the problem:
 
-    [x_3, x_4] -in- Nonnegatives(2)
+    [x_3, x_4] -in- NonnegativeCone(2)
     [x_1, x_2, x_3, x_4] -in- Complements(4)
 
 defines the complementarity problem where `0 <= x_1 ⟂ x_3 >= 0` and
@@ -1112,10 +1112,10 @@ end
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
-        Reals,
-        Zeros,
-        Nonnegatives,
-        Nonpositives,
+        RealCone,
+        ZeroCone,
+        NonnegativeCone,
+        NonpositiveCone,
         GreaterThan,
         LessThan,
         EqualTo,
@@ -1157,7 +1157,7 @@ Return a `Bool` indicating whether the elimination of any dimension of
 By default, this function returns `false` so it should only be implemented
 for sets that supports dimension update.
 
-For instance, `supports_dimension_update(MOI.Nonnegatives}` is `true` because
+For instance, `supports_dimension_update(MOI.NonnegativeCone}` is `true` because
 the elimination of any dimension of the `n`-dimensional nonnegative orthant
 gives the `n-1`-dimensional nonnegative orthant. However
 `supports_dimension_update(MOI.ExponentialCone}` is `false`.
@@ -1166,7 +1166,7 @@ function supports_dimension_update(::Type{<:AbstractVectorSet})
     return false
 end
 function supports_dimension_update(
-    ::Type{<:Union{Reals,Zeros,Nonnegatives,Nonpositives}},
+    ::Type{<:Union{RealCone,ZeroCone,NonnegativeCone,NonpositiveCone}},
 )
     return true
 end
@@ -1178,7 +1178,7 @@ Returns a set with the dimension modified to `new_dim`.
 """
 function update_dimension end
 function update_dimension(
-    set::Union{Reals,Zeros,Nonnegatives,Nonpositives},
+    set::Union{RealCone,ZeroCone,NonnegativeCone,NonpositiveCone},
     new_dim,
 )
     return typeof(set)(new_dim)

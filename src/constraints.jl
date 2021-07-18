@@ -9,7 +9,7 @@ is, `copy_to(model, src)` does not throw [`UnsupportedConstraint`](@ref) when
 supported in specific circumstances, e.g. `F`-in-`S` constraints cannot be
 combined with another type of constraint, it should still return `true`.
 
-    supports_constraint(model::ModelLike, ::Type{VectorOfVariables}, ::Type{Reals})::Bool
+    supports_constraint(model::ModelLike, ::Type{VectorOfVariables}, ::Type{RealCone})::Bool
 
 Return a `Bool` indicating whether `model` supports free variables. That is,
 `copy_to(model, src)` does not error when `src` contains variables that are not
@@ -20,7 +20,7 @@ solver requires all variables to be nonnegative, it should implement this
 method and return `false` because free variables cannot be copied to the solver.
 
 Note that free variables are not explicitly set to be free by calling
-[`add_constraint`](@ref) with the set [`Reals`](@ref), instead, free variables
+[`add_constraint`](@ref) with the set [`RealCone`](@ref), instead, free variables
 are created with [`add_variable`](@ref) and [`add_variables`](@ref).
 If `model` does not support free variables, it should not implement
 [`add_variable`](@ref) nor [`add_variables`](@ref) but should implement
@@ -32,11 +32,11 @@ function supports_constraint(
     F::Type{<:AbstractFunction},
     S::Type{<:AbstractSet},
 )
-    # TODO remove this condition, as `supports_add_constrained_variables(model, Reals)`
+    # TODO remove this condition, as `supports_add_constrained_variables(model, RealCone)`
     # should be called instead of
-    # `supports_constraint(model, ::VectorOfVariables, ::Reals)
-    if F === VectorOfVariables && S === Reals
-        return supports_add_constrained_variables(model, Reals)
+    # `supports_constraint(model, ::VectorOfVariables, ::RealCone)
+    if F === VectorOfVariables && S === RealCone
+        return supports_add_constrained_variables(model, RealCone)
     else
         return false
     end

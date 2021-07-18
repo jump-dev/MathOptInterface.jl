@@ -169,9 +169,9 @@ julia> c = MOI.add_constraint(
                ],
                [0.0, 0.0],
            ),
-           MOI.Nonnegatives(2),
+           MOI.NonnegativeCone(2),
        )
-MathOptInterface.ConstraintIndex{MathOptInterface.VectorAffineFunction{Float64},MathOptInterface.Nonnegatives}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorAffineFunction{Float64},MathOptInterface.NonnegativeCone}(1)
 
 julia> MOI.modify(model, c, MOI.VectorConstantChange([3.0, 4.0]));
 
@@ -227,9 +227,9 @@ julia> c = MOI.add_constraint(
                ],
                [0.0, 0.0],
            ),
-           MOI.Nonnegatives(2),
+           MOI.NonnegativeCone(2),
        )
-MathOptInterface.ConstraintIndex{MathOptInterface.VectorAffineFunction{Float64},MathOptInterface.Nonnegatives}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorAffineFunction{Float64},MathOptInterface.NonnegativeCone}(1)
 
 julia> MOI.modify(model, c, MOI.MultirowChange(x, [(1, 3.0), (2, 4.0)]));
 

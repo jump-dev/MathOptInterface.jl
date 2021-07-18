@@ -59,7 +59,7 @@ eight tuples specifying the types of constraints that are supported, and then a
 The eight tuples are in the following order:
  1. Un-typed scalar sets, e.g., [`Integer`](@ref)
  2. Typed scalar sets, e.g., [`LessThan`](@ref)
- 3. Un-typed vector sets, e.g., [`Nonnegatives`](@ref)
+ 3. Un-typed vector sets, e.g., [`NonnegativeCone`](@ref)
  4. Typed vector sets, e.g., [`PowerCone`](@ref)
  5. Un-typed scalar functions, e.g., [`SingleVariable`](@ref)
  6. Typed scalar functions, e.g., [`ScalarAffineFunction`](@ref)
@@ -75,7 +75,7 @@ julia> MOI.Utilities.@model(
            MyNewModel,
            (MOI.Integer,),                  # Un-typed scalar sets
            (MOI.GreaterThan,),              # Typed scalar sets
-           (MOI.Nonnegatives,),             # Un-typed vector sets
+           (MOI.NonnegativeCone,),          # Un-typed vector sets
            (MOI.PowerCone,),                # Typed vector sets
            (MOI.SingleVariable,),           # Un-typed scalar functions
            (MOI.ScalarAffineFunction,),     # Typed scalar functions

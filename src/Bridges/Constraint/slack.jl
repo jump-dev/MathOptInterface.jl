@@ -266,15 +266,15 @@ end
     VectorSlackBridge{T, F, S}
 
 The `VectorSlackBridge` converts a constraint `G`-in-`S` where `G` is a function different
-from `VectorOfVariables` into the constraints `F`in-`Zeros` and `VectorOfVariables`-in-`S`.
+from `VectorOfVariables` into the constraints `F`in-`ZeroCone` and `VectorOfVariables`-in-`S`.
 `F` is the result of subtracting a `VectorOfVariables` from `G`.
 Tipically `G` is the same as `F`, but that is not mandatory.
 """
 struct VectorSlackBridge{T,F,S} <:
-       AbstractSlackBridge{T,MOI.VectorOfVariables,MOI.Zeros,F,S}
+       AbstractSlackBridge{T,MOI.VectorOfVariables,MOI.ZeroCone,F,S}
     slack::Vector{MOI.VariableIndex}
     slack_in_set::CI{MOI.VectorOfVariables,S}
-    equality::CI{F,MOI.Zeros}
+    equality::CI{F,MOI.ZeroCone}
 end
 
 function bridge_constraint(
@@ -286,7 +286,7 @@ function bridge_constraint(
     d = MOI.dimension(s)
     slack, slack_in_set = MOI.add_constrained_variables(model, s)
     new_f = MOIU.operate(-, T, f, MOI.VectorOfVariables(slack))
-    equality = MOI.add_constraint(model, new_f, MOI.Zeros(d))
+    equality = MOI.add_constraint(model, new_f, MOI.ZeroCone(d))
     return VectorSlackBridge{T,F,S}(slack, slack_in_set, equality)
 end
 
@@ -301,7 +301,7 @@ end
 function MOI.supports_constraint(
     ::Type{VectorSlackBridge{T}},
     ::Type{<:MOI.VectorOfVariables},
-    ::Type{<:MOI.Zeros},
+    ::Type{<:MOI.ZeroCone},
 ) where {T}
     return false
 end
@@ -309,7 +309,7 @@ end
 function MOI.supports_constraint(
     ::Type{VectorSlackBridge{T}},
     ::Type{<:MOI.AbstractVectorFunction},
-    ::Type{<:MOI.Zeros},
+    ::Type{<:MOI.ZeroCone},
 ) where {T}
     return false
 end

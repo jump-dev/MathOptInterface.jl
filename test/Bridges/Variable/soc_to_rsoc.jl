@@ -18,7 +18,7 @@ bridged_mock = MOIB.Variable.SOCtoRSOC{Float64}(mock)
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1 / √2 + 1 / 2, 1 / √2 - 1 / 2, 1 / √2],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-√2]],
         )
     MOIT.soc1vtest(bridged_mock, config)
 
@@ -26,7 +26,7 @@ bridged_mock = MOIB.Variable.SOCtoRSOC{Float64}(mock)
         mock,
         MOI.ListOfConstraintIndices{
             MOI.VectorAffineFunction{Float64},
-            MOI.Zeros,
+            MOI.ZeroCone,
         }(),
     )
     @test length(ceqs) == 1
@@ -54,7 +54,7 @@ bridged_mock = MOIB.Variable.SOCtoRSOC{Float64}(mock)
         s = """
         variables: a, b, c
         rsoc: [a, b, c] in MathOptInterface.RotatedSecondOrderCone(3)
-        ceq: [$invs2*a + $invs2*b + -1.0] in MathOptInterface.Zeros(1)
+        ceq: [$invs2*a + $invs2*b + -1.0] in MathOptInterface.ZeroCone(1)
         maxobjective: $invs2*a + -$invs2*b + c
         """
         model = MOIU.Model{Float64}()
@@ -83,7 +83,7 @@ bridged_mock = MOIB.Variable.SOCtoRSOC{Float64}(mock)
         s = """
         variables: x, y, z
         soc: [x, y, z] in MathOptInterface.SecondOrderCone(3)
-        ceq: [x + -1.0] in MathOptInterface.Zeros(1)
+        ceq: [x + -1.0] in MathOptInterface.ZeroCone(1)
         maxobjective: y + z
         """
         model = MOIU.Model{Float64}()

@@ -139,7 +139,7 @@ so bridges should not implement this.
 ## Examples
 
 As a variable in [`MathOptInterface.GreaterThan`](@ref) is bridged into
-variables in [`MathOptInterface.Nonnegatives`](@ref) by the
+variables in [`MathOptInterface.NonnegativeCone`](@ref) by the
 [`VectorizeBridge`](@ref):
 
 ```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
@@ -151,7 +151,7 @@ MOI.Bridges.added_constrained_variable_types(
 # output
 
 1-element Array{Tuple{DataType},1}:
- (MathOptInterface.Nonnegatives,)
+ (MathOptInterface.NonnegativeCone,)
 ```
 """
 function MOIB.added_constrained_variable_types(
@@ -214,7 +214,7 @@ is `true`.
 ## Examples
 
 As a variable in [`MathOptInterface.GreaterThan`](@ref) is bridged into
-variables in [`MathOptInterface.Nonnegatives`](@ref) by the
+variables in [`MathOptInterface.NonnegativeCone`](@ref) by the
 [`VectorizeBridge`](@ref):
 
 ```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
@@ -225,7 +225,7 @@ MOI.Bridges.Variable.concrete_bridge_type(
 
 # output
 
-MathOptInterface.Bridges.Variable.VectorizeBridge{Float64,MathOptInterface.Nonnegatives}
+MathOptInterface.Bridges.Variable.VectorizeBridge{Float64,MathOptInterface.NonnegativeCone}
 ```
 """
 function concrete_bridge_type(bridge_type::DataType, ::Type{<:MOI.AbstractSet})

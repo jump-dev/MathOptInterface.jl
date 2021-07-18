@@ -287,10 +287,10 @@ end
     Interval,
     Semiinteger,
     Semicontinuous,
-    Zeros,
-    Reals,
-    Nonnegatives,
-    Nonpositives,
+    ZeroCone,
+    RealCone,
+    NonnegativeCone,
+    NonpositiveCone,
     SecondOrderCone,
     RotatedSecondOrderCone,
     GeometricMeanCone,
@@ -367,20 +367,20 @@ end
 
 # ========== Non-typed vector sets ==========
 
-function set_to_moi(::Val{:Zeros}, object::Object)
-    return MOI.Zeros(object["dimension"])
+function set_to_moi(::Val{:ZeroCone}, object::Object)
+    return MOI.ZeroCone(object["dimension"])
 end
 
-function set_to_moi(::Val{:Reals}, object::Object)
-    return MOI.Reals(object["dimension"])
+function set_to_moi(::Val{:RealCone}, object::Object)
+    return MOI.RealCone(object["dimension"])
 end
 
-function set_to_moi(::Val{:Nonnegatives}, object::Object)
-    return MOI.Nonnegatives(object["dimension"])
+function set_to_moi(::Val{:NonnegativeCone}, object::Object)
+    return MOI.NonnegativeCone(object["dimension"])
 end
 
-function set_to_moi(::Val{:Nonpositives}, object::Object)
-    return MOI.Nonpositives(object["dimension"])
+function set_to_moi(::Val{:NonpositiveCone}, object::Object)
+    return MOI.NonpositiveCone(object["dimension"])
 end
 
 function set_to_moi(::Val{:SecondOrderCone}, object::Object)

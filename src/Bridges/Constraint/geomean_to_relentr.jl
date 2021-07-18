@@ -17,7 +17,7 @@ of ones.
 """
 struct GeoMeantoRelEntrBridge{T,F,G,H} <: AbstractBridge
     y::MOI.VariableIndex
-    nn_index::CI{F,MOI.Nonnegatives} # for y >= 0
+    nn_index::CI{F,MOI.NonnegativeCone} # for y >= 0
     relentr_index::CI{G,MOI.RelativeEntropyCone}
 end
 
@@ -28,7 +28,7 @@ function bridge_constraint(
     s::MOI.GeometricMeanCone,
 ) where {T,F,G,H}
     f_scalars = MOIU.eachscalar(f)
-    (y, nn_index) = MOI.add_constrained_variables(model, MOI.Nonnegatives(1))
+    (y, nn_index) = MOI.add_constrained_variables(model, MOI.NonnegativeCone(1))
     w_func = MOIU.vectorize(
         fill(
             MOIU.operate(+, T, f_scalars[1], MOI.SingleVariable(y[1])),
@@ -59,7 +59,7 @@ function MOI.supports_constraint(
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:GeoMeantoRelEntrBridge})
-    return [(MOI.Nonnegatives,)]
+    return [(MOI.NonnegativeCone,)]
 end
 
 function MOIB.added_constraint_types(
@@ -94,7 +94,7 @@ end
 
 function MOI.get(
     ::GeoMeantoRelEntrBridge{T,F},
-    ::MOI.NumberOfConstraints{F,MOI.Nonnegatives},
+    ::MOI.NumberOfConstraints{F,MOI.NonnegativeCone},
 ) where {T,F}
     return 1
 end
@@ -108,7 +108,7 @@ end
 
 function MOI.get(
     bridge::GeoMeantoRelEntrBridge{T,F},
-    ::MOI.ListOfConstraintIndices{F,MOI.Nonnegatives},
+    ::MOI.ListOfConstraintIndices{F,MOI.NonnegativeCone},
 ) where {T,F}
     return [bridge.nn_index]
 end

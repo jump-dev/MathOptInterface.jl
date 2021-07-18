@@ -227,7 +227,7 @@ end
                 MOI.OPTIMAL,
                 (MOI.FEASIBLE_POINT, [0.5]),
                 MOI.FEASIBLE_POINT,
-                (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) =>
+                (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) =>
                     [[-0.5]],
             ),
         )

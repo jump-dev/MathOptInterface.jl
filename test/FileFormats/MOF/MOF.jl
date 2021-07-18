@@ -532,7 +532,7 @@ function test_Reals()
         """
 variables: x, y, z
 minobjective: x
-c1: [x, y, z] in Reals(3)
+c1: [x, y, z] in RealCone(3)
 """,
         ["x", "y", "z"],
         ["c1"],
@@ -544,7 +544,7 @@ function test_Zeros()
         """
 variables: x, y, z
 minobjective: x
-c1: [x, y, z] in Zeros(3)
+c1: [x, y, z] in ZeroCone(3)
 """,
         ["x", "y", "z"],
         ["c1"],
@@ -556,7 +556,7 @@ function test_Nonnegatives()
         """
 variables: x, y, z
 minobjective: x
-c1: [x, y, z] in Nonnegatives(3)
+c1: [x, y, z] in NonnegativeCone(3)
 """,
         ["x", "y", "z"],
         ["c1"],
@@ -568,7 +568,7 @@ function test_Nonpositives()
         """
 variables: x, y, z
 minobjective: x
-c1: [x, y, z] in Nonpositives(3)
+c1: [x, y, z] in NonpositiveCone(3)
 """,
         ["x", "y", "z"],
         ["c1"],
@@ -624,7 +624,7 @@ function test_vectoraffine_in_zeros()
         """
 variables: x, y
 minobjective: x
-c1: [1.0x + -3.0, 2.0y + -4.0] in Zeros(2)
+c1: [1.0x + -3.0, 2.0y + -4.0] in ZeroCone(2)
 """,
         ["x", "y"],
         ["c1"],
@@ -636,7 +636,7 @@ function test_vectorquadratic_in_nonnegatives()
         """
 variables: x, y
 minobjective: x
-c1: [1.0*x*x + -2.0x + 1.0, 2.0y + -4.0] in Nonnegatives(2)
+c1: [1.0*x*x + -2.0x + 1.0, 2.0y + -4.0] in NonnegativeCone(2)
 """,
         ["x", "y"],
         ["c1"],

@@ -264,9 +264,9 @@ function test_contlinear(Indexing)
     end
 end
 
-MOIU.@product_of_sets(Nonneg, MOI.Nonnegatives)
-MOIU.@product_of_sets(NonposNonneg, MOI.Nonpositives, MOI.Nonnegatives)
-MOIU.@product_of_sets(NonnegNonpos, MOI.Nonnegatives, MOI.Nonpositives)
+MOIU.@product_of_sets(Nonneg, MOI.NonnegativeCone)
+MOIU.@product_of_sets(NonposNonneg, MOI.NonpositiveCone, MOI.NonnegativeCone)
+MOIU.@product_of_sets(NonnegNonpos, MOI.NonnegativeCone, MOI.NonpositiveCone)
 
 function test_contconic()
     test_contconic(MOIU.OneBasedIndexing)
@@ -326,7 +326,7 @@ function test_contconic(Indexing)
     ) do optimizer
         return _lin3_query(
             optimizer,
-            [(F, MOI.Nonnegatives), (F, MOI.Nonpositives)],
+            [(F, MOI.NonnegativeCone), (F, MOI.NonpositiveCone)],
         )
     end
     b = [1.0, -1.0]
@@ -341,7 +341,7 @@ function test_contconic(Indexing)
     ) do optimizer
         return _lin3_query(
             optimizer,
-            [(F, MOI.Nonpositives), (F, MOI.Nonnegatives)],
+            [(F, MOI.NonpositiveCone), (F, MOI.NonnegativeCone)],
         )
     end
     # Here, we test that it works of some constraints are bridged but not all.
@@ -356,7 +356,7 @@ function test_contconic(Indexing)
         true,
         Indexing,
     ) do optimizer
-        return _lin3_query(optimizer, [(F, MOI.Nonnegatives)])
+        return _lin3_query(optimizer, [(F, MOI.NonnegativeCone)])
     end
 end
 
@@ -400,7 +400,7 @@ function test_nametest()
             VoVorSAff{T}{
                 MOIU.VectorOfConstraints{
                     MOI.VectorOfVariables,
-                    MOI.Nonpositives,
+                    MOI.NonpositiveCone,
                 },
                 MOIU.MatrixOfConstraints{
                     T,
@@ -420,7 +420,7 @@ MOIU.@struct_of_constraints_by_function_types(
     MOI.VectorAffineFunction{T},
 )
 
-MOIU.@product_of_sets(Zeros, MOI.Zeros)
+MOIU.@product_of_sets(ZeroCone, MOI.ZeroCone)
 
 function test_empty()
     T = Float64
@@ -428,12 +428,12 @@ function test_empty()
     model = MOIU.GenericOptimizer{
         T,
         VoVorVAff{T}{
-            MOIU.VectorOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives},
+            MOIU.VectorOfConstraints{MOI.VectorOfVariables,MOI.NonnegativeCone},
             MOIU.MatrixOfConstraints{
                 T,
                 MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
                 Vector{T},
-                Zeros{Float64},
+                ZeroCone{Float64},
             },
         },
     }()
@@ -457,7 +457,7 @@ function test_supports_constraint(T::Type = Float64, BadT::Type = Float32)
         model = MOIU.GenericOptimizer{
             T,
             VoVorSAff{T}{
-                MOIU.VectorOfConstraints{MOI.VectorOfVariables,MOI.Zeros},
+                MOIU.VectorOfConstraints{MOI.VectorOfVariables,MOI.ZeroCone},
                 MOIU.MatrixOfConstraints{
                     T,
                     MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
@@ -485,7 +485,7 @@ function test_copy(Indexing)
             VoVorSAfforVAff{T}{
                 MOIU.VectorOfConstraints{
                     MOI.VectorOfVariables,
-                    MOI.Nonnegatives,
+                    MOI.NonnegativeCone,
                 },
                 MOIU.MatrixOfConstraints{
                     T,
@@ -497,7 +497,7 @@ function test_copy(Indexing)
                     T,
                     MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
                     Vector{T},
-                    Zeros{T},
+                    ZeroCone{T},
                 },
             },
         }()
@@ -528,8 +528,8 @@ end
 
 MOIU.@struct_of_constraints_by_set_types(
     ZerosOrNot,
-    MOI.Zeros,
-    Union{MOI.Nonnegatives,MOI.Nonpositives},
+    MOI.ZeroCone,
+    Union{MOI.NonnegativeCone,MOI.NonpositiveCone},
 )
 
 function test_multicone()
@@ -542,7 +542,7 @@ function test_multicone()
                 T,
                 MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
                 Vector{T},
-                Zeros{T},
+                ZeroCone{T},
             },
             MOIU.MatrixOfConstraints{
                 T,
@@ -557,16 +557,16 @@ function test_multicone()
     fx = MOI.SingleVariable(x)
     y = MOI.add_variable(model)
     fy = MOI.SingleVariable(y)
-    MOI.add_constraint(model, MOIU.vectorize([T(5) * fx + T(2)]), MOI.Zeros(1))
+    MOI.add_constraint(model, MOIU.vectorize([T(5) * fx + T(2)]), MOI.ZeroCone(1))
     MOI.add_constraint(
         model,
         MOIU.vectorize([T(3) * fy + T(1)]),
-        MOI.Nonnegatives(1),
+        MOI.NonnegativeCone(1),
     )
     MOI.add_constraint(
         model,
         MOIU.vectorize([T(6), T(7) * fx, T(4)]),
-        MOI.Nonpositives(1),
+        MOI.NonpositiveCone(1),
     )
     MOIU.final_touch(model, nothing)
     _test_matrix_equal(

@@ -109,7 +109,7 @@ function _test_delete_bridged_variable(
     start_num_bridges = num_bridges()
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
     @test length(MOI.get(m, MOI.ListOfVariableIndices())) == nvars
-    if S != MOI.Reals
+    if S != MOI.RealCone
         F =
             S <: MOI.AbstractScalarSet ? MOI.SingleVariable :
             MOI.VectorOfVariables
@@ -123,7 +123,7 @@ function _test_delete_bridged_variable(
     @test_throws MOI.InvalidIndex(vi) MOI.delete(m, vi)
     @test !MOI.is_valid(m, vi)
     @test num_bridges() == start_num_bridges - used_bridges
-    if S != MOI.Reals
+    if S != MOI.RealCone
         _test_num_constraints(m, F, S, num_bridged - used_constraints)
     end
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars - 1
@@ -154,7 +154,7 @@ function _test_delete_bridged_variables(
     start_num_bridges = num_bridges()
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
     @test length(MOI.get(m, MOI.ListOfVariableIndices())) == nvars
-    if S != MOI.Reals
+    if S != MOI.RealCone
         F =
             S <: MOI.AbstractScalarSet ? MOI.SingleVariable :
             MOI.VectorOfVariables
@@ -168,7 +168,7 @@ function _test_delete_bridged_variables(
     @test_throws MOI.InvalidIndex(vis[1]) MOI.delete(m, vis)
     @test all(vi -> !MOI.is_valid(m, vi), vis)
     @test num_bridges() == start_num_bridges - used_bridges
-    if S != MOI.Reals
+    if S != MOI.RealCone
         _test_num_constraints(m, F, S, num_bridged - 1)
     end
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars - length(vis)

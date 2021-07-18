@@ -352,10 +352,10 @@ function test_quadratic_functions()
         }(),
     )
     f7 = MOI.VectorOfVariables([x, y])
-    c7 = MOI.add_constraint(model, f7, MOI.Nonpositives(2))
+    c7 = MOI.add_constraint(model, f7, MOI.NonpositiveCone(2))
     @test 1 == @inferred MOI.get(
         model,
-        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}(),
+        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.NonpositiveCone}(),
     )
 
     f8 = MOI.VectorOfVariables([x, y])
@@ -388,7 +388,7 @@ function test_quadratic_functions()
         ) in loc
         @test (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) in loc
         @test (MOI.VectorAffineFunction{Int}, MOI.SecondOrderCone) in loc
-        @test (MOI.VectorOfVariables, MOI.Nonpositives) in loc
+        @test (MOI.VectorOfVariables, MOI.NonpositiveCone) in loc
     end
     @test MOI.is_valid(model, c4)
     MOI.delete(model, c4)
@@ -433,11 +433,11 @@ function test_quadratic_functions()
     @test f.constants == [6, 8]
     @test 1 == @inferred MOI.get(
         model,
-        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}(),
+        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.NonpositiveCone}(),
     )
     @test [c7] == @inferred MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonpositives}(),
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.NonpositiveCone}(),
     )
     f = MOI.get(model, MOI.ConstraintFunction(), c7)
     @test f.variables == [x]

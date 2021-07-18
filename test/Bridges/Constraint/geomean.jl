@@ -163,7 +163,7 @@ config = MOIT.Config()
                     0,
                 ),
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1),
-                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0),
+                (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone, 0),
             ),
         )
     end
@@ -353,7 +353,7 @@ config = MOIT.Config()
                     0,
                 ),
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 0),
-                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0),
+                (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone, 0),
             ),
         )
     end
@@ -364,7 +364,7 @@ config = MOIT.Config()
                 mock,
                 [2, 2],
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-2, -2],
-                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+                (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
                     [[0]],
             )
 
@@ -404,7 +404,7 @@ config = MOIT.Config()
                 mock,
                 MOI.ListOfConstraintIndices{
                     MOI.VectorAffineFunction{Float64},
-                    MOI.Nonnegatives,
+                    MOI.NonnegativeCone,
                 }(),
             )
             @test length(nonneg) == 1
@@ -414,7 +414,7 @@ config = MOIT.Config()
             variables: t, x
             lessthan1: t + -1.0x in MathOptInterface.LessThan(0.0)
             lessthan2: 1.0x in MathOptInterface.LessThan(2.0)
-            nonneg: [1.0x] in MathOptInterface.Nonnegatives(1)
+            nonneg: [1.0x] in MathOptInterface.NonnegativeCone(1)
             maxobjective: 2.0 * t
             """
             model = MOIU.Model{Float64}()
@@ -490,7 +490,7 @@ config = MOIT.Config()
                     0,
                 ),
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1),
-                (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0),
+                (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone, 0),
             ),
         )
     end

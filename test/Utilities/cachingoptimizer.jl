@@ -49,7 +49,7 @@ end
 
 function MOI.supports_add_constrained_variables(
     ::NoFreeVariables,
-    ::Type{MOI.Reals},
+    ::Type{MOI.RealCone},
 )
     return false
 end
@@ -639,22 +639,22 @@ function test_nonempty_model()
 end
 
 function _constrained_variables_test(model)
-    @test !MOI.supports_add_constrained_variables(model, MOI.Reals)
+    @test !MOI.supports_add_constrained_variables(model, MOI.RealCone)
     @test MOI.supports_add_constrained_variable(model, MOI.ZeroOne)
     @test !MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
-    @test MOI.supports_add_constrained_variables(model, MOI.Nonnegatives)
+    @test MOI.supports_add_constrained_variables(model, MOI.NonnegativeCone)
     @test !MOI.supports_constraint(
         model,
         MOI.VectorOfVariables,
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     scalar_set = MOI.ZeroOne()
     x, cx = MOI.add_constrained_variable(model, scalar_set)
-    vector_set = MOI.Nonnegatives(2)
+    vector_set = MOI.NonnegativeCone(2)
     y, cy = MOI.add_constrained_variables(model, vector_set)
     constraint_types = Set([
         (MOI.SingleVariable, MOI.ZeroOne),
-        (MOI.VectorOfVariables, MOI.Nonnegatives),
+        (MOI.VectorOfVariables, MOI.NonnegativeCone),
     ])
     @test Set(MOI.get(model.model_cache, MOI.ListOfConstraintTypesPresent())) ==
           constraint_types

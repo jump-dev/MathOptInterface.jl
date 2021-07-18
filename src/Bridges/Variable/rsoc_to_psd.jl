@@ -16,7 +16,7 @@ struct RSOCtoPSDBridge{T} <: AbstractBridge
             MOI.VectorOfVariables,
             MOI.PositiveSemidefiniteConeTriangle,
         },
-        MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives},
+        MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.NonnegativeCone},
     }
     off_diag::Vector{MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{T}}}
     diag::Vector{
@@ -34,7 +34,7 @@ function bridge_constrained_variable(
     if set.dimension <= 2
         variables, psd = MOI.add_constrained_variables(
             model,
-            MOI.Nonnegatives(set.dimension),
+            MOI.NonnegativeCone(set.dimension),
         )
     else
         dim = set.dimension - 1
@@ -75,7 +75,7 @@ function supports_constrained_variable(
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:RSOCtoPSDBridge})
-    return [(MOI.PositiveSemidefiniteConeTriangle,), (MOI.Nonnegatives,)]
+    return [(MOI.PositiveSemidefiniteConeTriangle,), (MOI.NonnegativeCone,)]
 end
 
 function MOIB.added_constraint_types(::Type{RSOCtoPSDBridge{T}}) where {T}
@@ -97,14 +97,14 @@ end
 function MOI.get(
     bridge::RSOCtoPSDBridge,
     ::MOI.NumberOfConstraints{MOI.VectorOfVariables,S},
-) where {S<:Union{MOI.PositiveSemidefiniteConeTriangle,MOI.Nonnegatives}}
+) where {S<:Union{MOI.PositiveSemidefiniteConeTriangle,MOI.NonnegativeCone}}
     return bridge.psd isa MOI.ConstraintIndex{MOI.VectorOfVariables,S} ? 1 : 0
 end
 
 function MOI.get(
     bridge::RSOCtoPSDBridge,
     ::MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S},
-) where {S<:Union{MOI.PositiveSemidefiniteConeTriangle,MOI.Nonnegatives}}
+) where {S<:Union{MOI.PositiveSemidefiniteConeTriangle,MOI.NonnegativeCone}}
     if bridge.psd isa MOI.ConstraintIndex{MOI.VectorOfVariables,S}
         return [bridge.psd]
     else
@@ -153,7 +153,7 @@ end
 
 function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::RSOCtoPSDBridge)
     if bridge.psd isa
-       MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
+       MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.NonnegativeCone}
         dim = length(bridge.variables)
     else
         dim = length(bridge.diag) + 3
@@ -171,7 +171,7 @@ end
 
 function _variable_map(bridge::RSOCtoPSDBridge, i::MOIB.IndexInVector)
     if bridge.psd isa
-       MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
+       MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.NonnegativeCone}
         return i.value
     elseif i.value == 1
         return 1

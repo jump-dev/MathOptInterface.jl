@@ -265,7 +265,7 @@ MOI.Utilities.loadfromstring!(
     variables: x, y, z
     minobjective: 2x + 3y
     con1: x + y <= 1
-    con2: [x, y] in MOI.Nonnegatives(2)
+    con2: [x, y] in MOI.NonnegativeCone(2)
     x >= 0.0
     \"\"\"
 )

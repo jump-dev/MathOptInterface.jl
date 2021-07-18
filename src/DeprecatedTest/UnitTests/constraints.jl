@@ -221,7 +221,7 @@ unittests["solve_duplicate_terms_scalar_affine"] =
     solve_duplicate_terms_vector_affine(model::MOI.ModelLike,
                                         config::Config)
 
-Add a `VectorAffineFunction`-in-`Nonpositives` constraint with duplicate terms
+Add a `VectorAffineFunction`-in-`NonpositiveCone` constraint with duplicate terms
 in the function. If `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
@@ -243,7 +243,7 @@ function solve_duplicate_terms_vector_affine(
         MOI.VectorAffineTerm.(1, MOI.ScalarAffineTerm.([1.0, 1.0], [x, x])),
         [-1.0],
     )
-    c = MOI.add_constraint(model, f, MOI.Nonpositives(1))
+    c = MOI.add_constraint(model, f, MOI.NonpositiveCone(1))
     return test_model_solution(
         model,
         config;
@@ -366,7 +366,7 @@ unittests["solve_qcp_edge_cases"] = solve_qcp_edge_cases
 
 Test various edge cases relating to deleting affine constraints. This requires
     + ScalarAffineFunction-in-LessThan; and
-    + VectorAffineFunction-in-Nonpositives.
+    + VectorAffineFunction-in-NonpositiveCone.
 
 If `config.solve=true` confirm that it solves correctly.
 """
@@ -391,7 +391,7 @@ function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::Config)
         saf,
     )
     # test adding a VectorAffineFunction -in- LessThan
-    c1 = MOI.add_constraint(model, vaf, MOI.Nonpositives(1))
+    c1 = MOI.add_constraint(model, vaf, MOI.NonpositiveCone(1))
     test_model_solution(
         model,
         config;
@@ -421,7 +421,7 @@ function solve_affine_deletion_edge_cases(model::MOI.ModelLike, config::Config)
         constraint_primal = [(c2, 1.0)],
     )
     # add a different VectorAffineFunction constraint
-    c3 = MOI.add_constraint(model, vaf2, MOI.Nonpositives(1))
+    c3 = MOI.add_constraint(model, vaf2, MOI.NonpositiveCone(1))
     test_model_solution(
         model,
         config;

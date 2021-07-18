@@ -116,10 +116,10 @@ end
 
 function test_sets_DimensionMismatch()
     for (S, min_dimension) in (
-        (MOI.Reals, 0),
-        (MOI.Zeros, 0),
-        (MOI.Nonnegatives, 0),
-        (MOI.Nonpositives, 0),
+        (MOI.RealCone, 0),
+        (MOI.ZeroCone, 0),
+        (MOI.NonnegativeCone, 0),
+        (MOI.NonpositiveCone, 0),
         (MOI.NormInfinityCone, 1),
         (MOI.NormOneCone, 1),
         (MOI.SecondOrderCone, 1),
@@ -163,8 +163,8 @@ function _self_dual_set_test(set)
 end
 
 function test_sets_dual_nonpositives()
-    nonpositives3 = MOI.Nonpositives(3)
-    nonpositives4 = MOI.Nonpositives(4)
+    nonpositives3 = MOI.NonpositiveCone(3)
+    nonpositives4 = MOI.NonpositiveCone(4)
     _self_dual_set_test(nonpositives3)
     @test MOI.dual_set(nonpositives3) != nonpositives4
     _self_dual_set_test(nonpositives4)
@@ -172,8 +172,8 @@ function test_sets_dual_nonpositives()
 end
 
 function test_sets_dual_nonnegatives()
-    nonnegatives3 = MOI.Nonnegatives(3)
-    nonnegatives4 = MOI.Nonnegatives(4)
+    nonnegatives3 = MOI.NonnegativeCone(3)
+    nonnegatives4 = MOI.NonnegativeCone(4)
     _self_dual_set_test(nonnegatives3)
     @test MOI.dual_set(nonnegatives3) != nonnegatives4
     _self_dual_set_test(nonnegatives4)
@@ -181,10 +181,10 @@ function test_sets_dual_nonnegatives()
 end
 
 function test_sets_dual_zeroreal()
-    zeros3 = MOI.Zeros(3)
-    zeros4 = MOI.Zeros(4)
-    reals3 = MOI.Reals(3)
-    reals4 = MOI.Reals(4)
+    zeros3 = MOI.ZeroCone(3)
+    zeros4 = MOI.ZeroCone(4)
+    reals3 = MOI.RealCone(3)
+    reals4 = MOI.RealCone(4)
     _dual_set_test(zeros3, reals3)
     @test MOI.dual_set(reals3) != zeros4
     _dual_set_test(zeros4, reals4)

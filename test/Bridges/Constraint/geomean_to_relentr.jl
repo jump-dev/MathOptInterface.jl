@@ -34,7 +34,7 @@ config = MOIT.Config()
                 mock,
                 var_primal,
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-inv(3)],
-                (MOI.VectorOfVariables, MOI.Nonnegatives) => [[1]],
+                (MOI.VectorOfVariables, MOI.NonnegativeCone) => [[1]],
                 (MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone) => [relentr_dual],
             )
 
@@ -52,7 +52,7 @@ config = MOIT.Config()
             mock,
             MOI.ListOfConstraintIndices{
                 MOI.VectorOfVariables,
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         )
         relentr = MOI.get(
@@ -83,7 +83,7 @@ config = MOIT.Config()
             s = """
             variables: t, x, y, z, aux
             less: x + y + z in MathOptInterface.LessThan(3.0)
-            nonneg: [aux] in MathOptInterface.Nonnegatives(1)
+            nonneg: [aux] in MathOptInterface.NonnegativeCone(1)
             relentr: [0.0, x, y, z, t + aux, t + aux, t + aux] in MathOptInterface.RelativeEntropyCone(7)
             maxobjective: t
             """
@@ -169,7 +169,7 @@ config = MOIT.Config()
             4,
             (
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1),
-                (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
+                (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
                 (MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone, 0),
             ),
         )
@@ -184,7 +184,7 @@ config = MOIT.Config()
                 var_primal,
                 (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                     fill(-inv(9), 9),
-                (MOI.VectorOfVariables, MOI.Nonnegatives) => [[1]],
+                (MOI.VectorOfVariables, MOI.NonnegativeCone) => [[1]],
                 (MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone) => [relentr_dual],
             )
 
@@ -202,7 +202,7 @@ config = MOIT.Config()
             mock,
             MOI.ListOfConstraintIndices{
                 MOI.VectorOfVariables,
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         )
         relentr = MOI.get(
@@ -242,7 +242,7 @@ config = MOIT.Config()
             equalto7: 1.0x7 in MathOptInterface.EqualTo(1.0)
             equalto8: 1.0x8 in MathOptInterface.EqualTo(1.0)
             equalto9: 1.0x9 in MathOptInterface.EqualTo(1.0)
-            nonneg: [aux] in MathOptInterface.Nonnegatives(1)
+            nonneg: [aux] in MathOptInterface.NonnegativeCone(1)
             relentr: [0.0, x1, x2, x3, x4, x5, x6, x7, x8, x9, t + aux, t + aux, t + aux, t + aux, t + aux, t + aux, t + aux, t + aux, t + aux] in MathOptInterface.RelativeEntropyCone(19)
             maxobjective: t
             """
@@ -337,7 +337,7 @@ config = MOIT.Config()
             10,
             (
                 (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 9),
-                (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
+                (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
                 (MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone, 0),
             ),
         )
@@ -351,7 +351,7 @@ config = MOIT.Config()
                 mock,
                 var_primal,
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-2],
-                (MOI.VectorOfVariables, MOI.Nonnegatives) => [[2]],
+                (MOI.VectorOfVariables, MOI.NonnegativeCone) => [[2]],
                 (MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone) => [relentr_dual],
             )
 
@@ -369,7 +369,7 @@ config = MOIT.Config()
             mock,
             MOI.ListOfConstraintIndices{
                 MOI.VectorOfVariables,
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
             }(),
         )
         relentr = MOI.get(
@@ -400,7 +400,7 @@ config = MOIT.Config()
             s = """
             variables: t, x, aux
             less: 1.0x in MathOptInterface.LessThan(2.0)
-            nonneg: [aux] in MathOptInterface.Nonnegatives(1)
+            nonneg: [aux] in MathOptInterface.NonnegativeCone(1)
             relentr: [0.0, x, t + aux] in MathOptInterface.RelativeEntropyCone(3)
             maxobjective: 2.0t
             """
@@ -484,7 +484,7 @@ config = MOIT.Config()
             2,
             (
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1),
-                (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
+                (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
                 (MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone, 0),
             ),
         )

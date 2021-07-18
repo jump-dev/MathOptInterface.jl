@@ -60,7 +60,7 @@ MOIU.@model(
     StandardLPModel,
     (),
     (MOI.EqualTo, MOIT.UnknownScalarSet),
-    (MOI.Nonnegatives,),
+    (MOI.NonnegativeCone,),
     (),
     (),
     (MOI.ScalarAffineFunction,),
@@ -91,7 +91,7 @@ end
 function MOI.supports_constraint(
     ::StandardLPModel,
     ::Type{MOI.VectorOfVariables},
-    ::Type{MOI.Reals},
+    ::Type{MOI.RealCone},
 )
     return false
 end
@@ -182,7 +182,7 @@ end
     Float64,
     Int,
 ]
-    set = MOI.Zeros(1)
+    set = MOI.ZeroCone(1)
     @testset "No constraint bridge" begin
         model = StandardLPModel{T}()
         bridged = MOIB.Variable.Vectorize{T}(model)
@@ -349,7 +349,7 @@ MOIU.@model(
     SDPAModel,
     (),
     (MOI.EqualTo,),
-    (MOI.Nonnegatives, MOI.PositiveSemidefiniteConeTriangle),
+    (MOI.NonnegativeCone, MOI.PositiveSemidefiniteConeTriangle),
     (),
     (),
     (MOI.ScalarAffineFunction,),
@@ -387,13 +387,13 @@ end
 function MOI.supports_constraint(
     ::SDPAModel{T},
     ::Type{MOI.VectorOfVariables},
-    ::Type{MOI.Reals},
+    ::Type{MOI.RealCone},
 ) where {T}
     return false
 end
 function MOI.supports_add_constrained_variables(
     ::SDPAModel,
-    ::Type{MOI.Nonnegatives},
+    ::Type{MOI.NonnegativeCone},
 )
     return true
 end
@@ -403,7 +403,7 @@ function MOI.supports_add_constrained_variables(
 )
     return true
 end
-MOI.supports_add_constrained_variables(::SDPAModel, ::Type{MOI.Reals}) = false
+MOI.supports_add_constrained_variables(::SDPAModel, ::Type{MOI.RealCone}) = false
 function MOI.supports(
     ::SDPAModel{T},
     ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}},
@@ -444,84 +444,84 @@ end
     model = SDPAModel{T}()
     bridged = MOIB.LazyBridgeOptimizer(model)
     @testset "Variable" begin
-        @testset "Nonpositives" begin
+        @testset "NonpositiveCone" begin
             @test !MOI.supports_constraint(
                 model,
                 MOI.VectorOfVariables,
-                MOI.Nonpositives,
+                MOI.NonpositiveCone,
             )
             @test !MOI.supports_constraint(
                 bridged,
                 MOI.VectorOfVariables,
-                MOI.Nonpositives,
+                MOI.NonpositiveCone,
             )
             @test !MOI.supports_add_constrained_variables(
                 bridged,
-                MOI.Nonpositives,
+                MOI.NonpositiveCone,
             )
             MOIB.add_bridge(bridged, MOIB.Variable.NonposToNonnegBridge{T})
             @test !MOI.supports_constraint(
                 bridged,
                 MOI.VectorOfVariables,
-                MOI.Nonpositives,
+                MOI.NonpositiveCone,
             )
             @test MOI.supports_add_constrained_variables(
                 bridged,
-                MOI.Nonpositives,
+                MOI.NonpositiveCone,
             )
-            @test MOIB.bridge_type(bridged, MOI.Nonpositives) ==
+            @test MOIB.bridge_type(bridged, MOI.NonpositiveCone) ==
                   MOIB.Variable.NonposToNonnegBridge{T}
         end
-        @testset "Zeros" begin
+        @testset "ZeroCone" begin
             @test !MOI.supports_constraint(
                 model,
                 MOI.VectorOfVariables,
-                MOI.Zeros,
+                MOI.ZeroCone,
             )
-            @test !MOI.supports_add_constrained_variables(bridged, MOI.Zeros)
+            @test !MOI.supports_add_constrained_variables(bridged, MOI.ZeroCone)
             @test !MOI.supports_constraint(
                 bridged,
                 MOI.VectorOfVariables,
-                MOI.Zeros,
+                MOI.ZeroCone,
             )
             MOIB.add_bridge(bridged, MOIB.Variable.ZerosBridge{T})
             @test !MOI.supports_constraint(
                 bridged,
                 MOI.VectorOfVariables,
-                MOI.Zeros,
+                MOI.ZeroCone,
             )
-            @test MOI.supports_add_constrained_variables(bridged, MOI.Zeros)
-            @test MOIB.bridge_type(bridged, MOI.Zeros) ==
+            @test MOI.supports_add_constrained_variables(bridged, MOI.ZeroCone)
+            @test MOIB.bridge_type(bridged, MOI.ZeroCone) ==
                   MOIB.Variable.ZerosBridge{T}
         end
         @testset "Free" begin
             @test !MOI.supports_constraint(
                 model,
                 MOI.VectorOfVariables,
-                MOI.Reals,
+                MOI.RealCone,
             )
             @test !MOI.supports_constraint(
                 bridged,
                 MOI.VectorOfVariables,
-                MOI.Reals,
+                MOI.RealCone,
             )
-            @test !MOI.supports_add_constrained_variables(bridged, MOI.Reals)
+            @test !MOI.supports_add_constrained_variables(bridged, MOI.RealCone)
             @test_throws MOI.UnsupportedConstraint{
                 MOI.VectorOfVariables,
-                MOI.Reals,
+                MOI.RealCone,
             } MOI.add_variable(bridged)
             @test_throws MOI.UnsupportedConstraint{
                 MOI.VectorOfVariables,
-                MOI.Reals,
+                MOI.RealCone,
             } MOI.add_variables(bridged, 2)
             MOIB.add_bridge(bridged, MOIB.Variable.FreeBridge{T})
             @test !MOI.supports_constraint(
                 bridged,
                 MOI.VectorOfVariables,
-                MOI.Reals,
+                MOI.RealCone,
             )
-            @test MOI.supports_add_constrained_variables(bridged, MOI.Reals)
-            @test MOIB.bridge_type(bridged, MOI.Reals) ==
+            @test MOI.supports_add_constrained_variables(bridged, MOI.RealCone)
+            @test MOIB.bridge_type(bridged, MOI.RealCone) ==
                   MOIB.Variable.FreeBridge{T}
         end
         @testset "Vectorize" begin
@@ -578,7 +578,7 @@ end
                 MOI.GreaterThan{T},
             )
             @test MOIB.bridge_type(bridged, MOI.GreaterThan{T}) ==
-                  MOIB.Variable.VectorizeBridge{T,MOI.Nonnegatives}
+                  MOIB.Variable.VectorizeBridge{T,MOI.NonnegativeCone}
             @test !MOI.supports_constraint(
                 bridged,
                 MOI.SingleVariable,
@@ -589,7 +589,7 @@ end
                 MOI.LessThan{T},
             )
             @test MOIB.bridge_type(bridged, MOI.LessThan{T}) ==
-                  MOIB.Variable.VectorizeBridge{T,MOI.Nonpositives}
+                  MOIB.Variable.VectorizeBridge{T,MOI.NonpositiveCone}
             @test !MOI.supports_constraint(
                 bridged,
                 MOI.SingleVariable,
@@ -597,7 +597,7 @@ end
             )
             @test MOI.supports_add_constrained_variable(bridged, MOI.EqualTo{T})
             @test MOIB.bridge_type(bridged, MOI.EqualTo{T}) ==
-                  MOIB.Variable.VectorizeBridge{T,MOI.Zeros}
+                  MOIB.Variable.VectorizeBridge{T,MOI.ZeroCone}
         end
         @testset "RSOCtoPSD" begin
             @test !MOI.supports_constraint(
@@ -645,8 +645,8 @@ end
                 MOI.LessThan{T},
                 1,
                 (
-                    (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
-                    (MOI.VectorOfVariables, MOI.Nonpositives, 0),
+                    (MOI.VectorOfVariables, MOI.NonnegativeCone, 0),
+                    (MOI.VectorOfVariables, MOI.NonpositiveCone, 0),
                 ),
                 used_bridges = 2,
             )
@@ -683,12 +683,12 @@ end
             @test MOI.supports_constraint(
                 bridged,
                 MOI.VectorAffineFunction{T},
-                MOI.Zeros,
+                MOI.ZeroCone,
             )
             @test MOIB.bridge_type(
                 bridged,
                 MOI.VectorAffineFunction{T},
-                MOI.Zeros,
+                MOI.ZeroCone,
             ) == MOIB.Constraint.ScalarizeBridge{
                 T,
                 MOI.ScalarAffineFunction{T},
@@ -747,7 +747,7 @@ Bridge graph with 1 variable nodes, 1 constraint nodes and 0 objective nodes.
 Bridge graph with 1 variable nodes, 3 constraint nodes and 0 objective nodes.
  [1] constrained variables in `MOI.PositiveSemidefiniteConeSquare` are supported (distance 6) by adding free variables and then constrain them, see (1).
  (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeSquare` constraints are bridged (distance 3) by $(MOIB.Constraint.SquareBridge{T,MOI.VectorAffineFunction{T},MOI.ScalarAffineFunction{T},MOI.PositiveSemidefiniteConeTriangle,MOI.PositiveSemidefiniteConeSquare}).
- (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are bridged (distance 1) by $(MOIB.Constraint.ScalarizeBridge{T,MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}).
+ (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.ZeroCone` constraints are bridged (distance 1) by $(MOIB.Constraint.ScalarizeBridge{T,MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}).
  (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are bridged (distance 2) by $(MOIB.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.PositiveSemidefiniteConeTriangle}).
 """,
             )
@@ -771,7 +771,7 @@ Bridge graph with 1 variable nodes, 3 constraint nodes and 0 objective nodes.
             ) == MOIB.Constraint.VectorizeBridge{
                 T,
                 MOI.VectorAffineFunction{T},
-                MOI.Nonnegatives,
+                MOI.NonnegativeCone,
                 MOI.ScalarAffineFunction{T},
             }
         end
@@ -860,10 +860,10 @@ Bridge graph with 1 variable nodes, 0 constraint nodes and 0 objective nodes.
             """
 Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
  [1] constrained variables in `MOI.LessThan{$T}` are not supported because:
-   Cannot use `$(MOIB.Variable.VectorizeBridge{T,MOI.Nonpositives})` because:
-   [2] constrained variables in `MOI.Nonpositives` are not supported
+   Cannot use `$(MOIB.Variable.VectorizeBridge{T,MOI.NonpositiveCone})` because:
+   [2] constrained variables in `MOI.NonpositiveCone` are not supported
    Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
- [2] constrained variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
+ [2] constrained variables in `MOI.NonpositiveCone` are not supported because no added bridge supports bridging it.
    Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
 """,
         )
@@ -874,8 +874,8 @@ Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be brid
               MOI.Utilities.replace_acronym(
             """
 Bridge graph with 2 variable nodes, 0 constraint nodes and 0 objective nodes.
- [1] constrained variables in `MOI.LessThan{$T}` are bridged (distance 2) by $(MOIB.Variable.VectorizeBridge{T,MOI.Nonpositives}).
- [2] constrained variables in `MOI.Nonpositives` are bridged (distance 1) by $(MOIB.Variable.NonposToNonnegBridge{T}).
+ [1] constrained variables in `MOI.LessThan{$T}` are bridged (distance 2) by $(MOIB.Variable.VectorizeBridge{T,MOI.NonpositiveCone}).
+ [2] constrained variables in `MOI.NonpositiveCone` are bridged (distance 1) by $(MOIB.Variable.NonposToNonnegBridge{T}).
 """,
         )
     end
@@ -902,11 +902,11 @@ Bridge graph with 1 variable nodes, 1 constraint nodes and 0 objective nodes.
             """
 Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
  [1] constrained variables in `MOI.LessThan{$T}` are not supported because:
-   Cannot use `$(MOIB.Variable.VectorizeBridge{T,MOI.Nonpositives})` because:
-   [2] constrained variables in `MOI.Nonpositives` are not supported
+   Cannot use `$(MOIB.Variable.VectorizeBridge{T,MOI.NonpositiveCone})` because:
+   [2] constrained variables in `MOI.NonpositiveCone` are not supported
    Cannot add free variables and then constrain them because:
    (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
- [2] constrained variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
+ [2] constrained variables in `MOI.NonpositiveCone` are not supported because no added bridge supports bridging it.
    Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
  (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
 """,
@@ -918,8 +918,8 @@ Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be brid
               MOI.Utilities.replace_acronym(
             """
 Bridge graph with 2 variable nodes, 1 constraint nodes and 0 objective nodes.
- [1] constrained variables in `MOI.LessThan{$T}` are bridged (distance 2) by $(MOIB.Variable.VectorizeBridge{T,MOI.Nonpositives}).
- [2] constrained variables in `MOI.Nonpositives` are bridged (distance 1) by $(MOIB.Variable.NonposToNonnegBridge{T}).
+ [1] constrained variables in `MOI.LessThan{$T}` are bridged (distance 2) by $(MOIB.Variable.VectorizeBridge{T,MOI.NonpositiveCone}).
+ [2] constrained variables in `MOI.NonpositiveCone` are bridged (distance 1) by $(MOIB.Variable.NonposToNonnegBridge{T}).
  (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
 """,
         )
@@ -976,10 +976,10 @@ Bridge graph with 2 variable nodes, 1 constraint nodes and 0 objective nodes.
             """
 `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are not supported and cannot be bridged into supported constrained variables and constraints. See details below:
  [2] constrained variables in `MOI.LessThan{$T}` are not supported because:
-   Cannot use `$(MOIB.Variable.VectorizeBridge{T,MOI.Nonpositives})` because:
-   [3] constrained variables in `MOI.Nonpositives` are not supported
+   Cannot use `$(MOIB.Variable.VectorizeBridge{T,MOI.NonpositiveCone})` because:
+   [3] constrained variables in `MOI.NonpositiveCone` are not supported
    Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
- [3] constrained variables in `MOI.Nonpositives` are not supported because no added bridge supports bridging it.
+ [3] constrained variables in `MOI.NonpositiveCone` are not supported because no added bridge supports bridging it.
    Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
  [4] constrained variables in `MOI.Interval{$T}` are not supported because no added bridge supports bridging it.
    Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
@@ -1052,8 +1052,8 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.RotatedSecondOrderCone})` because:
    [1] constrained variables in `MOI.RotatedSecondOrderCone` are not supported
-   (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
- (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+   (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.ZeroCone` constraints are not supported
+ (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.ZeroCone` constraints are not supported because no added bridge supports bridging it.
  (4) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.QuadtoSOCBridge{T})` because:
    (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
@@ -1074,8 +1074,8 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
    (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.RotatedSecondOrderCone})` because:
-   (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
- (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+   (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.ZeroCone` constraints are not supported
+ (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.ZeroCone` constraints are not supported because no added bridge supports bridging it.
  (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.QuadtoSOCBridge{T})` because:
    (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
@@ -1096,7 +1096,7 @@ Bridge graph with 1 variable nodes, 5 constraint nodes and 2 objective nodes.
  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 5) by $(MOIB.Constraint.QuadtoSOCBridge{T}).
  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 4) by $(MOIB.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.RotatedSecondOrderCone}).
  (3) `MOI.SingleVariable`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by $(MOIB.Constraint.ScalarFunctionizeBridge{T,MOI.EqualTo{T}}).
- (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are bridged (distance 1) by $(MOIB.Constraint.ScalarizeBridge{T,MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}).
+ (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.ZeroCone` constraints are bridged (distance 1) by $(MOIB.Constraint.ScalarizeBridge{T,MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}).
  (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are bridged (distance 5) by $(MOIB.Constraint.QuadtoSOCBridge{T}).
  |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is bridged (distance 12) by $(MOIB.Objective.SlackBridge{T,MOI.ScalarQuadraticFunction{T},MOI.ScalarQuadraticFunction{T}}).
  |2| objective function of type `MOI.SingleVariable` is bridged (distance 1) by $(MOIB.Objective.FunctionizeBridge{T}).
@@ -1121,8 +1121,8 @@ Bridge graph with 1 variable nodes, 5 constraint nodes and 2 objective nodes.
  (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.ExponentialCone})` because:
    [1] constrained variables in `MOI.ExponentialCone` are not supported
-   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
- (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.ZeroCone` constraints are not supported
+ (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.ZeroCone` constraints are not supported because no added bridge supports bridging it.
 """,
         )
         MOIB.add_bridge(bridged, MOIB.Constraint.VectorFunctionizeBridge{T})
@@ -1136,8 +1136,8 @@ Bridge graph with 1 variable nodes, 5 constraint nodes and 2 objective nodes.
  (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.ExponentialCone` constraints are not supported because:
    Cannot use `$(MOIB.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.ExponentialCone})` because:
    [1] constrained variables in `MOI.ExponentialCone` are not supported
-   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported
- (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are not supported because no added bridge supports bridging it.
+   (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.ZeroCone` constraints are not supported
+ (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.ZeroCone` constraints are not supported because no added bridge supports bridging it.
 """,
         )
     end
@@ -1200,9 +1200,9 @@ MOIU.@model(
     (),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan),
     (
-        MOI.Zeros,
-        MOI.Nonnegatives,
-        MOI.Nonpositives,
+        MOI.ZeroCone,
+        MOI.NonnegativeCone,
+        MOI.NonpositiveCone,
         MOI.SecondOrderCone,
         MOI.NormInfinityCone,
         MOI.NormOneCone,
@@ -1242,7 +1242,7 @@ MOIU.@model(
     NoVariableModel,
     (MOI.ZeroOne, MOI.Integer),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan),
-    (MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives, MOI.SecondOrderCone),
+    (MOI.ZeroCone, MOI.NonnegativeCone, MOI.NonpositiveCone, MOI.SecondOrderCone),
     (),
     (),
     (MOI.ScalarAffineFunction,),
@@ -1296,19 +1296,19 @@ Bridge graph with 5 variable nodes, 11 constraint nodes and 0 objective nodes.
  [1] constrained variables in `MOI.RotatedSecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (3).
  [2] constrained variables in `MOI.PositiveSemidefiniteConeTriangle` are not supported
  [3] constrained variables in `MOI.SecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (1).
- [4] constrained variables in `MOI.Nonnegatives` are supported (distance 2) by adding free variables and then constrain them, see (6).
+ [4] constrained variables in `MOI.NonnegativeCone` are supported (distance 2) by adding free variables and then constrain them, see (6).
  [5] constrained variables in `MOI.Interval{$T}` are supported (distance 3) by adding free variables and then constrain them, see (8).
  (1) `MOI.VectorOfVariables`-in-`MOI.SecondOrderCone` constraints are bridged (distance 1) by $(MOIB.Constraint.VectorFunctionizeBridge{T,MOI.SecondOrderCone}).
  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by $(MOIB.Constraint.RSOCtoSOCBridge{T,MOI.VectorAffineFunction{T},MOI.VectorAffineFunction{T}}).
  (3) `MOI.VectorOfVariables`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by $(MOIB.Constraint.RSOCtoSOCBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
  (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
  (5) `MOI.VectorOfVariables`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
- (6) `MOI.VectorOfVariables`-in-`MOI.Nonnegatives` constraints are bridged (distance 1) by $(MOIB.Constraint.NonnegToNonposBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
+ (6) `MOI.VectorOfVariables`-in-`MOI.NonnegativeCone` constraints are bridged (distance 1) by $(MOIB.Constraint.NonnegToNonposBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
  (7) `MOI.SingleVariable`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 1) by $(MOIB.Constraint.GreaterToLessBridge{T,MOI.ScalarAffineFunction{T},MOI.SingleVariable}).
  (8) `MOI.SingleVariable`-in-`MOI.Interval{$T}` constraints are bridged (distance 2) by $(MOIB.Constraint.ScalarFunctionizeBridge{T,MOI.Interval{T}}).
  (9) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are bridged (distance 1) by $(MOIB.Constraint.SplitIntervalBridge{T,MOI.ScalarAffineFunction{T},MOI.Interval{T},MOI.GreaterThan{T},MOI.LessThan{T}}).
  (10) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are bridged (distance 1) by $(MOIB.Constraint.LessToGreaterBridge{T,MOI.ScalarAffineFunction{T},MOI.SingleVariable}).
- (11) `MOI.SingleVariable`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by $(MOIB.Constraint.VectorizeBridge{T,MOI.VectorAffineFunction{T},MOI.Zeros,MOI.SingleVariable}).
+ (11) `MOI.SingleVariable`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by $(MOIB.Constraint.VectorizeBridge{T,MOI.VectorAffineFunction{T},MOI.ZeroCone,MOI.SingleVariable}).
 """,
     )
 end
@@ -1317,7 +1317,7 @@ MOIU.@model(
     OnlyNonnegVAF,
     (),
     (),
-    (MOI.Nonnegatives,),
+    (MOI.NonnegativeCone,),
     (),
     (),
     (),
@@ -1444,12 +1444,12 @@ end
     end
 end
 
-# Only supports GreaterThan and Nonnegatives
+# Only supports GreaterThan and NonnegativeCone
 MOIU.@model(
     GreaterNonnegModel,
     (),
     (MOI.GreaterThan,),
-    (MOI.Nonnegatives,),
+    (MOI.NonnegativeCone,),
     (),
     (),
     (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
@@ -1469,9 +1469,9 @@ MOIU.@model(
     (),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
     (
-        MOI.Zeros,
-        MOI.Nonnegatives,
-        MOI.Nonpositives,
+        MOI.ZeroCone,
+        MOI.NonnegativeCone,
+        MOI.NonpositiveCone,
         MOI.SecondOrderCone,
         MOI.NormInfinityCone,
         MOI.NormOneCone,
@@ -1552,10 +1552,10 @@ MOIU.@model(
         MOI.Semiinteger,
     ),
     (
-        MOI.Reals,
-        MOI.Zeros,
-        MOI.Nonnegatives,
-        MOI.Nonpositives,
+        MOI.RealCone,
+        MOI.ZeroCone,
+        MOI.NonnegativeCone,
+        MOI.NonpositiveCone,
         MOI.NormInfinityCone,
         MOI.NormOneCone,
         MOI.SecondOrderCone,
@@ -1598,10 +1598,10 @@ MOIU.@model(
         MOI.Semiinteger,
     ),
     (
-        MOI.Reals,
-        MOI.Zeros,
-        MOI.Nonnegatives,
-        MOI.Nonpositives,
+        MOI.RealCone,
+        MOI.ZeroCone,
+        MOI.NonnegativeCone,
+        MOI.NonpositiveCone,
         MOI.NormInfinityCone,
         MOI.NormOneCone,
         MOI.SecondOrderCone,
@@ -1650,7 +1650,7 @@ end
     @test !MOI.supports_constraint(
         bridged,
         MOI.VectorAffineFunction{Float64},
-        MOI.Nonpositives,
+        MOI.NonpositiveCone,
     )
 end
 
@@ -1734,7 +1734,7 @@ end
 @testset "Supports" begin
     full_bridged_mock = MOIB.full_bridge_optimizer(mock, Float64)
     @testset "Mismatch vector/scalar" begin
-        for S in [MOI.Nonnegatives, MOI.Nonpositives, MOI.Zeros]
+        for S in [MOI.NonnegativeCone, MOI.NonpositiveCone, MOI.ZeroCone]
             @test !MOI.supports_constraint(
                 full_bridged_mock,
                 MOI.SingleVariable,
@@ -1797,11 +1797,11 @@ end
             F,
             MOI.RelativeEntropyCone,
         )
-        @test !MOI.supports_constraint(greater_nonneg_mock, F, MOI.Nonpositives)
+        @test !MOI.supports_constraint(greater_nonneg_mock, F, MOI.NonpositiveCone)
         @test MOI.supports_constraint(
             full_bridged_greater_nonneg,
             F,
-            MOI.Nonnegatives,
+            MOI.NonnegativeCone,
         )
     end
     for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64}]
@@ -1894,9 +1894,9 @@ end
                 )
             end
             for S in [
-                MOI.Nonpositives,
-                MOI.Nonnegatives,
-                MOI.Zeros,
+                MOI.NonpositiveCone,
+                MOI.NonnegativeCone,
+                MOI.ZeroCone,
                 MOI.SecondOrderCone,
             ]
                 @test MOI.supports_constraint(
@@ -1932,7 +1932,7 @@ struct CustomScalarSet <: MOI.AbstractScalarSet end
         @test !MOI.supports_constraint(bridged, typeof(func), typeof(set))
     end
     _test(f_scalar, MOI.EqualTo(one(S)))
-    _test(f_vector, MOI.Zeros(1))
+    _test(f_vector, MOI.ZeroCone(1))
     _test(f_scalar, CustomScalarSet())
     _test(f_vector, CustomVectorSet(1))
 end

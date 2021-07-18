@@ -615,11 +615,11 @@
                 }
             }, {
                 "description": "{0}^{dimension}",
-                "examples": ["{\"type\": \"Zeros\", \"dimension\": 3}"],
+                "examples": ["{\"type\": \"ZeroCone\", \"dimension\": 3}"],
                 "required": ["dimension"],
                 "properties": {
                     "type": {
-                        "const": "Zeros"
+                        "const": "ZeroCone"
                     },
                     "dimension": {
                         "type": "integer",
@@ -628,11 +628,11 @@
                 }
             }, {
                 "description": "R^{dimension}",
-                "examples": ["{\"type\": \"Reals\", \"dimension\": 3}"],
+                "examples": ["{\"type\": \"RealCone\", \"dimension\": 3}"],
                 "required": ["dimension"],
                 "properties": {
                     "type": {
-                        "const": "Reals"
+                        "const": "RealCone"
                     },
                     "dimension": {
                         "type": "integer",
@@ -641,11 +641,11 @@
                 }
             }, {
                 "description": "R₋^{dimension}",
-                "examples": ["{\"type\": \"Nonpositives\", \"dimension\": 3}"],
+                "examples": ["{\"type\": \"NonpositiveCone\", \"dimension\": 3}"],
                 "required": ["dimension"],
                 "properties": {
                     "type": {
-                        "const": "Nonpositives"
+                        "const": "NonpositiveCone"
                     },
                     "dimension": {
                         "type": "integer",
@@ -654,11 +654,11 @@
                 }
             }, {
                 "description": "R₊^{dimension}",
-                "examples": ["{\"type\": \"Nonnegatives\", \"dimension\": 3}"],
+                "examples": ["{\"type\": \"NonnegativeCone\", \"dimension\": 3}"],
                 "required": ["dimension"],
                 "properties": {
                     "type": {
-                        "const": "Nonnegatives"
+                        "const": "NonnegativeCone"
                     },
                     "dimension": {
                         "type": "integer",

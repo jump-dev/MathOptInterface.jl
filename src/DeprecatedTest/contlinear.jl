@@ -6,8 +6,8 @@ function linear1test(model::MOI.ModelLike, config::Config{T}) where {T}
     rtol = config.rtol
     # simple 2 variable, 1 constraint problem
     # min -x
-    # st   x + y <= 1   (x + y - 1 ∈ Nonpositives)
-    #       x, y >= 0   (x, y ∈ Nonnegatives)
+    # st   x + y <= 1   (x + y - 1 ∈ NonpositiveCone)
+    #       x, y >= 0   (x, y ∈ NonnegativeCone)
     @test MOI.supports_incremental_interface(model, false) #=copy_names=#
     @test MOI.supports(
         model,
@@ -1052,7 +1052,7 @@ function linear6test(model::MOI.ModelLike, config::Config{T}) where {T}
     end
 end
 
-# Modify constants in Nonnegatives and Nonpositives
+# Modify constants in NonnegativeCone and NonpositiveCone
 function linear7test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
@@ -1081,12 +1081,12 @@ function linear7test(model::MOI.ModelLike, config::Config{T}) where {T}
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
-        MOI.Nonnegatives,
+        MOI.NonnegativeCone,
     )
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
-        MOI.Nonpositives,
+        MOI.NonpositiveCone,
     )
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -1110,7 +1110,7 @@ function linear7test(model::MOI.ModelLike, config::Config{T}) where {T}
             [MOI.VectorAffineTerm{T}(1, MOI.ScalarAffineTerm{T}(one(T), x))],
             [zero(T)],
         ),
-        MOI.Nonnegatives(1),
+        MOI.NonnegativeCone(1),
     )
     c2 = MOI.add_constraint(
         model,
@@ -1118,7 +1118,7 @@ function linear7test(model::MOI.ModelLike, config::Config{T}) where {T}
             [MOI.VectorAffineTerm{T}(1, MOI.ScalarAffineTerm{T}(one(T), y))],
             [zero(T)],
         ),
-        MOI.Nonpositives(1),
+        MOI.NonpositiveCone(1),
     )
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -1150,7 +1150,7 @@ function linear7test(model::MOI.ModelLike, config::Config{T}) where {T}
                 ],
                 [-T(100)],
             ),
-            MOI.Nonnegatives(1),
+            MOI.NonnegativeCone(1),
         )
     end
     if config.solve
@@ -1182,7 +1182,7 @@ function linear7test(model::MOI.ModelLike, config::Config{T}) where {T}
                 ],
                 [T(100)],
             ),
-            MOI.Nonpositives(1),
+            MOI.NonpositiveCone(1),
         )
     end
     if config.solve
@@ -2181,7 +2181,11 @@ function linear15test(model::MOI.ModelLike, config::Config{T}) where {T}
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @test MOI.supports(model, MOI.ObjectiveSense())
-    @test MOI.supports_constraint(model, MOI.VectorAffineFunction{T}, MOI.Zeros)
+    @test MOI.supports_constraint(
+        model,
+        MOI.VectorAffineFunction{T},
+        MOI.ZeroCone,
+    )
     MOI.empty!(model)
     @test MOI.is_empty(model)
     x = MOI.add_variables(model, 1)
@@ -2194,7 +2198,7 @@ function linear15test(model::MOI.ModelLike, config::Config{T}) where {T}
             MOI.VectorAffineTerm{T}.(2, MOI.ScalarAffineTerm{T}.([one(T)], x)),
             zeros(2),
         ),
-        MOI.Zeros(2),
+        MOI.ZeroCone(2),
     )
     MOI.set(
         model,
