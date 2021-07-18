@@ -10,9 +10,9 @@ following conventions:
 
 * The name of concrete sets does not end with `Set`, but the name of abstract
   sets end with `Set`. For instance, `MOI.ZeroOne` is a concrete set
-  (it can be instanciated by the user), but `MOI.AbstractScalarSet` is an 
+  (it can be instantiated by the user), but `MOI.AbstractScalarSet` is an 
   abstract set (many sets should have it as supertype; an 
-  `MOI.AbstractScalarSet` cannot be instanciated).
+  `MOI.AbstractScalarSet` cannot be instantiated).
 * The name of conic sets ends with `Cone`, like `NormInfinityCone`, unless 
   the set is matrix-valued. 
 * Matrix-valued conic sets provide two versions: one for a standard 
