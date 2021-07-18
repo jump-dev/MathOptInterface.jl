@@ -209,9 +209,10 @@ function test_mock_deprecated()
             MOI.NO_SOLUTION,
             var_basis = [MOI.BASIC],
             con_basis = [
-                (MOI.ScalarAffineFunction{Float64},MOI.EqualTo{Float64}) => [MOI.BASIC],
+                (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
+                    [MOI.BASIC],
             ],
-        )
+        ),
     )
     @test_logs (:warn,) (:warn,) MOI.optimize!(mock)
     return
