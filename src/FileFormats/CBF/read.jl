@@ -360,7 +360,8 @@ function Base.read!(io::IO, model::Model)
             # Reverse order of indices.
             MOI.VectorAffineFunction(
                 [
-                    MOI.VectorAffineTerm{Float64}(4 - l, t) for l in 1:cone_dim for t in data.row_terms[row_idx+l]
+                    MOI.VectorAffineTerm{Float64}(4 - l, t) for
+                    l in 1:cone_dim for t in data.row_terms[row_idx+l]
                 ],
                 data.row_constants[row_idx.+(3:-1:1)],
             )
