@@ -300,7 +300,7 @@ function moi_to_object(
 ) where {I,S}
     @assert I == MOI.ACTIVATE_ON_ONE || I == MOI.ACTIVATE_ON_ZERO
     return OrderedObject(
-        "type" => "Indicator",
+        "type" => "IndicatorSet",
         "set" => moi_to_object(set.set, name_map),
         "activate_on" => (I == MOI.ACTIVATE_ON_ONE) ? "one" : "zero",
     )
