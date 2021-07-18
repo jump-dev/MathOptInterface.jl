@@ -82,5 +82,7 @@ function precompile_model(model, constraints)
     for (F, S) in constraints
         precompile_constraint(model, F, S)
     end
-    return Base.precompile(Tuple{typeof(add_constrained_variables),model,RealCone})
+    return Base.precompile(
+        Tuple{typeof(add_constrained_variables),model,RealCone},
+    )
 end

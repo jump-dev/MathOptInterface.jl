@@ -352,8 +352,11 @@ function emptytest(model::MOI.ModelLike)
         MOI.VectorOfVariables,
         MOI.NonnegativeCone,
     )
-    vc =
-        MOI.add_constraint(model, MOI.VectorOfVariables(v), MOI.NonnegativeCone(3))
+    vc = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables(v),
+        MOI.NonnegativeCone(3),
+    )
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
@@ -389,7 +392,10 @@ function emptytest(model::MOI.ModelLike)
     ) == 0
     @test MOI.get(
         model,
-        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.ZeroCone}(),
+        MOI.NumberOfConstraints{
+            MOI.VectorAffineFunction{Float64},
+            MOI.ZeroCone,
+        }(),
     ) == 0
     @test isempty(MOI.get(model, MOI.ListOfConstraintTypesPresent()))
     @test !MOI.is_valid(model, v[1])
@@ -711,7 +717,11 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
     # We test this after the creation of every `SingleVariable` constraint
     # to ensure a good coverage of corner cases.
     @test csv.value == w.value
-    cvv = MOI.add_constraint(src, MOI.VectorOfVariables(v), MOI.NonnegativeCone(3))
+    cvv = MOI.add_constraint(
+        src,
+        MOI.VectorOfVariables(v),
+        MOI.NonnegativeCone(3),
+    )
     MOI.set(src, MOI.ConstraintName(), cvv, "cvv")
     csa = MOI.add_constraint(
         src,
@@ -752,7 +762,11 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
         MOI.SingleVariable,
         MOI.EqualTo{Float64},
     )
-    @test MOI.supports_constraint(dest, MOI.VectorOfVariables, MOI.NonnegativeCone)
+    @test MOI.supports_constraint(
+        dest,
+        MOI.VectorOfVariables,
+        MOI.NonnegativeCone,
+    )
     @test MOI.supports_constraint(
         dest,
         MOI.ScalarAffineFunction{Float64},
@@ -805,7 +819,10 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
     ) == [dict[csa]]
     @test MOI.get(
         dest,
-        MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},MOI.ZeroCone}(),
+        MOI.NumberOfConstraints{
+            MOI.VectorAffineFunction{Float64},
+            MOI.ZeroCone,
+        }(),
     ) == 1
     @test MOI.get(
         dest,
@@ -827,7 +844,8 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
           MOI.get(dest, MOI.ConstraintName(), dict[cvv]) == dest_name("cvv")
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[cvv]) ==
           MOI.VectorOfVariables(getindex.(Ref(dict), v))
-    @test MOI.get(dest, MOI.ConstraintSet(), dict[cvv]) == MOI.NonnegativeCone(3)
+    @test MOI.get(dest, MOI.ConstraintSet(), dict[cvv]) ==
+          MOI.NonnegativeCone(3)
     @test !MOI.supports(dest, MOI.ConstraintName(), typeof(csa)) ||
           MOI.get(dest, MOI.ConstraintName(), dict[csa]) == dest_name("csa")
     @test MOI.get(dest, MOI.ConstraintFunction(), dict[csa]) ≈

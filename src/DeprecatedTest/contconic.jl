@@ -160,7 +160,11 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
             MOI.NonnegativeCone,
         )
         @test MOI.supports_add_constrained_variables(model, MOI.NonpositiveCone)
-        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.ZeroCone)
+        @test MOI.supports_constraint(
+            model,
+            MOI.VectorOfVariables,
+            MOI.ZeroCone,
+        )
     else
         @test MOI.supports_constraint(
             model,
@@ -493,7 +497,11 @@ function _norminf1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     )
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
-        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.ZeroCone)
+        @test MOI.supports_constraint(
+            model,
+            MOI.VectorOfVariables,
+            MOI.ZeroCone,
+        )
     else
         @test MOI.supports_constraint(
             model,
@@ -820,7 +828,11 @@ function _normone1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     )
     @test MOI.supports(model, MOI.ObjectiveSense())
     if vecofvars
-        @test MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.ZeroCone)
+        @test MOI.supports_constraint(
+            model,
+            MOI.VectorOfVariables,
+            MOI.ZeroCone,
+        )
     else
         @test MOI.supports_constraint(
             model,

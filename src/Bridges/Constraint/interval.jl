@@ -79,7 +79,13 @@ function concrete_bridge_type(
     F::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.ZeroCone},
 ) where {T}
-    return SplitIntervalBridge{T,F,MOI.ZeroCone,MOI.NonnegativeCone,MOI.NonpositiveCone}
+    return SplitIntervalBridge{
+        T,
+        F,
+        MOI.ZeroCone,
+        MOI.NonnegativeCone,
+        MOI.NonpositiveCone,
+    }
 end
 
 # Attributes, Bridge acting as a model

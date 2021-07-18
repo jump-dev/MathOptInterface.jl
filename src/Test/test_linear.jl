@@ -2807,7 +2807,8 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0.0],
-            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[0.0, 0.0]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) =>
+                [[0.0, 0.0]],
         ),
     )
     return

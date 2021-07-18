@@ -1618,7 +1618,8 @@ end
 # Variables
 function MOI.add_variable(b::AbstractBridgeOptimizer)
     if is_bridged(b, MOI.RealCone)
-        variables, constraint = MOI.add_constrained_variables(b, MOI.RealCone(1))
+        variables, constraint =
+            MOI.add_constrained_variables(b, MOI.RealCone(1))
         @assert isone(length(variables))
         return first(variables)
     else
@@ -1628,7 +1629,8 @@ end
 
 function MOI.add_variables(b::AbstractBridgeOptimizer, n)
     if is_bridged(b, MOI.RealCone)
-        variables, constraint = MOI.add_constrained_variables(b, MOI.RealCone(n))
+        variables, constraint =
+            MOI.add_constrained_variables(b, MOI.RealCone(n))
         return variables
     else
         return MOI.add_variables(b.model, n)

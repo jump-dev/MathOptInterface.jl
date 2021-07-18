@@ -21,7 +21,10 @@ function bridge_constrained_variable(
     return FreeBridge{T}(variables, constraint)
 end
 
-function supports_constrained_variable(::Type{<:FreeBridge}, ::Type{MOI.RealCone})
+function supports_constrained_variable(
+    ::Type{<:FreeBridge},
+    ::Type{MOI.RealCone},
+)
     return true
 end
 
@@ -136,8 +139,8 @@ function unbridged_map(
     # `unbridged_map` is required to return a `MOI.ScalarAffineFunction`.
     func = convert(MOI.ScalarAffineFunction{T}, sv)
     n = div(length(bridge.variables), 2)
-    return bridge.variables[i.value] => func,
-    bridge.variables[n+i.value] => zero(MOI.ScalarAffineFunction{T})
+    return bridge.variables[i.value] =>
+        func, bridge.variables[n+i.value] => zero(MOI.ScalarAffineFunction{T})
 end
 
 function MOI.supports(

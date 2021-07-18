@@ -835,7 +835,10 @@ function MOI.supports_add_constrained_variables(
     mock::MockOptimizer,
     ::Type{MOI.RealCone},
 )
-    return MOI.supports_add_constrained_variables(mock.inner_model, MOI.RealCone)
+    return MOI.supports_add_constrained_variables(
+        mock.inner_model,
+        MOI.RealCone,
+    )
 end
 
 function MOI.copy_to(mock::MockOptimizer, src::MOI.ModelLike; kws...)

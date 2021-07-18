@@ -285,8 +285,8 @@ function Base.iterate(d::AbstractDoubleDict)
         i_next = iterate(inner)
     end
     (i_i, i_state) = i_next
-    return CI{F,S}(i_i[1]) => typed_value(d, i_i[2], F, S),
-    (i_state, (o_i, o_state))
+    return CI{F,S}(i_i[1]) =>
+        typed_value(d, i_i[2], F, S), (i_state, (o_i, o_state))
 end
 function Base.iterate(d::AbstractDoubleDict, state)
     (i_state, (o_i, o_state)) = state
@@ -302,8 +302,8 @@ function Base.iterate(d::AbstractDoubleDict, state)
         i_next = iterate(inner)
     end
     (i_i, i_state) = i_next
-    return CI{F,S}(i_i[1]) => typed_value(d, i_i[2], F, S),
-    (i_state, (o_i, o_state))
+    return CI{F,S}(i_i[1]) =>
+        typed_value(d, i_i[2], F, S), (i_state, (o_i, o_state))
 end
 
 abstract type AbstractWithType{F,S,V,DI,DD} <: AD{CI{F,S},V} end

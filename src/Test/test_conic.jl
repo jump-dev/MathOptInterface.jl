@@ -414,7 +414,8 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [-4, -3, 16, 0],
-            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[7, 2, -4]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) =>
+                [[7, 2, -4]],
         ),
     )
     return
@@ -446,8 +447,10 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [-4, -3, 16, 0],
-            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) => [[0]],
-            (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) => [[0]],
+            (MOI.VectorAffineFunction{Float64}, MOI.NonnegativeCone) =>
+                [[0]],
+            (MOI.VectorAffineFunction{Float64}, MOI.NonpositiveCone) =>
+                [[0]],
             (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) =>
                 [[7, 2, -4], [7]],
         ),
@@ -796,7 +799,8 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1, 0.5, 1],
-            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-1], [-1]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) =>
+                [[-1], [-1]],
             (MOI.VectorOfVariables, MOI.NormInfinityCone) => [[1, 0, -1]],
         ),
     )
@@ -829,7 +833,8 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1, 0.5, 1],
-            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-1], [-1]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) =>
+                [[-1], [-1]],
             (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) =>
                 [[1, 0, -1]],
         ),
@@ -1225,7 +1230,8 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1, 0.5, 0.5],
-            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-1], [0]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) =>
+                [[-1], [0]],
             (MOI.VectorOfVariables, MOI.NormOneCone) => [[1, -1, -1]],
         ),
     )
@@ -1257,7 +1263,8 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1, 0.5, 0.5],
-            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) => [[-1], [0]],
+            (MOI.VectorAffineFunction{Float64}, MOI.ZeroCone) =>
+                [[-1], [0]],
             (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) =>
                 [[1, -1, -1]],
         ),
@@ -1532,7 +1539,11 @@ function _test_conic_SecondOrderCone_helper(
             MOI.SecondOrderCone,
         )
     end
-    @requires MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.ZeroCone)
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.ZeroCone,
+    )
 
     if use_VectorOfVariables
         xyz, csoc = MOI.add_constrained_variables(model, MOI.SecondOrderCone(3))

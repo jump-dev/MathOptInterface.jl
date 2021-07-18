@@ -72,7 +72,8 @@ This is used in the vectorize and scalarize bridges.
 
 See also: [`ScalarLinearSet`](@ref).
 """
-const VectorLinearSet = Union{MOI.ZeroCone,MOI.NonnegativeCone,MOI.NonpositiveCone}
+const VectorLinearSet =
+    Union{MOI.ZeroCone,MOI.NonnegativeCone,MOI.NonpositiveCone}
 
 """
     vector_set_type(::Type{S}) where {S}
