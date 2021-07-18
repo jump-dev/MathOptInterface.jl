@@ -172,7 +172,7 @@ where ``\mathcal{E}`` is the exponential cone (see [`ExponentialCone`](@ref)),
 | ``x_i \in \{0\} \cup \{l,l+1,\ldots,u-1,u\}``                                              | `SingleVariable`       | `Semiinteger`                      |
 | At most one component of ``x`` can be nonzero                                              | `VectorOfVariables`    | `SOS1`                             |
 | At most two components of ``x`` can be nonzero, and if so they must be adjacent components | `VectorOfVariables`    | `SOS2`                             |
-| ``y = 1 \implies a^T x \in S``                                                             | `VectorAffineFunction` | `IndicatorSet`                     |
+| ``y = 1 \implies a^T x \in S``                                                             | `VectorAffineFunction` | `Indicator`                        |
 
 ## JuMP mapping
 

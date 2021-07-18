@@ -35,7 +35,7 @@ include("../utilities.jl")
         ],
         [0.0, 0.0],
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO}(MOI.LessThan(8.0))
+    iset1 = MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(MOI.LessThan(8.0))
 
     BT = MOIB.Constraint.concrete_bridge_type(
         MOIB.Constraint.IndicatorActiveOnFalseBridge{Float64},

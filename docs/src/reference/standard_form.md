@@ -91,7 +91,7 @@ NormSpectralCone
 NormNuclearCone
 SOS1
 SOS2
-IndicatorSet
+Indicator
 Complements
 ```
 

@@ -149,7 +149,7 @@ or solver developers.
   A special ordered set of Type I.
 * [`SOS2(weights)`](@ref MathOptInterface.SOS2):
   A special ordered set of Type II.
-* [`IndicatorSet(set)`](@ref MathOptInterface.IndicatorSet):
+* [`Indicator(set)`](@ref MathOptInterface.Indicator):
   A set to specify indicator constraints.
 * [`Complements`](@ref MathOptInterface.Complements):
   A set for mixed complementarity constraints.
