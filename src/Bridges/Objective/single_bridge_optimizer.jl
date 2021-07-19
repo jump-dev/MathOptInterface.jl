@@ -70,3 +70,5 @@ function MOIB.bridge_type(
 ) where {BT}
     return BT
 end
+
+MOIB.recursive_model(b::SingleBridgeOptimizer) = b.model
