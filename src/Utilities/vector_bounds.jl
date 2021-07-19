@@ -58,37 +58,39 @@ const SUPPORTED_VARIABLE_SCALAR_SETS{T} = Union{
     MOI.Semiinteger{T},
 }
 
-# 0xcb = 0x80 | 0x40 | 0x8 | 0x2 | 0x1
-const _LOWER_BOUND_MASK = 0xcb
-# 0xcd = 0x80 | 0x40 | 0x8 | 0x4 | 0x1
-const _UPPER_BOUND_MASK = 0xcd
+# 0xcb = 0x0080 | 0x0040 | 0x0008 | 0x0002 | 0x0001
+const _LOWER_BOUND_MASK = 0x00cb
+# 0xcd = 0x0080 | 0x0040 | 0x0008 | 0x0004 | 0x0001
+const _UPPER_BOUND_MASK = 0x00cd
 
-_single_variable_flag(::Type{<:MOI.EqualTo}) = 0x1
-_single_variable_flag(::Type{<:MOI.GreaterThan}) = 0x2
-_single_variable_flag(::Type{<:MOI.LessThan}) = 0x4
-_single_variable_flag(::Type{<:MOI.Interval}) = 0x8
-_single_variable_flag(::Type{MOI.Integer}) = 0x10
-_single_variable_flag(::Type{MOI.ZeroOne}) = 0x20
-_single_variable_flag(::Type{<:MOI.Semicontinuous}) = 0x40
-_single_variable_flag(::Type{<:MOI.Semiinteger}) = 0x80
+const _DELETED_VARIABLE = 0x8000
 
-function _flag_to_set_type(flag::UInt8, ::Type{T}) where {T}
-    if flag == 0x1
+_single_variable_flag(::Type{<:MOI.EqualTo}) = 0x0001
+_single_variable_flag(::Type{<:MOI.GreaterThan}) = 0x0002
+_single_variable_flag(::Type{<:MOI.LessThan}) = 0x0004
+_single_variable_flag(::Type{<:MOI.Interval}) = 0x0008
+_single_variable_flag(::Type{MOI.Integer}) = 0x0010
+_single_variable_flag(::Type{MOI.ZeroOne}) = 0x0020
+_single_variable_flag(::Type{<:MOI.Semicontinuous}) = 0x0040
+_single_variable_flag(::Type{<:MOI.Semiinteger}) = 0x0080
+
+function _flag_to_set_type(flag::UInt16, ::Type{T}) where {T}
+    if flag == 0x0001
         return MOI.EqualTo{T}
-    elseif flag == 0x2
+    elseif flag == 0x0002
         return MOI.GreaterThan{T}
-    elseif flag == 0x4
+    elseif flag == 0x0004
         return MOI.LessThan{T}
-    elseif flag == 0x8
+    elseif flag == 0x0008
         return MOI.Interval{T}
-    elseif flag == 0x10
+    elseif flag == 0x0010
         return MOI.Integer
-    elseif flag == 0x20
+    elseif flag == 0x0020
         return MOI.ZeroOne
-    elseif flag == 0x40
+    elseif flag == 0x0040
         return MOI.Semicontinuous{T}
     else
-        @assert flag == 0x80
+        @assert flag == 0x0080
         return MOI.Semiinteger{T}
     end
 end
@@ -159,8 +161,7 @@ _no_upper_bound(::Type{T}) where {T<:AbstractFloat} = typemax(T)
 
 """
     struct SingleVariableConstraints{T} <: AbstractVectorBounds
-        variable_indices::Union{Nothing,Set{MOI.VariableIndex}}
-        set_mask::Vector{UInt8}
+        set_mask::Vector{UInt16}
         lower::Vector{T}
         upper::Vector{T}
     end
@@ -168,25 +169,26 @@ _no_upper_bound(::Type{T}) where {T<:AbstractFloat} = typemax(T)
 A struct for storing SingleVariable-related constraints. Used in `MOI.Model`.
 """
 mutable struct SingleVariableConstraints{T} <: AbstractVectorBounds
-    variable_indices::Union{Nothing,Set{MOI.VariableIndex}}
-    set_mask::Vector{UInt8}
+    set_mask::Vector{UInt16}
     lower::Vector{T}
     upper::Vector{T}
 end
 
 function SingleVariableConstraints{T}() where {T}
-    return SingleVariableConstraints{T}(nothing, UInt8[], T[], T[])
+    return SingleVariableConstraints{T}(UInt16[], T[], T[])
+end
+
+function MOI.throw_if_not_valid(b::SingleVariableConstraints, index)
+    if !MOI.is_valid(b, index)
+        throw(InvalidIndex(index))
+    end
 end
 
 function Base.:(==)(a::SingleVariableConstraints, b::SingleVariableConstraints)
-    return a.variable_indices == a.variable_indices &&
-           a.set_mask == b.set_mask &&
-           a.lower == b.lower &&
-           a.upper == b.upper
+    return a.set_mask == b.set_mask && a.lower == b.lower && a.upper == b.upper
 end
 
 function Base.empty!(b::SingleVariableConstraints)
-    b.variable_indices = nothing
     empty!(b.set_mask)
     empty!(b.lower)
     empty!(b.upper)
@@ -201,37 +203,30 @@ function Base.resize!(b::SingleVariableConstraints, n)
 end
 
 function MOI.add_variable(b::SingleVariableConstraints{T}) where {T}
-    push!(b.set_mask, 0x00)
+    push!(b.set_mask, 0x0000)
     push!(b.lower, _no_lower_bound(T))
     push!(b.upper, _no_upper_bound(T))
     x = MOI.VariableIndex(length(b.set_mask))
-    if b.variable_indices !== nothing
-        push!(b.variable_indices, x)
-    end
     return x
 end
 
 function MOI.get(b::SingleVariableConstraints, ::MOI.ListOfVariableIndices)
-    if b.variable_indices === nothing
-        return MOI.VariableIndex.(1:length(b.set_mask))
-    end
-    x = collect(b.variable_indices)
-    sort!(x, by = x -> x.value)
-    return x
+    return MOI.VariableIndex[
+        MOI.VariableIndex(i) for
+        i in 1:length(b.set_mask) if b.set_mask[i] != _DELETED_VARIABLE
+    ]
 end
 
 function MOI.is_valid(b::SingleVariableConstraints, x::MOI.VariableIndex)
-    if b.variable_indices === nothing
-        return 1 <= x.value <= length(b.set_mask)
-    end
-    return x in b.variable_indices
+    mask = get(b.set_mask, x.value, _DELETED_VARIABLE)
+    return mask != _DELETED_VARIABLE
 end
 
 function MOI.get(b::SingleVariableConstraints, ::MOI.NumberOfVariables)::Int64
-    if b.variable_indices === nothing
-        return length(b.set_mask)
+    if length(b.set_mask) == 0
+        return 0
     end
-    return length(b.variable_indices)
+    return sum(x != _DELETED_VARIABLE for x in b.set_mask)
 end
 
 function MOI.add_constraint(
@@ -257,6 +252,7 @@ function MOI.delete(
     b::SingleVariableConstraints{T},
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
 ) where {T,S}
+    MOI.throw_if_not_valid(b, ci)
     flag = _single_variable_flag(S)
     b.set_mask[ci.value] &= ~flag
     if !iszero(flag & _LOWER_BOUND_MASK)
@@ -269,12 +265,8 @@ function MOI.delete(
 end
 
 function MOI.delete(b::SingleVariableConstraints, x::MOI.VariableIndex)
-    # To "delete" the variable, set it to 0x00 (free).
-    b.set_mask[x.value] = 0x00
-    if b.variable_indices === nothing
-        b.variable_indices = Set(MOI.get(b, MOI.ListOfVariableIndices()))
-    end
-    delete!(b.variable_indices, x)
+    MOI.throw_if_not_valid(b, x)
+    b.set_mask[x.value] = _DELETED_VARIABLE
     return
 end
 
@@ -317,7 +309,7 @@ function _add_constraint_type(
     b::SingleVariableConstraints,
     S::Type{<:MOI.AbstractScalarSet},
 )
-    flag = _single_variable_flag(S)::UInt8
+    flag = _single_variable_flag(S)::UInt16
     if any(mask -> !iszero(flag & mask), b.set_mask)
         push!(list, (MOI.SingleVariable, S))
     end

@@ -17,8 +17,7 @@ end
 
 function test_empty()
     a = MOI.Utilities.SingleVariableConstraints(
-        Set([MOI.VariableIndex(1)]),
-        [0x00, 0x00],
+        [0x0000, 0x0000],
         [1, 2],
         [3, 4],
     )
@@ -29,8 +28,7 @@ end
 
 function test_resize()
     a = MOI.Utilities.SingleVariableConstraints(
-        nothing,
-        [0x00, 0x00],
+        [0x0000, 0x0000],
         [1, 2],
         [3, 4],
     )
@@ -47,17 +45,11 @@ end
 function test_add_variable()
     a = MOI.Utilities.SingleVariableConstraints{Int}()
     MOI.add_variable(a)
-    @test a == MOI.Utilities.SingleVariableConstraints{Int}(
-        nothing,
-        [0x00],
-        [0],
-        [0],
-    )
+    @test a == MOI.Utilities.SingleVariableConstraints{Int}([0x0000], [0], [0])
     a = MOI.Utilities.SingleVariableConstraints{Float64}()
     MOI.add_variable(a)
     @test a == MOI.Utilities.SingleVariableConstraints{Float64}(
-        nothing,
-        [0x00],
+        [0x0000],
         [-Inf],
         [Inf],
     )
@@ -66,36 +58,22 @@ end
 
 function test__flag_to_set_type()
     T = Int
-    @test_throws AssertionError MOI.Utilities._flag_to_set_type(0x11, T)
-    @test MOI.Utilities._flag_to_set_type(0x10, T) == MOI.Integer
-    @test MOI.Utilities._flag_to_set_type(0x20, T) == MOI.ZeroOne
+    @test_throws AssertionError MOI.Utilities._flag_to_set_type(0x0011, T)
+    @test MOI.Utilities._flag_to_set_type(0x0010, T) == MOI.Integer
+    @test MOI.Utilities._flag_to_set_type(0x0020, T) == MOI.ZeroOne
     return
 end
 
 function test_add_constraint()
     a = MOI.Utilities.SingleVariableConstraints{Int}()
     x = MOI.add_variable(a)
-    @test a == MOI.Utilities.SingleVariableConstraints{Int}(
-        nothing,
-        [0x00],
-        Int[0],
-        Int[0],
-    )
+    @test a ==
+          MOI.Utilities.SingleVariableConstraints{Int}([0x0000], Int[0], Int[0])
     f = MOI.SingleVariable(x)
     MOI.add_constraint(a, f, MOI.GreaterThan(3))
-    @test a == MOI.Utilities.SingleVariableConstraints{Int}(
-        nothing,
-        [0x02],
-        [3],
-        [0],
-    )
+    @test a == MOI.Utilities.SingleVariableConstraints{Int}([0x0002], [3], [0])
     MOI.add_constraint(a, f, MOI.LessThan(4))
-    @test a == MOI.Utilities.SingleVariableConstraints{Int}(
-        nothing,
-        [0x06],
-        [3],
-        [4],
-    )
+    @test a == MOI.Utilities.SingleVariableConstraints{Int}([0x0006], [3], [4])
     return
 end
 
@@ -137,21 +115,13 @@ end
 function test_delete_variable()
     a = MOI.Utilities.SingleVariableConstraints{Int}()
     x = MOI.add_variable(a)
-    @test a == MOI.Utilities.SingleVariableConstraints{Int}(
-        nothing,
-        [0x00],
-        Int[0],
-        Int[0],
-    )
+    @test a ==
+          MOI.Utilities.SingleVariableConstraints{Int}([0x0000], Int[0], Int[0])
     f = MOI.SingleVariable(x)
     c = MOI.add_constraint(a, f, MOI.LessThan(3))
     MOI.delete(a, x)
-    @test a == MOI.Utilities.SingleVariableConstraints{Int}(
-        Set{MOI.VariableIndex}(),
-        [0x00],
-        Int[0],
-        Int[3],
-    )
+    @test a ==
+          MOI.Utilities.SingleVariableConstraints{Int}([0x8000], Int[0], Int[3])
     return
 end
 
@@ -169,34 +139,21 @@ end
 function test_set_ConstraintSet()
     a = MOI.Utilities.SingleVariableConstraints{Int}()
     x = MOI.add_variable(a)
-    @test a == MOI.Utilities.SingleVariableConstraints{Int}(
-        nothing,
-        [0x00],
-        Int[0],
-        Int[0],
-    )
+    @test a ==
+          MOI.Utilities.SingleVariableConstraints{Int}([0x0000], Int[0], Int[0])
     f = MOI.SingleVariable(x)
     c = MOI.add_constraint(a, f, MOI.GreaterThan(3))
-    @test a == MOI.Utilities.SingleVariableConstraints{Int}(
-        nothing,
-        [0x02],
-        Int[3],
-        Int[0],
-    )
+    @test a ==
+          MOI.Utilities.SingleVariableConstraints{Int}([0x0002], Int[3], Int[0])
     MOI.set(a, MOI.ConstraintSet(), c, MOI.GreaterThan(2))
-    @test a == MOI.Utilities.SingleVariableConstraints{Int}(
-        nothing,
-        [0x02],
-        Int[2],
-        Int[0],
-    )
+    @test a ==
+          MOI.Utilities.SingleVariableConstraints{Int}([0x0002], Int[2], Int[0])
     return
 end
 
 function test_NumberOfConstraints()
     b = MOI.Utilities.SingleVariableConstraints(
-        nothing,
-        [0x08, 0x02, 0x04, 0x06],
+        [0x0008, 0x0002, 0x0004, 0x0006],
         [1.0, 3.0, -Inf, -1.0],
         [2.0, Inf, 4.0, 1.0],
     )
@@ -210,8 +167,7 @@ end
 
 function test_ListOfConstraintTypesPresent()
     b = MOI.Utilities.SingleVariableConstraints(
-        nothing,
-        [0x08, 0x02, 0x04, 0x06],
+        [0x0008, 0x0002, 0x0004, 0x0006],
         [1.0, 3.0, -Inf, -1.0],
         [2.0, Inf, 4.0, 1.0],
     )
@@ -225,8 +181,7 @@ end
 
 function test_ListOfConstraintIndices()
     b = MOI.Utilities.SingleVariableConstraints{Float64}(
-        nothing,
-        [0x08, 0x02, 0x04, 0x06],
+        [0x0008, 0x0002, 0x0004, 0x0006],
         [1.0, 3.0, -Inf, -1.0],
         [2.0, Inf, 4.0, 1.0],
     )

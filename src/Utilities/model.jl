@@ -73,7 +73,6 @@ function _delete_variable(
     model::AbstractModel{T},
     vi::MOI.VariableIndex,
 ) where {T}
-    MOI.throw_if_not_valid(model, vi)
     MOI.delete(model.variable_bounds, vi)
     model.name_to_var = nothing
     delete!(model.var_to_name, vi)
