@@ -444,21 +444,12 @@ end
 
 """
     variable_dual(model::MOI.ModelLike, attr::MOI.ConstraintDual,
-                  ci::MOI.ConstraintIndex{F},
-                  func::F) where F <: Union{MOI.SingleVariable,
-                                            MOI.VectorOfVariables}
+                  ci::MOI.ConstraintIndex{MOI.VectorOfVariables},
+                  func::MOI.VectorOfVariables)
 
 Return the dual of the constraint of index `ci` for which the value of the
 `MOI.ConstraintFunction` attribute is `func`.
 """
-function variable_dual(
-    model::MOI.ModelLike,
-    attr::MOI.ConstraintDual,
-    ci::MOI.ConstraintIndex{MOI.SingleVariable},
-    func::MOI.SingleVariable,
-)
-    return variable_dual(model, attr, ci, func.variable)
-end
 function variable_dual(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,
