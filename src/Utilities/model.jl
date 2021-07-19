@@ -561,15 +561,17 @@ function MOI.is_empty(model::AbstractModel)
            !model.objectiveset &&
            isempty(model.objective.terms) &&
            iszero(model.objective.constant) &&
-           MOI.is_empty(model.constraints)
+           MOI.is_empty(model.constraints) &&
+           MOI.is_empty(model.variable_bounds)
 end
+
 function MOI.empty!(model::AbstractModel{T}) where {T}
     model.name = ""
     model.senseset = false
     model.sense = MOI.FEASIBILITY_SENSE
     model.objectiveset = false
     model.objective = zero(MOI.ScalarAffineFunction{T})
-    empty!(model.variable_bounds)
+    MOI.empty!(model.variable_bounds)
     empty!(model.var_to_name)
     model.name_to_var = nothing
     empty!(model.con_to_name)

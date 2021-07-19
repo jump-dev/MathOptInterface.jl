@@ -188,11 +188,18 @@ function Base.:(==)(a::SingleVariableConstraints, b::SingleVariableConstraints)
     return a.set_mask == b.set_mask && a.lower == b.lower && a.upper == b.upper
 end
 
-function Base.empty!(b::SingleVariableConstraints)
+function MOI.empty!(b::SingleVariableConstraints)
     empty!(b.set_mask)
     empty!(b.lower)
     empty!(b.upper)
     return b
+end
+
+function MOI.is_empty(b::SingleVariableConstraints)
+    if length(b.set_mask) == 0
+        return true
+    end
+    return all(isequal(_DELETED_VARIABLE), b.set_mask)
 end
 
 function Base.resize!(b::SingleVariableConstraints, n)

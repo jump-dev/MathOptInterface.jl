@@ -21,8 +21,8 @@ function test_empty()
         [1, 2],
         [3, 4],
     )
-    empty!(a)
-    @test a == MOI.Utilities.SingleVariableConstraints{Int}()
+    MOI.empty!(a)
+    @test MOI.is_empty(a)
     return
 end
 
@@ -217,7 +217,8 @@ end
 function test_MatrixBounds_empty()
     a = MOI.Utilities.MatrixBounds([1, 2], [3, 4])
     empty!(a)
-    @test a == MOI.Utilities.MatrixBounds{Int}()
+    @test a.lower == Int[]
+    @test a.upper == Int[]
     return
 end
 
