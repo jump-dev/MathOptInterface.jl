@@ -57,7 +57,7 @@ config_with_basis = MOIT.Config(basis = true)
                 [1, 0],
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1],
                 (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [0, 1],
-                con_basis = [
+                constraint_basis_status = [
                     (
                         MOI.ScalarAffineFunction{Float64},
                         MOI.LessThan{Float64},
@@ -67,7 +67,7 @@ config_with_basis = MOIT.Config(basis = true)
                         MOI.GreaterThan{Float64},
                     ) => [MOI.BASIC, MOI.NONBASIC],
                 ],
-                var_basis = [MOI.BASIC, MOI.NONBASIC_AT_LOWER],
+                variable_basis_status = [MOI.BASIC, MOI.NONBASIC_AT_LOWER],
             ),
         )
         MOIT.linear2test(bridged_mock, config_with_basis)

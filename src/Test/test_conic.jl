@@ -2488,7 +2488,8 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.INFEASIBLE,
-            tuple(),
+            MOI.NO_SOLUTION,
+            MOI.INFEASIBILITY_CERTIFICATE,
             (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1],
             (MOI.SingleVariable, MOI.EqualTo{Float64}) => [-1],
             (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1],

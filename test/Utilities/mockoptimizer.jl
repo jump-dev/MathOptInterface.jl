@@ -1,101 +1,37 @@
+module TestMockOptimizer
+
 using Test
 import MathOptInterface
 const MOI = MathOptInterface
-const MOIT = MOI.DeprecatedTest
 const MOIU = MOI.Utilities
 
-@testset "Default objective sense" begin
-    MOIT.default_objective_test(MOIU.MockOptimizer(MOIU.Model{Float64}()))
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
 end
 
-@testset "Default statuses" begin
-    model = MOIU.MockOptimizer(MOIU.Model{Float64}())
-    MOIT.default_status_test(model)
-    MOI.empty!(model)
-    MOIT.default_status_test(model)
-end
+# function test_optimizer_solve_no_result()
+#     optimizer = MOIU.MockOptimizer(MOIU.Model{Float64}())
 
-@testset "Name test" begin
-    MOIT.nametest(MOIU.MockOptimizer(MOIU.Model{Float64}()))
-end
+#     v1 = MOI.add_variable(optimizer)
 
-struct NoFreeModel <: MOI.ModelLike end
-MOI.supports_add_constrained_variables(::NoFreeModel, ::Type{MOI.Reals}) = false
+#     # Load fake solution
+#     MOI.set(optimizer, MOI.TerminationStatus(), MOI.INFEASIBLE)
+#     MOI.optimize!(optimizer)
+#     @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.INFEASIBLE
 
-@testset "supports_add_constrained_variable" begin
-    optimizer = MOIU.MockOptimizer(MOIU.Model{Float64}())
-    @test MOI.supports_add_constrained_variable(
-        optimizer,
-        MOI.GreaterThan{Float64},
-    )
-    @test !MOI.supports_add_constrained_variable(
-        optimizer,
-        MOIT.UnknownScalarSet{Float64},
-    )
-    @test MOI.supports_add_constrained_variables(optimizer, MOI.Nonnegatives)
-    @test !MOI.supports_add_constrained_variables(
-        optimizer,
-        MOIT.UnknownVectorSet,
-    )
+#     MOI.set(optimizer, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+#     MOI.compute_conflict!(optimizer)
+#     @test MOI.get(optimizer, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+# end
 
-    nofree_optimizer = MOIU.MockOptimizer(NoFreeModel())
-    @test !MOI.supports_add_constrained_variable(
-        nofree_optimizer,
-        MOI.GreaterThan{Float64},
-    )
-    @test !MOI.supports_add_constrained_variables(
-        nofree_optimizer,
-        MOI.Nonnegatives,
-    )
-    @test !MOI.supports_add_constrained_variables(nofree_optimizer, MOI.Reals)
-end
-
-@testset "Optimizer attributes" begin
-    optimizer = MOIU.MockOptimizer(MOIU.Model{Float64}())
-    @test MOI.supports(optimizer, MOIU.MockModelAttribute())
-    MOI.set(optimizer, MOIU.MockModelAttribute(), 10)
-    @test MOI.get(optimizer, MOIU.MockModelAttribute()) == 10
-
-    v1 = MOI.add_variable(optimizer)
-    @test MOI.supports(optimizer, MOIU.MockVariableAttribute(), typeof(v1))
-    MOI.set(optimizer, MOIU.MockVariableAttribute(), v1, 11)
-    @test MOI.get(optimizer, MOIU.MockVariableAttribute(), v1) == 11
-    MOI.set(optimizer, MOIU.MockVariableAttribute(), [v1], [-11])
-    @test MOI.get(optimizer, MOIU.MockVariableAttribute(), [v1]) == [-11]
-
-    @test MOI.supports_constraint(
-        optimizer,
-        MOI.SingleVariable,
-        MOI.GreaterThan{Float64},
-    )
-    c1 = MOI.add_constraint(
-        optimizer,
-        MOI.SingleVariable(v1),
-        MOI.GreaterThan(1.0),
-    )
-    @test MOI.supports(optimizer, MOIU.MockConstraintAttribute(), typeof(c1))
-    MOI.set(optimizer, MOIU.MockConstraintAttribute(), c1, 12)
-    @test MOI.get(optimizer, MOIU.MockConstraintAttribute(), c1) == 12
-    MOI.set(optimizer, MOIU.MockConstraintAttribute(), [c1], [-12])
-    @test MOI.get(optimizer, MOIU.MockConstraintAttribute(), [c1]) == [-12]
-end
-
-@testset "Optimizer solve no result" begin
-    optimizer = MOIU.MockOptimizer(MOIU.Model{Float64}())
-
-    v1 = MOI.add_variable(optimizer)
-
-    # Load fake solution
-    MOI.set(optimizer, MOI.TerminationStatus(), MOI.INFEASIBLE)
-    MOI.optimize!(optimizer)
-    @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.INFEASIBLE
-
-    MOI.set(optimizer, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
-    MOI.compute_conflict!(optimizer)
-    @test MOI.get(optimizer, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
-end
-
-@testset "Optimizer solve with result" begin
+function test_optimizer_solve_with_result()
     optimizer = MOIU.MockOptimizer(
         MOIU.Model{Float64}(),
         eval_objective_value = false,
@@ -200,12 +136,7 @@ end
     )
 end
 
-@testset "Delete" begin
-    mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
-    MOIT.delete_test(mock)
-end
-
-@testset "CanonicalConstraintFunction" begin
+function test_CanonicalConstraintFunction()
     mock = MOIU.MockOptimizer(MOIU.Model{Int}())
     fx, fy = MOI.SingleVariable.(MOI.add_variables(mock, 2))
     cx = MOI.add_constraint(mock, fx, MOI.LessThan(0))
@@ -223,7 +154,7 @@ end
     end
 end
 
-@testset "Conflict access" begin
+function test_conflict_access()
     mock = MOIU.MockOptimizer(MOIU.Model{Int}())
     fx, fy = MOI.SingleVariable.(MOI.add_variables(mock, 2))
     cx = MOI.add_constraint(mock, fx, MOI.LessThan(0))
@@ -236,3 +167,57 @@ end
           MOI.NOT_IN_CONFLICT
     @test MOI.get(mock, MOI.ConstraintConflictStatus(), c) == MOI.IN_CONFLICT
 end
+
+function test_MockVariableAttribute()
+    mock = MOIU.MockOptimizer(MOIU.Model{Int}())
+    x = MOI.add_variable(mock)
+    MOI.set(mock, MOI.Utilities.MockVariableAttribute(), x, 1)
+    @test MOI.get(mock, MOI.Utilities.MockVariableAttribute(), x) == 1
+    return
+end
+
+function test_MockConstraintAttribute()
+    mock = MOIU.MockOptimizer(MOIU.Model{Int}())
+    x = MOI.add_variable(mock)
+    c = MOI.add_constraint(mock, MOI.SingleVariable(x), MOI.LessThan(0))
+    MOI.set(mock, MOI.Utilities.MockConstraintAttribute(), c, 1)
+    @test MOI.get(mock, MOI.Utilities.MockConstraintAttribute(), c) == 1
+    return
+end
+
+function test_DualObjectiveValue()
+    mock =
+        MOIU.MockOptimizer(MOIU.Model{Int}(); eval_dual_objective_value = false)
+    @test isnan(MOI.get(mock, MOI.DualObjectiveValue()))
+    return
+end
+
+function test_mock_deprecated()
+    mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
+    x = MOI.add_variable(mock)
+    c = MOI.add_constraint(
+        mock,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
+        MOI.EqualTo(2.0),
+    )
+    MOIU.set_mock_optimize!(
+        mock,
+        m -> MOI.Utilities.mock_optimize!(
+            m,
+            MOI.OPTIMAL,
+            MOI.FEASIBLE_POINT,
+            MOI.NO_SOLUTION,
+            var_basis = [MOI.BASIC],
+            con_basis = [
+                (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
+                    [MOI.BASIC],
+            ],
+        ),
+    )
+    @test_logs (:warn,) (:warn,) MOI.optimize!(mock)
+    return
+end
+
+end  # module
+
+TestMockOptimizer.runtests()

@@ -83,11 +83,11 @@ config = MOIT.Config()
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1, 0, 1],
-            con_basis = [
+            constraint_basis_status = [
                 (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                     [MOI.NONBASIC],
             ],
-            var_basis = [
+            variable_basis_status = [
                 MOI.BASIC,
                 MOI.NONBASIC_AT_LOWER,
                 MOI.NONBASIC_AT_UPPER,

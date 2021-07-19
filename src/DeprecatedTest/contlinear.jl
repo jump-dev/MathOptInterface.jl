@@ -263,9 +263,6 @@ function linear1test(model::MOI.ModelLike, config::Config{T}) where {T}
         end
         @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [-1, 0, 2] atol = atol rtol =
             rtol
-        if config.duals
-            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-        end
     end
     # put lb of x back to 0 and fix z to zero to get :
     # max x + 2z
