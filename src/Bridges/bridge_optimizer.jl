@@ -920,10 +920,16 @@ struct ObjectiveFunctionValue{F<:MOI.AbstractScalarFunction}
     result_index::Int
 end
 
+# `recursive_model(b::Objective.SingleBridgeOptimizer)` returns
+# `b.model` so any model should implement `ObjectiveFunctionValue`.
+function MOI.get(model::MOI.ModelLike, attr::ObjectiveFunctionValue)
+    return MOI.get(model, MOI.ObjectiveValue())
+end
+
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::ObjectiveFunctionValue{F},
-) where {F}
+) where {F<:MOI.AbstractScalarFunction} # Need `<:` to avoid ambiguity
     obj_attr = MOI.ObjectiveFunction{F}()
     if is_bridged(b, obj_attr)
         return MOI.get(recursive_model(b), attr, bridge(b, obj_attr))
