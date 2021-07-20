@@ -10,7 +10,9 @@ end
 
 @testset "$(dir)" for dir in [".", "Variable", "Constraint", "Objective"]
     @testset "$(file)" for file in readdir(joinpath(@__DIR__, dir))
-        if (dir == ".") && (file == "Bridges.jl" || file == "utilities.jl")
+        if !endswith(file, ".jl")
+            continue
+        elseif (dir == ".") && (file == "Bridges.jl" || file == "utilities.jl")
             continue
         end
         _timed_include(joinpath(@__DIR__, dir, file))
