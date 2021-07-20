@@ -579,7 +579,7 @@ end
 function MOI.delete(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
     if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
-        bridge = Constraint.bridges(b)[ci]
+        bridge = bridge(b, ci)
         if is_variable_bridged(b, ci)
             error(
                 "Cannot delete constraint index of bridged constrained",
@@ -923,7 +923,7 @@ end
 # `recursive_model(b::Objective.SingleBridgeOptimizer)` returns
 # `b.model` so any model should implement `ObjectiveFunctionValue`.
 function MOI.get(model::MOI.ModelLike, attr::ObjectiveFunctionValue)
-    return MOI.get(model, MOI.ObjectiveValue())
+    return MOI.get(model, MOI.ObjectiveValue(attr.result_index))
 end
 
 function MOI.get(

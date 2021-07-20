@@ -98,7 +98,12 @@ function MOI.set(
     bridge::SetMapBridge{T,S2,S1,F,G},
     func::G,
 ) where {T,S2,S1,F,G}
-    MOI.set(model, attr, bridge.constraint, MOIB.map_function(typeof(bridge), func))
+    MOI.set(
+        model,
+        attr,
+        bridge.constraint,
+        MOIB.map_function(typeof(bridge), func),
+    )
     return
 end
 
@@ -201,7 +206,7 @@ function MOI.modify(
     bridge::SetMapBridge,
     change::MOI.AbstractFunctionModification,
 )
-    MOI.modify(model, bridge.constraint, _map_change(typeof(bridge),  change))
+    MOI.modify(model, bridge.constraint, _map_change(typeof(bridge), change))
     return
 end
 
