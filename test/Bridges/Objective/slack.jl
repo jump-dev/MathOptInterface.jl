@@ -31,6 +31,38 @@ function test_SlackBridge_ObjectiveSense_error()
     return
 end
 
+function test_SlackBridge_ObjectiveSense_modify()
+    inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Objective.Slack{Float64}(inner)
+    x = MOI.add_variable(model)
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.1, x)], -1.2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    @test_throws(
+        ArgumentError,
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE),
+    )
+    MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    @test MOI.get(model, MOI.ObjectiveFunction{typeof(f)}()) ≈ f
+    return
+end
+
+function test_SlackBridge_ObjectiveFunction_modify()
+    inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Objective.Slack{Float64}(inner)
+    x = MOI.add_variable(model)
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.1, x)], -1.2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    @test MOI.get(model, MOI.ObjectiveFunction{typeof(f)}()) ≈ f
+    g = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(-1.1, x)], 1.2)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(g)}(), g)
+    @test MOI.get(model, MOI.ObjectiveFunction{typeof(g)}()) ≈ g
+    return
+end
+
 function test_SlackBridge_get_ObjectiveFunction_MIN()
     inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     model = MOI.Bridges.Objective.Slack{Float64}(inner)
@@ -78,6 +110,24 @@ function test_SlackBridge_NumberOfVariables()
     return
 end
 
+function test_SlackBridge_ListOfModelAttributesSet()
+    inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Objective.Slack{Float64}(inner)
+    x = MOI.add_variable(model)
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.1, x)], 1.2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    attr = MOI.get(model, MOI.ListOfModelAttributesSet())
+    @test length(attr) == 2
+    @test MOI.ObjectiveSense() in attr
+    @test MOI.ObjectiveFunction{typeof(f)}() in attr
+    attr = MOI.get(inner, MOI.ListOfModelAttributesSet())
+    @test length(attr) == 2
+    @test MOI.ObjectiveSense() in attr
+    @test MOI.ObjectiveFunction{MOI.SingleVariable}() in attr
+    return
+end
+
 function test_SlackBridge_ListOfVariableIndices()
     inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     model = MOI.Bridges.Objective.Slack{Float64}(inner)
@@ -122,9 +172,32 @@ function test_SlackBridge_ListOfConstraintIndices()
     }()
     @test MOI.get(model, attr) == []
     @test length(MOI.get(inner, attr)) == 1
+    attr = MOI.ListOfConstraintIndices{
+        MOI.ScalarAffineFunction{Float64},
+        MOI.LessThan{Float64},
+    }()
+    @test MOI.get(model, attr) == []
+    @test length(MOI.get(inner, attr)) == 0
     MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
     @test MOI.get(model, attr) == []
     @test length(MOI.get(inner, attr)) == 0
+    return
+end
+
+function test_SlackBridge_ObjectiveFunctionValue()
+    inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Objective.Slack{Float64}(inner)
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(2.0))
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.1, x)], -1.2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.Utilities.set_mock_optimize!(
+        inner,
+        mock -> MOI.Utilities.mock_optimize!(mock, [2.0, 1.0]),
+    )
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1.0
     return
 end
 
