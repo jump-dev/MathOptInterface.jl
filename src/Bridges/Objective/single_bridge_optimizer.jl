@@ -36,6 +36,20 @@ function MOIB.is_bridged(
     return false
 end
 
+MOIB.is_bridged(::SingleBridgeOptimizer, ::MOI.VariableIndex) = false
+function MOIB.is_bridged(
+    ::SingleBridgeOptimizer,
+    ::MOI.ConstraintIndex{MOI.SingleVariable},
+)
+    return false
+end
+function MOIB.is_bridged(
+    ::SingleBridgeOptimizer,
+    ::MOI.ConstraintIndex{MOI.VectorOfVariables},
+)
+    return false
+end
+
 function MOIB.supports_bridging_objective_function(
     ::SingleBridgeOptimizer{BT},
     F::Type{<:MOI.AbstractScalarFunction},
