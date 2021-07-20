@@ -1,4 +1,4 @@
-module TestObjectiveMap
+module TestObjectiveSlack
 
 using Test
 
@@ -203,4 +203,4 @@ end
 
 end  # module
 
-TestObjectiveMap.runtests()
+TestObjectiveSlack.runtests()
