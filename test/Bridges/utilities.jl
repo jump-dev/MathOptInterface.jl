@@ -7,7 +7,7 @@ function _test_num_constraints(bridged_mock, F, S, n)
 end
 
 function _warn_incomplete_list_num_constraints(BT, list_num_constraints)
-    for (S,) in MOIB.added_constrained_variable_types(BT)
+    for (S,) in MOI.Bridges.added_constrained_variable_types(BT)
         F = MOIU.variable_function_type(S)
         if !any(c -> c[1] == F && c[2] == S, list_num_constraints)
             error(
@@ -16,7 +16,7 @@ function _warn_incomplete_list_num_constraints(BT, list_num_constraints)
             )
         end
     end
-    for (F, S) in MOIB.added_constraint_types(BT)
+    for (F, S) in MOI.Bridges.added_constraint_types(BT)
         if !any(c -> c[1] == F && c[2] == S, list_num_constraints)
             error(
                 "Bridges of type $BT add $F-in-$S constraints but their " *
@@ -29,7 +29,7 @@ end
 
 """
     _test_delete_bridge(
-        m::MOIB.AbstractBridgeOptimizer,
+        m::MOI.Bridges.AbstractBridgeOptimizer,
         ci::MOI.ConstraintIndex{F, S},
         nvars::Int,
         list_num_constraints::Tuple;
@@ -51,7 +51,7 @@ Test deletion of the constraint `ci` in model `m`.
 * The number of `F`-in-`S` constraints is `num_bridged`.
 """
 function _test_delete_bridge(
-    m::MOIB.AbstractBridgeOptimizer,
+    m::MOI.Bridges.AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{F,S},
     nvars::Int,
     list_num_constraints::Tuple;
@@ -59,11 +59,11 @@ function _test_delete_bridge(
     num_bridged = 1,
 ) where {F,S}
     _warn_incomplete_list_num_constraints(
-        typeof(MOIB.bridge(m, ci)),
+        typeof(MOI.Bridges.bridge(m, ci)),
         list_num_constraints,
     )
     function num_bridges()
-        return count(bridge -> true, values(MOIB.Constraint.bridges(m)))
+        return count(bridge -> true, values(MOI.Bridges.Constraint.bridges(m)))
     end
     start_num_bridges = num_bridges()
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
@@ -90,7 +90,7 @@ end
 
 # Test deletion of variable bridge used for variable `vi`
 function _test_delete_bridged_variable(
-    m::MOIB.AbstractBridgeOptimizer,
+    m::MOI.Bridges.AbstractBridgeOptimizer,
     vi::MOI.VariableIndex,
     S::Type,
     nvars::Int,
@@ -100,11 +100,11 @@ function _test_delete_bridged_variable(
     used_constraints = 1,
 )
     _warn_incomplete_list_num_constraints(
-        typeof(MOIB.bridge(m, vi)),
+        typeof(MOI.Bridges.bridge(m, vi)),
         list_num_constraints,
     )
     function num_bridges()
-        return count(bridge -> true, values(MOIB.Variable.bridges(m)))
+        return count(bridge -> true, values(MOI.Bridges.Variable.bridges(m)))
     end
     start_num_bridges = num_bridges()
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
@@ -136,7 +136,7 @@ end
 
 # Test deletion of variable bridge used for vector of variables `vis`
 function _test_delete_bridged_variables(
-    m::MOIB.AbstractBridgeOptimizer,
+    m::MOI.Bridges.AbstractBridgeOptimizer,
     vis::Vector{MOI.VariableIndex},
     S::Type,
     nvars::Int,
@@ -145,11 +145,11 @@ function _test_delete_bridged_variables(
     num_bridged = 1,
 )
     _warn_incomplete_list_num_constraints(
-        typeof(MOIB.bridge(m, vis[1])),
+        typeof(MOI.Bridges.bridge(m, vis[1])),
         list_num_constraints,
     )
     function num_bridges()
-        return count(bridge -> true, values(MOIB.Variable.bridges(m)))
+        return count(bridge -> true, values(MOI.Bridges.Variable.bridges(m)))
     end
     start_num_bridges = num_bridges()
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
@@ -180,17 +180,19 @@ function _test_delete_bridged_variables(
 end
 
 function _test_delete_objective(
-    m::MOIB.AbstractBridgeOptimizer,
+    m::MOI.Bridges.AbstractBridgeOptimizer,
     nvars::Int,
     list_num_constraints::Tuple;
     used_bridges = 1,
 )
     _warn_incomplete_list_num_constraints(
-        typeof(MOIB.Objective.root_bridge(MOIB.Objective.bridges(m))),
+        typeof(
+            MOI.Bridges.Objective.root_bridge(MOI.Bridges.Objective.bridges(m)),
+        ),
         list_num_constraints,
     )
     function num_bridges()
-        return length(MOIB.Objective.bridges(m))
+        return length(MOI.Bridges.Objective.bridges(m))
     end
     start_num_bridges = num_bridges()
     @test MOI.get(m, MOI.NumberOfVariables()) == nvars
