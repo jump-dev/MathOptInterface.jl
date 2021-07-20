@@ -22,6 +22,7 @@ makedocs(
         "Background" => [
             "background/motivation.md",
             "background/duality.md",
+            "background/naming_conventions.md",
         ],
         "Tutorials" => [
             "tutorials/example.md",
