@@ -131,11 +131,16 @@ function MOI.get(
     return obj_slack_constant + slack - constant
 end
 
+_constant_term(set::MOI.LessThan) = set.upper
+_constant_term(set::MOI.GreaterThan) = set.lower
+
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.ObjectiveFunction{G},
     bridge::SlackBridge{T,F,G},
 ) where {T,F,G<:MOI.AbstractScalarFunction}
     func = MOI.get(model, MOI.ConstraintFunction(), bridge.constraint)
-    return MOIU.convert_approx(G, MOIU.remove_variable(func, bridge.slack))
+    set = MOI.get(model, MOI.ConstraintSet(), bridge.constraint)
+    f = MOIU.operate(-, T, func, _constant_term(set))
+    return MOIU.convert_approx(G, MOIU.remove_variable(f, bridge.slack))
 end
