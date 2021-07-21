@@ -259,6 +259,82 @@ function test_set_from_constants()
     return
 end
 
+function _test_bound_vectors(::Type{T}, nolb, noub) where {T}
+    variable_bounds = MOI.Utilities.SingleVariableConstraints{T}()
+    @test variable_bounds.lower == T[]
+    @test variable_bounds.upper == T[]
+    x = MOI.add_variable(variable_bounds)
+    fx = MOI.SingleVariable(x)
+    @test variable_bounds.lower == [nolb]
+    @test variable_bounds.upper == [noub]
+    ux = MOI.add_constraint(variable_bounds, fx, MOI.LessThan(T(1)))
+    @test variable_bounds.lower == [nolb]
+    @test variable_bounds.upper == [T(1)]
+    y = MOI.add_variable(variable_bounds)
+    fy = MOI.SingleVariable(y)
+    @test variable_bounds.lower == [nolb, nolb]
+    @test variable_bounds.upper == [T(1), noub]
+    cy = MOI.add_constraint(variable_bounds, fy, MOI.Interval(T(2), T(3)))
+    @test variable_bounds.lower == [nolb, T(2)]
+    @test variable_bounds.upper == [T(1), T(3)]
+    lx = MOI.add_constraint(variable_bounds, fx, MOI.GreaterThan(T(0)))
+    @test variable_bounds.lower == [T(0), T(2)]
+    @test variable_bounds.upper == [T(1), T(3)]
+    MOI.delete(variable_bounds, lx)
+    @test variable_bounds.lower == [nolb, T(2)]
+    @test variable_bounds.upper == [T(1), T(3)]
+    MOI.delete(variable_bounds, ux)
+    @test variable_bounds.lower == [nolb, T(2)]
+    @test variable_bounds.upper == [noub, T(3)]
+    cx = MOI.add_constraint(variable_bounds, fx, MOI.Semicontinuous(T(3), T(4)))
+    @test variable_bounds.lower == [T(3), T(2)]
+    @test variable_bounds.upper == [T(4), T(3)]
+    MOI.delete(variable_bounds, cy)
+    @test variable_bounds.lower == [T(3), nolb]
+    @test variable_bounds.upper == [T(4), noub]
+    sy = MOI.add_constraint(variable_bounds, fy, MOI.Semiinteger(T(-2), T(-1)))
+    @test variable_bounds.lower == [T(3), T(-2)]
+    @test variable_bounds.upper == [T(4), T(-1)]
+    MOI.delete(variable_bounds, sy)
+    @test variable_bounds.lower == [T(3), nolb]
+    @test variable_bounds.upper == [T(4), noub]
+    ey = MOI.add_constraint(variable_bounds, fy, MOI.EqualTo(T(-3)))
+    @test variable_bounds.lower == [T(3), T(-3)]
+    @test variable_bounds.upper == [T(4), T(-3)]
+    MOI.delete(variable_bounds, ey)
+    @test variable_bounds.lower == [T(3), nolb]
+    @test variable_bounds.upper == [T(4), noub]
+    MOI.delete(variable_bounds, cx)
+    @test variable_bounds.lower == [nolb, nolb]
+    @test variable_bounds.upper == [noub, noub]
+end
+
+function test_bound_vectors()
+    _test_bound_vectors(Int, 0, 0)
+    _test_bound_vectors(Float64, -Inf, Inf)
+    return
+end
+
+function test_ListOfConstraintTypesPresent_2()
+    for set in (
+        MOI.EqualTo(1.0),
+        MOI.GreaterThan(1.0),
+        MOI.LessThan(1.0),
+        MOI.Interval(1.0, 2.0),
+        MOI.Semicontinuous(1.0, 2.0),
+        MOI.Semiinteger(1.0, 2.0),
+        MOI.Integer(),
+        MOI.ZeroOne(),
+    )
+        model = MOI.Utilities.SingleVariableConstraints{Float64}()
+        x = MOI.add_variable(model)
+        MOI.add_constraint(model, MOI.SingleVariable(x), set)
+        @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) ==
+              [(MOI.SingleVariable, typeof(set))]
+    end
+    return
+end
+
 end  # module
 
 TestBox.runtests()

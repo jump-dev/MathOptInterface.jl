@@ -154,15 +154,6 @@ function test_TestExternalModel()
     return
 end
 
-function test_bound_twice()
-    for T in [Int, Float64]
-        model = MOI.Utilities.Model{T}()
-        MOI.Test.test_model_LowerBoundAlreadySet(model, MOI.Test.Config(T))
-        MOI.Test.test_model_UpperBoundAlreadySet(model, MOI.Test.Config(T))
-    end
-    return
-end
-
 function _test_ObjectiveFunction(T)
     model = MOI.Utilities.Model{T}()
     @test !MOI.supports(model, MOI.ObjectiveFunction{DummyFunction}())
@@ -479,26 +470,6 @@ function test_default_fallbacks()
     )
 end
 
-function test_ListOfConstraintTypesPresent()
-    @testset "$set" for set in (
-        MOI.EqualTo(1.0),
-        MOI.GreaterThan(1.0),
-        MOI.LessThan(1.0),
-        MOI.Interval(1.0, 2.0),
-        MOI.Semicontinuous(1.0, 2.0),
-        MOI.Semiinteger(1.0, 2.0),
-        MOI.Integer(),
-        MOI.ZeroOne(),
-    )
-        model = MOI.Utilities.Model{Float64}()
-        x = MOI.add_variable(model)
-        MOI.add_constraint(model, MOI.SingleVariable(x), set)
-        @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) ==
-              [(MOI.SingleVariable, typeof(set))]
-    end
-    return
-end
-
 function test_extension_dictionary()
     model = MOI.Utilities.Model{Float64}()
     model.ext[:my_store] = 1
@@ -510,93 +481,6 @@ function test_extension_dictionary()
     MOI.copy_to(dest, model)
     @test !haskey(dest.ext, :my_store)
     @test model.ext[:my_store] == 2
-    return
-end
-
-"""
-TODO(odow): consider moving this to MOI.Test
-"""
-function test_objective_set_via_modify()
-    model = MOI.Utilities.Model{Float64}()
-    x = MOI.add_variable(model)
-    attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
-    MOI.modify(model, attr, MOI.ScalarCoefficientChange(x, 1.0))
-    @test attr in MOI.get(model, MOI.ListOfModelAttributesSet())
-    return
-end
-
-function test_incorrect_modifications()
-    model = MOI.Utilities.Model{Float64}()
-    x = MOI.add_variable(model)
-    c = MOI.add_constraint(
-        model,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
-        MOI.EqualTo(1.0),
-    )
-    @test_throws(
-        ArgumentError,
-        MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(1.0)),
-    )
-    @test_throws(
-        ArgumentError,
-        MOI.set(model, MOI.ConstraintFunction(), c, MOI.SingleVariable(x)),
-    )
-    return
-end
-
-function _test_bound_vectors(::Type{T}, nolb, noub) where {T}
-    model = MOI.Utilities.Model{T}()
-    @test model.variable_bounds.lower == T[]
-    @test model.variable_bounds.upper == T[]
-    x = MOI.add_variable(model)
-    fx = MOI.SingleVariable(x)
-    @test model.variable_bounds.lower == [nolb]
-    @test model.variable_bounds.upper == [noub]
-    ux = MOI.add_constraint(model, fx, MOI.LessThan(T(1)))
-    @test model.variable_bounds.lower == [nolb]
-    @test model.variable_bounds.upper == [T(1)]
-    y = MOI.add_variable(model)
-    fy = MOI.SingleVariable(y)
-    @test model.variable_bounds.lower == [nolb, nolb]
-    @test model.variable_bounds.upper == [T(1), noub]
-    cy = MOI.add_constraint(model, fy, MOI.Interval(T(2), T(3)))
-    @test model.variable_bounds.lower == [nolb, T(2)]
-    @test model.variable_bounds.upper == [T(1), T(3)]
-    lx = MOI.add_constraint(model, fx, MOI.GreaterThan(T(0)))
-    @test model.variable_bounds.lower == [T(0), T(2)]
-    @test model.variable_bounds.upper == [T(1), T(3)]
-    MOI.delete(model, lx)
-    @test model.variable_bounds.lower == [nolb, T(2)]
-    @test model.variable_bounds.upper == [T(1), T(3)]
-    MOI.delete(model, ux)
-    @test model.variable_bounds.lower == [nolb, T(2)]
-    @test model.variable_bounds.upper == [noub, T(3)]
-    cx = MOI.add_constraint(model, fx, MOI.Semicontinuous(T(3), T(4)))
-    @test model.variable_bounds.lower == [T(3), T(2)]
-    @test model.variable_bounds.upper == [T(4), T(3)]
-    MOI.delete(model, cy)
-    @test model.variable_bounds.lower == [T(3), nolb]
-    @test model.variable_bounds.upper == [T(4), noub]
-    sy = MOI.add_constraint(model, fy, MOI.Semiinteger(T(-2), T(-1)))
-    @test model.variable_bounds.lower == [T(3), T(-2)]
-    @test model.variable_bounds.upper == [T(4), T(-1)]
-    MOI.delete(model, sy)
-    @test model.variable_bounds.lower == [T(3), nolb]
-    @test model.variable_bounds.upper == [T(4), noub]
-    ey = MOI.add_constraint(model, fy, MOI.EqualTo(T(-3)))
-    @test model.variable_bounds.lower == [T(3), T(-3)]
-    @test model.variable_bounds.upper == [T(4), T(-3)]
-    MOI.delete(model, ey)
-    @test model.variable_bounds.lower == [T(3), nolb]
-    @test model.variable_bounds.upper == [T(4), noub]
-    MOI.delete(model, cx)
-    @test model.variable_bounds.lower == [nolb, nolb]
-    @test model.variable_bounds.upper == [noub, noub]
-end
-
-function test_bound_vectors()
-    _test_bound_vectors(Int, 0, 0)
-    _test_bound_vectors(Float64, -Inf, Inf)
     return
 end
 
