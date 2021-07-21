@@ -110,16 +110,14 @@ function _delete_variable(
         MOI.ConstraintIndex{MOI.SingleVariable,MOI.Semiinteger{T}}(vi.value),
     )
 end
-_fast_in(vi1::MOI.VariableIndex, vi2::MOI.VariableIndex) = vi1 == vi2
-_fast_in(vi::MOI.VariableIndex, vis::Set{MOI.VariableIndex}) = vi in vis
+
 function MOI.delete(model::AbstractModel, vi::MOI.VariableIndex)
-    vis = [vi]
-    _throw_if_cannot_delete(model.constraints, vis, vi)
+    _throw_if_cannot_delete(model.constraints, [vi], vi)
     _delete_variable(model, vi)
     _deleted_constraints(model.constraints, vi) do ci
         return delete!(model.con_to_name, ci)
     end
-    model.objective = remove_variable(model.objective, vi)
+    MOI.delete(model.objective, vi)
     model.name_to_con = nothing
     return
 end
@@ -135,8 +133,7 @@ function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
     for vi in vis
         _delete_variable(model, vi)
     end
-    keep = x -> MOI.is_valid(model, x)
-    model.objective = filter_variables(keep, model.objective)
+    MOI.delete(model.objective, vis)
     model.name_to_con = nothing
     return
 end
@@ -304,82 +301,65 @@ function MOI.get(
 end
 
 # Objective
-MOI.get(model::AbstractModel, ::MOI.ObjectiveSense) = model.sense
-MOI.supports(model::AbstractModel, ::MOI.ObjectiveSense) = true
+
+function MOI.get(
+    model::AbstractModel,
+    attr::Union{
+        MOI.ObjectiveSense,
+        MOI.ObjectiveFunction,
+        MOI.ObjectiveFunctionType,
+    },
+)
+    return MOI.get(model.objective, attr)
+end
+
+function MOI.supports(
+    model::AbstractModel,
+    attr::Union{MOI.ObjectiveSense,MOI.ObjectiveFunction},
+)
+    return MOI.supports(model.objective, attr)
+end
+
 function MOI.set(
-    model::AbstractModel{T},
+    model::AbstractModel,
     ::MOI.ObjectiveSense,
     sense::MOI.OptimizationSense,
-) where {T}
-    if sense == MOI.FEASIBILITY_SENSE
-        model.objectiveset = false
-        model.objective = zero(MOI.ScalarAffineFunction{T})
-    end
-    model.senseset = true
-    model.sense = sense
+)
+    MOI.set(model.objective, attr, sense)
     return
 end
 
-function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunctionType)
-    return MOI.typeof(model.objective)
-end
-function MOI.get(model::AbstractModel, ::MOI.ObjectiveFunction{T})::T where {T}
-    return model.objective
-end
-function MOI.supports(
-    model::AbstractModel{T},
-    ::MOI.ObjectiveFunction{
-        <:Union{
-            MOI.SingleVariable,
-            MOI.ScalarAffineFunction{T},
-            MOI.ScalarQuadraticFunction{T},
-        },
-    },
-) where {T}
-    return true
-end
 function MOI.set(
     model::AbstractModel,
     attr::MOI.ObjectiveFunction{F},
     f::F,
 ) where {F<:MOI.AbstractFunction}
-    if !MOI.supports(model, attr)
-        throw(MOI.UnsupportedAttribute(attr))
-    end
-    model.objectiveset = true
-    # f needs to be copied, see #2
-    model.objective = copy(f)
+    MOI.set(model.objective, attr, f)
     return
 end
 
 function MOI.modify(
     model::AbstractModel,
-    ::MOI.ObjectiveFunction,
+    attr::MOI.ObjectiveFunction,
     change::MOI.AbstractFunctionModification,
 )
-    model.objective = modify_function(model.objective, change)
-    model.objectiveset = true
+    MOI.modify(model.objective, attr, change)
     return
 end
 
 function MOI.get(::AbstractModel, ::MOI.ListOfOptimizerAttributesSet)
     return MOI.AbstractOptimizerAttribute[]
 end
+
 function MOI.get(
     model::AbstractModel,
-    ::MOI.ListOfModelAttributesSet,
+    attr::MOI.ListOfModelAttributesSet,
 )::Vector{MOI.AbstractModelAttribute}
-    listattr = MOI.AbstractModelAttribute[]
-    if model.senseset
-        push!(listattr, MOI.ObjectiveSense())
-    end
-    if model.objectiveset
-        push!(listattr, MOI.ObjectiveFunction{typeof(model.objective)}())
-    end
+    ret = MOI.get(model.objective, attr)
     if !isempty(model.name)
-        push!(listattr, MOI.Name())
+        push!(ret, MOI.Name())
     end
-    return listattr
+    return ret
 end
 
 # Constraints
@@ -557,20 +537,14 @@ end
 
 function MOI.is_empty(model::AbstractModel)
     return isempty(model.name) &&
-           !model.senseset &&
-           !model.objectiveset &&
-           isempty(model.objective.terms) &&
-           iszero(model.objective.constant) &&
+           MOI.is_empty(model.objective) &&
            MOI.is_empty(model.constraints) &&
            MOI.is_empty(model.variable_bounds)
 end
 
 function MOI.empty!(model::AbstractModel{T}) where {T}
     model.name = ""
-    model.senseset = false
-    model.sense = MOI.FEASIBILITY_SENSE
-    model.objectiveset = false
-    model.objective = zero(MOI.ScalarAffineFunction{T})
+    MOI.empty!(model.objective)
     MOI.empty!(model.variable_bounds)
     empty!(model.var_to_name)
     model.name_to_var = nothing
@@ -848,14 +822,7 @@ for (loop_name, loop_super_type) in [
         """
         mutable struct $name{T,C} <: $super_type{T}
             name::String
-            senseset::Bool
-            sense::MOI.OptimizationSense
-            objectiveset::Bool
-            objective::Union{
-                MOI.SingleVariable,
-                MOI.ScalarAffineFunction{T},
-                MOI.ScalarQuadraticFunction{T},
-            }
+            objective::ObjectiveFunctionContainer{T}
             variable_bounds::SingleVariableConstraints{T}
             constraints::C
             var_to_name::Dict{MOI.VariableIndex,String}
@@ -869,10 +836,7 @@ for (loop_name, loop_super_type) in [
             function $name{T,C}() where {T,C}
                 return new{T,C}(
                     EMPTYSTRING,
-                    false,
-                    MOI.FEASIBILITY_SENSE,
-                    false,
-                    zero(MOI.ScalarAffineFunction{T}),
+                    ObjectiveFunctionContainer{T}(),
                     SingleVariableConstraints{T}(),
                     C(),
                     Dict{MOI.VariableIndex,String}(),
