@@ -113,7 +113,7 @@ Utilities.set_from_constants
 ```
 
 ```@docs
-Utilities.MatrixBounds
+Utilities.Hyperrectangle
 ```
 
 ### `.sets`

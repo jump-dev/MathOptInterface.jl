@@ -45,7 +45,7 @@ end
     SUPPORTED_VARIABLE_SCALAR_SETS{T}
 
 The union of scalar sets for `SingleVariable` constraints supported by
-`Utilities.MatrixBounds` and `Utilities.SingleVariableConstraints`.
+`Utilities.Hyperrectangle` and `Utilities.SingleVariableConstraints`.
 """
 const SUPPORTED_VARIABLE_SCALAR_SETS{T} = Union{
     MOI.EqualTo{T},
@@ -354,42 +354,42 @@ function MOI.get(
 end
 
 ###
-### MatrixBounds
+### Hyperrectangle
 ###
 
 """
-    struct MatrixBounds{T} <: AbstractVectorBounds
+    struct Hyperrectangle{T} <: AbstractVectorBounds
         lower::Vector{T}
         upper::Vector{T}
     end
 
 A struct for the .constants field in MatrixOfConstraints.
 """
-struct MatrixBounds{T} <: AbstractVectorBounds
+struct Hyperrectangle{T} <: AbstractVectorBounds
     lower::Vector{T}
     upper::Vector{T}
 end
 
-MatrixBounds{T}() where {T} = MatrixBounds{T}(T[], T[])
+Hyperrectangle{T}() where {T} = Hyperrectangle{T}(T[], T[])
 
-function Base.:(==)(a::MatrixBounds, b::MatrixBounds)
+function Base.:(==)(a::Hyperrectangle, b::Hyperrectangle)
     return a.lower == b.lower && a.upper == b.upper
 end
 
-function Base.empty!(b::MatrixBounds)
+function Base.empty!(b::Hyperrectangle)
     empty!(b.lower)
     empty!(b.upper)
     return b
 end
 
-function Base.resize!(b::MatrixBounds, n)
+function Base.resize!(b::Hyperrectangle, n)
     resize!(b.lower, n)
     resize!(b.upper, n)
     return
 end
 
 function load_constants(
-    b::MatrixBounds{T},
+    b::Hyperrectangle{T},
     offset,
     set::SUPPORTED_VARIABLE_SCALAR_SETS{T},
 ) where {T}
@@ -407,4 +407,4 @@ function load_constants(
     return
 end
 
-function_constants(::MatrixBounds{T}, row) where {T} = zero(T)
+function_constants(::Hyperrectangle{T}, row) where {T} = zero(T)

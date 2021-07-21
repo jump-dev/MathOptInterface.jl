@@ -410,7 +410,7 @@ const Model = MOI.Utilities.GenericModel{
     MOI.Utilities.MatrixOfConstraints{
         Float64,
         MOI.Utilities.MutableSparseMatrixCSC{Float64,Cint,MOI.Utilities.ZeroBasedIndexing},
-        MOI.Utilities.MatrixBounds{Float64},
+        MOI.Utilities.Hyperrectangle{Float64},
         LP{Float64},
     },
 }

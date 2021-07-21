@@ -199,14 +199,14 @@ function test_ListOfConstraintIndices()
 end
 
 ###
-### MatrixBounds
+### Hyperrectangle
 ###
 
-function test_MatrixBounds_equal()
-    a = MOI.Utilities.MatrixBounds([1, 2], [3, 4])
-    b = MOI.Utilities.MatrixBounds([1.0, 2.0], [3.0, 4.0])
-    c = MOI.Utilities.MatrixBounds([1.0, 3.0], [3.0, 4.0])
-    d = MOI.Utilities.MatrixBounds([1.0, 2.0], [3.0, 5.0])
+function test_Hyperrectangle_equal()
+    a = MOI.Utilities.Hyperrectangle([1, 2], [3, 4])
+    b = MOI.Utilities.Hyperrectangle([1.0, 2.0], [3.0, 4.0])
+    c = MOI.Utilities.Hyperrectangle([1.0, 3.0], [3.0, 4.0])
+    d = MOI.Utilities.Hyperrectangle([1.0, 2.0], [3.0, 5.0])
     @test a == a
     @test a == b
     @test a != c
@@ -214,16 +214,16 @@ function test_MatrixBounds_equal()
     return
 end
 
-function test_MatrixBounds_empty()
-    a = MOI.Utilities.MatrixBounds([1, 2], [3, 4])
+function test_Hyperrectangle_empty()
+    a = MOI.Utilities.Hyperrectangle([1, 2], [3, 4])
     empty!(a)
     @test a.lower == Int[]
     @test a.upper == Int[]
     return
 end
 
-function test_MatrixBounds_resize()
-    a = MOI.Utilities.MatrixBounds([1, 2], [3, 4])
+function test_Hyperrectangle_resize()
+    a = MOI.Utilities.Hyperrectangle([1, 2], [3, 4])
     @test length(a.lower) == 2
     @test length(a.upper) == 2
     resize!(a, 4)
@@ -233,22 +233,22 @@ function test_MatrixBounds_resize()
 end
 
 function test_load_constants()
-    a = MOI.Utilities.MatrixBounds([-Inf, -Inf, -Inf], [Inf, Inf, Inf])
+    a = MOI.Utilities.Hyperrectangle([-Inf, -Inf, -Inf], [Inf, Inf, Inf])
     MOI.Utilities.load_constants(a, 0, MOI.Interval(1.0, 2.0))
     MOI.Utilities.load_constants(a, 1, MOI.GreaterThan(3.0))
     MOI.Utilities.load_constants(a, 2, MOI.LessThan(4.0))
-    @test a == MOI.Utilities.MatrixBounds([1.0, 3.0, -Inf], [2.0, Inf, 4.0])
+    @test a == MOI.Utilities.Hyperrectangle([1.0, 3.0, -Inf], [2.0, Inf, 4.0])
     return
 end
 
 function test_function_constants()
-    a = MOI.Utilities.MatrixBounds([-Inf, -Inf, -Inf], [Inf, Inf, Inf])
+    a = MOI.Utilities.Hyperrectangle([-Inf, -Inf, -Inf], [Inf, Inf, Inf])
     MOI.Utilities.function_constants(a, 0) == 0.0
     return
 end
 
 function test_set_from_constants()
-    a = MOI.Utilities.MatrixBounds([1.0, 3.0, -Inf], [2.0, Inf, 4.0])
+    a = MOI.Utilities.Hyperrectangle([1.0, 3.0, -Inf], [2.0, Inf, 4.0])
     @test MOI.Utilities.set_from_constants(a, MOI.Interval{Float64}, 1) ==
           MOI.Interval(1.0, 2.0)
     @test MOI.Utilities.set_from_constants(a, MOI.GreaterThan{Float64}, 2) ==

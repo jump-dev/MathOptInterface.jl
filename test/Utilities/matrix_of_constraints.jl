@@ -192,18 +192,18 @@ function test_contlinear()
 end
 function test_contlinear(Indexing)
     A2 = sparse([1, 1], [1, 2], ones(2))
-    b2 = MOI.Utilities.MatrixBounds([-Inf], [1.0])
+    b2 = MOI.Utilities.Hyperrectangle([-Inf], [1.0])
     Alp = sparse(
         [1, 1, 2, 3, 4, 4],
         [1, 2, 1, 2, 1, 2],
         Float64[3, 2, 1, -1, 5, -4],
     )
-    blp = MOI.Utilities.MatrixBounds([5, 0, -Inf, 6], [5, Inf, 0, 7])
+    blp = MOI.Utilities.Hyperrectangle([5, 0, -Inf, 6], [5, Inf, 0, 7])
     F = MOI.ScalarAffineFunction{Float64}
     @testset "$SetType" for SetType in [MixLP{Float64}, OrdLP{Float64}]
         _test(
             MOIT.linear2test,
-            MOI.Utilities.MatrixBounds{Float64},
+            MOI.Utilities.Hyperrectangle{Float64},
             SetType,
             A2,
             b2,
@@ -223,7 +223,7 @@ function test_contlinear(Indexing)
         end
         _test(
             _lp,
-            MOI.Utilities.MatrixBounds{Float64},
+            MOI.Utilities.Hyperrectangle{Float64},
             SetType,
             Alp,
             blp,
@@ -363,7 +363,7 @@ end
 function test_get_by_name(T::Type, SetsType::Type)
     model = matrix_instance(
         T,
-        MOI.Utilities.MatrixBounds{T},
+        MOI.Utilities.Hyperrectangle{T},
         SetsType,
         MOI.Utilities.OneBasedIndexing,
     )
@@ -393,7 +393,7 @@ MOIU.@struct_of_constraints_by_function_types(
 function test_nametest()
     T = Float64
     Indexing = MOIU.OneBasedIndexing
-    ConstantsType = MOIU.MatrixBounds{T}
+    ConstantsType = MOIU.Hyperrectangle{T}
     for ProductOfSetsType in [MixLP{Float64}, OrdLP{Float64}]
         model = MOIU.GenericOptimizer{
             T,
@@ -443,7 +443,7 @@ end
 function test_valid()
     T = Float64
     Indexing = MOIU.OneBasedIndexing
-    ConstantsType = MOIU.MatrixBounds{T}
+    ConstantsType = MOIU.Hyperrectangle{T}
     for ProductOfSetsType in [MixLP{Float64}, OrdLP{Float64}]
         model = matrix_instance(T, ConstantsType, ProductOfSetsType, Indexing)
         MOI.DeprecatedTest.validtest(model, delete = false)
@@ -452,7 +452,7 @@ end
 
 function test_supports_constraint(T::Type = Float64, BadT::Type = Float32)
     Indexing = MOIU.OneBasedIndexing
-    ConstantsType = MOIU.MatrixBounds{T}
+    ConstantsType = MOIU.Hyperrectangle{T}
     for ProductOfSetsType in [MixLP{Float64}, OrdLP{Float64}]
         model = MOIU.GenericOptimizer{
             T,
@@ -490,7 +490,7 @@ function test_copy(Indexing)
                 MOIU.MatrixOfConstraints{
                     T,
                     MOIU.MutableSparseMatrixCSC{T,Int,Indexing},
-                    MOIU.MatrixBounds{T},
+                    MOIU.Hyperrectangle{T},
                     ScalarSetsType,
                 },
                 MOIU.MatrixOfConstraints{
@@ -513,7 +513,7 @@ end
 function test_modif()
     model = matrix_instance(
         Int,
-        MOIU.MatrixBounds{Int},
+        MOIU.Hyperrectangle{Int},
         OrdLP{Int},
         MOIU.OneBasedIndexing,
     )
