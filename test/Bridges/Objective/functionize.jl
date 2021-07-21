@@ -1,25 +1,35 @@
+module TestObjectiveFunctionize
+
 using Test
 
 using MathOptInterface
 const MOI = MathOptInterface
-const MOIT = MathOptInterface.DeprecatedTest
-const MOIU = MathOptInterface.Utilities
-const MOIB = MathOptInterface.Bridges
+
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
 
 include("../utilities.jl")
 
-mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
-config = MOIT.Config()
-
-bridged_mock = MOIB.Objective.Functionize{Float64}(mock)
-
-@testset "solve_singlevariable_obj" begin
-    MOIU.set_mock_optimize!(
+function test_solve_singlevariable_obj()
+    mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    bridged_mock = MOI.Bridges.Objective.Functionize{Float64}(mock)
+    MOI.Utilities.set_mock_optimize!(
         mock,
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, [1.0], MOI.FEASIBLE_POINT),
+        (mock::MOI.Utilities.MockOptimizer) ->
+            MOI.Utilities.mock_optimize!(mock, [1.0], MOI.FEASIBLE_POINT),
     )
-    MOIT.solve_singlevariable_obj(bridged_mock, config)
+    MOI.Test.test_objective_ObjectiveFunction_SingleVariable(
+        bridged_mock,
+        MOI.Test.Config(),
+    )
     @test MOI.get(mock, MOI.ObjectiveFunctionType()) ==
           MOI.ScalarAffineFunction{Float64}
     @test MOI.get(bridged_mock, MOI.ObjectiveFunctionType()) ==
@@ -38,14 +48,15 @@ bridged_mock = MOIB.Objective.Functionize{Float64}(mock)
     @test MOI.get(mock, MOI.ObjectiveSense()) == MOI.MAX_SENSE
     @test MOI.get(bridged_mock, MOI.ObjectiveSense()) == MOI.MAX_SENSE
     _test_delete_objective(bridged_mock, 1, tuple())
+    return
 end
 
-# Tests that the `ObjectiveValue` attribute passed has the correct
-# `result_index`.
-@testset "solve_result_index" begin
-    MOIU.set_mock_optimize!(
+function test_solve_result_index()
+    mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    bridged_mock = MOI.Bridges.Objective.Functionize{Float64}(mock)
+    MOI.Utilities.set_mock_optimize!(
         mock,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+        (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
             mock,
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [1.0]),
@@ -53,5 +64,9 @@ end
             (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0],
         ),
     )
-    MOIT.solve_result_index(bridged_mock, config)
+    return MOI.Test.test_solve_result_index(bridged_mock, MOI.Test.Config())
 end
+
+end  # module
+
+TestObjectiveFunctionize.runtests()
