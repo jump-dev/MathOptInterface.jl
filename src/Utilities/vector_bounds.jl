@@ -180,7 +180,7 @@ end
 
 function MOI.throw_if_not_valid(b::SingleVariableConstraints, index)
     if !MOI.is_valid(b, index)
-        throw(InvalidIndex(index))
+        throw(MOI.InvalidIndex(index))
     end
 end
 
