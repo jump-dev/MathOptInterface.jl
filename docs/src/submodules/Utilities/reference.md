@@ -114,7 +114,7 @@ Utilities.set_from_constants
 ```
 
 ```@docs
-Utilities.Box
+Utilities.Hyperrectangle
 ```
 
 ### `.sets`
