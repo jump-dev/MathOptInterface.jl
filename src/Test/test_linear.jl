@@ -836,7 +836,8 @@ end
         config::Config{T},
     ) where {T}
 
-Test solving a linear program with variabless containing lower and upper bounds.
+Test solving a linear program with ScalarAffineFunction-in-LessThan and
+GreaterThan constraints.
 """
 function test_linear_LessThan_and_GreaterThan(
     model::MOI.ModelLike,
@@ -852,12 +853,12 @@ function test_linear_LessThan_and_GreaterThan(
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.ScalarAffineFunction{T},
         MOI.GreaterThan{T},
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.ScalarAffineFunction{T},
         MOI.LessThan{T},
     )
     x = MOI.add_variable(model)
@@ -874,14 +875,10 @@ function test_linear_LessThan_and_GreaterThan(
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    c1 = MOI.add_constraint(
-        model,
-        MOI.SingleVariable(x),
-        MOI.GreaterThan(zero(T)),
-    )
-    @test c1.value == x.value
-    c2 = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.LessThan(zero(T)))
-    @test c2.value == y.value
+    fx = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(T), x)], zero(T))
+    c1 = MOI.add_constraint(model, fx, MOI.GreaterThan(zero(T)))
+    fy = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(T), y)], zero(T))
+    c2 = MOI.add_constraint(model, fy, MOI.LessThan(zero(T)))
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
@@ -924,6 +921,7 @@ function test_linear_LessThan_and_GreaterThan(
         @test MOI.get(model, MOI.VariablePrimal(), y) ≈ -T(100) atol = atol rtol =
             rtol
     end
+    return
 end
 
 function setup_test(

@@ -1,19 +1,29 @@
+module TestVariableBridge
+
 using Test
 
 using MathOptInterface
 const MOI = MathOptInterface
-const MOIT = MathOptInterface.DeprecatedTest
-const MOIU = MathOptInterface.Utilities
-const MOIB = MathOptInterface.Bridges
 
-struct DummyVariableBridge <: MOIB.Variable.AbstractBridge end
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
 
-@testset "AbstractBridge" begin
-    model = MOIU.Model{Float64}()
+struct DummyVariableBridge <: MOI.Bridges.Variable.AbstractBridge end
+
+function test_AbstractBridge()
+    model = MOI.Utilities.Model{Float64}()
     bridge = DummyVariableBridge()
     attr = MOI.VariablePrimalStart()
     @test !MOI.supports(model, attr, typeof(bridge))
-    i = MOIB.IndexInVector(1)
+    i = MOI.Bridges.IndexInVector(1)
     @test_throws MOI.UnsupportedAttribute(attr) MOI.set(
         model,
         attr,
@@ -31,4 +41,9 @@ struct DummyVariableBridge <: MOIB.Variable.AbstractBridge end
     err = MOI.SetAttributeNotAllowed(attr)
     @test_throws err MOI.set(model, attr, bridge, 1.0)
     @test_throws err MOI.set(model, attr, bridge, 1.0, i)
+    return
 end
+
+end  # module
+
+TestVariableBridge.runtests()
