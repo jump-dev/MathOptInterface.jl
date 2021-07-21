@@ -415,7 +415,7 @@ function test_quadratic_duplicate_terms()
     return
 end
 
-function test_()
+function test_quadratic_nonhomogeneous()
     mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     bridged_mock = MOI.Bridges.Objective.Slack{Float64}(mock)
     MOI.Utilities.set_mock_optimize!(
