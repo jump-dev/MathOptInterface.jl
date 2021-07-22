@@ -8,7 +8,7 @@ end
 
 function _warn_incomplete_list_num_constraints(BT, list_num_constraints)
     for (S,) in MOI.Bridges.added_constrained_variable_types(BT)
-        F = MOIU.variable_function_type(S)
+        F = MOI.Utilities.variable_function_type(S)
         if !any(c -> c[1] == F && c[2] == S, list_num_constraints)
             error(
                 "Bridges of type $BT add constrained variable in $S but " *

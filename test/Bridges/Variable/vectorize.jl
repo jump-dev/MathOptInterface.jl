@@ -1,19 +1,28 @@
+module TestVariableVectorize
+
 using Test
 
 using MathOptInterface
 const MOI = MathOptInterface
-const MOIT = MathOptInterface.DeprecatedTest
-const MOIU = MathOptInterface.Utilities
-const MOIB = MathOptInterface.Bridges
+
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
 
 include("../utilities.jl")
 
-mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-config = MOIT.Config()
-
-bridged_mock = MOIB.Variable.Vectorize{Float64}(mock)
-
-@testset "get scalar constraint" begin
+function test_get_scalar_constraint()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    bridged_mock = MOI.Bridges.Variable.Vectorize{Float64}(mock)
     x, cx = MOI.add_constrained_variable(bridged_mock, MOI.GreaterThan(1.0))
     fx = MOI.SingleVariable(x)
     func = 2.0 * fx
@@ -51,9 +60,9 @@ bridged_mock = MOIB.Variable.Vectorize{Float64}(mock)
         cy: [y] in MathOptInterface.Nonnegatives(1)
         c: 2.0y >= 3.0
         """
-        model = MOIU.Model{Float64}()
-        MOIU.loadfromstring!(model, s)
-        MOIU.test_models_equal(mock, model, ["y"], ["cy", "c"])
+        model = MOI.Utilities.Model{Float64}()
+        MOI.Utilities.loadfromstring!(model, s)
+        MOI.Utilities.test_models_equal(mock, model, ["y"], ["cy", "c"])
     end
     @testset "Bridged model" begin
         MOI.set(bridged_mock, MOI.VariableName(), x, "x")
@@ -62,9 +71,9 @@ bridged_mock = MOIB.Variable.Vectorize{Float64}(mock)
         x >= 1.0
         c: 2.0x >= 5.0
         """
-        model = MOIU.Model{Float64}()
-        MOIU.loadfromstring!(model, s)
-        MOIU.test_models_equal(
+        model = MOI.Utilities.Model{Float64}()
+        MOI.Utilities.loadfromstring!(model, s)
+        MOI.Utilities.test_models_equal(
             bridged_mock,
             model,
             ["x"],
@@ -74,9 +83,13 @@ bridged_mock = MOIB.Variable.Vectorize{Float64}(mock)
     end
 end
 
-@testset "exp3 with add_constrained_variable for `y`" begin
+function test_exp3_with_add_constrained_variable_y()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    bridged_mock = MOI.Bridges.Variable.Vectorize{Float64}(mock)
     mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+        (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
             mock,
             [log(5), 0.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
@@ -98,7 +111,7 @@ end
     fy = MOI.SingleVariable(y)
     ec = MOI.add_constraint(
         bridged_mock,
-        MOIU.operate(vcat, Float64, fx, 1.0, fy),
+        MOI.Utilities.operate(vcat, Float64, fx, 1.0, fy),
         MOI.ExponentialCone(),
     )
 
@@ -132,95 +145,82 @@ end
     )
     @test length(cis) == 1
 
-    @testset "get `UnknownVariableAttribute``" begin
-        err = ArgumentError(
-            "Variable bridge of type `$(MathOptInterface.Bridges.Variable.VectorizeBridge{Float64,MathOptInterface.Nonpositives})`" *
-            " does not support accessing the attribute `MathOptInterface.DeprecatedTest.UnknownVariableAttribute()`.",
-        )
-        @test_throws err MOI.get(
-            bridged_mock,
-            MOIT.UnknownVariableAttribute(),
-            y,
-        )
-    end
+    err = ArgumentError(
+        "Variable bridge of type `$(MathOptInterface.Bridges.Variable.VectorizeBridge{Float64,MathOptInterface.Nonpositives})`" *
+        " does not support accessing the attribute `MathOptInterface.Test.UnknownVariableAttribute()`.",
+    )
+    @test_throws err MOI.get(
+        bridged_mock,
+        MOI.Test.UnknownVariableAttribute(),
+        y,
+    )
+    ci = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(y.value)
+    attr = MOI.ConstraintSet()
+    err = MOI.SetAttributeNotAllowed(
+        attr,
+        "The variable `MathOptInterface.VariableIndex(12345676)` is bridged by the `VectorizeBridge`.",
+    )
+    @test_throws err MOI.set(bridged_mock, attr, ci, MOI.LessThan(4.0))
 
-    @testset "set `ConstraintSet`" begin
-        ci = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(
-            y.value,
-        )
-        attr = MOI.ConstraintSet()
-        err = MOI.SetAttributeNotAllowed(
-            attr,
-            "The variable `MathOptInterface.VariableIndex(12345676)` is bridged by the `VectorizeBridge`.",
-        )
-        @test_throws err MOI.set(bridged_mock, attr, ci, MOI.LessThan(4.0))
-    end
+    change = MOI.MultirowChange(y, [(3, 0.0)])
+    message =
+        "The change $change" *
+        " contains variables bridged into a function with nonzero constant."
+    err = MOI.ModifyConstraintNotAllowed(cis[1], change, message)
+    @test_throws err MOI.modify(bridged_mock, cis[1], change)
 
-    @testset "MultirowChange" begin
-        change = MOI.MultirowChange(y, [(3, 0.0)])
-        message =
-            "The change $change" *
-            " contains variables bridged into a function with nonzero constant."
-        err = MOI.ModifyConstraintNotAllowed(cis[1], change, message)
-        @test_throws err MOI.modify(bridged_mock, cis[1], change)
-    end
-
-    @testset "ScalarCoefficientChange" begin
-        change = MOI.ScalarCoefficientChange(y, 0.0)
-        attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
-        message =
-            "The change MathOptInterface.ScalarCoefficientChange{Float64}(MathOptInterface.VariableIndex(-1), 0.0)" *
-            " contains variables bridged into a function with nonzero constant."
-        err = MOI.ModifyObjectiveNotAllowed(change, message)
-        @test_throws err MOI.modify(bridged_mock, attr, change)
-    end
+    change = MOI.ScalarCoefficientChange(y, 0.0)
+    attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
+    message =
+        "The change MathOptInterface.ScalarCoefficientChange{Float64}(MathOptInterface.VariableIndex(-1), 0.0)" *
+        " contains variables bridged into a function with nonzero constant."
+    err = MOI.ModifyObjectiveNotAllowed(change, message)
+    @test_throws err MOI.modify(bridged_mock, attr, change)
 
     MOI.set(bridged_mock, MOI.VariableName(), x, "x")
     MOI.set(bridged_mock, MOI.ConstraintName(), xc, "xc")
     MOI.set(bridged_mock, MOI.ConstraintName(), ec, "ec")
     z = MOI.get(mock, MOI.ListOfVariableIndices())[2]
-    @testset "Mock model" begin
-        MOI.set(mock, MOI.VariableName(), z, "z")
-        MOI.set(
+
+    MOI.set(mock, MOI.VariableName(), z, "z")
+    MOI.set(
+        mock,
+        MOI.ConstraintName(),
+        MOI.get(
             mock,
-            MOI.ConstraintName(),
-            MOI.get(
-                mock,
-                MOI.ListOfConstraintIndices{
-                    MOI.VectorOfVariables,
-                    MOI.Nonpositives,
-                }(),
-            ),
-            ["zc"],
-        )
-        s = """
-        variables: x, z
-        zc: [z] in MathOptInterface.Nonpositives(1)
-        xc: 2.0x <= 4.0
-        ec: [x, 1.0, z + 5.0] in MathOptInterface.ExponentialCone()
-        """
-        model = MOIU.Model{Float64}()
-        MOIU.loadfromstring!(model, s)
-        MOIU.test_models_equal(mock, model, ["x", "z"], ["zc", "xc", "ec"])
-    end
-    @testset "Bridged model" begin
-        MOI.set(bridged_mock, MOI.VariableName(), y, "y")
-        s = """
-        variables: x, y
-        y <= 5.0
-        xc: 2.0x <= 4.0
-        ec: [x, 1.0, y] in MathOptInterface.ExponentialCone()
-        """
-        model = MOIU.Model{Float64}()
-        MOIU.loadfromstring!(model, s)
-        MOIU.test_models_equal(
-            bridged_mock,
-            model,
-            ["x", "y"],
-            ["xc", "ec"],
-            [("y", MOI.LessThan{Float64}(5.0))],
-        )
-    end
+            MOI.ListOfConstraintIndices{
+                MOI.VectorOfVariables,
+                MOI.Nonpositives,
+            }(),
+        ),
+        ["zc"],
+    )
+    s = """
+    variables: x, z
+    zc: [z] in MathOptInterface.Nonpositives(1)
+    xc: 2.0x <= 4.0
+    ec: [x, 1.0, z + 5.0] in MathOptInterface.ExponentialCone()
+    """
+    model = MOI.Utilities.Model{Float64}()
+    MOI.Utilities.loadfromstring!(model, s)
+    MOI.Utilities.test_models_equal(mock, model, ["x", "z"], ["zc", "xc", "ec"])
+
+    MOI.set(bridged_mock, MOI.VariableName(), y, "y")
+    s = """
+    variables: x, y
+    y <= 5.0
+    xc: 2.0x <= 4.0
+    ec: [x, 1.0, y] in MathOptInterface.ExponentialCone()
+    """
+    model = MOI.Utilities.Model{Float64}()
+    MOI.Utilities.loadfromstring!(model, s)
+    MOI.Utilities.test_models_equal(
+        bridged_mock,
+        model,
+        ["x", "y"],
+        ["xc", "ec"],
+        [("y", MOI.LessThan{Float64}(5.0))],
+    )
 
     @test MOI.supports(
         bridged_mock,
@@ -230,7 +230,7 @@ end
     @test MOI.supports(
         bridged_mock,
         MOI.VariablePrimalStart(),
-        typeof(MOIB.bridge(bridged_mock, y)),
+        typeof(MOI.Bridges.bridge(bridged_mock, y)),
     )
     MOI.set(bridged_mock, MOI.VariablePrimalStart(), y, 1.0)
     @test MOI.get(mock, MOI.VariablePrimalStart(), z) == -4
@@ -243,4 +243,9 @@ end
         2,
         ((MOI.VectorOfVariables, MOI.Nonpositives, 0),),
     )
+    return
 end
+
+end  # module
+
+TestVariableVectorize.runtests()

@@ -154,14 +154,6 @@ function test_TestExternalModel()
     return
 end
 
-function test_flag_to_set_type()
-    T = Int
-    @test_throws AssertionError MOI.Utilities.flag_to_set_type(0x11, T)
-    @test MOI.Utilities.flag_to_set_type(0x10, T) == MOI.Integer
-    @test MOI.Utilities.flag_to_set_type(0x20, T) == MOI.ZeroOne
-    return
-end
-
 function test_bound_twice()
     for T in [Int, Float64]
         model = MOI.Utilities.Model{T}()
