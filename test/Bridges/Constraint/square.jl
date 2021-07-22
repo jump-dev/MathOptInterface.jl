@@ -1,41 +1,51 @@
+module TestConstraintSquare
+
 using Test
 
 using MathOptInterface
 const MOI = MathOptInterface
-const MOIT = MathOptInterface.DeprecatedTest
-const MOIU = MathOptInterface.Utilities
-const MOIB = MathOptInterface.Bridges
+
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
 
 include("../utilities.jl")
 
-mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
-config = MOIT.Config()
-
-@testset "Square" begin
-    bridged_mock = MOIB.Constraint.Square{Float64}(mock)
-
-    MOIT.basic_constraint_tests(
+function test_Square()
+    mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    config = MOI.Test.Config()
+    bridged_mock = MOI.Bridges.Constraint.Square{Float64}(mock)
+    MOI.Test.runtests(
         bridged_mock,
         config,
         include = [
-            (F, S) for F in [
-                MOI.VectorOfVariables,
-                MOI.VectorAffineFunction{Float64},
-                MOI.VectorQuadraticFunction{Float64},
-            ] for S in [MOI.PositiveSemidefiniteConeSquare]
+            "test_basic_VectorOfVariables_PositiveSemidefiniteConeSquare",
+            "test_basic_VectorAffineFunction_PositiveSemidefiniteConeSquare",
+            "test_basic_VectorQuadraticFunction_PositiveSemidefiniteConeSquare",
         ],
     )
-
+    MOI.empty!(bridged_mock)
     mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+        (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
             mock,
             ones(4),
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [2, 2],
         )
-    MOIT.psds0vtest(bridged_mock, config)
+    MOI.Test.test_conic_PositiveSemidefiniteConeSquare_VectorOfVariables(
+        bridged_mock,
+        config,
+    )
+    MOI.empty!(bridged_mock)
     mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+        (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
             mock,
             ones(4),
             (
@@ -45,7 +55,10 @@ config = MOIT.Config()
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [2, 2],
         )
-    MOIT.psds0ftest(bridged_mock, config)
+    MOI.Test.test_conic_PositiveSemidefiniteConeSquare_VectorAffineFunction(
+        bridged_mock,
+        config,
+    )
     ci = first(
         MOI.get(
             bridged_mock,
@@ -68,4 +81,9 @@ config = MOIT.Config()
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 1),
         ),
     )
+    return
 end
+
+end  # module
+
+TestConstraintSquare.runtests()
