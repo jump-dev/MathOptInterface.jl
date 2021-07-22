@@ -8,25 +8,13 @@ function _timed_include(file)
     return println("    Took $(run_time) seconds")
 end
 
-@testset "$(file)" for file in
-                       ["bridge_optimizer.jl", "lazy_bridge_optimizer.jl"]
-    _timed_include(file)
-end
-@testset "Variable bridges" begin
-    variable_dir = joinpath(@__DIR__, "Variable")
-    @testset "$(file)" for file in readdir(variable_dir)
-        _timed_include(joinpath(variable_dir, file))
-    end
-end
-@testset "Constraint bridges" begin
-    constraint_dir = joinpath(@__DIR__, "Constraint")
-    @testset "$(file)" for file in readdir(constraint_dir)
-        _timed_include(joinpath(constraint_dir, file))
-    end
-end
-@testset "Objective bridges" begin
-    objective_dir = joinpath(@__DIR__, "Objective")
-    @testset "$(file)" for file in readdir(objective_dir)
-        _timed_include(joinpath(objective_dir, file))
+@testset "$(dir)" for dir in [".", "Variable", "Constraint", "Objective"]
+    @testset "$(file)" for file in readdir(joinpath(@__DIR__, dir))
+        if !endswith(file, ".jl")
+            continue
+        elseif (dir == ".") && (file == "Bridges.jl" || file == "utilities.jl")
+            continue
+        end
+        _timed_include(joinpath(@__DIR__, dir, file))
     end
 end
