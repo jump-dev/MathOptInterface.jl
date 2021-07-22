@@ -493,12 +493,12 @@ function test_objective_set_via_modify(model::MOI.ModelLike, config::Config)
 end
 
 """
-    test_incorrect_modifications(model::MOI.ModelLike, config::Config)
+    test_objective_incorrect_modifications(model::MOI.ModelLike, config::Config)
 
 Test that constraint sets cannot be set for the wrong set type, and that
 SingleVariable functions cannot be modified.
 """
-function test_incorrect_modifications(model::MOI.ModelLike, ::Config)
+function test_objective_incorrect_modifications(model::MOI.ModelLike, ::Config)
     @requires MOI.supports_constraint(
         model,
         MOI.ScalarAffineFunction{Float64},
