@@ -473,3 +473,50 @@ function setup_test(
     )
     return
 end
+
+"""
+    test_objective_set_via_modify(model::MOI.ModelLike, config::Config)
+
+Test that a SclaarAffineFunction can be set via modification without setting an
+objective prior.
+"""
+function test_objective_set_via_modify(model::MOI.ModelLike, config::Config)
+    attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
+    @requires MOI.supports(model, attr)
+    @requires _supports(config, MOI.modify)
+    @requires _supports(config, MOI.ScalarCoefficientChange)
+    @test MOI.get(model, MOI.ListOfModelAttributesSet()) == []
+    x = MOI.add_variable(model)
+    MOI.modify(model, attr, MOI.ScalarCoefficientChange(x, 1.0))
+    @test MOI.get(model, MOI.ListOfModelAttributesSet()) == [attr]
+    return
+end
+
+"""
+    test_objective_incorrect_modifications(model::MOI.ModelLike, config::Config)
+
+Test that constraint sets cannot be set for the wrong set type, and that
+SingleVariable functions cannot be modified.
+"""
+function test_objective_incorrect_modifications(model::MOI.ModelLike, ::Config)
+    @requires MOI.supports_constraint(
+        model,
+        MOI.ScalarAffineFunction{Float64},
+        MOI.EqualTo{Float64},
+    )
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
+        MOI.EqualTo(1.0),
+    )
+    @test_throws(
+        ArgumentError,
+        MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(1.0)),
+    )
+    @test_throws(
+        ArgumentError,
+        MOI.set(model, MOI.ConstraintFunction(), c, MOI.SingleVariable(x)),
+    )
+    return
+end
