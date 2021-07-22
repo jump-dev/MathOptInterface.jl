@@ -301,9 +301,15 @@ function Base.isapprox(
     return f == g
 end
 
-# For affine and quadratic functions, terms are compressed in a dictionary using `_dicts` and then the dictionaries are compared with `dict_compare`
+# For affine and quadratic functions, terms are compressed in a dictionary using
+# `_dicts` and then the dictionaries are compared with `dict_compare`
 function dict_compare(d1::Dict, d2::Dict{<:Any,T}, compare::Function) where {T}
-    return all(kv -> compare(kv.second, Base.get(d2, kv.first, zero(T))), d1)
+    for key in union(keys(d1), keys(d2))
+        if !compare(Base.get(d1, key, zero(T)), Base.get(d2, key, zero(T)))
+            return false
+        end
+    end
+    return true
 end
 
 # Build a dictionary where the duplicate keys are summed
