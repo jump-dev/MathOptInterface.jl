@@ -176,10 +176,12 @@ end
 
 function MOI.delete(o::ObjectiveFunctionContainer, x::MOI.VariableIndex)
     if o.single_variable !== nothing
-        sense = o.sense
-        MOI.empty!(o)
-        if o.is_sense_set
-            MOI.set(o, MOI.ObjectiveSense(), sense)
+        if x == o.single_variable.variable
+            sense = o.sense
+            MOI.empty!(o)
+            if o.is_sense_set
+                MOI.set(o, MOI.ObjectiveSense(), sense)
+            end
         end
     elseif o.scalar_quadratic !== nothing
         o.scalar_quadratic = remove_variable(o.scalar_quadratic, x)
