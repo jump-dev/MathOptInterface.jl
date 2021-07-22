@@ -192,11 +192,13 @@ end
 
 function MOI.delete(o::ObjectiveFunctionContainer, x::Vector{MOI.VariableIndex})
     keep = v -> !(v in x)
-    if o.single_variable !== nothing && o.single_variable.variable in x
-        sense = o.sense
-        MOI.empty!(o)
-        if o.is_sense_set
-            MOI.set(o, MOI.ObjectiveSense(), sense)
+    if o.single_variable !== nothing
+        if o.single_variable.variable in x
+            sense = o.sense
+            MOI.empty!(o)
+            if o.is_sense_set
+                MOI.set(o, MOI.ObjectiveSense(), sense)
+            end
         end
     elseif o.scalar_quadratic !== nothing
         o.scalar_quadratic = filter_variables(keep, o.scalar_quadratic)
