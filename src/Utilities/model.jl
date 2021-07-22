@@ -322,7 +322,7 @@ end
 
 function MOI.set(
     model::AbstractModel,
-    ::MOI.ObjectiveSense,
+    attr::MOI.ObjectiveSense,
     sense::MOI.OptimizationSense,
 )
     MOI.set(model.objective, attr, sense)

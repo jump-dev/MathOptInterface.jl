@@ -80,7 +80,7 @@ function test_delete_ScalarAffineFunction()
     MOI.set(o, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.delete(o, x)
     @test MOI.get(o, MOI.ObjectiveFunctionType()) == typeof(f)
-    @test_broken !(MOI.get(o, MOI.ObjectiveFunction{typeof(f)}()) ≈ f)
+    @test !(MOI.get(o, MOI.ObjectiveFunction{typeof(f)}()) ≈ f)
     return
 end
 
@@ -91,7 +91,7 @@ function test_delete_ScalarQuadraticFunction()
     MOI.set(o, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.delete(o, x)
     @test MOI.get(o, MOI.ObjectiveFunctionType()) == typeof(f)
-    @test_broken !(MOI.get(o, MOI.ObjectiveFunction{typeof(f)}()) ≈ f)
+    @test !(MOI.get(o, MOI.ObjectiveFunction{typeof(f)}()) ≈ f)
     return
 end
 
@@ -112,7 +112,7 @@ function test_delete_ScalarAffineFunction_plural()
     MOI.set(o, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.delete(o, [x])
     @test MOI.get(o, MOI.ObjectiveFunctionType()) == typeof(f)
-    @test_broken !(MOI.get(o, MOI.ObjectiveFunction{typeof(f)}()) ≈ f)
+    @test !(MOI.get(o, MOI.ObjectiveFunction{typeof(f)}()) ≈ f)
     return
 end
 
@@ -123,7 +123,7 @@ function test_delete_ScalarQuadraticFunction_plural()
     MOI.set(o, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.delete(o, [x])
     @test MOI.get(o, MOI.ObjectiveFunctionType()) == typeof(f)
-    @test_broken !(MOI.get(o, MOI.ObjectiveFunction{typeof(f)}()) ≈ f)
+    @test !(MOI.get(o, MOI.ObjectiveFunction{typeof(f)}()) ≈ f)
     return
 end
 

@@ -4,7 +4,7 @@
 A helper struct to simplify the handling of objective functions in
 Utilities.Model.
 """
-mutable struct ObjectiveFunctionContainer{T}
+mutable struct ObjectiveFunctionContainer{T} <: MOI.ModelLike
     is_sense_set::Bool
     sense::MOI.OptimizationSense
     is_function_set::Bool
