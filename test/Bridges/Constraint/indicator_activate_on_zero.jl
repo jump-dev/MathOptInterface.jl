@@ -1,29 +1,42 @@
+module TestConstraintIndicatorActiveOnFalse
+
 using Test
 
 using MathOptInterface
 const MOI = MathOptInterface
-const MOIT = MathOptInterface.DeprecatedTest
-const MOIU = MathOptInterface.Utilities
-const MOIB = MathOptInterface.Bridges
+
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
 
 include("../utilities.jl")
 
-@testset "Indicator activated on 0" begin
-    # linear problem with indicator constraint
-    # similar to indicator1_test with reversed z1
-    # max  2x1 + 3x2
-    # s.t. x1 + x2 <= 10
-    #      z1 == 0 ==> x2 <= 8
-    #      z2 == 1 ==> x2 + x1/5 <= 9
-    #      (1-z1) + z2 >= 1 <=> z2 - z1 >= 0
-    model = MOIU.MockOptimizer(MOIU.Model{Float64}())
-    config = MOIT.Config()
+"""
+    test_indicator_activate_on_zero()
 
+Linear problem with indicator constraint, similar to indicator1_test with
+reversed z1.
+```
+max  2x1 + 3x2
+s.t. x1 + x2 <= 10
+     z1 == 0 ==> x2 <= 8
+     z2 == 1 ==> x2 + x1/5 <= 9
+     (1-z1) + z2 >= 1 <=> z2 - z1 >= 0
+```
+"""
+function test_indicator_activate_on_zero()
+    model = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     x1 = MOI.add_variable(model)
     x2 = MOI.add_variable(model)
     z1 = MOI.add_variable(model)
     z2 = MOI.add_variable(model)
-
     vc1 = MOI.add_constraint(model, z1, MOI.ZeroOne())
     @test vc1.value == z1.value
     vc2 = MOI.add_constraint(model, z2, MOI.ZeroOne())
@@ -36,22 +49,19 @@ include("../utilities.jl")
         [0.0, 0.0],
     )
     iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO}(MOI.LessThan(8.0))
-
-    BT = MOIB.Constraint.concrete_bridge_type(
-        MOIB.Constraint.IndicatorActiveOnFalseBridge{Float64},
+    BT = MOI.Bridges.Constraint.concrete_bridge_type(
+        MOI.Bridges.Constraint.IndicatorActiveOnFalseBridge{Float64},
         typeof(f1),
         typeof(iset1),
     )
-    BT2 = MOIB.Constraint.concrete_bridge_type(
-        MOIB.Constraint.IndicatorActiveOnFalseBridge,
+    BT2 = MOI.Bridges.Constraint.concrete_bridge_type(
+        MOI.Bridges.Constraint.IndicatorActiveOnFalseBridge,
         typeof(f1),
         typeof(iset1),
     )
-    bridge = MOIB.Constraint.bridge_constraint(BT, model, f1, iset1)
-
+    bridge = MOI.Bridges.Constraint.bridge_constraint(BT, model, f1, iset1)
     @test BT === BT2
     @test bridge isa BT
-
     z1comp = bridge.variable
     @test MOI.get(model, MOI.ConstraintFunction(), bridge.zero_one_cons) ==
           MOI.SingleVariable(z1comp)
@@ -64,3 +74,7 @@ include("../utilities.jl")
         @test t.coefficient ≈ 1.0
     end
 end
+
+end  # module
+
+TestConstraintIndicatorActiveOnFalse.runtests()
