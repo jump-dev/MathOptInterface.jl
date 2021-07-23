@@ -165,7 +165,7 @@ Project.toml
 The best way to implement an interface to MathOptInterface is via
 [test-driven development](https://en.wikipedia.org/wiki/Test-driven_development).
 
-The [`MOI.DeprecatedTest` submodule](@ref test_module) contains a large test suite to help
+The [`MOI.Test` submodule](@ref test_module) contains a large test suite to help
 check that you have implemented things correctly.
 
 Follow the guide [How to test a solver](@ref) to set up the tests for your
@@ -173,9 +173,9 @@ package.
 
 !!! tip
     Run the tests frequently when developing. However, at the start there is
-    going to be a lot of errors! Comment out all the `test_` functions but one,
-    run the tests, implement any missing methods until the test passes, then
-    uncomment another test and repeat.
+    going to be a lot of errors! Start by excluding large classes of tests
+    (e.g., `exclude = ["test_basic_", "test_model_"]`, implement any missing
+    methods until the tests pass, then remove an exclusion and repeat.
 
 ## Initial code
 
