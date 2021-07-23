@@ -1,15 +1,25 @@
+module TestConstraintBridge
+
 using Test
 
 using MathOptInterface
 const MOI = MathOptInterface
-const MOIT = MathOptInterface.DeprecatedTest
-const MOIU = MathOptInterface.Utilities
-const MOIB = MathOptInterface.Bridges
 
-struct DummyBridge <: MOIB.Constraint.AbstractBridge end
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
 
-@testset "AbstractBridge" begin
-    model = MOIU.Model{Float64}()
+struct DummyBridge <: MOI.Bridges.Constraint.AbstractBridge end
+
+function test_AbstractBridge()
+    model = MOI.Utilities.Model{Float64}()
     bridge = DummyBridge()
     attr = MOI.ConstraintPrimalStart()
     @test !MOI.supports(model, attr, typeof(bridge))
@@ -23,3 +33,7 @@ struct DummyBridge <: MOIB.Constraint.AbstractBridge end
     err = MOI.SetAttributeNotAllowed(attr)
     @test_throws err MOI.set(model, attr, bridge, MOI.EqualTo(1.0))
 end
+
+end  # module
+
+TestConstraintBridge.runtests()

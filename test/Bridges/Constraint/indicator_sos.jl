@@ -1,14 +1,24 @@
+module TestConstraintIndicatorSOS1
+
 using Test
 
 using MathOptInterface
 const MOI = MathOptInterface
-const MOIT = MathOptInterface.DeprecatedTest
-const MOIU = MathOptInterface.Utilities
-const MOIB = MathOptInterface.Bridges
+
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
 
 include("../utilities.jl")
 
-@testset "Indicator by SOS1" begin
+function test_indicator_by_SOS1()
     # linear problem with indicator constraints
     # max  2x1 + 3x2
     # s.t. x1 + x2 <= 10
@@ -16,9 +26,7 @@ include("../utilities.jl")
     #      z2 == 1 ==> x1 + x2 == 9
     #      z3 == 1 ==> x1 >= 5
     #      z1 + z2 >= 1
-    model = MOIU.MockOptimizer(MOIU.Model{Float64}())
-    config = MOIT.Config()
-
+    model = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     x1 = MOI.add_variable(model)
     x2 = MOI.add_variable(model)
     z1 = MOI.add_variable(model)
@@ -56,36 +64,39 @@ include("../utilities.jl")
     )
     iset3 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.GreaterThan(5.0))
 
-    BT1 = MOIB.Constraint.concrete_bridge_type(
-        MOIB.Constraint.IndicatorSOS1Bridge{Float64},
+    BT1 = MOI.Bridges.Constraint.concrete_bridge_type(
+        MOI.Bridges.Constraint.IndicatorSOS1Bridge{Float64},
         typeof(f1),
         typeof(iset1),
     )
-    bridge1 = MOIB.Constraint.bridge_constraint(BT1, model, f1, iset1)
-    @test BT1 <: MOIB.Constraint.IndicatorSOS1Bridge{
+    bridge1 = MOI.Bridges.Constraint.bridge_constraint(BT1, model, f1, iset1)
+    @test BT1 <: MOI.Bridges.Constraint.IndicatorSOS1Bridge{
         Float64,
         <:MOI.LessThan,
         <:MOI.ConstraintIndex,
     }
     @test bridge1 isa BT1
 
-    BT2 = MOIB.Constraint.concrete_bridge_type(
-        MOIB.Constraint.IndicatorSOS1Bridge{Float64},
+    BT2 = MOI.Bridges.Constraint.concrete_bridge_type(
+        MOI.Bridges.Constraint.IndicatorSOS1Bridge{Float64},
         typeof(f2),
         typeof(iset2),
     )
-    bridge2 = MOIB.Constraint.bridge_constraint(BT2, model, f2, iset2)
-    @test BT2 <:
-          MOIB.Constraint.IndicatorSOS1Bridge{Float64,<:MOI.EqualTo,Nothing}
+    bridge2 = MOI.Bridges.Constraint.bridge_constraint(BT2, model, f2, iset2)
+    @test BT2 <: MOI.Bridges.Constraint.IndicatorSOS1Bridge{
+        Float64,
+        <:MOI.EqualTo,
+        Nothing,
+    }
     @test bridge2 isa BT2
 
-    BT3 = MOIB.Constraint.concrete_bridge_type(
-        MOIB.Constraint.IndicatorSOS1Bridge{Float64},
+    BT3 = MOI.Bridges.Constraint.concrete_bridge_type(
+        MOI.Bridges.Constraint.IndicatorSOS1Bridge{Float64},
         typeof(f3),
         typeof(iset3),
     )
-    bridge3 = MOIB.Constraint.bridge_constraint(BT3, model, f3, iset3)
-    @test BT3 <: MOIB.Constraint.IndicatorSOS1Bridge{
+    bridge3 = MOI.Bridges.Constraint.bridge_constraint(BT3, model, f3, iset3)
+    @test BT3 <: MOI.Bridges.Constraint.IndicatorSOS1Bridge{
         Float64,
         <:MOI.GreaterThan,
         <:MOI.ConstraintIndex,
@@ -156,43 +167,45 @@ include("../utilities.jl")
     ## MOI.get on bridge
     @test MOI.get(model, MOI.ConstraintSet(), bridge3) == iset3
     @test MOI.get(model, MOI.ConstraintFunction(), bridge3) ≈ f3
+    return
 end
 
-@testset "Basic constraint test" begin
-    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-    config = MOIT.Config()
-    for BC in [MOI.LessThan{Float64}, MOI.GreaterThan{Float64}]
-        bridged_mock = MOIB.Constraint.IndicatortoSOS1{
+function test_basic()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    function _bridge(S)
+        return MOI.Bridges.Constraint.IndicatortoSOS1{
             Float64,
-            BC,
-            MOI.ConstraintIndex{MOI.SingleVariable,BC},
+            S,
+            MOI.ConstraintIndex{MOI.SingleVariable,S},
         }(
             mock,
         )
-        MOIT.basic_constraint_tests(
-            bridged_mock,
-            config,
-            include = [
-                (
-                    MOI.VectorAffineFunction{Float64},
-                    MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,BC},
-                ),
-            ],
-        )
     end
+    MOI.Test.test_basic_VectorAffineFunction_Indicator_GreaterThan(
+        _bridge(MOI.GreaterThan{Float64}),
+        MOI.Test.Config(),
+    )
+    MOI.Test.test_basic_VectorAffineFunction_Indicator_LessThan(
+        _bridge(MOI.LessThan{Float64}),
+        MOI.Test.Config(),
+    )
+    return
 end
 
-@testset "Model equality" begin
-    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-    config = MOIT.Config()
-    bridged_mock = MOIB.Constraint.IndicatortoSOS1{
+function test_model_equality()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    bridged_mock = MOI.Bridges.Constraint.IndicatortoSOS1{
         Float64,
         MOI.LessThan{Float64},
         MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}},
     }(
         mock,
     )
-    (z, bin_cons) = MOI.add_constrained_variable(bridged_mock, MOI.ZeroOne())
+    z, _ = MOI.add_constrained_variable(bridged_mock, MOI.ZeroOne())
     MOI.set(bridged_mock, MOI.VariableName(), z, "z")
     x = MOI.add_variable(bridged_mock)
     MOI.set(bridged_mock, MOI.VariableName(), x, "x")
@@ -248,9 +261,9 @@ end
     z in MathOptInterface.ZeroOne()
     maxobjective: z
     """
-    model = MOIU.Model{Float64}()
-    MOIU.loadfromstring!(model, s)
-    MOIU.test_models_equal(
+    model = MOI.Utilities.Model{Float64}()
+    MOI.Utilities.loadfromstring!(model, s)
+    MOI.Utilities.test_models_equal(
         mock,
         model,
         var_names,
@@ -272,26 +285,28 @@ end
         num_bridged = 1,
     )
 
-    model = MOIU.Model{Float64}()
+    model = MOI.Utilities.Model{Float64}()
     sbridged = """
     variables: x, z
     z in MathOptInterface.ZeroOne()
     maxobjective: z
     """
-    MOIU.loadfromstring!(model, sbridged)
-    MOIU.test_models_equal(
+    MOI.Utilities.loadfromstring!(model, sbridged)
+    MOI.Utilities.test_models_equal(
         bridged_mock,
         model,
         ["z", "x"],
         String[],
         [("z", MOI.ZeroOne())],
     )
+    return
 end
 
-@testset "Getting primal attributes" begin
-    mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-    config = MOIT.Config()
-    (z, bin_cons) = MOI.add_constrained_variable(mock, MOI.ZeroOne())
+function test_getting_primal_attributes()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    z, _ = MOI.add_constrained_variable(mock, MOI.ZeroOne())
     x = MOI.add_variable(mock)
     f = MOI.VectorAffineFunction(
         [
@@ -301,12 +316,12 @@ end
         [0.0, 0.0],
     )
     iset = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
-    BT = MOIB.Constraint.concrete_bridge_type(
-        MOIB.Constraint.IndicatorSOS1Bridge{Float64},
+    BT = MOI.Bridges.Constraint.concrete_bridge_type(
+        MOI.Bridges.Constraint.IndicatorSOS1Bridge{Float64},
         typeof(f),
         typeof(iset),
     )
-    bridge1 = MOIB.Constraint.bridge_constraint(BT, mock, f, iset)
+    bridge1 = MOI.Bridges.Constraint.bridge_constraint(BT, mock, f, iset)
     # w value should be defaulted to 0
     MOI.set(mock, MOI.VariablePrimalStart(), bridge1.w_variable, 0.0)
     affine_value = 6.0
@@ -327,12 +342,12 @@ end
         (1.0, affine_value - w_value),
     )
     iseteq = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.EqualTo(8.0))
-    BT = MOIB.Constraint.concrete_bridge_type(
-        MOIB.Constraint.IndicatorSOS1Bridge{Float64},
+    BT = MOI.Bridges.Constraint.concrete_bridge_type(
+        MOI.Bridges.Constraint.IndicatorSOS1Bridge{Float64},
         typeof(f),
         typeof(iseteq),
     )
-    bridge_eq = MOIB.Constraint.bridge_constraint(BT, mock, f, iseteq)
+    bridge_eq = MOI.Bridges.Constraint.bridge_constraint(BT, mock, f, iseteq)
     @test MOI.get(
         bridge_eq,
         MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}(),
@@ -356,12 +371,12 @@ end
     @test MOI.supports(
         mock,
         MOI.ConstraintPrimalStart(),
-        MOIB.Constraint.IndicatorSOS1Bridge{Float64},
+        MOI.Bridges.Constraint.IndicatorSOS1Bridge{Float64},
     )
     @test MOI.supports(
         mock,
         MOI.ConstraintPrimalStart(),
-        MOIB.Constraint.IndicatorSOS1Bridge,
+        MOI.Bridges.Constraint.IndicatorSOS1Bridge,
     )
 
     # VariablePrimal
@@ -374,4 +389,9 @@ end
     @test all(
         MOI.get(mock, MOI.ConstraintPrimal(), bridge1) .≈ (1.0, affine_value),
     )
+    return
 end
+
+end  # module
+
+TestConstraintIndicatorSOS1.runtests()
