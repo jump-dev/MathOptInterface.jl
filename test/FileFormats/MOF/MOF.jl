@@ -763,7 +763,7 @@ c1: [t, x1, x2, x3, x4] in RootDetConeSquare(2)
     )
 end
 
-function test_IndicatorSet()
+function test_Indicator()
     _test_model_equality(
         """
 variables: x, y
