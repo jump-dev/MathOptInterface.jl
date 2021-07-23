@@ -217,6 +217,16 @@ function _reverse_dict(dest::AbstractDict, src::AbstractDict)
     return
 end
 
+function _reverse_dict(
+    dest::DoubleDicts.IndexDoubleDict,
+    src::DoubleDicts.IndexDoubleDict,
+)
+    for (key, value) in src.dict
+        dest.dict[key] = MOI.Utilities._reverse_dict(value)
+    end
+    return
+end
+
 function _reverse_dict(src::D) where {D<:Dict}
     return D(values(src) .=> keys(src))
 end

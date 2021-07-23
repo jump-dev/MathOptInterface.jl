@@ -491,3 +491,50 @@ function MOI.get(model::Optimizer, attr::MOI.ObjectiveFunction)
     return MOI.Utilities.get_fallback(model, attr)
 end
 ```
+
+## DoubleDicts
+
+When writing MOI interfaces, we often need to handle situations in which we map
+[`ConstraintIndex`](@ref)s to different values. For example, to a string
+for [`ConstraintName`](@ref).
+
+One option is to use a dictionary like `Dict{MOI.ConstraintIndex,String}`.
+However, this incurs a performance cost because the key is not a concrete type.
+
+The DoubleDicts submodule helps this situation by providing two types main
+types [`Utilities.DoubleDicts.DoubleDict`](@ref) and
+[`Utilities.DoubleDicts.IndexDoubleDict`](@ref). These types act like normal
+dictionaries, but internally they use more efficient dictionaries specialized to
+the type of the function-set pair.
+
+The most common usage of a `DoubleDict` is in the `index_map` returned by
+[`copy_to`](@ref). Performance can be improved, by using a function barrier.
+That is, instead of code like:
+```julia
+index_map = MOI.copy_to(dest, src)
+for (F, S) in MOI.get(src, MOI.ListOfConstraintTypesPresent())
+    for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
+        dest_ci = index_map[ci]
+        # ...
+    end
+end
+```
+use instead:
+```julia
+function function_barrier(
+    dest,
+    src,
+    index_map::MOI.Utilities.DoubleDicts.IndexDoubleDictInner{F,S},
+) where {F,S}
+    for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
+        dest_ci = index_map[ci]
+        # ...
+    end
+    return
+end
+
+index_map = MOI.copy_to(dest, src)
+for (F, S) in MOI.get(src, MOI.ListOfConstraintTypesPresent())
+    function_barrier(dest, src, index_map[F, S])
+end
+```
