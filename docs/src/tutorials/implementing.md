@@ -174,7 +174,7 @@ package.
 !!! tip
     Run the tests frequently when developing. However, at the start there is
     going to be a lot of errors! Start by excluding large classes of tests
-    (e.g., `exclude = ["test_basic_", "test_model_]`, implement any missing
+    (e.g., `exclude = ["test_basic_", "test_model_"]`, implement any missing
     methods until the tests pass, then remove an exclusion and repeat.
 
 ## Initial code
