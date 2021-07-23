@@ -1,33 +1,41 @@
+module TestConstraintSOCtoPSD
+
 using Test
 
 using MathOptInterface
 const MOI = MathOptInterface
-const MOIT = MathOptInterface.DeprecatedTest
-const MOIU = MathOptInterface.Utilities
-const MOIB = MathOptInterface.Bridges
+
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
 
 include("../utilities.jl")
 
-mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-config = MOIT.Config()
-
-@testset "SOCtoPSD" begin
-    bridged_mock = MOIB.Constraint.SOCtoPSD{Float64}(mock)
-
-    MOIT.basic_constraint_tests(
+function test_SOCtoPSD()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    config = MOI.Test.Config()
+    bridged_mock = MOI.Bridges.Constraint.SOCtoPSD{Float64}(mock)
+    MOI.Test.runtests(
         bridged_mock,
         config,
         include = [
-            (F, MOI.SecondOrderCone) for F in [
-                MOI.VectorOfVariables,
-                MOI.VectorAffineFunction{Float64},
-                MOI.VectorQuadraticFunction{Float64},
-            ]
+            "test_basic_VectorOfVariabless_SecondOrderCone",
+            "test_basic_VectorAffineFunction_SecondOrderCone",
+            "test_basic_VectorQuadraticFunction_SecondOrderCone",
         ],
     )
-
+    MOI.empty!(bridged_mock)
     mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+        (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
             mock,
             [1.0, 1 / √2, 1 / √2],
             (
@@ -36,9 +44,12 @@ config = MOIT.Config()
             ) => [[√2 / 2, -1 / 2, √2 / 4, -1 / 2, √2 / 4, √2 / 4]],
             (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
         )
-    MOIT.soc1vtest(bridged_mock, config)
-    MOIT.soc1ftest(bridged_mock, config)
-
+    MOI.Test.test_conic_SecondOrderCone_VectorOfVariables(bridged_mock, config)
+    MOI.empty!(bridged_mock)
+    MOI.Test.test_conic_SecondOrderCone_VectorAffineFunction(
+        bridged_mock,
+        config,
+    )
     ci = first(
         MOI.get(
             bridged_mock,
@@ -48,17 +59,12 @@ config = MOIT.Config()
             }(),
         ),
     )
-
-    @testset "$attr" for attr in [
-        MOI.ConstraintPrimalStart(),
-        MOI.ConstraintDualStart(),
-    ]
+    for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
         @test MOI.supports(bridged_mock, attr, typeof(ci))
         value = [√2, -1.0, -1.0]
         MOI.set(bridged_mock, attr, ci, value)
         @test MOI.get(bridged_mock, attr, ci) ≈ value
     end
-
     _test_delete_bridge(
         bridged_mock,
         ci,
@@ -69,25 +75,27 @@ config = MOIT.Config()
             0,
         ),),
     )
+    return
 end
 
-@testset "RSOCtoPSD" begin
-    bridged_mock = MOIB.Constraint.RSOCtoPSD{Float64}(mock)
-
-    MOIT.basic_constraint_tests(
+function test_RSOCtoPSD()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    config = MOI.Test.Config()
+    bridged_mock = MOI.Bridges.Constraint.RSOCtoPSD{Float64}(mock)
+    MOI.Test.runtests(
         bridged_mock,
         config,
         include = [
-            (F, MOI.RotatedSecondOrderCone) for F in [
-                MOI.VectorOfVariables,
-                MOI.VectorAffineFunction{Float64},
-                MOI.VectorQuadraticFunction{Float64},
-            ]
+            "test_basic_VectorOfVariabless_RotatedSecondOrderCone",
+            "test_basic_VectorAffineFunction_RotatedSecondOrderCone",
+            "test_basic_VectorQuadraticFunction_RotatedSecondOrderCone",
         ],
     )
-
+    MOI.empty!(bridged_mock)
     mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+        (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
             mock,
             [0.5, 1.0, 1 / √2, 1 / √2],
             (MOI.SingleVariable, MOI.EqualTo{Float64}) => [-√2, -1 / √2],
@@ -96,9 +104,13 @@ end
                 MOI.PositiveSemidefiniteConeTriangle,
             ) => [[√2, -1 / 2, √2 / 8, -1 / 2, √2 / 8, √2 / 8]],
         )
-    MOIT.rotatedsoc1vtest(bridged_mock, config)
+    MOI.Test.test_conic_RotatedSecondOrderCone_VectorOfVariables(
+        bridged_mock,
+        config,
+    )
+    MOI.empty!(bridged_mock)
     mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+        (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
             mock,
             [1 / √2, 1 / √2],
             (
@@ -106,8 +118,10 @@ end
                 MOI.PositiveSemidefiniteConeTriangle,
             ) => [[√2, -1 / 2, √2 / 8, -1 / 2, √2 / 8, √2 / 8]],
         )
-    MOIT.rotatedsoc1ftest(bridged_mock, config)
-
+    MOI.Test.test_conic_RotatedSecondOrderCone_VectorAffineFunction(
+        bridged_mock,
+        config,
+    )
     ci = first(
         MOI.get(
             bridged_mock,
@@ -117,17 +131,12 @@ end
             }(),
         ),
     )
-
-    @testset "$attr" for attr in [
-        MOI.ConstraintPrimalStart(),
-        MOI.ConstraintDualStart(),
-    ]
+    for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
         @test MOI.supports(bridged_mock, attr, typeof(ci))
         value = [√2, √2 / 4, -1.0, -1.0]
         MOI.set(bridged_mock, attr, ci, value)
         @test MOI.get(bridged_mock, attr, ci) ≈ value
     end
-
     _test_delete_bridge(
         bridged_mock,
         ci,
@@ -138,4 +147,9 @@ end
             0,
         ),),
     )
+    return
 end
+
+end  # module
+
+TestConstraintSOCtoPSD.runtests()
