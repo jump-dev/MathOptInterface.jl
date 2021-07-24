@@ -104,9 +104,7 @@ _set(::Type{MOI.RootDetConeTriangle}) = MOI.RootDetConeTriangle(3)
 _set(::Type{MOI.RootDetConeSquare}) = MOI.RootDetConeSquare(3)
 _set(::Type{MOI.Complements}) = MOI.Complements(2)
 
-function _set(
-    ::Type{MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}}},
-)
+function _set(::Type{MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}}})
     return MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(3.0))
 end
 
