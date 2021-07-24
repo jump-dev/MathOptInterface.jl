@@ -311,7 +311,7 @@ end
     DualPowerCone,
     SOS1,
     SOS2,
-    Indicator,
+    IndicatorSet,
     Complements,
 )
 
@@ -469,7 +469,7 @@ function set_to_moi(::Val{:SOS2}, object::Object)
     return MOI.SOS2(Float64.(object["weights"]))
 end
 
-function set_to_moi(::Val{:Indicator}, object::Object)
+function set_to_moi(::Val{:IndicatorSet}, object::Object)
     set = set_to_moi(object["set"]::typeof(object))
     indicator = if object["activate_on"]::String == "one"
         MOI.ACTIVATE_ON_ONE
