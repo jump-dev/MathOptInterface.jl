@@ -12,7 +12,6 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     inner_model::MT
     # Flags
     supports_names::Bool # Allows to test with optimizer not supporting names
-    needs_allocate_load::Bool # Allows to tests the Allocate-Load interface, see copy_to
     add_var_allowed::Bool # If false, the optimizer throws AddVariableNotAllowed
     add_con_allowed::Bool # If false, the optimizer throws AddConstraintNotAllowed
     modify_allowed::Bool # If false, the optimizer throws Modify...NotAllowed
@@ -67,9 +66,8 @@ end
 function MockOptimizer(
     inner_model::MOI.ModelLike;
     supports_names = true,
-    needs_allocate_load = false,
-    add_var_allowed = !needs_allocate_load,
-    add_con_allowed = !needs_allocate_load,
+    add_var_allowed = true,
+    add_con_allowed = true,
     eval_objective_value = true,
     eval_dual_objective_value = true,
     eval_variable_constraint_dual = true,
@@ -79,7 +77,6 @@ function MockOptimizer(
         inner_model,
         # Flags
         supports_names,
-        needs_allocate_load,
         add_var_allowed,
         add_con_allowed,
         true,
@@ -924,8 +921,7 @@ function MOI.supports_incremental_interface(
     mock::MockOptimizer,
     copy_names::Bool,
 )
-    return !mock.needs_allocate_load &&
-           MOI.supports_incremental_interface(mock.inner_model, copy_names)
+    return MOI.supports_incremental_interface(mock.inner_model, copy_names)
 end
 
 function final_touch(uf::MockOptimizer, index_map)

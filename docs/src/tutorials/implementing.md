@@ -376,10 +376,6 @@ To implement the [`copy_to`](@ref) interface, implement the following function:
 
 * [`copy_to`](@ref)
 
-!!! tip
-    An alternative is to use the Utilities submodule to implement the
-    [Allocate-Load] API.
-
 ### The incremental interface
 
 !!! warning

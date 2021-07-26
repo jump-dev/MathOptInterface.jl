@@ -60,15 +60,6 @@ end
 
 function test_errors_UnsupportedConstraint()
     _test_errors_UnsupportedConstraint(MOI.add_constraint)
-    _test_errors_UnsupportedConstraint(MOI.Utilities.allocate_constraint)
-    _test_errors_UnsupportedConstraint() do model, func, set
-        return MOI.Utilities.load_constraint(
-            model,
-            MOI.ConstraintIndex{typeof(func),typeof(set)}(1),
-            func,
-            set,
-        )
-    end
     return
 end
 
@@ -121,39 +112,6 @@ function test_errors_add_constraint()
             [MOI.EqualTo(0.0), MOI.EqualTo(0.0)],
         ),
     )
-    return
-end
-
-function test_errors_allocate_constraint()
-    model = DummyModel()
-    vi = MOI.VariableIndex(1)
-    func = MOI.SingleVariable(vi)
-    @test_throws(
-        MOI.ErrorException,
-        MOIU.allocate_constraint(model, func, MOI.EqualTo(0.0)),
-    )
-    try
-        MOIU.allocate_constraint(model, func, MOI.EqualTo(0.0))
-    catch err
-        @test err === MOIU.ALLOCATE_LOAD_NOT_IMPLEMENTED
-    end
-    return
-end
-
-function test_errors_load_constraint()
-    model = DummyModel()
-    vi = MOI.VariableIndex(1)
-    func = MOI.SingleVariable(vi)
-    ci = MOI.ConstraintIndex{typeof(func),MOI.EqualTo{Float64}}(1)
-    @test_throws(
-        MOI.ErrorException,
-        MOIU.load_constraint(model, ci, func, MOI.EqualTo(0.0)),
-    )
-    try
-        MOIU.load_constraint(model, ci, func, MOI.EqualTo(0.0))
-    catch err
-        @test err === MOIU.ALLOCATE_LOAD_NOT_IMPLEMENTED
-    end
     return
 end
 
@@ -211,8 +169,6 @@ end
 
 function test_errors_unsupported_attribute()
     _test_unsupported_attribute(MOI.set)
-    _test_unsupported_attribute(MOI.Utilities.load)
-    _test_unsupported_attribute(MOI.Utilities.allocate)
     return
 end
 
@@ -229,48 +185,6 @@ function test_errors_SetAttributeNotAllowed()
     @test_throws(
         MOI.SetAttributeNotAllowed,
         MOI.set(model, MOI.ConstraintPrimalStart(), ci, 0.0),
-    )
-    return
-end
-
-function test_errors_allocate()
-    model = DummyModel()
-    vi = MOI.VariableIndex(1)
-    func = MOI.SingleVariable(vi)
-    ci = MOI.ConstraintIndex{typeof(func),MOI.EqualTo{Float64}}(1)
-    @test_throws(
-        MOI.ErrorException,
-        MOI.Utilities.allocate(model, MOI.ObjectiveSense(), MOI.MAX_SENSE),
-    )
-    try
-        MOI.Utilities.allocate(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    catch err
-        @test err === MOIU.ALLOCATE_LOAD_NOT_IMPLEMENTED
-    end
-    @test_throws(
-        MOI.ErrorException,
-        MOI.Utilities.allocate(model, MOI.ConstraintPrimalStart(), ci, 0.0),
-    )
-    return
-end
-
-function test_errors_load()
-    model = DummyModel()
-    vi = MOI.VariableIndex(1)
-    func = MOI.SingleVariable(vi)
-    ci = MOI.ConstraintIndex{typeof(func),MOI.EqualTo{Float64}}(1)
-    @test_throws(
-        MOI.ErrorException,
-        MOI.Utilities.load(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    )
-    try
-        MOI.Utilities.load(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    catch err
-        @test err === MOIU.ALLOCATE_LOAD_NOT_IMPLEMENTED
-    end
-    @test_throws(
-        MOI.ErrorException,
-        MOI.Utilities.load(model, MOI.ConstraintPrimalStart(), ci, 0.0),
     )
     return
 end
