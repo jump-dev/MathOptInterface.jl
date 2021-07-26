@@ -42,9 +42,9 @@ function test_LowerBoundAlreadySet_error()
     S2 = MOI.Interval{Int}
     err = MOI.LowerBoundAlreadySet{S1,S2}(x)
     @test sprint(showerror, err) ==
-        "$(typeof(err)): Cannot add `SingleVariable`-in-`$(S2)` constraint " *
-        "for variable $(x) as a `SingleVariable`-in-`$(S1)` constraint was " *
-        "already set for this variable and both constraints set a lower bound."
+          "$(typeof(err)): Cannot add `SingleVariable`-in-`$(S2)` constraint " *
+          "for variable $(x) as a `SingleVariable`-in-`$(S1)` constraint was " *
+          "already set for this variable and both constraints set a lower bound."
     return
 end
 
@@ -54,9 +54,9 @@ function test_UpperBoundAlreadySet_error()
     S2 = MOI.Interval{Int}
     err = MOI.UpperBoundAlreadySet{S1,S2}(x)
     @test sprint(showerror, err) ==
-        "$(typeof(err)): Cannot add `SingleVariable`-in-`$(S2)` constraint " *
-        "for variable $(x) as a `SingleVariable`-in-`$(S1)` constraint was " *
-        "already set for this variable and both constraints set an upper bound."
+          "$(typeof(err)): Cannot add `SingleVariable`-in-`$(S2)` constraint " *
+          "for variable $(x) as a `SingleVariable`-in-`$(S1)` constraint was " *
+          "already set for this variable and both constraints set an upper bound."
     return
 end
 
@@ -67,10 +67,10 @@ function test_ScalarFunctionConstantNotZero_error()
     S = MOI.EqualTo{T}
     err = MOI.ScalarFunctionConstantNotZero{T,F,S}(one(T))
     @test sprint(showerror, err) ==
-        "In `$F`-in-`$S` constraint: Constant $(one(T)) of the function is " *
-        "not zero. The function constant should be moved to the set. You can " *
-        "use `MOI.Utilities.normalize_and_add_constraint` which does this " *
-        "automatically."
+          "In `$F`-in-`$S` constraint: Constant $(one(T)) of the function is " *
+          "not zero. The function constant should be moved to the set. You can " *
+          "use `MOI.Utilities.normalize_and_add_constraint` which does this " *
+          "automatically."
     return
 end
 
