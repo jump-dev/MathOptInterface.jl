@@ -274,14 +274,9 @@ function Base.showerror(io::IO, err::LowerBoundAlreadySet{S1,S2}) where {S1,S2}
     return print(
         io,
         typeof(err),
-        ": Cannot add `SingleVariable`-in`",
-        S2,
-        "` constraint for variable ",
-        err.vi,
-        " as a `SingleVariable`-in`",
-        S1,
-        "` constraint was already set for this variable and both",
-        " constraints set a lower bound.",
+        ": Cannot add `SingleVariable`-in-`$(S2)` constraint for variable ",
+        "$(err.vi) as a `SingleVariable`-in-`$(S1)` constraint was already ",
+        "set for this variable and both constraints set a lower bound.",
     )
 end
 
@@ -301,14 +296,9 @@ function Base.showerror(io::IO, err::UpperBoundAlreadySet{S1,S2}) where {S1,S2}
     return print(
         io,
         typeof(err),
-        ": Cannot add `SingleVariable`-in`",
-        S2,
-        "` constraint for variable ",
-        err.vi,
-        " as a `SingleVariable`-in`",
-        S1,
-        "` constraint was already set for this variable and both",
-        " constraints set an upper bound.",
+        ": Cannot add `SingleVariable`-in-`$(S2)` constraint for variable ",
+        "$(err.vi) as a `SingleVariable`-in-`$(S1)` constraint was already ",
+        "set for this variable and both constraints set an upper bound.",
     )
 end
 
