@@ -440,3 +440,24 @@ function test_model_VariablePrimalStart(model::MOI.ModelLike, ::Config)
     @test MOI.get(model, MOI.VariablePrimalStart(), x) === nothing
     return
 end
+
+"""
+    test_add_constrained_variables(model::MOI.ModelLike, config::Config)
+
+Test vector method of `add_constrained_variables`.
+"""
+function test_add_constrained_variables_vector(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    @requires MOI.supports_add_constrained_variable(model, MOI.GreaterThan{T})
+    @test MOI.get(model, MOI.NumberOfVariables()) == 0
+    sets = [MOI.GreaterThan(zero(T)), MOI.GreaterThan(one(T))]
+    v, cv = MOI.add_constrained_variables(model, sets)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 2
+    @test length(v) == 2
+    @test length(cv) == 2
+    @test MOI.get(model, MOI.ConstraintSet(), cv[1]) == sets[1]
+    @test MOI.get(model, MOI.ConstraintSet(), cv[2]) == sets[2]
+    return
+end
