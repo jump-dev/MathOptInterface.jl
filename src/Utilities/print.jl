@@ -49,36 +49,21 @@ end
 # REPL-specific symbols
 # Anything here: https://en.wikipedia.org/wiki/Windows-1252
 # should probably work fine on Windows
-function _to_string(::_PrintOptions, name::Symbol)
-    if name == :leq
-        return "<="
-    elseif name == :geq
-        return ">="
-    elseif name == :eq
-        return "=="
-    elseif name == :times
-        return "*"
-    elseif name == :sq
-        return "²"
-    elseif name == :in
-        return Sys.iswindows() ? "in" : "∈"
-    end
+
+_to_string(::_PrintOptions, ::typeof(*)) = "*"
+
+_to_string(::_PrintOptions{MIME"text/latex"}, ::typeof(*)) = "\\times "
+
+_to_string(::_PrintOptions, ::typeof(in)) = Sys.iswindows() ? "in" : "∈"
+
+_to_string(::_PrintOptions{MIME"text/latex"}, ::typeof(in)) = "\\in "
+
+function _to_string(::_PrintOptions, ::typeof(^), n::Int)
+    return n == 2 ? "²" : string('^', n)
 end
 
-function _to_string(::_PrintOptions{MIME"text/latex"}, name::Symbol)
-    if name == :leq
-        return "\\leq"
-    elseif name == :geq
-        return "\\geq"
-    elseif name == :eq
-        return "="
-    elseif name == :times
-        return "\\times "
-    elseif name == :sq
-        return "^2"
-    elseif name == :in
-        return "\\in"
-    end
+function _to_string(::_PrintOptions{MIME"text/latex"}, ::typeof(^), n::Int)
+    return string('^', n)
 end
 
 #------------------------------------------------------------------------
@@ -211,9 +196,9 @@ function _to_string(
     coef = term.coefficient
     name = if term.variable_1 == term.variable_2
         coef /= 2
-        string(name_1, _to_string(options, :sq))
+        string(name_1, _to_string(options, ^, 2))
     else
-        string(name_1, _to_string(options, :times), name_2)
+        string(name_1, _to_string(options, *), name_2)
     end
     return _to_string(options, coef, name; is_first = is_first)
 end
@@ -278,7 +263,7 @@ end
 #------------------------------------------------------------------------
 
 function _to_string(options::_PrintOptions, set::MOI.LessThan)
-    return string(_to_string(options, :leq), " ", _shorten(options, set.upper))
+    return string("<= ", _shorten(options, set.upper))
 end
 
 function _to_string(options::_PrintOptions{MIME"text/latex"}, set::MOI.LessThan)
@@ -286,7 +271,7 @@ function _to_string(options::_PrintOptions{MIME"text/latex"}, set::MOI.LessThan)
 end
 
 function _to_string(options::_PrintOptions, set::MOI.GreaterThan)
-    return string(_to_string(options, :geq), " ", _shorten(options, set.lower))
+    return string(">= ", _shorten(options, set.lower))
 end
 
 function _to_string(
@@ -297,7 +282,7 @@ function _to_string(
 end
 
 function _to_string(options::_PrintOptions, set::MOI.EqualTo)
-    return string(_to_string(options, :eq), " ", _shorten(options, set.value))
+    return string("== ", _shorten(options, set.value))
 end
 
 function _to_string(options::_PrintOptions{MIME"text/latex"}, set::MOI.EqualTo)
@@ -306,7 +291,7 @@ end
 
 function _to_string(options::_PrintOptions, set::MOI.Interval)
     return string(
-        _to_string(options, :in),
+        _to_string(options, in),
         " [",
         _shorten(options, set.lower),
         ", ",
@@ -326,13 +311,13 @@ function _to_string(options::_PrintOptions{MIME"text/latex"}, set::MOI.Interval)
 end
 
 function _to_string(options::_PrintOptions, ::MOI.ZeroOne)
-    return string(_to_string(options, :in), " {0, 1}")
+    return string(_to_string(options, in), " {0, 1}")
 end
 
 _to_string(::_PrintOptions{MIME"text/latex"}, ::MOI.ZeroOne) = "\\in \\{0, 1\\}"
 
 function _to_string(options::_PrintOptions, ::MOI.Integer)
-    return string(_to_string(options, :in), " ℤ")
+    return string(_to_string(options, in), " ℤ")
 end
 
 function _to_string(::_PrintOptions{MIME"text/latex"}, ::MOI.Integer)
@@ -340,7 +325,7 @@ function _to_string(::_PrintOptions{MIME"text/latex"}, ::MOI.Integer)
 end
 
 function _to_string(options::_PrintOptions, set::MOI.AbstractSet)
-    return string(_to_string(options, :in), " ", _drop_moi(set))
+    return string(_to_string(options, in), " ", _drop_moi(set))
 end
 
 function _to_string(::_PrintOptions{MIME"text/latex"}, set::MOI.AbstractSet)

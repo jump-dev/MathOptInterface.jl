@@ -584,6 +584,46 @@ function test_nlp()
     return
 end
 
+function test_nlp_no_objective()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    v = MOI.add_variables(model, 4)
+    for i in 1:4
+        MOI.set(model, MOI.VariableName(), v[i], "x[$i]")
+    end
+    lb, ub = [25.0, 40.0], [Inf, 40.0]
+    evaluator = MOI.Test.HS071(true)
+    block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, false)
+    MOI.set(model, MOI.NLPBlock(), block_data)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.SingleVariable}(),
+        MOI.SingleVariable(v[1]),
+    )
+    @test sprint(print, model) == """
+    Minimize SingleVariable:
+     x[1]
+
+    Subject to:
+
+    Nonlinear
+     x[1] * x[2] * x[3] * x[4] >= 25.0
+     x[1] ^ 2 + x[2] ^ 2 + x[3] ^ 2 + x[4] ^ 2 == 40.0
+    """
+    _string_compare(
+        sprint(print, MOIU.latex_formulation(model)),
+        raw"""
+        $$ \begin{aligned}
+        \min\quad & x_{1} \\
+        \text{Subject to}\\
+         & \text{Nonlinear} \\
+         & x_{1} \times x_{2} \times x_{3} \times x_{4} \ge 25.0 \\
+         & x_{1} ^ 2 + x_{2} ^ 2 + x_{3} ^ 2 + x_{4} ^ 2 = 40.0 \\
+        \end{aligned} $$""",
+    )
+    return
+end
+
 function test_print_with_acronym()
     @test sprint(MOIU.print_with_acronym, "MathOptInterface") == "MOI"
     @test sprint(
