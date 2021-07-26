@@ -316,7 +316,7 @@ $$ \begin{aligned}
 
 !!! tip
     In IJulia, calling `print` or ending a cell with
-    [`Utilities.latex_formulation`](@ref) will render the model in LaTex.
+    [`Utilities.latex_formulation`](@ref) will render the model in LaTeX.
 
 ## Allocate-Load
 
