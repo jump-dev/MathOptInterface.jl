@@ -979,9 +979,6 @@ struct SOS2{T<:Real} <: AbstractVectorSet
 end
 
 Base.:(==)(a::T, b::T) where {T<:Union{SOS1,SOS2}} = a.weights == b.weights
-function Base.isapprox(a::T, b::T; kwargs...) where {T<:Union{SOS1,SOS2}}
-    return isapprox(a.weights, b.weights; kwargs...)
-end
 
 dimension(s::Union{SOS1,SOS2}) = length(s.weights)
 
