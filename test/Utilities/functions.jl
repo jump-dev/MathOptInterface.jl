@@ -223,8 +223,8 @@ function test_eval_variables()
         MOI.VectorQuadraticTerm.(
             [1, 2, 2],
             MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y]),
-            ),
-            MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(1.0, [x, y])),
+        ),
+        MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(1.0, [x, y])),
         [-3.0, -2.0],
     )
     @test MOI.output_dimension(fvq) == 2
@@ -312,8 +312,8 @@ function test_map_indices()
         MOI.VectorQuadraticTerm.(
             [1, 2, 2],
             MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y]),
-            ),
-            MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(1.0, [x, y])),
+        ),
+        MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(1.0, [x, y])),
         [-3.0, -2.0],
     )
     gvq = MOI.Utilities.map_indices(index_map, fvq)
