@@ -428,34 +428,31 @@ function Base.isapprox(
     )
 end
 
-function constant(
-    f::Union{ScalarAffineFunction,ScalarQuadraticFunction},
-    T::DataType,
-)
+function constant(f::Union{ScalarAffineFunction,ScalarQuadraticFunction}, ::Any)
     return constant(f)
 end
-function constant(
-    f::Union{VectorAffineFunction,VectorQuadraticFunction},
-    T::DataType,
-)
+
+function constant(f::Union{VectorAffineFunction,VectorQuadraticFunction}, ::Any)
     return constant(f)
 end
 
 """
-    constant(f::SingleVariable, T::DataType)
+    constant(f::SingleVariable, ::Type{T}) where {T}
 
 The constant term of a `SingleVariable` function is
 the zero value of the specified type `T`.
 """
-constant(f::SingleVariable, T::DataType) = zero(T)
+constant(f::SingleVariable, ::Type{T}) where {T} = zero(T)
 
 """
-    constant(f::VectorOfVariables, T::DataType)
+    constant(f::VectorOfVariables, ::Type{T}) where {T}
 
 The constant term of a `VectorOfVariables` function is a
 vector of zero values of the specified type `T`.
 """
-constant(f::VectorOfVariables, T::DataType) = zeros(T, length(f.variables))
+function constant(f::VectorOfVariables, ::Type{T}) where {T}
+    return zeros(T, length(f.variables))
+end
 
 # isbits type, nothing to copy
 Base.copy(func::SingleVariable) = func
