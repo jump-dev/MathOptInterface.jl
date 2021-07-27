@@ -26,8 +26,8 @@ function test_error_for_nonconvex_quadratic_constraints()
         MOI.add_constraint(
             bridged_mock,
             MOI.ScalarQuadraticFunction(
-                MOI.ScalarAffineTerm{Float64}[],
                 [MOI.ScalarQuadraticTerm(1.0, x, x)],
+                MOI.ScalarAffineTerm{Float64}[],
                 0.0,
             ),
             MOI.GreaterThan(0.0),
@@ -37,8 +37,8 @@ function test_error_for_nonconvex_quadratic_constraints()
         MOI.add_constraint(
             bridged_mock,
             MOI.ScalarQuadraticFunction(
-                MOI.ScalarAffineTerm{Float64}[],
                 [MOI.ScalarQuadraticTerm(-1.0, x, x)],
+                MOI.ScalarAffineTerm{Float64}[],
                 0.0,
             ),
             MOI.LessThan(0.0),

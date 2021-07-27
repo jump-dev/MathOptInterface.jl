@@ -209,8 +209,8 @@ function function_to_moi(
     name_map::Dict{String,MOI.VariableIndex},
 )
     return MOI.ScalarQuadraticFunction{Float64}(
-        parse_scalar_affine_term.(object["affine_terms"], Ref(name_map)),
         parse_scalar_quadratic_term.(object["quadratic_terms"], Ref(name_map)),
+        parse_scalar_affine_term.(object["affine_terms"], Ref(name_map)),
         object["constant"]::Float64,
     )
 end
@@ -269,8 +269,8 @@ function function_to_moi(
     name_map::Dict{String,MOI.VariableIndex},
 )
     return MOI.VectorQuadraticFunction{Float64}(
-        parse_vector_affine_term.(object["affine_terms"], Ref(name_map)),
         parse_vector_quadratic_term.(object["quadratic_terms"], Ref(name_map)),
+        parse_vector_affine_term.(object["affine_terms"], Ref(name_map)),
         Float64.(object["constants"]),
     )
 end

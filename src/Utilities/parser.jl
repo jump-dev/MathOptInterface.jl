@@ -99,8 +99,8 @@ function _parse_function(ex)
                 return _ParsedVectorAffineFunction(affine_terms, constant)
             else
                 return _ParsedVectorQuadraticFunction(
-                    affine_terms,
                     quadratic_terms,
+                    affine_terms,
                     constant,
                 )
             end
@@ -163,8 +163,8 @@ function _parse_function(ex)
             return _ParsedScalarAffineFunction(affine_terms, constant)
         else
             return _ParsedScalarQuadraticFunction(
-                affine_terms,
                 quadratic_terms,
+                affine_terms,
                 constant,
             )
         end

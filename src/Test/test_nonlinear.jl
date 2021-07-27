@@ -614,8 +614,8 @@ function test_nonlinear_qp_complementarity_constraint(
         model,
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
         MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm.([-10.0, 4.0], x[[1, 2]]),
             MOI.ScalarQuadraticTerm.([2.0, 8.0], x[1:2], x[1:2]),
+            MOI.ScalarAffineTerm.([-10.0, 4.0], x[[1, 2]]),
             26.0,
         ),
     )

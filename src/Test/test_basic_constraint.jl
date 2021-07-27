@@ -28,8 +28,8 @@ function _function(
     x::Vector{MOI.VariableIndex},
 ) where {T}
     return MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm.(one(T), x),
         MOI.ScalarQuadraticTerm.(one(T), x, x),
+        MOI.ScalarAffineTerm.(one(T), x),
         zero(T),
     )
 end
@@ -51,11 +51,11 @@ function _function(
     x::Vector{MOI.VariableIndex},
 ) where {T}
     return MOI.VectorQuadraticFunction(
-        MOI.VectorAffineTerm.(1:length(x), MOI.ScalarAffineTerm.(one(T), x)),
         MOI.VectorQuadraticTerm.(
             1:length(x),
             MOI.ScalarQuadraticTerm.(one(T), x, x),
         ),
+        MOI.VectorAffineTerm.(1:length(x), MOI.ScalarAffineTerm.(one(T), x)),
         zeros(T, length(x)),
     )
 end

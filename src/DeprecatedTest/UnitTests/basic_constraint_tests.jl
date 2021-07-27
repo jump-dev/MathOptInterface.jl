@@ -11,8 +11,8 @@ const dummy_scalar_affine =
 # 1.0 * x + 1.0 * x^2 + 0.0
 const dummy_scalar_quadratic =
     (x::Vector{MOI.VariableIndex}) -> MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm.(1.0, x),
         MOI.ScalarQuadraticTerm.(1.0, x, x),
+        MOI.ScalarAffineTerm.(1.0, x),
         0.0,
     )
 # x₁ +    + 0.0
@@ -26,11 +26,11 @@ const dummy_vector_affine =
 #    + x₂ +      + x₂^2 + 0.0
 const dummy_vector_quadratic =
     (x::Vector{MOI.VariableIndex}) -> MOI.VectorQuadraticFunction(
-        MOI.VectorAffineTerm.(1:length(x), MOI.ScalarAffineTerm.(1.0, x)),           # affine component
         MOI.VectorQuadraticTerm.(
             1:length(x),
             MOI.ScalarQuadraticTerm.(1.0, x, x),
         ),  # affine component
+        MOI.VectorAffineTerm.(1:length(x), MOI.ScalarAffineTerm.(1.0, x)),           # affine component
         zeros(Float64, length(x)),                                                    # constant term
     )
 

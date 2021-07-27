@@ -212,19 +212,19 @@ function test_eval_variables()
     @test MOI.Utilities.eval_variables(vi -> vals[vi], fva) ≈ [12, 7]
     @test MOI.Utilities.eval_variables(vi -> vals[vi], fva) ≈ [12, 7]
     fsq = MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm.(1.0, [x, y]),
         MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y]),
+        MOI.ScalarAffineTerm.(1.0, [x, y]),
         -3.0,
     )
     @test MOI.output_dimension(fsq) == 1
     @test MOI.Utilities.eval_variables(vi -> vals[vi], fsq) ≈ 16
     @test MOI.Utilities.eval_variables(vi -> vals[vi], fsq) ≈ 16
     fvq = MOI.VectorQuadraticFunction(
-        MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(1.0, [x, y])),
         MOI.VectorQuadraticTerm.(
             [1, 2, 2],
             MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y]),
-        ),
+            ),
+            MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(1.0, [x, y])),
         [-3.0, -2.0],
     )
     @test MOI.output_dimension(fvq) == 2
@@ -297,8 +297,8 @@ end
 
 function test_map_indices()
     fsq = MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm.(1.0, [x, y]),
         MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y]),
+        MOI.ScalarAffineTerm.(1.0, [x, y]),
         -3.0,
     )
     index_map = Dict(x => y, y => z, w => w, z => x)
@@ -309,11 +309,11 @@ function test_map_indices()
     @test gsq.quadratic_terms == sqts
     @test gsq.constant == -3.0
     fvq = MOI.VectorQuadraticFunction(
-        MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(1.0, [x, y])),
         MOI.VectorQuadraticTerm.(
             [1, 2, 2],
             MOI.ScalarQuadraticTerm.(1.0, [x, w, w], [z, z, y]),
-        ),
+            ),
+            MOI.VectorAffineTerm.([2, 1], MOI.ScalarAffineTerm.(1.0, [x, y])),
         [-3.0, -2.0],
     )
     gvq = MOI.Utilities.map_indices(index_map, fvq)
@@ -410,13 +410,13 @@ end
 
 function test_indexing_on_VectorQuadraticFunction()
     f = MOI.VectorQuadraticFunction(
-        MOI.VectorAffineTerm.(
-            [2, 1, 3, 2, 2],
-            MOI.ScalarAffineTerm.([1, 7, 2, 9, 3], [x, y, z, z, y]),
-        ),
         MOI.VectorQuadraticTerm.(
             [2, 3, 1, 2],
             MOI.ScalarQuadraticTerm.([1, 6, 4, 3], [z, x, x, y], [y, z, z, y]),
+        ),
+        MOI.VectorAffineTerm.(
+            [2, 1, 3, 2, 2],
+            MOI.ScalarAffineTerm.([1, 7, 2, 9, 3], [x, y, z, z, y]),
         ),
         [2, 7, 5],
     )
@@ -584,8 +584,8 @@ function test_Scalar_Affine_convert()
           MOI.SingleVariable(x)
     @test convert(typeof(f), f) === f
     quad_f = MOI.ScalarQuadraticFunction(
-        f.terms,
         MOI.ScalarQuadraticTerm{Float64}[],
+        f.terms,
         f.constant,
     )
     @test convert(MOI.ScalarQuadraticFunction{Float64}, f) ≈ quad_f
@@ -802,73 +802,73 @@ function test_Scalar_Quadratic_operate()
     @test f ≈ (fx + 2) * (fx + 1) + (fy + 1) * (2fy + 3fx) + (5 - 3fx - 2fy)
     @test f ≈ begin
         MOI.ScalarQuadraticFunction(
-            [MOI.ScalarAffineTerm(3, x)],
             MOI.ScalarQuadraticTerm.([2], [x], [x]),
+            [MOI.ScalarAffineTerm(3, x)],
             4,
         ) + MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm{Int}[],
             MOI.ScalarQuadraticTerm.([4, 3], [y, x], [y, y]),
+            MOI.ScalarAffineTerm{Int}[],
             3,
         )
     end
     @test f ≈ begin
         MOI.ScalarQuadraticFunction(
-            [MOI.ScalarAffineTerm(3, x)],
             MOI.ScalarQuadraticTerm.([2], [x], [x]),
+            [MOI.ScalarAffineTerm(3, x)],
             10,
         ) - MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm{Int}[],
             MOI.ScalarQuadraticTerm.([-4, -3], [y, x], [y, y]),
+            MOI.ScalarAffineTerm{Int}[],
             3,
         )
     end
     @test f ≈ begin
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 5) +
         MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm{Int}[],
             MOI.ScalarQuadraticTerm.([2, 4, 3], [x, y, x], [x, y, y]),
+            MOI.ScalarAffineTerm{Int}[],
             2,
         )
     end
     @test f ≈ begin
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 5) -
         MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm{Int}[],
             MOI.ScalarQuadraticTerm.([-2, -4, -3], [x, y, x], [x, y, y]),
+            MOI.ScalarAffineTerm{Int}[],
             -2,
         )
     end
     @test f ≈ begin
         MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm{Int}[],
             MOI.ScalarQuadraticTerm.([2, 4, 3], [x, y, x], [x, y, y]),
+            MOI.ScalarAffineTerm{Int}[],
             2,
         ) + MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(3, x)], 5)
     end
     @test f ≈ begin
         MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm{Int}[],
             MOI.ScalarQuadraticTerm.([2, 4, 3], [x, y, x], [x, y, y]),
+            MOI.ScalarAffineTerm{Int}[],
             12,
         ) - MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(-3, x)], 5)
     end
     @test f ≈ begin
         MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm.([2], [x]),
             MOI.ScalarQuadraticTerm.([2, 4, 3], [x, y, x], [x, y, y]),
+            MOI.ScalarAffineTerm.([2], [x]),
             7,
         ) + MOI.SingleVariable(x)
     end
     @test f ≈
           MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm.([3], [x]),
         MOI.ScalarQuadraticTerm.([2, 4, 3], [x, y, x], [x, y, y]),
+        MOI.ScalarAffineTerm.([3], [x]),
         10,
     ) - 3
     @test f ≈
           2.0 * MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm.([3.0], [x]),
         MOI.ScalarQuadraticTerm.([2.0, 4.0, 3.0], [x, y, x], [x, y, y]),
+        MOI.ScalarAffineTerm.([3.0], [x]),
         7.0,
     ) / 2.0
     return
@@ -965,13 +965,13 @@ end
 
 function test_Vector_Quadratic()
     f = MOI.VectorQuadraticFunction(
-        MOI.VectorAffineTerm.(
-            [1, 2, 2],
-            MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y]),
-        ),
         MOI.VectorQuadraticTerm.(
             [1, 1, 2],
             MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]),
+        ),
+        MOI.VectorAffineTerm.(
+            [1, 2, 2],
+            MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y]),
         ),
         [7, 3, 4],
     )
@@ -1584,13 +1584,13 @@ function test_vector_plus_and_neg()
         [3, 1, 4],
     )
     f = MOI.VectorQuadraticFunction(
-        MOI.VectorAffineTerm.(
-            [1, 2, 2],
-            MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y]),
-        ),
         MOI.VectorQuadraticTerm.(
             [1, 1, 2],
             MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]),
+        ),
+        MOI.VectorAffineTerm.(
+            [1, 2, 2],
+            MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y]),
         ),
         [7, 3, 4],
     )
@@ -1623,24 +1623,24 @@ function test_vector_plus_and_neg()
         [0, 0, 0],
     )
     f_plus_α = MOI.VectorQuadraticFunction(
+        MOI.VectorQuadraticTerm.(
+            [1, 1, 2],
+            MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]),
+        ),
         MOI.VectorAffineTerm.(
             [1, 2, 2],
             MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y]),
         ),
-        MOI.VectorQuadraticTerm.(
-            [1, 1, 2],
-            MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]),
-        ),
         [8, 5, 7],
     )
     f_minus_g = MOI.VectorQuadraticFunction(
-        MOI.VectorAffineTerm.(
-            [1, 2, 2, 3, 1],
-            MOI.ScalarAffineTerm.([3, 1, 2, -5, -2], [x, x, y, y, x]),
-        ),
         MOI.VectorQuadraticTerm.(
             [1, 1, 2],
             MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]),
+        ),
+        MOI.VectorAffineTerm.(
+            [1, 2, 2, 3, 1],
+            MOI.ScalarAffineTerm.([3, 1, 2, -5, -2], [x, x, y, y, x]),
         ),
         [4, 2, 0],
     )

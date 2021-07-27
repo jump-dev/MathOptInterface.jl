@@ -50,3 +50,21 @@ function RawParameter(name::Any)
     )
     return RawOptimizerAttribute(string(name))
 end
+
+function ScalarQuadraticFunction(
+    affine_terms::Vector{<:ScalarAffineTerm{T}},
+    quadratic_terms::Vector{<:ScalarQuadraticTerm{T}},
+    constant::T,
+) where {T}
+    @warn("Fields of ScalarQuadraticFunction have been re-ordered.", maxlog = 1)
+    return ScalarQuadraticFunction(quadratic_terms, affine_terms, constant)
+end
+
+function VectorQuadraticFunction(
+    affine_terms::Vector{<:VectorAffineTerm{T}},
+    quadratic_terms::Vector{<:VectorQuadraticTerm{T}},
+    constant::Vector{T},
+) where {T}
+    @warn("Fields of VectorQuadraticFunction have been re-ordered.", maxlog = 1)
+    return VectorQuadraticFunction(quadratic_terms, affine_terms, constant)
+end

@@ -43,8 +43,8 @@ end
 function test_nlexpr_scalarquadratic_0()
     x = MOI.VariableIndex(1)
     f = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(1.1, x)],
         MOI.ScalarQuadraticTerm{Float64}[],
+        [MOI.ScalarAffineTerm(1.1, x)],
         3.0,
     )
     return _test_nlexpr(
@@ -59,8 +59,8 @@ end
 function test_nlexpr_scalarquadratic_1a()
     x = MOI.VariableIndex(1)
     f = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(1.1, x)],
         [MOI.ScalarQuadraticTerm(2.0, x, x)],
+        [MOI.ScalarAffineTerm(1.1, x)],
         3.0,
     )
     terms = [NL.OPMULT, x, x]
@@ -70,8 +70,8 @@ end
 function test_nlexpr_scalarquadratic_1b()
     x = MOI.VariableIndex(1)
     f = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(1.1, x)],
         [MOI.ScalarQuadraticTerm(2.5, x, x)],
+        [MOI.ScalarAffineTerm(1.1, x)],
         3.0,
     )
     terms = [NL.OPMULT, 1.25, NL.OPMULT, x, x]
@@ -82,8 +82,8 @@ function test_nlexpr_scalarquadratic_1c()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     f = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(1.1, x)],
         [MOI.ScalarQuadraticTerm(1.0, x, y)],
+        [MOI.ScalarAffineTerm(1.1, x)],
         3.0,
     )
     terms = [NL.OPMULT, x, y]
@@ -94,11 +94,11 @@ function test_nlexpr_scalarquadratic_2()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     f = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(1.1, x)],
         [
             MOI.ScalarQuadraticTerm(2.0, x, x),
             MOI.ScalarQuadraticTerm(1.0, x, y),
         ],
+        [MOI.ScalarAffineTerm(1.1, x)],
         3.0,
     )
     terms = [NL.OPPLUS, NL.OPMULT, x, x, NL.OPMULT, x, y]
@@ -110,12 +110,12 @@ function test_nlexpr_scalarquadratic_3()
     y = MOI.VariableIndex(2)
     z = MOI.VariableIndex(3)
     f = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(1.1, x)],
         [
             MOI.ScalarQuadraticTerm(2.0, x, x),
             MOI.ScalarQuadraticTerm(0.5, x, y),
             MOI.ScalarQuadraticTerm(4.0, x, z),
         ],
+        [MOI.ScalarAffineTerm(1.1, x)],
         3.0,
     )
     terms = [
@@ -599,13 +599,13 @@ function test_nlmodel_linear_quadratic()
     MOI.add_constraint(model, MOI.SingleVariable(x[3]), MOI.Integer())
     f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x[2:4]), 2.0)
     g = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(1.0, x[1])],
         [MOI.ScalarQuadraticTerm(2.0, x[1], x[2])],
+        [MOI.ScalarAffineTerm(1.0, x[1])],
         3.0,
     )
     h = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(1.0, x[3])],
         [MOI.ScalarQuadraticTerm(1.0, x[1], x[2])],
+        [MOI.ScalarAffineTerm(1.0, x[3])],
         0.0,
     )
     MOI.add_constraint(model, f, MOI.Interval(1.0, 10.0))
@@ -690,8 +690,8 @@ function test_nlmodel_quadratic_interval()
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     x = MOI.add_variable(model)
     g = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(1.0, x)],
         [MOI.ScalarQuadraticTerm(2.0, x, x)],
+        [MOI.ScalarAffineTerm(1.0, x)],
         3.0,
     )
     MOI.add_constraint(model, g, MOI.Interval(1.0, 10.0))
@@ -744,8 +744,8 @@ end
 function test_eval_scalarquadratic()
     x = MOI.VariableIndex(1)
     f = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(1.1, x)],
         [MOI.ScalarQuadraticTerm(2.0, x, x)],
+        [MOI.ScalarAffineTerm(1.1, x)],
         3.0,
     )
     @test NL._evaluate(NL._NLExpr(f), Dict(x => 1.1)) == 5.42
@@ -814,8 +814,8 @@ function test_issue_79()
     z = MOI.add_variable(model)
     MOI.add_constraint(model, MOI.SingleVariable(z), MOI.ZeroOne())
     f = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(-1.0, z)],
         [MOI.ScalarQuadraticTerm(1.0, z, z)],
+        [MOI.ScalarAffineTerm(-1.0, z)],
         0.25,
     )
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
@@ -823,8 +823,8 @@ function test_issue_79()
     MOI.add_constraint(
         model,
         MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm{Float64}[],
             [MOI.ScalarQuadraticTerm(1.0, x, z)],
+            MOI.ScalarAffineTerm{Float64}[],
             0.0,
         ),
         MOI.LessThan(0.0),

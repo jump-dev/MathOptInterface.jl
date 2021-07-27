@@ -60,8 +60,8 @@ function test_functions_convert_SingleVariable()
     )
     f_vqf = convert(MOI.VectorQuadraticFunction{Float64}, f)
     @test f_vqf ≈ MOI.VectorQuadraticFunction(
-        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
         MOI.VectorQuadraticTerm{Float64}[],
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
         [0.0],
     )
 end
@@ -78,8 +78,8 @@ function test_functions_convert_ScalarAffineFunction()
     )
     f_vqf = convert(MOI.VectorQuadraticFunction{Float64}, f)
     @test f_vqf ≈ MOI.VectorQuadraticFunction(
-        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2.0, x))],
         MOI.VectorQuadraticTerm{Float64}[],
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2.0, x))],
         [1.0],
     )
 end
@@ -88,19 +88,19 @@ function test_functions_convert_ScalarQuadraticFunction()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
     f = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(2.0, x)],
         [MOI.ScalarQuadraticTerm(3.0, x, x)],
+        [MOI.ScalarAffineTerm(2.0, x)],
         1.0,
     )
     @test_throws(MethodError, convert(MOI.VectorOfVariables, f))
     @test_throws(MethodError, convert(MOI.VectorAffineFunction{Float64}, f))
     f_vqf = convert(MOI.VectorQuadraticFunction{Float64}, f)
     @test f_vqf ≈ MOI.VectorQuadraticFunction(
-        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2.0, x))],
         MOI.VectorQuadraticTerm{Float64}[MOI.VectorQuadraticTerm(
             1,
             MOI.ScalarQuadraticTerm(3.0, x, x),
         )],
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2.0, x))],
         [1.0],
     )
 end
@@ -172,8 +172,8 @@ function test_isapprox_ScalarQuadraticFunction()
     y = MOI.VariableIndex(2)
     z = MOI.VariableIndex(3)
     f = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(3, x)],
         MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]),
+        [MOI.ScalarAffineTerm(3, x)],
         8,
     )
     g = deepcopy(f)
@@ -195,13 +195,13 @@ function test_isapprox_VectorQuadraticFunction()
     y = MOI.VariableIndex(2)
     z = MOI.VariableIndex(3)
     f = MOI.VectorQuadraticFunction(
-        MOI.VectorAffineTerm.(
-            [1, 2, 1],
-            MOI.ScalarAffineTerm.([3, 1, 1], [x, x, y]),
-        ),
         MOI.VectorQuadraticTerm.(
             [1, 1, 2],
             MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]),
+        ),
+        MOI.VectorAffineTerm.(
+            [1, 2, 1],
+            MOI.ScalarAffineTerm.([3, 1, 1], [x, x, y]),
         ),
         [10, 11, 12],
     )
@@ -224,21 +224,21 @@ end
 
 function test_isapprox_issue_1483()
     x = MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm{Float16}[],
         MOI.ScalarQuadraticTerm{Float16}[],
+        MOI.ScalarAffineTerm{Float16}[],
         Float16(0.0),
     )
     y = MOI.ScalarQuadraticFunction(
+        MOI.ScalarQuadraticTerm{Float16}[],
         MOI.ScalarAffineTerm{Float16}[MOI.ScalarAffineTerm(
             Float16(1.0),
             MOI.VariableIndex(1234),
         )],
-        MOI.ScalarQuadraticTerm{Float16}[],
         Float16(0.0),
     )
     z = MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm{Float16}[],
         MOI.ScalarQuadraticTerm{Float16}[],
+        MOI.ScalarAffineTerm{Float16}[],
         Float16(0.0),
     )
     @test !(x ≈ y)

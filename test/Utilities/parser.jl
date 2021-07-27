@@ -48,8 +48,8 @@ function test__parse_function()
     @test _struct_isequal(
         MOIU._parse_function(:(2 * x * y + y + 1.0)),
         MOIU._ParsedScalarQuadraticFunction(
-            MOIU._ParsedScalarAffineTerm.([1.0], [:y]),
             MOIU._ParsedScalarQuadraticTerm.([2.0], [:x], [:y]),
+            MOIU._ParsedScalarAffineTerm.([1.0], [:y]),
             1.0,
         ),
     )
@@ -70,13 +70,13 @@ function test__parse_function()
     @test _struct_isequal(
         MOIU._parse_function(:([x, 2x + y + 5.0, 1 * x * x])),
         MOIU._ParsedVectorQuadraticFunction(
-            MOIU._ParsedVectorAffineTerm.(
-                [1, 2, 2],
-                MOIU._ParsedScalarAffineTerm.([1.0, 2.0, 1.0], [:x, :x, :y]),
-            ),
             MOIU._ParsedVectorQuadraticTerm.(
                 [3],
                 MOIU._ParsedScalarQuadraticTerm.([2.0], [:x], [:x]),
+            ),
+            MOIU._ParsedVectorAffineTerm.(
+                [1, 2, 2],
+                MOIU._ParsedScalarAffineTerm.([1.0, 2.0, 1.0], [:x, :x, :y]),
             ),
             [0.0, 5.0, 0.0],
         ),
