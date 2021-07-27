@@ -9,18 +9,16 @@ Sets encode the structure of constraints. Their names should follow the
 following conventions: 
 
 * Abstract types in the set hierarchy should begin with `Abstract` and end in
-  `Set`, e.g., [`MOI.AbstractScalarSet`](@ref), [`MOI.AbstractVectorSet`](@ref).
+  `Set`, e.g., [`AbstractScalarSet`](@ref), [`AbstractVectorSet`](@ref).
 * Vector-valued conic sets should end with `Cone`, e.g.,
-  [`MOI.NormInfinityCone`](@ref), [`MOI.SecondOrderCone`](@ref).
+  [`NormInfinityCone`](@ref), [`SecondOrderCone`](@ref).
 * Vector-valued Cartesian products should be plural and not end in `Cone`,
-  e.g., [`MOI.Nonnegatives`](@ref), not `MOI.NonnegativeCone`.
+  e.g., [`Nonnegatives`](@ref), not `NonnegativeCone`.
 * Matrix-valued conic sets should provide two representations: `ConeSquare` and
-  `ConeTriangle`, e.g., [`MOI.RootDetConeTriangle`](@ref) and
-  [`MOI.RootDetConeSquare`](@ref). See [Matrix cones](@ref) for more details.
-* Scalar sets should be singular, not plural, e.g., [`MOI.Integer`](@ref), not 
-  `MOI.Integers`.
-* The sets are named with nouns instead of verbs. Usual sets in mixed-integer
-  and convex programming only have such names.
+  `ConeTriangle`, e.g., [`RootDetConeTriangle`](@ref) and
+  [`RootDetConeSquare`](@ref). See [Matrix cones](@ref) for more details.
+* Scalar sets should be singular, not plural, e.g., [`Integer`](@ref), not 
+  `Integers`.
 * As much as possible, the names should follow established conventions in the 
   domain where this set is used: for instance, convex sets should have names 
   close to those of [CVX](http://web.cvxr.com/cvx/doc/), and 
