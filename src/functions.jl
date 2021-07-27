@@ -428,16 +428,11 @@ function Base.isapprox(
     )
 end
 
-function constant(
-    f::Union{ScalarAffineFunction,ScalarQuadraticFunction},
-    ::Any,
-)
+function constant(f::Union{ScalarAffineFunction,ScalarQuadraticFunction}, ::Any)
     return constant(f)
 end
-function constant(
-    f::Union{VectorAffineFunction,VectorQuadraticFunction},
-    ::Any,
-)
+
+function constant(f::Union{VectorAffineFunction,VectorQuadraticFunction}, ::Any)
     return constant(f)
 end
 
