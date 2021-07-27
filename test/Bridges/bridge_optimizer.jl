@@ -655,6 +655,54 @@ function test_nesting_SingleBridgeOptimizer()
     return
 end
 
+struct UnsupportedSet <: MOI.AbstractScalarSet end
+
+function test_supports_bridging_constrained_variable()
+    model = MOI.Bridges.Constraint.SplitInterval{Int}(NoIntervalModel{Int}())
+    @test !MOI.Bridges.supports_bridging_constrained_variable(
+        model,
+        UnsupportedSet,
+    )
+    return
+end
+
+function test_supports_add_constrained_variable()
+    model = MOI.Bridges.Constraint.SplitInterval{Int}(NoIntervalModel{Int}())
+    @test !MOI.supports_add_constrained_variable(model, UnsupportedSet)
+    return
+end
+
+function test_supports_bridging_constraint()
+    model = MOI.Bridges.Constraint.SplitInterval{Int}(NoIntervalModel{Int}())
+    @test !MOI.Bridges.supports_bridging_constraint(
+        model,
+        MOI.SingleVariable,
+        UnsupportedSet,
+    )
+    return
+end
+
+function test_supports_bridging_objective_function()
+    model = MOI.Bridges.Constraint.SplitInterval{Int}(NoIntervalModel{Int}())
+    @test !MOI.Bridges.supports_bridging_objective_function(
+        model,
+        MOI.SingleVariable,
+    )
+    return
+end
+
+function test_get_ObjectiveFunctionType()
+    model = MOI.Bridges.Constraint.SplitInterval{Int}(NoIntervalModel{Int}())
+    x = MOI.add_variable(model)
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.SingleVariable}(),
+        MOI.SingleVariable(x),
+    )
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) == MOI.SingleVariable
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
