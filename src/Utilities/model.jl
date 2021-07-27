@@ -334,6 +334,9 @@ function MOI.set(
     attr::MOI.ObjectiveFunction{F},
     f::F,
 ) where {F<:MOI.AbstractFunction}
+    if !MOI.supports(model, attr)
+        throw(MOI.UnsupportedAttribute(attr))
+    end
     MOI.set(model.objective, attr, f)
     return
 end
