@@ -51,12 +51,7 @@ end
 # should probably work fine on Windows
 
 _to_string(::_PrintOptions, ::typeof(*)) = "*"
-
 _to_string(::_PrintOptions{MIME"text/latex"}, ::typeof(*)) = "\\times "
-
-_to_string(::_PrintOptions, ::typeof(in)) = Sys.iswindows() ? "in" : "∈"
-
-_to_string(::_PrintOptions{MIME"text/latex"}, ::typeof(in)) = "\\in "
 
 function _to_string(::_PrintOptions, ::typeof(^), n::Int)
     return n == 2 ? "²" : string('^', n)
@@ -65,6 +60,8 @@ end
 function _to_string(::_PrintOptions{MIME"text/latex"}, ::typeof(^), n::Int)
     return string('^', n)
 end
+
+_to_string(::_PrintOptions, ::typeof(in)) = @static Sys.iswindows() ? "in" : "∈"
 
 #------------------------------------------------------------------------
 # Functions
