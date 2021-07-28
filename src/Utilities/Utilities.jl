@@ -59,6 +59,7 @@ include("copy.jl")
 include("results.jl")
 include("variables.jl")
 
+include("objective_function_container.jl")
 include("vector_bounds.jl")
 include("vector_of_constraints.jl")
 include("struct_of_constraints.jl")
