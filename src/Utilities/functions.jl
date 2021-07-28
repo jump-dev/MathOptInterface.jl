@@ -1042,8 +1042,8 @@ function filter_variables(
     f::Union{MOI.ScalarQuadraticFunction,MOI.VectorQuadraticFunction},
 )
     return typeof(f)(
-        _filter_variables(keep, f.affine_terms),
         _filter_variables(keep, f.quadratic_terms),
+        _filter_variables(keep, f.affine_terms),
         MOI.constant(f),
     )
 end
@@ -1077,10 +1077,10 @@ function modify_function(f::VAF, change::MOI.VectorConstantChange)
     return VAF(f.terms, change.new_constant)
 end
 function modify_function(f::SQF, change::MOI.ScalarConstantChange)
-    return SQF(f.affine_terms, f.quadratic_terms, change.new_constant)
+    return SQF(f.quadratic_terms, f.affine_terms, change.new_constant)
 end
 function modify_function(f::VQF, change::MOI.VectorConstantChange)
-    return VQF(f.affine_terms, f.quadratic_terms, change.new_constant)
+    return VQF(f.quadratic_terms, f.affine_terms, change.new_constant)
 end
 
 function _modifycoefficient(
