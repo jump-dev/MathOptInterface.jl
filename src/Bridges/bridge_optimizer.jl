@@ -579,7 +579,7 @@ end
 function MOI.delete(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
     if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
-        bridge = bridge(b, ci)
+        br = bridge(b, ci)
         if is_variable_bridged(b, ci)
             error(
                 "Cannot delete constraint index of bridged constrained",
@@ -592,7 +592,7 @@ function MOI.delete(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
         Variable.call_in_context(
             Variable.bridges(b),
             ci,
-            () -> MOI.delete(recursive_model(b), bridge),
+            () -> MOI.delete(recursive_model(b), br),
         )
         b.name_to_con = nothing
         delete!(b.con_to_name, ci)
