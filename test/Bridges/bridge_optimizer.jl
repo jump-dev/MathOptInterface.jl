@@ -703,6 +703,8 @@ function test_get_ObjectiveFunctionType()
     return
 end
 
+include("identity_bridge.jl")
+
 function test_recursive_model_variable(::Type{T} = Int) where {T}
     model = MOIU.UniversalFallback(MOIU.Model{T}())
     BT = IdentityBridges.VariableBridge{T}
