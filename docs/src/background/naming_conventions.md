@@ -1,3 +1,12 @@
+```@meta
+CurrentModule = MathOptInterface
+DocTestSetup = quote
+    using MathOptInterface
+    const MOI = MathOptInterface
+end
+DocTestFilters = [r"MathOptInterface|MOI"]
+```
+
 # Naming conventions
 
 MOI follows several conventions for naming functions and structures. These 
