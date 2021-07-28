@@ -197,7 +197,7 @@ function unbridged_map(bridge::SetMapBridge{T}, vi::MOI.VariableIndex) where {T}
     F = MOI.ScalarAffineFunction{T}
     func = MOI.SingleVariable(vi)
     mapped = MOIB.inverse_map_function(typeof(bridge), func)
-    return Pair{MOI.VariableIndex,F}[bridge.variable => mapped]
+    return Pair{MOI.VariableIndex,F}[bridge.variable=>mapped]
 end
 
 function unbridged_map(
