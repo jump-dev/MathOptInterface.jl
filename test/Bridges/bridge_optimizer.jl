@@ -706,7 +706,7 @@ end
 include("identity_bridge.jl")
 
 function test_recursive_model_variable(::Type{T} = Int) where {T}
-    model = MOIU.UniversalFallback(MOIU.Model{T}())
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
     BT = IdentityBridges.VariableBridge{T}
     b = MOIB.Variable.SingleBridgeOptimizer{BT}(model)
     x, cx = MOI.add_constrained_variable(b, MOI.EqualTo(one(T)))
@@ -722,7 +722,7 @@ function test_recursive_model_variable(::Type{T} = Int) where {T}
 end
 
 function test_recursive_model_constraint(::Type{T} = Int) where {T}
-    model = MOIU.UniversalFallback(MOIU.Model{T}())
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
     BT = IdentityBridges.ConstraintBridge{T}
     b = MOIB.Constraint.SingleBridgeOptimizer{BT}(model)
     x = MOI.add_variable(b)
@@ -751,7 +751,7 @@ function test_recursive_model_constraint(::Type{T} = Int) where {T}
 end
 
 function test_recursive_model_objective(::Type{T} = Int) where {T}
-    model = MOIU.UniversalFallback(MOIU.Model{T}())
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
     BT = IdentityBridges.ObjectiveBridge{T}
     b = MOIB.Objective.SingleBridgeOptimizer{BT}(model)
     x = MOI.add_variable(b)
