@@ -75,7 +75,7 @@ function supports_constrained_variable(
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:RSOCtoPSDBridge})
-    return Tuple{Type,Type}[
+    return Tuple{Type}[
         (MOI.PositiveSemidefiniteConeTriangle,),
         (MOI.Nonnegatives,),
     ]
