@@ -149,7 +149,7 @@ end
 function MOIB.added_constraint_types(
     ::Type{SquareBridge{T,F,G,TT,ST}},
 ) where {T,F,G,TT,ST}
-    return [(F, TT), (G, MOI.EqualTo{T})]
+    return Tuple{Type,Type}[(F, TT), (G, MOI.EqualTo{T})]
 end
 
 function concrete_bridge_type(

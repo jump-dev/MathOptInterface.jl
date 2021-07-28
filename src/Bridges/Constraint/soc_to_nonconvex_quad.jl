@@ -146,7 +146,7 @@ end
 function MOIB.added_constraint_types(
     ::Type{<:AbstractSOCtoNonConvexQuadBridge{T}},
 ) where {T}
-    return [
+    return Tuple{Type,Type}[
         (MOI.ScalarQuadraticFunction{T}, MOI.LessThan{T}),
         (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}),
     ]

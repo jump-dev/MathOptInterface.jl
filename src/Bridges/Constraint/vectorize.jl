@@ -56,7 +56,7 @@ end
 function MOIB.added_constraint_types(
     ::Type{<:VectorizeBridge{T,F,S}},
 ) where {T,F,S}
-    return [(F, S)]
+    return Tuple{Type,Type}[(F, S)]
 end
 
 function concrete_bridge_type(

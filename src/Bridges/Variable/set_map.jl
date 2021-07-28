@@ -43,7 +43,7 @@ end
 function MOIB.added_constrained_variable_types(
     ::Type{<:SetMapBridge{T,S1}},
 ) where {T,S1}
-    return [(S1,)]
+    return Tuple{Type}[(S1,)]
 end
 
 function MOIB.added_constraint_types(::Type{<:SetMapBridge})

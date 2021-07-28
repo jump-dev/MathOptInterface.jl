@@ -39,7 +39,7 @@ end
 function MOIB.added_constraint_types(
     ::Type{ScalarFunctionizeBridge{T,S}},
 ) where {T,S}
-    return [(MOI.ScalarAffineFunction{T}, S)]
+    return Tuple{Type,Type}[(MOI.ScalarAffineFunction{T}, S)]
 end
 
 function concrete_bridge_type(
@@ -136,7 +136,7 @@ end
 function MOIB.added_constraint_types(
     ::Type{VectorFunctionizeBridge{T,S}},
 ) where {T,S}
-    return [(MOI.VectorAffineFunction{T}, S)]
+    return Tuple{Type,Type}[(MOI.VectorAffineFunction{T}, S)]
 end
 
 function concrete_bridge_type(

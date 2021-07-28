@@ -144,7 +144,7 @@ end
 function MOIB.added_constraint_types(
     ::Type{<:GeoMeanBridge{T,F,G}},
 ) where {T,F,G}
-    return [
+    return Tuple{Type,Type}[
         (F, MOI.LessThan{T}),
         (G, MOI.RotatedSecondOrderCone),
         (G, MOI.Nonnegatives),

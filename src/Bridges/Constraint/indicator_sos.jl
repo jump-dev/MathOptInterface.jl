@@ -109,19 +109,19 @@ end
 function MOIB.added_constrained_variable_types(
     ::Type{<:IndicatorSOS1Bridge{T,BC}},
 ) where {T,BC<:Union{MOI.LessThan{T},MOI.GreaterThan{T}}}
-    return [(BC,)]
+    return Tuple{Type}[(BC,)]
 end
 
 function MOIB.added_constrained_variable_types(
     ::Type{<:IndicatorSOS1Bridge{T,BC}},
 ) where {T,BC}
-    return []
+    return Tuple{Type}[]
 end
 
 function MOIB.added_constraint_types(
     ::Type{<:IndicatorSOS1Bridge{T,BC}},
 ) where {T,BC<:Union{MOI.LessThan{T},MOI.GreaterThan{T}}}
-    return [
+    return Tuple{Type,Type}[
         (MOI.VectorOfVariables, MOI.SOS1{T}),
         (MOI.ScalarAffineFunction{T}, BC),
     ]
@@ -130,7 +130,7 @@ end
 function MOIB.added_constraint_types(
     ::Type{<:IndicatorSOS1Bridge{T,S}},
 ) where {T,S<:MOI.AbstractScalarSet}
-    return [
+    return Tuple{Type,Type}[
         (MOI.VectorOfVariables, MOI.SOS1{T}),
         (MOI.ScalarAffineFunction{T}, S),
     ]

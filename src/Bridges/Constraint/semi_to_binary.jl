@@ -75,13 +75,13 @@ end
 function MOIB.added_constrained_variable_types(
     ::Type{<:SemiToBinaryBridge{T,S}},
 ) where {T,S}
-    return [(MOI.ZeroOne,)]
+    return Tuple{Type}[(MOI.ZeroOne,)]
 end
 
 function MOIB.added_constraint_types(
     ::Type{<:SemiToBinaryBridge{T,S}},
 ) where {T,S<:MOI.Semicontinuous{T}}
-    return [
+    return Tuple{Type,Type}[
         (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}),
         (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}),
     ]
@@ -90,7 +90,7 @@ end
 function MOIB.added_constraint_types(
     ::Type{<:SemiToBinaryBridge{T,S}},
 ) where {T,S<:MOI.Semiinteger{T}}
-    return [
+    return Tuple{Type,Type}[
         (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}),
         (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}),
         (MOI.SingleVariable, MOI.Integer),

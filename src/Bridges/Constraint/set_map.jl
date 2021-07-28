@@ -57,7 +57,7 @@ end
 function MOIB.added_constraint_types(
     ::Type{<:SetMapBridge{T,S2,S1,F}},
 ) where {T,S2,S1,F}
-    return [(F, S2)]
+    return Tuple{Type,Type}[(F, S2)]
 end
 
 # Attributes, Bridge acting as a model

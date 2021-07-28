@@ -62,7 +62,7 @@ end
 MOIB.added_constrained_variable_types(::Type{<:SlackBridge}) = Tuple{Type}[]
 
 function MOIB.added_constraint_types(::Type{<:SlackBridge{T,F}}) where {T,F}
-    return [(F, MOI.GreaterThan{T}), (F, MOI.LessThan{T})]
+    return Tuple{Type,Type}[(F, MOI.GreaterThan{T}), (F, MOI.LessThan{T})]
 end
 
 function MOIB.set_objective_function_type(::Type{<:SlackBridge})
