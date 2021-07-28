@@ -30,7 +30,7 @@ function MOIB.added_constrained_variable_types(::Type{<:FreeBridge})
 end
 
 function MOIB.added_constraint_types(::Type{FreeBridge{T}}) where {T}
-    return Tuple{DataType,DataType}[]
+    return Tuple{Type,Type}[]
 end
 
 # Attributes, Bridge acting as a model

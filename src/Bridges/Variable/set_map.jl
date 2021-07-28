@@ -47,7 +47,7 @@ function MOIB.added_constrained_variable_types(
 end
 
 function MOIB.added_constraint_types(::Type{<:SetMapBridge})
-    return Tuple{DataType,DataType}[]
+    return Tuple{Type,Type}[]
 end
 
 # Attributes, Bridge acting as a model

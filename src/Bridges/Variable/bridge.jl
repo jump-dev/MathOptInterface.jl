@@ -150,7 +150,7 @@ MOI.Bridges.added_constrained_variable_types(
 
 # output
 
-1-element Array{Tuple{DataType},1}:
+1-element Array{Tuple{Type},1}:
  (MathOptInterface.Nonnegatives,)
 ```
 """
@@ -189,7 +189,7 @@ MOI.Bridges.added_constraint_types(
 
 # output
 
-2-element Array{Tuple{DataType,DataType},1}:
+2-element Array{Tuple{Type,Type},1}:
  (MathOptInterface.SingleVariable, MathOptInterface.EqualTo{Float64})
  (MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.EqualTo{Float64})
 ```
@@ -205,7 +205,7 @@ end
     concrete_bridge_type(
         BT::Type{<:AbstractBridge},
         S::Type{<:MOI.AbstractSet},
-    )::DataType
+    )::Type
 
 Return the concrete type of the bridge supporting variables in `S` constraints.
 This function can only be called if `MOI.supports_constrained_variable(BT, S)`
@@ -228,7 +228,7 @@ MOI.Bridges.Variable.concrete_bridge_type(
 MathOptInterface.Bridges.Variable.VectorizeBridge{Float64,MathOptInterface.Nonnegatives}
 ```
 """
-function concrete_bridge_type(bridge_type::DataType, ::Type{<:MOI.AbstractSet})
+function concrete_bridge_type(bridge_type::Type, ::Type{<:MOI.AbstractSet})
     return bridge_type
 end
 

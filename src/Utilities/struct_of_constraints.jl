@@ -108,7 +108,7 @@ function MOI.get(
 )
     return broadcastvcat(model) do constrs
         if constrs === nothing
-            return Tuple{DataType,DataType}[]
+            return Tuple{Type,Type}[]
         end
         return MOI.get(constrs, attr)
     end

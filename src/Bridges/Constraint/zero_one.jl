@@ -30,7 +30,7 @@ function MOIB.added_constraint_types(::Type{<:ZeroOneBridge{T}}) where {T}
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:ZeroOneBridge})
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function concrete_bridge_type(

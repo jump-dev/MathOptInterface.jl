@@ -24,11 +24,11 @@ function supports_objective_function(
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:FunctionizeBridge})
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOIB.added_constraint_types(::Type{<:FunctionizeBridge})
-    return Tuple{DataType,DataType}[]
+    return Tuple{Type,Type}[]
 end
 
 function MOIB.set_objective_function_type(
