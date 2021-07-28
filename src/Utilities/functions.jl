@@ -171,7 +171,7 @@ end
 function map_indices(index_map::F, f::Union{SQF,VQF}) where {F<:Function}
     lin = map_indices.(index_map, f.affine_terms)
     quad = map_indices.(index_map, f.quadratic_terms)
-    return typeof(f)(lin, quad, MOI.constant(f))
+    return typeof(f)(quad, lin, MOI.constant(f))
 end
 
 # Function changes
