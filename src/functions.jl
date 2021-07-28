@@ -387,8 +387,8 @@ end
 
 function _dicts(f::Union{ScalarQuadraticFunction,VectorQuadraticFunction})
     return (
-        sum_dict(term_pair.(f.affine_terms)),
         sum_dict(term_pair.(f.quadratic_terms)),
+        sum_dict(term_pair.(f.affine_terms)),
     )
 end
 
@@ -486,8 +486,8 @@ function Base.copy(
     func::F,
 ) where {F<:Union{ScalarQuadraticFunction,VectorQuadraticFunction}}
     return F(
-        copy(func.affine_terms),
         copy(func.quadratic_terms),
+        copy(func.affine_terms),
         copy(constant(func)),
     )
 end

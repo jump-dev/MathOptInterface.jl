@@ -453,8 +453,8 @@ function ScalarFunctionIterator(f::MOI.VectorQuadraticFunction)
     return ScalarFunctionIterator(
         f,
         (
-            output_index_iterator(f.affine_terms, MOI.output_dimension(f)),
             output_index_iterator(f.quadratic_terms, MOI.output_dimension(f)),
+            output_index_iterator(f.affine_terms, MOI.output_dimension(f)),
         ),
     )
 end
@@ -533,11 +533,11 @@ function Base.getindex(
     return MOI.ScalarQuadraticFunction(
         MOI.ScalarQuadraticTerm{T}[
             it.f.quadratic_terms[i].scalar_term for
-            i in ChainedIteratorAtIndex(it.cache[2], output_index)
+            i in ChainedIteratorAtIndex(it.cache[1], output_index)
         ],
         MOI.ScalarAffineTerm{T}[
             it.f.affine_terms[i].scalar_term for
-            i in ChainedIteratorAtIndex(it.cache[1], output_index)
+            i in ChainedIteratorAtIndex(it.cache[2], output_index)
         ],
         it.f.constants[output_index],
     )
@@ -550,13 +550,13 @@ function Base.getindex(
     vat = MOI.VectorAffineTerm{T}[]
     vqt = MOI.VectorQuadraticTerm{T}[]
     for (i, output_index) in enumerate(output_indices)
-        for j in ChainedIteratorAtIndex(it.cache[1], output_index)
+        for j in ChainedIteratorAtIndex(it.cache[2], output_index)
             push!(
                 vat,
                 MOI.VectorAffineTerm(i, it.f.affine_terms[j].scalar_term),
             )
         end
-        for j in ChainedIteratorAtIndex(it.cache[2], output_index)
+        for j in ChainedIteratorAtIndex(it.cache[1], output_index)
             push!(
                 vqt,
                 MOI.VectorQuadraticTerm(i, it.f.quadratic_terms[j].scalar_term),
