@@ -32,8 +32,8 @@ VectorQuadraticFunction
 output_dimension
 constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction})
 constant(f::Union{VectorAffineFunction, VectorQuadraticFunction})
-constant(f::SingleVariable, ::DataType)
-constant(f::VectorOfVariables, T::DataType)
+constant(f::SingleVariable, ::Type)
+constant(f::VectorOfVariables, T::Type)
 ```
 
 ## Sets

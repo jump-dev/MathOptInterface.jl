@@ -348,7 +348,7 @@ function test_quadratic_functions()
         MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
     )
     loc1 = MOI.get(model, MOI.ListOfConstraintTypesPresent())
-    loc2 = Vector{Tuple{DataType,DataType}}()
+    loc2 = Vector{Tuple{Type,Type}}()
     function _pushloc(v::MOI.Utilities.VectorOfConstraints{F,S}) where {F,S}
         if !MOI.is_empty(v)
             push!(loc2, (F, S))

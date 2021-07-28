@@ -117,7 +117,7 @@ end
 function MOI.get(
     v::VectorOfConstraints{F,S},
     ::MOI.ListOfConstraintTypesPresent,
-)::Vector{Tuple{DataType,DataType}} where {F,S}
+)::Vector{Tuple{Type,Type}} where {F,S}
     return isempty(v.constraints) ? [] : [(F, S)]
 end
 

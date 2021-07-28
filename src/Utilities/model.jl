@@ -511,8 +511,8 @@ function MOI.get(
     attr::MOI.ListOfConstraintTypesPresent,
 ) where {T}
     return vcat(
-        MOI.get(model.constraints, attr)::Vector{Tuple{DataType,DataType}},
-        MOI.get(model.variable_bounds, attr)::Vector{Tuple{DataType,DataType}},
+        MOI.get(model.constraints, attr)::Vector{Tuple{Type,Type}},
+        MOI.get(model.variable_bounds, attr)::Vector{Tuple{Type,Type}},
     )
 end
 

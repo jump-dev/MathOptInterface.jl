@@ -327,7 +327,7 @@ function MOI.get(
     b::SingleVariableConstraints{T},
     ::MOI.ListOfConstraintTypesPresent,
 ) where {T}
-    list = Tuple{DataType,DataType}[]
+    list = Tuple{Type,Type}[]
     _add_constraint_type(list, b, MOI.EqualTo{T})
     _add_constraint_type(list, b, MOI.GreaterThan{T})
     _add_constraint_type(list, b, MOI.LessThan{T})

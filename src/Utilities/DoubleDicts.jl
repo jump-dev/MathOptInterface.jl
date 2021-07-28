@@ -38,9 +38,9 @@ inner = dict[F, S]
 to return a type-stable [`DoubleDictInner`](@ref).
 """
 struct DoubleDict{V} <: AbstractDoubleDict{V}
-    dict::Dict{Tuple{DataType,DataType},Dict{Int64,V}}
+    dict::Dict{Tuple{Type,Type},Dict{Int64,V}}
     function DoubleDict{V}() where {V}
-        return new{V}(Dict{Tuple{DataType,DataType},Dict{Int64,V}}())
+        return new{V}(Dict{Tuple{Type,Type},Dict{Int64,V}}())
     end
 end
 
@@ -73,9 +73,9 @@ inner = dict[F, S]
 to return a type-stable [`IndexDoubleDictInner`](@ref).
 """
 struct IndexDoubleDict <: AbstractDoubleDict{MOI.ConstraintIndex}
-    dict::Dict{Tuple{DataType,DataType},Dict{Int64,Int64}}
+    dict::Dict{Tuple{Type,Type},Dict{Int64,Int64}}
     function IndexDoubleDict()
-        return new(Dict{Tuple{DataType,DataType},Dict{Int64,Int64}}())
+        return new(Dict{Tuple{Type,Type},Dict{Int64,Int64}}())
     end
 end
 

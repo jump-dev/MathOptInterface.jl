@@ -1512,11 +1512,11 @@ struct BridgeAddingNoConstraint{T} <: MOI.Bridges.Constraint.AbstractBridge end
 function MOI.Bridges.added_constrained_variable_types(
     ::Type{<:BridgeAddingNoConstraint},
 )
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOI.Bridges.added_constraint_types(::Type{<:BridgeAddingNoConstraint})
-    return Tuple{DataType,DataType}[]
+    return Tuple{Type,Type}[]
 end
 
 function MOI.supports_constraint(

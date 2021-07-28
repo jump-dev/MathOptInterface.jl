@@ -99,7 +99,7 @@ end
         BT::Type{<:AbstractBridge},
         F::Type{<:MOI.AbstractFunction},
         S::Type{<:MOI.AbstractSet}
-    )::DataType
+    )::Type
 
 Return the concrete type of the bridge supporting `F`-in-`S` constraints. This
 function can only be called if `MOI.supports_constraint(BT, F, S)` is `true`.
@@ -126,7 +126,7 @@ MathOptInterface.Bridges.Constraint.SplitIntervalBridge{Float64,MathOptInterface
 ```
 """
 function concrete_bridge_type(
-    bridge_type::DataType,
+    bridge_type::Type,
     ::Type{<:MOI.AbstractFunction},
     ::Type{<:MOI.AbstractSet},
 )

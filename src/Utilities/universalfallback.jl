@@ -17,8 +17,8 @@ mutable struct UniversalFallback{MT} <: MOI.ModelLike
     # See https://github.com/jump-dev/JuMP.jl/issues/1152 and
     # https://github.com/jump-dev/JuMP.jl/issues/2238 for why we use an
     # `OrderedDict`
-    single_variable_constraints::OrderedDict{DataType,OrderedDict}
-    constraints::OrderedDict{Tuple{DataType,DataType},VectorOfConstraints}
+    single_variable_constraints::OrderedDict{Type,OrderedDict}
+    constraints::OrderedDict{Tuple{Type,Type},VectorOfConstraints}
     con_to_name::Dict{MOI.ConstraintIndex,String}
     name_to_con::Union{Dict{String,MOI.ConstraintIndex},Nothing}
     optattr::Dict{MOI.AbstractOptimizerAttribute,Any}
@@ -29,8 +29,8 @@ mutable struct UniversalFallback{MT} <: MOI.ModelLike
         return new{typeof(model)}(
             model,
             nothing,
-            OrderedDict{Tuple{DataType,DataType},OrderedDict}(),
-            OrderedDict{Tuple{DataType,DataType},VectorOfConstraints}(),
+            OrderedDict{Tuple{Type,Type},OrderedDict}(),
+            OrderedDict{Tuple{Type,Type},VectorOfConstraints}(),
             Dict{MOI.ConstraintIndex,String}(),
             nothing,
             Dict{MOI.AbstractOptimizerAttribute,Any}(),

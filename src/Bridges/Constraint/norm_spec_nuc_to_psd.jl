@@ -50,13 +50,13 @@ function MOI.supports_constraint(
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:NormSpectralBridge})
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOIB.added_constraint_types(
     ::Type{NormSpectralBridge{T,F,G}},
 ) where {T,F,G}
-    return [(F, MOI.PositiveSemidefiniteConeTriangle)]
+    return Tuple{Type,Type}[(F, MOI.PositiveSemidefiniteConeTriangle)]
 end
 
 function concrete_bridge_type(
@@ -253,13 +253,16 @@ function MOI.supports_constraint(
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:NormNuclearBridge})
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOIB.added_constraint_types(
     ::Type{NormNuclearBridge{T,F,G,H}},
 ) where {T,F,G,H}
-    return [(F, MOI.GreaterThan{T}), (G, MOI.PositiveSemidefiniteConeTriangle)]
+    return Tuple{Type,Type}[
+        (F, MOI.GreaterThan{T}),
+        (G, MOI.PositiveSemidefiniteConeTriangle),
+    ]
 end
 
 function concrete_bridge_type(

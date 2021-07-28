@@ -3,13 +3,13 @@ abstract type AbstractSlackBridge{T,VF,ZS,F,S} <: AbstractBridge end
 function MOIB.added_constrained_variable_types(
     ::Type{<:AbstractSlackBridge{T,VF,ZS,F,S}},
 ) where {T,VF,ZS,F,S}
-    return [(S,)]
+    return Tuple{Type}[(S,)]
 end
 
 function MOIB.added_constraint_types(
     ::Type{<:AbstractSlackBridge{T,VF,ZS,F}},
 ) where {T,VF,ZS,F}
-    return [(F, ZS)]
+    return Tuple{Type,Type}[(F, ZS)]
 end
 
 function MOI.get(

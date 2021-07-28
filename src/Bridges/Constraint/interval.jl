@@ -57,13 +57,13 @@ function MOI.supports_constraint(
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:SplitIntervalBridge})
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOIB.added_constraint_types(
     ::Type{SplitIntervalBridge{T,F,S,LS,US}},
 ) where {T,F,S,LS,US}
-    return [(F, LS), (F, US)]
+    return Tuple{Type,Type}[(F, LS), (F, US)]
 end
 
 function concrete_bridge_type(

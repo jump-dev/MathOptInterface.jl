@@ -37,19 +37,19 @@ mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     graph::Graph
     # List of types of available bridges
     variable_bridge_types::Vector{Any}
-    variable_node::OrderedDict{Tuple{DataType},VariableNode}
-    variable_types::Vector{Tuple{DataType}}
+    variable_node::OrderedDict{Tuple{Type},VariableNode}
+    variable_types::Vector{Tuple{Type}}
     # List of types of available bridges
     constraint_bridge_types::Vector{Any}
-    constraint_node::OrderedDict{Tuple{DataType,DataType},ConstraintNode}
-    constraint_types::Vector{Tuple{DataType,DataType}}
+    constraint_node::OrderedDict{Tuple{Type,Type},ConstraintNode}
+    constraint_types::Vector{Tuple{Type,Type}}
     # List of types of available bridges
     objective_bridge_types::Vector{Any}
-    objective_node::OrderedDict{Tuple{DataType},ObjectiveNode}
-    objective_types::Vector{Tuple{DataType}}
+    objective_node::OrderedDict{Tuple{Type},ObjectiveNode}
+    objective_types::Vector{Tuple{Type}}
     # Cache for (F, S) -> BridgeType. Avoids having to look up
     # `concrete_bridge_type` at runtime, which is slow.
-    cached_bridge_type::Dict{Any,DataType}
+    cached_bridge_type::Dict{Any,Type}
 end
 
 function LazyBridgeOptimizer(model::MOI.ModelLike)
@@ -64,15 +64,15 @@ function LazyBridgeOptimizer(model::MOI.ModelLike)
         Objective.Map(),
         Graph(),
         Any[],
-        OrderedDict{Tuple{DataType},VariableNode}(),
-        Tuple{DataType}[],
+        OrderedDict{Tuple{Type},VariableNode}(),
+        Tuple{Type}[],
         Any[],
-        OrderedDict{Tuple{DataType,DataType},ConstraintNode}(),
-        Tuple{DataType,DataType}[],
+        OrderedDict{Tuple{Type,Type},ConstraintNode}(),
+        Tuple{Type,Type}[],
         Any[],
-        OrderedDict{Tuple{DataType},ObjectiveNode}(),
-        Tuple{DataType}[],
-        Dict{Any,DataType}(),
+        OrderedDict{Tuple{Type},ObjectiveNode}(),
+        Tuple{Type}[],
+        Dict{Any,Type}(),
     )
 end
 
@@ -416,7 +416,7 @@ end
 function bridge_type(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     bt = get(b.cached_bridge_type, (S,), nothing)
     if bt !== nothing
-        return bt::DataType
+        return bt::Type
     end
     index = bridge_index(b, S)
     if iszero(index)
@@ -424,7 +424,7 @@ function bridge_type(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     end
     new_bt = Variable.concrete_bridge_type(b.variable_bridge_types[index], S)
     b.cached_bridge_type[(S,)] = new_bt
-    return new_bt::DataType
+    return new_bt::Type
 end
 
 function bridge_type(
@@ -434,7 +434,7 @@ function bridge_type(
 )
     bt = get(b.cached_bridge_type, (F, S), nothing)
     if bt !== nothing
-        return bt::DataType
+        return bt::Type
     end
     index = bridge_index(b, F, S)
     if iszero(index)
@@ -443,7 +443,7 @@ function bridge_type(
     new_bt =
         Constraint.concrete_bridge_type(b.constraint_bridge_types[index], F, S)
     b.cached_bridge_type[(F, S)] = new_bt
-    return new_bt::DataType
+    return new_bt::Type
 end
 
 function bridge_type(
@@ -452,7 +452,7 @@ function bridge_type(
 )
     bt = get(b.cached_bridge_type, (F,), nothing)
     if bt !== nothing
-        return bt::DataType
+        return bt::Type
     end
     index = bridge_index(b, F)
     if iszero(index)
@@ -460,7 +460,7 @@ function bridge_type(
     end
     new_bt = Objective.concrete_bridge_type(b.objective_bridge_types[index], F)
     b.cached_bridge_type[(F,)] = new_bt
-    return new_bt::DataType
+    return new_bt::Type
 end
 
 function _func_name(::Type{Constraint.ScalarFunctionizeBridge})

@@ -11,7 +11,7 @@ struct OptimizerWithAttributes
     # Function that takes zero arguments and returns a new optimizer.
     # The type of the function could be
     # * `Function`: a function, or
-    # * `DataType`: a type, or
+    # * `Type`: a type, or
     # * `UnionAll`: a type with missing parameters.
     optimizer_constructor::Any
     params::Vector{Pair{AbstractOptimizerAttribute,Any}}

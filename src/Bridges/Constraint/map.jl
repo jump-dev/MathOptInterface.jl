@@ -8,22 +8,19 @@ struct Map <: AbstractDict{MOI.ConstraintIndex,AbstractBridge}
     # It is set to `nothing` when the constraint is deleted.
     bridges::Vector{Union{Nothing,AbstractBridge}}
     # Constraint Index of bridged constraint -> Constraint type.
-    constraint_types::Vector{Tuple{DataType,DataType}}
+    constraint_types::Vector{Tuple{Type,Type}}
     # The order of the keys is used in `keys_of_type` which is used by
     # `ListOfConstraintIndices`. Therefore they need to be in the order
     # of creation so we need `OrderedDict` and not `Dict`.
     # For `SingleVariable` constraints: (variable, set type) -> bridge
-    single_variable_constraints::OrderedDict{
-        Tuple{Int64,DataType},
-        AbstractBridge,
-    }
+    single_variable_constraints::OrderedDict{Tuple{Int64,Type},AbstractBridge}
 end
 
 function Map()
     return Map(
         Union{Nothing,AbstractBridge}[],
-        Tuple{DataType,DataType}[],
-        OrderedDict{Tuple{Int64,DataType},AbstractBridge}(),
+        Tuple{Type,Type}[],
+        OrderedDict{Tuple{Int64,Type},AbstractBridge}(),
     )
 end
 
@@ -194,7 +191,7 @@ end
 Return a list of all the different concrete type of keys in `map`.
 """
 function list_of_key_types(map::Map)
-    list = Set{Tuple{DataType,DataType}}()
+    list = Set{Tuple{Type,Type}}()
     for i in eachindex(map.bridges)
         if map.bridges[i] !== nothing
             push!(list, map.constraint_types[i])

@@ -218,7 +218,7 @@ function set_from_constants end
 ###
 
 """
-    set_types(sets)::Vector{DataType}
+    set_types(sets)::Vector{Type}
 
 Return the list of the types of the sets allowed in `sets`.
 """

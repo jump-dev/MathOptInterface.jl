@@ -127,11 +127,11 @@ function MOI.supports_constraint(
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:NormOneBridge})
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOIB.added_constraint_types(::Type{<:NormOneBridge{T,F}}) where {T,F}
-    return [(F, MOI.Nonnegatives)]
+    return Tuple{Type,Type}[(F, MOI.Nonnegatives)]
 end
 
 function concrete_bridge_type(

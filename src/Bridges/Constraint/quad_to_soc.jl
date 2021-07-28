@@ -164,11 +164,14 @@ function MOI.supports_constraint(
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:QuadtoSOCBridge})
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOIB.added_constraint_types(::Type{QuadtoSOCBridge{T}}) where {T}
-    return [(MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone)]
+    return Tuple{Type,Type}[(
+        MOI.VectorAffineFunction{T},
+        MOI.RotatedSecondOrderCone,
+    ),]
 end
 
 function concrete_bridge_type(

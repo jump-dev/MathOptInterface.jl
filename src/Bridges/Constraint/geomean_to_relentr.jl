@@ -59,13 +59,13 @@ function MOI.supports_constraint(
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:GeoMeantoRelEntrBridge})
-    return [(MOI.Nonnegatives,)]
+    return Tuple{Type}[(MOI.Nonnegatives,)]
 end
 
 function MOIB.added_constraint_types(
     ::Type{<:GeoMeantoRelEntrBridge{T,F,G}},
 ) where {T,F,G}
-    return [(G, MOI.RelativeEntropyCone)]
+    return Tuple{Type,Type}[(G, MOI.RelativeEntropyCone)]
 end
 
 function concrete_bridge_type(

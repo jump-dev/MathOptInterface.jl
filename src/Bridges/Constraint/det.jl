@@ -146,11 +146,11 @@ function MOI.supports_constraint(
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:LogDetBridge})
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOIB.added_constraint_types(::Type{LogDetBridge{T}}) where {T}
-    return [
+    return Tuple{Type,Type}[
         (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle),
         (MOI.VectorAffineFunction{T}, MOI.ExponentialCone),
         (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}),
@@ -396,11 +396,11 @@ function MOI.supports_constraint(
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:RootDetBridge})
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOIB.added_constraint_types(::Type{RootDetBridge{T}}) where {T}
-    return [
+    return Tuple{Type,Type}[
         (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle),
         (MOI.VectorAffineFunction{T}, MOI.GeometricMeanCone),
     ]

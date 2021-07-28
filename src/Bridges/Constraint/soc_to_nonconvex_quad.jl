@@ -140,13 +140,13 @@ end
 function MOIB.added_constrained_variable_types(
     ::Type{<:AbstractSOCtoNonConvexQuadBridge},
 )
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOIB.added_constraint_types(
     ::Type{<:AbstractSOCtoNonConvexQuadBridge{T}},
 ) where {T}
-    return [
+    return Tuple{Type,Type}[
         (MOI.ScalarQuadraticFunction{T}, MOI.LessThan{T}),
         (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}),
     ]

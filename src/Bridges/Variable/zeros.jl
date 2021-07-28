@@ -32,11 +32,11 @@ function supports_constrained_variable(::Type{<:ZerosBridge}, ::Type{MOI.Zeros})
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:ZerosBridge})
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOIB.added_constraint_types(::Type{<:ZerosBridge})
-    return Tuple{DataType,DataType}[]
+    return Tuple{Type,Type}[]
 end
 
 # Attributes, Bridge acting as a model

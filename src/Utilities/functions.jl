@@ -87,7 +87,7 @@ end
 
 const ObjectWithoutIndex = Union{
     Nothing,
-    DataType,
+    Type,
     Number,
     Enum,
     AbstractString,

@@ -37,13 +37,13 @@ function MOI.supports_constraint(
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:ScalarizeBridge})
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOIB.added_constraint_types(
     ::Type{ScalarizeBridge{T,F,S}},
 ) where {T,F,S}
-    return [(F, S)]
+    return Tuple{Type,Type}[(F, S)]
 end
 
 function concrete_bridge_type(
