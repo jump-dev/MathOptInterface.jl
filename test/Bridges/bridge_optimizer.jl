@@ -708,10 +708,10 @@ include("identity_bridge.jl")
 function test_recursive_model_variable(::Type{T} = Int) where {T}
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
     BT = IdentityBridges.VariableBridge{T}
-    b = MOIB.Variable.SingleBridgeOptimizer{BT}(model)
+    b = MOI.Bridges.Variable.SingleBridgeOptimizer{BT}(model)
     x, cx = MOI.add_constrained_variable(b, MOI.EqualTo(one(T)))
-    @test MOIB.is_bridged(b, x)
-    @test MOIB.is_bridged(b, cx)
+    @test MOI.Bridges.is_bridged(b, x)
+    @test MOI.Bridges.is_bridged(b, cx)
     @test MOI.get(b, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(x)
     @test MOI.get(b, MOI.ConstraintSet(), cx) == MOI.EqualTo(one(T))
     MOI.set(b, MOI.ConstraintSet(), cx, MOI.EqualTo(zero(T)))
@@ -724,13 +724,13 @@ end
 function test_recursive_model_constraint(::Type{T} = Int) where {T}
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
     BT = IdentityBridges.ConstraintBridge{T}
-    b = MOIB.Constraint.SingleBridgeOptimizer{BT}(model)
+    b = MOI.Bridges.Constraint.SingleBridgeOptimizer{BT}(model)
     x = MOI.add_variable(b)
     fx = MOI.SingleVariable(x)
     func = one(T) * fx
     set = MOI.EqualTo(zero(T))
     c = MOI.add_constraint(b, func, set)
-    @test MOIB.is_bridged(b, c)
+    @test MOI.Bridges.is_bridged(b, c)
     @test MOI.get(b, MOI.ConstraintFunction(), c) ≈ func
     new_func = T(2) * fx
     MOI.set(b, MOI.ConstraintFunction(), c, new_func)
@@ -753,19 +753,19 @@ end
 function test_recursive_model_objective(::Type{T} = Int) where {T}
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
     BT = IdentityBridges.ObjectiveBridge{T}
-    b = MOIB.Objective.SingleBridgeOptimizer{BT}(model)
+    b = MOI.Bridges.Objective.SingleBridgeOptimizer{BT}(model)
     x = MOI.add_variable(b)
     fx = MOI.SingleVariable(x)
     func = one(T) * fx
     MOI.set(b, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    @test !MOIB.is_objective_bridged(b)
+    @test !MOI.Bridges.is_objective_bridged(b)
     attr = MOI.ObjectiveFunction{typeof(func)}()
     MOI.set(b, attr, func)
-    @test MOIB.is_objective_bridged(b)
+    @test MOI.Bridges.is_objective_bridged(b)
     @test MOI.get(b, attr) ≈ func
     attr = MOI.ObjectiveFunction{typeof(fx)}()
     MOI.set(b, attr, fx)
-    @test !MOIB.is_objective_bridged(b)
+    @test !MOI.Bridges.is_objective_bridged(b)
     @test MOI.get(b, attr) ≈ fx
 end
 
