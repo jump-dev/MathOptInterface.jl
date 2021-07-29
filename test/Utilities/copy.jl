@@ -171,7 +171,6 @@ end
 Model that distinguish variables created constrained
 """
 struct ConstrainedVariablesModel <: MOI.ModelLike
-    allocate_load::Bool
     added_constrained::Vector{Bool}
 end
 
@@ -181,11 +180,7 @@ function MOI.supports_incremental_interface(
     model::ConstrainedVariablesModel,
     ::Bool,
 )
-    return !model.allocate_load
-end
-
-function MOIU.supports_allocate_load(model::ConstrainedVariablesModel, ::Bool)
-    return model.allocate_load
+    return true
 end
 
 function MOI.copy_to(
@@ -204,12 +199,6 @@ function MOI.add_variables(model::ConstrainedVariablesModel, n)
     return MOI.VariableIndex.(m .+ (1:n))
 end
 
-function MOIU.allocate_variables(model::ConstrainedVariablesModel, n)
-    return MOI.add_variables(model, n)
-end
-
-MOIU.load_variables(::ConstrainedVariablesModel, ::Int) = nothing
-
 function MOI.add_constrained_variables(
     model::ConstrainedVariablesModel,
     set::MOI.AbstractVectorSet,
@@ -222,22 +211,6 @@ function MOI.add_constrained_variables(
     return MOI.VariableIndex.(m .+ (1:MOI.dimension(set))), ci
 end
 
-function MOIU.allocate_constrained_variables(
-    model::ConstrainedVariablesModel,
-    set::MOI.AbstractVectorSet,
-)
-    return MOI.add_constrained_variables(model, set)
-end
-
-function MOIU.load_constrained_variables(
-    ::ConstrainedVariablesModel,
-    ::Vector{MOI.VariableIndex},
-    ::MOI.ConstraintIndex{MOI.VectorOfVariables},
-    ::MOI.AbstractVectorSet,
-)
-    return
-end
-
 function MOI.add_constraint(
     ::ConstrainedVariablesModel,
     func::MOI.VectorOfVariables,
@@ -248,45 +221,12 @@ function MOI.add_constraint(
     )
 end
 
-function MOIU.allocate_constraint(
-    model::ConstrainedVariablesModel,
-    func::MOI.VectorOfVariables,
-    set::MOI.AbstractVectorSet,
-)
-    return MOI.add_constraint(model, func, set)
-end
-
-function MOIU.load_constraint(
-    ::ConstrainedVariablesModel,
-    ::MOI.ConstraintIndex{MOI.VectorOfVariables},
-    ::MOI.VectorOfVariables,
-    ::MOI.AbstractVectorSet,
-)
-    return
-end
-
-function test_ConstrainedVariablesModel_allocate_true()
+function test_ConstrainedVariablesModel()
     src = MOIU.Model{Int}()
     x = MOI.add_variables(src, 3)
     cx = MOI.add_constraint(src, [x[1], x[3], x[1], x[2]], MOI.Nonnegatives(4))
     y, cy = MOI.add_constrained_variables(src, MOI.Nonpositives(3))
-    dest = ConstrainedVariablesModel(true, Bool[])
-    idxmap = MOI.copy_to(dest, src)
-    for vi in x
-        @test !dest.added_constrained[idxmap[vi].value]
-    end
-    for vi in y
-        @test dest.added_constrained[idxmap[vi].value]
-    end
-    return
-end
-
-function test_ConstrainedVariablesModel_allocate_false()
-    src = MOIU.Model{Int}()
-    x = MOI.add_variables(src, 3)
-    cx = MOI.add_constraint(src, [x[1], x[3], x[1], x[2]], MOI.Nonnegatives(4))
-    y, cy = MOI.add_constrained_variables(src, MOI.Nonpositives(3))
-    dest = ConstrainedVariablesModel(false, Bool[])
+    dest = ConstrainedVariablesModel(Bool[])
     idxmap = MOI.copy_to(dest, src)
     for vi in x
         @test !dest.added_constrained[idxmap[vi].value]

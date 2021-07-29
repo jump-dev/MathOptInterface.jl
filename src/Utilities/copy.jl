@@ -9,10 +9,10 @@
         filter_constraints::Union{Nothing,Function} = nothing,
     )
 
-Use [`MathOptInterface.supports_incremental_interface`](@ref) and
-[`Utilities.supports_allocate_load`](@ref) to automatically choose between
-[`Utilities.default_copy_to`](@ref) or [`Utilities.allocate_load`](@ref) to
-apply the copy operation.
+A default fallback for [`MOI.copy_to`](@ref).
+
+To use this method, define
+[`MathOptInterface.supports_incremental_interface`](@ref).
 
 If the `filter_constraints` arguments is given, only the constraints for which
 this function returns `true` will be copied. This function is given a
@@ -24,17 +24,14 @@ function automatic_copy_to(
     copy_names::Bool = true,
     filter_constraints::Union{Nothing,Function} = nothing,
 )
-    if MOI.supports_incremental_interface(dest, copy_names)
-        return default_copy_to(dest, src, copy_names, filter_constraints)
-    elseif supports_allocate_load(dest, copy_names)
-        return allocate_load(dest, src, copy_names, filter_constraints)
-    else
+    if !MOI.supports_incremental_interface(dest, copy_names)
         error(
             "Model $(typeof(dest)) does not support copy",
             copy_names ? " with names" : "",
             ".",
         )
     end
+    return default_copy_to(dest, src, copy_names, filter_constraints)
 end
 
 @deprecate supports_default_copy_to MOI.supports_incremental_interface
@@ -662,5 +659,3 @@ function default_copy_to(
 
     return idxmap
 end
-
-include("copy/allocate_load.jl")
