@@ -827,10 +827,10 @@ for (loop_name, loop_super_type) in [
     end
 end
 
-const LessThanIndicatorSetOne{T} =
-    MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}
-const LessThanIndicatorSetZero{T} =
-    MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{T}}
+const LessThanIndicatorOne{T} =
+    MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}
+const LessThanIndicatorZero{T} =
+    MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{T}}
 
 @model(
     Model,
@@ -871,8 +871,8 @@ const LessThanIndicatorSetZero{T} =
         MOI.DualPowerCone,
         MOI.SOS1,
         MOI.SOS2,
-        LessThanIndicatorSetOne,
-        LessThanIndicatorSetZero,
+        LessThanIndicatorOne,
+        LessThanIndicatorZero,
     ),
     (),
     (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),

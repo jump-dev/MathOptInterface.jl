@@ -477,5 +477,5 @@ function set_to_moi(::Val{:IndicatorSet}, object::Object)
         @assert object["activate_on"]::String == "zero"
         MOI.ACTIVATE_ON_ZERO
     end
-    return MOI.IndicatorSet{indicator}(set)
+    return MOI.Indicator{indicator}(set)
 end

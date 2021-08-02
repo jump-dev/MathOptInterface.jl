@@ -3497,7 +3497,7 @@ function test_linear_Indicator_integration(model::MOI.ModelLike, config::Config)
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
     )
     x1 = MOI.add_variable(model)
     x2 = MOI.add_variable(model)
@@ -3512,7 +3512,7 @@ function test_linear_Indicator_integration(model::MOI.ModelLike, config::Config)
         ],
         [0.0, 0.0],
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
+    iset1 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
     MOI.add_constraint(model, f1, iset1)
     f2 = MOI.VectorAffineFunction(
         [
@@ -3522,7 +3522,7 @@ function test_linear_Indicator_integration(model::MOI.ModelLike, config::Config)
         ],
         [0.0, 0.0],
     )
-    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
+    iset2 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
     MOI.add_constraint(model, f2, iset2)
     # Additional regular constraint.
     MOI.add_constraint(
@@ -3604,7 +3604,7 @@ function test_linear_Indicator_ON_ONE(model::MOI.ModelLike, config::Config)
         ],
         [0.0, 0.0],
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
+    iset1 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
     MOI.add_constraint(model, f1, iset1)
     f2 = MOI.VectorAffineFunction(
         [
@@ -3614,7 +3614,7 @@ function test_linear_Indicator_ON_ONE(model::MOI.ModelLike, config::Config)
         ],
         [0.0, 0.0],
     )
-    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
+    iset2 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
     MOI.add_constraint(model, f2, iset2)
     # additional regular constraint
     MOI.add_constraint(
@@ -3703,7 +3703,7 @@ function test_linear_Indicator_ON_ZERO(model::MOI.ModelLike, config::Config)
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
     )
     x1 = MOI.add_variable(model)
     x2 = MOI.add_variable(model)
@@ -3720,7 +3720,7 @@ function test_linear_Indicator_ON_ZERO(model::MOI.ModelLike, config::Config)
         ],
         [0.0, 0.0],
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO}(MOI.LessThan(8.0))
+    iset1 = MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(MOI.LessThan(8.0))
     MOI.add_constraint(model, f1, iset1)
     f2 = MOI.VectorAffineFunction(
         [
@@ -3730,7 +3730,7 @@ function test_linear_Indicator_ON_ZERO(model::MOI.ModelLike, config::Config)
         ],
         [0.0, 0.0],
     )
-    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
+    iset2 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
     MOI.add_constraint(model, f2, iset2)
     # Additional regular constraint.
     MOI.add_constraint(
@@ -3822,7 +3822,7 @@ function test_linear_Indicator_constant_term(
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Float64},
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
     )
     x1 = MOI.add_variable(model)
     x2 = MOI.add_variable(model)
@@ -3837,7 +3837,7 @@ function test_linear_Indicator_constant_term(
         ],
         [0.0, -1.0],
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(7.0))
+    iset1 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(7.0))
     MOI.add_constraint(model, f1, iset1)
     f2 = MOI.VectorAffineFunction(
         [
@@ -3847,7 +3847,7 @@ function test_linear_Indicator_constant_term(
         ],
         [0.0, 1.0],
     )
-    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(10.0))
+    iset2 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(10.0))
     MOI.add_constraint(model, f2, iset2)
     # Additional regular constraint.
     MOI.add_constraint(

@@ -46,7 +46,7 @@ function test_sets_equals()
         @test S(a(), a()) != S(b(), b())
         @test S(a(), a()) == S(a(), a())
     end
-    S = MOI.IndicatorSet
+    S = MOI.Indicator
     A() = MOI.LessThan(a())
     B() = MOI.LessThan(b())
     @test S{MOI.ACTIVATE_ON_ZERO}(A()) == S{MOI.ACTIVATE_ON_ZERO}(A())
@@ -70,15 +70,15 @@ function test_sets_sos2_copy()
 end
 
 function test_sets_indicator_copy()
-    s1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(4.0))
-    s2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO}(MOI.GreaterThan(4.0))
+    s1 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(4.0))
+    s2 = MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(MOI.GreaterThan(4.0))
     s1_copy = copy(s1)
     s2_copy = copy(s2)
-    @test s1_copy isa MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}
+    @test s1_copy isa MOI.Indicator{MOI.ACTIVATE_ON_ONE}
     @test s1 == s1_copy
-    @test s2_copy isa MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO}
+    @test s2_copy isa MOI.Indicator{MOI.ACTIVATE_ON_ZERO}
     @test s2 == s2_copy
-    s3 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO}(MutLessThan(4.0))
+    s3 = MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(MutLessThan(4.0))
     s3_copy = copy(s3)
     @test s3.set.upper ≈ 4.0
     s3_copy.set.upper = 5.0
@@ -109,7 +109,7 @@ function test_sets_dimension()
     @test MOI.dimension(MOI.SOS1([1.0, 2.0])) == 2
     @test MOI.dimension(MOI.SOS2([1.0, 2.0])) == 2
     @test MOI.dimension(
-        MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(1.0)),
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(1.0)),
     ) == 2
     @test MOI.dimension(MOI.Complements(10)) == 10
 end

@@ -43,7 +43,7 @@ function test_indicator_by_SOS1()
         ],
         [0.0, 0.0],
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
+    iset1 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
 
     f2 = MOI.VectorAffineFunction(
         [
@@ -53,7 +53,7 @@ function test_indicator_by_SOS1()
         ],
         [0.0, 0.0],
     )
-    iset2 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.EqualTo(9.0))
+    iset2 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.EqualTo(9.0))
 
     f3 = MOI.VectorAffineFunction(
         [
@@ -62,7 +62,7 @@ function test_indicator_by_SOS1()
         ],
         [0.0, 0.0],
     )
-    iset3 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.GreaterThan(5.0))
+    iset3 = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.GreaterThan(5.0))
 
     BT1 = MOI.Bridges.Constraint.concrete_bridge_type(
         MOI.Bridges.Constraint.IndicatorSOS1Bridge{Float64},
@@ -217,7 +217,7 @@ function test_model_equality()
         ],
         [0.0, 0.0],
     )
-    iset = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
+    iset = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
     ci = MOI.add_constraint(bridged_mock, f, iset)
     @test length(MOI.get(mock, MOI.ListOfVariableIndices())) == 3
     MOI.set(
@@ -315,7 +315,7 @@ function test_getting_primal_attributes()
         ],
         [0.0, 0.0],
     )
-    iset = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
+    iset = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(8.0))
     BT = MOI.Bridges.Constraint.concrete_bridge_type(
         MOI.Bridges.Constraint.IndicatorSOS1Bridge{Float64},
         typeof(f),
@@ -341,7 +341,7 @@ function test_getting_primal_attributes()
         MOI.get(mock, MOI.ConstraintPrimalStart(), bridge1) .≈
         (1.0, affine_value - w_value),
     )
-    iseteq = MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(MOI.EqualTo(8.0))
+    iseteq = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.EqualTo(8.0))
     BT = MOI.Bridges.Constraint.concrete_bridge_type(
         MOI.Bridges.Constraint.IndicatorSOS1Bridge{Float64},
         typeof(f),

@@ -48,7 +48,7 @@ function test_indicator_activate_on_zero()
         ],
         [0.0, 0.0],
     )
-    iset1 = MOI.IndicatorSet{MOI.ACTIVATE_ON_ZERO}(MOI.LessThan(8.0))
+    iset1 = MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(MOI.LessThan(8.0))
     BT = MOI.Bridges.Constraint.concrete_bridge_type(
         MOI.Bridges.Constraint.IndicatorActiveOnFalseBridge{Float64},
         typeof(f1),
