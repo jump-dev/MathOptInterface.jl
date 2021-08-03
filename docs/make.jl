@@ -27,6 +27,7 @@ makedocs(
         "Tutorials" => [
             "tutorials/example.md",
             "tutorials/implementing.md",
+            "tutorials/mathprogbase.md",
         ],
         "Manual" => [
             "manual/standard_form.md",
