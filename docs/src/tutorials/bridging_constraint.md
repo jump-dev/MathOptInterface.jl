@@ -21,11 +21,11 @@ dimensionality of the functions that can be used with the set.
 * A scalar function only has one dimension. MOI defines three types of scalar 
   functions: a variable ([`SingleVariable`](@ref)), an affine function 
   ([`ScalarAffineFunction`](@ref)), or a quadratic function 
-  ([`QuadraticAffineFunction`](@ref)).
+  ([`ScalarQuadraticFunction`](@ref)).
 * A vector function has several dimensions (at least one). MOI defines three 
   types of vector functions: several variables ([`VectorOfVariables`](@ref)), 
   an affine function ([`VectorAffineFunction`](@ref)), or a quadratic function 
-  ([`VectorAffineFunction`](@ref)). The main difference with scalar functions 
+  ([`VectorQuadraticFunction`](@ref)). The main difference with scalar functions 
   is that the order of dimensions can be very important: for instance, in an 
   indicator constraint ([`Indicator`](@ref)), the first dimension indicates
   whether the constraint about the second dimension is active.
