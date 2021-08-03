@@ -42,7 +42,7 @@ Then, three sets of functions must be defined:
 
 1. [`Bridges.Constraint.bridge_constraint`](@ref): this function implements the
    bridge and creates the required variables and constraints.
-2. `supports_constraint`: these functions should return `true` when the 
+2. [`supports_constraint`](@ref): these functions should return `true` when the 
    combination of function and set is supported by the bridge. By default, the 
    base implementation always returns `false` and the bridge does not have to 
    provide this implementation.
