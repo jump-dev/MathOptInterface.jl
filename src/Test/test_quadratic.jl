@@ -54,12 +54,12 @@ function test_quadratic_integration(model::MOI.ModelLike, config::Config)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
     obj = MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm{Float64}[],
         MOI.ScalarQuadraticTerm.(
             [2.0, 1.0, 2.0, 1.0, 2.0],
             v[[1, 1, 2, 2, 3]],
             v[[1, 2, 2, 3, 3]],
         ),
+        MOI.ScalarAffineTerm{Float64}[],
         0.0,
     )
     MOI.set(
@@ -180,12 +180,12 @@ function test_quadratic_duplicate_terms(model::MOI.ModelLike, config::Config)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
     obj = MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm.(0.0, v),
         MOI.ScalarQuadraticTerm.(
             [2.0, 0.5, 0.5, 2.0, 1.0, 1.0, 1.0],
             [v[1], v[1], v[1], v[2], v[2], v[3], v[3]],
             [v[1], v[2], v[2], v[2], v[3], v[3], v[3]],
         ),
+        MOI.ScalarAffineTerm.(0.0, v),
         0.0,
     )
     MOI.set(
@@ -232,12 +232,12 @@ function test_quadratic_duplicate_terms(model::MOI.ModelLike, config::Config)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
     obj2 = MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm.(0.0, v),
         MOI.ScalarQuadraticTerm.(
             [-4.0, -1.0, -1.0, -4.0, -2.0, -2.0, -2.0],
             [v[1], v[1], v[1], v[2], v[2], v[3], v[3]],
             [v[1], v[2], v[2], v[2], v[3], v[3], v[3]],
         ),
+        MOI.ScalarAffineTerm.(0.0, v),
         0.0,
     )
     MOI.set(
@@ -349,8 +349,8 @@ function test_quadratic_nonhomogeneous(model::MOI.ModelLike, config::Config)
     @test vc2.value == y.value
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     obj = MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm.([1.0, 1.0], [x, y]),
         MOI.ScalarQuadraticTerm.([4.0, 2.0, 1.0], [x, y, x], [x, y, y]),
+        MOI.ScalarAffineTerm.([1.0, 1.0], [x, y]),
         1.0,
     )
     MOI.set(
@@ -511,8 +511,8 @@ function test_quadratic_constraint_integration(
         ) == 1
     end
     c2f = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(1.0, y)],
         [MOI.ScalarQuadraticTerm(2.0, x, x)],
+        [MOI.ScalarAffineTerm(1.0, y)],
         0.0,
     )
     c2 = MOI.add_constraint(model, c2f, MOI.LessThan(2.0))
@@ -630,8 +630,8 @@ function test_quadratic_constraint_basic(model::MOI.ModelLike, config::Config)
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
     cf = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(0.0, x)],
         [MOI.ScalarQuadraticTerm(2.0, x, x)],
+        [MOI.ScalarAffineTerm(0.0, x)],
         0.0,
     )
     c = MOI.add_constraint(model, cf, MOI.LessThan(2.0))
@@ -723,8 +723,8 @@ function test_quadratic_constraint_minimize(
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
     cf = MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm{Float64}[],
         [MOI.ScalarQuadraticTerm(2.0, x, x)],
+        MOI.ScalarAffineTerm{Float64}[],
         0.0,
     )
     c = MOI.add_constraint(model, cf, MOI.LessThan(2.0))
@@ -817,8 +817,8 @@ function _test_quadratic_constraint_helper(
     vc = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.EqualTo(1.0))
     @test vc.value == y.value
     cf = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(0.0, x)],
         MOI.ScalarQuadraticTerm.([2.0, 1.0, 2.0], [x, x, y], [x, y, y]),
+        [MOI.ScalarAffineTerm(0.0, x)],
         0.0,
     )
     if !less_than
@@ -957,8 +957,8 @@ function test_quadratic_nonconvex_constraint_integration(
     vc2 = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.GreaterThan(1.0))
     @test vc2.value == y.value
     cf = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(0.0, x)],
         [MOI.ScalarQuadraticTerm(1.0, x, y)],
+        [MOI.ScalarAffineTerm(0.0, x)],
         0.0,
     )
     c = MOI.add_constraint(model, cf, MOI.LessThan(4.0))
@@ -1044,14 +1044,14 @@ function test_quadratic_nonconvex_constraint_basic(
     vc2 = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
     @test vc2.value == y.value
     cf = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(0.0, x)],
         [MOI.ScalarQuadraticTerm(1.0, x, y)],
+        [MOI.ScalarAffineTerm(0.0, x)],
         0.0,
     )
     c = MOI.add_constraint(model, cf, MOI.EqualTo(4.0))
     cf2 = MOI.ScalarQuadraticFunction(
-        [MOI.ScalarAffineTerm(0.0, x)],
         [MOI.ScalarQuadraticTerm(2.0, x, x)],
+        [MOI.ScalarAffineTerm(0.0, x)],
         0.0,
     )
     c2 = MOI.add_constraint(model, cf2, MOI.EqualTo(4.0))
@@ -1154,8 +1154,8 @@ function test_quadratic_SecondOrderCone_basic(
         ) == 1
     end
     c2f = MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm{Float64}[],
         MOI.ScalarQuadraticTerm.([2.0, 2.0, -2.0], [x, y, t], [x, y, t]),
+        MOI.ScalarAffineTerm{Float64}[],
         0.0,
     )
     c2 = MOI.add_constraint(model, c2f, MOI.LessThan(0.0))

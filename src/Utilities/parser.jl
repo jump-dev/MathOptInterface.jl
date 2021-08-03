@@ -27,8 +27,8 @@ struct _ParsedScalarQuadraticTerm
 end
 
 struct _ParsedScalarQuadraticFunction
-    affine_terms::Vector{_ParsedScalarAffineTerm}
     quadratic_terms::Vector{_ParsedScalarQuadraticTerm}
+    affine_terms::Vector{_ParsedScalarAffineTerm}
     constant::Float64
 end
 
@@ -38,8 +38,8 @@ struct _ParsedVectorQuadraticTerm
 end
 
 struct _ParsedVectorQuadraticFunction
-    affine_terms::Vector{_ParsedVectorAffineTerm}
     quadratic_terms::Vector{_ParsedVectorQuadraticTerm}
+    affine_terms::Vector{_ParsedVectorAffineTerm}
     constant::Vector{Float64}
 end
 
@@ -99,8 +99,8 @@ function _parse_function(ex)
                 return _ParsedVectorAffineFunction(affine_terms, constant)
             else
                 return _ParsedVectorQuadraticFunction(
-                    affine_terms,
                     quadratic_terms,
+                    affine_terms,
                     constant,
                 )
             end
@@ -163,8 +163,8 @@ function _parse_function(ex)
             return _ParsedScalarAffineFunction(affine_terms, constant)
         else
             return _ParsedScalarQuadraticFunction(
-                affine_terms,
                 quadratic_terms,
+                affine_terms,
                 constant,
             )
         end

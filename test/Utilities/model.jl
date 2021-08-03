@@ -221,8 +221,8 @@ function test_quadratic_functions()
     x, y = MOI.add_variables(model, 2)
     @test 2 == @inferred MOI.get(model, MOI.NumberOfVariables())
     f1 = MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm.([3], [x]),
         MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]),
+        MOI.ScalarAffineTerm.([3], [x]),
         7,
     )
     c1 = MOI.add_constraint(model, f1, MOI.Interval(-1, 1))
@@ -241,13 +241,13 @@ function test_quadratic_functions()
         }(),
     )) == [c1]
     f2 = MOI.VectorQuadraticFunction(
-        MOI.VectorAffineTerm.(
-            [1, 2, 2],
-            MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y]),
-        ),
         MOI.VectorQuadraticTerm.(
             [1, 1, 2],
             MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]),
+        ),
+        MOI.VectorAffineTerm.(
+            [1, 2, 2],
+            MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y]),
         ),
         [7, 3, 4],
     )

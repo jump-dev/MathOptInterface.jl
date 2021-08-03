@@ -24,8 +24,8 @@ function MA.mutable_copy(func::MOI.ScalarQuadraticFunction)
         ) for t in func.quadratic_terms
     ]
     return MOI.ScalarQuadraticFunction(
-        affine_terms,
         quadratic_terms,
+        affine_terms,
         MA.copy_if_mutable(func.constant),
     )
 end

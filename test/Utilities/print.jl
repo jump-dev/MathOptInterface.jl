@@ -130,8 +130,8 @@ function test_ScalarQuadraticFunction()
     MOI.set(model, MOI.VariableName(), x, "x")
     MOI.set(model, MOI.VariableName(), y, "y")
     f = MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm.([-1.2, 1.3], [x, x]),
         MOI.ScalarQuadraticTerm.([0.5, 0.6], [x, x], [x, y]),
+        MOI.ScalarAffineTerm.([-1.2, 1.3], [x, x]),
         1.4,
     )
     @test MOIU._to_string(PLAIN, model, f) ==

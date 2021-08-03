@@ -299,12 +299,12 @@ function solve_qcp_edge_cases(model::MOI.ModelLike, config::Config)
         MOI.add_constraint(
             model,
             MOI.ScalarQuadraticFunction(
-                MOI.ScalarAffineTerm.([1.0], [x[2]]),  # affine terms
                 MOI.ScalarQuadraticTerm.(
                     [2.0, 2.0],
                     [x[1], x[1]],
                     [x[1], x[1]],
                 ),  # quad
+                MOI.ScalarAffineTerm.([1.0], [x[2]]),  # affine terms
                 0.0,  # constant
             ),
             MOI.LessThan(1.0),
@@ -341,12 +341,12 @@ function solve_qcp_edge_cases(model::MOI.ModelLike, config::Config)
         MOI.add_constraint(
             model,
             MOI.ScalarQuadraticFunction(
-                MOI.ScalarAffineTerm{Float64}[],  # affine terms
                 MOI.ScalarQuadraticTerm.(
                     [2.0, 0.25, 0.25, 0.5, 2.0],
                     [x[1], x[1], x[2], x[1], x[2]],
                     [x[1], x[2], x[1], x[2], x[2]],
                 ),  # quad
+                MOI.ScalarAffineTerm{Float64}[],  # affine terms
                 0.0,  # constant
             ),
             MOI.LessThan(1.0),

@@ -47,7 +47,7 @@ function bridge_constraint(
         push!(q_terms, MOI.ScalarQuadraticTerm(T(2), var, var))
     end
 
-    fq = MOI.ScalarQuadraticFunction(a_terms, q_terms, zero(T))
+    fq = MOI.ScalarQuadraticFunction(q_terms, a_terms, zero(T))
     quad = MOI.add_constraint(model, fq, MOI.LessThan(zero(T)))
     # ScalarAffineFunction's are added instead of SingleVariable's
     # because models can only have one SingleVariable per variable.
@@ -107,7 +107,7 @@ function bridge_constraint(
         push!(q_terms, MOI.ScalarQuadraticTerm(T(2), var, var))
     end
 
-    fq = MOI.ScalarQuadraticFunction(a_terms, q_terms, zero(T))
+    fq = MOI.ScalarQuadraticFunction(q_terms, a_terms, zero(T))
     quad = MOI.add_constraint(model, fq, MOI.LessThan(zero(T)))
     # ScalarAffineFunction's are added instead of SingleVariable's
     # because models can only have one SingleVariable per variable.

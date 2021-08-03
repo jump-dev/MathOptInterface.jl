@@ -253,8 +253,8 @@ function test_objective_qp_ObjectiveFunction_edge_cases(
         model,
         obj_attr,
         MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm{Float64}[],  # affine terms
             MOI.ScalarQuadraticTerm.([2.0, 2.0], x, x),  # quad
+            MOI.ScalarAffineTerm{Float64}[],  # affine terms
             0.0,  # constant
         ),
     )
@@ -270,8 +270,8 @@ function test_objective_qp_ObjectiveFunction_edge_cases(
         model,
         obj_attr,
         MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm.([1.0, 1.0], [x[1], x[1]]),  # affine terms
             MOI.ScalarQuadraticTerm.([2.0, 2.0], x, x),  # quad
+            MOI.ScalarAffineTerm.([1.0, 1.0], [x[1], x[1]]),  # affine terms
             0.0,  # constant
         ),
     )
@@ -287,8 +287,8 @@ function test_objective_qp_ObjectiveFunction_edge_cases(
         model,
         obj_attr,
         MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm{Float64}[],  # affine terms
             MOI.ScalarQuadraticTerm.([2.0, 2.0], [x[1], x[1]], [x[1], x[1]]),  # quad
+            MOI.ScalarAffineTerm{Float64}[],  # affine terms
             0.0,  # constant
         ),
     )
@@ -304,12 +304,12 @@ function test_objective_qp_ObjectiveFunction_edge_cases(
         model,
         obj_attr,
         MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm{Float64}[],  # affine terms
             MOI.ScalarQuadraticTerm.(
                 [2.0, 0.25, 0.25, 0.5, 2.0],
                 [x[1], x[1], x[2], x[1], x[2]],
                 [x[1], x[2], x[1], x[2], x[2]],
             ),  # quad
+            MOI.ScalarAffineTerm{Float64}[],  # affine terms
             0.0,  # constant
         ),
     )
@@ -387,12 +387,12 @@ function test_objective_qp_ObjectiveFunction_zero_ofdiag(
         model,
         obj_attr,
         MOI.ScalarQuadraticFunction(
-            MOI.ScalarAffineTerm{Float64}[],  # affine terms
             MOI.ScalarQuadraticTerm.(
                 [2.0, 0.0, 2.0],
                 [x[1], x[1], x[2]],
                 [x[1], x[2], x[2]],
             ),  # quad
+            MOI.ScalarAffineTerm{Float64}[],  # affine terms
             0.0,  # constant
         ),
     )
