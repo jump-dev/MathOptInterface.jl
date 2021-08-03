@@ -40,14 +40,14 @@ model.
 
 Then, three sets of functions must be defined: 
 
-1. `Bridges.Constraint.bridge_constraint`: this function implements the bridge
-   and creates the required variables and constraints.
+1. [`Bridges.Constraint.bridge_constraint`](@ref): this function implements the
+   bridge and creates the required variables and constraints.
 2. `supports_constraint`: these functions should return `true` when the 
    combination of function and set is supported by the bridge. By default, the 
    base implementation always returns `false` and the bridge does not have to 
    provide this implementation.
-3. `Bridges.added_constrained_variable_types` and 
-   `Bridges.added_constraint_types`: these functions return the types of 
-   variables and constraints that this bridge adds. They are used to compute
+3. [`Bridges.added_constrained_variable_types`](@ref) and 
+   [`Bridges.added_constraint_types`](@ref): these functions return the types 
+   of variables and constraints that this bridge adds. They are used to compute
    the set of other bridges that are required to use the one you are defining, 
    if need be.
