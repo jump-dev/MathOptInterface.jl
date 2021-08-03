@@ -30,7 +30,11 @@ dimensionality of the functions that can be used with the set.
   indicator constraint ([`Indicator`](@ref)), the first dimension indicates
   whether the constraint about the second dimension is active.
 
-## Four parts in a constraint bridge
+In this tutorial, we will cover the creation of a bridge from `<=` 
+([`LessThan`](@ref)) to `>=` ([`GreaterThan`](@ref)), i.e. creating a 
+constraint with reversed signs, only for scalar affine functions.
+
+## Four mandatory parts in a constraint bridge
 
 The first part of a constraint bridge is a new concrete type that inherits from
 [`Bridges.Constraint.AbstractBridge`](@ref). This type must have fields to 
@@ -51,3 +55,43 @@ Then, three sets of functions must be defined:
    of variables and constraints that this bridge adds. They are used to compute
    the set of other bridges that are required to use the one you are defining, 
    if need be.
+
+More functions can be implemented, for instance to retrieve properties from the 
+bridge or deleting a bridged constraint.
+
+### 1. Structure for the bridge
+
+A typical `struct` behind a bridge depends on the type of the coefficients that
+are used for the model (typically `Float64`, but coefficients might also be 
+integers or complex numbers).
+
+This structure must hold a reference to all the variables and the constraints 
+that are created as part of the bridge.
+
+In our example, the bridge should be able to map any 
+`ScalarAffineFunction{T}`-in-`LessThan{T}` constraint to a single
+`ScalarAffineFunction{T}`-in-`GreaterThan{T}` constraint. The affine function
+has coefficients of type `T`. The bridge is parametrized with `T`, so that the 
+constraint that the bridge creates also has coefficients of type `T`.
+
+```julia
+struct SignBridge{T <: Number} <: Bridges.Constraint.AbstractBridge
+    constraint::ConstraintIndex{ScalarAffineFunction{T}, GreaterThan{T}}
+end
+```
+
+### 2. Bridge creation
+
+### 3. Supported constraint types
+
+### 4. Metadata about the bridge
+
+## Bridge registration
+
+## Bridge improvements
+
+### Attribute retrieval
+
+Like models, bridges have attributes that can be retrieved using [`get`](@ref) 
+and [`set`](@ref). The most important ones are the number of variables and
+constraints, but also the lists of variables and constraints.
