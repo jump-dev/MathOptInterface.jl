@@ -37,6 +37,7 @@ Bridges.Variable.unbridged_map
 
 ```@docs
 Bridges.Constraint.AbstractBridge
+Bridges.Constraint.AbstractFunctionConversionBridge
 Bridges.Constraint.SingleBridgeOptimizer
 Bridges.Constraint.add_all_bridges
 ```
