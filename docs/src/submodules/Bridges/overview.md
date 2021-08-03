@@ -52,8 +52,13 @@ form supported by the solver.
 The equivalent formulation may add constraints (and possibly also variables) in
 the underlying model.
 
+In particular, constraint bridges can focus on rewriting the function of a
+constraint, and do not change the set.
+
 Read the [list of implemented constraint bridges](@ref constraint_bridges_ref)
 for more details on the types of transformations that are available.
+Function bridges are [ScalarFunctionizeBridge](@ref) and
+[VectorFunctionizeBridge](@ref).
 
 ### [Variable bridges](@id variable_bridges)
 
@@ -62,7 +67,7 @@ Variable bridges convert variables added by the user, either free with
 [`add_constrained_variable`](@ref)/[`add_constrained_variables`](@ref),
 into an equivalent form supported by the solver.
 
-Te equivalent formulation may add constraints (and possibly also variables) in
+The equivalent formulation may add constraints (and possibly also variables) in
 the underlying model.
 
 Read the [list of implemented variable bridges](@ref variable_bridges_ref) for
