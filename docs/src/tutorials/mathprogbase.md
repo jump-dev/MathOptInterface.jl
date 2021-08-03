@@ -13,7 +13,8 @@ For more information, read [Implementing a solver interface](@ref).
 ## Transitioning the high-level functions
 
 MathOptInterface doesn't provide replacements for the high-level interfaces in
-MathProgBase. We recommend you use JuMP instead.
+MathProgBase. We recommend you use [JuMP](https://github.com/jump-dev/JuMP.jl)
+as a modeling interface instead.
 
 !!! tip
     If you haven't used JuMP before, start with the tutorial
