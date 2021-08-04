@@ -194,6 +194,21 @@ function test_UnsupportedSubmittable()
     )
 end
 
+function test_attribute_value_type()
+    @test MOI.attribute_value_type(MOI.CallbackNodeStatus(1)) ==
+          MOI.CallbackNodeStatusCode
+    @test MOI.attribute_value_type(MOI.LazyConstraintCallback()) == Function
+    @test MOI.attribute_value_type(MOI.RelativeGap()) == Float64
+    @test MOI.attribute_value_type(MOI.SimplexIterations()) == Int64
+    @test MOI.attribute_value_type(MOI.BarrierIterations()) == Int64
+    @test MOI.attribute_value_type(MOI.NodeCount()) == Int64
+    @test MOI.attribute_value_type(
+        MOI.ConstraintBridgingCost{MOI.SingleVariable,MOI.ZeroOne}(),
+    ) == Float64
+    @test MOI.attribute_value_type(MOI.VariableBridgingCost{MOI.ZeroOne}()) ==
+          Float64
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")
