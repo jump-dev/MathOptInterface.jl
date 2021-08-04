@@ -49,6 +49,12 @@ Utilities.state
 Utilities.mode
 ```
 
+### Mock optimizer
+
+```@docs
+Utilities.MockOptimizer
+```
+
 ## Printing
 
 ```@docs
