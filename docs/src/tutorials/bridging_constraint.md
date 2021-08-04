@@ -220,3 +220,57 @@ Bridges.add_bridge(optimizer, SignBridge{Float64})
 Like models, bridges have attributes that can be retrieved using [`get`](@ref) 
 and [`set`](@ref). The most important ones are the number of variables and
 constraints, but also the lists of variables and constraints.
+
+In our example, we only have one constraint and only have to implement the 
+[`NumberOfConstraints`](@ref) and [`ListOfConstraints`](@ref) attributes:
+
+```julia
+function get(
+    ::SignBridge{T},
+    ::NumberOfConstraints{
+        ScalarAffineFunction{T},
+        GreaterThan{T},
+    },
+) where {T}
+    return 1
+end
+
+function get(
+    bridge::SignBridge{T},
+    ::ListOfConstraints{
+        ScalarAffineFunction{T},
+        GreaterThan{T},
+    },
+) where {T}
+    return [bridge.constraint]
+end
+```
+
+You must implement one such pair of functions for each type of constraint the 
+bridge adds to the model.
+
+!!! warning
+    Avoid returning a list from the bridge object without copying it. Users 
+    should be able to change the contents of the returned list without altering
+    the bridge object.
+
+For variables, the situation is simpler. If your bridge creates new variables, 
+you should implement the [`NumberOfVariables`](@ref) and 
+[`ListOfVariables`](@ref) attributes. However, these attributes do not have
+parameters, unlike their constraint counterparts. Only two functions suffice:
+
+```julia
+function get(
+    ::SignBridge{T},
+    ::NumberOfVariables,
+) where {T}
+    return …
+end
+
+function get(
+    ::SignBridge{T},
+    ::ListOfVariables,
+) where {T}
+    return …
+end
+```
