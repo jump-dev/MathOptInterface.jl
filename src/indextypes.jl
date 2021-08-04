@@ -19,7 +19,6 @@ index.value == MOI.get(model, MOI.ConstraintFunction(), index).variable.value
 struct ConstraintIndex{F,S}
     value::Int64
 end
-index_value(ci::ConstraintIndex) = ci.value
 
 """
     VariableIndex
@@ -30,7 +29,6 @@ To allow for deletion, indices need not be consecutive.
 struct VariableIndex
     value::Int64
 end
-index_value(vi::VariableIndex) = vi.value
 
 # The default hash is slow. It's important for the performance of dictionaries
 # of VariableIndices to define our own.
