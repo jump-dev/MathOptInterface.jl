@@ -106,6 +106,7 @@ Bridges.Variable.add_all_bridges
 ### [Bridges implemented](@id variable_bridges_ref)
 
 ```@docs
+Bridges.Variable.FlipSignBridge
 Bridges.Variable.ZerosBridge
 Bridges.Variable.FreeBridge
 Bridges.Variable.NonposToNonnegBridge
