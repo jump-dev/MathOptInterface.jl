@@ -58,6 +58,7 @@ Bridges.inverse_adjoint_map_function
 ### [Bridges implemented](@id constraint_bridges_ref)
 
 ```@docs
+Bridges.Constraint.FlipSignBridge
 Bridges.Constraint.GreaterToIntervalBridge
 Bridges.Constraint.GreaterToLessBridge
 Bridges.Constraint.LessToIntervalBridge
