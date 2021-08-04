@@ -222,7 +222,8 @@ and [`set`](@ref). The most important ones are the number of variables and
 constraints, but also the lists of variables and constraints.
 
 In our example, we only have one constraint and only have to implement the 
-[`NumberOfConstraints`](@ref) and [`ListOfConstraints`](@ref) attributes:
+[`NumberOfConstraints`](@ref) and [`ListOfConstraintTypesPresent`](@ref) 
+attributes:
 
 ```julia
 function get(
@@ -237,7 +238,7 @@ end
 
 function get(
     bridge::SignBridge{T},
-    ::ListOfConstraints{
+    ::ListOfConstraintTypesPresent{
         ScalarAffineFunction{T},
         GreaterThan{T},
     },
