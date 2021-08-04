@@ -191,7 +191,7 @@ const Sign{T, OT <: MOI.ModelLike} =
 ```
 
 In the context of unit tests, this bridge is used in conjunction with a 
-[`MockOptimizer`](@ref): 
+[`Utilities.MockOptimizer`](@ref): 
 
 ```julia
 mock = Utilities.MockOptimizer(
