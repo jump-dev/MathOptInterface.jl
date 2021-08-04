@@ -8,6 +8,13 @@ struct MockVariableAttribute <: MOI.AbstractVariableAttribute end
 struct MockConstraintAttribute <: MOI.AbstractConstraintAttribute end
 
 # A mock optimizer used for testing.
+"""
+    MockOptimizer
+
+`MockOptimizer` is a fake optimizer especially useful for testing. Its main 
+feature is that it can store the values that should be returned for each 
+attribute.
+"""
 mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     inner_model::MT
     # Flags
