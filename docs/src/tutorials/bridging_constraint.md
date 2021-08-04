@@ -93,7 +93,7 @@ and set. The arguments to `bridge_constraint` are similar to
 [`add_constraint`](@ref), with the exception of the first argument: it is the
 type of the structure defined in the first step.
 
-`bridge_constraint` returns an object whose type is the structure defined in
+`bridge_constraint` returns an instance of the struct defined in the first step.
 the first step.
 
 In our example, the bridge constraint could be defined as: 
