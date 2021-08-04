@@ -288,7 +288,7 @@ but with a sign change.
 
 ```julia
 function MOI.modify(
-    model,
+    model::MOI.ModelLike,
     bridge::SignBridge,
     change::ScalarCoefficientChange,
 )
@@ -306,7 +306,7 @@ end
 When a bridge is deleted, the constraints it added should be deleted too.
 
 ```julia
-function delete(model, bridge::SignBridge)
+function delete(model::MOI.ModelLike, bridge::SignBridge)
     delete(model, bridge.constraint)
     return
 end
