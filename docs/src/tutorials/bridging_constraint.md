@@ -176,7 +176,7 @@ end
 
 For a bridge to be used by MOI, it must be known by MOI. 
 
-### Single-bridge optimizer
+### `SingleBridgeOptimizer`
 
 The first way to do so is to create a single-bridge optimizer. This type of 
 optimizer wraps another optimizer and adds the possibility to use only one 
@@ -198,6 +198,19 @@ mock = Utilities.MockOptimizer(
     Utilities.UniversalFallback(Utilities.Model{Float64}()),
 )
 bridged_mock = Sign{Float64}(mock)
+```
+
+### New bridge for a `LazyBridgeOptimizer`
+
+Typical user-facing models for MOI are based on 
+[`Bridges.LazyBridgeOptimizer`](@ref). For instance, this type of model is 
+returned by [`Bridges.full_bridge_optimizer`](@ref). These models can be 
+added more bridges by using [`Bridges.add_bridge`](@ref): 
+
+```julia
+inner_optimizer = Utilities.Model{Float64}()
+optimizer = Bridges.full_bridge_optimizer(inner_optimizer, Float64)
+Bridges.add_bridge(optimizer, SignBridge{Float64})
 ```
 
 ## Bridge improvements
