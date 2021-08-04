@@ -30,9 +30,13 @@ dimensionality of the functions that can be used with the set.
   indicator constraint ([`Indicator`](@ref)), the first dimension indicates
   whether the constraint about the second dimension is active.
 
-In this tutorial, we will cover the creation of a bridge from `<=` 
-([`LessThan`](@ref)) to `>=` ([`GreaterThan`](@ref)), i.e. creating a 
-constraint with reversed signs, only for scalar affine functions.
+To explain how to implement a bridge, we present the example of
+[`Bridges.Constraint.FlipSignBridge`](@ref). This bridge maps `<=`
+([`LessThan`](@ref)) constraints to `>=` ([`GreaterThan`](@ref)) constraints.
+This corresponds to reversing the sign of the inequality. We focus on scalar
+affine functions (we disregard the cases of a single variable or of quadratic 
+functions). This example is a simplified version of the code included 
+in MOI.
 
 ## Four mandatory parts in a constraint bridge
 
