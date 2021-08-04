@@ -277,9 +277,9 @@ end
 
 ### Model modifications
 
-When the user requests a change to a constraint, MOI does its best to avoid
-copying the model, whence the modification API. Bridges can also implement 
-this API to allow certain changes, such as coefficient changes.
+To avoid copying the model when the user request to change a constraint, MOI 
+provides [`MOI.modify`](@ref). Bridges can also implement this API to allow 
+certain changes, such as coefficient changes.
 
 In our case, a modification of a coefficient in the original constraint
 (i.e. replacing the value of the coefficient of a variable in the affine 
