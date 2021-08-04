@@ -89,7 +89,7 @@ end
 
 The function [`Bridges.Constraint.bridge_constraint`](@ref) is called whenever
 the bridge should be instantiated for a specific model, with the given function
-and set. The arguments to `bridge_constraint` are highly similar to 
+and set. The arguments to `bridge_constraint` are similar to 
 [`add_constraint`](@ref), with the exception of the first argument: it is the
 type of the structure defined in the first step.
 
