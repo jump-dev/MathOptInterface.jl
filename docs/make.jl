@@ -28,6 +28,7 @@ makedocs(
             "tutorials/example.md",
             "tutorials/implementing.md",
             "tutorials/mathprogbase.md",
+            "tutorials/bridging_constraint.md",
         ],
         "Manual" => [
             "manual/standard_form.md",
