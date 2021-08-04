@@ -40,7 +40,7 @@ in MOI.
 
 ## Four mandatory parts in a constraint bridge
 
-The first part of a constraint bridge is a new concrete type that inherits from
+The first part of a constraint bridge is a new concrete subtype of
 [`Bridges.Constraint.AbstractBridge`](@ref). This type must have fields to 
 store all the new variables and constraints that the bridge will add. 
 Typically, these types are parametrized by the type of the coefficients in the
