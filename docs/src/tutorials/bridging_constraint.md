@@ -80,7 +80,7 @@ has coefficients of type `T`. The bridge is parametrized with `T`, so that the
 constraint that the bridge creates also has coefficients of type `T`.
 
 ```julia
-struct SignBridge{T <: Number} <: Bridges.Constraint.AbstractBridge
+struct SignBridge{T<:Number} <: Bridges.Constraint.AbstractBridge
     constraint::ConstraintIndex{ScalarAffineFunction{T}, GreaterThan{T}}
 end
 ```
