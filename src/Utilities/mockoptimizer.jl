@@ -39,7 +39,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     optimize!::Function
     optimize_called::Bool
     termination_status::MOI.TerminationStatusCode
-    result_count::Int
+    result_count::Int64
     objective_value::Dict{Int,Float64}
     dual_objective_value::Dict{Int,Float64}
     # Primal solution
