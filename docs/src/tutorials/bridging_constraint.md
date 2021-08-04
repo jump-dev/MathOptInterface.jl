@@ -274,3 +274,29 @@ function get(
     return …
 end
 ```
+
+### Model modifications
+
+When the user requests a change to a constraint, MOI does its best to avoid
+copying the model, whence the modification API. Bridges can also implement 
+this API to allow certain changes, such as coefficient changes.
+
+In our case, a modification of a coefficient in the original constraint
+(i.e. replacing the value of the coefficient of a variable in the affine 
+function) should be transmitted to the constraint created by the bridge,
+but with a sign change.
+
+```julia
+function MOI.modify(
+    model::MOI.ModelLike,
+    bridge::SignBridge,
+    change::ScalarCoefficientChange,
+)
+    MOI.modify(
+        model,
+        bridge.constraint,
+        MOI.ScalarCoefficientChange(change.variable, -change.new_coefficient),
+    )
+    return
+end
+```
