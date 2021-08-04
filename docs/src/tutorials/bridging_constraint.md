@@ -71,6 +71,8 @@ that are created as part of the bridge.
 The type of this structure is used throughout MOI as an identifier for the 
 bridge. It is passed as argument to most functions related to bridges.
 
+The best practice is to have the name of this type end with `Bridge`.
+
 In our example, the bridge should be able to map any 
 `ScalarAffineFunction{T}`-in-`LessThan{T}` constraint to a single
 `ScalarAffineFunction{T}`-in-`GreaterThan{T}` constraint. The affine function
@@ -164,13 +166,39 @@ A bridge that creates binary variables would rather have this definition of
 `added_constrained_variable_types`:
 
 ```julia
-function Bridges.added_constrained_variable_types(::Type{Bridge{T}}) where {T}
+function Bridges.added_constrained_variable_types(::Type{SomeBridge{T}}) where {T}
     # The bridge only creates binary variables: 
     return [(MOI.ZeroOne,)]
 end
 ```
 
 ## Bridge registration
+
+For a bridge to be used by MOI, it must be known by MOI. 
+
+### Single-bridge optimizer
+
+The first way to do so is to create a single-bridge optimizer. This type of 
+optimizer wraps another optimizer and adds the possibility to use only one 
+bridge. It is especially useful when unit testing bridges.
+
+It is common practice to use the same name as the type defined for the bridge
+(`SignBridge`, in our example) without the suffix `Bridge`.
+
+```julia
+const Sign{T, OT <: MOI.ModelLike} =
+    SingleBridgeOptimizer{SignBridge{T}, OT}
+```
+
+In the context of unit tests, this bridge is used in conjunction with a 
+[`MockOptimizer`](@ref): 
+
+```julia
+mock = Utilities.MockOptimizer(
+    Utilities.UniversalFallback(Utilities.Model{Float64}()),
+)
+bridged_mock = Sign{Float64}(mock)
+```
 
 ## Bridge improvements
 
