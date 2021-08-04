@@ -91,7 +91,7 @@ The function [`Bridges.Constraint.bridge_constraint`](@ref) is called whenever
 the bridge should be instantiated for a specific model, with the given function
 and set. The arguments to `bridge_constraint` are similar to 
 [`add_constraint`](@ref), with the exception of the first argument: it is the
-type of the structure defined in the first step.
+`Type` of the struct defined in the first step.
 
 `bridge_constraint` returns an instance of the struct defined in the first step.
 the first step.
@@ -155,7 +155,7 @@ function Bridges.added_constrained_variable_types(::Type{SignBridge{T}}) where {
 end
 
 function Bridges.added_constraint_types(::Type{SignBridge{T}}) where {T}
-    return [
+    return Tuple{Type,Type}[
         # One element per F-in-S the bridge creates.
         (ScalarAffineFunction{T}, GreaterThan{T}),
     ]
@@ -168,7 +168,7 @@ A bridge that creates binary variables would rather have this definition of
 ```julia
 function Bridges.added_constrained_variable_types(::Type{SomeBridge{T}}) where {T}
     # The bridge only creates binary variables: 
-    return [(MOI.ZeroOne,)]
+    return Tuple{Type}[(MOI.ZeroOne,)]
 end
 ```
 
@@ -264,14 +264,14 @@ function get(
     ::SignBridge{T},
     ::NumberOfVariables,
 ) where {T}
-    return …
+    return 0
 end
 
 function get(
     ::SignBridge{T},
     ::ListOfVariableIndices,
 ) where {T}
-    return …
+    return MOI.VariableIndex[]
 end
 ```
 
