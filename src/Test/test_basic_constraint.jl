@@ -164,6 +164,8 @@ function _basic_constraint_test_helper(
     ###
     if _supports(config, MOI.ConstraintFunction)
         @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ constraint_function
+        @test MOI.get(model, MOI.CanonicalConstraintFunction(), c) ≈
+              constraint_function
     end
     ###
     ### Test MOI.ConstraintSet
