@@ -151,7 +151,7 @@ only `ScalarAffineFunction{T}`-in-`GreaterThan{T}` constraints:
 ```julia
 function Bridges.added_constrained_variable_types(::Type{SignBridge{T}}) where {T}
     # The bridge does not create variables, return an empty list of tuples: 
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function Bridges.added_constraint_types(::Type{SignBridge{T}}) where {T}
