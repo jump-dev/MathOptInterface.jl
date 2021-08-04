@@ -68,6 +68,9 @@ integers or complex numbers).
 This structure must hold a reference to all the variables and the constraints 
 that are created as part of the bridge.
 
+The type of this structure is used throughout MOI as an identifier for the 
+bridge. It is passed as argument to most functions related to bridges.
+
 In our example, the bridge should be able to map any 
 `ScalarAffineFunction{T}`-in-`LessThan{T}` constraint to a single
 `ScalarAffineFunction{T}`-in-`GreaterThan{T}` constraint. The affine function
@@ -82,9 +85,90 @@ end
 
 ### 2. Bridge creation
 
+The function [`Bridges.Constraint.bridge_constraint`](@ref) is called whenever
+the bridge should be instantiated for a specific model, with the given function
+and set. The arguments to `bridge_constraint` are highly similar to 
+[`add_constraint`](@ref), with the exception of the first argument: it is the
+type of the structure defined in the first step.
+
+`bridge_constraint` returns an object whose type is the structure defined in
+the first step.
+
+In our example, the bridge constraint could be defined as: 
+
+```julia
+function Bridges.Constraint.bridge_constraint(
+    ::Type{SignBridge{T}}, # Bridge to use.
+    model, # Model to which the constraint is being added.
+    f::ScalarAffineFunction{T}, # Function to rewrite.
+    s::LessThan{T}, # Set to rewrite.
+) where {T}
+    # Create the variables and constraints required for the bridge.
+    con = add_constraint(model, -f, GreaterThan(-s.upper))
+
+    # Return an instance of the bridge type with a reference to all the 
+    # variables and constraints that were created in this function.
+    return SignBridge(con)
+end
+```
+
 ### 3. Supported constraint types
 
+The function [`supports_constraint`](@ref) determines whether the bridge type
+supports a given combination of function and set.
+
+This function must closely match `bridge_constraint`, because it will not be 
+called if `supports_constraint` returns `false`.
+
+```julia
+function supports_constraint(
+    ::Type{SignBridge{T}}, # Bridge to use.
+    ::Type{ScalarAffineFunction{T}}, # Function to rewrite.
+    ::Type{LessThan{T}}, # Set to rewrite.
+) where {T}
+    # Do some computation to ensure that the constraint is supported.
+    # Typically, you can directly return true.
+    return true
+end
+```
+
 ### 4. Metadata about the bridge
+
+To determine whether a bridge can be used, MOI uses a shortest-path algorithm
+that uses the variable types and the constraints that the bridge can create. 
+This information is communicated from the bridge to MOI using the functions 
+[`Bridges.added_constrained_variable_types`](@ref) and 
+[`Bridges.added_constraint_types`](@ref). Both return lists of tuples: 
+either a list of 1-tuples containing the variable types (typically, `ZeroOne` 
+or `Integer`) or a list of 2-tuples contained the functions and sets (like 
+`ScalarAffineFunction{T}`-`GreaterThan`).
+
+For our example, the bridge does not create any constrained variables, and
+only `ScalarAffineFunction{T}`-in-`GreaterThan{T}` constraints:
+
+```julia
+function Bridges.added_constrained_variable_types(::Type{SignBridge{T}}) where {T}
+    # The bridge does not create variables, return an empty list of tuples: 
+    return Tuple{DataType}[]
+end
+
+function Bridges.added_constraint_types(::Type{SignBridge{T}}) where {T}
+    return [
+        # One element per F-in-S the bridge creates.
+        (ScalarAffineFunction{T}, GreaterThan{T}),
+    ]
+end
+```
+
+A bridge that creates binary variables would rather have this definition of 
+`added_constrained_variable_types`:
+
+```julia
+function Bridges.added_constrained_variable_types(::Type{Bridge{T}}) where {T}
+    # The bridge only creates binary variables: 
+    return [(MOI.ZeroOne,)]
+end
+```
 
 ## Bridge registration
 
