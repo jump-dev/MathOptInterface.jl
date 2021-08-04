@@ -257,7 +257,7 @@ bridge adds to the model.
 
 For variables, the situation is simpler. If your bridge creates new variables, 
 you should implement the [`NumberOfVariables`](@ref) and 
-[`ListOfVariables`](@ref) attributes. However, these attributes do not have
+[`ListOfVariableIndices`](@ref) attributes. However, these attributes do not have
 parameters, unlike their constraint counterparts. Only two functions suffice:
 
 ```julia
@@ -270,7 +270,7 @@ end
 
 function get(
     ::SignBridge{T},
-    ::ListOfVariables,
+    ::ListOfVariableIndices,
 ) where {T}
     return …
 end
