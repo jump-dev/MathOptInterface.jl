@@ -91,7 +91,8 @@ The function [`Bridges.Constraint.bridge_constraint`](@ref) is called whenever
 the bridge should be instantiated for a specific model, with the given function
 and set. The arguments to `bridge_constraint` are similar to 
 [`add_constraint`](@ref), with the exception of the first argument: it is the
-`Type` of the struct defined in the first step.
+`Type` of the struct defined in the first step (for our example, 
+`Type{SignBridge{T}}`).
 
 `bridge_constraint` returns an instance of the struct defined in the first step.
 the first step.
