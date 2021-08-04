@@ -54,7 +54,7 @@ function MOI.get(
     ::MOI.CanonicalConstraintFunction,
     bridge::AbstractFunctionConversionBridge,
 )
-    f = MOI.get(model, MOI.ConstraintFunction())
+    f = MOI.get(model, MOI.ConstraintFunction(), bridge)
     if !MOI.Utilities.is_canonical(f)
         return MOI.Utilities.canonical(f)
     end
