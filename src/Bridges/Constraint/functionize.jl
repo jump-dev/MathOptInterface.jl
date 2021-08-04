@@ -89,11 +89,10 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintFunction,
+    attr::Union{MOI.CanonicalConstraintFunction,MOI.ConstraintFunction},
     b::ScalarFunctionizeBridge,
 )
-    f = MOIU.canonical(MOI.get(model, attr, b.constraint))
-    return convert(MOI.SingleVariable, f)
+    return convert(MOI.SingleVariable, MOI.get(model, attr, b.constraint))
 end
 
 # vector version
@@ -201,7 +200,7 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintFunction,
+    attr::Union{MOI.CanonicalConstraintFunction,MOI.ConstraintFunction},
     b::VectorFunctionizeBridge,
 )
     f = MOI.get(model, attr, b.constraint)
