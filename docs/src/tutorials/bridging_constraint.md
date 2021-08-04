@@ -101,7 +101,7 @@ In our example, the bridge constraint could be defined as:
 ```julia
 function Bridges.Constraint.bridge_constraint(
     ::Type{SignBridge{T}}, # Bridge to use.
-    model, # Model to which the constraint is being added.
+    model::MOI.ModelLike, # Model to which the constraint is being added.
     f::ScalarAffineFunction{T}, # Function to rewrite.
     s::LessThan{T}, # Set to rewrite.
 ) where {T}
