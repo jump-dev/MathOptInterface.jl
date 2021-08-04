@@ -640,16 +640,8 @@ function test_linear_integration_2(
             @test MOI.get(model, MOI.VariableBasisStatus(), y) ==
                   MOI.NONBASIC_AT_LOWER
             @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.NONBASIC
-            _test_attribute_value_type(
-                model,
-                MOI.ConstraintBasisStatus(),
-                c,
-            )
-            _test_attribute_value_type(
-                model,
-                MOI.VariableBasisStatus(),
-                x,
-            )
+            _test_attribute_value_type(model, MOI.ConstraintBasisStatus(), c)
+            _test_attribute_value_type(model, MOI.VariableBasisStatus(), x)
         end
     end
 end
