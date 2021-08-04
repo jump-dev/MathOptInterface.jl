@@ -186,7 +186,7 @@ It is common practice to use the same name as the type defined for the bridge
 (`SignBridge`, in our example) without the suffix `Bridge`.
 
 ```julia
-const Sign{T, OT <: MOI.ModelLike} =
+const Sign{T,OT<: MOI.ModelLike} =
     SingleBridgeOptimizer{SignBridge{T}, OT}
 ```
 
