@@ -1,73 +1,46 @@
+module TestModel
+
 using Test
+
 import MathOptInterface
+
 const MOI = MathOptInterface
-const MOIT = MOI.Test
-const MOIU = MOI.Utilities
 
-function bound_vectors_test(::Type{T}, nolb, noub) where {T}
-    model = MOIU.Model{T}()
-    @test model.lower_bound == T[]
-    @test model.upper_bound == T[]
-    x = MOI.add_variable(model)
-    fx = MOI.SingleVariable(x)
-    @test model.lower_bound == [nolb]
-    @test model.upper_bound == [noub]
-    ux = MOI.add_constraint(model, fx, MOI.LessThan(T(1)))
-    @test model.lower_bound == [nolb]
-    @test model.upper_bound == [T(1)]
-    y = MOI.add_variable(model)
-    fy = MOI.SingleVariable(y)
-    @test model.lower_bound == [nolb, nolb]
-    @test model.upper_bound == [T(1), noub]
-    cy = MOI.add_constraint(model, fy, MOI.Interval(T(2), T(3)))
-    @test model.lower_bound == [nolb, T(2)]
-    @test model.upper_bound == [T(1), T(3)]
-    lx = MOI.add_constraint(model, fx, MOI.GreaterThan(T(0)))
-    @test model.lower_bound == [T(0), T(2)]
-    @test model.upper_bound == [T(1), T(3)]
-    MOI.delete(model, lx)
-    @test model.lower_bound == [nolb, T(2)]
-    @test model.upper_bound == [T(1), T(3)]
-    MOI.delete(model, ux)
-    @test model.lower_bound == [nolb, T(2)]
-    @test model.upper_bound == [noub, T(3)]
-    cx = MOI.add_constraint(model, fx, MOI.Semicontinuous(T(3), T(4)))
-    @test model.lower_bound == [T(3), T(2)]
-    @test model.upper_bound == [T(4), T(3)]
-    MOI.delete(model, cy)
-    @test model.lower_bound == [T(3), nolb]
-    @test model.upper_bound == [T(4), noub]
-    sy = MOI.add_constraint(model, fy, MOI.Semiinteger(T(-2), T(-1)))
-    @test model.lower_bound == [T(3), T(-2)]
-    @test model.upper_bound == [T(4), T(-1)]
-    MOI.delete(model, sy)
-    @test model.lower_bound == [T(3), nolb]
-    @test model.upper_bound == [T(4), noub]
-    ey = MOI.add_constraint(model, fy, MOI.EqualTo(T(-3)))
-    @test model.lower_bound == [T(3), T(-3)]
-    @test model.upper_bound == [T(4), T(-3)]
-    MOI.delete(model, ey)
-    @test model.lower_bound == [T(3), nolb]
-    @test model.upper_bound == [T(4), noub]
-    MOI.delete(model, cx)
-    @test model.lower_bound == [nolb, nolb]
-    @test model.upper_bound == [noub, noub]
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
 end
 
-@testset "Basic constraint tests" begin
-    model = MOIU.Model{Float64}()
-    MOIT.basic_constraint_tests(model, MOIT.Config())
-end
+###
+### Test helpers
+###
 
-# We need to test this in a module at the top level because it can't be defined
-# in a testset. If it runs without error, then we're okay.
+"""
+    TestExternalModel
+
+We need to define this in a module at the top level because it can't be
+defined in a testset. If it runs without error, then we're okay.
+"""
 module TestExternalModel
+
 using MathOptInterface
+
 struct NewSet <: MathOptInterface.AbstractScalarSet end
+
 struct NewFunction <: MathOptInterface.AbstractScalarFunction end
+
 MathOptInterface.Utilities.canonicalize!(f::NewFunction) = f
+
 Base.copy(::NewFunction) = NewFunction()
+
 Base.copy(::NewSet) = NewSet()
+
 MathOptInterface.Utilities.@model(
     ExternalModel,
     (MathOptInterface.ZeroOne, NewSet),
@@ -77,8 +50,9 @@ MathOptInterface.Utilities.@model(
     (NewFunction,),
     (MathOptInterface.ScalarAffineFunction,),
     (),
-    ()
+    (),
 )
+
 MathOptInterface.Utilities.@model(
     ExternalOptimizer,
     (MathOptInterface.ZeroOne, NewSet),
@@ -89,43 +63,77 @@ MathOptInterface.Utilities.@model(
     (),
     (),
     (),
-    true
+    true,
 )
-end
-@test isdefined(TestExternalModel, :ExternalModelScalarConstraints)
-@test !isdefined(TestExternalModel, :ExternalModelVectorConstraints)
-@test isdefined(TestExternalModel, :ExternalModelFunctionConstraints)
-@test isdefined(TestExternalModel, :ExternalOptimizerScalarConstraints)
-@test !isdefined(TestExternalModel, :ExternalOptimizerVectorConstraints)
-@test !isdefined(TestExternalModel, :ExternalOptimizerFunctionConstraints)
-@test TestExternalModel.ExternalModel{Int} == MOIU.GenericModel{
-    Int,
-    TestExternalModel.ExternalModelFunctionConstraints{Int},
-}
-@test TestExternalModel.ExternalOptimizer{Int} == MOIU.GenericOptimizer{
-    Int,
-    TestExternalModel.ExternalOptimizerScalarConstraints{
-        Int,
-        MOIU.VectorOfConstraints{TestExternalModel.NewFunction,MOI.ZeroOne},
-        MOIU.VectorOfConstraints{
-            TestExternalModel.NewFunction,
-            TestExternalModel.NewSet,
-        },
-    },
-}
 
-@testset "Super-types" begin
+end
+
+struct DummyFunction <: MOI.AbstractScalarFunction end
+
+struct DummySet <: MOI.AbstractScalarSet end
+
+# We create a new function and set to test catching errors if users create their
+# own sets and functions
+struct FunctionNotSupportedBySolvers <: MOI.AbstractScalarFunction
+    x::MOI.VariableIndex
+end
+
+struct SetNotSupportedBySolvers <: MOI.AbstractSet end
+
+###
+### The tests start here.
+###
+
+function test_MOI_Test()
+    MOI.Test.runtests(
+        MOI.Utilities.Model{Float64}(),
+        MOI.Test.Config(exclude = Any[MOI.optimize!,]),
+    )
+    return
+end
+
+function test_TestExternalModel_fields()
+    @test isdefined(TestExternalModel, :ExternalModelScalarConstraints)
+    @test !isdefined(TestExternalModel, :ExternalModelVectorConstraints)
+    @test isdefined(TestExternalModel, :ExternalModelFunctionConstraints)
+    @test isdefined(TestExternalModel, :ExternalOptimizerScalarConstraints)
+    @test !isdefined(TestExternalModel, :ExternalOptimizerVectorConstraints)
+    @test !isdefined(TestExternalModel, :ExternalOptimizerFunctionConstraints)
+    @test TestExternalModel.ExternalModel{Int} == MOI.Utilities.GenericModel{
+        Int,
+        TestExternalModel.ExternalModelFunctionConstraints{Int},
+    }
+    @test TestExternalModel.ExternalOptimizer{Int} ==
+          MOI.Utilities.GenericOptimizer{
+        Int,
+        TestExternalModel.ExternalOptimizerScalarConstraints{
+            Int,
+            MOI.Utilities.VectorOfConstraints{
+                TestExternalModel.NewFunction,
+                MOI.ZeroOne,
+            },
+            MOI.Utilities.VectorOfConstraints{
+                TestExternalModel.NewFunction,
+                TestExternalModel.NewSet,
+            },
+        },
+    }
+    return
+end
+
+function test_TestExternalModel_supertypes()
     model = TestExternalModel.ExternalModel{Float64}()
     optimizer = TestExternalModel.ExternalOptimizer{Float64}()
-    @test isa(model, MOIU.AbstractModelLike{Float64})
-    @test !isa(model, MOIU.AbstractOptimizer{Float64})
+    @test isa(model, MOI.Utilities.AbstractModelLike{Float64})
+    @test !isa(model, MOI.Utilities.AbstractOptimizer{Float64})
     @test !isa(model, MOI.AbstractOptimizer)
-    @test !isa(optimizer, MOIU.AbstractModelLike{Float64})
-    @test isa(optimizer, MOIU.AbstractOptimizer{Float64})
+    @test !isa(optimizer, MOI.Utilities.AbstractModelLike{Float64})
+    @test isa(optimizer, MOI.Utilities.AbstractOptimizer{Float64})
     @test isa(optimizer, MOI.AbstractOptimizer)
+    return
 end
 
-@testset "External @model" begin
+function test_TestExternalModel()
     model = TestExternalModel.ExternalModel{Float64}()
     c = MOI.add_constraint(
         model,
@@ -143,122 +151,81 @@ end
     )
     @test typeof(c2) ==
           MOI.ConstraintIndex{TestExternalModel.NewFunction,MOI.ZeroOne}
+    return
 end
 
-struct DummyFunction <: MOI.AbstractScalarFunction end
-struct DummySet <: MOI.AbstractScalarSet end
-
-@testset "Supports with $T" for T in [Float64, Int]
-    model = MOIU.Model{T}()
-    @testset "ObjectiveFunction" begin
-        @test !MOI.supports(model, MOI.ObjectiveFunction{DummyFunction}())
-        for F in [
-            MOI.SingleVariable,
-            MOI.ScalarAffineFunction{T},
-            MOI.ScalarQuadraticFunction{T},
-        ]
-            @test MOI.supports(model, MOI.ObjectiveFunction{F}())
-        end
-        U = Float32
-        for F in [MOI.ScalarAffineFunction{U}, MOI.ScalarQuadraticFunction{U}]
-            @test !MOI.supports(model, MOI.ObjectiveFunction{F}())
-        end
+function _test_ObjectiveFunction(T)
+    model = MOI.Utilities.Model{T}()
+    @test !MOI.supports(model, MOI.ObjectiveFunction{DummyFunction}())
+    for F in [
+        MOI.SingleVariable,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+    ]
+        @test MOI.supports(model, MOI.ObjectiveFunction{F}())
     end
-    @testset "`SingleVariable`-in-`S`" begin
-        @test !MOI.supports_constraint(model, DummyFunction, DummySet)
-        @test !MOI.supports_constraint(model, MOI.SingleVariable, DummySet)
-        @test !MOI.supports_add_constrained_variable(model, DummySet)
-        for S in [
-            MOI.EqualTo{T},
-            MOI.GreaterThan{T},
-            MOI.LessThan{T},
-            MOI.Interval{T},
-            MOI.Integer,
-            MOI.ZeroOne,
-            MOI.Semicontinuous{T},
-            MOI.Semiinteger{T},
-        ]
-            @test MOI.supports_constraint(model, MOI.SingleVariable, S)
-            @test MOI.supports_add_constrained_variable(model, S)
-        end
-        U = Float32
-        for S in [
-            MOI.EqualTo{U},
-            MOI.GreaterThan{U},
-            MOI.LessThan{U},
-            MOI.Interval{U},
-            MOI.Semicontinuous{U},
-            MOI.Semiinteger{U},
-        ]
-            @test !MOI.supports_constraint(model, MOI.SingleVariable, S)
-            @test !MOI.supports_add_constrained_variable(model, S)
-        end
+    U = Float32
+    for F in [MOI.ScalarAffineFunction{U}, MOI.ScalarQuadraticFunction{U}]
+        @test !MOI.supports(model, MOI.ObjectiveFunction{F}())
     end
+    return
 end
 
-@testset "Setting lower/upper bound twice" begin
-    @testset "flag_to_set_type" begin
-        T = Int
-        @test_throws AssertionError MOIU.flag_to_set_type(0x11, T)
-        @test MOIU.flag_to_set_type(0x10, T) == MOI.Integer
-        @test MOIU.flag_to_set_type(0x20, T) == MOI.ZeroOne
+function test_ObjectiveFunction()
+    _test_ObjectiveFunction(Float64)
+    _test_ObjectiveFunction(Int)
+    return
+end
+
+function _test_SingleVariable(T)
+    model = MOI.Utilities.Model{T}()
+    @test !MOI.supports_constraint(model, DummyFunction, DummySet)
+    @test !MOI.supports_constraint(model, MOI.SingleVariable, DummySet)
+    @test !MOI.supports_add_constrained_variable(model, DummySet)
+    for S in [
+        MOI.EqualTo{T},
+        MOI.GreaterThan{T},
+        MOI.LessThan{T},
+        MOI.Interval{T},
+        MOI.Integer,
+        MOI.ZeroOne,
+        MOI.Semicontinuous{T},
+        MOI.Semiinteger{T},
+    ]
+        @test MOI.supports_constraint(model, MOI.SingleVariable, S)
+        @test MOI.supports_add_constrained_variable(model, S)
     end
-    @testset "$T" for T in [Int, Float64]
-        model = MOIU.Model{T}()
-        MOIT.set_lower_bound_twice(model, T)
-        MOIT.set_upper_bound_twice(model, T)
+    U = Float32
+    for S in [
+        MOI.EqualTo{U},
+        MOI.GreaterThan{U},
+        MOI.LessThan{U},
+        MOI.Interval{U},
+        MOI.Semicontinuous{U},
+        MOI.Semiinteger{U},
+    ]
+        @test !MOI.supports_constraint(model, MOI.SingleVariable, S)
+        @test !MOI.supports_add_constrained_variable(model, S)
     end
+    return
 end
 
-@testset "Name test" begin
-    MOIT.nametest(MOIU.Model{Float64}())
+function test_SingleVariable()
+    _test_SingleVariable(Float64)
+    _test_SingleVariable(Int)
+    return
 end
 
-@testset "Valid test" begin
-    MOIT.validtest(MOIU.Model{Float64}())
-end
-
-@testset "Delete test" begin
-    MOIT.delete_test(MOIU.Model{Float64}())
-end
-
-@testset "Empty test" begin
-    MOIT.emptytest(MOIU.Model{Float64}())
-end
-
-@testset "supports_constraint test" begin
-    MOIT.supports_constrainttest(MOIU.Model{Float64}(), Float64, Int)
-    MOIT.supports_constrainttest(MOIU.Model{Int}(), Int, Float64)
-end
-
-@testset "OrderedIndices" begin
-    MOIT.orderedindicestest(MOIU.Model{Float64}())
-end
-
-@testset "Continuous Linear tests" begin
-    config = MOIT.Config(solve = false)
-    exclude = ["partial_start"] # Model doesn't support VariablePrimalStart.
-    MOIT.contlineartest(MOIU.Model{Float64}(), config, exclude)
-end
-
-@testset "Continuous Conic tests" begin
-    config = MOIT.Config(solve = false)
-    MOIT.contconictest(MOIU.Model{Float64}(), config)
-end
-
-@testset "Quadratic functions" begin
-    model = MOIU.Model{Int}()
-
+function test_quadratic_functions()
+    model = MOI.Utilities.Model{Int}()
     x, y = MOI.add_variables(model, 2)
     @test 2 == @inferred MOI.get(model, MOI.NumberOfVariables())
-
     f1 = MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm.([3], [x]),
         MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]),
+        MOI.ScalarAffineTerm.([3], [x]),
         7,
     )
     c1 = MOI.add_constraint(model, f1, MOI.Interval(-1, 1))
-
     @test 1 == @inferred MOI.get(
         model,
         MOI.NumberOfConstraints{
@@ -273,20 +240,18 @@ end
             MOI.Interval{Int},
         }(),
     )) == [c1]
-
     f2 = MOI.VectorQuadraticFunction(
-        MOI.VectorAffineTerm.(
-            [1, 2, 2],
-            MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y]),
-        ),
         MOI.VectorQuadraticTerm.(
             [1, 1, 2],
             MOI.ScalarQuadraticTerm.([1, 2, 3], [x, y, x], [x, y, y]),
         ),
+        MOI.VectorAffineTerm.(
+            [1, 2, 2],
+            MOI.ScalarAffineTerm.([3, 1, 2], [x, x, y]),
+        ),
         [7, 3, 4],
     )
     c2 = MOI.add_constraint(model, f2, MOI.PositiveSemidefiniteConeTriangle(3))
-
     @test 1 == @inferred MOI.get(
         model,
         MOI.NumberOfConstraints{
@@ -301,7 +266,6 @@ end
             MOI.PositiveSemidefiniteConeTriangle,
         }(),
     )) == [c2]
-
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (
@@ -312,14 +276,11 @@ end
         MOI.VectorQuadraticFunction{Int},
         MOI.PositiveSemidefiniteConeTriangle,
     ) in loc
-
     c3 = MOI.add_constraint(model, f1, MOI.Interval(-1, 1))
-
     change_1 = MOI.ScalarConstantChange(9)
-    f3 = MOIU.modify_function(f1, change_1)
+    f3 = MOI.Utilities.modify_function(f1, change_1)
     change_2 = MOI.ScalarCoefficientChange(y, 2)
-    f3 = MOIU.modify_function(f3, change_2)
-
+    f3 = MOI.Utilities.modify_function(f3, change_2)
     @test !(MOI.get(model, MOI.ConstraintFunction(), c1) ≈ f3)
     @test !(MOI.get(model, MOI.ConstraintFunction(), c3) ≈ f3)
     MOI.set(model, MOI.ConstraintFunction(), c1, f3)
@@ -337,7 +298,6 @@ end
     @test MOI.Utilities.is_canonical(
         MOI.get(model, MOI.CanonicalConstraintFunction(), c1),
     )
-
     f4 = MOI.VectorAffineFunction(
         MOI.VectorAffineTerm.(
             [1, 1, 2],
@@ -353,7 +313,6 @@ end
             MOI.SecondOrderCone,
         }(),
     )
-
     f5 = MOI.VectorOfVariables([x, x])
     c5 = MOI.add_constraint(model, f5, MOI.RotatedSecondOrderCone(2))
     @test 1 == @inferred MOI.get(
@@ -363,7 +322,6 @@ end
             MOI.RotatedSecondOrderCone,
         }(),
     )
-
     f6 = MOI.VectorAffineFunction(
         MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([2, 9], [x, y])),
         [6, 8],
@@ -376,7 +334,6 @@ end
             MOI.SecondOrderCone,
         }(),
     )
-
     f7 = MOI.VectorOfVariables([x, y])
     c7 = MOI.add_constraint(model, f7, MOI.Nonpositives(2))
     @test 1 == @inferred MOI.get(
@@ -390,9 +347,8 @@ end
         model,
         MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
     )
-
     loc1 = MOI.get(model, MOI.ListOfConstraintTypesPresent())
-    loc2 = Vector{Tuple{DataType,DataType}}()
+    loc2 = Vector{Tuple{Type,Type}}()
     function _pushloc(v::MOI.Utilities.VectorOfConstraints{F,S}) where {F,S}
         if !MOI.is_empty(v)
             push!(loc2, (F, S))
@@ -400,9 +356,9 @@ end
     end
     _pushloc(::Nothing) = nothing
     function _pushloc(model::MOI.Utilities.StructOfConstraints)
-        return MOIU.broadcastcall(_pushloc, model)
+        return MOI.Utilities.broadcastcall(_pushloc, model)
     end
-    MOIU.broadcastcall(_pushloc, model.constraints)
+    MOI.Utilities.broadcastcall(_pushloc, model.constraints)
     for loc in (loc1, loc2)
         @test length(loc) == 6
         @test (
@@ -417,7 +373,6 @@ end
         @test (MOI.VectorAffineFunction{Int}, MOI.SecondOrderCone) in loc
         @test (MOI.VectorOfVariables, MOI.Nonpositives) in loc
     end
-
     @test MOI.is_valid(model, c4)
     MOI.delete(model, c4)
     @test !MOI.is_valid(model, c4)
@@ -430,7 +385,6 @@ end
         }(),
     )
     @test MOI.get(model, MOI.ConstraintFunction(), c6).constants == f6.constants
-
     fx = MOI.SingleVariable(x)
     fy = MOI.SingleVariable(y)
     obj = 1fx + 2fy
@@ -442,7 +396,6 @@ end
     err = MOI.DeleteNotAllowed(y, message)
     @test_throws err MOI.delete(model, y)
     @test MOI.get(model, MOI.ObjectiveFunction{typeof(obj)}()) ≈ 1fx + 2fy
-
     @test MOI.is_valid(model, c8)
     MOI.delete(model, c8)
     @test !MOI.is_valid(model, c8)
@@ -450,21 +403,17 @@ end
         model,
         MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
     )
-
     MOI.delete(model, y)
     @test MOI.get(model, MOI.ObjectiveFunction{typeof(obj)}()) ≈ 1fx
-
     f = MOI.get(model, MOI.ConstraintFunction(), c2)
     @test f.affine_terms ==
           MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([3, 1], [x, x]))
     @test f.quadratic_terms ==
           MOI.VectorQuadraticTerm.([1], MOI.ScalarQuadraticTerm.([1], [x], [x]))
     @test f.constants == [7, 3, 4]
-
     f = MOI.get(model, MOI.ConstraintFunction(), c6)
     @test f.terms == MOI.VectorAffineTerm.([1], MOI.ScalarAffineTerm.([2], [x]))
     @test f.constants == [6, 8]
-
     @test 1 == @inferred MOI.get(
         model,
         MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonpositives}(),
@@ -473,123 +422,68 @@ end
         model,
         MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonpositives}(),
     )
-
     f = MOI.get(model, MOI.ConstraintFunction(), c7)
     @test f.variables == [x]
-
     s = MOI.get(model, MOI.ConstraintSet(), c7)
     @test MOI.dimension(s) == 1
 end
 
-# We create a new function and set to test catching errors if users create their
-# own sets and functions
-struct FunctionNotSupportedBySolvers <: MOI.AbstractScalarFunction
-    x::MOI.VariableIndex
-end
-struct SetNotSupportedBySolvers <: MOI.AbstractSet end
-@testset "Default fallbacks" begin
-    @testset "set" begin
-        model = MOIU.Model{Float64}()
-        x = MOI.add_variable(model)
-        func = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x))
-        c = MOI.add_constraint(model, func, MOI.LessThan(0.0))
-        @test !MOI.supports_constraint(
-            model,
-            FunctionNotSupportedBySolvers,
-            SetNotSupportedBySolvers,
-        )
-
-        # set of different type
-        @test_throws Exception MOI.set(
-            model,
-            MOI.ConstraintSet(),
-            c,
-            MOI.GreaterThan(0.0),
-        )
-        # set not implemented
-        @test_throws Exception MOI.set(
-            model,
-            MOI.ConstraintSet(),
-            c,
-            SetNotSupportedBySolvers(),
-        )
-
-        # function of different type
-        @test_throws Exception MOI.set(
-            model,
-            MOI.ConstraintFunction(),
-            c,
-            MOI.VectorOfVariables([x]),
-        )
-        # function not implemented
-        @test_throws Exception MOI.set(
-            model,
-            MOI.ConstraintFunction(),
-            c,
-            FunctionNotSupportedBySolvers(x),
-        )
-    end
-end
-
-@testset "ListOfSupportedConstraints" begin
-    @testset "$set" for set in (
-        MOI.EqualTo(1.0),
-        MOI.GreaterThan(1.0),
-        MOI.LessThan(1.0),
-        MOI.Interval(1.0, 2.0),
-        MOI.Semicontinuous(1.0, 2.0),
-        MOI.Semiinteger(1.0, 2.0),
-        MOI.Integer(),
-        MOI.ZeroOne(),
+function test_default_fallbacks()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    func = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x))
+    c = MOI.add_constraint(model, func, MOI.LessThan(0.0))
+    @test !MOI.supports_constraint(
+        model,
+        FunctionNotSupportedBySolvers,
+        SetNotSupportedBySolvers,
     )
-        model = MOIU.Model{Float64}()
-        x = MOI.add_variable(model)
-        MOI.add_constraint(model, MOI.SingleVariable(x), set)
-        @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) ==
-              [(MOI.SingleVariable, typeof(set))]
-    end
+
+    # set of different type
+    @test_throws Exception MOI.set(
+        model,
+        MOI.ConstraintSet(),
+        c,
+        MOI.GreaterThan(0.0),
+    )
+    # set not implemented
+    @test_throws Exception MOI.set(
+        model,
+        MOI.ConstraintSet(),
+        c,
+        SetNotSupportedBySolvers(),
+    )
+
+    # function of different type
+    @test_throws Exception MOI.set(
+        model,
+        MOI.ConstraintFunction(),
+        c,
+        MOI.VectorOfVariables([x]),
+    )
+    # function not implemented
+    @test_throws Exception MOI.set(
+        model,
+        MOI.ConstraintFunction(),
+        c,
+        FunctionNotSupportedBySolvers(x),
+    )
 end
 
-@testset "Extension dictionary" begin
-    model = MOIU.Model{Float64}()
+function test_extension_dictionary()
+    model = MOI.Utilities.Model{Float64}()
     model.ext[:my_store] = 1
     @test model.ext[:my_store] == 1
     MOI.empty!(model)
     @test model.ext[:my_store] == 1
     model.ext[:my_store] = 2
-    dest = MOIU.Model{Float64}()
+    dest = MOI.Utilities.Model{Float64}()
     MOI.copy_to(dest, model)
     @test !haskey(dest.ext, :my_store)
     @test model.ext[:my_store] == 2
+    return
 end
 
-@testset "Objective set via modify" begin
-    model = MOIU.Model{Float64}()
-    x = MOI.add_variable(model)
-    attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
-    MOI.modify(model, attr, MOI.ScalarCoefficientChange(x, 1.0))
-    @test attr in MOI.get(model, MOI.ListOfModelAttributesSet())
-end
+end  # module
 
-@testset "Incorrect modifications" begin
-    model = MOIU.Model{Float64}()
-    x = MOI.add_variable(model)
-    c = MOI.add_constraint(
-        model,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
-        MOI.EqualTo(1.0),
-    )
-    @test_throws(
-        ArgumentError,
-        MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(1.0)),
-    )
-    @test_throws(
-        ArgumentError,
-        MOI.set(model, MOI.ConstraintFunction(), c, MOI.SingleVariable(x)),
-    )
-end
-
-@testset "Bound vector" begin
-    bound_vectors_test(Int, 0, 0)
-    bound_vectors_test(Float64, -Inf, Inf)
-end
+TestModel.runtests()

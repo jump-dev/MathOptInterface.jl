@@ -154,8 +154,10 @@ supports_add_constrained_variables(::ModelLike, ::Type{Reals}) = true
     add_constrained_variables(
         model::ModelLike,
         sets::AbstractVector{<:AbstractScalarSet}
-    )::Tuple{Vector{MOI.VariableIndex},
-             Vector{MOI.ConstraintIndex{MOI.SingleVariable, eltype(sets)}}}
+    )::Tuple{
+        Vector{MOI.VariableIndex},
+        Vector{MOI.ConstraintIndex{MOI.SingleVariable,eltype(sets)}},
+    }
 
 Add to `model` scalar variables constrained to belong to `sets`, returning the
 indices of the variables created and the indices of the constraints constraining
@@ -184,9 +186,11 @@ end
 """
     add_constrained_variables(
         model::ModelLike,
-        set::AbstractVectorSet
-    )::Tuple{Vector{MOI.VariableIndex},
-             MOI.ConstraintIndex{MOI.VectorOfVariables, typeof(set)}}
+        set::AbstractVectorSet,
+    )::Tuple{
+        Vector{MOI.VariableIndex},
+        MOI.ConstraintIndex{MOI.VectorOfVariables,typeof(set)},
+    }
 
 Add to `model` a vector of variables constrained to belong to `set`, returning
 the indices of the variables created and the index of the constraint

@@ -117,7 +117,7 @@ end
 function MOI.get(
     v::VectorOfConstraints{F,S},
     ::MOI.ListOfConstraintTypesPresent,
-)::Vector{Tuple{DataType,DataType}} where {F,S}
+)::Vector{Tuple{Type,Type}} where {F,S}
     return isempty(v.constraints) ? [] : [(F, S)]
 end
 
@@ -146,6 +146,7 @@ function MOI.modify(
 end
 
 function _add_variable(::VectorOfConstraints) end
+function _add_variables(::VectorOfConstraints, ::Int64) end
 
 # Deletion of variables in vector of variables
 
@@ -173,6 +174,9 @@ end
 
 # Nothing to do as it's not `VectorOfVariables` constraints
 _throw_if_cannot_delete(::VectorOfConstraints, vis, fast_in_vis) = nothing
+
+_fast_in(vi1::MOI.VariableIndex, vi2::MOI.VariableIndex) = vi1 == vi2
+_fast_in(vi::MOI.VariableIndex, vis::Set{MOI.VariableIndex}) = vi in vis
 
 function _throw_if_cannot_delete(
     v::VectorOfConstraints{MOI.VectorOfVariables,S},

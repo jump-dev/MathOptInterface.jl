@@ -1,10 +1,21 @@
 module TestPrint
 
+using Test
+
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
-using Test
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
 
 const LATEX = MIME("text/latex")
 const PLAIN = MIME("text/plain")
@@ -119,8 +130,8 @@ function test_ScalarQuadraticFunction()
     MOI.set(model, MOI.VariableName(), x, "x")
     MOI.set(model, MOI.VariableName(), y, "y")
     f = MOI.ScalarQuadraticFunction(
-        MOI.ScalarAffineTerm.([-1.2, 1.3], [x, x]),
         MOI.ScalarQuadraticTerm.([0.5, 0.6], [x, x], [x, y]),
+        MOI.ScalarAffineTerm.([-1.2, 1.3], [x, x]),
         1.4,
     )
     @test MOIU._to_string(PLAIN, model, f) ==
@@ -573,14 +584,68 @@ function test_nlp()
     return
 end
 
-function runtests()
-    for name in names(@__MODULE__; all = true)
-        if startswith("$(name)", "test_")
-            @testset "$(name)" begin
-                getfield(@__MODULE__, name)()
-            end
-        end
+function test_nlp_no_objective()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    v = MOI.add_variables(model, 4)
+    for i in 1:4
+        MOI.set(model, MOI.VariableName(), v[i], "x[$i]")
     end
+    lb, ub = [25.0, 40.0], [Inf, 40.0]
+    evaluator = MOI.Test.HS071(true)
+    block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, false)
+    MOI.set(model, MOI.NLPBlock(), block_data)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.SingleVariable}(),
+        MOI.SingleVariable(v[1]),
+    )
+    @test sprint(print, model) == """
+    Minimize SingleVariable:
+     x[1]
+
+    Subject to:
+
+    Nonlinear
+     x[1] * x[2] * x[3] * x[4] >= 25.0
+     x[1] ^ 2 + x[2] ^ 2 + x[3] ^ 2 + x[4] ^ 2 == 40.0
+    """
+    _string_compare(
+        sprint(print, MOIU.latex_formulation(model)),
+        raw"""
+        $$ \begin{aligned}
+        \min\quad & x_{1} \\
+        \text{Subject to}\\
+         & \text{Nonlinear} \\
+         & x_{1} \times x_{2} \times x_{3} \times x_{4} \ge 25.0 \\
+         & x_{1} ^ 2 + x_{2} ^ 2 + x_{3} ^ 2 + x_{4} ^ 2 = 40.0 \\
+        \end{aligned} $$""",
+    )
+    return
+end
+
+function test_print_with_acronym()
+    @test sprint(MOIU.print_with_acronym, "MathOptInterface") == "MOI"
+    @test sprint(
+        MOIU.print_with_acronym,
+        "MathOptInterface.MathOptInterface",
+    ) == "MOI.MOI"
+    @test sprint(
+        MOIU.print_with_acronym,
+        "MathOptInterface.Utilities.MathOptInterface",
+    ) == "MOIU.MOI"
+    @test sprint(MOIU.print_with_acronym, "MathOptInterfaceXXBridges") ==
+          "MOIXXBridges"
+    @test sprint(MOIU.print_with_acronym, "MathOptInterface.BridgesXX") ==
+          "MOIBXX"
+    @test sprint(MOIU.print_with_acronym, "MathOptInterface.Test.x") == "MOIT.x"
+    @test sprint(MOIU.print_with_acronym, "MathOptInterface.x.Test") ==
+          "MOI.x.Test"
+    @test sprint(MOIU.print_with_acronym, "MathOptInterface.Utilities.Test") ==
+          "MOIU.Test"
+    @test sprint(MOIU.print_with_acronym, "MathOptInterface.Utilities.Test") ==
+          "MOIU.Test"
+    return
 end
 
 end

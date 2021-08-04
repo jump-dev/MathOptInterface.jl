@@ -50,13 +50,13 @@ function MOI.supports_constraint(
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:NormSpectralBridge})
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOIB.added_constraint_types(
     ::Type{NormSpectralBridge{T,F,G}},
 ) where {T,F,G}
-    return [(F, MOI.PositiveSemidefiniteConeTriangle)]
+    return Tuple{Type,Type}[(F, MOI.PositiveSemidefiniteConeTriangle)]
 end
 
 function concrete_bridge_type(
@@ -210,14 +210,13 @@ function bridge_constraint(
         [U[trimap(i, i)] for i in 1:column_dim],
         [V[trimap(i, i)] for i in 1:row_dim],
     )
+    rhs = MOI.ScalarAffineFunction(
+        MOI.ScalarAffineTerm.(one(T), diag_vars),
+        zero(T),
+    )
     ge_index = MOIU.normalize_and_add_constraint(
         model,
-        MOIU.operate(
-            -,
-            T,
-            f_scalars[1],
-            MOIU.operate!(/, T, MOIU.operate(sum, T, diag_vars), T(2)),
-        ),
+        MOIU.operate(-, T, f_scalars[1], MOIU.operate!(/, T, rhs, T(2))),
         MOI.GreaterThan(zero(T)),
         allow_modify_function = true,
     )
@@ -254,13 +253,16 @@ function MOI.supports_constraint(
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:NormNuclearBridge})
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOIB.added_constraint_types(
     ::Type{NormNuclearBridge{T,F,G,H}},
 ) where {T,F,G,H}
-    return [(F, MOI.GreaterThan{T}), (G, MOI.PositiveSemidefiniteConeTriangle)]
+    return Tuple{Type,Type}[
+        (F, MOI.GreaterThan{T}),
+        (G, MOI.PositiveSemidefiniteConeTriangle),
+    ]
 end
 
 function concrete_bridge_type(

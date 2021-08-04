@@ -28,6 +28,8 @@ end
 function replace_acronym(s::AbstractString)
     s = replace(s, "MathOptInterface.Utilities" => "MOIU")
     s = replace(s, "MathOptInterface.Bridges" => "MOIB")
+    # TODO(odow): remove once deprecated tests are deleted.
+    s = replace(s, "MathOptInterface.DeprecatedTest" => "MOIT")
     s = replace(s, "MathOptInterface.Test" => "MOIT")
     s = replace(s, "MathOptInterface" => "MOI")
     return s
@@ -57,6 +59,8 @@ include("copy.jl")
 include("results.jl")
 include("variables.jl")
 
+include("objective_function_container.jl")
+include("vector_bounds.jl")
 include("vector_of_constraints.jl")
 include("struct_of_constraints.jl")
 include("model.jl")

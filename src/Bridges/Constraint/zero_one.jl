@@ -23,14 +23,14 @@ function bridge_constraint(
 end
 
 function MOIB.added_constraint_types(::Type{<:ZeroOneBridge{T}}) where {T}
-    return [
+    return Tuple{Type,Type}[
         (MOI.SingleVariable, MOI.Interval{T}),
         (MOI.SingleVariable, MOI.Integer),
     ]
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:ZeroOneBridge})
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function concrete_bridge_type(

@@ -20,6 +20,7 @@ end
     "Test",
     "Utilities",
     "Benchmarks",
+    "DeprecatedTest",
 ]
     include("$(submodule)/$(submodule).jl")
 end

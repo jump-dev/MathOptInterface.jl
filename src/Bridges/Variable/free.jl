@@ -26,11 +26,11 @@ function supports_constrained_variable(::Type{<:FreeBridge}, ::Type{MOI.Reals})
 end
 
 function MOIB.added_constrained_variable_types(::Type{<:FreeBridge})
-    return [(MOI.Nonnegatives,)]
+    return Tuple{Type}[(MOI.Nonnegatives,)]
 end
 
 function MOIB.added_constraint_types(::Type{FreeBridge{T}}) where {T}
-    return Tuple{DataType,DataType}[]
+    return Tuple{Type,Type}[]
 end
 
 # Attributes, Bridge acting as a model

@@ -763,12 +763,12 @@ c1: [t, x1, x2, x3, x4] in RootDetConeSquare(2)
     )
 end
 
-function test_IndicatorSet()
+function test_Indicator()
     _test_model_equality(
         """
 variables: x, y
 minobjective: x
-c1: [x, y] in IndicatorSet{ACTIVATE_ON_ONE}(GreaterThan(1.0))
+c1: [x, y] in Indicator{ACTIVATE_ON_ONE}(GreaterThan(1.0))
 """,
         ["x", "y"],
         ["c1"],
@@ -778,7 +778,7 @@ c1: [x, y] in IndicatorSet{ACTIVATE_ON_ONE}(GreaterThan(1.0))
         """
 variables: x, y
 minobjective: x
-c1: [x, y] in IndicatorSet{ACTIVATE_ON_ZERO}(GreaterThan(1.0))
+c1: [x, y] in Indicator{ACTIVATE_ON_ZERO}(GreaterThan(1.0))
 """,
         ["x", "y"],
         ["c1"],

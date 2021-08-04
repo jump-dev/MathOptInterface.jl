@@ -1232,6 +1232,8 @@ struct VariableBasisStatus <: AbstractVariableAttribute
     VariableBasisStatus(result_index::Int = 1) = new(result_index)
 end
 
+attribute_value_type(::VariableBasisStatus) = BasisStatusCode
+
 ## Constraint attributes
 
 """

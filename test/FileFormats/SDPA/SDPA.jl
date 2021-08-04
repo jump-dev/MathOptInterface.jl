@@ -261,7 +261,7 @@ const _EXAMPLE_MODELS = [
         """
     variables: x, y
     minobjective: 10x + 20y
-    c1: [x + -1, 0, x + -2] in PositiveSemidefiniteConeTriangle(2)
+    c1: [x + -1, 0, x + y + -2] in PositiveSemidefiniteConeTriangle(2)
     c2: [5y + -3, 2y, 6y + -4] in PositiveSemidefiniteConeTriangle(2)
 """,
     ),
@@ -298,7 +298,7 @@ end
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")
-            @testset "name" begin
+            @testset "$name" begin
                 getfield(@__MODULE__, name)()
             end
         end

@@ -316,77 +316,7 @@ $$ \begin{aligned}
 
 !!! tip
     In IJulia, calling `print` or ending a cell with
-    [`Utilities.latex_formulation`](@ref) will render the model in LaTex.
-
-## Allocate-Load
-
-The Allocate-Load API allows solvers that do not support loading the problem
-incrementally to implement [`copy_to`](@ref) in a way that still allows
-transformations to be applied in the copy between the cache and the
-model if the transformations are implemented as MOI layers implementing the
-Allocate-Load API.
-
-Loading a model using the Allocate-Load interface consists of two passes
-through the model data:
-1) the _allocate_ pass where the model typically records the necessary
-   information about the constraints and attributes such as their number and
-   size. This information may be used by the solver to allocate datastructures
-   of appropriate size.
-2) the _load_ pass where the model typically loads the constraint and attribute
-   data to the model.
-
-The description above only gives a suggestion of what to achieve in each pass.
-In fact the exact same constraint and attribute data is provided to each pass,
-so an implementation of the Allocate-Load API is free to do whatever is more
-convenient in each pass.
-
-The main difference between each pass, apart from the fact that one is executed
-before the other during a copy, is that the allocate pass needs to create and
-return new variable and constraint indices, while during the load pass the
-appropriate constraint indices are provided.
-
-If you choose to implement the Allocate-Load API, implement the following
-functions, which will be called in order:
-
-**Allocate**
-
- * [`Utilities.allocate_variables`](@ref)
- * [`Utilities.allocate_constrained_variable`](@ref)
- * [`Utilities.allocate_constrained_variables`](@ref)
- * [`Utilities.allocate`](@ref)
- * [`Utilities.allocate_constraint`](@ref)
-
-**Load**
-
- * [`Utilities.load_variables`](@ref)
- * [`Utilities.load_constrained_variable`](@ref)
- * [`Utilities.load_constrained_variables`](@ref)
- * [`Utilities.load`](@ref)
- * [`Utilities.load_constraint`](@ref)
-
-Note that the `_constrained_variable` functions are optional, and are only
-needed if the solver requires variables be constrained on creation.
-
-You must also implement:
-```julia
-function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kwargs...)
-    return MOI.Utilities.automatic_copy_to(dest, src; kwargs...)
-end
-
-function MOI.Utilities.supports_allocate_load(
-    model::Optimizer,
-    copy_names::Bool,
-)
-    # If you support names...
-    return true
-    # Otherwise...
-    return !copy_names
-end
-```
-See [`Utilities.supports_allocate_load`](@ref) for more details.
-
-!!! warning
-    The Allocate-Load API should **not** be used outside [`copy_to`](@ref).
+    [`Utilities.latex_formulation`](@ref) will render the model in LaTeX.
 
 ## Utilities.MatrixOfConstraints
 
@@ -410,7 +340,7 @@ const Model = MOI.Utilities.GenericModel{
     MOI.Utilities.MatrixOfConstraints{
         Float64,
         MOI.Utilities.MutableSparseMatrixCSC{Float64,Cint,MOI.Utilities.ZeroBasedIndexing},
-        MOI.Utilities.Box{Float64},
+        MOI.Utilities.Hyperrectangle{Float64},
         LP{Float64},
     },
 }
@@ -489,5 +419,52 @@ used instead. For example:
 ```julia
 function MOI.get(model::Optimizer, attr::MOI.ObjectiveFunction)
     return MOI.Utilities.get_fallback(model, attr)
+end
+```
+
+## DoubleDicts
+
+When writing MOI interfaces, we often need to handle situations in which we map
+[`ConstraintIndex`](@ref)s to different values. For example, to a string
+for [`ConstraintName`](@ref).
+
+One option is to use a dictionary like `Dict{MOI.ConstraintIndex,String}`.
+However, this incurs a performance cost because the key is not a concrete type.
+
+The DoubleDicts submodule helps this situation by providing two types main
+types [`Utilities.DoubleDicts.DoubleDict`](@ref) and
+[`Utilities.DoubleDicts.IndexDoubleDict`](@ref). These types act like normal
+dictionaries, but internally they use more efficient dictionaries specialized to
+the type of the function-set pair.
+
+The most common usage of a `DoubleDict` is in the `index_map` returned by
+[`copy_to`](@ref). Performance can be improved, by using a function barrier.
+That is, instead of code like:
+```julia
+index_map = MOI.copy_to(dest, src)
+for (F, S) in MOI.get(src, MOI.ListOfConstraintTypesPresent())
+    for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
+        dest_ci = index_map[ci]
+        # ...
+    end
+end
+```
+use instead:
+```julia
+function function_barrier(
+    dest,
+    src,
+    index_map::MOI.Utilities.DoubleDicts.IndexDoubleDictInner{F,S},
+) where {F,S}
+    for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
+        dest_ci = index_map[ci]
+        # ...
+    end
+    return
+end
+
+index_map = MOI.copy_to(dest, src)
+for (F, S) in MOI.get(src, MOI.ListOfConstraintTypesPresent())
+    function_barrier(dest, src, index_map[F, S])
 end
 ```

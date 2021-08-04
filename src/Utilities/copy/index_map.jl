@@ -5,7 +5,7 @@ struct IndexMap <: AbstractDict{MOI.Index,MOI.Index}
         typeof(CleverDicts.key_to_index),
         typeof(CleverDicts.index_to_key),
     }
-    con_map::DoubleDicts.MainIndexDoubleDict
+    con_map::DoubleDicts.IndexDoubleDict
 end
 
 """
@@ -46,7 +46,7 @@ end
 
 function _identity_constraints_map(
     model,
-    map::MOIU.DoubleDicts.IndexWithType{F,S},
+    map::MOIU.DoubleDicts.IndexDoubleDictInner{F,S},
 ) where {F,S}
     for c in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         map[c] = c

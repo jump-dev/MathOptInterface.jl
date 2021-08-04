@@ -33,11 +33,11 @@ end
 function MOIB.added_constrained_variable_types(
     ::Type{VectorizeBridge{T,S}},
 ) where {T,S}
-    return [(S,)]
+    return Tuple{Type}[(S,)]
 end
 
 function MOIB.added_constraint_types(::Type{<:VectorizeBridge})
-    return Tuple{DataType,DataType}[]
+    return Tuple{Type,Type}[]
 end
 
 function concrete_bridge_type(

@@ -66,8 +66,14 @@ mutable struct MutableSparseMatrixCSC{Tv,Ti<:Integer,I<:AbstractIndexing}
     rowval::Vector{Ti}
     nzval::Vector{Tv}
     function MutableSparseMatrixCSC{Tv,Ti,I}() where {Tv,Ti<:Integer,I}
-        return new{Tv,Ti,I}(I(), 0, 0, Ti[], Ti[], Tv[])
+        return new{Tv,Ti,I}(I(), 0, 0, [zero(Ti)], Ti[], Tv[])
     end
+end
+
+function SparseArrays.nzrange(A::MutableSparseMatrixCSC, col)
+    start = _shift(A.colptr[col], A.indexing, OneBasedIndexing())
+    stop = _shift(A.colptr[col+1], A.indexing, ZeroBasedIndexing())
+    return start:stop
 end
 
 function MOI.empty!(A::MutableSparseMatrixCSC{Tv,Ti}) where {Tv,Ti}
@@ -83,6 +89,14 @@ end
 function add_column(A::MutableSparseMatrixCSC{Tv,Ti}) where {Tv,Ti}
     A.n += 1
     push!(A.colptr, zero(Ti))
+    return
+end
+
+function add_columns(A::MutableSparseMatrixCSC{Tv,Ti}, n) where {Tv,Ti}
+    A.n += n
+    for _ in 1:n
+        push!(A.colptr, zero(Ti))
+    end
     return
 end
 
@@ -158,4 +172,72 @@ function Base.convert(
         _shift(A.rowval, A.indexing, OneBasedIndexing()),
         A.nzval,
     )
+end
+
+function _first_in_column(
+    A::MutableSparseMatrixCSC{Tv,Ti},
+    row::Integer,
+    col::Integer,
+) where {Tv,Ti}
+    range = SparseArrays.nzrange(A, col)
+    row = _shift(row, OneBasedIndexing(), A.indexing)
+    idx = searchsortedfirst(view(A.rowval, range), row)
+    return get(range, idx, last(range) + 1)
+end
+
+function extract_function(
+    A::MutableSparseMatrixCSC{T},
+    row::Integer,
+    constant::T,
+) where {T}
+    func = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], constant)
+    for col in 1:A.n
+        idx = _first_in_column(A, row, col)
+        if idx > last(SparseArrays.nzrange(A, col))
+            continue
+        end
+        r = _shift(A.rowval[idx], A.indexing, OneBasedIndexing())
+        if r == row
+            push!(
+                func.terms,
+                MOI.ScalarAffineTerm(A.nzval[idx], MOI.VariableIndex(col)),
+            )
+        end
+    end
+    return func
+end
+
+function extract_function(
+    A::MutableSparseMatrixCSC{T},
+    rows::UnitRange,
+    constants::Vector{T},
+) where {T}
+    func = MOI.VectorAffineFunction(MOI.VectorAffineTerm{T}[], constants)
+    if isempty(rows)
+        return func
+    end
+    idx = [_first_in_column(A, first(rows), col) for col in 1:A.n]
+    for output_index in eachindex(rows)
+        for col in 1:A.n
+            if idx[col] > last(SparseArrays.nzrange(A, col))
+                continue
+            end
+            row = _shift(A.rowval[idx[col]], A.indexing, OneBasedIndexing())
+            if row != rows[output_index]
+                continue
+            end
+            push!(
+                func.terms,
+                MOI.VectorAffineTerm(
+                    output_index,
+                    MOI.ScalarAffineTerm(
+                        A.nzval[idx[col]],
+                        MOI.VariableIndex(col),
+                    ),
+                ),
+            )
+            idx[col] += 1
+        end
+    end
+    return func
 end

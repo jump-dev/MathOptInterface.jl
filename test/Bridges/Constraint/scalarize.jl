@@ -1,41 +1,49 @@
+module TestConstraintScalarize
+
 using Test
 
 using MathOptInterface
 const MOI = MathOptInterface
-const MOIT = MathOptInterface.Test
-const MOIU = MathOptInterface.Utilities
-const MOIB = MathOptInterface.Bridges
+
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
 
 include("../utilities.jl")
 
-mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
-config = MOIT.Config()
-
-@testset "Scalarize" begin
-    bridged_mock = MOIB.Constraint.Scalarize{Float64}(mock)
-
-    MOIT.basic_constraint_tests(
+function test_scalarize()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    config = MOI.Test.Config()
+    bridged_mock = MOI.Bridges.Constraint.Scalarize{Float64}(mock)
+    MOI.Test.runtests(
         bridged_mock,
         config,
         include = [
-            (F, S) for F in [
-                MOI.VectorOfVariables,
-                MOI.VectorAffineFunction{Float64},
-                MOI.VectorQuadraticFunction{Float64},
-            ] for S in [MOI.Nonnegatives, MOI.Nonpositives, MOI.Zeros]
+            "test_basic_$(F)_$(S)" for F in [
+                "VectorOfVariables",
+                "VectorAffineFunction",
+                "VectorQuadraticFunction",
+            ] for S in ["Nonnegatives", "Nonpositives", "Zeros"]
         ],
     )
-
-    # VectorOfVariables-in-Nonnegatives
-    # VectorAffineFunction-in-Zeros
+    MOI.empty!(bridged_mock)
     mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+        (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
             mock,
             [1.0, 0.0, 2.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [-3, -1],
         )
-    MOIT.lin1vtest(bridged_mock, config)
+    MOI.Test.test_conic_linear_VectorOfVariables(bridged_mock, config)
     ci = first(
         MOI.get(
             bridged_mock,
@@ -45,7 +53,7 @@ config = MOIT.Config()
             }(),
         ),
     )
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         3,
@@ -68,18 +76,13 @@ config = MOIT.Config()
     new_func = MOI.VectorOfVariables(func.variables[[1, 3]])
     @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) == new_func
     @test MOI.get(bridged_mock, MOI.ConstraintSet(), ci) == MOI.Nonnegatives(2)
-
-    @testset "$attr" for attr in [
-        MOI.ConstraintPrimalStart(),
-        MOI.ConstraintDualStart(),
-    ]
+    for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
         @test MOI.supports(bridged_mock, attr, typeof(ci))
         values = [1.0, 2.0]
         MOI.set(bridged_mock, attr, ci, values)
         @test MOI.get(bridged_mock, attr, ci) == values
     end
-
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         2,
@@ -88,11 +91,11 @@ config = MOIT.Config()
             (MOI.SingleVariable, MOI.GreaterThan{Float64}, 0),
         ),
     )
-
+    MOI.empty!(bridged_mock)
     # VectorAffineFunction-in-Nonnegatives
     # VectorAffineFunction-in-Zeros
     mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+        (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
             mock,
             [1.0, 0.0, 2.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
@@ -100,8 +103,7 @@ config = MOIT.Config()
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [-3, -1],
         )
-    MOIT.lin1ftest(bridged_mock, config)
-
+    MOI.Test.test_conic_linear_VectorAffineFunction(bridged_mock, config)
     ci = first(
         MOI.get(
             bridged_mock,
@@ -111,18 +113,13 @@ config = MOIT.Config()
             }(),
         ),
     )
-
-    @testset "$attr" for attr in [
-        MOI.ConstraintPrimalStart(),
-        MOI.ConstraintDualStart(),
-    ]
+    for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
         @test MOI.supports(bridged_mock, attr, typeof(ci))
         values = [1.0, -2.0]
         MOI.set(bridged_mock, attr, ci, values)
         @test MOI.get(bridged_mock, attr, ci) == values
     end
-
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         3,
@@ -131,7 +128,6 @@ config = MOIT.Config()
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
         ),
     )
-
     ci = first(
         MOI.get(
             bridged_mock,
@@ -141,18 +137,13 @@ config = MOIT.Config()
             }(),
         ),
     )
-
-    @testset "$attr" for attr in [
-        MOI.ConstraintPrimalStart(),
-        MOI.ConstraintDualStart(),
-    ]
+    for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
         @test MOI.supports(bridged_mock, attr, typeof(ci))
         values = [1.0, -2.0, 3.0]
         MOI.set(bridged_mock, attr, ci, values)
         @test MOI.get(bridged_mock, attr, ci) == values
     end
-
-    test_delete_bridge(
+    _test_delete_bridge(
         bridged_mock,
         ci,
         3,
@@ -161,33 +152,35 @@ config = MOIT.Config()
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 0),
         ),
     )
-
+    MOI.empty!(bridged_mock)
     # Test setting VectorAffineFunction with nonzero constants
-    MOIU.set_mock_optimize!(
+    MOI.Utilities.set_mock_optimize!(
         mock,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.0, 0.0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1.0, 0.75]),
+        (mock::MOI.Utilities.MockOptimizer) ->
+            MOI.Utilities.mock_optimize!(mock, [0.0, 0.0]),
+        (mock::MOI.Utilities.MockOptimizer) ->
+            MOI.Utilities.mock_optimize!(mock, [1.0, 0.75]),
     )
-    MOIT.solve_func_vectoraffine_nonneg(bridged_mock, config)
-
+    MOI.Test.test_modification_func_vectoraffine_nonneg(bridged_mock, config)
+    MOI.empty!(bridged_mock)
     # VectorOfVariables-in-Nonnegatives
     # VectorOfVariables-in-Nonpositives
     # VectorOfVariables-in-Zeros
     # VectorAffineFunction-in-Zeros
     mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+        (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
             mock,
             [-4, -3, 16, 0],
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [7, 2, -4],
         )
-    MOIT.lin2vtest(bridged_mock, config)
-
+    MOI.Test.test_conic_linear_VectorOfVariables_2(bridged_mock, config)
+    MOI.empty!(bridged_mock)
     # VectorAffineFunction-in-Nonnegatives
     # VectorAffineFunction-in-Nonpositives
     # VectorAffineFunction-in-Zeros
     mock.optimize! =
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+        (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
             mock,
             [-4, -3, 16, 0],
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
@@ -197,5 +190,18 @@ config = MOIT.Config()
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [7, 2, -4, 7],
         )
-    MOIT.lin2ftest(bridged_mock, config)
+    MOI.Test.test_conic_linear_VectorAffineFunction_2(bridged_mock, config)
+    MOI.Test.test_constraint_ConstraintPrimalStart(
+        bridged_mock,
+        MOI.Test.Config(),
+    )
+    MOI.Test.test_constraint_ConstraintDualStart(
+        bridged_mock,
+        MOI.Test.Config(),
+    )
+    return
 end
+
+end  # module
+
+TestConstraintScalarize.runtests()

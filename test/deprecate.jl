@@ -42,6 +42,30 @@ function test_deprecations_ScalarQuadraticTerm()
     @test_logs (:warn,) t.variable_index_2 == y
 end
 
+function test_deprecations_ScalarQuadraticFunction()
+    @test_logs(
+        (:warn,),
+        MOI.ScalarQuadraticFunction(
+            MOI.ScalarAffineTerm{Int}[],
+            MOI.ScalarQuadraticTerm{Int}[],
+            0,
+        ),
+    )
+    return
+end
+
+function test_deprecations_VectorQuadraticFunction()
+    @test_logs(
+        (:warn,),
+        MOI.VectorQuadraticFunction(
+            MOI.VectorAffineTerm{Int}[],
+            MOI.VectorQuadraticTerm{Int}[],
+            [0, 1],
+        ),
+    )
+    return
+end
+
 function test_RawOptimizerAttribute()
     @test_logs (:warn,) MOI.RawParameter(:a) == MOI.RawOptimizerAttribute("a")
 end

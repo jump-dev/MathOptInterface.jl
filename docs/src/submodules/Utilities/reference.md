@@ -33,6 +33,8 @@ Utilities.UniversalFallback
 Utilities.@model
 Utilities.GenericModel
 Utilities.GenericOptimizer
+Utilities.@struct_of_constraints_by_function_types
+Utilities.@struct_of_constraints_by_set_types
 Utilities.struct_of_constraint_code
 ```
 
@@ -62,23 +64,6 @@ Utilities.IndexMap
 Utilities.identity_index_map
 ```
 
-### [Allocate-Load API](@id allocate_load_api_ref)
-
-```@docs
-Utilities.allocate_load
-Utilities.supports_allocate_load
-Utilities.allocate_variables
-Utilities.allocate_constrained_variable
-Utilities.allocate_constrained_variables
-Utilities.allocate
-Utilities.allocate_constraint
-Utilities.load_variables
-Utilities.load_constrained_variable
-Utilities.load_constrained_variables
-Utilities.load
-Utilities.load_constraint
-```
-
 ## MatrixOfConstraints
 
 ```@docs
@@ -93,6 +78,7 @@ Utilities.allocate_terms
 Utilities.set_number_of_rows
 Utilities.load_terms
 Utilities.final_touch
+Utilities.extract_function
 ```
 
 ```@docs
@@ -106,10 +92,12 @@ Utilities.OneBasedIndexing
 
 ```@docs
 Utilities.load_constants
+Utilities.function_constants
+Utilities.set_from_constants
 ```
 
 ```@docs
-Utilities.Box
+Utilities.Hyperrectangle
 ```
 
 ### `.sets`
@@ -193,4 +181,13 @@ The following utilities are useful when working with symmetric matrix cones.
 ```@docs
 Utilities.is_diagonal_vectorized_index
 Utilities.side_dimension_for_vectorized_dimension
+```
+
+## DoubleDicts
+
+```@docs
+Utilities.DoubleDicts.DoubleDict
+Utilities.DoubleDicts.DoubleDictInner
+Utilities.DoubleDicts.IndexDoubleDict
+Utilities.DoubleDicts.IndexDoubleDictInner
 ```

@@ -217,6 +217,16 @@ function _reverse_dict(dest::AbstractDict, src::AbstractDict)
     return
 end
 
+function _reverse_dict(
+    dest::DoubleDicts.IndexDoubleDict,
+    src::DoubleDicts.IndexDoubleDict,
+)
+    for (key, value) in src.dict
+        dest.dict[key] = MOI.Utilities._reverse_dict(value)
+    end
+    return
+end
+
 function _reverse_dict(src::D) where {D<:Dict}
     return D(values(src) .=> keys(src))
 end
@@ -545,14 +555,15 @@ end
 # ConstraintSet and ConstraintFunction methods, but allows us to strongly type
 # the third and fourth arguments of the set methods so that we only support
 # setting the same type of set or function.
-function replace_constraint_function_or_set(
+function _replace_constraint_function_or_set(
     m::CachingOptimizer,
     attr,
     cindex,
     replacement,
 )
-    replacement_optimizer = map_indices(m.model_to_optimizer_map, replacement)
     if m.state == ATTACHED_OPTIMIZER
+        replacement_optimizer =
+            map_indices(m.model_to_optimizer_map, replacement)
         if m.mode == AUTOMATIC
             try
                 MOI.set(
@@ -587,23 +598,32 @@ function MOI.set(
     cindex::CI{F,S},
     set::S,
 ) where {F,S}
-    replace_constraint_function_or_set(m, MOI.ConstraintSet(), cindex, set)
+    _replace_constraint_function_or_set(m, MOI.ConstraintSet(), cindex, set)
     return
 end
 
 function MOI.set(
-    m::CachingOptimizer,
+    model::CachingOptimizer,
     ::MOI.ConstraintFunction,
-    cindex::CI{F},
+    cindex::MOI.ConstraintIndex{F,S},
     func::F,
-) where {F}
-    replace_constraint_function_or_set(
-        m,
+) where {F,S}
+    _replace_constraint_function_or_set(
+        model,
         MOI.ConstraintFunction(),
         cindex,
         func,
     )
     return
+end
+
+function MOI.set(
+    ::CachingOptimizer,
+    ::MOI.ConstraintFunction,
+    ::MOI.ConstraintIndex{MOI.SingleVariable,S},
+    ::MOI.SingleVariable,
+) where {S}
+    return throw(MOI.SettingSingleVariableFunctionNotAllowed())
 end
 
 function MOI.modify(

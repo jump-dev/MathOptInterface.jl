@@ -5,6 +5,7 @@
         sets::ST
         caches::Vector{Any}
         are_indices_mapped::Vector{BitSet}
+        final_touch::Bool
     end
 
 Represent `ScalarAffineFunction` and `VectorAffinefunction` constraints in a
@@ -59,6 +60,8 @@ The `.constants::BT` type must implement:
  * `Base.empty!(::BT)`
  * `Base.resize(::BT)`
  * [`MOI.Utilities.load_constants`](@ref)
+ * [`MOI.Utilities.function_constants`](@ref)
+ * [`MOI.Utilities.set_from_constants`](@ref)
 
 The `.sets::ST` type must implement:
 
@@ -82,8 +85,11 @@ mutable struct MatrixOfConstraints{T,AT,BT,ST} <: MOI.ModelLike
     sets::ST
     caches::Vector{Any}
     are_indices_mapped::Vector{BitSet}
+    final_touch::Bool
     function MatrixOfConstraints{T,AT,BT,ST}() where {T,AT,BT,ST}
-        return new{T,AT,BT,ST}(AT(), BT(), ST(), Any[], BitSet[])
+        model = new{T,AT,BT,ST}(AT(), BT(), ST(), Any[], BitSet[], false)
+        MOI.empty!(model)
+        return model
     end
 end
 
@@ -145,6 +151,23 @@ No more modification is allowed unless `MOI.empty!` is called.
 """
 function final_touch end
 
+"""
+    extract_function(coefficients, row::Integer, constant::T) where {T}
+
+Return the `MOI.ScalarAffineFunction{T}` function corresponding to row `row` in
+`coefficients`.
+
+    extract_function(
+        coefficients,
+        rows::UnitRange,
+        constants::Vector{T},
+    ) where{T}
+
+Return the `MOI.VectorAffineFunction{T}` function corresponding to rows `rows`
+in `coefficients`.
+"""
+function extract_function end
+
 ###
 ### Interface for the .constants field
 ###
@@ -168,12 +191,34 @@ The constants are loaded in three steps:
 """
 function load_constants end
 
+"""
+    function_constants(constants, rows)
+
+This function returns the function constants that were loaded with
+[`load_constants`](@ref) at the rows `rows`.
+
+This function should be implemented to be usable as storage of constants for
+[`MatrixOfConstraints`](@ref).
+"""
+function function_constants end
+
+"""
+    set_from_constants(constants, S::Type, rows)::S
+
+This function returns an instance of the set `S` for which the constants where
+loaded with [`load_constants`](@ref) at the rows `rows`.
+
+This function should be implemented to be usable as storage of constants for
+[`MatrixOfConstraints`](@ref).
+"""
+function set_from_constants end
+
 ###
 ### Interface for the .sets field
 ###
 
 """
-    set_types(sets)::Vector{DataType}
+    set_types(sets)::Vector{Type}
 
 Return the list of the types of the sets allowed in `sets`.
 """
@@ -227,6 +272,7 @@ function MOI.empty!(v::MatrixOfConstraints{T}) where {T}
     v.caches =
         [Tuple{_affine_function_type(T, S),S}[] for S in set_types(v.sets)]
     v.are_indices_mapped = [BitSet() for _ in eachindex(v.caches)]
+    v.final_touch = false
     return
 end
 
@@ -263,8 +309,11 @@ function MOI.supports_constraint(
     return F == _affine_function_type(T, S) && set_index(v.sets, S) !== nothing
 end
 
-function MOI.is_valid(v::MatrixOfConstraints, ci::MOI.ConstraintIndex)
-    return MOI.is_valid(v.sets, ci)
+function MOI.is_valid(
+    v::MatrixOfConstraints{T},
+    ci::MOI.ConstraintIndex{F,S},
+) where {T,F,S}
+    return F == _affine_function_type(T, S) && MOI.is_valid(v.sets, ci)
 end
 
 function MOI.get(
@@ -283,6 +332,18 @@ _add_set(sets, i, ::MOI.AbstractScalarFunction) = add_set(sets, i)
 function _add_set(sets, i, func::MOI.AbstractVectorFunction)
     return add_set(sets, i, MOI.output_dimension(func))
 end
+
+const _MATRIXOFCONSTRAINTS_MODIFY_NOT_ALLOWED_ERROR_MESSAGE = """
+MatrixOfConstraints does not allow modifications to be made to the model once
+`MOI.Utilities.final_touch` has been called. This is called at the end of
+`MOI.copy_to` and in `MOI.Utilities.attach_optimizer` (which is called by
+`MOI.optimize!` in a `MOI.Utilities.CachingOptimizer`). In order to be able to
+apply modifications to this model, you should add a layer
+`MOI.Utilities.CachingOptimizer(MOI.Utilities.Model{Float64}(), model)`
+where `model` is the current model. This will automatically empty `model` when
+modifications are done after `MOI.Utilities.final_touch` is called and copy the
+model again in `MOI.Utilities.attach_optimizer`.
+"""
 
 function _add_constraint(
     model::MatrixOfConstraints,
@@ -310,6 +371,13 @@ function MOI.add_constraint(
     i = set_index(model.sets, S)
     if i === nothing || F != _affine_function_type(T, S)
         throw(MOI.UnsupportedConstraint{F,S}())
+    end
+    if model.final_touch
+        throw(
+            MOI.AddConstraintNotAllowed{F,S}(
+                _MATRIXOFCONSTRAINTS_MODIFY_NOT_ALLOWED_ERROR_MESSAGE,
+            ),
+        )
     end
     return _add_constraint(model, i, IdentityMap(), func, set)
 end
@@ -383,6 +451,10 @@ end
 
 _add_variable(model::MatrixOfConstraints) = add_column(model.coefficients)
 
+function _add_variables(model::MatrixOfConstraints, n)
+    return add_columns(model.coefficients, n)
+end
+
 function pass_nonvariable_constraints(
     dest::MatrixOfConstraints,
     src::MOI.ModelLike,
@@ -398,6 +470,15 @@ function pass_nonvariable_constraints(
 end
 
 function final_touch(model::MatrixOfConstraints, index_map)
+    if model.final_touch
+        # If `default_copy_to` calls `final_touch`, then `index_map` is not
+        # `nothing` and `final_touch` should be `false`.
+        # When `CachingOptimizer` calls this, `index_map` is `nothing`
+        # and `final_touch` might be `true`.
+        # So we are always in a case where `index_map` is `nothing`.
+        @assert index_map === nothing
+        return
+    end
     final_touch(model.sets)
     num_rows = MOI.dimension(model.sets)
     resize!(model.constants, num_rows)
@@ -410,6 +491,7 @@ function final_touch(model::MatrixOfConstraints, index_map)
     final_touch(model.coefficients)
     empty!(model.caches)
     empty!(model.are_indices_mapped)
+    model.final_touch = true
     return
 end
 
@@ -447,55 +529,32 @@ function load_constants(
     return
 end
 
-###
-### .constants::Box
-###
+function_constants(b::Vector, rows) = b[rows]
 
-"""
-    struct Box{T}
-        lower::Vector{T}
-        upper::Vector{T}
-    end
+# FIXME does not work for all sets
+set_from_constants(::Vector, ::Type{S}, rows) where {S} = S(length(rows))
 
-Stores the constants of scalar constraints with the lower bound of the set in
-`lower` and the upper bound in `upper`.
-"""
-struct Box{T}
-    lower::Vector{T}
-    upper::Vector{T}
+function MOI.get(
+    model::MatrixOfConstraints,
+    ::Union{MOI.CanonicalConstraintFunction,MOI.ConstraintFunction},
+    ci::MOI.ConstraintIndex,
+)
+    @assert model.final_touch
+    MOI.throw_if_not_valid(model, ci)
+    r = rows(model, ci)
+    return extract_function(
+        model.coefficients,
+        r,
+        function_constants(model.constants, r),
+    )
 end
 
-Box{T}() where {T} = Box{T}(T[], T[])
-
-Base.:(==)(a::Box, b::Box) = a.lower == b.lower && a.upper == b.upper
-
-function Base.empty!(b::Box)
-    empty!(b.lower)
-    empty!(b.upper)
-    return b
-end
-
-function Base.resize!(b::Box, n)
-    resize!(b.lower, n)
-    resize!(b.upper, n)
-    return
-end
-
-function load_constants(
-    b::Box{T},
-    offset,
-    set::SUPPORTED_VARIABLE_SCALAR_SETS{T},
-) where {T}
-    flag = single_variable_flag(typeof(set))
-    if iszero(flag & LOWER_BOUND_MASK)
-        b.lower[offset+1] = typemin(T)
-    else
-        b.lower[offset+1] = extract_lower_bound(set)
-    end
-    if iszero(flag & UPPER_BOUND_MASK)
-        b.upper[offset+1] = typemax(T)
-    else
-        b.upper[offset+1] = extract_upper_bound(set)
-    end
-    return
+function MOI.get(
+    model::MatrixOfConstraints,
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{F,S},
+) where {F,S}
+    @assert model.final_touch
+    MOI.throw_if_not_valid(model, ci)
+    return set_from_constants(model.constants, S, rows(model, ci))
 end

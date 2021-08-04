@@ -29,6 +29,8 @@ Bridges.debug_supports_constraint
 Bridges.debug_supports
 Bridges.bridged_variable_function
 Bridges.unbridged_variable_function
+Bridges.bridged_function
+Bridges.Variable.unbridged_map
 ```
 
 ## Constraint bridges
@@ -37,6 +39,19 @@ Bridges.unbridged_variable_function
 Bridges.Constraint.AbstractBridge
 Bridges.Constraint.SingleBridgeOptimizer
 Bridges.Constraint.add_all_bridges
+```
+
+### [SetMap bridges](@id constraint_set_map)
+
+```@docs
+Bridges.Variable.SetMapBridge
+Bridges.Constraint.SetMapBridge
+Bridges.map_set
+Bridges.inverse_map_set
+Bridges.map_function
+Bridges.inverse_map_function
+Bridges.adjoint_map_function
+Bridges.inverse_adjoint_map_function
 ```
 
 ### [Bridges implemented](@id constraint_bridges_ref)

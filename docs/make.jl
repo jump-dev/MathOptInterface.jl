@@ -22,6 +22,12 @@ makedocs(
         "Background" => [
             "background/motivation.md",
             "background/duality.md",
+            "background/naming_conventions.md",
+        ],
+        "Tutorials" => [
+            "tutorials/example.md",
+            "tutorials/implementing.md",
+            "tutorials/mathprogbase.md",
         ],
         "Manual" => [
             "manual/standard_form.md",
@@ -30,8 +36,6 @@ makedocs(
             "manual/constraints.md",
             "manual/solutions.md",
             "manual/modification.md",
-            "manual/example.md",
-            "manual/implementing.md",
         ],
         "API Reference" => [
             "reference/standard_form.md",
@@ -63,6 +67,7 @@ makedocs(
             ],
             "Test" => [
                 "Overview" => "submodules/Test/overview.md",
+                "API Reference" => "submodules/Test/reference.md",
             ],
         ],
     ],

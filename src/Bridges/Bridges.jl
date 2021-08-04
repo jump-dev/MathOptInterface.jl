@@ -7,11 +7,15 @@ const MOIU = MOI.Utilities
 const CI = MOI.ConstraintIndex
 
 include("bridge.jl")
+include("set_map.jl")
 include("bridge_optimizer.jl")
 
 include("Variable/Variable.jl")
 include("Constraint/Constraint.jl")
 include("Objective/Objective.jl")
+
+include("flip_sign.jl")
+include("soc_rsoc.jl")
 
 include("lazy_bridge_optimizer.jl")
 include("debug.jl")

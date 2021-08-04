@@ -170,14 +170,14 @@ end
     concrete_bridge_type(
         BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
         F::Type{<:MOI.AbstractScalarFunction},
-    )::DataType
+    )::Type
 
 Return the concrete type of the bridge supporting objective functions of type
 `F`. This function can only be called if `MOI.supports_objective_function(BT, F)`
 is `true`.
 """
 function concrete_bridge_type(
-    bridge_type::DataType,
+    bridge_type::Type,
     ::Type{<:MOI.AbstractScalarFunction},
 )
     return bridge_type

@@ -59,10 +59,10 @@ function supports_objective_function(
     return true
 end
 
-MOIB.added_constrained_variable_types(::Type{<:SlackBridge}) = Tuple{DataType}[]
+MOIB.added_constrained_variable_types(::Type{<:SlackBridge}) = Tuple{Type}[]
 
 function MOIB.added_constraint_types(::Type{<:SlackBridge{T,F}}) where {T,F}
-    return [(F, MOI.GreaterThan{T}), (F, MOI.LessThan{T})]
+    return Tuple{Type,Type}[(F, MOI.GreaterThan{T}), (F, MOI.LessThan{T})]
 end
 
 function MOIB.set_objective_function_type(::Type{<:SlackBridge})
@@ -129,11 +129,16 @@ function MOI.get(
     return obj_slack_constant + slack - constant
 end
 
+_constant_term(set::MOI.LessThan) = set.upper
+_constant_term(set::MOI.GreaterThan) = set.lower
+
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.ObjectiveFunction{G},
     bridge::SlackBridge{T,F,G},
 ) where {T,F,G<:MOI.AbstractScalarFunction}
     func = MOI.get(model, MOI.ConstraintFunction(), bridge.constraint)
-    return MOIU.convert_approx(G, MOIU.remove_variable(func, bridge.slack))
+    set = MOI.get(model, MOI.ConstraintSet(), bridge.constraint)
+    f = MOIU.operate(-, T, func, _constant_term(set))
+    return MOIU.convert_approx(G, MOIU.remove_variable(f, bridge.slack))
 end

@@ -30,7 +30,7 @@ function bridge_constraint(
     ::Type{IndicatorSOS1Bridge{T,BC,MaybeBC}},
     model::MOI.ModelLike,
     f::MOI.VectorAffineFunction{T},
-    s::MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,BC},
+    s::MOI.Indicator{MOI.ACTIVATE_ON_ONE,BC},
 ) where {T<:Real,BC,MaybeBC}
     f_scalars = MOIU.eachscalar(f)
     (w, bound_constraint) = _add_bound_constraint!(model, BC)
@@ -68,7 +68,7 @@ end
 function MOI.supports_constraint(
     ::Type{<:IndicatorSOS1Bridge},
     ::Type{<:MOI.AbstractVectorFunction},
-    ::Type{<:MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,<:MOI.AbstractScalarSet}},
+    ::Type{<:MOI.Indicator{MOI.ACTIVATE_ON_ONE,<:MOI.AbstractScalarSet}},
 )
     return true
 end
@@ -78,7 +78,7 @@ function MOI.get(
     attr::MOI.ConstraintSet,
     b::IndicatorSOS1Bridge,
 )
-    return MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE}(
+    return MOI.Indicator{MOI.ACTIVATE_ON_ONE}(
         MOI.get(model, attr, b.linear_constraint_index),
     )
 end
@@ -109,19 +109,19 @@ end
 function MOIB.added_constrained_variable_types(
     ::Type{<:IndicatorSOS1Bridge{T,BC}},
 ) where {T,BC<:Union{MOI.LessThan{T},MOI.GreaterThan{T}}}
-    return [(BC,)]
+    return Tuple{Type}[(BC,)]
 end
 
 function MOIB.added_constrained_variable_types(
     ::Type{<:IndicatorSOS1Bridge{T,BC}},
 ) where {T,BC}
-    return []
+    return Tuple{Type}[]
 end
 
 function MOIB.added_constraint_types(
     ::Type{<:IndicatorSOS1Bridge{T,BC}},
 ) where {T,BC<:Union{MOI.LessThan{T},MOI.GreaterThan{T}}}
-    return [
+    return Tuple{Type,Type}[
         (MOI.VectorOfVariables, MOI.SOS1{T}),
         (MOI.ScalarAffineFunction{T}, BC),
     ]
@@ -130,7 +130,7 @@ end
 function MOIB.added_constraint_types(
     ::Type{<:IndicatorSOS1Bridge{T,S}},
 ) where {T,S<:MOI.AbstractScalarSet}
-    return [
+    return Tuple{Type,Type}[
         (MOI.VectorOfVariables, MOI.SOS1{T}),
         (MOI.ScalarAffineFunction{T}, S),
     ]
@@ -139,7 +139,7 @@ end
 function concrete_bridge_type(
     ::Type{<:IndicatorSOS1Bridge{T}},
     ::Type{<:MOI.AbstractVectorFunction},
-    ::Type{MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,S}},
+    ::Type{MOI.Indicator{MOI.ACTIVATE_ON_ONE,S}},
 ) where {T,S<:Union{MOI.LessThan,MOI.GreaterThan}}
     return IndicatorSOS1Bridge{T,S,MOI.ConstraintIndex{MOI.SingleVariable,S}}
 end
@@ -147,7 +147,7 @@ end
 function concrete_bridge_type(
     ::Type{<:IndicatorSOS1Bridge{T}},
     ::Type{<:MOI.AbstractVectorFunction},
-    ::Type{MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,S}},
+    ::Type{MOI.Indicator{MOI.ACTIVATE_ON_ONE,S}},
 ) where {T,S<:MOI.AbstractScalarSet}
     return IndicatorSOS1Bridge{T,S,Nothing}
 end
