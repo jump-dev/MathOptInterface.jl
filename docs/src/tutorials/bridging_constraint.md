@@ -106,7 +106,7 @@ In our example, the bridge constraint could be defined as:
 ```julia
 function Bridges.Constraint.bridge_constraint(
     ::Type{SignBridge{T}}, # Bridge to use.
-    model::MOI.ModelLike, # Model to which the constraint is being added.
+    model::ModelLike, # Model to which the constraint is being added.
     f::ScalarAffineFunction{T}, # Function to rewrite.
     s::LessThan{T}, # Set to rewrite.
 ) where {T}
@@ -173,7 +173,7 @@ A bridge that creates binary variables would rather have this definition of
 ```julia
 function Bridges.added_constrained_variable_types(::Type{SomeBridge{T}}) where {T}
     # The bridge only creates binary variables: 
-    return Tuple{Type}[(MOI.ZeroOne,)]
+    return Tuple{Type}[(ZeroOne,)]
 end
 ```
 
@@ -191,7 +191,7 @@ It is common practice to use the same name as the type defined for the bridge
 (`SignBridge`, in our example) without the suffix `Bridge`.
 
 ```julia
-const Sign{T,OT<: MOI.ModelLike} =
+const Sign{T,OT<: ModelLike} =
     SingleBridgeOptimizer{SignBridge{T}, OT}
 ```
 
@@ -276,14 +276,14 @@ function get(
     ::SignBridge{T},
     ::ListOfVariableIndices,
 ) where {T}
-    return MOI.VariableIndex[]
+    return VariableIndex[]
 end
 ```
 
 ### Model modifications
 
 To avoid copying the model when the user request to change a constraint, MOI 
-provides [`MOI.modify`](@ref). Bridges can also implement this API to allow 
+provides [`modify`](@ref). Bridges can also implement this API to allow 
 certain changes, such as coefficient changes.
 
 In our case, a modification of a coefficient in the original constraint
@@ -292,15 +292,15 @@ function) should be transmitted to the constraint created by the bridge,
 but with a sign change.
 
 ```julia
-function MOI.modify(
-    model::MOI.ModelLike,
+function modify(
+    model::ModelLike,
     bridge::SignBridge,
     change::ScalarCoefficientChange,
 )
-    MOI.modify(
+    modify(
         model,
         bridge.constraint,
-        MOI.ScalarCoefficientChange(change.variable, -change.new_coefficient),
+        ScalarCoefficientChange(change.variable, -change.new_coefficient),
     )
     return
 end
@@ -311,7 +311,7 @@ end
 When a bridge is deleted, the constraints it added should be deleted too.
 
 ```julia
-function delete(model::MOI.ModelLike, bridge::SignBridge)
+function delete(model::ModelLike, bridge::SignBridge)
     delete(model, bridge.constraint)
     return
 end
