@@ -1117,7 +1117,7 @@ results may be alternate certificates, or infeasible points.
 """
 struct ResultCount <: AbstractModelAttribute end
 
-attribute_value_type(::ResultCount) = Int64
+attribute_value_type(::ResultCount) = Int
 
 """
     ConflictStatusCode
