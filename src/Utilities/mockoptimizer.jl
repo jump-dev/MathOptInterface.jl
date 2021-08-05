@@ -96,7 +96,7 @@ function MockOptimizer(
         (::MockOptimizer) -> nothing,
         false,
         MOI.OPTIMIZE_NOT_CALLED,
-        1,
+        Int64(1),
         Dict{Int,Float64}(),
         Dict{Int,Float64}(),
         # PrimalStatus
