@@ -177,6 +177,16 @@ function Bridges.added_constrained_variable_types(::Type{SomeBridge{T}}) where {
 end
 ```
 
+!!! warning
+    If you declare the creation of constrained variables, the corresponding 
+    constraint type `SingleVariable` should not be indicated in 
+    `added_constrained_variable_types`. This would restrict the use of the 
+    bridge to solvers that can add such a constraint after the variable is 
+    created. 
+
+Typically, the function [`concrete_bridge_type`](@ref) does not have to be 
+defined for most bridges.
+
 ## Bridge registration
 
 For a bridge to be used by MOI, it must be known by MOI. 

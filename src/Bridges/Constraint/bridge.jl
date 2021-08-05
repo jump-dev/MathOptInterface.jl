@@ -85,6 +85,10 @@ Return a list of the types of constraints that bridges of type `BT` add for
 bridging `F`-in-`S` constraints. This falls back to
 `added_constraint_types(concrete_bridge_type(BT, F, S))`
 so bridges should not implement this method.
+
+This function should not repeat the constraints added on variables when they 
+are created (this is the role of `added_constrained_variable_types`), but only
+the constraints that are added with `MOI.add_constraint`.
 """
 function MOIB.added_constraint_types(
     BT::Type{<:AbstractBridge},
