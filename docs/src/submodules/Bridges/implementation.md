@@ -34,11 +34,11 @@ Bridges.Objective.bridge_objective
 ```
 
 When querying the [`NumberOfVariables`](@ref), [`NumberOfConstraints`](@ref)
-and [`ListOfConstraintIndices`](@ref), the variables and constraints created
-by the bridges in the underlying model are hidden by the bridge optimizer.
-For this purpose, the bridge should provide access to the variables and
-constraints it has creates by implemented the following methods of
-[`get`](@ref):
+[`ListOfVariableIndices`](@ref), and [`ListOfConstraintIndices`](@ref), the 
+variables and constraints created by the bridges in the underlying model are
+hidden by the bridge optimizer. For this purpose, the bridge should provide
+access to the variables and constraints it has creates by implemented the 
+following methods of [`get`](@ref):
 ```@docs
 get(::Bridges.Constraint.AbstractBridge, ::NumberOfVariables)
 get(::Bridges.Constraint.AbstractBridge, ::ListOfVariableIndices)
