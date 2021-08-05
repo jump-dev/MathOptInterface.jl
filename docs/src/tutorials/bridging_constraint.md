@@ -184,6 +184,12 @@ end
     This would restrict the use of the bridge to solvers that can add such a 
     constraint after the variable is created. 
 
+    More concretely, *if* you declare in `added_constrained_variable_types` that
+    your bridge creates binary variables (`ZeroOne`), *and if* you never add such 
+    a constraint afterward (you do not call 
+    `add_constraint(model, SingleVariable(var), ZeroOne())`), then you should 
+    *not* list `(SingleVariable, ZeroOne)` in `added_constraint_types`.
+
 Typically, the function [`Bridges.Constraint.concrete_bridge_type`](@ref) does
 not have to be defined for most bridges.
 
