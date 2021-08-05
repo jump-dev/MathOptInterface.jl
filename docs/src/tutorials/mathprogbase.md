@@ -5,8 +5,10 @@ However, it is not a direct replacement.
 
 ## Transitioning a solver interface
 
-Writing a solver interface in MathOptInterface is more work than the equivalent
-interface in MathProgBase.
+MathOptInterface is more extensive than MathProgBase which may make its
+implementation seem daunting at first.
+There are however numerous utilities in MathOptInterface that should hopefully
+make the implementation as simple or simpler than MathProgBase.
 
 For more information, read [Implementing a solver interface](@ref).
 
