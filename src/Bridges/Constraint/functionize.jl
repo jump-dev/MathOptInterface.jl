@@ -89,7 +89,15 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::Union{MOI.CanonicalConstraintFunction,MOI.ConstraintFunction},
+    attr::MOI.CanonicalConstraintFunction,
+    b::ScalarFunctionizeBridge,
+)
+    return convert(MOI.SingleVariable, MOI.get(model, attr, b.constraint))
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintFunction,
     b::ScalarFunctionizeBridge,
 )
     return convert(MOI.SingleVariable, MOI.get(model, attr, b.constraint))
@@ -200,7 +208,16 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::Union{MOI.CanonicalConstraintFunction,MOI.ConstraintFunction},
+    attr::MOI.CanonicalConstraintFunction,
+    b::VectorFunctionizeBridge,
+)
+    f = MOI.get(model, attr, b.constraint)
+    return MOIU.convert_approx(MOI.VectorOfVariables, f)
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintFunction,
     b::VectorFunctionizeBridge,
 )
     f = MOI.get(model, attr, b.constraint)
