@@ -184,8 +184,8 @@ end
     bridge to solvers that can add such a constraint after the variable is 
     created. 
 
-Typically, the function [`concrete_bridge_type`](@ref) does not have to be 
-defined for most bridges.
+Typically, the function [`Bridges.Constraint.concrete_bridge_type`](@ref) does
+not have to be defined for most bridges.
 
 ## Bridge registration
 
