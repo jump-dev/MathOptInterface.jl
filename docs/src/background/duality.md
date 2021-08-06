@@ -108,8 +108,8 @@ and similarly, the dual is:
 ```
 
 !!! warning
-    For the LP case is that the signs of the feasible duals depend only on the
-    sense of the inequality and not on the objective sense.
+    For the LP case, the signs of the feasible dual variables depend only on the
+    sense of the corresponding primal inequality and not on the objective sense.
 
 ## Duality and scalar product
 
@@ -133,7 +133,7 @@ Given a problem with quadratic functions:
 & \;\;\text{s.t.} & \frac{1}{2}x^TQ_ix + a_i^T x + b_i & \in \mathcal{C}_i & i = 1 \ldots m
 \end{align*}
 ```
-Consider the Lagrangian function
+with cones ``\mathcal{C}_i \subseteq \mathbb{R}`` for ``i = 1 \ldots m``, consider the Lagrangian function
 ```math
 L(x, y) = \frac{1}{2}x^TQ_0x + a_0^T x + b_0 - \sum_{i = 1}^m y_i (\frac{1}{2}x^TQ_ix + a_i^T x + b_i)
 ```
@@ -152,9 +152,9 @@ A pair of primal-dual variables $(x^\star, y^\star)$ is optimal if
   ```
   That is, for all ``i = 1, \ldots, m``, ``\frac{1}{2}x^TQ_ix + a_i^T x + b_i`` is
   either zero or in the normal cone of ``\mathcal{C}_i^*`` at ``y^\star``.
-  For instance, if ``\mathcal{C}_i`` is ``\{ x \in \mathbb{R} : x \le 0 \}``, it means that
-  if ``\frac{1}{2}x^TQ_ix + a_i^T x + b_i`` is nonzero then ``\lambda_i = 0``,
-  this is the classical complementary slackness condition.
+  For instance, if ``\mathcal{C}_i`` is ``\{ x \in \mathbb{R} : x \le 0 \}``, this means that
+  if ``\frac{1}{2}x^TQ_ix + a_i^T x + b_i`` is nonzero at ``x^\star`` then ``y_i^\star = 0``.
+  This is the classical complementary slackness condition.
 
 If ``\mathcal{C}_i`` is a vector set, the discussion remains valid with
 ``y_i(\frac{1}{2}x^TQ_ix + a_i^T x + b_i)`` replaced with the scalar product
@@ -162,13 +162,13 @@ between ``y_i`` and the vector of scalar-valued quadratic functions.
 
 !!! note
     For quadratic programs with only affine constraints, the optimality condition
-    ``\nabla_x L(x, y^\star) = 0`` can be simplified as follows
+    ``\nabla_x L(x, y^\star) = 0`` can be simplified as follows:
     ```math
     0 = \nabla_x L(x, y^\star) = Q_0x + a_0 - \sum_{i = 1}^m y_i^\star a_i
     ```
     which gives
     ```math
-    Q_0x = \sum_{i = 1}^m y_i^\star a_i - a_0
+    Q_0x = \sum_{i = 1}^m y_i^\star a_i - a_0 .
     ```
     The Lagrangian function
     ```math

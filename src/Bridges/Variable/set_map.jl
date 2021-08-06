@@ -23,13 +23,21 @@ bridge.
 """
 abstract type SetMapBridge{T,S1,S2} <: AbstractBridge end
 
+function _add_constrained_var(model, set::MOI.AbstractScalarSet)
+    return MOI.add_constrained_variable(model, set)
+end
+
+function _add_constrained_var(model, set::MOI.AbstractVectorSet)
+    return MOI.add_constrained_variables(model, set)
+end
+
 function bridge_constrained_variable(
     BT::Type{<:SetMapBridge{T,S1,S2}},
     model::MOI.ModelLike,
     set::S2,
 ) where {T,S1,S2}
     variables, constraint =
-        MOI.add_constrained_variables(model, MOIB.inverse_map_set(BT, set))
+        _add_constrained_var(model, MOIB.inverse_map_set(BT, set))
     return BT(variables, constraint)
 end
 
@@ -88,7 +96,17 @@ function MOI.get(
 end
 
 # References
-function MOI.delete(model::MOI.ModelLike, bridge::SetMapBridge)
+function MOI.delete(
+    model::MOI.ModelLike,
+    bridge::SetMapBridge{T,S1,S2},
+) where {T,S1,S2<:MOI.AbstractScalarSet}
+    MOI.delete(model, bridge.variable)
+    return
+end
+function MOI.delete(
+    model::MOI.ModelLike,
+    bridge::SetMapBridge{T,S1,S2},
+) where {T,S1,S2<:MOI.AbstractVectorSet}
     MOI.delete(model, bridge.variables)
     return
 end
@@ -102,6 +120,17 @@ function MOI.get(
 )
     set = MOI.get(model, attr, bridge.constraint)
     return MOIB.map_set(typeof(bridge), set)
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintSet,
+    bridge::SetMapBridge{T,S1},
+    set::S1,
+) where {T,S1}
+    mapped = MOIB.inverse_map_set(typeof(bridge), set)
+    MOI.set(model, attr, bridge.constraint, mapped)
+    return
 end
 
 function MOI.get(
@@ -162,6 +191,13 @@ function MOIB.bridged_function(
         i,
     )
     return convert(MOI.ScalarAffineFunction{T}, func)
+end
+
+function unbridged_map(bridge::SetMapBridge{T}, vi::MOI.VariableIndex) where {T}
+    F = MOI.ScalarAffineFunction{T}
+    func = MOI.SingleVariable(vi)
+    mapped = MOIB.inverse_map_function(typeof(bridge), func)
+    return Pair{MOI.VariableIndex,F}[bridge.variable=>mapped]
 end
 
 function unbridged_map(

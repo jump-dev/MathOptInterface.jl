@@ -37,6 +37,11 @@ Because these bridges are included in MathOptInterface, they can be re-used by
 any optimizer. Some bridges also implement constraint modifications and
 constraint primal and dual translations.
 
+Several bridges can be used in combination to transform a single constraint
+into a form that the solver may understand. Choosing the bridges to use 
+takes the form of finding a shortest path in the hypergraph of bridges. The
+methodology is detailed in [the MOI paper](https://arxiv.org/abs/2002.03447).
+
 ## The three types of bridges
 
 There are three types of bridges in MathOptInterface:
@@ -47,22 +52,30 @@ There are three types of bridges in MathOptInterface:
 ### Constraint bridges
 
 Constraint bridges convert constraints formulated by the user into an equivalent
-form supported by the solver.
+form supported by the solver. Constraint bridges are subtypes of 
+[`Bridges.Constraint.AbstractBridge`](@ref).
 
 The equivalent formulation may add constraints (and possibly also variables) in
 the underlying model.
 
+In particular, constraint bridges can focus on rewriting the function of a
+constraint, and do not change the set. Function bridges are subtypes of 
+[`Bridges.Constraint.AbstractFunctionConversionBridge`](@ref).
+
 Read the [list of implemented constraint bridges](@ref constraint_bridges_ref)
 for more details on the types of transformations that are available.
+Function bridges are [`Bridges.Constraint.ScalarFunctionizeBridge`](@ref) and
+[`Bridges.Constraint.VectorFunctionizeBridge`](@ref).
 
 ### [Variable bridges](@id variable_bridges)
 
 Variable bridges convert variables added by the user, either free with
 [`add_variable`](@ref)/[`add_variables`](@ref), or constrained with
 [`add_constrained_variable`](@ref)/[`add_constrained_variables`](@ref),
-into an equivalent form supported by the solver.
+into an equivalent form supported by the solver. Variable bridges are 
+subtypes of [`Bridges.Variable.AbstractBridge`](@ref).
 
-Te equivalent formulation may add constraints (and possibly also variables) in
+The equivalent formulation may add constraints (and possibly also variables) in
 the underlying model.
 
 Read the [list of implemented variable bridges](@ref variable_bridges_ref) for
@@ -71,9 +84,10 @@ more details on the types of transformations that are available.
 ### Objective bridges
 
 Objective bridges convert the [`ObjectiveFunction`](@ref) set by the user into
-an equivalent form supported by the solver.
+an equivalent form supported by the solver. Objective bridges are 
+subtypes of [`Bridges.Objective.AbstractBridge`](@ref).
 
-Te equivalent formulation may add constraints (and possibly also variables) in
+The equivalent formulation may add constraints (and possibly also variables) in
 the underlying model.
 
 Read the [list of implemented objective bridges](@ref objective_bridges_ref) for

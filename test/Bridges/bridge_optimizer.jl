@@ -703,6 +703,72 @@ function test_get_ObjectiveFunctionType()
     return
 end
 
+include("identity_bridge.jl")
+
+function test_recursive_model_variable(::Type{T} = Int) where {T}
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
+    BT = IdentityBridges.VariableBridge{T}
+    b = MOI.Bridges.Variable.SingleBridgeOptimizer{BT}(model)
+    x, cx = MOI.add_constrained_variable(b, MOI.EqualTo(one(T)))
+    @test MOI.Bridges.is_bridged(b, x)
+    @test MOI.Bridges.is_bridged(b, cx)
+    @test MOI.get(b, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(x)
+    @test MOI.get(b, MOI.ConstraintSet(), cx) == MOI.EqualTo(one(T))
+    MOI.set(b, MOI.ConstraintSet(), cx, MOI.EqualTo(zero(T)))
+    @test MOI.get(b, MOI.ConstraintSet(), cx) == MOI.EqualTo(zero(T))
+    @test MOI.is_valid(b, x)
+    MOI.delete(b, x)
+    @test !MOI.is_valid(b, x)
+end
+
+function test_recursive_model_constraint(::Type{T} = Int) where {T}
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
+    BT = IdentityBridges.ConstraintBridge{T}
+    b = MOI.Bridges.Constraint.SingleBridgeOptimizer{BT}(model)
+    x = MOI.add_variable(b)
+    fx = MOI.SingleVariable(x)
+    func = one(T) * fx
+    set = MOI.EqualTo(zero(T))
+    c = MOI.add_constraint(b, func, set)
+    @test MOI.Bridges.is_bridged(b, c)
+    @test MOI.get(b, MOI.ConstraintFunction(), c) ≈ func
+    new_func = T(2) * fx
+    MOI.set(b, MOI.ConstraintFunction(), c, new_func)
+    @test MOI.get(b, MOI.ConstraintFunction(), c) == new_func
+    MOI.modify(b, c, MOI.ScalarCoefficientChange(x, T(3)))
+    @test MOI.get(b, MOI.ConstraintFunction(), c) ≈ T(3) * fx
+    MOI.modify(b, c, MOI.ScalarConstantChange(T(-1)))
+    @test MOI.get(b, MOI.ConstraintFunction(), c) ≈ T(3) * fx + T(-1)
+    @test MOI.get(b, MOI.ConstraintSet(), c) == set
+    new_set = MOI.EqualTo(one(T))
+    MOI.set(b, MOI.ConstraintSet(), c, new_set)
+    @test MOI.get(b, MOI.ConstraintSet(), c) == new_set
+    MOI.set(b, MOI.ConstraintDualStart(), c, one(T))
+    @test MOI.get(b, MOI.ConstraintDualStart(), c) == one(T)
+    @test MOI.is_valid(b, c)
+    MOI.delete(b, c)
+    @test !MOI.is_valid(b, c)
+end
+
+function test_recursive_model_objective(::Type{T} = Int) where {T}
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
+    BT = IdentityBridges.ObjectiveBridge{T}
+    b = MOI.Bridges.Objective.SingleBridgeOptimizer{BT}(model)
+    x = MOI.add_variable(b)
+    fx = MOI.SingleVariable(x)
+    func = one(T) * fx
+    MOI.set(b, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    @test !MOI.Bridges.is_objective_bridged(b)
+    attr = MOI.ObjectiveFunction{typeof(func)}()
+    MOI.set(b, attr, func)
+    @test MOI.Bridges.is_objective_bridged(b)
+    @test MOI.get(b, attr) ≈ func
+    attr = MOI.ObjectiveFunction{typeof(fx)}()
+    MOI.set(b, attr, fx)
+    @test !MOI.Bridges.is_objective_bridged(b)
+    @test MOI.get(b, attr) ≈ fx
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()

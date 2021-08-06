@@ -18,6 +18,12 @@ s.t. \; & w^\top x \le C \\
 \end{aligned}
 ```
 
+Load the MathOptInterface module and define the shorthand `MOI`:
+```julia
+using MathOptInterface
+const MOI = MathOptInterface
+```
+
 As an optimizer, we choose GLPK:
 ```julia
 using GLPK

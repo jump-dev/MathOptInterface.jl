@@ -37,6 +37,7 @@ Bridges.Variable.unbridged_map
 
 ```@docs
 Bridges.Constraint.AbstractBridge
+Bridges.Constraint.AbstractFunctionConversionBridge
 Bridges.Constraint.SingleBridgeOptimizer
 Bridges.Constraint.add_all_bridges
 ```
@@ -57,6 +58,7 @@ Bridges.inverse_adjoint_map_function
 ### [Bridges implemented](@id constraint_bridges_ref)
 
 ```@docs
+Bridges.Constraint.FlipSignBridge
 Bridges.Constraint.GreaterToIntervalBridge
 Bridges.Constraint.GreaterToLessBridge
 Bridges.Constraint.LessToIntervalBridge
@@ -104,6 +106,7 @@ Bridges.Variable.add_all_bridges
 ### [Bridges implemented](@id variable_bridges_ref)
 
 ```@docs
+Bridges.Variable.FlipSignBridge
 Bridges.Variable.ZerosBridge
 Bridges.Variable.FreeBridge
 Bridges.Variable.NonposToNonnegBridge

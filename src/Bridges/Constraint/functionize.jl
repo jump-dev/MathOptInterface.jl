@@ -89,11 +89,18 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
+    attr::MOI.CanonicalConstraintFunction,
+    b::ScalarFunctionizeBridge,
+)
+    return convert(MOI.SingleVariable, MOI.get(model, attr, b.constraint))
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
     attr::MOI.ConstraintFunction,
     b::ScalarFunctionizeBridge,
 )
-    f = MOIU.canonical(MOI.get(model, attr, b.constraint))
-    return convert(MOI.SingleVariable, f)
+    return convert(MOI.SingleVariable, MOI.get(model, attr, b.constraint))
 end
 
 # vector version
@@ -197,6 +204,15 @@ function MOI.set(
         MOI.VectorAffineFunction{T}(func),
     )
     return
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.CanonicalConstraintFunction,
+    b::VectorFunctionizeBridge,
+)
+    f = MOI.get(model, attr, b.constraint)
+    return MOIU.convert_approx(MOI.VectorOfVariables, f)
 end
 
 function MOI.get(

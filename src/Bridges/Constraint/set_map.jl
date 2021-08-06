@@ -92,6 +92,21 @@ function MOI.get(
     return MOIU.convert_approx(G, func)
 end
 
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintFunction,
+    bridge::SetMapBridge{T,S2,S1,F,G},
+    func::G,
+) where {T,S2,S1,F,G}
+    MOI.set(
+        model,
+        attr,
+        bridge.constraint,
+        MOIB.map_function(typeof(bridge), func),
+    )
+    return
+end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintSet,
@@ -164,14 +179,34 @@ function MOI.set(
     return
 end
 
+# By linearity of the map, we can just change the constant/coefficient
+function _map_change(::Type{BT}, change::MOI.ScalarConstantChange) where {BT}
+    constant = MOIB.map_function(BT, change.new_constant)
+    return MOI.ScalarConstantChange(constant)
+end
+function _map_change(::Type{BT}, change::MOI.VectorConstantChange) where {BT}
+    constant = MOIB.map_function(BT, change.new_constant)
+    return MOI.VectorConstantChange(constant)
+end
+function _map_change(::Type{BT}, change::MOI.ScalarCoefficientChange) where {BT}
+    coefficient = MOIB.map_function(BT, change.new_coefficient)
+    return MOI.ScalarCoefficientChange(change.variable, coefficient)
+end
+function _map_change(::Type{BT}, change::MOI.MultirowChange) where {BT}
+    # It is important here that `change.new_coefficients` contains
+    # the complete new sparse column associated to the variable.
+    # Calling modify twice with part of the column won't work since
+    # the linear map might reset all the column each time.
+    coefficients = MOIB.map_function(BT, change.new_coefficients)
+    return MOI.MultirowChange(change.variable, coefficients)
+end
+
 function MOI.modify(
     model::MOI.ModelLike,
     bridge::SetMapBridge,
-    change::MOI.VectorConstantChange,
+    change::MOI.AbstractFunctionModification,
 )
-    # By linearity of the map, we can just change the constant
-    constant = MOIB.map_function(typeof(bridge), change.new_constant)
-    MOI.modify(model, bridge.constraint, MOI.VectorConstantChange(constant))
+    MOI.modify(model, bridge.constraint, _map_change(typeof(bridge), change))
     return
 end
 
