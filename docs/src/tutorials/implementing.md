@@ -51,7 +51,7 @@ has a good list of solvers, along with the problem classes they support.
 
 ### Create a low-level interface
 
-Before writing a MathOptInterface, you first need to be able to call the solver
+Before writing a MathOptInterface wrapper, you first need to be able to call the solver
 from Julia.
 
 #### Wrapping solvers written in Julia
@@ -77,7 +77,7 @@ easiest way to do this is to copy an existing solver. Good examples to follow
 are the [COIN-OR solvers](https://github.com/JuliaPackaging/Yggdrasil/tree/master/C/Coin-OR).
 
 !!! warning
-    Building the solver via Yggdrasil is non-trivial. please ask the
+    Building the solver via Yggdrasil is non-trivial. Please ask the
     [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev) for help.
 
 If the code is commercial or not publicly available, the user will need to
@@ -252,7 +252,7 @@ Now that we have an `Optimizer`, we need to implement a few basic methods.
     It is also very helpful to look at an existing wrapper for a similar solver.
 
 You should also implement `Base.show(::IO, ::Optimizer)` to print a nice string
-when some prints your model. For example
+when someone prints your model. For example
 ```julia
 function Base.show(io::IO, model::Optimizer)
     return print(io, "NewSolver with the pointer $(model.ptr)")
@@ -660,12 +660,12 @@ For example, Gurobi.jl adds attributes for multiobjective optimization by
 struct NumberOfObjectives <: MOI.AbstractModelAttribute end
 
 function MOI.set(model::Optimizer, ::NumberOfObjectives, n::Integer)
-    # Code to set NumberOfOBjectives
+    # Code to set NumberOfObjectives
     return
 end
 
 function MOI.get(model::Optimizer, ::NumberOfObjectives)
-    n = # Code to get NumberOfobjectives
+    n = # Code to get NumberOfObjectives
     return n
 end
 ```
