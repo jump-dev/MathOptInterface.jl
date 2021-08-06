@@ -27,7 +27,7 @@ function bridge_constraint end
 
 The number of variables created by the bridge `b` in the model.
 """
-MOI.get(::AbstractBridge, ::MOI.NumberOfVariables) = Int64(0)
+MOI.get(::AbstractBridge, ::MOI.NumberOfVariables)::Int64 = 0
 
 """
     MOI.get(b::AbstractBridge, ::MOI.ListOfVariableIndices)

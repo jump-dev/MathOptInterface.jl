@@ -78,7 +78,7 @@ function concrete_bridge_type(
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(::SlackBridge, ::MOI.NumberOfVariables) = Int64(1)
+MOI.get(::SlackBridge, ::MOI.NumberOfVariables)::Int64 = 1
 
 function MOI.get(bridge::SlackBridge, ::MOI.ListOfVariableIndices)
     return [bridge.slack]

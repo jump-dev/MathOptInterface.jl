@@ -401,7 +401,7 @@ abstract type BadModel <: MOI.ModelLike end
 function MOI.get(::BadModel, ::MOI.ListOfModelAttributesSet)
     return MOI.AbstractModelAttribute[]
 end
-MOI.get(::BadModel, ::MOI.NumberOfVariables) = Int64(1)
+MOI.get(::BadModel, ::MOI.NumberOfVariables)::Int64 = 1
 MOI.get(::BadModel, ::MOI.ListOfVariableIndices) = [MOI.VariableIndex(1)]
 function MOI.get(::BadModel, ::MOI.ListOfVariableAttributesSet)
     return MOI.AbstractVariableAttribute[]

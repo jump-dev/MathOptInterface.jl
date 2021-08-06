@@ -411,7 +411,7 @@ end
 
 # Attributes, Bridge acting as a model
 
-MOI.get(b::RootDetBridge, ::MOI.NumberOfVariables) = Int64(length(b.Δ))
+MOI.get(b::RootDetBridge, ::MOI.NumberOfVariables)::Int64 = length(b.Δ)
 
 MOI.get(b::RootDetBridge, ::MOI.ListOfVariableIndices) = copy(b.Δ)
 

@@ -86,7 +86,7 @@ function concrete_bridge_type(
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(::GeoMeantoRelEntrBridge, ::MOI.NumberOfVariables) = Int64(1)
+MOI.get(::GeoMeantoRelEntrBridge, ::MOI.NumberOfVariables)::Int64 = 1
 
 function MOI.get(bridge::GeoMeantoRelEntrBridge, ::MOI.ListOfVariableIndices)
     return [bridge.y]

@@ -150,7 +150,7 @@ function concrete_bridge_type(
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(b::NormOneBridge, ::MOI.NumberOfVariables) = Int64(length(b.y))
+MOI.get(b::NormOneBridge, ::MOI.NumberOfVariables)::Int64 = length(b.y)
 
 MOI.get(b::NormOneBridge, ::MOI.ListOfVariableIndices) = copy(b.y)
 

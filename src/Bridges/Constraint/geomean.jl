@@ -164,7 +164,7 @@ function concrete_bridge_type(
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(b::GeoMeanBridge, ::MOI.NumberOfVariables) = Int64(length(b.xij))
+MOI.get(b::GeoMeanBridge, ::MOI.NumberOfVariables)::Int64 = length(b.xij)
 
 MOI.get(b::GeoMeanBridge, ::MOI.ListOfVariableIndices) = copy(b.xij)
 

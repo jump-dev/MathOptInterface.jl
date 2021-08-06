@@ -217,7 +217,7 @@ function concrete_bridge_type(
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(b::ScalarSlackBridge, ::MOI.NumberOfVariables) = Int64(1)
+MOI.get(b::ScalarSlackBridge, ::MOI.NumberOfVariables)::Int64 = 1
 MOI.get(b::ScalarSlackBridge, ::MOI.ListOfVariableIndices) = [b.slack]
 
 # Attributes, Bridge acting as a constraint
@@ -332,7 +332,7 @@ function concrete_bridge_type(
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(b::VectorSlackBridge, ::MOI.NumberOfVariables) = Int64(length(b.slack))
+MOI.get(b::VectorSlackBridge, ::MOI.NumberOfVariables)::Int64 = length(b.slack)
 
 MOI.get(b::VectorSlackBridge, ::MOI.ListOfVariableIndices) = copy(b.slack)
 
