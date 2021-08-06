@@ -64,8 +64,8 @@ end
 function MOI.get(
     ::SetMapBridge{T,S2,S1,F},
     ::MOI.NumberOfConstraints{F,S2},
-) where {T,S2,S1,F}
-    return Int64(1)
+)::Int64 where {T,S2,S1,F}
+    return 1
 end
 
 function MOI.get(

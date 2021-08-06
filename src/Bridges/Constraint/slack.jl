@@ -15,15 +15,15 @@ end
 function MOI.get(
     ::AbstractSlackBridge{T,VF,ZS,F},
     ::MOI.NumberOfConstraints{F,ZS},
-) where {T,VF,ZS,F}
-    return Int64(1)
+)::Int64 where {T,VF,ZS,F}
+    return 1
 end
 
 function MOI.get(
     ::AbstractSlackBridge{T,VF,ZS,F,S},
     ::MOI.NumberOfConstraints{VF,S},
-) where {T,VF,ZS,F,S}
-    return Int64(1)
+)::Int64 where {T,VF,ZS,F,S}
+    return 1
 end
 
 function MOI.get(

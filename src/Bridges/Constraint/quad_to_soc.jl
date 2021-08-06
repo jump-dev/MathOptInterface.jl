@@ -189,8 +189,8 @@ function MOI.get(
         MOI.VectorAffineFunction{T},
         MOI.RotatedSecondOrderCone,
     },
-) where {T}
-    return Int64(1)
+)::Int64 where {T}
+    return 1
 end
 
 function MOI.get(

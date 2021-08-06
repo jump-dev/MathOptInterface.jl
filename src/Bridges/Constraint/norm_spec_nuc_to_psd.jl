@@ -70,10 +70,10 @@ end
 
 # Attributes, Bridge acting as a model
 function MOI.get(
-    bridge::NormSpectralBridge{T,F,G},
+    ::NormSpectralBridge{T,F,G},
     ::MOI.NumberOfConstraints{F,MOI.PositiveSemidefiniteConeTriangle},
-) where {T,F,G}
-    return Int64(1)
+)::Int64 where {T,F,G}
+    return 1
 end
 
 function MOI.get(
@@ -282,8 +282,8 @@ function concrete_bridge_type(
 end
 
 # Attributes, Bridge acting as a model
-function MOI.get(bridge::NormNuclearBridge, ::MOI.NumberOfVariables)
-    return Int64(length(bridge.U) + length(bridge.V))
+function MOI.get(bridge::NormNuclearBridge, ::MOI.NumberOfVariables)::Int64
+    return length(bridge.U) + length(bridge.V)
 end
 
 function MOI.get(bridge::NormNuclearBridge, ::MOI.ListOfVariableIndices)
@@ -291,17 +291,17 @@ function MOI.get(bridge::NormNuclearBridge, ::MOI.ListOfVariableIndices)
 end
 
 function MOI.get(
-    bridge::NormNuclearBridge{T,F,G,H},
+    ::NormNuclearBridge{T,F,G,H},
     ::MOI.NumberOfConstraints{F,MOI.GreaterThan{T}},
-) where {T,F,G,H}
-    return Int64(1)
+)::Int64 where {T,F,G,H}
+    return 1
 end
 
 function MOI.get(
-    bridge::NormNuclearBridge{T,F,G,H},
+    ::NormNuclearBridge{T,F,G,H},
     ::MOI.NumberOfConstraints{G,MOI.PositiveSemidefiniteConeTriangle},
-) where {T,F,G,H}
-    return Int64(1)
+)::Int64 where {T,F,G,H}
+    return 1
 end
 
 function MOI.get(

@@ -54,8 +54,8 @@ end
 function MOI.get(
     ::ScalarFunctionizeBridge{T,S},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},S},
-) where {T,S}
-    return Int64(1)
+)::Int64 where {T,S}
+    return 1
 end
 
 function MOI.get(
@@ -158,8 +158,8 @@ end
 function MOI.get(
     ::VectorFunctionizeBridge{T,S},
     ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},S},
-) where {T,S}
-    return Int64(1)
+)::Int64 where {T,S}
+    return 1
 end
 
 function MOI.get(

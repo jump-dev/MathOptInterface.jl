@@ -485,8 +485,8 @@ end
 function MOI.get(
     model::AbstractModel,
     noc::MOI.NumberOfConstraints{F,S},
-) where {F,S}
-    return Int64(MOI.get(model.constraints, noc))
+)::Int64 where {F,S}
+    return MOI.get(model.constraints, noc)
 end
 
 function MOI.get(

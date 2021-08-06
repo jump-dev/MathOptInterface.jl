@@ -154,9 +154,7 @@ end
 
 # Attributes, Bridge acting as a model
 
-function MOI.get(::IndicatorSOS1Bridge, ::MOI.NumberOfVariables)
-    return Int64(1)
-end
+MOI.get(::IndicatorSOS1Bridge, ::MOI.NumberOfVariables)::Int64 = 1
 
 function MOI.get(b::IndicatorSOS1Bridge, ::MOI.ListOfVariableIndices)
     return [b.w_variable]
@@ -165,29 +163,29 @@ end
 function MOI.get(
     ::IndicatorSOS1Bridge{T,BC,Nothing},
     ::MOI.NumberOfConstraints{MOI.SingleVariable,BC},
-) where {T,BC}
-    return Int64(0)
+)::Int64 where {T,BC}
+    return 0
 end
 
 function MOI.get(
     ::IndicatorSOS1Bridge{T,BC,CI},
     ::MOI.NumberOfConstraints{MOI.SingleVariable,BC},
-) where {T,BC,CI<:MOI.ConstraintIndex{MOI.SingleVariable,BC}}
-    return Int64(1)
+)::Int64 where {T,BC,CI<:MOI.ConstraintIndex{MOI.SingleVariable,BC}}
+    return 1
 end
 
 function MOI.get(
     ::IndicatorSOS1Bridge,
     ::MOI.NumberOfConstraints{MOI.VectorOfVariables,<:MOI.SOS1},
-)
-    return Int64(1)
+)::Int64
+    return 1
 end
 
 function MOI.get(
     ::IndicatorSOS1Bridge{T,BC},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},BC},
-) where {T,BC,CI<:MOI.ConstraintIndex{MOI.SingleVariable,BC}}
-    return Int64(1)
+)::Int64 where {T,BC,CI<:MOI.ConstraintIndex{MOI.SingleVariable,BC}}
+    return 1
 end
 
 function MOI.get(

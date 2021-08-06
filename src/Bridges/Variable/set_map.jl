@@ -59,8 +59,8 @@ function MOIB.added_constraint_types(::Type{<:SetMapBridge})
 end
 
 # Attributes, Bridge acting as a model
-function MOI.get(bridge::SetMapBridge, ::MOI.NumberOfVariables)
-    return Int64(length(bridge.variables))
+function MOI.get(bridge::SetMapBridge, ::MOI.NumberOfVariables)::Int64
+    return length(bridge.variables)
 end
 
 function MOI.get(bridge::SetMapBridge, ::MOI.ListOfVariableIndices)
@@ -70,15 +70,15 @@ end
 function MOI.get(
     ::SetMapBridge{T,S1},
     ::MOI.NumberOfConstraints{MOI.SingleVariable,S1},
-) where {T,S1<:MOI.AbstractScalarSet}
-    return Int64(1)
+)::Int64 where {T,S1<:MOI.AbstractScalarSet}
+    return 1
 end
 
 function MOI.get(
     ::SetMapBridge{T,S1},
     ::MOI.NumberOfConstraints{MOI.VectorOfVariables,S1},
-) where {T,S1<:MOI.AbstractVectorSet}
-    return Int64(1)
+)::Int64 where {T,S1<:MOI.AbstractVectorSet}
+    return 1
 end
 
 function MOI.get(

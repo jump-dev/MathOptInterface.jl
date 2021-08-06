@@ -38,9 +38,7 @@ function MOIB.set_objective_function_type(
 end
 
 # Attributes, Bridge acting as a model
-function MOI.get(::FunctionizeBridge, ::MOI.NumberOfVariables)
-    return Int64(0)
-end
+MOI.get(::FunctionizeBridge, ::MOI.NumberOfVariables)::Int64 = 0
 
 function MOI.get(::FunctionizeBridge, ::MOI.ListOfVariableIndices)
     return MOI.VariableIndex[]

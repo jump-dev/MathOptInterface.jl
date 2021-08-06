@@ -82,8 +82,8 @@ function concrete_bridge_type(
 end
 
 # Attributes, Bridge acting as a model
-function MOI.get(bridge::RelativeEntropyBridge, ::MOI.NumberOfVariables)
-    return Int64(length(bridge.y))
+function MOI.get(bridge::RelativeEntropyBridge, ::MOI.NumberOfVariables)::Int64
+    return length(bridge.y)
 end
 
 function MOI.get(bridge::RelativeEntropyBridge, ::MOI.ListOfVariableIndices)
@@ -91,17 +91,17 @@ function MOI.get(bridge::RelativeEntropyBridge, ::MOI.ListOfVariableIndices)
 end
 
 function MOI.get(
-    bridge::RelativeEntropyBridge{T,F},
+    ::RelativeEntropyBridge{T,F},
     ::MOI.NumberOfConstraints{F,MOI.GreaterThan{T}},
-) where {T,F}
-    return Int64(1)
+)::Int64 where {T,F}
+    return 1
 end
 
 function MOI.get(
     bridge::RelativeEntropyBridge{T,F,G},
     ::MOI.NumberOfConstraints{G,MOI.ExponentialCone},
-) where {T,F,G}
-    return Int64(length(bridge.y))
+)::Int64 where {T,F,G}
+    return length(bridge.y)
 end
 
 function MOI.get(

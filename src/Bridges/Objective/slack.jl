@@ -87,8 +87,8 @@ end
 function MOI.get(
     bridge::SlackBridge{T,F},
     ::MOI.NumberOfConstraints{F,S},
-) where {T,F,S<:Union{MOI.GreaterThan{T},MOI.LessThan{T}}}
-    return Int64(bridge.constraint isa MOI.ConstraintIndex{F,S} ? 1 : 0)
+)::Int64 where {T,F,S<:Union{MOI.GreaterThan{T},MOI.LessThan{T}}}
+    return bridge.constraint isa MOI.ConstraintIndex{F,S} ? 1 : 0
 end
 
 function MOI.get(

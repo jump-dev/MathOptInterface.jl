@@ -211,8 +211,8 @@ end
 
 # Attributes, Bridge acting as a model
 
-function MOI.get(b::LogDetBridge, ::MOI.NumberOfVariables)
-    return Int64(length(b.Δ) + length(b.l))
+function MOI.get(b::LogDetBridge, ::MOI.NumberOfVariables)::Int64
+    return length(b.Δ) + length(b.l)
 end
 
 MOI.get(b::LogDetBridge, ::MOI.ListOfVariableIndices) = [b.Δ; b.l]
@@ -223,22 +223,22 @@ function MOI.get(
         MOI.VectorAffineFunction{T},
         MOI.PositiveSemidefiniteConeTriangle,
     },
-) where {T}
-    return Int64(1)
+)::Int64 where {T}
+    return 1
 end
 
 function MOI.get(
     b::LogDetBridge{T},
     ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},MOI.ExponentialCone},
-) where {T}
-    return Int64(length(b.lcindex))
+)::Int64 where {T}
+    return length(b.lcindex)
 end
 
 function MOI.get(
     ::LogDetBridge{T},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.LessThan{T}},
-) where {T}
-    return Int64(1)
+)::Int64 where {T}
+    return 1
 end
 
 function MOI.get(
@@ -421,8 +421,8 @@ function MOI.get(
         MOI.VectorAffineFunction{T},
         MOI.PositiveSemidefiniteConeTriangle,
     },
-) where {T}
-    return Int64(1)
+)::Int64 where {T}
+    return 1
 end
 
 function MOI.get(
@@ -431,8 +431,8 @@ function MOI.get(
         MOI.VectorAffineFunction{T},
         MOI.GeometricMeanCone,
     },
-) where {T}
-    return Int64(1)
+)::Int64 where {T}
+    return 1
 end
 
 function MOI.get(

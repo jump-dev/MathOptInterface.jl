@@ -58,8 +58,8 @@ end
 function MOI.get(
     bridge::ScalarizeBridge{T,F,S},
     ::MOI.NumberOfConstraints{F,S},
-) where {T,F,S}
-    return Int64(length(bridge.scalar_constraints))
+)::Int64 where {T,F,S}
+    return length(bridge.scalar_constraints)
 end
 
 function MOI.get(

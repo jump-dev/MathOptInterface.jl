@@ -726,7 +726,7 @@ function MOI.get(
     return list
 end
 
-function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.NumberOfVariables)
+function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.NumberOfVariables)::Int64
     s =
         MOI.get(b.model, attr) +
         Variable.number_of_variables(Variable.bridges(b))
@@ -739,7 +739,7 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.NumberOfVariables)
     for bridge in values(Objective.bridges(b))
         s -= MOI.get(bridge, attr)
     end
-    return Int64(s)
+    return s
 end
 
 # Number of all constraints, including those bridged
@@ -765,7 +765,7 @@ end
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.NumberOfConstraints{F,S},
-) where {F,S}
+)::Int64 where {F,S}
     s = get_all_including_bridged(b, attr)
     # The constraints counted in `s` may have been added by bridges
     for bridge in values(Variable.bridges(b))
@@ -777,7 +777,7 @@ function MOI.get(
     for bridge in values(Objective.bridges(b))
         s -= MOI.get(bridge, attr)
     end
-    return Int64(s)
+    return s
 end
 
 function MOI.get(

@@ -171,22 +171,22 @@ MOI.get(b::GeoMeanBridge, ::MOI.ListOfVariableIndices) = copy(b.xij)
 function MOI.get(
     ::GeoMeanBridge{T,F},
     ::MOI.NumberOfConstraints{F,MOI.LessThan{T}},
-) where {T,F}
-    return Int64(1) # t ≤ x_{l1}/sqrt(N)
+)::Int64 where {T,F}
+    return 1 # t ≤ x_{l1}/sqrt(N)
 end
 
 function MOI.get(
     b::GeoMeanBridge{T,F,G},
     ::MOI.NumberOfConstraints{G,MOI.RotatedSecondOrderCone},
-) where {T,F,G}
-    return Int64(length(b.socrc))
+)::Int64 where {T,F,G}
+    return length(b.socrc)
 end
 
 function MOI.get(
     b::GeoMeanBridge{T,F,G},
     ::MOI.NumberOfConstraints{G,MOI.Nonnegatives},
-) where {T,F,G}
-    return Int64(b.d > 2 ? 0 : 1)
+)::Int64 where {T,F,G}
+    return b.d > 2 ? 0 : 1
 end
 
 function MOI.get(
