@@ -49,18 +49,6 @@ function MOI.set(
     return
 end
 
-function MOI.get(
-    model::MOI.ModelLike,
-    ::MOI.CanonicalConstraintFunction,
-    bridge::AbstractFunctionConversionBridge,
-)
-    f = MOI.get(model, MOI.ConstraintFunction(), bridge)
-    if !MOI.Utilities.is_canonical(f)
-        return MOI.Utilities.canonical(f)
-    end
-    return f
-end
-
 """
     invariant_under_function_conversion(attr::MOI.AbstractConstraintAttribute)
 
