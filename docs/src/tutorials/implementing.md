@@ -470,7 +470,7 @@ MOI.supports_incremental_interface(::Optimizer, copy_names::Bool) = true
 MOI.supports_incremental_interface(::Optimizer, copy_names::Bool) = !copy_names
 
 function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kwargs...)
-    return MOI.Utilities.automatic_copy_to(dest, src; kwargs...)
+    return MOI.Utilities.default_copy_to(dest, src; kwargs...)
 end
 ```
 See [`supports_incremental_interface`](@ref) for more details on whether to

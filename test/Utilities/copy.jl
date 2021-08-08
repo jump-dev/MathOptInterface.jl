@@ -124,12 +124,12 @@ end
 function test_AUTOMATIC()
     src = DummyModel()
     dest = DummyModel()
-    @test_throws ErrorException MOIU.automatic_copy_to(dest, src)
+    @test_throws ErrorException MOIU.default_copy_to(dest, src)
     try
-        @test_throws ErrorException MOIU.automatic_copy_to(dest, src)
+        @test_throws ErrorException MOIU.default_copy_to(dest, src)
     catch err
         @test sprint(showerror, err) ==
-              "Model DummyModel does not" * " support copy with names."
+              "Model DummyModel does not support copy with names."
     end
 end
 
@@ -188,7 +188,7 @@ function MOI.copy_to(
     src::MOI.ModelLike;
     kws...,
 )
-    return MOIU.automatic_copy_to(dest, src; kws...)
+    return MOIU.default_copy_to(dest, src; kws...)
 end
 
 function MOI.add_variables(model::ConstrainedVariablesModel, n)
@@ -283,7 +283,7 @@ function MOI.copy_to(
     src::MOI.ModelLike;
     kwargs...,
 )
-    return MOIU.automatic_copy_to(dest, src; kwargs...)
+    return MOIU.default_copy_to(dest, src; kwargs...)
 end
 
 function MOI.supports_incremental_interface(
@@ -670,7 +670,7 @@ end
 MOI.supports_incremental_interface(::BoundModel, ::Bool) = true
 
 function MOI.copy_to(dest::BoundModel, src::MOI.ModelLike; kws...)
-    return MOIU.automatic_copy_to(dest, src; kws...)
+    return MOIU.default_copy_to(dest, src; kws...)
 end
 
 MOI.empty!(model::BoundModel) = MOI.empty!(model.inner)

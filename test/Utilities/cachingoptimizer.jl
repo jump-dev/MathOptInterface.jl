@@ -85,7 +85,7 @@ end
 MOI.supports_incremental_interface(::NoFreeVariables, names::Bool) = !names
 
 function MOI.copy_to(dest::NoFreeVariables, src::MOI.ModelLike; kwargs...)
-    return MOI.Utilities.automatic_copy_to(dest, src; kwargs...)
+    return MOI.Utilities.default_copy_to(dest, src; kwargs...)
 end
 
 ###

@@ -576,7 +576,7 @@ function pass_nonvariable_constraints(
 end
 
 function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kws...)
-    return automatic_copy_to(dest, src; kws...)
+    return default_copy_to(dest, src; kws...)
 end
 MOI.supports_incremental_interface(::AbstractModel, ::Bool) = true
 function final_touch(model::AbstractModel, index_map)

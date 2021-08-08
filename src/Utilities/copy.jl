@@ -1,39 +1,7 @@
 # This file contains default implementations for the `MOI.copy_to` function that
 # can be used by a model.
 
-"""
-    automatic_copy_to(
-        dest::MOI.ModelLike,
-        src::MOI.ModelLike;
-        copy_names::Bool=true,
-        filter_constraints::Union{Nothing,Function} = nothing,
-    )
-
-A default fallback for [`MOI.copy_to`](@ref).
-
-To use this method, define
-[`MathOptInterface.supports_incremental_interface`](@ref).
-
-If the `filter_constraints` arguments is given, only the constraints for which
-this function returns `true` will be copied. This function is given a
-constraint index as argument.
-"""
-function automatic_copy_to(
-    dest::MOI.ModelLike,
-    src::MOI.ModelLike;
-    copy_names::Bool = true,
-    filter_constraints::Union{Nothing,Function} = nothing,
-)
-    if !MOI.supports_incremental_interface(dest, copy_names)
-        error(
-            "Model $(typeof(dest)) does not support copy",
-            copy_names ? " with names" : "",
-            ".",
-        )
-    end
-    return default_copy_to(dest, src, copy_names, filter_constraints)
-end
-
+@deprecate automatic_copy_to default_copy_to
 @deprecate supports_default_copy_to MOI.supports_incremental_interface
 
 include("copy/index_map.jl")
@@ -598,6 +566,13 @@ function default_copy_to(
     copy_names::Bool,
     filter_constraints::Union{Nothing,Function} = nothing,
 )
+    if !MOI.supports_incremental_interface(dest, copy_names)
+        error(
+            "Model $(typeof(dest)) does not support copy",
+            copy_names ? " with names" : "",
+            ".",
+        )
+    end
     MOI.empty!(dest)
 
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())

@@ -11,8 +11,8 @@ struct MockConstraintAttribute <: MOI.AbstractConstraintAttribute end
 """
     MockOptimizer
 
-`MockOptimizer` is a fake optimizer especially useful for testing. Its main 
-feature is that it can store the values that should be returned for each 
+`MockOptimizer` is a fake optimizer especially useful for testing. Its main
+feature is that it can store the values that should be returned for each
 attribute.
 """
 mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
@@ -921,7 +921,7 @@ function MOI.supports_add_constrained_variables(
 end
 
 function MOI.copy_to(mock::MockOptimizer, src::MOI.ModelLike; kws...)
-    return automatic_copy_to(mock, src; kws...)
+    return default_copy_to(mock, src; kws...)
 end
 
 function MOI.supports_incremental_interface(
