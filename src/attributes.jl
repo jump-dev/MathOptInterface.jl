@@ -48,6 +48,19 @@ const AnyAttribute = Union{
 Base.broadcastable(attribute::AnyAttribute) = Ref(attribute)
 
 """
+    attribute_value_type(attr::AnyAttribute)
+
+Given an attribute `attr`, return the type of value expected by [`get`](@ref),
+or returned by [`set`](@ref).
+
+# Notes
+
+ * Only implement this if it make sense to do so. If un-implemented, the default
+   is `Any`.
+"""
+attribute_value_type(::AnyAttribute) = Any
+
+"""
     struct UnsupportedAttribute{AttrType} <: UnsupportedError
         attr::AttrType
         message::String
@@ -658,7 +671,10 @@ Returns a [`CallbackNodeStatusCode`](@ref) Enum.
 struct CallbackNodeStatus{CallbackDataType} <: AbstractOptimizerAttribute
     callback_data::CallbackDataType
 end
+
 is_set_by_optimize(::CallbackNodeStatus) = true
+
+attribute_value_type(::CallbackNodeStatus) = CallbackNodeStatusCode
 
 ## Optimizer attributes
 
@@ -675,6 +691,8 @@ struct ListOfOptimizerAttributesSet <: AbstractOptimizerAttribute end
 An optimizer attribute for the string identifying the solver/optimizer.
 """
 struct SolverName <: AbstractOptimizerAttribute end
+
+attribute_value_type(::SolverName) = String
 
 """
     Silent()
@@ -697,6 +715,8 @@ given.
 """
 struct Silent <: AbstractOptimizerAttribute end
 
+attribute_value_type(::Silent) = Bool
+
 """
     TimeLimitSec()
 
@@ -705,6 +725,8 @@ to `nothing`, it deactivates the solver time limit. The default value is
 `nothing`. The time limit is in seconds.
 """ # TODO add a test checking if the solver returns TIME_LIMIT status when the time limit is hit
 struct TimeLimitSec <: AbstractOptimizerAttribute end
+
+attribute_value_type(::TimeLimitSec) = Union{Nothing,Float64}
 
 """
     RawOptimizerAttribute(name::String)
@@ -723,6 +745,8 @@ optimization. When set to `nothing` uses solver default. Values are positive
 integers. The default value is `nothing`.
 """
 struct NumberOfThreads <: AbstractOptimizerAttribute end
+
+attribute_value_type(::NumberOfThreads) = Union{Nothing,Int}
 
 ### Callbacks
 
@@ -768,6 +792,8 @@ commonly called `callback_data`, that can be used for instance in
 [`UserCutCallback`](@ref).
 """
 abstract type AbstractCallback <: AbstractModelAttribute end
+
+attribute_value_type(::AbstractCallback) = Function
 
 """
     LazyConstraintCallback() <: AbstractCallback
@@ -878,6 +904,10 @@ of `""` if not set`.
 """
 struct Name <: AbstractModelAttribute end
 
+attribute_value_type(::Name) = String
+
+@enum OptimizationSense MIN_SENSE MAX_SENSE FEASIBILITY_SENSE
+
 """
     ObjectiveSense()
 
@@ -887,7 +917,7 @@ must be an `OptimizationSense`: `MIN_SENSE`, `MAX_SENSE`, or
 """
 struct ObjectiveSense <: AbstractModelAttribute end
 
-@enum OptimizationSense MIN_SENSE MAX_SENSE FEASIBILITY_SENSE
+attribute_value_type(::ObjectiveSense) = OptimizationSense
 
 """
     NumberOfVariables()
@@ -895,6 +925,8 @@ struct ObjectiveSense <: AbstractModelAttribute end
 A model attribute for the number of variables in the model.
 """
 struct NumberOfVariables <: AbstractModelAttribute end
+
+attribute_value_type(::NumberOfVariables) = Int64
 
 """
     ListOfVariableIndices()
@@ -921,6 +953,8 @@ A model attribute for the number of constraints of the type `F`-in-`S` present i
 """
 struct NumberOfConstraints{F,S} <: AbstractModelAttribute end
 
+attribute_value_type(::NumberOfConstraints) = Int64
+
 """
     ListOfConstraintTypesPresent()
 
@@ -942,6 +976,8 @@ it has non-integer coefficient and `F` is `ScalarAffineFunction{Int}`.
 """
 struct ObjectiveFunction{F<:AbstractScalarFunction} <: AbstractModelAttribute end
 
+attribute_value_type(::ObjectiveFunction{F}) where {F} = F
+
 """
     ObjectiveFunctionType()
 
@@ -959,6 +995,8 @@ attr = MOI.get(model, MOI.ObjectiveFunctionType())
 ```
 """
 struct ObjectiveFunctionType <: AbstractModelAttribute end
+
+attribute_value_type(::ObjectiveFunctionType) = Type{<:AbstractFunction}
 
 ## Optimizer attributes
 
@@ -1001,12 +1039,16 @@ A model attribute for the final relative optimality gap, defined as ``\\frac{|b-
 """
 struct RelativeGap <: AbstractModelAttribute end
 
+attribute_value_type(::RelativeGap) = Float64
+
 """
     SolveTimeSec()
 
 A model attribute for the total elapsed solution time (in seconds) as reported by the optimizer.
 """
 struct SolveTimeSec <: AbstractModelAttribute end
+
+attribute_value_type(::SolveTimeSec) = Float64
 
 @deprecate SolveTime SolveTimeSec
 
@@ -1018,6 +1060,8 @@ In particular, for a mixed-integer program (MIP), the total simplex iterations f
 """
 struct SimplexIterations <: AbstractModelAttribute end
 
+attribute_value_type(::SimplexIterations) = Int64
+
 """
     BarrierIterations()
 
@@ -1025,12 +1069,16 @@ A model attribute for the cumulative number of barrier iterations while solving 
 """
 struct BarrierIterations <: AbstractModelAttribute end
 
+attribute_value_type(::BarrierIterations) = Int64
+
 """
     NodeCount()
 
 A model attribute for the total number of branch-and-bound nodes explored while solving a mixed-integer program (MIP).
 """
 struct NodeCount <: AbstractModelAttribute end
+
+attribute_value_type(::NodeCount) = Int64
 
 """
     RawSolver()
@@ -1069,6 +1117,8 @@ results may be alternate certificates, or infeasible points.
 """
 struct ResultCount <: AbstractModelAttribute end
 
+attribute_value_type(::ResultCount) = Int
+
 """
     ConflictStatusCode
 
@@ -1098,6 +1148,8 @@ refiner stopped when computing the conflict.
 """
 struct ConflictStatus <: AbstractModelAttribute end
 
+attribute_value_type(::ConflictStatus) = ConflictStatusCode
+
 ## Variable attributes
 
 """
@@ -1118,6 +1170,8 @@ cannot be looked up using [`get`](@ref). It has a default value of `""` if not
 set`.
 """
 struct VariableName <: AbstractVariableAttribute end
+
+attribute_value_type(::VariableName) = String
 
 """
     VariablePrimalStart()
@@ -1199,6 +1253,8 @@ struct VariableBasisStatus <: AbstractVariableAttribute
     VariableBasisStatus(result_index::Int = 1) = new(result_index)
 end
 
+attribute_value_type(::VariableBasisStatus) = BasisStatusCode
+
 ## Constraint attributes
 
 """
@@ -1231,6 +1287,8 @@ regardless of whether they have the same `F`-in-`S` type.
 You should _not_ implement `ConstraintName` for `SingleVariable` constraints.
 """
 struct ConstraintName <: AbstractConstraintAttribute end
+
+attribute_value_type(::ConstraintName) = String
 
 """
     SingleVariableConstraintNameError()
@@ -1325,6 +1383,8 @@ struct ConstraintBasisStatus <: AbstractConstraintAttribute
     ConstraintBasisStatus(result_index::Int = 1) = new(result_index)
 end
 
+attribute_value_type(::ConstraintBasisStatus) = BasisStatusCode
+
 function get_fallback(
     ::ModelLike,
     ::ConstraintBasisStatus,
@@ -1356,6 +1416,8 @@ then it returns the function stored internally instead of a copy.
 """
 struct CanonicalConstraintFunction <: AbstractConstraintAttribute end
 
+attribute_value_type(::CanonicalConstraintFunction) = AbstractFunction
+
 function get_fallback(
     model::ModelLike,
     ::CanonicalConstraintFunction,
@@ -1383,6 +1445,8 @@ A constraint attribute for the `AbstractFunction` object used to define the cons
 It is guaranteed to be equivalent but not necessarily identical to the function provided by the user.
 """
 struct ConstraintFunction <: AbstractConstraintAttribute end
+
+attribute_value_type(::ConstraintFunction) = AbstractFunction
 
 function throw_set_error_fallback(
     ::ModelLike,
@@ -1414,6 +1478,8 @@ end
 A constraint attribute for the `AbstractSet` object used to define the constraint.
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
+
+attribute_value_type(::ConstraintSet) = AbstractSet
 
 function throw_set_error_fallback(
     ::ModelLike,
@@ -1468,13 +1534,11 @@ in the conflict. Its type is [`ConflictParticipationStatusCode`](@ref).
 """
 struct ConstraintConflictStatus <: AbstractConstraintAttribute end
 
-## Termination status
-"""
-    TerminationStatus()
+function attribute_value_type(::ConstraintConflictStatus)
+    return ConflictParticipationStatusCode
+end
 
-A model attribute for the `TerminationStatusCode` explaining why the optimizer stopped.
-"""
-struct TerminationStatus <: AbstractModelAttribute end
+## Termination status
 
 """
     TerminationStatusCode
@@ -1589,12 +1653,23 @@ This group of statuses means that something unexpected or problematic happened.
 )
 
 """
+    TerminationStatus()
+
+A model attribute for the `TerminationStatusCode` explaining why the optimizer stopped.
+"""
+struct TerminationStatus <: AbstractModelAttribute end
+
+attribute_value_type(::TerminationStatus) = TerminationStatusCode
+
+"""
     RawStatusString()
 
 A model attribute for a solver specific string explaining why the optimizer
 stopped.
 """
 struct RawStatusString <: AbstractModelAttribute end
+
+attribute_value_type(::RawStatusString) = String
 
 ## Result status
 
@@ -1659,6 +1734,8 @@ struct PrimalStatus <: AbstractModelAttribute
     PrimalStatus(result_index::Int = 1) = new(result_index)
 end
 
+attribute_value_type(::PrimalStatus) = ResultStatusCode
+
 """
     DualStatus(result_index::Int = 1)
 
@@ -1675,8 +1752,13 @@ struct DualStatus <: AbstractModelAttribute
     DualStatus(result_index::Int = 1) = new(result_index)
 end
 
+attribute_value_type(::DualStatus) = ResultStatusCode
+
 # Cost of bridging constrained variable in S
 struct VariableBridgingCost{S<:AbstractSet} <: AbstractModelAttribute end
+
+attribute_value_type(::VariableBridgingCost) = Float64
+
 function get_fallback(
     model::ModelLike,
     ::VariableBridgingCost{S},
@@ -1693,6 +1775,9 @@ end
 # Cost of bridging F-in-S constraints
 struct ConstraintBridgingCost{F<:AbstractFunction,S<:AbstractSet} <:
        AbstractModelAttribute end
+
+attribute_value_type(::ConstraintBridgingCost) = Float64
+
 function get_fallback(
     model::ModelLike,
     ::ConstraintBridgingCost{F,S},

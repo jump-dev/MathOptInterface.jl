@@ -101,16 +101,16 @@ end
 
 # Attributes, Bridge acting as a model
 function MOI.get(
-    bridge::ZeroOneBridge{T},
+    ::ZeroOneBridge{T},
     ::MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Interval{T}},
-) where {T}
+)::Int64 where {T}
     return 1
 end
 
 function MOI.get(
-    bridge::ZeroOneBridge,
+    ::ZeroOneBridge,
     ::MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Integer},
-)
+)::Int64
     return 1
 end
 

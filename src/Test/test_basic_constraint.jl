@@ -135,6 +135,7 @@ function _basic_constraint_test_helper(
     @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 0
     c = MOI.add_constraint(model, constraint_function, set)
     @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+    _test_attribute_value_type(model, MOI.NumberOfConstraints{F,S}())
     ###
     ### Test MOI.is_valid
     ###
@@ -157,6 +158,7 @@ function _basic_constraint_test_helper(
             @test MOI.supports(model, MOI.ConstraintName(), typeof(c))
             MOI.set(model, MOI.ConstraintName(), c, "c")
             @test MOI.get(model, MOI.ConstraintName(), c) == "c"
+            _test_attribute_value_type(model, MOI.ConstraintName(), c)
         end
     end
     ###
@@ -166,12 +168,15 @@ function _basic_constraint_test_helper(
         @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ constraint_function
         @test MOI.get(model, MOI.CanonicalConstraintFunction(), c) ≈
               constraint_function
+        _test_attribute_value_type(model, MOI.ConstraintFunction(), c)
+        _test_attribute_value_type(model, MOI.CanonicalConstraintFunction(), c)
     end
     ###
     ### Test MOI.ConstraintSet
     ###
     if _supports(config, MOI.ConstraintSet)
         @test MOI.get(model, MOI.ConstraintSet(), c) == set
+        _test_attribute_value_type(model, MOI.ConstraintSet(), c)
     end
     ###
     ### Test MOI.ListOfConstraintIndices

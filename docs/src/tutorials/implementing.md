@@ -271,6 +271,11 @@ For each attribute
  * [`supports`](@ref) returns a `Bool` indicating whether the solver supports the
    attribute.
 
+!!! info
+    Use [`attribute_value_type`](@ref) to check the value expected by a given
+    attribute. You should make sure that your [`get`](@ref) function correctly
+    infers to this type (or a subtype of it).
+
 Each column in the table indicates whether you need to implement the particular
 method for each attribute.
 

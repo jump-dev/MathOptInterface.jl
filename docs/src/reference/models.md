@@ -18,6 +18,7 @@ get
 get!
 set
 supports
+attribute_value_type
 ```
 
 ## Model interface

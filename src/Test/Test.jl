@@ -387,6 +387,60 @@ function _test_model_solution(
     return
 end
 
+# TODO(odow): The following are helper functions for testing the value types of
+#     different attributes. The following attributes are not tested:
+# BarrierIterations()
+# CallbackNodeStatus()
+# ConflictStatus()
+# ConstraintBridgingCost()
+# ConstraintConflictStatus()
+# LazyConstraintCallback()
+# NodeCount
+# RelativeGap
+# SimplexIterations
+# VariableBridgingCost()
+
+function _test_attribute_value_type(
+    model::MOI.ModelLike,
+    attribute::Union{MOI.AbstractModelAttribute,MOI.AbstractOptimizerAttribute},
+)
+    T = MOI.attribute_value_type(attribute)
+    @static if VERSION < v"1.5"
+        @test MOI.get(model, attribute) isa T
+    else
+        @test @inferred(T, MOI.get(model, attribute)) isa T
+    end
+    return
+end
+
+function _test_attribute_value_type(
+    model::MOI.ModelLike,
+    attribute::MOI.AbstractConstraintAttribute,
+    ci::MOI.ConstraintIndex,
+)
+    T = MOI.attribute_value_type(attribute)
+    @static if VERSION < v"1.5"
+        @test MOI.get(model, attribute, ci) isa T
+    else
+        @test @inferred(T, MOI.get(model, attribute, ci)) isa T
+    end
+    return
+end
+
+function _test_attribute_value_type(
+    model::MOI.ModelLike,
+    attribute::MOI.AbstractVariableAttribute,
+    x::MOI.VariableIndex,
+)
+    T = MOI.attribute_value_type(attribute)
+    @static if VERSION < v"1.5"
+        @test MOI.get(model, attribute, x) isa T
+    else
+        @test @inferred(T, MOI.get(model, attribute, x)) isa T
+    end
+    return
+end
+
 ###
 ### Include all the test files!
 ###

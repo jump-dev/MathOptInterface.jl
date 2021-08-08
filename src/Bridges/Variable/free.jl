@@ -34,7 +34,7 @@ function MOIB.added_constraint_types(::Type{FreeBridge{T}}) where {T}
 end
 
 # Attributes, Bridge acting as a model
-function MOI.get(bridge::FreeBridge, ::MOI.NumberOfVariables)
+function MOI.get(bridge::FreeBridge, ::MOI.NumberOfVariables)::Int64
     return length(bridge.variables)
 end
 
@@ -45,7 +45,7 @@ end
 function MOI.get(
     ::FreeBridge,
     ::MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives},
-)
+)::Int64
     return 1
 end
 

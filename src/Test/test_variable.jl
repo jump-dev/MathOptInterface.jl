@@ -7,6 +7,7 @@ function test_variable_add_variable(model::MOI.ModelLike, ::Config)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     v = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
+    _test_attribute_value_type(model, MOI.NumberOfVariables())
     return
 end
 

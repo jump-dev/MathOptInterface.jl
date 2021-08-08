@@ -172,7 +172,7 @@ end
 function MOI.get(
     ::AbstractSOCtoNonConvexQuadBridge{T},
     ::MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{T},MOI.LessThan{T}},
-) where {T}
+)::Int64 where {T}
     return 1
 end
 
@@ -189,7 +189,7 @@ end
 function MOI.get(
     bridge::AbstractSOCtoNonConvexQuadBridge{T},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}},
-) where {T}
+)::Int64 where {T}
     return length(bridge.var_pos)
 end
 

@@ -73,6 +73,8 @@ function test_objective_get_ObjectiveFunction_ScalarAffineFunction(
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
     )
     @test convert(MOI.ScalarAffineFunction{Float64}, quad_obj_fun) ≈ f
+    _test_attribute_value_type(model, MOI.ObjectiveFunctionType())
+    _test_attribute_value_type(model, obj_attr)
     return
 end
 
@@ -188,6 +190,11 @@ function test_objective_ObjectiveFunction_SingleVariable(
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    _test_attribute_value_type(model, MOI.ObjectiveFunctionType())
+    _test_attribute_value_type(
+        model,
+        MOI.ObjectiveFunction{MOI.SingleVariable}(),
+    )
     _test_model_solution(
         model,
         config;

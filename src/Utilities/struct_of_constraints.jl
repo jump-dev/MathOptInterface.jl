@@ -117,7 +117,7 @@ end
 function MOI.get(
     model::StructOfConstraints,
     attr::MOI.NumberOfConstraints{F,S},
-) where {F,S}
+)::Int64 where {F,S}
     if !MOI.supports_constraint(model, F, S)
         return 0
     end

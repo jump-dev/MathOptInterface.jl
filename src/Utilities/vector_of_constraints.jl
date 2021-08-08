@@ -124,7 +124,7 @@ end
 function MOI.get(
     v::VectorOfConstraints{F,S},
     ::MOI.NumberOfConstraints{F,S},
-) where {F,S}
+)::Int64 where {F,S}
     return length(v.constraints)
 end
 

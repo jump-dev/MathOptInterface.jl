@@ -306,7 +306,7 @@ end
 function MOI.get(
     b::SingleVariableConstraints,
     ::MOI.NumberOfConstraints{MOI.SingleVariable,S},
-) where {S}
+)::Int64 where {S}
     flag = _single_variable_flag(S)
     return count(mask -> !iszero(flag & mask), b.set_mask)
 end

@@ -139,6 +139,7 @@ Test that the default ObjectiveSense is FEASIBILITY_SENSE.
 """
 function test_model_default_ObjectiveSense(model::MOI.ModelLike, ::Config)
     MOI.get(model, MOI.ObjectiveSense()) == MOI.FEASIBILITY_SENSE
+    _test_attribute_value_type(model, MOI.ObjectiveSense())
     return
 end
 
@@ -152,6 +153,7 @@ function test_model_default_TerminationStatus(
     ::Config,
 )
     MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+    _test_attribute_value_type(model, MOI.TerminationStatus())
     return
 end
 
@@ -164,6 +166,7 @@ Test that the default PrimalStatus is NO_SOLUTION.
 """
 function test_model_default_PrimalStatus(model::MOI.AbstractOptimizer, ::Config)
     MOI.get(model, MOI.PrimalStatus()) == MOI.NO_SOLUTION
+    _test_attribute_value_type(model, MOI.PrimalStatus())
     return
 end
 
@@ -176,6 +179,7 @@ Test that the default DualStatus is NO_SOLUTION.
 """
 function test_model_default_DualStatus(model::MOI.AbstractOptimizer, ::Config)
     MOI.get(model, MOI.DualStatus()) == MOI.NO_SOLUTION
+    _test_attribute_value_type(model, MOI.DualStatus())
     return
 end
 
@@ -198,6 +202,7 @@ function test_model_VariableName(model::MOI.ModelLike, ::Config)
     @test MOI.get(model, MOI.VariableIndex, "x1") == x[2]
     MOI.set(model, MOI.VariableName(), x[1], "x1")
     @test_throws ErrorException MOI.get(model, MOI.VariableIndex, "x1")
+    _test_attribute_value_type(model, MOI.VariableName(), x[1])
     return
 end
 
@@ -265,6 +270,7 @@ function test_model_Name(model::MOI.ModelLike, ::Config)
     MOI.set(model, MOI.Name(), "Name2")
     @test MOI.Name() in MOI.get(model, MOI.ListOfModelAttributesSet())
     @test MOI.get(model, MOI.Name()) == "Name2"
+    _test_attribute_value_type(model, MOI.Name())
     return
 end
 

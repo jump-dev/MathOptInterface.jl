@@ -14,6 +14,7 @@ function test_attribute_NumberThreads(model::MOI.AbstractOptimizer, ::Config)
     @test MOI.get(model, MOI.NumberOfThreads()) == 3
     MOI.set(model, MOI.NumberOfThreads(), value)
     @test value == MOI.get(model, MOI.NumberOfThreads())
+    _test_attribute_value_type(model, MOI.NumberOfThreads())
     return
 end
 test_attribute_NumberThreads(::MOI.ModelLike, ::Config) = nothing
@@ -41,7 +42,7 @@ function test_attribute_RawStatusString(
     @requires _supports(config, MOI.RawStatusString)
     MOI.add_variable(model)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.RawStatusString()) isa AbstractString
+    _test_attribute_value_type(model, MOI.RawStatusString())
     return
 end
 test_attribute_RawStatusString(::MOI.ModelLike, ::Config) = nothing
@@ -80,6 +81,7 @@ function test_attribute_Silent(model::MOI.AbstractOptimizer, ::Config)
     @test !value == MOI.get(model, MOI.Silent())
     MOI.set(model, MOI.Silent(), value)
     @test value == MOI.get(model, MOI.Silent())
+    _test_attribute_value_type(model, MOI.Silent())
     return
 end
 test_attribute_Silent(::MOI.ModelLike, ::Config) = nothing
@@ -100,7 +102,7 @@ Test that the [`MOI.SolverName`](@ref) attribute is implemented for `model`.
 """
 function test_attribute_SolverName(model::MOI.AbstractOptimizer, config::Config)
     if _supports(config, MOI.SolverName)
-        @test MOI.get(model, MOI.SolverName()) isa AbstractString
+        _test_attribute_value_type(model, MOI.SolverName())
     end
     return
 end
@@ -120,6 +122,7 @@ function test_attribute_SolveTimeSec(
     MOI.add_variable(model)
     MOI.optimize!(model)
     @test MOI.get(model, MOI.SolveTimeSec()) >= 0.0
+    _test_attribute_value_type(model, MOI.SolveTimeSec())
     return
 end
 test_attribute_SolveTimeSec(::MOI.ModelLike, ::Config) = nothing
@@ -151,6 +154,7 @@ function test_attribute_TimeLimitSec(model::MOI.AbstractOptimizer, ::Config)
     @test MOI.get(model, MOI.TimeLimitSec()) == 1.0
     MOI.set(model, MOI.TimeLimitSec(), value)
     @test value == MOI.get(model, MOI.TimeLimitSec()) # Equality should hold
+    _test_attribute_value_type(model, MOI.TimeLimitSec())
     return
 end
 test_attribute_TimeLimitSec(::MOI.ModelLike, ::Config) = nothing

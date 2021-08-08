@@ -214,9 +214,7 @@ end
 
 # Attributes, Bridge acting as a model
 
-function MOI.get(::SemiToBinaryBridge, ::MOI.NumberOfVariables)
-    return 1
-end
+MOI.get(::SemiToBinaryBridge, ::MOI.NumberOfVariables)::Int64 = 1
 
 function MOI.get(b::SemiToBinaryBridge, ::MOI.ListOfVariableIndices)
     return [b.binary_variable]
@@ -225,28 +223,28 @@ end
 function MOI.get(
     ::SemiToBinaryBridge{T,S},
     ::MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne},
-) where {T,S}
+)::Int64 where {T,S}
     return 1
 end
 
 function MOI.get(
     ::SemiToBinaryBridge{T,S},
     ::MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Integer},
-) where {T,S<:MOI.Semiinteger}
+)::Int64 where {T,S<:MOI.Semiinteger}
     return 1
 end
 
 function MOI.get(
     ::SemiToBinaryBridge{T,S},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}},
-) where {T,S}
+)::Int64 where {T,S}
     return 1
 end
 
 function MOI.get(
     ::SemiToBinaryBridge{T,S},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.LessThan{T}},
-) where {T,S}
+)::Int64 where {T,S}
     return 1
 end
 

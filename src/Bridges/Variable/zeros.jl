@@ -40,7 +40,7 @@ function MOIB.added_constraint_types(::Type{<:ZerosBridge})
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(bridge::ZerosBridge, ::MOI.NumberOfVariables) = 0
+MOI.get(::ZerosBridge, ::MOI.NumberOfVariables)::Int64 = 0
 
 function MOI.get(bridge::ZerosBridge, ::MOI.ListOfVariableIndices)
     return MOI.VariableIndex[]

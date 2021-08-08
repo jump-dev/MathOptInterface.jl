@@ -332,7 +332,7 @@ end
 """
     test_solve_result_index(model::MOI.ModelLike, config::Config)
 
-Test that various attributess implement `.result_index` correctly.
+Test that various attributes implement `.result_index` correctly.
 """
 function test_solve_result_index(model::MOI.ModelLike, config::Config)
     @requires _supports(config, MOI.optimize!)
@@ -348,6 +348,7 @@ function test_solve_result_index(model::MOI.ModelLike, config::Config)
     )
     MOI.optimize!(model)
     result_count = MOI.get(model, MOI.ResultCount())
+    _test_attribute_value_type(model, MOI.ResultCount())
     function result_err(attr)
         return MOI.ResultIndexBoundsError{typeof(attr)}(attr, result_count)
     end

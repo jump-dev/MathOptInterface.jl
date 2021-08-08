@@ -164,29 +164,29 @@ function concrete_bridge_type(
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(b::GeoMeanBridge, ::MOI.NumberOfVariables) = length(b.xij)
+MOI.get(b::GeoMeanBridge, ::MOI.NumberOfVariables)::Int64 = length(b.xij)
 
 MOI.get(b::GeoMeanBridge, ::MOI.ListOfVariableIndices) = copy(b.xij)
 
 function MOI.get(
     ::GeoMeanBridge{T,F},
     ::MOI.NumberOfConstraints{F,MOI.LessThan{T}},
-) where {T,F}
+)::Int64 where {T,F}
     return 1 # t ≤ x_{l1}/sqrt(N)
 end
 
 function MOI.get(
     b::GeoMeanBridge{T,F,G},
     ::MOI.NumberOfConstraints{G,MOI.RotatedSecondOrderCone},
-) where {T,F,G}
+)::Int64 where {T,F,G}
     return length(b.socrc)
 end
 
 function MOI.get(
     b::GeoMeanBridge{T,F,G},
     ::MOI.NumberOfConstraints{G,MOI.Nonnegatives},
-) where {T,F,G}
-    return (b.d > 2 ? 0 : 1)
+)::Int64 where {T,F,G}
+    return b.d > 2 ? 0 : 1
 end
 
 function MOI.get(

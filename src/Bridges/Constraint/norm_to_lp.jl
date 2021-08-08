@@ -150,12 +150,14 @@ function concrete_bridge_type(
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(b::NormOneBridge, ::MOI.NumberOfVariables) = length(b.y)
+MOI.get(b::NormOneBridge, ::MOI.NumberOfVariables)::Int64 = length(b.y)
+
 MOI.get(b::NormOneBridge, ::MOI.ListOfVariableIndices) = copy(b.y)
+
 function MOI.get(
-    b::NormOneBridge{T,F},
+    ::NormOneBridge{T,F},
     ::MOI.NumberOfConstraints{F,MOI.Nonnegatives},
-) where {T,F}
+)::Int64 where {T,F}
     return 1
 end
 

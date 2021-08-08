@@ -15,14 +15,14 @@ end
 function MOI.get(
     ::AbstractSlackBridge{T,VF,ZS,F},
     ::MOI.NumberOfConstraints{F,ZS},
-) where {T,VF,ZS,F}
+)::Int64 where {T,VF,ZS,F}
     return 1
 end
 
 function MOI.get(
     ::AbstractSlackBridge{T,VF,ZS,F,S},
     ::MOI.NumberOfConstraints{VF,S},
-) where {T,VF,ZS,F,S}
+)::Int64 where {T,VF,ZS,F,S}
     return 1
 end
 
@@ -217,7 +217,7 @@ function concrete_bridge_type(
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(b::ScalarSlackBridge, ::MOI.NumberOfVariables) = 1
+MOI.get(b::ScalarSlackBridge, ::MOI.NumberOfVariables)::Int64 = 1
 MOI.get(b::ScalarSlackBridge, ::MOI.ListOfVariableIndices) = [b.slack]
 
 # Attributes, Bridge acting as a constraint
@@ -332,7 +332,8 @@ function concrete_bridge_type(
 end
 
 # Attributes, Bridge acting as a model
-MOI.get(b::VectorSlackBridge, ::MOI.NumberOfVariables) = length(b.slack)
+MOI.get(b::VectorSlackBridge, ::MOI.NumberOfVariables)::Int64 = length(b.slack)
+
 MOI.get(b::VectorSlackBridge, ::MOI.ListOfVariableIndices) = copy(b.slack)
 
 # Attributes, Bridge acting as a constraint
