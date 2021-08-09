@@ -4,31 +4,90 @@ MathOptInterface (MOI) release notes
 v0.10.0 (In development)
 ------------------------
 
-**This is a breaking release.**
+**MOI is a significant breaking release. There are a large number of
+user-visible breaking changes and code refactors, as well as a substantial
+number of new features.**
 
-Breaking renames and type changes:
+Breaking changes in MOI
 
+- `SingleVariable` constraints should not support `ConstraintName`
+- `SingleVariableConstraints` should not support `ConstraintBasisStatus`.
+  Implement `VariableBasisStatus` instead
 - `ListOfConstraints` has been renamed to `ListOfConstraintTypesPresent`
+- `ListOfConstraintTypesPresent` should now return `Tuple{Type,Type}` instead of
+  `Tuple{DataType,DataType}`
 - `SolveTime` has been renamed to `SolveTimeSec`
-- The `.N` field in some result attributes has been renamed to `.result_index`
-- The `.variable_index` field in `ScalarAffineTerm` has been renamed to `.variable`
-- The `.variable_index_1` field in `ScalarQuadraticTerm` has been renamed to `.variable_1`
-- The `.variable_index_2` field in `ScalarQuadraticTerm` has been renamed to `.variable_2`
-- `Constraint.RSOCBridge` has been renamed to `Constraint.RSOCtoSOCBridge`
-- `Constraint.SOCRBridge` has been renamed to `Constraint.SOCtoRSOCBridge`
+- `IndicatorSet` has been renamed to `Indicator`
 - `RawParameter` has been renamed to `RawOptimizerAttribute` and now takes
   `String` instead of `Any` as the only argument
-- `Test.TestConfig` has been renamed to `Test.Config`    
-- `IndicatorSet` has been renamed to `Indicator`
-
-Breaking behavior changes:
-
-- `CachingOptimizer`s are now initialized as `EMPTY_OPTIMIZER` instead of `ATTACHED_OPTIMIZER`.
-  If your code relies on the optimizer being attached, call `MOIU.attach_optimizer(model)`
-  after creation.
+- The `.N` field in some result attributes has been renamed to `.result_index`
+- The `.variable_index` field in `ScalarAffineTerm` has been renamed to
+  `.variable`
+- The `.variable_index_1` field in `ScalarQuadraticTerm` has been renamed to
+  `.variable_1`
+- The `.variable_index_2` field in `ScalarQuadraticTerm` has been renamed to
+  `.variable_2`
+- The order of `affine_terms` and `quadratic_terms` in `ScalarQuadraticFunction`
+  and `VectorQuadraticFunction` have been reversed. Both functions now accept
+  quadratic, affine, and constant terms in that order.
+- The `index_value` function has been removed. Use `.value` instead.
+- `isapprox` has been removed for `SOS1` and `SOS2`.
 - The `dimension` argument to `Complements(dimension::Int)` should now be the
   length of the corresponding function, instead of half the length. An
   `ArgumentError` is thrown if `dimension` is not even.
+
+Breaking changes in `Bridges`
+
+- `Constraint.RSOCBridge` has been renamed to `Constraint.RSOCtoSOCBridge`
+- `Constraint.SOCRBridge` has been renamed to `Constraint.SOCtoRSOCBridge`
+- Bridges now return vectors that can be modified by the user. Previously, some
+  bridges returned views instead of copies.
+- `Bridges.IndexInVector` has been unified into a single type. Previously there
+  was a different type for each submodule within `Bridges`
+
+Breaking changes in `FileFormats`
+
+- `FileFormats.MOF.Model` no longer accepts `validate` argument. Use the
+  JSONSchema package to validate the MOF file. See the documentation for more.
+
+Breaking changes in `Utilities`
+
+- The datastructure of `Utilities.Model` (and models created with
+  `Utilities.@model`) has been significantly refactored in a breaking way. This
+  includes the way that objecive functions and variable-related information is
+  stored.
+- `Utilities.supports_default_copy` has been renamed to
+  `supports_incremental_interface`
+- `Utilities.automatic_copy_to` has been renamed to `Utilities.default_copy_to`
+- The allocate-load API has been removed.
+- `CachingOptimizer`s are now initialized as `EMPTY_OPTIMIZER` instead of
+  `ATTACHED_OPTIMIZER`. If your code relies on the optimizer being attached,
+  call `MOIU.attach_optimizer(model)` after creation.
+- The field names of `Utilities.IndexMap` have been renamed to `var_map` and
+  `con_map`. Accessing these fields directly is considered a private detail that
+  may change. Use the public `getindex` and `setindex!` API instead.
+- `Utilities.DoubleDicts` have been significantly refactored. Consult the source
+  code for details.
+
+Breaking changes in `Test`
+
+- `MOI.Test` has been renamed to `MOI.DeprecatedTest`
+- An entirely new `MOI.Test` submodule has been written. See the documentation
+  for details. The new `MOI.Test` submodule may find many bugs in the
+  implementations of existing solvers that were previously untested.
+
+Other changes:
+
+- `attribute_value_type` has been added
+- `VariableBasisStatus` has been added
+- `print(model)` now prints a human-readable description of the model
+- Various improvements to the `FileFormats` submodule
+  - `FileFormats.CBF` was refactored and received bugfixes
+  - Support for MathOptFormat v0.6 was added in `FileFormats.MOF`
+  - `FileFormats.MPS` has had bugfixes and support for more features such as
+    `OBJSENSE` and objective constants.
+  - `FileFormats.NL` has been added to support nonlinear files
+- Improved type inference throughout to reduce latency
 
 v0.9.22 (May 22, 2021)
 ---------------------------
