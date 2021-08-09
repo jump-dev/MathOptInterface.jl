@@ -70,6 +70,13 @@ function test_RawOptimizerAttribute()
     @test_logs (:warn,) MOI.RawParameter(:a) == MOI.RawOptimizerAttribute("a")
 end
 
+function test_default_copy_to()
+    dest = MOI.Utilities.Model{Float64}()
+    src = MOI.Utilities.Model{Float64}()
+    @test_logs (:warn,) MOI.Utilities.default_copy_to(dest, src, true)
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

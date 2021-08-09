@@ -920,8 +920,8 @@ function MOI.supports_add_constrained_variables(
     return MOI.supports_add_constrained_variables(mock.inner_model, MOI.Reals)
 end
 
-function MOI.copy_to(mock::MockOptimizer, src::MOI.ModelLike; kws...)
-    return default_copy_to(mock, src; kws...)
+function MOI.copy_to(dest::MockOptimizer, src::MOI.ModelLike; kwargs...)
+    return default_copy_to(dest, src; kwargs...)
 end
 
 function MOI.supports_incremental_interface(

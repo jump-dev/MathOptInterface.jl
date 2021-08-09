@@ -454,14 +454,6 @@ function copy_free_variables(
     return
 end
 
-function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
-    Base.depwarn(
-        "default_copy_to(dest, src) is deprecated, use default_copy_to(dest, src, true) instead or default_copy_to(dest, src, false) if you do not want to copy names.",
-        :default_copy_to,
-    )
-    return default_copy_to(dest, src, true)
-end
-
 function sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
     constraint_types = MOI.get(src, MOI.ListOfConstraintTypesPresent())
     single_or_vector_variables_types = [
@@ -543,11 +535,30 @@ only once all the model information is gathered.
 """
 function final_touch(::MOI.ModelLike, idxmap) end
 
+function default_copy_to(
+    dest::MOI.ModelLike,
+    src::MOI.ModelLike,
+    copy_names::Bool,
+    filter_constraints::Union{Nothing,Function} = nothing,
+)
+    @warn(
+        "The `copy_names` and `filter_constraints` arguments to " *
+        "`default_copy_to` are now keyword arguments.",
+        maxlog = 1,
+    )
+    return default_copy_to(
+        dest,
+        src;
+        copy_names = copy_names,
+        filter_constraints = filter_constraints,
+    )
+end
+
 """
     default_copy_to(
         dest::MOI.ModelLike,
-        src::MOI.ModelLike,
-        copy_names::Bool,
+        src::MOI.ModelLike;
+        copy_names::Bool = true,
         filter_constraints::Union{Nothing,Function} = nothing,
     )
 
@@ -562,8 +573,8 @@ constraint index as argument.
 """
 function default_copy_to(
     dest::MOI.ModelLike,
-    src::MOI.ModelLike,
-    copy_names::Bool,
+    src::MOI.ModelLike;
+    copy_names::Bool = false,
     filter_constraints::Union{Nothing,Function} = nothing,
 )
     if !MOI.supports_incremental_interface(dest, copy_names)
