@@ -11,8 +11,8 @@ number of new features.**
 Breaking changes in MOI
 
 - `SingleVariable` constraints should not support `ConstraintName`
-- `SingleVariableConstraints` should not support `ConstraintBasisStatus`.
-  Implement `VariableBasisStatus` instead
+- `SingleVariable` constraints should not support `ConstraintBasisStatus`;
+  implement `VariableBasisStatus` instead
 - `ListOfConstraints` has been renamed to `ListOfConstraintTypesPresent`
 - `ListOfConstraintTypesPresent` should now return `Tuple{Type,Type}` instead of
   `Tuple{DataType,DataType}`
@@ -20,7 +20,7 @@ Breaking changes in MOI
 - `IndicatorSet` has been renamed to `Indicator`
 - `RawParameter` has been renamed to `RawOptimizerAttribute` and now takes
   `String` instead of `Any` as the only argument
-- The `.N` field in some result attributes has been renamed to `.result_index`
+- The `.N` field in result attributes has been renamed to `.result_index`
 - The `.variable_index` field in `ScalarAffineTerm` has been renamed to
   `.variable`
 - The `.variable_index_1` field in `ScalarQuadraticTerm` has been renamed to
@@ -42,13 +42,14 @@ Breaking changes in `Bridges`
 - `Constraint.SOCRBridge` has been renamed to `Constraint.SOCtoRSOCBridge`
 - Bridges now return vectors that can be modified by the user. Previously, some
   bridges returned views instead of copies.
-- `Bridges.IndexInVector` has been unified into a single type. Previously there
+- `Bridges.IndexInVector` has been unified into a single type. Previously, there
   was a different type for each submodule within `Bridges`
 
 Breaking changes in `FileFormats`
 
 - `FileFormats.MOF.Model` no longer accepts `validate` argument. Use the
-  JSONSchema package to validate the MOF file. See the documentation for more.
+  JSONSchema package to validate the MOF file. See the documentation for more
+  information.
 
 Breaking changes in `Utilities`
 
@@ -59,7 +60,7 @@ Breaking changes in `Utilities`
 - `Utilities.supports_default_copy` has been renamed to
   `supports_incremental_interface`
 - `Utilities.automatic_copy_to` has been renamed to `Utilities.default_copy_to`
-- The allocate-load API has been removed.
+- The allocate-load API has been removed
 - `CachingOptimizer`s are now initialized as `EMPTY_OPTIMIZER` instead of
   `ATTACHED_OPTIMIZER`. If your code relies on the optimizer being attached,
   call `MOIU.attach_optimizer(model)` after creation.
