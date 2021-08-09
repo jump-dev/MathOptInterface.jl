@@ -562,14 +562,13 @@ end
         filter_constraints::Union{Nothing,Function} = nothing,
     )
 
-Implements `MOI.copy_to(dest, src)` by adding the variables and then the
-constraints and attributes incrementally. The function
-[`MathOptInterface.supports_incremental_interface`](@ref) can be used to check
-whether `dest` supports the copying a model incrementally.
+A default implementation of `MOI.copy_to(dest, src)` for models that implement
+the incremental interface, i.e., [`MOI.supports_incremental_interface`](@ref)
+returns `true`.
 
-If the `filter_constraints` arguments is given, only the constraints for which
-this function returns `true` will be copied. This function is given a
-constraint index as argument.
+If `filter_constraints` is a `Function`, only constraints for which
+`filter_constraints(ci)` returns `true` will be copied, where `ci` is the
+[`MOI.ConstraintIndex`](@ref) of the constraint.
 """
 function default_copy_to(
     dest::MOI.ModelLike,
