@@ -574,7 +574,7 @@ constraint index as argument.
 function default_copy_to(
     dest::MOI.ModelLike,
     src::MOI.ModelLike;
-    copy_names::Bool = false,
+    copy_names::Bool = true,
     filter_constraints::Union{Nothing,Function} = nothing,
 )
     if !MOI.supports_incremental_interface(dest, copy_names)
