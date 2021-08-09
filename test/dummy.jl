@@ -14,7 +14,10 @@ function MOI.copy_to(
     return MOIU.default_copy_to(dest, src, copy_names)
 end
 
+MOI.supports_incremental_interface(::AbstractDummyModel, ::Bool) = true
+
 MOI.supports(::AbstractDummyModel, ::MOI.ObjectiveSense) = true
+
 function MOI.supports(
     ::AbstractDummyModel,
     ::MOI.ConstraintPrimalStart,

@@ -2,7 +2,7 @@ using Test
 import MathOptInterface
 const MOI = MathOptInterface
 const MOIT = MOI.DeprecatedTest
-const MOU = MOI.Utilities
+const MOIU = MOI.Utilities
 
 @testset "Start value attributes and nothing" begin
     model = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
