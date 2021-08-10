@@ -186,10 +186,14 @@ otherwise an error is thrown; see [`MathOptInterface.copy_to`](@ref) for more de
 errors can be thrown.
 """
 function attach_optimizer(model::CachingOptimizer)
+    return _attach_optimizer(model, MOI.copy_to)
+end
+
+function _attach_optimizer(model::CachingOptimizer, copy_to::F) where {F<:Function}
     @assert model.state == EMPTY_OPTIMIZER
     # We do not need to copy names because name-related operations are handled
     # by `m.model_cache`
-    indexmap = MOI.copy_to(
+    indexmap = copy_to(
         model.optimizer,
         model.model_cache;
         copy_names = false,
@@ -293,11 +297,12 @@ MOI.is_empty(m::CachingOptimizer) = MOI.is_empty(m.model_cache)
 
 function MOI.optimize!(m::CachingOptimizer)
     if m.mode == AUTOMATIC && m.state == EMPTY_OPTIMIZER
-        attach_optimizer(m)
+        _attach_optimizer(m, MOI.copy_to_and_optimize!)
+    else
+        # TODO: better error message if no optimizer is set
+        @assert m.state == ATTACHED_OPTIMIZER
+        MOI.optimize!(m.optimizer)
     end
-    # TODO: better error message if no optimizer is set
-    @assert m.state == ATTACHED_OPTIMIZER
-    MOI.optimize!(m.optimizer)
     return
 end
 
