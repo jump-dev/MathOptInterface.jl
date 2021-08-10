@@ -186,3 +186,5 @@ function test_attribute_after_empty(model::MOI.AbstractOptimizer, ::Config)
     MOI.set(model, MOI.Silent(), current)
     return
 end
+
+test_attribute_after_empty(::MOI.ModelLike, ::Config) = nothing
