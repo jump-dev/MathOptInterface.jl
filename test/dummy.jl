@@ -5,14 +5,19 @@ const MOIU = MOI.Utilities
 abstract type AbstractDummyModel <: MOI.ModelLike end
 
 function MOI.empty!(::AbstractDummyModel) end
+
 function MOI.copy_to(
     dest::AbstractDummyModel,
     src::MOI.ModelLike;
-    copy_names = true,
+    copy_names::Bool = true,
 )
     return MOIU.default_copy_to(dest, src, copy_names)
 end
+
+MOI.supports_incremental_interface(::AbstractDummyModel, ::Bool) = true
+
 MOI.supports(::AbstractDummyModel, ::MOI.ObjectiveSense) = true
+
 function MOI.supports(
     ::AbstractDummyModel,
     ::MOI.ConstraintPrimalStart,

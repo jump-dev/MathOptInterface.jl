@@ -30,9 +30,9 @@ function MOI.empty!(::AbstractDummyModel) end
 function MOI.copy_to(
     dest::AbstractDummyModel,
     src::MOI.ModelLike;
-    copy_names = true,
+    copy_names::Bool = true,
 )
-    return MOIU.default_copy_to(dest, src, copy_names)
+    return MOIU.default_copy_to(dest, src; copy_names = copy_names)
 end
 
 MOI.supports(::AbstractDummyModel, ::MOI.ObjectiveSense) = true
@@ -124,12 +124,12 @@ end
 function test_AUTOMATIC()
     src = DummyModel()
     dest = DummyModel()
-    @test_throws ErrorException MOIU.automatic_copy_to(dest, src)
+    @test_throws ErrorException MOIU.default_copy_to(dest, src)
     try
-        @test_throws ErrorException MOIU.automatic_copy_to(dest, src)
+        @test_throws ErrorException MOIU.default_copy_to(dest, src)
     catch err
         @test sprint(showerror, err) ==
-              "Model DummyModel does not" * " support copy with names."
+              "Model DummyModel does not support copy with names."
     end
 end
 
@@ -151,7 +151,7 @@ function test_issue_849()
     )
     MOI.set(model, MOI.NLPBlock(), nlp_data)
     copy = MOIU.UniversalFallback(MOIU.Model{Float64}())
-    index_map = MOIU.default_copy_to(copy, model, true)
+    index_map = MOIU.default_copy_to(copy, model; copy_names = true)
     for vi in [a, b, c, x, y[1]]
         @test index_map[vi] == vi
     end
@@ -186,9 +186,9 @@ end
 function MOI.copy_to(
     dest::ConstrainedVariablesModel,
     src::MOI.ModelLike;
-    kws...,
+    kwargs...,
 )
-    return MOIU.automatic_copy_to(dest, src; kws...)
+    return MOIU.default_copy_to(dest, src; kwargs...)
 end
 
 function MOI.add_variables(model::ConstrainedVariablesModel, n)
@@ -283,7 +283,7 @@ function MOI.copy_to(
     src::MOI.ModelLike;
     kwargs...,
 )
-    return MOIU.automatic_copy_to(dest, src; kwargs...)
+    return MOIU.default_copy_to(dest, src; kwargs...)
 end
 
 function MOI.supports_incremental_interface(
@@ -669,8 +669,8 @@ end
 
 MOI.supports_incremental_interface(::BoundModel, ::Bool) = true
 
-function MOI.copy_to(dest::BoundModel, src::MOI.ModelLike; kws...)
-    return MOIU.automatic_copy_to(dest, src; kws...)
+function MOI.copy_to(dest::BoundModel, src::MOI.ModelLike; kwargs...)
+    return MOIU.default_copy_to(dest, src; kwargs...)
 end
 
 MOI.empty!(model::BoundModel) = MOI.empty!(model.inner)

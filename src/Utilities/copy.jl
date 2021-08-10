@@ -1,39 +1,7 @@
 # This file contains default implementations for the `MOI.copy_to` function that
 # can be used by a model.
 
-"""
-    automatic_copy_to(
-        dest::MOI.ModelLike,
-        src::MOI.ModelLike;
-        copy_names::Bool=true,
-        filter_constraints::Union{Nothing,Function} = nothing,
-    )
-
-A default fallback for [`MOI.copy_to`](@ref).
-
-To use this method, define
-[`MathOptInterface.supports_incremental_interface`](@ref).
-
-If the `filter_constraints` arguments is given, only the constraints for which
-this function returns `true` will be copied. This function is given a
-constraint index as argument.
-"""
-function automatic_copy_to(
-    dest::MOI.ModelLike,
-    src::MOI.ModelLike;
-    copy_names::Bool = true,
-    filter_constraints::Union{Nothing,Function} = nothing,
-)
-    if !MOI.supports_incremental_interface(dest, copy_names)
-        error(
-            "Model $(typeof(dest)) does not support copy",
-            copy_names ? " with names" : "",
-            ".",
-        )
-    end
-    return default_copy_to(dest, src, copy_names, filter_constraints)
-end
-
+@deprecate automatic_copy_to default_copy_to
 @deprecate supports_default_copy_to MOI.supports_incremental_interface
 
 include("copy/index_map.jl")
@@ -486,14 +454,6 @@ function copy_free_variables(
     return
 end
 
-function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
-    Base.depwarn(
-        "default_copy_to(dest, src) is deprecated, use default_copy_to(dest, src, true) instead or default_copy_to(dest, src, false) if you do not want to copy names.",
-        :default_copy_to,
-    )
-    return default_copy_to(dest, src, true)
-end
-
 function sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
     constraint_types = MOI.get(src, MOI.ListOfConstraintTypesPresent())
     single_or_vector_variables_types = [
@@ -575,29 +535,54 @@ only once all the model information is gathered.
 """
 function final_touch(::MOI.ModelLike, idxmap) end
 
-"""
-    default_copy_to(
-        dest::MOI.ModelLike,
-        src::MOI.ModelLike,
-        copy_names::Bool,
-        filter_constraints::Union{Nothing,Function} = nothing,
-    )
-
-Implements `MOI.copy_to(dest, src)` by adding the variables and then the
-constraints and attributes incrementally. The function
-[`MathOptInterface.supports_incremental_interface`](@ref) can be used to check
-whether `dest` supports the copying a model incrementally.
-
-If the `filter_constraints` arguments is given, only the constraints for which
-this function returns `true` will be copied. This function is given a
-constraint index as argument.
-"""
 function default_copy_to(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     copy_names::Bool,
     filter_constraints::Union{Nothing,Function} = nothing,
 )
+    @warn(
+        "The `copy_names` and `filter_constraints` arguments to " *
+        "`default_copy_to` are now keyword arguments.",
+        maxlog = 1,
+    )
+    return default_copy_to(
+        dest,
+        src;
+        copy_names = copy_names,
+        filter_constraints = filter_constraints,
+    )
+end
+
+"""
+    default_copy_to(
+        dest::MOI.ModelLike,
+        src::MOI.ModelLike;
+        copy_names::Bool = true,
+        filter_constraints::Union{Nothing,Function} = nothing,
+    )
+
+A default implementation of `MOI.copy_to(dest, src)` for models that implement
+the incremental interface, i.e., [`MOI.supports_incremental_interface`](@ref)
+returns `true`.
+
+If `filter_constraints` is a `Function`, only constraints for which
+`filter_constraints(ci)` returns `true` will be copied, where `ci` is the
+[`MOI.ConstraintIndex`](@ref) of the constraint.
+"""
+function default_copy_to(
+    dest::MOI.ModelLike,
+    src::MOI.ModelLike;
+    copy_names::Bool = true,
+    filter_constraints::Union{Nothing,Function} = nothing,
+)
+    if !MOI.supports_incremental_interface(dest, copy_names)
+        error(
+            "Model $(typeof(dest)) does not support copy",
+            copy_names ? " with names" : "",
+            ".",
+        )
+    end
     MOI.empty!(dest)
 
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())

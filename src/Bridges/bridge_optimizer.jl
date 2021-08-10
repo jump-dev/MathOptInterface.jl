@@ -426,8 +426,12 @@ function MOIU.pass_nonvariable_constraints(
     return
 end
 
-function MOI.copy_to(b::AbstractBridgeOptimizer, src::MOI.ModelLike; kwargs...)
-    return MOIU.automatic_copy_to(b, src; kwargs...)
+function MOI.copy_to(
+    dest::AbstractBridgeOptimizer,
+    src::MOI.ModelLike;
+    kwargs...,
+)
+    return MOIU.default_copy_to(dest, src; kwargs...)
 end
 
 function MOI.supports_incremental_interface(

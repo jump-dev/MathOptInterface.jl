@@ -64,7 +64,6 @@ Utilities.latex_formulation
 ## Copy utilities
 
 ```@docs
-Utilities.automatic_copy_to
 Utilities.default_copy_to
 Utilities.IndexMap
 Utilities.identity_index_map
