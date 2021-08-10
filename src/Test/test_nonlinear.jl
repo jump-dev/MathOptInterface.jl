@@ -442,6 +442,70 @@ function setup_test(
 end
 
 """
+    test_nonlinear_hs071_NLPBlockDual(model::MOI.ModelLike, config::Config)
+
+Test NLPBlockDual.
+"""
+function test_nonlinear_hs071_NLPBlockDual(model::MOI.ModelLike, config::Config)
+    @requires MOI.supports(model, MOI.NLPBlock())
+    @requires _supports(config, MOI.optimize!)
+    @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    v = MOI.add_variables(model, 4)
+    l = [1.1, 1.2, 1.3, 1.4]
+    u = [5.1, 5.2, 5.3, 5.4]
+    start = [2.1, 2.2, 2.3, 2.4]
+    MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.GreaterThan.(l))
+    MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.LessThan.(u))
+    MOI.set.(model, MOI.VariablePrimalStart(), v, start)
+    lb, ub = [25.0, 40.0], [Inf, 40.0]
+    evaluator = MOI.Test.HS071(true)
+    block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, true)
+    MOI.set(model, MOI.NLPBlock(), block_data)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.optimize!(model)
+    dual = MOI.get(model, MOI.NLPBlockDual())
+    @test isapprox(dual, [0.178761800, 0.985000823], config)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.optimize!(model)
+    dual = MOI.get(model, MOI.NLPBlockDual())
+    @test isapprox(dual, [0.0, -5.008488315], config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_hs071_NLPBlockDual),
+    model::MOIU.MockOptimizer,
+    config::Config,
+)
+    config.optimal_status = MOI.LOCALLY_SOLVED
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(
+                mock,
+                config.optimal_status,
+                [1.1, 1.57355205213644, 2.6746837915674373, 5.4],
+            )
+            MOI.set(mock, MOI.NLPBlockDual(), [0.178761800, 0.985000823])
+        end,
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(
+                mock,
+                config.optimal_status,
+                [
+                    4.567633003532132,
+                    1.6613736769916652,
+                    1.7612041983937636,
+                    3.6434497419346723,
+                ],
+            )
+            MOI.set(mock, MOI.NLPBlockDual(), [0.0, -5.008488315])
+        end,
+    )
+    return
+end
+
+"""
     test_nonlinear_objective_and_moi_objective_test(
         model::MOI.ModelLike,
         config::Config,
