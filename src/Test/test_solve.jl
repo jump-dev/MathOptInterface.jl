@@ -8,6 +8,7 @@ function test_solve_ObjectiveBound_MIN_SENSE_IP(
     config::Config,
 )
     @requires _supports(config, MOI.optimize!)
+    @requires _supports(config, MOI.ObjectiveBound)
     MOIU.loadfromstring!(
         model,
         """
@@ -53,6 +54,7 @@ function test_solve_ObjectiveBound_MAX_SENSE_IP(
     config::Config,
 )
     @requires _supports(config, MOI.optimize!)
+    @requires _supports(config, MOI.ObjectiveBound)
     MOIU.loadfromstring!(
         model,
         """
@@ -98,6 +100,7 @@ function test_solve_ObjectiveBound_MIN_SENSE_LP(
     config::Config,
 )
     @requires _supports(config, MOI.optimize!)
+    @requires _supports(config, MOI.ObjectiveBound)
     MOIU.loadfromstring!(
         model,
         """
@@ -141,6 +144,7 @@ function test_solve_ObjectiveBound_MAX_SENSE_LP(
     config::Config,
 )
     @requires _supports(config, MOI.optimize!)
+    @requires _supports(config, MOI.ObjectiveBound)
     MOIU.loadfromstring!(
         model,
         """
