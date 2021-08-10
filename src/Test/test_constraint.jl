@@ -680,7 +680,6 @@ function test_constraint_PrimalStart_DualStart_SecondOrderCone(
     if MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
         MOI.set(model, MOI.ConstraintDualStart(), c, T[2, -2])
     end
-    MOI.optimize!(model)
     _test_model_solution(
         model,
         config;
