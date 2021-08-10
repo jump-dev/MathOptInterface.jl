@@ -167,3 +167,18 @@ function setup_test(
     MOI.set(model, MOI.TimeLimitSec(), nothing)
     return
 end
+
+"""
+    test_attribute_after_empty(model::MOI.AbstractOptimizer, config::Config)
+
+Test that optimizer attributes such as `Silent` are not cleared by `MOI.empty!`.
+"""
+function test_attribute_after_empty(model::MOI.AbstractOptimizer, ::Config)
+    @requires MOI.supports(model, MOI.Silent())
+    @test MOI.get(model, MOI.Silent()) == false
+    MOI.set(model, MOI.Silent(), true)
+    @test MOI.get(model, MOI.Silent()) == true
+    MOI.empty!(model)
+    @test MOI.get(model, MOI.Silent()) == true
+    return
+end
