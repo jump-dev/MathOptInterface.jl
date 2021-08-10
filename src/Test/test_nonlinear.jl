@@ -484,12 +484,7 @@ function setup_test(
             MOI.Utilities.mock_optimize!(
                 mock,
                 config.optimal_status,
-                [
-                    1.1,
-                    1.57355205213644,
-                    2.6746837915674373,
-                    5.4,
-                ],
+                [1.1, 1.57355205213644, 2.6746837915674373, 5.4],
             )
             MOI.set(mock, MOI.NLPBlockDual(), [0.178761800, 0.985000823])
         end,
