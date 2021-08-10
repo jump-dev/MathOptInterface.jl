@@ -363,8 +363,7 @@ function _test_model_solution(
             )
         end
     end
-    if constraint_primal !== nothing &&
-       _supports(config, MOI.ConstraintPrimal())
+    if constraint_primal !== nothing && _supports(config, MOI.ConstraintPrimal)
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         for (index, solution_value) in constraint_primal
             @test isapprox(
@@ -374,7 +373,7 @@ function _test_model_solution(
             )
         end
     end
-    if constraint_dual !== nothing && _supports(config, MOI.ConstraintDual())
+    if constraint_dual !== nothing && _supports(config, MOI.ConstraintDual)
         @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         for (index, solution_value) in constraint_dual
             @test isapprox(
