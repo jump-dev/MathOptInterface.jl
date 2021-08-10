@@ -749,9 +749,9 @@ macro model(
     func_typed = _struct_of_constraints_type(func_name, set_struct_types, false)
     T = esc(:T)
     generic = if is_optimizer
-        :(GenericOptimizer{$T,$func_typed})
+        :(GenericOptimizer{$T,ObjectiveFunctionContainer{$T},SingleVariableConstraints{$T},$func_typed})
     else
-        :(GenericModel{$T,$func_typed})
+        :(GenericModel{$T,ObjectiveFunctionContainer{$T},SingleVariableConstraints{$T},$func_typed})
     end
     model_code = :(const $esc_model_name{$T} = $generic)
     expr = Expr(:block)
@@ -798,10 +798,10 @@ for (loop_name, loop_super_type) in [
         (resp. `variable_bounds.upper`). When no lower (resp. upper) bound is set, it is
         `typemin(T)` (resp. `typemax(T)`) if `T <: AbstractFloat`.
         """
-        mutable struct $name{T,C} <: $super_type{T}
+        mutable struct $name{T,O,V,C} <: $super_type{T}
             name::String
-            objective::ObjectiveFunctionContainer{T}
-            variable_bounds::SingleVariableConstraints{T}
+            objective::O
+            variable_bounds::V
             constraints::C
             var_to_name::Dict{MOI.VariableIndex,String}
             # If `nothing`, the dictionary hasn't been constructed yet.
@@ -811,11 +811,11 @@ for (loop_name, loop_super_type) in [
             # A useful dictionary for extensions to store things. These are
             # _not_ copied between models!
             ext::Dict{Symbol,Any}
-            function $name{T,C}() where {T,C}
-                return new{T,C}(
+            function $name{T,O,V,C}() where {T,O,V,C}
+                return new{T,O,V,C}(
                     EMPTYSTRING,
-                    ObjectiveFunctionContainer{T}(),
-                    SingleVariableConstraints{T}(),
+                    O(),
+                    V(),
                     C(),
                     Dict{MOI.VariableIndex,String}(),
                     nothing,
