@@ -749,9 +749,19 @@ macro model(
     func_typed = _struct_of_constraints_type(func_name, set_struct_types, false)
     T = esc(:T)
     generic = if is_optimizer
-        :(GenericOptimizer{$T,ObjectiveFunctionContainer{$T},SingleVariableConstraints{$T},$func_typed})
+        :(GenericOptimizer{
+            $T,
+            ObjectiveFunctionContainer{$T},
+            SingleVariableConstraints{$T},
+            $func_typed,
+        })
     else
-        :(GenericModel{$T,ObjectiveFunctionContainer{$T},SingleVariableConstraints{$T},$func_typed})
+        :(GenericModel{
+            $T,
+            ObjectiveFunctionContainer{$T},
+            SingleVariableConstraints{$T},
+            $func_typed,
+        })
     end
     model_code = :(const $esc_model_name{$T} = $generic)
     expr = Expr(:block)
@@ -779,19 +789,14 @@ for (loop_name, loop_super_type) in [
     global super_type = loop_super_type
     @eval begin
         """
-            mutable struct $name{T,C} <: $super_type{T}
+            mutable struct $name{T,O,V,C} <: $super_type{T}
 
-        Implements a models supporting
-        * an objective function of type
-          `MOI.SingleVariable`, `MOI.ScalarAffineFunction{T}` and
-          `MOI.ScalarQuadraticFunction{T}`,
-        * [`MathOptInterface.SingleVariable`](@ref)-in-`S`
-          constraints where `S` is [`MathOptInterface.EqualTo`](@ref),
-          [`MathOptInterface.GreaterThan`](@ref), [`MathOptInterface.LessThan`](@ref),
-          [`MathOptInterface.Interval`](@ref), [`MathOptInterface.Integer`](@ref),
-          [`MathOptInterface.ZeroOne`](@ref), [`MathOptInterface.Semicontinuous`](@ref)
-          or [`MathOptInterface.Semiinteger`](@ref).
-        * `F`-in-`S` constraints that are supported by `C`.
+        Implements a models supporting:
+
+         * Coefficients of type `T`
+         * An objective function stored in `O`
+         * Variables and `SingleVariable` constraints stored in `V`
+         * `F`-in-`S` constraints stored in `C`.
 
         The lower (resp. upper) bound of a variable of index `VariableIndex(i)`
         is at the `i`th index of the vector stored in the field `variable_bounds.lower`

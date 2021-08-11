@@ -771,7 +771,12 @@ function _test_copy_of_constraints_passed_as_copy_accross_layers(
     dest = MOIU.CachingOptimizer(
         MOI.Bridges.full_bridge_optimizer(
             MOIU.UniversalFallback(
-                MOIU.GenericOptimizer{T,OnlyCopyConstraints{F,S}}(),
+                MOIU.GenericOptimizer{
+                    T,
+                    MOI.Utilities.ObjectiveFunctionContainer{T},
+                    MOI.Utilities.SingleVariableConstraints{T},
+                    OnlyCopyConstraints{F,S},
+                }(),
             ),
             T,
         ),

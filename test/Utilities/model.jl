@@ -103,9 +103,10 @@ function test_TestExternalModel_fields()
         Int,
         TestExternalModel.ExternalModelFunctionConstraints{Int},
     }
-    @test TestExternalModel.ExternalOptimizer{Int} ==
-          MOI.Utilities.GenericOptimizer{
+    model = MOI.Utilities.GenericOptimizer{
         Int,
+        MOI.Utilities.ObjectiveFunctionContainer{Int},
+        MOI.Utilities.SingleVariableConstraints{Int},
         TestExternalModel.ExternalOptimizerScalarConstraints{
             Int,
             MOI.Utilities.VectorOfConstraints{
@@ -118,6 +119,8 @@ function test_TestExternalModel_fields()
             },
         },
     }
+    @test TestExternalModel.ExternalOptimizer{Int} == model
+
     return
 end
 
