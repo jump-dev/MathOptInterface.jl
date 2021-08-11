@@ -74,6 +74,7 @@ function _delete_variable(
     vi::MOI.VariableIndex,
 ) where {T}
     MOI.delete(model.variables, vi)
+    delete!(model.var_to_name, vi)
     model.name_to_var = nothing
     model.name_to_con = nothing
     return
