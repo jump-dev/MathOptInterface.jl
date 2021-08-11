@@ -172,10 +172,18 @@ mutable struct SingleVariableConstraints{T} <: AbstractVectorBounds
     set_mask::Vector{UInt16}
     lower::Vector{T}
     upper::Vector{T}
+    var_to_name::Dict{MOI.VariableIndex,String}
+    name_to_var::Union{Dict{String,MOI.VariableIndex},Nothing}
 end
 
 function SingleVariableConstraints{T}() where {T}
-    return SingleVariableConstraints{T}(UInt16[], T[], T[])
+    return SingleVariableConstraints{T}(
+        UInt16[],
+        T[],
+        T[],
+        Dict{MOI.VariableIndex,String}(),
+        nothing,
+    )
 end
 
 function MOI.throw_if_not_valid(b::SingleVariableConstraints, index)
@@ -192,6 +200,8 @@ function MOI.empty!(b::SingleVariableConstraints)
     empty!(b.set_mask)
     empty!(b.lower)
     empty!(b.upper)
+    empty!(b.var_to_name)
+    b.name_to_var = nothing
     return b
 end
 
@@ -215,6 +225,54 @@ function MOI.add_variable(b::SingleVariableConstraints{T}) where {T}
     push!(b.upper, _no_upper_bound(T))
     x = MOI.VariableIndex(length(b.set_mask))
     return x
+end
+
+function MOI.supports(
+    ::SingleVariableConstraints,
+    ::MOI.VariableName,
+    ::Type{MOI.VariableIndex},
+)
+    return true
+end
+
+function MOI.set(
+    b::SingleVariableConstraints,
+    ::MOI.VariableName,
+    x::MOI.VariableIndex,
+    name::String,
+)
+    MOI.set(b.variables, MOI.VariableName(), x, name)
+    b.var_to_name[x] = name
+    b.name_to_var = nothing
+    return
+end
+
+function MOI.get(
+    b::SingleVariableConstraints,
+    ::MOI.VariableName,
+    x::MOI.VariableIndex,
+)
+    return get(b.var_to_name, x, "")
+end
+
+function MOI.get(
+    b::SingleVariableConstraints,
+    ::Type{MOI.VariableIndex},
+    name::String,
+)
+    if b.name_to_var === nothing
+        b.name_to_var = build_name_to_var_map(b.var_to_name)
+    end
+    result = get(b.name_to_var, name, nothing)
+    throw_if_multiple_with_name(result, name)
+    return result
+end
+
+function MOI.get(
+    b::AbstractModel,
+    ::MOI.ListOfVariableAttributesSet,
+)::Vector{MOI.AbstractVariableAttribute}
+    return isempty(b.var_to_name) ? [] : [MOI.VariableName()]
 end
 
 function MOI.get(b::SingleVariableConstraints, ::MOI.ListOfVariableIndices)
@@ -268,6 +326,8 @@ function MOI.delete(
     if !iszero(flag & _UPPER_BOUND_MASK)
         b.upper[ci.value] = _no_upper_bound(T)
     end
+    delete!(b.var_to_name, vi)
+    b.name_to_var = nothing
     return
 end
 

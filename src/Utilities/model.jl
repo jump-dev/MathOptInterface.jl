@@ -69,51 +69,9 @@ function filter_variables(
     return g, t
 end
 
-function _delete_variable(
-    model::AbstractModel{T},
-    vi::MOI.VariableIndex,
-) where {T}
-    MOI.delete(model.variable_bounds, vi)
-    model.name_to_var = nothing
-    delete!(model.var_to_name, vi)
-    model.name_to_con = nothing
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{T}}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{T}}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{T}}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Interval{T}}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Semicontinuous{T}}(vi.value),
-    )
-    return delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Semiinteger{T}}(vi.value),
-    )
-end
-
 function MOI.delete(model::AbstractModel, vi::MOI.VariableIndex)
     _throw_if_cannot_delete(model.constraints, [vi], vi)
-    _delete_variable(model, vi)
+    MOI.delete(model.variable_bounds, vi)
     _deleted_constraints(model.constraints, vi) do ci
         return delete!(model.con_to_name, ci)
     end
@@ -131,7 +89,7 @@ function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
         return delete!(model.con_to_name, ci)
     end
     for vi in vis
-        _delete_variable(model, vi)
+        MOI.delete(model.variable_bounds, vi)
     end
     MOI.delete(model.objective, vis)
     model.name_to_con = nothing
@@ -164,31 +122,46 @@ function MOI.set(model::AbstractModel, ::MOI.Name, name::String)
 end
 MOI.get(model::AbstractModel, ::MOI.Name) = model.name
 
-MOI.supports(::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
-function MOI.set(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
-    model.var_to_name[vi] = name
-    model.name_to_var = nothing # Invalidate the name map.
+function MOI.supports(
+    b::AbstractModel,
+    ::MOI.VariableName,
+    ::Type{MOI.VariableIndex},
+)
+    return MOI.supports(b, MOI.VariableName(), MOI.VariableIndex)
+end
+
+function MOI.set(
+    model::AbstractModel,
+    ::MOI.VariableName,
+    x::MOI.VariableIndex,
+    name::String,
+)
+    MOI.set(model.variables, MOI.VariableName(), x, name)
     return
 end
 
-function MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI)
-    return get(model.var_to_name, vi, EMPTYSTRING)
+function MOI.get(
+    model::AbstractModel,
+    attr::MOI.VariableName,
+    x::MOI.VariableIndex,
+)
+    return MOI.get(model.variable_bounds, attr, x)
 end
 
 """
-    build_name_to_var_map(con_to_name::Dict{MOI.VariableIndex, String})
+    build_name_to_var_map(var_to_name::Dict{MOI.VariableIndex,String})
 
 Create and return a reverse map from name to variable index, given a map from
 variable index to name. The special value `MOI.VariableIndex(0)` is used to
 indicate that multiple variables have the same name.
 """
-function build_name_to_var_map(var_to_name::Dict{VI,String})
-    name_to_var = Dict{String,VI}()
+function build_name_to_var_map(var_to_name::Dict{MOI.VariableIndex,String})
+    name_to_var = Dict{String,MOI.VariableIndex}()
     for (var, var_name) in var_to_name
         if haskey(name_to_var, var_name)
             # 0 is a special value that means this string does not map to
             # a unique variable name.
-            name_to_var[var_name] = VI(0)
+            name_to_var[var_name] = MOI.VariableIndex(0)
         else
             name_to_var[var_name] = var
         end
@@ -199,31 +172,28 @@ end
 function throw_multiple_name_error(::Type{MOI.VariableIndex}, name::String)
     return error("Multiple variables have the name $name.")
 end
+
 function throw_multiple_name_error(::Type{<:MOI.ConstraintIndex}, name::String)
     return error("Multiple constraints have the name $name.")
 end
-function throw_if_multiple_with_name(::Nothing, ::String) end
+
+throw_if_multiple_with_name(::Nothing, ::String) = nothing
+
 function throw_if_multiple_with_name(index::MOI.Index, name::String)
     if iszero(index.value)
         throw_multiple_name_error(typeof(index), name)
     end
 end
 
-function MOI.get(model::AbstractModel, ::Type{VI}, name::String)
-    if model.name_to_var === nothing
-        # Rebuild the map.
-        model.name_to_var = build_name_to_var_map(model.var_to_name)
-    end
-    result = get(model.name_to_var, name, nothing)
-    throw_if_multiple_with_name(result, name)
-    return result
+function MOI.get(model::AbstractModel, ::Type{MOI.VariableIndex}, name::String)
+    return MOI.get(model.variable_bounds, MOI.VariableIndex, name)
 end
 
 function MOI.get(
     model::AbstractModel,
     ::MOI.ListOfVariableAttributesSet,
 )::Vector{MOI.AbstractVariableAttribute}
-    return isempty(model.var_to_name) ? [] : [MOI.VariableName()]
+    return MOI.get(model.variable_bounds, MOI.ListOfVariableAttributesSet())
 end
 
 MOI.supports(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
@@ -549,8 +519,6 @@ function MOI.empty!(model::AbstractModel{T}) where {T}
     model.name = ""
     MOI.empty!(model.objective)
     MOI.empty!(model.variable_bounds)
-    empty!(model.var_to_name)
-    model.name_to_var = nothing
     empty!(model.con_to_name)
     model.name_to_con = nothing
     MOI.empty!(model.constraints)
