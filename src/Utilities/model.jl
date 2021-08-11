@@ -791,17 +791,16 @@ for (loop_name, loop_super_type) in [
         """
             mutable struct $name{T,O,V,C} <: $super_type{T}
 
-        Implements a models supporting:
+        Implements a model supporting coefficients of type `T` and:
 
-         * Coefficients of type `T`
-         * An objective function stored in `O`
-         * Variables and `SingleVariable` constraints stored in `V`
-         * `F`-in-`S` constraints stored in `C`.
+         * An objective function stored in `.objective::O`
+         * Variables and `SingleVariable` constraints stored in `.variable_bounds::V`
+         * `F`-in-`S` constraints (excluding `SingleVariable` constraints)
+           stored in `.constraints::C`
 
-        The lower (resp. upper) bound of a variable of index `VariableIndex(i)`
-        is at the `i`th index of the vector stored in the field `variable_bounds.lower`
-        (resp. `variable_bounds.upper`). When no lower (resp. upper) bound is set, it is
-        `typemin(T)` (resp. `typemax(T)`) if `T <: AbstractFloat`.
+        All interactions should take place via the MOI interface, so the types
+        `O`, `V`, and `C` should implement the API as needed for their
+        functionality.
         """
         mutable struct $name{T,O,V,C} <: $super_type{T}
             name::String
