@@ -697,7 +697,7 @@ struct LPModelFunctionConstraints{T} <: MOIU.StructOfConstraints
         MOIU.VectorOfConstraints{MOI.VectorAffineFunction{T}, MOI.Nonpositives}
     }
 end
-const LPModel{T} = MOIU.GenericModel{T, LPModelFunctionConstraints{T}}
+const LPModel{T} = MOIU.GenericModel{T,MOIU.ObjectiveFunctionContainer{T},MOIU.SingleVariableConstraints{T},LPModelFunctionConstraints{T}}
 ```
 The type `LPModel` implements the MathOptInterface API except methods specific
 to optimizers like `optimize!` or `get` with `VariablePrimal`.

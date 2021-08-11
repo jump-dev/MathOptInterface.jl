@@ -54,8 +54,8 @@ MOI.Utilities.@product_of_sets(
 function _new_VectorSets()
     return MOI.Utilities.GenericOptimizer{
         Int,
-        MOI.Utilities.ObjectiveFunctionContainer{Float64},
-        MOI.Utilities.SingleVariableConstraints{Float64},
+        MOI.Utilities.ObjectiveFunctionContainer{Int},
+        MOI.Utilities.SingleVariableConstraints{Int},
         MOI.Utilities.MatrixOfConstraints{
             Int,
             MOI.Utilities.MutableSparseMatrixCSC{
