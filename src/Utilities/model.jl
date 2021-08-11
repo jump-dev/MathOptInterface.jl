@@ -75,40 +75,8 @@ function _delete_variable(
 ) where {T}
     MOI.delete(model.variables, vi)
     model.name_to_var = nothing
-    delete!(model.var_to_name, vi)
     model.name_to_con = nothing
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{T}}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{T}}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{T}}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Interval{T}}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Semicontinuous{T}}(vi.value),
-    )
-    return delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Semiinteger{T}}(vi.value),
-    )
+    return
 end
 
 function MOI.delete(model::AbstractModel, vi::MOI.VariableIndex)
