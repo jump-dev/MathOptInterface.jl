@@ -1,24 +1,24 @@
 """
-    ObjectiveFunctionContainer{T}
+    ObjectiveContainer{T}
 
 A helper struct to simplify the handling of objective functions in
 Utilities.Model.
 """
-mutable struct ObjectiveFunctionContainer{T} <: MOI.ModelLike
+mutable struct ObjectiveContainer{T} <: MOI.ModelLike
     is_sense_set::Bool
     sense::MOI.OptimizationSense
     is_function_set::Bool
     single_variable::Union{Nothing,MOI.SingleVariable}
     scalar_affine::Union{Nothing,MOI.ScalarAffineFunction{T}}
     scalar_quadratic::Union{Nothing,MOI.ScalarQuadraticFunction{T}}
-    function ObjectiveFunctionContainer{T}() where {T}
+    function ObjectiveContainer{T}() where {T}
         o = new{T}()
         MOI.empty!(o)
         return o
     end
 end
 
-function MOI.empty!(o::ObjectiveFunctionContainer{T}) where {T}
+function MOI.empty!(o::ObjectiveContainer{T}) where {T}
     o.is_sense_set = false
     o.sense = MOI.FEASIBILITY_SENSE
     o.is_function_set = false
@@ -29,7 +29,7 @@ function MOI.empty!(o::ObjectiveFunctionContainer{T}) where {T}
     return
 end
 
-function MOI.is_empty(o::ObjectiveFunctionContainer)
+function MOI.is_empty(o::ObjectiveContainer)
     return !o.is_sense_set && !o.is_function_set
 end
 
@@ -37,11 +37,11 @@ end
 ### ObjectiveSense
 ###
 
-MOI.supports(::ObjectiveFunctionContainer, ::MOI.ObjectiveSense) = true
+MOI.supports(::ObjectiveContainer, ::MOI.ObjectiveSense) = true
 
-MOI.get(o::ObjectiveFunctionContainer, ::MOI.ObjectiveSense) = o.sense
+MOI.get(o::ObjectiveContainer, ::MOI.ObjectiveSense) = o.sense
 
-function MOI.set(o::ObjectiveFunctionContainer, ::MOI.ObjectiveSense, value)
+function MOI.set(o::ObjectiveContainer, ::MOI.ObjectiveSense, value)
     if value == MOI.FEASIBILITY_SENSE
         MOI.empty!(o)
     end
@@ -55,7 +55,7 @@ end
 ###
 
 function MOI.get(
-    o::ObjectiveFunctionContainer{T},
+    o::ObjectiveContainer{T},
     ::MOI.ObjectiveFunctionType,
 ) where {T}
     if o.single_variable !== nothing
@@ -72,7 +72,7 @@ end
 ###
 
 function MOI.supports(
-    ::ObjectiveFunctionContainer{T},
+    ::ObjectiveContainer{T},
     ::MOI.ObjectiveFunction{
         <:Union{
             MOI.SingleVariable,
@@ -85,7 +85,7 @@ function MOI.supports(
 end
 
 function MOI.get(
-    o::ObjectiveFunctionContainer{T},
+    o::ObjectiveContainer{T},
     ::MOI.ObjectiveFunction{F},
 ) where {T,F}
     if o.single_variable !== nothing
@@ -98,7 +98,7 @@ function MOI.get(
 end
 
 function MOI.set(
-    o::ObjectiveFunctionContainer,
+    o::ObjectiveContainer,
     ::MOI.ObjectiveFunction{MOI.SingleVariable},
     f::MOI.SingleVariable,
 )
@@ -110,7 +110,7 @@ function MOI.set(
 end
 
 function MOI.set(
-    o::ObjectiveFunctionContainer{T},
+    o::ObjectiveContainer{T},
     ::MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}},
     f::MOI.ScalarAffineFunction{T},
 ) where {T}
@@ -122,7 +122,7 @@ function MOI.set(
 end
 
 function MOI.set(
-    o::ObjectiveFunctionContainer{T},
+    o::ObjectiveContainer{T},
     ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}},
     f::MOI.ScalarQuadraticFunction{T},
 ) where {T}
@@ -137,7 +137,7 @@ end
 ### MOI.ListOfModelAttributesSet
 ###
 
-function MOI.get(o::ObjectiveFunctionContainer, ::MOI.ListOfModelAttributesSet)
+function MOI.get(o::ObjectiveContainer, ::MOI.ListOfModelAttributesSet)
     ret = MOI.AbstractModelAttribute[]
     if o.is_sense_set
         push!(ret, MOI.ObjectiveSense())
@@ -154,7 +154,7 @@ end
 ###
 
 function MOI.modify(
-    o::ObjectiveFunctionContainer,
+    o::ObjectiveContainer,
     ::MOI.ObjectiveFunction,
     change::MOI.AbstractFunctionModification,
 )
@@ -174,7 +174,7 @@ end
 ### MOI.delete
 ###
 
-function MOI.delete(o::ObjectiveFunctionContainer, x::MOI.VariableIndex)
+function MOI.delete(o::ObjectiveContainer, x::MOI.VariableIndex)
     if o.single_variable !== nothing
         if x == o.single_variable.variable
             sense = o.sense
@@ -192,7 +192,7 @@ function MOI.delete(o::ObjectiveFunctionContainer, x::MOI.VariableIndex)
     return
 end
 
-function MOI.delete(o::ObjectiveFunctionContainer, x::Vector{MOI.VariableIndex})
+function MOI.delete(o::ObjectiveContainer, x::Vector{MOI.VariableIndex})
     keep = v -> !(v in x)
     if o.single_variable !== nothing
         if o.single_variable.variable in x

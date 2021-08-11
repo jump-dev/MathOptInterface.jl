@@ -666,7 +666,7 @@ struct LPModelFunctionConstraints{T} <: MOIU.StructOfConstraints
         MOIU.VectorOfConstraints{MOI.VectorAffineFunction{T}, MOI.Nonpositives}
     }
 end
-const LPModel{T} = MOIU.GenericModel{T,MOIU.ObjectiveFunctionContainer{T},MOIU.SingleVariableConstraints{T},LPModelFunctionConstraints{T}}
+const LPModel{T} = MOIU.GenericModel{T,MOIU.ObjectiveContainer{T},MOIU.VariablesContainer{T},LPModelFunctionConstraints{T}}
 ```
 The type `LPModel` implements the MathOptInterface API except methods specific
 to optimizers like `optimize!` or `get` with `VariablePrimal`.
@@ -720,15 +720,15 @@ macro model(
     generic = if is_optimizer
         :(GenericOptimizer{
             $T,
-            ObjectiveFunctionContainer{$T},
-            SingleVariableConstraints{$T},
+            ObjectiveContainer{$T},
+            VariablesContainer{$T},
             $func_typed,
         })
     else
         :(GenericModel{
             $T,
-            ObjectiveFunctionContainer{$T},
-            SingleVariableConstraints{$T},
+            ObjectiveContainer{$T},
+            VariablesContainer{$T},
             $func_typed,
         })
     end
@@ -874,7 +874,7 @@ Model
 # julia> print(MathOptInterface.Utilities.Model)
 # MathOptInterface.Utilities.Model{T} where T
 # julia> MathOptInterface.Utilities.Model
-# MathOptInterface.Utilities.Model{T} where T (alias for MathOptInterface.Utilities.GenericModel{T, MathOptInterface.Utilities.ObjectiveFunctionContainer{T}, MathOptInterface.Utilities.SingleVariableConstraints{T}, MathOptInterface.Utilities.ModelFunctionConstraints{T}} where T)
+# MathOptInterface.Utilities.Model{T} where T (alias for MathOptInterface.Utilities.GenericModel{T, MathOptInterface.Utilities.ObjectiveContainer{T}, MathOptInterface.Utilities.VariablesContainer{T}, MathOptInterface.Utilities.ModelFunctionConstraints{T}} where T)
 # ```
 # As MOI is not doing `using .Utilities` and is not exporting `Model`, the user
 # still needs to do `MOI.Utilities.Model` unless he does

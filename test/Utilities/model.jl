@@ -101,14 +101,14 @@ function test_TestExternalModel_fields()
     @test !isdefined(TestExternalModel, :ExternalOptimizerFunctionConstraints)
     @test TestExternalModel.ExternalModel{Int} == MOI.Utilities.GenericModel{
         Int,
-        MOI.Utilities.ObjectiveFunctionContainer{Int},
-        MOI.Utilities.SingleVariableConstraints{Int},
+        MOI.Utilities.ObjectiveContainer{Int},
+        MOI.Utilities.VariablesContainer{Int},
         TestExternalModel.ExternalModelFunctionConstraints{Int},
     }
     model = MOI.Utilities.GenericOptimizer{
         Int,
-        MOI.Utilities.ObjectiveFunctionContainer{Int},
-        MOI.Utilities.SingleVariableConstraints{Int},
+        MOI.Utilities.ObjectiveContainer{Int},
+        MOI.Utilities.VariablesContainer{Int},
         TestExternalModel.ExternalOptimizerScalarConstraints{
             Int,
             MOI.Utilities.VectorOfConstraints{

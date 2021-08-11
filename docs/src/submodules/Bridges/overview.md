@@ -38,7 +38,7 @@ any optimizer. Some bridges also implement constraint modifications and
 constraint primal and dual translations.
 
 Several bridges can be used in combination to transform a single constraint
-into a form that the solver may understand. Choosing the bridges to use 
+into a form that the solver may understand. Choosing the bridges to use
 takes the form of finding a shortest path in the hypergraph of bridges. The
 methodology is detailed in [the MOI paper](https://arxiv.org/abs/2002.03447).
 
@@ -52,14 +52,14 @@ There are three types of bridges in MathOptInterface:
 ### Constraint bridges
 
 Constraint bridges convert constraints formulated by the user into an equivalent
-form supported by the solver. Constraint bridges are subtypes of 
+form supported by the solver. Constraint bridges are subtypes of
 [`Bridges.Constraint.AbstractBridge`](@ref).
 
 The equivalent formulation may add constraints (and possibly also variables) in
 the underlying model.
 
 In particular, constraint bridges can focus on rewriting the function of a
-constraint, and do not change the set. Function bridges are subtypes of 
+constraint, and do not change the set. Function bridges are subtypes of
 [`Bridges.Constraint.AbstractFunctionConversionBridge`](@ref).
 
 Read the [list of implemented constraint bridges](@ref constraint_bridges_ref)
@@ -72,7 +72,7 @@ Function bridges are [`Bridges.Constraint.ScalarFunctionizeBridge`](@ref) and
 Variable bridges convert variables added by the user, either free with
 [`add_variable`](@ref)/[`add_variables`](@ref), or constrained with
 [`add_constrained_variable`](@ref)/[`add_constrained_variables`](@ref),
-into an equivalent form supported by the solver. Variable bridges are 
+into an equivalent form supported by the solver. Variable bridges are
 subtypes of [`Bridges.Variable.AbstractBridge`](@ref).
 
 The equivalent formulation may add constraints (and possibly also variables) in
@@ -84,7 +84,7 @@ more details on the types of transformations that are available.
 ### Objective bridges
 
 Objective bridges convert the [`ObjectiveFunction`](@ref) set by the user into
-an equivalent form supported by the solver. Objective bridges are 
+an equivalent form supported by the solver. Objective bridges are
 subtypes of [`Bridges.Objective.AbstractBridge`](@ref).
 
 The equivalent formulation may add constraints (and possibly also variables) in
@@ -104,14 +104,14 @@ in a [`Bridges.full_bridge_optimizer`](@ref).
 
 ```jldoctest
 julia> inner_optimizer = MOI.Utilities.Model{Float64}()
-MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}
+MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}
 
 julia> optimizer = MOI.Bridges.full_bridge_optimizer(inner_optimizer, Float64)
-MOIB.LazyBridgeOptimizer{MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}}
+MOIB.LazyBridgeOptimizer{MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}}
 with 0 variable bridges
 with 0 constraint bridges
 with 0 objective bridges
-with inner model MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}
+with inner model MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}
 ```
 
 That's all you have to do! Use `optimizer` as normal, and bridging will happen
@@ -136,12 +136,12 @@ However, this will force the constraint to be bridged, even if the
 
 ```jldoctest
 julia> inner_optimizer = MOI.Utilities.Model{Float64}()
-MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}
+MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}
 
 julia> optimizer = MOI.Bridges.Constraint.SplitInterval{Float64}(inner_optimizer)
-MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64,F,S,LS,US} where US<:MOI.AbstractSet where LS<:MOI.AbstractSet where S<:MOI.AbstractSet where F<:MOI.AbstractFunction,MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}}
+MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64,F,S,LS,US} where US<:MOI.AbstractSet where LS<:MOI.AbstractSet where S<:MOI.AbstractSet where F<:MOI.AbstractFunction,MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}}
 with 0 constraint bridges
-with inner model MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}
+with inner model MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}
 
 julia> x = MOI.add_variable(optimizer)
 MOI.VariableIndex(1)
@@ -168,14 +168,14 @@ manually construct a [`Bridges.LazyBridgeOptimizer`](@ref).
 First, wrap an inner optimizer:
 ```jldoctest lazy_bridge_optimizer
 julia> inner_optimizer = MOI.Utilities.Model{Float64}()
-MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}
+MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}
 
 julia> optimizer = MOI.Bridges.LazyBridgeOptimizer(inner_optimizer)
-MOIB.LazyBridgeOptimizer{MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}}
+MOIB.LazyBridgeOptimizer{MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}}
 with 0 variable bridges
 with 0 constraint bridges
 with 0 objective bridges
-with inner model MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}
+with inner model MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}
 ```
 
 Then use [`Bridges.add_bridge`](@ref) to add individual bridges:

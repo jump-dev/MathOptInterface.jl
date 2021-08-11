@@ -45,7 +45,7 @@ end
     SUPPORTED_VARIABLE_SCALAR_SETS{T}
 
 The union of scalar sets for `SingleVariable` constraints supported by
-`Utilities.Hyperrectangle` and `Utilities.SingleVariableConstraints`.
+`Utilities.Hyperrectangle` and `Utilities.VariablesContainer`.
 """
 const SUPPORTED_VARIABLE_SCALAR_SETS{T} = Union{
     MOI.EqualTo{T},
@@ -154,62 +154,63 @@ _no_upper_bound(::Type{T}) where {T} = zero(T)
 _no_upper_bound(::Type{T}) where {T<:AbstractFloat} = typemax(T)
 
 ###
-### SingleVariableConstraints
+### VariablesContainer
 ###
 ### For use in MOI.Utilities.Model
 ###
 
 """
-    struct SingleVariableConstraints{T} <: AbstractVectorBounds
+    struct VariablesContainer{T} <: AbstractVectorBounds
         set_mask::Vector{UInt16}
         lower::Vector{T}
         upper::Vector{T}
     end
 
-A struct for storing SingleVariable-related constraints. Used in `MOI.Model`.
+A struct for storing variables and SingleVariable-related constraints. Used in
+`MOI.Utilities.Model` by default.
 """
-mutable struct SingleVariableConstraints{T} <: AbstractVectorBounds
+mutable struct VariablesContainer{T} <: AbstractVectorBounds
     set_mask::Vector{UInt16}
     lower::Vector{T}
     upper::Vector{T}
 end
 
-function SingleVariableConstraints{T}() where {T}
-    return SingleVariableConstraints{T}(UInt16[], T[], T[])
+function VariablesContainer{T}() where {T}
+    return VariablesContainer{T}(UInt16[], T[], T[])
 end
 
-function MOI.throw_if_not_valid(b::SingleVariableConstraints, index)
+function MOI.throw_if_not_valid(b::VariablesContainer, index)
     if !MOI.is_valid(b, index)
         throw(MOI.InvalidIndex(index))
     end
 end
 
-function Base.:(==)(a::SingleVariableConstraints, b::SingleVariableConstraints)
+function Base.:(==)(a::VariablesContainer, b::VariablesContainer)
     return a.set_mask == b.set_mask && a.lower == b.lower && a.upper == b.upper
 end
 
-function MOI.empty!(b::SingleVariableConstraints)
+function MOI.empty!(b::VariablesContainer)
     empty!(b.set_mask)
     empty!(b.lower)
     empty!(b.upper)
     return b
 end
 
-function MOI.is_empty(b::SingleVariableConstraints)
+function MOI.is_empty(b::VariablesContainer)
     if length(b.set_mask) == 0
         return true
     end
     return all(isequal(_DELETED_VARIABLE), b.set_mask)
 end
 
-function Base.resize!(b::SingleVariableConstraints, n)
+function Base.resize!(b::VariablesContainer, n)
     resize!(b.set_mask, n)
     resize!(b.lower, n)
     resize!(b.upper, n)
     return
 end
 
-function MOI.add_variable(b::SingleVariableConstraints{T}) where {T}
+function MOI.add_variable(b::VariablesContainer{T}) where {T}
     push!(b.set_mask, 0x0000)
     push!(b.lower, _no_lower_bound(T))
     push!(b.upper, _no_upper_bound(T))
@@ -217,19 +218,19 @@ function MOI.add_variable(b::SingleVariableConstraints{T}) where {T}
     return x
 end
 
-function MOI.get(b::SingleVariableConstraints, ::MOI.ListOfVariableIndices)
+function MOI.get(b::VariablesContainer, ::MOI.ListOfVariableIndices)
     return MOI.VariableIndex[
         MOI.VariableIndex(i) for
         i in 1:length(b.set_mask) if b.set_mask[i] != _DELETED_VARIABLE
     ]
 end
 
-function MOI.is_valid(b::SingleVariableConstraints, x::MOI.VariableIndex)
+function MOI.is_valid(b::VariablesContainer, x::MOI.VariableIndex)
     mask = get(b.set_mask, x.value, _DELETED_VARIABLE)
     return mask != _DELETED_VARIABLE
 end
 
-function MOI.get(b::SingleVariableConstraints, ::MOI.NumberOfVariables)::Int64
+function MOI.get(b::VariablesContainer, ::MOI.NumberOfVariables)::Int64
     if length(b.set_mask) == 0
         return 0
     end
@@ -237,7 +238,7 @@ function MOI.get(b::SingleVariableConstraints, ::MOI.NumberOfVariables)::Int64
 end
 
 function MOI.add_constraint(
-    b::SingleVariableConstraints{T},
+    b::VariablesContainer{T},
     f::MOI.SingleVariable,
     set::S,
 ) where {T,S}
@@ -256,7 +257,7 @@ function MOI.add_constraint(
 end
 
 function MOI.delete(
-    b::SingleVariableConstraints{T},
+    b::VariablesContainer{T},
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
 ) where {T,S}
     MOI.throw_if_not_valid(b, ci)
@@ -271,14 +272,14 @@ function MOI.delete(
     return
 end
 
-function MOI.delete(b::SingleVariableConstraints, x::MOI.VariableIndex)
+function MOI.delete(b::VariablesContainer, x::MOI.VariableIndex)
     MOI.throw_if_not_valid(b, x)
     b.set_mask[x.value] = _DELETED_VARIABLE
     return
 end
 
 function MOI.is_valid(
-    b::SingleVariableConstraints,
+    b::VariablesContainer,
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
 ) where {S}
     if !(1 <= ci.value <= length(b.set_mask))
@@ -288,7 +289,7 @@ function MOI.is_valid(
 end
 
 function MOI.set(
-    b::SingleVariableConstraints,
+    b::VariablesContainer,
     ::MOI.ConstraintSet,
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
     set::S,
@@ -304,7 +305,7 @@ function MOI.set(
 end
 
 function MOI.get(
-    b::SingleVariableConstraints,
+    b::VariablesContainer,
     ::MOI.NumberOfConstraints{MOI.SingleVariable,S},
 )::Int64 where {S}
     flag = _single_variable_flag(S)
@@ -313,7 +314,7 @@ end
 
 function _add_constraint_type(
     list,
-    b::SingleVariableConstraints,
+    b::VariablesContainer,
     S::Type{<:MOI.AbstractScalarSet},
 )
     flag = _single_variable_flag(S)::UInt16
@@ -324,7 +325,7 @@ function _add_constraint_type(
 end
 
 function MOI.get(
-    b::SingleVariableConstraints{T},
+    b::VariablesContainer{T},
     ::MOI.ListOfConstraintTypesPresent,
 ) where {T}
     list = Tuple{Type,Type}[]
@@ -340,7 +341,7 @@ function MOI.get(
 end
 
 function MOI.get(
-    b::SingleVariableConstraints,
+    b::VariablesContainer,
     ::MOI.ListOfConstraintIndices{MOI.SingleVariable,S},
 ) where {S}
     list = MOI.ConstraintIndex{MOI.SingleVariable,S}[]
