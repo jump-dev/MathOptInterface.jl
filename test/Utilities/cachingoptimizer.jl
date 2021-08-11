@@ -733,6 +733,23 @@ function test_status_codes()
     return
 end
 
+struct CopyToAndOptimizer <: MOI.AbstractOptimizer end
+MOI.is_empty(::CopyToAndOptimizer) = true
+function MOI.copy_to_and_optimize!(::CopyToAndOptimizer, src; kws...)
+    return MOI.Utilities.IndexMap()
+end
+
+function test_copy_to_and_optimize!()
+    optimizer = CopyToAndOptimizer()
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.Model{Float64}(),
+        optimizer,
+    )
+    MOI.optimize!(model)
+    @test MOI.Utilities.state(model) == MOI.Utilities.ATTACHED_OPTIMIZER
+    return
+end
+
 end  # module
 
 TestCachingOptimizer.runtests()
