@@ -1,4 +1,4 @@
-module TestBox
+module TestVariableContainer
 
 using Test
 import MathOptInterface
@@ -320,4 +320,4 @@ end
 
 end  # module
 
-TestBox.runtests()
+TestVariableContainer.runtests()
