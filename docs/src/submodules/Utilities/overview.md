@@ -21,7 +21,7 @@ given the extensibility of MOI, this might not cover all use cases.
 Create a model as follows:
 ```jldoctest
 julia> model = MOI.Utilities.Model{Float64}()
-MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
+MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}
 ```
 
 ## Utilities.UniversalFallback
@@ -36,8 +36,8 @@ like [`VariablePrimalStart`](@ref), so JuMP uses a combination of Universal
 fallback and [`Utilities.Model`](@ref) as a generic problem cache:
 ```jldoctest
 julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
-MOIU.UniversalFallback{MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
-fallback for MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
+MOIU.UniversalFallback{MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}}
+fallback for MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}
 ```
 
 !!! warning
@@ -83,10 +83,10 @@ julia> MOI.Utilities.@model(
            (MOI.VectorAffineFunction,),     # Typed vector functions
            true,                            # <:MOI.AbstractOptimizer?
        )
-MathOptInterface.Utilities.GenericOptimizer{T,MyNewModelFunctionConstraints{T}} where T
+MathOptInterface.Utilities.GenericOptimizer{T,MathOptInterface.Utilities.ObjectiveFunctionContainer{T},MathOptInterface.Utilities.SingleVariableConstraints{T},MyNewModelFunctionConstraints{T}} where T
 
 julia> model = MyNewModel{Float64}()
-MOIU.GenericOptimizer{Float64,MyNewModelFunctionConstraints{Float64}}
+MOIU.GenericOptimizer{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MyNewModelFunctionConstraints{Float64}}
 ```
 
 !!! warning
@@ -112,7 +112,7 @@ julia> MOI.Utilities.@model(
            (MOI.VectorAffineFunction,),  # Typed vector functions
            true,  # is_optimizer
        )
-MathOptInterface.Utilities.GenericOptimizer{T,MathOptInterface.Utilities.VectorOfConstraints{MathOptInterface.VectorAffineFunction{T},MathOptInterface.Complements}} where T
+MathOptInterface.Utilities.GenericOptimizer{T,MathOptInterface.Utilities.ObjectiveFunctionContainer{T},MathOptInterface.Utilities.SingleVariableConstraints{T},MathOptInterface.Utilities.VectorOfConstraints{MathOptInterface.VectorAffineFunction{T},MathOptInterface.Complements}} where T
 ```
 However, `PathOptimizer` does not support some `SingleVariable`-in-Set
 constraints, so we must explicitly define:
@@ -152,11 +152,11 @@ julia> model = MOI.Utilities.CachingOptimizer(
            MOI.Utilities.Model{Float64}(),
            PathOptimizer{Float64}(),
        )
-MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}}
 in state EMPTY_OPTIMIZER
 in mode AUTOMATIC
-with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
-with optimizer MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}
+with model cache MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}
+with optimizer MOIU.GenericOptimizer{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}
 ```
 
 A [`Utilities.CachingOptimizer`](@ref) may be in one of three possible states:
@@ -176,11 +176,11 @@ Use [`Utilities.attach_optimizer`](@ref) to go from `EMPTY_OPTIMIZER` to
 julia> MOI.Utilities.attach_optimizer(model)
 
 julia> model
-MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}}
 in state ATTACHED_OPTIMIZER
 in mode AUTOMATIC
-with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
-with optimizer MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}
+with model cache MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}
+with optimizer MOIU.GenericOptimizer{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}
 ```
 
 !!! info
@@ -192,11 +192,11 @@ Use [`Utilities.reset_optimizer`](@ref) to go from `ATTACHED_OPTIMIZER` to
 julia> MOI.Utilities.reset_optimizer(model)
 
 julia> model
-MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}}
 in state EMPTY_OPTIMIZER
 in mode AUTOMATIC
-with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
-with optimizer MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}
+with model cache MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}
+with optimizer MOIU.GenericOptimizer{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}
 ```
 
 !!! info
@@ -209,10 +209,10 @@ Use [`Utilities.drop_optimizer`](@ref) to go from any state to `NO_OPTIMIZER`:
 julia> MOI.Utilities.drop_optimizer(model)
 
 julia> model
-MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}}
 in state NO_OPTIMIZER
 in mode AUTOMATIC
-with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
+with model cache MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}
 with optimizer nothing
 ```
 
@@ -222,11 +222,11 @@ Pass an empty optimizer to [`Utilities.reset_optimizer`](@ref) to go from
 julia> MOI.Utilities.reset_optimizer(model, PathOptimizer{Float64}())
 
 julia> model
-MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}}
 in state EMPTY_OPTIMIZER
 in mode AUTOMATIC
-with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
-with optimizer MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}
+with model cache MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}
+with optimizer MOIU.GenericOptimizer{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}
 ```
 
 Deciding when to attach and reset the optimizer is tedious, and you will often
@@ -256,20 +256,20 @@ julia> model = MOI.Utilities.CachingOptimizer(
            MOI.Utilities.Model{Float64}(),
            MOI.Utilities.MANUAL,
        )
-MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}}
 in state NO_OPTIMIZER
 in mode MANUAL
-with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
+with model cache MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}
 with optimizer nothing
 
 julia> MOI.Utilities.reset_optimizer(model, PathOptimizer{Float64}())
 
 julia> model
-MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}}
 in state EMPTY_OPTIMIZER
 in mode MANUAL
-with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
-with optimizer MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}
+with model cache MOIU.GenericModel{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.ModelFunctionConstraints{Float64}}
+with optimizer MOIU.GenericOptimizer{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}
 ```
 
 ## Printing

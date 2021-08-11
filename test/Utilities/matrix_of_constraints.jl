@@ -29,6 +29,8 @@ MOI.Utilities.@product_of_sets(
 function _new_ScalarSets()
     return MOI.Utilities.GenericOptimizer{
         Float64,
+        MOI.Utilities.ObjectiveFunctionContainer{Float64},
+        MOI.Utilities.SingleVariableConstraints{Float64},
         MOI.Utilities.MatrixOfConstraints{
             Float64,
             MOI.Utilities.MutableSparseMatrixCSC{
@@ -52,6 +54,8 @@ MOI.Utilities.@product_of_sets(
 function _new_VectorSets()
     return MOI.Utilities.GenericOptimizer{
         Int,
+        MOI.Utilities.ObjectiveFunctionContainer{Int},
+        MOI.Utilities.SingleVariableConstraints{Int},
         MOI.Utilities.MatrixOfConstraints{
             Int,
             MOI.Utilities.MutableSparseMatrixCSC{
@@ -277,6 +281,8 @@ end
 function test_ScalarSets()
     optimizer = MOI.Utilities.GenericOptimizer{
         Float64,
+        MOI.Utilities.ObjectiveFunctionContainer{Float64},
+        MOI.Utilities.SingleVariableConstraints{Float64},
         MOI.Utilities.MatrixOfConstraints{
             Float64,
             MOI.Utilities.MutableSparseMatrixCSC{
@@ -305,6 +311,8 @@ end
 function test_modify()
     model = MOI.Utilities.GenericOptimizer{
         Int,
+        MOI.Utilities.ObjectiveFunctionContainer{Int},
+        MOI.Utilities.SingleVariableConstraints{Int},
         MOI.Utilities.MatrixOfConstraints{
             Int,
             MOI.Utilities.MutableSparseMatrixCSC{
@@ -343,6 +351,8 @@ function test_multicone()
     Indexing = MOI.Utilities.OneBasedIndexing
     model = MOI.Utilities.GenericOptimizer{
         T,
+        MOI.Utilities.ObjectiveFunctionContainer{T},
+        MOI.Utilities.SingleVariableConstraints{T},
         ZerosOrNot{T}{
             MOI.Utilities.MatrixOfConstraints{
                 T,

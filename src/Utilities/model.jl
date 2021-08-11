@@ -666,7 +666,7 @@ struct LPModelFunctionConstraints{T} <: MOIU.StructOfConstraints
         MOIU.VectorOfConstraints{MOI.VectorAffineFunction{T}, MOI.Nonpositives}
     }
 end
-const LPModel{T} = MOIU.GenericModel{T, LPModelFunctionConstraints{T}}
+const LPModel{T} = MOIU.GenericModel{T,MOIU.ObjectiveFunctionContainer{T},MOIU.SingleVariableConstraints{T},LPModelFunctionConstraints{T}}
 ```
 The type `LPModel` implements the MathOptInterface API except methods specific
 to optimizers like `optimize!` or `get` with `VariablePrimal`.
@@ -718,9 +718,19 @@ macro model(
     func_typed = _struct_of_constraints_type(func_name, set_struct_types, false)
     T = esc(:T)
     generic = if is_optimizer
-        :(GenericOptimizer{$T,$func_typed})
+        :(GenericOptimizer{
+            $T,
+            ObjectiveFunctionContainer{$T},
+            SingleVariableConstraints{$T},
+            $func_typed,
+        })
     else
-        :(GenericModel{$T,$func_typed})
+        :(GenericModel{
+            $T,
+            ObjectiveFunctionContainer{$T},
+            SingleVariableConstraints{$T},
+            $func_typed,
+        })
     end
     model_code = :(const $esc_model_name{$T} = $generic)
     expr = Expr(:block)
@@ -748,29 +758,23 @@ for (loop_name, loop_super_type) in [
     global super_type = loop_super_type
     @eval begin
         """
-            mutable struct $name{T,C} <: $super_type{T}
+            mutable struct $name{T,O,V,C} <: $super_type{T}
 
-        Implements a models supporting
-        * an objective function of type
-          `MOI.SingleVariable`, `MOI.ScalarAffineFunction{T}` and
-          `MOI.ScalarQuadraticFunction{T}`,
-        * [`MathOptInterface.SingleVariable`](@ref)-in-`S`
-          constraints where `S` is [`MathOptInterface.EqualTo`](@ref),
-          [`MathOptInterface.GreaterThan`](@ref), [`MathOptInterface.LessThan`](@ref),
-          [`MathOptInterface.Interval`](@ref), [`MathOptInterface.Integer`](@ref),
-          [`MathOptInterface.ZeroOne`](@ref), [`MathOptInterface.Semicontinuous`](@ref)
-          or [`MathOptInterface.Semiinteger`](@ref).
-        * `F`-in-`S` constraints that are supported by `C`.
+        Implements a model supporting coefficients of type `T` and:
 
-        The lower (resp. upper) bound of a variable of index `VariableIndex(i)`
-        is at the `i`th index of the vector stored in the field `variable_bounds.lower`
-        (resp. `variable_bounds.upper`). When no lower (resp. upper) bound is set, it is
-        `typemin(T)` (resp. `typemax(T)`) if `T <: AbstractFloat`.
+         * An objective function stored in `.objective::O`
+         * Variables and `SingleVariable` constraints stored in `.variable_bounds::V`
+         * `F`-in-`S` constraints (excluding `SingleVariable` constraints)
+           stored in `.constraints::C`
+
+        All interactions should take place via the MOI interface, so the types
+        `O`, `V`, and `C` should implement the API as needed for their
+        functionality.
         """
-        mutable struct $name{T,C} <: $super_type{T}
+        mutable struct $name{T,O,V,C} <: $super_type{T}
             name::String
-            objective::ObjectiveFunctionContainer{T}
-            variables::SingleVariableConstraints{T}
+            objective::O
+            variables::V
             constraints::C
             var_to_name::Dict{MOI.VariableIndex,String}
             # If `nothing`, the dictionary hasn't been constructed yet.
@@ -780,11 +784,11 @@ for (loop_name, loop_super_type) in [
             # A useful dictionary for extensions to store things. These are
             # _not_ copied between models!
             ext::Dict{Symbol,Any}
-            function $name{T,C}() where {T,C}
-                return new{T,C}(
+            function $name{T,O,V,C}() where {T,O,V,C}
+                return new{T,O,V,C}(
                     EMPTYSTRING,
-                    ObjectiveFunctionContainer{T}(),
-                    SingleVariableConstraints{T}(),
+                    O(),
+                    V(),
                     C(),
                     Dict{MOI.VariableIndex,String}(),
                     nothing,
@@ -862,3 +866,17 @@ x = add_variable(model)
 ```
 """
 Model
+
+# This export makes the type be printed as:
+# ```julia
+# julia> Base.show(IOContext(stdout, :compact => true), MathOptInterface.Utilities.Model)
+# Model{T} where T
+# julia> print(MathOptInterface.Utilities.Model)
+# MathOptInterface.Utilities.Model{T} where T
+# julia> MathOptInterface.Utilities.Model
+# MathOptInterface.Utilities.Model{T} where T (alias for MathOptInterface.Utilities.GenericModel{T, MathOptInterface.Utilities.ObjectiveFunctionContainer{T}, MathOptInterface.Utilities.SingleVariableConstraints{T}, MathOptInterface.Utilities.ModelFunctionConstraints{T}} where T)
+# ```
+# As MOI is not doing `using .Utilities` and is not exporting `Model`, the user
+# still needs to do `MOI.Utilities.Model` unless he does
+# `using MathOptInterface.Utilities`.
+export Model
