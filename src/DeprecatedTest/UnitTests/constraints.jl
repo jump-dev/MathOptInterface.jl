@@ -539,7 +539,6 @@ function solve_start_soc(model::MOI.ModelLike, config::Config{T}) where {T}
         MOI.set(model, MOI.ConstraintDualStart(), c, T[2, -2])
     end
     if config.solve
-        MOI.optimize!(model)
         test_model_solution(
             model,
             config;

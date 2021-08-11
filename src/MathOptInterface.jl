@@ -159,6 +159,21 @@ is_valid(dest, index_map[x]) # true
 """
 function copy_to end
 
+"""
+    copy_to_and_optimize!(dest::ModelLike, src::ModelLike; copy_names=true, warn_attributes=true)
+
+Same as [`copy_to`](@ref) followed [`optimize!`](@ref). An optimizer
+can decide to implement this function and not implement [`copy_to`](@ref) and
+[`optimize!`](@ref).
+
+**WARNING** This is an experimental new feature of MOI v0.10 that may break in MOI v1.0.
+"""
+function copy_to_and_optimize!(dest, src; kws...)
+    index_map = copy_to(dest, src; kws...)
+    optimize!(dest)
+    return index_map
+end
+
 include("error.jl")
 include("indextypes.jl")
 include("functions.jl")

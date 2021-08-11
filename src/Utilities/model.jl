@@ -7,7 +7,7 @@ const AbstractModel{T} = Union{AbstractModelLike{T},AbstractOptimizer{T}}
 
 # Variables
 function MOI.get(model::AbstractModel, attr::MOI.NumberOfVariables)::Int64
-    return MOI.get(model.variable_bounds, attr)
+    return MOI.get(model.variables, attr)
 end
 
 """
@@ -23,7 +23,7 @@ function _add_variable(::Nothing) end
 function _add_variables(::Nothing, ::Int64) end
 
 function MOI.add_variable(model::AbstractModel)
-    x = MOI.add_variable(model.variable_bounds)
+    x = MOI.add_variable(model.variables)
     _add_variable(model.constraints)
     return x
 end
@@ -73,42 +73,11 @@ function _delete_variable(
     model::AbstractModel{T},
     vi::MOI.VariableIndex,
 ) where {T}
-    MOI.delete(model.variable_bounds, vi)
-    model.name_to_var = nothing
+    MOI.delete(model.variables, vi)
     delete!(model.var_to_name, vi)
+    model.name_to_var = nothing
     model.name_to_con = nothing
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{T}}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{T}}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{T}}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Interval{T}}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(vi.value),
-    )
-    delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Semicontinuous{T}}(vi.value),
-    )
-    return delete!(
-        model.con_to_name,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Semiinteger{T}}(vi.value),
-    )
+    return
 end
 
 function MOI.delete(model::AbstractModel, vi::MOI.VariableIndex)
@@ -142,7 +111,7 @@ function MOI.is_valid(
     model::AbstractModel,
     ci::CI{MOI.SingleVariable,S},
 ) where {S}
-    return MOI.is_valid(model.variable_bounds, ci)
+    return MOI.is_valid(model.variables, ci)
 end
 
 function MOI.is_valid(model::AbstractModel, ci::MOI.ConstraintIndex)
@@ -150,11 +119,11 @@ function MOI.is_valid(model::AbstractModel, ci::MOI.ConstraintIndex)
 end
 
 function MOI.is_valid(model::AbstractModel, x::MOI.VariableIndex)
-    return MOI.is_valid(model.variable_bounds, x)
+    return MOI.is_valid(model.variables, x)
 end
 
 function MOI.get(model::AbstractModel, attr::MOI.ListOfVariableIndices)
-    return MOI.get(model.variable_bounds, attr)
+    return MOI.get(model.variables, attr)
 end
 
 # Names
@@ -387,7 +356,7 @@ function MOI.add_constraint(
     f::MOI.SingleVariable,
     s::SUPPORTED_VARIABLE_SCALAR_SETS{T},
 ) where {T}
-    return MOI.add_constraint(model.variable_bounds, f, s)
+    return MOI.add_constraint(model.variables, f, s)
 end
 
 function MOI.add_constraint(
@@ -411,7 +380,7 @@ function _delete_constraint(
     ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
 ) where {S}
     MOI.throw_if_not_valid(model, ci)
-    MOI.delete(model.variable_bounds, ci)
+    MOI.delete(model.variables, ci)
     return
 end
 
@@ -451,7 +420,7 @@ function MOI.set(
     set::S,
 ) where {T,S<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}
     MOI.throw_if_not_valid(model, ci)
-    MOI.set(model.variable_bounds, attr, ci, set)
+    MOI.set(model.variables, attr, ci, set)
     return
 end
 
@@ -479,7 +448,7 @@ function MOI.get(
     model::AbstractModel,
     attr::MOI.NumberOfConstraints{MOI.SingleVariable,S},
 ) where {S}
-    return MOI.get(model.variable_bounds, attr)
+    return MOI.get(model.variables, attr)
 end
 
 function MOI.get(
@@ -495,7 +464,7 @@ function MOI.get(
 ) where {T}
     return vcat(
         MOI.get(model.constraints, attr)::Vector{Tuple{Type,Type}},
-        MOI.get(model.variable_bounds, attr)::Vector{Tuple{Type,Type}},
+        MOI.get(model.variables, attr)::Vector{Tuple{Type,Type}},
     )
 end
 
@@ -503,7 +472,7 @@ function MOI.get(
     model::AbstractModel,
     attr::MOI.ListOfConstraintIndices{MOI.SingleVariable,S},
 ) where {S}
-    return MOI.get(model.variable_bounds, attr)
+    return MOI.get(model.variables, attr)
 end
 
 function MOI.get(
@@ -535,20 +504,20 @@ function MOI.get(
     ci::CI{MOI.SingleVariable,S},
 ) where {S}
     MOI.throw_if_not_valid(model, ci)
-    return set_from_constants(model.variable_bounds, S, ci.value)
+    return set_from_constants(model.variables, S, ci.value)
 end
 
 function MOI.is_empty(model::AbstractModel)
     return isempty(model.name) &&
            MOI.is_empty(model.objective) &&
            MOI.is_empty(model.constraints) &&
-           MOI.is_empty(model.variable_bounds)
+           MOI.is_empty(model.variables)
 end
 
 function MOI.empty!(model::AbstractModel{T}) where {T}
     model.name = ""
     MOI.empty!(model.objective)
-    MOI.empty!(model.variable_bounds)
+    MOI.empty!(model.variables)
     empty!(model.var_to_name)
     model.name_to_var = nothing
     empty!(model.con_to_name)
@@ -805,7 +774,7 @@ for (loop_name, loop_super_type) in [
         mutable struct $name{T,O,V,C} <: $super_type{T}
             name::String
             objective::O
-            variable_bounds::V
+            variables::V
             constraints::C
             var_to_name::Dict{MOI.VariableIndex,String}
             # If `nothing`, the dictionary hasn't been constructed yet.
