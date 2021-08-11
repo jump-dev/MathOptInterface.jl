@@ -733,8 +733,7 @@ function test_status_codes()
     return
 end
 
-struct CopyToAndOptimizer <: MOI.AbstractOptimizer
-end
+struct CopyToAndOptimizer <: MOI.AbstractOptimizer end
 MOI.is_empty(::CopyToAndOptimizer) = true
 function MOI.copy_to_and_optimize!(::CopyToAndOptimizer, src; kws...)
     return MOI.Utilities.IndexMap()

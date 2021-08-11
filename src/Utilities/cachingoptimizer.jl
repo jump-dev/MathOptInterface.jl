@@ -189,7 +189,10 @@ function attach_optimizer(model::CachingOptimizer)
     return _attach_optimizer(model, MOI.copy_to)
 end
 
-function _attach_optimizer(model::CachingOptimizer, copy_to::F) where {F<:Function}
+function _attach_optimizer(
+    model::CachingOptimizer,
+    copy_to::F,
+) where {F<:Function}
     @assert model.state == EMPTY_OPTIMIZER
     # We do not need to copy names because name-related operations are handled
     # by `m.model_cache`
