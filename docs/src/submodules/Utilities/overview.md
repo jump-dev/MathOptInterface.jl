@@ -83,7 +83,7 @@ julia> MOI.Utilities.@model(
            (MOI.VectorAffineFunction,),     # Typed vector functions
            true,                            # <:MOI.AbstractOptimizer?
        )
-MathOptInterface.Utilities.GenericOptimizer{T,MOIU.ObjectiveFunctionContainer{T},MOIU.SingleVariableConstraints{T},MyNewModelFunctionConstraints{T}} where T
+MathOptInterface.Utilities.GenericOptimizer{T,MathOptInterface.Utilities.ObjectiveFunctionContainer{T},MathOptInterface.Utilities.SingleVariableConstraints{T},MyNewModelFunctionConstraints{T}} where T
 
 julia> model = MyNewModel{Float64}()
 MOIU.GenericOptimizer{Float64,MOIU.ObjectiveFunctionContainer{Float64},MOIU.SingleVariableConstraints{Float64},MyNewModelFunctionConstraints{Float64}}
@@ -112,7 +112,7 @@ julia> MOI.Utilities.@model(
            (MOI.VectorAffineFunction,),  # Typed vector functions
            true,  # is_optimizer
        )
-MathOptInterface.Utilities.GenericOptimizer{T,MOIU.ObjectiveFunctionContainer{T},MOIU.SingleVariableConstraints{T},MathOptInterface.Utilities.VectorOfConstraints{MathOptInterface.VectorAffineFunction{T},MathOptInterface.Complements}} where T
+MathOptInterface.Utilities.GenericOptimizer{T,MathOptInterface.Utilities.ObjectiveFunctionContainer{T},MathOptInterface.Utilities.SingleVariableConstraints{T},MathOptInterface.Utilities.VectorOfConstraints{MathOptInterface.VectorAffineFunction{T},MathOptInterface.Complements}} where T
 ```
 However, `PathOptimizer` does not support some `SingleVariable`-in-Set
 constraints, so we must explicitly define:
