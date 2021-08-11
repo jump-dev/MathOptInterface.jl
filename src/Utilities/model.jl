@@ -897,3 +897,17 @@ x = add_variable(model)
 ```
 """
 Model
+
+# This export makes the type be printed as:
+# ```julia
+# julia> Base.show(IOContext(stdout, :compact => true), MathOptInterface.Utilities.Model)
+# Model{T} where T
+# julia> print(MathOptInterface.Utilities.Model)
+# MathOptInterface.Utilities.Model{T} where T
+# julia> MathOptInterface.Utilities.Model
+# MathOptInterface.Utilities.Model{T} where T (alias for MathOptInterface.Utilities.GenericModel{T, MathOptInterface.Utilities.ObjectiveFunctionContainer{T}, MathOptInterface.Utilities.SingleVariableConstraints{T}, MathOptInterface.Utilities.ModelFunctionConstraints{T}} where T)
+# ```
+# As MOI is not doing `using .Utilities` and is not exporting `Model`, the user
+# still needs to do `MOI.Utilities.Model` unless he does
+# `using MathOptInterface.Utilities`.
+export Model
