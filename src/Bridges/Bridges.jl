@@ -46,7 +46,7 @@ See also [`ListOfNonstandardBridges`](@ref).
 function full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where {T}
     bridged_model = LazyBridgeOptimizer(model)
     for BT in MOI.get(model, ListOfNonstandardBridges{T}())
-        MOIB.add_bridge(bridged_model, BT)
+        add_bridge(bridged_model, BT)
     end
     Variable.add_all_bridges(bridged_model, T)
     Constraint.add_all_bridges(bridged_model, T)
