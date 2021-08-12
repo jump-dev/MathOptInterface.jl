@@ -124,7 +124,7 @@ function pass_attributes(
     copy_names::Bool,
     index_map::IndexMap,
     cis_src::Vector{MOI.ConstraintIndex{F,S}},
-    filter_constraints::Union{Nothing,Function},
+    filter_constraints::Union{Nothing,Function} = nothing,
 ) where {F,S}
     if filter_constraints !== nothing
         filter!(filter_constraints, cis_src)
@@ -279,7 +279,7 @@ function _copy_constraints(
     for ci in cis_src
         f = MOI.get(src, MOI.ConstraintFunction(), ci)
         s = MOI.get(src, MOI.ConstraintSet(), ci)
-        index_map[ci] = MOI.add_constraints(dest, f, s)
+        index_map[ci] = MOI.add_constraints(dest, map_indices(index_map, f), s)
     end
     return
 end
