@@ -1,4 +1,4 @@
-module TestBox
+module TestVariableContainer
 
 using Test
 import MathOptInterface
@@ -16,22 +16,14 @@ function runtests()
 end
 
 function test_empty()
-    a = MOI.Utilities.SingleVariableConstraints(
-        [0x0000, 0x0000],
-        [1, 2],
-        [3, 4],
-    )
+    a = MOI.Utilities.VariablesContainer([0x0000, 0x0000], [1, 2], [3, 4])
     MOI.empty!(a)
     @test MOI.is_empty(a)
     return
 end
 
 function test_resize()
-    a = MOI.Utilities.SingleVariableConstraints(
-        [0x0000, 0x0000],
-        [1, 2],
-        [3, 4],
-    )
+    a = MOI.Utilities.VariablesContainer([0x0000, 0x0000], [1, 2], [3, 4])
     @test length(a.set_mask) == 2
     @test length(a.lower) == 2
     @test length(a.upper) == 2
@@ -43,16 +35,13 @@ function test_resize()
 end
 
 function test_add_variable()
-    a = MOI.Utilities.SingleVariableConstraints{Int}()
+    a = MOI.Utilities.VariablesContainer{Int}()
     MOI.add_variable(a)
-    @test a == MOI.Utilities.SingleVariableConstraints{Int}([0x0000], [0], [0])
-    a = MOI.Utilities.SingleVariableConstraints{Float64}()
+    @test a == MOI.Utilities.VariablesContainer{Int}([0x0000], [0], [0])
+    a = MOI.Utilities.VariablesContainer{Float64}()
     MOI.add_variable(a)
-    @test a == MOI.Utilities.SingleVariableConstraints{Float64}(
-        [0x0000],
-        [-Inf],
-        [Inf],
-    )
+    @test a ==
+          MOI.Utilities.VariablesContainer{Float64}([0x0000], [-Inf], [Inf])
     return
 end
 
@@ -65,20 +54,19 @@ function test__flag_to_set_type()
 end
 
 function test_add_constraint()
-    a = MOI.Utilities.SingleVariableConstraints{Int}()
+    a = MOI.Utilities.VariablesContainer{Int}()
     x = MOI.add_variable(a)
-    @test a ==
-          MOI.Utilities.SingleVariableConstraints{Int}([0x0000], Int[0], Int[0])
+    @test a == MOI.Utilities.VariablesContainer{Int}([0x0000], Int[0], Int[0])
     f = MOI.SingleVariable(x)
     MOI.add_constraint(a, f, MOI.GreaterThan(3))
-    @test a == MOI.Utilities.SingleVariableConstraints{Int}([0x0002], [3], [0])
+    @test a == MOI.Utilities.VariablesContainer{Int}([0x0002], [3], [0])
     MOI.add_constraint(a, f, MOI.LessThan(4))
-    @test a == MOI.Utilities.SingleVariableConstraints{Int}([0x0006], [3], [4])
+    @test a == MOI.Utilities.VariablesContainer{Int}([0x0006], [3], [4])
     return
 end
 
 function test_add_constraint_LowerBoundAlreadySet()
-    a = MOI.Utilities.SingleVariableConstraints{Int}()
+    a = MOI.Utilities.VariablesContainer{Int}()
     x = MOI.add_variable(a)
     f = MOI.SingleVariable(x)
     MOI.add_constraint(a, f, MOI.GreaterThan(3))
@@ -90,7 +78,7 @@ function test_add_constraint_LowerBoundAlreadySet()
 end
 
 function test_add_constraint_UpperBoundAlreadySet()
-    a = MOI.Utilities.SingleVariableConstraints{Int}()
+    a = MOI.Utilities.VariablesContainer{Int}()
     x = MOI.add_variable(a)
     f = MOI.SingleVariable(x)
     MOI.add_constraint(a, f, MOI.LessThan(3))
@@ -102,7 +90,7 @@ function test_add_constraint_UpperBoundAlreadySet()
 end
 
 function test_delete_constraint_LessThan()
-    a = MOI.Utilities.SingleVariableConstraints{Int}()
+    a = MOI.Utilities.VariablesContainer{Int}()
     x = MOI.add_variable(a)
     f = MOI.SingleVariable(x)
     c = MOI.add_constraint(a, f, MOI.LessThan(3))
@@ -113,20 +101,18 @@ function test_delete_constraint_LessThan()
 end
 
 function test_delete_variable()
-    a = MOI.Utilities.SingleVariableConstraints{Int}()
+    a = MOI.Utilities.VariablesContainer{Int}()
     x = MOI.add_variable(a)
-    @test a ==
-          MOI.Utilities.SingleVariableConstraints{Int}([0x0000], Int[0], Int[0])
+    @test a == MOI.Utilities.VariablesContainer{Int}([0x0000], Int[0], Int[0])
     f = MOI.SingleVariable(x)
     c = MOI.add_constraint(a, f, MOI.LessThan(3))
     MOI.delete(a, x)
-    @test a ==
-          MOI.Utilities.SingleVariableConstraints{Int}([0x8000], Int[0], Int[3])
+    @test a == MOI.Utilities.VariablesContainer{Int}([0x8000], Int[0], Int[3])
     return
 end
 
 function test_delete_constraint_GreaterThan()
-    a = MOI.Utilities.SingleVariableConstraints{Int}()
+    a = MOI.Utilities.VariablesContainer{Int}()
     x = MOI.add_variable(a)
     f = MOI.SingleVariable(x)
     c = MOI.add_constraint(a, f, MOI.GreaterThan(3))
@@ -137,22 +123,19 @@ function test_delete_constraint_GreaterThan()
 end
 
 function test_set_ConstraintSet()
-    a = MOI.Utilities.SingleVariableConstraints{Int}()
+    a = MOI.Utilities.VariablesContainer{Int}()
     x = MOI.add_variable(a)
-    @test a ==
-          MOI.Utilities.SingleVariableConstraints{Int}([0x0000], Int[0], Int[0])
+    @test a == MOI.Utilities.VariablesContainer{Int}([0x0000], Int[0], Int[0])
     f = MOI.SingleVariable(x)
     c = MOI.add_constraint(a, f, MOI.GreaterThan(3))
-    @test a ==
-          MOI.Utilities.SingleVariableConstraints{Int}([0x0002], Int[3], Int[0])
+    @test a == MOI.Utilities.VariablesContainer{Int}([0x0002], Int[3], Int[0])
     MOI.set(a, MOI.ConstraintSet(), c, MOI.GreaterThan(2))
-    @test a ==
-          MOI.Utilities.SingleVariableConstraints{Int}([0x0002], Int[2], Int[0])
+    @test a == MOI.Utilities.VariablesContainer{Int}([0x0002], Int[2], Int[0])
     return
 end
 
 function test_NumberOfConstraints()
-    b = MOI.Utilities.SingleVariableConstraints(
+    b = MOI.Utilities.VariablesContainer(
         [0x0008, 0x0002, 0x0004, 0x0006],
         [1.0, 3.0, -Inf, -1.0],
         [2.0, Inf, 4.0, 1.0],
@@ -166,7 +149,7 @@ function test_NumberOfConstraints()
 end
 
 function test_ListOfConstraintTypesPresent()
-    b = MOI.Utilities.SingleVariableConstraints(
+    b = MOI.Utilities.VariablesContainer(
         [0x0008, 0x0002, 0x0004, 0x0006],
         [1.0, 3.0, -Inf, -1.0],
         [2.0, Inf, 4.0, 1.0],
@@ -180,7 +163,7 @@ function test_ListOfConstraintTypesPresent()
 end
 
 function test_ListOfConstraintIndices()
-    b = MOI.Utilities.SingleVariableConstraints{Float64}(
+    b = MOI.Utilities.VariablesContainer{Float64}(
         [0x0008, 0x0002, 0x0004, 0x0006],
         [1.0, 3.0, -Inf, -1.0],
         [2.0, Inf, 4.0, 1.0],
@@ -260,7 +243,7 @@ function test_set_from_constants()
 end
 
 function _test_bound_vectors(::Type{T}, nolb, noub) where {T}
-    variable_bounds = MOI.Utilities.SingleVariableConstraints{T}()
+    variable_bounds = MOI.Utilities.VariablesContainer{T}()
     @test variable_bounds.lower == T[]
     @test variable_bounds.upper == T[]
     x = MOI.add_variable(variable_bounds)
@@ -326,7 +309,7 @@ function test_ListOfConstraintTypesPresent_2()
         MOI.Integer(),
         MOI.ZeroOne(),
     )
-        model = MOI.Utilities.SingleVariableConstraints{Float64}()
+        model = MOI.Utilities.VariablesContainer{Float64}()
         x = MOI.add_variable(model)
         MOI.add_constraint(model, MOI.SingleVariable(x), set)
         @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) ==
@@ -337,4 +320,4 @@ end
 
 end  # module
 
-TestBox.runtests()
+TestVariableContainer.runtests()
