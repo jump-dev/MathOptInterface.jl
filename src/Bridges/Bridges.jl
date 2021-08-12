@@ -6,6 +6,7 @@ const MOIU = MOI.Utilities
 
 const CI = MOI.ConstraintIndex
 
+include("lazy_iterators.jl")
 include("bridge.jl")
 include("set_map.jl")
 include("bridge_optimizer.jl")

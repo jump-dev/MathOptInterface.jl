@@ -80,24 +80,21 @@ function Base.show(io::IO, graph::Graph)
 end
 
 function variable_nodes(graph::Graph)
-    return MOIU.LazyMap{VariableNode}(
-        i -> VariableNode(i),
-        eachindex(graph.variable_best),
-    )
+    return LazyMap{VariableNode}(eachindex(graph.variable_best)) do i
+        return i -> VariableNode(i)
+    end
 end
 
 function constraint_nodes(graph::Graph)
-    return MOIU.LazyMap{ConstraintNode}(
-        i -> ConstraintNode(i),
-        eachindex(graph.constraint_best),
-    )
+    return LazyMap{ConstraintNode}(eachindex(graph.constraint_best)) do i
+        return ConstraintNode(i)
+    end
 end
 
 function objective_nodes(graph::Graph)
-    return MOIU.LazyMap{ObjectiveNode}(
-        i -> ObjectiveNode(i),
-        eachindex(graph.objective_best),
-    )
+    return LazyMap{ObjectiveNode}(eachindex(graph.objective_best)) do i
+        return ObjectiveNode(i)
+    end
 end
 
 # After `add_bridge(b, BT)`, some constrained variables `(S,)` in

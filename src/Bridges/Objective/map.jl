@@ -97,7 +97,7 @@ Base.length(::EmptyMap) = 0
 
 Base.haskey(::EmptyMap, ::MOI.ObjectiveFunction) = false
 
-Base.values(::EmptyMap) = MOIU.EmptyVector{AbstractBridge}()
+Base.values(::EmptyMap) = MOIB.EmptyVector{AbstractBridge}()
 
 Base.iterate(::EmptyMap) = nothing
 
