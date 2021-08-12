@@ -126,9 +126,7 @@ function edge(
 )
     return Edge(
         bridge_index,
-        Node[
-            node(b, C[1]) for C in added_constrained_variable_types(BT)
-        ],
+        Node[node(b, C[1]) for C in added_constrained_variable_types(BT)],
         Node[node(b, C[1], C[2]) for C in added_constraint_types(BT)],
         node(b, set_objective_function_type(BT)),
     )
@@ -262,11 +260,7 @@ function node(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractScalarFunction})
             add_edge(
                 b.graph,
                 objective_node,
-                edge(
-                    b,
-                    i,
-                    Objective.concrete_bridge_type(BT, F),
-                )
+                edge(b, i, Objective.concrete_bridge_type(BT, F)),
             )
         end
     end

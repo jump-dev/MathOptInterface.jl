@@ -107,11 +107,7 @@ function print_nodes(
     return
 end
 
-function print_if_unsupported(
-    io::IO,
-    b::LazyBridgeOptimizer,
-    node::Node,
-)
+function print_if_unsupported(io::IO, b::LazyBridgeOptimizer, node::Node)
     if _dist(b.graph, node) != INFINITY
         return
     end
@@ -158,11 +154,7 @@ function print_unsupported(
     return
 end
 
-function _bridge_type(
-    b::LazyBridgeOptimizer,
-    node::Node,
-    bridge_index::Int,
-)
+function _bridge_type(b::LazyBridgeOptimizer, node::Node, bridge_index::Int)
     if node.type == _VariableNode
         return Variable.concrete_bridge_type(
             b.variable_bridge_types[bridge_index],
@@ -213,7 +205,11 @@ function _print_unsupported_variable(io::IO, b::LazyBridgeOptimizer, node::Node)
     return
 end
 
-function _print_unsupported_constraint(io::IO, b::LazyBridgeOptimizer, node::Node)
+function _print_unsupported_constraint(
+    io::IO,
+    b::LazyBridgeOptimizer,
+    node::Node,
+)
     print_unsupported(
         io,
         b,
@@ -223,7 +219,11 @@ function _print_unsupported_constraint(io::IO, b::LazyBridgeOptimizer, node::Nod
     return
 end
 
-function _print_unsupported_objective(io::IO, b::LazyBridgeOptimizer, node::Node)
+function _print_unsupported_objective(
+    io::IO,
+    b::LazyBridgeOptimizer,
+    node::Node,
+)
     print_unsupported(
         io,
         b,
@@ -268,11 +268,29 @@ function add_unsupported_variable(
     objectives,
 )
     if node.type == _VariableNode
-        _add_unsupported_variable(graph, node, variables, constraints, objectives)
+        _add_unsupported_variable(
+            graph,
+            node,
+            variables,
+            constraints,
+            objectives,
+        )
     elseif node.type == _ConstraintNode
-        _add_unsupported_constraint(graph, node, variables, constraints, objectives)
+        _add_unsupported_constraint(
+            graph,
+            node,
+            variables,
+            constraints,
+            objectives,
+        )
     else
-        _add_unsupported_objective(graph, node, variables, constraints, objectives)
+        _add_unsupported_objective(
+            graph,
+            node,
+            variables,
+            constraints,
+            objectives,
+        )
     end
     return
 end
