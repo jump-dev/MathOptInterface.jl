@@ -130,7 +130,7 @@ function pass_attributes(
         filter!(filter_constraints, cis_src)
     end
     for attr in MOI.get(src, MOI.ListOfConstraintAttributesSet{F,S}())
-        _pass_attributes(dest, src, copy_names, index_map, cis_src, attr)
+        _pass_attribute(dest, src, copy_names, index_map, cis_src, attr)
     end
     return
 end
