@@ -275,7 +275,7 @@ function _copy_constraints(
     for ci in cis_src
         f = MOI.get(src, MOI.ConstraintFunction(), ci)
         s = MOI.get(src, MOI.ConstraintSet(), ci)
-        index_map[ci] = MOI.add_constraints(dest, map_indices(index_map, f), s)
+        index_map[ci] = MOI.add_constraint(dest, map_indices(index_map, f), s)
     end
     return
 end
