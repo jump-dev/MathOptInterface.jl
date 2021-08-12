@@ -1,38 +1,27 @@
 const INFINITY = -1
 const INVALID_NODE_INDEX = -1
 
-abstract type AbstractNode end
+@enum(_NodeType, _VariableNode, _ConstraintNode, _ObjectiveNode)
 
-struct VariableNode <: AbstractNode
+struct Node
     index::Int
+    type::_NodeType
 end
 
-struct ConstraintNode <: AbstractNode
-    index::Int
-end
-
-struct ObjectiveNode <: AbstractNode
-    index::Int
-end
-
-abstract type AbstractEdge end
-
-struct Edge <: AbstractEdge
+struct Edge
     bridge_index::Int
-    added_variables::Vector{VariableNode}
-    added_constraints::Vector{ConstraintNode}
+    added_variables::Vector{Node}
+    added_constraints::Vector{Node}
+    added_objective::Union{Nothing,Node}
 end
 
-struct ObjectiveEdge <: AbstractEdge
-    bridge_index::Int
-    added_variables::Vector{VariableNode}
-    added_constraints::Vector{ConstraintNode}
-    added_objective::ObjectiveNode
+function Edge(bridge_index, added_variables, added_constraints)
+    return Edge(bridge_index, added_variables, added_constraints, nothing)
 end
 
 mutable struct Graph
     variable_edges::Vector{Vector{Edge}}
-    variable_constraint_node::Vector{ConstraintNode}
+    variable_constraint_node::Vector{Node}
     variable_constraint_cost::Vector{Int}
     # variable node index -> Number of bridges that need to be used
     variable_dist::Vector{Int}
@@ -45,7 +34,7 @@ mutable struct Graph
     # constraint node index -> Index of bridge to be used
     constraint_best::Vector{Int}
     constraint_last_correct::Int
-    objective_edges::Vector{Vector{ObjectiveEdge}}
+    objective_edges::Vector{Vector{Edge}}
     # objective node index -> Number of bridges that need to be used
     objective_dist::Vector{Int}
     # objective node index -> Index of bridge to be used
@@ -56,7 +45,7 @@ end
 function Graph()
     return Graph(
         Vector{Edge}[],
-        ConstraintNode[],
+        Node[],
         Int[],
         Int[],
         Int[],
@@ -65,7 +54,7 @@ function Graph()
         Int[],
         Int[],
         0,
-        Vector{ObjectiveEdge}[],
+        Vector{Edge}[],
         Int[],
         Int[],
         0,
@@ -80,22 +69,22 @@ function Base.show(io::IO, graph::Graph)
 end
 
 function variable_nodes(graph::Graph)
-    return MOIU.LazyMap{VariableNode}(
-        i -> VariableNode(i),
+    return MOIU.LazyMap{Node}(
+        i -> Variable(i, _VariableNode),
         eachindex(graph.variable_best),
     )
 end
 
 function constraint_nodes(graph::Graph)
-    return MOIU.LazyMap{ConstraintNode}(
-        i -> ConstraintNode(i),
+    return MOIU.LazyMap{Node}(
+        i -> Node(i, _ConstraintNode),
         eachindex(graph.constraint_best),
     )
 end
 
 function objective_nodes(graph::Graph)
-    return MOIU.LazyMap{ObjectiveNode}(
-        i -> ObjectiveNode(i),
+    return MOIU.LazyMap{Node}(
+        i -> Node(i, _ObjectiveNode),
         eachindex(graph.objective_best),
     )
 end
@@ -128,18 +117,14 @@ function Base.empty!(graph::Graph)
     return
 end
 
-function add_edge(graph::Graph, node::VariableNode, edge::Edge)
-    push!(graph.variable_edges[node.index], edge)
-    return
-end
-
-function add_edge(graph::Graph, node::ConstraintNode, edge::Edge)
-    push!(graph.constraint_edges[node.index], edge)
-    return
-end
-
-function add_edge(graph::Graph, node::ObjectiveNode, edge::ObjectiveEdge)
-    push!(graph.objective_edges[node.index], edge)
+function add_edge(graph::Graph, node::Node, edge::Edge)
+    if node.type == _VariableNode
+        push!(graph.variable_edges[node.index], edge)
+    elseif node.type == _ConstraintNode
+        push!(graph.constraint_edges[node.index], edge)
+    else
+        push!(graph.objective_edges[node.index], edge)
+    end
     return
 end
 
@@ -147,17 +132,20 @@ function add_variable_node(graph::Graph)
     push!(graph.variable_edges, Edge[])
     # Use an invalid index so that the code errors instead return something
     # incorrect in case `set_variable_constraint_node` is not called.
-    push!(graph.variable_constraint_node, ConstraintNode(INVALID_NODE_INDEX))
+    push!(
+        graph.variable_constraint_node,
+        Node(INVALID_NODE_INDEX, _ConstraintNode),
+    )
     push!(graph.variable_constraint_cost, 0)
     push!(graph.variable_dist, INFINITY)
     push!(graph.variable_best, 0)
-    return VariableNode(length(graph.variable_best))
+    return Node(length(graph.variable_best), _VariableNode)
 end
 
 function set_variable_constraint_node(
     graph::Graph,
-    variable_node::VariableNode,
-    constraint_node::ConstraintNode,
+    variable_node::Node,
+    constraint_node::Node,
     cost::Int,
 )
     graph.variable_constraint_node[variable_node.index] = constraint_node
@@ -169,44 +157,40 @@ function add_constraint_node(graph::Graph)
     push!(graph.constraint_edges, Edge[])
     push!(graph.constraint_dist, INFINITY)
     push!(graph.constraint_best, 0)
-    return ConstraintNode(length(graph.constraint_best))
+    return Node(length(graph.constraint_best), _ConstraintNode)
 end
 
 function add_objective_node(graph::Graph)
-    push!(graph.objective_edges, ObjectiveEdge[])
+    push!(graph.objective_edges, Edge[])
     push!(graph.objective_dist, INFINITY)
     push!(graph.objective_best, 0)
-    return ObjectiveNode(length(graph.objective_best))
+    return Node(length(graph.objective_best), _ObjectiveNode)
 end
 
-function bridging_cost(graph::Graph, node::AbstractNode)
+function bridging_cost(graph::Graph, node::Node)
     bellman_ford!(graph)
     dist = _dist(graph, node)
     return dist == INFINITY ? Inf : float(dist)
 end
 
-function bridge_index(graph::Graph, node::VariableNode)
+function bridge_index(graph::Graph, node::Node)
     bellman_ford!(graph)
-    return graph.variable_best[node.index]
-end
-
-function bridge_index(graph::Graph, node::ConstraintNode)
-    bellman_ford!(graph)
-    return graph.constraint_best[node.index]
-end
-
-function bridge_index(graph::Graph, node::ObjectiveNode)
-    bellman_ford!(graph)
-    return graph.objective_best[node.index]
+    if node.type == _VariableNode
+        return graph.variable_best[node.index]
+    elseif node.type == _ConstraintNode
+        return graph.constraint_best[node.index]
+    else
+        return graph.objective_best[node.index]
+    end
 end
 
 """
-    is_variable_edge_best(graph::Graph, node::VariableNode)
+    is_variable_edge_best(graph::Graph, node::Node)
 
 Return a `Bool` indicating whether the value of `_dist(graph, node)` can be
 achieved with a variable bridge.
 """
-function is_variable_edge_best(graph::Graph, node::VariableNode)
+function is_variable_edge_best(graph::Graph, node::Node)
     bellman_ford!(graph)
     return graph.variable_dist[node.index] == _dist(graph, node)
 end
@@ -214,7 +198,7 @@ end
 # Update `b.variable_dist`, `b.constraint_dist` `b.variable_best` and
 # `b.constraint_best` for constrained variable types in `variables` and
 # constraint types in `constraints`.
-function updated_dist(graph::Graph, current::Int, edges::Vector{<:AbstractEdge})
+function updated_dist(graph::Graph, current::Int, edges::Vector{Edge})
     bridge_index = 0
     for edge in edges
         if supports_added_no_update(graph, edge)
@@ -278,66 +262,52 @@ function bellman_ford!(graph::Graph)
     return
 end
 
-function _dist(graph::Graph, node::VariableNode)
+function _dist(graph::Graph, node::Node)
     if iszero(node.index)
         return 0
+    elseif node.type == _ConstraintNode
+        return graph.constraint_dist[node.index]
+    elseif node.type == _ObjectiveNode
+        return graph.objective_dist[node.index]
     end
     constraint_node = graph.variable_constraint_node[node.index]
     # If free variables are bridged but the functionize bridge was not added,
-    # constraint_node is `ConstraintNode(INVALID_NODE_INDEX)`.
+    # constraint_node is `Node(INVALID_NODE_INDEX, _ConstraintNode)`.
     dc =
         constraint_node.index == INVALID_NODE_INDEX ? INFINITY :
         _dist(graph, constraint_node)
     dv = graph.variable_dist[node.index]
     if dc == INFINITY
         return dv
-    else
-        dc += graph.variable_constraint_cost[node.index]
-        if dv == INFINITY
-            return dc
-        else
-            return min(dv, dc)
-        end
     end
+    dc += graph.variable_constraint_cost[node.index]
+    return dv == INFINITY ? dc : min(dv, dc)
 end
 
-function _dist(graph::Graph, node::ConstraintNode)
-    return iszero(node.index) ? 0 : graph.constraint_dist[node.index]
-end
-
-function _dist(graph::Graph, node::ObjectiveNode)
-    return iszero(node.index) ? 0 : graph.objective_dist[node.index]
-end
-
-function _sum_dist(graph::Graph, nodes::Vector{<:AbstractNode})
-    return mapreduce(node -> _dist(graph, node), +, nodes, init = 0)
-end
+_dist(::Graph, ::Nothing) = 0
 
 function added_dist(graph::Graph, edge::Edge)
-    return _sum_dist(graph, edge.added_variables) +
-           _sum_dist(graph, edge.added_constraints)
+    d = _dist(graph, edge.added_objective)
+    for n in edge.added_constraints
+        d += _dist(graph, n)
+    end
+    for n in edge.added_constraints
+        d += _dist(graph, n)
+    end
+    return d
 end
 
-function added_dist(graph::Graph, edge::ObjectiveEdge)
-    return _sum_dist(graph, edge.added_variables) +
-           _sum_dist(graph, edge.added_constraints) +
-           _dist(graph, edge.added_objective)
-end
-
-function supports_no_update(graph::Graph, node::AbstractNode)
+function supports_no_update(graph::Graph, node::Node)
     return iszero(node.index) || _dist(graph, node) != INFINITY
 end
 
-function _supports_all_no_update(graph::Graph, nodes::Vector{<:AbstractNode})
+supports_no_update(::Graph, ::Nothing) = true
+
+function _supports_all_no_update(graph::Graph, nodes::Vector{Node})
     return all(node -> supports_no_update(graph, node), nodes)
 end
 
 function supports_added_no_update(graph::Graph, edge::Edge)
-    return _supports_all_no_update(graph, edge.added_variables) &&
-           _supports_all_no_update(graph, edge.added_constraints)
-end
-
-function supports_added_no_update(graph::Graph, edge::ObjectiveEdge)
     return _supports_all_no_update(graph, edge.added_variables) &&
            _supports_all_no_update(graph, edge.added_constraints) &&
            supports_no_update(graph, edge.added_objective)

@@ -1,4 +1,16 @@
-function print_node(io::IO, b::LazyBridgeOptimizer, node::VariableNode)
+
+function print_node(io::IO, b::LazyBridgeOptimizer, node::Node)
+    if node.type == _VariableNode
+        _print_variable_node(io, b, node)
+    elseif node.type == _ConstraintNode
+        _print_constraint_node(io, b, node)
+    else
+        _print_objective_node(io, b, bode)
+    end
+    return
+end
+
+function _print_variable_node(io::IO, b::LazyBridgeOptimizer, node::Node)
     S, = b.variable_types[node.index]
     MOIU.print_with_acronym(
         io,
@@ -7,13 +19,13 @@ function print_node(io::IO, b::LazyBridgeOptimizer, node::VariableNode)
     return
 end
 
-function print_node(io::IO, b::LazyBridgeOptimizer, node::ConstraintNode)
+function _print_constraint_node(io::IO, b::LazyBridgeOptimizer, node::Node)
     F, S = b.constraint_types[node.index]
     MOIU.print_with_acronym(io, "($(node.index)) `$F`-in-`$S` constraints are")
     return
 end
 
-function print_node(io::IO, b::LazyBridgeOptimizer, node::ObjectiveNode)
+function _print_objective_node(io::IO, b::LazyBridgeOptimizer, node::Node)
     F, = b.objective_types[node.index]
     MOIU.print_with_acronym(
         io,
@@ -25,7 +37,7 @@ end
 function print_node_info(
     io::IO,
     b::LazyBridgeOptimizer,
-    node::AbstractNode;
+    node::Node;
     debug_unsupported = false,
 )
     print(io, " ")
@@ -42,8 +54,8 @@ function print_node_info(
     else
         index = bridge_index(b.graph, node)
         if iszero(index) ||
-           (node isa VariableNode && !is_variable_edge_best(b.graph, node))
-            @assert node isa VariableNode
+           (node.type == _VariableNode && !is_variable_edge_best(b.graph, node))
+            @assert node.type == _VariableNode
             println(
                 io,
                 " supported (distance $d) by adding free variables and then constrain them, see ($(b.graph.variable_constraint_node[node.index].index)).",
@@ -98,7 +110,7 @@ end
 function print_if_unsupported(
     io::IO,
     b::LazyBridgeOptimizer,
-    node::AbstractNode,
+    node::Node,
 )
     if _dist(b.graph, node) != INFINITY
         return
@@ -116,17 +128,9 @@ function print_unsupported(io::IO, b::LazyBridgeOptimizer, edge::Edge)
     for node in edge.added_constraints
         print_if_unsupported(io, b, node)
     end
-    return
-end
-
-function print_unsupported(io::IO, b::LazyBridgeOptimizer, edge::ObjectiveEdge)
-    for node in edge.added_variables
-        print_if_unsupported(io, b, node)
+    if edge.added_objective !== nothing
+        print_if_unsupported(io, b, edge.added_objective)
     end
-    for node in edge.added_constraints
-        print_if_unsupported(io, b, node)
-    end
-    print_if_unsupported(io, b, edge.added_objective)
     return
 end
 
@@ -156,38 +160,39 @@ end
 
 function _bridge_type(
     b::LazyBridgeOptimizer,
-    node::VariableNode,
+    node::Node,
     bridge_index::Int,
 )
-    return Variable.concrete_bridge_type(
-        b.variable_bridge_types[bridge_index],
-        b.variable_types[node.index]...,
-    )
+    if node.type == _VariableNode
+        return Variable.concrete_bridge_type(
+            b.variable_bridge_types[bridge_index],
+            b.variable_types[node.index]...,
+        )
+    elseif node.type == _ConstraintNode
+        return Constraint.concrete_bridge_type(
+            b.constraint_bridge_types[bridge_index],
+            b.constraint_types[node.index]...,
+        )
+    else
+        return Objective.concrete_bridge_type(
+            b.objective_bridge_types[bridge_index],
+            b.objective_types[node.index]...,
+        )
+    end
 end
 
-function _bridge_type(
-    b::LazyBridgeOptimizer,
-    node::ConstraintNode,
-    bridge_index::Int,
-)
-    return Constraint.concrete_bridge_type(
-        b.constraint_bridge_types[bridge_index],
-        b.constraint_types[node.index]...,
-    )
+function print_unsupported(io::IO, b::LazyBridgeOptimizer, node::Node)
+    if node.type == _VariableNode
+        _print_unsupported_variable(io, b, node)
+    elseif node.type == _ConstraintNode
+        _print_unsupported_constraint(io, b, node)
+    else
+        _print_unsupported_objective(io, b, node)
+    end
+    return
 end
 
-function _bridge_type(
-    b::LazyBridgeOptimizer,
-    node::ObjectiveNode,
-    bridge_index::Int,
-)
-    return Objective.concrete_bridge_type(
-        b.objective_bridge_types[bridge_index],
-        b.objective_types[node.index]...,
-    )
-end
-
-function print_unsupported(io::IO, b::LazyBridgeOptimizer, node::VariableNode)
+function _print_unsupported_variable(io::IO, b::LazyBridgeOptimizer, node::Node)
     print_unsupported(
         io,
         b,
@@ -208,7 +213,7 @@ function print_unsupported(io::IO, b::LazyBridgeOptimizer, node::VariableNode)
     return
 end
 
-function print_unsupported(io::IO, b::LazyBridgeOptimizer, node::ConstraintNode)
+function _print_unsupported_constraint(io::IO, b::LazyBridgeOptimizer, node::Node)
     print_unsupported(
         io,
         b,
@@ -218,7 +223,7 @@ function print_unsupported(io::IO, b::LazyBridgeOptimizer, node::ConstraintNode)
     return
 end
 
-function print_unsupported(io::IO, b::LazyBridgeOptimizer, node::ObjectiveNode)
+function _print_unsupported_objective(io::IO, b::LazyBridgeOptimizer, node::Node)
     print_unsupported(
         io,
         b,
@@ -242,38 +247,39 @@ function add_unsupported(
         for node in edge.added_constraints
             add_unsupported(graph, node, variables, constraints, objectives)
         end
+        if edge.added_objective.type !== nothing
+            add_unsupported(
+                graph,
+                edge.added_objective,
+                variables,
+                constraints,
+                objectives,
+            )
+        end
     end
     return
 end
 
-function add_unsupported(
+function add_unsupported_variable(
     graph::Graph,
-    edges::Vector{ObjectiveEdge},
+    node::Node,
     variables,
     constraints,
     objectives,
 )
-    for edge in edges
-        for node in edge.added_variables
-            add_unsupported(graph, node, variables, constraints, objectives)
-        end
-        for node in edge.added_constraints
-            add_unsupported(graph, node, variables, constraints, objectives)
-        end
-        add_unsupported(
-            graph,
-            edge.added_objective,
-            variables,
-            constraints,
-            objectives,
-        )
+    if node.type == _VariableNode
+        _add_unsupported_variable(graph, node, variables, constraints, objectives)
+    elseif node.type == _ConstraintNode
+        _add_unsupported_constraint(graph, node, variables, constraints, objectives)
+    else
+        _add_unsupported_objective(graph, node, variables, constraints, objectives)
     end
     return
 end
 
-function add_unsupported(
+function _add_unsupported_variable(
     graph::Graph,
-    node::VariableNode,
+    node::Node,
     variables,
     constraints,
     objectives,
@@ -302,9 +308,9 @@ function add_unsupported(
     return
 end
 
-function add_unsupported(
+function _add_unsupported_constraint(
     graph::Graph,
-    node::ConstraintNode,
+    node::Node,
     variables,
     constraints,
     objectives,
@@ -323,9 +329,9 @@ function add_unsupported(
     return
 end
 
-function add_unsupported(
+function _add_unsupported_objective(
     graph::Graph,
-    node::ObjectiveNode,
+    node::Node,
     variables,
     constraints,
     objectives,
@@ -350,10 +356,10 @@ function _sort(nodes::Set)
     return vector
 end
 
-function debug_unsupported(io::IO, b::LazyBridgeOptimizer, node::AbstractNode)
-    variables = Set{VariableNode}()
-    constraints = Set{ConstraintNode}()
-    objectives = Set{ObjectiveNode}()
+function debug_unsupported(io::IO, b::LazyBridgeOptimizer, node::Node)
+    variables = Set{Node}()
+    constraints = Set{Node}()
+    objectives = Set{Node}()
     add_unsupported(b.graph, node, variables, constraints, objectives)
     print_nodes(
         io,
