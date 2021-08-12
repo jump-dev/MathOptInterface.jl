@@ -386,26 +386,39 @@ _is_variable_function(::Any) = false
 
 function _cost_of_bridging(
     dest::MOI.ModelLike,
-    ::Type{F},
     ::Type{S},
-) where {F,S}
+) where {S<:MOI.AbstractScalarSet}
     return (
         MOI.get(dest, MOI.VariableBridgingCost{S}()) -
-        MOI.get(dest, MOI.ConstraintBridgingCost{F,S}()),
-        # In case of ties, we give priority to vector sets.
-        # See issue #987
-        F === MOI.SingleVariable,
+        MOI.get(dest, MOI.ConstraintBridgingCost{MOI.SingleVariable,S}()),
+        # In case of ties, we give priority to vector sets. See issue #987.
+        false,
     )
 end
 
-_cost_of_bridging(arg::Tuple) = _cost_of_bridging(arg[1], arg[2], arg[3])
+function _cost_of_bridging(
+    dest::MOI.ModelLike,
+    ::Type{S},
+) where {S<:MOI.AbstractVectorSet}
+    return (
+        MOI.get(dest, MOI.VariableBridgingCost{S}()) -
+        MOI.get(dest, MOI.ConstraintBridgingCost{MOI.VectorOfVariables,S}()),
+        # In case of ties, we give priority to vector sets. See issue #987
+        true,
+    )
+end
 
-function _sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
+"""
+    sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
+
+Returns a `Vector{Type}` of the set types corresponding to `SingleVariable` and
+`VectorOfVariables` constraints in the order in which they should be added.
+"""
+function sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
     constraint_types = MOI.get(src, MOI.ListOfConstraintTypesPresent())
-    single_or_vector_variables_types = Any[
-        (dest, F, S) for (F, S) in constraint_types if _is_variable_function(F)
-    ]
-    return sort!(single_or_vector_variables_types; by = _cost_of_bridging)
+    sets = Type[S for (F, S) in constraint_types if _is_variable_function(F)]
+    sort!(sets; by = S::Type -> _cost_of_bridging(dest, S))
+    return sets
 end
 
 """
@@ -481,7 +494,7 @@ function default_copy_to(
     else
         Any[
             _try_constrain_variables_on_creation(dest, src, index_map, S)
-            for (_, F, S) in _sorted_variable_sets_by_cost(dest, src)
+            for S in sorted_variable_sets_by_cost(dest, src)
         ]
     end
     _copy_free_variables(dest, index_map, vis_src)
