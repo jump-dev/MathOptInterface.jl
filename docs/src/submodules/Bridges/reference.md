@@ -60,9 +60,10 @@ Bridges.inverse_adjoint_map_function
 
 ```@docs
 Bridges.Constraint.FlipSignBridge
+Bridges.Constraint.AbstractToIntervalBridge
 Bridges.Constraint.GreaterToIntervalBridge
-Bridges.Constraint.GreaterToLessBridge
 Bridges.Constraint.LessToIntervalBridge
+Bridges.Constraint.GreaterToLessBridge
 Bridges.Constraint.LessToGreaterBridge
 Bridges.Constraint.NonnegToNonposBridge
 Bridges.Constraint.NonposToNonnegBridge
