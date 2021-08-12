@@ -81,7 +81,7 @@ end
 
 function variable_nodes(graph::Graph)
     return LazyMap{VariableNode}(eachindex(graph.variable_best)) do i
-        return i -> VariableNode(i)
+        return VariableNode(i)
     end
 end
 
