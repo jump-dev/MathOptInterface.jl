@@ -14,7 +14,8 @@ field by convention.
     It is required that `T` be a `AbstractFloat` type because otherwise
     typemin and typemax would either be not implemented (e.g. BigInt)
     or would not give infinite value (e.g. Int). For this reason,
-    this bridge is only added to [`full_bridge_optimizer`](@ref)
+    this bridge is only added to
+    [`MathOptInterface.Bridges.full_bridge_optimizer`](@ref).
 
     when `T` is a subtype of `AbstractFloat`.
 """
