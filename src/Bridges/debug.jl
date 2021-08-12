@@ -1,4 +1,3 @@
-
 function print_node(io::IO, b::LazyBridgeOptimizer, node::Node)
     if node.type == _VariableNode
         _print_variable_node(io, b, node)
