@@ -459,8 +459,7 @@ function pass_nonvariable_constraints(
     dest::MatrixOfConstraints,
     src::MOI.ModelLike,
     index_map::IndexMap,
-    constraint_types,
-    pass_cons = copy_constraints;
+    constraint_types;
     filter_constraints::Union{Nothing,Function} = nothing,
 )
     for (F, S) in constraint_types

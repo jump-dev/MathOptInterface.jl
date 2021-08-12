@@ -530,16 +530,14 @@ function pass_nonvariable_constraints(
     dest::AbstractModel,
     src::MOI.ModelLike,
     idxmap::IndexMap,
-    constraint_types,
-    pass_cons;
+    constraint_types;
     filter_constraints::Union{Nothing,Function} = nothing,
 )
     return pass_nonvariable_constraints(
         dest.constraints,
         src,
         idxmap,
-        constraint_types,
-        pass_cons;
+        constraint_types;
         filter_constraints = filter_constraints,
     )
 end

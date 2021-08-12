@@ -382,8 +382,7 @@ function MOIU.pass_nonvariable_constraints(
     dest::AbstractBridgeOptimizer,
     src::MOI.ModelLike,
     idxmap::MOIU.IndexMap,
-    constraint_types,
-    pass_cons;
+    constraint_types;
     filter_constraints::Union{Nothing,Function} = nothing,
 )
     if Variable.has_bridges(Variable.bridges(dest))
@@ -393,8 +392,7 @@ function MOIU.pass_nonvariable_constraints(
             dest,
             src,
             idxmap,
-            constraint_types,
-            pass_cons;
+            constraint_types;
             filter_constraints = filter_constraints,
         )
     end
@@ -411,16 +409,14 @@ function MOIU.pass_nonvariable_constraints(
         dest.model,
         src,
         idxmap,
-        not_bridged_types,
-        pass_cons;
+        not_bridged_types;
         filter_constraints = filter_constraints,
     )
     MOIU.pass_nonvariable_constraints_fallback(
         dest,
         src,
         idxmap,
-        bridged_types,
-        pass_cons;
+        bridged_types;
         filter_constraints = filter_constraints,
     )
     return
