@@ -146,7 +146,7 @@ function _pass_attribute(
     if attr == MOI.ConstraintName() && !copy_names
         return
     elseif attr == MOI.ConstraintPrimalStart() ||
-            attr == MOI.ConstraintDualStart()
+           attr == MOI.ConstraintDualStart()
         # As starting values are simply *hints* for the optimization, not
         # supporting them gives a warning, not an error
         if !MOI.supports(dest, attr, MOI.ConstraintIndex{F,S})
@@ -187,10 +187,8 @@ function _try_constrain_variables_on_creation(
     ::Type{S},
 ) where {S<:MOI.AbstractVectorSet}
     not_added = MOI.ConstraintIndex{MOI.VectorOfVariables,S}[]
-    for ci_src in MOI.get(
-        src,
-        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S}(),
-    )
+    for ci_src in
+        MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S}())
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
         if !allunique(f_src.variables)
             # Can't add it because there are duplicate variables
@@ -231,10 +229,8 @@ function _try_constrain_variables_on_creation(
     ::Type{S},
 ) where {S<:MOI.AbstractScalarSet}
     not_added = MOI.ConstraintIndex{MOI.SingleVariable,S}[]
-    for ci_src in MOI.get(
-        src,
-        MOI.ListOfConstraintIndices{MOI.SingleVariable,S}(),
-    )
+    for ci_src in
+        MOI.get(src, MOI.ListOfConstraintIndices{MOI.SingleVariable,S}())
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
         if haskey(index_map, f_src.variable)
             # Can't add it because it contains a variable previously added
@@ -368,11 +364,7 @@ function _pass_constraints(
     return
 end
 
-function _copy_free_variables(
-    dest::MOI.ModelLike,
-    index_map::IndexMap,
-    vis_src,
-)
+function _copy_free_variables(dest::MOI.ModelLike, index_map::IndexMap, vis_src)
     if length(vis_src) == length(index_map.var_map)
         return  # All variables already added
     end
@@ -488,8 +480,8 @@ function default_copy_to(
         ]
     else
         Any[
-            _try_constrain_variables_on_creation(dest, src, index_map, S) for
-            (_, F, S) in _sorted_variable_sets_by_cost(dest, src)
+            _try_constrain_variables_on_creation(dest, src, index_map, S)
+            for (_, F, S) in _sorted_variable_sets_by_cost(dest, src)
         ]
     end
     _copy_free_variables(dest, index_map, vis_src)
