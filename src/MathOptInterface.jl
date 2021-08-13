@@ -230,7 +230,21 @@ include("instantiate.jl")
 include("deprecate.jl")
 include("DeprecatedTest/DeprecatedTest.jl")
 
-# Work around a boostrapping issue. See the comment above Utilities.IndexMap.
+"""
+    IndexMap(number_of_variables::Int = 0)
+
+The dictionary-like object returned by [`copy_to`](@ref).
+
+If known in advance, pass `number_of_variables` to preallocate the necessary
+space for the variables.
+
+## IndexMap
+
+Implementations of [`copy_to`](@ref) must return an [`IndexMap`](@ref). For
+technical reasons, the `IndexMap` type is defined in the Utilties submodule as
+`MOI.Utilities.IndexMap`. However, since it is an integral part of the MOI API,
+we provide this `MOI.IndexMap` as an alias.
+"""
 const IndexMap = Utilities.IndexMap
 
 end

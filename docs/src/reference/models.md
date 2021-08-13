@@ -31,6 +31,7 @@ write_to_file
 read_from_file
 supports_incremental_interface
 copy_to
+IndexMap
 ```
 
 ## Model attributes
