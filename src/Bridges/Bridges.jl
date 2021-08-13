@@ -73,8 +73,12 @@ Such optimizers should implement the `ListOfNonstandardBridges` attribute to
 return a vector of bridge types that are added by [`full_bridge_optimizer`](@ref)
 in addition to the list of default bridges.
 
-Note that optimizers implementing `ListOfNonstandardBridges` may be unusable
-if the non-standard bridges are not added.
+Note that optimizers implementing `ListOfNonstandardBridges` may require
+package-specific functions or sets to be used if the non-standard bridges
+are not added. Therefore, you are recommended to use
+`model = MOI.instantiate(Package.Optimizer; with_bridge_type = T)` instead of
+`model = MOI.instantiate(Package.Optimizer)`. See
+[`MathOptInterface.instantiate`](@ref).
 
 ## Examples
 
