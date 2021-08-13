@@ -69,6 +69,19 @@ function pass_attributes(
     vis_src::Vector{MOI.VariableIndex},
 )
     for attr in MOI.get(src, MOI.ListOfVariableAttributesSet())
+        if attr == MOI.VariableName() && !copy_names
+            continue
+        elseif attr == MOI.VariablePrimalStart()
+            # As starting values are simply *hints* for the optimization, not
+            # supporting them gives a warning, not an error
+            if !MOI.supports(dest, attr, MOI.VariableIndex)
+                @warn(
+                    "$attr is not supported by $(typeof(dest)). This " *
+                    "information will be discarded."
+                )
+                continue
+            end
+        end
         _pass_attribute(dest, src, copy_names, index_map, vis_src, attr)
     end
     return
@@ -82,19 +95,6 @@ function _pass_attribute(
     vis_src::Vector{MOI.VariableIndex},
     attr::MOI.AbstractVariableAttribute,
 )
-    if attr == MOI.VariableName() && !copy_names
-        return
-    elseif attr == MOI.VariablePrimalStart()
-        # As starting values are simply *hints* for the optimization, not
-        # supporting them gives a warning, not an error
-        if !MOI.supports(dest, attr, MOI.VariableIndex)
-            @warn(
-                "$attr is not supported by $(typeof(dest)). This " *
-                "information will be discarded."
-            )
-            return
-        end
-    end
     for x in vis_src
         value = MOI.get(src, attr, x)
         if value !== nothing
@@ -130,6 +130,20 @@ function pass_attributes(
         filter!(filter_constraints, cis_src)
     end
     for attr in MOI.get(src, MOI.ListOfConstraintAttributesSet{F,S}())
+        if attr == MOI.ConstraintName() && !copy_names
+            continue
+        elseif attr == MOI.ConstraintPrimalStart() ||
+               attr == MOI.ConstraintDualStart()
+            # As starting values are simply *hints* for the optimization, not
+            # supporting them gives a warning, not an error
+            if !MOI.supports(dest, attr, MOI.ConstraintIndex{F,S})
+                @warn(
+                    "$attr is not supported by $(typeof(dest)). This " *
+                    "information will be discarded."
+                )
+                continue
+            end
+        end
         _pass_attribute(dest, src, copy_names, index_map, cis_src, attr)
     end
     return
@@ -143,20 +157,6 @@ function _pass_attribute(
     cis_src::Vector{MOI.ConstraintIndex{F,S}},
     attr::MOI.AbstractConstraintAttribute,
 ) where {F,S}
-    if attr == MOI.ConstraintName() && !copy_names
-        return
-    elseif attr == MOI.ConstraintPrimalStart() ||
-           attr == MOI.ConstraintDualStart()
-        # As starting values are simply *hints* for the optimization, not
-        # supporting them gives a warning, not an error
-        if !MOI.supports(dest, attr, MOI.ConstraintIndex{F,S})
-            @warn(
-                "$attr is not supported by $(typeof(dest)). This " *
-                "information will be discarded."
-            )
-            return
-        end
-    end
     for ci in cis_src
         value = MOI.get(src, attr, ci)
         if value !== nothing
