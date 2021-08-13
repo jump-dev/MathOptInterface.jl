@@ -195,11 +195,8 @@ An optimizer can decide to implement this function instead of implementing
 !!! warning
     This is an experimental new feature of MOI v0.10 that may break in MOI v1.0.
 """
-function copy_to_and_optimize!(
-    dest::AbstractOptimizer,
-    src::ModelLike;
-    kwargs...,
-)
+function copy_to_and_optimize!(dest, src; kwargs...)
+    # The arguments above are untyped to avoid ambiguities.
     index_map = copy_to(dest, src; kwargs...)
     optimize!(dest)
     return index_map
