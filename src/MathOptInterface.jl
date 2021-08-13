@@ -124,23 +124,41 @@ This is used in two places to determine whether to add a cache:
 supports_incremental_interface(::ModelLike, ::Bool) = false
 
 """
-    copy_to(dest::ModelLike, src::ModelLike; copy_names=true, warn_attributes=true)
+    copy_to(
+        dest::ModelLike,
+        src::ModelLike;
+        copy_names::Bool = true,
+        warn_attributes::Bool = true,
+    )::IndexMap
 
-Copy the model from `src` into `dest`. The target `dest` is emptied, and all
-previous indices to variables or constraints in `dest` are invalidated. Returns
-a dictionary-like object that translates variable and constraint indices from
-the `src` model to the corresponding indices in the `dest` model.
+Copy the model from `src` into `dest`.
 
-If `copy_names` is `false`, the `Name`, `VariableName` and `ConstraintName`
-attributes are not copied even if they are set in `src`. If a constraint that
-is copied from `src` is not supported by `dest` then an
-[`UnsupportedConstraint`](@ref) error is thrown. Similarly, if a model, variable
-or constraint attribute that is copied from `src` is not supported by `dest`
-then an [`UnsupportedAttribute`](@ref) error is thrown. Unsupported *optimizer*
-attributes are treated differently:
+The target `dest` is emptied, and all previous indices to variables and
+constraints in `dest` are invalidated.
 
-* If `warn_attributes` is `true`, a warning is displayed, otherwise,
-* the attribute is silently ignored.
+Returns an [`IndexMap`](@ref) object that translates variable and constraint
+indices from the `src` model to the corresponding indices in the `dest` model.
+
+## Notes
+
+ * If `copy_names == false`, the [`Name`](@ref), [`VariableName`](@ref) and
+   [`ConstraintName`](@ref) attributes are not copied, even if they are set in
+   `src`.
+ * If a constraint that in `src` is not supported by `dest`, then an
+   [`UnsupportedConstraint`](@ref) error is thrown.
+ * If an [`AbstractModelAttribute`](@ref), [`AbstractVariableAttribute`](@ref),
+   or [`AbstractConstraintAttribute`](@ref) is set in `src` but not supported by
+   `dest`, then an [`UnsupportedAttribute`](@ref) error is thrown.
+ * Unsupported [`AbstractOptimizerAttribute`](@ref)s are treated differently:
+   * If `warn_attributes == true`, a warning is displayed, otherwise, the
+     attribute is silently ignored.
+
+## IndexMap
+
+Implementations of `copy_to` must return an [`IndexMap`](@ref). For technical
+reasons, this type is defined in the Utilties submodule as
+`MOI.Utilities.IndexMap`. However, since it is an integral part of the MOI API,
+we provide `MOI.IndexMap` as an alias.
 
 ### Example
 
@@ -160,16 +178,26 @@ is_valid(dest, index_map[x]) # true
 function copy_to end
 
 """
-    copy_to_and_optimize!(dest::ModelLike, src::ModelLike; copy_names=true, warn_attributes=true)
+    copy_to_and_optimize!(
+        dest::AbstractOptimizer,
+        src::ModelLike;
+        kwargs...
+    )::IndexMap
 
-Same as [`copy_to`](@ref) followed [`optimize!`](@ref). An optimizer
-can decide to implement this function and not implement [`copy_to`](@ref) and
-[`optimize!`](@ref).
+A single call equivalent to calling [`copy_to`](@ref) followed by
+[`optimize!`](@ref).  Like [`copy_to`](@ref), it returns an [`IndexMap`].
 
-**WARNING** This is an experimental new feature of MOI v0.10 that may break in MOI v1.0.
+Keyword arguments are passed to [`copy_to`](@ref).
+
+An optimizer can decide to implement this function instead of implementing
+[`copy_to`](@ref) and [`optimize!`](@ref) individually.
+
+!!! warning
+    This is an experimental new feature of MOI v0.10 that may break in MOI v1.0.
 """
-function copy_to_and_optimize!(dest, src; kws...)
-    index_map = copy_to(dest, src; kws...)
+function copy_to_and_optimize!(dest, src; kwargs...)
+    # The arguments above are untyped to avoid ambiguities.
+    index_map = copy_to(dest, src; kwargs...)
     optimize!(dest)
     return index_map
 end
@@ -198,5 +226,22 @@ include("FileFormats/FileFormats.jl")
 include("instantiate.jl")
 include("deprecate.jl")
 include("DeprecatedTest/DeprecatedTest.jl")
+
+"""
+    IndexMap(number_of_variables::Int = 0)
+
+The dictionary-like object returned by [`copy_to`](@ref).
+
+If known in advance, pass `number_of_variables` to preallocate the necessary
+space for the variables.
+
+## IndexMap
+
+Implementations of [`copy_to`](@ref) must return an [`IndexMap`](@ref). For
+technical reasons, the `IndexMap` type is defined in the Utilties submodule as
+`MOI.Utilities.IndexMap`. However, since it is an integral part of the MOI API,
+we provide this `MOI.IndexMap` as an alias.
+"""
+const IndexMap = Utilities.IndexMap
 
 end

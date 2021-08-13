@@ -1,3 +1,11 @@
+# IndexMap is defined here because there is a boostrapping problem.
+#  * IndexMap requires `Utilities.CleverDicts` and `Utilities.DoubleDicts`, so
+#    if it were to be defined in MOI proper, it must be included after
+#    Utilities.
+#  * However, Utilities requires IndexMap, so it must be defined before
+#    Utilities.jl is included.
+# To work around this issue, we define `IndexMap` here.
+
 struct IndexMap <: AbstractDict{MOI.Index,MOI.Index}
     var_map::CleverDicts.CleverDict{
         MOI.VariableIndex,
@@ -9,17 +17,18 @@ struct IndexMap <: AbstractDict{MOI.Index,MOI.Index}
 end
 
 """
-    IndexMap(n::Int = 0)
+    IndexMap(number_of_variables::Int = 0)
 
-Dictionary-like object returned by [`MathOptInterface.copy_to`](@ref) that
-contains the mapping between variable indices in `.var_map` and between
-constraint indices in `.con_map`.
+The dictionary-like object returned by [`MathOptInterface.copy_to`](@ref).
+
+If known in advance, pass `number_of_variables` to preallocate the necessary
+space for the variables.
 """
-function IndexMap(n::Int = 0)
+function IndexMap(number_of_variables::Int = 0)
     var_map = CleverDicts.CleverDict{MOI.VariableIndex,MOI.VariableIndex}(
         CleverDicts.key_to_index,
         CleverDicts.index_to_key,
-        n,
+        number_of_variables,
     )
     con_map = DoubleDicts.IndexDoubleDict()
     return IndexMap(var_map, con_map)
