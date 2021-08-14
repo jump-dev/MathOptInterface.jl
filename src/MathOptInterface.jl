@@ -107,11 +107,7 @@ instead.
 supports_incremental_interface(::ModelLike) = false
 
 """
-    copy_to(
-        dest::ModelLike,
-        src::ModelLike;
-        warn_attributes::Bool = true,
-    )::IndexMap
+    copy_to(dest::ModelLike, src::ModelLike)::IndexMap
 
 Copy the model from `src` into `dest`.
 
@@ -128,14 +124,13 @@ indices from the `src` model to the corresponding indices in the `dest` model.
  * If an [`AbstractModelAttribute`](@ref), [`AbstractVariableAttribute`](@ref),
    or [`AbstractConstraintAttribute`](@ref) is set in `src` but not supported by
    `dest`, then an [`UnsupportedAttribute`](@ref) error is thrown.
- * Unsupported [`AbstractOptimizerAttribute`](@ref)s are treated differently:
-   * If `warn_attributes == true`, a warning is displayed, otherwise, the
-     attribute is silently ignored.
+
+[`AbstractOptimizerAttribute`](@ref)s are _not_ copied  to the `dest` model.
 
 ## IndexMap
 
 Implementations of `copy_to` must return an [`IndexMap`](@ref). For technical
-reasons, this type is defined in the Utilties submodule as
+reasons, this type is defined in the Utilities submodule as
 `MOI.Utilities.IndexMap`. However, since it is an integral part of the MOI API,
 we provide `MOI.IndexMap` as an alias.
 
@@ -159,8 +154,7 @@ function copy_to end
 """
     copy_to_and_optimize!(
         dest::AbstractOptimizer,
-        src::ModelLike;
-        kwargs...
+        src::ModelLike,
     )::IndexMap
 
 A single call equivalent to calling [`copy_to`](@ref) followed by
@@ -174,9 +168,9 @@ An optimizer can decide to implement this function instead of implementing
 !!! warning
     This is an experimental new feature of MOI v0.10 that may break in MOI v1.0.
 """
-function copy_to_and_optimize!(dest, src; kwargs...)
+function copy_to_and_optimize!(dest, src)
     # The arguments above are untyped to avoid ambiguities.
-    index_map = copy_to(dest, src; kwargs...)
+    index_map = copy_to(dest, src)
     optimize!(dest)
     return index_map
 end
