@@ -20,38 +20,26 @@ function _test_instantiate(T)
         MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}},
     }
     @test MOI.get(optimizer, MOI.Silent())
-    for with_names in [true, false]
-        optimizer = MOI.instantiate(
-            optimizer_constructor,
-            with_bridge_type = T,
-            with_names = with_names,
-        )
-        @test optimizer isa MOI.Bridges.LazyBridgeOptimizer{
-            MOI.Utilities.MockOptimizer{
-                MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}},
-            },
-        }
-        @test MOI.get(optimizer, MOI.Silent())
-        @test MOI.get(optimizer, MOI.RawOptimizerAttribute("a")) == 1
-        @test MOI.get(optimizer, MOI.RawOptimizerAttribute("b")) == 2
-    end
+    optimizer = MOI.instantiate(optimizer_constructor, with_bridge_type = T)
+    @test optimizer isa MOI.Bridges.LazyBridgeOptimizer{
+        MOI.Utilities.MockOptimizer{
+            MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}},
+        },
+    }
+    @test MOI.get(optimizer, MOI.Silent())
+    @test MOI.get(optimizer, MOI.RawOptimizerAttribute("a")) == 1
+    @test MOI.get(optimizer, MOI.RawOptimizerAttribute("b")) == 2
 
     optimizer_constructor = MOI.OptimizerWithAttributes(DummyOptimizer, [])
     optimizer = MOI.instantiate(optimizer_constructor)
     @test optimizer isa DummyOptimizer
-    for with_names in [true, false]
-        optimizer = MOI.instantiate(
-            optimizer_constructor,
-            with_bridge_type = T,
-            with_names = with_names,
-        )
-        @test optimizer isa MOI.Bridges.LazyBridgeOptimizer{
-            MOI.Utilities.CachingOptimizer{
-                DummyOptimizer,
-                MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}},
-            },
-        }
-    end
+    optimizer = MOI.instantiate(optimizer_constructor, with_bridge_type = T)
+    @test optimizer isa MOI.Bridges.LazyBridgeOptimizer{
+        MOI.Utilities.CachingOptimizer{
+            DummyOptimizer,
+            MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}},
+        },
+    }
 
     err = ErrorException(
         "The provided `optimizer_constructor` returned a non-empty optimizer.",
