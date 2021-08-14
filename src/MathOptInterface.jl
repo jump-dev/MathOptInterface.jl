@@ -128,7 +128,6 @@ supports_incremental_interface(::ModelLike, ::Bool) = false
         dest::ModelLike,
         src::ModelLike;
         copy_names::Bool = true,
-        warn_attributes::Bool = true,
     )::IndexMap
 
 Copy the model from `src` into `dest`.
@@ -149,9 +148,8 @@ indices from the `src` model to the corresponding indices in the `dest` model.
  * If an [`AbstractModelAttribute`](@ref), [`AbstractVariableAttribute`](@ref),
    or [`AbstractConstraintAttribute`](@ref) is set in `src` but not supported by
    `dest`, then an [`UnsupportedAttribute`](@ref) error is thrown.
- * Unsupported [`AbstractOptimizerAttribute`](@ref)s are treated differently:
-   * If `warn_attributes == true`, a warning is displayed, otherwise, the
-     attribute is silently ignored.
+
+[`AbstractOptimizerAttribute`](@ref)s are _not_ copied  to the `dest` model.
 
 ## IndexMap
 
