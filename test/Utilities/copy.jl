@@ -464,11 +464,8 @@ function test_create_variables_using_supports_add_constrained_variable()
 
     dest = OrderConstrainedVariablesModel()
     bridged_dest = MOI.Bridges.full_bridge_optimizer(dest, Float64)
-    @test MOIU.sorted_variable_sets_by_cost(bridged_dest, src) == [
-        (MOI.VectorOfVariables, MOI.Zeros),
-        (MOI.VectorOfVariables, MOI.Nonnegatives),
-        (MOI.VectorOfVariables, MOI.Nonpositives),
-    ]
+    @test MOIU.sorted_variable_sets_by_cost(bridged_dest, src) ==
+          Type[MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives]
     @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Nonnegatives)
     @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Nonnegatives}()) ==
           0.0
@@ -509,11 +506,8 @@ function test_create_variables_using_supports_add_constrained_variable()
 
     dest = ReverseOrderConstrainedVariablesModel()
     bridged_dest = MOI.Bridges.full_bridge_optimizer(dest, Float64)
-    @test MOIU.sorted_variable_sets_by_cost(bridged_dest, src) == [
-        (MOI.VectorOfVariables, MOI.Zeros),
-        (MOI.VectorOfVariables, MOI.Nonpositives),
-        (MOI.VectorOfVariables, MOI.Nonnegatives),
-    ]
+    @test MOIU.sorted_variable_sets_by_cost(bridged_dest, src) ==
+          Type[MOI.Zeros, MOI.Nonpositives, MOI.Nonnegatives]
     @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Nonnegatives)
     @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Nonnegatives}()) ==
           2.0
@@ -741,16 +735,14 @@ function MOIU.pass_nonvariable_constraints(
     dest::OnlyCopyConstraints,
     src::MOI.ModelLike,
     idxmap::MOIU.IndexMap,
-    constraint_types,
-    pass_cons;
+    constraint_types;
     filter_constraints::Union{Nothing,Function} = nothing,
 )
     return MOIU.pass_nonvariable_constraints(
         dest.constraints,
         src,
         idxmap,
-        constraint_types,
-        pass_cons;
+        constraint_types;
         filter_constraints = filter_constraints,
     )
 end

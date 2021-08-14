@@ -22,8 +22,6 @@ function MOI.get(::BadModel, ::MOI.ListOfModelAttributesSet)
     return MOI.AbstractModelAttribute[]
 end
 
-MOI.get(::BadModel, ::MOI.NumberOfVariables) = 1
-
 MOI.get(::BadModel, ::MOI.ListOfVariableIndices) = [MOI.VariableIndex(1)]
 
 function MOI.get(::BadModel, ::MOI.ListOfVariableAttributesSet)
@@ -52,10 +50,6 @@ function MOI.get(
     ::MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}},
 )
     return MOI.EqualTo(0.0)
-end
-
-function MOI.get(::BadModel, ::MOI.ListOfConstraintAttributesSet)
-    return MOI.AbstractConstraintAttribute[]
 end
 
 struct BadConstraintModel <: BadModel end
