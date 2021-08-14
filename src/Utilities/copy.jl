@@ -10,22 +10,18 @@ include("copy/index_map.jl")
     pass_attributes(
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
-        copy_names::Bool,
         index_map::IndexMap,
     )
 
 Pass the model attributes from the model `src` to the model `dest`.
-
-Does not copy `Name` if `copy_names` is `false`.
 """
 function pass_attributes(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    copy_names::Bool,
     index_map::IndexMap,
 )
     for attr in MOI.get(src, MOI.ListOfModelAttributesSet())
-        _pass_attribute(dest, src, copy_names, index_map, attr)
+        _pass_attribute(dest, src, index_map, attr)
     end
     return
 end
@@ -33,14 +29,12 @@ end
 function _pass_attribute(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    copy_names::Bool,
     index_map::IndexMap,
     attr::MOI.AbstractModelAttribute,
 )
-    if attr == MOI.Name() && !copy_names
-        return
+    if attr == MOI.Name() && !MOI.supports(dest, attr)
+        return  # Skipping names is okay.
     end
-    @assert MOI.is_copyable(attr)
     value = MOI.get(src, attr)
     if value !== nothing
         MOI.set(dest, attr, map_indices(index_map, value))
@@ -52,37 +46,20 @@ end
     pass_attributes(
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
-        copy_names::Bool,
         index_map::IndexMap,
         vis_src::Vector{MOI.VariableIndex},
     )
 
 Pass the variable attributes from the model `src` to the model `dest`.
-
-Does not copy `VariableName` if `copy_names` is `false`.
 """
 function pass_attributes(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    copy_names::Bool,
     index_map::IndexMap,
     vis_src::Vector{MOI.VariableIndex},
 )
     for attr in MOI.get(src, MOI.ListOfVariableAttributesSet())
-        if attr == MOI.VariableName() && !copy_names
-            continue
-        elseif attr == MOI.VariablePrimalStart()
-            # As starting values are simply *hints* for the optimization, not
-            # supporting them gives a warning, not an error
-            if !MOI.supports(dest, attr, MOI.VariableIndex)
-                @warn(
-                    "$attr is not supported by $(typeof(dest)). This " *
-                    "information will be discarded."
-                )
-                continue
-            end
-        end
-        _pass_attribute(dest, src, copy_names, index_map, vis_src, attr)
+        _pass_attribute(dest, src, index_map, vis_src, attr)
     end
     return
 end
@@ -90,11 +67,14 @@ end
 function _pass_attribute(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    copy_names::Bool,
     index_map::IndexMap,
     vis_src::Vector{MOI.VariableIndex},
     attr::MOI.AbstractVariableAttribute,
 )
+    if (attr == MOI.VariableName() || attr == MOI.VariablePrimalStart()) &&
+       !MOI.supports(dest, attr, MOI.VariableIndex)
+        return  # Skipping names and start values is okay.
+    end
     for x in vis_src
         value = MOI.get(src, attr, x)
         if value !== nothing
@@ -108,20 +88,16 @@ end
     pass_attributes(
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
-        copy_names::Bool,
         index_map::IndexMap,
         cis_src::Vector{MOI.ConstraintIndex{F,S}},
     ) where {F,S}
 
 Pass the constraint attributes of `F`-in-`S` constraints from the model `src` to
 the model `dest`.
-
-Does not copy `ConstraintName` if `copy_names` is `false`.
 """
 function pass_attributes(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    copy_names::Bool,
     index_map::IndexMap,
     cis_src::Vector{MOI.ConstraintIndex{F,S}},
     filter_constraints::Union{Nothing,Function} = nothing,
@@ -130,21 +106,7 @@ function pass_attributes(
         filter!(filter_constraints, cis_src)
     end
     for attr in MOI.get(src, MOI.ListOfConstraintAttributesSet{F,S}())
-        if attr == MOI.ConstraintName() && !copy_names
-            continue
-        elseif attr == MOI.ConstraintPrimalStart() ||
-               attr == MOI.ConstraintDualStart()
-            # As starting values are simply *hints* for the optimization, not
-            # supporting them gives a warning, not an error
-            if !MOI.supports(dest, attr, MOI.ConstraintIndex{F,S})
-                @warn(
-                    "$attr is not supported by $(typeof(dest)). This " *
-                    "information will be discarded."
-                )
-                continue
-            end
-        end
-        _pass_attribute(dest, src, copy_names, index_map, cis_src, attr)
+        _pass_attribute(dest, src, index_map, cis_src, attr)
     end
     return
 end
@@ -152,11 +114,18 @@ end
 function _pass_attribute(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    copy_names::Bool,
     index_map::IndexMap,
     cis_src::Vector{MOI.ConstraintIndex{F,S}},
     attr::MOI.AbstractConstraintAttribute,
 ) where {F,S}
+    !MOI.supports(dest, attr, MOI.ConstraintIndex{F,S})
+    if (
+        attr == MOI.ConstraintName() ||
+        attr == MOI.ConstraintPrimalStart() ||
+        attr == MOI.ConstraintDualStart()
+    ) && !MOI.supports(dest, attr, MOI.ConstraintIndex{F,S})
+        return  # Skipping names and start values is okay
+    end
     for ci in cis_src
         value = MOI.get(src, attr, ci)
         if value !== nothing
@@ -332,7 +301,6 @@ end
 function _pass_constraints(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    copy_names::Bool,
     index_map::IndexMap,
     variable_constraints_not_added::Vector,
     filter_constraints::Union{Nothing,Function} = nothing,
@@ -355,7 +323,6 @@ function _pass_constraints(
         pass_attributes(
             dest,
             src,
-            copy_names,
             index_map,
             MOI.get(src, MOI.ListOfConstraintIndices{F,S}()),
             filter_constraints,
@@ -441,19 +408,13 @@ function default_copy_to(
         "`default_copy_to` are now keyword arguments.",
         maxlog = 1,
     )
-    return default_copy_to(
-        dest,
-        src;
-        copy_names = copy_names,
-        filter_constraints = filter_constraints,
-    )
+    return default_copy_to(dest, src; filter_constraints = filter_constraints)
 end
 
 """
     default_copy_to(
         dest::MOI.ModelLike,
         src::MOI.ModelLike;
-        copy_names::Bool = true,
         filter_constraints::Union{Nothing,Function} = nothing,
     )
 
@@ -468,15 +429,11 @@ If `filter_constraints` is a `Function`, only constraints for which
 function default_copy_to(
     dest::MOI.ModelLike,
     src::MOI.ModelLike;
-    copy_names::Bool = true,
     filter_constraints::Union{Nothing,Function} = nothing,
+    kwargs...,
 )
-    if !MOI.supports_incremental_interface(dest, copy_names)
-        error(
-            "Model $(typeof(dest)) does not support copy",
-            copy_names ? " with names" : "",
-            ".",
-        )
+    if !MOI.supports_incremental_interface(dest)
+        error("Model $(typeof(dest)) does not support copy_to.")
     end
     MOI.empty!(dest)
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
@@ -499,14 +456,13 @@ function default_copy_to(
     end
     _copy_free_variables(dest, index_map, vis_src)
     # Copy variable attributes
-    pass_attributes(dest, src, copy_names, index_map, vis_src)
+    pass_attributes(dest, src, index_map, vis_src)
     # Copy model attributes
-    pass_attributes(dest, src, copy_names, index_map)
+    pass_attributes(dest, src, index_map)
     # Copy constraints
     _pass_constraints(
         dest,
         src,
-        copy_names,
         index_map,
         constraints_not_added,
         filter_constraints,

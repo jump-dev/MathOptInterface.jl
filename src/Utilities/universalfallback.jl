@@ -129,11 +129,8 @@ function MOI.copy_to(dest::UniversalFallback, src::MOI.ModelLike; kwargs...)
     return MOIU.default_copy_to(dest, src; kwargs...)
 end
 
-function MOI.supports_incremental_interface(
-    uf::UniversalFallback,
-    copy_names::Bool,
-)
-    return MOI.supports_incremental_interface(uf.model, copy_names)
+function MOI.supports_incremental_interface(uf::UniversalFallback)
+    return MOI.supports_incremental_interface(uf.model)
 end
 
 function final_touch(uf::UniversalFallback, index_map)

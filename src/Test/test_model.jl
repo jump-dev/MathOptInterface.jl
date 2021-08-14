@@ -280,7 +280,7 @@ function test_model_Name_VariableName_ConstraintName(
     model::MOI.ModelLike,
     config::Config,
 )
-    @requires MOI.supports_incremental_interface(model, true)
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.VariableName(), MOI.VariableIndex)
     @test MOI.get(model, MOI.NumberOfVariables()) == 0
     @test MOI.get(
@@ -512,7 +512,7 @@ Test various parts of `MOI.is_valid`.
 Taken from https://github.com/jump-dev/MathOptInterfaceUtilities.jl/issues/41
 """
 function test_model_is_valid(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_incremental_interface(model, false)
+    @requires MOI.supports_incremental_interface(model)
     v = MOI.add_variables(model, 2)
     @test MOI.is_valid(model, v[1])
     @test MOI.is_valid(model, v[2])
@@ -697,7 +697,7 @@ Test whether the model returns ListOfVariableIndices and ListOfConstraintIndices
 sorted by creation time.
 """
 function test_model_ordered_indices(model::MOI.ModelLike, ::Config)
-    @requires MOI.supports_incremental_interface(model, false)
+    @requires MOI.supports_incremental_interface(model)
     v1 = MOI.add_variable(model)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v1]
     v2 = MOI.add_variable(model)

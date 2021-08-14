@@ -196,11 +196,8 @@ function _attach_optimizer(
     @assert model.state == EMPTY_OPTIMIZER
     # We do not need to copy names because name-related operations are handled
     # by `m.model_cache`
-    indexmap = copy_to(
-        model.optimizer,
-        model.model_cache;
-        copy_names = false,
-    )::MOI.Utilities.IndexMap
+    indexmap =
+        copy_to(model.optimizer, model.model_cache)::MOI.Utilities.IndexMap
     model.state = ATTACHED_OPTIMIZER
     # MOI does not define the type of index_map, so we have to convert it
     # into an actual IndexMap. Also load the reverse IndexMap.
@@ -274,11 +271,8 @@ function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; kws...)
     return MOI.copy_to(m.model_cache, src; kws...)
 end
 
-function MOI.supports_incremental_interface(
-    model::CachingOptimizer,
-    copy_names::Bool,
-)
-    return MOI.supports_incremental_interface(model.model_cache, copy_names)
+function MOI.supports_incremental_interface(model::CachingOptimizer)
+    return MOI.supports_incremental_interface(model.model_cache)
 end
 
 function MOI.empty!(m::CachingOptimizer)
@@ -893,9 +887,6 @@ end
 ##### Names
 #####
 
-# Names are not copied, i.e. we use the option `copy_names=false` in
-# `attachoptimizer`, so the caching optimizer can support names even if the
-# optimizer does not.
 function MOI.supports(
     model::CachingOptimizer,
     attr::Union{MOI.VariableName,MOI.ConstraintName},

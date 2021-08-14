@@ -11,7 +11,7 @@ function test_linear_integration(
 ) where {T}
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -552,7 +552,7 @@ function test_linear_integration_2(
     # Min -x
     # s.t. x + y <= 1
     # x, y >= 0
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -684,7 +684,7 @@ function test_linear_inactive_bounds(
     # min  x
     # s.t. x >= 0
     #      x >= 3
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -847,7 +847,7 @@ function test_linear_LessThan_and_GreaterThan(
 ) where {T}
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -967,7 +967,7 @@ function test_linear_integration_modification(
     #        x >= 0, y >= 0
     #
     #   solution: x = 1.3333333, y = 1.3333333, objv = 2.66666666
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1130,7 +1130,7 @@ function test_linear_modify_GreaterThan_and_LessThan_constraints(
 ) where {T}
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1271,7 +1271,7 @@ function test_linear_VectorAffineFunction(
     # s.t. -    z        == - 1     (c1)
     #                  w ==   1     (c2)
     # i.e. z == w == 1
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1426,7 +1426,7 @@ function test_linear_INFEASIBLE(
     # min x
     # s.t. 2x+y <= -1
     # x,y >= 0
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1533,7 +1533,7 @@ function test_linear_DUAL_INFEASIBLE(
     # min -x-y
     # s.t. -x+2y <= 0
     # x,y >= 0
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1626,7 +1626,7 @@ function test_linear_DUAL_INFEASIBLE_2(
     # min -x-y
     # s.t. x-y == 0
     # x,y >= 0
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1729,7 +1729,7 @@ function test_linear_add_constraints(
     #
     #   solution: (59.0909, 36.3636)
     #   objv: 71818.1818
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1855,7 +1855,7 @@ function test_linear_integration_Interval(
     #
     #       s.t.  5 <= x + y <= 10
     #                  x,  y >= 0
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -2099,7 +2099,7 @@ function test_linear_Interval_inactive(
     #
     #       s.t.  -1 <= x + y <= 10
     #                   x,  y >= 0
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -2243,7 +2243,7 @@ function test_linear_transform(
 ) where {T}
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -2344,7 +2344,7 @@ function test_linear_INFEASIBLE_2(
 ) where {T}
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -2462,7 +2462,7 @@ function test_linear_FEASIBILITY_SENSE(
 ) where {T}
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports_constraint(
         model,
         MOI.ScalarAffineFunction{T},
@@ -2556,7 +2556,7 @@ function test_linear_integration_delete_variables(
     # s.t. 3x + 2y + z <= 2
     #      x, y, z >= 0
     #      z <= 1
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -2749,7 +2749,7 @@ function test_linear_VectorAffineFunction_empty_row(
 ) where {T}
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -2896,7 +2896,7 @@ s.t.  x + y + z <= 10
 ```
 """
 function test_linear_integer_integration(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -3038,7 +3038,7 @@ end
 Test Special Ordered Sets of type 1.
 """
 function test_linear_SOS1_integration(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -3145,7 +3145,7 @@ end
 Test Special Ordered Sets of type 2.
 """
 function test_linear_SOS2_integration(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -3293,7 +3293,7 @@ s.t.  0 <= z - 0.5 eᵀ b / 40 <= 0.999
 ```
 """
 function test_linear_integer_solve_twice(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -3385,7 +3385,7 @@ st  2a + 8b + 4c + 2d + 5e <= 10
 ```
 """
 function test_linear_integer_knapsack(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -3921,7 +3921,7 @@ function _test_linear_SemiXXX_integration(
     config::Config{T},
     use_semiinteger::Bool,
 ) where {T}
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),

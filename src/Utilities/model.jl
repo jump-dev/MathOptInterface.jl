@@ -546,7 +546,7 @@ function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kwargs...)
     return default_copy_to(dest, src; kwargs...)
 end
 
-MOI.supports_incremental_interface(::AbstractModel, ::Bool) = true
+MOI.supports_incremental_interface(::AbstractModel) = true
 function final_touch(model::AbstractModel, index_map)
     return final_touch(model.constraints, index_map)
 end

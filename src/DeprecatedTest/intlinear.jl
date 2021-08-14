@@ -12,7 +12,7 @@ function int1test(model::MOI.ModelLike, config::Config)
     #         x is continuous: 0 <= x <= 5
     #         y is integer: 0 <= y <= 10
     #         z is binary
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -139,7 +139,7 @@ function int2test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     @testset "SOSI" begin
-        @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+        @test MOI.supports_incremental_interface(model)
         @test MOI.supports(
             model,
             MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -244,7 +244,7 @@ function int2test(model::MOI.ModelLike, config::Config)
         end
     end
     @testset "SOSII" begin
-        @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+        @test MOI.supports_incremental_interface(model)
         @test MOI.supports(
             model,
             MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -379,7 +379,7 @@ function int3test(model::MOI.ModelLike, config::Config)
     #       z in {0, 1, 2, ..., 100}
     MOI.empty!(model)
     @test MOI.is_empty(model)
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -456,7 +456,7 @@ function knapsacktest(model::MOI.ModelLike, config::Config)
     #                  a,b,c,d,e ∈ binary
     MOI.empty!(model)
     @test MOI.is_empty(model)
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -917,7 +917,7 @@ end
 function _semitest(model::MOI.ModelLike, config::Config{T}, int::Bool) where {T}
     atol = config.atol
     rtol = config.rtol
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),

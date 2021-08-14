@@ -924,11 +924,8 @@ function MOI.copy_to(dest::MockOptimizer, src::MOI.ModelLike; kwargs...)
     return default_copy_to(dest, src; kwargs...)
 end
 
-function MOI.supports_incremental_interface(
-    mock::MockOptimizer,
-    copy_names::Bool,
-)
-    return MOI.supports_incremental_interface(mock.inner_model, copy_names)
+function MOI.supports_incremental_interface(mock::MockOptimizer)
+    return MOI.supports_incremental_interface(mock.inner_model)
 end
 
 function final_touch(uf::MockOptimizer, index_map)
