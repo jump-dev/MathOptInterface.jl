@@ -25,6 +25,7 @@ Bridges.add_bridge
 Bridges.remove_bridge
 Bridges.has_bridge
 Bridges.full_bridge_optimizer
+Bridges.ListOfNonstandardBridges
 Bridges.debug_supports_constraint
 Bridges.debug_supports
 Bridges.bridged_variable_function
@@ -59,9 +60,10 @@ Bridges.inverse_adjoint_map_function
 
 ```@docs
 Bridges.Constraint.FlipSignBridge
+Bridges.Constraint.AbstractToIntervalBridge
 Bridges.Constraint.GreaterToIntervalBridge
-Bridges.Constraint.GreaterToLessBridge
 Bridges.Constraint.LessToIntervalBridge
+Bridges.Constraint.GreaterToLessBridge
 Bridges.Constraint.LessToGreaterBridge
 Bridges.Constraint.NonnegToNonposBridge
 Bridges.Constraint.NonposToNonnegBridge
