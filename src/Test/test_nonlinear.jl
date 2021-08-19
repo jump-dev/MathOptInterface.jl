@@ -914,11 +914,7 @@ function setup_test(
 )
     MOI.Utilities.set_mock_optimize!(
         model,
-        (mock) -> MOI.Utilities.mock_optimize!(
-            mock,
-            MOI.INVALID_MODEL,
-            [NaN],
-        ),
+        mock -> MOI.Utilities.mock_optimize!(mock, MOI.INVALID_MODEL, [NaN]),
     )
     return
 end
