@@ -850,3 +850,75 @@ function test_nonlinear_Feasibility_internal(::MOI.ModelLike, ::Config)
     @test H == [2.2]
     return
 end
+
+"""
+    InvalidEvaluator()
+
+An AbstractNLPEvaluator for the problem:
+```
+min sqrt(x)
+    x <= -1
+```
+"""
+struct InvalidEvaluator <: MOI.AbstractNLPEvaluator end
+
+function MOI.initialize(d::InvalidEvaluator, requested_features::Vector{Symbol})
+    for feat in requested_features
+        @assert feat in MOI.features_available(d)
+    end
+    return
+end
+
+function MOI.features_available(::InvalidEvaluator)
+    return [:Grad, :ExprGraph]
+end
+
+MOI.objective_expr(::InvalidEvaluator) = :(0 * x[$(MOI.VariableIndex(1))] / 0)
+
+MOI.constraint_expr(::InvalidEvaluator, i::Int) = :()
+
+MOI.eval_objective(::InvalidEvaluator, x) = NaN
+
+MOI.eval_constraint(::InvalidEvaluator, g, x) = nothing
+
+function MOI.eval_objective_gradient(::InvalidEvaluator, grad_f, x)
+    grad_f[1] = NaN
+    return
+end
+
+"""
+    test_nonlinear_invalid(model::MOI.ModelLike, config::Config)
+
+Test that a nonlinear model returns the TerminationStatus `INVALID_MODEL` if a
+NaN is detected in a function evaluation.
+"""
+function test_nonlinear_invalid(model::MOI.ModelLike, config::Config)
+    @requires MOI.supports(model, MOI.NLPBlock())
+    @requires _supports(config, MOI.optimize!)
+    MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(
+        model,
+        MOI.NLPBlock(),
+        MOI.NLPBlockData(MOI.NLPBoundsPair[], InvalidEvaluator(), true),
+    )
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INVALID_MODEL
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_invalid),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        (mock) -> MOI.Utilities.mock_optimize!(
+            mock,
+            MOI.INVALID_MODEL,
+            [NaN],
+        ),
+    )
+    return
+end
