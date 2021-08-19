@@ -542,8 +542,8 @@ function pass_nonvariable_constraints(
     )
 end
 
-function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike; kwargs...)
-    return default_copy_to(dest, src; kwargs...)
+function MOI.copy_to(dest::AbstractModel, src::MOI.ModelLike)
+    return default_copy_to(dest, src)
 end
 
 MOI.supports_incremental_interface(::AbstractModel) = true

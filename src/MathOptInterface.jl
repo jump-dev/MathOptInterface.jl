@@ -149,7 +149,16 @@ is_valid(dest, x) # false (unless index_map[x] == x)
 is_valid(dest, index_map[x]) # true
 ```
 """
-function copy_to end
+function copy_to(dest, src; kwargs...)
+    if length(kwargs) > 0
+        @warn(
+            "copy_to with keyword arguments is deprecated. Now names are " *
+            "copied by default",
+            maxlog = 1,
+        )
+    end
+    return copy_to(dest, src)
+end
 
 """
     copy_to_and_optimize!(

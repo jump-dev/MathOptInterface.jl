@@ -77,6 +77,13 @@ function test_default_copy_to()
     return
 end
 
+function test_copy_to_copy_names()
+    dest = MOI.Utilities.Model{Float64}()
+    src = MOI.Utilities.Model{Float64}()
+    @test_logs (:warn,) MOI.copy_to(dest, src; copy_names = true)
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

@@ -400,7 +400,7 @@ function final_touch(::MOI.ModelLike, index_map) end
 function default_copy_to(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    copy_names::Bool,
+    ::Bool,
     filter_constraints::Union{Nothing,Function} = nothing,
 )
     @warn(
@@ -430,7 +430,6 @@ function default_copy_to(
     dest::MOI.ModelLike,
     src::MOI.ModelLike;
     filter_constraints::Union{Nothing,Function} = nothing,
-    kwargs...,
 )
     if !MOI.supports_incremental_interface(dest)
         error("Model $(typeof(dest)) does not support copy_to.")
