@@ -565,6 +565,55 @@ function setup_test(
 end
 
 """
+    test_nonlinear_without_objective(model::MOI.ModelLike, config::Config)
+
+Test a nonlinear problem without an objective.
+"""
+function test_nonlinear_without_objective(model::MOI.ModelLike, config::Config)
+    @requires MOI.supports(model, MOI.NLPBlock())
+    @requires _supports(config, MOI.optimize!)
+    @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    lb = [1.0]
+    ub = [2.0]
+    block_data = MOI.NLPBlockData(
+        MOI.NLPBoundsPair.(lb, ub),
+        FeasibilitySenseEvaluator(true),
+        false,
+    )
+    x = MOI.add_variable(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+    # Avoid starting at zero because it's a critial point.
+    MOI.set(model, MOI.VariablePrimalStart(), x, 1.5)
+    MOI.set(model, MOI.NLPBlock(), block_data)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test MOI.get(model, MOI.ResultCount()) >= 1
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+    @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 0.0, config)
+    xv = MOI.get(model, MOI.VariablePrimal(), x)
+    @test isapprox(abs(xv), 1.0, config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_without_objective),
+    model::MOIU.MockOptimizer,
+    config::Config,
+)
+    config.optimal_status = MOI.LOCALLY_SOLVED
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(mock, config.optimal_status, [-1.0]),
+            MOI.set(mock, MOI.ObjectiveValue(), 0.0)
+        end,
+    )
+    flag = model.eval_objective_value
+    model.eval_objective_value = false
+    return () -> model.eval_objective_value = flag
+end
+
+"""
     test_nonlinear_mixed_complementarity(model::MOI.ModelLike, config::Config)
 
 Test the solution of the linear mixed-complementarity problem:
