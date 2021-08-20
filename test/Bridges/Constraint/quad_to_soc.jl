@@ -1,6 +1,7 @@
 module TestConstraintQuadToSOC
 
 import LinearAlgebra
+import SparseArrays
 using Test
 
 using MathOptInterface
@@ -166,6 +167,9 @@ function test_fill_reducing_permutation()
         MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64},MOI.RotatedSecondOrderCone}(),
     )
     F = LinearAlgebra.cholesky(Q)
+    # Test that the sparse cholesky pivot is permuted
+    SF = LinearAlgebra.cholesky(SparseArrays.sparse(Q))
+    @test SF.p == [3, 2, 1]
     U = Matrix(F.U)
     @test MOI.get(model, MOI.ConstraintFunction(), indices[1]) ≈
           MOI.VectorAffineFunction(
