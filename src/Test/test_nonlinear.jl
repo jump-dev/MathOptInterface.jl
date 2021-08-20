@@ -899,3 +899,88 @@ function test_nonlinear_Feasibility_internal(::MOI.ModelLike, ::Config)
     @test H == [2.2]
     return
 end
+
+"""
+    InvalidEvaluator()
+
+An AbstractNLPEvaluator for the problem: `min NaN`, where `eval_objective`
+returns a `NaN`.
+
+Solvers should return a `TerminationStatus` of `MOI.INVALID_MODEL`.
+"""
+struct InvalidEvaluator <: MOI.AbstractNLPEvaluator end
+
+function MOI.initialize(d::InvalidEvaluator, requested_features::Vector{Symbol})
+    for feat in requested_features
+        @assert feat in MOI.features_available(d)
+    end
+    return
+end
+
+function MOI.features_available(::InvalidEvaluator)
+    return [:Grad, :ExprGraph]
+end
+
+MOI.objective_expr(::InvalidEvaluator) = :(NaN)
+
+MOI.eval_objective(::InvalidEvaluator, x) = NaN
+
+function MOI.eval_objective_gradient(::InvalidEvaluator, grad_f, x)
+    grad_f[1] = NaN
+    return
+end
+
+"""
+    test_nonlinear_InvalidEvaluator_internal(::MOI.ModelLike, ::Config)
+
+A test for the correctness of the InvalidEvaluator evaluator.
+
+This is mainly for the internal purpose of checking their correctness as
+written. External solvers can exclude this test without consequence.
+"""
+function test_nonlinear_InvalidEvaluator_internal(::MOI.ModelLike, ::Config)
+    d = InvalidEvaluator()
+    @test MOI.objective_expr(d) == :(NaN)
+    MOI.initialize(d, [:Grad, :ExprGraph])
+    x = [1.5]
+    # f(x)
+    @test isnan(MOI.eval_objective(d, x))
+    # f'(x)
+    ∇f = fill(NaN, length(x))
+    MOI.eval_objective_gradient(d, ∇f, x)
+    @test isnan(∇f[1])
+    return
+end
+
+"""
+    test_nonlinear_invalid(model::MOI.ModelLike, config::Config)
+
+Test that a nonlinear model returns the TerminationStatus `INVALID_MODEL` if a
+NaN is detected in a function evaluation.
+"""
+function test_nonlinear_invalid(model::MOI.ModelLike, config::Config)
+    @requires MOI.supports(model, MOI.NLPBlock())
+    @requires _supports(config, MOI.optimize!)
+    MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(
+        model,
+        MOI.NLPBlock(),
+        MOI.NLPBlockData(MOI.NLPBoundsPair[], InvalidEvaluator(), true),
+    )
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INVALID_MODEL
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_invalid),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> MOI.Utilities.mock_optimize!(mock, MOI.INVALID_MODEL, [NaN]),
+    )
+    return
+end
