@@ -1,5 +1,6 @@
 module TestConstraintQuadToSOC
 
+import LinearAlgebra
 using Test
 
 using MathOptInterface
@@ -150,6 +151,35 @@ function test_qcp()
     MOI.Test.test_quadratic_constraint_LessThan(bridged_mock, config)
     MOI.empty!(bridged_mock)
     MOI.Test.test_quadratic_constraint_GreaterThan(bridged_mock, config)
+    return
+end
+
+function test_fill_reducing_permutation()
+    model = MOI.Utilities.Model{Float64}()
+    bridge = MOI.Bridges.Constraint.QuadtoSOC{Float64}(model)
+    x = MOI.add_variables(bridge, 3)
+    Q = Float64[2 1 1; 1 2 0; 1 0 2]
+    f = 0.5 * MOI.SingleVariable.(x)' * Q * MOI.SingleVariable.(x)
+    MOI.add_constraint(bridge, f, MOI.LessThan(2.0))
+    indices = MOI.get(
+        model,
+        MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64},MOI.RotatedSecondOrderCone}(),
+    )
+    F = LinearAlgebra.cholesky(Q)
+    U = Matrix(F.U)
+    @test MOI.get(model, MOI.ConstraintFunction(), indices[1]) ≈
+          MOI.VectorAffineFunction(
+              [
+                MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(U[1, 1], x[1])),
+                MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(U[1, 2], x[2])),
+                MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(U[1, 3], x[3])),
+                MOI.VectorAffineTerm(4, MOI.ScalarAffineTerm(U[2, 2], x[2])),
+                MOI.VectorAffineTerm(4, MOI.ScalarAffineTerm(U[2, 3], x[3])),
+                MOI.VectorAffineTerm(5, MOI.ScalarAffineTerm(U[3, 3], x[3])),
+
+              ],
+              [1.0, 2.0, 0.0, 0.0, 0.0]
+          )
     return
 end
 

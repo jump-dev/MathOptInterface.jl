@@ -75,7 +75,6 @@ function bridge_constraint(
     if !less_than
         LinearAlgebra.rmul!(Q, -1)
     end
-    # We have L × L' ≈ Q[p, p]
     F = try
         LinearAlgebra.cholesky(LinearAlgebra.Symmetric(Q))
     catch
