@@ -97,8 +97,7 @@ function bridge_constraint(
         MOI.VectorAffineTerm(
             2,
             MOI.ScalarAffineTerm(scale * term.coefficient, term.variable),
-        )
-        for term in func.affine_terms
+        ) for term in func.affine_terms
     ]
     # Add the Lx terms...
     L, p = SparseArrays.sparse(F.L), F.p

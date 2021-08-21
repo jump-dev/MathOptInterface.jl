@@ -164,7 +164,10 @@ function test_fill_reducing_permutation()
     MOI.add_constraint(bridge, f, MOI.LessThan(2.0))
     indices = MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64},MOI.RotatedSecondOrderCone}(),
+        MOI.ListOfConstraintIndices{
+            MOI.VectorAffineFunction{Float64},
+            MOI.RotatedSecondOrderCone,
+        }(),
     )
     F = LinearAlgebra.cholesky(Q)
     # Test that the sparse cholesky pivot is permuted
@@ -173,17 +176,16 @@ function test_fill_reducing_permutation()
     U = Matrix(F.U)
     @test MOI.get(model, MOI.ConstraintFunction(), indices[1]) ≈
           MOI.VectorAffineFunction(
-              [
-                MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(U[1, 1], x[1])),
-                MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(U[1, 2], x[2])),
-                MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(U[1, 3], x[3])),
-                MOI.VectorAffineTerm(4, MOI.ScalarAffineTerm(U[2, 2], x[2])),
-                MOI.VectorAffineTerm(4, MOI.ScalarAffineTerm(U[2, 3], x[3])),
-                MOI.VectorAffineTerm(5, MOI.ScalarAffineTerm(U[3, 3], x[3])),
-
-              ],
-              [1.0, 2.0, 0.0, 0.0, 0.0]
-          )
+        [
+            MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(U[1, 1], x[1])),
+            MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(U[1, 2], x[2])),
+            MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(U[1, 3], x[3])),
+            MOI.VectorAffineTerm(4, MOI.ScalarAffineTerm(U[2, 2], x[2])),
+            MOI.VectorAffineTerm(4, MOI.ScalarAffineTerm(U[2, 3], x[3])),
+            MOI.VectorAffineTerm(5, MOI.ScalarAffineTerm(U[3, 3], x[3])),
+        ],
+        [1.0, 2.0, 0.0, 0.0, 0.0],
+    )
     return
 end
 
