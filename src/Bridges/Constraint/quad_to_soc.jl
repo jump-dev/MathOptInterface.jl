@@ -1,4 +1,5 @@
-using LinearAlgebra, SparseArrays
+import LinearAlgebra
+import SparseArrays
 
 """
     QuadtoSOCBridge{T}
@@ -67,19 +68,17 @@ function bridge_constraint(
     func::MOI.ScalarQuadraticFunction{T},
     set::Union{MOI.LessThan{T},MOI.GreaterThan{T}},
 ) where {T}
-    set_constant = MOI.constant(set)
-    less_than = set isa MOI.LessThan
-    Q, index_to_variable_map = matrix_from_quadratic_terms(func.quadratic_terms)
+    less_than = set isa MOI.LessThan{T}
+    scale = less_than ? -1 : 1
+    Q, index_to_variable_map =
+        _matrix_from_quadratic_terms(func.quadratic_terms)
     if !less_than
-        rmul!(Q, -1)
+        LinearAlgebra.rmul!(Q, -1)
     end
-    # We have L × L' ≈ Q[p, p]
-    L, p = try
-        F = cholesky(Symmetric(Q))
-        sparse(F.L), F.p
-    catch err
-        if err isa PosDefException
-            error("""
+    F = try
+        LinearAlgebra.cholesky(LinearAlgebra.Symmetric(Q))
+    catch
+        error("""
             Unable to transform a quadratic constraint into a second-order cone
             constraint because the quadratic constraint is not strongly convex.
 
@@ -88,24 +87,46 @@ function bridge_constraint(
             yet.
 
             Note that a quadratic equality constraint is non-convex.""")
-        else
-            rethrow(err)
-        end
     end
-    Ux_terms = matrix_to_vector_affine_terms(L, p, index_to_variable_map)
-    Ux = MOI.VectorAffineFunction(Ux_terms, zeros(T, size(L, 2)))
-    t = MOI.ScalarAffineFunction(
-        less_than ? MOIU.operate_terms(-, func.affine_terms) :
-        func.affine_terms,
-        less_than ? set_constant - func.constant : func.constant - set_constant,
+    # Construct the VectorAffineFunction. We're aiming for:
+    #  |          1 |
+    #  | -a^T x - b | ∈ RotatedSecondOrderCone()
+    #  |     Lx + 0 |
+    # Start with the -a^T x terms...
+    vector_terms = MOI.VectorAffineTerm{T}[
+        MOI.VectorAffineTerm(
+            2,
+            MOI.ScalarAffineTerm(scale * term.coefficient, term.variable),
+        ) for term in func.affine_terms
+    ]
+    # Add the Lx terms...
+    L, p = SparseArrays.sparse(F.L), F.p
+    I, J, V = SparseArrays.findnz(L)
+    for i in 1:length(V)
+        # Cholesky is a pivoted decomposition, so L × L' == Q[p, p].
+        # To get the variable, we need the row of L, I[i], then to map that
+        # through the permutation vector, so `p[I[i]]`, and then through the
+        # index_to_variable_map.
+        xi = index_to_variable_map[p[I[i]]]
+        push!(
+            vector_terms,
+            MOI.VectorAffineTerm(J[i] + 2, MOI.ScalarAffineTerm(V[i], xi)),
+        )
+    end
+    # This is the [1, b, 0] vector...
+    set_constant = MOI.constant(set)
+    vector_constant = vcat(
+        one(T),
+        scale * (func.constant - set_constant),
+        zeros(T, size(L, 1)),
     )
-    f = MOIU.operate(vcat, T, one(T), t, Ux)
+    f = MOI.VectorAffineFunction(vector_terms, vector_constant)
     dimension = MOI.output_dimension(f)
     soc = MOI.add_constraint(model, f, MOI.RotatedSecondOrderCone(dimension))
     return QuadtoSOCBridge(soc, dimension, less_than, set_constant)
 end
 
-function matrix_from_quadratic_terms(
+function _matrix_from_quadratic_terms(
     terms::Vector{MOI.ScalarQuadraticTerm{T}},
 ) where {T}
     variable_to_index_map = Dict{MOI.VariableIndex,Int}()
@@ -120,9 +141,7 @@ function matrix_from_quadratic_terms(
             end
         end
     end
-    I = Int[]
-    J = Int[]
-    V = T[]
+    I, J, V = Int[], Int[], T[]
     for term in terms
         i = variable_to_index_map[term.variable_1]
         j = variable_to_index_map[term.variable_2]
@@ -136,23 +155,7 @@ function matrix_from_quadratic_terms(
         end
     end
     # Duplicate terms are summed together in `sparse`
-    Q = sparse(I, J, V, n, n)
-    return Q, index_to_variable_map
-end
-
-function matrix_to_vector_affine_terms(
-    L::SparseMatrixCSC{T},
-    p::Vector,
-    index_to_variable_map::Dict{Int,MOI.VariableIndex},
-) where {T}
-    # We know that L × L' ≈ Q[p, p] hence (L × L')[i, :] ≈ Q[p[i], p]
-    # We precompute the map to avoid having to do a dictionary lookup for every
-    # term
-    variable = map(i -> index_to_variable_map[p[i]], 1:size(L, 1))
-    function term(i::Integer, j::Integer, v::T)
-        return MOI.VectorAffineTerm(j, MOI.ScalarAffineTerm(v, variable[i]))
-    end
-    return map(ijv -> term(ijv...), zip(findnz(L)...))
+    return SparseArrays.sparse(I, J, V, n, n), index_to_variable_map
 end
 
 function MOI.supports_constraint(
