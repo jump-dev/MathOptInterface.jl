@@ -430,11 +430,8 @@ function MOI.copy_to(
     return MOIU.default_copy_to(dest, src; kwargs...)
 end
 
-function MOI.supports_incremental_interface(
-    b::AbstractBridgeOptimizer,
-    copy_names::Bool,
-)
-    return MOI.supports_incremental_interface(b.model, copy_names)
+function MOI.supports_incremental_interface(b::AbstractBridgeOptimizer)
+    return MOI.supports_incremental_interface(b.model)
 end
 function MOIU.final_touch(uf::AbstractBridgeOptimizer, index_map)
     return MOIU.final_touch(uf.model, index_map)

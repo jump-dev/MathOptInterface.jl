@@ -8,7 +8,7 @@ function qp1test(model::MOI.ModelLike, config::Config)
     # st  x + 2y + 3z >= 4 (c1)
     #     x +  y      >= 1 (c2)
     #     x, y, z \in R
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
@@ -107,7 +107,7 @@ function qp2test(model::MOI.ModelLike, config::Config)
     # st  x + 2y + 3z >= 4 (c1)
     #     x +  y      >= 1 (c2)
     #     x, y, z \in R
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
@@ -241,7 +241,7 @@ function qp3test(model::MOI.ModelLike, config::Config)
     #    minimize 2 x^2 + y^2 + xy + x + y + 1
     #       s.t.  x, y >= 0
     #             x + y = 1
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
@@ -363,7 +363,7 @@ function qcp1test(model::MOI.ModelLike, config::Config)
     #     x² + y <= 2 (c2)
     # Optimal solution
     # x = 1/2, y = 7/4
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -476,7 +476,7 @@ function qcp2test(model::MOI.ModelLike, config::Config)
     rtol = config.rtol
     # Max x
     # s.t. x^2 <= 2 (c)
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -542,7 +542,7 @@ function qcp3test(model::MOI.ModelLike, config::Config)
     rtol = config.rtol
     # Min -x
     # s.t. x^2 <= 2
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -612,7 +612,7 @@ function _qcp4test(model::MOI.ModelLike, config::Config, less_than::Bool)
     # Max  x
     # s.t. x^2 + x * y + y^2 <= 3 (c)
     #      y == 1
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -716,7 +716,7 @@ function ncqcp1test(model::MOI.ModelLike, config::Config)
     # Max 2x + y
     # s.t. x * y <= 4 (c)
     #      x, y >= 1
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -789,7 +789,7 @@ function ncqcp2test(model::MOI.ModelLike, config::Config)
     # s.t. x * y == 4 (c)
     #      x * x == 4 (c2)
     #      x, y >= 0
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports_constraint(
         model,
         MOI.ScalarQuadraticFunction{Float64},
@@ -864,7 +864,7 @@ function socp1test(model::MOI.ModelLike, config::Config)
     # s.t. x + y >= 1 (c1)
     #      x^2 + y^2 <= t^2 (c2)
     #      t >= 0 (bound)
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),

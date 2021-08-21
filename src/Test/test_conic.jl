@@ -23,7 +23,7 @@ function _test_conic_linear_helper(
 )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -223,7 +223,7 @@ function _test_conic_linear_helper_2(
 )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -468,7 +468,7 @@ s.t. -1 + x ∈ R₊
 ```
 """
 function test_conic_linear_INFEASIBLE(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -557,7 +557,7 @@ s.t. -1 + x ∈ R₊
 ```
 """
 function test_conic_linear_INFEASIBLE_2(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -647,7 +647,7 @@ function _test_conic_NormInfinityCone_helper(
     #  st  x == 1
     #      y == 1/2
     #      x >= ||(y,z)||_∞
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -855,7 +855,7 @@ function test_conic_NormInfinityCone_INFEASIBLE(
     model::MOI.ModelLike,
     config::Config,
 )
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -967,7 +967,7 @@ let n = 3. optimal solution: y .= -1, x = 2
 function test_conic_NormInfinityCone_3(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
@@ -1077,7 +1077,7 @@ function _test_conic_NormOneCone_helper(
     #  st  x == 1
     #      y == 1/2
     #      x >= ||(y,z)||_1
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1282,7 +1282,7 @@ s.t. -2 + y ∈ R₊
       (x,y) ∈ NormOne₂
 """
 function test_conic_NormOneCone_INFEASIBLE(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1399,7 +1399,7 @@ function test_conic_NormOneCone(model::MOI.ModelLike, config::Config)
     )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
@@ -1514,7 +1514,7 @@ function _test_conic_SecondOrderCone_helper(
     )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1707,7 +1707,7 @@ function _test_conic_SecondOrderCone_helper_2(
     # s.t.  -1/√2 + y ∈ R₊
     #        1 - t ∈ {0}
     #      (t,x,y) ∈ SOC₃
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1940,7 +1940,7 @@ function test_conic_SecondOrderCone_INFEASIBLE(
     )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2068,7 +2068,7 @@ function test_conic_SecondOrderCone_out_of_order(
     )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2190,7 +2190,7 @@ function _test_conic_RotatedSecondOrderCone_helper(
 )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2385,7 +2385,7 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE(
     rtol = config.rtol
     b = [-2, -1, 1 / 2]
     c = [0.0, 0.0, 0.0]
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2521,7 +2521,7 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE_2(
 )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2740,7 +2740,7 @@ function test_conic_RotatedSecondOrderCone_out_of_order(
 )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2841,7 +2841,7 @@ function _test_conic_GeometricMeanCone_helper(
     # (xyz)^(1/3) ≤ (x+y+z)/3 = 1
     # Therefore xyz ≤ 1
     # This can be attained using x = y = z = 1 so it is optimal.
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2997,7 +2997,7 @@ function _test_conic_GeometricMeanCone_helper_2(
 )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -3162,7 +3162,7 @@ function _test_conic_GeometricMeanCone_helper_3(
 )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -3317,7 +3317,7 @@ function _test_conic_Exponential_helper(
     #  st  y e^(x/y) <= z, y > 0 (i.e (x, y, z) are in the exponential primal cone)
     #      x == 1
     #      y == 2
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -3487,7 +3487,7 @@ function test_conic_Exponential_hard_2(model::MOI.ModelLike, config::Config)
     )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -3687,7 +3687,7 @@ function test_conic_Exponential_hard(model::MOI.ModelLike, config::Config)
     )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -3808,7 +3808,7 @@ function _test_conic_DualExponentialCone_helper(
     # x_2 + v == 1
     # w == 1
     # (u, v, w) ∈ DualExponentialCone
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -4009,7 +4009,7 @@ function _test_conic_PowerCone_helper(
     atol = config.atol
     rtol = config.rtol
     a = 0.9
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -4195,7 +4195,7 @@ function _test_conic_DualPowerCone_helper(
     @requires MOI.supports_constraint(model, F, MOI.DualPowerCone{Float64})
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -4389,7 +4389,7 @@ function test_conic_RelativeEntropyCone(
     )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
@@ -4482,7 +4482,7 @@ function test_conic_NormSpectralCone(
     )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
@@ -4576,7 +4576,7 @@ function test_conic_NormSpectralCone_2(
     )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
@@ -4670,7 +4670,7 @@ function test_conic_NormNuclearCone(
     )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
@@ -4768,7 +4768,7 @@ function test_conic_NormNuclearCone_2(
     )
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
@@ -4863,7 +4863,7 @@ function _test_conic_PositiveSemidefiniteCone_helper(
     atol = config.atol
     rtol = config.rtol
     square = psdcone == MOI.PositiveSemidefiniteConeSquare
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -5165,7 +5165,7 @@ function _test_conic_PositiveSemidefiniteCone_helper_2(
     # With (2) we get
     α = √(3 - 2obj - 4x2) / 2
     β = k * α
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -5508,7 +5508,7 @@ function test_conic_PositiveSemidefiniteConeTriangle(
     atol = config.atol
     rtol = config.rtol
     # Caused getdual to fail on SCS and Mosek
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -5719,7 +5719,7 @@ function _test_conic_PositiveSemidefiniteCone_helper_3(
 ) where {T}
     atol = config.atol
     rtol = config.rtol
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
@@ -5904,7 +5904,7 @@ function _test_det_cone_helper_ellipsoid(
     square = detcone == MOI.LogDetConeSquare || detcone == MOI.RootDetConeSquare
     use_logdet =
         detcone == MOI.LogDetConeTriangle || detcone == MOI.LogDetConeSquare
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -6064,7 +6064,7 @@ function _test_det_cone_helper(model::MOI.ModelLike, config::Config, detcone)
         detcone == MOI.LogDetConeTriangle || detcone == MOI.LogDetConeSquare
     mat = Float64[3 2 1; 2 2 1; 1 1 3]
     matL = Float64[3, 2, 2, 1, 1, 3]
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(

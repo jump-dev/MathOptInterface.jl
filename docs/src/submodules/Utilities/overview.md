@@ -374,19 +374,14 @@ function _copy_to(
     return
 end
 
-function MOI.copy_to(
-    dest::Optimizer,
-    src::Model;
-    copy_names::Bool = false
-)
+function MOI.copy_to(dest::Optimizer, src::Model)
     _copy_to(dest, src)
     return MOI.Utilities.identity_index_map(src)
 end
 
 function MOI.copy_to(
     dest::Optimizer,
-    src::MOI.Utilities.UniversalFallback{Model};
-    copy_names::Bool = false
+    src::MOI.Utilities.UniversalFallback{Model},
 )
     # Copy attributes from `src` to `dest` and error in case any unsupported
     # constraints or attributes are set in `UniversalFallback`.
@@ -395,8 +390,7 @@ end
 
 function MOI.copy_to(
     dest::Optimizer,
-    src::MOI.ModelLike;
-    copy_names::Bool = false
+    src::MOI.ModelLike,
 )
     model = Model()
     index_map = MOI.copy_to(model, src)

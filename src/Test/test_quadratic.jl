@@ -10,7 +10,7 @@ st  x + 2y + 3z >= 4 (c1)
 ```
 """
 function test_quadratic_integration(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
@@ -136,7 +136,7 @@ st  x + 2y + 3z >= 4 (c1)
 ```
 """
 function test_quadratic_duplicate_terms(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
@@ -316,7 +316,7 @@ minimize 2 x^2 + y^2 + xy + x + y + 1
 ```
 """
 function test_quadratic_nonhomogeneous(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
@@ -472,7 +472,7 @@ function test_quadratic_constraint_integration(
     model::MOI.ModelLike,
     config::Config,
 )
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -617,7 +617,7 @@ s.t. x^2 <= 2 (c)
 ```
 """
 function test_quadratic_constraint_basic(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -710,7 +710,7 @@ function test_quadratic_constraint_minimize(
     model::MOI.ModelLike,
     config::Config,
 )
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -800,7 +800,7 @@ function _test_quadratic_constraint_helper(
     config::Config,
     less_than::Bool,
 )
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -939,7 +939,7 @@ function test_quadratic_nonconvex_constraint_integration(
     model::MOI.ModelLike,
     config::Config,
 )
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1030,7 +1030,7 @@ function test_quadratic_nonconvex_constraint_basic(
     model::MOI.ModelLike,
     config::Config,
 )
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports_constraint(
         model,
         MOI.ScalarQuadraticFunction{Float64},
@@ -1117,7 +1117,7 @@ function test_quadratic_SecondOrderCone_basic(
     model::MOI.ModelLike,
     config::Config,
 )
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1268,7 +1268,7 @@ function test_quadratic_Integer_SecondOrderCone(
     model::MOI.ModelLike,
     config::Config,
 )
-    @requires MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),

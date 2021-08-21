@@ -464,17 +464,12 @@ If you don't want to implement [`copy_to`](@ref), e.g., because the solver has
 no API for building the problem in a single function call, define the following
 fallback:
 ```julia
-# If you support VariableName and ConstraintName...
-MOI.supports_incremental_interface(::Optimizer, copy_names::Bool) = true
-# Otherwise...
-MOI.supports_incremental_interface(::Optimizer, copy_names::Bool) = !copy_names
+MOI.supports_incremental_interface(::Optimizer) = true
 
 function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kwargs...)
     return MOI.Utilities.default_copy_to(dest, src; kwargs...)
 end
 ```
-See [`supports_incremental_interface`](@ref) for more details on whether to
-implement the `true` or `!copy_names` version.
 
 ## [Names](@id implement_names)
 

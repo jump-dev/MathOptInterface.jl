@@ -8,7 +8,7 @@ function intsoc1test(model::MOI.ModelLike, config::Config)
     #  st  x            == 1
     #      x >= ||(y,z)||
     #      (y,z) binary
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),

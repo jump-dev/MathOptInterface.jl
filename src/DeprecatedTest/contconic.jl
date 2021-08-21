@@ -10,7 +10,7 @@ function _lin1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     #            y +  z == 2
     #       x>=0 y>=0 z>=0
     # Opt obj = -11, soln x = 1, y = 0, z = 2
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -147,7 +147,7 @@ function _lin2test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     #       s zero
     # Opt solution = -82
     # x = -4, y = -3, z = 16, s == 0
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -324,7 +324,7 @@ function lin3test(model::MOI.ModelLike, config::Config)
     # min 0
     # s.t. -1 + x ∈ R₊
     #       1 + x ∈ R₋
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -408,7 +408,7 @@ function lin4test(model::MOI.ModelLike, config::Config)
     # min 0
     # s.t. -1 + x ∈ R₊
     #           x ∈ R₋
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -486,7 +486,7 @@ function _norminf1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     #  st  x == 1
     #      y == 1/2
     #      x >= ||(y,z)||_∞
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -624,7 +624,7 @@ function norminf2test(model::MOI.ModelLike, config::Config)
     # s.t. -2 + y ∈ R₊
     #      -1 + x ∈ R₋
     #       (x,y) ∈ NormInf₂
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -717,7 +717,7 @@ function norminf3test(model::MOI.ModelLike, config::Config)
     #  st  (-1 + x, 2 .+ y) in NormInf(1 + n)
     #      (1 .+ y) in Nonnegatives(n)
     # let n = 3. optimal solution: y .= -1, x = 2
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
@@ -813,7 +813,7 @@ function _normone1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     #  st  x == 1
     #      y == 1/2
     #      x >= ||(y,z)||_1
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -947,7 +947,7 @@ function normone2test(model::MOI.ModelLike, config::Config)
     # s.t. -2 + y ∈ R₊
     #      -1 + x ∈ R₋
     #       (x,y) ∈ NormOne₂
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1040,7 +1040,7 @@ function normone3test(model::MOI.ModelLike, config::Config)
     #  st  (-1 + x, 2 .+ y) in NormOne(1 + n)
     #      (1 .+ y) in Nonnegatives(n)
     # let n = 3. optimal solution: y .= -1, x = 4
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
@@ -1134,7 +1134,7 @@ function _soc1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     # max 0x + 1y + 1z
     #  st  x == 1
     #      x >= ||(y,z)||
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1256,7 +1256,7 @@ function _soc2test(model::MOI.ModelLike, config::Config, nonneg::Bool)
     # s.t.  -1/√2 + y ∈ R₊
     #        1 - t ∈ {0}
     #      (t,x,y) ∈ SOC₃
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1412,7 +1412,7 @@ function soc3test(model::MOI.ModelLike, config::Config)
     # s.t. -2 + y ∈ R₊
     #      -1 + x ∈ R₋
     #       (x,y) ∈ SOC₂
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1512,7 +1512,7 @@ function soc4test(model::MOI.ModelLike, config::Config)
     #      (x[1],x[4],x[5]) ∈ SOC₃
     # Like SOCINT1 but with copies of variables and integrality relaxed
     # Tests out-of-order indices in cones
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1622,7 +1622,7 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::Config, abvars::Bool)
     #     [1.0] - [      ] SOCRotated
     #     [0.0] - [-y    ] SOCRotated
     #     [0.0] - [    -z] SOCRotated
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1763,7 +1763,7 @@ function rotatedsoc2test(model::MOI.ModelLike, config::Config)
     #       (x,y,z) ∈ SOCRotated
     b = [-2, -1, 1 / 2]
     c = [0.0, 0.0, 0.0]
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -1871,7 +1871,7 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
     #      t2 == 1
     # [t1/√2, t2/√2, x] in SOC4
     # [x1/√2, u/√2,  v] in SOC3
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2053,7 +2053,7 @@ function rotatedsoc4test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
     # with equality iff x = y.
     # We conclude that the optimal solution is x = y = t = u = 1
     # with objective value 2.
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2140,7 +2140,7 @@ function _geomean1test(model::MOI.ModelLike, config::Config, vecofvars, n = 3)
     # (xyz)^(1/3) ≤ (x+y+z)/3 = 1
     # Therefore xyz ≤ 1
     # This can be attained using x = y = z = 1 so it is optimal.
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2245,7 +2245,7 @@ function _geomean2test(model::MOI.ModelLike, config::Config, vecofvars)
     # st  (t,x_1,x_2,...,x_9) ∈ GeometricMeanCone(10)
     #     x_1 == x_2, ..., x_9 == 1
     # the optimal solution is 1 with optimal value 1
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2358,7 +2358,7 @@ function _geomean3test(model::MOI.ModelLike, config::Config, vecofvars)
     # st  (t,x) ∈ GeometricMeanCone(2)
     #     x <= 2
     # the optimal solution is (t, x) = (2, 2) with objective value 4
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2469,7 +2469,7 @@ function _exp1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     #  st  y e^(x/y) <= z, y > 0 (i.e (x, y, z) are in the exponential primal cone)
     #      x == 1
     #      y == 2
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2570,7 +2570,7 @@ function exp2test(model::MOI.ModelLike, config::Config)
     # A problem where ECOS was failing
     atol = config.atol
     rtol = config.rtol
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2735,7 +2735,7 @@ function exp3test(model::MOI.ModelLike, config::Config)
     # A problem where ECOS was failing
     atol = config.atol
     rtol = config.rtol
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2836,7 +2836,7 @@ function _dualexp1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     # x_2 + v == 1
     # w == 1
     # (u, v, w) ∈ DualExponentialCone
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -2969,7 +2969,7 @@ function _pow1test(model::MOI.ModelLike, config::Config, vecofvars::Bool)
     #     v + β = 0
     #     w = -1
     a = 0.9
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -3091,7 +3091,7 @@ function _dualpow1test(
     # Here the best you can do is u + v == 1 and for that inequality must hold so u = 9v
     # hence you get v = 0.1 and u = 0.9.
     # The same works for other values of exponent as key word argument
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -3215,7 +3215,7 @@ function relentr1test(model::MOI.ModelLike, config::Config)
     #  st  u >= 2*log(2/1) + 3*log(3/5)  (i.e. (u, 1, 5, 2, 3) in RelativeEntropyCone(5))
     # Optimal solution is:
     # u = 2*log(2/1) + 3*log(3/5) ≈ -0.1461825
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
@@ -3280,7 +3280,7 @@ function normspec1test(model::MOI.ModelLike, config::Config)
     #  st  t >= sigma_1([1 1 0; 1 -1 1]) (i.e (t, 1, 1, 1, -1, 0, 1]) is in NormSpectralCone(2, 3))
     # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
     # t = sqrt(3)
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
@@ -3342,7 +3342,7 @@ function normspec2test(model::MOI.ModelLike, config::Config)
     #  st  t >= sigma_1([1 1; 1 -1; 0 1]) (i.e (t, 1, 1, 0, 1, -1, 1]) is in NormSpectralCone(3, 2))
     # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
     # t = sqrt(3)
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
@@ -3408,7 +3408,7 @@ function normnuc1test(model::MOI.ModelLike, config::Config)
     #  st  t >= sum_i sigma_i([1 1 0; 1 -1 1]) (i.e (t, 1, 1, 1, -1, 0, 1]) is in NormNuclearCone(2, 3))
     # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
     # t = sqrt(3) + sqrt(2)
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
@@ -3473,7 +3473,7 @@ function normnuc2test(model::MOI.ModelLike, config::Config)
     #  st  t >= sum_i sigma_i([1 1; 1 -1; 0 1]) (i.e (t, 1, 1, 0, 1, -1, 1]) is in NormNuclearCone(3, 2))
     # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
     # t = sqrt(3) + sqrt(2)
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
@@ -3551,7 +3551,7 @@ function _psd0test(
     #     ⎛ 1   1 ⎞
     # X = ⎜       ⎟           y = 2
     #     ⎝ 1   1 ⎠
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -3735,7 +3735,7 @@ function _psd1test(
     # With (2) we get
     α = √(3 - 2obj - 4x2) / 2
     β = k * α
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -3900,7 +3900,7 @@ function psdt2test(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     # Caused getdual to fail on SCS and Mosek
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -4071,7 +4071,7 @@ function _psd3test(model::MOI.ModelLike, psdcone, config::Config{T}) where {T}
     #      [1 1 x]
     atol = config.atol
     rtol = config.rtol
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{T}, psdcone)
@@ -4196,7 +4196,7 @@ function _det1test(
     #           |         |
     #           |_________|
     #            -Q22 ≥ -1
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -4357,7 +4357,7 @@ function _det2test(model::MOI.ModelLike, config::Config, detcone)
     # logdet(mat)  ≈ 1.609438
     mat = Float64[3 2 1; 2 2 1; 1 1 3]
     matL = Float64[3, 2, 2, 1, 1, 3]
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(

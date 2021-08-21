@@ -8,7 +8,7 @@ function linear1test(model::MOI.ModelLike, config::Config{T}) where {T}
     # min -x
     # st   x + y <= 1   (x + y - 1 ∈ Nonpositives)
     #       x, y >= 0   (x, y ∈ Nonnegatives)
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -498,7 +498,7 @@ function linear2test(model::MOI.ModelLike, config::Config{T}) where {T}
     # Min -x
     # s.t. x + y <= 1
     # x, y >= 0
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -596,7 +596,7 @@ function linear3test(model::MOI.ModelLike, config::Config{T}) where {T}
     # min  x
     # s.t. x >= 0
     #      x >= 3
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -715,7 +715,7 @@ end
 function linear4test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -810,7 +810,7 @@ function linear5test(model::MOI.ModelLike, config::Config{T}) where {T}
     #        x >= 0, y >= 0
     #
     #   solution: x = 1.3333333, y = 1.3333333, objv = 2.66666666
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -950,7 +950,7 @@ end
 function linear6test(model::MOI.ModelLike, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1069,7 +1069,7 @@ function linear7test(model::MOI.ModelLike, config::Config{T}) where {T}
     # s.t. -    z        == - 1     (c1)
     #                  w ==   1     (c2)
     # i.e. z == w == 1
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1202,7 +1202,7 @@ function linear8atest(model::MOI.ModelLike, config::Config{T}) where {T}
     # min x
     # s.t. 2x+y <= -1
     # x,y >= 0
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1281,7 +1281,7 @@ function linear8btest(model::MOI.ModelLike, config::Config{T}) where {T}
     # min -x-y
     # s.t. -x+2y <= 0
     # x,y >= 0
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1351,7 +1351,7 @@ function linear8ctest(model::MOI.ModelLike, config::Config{T}) where {T}
     # min -x-y
     # s.t. x-y == 0
     # x,y >= 0
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1430,7 +1430,7 @@ function linear9test(model::MOI.ModelLike, config::Config{T}) where {T}
     #
     #   solution: (59.0909, 36.3636)
     #   objv: 71818.1818
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1523,7 +1523,7 @@ function linear10test(model::MOI.ModelLike, config::Config{T}) where {T}
     #
     #       s.t.  5 <= x + y <= 10
     #                  x,  y >= 0
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1699,7 +1699,7 @@ function linear10btest(model::MOI.ModelLike, config::Config{T}) where {T}
     #
     #       s.t.  -1 <= x + y <= 10
     #                   x,  y >= 0
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1807,7 +1807,7 @@ function linear11test(model::MOI.ModelLike, config::Config{T}) where {T}
     #      w +  z == 1
     #      w >= 0, z <= 0
     # sol: w = 1, z = 0
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1883,7 +1883,7 @@ function linear12test(model::MOI.ModelLike, config::Config{T}) where {T}
     # s.t. 2x-3y <= -7
     #      y <= 2
     # x,y >= 0
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -1967,7 +1967,7 @@ function linear13test(model::MOI.ModelLike, config::Config{T}) where {T}
     # find x, y
     # s.t. 2x + 3y >= 1
     #      x - y == 0
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports_constraint(
         model,
         MOI.ScalarAffineFunction{T},
@@ -2034,7 +2034,7 @@ function linear14test(model::MOI.ModelLike, config::Config{T}) where {T}
     # s.t. 3x + 2y + z <= 2
     #      x, y, z >= 0
     #      z <= 1
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -2172,7 +2172,7 @@ function linear15test(model::MOI.ModelLike, config::Config{T}) where {T}
     # minimize 0
     # s.t. 0 == 0
     #      x == 1
-    @test MOI.supports_incremental_interface(model, false) #=copy_names=#
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),

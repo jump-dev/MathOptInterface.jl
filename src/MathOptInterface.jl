@@ -95,40 +95,19 @@ Empty the model, that is, remove all variables, constraints and model attributes
 function empty! end
 
 """
-    supports_incremental_interface(model::ModelLike, copy_names::Bool)
+    supports_incremental_interface(model::ModelLike)
 
 Return a `Bool` indicating whether `model` supports building incrementally via
 [`add_variable`](@ref) and [`add_constraint`](@ref).
 
-`copy_names` is a `Bool` indicating whether the user wishes to set
-[`VariableName`](@ref) and [`ConstraintName`](@ref) attributes.
-If `model` supports the incremental interface but does not support name
-attributes, define
-```julia
-supports_incremental_interface(::MyNewModel, copy_names::Bool) = !copy_names
-```
-
 The main purpose of this function is to determine whether a model can be loaded
 into `model` incrementally or whether it should be cached and copied at once
 instead.
-
-This is used in two places to determine whether to add a cache:
-1. A first cache can be used to store the model as entered by the user as well
-   as the names of variables and constraints. This cache is created if this
-   function returns `false` when `copy_names` is `true`.
-2. If bridges are used, then a second cache can be used to store the bridged
-   model with unnamed variables and constraints. This cache is created if this
-   function returns `false` when `copy_names` is `false`.
-```
 """
-supports_incremental_interface(::ModelLike, ::Bool) = false
+supports_incremental_interface(::ModelLike) = false
 
 """
-    copy_to(
-        dest::ModelLike,
-        src::ModelLike;
-        copy_names::Bool = true,
-    )::IndexMap
+    copy_to(dest::ModelLike, src::ModelLike)::IndexMap
 
 Copy the model from `src` into `dest`.
 
@@ -140,9 +119,6 @@ indices from the `src` model to the corresponding indices in the `dest` model.
 
 ## Notes
 
- * If `copy_names == false`, the [`Name`](@ref), [`VariableName`](@ref) and
-   [`ConstraintName`](@ref) attributes are not copied, even if they are set in
-   `src`.
  * If a constraint that in `src` is not supported by `dest`, then an
    [`UnsupportedConstraint`](@ref) error is thrown.
  * If an [`AbstractModelAttribute`](@ref), [`AbstractVariableAttribute`](@ref),
@@ -154,7 +130,7 @@ indices from the `src` model to the corresponding indices in the `dest` model.
 ## IndexMap
 
 Implementations of `copy_to` must return an [`IndexMap`](@ref). For technical
-reasons, this type is defined in the Utilties submodule as
+reasons, this type is defined in the Utilities submodule as
 `MOI.Utilities.IndexMap`. However, since it is an integral part of the MOI API,
 we provide `MOI.IndexMap` as an alias.
 
@@ -173,13 +149,21 @@ is_valid(dest, x) # false (unless index_map[x] == x)
 is_valid(dest, index_map[x]) # true
 ```
 """
-function copy_to end
+function copy_to(dest, src; kwargs...)
+    if length(kwargs) > 0
+        @warn(
+            "copy_to with keyword arguments is deprecated. Now names are " *
+            "copied by default",
+            maxlog = 1,
+        )
+    end
+    return copy_to(dest, src)
+end
 
 """
     copy_to_and_optimize!(
         dest::AbstractOptimizer,
-        src::ModelLike;
-        kwargs...
+        src::ModelLike,
     )::IndexMap
 
 A single call equivalent to calling [`copy_to`](@ref) followed by
@@ -193,9 +177,9 @@ An optimizer can decide to implement this function instead of implementing
 !!! warning
     This is an experimental new feature of MOI v0.10 that may break in MOI v1.0.
 """
-function copy_to_and_optimize!(dest, src; kwargs...)
+function copy_to_and_optimize!(dest, src)
     # The arguments above are untyped to avoid ambiguities.
-    index_map = copy_to(dest, src; kwargs...)
+    index_map = copy_to(dest, src)
     optimize!(dest)
     return index_map
 end

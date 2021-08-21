@@ -27,12 +27,8 @@ abstract type AbstractDummyModel <: MOI.ModelLike end
 
 function MOI.empty!(::AbstractDummyModel) end
 
-function MOI.copy_to(
-    dest::AbstractDummyModel,
-    src::MOI.ModelLike;
-    copy_names::Bool = true,
-)
-    return MOIU.default_copy_to(dest, src; copy_names = copy_names)
+function MOI.copy_to(dest::AbstractDummyModel, src::MOI.ModelLike)
+    return MOIU.default_copy_to(dest, src)
 end
 
 MOI.supports(::AbstractDummyModel, ::MOI.ObjectiveSense) = true
@@ -151,7 +147,7 @@ function test_issue_849()
     )
     MOI.set(model, MOI.NLPBlock(), nlp_data)
     copy = MOIU.UniversalFallback(MOIU.Model{Float64}())
-    index_map = MOIU.default_copy_to(copy, model; copy_names = true)
+    index_map = MOIU.default_copy_to(copy, model)
     for vi in [a, b, c, x, y[1]]
         @test index_map[vi] == vi
     end
@@ -176,12 +172,7 @@ end
 
 MOI.empty!(model::ConstrainedVariablesModel) = empty!(model.added_constrained)
 
-function MOI.supports_incremental_interface(
-    model::ConstrainedVariablesModel,
-    ::Bool,
-)
-    return true
-end
+MOI.supports_incremental_interface(::ConstrainedVariablesModel) = true
 
 function MOI.copy_to(
     dest::ConstrainedVariablesModel,
@@ -286,12 +277,7 @@ function MOI.copy_to(
     return MOIU.default_copy_to(dest, src; kwargs...)
 end
 
-function MOI.supports_incremental_interface(
-    ::AbstractConstrainedVariablesModel,
-    ::Bool,
-)
-    return true
-end
+MOI.supports_incremental_interface(::AbstractConstrainedVariablesModel) = true
 
 function MOI.empty!(model::AbstractConstrainedVariablesModel)
     model.constraintIndices = MOI.ConstraintIndex[]
@@ -661,7 +647,7 @@ function MOI.supports_constraint(
     return true
 end
 
-MOI.supports_incremental_interface(::BoundModel, ::Bool) = true
+MOI.supports_incremental_interface(::BoundModel) = true
 
 function MOI.copy_to(dest::BoundModel, src::MOI.ModelLike; kwargs...)
     return MOIU.default_copy_to(dest, src; kwargs...)

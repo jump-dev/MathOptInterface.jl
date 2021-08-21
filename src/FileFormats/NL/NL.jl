@@ -240,11 +240,7 @@ struct _LinearNLPEvaluator <: MOI.AbstractNLPEvaluator end
 MOI.features_available(::_LinearNLPEvaluator) = [:ExprGraph]
 MOI.initialize(::_LinearNLPEvaluator, ::Vector{Symbol}) = nothing
 
-function MOI.copy_to(
-    dest::Model,
-    model::MOI.ModelLike;
-    copy_names::Bool = false,
-)
+function MOI.copy_to(dest::Model, model::MOI.ModelLike)
     mapping = MOI.Utilities.IndexMap()
     # Initialize the NLP block.
     nlp_block = try
