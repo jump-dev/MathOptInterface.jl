@@ -121,6 +121,41 @@ function test_MOI_Test()
     return
 end
 
+# !!! warning
+#     This is some type piracy! To enable CachingOptimizer to pass some MOI.Test
+#     functions with MockOptimizer, we overload `setup_test` to setup the inner
+#     mock optimizer.
+#
+#     This is pretty fragile! It requires the inner optimizer to be attached,
+#     amongst other things. It's used by `test_compute_conflict` below, but not
+#     by test_MOI_Test above (test_MOI_Test has `exclude = Any[MOI.optimize!]`).
+function MOI.Test.setup_test(
+    f::Any,
+    model::MOI.Utilities.CachingOptimizer{
+        MOI.Utilities.MockOptimizer{
+            MOI.Utilities.UniversalFallback{MOI.Utilities.Model{Float64}},
+        },
+        MOI.Utilities.Model{Float64},
+    },
+    config::MOI.Test.Config
+)
+    MOI.Test.setup_test(f, model.optimizer, config)
+    return
+end
+
+function test_compute_conflict()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    model = MOI.Utilities.CachingOptimizer(MOI.Utilities.Model{Float64}(), mock)
+    MOI.Test.runtests(
+        model,
+        MOI.Test.Config(),
+        include = ["test_solve_conflict"],
+    )
+    return
+end
+
 """
 Without an optimizer attached (i.e., `MOI.state(model) == NO_OPTIMIZER`) we
 need throw nice errors for attributes that are based on the optimizer. For

@@ -964,7 +964,7 @@ function setup_test(
                         [MOI.IN_CONFLICT],
                 ],
             )
-            MOI.set(model, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+            MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
         end,
     )
     return
@@ -1032,7 +1032,7 @@ function setup_test(
                     ) => [MOI.IN_CONFLICT],
                 ],
             )
-            MOI.set(model, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+            MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
         end,
     )
     return
@@ -1088,7 +1088,7 @@ function setup_test(
                         [MOI.IN_CONFLICT],
                 ],
             )
-            MOI.set(model, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+            MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
         end,
     )
     return
@@ -1170,7 +1170,7 @@ function setup_test(
                     ) => [MOI.NOT_IN_CONFLICT],
                 ],
             )
-            MOI.set(model, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+            MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
         end,
     )
     return
@@ -1249,7 +1249,7 @@ function setup_test(
                     ) => [MOI.NOT_IN_CONFLICT],
                 ],
             )
-            MOI.set(model, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+            MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
         end,
     )
     return
@@ -1331,7 +1331,7 @@ function setup_test(
                     ) => [MOI.NOT_IN_CONFLICT],
                 ],
             )
-            MOI.set(model, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+            MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
         end,
     )
     return
@@ -1380,7 +1380,7 @@ function setup_test(
                 MOI.NO_SOLUTION,
                 MOI.NO_SOLUTION,
             )
-            MOI.set(model, MOI.ConflictStatus(), MOI.NO_CONFLICT_EXISTS)
+            MOI.set(mock, MOI.ConflictStatus(), MOI.NO_CONFLICT_EXISTS)
         end,
     )
     return
@@ -1441,7 +1441,7 @@ function setup_test(
                     ) => [MOI.IN_CONFLICT],
                 ],
             )
-            MOI.set(model, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+            MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
         end,
     )
     return
