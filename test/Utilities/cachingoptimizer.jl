@@ -137,7 +137,7 @@ function MOI.Test.setup_test(
         },
         MOI.Utilities.Model{Float64},
     },
-    config::MOI.Test.Config
+    config::MOI.Test.Config,
 )
     MOI.Test.setup_test(f, model.optimizer, config)
     return
