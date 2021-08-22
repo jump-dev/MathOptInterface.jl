@@ -24,14 +24,14 @@ function bridge_constraint(
     psd_set = MOI.PositiveSemidefiniteConeTriangle(side_dim)
     psd_func = MOIU.zero_with_output_dimension(F, MOI.dimension(psd_set))
     for i in 1:side_dim
-        MOIU.operate_output_index!(+, T, trimap(i, i), psd_func, t)
+        MOIU.operate_output_index!(+, T, MOIU.trimap(i, i), psd_func, t)
     end
     X_idx = 2
     for j in 1:column_dim, i in (column_dim+1):side_dim
         MOIU.operate_output_index!(
             +,
             T,
-            trimap(i, j),
+            MOIU.trimap(i, j),
             psd_func,
             f_scalars[X_idx],
         )
@@ -101,7 +101,7 @@ function MOI.get(
     t = psd_func[1]
     side_dim = bridge.row_dim + bridge.column_dim
     X = psd_func[[
-        trimap(i, j) for j in 1:bridge.column_dim for
+        MOIU.trimap(i, j) for j in 1:bridge.column_dim for
         i in (bridge.column_dim+1):side_dim
     ]]
     return MOIU.convert_approx(G, MOIU.operate(vcat, T, t, X))
@@ -132,7 +132,7 @@ function MOI.get(
     t = primal[1]
     side_dim = bridge.row_dim + bridge.column_dim
     X = primal[[
-        trimap(i, j) for j in 1:bridge.column_dim for
+        MOIU.trimap(i, j) for j in 1:bridge.column_dim for
         i in (bridge.column_dim+1):side_dim
     ]]
     return vcat(t, X)
@@ -148,11 +148,11 @@ function MOI.set(
     side_dim = bridge.row_dim + column_dim
     primal = zeros(T, div(side_dim * (side_dim + 1), 2))
     for i in 1:side_dim
-        primal[trimap(i, i)] = value[1]
+        primal[MOIU.trimap(i, i)] = value[1]
     end
     X_idx = 2
     for j in 1:column_dim, i in (column_dim+1):side_dim
-        primal[trimap(i, j)] = value[X_idx]
+        primal[MOIU.trimap(i, j)] = value[X_idx]
         X_idx += 1
     end
     MOI.set(model, MOI.ConstraintPrimalStart(), bridge.psd_index, primal)
@@ -168,10 +168,11 @@ function MOI.get(
     dual = MOI.get(model, MOI.ConstraintDual(), bridge.psd_index)
     column_dim = bridge.column_dim
     side_dim = bridge.row_dim + column_dim
-    t = sum(dual[trimap(i, i)] for i in 1:side_dim)
+    t = sum(dual[MOIU.(i, i)] for i in 1:side_dim)
     X =
         2 * dual[[
-            trimap(i, j) for j in 1:column_dim for i in (column_dim+1):side_dim
+            MOIU.trimap(i, j) for j in 1:column_dim for
+            i in (column_dim+1):side_dim
         ]]
     return vcat(t, X)
 end
@@ -207,8 +208,8 @@ function bridge_constraint(
     U = MOI.add_variables(model, U_dim)
     V = MOI.add_variables(model, V_dim)
     diag_vars = vcat(
-        [U[trimap(i, i)] for i in 1:column_dim],
-        [V[trimap(i, i)] for i in 1:row_dim],
+        [U[MOIU.trimap(i, i)] for i in 1:column_dim],
+        [V[MOIU.trimap(i, i)] for i in 1:row_dim],
     )
     rhs = MOI.ScalarAffineFunction(
         MOI.ScalarAffineTerm.(one(T), diag_vars),
@@ -230,7 +231,7 @@ function bridge_constraint(
             vcat,
             T,
             psd_func,
-            MOI.VectorOfVariables(V[[trimap(i, j) for j in 1:i]]),
+            MOI.VectorOfVariables(V[[MOIU.trimap(i, j) for j in 1:i]]),
         )
     end
     psd_index = MOI.add_constraint(model, psd_func, psd_set)
@@ -346,13 +347,17 @@ function MOI.get(
         MOIU.operate(
             /,
             T,
-            MOIU.operate(+, T, [psd_func[trimap(i, i)] for i in 1:side_dim]...),
+            MOIU.operate(
+                +,
+                T,
+                [psd_func[MOIU.trimap(i, i)] for i in 1:side_dim]...,
+            ),
             T(2),
         ),
     )
     t = MOIU.remove_variable(MOIU.remove_variable(t, bridge.U), bridge.V)
     X = psd_func[[
-        trimap(i, j) for j in 1:bridge.column_dim for
+        MOIU.trimap(i, j) for j in 1:bridge.column_dim for
         i in (bridge.column_dim+1):side_dim
     ]]
     return MOIU.convert_approx(H, MOIU.operate(vcat, T, t, X))
@@ -382,9 +387,9 @@ function MOI.get(
     ge_primal = MOI.get(model, MOI.ConstraintPrimal(), bridge.ge_index)
     psd_primal = MOI.get(model, MOI.ConstraintPrimal(), bridge.psd_index)
     side_dim = bridge.row_dim + bridge.column_dim
-    t = ge_primal + sum(psd_primal[trimap(i, i)] for i in 1:side_dim) / 2
+    t = ge_primal + sum(psd_primal[MOIU.trimap(i, i)] for i in 1:side_dim) / 2
     X = psd_primal[[
-        trimap(i, j) for j in 1:bridge.column_dim for
+        MOIU.trimap(i, j) for j in 1:bridge.column_dim for
         i in (bridge.column_dim+1):side_dim
     ]]
     return vcat(t, X)
@@ -401,7 +406,7 @@ function MOI.get(
     side_dim = bridge.row_dim + bridge.column_dim
     X =
         2 * psd_dual[[
-            trimap(i, j) for j in 1:bridge.column_dim for
+            MOIU.trimap(i, j) for j in 1:bridge.column_dim for
             i in (bridge.column_dim+1):side_dim
         ]]
     return vcat(t, X)
@@ -418,11 +423,11 @@ function MOI.set(
     side_dim = bridge.row_dim + column_dim
     dual = zeros(T, div(side_dim * (side_dim + 1), 2))
     for i in 1:side_dim
-        dual[trimap(i, i)] = value[1]
+        dual[MOIU.trimap(i, i)] = value[1]
     end
     X_idx = 2
     for j in 1:column_dim, i in (column_dim+1):side_dim
-        dual[trimap(i, j)] = value[X_idx] / 2
+        dual[MOIU.trimap(i, j)] = value[X_idx] / 2
         X_idx += 1
     end
     MOI.set(model, MOI.ConstraintDualStart(), bridge.psd_index, dual)

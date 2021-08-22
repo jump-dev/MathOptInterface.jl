@@ -122,3 +122,18 @@ Return the dimension `d` such that
 function side_dimension_for_vectorized_dimension(n::Base.Integer)
     return div(isqrt(1 + 8n), 2)
 end
+
+"""
+    trimap(row::Integer, column::Integer)
+
+Convert between the row and column indices of a matrix, to the linear index of
+the corresponding element in the triangular representation.
+
+This is most useful when mapping between `ConeSquare` and `ConeTriangle` sets.
+"""
+function trimap(row::Integer, column::Integer)
+    if row < column
+        return trimap(column, row)
+    end
+    return div((row - 1) * row, 2) + column
+end
