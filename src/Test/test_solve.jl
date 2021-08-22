@@ -923,8 +923,8 @@ function test_solve_conflict_bound_bound(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    @requires _supports(config, MOI.ConflictStatus)
-    @requires _supports(config, MOI.ConstraintConflictStatus)
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
     try
         MOI.get(model, MOI.ConflictStatus())
     catch
@@ -979,8 +979,8 @@ function test_solve_conflict_two_affine(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    @requires _supports(config, MOI.ConflictStatus)
-    @requires _supports(config, MOI.ConstraintConflictStatus)
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
     try
         MOI.get(model, MOI.ConflictStatus())
     catch
@@ -1047,8 +1047,8 @@ function test_solve_conflict_invalid_interval(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    @requires _supports(config, MOI.ConflictStatus)
-    @requires _supports(config, MOI.ConstraintConflictStatus)
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
     try
         MOI.get(model, MOI.ConflictStatus())
     catch
@@ -1103,8 +1103,8 @@ function test_solve_conflict_affine_affine(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    @requires _supports(config, MOI.ConflictStatus)
-    @requires _supports(config, MOI.ConstraintConflictStatus)
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
     try
         MOI.get(model, MOI.ConflictStatus())
     catch
@@ -1185,8 +1185,8 @@ function test_solve_conflict_EqualTo(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    @requires _supports(config, MOI.ConflictStatus)
-    @requires _supports(config, MOI.ConstraintConflictStatus)
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
     try
         MOI.get(model, MOI.ConflictStatus())
     catch
@@ -1264,8 +1264,8 @@ function test_solve_conflict_NOT_IN_CONFLICT(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    @requires _supports(config, MOI.ConflictStatus)
-    @requires _supports(config, MOI.ConstraintConflictStatus)
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
     try
         MOI.get(model, MOI.ConflictStatus())
     catch
@@ -1346,8 +1346,8 @@ function test_solve_conflict_feasible(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    @requires _supports(config, MOI.ConflictStatus)
-    @requires _supports(config, MOI.ConstraintConflictStatus)
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
     try
         MOI.get(model, MOI.ConflictStatus())
     catch
@@ -1395,8 +1395,8 @@ function test_solve_conflict_zeroone(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    @requires _supports(config, MOI.ConflictStatus)
-    @requires _supports(config, MOI.ConstraintConflictStatus)
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
     try
         MOI.get(model, MOI.ConflictStatus())
     catch
