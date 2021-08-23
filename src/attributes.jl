@@ -1035,7 +1035,13 @@ struct ObjectiveBound <: AbstractModelAttribute end
 """
     RelativeGap()
 
-A model attribute for the final relative optimality gap, defined as ``\\frac{|b-f|}{|f|}``, where ``b`` is the best bound and ``f`` is the best feasible objective value.
+A model attribute for the final relative optimality gap.
+
+!!! warning
+    The definition of this gap is solver-dependent. However, most solvers
+    implementing this attribute define the relative gap as some variation of
+    ``\\frac{|b-f|}{|f|}``, where ``b`` is the best bound and ``f`` is the best
+    feasible objective value.
 """
 struct RelativeGap <: AbstractModelAttribute end
 
