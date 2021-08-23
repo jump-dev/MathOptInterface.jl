@@ -175,6 +175,19 @@ function test_dot_coefficients()
     @test MOIU.dot_coefficients(sp_vec, MOI.LogDetConeTriangle(3)) == sp_vec
 end
 
+function test_trimap()
+    @test MOIU.trimap(1, 1) == 1
+    @test MOIU.trimap(1, 2) == 2
+    @test MOIU.trimap(2, 1) == 2
+    @test MOIU.trimap(2, 2) == 3
+    @test MOIU.trimap(3, 1) == 4
+    @test MOIU.trimap(1, 3) == 4
+    @test MOIU.trimap(3, 2) == 5
+    @test MOIU.trimap(2, 3) == 5
+    @test MOIU.trimap(3, 3) == 6
+    return
+end
+
 end  # module
 
 TestSets.runtests()
