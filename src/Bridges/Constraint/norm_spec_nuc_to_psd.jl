@@ -168,7 +168,7 @@ function MOI.get(
     dual = MOI.get(model, MOI.ConstraintDual(), bridge.psd_index)
     column_dim = bridge.column_dim
     side_dim = bridge.row_dim + column_dim
-    t = sum(dual[MOIU.(i, i)] for i in 1:side_dim)
+    t = sum(dual[MOIU.trimap(i, i)] for i in 1:side_dim)
     X =
         2 * dual[[
             MOIU.trimap(i, j) for j in 1:column_dim for
