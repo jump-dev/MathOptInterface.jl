@@ -606,13 +606,13 @@ end
         args,
         F::Type{<:MOI.AbstractFunction},
         S::Type{<:MOI.AbstractSet},
-        init,
+        value::T,
         operate_variable_bridges!,
         operate_constraint_bridges!,
-    )
+    )::T where {T}
 
 If `F`-in-`S` constraints may be added to `b.model`, starts with
-`value = MOI.get(b.model, args...)`, otherwise, starts with `value = init()`.
+`value = MOI.get(b.model, args...)`, otherwise, starts with `value`.
 
 Then:
  * if `F`-in-`S` constraints may correspond to bridged variables, modify it with
@@ -622,7 +622,7 @@ Then:
 then return the final `value`.
 
 For example, [`MOI.supports`](@ref) calls this function with
- * `init = () -> true`
+ * `value = true`
  * `operate_variable_bridges(ok) = ok && MOI.supports(b, attr, Variable.concrete_bridge_type(b, S))`
  * `operate_constraint_bridges(ok) = ok && MOI.supports(b, attr, Constraint.concrete_bridge_type(b, F, S))`.
 """
@@ -630,26 +630,23 @@ function reduce_bridged(
     b::AbstractBridgeOptimizer,
     F::Type{<:MOI.AbstractFunction},
     S::Type{<:MOI.AbstractSet},
-    # TODO(odow): why is init a function and not a constant?
-    init,
-    model_value,
-    operate_variable_bridges!,
-    operate_constraint_bridges!,
-)
+    value::T,
+    model_value::Function,
+    operate_variable_bridges!::Function,
+    operate_constraint_bridges!::Function,
+)::T where {T}
     variable_function = F == MOIU.variable_function_type(S)
     # A `F`-in-`S` could be added to the model either if it this constraint
-    # is not bridged or if variables constrained on creations to `S` are not bridged
-    # and `F` is `SingleVariable` or `VectorOfVariables`.
+    # is not bridged or if variables constrained on creations to `S` are not
+    # bridged and `F` is `SingleVariable` or `VectorOfVariables`.
     if !is_bridged(b, F, S) || (variable_function && !is_bridged(b, S))
         value = model_value()
-    else
-        value = init()
     end
     if variable_function && is_bridged(b, S) && is_variable_bridged(b, S)
         value = operate_variable_bridges!(value)
     end
-    # Even if it is not bridged, it may have been force-bridged because one of the
-    # variable in the function was bridged.
+    # Even if it is not bridged, it may have been force-bridged because one of
+    # the variable in the function was bridged.
     if is_bridged(b, F, S) ||
        (variable_function && supports_constraint_bridges(b))
         value = operate_constraint_bridges!(value)
@@ -678,7 +675,7 @@ function get_all_including_bridged(
         b,
         F,
         S,
-        () -> MOI.ConstraintIndex{F,S}[],
+        MOI.ConstraintIndex{F,S}[],
         () -> MOI.get(b.model, attr),
         list -> append!(
             list,
@@ -697,9 +694,8 @@ end
 # Remove constraints bridged by `bridge` from `list`
 function _remove_bridged(list, bridge, attr)
     for c in MOI.get(bridge, attr)
-        # TODO(odow): fix this
-        i = something(findfirst(isequal(c), list), 0)
-        if !iszero(i)
+        i = findfirst(isequal(c), list)
+        if i !== nothing
             MOI.deleteat!(list, i)
         end
     end
@@ -748,7 +744,7 @@ function get_all_including_bridged(
         b,
         F,
         S,
-        () -> 0,
+        Int64(0),
         () -> MOI.get(b.model, attr),
         num -> num + Variable.number_with_set(Variable.bridges(b), S),
         num ->
@@ -1237,7 +1233,7 @@ function MOI.supports(
         b,
         F,
         S,
-        () -> true,
+        true,
         () -> MOI.supports(b.model, attr, IndexType),
         ok -> ok && MOI.supports(b, attr, Variable.concrete_bridge_type(b, S)),
         ok ->
