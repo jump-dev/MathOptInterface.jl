@@ -913,3 +913,536 @@ function setup_test(
     )
     return
 end
+
+"""
+    test_solve_conflict_bound_bound(model::MOI.ModelLike, config::Config)
+
+Test the ConflictStatus API when two variable bounds are in the conflict.
+"""
+function test_solve_conflict_bound_bound(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
+    try
+        MOI.get(model, MOI.ConflictStatus())
+    catch
+        return  # If this fails, skip the test.
+    end
+    x = MOI.add_variable(model)
+    c1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(T(2)))
+    c2 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(one(T)))
+    @test MOI.get(model, MOI.ConflictStatus()) ==
+          MOI.COMPUTE_CONFLICT_NOT_CALLED
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    MOI.compute_conflict!(model)
+    @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c1) == MOI.IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c2) == MOI.IN_CONFLICT
+    return
+end
+
+function setup_test(
+    ::typeof(test_solve_conflict_bound_bound),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        mock::MOIU.MockOptimizer -> begin
+            MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                MOI.NO_SOLUTION,
+                MOI.NO_SOLUTION;
+                constraint_conflict_status = [
+                    (MOI.SingleVariable, MOI.LessThan{Float64}) =>
+                        [MOI.IN_CONFLICT],
+                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
+                        [MOI.IN_CONFLICT],
+                ],
+            )
+            MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+        end,
+    )
+    return
+end
+
+"""
+    test_solve_conflict_two_affine(model::MOI.ModelLike, config::Config)
+
+Test the ConflictStatus API when two affine constraints are in the conflict.
+"""
+function test_solve_conflict_two_affine(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
+    try
+        MOI.get(model, MOI.ConflictStatus())
+    catch
+        return  # If this fails, skip the test.
+    end
+    x = MOI.add_variable(model)
+    c1 = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([one(T)], [x]), zero(T)),
+        MOI.GreaterThan(T(2)),
+    )
+    c2 = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([one(T)], [x]), zero(T)),
+        MOI.LessThan(T(1)),
+    )
+    @test MOI.get(model, MOI.ConflictStatus()) ==
+          MOI.COMPUTE_CONFLICT_NOT_CALLED
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    MOI.compute_conflict!(model)
+    @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c1) == MOI.IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c2) == MOI.IN_CONFLICT
+    return
+end
+
+function setup_test(
+    ::typeof(test_solve_conflict_two_affine),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        mock::MOIU.MockOptimizer -> begin
+            MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                MOI.NO_SOLUTION,
+                MOI.NO_SOLUTION;
+                constraint_conflict_status = [
+                    (
+                        MOI.ScalarAffineFunction{Float64},
+                        MOI.LessThan{Float64},
+                    ) => [MOI.IN_CONFLICT],
+                    (
+                        MOI.ScalarAffineFunction{Float64},
+                        MOI.GreaterThan{Float64},
+                    ) => [MOI.IN_CONFLICT],
+                ],
+            )
+            MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+        end,
+    )
+    return
+end
+
+"""
+    test_solve_conflict_invalid_interval(model::MOI.ModelLike, config::Config)
+
+Test the ConflictStatus API when an interval bound has upper < lower.
+"""
+function test_solve_conflict_invalid_interval(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
+    try
+        MOI.get(model, MOI.ConflictStatus())
+    catch
+        return  # If this fails, skip the test.
+    end
+    x = MOI.add_variable(model)
+    c1 = MOI.add_constraint(
+        model,
+        MOI.SingleVariable(x),
+        MOI.Interval(one(T), zero(T)),
+    )
+    @test MOI.get(model, MOI.ConflictStatus()) ==
+          MOI.COMPUTE_CONFLICT_NOT_CALLED
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    MOI.compute_conflict!(model)
+    @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c1) == MOI.IN_CONFLICT
+    return
+end
+
+function setup_test(
+    ::typeof(test_solve_conflict_invalid_interval),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        mock::MOIU.MockOptimizer -> begin
+            MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                MOI.NO_SOLUTION,
+                MOI.NO_SOLUTION;
+                constraint_conflict_status = [
+                    (MOI.SingleVariable, MOI.Interval{Float64}) =>
+                        [MOI.IN_CONFLICT],
+                ],
+            )
+            MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+        end,
+    )
+    return
+end
+
+"""
+    test_solve_conflict_affine_affine(model::MOI.ModelLike, config::Config)
+
+Test the ConflictStatus API when two constraints are in the conflict.
+"""
+function test_solve_conflict_affine_affine(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
+    try
+        MOI.get(model, MOI.ConflictStatus())
+    catch
+        return  # If this fails, skip the test.
+    end
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    b1 = MOI.add_constraint(
+        model,
+        MOI.SingleVariable(x),
+        MOI.GreaterThan(zero(T)),
+    )
+    b2 = MOI.add_constraint(
+        model,
+        MOI.SingleVariable(y),
+        MOI.GreaterThan(zero(T)),
+    )
+    cf1 =
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), [x, y]), zero(T))
+    c1 = MOI.add_constraint(model, cf1, MOI.LessThan(-one(T)))
+    cf2 = MOI.ScalarAffineFunction(
+        MOI.ScalarAffineTerm.([one(T), -one(T)], [x, y]),
+        zero(T),
+    )
+    c2 = MOI.add_constraint(model, cf2, MOI.GreaterThan(one(T)))
+    @test MOI.get(model, MOI.ConflictStatus()) ==
+          MOI.COMPUTE_CONFLICT_NOT_CALLED
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    MOI.compute_conflict!(model)
+    @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), b1) == MOI.IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), b2) == MOI.IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c1) == MOI.IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c2) ==
+          MOI.NOT_IN_CONFLICT
+    return
+end
+
+function setup_test(
+    ::typeof(test_solve_conflict_affine_affine),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        mock::MOIU.MockOptimizer -> begin
+            MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                MOI.NO_SOLUTION,
+                MOI.NO_SOLUTION;
+                constraint_conflict_status = [
+                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
+                        [MOI.IN_CONFLICT, MOI.IN_CONFLICT],
+                    (
+                        MOI.ScalarAffineFunction{Float64},
+                        MOI.LessThan{Float64},
+                    ) => [MOI.IN_CONFLICT],
+                    (
+                        MOI.ScalarAffineFunction{Float64},
+                        MOI.GreaterThan{Float64},
+                    ) => [MOI.NOT_IN_CONFLICT],
+                ],
+            )
+            MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+        end,
+    )
+    return
+end
+
+"""
+    test_solve_conflict_EqualTo(model::MOI.ModelLike, config::Config)
+
+Test the ConflictStatus API when some constraints are EqualTo.
+"""
+function test_solve_conflict_EqualTo(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
+    try
+        MOI.get(model, MOI.ConflictStatus())
+    catch
+        return  # If this fails, skip the test.
+    end
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    b1 = MOI.add_constraint(
+        model,
+        MOI.SingleVariable(x),
+        MOI.GreaterThan(zero(T)),
+    )
+    b2 = MOI.add_constraint(
+        model,
+        MOI.SingleVariable(y),
+        MOI.GreaterThan(zero(T)),
+    )
+    cf1 =
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), [x, y]), zero(T))
+    c1 = MOI.add_constraint(model, cf1, MOI.EqualTo(-one(T)))
+    cf2 = MOI.ScalarAffineFunction(
+        MOI.ScalarAffineTerm.([one(T), -one(T)], [x, y]),
+        zero(T),
+    )
+    c2 = MOI.add_constraint(model, cf2, MOI.GreaterThan(one(T)))
+    @test MOI.get(model, MOI.ConflictStatus()) ==
+          MOI.COMPUTE_CONFLICT_NOT_CALLED
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    MOI.compute_conflict!(model)
+    @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), b1) == MOI.IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), b2) == MOI.IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c1) == MOI.IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c2) ==
+          MOI.NOT_IN_CONFLICT
+    return
+end
+
+function setup_test(
+    ::typeof(test_solve_conflict_EqualTo),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        mock::MOIU.MockOptimizer -> begin
+            MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                MOI.NO_SOLUTION,
+                MOI.NO_SOLUTION;
+                constraint_conflict_status = [
+                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
+                        [MOI.IN_CONFLICT, MOI.IN_CONFLICT],
+                    (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => [MOI.IN_CONFLICT],
+                    (
+                        MOI.ScalarAffineFunction{Float64},
+                        MOI.GreaterThan{Float64},
+                    ) => [MOI.NOT_IN_CONFLICT],
+                ],
+            )
+            MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+        end,
+    )
+    return
+end
+
+"""
+    test_solve_conflict_NOT_IN_CONFLICT(model::MOI.ModelLike, config::Config)
+
+Test the ConflictStatus API when some constraints are not in the conlict.
+"""
+function test_solve_conflict_NOT_IN_CONFLICT(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
+    try
+        MOI.get(model, MOI.ConflictStatus())
+    catch
+        return  # If this fails, skip the test.
+    end
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    z = MOI.add_variable(model)
+    S = MOI.GreaterThan(zero(T))
+    b1 = MOI.add_constraint(model, MOI.SingleVariable(x), S)
+    b2 = MOI.add_constraint(model, MOI.SingleVariable(y), S)
+    b3 = MOI.add_constraint(model, MOI.SingleVariable(z), S)
+    cf1 =
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), [x, y]), zero(T))
+    c1 = MOI.add_constraint(model, cf1, MOI.LessThan(-one(T)))
+    cf2 = MOI.ScalarAffineFunction(
+        MOI.ScalarAffineTerm.([one(T), -one(T), one(T)], [x, y, z]),
+        zero(T),
+    )
+    c2 = MOI.add_constraint(model, cf2, MOI.GreaterThan(one(T)))
+    @test MOI.get(model, MOI.ConflictStatus()) ==
+          MOI.COMPUTE_CONFLICT_NOT_CALLED
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    MOI.compute_conflict!(model)
+    @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), b1) == MOI.IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), b2) == MOI.IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), b3) ==
+          MOI.NOT_IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c1) == MOI.IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c2) ==
+          MOI.NOT_IN_CONFLICT
+    return
+end
+
+function setup_test(
+    ::typeof(test_solve_conflict_NOT_IN_CONFLICT),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        mock::MOIU.MockOptimizer -> begin
+            MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                MOI.NO_SOLUTION,
+                MOI.NO_SOLUTION;
+                constraint_conflict_status = [
+                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [
+                        MOI.IN_CONFLICT,
+                        MOI.IN_CONFLICT,
+                        MOI.NOT_IN_CONFLICT,
+                    ],
+                    (
+                        MOI.ScalarAffineFunction{Float64},
+                        MOI.LessThan{Float64},
+                    ) => [MOI.IN_CONFLICT],
+                    (
+                        MOI.ScalarAffineFunction{Float64},
+                        MOI.GreaterThan{Float64},
+                    ) => [MOI.NOT_IN_CONFLICT],
+                ],
+            )
+            MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+        end,
+    )
+    return
+end
+
+"""
+    test_solve_conflict_feasible(model::MOI.ModelLike, config::Config)
+
+Test the ConflictStatus API when the problem is feasible.
+"""
+function test_solve_conflict_feasible(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
+    try
+        MOI.get(model, MOI.ConflictStatus())
+    catch
+        return  # If this fails, skip the test.
+    end
+    x = MOI.add_variable(model)
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(T), x)], zero(T))
+    _ = MOI.add_constraint(model, f, MOI.GreaterThan(one(T)))
+    _ = MOI.add_constraint(model, f, MOI.LessThan(T(2)))
+    @test MOI.get(model, MOI.ConflictStatus()) ==
+          MOI.COMPUTE_CONFLICT_NOT_CALLED
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    MOI.compute_conflict!(model)
+    @test MOI.get(model, MOI.ConflictStatus()) == MOI.NO_CONFLICT_EXISTS
+    return
+end
+
+function setup_test(
+    ::typeof(test_solve_conflict_feasible),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        mock::MOIU.MockOptimizer -> begin
+            MOIU.mock_optimize!(
+                mock,
+                MOI.OPTIMAL,
+                MOI.NO_SOLUTION,
+                MOI.NO_SOLUTION,
+            )
+            MOI.set(mock, MOI.ConflictStatus(), MOI.NO_CONFLICT_EXISTS)
+        end,
+    )
+    return
+end
+
+"""
+    test_solve_conflict_zeroone(model::MOI.ModelLike, config::Config)
+
+Test the ConflictStatus API when an integrality is in the conflict.
+"""
+function test_solve_conflict_zeroone(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
+    try
+        MOI.get(model, MOI.ConflictStatus())
+    catch
+        return  # If this fails, skip the test.
+    end
+    x, c1 = MOI.add_constrained_variable(model, MOI.ZeroOne())
+    c2 = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), [x]), zero(T)),
+        MOI.GreaterThan(T(2)),
+    )
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    MOI.compute_conflict!(model)
+    @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+    zeroone_conflict = MOI.get(model, MOI.ConstraintConflictStatus(), c1)
+    @test zeroone_conflict == MOI.MAYBE_IN_CONFLICT ||
+          zeroone_conflict == MOI.IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c2) == MOI.IN_CONFLICT
+    return
+end
+
+function setup_test(
+    ::typeof(test_solve_conflict_zeroone),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        mock::MOIU.MockOptimizer -> begin
+            MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                MOI.NO_SOLUTION,
+                MOI.NO_SOLUTION;
+                constraint_conflict_status = [
+                    (MOI.SingleVariable, MOI.ZeroOne) =>
+                        [MOI.MAYBE_IN_CONFLICT],
+                    (
+                        MOI.ScalarAffineFunction{Float64},
+                        MOI.GreaterThan{Float64},
+                    ) => [MOI.IN_CONFLICT],
+                ],
+            )
+            MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+        end,
+    )
+    return
+end

@@ -57,6 +57,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     dual_status::Dict{Int,MOI.ResultStatusCode}
     constraint_dual::Dict{MOI.ConstraintIndex,Dict{Int,Any}}
     # Constraint conflicts
+    compute_conflict_called::Bool
     conflict_status::MOI.ConflictStatusCode
     constraint_conflict_status::Dict{
         MOI.ConstraintIndex,
@@ -114,6 +115,7 @@ function MockOptimizer(
         Dict{Int,MOI.ResultStatusCode}(),
         Dict{MOI.ConstraintIndex,Dict{Int,Any}}(),
         #
+        false,
         MOI.COMPUTE_CONFLICT_NOT_CALLED,
         Dict{MOI.ConstraintIndex,MOI.ConflictParticipationStatusCode}(),
         # Basis status
@@ -199,7 +201,10 @@ function MOI.optimize!(mock::MockOptimizer)
     return
 end
 
-MOI.compute_conflict!(::MockOptimizer) = nothing
+function MOI.compute_conflict!(model::MockOptimizer)
+    model.compute_conflict_called = true
+    return
+end
 
 function throw_mock_unsupported_names(attr)
     return throw(
@@ -292,7 +297,12 @@ function MOI.set(
     return
 end
 
-MOI.get(mock::MockOptimizer, ::MOI.ConflictStatus) = mock.conflict_status
+function MOI.get(mock::MockOptimizer, ::MOI.ConflictStatus)
+    if mock.compute_conflict_called
+        return mock.conflict_status
+    end
+    return MOI.COMPUTE_CONFLICT_NOT_CALLED
+end
 
 function MOI.set(mock::MockOptimizer, ::MockModelAttribute, value::Integer)
     mock.mock_model_attribute = value
@@ -429,7 +439,7 @@ function MOI.set(
     idx::MOI.ConstraintIndex,
     value,
 )
-    mock.constraint_conflict_status[idx] = value
+    mock.constraint_conflict_status[xor_index(idx)] = value
     return
 end
 
@@ -699,7 +709,7 @@ function MOI.get(
     idx::MOI.ConstraintIndex,
 )
     MOI.throw_if_not_valid(mock, idx)
-    return mock.constraint_conflict_status[idx]
+    return mock.constraint_conflict_status[xor_index(idx)]
 end
 
 function _safe_set_result(
@@ -745,6 +755,9 @@ function MOI.empty!(mock::MockOptimizer)
     empty!(mock.mock_constraint_attribute)
     mock.optimize_called = false
     mock.termination_status = MOI.OPTIMIZE_NOT_CALLED
+    mock.compute_conflict_called = false
+    mock.conflict_status = MOI.COMPUTE_CONFLICT_NOT_CALLED
+    empty!(mock.constraint_conflict_status)
     empty!(mock.objective_value)
     empty!(mock.dual_objective_value)
     empty!(mock.primal_status)
@@ -967,6 +980,7 @@ end
         constraint_duals::Pair{Tuple{DataTypeDataType},<:Vector}...;
         constraint_basis_status = Pair{Tuple{DataTypeDataType},<:Vector}[],
         variable_basis_status = MOI.BasisStatusCode[],
+        constraint_conflict_status = Pair{Tuple{Type,Type},<:Vector}[],
     )
 
 Fake the result of a call to `optimize!` in the mock optimizer by storing the
@@ -998,6 +1012,10 @@ solution.
  * `variable_basis_status`: a vector of `MOI.BasisStatusCode`, corresponding to
    the `MOI.VariableBasisStatus` attribute of the variables in the order
    returned by `MOI.ListOfVariableIndices`.
+
+ * `constraint_conflict_status`: a vector of pairs similar to
+   `constraint_duals`, except this time for the `MOI.ConstraintConflictStatus`
+   attribute.
 """
 function mock_optimize!(
     mock::MockOptimizer,
@@ -1010,6 +1028,7 @@ function mock_optimize!(
     dual_status_constraint_duals...;
     constraint_basis_status = [],
     variable_basis_status = MOI.BasisStatusCode[],
+    constraint_conflict_status = [],
     var_basis = nothing,
     con_basis = nothing,
 )
@@ -1040,6 +1059,18 @@ function mock_optimize!(
                 MOI.ConstraintBasisStatus(),
                 ci,
                 con_basis_pair.second[i],
+            )
+        end
+    end
+    for con_conflict_pair in constraint_conflict_status
+        F, S = con_conflict_pair.first
+        indices = MOI.get(mock, MOI.ListOfConstraintIndices{F,S}())
+        for (i, ci) in enumerate(indices)
+            MOI.set(
+                mock,
+                MOI.ConstraintConflictStatus(),
+                ci,
+                con_conflict_pair.second[i],
             )
         end
     end
