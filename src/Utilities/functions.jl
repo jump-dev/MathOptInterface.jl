@@ -2858,7 +2858,7 @@ function operate(
         funcs...,
     )
     fill_vector(constant, T, 0, 0, fill_constant, output_dim, funcs...)
-    return VQF(affine_terms, quadratic_terms, constant)
+    return VQF(quadratic_terms, affine_terms, constant)
 end
 
 # Similar to `eachscalar` but faster, see
