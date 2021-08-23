@@ -80,7 +80,6 @@ mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
     hash::F
     inverse_hash::I
     is_dense::Bool
-    set::BitSet
     vector::Vector{V}
     dict::OrderedCollections.OrderedDict{K,V}
     function CleverDict{K,V}(
@@ -88,15 +87,13 @@ mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
         inverse_hash::I,
         n::Integer = 0,
     ) where {K,V,F,I}
-        set = BitSet()
-        sizehint!(set, n)
-        vec = Vector{K}(undef, n)
+        vec = K[]
+        sizehint!(vec, n)
         return new{K,V,F,I}(
             0,
             hash,
             inverse_hash,
             true,
-            set,
             vec,
             OrderedCollections.OrderedDict{K,V}(),
         )
@@ -137,30 +134,28 @@ function add_item(c::CleverDict{K,V}, val::V)::K where {K,V}
     return key
 end
 
-function Base.empty!(c::CleverDict, init_in_dense_mode = true)
-    if _is_dense(c)
-        empty!(c.vector)
-        empty!(c.set)
-    else
-        empty!(c.dict)
-    end
+function Base.empty!(c::CleverDict)
+    empty!(c.vector)
+    empty!(c.dict)
     c.last_index = 0
-    c.is_dense = init_in_dense_mode
+    c.is_dense = true
     return
 end
 
 function Base.length(c::CleverDict)
-    # Use c.set instead of c.vector due to initial allocation of .vector.
-    return _is_dense(c) ? length(c.set) : length(c.dict)
+    return _is_dense(c) ? length(c.vector) : length(c.dict)
 end
 
 function Base.haskey(c::CleverDict{K}, key::K) where {K}
-    return _is_dense(c) ? c.hash(key)::Int64 in c.set : haskey(c.dict, key)
+    if _is_dense(c)
+        return 1 <= c.hash(key)::Int64 <= length(c.vector)
+    end
+    return haskey(c.dict, key)
 end
 
-function Base.keys(c::CleverDict)
+function Base.keys(c::CleverDict{K}) where {K}
     if _is_dense(c)
-        return [_inverse_hash(c, index) for index in c.set]
+        return K[_inverse_hash(c, i) for i in 1:length(c.vector)]
     end
     return collect(keys(c.dict))
 end
@@ -175,7 +170,7 @@ function Base.get(c::CleverDict, key, default)
     return get(c.dict, key, default)
 end
 
-function Base.getindex(c::CleverDict, key)
+function Base.getindex(c::CleverDict{K,V}, key::K) where {K,V}
     if _is_dense(c)
         if !haskey(c, key)
             throw(KeyError(key))
@@ -196,10 +191,8 @@ function Base.setindex!(c::CleverDict{K,V}, value::V, key::K)::V where {K,V}
     end
     if 1 <= h <= length(c.vector) && _is_dense(c)
         c.vector[h] = value
-        push!(c.set, h)
     elseif h == length(c.vector) + 1 && _is_dense(c)
         push!(c.vector, value)
-        push!(c.set, h)
     else
         if _is_dense(c)
             _rehash(c)
@@ -222,7 +215,6 @@ function _rehash(c::CleverDict{K}) where {K}
         c.dict[k] = v
     end
     empty!(c.vector)
-    empty!(c.set)
     c.is_dense = false
     return
 end
@@ -268,79 +260,39 @@ function Base.getindex(c::CleverDict{K,V}, index::LinearIndex)::V where {K,V}
 end
 
 function Base.isempty(c::CleverDict)
-    return _is_dense(c) ? isempty(c.set) : isempty(c.dict)
+    return _is_dense(c) ? isempty(c.vector) : isempty(c.dict)
 end
 
 Base.haskey(::CleverDict, key) = false
 
-# Here, we implement the iterate functions for our `CleverDict`. For either
-# backend (`OrderedDict` or `Vector`+`BitSet`) we return the same _State type
-# so that `iterate` returns the same
-# type regardless of the backing datastructure. To help inference, we convert
-# the return type. Don't use a type-assertion because this doesn't support `V`
-# being an abstract type.
-
-struct _State
-    int::Int64
-    uint::UInt64
-    # ::Integer is needed for 32-bit machines.
-    _State(i::Integer) = new(Int64(i), UInt64(0))
-    _State(i::Integer, j::UInt64) = new(Int64(i), j)
-end
-
-function Base.iterate(
-    c::CleverDict{K,V},
-)::Union{Nothing,Tuple{Pair{K,V},_State}} where {K,V}
+function Base.iterate(c::CleverDict{K,V}) where {K,V}
     if _is_dense(c)
-        itr = iterate(c.set)
+        itr = iterate(c.vector)
         if itr === nothing
             return
         end
-        el, i = itr
-        new_el = _inverse_hash(c, el) => c.vector[el]::V
-        @static if VERSION >= v"1.4.0"
-            return new_el, _State(i[2], i[1])
-        else
-            return new_el, _State(i)
-        end
+        return _inverse_hash(c, 1) => itr[1]::V, itr[2]::Int
     end
     itr = iterate(c.dict)
     if itr === nothing
         return
     end
-    el, i = itr
-    return convert(Pair{K,V}, el), _State(i)
+    return convert(Pair{K,V}, itr[1]), itr[2]
 end
 
-function Base.iterate(
-    c::CleverDict{K,V},
-    s::_State,
-)::Union{Nothing,Tuple{Pair{K,V},_State}} where {K,V}
-    # Note that BitSet is defined by machine Int, so we need to cast any `.int`
-    # fields to `Int` for 32-bit machines.
+function Base.iterate(c::CleverDict{K,V}, s::Int) where {K,V}
     if _is_dense(c)
-        @static if VERSION >= v"1.4.0"
-            itr = iterate(c.set, (s.uint, Int(s.int)))
-        else
-            itr = iterate(c.set, Int(s.int))
-        end
+        itr = iterate(c.vector, s)
         if itr === nothing
             return
         end
-        el, i = itr
-        new_el = _inverse_hash(c, el) => c.vector[el]::V
-        @static if VERSION >= v"1.4.0"
-            return new_el, _State(i[2], i[1])
-        else
-            return new_el, _State(i)
-        end
+        return _inverse_hash(c, s) => itr[1]::V, itr[2]::Int
     end
-    itr = iterate(c.dict, Int(s.int))
+    itr = iterate(c.dict, s)
     if itr === nothing
         return
     end
-    el, i = itr
-    return convert(Pair{K,V}, el), _State(i)
+    return convert(Pair{K,V}, itr[1]), itr[2]
 end
 
 # we do not have to implement values and keys functions because they can rely
@@ -349,7 +301,6 @@ end
 function Base.sizehint!(c::CleverDict{K,V}, n) where {K,V}
     if _is_dense(c)
         sizehint!(c.vector, n)
-        sizehint!(c.set, n)
     else
         sizehint!(c.dict, n)
     end
@@ -364,7 +315,6 @@ function Base.resize!(c::CleverDict{K,V}, n) where {K,V}
             )
         end
         resize!(c.vector, n)
-        sizehint!(c.set, n)
     else
         sizehint!(c.dict, n)
     end

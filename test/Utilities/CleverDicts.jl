@@ -255,7 +255,7 @@ function test_dense_operations()
     @test haskey(d, 4)
     @test !haskey(d, 6)
     @test length(d) == 2
-    @test collect(d) == [2 => 1.5, 4 => 0.25]
+    @test collect(d) == [4 => 0.25, 2 => 1.5]
     @test d[2] == 1.5
     @test d[4] == 0.25
 
@@ -264,7 +264,7 @@ function test_dense_operations()
     @test haskey(d, 4)
     @test haskey(d, 6)
     @test length(d) == 3
-    @test collect(d) == [2 => 1.5, 4 => 0.25, 6 => 0.75]
+    @test collect(d) == [4 => 0.25, 2 => 1.5, 6 => 0.75]
     @test d[2] == 1.5
     @test d[4] == 0.25
     @test d[6] == 0.75
