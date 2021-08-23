@@ -26,7 +26,7 @@ function eval_variables(varval::Function, f::MOI.ScalarAffineFunction)
     for t in f.terms
         out += eval_term(varval, t)
     end
-    return t
+    return out
 end
 
 function eval_variables(varval::Function, f::MOI.VectorAffineFunction)
