@@ -129,7 +129,8 @@ end
 Convert between the row and column indices of a matrix, to the linear index of
 the corresponding element in the triangular representation.
 
-This is most useful when mapping between `ConeSquare` and `ConeTriangle` sets.
+This is most useful when mapping between `ConeSquare` and `ConeTriangle` sets,
+e.g., as part of an [`MOI.AbstractSymmetricMatrixSetTriangle`](@ref) set.
 """
 function trimap(row::Integer, column::Integer)
     if row < column
