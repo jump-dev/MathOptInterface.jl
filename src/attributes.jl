@@ -1337,17 +1337,17 @@ struct ConstraintDualStart <: AbstractConstraintAttribute end
 A constraint attribute for the assignment to some constraint's primal value(s)
 in result `result_index`. If `result_index` is omitted, it is 1 by default.
 
+If the constraint is `f(x) in S`, then the `ConstraintPrimal` is the value of
+`f`, evaluated at the correspondng [`VariablePrimal`](@ref) solution.
+
 See [`ResultCount`](@ref) for information on how the results are ordered.
 
-## Example
+## Conic solvers
 
-Given a constraint `function-in-set`, the `ConstraintPrimal` is the value of the
-function evaluated at the primal solution of the variables.
-
-For example, given the constraint
-`ScalarAffineFunction([x,y], [1, 2], 3)`-in-`Interval(0, 20)` and a primal
-solution of `(x,y) = (4,5)`, the `ConstraintPrimal` solution of the constraint
-is `1 * 4 + 2 * 5 + 3 = 17`.
+Some conic solvers reformulate `b - Ax in K` to `s = b - Ax, s in K`. These
+solvers should return the value of `s` for `ConstraintPrimal`, rather than
+`b - Ax`. (Although these are constrained by an equality constraint, due to
+numerical tolerances they may not be identical.)
 """
 struct ConstraintPrimal <: AbstractConstraintAttribute
     result_index::Int
