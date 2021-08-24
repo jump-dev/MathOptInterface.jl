@@ -102,7 +102,7 @@ redundancy to zero.
 canonical form:
 
 ```julia
-Utilities.is_canonical(f2 + f2) # (x + 2) + (x + 2) is stored as x + x + 2
+Utilities.is_canonical(f2 + f2) # (x + 2) + (x + 2) is stored as x + x + 4
 ```
 
 [`Utilities.canonical`](@ref) returns the equivalent canonical version of the 
