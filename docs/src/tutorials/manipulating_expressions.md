@@ -13,7 +13,9 @@ This guide highlights a syntactically appealing way to build expressions at the
 MOI level, but also to look at their contents. It may be especially useful
 when writing models or bridge code.
 
-## Creating scalar affine functions
+## Creating functions
+
+### Creating scalar affine functions
 
 The simplest scalar function is simply a variable: 
 
@@ -37,8 +39,8 @@ However, you can also use operators to build the same scalar function:
 f2 = 1 * MOI.SingleVariable(var_idx) + 2
 ```
 
-## Creating scalar quadratic functions
+### Creating scalar quadratic functions
 
-## Creating vector functions
+### Creating vector functions
 
 ## Canonicalizing functions
