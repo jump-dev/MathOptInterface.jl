@@ -110,3 +110,24 @@ function:
 ```julia
 MOIU.canonical(f2 + f2) # Returns 2 * x + 2
 ```
+
+## Exploring functions
+
+At some point, you might need to dig into a function, for instance to map it 
+into solver constructs.
+
+### Vector functions
+
+[`MOIU.scalarize`](@ref) returns a vector of scalar functions from a vector 
+function:
+
+```julia
+MOIU.scalarize(MOIU.vectorize([f2, 2 * f2])) # Returns a vector [f2, 2 * f2].
+```
+
+[`MOI.output_dimension`](@ref) returns the number of dimensions of the 
+output of a function:
+
+```julia
+MOI.output_dimension(MOIU.vectorize([f2, 2 * f2])) # Returns 2.
+```
