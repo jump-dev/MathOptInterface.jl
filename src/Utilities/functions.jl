@@ -1,4 +1,4 @@
-function  test_models_equal(args...)
+function test_models_equal(args...)
     @warn(
         "`Utilities.test_models_equal` has been moved to " *
         "`Test.test_models_equal`",
