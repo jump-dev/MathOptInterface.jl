@@ -93,7 +93,7 @@ In more advanced use cases, you might need to ensure that a function is
 "canonical". Functions are stored as an array of terms, but there is no check
 that these terms are redundant: a [`ScalarAffineFunction`](@ref) object might
 have two terms with the same variable, like `x + x + 1`. These terms could be
-merged without changing the semantics of the function: `2 * x + 1`. 
+merged without changing the semantics of the function: `2x + 1`. 
 
 Working with these objects might be cumbersome. Canonicalization helps maintain 
 redundancy to zero. 
@@ -109,7 +109,7 @@ Utilities.is_canonical(f2 + f2) # (x + 2) + (x + 2) is stored as x + x + 4
 function:
 
 ```julia
-Utilities.canonical(f2 + f2) # Returns 2 * x + 2
+Utilities.canonical(f2 + f2) # Returns 2x + 2
 ```
 
 ## Exploring functions
