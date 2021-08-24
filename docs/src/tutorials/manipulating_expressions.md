@@ -23,8 +23,8 @@ them, which is reviewed in this section.
 The simplest scalar function is simply a variable: 
 
 ```julia
-var_idx = add_variable(model) # Create the variable x
-f1 = SingleVariable(var_idx) # x
+x = add_variable(model) # Create the variable x
+f1 = SingleVariable(x) # x
 ```
 
 This type of function is extremely simple: to express more complex functions, 
@@ -33,13 +33,13 @@ sum of linear terms (a factor times a variable) and a constant. Such an object
 can be built using the standard constructor: 
 
 ```julia
-f2 = ScalarAffineFunction([ScalarAffineTerm(1, var_idx)], 2) # x + 2
+f2 = ScalarAffineFunction([ScalarAffineTerm(1, x)], 2) # x + 2
 ```
 
 However, you can also use operators to build the same scalar function: 
 
 ```julia
-f2 = SingleVariable(var_idx) + 2 # x + 2
+f2 = SingleVariable(x) + 2 # x + 2
 ```
 
 !!! warning
@@ -47,7 +47,7 @@ f2 = SingleVariable(var_idx) + 2 # x + 2
     means that the Julia compiler was not able to determine the type of the 
     coefficients for the function. In that case, you can insert a 
     multiplication by one (with the appropriate type). For instance,
-    `1.0 * SingleVariable(var_idx)` creates a
+    `1.0 * SingleVariable(x)` creates a
     [`ScalarAffineFunction`](@ref) whose coefficients are of type `Float64`
     (the type of `1.0`).
 
@@ -58,7 +58,7 @@ objects, in a way that is highly similar to scalar affine functions. You can
 obtain a quadratic function as a product of affine functions: 
 
 ```julia
-f3 = 1 * SingleVariable(var_idx) * SingleVariable(var_idx) # x²
+f3 = 1 * SingleVariable(x) * SingleVariable(x) # x²
 f4 = f2 * f2 # (x + 2)²
 f4 = f2^2 # (x + 2)² too
 ```
