@@ -125,6 +125,10 @@ function:
 MOIU.scalarize(MOIU.vectorize([f2, 2 * f2])) # Returns a vector [f2, 2 * f2].
 ```
 
+!!! note
+    [`MOIU.eachscalar`](@ref) returns an iterator on the dimensions, which
+    serves the same purpose as [`MOIU.scalarize`](@ref).
+
 [`MOI.output_dimension`](@ref) returns the number of dimensions of the 
 output of a function:
 
