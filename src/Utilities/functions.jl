@@ -492,7 +492,20 @@ function ScalarFunctionIterator(f::MOI.VectorQuadraticFunction)
     )
 end
 
+"""
+    eachscalar(f::MOI.AbstractVectorFunction)
+
+Returns an iterator for the scalar components of the vector function.
+
+See also [`scalarize`](@ref).
+"""
 eachscalar(f::MOI.AbstractVectorFunction) = ScalarFunctionIterator(f)
+
+"""
+    eachscalar(f::MOI.AbstractVector)
+
+Returns an iterator for the scalar components of the vector.
+"""
 eachscalar(f::AbstractVector) = f
 
 function Base.iterate(it::ScalarFunctionIterator, state = 1)
@@ -3072,6 +3085,8 @@ end
 
 Returns a vector of scalar functions making up the vector function in the form
 of a `Vector{MOI.SingleVariable}`.
+
+See also [`eachscalar`](@ref).
 """
 function scalarize(f::MOI.VectorOfVariables, ignore_constants::Bool = false)
     return MOI.SingleVariable.(f.variables)
@@ -3082,6 +3097,8 @@ end
 
 Returns a vector of scalar functions making up the vector function in the form
 of a `Vector{MOI.ScalarAffineFunction{T}}`.
+
+See also [`eachscalar`](@ref).
 """
 function scalarize(
     f::MOI.VectorAffineFunction{T},
@@ -3107,6 +3124,8 @@ end
 
 Returns a vector of scalar functions making up the vector function in the form
 of a `Vector{MOI.ScalarQuadraticFunction{T}}`.
+
+See also [`eachscalar`](@ref).
 """
 function scalarize(
     f::MOI.VectorQuadraticFunction{T},
