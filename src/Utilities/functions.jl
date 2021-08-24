@@ -3067,12 +3067,22 @@ function operate(
     return MOI.VectorQuadraticFunction(quadratic_terms, affine_terms, constant)
 end
 
-# Similar to `eachscalar` but faster, see
-# https://github.com/jump-dev/MathOptInterface.jl/issues/418
+"""
+    scalarize(func::MOI.VectorOfVariables, ignore_constants::Bool = false)
+
+Returns a vector of scalar functions making up the vector function in the form
+of a `Vector{MOI.SingleVariable}`.
+"""
 function scalarize(f::MOI.VectorOfVariables, ignore_constants::Bool = false)
     return MOI.SingleVariable.(f.variables)
 end
 
+"""
+    scalarize(func::MOI.VectorAffineFunction{T}, ignore_constants::Bool = false)
+
+Returns a vector of scalar functions making up the vector function in the form
+of a `Vector{MOI.ScalarAffineFunction{T}}`.
+"""
 function scalarize(
     f::MOI.VectorAffineFunction{T},
     ignore_constants::Bool = false,
@@ -3092,6 +3102,12 @@ function scalarize(
     return functions
 end
 
+"""
+    scalarize(func::MOI.VectorQuadraticFunction{T}, ignore_constants::Bool = false)
+
+Returns a vector of scalar functions making up the vector function in the form
+of a `Vector{MOI.ScalarQuadraticFunction{T}}`.
+"""
 function scalarize(
     f::MOI.VectorQuadraticFunction{T},
     ignore_constants::Bool = false,
