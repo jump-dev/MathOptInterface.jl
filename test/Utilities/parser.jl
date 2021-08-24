@@ -55,7 +55,7 @@ function test__parse_function()
     )
 
     err = ErrorException(
-        "Unsupport operator in `loadfromstring!`: `-`. " *
+        "Unsupported operator in `loadfromstring!`: `-`. " *
         "The parser is deliberately limited in the syntax it " *
         "accepts. Write `x - y` as `x + -1 * y`,  and `x^2` as " *
         "`x * x`.",

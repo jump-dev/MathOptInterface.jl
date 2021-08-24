@@ -117,7 +117,7 @@ function _parse_function(ex)
         @assert isexpr(ex, :call)
         if ex.args[1] != :+
             error(
-                "Unsupport operator in `loadfromstring!`: `$(ex.args[1])`. " *
+                "Unsupported operator in `loadfromstring!`: `$(ex.args[1])`. " *
                 "The parser is deliberately limited in the syntax it " *
                 "accepts. Write `x - y` as `x + -1 * y`,  and `x^2` as " *
                 "`x * x`.",
