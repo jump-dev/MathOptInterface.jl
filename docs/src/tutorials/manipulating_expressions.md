@@ -53,8 +53,8 @@ f2 = MOI.SingleVariable(var_idx) + 2 # x + 2
 ### Creating scalar quadratic functions
 
 Scalar quadratic functions are stored in `ScalarQuadraticFunction` objects, in a
-way that is highly similar to scalar affine functions. You can obtain a quadratic
-function as a product of affine functions: 
+way that is highly similar to scalar affine functions. You can obtain a 
+quadratic function as a product of affine functions: 
 
 ```julia
 f3 = 1 * MOI.SingleVariable(var_idx) * MOI.SingleVariable(var_idx) # x²
