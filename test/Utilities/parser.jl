@@ -54,7 +54,12 @@ function test__parse_function()
         ),
     )
 
-    err = ErrorException("Expected `+`, got `-`.")
+    err = ErrorException(
+        "Unsupport operator in `loadfromstring!`: `-`. " *
+        "The parser is deliberately limited in the syntax it "  *
+        "accepts. Write `x - y` as `x + -1 * y`,  and `x^2` as "  *
+        "`x * x`."
+    )
     @test_throws err MOIU._parse_function(:(x - y))
 
     @test _struct_isequal(
