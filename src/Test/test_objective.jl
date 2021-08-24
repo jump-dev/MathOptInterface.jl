@@ -46,6 +46,45 @@ function test_objective_ObjectiveSense_FEASIBILITY_SENSE(
 end
 
 """
+    test_objective_FEASIBILITY_SENSE_clears_objective(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Test setting objective sense to FEASIBILITY_SENSE  clears previous objective.
+"""
+function test_objective_FEASIBILITY_SENSE_clears_objective(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    @requires _supports(config, MOI.optimize!)
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.ObjectiveValue()) == 1.0
+    MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.ObjectiveValue()) == 0.0
+    return
+end
+
+function setup_test(
+    ::typeof(test_objective_FEASIBILITY_SENSE_clears_objective),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1])),
+    )
+    return
+end
+
+"""
     test_objective_get_ObjectiveFunction_ScalarAffineFunction(
         model::MOI.ModelLike,
         config::Config,
