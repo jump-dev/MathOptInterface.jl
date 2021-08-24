@@ -28,7 +28,7 @@ f1 = MOI.SingleVariable(var_idx) # x
 ```
 
 This type of function is extremely simple: to express more complex functions, 
-other types must be used. For instance, a `ScalarAffineFunction` is a sum of 
+other types must be used. For instance, a [`ScalarAffineFunction`](@ref) is a sum of 
 linear terms (a factor times a variable) and a constant. Such an object can be 
 built using the standard constructor: 
 
@@ -47,12 +47,12 @@ f2 = MOI.SingleVariable(var_idx) + 2 # x + 2
     that the Julia compiler was not able to determine the type of the 
     coefficients for the function. In that case, you can insert a 
     multiplication by one (with the appropriate type). For instance,
-    `1.0 * MOI.SingleVariable(var_idx)` creates an `MOI.ScalarAffineFunction`
+    `1.0 * MOI.SingleVariable(var_idx)` creates an [`MOI.ScalarAffineFunction`](@ref)
     whose coefficients are of type `Float64` (the type of `1.0`).
 
 ### Creating scalar quadratic functions
 
-Scalar quadratic functions are stored in `ScalarQuadraticFunction` objects, in a
+Scalar quadratic functions are stored in [`ScalarQuadraticFunction`](@ref) objects, in a
 way that is highly similar to scalar affine functions. You can obtain a 
 quadratic function as a product of affine functions: 
 
@@ -66,8 +66,8 @@ f4 = f2^2 # (x + 2)² too
 
 A vector function is a function with several values, irrespective of the number
 of input variables. Similarly to scalar functions, there are three main types 
-of vector functions: `VectorOfVariables`, `VectorAffineFunction`, and 
-`VectorQuadraticFunction`.
+of vector functions: [`VectorOfVariables`](@ref), [`VectorAffineFunction`](@ref), and 
+[`VectorQuadraticFunction`](@ref).
 
 The easiest way to create a vector function is to stack several scalar
 functions using [`MOI.Utilities.vectorize`](@ref). It takes a vector as input,
@@ -79,8 +79,8 @@ f5 = MOIU.vectorize([f2, 2 * f2])
 ```
 
 !!! warning
-    `MOIU.vectorize` only takes a vector of similar scalar functions: you cannot
-    mix `SingleVariable` and `ScalarAffineFunction`, for instance. In practice,
+    [`MOIU.vectorize`](@ref) only takes a vector of similar scalar functions: you cannot
+    mix [`SingleVariable`](@ref) and [`ScalarAffineFunction`](@ref), for instance. In practice,
     it means that `MOIU.vectorize([f1, f2])` does not work; you should rather use
     `MOIU.vectorize([1 * f1, f2])` instead to only have 
     [`ScalarAffineFunction`](@ref) objects.
