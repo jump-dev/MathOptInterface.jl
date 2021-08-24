@@ -1320,14 +1320,22 @@ end
 """
     ConstraintPrimalStart()
 
-A constraint attribute for the initial assignment to some constraint's primal value(s) that the optimizer may use to warm-start the solve. May be a number or `nothing` (unset).
+A constraint attribute for the initial assignment to some constraint's
+[`ConstraintPrimal`](@ref) that the optimizer may use to warm-start the solve.
+
+May be `nothing` (unset), a number for [`AbstractScalarFunction`](@ref), or a
+vector for [`AbstractVectorFunction`](@ref).
 """
 struct ConstraintPrimalStart <: AbstractConstraintAttribute end
 
 """
     ConstraintDualStart()
 
-A constraint attribute for the initial assignment to some constraint's dual value(s) that the optimizer may use to warm-start the solve. May be a number or `nothing` (unset).
+A constraint attribute for the initial assignment to some constraint's
+[`ConstraintDual`](@ref) that the optimizer may use to warm-start the solve.
+
+May be `nothing` (unset), a number for [`AbstractScalarFunction`](@ref), or a
+vector for [`AbstractVectorFunction`](@ref).
 """
 struct ConstraintDualStart <: AbstractConstraintAttribute end
 
@@ -1335,19 +1343,19 @@ struct ConstraintDualStart <: AbstractConstraintAttribute end
     ConstraintPrimal(result_index::Int = 1)
 
 A constraint attribute for the assignment to some constraint's primal value(s)
-in result `result_index`. If `result_index` is omitted, it is 1 by default.
+in result `result_index`.
 
-If the constraint is `f(x) in S`, then the `ConstraintPrimal` is the value of
-`f`, evaluated at the correspondng [`VariablePrimal`](@ref) solution.
+If the constraint is `f(x) in S`, then in most cases the `ConstraintPrimal` is
+the value of `f`, evaluated at the correspondng [`VariablePrimal`](@ref)
+solution.
 
-See [`ResultCount`](@ref) for information on how the results are ordered.
-
-## Conic solvers
-
-Some conic solvers reformulate `b - Ax in K` to `s = b - Ax, s in K`. These
-solvers should return the value of `s` for `ConstraintPrimal`, rather than
+However, some conic solvers reformulate `b - Ax in S` to `s = b - Ax, s in S`.
+These solvers may return the value of `s` for `ConstraintPrimal`, rather than
 `b - Ax`. (Although these are constrained by an equality constraint, due to
 numerical tolerances they may not be identical.)
+
+If `result_index` is omitted, it is 1 by default. See [`ResultCount`](@ref) for
+information on how the results are ordered.
 """
 struct ConstraintPrimal <: AbstractConstraintAttribute
     result_index::Int
