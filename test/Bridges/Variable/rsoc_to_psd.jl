@@ -71,7 +71,7 @@ function test_RSOC_of_dimension_2()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(mock, model, var_names, ["cab", "c"])
+    MOI.Test.test_models_equal(mock, model, var_names, ["cab", "c"])
     var_names = ["x", "y"]
     MOI.set(
         bridged_mock,
@@ -88,12 +88,7 @@ function test_RSOC_of_dimension_2()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
-        bridged_mock,
-        model,
-        var_names,
-        ["cxy", "c"],
-    )
+    MOI.Test.test_models_equal(bridged_mock, model, var_names, ["cxy", "c"])
     _test_delete_bridged_variables(
         bridged_mock,
         xy,
@@ -181,7 +176,7 @@ function test_RSOC4()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.test_models_equal(
         mock,
         model,
         var_names,
@@ -223,12 +218,7 @@ function test_RSOC4()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
-        bridged_mock,
-        model,
-        var_names,
-        ["rsoc", "c"],
-    )
+    MOI.Test.test_models_equal(bridged_mock, model, var_names, ["rsoc", "c"])
 
     v = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
     @test length(v) == 4

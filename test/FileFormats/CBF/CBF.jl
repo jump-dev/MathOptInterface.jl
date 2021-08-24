@@ -72,7 +72,7 @@ function _test_write_then_read(model_string::String)
     MOI.read_from_file(model2, CBF_TEST_FILE)
     _set_var_and_con_names(model2)
 
-    return MOIU.test_models_equal(model1, model2, args...)
+    return MOI.Test.test_models_equal(model1, model2, args...)
 end
 
 function _test_read(filename::String, model_string::String)
@@ -84,7 +84,7 @@ function _test_read(filename::String, model_string::String)
     MOI.read_from_file(model2, filename)
     _set_var_and_con_names(model2)
 
-    return MOIU.test_models_equal(model1, model2, args...)
+    return MOI.Test.test_models_equal(model1, model2, args...)
 end
 
 function test_show()

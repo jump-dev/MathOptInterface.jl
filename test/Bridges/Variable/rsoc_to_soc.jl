@@ -66,7 +66,7 @@ function test_rotatedsoc4()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(mock, model, var_names, ["soc", "c"])
+    MOI.Test.test_models_equal(mock, model, var_names, ["soc", "c"])
     var_names = ["t", "u", "x", "y"]
     MOI.set(
         bridged_mock,
@@ -92,12 +92,7 @@ function test_rotatedsoc4()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
-        bridged_mock,
-        model,
-        var_names,
-        ["rsoc", "c"],
-    )
+    MOI.Test.test_models_equal(bridged_mock, model, var_names, ["rsoc", "c"])
 
     tuxy = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
 

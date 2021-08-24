@@ -440,6 +440,107 @@ function _test_attribute_value_type(
     return
 end
 
+function _test_variablenames_equal(model, variable_names)
+    seen_name = Dict(name => false for name in variable_names)
+    for index in MOI.get(model, MOI.ListOfVariableIndices())
+        name = MOI.get(model, MOI.VariableName(), index)
+        @test haskey(seen_name, name)
+        @test seen_name[name] == false
+        seen_name[name] = true
+    end
+    @test all(values(seen_name))
+    return
+end
+
+function _test_constraintnames_equal(model, constraint_names)
+    seen_name = Dict(name => false for name in constraint_names)
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        if F == MOI.SingleVariable
+            continue
+        end
+        for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+            name = MOI.get(model, MOI.ConstraintName(), index)
+            @test haskey(seen_name, name)
+            @test seen_name[name] == false
+            seen_name[name] = true
+        end
+    end
+    @test all(values(seen_name))
+    return
+end
+
+"""
+    test_models_equal(
+        model1::ModelLike,
+        model2::ModelLike,
+        variable_names::Vector{String},
+        constraint_names::Vector{String},
+        single_variable_constraints::Vector{Tuple{String,<:MOI.AbstractScalarSet}}
+    )
+
+Test that `model1` and `model2` are identical using `variable_names` as keys for
+the variable names and `constraint_names` as keys for the constraint names.
+
+In addition, it checks that there is a SingleVariable-in-Set constraint for each
+`(name, set)` tuple in `single_variable_constraints`, where `name` is the name
+of the corresponding variable.
+
+!!! warning
+    This is not a generic function that works in all cases. It is mainly
+    intended for writing tests in which all variables and constraints have
+    unique names.
+"""
+function test_models_equal(
+    model1::MOI.ModelLike,
+    model2::MOI.ModelLike,
+    variable_names::Vector{String},
+    constraint_names::Vector{String},
+    single_variable_constraints::Vector{<:Tuple} = Tuple[],
+)
+    for (name, set) in single_variable_constraints
+        x1 = MOI.get(model1, MOI.VariableIndex, name)
+        ci1 = MOI.ConstraintIndex{MOI.SingleVariable,typeof(set)}(x1.value)
+        @test MOI.is_valid(model1, ci1)
+        @test MOI.get(model1, MOI.ConstraintSet(), ci1) == set
+        x2 = MOI.get(model2, MOI.VariableIndex, name)
+        ci2 = MOI.ConstraintIndex{MOI.SingleVariable,typeof(set)}(x2.value)
+        @test MOI.is_valid(model2, ci2)
+        @test MOI.get(model2, MOI.ConstraintSet(), ci2) == set
+    end
+    _test_variablenames_equal(model1, variable_names)
+    _test_variablenames_equal(model2, variable_names)
+    _test_constraintnames_equal(model1, constraint_names)
+    _test_constraintnames_equal(model2, constraint_names)
+    map_2to1 = Dict{MOI.VariableIndex,MOI.VariableIndex}()
+    for name in variable_names
+        index2 = MOI.get(model2, MOI.VariableIndex, name)
+        map_2to1[index2] = MOI.get(model1, MOI.VariableIndex, name)
+    end
+    for name in constraint_names
+        c1 = MOI.get(model1, MOI.ConstraintIndex, name)
+        c2 = MOI.get(model2, MOI.ConstraintIndex, name)
+        f1 = MOI.get(model1, MOI.ConstraintFunction(), c1)
+        f2 = MOI.get(model2, MOI.ConstraintFunction(), c2)
+        @test isapprox(f1, MOI.Utilities.map_indices(map_2to1, f2))
+        @test MOI.get(model1, MOI.ConstraintSet(), c1) ==
+              MOI.get(model2, MOI.ConstraintSet(), c2)
+    end
+    attrs1 = MOI.get(model1, MOI.ListOfModelAttributesSet())
+    attrs2 = MOI.get(model2, MOI.ListOfModelAttributesSet())
+    for attr in union(attrs1, attrs2)
+        value1 = MOI.get(model1, attr)
+        value2 = MOI.get(model2, attr)
+        if value1 isa MOI.AbstractFunction
+            @test value2 isa MOI.AbstractFunction
+            @test isapprox(value1, MOI.Utilities.map_indices(map_2to1, value2))
+        else
+            @test !(value2 isa MOI.AbstractFunction)
+            @test value1 == value2
+        end
+    end
+    return
+end
+
 ###
 ### Include all the test files!
 ###

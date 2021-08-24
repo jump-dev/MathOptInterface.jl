@@ -92,7 +92,7 @@ function test_NormInfinity_1()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.test_models_equal(
         mock,
         model,
         var_names,
@@ -133,7 +133,7 @@ function test_NormInfinity_1()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.test_models_equal(
         bridged_mock,
         model,
         var_names,
@@ -216,12 +216,7 @@ function test_conic_NormInfinityCone_3()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
-        mock,
-        model,
-        var_names,
-        ["nonneg1", "nonneg2"],
-    )
+    MOI.Test.test_models_equal(mock, model, var_names, ["nonneg1", "nonneg2"])
     MOI.set(
         bridged_mock,
         MOI.VariableName(),
@@ -255,7 +250,7 @@ function test_conic_NormInfinityCone_3()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.test_models_equal(
         bridged_mock,
         model,
         var_names,
@@ -372,7 +367,7 @@ function test_conic_NormOneCone_VectorOfVariables()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.test_models_equal(
         mock,
         model,
         [var_names; "u"; "v"],
@@ -407,7 +402,7 @@ function test_conic_NormOneCone_VectorOfVariables()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.test_models_equal(
         bridged_mock,
         model,
         var_names,
@@ -484,7 +479,7 @@ function test_conic_NormOneCone()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.test_models_equal(
         mock,
         model,
         var_names_all,
@@ -522,7 +517,7 @@ function test_conic_NormOneCone()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.test_models_equal(
         bridged_mock,
         model,
         var_names,

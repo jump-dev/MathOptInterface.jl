@@ -62,7 +62,7 @@ function test_get_scalar_constraint()
         """
         model = MOI.Utilities.Model{Float64}()
         MOI.Utilities.loadfromstring!(model, s)
-        MOI.Utilities.test_models_equal(mock, model, ["y"], ["cy", "c"])
+        MOI.Test.test_models_equal(mock, model, ["y"], ["cy", "c"])
     end
     @testset "Bridged model" begin
         MOI.set(bridged_mock, MOI.VariableName(), x, "x")
@@ -73,7 +73,7 @@ function test_get_scalar_constraint()
         """
         model = MOI.Utilities.Model{Float64}()
         MOI.Utilities.loadfromstring!(model, s)
-        MOI.Utilities.test_models_equal(
+        MOI.Test.test_models_equal(
             bridged_mock,
             model,
             ["x"],
@@ -203,7 +203,7 @@ function test_exp3_with_add_constrained_variable_y()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(mock, model, ["x", "z"], ["zc", "xc", "ec"])
+    MOI.Test.test_models_equal(mock, model, ["x", "z"], ["zc", "xc", "ec"])
 
     MOI.set(bridged_mock, MOI.VariableName(), y, "y")
     s = """
@@ -214,7 +214,7 @@ function test_exp3_with_add_constrained_variable_y()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.test_models_equal(
         bridged_mock,
         model,
         ["x", "y"],

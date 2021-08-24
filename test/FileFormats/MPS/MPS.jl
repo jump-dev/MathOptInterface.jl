@@ -14,7 +14,7 @@ function _test_model_equality(model_string, variables, constraints)
     MOI.write_to_file(model, MPS_TEST_FILE)
     model_2 = MPS.Model()
     MOI.read_from_file(model_2, MPS_TEST_FILE)
-    return MOIU.test_models_equal(model, model_2, variables, constraints)
+    return MOI.Test.test_models_equal(model, model_2, variables, constraints)
 end
 
 function test_show()
@@ -136,7 +136,7 @@ z in ZeroOne()
 """,
     )
     MOI.set(model_2, MOI.Name(), "stacked_data")
-    return MOIU.test_models_equal(
+    return MOI.Test.test_models_equal(
         model,
         model_2,
         ["x", "y", "z"],
@@ -162,7 +162,7 @@ con1: 1.0 * x >= 1.0
 x in Integer()
 """,
     )
-    return MOIU.test_models_equal(
+    return MOI.Test.test_models_equal(
         model,
         model_2,
         ["x"],
@@ -316,7 +316,7 @@ x >= 1.0
     MOI.write_to_file(model, MPS_TEST_FILE)
     model_2 = MPS.Model()
     MOI.read_from_file(model_2, MPS_TEST_FILE)
-    return MOIU.test_models_equal(
+    return MOI.Test.test_models_equal(
         model,
         model_2,
         ["x", "y", "z"],
@@ -343,7 +343,7 @@ y <= 0.0
     MOI.write_to_file(model, MPS_TEST_FILE)
     model_2 = MPS.Model()
     MOI.read_from_file(model_2, MPS_TEST_FILE)
-    return MOIU.test_models_equal(
+    return MOI.Test.test_models_equal(
         model,
         model_2,
         ["x", "y", "z"],
@@ -371,7 +371,7 @@ w in Interval(4.0, 5.0)
     MOI.write_to_file(model, MPS_TEST_FILE)
     model_2 = MPS.Model()
     MOI.read_from_file(model_2, MPS_TEST_FILE)
-    return MOIU.test_models_equal(
+    return MOI.Test.test_models_equal(
         model,
         model_2,
         ["w", "x", "y", "z"],
