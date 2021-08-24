@@ -1448,6 +1448,8 @@ function setup_test(
 end
 
 function test_solve_SOS2_add_and_delete(model::MOI.ModelLike, config::Config)
+    @requires _supports(config, MOI.optimize!)
+    @requires MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.SOS2{Float64})
     function add_SOS2(x, y, xp, yp)
         λ = MOI.add_variables(model, length(xp))
         # 0 <= λ <= 1
