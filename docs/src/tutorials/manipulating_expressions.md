@@ -15,6 +15,9 @@ when writing models or bridge code.
 
 ## Creating functions
 
+When working with MathOptInterface, the major use of functions is creating them,
+which is reviewed in this section.
+
 ### Creating scalar affine functions
 
 The simplest scalar function is simply a variable: 
@@ -62,3 +65,5 @@ f4 = f2^2 # (x + 2)² too
 ### Creating vector functions
 
 ## Canonicalizing functions
+
+In more advanced use cases, you might need to ensure that a function is "canonical".
