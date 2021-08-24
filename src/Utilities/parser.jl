@@ -118,9 +118,9 @@ function _parse_function(ex)
         if ex.args[1] != :+
             error(
                 "Unsupport operator in `loadfromstring!`: `$(ex.args[1])`. " *
-                "The parser is deliberately limited in the syntax it "  *
-                "accepts. Write `x - y` as `x + -1 * y`,  and `x^2` as "  *
-                "`x * x`."
+                "The parser is deliberately limited in the syntax it " *
+                "accepts. Write `x - y` as `x + -1 * y`,  and `x^2` as " *
+                "`x * x`.",
             )
         end
         affine_terms = _ParsedScalarAffineTerm[]
