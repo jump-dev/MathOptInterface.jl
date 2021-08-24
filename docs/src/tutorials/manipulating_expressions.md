@@ -64,6 +64,27 @@ f4 = f2^2 # (x + 2)² too
 
 ### Creating vector functions
 
+A vector function is a function with several values, irrespective of the number
+of input variables. Similarly to scalar functions, there are three main types 
+of vector functions: `VectorOfVariables`, `VectorAffineFunction`, and 
+`VectorQuadraticFunction`.
+
+The easiest way to create a vector function is to stack several scalar
+functions using [`MOI.Utilities.vectorize`](@ref). It takes a vector as input,
+and the generated vector function (of the most appropriate type) has each 
+dimension corresponding to a dimension of the vector.
+
+```julia
+f5 = MOIU.vectorize([f2, 2 * f2])
+```
+
+!!! warning
+    `MOIU.vectorize` only takes a vector of similar scalar functions: you cannot
+    mix `SingleVariable` and `ScalarAffineFunction`, for instance. In practice,
+    it means that `MOIU.vectorize([f1, f2])` does not work; you should rather use
+    `MOIU.vectorize([1 * f1, f2])` instead to only have 
+    [`ScalarAffineFunction`](@ref) objects.
+
 ## Canonicalizing functions
 
 In more advanced use cases, you might need to ensure that a function is "canonical".
