@@ -23,8 +23,8 @@ them, which is reviewed in this section.
 The simplest scalar function is simply a variable: 
 
 ```julia
-var_idx = MOI.add_variable(model) # Create the variable x
-f1 = MOI.SingleVariable(var_idx) # x
+var_idx = add_variable(model) # Create the variable x
+f1 = SingleVariable(var_idx) # x
 ```
 
 This type of function is extremely simple: to express more complex functions, 
@@ -33,13 +33,13 @@ sum of linear terms (a factor times a variable) and a constant. Such an object
 can be built using the standard constructor: 
 
 ```julia
-f2 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, var_idx)], 2) # x + 2
+f2 = ScalarAffineFunction([ScalarAffineTerm(1, var_idx)], 2) # x + 2
 ```
 
 However, you can also use operators to build the same scalar function: 
 
 ```julia
-f2 = MOI.SingleVariable(var_idx) + 2 # x + 2
+f2 = SingleVariable(var_idx) + 2 # x + 2
 ```
 
 !!! warning
@@ -47,8 +47,8 @@ f2 = MOI.SingleVariable(var_idx) + 2 # x + 2
     means that the Julia compiler was not able to determine the type of the 
     coefficients for the function. In that case, you can insert a 
     multiplication by one (with the appropriate type). For instance,
-    `1.0 * MOI.SingleVariable(var_idx)` creates an 
-    [`MOI.ScalarAffineFunction`](@ref) whose coefficients are of type `Float64`
+    `1.0 * SingleVariable(var_idx)` creates a
+    [`ScalarAffineFunction`](@ref) whose coefficients are of type `Float64`
     (the type of `1.0`).
 
 ### Creating scalar quadratic functions
@@ -58,7 +58,7 @@ objects, in a way that is highly similar to scalar affine functions. You can
 obtain a quadratic function as a product of affine functions: 
 
 ```julia
-f3 = 1 * MOI.SingleVariable(var_idx) * MOI.SingleVariable(var_idx) # x²
+f3 = 1 * SingleVariable(var_idx) * SingleVariable(var_idx) # x²
 f4 = f2 * f2 # (x + 2)²
 f4 = f2^2 # (x + 2)² too
 ```
@@ -71,20 +71,21 @@ of vector functions: [`VectorOfVariables`](@ref),
 [`VectorAffineFunction`](@ref), and [`VectorQuadraticFunction`](@ref).
 
 The easiest way to create a vector function is to stack several scalar
-functions using [`MOI.Utilities.vectorize`](@ref). It takes a vector as input,
+functions using [`Utilities.vectorize`](@ref). It takes a vector as input,
 and the generated vector function (of the most appropriate type) has each 
 dimension corresponding to a dimension of the vector.
 
 ```julia
-f5 = MOIU.vectorize([f2, 2 * f2])
+f5 = Utilities.vectorize([f2, 2 * f2])
 ```
 
 !!! warning
-    [`MOIU.vectorize`](@ref) only takes a vector of similar scalar functions: 
-    you cannot mix [`SingleVariable`](@ref) and [`ScalarAffineFunction`](@ref),
-    for instance. In practice, it means that `MOIU.vectorize([f1, f2])` does 
-    not work; you should rather use `MOIU.vectorize([1 * f1, f2])` instead to 
-    only have [`ScalarAffineFunction`](@ref) objects.
+    [`Utilities.vectorize`](@ref) only takes a vector of similar scalar 
+    functions: you cannot mix [`SingleVariable`](@ref) and 
+    [`ScalarAffineFunction`](@ref), for instance. In practice, it means that 
+    `Utilities.vectorize([f1, f2])` does not work; you should rather use 
+    `Utilities.vectorize([1 * f1, f2])` instead to only have 
+    [`ScalarAffineFunction`](@ref) objects.
 
 ## Canonicalizing functions
 
@@ -97,18 +98,18 @@ merged without changing the semantics of the function: `2 * x + 1`.
 Working with these objects might be cumbersome. Canonicalization helps maintain 
 redundancy to zero. 
 
-[`MOIU.is_canonical`](@ref) checks whether a function is already in its 
+[`Utilities.is_canonical`](@ref) checks whether a function is already in its 
 canonical form:
 
 ```julia
-MOIU.is_canonical(f2 + f2) # (x + 2) + (x + 2) is stored as x + x + 2
+Utilities.is_canonical(f2 + f2) # (x + 2) + (x + 2) is stored as x + x + 2
 ```
 
-[`MOIU.canonical`](@ref) returns the equivalent canonical version of the 
+[`Utilities.canonical`](@ref) returns the equivalent canonical version of the 
 function:
 
 ```julia
-MOIU.canonical(f2 + f2) # Returns 2 * x + 2
+Utilities.canonical(f2 + f2) # Returns 2 * x + 2
 ```
 
 ## Exploring functions
@@ -118,20 +119,20 @@ into solver constructs.
 
 ### Vector functions
 
-[`MOIU.scalarize`](@ref) returns a vector of scalar functions from a vector 
-function:
+[`Utilities.scalarize`](@ref) returns a vector of scalar functions from a
+vector function:
 
 ```julia
-MOIU.scalarize(MOIU.vectorize([f2, 2 * f2])) # Returns a vector [f2, 2 * f2].
+Utilities.scalarize(f5) # Returns a vector [f2, 2 * f2].
 ```
 
 !!! note
-    [`MOIU.eachscalar`](@ref) returns an iterator on the dimensions, which
-    serves the same purpose as [`MOIU.scalarize`](@ref).
+    [`Utilities.eachscalar`](@ref) returns an iterator on the dimensions, which
+    serves the same purpose as [`Utilities.scalarize`](@ref).
 
-[`MOI.output_dimension`](@ref) returns the number of dimensions of the 
+[`output_dimension`](@ref) returns the number of dimensions of the 
 output of a function:
 
 ```julia
-MOI.output_dimension(MOIU.vectorize([f2, 2 * f2])) # Returns 2.
+output_dimension(f5) # Returns 2.
 ```
