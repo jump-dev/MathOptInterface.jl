@@ -24,20 +24,28 @@ var_idx = MOI.add_variable(model)
 f1 = MOI.SingleVariable(var_idx)
 ```
 
-This type of function is extremely simple: to express more complex functions, other 
-types must be used. For instance, a `ScalarAffineFunction` is a sum of linear terms
-(a factor times a variable) and a constant. Such an object can be built using the 
-standard constructor: 
+This type of function is extremely simple: to express more complex functions, 
+other types must be used. For instance, a `ScalarAffineFunction` is a sum of 
+linear terms (a factor times a variable) and a constant. Such an object can be 
+built using the standard constructor: 
 
 ```
-f2 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm(1, var_idx), 2)
+f2 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, var_idx)], 2)
 ```
 
 However, you can also use operators to build the same scalar function: 
 
 ```
-f2 = 1 * MOI.SingleVariable(var_idx) + 2
+f2 = MOI.SingleVariable(var_idx) + 2
 ```
+
+!!! warning
+    If you get an error such as `ERROR: UndefVarError: T not defined`, it means 
+    that the Julia compiler was not able to determine the type of the 
+    coefficients for the function. In that case, you can insert a 
+    multiplication by one (with the appropriate type). For instance,
+    `1.0 * MOI.SingleVariable(var_idx)` creates an `MOI.ScalarAffineFunction`
+    whose coefficients are of type `Float64` (the type of `1.0`).
 
 ### Creating scalar quadratic functions
 
