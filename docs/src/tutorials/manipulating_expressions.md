@@ -34,14 +34,16 @@ other types must be used. For instance, a [`ScalarAffineFunction`](@ref) is a
 sum of linear terms (a factor times a variable) and a constant. Such an object
 can be built using the standard constructor: 
 
-```julia
-f2 = ScalarAffineFunction([ScalarAffineTerm(1, x)], 2) # x + 2
+```jldoctest expr
+julia> f2 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x)], 2) # x + 2
+MathOptInterface.ScalarAffineFunction{Int64}(MathOptInterface.ScalarAffineTerm{Int64}[MathOptInterface.ScalarAffineTerm{Int64}(1, MathOptInterface.VariableIndex(1))], 2)
 ```
 
 However, you can also use operators to build the same scalar function: 
 
-```julia
-f2 = SingleVariable(x) + 2 # x + 2
+```jldoctest expr
+julia> f2 = MOI.SingleVariable(x) + 2 # x + 2
+MathOptInterface.ScalarAffineFunction{Int64}(MathOptInterface.ScalarAffineTerm{Int64}[MathOptInterface.ScalarAffineTerm{Int64}(1, MathOptInterface.VariableIndex(1))], 2)
 ```
 
 !!! warning
@@ -51,7 +53,7 @@ f2 = SingleVariable(x) + 2 # x + 2
     multiplication by one (with the appropriate type). For instance,
     `1.0 * SingleVariable(x)` creates a
     [`ScalarAffineFunction`](@ref) whose coefficients are of type `Float64`
-    (the type of `1.0`).
+    (the type of `1.0`), i.e. a `ScalarAffineFunction{Float64}`.
 
 ### Creating scalar quadratic functions
 
@@ -59,10 +61,13 @@ Scalar quadratic functions are stored in [`ScalarQuadraticFunction`](@ref)
 objects, in a way that is highly similar to scalar affine functions. You can
 obtain a quadratic function as a product of affine functions: 
 
-```julia
-f3 = 1 * SingleVariable(x) * SingleVariable(x) # x²
-f4 = f2 * f2 # (x + 2)²
-f4 = f2^2 # (x + 2)² too
+```jldoctest expr
+julia> f3 = 1 * MOI.SingleVariable(x) * MOI.SingleVariable(x) # x²
+MathOptInterface.ScalarQuadraticFunction{Int64}(MathOptInterface.ScalarAffineTerm{Int64}[], MathOptInterface.ScalarQuadraticTerm{Int64}[MathOptInterface.ScalarQuadraticTerm{Int64}(2, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(1))], 0)
+julia> f4 = f2 * f2 # (x + 2)²
+MathOptInterface.ScalarQuadraticFunction{Int64}(MathOptInterface.ScalarAffineTerm{Int64}[MathOptInterface.ScalarAffineTerm{Int64}(2, MathOptInterface.VariableIndex(1)), MathOptInterface.ScalarAffineTerm{Int64}(2, MathOptInterface.VariableIndex(1))], MathOptInterface.ScalarQuadraticTerm{Int64}[MathOptInterface.ScalarQuadraticTerm{Int64}(2, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(1))], 4)
+julia> f4 = f2^2 # (x + 2)² too
+MathOptInterface.ScalarQuadraticFunction{Int64}(MathOptInterface.ScalarAffineTerm{Int64}[MathOptInterface.ScalarAffineTerm{Int64}(2, MathOptInterface.VariableIndex(1)), MathOptInterface.ScalarAffineTerm{Int64}(2, MathOptInterface.VariableIndex(1))], MathOptInterface.ScalarQuadraticTerm{Int64}[MathOptInterface.ScalarQuadraticTerm{Int64}(2, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(1))], 4)
 ```
 
 ### Creating vector functions
