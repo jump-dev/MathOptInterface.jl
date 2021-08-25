@@ -22,9 +22,11 @@ them, which is reviewed in this section.
 
 The simplest scalar function is simply a variable: 
 
-```julia
-x = add_variable(model) # Create the variable x
-f1 = SingleVariable(x) # x
+```jldoctest expr; setup=:(model = MOI.Utilities.CachingOptimizer(MOI.Utilities.Model{Float64}(), MOI.Utilities.AUTOMATIC); )
+julia> x = MOI.add_variable(model) # Create the variable x
+MathOptInterface.VariableIndex(1)
+julia> f1 = MOI.SingleVariable(x) # A function with the single variable x
+MathOptInterface.SingleVariable(MathOptInterface.VariableIndex(1))
 ```
 
 This type of function is extremely simple: to express more complex functions, 
