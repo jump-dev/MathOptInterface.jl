@@ -1035,7 +1035,13 @@ struct ObjectiveBound <: AbstractModelAttribute end
 """
     RelativeGap()
 
-A model attribute for the final relative optimality gap, defined as ``\\frac{|b-f|}{|f|}``, where ``b`` is the best bound and ``f`` is the best feasible objective value.
+A model attribute for the final relative optimality gap.
+
+!!! warning
+    The definition of this gap is solver-dependent. However, most solvers
+    implementing this attribute define the relative gap as some variation of
+    ``\\frac{|b-f|}{|f|}``, where ``b`` is the best bound and ``f`` is the best
+    feasible objective value.
 """
 struct RelativeGap <: AbstractModelAttribute end
 
@@ -1314,14 +1320,22 @@ end
 """
     ConstraintPrimalStart()
 
-A constraint attribute for the initial assignment to some constraint's primal value(s) that the optimizer may use to warm-start the solve. May be a number or `nothing` (unset).
+A constraint attribute for the initial assignment to some constraint's
+[`ConstraintPrimal`](@ref) that the optimizer may use to warm-start the solve.
+
+May be `nothing` (unset), a number for [`AbstractScalarFunction`](@ref), or a
+vector for [`AbstractVectorFunction`](@ref).
 """
 struct ConstraintPrimalStart <: AbstractConstraintAttribute end
 
 """
     ConstraintDualStart()
 
-A constraint attribute for the initial assignment to some constraint's dual value(s) that the optimizer may use to warm-start the solve. May be a number or `nothing` (unset).
+A constraint attribute for the initial assignment to some constraint's
+[`ConstraintDual`](@ref) that the optimizer may use to warm-start the solve.
+
+May be `nothing` (unset), a number for [`AbstractScalarFunction`](@ref), or a
+vector for [`AbstractVectorFunction`](@ref).
 """
 struct ConstraintDualStart <: AbstractConstraintAttribute end
 
@@ -1329,19 +1343,19 @@ struct ConstraintDualStart <: AbstractConstraintAttribute end
     ConstraintPrimal(result_index::Int = 1)
 
 A constraint attribute for the assignment to some constraint's primal value(s)
-in result `result_index`. If `result_index` is omitted, it is 1 by default.
+in result `result_index`.
 
-See [`ResultCount`](@ref) for information on how the results are ordered.
+If the constraint is `f(x) in S`, then in most cases the `ConstraintPrimal` is
+the value of `f`, evaluated at the correspondng [`VariablePrimal`](@ref)
+solution.
 
-## Example
+However, some conic solvers reformulate `b - Ax in S` to `s = b - Ax, s in S`.
+These solvers may return the value of `s` for `ConstraintPrimal`, rather than
+`b - Ax`. (Although these are constrained by an equality constraint, due to
+numerical tolerances they may not be identical.)
 
-Given a constraint `function-in-set`, the `ConstraintPrimal` is the value of the
-function evaluated at the primal solution of the variables.
-
-For example, given the constraint
-`ScalarAffineFunction([x,y], [1, 2], 3)`-in-`Interval(0, 20)` and a primal
-solution of `(x,y) = (4,5)`, the `ConstraintPrimal` solution of the constraint
-is `1 * 4 + 2 * 5 + 3 = 17`.
+If `result_index` is omitted, it is 1 by default. See [`ResultCount`](@ref) for
+information on how the results are ordered.
 """
 struct ConstraintPrimal <: AbstractConstraintAttribute
     result_index::Int

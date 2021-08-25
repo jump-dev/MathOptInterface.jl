@@ -62,7 +62,7 @@ function bridge_constrained_variable(
             func = MOIU.operate(-, T, u2, MOI.SingleVariable(variables[k]))
             push!(diag, MOI.add_constraint(model, func, MOI.EqualTo(zero(T))))
         end
-        @assert k == trimap(dim, dim)
+        @assert k == MOIU.trimap(dim, dim)
     end
     return RSOCtoPSDBridge{T}(variables, psd, off_diag, diag)
 end
@@ -168,14 +168,6 @@ function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::RSOCtoPSDBridge)
     return MOI.RotatedSecondOrderCone(dim)
 end
 
-function trimap(i::Integer, j::Integer)
-    if i < j
-        return trimap(j, i)
-    else
-        return div((i - 1) * i, 2) + j
-    end
-end
-
 function _variable_map(bridge::RSOCtoPSDBridge, i::MOIB.IndexInVector)
     if bridge.psd isa
        MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
@@ -185,7 +177,7 @@ function _variable_map(bridge::RSOCtoPSDBridge, i::MOIB.IndexInVector)
     elseif i.value == 2
         return 3
     else
-        return trimap(1, i.value - 1)
+        return MOIU.trimap(1, i.value - 1)
     end
 end
 

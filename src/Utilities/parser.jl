@@ -106,18 +106,22 @@ function _parse_function(ex)
             end
         end
     else
-        # only accept Expr(:call, :+, ...), no recursive expressions
-        # TODO: generalize. x - y + z would be useful
+        # For simplicity, only accept Expr(:call, :+, ...); no recursive
+        # expressions
         if isexpr(ex, :call) && ex.args[1] == :*
-            # handle 2x as (+)(2x)
-            ex = Expr(:call, :+, ex)
+            ex = Expr(:call, :+, ex)  # Handle 2x as (+)(2x)
         end
         if ex isa Number
             ex = Expr(:call, :+, ex)
         end
         @assert isexpr(ex, :call)
         if ex.args[1] != :+
-            error("Expected `+`, got `$(ex.args[1])`.")
+            error(
+                "Unsupported operator in `loadfromstring!`: `$(ex.args[1])`. " *
+                "The parser is deliberately limited in the syntax it " *
+                "accepts. Write `x - y` as `x + -1 * y`,  and `x^2` as " *
+                "`x * x`.",
+            )
         end
         affine_terms = _ParsedScalarAffineTerm[]
         quadratic_terms = _ParsedScalarQuadraticTerm[]

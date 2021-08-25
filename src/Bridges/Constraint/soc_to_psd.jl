@@ -15,10 +15,10 @@ function _SOCtoPSDaff(
     dim = length(f_scalars)
     n = div(dim * (dim + 1), 2)
     h = MOIU.zero_with_output_dimension(F, n)
-    MOIU.operate_output_index!(+, T, trimap(1, 1), h, f_scalars[1])
+    MOIU.operate_output_index!(+, T, MOIU.trimap(1, 1), h, f_scalars[1])
     for i in 2:dim
-        MOIU.operate_output_index!(+, T, trimap(1, i), h, f_scalars[i])
-        MOIU.operate_output_index!(+, T, trimap(i, i), h, g)
+        MOIU.operate_output_index!(+, T, MOIU.trimap(1, i), h, f_scalars[i])
+        MOIU.operate_output_index!(+, T, MOIU.trimap(i, i), h, g)
     end
     return h
 end
@@ -89,14 +89,14 @@ end
 function MOIB.inverse_map_function(::Type{<:SOCtoPSDBridge}, func)
     scalars = MOIU.eachscalar(func)
     dim = MOIU.side_dimension_for_vectorized_dimension(length(scalars))
-    return scalars[trimap.(1, 1:dim)]
+    return scalars[MOIU.trimap.(1, 1:dim)]
 end
 
 function MOIB.adjoint_map_function(::Type{<:SOCtoPSDBridge{T}}, func) where {T}
     scalars = MOIU.eachscalar(func)
     dim = MOIU.side_dimension_for_vectorized_dimension(length(scalars))
-    tdual = sum(i -> func[trimap(i, i)], 1:dim)
-    return MOIU.operate(vcat, T, tdual, func[trimap.(2:dim, 1)] * 2)
+    tdual = sum(i -> func[MOIU.trimap(i, i)], 1:dim)
+    return MOIU.operate(vcat, T, tdual, func[MOIU.trimap.(2:dim, 1)] * 2)
 end
 
 function MOIB.inverse_adjoint_map_function(
@@ -189,14 +189,26 @@ function MOIB.inverse_map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where {T}
     t = scalars[1]
     # It is (2u*I)[1,1] so it needs to be divided by 2 to get u
     u = MOIU.operate!(/, T, scalars[3], convert(T, 2))
-    return MOIU.operate(vcat, T, t, u, scalars[[trimap(1, i) for i in 2:dim]])
+    return MOIU.operate(
+        vcat,
+        T,
+        t,
+        u,
+        scalars[[MOIU.trimap(1, i) for i in 2:dim]],
+    )
 end
 
 function MOIB.adjoint_map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where {T}
     scalars = MOIU.eachscalar(func)
     dim = MOIU.side_dimension_for_vectorized_dimension(length(scalars))
-    udual = sum(i -> func[trimap(i, i)], 2:dim)
-    return MOIU.operate(vcat, T, func[1], 2udual, func[trimap.(2:dim, 1)] * 2)
+    udual = sum(i -> func[MOIU.trimap(i, i)], 2:dim)
+    return MOIU.operate(
+        vcat,
+        T,
+        func[1],
+        2udual,
+        func[MOIU.trimap.(2:dim, 1)] * 2,
+    )
 end
 
 function MOIB.inverse_adjoint_map_function(

@@ -1,12 +1,3 @@
-# TODO(odow): this appears elsewhere
-function trimap(i::Integer, j::Integer)
-    if i < j
-        trimap(j, i)
-    else
-        div((i - 1) * i, 2) + j
-    end
-end
-
 """
     extract_eigenvalues(
         model,
@@ -32,14 +23,14 @@ function extract_eigenvalues(
     f_scalars = MOIU.eachscalar(f)
     tu = [f_scalars[i] for i in 1:offset]
 
-    n = trimap(d, d)
+    n = MOIU.trimap(d, d)
     X = f_scalars[offset.+(1:n)]
     m = length(X.terms)
     M = m + n + d
 
     terms = Vector{MOI.VectorAffineTerm{T}}(undef, M)
     terms[1:m] = X.terms
-    N = trimap(2d, 2d)
+    N = MOIU.trimap(2d, 2d)
     constant = zeros(T, N)
     constant[1:n] = X.constants
 
@@ -50,14 +41,14 @@ function extract_eigenvalues(
         for i in j:d
             cur += 1
             terms[cur] = MOI.VectorAffineTerm(
-                trimap(i, d + j),
-                MOI.ScalarAffineTerm(one(T), Δ[trimap(i, j)]),
+                MOIU.trimap(i, d + j),
+                MOI.ScalarAffineTerm(one(T), Δ[MOIU.trimap(i, j)]),
             )
         end
         cur += 1
         terms[cur] = MOI.VectorAffineTerm(
-            trimap(d + j, d + j),
-            MOI.ScalarAffineTerm(one(T), Δ[trimap(j, j)]),
+            MOIU.trimap(d + j, d + j),
+            MOI.ScalarAffineTerm(one(T), Δ[MOIU.trimap(j, j)]),
         )
     end
     @assert cur == M
@@ -65,7 +56,7 @@ function extract_eigenvalues(
     sdindex =
         MOI.add_constraint(model, Y, MOI.PositiveSemidefiniteConeTriangle(2d))
 
-    D = Δ[trimap.(1:d, 1:d)]
+    D = Δ[MOIU.trimap.(1:d, 1:d)]
 
     return tu, D, Δ, sdindex
 end
