@@ -82,8 +82,9 @@ functions using [`Utilities.vectorize`](@ref). It takes a vector as input,
 and the generated vector function (of the most appropriate type) has each 
 dimension corresponding to a dimension of the vector.
 
-```julia
-f5 = Utilities.vectorize([f2, 2 * f2])
+```jldoctest expr
+julia> f5 = MOI.Utilities.vectorize([f2, 2 * f2])
+MathOptInterface.VectorAffineFunction{Int64}(MathOptInterface.VectorAffineTerm{Int64}[MathOptInterface.VectorAffineTerm{Int64}(1, MathOptInterface.ScalarAffineTerm{Int64}(1, MathOptInterface.VariableIndex(1))), MathOptInterface.VectorAffineTerm{Int64}(2, MathOptInterface.ScalarAffineTerm{Int64}(2, MathOptInterface.VariableIndex(1)))], [2, 4])
 ```
 
 !!! warning
@@ -108,15 +109,17 @@ redundancy to zero.
 [`Utilities.is_canonical`](@ref) checks whether a function is already in its 
 canonical form:
 
-```julia
-Utilities.is_canonical(f2 + f2) # (x + 2) + (x + 2) is stored as x + x + 4
+```jldoctest expr
+julia> MOI.Utilities.is_canonical(f2 + f2) # (x + 2) + (x + 2) is stored as x + x + 4
+false
 ```
 
 [`Utilities.canonical`](@ref) returns the equivalent canonical version of the 
 function:
 
-```julia
-Utilities.canonical(f2 + f2) # Returns 2x + 2
+```jldoctest expr
+julia> MOI.Utilities.canonical(f2 + f2) # Returns 2x + 4
+MathOptInterface.ScalarAffineFunction{Int64}(MathOptInterface.ScalarAffineTerm{Int64}[MathOptInterface.ScalarAffineTerm{Int64}(2, MathOptInterface.VariableIndex(1))], 4)
 ```
 
 ## Exploring functions
@@ -129,8 +132,11 @@ into solver constructs.
 [`Utilities.scalarize`](@ref) returns a vector of scalar functions from a
 vector function:
 
-```julia
-Utilities.scalarize(f5) # Returns a vector [f2, 2 * f2].
+```jldoctest expr
+julia> MOI.Utilities.scalarize(f5) # Returns a vector [f2, 2 * f2].
+2-element Vector{MathOptInterface.ScalarAffineFunction{Int64}}:
+ MathOptInterface.ScalarAffineFunction{Int64}(MathOptInterface.ScalarAffineTerm{Int64}[MathOptInterface.ScalarAffineTerm{Int64}(1, MathOptInterface.VariableIndex(1))], 2)
+ MathOptInterface.ScalarAffineFunction{Int64}(MathOptInterface.ScalarAffineTerm{Int64}[MathOptInterface.ScalarAffineTerm{Int64}(2, MathOptInterface.VariableIndex(1))], 4)
 ```
 
 !!! note
@@ -140,6 +146,7 @@ Utilities.scalarize(f5) # Returns a vector [f2, 2 * f2].
 [`output_dimension`](@ref) returns the number of dimensions of the 
 output of a function:
 
-```julia
-output_dimension(f5) # Returns 2.
+```jldoctest expr
+julia> MOI.output_dimension(f5)
+2
 ```
