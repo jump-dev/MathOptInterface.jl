@@ -388,7 +388,6 @@ function _allocate_constraints(
     index_map,
     ::Type{F},
     ::Type{S},
-    filter_constraints::Union{Nothing,Function},
 ) where {T,F,S}
     i = set_index(model.sets, S)
     if i === nothing || F != _affine_function_type(T, S)
@@ -398,9 +397,6 @@ function _allocate_constraints(
         src,
         MOI.ListOfConstraintIndices{_affine_function_type(T, S),S}(),
     )
-    if filter_constraints !== nothing
-        filter!(filter_constraints, cis_src)
-    end
     for ci_src in cis_src
         func = MOI.get(src, MOI.CanonicalConstraintFunction(), ci_src)
         set = MOI.get(src, MOI.ConstraintSet(), ci_src)
@@ -459,11 +455,10 @@ function pass_nonvariable_constraints(
     dest::MatrixOfConstraints,
     src::MOI.ModelLike,
     index_map::IndexMap,
-    constraint_types;
-    filter_constraints::Union{Nothing,Function} = nothing,
+    constraint_types,
 )
     for (F, S) in constraint_types
-        _allocate_constraints(dest, src, index_map, F, S, filter_constraints)
+        _allocate_constraints(dest, src, index_map, F, S)
     end
     return
 end

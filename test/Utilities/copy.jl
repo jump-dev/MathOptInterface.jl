@@ -600,11 +600,12 @@ function test_filtering_copy()
     # Filtering function: the default case where this function always returns
     # true is already well-tested by the above cases.
     # Only keep the constraint c1.
-    f = (cidx) -> cidx == c1
+    f(::Any) = true
+    f(cidx::MOI.ConstraintIndex) = cidx == c1
 
     # Perform the copy.
     dst = OrderConstrainedVariablesModel()
-    index_map = MOI.copy_to(dst, src, filter_constraints = f)
+    index_map = MOI.copy_to(dst, MOI.Utilities.FilterModel(f, src))
 
     @test typeof(c1) == typeof(dst.constraintIndices[1])
     @test length(dst.constraintIndices) == 1
@@ -661,7 +662,9 @@ function test_BoundModel_filtering_copy()
     c2 = MOI.add_constraint(src, x, MOI.Integer())
 
     # Filtering function: get rid of integrality constraint.
-    f = (cidx) -> MOI.get(src, MOI.ConstraintSet(), cidx) != MOI.Integer()
+    f(::Any) = true
+    f(cidx::MOI.ConstraintIndex) =
+        MOI.get(src, MOI.ConstraintSet(), cidx) != MOI.Integer()
 
     # Perform the unfiltered copy. This should throw an error (i.e. the
     # implementation of BoundModel
@@ -674,7 +677,7 @@ function test_BoundModel_filtering_copy()
 
     # Perform the filtered copy. This should not throw an error.
     dst = BoundModel()
-    MOI.copy_to(dst, src, filter_constraints = f)
+    MOI.copy_to(dst, MOI.Utilities.FilterModel(f, src))
     @test MOI.get(
         dst,
         MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{Float64}}(),
@@ -713,15 +716,13 @@ function MOIU.pass_nonvariable_constraints(
     dest::OnlyCopyConstraints,
     src::MOI.ModelLike,
     idxmap::MOIU.IndexMap,
-    constraint_types;
-    filter_constraints::Union{Nothing,Function} = nothing,
+    constraint_types,
 )
     return MOIU.pass_nonvariable_constraints(
         dest.constraints,
         src,
         idxmap,
-        constraint_types;
-        filter_constraints = filter_constraints,
+        constraint_types,
     )
 end
 

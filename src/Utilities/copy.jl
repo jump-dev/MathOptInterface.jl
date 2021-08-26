@@ -100,11 +100,7 @@ function pass_attributes(
     src::MOI.ModelLike,
     index_map::IndexMap,
     cis_src::Vector{MOI.ConstraintIndex{F,S}},
-    filter_constraints::Union{Nothing,Function} = nothing,
 ) where {F,S}
-    if filter_constraints !== nothing
-        filter!(filter_constraints, cis_src)
-    end
     for attr in MOI.get(src, MOI.ListOfConstraintAttributesSet{F,S}())
         _pass_attribute(dest, src, index_map, cis_src, attr)
     end
@@ -220,27 +216,18 @@ end
         src::MOI.ModelLike,
         index_map::IndexMap,
         cis_src::Vector{<:MOI.ConstraintIndex},
-        filter_constraints::Union{Nothing,Function} = nothing,
     )
 
 Copy the constraints `cis_src` from the model `src` to the model `dest` and fill
 `index_map` accordingly. Note that the attributes are not copied; call
 [`pass_attributes`] to copy the constraint attributes.
-
-If the `filter_constraints` arguments is given, only the constraints for which
-this function returns `true` will be copied. This function is given a
-constraint index as argument.
 """
 function _copy_constraints(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     index_map::IndexMap,
     cis_src::Vector{<:MOI.ConstraintIndex},
-    filter_constraints::Union{Nothing,Function} = nothing,
 )
-    if filter_constraints !== nothing
-        filter!(filter_constraints, cis_src)
-    end
     for ci in cis_src
         f = MOI.get(src, MOI.ConstraintFunction(), ci)
         s = MOI.get(src, MOI.ConstraintSet(), ci)
@@ -253,12 +240,11 @@ function pass_nonvariable_constraints_fallback(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     index_map::IndexMap,
-    constraint_types;
-    filter_constraints::Union{Nothing,Function} = nothing,
+    constraint_types,
 )
     for (F, S) in constraint_types
         cis_src = MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
-        _copy_constraints(dest, src, index_map, cis_src, filter_constraints)
+        _copy_constraints(dest, src, index_map, cis_src)
     end
     return
 end
@@ -268,14 +254,11 @@ end
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
         index_map::IndexMap,
-        constraint_types;
-        filter_constraints::Union{Nothing,Function} = nothing,
+        constraint_types,
     )
 
 For all tuples `(F, S)` in `constraint_types`, copy all constraints of type
 `F`-in-`S` from `src` to `dest` mapping the variables indices with `index_map`.
-If `filter_constraints` is not nothing, only indices `ci` such that
-`filter_constraints(ci)` is true are copied.
 
 The default implementation calls `pass_nonvariable_constraints_fallback`.
 A method can be implemented to use a specialized copy for a given type of
@@ -285,15 +268,13 @@ function pass_nonvariable_constraints(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     index_map::IndexMap,
-    constraint_types;
-    filter_constraints::Union{Nothing,Function} = nothing,
+    constraint_types,
 )
     pass_nonvariable_constraints_fallback(
         dest,
         src,
         index_map,
-        constraint_types;
-        filter_constraints = filter_constraints,
+        constraint_types,
     )
     return
 end
@@ -303,10 +284,9 @@ function _pass_constraints(
     src::MOI.ModelLike,
     index_map::IndexMap,
     variable_constraints_not_added::Vector,
-    filter_constraints::Union{Nothing,Function} = nothing,
 )
     for cis in variable_constraints_not_added
-        _copy_constraints(dest, src, index_map, cis, filter_constraints)
+        _copy_constraints(dest, src, index_map, cis)
     end
     all_constraint_types = MOI.get(src, MOI.ListOfConstraintTypesPresent())
     nonvariable_constraint_types = Any[
@@ -316,8 +296,7 @@ function _pass_constraints(
         dest,
         src,
         index_map,
-        nonvariable_constraint_types;
-        filter_constraints = filter_constraints,
+        nonvariable_constraint_types,
     )
     for (F, S) in all_constraint_types
         pass_attributes(
@@ -325,7 +304,6 @@ function _pass_constraints(
             src,
             index_map,
             MOI.get(src, MOI.ListOfConstraintIndices{F,S}()),
-            filter_constraints,
         )
     end
     return
@@ -405,32 +383,20 @@ function default_copy_to(
 )
     @warn(
         "The `copy_names` and `filter_constraints` arguments to " *
-        "`default_copy_to` are now keyword arguments.",
+        "`default_copy_to` have been removed.",
         maxlog = 1,
     )
-    return default_copy_to(dest, src; filter_constraints = filter_constraints)
+    return default_copy_to(dest, src)
 end
 
 """
-    default_copy_to(
-        dest::MOI.ModelLike,
-        src::MOI.ModelLike;
-        filter_constraints::Union{Nothing,Function} = nothing,
-    )
+    default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
 
 A default implementation of `MOI.copy_to(dest, src)` for models that implement
 the incremental interface, i.e., [`MOI.supports_incremental_interface`](@ref)
 returns `true`.
-
-If `filter_constraints` is a `Function`, only constraints for which
-`filter_constraints(ci)` returns `true` will be copied, where `ci` is the
-[`MOI.ConstraintIndex`](@ref) of the constraint.
 """
-function default_copy_to(
-    dest::MOI.ModelLike,
-    src::MOI.ModelLike;
-    filter_constraints::Union{Nothing,Function} = nothing,
-)
+function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
     if !MOI.supports_incremental_interface(dest)
         error("Model $(typeof(dest)) does not support copy_to.")
     end
@@ -464,8 +430,105 @@ function default_copy_to(
         src,
         index_map,
         constraints_not_added,
-        filter_constraints,
     )
     final_touch(dest, index_map)
     return index_map
 end
+
+_always_true(::Any) = true
+
+"""
+    ModelFilter(filter::Function, model::MOI.ModelLike)
+
+A layer to filter out various components of `model`.
+
+The attributes that are filtered are:
+
+ * `MOI.ListOfModelAttributesSet`
+ * `MOI.ListOfVariableAttributesSet`
+ * `MOI.ListOfConstraintAttributesSet`
+ * `MOI.ListOfConstraintIndices`
+ * `MOI.ListOfVariableIndices`
+
+See the examples for examples of how this works.
+
+!!! note
+    This layer has a limited scope. It is intended by be used in conjunction
+    with `MOI.copy_to`.
+
+## Example: copy model excluding integer constraints
+
+Use the `do` syntax to provide a single function.
+
+```julia
+filtered_src = ModelFilter(src) do x
+    return !(x isa MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer})
+end
+MOI.copy_to(dest, filtered_src)
+```
+
+## Example: copy model excluding names
+
+Use type dispatch to simplify the implementation:
+
+```julia
+my_filter(x) = true
+my_filter(::MOI.VariableName) = false
+my_filter(::MOI.ConstraintName) = false
+filtered_src = ModelFilter(my_filter, src)
+MOI.copy_to(dest, filtered_src)
+```
+
+## Example: copy irreducible infeasible subsystem
+
+```julia
+my_filter(x) = true
+function my_filter(ci::MOI.ConstraintIndex)
+    status = MOI.get(dest, MOI.ConstraintConflictStatus(), ci)
+    return status != MOI.NOT_IN_CONFLICT
+end
+filtered_src = ModelFilter(my_filter, src)
+MOI.copy_to(dest, filtered_src)
+```
+"""
+struct ModelFilter{T} <: MOI.ModelLike
+    inner::T
+    filter::Function
+    function ModelFilter(filter::Function, model::MOI.ModelLike)
+        return new{typeof(model)}(model, filter)
+    end
+end
+
+function MOI.get(
+    model::ModelFilter,
+    attr::Union{
+        MOI.ListOfModelAttributesSet,
+        MOI.ListOfVariableAttributesSet,
+        MOI.ListOfConstraintAttributesSet,
+        MOI.ListOfConstraintIndices,
+        MOI.ListOfVariableIndices,
+    },
+)
+    return filter(model.filter, MOI.get(model.inner, attr))
+end
+
+function MOI.get(model::ModelFilter, attr::MOI.AbstractModelAttribute)
+    return MOI.get(model.inner, attr)
+end
+
+function MOI.get(
+    model::ModelFilter,
+    attr::MOI.AbstractVariableAttribute,
+    x::MOI.VariableIndex,
+)
+    return MOI.get(model.inner, attr, x)
+end
+
+function MOI.get(
+    model::ModelFilter,
+    attr::MOI.AbstractConstraintAttribute,
+    ci::MOI.ConstraintIndex,
+)
+    return MOI.get(model.inner, attr, ci)
+end
+
