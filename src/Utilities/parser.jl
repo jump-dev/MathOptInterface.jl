@@ -246,7 +246,9 @@ for typename in [
     @eval _parsed_to_moi(model, f::$typename) = $constructor
 end
 
-_parsed_to_moi(model, f::_ParsedVariableIndex) = _parsed_to_moi(f.variable)
+function _parsed_to_moi(model, f::_ParsedVariableIndex)
+    return _parsed_to_moi(model, f.variable)
+end
 
 # Ideally, this should be load_from_string
 """
