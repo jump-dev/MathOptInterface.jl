@@ -22,7 +22,7 @@ The API of MathOptInterface is large. At a minimum, objects subtyping
 
 and the functions:
 
- * [`isempty`](@ref)
+ * [`is_empty`](@ref)
  * [`empty!`](@ref)
 
 !!! warning

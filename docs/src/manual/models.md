@@ -66,7 +66,7 @@ Consult the docstsrings of each attribute for information on what it represents.
 
 Objects subtyping [`ModelLike`](ref) must implement:
 
- * [`isempty`](@ref)
+ * [`is_empty`](@ref)
  * [`empty!`](@ref)
 
 The following attributes are available. Some are required by all
@@ -92,7 +92,8 @@ implementations, and others are optional.
 
 ## AbstractOptimizer API
 
-In addition to implementing the [ModelLike API](@ref), objects subtyping [`AbstractOptimizer`](ref) must implement:
+In addition to implementing the [ModelLike API](@ref), objects subtyping
+[`AbstractOptimizer`](ref) must implement:
 
  * [`optimize!`](@ref)
 
