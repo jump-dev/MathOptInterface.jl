@@ -444,9 +444,9 @@ The attributes that are filtered are:
 
  * `MOI.ListOfModelAttributesSet`
  * `MOI.ListOfVariableAttributesSet`
+ * `MOI.ListOfVariableIndices`
  * `MOI.ListOfConstraintAttributesSet`
  * `MOI.ListOfConstraintIndices`
- * `MOI.ListOfVariableIndices`
 
 See the examples for examples of how this works.
 
