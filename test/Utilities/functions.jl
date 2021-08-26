@@ -1781,6 +1781,19 @@ function test_zero_with_output_dimension()
     return
 end
 
+"""
+    test_SingleVariable_operators()
+
+Test the three Base.:(op) fallbacks for pure SingleVariable operations.
+"""
+function test_SingleVariable_operators()
+    x = MOI.SingleVariable(MOI.VariableIndex(1))
+    @test x + x ≈ 1.0 * x + 1.0 * x
+    @test x - x ≈ 1.0 * x - 1.0 * x
+    @test x * x ≈ 1.0 * x * 1.0 * x
+    return
+end
+
 end  # module
 
 TestFunctions.runtests()

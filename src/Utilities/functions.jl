@@ -1922,6 +1922,23 @@ function Base.:-(α::Number, f::MOI.SingleVariable)
     return operate(-, typeof(α), α, f)
 end
 
+# SingleVariable defaults to Float64
+function Base.:+(arg::MOI.SingleVariable, args::MOI.SingleVariable...)
+    return operate(+, Float64, arg, args...)
+end
+
+function Base.:-(arg::MOI.SingleVariable, args::MOI.SingleVariable...)
+    return operate(-, Float64, arg, args...)
+end
+
+function Base.:*(
+    arg::MOI.SingleVariable,
+    arg2::MOI.SingleVariable,
+    args::MOI.SingleVariable...,
+)
+    return operate(*, Float64, arg, arg2, args...)
+end
+
 # Vector +/-
 ###############################################################################
 
