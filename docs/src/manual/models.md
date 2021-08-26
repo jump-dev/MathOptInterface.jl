@@ -62,50 +62,65 @@ functions.
 
 Consult the docstsrings of each attribute for information on what it represents.
 
-## Model attributes
+## ModelLike API
 
-The following attributes are available for models:
+Objects subtyping [`ModelLike`](ref) must implement:
+
+ * [`isempty`](@ref)
+ * [`empty!`](@ref)
+
+The following attributes are available. Some are required by all
+implementations, and others are optional.
+
+**Required**
+
+ * [`ListOfConstraintAttributesSet`](@ref)
+ * [`ListOfConstraintIndices`](@ref)
+ * [`ListOfConstraintTypesPresent`](@ref)
+ * [`ListOfModelAttributesSet`](@ref)
+ * [`ListOfVariableAttributesSet`](@ref)
+ * [`ListOfVariableIndices`](@ref)
+ * [`NumberOfConstraints`](@ref)
+ * [`NumberOfVariables`](@ref)
+
+**Optional**
 
  * [`Name`](@ref)
  * [`ObjectiveFunction`](@ref)
  * [`ObjectiveFunctionType`](@ref)
  * [`ObjectiveSense`](@ref)
- * [`NumberOfVariables`](@ref)
- * [`ListOfVariableIndices`](@ref)
- * [`ListOfConstraintTypesPresent`](@ref)
- * [`NumberOfConstraints`](@ref)
- * [`ListOfConstraintIndices`](@ref)
+
+## AbstractOptimizer API
+
+In addition to implementing the [ModelLike API](@ref), objects subtyping [`AbstractOptimizer`](ref) must implement:
+
+ * [`optimize!`](@ref)
+
+The following attributes are available. Some are required by all
+implementations, and others are optional.
+
+**Required**
+
+ * [`DualStatus`](@ref)
  * [`ListOfOptimizerAttributesSet`](@ref)
- * [`ListOfModelAttributesSet`](@ref)
- * [`ListOfVariableAttributesSet`](@ref)
- * [`ListOfConstraintAttributesSet`](@ref)
+ * [`PrimalStatus`](@ref)
+ * [`RawStatusString`](@ref)
+ * [`ResultCount`](@ref)
+ * [`TerminationStatus`](@ref)
 
-## Optimizer attributes
+**Optional**
 
-The following attributes are available for optimizers:
-
- - [`SolverName`](@ref)
- - [`RawOptimizerAttribute`](@ref)
- - [`Silent`](@ref)
- - [`TimeLimitSec`](@ref)
- - [`NumberOfThreads`](@ref)
- - [`RawSolver`](@ref)
-
-In addition, optimizers should implement the following attributes to provide
-access to solutions:
-
- - [`TerminationStatus`](@ref)
- - [`TerminationStatusCode`](@ref)
- - [`PrimalStatus`](@ref)
- - [`DualStatus`](@ref)
- - [`ResultStatusCode`](@ref)
- - [`RawStatusString`](@ref)
- - [`ResultCount`](@ref)
- - [`ObjectiveValue`](@ref)
- - [`DualObjectiveValue`](@ref)
- - [`ObjectiveBound`](@ref)
- - [`RelativeGap`](@ref)
- - [`SolveTimeSec`](@ref)
- - [`SimplexIterations`](@ref)
- - [`BarrierIterations`](@ref)
- - [`NodeCount`](@ref)
+ * [`BarrierIterations`](@ref)
+ * [`DualObjectiveValue`](@ref)
+ * [`NodeCount`](@ref)
+ * [`NumberOfThreads`](@ref)
+ * [`ObjectiveBound`](@ref)
+ * [`ObjectiveValue`](@ref)
+ * [`RelativeGap`](@ref)
+ * [`RawOptimizerAttribute`](@ref)
+ * [`RawSolver`](@ref)
+ * [`Silent`](@ref)
+ * [`SimplexIterations`](@ref)
+ * [`SolverName`](@ref)
+ * [`SolveTimeSec`](@ref)
+ * [`TimeLimitSec`](@ref)

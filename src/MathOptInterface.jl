@@ -5,6 +5,29 @@ module MathOptInterface
 
 Abstract supertype for objects that implement the "Model" interface for defining
 an optimization problem.
+
+## Interface
+
+The API of MathOptInterface is large. At a minimum, objects subtyping
+`ModelLike` should implement [`get`](@ref) for the following attributes:
+
+ * [`ListOfConstraintAttributesSet`](@ref)
+ * [`ListOfConstraintIndices`](@ref)
+ * [`ListOfConstraintTypesPresent`](@ref)
+ * [`ListOfModelAttributesSet`](@ref)
+ * [`ListOfVariableAttributesSet`](@ref)
+ * [`ListOfVariableIndices`](@ref)
+ * [`NumberOfConstraints`](@ref)
+ * [`NumberOfVariables`](@ref)
+
+and the functions:
+
+ * [`isempty`](@ref)
+ * [`empty!`](@ref)
+
+!!! warning
+    This is the _minimal_ API required. Consult the documentation for more
+    details on how to interface the full API.
 """
 abstract type ModelLike end
 
@@ -17,12 +40,32 @@ function Base.show(io::IO, model::ModelLike)
 end
 
 """
-    AbstractOptimizer
+    AbstractOptimizer <: ModelLike
 
-Abstract supertype for objects representing an instance of an optimization problem
-tied to a particular solver. This is typically a solver's in-memory representation.
-In addition to `ModelLike`, `AbstractOptimizer` objects let you solve the
-model and query the solution.
+Abstract supertype for objects representing an instance of an optimization
+problem tied to a particular solver. This is typically a solver's in-memory
+representation. In addition to `ModelLike`, `AbstractOptimizer` objects let you
+solve the model and query the solution.
+
+## Interface
+
+The API of MathOptInterface is large. At a minimum, objects subtyping
+`AbstractOptimizer` should implement the [`ModelLike`](@ref) API, plus:
+
+ * [`optimize!`](@ref)
+
+and [`get`](@ref) for the following attributes:
+
+ * [`DualStatus`](@ref)
+ * [`ListOfOptimizerAttributesSet`](@ref)
+ * [`PrimalStatus`](@ref)
+ * [`RawStatusString`](@ref)
+ * [`ResultCount`](@ref)
+ * [`TerminationStatus`](@ref)
+
+!!! warning
+    This is the _minimal_ API required. Consult the documentation for more
+    details on how to interface the full API.
 """
 abstract type AbstractOptimizer <: ModelLike end
 
@@ -82,7 +125,9 @@ function read_from_file end
 """
     is_empty(model::ModelLike)
 
-Returns `false` if the `model` has any model attribute set or has any variables or constraints.
+Returns `false` if the `model` has any model attribute set or has any variables
+or constraints.
+
 Note that an empty model can have optimizer attributes set.
 """
 function is_empty end
@@ -90,7 +135,8 @@ function is_empty end
 """
     empty!(model::ModelLike)
 
-Empty the model, that is, remove all variables, constraints and model attributes but not optimizer attributes.
+Empty the model, that is, remove all variables, constraints and model attributes
+but not optimizer attributes.
 """
 function empty! end
 
