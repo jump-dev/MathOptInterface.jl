@@ -83,25 +83,22 @@ mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
     vector::Vector{V}
     dict::OrderedCollections.OrderedDict{K,V}
     function CleverDict{K,V}(
-        hash::F,
-        inverse_hash::I,
-        n::Integer = 0,
-    ) where {K,V,F,I}
-        vec = K[]
-        sizehint!(vec, n)
+        hash::F = key_to_index,
+        inverse_hash::I = index_to_key,
+        n = nothing,
+    ) where {K,V,F<:Function,I<:Function}
+        if n !== nothing
+            @warn("The `n` argument to `CleverDict` has been removed.")
+        end
         return new{K,V,F,I}(
             0,
             hash,
             inverse_hash,
             true,
-            vec,
+            K[],
             OrderedCollections.OrderedDict{K,V}(),
         )
     end
-end
-
-function CleverDict{K,V}(n::Integer = 0) where {K,V}
-    return CleverDict{K,V}(key_to_index, index_to_key, n)
 end
 
 _is_dense(c::CleverDict) = c.is_dense

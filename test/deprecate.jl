@@ -84,6 +84,22 @@ function test_copy_to_copy_names()
     return
 end
 
+function test_IndexMap()
+    @test_logs (:warn,) MOI.IndexMap(1)
+    return
+end
+
+function test_CleverDicts()
+    K, V = MOI.VariableIndex, MOI.VariableIndex
+    @test_logs (:warn,) MOI.Utilities.CleverDicts.CleverDict{K,V}(1)
+    @test_logs (:warn,) MOI.Utilities.CleverDicts.CleverDict{K,V}(
+        MOI.Utilities.CleverDicts.key_to_index,
+        MOI.Utilities.CleverDicts.index_to_key,
+        1,
+    )
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

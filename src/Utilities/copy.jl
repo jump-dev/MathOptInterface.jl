@@ -436,7 +436,7 @@ function default_copy_to(
     end
     MOI.empty!(dest)
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
-    index_map = _index_map_for_variable_indices(vis_src)
+    index_map = IndexMap()
     # The `NLPBlock` assumes that the order of variables does not change (#849)
     # Therefore, all SingleVariable and VectorOfVariable constraints are added
     # seprately, and no variables constrained-on-creation are added.
