@@ -1,14 +1,3 @@
-# Functions
-
-import MutableArithmetics
-
-"""
-    AbstractFunction
-
-Abstract supertype for function objects.
-"""
-abstract type AbstractFunction <: MutableArithmetics.AbstractMutable end
-
 """
     output_dimension(f::AbstractFunction)
 
@@ -17,34 +6,11 @@ has a vector output.
 """
 function output_dimension end
 
-"""
-    AbstractScalarFunction
-
-Abstract supertype for scalar-valued function objects.
-"""
-abstract type AbstractScalarFunction <: AbstractFunction end
 output_dimension(::AbstractScalarFunction) = 1
 
 Base.broadcastable(f::AbstractScalarFunction) = Ref(f)
 Base.ndims(::Type{<:AbstractScalarFunction}) = 0
 Base.ndims(::AbstractScalarFunction) = 0
-
-"""
-    AbstractVectorFunction
-
-Abstract supertype for vector-valued function objects.
-"""
-abstract type AbstractVectorFunction <: AbstractFunction end
-
-"""
-    variable
-
-The function that extracts the scalar variable referenced by `variable`, a `VariableIndex`.
-This function is naturally be used for single variable bounds or integrality constraints.
-"""
-struct VariableIndex <: AbstractScalarFunction
-    variable::VariableIndex
-end
 
 """
     VectorOfVariables(variables)
@@ -495,7 +461,7 @@ end
 # Define shortcuts for
 # VariableIndex -> ScalarAffineFunction
 function ScalarAffineFunction{T}(f::VariableIndex) where {T}
-    return ScalarAffineFunction([ScalarAffineTerm(one(T), f.variable)], zero(T))
+    return ScalarAffineFunction([ScalarAffineTerm(one(T), f)], zero(T))
 end
 # VectorOfVariables -> VectorAffineFunction
 function VectorAffineFunction{T}(f::VectorOfVariables) where {T}
@@ -610,7 +576,7 @@ function Base.convert(
 end
 
 function Base.convert(::Type{VectorOfVariables}, g::VariableIndex)
-    return VectorOfVariables([g.variable])
+    return VectorOfVariables([g])
 end
 
 function Base.convert(
@@ -618,7 +584,7 @@ function Base.convert(
     g::VariableIndex,
 ) where {T}
     return VectorAffineFunction{T}(
-        [VectorAffineTerm(1, ScalarAffineTerm(one(T), g.variable))],
+        [VectorAffineTerm(1, ScalarAffineTerm(one(T), g))],
         [zero(T)],
     )
 end
@@ -629,7 +595,7 @@ function Base.convert(
 ) where {T}
     return VectorQuadraticFunction{T}(
         VectorQuadraticTerm{T}[],
-        [VectorAffineTerm(1, ScalarAffineTerm(one(T), g.variable))],
+        [VectorAffineTerm(1, ScalarAffineTerm(one(T), g))],
         [zero(T)],
     )
 end

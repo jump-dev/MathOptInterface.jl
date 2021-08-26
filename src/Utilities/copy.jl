@@ -201,14 +201,14 @@ function _try_constrain_variables_on_creation(
     for ci_src in
         MOI.get(src, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
-        if haskey(index_map, f_src.variable)
+        if haskey(index_map, f_src)
             # Can't add it because it contains a variable previously added
             push!(not_added, ci_src)
         else
             set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
             vi_dest, ci_dest = MOI.add_constrained_variable(dest, set)
             index_map[ci_src] = ci_dest
-            index_map[f_src.variable] = vi_dest
+            index_map[f_src] = vi_dest
         end
     end
     return not_added

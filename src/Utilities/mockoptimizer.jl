@@ -176,7 +176,7 @@ end
 
 function MOI.add_constraint(
     mock::MockOptimizer,
-    func::MOI.SingleVariable,
+    func::MOI.VariableIndex,
     set::MOI.AbstractSet,
 )
     if !mock.add_con_allowed

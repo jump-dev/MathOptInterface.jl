@@ -9,7 +9,7 @@ struct FunctionizeBridge{T} <: AbstractBridge end
 function bridge_objective(
     ::Type{FunctionizeBridge{T}},
     model::MOI.ModelLike,
-    func::MOI.SingleVariable,
+    func::MOI.VariableIndex,
 ) where {T}
     F = MOI.ScalarAffineFunction{T}
     MOI.set(model, MOI.ObjectiveFunction{F}(), convert(F, func))

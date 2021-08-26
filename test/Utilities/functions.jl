@@ -59,7 +59,7 @@ function test_Vectorization_vectorize()
     g2 = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Int}[], 1)
     g3 = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(5, y)], 4)
     @test g ≈ MOI.Utilities.vectorize([g1, g2, g3])
-    vov = MOI.Utilities.vectorize(MOI.SingleVariable[])
+    vov = MOI.Utilities.vectorize(MOI.VariableIndex[])
     @test MOI.output_dimension(vov) == 0
     @test vov isa MOI.VectorOfVariables
     aff = MOI.Utilities.vectorize(MOI.ScalarAffineFunction{Int}[])
@@ -437,7 +437,7 @@ function test_indexing_on_VectorQuadraticFunction()
 end
 
 function test_Scalar_Variable_isone()
-    f = MOI.SingleVariable(MOI.VariableIndex(0))
+    f = MOI.VariableIndex(0)
     g = MOI.VariableIndex(1)
     @test !isone(f)
     @test !isone(g)
@@ -445,7 +445,7 @@ function test_Scalar_Variable_isone()
 end
 
 function test_Scalar_Variable_iszero()
-    f = MOI.SingleVariable(MOI.VariableIndex(0))
+    f = MOI.VariableIndex(0)
     g = MOI.VariableIndex(1)
     @test !iszero(f)
     @test !iszero(g)
@@ -458,7 +458,7 @@ function test_Scalar_Variable_iszero()
 end
 
 function test_Scalar_Variable_complex()
-    f = MOI.SingleVariable(MOI.VariableIndex(0))
+    f = MOI.VariableIndex(0)
     @test real(f) === f
     @test MA.promote_operation(real, typeof(f)) == typeof(f)
     for T in [Int, Int32, Float64]
@@ -481,7 +481,7 @@ end
 
 function test_Scalar_Affine_complex()
     fx = MOI.VariableIndex(1)
-    fy = MOI.SingleVariable(MOI.VariableIndex(2))
+    fy = MOI.VariableIndex(2)
     r = 3fx + 4fy
     c = 2fx + 5fy
     f = (1 + 0im) * r + c * im
@@ -1466,7 +1466,7 @@ end
 
 function test_canonical_ScalarQuadratic()
     x = MOI.VariableIndex(1)
-    y = MOI.SingleVariable(MOI.VariableIndex(2))
+    y = MOI.VariableIndex(2)
     @test MOI.Utilities.is_canonical(
         convert(MOI.ScalarQuadraticFunction{Float64}, 1.0),
     )
@@ -1488,7 +1488,7 @@ end
 
 function test_canonical_VectorQuadratic()
     x = MOI.VariableIndex(1)
-    y = MOI.SingleVariable(MOI.VariableIndex(2))
+    y = MOI.VariableIndex(2)
     @test MOI.Utilities.is_canonical(
         MOI.Utilities.operate(
             vcat,

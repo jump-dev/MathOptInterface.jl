@@ -1138,7 +1138,7 @@ function test_SDPAModel_with_bridges_and_caching()
     cis = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
     @test length(cis) == 1
     ci_sdpa = first(cis)
-    func = [1.0, -1.0]'MOI.SingleVariable.(vis_sdpa)
+    func = [1.0, -1.0]' * vis_sdpa
     @test MOI.get(model, attr, ci_sdpa) ≈ func
     return
 end

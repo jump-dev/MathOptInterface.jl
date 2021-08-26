@@ -14,7 +14,7 @@ end
 function bridge_constraint(
     ::Type{ScalarFunctionizeBridge{T,S}},
     model,
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
     s::S,
 ) where {T,S}
     constraint = MOI.add_constraint(model, MOI.ScalarAffineFunction{T}(f), s)
@@ -76,7 +76,7 @@ function MOI.set(
     model::MOI.ModelLike,
     ::MOI.ConstraintFunction,
     c::ScalarFunctionizeBridge{T},
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
 ) where {T}
     MOI.set(
         model,

@@ -239,21 +239,21 @@ end
 
 function MOI.add_constraint(
     b::VariablesContainer{T},
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
     set::S,
 ) where {T,S}
     flag = _single_variable_flag(S)
-    mask = b.set_mask[f.variable.value]
-    _throw_if_lower_bound_set(f.variable, S, mask, T)
-    _throw_if_upper_bound_set(f.variable, S, mask, T)
+    mask = b.set_mask[f.value]
+    _throw_if_lower_bound_set(f, S, mask, T)
+    _throw_if_upper_bound_set(f, S, mask, T)
     if !iszero(flag & _LOWER_BOUND_MASK)
-        b.lower[f.variable.value] = _lower_bound(set)
+        b.lower[f.value] = _lower_bound(set)
     end
     if !iszero(flag & _UPPER_BOUND_MASK)
-        b.upper[f.variable.value] = _upper_bound(set)
+        b.upper[f.value] = _upper_bound(set)
     end
-    b.set_mask[f.variable.value] = mask | flag
-    return MOI.ConstraintIndex{MOI.VariableIndex,S}(f.variable.value)
+    b.set_mask[f.value] = mask | flag
+    return MOI.ConstraintIndex{MOI.VariableIndex,S}(f.value)
 end
 
 function MOI.delete(

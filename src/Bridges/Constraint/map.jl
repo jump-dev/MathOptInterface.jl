@@ -272,12 +272,12 @@ end
 function add_key_for_bridge(
     map::Map,
     bridge::AbstractBridge,
-    func::MOI.SingleVariable,
+    func::MOI.VariableIndex,
     set::MOI.AbstractScalarSet,
 )
-    map.single_variable_constraints[(func.variable.value, typeof(set))] = bridge
+    map.single_variable_constraints[(func.value, typeof(set))] = bridge
     return MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(
-        func.variable.value,
+        func.value,
     )
 end
 

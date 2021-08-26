@@ -206,14 +206,7 @@ function correct_throw_add_constraint_error_fallback(
     end
 end
 
-# convenient shorthands TODO: document
-function add_constraint(
-    model::ModelLike,
-    v::VariableIndex,
-    set::AbstractScalarSet,
-)
-    return add_constraint(model, v, set)
-end
+# TODO(odow): remove this?
 function add_constraint(
     model::ModelLike,
     v::Vector{VariableIndex},

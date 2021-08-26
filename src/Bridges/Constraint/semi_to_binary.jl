@@ -40,7 +40,7 @@ end
 function bridge_constraint(
     ::Type{SemiToBinaryBridge{T,S}},
     model::MOI.ModelLike,
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
     s::S,
 ) where {T<:Real,S<:SemiSets{T}}
     binary, binary_con = MOI.add_constrained_variable(model, MOI.ZeroOne())
@@ -63,7 +63,7 @@ function bridge_constraint(
 
     return SemiToBinaryBridge{T,S}(
         s,
-        f.variable,
+        f,
         binary,
         binary_con,
         lb_ci,

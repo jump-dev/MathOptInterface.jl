@@ -213,7 +213,7 @@ function Base.write(io::IO, model::Model{T}) where {T}
     if length(integer_cons) > 0
         println(io, "*INTEGER")
         for con_idx in integer_cons
-            println(io, "*$(con_function(con_idx).variable.value)")
+            println(io, "*$(con_function(con_idx).value)")
         end
     end
     return

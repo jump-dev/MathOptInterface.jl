@@ -172,7 +172,7 @@ end
 
 const _WRITE_READ_MODELS = [
     (
-        "min SingleVariable",
+        "min VariableIndex",
         """
     variables: x
     minobjective: x
@@ -186,7 +186,7 @@ const _WRITE_READ_MODELS = [
 """,
     ),
     (
-        "max SingleVariable",
+        "max VariableIndex",
         """
     variables: x
     maxobjective: x
@@ -200,7 +200,7 @@ const _WRITE_READ_MODELS = [
 """,
     ),
     (
-        "SingleVariable in Integer",
+        "VariableIndex in Integer",
         """
     variables: x, y
     minobjective: 1.2x

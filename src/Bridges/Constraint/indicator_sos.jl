@@ -34,7 +34,7 @@ function bridge_constraint(
 ) where {T<:Real,BC,MaybeBC}
     f_scalars = MOIU.eachscalar(f)
     (w, bound_constraint) = _add_bound_constraint!(model, BC)
-    z = convert(MOI.VariableIndex, f_scalars[1]).variable
+    z = convert(MOI.VariableIndex, f_scalars[1])
     sos_vector = MOI.VectorOfVariables([w, z])
     sos_constraint =
         MOI.add_constraint(model, sos_vector, MOI.SOS1{T}([0.4, 0.6]))

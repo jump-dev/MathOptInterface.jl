@@ -767,7 +767,7 @@ end
 
 function MOI.add_constraint(
     uf::UniversalFallback,
-    func::MOI.SingleVariable,
+    func::MOI.VariableIndex,
     set::S,
 ) where {S<:MOI.AbstractScalarSet}
     if MOI.supports_constraint(uf.model, MOI.VariableIndex, S)
@@ -782,7 +782,7 @@ function MOI.add_constraint(
             S,
         }()
     end::OrderedDict{MOI.ConstraintIndex{MOI.VariableIndex,S},S}
-    ci = MOI.ConstraintIndex{MOI.VariableIndex,S}(func.variable.value)
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,S}(func.value)
     constraints[ci] = set
     return ci
 end

@@ -52,7 +52,7 @@ function test_get_bounds_Float64()
     @test 1.35 == @inferred MOIU.get_bounds(model, T, e_v)[1]
     @test 1.35 == @inferred MOIU.get_bounds(model, T, e_v)[2]
 
-    MOI.add_constraint(model, MOI.SingleVariable(y_v), MOI.LessThan{T}(3.6))
+    MOI.add_constraint(model, y_v, MOI.LessThan{T}(3.6))
 
     @test 1.0 == @inferred MOIU.get_bounds(model, T, y_v)[1]
     @test 3.6 == @inferred MOIU.get_bounds(model, T, y_v)[2]
@@ -88,7 +88,7 @@ function test_get_bounds_UInt128()
     @test 0 == @inferred MOIU.get_bounds(model, T, v_v)[1]
     @test 7 == @inferred MOIU.get_bounds(model, T, v_v)[2]
 
-    MOI.add_constraint(model, MOI.SingleVariable(y_v), MOI.LessThan{T}(5))
+    MOI.add_constraint(model, y_v, MOI.LessThan{T}(5))
 
     @test 1 == @inferred MOIU.get_bounds(model, T, y_v)[1]
     @test 5 == @inferred MOIU.get_bounds(model, T, y_v)[2]

@@ -374,7 +374,7 @@ function variable_dual(
     for constraint_index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         if constraint_index != ci
             func = MOI.get(model, MOI.ConstraintFunction(), constraint_index)
-            if (F == MOI.VariableIndex && func.variable == vi) ||
+            if (F == MOI.VariableIndex && func == vi) ||
                (F == MOI.VectorOfVariables && vi in func.variables)
                 error(
                     "Fallback getter for variable constraint dual does not",
@@ -413,7 +413,7 @@ function variable_dual(
         F = MOI.get(model, MOI.ObjectiveFunctionType())
         obj_attr = MOI.ObjectiveFunction{F}()
         if F == MOI.VariableIndex
-            if MOI.get(model, obj_attr).variable == vi
+            if MOI.get(model, obj_attr) == vi
                 dual += sign
             end
         elseif F <: MOI.ScalarAffineFunction
@@ -455,9 +455,9 @@ function variable_dual(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,
     ci::MOI.ConstraintIndex{MOI.VariableIndex},
-    func::MOI.SingleVariable,
+    func::MOI.VariableIndex,
 )
-    return variable_dual(model, attr, ci, func.variable)
+    return variable_dual(model, attr, ci, func)
 end
 function variable_dual(
     model::MOI.ModelLike,

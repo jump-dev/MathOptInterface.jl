@@ -476,10 +476,10 @@ function _process_constraint(
         s = MOI.get(model, MOI.ConstraintSet(), ci)
         _, l, u = _set_to_bounds(s)
         if l > -Inf
-            dest.x[f.variable].lower = l
+            dest.x[f].lower = l
         end
         if u < Inf
-            dest.x[f.variable].upper = u
+            dest.x[f].upper = u
         end
     end
     return
@@ -495,7 +495,7 @@ function _process_constraint(
     for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         mapping[ci] = ci
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
-        dest.x[f.variable].type = S == MOI.ZeroOne ? _BINARY : _INTEGER
+        dest.x[f].type = S == MOI.ZeroOne ? _BINARY : _INTEGER
     end
     return
 end

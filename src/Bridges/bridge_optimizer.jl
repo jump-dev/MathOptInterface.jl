@@ -1004,7 +1004,7 @@ function MOI.set(
     end
     if Variable.has_bridges(Variable.bridges(b))
         if func isa MOI.VariableIndex
-            if is_bridged(b, func.variable)
+            if is_bridged(b, func)
                 BridgeType = Objective.concrete_bridge_type(
                     objective_functionize_bridge(b),
                     typeof(func),
@@ -1440,18 +1440,18 @@ end
 
 function _check_double_single_variable(
     b::AbstractBridgeOptimizer,
-    func::MOI.SingleVariable,
+    func::MOI.VariableIndex,
     set,
 )
     if !is_bridged(b, typeof(set))
         # The variable might have been constrained in `b.model` to a set of type
         # `typeof(set)` on creation.
         ci = MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(
-            func.variable.value,
+            func.value,
         )
         if MOI.is_valid(b.model, ci)
             error(
-                "The variable `$(func.variable)` was constrained on creation ",
+                "The variable `$(func)` was constrained on creation ",
                 "to a set of type `$(typeof(set))`. Therefore, a ",
                 "`VariableIndex`-in-`$(typeof(set))` cannot be added on this ",
                 "variable. Use `MOI.set` with `MOI.ConstraintSet()` instead.",
@@ -1470,17 +1470,15 @@ function MOI.add_constraint(
 )
     if Variable.has_bridges(Variable.bridges(b))
         if f isa MOI.VariableIndex
-            if is_bridged(b, f.variable)
+            if is_bridged(b, f)
                 if MOI.is_valid(
                     b,
-                    MOI.ConstraintIndex{MOI.VariableIndex,typeof(s)}(
-                        f.variable.value,
-                    ),
+                    MOI.ConstraintIndex{MOI.VariableIndex,typeof(s)}(f.value),
                 )
                     # The other constraint could have been through a variable bridge.
                     error(
                         "Cannot add two `VariableIndex`-in-`$(typeof(s))`",
-                        " on the same variable $(f.variable).",
+                        " on the same variable $(f).",
                     )
                 end
                 BridgeType = Constraint.concrete_bridge_type(
@@ -1527,7 +1525,7 @@ function MOI.add_constraints(
     end
     if Variable.has_bridges(Variable.bridges(b))
         if F == MOI.VariableIndex
-            if any(func -> is_bridged(b, func.variable), f)
+            if any(func -> is_bridged(b, func), f)
                 return MOI.add_constraint.(b, f, s)
             end
         elseif F == MOI.VectorOfVariables
@@ -1782,10 +1780,10 @@ function bridged_function(bridge::AbstractBridgeOptimizer, value)
     )::typeof(value)
 end
 
-function bridged_function(b::AbstractBridgeOptimizer, func::MOI.SingleVariable)
+function bridged_function(b::AbstractBridgeOptimizer, func::MOI.VariableIndex)
     # Should not be called by `add_constraint` as it force-bridges it
     # but could be called by attributes
-    if is_bridged(b, func.variable)
+    if is_bridged(b, func)
         # It could be solved by force-bridging the attribues (e.g. objective).
         error("Using bridged variable in `VariableIndex` function.")
     end
@@ -1899,7 +1897,7 @@ end
 
 function bridged_constraint_function(
     b::AbstractBridgeOptimizer,
-    func::MOI.SingleVariable,
+    func::MOI.VariableIndex,
     set::MOI.AbstractScalarSet,
 )
     return bridged_function(b, func), set
@@ -1940,7 +1938,7 @@ end
 
 function unbridged_constraint_function(
     b::AbstractBridgeOptimizer,
-    func::MOI.SingleVariable,
+    func::MOI.VariableIndex,
 )
     return unbridged_function(b, func)
 end

@@ -138,7 +138,7 @@ end
 
 function test_CanonicalConstraintFunction()
     mock = MOIU.MockOptimizer(MOIU.Model{Int}())
-    fx, fy = MOI.SingleVariable.(MOI.add_variables(mock, 2))
+    fx, fy = MOI.add_variables(mock, 2)
     cx = MOI.add_constraint(mock, fx, MOI.LessThan(0))
     c = MOI.add_constraint(mock, 1fx + fy, MOI.LessThan(1))
     @test MOIU.is_canonical(MOI.get(mock, MOI.ConstraintFunction(), cx))
@@ -156,7 +156,7 @@ end
 
 function test_conflict_access()
     mock = MOIU.MockOptimizer(MOIU.Model{Int}())
-    fx, fy = MOI.SingleVariable.(MOI.add_variables(mock, 2))
+    fx, fy = MOI.add_variables(mock, 2)
     cx = MOI.add_constraint(mock, fx, MOI.LessThan(0))
     c = MOI.add_constraint(mock, 1fx + fy, MOI.LessThan(1))
     MOI.set(mock, MOI.ConstraintConflictStatus(), cx, MOI.NOT_IN_CONFLICT)

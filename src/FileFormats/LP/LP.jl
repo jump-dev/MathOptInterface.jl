@@ -83,10 +83,10 @@ const NAME_REG = r"([^a-zA-Z0-9\!\"\#\$\%\&\(\)\/\,\.\;\?\@\_\`\'\{\}\|\~])"
 function write_function(
     io::IO,
     model::Model,
-    func::MOI.SingleVariable,
+    func::MOI.VariableIndex,
     variable_names::Dict{MOI.VariableIndex,String},
 )
-    print(io, variable_names[func.variable])
+    print(io, variable_names[func])
     return
 end
 

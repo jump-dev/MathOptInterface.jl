@@ -1,4 +1,35 @@
-# Index types
+import MutableArithmetics
+
+"""
+    AbstractFunction
+
+Abstract supertype for function objects.
+"""
+abstract type AbstractFunction <: MutableArithmetics.AbstractMutable end
+
+"""
+    AbstractScalarFunction
+
+Abstract supertype for scalar-valued function objects.
+"""
+abstract type AbstractScalarFunction <: AbstractFunction end
+
+"""
+    AbstractVectorFunction
+
+Abstract supertype for vector-valued function objects.
+"""
+abstract type AbstractVectorFunction <: AbstractFunction end
+
+"""
+    VariableIndex
+
+A type-safe wrapper for `Int64` for use in referencing variables in a model.
+To allow for deletion, indices need not be consecutive.
+"""
+struct VariableIndex <: AbstractScalarFunction
+    value::Int64
+end
 
 """
     ConstraintIndex{F, S}
@@ -13,20 +44,10 @@ If `F` is [`VariableIndex`](@ref) then the index is equal to the index of the
 variable. That is for an `index::ConstraintIndex{VariableIndex}`, we always
 have
 ```julia
-index.value == MOI.get(model, MOI.ConstraintFunction(), index).variable.value
+index.value == MOI.get(model, MOI.ConstraintFunction(), index).value
 ```
 """
 struct ConstraintIndex{F,S}
-    value::Int64
-end
-
-"""
-    VariableIndex
-
-A type-safe wrapper for `Int64` for use in referencing variables in a model.
-To allow for deletion, indices need not be consecutive.
-"""
-struct VariableIndex
     value::Int64
 end
 
@@ -104,11 +125,11 @@ The following modifications also take effect if `Index` is [`VariableIndex`](@re
 * If `index` used in the objective function, it is removed from the function,
   i.e., it is substituted for zero.
 * For each `func`-in-`set` constraint of the model:
-  - If `func isa VariableIndex` and `func.variable == index` then the
+  - If `func isa VariableIndex` and `func == index` then the
     constraint is deleted.
-  - If `func isa VectorOfVariables` and `index in func.variable` then
-    * if `length(func.variable) == 1` is one, the constraint is deleted;
-    * if `length(func.variable) > 1` and `supports_dimension_update(set)` then
+  - If `func isa VectorOfVariables` and `index in func.variables` then
+    * if `length(func.variables) == 1` is one, the constraint is deleted;
+    * if `length(func.variables) > 1` and `supports_dimension_update(set)` then
       then the variable is removed from `func` and `set` is replaced by
       `update_dimension(set, MOI.dimension(set) - 1)`.
     * Otherwise, a [`DeleteNotAllowed`](@ref) error is thrown.
