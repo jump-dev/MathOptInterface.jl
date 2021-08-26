@@ -405,6 +405,7 @@ function my_filter(::MOI.ListOfConstraintIndices, ci::MOI.ConstraintIndex)
     status = MOI.get(dest, MOI.ConstraintConflictStatus(), ci)
     return status != MOI.NOT_IN_CONFLICT
 end
+filtered_src = MOI.Utilities.ModelFilter(my_filter, src)
 MOI.copy_to(dest, filtered_src)
 ```
 
