@@ -1,10 +1,10 @@
 function test_models_equal(args...)
     @warn(
         "`Utilities.test_models_equal` has been moved to " *
-        "`Test.test_models_equal`",
+        "`Test.util_test_models_equal`",
         maxlog = 1,
     )
-    return MOI.Test.test_models_equal(args...)
+    return MOI.Test.util_test_models_equal(args...)
 end
 
 variable_function_type(::Type{<:MOI.AbstractScalarSet}) = MOI.SingleVariable

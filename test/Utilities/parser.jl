@@ -111,7 +111,7 @@ function test_one_variable()
 
     model2 = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model2, s)
-    MOI.Test.test_models_equal(
+    MOI.Test.util_test_models_equal(
         model,
         model2,
         ["x"],
@@ -163,7 +163,7 @@ function test_linear_constraints()
 
     model2 = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model2, s)
-    MOI.Test.test_models_equal(
+    MOI.Test.util_test_models_equal(
         model,
         model2,
         ["x", "y"],
@@ -194,7 +194,7 @@ function test_minimization_linear_objective()
 
     model2 = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model2, s)
-    MOI.Test.test_models_equal(model, model2, ["x", "y"], String[])
+    MOI.Test.util_test_models_equal(model, model2, ["x", "y"], String[])
     return
 end
 
@@ -220,7 +220,7 @@ function test_maximization_linear_objective()
 
     model2 = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model2, s)
-    MOI.Test.test_models_equal(model, model2, ["x", "y"], String[])
+    MOI.Test.util_test_models_equal(model, model2, ["x", "y"], String[])
     return
 end
 
@@ -268,7 +268,7 @@ function test_SecondOrderCone_constraints()
 
     model2 = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model2, s)
-    MOI.Test.test_models_equal(
+    MOI.Test.util_test_models_equal(
         model,
         model2,
         ["x", "y", "z"],

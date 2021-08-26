@@ -41,7 +41,7 @@ function _test_model_equality(model_string, variables, constraints; suffix = "")
     MOI.write_to_file(model, TEST_MOF_FILE * suffix)
     model_2 = MOF.Model()
     MOI.read_from_file(model_2, TEST_MOF_FILE * suffix)
-    MOI.Test.test_models_equal(model, model_2, variables, constraints)
+    MOI.Test.util_test_models_equal(model, model_2, variables, constraints)
     return _validate(TEST_MOF_FILE * suffix)
 end
 
@@ -319,7 +319,7 @@ function test_empty_model()
     MOI.write_to_file(model, TEST_MOF_FILE)
     model_2 = MOF.Model()
     MOI.read_from_file(model_2, TEST_MOF_FILE)
-    return MOI.Test.test_models_equal(model, model_2, String[], String[])
+    return MOI.Test.util_test_models_equal(model, model_2, String[], String[])
 end
 
 function test_FEASIBILITY_SENSE()
@@ -330,7 +330,7 @@ function test_FEASIBILITY_SENSE()
     MOI.write_to_file(model, TEST_MOF_FILE)
     model_2 = MOF.Model()
     MOI.read_from_file(model_2, TEST_MOF_FILE)
-    return MOI.Test.test_models_equal(model, model_2, ["x"], String[])
+    return MOI.Test.util_test_models_equal(model, model_2, ["x"], String[])
 end
 
 function test_empty_function_term()
@@ -346,7 +346,7 @@ function test_empty_function_term()
     MOI.write_to_file(model, TEST_MOF_FILE)
     model_2 = MOF.Model()
     MOI.read_from_file(model_2, TEST_MOF_FILE)
-    return MOI.Test.test_models_equal(model, model_2, ["x"], ["c"])
+    return MOI.Test.util_test_models_equal(model, model_2, ["x"], ["c"])
 end
 
 function test_min_objective()

@@ -106,7 +106,7 @@ function test_conic_GeometricMeanCone_VectorAffineFunction()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Test.test_models_equal(
+    MOI.Test.util_test_models_equal(
         mock,
         model,
         vcat(var_names, "aux"),
@@ -139,7 +139,7 @@ function test_conic_GeometricMeanCone_VectorAffineFunction()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Test.test_models_equal(
+    MOI.Test.util_test_models_equal(
         bridged_mock,
         model,
         var_names,
@@ -258,7 +258,7 @@ function test_conic_GeometricMeanCone_VectorAffineFunction_2()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Test.test_models_equal(
+    MOI.Test.util_test_models_equal(
         mock,
         model,
         vcat(var_names, "aux"),
@@ -300,7 +300,7 @@ function test_conic_GeometricMeanCone_VectorAffineFunction_2()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Test.test_models_equal(
+    MOI.Test.util_test_models_equal(
         bridged_mock,
         model,
         var_names,
@@ -409,7 +409,7 @@ function test_conic_GeometricMeanCone_VectorAffineFunction_3()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Test.test_models_equal(
+    MOI.Test.util_test_models_equal(
         mock,
         model,
         vcat(var_names, "aux"),
@@ -442,7 +442,7 @@ function test_conic_GeometricMeanCone_VectorAffineFunction_3()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Test.test_models_equal(
+    MOI.Test.util_test_models_equal(
         bridged_mock,
         model,
         var_names,

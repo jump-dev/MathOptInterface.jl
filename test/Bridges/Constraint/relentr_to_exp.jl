@@ -93,7 +93,7 @@ function test_RelativeEntropy()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Test.test_models_equal(
+    MOI.Test.util_test_models_equal(
         mock,
         model,
         vcat(var_names, "y1", "y2"),
@@ -116,7 +116,7 @@ function test_RelativeEntropy()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Test.test_models_equal(bridged_mock, model, var_names, ["relentr"])
+    MOI.Test.util_test_models_equal(bridged_mock, model, var_names, ["relentr"])
     ci = first(
         MOI.get(
             bridged_mock,

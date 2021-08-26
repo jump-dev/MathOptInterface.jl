@@ -176,8 +176,6 @@ function runtests(
             continue
         elseif !isempty(exclude) && any(s -> occursin(s, name), exclude)
             continue
-        elseif name == "test_models_equal"
-            continue  # Hard-coded skip!
         end
         @testset "$(name)" begin
             test_function = getfield(@__MODULE__, name_sym)
@@ -472,7 +470,7 @@ function _test_constraintnames_equal(model, constraint_names)
 end
 
 """
-    test_models_equal(
+    util_test_models_equal(
         model1::ModelLike,
         model2::ModelLike,
         variable_names::Vector{String},
@@ -492,7 +490,7 @@ of the corresponding variable.
     intended for writing tests in which all variables and constraints have
     unique names.
 """
-function test_models_equal(
+function util_test_models_equal(
     model1::MOI.ModelLike,
     model2::MOI.ModelLike,
     variable_names::Vector{String},

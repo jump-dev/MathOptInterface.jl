@@ -112,7 +112,7 @@ function test_NonposToNonneg()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Test.test_models_equal(
+    MOI.Test.util_test_models_equal(
         mock,
         model,
         var_names,
@@ -128,7 +128,7 @@ function test_NonposToNonneg()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Test.test_models_equal(
+    MOI.Test.util_test_models_equal(
         bridged_mock,
         model,
         ["x", "z", "w", "v"],

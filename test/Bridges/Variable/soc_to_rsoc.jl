@@ -67,7 +67,7 @@ function test_soc1v()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Test.test_models_equal(mock, model, var_names, ["rsoc", "ceq"])
+    MOI.Test.util_test_models_equal(mock, model, var_names, ["rsoc", "ceq"])
     var_names = ["x", "y", "z"]
     MOI.set(
         bridged_mock,
@@ -90,7 +90,12 @@ function test_soc1v()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Test.test_models_equal(bridged_mock, model, var_names, ["soc", "ceq"])
+    MOI.Test.util_test_models_equal(
+        bridged_mock,
+        model,
+        var_names,
+        ["soc", "ceq"],
+    )
     xyz = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
 
     message = string(
