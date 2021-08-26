@@ -3243,8 +3243,7 @@ function convert_approx(
     tol = tol_default(T),
 ) where {T}
     return MOI.VectorOfVariables([
-        convert_approx(MOI.VariableIndex, f, tol = tol).variable for
-        f in scalarize(func)
+        convert_approx(MOI.VariableIndex, f, tol = tol) for f in scalarize(func)
     ])
 end
 

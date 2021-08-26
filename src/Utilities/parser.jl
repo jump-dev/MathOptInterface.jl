@@ -227,7 +227,6 @@ for typename in [
     :_ParsedScalarQuadraticFunction,
     :_ParsedVectorQuadraticTerm,
     :_ParsedVectorQuadraticFunction,
-    :_ParsedVariableIndex,
     :_ParsedVectorOfVariables,
 ]
     moiname = Meta.parse(replace(string(typename), "_Parsed" => "MOI."))
@@ -246,6 +245,8 @@ for typename in [
     )
     @eval _parsed_to_moi(model, f::$typename) = $constructor
 end
+
+_parsed_to_moi(model, f::_ParsedVariableIndex) = _parsed_to_moi(f.variable)
 
 # Ideally, this should be load_from_string
 """
