@@ -107,14 +107,14 @@ function test_ZeroOne()
     MOI.empty!(bridged_mock)
     @test MOI.is_empty(bridged_mock)
     MOI.Utilities.loadfromstring!(bridged_mock, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.util_test_models_equal(
         bridged_mock,
         model,
         ["x", "y"],
         String[],
         [("y", MOI.EqualTo{Float64}(1.0)), ("x", MOI.ZeroOne())],
     )
-    MOI.Utilities.test_models_equal(
+    MOI.Test.util_test_models_equal(
         mock,
         modelb,
         ["x", "y"],

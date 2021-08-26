@@ -248,7 +248,7 @@ function test_model_equality()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.util_test_models_equal(
         mock,
         model,
         var_names,
@@ -277,7 +277,7 @@ function test_model_equality()
     maxobjective: z
     """
     MOI.Utilities.loadfromstring!(model, sbridged)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.util_test_models_equal(
         bridged_mock,
         model,
         ["z", "x"],

@@ -1,4 +1,11 @@
-using Test
+function test_models_equal(args...)
+    @warn(
+        "`Utilities.test_models_equal` has been moved to " *
+        "`Test.util_test_models_equal`",
+        maxlog = 1,
+    )
+    return MOI.Test.util_test_models_equal(args...)
+end
 
 variable_function_type(::Type{<:MOI.AbstractScalarSet}) = MOI.SingleVariable
 variable_function_type(::Type{<:MOI.AbstractVectorSet}) = MOI.VectorOfVariables
@@ -862,56 +869,6 @@ function sort_and_compress!(x::AbstractVector, by, keep, combine)
     return x
 end
 
-function test_variablenames_equal(model, variablenames)
-    seen_name = Dict(name => false for name in variablenames)
-    for index in MOI.get(model, MOI.ListOfVariableIndices())
-        vname = MOI.get(model, MOI.VariableName(), index)
-        if !haskey(seen_name, vname)
-            error(
-                "Variable with name $vname present in model but not expected list of variable names.",
-            )
-        end
-        if seen_name[vname]
-            error(
-                "Variable with name $vname present twice in model (shouldn't happen!)",
-            )
-        end
-        seen_name[vname] = true
-    end
-    for (vname, seen) in seen_name
-        if !seen
-            error("Did not find variable with name $vname in instance.")
-        end
-    end
-end
-function test_constraintnames_equal(model, constraintnames)
-    seen_name = Dict(name => false for name in constraintnames)
-    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        if F == MOI.SingleVariable
-            continue
-        end
-        for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            cname = MOI.get(model, MOI.ConstraintName(), index)
-            if !haskey(seen_name, cname)
-                error(
-                    "Constraint with name $cname present in model but not expected list of constraint names.",
-                )
-            end
-            if seen_name[cname]
-                error(
-                    "Constraint with name $cname present twice in model (shouldn't happen!)",
-                )
-            end
-            seen_name[cname] = true
-        end
-    end
-    for (cname, seen) in seen_name
-        if !seen
-            error("Did not find constraint with name $cname in instance.")
-        end
-    end
-end
-
 """
     all_coefficients(p::Function, f::MOI.AbstractFunction)
 
@@ -978,81 +935,6 @@ function Base.isone(
     f::Union{MOI.ScalarAffineFunction,MOI.ScalarQuadraticFunction},
 )
     return isone(MOI.constant(f)) && _is_constant(canonical(f))
-end
-
-"""
-    test_models_equal(
-        model1::ModelLike,
-        model2::ModelLike,
-        variablenames::Vector{String},
-        constraintnames::Vector{String},
-        single_variable_constraints::Vector{Tuple{String,<:MOI.AbstractScalarSet}}
-    )
-
-Test that `model1` and `model2` are identical using `variablenames` as as keys
-for the variable names and `constraintnames` as keys for the constraint names.
-
-In addition, it checks that there is a SingleVariable-in-Set constraint for each
-`(name, set)` tuple in `single_variable_constraints`, where `name` is the name
-of the corresponding variable.
-
-Uses `Base.Test` macros.
-"""
-function test_models_equal(
-    model1::MOI.ModelLike,
-    model2::MOI.ModelLike,
-    variablenames::Vector{String},
-    constraintnames::Vector{String},
-    single_variable_constraints::Vector{<:Tuple} = Tuple[],
-)
-    for (x_name, set) in single_variable_constraints
-        x1 = MOI.get(model1, MOI.VariableIndex, x_name)
-        ci1 = MOI.ConstraintIndex{MOI.SingleVariable,typeof(set)}(x1.value)
-        @test MOI.is_valid(model1, ci1)
-        @test MOI.get(model1, MOI.ConstraintSet(), ci1) == set
-        x2 = MOI.get(model2, MOI.VariableIndex, x_name)
-        ci2 = MOI.ConstraintIndex{MOI.SingleVariable,typeof(set)}(x2.value)
-        @test MOI.is_valid(model2, ci2)
-        @test MOI.get(model2, MOI.ConstraintSet(), ci2) == set
-    end
-    # TODO: give test-friendly feedback instead of errors?
-    test_variablenames_equal(model1, variablenames)
-    test_variablenames_equal(model2, variablenames)
-    test_constraintnames_equal(model1, constraintnames)
-    test_constraintnames_equal(model2, constraintnames)
-
-    variablemap_2to1 = Dict{VI,VI}()
-    for vname in variablenames
-        index1 = MOI.get(model1, VI, vname)
-        index2 = MOI.get(model2, VI, vname)
-        variablemap_2to1[index2] = index1
-    end
-
-    for cname in constraintnames
-        index1 = MOI.get(model1, CI, cname)
-        index2 = MOI.get(model2, CI, cname)
-        f1 = MOI.get(model1, MOI.ConstraintFunction(), index1)
-        f2 = MOI.get(model2, MOI.ConstraintFunction(), index2)
-        s1 = MOI.get(model1, MOI.ConstraintSet(), index1)
-        s2 = MOI.get(model2, MOI.ConstraintSet(), index2)
-        @test isapprox(f1, map_indices(variablemap_2to1, f2))
-        @test s1 == s2
-    end
-    attrs1 = MOI.get(model1, MOI.ListOfModelAttributesSet())
-    attrs2 = MOI.get(model2, MOI.ListOfModelAttributesSet())
-    attr_list = attrs1 ∪ attrs2
-    for attr in attr_list
-        value1 = MOI.get(model1, attr)
-        value2 = MOI.get(model2, attr)
-        if value1 isa MOI.AbstractFunction
-            @test value2 isa MOI.AbstractFunction
-            @test isapprox(value1, map_indices(variablemap_2to1, value2))
-        else
-            @test !(value2 isa MOI.AbstractFunction)
-            @test value1 == value2
-        end
-    end
-    return
 end
 
 _keep_all(keep::Function, v::MOI.VariableIndex) = keep(v)

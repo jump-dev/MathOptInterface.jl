@@ -88,7 +88,7 @@ function test_NormSpectral()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(mock, model, var_names, ["psd"])
+    MOI.Test.util_test_models_equal(mock, model, var_names, ["psd"])
     spec = MOI.get(
         bridged_mock,
         MOI.ListOfConstraintIndices{
@@ -106,7 +106,7 @@ function test_NormSpectral()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(bridged_mock, model, var_names, ["spec"])
+    MOI.Test.util_test_models_equal(bridged_mock, model, var_names, ["spec"])
     ci = first(
         MOI.get(
             bridged_mock,
@@ -234,7 +234,7 @@ function test_NormNuclear()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(mock, model, var_names, ["greater", "psd"])
+    MOI.Test.util_test_models_equal(mock, model, var_names, ["greater", "psd"])
     MOI.set(
         bridged_mock,
         MOI.VariableName(),
@@ -258,7 +258,7 @@ function test_NormNuclear()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(bridged_mock, model, ["t"], ["nuc"])
+    MOI.Test.util_test_models_equal(bridged_mock, model, ["t"], ["nuc"])
     ci = first(
         MOI.get(
             bridged_mock,

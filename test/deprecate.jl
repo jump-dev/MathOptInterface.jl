@@ -84,6 +84,16 @@ function test_copy_to_copy_names()
     return
 end
 
+function test_test_models_equal()
+    dest = MOI.Utilities.Model{Float64}()
+    src = MOI.Utilities.Model{Float64}()
+    @test_logs(
+        (:warn,),
+        MOI.Utilities.test_models_equal(dest, src, String[], String[]),
+    )
+    return
+end
+
 function test_IndexMap()
     @test_logs (:warn,) MOI.IndexMap(1)
     return

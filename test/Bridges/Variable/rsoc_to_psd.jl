@@ -71,7 +71,7 @@ function test_RSOC_of_dimension_2()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(mock, model, var_names, ["cab", "c"])
+    MOI.Test.util_test_models_equal(mock, model, var_names, ["cab", "c"])
     var_names = ["x", "y"]
     MOI.set(
         bridged_mock,
@@ -88,7 +88,7 @@ function test_RSOC_of_dimension_2()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.util_test_models_equal(
         bridged_mock,
         model,
         var_names,
@@ -181,7 +181,7 @@ function test_RSOC4()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.util_test_models_equal(
         mock,
         model,
         var_names,
@@ -223,7 +223,7 @@ function test_RSOC4()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.util_test_models_equal(
         bridged_mock,
         model,
         var_names,
