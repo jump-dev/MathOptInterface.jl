@@ -13,6 +13,7 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 ```@docs
 AbstractFunction
+AbstractScalarFunction
 AbstractVectorFunction
 SingleVariable
 VectorOfVariables

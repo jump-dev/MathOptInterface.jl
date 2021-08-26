@@ -17,40 +17,14 @@ struct IndexMap <: AbstractDict{MOI.Index,MOI.Index}
 end
 
 """
-    IndexMap(number_of_variables::Int = 0)
+    IndexMap()
 
 The dictionary-like object returned by [`MathOptInterface.copy_to`](@ref).
-
-If known in advance, pass `number_of_variables` to preallocate the necessary
-space for the variables.
 """
-function IndexMap(number_of_variables::Int = 0)
-    var_map = CleverDicts.CleverDict{MOI.VariableIndex,MOI.VariableIndex}(
-        CleverDicts.key_to_index,
-        CleverDicts.index_to_key,
-        number_of_variables,
-    )
+function IndexMap()
+    var_map = CleverDicts.CleverDict{MOI.VariableIndex,MOI.VariableIndex}()
     con_map = DoubleDicts.IndexDoubleDict()
     return IndexMap(var_map, con_map)
-end
-
-"""
-    _index_map_for_variable_indices(variables)
-
-This function does not add variables to the IndexMap.
-It simply initializes the IndexMap with a proper data struture.
-If the variable indices are contiguous and start from 1, then
-an optimized data structure with pre allocated memory is initialized.
-Otherwise the data structure will start empty and will try to
-keep using performant structure for as long as possible.
-"""
-function _index_map_for_variable_indices(variables)
-    n = length(variables)
-    if all(i -> variables[i] == MOI.VariableIndex(i), 1:n)
-        return IndexMap(n)
-    else
-        return IndexMap()
-    end
 end
 
 function _identity_constraints_map(
@@ -71,7 +45,7 @@ Return an [`IndexMap`](@ref) that maps all variable and constraint indices of
 """
 function identity_index_map(model::MOI.ModelLike)
     variables = MOI.get(model, MOI.ListOfVariableIndices())
-    map = _index_map_for_variable_indices(variables)
+    map = IndexMap()
     for x in variables
         map[x] = x
     end

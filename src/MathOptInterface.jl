@@ -210,12 +210,9 @@ include("deprecate.jl")
 include("DeprecatedTest/DeprecatedTest.jl")
 
 """
-    IndexMap(number_of_variables::Int = 0)
+    IndexMap()
 
 The dictionary-like object returned by [`copy_to`](@ref).
-
-If known in advance, pass `number_of_variables` to preallocate the necessary
-space for the variables.
 
 ## IndexMap
 
