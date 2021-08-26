@@ -89,7 +89,7 @@ function moi_to_object(
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
     object = OrderedObject()
-    if F != MOI.SingleVariable
+    if F != MOI.VariableIndex
         name = MOI.get(model, MOI.ConstraintName(), index)
         if name != ""
             object["name"] = name
@@ -118,7 +118,7 @@ function moi_to_object(
     name_map::Dict{MOI.VariableIndex,String},
 )
     return OrderedObject(
-        "type" => "SingleVariable",
+        "type" => "VariableIndex",
         "variable" => name_map[foo.variable],
     )
 end

@@ -91,13 +91,13 @@ end
 function MA.promote_operation(
     op::PROMOTE_IMPLEMENTED_OP,
     F::Type{<:Number},
-    G::Type{<:Union{MOI.SingleVariable,MOI.VectorOfVariables}},
+    G::Type{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
 )
     return promote_operation(op, F, F, G)
 end
 function MA.promote_operation(
     op::PROMOTE_IMPLEMENTED_OP,
-    F::Type{<:Union{MOI.SingleVariable,MOI.VectorOfVariables}},
+    F::Type{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
     G::Type{<:Number},
 )
     return promote_operation(op, G, F, G)
@@ -221,7 +221,7 @@ function MA.mutable_operate!(
 end
 
 _constant(::Type{T}, α::T) where {T} = α
-_constant(::Type{T}, ::MOI.SingleVariable) where {T} = zero(T)
+_constant(::Type{T}, ::MOI.VariableIndex) where {T} = zero(T)
 _constant(::Type{T}, func::TypedScalarLike{T}) where {T} = MOI.constant(func)
 
 _affine_terms(f::MOI.ScalarAffineFunction) = f.terms

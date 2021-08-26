@@ -28,9 +28,9 @@ function test_functions_broadcast()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     z = MOI.VariableIndex(3)
-    xf = MOI.SingleVariable(x)
-    yf = MOI.SingleVariable(y)
-    zf = MOI.SingleVariable(z)
+    xf = x
+    yf = y
+    zf = z
     function sum_indices(sv1::MOI.SingleVariable, sv2::MOI.SingleVariable)
         return sv1.variable.value + sv2.variable.value
     end
@@ -47,10 +47,10 @@ function test_functions_copy_VectorOfVariables()
     @test f.variables[2] == y
 end
 
-function test_functions_convert_SingleVariable()
+function test_functions_convert_VariableIndex()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
-    f = MOI.SingleVariable(x)
+    f = x
     f_vov = convert(MOI.VectorOfVariables, f)
     @test f_vov ≈ MOI.VectorOfVariables([x])
     f_vaf = convert(MOI.VectorAffineFunction{Float64}, f)
@@ -105,11 +105,11 @@ function test_functions_convert_ScalarQuadraticFunction()
     )
 end
 
-function test_isapprox_SingleVariable()
+function test_isapprox_VariableIndex()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
-    @test MOI.SingleVariable(x) == MOI.SingleVariable(x)
-    @test MOI.SingleVariable(x) != MOI.SingleVariable(y)
+    @test x == x
+    @test x != y
     return
 end
 

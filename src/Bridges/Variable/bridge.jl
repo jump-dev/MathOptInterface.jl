@@ -177,7 +177,7 @@ so bridges should not implement this method.
 In addition to creating variables in
 [`MathOptInterface.PositiveSemidefiniteConeTriangle`](@ref), the
 [`RSOCtoPSDBridge`](@ref) also creates
-[`MathOptInterface.SingleVariable`](@ref)-in-[`MathOptInterface.EqualTo`](@ref) and
+[`MathOptInterface.VariableIndex`](@ref)-in-[`MathOptInterface.EqualTo`](@ref) and
 [`MathOptInterface.ScalarAffineFunction`](@ref)-in-[`MathOptInterface.EqualTo`](@ref)
 constraints:
 
@@ -190,7 +190,7 @@ MOI.Bridges.added_constraint_types(
 # output
 
 2-element Array{Tuple{Type,Type},1}:
- (MathOptInterface.SingleVariable, MathOptInterface.EqualTo{Float64})
+ (MathOptInterface.VariableIndex, MathOptInterface.EqualTo{Float64})
  (MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.EqualTo{Float64})
 ```
 """

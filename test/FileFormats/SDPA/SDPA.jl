@@ -22,7 +22,7 @@ function _set_var_and_con_names(model::MOI.ModelLike)
     single_variable_constraints = Tuple[]
     for i in MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Integer}(),
+        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.Integer}(),
     )
         idx += 1
         x = MOI.get(model, MOI.VariableName(), MOI.VariableIndex(i.value))
@@ -103,8 +103,8 @@ function test_support()
         x in $set
         """
         model = SDPA.Model()
-        @test !MOI.supports_constraint(model, MOI.SingleVariable, typeof(set))
-        err = MOI.UnsupportedConstraint{MOI.SingleVariable,typeof(set)}
+        @test !MOI.supports_constraint(model, MOI.VariableIndex, typeof(set))
+        err = MOI.UnsupportedConstraint{MOI.VariableIndex,typeof(set)}
         @test_throws err MOIU.loadfromstring!(model, model_string)
     end
 end
@@ -115,7 +115,7 @@ function test_delete()
         x = MOI.add_variable(model)
         MOI.delete(model, x)
         y = MOI.add_variable(model)
-        fy = MOI.SingleVariable(y)
+        fy = y
         MOI.add_constraint(
             model,
             MOIU.vectorize([one(T) * fy]),
@@ -131,7 +131,7 @@ end
 function test_objective()
     for T in [Int, Float64]
         model = SDPA.Model(; number_type = T)
-        @test !MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+        @test !MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
         @test !MOI.supports(
             model,
             MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}(),

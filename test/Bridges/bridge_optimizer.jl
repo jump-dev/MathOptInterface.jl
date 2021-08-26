@@ -30,9 +30,9 @@ function test_subsitution_of_variables()
     )
     bridged = MOI.Bridges.Variable.Vectorize{Float64}(mock)
     x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(1.0))
-    fx = MOI.SingleVariable(x)
+    fx = x
     y = MOI.get(mock, MOI.ListOfVariableIndices())[1]
-    fy = MOI.SingleVariable(y)
+    fy = y
 
     c2fx = MOI.add_constraint(bridged, 2.0fx, MOI.GreaterThan(1.0))
     @test MOI.get(bridged, MOI.ConstraintFunction(), c2fx) ≈ 2.0fx
@@ -67,7 +67,7 @@ function test_subsitution_of_variables()
     @test MOI.get(mock, DummyModelAttribute()) ≈ 2.0fy + 3.0
 
     z = MOI.add_variable(bridged)
-    fz = MOI.SingleVariable(z)
+    fz = z
     for (attr, index) in
         [(DummyVariableAttribute(), z), (DummyConstraintAttribute(), c2fx)]
         MOI.set(bridged, attr, index, 1.0fx)
@@ -131,9 +131,9 @@ function test_LazyConstraint()
     )
     bridged = MOI.Bridges.Variable.Vectorize{Float64}(mock)
     x, _ = MOI.add_constrained_variable(bridged, MOI.GreaterThan(1.0))
-    fx = MOI.SingleVariable(x)
+    fx = x
     y = MOI.get(mock, MOI.ListOfVariableIndices())[1]
-    fy = MOI.SingleVariable(y)
+    fy = y
     sub = MOI.LazyConstraint(nothing)
     @test MOI.supports(bridged, sub)
     MOI.submit(bridged, sub, 2.0fx, MOI.GreaterThan(1.0))
@@ -149,7 +149,7 @@ function test_HeuristicSolution()
     bridged = MOI.Bridges.Variable.Vectorize{Float64}(mock)
     x, _ = MOI.add_constrained_variable(bridged, MOI.GreaterThan(1.0))
     y = MOI.get(mock, MOI.ListOfVariableIndices())[1]
-    fy = MOI.SingleVariable(y)
+    fy = y
     z = MOI.add_variable(bridged)
     sub = MOI.HeuristicSolution(nothing)
     @test MOI.supports(bridged, sub)
@@ -214,7 +214,7 @@ function unsupported_constraint_attribute()
     )
     bridge = MOI.Bridges.Constraint.SplitIntervalBridge{
         Float64,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.Interval{Float64},
         MOI.GreaterThan{Float64},
         MOI.LessThan{Float64},
@@ -233,7 +233,7 @@ function unsupported_constraint_attribute()
     x = MOI.add_variable(bridged_mock)
     ci = MOI.add_constraint(
         bridged_mock,
-        MOI.SingleVariable(x),
+        x,
         MOI.Interval(0.0, 1.0),
     )
     @test !MOI.Bridges.is_bridged(bridged_mock, ci)
@@ -278,7 +278,7 @@ function test_issue_453()
     @test c1 == c2
     @test MOI.is_valid(
         bridged_mock,
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(x.value),
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}}(x.value),
     )
     return
 end
@@ -355,16 +355,16 @@ function test_custom_test()
 
     n = 4
     z = MOI.add_variables(model, n)
-    scon_indices = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Interval{Int}}[]
+    scon_indices = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Interval{Int}}[]
     for (i, v) in enumerate([x; y; z])
-        f = MOI.SingleVariable(v)
+        f = v
         c = MOI.add_constraint(model, f, MOI.Interval(i, 2i))
         push!(scon_indices, c)
 
         @test Set(MOI.get(model, MOI.ListOfConstraintTypesPresent())) == Set([
             (MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}),
             (MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}),
-            (MOI.SingleVariable, MOI.Interval{Int}),
+            (MOI.VariableIndex, MOI.Interval{Int}),
         ])
         _test_num_constraints(
             model,
@@ -378,7 +378,7 @@ function test_custom_test()
             MOI.Interval{Int},
             1,
         )
-        _test_num_constraints(model, MOI.SingleVariable, MOI.Interval{Int}, i)
+        _test_num_constraints(model, MOI.VariableIndex, MOI.Interval{Int}, i)
         @test (@inferred MOI.get(
             model,
             MOI.ListOfConstraintIndices{
@@ -396,7 +396,7 @@ function test_custom_test()
         # The indices should be returned in order of creation
         @test (@inferred MOI.get(
             model,
-            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Interval{Int}}(),
+            MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.Interval{Int}}(),
         )) == scon_indices
     end
 
@@ -409,7 +409,7 @@ function test_custom_test()
         @test Set(MOI.get(model, MOI.ListOfConstraintTypesPresent())) == Set([
             (MOI.ScalarAffineFunction{Int}, MOI.GreaterThan{Int}),
             (MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}),
-            (MOI.SingleVariable, MOI.Interval{Int}),
+            (MOI.VariableIndex, MOI.Interval{Int}),
             (MOI.VectorOfVariables, MOI.Nonnegatives),
         ])
         _test_num_constraints(
@@ -426,7 +426,7 @@ function test_custom_test()
         )
         _test_num_constraints(
             model,
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.Interval{Int},
             n + 2,
         )
@@ -448,7 +448,7 @@ function test_custom_test()
         # The indices should be returned in order of creation
         @test (@inferred MOI.get(
             model,
-            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Interval{Int}}(),
+            MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.Interval{Int}}(),
         )) == scon_indices
         @test (@inferred MOI.get(
             model,
@@ -464,7 +464,7 @@ function test_custom_test()
 
     @test Set(MOI.get(model, MOI.ListOfConstraintTypesPresent())) == Set([
         (MOI.ScalarAffineFunction{Int}, MOI.Interval{Int}),
-        (MOI.SingleVariable, MOI.Interval{Int}),
+        (MOI.VariableIndex, MOI.Interval{Int}),
         (MOI.VectorOfVariables, MOI.Nonnegatives),
     ])
     _test_num_constraints(
@@ -479,7 +479,7 @@ function test_custom_test()
         MOI.Interval{Int},
         1,
     )
-    _test_num_constraints(model, MOI.SingleVariable, MOI.Interval{Int}, n + 2)
+    _test_num_constraints(model, MOI.VariableIndex, MOI.Interval{Int}, n + 2)
     _test_num_constraints(model, MOI.VectorOfVariables, MOI.Nonnegatives, n)
     @test (@inferred MOI.get(
         model,
@@ -491,7 +491,7 @@ function test_custom_test()
     # The indices should be returned in order of creation
     @test (@inferred MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Interval{Int}}(),
+        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.Interval{Int}}(),
     )) == scon_indices
     @test (@inferred MOI.get(
         model,
@@ -549,7 +549,7 @@ MOI.Utilities.@model(
 
 function MOI.supports_constraint(
     ::AffineOnlyModel{T},
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{MOI.LessThan{T}},
 ) where {T}
     return false
@@ -557,20 +557,20 @@ end
 
 function MOI.supports_constraint(
     ::AffineOnlyModel{T},
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{MOI.Interval{T}},
 ) where {T}
     return false
 end
 
 function test_double_deletion_scalar()
-    # The variable is bridged to `SingleVariable`-in-`Interval` and then `ScalarAffineFunction`-in-`Interval`.
-    # Hence there is two bridged `SingleVariable` constraints on the same variables and we need to be
+    # The variable is bridged to `VariableIndex`-in-`Interval` and then `ScalarAffineFunction`-in-`Interval`.
+    # Hence there is two bridged `VariableIndex` constraints on the same variables and we need to be
     # careful not to delete the second one twice, see https://github.com/jump-dev/MathOptInterface.jl/issues/1231
     model =
         MOI.instantiate(AffineOnlyModel{Float64}, with_bridge_type = Float64)
     x = MOI.add_variable(model)
-    c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
+    c = MOI.add_constraint(model, x, MOI.LessThan(1.0))
     # Need to test the bridging to make sure it's not functionized first as otherwise,
     # this test would not cover the case we want to test
     b1 = MOI.Bridges.bridge(model, c)
@@ -619,7 +619,7 @@ function test_nesting_SingleBridgeOptimizer()
     @test MOI.is_valid(b0, x)
     @test MOI.Bridges.is_bridged(b0, x)
     @test !MOI.is_valid(model, x)
-    fx = MOI.SingleVariable(x)
+    fx = x
     clt = MOI.add_constraint(b, fx, MOI.LessThan(one(T)))
     @test MOI.is_valid(b, clt)
     @test !MOI.Bridges.is_bridged(b, clt)
@@ -676,7 +676,7 @@ function test_supports_bridging_constraint()
     model = MOI.Bridges.Constraint.SplitInterval{Int}(NoIntervalModel{Int}())
     @test !MOI.Bridges.supports_bridging_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         UnsupportedSet,
     )
     return
@@ -686,7 +686,7 @@ function test_supports_bridging_objective_function()
     model = MOI.Bridges.Constraint.SplitInterval{Int}(NoIntervalModel{Int}())
     @test !MOI.Bridges.supports_bridging_objective_function(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
     )
     return
 end
@@ -696,10 +696,10 @@ function test_get_ObjectiveFunctionType()
     x = MOI.add_variable(model)
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
+        MOI.ObjectiveFunction{MOI.VariableIndex}(),
+        x,
     )
-    @test MOI.get(model, MOI.ObjectiveFunctionType()) == MOI.SingleVariable
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) == MOI.VariableIndex
     return
 end
 
@@ -712,7 +712,7 @@ function test_recursive_model_variable(::Type{T} = Int) where {T}
     x, cx = MOI.add_constrained_variable(b, MOI.EqualTo(one(T)))
     @test MOI.Bridges.is_bridged(b, x)
     @test MOI.Bridges.is_bridged(b, cx)
-    @test MOI.get(b, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(x)
+    @test MOI.get(b, MOI.ConstraintFunction(), cx) == x
     @test MOI.get(b, MOI.ConstraintSet(), cx) == MOI.EqualTo(one(T))
     MOI.set(b, MOI.ConstraintSet(), cx, MOI.EqualTo(zero(T)))
     @test MOI.get(b, MOI.ConstraintSet(), cx) == MOI.EqualTo(zero(T))
@@ -726,7 +726,7 @@ function test_recursive_model_constraint(::Type{T} = Int) where {T}
     BT = IdentityBridges.ConstraintBridge{T}
     b = MOI.Bridges.Constraint.SingleBridgeOptimizer{BT}(model)
     x = MOI.add_variable(b)
-    fx = MOI.SingleVariable(x)
+    fx = x
     func = one(T) * fx
     set = MOI.EqualTo(zero(T))
     c = MOI.add_constraint(b, func, set)
@@ -755,7 +755,7 @@ function test_recursive_model_objective(::Type{T} = Int) where {T}
     BT = IdentityBridges.ObjectiveBridge{T}
     b = MOI.Bridges.Objective.SingleBridgeOptimizer{BT}(model)
     x = MOI.add_variable(b)
-    fx = MOI.SingleVariable(x)
+    fx = x
     func = one(T) * fx
     MOI.set(b, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     @test !MOI.Bridges.is_objective_bridged(b)

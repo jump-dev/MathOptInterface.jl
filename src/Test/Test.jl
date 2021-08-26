@@ -318,7 +318,7 @@ MOIU.loadfromstring!(model, \"\"\"
 x = MOI.get(model, MOI.VariableIndex, "x")
 c = MOI.get(
     model,
-    MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}},
+    MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}},
     "c",
 )
 _test_model_solution(

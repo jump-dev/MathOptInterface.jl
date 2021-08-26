@@ -18,7 +18,7 @@ function intsoc1test(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction{Float64},
         MOI.Zeros,
     )
-    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @test MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     @test MOI.supports_constraint(
         model,
         MOI.VectorOfVariables,
@@ -66,11 +66,11 @@ function intsoc1test(model::MOI.ModelLike, config::Config)
     @test length(loc) == 2
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
     @test (MOI.VectorOfVariables, MOI.SecondOrderCone) in loc
-    bin1 = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.ZeroOne())
-    # We test this after the creation of every `SingleVariable` constraint
+    bin1 = MOI.add_constraint(model, y, MOI.ZeroOne())
+    # We test this after the creation of every `VariableIndex` constraint
     # to ensure a good coverage of corner cases.
     @test bin1.value == y.value
-    bin2 = MOI.add_constraint(model, MOI.SingleVariable(z), MOI.ZeroOne())
+    bin2 = MOI.add_constraint(model, z, MOI.ZeroOne())
     @test bin2.value == z.value
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED

@@ -47,9 +47,9 @@ end
 MOIB.is_bridged(::SingleBridgeOptimizer, ::MOI.VariableIndex) = false
 function MOIB.is_bridged(
     b::SingleBridgeOptimizer,
-    ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
 ) where {S}
-    return MOIB.is_bridged(b, MOI.SingleVariable, S) &&
+    return MOIB.is_bridged(b, MOI.VariableIndex, S) &&
            haskey(Constraint.bridges(b), ci)
 end
 function MOIB.is_bridged(

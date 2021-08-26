@@ -167,7 +167,7 @@ function _read_INT(io::IO, model::Model, data::_CBFReadData)
     for _ in 1:_read(io, Int)
         MOI.add_constraint(
             model,
-            MOI.SingleVariable(data.scalar_vars[_read(io, Int)+1]),
+            data.scalar_vars[_read(io, Int)+1],
             MOI.Integer(),
         )
     end

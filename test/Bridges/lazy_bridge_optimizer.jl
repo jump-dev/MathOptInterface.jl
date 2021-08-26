@@ -82,7 +82,7 @@ MOI.Utilities.@model(
 
 function MOI.supports_constraint(
     ::StandardLPModel{T},
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{<:Union{MOI.GreaterThan{T},MOI.LessThan{T},MOI.EqualTo{T}}},
 ) where {T}
     return false
@@ -99,23 +99,23 @@ end
 function MOI.supports(
     ::StandardLPModel{T},
     ::MOI.ObjectiveFunction{
-        <:Union{MOI.SingleVariable,MOI.ScalarQuadraticFunction{T}},
+        <:Union{MOI.VariableIndex,MOI.ScalarQuadraticFunction{T}},
     },
 ) where {T}
     return false
 end
 
-function _test_bridged_variable_in_SingleVariable_constraint(T)
+function _test_bridged_variable_in_VariableIndex_constraint(T)
     S = MOI.Test.UnknownScalarSet{T}
     set = S(one(T))
     model = StandardLPModel{T}()
     bridged = MOI.Bridges.Variable.Vectorize{T}(model)
     x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-    fx = MOI.SingleVariable(x)
+    fx = x
     err = _functionize_error(
         bridged,
         MOI.Bridges.Constraint.ScalarFunctionizeBridge,
-        "SingleVariable",
+        "VariableIndex",
         "constraint",
     )
     @test_throws err MOI.add_constraint(bridged, fx, set)
@@ -125,13 +125,13 @@ function _test_bridged_variable_in_SingleVariable_constraint(T)
         bridged = MOI.Bridges.LazyBridgeOptimizer(model)
         MOI.Bridges.add_bridge(bridged, MOI.Bridges.Variable.VectorizeBridge{T})
         x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-        fx = MOI.SingleVariable(x)
+        fx = x
         return model, bridged, fx
     end
     _, bridged, fx = _bridged()
     err = _lazy_functionize_error(
         MOI.Bridges.Constraint.ScalarFunctionizeBridge,
-        "SingleVariable",
+        "VariableIndex",
         "constraint",
     )
     @test_throws err MOI.add_constraint(bridged, fx, set)
@@ -150,7 +150,7 @@ function _test_bridged_variable_in_SingleVariable_constraint(T)
         @test MOI.get(bridged, MOI.ConstraintFunction(), cx) == fx
         @test MOI.get(bridged, MOI.ConstraintSet(), cx) == set
         a = MOI.get(model, MOI.ListOfVariableIndices())[1]
-        fa = MOI.SingleVariable(a)
+        fa = a
         ca = MOI.get(
             model,
             MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},S}(),
@@ -163,9 +163,9 @@ function _test_bridged_variable_in_SingleVariable_constraint(T)
     return
 end
 
-function test_bridged_variable_in_SingleVariable_constraint()
-    _test_bridged_variable_in_SingleVariable_constraint(Float64)
-    _test_bridged_variable_in_SingleVariable_constraint(Int)
+function test_bridged_variable_in_VariableIndex_constraint()
+    _test_bridged_variable_in_VariableIndex_constraint(Float64)
+    _test_bridged_variable_in_VariableIndex_constraint(Int)
     return
 end
 
@@ -217,7 +217,7 @@ function _test_bridged_variable_in_VectorOfVariables_constraint(T)
         @test MOI.get(bridged, MOI.ConstraintFunction(), cx) == fx
         @test MOI.get(bridged, MOI.ConstraintSet(), cx) == set
         a = MOI.get(model, MOI.ListOfVariableIndices())[1]
-        fa = MOI.SingleVariable(a)
+        fa = a
         ca = MOI.get(
             model,
             MOI.ListOfConstraintIndices{
@@ -238,15 +238,15 @@ function test_bridged_variable_in_VectorOfVariables_constraint()
     return
 end
 
-function _test_bridged_variable_in_SingleVariable_obiective(T)
+function _test_bridged_variable_in_VariableIndex_obiective(T)
     model = StandardLPModel{T}()
     bridged = MOI.Bridges.Variable.Vectorize{T}(model)
     x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-    fx = MOI.SingleVariable(x)
+    fx = x
     err = _functionize_error(
         bridged,
         MOI.Bridges.Objective.FunctionizeBridge,
-        "SingleVariable",
+        "VariableIndex",
         "objective",
     )
     @test_throws err MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
@@ -254,19 +254,19 @@ function _test_bridged_variable_in_SingleVariable_obiective(T)
     bridged = MOI.Bridges.LazyBridgeOptimizer(model)
     MOI.Bridges.add_bridge(bridged, MOI.Bridges.Variable.VectorizeBridge{T})
     x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-    fx = MOI.SingleVariable(x)
+    fx = x
     err = _lazy_functionize_error(
         MOI.Bridges.Objective.FunctionizeBridge,
-        "SingleVariable",
+        "VariableIndex",
         "objective",
     )
     @test_throws err MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
     MOI.Bridges.add_bridge(bridged, MOI.Bridges.Objective.FunctionizeBridge{T})
     MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
-    @test MOI.get(bridged, MOI.ObjectiveFunctionType()) == MOI.SingleVariable
-    @test MOI.get(bridged, MOI.ObjectiveFunction{MOI.SingleVariable}()) ≈ fx
+    @test MOI.get(bridged, MOI.ObjectiveFunctionType()) == MOI.VariableIndex
+    @test MOI.get(bridged, MOI.ObjectiveFunction{MOI.VariableIndex}()) ≈ fx
     a = MOI.get(model, MOI.ListOfVariableIndices())[1]
-    fa = MOI.SingleVariable(a)
+    fa = a
     @test MOI.get(model, MOI.ObjectiveFunctionType()) ==
           MOI.ScalarAffineFunction{T}
     @test MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}()) ≈
@@ -274,9 +274,9 @@ function _test_bridged_variable_in_SingleVariable_obiective(T)
     return
 end
 
-function test_bridged_variable_in_SingleVariable_obiective()
-    _test_bridged_variable_in_SingleVariable_obiective(Float64)
-    _test_bridged_variable_in_SingleVariable_obiective(Int)
+function test_bridged_variable_in_VariableIndex_obiective()
+    _test_bridged_variable_in_VariableIndex_obiective(Float64)
+    _test_bridged_variable_in_VariableIndex_obiective(Int)
     return
 end
 
@@ -328,7 +328,7 @@ MOI.Utilities.@model(
 
 function MOI.supports_constraint(
     ::SDPAModel{T},
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{
         <:Union{
             MOI.GreaterThan{T},
@@ -363,7 +363,7 @@ MOI.supports_add_constrained_variables(::SDPAModel, ::Type{MOI.Reals}) = false
 function MOI.supports(
     ::SDPAModel{T},
     ::MOI.ObjectiveFunction{
-        <:Union{MOI.SingleVariable,MOI.ScalarQuadraticFunction{T}},
+        <:Union{MOI.VariableIndex,MOI.ScalarQuadraticFunction{T}},
     },
 ) where {T}
     return false
@@ -454,35 +454,35 @@ function _test_SDPA_format(T)
           MOI.Bridges.Variable.FreeBridge{T}
     @test !MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{T},
     )
     @test !MOI.supports_constraint(
         bridged,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{T},
     )
     @test !MOI.supports_add_constrained_variable(bridged, MOI.GreaterThan{T})
-    @test !MOI.supports_constraint(model, MOI.SingleVariable, MOI.LessThan{T})
-    @test !MOI.supports_constraint(bridged, MOI.SingleVariable, MOI.LessThan{T})
+    @test !MOI.supports_constraint(model, MOI.VariableIndex, MOI.LessThan{T})
+    @test !MOI.supports_constraint(bridged, MOI.VariableIndex, MOI.LessThan{T})
     @test !MOI.supports_add_constrained_variable(bridged, MOI.LessThan{T})
-    @test !MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{T})
-    @test !MOI.supports_constraint(bridged, MOI.SingleVariable, MOI.EqualTo{T})
+    @test !MOI.supports_constraint(model, MOI.VariableIndex, MOI.EqualTo{T})
+    @test !MOI.supports_constraint(bridged, MOI.VariableIndex, MOI.EqualTo{T})
     @test !MOI.supports_add_constrained_variable(bridged, MOI.EqualTo{T})
     MOI.Bridges.add_bridge(bridged, MOI.Bridges.Variable.VectorizeBridge{T})
     @test !MOI.supports_constraint(
         bridged,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{T},
     )
     @test MOI.supports_add_constrained_variable(bridged, MOI.GreaterThan{T})
     @test MOI.Bridges.bridge_type(bridged, MOI.GreaterThan{T}) ==
           MOI.Bridges.Variable.VectorizeBridge{T,MOI.Nonnegatives}
-    @test !MOI.supports_constraint(bridged, MOI.SingleVariable, MOI.LessThan{T})
+    @test !MOI.supports_constraint(bridged, MOI.VariableIndex, MOI.LessThan{T})
     @test MOI.supports_add_constrained_variable(bridged, MOI.LessThan{T})
     @test MOI.Bridges.bridge_type(bridged, MOI.LessThan{T}) ==
           MOI.Bridges.Variable.VectorizeBridge{T,MOI.Nonpositives}
-    @test !MOI.supports_constraint(bridged, MOI.SingleVariable, MOI.EqualTo{T})
+    @test !MOI.supports_constraint(bridged, MOI.VariableIndex, MOI.EqualTo{T})
     @test MOI.supports_add_constrained_variable(bridged, MOI.EqualTo{T})
     @test MOI.Bridges.bridge_type(bridged, MOI.EqualTo{T}) ==
           MOI.Bridges.Variable.VectorizeBridge{T,MOI.Zeros}
@@ -689,16 +689,16 @@ Bridge graph with 1 variable nodes, 3 constraint nodes and 0 objective nodes.
     ) == MOI.Bridges.Constraint.QuadtoSOCBridge{T}
     F = MOI.ScalarQuadraticFunction{T}
     attr = MOI.ObjectiveFunction{F}()
-    @test !MOI.supports(bridged, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test !MOI.supports(bridged, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @test !MOI.supports(bridged, attr)
     err = MOI.UnsupportedAttribute(attr)
     @test_throws err MOI.Bridges.bridge_type(bridged, F)
     MOI.Bridges.add_bridge(bridged, MOI.Bridges.Objective.SlackBridge{T})
-    @test !MOI.supports(bridged, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test !MOI.supports(bridged, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @test !MOI.supports(bridged, attr)
     MOI.Bridges.add_bridge(bridged, MOI.Bridges.Objective.FunctionizeBridge{T})
-    @test MOI.supports(bridged, MOI.ObjectiveFunction{MOI.SingleVariable}())
-    @test MOI.Bridges.bridge_type(bridged, MOI.SingleVariable) ==
+    @test MOI.supports(bridged, MOI.ObjectiveFunction{MOI.VariableIndex}())
+    @test MOI.Bridges.bridge_type(bridged, MOI.VariableIndex) ==
           MOI.Bridges.Objective.FunctionizeBridge{T}
     @test MOI.supports(bridged, attr)
     @test MOI.Bridges.bridge_type(bridged, F) ==
@@ -930,8 +930,8 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
    Cannot use `$(MOI.Bridges.Objective.SlackBridge{T,MOI.ScalarQuadraticFunction{T},MOI.ScalarQuadraticFunction{T}})` because:
    (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported
    (2) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
-   |2| objective function of type `MOI.SingleVariable` is not supported
- |2| objective function of type `MOI.SingleVariable` is not supported because no added bridge supports bridging it.
+   |2| objective function of type `MOI.VariableIndex` is not supported
+ |2| objective function of type `MOI.VariableIndex` is not supported because no added bridge supports bridging it.
 """,
         )
         MOI.Bridges.add_bridge(
@@ -1024,11 +1024,11 @@ Bridge graph with 1 variable nodes, 5 constraint nodes and 2 objective nodes.
  [1] constrained variables in `MOI.RotatedSecondOrderCone` are bridged (distance 2) by $(MOI.Bridges.Variable.RSOCtoPSDBridge{T}).
  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 5) by $(MOI.Bridges.Constraint.QuadtoSOCBridge{T}).
  (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 4) by $(MOI.Bridges.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.RotatedSecondOrderCone}).
- (3) `MOI.SingleVariable`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.ScalarFunctionizeBridge{T,MOI.EqualTo{T}}).
+ (3) `MOI.VariableIndex`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.ScalarFunctionizeBridge{T,MOI.EqualTo{T}}).
  (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.ScalarizeBridge{T,MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}).
  (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are bridged (distance 5) by $(MOI.Bridges.Constraint.QuadtoSOCBridge{T}).
  |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is bridged (distance 12) by $(MOI.Bridges.Objective.SlackBridge{T,MOI.ScalarQuadraticFunction{T},MOI.ScalarQuadraticFunction{T}}).
- |2| objective function of type `MOI.SingleVariable` is bridged (distance 1) by $(MOI.Bridges.Objective.FunctionizeBridge{T}).
+ |2| objective function of type `MOI.VariableIndex` is bridged (distance 1) by $(MOI.Bridges.Objective.FunctionizeBridge{T}).
 """,
         )
     end
@@ -1119,7 +1119,7 @@ function test_SDPAModel_with_bridges_and_caching()
         MOI.Utilities.MANUAL,
     )
     vi_cache = MOI.add_variable(cached)
-    f(vi) = 1.0 * MOI.SingleVariable(vi)
+    f(vi) = 1.0 * vi
     ci_cache = MOI.add_constraint(cached, f(vi_cache), MOI.EqualTo(1.0))
     model = SDPAModel{Float64}()
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
@@ -1205,7 +1205,7 @@ function test_constrained_variables_in_RSOC()
     return
 end
 
-# Model not supporting VectorOfVariables and SingleVariable
+# Model not supporting VectorOfVariables and VariableIndex
 MOI.Utilities.@model(
     NoVariableModel,
     (MOI.ZeroOne, MOI.Integer),
@@ -1219,7 +1219,7 @@ MOI.Utilities.@model(
 )
 function MOI.supports_constraint(
     ::NoVariableModel{T},
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{<:MOI.Utilities.SUPPORTED_VARIABLE_SCALAR_SETS{T}},
 ) where {T}
     return false
@@ -1274,11 +1274,11 @@ Bridge graph with 5 variable nodes, 11 constraint nodes and 0 objective nodes.
  (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
  (5) `MOI.VectorOfVariables`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
  (6) `MOI.VectorOfVariables`-in-`MOI.Nonnegatives` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.NonnegToNonposBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
- (7) `MOI.SingleVariable`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.GreaterToLessBridge{T,MOI.ScalarAffineFunction{T},MOI.SingleVariable}).
- (8) `MOI.SingleVariable`-in-`MOI.Interval{$T}` constraints are bridged (distance 2) by $(MOI.Bridges.Constraint.ScalarFunctionizeBridge{T,MOI.Interval{T}}).
+ (7) `MOI.VariableIndex`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.GreaterToLessBridge{T,MOI.ScalarAffineFunction{T},MOI.VariableIndex}).
+ (8) `MOI.VariableIndex`-in-`MOI.Interval{$T}` constraints are bridged (distance 2) by $(MOI.Bridges.Constraint.ScalarFunctionizeBridge{T,MOI.Interval{T}}).
  (9) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.SplitIntervalBridge{T,MOI.ScalarAffineFunction{T},MOI.Interval{T},MOI.GreaterThan{T},MOI.LessThan{T}}).
- (10) `MOI.SingleVariable`-in-`MOI.LessThan{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.LessToGreaterBridge{T,MOI.ScalarAffineFunction{T},MOI.SingleVariable}).
- (11) `MOI.SingleVariable`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.VectorizeBridge{T,MOI.VectorAffineFunction{T},MOI.Zeros,MOI.SingleVariable}).
+ (10) `MOI.VariableIndex`-in-`MOI.LessThan{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.LessToGreaterBridge{T,MOI.ScalarAffineFunction{T},MOI.VariableIndex}).
+ (11) `MOI.VariableIndex`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.VectorizeBridge{T,MOI.VectorAffineFunction{T},MOI.Zeros,MOI.VariableIndex}).
 """,
     )
     return
@@ -1304,7 +1304,7 @@ MOI.Utilities.@model(
 
 function MOI.supports_constraint(
     ::OnlyNonnegVAF{T},
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{<:MOI.Utilities.SUPPORTED_VARIABLE_SCALAR_SETS{T}},
 ) where {T}
     return false
@@ -1358,16 +1358,16 @@ function _test_context_substitution(T)
     )
     MOI.Bridges.add_bridge(bridged, MOI.Bridges.Variable.VectorizeBridge{T})
     x, cx = MOI.add_constrained_variable(bridged, MOI.LessThan(one(T)))
-    fx = MOI.SingleVariable(x)
+    fx = x
     vectorize = MOI.Bridges.bridge(bridged, x)
     @test vectorize isa MOI.Bridges.Variable.VectorizeBridge
     y = vectorize.variable
-    fy = MOI.SingleVariable(y)
+    fy = y
     flip = MOI.Bridges.bridge(bridged, y)
     @test flip isa MOI.Bridges.Variable.NonposToNonnegBridge
     Z = flip.variables
     z = Z[1]
-    fz = MOI.SingleVariable(z)
+    fz = z
     vov_ci = flip.constraint
     functionize = MOI.Bridges.bridge(bridged, vov_ci)
     @test functionize isa MOI.Bridges.Constraint.VectorFunctionizeBridge
@@ -1450,7 +1450,7 @@ MOI.Utilities.@model(
 
 function MOI.supports_constraint(
     ::GreaterNonnegModel{T},
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{<:Union{MOI.EqualTo{T},MOI.LessThan{T},MOI.Interval{T}}},
 ) where {T}
     return false
@@ -1492,7 +1492,7 @@ MOI.Utilities.@model NothingModel () () () () () () () ()
 
 function MOI.supports_constraint(
     ::NothingModel{T},
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{
         <:Union{
             MOI.EqualTo{T},
@@ -1521,7 +1521,7 @@ end
 
 function MOI.supports_constraint(
     ::Type{<:BridgeAddingNoConstraint},
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{MOI.Integer},
 )
     return true
@@ -1529,7 +1529,7 @@ end
 
 function MOI.Bridges.Constraint.concrete_bridge_type(
     ::Type{<:BridgeAddingNoConstraint{T}},
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{MOI.Integer},
 ) where {T}
     return BridgeAddingNoConstraint{T}
@@ -1630,7 +1630,7 @@ function test_bridge_adding_no_constraint()
     MOI.Bridges.add_bridge(bridged, BridgeAddingNoConstraint{Float64})
     @test MOI.Bridges.supports_bridging_constraint(
         bridged,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.Integer,
     )
 end
@@ -1642,7 +1642,7 @@ function test_unsupported_constraint_with_cycles()
     bridged = MOI.Bridges.full_bridge_optimizer(mock, Float64)
     @test !MOI.supports_constraint(
         bridged,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{Float64},
     )
     @test !MOI.supports_constraint(
@@ -1763,7 +1763,7 @@ function test_supports()
     mock = MOI.Utilities.MockOptimizer(NoRSOCModel{Float64}())
     full_bridged_mock = MOI.Bridges.full_bridge_optimizer(mock, Float64)
     for S in [MOI.Nonnegatives, MOI.Nonpositives, MOI.Zeros]
-        @test !MOI.supports_constraint(full_bridged_mock, MOI.SingleVariable, S)
+        @test !MOI.supports_constraint(full_bridged_mock, MOI.VariableIndex, S)
     end
     for S in
         [MOI.GreaterThan{Float64}, MOI.LessThan{Float64}, MOI.EqualTo{Float64}]
@@ -1778,7 +1778,7 @@ function test_supports()
     full_bridged_greater_nonneg =
         MOI.Bridges.full_bridge_optimizer(greater_nonneg_mock, Float64)
     for F in [
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.ScalarAffineFunction{Float64},
         MOI.ScalarQuadraticFunction{Float64},
     ]
@@ -1910,7 +1910,7 @@ function test_supports()
         ]
             @test MOI.supports_constraint(
                 full_bridged_no_variable,
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 S,
             )
         end
@@ -1937,7 +1937,7 @@ function test_wrong_coefficient()
         model = MOI.Utilities.Model{T}()
         bridged = MOI.Bridges.full_bridge_optimizer(model, T)
         x = MOI.add_variable(bridged)
-        fx = MOI.SingleVariable(x)
+        fx = x
         f_scalar = one(S) * fx
         f_vector = MOI.Utilities.vectorize([f_scalar])
         function _test(func, set)

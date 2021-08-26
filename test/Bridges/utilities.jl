@@ -111,7 +111,7 @@ function _test_delete_bridged_variable(
     @test length(MOI.get(m, MOI.ListOfVariableIndices())) == nvars
     if S != MOI.Reals
         F =
-            S <: MOI.AbstractScalarSet ? MOI.SingleVariable :
+            S <: MOI.AbstractScalarSet ? MOI.VariableIndex :
             MOI.VectorOfVariables
         _test_num_constraints(m, F, S, num_bridged)
     end
@@ -156,7 +156,7 @@ function _test_delete_bridged_variables(
     @test length(MOI.get(m, MOI.ListOfVariableIndices())) == nvars
     if S != MOI.Reals
         F =
-            S <: MOI.AbstractScalarSet ? MOI.SingleVariable :
+            S <: MOI.AbstractScalarSet ? MOI.VariableIndex :
             MOI.VectorOfVariables
         _test_num_constraints(m, F, S, num_bridged)
     end

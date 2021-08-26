@@ -4,8 +4,8 @@
         config::Config,
     )
 
-Test that modifying the function of a `SingleVariable`-in-`LessThan` constraint
-throws a [`SettingSingleVariableFunctionNotAllowed`](@ref) error.
+Test that modifying the function of a `VariableIndex`-in-`LessThan` constraint
+throws a [`SettingVariableIndexFunctionNotAllowed`](@ref) error.
 """
 function test_modification_set_function_single_variable(
     model::MOI.ModelLike,
@@ -21,12 +21,12 @@ function test_modification_set_function_single_variable(
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
     y = MOI.get(model, MOI.VariableIndex, "y")
-    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(x.value)
-    # We test this after the creation of every `SingleVariable` constraint
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}}(x.value)
+    # We test this after the creation of every `VariableIndex` constraint
     # to ensure a good coverage of corner cases.
     @test c.value == x.value
-    err = MOI.SettingSingleVariableFunctionNotAllowed()
-    func = MOI.SingleVariable(y)
+    err = MOI.SettingVariableIndexFunctionNotAllowed()
+    func = y
     @test_throws err MOI.set(model, MOI.ConstraintFunction(), c, func)
     return
 end
@@ -37,7 +37,7 @@ end
         config::Config,
     )
 
-Test set modification SingleVariable-in-LessThan constraint. If
+Test set modification VariableIndex-in-LessThan constraint. If
 `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
@@ -54,7 +54,7 @@ function test_modification_set_singlevariable_lessthan(
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(x.value)
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}}(x.value)
     @test c.value == x.value
     _test_model_solution(
         model,
@@ -106,7 +106,7 @@ end
         config::Config,
     )
 
-Test set transformation of a SingleVariable-in-LessThan constraint. If
+Test set transformation of a VariableIndex-in-LessThan constraint. If
 `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
@@ -123,7 +123,7 @@ function test_modification_transform_singlevariable_lessthan(
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(x.value)
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}}(x.value)
     @test c.value == x.value
     _test_model_solution(
         model,
@@ -630,7 +630,7 @@ function test_modification_const_scalar_objective(
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 2.0)
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
+    MOI.add_constraint(model, x, MOI.LessThan(1.0))
     _test_model_solution(
         model,
         config;
@@ -683,7 +683,7 @@ function test_modification_coef_scalar_objective(
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
+    MOI.add_constraint(model, x, MOI.LessThan(1.0))
     _test_model_solution(
         model,
         config;
@@ -733,10 +733,10 @@ function test_modification_delete_variable_with_single_variable_obj(
 )
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
-    f = MOI.SingleVariable(x)
+    f = x
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     MOI.delete(model, y)
     _test_model_solution(
         model,
@@ -761,7 +761,7 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [1.0]),
             MOI.FEASIBLE_POINT,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [1.0],
         ),
     )
     return

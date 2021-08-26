@@ -150,7 +150,7 @@ function functionized_type(
     return MOI.VectorAffineFunction{T}
 end
 
-function functionized_type(b::LazyBridgeOptimizer, ::Type{MOI.SingleVariable})
+function functionized_type(b::LazyBridgeOptimizer, ::Type{MOI.VariableIndex})
     return functionized_type(
         _first_functionize_bridge(
             b.constraint_bridge_types,
@@ -464,12 +464,12 @@ function bridge_type(
 end
 
 function _func_name(::Type{Constraint.ScalarFunctionizeBridge})
-    return "SingleVariable", "constraint"
+    return "VariableIndex", "constraint"
 end
 function _func_name(::Type{Constraint.VectorFunctionizeBridge})
     return "VectorOfVariables", "constraint"
 end
-_func_name(::Type{Objective.FunctionizeBridge}) = "SingleVariable", "objective"
+_func_name(::Type{Objective.FunctionizeBridge}) = "VariableIndex", "objective"
 function _first_functionize_bridge(bridge_types, target_type)
     index = findfirst(bridge_type -> bridge_type <: target_type, bridge_types)
     if index === nothing

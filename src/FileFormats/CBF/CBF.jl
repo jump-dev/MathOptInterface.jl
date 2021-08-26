@@ -29,7 +29,7 @@ MOI.Utilities.@model(
 
 function MOI.supports_constraint(
     ::Model{T},
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{<:MOI.Utilities.SUPPORTED_VARIABLE_SCALAR_SETS{T}},
 ) where {T}
     return false
@@ -37,7 +37,7 @@ end
 
 function MOI.supports_constraint(
     ::Model,
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{MOI.Integer},
 )
     return true

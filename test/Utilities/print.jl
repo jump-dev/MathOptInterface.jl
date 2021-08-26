@@ -73,7 +73,7 @@ function test_single_variable()
     model = MOIU.Model{Float64}()
     x = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), x, "x")
-    f = MOI.SingleVariable(x)
+    f = x
     @test MOIU._to_string(PLAIN, model, f) == "x"
     @test MOIU._to_string(LATEX, model, f) == "x"
 end
@@ -312,13 +312,13 @@ function test_model()
      │0.0 + 1.0 y │
      └            ┘ $(IN) ExponentialCone()
 
-    SingleVariable-in-GreaterThan{Float64}
+    VariableIndex-in-GreaterThan{Float64}
      x >= 0.1
 
-    SingleVariable-in-Integer
+    VariableIndex-in-Integer
      z $(IN) ℤ
 
-    SingleVariable-in-ZeroOne
+    VariableIndex-in-ZeroOne
      x $(IN) {0, 1}
      y $(IN) {0, 1}
     """
@@ -379,11 +379,11 @@ function test_latex()
         1.0\\
         0.0 + 1.0 x^2\\
         0.0 + 1.0 y\end{bmatrix} \in \text{ExponentialCone()} \\
-         & \text{SingleVariable-in-GreaterThan{Float64}} \\
+         & \text{VariableIndex-in-GreaterThan{Float64}} \\
          & x \ge 0.1 \\
-         & \text{SingleVariable-in-Integer} \\
+         & \text{VariableIndex-in-Integer} \\
          & z \in \mathbb{Z} \\
-         & \text{SingleVariable-in-ZeroOne} \\
+         & \text{VariableIndex-in-ZeroOne} \\
          & x \in \{0, 1\} \\
          & y \in \{0, 1\} \\
         \end{aligned} $$""",
@@ -528,8 +528,8 @@ function test_nlp()
     v = MOI.add_variables(model, 4)
     l = [1.1, 1.2, 1.3, 1.4]
     u = [5.1, 5.2, 5.3, 5.4]
-    MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.GreaterThan.(l))
-    MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.LessThan.(u))
+    MOI.add_constraint.(model, v, MOI.GreaterThan.(l))
+    MOI.add_constraint.(model, v, MOI.LessThan.(u))
     for i in 1:4
         MOI.set(model, MOI.VariableName(), v[i], "x[$i]")
     end
@@ -544,13 +544,13 @@ function test_nlp()
 
     Subject to:
 
-    SingleVariable-in-GreaterThan{Float64}
+    VariableIndex-in-GreaterThan{Float64}
      x[1] >= 1.1
      x[2] >= 1.2
      x[3] >= 1.3
      x[4] >= 1.4
 
-    SingleVariable-in-LessThan{Float64}
+    VariableIndex-in-LessThan{Float64}
      x[1] <= 5.1
      x[2] <= 5.2
      x[3] <= 5.3
@@ -566,12 +566,12 @@ function test_nlp()
         $$ \begin{aligned}
         \min\quad & x_{1} \times x_{4} \times (x_{1} + x_{2} + x_{3}) + x_{3} \\
         \text{Subject to}\\
-         & \text{SingleVariable-in-GreaterThan{Float64}} \\
+         & \text{VariableIndex-in-GreaterThan{Float64}} \\
          & x_{1} \ge 1.1 \\
          & x_{2} \ge 1.2 \\
          & x_{3} \ge 1.3 \\
          & x_{4} \ge 1.4 \\
-         & \text{SingleVariable-in-LessThan{Float64}} \\
+         & \text{VariableIndex-in-LessThan{Float64}} \\
          & x_{1} \le 5.1 \\
          & x_{2} \le 5.2 \\
          & x_{3} \le 5.3 \\
@@ -597,8 +597,8 @@ function test_nlp_no_objective()
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(v[1]),
+        MOI.ObjectiveFunction{MOI.VariableIndex}(),
+        v[1],
     )
     @test sprint(print, model) == """
     Minimize SingleVariable:

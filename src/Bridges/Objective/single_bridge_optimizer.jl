@@ -39,7 +39,7 @@ end
 MOIB.is_bridged(::SingleBridgeOptimizer, ::MOI.VariableIndex) = false
 function MOIB.is_bridged(
     ::SingleBridgeOptimizer,
-    ::MOI.ConstraintIndex{MOI.SingleVariable},
+    ::MOI.ConstraintIndex{MOI.VariableIndex},
 )
     return false
 end

@@ -14,7 +14,7 @@ struct IndicatorActiveOnFalseBridge{
     S<:MOI.AbstractScalarSet,
 } <: AbstractBridge
     variable::MOI.VariableIndex
-    zero_one_cons::MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}
+    zero_one_cons::MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}
     disjunction_cons::MOI.ConstraintIndex{
         MOI.ScalarAffineFunction{T},
         MOI.EqualTo{T},
@@ -39,9 +39,9 @@ function bridge_constraint(
     f_scalars = MOIU.eachscalar(f)
     z2, zo_cons = MOI.add_constrained_variable(model, MOI.ZeroOne())
     # z1 + z2 == 1
-    z1_z2 = MOIU.operate(+, T, f_scalars[1], MOI.SingleVariable(z2))
+    z1_z2 = MOIU.operate(+, T, f_scalars[1], z2)
     dcons = MOIU.normalize_and_add_constraint(model, z1_z2, MOI.EqualTo(one(T)))
-    f2 = MOIU.operate(vcat, T, MOI.SingleVariable(z2), f_scalars[2])
+    f2 = MOIU.operate(vcat, T, z2, f_scalars[2])
     ci =
         MOI.add_constraint(model, f2, MOI.Indicator{MOI.ACTIVATE_ON_ONE}(s.set))
     return IndicatorActiveOnFalseBridge{T,F,S}(z2, zo_cons, dcons, ci)

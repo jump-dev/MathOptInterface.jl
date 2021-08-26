@@ -28,9 +28,9 @@ function test_zeros()
     MOI.set(bridged_mock, MOI.VariableName(), yz, ["y", "z"])
     MOI.set(bridged_mock, MOI.ConstraintName(), cyz, "cyz")
     y, z = yz
-    fx = MOI.SingleVariable(x)
-    fy = MOI.SingleVariable(y)
-    fz = MOI.SingleVariable(z)
+    fx = x
+    fy = y
+    fz = z
 
     MOI.set(bridged_mock, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(fx)}(), fx)
@@ -178,7 +178,7 @@ function test_zeros()
         yz,
         MOI.Zeros,
         3,
-        ((MOI.SingleVariable, MOI.GreaterThan{Float64}, 1),),
+        ((MOI.VariableIndex, MOI.GreaterThan{Float64}, 1),),
     )
     @test MOI.is_valid(bridged_mock, x)
     @test !MOI.is_valid(bridged_mock, y)

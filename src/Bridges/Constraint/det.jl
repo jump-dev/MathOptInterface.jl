@@ -168,7 +168,7 @@ function sublog(
 ) where {T}
     return MOI.add_constraint(
         model,
-        MOIU.operate(vcat, T, MOI.SingleVariable(x), y, MOI.SingleVariable(z)),
+        MOIU.operate(vcat, T, x, y, z),
         MOI.ExponentialCone(),
     )
 end

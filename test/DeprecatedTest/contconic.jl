@@ -207,7 +207,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0.5, 1.0, 1 / √2, 1 / √2],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) => [-√2, -1 / √2],
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [-√2, -1 / √2],
             (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) =>
                 [[√2, 1 / √2, -1.0, -1.0]],
         )
@@ -228,9 +228,9 @@ end
             MOI.INFEASIBLE,
             MOI.NO_SOLUTION,
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) => [-1],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1],
+            (MOI.VariableIndex, MOI.LessThan{Float64}) => [-1],
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [-1],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [1],
             (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) =>
                 [[1, 1, -1]],
         )
@@ -244,11 +244,11 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1.0; zeros(n - 1); ub; √ub; ones(2)],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) =>
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) =>
                 [-√ub / 4, -√ub / 4],
             (MOI.VectorOfVariables, MOI.Nonnegatives) => [zeros(n)],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0.0],
-            (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1 / (2 * √ub)],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [0.0],
+            (MOI.VariableIndex, MOI.LessThan{Float64}) => [-1 / (2 * √ub)],
             (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [
 #! format:off
 # TODO(odow): formatting incorrectly modifies this line.
@@ -581,7 +581,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0, 1, 0, 1, 1],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [2],
             (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
                 [[1, 1]],
             (MOI.VectorOfVariables, MOI.LogDetConeTriangle) =>
@@ -593,7 +593,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0, 1, 0, 1, 1],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [2],
             (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
                 [[1, 1]],
             (MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle) =>
@@ -612,7 +612,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0, 1, 0, 0, 1, 1],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [2],
             (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
                 [[1, 1]],
             (MOI.VectorOfVariables, MOI.LogDetConeSquare) =>
@@ -624,7 +624,7 @@ end
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0, 1, 0, 0, 1, 1],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [2],
             (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
                 [[1, 1]],
             (MOI.VectorAffineFunction{Float64}, MOI.LogDetConeSquare) =>

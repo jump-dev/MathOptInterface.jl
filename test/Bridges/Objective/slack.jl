@@ -126,7 +126,7 @@ function test_SlackBridge_ListOfModelAttributesSet()
     attr = MOI.get(inner, MOI.ListOfModelAttributesSet())
     @test length(attr) == 2
     @test MOI.ObjectiveSense() in attr
-    @test MOI.ObjectiveFunction{MOI.SingleVariable}() in attr
+    @test MOI.ObjectiveFunction{MOI.VariableIndex}() in attr
     return
 end
 
@@ -190,7 +190,7 @@ function test_SlackBridge_ObjectiveFunctionValue()
     inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     model = MOI.Bridges.Objective.Slack{Float64}(inner)
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(2.0))
+    MOI.add_constraint(model, x, MOI.GreaterThan(2.0))
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.1, x)], -1.2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)

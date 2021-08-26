@@ -30,7 +30,7 @@ function test_split_basic()
         config,
         include = [
             "test_basic_$(F)_$(S)" for F in [
-                "SingleVariable",
+                "VariableIndex",
                 "ScalarAffineFunction",
                 "ScalarQuadraticFunction",
             ] for S in ["Interval", "EqualTo"]

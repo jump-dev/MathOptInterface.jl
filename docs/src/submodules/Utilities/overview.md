@@ -61,7 +61,7 @@ The eight tuples are in the following order:
  2. Typed scalar sets, e.g., [`LessThan`](@ref)
  3. Un-typed vector sets, e.g., [`Nonnegatives`](@ref)
  4. Typed vector sets, e.g., [`PowerCone`](@ref)
- 5. Un-typed scalar functions, e.g., [`SingleVariable`](@ref)
+ 5. Un-typed scalar functions, e.g., [`VariableIndex`](@ref)
  6. Typed scalar functions, e.g., [`ScalarAffineFunction`](@ref)
  7. Un-typed vector functions, e.g., [`VectorOfVariables`](@ref)
  8. Typed vector functions, e.g., [`VectorAffineFunction`](@ref)
@@ -90,8 +90,8 @@ MOIU.GenericOptimizer{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesCon
 ```
 
 !!! warning
-    `MyNewModel` supports every `SingleVariable`-in-Set constraint, as well as
-    [`SingleVariable`](@ref), [`ScalarAffineFunction`](@ref), and
+    `MyNewModel` supports every `VariableIndex`-in-Set constraint, as well as
+    [`VariableIndex`](@ref), [`ScalarAffineFunction`](@ref), and
     [`ScalarQuadraticFunction`](@ref) objective functions. Implement
     `MOI.supports` as needed to forbid constraint and objective function
     combinations.
@@ -114,12 +114,12 @@ julia> MOI.Utilities.@model(
        )
 MathOptInterface.Utilities.GenericOptimizer{T,MathOptInterface.Utilities.ObjectiveContainer{T},MathOptInterface.Utilities.VariablesContainer{T},MathOptInterface.Utilities.VectorOfConstraints{MathOptInterface.VectorAffineFunction{T},MathOptInterface.Complements}} where T
 ```
-However, `PathOptimizer` does not support some `SingleVariable`-in-Set
+However, `PathOptimizer` does not support some `VariableIndex`-in-Set
 constraints, so we must explicitly define:
 ```jldoctest pathoptimizer
 julia> function MOI.supports_constraint(
            ::PathOptimizer,
-           ::Type{MOI.SingleVariable},
+           ::Type{MOI.VariableIndex},
            ::Type{Union{<:MOI.Semiinteger,MOI.Semicontinuous,MOI.ZeroOne,MOI.Integer}}
        )
            return false
@@ -283,11 +283,11 @@ MathOptInterface.VariableIndex(1)
 
 julia> MOI.set(model, MOI.VariableName(), x, "x_var")
 
-julia> f = MOI.SingleVariable(x)
+julia> f = x
 MathOptInterface.SingleVariable(MathOptInterface.VariableIndex(1))
 
 julia> MOI.add_constraint(model, f, MOI.ZeroOne())
-MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.ZeroOne}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex,MathOptInterface.ZeroOne}(1)
 
 julia> MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
 
@@ -299,7 +299,7 @@ Maximize SingleVariable:
 
 Subject to:
 
-SingleVariable-in-ZeroOne
+VariableIndex-in-ZeroOne
  x_var ∈ {0, 1}
 ```
 
@@ -309,7 +309,7 @@ julia> MOI.Utilities.latex_formulation(model)
 $$ \begin{aligned}
 \max\quad & x\_var \\
 \text{Subject to}\\
- & \text{SingleVariable-in-ZeroOne} \\
+ & \text{VariableIndex-in-ZeroOne} \\
  & x\_var \in \{0, 1\} \\
 \end{aligned} $$
 ```
@@ -324,7 +324,7 @@ The constraints of [`Utilities.Model`](@ref) are stored as a vector of tuples
 of function and set in a `Utilities.VectorOfConstraints`. Other representations
 can be used by parametrizing the type [`Utilities.GenericModel`](@ref)
 (resp. [`Utilities.GenericOptimizer`](@ref)). For instance, if all
-non-`SingleVariable` constraints are affine, the coefficients of all the
+non-`VariableIndex` constraints are affine, the coefficients of all the
 constraints can be stored in a single sparse matrix using
 [`Utilities.MatrixOfConstraints`](@ref). The constraints storage can even be
 customized up to a point where it exactly matches the storage of the solver of

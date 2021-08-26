@@ -2,10 +2,10 @@
     SlackBridge{T, F, G}
 
 The `SlackBridge` converts an objective function of type `G` into a
-[`MOI.SingleVariable`](@ref) objective by creating a slack variable and a
+[`MOI.VariableIndex`](@ref) objective by creating a slack variable and a
 `F`-in-[`MOI.LessThan`](@ref) constraint for minimization or
 `F`-in-[`MOI.LessThan`](@ref) constraint for maximization where `F` is
-`MOI.Utilities.promote_operation(-, T, G, MOI.SingleVariable}`.
+`MOI.Utilities.promote_operation(-, T, G, MOI.VariableIndex}`.
 Note that when using this bridge, changing the optimization sense
 is not supported. Set the sense to `MOI.FEASIBILITY_SENSE` first
 to delete the bridge in order to change the sense, then re-add the objective.
@@ -28,7 +28,7 @@ function bridge_objective(
     func::G,
 ) where {T,F,G<:MOI.AbstractScalarFunction}
     slack = MOI.add_variable(model)
-    fslack = MOI.SingleVariable(slack)
+    fslack = slack
     f = MOIU.operate(-, T, func, fslack)
     if MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
         set = MOI.LessThan(zero(T))
@@ -41,13 +41,13 @@ function bridge_objective(
         )
     end
     constraint = MOIU.normalize_and_add_constraint(model, f, set)
-    MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(), fslack)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), fslack)
     return SlackBridge{T,F,G}(slack, constraint)
 end
 
 function supports_objective_function(
     ::Type{<:SlackBridge},
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
 )
     return false
 end
@@ -66,14 +66,14 @@ function MOIB.added_constraint_types(::Type{<:SlackBridge{T,F}}) where {T,F}
 end
 
 function MOIB.set_objective_function_type(::Type{<:SlackBridge})
-    return MOI.SingleVariable
+    return MOI.VariableIndex
 end
 
 function concrete_bridge_type(
     ::Type{<:SlackBridge{T}},
     G::Type{<:MOI.AbstractScalarFunction},
 ) where {T}
-    F = MOIU.promote_operation(-, T, G, MOI.SingleVariable)
+    F = MOIU.promote_operation(-, T, G, MOI.VariableIndex)
     return SlackBridge{T,F,G}
 end
 
@@ -115,7 +115,7 @@ function MOI.get(
 ) where {T,F,G}
     slack = MOI.get(
         model,
-        MOIB.ObjectiveFunctionValue{MOI.SingleVariable}(attr.result_index),
+        MOIB.ObjectiveFunctionValue{MOI.VariableIndex}(attr.result_index),
     )
     # There may be a gap between the value of the original objective `g` and the
     # value of `bridge.slack`. Since `bridge.constraint` is `g - slack`, we can

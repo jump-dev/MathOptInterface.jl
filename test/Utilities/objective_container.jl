@@ -31,9 +31,9 @@ end
 function test_FEASIBILITY_SENSE_clears_objective()
     o = MOI.Utilities.ObjectiveContainer{Float16}()
     x = MOI.VariableIndex(1234)
-    f = MOI.SingleVariable(x)
-    MOI.set(o, MOI.ObjectiveFunction{MOI.SingleVariable}(), f)
-    @test MOI.get(o, MOI.ObjectiveFunction{MOI.SingleVariable}()) ≈ f
+    f = x
+    MOI.set(o, MOI.ObjectiveFunction{MOI.VariableIndex}(), f)
+    @test MOI.get(o, MOI.ObjectiveFunction{MOI.VariableIndex}()) ≈ f
     MOI.set(o, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
     @test !MOI.is_empty(o)
     @test o.is_function_set == false
@@ -45,7 +45,7 @@ function _test_basic_objective(F, T)
     @test MOI.is_empty(o)
     @test MOI.supports(o, MOI.ObjectiveFunction{F}())
     x = MOI.VariableIndex(1234)
-    f = convert(F, MOI.SingleVariable(x))
+    f = convert(F, x)
     MOI.set(o, MOI.ObjectiveFunction{F}(), f)
     @test MOI.get(o, MOI.ObjectiveFunctionType()) == F
     @test !MOI.is_empty(o)
@@ -57,17 +57,17 @@ function _test_basic_objective(F, T)
 end
 
 function test_basic_objective()
-    _test_basic_objective(MOI.SingleVariable, Float32)
+    _test_basic_objective(MOI.VariableIndex, Float32)
     _test_basic_objective(MOI.ScalarAffineFunction{Float32}, Float32)
     _test_basic_objective(MOI.ScalarQuadraticFunction{Float32}, Float32)
     return
 end
 
-function test_delete_SingleVariable()
+function test_delete_VariableIndex()
     o = MOI.Utilities.ObjectiveContainer{Float16}()
     x = MOI.VariableIndex(1234)
-    f = MOI.SingleVariable(x)
-    MOI.set(o, MOI.ObjectiveFunction{MOI.SingleVariable}(), f)
+    f = x
+    MOI.set(o, MOI.ObjectiveFunction{MOI.VariableIndex}(), f)
     MOI.delete(o, x)
     @test MOI.is_empty(o)
     return
@@ -76,7 +76,7 @@ end
 function test_delete_ScalarAffineFunction()
     o = MOI.Utilities.ObjectiveContainer{Float16}()
     x = MOI.VariableIndex(1234)
-    f = convert(MOI.ScalarAffineFunction{Float16}, MOI.SingleVariable(x))
+    f = convert(MOI.ScalarAffineFunction{Float16}, x)
     MOI.set(o, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.delete(o, x)
     @test MOI.get(o, MOI.ObjectiveFunctionType()) == typeof(f)
@@ -87,7 +87,7 @@ end
 function test_delete_ScalarQuadraticFunction()
     o = MOI.Utilities.ObjectiveContainer{Float16}()
     x = MOI.VariableIndex(1234)
-    f = convert(MOI.ScalarQuadraticFunction{Float16}, MOI.SingleVariable(x))
+    f = convert(MOI.ScalarQuadraticFunction{Float16}, x)
     MOI.set(o, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.delete(o, x)
     @test MOI.get(o, MOI.ObjectiveFunctionType()) == typeof(f)
@@ -95,11 +95,11 @@ function test_delete_ScalarQuadraticFunction()
     return
 end
 
-function test_delete_SingleVariable_plural()
+function test_delete_VariableIndex_plural()
     o = MOI.Utilities.ObjectiveContainer{Float16}()
     x = MOI.VariableIndex(1234)
-    f = MOI.SingleVariable(x)
-    MOI.set(o, MOI.ObjectiveFunction{MOI.SingleVariable}(), f)
+    f = x
+    MOI.set(o, MOI.ObjectiveFunction{MOI.VariableIndex}(), f)
     MOI.delete(o, [x])
     @test MOI.is_empty(o)
     return
@@ -108,7 +108,7 @@ end
 function test_delete_ScalarAffineFunction_plural()
     o = MOI.Utilities.ObjectiveContainer{Float16}()
     x = MOI.VariableIndex(1234)
-    f = convert(MOI.ScalarAffineFunction{Float16}, MOI.SingleVariable(x))
+    f = convert(MOI.ScalarAffineFunction{Float16}, x)
     MOI.set(o, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.delete(o, [x])
     @test MOI.get(o, MOI.ObjectiveFunctionType()) == typeof(f)
@@ -119,7 +119,7 @@ end
 function test_delete_ScalarQuadraticFunction_plural()
     o = MOI.Utilities.ObjectiveContainer{Float16}()
     x = MOI.VariableIndex(1234)
-    f = convert(MOI.ScalarQuadraticFunction{Float16}, MOI.SingleVariable(x))
+    f = convert(MOI.ScalarQuadraticFunction{Float16}, x)
     MOI.set(o, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.delete(o, [x])
     @test MOI.get(o, MOI.ObjectiveFunctionType()) == typeof(f)

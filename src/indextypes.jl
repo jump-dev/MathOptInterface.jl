@@ -9,8 +9,8 @@ The parameter `F` is the type of the function in the constraint, and the
 parameter `S` is the type of set in the constraint. To allow for deletion,
 indices need not be consecutive. Indices within a constraint type (i.e. `F`-in-`S`)
 must be unique, but non-unique indices across different constraint types are allowed.
-If `F` is [`SingleVariable`](@ref) then the index is equal to the index of the
-variable. That is for an `index::ConstraintIndex{SingleVariable}`, we always
+If `F` is [`VariableIndex`](@ref) then the index is equal to the index of the
+variable. That is for an `index::ConstraintIndex{VariableIndex}`, we always
 have
 ```julia
 index.value == MOI.get(model, MOI.ConstraintFunction(), index).variable.value
@@ -104,7 +104,7 @@ The following modifications also take effect if `Index` is [`VariableIndex`](@re
 * If `index` used in the objective function, it is removed from the function,
   i.e., it is substituted for zero.
 * For each `func`-in-`set` constraint of the model:
-  - If `func isa SingleVariable` and `func.variable == index` then the
+  - If `func isa VariableIndex` and `func.variable == index` then the
     constraint is deleted.
   - If `func isa VectorOfVariables` and `index in func.variable` then
     * if `length(func.variable) == 1` is one, the constraint is deleted;

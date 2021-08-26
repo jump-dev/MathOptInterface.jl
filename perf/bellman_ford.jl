@@ -9,13 +9,13 @@ const MOIB = MOI.Bridges
 MOIU.@model(SDPAModel,
             (), (MOI.EqualTo,), (MOI.Nonnegatives, MOI.PositiveSemidefiniteConeTriangle), (),
             (), (MOI.ScalarAffineFunction,), (MOI.VectorOfVariables,), ())
-MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.GreaterThan{T}}) where {T} = false
-MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.LessThan{T}}) where {T} = false
-MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.EqualTo{T}}) where {T} = false
-MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.SingleVariable}, ::Type{MOI.Interval{T}}) where {T} = false
+MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.VariableIndex}, ::Type{MOI.GreaterThan{T}}) where {T} = false
+MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.VariableIndex}, ::Type{MOI.LessThan{T}}) where {T} = false
+MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.VariableIndex}, ::Type{MOI.EqualTo{T}}) where {T} = false
+MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.VariableIndex}, ::Type{MOI.Interval{T}}) where {T} = false
 MOI.supports_constraint(::SDPAModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Reals}) = false
 MOI.supports(::SDPAModel{T}, ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}) where {T} = false
-MOI.supports(::SDPAModel, ::MOI.ObjectiveFunction{MOI.SingleVariable}) = false
+MOI.supports(::SDPAModel, ::MOI.ObjectiveFunction{MOI.VariableIndex}) = false
 
 function interval_constraint()
     model = SDPAModel{Float64}()

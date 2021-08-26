@@ -163,7 +163,7 @@ function _test_ObjectiveFunction(T)
     model = MOI.Utilities.Model{T}()
     @test !MOI.supports(model, MOI.ObjectiveFunction{DummyFunction}())
     for F in [
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
     ]
@@ -182,10 +182,10 @@ function test_ObjectiveFunction()
     return
 end
 
-function _test_SingleVariable(T)
+function _test_T
     model = MOI.Utilities.Model{T}()
     @test !MOI.supports_constraint(model, DummyFunction, DummySet)
-    @test !MOI.supports_constraint(model, MOI.SingleVariable, DummySet)
+    @test !MOI.supports_constraint(model, MOI.VariableIndex, DummySet)
     @test !MOI.supports_add_constrained_variable(model, DummySet)
     for S in [
         MOI.EqualTo{T},
@@ -197,7 +197,7 @@ function _test_SingleVariable(T)
         MOI.Semicontinuous{T},
         MOI.Semiinteger{T},
     ]
-        @test MOI.supports_constraint(model, MOI.SingleVariable, S)
+        @test MOI.supports_constraint(model, MOI.VariableIndex, S)
         @test MOI.supports_add_constrained_variable(model, S)
     end
     U = Float32
@@ -209,15 +209,15 @@ function _test_SingleVariable(T)
         MOI.Semicontinuous{U},
         MOI.Semiinteger{U},
     ]
-        @test !MOI.supports_constraint(model, MOI.SingleVariable, S)
+        @test !MOI.supports_constraint(model, MOI.VariableIndex, S)
         @test !MOI.supports_add_constrained_variable(model, S)
     end
     return
 end
 
-function test_SingleVariable()
-    _test_SingleVariable(Float64)
-    _test_SingleVariable(Int)
+function test_VariableIndex()
+    _test_Float64
+    _test_Int
     return
 end
 
@@ -390,8 +390,8 @@ function test_quadratic_functions()
         }(),
     )
     @test MOI.get(model, MOI.ConstraintFunction(), c6).constants == f6.constants
-    fx = MOI.SingleVariable(x)
-    fy = MOI.SingleVariable(y)
+    fx = x
+    fy = y
     obj = 1fx + 2fy
     MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
     message = string(
@@ -436,7 +436,7 @@ end
 function test_default_fallbacks()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
-    func = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x))
+    func = convert(MOI.ScalarAffineFunction{Float64}, x)
     c = MOI.add_constraint(model, func, MOI.LessThan(0.0))
     @test !MOI.supports_constraint(
         model,

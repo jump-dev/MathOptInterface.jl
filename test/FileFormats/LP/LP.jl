@@ -144,8 +144,8 @@ function test_name_sanitization_length()
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
+        MOI.ObjectiveFunction{MOI.VariableIndex}(),
+        x,
     )
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==

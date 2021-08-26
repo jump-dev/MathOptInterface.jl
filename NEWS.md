@@ -10,8 +10,8 @@ number of new features.**
 
 Breaking changes in MOI
 
-- `SingleVariable` constraints should not support `ConstraintName`
-- `SingleVariable` constraints should not support `ConstraintBasisStatus`;
+- `VariableIndex` constraints should not support `ConstraintName`
+- `VariableIndex` constraints should not support `ConstraintBasisStatus`;
   implement `VariableBasisStatus` instead
 - `ListOfConstraints` has been renamed to `ListOfConstraintTypesPresent`
 - `ListOfConstraintTypesPresent` should now return `Tuple{Type,Type}` instead of
@@ -131,7 +131,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 - Improved performance of `Utilities.ScalarFunctionIterator`
 - Added support for `compute_conflict` to MOI layers
 - Added test with zero off-diagonal quadratic term in objective
-- Fixed double deletion of nested bridged `SingleVariable`/`VectorOfVariables`
+- Fixed double deletion of nested bridged `VariableIndex`/`VectorOfVariables`
   constraints
 - Fixed modification of un-set objective
 - Fixed function modification with duplicate terms
@@ -389,10 +389,10 @@ v0.9.3 (September 20, 2019)
 - Fixed copy of `VectorOfVariables` constraints with duplicate indices (#886).
 - Added extension dictionary to MOIU.Model (#884).
 - Implemented `MOI.get` for function and set for `GeoMeanBridge` (#888).
-- Updated documentation for SingleVariable indices and bridges (#885).
+- Updated documentation for VariableIndex indices and bridges (#885).
 - Testing improvements:
   * Added more comprehensive tests for names (#882).
-  * Added tests for `SingleVariable` duals (#883).
+  * Added tests for `VariableIndex` duals (#883).
   * Added tests for `DualExponentialCone` and `DualPowerCone` (#873).
 - Improvements for arbitary coefficient type:
   * Fixed `==` for sets with mutable fields (#887).
@@ -472,7 +472,7 @@ v0.9.0 (August 13, 2019)
   * Implement optimizer attributes for CachingOptimizer (#745).
   * Rename `Utilities.add_scalar_constraint` to
     `Utilities.normalize_and_add_constraint` (#801).
-  * `operate` with `vcat`, `SingleVariable` and `VectorOfVariables` now returns
+  * `operate` with `vcat`, `VariableIndex` and `VectorOfVariables` now returns
     a `VectorOfVariables` (#616).
   * Fix a type piracy of `operate` (#784).
   * The `load_constraint` fallback signature was fixed (#760).
@@ -505,7 +505,7 @@ v0.8.3 (March 6, 2019)
 ----------------------
 
 - Use zero constant in scalar constraint function of `MOI.Test.copytest` (#691).
-- Fix variable deletion with `SingleVariable` objective function (#690).
+- Fix variable deletion with `VariableIndex` objective function (#690).
 - Fix `LazyBridgeOptimizer` with bridges that add no constraints (#689).
 - Error message improvements (#673, #685, #686, #688).
 - Documentation improvements (#682, #683, #687).

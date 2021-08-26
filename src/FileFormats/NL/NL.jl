@@ -179,7 +179,7 @@ function MOI.is_empty(model::Model)
 end
 
 const _SCALAR_FUNCTIONS = Union{
-    MOI.SingleVariable,
+    MOI.VariableIndex,
     MOI.ScalarAffineFunction{Float64},
     MOI.ScalarQuadraticFunction{Float64},
 }
@@ -201,7 +201,7 @@ end
 
 function MOI.supports_constraint(
     ::Model,
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{<:Union{MOI.ZeroOne,MOI.Integer}},
 )
     return true
@@ -466,7 +466,7 @@ end
 function _process_constraint(
     dest::Model,
     model,
-    F::Type{MOI.SingleVariable},
+    F::Type{MOI.VariableIndex},
     S::Type{<:_SCALAR_SETS},
     mapping,
 )
@@ -488,7 +488,7 @@ end
 function _process_constraint(
     dest::Model,
     model,
-    F::Type{MOI.SingleVariable},
+    F::Type{MOI.VariableIndex},
     S::Type{<:Union{MOI.ZeroOne,MOI.Integer}},
     mapping,
 )

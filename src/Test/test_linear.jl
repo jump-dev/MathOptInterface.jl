@@ -32,10 +32,10 @@ function test_linear_integration(
         MOI.ScalarAffineFunction{T},
         MOI.LessThan{T},
     )
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{T})
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.EqualTo{T})
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{T},
     )
     v = MOI.add_variables(model, 2)
@@ -56,10 +56,10 @@ function test_linear_integration(
     end
     vc1 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(v[1]),
+        v[1],
         MOI.GreaterThan(zero(T)),
     )
-    # We test this after the creation of every `SingleVariable` constraint
+    # We test this after the creation of every `VariableIndex` constraint
     # to ensure a good coverage of corner cases.
     @test vc1.value == v[1].value
     # test fallback
@@ -68,7 +68,7 @@ function test_linear_integration(
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}(),
         ) == 2
     end
     # Note: adding some redundant zero coefficients to catch solvers that don't
@@ -183,14 +183,14 @@ function test_linear_integration(
     end
     vc3 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(v[3]),
+        v[3],
         MOI.GreaterThan(zero(T)),
     )
     @test vc3.value == v[3].value
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}(),
         ) == 3
     end
     if _supports(config, MOI.ScalarCoefficientChange)
@@ -218,7 +218,7 @@ function test_linear_integration(
         ) == 1
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}(),
         ) == 3
     end
     if _supports(config, MOI.optimize!)
@@ -274,14 +274,14 @@ function test_linear_integration(
     MOI.delete(model, vc3)
     vc3 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(v[3]),
+        v[3],
         MOI.EqualTo(zero(T)),
     )
     @test vc3.value == v[3].value
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}(),
         ) == 2
     end
     if _supports(config, MOI.optimize!)
@@ -404,15 +404,15 @@ function test_linear_integration(
         ) == 0
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{T}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{T}}(),
         ) == 1
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}(),
         ) == 2
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{T}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{T}}(),
         ) == 0
     end
     if _supports(config, MOI.optimize!)
@@ -462,14 +462,14 @@ function test_linear_integration(
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}(),
         ) == 2
     end
     MOI.delete(model, v[1])
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}(),
         ) == 1
     end
     if _supports(config, MOI.ConstraintFunction)
@@ -565,7 +565,7 @@ function test_linear_integration_2(
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{T},
     )
     x = MOI.add_variable(model)
@@ -587,20 +587,20 @@ function test_linear_integration_2(
     end
     vc1 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x),
+        x,
         MOI.GreaterThan(zero(T)),
     )
     @test vc1.value == x.value
     vc2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(y),
+        y,
         MOI.GreaterThan(zero(T)),
     )
     @test vc2.value == y.value
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}(),
         ) == 2
     end
     objf = MOI.ScalarAffineFunction{T}(
@@ -702,19 +702,19 @@ function test_linear_inactive_bounds(
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{T},
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{T},
     )
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
     vc = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x),
+        x,
         MOI.GreaterThan(zero(T)),
     )
     @test vc.value == x.value
@@ -726,7 +726,7 @@ function test_linear_inactive_bounds(
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}(),
         ) == 1
         @test MOI.get(
             model,
@@ -762,7 +762,7 @@ function test_linear_inactive_bounds(
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    vc = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(zero(T)))
+    vc = MOI.add_constraint(model, x, MOI.LessThan(zero(T)))
     @test vc.value == x.value
     cf = MOI.ScalarAffineFunction{T}(
         [MOI.ScalarAffineTerm{T}(one(T), x)],
@@ -772,7 +772,7 @@ function test_linear_inactive_bounds(
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{T}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{T}}(),
         ) == 1
         @test MOI.get(
             model,
@@ -1007,20 +1007,20 @@ function test_linear_integration_modification(
     end
     vc1 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x),
+        x,
         MOI.GreaterThan(zero(T)),
     )
     @test vc1.value == x.value
     vc2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(y),
+        y,
         MOI.GreaterThan(zero(T)),
     )
     @test vc2.value == y.value
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}(),
         ) == 2
     end
     objf = MOI.ScalarAffineFunction{T}(
@@ -1160,9 +1160,9 @@ function test_linear_modify_GreaterThan_and_LessThan_constraints(
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    fx = convert(MOI.ScalarAffineFunction{T}, MOI.SingleVariable(x))
+    fx = convert(MOI.ScalarAffineFunction{T}, x)
     c1 = MOI.add_constraint(model, fx, MOI.GreaterThan(zero(T)))
-    fy = convert(MOI.ScalarAffineFunction{T}, MOI.SingleVariable(y))
+    fy = convert(MOI.ScalarAffineFunction{T}, y)
     c2 = MOI.add_constraint(model, fy, MOI.LessThan(zero(T)))
     if _supports(config, MOI.ConstraintFunction)
         @test MOI.get(model, MOI.ConstraintFunction(), c1) ≈ fx
@@ -1439,7 +1439,7 @@ function test_linear_INFEASIBLE(
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{T},
     )
     x = MOI.add_variable(model)
@@ -1454,13 +1454,13 @@ function test_linear_INFEASIBLE(
     )
     bndx = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x),
+        x,
         MOI.GreaterThan(zero(T)),
     )
     @test bndx.value == x.value
     bndy = MOI.add_constraint(
         model,
-        MOI.SingleVariable(y),
+        y,
         MOI.GreaterThan(zero(T)),
     )
     @test bndy.value == y.value
@@ -1546,7 +1546,7 @@ function test_linear_DUAL_INFEASIBLE(
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{T},
     )
     x = MOI.add_variable(model)
@@ -1561,13 +1561,13 @@ function test_linear_DUAL_INFEASIBLE(
     )
     vc1 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x),
+        x,
         MOI.GreaterThan(zero(T)),
     )
     @test vc1.value == x.value
     vc2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(y),
+        y,
         MOI.GreaterThan(zero(T)),
     )
     @test vc2.value == y.value
@@ -1639,7 +1639,7 @@ function test_linear_DUAL_INFEASIBLE_2(
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{T},
     )
     x = MOI.add_variable(model)
@@ -1654,13 +1654,13 @@ function test_linear_DUAL_INFEASIBLE_2(
     )
     vc1 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x),
+        x,
         MOI.GreaterThan(zero(T)),
     )
     @test vc1.value == x.value
     vc2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(y),
+        y,
         MOI.GreaterThan(zero(T)),
     )
     @test vc2.value == y.value
@@ -1747,14 +1747,14 @@ function test_linear_add_constraints(
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{T},
     )
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     vc12 = MOI.add_constraints(
         model,
-        [MOI.SingleVariable(x), MOI.SingleVariable(y)],
+        [x, y],
         [MOI.GreaterThan(T(30)), MOI.GreaterThan(zero(T))],
     )
     @test vc12[1].value == x.value
@@ -1868,14 +1868,14 @@ function test_linear_integration_Interval(
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{T},
     )
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     vc = MOI.add_constraints(
         model,
-        [MOI.SingleVariable(x), MOI.SingleVariable(y)],
+        [x, y],
         [MOI.GreaterThan(zero(T)), MOI.GreaterThan(zero(T))],
     )
     @test vc[1].value == x.value
@@ -2112,14 +2112,14 @@ function test_linear_Interval_inactive(
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{T},
     )
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     vc = MOI.add_constraints(
         model,
-        [MOI.SingleVariable(x), MOI.SingleVariable(y)],
+        [x, y],
         [MOI.GreaterThan(zero(T)), MOI.GreaterThan(zero(T))],
     )
     @test vc[1].value == x.value
@@ -2357,7 +2357,7 @@ function test_linear_INFEASIBLE_2(
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{T},
     )
     x = MOI.add_variable(model)
@@ -2380,13 +2380,13 @@ function test_linear_INFEASIBLE_2(
     )
     bndx = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x),
+        x,
         MOI.GreaterThan(zero(T)),
     )
     @test bndx.value == x.value
     bndy = MOI.add_constraint(
         model,
-        MOI.SingleVariable(y),
+        y,
         MOI.GreaterThan(zero(T)),
     )
     @test bndy.value == y.value
@@ -2569,12 +2569,12 @@ function test_linear_integration_delete_variables(
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{T},
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{T},
     )
     x, y, z = MOI.add_variables(model, 3)
@@ -2588,24 +2588,24 @@ function test_linear_integration_delete_variables(
     )
     clbx = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x),
+        x,
         MOI.GreaterThan(zero(T)),
     )
     @test clbx.value == x.value
     clby = MOI.add_constraint(
         model,
-        MOI.SingleVariable(y),
+        y,
         MOI.GreaterThan(zero(T)),
     )
     @test clby.value == y.value
     clbz = MOI.add_constraint(
         model,
-        MOI.SingleVariable(z),
+        z,
         MOI.GreaterThan(zero(T)),
     )
     @test clbz.value == z.value
     cubz =
-        MOI.add_constraint(model, MOI.SingleVariable(z), MOI.LessThan(one(T)))
+        MOI.add_constraint(model, z, MOI.LessThan(one(T)))
     @test cubz.value == z.value
     MOI.set(
         model,
@@ -2711,15 +2711,15 @@ function setup_test(
             ],
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
                 [-1],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2, 0, 0],
-            (MOI.SingleVariable, MOI.LessThan{Float64}) => [-2],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2, 0, 0],
+            (MOI.VariableIndex, MOI.LessThan{Float64}) => [-2],
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1],
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
                 [-1],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [0],
         ),
     )
     # test_linear_integration_delete_variables has double variable bounds for
@@ -2909,11 +2909,11 @@ function test_linear_integer_integration(model::MOI.ModelLike, config::Config)
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{Float64},
     )
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.Integer)
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.Integer)
     v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
     cf =
@@ -2942,44 +2942,44 @@ function test_linear_integer_integration(model::MOI.ModelLike, config::Config)
     end
     vc1 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(v[1]),
+        v[1],
         MOI.Interval(0.0, 5.0),
     )
-    # We test this after the creation of every `SingleVariable` constraint
+    # We test this after the creation of every `VariableIndex` constraint
     # to ensure a good coverage of corner cases.
     @test vc1.value == v[1].value
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Interval{Float64}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.Interval{Float64}}(),
         ) == 1
     end
     vc2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(v[2]),
+        v[2],
         MOI.Interval(0.0, 10.0),
     )
     @test vc2.value == v[2].value
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Interval{Float64}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.Interval{Float64}}(),
         ) == 2
     end
-    vc3 = MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.Integer())
+    vc3 = MOI.add_constraint(model, v[2], MOI.Integer())
     @test vc3.value == v[2].value
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Integer}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.Integer}(),
         ) == 1
     end
-    vc4 = MOI.add_constraint(model, MOI.SingleVariable(v[3]), MOI.ZeroOne())
+    vc4 = MOI.add_constraint(model, v[3], MOI.ZeroOne())
     @test vc4.value == v[3].value
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.ZeroOne}(),
         ) == 1
     end
     objf =
@@ -3051,16 +3051,16 @@ function test_linear_SOS1_integration(model::MOI.ModelLike, config::Config)
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{Float64},
     )
     v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
-    vc1 = MOI.add_constraint(model, MOI.SingleVariable(v[1]), MOI.LessThan(1.0))
+    vc1 = MOI.add_constraint(model, v[1], MOI.LessThan(1.0))
     @test vc1.value == v[1].value
-    vc2 = MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.LessThan(1.0))
+    vc2 = MOI.add_constraint(model, v[2], MOI.LessThan(1.0))
     @test vc2.value == v[2].value
-    vc3 = MOI.add_constraint(model, MOI.SingleVariable(v[3]), MOI.LessThan(2.0))
+    vc3 = MOI.add_constraint(model, v[3], MOI.LessThan(2.0))
     @test vc3.value == v[3].value
     c1 = MOI.add_constraint(
         model,
@@ -3161,7 +3161,7 @@ function test_linear_SOS2_integration(model::MOI.ModelLike, config::Config)
         MOI.VectorOfVariables,
         MOI.SOS2{Float64},
     )
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     @requires MOI.supports_constraint(
         model,
         MOI.ScalarAffineFunction{Float64},
@@ -3173,13 +3173,13 @@ function test_linear_SOS2_integration(model::MOI.ModelLike, config::Config)
     for i in 1:8
         vc = MOI.add_constraint(
             model,
-            MOI.SingleVariable(v[i]),
+            v[i],
             MOI.Interval(0.0, 2.0),
         )
         @test vc.value == v[i].value
         push!(
             bin_constraints,
-            MOI.add_constraint(model, MOI.SingleVariable(v[i]), MOI.ZeroOne()),
+            MOI.add_constraint(model, v[i], MOI.ZeroOne()),
         )
         @test bin_constraints[i].value == v[i].value
     end
@@ -3299,11 +3299,11 @@ function test_linear_integer_solve_twice(model::MOI.ModelLike, config::Config)
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.Integer)
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.Integer)
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.Interval{Float64},
     )
     @requires MOI.supports_constraint(
@@ -3312,17 +3312,17 @@ function test_linear_integer_solve_twice(model::MOI.ModelLike, config::Config)
         MOI.Interval{Float64},
     )
     z = MOI.add_variable(model)
-    vc1 = MOI.add_constraint(model, MOI.SingleVariable(z), MOI.Integer())
+    vc1 = MOI.add_constraint(model, z, MOI.Integer())
     @test vc1.value == z.value
     vc2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(z),
+        z,
         MOI.Interval(0.0, 100.0),
     )
     @test vc2.value == z.value
     b = MOI.add_variables(model, 10)
     for bi in b
-        vc = MOI.add_constraint(model, MOI.SingleVariable(bi), MOI.ZeroOne())
+        vc = MOI.add_constraint(model, bi, MOI.ZeroOne())
         @test vc.value == bi.value
     end
     c = MOI.add_constraint(
@@ -3391,7 +3391,7 @@ function test_linear_integer_knapsack(model::MOI.ModelLike, config::Config)
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     @requires MOI.supports_constraint(
         model,
         MOI.ScalarAffineFunction{Float64},
@@ -3400,13 +3400,13 @@ function test_linear_integer_knapsack(model::MOI.ModelLike, config::Config)
     v = MOI.add_variables(model, 5)
     @test MOI.get(model, MOI.NumberOfVariables()) == 5
     for vi in v
-        vc = MOI.add_constraint(model, MOI.SingleVariable(vi), MOI.ZeroOne())
+        vc = MOI.add_constraint(model, vi, MOI.ZeroOne())
         @test vc.value == vi.value
     end
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.ZeroOne}(),
         ) == 5
     end
     c = MOI.add_constraint(
@@ -3485,10 +3485,10 @@ function test_linear_Indicator_integration(model::MOI.ModelLike, config::Config)
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.Interval{Float64},
     )
     @requires MOI.supports_constraint(
@@ -3691,10 +3691,10 @@ function test_linear_Indicator_ON_ZERO(model::MOI.ModelLike, config::Config)
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.Interval{Float64},
     )
     @requires MOI.supports_constraint(
@@ -3810,10 +3810,10 @@ function test_linear_Indicator_constant_term(
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.Interval{Float64},
     )
     @requires MOI.supports_constraint(
@@ -3930,13 +3930,13 @@ function _test_linear_SemiXXX_integration(
     if use_semiinteger
         @requires MOI.supports_constraint(
             model,
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.Semiinteger{T},
         )
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.Semicontinuous{T},
         )
     end
@@ -3945,14 +3945,14 @@ function _test_linear_SemiXXX_integration(
     if !use_semiinteger
         vc1 = MOI.add_constraint(
             model,
-            MOI.SingleVariable(v[1]),
+            v[1],
             MOI.Semicontinuous(T(2), T(3)),
         )
         if _supports(config, MOI.NumberOfConstraints)
             @test MOI.get(
                 model,
                 MOI.NumberOfConstraints{
-                    MOI.SingleVariable,
+                    MOI.VariableIndex,
                     MOI.Semicontinuous{T},
                 }(),
             ) == 1
@@ -3960,25 +3960,25 @@ function _test_linear_SemiXXX_integration(
     else
         vc1 = MOI.add_constraint(
             model,
-            MOI.SingleVariable(v[1]),
+            v[1],
             MOI.Semiinteger(T(2), T(3)),
         )
         if _supports(config, MOI.NumberOfConstraints)
             @test MOI.get(
                 model,
-                MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Semiinteger{T}}(),
+                MOI.NumberOfConstraints{MOI.VariableIndex,MOI.Semiinteger{T}}(),
             ) == 1
         end
     end
     vc2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(v[2]),
+        v[2],
         MOI.EqualTo(zero(T)),
     )
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{T}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{T}}(),
         ) == 1
     end
     cf = MOI.ScalarAffineFunction{T}(

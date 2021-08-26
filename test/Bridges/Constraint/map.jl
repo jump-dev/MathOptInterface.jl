@@ -28,7 +28,7 @@ function test_map()
 
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
-    fx = MOI.SingleVariable(x)
+    fx = x
     b1 = ConstraintDummyBridge(1)
     c1 =
         MOI.Bridges.Constraint.add_key_for_bridge(map, b1, fx, MOI.EqualTo(0.0))
@@ -89,7 +89,7 @@ function test_map()
 
     @test MOI.Bridges.Constraint.list_of_key_types(map) == Set([
         (MOI.VectorOfVariables, MOI.SecondOrderCone),
-        (MOI.SingleVariable, MOI.EqualTo{Float64}),
+        (MOI.VariableIndex, MOI.EqualTo{Float64}),
         (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}),
     ])
     @test MOI.Bridges.Constraint.variable_constraints(map, x) == [c1]

@@ -25,11 +25,11 @@ function int1test(model::MOI.ModelLike, config::Config)
     )
     @test MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{Float64},
     )
-    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
-    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Integer)
+    @test MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
+    @test MOI.supports_constraint(model, MOI.VariableIndex, MOI.Integer)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     v = MOI.add_variables(model, 3)
@@ -60,44 +60,44 @@ function int1test(model::MOI.ModelLike, config::Config)
     end
     vc1 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(v[1]),
+        v[1],
         MOI.Interval(0.0, 5.0),
     )
-    # We test this after the creation of every `SingleVariable` constraint
+    # We test this after the creation of every `VariableIndex` constraint
     # to ensure a good coverage of corner cases.
     @test vc1.value == v[1].value
     if config.query_number_of_constraints
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Interval{Float64}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.Interval{Float64}}(),
         ) == 1
     end
     vc2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(v[2]),
+        v[2],
         MOI.Interval(0.0, 10.0),
     )
     @test vc2.value == v[2].value
     if config.query_number_of_constraints
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Interval{Float64}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.Interval{Float64}}(),
         ) == 2
     end
-    vc3 = MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.Integer())
+    vc3 = MOI.add_constraint(model, v[2], MOI.Integer())
     @test vc3.value == v[2].value
     if config.query_number_of_constraints
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Integer}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.Integer}(),
         ) == 1
     end
-    vc4 = MOI.add_constraint(model, MOI.SingleVariable(v[3]), MOI.ZeroOne())
+    vc4 = MOI.add_constraint(model, v[3], MOI.ZeroOne())
     @test vc4.value == v[3].value
     if config.query_number_of_constraints
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.ZeroOne}(),
         ) == 1
     end
     objf =
@@ -152,7 +152,7 @@ function int2test(model::MOI.ModelLike, config::Config)
         )
         @test MOI.supports_constraint(
             model,
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.LessThan{Float64},
         )
         MOI.empty!(model)
@@ -161,19 +161,19 @@ function int2test(model::MOI.ModelLike, config::Config)
         @test MOI.get(model, MOI.NumberOfVariables()) == 3
         vc1 = MOI.add_constraint(
             model,
-            MOI.SingleVariable(v[1]),
+            v[1],
             MOI.LessThan(1.0),
         )
         @test vc1.value == v[1].value
         vc2 = MOI.add_constraint(
             model,
-            MOI.SingleVariable(v[2]),
+            v[2],
             MOI.LessThan(1.0),
         )
         @test vc2.value == v[2].value
         vc3 = MOI.add_constraint(
             model,
-            MOI.SingleVariable(v[3]),
+            v[3],
             MOI.LessThan(2.0),
         )
         @test vc3.value == v[3].value
@@ -260,7 +260,7 @@ function int2test(model::MOI.ModelLike, config::Config)
             MOI.VectorOfVariables,
             MOI.SOS2{Float64},
         )
-        @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+        @test MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
         @test MOI.supports_constraint(
             model,
             MOI.ScalarAffineFunction{Float64},
@@ -274,7 +274,7 @@ function int2test(model::MOI.ModelLike, config::Config)
         for i in 1:8
             vc = MOI.add_constraint(
                 model,
-                MOI.SingleVariable(v[i]),
+                v[i],
                 MOI.Interval(0.0, 2.0),
             )
             @test vc.value == v[i].value
@@ -282,7 +282,7 @@ function int2test(model::MOI.ModelLike, config::Config)
                 bin_constraints,
                 MOI.add_constraint(
                     model,
-                    MOI.SingleVariable(v[i]),
+                    v[i],
                     MOI.ZeroOne(),
                 ),
             )
@@ -385,11 +385,11 @@ function int3test(model::MOI.ModelLike, config::Config)
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
     @test MOI.supports(model, MOI.ObjectiveSense())
-    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
-    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Integer)
+    @test MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
+    @test MOI.supports_constraint(model, MOI.VariableIndex, MOI.Integer)
     @test MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.Interval{Float64},
     )
     @test MOI.supports_constraint(
@@ -398,17 +398,17 @@ function int3test(model::MOI.ModelLike, config::Config)
         MOI.Interval{Float64},
     )
     z = MOI.add_variable(model)
-    vc1 = MOI.add_constraint(model, MOI.SingleVariable(z), MOI.Integer())
+    vc1 = MOI.add_constraint(model, z, MOI.Integer())
     @test vc1.value == z.value
     vc2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(z),
+        z,
         MOI.Interval(0.0, 100.0),
     )
     @test vc2.value == z.value
     b = MOI.add_variables(model, 10)
     for bi in b
-        vc = MOI.add_constraint(model, MOI.SingleVariable(bi), MOI.ZeroOne())
+        vc = MOI.add_constraint(model, bi, MOI.ZeroOne())
         @test vc.value == bi.value
     end
     c = MOI.add_constraint(
@@ -462,7 +462,7 @@ function knapsacktest(model::MOI.ModelLike, config::Config)
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
     @test MOI.supports(model, MOI.ObjectiveSense())
-    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @test MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     @test MOI.supports_constraint(
         model,
         MOI.ScalarAffineFunction{Float64},
@@ -471,13 +471,13 @@ function knapsacktest(model::MOI.ModelLike, config::Config)
     v = MOI.add_variables(model, 5)
     @test MOI.get(model, MOI.NumberOfVariables()) == 5
     for vi in v
-        vc = MOI.add_constraint(model, MOI.SingleVariable(vi), MOI.ZeroOne())
+        vc = MOI.add_constraint(model, vi, MOI.ZeroOne())
         @test vc.value == vi.value
     end
     if config.query_number_of_constraints
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.ZeroOne}(),
         ) == 5
     end
     c = MOI.add_constraint(
@@ -537,10 +537,10 @@ function indicator1_test(model::MOI.ModelLike, config::Config)
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
     @test MOI.supports(model, MOI.ObjectiveSense())
-    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @test MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     @test MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.Interval{Float64},
     )
     @test MOI.supports_constraint(
@@ -723,10 +723,10 @@ function indicator3_test(model::MOI.ModelLike, config::Config)
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
     @test MOI.supports(model, MOI.ObjectiveSense())
-    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @test MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     @test MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.Interval{Float64},
     )
     @test MOI.supports_constraint(
@@ -828,10 +828,10 @@ function indicator4_test(model::MOI.ModelLike, config::Config)
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
     @test MOI.supports(model, MOI.ObjectiveSense())
-    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @test MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     @test MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.Interval{Float64},
     )
     @test MOI.supports_constraint(
@@ -926,13 +926,13 @@ function _semitest(model::MOI.ModelLike, config::Config{T}, int::Bool) where {T}
     if !int
         @test MOI.supports_constraint(
             model,
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.Semicontinuous{T},
         )
     else
         @test MOI.supports_constraint(
             model,
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.Semiinteger{T},
         )
     end
@@ -952,14 +952,14 @@ function _semitest(model::MOI.ModelLike, config::Config{T}, int::Bool) where {T}
     if !int
         vc1 = MOI.add_constraint(
             model,
-            MOI.SingleVariable(v[1]),
+            v[1],
             MOI.Semicontinuous(T(2), T(3)),
         )
         if config.query_number_of_constraints
             @test MOI.get(
                 model,
                 MOI.NumberOfConstraints{
-                    MOI.SingleVariable,
+                    MOI.VariableIndex,
                     MOI.Semicontinuous{T},
                 }(),
             ) == 1
@@ -967,25 +967,25 @@ function _semitest(model::MOI.ModelLike, config::Config{T}, int::Bool) where {T}
     else
         vc1 = MOI.add_constraint(
             model,
-            MOI.SingleVariable(v[1]),
+            v[1],
             MOI.Semiinteger(T(2), T(3)),
         )
         if config.query_number_of_constraints
             @test MOI.get(
                 model,
-                MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Semiinteger{T}}(),
+                MOI.NumberOfConstraints{MOI.VariableIndex,MOI.Semiinteger{T}}(),
             ) == 1
         end
     end
     vc2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(v[2]),
+        v[2],
         MOI.EqualTo(zero(T)),
     )
     if config.query_number_of_constraints
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{T}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{T}}(),
         ) == 1
     end
     cf = MOI.ScalarAffineFunction{T}(

@@ -287,7 +287,7 @@ has_bridges(map::Map) = !isempty(map.info)
 Create a new variable index `vi`, store the mapping `vi => bridge` and
 associate `vi` to `typeof(set)`. It returns a tuple with `vi` and the
 constraint index
-`MOI.ConstraintIndex{MOI.SingleVariable, typeof(set)}(vi.value)`.
+`MOI.ConstraintIndex{MOI.VariableIndex, typeof(set)}(vi.value)`.
 """
 function add_key_for_bridge(
     map::Map,
@@ -316,7 +316,7 @@ function add_key_for_bridge(
             end
         end
     end
-    return variable, MOI.ConstraintIndex{MOI.SingleVariable,typeof(set)}(index)
+    return variable, MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(index)
 end
 
 """
@@ -374,13 +374,13 @@ function add_keys_for_bridge(
 end
 
 """
-    function_for(map::Map, ci::MOI.ConstraintIndex{MOI.SingleVariable})
+    function_for(map::Map, ci::MOI.ConstraintIndex{MOI.VariableIndex})
 
-Return `MOI.SingleVariable(vi)` where `vi` is the bridged variable
+Return `vi` where `vi` is the bridged variable
 corresponding to `ci`.
 """
-function function_for(::Map, ci::MOI.ConstraintIndex{MOI.SingleVariable})
-    return MOI.SingleVariable(MOI.VariableIndex(ci.value))
+function function_for(::Map, ci::MOI.ConstraintIndex{MOI.VariableIndex})
+    return MOI.VariableIndex(ci.value)
 end
 
 """

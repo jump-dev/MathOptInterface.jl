@@ -10,7 +10,7 @@ const S{T} = MOI.EqualTo{T}
 
 struct VariableBridge{T} <: MOIB.Variable.SetMapBridge{T,S{T},S{T}}
     variable::MOI.VariableIndex
-    constraint::MOI.ConstraintIndex{MOI.SingleVariable,S{T}}
+    constraint::MOI.ConstraintIndex{MOI.VariableIndex,S{T}}
 end
 
 struct ConstraintBridge{T} <:

@@ -28,7 +28,7 @@ Works as a `AbstractDict{MOI.ConstraintIndex,V}` with minimal differences.
 If `V` is also a `MOI.ConstraintIndex`, use [`IndexDoubleDict`](@ref).
 
 Note that `MOI.ConstraintIndex` is not a concrete type, opposed to
-`MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integers}`, which is a concrete
+`MOI.ConstraintIndex{MOI.VariableIndex, MOI.Integers}`, which is a concrete
 type.
 
 When looping through multiple keys of the same Function-in-Set type, use

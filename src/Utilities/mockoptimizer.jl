@@ -29,7 +29,7 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     eval_objective_value::Bool
     # Computes `DualObjectiveValue` using `get_fallback`
     eval_dual_objective_value::Bool
-    # Computes `ConstraintDual` of constraints with `SingleVariable` or
+    # Computes `ConstraintDual` of constraints with `VariableIndex` or
     # `VectorOfVariables` functions by evaluating the `ConstraintDual` of
     # constraints having the variable in the function. See `get_fallback`.
     eval_variable_constraint_dual::Bool
@@ -659,7 +659,7 @@ function MOI.get(
     MOI.check_result_index_bounds(mock, attr)
     MOI.throw_if_not_valid(mock, idx)
     if mock.eval_variable_constraint_dual &&
-       (F == MOI.SingleVariable || F == MOI.VectorOfVariables)
+       (F == MOI.VariableIndex || F == MOI.VectorOfVariables)
         return get_fallback(mock, attr, idx)
     else
         return _safe_get_result(mock.constraint_dual, attr, idx, "dual")

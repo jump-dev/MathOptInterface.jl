@@ -110,23 +110,23 @@ function can only be called if `MOI.supports_constraint(BT, F, S)` is `true`.
 
 ## Examples
 
-As a [`MathOptInterface.SingleVariable`](@ref)-in-[`MathOptInterface.Interval`](@ref)
+As a [`MathOptInterface.VariableIndex`](@ref)-in-[`MathOptInterface.Interval`](@ref)
 constraint is bridged into a
-[`MathOptInterface.SingleVariable`](@ref)-in-[`MathOptInterface.GreaterThan`](@ref)
+[`MathOptInterface.VariableIndex`](@ref)-in-[`MathOptInterface.GreaterThan`](@ref)
 and a
-[`MathOptInterface.SingleVariable`](@ref)-in-[`MathOptInterface.LessThan`](@ref)
+[`MathOptInterface.VariableIndex`](@ref)-in-[`MathOptInterface.LessThan`](@ref)
 by the [`SplitIntervalBridge`](@ref):
 
 ```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
 MOI.Bridges.Constraint.concrete_bridge_type(
     MOI.Bridges.Constraint.SplitIntervalBridge{Float64},
-    MOI.SingleVariable,
+    MOI.VariableIndex,
     MOI.Interval{Float64},
 )
 
 # output
 
-MathOptInterface.Bridges.Constraint.SplitIntervalBridge{Float64,MathOptInterface.SingleVariable,MathOptInterface.Interval{Float64},MathOptInterface.GreaterThan{Float64},MathOptInterface.LessThan{Float64}}
+MathOptInterface.Bridges.Constraint.SplitIntervalBridge{Float64,MathOptInterface.VariableIndex,MathOptInterface.Interval{Float64},MathOptInterface.GreaterThan{Float64},MathOptInterface.LessThan{Float64}}
 ```
 """
 function concrete_bridge_type(

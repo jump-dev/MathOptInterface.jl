@@ -67,7 +67,7 @@ end
 
 function is_bridged(
     b::AbstractBridgeOptimizer,
-    ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
 ) where {S}
     # There are a few cases for which we should return `false`:
     # 1) It was added as variables constrained on creation to `b.model`,
@@ -88,12 +88,12 @@ function is_bridged(
     #     not possible so we are in case 5) and we return `true`.
     #   - if `!is_bridged(b, F, S)`, then 5) is not possible and we return `false`.
     #   - if `!is_bridged(b, S)` and `is_bridged(b, F, S)`, then it is either case 1)
-    #     or 5). They cannot both be the cases as one cannot add two `SingleVariable`
+    #     or 5). They cannot both be the cases as one cannot add two `VariableIndex`
     #     with the same set type on the same variable (this is ensured by
     #     `_check_double_single_variable`). Therefore, we can safely determine
     #     whether it is bridged with `haskey(Constraint.bridges(b), ci)`.
     return ci.value < 0 || (
-        is_bridged(b, MOI.SingleVariable, S) &&
+        is_bridged(b, MOI.VariableIndex, S) &&
         (is_bridged(b, S) || haskey(Constraint.bridges(b), ci))
     )
 end
@@ -165,7 +165,7 @@ is_variable_bridged(::AbstractBridgeOptimizer, ::MOI.ConstraintIndex) = false
 
 function is_variable_bridged(
     b::AbstractBridgeOptimizer,
-    ci::MOI.ConstraintIndex{<:Union{MOI.SingleVariable,MOI.VectorOfVariables}},
+    ci::MOI.ConstraintIndex{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
 )
     # It can be a constraint corresponding to bridged constrained variables so
     # we `check` with `haskey(Constraint.bridges(b), ci)` whether this is the
@@ -491,7 +491,7 @@ function _delete_variables_in_variables_constraints(
     vis::Vector{MOI.VariableIndex},
 )
     # Delete all `MOI.VectorOfVariables` constraints of these variables.
-    # We reverse for the same reason as for `SingleVariable` below.
+    # We reverse for the same reason as for `VariableIndex` below.
     # As the iterators are lazy, when the inner bridge constraint is deleted,
     # it won't be part of the iteration.
     for ci in Iterators.reverse(
@@ -499,9 +499,9 @@ function _delete_variables_in_variables_constraints(
     )
         _delete_variables_in_vector_of_variables_constraint(b, vis, ci)
     end
-    # Delete all `MOI.SingleVariable` constraints of these variables.
+    # Delete all `MOI.VariableIndex` constraints of these variables.
     for vi in vis
-        # If a bridged `SingleVariable` constraints creates a second one,
+        # If a bridged `VariableIndex` constraints creates a second one,
         # then we will delete the second one when deleting the first one hence we
         # should not delete it again in this loop.
         # For this, we reverse the order so that we encounter the first one first
@@ -638,7 +638,7 @@ function reduce_bridged(
     variable_function = F == MOIU.variable_function_type(S)
     # A `F`-in-`S` could be added to the model either if it this constraint
     # is not bridged or if variables constrained on creations to `S` are not
-    # bridged and `F` is `SingleVariable` or `VectorOfVariables`.
+    # bridged and `F` is `VariableIndex` or `VectorOfVariables`.
     if !is_bridged(b, F, S) || (variable_function && !is_bridged(b, S))
         value = model_value()
     end
@@ -993,7 +993,7 @@ function MOI.set(
     if is_objective_bridged(b)
         # Clear objective function by setting sense to `MOI.FEASIBILITY_SENSE`
         # first. This is needed if the objective function of `b.model` is
-        # `MOI.SingleVariable(slack)` where `slack` is the slack variable
+        # `slack` where `slack` is the slack variable
         # created by `Objective.SlackBridge`.
         sense = MOI.get(b.model, MOI.ObjectiveSense())
         MOI.set(b.model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
@@ -1003,7 +1003,7 @@ function MOI.set(
         end
     end
     if Variable.has_bridges(Variable.bridges(b))
-        if func isa MOI.SingleVariable
+        if func isa MOI.VariableIndex
             if is_bridged(b, func.variable)
                 BridgeType = Objective.concrete_bridge_type(
                     objective_functionize_bridge(b),
@@ -1151,7 +1151,7 @@ end
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::MOI.ConstraintSet,
-    ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
     value::S,
 ) where {S<:MOI.AbstractScalarSet}
     _set_substituted(b, attr, ci, value)
@@ -1161,7 +1161,7 @@ end
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.ConstraintSet,
-    ci::MOI.ConstraintIndex{MOI.SingleVariable},
+    ci::MOI.ConstraintIndex{MOI.VariableIndex},
 )
     if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
@@ -1333,18 +1333,18 @@ end
 function MOI.supports(
     ::AbstractBridgeOptimizer,
     ::MOI.ConstraintName,
-    ::Type{MOI.ConstraintIndex{MOI.SingleVariable,S}},
+    ::Type{MOI.ConstraintIndex{MOI.VariableIndex,S}},
 ) where {S}
-    return throw(MOI.SingleVariableConstraintNameError())
+    return throw(MOI.VariableIndexConstraintNameError())
 end
 
 function MOI.set(
     ::AbstractBridgeOptimizer,
     ::MOI.ConstraintName,
-    ::MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet},
+    ::MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet},
     ::String,
 )
-    return throw(MOI.SingleVariableConstraintNameError())
+    return throw(MOI.VariableIndexConstraintNameError())
 end
 
 # Query index from name (similar to `UniversalFallback`)
@@ -1446,14 +1446,14 @@ function _check_double_single_variable(
     if !is_bridged(b, typeof(set))
         # The variable might have been constrained in `b.model` to a set of type
         # `typeof(set)` on creation.
-        ci = MOI.ConstraintIndex{MOI.SingleVariable,typeof(set)}(
+        ci = MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(
             func.variable.value,
         )
         if MOI.is_valid(b.model, ci)
             error(
                 "The variable `$(func.variable)` was constrained on creation ",
                 "to a set of type `$(typeof(set))`. Therefore, a ",
-                "`SingleVariable`-in-`$(typeof(set))` cannot be added on this ",
+                "`VariableIndex`-in-`$(typeof(set))` cannot be added on this ",
                 "variable. Use `MOI.set` with `MOI.ConstraintSet()` instead.",
             )
         end
@@ -1469,17 +1469,17 @@ function MOI.add_constraint(
     s::MOI.AbstractSet,
 )
     if Variable.has_bridges(Variable.bridges(b))
-        if f isa MOI.SingleVariable
+        if f isa MOI.VariableIndex
             if is_bridged(b, f.variable)
                 if MOI.is_valid(
                     b,
-                    MOI.ConstraintIndex{MOI.SingleVariable,typeof(s)}(
+                    MOI.ConstraintIndex{MOI.VariableIndex,typeof(s)}(
                         f.variable.value,
                     ),
                 )
                     # The other constraint could have been through a variable bridge.
                     error(
-                        "Cannot add two `SingleVariable`-in-`$(typeof(s))`",
+                        "Cannot add two `VariableIndex`-in-`$(typeof(s))`",
                         " on the same variable $(f.variable).",
                     )
                 end
@@ -1526,7 +1526,7 @@ function MOI.add_constraints(
         return MOI.add_constraint.(b, f, s)
     end
     if Variable.has_bridges(Variable.bridges(b))
-        if F == MOI.SingleVariable
+        if F == MOI.VariableIndex
             if any(func -> is_bridged(b, func.variable), f)
                 return MOI.add_constraint.(b, f, s)
             end
@@ -1719,7 +1719,7 @@ function MOI.add_constrained_variable(
         )
     else
         variable = MOI.add_variable(b)
-        constraint = MOI.add_constraint(b, MOI.SingleVariable(variable), set)
+        constraint = MOI.add_constraint(b, variable, set)
         return variable, constraint
     end
 end
@@ -1745,7 +1745,7 @@ end
 Return a `MOI.AbstractScalarFunction` of variables of `b.model` that equals
 `vi`. That is, if the variable `vi` is bridged, it returns its expression in
 terms of the variables of `b.model`. Otherwise, it returns
-`MOI.SingleVariable(vi)`.
+`vi`.
 """
 function bridged_variable_function(
     b::AbstractBridgeOptimizer,
@@ -1757,7 +1757,7 @@ function bridged_variable_function(
         # bridged variables.
         return bridged_function(b, func)
     else
-        return MOI.SingleVariable(vi)
+        return vi
     end
 end
 
@@ -1787,7 +1787,7 @@ function bridged_function(b::AbstractBridgeOptimizer, func::MOI.SingleVariable)
     # but could be called by attributes
     if is_bridged(b, func.variable)
         # It could be solved by force-bridging the attribues (e.g. objective).
-        error("Using bridged variable in `SingleVariable` function.")
+        error("Using bridged variable in `VariableIndex` function.")
     end
     return func
 end
@@ -1809,7 +1809,7 @@ end
 Return a `MOI.AbstractScalarFunction` of variables of `b` that equals `vi`.
 That is, if the variable `vi` is an internal variable of `b.model` created by a
 bridge but not visible to the user, it returns its expression in terms of the
-variables of bridged variables. Otherwise, it returns `MOI.SingleVariable(vi)`.
+variables of bridged variables. Otherwise, it returns `vi`.
 """
 function unbridged_variable_function(
     b::AbstractBridgeOptimizer,
@@ -1817,7 +1817,7 @@ function unbridged_variable_function(
 )
     func = Variable.unbridged_function(Variable.bridges(b), vi)
     if func === nothing
-        return MOI.SingleVariable(vi)
+        return vi
     else
         # If two variable bridges are chained, `func` may still contain
         # variables to unbridge.
@@ -1848,7 +1848,7 @@ end
 
 function unbridged_function(
     ::AbstractBridgeOptimizer,
-    func::Union{MOI.SingleVariable,MOI.VectorOfVariables},
+    func::Union{MOI.VariableIndex,MOI.VectorOfVariables},
 )
     return func # bridged variables are not allowed in non-bridged constraints
 end

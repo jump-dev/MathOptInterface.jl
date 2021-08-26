@@ -273,12 +273,12 @@ function _test_HS071(model::MOI.ModelLike, config::Config, evaluator::HS071)
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{Float64},
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{Float64},
     )
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
@@ -293,15 +293,15 @@ function _test_HS071(model::MOI.ModelLike, config::Config, evaluator::HS071)
     for i in 1:4
         cub = MOI.add_constraint(
             model,
-            MOI.SingleVariable(v[i]),
+            v[i],
             MOI.LessThan(u[i]),
         )
-        # We test this after the creation of every `SingleVariable` constraint
+        # We test this after the creation of every `VariableIndex` constraint
         # to ensure a good coverage of corner cases.
         @test cub.value == v[i].value
         clb = MOI.add_constraint(
             model,
-            MOI.SingleVariable(v[i]),
+            v[i],
             MOI.GreaterThan(l[i]),
         )
         @test clb.value == v[i].value
@@ -454,8 +454,8 @@ function test_nonlinear_hs071_NLPBlockDual(model::MOI.ModelLike, config::Config)
     l = [1.1, 1.2, 1.3, 1.4]
     u = [5.1, 5.2, 5.3, 5.4]
     start = [2.1, 2.2, 2.3, 2.4]
-    MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.GreaterThan.(l))
-    MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.LessThan.(u))
+    MOI.add_constraint.(model, v, MOI.GreaterThan.(l))
+    MOI.add_constraint.(model, v, MOI.LessThan.(u))
     MOI.set.(model, MOI.VariablePrimalStart(), v, start)
     lb, ub = [25.0, 40.0], [Inf, 40.0]
     evaluator = MOI.Test.HS071(true)
@@ -630,7 +630,7 @@ function test_nonlinear_mixed_complementarity(
     )
     @requires _supports(config, MOI.optimize!)
     x = MOI.add_variables(model, 4)
-    MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.Interval(0.0, 10.0))
+    MOI.add_constraint.(model, x, MOI.Interval(0.0, 10.0))
     MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
     M = Float64[0 0 -1 -1; 0 0 1 -2; 1 -1 2 -2; 1 2 -2 4]
     q = [2; 2; -2; -6]
@@ -722,7 +722,7 @@ function test_nonlinear_qp_complementarity_constraint(
     @requires _supports(config, MOI.optimize!)
     x = MOI.add_variables(model, 8)
     MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
-    MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
+    MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),

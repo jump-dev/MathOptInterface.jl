@@ -25,8 +25,8 @@ function test_scalar_functionize()
     bridged_mock = MOI.Bridges.Constraint.ScalarFunctionize{Float64}(mock)
     x = MOI.add_variable(bridged_mock)
     y = MOI.add_variable(bridged_mock)
-    sx = MOI.SingleVariable(x)
-    sy = MOI.SingleVariable(y)
+    sx = x
+    sy = y
     ci = MOI.add_constraint(bridged_mock, sx, MOI.GreaterThan(0.0))
     @test MOI.get(bridged_mock, MOI.ConstraintFunction(), ci) ≈ sx
     MOI.set(bridged_mock, MOI.ConstraintFunction(), ci, sy)
@@ -44,8 +44,8 @@ function test_scalar_functionize()
         bridged_mock,
         MOI.Test.Config(),
         include = [
-            "test_basic_SingleVariable_GreaterThan",
-            "test_basic_SingleVariable_LessThan",
+            "test_basic_VariableIndex_GreaterThan",
+            "test_basic_VariableIndex_LessThan",
         ],
     )
     for T in [Int, Float64], S in [MOI.GreaterThan{T}, MOI.LessThan{T}]
@@ -86,7 +86,7 @@ function test_scalar_functionize_linear2()
     cis = MOI.get(
         bridged_mock,
         MOI.ListOfConstraintIndices{
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.GreaterThan{Float64},
         }(),
     )
