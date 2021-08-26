@@ -46,7 +46,7 @@ end
 
 function MOI.supports_constraint(
     ::ModelForUniversalFallback{T},
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{
         <:Union{
             MOI.EqualTo{T},
@@ -185,12 +185,12 @@ function test_supported_objective_attributes()
     model = ModelForUniversalFallback{Float64}()
     uf = MOI.Utilities.UniversalFallback(model)
     x, y = MOI.add_variables(uf, 2)
-    attr = MOI.ObjectiveFunction{MOI.SingleVariable}()
+    attr = MOI.ObjectiveFunction{MOI.VariableIndex}()
     @test MOI.supports(model, attr)
-    MOI.set(uf, attr, MOI.SingleVariable(x))
-    @test MOI.get(uf, attr) ≈ MOI.SingleVariable(x)
-    MOI.set(uf, attr, MOI.SingleVariable(y))
-    @test MOI.get(uf, attr) ≈ MOI.SingleVariable(y)
+    MOI.set(uf, attr, x)
+    @test MOI.get(uf, attr) ≈ x
+    MOI.set(uf, attr, y)
+    @test MOI.get(uf, attr) ≈ y
     return
 end
 

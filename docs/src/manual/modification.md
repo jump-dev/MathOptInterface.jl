@@ -105,7 +105,7 @@ true
 However, the following will fail as the new function is of a different type to
 the original function:
 ```julia
-julia> MOI.set(model, MOI.ConstraintFunction(), c, MOI.SingleVariable(x))
+julia> MOI.set(model, MOI.ConstraintFunction(), c, x)
 ERROR: [...]
 ```
 

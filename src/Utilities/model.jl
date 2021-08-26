@@ -109,7 +109,7 @@ end
 
 function MOI.is_valid(
     model::AbstractModel,
-    ci::CI{MOI.SingleVariable,S},
+    ci::CI{MOI.VariableIndex,S},
 ) where {S}
     return MOI.is_valid(model.variables, ci)
 end
@@ -211,18 +211,18 @@ end
 function MOI.supports(
     ::AbstractModel,
     ::MOI.ConstraintName,
-    ::Type{<:MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
+    ::Type{<:MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet}},
 )
-    return throw(MOI.SingleVariableConstraintNameError())
+    return throw(MOI.VariableIndexConstraintNameError())
 end
 
 function MOI.set(
     ::AbstractModel,
     ::MOI.ConstraintName,
-    ::MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet},
+    ::MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet},
     ::String,
 )
-    return throw(MOI.SingleVariableConstraintNameError())
+    return throw(MOI.VariableIndexConstraintNameError())
 end
 
 function MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI)
@@ -338,7 +338,7 @@ end
 
 function MOI.supports_constraint(
     ::AbstractModel{T},
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{<:SUPPORTED_VARIABLE_SCALAR_SETS{T}},
 ) where {T}
     return true
@@ -377,7 +377,7 @@ end
 
 function _delete_constraint(
     model::AbstractModel,
-    ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
 ) where {S}
     MOI.throw_if_not_valid(model, ci)
     MOI.delete(model.variables, ci)
@@ -407,16 +407,16 @@ end
 function MOI.set(
     ::AbstractModel,
     ::MOI.ConstraintFunction,
-    ::MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet},
-    ::MOI.SingleVariable,
+    ::MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet},
+    ::MOI.VariableIndex,
 )
-    return throw(MOI.SettingSingleVariableFunctionNotAllowed())
+    return throw(MOI.SettingVariableIndexFunctionNotAllowed())
 end
 
 function MOI.set(
     model::AbstractModel{T},
     attr::MOI.ConstraintSet,
-    ci::MOI.ConstraintIndex{MOI.SingleVariable,S},
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
     set::S,
 ) where {T,S<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}
     MOI.throw_if_not_valid(model, ci)
@@ -446,7 +446,7 @@ end
 
 function MOI.get(
     model::AbstractModel,
-    attr::MOI.NumberOfConstraints{MOI.SingleVariable,S},
+    attr::MOI.NumberOfConstraints{MOI.VariableIndex,S},
 ) where {S}
     return MOI.get(model.variables, attr)
 end
@@ -470,7 +470,7 @@ end
 
 function MOI.get(
     model::AbstractModel,
-    attr::MOI.ListOfConstraintIndices{MOI.SingleVariable,S},
+    attr::MOI.ListOfConstraintIndices{MOI.VariableIndex,S},
 ) where {S}
     return MOI.get(model.variables, attr)
 end
@@ -485,10 +485,10 @@ end
 function MOI.get(
     model::AbstractModel,
     ::MOI.ConstraintFunction,
-    ci::CI{MOI.SingleVariable},
+    ci::CI{MOI.VariableIndex},
 )
     MOI.throw_if_not_valid(model, ci)
-    return MOI.SingleVariable(MOI.VariableIndex(ci.value))
+    return MOI.VariableIndex(ci.value)
 end
 function MOI.get(
     model::AbstractModel,
@@ -501,7 +501,7 @@ end
 function MOI.get(
     model::AbstractModel,
     ::MOI.ConstraintSet,
-    ci::CI{MOI.SingleVariable,S},
+    ci::CI{MOI.VariableIndex,S},
 ) where {S}
     MOI.throw_if_not_valid(model, ci)
     return set_from_constants(model.variables, S, ci.value)
@@ -590,14 +590,14 @@ functions, `typed_scalar_functions` typed scalar functions, `vector_functions`
 vector functions and `typed_vector_functions` typed vector functions.
 To give no set/function, write `()`, to give one set `S`, write `(S,)`.
 
-The function [`MathOptInterface.SingleVariable`](@ref) should not be given in
-`scalar_functions`. The model supports [`MathOptInterface.SingleVariable`](@ref)-in-`S`
+The function [`MathOptInterface.VariableIndex`](@ref) should not be given in
+`scalar_functions`. The model supports [`MathOptInterface.VariableIndex`](@ref)-in-`S`
 constraints where `S` is [`MathOptInterface.EqualTo`](@ref),
 [`MathOptInterface.GreaterThan`](@ref), [`MathOptInterface.LessThan`](@ref),
 [`MathOptInterface.Interval`](@ref), [`MathOptInterface.Integer`](@ref),
 [`MathOptInterface.ZeroOne`](@ref), [`MathOptInterface.Semicontinuous`](@ref)
 or [`MathOptInterface.Semiinteger`](@ref). The sets supported
-with the [`MathOptInterface.SingleVariable`](@ref) cannot be controlled from the
+with the [`MathOptInterface.VariableIndex`](@ref) cannot be controlled from the
 macro, use the [`UniversalFallback`](@ref) to support more sets.
 
 This macro creates a model specialized for specific types of constraint,
@@ -761,8 +761,8 @@ for (loop_name, loop_super_type) in [
         Implements a model supporting coefficients of type `T` and:
 
          * An objective function stored in `.objective::O`
-         * Variables and `SingleVariable` constraints stored in `.variable_bounds::V`
-         * `F`-in-`S` constraints (excluding `SingleVariable` constraints)
+         * Variables and `VariableIndex` constraints stored in `.variable_bounds::V`
+         * `F`-in-`S` constraints (excluding `VariableIndex` constraints)
            stored in `.constraints::C`
 
         All interactions should take place via the MOI interface, so the types

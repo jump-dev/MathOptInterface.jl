@@ -11,7 +11,7 @@ const MOI = MathOptInterface
 
 const MOIU = MOI.Utilities # used in macro
 
-const SVF = MOI.SingleVariable
+const SVF = MOI.VariableIndex
 const VVF = MOI.VectorOfVariables
 const SAF{T} = MOI.ScalarAffineFunction{T}
 const VAF{T} = MOI.VectorAffineFunction{T}

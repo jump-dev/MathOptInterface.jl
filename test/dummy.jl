@@ -23,7 +23,7 @@ function MOI.supports(
 end
 function MOI.supports_constraint(
     ::AbstractDummyModel,
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{MOI.EqualTo{Float64}},
 )
     return true
@@ -44,8 +44,8 @@ MOI.add_variable(::DummyModelWithAdd) = MOI.VariableIndex(0)
 MOI.add_variables(::DummyModelWithAdd, n) = fill(MOI.VariableIndex(0), n)
 function MOI.add_constraint(
     ::DummyModelWithAdd,
-    ::MOI.SingleVariable,
+    ::MOI.VariableIndex,
     ::MOI.EqualTo{Float64},
 )
-    return MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}(0)
+    return MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}(0)
 end

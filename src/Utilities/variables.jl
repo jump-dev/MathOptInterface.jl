@@ -10,12 +10,12 @@ function get_bounds(
     x::MOI.VariableIndex,
 ) where {T}
     xval = x.value
-    c_lt = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{T}}(xval)
-    c_gt = MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{T}}(xval)
-    c_int = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Interval{T}}(xval)
-    c_eq = MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{T}}(xval)
-    c_sc = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Semicontinuous{T}}(xval)
-    c_si = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Semiinteger{T}}(xval)
+    c_lt = MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{T}}(xval)
+    c_gt = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{T}}(xval)
+    c_int = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Interval{T}}(xval)
+    c_eq = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{T}}(xval)
+    c_sc = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Semicontinuous{T}}(xval)
+    c_si = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Semiinteger{T}}(xval)
     if MOI.is_valid(model, c_int)
         # It is assumed that none of the other ConstraintIndexs are valid
         int::MOI.Interval{T} = MOI.get(model, MOI.ConstraintSet(), c_int)

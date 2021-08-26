@@ -20,13 +20,13 @@ function runtests()
 end
 
 const w = MOI.VariableIndex(0)
-const fw = MOI.SingleVariable(w)
+const fw = w
 const x = MOI.VariableIndex(1)
-const fx = MOI.SingleVariable(x)
+const fx = x
 const y = MOI.VariableIndex(2)
-const fy = MOI.SingleVariable(y)
+const fy = y
 const z = MOI.VariableIndex(3)
-const fz = MOI.SingleVariable(z)
+const fz = z
 
 # Number-like but not subtype of `Number`
 struct NonNumber
@@ -77,8 +77,8 @@ function test_Vectorization_operate_vcat()
         [3, 1, 4],
     )
     v = MOI.VectorOfVariables([y, w])
-    wf = MOI.SingleVariable(w)
-    xf = MOI.SingleVariable(x)
+    wf = w
+    xf = x
     for T in [Int, Float64]
         @test MOI.VectorOfVariables == MOI.Utilities.promote_operation(
             vcat,
@@ -145,13 +145,13 @@ function test_promote_operation_Quadratic()
         vcat,
         Int,
         MOI.VectorQuadraticFunction{Int},
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.ScalarQuadraticFunction{Int},
         MOI.VectorOfVariables,
         Int,
         MOI.ScalarQuadraticFunction{Int},
         MOI.VectorQuadraticFunction{Int},
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         Int,
     ) == MOI.VectorQuadraticFunction{Int}
     return
@@ -182,7 +182,7 @@ end
 function test_eval_variables()
     # We do tests twice to make sure the function is not modified
     vals = Dict(w => 0, x => 3, y => 1, z => 5)
-    fsv = MOI.SingleVariable(z)
+    fsv = z
     @test MOI.output_dimension(fsv) == 1
     @test MOI.Utilities.eval_variables(vi -> vals[vi], fsv) ≈ 5
     @test MOI.Utilities.eval_variables(vi -> vals[vi], fsv) ≈ 5
@@ -348,15 +348,15 @@ function test_iteration_and_indexing_on_VectorOfVariables()
     f = MOI.VectorOfVariables([z, w, x, y])
     it = MOI.Utilities.eachscalar(f)
     @test length(it) == 4
-    @test eltype(it) == MOI.SingleVariable
+    @test eltype(it) == MOI.VariableIndex
     @test collect(it) == [
-        MOI.SingleVariable(z),
-        MOI.SingleVariable(w),
-        MOI.SingleVariable(x),
-        MOI.SingleVariable(y),
+        z,
+        w,
+        x,
+        y,
     ]
-    @test it[2] == MOI.SingleVariable(w)
-    @test it[end] == MOI.SingleVariable(y)
+    @test it[2] == w
+    @test it[end] == y
     return
 end
 
@@ -438,7 +438,7 @@ end
 
 function test_Scalar_Variable_isone()
     f = MOI.SingleVariable(MOI.VariableIndex(0))
-    g = MOI.SingleVariable(MOI.VariableIndex(1))
+    g = MOI.VariableIndex(1)
     @test !isone(f)
     @test !isone(g)
     return
@@ -446,7 +446,7 @@ end
 
 function test_Scalar_Variable_iszero()
     f = MOI.SingleVariable(MOI.VariableIndex(0))
-    g = MOI.SingleVariable(MOI.VariableIndex(1))
+    g = MOI.VariableIndex(1)
     @test !iszero(f)
     @test !iszero(g)
     @test f + 1 ≈ 1 + f
@@ -480,7 +480,7 @@ function test_Scalar_Affine_zero()
 end
 
 function test_Scalar_Affine_complex()
-    fx = MOI.SingleVariable(MOI.VariableIndex(1))
+    fx = MOI.VariableIndex(1)
     fy = MOI.SingleVariable(MOI.VariableIndex(2))
     r = 3fx + 4fy
     c = 2fx + 5fy
@@ -496,7 +496,7 @@ function test_Scalar_Affine_complex()
 end
 
 function test_Scalar_Affine_promote_operation()
-    @test MOI.Utilities.promote_operation(-, Int, MOI.SingleVariable) ==
+    @test MOI.Utilities.promote_operation(-, Int, MOI.VariableIndex) ==
           MOI.ScalarAffineFunction{Int}
     @test MOI.Utilities.promote_operation(
         -,
@@ -506,8 +506,8 @@ function test_Scalar_Affine_promote_operation()
     @test MOI.Utilities.promote_operation(
         +,
         Float64,
-        MOI.SingleVariable,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
+        MOI.VariableIndex,
     ) == MOI.ScalarAffineFunction{Float64}
     @test MOI.Utilities.promote_operation(
         +,
@@ -528,8 +528,8 @@ function test_Scalar_Affine_comparison()
     @test MOI.Utilities.operate(
         +,
         Float64,
-        MOI.SingleVariable(x),
-        MOI.SingleVariable(z),
+        x,
+        z,
     ) + 1.0 ≈ MOI.ScalarAffineFunction(
         MOI.ScalarAffineTerm.([1, 1e-7, 1], [x, y, z]),
         1.0,
@@ -575,13 +575,13 @@ end
 
 function test_Scalar_Affine_convert()
     f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 0.5], [x, y]), 0.5)
-    @test_throws InexactError convert(MOI.SingleVariable, f)
+    @test_throws InexactError convert(MOI.VariableIndex, f)
     @test_throws InexactError MOI.Utilities.convert_approx(
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         f,
     )
-    @test MOI.Utilities.convert_approx(MOI.SingleVariable, f, tol = 0.5) ==
-          MOI.SingleVariable(x)
+    @test MOI.Utilities.convert_approx(MOI.VariableIndex, f, tol = 0.5) ==
+          x
     @test convert(typeof(f), f) === f
     quad_f = MOI.ScalarQuadraticFunction(
         MOI.ScalarQuadraticTerm{Float64}[],
@@ -590,13 +590,13 @@ function test_Scalar_Affine_convert()
     )
     @test convert(MOI.ScalarQuadraticFunction{Float64}, f) ≈ quad_f
     for g in [
-        convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x)),
-        convert(MOI.ScalarAffineFunction{Float64}, 1MOI.SingleVariable(x)),
+        convert(MOI.ScalarAffineFunction{Float64}, x),
+        convert(MOI.ScalarAffineFunction{Float64}, 1x),
     ]
         @test g isa MOI.ScalarAffineFunction{Float64}
-        @test convert(MOI.SingleVariable, g) == MOI.SingleVariable(x)
-        @test MOI.Utilities.convert_approx(MOI.SingleVariable, g) ==
-              MOI.SingleVariable(x)
+        @test convert(MOI.VariableIndex, g) == x
+        @test MOI.Utilities.convert_approx(MOI.VariableIndex, g) ==
+              x
     end
     return
 end
@@ -619,18 +619,18 @@ function test_Scalar_Affine_operate_with_Int_coefficient()
     )
     @test f === +f
     @test f ≈
-          MOI.SingleVariable(x) +
+          x +
           MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 4], [x, y]), 5)
     @test f ≈ f * 1
     @test f ≈
           MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 2], [x, y]), 2) *
           2 + 1
     @test f ≈
-          MOI.SingleVariable(x) -
+          x -
           MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1, -4], [x, y]), -5)
     @test f ≈
           MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3, 4], [x, y]), 5) -
-          MOI.SingleVariable(x)
+          x
     return
 end
 
@@ -682,20 +682,20 @@ function test_Scalar_Quadratic_promote_operation()
     @test MOI.Utilities.promote_operation(
         *,
         Int,
-        MOI.SingleVariable,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
+        MOI.VariableIndex,
     ) == MOI.ScalarQuadraticFunction{Int}
     @test MOI.Utilities.promote_operation(
         *,
         Float64,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.ScalarAffineFunction{Float64},
     ) == MOI.ScalarQuadraticFunction{Float64}
     @test MOI.Utilities.promote_operation(
         *,
         Int,
         MOI.ScalarAffineFunction{Int},
-        MOI.SingleVariable,
+        MOI.VariableIndex,
     ) == MOI.ScalarQuadraticFunction{Int}
     @test MOI.Utilities.promote_operation(
         *,
@@ -737,10 +737,10 @@ end
 function test_Scalar_Quadratic_convert()
     f = 7 + 3fx + 1fx * fx + 2fy * fy + 3fx * fy
     MOI.Utilities.canonicalize!(f)
-    @test_throws InexactError convert(MOI.SingleVariable, f)
+    @test_throws InexactError convert(MOI.VariableIndex, f)
     @test_throws InexactError convert(MOI.ScalarAffineFunction{Int}, f)
     g = convert(MOI.ScalarQuadraticFunction{Float64}, fx)
-    @test convert(MOI.SingleVariable, g) == fx
+    @test convert(MOI.VariableIndex, g) == fx
     return
 end
 
@@ -857,7 +857,7 @@ function test_Scalar_Quadratic_operate()
             MOI.ScalarQuadraticTerm.([2, 4, 3], [x, y, x], [x, y, y]),
             MOI.ScalarAffineTerm.([2], [x]),
             7,
-        ) + MOI.SingleVariable(x)
+        ) + x
     end
     @test f ≈
           MOI.ScalarQuadraticFunction(
@@ -1465,7 +1465,7 @@ function test_canonical_VectorAffine()
 end
 
 function test_canonical_ScalarQuadratic()
-    x = MOI.SingleVariable(MOI.VariableIndex(1))
+    x = MOI.VariableIndex(1)
     y = MOI.SingleVariable(MOI.VariableIndex(2))
     @test MOI.Utilities.is_canonical(
         convert(MOI.ScalarQuadraticFunction{Float64}, 1.0),
@@ -1487,7 +1487,7 @@ function test_canonical_ScalarQuadratic()
 end
 
 function test_canonical_VectorQuadratic()
-    x = MOI.SingleVariable(MOI.VariableIndex(1))
+    x = MOI.VariableIndex(1)
     y = MOI.SingleVariable(MOI.VariableIndex(2))
     @test MOI.Utilities.is_canonical(
         MOI.Utilities.operate(

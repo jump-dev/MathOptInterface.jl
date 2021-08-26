@@ -97,7 +97,7 @@ function throw_if_scalar_and_constant_not_zero(
     return
 end
 function throw_if_scalar_and_constant_not_zero(
-    ::SingleVariable,
+    ::VariableIndex,
     ::Type{S},
 ) where {S<:AbstractScalarSet}
     return
@@ -114,7 +114,7 @@ end
 
 Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, and ``\\mathcal{S}`` is defined by `set`.
 
-    add_constraint(model::ModelLike, v::VariableIndex, set::S)::ConstraintIndex{SingleVariable,S} where {S}
+    add_constraint(model::ModelLike, v::VariableIndex, set::S)::ConstraintIndex{VariableIndex,S} where {S}
     add_constraint(model::ModelLike, vec::Vector{VariableIndex}, set::S)::ConstraintIndex{VectorOfVariables,S} where {S}
 
 Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vector of variables) referenced by `v` and ``\\mathcal{S}`` is defined by `set`.
@@ -128,10 +128,10 @@ Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vecto
   is [`EqualTo`](@ref), [`GreaterThan`](@ref), [`LessThan`](@ref) or
   [`Interval`](@ref).
 * a [`LowerBoundAlreadySet`](@ref) error is thrown if `F` is a
-  [`SingleVariable`](@ref) and a constraint was already added to this variable
+  [`VariableIndex`](@ref) and a constraint was already added to this variable
   that sets a lower bound.
 * a [`UpperBoundAlreadySet`](@ref) error is thrown if `F` is a
-  [`SingleVariable`](@ref) and a constraint was already added to this variable
+  [`VariableIndex`](@ref) and a constraint was already added to this variable
   that sets an upper bound.
 """
 function add_constraint(
@@ -212,7 +212,7 @@ function add_constraint(
     v::VariableIndex,
     set::AbstractScalarSet,
 )
-    return add_constraint(model, SingleVariable(v), set)
+    return add_constraint(model, v, set)
 end
 function add_constraint(
     model::ModelLike,
@@ -238,8 +238,8 @@ end
 """
     LowerBoundAlreadySet{S1, S2}
 
-Error thrown when setting a `SingleVariable`-in-`S2` when a
-`SingleVariable`-in-`S1` has already been added and the sets `S1`, `S2` both
+Error thrown when setting a `VariableIndex`-in-`S2` when a
+`VariableIndex`-in-`S1` has already been added and the sets `S1`, `S2` both
 set a lower bound, i.e. they are [`EqualTo`](@ref), [`GreaterThan`](@ref),
 [`Interval`](@ref), [`Semicontinuous`](@ref) or [`Semiinteger`](@ref).
 """
@@ -251,8 +251,8 @@ function Base.showerror(io::IO, err::LowerBoundAlreadySet{S1,S2}) where {S1,S2}
     return print(
         io,
         typeof(err),
-        ": Cannot add `SingleVariable`-in-`$(S2)` constraint for variable ",
-        "$(err.vi) as a `SingleVariable`-in-`$(S1)` constraint was already ",
+        ": Cannot add `VariableIndex`-in-`$(S2)` constraint for variable ",
+        "$(err.vi) as a `VariableIndex`-in-`$(S1)` constraint was already ",
         "set for this variable and both constraints set a lower bound.",
     )
 end
@@ -260,8 +260,8 @@ end
 """
     UpperBoundAlreadySet{S1, S2}
 
-Error thrown when setting a `SingleVariable`-in-`S2` when a
-`SingleVariable`-in-`S1` has already been added and the sets `S1`, `S2` both
+Error thrown when setting a `VariableIndex`-in-`S2` when a
+`VariableIndex`-in-`S1` has already been added and the sets `S1`, `S2` both
 set an upper bound, i.e. they are [`EqualTo`](@ref), [`LessThan`](@ref),
 [`Interval`](@ref), [`Semicontinuous`](@ref) or [`Semiinteger`](@ref).
 """
@@ -273,8 +273,8 @@ function Base.showerror(io::IO, err::UpperBoundAlreadySet{S1,S2}) where {S1,S2}
     return print(
         io,
         typeof(err),
-        ": Cannot add `SingleVariable`-in-`$(S2)` constraint for variable ",
-        "$(err.vi) as a `SingleVariable`-in-`$(S1)` constraint was already ",
+        ": Cannot add `VariableIndex`-in-`$(S2)` constraint for variable ",
+        "$(err.vi) as a `VariableIndex`-in-`$(S1)` constraint was already ",
         "set for this variable and both constraints set an upper bound.",
     )
 end

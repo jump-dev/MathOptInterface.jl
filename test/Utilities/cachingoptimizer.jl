@@ -259,15 +259,15 @@ function test_mapping_of_variables()
     @test x != y # Otherwise, these tests will trivially pass
     @test !MOI.is_valid(model, y)
     @test !MOI.is_valid(mock, x)
-    fx = MOI.SingleVariable(x)
-    fy = MOI.SingleVariable(y)
+    fx = x
+    fy = y
 
     cfx = MOI.add_constraint(model, fx, MOI.GreaterThan(1.0))
     cfy = first(
         MOI.get(
             mock,
             MOI.ListOfConstraintIndices{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.GreaterThan{Float64},
             }(),
         ),
@@ -448,24 +448,24 @@ function test_CachingOptimizer_MANUAL_mode()
 
     @test MOI.supports_constraint(
         m.model_cache,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{Float64},
     )
     @test MOI.supports_constraint(
         m.optimizer.inner_model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{Float64},
     )
     @test MOI.supports_constraint(
         m.optimizer,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{Float64},
     )
-    @test MOI.supports_constraint(m, MOI.SingleVariable, MOI.LessThan{Float64})
-    lb = MOI.add_constraint(m, MOI.SingleVariable(v), MOI.LessThan(10.0))
+    @test MOI.supports_constraint(m, MOI.VariableIndex, MOI.LessThan{Float64})
+    lb = MOI.add_constraint(m, v, MOI.LessThan(10.0))
     MOI.set(m, MOI.ConstraintSet(), lb, MOI.LessThan(11.0))
     @test MOI.get(m, MOI.ConstraintSet(), lb) == MOI.LessThan(11.0)
-    @test MOI.get(m, MOI.ConstraintFunction(), lb) == MOI.SingleVariable(v)
+    @test MOI.get(m, MOI.ConstraintFunction(), lb) == v
 
     MOIU.drop_optimizer(m)
     @test MOIU.state(m) == MOIU.NO_OPTIMIZER
@@ -615,7 +615,7 @@ function test_CachingOptimizer_AUTOMATIC_mode()
         @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
 
         vi = MOI.add_variable(m)
-        ci = MOI.add_constraint(m, MOI.SingleVariable(vi), MOI.EqualTo(0.0))
+        ci = MOI.add_constraint(m, vi, MOI.EqualTo(0.0))
         s.delete_allowed = false # Simulate optimizer that cannot delete constraint
         MOI.delete(m, ci)
         s.delete_allowed = true
@@ -676,7 +676,7 @@ end
 function _constrained_variables_test(model)
     @test !MOI.supports_add_constrained_variables(model, MOI.Reals)
     @test MOI.supports_add_constrained_variable(model, MOI.ZeroOne)
-    @test !MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @test !MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     @test MOI.supports_add_constrained_variables(model, MOI.Nonnegatives)
     @test !MOI.supports_constraint(
         model,
@@ -688,7 +688,7 @@ function _constrained_variables_test(model)
     vector_set = MOI.Nonnegatives(2)
     y, cy = MOI.add_constrained_variables(model, vector_set)
     constraint_types = Set([
-        (MOI.SingleVariable, MOI.ZeroOne),
+        (MOI.VariableIndex, MOI.ZeroOne),
         (MOI.VectorOfVariables, MOI.Nonnegatives),
     ])
     @test Set(MOI.get(model.model_cache, MOI.ListOfConstraintTypesPresent())) ==

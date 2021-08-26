@@ -19,7 +19,7 @@ most important one is whether the set is scalar or vector, which impacts the
 dimensionality of the functions that can be used with the set. 
 
 * A scalar function only has one dimension. MOI defines three types of scalar 
-  functions: a variable ([`SingleVariable`](@ref)), an affine function 
+  functions: a variable ([`VariableIndex`](@ref)), an affine function 
   ([`ScalarAffineFunction`](@ref)), or a quadratic function 
   ([`ScalarQuadraticFunction`](@ref)).
 * A vector function has several dimensions (at least one). MOI defines three 
@@ -180,15 +180,15 @@ end
 !!! warning
     If you declare the creation of constrained variables in 
     `added_constrained_variable_types`, the corresponding constraint type 
-    `SingleVariable` should not be indicated in `added_constraint_types`.
+    `VariableIndex` should not be indicated in `added_constraint_types`.
     This would restrict the use of the bridge to solvers that can add such a 
     constraint after the variable is created. 
 
     More concretely, *if* you declare in `added_constrained_variable_types` that
     your bridge creates binary variables (`ZeroOne`), *and if* you never add such 
     a constraint afterward (you do not call 
-    `add_constraint(model, SingleVariable(var), ZeroOne())`), then you should 
-    *not* list `(SingleVariable, ZeroOne)` in `added_constraint_types`.
+    `add_constraint(model, var, ZeroOne())`), then you should 
+    *not* list `(VariableIndex, ZeroOne)` in `added_constraint_types`.
 
 Typically, the function [`Bridges.Constraint.concrete_bridge_type`](@ref) does
 not have to be defined for most bridges.

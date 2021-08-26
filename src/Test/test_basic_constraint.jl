@@ -1,9 +1,9 @@
 function _function(
     ::Any,
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     x::Vector{MOI.VariableIndex},
 )
-    return MOI.SingleVariable(x[1])
+    return x[1]
 end
 
 function _function(
@@ -144,13 +144,13 @@ function _basic_constraint_test_helper(
     ### Test MOI.ConstraintName
     ###
     if _supports(config, MOI.ConstraintName)
-        if F == MOI.SingleVariable
+        if F == MOI.VariableIndex
             @test_throws(
-                MOI.SingleVariableConstraintNameError(),
+                MOI.VariableIndexConstraintNameError(),
                 MOI.supports(model, MOI.ConstraintName(), typeof(c)),
             )
             @test_throws(
-                MOI.SingleVariableConstraintNameError(),
+                MOI.VariableIndexConstraintNameError(),
                 MOI.set(model, MOI.ConstraintName(), c, "c"),
             )
         else
@@ -186,7 +186,7 @@ function _basic_constraint_test_helper(
     ###
     ### Test MOI.add_constraints
     ###
-    if F != MOI.SingleVariable && F != MOI.VectorOfVariables
+    if F != MOI.VariableIndex && F != MOI.VectorOfVariables
         # We can't add multiple variable constraints as these are
         # interpreted as bounds etc.
         MOI.add_constraints(
@@ -262,7 +262,7 @@ for s in [
 ]
     S = getfield(MOI, s)
     functions = if S <: MOI.AbstractScalarSet
-        (:SingleVariable, :ScalarAffineFunction, :ScalarQuadraticFunction)
+        (:VariableIndex, :ScalarAffineFunction, :ScalarQuadraticFunction)
     else
         (:VectorOfVariables, :VectorAffineFunction, :VectorQuadraticFunction)
     end

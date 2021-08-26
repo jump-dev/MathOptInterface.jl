@@ -15,10 +15,10 @@ function runtests()
     return
 end
 
-function test_normalize_and_add_constrant_SingleVariable()
+function test_normalize_and_add_constrant_VariableIndex()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
-    f = MOI.SingleVariable(x)
+    f = x
     ci = MOI.Utilities.normalize_and_add_constraint(
         model,
         f,

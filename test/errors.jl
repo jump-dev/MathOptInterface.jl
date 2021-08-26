@@ -26,7 +26,7 @@ end
 function test_errors_inconsistent_vectorscalar()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = MOI.SingleVariable(vi)
+    func = vi
     @test_throws(
         MOI.ErrorException,
         MOI.add_constraint(
@@ -45,13 +45,13 @@ end
 function _test_errors_UnsupportedConstraint(f)
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = MOI.SingleVariable(vi)
+    func = vi
     @test_throws(MOI.UnsupportedConstraint, f(model, func, MOI.EqualTo(0)),)
     try
         f(model, func, MOI.EqualTo(0))
     catch err
         @test sprint(showerror, err) ==
-              "$(MOI.UnsupportedConstraint{MOI.SingleVariable,MOI.EqualTo{Int}}):" *
+              "$(MOI.UnsupportedConstraint{MOI.VariableIndex,MOI.EqualTo{Int}}):" *
               " `$MOI.SingleVariable`-in-`$MOI.EqualTo{$Int}` constraint is" *
               " not supported by the model."
     end
@@ -80,7 +80,7 @@ end
 function test_errors_add_constraint()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = MOI.SingleVariable(vi)
+    func = vi
     @test_throws(
         MOI.AddConstraintNotAllowed,
         MOI.add_constraint(model, func, MOI.EqualTo(0.0)),
@@ -89,7 +89,7 @@ function test_errors_add_constraint()
         MOI.add_constraint(model, func, MOI.EqualTo(0.0))
     catch err
         @test sprint(showerror, err) ==
-              "$(MOI.AddConstraintNotAllowed{MOI.SingleVariable,MOI.EqualTo{Float64}}):" *
+              "$(MOI.AddConstraintNotAllowed{MOI.VariableIndex,MOI.EqualTo{Float64}}):" *
               " Adding `$MOI.SingleVariable`-in-`$MOI.EqualTo{Float64}`" *
               " constraints cannot be performed. You may want to use a" *
               " `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
@@ -118,8 +118,8 @@ end
 function test_errors_DeleteNotAllowed()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = MOI.SingleVariable(vi)
-    ci = MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}(1)
+    func = vi
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}(1)
     @test_throws MOI.DeleteNotAllowed{typeof(vi)} MOI.delete(model, vi)
     try
         MOI.delete(model, vi)
@@ -137,8 +137,8 @@ function test_errors_DeleteNotAllowed()
         MOI.delete(model, ci)
     catch err
         @test sprint(showerror, err) ==
-              "$(MathOptInterface.DeleteNotAllowed{MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}}):" *
-              " Deleting the index $(MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1))" *
+              "$(MathOptInterface.DeleteNotAllowed{MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex,MathOptInterface.EqualTo{Float64}}}):" *
+              " Deleting the index $(MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex,MathOptInterface.EqualTo{Float64}}(1))" *
               " cannot be performed. You may want to use a `CachingOptimizer`" *
               " in `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
               " before doing this operation if the `CachingOptimizer` is in" *
@@ -150,14 +150,14 @@ end
 function _test_unsupported_attribute(f)
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = MOI.SingleVariable(vi)
+    func = vi
     ci = MOI.ConstraintIndex{typeof(func),MOI.EqualTo{Float64}}(1)
     @test_throws(
         MOI.UnsupportedAttribute,
         f(
             model,
-            MOI.ObjectiveFunction{MOI.SingleVariable}(),
-            MOI.SingleVariable(vi),
+            MOI.ObjectiveFunction{MOI.VariableIndex}(),
+            vi,
         ),
     )
     @test_throws(
@@ -175,7 +175,7 @@ end
 function test_errors_SetAttributeNotAllowed()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = MOI.SingleVariable(vi)
+    func = vi
     ci = MOI.ConstraintIndex{typeof(func),MOI.EqualTo{Float64}}(1)
     model = DummyModel()
     @test_throws(
@@ -192,7 +192,7 @@ end
 function test_errors_ConstraintFunction_NotAllowed()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = MOI.SingleVariable(vi)
+    func = vi
     ci = MOI.ConstraintIndex{typeof(func),MOI.EqualTo{Float64}}(1)
     @test_throws(
         MOI.SetAttributeNotAllowed,
@@ -213,7 +213,7 @@ end
 function test_errors_ConstraintSet_NotAllowed()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = MOI.SingleVariable(vi)
+    func = vi
     ci = MOI.ConstraintIndex{typeof(func),MOI.EqualTo{Float64}}(1)
     @test_throws(
         MOI.SetAttributeNotAllowed,
@@ -232,14 +232,14 @@ end
 function test_errors_ModifyNotAllowed_constraint()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = MOI.SingleVariable(vi)
+    func = vi
     ci = MOI.ConstraintIndex{typeof(func),MOI.EqualTo{Float64}}(1)
     change = MOI.ScalarConstantChange(1.0)
     err = MOI.ModifyConstraintNotAllowed(ci, change)
     @test_throws err MOI.modify(model, ci, change)
     @test sprint(showerror, err) ==
-          "$(MathOptInterface.ModifyConstraintNotAllowed{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64},MathOptInterface.ScalarConstantChange{Float64}}):" *
-          " Modifying the constraints $(MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.EqualTo{Float64}}(1))" *
+          "$(MathOptInterface.ModifyConstraintNotAllowed{MathOptInterface.VariableIndex,MathOptInterface.EqualTo{Float64},MathOptInterface.ScalarConstantChange{Float64}}):" *
+          " Modifying the constraints $(MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex,MathOptInterface.EqualTo{Float64}}(1))" *
           " with MathOptInterface.ScalarConstantChange{Float64}(1.0) cannot" *
           " be performed. You may want to use a `CachingOptimizer` in" *
           " `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
@@ -250,7 +250,7 @@ end
 function test_errors_ModifyNotAllowed_objective()
     model = DummyModel()
     change = MOI.ScalarConstantChange(1.0)
-    attr = MOI.ObjectiveFunction{MOI.SingleVariable}()
+    attr = MOI.ObjectiveFunction{MOI.VariableIndex}()
     err = MOI.ModifyObjectiveNotAllowed(change)
     @test_throws err MOI.modify(model, attr, change)
     @test sprint(showerror, err) ==

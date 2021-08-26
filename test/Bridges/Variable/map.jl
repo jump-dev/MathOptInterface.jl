@@ -45,7 +45,7 @@ function test_map()
     map = MOI.Bridges.Variable.Map()
     b1 = VariableDummyBridge(1)
     set1 = MOI.EqualTo(0.0)
-    F1 = MOI.SingleVariable
+    F1 = MOI.VariableIndex
     S1 = typeof(set1)
     v1, c1 = MOI.Bridges.Variable.add_key_for_bridge(map, () -> b1, set1)
     cannot_unbridge_err = ErrorException(
@@ -59,7 +59,7 @@ function test_map()
     @test MOI.Bridges.Variable.constrained_set(map, v1) == S1
     @test MOI.Bridges.Variable.number_with_set(map, S1) == 1
     @test MOI.Bridges.Variable.constraints_with_set(map, S1) == [c1]
-    @test MOI.Bridges.Variable.function_for(map, c1) == MOI.SingleVariable(v1)
+    @test MOI.Bridges.Variable.function_for(map, c1) == v1
     @test_throws cannot_unbridge_err MOI.Bridges.Variable.unbridged_function(
         map,
         MOI.VariableIndex(1),

@@ -82,7 +82,7 @@ function test_HS071()
     end
     MOI.add_constraints(
         model,
-        MOI.SingleVariable.(x),
+        x,
         Ref(MOI.Interval(1.0, 5.0)),
     )
     MOI.set(model, MOI.NLPBlock(), HS071(x))

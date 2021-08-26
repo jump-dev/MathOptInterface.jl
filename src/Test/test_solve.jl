@@ -218,27 +218,27 @@ function setup_test(
 end
 
 """
-    test_solve_SingleVariable_ConstraintDual_MIN_SENSE(
+    test_solve_VariableIndex_ConstraintDual_MIN_SENSE(
         model::MOI.ModelLike,
         config::Config,
     )
 
-Test `ConstraintDual` of a `SingleVariable` constraint when minimizing.
+Test `ConstraintDual` of a `VariableIndex` constraint when minimizing.
 """
-function test_solve_SingleVariable_ConstraintDual_MIN_SENSE(
+function test_solve_VariableIndex_ConstraintDual_MIN_SENSE(
     model::MOI.ModelLike,
     config::Config,
 )
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
     x = MOI.add_variable(model)
-    xl = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
-    xu = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
+    xl = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
+    xu = MOI.add_constraint(model, x, MOI.LessThan(1.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
+        MOI.ObjectiveFunction{MOI.VariableIndex}(),
+        x,
     )
     MOI.optimize!(model)
     @test isapprox(
@@ -255,7 +255,7 @@ function test_solve_SingleVariable_ConstraintDual_MIN_SENSE(
 end
 
 function setup_test(
-    ::typeof(test_solve_SingleVariable_ConstraintDual_MIN_SENSE),
+    ::typeof(test_solve_VariableIndex_ConstraintDual_MIN_SENSE),
     model::MOIU.MockOptimizer,
     ::Config,
 )
@@ -268,35 +268,35 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [1.0]),
             MOI.FEASIBLE_POINT,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0],
-            (MOI.SingleVariable, MOI.LessThan{Float64}) => [0.0],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [1.0],
+            (MOI.VariableIndex, MOI.LessThan{Float64}) => [0.0],
         ),
     )
     return () -> model.eval_variable_constraint_dual = flag
 end
 
 """
-    test_solve_SingleVariable_ConstraintDual_MAX_SENSE(
+    test_solve_VariableIndex_ConstraintDual_MAX_SENSE(
         model::MOI.ModelLike,
         config::Config,
     )
 
-Test `ConstraintDual` of a `SingleVariable` constraint when maximizing.
+Test `ConstraintDual` of a `VariableIndex` constraint when maximizing.
 """
-function test_solve_SingleVariable_ConstraintDual_MAX_SENSE(
+function test_solve_VariableIndex_ConstraintDual_MAX_SENSE(
     model::MOI.ModelLike,
     config::Config,
 )
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
     x = MOI.add_variable(model)
-    xl = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
-    xu = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
+    xl = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
+    xu = MOI.add_constraint(model, x, MOI.LessThan(1.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
+        MOI.ObjectiveFunction{MOI.VariableIndex}(),
+        x,
     )
     MOI.optimize!(model)
     @test isapprox(
@@ -313,7 +313,7 @@ function test_solve_SingleVariable_ConstraintDual_MAX_SENSE(
 end
 
 function setup_test(
-    ::typeof(test_solve_SingleVariable_ConstraintDual_MAX_SENSE),
+    ::typeof(test_solve_VariableIndex_ConstraintDual_MAX_SENSE),
     model::MOIU.MockOptimizer,
     ::Config,
 )
@@ -326,8 +326,8 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [1.0]),
             MOI.FEASIBLE_POINT,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0.0],
-            (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1.0],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [0.0],
+            (MOI.VariableIndex, MOI.LessThan{Float64}) => [-1.0],
         ),
     )
     return () -> model.eval_variable_constraint_dual = flag
@@ -343,12 +343,12 @@ function test_solve_result_index(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     x = MOI.add_variable(model)
-    c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
+        MOI.ObjectiveFunction{MOI.VariableIndex}(),
+        x,
     )
     MOI.optimize!(model)
     result_count = MOI.get(model, MOI.ResultCount())
@@ -410,7 +410,7 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [1.0]),
             MOI.FEASIBLE_POINT,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [1.0],
         ),
     )
     return
@@ -432,7 +432,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_EqualTo_upper(
     @requires _supports(config, MOI.ConstraintDual)
     x = MOI.add_variables(model, 2)
     clb =
-        MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
+        MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0], x), 0.0),
@@ -464,7 +464,7 @@ function setup_test(
             MOI.INFEASIBLE,
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [-1.0],
         ),
@@ -488,7 +488,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_EqualTo_lower(
     @requires _supports(config, MOI.ConstraintDual)
     x = MOI.add_variables(model, 2)
     clb =
-        MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
+        MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0, -1.0], x), 0.0),
@@ -519,7 +519,7 @@ function setup_test(
             MOI.INFEASIBLE,
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [1.0],
         ),
@@ -543,7 +543,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_LessThan(
     @requires _supports(config, MOI.ConstraintDual)
     x = MOI.add_variables(model, 2)
     clb =
-        MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
+        MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0], x), 0.0),
@@ -575,7 +575,7 @@ function setup_test(
             MOI.INFEASIBLE,
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
                 [-1.0],
         ),
@@ -599,7 +599,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_GreaterThan(
     @requires _supports(config, MOI.ConstraintDual)
     x = MOI.add_variables(model, 2)
     clb =
-        MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
+        MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0, -1.0], x), 0.0),
@@ -631,7 +631,7 @@ function setup_test(
             MOI.INFEASIBLE,
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
                 [1.0],
         ),
@@ -655,7 +655,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_Interval_upper(
     @requires _supports(config, MOI.ConstraintDual)
     x = MOI.add_variables(model, 2)
     clb =
-        MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
+        MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0], x), 0.0),
@@ -687,7 +687,7 @@ function setup_test(
             MOI.INFEASIBLE,
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) =>
                 [-1.0],
         ),
@@ -711,7 +711,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_Interval_lower(
     @requires _supports(config, MOI.ConstraintDual)
     x = MOI.add_variables(model, 2)
     clb =
-        MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
+        MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0, -1.0], x), 0.0),
@@ -743,7 +743,7 @@ function setup_test(
             MOI.INFEASIBLE,
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0, 1.0],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) =>
                 [1.0],
         ),
@@ -759,14 +759,14 @@ end
 
 Test the Farkas dual of a variable upper bound violated above when minimizing.
 """
-function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_SingleVariable_LessThan(
+function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_VariableIndex_LessThan(
     model::MOI.ModelLike,
     config::Config,
 )
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
     x = MOI.add_variables(model, 2)
-    clb = MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.LessThan(0.0))
+    clb = MOI.add_constraint.(model, x, MOI.LessThan(0.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0], x), 0.0),
@@ -788,7 +788,7 @@ end
 
 function setup_test(
     ::typeof(
-        test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_SingleVariable_LessThan,
+        test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_VariableIndex_LessThan,
     ),
     model::MOIU.MockOptimizer,
     ::Config,
@@ -800,7 +800,7 @@ function setup_test(
             MOI.INFEASIBLE,
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.LessThan{Float64}) => [-2.0, -1.0],
+            (MOI.VariableIndex, MOI.LessThan{Float64}) => [-2.0, -1.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
                 [1.0],
         ),
@@ -816,14 +816,14 @@ end
 
 Test the Farkas dual of a variable upper bound violated above when maximizing.
 """
-function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_SingleVariable_LessThan_max(
+function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_VariableIndex_LessThan_max(
     model::MOI.ModelLike,
     config::Config,
 )
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
     x = MOI.add_variables(model, 2)
-    clb = MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.LessThan(0.0))
+    clb = MOI.add_constraint.(model, x, MOI.LessThan(0.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0], x), 0.0),
@@ -832,8 +832,8 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_SingleVariable_LessThan
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x[1]),
+        MOI.ObjectiveFunction{MOI.VariableIndex}(),
+        x[1],
     )
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
@@ -851,7 +851,7 @@ end
 
 function setup_test(
     ::typeof(
-        test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_SingleVariable_LessThan_max,
+        test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_VariableIndex_LessThan_max,
     ),
     model::MOIU.MockOptimizer,
     ::Config,
@@ -863,7 +863,7 @@ function setup_test(
             MOI.INFEASIBLE,
             (MOI.NO_SOLUTION, [NaN, NaN]),
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.LessThan{Float64}) => [-2.0, -1.0],
+            (MOI.VariableIndex, MOI.LessThan{Float64}) => [-2.0, -1.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
                 [1.0],
         ),
@@ -885,12 +885,12 @@ function test_solve_optimize_twice(
 ) where {T}
     @requires _supports(config, MOI.optimize!)
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(one(T)))
+    MOI.add_constraint(model, x, MOI.GreaterThan(one(T)))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
+        MOI.ObjectiveFunction{MOI.VariableIndex}(),
+        x,
     )
     MOI.optimize!(model)
     MOI.optimize!(model)
@@ -931,8 +931,8 @@ function test_solve_conflict_bound_bound(
         return  # If this fails, skip the test.
     end
     x = MOI.add_variable(model)
-    c1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(T(2)))
-    c2 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(one(T)))
+    c1 = MOI.add_constraint(model, x, MOI.GreaterThan(T(2)))
+    c2 = MOI.add_constraint(model, x, MOI.LessThan(one(T)))
     @test MOI.get(model, MOI.ConflictStatus()) ==
           MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
@@ -958,9 +958,9 @@ function setup_test(
                 MOI.NO_SOLUTION,
                 MOI.NO_SOLUTION;
                 constraint_conflict_status = [
-                    (MOI.SingleVariable, MOI.LessThan{Float64}) =>
+                    (MOI.VariableIndex, MOI.LessThan{Float64}) =>
                         [MOI.IN_CONFLICT],
-                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
+                    (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
                         [MOI.IN_CONFLICT],
                 ],
             )
@@ -1057,7 +1057,7 @@ function test_solve_conflict_invalid_interval(
     x = MOI.add_variable(model)
     c1 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x),
+        x,
         MOI.Interval(one(T), zero(T)),
     )
     @test MOI.get(model, MOI.ConflictStatus()) ==
@@ -1084,7 +1084,7 @@ function setup_test(
                 MOI.NO_SOLUTION,
                 MOI.NO_SOLUTION;
                 constraint_conflict_status = [
-                    (MOI.SingleVariable, MOI.Interval{Float64}) =>
+                    (MOI.VariableIndex, MOI.Interval{Float64}) =>
                         [MOI.IN_CONFLICT],
                 ],
             )
@@ -1114,12 +1114,12 @@ function test_solve_conflict_affine_affine(
     y = MOI.add_variable(model)
     b1 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x),
+        x,
         MOI.GreaterThan(zero(T)),
     )
     b2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(y),
+        y,
         MOI.GreaterThan(zero(T)),
     )
     cf1 =
@@ -1158,7 +1158,7 @@ function setup_test(
                 MOI.NO_SOLUTION,
                 MOI.NO_SOLUTION;
                 constraint_conflict_status = [
-                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
+                    (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
                         [MOI.IN_CONFLICT, MOI.IN_CONFLICT],
                     (
                         MOI.ScalarAffineFunction{Float64},
@@ -1196,12 +1196,12 @@ function test_solve_conflict_EqualTo(
     y = MOI.add_variable(model)
     b1 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x),
+        x,
         MOI.GreaterThan(zero(T)),
     )
     b2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(y),
+        y,
         MOI.GreaterThan(zero(T)),
     )
     cf1 =
@@ -1240,7 +1240,7 @@ function setup_test(
                 MOI.NO_SOLUTION,
                 MOI.NO_SOLUTION;
                 constraint_conflict_status = [
-                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
+                    (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
                         [MOI.IN_CONFLICT, MOI.IN_CONFLICT],
                     (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => [MOI.IN_CONFLICT],
                     (
@@ -1275,9 +1275,9 @@ function test_solve_conflict_NOT_IN_CONFLICT(
     y = MOI.add_variable(model)
     z = MOI.add_variable(model)
     S = MOI.GreaterThan(zero(T))
-    b1 = MOI.add_constraint(model, MOI.SingleVariable(x), S)
-    b2 = MOI.add_constraint(model, MOI.SingleVariable(y), S)
-    b3 = MOI.add_constraint(model, MOI.SingleVariable(z), S)
+    b1 = MOI.add_constraint(model, x, S)
+    b2 = MOI.add_constraint(model, y, S)
+    b3 = MOI.add_constraint(model, z, S)
     cf1 =
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), [x, y]), zero(T))
     c1 = MOI.add_constraint(model, cf1, MOI.LessThan(-one(T)))
@@ -1316,7 +1316,7 @@ function setup_test(
                 MOI.NO_SOLUTION,
                 MOI.NO_SOLUTION;
                 constraint_conflict_status = [
-                    (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [
+                    (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [
                         MOI.IN_CONFLICT,
                         MOI.IN_CONFLICT,
                         MOI.NOT_IN_CONFLICT,
@@ -1433,7 +1433,7 @@ function setup_test(
                 MOI.NO_SOLUTION,
                 MOI.NO_SOLUTION;
                 constraint_conflict_status = [
-                    (MOI.SingleVariable, MOI.ZeroOne) =>
+                    (MOI.VariableIndex, MOI.ZeroOne) =>
                         [MOI.MAYBE_IN_CONFLICT],
                     (
                         MOI.ScalarAffineFunction{Float64},
@@ -1457,8 +1457,8 @@ function test_solve_SOS2_add_and_delete(model::MOI.ModelLike, config::Config)
     function add_SOS2(x, y, xp, yp)
         λ = MOI.add_variables(model, length(xp))
         # 0 <= λ <= 1
-        MOI.add_constraint.(model, MOI.SingleVariable.(λ), MOI.LessThan(1.0))
-        MOI.add_constraint.(model, MOI.SingleVariable.(λ), MOI.GreaterThan(0.0))
+        MOI.add_constraint.(model, λ, MOI.LessThan(1.0))
+        MOI.add_constraint.(model, λ, MOI.GreaterThan(0.0))
         # Σλᵢ == 1
         MOI.add_constraint(
             model,
@@ -1494,7 +1494,7 @@ function test_solve_SOS2_add_and_delete(model::MOI.ModelLike, config::Config)
     x = MOI.add_variables(model, 2)
     y = MOI.add_variables(model, 2)
     λ, c1 = add_SOS2(x[1], y[1], [1.0, 2.0, 3.0], [2.0, 2.0, 1.0])
-    MOI.add_constraint(model, MOI.SingleVariable(x[1]), MOI.LessThan(2.5))
+    MOI.add_constraint(model, x[1], MOI.LessThan(2.5))
     η, c2 = add_SOS2(x[2], y[2], [1.0, 2.0, 3.0, 4.0], [0.5, 1.0, 0.2, 2.0])
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, y), 0.0)

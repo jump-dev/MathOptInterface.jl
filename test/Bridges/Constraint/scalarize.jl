@@ -59,7 +59,7 @@ function test_scalarize()
         3,
         (
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}, 0),
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}, 0),
         ),
     )
     ci = first(
@@ -88,7 +88,7 @@ function test_scalarize()
         2,
         (
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}, 0),
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}, 0),
         ),
     )
     MOI.empty!(bridged_mock)

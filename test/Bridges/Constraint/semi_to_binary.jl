@@ -30,12 +30,12 @@ function test_SemiToBinary()
     }
     @test MOI.supports_constraint(
         bridge_type,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.Semiinteger{Float64},
     )
     @test MOI.Bridges.Constraint.concrete_bridge_type(
         bridge_type,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.Semiinteger{Float64},
     ) == bridge_type
     @test MOI.supports(bridged_mock, MOI.ConstraintPrimalStart(), bridge_type)
@@ -43,8 +43,8 @@ function test_SemiToBinary()
         bridged_mock,
         config,
         include = [
-            "test_basic_SingleVariable_Semiinteger",
-            "test_basic_SingleVariable_Semicontinuous",
+            "test_basic_VariableIndex_Semiinteger",
+            "test_basic_VariableIndex_Semicontinuous",
         ],
     )
     MOI.empty!(bridged_mock)
@@ -78,7 +78,7 @@ function test_SemiToBinary()
         MOI.get(
             bridged_mock,
             MOI.ListOfConstraintIndices{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.Semicontinuous{Float64},
             }(),
         ),
@@ -88,9 +88,9 @@ function test_SemiToBinary()
         ci,
         2,
         (
-            (MOI.SingleVariable, MOI.EqualTo{Float64}, 1),
-            (MOI.SingleVariable, MOI.ZeroOne, 0),
-            (MOI.SingleVariable, MOI.Integer, 0),
+            (MOI.VariableIndex, MOI.EqualTo{Float64}, 1),
+            (MOI.VariableIndex, MOI.ZeroOne, 0),
+            (MOI.VariableIndex, MOI.Integer, 0),
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 0),
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 1),
         ),
@@ -126,7 +126,7 @@ function test_SemiToBinary()
         MOI.get(
             bridged_mock,
             MOI.ListOfConstraintIndices{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.Semiinteger{Float64},
             }(),
         ),
@@ -147,9 +147,9 @@ function test_SemiToBinary()
         ci,
         2,
         (
-            (MOI.SingleVariable, MOI.EqualTo{Float64}, 1),
-            (MOI.SingleVariable, MOI.ZeroOne, 0),
-            (MOI.SingleVariable, MOI.Integer, 0),
+            (MOI.VariableIndex, MOI.EqualTo{Float64}, 1),
+            (MOI.VariableIndex, MOI.ZeroOne, 0),
+            (MOI.VariableIndex, MOI.Integer, 0),
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 0),
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}, 1),
         ),
@@ -190,7 +190,7 @@ function test_SemiToBinary()
     ci = first(
         MOI.get(
             mock,
-            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.ZeroOne}(),
+            MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.ZeroOne}(),
         ),
     )
     z = MOI.VariableIndex(ci.value)
@@ -198,7 +198,7 @@ function test_SemiToBinary()
     ci = first(
         MOI.get(
             mock,
-            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Integer}(),
+            MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.Integer}(),
         ),
     )
     ci = first(

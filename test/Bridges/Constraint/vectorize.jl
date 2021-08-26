@@ -39,7 +39,7 @@ function test_basic()
         config,
         include = [
             "test_basic_$(F)_$(S)" for
-            F in ["SingleVariable", "ScalarAffineFunction"] for
+            F in ["VariableIndex", "ScalarAffineFunction"] for
             S in ["EqualTo", "GreaterThan", "LessThan"]
         ],
     )

@@ -246,7 +246,7 @@ function qp3test(model::MOI.ModelLike, config::Config)
         model,
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
     )
-    MOI.supports_constraint(model, MOI.SingleVariable, MOI.GreaterThan{Float64})
+    MOI.supports_constraint(model, MOI.VariableIndex, MOI.GreaterThan{Float64})
     MOI.supports_constraint(
         model,
         MOI.ScalarAffineFunction{Float64},
@@ -264,11 +264,11 @@ function qp3test(model::MOI.ModelLike, config::Config)
         ),
         MOI.EqualTo(1.0),
     )
-    vc1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
-    # We test this after the creation of every `SingleVariable` constraint
+    vc1 = MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+    # We test this after the creation of every `VariableIndex` constraint
     # to ensure a good coverage of corner cases.
     @test vc1.value == x.value
-    vc2 = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
+    vc2 = MOI.add_constraint(model, y, MOI.GreaterThan(0.0))
     @test vc2.value == y.value
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     obj = MOI.ScalarQuadraticFunction(
@@ -628,7 +628,7 @@ function _qcp4test(model::MOI.ModelLike, config::Config, less_than::Bool)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
-    vc = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.EqualTo(1.0))
+    vc = MOI.add_constraint(model, y, MOI.EqualTo(1.0))
     @test vc.value == y.value
     cf = MOI.ScalarQuadraticFunction(
         MOI.ScalarQuadraticTerm.([2.0, 1.0, 2.0], [x, x, y], [x, y, y]),
@@ -731,9 +731,9 @@ function ncqcp1test(model::MOI.ModelLike, config::Config)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
-    vc1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    vc1 = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     @test vc1.value == x.value
-    vc2 = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.GreaterThan(1.0))
+    vc2 = MOI.add_constraint(model, y, MOI.GreaterThan(1.0))
     @test vc2.value == y.value
     cf = MOI.ScalarQuadraticFunction(
         [MOI.ScalarQuadraticTerm(1.0, x, y)],
@@ -800,9 +800,9 @@ function ncqcp2test(model::MOI.ModelLike, config::Config)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
-    vc1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+    vc1 = MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
     @test vc1.value == x.value
-    vc2 = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.GreaterThan(0.0))
+    vc2 = MOI.add_constraint(model, y, MOI.GreaterThan(0.0))
     @test vc2.value == y.value
     cf = MOI.ScalarQuadraticFunction(
         [MOI.ScalarQuadraticTerm(1.0, x, y)],
@@ -881,7 +881,7 @@ function socp1test(model::MOI.ModelLike, config::Config)
     )
     @test MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{Float64},
     )
     MOI.empty!(model)
@@ -918,13 +918,13 @@ function socp1test(model::MOI.ModelLike, config::Config)
         ) == 1
     end
     bound =
-        MOI.add_constraint(model, MOI.SingleVariable(t), MOI.GreaterThan(0.0))
+        MOI.add_constraint(model, t, MOI.GreaterThan(0.0))
     @test bound.value == t.value
     if config.query_number_of_constraints
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.GreaterThan{Float64},
             }(),
         ) == 1

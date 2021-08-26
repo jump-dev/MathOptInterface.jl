@@ -80,7 +80,7 @@ function bridge_constraint(
     rsoc_constraints =
         Vector{MOI.ConstraintIndex{G,MOI.RotatedSecondOrderCone}}(undef, N - 1)
     xij = MOI.add_variables(model, N - 1)
-    xl1 = MOI.SingleVariable(xij[1])
+    xl1 = xij[1]
     sN = one(T) / sqrt(N)
     _getx(i)::SG = i > n ? sN * xl1 : f_scalars[1+i]
 
@@ -101,10 +101,10 @@ function bridge_constraint(
                 a = _getx(2j - 1)
                 b = _getx(2j)
             else
-                a = convert(SG, MOI.SingleVariable(xij[offset_next+2j-1]))
-                b = convert(SG, MOI.SingleVariable(xij[offset_next+2j]))
+                a = convert(SG, xij[offset_next+2j-1])
+                b = convert(SG, xij[offset_next+2j])
             end
-            c = MOI.SingleVariable(xij[offset+j])
+            c = xij[offset+j]
             rsoc_constraints[offset+j] = MOI.add_constraint(
                 model,
                 MOIU.operate(vcat, T, a, b, c),
@@ -151,9 +151,9 @@ function concrete_bridge_type(
     ::Type{MOI.GeometricMeanCone},
 ) where {T}
     S = MOIU.scalar_type(H)
-    A = MOIU.promote_operation(*, T, T, MOI.SingleVariable)
+    A = MOIU.promote_operation(*, T, T, MOI.VariableIndex)
     F = MOIU.promote_operation(+, T, S, A)
-    G = MOIU.promote_operation(vcat, T, A, S, MOI.SingleVariable)
+    G = MOIU.promote_operation(vcat, T, A, S, MOI.VariableIndex)
     return GeoMeanBridge{T,F,G,H}
 end
 

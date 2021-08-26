@@ -59,7 +59,7 @@ function test_objective_FEASIBILITY_SENSE_clears_objective(
 )
     @requires _supports(config, MOI.optimize!)
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
@@ -103,7 +103,7 @@ function test_objective_get_ObjectiveFunction_ScalarAffineFunction(
     MOI.set(model, obj_attr, f)
     @test_throws(
         InexactError,
-        MOI.get(model, MOI.ObjectiveFunction{MOI.SingleVariable}()),
+        MOI.get(model, MOI.ObjectiveFunction{MOI.VariableIndex}()),
     )
     obj_fun = MOI.get(model, obj_attr)
     @test obj_fun ≈ f
@@ -137,7 +137,7 @@ function test_objective_ObjectiveFunction_constant(
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 1.0)
     MOI.set(model, obj_attr, f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     _test_model_solution(
         model,
         config;
@@ -207,32 +207,32 @@ function setup_test(
 end
 
 """
-    test_objective_ObjectiveFunction_SingleVariable(
+    test_objective_ObjectiveFunction_VariableIndex(
         model::MOI.ModelLike,
         config::Config,
     )
 
-Test SingleVariable objective,  if `config.solve=true` confirm that it
+Test VariableIndex objective,  if `config.solve=true` confirm that it
 solves correctly, and if `config.duals=true`, check that the duals are computed
 correctly.
 """
-function test_objective_ObjectiveFunction_SingleVariable(
+function test_objective_ObjectiveFunction_VariableIndex(
     model::MOI.ModelLike,
     config::Config,
 )
-    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     x = MOI.add_variable(model)
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
+        MOI.ObjectiveFunction{MOI.VariableIndex}(),
+        x,
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     _test_attribute_value_type(model, MOI.ObjectiveFunctionType())
     _test_attribute_value_type(
         model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
+        MOI.ObjectiveFunction{MOI.VariableIndex}(),
     )
     _test_model_solution(
         model,
@@ -246,7 +246,7 @@ function test_objective_ObjectiveFunction_SingleVariable(
 end
 
 function setup_test(
-    ::typeof(test_objective_ObjectiveFunction_SingleVariable),
+    ::typeof(test_objective_ObjectiveFunction_VariableIndex),
     model::MOIU.MockOptimizer,
     ::Config,
 )
@@ -283,13 +283,13 @@ function test_objective_qp_ObjectiveFunction_edge_cases(
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     vc1 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x[1]),
+        x[1],
         MOI.GreaterThan(1.0),
     )
     @test vc1.value == x[1].value
     vc2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x[2]),
+        x[2],
         MOI.GreaterThan(2.0),
     )
     @test vc2.value == x[2].value
@@ -419,13 +419,13 @@ function test_objective_qp_ObjectiveFunction_zero_ofdiag(
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     vc1 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x[1]),
+        x[1],
         MOI.GreaterThan(1.0),
     )
     @test vc1.value == x[1].value
     vc2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x[2]),
+        x[2],
         MOI.GreaterThan(2.0),
     )
     @test vc2.value == x[2].value
@@ -481,7 +481,7 @@ function test_objective_ObjectiveFunction_duplicate_terms(
     config::Config,
 )
     x = MOI.add_variable(model)
-    c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     @test c.value == x.value
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(
@@ -542,7 +542,7 @@ end
     test_objective_incorrect_modifications(model::MOI.ModelLike, config::Config)
 
 Test that constraint sets cannot be set for the wrong set type, and that
-SingleVariable functions cannot be modified.
+VariableIndex functions cannot be modified.
 """
 function test_objective_incorrect_modifications(model::MOI.ModelLike, ::Config)
     @requires MOI.supports_constraint(
@@ -562,7 +562,7 @@ function test_objective_incorrect_modifications(model::MOI.ModelLike, ::Config)
     )
     @test_throws(
         ArgumentError,
-        MOI.set(model, MOI.ConstraintFunction(), c, MOI.SingleVariable(x)),
+        MOI.set(model, MOI.ConstraintFunction(), c, x),
     )
     return
 end

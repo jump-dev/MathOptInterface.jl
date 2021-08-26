@@ -43,7 +43,7 @@ struct _ParsedVectorQuadraticFunction
     constant::Vector{Float64}
 end
 
-struct _ParsedSingleVariable
+struct _ParsedVariableIndex
     variable::Symbol
 end
 
@@ -54,7 +54,7 @@ end
 # Not written with any considerations for performance
 function _parse_function(ex)
     if isa(ex, Symbol)
-        return _ParsedSingleVariable(ex)
+        return _ParsedVariableIndex(ex)
     elseif isexpr(ex, :vect)
         if all(s -> isa(s, Symbol), ex.args)
             return _ParsedVectorOfVariables(copy(ex.args))
@@ -64,7 +64,7 @@ function _parse_function(ex)
             quadratic_terms = _ParsedVectorQuadraticTerm[]
             constant = Float64[]
             for (outindex, f) in enumerate(singlefunctions)
-                if isa(f, _ParsedSingleVariable)
+                if isa(f, _ParsedVariableIndex)
                     push!(
                         affine_terms,
                         _ParsedVectorAffineTerm(
@@ -227,7 +227,7 @@ for typename in [
     :_ParsedScalarQuadraticFunction,
     :_ParsedVectorQuadraticTerm,
     :_ParsedVectorQuadraticFunction,
-    :_ParsedSingleVariable,
+    :_ParsedVariableIndex,
     :_ParsedVectorOfVariables,
 ]
     moiname = Meta.parse(replace(string(typename), "_Parsed" => "MOI."))
@@ -283,7 +283,7 @@ Special labels are:
  - maxobjectives
 Everything else denotes a constraint with a name.
 
-Do not name `SingleVariable` constraints.
+Do not name `VariableIndex` constraints.
 
 ## Exceptions
 
@@ -334,7 +334,7 @@ function loadfromstring!(model, s)
                 throw(MOI.UnsupportedConstraint{F,S}())
             end
             cindex = MOI.add_constraint(model, f, set)
-            if F != MOI.SingleVariable
+            if F != MOI.VariableIndex
                 MOI.set(model, MOI.ConstraintName(), cindex, String(label))
             end
         end

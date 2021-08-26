@@ -182,9 +182,9 @@ function test_variable_solve_with_upperbound(
     config::Config,
 )
     x = MOI.add_variable(model)
-    c1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.0))
+    c1 = MOI.add_constraint(model, x, MOI.LessThan(1.0))
     @test x.value == c1.value
-    c2 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+    c2 = MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
     @test x.value == c2.value
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
@@ -212,8 +212,8 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [1]),
             MOI.FEASIBLE_POINT,
-            (MOI.SingleVariable, MOI.LessThan{Float64}) => [-2.0],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0.0],
+            (MOI.VariableIndex, MOI.LessThan{Float64}) => [-2.0],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [0.0],
         ),
     )
     model.eval_variable_constraint_dual = false
@@ -230,8 +230,8 @@ function test_variable_solve_with_lowerbound(
     config::Config,
 )
     x = MOI.add_variable(model)
-    c1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
-    c2 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(2.0))
+    c1 = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
+    c2 = MOI.add_constraint(model, x, MOI.LessThan(2.0))
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -258,8 +258,8 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [1]),
             MOI.FEASIBLE_POINT,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0],
-            (MOI.SingleVariable, MOI.LessThan{Float64}) => [0.0],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0],
+            (MOI.VariableIndex, MOI.LessThan{Float64}) => [0.0],
         ),
     )
     model.eval_variable_constraint_dual = false
@@ -279,9 +279,9 @@ function test_variable_solve_Integer_with_lower_bound(
     config::Config,
 )
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.5))
+    MOI.add_constraint(model, x, MOI.GreaterThan(1.5))
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.Integer())
+    MOI.add_constraint(model, x, MOI.Integer())
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     _test_model_solution(
@@ -319,9 +319,9 @@ function test_variable_solve_Integer_with_upper_bound(
     config::Config,
 )
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(1.5))
+    MOI.add_constraint(model, x, MOI.LessThan(1.5))
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(-2.0, x)], 0.0)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.Integer())
+    MOI.add_constraint(model, x, MOI.Integer())
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     _test_model_solution(
@@ -359,9 +359,9 @@ function test_variable_solve_ZeroOne_with_upper_bound(
     config::Config,
 )
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(2.0))
+    MOI.add_constraint(model, x, MOI.LessThan(2.0))
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(-2.0, x)], 0.0)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.ZeroOne())
+    MOI.add_constraint(model, x, MOI.ZeroOne())
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     _test_model_solution(
@@ -399,9 +399,9 @@ function test_variable_solve_ZeroOne_with_0_upper_bound(
     config::Config,
 )
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(0.0))
+    MOI.add_constraint(model, x, MOI.LessThan(0.0))
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.ZeroOne())
+    MOI.add_constraint(model, x, MOI.ZeroOne())
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     _test_model_solution(

@@ -50,11 +50,11 @@ function bridge_constraint(
 
     fq = MOI.ScalarQuadraticFunction(q_terms, a_terms, zero(T))
     quad = MOI.add_constraint(model, fq, MOI.LessThan(zero(T)))
-    # ScalarAffineFunction's are added instead of SingleVariable's
-    # because models can only have one SingleVariable per variable.
-    # Hence, adding a SingleVariable constraint here could conflict with
-    # a user defined SingleVariable
-    fp = convert(MOI.ScalarAffineFunction{T}, MOI.SingleVariable(t))
+    # ScalarAffineFunction's are added instead of VariableIndex's
+    # because models can only have one VariableIndex per variable.
+    # Hence, adding a VariableIndex constraint here could conflict with
+    # a user defined VariableIndex
+    fp = convert(MOI.ScalarAffineFunction{T}, t)
     var_pos = MOI.add_constraint(model, fp, MOI.GreaterThan(zero(T)))
 
     return SOCtoNonConvexQuadBridge(quad, [var_pos], vis)
@@ -110,13 +110,13 @@ function bridge_constraint(
 
     fq = MOI.ScalarQuadraticFunction(q_terms, a_terms, zero(T))
     quad = MOI.add_constraint(model, fq, MOI.LessThan(zero(T)))
-    # ScalarAffineFunction's are added instead of SingleVariable's
-    # because models can only have one SingleVariable per variable.
-    # Hence, adding a SingleVariable constraint here could conflict with
-    # a user defined SingleVariable
-    fp1 = convert(MOI.ScalarAffineFunction{T}, MOI.SingleVariable(t))
+    # ScalarAffineFunction's are added instead of VariableIndex's
+    # because models can only have one VariableIndex per variable.
+    # Hence, adding a VariableIndex constraint here could conflict with
+    # a user defined VariableIndex
+    fp1 = convert(MOI.ScalarAffineFunction{T}, t)
     var_pos1 = MOI.add_constraint(model, fp1, MOI.GreaterThan(zero(T)))
-    fp2 = convert(MOI.ScalarAffineFunction{T}, MOI.SingleVariable(u))
+    fp2 = convert(MOI.ScalarAffineFunction{T}, u)
     var_pos2 = MOI.add_constraint(model, fp2, MOI.GreaterThan(zero(T)))
 
     return RSOCtoNonConvexQuadBridge(quad, [var_pos1, var_pos2], vis)

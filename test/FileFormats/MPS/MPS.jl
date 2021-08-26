@@ -110,8 +110,8 @@ function test_maximization()
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
+        MOI.ObjectiveFunction{MOI.VariableIndex}(),
+        x,
     )
     @test sprint(MPS.write_columns, model, ["x"], Dict(x => "x")) ==
           "COLUMNS\n    x         OBJ       1\n"

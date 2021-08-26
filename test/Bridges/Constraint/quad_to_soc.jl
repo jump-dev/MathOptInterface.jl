@@ -160,7 +160,7 @@ function test_fill_reducing_permutation()
     bridge = MOI.Bridges.Constraint.QuadtoSOC{Float64}(model)
     x = MOI.add_variables(bridge, 3)
     Q = Float64[2 1 1; 1 2 0; 1 0 2]
-    f = 0.5 * MOI.SingleVariable.(x)' * Q * MOI.SingleVariable.(x)
+    f = 0.5 * x' * Q * x
     MOI.add_constraint(bridge, f, MOI.LessThan(2.0))
     indices = MOI.get(
         model,

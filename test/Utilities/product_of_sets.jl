@@ -100,7 +100,7 @@ function test_scalar_NumberOfConstraints()
     MOI.Utilities.final_touch(sets)
     @test MOI.get(
         sets,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}(),
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.ZeroOne}(),
     ) == 0
     for (x, S) in zip([2, 1, 0, 0], MOI.Utilities.set_types(sets))
         @test MOI.get(

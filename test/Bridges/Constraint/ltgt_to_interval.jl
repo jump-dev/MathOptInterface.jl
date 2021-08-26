@@ -30,7 +30,7 @@ function test_GreaterToInterval()
         config,
         include = [
             "test_basic_$(F)_GreaterThanThan" for F in [
-                "SingleVariable",
+                "VariableIndex",
                 "ScalarAffineFunction",
                 "ScalarQuadraticFunction",
             ]
@@ -84,7 +84,7 @@ function test_LessToInterval()
         config,
         include = [
             "test_basic_$(F)_LessThan" for F in [
-                "SingleVariable",
+                "VariableIndex",
                 "ScalarAffineFunction",
                 "ScalarQuadraticFunction",
             ]

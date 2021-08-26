@@ -65,7 +65,7 @@ function test_scalar_slack()
         ci,
         2,
         (
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}, 0),
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}, 0),
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
         ),
     )
@@ -121,8 +121,8 @@ function test_scalar_slack()
             [0.5, 0.5, 1.0, 1.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [1, 0],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1],
-            (MOI.SingleVariable, MOI.LessThan{Float64}) => [0],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [1],
+            (MOI.VariableIndex, MOI.LessThan{Float64}) => [0],
         ),
     )
     MOI.Test.test_linear_transform(bridged_mock, config)
@@ -153,8 +153,8 @@ function test_scalar_slack()
     loc = MOI.get(mock, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 3
     @test (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) in loc
-    @test (MOI.SingleVariable, MOI.LessThan{Float64}) in loc
-    @test (MOI.SingleVariable, MOI.GreaterThan{Float64}) in loc
+    @test (MOI.VariableIndex, MOI.LessThan{Float64}) in loc
+    @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in loc
     for T in [Int, Float64], S in [MOI.GreaterThan{T}, MOI.GreaterThan{T}]
         for F in [MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}]
             @test MOI.Bridges.added_constraint_types(

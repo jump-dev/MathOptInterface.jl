@@ -41,7 +41,7 @@ check that the attribute  `DualStatus` is `MOI.FEASIBLE_POINT`. Then for each
         c: x >= 1.0
     \"\"\")
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.get(model, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}}, "c")
+    c = MOI.get(model, MOI.ConstraintIndex{MOI.VariableIndex, MOI.GreaterThan{Float64}}, "c")
     test_model_solution(model, config;
         objective_value   = 3.0,
         variable_primal   = [(x, 1.0)],

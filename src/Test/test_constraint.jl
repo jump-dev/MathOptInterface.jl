@@ -405,15 +405,15 @@ function test_constraint_qcp_duplicate_diagonal(
     )
     vc1 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x[1]),
+        x[1],
         MOI.GreaterThan(0.5),
     )
-    # We test this after the creation of every `SingleVariable` constraint
+    # We test this after the creation of every `VariableIndex` constraint
     # to ensure a good coverage of corner cases.
     @test vc1.value == x[1].value
     vc2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x[2]),
+        x[2],
         MOI.GreaterThan(0.5),
     )
     @test vc2.value == x[2].value
@@ -477,13 +477,13 @@ function test_constraint_qcp_duplicate_off_diagonal(
     )
     vc1 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x[1]),
+        x[1],
         MOI.GreaterThan{Float64}(0.5),
     )
     @test vc1.value == x[1].value
     vc2 = MOI.add_constraint(
         model,
-        MOI.SingleVariable(x[2]),
+        x[2],
         MOI.GreaterThan{Float64}(0.5),
     )
     @test vc2.value == x[2].value
@@ -531,7 +531,7 @@ end
 Test a problem with a bounded ZeroOne variable.
 """
 function test_constraint_ZeroOne_bounds(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     MOIU.loadfromstring!(
         model,
         """
@@ -571,7 +571,7 @@ end
 Test a problem with a ZeroOne and binding fractional upper bound.
 """
 function test_constraint_ZeroOne_bounds_2(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     MOIU.loadfromstring!(
         model,
         """
@@ -611,7 +611,7 @@ end
 Test a problem with a ZeroOne and infeasible fractional bounds.
 """
 function test_constraint_ZeroOne_bounds_3(model::MOI.ModelLike, config::Config)
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     @requires _supports(config, MOI.optimize!)
     MOIU.loadfromstring!(
         model,
@@ -662,7 +662,7 @@ function test_constraint_PrimalStart_DualStart_SecondOrderCone(
     )
     @requires _supports(config, MOI.optimize!)
     x = MOI.add_variable(model)
-    fx = MOI.SingleVariable(x)
+    fx = x
     o = one(T)
     c = MOI.add_constraint(
         model,

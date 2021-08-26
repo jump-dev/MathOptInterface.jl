@@ -41,7 +41,7 @@ function test_optimizer_solve_with_result()
     v = MOI.add_variables(optimizer, 2)
     c1 = MOI.add_constraint(
         optimizer,
-        MOI.SingleVariable(v[1]),
+        v[1],
         MOI.GreaterThan(1.0),
     )
     soc = MOI.add_constraint(
@@ -51,8 +51,8 @@ function test_optimizer_solve_with_result()
     )
     MOI.set(
         optimizer,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(v[1]),
+        MOI.ObjectiveFunction{MOI.VariableIndex}(),
+        v[1],
     )
     MOI.set(optimizer, MOI.ResultCount(), 1)
     @test_throws(
@@ -179,7 +179,7 @@ end
 function test_MockConstraintAttribute()
     mock = MOIU.MockOptimizer(MOIU.Model{Int}())
     x = MOI.add_variable(mock)
-    c = MOI.add_constraint(mock, MOI.SingleVariable(x), MOI.LessThan(0))
+    c = MOI.add_constraint(mock, x, MOI.LessThan(0))
     MOI.set(mock, MOI.Utilities.MockConstraintAttribute(), c, 1)
     @test MOI.get(mock, MOI.Utilities.MockConstraintAttribute(), c) == 1
     return

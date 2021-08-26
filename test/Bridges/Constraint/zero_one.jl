@@ -26,15 +26,15 @@ function test_ZeroOne()
     bridged_mock = MOI.Bridges.Constraint.ZeroOne{Float64}(mock)
 
     bridge_type = MOI.Bridges.Constraint.ZeroOneBridge{Float64}
-    @test MOI.supports_constraint(bridge_type, MOI.SingleVariable, MOI.ZeroOne)
+    @test MOI.supports_constraint(bridge_type, MOI.VariableIndex, MOI.ZeroOne)
     @test MOI.Bridges.Constraint.concrete_bridge_type(
         bridge_type,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.ZeroOne,
     ) == bridge_type
 
     @test MOI.supports(bridged_mock, MOI.ConstraintPrimalStart(), bridge_type)
-    MOI.Test.test_basic_SingleVariable_ZeroOne(bridged_mock, config)
+    MOI.Test.test_basic_VariableIndex_ZeroOne(bridged_mock, config)
     MOI.empty!(bridged_mock)
     MOI.Utilities.set_mock_optimize!(
         mock,
@@ -45,7 +45,7 @@ function test_ZeroOne()
     ci = first(
         MOI.get(
             bridged_mock,
-            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.ZeroOne}(),
+            MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.ZeroOne}(),
         ),
     )
     @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), ci) == 1
@@ -54,8 +54,8 @@ function test_ZeroOne()
         ci,
         5,
         (
-            (MOI.SingleVariable, MOI.Integer, 0),
-            (MOI.SingleVariable, MOI.Interval{Float64}, 0),
+            (MOI.VariableIndex, MOI.Integer, 0),
+            (MOI.VariableIndex, MOI.Interval{Float64}, 0),
         ),
         num_bridged = 5,
     )
@@ -78,7 +78,7 @@ function test_ZeroOne()
     ci = first(
         MOI.get(
             bridged_mock,
-            MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.ZeroOne}(),
+            MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.ZeroOne}(),
         ),
     )
     for attr in [MOI.ConstraintPrimalStart()]

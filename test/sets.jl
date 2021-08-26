@@ -91,7 +91,7 @@ function test_sets_broadcast()
     x = MOI.add_variables(model, 3)
     cis = MOI.add_constraint.(model, x, MOI.EqualTo(0.0))
     @test cis isa
-          Vector{MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}}
+          Vector{MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}}
     @test length(cis) == 3
 end
 

@@ -35,7 +35,7 @@ function bridge_constraint(
         MOIU.operate(
             vcat,
             T,
-            MOIU.operate(-, T, MOI.SingleVariable(y[i])),
+            MOIU.operate(-, T, y[i]),
             f_scalars[w_start+i],
             f_scalars[1+i],
         ) for i in 1:v_dim
@@ -75,7 +75,7 @@ function concrete_bridge_type(
     G = MOIU.promote_operation(
         vcat,
         T,
-        MOIU.promote_operation(-, T, MOI.SingleVariable),
+        MOIU.promote_operation(-, T, MOI.VariableIndex),
         S,
     )
     return RelativeEntropyBridge{T,F,G,H}

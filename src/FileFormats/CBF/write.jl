@@ -258,7 +258,7 @@ end
 function _write_INT(io::IO, model::Model)
     cons = MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Integer}(),
+        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.Integer}(),
     )
     if isempty(cons)
         return

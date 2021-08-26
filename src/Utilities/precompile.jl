@@ -12,7 +12,7 @@ function _precompile_()
         MOI.Semicontinuous{T},
     )
     scalar_functions = (
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
     )

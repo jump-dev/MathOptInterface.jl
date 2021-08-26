@@ -1,6 +1,6 @@
 using Test
 
-variable_function_type(::Type{<:MOI.AbstractScalarSet}) = MOI.SingleVariable
+variable_function_type(::Type{<:MOI.AbstractScalarSet}) = MOI.VariableIndex
 variable_function_type(::Type{<:MOI.AbstractVectorSet}) = MOI.VectorOfVariables
 
 """
@@ -175,7 +175,7 @@ end
 # Functions
 
 function map_indices(index_map::F, f::MOI.SingleVariable) where {F<:Function}
-    return MOI.SingleVariable(index_map(f.variable))
+    return index_map(f.variable)
 end
 
 function map_indices(index_map::F, f::MOI.VectorOfVariables) where {F<:Function}
@@ -233,7 +233,7 @@ end
     substitute_variables(variable_map::Function, x)
 
 Substitute any [`MOI.VariableIndex`](@ref) in `x` by `variable_map(x)`. The
-`variable_map` function returns either [`MOI.SingleVariable`](@ref) or
+`variable_map` function returns either [`MOI.VariableIndex`](@ref) or
 [`MOI.ScalarAffineFunction`](@ref), see [`eval_variables`](@ref) for a similar
 function where `variable_map` returns a number.
 
@@ -272,7 +272,7 @@ function substitute_variables(
     vi::MOI.VariableIndex,
 ) where {F<:Function}
     func = variable_map(vi)
-    if func != MOI.SingleVariable(vi)
+    if func != vi
         error("Cannot substitute `$vi` as it is bridged into `$func`.")
     end
     return vi
@@ -395,7 +395,7 @@ end
 Type of functions obtained by indexing objects obtained by calling `eachscalar`
 on functions of type `F`.
 """
-scalar_type(::Type{MOI.VectorOfVariables}) = MOI.SingleVariable
+scalar_type(::Type{MOI.VectorOfVariables}) = MOI.VariableIndex
 
 function scalar_type(::Type{MOI.VectorAffineFunction{T}}) where {T}
     return MOI.ScalarAffineFunction{T}
@@ -500,7 +500,7 @@ function Base.length(it::ScalarFunctionIterator{<:MOI.AbstractVectorFunction})
 end
 
 function Base.eltype(::ScalarFunctionIterator{MOI.VectorOfVariables})
-    return MOI.SingleVariable
+    return MOI.VariableIndex
 end
 
 function Base.eltype(
@@ -525,7 +525,7 @@ function Base.getindex(
     it::ScalarFunctionIterator{MOI.VectorOfVariables},
     output_index::Integer,
 )
-    return MOI.SingleVariable(it.f.variables[output_index])
+    return it.f.variables[output_index]
 end
 
 function Base.getindex(
@@ -680,7 +680,7 @@ function unsafe_add(
     return T(t1.output_index, scalar_term)
 end
 
-is_canonical(::Union{MOI.SingleVariable,MOI.VectorOfVariables}) = true
+is_canonical(::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = true
 
 """
     is_canonical(f::Union{ScalarAffineFunction, VectorAffineFunction})
@@ -777,7 +777,7 @@ is `ScalarAffineFunction([x, y], [-1, 2], 5)`.
 """
 canonical(f::MOI.AbstractFunction) = canonicalize!(copy(f))
 
-canonicalize!(f::Union{MOI.VectorOfVariables,MOI.SingleVariable}) = f
+canonicalize!(f::Union{MOI.VectorOfVariables,MOI.VariableIndex}) = f
 
 """
     canonicalize!(f::Union{ScalarAffineFunction, VectorAffineFunction})
@@ -887,7 +887,7 @@ end
 function test_constraintnames_equal(model, constraintnames)
     seen_name = Dict(name => false for name in constraintnames)
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        if F == MOI.SingleVariable
+        if F == MOI.VariableIndex
             continue
         end
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
@@ -964,7 +964,7 @@ function _is_constant(f::MOI.ScalarQuadraticFunction)
     return isempty(f.affine_terms) && isempty(f.quadratic_terms)
 end
 
-Base.iszero(::MOI.SingleVariable) = false
+Base.iszero(::MOI.VariableIndex) = false
 
 function Base.iszero(
     f::Union{MOI.ScalarAffineFunction,MOI.ScalarQuadraticFunction},
@@ -972,7 +972,7 @@ function Base.iszero(
     return iszero(MOI.constant(f)) && _is_constant(canonical(f))
 end
 
-Base.isone(::MOI.SingleVariable) = false
+Base.isone(::MOI.VariableIndex) = false
 
 function Base.isone(
     f::Union{MOI.ScalarAffineFunction,MOI.ScalarQuadraticFunction},
@@ -992,7 +992,7 @@ end
 Test that `model1` and `model2` are identical using `variablenames` as as keys
 for the variable names and `constraintnames` as keys for the constraint names.
 
-In addition, it checks that there is a SingleVariable-in-Set constraint for each
+In addition, it checks that there is a VariableIndex-in-Set constraint for each
 `(name, set)` tuple in `single_variable_constraints`, where `name` is the name
 of the corresponding variable.
 
@@ -1007,11 +1007,11 @@ function test_models_equal(
 )
     for (x_name, set) in single_variable_constraints
         x1 = MOI.get(model1, MOI.VariableIndex, x_name)
-        ci1 = MOI.ConstraintIndex{MOI.SingleVariable,typeof(set)}(x1.value)
+        ci1 = MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(x1.value)
         @test MOI.is_valid(model1, ci1)
         @test MOI.get(model1, MOI.ConstraintSet(), ci1) == set
         x2 = MOI.get(model2, MOI.VariableIndex, x_name)
-        ci2 = MOI.ConstraintIndex{MOI.SingleVariable,typeof(set)}(x2.value)
+        ci2 = MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(x2.value)
         @test MOI.is_valid(model2, ci2)
         @test MOI.get(model2, MOI.ConstraintSet(), ci2) == set
     end
@@ -1091,7 +1091,7 @@ function filter_variables end
 function filter_variables(keep::Function, f::MOI.SingleVariable)
     if !keep(f.variable)
         error(
-            "Cannot remove variable from a `SingleVariable` function of the",
+            "Cannot remove variable from a `VariableIndex` function of the",
             " same variable.",
         )
     end
@@ -1623,19 +1623,19 @@ end
 
 # Functions convertible to a ScalarAffineFunction
 const ScalarAffineLike{T} =
-    Union{T,MOI.SingleVariable,MOI.ScalarAffineFunction{T}}
+    Union{T,MOI.VariableIndex,MOI.ScalarAffineFunction{T}}
 # Functions convertible to a ScalarQuadraticFunction
 const ScalarQuadraticLike{T} =
     Union{ScalarAffineLike{T},MOI.ScalarQuadraticFunction{T}}
 
 # `ScalarLike` for which `T` is defined to avoid defining, e.g.,
-# `+(::SingleVariable, ::Any)` which should rather be
-# `+(::SingleVariable, ::Number)`.
+# `+(::VariableIndex, ::Any)` which should rather be
+# `+(::VariableIndex, ::Number)`.
 const TypedScalarLike{T} =
     Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}
 # Used for overloading Base operator functions so `T` is not in the union to
 # avoid overloading e.g. `+(::Float64, ::Float64)`
-const ScalarLike{T} = Union{MOI.SingleVariable,TypedScalarLike{T}}
+const ScalarLike{T} = Union{MOI.VariableIndex,TypedScalarLike{T}}
 
 # Functions convertible to a VectorAffineFunction
 const VectorAffineLike{T} =
@@ -1712,7 +1712,7 @@ function operate!(
     op::Union{typeof(+),typeof(-)},
     ::Type{T},
     f::MOI.ScalarAffineFunction{T},
-    g::Union{T,MOI.SingleVariable,MOI.ScalarAffineFunction{T}},
+    g::Union{T,MOI.VariableIndex,MOI.ScalarAffineFunction{T}},
 ) where {T}
     return MA.mutable_operate!(op, f, g)
 end
@@ -1742,7 +1742,7 @@ function operate!(
     f::MOI.ScalarQuadraticFunction{T},
     g::Union{
         T,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
     },
@@ -1890,7 +1890,7 @@ function Base.:+(
     return operate(+, T, α, arg, args...)
 end
 
-function Base.:+(α::Number, f::MOI.SingleVariable)
+function Base.:+(α::Number, f::MOI.VariableIndex)
     return operate(+, typeof(α), α, f)
 end
 
@@ -1898,7 +1898,7 @@ function Base.:+(f::TypedScalarLike{T}, α::T) where {T}
     return operate(+, T, f, α)
 end
 
-function Base.:+(f::MOI.SingleVariable, α::Number)
+function Base.:+(f::MOI.VariableIndex, α::Number)
     return operate(+, typeof(α), f, α)
 end
 
@@ -1910,7 +1910,7 @@ function Base.:-(f::TypedScalarLike{T}, α::T) where {T}
     return operate(-, T, f, α)
 end
 
-function Base.:-(f::MOI.SingleVariable, α::Number)
+function Base.:-(f::MOI.VariableIndex, α::Number)
     return operate(-, typeof(α), f, α)
 end
 
@@ -1918,7 +1918,7 @@ function Base.:-(α::T, f::TypedScalarLike{T}) where {T}
     return operate(-, T, α, f)
 end
 
-function Base.:-(α::Number, f::MOI.SingleVariable)
+function Base.:-(α::Number, f::MOI.VariableIndex)
     return operate(-, typeof(α), α, f)
 end
 
@@ -2349,7 +2349,7 @@ function promote_operation(
     ::typeof(*),
     ::Type{T},
     ::Type{T},
-    ::Type{<:Union{MOI.SingleVariable,MOI.ScalarAffineFunction{T}}},
+    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
 ) where {T}
     return MOI.ScalarAffineFunction{T}
 end
@@ -2357,7 +2357,7 @@ end
 function promote_operation(
     ::typeof(*),
     ::Type{T},
-    ::Type{<:Union{MOI.SingleVariable,MOI.ScalarAffineFunction{T}}},
+    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
     ::Type{T},
 ) where {T}
     return MOI.ScalarAffineFunction{T}
@@ -2384,13 +2384,13 @@ end
 function promote_operation(
     ::typeof(*),
     ::Type{T},
-    ::Type{<:Union{MOI.SingleVariable,MOI.ScalarAffineFunction{T}}},
-    ::Type{<:Union{MOI.SingleVariable,MOI.ScalarAffineFunction{T}}},
+    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
+    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
 ) where {T}
     return MOI.ScalarQuadraticFunction{T}
 end
 
-function operate!(::typeof(*), ::Type{T}, f::MOI.SingleVariable, α::T) where {T}
+function operate!(::typeof(*), ::Type{T}, f::MOI.VariableIndex, α::T) where {T}
     return operate(*, T, α, f)
 end
 
@@ -2419,7 +2419,7 @@ end
 function operate(
     ::typeof(*),
     ::Type{T},
-    f::Union{MOI.SingleVariable,MOI.VectorOfVariables},
+    f::Union{MOI.VariableIndex,MOI.VectorOfVariables},
     α::T,
 ) where {T}
     return operate(*, T, α, f)
@@ -2552,11 +2552,11 @@ function Base.:*(
     return operate(*, T, f, g, args...)
 end
 
-function Base.:*(f::Number, g::Union{MOI.SingleVariable,MOI.VectorOfVariables})
+function Base.:*(f::Number, g::Union{MOI.VariableIndex,MOI.VectorOfVariables})
     return operate(*, typeof(f), f, g)
 end
 
-function Base.:*(f::Union{MOI.SingleVariable,MOI.VectorOfVariables}, g::Number)
+function Base.:*(f::Union{MOI.VariableIndex,MOI.VectorOfVariables}, g::Number)
     return operate(*, typeof(g), f, g)
 end
 
@@ -2616,7 +2616,7 @@ LinearAlgebra.symmetric(f::ScalarLike, ::Symbol) = f
 function promote_operation(
     ::typeof(/),
     ::Type{T},
-    ::Type{<:Union{MOI.SingleVariable,MOI.ScalarAffineFunction{T}}},
+    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
     ::Type{T},
 ) where {T}
     return MOI.ScalarAffineFunction{T}
@@ -2631,7 +2631,7 @@ function promote_operation(
     return MOI.ScalarQuadraticFunction{T}
 end
 
-function operate!(::typeof(/), ::Type{T}, f::MOI.SingleVariable, α::T) where {T}
+function operate!(::typeof(/), ::Type{T}, f::MOI.VariableIndex, α::T) where {T}
     return operate(/, T, f, α)
 end
 
@@ -2683,7 +2683,7 @@ end
 function operate(
     ::typeof(/),
     ::Type{T},
-    f::Union{MOI.SingleVariable,MOI.VectorOfVariables},
+    f::Union{MOI.VariableIndex,MOI.VectorOfVariables},
     α::T,
 ) where {T}
     return operate(*, T, inv(α), f)
@@ -2693,7 +2693,7 @@ function Base.:/(f::TypedLike{T}, g::T) where {T}
     return operate(/, T, f, g)
 end
 
-function Base.:/(f::Union{MOI.SingleVariable,MOI.VectorOfVariables}, g::Number)
+function Base.:/(f::Union{MOI.VariableIndex,MOI.VectorOfVariables}, g::Number)
     return operate(/, typeof(g), f, g)
 end
 
@@ -2803,7 +2803,7 @@ end
 function promote_operation(
     ::typeof(vcat),
     ::Type{T},
-    ::Type{<:Union{MOI.SingleVariable,MOI.VectorOfVariables}}...,
+    ::Type{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}}...,
 ) where {T}
     return MOI.VectorOfVariables
 end
@@ -2811,7 +2811,7 @@ end
 function operate(
     ::typeof(vcat),
     ::Type{T},
-    funcs::Union{MOI.SingleVariable,MOI.VectorOfVariables}...,
+    funcs::Union{MOI.VariableIndex,MOI.VectorOfVariables}...,
 ) where {T}
     out_dim = sum(func -> output_dim(T, func), funcs)
     variables = Vector{MOI.VariableIndex}(undef, out_dim)
@@ -2821,7 +2821,7 @@ end
 
 number_of_affine_terms(::Type{T}, ::T) where {T} = 0
 
-number_of_affine_terms(::Type, ::MOI.SingleVariable) = 1
+number_of_affine_terms(::Type, ::MOI.VariableIndex) = 1
 
 number_of_affine_terms(::Type, f::MOI.VectorOfVariables) = length(f.variables)
 
@@ -2843,7 +2843,7 @@ function number_of_quadratic_terms(
     ::Type{T},
     ::Union{
         T,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.VectorOfVariables,
         MOI.ScalarAffineFunction{T},
         MOI.VectorAffineFunction{T},
@@ -2938,7 +2938,7 @@ function fill_terms(
     ::Int,
     ::Union{
         T,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.VectorOfVariables,
         MOI.ScalarAffineFunction{T},
         MOI.VectorAffineFunction{T},
@@ -2976,7 +2976,7 @@ function fill_constant(
     ::Vector{T},
     ::Int,
     ::Int,
-    ::Union{MOI.SingleVariable,MOI.VectorOfVariables},
+    ::Union{MOI.VariableIndex,MOI.VectorOfVariables},
 ) where {T}
     return
 end
@@ -3003,12 +3003,12 @@ function fill_constant(
 end
 
 """
-    vectorize(funcs::AbstractVector{MOI.SingleVariable})
+    vectorize(funcs::AbstractVector{MOI.VariableIndex})
 
 Returns the vector of scalar affine functions in the form of a
 `MOI.VectorAffineFunction{T}`.
 """
-function vectorize(funcs::AbstractVector{MOI.SingleVariable})
+function vectorize(funcs::AbstractVector{MOI.VariableIndex})
     vars = MOI.VariableIndex[func.variable for func in funcs]
     return MOI.VectorOfVariables(vars)
 end
@@ -3157,7 +3157,7 @@ end
 # Similar to `eachscalar` but faster, see
 # https://github.com/jump-dev/MathOptInterface.jl/issues/418
 function scalarize(f::MOI.VectorOfVariables, ignore_constants::Bool = false)
-    return MOI.SingleVariable.(f.variables)
+    return f.variables
 end
 
 function scalarize(
@@ -3227,7 +3227,7 @@ tol_default(T::Type{<:AbstractFloat}) = sqrt(eps(T))
 convert_approx(::Type{T}, func::T; kws...) where {T} = func
 
 function convert_approx(
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     func::MOI.ScalarAffineFunction{T};
     tol = tol_default(T),
 ) where {T}
@@ -3239,9 +3239,9 @@ function convert_approx(
            j -> j != i && abs(f.terms[j].coefficient) > tol,
            eachindex(f.terms),
        )
-        throw(InexactError(:convert_approx, MOI.SingleVariable, func))
+        throw(InexactError(:convert_approx, MOI.VariableIndex, func))
     end
-    return MOI.SingleVariable(f.terms[i].variable)
+    return f.terms[i].variable
 end
 
 function convert_approx(
@@ -3250,7 +3250,7 @@ function convert_approx(
     tol = tol_default(T),
 ) where {T}
     return MOI.VectorOfVariables([
-        convert_approx(MOI.SingleVariable, f, tol = tol).variable for
+        convert_approx(MOI.VariableIndex, f, tol = tol).variable for
         f in scalarize(func)
     ])
 end
@@ -3348,7 +3348,7 @@ function Base.:*(g::TypedLike{T}, β::T) where {T<:Number}
 end
 
 function is_coefficient_type(
-    ::Type{<:Union{MOI.SingleVariable,MOI.VectorOfVariables}},
+    ::Type{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
     ::Type,
 )
     return true
@@ -3394,24 +3394,22 @@ Base.real(f::TypedLike) = operate_coefficients(real, f)
 
 function MA.promote_operation(
     ::typeof(real),
-    T::Type{<:Union{MOI.SingleVariable,MOI.VectorOfVariables}},
+    T::Type{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
 )
     return T
 end
 
-Base.real(f::Union{MOI.SingleVariable,MOI.VectorOfVariables}) = f
+Base.real(f::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = f
 
 function promote_operation(
     ::typeof(imag),
     ::Type{T},
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
 ) where {T}
     return MOI.ScalarAffineFunction{T}
 end
 
-function operate(::typeof(imag), ::Type{T}, f::MOI.SingleVariable) where {T}
-    return zero(MOI.ScalarAffineFunction{T})
-end
+
 
 function promote_operation(
     ::typeof(imag),
@@ -3436,9 +3434,9 @@ Base.conj(f::TypedLike) = operate_coefficients(conj, f)
 
 function MA.promote_operation(
     ::typeof(conj),
-    T::Type{<:Union{MOI.SingleVariable,MOI.VectorOfVariables}},
+    T::Type{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
 )
     return T
 end
 
-Base.conj(f::Union{MOI.SingleVariable,MOI.VectorOfVariables}) = f
+Base.conj(f::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = f

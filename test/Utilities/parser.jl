@@ -24,7 +24,7 @@ end
 function test__parse_function()
     @test _struct_isequal(
         MOIU._parse_function(:x),
-        MOIU._ParsedSingleVariable(:x),
+        MOIU._ParsedVariableIndex(:x),
     )
     @test _struct_isequal(
         MOIU._parse_function(:([x, y, z])),
@@ -107,7 +107,7 @@ function test_one_variable()
     x = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), x, "x")
     bound =
-        MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+        MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
 
     model2 = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model2, s)

@@ -14,7 +14,7 @@ MOI.Test.runtests(
         "test_model_copy_to_UnsupportedAttribute",
         "test_model_copy_to_UnsupportedConstraint",
         "test_model_supports_constraint_ScalarAffineFunction_EqualTo",
-        "test_model_supports_constraint_SingleVariable_EqualTo",
+        "test_model_supports_constraint_VariableIndex_EqualTo",
         "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
     ],
     warn_unsupported = true,
@@ -33,7 +33,7 @@ MOI.Test.runtests(
         "test_model_copy_to_UnsupportedAttribute",
         "test_model_copy_to_UnsupportedConstraint",
         "test_model_supports_constraint_ScalarAffineFunction_EqualTo",
-        "test_model_supports_constraint_SingleVariable_EqualTo",
+        "test_model_supports_constraint_VariableIndex_EqualTo",
         "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
     ],
 )
