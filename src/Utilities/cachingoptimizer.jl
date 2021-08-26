@@ -249,16 +249,14 @@ function pass_nonvariable_constraints(
     dest::CachingOptimizer,
     src::MOI.ModelLike,
     idxmap::IndexMap,
-    constraint_types;
-    filter_constraints::Union{Nothing,Function} = nothing,
+    constraint_types,
 )
     dest.state == ATTACHED_OPTIMIZER && reset_optimizer(dest)
     return pass_nonvariable_constraints(
         dest.model_cache,
         src,
         idxmap,
-        constraint_types;
-        filter_constraints = filter_constraints,
+        constraint_types,
     )
 end
 function final_touch(m::CachingOptimizer, index_map)
