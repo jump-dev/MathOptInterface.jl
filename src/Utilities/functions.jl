@@ -13,8 +13,8 @@ function.
 """
 function eval_variables end
 
-function eval_variables(varval::Function, f::MOI.SingleVariable)
-    return varval(f.variable)
+function eval_variables(varval::Function, f::MOI.VariableIndex)
+    return varval(f)
 end
 
 function eval_variables(varval::Function, f::MOI.VectorOfVariables)
@@ -173,10 +173,6 @@ function map_indices(
 end
 
 # Functions
-
-function map_indices(index_map::F, f::MOI.SingleVariable) where {F<:Function}
-    return index_map(f.variable)
-end
 
 function map_indices(index_map::F, f::MOI.VectorOfVariables) where {F<:Function}
     return MOI.VectorOfVariables(index_map.(f.variables))
@@ -1088,8 +1084,8 @@ not specialize on this. Define instead
 """
 function filter_variables end
 
-function filter_variables(keep::Function, f::MOI.SingleVariable)
-    if !keep(f.variable)
+function filter_variables(keep::Function, f::MOI.VariableIndex)
+    if !keep(f)
         error(
             "Cannot remove variable from a `VariableIndex` function of the",
             " same variable.",
@@ -1720,7 +1716,7 @@ end
 function operate!(
     op::Union{typeof(+),typeof(-)},
     ::Type{T},
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
     g::ScalarQuadraticLike,
 ) where {T}
     return operate(op, T, f, g)
@@ -1772,9 +1768,9 @@ function operate(::typeof(-), ::Type{T}, α::T, f::ScalarLike{T}) where {T}
 end
 
 # Scalar Variable +/- ...
-function operate(::typeof(-), ::Type{T}, f::MOI.SingleVariable) where {T}
+function operate(::typeof(-), ::Type{T}, f::MOI.VariableIndex) where {T}
     return MOI.ScalarAffineFunction{T}(
-        [MOI.ScalarAffineTerm(-one(T), f.variable)],
+        [MOI.ScalarAffineTerm(-one(T), f)],
         zero(T),
     )
 end
@@ -1782,11 +1778,11 @@ end
 function operate(
     op::Union{typeof(+),typeof(-)},
     ::Type{T},
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
     α::T,
 ) where {T}
     return MOI.ScalarAffineFunction{T}(
-        [MOI.ScalarAffineTerm(one(T), f.variable)],
+        [MOI.ScalarAffineTerm(one(T), f)],
         op(α),
     )
 end
@@ -1794,13 +1790,13 @@ end
 function operate(
     op::Union{typeof(+),typeof(-)},
     ::Type{T},
-    f::MOI.SingleVariable,
-    g::MOI.SingleVariable,
+    f::MOI.VariableIndex,
+    g::MOI.VariableIndex,
 ) where {T}
     return MOI.ScalarAffineFunction{T}(
         [
-            MOI.ScalarAffineTerm(one(T), f.variable),
-            MOI.ScalarAffineTerm(op(one(T)), g.variable),
+            MOI.ScalarAffineTerm(one(T), f),
+            MOI.ScalarAffineTerm(op(one(T)), g),
         ],
         zero(T),
     )
@@ -1809,7 +1805,7 @@ end
 function operate(
     op::typeof(+),
     ::Type{T},
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
     g::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
 ) where {T}
     return operate(op, T, g, f)
@@ -1818,7 +1814,7 @@ end
 function operate(
     ::typeof(-),
     ::Type{T},
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
     g::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
 ) where {T}
     return operate!(+, T, operate(-, T, g), f)
@@ -1997,13 +1993,13 @@ function operate_output_index!(
     ::Type{T},
     output_index::Integer,
     f::MOI.VectorAffineFunction{T},
-    g::MOI.SingleVariable,
+    g::MOI.VariableIndex,
 ) where {T}
     push!(
         f.terms,
         MOI.VectorAffineTerm(
             output_index,
-            MOI.ScalarAffineTerm(op(one(T)), g.variable),
+            MOI.ScalarAffineTerm(op(one(T)), g),
         ),
     )
     return f
@@ -2394,9 +2390,9 @@ function operate!(::typeof(*), ::Type{T}, f::MOI.VariableIndex, α::T) where {T}
     return operate(*, T, α, f)
 end
 
-function operate(::typeof(*), ::Type{T}, α::T, f::MOI.SingleVariable) where {T}
+function operate(::typeof(*), ::Type{T}, α::T, f::MOI.VariableIndex) where {T}
     return MOI.ScalarAffineFunction{T}(
-        [MOI.ScalarAffineTerm(α, f.variable)],
+        [MOI.ScalarAffineTerm(α, f)],
         zero(T),
     )
 end
@@ -2455,15 +2451,15 @@ end
 function operate(
     ::typeof(*),
     ::Type{T},
-    f::MOI.SingleVariable,
-    g::MOI.SingleVariable,
+    f::MOI.VariableIndex,
+    g::MOI.VariableIndex,
 ) where {T}
     return MOI.ScalarQuadraticFunction(
         [
             MOI.ScalarQuadraticTerm(
-                f.variable == g.variable ? 2one(T) : one(T),
-                f.variable,
-                g.variable,
+                f == g ? 2one(T) : one(T),
+                f,
+                g,
             ),
         ],
         MOI.ScalarAffineTerm{T}[],
@@ -2475,18 +2471,18 @@ function operate(
     ::typeof(*),
     ::Type{T},
     f::MOI.ScalarAffineFunction{T},
-    g::MOI.SingleVariable,
+    g::MOI.VariableIndex,
 ) where {T}
     if iszero(f.constant)
         aff_terms = MOI.ScalarAffineTerm{T}[]
     else
-        aff_terms = [MOI.ScalarAffineTerm(f.constant, g.variable)]
+        aff_terms = [MOI.ScalarAffineTerm(f.constant, g)]
     end
     quad_terms = map(
         t -> MOI.ScalarQuadraticTerm(
-            t.variable == g.variable ? 2t.coefficient : t.coefficient,
+            t.variable == g ? 2t.coefficient : t.coefficient,
             t.variable,
-            g.variable,
+            g,
         ),
         f.terms,
     )
@@ -2496,7 +2492,7 @@ end
 function operate(
     ::typeof(*),
     ::Type{T},
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
     g::MOI.ScalarAffineFunction{T},
 ) where {T}
     return operate(*, T, g, f)
@@ -2635,9 +2631,9 @@ function operate!(::typeof(/), ::Type{T}, f::MOI.VariableIndex, α::T) where {T}
     return operate(/, T, f, α)
 end
 
-function operate(::typeof(/), ::Type{T}, f::MOI.SingleVariable, α::T) where {T}
+function operate(::typeof(/), ::Type{T}, f::MOI.VariableIndex, α::T) where {T}
     return MOI.ScalarAffineFunction{T}(
-        [MOI.ScalarAffineTerm(inv(α), f.variable)],
+        [MOI.ScalarAffineTerm(inv(α), f)],
         zero(T),
     )
 end
@@ -2784,9 +2780,9 @@ function fill_variables(
     variables::Vector{MOI.VariableIndex},
     offset::Int,
     output_offset::Int,
-    func::MOI.SingleVariable,
+    func::MOI.VariableIndex,
 )
-    variables[offset+1] = func.variable
+    variables[offset+1] = func
     return
 end
 
@@ -2888,10 +2884,10 @@ function fill_terms(
     terms::Vector{MOI.VectorAffineTerm{T}},
     offset::Int,
     output_offset::Int,
-    func::MOI.SingleVariable,
+    func::MOI.VariableIndex,
 ) where {T}
     terms[offset+1] =
-        offset_term(MOI.ScalarAffineTerm(one(T), func.variable), output_offset)
+        offset_term(MOI.ScalarAffineTerm(one(T), func), output_offset)
     return
 end
 
@@ -3003,15 +2999,12 @@ function fill_constant(
 end
 
 """
-    vectorize(funcs::AbstractVector{MOI.VariableIndex})
+    vectorize(x::AbstractVector{MOI.VariableIndex})
 
 Returns the vector of scalar affine functions in the form of a
 `MOI.VectorAffineFunction{T}`.
 """
-function vectorize(funcs::AbstractVector{MOI.VariableIndex})
-    vars = MOI.VariableIndex[func.variable for func in funcs]
-    return MOI.VectorOfVariables(vars)
-end
+vectorize(x::AbstractVector{MOI.VariableIndex}) = MOI.VectorOfVariables(x)
 
 """
     vectorize(funcs::AbstractVector{MOI.ScalarAffineFunction{T}}) where T

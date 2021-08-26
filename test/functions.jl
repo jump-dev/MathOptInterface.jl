@@ -31,8 +31,8 @@ function test_functions_broadcast()
     xf = x
     yf = y
     zf = z
-    function sum_indices(sv1::MOI.SingleVariable, sv2::MOI.SingleVariable)
-        return sv1.variable.value + sv2.variable.value
+    function sum_indices(sv1::MOI.VariableIndex, sv2::MOI.VariableIndex)
+        return sv1.value + sv2.value
     end
     @test sum_indices.(xf, [yf, zf]) == [3, 4]
 end

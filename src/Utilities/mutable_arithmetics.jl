@@ -143,9 +143,9 @@ end
 function MA.mutable_operate!(
     op::Union{typeof(+),typeof(-)},
     f::MOI.ScalarAffineFunction{T},
-    g::MOI.SingleVariable,
+    g::MOI.VariableIndex,
 ) where {T}
-    push!(f.terms, MOI.ScalarAffineTerm(op(one(T)), g.variable))
+    push!(f.terms, MOI.ScalarAffineTerm(op(one(T)), g))
     return f
 end
 function MA.mutable_operate_to!(
@@ -195,9 +195,9 @@ end
 function MA.mutable_operate!(
     op::Union{typeof(+),typeof(-)},
     f::MOI.ScalarQuadraticFunction{T},
-    g::MOI.SingleVariable,
+    g::MOI.VariableIndex,
 ) where {T}
-    push!(f.affine_terms, MOI.ScalarAffineTerm(op(one(T)), g.variable))
+    push!(f.affine_terms, MOI.ScalarAffineTerm(op(one(T)), g))
     return f
 end
 function MA.mutable_operate!(
@@ -231,36 +231,36 @@ function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
     α::T,
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
     β::T,
 ) where {T}
-    push!(terms, MOI.ScalarAffineTerm(op(α * β), f.variable))
+    push!(terms, MOI.ScalarAffineTerm(op(α * β), f))
     return
 end
 function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
     β::T,
 ) where {T}
-    push!(terms, MOI.ScalarAffineTerm(op(β), f.variable))
+    push!(terms, MOI.ScalarAffineTerm(op(β), f))
     return
 end
 function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
     α::T,
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
 ) where {T}
-    push!(terms, MOI.ScalarAffineTerm(op(α), f.variable))
+    push!(terms, MOI.ScalarAffineTerm(op(α), f))
     return
 end
 function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
 ) where {T}
-    push!(terms, MOI.ScalarAffineTerm(op(one(T)), f.variable))
+    push!(terms, MOI.ScalarAffineTerm(op(one(T)), f))
     return
 end
 

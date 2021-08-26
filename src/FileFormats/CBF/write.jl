@@ -267,7 +267,7 @@ function _write_INT(io::IO, model::Model)
     println(io, length(cons))
     for ci in cons
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
-        println(io, f.variable.value - 1)
+        println(io, f.value - 1)
     end
     println(io)
     return

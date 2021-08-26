@@ -212,7 +212,7 @@ function test_min()
     model = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model, "variables: x\nminobjective: x")
     @test sprint(print, model) == """
-    Minimize SingleVariable:
+    Minimize VariableIndex:
      x
 
     Subject to:
@@ -232,7 +232,7 @@ function test_max()
     model = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model, "variables: x\nmaxobjective: x")
     @test sprint(print, model) == """
-    Maximize SingleVariable:
+    Maximize VariableIndex:
      x
 
     Subject to:
@@ -601,7 +601,7 @@ function test_nlp_no_objective()
         v[1],
     )
     @test sprint(print, model) == """
-    Minimize SingleVariable:
+    Minimize VariableIndex:
      x[1]
 
     Subject to:

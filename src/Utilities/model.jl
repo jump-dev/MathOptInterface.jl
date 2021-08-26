@@ -353,7 +353,7 @@ end
 
 function MOI.add_constraint(
     model::AbstractModel{T},
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
     s::SUPPORTED_VARIABLE_SCALAR_SETS{T},
 ) where {T}
     return MOI.add_constraint(model.variables, f, s)

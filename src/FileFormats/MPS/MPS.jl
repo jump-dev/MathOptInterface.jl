@@ -238,7 +238,7 @@ function _list_of_integer_variables(model, names, integer_variables, S)
     for index in
         MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
         v_index = MOI.get(model, MOI.ConstraintFunction(), index)
-        push!(integer_variables, names[v_index.variable])
+        push!(integer_variables, names[v_index])
     end
     return
 end
@@ -500,7 +500,7 @@ function _collect_bounds(bounds, model, S, names)
         MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
         func = MOI.get(model, MOI.ConstraintFunction(), index)
         set = MOI.get(model, MOI.ConstraintSet(), index)::S
-        name = names[func.variable]
+        name = names[func]
         bounds[name] = update_bounds(bounds[name], set)
     end
     return

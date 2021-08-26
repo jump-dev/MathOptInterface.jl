@@ -77,7 +77,7 @@ julia> MOI.Utilities.@model(
            (MOI.GreaterThan,),              # Typed scalar sets
            (MOI.Nonnegatives,),             # Un-typed vector sets
            (MOI.PowerCone,),                # Typed vector sets
-           (MOI.SingleVariable,),           # Un-typed scalar functions
+           (MOI.VariableIndex,),            # Un-typed scalar functions
            (MOI.ScalarAffineFunction,),     # Typed scalar functions
            (MOI.VectorOfVariables,),        # Un-typed vector functions
            (MOI.VectorAffineFunction,),     # Typed vector functions
@@ -283,10 +283,7 @@ MathOptInterface.VariableIndex(1)
 
 julia> MOI.set(model, MOI.VariableName(), x, "x_var")
 
-julia> f = x
-MathOptInterface.SingleVariable(MathOptInterface.VariableIndex(1))
-
-julia> MOI.add_constraint(model, f, MOI.ZeroOne())
+julia> MOI.add_constraint(model, x, MOI.ZeroOne())
 MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex,MathOptInterface.ZeroOne}(1)
 
 julia> MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
@@ -294,7 +291,7 @@ julia> MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
 julia> MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
 julia> print(model)
-Maximize SingleVariable:
+Maximize VariableIndex:
  x_var
 
 Subject to:

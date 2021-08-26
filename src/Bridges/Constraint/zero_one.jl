@@ -13,7 +13,7 @@ end
 function bridge_constraint(
     ::Type{ZeroOneBridge{T}},
     model::MOI.ModelLike,
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
     ::MOI.ZeroOne,
 ) where {T<:Real}
     interval_index =

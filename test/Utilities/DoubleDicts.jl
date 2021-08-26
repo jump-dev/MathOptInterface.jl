@@ -90,9 +90,9 @@ function _test_basic_functionality(dict, k_values, v_values)
     @test length(dict) == 0
 
     dict[k_values[1]] = v_values[1]
-    idict = dict[MOI.SingleVariable, MOI.Integer]
-    bdict = dict[MOI.SingleVariable, MOI.ZeroOne]
-    idict_ = dict[MOI.SingleVariable, MOI.Integer]
+    idict = dict[MOI.VariableIndex, MOI.Integer]
+    bdict = dict[MOI.VariableIndex, MOI.ZeroOne]
+    idict_ = dict[MOI.VariableIndex, MOI.Integer]
     @test idict.dict === idict_.dict
     sizehint!(idict, 2)
     @test length(idict) == 1
@@ -126,7 +126,7 @@ function _test_basic_functionality(dict, k_values, v_values)
     bdict[k_values[3]] = v_values[3]
     length(bdict) == 1
 
-    edict = dict[MOI.SingleVariable, MOI.EqualTo{Bool}]
+    edict = dict[MOI.VariableIndex, MOI.EqualTo{Bool}]
     ek = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Bool}}(1)
     delete!(edict, ek)
     @test_throws KeyError edict[ek]

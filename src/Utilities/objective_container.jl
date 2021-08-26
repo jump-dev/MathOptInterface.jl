@@ -100,7 +100,7 @@ end
 function MOI.set(
     o::ObjectiveContainer,
     ::MOI.ObjectiveFunction{MOI.VariableIndex},
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
 )
     o.is_function_set = true
     o.single_variable = copy(f)
@@ -176,7 +176,7 @@ end
 
 function MOI.delete(o::ObjectiveContainer, x::MOI.VariableIndex)
     if o.single_variable !== nothing
-        if x == o.single_variable.variable
+        if x == o.single_variable
             sense = o.sense
             MOI.empty!(o)
             if o.is_sense_set
@@ -195,7 +195,7 @@ end
 function MOI.delete(o::ObjectiveContainer, x::Vector{MOI.VariableIndex})
     keep = v -> !(v in x)
     if o.single_variable !== nothing
-        if o.single_variable.variable in x
+        if o.single_variable in x
             sense = o.sense
             MOI.empty!(o)
             if o.is_sense_set
