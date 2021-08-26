@@ -605,7 +605,7 @@ function test_filtering_copy()
 
     # Perform the copy.
     dst = OrderConstrainedVariablesModel()
-    index_map = MOI.copy_to(dst, MOI.Utilities.FilterModel(f, src))
+    index_map = MOI.copy_to(dst, MOI.Utilities.ModelFilter(f, src))
 
     @test typeof(c1) == typeof(dst.constraintIndices[1])
     @test length(dst.constraintIndices) == 1
@@ -677,7 +677,7 @@ function test_BoundModel_filtering_copy()
 
     # Perform the filtered copy. This should not throw an error.
     dst = BoundModel()
-    MOI.copy_to(dst, MOI.Utilities.FilterModel(f, src))
+    MOI.copy_to(dst, MOI.Utilities.ModelFilter(f, src))
     @test MOI.get(
         dst,
         MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{Float64}}(),
