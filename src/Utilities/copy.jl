@@ -430,8 +430,6 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
     return index_map
 end
 
-_always_true(::Any) = true
-
 """
     ModelFilter(filter::Function, model::MOI.ModelLike)
 

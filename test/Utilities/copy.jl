@@ -627,10 +627,11 @@ function test_filtering_copy_AbstractModelAttribute()
 end
 
 function test_filtering_copy_AbstractVariableAttribute()
-    src = MOI.Utilities.Model{Float64}()
+    src = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     x = MOI.add_variable(src)
     MOI.set(src, MOI.VariableName(), x, "x")
-    dest = MOI.Utilities.Model{Float64}()
+    MOI.set(src, MOI.VariablePrimalStart(), x, 1.0)
+    dest = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do attr, item
         if attr != MOI.ListOfVariableAttributesSet()
             return true
@@ -638,22 +639,25 @@ function test_filtering_copy_AbstractVariableAttribute()
         return item != MOI.VariableName()
     end)
     @test MOI.get(dest, MOI.VariableName(), index_map[x]) == ""
+    @test MOI.get(dest, MOI.VariablePrimalStart(), index_map[x]) == 1.0
     return
 end
 
 function test_filtering_copy_AbstractConstraintAttribute()
-    src = MOI.Utilities.Model{Float64}()
+    src = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     x = MOI.add_variable(src)
     c = MOI.add_constraint(src, MOI.VectorOfVariables([x]), MOI.Nonnegatives(1))
     MOI.set(src, MOI.ConstraintName(), c, "c")
-    dest = MOI.Utilities.Model{Float64}()
+    MOI.set(src, MOI.ConstraintDualStart(), c, [1.0])
+    dest = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do attr, item
         if !(attr isa MOI.ListOfConstraintAttributesSet)
             return true
         end
         return item != MOI.ConstraintName()
     end)
-    @test MOI.get(dest, MOI.VariableName(), index_map[x]) == ""
+    @test MOI.get(dest, MOI.ConstraintName(), index_map[c]) == ""
+    @test MOI.get(dest, MOI.ConstraintDualStart(), index_map[c]) == [1.0]
     return
 end
 
