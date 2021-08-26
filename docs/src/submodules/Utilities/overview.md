@@ -347,10 +347,7 @@ The [`copy_to`](@ref) operation can now be implemented as follows (assuming that
 the `Model` definition above is in the `Clp` module so that it can be referred
 to as `Model`, to be distinguished with [`Utilities.Model`](@ref)):
 ```julia
-function _copy_to(
-    dest::Optimizer,
-    src::Model
-)
+function _copy_to(dest::Optimizer, src::Model)
     @assert MOI.is_empty(dest)
     A = src.constraints.coefficients
     row_bounds = src.constraints.constants
@@ -394,6 +391,21 @@ function MOI.copy_to(
     _copy_to(dest, model)
     return index_map
 end
+```
+
+## ModelFilter
+
+Utilities provides [`Utilities.ModelFilter`](@ref) as a useful tool to copy a
+subset of a model. For example, given an infeasible model, we can copy the
+irreducible infeasible subsystem (for models implementing
+[`ConstraintConflictStatus`](@ref)) as follows:
+```julia
+my_filter(::Any, ::Any) = true
+function my_filter(::MOI.ListOfConstraintIndices, ci::MOI.ConstraintIndex)
+    status = MOI.get(dest, MOI.ConstraintConflictStatus(), ci)
+    return status != MOI.NOT_IN_CONFLICT
+end
+MOI.copy_to(dest, filtered_src)
 ```
 
 ## Fallbacks

@@ -600,8 +600,8 @@ function test_filtering_copy()
     # Filtering function: the default case where this function always returns
     # true is already well-tested by the above cases.
     # Only keep the constraint c1.
-    f(::Any) = true
-    f(cidx::MOI.ConstraintIndex) = cidx == c1
+    f(::Any, ::Any) = true
+    f(::MOI.ListOfConstraintIndices, cidx::MOI.ConstraintIndex) = cidx == c1
 
     # Perform the copy.
     dst = OrderConstrainedVariablesModel()
@@ -609,6 +609,94 @@ function test_filtering_copy()
 
     @test typeof(c1) == typeof(dst.constraintIndices[1])
     @test length(dst.constraintIndices) == 1
+    return
+end
+
+function test_filtering_copy_AbstractModelAttribute()
+    src = MOI.Utilities.Model{Float64}()
+    MOI.set(src, MOI.Name(), "src")
+    dest = MOI.Utilities.Model{Float64}()
+    MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do attr, item
+        if attr != MOI.ListOfModelAttributesSet()
+            return true
+        end
+        return item != MOI.Name()
+    end)
+    @test MOI.get(dest, MOI.Name()) == ""
+    return
+end
+
+function test_filtering_copy_AbstractVariableAttribute()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(src)
+    MOI.set(src, MOI.VariableName(), x, "x")
+    dest = MOI.Utilities.Model{Float64}()
+    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do attr, item
+        if attr != MOI.ListOfVariableAttributesSet()
+            return true
+        end
+        return item != MOI.VariableName()
+    end)
+    @test MOI.get(dest, MOI.VariableName(), index_map[x]) == ""
+    return
+end
+
+function test_filtering_copy_AbstractConstraintAttribute()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(src)
+    c = MOI.add_constraint(src, MOI.VectorOfVariables([x]), MOI.Nonnegatives(1))
+    MOI.set(src, MOI.ConstraintName(), c, "c")
+    dest = MOI.Utilities.Model{Float64}()
+    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do attr, item
+        if !(attr isa MOI.ListOfConstraintAttributesSet)
+            return true
+        end
+        return item != MOI.ConstraintName()
+    end)
+    @test MOI.get(dest, MOI.VariableName(), index_map[x]) == ""
+    return
+end
+
+function test_filtering_copy_ListOfVariableIndices()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(src, 4)
+    dest = MOI.Utilities.Model{Float64}()
+    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do attr, item
+        if attr != MOI.ListOfVariableIndices()
+            return true
+        end
+        return isodd(item.value)
+    end)
+    @test MOI.get(dest, MOI.NumberOfVariables()) == 2
+    for xi in x
+        @test haskey(index_map, xi) == isodd(xi.value)
+    end
+    return
+end
+
+function test_filtering_copy_ListOfConstraintIndices()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(src, 4)
+    MOI.add_constraint.(src, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
+    dest = MOI.Utilities.Model{Float64}()
+    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do attr, item
+        if !(attr isa MOI.ListOfConstraintIndices)
+            return true
+        end
+        return isodd(item.value)
+    end)
+    @test MOI.get(dest, MOI.NumberOfVariables()) == 4
+    @test MOI.get(
+        dest,
+        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}(),
+    ) == 2
+    for xi in x
+        @test haskey(index_map, xi)
+        ci = MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(
+            xi.value,
+        )
+        @test haskey(index_map, ci) == isodd(xi.value)
+    end
     return
 end
 
@@ -662,9 +750,13 @@ function test_BoundModel_filtering_copy()
     c2 = MOI.add_constraint(src, x, MOI.Integer())
 
     # Filtering function: get rid of integrality constraint.
-    f(::Any) = true
-    f(cidx::MOI.ConstraintIndex) =
-        MOI.get(src, MOI.ConstraintSet(), cidx) != MOI.Integer()
+    f(::Any, ::Any) = true
+    function f(
+        ::MOI.ListOfConstraintIndices{F,MOI.Integer},
+        ::MOI.ConstraintIndex{F,MOI.Integer},
+    ) where {F}
+        return false
+    end
 
     # Perform the unfiltered copy. This should throw an error (i.e. the
     # implementation of BoundModel

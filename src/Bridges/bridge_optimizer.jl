@@ -382,7 +382,7 @@ function MOIU.pass_nonvariable_constraints(
     dest::AbstractBridgeOptimizer,
     src::MOI.ModelLike,
     idxmap::MOIU.IndexMap,
-    constraint_types;
+    constraint_types,
 )
     if Variable.has_bridges(Variable.bridges(dest))
         # The functions may contained bridged variables which needs to be
@@ -409,12 +409,7 @@ function MOIU.pass_nonvariable_constraints(
         idxmap,
         not_bridged_types,
     )
-    MOIU.pass_nonvariable_constraints_fallback(
-        dest,
-        src,
-        idxmap,
-        bridged_types,
-    )
+    MOIU.pass_nonvariable_constraints_fallback(dest, src, idxmap, bridged_types)
     return
 end
 

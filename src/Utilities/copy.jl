@@ -425,12 +425,7 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
     # Copy model attributes
     pass_attributes(dest, src, index_map)
     # Copy constraints
-    _pass_constraints(
-        dest,
-        src,
-        index_map,
-        constraints_not_added,
-    )
+    _pass_constraints(dest, src, index_map, constraints_not_added)
     final_touch(dest, index_map)
     return index_map
 end
@@ -440,7 +435,10 @@ _always_true(::Any) = true
 """
     ModelFilter(filter::Function, model::MOI.ModelLike)
 
-A layer to filter out various components of `model`.
+A layer to filter out various components of `model`. The filter function takes
+two arguments: an attribute (see below) and an element from the list returned by
+that attribute. It returns `true` if the element should be included in `dest`,
+and `false` otherwise.
 
 The attributes that are filtered are:
 
@@ -461,8 +459,8 @@ See the examples for examples of how this works.
 Use the `do` syntax to provide a single function.
 
 ```julia
-filtered_src = ModelFilter(src) do x
-    return !(x isa MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer})
+filtered_src = MOI.Utilities.ModelFilter(src) do attr, _
+    return attr != MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Integer}()
 end
 MOI.copy_to(dest, filtered_src)
 ```
@@ -472,22 +470,22 @@ MOI.copy_to(dest, filtered_src)
 Use type dispatch to simplify the implementation:
 
 ```julia
-my_filter(x) = true
-my_filter(::MOI.VariableName) = false
-my_filter(::MOI.ConstraintName) = false
-filtered_src = ModelFilter(my_filter, src)
+my_filter(::Any, ::Any) = true
+my_filter(::MOI.ListOfModelAttributesSet, ::MOI.VariableName) = false
+my_filter(::MOI.ListOfConstraintAttributesSet, ::MOI.ConstraintName) = false
+filtered_src = MOI.Utilities.ModelFilter(my_filter, src)
 MOI.copy_to(dest, filtered_src)
 ```
 
 ## Example: copy irreducible infeasible subsystem
 
 ```julia
-my_filter(x) = true
-function my_filter(ci::MOI.ConstraintIndex)
+my_filter(::Any, ::Any) = true
+function my_filter(::MOI.ListOfConstraintIndices, ci::MOI.ConstraintIndex)
     status = MOI.get(dest, MOI.ConstraintConflictStatus(), ci)
     return status != MOI.NOT_IN_CONFLICT
 end
-filtered_src = ModelFilter(my_filter, src)
+filtered_src = MOI.Utilities.ModelFilter(my_filter, src)
 MOI.copy_to(dest, filtered_src)
 ```
 """
@@ -509,7 +507,9 @@ function MOI.get(
         MOI.ListOfVariableIndices,
     },
 )
-    return filter(model.filter, MOI.get(model.inner, attr))
+    return filter(MOI.get(model.inner, attr)) do item
+        return model.filter(attr, item)
+    end
 end
 
 function MOI.get(model::ModelFilter, attr::MOI.AbstractModelAttribute)
@@ -531,4 +531,3 @@ function MOI.get(
 )
     return MOI.get(model.inner, attr, ci)
 end
-
