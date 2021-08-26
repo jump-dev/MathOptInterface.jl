@@ -1922,21 +1922,35 @@ function Base.:-(α::Number, f::MOI.SingleVariable)
     return operate(-, typeof(α), α, f)
 end
 
-# SingleVariable defaults to Float64
-function Base.:+(arg::MOI.SingleVariable, args::MOI.SingleVariable...)
-    return operate(+, Float64, arg, args...)
+function Base.:+(::MOI.SingleVariable, ::MOI.SingleVariable...)
+    return error(
+        "Unable to add SingleVariables together because no coefficient type " *
+        "is specified. Instead of `x + y`, convert one of the terms to a " *
+        "`ScalarAffineFunction` first by left-multiplying by `one(T)` where " *
+        "`T` is the coefficient type For example: `1.0 * x + y`.",
+    )
 end
 
-function Base.:-(arg::MOI.SingleVariable, args::MOI.SingleVariable...)
-    return operate(-, Float64, arg, args...)
+function Base.:-(::MOI.SingleVariable, ::MOI.SingleVariable...)
+    return error(
+        "Unable to subtract SingleVariables together because no coefficient " *
+        "type is specified. Instead of `x - y`, convert one of the terms to a " *
+        "`ScalarAffineFunction` first by left-multiplying by `one(T)` where " *
+        "`T` is the coefficient type For example: `1.0 * x - y`.",
+    )
 end
 
 function Base.:*(
-    arg::MOI.SingleVariable,
-    arg2::MOI.SingleVariable,
-    args::MOI.SingleVariable...,
+    ::MOI.SingleVariable,
+    ::MOI.SingleVariable,
+    ::MOI.SingleVariable...,
 )
-    return operate(*, Float64, arg, arg2, args...)
+    return error(
+        "Unable to multiply SingleVariables together because no coefficient " *
+        "type is specified. Instead of `x * y`, convert one of the terms to a " *
+        "`ScalarAffineFunction` first by left-multiplying by `one(T)` where " *
+        "`T` is the coefficient type For example: `1.0 * x * y`.",
+    )
 end
 
 # Vector +/-
