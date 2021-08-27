@@ -15,7 +15,7 @@ Use [`add_constraint`](@ref) to add a single constraint.
 
 ```jldoctest constraints; setup=:(model = MOI.Utilities.Model{Float64}(); x = MOI.add_variables(model, 2))
 julia> c = MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Nonnegatives(2))
-MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables,MathOptInterface.Nonnegatives}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.Nonnegatives}(1)
 ```
 
 [`add_constraint`](@ref) returns a [`ConstraintIndex`](@ref) type, which should
@@ -36,9 +36,9 @@ julia> c = MOI.add_constraints(
            [x[1], x[2]],
            [MOI.GreaterThan(0.0), MOI.GreaterThan(1.0)]
        )
-2-element Array{MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex,MathOptInterface.GreaterThan{Float64}},1}:
- MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex,MathOptInterface.GreaterThan{Float64}}(1)
- MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex,MathOptInterface.GreaterThan{Float64}}(2)
+Vector{MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.GreaterThan{Float64}}}:
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.GreaterThan{Float64}}(1)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.GreaterThan{Float64}}(2)
 ```
 This time, a vector of [`ConstraintIndex`](@ref) are returned.
 

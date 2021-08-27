@@ -265,7 +265,7 @@ with optimizer nothing
 julia> MOI.Utilities.reset_optimizer(model, PathOptimizer{Float64}())
 
 julia> model
-MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}}
+MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.GenericModel{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}}
 in state EMPTY_OPTIMIZER
 in mode MANUAL
 with model cache MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}
@@ -284,9 +284,9 @@ MathOptInterface.VariableIndex(1)
 julia> MOI.set(model, MOI.VariableName(), x, "x_var")
 
 julia> MOI.add_constraint(model, x, MOI.ZeroOne())
-MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex,MathOptInterface.ZeroOne}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(1)
 
-julia> MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+julia> MOI.set(model, MOI.ObjectiveFunction{typeof(x)}(), x)
 
 julia> MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
 
