@@ -15,8 +15,7 @@ when writing models or bridge code.
 
 ## Creating functions
 
-When working with MathOptInterface, the major use of functions is creating 
-them, which is reviewed in this section.
+This section details the ways to create functions with MathOptInterface.
 
 ### Creating scalar affine functions
 
