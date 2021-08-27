@@ -150,7 +150,7 @@ MOI.Bridges.added_constrained_variable_types(
 
 # output
 
-1-element Array {Tuple{Type},1}:
+1-element Array{Tuple{Type},1}:
  (MathOptInterface.Nonnegatives,)
 ```
 """

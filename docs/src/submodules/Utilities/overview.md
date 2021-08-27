@@ -284,7 +284,7 @@ MathOptInterface.VariableIndex(1)
 julia> MOI.set(model, MOI.VariableName(), x, "x_var")
 
 julia> MOI.add_constraint(model, x, MOI.ZeroOne())
-MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex,MathOptInterface.ZeroOne}(1)
 
 julia> MOI.set(model, MOI.ObjectiveFunction{typeof(x)}(), x)
 
