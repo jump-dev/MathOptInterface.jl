@@ -241,9 +241,14 @@ Base.unsafe_convert(::Type{Ptr{Cvoid}}, model::Optimizer) = model.ptr
 
 ### Implement methods for `Optimizer`
 
-Now that we have an `Optimizer`, we need to implement a few basic methods.
+All `Optimizer`s must implement the following methods:
 
-* [`empty!`](@ref) and [`is_empty`](@ref)
+ * [`empty!`](@ref)
+ * [`is_empty`](@ref)
+ * [`optimize!`](@ref)
+
+Other methods, detailed below, are optional or depend on how you implement the
+itnerface.
 
 !!! tip
     For this and all future methods, read the docstrings to understand what each
@@ -261,8 +266,7 @@ end
 
 ### Implement attributes
 
-You also need to implement the model and optimizer attributes in the following
-table.
+MathOptInterface uses attributes to manage different aspects of the problem.
 
 For each attribute
  * [`get`](@ref) gets the current value of the attribute
@@ -276,36 +280,16 @@ For each attribute
     attribute. You should make sure that your [`get`](@ref) function correctly
     infers to this type (or a subtype of it).
 
-Each column in the table indicates whether you need to implement the particular
-method for each attribute.
+All `Optimizer`s must implement [`get`](@ref) for the the following attributes:
 
-| Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
-| ---------------------- | --------------| ------------- | ------------------ |
-| [`SolverName`](@ref)   | Yes           | No            | No                 |
-| [`RawSolver`](@ref)    | Yes           | No            | No                 |
-| [`Name`](@ref)         | Yes           | Yes           | Yes                |
-| [`Silent`](@ref)       | Yes           | Yes           | Yes                |
-| [`TimeLimitSec`](@ref) | Yes           | Yes           | Yes                |
-| [`RawOptimizerAttribute`](@ref) | Yes           | Yes           | Yes                |
-| [`NumberOfThreads`](@ref) | Yes        | Yes           | Yes                |
-
-For example:
-```julia
-function MOI.get(model::Optimizer, ::MOI.Silent)
-    return # true if MOI.Silent is set
-end
-
-function MOI.set(model::Optimizer, ::MOI.Silent, v::Bool)
-    if v
-        # Set a parameter to turn off printing
-    else
-        # Restore the default printing
-    end
-    return
-end
-
-MOI.supports(::Optimizer, ::MOI.Silent) = true
-```
+ * [`ListOfConstraintAttributesSet`](@ref)
+ * [`ListOfConstraintTypesPresent`](@ref)
+ * [`ListOfConstraintIndices`](@ref)
+ * [`ListOfModelAttributesSet`](@ref)
+ * [`ListOfVariableAttributesSet`](@ref)
+ * [`ListOfVariableIndices`](@ref)
+ * [`NumberOfConstraints`](@ref)
+ * [`NumberOfVariables`](@ref)
 
 ### Define `supports_constraint`
 
@@ -402,36 +386,30 @@ To implement the incremental interface, implement the following functions:
     in the function. Throw [`ScalarFunctionConstantNotZero`](@ref) if the
     function constant is not zero.
 
-In addition, you should implement the following model attributes:
+In addition, you should implement the following model attributes if applicable.
+Each column in the table indicates whether you need to implement the particular
+method for each attribute.
 
 | Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
 | ---------------------- | --------------| ------------- | ------------------ |
-| [`ListOfModelAttributesSet`](@ref) | Yes           | No            | No     |
-| [`ObjectiveFunctionType`](@ref)    | Yes           | No            | No     |
-| [`ObjectiveFunction`](@ref)        | Yes           | Yes           | Yes    |
-| [`ObjectiveSense`](@ref)           | Yes           | Yes           | Yes    |
+| [`ConstraintFunction`](@ref)    | Yes  | Yes           | No                 |
+| [`ConstraintSet`](@ref)         | Yes  | Yes           | No                 |
+| [`Name`](@ref)                  | Yes  | Yes           | Yes                |
+| [`NumberOfThreads`](@ref)       | Yes  | Yes           | Yes                |
+| [`ObjectiveFunctionType`](@ref) | Yes  | No            | No                 |
+| [`ObjectiveFunction`](@ref)     | Yes  | Yes           | Yes                |
+| [`ObjectiveSense`](@ref)        | Yes  | Yes           | Yes                |
+| [`RawOptimizerAttribute`](@ref) | Yes  | Yes           | Yes                |
+| [`RawSolver`](@ref)             | Yes  | No            | No                 |
+| [`Silent`](@ref)                | Yes  | Yes           | Yes                |
+| [`SolverName`](@ref)            | Yes  | No            | No                 |
+| [`TimeLimitSec`](@ref)          | Yes  | Yes           | Yes                |
 
-Variable-related attributes:
+#### Modifications
 
-| Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
-| ---------------------- | --------------| ------------- | ------------------ |
-| [`ListOfVariableAttributesSet`](@ref)  | Yes           | No            | No |
-| [`NumberOfVariables`](@ref)            | Yes           | No            | No |
-| [`ListOfVariableIndices`](@ref)        | Yes           | No            | No |
+If your solver supports modifying data in-place, implement [`modify`](@ref) for
+the following `AbstractModification`s:
 
-Constraint-related attributes:
-
-| Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
-| ---------------------- | --------------| ------------- | ------------------ |
-| [`ListOfConstraintAttributesSet`](@ref) | Yes          | No            | No |
-| [`NumberOfConstraints`](@ref)           | Yes          | No            | No |
-| [`ListOfConstraintTypesPresent`](@ref)  | Yes          | No            | No |
-| [`ConstraintFunction`](@ref)            | Yes          | Yes           | No |
-| [`ConstraintSet`](@ref)                 | Yes          | Yes           | No |
-
-If your solver supports modifying data in-place, implement:
-
-* [`modify`](@ref)
 * [`ScalarConstantChange`](@ref)
 * [`ScalarCoefficientChange`](@ref)
 * [`VectorConstantChange`](@ref)
@@ -466,8 +444,8 @@ fallback:
 ```julia
 MOI.supports_incremental_interface(::Optimizer) = true
 
-function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kwargs...)
-    return MOI.Utilities.default_copy_to(dest, src; kwargs...)
+function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike)
+    return MOI.Utilities.default_copy_to(dest, src)
 end
 ```
 
@@ -481,7 +459,8 @@ the `Name` attribute for variables and constraints:
 | [`VariableName`](@ref)   | Yes         | Yes           | Yes                |
 | [`ConstraintName`](@ref) | Yes         | Yes           | Yes                |
 
-If you implement names, you should also implement the following three methods:
+If you implement names, you must also implement the following three methods:
+
 ```julia
 function MOI.get(model::Optimizer, ::Type{MOI.VariableIndex}, name::String)
     return # The variable named `name`.
@@ -536,17 +515,13 @@ Implement [`optimize!`](@ref) to solve the model:
 
 * [`optimize!`](@ref)
 
-At a minimum, implement the following attributes to allow the user to access
-solution information.
+All `Optimizer`s must implement the following attributes:
 
-* [`TerminationStatus`](@ref)
-* [`PrimalStatus`](@ref)
 * [`DualStatus`](@ref)
+* [`PrimalStatus`](@ref)
 * [`RawStatusString`](@ref)
 * [`ResultCount`](@ref)
-* [`ObjectiveValue`](@ref)
-* [`VariablePrimal`](@ref)
-* [`SolveTimeSec`](@ref)
+* [`TerminationStatus`](@ref)
 
 !!! info
     You only need to implement [`get`](@ref) for solution attributes. Don't
@@ -557,6 +532,12 @@ solution information.
     statuses. Statuses like `NEARLY_FEASIBLE_POINT` and `INFEASIBLE_POINT`, are
     designed to be used when the solver explicitly indicates that relaxed
     tolerances are satisfied or the returned point is infeasible, respectively.
+
+You should also implement the following attributes:
+
+* [`ObjectiveValue`](@ref)
+* [`SolveTimeSec`](@ref)
+* [`VariablePrimal`](@ref)
 
 !!! tip
     Attributes like [`VariablePrimal`](@ref) and [`ObjectiveValue`](@ref) are

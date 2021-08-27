@@ -9,7 +9,7 @@ an optimization problem.
 ## Interface
 
 The API of MathOptInterface is large. At a minimum, objects subtyping
-`ModelLike` should implement [`get`](@ref) for the following attributes:
+`ModelLike` must implement [`get`](@ref) for the following attributes:
 
  * [`ListOfConstraintAttributesSet`](@ref)
  * [`ListOfConstraintIndices`](@ref)
@@ -50,7 +50,7 @@ solve the model and query the solution.
 ## Interface
 
 The API of MathOptInterface is large. At a minimum, objects subtyping
-`AbstractOptimizer` should implement the [`ModelLike`](@ref) API, plus:
+`AbstractOptimizer` must implement the [`ModelLike`](@ref) API, plus:
 
  * [`optimize!`](@ref)
 
