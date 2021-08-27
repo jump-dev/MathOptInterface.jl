@@ -558,11 +558,6 @@ function MOI.is_empty(model::ModelFilter)
     elseif length(MOI.get(model, MOI.ListOfModelAttributesSet())) > 0
         return false
     end
-    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        if MOI.get(model, MOI.NumberOfConstraints{F,S}()) > 0
-            return false
-        end
-    end
     return true
 end
 

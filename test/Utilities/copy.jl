@@ -703,12 +703,14 @@ function test_filtering_copy_ListOfConstraintIndices()
     x = MOI.add_variables(src, 4)
     MOI.add_constraint.(src, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
     dest = MOI.Utilities.Model{Float64}()
-    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
+    filtered_src = MOI.Utilities.ModelFilter(src) do item
         if item isa MOI.ConstraintIndex
             return isodd(item.value)
         end
         return true
-    end)
+    end
+    @test !MOI.is_empty(filtered_src)
+    index_map = MOI.copy_to(dest, filtered_src)
     @test MOI.get(dest, MOI.NumberOfVariables()) == 4
     @test MOI.get(
         dest,
