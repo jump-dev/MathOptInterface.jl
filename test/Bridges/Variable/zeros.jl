@@ -46,7 +46,7 @@ function test_zeros()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.util_test_models_equal(
         bridged_mock,
         model,
         ["x", "y", "z"],
@@ -165,7 +165,7 @@ function test_zeros()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.util_test_models_equal(
         mock,
         model,
         ["x"],

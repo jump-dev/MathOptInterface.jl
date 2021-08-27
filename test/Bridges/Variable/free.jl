@@ -85,7 +85,7 @@ function test_modification_multirow_vectoraffine_nonpos()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(mock, model, var_names, ["nonneg", "c"])
+    MOI.Test.util_test_models_equal(mock, model, var_names, ["nonneg", "c"])
     s = """
     variables: x
     c: [4.0x + -1.0, 3.0x + -1.0] in MathOptInterface.Nonpositives(2)
@@ -93,7 +93,7 @@ function test_modification_multirow_vectoraffine_nonpos()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(bridged_mock, model, ["x"], ["c"])
+    MOI.Test.util_test_models_equal(bridged_mock, model, ["x"], ["c"])
     return
 end
 
@@ -282,7 +282,7 @@ function test_linear_transform()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.util_test_models_equal(
         mock,
         model,
         var_names,
@@ -298,7 +298,7 @@ function test_linear_transform()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.util_test_models_equal(
         bridged_mock,
         model,
         var_names,

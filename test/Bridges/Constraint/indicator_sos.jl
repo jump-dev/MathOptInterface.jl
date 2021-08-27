@@ -174,21 +174,12 @@ function test_basic()
     mock = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
     )
-    function _bridge(S)
-        return MOI.Bridges.Constraint.IndicatortoSOS1{
-            Float64,
-            S,
-            MOI.ConstraintIndex{MOI.VariableIndex,S},
-        }(
-            mock,
-        )
-    end
     MOI.Test.test_basic_VectorAffineFunction_Indicator_GreaterThan(
-        _bridge(MOI.GreaterThan{Float64}),
+        MOI.Bridges.Constraint.IndicatortoSOS1{Float64}(mock),
         MOI.Test.Config(),
     )
     MOI.Test.test_basic_VectorAffineFunction_Indicator_LessThan(
-        _bridge(MOI.LessThan{Float64}),
+        MOI.Bridges.Constraint.IndicatortoSOS1{Float64}(mock),
         MOI.Test.Config(),
     )
     return
@@ -198,13 +189,7 @@ function test_model_equality()
     mock = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
     )
-    bridged_mock = MOI.Bridges.Constraint.IndicatortoSOS1{
-        Float64,
-        MOI.LessThan{Float64},
-        MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}},
-    }(
-        mock,
-    )
+    bridged_mock = MOI.Bridges.Constraint.IndicatortoSOS1{Float64}(mock)
     z, _ = MOI.add_constrained_variable(bridged_mock, MOI.ZeroOne())
     MOI.set(bridged_mock, MOI.VariableName(), z, "z")
     x = MOI.add_variable(bridged_mock)
@@ -263,7 +248,7 @@ function test_model_equality()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.util_test_models_equal(
         mock,
         model,
         var_names,
@@ -292,7 +277,7 @@ function test_model_equality()
     maxobjective: z
     """
     MOI.Utilities.loadfromstring!(model, sbridged)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.util_test_models_equal(
         bridged_mock,
         model,
         ["z", "x"],

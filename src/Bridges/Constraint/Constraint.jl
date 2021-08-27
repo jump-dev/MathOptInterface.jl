@@ -90,11 +90,12 @@ const LogDet{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{LogDetBridge{T},OT}
 const RootDet{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{RootDetBridge{T},OT}
 
 include("indicator_activate_on_zero.jl")
-# TODO(odow): should something go here?
+const IndicatorActiveOnFalse{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{IndicatorActiveOnFalseBridge{T},OT}
 
 include("indicator_sos.jl")
-const IndicatortoSOS1{T,BC<:MOI.AbstractScalarSet,MaybeBC} =
-    SingleBridgeOptimizer{IndicatorSOS1Bridge{T,BC,MaybeBC}}
+const IndicatortoSOS1{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{IndicatorSOS1Bridge{T},OT}
 
 include("semi_to_binary.jl")
 const SemiToBinary{T,OT<:MOI.ModelLike} =

@@ -176,7 +176,7 @@ function test_SemiToBinary()
     MOI.empty!(bridged_mock)
     @test MOI.is_empty(bridged_mock)
     MOI.Utilities.loadfromstring!(bridged_mock, s)
-    MOI.Utilities.test_models_equal(
+    MOI.Test.util_test_models_equal(
         bridged_mock,
         model,
         ["x", "y"],
@@ -221,7 +221,7 @@ function test_SemiToBinary()
         ),
     )
     MOI.set(mock, MOI.ConstraintName(), ci, "cup")
-    MOI.Utilities.test_models_equal(
+    MOI.Test.util_test_models_equal(
         mock,
         modelb,
         ["x", "y", "z"],
