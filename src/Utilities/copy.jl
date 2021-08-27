@@ -440,11 +440,12 @@ and `false` otherwise.
 
 The attributes that are filtered are:
 
+ * `MOI.ListOfConstraintAttributesSet`
+ * `MOI.ListOfConstraintIndices`
+ * `MOI.ListOfConstraintTypesPresent`
  * `MOI.ListOfModelAttributesSet`
  * `MOI.ListOfVariableAttributesSet`
  * `MOI.ListOfVariableIndices`
- * `MOI.ListOfConstraintAttributesSet`
- * `MOI.ListOfConstraintIndices`
 
 See the examples for examples of how this works.
 
@@ -457,7 +458,10 @@ See the examples for examples of how this works.
 Use the `do` syntax to provide a single function.
 
 ```julia
-filtered_src = MOI.Utilities.ModelFilter(src) do attr, _
+filtered_src = MOI.Utilities.ModelFilter(src) do item
+    if item isa Tuple{Type,Type}
+        return item != (MOI.SingleVariable, MOI.Integer)
+    end
     return attr != MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Integer}()
 end
 MOI.copy_to(dest, filtered_src)
@@ -487,11 +491,11 @@ filtered_src = MOI.Utilities.ModelFilter(my_filter, src)
 MOI.copy_to(dest, filtered_src)
 ```
 """
-struct ModelFilter{T} <: MOI.ModelLike
+struct ModelFilter{T,F} <: MOI.ModelLike
     inner::T
-    filter::Function
+    filter::F
     function ModelFilter(filter::Function, model::MOI.ModelLike)
-        return new{typeof(model)}(model, filter)
+        return new{typeof(model),typeof(filter)}(model, filter)
     end
 end
 
@@ -499,15 +503,14 @@ function MOI.get(
     model::ModelFilter,
     attr::Union{
         MOI.ListOfModelAttributesSet,
-        MOI.ListOfVariableAttributesSet,
         MOI.ListOfConstraintAttributesSet,
         MOI.ListOfConstraintIndices,
+        MOI.ListOfConstraintTypesPresent,
+        MOI.ListOfVariableAttributesSet,
         MOI.ListOfVariableIndices,
     },
 )
-    return filter(MOI.get(model.inner, attr)) do item
-        return model.filter(attr, item)
-    end
+    return filter(model.filter, MOI.get(model.inner, attr))
 end
 
 function MOI.get(model::ModelFilter, attr::MOI.AbstractModelAttribute)
@@ -529,3 +532,7 @@ function MOI.get(
 )
     return MOI.get(model.inner, attr, ci)
 end
+
+MOI.is_empty(model::ModelFilter) = MOI.is_empty(model.inner)
+
+MOI.empty!(model::ModelFilter) = MOI.empty!(model.inner)

@@ -600,8 +600,8 @@ function test_filtering_copy()
     # Filtering function: the default case where this function always returns
     # true is already well-tested by the above cases.
     # Only keep the constraint c1.
-    f(::Any, ::Any) = true
-    f(::MOI.ListOfConstraintIndices, cidx::MOI.ConstraintIndex) = cidx == c1
+    f(::Any) = true
+    f(cidx::MOI.ConstraintIndex) = cidx == c1
 
     # Perform the copy.
     dst = OrderConstrainedVariablesModel()
@@ -616,13 +616,27 @@ function test_filtering_copy_AbstractModelAttribute()
     src = MOI.Utilities.Model{Float64}()
     MOI.set(src, MOI.Name(), "src")
     dest = MOI.Utilities.Model{Float64}()
-    MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do attr, item
-        if attr != MOI.ListOfModelAttributesSet()
-            return true
+    MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
+        if item isa MOI.AbstractModelAttribute
+            return item != MOI.Name()
         end
-        return item != MOI.Name()
+        return true
     end)
     @test MOI.get(dest, MOI.Name()) == ""
+    return
+end
+
+function test_filtering_copy_empty()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(src)
+    model = MOI.Utilities.ModelFilter(src) do item
+        return !(item isa MOI.VariableIndex)
+    end
+    # TODO(odow): should this report empty or not? We filtered out all the
+    # variables...
+    @test MOI.is_empty(model)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
     return
 end
 
@@ -632,11 +646,11 @@ function test_filtering_copy_AbstractVariableAttribute()
     MOI.set(src, MOI.VariableName(), x, "x")
     MOI.set(src, MOI.VariablePrimalStart(), x, 1.0)
     dest = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
-    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do attr, item
-        if attr != MOI.ListOfVariableAttributesSet()
-            return true
+    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
+        if item isa MOI.AbstractVariableAttribute
+            return item != MOI.VariableName()
         end
-        return item != MOI.VariableName()
+        return true
     end)
     @test MOI.get(dest, MOI.VariableName(), index_map[x]) == ""
     @test MOI.get(dest, MOI.VariablePrimalStart(), index_map[x]) == 1.0
@@ -650,11 +664,11 @@ function test_filtering_copy_AbstractConstraintAttribute()
     MOI.set(src, MOI.ConstraintName(), c, "c")
     MOI.set(src, MOI.ConstraintDualStart(), c, [1.0])
     dest = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
-    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do attr, item
-        if !(attr isa MOI.ListOfConstraintAttributesSet)
-            return true
+    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
+        if item isa MOI.AbstractConstraintAttribute
+            return item != MOI.ConstraintName()
         end
-        return item != MOI.ConstraintName()
+        return true
     end)
     @test MOI.get(dest, MOI.ConstraintName(), index_map[c]) == ""
     @test MOI.get(dest, MOI.ConstraintDualStart(), index_map[c]) == [1.0]
@@ -665,11 +679,11 @@ function test_filtering_copy_ListOfVariableIndices()
     src = MOI.Utilities.Model{Float64}()
     x = MOI.add_variables(src, 4)
     dest = MOI.Utilities.Model{Float64}()
-    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do attr, item
-        if attr != MOI.ListOfVariableIndices()
-            return true
+    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
+        if item isa MOI.VariableIndex
+            return isodd(item.value)
         end
-        return isodd(item.value)
+        return true
     end)
     @test MOI.get(dest, MOI.NumberOfVariables()) == 2
     for xi in x
@@ -683,11 +697,11 @@ function test_filtering_copy_ListOfConstraintIndices()
     x = MOI.add_variables(src, 4)
     MOI.add_constraint.(src, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
     dest = MOI.Utilities.Model{Float64}()
-    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do attr, item
-        if !(attr isa MOI.ListOfConstraintIndices)
-            return true
+    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
+        if item isa MOI.ConstraintIndex
+            return isodd(item.value)
         end
-        return isodd(item.value)
+        return true
     end)
     @test MOI.get(dest, MOI.NumberOfVariables()) == 4
     @test MOI.get(
@@ -701,6 +715,33 @@ function test_filtering_copy_ListOfConstraintIndices()
         )
         @test haskey(index_map, ci) == isodd(xi.value)
     end
+    return
+end
+
+function test_filtering_copy_ListOfConstraintTypesPresent()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(src, 4)
+    MOI.add_constraint.(src, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
+    MOI.add_constraint.(src, MOI.SingleVariable.(x), MOI.ZeroOne())
+    dest = MOI.Utilities.Model{Float64}()
+    index_map = MOI.copy_to(
+        dest,
+        MOI.Utilities.ModelFilter(src) do item
+            if item isa Tuple{Type,Type}
+                return item == (MOI.SingleVariable, MOI.ZeroOne)
+            end
+            return true
+        end,
+    )
+    @test MOI.get(dest, MOI.NumberOfVariables()) == 4
+    @test MOI.get(
+        dest,
+        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}(),
+    ) == 0
+    @test MOI.get(
+        dest,
+        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}(),
+    ) == 4
     return
 end
 
@@ -754,13 +795,8 @@ function test_BoundModel_filtering_copy()
     c2 = MOI.add_constraint(src, x, MOI.Integer())
 
     # Filtering function: get rid of integrality constraint.
-    f(::Any, ::Any) = true
-    function f(
-        ::MOI.ListOfConstraintIndices{F,MOI.Integer},
-        ::MOI.ConstraintIndex{F,MOI.Integer},
-    ) where {F}
-        return false
-    end
+    f(::Any) = true
+    f(::MOI.ConstraintIndex{F,MOI.Integer}) where {F} = false
 
     # Perform the unfiltered copy. This should throw an error (i.e. the
     # implementation of BoundModel
