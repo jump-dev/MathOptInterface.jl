@@ -126,7 +126,7 @@ MOI.Bridges.Constraint.concrete_bridge_type(
 
 # output
 
-MathOptInterface.Bridges.Constraint.SplitIntervalBridge{Float64, MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64}, MathOptInterface.GreaterThan{Float64}, MathOptInterface.LessThan{Float64}}
+MathOptInterface.Bridges.Constraint.SplitIntervalBridge{Float64,MathOptInterface.VariableIndex,MathOptInterface.Interval{Float64},MathOptInterface.GreaterThan{Float64},MathOptInterface.LessThan{Float64}}
 ```
 """
 function concrete_bridge_type(

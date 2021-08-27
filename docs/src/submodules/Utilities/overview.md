@@ -265,7 +265,7 @@ with optimizer nothing
 julia> MOI.Utilities.reset_optimizer(model, PathOptimizer{Float64}())
 
 julia> model
-MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.GenericModel{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}}
+MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}}
 in state EMPTY_OPTIMIZER
 in mode MANUAL
 with model cache MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}
