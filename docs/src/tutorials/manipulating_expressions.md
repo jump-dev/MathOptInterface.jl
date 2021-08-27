@@ -45,15 +45,6 @@ julia> f2 = MOI.SingleVariable(x) + 2 # x + 2
 MathOptInterface.ScalarAffineFunction{Int64}(MathOptInterface.ScalarAffineTerm{Int64}[ScalarAffineTerm{Int64}(1, VariableIndex(1))], 2)
 ```
 
-!!! warning
-    If you get an error such as `ERROR: UndefVarError: T not defined`, it 
-    means that the Julia compiler was not able to determine the type of the 
-    coefficients for the function. In that case, you can insert a 
-    multiplication by one (with the appropriate type). For instance,
-    `1.0 * SingleVariable(x)` creates a
-    [`ScalarAffineFunction`](@ref) whose coefficients are of type `Float64`
-    (the type of `1.0`), i.e. a `ScalarAffineFunction{Float64}`.
-
 ### Creating scalar quadratic functions
 
 Scalar quadratic functions are stored in [`ScalarQuadraticFunction`](@ref) 
