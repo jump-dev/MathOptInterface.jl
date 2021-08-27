@@ -32,7 +32,7 @@ julia> c = MOI.add_constraint(
            MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
            MOI.EqualTo(1.0),
        )
-MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64},MathOptInterface.EqualTo{Float64}}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.EqualTo{Float64}}(1)
 
 julia> MOI.set(model, MOI.ConstraintSet(), c, MOI.EqualTo(2.0));
 
@@ -66,7 +66,7 @@ julia> c = MOI.add_constraint(
            MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
            MOI.LessThan(1.0),
        )
-MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64},MathOptInterface.LessThan{Float64}}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.LessThan{Float64}}(1)
 
 julia> new_c = MOI.transform(model, c, MOI.GreaterThan(2.0));
 
@@ -92,7 +92,7 @@ julia> c = MOI.add_constraint(
            MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
            MOI.EqualTo(1.0),
        )
-MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64},MathOptInterface.EqualTo{Float64}}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.EqualTo{Float64}}(1)
 
 julia> new_f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 1.0);
 
@@ -120,7 +120,7 @@ julia> c = MOI.add_constraint(
            MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
            MOI.EqualTo(1.0),
        )
-MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64},MathOptInterface.EqualTo{Float64}}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.EqualTo{Float64}}(1)
 
 julia> MOI.modify(model, c, MOI.ScalarConstantChange(1.0));
 
@@ -171,7 +171,7 @@ julia> c = MOI.add_constraint(
            ),
            MOI.Nonnegatives(2),
        )
-MathOptInterface.ConstraintIndex{MathOptInterface.VectorAffineFunction{Float64},MathOptInterface.Nonnegatives}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorAffineFunction{Float64}, MathOptInterface.Nonnegatives}(1)
 
 julia> MOI.modify(model, c, MOI.VectorConstantChange([3.0, 4.0]));
 
@@ -198,7 +198,7 @@ julia> c = MOI.add_constraint(
            MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
            MOI.EqualTo(1.0),
        )
-MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64},MathOptInterface.EqualTo{Float64}}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.EqualTo{Float64}}(1)
 
 julia> MOI.modify(model, c, MOI.ScalarCoefficientChange(x, 2.0));
 
@@ -229,7 +229,7 @@ julia> c = MOI.add_constraint(
            ),
            MOI.Nonnegatives(2),
        )
-MathOptInterface.ConstraintIndex{MathOptInterface.VectorAffineFunction{Float64},MathOptInterface.Nonnegatives}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorAffineFunction{Float64}, MathOptInterface.Nonnegatives}(1)
 
 julia> MOI.modify(model, c, MOI.MultirowChange(x, [(1, 3.0), (2, 4.0)]));
 

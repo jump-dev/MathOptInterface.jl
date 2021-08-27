@@ -15,7 +15,6 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 AbstractFunction
 AbstractScalarFunction
 AbstractVectorFunction
-VariableIndex
 VectorOfVariables
 ScalarAffineTerm
 ScalarAffineFunction

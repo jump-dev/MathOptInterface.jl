@@ -36,7 +36,7 @@ julia> c = MOI.add_constraints(
            [x[1], x[2]],
            [MOI.GreaterThan(0.0), MOI.GreaterThan(1.0)]
        )
-Vector{MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.GreaterThan{Float64}}}:
+2-element Vector{MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.GreaterThan{Float64}}}:
  MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.GreaterThan{Float64}}(1)
  MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.GreaterThan{Float64}}(2)
 ```
