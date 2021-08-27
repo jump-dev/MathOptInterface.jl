@@ -150,7 +150,7 @@ MOI.Bridges.added_constrained_variable_types(
 
 # output
 
-1-element Vector{Tuple{Type}}:
+Vector{Tuple{Type}}:
  (MathOptInterface.Nonnegatives,)
 ```
 """
@@ -189,7 +189,7 @@ MOI.Bridges.added_constraint_types(
 
 # output
 
-2-element Vector{Tuple{Type, Type}}:
+2-element Array{Tuple{Type,Type},1}:
  (MathOptInterface.VariableIndex, MathOptInterface.EqualTo{Float64})
  (MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.EqualTo{Float64})
 ```

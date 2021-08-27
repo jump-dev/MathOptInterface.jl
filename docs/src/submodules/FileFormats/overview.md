@@ -65,7 +65,7 @@ To write a model `src` to a [MathOptFormat file](https://jump.dev/MathOptFormat/
 use:
 ```jldoctest fileformats
 julia> src = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}
 
 julia> MOI.add_variable(src)
 MathOptInterface.VariableIndex(1)
@@ -108,7 +108,7 @@ A MathOptFormat Model
 julia> MOI.read_from_file(dest, "file.mof.json")
 
 julia> MOI.get(dest, MOI.ListOfVariableIndices())
-1-element Vector{MathOptInterface.VariableIndex}:
+1-element Array{MathOptInterface.VariableIndex,1}:
  MathOptInterface.VariableIndex(1)
 
 julia> rm("file.mof.json")  # Clean up after ourselves.
@@ -122,13 +122,13 @@ guess the format from the file extension. For example:
 
 ```jldoctest fileformats
 julia> src = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}
 
 julia> dest = MOI.FileFormats.Model(filename = "file.cbf.gz")
 A Conic Benchmark Format (CBF) model
 
 julia> MOI.copy_to(dest, src)
-MathOptInterface.Utilities.IndexMap()
+MathOptInterface.Utilities.IndexMap with 0 entries
 
 julia> MOI.write_to_file(dest, "file.cbf.gz")
 
@@ -136,13 +136,13 @@ julia> src_2 = MOI.FileFormats.Model(filename = "file.cbf.gz")
 A Conic Benchmark Format (CBF) model
 
 julia> src = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}
 
 julia> dest = MOI.FileFormats.Model(filename = "file.cbf.gz")
 A Conic Benchmark Format (CBF) model
 
 julia> MOI.copy_to(dest, src)
-MathOptInterface.Utilities.IndexMap()
+MathOptInterface.Utilities.IndexMap with 0 entries
 
 julia> MOI.write_to_file(dest, "file.cbf.gz")
 
@@ -180,13 +180,13 @@ In addition to [`write_to_file`](@ref) and [`read_from_file`](@ref), you can
 read and write directly from `IO` streams using `Base.write` and `Base.read!`:
 ```jldoctest
 julia> src = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU.VariablesContainer{Float64},MOIU.ModelFunctionConstraints{Float64}}
 
 julia> dest = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MPS)
 A Mathematical Programming System (MPS) model
 
 julia> MOI.copy_to(dest, src)
-MathOptInterface.Utilities.IndexMap()
+MathOptInterface.Utilities.IndexMap with 0 entries
 
 julia> io = IOBuffer();
 
@@ -255,7 +255,7 @@ Use `JSONSchema.validate` to obtain more insight into why the validation failed:
 julia> JSONSchema.validate(bad_model, schema)
 Validation failed:
 path:         [variables][1]
-instance:     Dict{String, Any}("NaMe" => "x")
+instance:     Dict{String,Any}("NaMe"=>"x")
 schema key:   required
 schema value: Any["name"]
 ```

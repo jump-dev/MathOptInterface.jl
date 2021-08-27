@@ -29,7 +29,7 @@ true
 Use [`add_variables`](@ref) to add a number of variables.
 ```jldoctest variables
 julia> y = MOI.add_variables(model, 2)
-2-element Vector{MathOptInterface.VariableIndex}:
+2-element Array{MathOptInterface.VariableIndex,1}:
  MathOptInterface.VariableIndex(2)
  MathOptInterface.VariableIndex(3)
 ```
