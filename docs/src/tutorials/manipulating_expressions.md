@@ -28,7 +28,7 @@ julia> f1 = MOI.SingleVariable(x) # A function with the single variable x
 MathOptInterface.SingleVariable(MathOptInterface.VariableIndex(1))
 ```
 
-This type of function is extremely simple: to express more complex functions, 
+This type of function is extremely simple; to express more complex functions, 
 other types must be used. For instance, a [`ScalarAffineFunction`](@ref) is a
 sum of linear terms (a factor times a variable) and a constant. Such an object
 can be built using the standard constructor: 
