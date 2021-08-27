@@ -1802,7 +1802,7 @@ end
 
 function Base.:+(::MOI.VariableIndex, ::MOI.VariableIndex...)
     return error(
-        "Unable to add SingleVariables together because no coefficient type " *
+        "Unable to add VariableIndex together because no coefficient type " *
         "is specified. Instead of `x + y`, convert one of the terms to a " *
         "`ScalarAffineFunction` first by left-multiplying by `one(T)` where " *
         "`T` is the coefficient type For example: `1.0 * x + y`.",
