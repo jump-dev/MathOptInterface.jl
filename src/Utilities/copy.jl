@@ -502,10 +502,10 @@ end
 function MOI.get(
     model::ModelFilter,
     attr::Union{
-        MOI.ListOfModelAttributesSet,
         MOI.ListOfConstraintAttributesSet,
         MOI.ListOfConstraintIndices,
         MOI.ListOfConstraintTypesPresent,
+        MOI.ListOfModelAttributesSet,
         MOI.ListOfVariableAttributesSet,
         MOI.ListOfVariableIndices,
     },
@@ -516,6 +516,20 @@ end
 function MOI.get(model::ModelFilter, attr::MOI.AbstractModelAttribute)
     return MOI.get(model.inner, attr)
 end
+
+# !!! warning
+#     Slow implementations, but we need to report the number of variables and
+#     constraints in the filtered model, not in the `.inner`.
+
+function MOI.get(model::ModelFilter, ::MOI.NumberOfVariables)
+    return length(MOI.get(model, MOI.ListOfVariableIndices()))
+end
+
+function MOI.get(model::ModelFilter, ::MOI.NumberOfConstraints{F,S}) where {F,S}
+    return length(MOI.get(model, MOI.ListOfConstraintIndices{F,S}()))
+end
+
+# These just forward the attributes into the inner model.
 
 function MOI.get(
     model::ModelFilter,
@@ -533,6 +547,23 @@ function MOI.get(
     return MOI.get(model.inner, attr, ci)
 end
 
-MOI.is_empty(model::ModelFilter) = MOI.is_empty(model.inner)
+# !!! warning
+#     This is a slow implementation. But we need to check if we filtered
+#     everything.
+function MOI.is_empty(model::ModelFilter)
+    if MOI.is_empty(model.inner)
+        return true
+    elseif MOI.get(model, MOI.NumberOfVariables()) > 0
+        return false
+    elseif length(MOI.get(model, MOI.ListOfModelAttributesSet())) > 0
+        return false
+    end
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        if MOI.get(model, MOI.NumberOfConstraints{F,S}()) > 0
+            return false
+        end
+    end
+    return true
+end
 
 MOI.empty!(model::ModelFilter) = MOI.empty!(model.inner)

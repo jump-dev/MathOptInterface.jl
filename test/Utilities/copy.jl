@@ -612,31 +612,33 @@ function test_filtering_copy()
     return
 end
 
-function test_filtering_copy_AbstractModelAttribute()
-    src = MOI.Utilities.Model{Float64}()
-    MOI.set(src, MOI.Name(), "src")
-    dest = MOI.Utilities.Model{Float64}()
-    MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
-        if item isa MOI.AbstractModelAttribute
-            return item != MOI.Name()
-        end
-        return true
-    end)
-    @test MOI.get(dest, MOI.Name()) == ""
-    return
-end
-
 function test_filtering_copy_empty()
     src = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(src)
     model = MOI.Utilities.ModelFilter(src) do item
         return !(item isa MOI.VariableIndex)
     end
-    # TODO(odow): should this report empty or not? We filtered out all the
-    # variables...
     @test MOI.is_empty(model)
+    MOI.set(src, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    @test !MOI.is_empty(model)
     MOI.empty!(model)
     @test MOI.is_empty(model)
+    return
+end
+
+function test_filtering_copy_AbstractModelAttribute()
+    src = MOI.Utilities.Model{Float64}()
+    MOI.set(src, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    dest = MOI.Utilities.Model{Float64}()
+    filtered_src = MOI.Utilities.ModelFilter(src) do item
+        if item isa MOI.AbstractModelAttribute
+            return item != MOI.ObjectiveSense()
+        end
+        return true
+    end
+    @test MOI.is_empty(filtered_src)
+    MOI.copy_to(dest, filtered_src)
+    @test MOI.get(dest, MOI.ObjectiveSense()) == MOI.FEASIBILITY_SENSE
     return
 end
 
@@ -646,12 +648,14 @@ function test_filtering_copy_AbstractVariableAttribute()
     MOI.set(src, MOI.VariableName(), x, "x")
     MOI.set(src, MOI.VariablePrimalStart(), x, 1.0)
     dest = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
-    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
+    filtered_src = MOI.Utilities.ModelFilter(src) do item
         if item isa MOI.AbstractVariableAttribute
             return item != MOI.VariableName()
         end
         return true
-    end)
+    end
+    @test !MOI.is_empty(filtered_src)
+    index_map = MOI.copy_to(dest, filtered_src)
     @test MOI.get(dest, MOI.VariableName(), index_map[x]) == ""
     @test MOI.get(dest, MOI.VariablePrimalStart(), index_map[x]) == 1.0
     return
@@ -664,12 +668,14 @@ function test_filtering_copy_AbstractConstraintAttribute()
     MOI.set(src, MOI.ConstraintName(), c, "c")
     MOI.set(src, MOI.ConstraintDualStart(), c, [1.0])
     dest = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
-    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
+    filtered_src = MOI.Utilities.ModelFilter(src) do item
         if item isa MOI.AbstractConstraintAttribute
             return item != MOI.ConstraintName()
         end
         return true
-    end)
+    end
+    @test !MOI.is_empty(filtered_src)
+    index_map = MOI.copy_to(dest, filtered_src)
     @test MOI.get(dest, MOI.ConstraintName(), index_map[c]) == ""
     @test MOI.get(dest, MOI.ConstraintDualStart(), index_map[c]) == [1.0]
     return
