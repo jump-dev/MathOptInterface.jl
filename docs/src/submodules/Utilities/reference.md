@@ -157,6 +157,8 @@ The following functions can be used to manipulate functions with basic algebra:
 
 ```@docs
 Utilities.scalar_type
+Utilities.scalarize
+Utilities.eachscalar
 Utilities.promote_operation
 Utilities.operate
 Utilities.operate!

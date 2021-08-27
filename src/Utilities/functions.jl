@@ -492,7 +492,20 @@ function ScalarFunctionIterator(f::MOI.VectorQuadraticFunction)
     )
 end
 
+"""
+    eachscalar(f::MOI.AbstractVectorFunction)
+
+Returns an iterator for the scalar components of the vector function.
+
+See also [`scalarize`](@ref).
+"""
 eachscalar(f::MOI.AbstractVectorFunction) = ScalarFunctionIterator(f)
+
+"""
+    eachscalar(f::MOI.AbstractVector)
+
+Returns an iterator for the scalar components of the vector.
+"""
 eachscalar(f::AbstractVector) = f
 
 function Base.iterate(it::ScalarFunctionIterator, state = 1)
@@ -3067,12 +3080,26 @@ function operate(
     return MOI.VectorQuadraticFunction(quadratic_terms, affine_terms, constant)
 end
 
-# Similar to `eachscalar` but faster, see
-# https://github.com/jump-dev/MathOptInterface.jl/issues/418
+"""
+    scalarize(func::MOI.VectorOfVariables, ignore_constants::Bool = false)
+
+Returns a vector of scalar functions making up the vector function in the form
+of a `Vector{MOI.SingleVariable}`.
+
+See also [`eachscalar`](@ref).
+"""
 function scalarize(f::MOI.VectorOfVariables, ignore_constants::Bool = false)
     return MOI.SingleVariable.(f.variables)
 end
 
+"""
+    scalarize(func::MOI.VectorAffineFunction{T}, ignore_constants::Bool = false)
+
+Returns a vector of scalar functions making up the vector function in the form
+of a `Vector{MOI.ScalarAffineFunction{T}}`.
+
+See also [`eachscalar`](@ref).
+"""
 function scalarize(
     f::MOI.VectorAffineFunction{T},
     ignore_constants::Bool = false,
@@ -3092,6 +3119,14 @@ function scalarize(
     return functions
 end
 
+"""
+    scalarize(func::MOI.VectorQuadraticFunction{T}, ignore_constants::Bool = false)
+
+Returns a vector of scalar functions making up the vector function in the form
+of a `Vector{MOI.ScalarQuadraticFunction{T}}`.
+
+See also [`eachscalar`](@ref).
+"""
 function scalarize(
     f::MOI.VectorQuadraticFunction{T},
     ignore_constants::Bool = false,
