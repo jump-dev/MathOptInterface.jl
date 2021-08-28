@@ -182,7 +182,7 @@ function test_ObjectiveFunction()
     return
 end
 
-function _test_T
+function _test_T()
     model = MOI.Utilities.Model{T}()
     @test !MOI.supports_constraint(model, DummyFunction, DummySet)
     @test !MOI.supports_constraint(model, MOI.VariableIndex, DummySet)

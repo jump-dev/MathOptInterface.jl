@@ -104,10 +104,10 @@ nonpositive) real numbers.
 | ``a^Tx \ge \alpha``           | `ScalarAffineFunction`       | `GreaterThan`  |
 | ``a^Tx = \beta``              | `ScalarAffineFunction`       | `EqualTo`      |
 | ``\alpha \le a^Tx \le \beta`` | `ScalarAffineFunction`       | `Interval`     |
-| ``x_i \le \beta``             | `VariableIndex`             | `LessThan`     |
-| ``x_i \ge \alpha``            | `VariableIndex`             | `GreaterThan`  |
-| ``x_i = \beta``               | `VariableIndex`             | `EqualTo`      |
-| ``\alpha \le x_i \le \beta``  | `VariableIndex`             | `Interval`     |
+| ``x_i \le \beta``             | `VariableIndex`              | `LessThan`     |
+| ``x_i \ge \alpha``            | `VariableIndex`              | `GreaterThan`  |
+| ``x_i = \beta``               | `VariableIndex`              | `EqualTo`      |
+| ``\alpha \le x_i \le \beta``  | `VariableIndex`              | `Interval`     |
 | ``Ax + b \in \mathbb{R}_+^n`` | `VectorAffineFunction`       | `Nonnegatives` |
 | ``Ax + b \in \mathbb{R}_-^n`` | `VectorAffineFunction`       | `Nonpositives` |
 | ``Ax + b = 0``                | `VectorAffineFunction`       | `Zeros`        |
@@ -166,10 +166,10 @@ where ``\mathcal{E}`` is the exponential cone (see [`ExponentialCone`](@ref)),
 
 | Mathematical Constraint                                                                    | MOI Function           | MOI Set                            |
 |--------------------------------------------------------------------------------------------|------------------------|------------------------------------|
-| ``x_i \in \mathbb{Z}``                                                                     | `VariableIndex`       | `Integer`                          |
-| ``x_i \in \{0,1\}``                                                                        | `VariableIndex`       | `ZeroOne`                          |
-| ``x_i \in \{0\} \cup [l,u]``                                                               | `VariableIndex`       | `Semicontinuous`                   |
-| ``x_i \in \{0\} \cup \{l,l+1,\ldots,u-1,u\}``                                              | `VariableIndex`       | `Semiinteger`                      |
+| ``x_i \in \mathbb{Z}``                                                                     | `VariableIndex`        | `Integer`                          |
+| ``x_i \in \{0,1\}``                                                                        | `VariableIndex`        | `ZeroOne`                          |
+| ``x_i \in \{0\} \cup [l,u]``                                                               | `VariableIndex`        | `Semicontinuous`                   |
+| ``x_i \in \{0\} \cup \{l,l+1,\ldots,u-1,u\}``                                              | `VariableIndex`        | `Semiinteger`                      |
 | At most one component of ``x`` can be nonzero                                              | `VectorOfVariables`    | `SOS1`                             |
 | At most two components of ``x`` can be nonzero, and if so they must be adjacent components | `VectorOfVariables`    | `SOS2`                             |
 | ``y = 1 \implies a^T x \in S``                                                             | `VectorAffineFunction` | `Indicator`                        |

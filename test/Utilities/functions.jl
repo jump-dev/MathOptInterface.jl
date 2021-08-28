@@ -1787,7 +1787,7 @@ end
 Test the three Base.:(op) fallbacks for pure SingleVariable operations.
 """
 function test_SingleVariable_operators()
-    x = MOI.SingleVariable(MOI.VariableIndex(1))
+    x = MOI.VariableIndex(1)
     @test_throws ErrorException x + x
     @test_throws ErrorException x - x
     @test_throws ErrorException x * x

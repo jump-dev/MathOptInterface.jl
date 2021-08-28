@@ -455,7 +455,7 @@ end
 function _test_constraintnames_equal(model, constraint_names)
     seen_name = Dict(name => false for name in constraint_names)
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        if F == MOI.SingleVariable
+        if F == MOI.VariableIndex
             continue
         end
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
@@ -481,7 +481,7 @@ end
 Test that `model1` and `model2` are identical using `variable_names` as keys for
 the variable names and `constraint_names` as keys for the constraint names.
 
-In addition, it checks that there is a SingleVariable-in-Set constraint for each
+In addition, it checks that there is a VariableIndex-in-Set constraint for each
 `(name, set)` tuple in `single_variable_constraints`, where `name` is the name
 of the corresponding variable.
 
@@ -499,11 +499,11 @@ function util_test_models_equal(
 )
     for (name, set) in single_variable_constraints
         x1 = MOI.get(model1, MOI.VariableIndex, name)
-        ci1 = MOI.ConstraintIndex{MOI.SingleVariable,typeof(set)}(x1.value)
+        ci1 = MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(x1.value)
         @test MOI.is_valid(model1, ci1)
         @test MOI.get(model1, MOI.ConstraintSet(), ci1) == set
         x2 = MOI.get(model2, MOI.VariableIndex, name)
-        ci2 = MOI.ConstraintIndex{MOI.SingleVariable,typeof(set)}(x2.value)
+        ci2 = MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(x2.value)
         @test MOI.is_valid(model2, ci2)
         @test MOI.get(model2, MOI.ConstraintSet(), ci2) == set
     end

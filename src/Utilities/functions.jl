@@ -1813,18 +1813,18 @@ function Base.:-(α::Number, f::MOI.VariableIndex)
     return operate(-, typeof(α), α, f)
 end
 
-function Base.:+(::MOI.SingleVariable, ::MOI.SingleVariable...)
+function Base.:+(::MOI.VariableIndex, ::MOI.VariableIndex...)
     return error(
-        "Unable to add SingleVariables together because no coefficient type " *
+        "Unable to add VariableIndex together because no coefficient type " *
         "is specified. Instead of `x + y`, convert one of the terms to a " *
         "`ScalarAffineFunction` first by left-multiplying by `one(T)` where " *
         "`T` is the coefficient type For example: `1.0 * x + y`.",
     )
 end
 
-function Base.:-(::MOI.SingleVariable, ::MOI.SingleVariable...)
+function Base.:-(::MOI.VariableIndex, ::MOI.VariableIndex...)
     return error(
-        "Unable to subtract SingleVariables together because no coefficient " *
+        "Unable to subtract VariableIndex together because no coefficient " *
         "type is specified. Instead of `x - y`, convert one of the terms to a " *
         "`ScalarAffineFunction` first by left-multiplying by `one(T)` where " *
         "`T` is the coefficient type For example: `1.0 * x - y`.",
@@ -1832,12 +1832,12 @@ function Base.:-(::MOI.SingleVariable, ::MOI.SingleVariable...)
 end
 
 function Base.:*(
-    ::MOI.SingleVariable,
-    ::MOI.SingleVariable,
-    ::MOI.SingleVariable...,
+    ::MOI.VariableIndex,
+    ::MOI.VariableIndex,
+    ::MOI.VariableIndex...,
 )
     return error(
-        "Unable to multiply SingleVariables together because no coefficient " *
+        "Unable to multiply VariableIndex together because no coefficient " *
         "type is specified. Instead of `x * y`, convert one of the terms to a " *
         "`ScalarAffineFunction` first by left-multiplying by `one(T)` where " *
         "`T` is the coefficient type For example: `1.0 * x * y`.",
