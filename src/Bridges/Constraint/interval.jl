@@ -1,5 +1,19 @@
 _lower_set(set::MOI.Interval) = MOI.GreaterThan(set.lower)
+function _lower_set(set::MOI.Interval{T}) where {T<:AbstractFloat}
+    if set.lower == typemin(T)
+        return nothing
+    else
+        return MOI.GreaterThan(set.lower)
+    end
+end
 _upper_set(set::MOI.Interval) = MOI.LessThan(set.upper)
+function _upper_set(set::MOI.Interval{T}) where {T<:AbstractFloat}
+    if set.upper == typemax(T)
+        return nothing
+    else
+        return MOI.LessThan(set.upper)
+    end
+end
 _lower_set(set::MOI.EqualTo) = MOI.GreaterThan(set.value)
 _upper_set(set::MOI.EqualTo) = MOI.LessThan(set.value)
 _lower_set(set::MOI.Zeros) = MOI.Nonnegatives(set.dimension)
@@ -25,8 +39,8 @@ struct SplitIntervalBridge{
     LS<:MOI.AbstractSet,
     US<:MOI.AbstractSet,
 } <: AbstractBridge
-    lower::MOI.ConstraintIndex{F,LS}
-    upper::MOI.ConstraintIndex{F,US}
+    lower::Union{Nothing,MOI.ConstraintIndex{F,LS}}
+    upper::Union{Nothing,MOI.ConstraintIndex{F,US}}
 end
 
 function bridge_constraint(
@@ -35,8 +49,18 @@ function bridge_constraint(
     f::F,
     set::S,
 ) where {T,F,S,LS,US}
-    lower = MOI.add_constraint(model, f, _lower_set(set))
-    upper = MOI.add_constraint(model, f, _upper_set(set))
+    lower_set = _lower_set(set)
+    if lower_set === nothing
+        lower = nothing
+    else
+        lower = MOI.add_constraint(model, f, _lower_set(set))
+    end
+    upper_set = _upper_set(set)
+    if upper_set === nothing
+        upper = nothing
+    else
+        upper = MOI.add_constraint(model, f, _upper_set(set))
+    end
     return SplitIntervalBridge{T,F,S,LS,US}(lower, upper)
 end
 
@@ -85,36 +109,56 @@ function concrete_bridge_type(
 end
 
 function MOI.get(
-    ::SplitIntervalBridge{T,F,S,LS},
+    bridge::SplitIntervalBridge{T,F,S,LS},
     ::MOI.NumberOfConstraints{F,LS},
 )::Int64 where {T,F,S,LS}
-    return 1
+    if bridge.lower === nothing
+        return 0
+    else
+        return 1
+    end
 end
 
 function MOI.get(
     ::SplitIntervalBridge{T,F,S,LS,US},
     ::MOI.NumberOfConstraints{F,US},
 )::Int64 where {T,F,S,LS,US}
-    return 1
+    if bridge.upper === nothing
+        return 0
+    else
+        return 1
+    end
 end
 
 function MOI.get(
     bridge::SplitIntervalBridge{T,F,S,LS},
     ::MOI.ListOfConstraintIndices{F,LS},
 ) where {T,F,S,LS}
-    return [bridge.lower]
+    if bridge.lower === nothing
+        return MOI.ConstraintIndex{F,LS}[]
+    else
+        return [bridge.lower]
+    end
 end
 
 function MOI.get(
     bridge::SplitIntervalBridge{T,F,S,LS,US},
     ::MOI.ListOfConstraintIndices{F,US},
 ) where {T,F,S,LS,US}
-    return [bridge.upper]
+    if bridge.upper === nothing
+        return MOI.ConstraintIndex{F,US}[]
+    else
+        return [bridge.upper]
+    end
 end
 
 function MOI.delete(model::MOI.ModelLike, bridge::SplitIntervalBridge)
-    MOI.delete(model, bridge.lower)
-    MOI.delete(model, bridge.upper)
+    if bridge.lower !== nothing
+        MOI.delete(model, bridge.lower)
+    end
+    if bridge.upper !== nothing
+        MOI.delete(model, bridge.upper)
+    end
     return
 end
 
@@ -128,13 +172,23 @@ function MOI.supports(
     return MOI.supports(model, attr, ci_1) && MOI.supports(model, attr, ci_2)
 end
 
+function _error_double_inf(attr)
+    error("Cannot get `$attr` for a constraint in the interval [-Inf, Inf].")
+end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
     bridge::SplitIntervalBridge,
 )
     # lower and upper should give the same value
-    return MOI.get(model, attr, bridge.lower)
+    if bridge.lower !== nothing
+        return MOI.get(model, attr, bridge.lower)
+    end
+    if bridge.upper !== nothing
+        return MOI.get(model, attr, bridge.upper)
+    end
+    _error_double_inf(attr)
 end
 
 function MOI.set(
@@ -143,8 +197,12 @@ function MOI.set(
     bridge::SplitIntervalBridge,
     value,
 )
-    MOI.set(model, attr, bridge.lower, value)
-    MOI.set(model, attr, bridge.upper, value)
+    if bridge.lower !== nothing
+        MOI.set(model, attr, bridge.lower, value)
+    end
+    if bridge.upper !== nothing
+        MOI.set(model, attr, bridge.upper, value)
+    end
     return
 end
 
@@ -157,10 +215,22 @@ end
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
-    bridge::SplitIntervalBridge,
-)
-    return MOI.get(model, attr, bridge.lower) +
-           MOI.get(model, attr, bridge.upper)
+    bridge::SplitIntervalBridge{T},
+) where {T}
+    if bridge.lower === nothing
+        if bridge.upper === nothing
+            return zero(T)
+        else
+            return MOI.get(model, attr, bridge.upper)
+        end
+    else
+        if bridge.upper === nothing
+            return MOI.get(model, attr, bridge.lower)
+        else
+            return MOI.get(model, attr, bridge.lower) +
+                   MOI.get(model, attr, bridge.upper)
+        end
+    end
 end
 
 function _split_dual_start(value)
