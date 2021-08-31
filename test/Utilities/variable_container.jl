@@ -57,10 +57,9 @@ function test_add_constraint()
     a = MOI.Utilities.VariablesContainer{Int}()
     x = MOI.add_variable(a)
     @test a == MOI.Utilities.VariablesContainer{Int}([0x0000], Int[0], Int[0])
-    f = x
-    MOI.add_constraint(a, f, MOI.GreaterThan(3))
+    MOI.add_constraint(a, x, MOI.GreaterThan(3))
     @test a == MOI.Utilities.VariablesContainer{Int}([0x0002], [3], [0])
-    MOI.add_constraint(a, f, MOI.LessThan(4))
+    MOI.add_constraint(a, x, MOI.LessThan(4))
     @test a == MOI.Utilities.VariablesContainer{Int}([0x0006], [3], [4])
     return
 end
@@ -68,11 +67,10 @@ end
 function test_add_constraint_LowerBoundAlreadySet()
     a = MOI.Utilities.VariablesContainer{Int}()
     x = MOI.add_variable(a)
-    f = x
-    MOI.add_constraint(a, f, MOI.GreaterThan(3))
+    MOI.add_constraint(a, x, MOI.GreaterThan(3))
     @test_throws(
         MOI.LowerBoundAlreadySet{MOI.GreaterThan{Int},MOI.GreaterThan{Int}},
-        MOI.add_constraint(a, f, MOI.GreaterThan(3)),
+        MOI.add_constraint(a, x, MOI.GreaterThan(3)),
     )
     return
 end
@@ -80,11 +78,10 @@ end
 function test_add_constraint_UpperBoundAlreadySet()
     a = MOI.Utilities.VariablesContainer{Int}()
     x = MOI.add_variable(a)
-    f = x
-    MOI.add_constraint(a, f, MOI.LessThan(3))
+    MOI.add_constraint(a, x, MOI.LessThan(3))
     @test_throws(
         MOI.UpperBoundAlreadySet{MOI.LessThan{Int},MOI.LessThan{Int}},
-        MOI.add_constraint(a, f, MOI.LessThan(3)),
+        MOI.add_constraint(a, x, MOI.LessThan(3)),
     )
     return
 end
@@ -92,8 +89,7 @@ end
 function test_delete_constraint_LessThan()
     a = MOI.Utilities.VariablesContainer{Int}()
     x = MOI.add_variable(a)
-    f = x
-    c = MOI.add_constraint(a, f, MOI.LessThan(3))
+    c = MOI.add_constraint(a, x, MOI.LessThan(3))
     @test MOI.is_valid(a, c)
     MOI.delete(a, c)
     @test !MOI.is_valid(a, c)
@@ -104,8 +100,7 @@ function test_delete_variable()
     a = MOI.Utilities.VariablesContainer{Int}()
     x = MOI.add_variable(a)
     @test a == MOI.Utilities.VariablesContainer{Int}([0x0000], Int[0], Int[0])
-    f = x
-    c = MOI.add_constraint(a, f, MOI.LessThan(3))
+    c = MOI.add_constraint(a, x, MOI.LessThan(3))
     MOI.delete(a, x)
     @test a == MOI.Utilities.VariablesContainer{Int}([0x8000], Int[0], Int[3])
     return
@@ -114,8 +109,7 @@ end
 function test_delete_constraint_GreaterThan()
     a = MOI.Utilities.VariablesContainer{Int}()
     x = MOI.add_variable(a)
-    f = x
-    c = MOI.add_constraint(a, f, MOI.GreaterThan(3))
+    c = MOI.add_constraint(a, x, MOI.GreaterThan(3))
     @test MOI.is_valid(a, c)
     MOI.delete(a, c)
     @test !MOI.is_valid(a, c)
@@ -126,8 +120,7 @@ function test_set_ConstraintSet()
     a = MOI.Utilities.VariablesContainer{Int}()
     x = MOI.add_variable(a)
     @test a == MOI.Utilities.VariablesContainer{Int}([0x0000], Int[0], Int[0])
-    f = x
-    c = MOI.add_constraint(a, f, MOI.GreaterThan(3))
+    c = MOI.add_constraint(a, x, MOI.GreaterThan(3))
     @test a == MOI.Utilities.VariablesContainer{Int}([0x0002], Int[3], Int[0])
     MOI.set(a, MOI.ConstraintSet(), c, MOI.GreaterThan(2))
     @test a == MOI.Utilities.VariablesContainer{Int}([0x0002], Int[2], Int[0])
@@ -247,20 +240,18 @@ function _test_bound_vectors(::Type{T}, nolb, noub) where {T}
     @test variable_bounds.lower == T[]
     @test variable_bounds.upper == T[]
     x = MOI.add_variable(variable_bounds)
-    fx = x
     @test variable_bounds.lower == [nolb]
     @test variable_bounds.upper == [noub]
-    ux = MOI.add_constraint(variable_bounds, fx, MOI.LessThan(T(1)))
+    ux = MOI.add_constraint(variable_bounds, x, MOI.LessThan(T(1)))
     @test variable_bounds.lower == [nolb]
     @test variable_bounds.upper == [T(1)]
     y = MOI.add_variable(variable_bounds)
-    fy = y
     @test variable_bounds.lower == [nolb, nolb]
     @test variable_bounds.upper == [T(1), noub]
-    cy = MOI.add_constraint(variable_bounds, fy, MOI.Interval(T(2), T(3)))
+    cy = MOI.add_constraint(variable_bounds, y, MOI.Interval(T(2), T(3)))
     @test variable_bounds.lower == [nolb, T(2)]
     @test variable_bounds.upper == [T(1), T(3)]
-    lx = MOI.add_constraint(variable_bounds, fx, MOI.GreaterThan(T(0)))
+    lx = MOI.add_constraint(variable_bounds, x, MOI.GreaterThan(T(0)))
     @test variable_bounds.lower == [T(0), T(2)]
     @test variable_bounds.upper == [T(1), T(3)]
     MOI.delete(variable_bounds, lx)
@@ -269,19 +260,19 @@ function _test_bound_vectors(::Type{T}, nolb, noub) where {T}
     MOI.delete(variable_bounds, ux)
     @test variable_bounds.lower == [nolb, T(2)]
     @test variable_bounds.upper == [noub, T(3)]
-    cx = MOI.add_constraint(variable_bounds, fx, MOI.Semicontinuous(T(3), T(4)))
+    cx = MOI.add_constraint(variable_bounds, x, MOI.Semicontinuous(T(3), T(4)))
     @test variable_bounds.lower == [T(3), T(2)]
     @test variable_bounds.upper == [T(4), T(3)]
     MOI.delete(variable_bounds, cy)
     @test variable_bounds.lower == [T(3), nolb]
     @test variable_bounds.upper == [T(4), noub]
-    sy = MOI.add_constraint(variable_bounds, fy, MOI.Semiinteger(T(-2), T(-1)))
+    sy = MOI.add_constraint(variable_bounds, y, MOI.Semiinteger(T(-2), T(-1)))
     @test variable_bounds.lower == [T(3), T(-2)]
     @test variable_bounds.upper == [T(4), T(-1)]
     MOI.delete(variable_bounds, sy)
     @test variable_bounds.lower == [T(3), nolb]
     @test variable_bounds.upper == [T(4), noub]
-    ey = MOI.add_constraint(variable_bounds, fy, MOI.EqualTo(T(-3)))
+    ey = MOI.add_constraint(variable_bounds, y, MOI.EqualTo(T(-3)))
     @test variable_bounds.lower == [T(3), T(-3)]
     @test variable_bounds.upper == [T(4), T(-3)]
     MOI.delete(variable_bounds, ey)

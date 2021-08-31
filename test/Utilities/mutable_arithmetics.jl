@@ -82,9 +82,8 @@ test_promote_operation_Float32() = _test_promote_operation(Float32)
 
 function _test_scaling(T)
     x = MOI.VariableIndex(1)
-    fx = x
-    @test T(3) == MA.scaling(T(0)fx + T(3))
-    f = T(2)fx + T(3)
+    @test T(3) == MA.scaling(T(0)x + T(3))
+    f = T(2)x + T(3)
     err = InexactError(:convert, T, f)
     @test_throws err MA.scaling(f)
 end
@@ -95,8 +94,7 @@ test_scaling_Float32() = _test_scaling(Float32)
 function test_unary_minus()
     for T in [Float64, Float32]
         x = MOI.VariableIndex(1)
-        fx = x
-        for f in [T(2)fx + T(3), T(4) * fx * fx + T(2)fx + T(3)]
+        for f in [T(2)x + T(3), T(4) * x * x + T(2)x + T(3)]
             g = -f
             @test g ≈ MA.operate!(-, f)
             @test g ≈ f
@@ -174,18 +172,17 @@ end
 
 function test_VariableIndex()
     x = MOI.VariableIndex(1)
-    fx = x
-    a = 2fx
-    MA.Test.@test_rewrite(a + fx)
-    MA.Test.@test_rewrite(a + 3 * fx)
-    MA.Test.@test_rewrite(a + fx * 4)
-    MA.Test.@test_rewrite(a + 3 * fx * 4)
-    MA.Test.@test_rewrite(fx + a)
-    MA.Test.@test_rewrite(a - fx)
-    MA.Test.@test_rewrite(a - 3 * fx)
-    MA.Test.@test_rewrite(a - fx * 4)
-    MA.Test.@test_rewrite(a - 3 * fx * 4)
-    MA.Test.@test_rewrite(fx - a)
+    a = 2x
+    MA.Test.@test_rewrite(a + x)
+    MA.Test.@test_rewrite(a + 3 * x)
+    MA.Test.@test_rewrite(a + x * 4)
+    MA.Test.@test_rewrite(a + 3 * x * 4)
+    MA.Test.@test_rewrite(x + a)
+    MA.Test.@test_rewrite(a - x)
+    MA.Test.@test_rewrite(a - 3 * x)
+    MA.Test.@test_rewrite(a - x * 4)
+    MA.Test.@test_rewrite(a - 3 * x * 4)
+    MA.Test.@test_rewrite(x - a)
 end
 
 function test_ScalarAffineFunction()
@@ -196,15 +193,13 @@ function test_ScalarAffineFunction()
     )
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
-    fx = x
-    fy = y
-    a = T(2) * fx + T(1)
-    b = T(4) * fy + T(2)
-    c = T(3) * fx - T(2) * fy - T(3)
-    d = T(3) * fx - T(2) * fy + T(4) * fx
-    e = T(5) * fx - T(5)
-    f = T(1) * fy - T(2) * fx + T(2)
-    g = T(2) * fx + T(3) * fx
+    a = T(2) * x + T(1)
+    b = T(4) * y + T(2)
+    c = T(3) * x - T(2) * y - T(3)
+    d = T(3) * x - T(2) * y + T(4) * x
+    e = T(5) * x - T(5)
+    f = T(1) * y - T(2) * x + T(2)
+    g = T(2) * x + T(3) * x
     _run_all_tests(T, a, b, c, d, e, f, g)
     return
 end
@@ -217,15 +212,13 @@ function test_ScalarQuadraticFunction()
     )
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
-    fx = x
-    fy = y
-    a = T(2) * fx + T(1) + T(4) * fx * fy
-    b = T(4) * fy + T(3) * fy * fy - T(3) * fy * fx + T(2)
-    c = T(2) * fx * fx + T(3) * fx - T(2) * fy - T(3)
-    d = T(2) * fx * fx + T(3) * fx - T(2) * fy + T(4) * fx - T(1) * fy * fy
-    e = T(5) * fx - T(5) - T(4) * fx * fy
-    f = T(1) * fy + T(2) * fy * fy - T(2) * fx + T(2)
-    g = T(2) * fx + T(3) * fx + T(3) * fx * fy
+    a = T(2) * x + T(1) + T(4) * x * y
+    b = T(4) * y + T(3) * y * y - T(3) * y * x + T(2)
+    c = T(2) * x * x + T(3) * x - T(2) * y - T(3)
+    d = T(2) * x * x + T(3) * x - T(2) * y + T(4) * x - T(1) * y * y
+    e = T(5) * x - T(5) - T(4) * x * y
+    f = T(1) * y + T(2) * y * y - T(2) * x + T(2)
+    g = T(2) * x + T(3) * x + T(3) * x * y
     _run_all_tests(T, a, b, c, d, e, f, g)
     return
 end

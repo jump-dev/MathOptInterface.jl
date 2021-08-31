@@ -250,11 +250,10 @@ function unbridged_map(
     vi::MOI.VariableIndex,
     i::MOIB.IndexInVector,
 ) where {T}
-    sv = vi
     if i.value == 2
-        func = MOIU.operate(*, T, convert(T, 2), sv)
+        func = MOIU.operate(*, T, convert(T, 2), vi)
     else
-        func = convert(MOI.ScalarAffineFunction{T}, sv)
+        func = convert(MOI.ScalarAffineFunction{T}, vi)
     end
     return (_variable(bridge, i) => func,)
 end

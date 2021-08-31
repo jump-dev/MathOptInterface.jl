@@ -163,8 +163,7 @@ function MOI.set(
 end
 
 function MOIB.bridged_function(bridge::VectorizeBridge{T}) where {T}
-    func = bridge.variable
-    return MOIU.operate(+, T, func, bridge.set_constant)
+    return MOIU.operate(+, T, bridge.variable, bridge.set_constant)
 end
 
 function unbridged_map(

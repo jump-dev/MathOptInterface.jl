@@ -646,16 +646,15 @@ function test_constraint_PrimalStart_DualStart_SecondOrderCone(
     )
     @requires _supports(config, MOI.optimize!)
     x = MOI.add_variable(model)
-    fx = x
     o = one(T)
     c = MOI.add_constraint(
         model,
-        MOIU.operate(vcat, T, fx, o),
+        MOIU.operate(vcat, T, x, o),
         MOI.SecondOrderCone(2),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    MOI.set(model, MOI.ObjectiveFunction{typeof(fx)}(), fx)
-    if MOI.supports(model, MOI.VariablePrimalStart(), typeof(x))
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
+    if MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
         MOI.set(model, MOI.VariablePrimalStart(), x, T(2))
     end
     if MOI.supports(model, MOI.ConstraintPrimalStart(), typeof(c))

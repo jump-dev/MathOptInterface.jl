@@ -30,53 +30,49 @@ function test_subsitution_of_variables()
     )
     bridged = MOI.Bridges.Variable.Vectorize{Float64}(mock)
     x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(1.0))
-    fx = x
     y = MOI.get(mock, MOI.ListOfVariableIndices())[1]
-    fy = y
-
-    c2fx = MOI.add_constraint(bridged, 2.0fx, MOI.GreaterThan(1.0))
-    @test MOI.get(bridged, MOI.ConstraintFunction(), c2fx) ≈ 2.0fx
-    @test MOI.get(bridged, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(1.0)
+    c2x = MOI.add_constraint(bridged, 2.0x, MOI.GreaterThan(1.0))
+    @test MOI.get(bridged, MOI.ConstraintFunction(), c2x) ≈ 2.0x
+    @test MOI.get(bridged, MOI.ConstraintSet(), c2x) == MOI.GreaterThan(1.0)
     # The constant was moved to the set
-    @test MOI.get(mock, MOI.ConstraintFunction(), c2fx) ≈ 2.0fy
-    @test MOI.get(mock, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(-1.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2x) ≈ 2.0y
+    @test MOI.get(mock, MOI.ConstraintSet(), c2x) == MOI.GreaterThan(-1.0)
 
-    MOI.set(bridged, MOI.ConstraintSet(), c2fx, MOI.GreaterThan(2.0))
-    @test MOI.get(bridged, MOI.ConstraintFunction(), c2fx) ≈ 2.0fx
-    @test MOI.get(bridged, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(2.0)
-    @test MOI.get(mock, MOI.ConstraintFunction(), c2fx) ≈ 2.0fy
-    @test MOI.get(mock, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(0.0)
+    MOI.set(bridged, MOI.ConstraintSet(), c2x, MOI.GreaterThan(2.0))
+    @test MOI.get(bridged, MOI.ConstraintFunction(), c2x) ≈ 2.0x
+    @test MOI.get(bridged, MOI.ConstraintSet(), c2x) == MOI.GreaterThan(2.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2x) ≈ 2.0y
+    @test MOI.get(mock, MOI.ConstraintSet(), c2x) == MOI.GreaterThan(0.0)
 
-    MOI.set(bridged, MOI.ConstraintFunction(), c2fx, 3.0fx)
-    @test MOI.get(bridged, MOI.ConstraintFunction(), c2fx) ≈ 3.0fx
-    @test MOI.get(bridged, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(2.0)
-    @test MOI.get(mock, MOI.ConstraintFunction(), c2fx) ≈ 3.0fy
-    @test MOI.get(mock, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(-1.0)
+    MOI.set(bridged, MOI.ConstraintFunction(), c2x, 3.0x)
+    @test MOI.get(bridged, MOI.ConstraintFunction(), c2x) ≈ 3.0x
+    @test MOI.get(bridged, MOI.ConstraintSet(), c2x) == MOI.GreaterThan(2.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2x) ≈ 3.0y
+    @test MOI.get(mock, MOI.ConstraintSet(), c2x) == MOI.GreaterThan(-1.0)
 
-    MOI.set(bridged, MOI.ConstraintSet(), c2fx, MOI.GreaterThan(4.0))
-    @test MOI.get(bridged, MOI.ConstraintFunction(), c2fx) ≈ 3.0fx
-    @test MOI.get(bridged, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(4.0)
-    @test MOI.get(mock, MOI.ConstraintFunction(), c2fx) ≈ 3.0fy
-    @test MOI.get(mock, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(1.0)
+    MOI.set(bridged, MOI.ConstraintSet(), c2x, MOI.GreaterThan(4.0))
+    @test MOI.get(bridged, MOI.ConstraintFunction(), c2x) ≈ 3.0x
+    @test MOI.get(bridged, MOI.ConstraintSet(), c2x) == MOI.GreaterThan(4.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2x) ≈ 3.0y
+    @test MOI.get(mock, MOI.ConstraintSet(), c2x) == MOI.GreaterThan(1.0)
 
-    MOI.set(bridged, MOI.ObjectiveFunction{typeof(2.0fx)}(), 2.0fx)
-    @test MOI.get(mock, MOI.ObjectiveFunction{typeof(2.0fy)}()) ≈ 2.0fy + 2.0
+    MOI.set(bridged, MOI.ObjectiveFunction{typeof(2.0x)}(), 2.0x)
+    @test MOI.get(mock, MOI.ObjectiveFunction{typeof(2.0y)}()) ≈ 2.0y + 2.0
 
-    MOI.set(bridged, DummyModelAttribute(), 2.0fx + 1.0)
-    @test MOI.get(bridged, DummyModelAttribute()) ≈ 2.0fx + 1.0
-    @test MOI.get(mock, DummyModelAttribute()) ≈ 2.0fy + 3.0
+    MOI.set(bridged, DummyModelAttribute(), 2.0x + 1.0)
+    @test MOI.get(bridged, DummyModelAttribute()) ≈ 2.0x + 1.0
+    @test MOI.get(mock, DummyModelAttribute()) ≈ 2.0y + 3.0
 
     z = MOI.add_variable(bridged)
-    fz = z
     for (attr, index) in
-        [(DummyVariableAttribute(), z), (DummyConstraintAttribute(), c2fx)]
-        MOI.set(bridged, attr, index, 1.0fx)
-        @test MOI.get(bridged, attr, index) ≈ 1.0fx
-        @test MOI.get(mock, attr, index) ≈ 1.0fy + 1.0
+        [(DummyVariableAttribute(), z), (DummyConstraintAttribute(), c2x)]
+        MOI.set(bridged, attr, index, 1.0x)
+        @test MOI.get(bridged, attr, index) ≈ 1.0x
+        @test MOI.get(mock, attr, index) ≈ 1.0y + 1.0
 
-        MOI.set(bridged, attr, [index], [3.0fx + 1.0fz])
-        @test MOI.get(bridged, attr, [index])[1] ≈ 3.0fx + 1.0fz
-        @test MOI.get(mock, attr, [index])[1] ≈ 3.0fy + 1.0fz + 3.0
+        MOI.set(bridged, attr, [index], [3.0x + 1.0z])
+        @test MOI.get(bridged, attr, [index])[1] ≈ 3.0x + 1.0z
+        @test MOI.get(mock, attr, [index])[1] ≈ 3.0y + 1.0z + 3.0
     end
     return
 end
@@ -131,13 +127,11 @@ function test_LazyConstraint()
     )
     bridged = MOI.Bridges.Variable.Vectorize{Float64}(mock)
     x, _ = MOI.add_constrained_variable(bridged, MOI.GreaterThan(1.0))
-    fx = x
     y = MOI.get(mock, MOI.ListOfVariableIndices())[1]
-    fy = y
     sub = MOI.LazyConstraint(nothing)
     @test MOI.supports(bridged, sub)
-    MOI.submit(bridged, sub, 2.0fx, MOI.GreaterThan(1.0))
-    mock.submitted[sub][1][1] ≈ 2.0fy + 2.0
+    MOI.submit(bridged, sub, 2.0x, MOI.GreaterThan(1.0))
+    mock.submitted[sub][1][1] ≈ 2.0y + 2.0
     mock.submitted[sub][1][2] == MOI.GreaterThan(1.0)
     return
 end
@@ -149,7 +143,6 @@ function test_HeuristicSolution()
     bridged = MOI.Bridges.Variable.Vectorize{Float64}(mock)
     x, _ = MOI.add_constrained_variable(bridged, MOI.GreaterThan(1.0))
     y = MOI.get(mock, MOI.ListOfVariableIndices())[1]
-    fy = y
     z = MOI.add_variable(bridged)
     sub = MOI.HeuristicSolution(nothing)
     @test MOI.supports(bridged, sub)
@@ -157,7 +150,7 @@ function test_HeuristicSolution()
     mock.submitted[sub][1][1] == [z]
     mock.submitted[sub][1][2] == [1.0]
     err = ErrorException(
-        "Cannot substitute `$x` as it is bridged into `$(1.0fy + 1.0)`.",
+        "Cannot substitute `$x` as it is bridged into `$(1.0y + 1.0)`.",
     )
     @test_throws err MOI.submit(bridged, sub, [x], [1.0])
     return
@@ -615,8 +608,7 @@ function test_nesting_SingleBridgeOptimizer()
     @test MOI.is_valid(b0, x)
     @test MOI.Bridges.is_bridged(b0, x)
     @test !MOI.is_valid(model, x)
-    fx = x
-    clt = MOI.add_constraint(b, fx, MOI.LessThan(one(T)))
+    clt = MOI.add_constraint(b, x, MOI.LessThan(one(T)))
     @test MOI.is_valid(b, clt)
     @test !MOI.Bridges.is_bridged(b, clt)
     @test MOI.is_valid(b2, clt)
@@ -625,11 +617,8 @@ function test_nesting_SingleBridgeOptimizer()
     @test MOI.Bridges.is_bridged(b1, clt)
     @test !MOI.is_valid(b0, clt)
     @test !MOI.is_valid(model, clt)
-    cnn = MOI.add_constraint(
-        b,
-        MOI.Utilities.vectorize([fx]),
-        MOI.Nonnegatives(1),
-    )
+    cnn =
+        MOI.add_constraint(b, MOI.Utilities.vectorize([x]), MOI.Nonnegatives(1))
     @test MOI.is_valid(b, cnn)
     @test !MOI.Bridges.is_bridged(b, cnn)
     @test MOI.is_valid(b2, cnn)
@@ -637,11 +626,11 @@ function test_nesting_SingleBridgeOptimizer()
     @test !MOI.is_valid(b1, cnn)
     @test !MOI.is_valid(b0, cnn)
     @test !MOI.is_valid(model, cnn)
-    obj = fx
+    obj = x
     attr = MOI.ObjectiveFunction{typeof(obj)}()
     MOI.set(b, attr, obj)
     @test MOI.Bridges.is_bridged(b, attr)
-    obj = one(T) * fx
+    obj = one(T) * x
     attr = MOI.ObjectiveFunction{typeof(obj)}()
     MOI.set(b, attr, obj)
     @test !MOI.Bridges.is_bridged(b, attr)
@@ -718,19 +707,18 @@ function test_recursive_model_constraint(::Type{T} = Int) where {T}
     BT = IdentityBridges.ConstraintBridge{T}
     b = MOI.Bridges.Constraint.SingleBridgeOptimizer{BT}(model)
     x = MOI.add_variable(b)
-    fx = x
-    func = one(T) * fx
+    func = one(T) * x
     set = MOI.EqualTo(zero(T))
     c = MOI.add_constraint(b, func, set)
     @test MOI.Bridges.is_bridged(b, c)
     @test MOI.get(b, MOI.ConstraintFunction(), c) ≈ func
-    new_func = T(2) * fx
+    new_func = T(2) * x
     MOI.set(b, MOI.ConstraintFunction(), c, new_func)
     @test MOI.get(b, MOI.ConstraintFunction(), c) == new_func
     MOI.modify(b, c, MOI.ScalarCoefficientChange(x, T(3)))
-    @test MOI.get(b, MOI.ConstraintFunction(), c) ≈ T(3) * fx
+    @test MOI.get(b, MOI.ConstraintFunction(), c) ≈ T(3) * x
     MOI.modify(b, c, MOI.ScalarConstantChange(T(-1)))
-    @test MOI.get(b, MOI.ConstraintFunction(), c) ≈ T(3) * fx + T(-1)
+    @test MOI.get(b, MOI.ConstraintFunction(), c) ≈ T(3) * x + T(-1)
     @test MOI.get(b, MOI.ConstraintSet(), c) == set
     new_set = MOI.EqualTo(one(T))
     MOI.set(b, MOI.ConstraintSet(), c, new_set)
@@ -747,18 +735,17 @@ function test_recursive_model_objective(::Type{T} = Int) where {T}
     BT = IdentityBridges.ObjectiveBridge{T}
     b = MOI.Bridges.Objective.SingleBridgeOptimizer{BT}(model)
     x = MOI.add_variable(b)
-    fx = x
-    func = one(T) * fx
+    func = one(T) * x
     MOI.set(b, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     @test !MOI.Bridges.is_objective_bridged(b)
     attr = MOI.ObjectiveFunction{typeof(func)}()
     MOI.set(b, attr, func)
     @test MOI.Bridges.is_objective_bridged(b)
     @test MOI.get(b, attr) ≈ func
-    attr = MOI.ObjectiveFunction{typeof(fx)}()
-    MOI.set(b, attr, fx)
+    attr = MOI.ObjectiveFunction{typeof(x)}()
+    MOI.set(b, attr, x)
     @test !MOI.Bridges.is_objective_bridged(b)
-    @test MOI.get(b, attr) ≈ fx
+    @test MOI.get(b, attr) ≈ x
 end
 
 end  # module

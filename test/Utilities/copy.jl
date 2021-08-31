@@ -83,11 +83,9 @@ struct DummyEvaluator <: MOI.AbstractNLPEvaluator end
 function _test_identity_index_map(::Type{T}) where {T}
     model = MOI.Utilities.Model{T}()
     x, y = MOI.add_variables(model, 2)
-    fx = x
-    fy = y
-    cx = MOI.add_constraint(model, fx, MOI.EqualTo(one(T)))
-    cy = MOI.add_constraint(model, fy, MOI.EqualTo(zero(T)))
-    c = MOI.add_constraint(model, one(T) * fx + fy, MOI.LessThan(zero(T)))
+    cx = MOI.add_constraint(model, x, MOI.EqualTo(one(T)))
+    cy = MOI.add_constraint(model, y, MOI.EqualTo(zero(T)))
+    c = MOI.add_constraint(model, one(T) * x + y, MOI.LessThan(zero(T)))
     index_map = MOI.Utilities.identity_index_map(model)
     @test x == index_map[x]
     @test y == index_map[y]
@@ -735,11 +733,10 @@ function _test_copy_of_constraints_passed_as_copy_accross_layers(
     S2 = MOI.GreaterThan{T}
     src = MOIU.Model{T}()
     x = MOI.add_variable(src)
-    fx = x
-    MOI.add_constraint(src, T(1) * fx, MOI.EqualTo(T(1)))
-    MOI.add_constraint(src, T(2) * fx, MOI.EqualTo(T(2)))
-    MOI.add_constraint(src, T(3) * fx, MOI.GreaterThan(T(3)))
-    MOI.add_constraint(src, T(4) * fx, MOI.GreaterThan(T(4)))
+    MOI.add_constraint(src, T(1) * x, MOI.EqualTo(T(1)))
+    MOI.add_constraint(src, T(2) * x, MOI.EqualTo(T(2)))
+    MOI.add_constraint(src, T(3) * x, MOI.GreaterThan(T(3)))
+    MOI.add_constraint(src, T(4) * x, MOI.GreaterThan(T(4)))
     dest = MOIU.CachingOptimizer(
         MOI.Bridges.full_bridge_optimizer(
             MOIU.UniversalFallback(

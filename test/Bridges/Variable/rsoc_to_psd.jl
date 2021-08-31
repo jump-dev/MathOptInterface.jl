@@ -28,10 +28,8 @@ function test_RSOC_of_dimension_2()
         MOI.RotatedSecondOrderCone(2),
     )
     x, y = xy
-    fx = x
-    fy = y
-    c = MOI.add_constraint(bridged_mock, 1.0fx + 1.0fy, MOI.LessThan(1.0))
-    obj = 1.0fy
+    c = MOI.add_constraint(bridged_mock, 1.0x + 1.0y, MOI.LessThan(1.0))
+    obj = 1.0y
     MOI.set(bridged_mock, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(obj)}(), obj)
     mock.optimize! =

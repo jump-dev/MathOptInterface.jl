@@ -31,9 +31,8 @@ end
 function test_FEASIBILITY_SENSE_clears_objective()
     o = MOI.Utilities.ObjectiveContainer{Float16}()
     x = MOI.VariableIndex(1234)
-    f = x
-    MOI.set(o, MOI.ObjectiveFunction{MOI.VariableIndex}(), f)
-    @test MOI.get(o, MOI.ObjectiveFunction{MOI.VariableIndex}()) ≈ f
+    MOI.set(o, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
+    @test MOI.get(o, MOI.ObjectiveFunction{MOI.VariableIndex}()) ≈ x
     MOI.set(o, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
     @test !MOI.is_empty(o)
     @test o.is_function_set == false
@@ -66,8 +65,7 @@ end
 function test_delete_VariableIndex()
     o = MOI.Utilities.ObjectiveContainer{Float16}()
     x = MOI.VariableIndex(1234)
-    f = x
-    MOI.set(o, MOI.ObjectiveFunction{MOI.VariableIndex}(), f)
+    MOI.set(o, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.delete(o, x)
     @test MOI.is_empty(o)
     return
@@ -98,8 +96,7 @@ end
 function test_delete_VariableIndex_plural()
     o = MOI.Utilities.ObjectiveContainer{Float16}()
     x = MOI.VariableIndex(1234)
-    f = x
-    MOI.set(o, MOI.ObjectiveFunction{MOI.VariableIndex}(), f)
+    MOI.set(o, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.delete(o, [x])
     @test MOI.is_empty(o)
     return

@@ -20,13 +20,9 @@ function runtests()
 end
 
 const w = MOI.VariableIndex(0)
-const fw = w
 const x = MOI.VariableIndex(1)
-const fx = x
 const y = MOI.VariableIndex(2)
-const fy = y
 const z = MOI.VariableIndex(3)
-const fz = z
 
 # Number-like but not subtype of `Number`
 struct NonNumber
@@ -43,8 +39,8 @@ function test_NonNumber()
     two = NonNumber(2)
     three = NonNumber(3)
     six = NonNumber(6)
-    three_x = MOI.Utilities.operate(*, NonNumber, three, fx)
-    six_x = MOI.Utilities.operate(*, NonNumber, six, fx)
+    three_x = MOI.Utilities.operate(*, NonNumber, three, x)
+    six_x = MOI.Utilities.operate(*, NonNumber, six, x)
     @test six_x ≈ two * three_x
     @test six_x ≈ three_x * two
     return
@@ -77,35 +73,33 @@ function test_Vectorization_operate_vcat()
         [3, 1, 4],
     )
     v = MOI.VectorOfVariables([y, w])
-    wf = w
-    xf = x
     for T in [Int, Float64]
         @test MOI.VectorOfVariables == MOI.Utilities.promote_operation(
             vcat,
             T,
-            typeof(wf),
+            typeof(w),
             typeof(v),
-            typeof(xf),
+            typeof(x),
         )
-        vov = MOI.Utilities.operate(vcat, T, wf, v, xf)
+        vov = MOI.Utilities.operate(vcat, T, w, v, x)
         @test vov.variables == [w, y, w, x]
         @test MOI.VectorOfVariables == MOI.Utilities.promote_operation(
             vcat,
             T,
             typeof(v),
-            typeof(wf),
-            typeof(xf),
+            typeof(w),
+            typeof(x),
         )
-        vov = MOI.Utilities.operate(vcat, T, v, wf, xf)
+        vov = MOI.Utilities.operate(vcat, T, v, w, x)
         @test vov.variables == [y, w, w, x]
         @test MOI.VectorOfVariables == MOI.Utilities.promote_operation(
             vcat,
             T,
-            typeof(wf),
-            typeof(xf),
+            typeof(w),
+            typeof(x),
             typeof(v),
         )
-        vov = MOI.Utilities.operate(vcat, T, wf, xf, v)
+        vov = MOI.Utilities.operate(vcat, T, w, x, v)
         @test vov.variables == [w, x, y, w]
     end
     f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2, 4], [x, z]), 5)
@@ -116,15 +110,15 @@ function test_Vectorization_operate_vcat()
     @test MOI.Utilities.promote_operation(
         vcat,
         Int,
-        typeof(wf),
+        typeof(w),
         typeof(f),
         typeof(v),
         Int,
         typeof(g),
-        typeof(xf),
+        typeof(x),
         Int,
     ) == MOI.VectorAffineFunction{Int}
-    F = MOI.Utilities.operate(vcat, Int, wf, f, v, 3, g, xf, -4)
+    F = MOI.Utilities.operate(vcat, Int, w, f, v, 3, g, x, -4)
     expected_terms =
         MOI.VectorAffineTerm.(
             [1, 2, 2, 3, 4, 8, 6, 9],
@@ -134,7 +128,7 @@ function test_Vectorization_operate_vcat()
             ),
         )
     expected_constants = [0, 5, 0, 0, 3, 3, 1, 4, 0, -4]
-    F = MOI.Utilities.operate(vcat, Int, wf, f, v, 3, g, xf, -4)
+    F = MOI.Utilities.operate(vcat, Int, w, f, v, 3, g, x, -4)
     @test F.terms == expected_terms
     @test F.constants == expected_constants
     return
@@ -182,10 +176,9 @@ end
 function test_eval_variables()
     # We do tests twice to make sure the function is not modified
     vals = Dict(w => 0, x => 3, y => 1, z => 5)
-    fsv = z
-    @test MOI.output_dimension(fsv) == 1
-    @test MOI.Utilities.eval_variables(vi -> vals[vi], fsv) ≈ 5
-    @test MOI.Utilities.eval_variables(vi -> vals[vi], fsv) ≈ 5
+    @test MOI.output_dimension(z) == 1
+    @test MOI.Utilities.eval_variables(vi -> vals[vi], z) ≈ 5
+    @test MOI.Utilities.eval_variables(vi -> vals[vi], z) ≈ 5
     fvv = MOI.VectorOfVariables([x, z, y])
     @test MOI.output_dimension(fvv) == 3
     @test MOI.Utilities.eval_variables(vi -> vals[vi], fvv) ≈ [3, 5, 1]
@@ -235,29 +228,27 @@ end
 
 function test_substitute_variables()
     # We do tests twice to make sure the function is not modified
-    subs = Dict(w => 1.0fy + 1.0fz, x => 2.0fy + 1.0, y => 1.0fy, z => -1.0fw)
+    subs = Dict(w => 1.0y + 1.0z, x => 2.0y + 1.0, y => 1.0y, z => -1.0w)
     vals = Dict(w => 0.0, x => 3.0, y => 1.0, z => 5.0)
     subs_vals = Dict(w => 6.0, x => 3.0, y => 1.0, z => 0.0)
-    fsa = fx + 3.0fz + 2.0fy + 2.0
-    subs_sa = -3.0fw + 4.0fy + 3.0
+    fsa = x + 3.0z + 2.0y + 2.0
+    subs_sa = -3.0w + 4.0y + 3.0
     @test MOI.Utilities.eval_variables(vi -> subs_vals[vi], fsa) ==
           MOI.Utilities.eval_variables(vi -> vals[vi], subs_sa)
     @test MOI.Utilities.substitute_variables(vi -> subs[vi], fsa) ≈ subs_sa
     @test MOI.Utilities.substitute_variables(vi -> subs[vi], fsa) ≈ subs_sa
-    fva = MOI.Utilities.operate(vcat, Float64, 3.0fz - 3.0, fx + 2.0fy + 2.0)
-    subs_va = MOI.Utilities.operate(vcat, Float64, -3.0fw - 3.0, 4.0fy + 3.0)
+    fva = MOI.Utilities.operate(vcat, Float64, 3.0z - 3.0, x + 2.0y + 2.0)
+    subs_va = MOI.Utilities.operate(vcat, Float64, -3.0w - 3.0, 4.0y + 3.0)
     @test MOI.Utilities.eval_variables(vi -> subs_vals[vi], fva) ==
           MOI.Utilities.eval_variables(vi -> vals[vi], subs_va)
     @test MOI.Utilities.substitute_variables(vi -> subs[vi], fva) ≈ subs_va
     @test MOI.Utilities.substitute_variables(vi -> subs[vi], fva) ≈ subs_va
-    fsq =
-        1.0fx + 1.0fy + 1.0fx * fz + 1.0fw * fz + 1.0fw * fy + 2.0fw * fw - 3.0
+    fsq = 1.0x + 1.0y + 1.0x * z + 1.0w * z + 1.0w * y + 2.0w * w - 3.0
     #     2y + 1 +     y - 2yw - w    + (y + z) * (-w) + (y + z) * y  + 2 (y + z) * (y + z) - 3
     #     2y     +     y - 2yw - w    - yw - zw        + y^2 + zy     + 2y^2 + 2z^2 + 4yz   - 2
     #     3y - w + 3y^2 + 2z^2 - 3yw - zw + 5yz - 2
     subs_sq =
-        3.0fy - 1.0fw + 3.0fy * fy + 2.0fz * fz - 3.0fy * fw - 1.0fz * fw +
-        5.0fy * fz - 2.0
+        3.0y - 1.0w + 3.0y * y + 2.0z * z - 3.0y * w - 1.0z * w + 5.0y * z - 2.0
     @test MOI.Utilities.eval_variables(vi -> subs_vals[vi], fsq) ==
           MOI.Utilities.eval_variables(vi -> vals[vi], subs_sq)
     @test MOI.Utilities.substitute_variables(vi -> subs[vi], fsq) ≈ subs_sq
@@ -265,33 +256,33 @@ function test_substitute_variables()
     fvq = MOI.Utilities.operate(
         vcat,
         Float64,
-        1.0fy + 1.0fx * fz - 3.0,
-        1.0fx + 1.0fw * fz + 1.0fw * fy - 2.0,
+        1.0y + 1.0x * z - 3.0,
+        1.0x + 1.0w * z + 1.0w * y - 2.0,
     )
     subs_vq = MOI.Utilities.operate(
         vcat,
         Float64,
-        1.0fy - fw - 2.0fy * fw - 3.0,
-        2.0fy + 1.0fy * fy - 1.0fw * fy - 1.0fw * fz + 1.0fy * fz - 1.0,
+        1.0y - w - 2.0y * w - 3.0,
+        2.0y + 1.0y * y - 1.0w * y - 1.0w * z + 1.0y * z - 1.0,
     )
     @test MOI.Utilities.eval_variables(vi -> subs_vals[vi], fvq) ==
           MOI.Utilities.eval_variables(vi -> vals[vi], subs_vq)
     @test MOI.Utilities.substitute_variables(vi -> subs[vi], fvq) ≈ subs_vq
     @test MOI.Utilities.substitute_variables(vi -> subs[vi], fvq) ≈ subs_vq
 
-    complex_aff = 2.0im * fy
+    complex_aff = 2.0im * y
     # Test that variables can be substituted for `MOI.ScalarAffineFunction{S}`
     # in a `MOI.ScalarAffineFunction{T}` where `S != T`.
-    @test MOI.Utilities.substitute_variables(vi -> 1.5fx, complex_aff) ≈
-          3.0im * fx
-    float_aff = 2.0 * fy
-    @test MOI.Utilities.substitute_variables(vi -> 3fx, float_aff) ≈ 6.0 * fx
-    complex_quad = 1.5im * fy * fy
-    @test MOI.Utilities.substitute_variables(vi -> 2fx, complex_quad) ≈
-          6.0im * fx * fx
-    int_quad = 3 * fy * fx
-    @test MOI.Utilities.substitute_variables(vi -> true * fy, int_quad) ≈
-          3 * fy * fy
+    @test MOI.Utilities.substitute_variables(vi -> 1.5x, complex_aff) ≈
+          3.0im * x
+    float_aff = 2.0 * y
+    @test MOI.Utilities.substitute_variables(vi -> 3x, float_aff) ≈ 6.0 * x
+    complex_quad = 1.5im * y * y
+    @test MOI.Utilities.substitute_variables(vi -> 2x, complex_quad) ≈
+          6.0im * x * x
+    int_quad = 3 * y * x
+    @test MOI.Utilities.substitute_variables(vi -> true * y, int_quad) ≈
+          3 * y * y
     return
 end
 
@@ -475,10 +466,10 @@ function test_Scalar_Affine_zero()
 end
 
 function test_Scalar_Affine_complex()
-    fx = MOI.VariableIndex(1)
-    fy = MOI.VariableIndex(2)
-    r = 3fx + 4fy
-    c = 2fx + 5fy
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    r = 3x + 4y
+    c = 2x + 5y
     f = (1 + 0im) * r + c * im
     @test real(f) ≈ r
     @test MOI.Utilities.operate(imag, Int, f) ≈ c
@@ -697,7 +688,7 @@ function test_Scalar_Quadratic_promote_operation()
 end
 
 function test_Scalar_Quadratic_Comparison_With_iszero()
-    f = 7 + 3fx + 1fx * fx + 2fy * fy + 3fx * fy
+    f = 7 + 3x + 1x * x + 2y * y + 3x * y
     MOI.Utilities.canonicalize!(f)
     @test !iszero(f)
     @test iszero(0 * f)
@@ -706,12 +697,12 @@ function test_Scalar_Quadratic_Comparison_With_iszero()
 end
 
 function test_Scalar_Quadratic_Comparison_With_tolerance()
-    f = 7 + 3fx + 1fx * fx + 2fy * fy + 3fx * fy
+    f = 7 + 3x + 1x * x + 2y * y + 3x * y
     MOI.Utilities.canonicalize!(f)
     @test !MOI.Utilities.isapprox_zero(f, 1e-8)
     # Test isapprox_zero with zero terms
     @test MOI.Utilities.isapprox_zero(0 * f, 1e-8)
-    g = 1.0fx * fy - (1 + 1e-6) * fy * fx
+    g = 1.0x * y - (1 + 1e-6) * y * x
     MOI.Utilities.canonicalize!(g)
     @test MOI.Utilities.isapprox_zero(g, 1e-5)
     @test !MOI.Utilities.isapprox_zero(g, 1e-7)
@@ -719,18 +710,18 @@ function test_Scalar_Quadratic_Comparison_With_tolerance()
 end
 
 function test_Scalar_Quadratic_convert()
-    f = 7 + 3fx + 1fx * fx + 2fy * fy + 3fx * fy
+    f = 7 + 3x + 1x * x + 2y * y + 3x * y
     MOI.Utilities.canonicalize!(f)
     @test_throws InexactError convert(MOI.VariableIndex, f)
     @test_throws InexactError convert(MOI.ScalarAffineFunction{Int}, f)
-    g = convert(MOI.ScalarQuadraticFunction{Float64}, fx)
-    @test convert(MOI.VariableIndex, g) == fx
+    g = convert(MOI.ScalarQuadraticFunction{Float64}, x)
+    @test convert(MOI.VariableIndex, g) == x
     return
 end
 
 function test_Scalar_Quadratic_Power_Affine()
-    f = 7 + 3fx + 1fx * fx + 2fy * fy + 3fx * fy
-    aff = 1fx + 2 + fy
+    f = 7 + 3x + 1x * x + 2y * y + 3x * y
+    aff = 1x + 2 + y
     @test isone(@inferred aff^0)
     @test convert(typeof(f), aff) ≈ @inferred aff^1
     @test aff * aff ≈ @inferred aff^2
@@ -740,7 +731,7 @@ function test_Scalar_Quadratic_Power_Affine()
 end
 
 function test_Scalar_Quadratic_Power_Quadratic()
-    f = 7 + 3fx + 1fx * fx + 2fy * fy + 3fx * fy
+    f = 7 + 3x + 1x * x + 2y * y + 3x * y
     @test isone(@inferred f^0)
     @test f ≈ @inferred f^1
     err = ArgumentError("Cannot take $(typeof(f)) to the power 2.")
@@ -749,41 +740,39 @@ function test_Scalar_Quadratic_Power_Quadratic()
 end
 
 function test_Scalar_Quadratic_no_zero_affine_term()
-    # Test that no affine 0y term is created when multiplying 1fx by fy
-    for fxfy in [1fx * fy, fx * 1fy]
-        @test isempty(fxfy.affine_terms)
-        @test length(fxfy.quadratic_terms) == 1
-        @test fxfy.quadratic_terms[1] == MOI.ScalarQuadraticTerm(1, x, y) ||
-              fxfy.quadratic_terms[1] == MOI.ScalarQuadraticTerm(1, y, x)
+    # Test that no affine 0y term is created when multiplying 1x by y
+    for xy in [1x * y, x * 1y]
+        @test isempty(xy.affine_terms)
+        @test length(xy.quadratic_terms) == 1
+        @test xy.quadratic_terms[1] == MOI.ScalarQuadraticTerm(1, x, y) ||
+              xy.quadratic_terms[1] == MOI.ScalarQuadraticTerm(1, y, x)
     end
-    for fxfx in [1fx * fx, fx * 1fx]
-        @test isempty(fxfx.affine_terms)
-        @test length(fxfx.quadratic_terms) == 1
-        @test fxfx.quadratic_terms[1] == MOI.ScalarQuadraticTerm(2, x, x)
+    for xx in [1x * x, x * 1x]
+        @test isempty(xx.affine_terms)
+        @test length(xx.quadratic_terms) == 1
+        @test xx.quadratic_terms[1] == MOI.ScalarQuadraticTerm(2, x, x)
     end
     return
 end
 
 function test_Scalar_Quadratic_operate!()
-    q = 1.0fx + 1.0fy + (1.0fx) * fz + (1.0fw) * fz
-    @test q ≈ 1.0fx + 1.0fy + (1.0fw) * fz + (1.0fx) * fz
+    q = 1.0x + 1.0y + (1.0x) * z + (1.0w) * z
+    @test q ≈ 1.0x + 1.0y + (1.0w) * z + (1.0x) * z
     # This calls
-    aff = 1.0fx + 1.0fy
+    aff = 1.0x + 1.0y
     # which tries to mutate `aff`, gets a quadratic expression
     # and mutate it with the remaining term
-    @test MOI.Utilities.operate!(+, Float64, aff, (1.0fx) * fz, (1.0fw) * fz) ≈
-          q
+    @test MOI.Utilities.operate!(+, Float64, aff, (1.0x) * z, (1.0w) * z) ≈ q
     return
 end
 
 function test_Scalar_Quadratic_operate()
-    f = 7 + 3fx + 1fx * fx + 2fy * fy + 3fx * fy
-    @test f ≈ 7 + (fx + 2fy) * (1fx + fy) + 3fx
-    @test f ≈ -(-7 - 3fx) + (fx + 2fy) * (1fx + fy)
-    @test f ≈ -((fx + 2fy) * (MOI.Utilities.operate(-, Int, fx) - fy)) + 3fx + 7
-    @test f ≈
-          7 + MOI.Utilities.operate(*, Int, fx, fx) + 3fx * (fy + 1) + 2fy * fy
-    @test f ≈ (fx + 2) * (fx + 1) + (fy + 1) * (2fy + 3fx) + (5 - 3fx - 2fy)
+    f = 7 + 3x + 1x * x + 2y * y + 3x * y
+    @test f ≈ 7 + (x + 2y) * (1x + y) + 3x
+    @test f ≈ -(-7 - 3x) + (x + 2y) * (1x + y)
+    @test f ≈ -((x + 2y) * (MOI.Utilities.operate(-, Int, x) - y)) + 3x + 7
+    @test f ≈ 7 + MOI.Utilities.operate(*, Int, x, x) + 3x * (y + 1) + 2y * y
+    @test f ≈ (x + 2) * (x + 1) + (y + 1) * (2y + 3x) + (5 - 3x - 2y)
     @test f ≈ begin
         MOI.ScalarQuadraticFunction(
             MOI.ScalarQuadraticTerm.([2], [x], [x]),
@@ -859,7 +848,7 @@ function test_Scalar_Quadratic_operate()
 end
 
 function test_Scalar_Quadratic_modification()
-    f = 7 + 3fx + 1fx * fx + 2fy * fy + 3fx * fy
+    f = 7 + 3x + 1x * x + 2y * y + 3x * y
     f = MOI.Utilities.modify_function(f, MOI.ScalarConstantChange(9))
     @test f.constant == 9
     f = MOI.Utilities.modify_function(f, MOI.ScalarCoefficientChange(y, 0))
@@ -890,10 +879,10 @@ function test_Vector_Variable()
 end
 
 function test_Vector_Affine_complex()
-    fx = MOI.VectorOfVariables([MOI.VariableIndex(1)])
-    fy = MOI.VectorOfVariables([MOI.VariableIndex(2)])
-    r = 3fx + 4fy
-    c = 2fx + 5fy
+    x = MOI.VectorOfVariables([MOI.VariableIndex(1)])
+    y = MOI.VectorOfVariables([MOI.VariableIndex(2)])
+    r = 3x + 4y
+    c = 2x + 5y
     f = (1 + 0im) * r + c * im
     @test real(f) ≈ r
     @test MOI.Utilities.operate(imag, Int, f) ≈ c
@@ -1655,30 +1644,30 @@ function test_vector_mult_and_div()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     v = MOI.VectorOfVariables([y, w, y])
-    v2 = MOI.Utilities.operate(vcat, Float64, 2.0fy, 2.0fw, 2.0fy)
+    v2 = MOI.Utilities.operate(vcat, Float64, 2.0y, 2.0w, 2.0y)
     f = MOI.Utilities.operate(
         vcat,
         Float64,
-        2.0fx + 3.0fy + 1.0,
-        3.0fx + 2.0fy + 3.0,
+        2.0x + 3.0y + 1.0,
+        3.0x + 2.0y + 3.0,
     )
     f2 = MOI.Utilities.operate(
         vcat,
         Float64,
-        4.0fx + 6.0fy + 2.0,
-        6.0fx + 4.0fy + 6.0,
+        4.0x + 6.0y + 2.0,
+        6.0x + 4.0y + 6.0,
     )
     g = MOI.Utilities.operate(
         vcat,
         Float64,
-        7.0fx * fy + 2.0fx + 3.0fy + 1.0,
-        6.0fx * fx + 5.0fy * fy + 3.0fx + 2.0fy + 3.0,
+        7.0x * y + 2.0x + 3.0y + 1.0,
+        6.0x * x + 5.0y * y + 3.0x + 2.0y + 3.0,
     )
     g2 = MOI.Utilities.operate(
         vcat,
         Float64,
-        14.0fx * fy + 4.0fx + 6.0fy + 2.0,
-        12.0fx * fx + 10.0fy * fy + 6.0fx + 4.0fy + 6.0,
+        14.0x * y + 4.0x + 6.0y + 2.0,
+        12.0x * x + 10.0y * y + 6.0x + 4.0y + 6.0,
     )
     for (a, a2) in [(v, v2), (f, f2), (g, g2)]
         @test a * 2.0 ≈ a2

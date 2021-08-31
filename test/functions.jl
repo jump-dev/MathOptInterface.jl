@@ -28,13 +28,10 @@ function test_functions_broadcast()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     z = MOI.VariableIndex(3)
-    xf = x
-    yf = y
-    zf = z
     function sum_indices(sv1::MOI.VariableIndex, sv2::MOI.VariableIndex)
         return sv1.value + sv2.value
     end
-    @test sum_indices.(xf, [yf, zf]) == [3, 4]
+    @test sum_indices.(x, [y, z]) == [3, 4]
 end
 
 function test_functions_copy_VectorOfVariables()
@@ -50,15 +47,14 @@ end
 function test_functions_convert_VariableIndex()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
-    f = x
-    f_vov = convert(MOI.VectorOfVariables, f)
+    f_vov = convert(MOI.VectorOfVariables, x)
     @test f_vov ≈ MOI.VectorOfVariables([x])
-    f_vaf = convert(MOI.VectorAffineFunction{Float64}, f)
+    f_vaf = convert(MOI.VectorAffineFunction{Float64}, x)
     @test f_vaf ≈ MOI.VectorAffineFunction(
         [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
         [0.0],
     )
-    f_vqf = convert(MOI.VectorQuadraticFunction{Float64}, f)
+    f_vqf = convert(MOI.VectorQuadraticFunction{Float64}, x)
     @test f_vqf ≈ MOI.VectorQuadraticFunction(
         MOI.VectorQuadraticTerm{Float64}[],
         [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
@@ -103,14 +99,6 @@ function test_functions_convert_ScalarQuadraticFunction()
         [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2.0, x))],
         [1.0],
     )
-end
-
-function test_isapprox_VariableIndex()
-    x = MOI.VariableIndex(1)
-    y = MOI.VariableIndex(2)
-    @test x == x
-    @test x != y
-    return
 end
 
 function test_isapprox_VectorOfVariables()

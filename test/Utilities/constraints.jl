@@ -18,14 +18,13 @@ end
 function test_normalize_and_add_constrant_VariableIndex()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
-    f = x
     ci = MOI.Utilities.normalize_and_add_constraint(
         model,
-        f,
+        x,
         MOI.EqualTo(1.0),
         allow_modify_function = false,
     )
-    @test MOI.get(model, MOI.ConstraintFunction(), ci) == f
+    @test MOI.get(model, MOI.ConstraintFunction(), ci) == x
     @test MOI.get(model, MOI.ConstraintSet(), ci) == MOI.EqualTo(1.0)
     return
 end

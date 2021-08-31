@@ -69,15 +69,6 @@ function test_variable()
     end
 end
 
-function test_single_variable()
-    model = MOIU.Model{Float64}()
-    x = MOI.add_variable(model)
-    MOI.set(model, MOI.VariableName(), x, "x")
-    f = x
-    @test MOIU._to_string(PLAIN, model, f) == "x"
-    @test MOIU._to_string(LATEX, model, f) == "x"
-end
-
 function test_ScalarAffineTerm()
     model = MOIU.Model{Float64}()
     x = MOI.add_variable(model)

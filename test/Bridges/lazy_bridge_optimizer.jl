@@ -111,52 +111,49 @@ function _test_bridged_variable_in_VariableIndex_constraint(T)
     model = StandardLPModel{T}()
     bridged = MOI.Bridges.Variable.Vectorize{T}(model)
     x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-    fx = x
     err = _functionize_error(
         bridged,
         MOI.Bridges.Constraint.ScalarFunctionizeBridge,
         "VariableIndex",
         "constraint",
     )
-    @test_throws err MOI.add_constraint(bridged, fx, set)
-    @test_throws err MOI.add_constraints(bridged, [fx], [set])
+    @test_throws err MOI.add_constraint(bridged, x, set)
+    @test_throws err MOI.add_constraints(bridged, [x], [set])
     function _bridged()
         model = StandardLPModel{T}()
         bridged = MOI.Bridges.LazyBridgeOptimizer(model)
         MOI.Bridges.add_bridge(bridged, MOI.Bridges.Variable.VectorizeBridge{T})
         x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-        fx = x
-        return model, bridged, fx
+        return model, bridged, x
     end
-    _, bridged, fx = _bridged()
+    _, bridged, x = _bridged()
     err = _lazy_functionize_error(
         MOI.Bridges.Constraint.ScalarFunctionizeBridge,
         "VariableIndex",
         "constraint",
     )
-    @test_throws err MOI.add_constraint(bridged, fx, set)
-    @test_throws err MOI.add_constraints(bridged, [fx], [set])
+    @test_throws err MOI.add_constraint(bridged, x, set)
+    @test_throws err MOI.add_constraints(bridged, [x], [set])
     for i in 1:2
-        model, bridged, fx = _bridged()
+        model, bridged, x = _bridged()
         MOI.Bridges.add_bridge(
             bridged,
             MOI.Bridges.Constraint.ScalarFunctionizeBridge{T},
         )
         if i == 1
-            cx = MOI.add_constraint(bridged, fx, set)
+            cx = MOI.add_constraint(bridged, x, set)
         else
-            cx = MOI.add_constraints(bridged, [fx], [set])[1]
+            cx = MOI.add_constraints(bridged, [x], [set])[1]
         end
-        @test MOI.get(bridged, MOI.ConstraintFunction(), cx) == fx
+        @test MOI.get(bridged, MOI.ConstraintFunction(), cx) == x
         @test MOI.get(bridged, MOI.ConstraintSet(), cx) == set
         a = MOI.get(model, MOI.ListOfVariableIndices())[1]
-        fa = a
         ca = MOI.get(
             model,
             MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},S}(),
         )[1]
         @test MOI.get(model, MOI.ConstraintFunction(), ca) ≈
-              convert(MOI.ScalarAffineFunction{T}, fa)
+              convert(MOI.ScalarAffineFunction{T}, a)
         @test MOI.get(model, MOI.ConstraintSet(), ca) ==
               MOI.Utilities.shift_constant(set, -one(T))
     end
@@ -174,15 +171,15 @@ function _test_bridged_variable_in_VectorOfVariables_constraint(T)
     model = StandardLPModel{T}()
     bridged = MOI.Bridges.Variable.Vectorize{T}(model)
     x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-    fx = MOI.VectorOfVariables([x])
+    x = MOI.VectorOfVariables([x])
     err = _functionize_error(
         bridged,
         MOI.Bridges.Constraint.VectorFunctionizeBridge,
         "VectorOfVariables",
         "constraint",
     )
-    @test_throws err MOI.add_constraint(bridged, fx, set)
-    @test_throws err MOI.add_constraints(bridged, [fx], [set])
+    @test_throws err MOI.add_constraint(bridged, x, set)
+    @test_throws err MOI.add_constraints(bridged, [x], [set])
     function _bridged()
         model = StandardLPModel{T}()
         bridged = MOI.Bridges.LazyBridgeOptimizer(model)
@@ -192,32 +189,31 @@ function _test_bridged_variable_in_VectorOfVariables_constraint(T)
             MOI.Bridges.Constraint.ScalarizeBridge{T},
         )
         x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-        fx = MOI.VectorOfVariables([x])
-        return model, bridged, fx
+        x = MOI.VectorOfVariables([x])
+        return model, bridged, x
     end
-    _, bridged, fx = _bridged()
+    _, bridged, x = _bridged()
     err = _lazy_functionize_error(
         MOI.Bridges.Constraint.VectorFunctionizeBridge,
         "VectorOfVariables",
         "constraint",
     )
-    @test_throws err MOI.add_constraint(bridged, fx, set)
-    @test_throws err MOI.add_constraints(bridged, [fx], [set])
+    @test_throws err MOI.add_constraint(bridged, x, set)
+    @test_throws err MOI.add_constraints(bridged, [x], [set])
     for i in 1:2
-        model, bridged, fx = _bridged()
+        model, bridged, x = _bridged()
         MOI.Bridges.add_bridge(
             bridged,
             MOI.Bridges.Constraint.VectorFunctionizeBridge{T},
         )
         if i == 1
-            cx = MOI.add_constraint(bridged, fx, set)
+            cx = MOI.add_constraint(bridged, x, set)
         else
-            cx = MOI.add_constraints(bridged, [fx], [set])[1]
+            cx = MOI.add_constraints(bridged, [x], [set])[1]
         end
-        @test MOI.get(bridged, MOI.ConstraintFunction(), cx) == fx
+        @test MOI.get(bridged, MOI.ConstraintFunction(), cx) == x
         @test MOI.get(bridged, MOI.ConstraintSet(), cx) == set
         a = MOI.get(model, MOI.ListOfVariableIndices())[1]
-        fa = a
         ca = MOI.get(
             model,
             MOI.ListOfConstraintIndices{
@@ -226,7 +222,7 @@ function _test_bridged_variable_in_VectorOfVariables_constraint(T)
             }(),
         )[1]
         @test MOI.get(model, MOI.ConstraintFunction(), ca) ≈
-              convert(MOI.ScalarAffineFunction{T}, fa)
+              convert(MOI.ScalarAffineFunction{T}, a)
         @test MOI.get(model, MOI.ConstraintSet(), ca) == MOI.EqualTo(-one(T))
     end
     return
@@ -242,35 +238,32 @@ function _test_bridged_variable_in_VariableIndex_obiective(T)
     model = StandardLPModel{T}()
     bridged = MOI.Bridges.Variable.Vectorize{T}(model)
     x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-    fx = x
     err = _functionize_error(
         bridged,
         MOI.Bridges.Objective.FunctionizeBridge,
         "VariableIndex",
         "objective",
     )
-    @test_throws err MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
+    @test_throws err MOI.set(bridged, MOI.ObjectiveFunction{typeof(x)}(), x)
     model = StandardLPModel{T}()
     bridged = MOI.Bridges.LazyBridgeOptimizer(model)
     MOI.Bridges.add_bridge(bridged, MOI.Bridges.Variable.VectorizeBridge{T})
     x, cx = MOI.add_constrained_variable(bridged, MOI.GreaterThan(one(T)))
-    fx = x
     err = _lazy_functionize_error(
         MOI.Bridges.Objective.FunctionizeBridge,
         "VariableIndex",
         "objective",
     )
-    @test_throws err MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
+    @test_throws err MOI.set(bridged, MOI.ObjectiveFunction{typeof(x)}(), x)
     MOI.Bridges.add_bridge(bridged, MOI.Bridges.Objective.FunctionizeBridge{T})
-    MOI.set(bridged, MOI.ObjectiveFunction{typeof(fx)}(), fx)
+    MOI.set(bridged, MOI.ObjectiveFunction{typeof(x)}(), x)
     @test MOI.get(bridged, MOI.ObjectiveFunctionType()) == MOI.VariableIndex
-    @test MOI.get(bridged, MOI.ObjectiveFunction{MOI.VariableIndex}()) ≈ fx
+    @test MOI.get(bridged, MOI.ObjectiveFunction{MOI.VariableIndex}()) ≈ x
     a = MOI.get(model, MOI.ListOfVariableIndices())[1]
-    fa = a
     @test MOI.get(model, MOI.ObjectiveFunctionType()) ==
           MOI.ScalarAffineFunction{T}
     @test MOI.get(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}()) ≈
-          fa + one(T)
+          a + one(T)
     return
 end
 
@@ -1354,16 +1347,13 @@ function _test_context_substitution(T)
     )
     MOI.Bridges.add_bridge(bridged, MOI.Bridges.Variable.VectorizeBridge{T})
     x, cx = MOI.add_constrained_variable(bridged, MOI.LessThan(one(T)))
-    fx = x
     vectorize = MOI.Bridges.bridge(bridged, x)
     @test vectorize isa MOI.Bridges.Variable.VectorizeBridge
     y = vectorize.variable
-    fy = y
     flip = MOI.Bridges.bridge(bridged, y)
     @test flip isa MOI.Bridges.Variable.NonposToNonnegBridge
     Z = flip.variables
     z = Z[1]
-    fz = z
     vov_ci = flip.constraint
     functionize = MOI.Bridges.bridge(bridged, vov_ci)
     @test functionize isa MOI.Bridges.Constraint.VectorFunctionizeBridge
@@ -1374,14 +1364,14 @@ function _test_context_substitution(T)
             vi,
         )
     end
-    @test f(y) ≈ one(T) * fx - one(T)
+    @test f(y) ≈ one(T) * x - one(T)
     @test MOI.Bridges.call_in_context(bridged, x, bridge -> f(y)) === nothing
     @test MOI.Bridges.call_in_context(bridged, y, bridge -> f(y)) === nothing
-    @test f(z) ≈ -one(T) * fy
+    @test f(z) ≈ -one(T) * y
     @test MOI.Bridges.call_in_context(bridged, x, bridge -> f(z)) ≈ f(z)
     @test MOI.Bridges.call_in_context(bridged, y, bridge -> f(z)) === nothing
     attr = InvariantUnderFunctionConversionAttribute()
-    for func in [T(2) * fx, T(2) * fy, T(2) * fz]
+    for func in [T(2) * x, T(2) * y, T(2) * z]
         MOI.set(model, attr, aff_ci, func)
         @test MOI.get(model, attr, aff_ci) ≈ func
         @test MOI.Bridges.call_in_context(
@@ -1933,8 +1923,7 @@ function test_wrong_coefficient()
         model = MOI.Utilities.Model{T}()
         bridged = MOI.Bridges.full_bridge_optimizer(model, T)
         x = MOI.add_variable(bridged)
-        fx = x
-        f_scalar = one(S) * fx
+        f_scalar = one(S) * x
         f_vector = MOI.Utilities.vectorize([f_scalar])
         function _test(func, set)
             @test_throws(

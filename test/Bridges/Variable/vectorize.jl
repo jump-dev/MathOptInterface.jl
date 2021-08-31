@@ -24,8 +24,7 @@ function test_get_scalar_constraint()
     )
     bridged_mock = MOI.Bridges.Variable.Vectorize{Float64}(mock)
     x, cx = MOI.add_constrained_variable(bridged_mock, MOI.GreaterThan(1.0))
-    fx = x
-    func = 2.0 * fx
+    func = 2.0 * x
     set = MOI.GreaterThan(5.0)
     err =
         MOI.ScalarFunctionConstantNotZero{Float64,typeof(func),typeof(set)}(1.0)
@@ -101,17 +100,15 @@ function test_exp3_with_add_constrained_variable_y()
     MOI.empty!(bridged_mock)
     x = MOI.add_variable(bridged_mock)
     @test MOI.get(bridged_mock, MOI.NumberOfVariables()) == 1
-    fx = x
-    xc = MOI.add_constraint(bridged_mock, 2.0fx, MOI.LessThan(4.0))
+    xc = MOI.add_constraint(bridged_mock, 2.0x, MOI.LessThan(4.0))
     y, yc = MOI.add_constrained_variable(bridged_mock, MOI.LessThan(5.0))
     @test yc.value == y.value == -1
     @test MOI.get(bridged_mock, MOI.NumberOfVariables()) == 2
     @test length(MOI.get(bridged_mock, MOI.ListOfVariableIndices())) == 2
     @test Set(MOI.get(bridged_mock, MOI.ListOfVariableIndices())) == Set([x, y])
-    fy = y
     ec = MOI.add_constraint(
         bridged_mock,
-        MOI.Utilities.operate(vcat, Float64, fx, 1.0, fy),
+        MOI.Utilities.operate(vcat, Float64, x, 1.0, y),
         MOI.ExponentialCone(),
     )
 

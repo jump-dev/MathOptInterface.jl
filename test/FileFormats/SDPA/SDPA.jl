@@ -115,10 +115,9 @@ function test_delete()
         x = MOI.add_variable(model)
         MOI.delete(model, x)
         y = MOI.add_variable(model)
-        fy = y
         MOI.add_constraint(
             model,
-            MOIU.vectorize([one(T) * fy]),
+            MOIU.vectorize([one(T) * y]),
             MOI.Nonnegatives(1),
         )
         err = ErrorException(

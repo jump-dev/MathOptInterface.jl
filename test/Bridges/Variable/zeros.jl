@@ -28,13 +28,9 @@ function test_zeros()
     MOI.set(bridged_mock, MOI.VariableName(), yz, ["y", "z"])
     MOI.set(bridged_mock, MOI.ConstraintName(), cyz, "cyz")
     y, z = yz
-    fx = x
-    fy = y
-    fz = z
-
     MOI.set(bridged_mock, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(fx)}(), fx)
-    @test MOI.get(bridged_mock, MOI.ObjectiveFunction{typeof(fx)}()) == fx
+    MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(x)}(), x)
+    @test MOI.get(bridged_mock, MOI.ObjectiveFunction{typeof(x)}()) == x
 
     # Test before adding affine constraints are affine expressions cannot be
     # unbridged when `Variable.ZerosBridge` is used.
@@ -56,13 +52,13 @@ function test_zeros()
 
     c1, c2 = MOI.add_constraints(
         bridged_mock,
-        [1.0fy + 1.0fz, 1.0fx + 1.0fy + 1.0fz],
+        [1.0y + 1.0z, 1.0x + 1.0y + 1.0z],
         [MOI.EqualTo(0.0), MOI.GreaterThan(1.0)],
     )
     MOI.set(bridged_mock, MOI.ConstraintName(), c1, "con1")
     MOI.set(bridged_mock, MOI.ConstraintName(), c2, "con2")
     MOI.set(bridged_mock, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    obj = 1.0fx - 1.0fy - 1.0fz
+    obj = 1.0x - 1.0y - 1.0z
     MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(obj)}(), obj)
 
     @test MOI.Bridges.Variable.unbridged_map(

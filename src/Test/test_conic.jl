@@ -2746,12 +2746,8 @@ function test_conic_RotatedSecondOrderCone_out_of_order(
 
     v, cv = MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(4))
     t, u, x, y = v
-    ft = t
-    fu = u
-    c = MOI.add_constraint(model, 1.0ft + 1.0fu, MOI.LessThan(2.0))
-    fx = x
-    fy = y
-    func = 1.0fx + 1.0fy
+    c = MOI.add_constraint(model, 1.0t + 1.0u, MOI.LessThan(2.0))
+    func = 1.0x + 1.0y
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{typeof(func)}(), func)
     if _supports(config, MOI.optimize!)
@@ -5697,23 +5693,22 @@ function _test_conic_PositiveSemidefiniteCone_helper_3(
     )
 
     x = MOI.add_variable(model)
-    fx = x
     if psdcone == MOI.PositiveSemidefiniteConeTriangle
-        func = MOIU.operate(vcat, T, fx, one(T), fx, one(T), one(T), fx)
+        func = MOIU.operate(vcat, T, x, one(T), x, one(T), one(T), x)
     else
         @assert psdcone == MOI.PositiveSemidefiniteConeSquare
         func = MOIU.operate(
             vcat,
             T,
-            fx,
+            x,
             one(T),
             one(T),
             one(T),
-            fx,
+            x,
             one(T),
             one(T),
             one(T),
-            fx,
+            x,
         )
     end
     c = MOI.add_constraint(model, func, psdcone(3))

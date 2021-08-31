@@ -28,8 +28,7 @@ function bridge_objective(
     func::G,
 ) where {T,F,G<:MOI.AbstractScalarFunction}
     slack = MOI.add_variable(model)
-    fslack = slack
-    f = MOIU.operate(-, T, func, fslack)
+    f = MOIU.operate(-, T, func, slack)
     if MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
         set = MOI.LessThan(zero(T))
     elseif MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
@@ -41,7 +40,7 @@ function bridge_objective(
         )
     end
     constraint = MOIU.normalize_and_add_constraint(model, f, set)
-    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), fslack)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), slack)
     return SlackBridge{T,F,G}(slack, constraint)
 end
 

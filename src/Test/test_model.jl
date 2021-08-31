@@ -795,7 +795,6 @@ function test_model_LowerBoundAlreadySet(
     )
     @requires _supports(config, MOI.delete)
     x = MOI.add_variable(model)
-    f = x
     lb = zero(T)
     sets = [
         MOI.EqualTo(lb),
@@ -808,13 +807,13 @@ function test_model_LowerBoundAlreadySet(
         if !MOI.supports_constraint(model, MOI.VariableIndex, typeof(set1))
             continue
         end
-        ci = MOI.add_constraint(model, f, set1)
+        ci = MOI.add_constraint(model, x, set1)
         err = MOI.LowerBoundAlreadySet{typeof(set1),typeof(set2)}(x)
-        @test_throws err MOI.add_constraint(model, f, set2)
+        @test_throws err MOI.add_constraint(model, x, set2)
         MOI.delete(model, ci)
-        ci = MOI.add_constraint(model, f, set2)
+        ci = MOI.add_constraint(model, x, set2)
         err = MOI.LowerBoundAlreadySet{typeof(set2),typeof(set1)}(x)
-        @test_throws err MOI.add_constraint(model, f, set1)
+        @test_throws err MOI.add_constraint(model, x, set1)
         MOI.delete(model, ci)
     end
     return
@@ -833,7 +832,6 @@ function test_model_UpperBoundAlreadySet(
     ::Config{T},
 ) where {T}
     x = MOI.add_variable(model)
-    f = x
     ub = zero(T)
     @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.LessThan{T})
     sets = [
@@ -847,13 +845,13 @@ function test_model_UpperBoundAlreadySet(
         if !MOI.supports_constraint(model, MOI.VariableIndex, typeof(set1))
             continue
         end
-        ci = MOI.add_constraint(model, f, set1)
+        ci = MOI.add_constraint(model, x, set1)
         err = MOI.UpperBoundAlreadySet{typeof(set1),typeof(set2)}(x)
-        @test_throws err MOI.add_constraint(model, f, set2)
+        @test_throws err MOI.add_constraint(model, x, set2)
         MOI.delete(model, ci)
-        ci = MOI.add_constraint(model, f, set2)
+        ci = MOI.add_constraint(model, x, set2)
         err = MOI.UpperBoundAlreadySet{typeof(set2),typeof(set1)}(x)
-        @test_throws err MOI.add_constraint(model, f, set1)
+        @test_throws err MOI.add_constraint(model, x, set1)
         MOI.delete(model, ci)
     end
     return

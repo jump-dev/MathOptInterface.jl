@@ -26,8 +26,7 @@ function test_modification_set_function_single_variable(
     # to ensure a good coverage of corner cases.
     @test c.value == x.value
     err = MOI.SettingVariableIndexNotAllowed()
-    func = y
-    @test_throws err MOI.set(model, MOI.ConstraintFunction(), c, func)
+    @test_throws err MOI.set(model, MOI.ConstraintFunction(), c, y)
     return
 end
 
@@ -733,8 +732,7 @@ function test_modification_delete_variable_with_single_variable_obj(
 )
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
-    f = x
-    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     MOI.delete(model, y)

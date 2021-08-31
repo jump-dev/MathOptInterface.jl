@@ -3351,7 +3351,7 @@ Base.imag(f::TypedLike) = operate_coefficients(imag, f)
 operate(::typeof(imag), ::Type, f::TypedLike) = imag(f)
 
 function operate(::typeof(imag), ::Type{T}, ::MOI.VariableIndex) where {T}
-    return MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}[], zero(T))
+    return zero(MOI.ScalarAffineFunction{T})
 end
 
 Base.conj(f::TypedLike) = operate_coefficients(conj, f)

@@ -26,7 +26,6 @@ end
 function test_errors_inconsistent_vectorscalar()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = vi
     @test_throws(
         MOI.ErrorException,
         MOI.add_constraint(
@@ -37,7 +36,7 @@ function test_errors_inconsistent_vectorscalar()
     )
     @test_throws(
         MOI.ErrorException,
-        MOI.add_constraint(model, func, MOI.Nonnegatives(2))
+        MOI.add_constraint(model, vi, MOI.Nonnegatives(2))
     )
     return
 end
@@ -45,10 +44,9 @@ end
 function _test_errors_UnsupportedConstraint(f)
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = vi
-    @test_throws(MOI.UnsupportedConstraint, f(model, func, MOI.EqualTo(0)),)
+    @test_throws(MOI.UnsupportedConstraint, f(model, vi, MOI.EqualTo(0)),)
     try
-        f(model, func, MOI.EqualTo(0))
+        f(model, vi, MOI.EqualTo(0))
     catch err
         @test sprint(showerror, err) ==
               "$(MOI.UnsupportedConstraint{MOI.VariableIndex,MOI.EqualTo{Int}}):" *
@@ -80,13 +78,12 @@ end
 function test_errors_add_constraint()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = vi
     @test_throws(
         MOI.AddConstraintNotAllowed,
-        MOI.add_constraint(model, func, MOI.EqualTo(0.0)),
+        MOI.add_constraint(model, vi, MOI.EqualTo(0.0)),
     )
     try
-        MOI.add_constraint(model, func, MOI.EqualTo(0.0))
+        MOI.add_constraint(model, vi, MOI.EqualTo(0.0))
     catch err
         @test sprint(showerror, err) ==
               "$(MOI.AddConstraintNotAllowed{MOI.VariableIndex,MOI.EqualTo{Float64}}):" *
@@ -118,7 +115,6 @@ end
 function test_errors_DeleteNotAllowed()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = vi
     ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}(1)
     @test_throws MOI.DeleteNotAllowed{typeof(vi)} MOI.delete(model, vi)
     try
@@ -150,8 +146,7 @@ end
 function _test_unsupported_attribute(f)
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = vi
-    ci = MOI.ConstraintIndex{typeof(func),MOI.EqualTo{Float64}}(1)
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}(1)
     @test_throws(
         MOI.UnsupportedAttribute,
         f(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), vi),
@@ -171,8 +166,7 @@ end
 function test_errors_SetAttributeNotAllowed()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = vi
-    ci = MOI.ConstraintIndex{typeof(func),MOI.EqualTo{Float64}}(1)
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}(1)
     model = DummyModel()
     @test_throws(
         MOI.SetAttributeNotAllowed,
@@ -188,11 +182,10 @@ end
 function test_errors_ConstraintFunction_NotAllowed()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = vi
-    ci = MOI.ConstraintIndex{typeof(func),MOI.EqualTo{Float64}}(1)
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}(1)
     @test_throws(
         MOI.SetAttributeNotAllowed,
-        MOI.set(model, MOI.ConstraintFunction(), ci, func)
+        MOI.set(model, MOI.ConstraintFunction(), ci, vi)
     )
     @test_throws(
         ArgumentError,
@@ -209,8 +202,7 @@ end
 function test_errors_ConstraintSet_NotAllowed()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = vi
-    ci = MOI.ConstraintIndex{typeof(func),MOI.EqualTo{Float64}}(1)
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}(1)
     @test_throws(
         MOI.SetAttributeNotAllowed,
         MOI.set(model, MOI.ConstraintSet(), ci, MOI.EqualTo(1.0))
@@ -228,8 +220,7 @@ end
 function test_errors_ModifyNotAllowed_constraint()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    func = vi
-    ci = MOI.ConstraintIndex{typeof(func),MOI.EqualTo{Float64}}(1)
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}(1)
     change = MOI.ScalarConstantChange(1.0)
     err = MOI.ModifyConstraintNotAllowed(ci, change)
     @test_throws err MOI.modify(model, ci, change)
