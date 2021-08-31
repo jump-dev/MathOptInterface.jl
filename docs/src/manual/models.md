@@ -90,12 +90,19 @@ implementations, and others are optional.
  * [`ObjectiveFunctionType`](@ref)
  * [`ObjectiveSense`](@ref)
 
+!!! note
+    To be useful, a [`ModelLike`](@ref) should, in most cases, also implement
+    [`copy_to`](@ref) or the incremental interface ([`add_variable`](@ref),
+    [`add_constraint`](@ref), etc.) See [Implementing a solver interface](@ref)
+    for more details.
+
 ## AbstractOptimizer API
 
-In addition to implementing the [ModelLike API](@ref), objects subtyping
-[`AbstractOptimizer`](ref) must implement:
+There are two options for [`AbstractOptimizer`](@ref)s:
 
- * [`optimize!`](@ref)
+ 1. Implement the required portion of the [ModelLike API](@ref), plus
+    [`optimize!`](@ref)
+ 2. Implement [`copy_to_and_optimize!`](@ref)
 
 The following attributes are available. Some are required by all
 implementations, and others are optional.
@@ -103,7 +110,6 @@ implementations, and others are optional.
 **Required**
 
  * [`DualStatus`](@ref)
- * [`ListOfOptimizerAttributesSet`](@ref)
  * [`PrimalStatus`](@ref)
  * [`RawStatusString`](@ref)
  * [`ResultCount`](@ref)

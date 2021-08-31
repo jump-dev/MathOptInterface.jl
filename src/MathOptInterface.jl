@@ -49,15 +49,16 @@ solve the model and query the solution.
 
 ## Interface
 
-The API of MathOptInterface is large. At a minimum, objects subtyping
-`AbstractOptimizer` must implement the [`ModelLike`](@ref) API, plus:
+The API of MathOptInterface is large. There are two options for
+[`AbstractOptimizer`](@ref)s:
 
- * [`optimize!`](@ref)
+ 1. Implement the required portion of the [`ModelLike`](@ref) API, plus
+    [`optimize!`](@ref)
+ 2. Implement [`copy_to_and_optimize!`](@ref)
 
-and [`get`](@ref) for the following attributes:
+In addition, they must implement [`get`](@ref) for the following attributes:
 
  * [`DualStatus`](@ref)
- * [`ListOfOptimizerAttributesSet`](@ref)
  * [`PrimalStatus`](@ref)
  * [`RawStatusString`](@ref)
  * [`ResultCount`](@ref)
