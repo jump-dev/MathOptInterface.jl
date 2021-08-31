@@ -182,7 +182,7 @@ function test_ObjectiveFunction()
     return
 end
 
-function _test_T()
+function _test_VariableIndex(T)
     model = MOI.Utilities.Model{T}()
     @test !MOI.supports_constraint(model, DummyFunction, DummySet)
     @test !MOI.supports_constraint(model, MOI.VariableIndex, DummySet)
@@ -216,8 +216,8 @@ function _test_T()
 end
 
 function test_VariableIndex()
-    _test_Float64
-    _test_Int
+    _test_VariableIndex(Float64)
+    _test_VariableIndex(Int)
     return
 end
 
