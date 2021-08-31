@@ -524,12 +524,8 @@ function MOI.get(model::ModelFilter, attr::MOI.AbstractModelAttribute)
 end
 
 # !!! warning
-#     Slow implementations, but we need to report the number of variables and
-#     constraints in the filtered model, not in the `.inner`.
-
-function MOI.get(model::ModelFilter, ::MOI.NumberOfVariables)
-    return length(MOI.get(model, MOI.ListOfVariableIndices()))
-end
+#     Slow implementations, but we need to report the number of constraints in
+#     the filtered model, not in the `.inner`.
 
 function MOI.get(model::ModelFilter, ::MOI.NumberOfConstraints{F,S}) where {F,S}
     return length(MOI.get(model, MOI.ListOfConstraintIndices{F,S}()))
