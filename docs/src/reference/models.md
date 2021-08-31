@@ -60,6 +60,7 @@ AbstractOptimizer
 OptimizerWithAttributes
 optimize!
 instantiate
+copy_to_and_optimize!
 ```
 
 ## Optimizer attributes
