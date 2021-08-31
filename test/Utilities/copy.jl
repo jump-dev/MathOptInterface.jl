@@ -699,6 +699,10 @@ function test_filtering_copy_ListOfConstraintIndices()
         dest,
         MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}(),
     ) == 2
+    @test MOI.get(
+        filtered_src,
+        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}(),
+    ) == 2
     for xi in x
         @test haskey(index_map, xi)
         ci = MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(
