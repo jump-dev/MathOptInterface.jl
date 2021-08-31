@@ -452,11 +452,7 @@ function _test_SDPA_format(T)
     @test MOI.supports_add_constrained_variables(bridged, MOI.Reals)
     @test MOI.Bridges.bridge_type(bridged, MOI.Reals) ==
           MOI.Bridges.Variable.FreeBridge{T}
-    @test !MOI.supports_constraint(
-        model,
-        MOI.VariableIndex,
-        MOI.GreaterThan{T},
-    )
+    @test !MOI.supports_constraint(model, MOI.VariableIndex, MOI.GreaterThan{T})
     @test !MOI.supports_constraint(
         bridged,
         MOI.VariableIndex,

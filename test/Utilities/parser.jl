@@ -106,8 +106,7 @@ function test_one_variable()
     model = MOIU.Model{Float64}()
     x = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), x, "x")
-    bound =
-        MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
+    bound = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
 
     model2 = MOIU.Model{Float64}()
     MOIU.loadfromstring!(model2, s)

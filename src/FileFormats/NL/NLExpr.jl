@@ -296,8 +296,6 @@ end
 
 _NLExpr(x::MOI.VariableIndex) = _NLExpr(true, _NLTerm[], Dict(x => 1.0), 0.0)
 
-
-
 function _add_or_set(dict, key, value)
     if haskey(dict, key)
         dict[key] += value

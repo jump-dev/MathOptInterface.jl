@@ -349,12 +349,7 @@ function test_iteration_and_indexing_on_VectorOfVariables()
     it = MOI.Utilities.eachscalar(f)
     @test length(it) == 4
     @test eltype(it) == MOI.VariableIndex
-    @test collect(it) == [
-        z,
-        w,
-        x,
-        y,
-    ]
+    @test collect(it) == [z, w, x, y]
     @test it[2] == w
     @test it[end] == y
     return
@@ -525,12 +520,8 @@ function test_Scalar_Affine_promote_operation()
 end
 
 function test_Scalar_Affine_comparison()
-    @test MOI.Utilities.operate(
-        +,
-        Float64,
-        x,
-        z,
-    ) + 1.0 ≈ MOI.ScalarAffineFunction(
+    @test MOI.Utilities.operate(+, Float64, x, z) + 1.0 ≈
+          MOI.ScalarAffineFunction(
         MOI.ScalarAffineTerm.([1, 1e-7, 1], [x, y, z]),
         1.0,
     ) atol = 1e-6
@@ -576,12 +567,8 @@ end
 function test_Scalar_Affine_convert()
     f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 0.5], [x, y]), 0.5)
     @test_throws InexactError convert(MOI.VariableIndex, f)
-    @test_throws InexactError MOI.Utilities.convert_approx(
-        MOI.VariableIndex,
-        f,
-    )
-    @test MOI.Utilities.convert_approx(MOI.VariableIndex, f, tol = 0.5) ==
-          x
+    @test_throws InexactError MOI.Utilities.convert_approx(MOI.VariableIndex, f)
+    @test MOI.Utilities.convert_approx(MOI.VariableIndex, f, tol = 0.5) == x
     @test convert(typeof(f), f) === f
     quad_f = MOI.ScalarQuadraticFunction(
         MOI.ScalarQuadraticTerm{Float64}[],
@@ -595,8 +582,7 @@ function test_Scalar_Affine_convert()
     ]
         @test g isa MOI.ScalarAffineFunction{Float64}
         @test convert(MOI.VariableIndex, g) == x
-        @test MOI.Utilities.convert_approx(MOI.VariableIndex, g) ==
-              x
+        @test MOI.Utilities.convert_approx(MOI.VariableIndex, g) == x
     end
     return
 end
@@ -619,8 +605,7 @@ function test_Scalar_Affine_operate_with_Int_coefficient()
     )
     @test f === +f
     @test f ≈
-          x +
-          MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 4], [x, y]), 5)
+          x + MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 4], [x, y]), 5)
     @test f ≈ f * 1
     @test f ≈
           MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, 2], [x, y]), 2) *
@@ -629,8 +614,7 @@ function test_Scalar_Affine_operate_with_Int_coefficient()
           x -
           MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1, -4], [x, y]), -5)
     @test f ≈
-          MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3, 4], [x, y]), 5) -
-          x
+          MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([3, 4], [x, y]), 5) - x
     return
 end
 

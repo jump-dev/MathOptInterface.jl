@@ -222,11 +222,7 @@ function test_objective_ObjectiveFunction_VariableIndex(
 )
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     x = MOI.add_variable(model)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        x,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     _test_attribute_value_type(model, MOI.ObjectiveFunctionType())
@@ -281,17 +277,9 @@ function test_objective_qp_ObjectiveFunction_edge_cases(
     @requires MOI.supports(model, obj_attr)
     x = MOI.add_variables(model, 2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    vc1 = MOI.add_constraint(
-        model,
-        x[1],
-        MOI.GreaterThan(1.0),
-    )
+    vc1 = MOI.add_constraint(model, x[1], MOI.GreaterThan(1.0))
     @test vc1.value == x[1].value
-    vc2 = MOI.add_constraint(
-        model,
-        x[2],
-        MOI.GreaterThan(2.0),
-    )
+    vc2 = MOI.add_constraint(model, x[2], MOI.GreaterThan(2.0))
     @test vc2.value == x[2].value
     # Basic model
     # min x^2 + y^2 | x>=1, y>=2
@@ -417,17 +405,9 @@ function test_objective_qp_ObjectiveFunction_zero_ofdiag(
     @requires MOI.supports(model, obj_attr)
     x = MOI.add_variables(model, 2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    vc1 = MOI.add_constraint(
-        model,
-        x[1],
-        MOI.GreaterThan(1.0),
-    )
+    vc1 = MOI.add_constraint(model, x[1], MOI.GreaterThan(1.0))
     @test vc1.value == x[1].value
-    vc2 = MOI.add_constraint(
-        model,
-        x[2],
-        MOI.GreaterThan(2.0),
-    )
+    vc2 = MOI.add_constraint(model, x[2], MOI.GreaterThan(2.0))
     @test vc2.value == x[2].value
     MOI.set(
         model,
@@ -560,9 +540,6 @@ function test_objective_incorrect_modifications(model::MOI.ModelLike, ::Config)
         ArgumentError,
         MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(1.0)),
     )
-    @test_throws(
-        ArgumentError,
-        MOI.set(model, MOI.ConstraintFunction(), c, x),
-    )
+    @test_throws(ArgumentError, MOI.set(model, MOI.ConstraintFunction(), c, x),)
     return
 end

@@ -595,11 +595,7 @@ function test_nlp_no_objective()
     block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, false)
     MOI.set(model, MOI.NLPBlock(), block_data)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        v[1],
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), v[1])
     @test sprint(print, model) == """
     Minimize VariableIndex:
      x[1]

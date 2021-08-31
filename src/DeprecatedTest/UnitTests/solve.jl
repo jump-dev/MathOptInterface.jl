@@ -119,11 +119,7 @@ function solve_single_variable_dual_min(model::MOI.ModelLike, config::Config)
     xl = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     xu = MOI.add_constraint(model, x, MOI.LessThan(1.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        x,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     if config.solve && config.duals
         MOI.optimize!(model)
         @test isapprox(
@@ -146,11 +142,7 @@ function solve_single_variable_dual_max(model::MOI.ModelLike, config::Config)
     xl = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     xu = MOI.add_constraint(model, x, MOI.LessThan(1.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        x,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     if config.solve && config.duals
         MOI.optimize!(model)
         @test isapprox(
@@ -174,11 +166,7 @@ function solve_result_index(model::MOI.ModelLike, config::Config)
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        x,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     if config.solve
         MOI.optimize!(model)
         result_count = MOI.get(model, MOI.ResultCount())
@@ -235,8 +223,7 @@ unittests["solve_result_index"] = solve_result_index
 function solve_farkas_equalto_upper(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
-    clb =
-        MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
+    clb = MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0], x), 0.0),
@@ -259,8 +246,7 @@ unittests["solve_farkas_equalto_upper"] = solve_farkas_equalto_upper
 function solve_farkas_equalto_lower(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
-    clb =
-        MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
+    clb = MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0, -1.0], x), 0.0),
@@ -283,8 +269,7 @@ unittests["solve_farkas_equalto_lower"] = solve_farkas_equalto_lower
 function solve_farkas_lessthan(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
-    clb =
-        MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
+    clb = MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0], x), 0.0),
@@ -307,8 +292,7 @@ unittests["solve_farkas_lessthan"] = solve_farkas_lessthan
 function solve_farkas_greaterthan(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
-    clb =
-        MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
+    clb = MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0, -1.0], x), 0.0),
@@ -331,8 +315,7 @@ unittests["solve_farkas_greaterthan"] = solve_farkas_greaterthan
 function solve_farkas_interval_upper(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
-    clb =
-        MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
+    clb = MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0, 1.0], x), 0.0),
@@ -355,8 +338,7 @@ unittests["solve_farkas_interval_upper"] = solve_farkas_interval_upper
 function solve_farkas_interval_lower(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
-    clb =
-        MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
+    clb = MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-2.0, -1.0], x), 0.0),
@@ -412,11 +394,7 @@ function solve_farkas_variable_lessthan_max(
         MOI.GreaterThan(1.0),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        x[1],
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x[1])
     if config.solve && config.infeas_certificates
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
@@ -437,11 +415,7 @@ function solve_twice(model::MOI.ModelLike, config::Config)
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        x,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     if config.solve
         MOI.optimize!(model)
         MOI.optimize!(model)

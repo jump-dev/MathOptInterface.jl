@@ -130,11 +130,7 @@ function test_exp3_with_add_constrained_variable_y()
         "Cannot add two `VariableIndex`-in-`MathOptInterface.LessThan{Float64}`" *
         " on the same variable MathOptInterface.VariableIndex(-1).",
     )
-    @test_throws err MOI.add_constraint(
-        bridged_mock,
-        y,
-        MOI.LessThan(4.0),
-    )
+    @test_throws err MOI.add_constraint(bridged_mock, y, MOI.LessThan(4.0))
 
     cis = MOI.get(
         bridged_mock,

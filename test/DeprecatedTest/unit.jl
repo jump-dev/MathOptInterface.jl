@@ -531,8 +531,7 @@ end
                 MOI.INFEASIBLE,
                 (MOI.NO_SOLUTION, [NaN, NaN]),
                 MOI.INFEASIBILITY_CERTIFICATE,
-                (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
-                    [2.0, 1.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
                 (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                     [-1.0],
             ),
@@ -548,8 +547,7 @@ end
                 MOI.INFEASIBLE,
                 (MOI.NO_SOLUTION, [NaN, NaN]),
                 MOI.INFEASIBILITY_CERTIFICATE,
-                (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
-                    [2.0, 1.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
                 (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                     [1.0],
             ),
@@ -565,8 +563,7 @@ end
                 MOI.INFEASIBLE,
                 (MOI.NO_SOLUTION, [NaN, NaN]),
                 MOI.INFEASIBILITY_CERTIFICATE,
-                (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
-                    [2.0, 1.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0],
             ),
         )
@@ -581,8 +578,7 @@ end
                 MOI.INFEASIBLE,
                 (MOI.NO_SOLUTION, [NaN, NaN]),
                 MOI.INFEASIBILITY_CERTIFICATE,
-                (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
-                    [2.0, 1.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
                 (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [1.0],
             ),
         )
@@ -597,8 +593,7 @@ end
                 MOI.INFEASIBLE,
                 (MOI.NO_SOLUTION, [NaN, NaN]),
                 MOI.INFEASIBILITY_CERTIFICATE,
-                (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
-                    [2.0, 1.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
                 (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [-1.0],
             ),
         )
@@ -613,8 +608,7 @@ end
                 MOI.INFEASIBLE,
                 (MOI.NO_SOLUTION, [NaN, NaN]),
                 MOI.INFEASIBILITY_CERTIFICATE,
-                (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
-                    [2.0, 1.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
                 (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [1.0],
             ),
         )

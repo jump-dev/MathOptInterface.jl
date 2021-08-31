@@ -291,19 +291,11 @@ function _test_HS071(model::MOI.ModelLike, config::Config, evaluator::HS071)
     u = [5.0, 5.0, 5.0, 5.0]
     start = [1, 5, 5, 1]
     for i in 1:4
-        cub = MOI.add_constraint(
-            model,
-            v[i],
-            MOI.LessThan(u[i]),
-        )
+        cub = MOI.add_constraint(model, v[i], MOI.LessThan(u[i]))
         # We test this after the creation of every `VariableIndex` constraint
         # to ensure a good coverage of corner cases.
         @test cub.value == v[i].value
-        clb = MOI.add_constraint(
-            model,
-            v[i],
-            MOI.GreaterThan(l[i]),
-        )
+        clb = MOI.add_constraint(model, v[i], MOI.GreaterThan(l[i]))
         @test clb.value == v[i].value
         MOI.set(model, MOI.VariablePrimalStart(), v[i], start[i])
     end

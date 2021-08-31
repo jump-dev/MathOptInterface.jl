@@ -917,8 +917,7 @@ function socp1test(model::MOI.ModelLike, config::Config)
             }(),
         ) == 1
     end
-    bound =
-        MOI.add_constraint(model, t, MOI.GreaterThan(0.0))
+    bound = MOI.add_constraint(model, t, MOI.GreaterThan(0.0))
     @test bound.value == t.value
     if config.query_number_of_constraints
         @test MOI.get(

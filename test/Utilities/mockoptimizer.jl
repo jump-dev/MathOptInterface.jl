@@ -39,21 +39,13 @@ function test_optimizer_solve_with_result()
     )
 
     v = MOI.add_variables(optimizer, 2)
-    c1 = MOI.add_constraint(
-        optimizer,
-        v[1],
-        MOI.GreaterThan(1.0),
-    )
+    c1 = MOI.add_constraint(optimizer, v[1], MOI.GreaterThan(1.0))
     soc = MOI.add_constraint(
         optimizer,
         MOI.VectorOfVariables(v),
         MOI.SecondOrderCone(2),
     )
-    MOI.set(
-        optimizer,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        v[1],
-    )
+    MOI.set(optimizer, MOI.ObjectiveFunction{MOI.VariableIndex}(), v[1])
     MOI.set(optimizer, MOI.ResultCount(), 1)
     @test_throws(
         ErrorException("No mock primal is set for variable `$(v[1])`."),

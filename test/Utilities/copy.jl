@@ -563,10 +563,7 @@ function test_create_variables_using_supports_add_constrained_variable()
     ) == 1.0
     @test MOI.get(
         bridged_dest,
-        MOI.ConstraintBridgingCost{
-            MOI.VariableIndex,
-            MOI.GreaterThan{Float64},
-        }(),
+        MOI.ConstraintBridgingCost{MOI.VariableIndex,MOI.GreaterThan{Float64}}(),
     ) == 0.0
     index_map = MOI.copy_to(bridged_dest, src)
     @test typeof(c1) == typeof(dest.constraintIndices[2])
@@ -588,10 +585,7 @@ function test_create_variables_using_supports_add_constrained_variable()
     ) == 0.0
     @test MOI.get(
         bridged_dest,
-        MOI.ConstraintBridgingCost{
-            MOI.VariableIndex,
-            MOI.GreaterThan{Float64},
-        }(),
+        MOI.ConstraintBridgingCost{MOI.VariableIndex,MOI.GreaterThan{Float64}}(),
     ) == 2.0
     index_map = MOI.copy_to(bridged_dest, src)
     @test typeof(c1) == typeof(dest.constraintIndices[1])

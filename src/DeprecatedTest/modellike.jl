@@ -42,11 +42,7 @@ function nametest(model::MOI.ModelLike; delete::Bool = true)
     @testset "Variable bounds" begin
         MOI.empty!(model)
         x = MOI.add_variable(model)
-        c1 = MOI.add_constraint(
-            model,
-            x,
-            MOI.GreaterThan(0.0),
-        )
+        c1 = MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
         c2 = MOI.add_constraint(model, x, MOI.LessThan(1.0))
         @test_throws(
             MOI.VariableIndexConstraintNameError(),
@@ -747,11 +743,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
         dest,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
-    @test MOI.supports_constraint(
-        dest,
-        MOI.VariableIndex,
-        MOI.EqualTo{Float64},
-    )
+    @test MOI.supports_constraint(dest, MOI.VariableIndex, MOI.EqualTo{Float64})
     @test MOI.supports_constraint(dest, MOI.VectorOfVariables, MOI.Nonnegatives)
     @test MOI.supports_constraint(
         dest,
@@ -820,8 +812,7 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
     @test (MOI.VectorOfVariables, MOI.Nonnegatives) in loc
     @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in loc
     @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
-    @test MOI.get(dest, MOI.ConstraintFunction(), dict[csv]) ==
-          dict[w]
+    @test MOI.get(dest, MOI.ConstraintFunction(), dict[csv]) == dict[w]
     @test MOI.get(dest, MOI.ConstraintSet(), dict[csv]) == MOI.EqualTo(2.0)
     @test !MOI.supports(dest, MOI.ConstraintName(), typeof(cvv)) ||
           MOI.get(dest, MOI.ConstraintName(), dict[cvv]) == dest_name("cvv")

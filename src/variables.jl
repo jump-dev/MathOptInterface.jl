@@ -173,10 +173,8 @@ function add_constrained_variables(
     sets::AbstractVector{<:AbstractScalarSet},
 )
     variables = Vector{VariableIndex}(undef, length(sets))
-    constraints = Vector{ConstraintIndex{VariableIndex,eltype(sets)}}(
-        undef,
-        length(sets),
-    )
+    constraints =
+        Vector{ConstraintIndex{VariableIndex,eltype(sets)}}(undef, length(sets))
     for (i, set) in enumerate(sets)
         variables[i], constraints[i] = add_constrained_variable(model, set)
     end

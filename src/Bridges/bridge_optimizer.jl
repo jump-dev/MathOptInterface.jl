@@ -1446,9 +1446,7 @@ function _check_double_single_variable(
     if !is_bridged(b, typeof(set))
         # The variable might have been constrained in `b.model` to a set of type
         # `typeof(set)` on creation.
-        ci = MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(
-            func.value,
-        )
+        ci = MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(func.value)
         if MOI.is_valid(b.model, ci)
             error(
                 "The variable `$(func)` was constrained on creation ",

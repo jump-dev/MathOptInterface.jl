@@ -208,10 +208,7 @@ end
 
 Test ConstraintName for VariableIndex constraints.
 """
-function test_model_VariableIndex_ConstraintName(
-    model::MOI.ModelLike,
-    ::Config,
-)
+function test_model_VariableIndex_ConstraintName(model::MOI.ModelLike, ::Config)
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
     @test_throws(
@@ -643,11 +640,7 @@ function test_model_supports_constraint_VariableIndex_EqualTo(
 ) where {T}
     @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.EqualTo{T})
     # Pick a "bad" coefficient type that should fail tests.
-    @test !MOI.supports_constraint(
-        model,
-        MOI.VariableIndex,
-        MOI.EqualTo{UInt8},
-    )
+    @test !MOI.supports_constraint(model, MOI.VariableIndex, MOI.EqualTo{UInt8})
     # Scalar-in-vector
     @test !MOI.supports_constraint(model, MOI.VariableIndex, MOI.Zeros)
     return
@@ -842,11 +835,7 @@ function test_model_UpperBoundAlreadySet(
     x = MOI.add_variable(model)
     f = x
     ub = zero(T)
-    @requires MOI.supports_constraint(
-        model,
-        MOI.VariableIndex,
-        MOI.LessThan{T},
-    )
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.LessThan{T})
     sets = [
         MOI.EqualTo(ub),
         MOI.Interval(ub, ub),

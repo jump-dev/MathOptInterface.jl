@@ -729,11 +729,7 @@ function norminf3test(model::MOI.ModelLike, config::Config)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variables(model, 3)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        x,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     norminf_vaf = MOI.VectorAffineFunction(
         MOI.VectorAffineTerm.(1:4, MOI.ScalarAffineTerm.(1.0, vcat(x, y))),
@@ -1052,11 +1048,7 @@ function normone3test(model::MOI.ModelLike, config::Config)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variables(model, 3)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        x,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     norminf_vaf = MOI.VectorAffineFunction(
         MOI.VectorAffineTerm.(1:4, MOI.ScalarAffineTerm.(1.0, vcat(x, y))),
@@ -1796,11 +1788,7 @@ function rotatedsoc2test(model::MOI.ModelLike, config::Config)
     @test vc1.value == x[1].value
     vc2 = MOI.add_constraint(model, x[2], MOI.EqualTo(0.5))
     @test vc2.value == x[2].value
-    vc3 = MOI.add_constraint(
-        model,
-        x[3],
-        MOI.GreaterThan(2.0),
-    )
+    vc3 = MOI.add_constraint(model, x[3], MOI.GreaterThan(2.0))
     @test vc3.value == x[3].value
     if config.query_number_of_constraints
         @test MOI.get(
@@ -3235,11 +3223,7 @@ function relentr1test(model::MOI.ModelLike, config::Config)
         ),
         MOI.RelativeEntropyCone(5),
     )
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        u,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), u)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -3301,11 +3285,7 @@ function normspec1test(model::MOI.ModelLike, config::Config)
         ),
         MOI.NormSpectralCone(2, 3),
     )
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        t,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -3363,11 +3343,7 @@ function normspec2test(model::MOI.ModelLike, config::Config)
         ),
         MOI.NormSpectralCone(3, 2),
     )
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        t,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -3429,11 +3405,7 @@ function normnuc1test(model::MOI.ModelLike, config::Config)
         ),
         MOI.NormNuclearCone(2, 3),
     )
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        t,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -3494,11 +3466,7 @@ function normnuc2test(model::MOI.ModelLike, config::Config)
         ),
         MOI.NormNuclearCone(3, 2),
     )
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        t,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -4098,11 +4066,7 @@ function _psd3test(model::MOI.ModelLike, psdcone, config::Config{T}) where {T}
         )
     end
     c = MOI.add_constraint(model, func, psdcone(3))
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        x,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -4369,11 +4333,7 @@ function _det2test(model::MOI.ModelLike, config::Config, detcone)
     @test MOI.is_empty(model)
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        t,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     constant_mat = square ? vec(mat) : matL
     constant_vec = use_logdet ? vcat(0, 1, constant_mat) : vcat(0, constant_mat)

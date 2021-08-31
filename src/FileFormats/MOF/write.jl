@@ -118,7 +118,7 @@ function moi_to_object(
     name_map::Dict{MOI.VariableIndex,String},
 )
     return OrderedObject(
-        "type" => "VariableIndex",
+        "type" => "SingleVariable",
         "variable" => name_map[foo],
     )
 end

@@ -1676,10 +1676,7 @@ function operate(
     f::MOI.VariableIndex,
     α::T,
 ) where {T}
-    return MOI.ScalarAffineFunction{T}(
-        [MOI.ScalarAffineTerm(one(T), f)],
-        op(α),
-    )
+    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(one(T), f)], op(α))
 end
 
 function operate(
@@ -1689,10 +1686,7 @@ function operate(
     g::MOI.VariableIndex,
 ) where {T}
     return MOI.ScalarAffineFunction{T}(
-        [
-            MOI.ScalarAffineTerm(one(T), f),
-            MOI.ScalarAffineTerm(op(one(T)), g),
-        ],
+        [MOI.ScalarAffineTerm(one(T), f), MOI.ScalarAffineTerm(op(one(T)), g)],
         zero(T),
     )
 end
@@ -1923,10 +1917,7 @@ function operate_output_index!(
 ) where {T}
     push!(
         f.terms,
-        MOI.VectorAffineTerm(
-            output_index,
-            MOI.ScalarAffineTerm(op(one(T)), g),
-        ),
+        MOI.VectorAffineTerm(output_index, MOI.ScalarAffineTerm(op(one(T)), g)),
     )
     return f
 end
@@ -2317,10 +2308,7 @@ function operate!(::typeof(*), ::Type{T}, f::MOI.VariableIndex, α::T) where {T}
 end
 
 function operate(::typeof(*), ::Type{T}, α::T, f::MOI.VariableIndex) where {T}
-    return MOI.ScalarAffineFunction{T}(
-        [MOI.ScalarAffineTerm(α, f)],
-        zero(T),
-    )
+    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(α, f)], zero(T))
 end
 
 function operate(
@@ -2381,13 +2369,7 @@ function operate(
     g::MOI.VariableIndex,
 ) where {T}
     return MOI.ScalarQuadraticFunction(
-        [
-            MOI.ScalarQuadraticTerm(
-                f == g ? 2one(T) : one(T),
-                f,
-                g,
-            ),
-        ],
+        [MOI.ScalarQuadraticTerm(f == g ? 2one(T) : one(T), f, g)],
         MOI.ScalarAffineTerm{T}[],
         zero(T),
     )
@@ -3348,8 +3330,6 @@ function promote_operation(
 ) where {T}
     return MOI.ScalarAffineFunction{T}
 end
-
-
 
 function promote_operation(
     ::typeof(imag),

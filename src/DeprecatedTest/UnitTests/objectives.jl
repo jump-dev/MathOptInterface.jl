@@ -109,9 +109,7 @@ function solve_constant_obj(model::MOI.ModelLike, config::Config)
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(
-        x.value,
-    )
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(x.value)
     # We test this after the creation of every `VariableIndex` constraint
     # to ensure a good coverage of corner cases.
     @test c.value == x.value
@@ -146,9 +144,7 @@ function solve_blank_obj(model::MOI.ModelLike, config::Config)
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(
-        x.value,
-    )
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(x.value)
     @test c.value == x.value
     test_model_solution(
         model,
@@ -185,9 +181,7 @@ function solve_singlevariable_obj(model::MOI.ModelLike, config::Config)
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(
-        x.value,
-    )
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(x.value)
     @test c.value == x.value
     return test_model_solution(
         model,
@@ -214,17 +208,9 @@ function solve_qp_edge_cases(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    vc1 = MOI.add_constraint(
-        model,
-        x[1],
-        MOI.GreaterThan(1.0),
-    )
+    vc1 = MOI.add_constraint(model, x[1], MOI.GreaterThan(1.0))
     @test vc1.value == x[1].value
-    vc2 = MOI.add_constraint(
-        model,
-        x[2],
-        MOI.GreaterThan(2.0),
-    )
+    vc2 = MOI.add_constraint(model, x[2], MOI.GreaterThan(2.0))
     @test vc2.value == x[2].value
     @testset "Basic model" begin
         # min x^2 + y^2 | x>=1, y>=2
@@ -322,17 +308,9 @@ function solve_qp_zero_offdiag(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    vc1 = MOI.add_constraint(
-        model,
-        x[1],
-        MOI.GreaterThan(1.0),
-    )
+    vc1 = MOI.add_constraint(model, x[1], MOI.GreaterThan(1.0))
     @test vc1.value == x[1].value
-    vc2 = MOI.add_constraint(
-        model,
-        x[2],
-        MOI.GreaterThan(2.0),
-    )
+    vc2 = MOI.add_constraint(model, x[2], MOI.GreaterThan(2.0))
     @test vc2.value == x[2].value
     MOI.set(
         model,

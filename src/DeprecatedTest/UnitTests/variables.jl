@@ -240,9 +240,8 @@ function solve_with_upperbound(model::MOI.ModelLike, config::Config)
     # We test this after the creation of every `VariableIndex` constraint
     # to ensure a good coverage of corner cases.
     @test c1.value == x.value
-    c2 = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(
-        x.value,
-    )
+    c2 =
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(x.value)
     @test c2.value == x.value
     return test_model_solution(
         model,
@@ -275,9 +274,8 @@ function solve_with_lowerbound(model::MOI.ModelLike, config::Config)
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c1 = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(
-        x.value,
-    )
+    c1 =
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(x.value)
     @test c1.value == x.value
     c2 = MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}}(x.value)
     @test c2.value == x.value

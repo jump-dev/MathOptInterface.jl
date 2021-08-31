@@ -231,11 +231,7 @@ function unsupported_constraint_attribute()
         "trying to do.",
     )
     x = MOI.add_variable(bridged_mock)
-    ci = MOI.add_constraint(
-        bridged_mock,
-        x,
-        MOI.Interval(0.0, 1.0),
-    )
+    ci = MOI.add_constraint(bridged_mock, x, MOI.Interval(0.0, 1.0))
     @test !MOI.Bridges.is_bridged(bridged_mock, ci)
     @test MOI.Bridges.is_bridged(bridged_mock.model, ci)
     @test !MOI.supports(bridged_mock, attr, typeof(ci))
@@ -694,11 +690,7 @@ end
 function test_get_ObjectiveFunctionType()
     model = MOI.Bridges.Constraint.SplitInterval{Int}(NoIntervalModel{Int}())
     x = MOI.add_variable(model)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        x,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     @test MOI.get(model, MOI.ObjectiveFunctionType()) == MOI.VariableIndex
     return
 end

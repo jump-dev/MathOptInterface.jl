@@ -9,12 +9,6 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 # Variables
 
-## Types
-
-```@docs
-VariableIndex
-```
-
 ## Functions
 
 ```@docs

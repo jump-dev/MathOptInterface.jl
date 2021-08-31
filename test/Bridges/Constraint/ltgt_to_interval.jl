@@ -29,11 +29,8 @@ function test_GreaterToInterval()
         bridged_mock,
         config,
         include = [
-            "test_basic_$(F)_GreaterThanThan" for F in [
-                "VariableIndex",
-                "ScalarAffineFunction",
-                "ScalarQuadraticFunction",
-            ]
+            "test_basic_$(F)_GreaterThanThan" for F in
+            ["VariableIndex", "ScalarAffineFunction", "ScalarQuadraticFunction"]
         ],
     )
     MOI.empty!(bridged_mock)
@@ -83,11 +80,8 @@ function test_LessToInterval()
         bridged_mock,
         config,
         include = [
-            "test_basic_$(F)_LessThan" for F in [
-                "VariableIndex",
-                "ScalarAffineFunction",
-                "ScalarQuadraticFunction",
-            ]
+            "test_basic_$(F)_LessThan" for F in
+            ["VariableIndex", "ScalarAffineFunction", "ScalarQuadraticFunction"]
         ],
     )
     MOI.empty!(bridged_mock)

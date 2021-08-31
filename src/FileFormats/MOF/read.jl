@@ -118,7 +118,8 @@ end
 
 @head_to_val(
     head_to_function,
-    VariableIndex,
+    # TODO(odow): update once MathOptFormat finalized.
+    SingleVariable,
     VectorOfVariables,
     ScalarAffineFunction,
     ScalarQuadraticFunction,
@@ -158,7 +159,7 @@ end
 # ========== Non-typed scalar functions ==========
 
 function function_to_moi(
-    ::Val{:VariableIndex},
+    ::Val{:SingleVariable},
     object::Object,
     name_map::Dict{String,MOI.VariableIndex},
 )

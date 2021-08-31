@@ -1,6 +1,5 @@
 # x
-const dummy_single_variable =
-    (x::Vector{MOI.VariableIndex}) -> x[1]
+const dummy_single_variable = (x::Vector{MOI.VariableIndex}) -> x[1]
 # x₁, x₂
 const dummy_vectorofvariables =
     (x::Vector{MOI.VariableIndex}) -> MOI.VectorOfVariables(x)

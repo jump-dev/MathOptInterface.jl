@@ -232,11 +232,7 @@ function test_model_equality()
     )
     @test length(inequality_list) == 1
     MOI.set(mock, MOI.ConstraintName(), inequality_list[1], "ineq")
-    MOI.set(
-        mock,
-        MOI.ObjectiveFunction{MOI.VariableIndex}(),
-        z,
-    )
+    MOI.set(mock, MOI.ObjectiveFunction{MOI.VariableIndex}(), z)
     MOI.set(mock, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     s = """
     variables: z, x, w

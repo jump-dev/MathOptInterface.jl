@@ -154,11 +154,7 @@ function _test_unsupported_attribute(f)
     ci = MOI.ConstraintIndex{typeof(func),MOI.EqualTo{Float64}}(1)
     @test_throws(
         MOI.UnsupportedAttribute,
-        f(
-            model,
-            MOI.ObjectiveFunction{MOI.VariableIndex}(),
-            vi,
-        ),
+        f(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), vi),
     )
     @test_throws(
         MOI.UnsupportedAttribute,

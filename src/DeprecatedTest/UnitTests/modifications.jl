@@ -492,9 +492,7 @@ function delete_variable_with_single_variable_obj(
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
     y = MOI.get(model, MOI.VariableIndex, "y")
-    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(
-        x.value,
-    )
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(x.value)
     @test c.value == x.value
     MOI.delete(model, y)
     return test_model_solution(

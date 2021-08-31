@@ -1168,8 +1168,7 @@ function test_quadratic_SecondOrderCone_basic(
             }(),
         ) == 1
     end
-    bound =
-        MOI.add_constraint(model, t, MOI.GreaterThan(0.0))
+    bound = MOI.add_constraint(model, t, MOI.GreaterThan(0.0))
     @test bound.value == t.value
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(

@@ -80,11 +80,7 @@ function test_HS071()
     for (index, variable) in enumerate(x)
         MOI.set(model, MOI.VariableName(), variable, "var_$(index)")
     end
-    MOI.add_constraints(
-        model,
-        x,
-        Ref(MOI.Interval(1.0, 5.0)),
-    )
+    MOI.add_constraints(model, x, Ref(MOI.Interval(1.0, 5.0)))
     MOI.set(model, MOI.NLPBlock(), HS071(x))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.write_to_file(model, TEST_MOF_FILE)

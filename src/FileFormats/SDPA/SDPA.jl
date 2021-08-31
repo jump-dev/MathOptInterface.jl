@@ -380,11 +380,7 @@ function Base.read!(io::IO, model::Model{T}) where {T}
         MOI.add_constraint(model, funcs[block], block_sets[block])
     end
     for var_idx in intvar_idx
-        MOI.add_constraint(
-            model,
-            scalar_vars[var_idx],
-            MOI.Integer(),
-        )
+        MOI.add_constraint(model, scalar_vars[var_idx], MOI.Integer())
     end
     return
 end

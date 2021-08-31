@@ -52,11 +52,7 @@ function linear1test(model::MOI.ModelLike, config::Config{T}) where {T}
             }(),
         ) == 1
     end
-    vc1 = MOI.add_constraint(
-        model,
-        v[1],
-        MOI.GreaterThan(zero(T)),
-    )
+    vc1 = MOI.add_constraint(model, v[1], MOI.GreaterThan(zero(T)))
     # We test this after the creation of every `VariableIndex` constraint
     # to ensure a good coverage of corner cases.
     @test vc1.value == v[1].value
@@ -179,11 +175,7 @@ function linear1test(model::MOI.ModelLike, config::Config{T}) where {T}
             MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
         )
     end
-    vc3 = MOI.add_constraint(
-        model,
-        v[3],
-        MOI.GreaterThan(zero(T)),
-    )
+    vc3 = MOI.add_constraint(model, v[3], MOI.GreaterThan(zero(T)))
     @test vc3.value == v[3].value
     if config.query_number_of_constraints
         @test MOI.get(
@@ -270,11 +262,7 @@ function linear1test(model::MOI.ModelLike, config::Config{T}) where {T}
     # x, y >= 0, z = 0 (vc3)
     MOI.set(model, MOI.ConstraintSet(), vc1, MOI.GreaterThan(zero(T)))
     MOI.delete(model, vc3)
-    vc3 = MOI.add_constraint(
-        model,
-        v[3],
-        MOI.EqualTo(zero(T)),
-    )
+    vc3 = MOI.add_constraint(model, v[3], MOI.EqualTo(zero(T)))
     @test vc3.value == v[3].value
     if config.query_number_of_constraints
         @test MOI.get(
@@ -529,17 +517,9 @@ function linear2test(model::MOI.ModelLike, config::Config{T}) where {T}
             }(),
         ) == 1
     end
-    vc1 = MOI.add_constraint(
-        model,
-        x,
-        MOI.GreaterThan(zero(T)),
-    )
+    vc1 = MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
     @test vc1.value == x.value
-    vc2 = MOI.add_constraint(
-        model,
-        y,
-        MOI.GreaterThan(zero(T)),
-    )
+    vc2 = MOI.add_constraint(model, y, MOI.GreaterThan(zero(T)))
     @test vc2.value == y.value
     if config.query_number_of_constraints
         @test MOI.get(
@@ -618,11 +598,7 @@ function linear3test(model::MOI.ModelLike, config::Config{T}) where {T}
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    vc = MOI.add_constraint(
-        model,
-        x,
-        MOI.GreaterThan(zero(T)),
-    )
+    vc = MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
     @test vc.value == x.value
     cf = MOI.ScalarAffineFunction{T}(
         [MOI.ScalarAffineTerm{T}(one(T), x)],
@@ -739,11 +715,7 @@ function linear4test(model::MOI.ModelLike, config::Config{T}) where {T}
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    c1 = MOI.add_constraint(
-        model,
-        x,
-        MOI.GreaterThan(zero(T)),
-    )
+    c1 = MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
     @test c1.value == x.value
     c2 = MOI.add_constraint(model, y, MOI.LessThan(zero(T)))
     @test c2.value == y.value
@@ -850,17 +822,9 @@ function linear5test(model::MOI.ModelLike, config::Config{T}) where {T}
             }(),
         ) == 2
     end
-    vc1 = MOI.add_constraint(
-        model,
-        x,
-        MOI.GreaterThan(zero(T)),
-    )
+    vc1 = MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
     @test vc1.value == x.value
-    vc2 = MOI.add_constraint(
-        model,
-        y,
-        MOI.GreaterThan(zero(T)),
-    )
+    vc2 = MOI.add_constraint(model, y, MOI.GreaterThan(zero(T)))
     @test vc2.value == y.value
     if config.query_number_of_constraints
         @test MOI.get(
@@ -1226,17 +1190,9 @@ function linear8atest(model::MOI.ModelLike, config::Config{T}) where {T}
         ),
         MOI.LessThan(-one(T)),
     )
-    bndx = MOI.add_constraint(
-        model,
-        x,
-        MOI.GreaterThan(zero(T)),
-    )
+    bndx = MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
     @test bndx.value == x.value
-    bndy = MOI.add_constraint(
-        model,
-        y,
-        MOI.GreaterThan(zero(T)),
-    )
+    bndy = MOI.add_constraint(model, y, MOI.GreaterThan(zero(T)))
     @test bndy.value == y.value
     MOI.set(
         model,
@@ -1305,17 +1261,9 @@ function linear8btest(model::MOI.ModelLike, config::Config{T}) where {T}
         ),
         MOI.LessThan(zero(T)),
     )
-    vc1 = MOI.add_constraint(
-        model,
-        x,
-        MOI.GreaterThan(zero(T)),
-    )
+    vc1 = MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
     @test vc1.value == x.value
-    vc2 = MOI.add_constraint(
-        model,
-        y,
-        MOI.GreaterThan(zero(T)),
-    )
+    vc2 = MOI.add_constraint(model, y, MOI.GreaterThan(zero(T)))
     @test vc2.value == y.value
     MOI.set(
         model,
@@ -1375,17 +1323,9 @@ function linear8ctest(model::MOI.ModelLike, config::Config{T}) where {T}
         ),
         MOI.EqualTo(zero(T)),
     )
-    vc1 = MOI.add_constraint(
-        model,
-        x,
-        MOI.GreaterThan(zero(T)),
-    )
+    vc1 = MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
     @test vc1.value == x.value
-    vc2 = MOI.add_constraint(
-        model,
-        y,
-        MOI.GreaterThan(zero(T)),
-    )
+    vc2 = MOI.add_constraint(model, y, MOI.GreaterThan(zero(T)))
     @test vc2.value == y.value
     MOI.set(
         model,
@@ -1915,17 +1855,9 @@ function linear12test(model::MOI.ModelLike, config::Config{T}) where {T}
         ),
         MOI.LessThan(T(2)),
     )
-    bndx = MOI.add_constraint(
-        model,
-        x,
-        MOI.GreaterThan(zero(T)),
-    )
+    bndx = MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
     @test bndx.value == x.value
-    bndy = MOI.add_constraint(
-        model,
-        y,
-        MOI.GreaterThan(zero(T)),
-    )
+    bndy = MOI.add_constraint(model, y, MOI.GreaterThan(zero(T)))
     @test bndy.value == y.value
     MOI.set(
         model,
@@ -2058,26 +1990,13 @@ function linear14test(model::MOI.ModelLike, config::Config{T}) where {T}
         ),
         MOI.LessThan(T(2)),
     )
-    clbx = MOI.add_constraint(
-        model,
-        x,
-        MOI.GreaterThan(zero(T)),
-    )
+    clbx = MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
     @test clbx.value == x.value
-    clby = MOI.add_constraint(
-        model,
-        y,
-        MOI.GreaterThan(zero(T)),
-    )
+    clby = MOI.add_constraint(model, y, MOI.GreaterThan(zero(T)))
     @test clby.value == y.value
-    clbz = MOI.add_constraint(
-        model,
-        z,
-        MOI.GreaterThan(zero(T)),
-    )
+    clbz = MOI.add_constraint(model, z, MOI.GreaterThan(zero(T)))
     @test clbz.value == z.value
-    cubz =
-        MOI.add_constraint(model, z, MOI.LessThan(one(T)))
+    cubz = MOI.add_constraint(model, z, MOI.LessThan(one(T)))
     @test cubz.value == z.value
     MOI.set(
         model,
