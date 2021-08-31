@@ -852,7 +852,7 @@ function MOI.set(
     ::MOI.ConstraintIndex{MOI.VariableIndex},
     ::MOI.VariableIndex,
 )
-    return throw(MOI.SettingVariableIndexFunctionNotAllowed())
+    return throw(MOI.SettingVariableIndexNotAllowed())
 end
 
 function MOI.set(

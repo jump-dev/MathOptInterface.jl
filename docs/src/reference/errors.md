@@ -74,5 +74,5 @@ SubmitNotAllowed
 Note that setting the [`ConstraintFunction`](@ref) of a [`VariableIndex`]
 constraint is not allowed:
 ```@docs
-SettingVariableIndexFunctionNotAllowed
+SettingVariableIndexNotAllowed
 ```

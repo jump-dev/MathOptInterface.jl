@@ -421,7 +421,7 @@ function type used to define the constraint.
 
 Setting the constraint function is not allowed if `F` is
 [`VariableIndex`](@ref), it throws a
-[`SettingVariableIndexFunctionNotAllowed`](@ref) error. Indeed, it would
+[`SettingVariableIndexNotAllowed`](@ref) error. Indeed, it would
 require changing the index `c` as the index of `VariableIndex` constraints
 should be the same as the index of the variable.
 
@@ -490,12 +490,12 @@ function throw_set_error_fallback(
 end
 
 """
-    SettingVariableIndexFunctionNotAllowed()
+    SettingVariableIndexNotAllowed()
 
 Error type that should be thrown when the user calls [`set`](@ref) to change
 the [`ConstraintFunction`](@ref) of a [`VariableIndex`](@ref) constraint.
 """
-struct SettingVariableIndexFunctionNotAllowed <: Exception end
+struct SettingVariableIndexNotAllowed <: Exception end
 
 """
     submit(optimizer::AbstractOptimizer, sub::AbstractSubmittable,

@@ -4,7 +4,7 @@ const modificationtests = Dict{String,Function}()
     set_function_single_variable(model::MOI.ModelLike, config::Config)
 
 Test that modifying the function of a `VariableIndex`-in-`LessThan` constraint
-throws a [`SettingVariableIndexFunctionNotAllowed`](@ref) error.
+throws a [`SettingVariableIndexNotAllowed`](@ref) error.
 """
 function set_function_single_variable(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
@@ -22,7 +22,7 @@ function set_function_single_variable(model::MOI.ModelLike, config::Config)
     # We test this after the creation of every `VariableIndex` constraint
     # to ensure a good coverage of corner cases.
     @test c.value == x.value
-    err = MOI.SettingVariableIndexFunctionNotAllowed()
+    err = MOI.SettingVariableIndexNotAllowed()
     func = y
     @test_throws err MOI.set(model, MOI.ConstraintFunction(), c, func)
 end
