@@ -438,16 +438,23 @@ two arguments: an attribute (see below) and an element from the list returned by
 that attribute. It returns `true` if the element should be included in `dest`,
 and `false` otherwise.
 
-The attributes that are filtered are:
+The components that are filtered are:
 
- * `MOI.ListOfConstraintAttributesSet`
- * `MOI.ListOfConstraintIndices`
- * `MOI.ListOfConstraintTypesPresent`
- * `MOI.ListOfModelAttributesSet`
- * `MOI.ListOfVariableAttributesSet`
- * `MOI.ListOfVariableIndices`
+ * Entire constraint types via:
+   * `MOI.ListOfConstraintTypesPresent`
+ * Individual constraints via:
+   * `MOI.ListOfConstraintIndices{F,S}`
+ * Specific attributes via:
+   * `MOI.ListOfModelAttributesSet`
+   * `MOI.ListOfConstraintAttributesSet`
+   * `MOI.ListOfVariableAttributesSet`
 
-See the examples for examples of how this works.
+!!! warning
+    The list of attributes filtered may change in a future release. You should
+    write functions that are generic and not limited to the five types listed
+    above.
+
+See below for examples of how this works.
 
 !!! note
     This layer has a limited scope. It is intended by be used in conjunction
@@ -507,7 +514,6 @@ function MOI.get(
         MOI.ListOfConstraintTypesPresent,
         MOI.ListOfModelAttributesSet,
         MOI.ListOfVariableAttributesSet,
-        MOI.ListOfVariableIndices,
     },
 )
     return filter(model.filter, MOI.get(model.inner, attr))

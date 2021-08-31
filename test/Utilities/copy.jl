@@ -614,12 +614,12 @@ end
 
 function test_filtering_copy_empty()
     src = MOI.Utilities.Model{Float64}()
-    x = MOI.add_variable(src)
+    MOI.set(src, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     model = MOI.Utilities.ModelFilter(src) do item
-        return !(item isa MOI.VariableIndex)
+        return item !== MOI.ObjectiveSense()
     end
     @test MOI.is_empty(model)
-    MOI.set(src, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.add_variable(src)
     @test !MOI.is_empty(model)
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -678,23 +678,6 @@ function test_filtering_copy_AbstractConstraintAttribute()
     index_map = MOI.copy_to(dest, filtered_src)
     @test MOI.get(dest, MOI.ConstraintName(), index_map[c]) == ""
     @test MOI.get(dest, MOI.ConstraintDualStart(), index_map[c]) == [1.0]
-    return
-end
-
-function test_filtering_copy_ListOfVariableIndices()
-    src = MOI.Utilities.Model{Float64}()
-    x = MOI.add_variables(src, 4)
-    dest = MOI.Utilities.Model{Float64}()
-    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
-        if item isa MOI.VariableIndex
-            return isodd(item.value)
-        end
-        return true
-    end)
-    @test MOI.get(dest, MOI.NumberOfVariables()) == 2
-    for xi in x
-        @test haskey(index_map, xi) == isodd(xi.value)
-    end
     return
 end
 
