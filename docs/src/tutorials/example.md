@@ -35,13 +35,13 @@ optimizer = GLPK.Optimizer()
 We first define the constants of the problem:
 ```jldoctest knapsack; setup = :(optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}()); MOI.Utilities.set_mock_optimize!(optimizer, mock -> MOI.Utilities.mock_optimize!(mock, ones(3))))
 julia> c = [1.0, 2.0, 3.0]
-3-element Array{Float64,1}:
+3-element Vector{Float64}:
  1.0
  2.0
  3.0
 
 julia> w = [0.3, 0.5, 1.0]
-3-element Array{Float64,1}:
+3-element Vector{Float64}:
  0.3
  0.5
  1.0
@@ -135,7 +135,7 @@ julia> MOI.get(optimizer, MOI.ObjectiveValue())
 And what is the value of the variables `x`?
 ```jldoctest knapsack
 julia> MOI.get(optimizer, MOI.VariablePrimal(), x)
-3-element Array{Float64,1}:
+3-element Vector{Float64}:
  1.0
  1.0
  1.0

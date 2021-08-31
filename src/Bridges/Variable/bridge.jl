@@ -150,7 +150,7 @@ MOI.Bridges.added_constrained_variable_types(
 
 # output
 
-1-element Array{Tuple{Type},1}:
+1-element Vector{Tuple{Type}}:
  (MathOptInterface.Nonnegatives,)
 ```
 """
@@ -189,7 +189,7 @@ MOI.Bridges.added_constraint_types(
 
 # output
 
-2-element Array{Tuple{Type,Type},1}:
+2-element Vector{Tuple{Type, Type}}:
  (MathOptInterface.VariableIndex, MathOptInterface.EqualTo{Float64})
  (MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.EqualTo{Float64})
 ```
@@ -225,7 +225,7 @@ MOI.Bridges.Variable.concrete_bridge_type(
 
 # output
 
-MathOptInterface.Bridges.Variable.VectorizeBridge{Float64,MathOptInterface.Nonnegatives}
+MathOptInterface.Bridges.Variable.VectorizeBridge{Float64, MathOptInterface.Nonnegatives}
 ```
 """
 function concrete_bridge_type(bridge_type::Type, ::Type{<:MOI.AbstractSet})
