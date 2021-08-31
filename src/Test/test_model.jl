@@ -1144,33 +1144,6 @@ function test_model_ModelFilter_AbstractConstraintAttribute(
 end
 
 """
-    test_model_ModelFilter_ListOfVariableIndices(
-        src::MOI.ModelLike,
-        ::Config{T},
-    ) where {T}
-
-Tests `Utilties.ModelFilter` of `ListOfVariableIndices`.
-"""
-function test_model_ModelFilter_ListOfVariableIndices(
-    src::MOI.ModelLike,
-    ::Config{T},
-) where {T}
-    x = MOI.add_variables(src, 4)
-    dest = MOI.Utilities.Model{T}()
-    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
-        if item isa MOI.VariableIndex
-            return isodd(item.value)
-        end
-        return true
-    end)
-    @test MOI.get(dest, MOI.NumberOfVariables()) == 2
-    for xi in x
-        @test haskey(index_map, xi) == isodd(xi.value)
-    end
-    return
-end
-
-"""
     test_model_ModelFilter_ListOfConstraintIndices(
         src::MOI.ModelLike,
         ::Config{T},
