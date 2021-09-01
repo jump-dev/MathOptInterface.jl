@@ -1168,8 +1168,7 @@ function test_model_ModelFilter_ListOfConstraintIndices(
     ) == 2
     for xi in x
         @test haskey(index_map, xi)
-        ci =
-            MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{T}}(xi.value)
+        ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{T}}(xi.value)
         @test haskey(index_map, ci) == isodd(xi.value)
     end
     return
@@ -1190,9 +1189,7 @@ function test_model_ModelFilter_ListOfConstraintTypesPresent(
     @requires(
         MOI.supports_constraint(src, MOI.VariableIndex, MOI.GreaterThan{T}),
     )
-    @requires(
-        MOI.supports_constraint(src, MOI.VariableIndex, MOI.LessThan{T}),
-    )
+    @requires(MOI.supports_constraint(src, MOI.VariableIndex, MOI.LessThan{T}))
     x = MOI.add_variables(src, 4)
     MOI.add_constraint.(src, x, MOI.GreaterThan(zero(T)))
     MOI.add_constraint.(src, x, MOI.LessThan(one(T)))
