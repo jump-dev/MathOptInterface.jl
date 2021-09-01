@@ -1150,10 +1150,10 @@ function test_model_ModelFilter_ListOfConstraintIndices(
     ::Config{T},
 ) where {T}
     @requires(
-        MOI.supports_constraint(src, MOI.SingleVariable, MOI.GreaterThan{T}),
+        MOI.supports_constraint(src, MOI.VariableIndex, MOI.GreaterThan{T}),
     )
     x = MOI.add_variables(src, 4)
-    MOI.add_constraint.(src, MOI.SingleVariable.(x), MOI.GreaterThan(zero(T)))
+    MOI.add_constraint.(src, x, MOI.GreaterThan(zero(T)))
     dest = MOI.Utilities.Model{T}()
     index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
         if item isa MOI.ConstraintIndex
@@ -1164,12 +1164,12 @@ function test_model_ModelFilter_ListOfConstraintIndices(
     @test MOI.get(dest, MOI.NumberOfVariables()) == 4
     @test MOI.get(
         dest,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}(),
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}(),
     ) == 2
     for xi in x
         @test haskey(index_map, xi)
         ci =
-            MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{T}}(xi.value)
+            MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{T}}(xi.value)
         @test haskey(index_map, ci) == isodd(xi.value)
     end
     return
@@ -1188,20 +1188,20 @@ function test_model_ModelFilter_ListOfConstraintTypesPresent(
     ::Config{T},
 ) where {T}
     @requires(
-        MOI.supports_constraint(src, MOI.SingleVariable, MOI.GreaterThan{T}),
+        MOI.supports_constraint(src, MOI.VariableIndex, MOI.GreaterThan{T}),
     )
     @requires(
-        MOI.supports_constraint(src, MOI.SingleVariable, MOI.LessThan{T}),
+        MOI.supports_constraint(src, MOI.VariableIndex, MOI.LessThan{T}),
     )
     x = MOI.add_variables(src, 4)
-    MOI.add_constraint.(src, MOI.SingleVariable.(x), MOI.GreaterThan(zero(T)))
-    MOI.add_constraint.(src, MOI.SingleVariable.(x), MOI.LessThan(one(T)))
+    MOI.add_constraint.(src, x, MOI.GreaterThan(zero(T)))
+    MOI.add_constraint.(src, x, MOI.LessThan(one(T)))
     dest = MOI.Utilities.Model{T}()
     index_map = MOI.copy_to(
         dest,
         MOI.Utilities.ModelFilter(src) do item
             if item isa Tuple{Type,Type}
-                return item == (MOI.SingleVariable, MOI.LessThan{T})
+                return item == (MOI.VariableIndex, MOI.LessThan{T})
             end
             return true
         end,
@@ -1209,11 +1209,11 @@ function test_model_ModelFilter_ListOfConstraintTypesPresent(
     @test MOI.get(dest, MOI.NumberOfVariables()) == 4
     @test MOI.get(
         dest,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{T}}(),
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}(),
     ) == 0
     @test MOI.get(
         dest,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{T}}(),
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{T}}(),
     ) == 4
     return
 end

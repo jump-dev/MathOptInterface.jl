@@ -467,10 +467,7 @@ Use the `do` syntax to provide a single function.
 
 ```julia
 filtered_src = MOI.Utilities.ModelFilter(src) do item
-    if item isa Tuple{Type,Type}
-        return item != (MOI.SingleVariable, MOI.Integer)
-    end
-    return attr != MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Integer}()
+    return item != (MOI.VariableIndex, MOI.Integer)
 end
 MOI.copy_to(dest, filtered_src)
 ```

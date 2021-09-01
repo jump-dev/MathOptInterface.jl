@@ -686,7 +686,7 @@ end
 function test_filtering_copy_ListOfConstraintIndices()
     src = MOI.Utilities.Model{Float64}()
     x = MOI.add_variables(src, 4)
-    MOI.add_constraint.(src, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
+    MOI.add_constraint.(src, x, MOI.GreaterThan(0.0))
     dest = MOI.Utilities.Model{Float64}()
     filtered_src = MOI.Utilities.ModelFilter(src) do item
         if item isa MOI.ConstraintIndex
@@ -699,15 +699,15 @@ function test_filtering_copy_ListOfConstraintIndices()
     @test MOI.get(dest, MOI.NumberOfVariables()) == 4
     @test MOI.get(
         dest,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}(),
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{Float64}}(),
     ) == 2
     @test MOI.get(
         filtered_src,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}(),
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{Float64}}(),
     ) == 2
     for xi in x
         @test haskey(index_map, xi)
-        ci = MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(
+        ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(
             xi.value,
         )
         @test haskey(index_map, ci) == isodd(xi.value)
@@ -718,14 +718,14 @@ end
 function test_filtering_copy_ListOfConstraintTypesPresent()
     src = MOI.Utilities.Model{Float64}()
     x = MOI.add_variables(src, 4)
-    MOI.add_constraint.(src, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
-    MOI.add_constraint.(src, MOI.SingleVariable.(x), MOI.ZeroOne())
+    MOI.add_constraint.(src, x, MOI.GreaterThan(0.0))
+    MOI.add_constraint.(src, x, MOI.ZeroOne())
     dest = MOI.Utilities.Model{Float64}()
     index_map = MOI.copy_to(
         dest,
         MOI.Utilities.ModelFilter(src) do item
             if item isa Tuple{Type,Type}
-                return item == (MOI.SingleVariable, MOI.ZeroOne)
+                return item == (MOI.VariableIndex, MOI.ZeroOne)
             end
             return true
         end,
@@ -733,11 +733,11 @@ function test_filtering_copy_ListOfConstraintTypesPresent()
     @test MOI.get(dest, MOI.NumberOfVariables()) == 4
     @test MOI.get(
         dest,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}(),
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{Float64}}(),
     ) == 0
     @test MOI.get(
         dest,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.ZeroOne}(),
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.ZeroOne}(),
     ) == 4
     return
 end
