@@ -6497,3 +6497,393 @@ function setup_test(
     )
     return
 end
+
+"""
+    test_conic_SecondOrderCone_no_initial_bound(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test a second order cone with no bound on the epigraph variable.
+"""
+function test_conic_SecondOrderCone_no_initial_bound(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires(
+        MOI.supports_constraint(
+            model,
+            MOI.VectorOfVariables,
+            MOI.SecondOrderCone,
+        ),
+    )
+    @requires _supports(config, MOI.optimize!)
+    t = MOI.add_variable(model)
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraints(model, x, MOI.GreaterThan.(3.0:4.0))
+    c_soc = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([t; x]),
+        MOI.SecondOrderCone(3),
+    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    MOI.delete(model, c_soc)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.DUAL_INFEASIBLE
+    return
+end
+
+function setup_test(
+    ::typeof(test_conic_SecondOrderCone_no_initial_bound),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE),
+    )
+    return
+end
+
+"""
+    test_conic_SecondOrderCone_nonnegative_initial_bound(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test a second order cone with a non-negative epigraph variable.
+"""
+function test_conic_SecondOrderCone_nonnegative_initial_bound(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires(
+        MOI.supports_constraint(
+            model,
+            MOI.VectorOfVariables,
+            MOI.SecondOrderCone,
+        ),
+    )
+    @requires _supports(config, MOI.optimize!)
+    t = MOI.add_variable(model)
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint(model, t, MOI.GreaterThan(1.0))
+    MOI.add_constraints(model, x, MOI.GreaterThan.(3.0:4.0))
+    c_soc = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([t; x]),
+        MOI.SecondOrderCone(3),
+    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    MOI.delete(model, c_soc)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.VariablePrimal(), t) == 1.0
+    return
+end
+
+function setup_test(
+    ::typeof(test_conic_SecondOrderCone_nonnegative_initial_bound),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [1.0, 3.0, 4.0]),
+    )
+    return
+end
+
+"""
+    test_conic_SecondOrderCone_negative_initial_bound(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test a second order cone with an epigraph variable >= -M.
+"""
+function test_conic_SecondOrderCone_negative_initial_bound(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires(
+        MOI.supports_constraint(
+            model,
+            MOI.VectorOfVariables,
+            MOI.SecondOrderCone,
+        ),
+    )
+    @requires _supports(config, MOI.optimize!)
+    t = MOI.add_variable(model)
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint(model, t, MOI.GreaterThan(-1.0))
+    MOI.add_constraints(model, x, MOI.GreaterThan.(3.0:4.0))
+    c_soc = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([t; x]),
+        MOI.SecondOrderCone(3),
+    )
+    MOI.optimize!(model)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    MOI.delete(model, c_soc)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.VariablePrimal(), t) == -1.0
+    return
+end
+
+function setup_test(
+    ::typeof(test_conic_SecondOrderCone_negative_initial_bound),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [-1.0, 3.0, 4.0]),
+    )
+    return
+end
+
+"""
+    test_conic_SecondOrderCone_nonnegative_post_bound(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test a second order cone with a nonnegative epigraph variable.
+"""
+function test_conic_SecondOrderCone_nonnegative_post_bound(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires(
+        MOI.supports_constraint(
+            model,
+            MOI.VectorOfVariables,
+            MOI.SecondOrderCone,
+        ),
+    )
+    @requires _supports(config, MOI.optimize!)
+    t = MOI.add_variable(model)
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraints(model, x, MOI.GreaterThan.(3.0:4.0))
+    MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([t; x]),
+        MOI.SecondOrderCone(3),
+    )
+    c_lb = MOI.add_constraint(model, t, MOI.GreaterThan(6.0))
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.VariablePrimal(), t) == 6.0
+    MOI.delete(model, c_lb)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    return
+end
+
+function setup_test(
+    ::typeof(test_conic_SecondOrderCone_nonnegative_post_bound),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [6.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
+    )
+    return
+end
+
+"""
+    test_conic_SecondOrderCone_negative_post_bound(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test a second order cone with an epigraph variable >= -M.
+"""
+function test_conic_SecondOrderCone_negative_post_bound(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires(
+        MOI.supports_constraint(
+            model,
+            MOI.VectorOfVariables,
+            MOI.SecondOrderCone,
+        ),
+    )
+    @requires _supports(config, MOI.optimize!)
+    t = MOI.add_variable(model)
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraints(model, x, MOI.GreaterThan.(3.0:4.0))
+    c_soc = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([t; x]),
+        MOI.SecondOrderCone(3),
+    )
+    MOI.add_constraint(model, t, MOI.GreaterThan(-6.0))
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    MOI.delete(model, c_soc)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.VariablePrimal(), t) == -6.0
+    return
+end
+
+function setup_test(
+    ::typeof(test_conic_SecondOrderCone_negative_post_bound),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [-6.0, 3.0, 4.0]),
+    )
+    return
+end
+
+"""
+    test_conic_SecondOrderCone_negative_post_bound_ii(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test a second order cosnstraint with an epigraph variable >= -M and the bound
+constraints added via `add_constraint`.
+"""
+function test_conic_SecondOrderCone_negative_post_bound_ii(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires(
+        MOI.supports_constraint(
+            model,
+            MOI.VectorOfVariables,
+            MOI.SecondOrderCone,
+        ),
+    )
+    @requires _supports(config, MOI.optimize!)
+    t = MOI.add_variable(model)
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraints(model, x, MOI.GreaterThan.(3.0:4.0))
+    c_soc = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([t; x]),
+        MOI.SecondOrderCone(3),
+    )
+    c_lb = MOI.add_constraint(model, t, MOI.GreaterThan(-6.0))
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    MOI.delete(model, c_lb)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    MOI.delete(model, c_soc)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.DUAL_INFEASIBLE
+    return
+end
+
+function setup_test(
+    ::typeof(test_conic_SecondOrderCone_negative_post_bound_ii),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE),
+    )
+    return
+end
+
+"""
+    test_conic_SecondOrderCone_negative_post_bound_iii(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test a second order cosnstraint with an epigraph variable >= -M and the bound
+constraints added via `add_constraints`.
+"""
+function test_conic_SecondOrderCone_negative_post_bound_iii(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires(
+        MOI.supports_constraint(
+            model,
+            MOI.VectorOfVariables,
+            MOI.SecondOrderCone,
+        ),
+    )
+    @requires _supports(config, MOI.optimize!)
+    t = MOI.add_variable(model)
+    x = MOI.add_variables(model, 2)
+    c_soc = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([t; x]),
+        MOI.SecondOrderCone(3),
+    )
+    c_lbs =
+        MOI.add_constraints(model, [t; x], MOI.GreaterThan.([-6.0, 3.0, 4.0]))
+    c_lb = first(c_lbs)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    MOI.delete(model, c_lb)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    MOI.delete(model, c_soc)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.DUAL_INFEASIBLE
+    return
+end
+
+function setup_test(
+    ::typeof(test_conic_SecondOrderCone_negative_post_bound_iii),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE),
+    )
+    return
+end
