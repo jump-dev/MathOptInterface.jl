@@ -214,19 +214,11 @@ function example_diet(optimizer, bridge)
     MOI.set(model, MOI.Silent(), true)
     nutrition = MOI.add_variables(model, size(category_data, 1))
     for (i, v) in enumerate(nutrition)
-        MOI.add_constraint(
-            model,
-            MOI.SingleVariable(v),
-            MOI.GreaterThan(category_data[i, 1]),
-        )
-        MOI.add_constraint(
-            model,
-            MOI.SingleVariable(v),
-            MOI.LessThan(category_data[i, 2]),
-        )
+        MOI.add_constraint(model, v, MOI.GreaterThan(category_data[i, 1]))
+        MOI.add_constraint(model, v, MOI.LessThan(category_data[i, 2]))
     end
     buy = MOI.add_variables(model, size(food_data, 1))
-    MOI.add_constraint.(model, MOI.SingleVariable.(buy), MOI.GreaterThan(0.0))
+    MOI.add_constraint.(model, buy, MOI.GreaterThan(0.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(cost, buy), 0.0)
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
