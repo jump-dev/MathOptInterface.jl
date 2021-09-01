@@ -18,7 +18,7 @@ end
 function _constant_not_zero_test(::Type{T}) where {T}
     S = MOI.EqualTo{T}
     x = MOI.VariableIndex(1)
-    @test nothing === MOI.throw_if_scalar_and_constant_not_zero(fx, S)
+    @test nothing === MOI.throw_if_scalar_and_constant_not_zero(x, S)
     func1 = one(T) * x + one(T)
     @test_throws MOI.ScalarFunctionConstantNotZero begin
         MOI.throw_if_scalar_and_constant_not_zero(func1, S)
