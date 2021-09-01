@@ -986,6 +986,7 @@ dimension(s::Union{SOS1,SOS2}) = length(s.weights)
 	ActivationCondition
 
 Activation condition for an indicator constraint.
+
 The enum value is used as first type parameter of `Indicator{A,S}`.
 """
 @enum ActivationCondition begin
@@ -994,32 +995,38 @@ The enum value is used as first type parameter of `Indicator{A,S}`.
 end
 
 """
-    Indicator{A, S <: AbstractScalarSet}(set::S)
+    Indicator{A<:ActivationCondition,S<:AbstractScalarSet}(set::S)
 
+The set corresponding to an indicator constraint.
+
+When `A` is `ACTIVATE_ON_ZERO`, this means:
 ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 0 \\implies x \\in set\\}``
-when `A` is `ACTIVATE_ON_ZERO` and
+
+When `A` is `ACTIVATE_ON_ONE`, this means:
 ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 1 \\implies x \\in set\\}``
-when `A` is `ACTIVATE_ON_ONE`.
 
-`S` has to be a sub-type of `AbstractScalarSet`.
-`A` is one of the value of the `ActivationCond` enum.
-`Indicator` is used with a `VectorAffineFunction` holding
-the indicator variable first.
+## Notes
 
-Example: ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^2 : y = 1 \\implies x_1 + x_2 \\leq 9 \\} ``
+Most solvers expect that the first row of the function is interpretable as a
+variable index `x_i` (e.g., `1.0 * x + 0.0`). An error will be thrown if this is
+not the case.
 
+## Example
+
+The constraint
+``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^2 : y = 1 \\implies x_1 + x_2 \\leq 9 \\}``
+is defined as
 ```julia
 f = MOI.VectorAffineFunction(
-    [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y)),
-     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x1)),
-     MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
+    [
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y)),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x1)),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
     ],
     [0.0, 0.0],
 )
-
-indicator_set = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
-
-MOI.add_constraint(model, f, indicator_set)
+s = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
+MOI.add_constraint(model, f, s)
 ```
 """
 struct Indicator{A,S<:AbstractScalarSet} <: AbstractVectorSet

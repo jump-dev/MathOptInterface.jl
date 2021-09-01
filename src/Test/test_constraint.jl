@@ -764,3 +764,108 @@ function test_constraint_ConstraintDualStart(
     @test MOI.get(model, MOI.ConstraintDualStart(), c) === nothing
     return
 end
+
+"""
+    test_constraint_Indicator_ConstraintName(
+        model::MOI.ModelLike,
+        ::Config{T},
+    ) where {T}
+
+Test ConstraintName for indicator sets.
+"""
+function test_constraint_Indicator_ConstraintName(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    @requires(
+        MOI.supports_constraint(
+            model,
+            MOI.VectorAffineFunction{T},
+            MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{T}},
+        ),
+    )
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint(model, x[1], MOI.ZeroOne())
+    f = MOI.VectorAffineFunction(
+        [
+            MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x[1])),
+            MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(2.0, x[2])),
+        ],
+        [0.0, 0.0],
+    )
+    s = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.GreaterThan(1.0))
+    c = MOI.add_constraint(model, f, s)
+    MOI.set(model, MOI.ConstraintName(), c, "my_indicator")
+    @test MOI.get(model, MOI.ConstraintName(), c) == "my_indicator"
+    return
+end
+
+"""
+    test_constraint_Indicator_ACTIVATE_ON_ONE(
+        model::MOI.ModelLike,
+        ::Config{T},
+    ) where {T}
+
+Test ACTIVATE_ON_ONE for indicator sets.
+"""
+function test_constraint_Indicator_ACTIVATE_ON_ONE(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    @requires(
+        MOI.supports_constraint(
+            model,
+            MOI.VectorAffineFunction{T},
+            MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{T}},
+        ),
+    )
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint(model, x[1], MOI.ZeroOne())
+    f = MOI.VectorAffineFunction(
+        [
+            MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x[1])),
+            MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(2.0, x[2])),
+        ],
+        [0.0, 0.0],
+    )
+    s = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.GreaterThan(1.0))
+    c = MOI.add_constraint(model, f, s)
+    @test MOI.get(model, MOI.ConstraintSet(), c) == s
+    @test isapprox(MOI.get(model, MOI.ConstraintFunction(), c), f)
+    return
+end
+
+"""
+    test_constraint_Indicator_ACTIVATE_ON_ZERO(
+        model::MOI.ModelLike,
+        ::Config{T},
+    ) where {T}
+
+Test ACTIVATE_ON_ZERO for indicator sets.
+"""
+function test_constraint_Indicator_ACTIVATE_ON_ZERO(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    @requires(
+        MOI.supports_constraint(
+            model,
+            MOI.VectorAffineFunction{T},
+            MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{T}},
+        ),
+    )
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint(model, x[1], MOI.ZeroOne())
+    f = MOI.VectorAffineFunction(
+        [
+            MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x[1])),
+            MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(2.0, x[2])),
+        ],
+        [0.0, 0.0],
+    )
+    s = MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(MOI.GreaterThan(1.0))
+    c = MOI.add_constraint(model, f, s)
+    @test MOI.get(model, MOI.ConstraintSet(), c) == s
+    @test isapprox(MOI.get(model, MOI.ConstraintFunction(), c), f)
+    return
+end
