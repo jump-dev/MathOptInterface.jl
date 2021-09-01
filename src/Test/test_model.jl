@@ -1043,3 +1043,174 @@ function test_model_ListOfConstraintAttributesSet(
     ) == []
     return
 end
+
+"""
+    test_model_ModelFilter_AbstractModelAttribute(
+        src::MOI.ModelLike,
+        ::Config{T},
+    ) where {T}
+
+Tests `Utilties.ModelFilter` of `AbstractModelAttribute`.
+"""
+function test_model_ModelFilter_AbstractModelAttribute(
+    src::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    @requires MOI.supports(src, MOI.Name())
+    MOI.set(src, MOI.Name(), "src")
+    dest = MOI.Utilities.Model{T}()
+    MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
+        return item != MOI.Name()
+    end)
+    @test MOI.get(dest, MOI.Name()) == ""
+    return
+end
+
+"""
+    test_model_ModelFilter_AbstractVariableAttribute(
+        src::MOI.ModelLike,
+        ::Config{T},
+    ) where {T}
+
+Tests `Utilties.ModelFilter` of `AbstractVariableAttribute`.
+"""
+function test_model_ModelFilter_AbstractVariableAttribute(
+    src::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    @requires MOI.supports(src, MOI.VariableName(), MOI.VariableIndex)
+    @requires MOI.supports(src, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    x = MOI.add_variable(src)
+    MOI.set(src, MOI.VariableName(), x, "x")
+    MOI.set(src, MOI.VariablePrimalStart(), x, 1.0)
+    dest = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
+    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
+        return item != MOI.VariableName()
+    end)
+    @test MOI.get(dest, MOI.VariableName(), index_map[x]) == ""
+    @test MOI.get(dest, MOI.VariablePrimalStart(), index_map[x]) == 1.0
+    return
+end
+
+"""
+    test_model_ModelFilter_AbstractConstraintAttribute(
+        src::MOI.ModelLike,
+        ::Config{T},
+    ) where {T}
+
+Tests `Utilties.ModelFilter` of `AbstractConstraintAttribute`.
+"""
+function test_model_ModelFilter_AbstractConstraintAttribute(
+    src::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    @requires(
+        MOI.supports(
+            src,
+            MOI.ConstraintName(),
+            MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives},
+        ),
+    )
+    @requires(
+        MOI.supports(
+            src,
+            MOI.ConstraintDualStart(),
+            MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives},
+        ),
+    )
+    @requires(
+        MOI.supports_constraint(src, MOI.VectorOfVariables, MOI.Nonnegatives),
+    )
+    x = MOI.add_variable(src)
+    c = MOI.add_constraint(src, MOI.VectorOfVariables([x]), MOI.Nonnegatives(1))
+    MOI.set(src, MOI.ConstraintName(), c, "c")
+    MOI.set(src, MOI.ConstraintDualStart(), c, [1.0])
+    dest = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
+    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
+        if item isa MOI.AbstractConstraintAttribute
+            return item != MOI.ConstraintName()
+        end
+        return true
+    end)
+    @test MOI.get(dest, MOI.ConstraintName(), index_map[c]) == ""
+    @test MOI.get(dest, MOI.ConstraintDualStart(), index_map[c]) == [1.0]
+    return
+end
+
+"""
+    test_model_ModelFilter_ListOfConstraintIndices(
+        src::MOI.ModelLike,
+        ::Config{T},
+    ) where {T}
+
+Tests `Utilties.ModelFilter` of `ListOfConstraintIndices`.
+"""
+function test_model_ModelFilter_ListOfConstraintIndices(
+    src::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    @requires(
+        MOI.supports_constraint(src, MOI.VariableIndex, MOI.GreaterThan{T}),
+    )
+    x = MOI.add_variables(src, 4)
+    MOI.add_constraint.(src, x, MOI.GreaterThan(zero(T)))
+    dest = MOI.Utilities.Model{T}()
+    index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
+        if item isa MOI.ConstraintIndex
+            return isodd(item.value)
+        end
+        return true
+    end)
+    @test MOI.get(dest, MOI.NumberOfVariables()) == 4
+    @test MOI.get(
+        dest,
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}(),
+    ) == 2
+    for xi in x
+        @test haskey(index_map, xi)
+        ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{T}}(xi.value)
+        @test haskey(index_map, ci) == isodd(xi.value)
+    end
+    return
+end
+
+"""
+    test_model_ModelFilter_ListOfConstraintTypesPresent(
+        src::MOI.ModelLike,
+        ::Config{T},
+    ) where {T}
+
+Tests `Utilties.ModelFilter` of `ListOfConstraintTypesPresent`.
+"""
+function test_model_ModelFilter_ListOfConstraintTypesPresent(
+    src::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    @requires(
+        MOI.supports_constraint(src, MOI.VariableIndex, MOI.GreaterThan{T}),
+    )
+    @requires(MOI.supports_constraint(src, MOI.VariableIndex, MOI.LessThan{T}))
+    x = MOI.add_variables(src, 4)
+    MOI.add_constraint.(src, x, MOI.GreaterThan(zero(T)))
+    MOI.add_constraint.(src, x, MOI.LessThan(one(T)))
+    dest = MOI.Utilities.Model{T}()
+    index_map = MOI.copy_to(
+        dest,
+        MOI.Utilities.ModelFilter(src) do item
+            if item isa Tuple{Type,Type}
+                return item == (MOI.VariableIndex, MOI.LessThan{T})
+            end
+            return true
+        end,
+    )
+    @test MOI.get(dest, MOI.NumberOfVariables()) == 4
+    @test MOI.get(
+        dest,
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}(),
+    ) == 0
+    @test MOI.get(
+        dest,
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{T}}(),
+    ) == 4
+    return
+end

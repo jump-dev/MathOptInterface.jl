@@ -97,8 +97,7 @@ function pass_nonvariable_constraints(
     dest::UniversalFallback,
     src::MOI.ModelLike,
     idxmap::IndexMap,
-    constraint_types;
-    filter_constraints::Union{Nothing,Function} = nothing,
+    constraint_types,
 )
     supported_types = eltype(constraint_types)[]
     unsupported_types = eltype(constraint_types)[]
@@ -109,19 +108,12 @@ function pass_nonvariable_constraints(
             push!(unsupported_types, (F, S))
         end
     end
-    pass_nonvariable_constraints(
-        dest.model,
-        src,
-        idxmap,
-        supported_types;
-        filter_constraints = filter_constraints,
-    )
+    pass_nonvariable_constraints(dest.model, src, idxmap, supported_types)
     return pass_nonvariable_constraints_fallback(
         dest,
         src,
         idxmap,
-        unsupported_types;
-        filter_constraints = filter_constraints,
+        unsupported_types,
     )
 end
 

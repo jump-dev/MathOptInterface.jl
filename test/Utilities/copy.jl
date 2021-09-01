@@ -600,14 +600,145 @@ function test_filtering_copy()
     # Filtering function: the default case where this function always returns
     # true is already well-tested by the above cases.
     # Only keep the constraint c1.
-    f = (cidx) -> cidx == c1
+    f(::Any) = true
+    f(cidx::MOI.ConstraintIndex) = cidx == c1
 
     # Perform the copy.
     dst = OrderConstrainedVariablesModel()
-    index_map = MOI.copy_to(dst, src, filter_constraints = f)
+    index_map = MOI.copy_to(dst, MOI.Utilities.ModelFilter(f, src))
 
     @test typeof(c1) == typeof(dst.constraintIndices[1])
     @test length(dst.constraintIndices) == 1
+    return
+end
+
+function test_filtering_copy_empty()
+    src = MOI.Utilities.Model{Float64}()
+    MOI.set(src, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    model = MOI.Utilities.ModelFilter(src) do item
+        return item !== MOI.ObjectiveSense()
+    end
+    @test MOI.is_empty(model)
+    MOI.add_variable(src)
+    @test !MOI.is_empty(model)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    MOI.set(src, MOI.Name(), "Model")
+    @test !MOI.is_empty(model)
+    return
+end
+
+function test_filtering_copy_AbstractModelAttribute()
+    src = MOI.Utilities.Model{Float64}()
+    MOI.set(src, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    dest = MOI.Utilities.Model{Float64}()
+    filtered_src = MOI.Utilities.ModelFilter(src) do item
+        if item isa MOI.AbstractModelAttribute
+            return item != MOI.ObjectiveSense()
+        end
+        return true
+    end
+    @test MOI.is_empty(filtered_src)
+    MOI.copy_to(dest, filtered_src)
+    @test MOI.get(dest, MOI.ObjectiveSense()) == MOI.FEASIBILITY_SENSE
+    return
+end
+
+function test_filtering_copy_AbstractVariableAttribute()
+    src = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(src)
+    MOI.set(src, MOI.VariableName(), x, "x")
+    MOI.set(src, MOI.VariablePrimalStart(), x, 1.0)
+    dest = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    filtered_src = MOI.Utilities.ModelFilter(src) do item
+        if item isa MOI.AbstractVariableAttribute
+            return item != MOI.VariableName()
+        end
+        return true
+    end
+    @test !MOI.is_empty(filtered_src)
+    index_map = MOI.copy_to(dest, filtered_src)
+    @test MOI.get(dest, MOI.VariableName(), index_map[x]) == ""
+    @test MOI.get(dest, MOI.VariablePrimalStart(), index_map[x]) == 1.0
+    return
+end
+
+function test_filtering_copy_AbstractConstraintAttribute()
+    src = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(src)
+    c = MOI.add_constraint(src, MOI.VectorOfVariables([x]), MOI.Nonnegatives(1))
+    MOI.set(src, MOI.ConstraintName(), c, "c")
+    MOI.set(src, MOI.ConstraintDualStart(), c, [1.0])
+    dest = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    filtered_src = MOI.Utilities.ModelFilter(src) do item
+        if item isa MOI.AbstractConstraintAttribute
+            return item != MOI.ConstraintName()
+        end
+        return true
+    end
+    @test !MOI.is_empty(filtered_src)
+    index_map = MOI.copy_to(dest, filtered_src)
+    @test MOI.get(dest, MOI.ConstraintName(), index_map[c]) == ""
+    @test MOI.get(dest, MOI.ConstraintDualStart(), index_map[c]) == [1.0]
+    return
+end
+
+function test_filtering_copy_ListOfConstraintIndices()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(src, 4)
+    MOI.add_constraint.(src, x, MOI.GreaterThan(0.0))
+    dest = MOI.Utilities.Model{Float64}()
+    filtered_src = MOI.Utilities.ModelFilter(src) do item
+        if item isa MOI.ConstraintIndex
+            return isodd(item.value)
+        end
+        return true
+    end
+    @test !MOI.is_empty(filtered_src)
+    index_map = MOI.copy_to(dest, filtered_src)
+    @test MOI.get(dest, MOI.NumberOfVariables()) == 4
+    @test MOI.get(
+        dest,
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{Float64}}(),
+    ) == 2
+    @test MOI.get(
+        filtered_src,
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{Float64}}(),
+    ) == 2
+    for xi in x
+        @test haskey(index_map, xi)
+        ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(
+            xi.value,
+        )
+        @test haskey(index_map, ci) == isodd(xi.value)
+    end
+    return
+end
+
+function test_filtering_copy_ListOfConstraintTypesPresent()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(src, 4)
+    MOI.add_constraint.(src, x, MOI.GreaterThan(0.0))
+    MOI.add_constraint.(src, x, MOI.ZeroOne())
+    dest = MOI.Utilities.Model{Float64}()
+    index_map = MOI.copy_to(
+        dest,
+        MOI.Utilities.ModelFilter(src) do item
+            if item isa Tuple{Type,Type}
+                return item == (MOI.VariableIndex, MOI.ZeroOne)
+            end
+            return true
+        end,
+    )
+    @test MOI.get(dest, MOI.NumberOfVariables()) == 4
+    @test MOI.get(
+        dest,
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{Float64}}(),
+    ) == 0
+    @test MOI.get(
+        dest,
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.ZeroOne}(),
+    ) == 4
     return
 end
 
@@ -661,7 +792,8 @@ function test_BoundModel_filtering_copy()
     c2 = MOI.add_constraint(src, x, MOI.Integer())
 
     # Filtering function: get rid of integrality constraint.
-    f = (cidx) -> MOI.get(src, MOI.ConstraintSet(), cidx) != MOI.Integer()
+    f(::Any) = true
+    f(::MOI.ConstraintIndex{F,MOI.Integer}) where {F} = false
 
     # Perform the unfiltered copy. This should throw an error (i.e. the
     # implementation of BoundModel
@@ -674,7 +806,7 @@ function test_BoundModel_filtering_copy()
 
     # Perform the filtered copy. This should not throw an error.
     dst = BoundModel()
-    MOI.copy_to(dst, src, filter_constraints = f)
+    MOI.copy_to(dst, MOI.Utilities.ModelFilter(f, src))
     @test MOI.get(
         dst,
         MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{Float64}}(),
@@ -713,15 +845,13 @@ function MOIU.pass_nonvariable_constraints(
     dest::OnlyCopyConstraints,
     src::MOI.ModelLike,
     idxmap::MOIU.IndexMap,
-    constraint_types;
-    filter_constraints::Union{Nothing,Function} = nothing,
+    constraint_types,
 )
     return MOIU.pass_nonvariable_constraints(
         dest.constraints,
         src,
         idxmap,
-        constraint_types;
-        filter_constraints = filter_constraints,
+        constraint_types,
     )
 end
 
