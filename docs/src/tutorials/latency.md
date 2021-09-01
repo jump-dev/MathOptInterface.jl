@@ -32,7 +32,7 @@ with the reasons for latency in Julia and how to fix them.
 
 ## Causes
 
-There are a three main causes of latency in MathOptInterface:
+There are three main causes of latency in MathOptInterface:
 
  1. A large number of types
  2. Lack of method ownership
@@ -105,7 +105,7 @@ we see a flamegraph with a large red-bar indicating that the method
 To fix this, we need to designate a module to "own" that method (i.e., create a
 back-edge). The easiest way to do this is for `MyOptimizer` to call
 `MyMOI.optimize(MyMOI.Wrapper{MyOptimizer.Optimizer})` during
-`using MyOptimzier`. Let's see that in practice:
+`using MyOptimizer`. Let's see that in practice:
 ```julia
 module MyMOI
     struct Wrapper{T}
