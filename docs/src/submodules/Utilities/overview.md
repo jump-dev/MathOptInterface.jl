@@ -400,13 +400,13 @@ subset of a model. For example, given an infeasible model, we can copy the
 irreducible infeasible subsystem (for models implementing
 [`ConstraintConflictStatus`](@ref)) as follows:
 ```julia
-my_filter(::Any, ::Any) = true
-function my_filter(::MOI.ListOfConstraintIndices, ci::MOI.ConstraintIndex)
+my_filter(::Any) = true
+function my_filter(ci::MOI.ConstraintIndex)
     status = MOI.get(dest, MOI.ConstraintConflictStatus(), ci)
     return status != MOI.NOT_IN_CONFLICT
 end
 filtered_src = MOI.Utilities.ModelFilter(my_filter, src)
-MOI.copy_to(dest, filtered_src)
+index_map = MOI.copy_to(dest, filtered_src)
 ```
 
 ## Fallbacks
