@@ -1,8 +1,7 @@
-MathOptInterface (MOI) release notes
-====================================
+# Release notes
 
-v0.10.0 (In development)
-------------------------
+v0.10.0 (unreleased)
+---------------------------
 
 **MOI is a significant breaking release. There are a large number of
 user-visible breaking changes and code refactors, as well as a substantial

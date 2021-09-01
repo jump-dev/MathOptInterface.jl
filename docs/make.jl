@@ -72,6 +72,7 @@ makedocs(
                 "API Reference" => "submodules/Test/reference.md",
             ],
         ],
+        "Release notes" => "release_notes.md",
     ],
 )
 
