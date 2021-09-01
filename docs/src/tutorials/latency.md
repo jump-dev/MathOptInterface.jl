@@ -43,11 +43,11 @@ Because of MathOptInterface's _function-in-set_ formulation, we fall into the
 worst-case situation.
 
 This is a fundamental limitation of Julia, so there isn't much we can do about
-it. However, if we can precomile MathOptInterface, much of the cost can be
+it. However, if we can precompile MathOptInterface, much of the cost can be
 shifted from start-up latency to the time it takes to precompile a package on
 installation.
 
-However, there are two things which make MathOptInterface hard to precomile...
+However, there are two things which make MathOptInterface hard to precompile...
 
 ### Lack of method ownership
 
@@ -57,7 +57,7 @@ method that is being dispatched, and so it cannot be precompiled.
 
 !!! tip
     This is a slightly simplified explanation. Read the [precompilation tutorial](https://julialang.org/blog/2021/01/precompile_tutorial/)
-    for a more in-depth discusison on back-edges.
+    for a more in-depth discussion on back-edges.
 
 Unfortunately, the design of MOI means that this is a frequent occurence! We
 have a bunch of types in `MOI.Utilities` that wrap types defined in external
@@ -67,20 +67,21 @@ in `MOI` (e.g., `add_variable`, `add_constraint`).
 Here's a simple example of method-ownership in practice:
 ```julia
 module MyMOI
-    struct Wrapper{T}
-        inner::T
-    end
-    optimize!(x::Wrapper) = optimize!(x.inner)
+struct Wrapper{T}
+    inner::T
 end
+optimize!(x::Wrapper) = optimize!(x.inner)
+end  # MyMOI
 
 module MyOptimizer
-    using ..MyMOI
-    struct Optimizer end
-    MyMOI.optimize!(x::Optimizer) = 1
-end
+using ..MyMOI
+struct Optimizer end
+MyMOI.optimize!(x::Optimizer) = 1
+end  # MyOptimizer
 
 using SnoopCompile
 model = MyMOI.Wrapper(MyOptimizer.Optimizer())
+
 julia> tinf = @snoopi_deep MyMOI.optimize!(model)
 InferenceTimingNode: 0.008256/0.008543 on InferenceFrameInfo for Core.Compiler.Timings.ROOT() with 1 direct children
 ```
@@ -99,32 +100,33 @@ back-edge). The easiest way to do this is for `MyOptimizer` to call
 `using MyOptimzier`. Let's see that in practice:
 ```julia
 module MyMOI
-    struct Wrapper{T}
-        inner::T
-    end
-    optimize(x::Wrapper) = optimize(x.inner)
+struct Wrapper{T}
+    inner::T
 end
+optimize(x::Wrapper) = optimize(x.inner)
+end  # MyMOI
 
 module MyOptimizer
-    using ..MyMOI
-    struct Optimizer end
-    MyMOI.optimize(x::Optimizer) = 1
-    # The syntax of this let-while loop is very particular:
-    #  * `let ... end` keeps everything local to avoid polluting the MyOptimizer
-    #    namespace
-    #  * `while true ... break end` runs the code once, and forces Julia to
-    #    compile the inner loop, rather than interpret it.
-    let
-        while true
-            model = MyMOI.Wrapper(Optimizer())
-            MyMOI.optimize(model)
-            break
-        end
+using ..MyMOI
+struct Optimizer end
+MyMOI.optimize(x::Optimizer) = 1
+# The syntax of this let-while loop is very particular:
+#  * `let ... end` keeps everything local to avoid polluting the MyOptimizer
+#    namespace
+#  * `while true ... break end` runs the code once, and forces Julia to compile
+#    the inner loop, rather than interpret it.
+let
+    while true
+        model = MyMOI.Wrapper(Optimizer())
+        MyMOI.optimize(model)
+        break
     end
 end
+end  # MyOptimizer
 
 using SnoopCompile
 model = MyMOI.Wrapper(MyOptimizer.Optimizer())
+
 julia> tinf = @snoopi_deep MyMOI.optimize(model)
 InferenceTimingNode: 0.006822/0.006822 on InferenceFrameInfo for Core.Compiler.Timings.ROOT() with 0 direct children
 ```
@@ -162,7 +164,8 @@ So to recap, MathOptInterface suffers package latency because:
 
 ## Resolutions
 
-There are no magic solutions to reduce latency. [Issue #1313](https://github.com/jump-dev/MathOptInterface.jl/issues/1313)
+There are no magic solutions to reduce latency.
+[Issue #1313](https://github.com/jump-dev/MathOptInterface.jl/issues/1313)
 tracks progress on reducing latency in MathOptInterface.
 
 A useful script is the following (replace GLPK as needed):
@@ -254,7 +257,7 @@ end
 You can create a flame-graph via
 ```julia
 using SnoopComile
-tinf = example_diet(GLPK.Optimizer, true)
+tinf = @snoopi_deep example_diet(GLPK.Optimizer, true)
 using ProfileView
 ProfileView.view(flamegraph(tinf))
 ```
