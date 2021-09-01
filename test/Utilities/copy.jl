@@ -623,6 +623,8 @@ function test_filtering_copy_empty()
     @test !MOI.is_empty(model)
     MOI.empty!(model)
     @test MOI.is_empty(model)
+    MOI.set(src, MOI.Name(), "Model")
+    @test !MOI.is_empty(model)
     return
 end
 

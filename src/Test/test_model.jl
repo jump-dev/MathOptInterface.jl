@@ -1060,10 +1060,7 @@ function test_model_ModelFilter_AbstractModelAttribute(
     MOI.set(src, MOI.Name(), "src")
     dest = MOI.Utilities.Model{T}()
     MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
-        if item isa MOI.AbstractModelAttribute
-            return item != MOI.Name()
-        end
-        return true
+        return item != MOI.Name()
     end)
     @test MOI.get(dest, MOI.Name()) == ""
     return
@@ -1088,10 +1085,7 @@ function test_model_ModelFilter_AbstractVariableAttribute(
     MOI.set(src, MOI.VariablePrimalStart(), x, 1.0)
     dest = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
     index_map = MOI.copy_to(dest, MOI.Utilities.ModelFilter(src) do item
-        if item isa MOI.AbstractVariableAttribute
-            return item != MOI.VariableName()
-        end
-        return true
+        return item != MOI.VariableName()
     end)
     @test MOI.get(dest, MOI.VariableName(), index_map[x]) == ""
     @test MOI.get(dest, MOI.VariablePrimalStart(), index_map[x]) == 1.0

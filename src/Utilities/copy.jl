@@ -556,7 +556,7 @@ end
 function MOI.is_empty(model::ModelFilter)
     if MOI.is_empty(model.inner)
         return true
-    elseif MOI.get(model, MOI.NumberOfVariables()) > 0
+    elseif MOI.get(model.inner, MOI.NumberOfVariables()) > 0
         return false
     elseif length(MOI.get(model, MOI.ListOfModelAttributesSet())) > 0
         return false
