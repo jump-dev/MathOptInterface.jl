@@ -245,7 +245,7 @@ All `Optimizer`s must implement the following methods:
 
  * [`empty!`](@ref)
  * [`is_empty`](@ref)
- * [`optimize!`](@ref)
+ * [`optimize!`](@ref) (or [`copy_to_and_optimize!`](@ref))
 
 Other methods, detailed below, are optional or depend on how you implement the
 itnerface.
@@ -280,16 +280,8 @@ For each attribute
     attribute. You should make sure that your [`get`](@ref) function correctly
     infers to this type (or a subtype of it).
 
-All `Optimizer`s must implement [`get`](@ref) for the the following attributes:
-
- * [`ListOfConstraintAttributesSet`](@ref)
- * [`ListOfConstraintTypesPresent`](@ref)
- * [`ListOfConstraintIndices`](@ref)
- * [`ListOfModelAttributesSet`](@ref)
- * [`ListOfVariableAttributesSet`](@ref)
- * [`ListOfVariableIndices`](@ref)
- * [`NumberOfConstraints`](@ref)
- * [`NumberOfVariables`](@ref)
+All `Optimizer`s must implement the [ModelLike API](@ref). See that section for
+details.
 
 ### Define `supports_constraint`
 
