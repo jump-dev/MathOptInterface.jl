@@ -3,7 +3,7 @@
 v0.10.0 (unreleased)
 ---------------------------
 
-**MOI is a significant breaking release. There are a large number of
+**MOI v0.10 is a significant breaking release. There are a large number of
 user-visible breaking changes and code refactors, as well as a substantial
 number of new features.**
 
