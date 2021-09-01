@@ -77,7 +77,7 @@ function get_objective_function(model::MOI.ModelLike, config::Config)
     expected_obj_fun =
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 1.0)
     @test_throws InexactError begin
-        MOI.get(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+        MOI.get(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     end
     obj_fun = MOI.get(model, obj_attr)
     @test obj_fun ≈ expected_obj_fun
@@ -109,10 +109,8 @@ function solve_constant_obj(model::MOI.ModelLike, config::Config)
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(
-        x.value,
-    )
-    # We test this after the creation of every `SingleVariable` constraint
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(x.value)
+    # We test this after the creation of every `VariableIndex` constraint
     # to ensure a good coverage of corner cases.
     @test c.value == x.value
     return test_model_solution(
@@ -146,9 +144,7 @@ function solve_blank_obj(model::MOI.ModelLike, config::Config)
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(
-        x.value,
-    )
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(x.value)
     @test c.value == x.value
     test_model_solution(
         model,
@@ -168,7 +164,7 @@ unittests["solve_blank_obj"] = solve_blank_obj
 """
     solve_singlevariable_obj(model::MOI.ModelLike, config::Config)
 
-Test SingleVariable objective,  if `config.solve=true` confirm that it
+Test VariableIndex objective,  if `config.solve=true` confirm that it
 solves correctly, and if `config.duals=true`, check that the duals are computed
 correctly.
 """
@@ -185,9 +181,7 @@ function solve_singlevariable_obj(model::MOI.ModelLike, config::Config)
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(
-        x.value,
-    )
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(x.value)
     @test c.value == x.value
     return test_model_solution(
         model,
@@ -214,17 +208,9 @@ function solve_qp_edge_cases(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    vc1 = MOI.add_constraint(
-        model,
-        MOI.SingleVariable(x[1]),
-        MOI.GreaterThan(1.0),
-    )
+    vc1 = MOI.add_constraint(model, x[1], MOI.GreaterThan(1.0))
     @test vc1.value == x[1].value
-    vc2 = MOI.add_constraint(
-        model,
-        MOI.SingleVariable(x[2]),
-        MOI.GreaterThan(2.0),
-    )
+    vc2 = MOI.add_constraint(model, x[2], MOI.GreaterThan(2.0))
     @test vc2.value == x[2].value
     @testset "Basic model" begin
         # min x^2 + y^2 | x>=1, y>=2
@@ -322,17 +308,9 @@ function solve_qp_zero_offdiag(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    vc1 = MOI.add_constraint(
-        model,
-        MOI.SingleVariable(x[1]),
-        MOI.GreaterThan(1.0),
-    )
+    vc1 = MOI.add_constraint(model, x[1], MOI.GreaterThan(1.0))
     @test vc1.value == x[1].value
-    vc2 = MOI.add_constraint(
-        model,
-        MOI.SingleVariable(x[2]),
-        MOI.GreaterThan(2.0),
-    )
+    vc2 = MOI.add_constraint(model, x[2], MOI.GreaterThan(2.0))
     @test vc2.value == x[2].value
     MOI.set(
         model,
@@ -366,7 +344,7 @@ function solve_duplicate_terms_obj(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
-    c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     @test c.value == x.value
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(

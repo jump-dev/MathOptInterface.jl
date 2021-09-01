@@ -120,8 +120,8 @@ function MOIB.bridged_function(
     return MOIU.operate(
         -,
         T,
-        MOI.SingleVariable(bridge.variables[i.value]),
-        MOI.SingleVariable(bridge.variables[n+i.value]),
+        bridge.variables[i.value],
+        bridge.variables[n+i.value],
     )
 end
 
@@ -132,9 +132,8 @@ function unbridged_map(
     vi::MOI.VariableIndex,
     i::MOIB.IndexInVector,
 ) where {T}
-    sv = MOI.SingleVariable(vi)
     # `unbridged_map` is required to return a `MOI.ScalarAffineFunction`.
-    func = convert(MOI.ScalarAffineFunction{T}, sv)
+    func = convert(MOI.ScalarAffineFunction{T}, vi)
     n = div(length(bridge.variables), 2)
     return bridge.variables[i.value] => func,
     bridge.variables[n+i.value] => zero(MOI.ScalarAffineFunction{T})

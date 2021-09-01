@@ -38,7 +38,7 @@ function test_RSOC()
         (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
             mock,
             [0.5, 1.0, 1 / √2, 1 / √2],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) => [-√2, -1 / √2],
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [-√2, -1 / √2],
             (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
                 [[3 / 2, 1 / 2, -1.0, -1.0]],
         )

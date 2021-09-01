@@ -186,12 +186,12 @@ function hs071test_template(
     @test MOI.supports(model, MOI.NLPBlock())
     @test MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{Float64},
     )
     @test MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{Float64},
     )
     @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
@@ -206,19 +206,11 @@ function hs071test_template(
     u = [5.0, 5.0, 5.0, 5.0]
     start = [1, 5, 5, 1]
     for i in 1:4
-        cub = MOI.add_constraint(
-            model,
-            MOI.SingleVariable(v[i]),
-            MOI.LessThan(u[i]),
-        )
-        # We test this after the creation of every `SingleVariable` constraint
+        cub = MOI.add_constraint(model, v[i], MOI.LessThan(u[i]))
+        # We test this after the creation of every `VariableIndex` constraint
         # to ensure a good coverage of corner cases.
         @test cub.value == v[i].value
-        clb = MOI.add_constraint(
-            model,
-            MOI.SingleVariable(v[i]),
-            MOI.GreaterThan(l[i]),
-        )
+        clb = MOI.add_constraint(model, v[i], MOI.GreaterThan(l[i]))
         @test clb.value == v[i].value
         MOI.set(model, MOI.VariablePrimalStart(), v[i], start[i])
     end
@@ -458,7 +450,7 @@ Test the solution of the linear mixed-complementarity problem:
 function test_linear_mixed_complementarity(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     x = MOI.add_variables(model, 4)
-    MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.Interval(0.0, 10.0))
+    MOI.add_constraint.(model, x, MOI.Interval(0.0, 10.0))
     MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
     M = Float64[0 0 -1 -1; 0 0 1 -2; 1 -1 2 -2; 1 2 -2 4]
     q = [2; 2; -2; -6]
@@ -538,7 +530,7 @@ function test_qp_complementarity_constraint(
     MOI.empty!(model)
     x = MOI.add_variables(model, 8)
     MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
-    MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
+    MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),

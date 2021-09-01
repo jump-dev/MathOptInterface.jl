@@ -718,7 +718,7 @@ function norminf3test(model::MOI.ModelLike, config::Config)
     #      (1 .+ y) in Nonnegatives(n)
     # let n = 3. optimal solution: y .= -1, x = 2
     @test MOI.supports_incremental_interface(model)
-    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
         model,
@@ -729,11 +729,7 @@ function norminf3test(model::MOI.ModelLike, config::Config)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variables(model, 3)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     norminf_vaf = MOI.VectorAffineFunction(
         MOI.VectorAffineTerm.(1:4, MOI.ScalarAffineTerm.(1.0, vcat(x, y))),
@@ -1041,7 +1037,7 @@ function normone3test(model::MOI.ModelLike, config::Config)
     #      (1 .+ y) in Nonnegatives(n)
     # let n = 3. optimal solution: y .= -1, x = 4
     @test MOI.supports_incremental_interface(model)
-    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
         model,
@@ -1052,11 +1048,7 @@ function normone3test(model::MOI.ModelLike, config::Config)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
     y = MOI.add_variables(model, 3)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     norminf_vaf = MOI.VectorAffineFunction(
         MOI.VectorAffineTerm.(1:4, MOI.ScalarAffineTerm.(1.0, vcat(x, y))),
@@ -1631,7 +1623,7 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::Config, abvars::Bool)
     if abvars
         @test MOI.supports_constraint(
             model,
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.EqualTo{Float64},
         )
         @test MOI.supports_add_constrained_variables(
@@ -1652,11 +1644,11 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::Config, abvars::Bool)
             MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(4))
         a, b, x1, x2 = abx
         x = [x1, x2]
-        vc1 = MOI.add_constraint(model, MOI.SingleVariable(a), MOI.EqualTo(0.5))
-        # We test this after the creation of every `SingleVariable` constraint
+        vc1 = MOI.add_constraint(model, a, MOI.EqualTo(0.5))
+        # We test this after the creation of every `VariableIndex` constraint
         # to ensure a good coverage of corner cases.
         @test vc1.value == a.value
-        vc2 = MOI.add_constraint(model, MOI.SingleVariable(b), MOI.EqualTo(1.0))
+        vc2 = MOI.add_constraint(model, b, MOI.EqualTo(1.0))
         @test vc2.value == b.value
     else
         x = MOI.add_variables(model, 2)
@@ -1677,7 +1669,7 @@ function _rotatedsoc1test(model::MOI.ModelLike, config::Config, abvars::Bool)
     if config.query_number_of_constraints
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{Float64}}(),
         ) == (abvars ? 2 : 0)
         @test MOI.get(
             model,
@@ -1771,17 +1763,17 @@ function rotatedsoc2test(model::MOI.ModelLike, config::Config)
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.EqualTo{Float64},
     )
     @test MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{Float64},
     )
     @test MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{Float64},
     )
     @test MOI.supports_add_constrained_variables(
@@ -1792,29 +1784,25 @@ function rotatedsoc2test(model::MOI.ModelLike, config::Config)
     @test MOI.is_empty(model)
     x, rsoc =
         MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(3))
-    vc1 = MOI.add_constraint(model, MOI.SingleVariable(x[1]), MOI.LessThan(1.0))
+    vc1 = MOI.add_constraint(model, x[1], MOI.LessThan(1.0))
     @test vc1.value == x[1].value
-    vc2 = MOI.add_constraint(model, MOI.SingleVariable(x[2]), MOI.EqualTo(0.5))
+    vc2 = MOI.add_constraint(model, x[2], MOI.EqualTo(0.5))
     @test vc2.value == x[2].value
-    vc3 = MOI.add_constraint(
-        model,
-        MOI.SingleVariable(x[3]),
-        MOI.GreaterThan(2.0),
-    )
+    vc3 = MOI.add_constraint(model, x[3], MOI.GreaterThan(2.0))
     @test vc3.value == x[3].value
     if config.query_number_of_constraints
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{Float64}}(),
         ) == 1
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{Float64}}(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.GreaterThan{Float64},
             }(),
         ) == 1
@@ -1879,18 +1867,18 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.EqualTo{Float64},
     )
     @test MOI.supports_add_constrained_variables(model, MOI.Nonnegatives)
     @test MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{Float64},
     )
     @test MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{Float64},
     )
     @test MOI.supports_constraint(
@@ -1904,13 +1892,13 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
     u = MOI.add_variable(model)
     v = MOI.add_variable(model)
     t = MOI.add_variables(model, 2)
-    ct1 = MOI.add_constraint(model, MOI.SingleVariable(t[1]), MOI.EqualTo(1.0))
+    ct1 = MOI.add_constraint(model, t[1], MOI.EqualTo(1.0))
     @test ct1.value == t[1].value
-    ct2 = MOI.add_constraint(model, MOI.SingleVariable(t[2]), MOI.EqualTo(1.0))
+    ct2 = MOI.add_constraint(model, t[2], MOI.EqualTo(1.0))
     @test ct2.value == t[2].value
-    cu1 = MOI.add_constraint(model, MOI.SingleVariable(u), MOI.GreaterThan(0.0))
+    cu1 = MOI.add_constraint(model, u, MOI.GreaterThan(0.0))
     @test cu1.value == u.value
-    cu2 = MOI.add_constraint(model, MOI.SingleVariable(u), MOI.LessThan(ub))
+    cu2 = MOI.add_constraint(model, u, MOI.LessThan(ub))
     @test cu2.value == u.value
     c1 = MOI.add_constraint(
         model,
@@ -1937,7 +1925,7 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
     if config.query_number_of_constraints
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{Float64}}(),
         ) == 2
         @test MOI.get(
             model,
@@ -1946,18 +1934,18 @@ function rotatedsoc3test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.GreaterThan{Float64},
             }(),
         ) == 1
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{Float64}}(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.GreaterThan{Float64},
             }(),
         ) == 1
@@ -2072,11 +2060,11 @@ function rotatedsoc4test(model::MOI.ModelLike, config::Config; n = 2, ub = 3.0)
     @test MOI.is_empty(model)
     v, cv = MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(4))
     t, u, x, y = v
-    ft = MOI.SingleVariable(t)
-    fu = MOI.SingleVariable(u)
+    ft = t
+    fu = u
     c = MOI.add_constraint(model, 1.0ft + 1.0fu, MOI.LessThan(2.0))
-    fx = MOI.SingleVariable(x)
-    fy = MOI.SingleVariable(y)
+    fx = x
+    fy = y
     func = 1.0fx + 1.0fy
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{typeof(func)}(), func)
@@ -2748,7 +2736,7 @@ function exp3test(model::MOI.ModelLike, config::Config)
     )
     @test MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{Float64},
     )
     @test MOI.supports_constraint(
@@ -2766,7 +2754,7 @@ function exp3test(model::MOI.ModelLike, config::Config)
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0),
         MOI.LessThan(4.0),
     )
-    yc = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.LessThan(5.0))
+    yc = MOI.add_constraint(model, y, MOI.LessThan(5.0))
     @test yc.value == y.value
     ec = MOI.add_constraint(
         model,
@@ -3216,7 +3204,7 @@ function relentr1test(model::MOI.ModelLike, config::Config)
     # Optimal solution is:
     # u = 2*log(2/1) + 3*log(3/5) ≈ -0.1461825
     @test MOI.supports_incremental_interface(model)
-    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
         model,
@@ -3235,11 +3223,7 @@ function relentr1test(model::MOI.ModelLike, config::Config)
         ),
         MOI.RelativeEntropyCone(5),
     )
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(u),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), u)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -3281,7 +3265,7 @@ function normspec1test(model::MOI.ModelLike, config::Config)
     # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
     # t = sqrt(3)
     @test MOI.supports_incremental_interface(model)
-    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
         model,
@@ -3301,11 +3285,7 @@ function normspec1test(model::MOI.ModelLike, config::Config)
         ),
         MOI.NormSpectralCone(2, 3),
     )
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(t),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -3343,7 +3323,7 @@ function normspec2test(model::MOI.ModelLike, config::Config)
     # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
     # t = sqrt(3)
     @test MOI.supports_incremental_interface(model)
-    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
         model,
@@ -3363,11 +3343,7 @@ function normspec2test(model::MOI.ModelLike, config::Config)
         ),
         MOI.NormSpectralCone(3, 2),
     )
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(t),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -3409,7 +3385,7 @@ function normnuc1test(model::MOI.ModelLike, config::Config)
     # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
     # t = sqrt(3) + sqrt(2)
     @test MOI.supports_incremental_interface(model)
-    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
         model,
@@ -3429,11 +3405,7 @@ function normnuc1test(model::MOI.ModelLike, config::Config)
         ),
         MOI.NormNuclearCone(2, 3),
     )
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(t),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -3474,7 +3446,7 @@ function normnuc2test(model::MOI.ModelLike, config::Config)
     # Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
     # t = sqrt(3) + sqrt(2)
     @test MOI.supports_incremental_interface(model)
-    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
         model,
@@ -3494,11 +3466,7 @@ function normnuc2test(model::MOI.ModelLike, config::Config)
         ),
         MOI.NormNuclearCone(3, 2),
     )
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(t),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -4072,13 +4040,13 @@ function _psd3test(model::MOI.ModelLike, psdcone, config::Config{T}) where {T}
     atol = config.atol
     rtol = config.rtol
     @test MOI.supports_incremental_interface(model)
-    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(model, MOI.VectorAffineFunction{T}, psdcone)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
-    fx = MOI.SingleVariable(x)
+    fx = x
     if psdcone == MOI.PositiveSemidefiniteConeTriangle
         func = MOIU.operate(vcat, T, fx, one(T), fx, one(T), one(T), fx)
     else
@@ -4098,11 +4066,7 @@ function _psd3test(model::MOI.ModelLike, psdcone, config::Config{T}) where {T}
         )
     end
     c = MOI.add_constraint(model, func, psdcone(3))
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if config.solve
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -4205,7 +4169,7 @@ function _det1test(
     if use_logdet
         @test MOI.supports_constraint(
             model,
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.EqualTo{Float64},
         )
     end
@@ -4231,7 +4195,7 @@ function _det1test(
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 5 : 4)
     if use_logdet
         u = MOI.add_variable(model)
-        vc = MOI.add_constraint(model, MOI.SingleVariable(u), MOI.EqualTo(1.0))
+        vc = MOI.add_constraint(model, u, MOI.EqualTo(1.0))
         @test vc.value == u.value
         vov = MOI.VectorOfVariables([t; u; Q])
     else
@@ -4358,7 +4322,7 @@ function _det2test(model::MOI.ModelLike, config::Config, detcone)
     mat = Float64[3 2 1; 2 2 1; 1 1 3]
     matL = Float64[3, 2, 2, 1, 1, 3]
     @test MOI.supports_incremental_interface(model)
-    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @test MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.supports_constraint(
         model,
@@ -4369,11 +4333,7 @@ function _det2test(model::MOI.ModelLike, config::Config, detcone)
     @test MOI.is_empty(model)
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(t),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     constant_mat = square ? vec(mat) : matL
     constant_vec = use_logdet ? vcat(0, 1, constant_mat) : vcat(0, constant_mat)

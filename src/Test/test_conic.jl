@@ -968,7 +968,7 @@ function test_conic_NormInfinityCone_3(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
-    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
@@ -978,11 +978,7 @@ function test_conic_NormInfinityCone_3(model::MOI.ModelLike, config::Config)
 
     x = MOI.add_variable(model)
     y = MOI.add_variables(model, 3)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     norminf_vaf = MOI.VectorAffineFunction(
         MOI.VectorAffineTerm.(1:4, MOI.ScalarAffineTerm.(1.0, vcat(x, y))),
@@ -1400,7 +1396,7 @@ function test_conic_NormOneCone(model::MOI.ModelLike, config::Config)
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
-    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
@@ -1410,11 +1406,7 @@ function test_conic_NormOneCone(model::MOI.ModelLike, config::Config)
 
     x = MOI.add_variable(model)
     y = MOI.add_variables(model, 3)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     norminf_vaf = MOI.VectorAffineFunction(
         MOI.VectorAffineTerm.(1:4, MOI.ScalarAffineTerm.(1.0, vcat(x, y))),
@@ -2199,7 +2191,7 @@ function _test_conic_RotatedSecondOrderCone_helper(
     if abvars
         @requires MOI.supports_constraint(
             model,
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.EqualTo{Float64},
         )
         @requires MOI.supports_add_constrained_variables(
@@ -2219,11 +2211,11 @@ function _test_conic_RotatedSecondOrderCone_helper(
             MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(4))
         a, b, x1, x2 = abx
         x = [x1, x2]
-        vc1 = MOI.add_constraint(model, MOI.SingleVariable(a), MOI.EqualTo(0.5))
-        # We test this after the creation of every `SingleVariable` constraint
+        vc1 = MOI.add_constraint(model, a, MOI.EqualTo(0.5))
+        # We test this after the creation of every `VariableIndex` constraint
         # to ensure a good coverage of corner cases.
         @test vc1.value == a.value
-        vc2 = MOI.add_constraint(model, MOI.SingleVariable(b), MOI.EqualTo(1.0))
+        vc2 = MOI.add_constraint(model, b, MOI.EqualTo(1.0))
         @test vc2.value == b.value
     else
         x = MOI.add_variables(model, 2)
@@ -2244,7 +2236,7 @@ function _test_conic_RotatedSecondOrderCone_helper(
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{Float64}}(),
         ) == (abvars ? 2 : 0)
         @test MOI.get(
             model,
@@ -2323,7 +2315,7 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0.5, 1.0, 1 / √2, 1 / √2],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) => [-√2, -1 / √2],
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [-√2, -1 / √2],
             (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) =>
                 [[√2, 1 / √2, -1.0, -1.0]],
         ),
@@ -2393,17 +2385,17 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE(
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.EqualTo{Float64},
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{Float64},
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{Float64},
     )
     @requires MOI.supports_add_constrained_variables(
@@ -2413,29 +2405,25 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE(
 
     x, rsoc =
         MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(3))
-    vc1 = MOI.add_constraint(model, MOI.SingleVariable(x[1]), MOI.LessThan(1.0))
+    vc1 = MOI.add_constraint(model, x[1], MOI.LessThan(1.0))
     @test vc1.value == x[1].value
-    vc2 = MOI.add_constraint(model, MOI.SingleVariable(x[2]), MOI.EqualTo(0.5))
+    vc2 = MOI.add_constraint(model, x[2], MOI.EqualTo(0.5))
     @test vc2.value == x[2].value
-    vc3 = MOI.add_constraint(
-        model,
-        MOI.SingleVariable(x[3]),
-        MOI.GreaterThan(2.0),
-    )
+    vc3 = MOI.add_constraint(model, x[3], MOI.GreaterThan(2.0))
     @test vc3.value == x[3].value
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{Float64}}(),
         ) == 1
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{Float64}}(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.GreaterThan{Float64},
             }(),
         ) == 1
@@ -2490,9 +2478,9 @@ function setup_test(
             MOI.INFEASIBLE,
             MOI.NO_SOLUTION,
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) => [-1],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1],
+            (MOI.VariableIndex, MOI.LessThan{Float64}) => [-1],
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [-1],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [1],
             (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) =>
                 [[1, 1, -1]],
         ),
@@ -2529,18 +2517,18 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE_2(
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.EqualTo{Float64},
     )
     @requires MOI.supports_add_constrained_variables(model, MOI.Nonnegatives)
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{Float64},
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{Float64},
     )
     @requires MOI.supports_constraint(
@@ -2553,13 +2541,13 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE_2(
     u = MOI.add_variable(model)
     v = MOI.add_variable(model)
     t = MOI.add_variables(model, 2)
-    ct1 = MOI.add_constraint(model, MOI.SingleVariable(t[1]), MOI.EqualTo(1.0))
+    ct1 = MOI.add_constraint(model, t[1], MOI.EqualTo(1.0))
     @test ct1.value == t[1].value
-    ct2 = MOI.add_constraint(model, MOI.SingleVariable(t[2]), MOI.EqualTo(1.0))
+    ct2 = MOI.add_constraint(model, t[2], MOI.EqualTo(1.0))
     @test ct2.value == t[2].value
-    cu1 = MOI.add_constraint(model, MOI.SingleVariable(u), MOI.GreaterThan(0.0))
+    cu1 = MOI.add_constraint(model, u, MOI.GreaterThan(0.0))
     @test cu1.value == u.value
-    cu2 = MOI.add_constraint(model, MOI.SingleVariable(u), MOI.LessThan(ub))
+    cu2 = MOI.add_constraint(model, u, MOI.LessThan(ub))
     @test cu2.value == u.value
     c1 = MOI.add_constraint(
         model,
@@ -2586,7 +2574,7 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE_2(
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{Float64}}(),
         ) == 2
         @test MOI.get(
             model,
@@ -2595,18 +2583,18 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE_2(
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.GreaterThan{Float64},
             }(),
         ) == 1
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{Float64}}(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.GreaterThan{Float64},
             }(),
         ) == 1
@@ -2692,11 +2680,11 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [1.0; zeros(n - 1); ub; √ub; ones(2)],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) =>
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) =>
                 [-√ub / 4, -√ub / 4],
             (MOI.VectorOfVariables, MOI.Nonnegatives) => [zeros(n)],
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0.0],
-            (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1 / (2 * √ub)],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [0.0],
+            (MOI.VariableIndex, MOI.LessThan{Float64}) => [-1 / (2 * √ub)],
             (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [
                 vcat(√ub / (2 * √2), √ub / (2 * √2), -√ub / 2, zeros(n - 1)),
                 [√ub / √2, 1 / √(2 * ub), -1.0],
@@ -2758,12 +2746,8 @@ function test_conic_RotatedSecondOrderCone_out_of_order(
 
     v, cv = MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(4))
     t, u, x, y = v
-    ft = MOI.SingleVariable(t)
-    fu = MOI.SingleVariable(u)
-    c = MOI.add_constraint(model, 1.0ft + 1.0fu, MOI.LessThan(2.0))
-    fx = MOI.SingleVariable(x)
-    fy = MOI.SingleVariable(y)
-    func = 1.0fx + 1.0fy
+    c = MOI.add_constraint(model, 1.0t + 1.0u, MOI.LessThan(2.0))
+    func = 1.0x + 1.0y
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{typeof(func)}(), func)
     if _supports(config, MOI.optimize!)
@@ -3700,7 +3684,7 @@ function test_conic_Exponential_hard(model::MOI.ModelLike, config::Config)
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{Float64},
     )
     @requires MOI.supports_constraint(
@@ -3717,7 +3701,7 @@ function test_conic_Exponential_hard(model::MOI.ModelLike, config::Config)
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0),
         MOI.LessThan(4.0),
     )
-    yc = MOI.add_constraint(model, MOI.SingleVariable(y), MOI.LessThan(5.0))
+    yc = MOI.add_constraint(model, y, MOI.LessThan(5.0))
     @test yc.value == y.value
     ec = MOI.add_constraint(
         model,
@@ -4390,7 +4374,7 @@ function test_conic_RelativeEntropyCone(
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
-    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
@@ -4408,11 +4392,7 @@ function test_conic_RelativeEntropyCone(
         ),
         MOI.RelativeEntropyCone(5),
     )
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(u),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), u)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -4483,7 +4463,7 @@ function test_conic_NormSpectralCone(
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
-    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
@@ -4502,11 +4482,7 @@ function test_conic_NormSpectralCone(
         ),
         MOI.NormSpectralCone(2, 3),
     )
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(t),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -4577,7 +4553,7 @@ function test_conic_NormSpectralCone_2(
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
-    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
@@ -4596,11 +4572,7 @@ function test_conic_NormSpectralCone_2(
         ),
         MOI.NormSpectralCone(3, 2),
     )
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(t),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -4671,7 +4643,7 @@ function test_conic_NormNuclearCone(
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
-    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
@@ -4690,11 +4662,7 @@ function test_conic_NormNuclearCone(
         ),
         MOI.NormNuclearCone(2, 3),
     )
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(t),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -4769,7 +4737,7 @@ function test_conic_NormNuclearCone_2(
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
-    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
@@ -4788,11 +4756,7 @@ function test_conic_NormNuclearCone_2(
         ),
         MOI.NormNuclearCone(3, 2),
     )
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(t),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -5720,7 +5684,7 @@ function _test_conic_PositiveSemidefiniteCone_helper_3(
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
-    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
@@ -5729,31 +5693,26 @@ function _test_conic_PositiveSemidefiniteCone_helper_3(
     )
 
     x = MOI.add_variable(model)
-    fx = MOI.SingleVariable(x)
     if psdcone == MOI.PositiveSemidefiniteConeTriangle
-        func = MOIU.operate(vcat, T, fx, one(T), fx, one(T), one(T), fx)
+        func = MOIU.operate(vcat, T, x, one(T), x, one(T), one(T), x)
     else
         @assert psdcone == MOI.PositiveSemidefiniteConeSquare
         func = MOIU.operate(
             vcat,
             T,
-            fx,
+            x,
             one(T),
             one(T),
             one(T),
-            fx,
+            x,
             one(T),
             one(T),
             one(T),
-            fx,
+            x,
         )
     end
     c = MOI.add_constraint(model, func, psdcone(3))
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
@@ -5913,7 +5872,7 @@ function _test_det_cone_helper_ellipsoid(
     if use_logdet
         @requires MOI.supports_constraint(
             model,
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.EqualTo{Float64},
         )
     end
@@ -5938,7 +5897,7 @@ function _test_det_cone_helper_ellipsoid(
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 5 : 4)
     if use_logdet
         u = MOI.add_variable(model)
-        vc = MOI.add_constraint(model, MOI.SingleVariable(u), MOI.EqualTo(1.0))
+        vc = MOI.add_constraint(model, u, MOI.EqualTo(1.0))
         @test vc.value == u.value
         vov = MOI.VectorOfVariables([t; u; Q])
     else
@@ -6065,7 +6024,7 @@ function _test_det_cone_helper(model::MOI.ModelLike, config::Config, detcone)
     mat = Float64[3 2 1; 2 2 1; 1 1 3]
     matL = Float64[3, 2, 2, 1, 1, 3]
     @requires MOI.supports_incremental_interface(model)
-    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.SingleVariable}())
+    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
@@ -6075,11 +6034,7 @@ function _test_det_cone_helper(model::MOI.ModelLike, config::Config, detcone)
 
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(t),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     constant_mat = square ? vec(mat) : matL
     constant_vec = use_logdet ? vcat(0, 1, constant_mat) : vcat(0, constant_mat)
@@ -6150,7 +6105,7 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0, 1, 0, 1, 1],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [2],
             (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
                 [[1, 1]],
             (MOI.VectorOfVariables, MOI.LogDetConeTriangle) =>
@@ -6193,7 +6148,7 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0, 1, 0, 1, 1],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [2],
             (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
                 [[1, 1]],
             (MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle) =>
@@ -6229,7 +6184,7 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0, 1, 0, 0, 1, 1],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [2],
             (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
                 [[1, 1]],
             (MOI.VectorOfVariables, MOI.LogDetConeSquare) =>
@@ -6267,7 +6222,7 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [0, 1, 0, 0, 1, 1],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) => [2],
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [2],
             (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
                 [[1, 1]],
             (MOI.VectorAffineFunction{Float64}, MOI.LogDetConeSquare) =>

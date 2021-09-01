@@ -156,7 +156,7 @@ end
     model = new_model()
     x = MOI.add_variables(model, 10_000)
     for (i, xi) in enumerate(x)
-        MOI.add_constraint(model, MOI.SingleVariable(xi), MOI.LessThan(1.0 * i))
+        MOI.add_constraint(model, xi, MOI.LessThan(1.0 * i))
     end
     return model
 end
@@ -164,18 +164,14 @@ end
 @add_benchmark function add_variable_constraints(new_model)
     model = new_model()
     x = MOI.add_variables(model, 10_000)
-    MOI.add_constraints(
-        model,
-        MOI.SingleVariable.(x),
-        MOI.LessThan.(1.0:10_000.0),
-    )
+    MOI.add_constraints(model, x, MOI.LessThan.(1.0:10_000.0))
     return model
 end
 
 @add_benchmark function delete_variable(new_model)
     model = new_model()
     x = MOI.add_variables(model, 1_000)
-    MOI.add_constraint.(model, MOI.SingleVariable.(x), Ref(MOI.LessThan(1.0)))
+    MOI.add_constraint.(model, x, Ref(MOI.LessThan(1.0)))
     MOI.delete.(model, x)
     return model
 end
@@ -183,21 +179,11 @@ end
 @add_benchmark function delete_variable_constraint(new_model)
     model = new_model()
     x = MOI.add_variables(model, 1_000)
-    cons =
-        MOI.add_constraint.(
-            model,
-            MOI.SingleVariable.(x),
-            Ref(MOI.LessThan(1.0)),
-        )
+    cons = MOI.add_constraint.(model, x, Ref(MOI.LessThan(1.0)))
     for con in cons
         MOI.delete(model, con)
     end
-    cons =
-        MOI.add_constraint.(
-            model,
-            MOI.SingleVariable.(x),
-            Ref(MOI.LessThan(1.0)),
-        )
+    cons = MOI.add_constraint.(model, x, Ref(MOI.LessThan(1.0)))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(
         model,

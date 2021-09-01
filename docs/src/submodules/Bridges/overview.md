@@ -24,7 +24,7 @@ example, the constraint ``l \le a^\top x \le u``
 two constraints: ``a^\top x \ge l`` ([`ScalarAffineFunction`](@ref)-in-[`GreaterThan`](@ref))
 and ``a^\top x \le u`` (`ScalarAffineFunction`-in-`LessThan`). An alternative
 re-formulation is to add a dummy variable `y` with the constraints ``l \le y \le u``
-([`SingleVariable`](@ref)-in-[`Interval`](@ref)) and ``a^\top x - y = 0``
+([`VariableIndex`](@ref)-in-[`Interval`](@ref)) and ``a^\top x - y = 0``
 ([`ScalarAffineFunction`](@ref)-in-[`EqualTo`](@ref)).
 
 To avoid each solver having to code these transformations manually,
@@ -146,17 +146,17 @@ with inner model MOIU.GenericModel{Float64,MOIU.ObjectiveContainer{Float64},MOIU
 julia> x = MOI.add_variable(optimizer)
 MOI.VariableIndex(1)
 
-julia> MOI.add_constraint(optimizer, MOI.SingleVariable(x), MOI.Interval(0.0, 1.0))
-MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.Interval{Float64}}(1)
+julia> MOI.add_constraint(optimizer, x, MOI.Interval(0.0, 1.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex,MathOptInterface.Interval{Float64}}(1)
 
 julia> MOI.get(optimizer, MOI.ListOfConstraintTypesPresent())
 1-element Array{Tuple{Type,Type},1}:
- (MathOptInterface.SingleVariable, MathOptInterface.Interval{Float64})
+ (MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64})
 
 julia> MOI.get(inner_optimizer, MOI.ListOfConstraintTypesPresent())
 2-element Array{Tuple{Type,Type},1}:
- (MathOptInterface.SingleVariable, MathOptInterface.GreaterThan{Float64})
- (MathOptInterface.SingleVariable, MathOptInterface.LessThan{Float64})
+ (MathOptInterface.VariableIndex, MathOptInterface.GreaterThan{Float64})
+ (MathOptInterface.VariableIndex, MathOptInterface.LessThan{Float64})
 ```
 
 ## Bridges.LazyBridgeOptimizer
@@ -190,14 +190,14 @@ Now the constraints will be bridged only if needed:
 julia> x = MOI.add_variable(optimizer)
 MOI.VariableIndex(1)
 
-julia> MOI.add_constraint(optimizer, MOI.SingleVariable(x), MOI.Interval(0.0, 1.0))
-MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.Interval{Float64}}(1)
+julia> MOI.add_constraint(optimizer, x, MOI.Interval(0.0, 1.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex,MathOptInterface.Interval{Float64}}(1)
 
 julia> MOI.get(optimizer, MOI.ListOfConstraintTypesPresent())
 1-element Array{Tuple{Type,Type},1}:
- (MathOptInterface.SingleVariable, MathOptInterface.Interval{Float64})
+ (MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64})
 
 julia> MOI.get(inner_optimizer, MOI.ListOfConstraintTypesPresent())
 1-element Array{Tuple{Type,Type},1}:
- (MathOptInterface.SingleVariable, MathOptInterface.Interval{Float64})
+ (MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64})
 ```

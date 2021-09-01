@@ -164,7 +164,7 @@ you should copy `src` to a bridged model using [`Bridges.full_bridge_optimizer`]
 ```julia
 src = MOI.Utilities.Model{Float64}()
 x = MOI.add_variable(model)
-MOI.add_constraint(model, MOI.SingleVariable(x), MOI.ZeroOne())
+MOI.add_constraint(model, x, MOI.ZeroOne())
 dest = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_CBF)
 bridged = MOI.Bridges.full_bridge_optimizer(dest, Float64)
 MOI.copy_to(bridged, src)

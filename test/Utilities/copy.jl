@@ -43,7 +43,7 @@ end
 
 function MOI.supports_constraint(
     ::AbstractDummyModel,
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{MOI.EqualTo{Float64}},
 )
     return true
@@ -68,10 +68,10 @@ MOI.add_variables(::DummyModelWithAdd, n) = fill(MOI.VariableIndex(0), n)
 
 function MOI.add_constraint(
     ::DummyModelWithAdd,
-    ::MOI.SingleVariable,
+    ::MOI.VariableIndex,
     ::MOI.EqualTo{Float64},
 )
-    return MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}(0)
+    return MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}(0)
 end
 
 struct DummyEvaluator <: MOI.AbstractNLPEvaluator end
@@ -83,11 +83,9 @@ struct DummyEvaluator <: MOI.AbstractNLPEvaluator end
 function _test_identity_index_map(::Type{T}) where {T}
     model = MOI.Utilities.Model{T}()
     x, y = MOI.add_variables(model, 2)
-    fx = MOI.SingleVariable(x)
-    fy = MOI.SingleVariable(y)
-    cx = MOI.add_constraint(model, fx, MOI.EqualTo(one(T)))
-    cy = MOI.add_constraint(model, fy, MOI.EqualTo(zero(T)))
-    c = MOI.add_constraint(model, one(T) * fx + fy, MOI.LessThan(zero(T)))
+    cx = MOI.add_constraint(model, x, MOI.EqualTo(one(T)))
+    cy = MOI.add_constraint(model, y, MOI.EqualTo(zero(T)))
+    c = MOI.add_constraint(model, one(T) * x + y, MOI.LessThan(zero(T)))
     index_map = MOI.Utilities.identity_index_map(model)
     @test x == index_map[x]
     @test y == index_map[y]
@@ -109,8 +107,8 @@ function test_IndexMap()
     @test occursin("Utilities.IndexMap()", sprint(show, map))
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
-    cx = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(1)
-    cy = MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(2)
+    cx = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}(1)
+    cy = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}(2)
     map = MOIU.IndexMap(Dict(x => y), DoubleDicts.IndexDoubleDict())
     map[cx] = cy
     @test length(map) == 2
@@ -363,7 +361,7 @@ end
 
 function MOI.supports_constraint(
     ::OrderConstrainedVariablesModel,
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{<:MOI.GreaterThan},
 )
     return true
@@ -378,7 +376,7 @@ end
 
 function MOI.supports_constraint(
     ::OrderConstrainedVariablesModel,
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{<:MOI.LessThan},
 )
     return false
@@ -393,7 +391,7 @@ end
 
 function MOI.supports_constraint(
     ::ReverseOrderConstrainedVariablesModel,
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{<:MOI.GreaterThan},
 )
     return false
@@ -408,7 +406,7 @@ end
 
 function MOI.supports_constraint(
     ::ReverseOrderConstrainedVariablesModel,
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{<:MOI.LessThan},
 )
     return true
@@ -555,7 +553,7 @@ function test_create_variables_using_supports_add_constrained_variable()
     ) == 0.0
     @test MOI.get(
         bridged_dest,
-        MOI.ConstraintBridgingCost{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+        MOI.ConstraintBridgingCost{MOI.VariableIndex,MOI.LessThan{Float64}}(),
     ) == 2.0
     @test MOI.get(
         bridged_dest,
@@ -563,10 +561,7 @@ function test_create_variables_using_supports_add_constrained_variable()
     ) == 1.0
     @test MOI.get(
         bridged_dest,
-        MOI.ConstraintBridgingCost{
-            MOI.SingleVariable,
-            MOI.GreaterThan{Float64},
-        }(),
+        MOI.ConstraintBridgingCost{MOI.VariableIndex,MOI.GreaterThan{Float64}}(),
     ) == 0.0
     index_map = MOI.copy_to(bridged_dest, src)
     @test typeof(c1) == typeof(dest.constraintIndices[2])
@@ -580,7 +575,7 @@ function test_create_variables_using_supports_add_constrained_variable()
     ) == 1.0
     @test MOI.get(
         bridged_dest,
-        MOI.ConstraintBridgingCost{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+        MOI.ConstraintBridgingCost{MOI.VariableIndex,MOI.LessThan{Float64}}(),
     ) == 0.0
     @test MOI.get(
         bridged_dest,
@@ -588,10 +583,7 @@ function test_create_variables_using_supports_add_constrained_variable()
     ) == 0.0
     @test MOI.get(
         bridged_dest,
-        MOI.ConstraintBridgingCost{
-            MOI.SingleVariable,
-            MOI.GreaterThan{Float64},
-        }(),
+        MOI.ConstraintBridgingCost{MOI.VariableIndex,MOI.GreaterThan{Float64}}(),
     ) == 2.0
     index_map = MOI.copy_to(bridged_dest, src)
     @test typeof(c1) == typeof(dest.constraintIndices[1])
@@ -641,7 +633,7 @@ end
 
 function MOI.supports_constraint(
     ::BoundModel,
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::MOI.LessThan{Float64},
 )
     return true
@@ -676,7 +668,7 @@ function test_BoundModel_filtering_copy()
     # should be correct).
     dst = BoundModel()
     @test_throws(
-        MOI.UnsupportedConstraint{MOI.SingleVariable,MOI.Integer},
+        MOI.UnsupportedConstraint{MOI.VariableIndex,MOI.Integer},
         MOI.copy_to(dst, src),
     )
 
@@ -685,11 +677,11 @@ function test_BoundModel_filtering_copy()
     MOI.copy_to(dst, src, filter_constraints = f)
     @test MOI.get(
         dst,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{Float64}}(),
     ) == 1
     @test MOI.get(
         dst,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.Integer}(),
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.Integer}(),
     ) == 0
 end
 
@@ -741,11 +733,10 @@ function _test_copy_of_constraints_passed_as_copy_accross_layers(
     S2 = MOI.GreaterThan{T}
     src = MOIU.Model{T}()
     x = MOI.add_variable(src)
-    fx = MOI.SingleVariable(x)
-    MOI.add_constraint(src, T(1) * fx, MOI.EqualTo(T(1)))
-    MOI.add_constraint(src, T(2) * fx, MOI.EqualTo(T(2)))
-    MOI.add_constraint(src, T(3) * fx, MOI.GreaterThan(T(3)))
-    MOI.add_constraint(src, T(4) * fx, MOI.GreaterThan(T(4)))
+    MOI.add_constraint(src, T(1) * x, MOI.EqualTo(T(1)))
+    MOI.add_constraint(src, T(2) * x, MOI.EqualTo(T(2)))
+    MOI.add_constraint(src, T(3) * x, MOI.GreaterThan(T(3)))
+    MOI.add_constraint(src, T(4) * x, MOI.GreaterThan(T(4)))
     dest = MOIU.CachingOptimizer(
         MOI.Bridges.full_bridge_optimizer(
             MOIU.UniversalFallback(

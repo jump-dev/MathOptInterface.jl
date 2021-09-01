@@ -18,13 +18,12 @@ end
 function _constant_not_zero_test(::Type{T}) where {T}
     S = MOI.EqualTo{T}
     x = MOI.VariableIndex(1)
-    fx = MOI.SingleVariable(x)
-    @test nothing === MOI.throw_if_scalar_and_constant_not_zero(fx, S)
-    func1 = one(T) * fx + one(T)
+    @test nothing === MOI.throw_if_scalar_and_constant_not_zero(x, S)
+    func1 = one(T) * x + one(T)
     @test_throws MOI.ScalarFunctionConstantNotZero begin
         MOI.throw_if_scalar_and_constant_not_zero(func1, S)
     end
-    func2 = one(T) * fx
+    func2 = one(T) * x
     @test nothing === MOI.throw_if_scalar_and_constant_not_zero(func2, S)
     func = MOI.Utilities.operate(vcat, T, func1, func2)
     @test nothing === MOI.throw_if_scalar_and_constant_not_zero(func, MOI.Zeros)
@@ -42,8 +41,8 @@ function test_LowerBoundAlreadySet_error()
     S2 = MOI.Interval{Int}
     err = MOI.LowerBoundAlreadySet{S1,S2}(x)
     @test sprint(showerror, err) ==
-          "$(typeof(err)): Cannot add `SingleVariable`-in-`$(S2)` constraint " *
-          "for variable $(x) as a `SingleVariable`-in-`$(S1)` constraint was " *
+          "$(typeof(err)): Cannot add `VariableIndex`-in-`$(S2)` constraint " *
+          "for variable $(x) as a `VariableIndex`-in-`$(S1)` constraint was " *
           "already set for this variable and both constraints set a lower bound."
     return
 end
@@ -54,8 +53,8 @@ function test_UpperBoundAlreadySet_error()
     S2 = MOI.Interval{Int}
     err = MOI.UpperBoundAlreadySet{S1,S2}(x)
     @test sprint(showerror, err) ==
-          "$(typeof(err)): Cannot add `SingleVariable`-in-`$(S2)` constraint " *
-          "for variable $(x) as a `SingleVariable`-in-`$(S1)` constraint was " *
+          "$(typeof(err)): Cannot add `VariableIndex`-in-`$(S2)` constraint " *
+          "for variable $(x) as a `VariableIndex`-in-`$(S1)` constraint was " *
           "already set for this variable and both constraints set an upper bound."
     return
 end

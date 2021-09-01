@@ -259,25 +259,22 @@ function test_mapping_of_variables()
     @test x != y # Otherwise, these tests will trivially pass
     @test !MOI.is_valid(model, y)
     @test !MOI.is_valid(mock, x)
-    fx = MOI.SingleVariable(x)
-    fy = MOI.SingleVariable(y)
-
-    cfx = MOI.add_constraint(model, fx, MOI.GreaterThan(1.0))
-    cfy = first(
+    cx = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
+    cy = first(
         MOI.get(
             mock,
             MOI.ListOfConstraintIndices{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.GreaterThan{Float64},
             }(),
         ),
     )
-    @test !MOI.is_valid(model, cfy)
-    @test !MOI.is_valid(mock, cfx)
-    @test MOI.get(mock, MOI.ConstraintFunction(), cfy) == fy
+    @test !MOI.is_valid(model, cy)
+    @test !MOI.is_valid(mock, cx)
+    @test MOI.get(mock, MOI.ConstraintFunction(), cy) == y
 
-    c2fx = MOI.add_constraint(model, 2.0fx, MOI.GreaterThan(1.0))
-    c2fy = first(
+    c2x = MOI.add_constraint(model, 2.0x, MOI.GreaterThan(1.0))
+    c2y = first(
         MOI.get(
             mock,
             MOI.ListOfConstraintIndices{
@@ -286,52 +283,50 @@ function test_mapping_of_variables()
             }(),
         ),
     )
-    @test !MOI.is_valid(model, c2fy)
-    @test !MOI.is_valid(mock, c2fx)
-    @test MOI.get(model, MOI.ConstraintFunction(), c2fx) ≈ 2.0fx
-    @test MOI.get(model, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(1.0)
-    @test MOI.get(mock, MOI.ConstraintFunction(), c2fy) ≈ 2.0fy
-    @test MOI.get(mock, MOI.ConstraintSet(), c2fy) == MOI.GreaterThan(1.0)
+    @test !MOI.is_valid(model, c2y)
+    @test !MOI.is_valid(mock, c2x)
+    @test MOI.get(model, MOI.ConstraintFunction(), c2x) ≈ 2.0x
+    @test MOI.get(model, MOI.ConstraintSet(), c2x) == MOI.GreaterThan(1.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2y) ≈ 2.0y
+    @test MOI.get(mock, MOI.ConstraintSet(), c2y) == MOI.GreaterThan(1.0)
 
-    MOI.set(model, MOI.ConstraintSet(), c2fx, MOI.GreaterThan(2.0))
-    @test MOI.get(model, MOI.ConstraintFunction(), c2fx) ≈ 2.0fx
-    @test MOI.get(model, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(2.0)
-    @test MOI.get(mock, MOI.ConstraintFunction(), c2fy) ≈ 2.0fy
-    @test MOI.get(mock, MOI.ConstraintSet(), c2fy) == MOI.GreaterThan(2.0)
+    MOI.set(model, MOI.ConstraintSet(), c2x, MOI.GreaterThan(2.0))
+    @test MOI.get(model, MOI.ConstraintFunction(), c2x) ≈ 2.0x
+    @test MOI.get(model, MOI.ConstraintSet(), c2x) == MOI.GreaterThan(2.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2y) ≈ 2.0y
+    @test MOI.get(mock, MOI.ConstraintSet(), c2y) == MOI.GreaterThan(2.0)
 
-    MOI.set(model, MOI.ConstraintFunction(), c2fx, 3.0fx)
-    @test MOI.get(model, MOI.ConstraintFunction(), c2fx) ≈ 3.0fx
-    @test MOI.get(model, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(2.0)
-    @test MOI.get(mock, MOI.ConstraintFunction(), c2fy) ≈ 3.0fy
-    @test MOI.get(mock, MOI.ConstraintSet(), c2fy) == MOI.GreaterThan(2.0)
+    MOI.set(model, MOI.ConstraintFunction(), c2x, 3.0x)
+    @test MOI.get(model, MOI.ConstraintFunction(), c2x) ≈ 3.0x
+    @test MOI.get(model, MOI.ConstraintSet(), c2x) == MOI.GreaterThan(2.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2y) ≈ 3.0y
+    @test MOI.get(mock, MOI.ConstraintSet(), c2y) == MOI.GreaterThan(2.0)
 
-    MOI.set(model, MOI.ConstraintSet(), c2fx, MOI.GreaterThan(4.0))
-    @test MOI.get(model, MOI.ConstraintFunction(), c2fx) ≈ 3.0fx
-    @test MOI.get(model, MOI.ConstraintSet(), c2fx) == MOI.GreaterThan(4.0)
-    @test MOI.get(mock, MOI.ConstraintFunction(), c2fy) ≈ 3.0fy
-    @test MOI.get(mock, MOI.ConstraintSet(), c2fy) == MOI.GreaterThan(4.0)
+    MOI.set(model, MOI.ConstraintSet(), c2x, MOI.GreaterThan(4.0))
+    @test MOI.get(model, MOI.ConstraintFunction(), c2x) ≈ 3.0x
+    @test MOI.get(model, MOI.ConstraintSet(), c2x) == MOI.GreaterThan(4.0)
+    @test MOI.get(mock, MOI.ConstraintFunction(), c2y) ≈ 3.0y
+    @test MOI.get(mock, MOI.ConstraintSet(), c2y) == MOI.GreaterThan(4.0)
 
-    MOI.set(model, MOI.ObjectiveFunction{typeof(fx)}(), fx)
-    @test MOI.get(mock, MOI.ObjectiveFunction{typeof(fy)}()) == fy
+    MOI.set(model, MOI.ObjectiveFunction{typeof(x)}(), x)
+    @test MOI.get(mock, MOI.ObjectiveFunction{typeof(y)}()) == y
 
-    MOI.set(model, MOI.ObjectiveFunction{typeof(2.0fx)}(), 2.0fx)
-    @test MOI.get(mock, MOI.ObjectiveFunction{typeof(2.0fy)}()) ≈ 2.0fy
+    MOI.set(model, MOI.ObjectiveFunction{typeof(2.0x)}(), 2.0x)
+    @test MOI.get(mock, MOI.ObjectiveFunction{typeof(2.0y)}()) ≈ 2.0y
 
-    MOI.set(model, DummyModelAttribute(), 2.0fx + 1.0)
-    @test MOI.get(model, DummyModelAttribute()) ≈ 2.0fx + 1.0
-    @test MOI.get(mock, DummyModelAttribute()) ≈ 2.0fy + 1.0
+    MOI.set(model, DummyModelAttribute(), 2.0x + 1.0)
+    @test MOI.get(model, DummyModelAttribute()) ≈ 2.0x + 1.0
+    @test MOI.get(mock, DummyModelAttribute()) ≈ 2.0y + 1.0
 
-    for (attr, cache_index, optimizer_index) in [
-        (DummyVariableAttribute(), x, y),
-        (DummyConstraintAttribute(), cfx, cfy),
-    ]
-        MOI.set(model, attr, cache_index, 1.0fx)
-        @test MOI.get(model, attr, cache_index) ≈ 1.0fx
-        @test MOI.get(mock, attr, optimizer_index) ≈ 1.0fy
+    for (attr, cache_index, optimizer_index) in
+        [(DummyVariableAttribute(), x, y), (DummyConstraintAttribute(), cx, cy)]
+        MOI.set(model, attr, cache_index, 1.0x)
+        @test MOI.get(model, attr, cache_index) ≈ 1.0x
+        @test MOI.get(mock, attr, optimizer_index) ≈ 1.0y
 
-        MOI.set(model, attr, [cache_index], [3.0fx])
-        @test MOI.get(model, attr, [cache_index])[1] ≈ 3.0fx
-        @test MOI.get(mock, attr, [optimizer_index])[1] ≈ 3.0fy
+        MOI.set(model, attr, [cache_index], [3.0x])
+        @test MOI.get(model, attr, [cache_index])[1] ≈ 3.0x
+        @test MOI.get(mock, attr, [optimizer_index])[1] ≈ 3.0y
     end
 
     @testset "RawSolver" begin
@@ -359,8 +354,8 @@ function test_mapping_of_variables()
     @testset "LazyConstraint" begin
         sub = MOI.LazyConstraint(nothing)
         @test MOI.supports(model, sub)
-        MOI.submit(model, sub, 2.0fx, MOI.GreaterThan(1.0))
-        @test mock.submitted[sub][1][1] ≈ 2.0fy
+        MOI.submit(model, sub, 2.0x, MOI.GreaterThan(1.0))
+        @test mock.submitted[sub][1][1] ≈ 2.0y
         @test mock.submitted[sub][1][2] == MOI.GreaterThan(1.0)
     end
     @testset "HeuristicSolution" begin
@@ -448,24 +443,24 @@ function test_CachingOptimizer_MANUAL_mode()
 
     @test MOI.supports_constraint(
         m.model_cache,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{Float64},
     )
     @test MOI.supports_constraint(
         m.optimizer.inner_model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{Float64},
     )
     @test MOI.supports_constraint(
         m.optimizer,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.LessThan{Float64},
     )
-    @test MOI.supports_constraint(m, MOI.SingleVariable, MOI.LessThan{Float64})
-    lb = MOI.add_constraint(m, MOI.SingleVariable(v), MOI.LessThan(10.0))
+    @test MOI.supports_constraint(m, MOI.VariableIndex, MOI.LessThan{Float64})
+    lb = MOI.add_constraint(m, v, MOI.LessThan(10.0))
     MOI.set(m, MOI.ConstraintSet(), lb, MOI.LessThan(11.0))
     @test MOI.get(m, MOI.ConstraintSet(), lb) == MOI.LessThan(11.0)
-    @test MOI.get(m, MOI.ConstraintFunction(), lb) == MOI.SingleVariable(v)
+    @test MOI.get(m, MOI.ConstraintFunction(), lb) == v
 
     MOIU.drop_optimizer(m)
     @test MOIU.state(m) == MOIU.NO_OPTIMIZER
@@ -615,7 +610,7 @@ function test_CachingOptimizer_AUTOMATIC_mode()
         @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
 
         vi = MOI.add_variable(m)
-        ci = MOI.add_constraint(m, MOI.SingleVariable(vi), MOI.EqualTo(0.0))
+        ci = MOI.add_constraint(m, vi, MOI.EqualTo(0.0))
         s.delete_allowed = false # Simulate optimizer that cannot delete constraint
         MOI.delete(m, ci)
         s.delete_allowed = true
@@ -676,7 +671,7 @@ end
 function _constrained_variables_test(model)
     @test !MOI.supports_add_constrained_variables(model, MOI.Reals)
     @test MOI.supports_add_constrained_variable(model, MOI.ZeroOne)
-    @test !MOI.supports_constraint(model, MOI.SingleVariable, MOI.ZeroOne)
+    @test !MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     @test MOI.supports_add_constrained_variables(model, MOI.Nonnegatives)
     @test !MOI.supports_constraint(
         model,
@@ -688,7 +683,7 @@ function _constrained_variables_test(model)
     vector_set = MOI.Nonnegatives(2)
     y, cy = MOI.add_constrained_variables(model, vector_set)
     constraint_types = Set([
-        (MOI.SingleVariable, MOI.ZeroOne),
+        (MOI.VariableIndex, MOI.ZeroOne),
         (MOI.VectorOfVariables, MOI.Nonnegatives),
     ])
     @test Set(MOI.get(model.model_cache, MOI.ListOfConstraintTypesPresent())) ==

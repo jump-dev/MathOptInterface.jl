@@ -78,3 +78,15 @@ function Utilities.IndexMap(::Int)
     @warn("The number_of_variables argument to `IndexMap` has been removed.")
     return Utilities.IndexMap()
 end
+
+function SingleVariable(x::VariableIndex)
+    @warn("`SingleVariable(x)` has been removed; use `x` instead.", maxlog = 1)
+    return x
+end
+
+@deprecate(SingleVariableConstraintNameError, VariableIndexConstraintNameError)
+
+@deprecate(
+    SettingSingleVariableFunctionNotAllowed,
+    SettingVariableIndexNotAllowed,
+)

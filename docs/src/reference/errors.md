@@ -29,7 +29,7 @@ thrown:
 ScalarFunctionConstantNotZero
 ```
 
-Some [`SingleVariable`](@ref) constraints cannot be combined on the same
+Some [`VariableIndex`](@ref) constraints cannot be combined on the same
 variable:
 ```@docs
 LowerBoundAlreadySet
@@ -71,8 +71,8 @@ UnsupportedSubmittable
 SubmitNotAllowed
 ```
 
-Note that setting the [`ConstraintFunction`](@ref) of a [`SingleVariable`]
+Note that setting the [`ConstraintFunction`](@ref) of a [`VariableIndex`]
 constraint is not allowed:
 ```@docs
-SettingSingleVariableFunctionNotAllowed
+SettingVariableIndexNotAllowed
 ```

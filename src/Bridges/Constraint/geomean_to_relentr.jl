@@ -30,10 +30,7 @@ function bridge_constraint(
     f_scalars = MOIU.eachscalar(f)
     (y, nn_index) = MOI.add_constrained_variables(model, MOI.Nonnegatives(1))
     w_func = MOIU.vectorize(
-        fill(
-            MOIU.operate(+, T, f_scalars[1], MOI.SingleVariable(y[1])),
-            MOI.dimension(s) - 1,
-        ),
+        fill(MOIU.operate(+, T, f_scalars[1], y[1]), MOI.dimension(s) - 1),
     )
     relentr_func = MOIU.operate(
         vcat,
@@ -80,7 +77,7 @@ function concrete_bridge_type(
         T,
         T,
         S,
-        MOIU.promote_operation(+, T, S, MOI.SingleVariable),
+        MOIU.promote_operation(+, T, S, MOI.VariableIndex),
     )
     return GeoMeantoRelEntrBridge{T,F,G,H}
 end
@@ -139,7 +136,7 @@ function MOI.get(
     )
     d = div(length(relentr_func) - 1, 2)
     u_func = MOIU.remove_variable(
-        MOIU.operate(-, T, relentr_func[end], MOI.SingleVariable(bridge.y)),
+        MOIU.operate(-, T, relentr_func[end], bridge.y),
         bridge.y,
     )
     w_func = relentr_func[2:(1+d)]

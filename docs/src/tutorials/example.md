@@ -87,7 +87,7 @@ julia> MOI.add_constraint(
 Add integrality constraints:
 ```jldoctest knapsack
 julia> for x_i in x
-           MOI.add_constraint(optimizer, MOI.SingleVariable(x_i), MOI.ZeroOne())
+           MOI.add_constraint(optimizer, x_i, MOI.ZeroOne())
        end
 ```
 

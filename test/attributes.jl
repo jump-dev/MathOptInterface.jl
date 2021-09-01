@@ -26,7 +26,7 @@ function test_attributes_supports()
         MOI.supports(
             model,
             MOI.ConstraintSet(),
-            MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}},
+            MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}},
         )
     end
     @test MOI.supports(model, MOI.ObjectiveSense())
@@ -50,8 +50,8 @@ function test_attributes_integration_compute_conflict_1()
         MOI.Bridges.full_bridge_optimizer(optimizer, Float64),
     )
     x = MOI.add_variable(model)
-    c1 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(0.0))
-    c2 = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(1.0))
+    c1 = MOI.add_constraint(model, x, MOI.LessThan(0.0))
+    c2 = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     MOI.optimize!(model)
     @test MOI.get(optimizer, MOI.ConflictStatus()) ==
           MOI.COMPUTE_CONFLICT_NOT_CALLED
@@ -62,7 +62,7 @@ function test_attributes_integration_compute_conflict_1()
         MOI.get(
             optimizer,
             MOI.ListOfConstraintIndices{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.LessThan{Float64},
             }(),
         )[1],
@@ -74,7 +74,7 @@ function test_attributes_integration_compute_conflict_1()
         MOI.get(
             optimizer,
             MOI.ListOfConstraintIndices{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.GreaterThan{Float64},
             }(),
         )[1],
@@ -122,19 +122,19 @@ struct _NoConstraintName <: MOI.AbstractOptimizer end
 function test_no_constraint_name()
     model = _NoConstraintName()
     @test_throws(
-        MOI.SingleVariableConstraintNameError(),
+        MOI.VariableIndexConstraintNameError(),
         MOI.supports(
             model,
             MOI.ConstraintName(),
-            MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne},
+            MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne},
         ),
     )
     @test_throws(
-        MOI.SingleVariableConstraintNameError(),
+        MOI.VariableIndexConstraintNameError(),
         MOI.set(
             model,
             MOI.ConstraintName(),
-            MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(1),
+            MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}(1),
             "name",
         ),
     )
@@ -172,10 +172,10 @@ end
 
 function test_ConstraintBasisStatus_fallback()
     model = DummyModelWithAdd()
-    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}}(1)
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}(1)
     @test_throws(
         ErrorException(
-            "Querying the basis status of a `SingleVariable` constraint is " *
+            "Querying the basis status of a `VariableIndex` constraint is " *
             "not supported. Use [`VariableBasisStatus`](@ref) instead.",
         ),
         MOI.get(model, MOI.ConstraintBasisStatus(), c),
@@ -203,7 +203,7 @@ function test_attribute_value_type()
     @test MOI.attribute_value_type(MOI.BarrierIterations()) == Int64
     @test MOI.attribute_value_type(MOI.NodeCount()) == Int64
     @test MOI.attribute_value_type(
-        MOI.ConstraintBridgingCost{MOI.SingleVariable,MOI.ZeroOne}(),
+        MOI.ConstraintBridgingCost{MOI.VariableIndex,MOI.ZeroOne}(),
     ) == Float64
     @test MOI.attribute_value_type(MOI.VariableBridgingCost{MOI.ZeroOne}()) ==
           Float64

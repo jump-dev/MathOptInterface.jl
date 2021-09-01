@@ -28,10 +28,8 @@ function test_RSOC_of_dimension_2()
         MOI.RotatedSecondOrderCone(2),
     )
     x, y = xy
-    fx = MOI.SingleVariable(x)
-    fy = MOI.SingleVariable(y)
-    c = MOI.add_constraint(bridged_mock, 1.0fx + 1.0fy, MOI.LessThan(1.0))
-    obj = 1.0fy
+    c = MOI.add_constraint(bridged_mock, 1.0x + 1.0y, MOI.LessThan(1.0))
+    obj = 1.0y
     MOI.set(bridged_mock, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(obj)}(), obj)
     mock.optimize! =
@@ -102,7 +100,7 @@ function test_RSOC_of_dimension_2()
         (
             (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
             (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle, 0),
-            (MOI.SingleVariable, MOI.EqualTo{Float64}, 0),
+            (MOI.VariableIndex, MOI.EqualTo{Float64}, 0),
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1),
         ),
@@ -119,7 +117,7 @@ function test_RSOC4()
             [1.0, 1.0, 2.0, 1.0, 0.0, 2.0],
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                 [0.25],
-            (MOI.SingleVariable, MOI.EqualTo{Float64}) => [-0.5],
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [-0.5],
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
                 [-1.0],
             (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle) =>
@@ -149,7 +147,7 @@ function test_RSOC4()
     MOI.set(mock, MOI.ConstraintName(), psd[1], "psd")
     off_diag = MOI.get(
         mock,
-        MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.EqualTo{Float64}}(),
+        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.EqualTo{Float64}}(),
     )
     @test length(off_diag) == 1
     diag = MOI.get(
@@ -250,7 +248,7 @@ function test_RSOC4()
         (
             (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
             (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle, 0),
-            (MOI.SingleVariable, MOI.EqualTo{Float64}, 0),
+            (MOI.VariableIndex, MOI.EqualTo{Float64}, 0),
             (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
         ),
     )

@@ -26,23 +26,23 @@ function test_solve_singlevariable_obj()
         (mock::MOI.Utilities.MockOptimizer) ->
             MOI.Utilities.mock_optimize!(mock, [1.0], MOI.FEASIBLE_POINT),
     )
-    MOI.Test.test_objective_ObjectiveFunction_SingleVariable(
+    MOI.Test.test_objective_ObjectiveFunction_VariableIndex(
         bridged_mock,
         MOI.Test.Config(),
     )
     @test MOI.get(mock, MOI.ObjectiveFunctionType()) ==
           MOI.ScalarAffineFunction{Float64}
     @test MOI.get(bridged_mock, MOI.ObjectiveFunctionType()) ==
-          MOI.SingleVariable
+          MOI.VariableIndex
     @test MOI.get(mock, MOI.ObjectiveSense()) == MOI.MIN_SENSE
     @test MOI.get(bridged_mock, MOI.ObjectiveSense()) == MOI.MIN_SENSE
     vis = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
-    func = MOI.SingleVariable(vis[1])
+    func = vis[1]
     @test MOI.get(
         mock,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     ) ≈ convert(MOI.ScalarAffineFunction{Float64}, func)
-    @test MOI.get(bridged_mock, MOI.ObjectiveFunction{MOI.SingleVariable}()) ==
+    @test MOI.get(bridged_mock, MOI.ObjectiveFunction{MOI.VariableIndex}()) ==
           func
     MOI.set(bridged_mock, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     @test MOI.get(mock, MOI.ObjectiveSense()) == MOI.MAX_SENSE
@@ -61,7 +61,7 @@ function test_solve_result_index()
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, [1.0]),
             MOI.FEASIBLE_POINT,
-            (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0],
+            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [1.0],
         ),
     )
     return MOI.Test.test_solve_result_index(bridged_mock, MOI.Test.Config())

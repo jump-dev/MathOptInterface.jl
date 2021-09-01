@@ -10,8 +10,9 @@ number of new features.**
 
 Breaking changes in MOI
 
-- `SingleVariable` constraints should not support `ConstraintName`
-- `SingleVariable` constraints should not support `ConstraintBasisStatus`;
+- `SingleVariable` has been removed; use `VariableIndex` instead
+- `VariableIndex` constraints should not support `ConstraintName`
+- `VariableIndex` constraints should not support `ConstraintBasisStatus`;
   implement `VariableBasisStatus` instead
 - `ListOfConstraints` has been renamed to `ListOfConstraintTypesPresent`
 - `ListOfConstraintTypesPresent` should now return `Tuple{Type,Type}` instead of

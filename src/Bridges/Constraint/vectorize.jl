@@ -6,10 +6,10 @@ Transforms a constraint `G`-in-`scalar_set_type(S, T)` where
 
 ## Examples
 
-The constraint `SingleVariable`-in-`LessThan{Float64}` becomes
+The constraint `VariableIndex`-in-`LessThan{Float64}` becomes
 `VectorAffineFunction{Float64}`-in-`Nonpositives`, where `T = Float64`,
 `F = VectorAffineFunction{Float64}`, `S = Nonpositives`, and
-`G = SingleVariable`.
+`G = VariableIndex`.
 """
 mutable struct VectorizeBridge{T,F,S,G} <: AbstractBridge
     vector_constraint::CI{F,S}

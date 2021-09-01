@@ -142,11 +142,7 @@ function test_name_sanitization_length()
     x = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), x, "abcdefg")
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
           "minimize\n" *

@@ -30,7 +30,7 @@ end
 
 function test_nlexpr_singlevariable()
     x = MOI.VariableIndex(1)
-    _test_nlexpr(MOI.SingleVariable(x), NL._NLTerm[], Dict(x => 1.0), 0.0)
+    _test_nlexpr(x, NL._NLTerm[], Dict(x => 1.0), 0.0)
     return
 end
 
@@ -301,8 +301,8 @@ function test_nlmodel_hs071()
     l = [1.1, 1.2, 1.3, 1.4]
     u = [5.1, 5.2, 5.3, 5.4]
     start = [2.1, 2.2, 2.3, 2.4]
-    MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.GreaterThan.(l))
-    MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.LessThan.(u))
+    MOI.add_constraint.(model, v, MOI.GreaterThan.(l))
+    MOI.add_constraint.(model, v, MOI.LessThan.(u))
     MOI.set.(model, MOI.VariablePrimalStart(), v, start)
     lb, ub = [25.0, 40.0], [Inf, 40.0]
     evaluator = MOI.Test.HS071(true)
@@ -449,10 +449,10 @@ function test_nlmodel_hs071_linear_obj()
     l = [1.1, 1.2, 1.3, 1.4]
     u = [5.1, 5.2, 5.3, 5.4]
     start = [2.1, 2.2, 2.3, 2.4]
-    MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.GreaterThan.(l))
-    MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.LessThan.(u))
-    MOI.add_constraint(model, MOI.SingleVariable(v[2]), MOI.ZeroOne())
-    MOI.add_constraint(model, MOI.SingleVariable(v[3]), MOI.Integer())
+    MOI.add_constraint.(model, v, MOI.GreaterThan.(l))
+    MOI.add_constraint.(model, v, MOI.LessThan.(u))
+    MOI.add_constraint(model, v[2], MOI.ZeroOne())
+    MOI.add_constraint(model, v[3], MOI.Integer())
     MOI.set.(model, MOI.VariablePrimalStart(), v, start)
     lb, ub = [25.0, 40.0], [Inf, 40.0]
     evaluator = MOI.Test.HS071(true)
@@ -593,10 +593,10 @@ end
 function test_nlmodel_linear_quadratic()
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     x = MOI.add_variables(model, 4)
-    MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.GreaterThan(0.0))
-    MOI.add_constraint.(model, MOI.SingleVariable.(x), MOI.LessThan(2.0))
-    MOI.add_constraint(model, MOI.SingleVariable(x[2]), MOI.ZeroOne())
-    MOI.add_constraint(model, MOI.SingleVariable(x[3]), MOI.Integer())
+    MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
+    MOI.add_constraint.(model, x, MOI.LessThan(2.0))
+    MOI.add_constraint(model, x[2], MOI.ZeroOne())
+    MOI.add_constraint(model, x[3], MOI.Integer())
     f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x[2:4]), 2.0)
     g = MOI.ScalarQuadraticFunction(
         [MOI.ScalarQuadraticTerm(2.0, x[1], x[2])],
@@ -731,7 +731,7 @@ end
 
 function test_eval_singlevariable()
     x = MOI.VariableIndex(1)
-    f = NL._NLExpr(MOI.SingleVariable(x))
+    f = NL._NLExpr(x)
     @test NL._evaluate(f, Dict(x => 1.2)) == 1.2
 end
 
@@ -812,7 +812,7 @@ function test_issue_79()
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     x = MOI.add_variable(model)
     z = MOI.add_variable(model)
-    MOI.add_constraint(model, MOI.SingleVariable(z), MOI.ZeroOne())
+    MOI.add_constraint(model, z, MOI.ZeroOne())
     f = MOI.ScalarQuadraticFunction(
         [MOI.ScalarQuadraticTerm(1.0, z, z)],
         [MOI.ScalarAffineTerm(-1.0, z)],
@@ -894,10 +894,10 @@ function test_linear_constraint_types()
     model = MOI.Utilities.Model{Float64}()
     n = NL.Model()
     y = MOI.add_variables(model, 3)
-    MOI.add_constraint(model, MOI.SingleVariable(y[1]), MOI.ZeroOne())
-    MOI.add_constraint(model, MOI.SingleVariable(y[2]), MOI.Integer())
-    @test MOI.supports_constraint(n, MOI.SingleVariable, MOI.ZeroOne)
-    @test MOI.supports_constraint(n, MOI.SingleVariable, MOI.Integer)
+    MOI.add_constraint(model, y[1], MOI.ZeroOne())
+    MOI.add_constraint(model, y[2], MOI.Integer())
+    @test MOI.supports_constraint(n, MOI.VariableIndex, MOI.ZeroOne)
+    @test MOI.supports_constraint(n, MOI.VariableIndex, MOI.Integer)
     for set in [
         MOI.GreaterThan(0.0),
         MOI.LessThan(1.0),
@@ -905,13 +905,13 @@ function test_linear_constraint_types()
         MOI.Interval(3.0, 4.0),
     ]
         x = MOI.add_variable(model)
-        @test MOI.supports_constraint(n, MOI.SingleVariable, typeof(set))
+        @test MOI.supports_constraint(n, MOI.VariableIndex, typeof(set))
         @test MOI.supports_constraint(
             n,
             MOI.ScalarAffineFunction{Float64},
             typeof(set),
         )
-        MOI.add_constraint(model, MOI.SingleVariable(x), set)
+        MOI.add_constraint(model, x, set)
         MOI.add_constraint(
             model,
             MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),

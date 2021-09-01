@@ -69,7 +69,7 @@ end
 
 function MOI.get(
     ::SetMapBridge{T,S1},
-    ::MOI.NumberOfConstraints{MOI.SingleVariable,S1},
+    ::MOI.NumberOfConstraints{MOI.VariableIndex,S1},
 )::Int64 where {T,S1<:MOI.AbstractScalarSet}
     return 1
 end
@@ -83,7 +83,7 @@ end
 
 function MOI.get(
     bridge::SetMapBridge{T,S1},
-    ::MOI.ListOfConstraintIndices{MOI.SingleVariable,S1},
+    ::MOI.ListOfConstraintIndices{MOI.VariableIndex,S1},
 ) where {T,S1<:MOI.AbstractScalarSet}
     return [bridge.constraint]
 end
@@ -195,8 +195,7 @@ end
 
 function unbridged_map(bridge::SetMapBridge{T}, vi::MOI.VariableIndex) where {T}
     F = MOI.ScalarAffineFunction{T}
-    func = MOI.SingleVariable(vi)
-    mapped = MOIB.inverse_map_function(typeof(bridge), func)
+    mapped = MOIB.inverse_map_function(typeof(bridge), vi)
     return Pair{MOI.VariableIndex,F}[bridge.variable=>mapped]
 end
 

@@ -325,8 +325,7 @@ function test_modify()
         },
     }()
     x = MOI.add_variable(model)
-    fx = MOI.SingleVariable(x)
-    func = 2fx
+    func = 2x
     set = MOI.EqualTo(1)
     c = MOI.add_constraint(model, func, set)
     MOI.Utilities.final_touch(model, nothing)
@@ -369,22 +368,20 @@ function test_multicone()
         },
     }()
     x = MOI.add_variable(model)
-    fx = MOI.SingleVariable(x)
     y = MOI.add_variable(model)
-    fy = MOI.SingleVariable(y)
     MOI.add_constraint(
         model,
-        MOI.Utilities.vectorize([T(5) * fx + T(2)]),
+        MOI.Utilities.vectorize([T(5) * x + T(2)]),
         MOI.Zeros(1),
     )
     MOI.add_constraint(
         model,
-        MOI.Utilities.vectorize([T(3) * fy + T(1)]),
+        MOI.Utilities.vectorize([T(3) * y + T(1)]),
         MOI.Nonnegatives(1),
     )
     MOI.add_constraint(
         model,
-        MOI.Utilities.vectorize([T(6), T(7) * fx, T(4)]),
+        MOI.Utilities.vectorize([T(6), T(7) * x, T(4)]),
         MOI.Nonpositives(1),
     )
     MOI.Utilities.final_touch(model, nothing)

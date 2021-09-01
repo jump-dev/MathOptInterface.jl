@@ -16,7 +16,7 @@ If `BC !<: Union{LessThan, GreaterThan}`, `bound_constraint_index` is `nothing`.
 struct IndicatorSOS1Bridge{
     T,
     BC<:MOI.AbstractScalarSet,
-    MaybeBC<:Union{MOI.ConstraintIndex{MOI.SingleVariable,BC},Nothing},
+    MaybeBC<:Union{MOI.ConstraintIndex{MOI.VariableIndex,BC},Nothing},
 } <: AbstractBridge
     w_variable::MOI.VariableIndex
     z_variable::MOI.VariableIndex
@@ -34,12 +34,12 @@ function bridge_constraint(
 ) where {T<:Real,BC,MaybeBC}
     f_scalars = MOIU.eachscalar(f)
     (w, bound_constraint) = _add_bound_constraint!(model, BC)
-    z = convert(MOI.SingleVariable, f_scalars[1]).variable
+    z = convert(MOI.VariableIndex, f_scalars[1])
     sos_vector = MOI.VectorOfVariables([w, z])
     sos_constraint =
         MOI.add_constraint(model, sos_vector, MOI.SOS1{T}([0.4, 0.6]))
     affine_func = f_scalars[2]
-    affine_expr = MOIU.operate(+, T, affine_func, MOI.SingleVariable(w))
+    affine_expr = MOIU.operate(+, T, affine_func, w)
     linear_constraint = MOI.add_constraint(model, affine_expr, s.set)
     return IndicatorSOS1Bridge{T,BC,MaybeBC}(
         w,
@@ -141,7 +141,7 @@ function concrete_bridge_type(
     ::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.Indicator{MOI.ACTIVATE_ON_ONE,S}},
 ) where {T,S<:Union{MOI.LessThan,MOI.GreaterThan}}
-    return IndicatorSOS1Bridge{T,S,MOI.ConstraintIndex{MOI.SingleVariable,S}}
+    return IndicatorSOS1Bridge{T,S,MOI.ConstraintIndex{MOI.VariableIndex,S}}
 end
 
 function concrete_bridge_type(
@@ -162,15 +162,15 @@ end
 
 function MOI.get(
     ::IndicatorSOS1Bridge{T,BC,Nothing},
-    ::MOI.NumberOfConstraints{MOI.SingleVariable,BC},
+    ::MOI.NumberOfConstraints{MOI.VariableIndex,BC},
 )::Int64 where {T,BC}
     return 0
 end
 
 function MOI.get(
     ::IndicatorSOS1Bridge{T,BC,CI},
-    ::MOI.NumberOfConstraints{MOI.SingleVariable,BC},
-)::Int64 where {T,BC,CI<:MOI.ConstraintIndex{MOI.SingleVariable,BC}}
+    ::MOI.NumberOfConstraints{MOI.VariableIndex,BC},
+)::Int64 where {T,BC,CI<:MOI.ConstraintIndex{MOI.VariableIndex,BC}}
     return 1
 end
 
@@ -184,22 +184,22 @@ end
 function MOI.get(
     ::IndicatorSOS1Bridge{T,BC},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},BC},
-)::Int64 where {T,BC,CI<:MOI.ConstraintIndex{MOI.SingleVariable,BC}}
+)::Int64 where {T,BC,CI<:MOI.ConstraintIndex{MOI.VariableIndex,BC}}
     return 1
 end
 
 function MOI.get(
     b::IndicatorSOS1Bridge{T,BC,CI},
-    ::MOI.ListOfConstraintIndices{MOI.SingleVariable,BC},
+    ::MOI.ListOfConstraintIndices{MOI.VariableIndex,BC},
 ) where {T,BC,CI<:MOI.ConstraintIndex}
     return [b.bound_constraint_index]
 end
 
 function MOI.get(
     ::IndicatorSOS1Bridge{T,BC,Nothing},
-    ::MOI.ListOfConstraintIndices{MOI.SingleVariable,BC},
+    ::MOI.ListOfConstraintIndices{MOI.VariableIndex,BC},
 ) where {T,BC}
-    return MOI.ConstraintIndex{MOI.SingleVariable,BC}[]
+    return MOI.ConstraintIndex{MOI.VariableIndex,BC}[]
 end
 
 function MOI.get(

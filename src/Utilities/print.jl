@@ -111,14 +111,6 @@ function _shorten(options::_PrintOptions, x::Float64)
     return string(x)
 end
 
-function _to_string(
-    options::_PrintOptions,
-    model::MOI.ModelLike,
-    f::MOI.SingleVariable,
-)
-    return _to_string(options, model, f.variable)
-end
-
 """
     _to_string(options::_PrintOptions, c::Float64, x::String)
 

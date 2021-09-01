@@ -3,8 +3,8 @@ const modificationtests = Dict{String,Function}()
 """
     set_function_single_variable(model::MOI.ModelLike, config::Config)
 
-Test that modifying the function of a `SingleVariable`-in-`LessThan` constraint
-throws a [`SettingSingleVariableFunctionNotAllowed`](@ref) error.
+Test that modifying the function of a `VariableIndex`-in-`LessThan` constraint
+throws a [`SettingVariableIndexNotAllowed`](@ref) error.
 """
 function set_function_single_variable(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
@@ -18,12 +18,12 @@ function set_function_single_variable(model::MOI.ModelLike, config::Config)
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
     y = MOI.get(model, MOI.VariableIndex, "y")
-    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(x.value)
-    # We test this after the creation of every `SingleVariable` constraint
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}}(x.value)
+    # We test this after the creation of every `VariableIndex` constraint
     # to ensure a good coverage of corner cases.
     @test c.value == x.value
-    err = MOI.SettingSingleVariableFunctionNotAllowed()
-    func = MOI.SingleVariable(y)
+    err = MOI.SettingVariableIndexNotAllowed()
+    func = y
     @test_throws err MOI.set(model, MOI.ConstraintFunction(), c, func)
 end
 modificationtests["set_function_single_variable"] = set_function_single_variable
@@ -31,7 +31,7 @@ modificationtests["set_function_single_variable"] = set_function_single_variable
 """
     solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::Config)
 
-Test set modification SingleVariable-in-LessThan constraint. If
+Test set modification VariableIndex-in-LessThan constraint. If
 `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
@@ -46,7 +46,7 @@ function solve_set_singlevariable_lessthan(model::MOI.ModelLike, config::Config)
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(x.value)
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}}(x.value)
     @test c.value == x.value
     test_model_solution(
         model,
@@ -73,7 +73,7 @@ modificationtests["solve_set_singlevariable_lessthan"] =
 """
     solve_transform_singlevariable_lessthan(model::MOI.ModelLike, config::Config)
 
-Test set transformation of a SingleVariable-in-LessThan constraint. If
+Test set transformation of a VariableIndex-in-LessThan constraint. If
 `config.solve=true` confirm that it solves correctly, and if
 `config.duals=true`, check that the duals are computed correctly.
 """
@@ -91,7 +91,7 @@ function solve_transform_singlevariable_lessthan(
 """,
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(x.value)
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}}(x.value)
     @test c.value == x.value
     test_model_solution(
         model,
@@ -492,9 +492,7 @@ function delete_variable_with_single_variable_obj(
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
     y = MOI.get(model, MOI.VariableIndex, "y")
-    c = MOI.ConstraintIndex{MOI.SingleVariable,MOI.GreaterThan{Float64}}(
-        x.value,
-    )
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(x.value)
     @test c.value == x.value
     MOI.delete(model, y)
     return test_model_solution(

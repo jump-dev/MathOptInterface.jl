@@ -28,7 +28,7 @@ function test_GreaterToLess()
         bridged_mock,
         config,
         include = [
-            "test_basic_SingleVariable_GreaterThan",
+            "test_basic_VariableIndex_GreaterThan",
             "test_basic_ScalarAffineFunction_GreaterThan",
             "test_basic_ScalarQuadraticFunction_GreaterThan",
         ],
@@ -77,7 +77,7 @@ function test_LessToGreater()
         bridged_mock,
         config,
         include = [
-            "test_basic_SingleVariable_LessThan",
+            "test_basic_VariableIndex_LessThan",
             "test_basic_ScalarAffineFunction_LessThan",
             "test_basic_ScalarQuadraticFunction_LessThan",
         ],

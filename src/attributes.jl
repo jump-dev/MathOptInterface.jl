@@ -420,9 +420,9 @@ function type used to define the constraint.
 #### Note
 
 Setting the constraint function is not allowed if `F` is
-[`SingleVariable`](@ref), it throws a
-[`SettingSingleVariableFunctionNotAllowed`](@ref) error. Indeed, it would
-require changing the index `c` as the index of `SingleVariable` constraints
+[`VariableIndex`](@ref), it throws a
+[`SettingVariableIndexNotAllowed`](@ref) error. Indeed, it would
+require changing the index `c` as the index of `VariableIndex` constraints
 should be the same as the index of the variable.
 
 #### Examples
@@ -433,7 +433,7 @@ If `c` is a `ConstraintIndex{ScalarAffineFunction,S}` and `v1` and `v2` are
 ```julia
 set(model, ConstraintFunction(), c,
     ScalarAffineFunction(ScalarAffineTerm.([1.0, 2.0], [v1, v2]), 5.0))
-set(model, ConstraintFunction(), c, SingleVariable(v1)) # Error
+set(model, ConstraintFunction(), c, v1) # Error
 ```
 """
 function set end
@@ -490,12 +490,12 @@ function throw_set_error_fallback(
 end
 
 """
-    SettingSingleVariableFunctionNotAllowed()
+    SettingVariableIndexNotAllowed()
 
 Error type that should be thrown when the user calls [`set`](@ref) to change
-the [`ConstraintFunction`](@ref) of a [`SingleVariable`](@ref) constraint.
+the [`ConstraintFunction`](@ref) of a [`VariableIndex`](@ref) constraint.
 """
-struct SettingSingleVariableFunctionNotAllowed <: Exception end
+struct SettingVariableIndexNotAllowed <: Exception end
 
 """
     submit(optimizer::AbstractOptimizer, sub::AbstractSubmittable,
@@ -540,7 +540,7 @@ argument to the feasible solution callback.
 
 ## Examples
 
-Suppose `fx = MOI.SingleVariable(x)` and `fx = MOI.SingleVariable(y)`
+Suppose `fx = x` and `fx = y`
 where `x` and `y` are [`VariableIndex`](@ref)s of `optimizer`. To add a
 `LazyConstraint` for `2x + 3y <= 1`, write
 ```julia
@@ -986,11 +986,11 @@ A model attribute for the type `F` of the objective function set using the
 
 ## Examples
 
-In the following code, `attr` should be equal to `MOI.SingleVariable`:
+In the following code, `attr` should be equal to `MOI.VariableIndex`:
 ```julia
 x = MOI.add_variable(model)
-MOI.set(model, MOI.ObjectiveFunction{MOI.SingleVariable}(),
-         MOI.SingleVariable(x))
+MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(),
+         x)
 attr = MOI.get(model, MOI.ObjectiveFunctionType())
 ```
 """
@@ -1290,31 +1290,31 @@ regardless of whether they have the same `F`-in-`S` type.
 
 ## Notes
 
-You should _not_ implement `ConstraintName` for `SingleVariable` constraints.
+You should _not_ implement `ConstraintName` for `VariableIndex` constraints.
 """
 struct ConstraintName <: AbstractConstraintAttribute end
 
 attribute_value_type(::ConstraintName) = String
 
 """
-    SingleVariableConstraintNameError()
+    VariableIndexConstraintNameError()
 
 An error to be thrown when the user tries to set `ConstraintName` on a
-`SingleVariable` constraint.
+`VariableIndex` constraint.
 """
-function SingleVariableConstraintNameError()
+function VariableIndexConstraintNameError()
     return UnsupportedAttribute(
         ConstraintName(),
-        "`ConstraintName`s are not supported for `SingleVariable` constraints.",
+        "`ConstraintName`s are not supported for `VariableIndex` constraints.",
     )
 end
 
 function supports_fallback(
     ::ModelLike,
     ::ConstraintName,
-    ::Type{ConstraintIndex{SingleVariable,S}},
+    ::Type{ConstraintIndex{VariableIndex,S}},
 ) where {S}
-    return throw(SingleVariableConstraintNameError())
+    return throw(VariableIndexConstraintNameError())
 end
 
 """
@@ -1388,8 +1388,8 @@ See [`ResultCount`](@ref) for information on how the results are ordered.
 
 For the basis status of a variable, query [`VariableBasisStatus`](@ref).
 
-`ConstraintBasisStatus` does not apply to `SingleVariable` constraints. You
-can infer the basis status of a [`SingleVariable`](@ref) constraint by looking
+`ConstraintBasisStatus` does not apply to `VariableIndex` constraints. You
+can infer the basis status of a [`VariableIndex`](@ref) constraint by looking
 at the result of [`VariableBasisStatus`](@ref).
 """
 struct ConstraintBasisStatus <: AbstractConstraintAttribute
@@ -1402,10 +1402,10 @@ attribute_value_type(::ConstraintBasisStatus) = BasisStatusCode
 function get_fallback(
     ::ModelLike,
     ::ConstraintBasisStatus,
-    ::ConstraintIndex{SingleVariable,<:AbstractScalarSet},
+    ::ConstraintIndex{VariableIndex,<:AbstractScalarSet},
 )
     return error(
-        "Querying the basis status of a `SingleVariable` constraint is not ",
+        "Querying the basis status of a `VariableIndex` constraint is not ",
         "supported. Use [`VariableBasisStatus`](@ref) instead.",
     )
 end

@@ -1,6 +1,5 @@
 # x
-const dummy_single_variable =
-    (x::Vector{MOI.VariableIndex}) -> MOI.SingleVariable(x[1])
+const dummy_single_variable = (x::Vector{MOI.VariableIndex}) -> x[1]
 # x₁, x₂
 const dummy_vectorofvariables =
     (x::Vector{MOI.VariableIndex}) -> MOI.VectorOfVariables(x)
@@ -35,21 +34,21 @@ const dummy_vector_quadratic =
     )
 
 const BasicConstraintTests = Dict(
-    (MOI.SingleVariable, MOI.LessThan{Float64}) =>
+    (MOI.VariableIndex, MOI.LessThan{Float64}) =>
         (dummy_single_variable, 1, MOI.LessThan(1.0)),
-    (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
+    (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
         (dummy_single_variable, 1, MOI.GreaterThan(1.0)),
-    (MOI.SingleVariable, MOI.EqualTo{Float64}) =>
+    (MOI.VariableIndex, MOI.EqualTo{Float64}) =>
         (dummy_single_variable, 1, MOI.EqualTo(1.0)),
-    (MOI.SingleVariable, MOI.Interval{Float64}) =>
+    (MOI.VariableIndex, MOI.Interval{Float64}) =>
         (dummy_single_variable, 1, MOI.Interval(1.0, 2.0)),
-    (MOI.SingleVariable, MOI.ZeroOne) =>
+    (MOI.VariableIndex, MOI.ZeroOne) =>
         (dummy_single_variable, 1, MOI.ZeroOne()),
-    (MOI.SingleVariable, MOI.Integer) =>
+    (MOI.VariableIndex, MOI.Integer) =>
         (dummy_single_variable, 1, MOI.Integer()),
-    (MOI.SingleVariable, MOI.Semicontinuous{Float64}) =>
+    (MOI.VariableIndex, MOI.Semicontinuous{Float64}) =>
         (dummy_single_variable, 1, MOI.Semicontinuous(1.0, 2.0)),
-    (MOI.SingleVariable, MOI.Semiinteger{Float64}) =>
+    (MOI.VariableIndex, MOI.Semiinteger{Float64}) =>
         (dummy_single_variable, 1, MOI.Semiinteger(1.0, 2.0)),
     (MOI.VectorOfVariables, MOI.SOS1{Float64}) =>
         (dummy_vectorofvariables, 2, MOI.SOS1([1.0, 2.0])),
@@ -257,7 +256,7 @@ function basic_constraint_tests(
     end
 end
 
-variables(func::MOI.SingleVariable) = func.variable
+variables(x::MOI.VariableIndex) = x
 variables(func::MOI.VectorOfVariables) = func.variables
 function variables(func::MOI.ScalarAffineFunction)
     return Set(term.variable for term in func.terms)
@@ -332,13 +331,13 @@ function basic_constraint_test_helper(
         @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
         if name
             @testset "ConstraintName" begin
-                if F == MOI.SingleVariable
+                if F == MOI.VariableIndex
                     @test_throws(
-                        MOI.SingleVariableConstraintNameError(),
+                        MOI.VariableIndexConstraintNameError(),
                         MOI.supports(model, MOI.ConstraintName(), typeof(c)),
                     )
                     @test_throws(
-                        MOI.SingleVariableConstraintNameError(),
+                        MOI.VariableIndexConstraintNameError(),
                         MOI.set(model, MOI.ConstraintName(), c, "c"),
                     )
                 else
@@ -368,7 +367,7 @@ function basic_constraint_test_helper(
               MOI.get(model, MOI.NumberOfConstraints{F,S}()) ==
               1
     end
-    if F != MOI.SingleVariable && F != MOI.VectorOfVariables
+    if F != MOI.VariableIndex && F != MOI.VectorOfVariables
         # We can't add multiple variable constraints as these are
         # interpreted as bounds etc.
         @testset "add_constraints" begin

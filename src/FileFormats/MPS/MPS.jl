@@ -236,9 +236,9 @@ end
 
 function _list_of_integer_variables(model, names, integer_variables, S)
     for index in
-        MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable,S}())
+        MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
         v_index = MOI.get(model, MOI.ConstraintFunction(), index)
-        push!(integer_variables, names[v_index.variable])
+        push!(integer_variables, names[v_index])
     end
     return
 end
@@ -497,10 +497,10 @@ end
 
 function _collect_bounds(bounds, model, S, names)
     for index in
-        MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable,S}())
+        MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
         func = MOI.get(model, MOI.ConstraintFunction(), index)
         set = MOI.get(model, MOI.ConstraintSet(), index)::S
-        name = names[func.variable]
+        name = names[func]
         bounds[name] = update_bounds(bounds[name], set)
     end
     return
@@ -826,12 +826,12 @@ function _add_variable(model, data, variable_map, i, name)
     MOI.set(model, MOI.VariableName(), x, name)
     set = bounds_to_set(data.col_lower[i], data.col_upper[i])
     if set !== nothing
-        MOI.add_constraint(model, MOI.SingleVariable(x), set)
+        MOI.add_constraint(model, x, set)
     end
     if data.vtype[i] == VTYPE_INTEGER
-        MOI.add_constraint(model, MOI.SingleVariable(x), MOI.Integer())
+        MOI.add_constraint(model, x, MOI.Integer())
     elseif data.vtype[i] == VTYPE_BINARY
-        MOI.add_constraint(model, MOI.SingleVariable(x), MOI.ZeroOne())
+        MOI.add_constraint(model, x, MOI.ZeroOne())
     end
     return
 end

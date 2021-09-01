@@ -316,7 +316,7 @@ For each function-set constraint pair, define [`supports_constraint`](@ref):
 ```julia
 function MOI.supports_constraint(
     ::Optimizer,
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{MOI.ZeroOne},
 )
     return true
@@ -326,7 +326,7 @@ To make this easier, you may want to use `Union`s:
 ```julia
 function MOI.supports_constraint(
     ::Optimizer,
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{<:Union{MOI.LessThan,MOI.GreaterThan,MOI.EqualTo}},
 )
     return true
@@ -509,24 +509,24 @@ These methods have the following rules:
 
 !!! warning
     You should _not_ implement [`ConstraintName`](@ref) for
-    [`SingleVariable`](@ref) constraints. If you implement [`ConstraintName`](@ref)
+    [`VariableIndex`](@ref) constraints. If you implement [`ConstraintName`](@ref)
     for other constraints, you can add the following two methods to disable
-    [`ConstraintName`](@ref) for [`SingleVariable`](@ref) constraints.
+    [`ConstraintName`](@ref) for [`VariableIndex`](@ref) constraints.
     ```julia
     function MOI.supports(
         ::Optimizer,
         ::MOI.ConstraintName,
-        ::Type{<:MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet}},
+        ::Type{<:MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet}},
     )
-        return throw(MOI.SingleVariableConstraintNameError())
+        return throw(MOI.VariableIndexConstraintNameError())
     end
     function MOI.set(
         ::Optimizer,
         ::MOI.ConstraintName,
-        ::MOI.ConstraintIndex{MOI.SingleVariable,<:MOI.AbstractScalarSet},
+        ::MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet},
         ::String,
     )
-        return throw(MOI.SingleVariableConstraintNameError())
+        return throw(MOI.VariableIndexConstraintNameError())
     end
     ```
 
@@ -602,17 +602,17 @@ In this case, declare that you `support` the constraint, and throw
 
 ### Dealing with multiple variable bounds
 
-MathOptInterface uses [`SingleVariable`](@ref) constraints to represent variable
+MathOptInterface uses [`VariableIndex`](@ref) constraints to represent variable
 bounds. Defining multiple variable bounds on a single variable is not allowed.
 
 Throw [`LowerBoundAlreadySet`](@ref) or [`UpperBoundAlreadySet`](@ref) if the
 user adds a constraint that results in multiple bounds.
 
 Only throw if the constraints conflict. It is okay to add
-[`SingleVariable`](@ref)-in-[`GreaterThan`](@ref) and then
-[`SingleVariable`](@ref)-in-[`LessThan`](@ref), but not
-[`SingleVariable`](@ref)-in-[`Interval`](@ref) and then
-[`SingleVariable`](@ref)-in-[`LessThan`](@ref),
+[`VariableIndex`](@ref)-in-[`GreaterThan`](@ref) and then
+[`VariableIndex`](@ref)-in-[`LessThan`](@ref), but not
+[`VariableIndex`](@ref)-in-[`Interval`](@ref) and then
+[`VariableIndex`](@ref)-in-[`LessThan`](@ref),
 
 ### Expect duplicate coefficients
 

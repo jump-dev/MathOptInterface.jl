@@ -179,7 +179,7 @@ function MOI.is_empty(model::Model)
 end
 
 const _SCALAR_FUNCTIONS = Union{
-    MOI.SingleVariable,
+    MOI.VariableIndex,
     MOI.ScalarAffineFunction{Float64},
     MOI.ScalarQuadraticFunction{Float64},
 }
@@ -201,7 +201,7 @@ end
 
 function MOI.supports_constraint(
     ::Model,
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{<:Union{MOI.ZeroOne,MOI.Integer}},
 )
     return true
@@ -466,7 +466,7 @@ end
 function _process_constraint(
     dest::Model,
     model,
-    F::Type{MOI.SingleVariable},
+    F::Type{MOI.VariableIndex},
     S::Type{<:_SCALAR_SETS},
     mapping,
 )
@@ -476,10 +476,10 @@ function _process_constraint(
         s = MOI.get(model, MOI.ConstraintSet(), ci)
         _, l, u = _set_to_bounds(s)
         if l > -Inf
-            dest.x[f.variable].lower = l
+            dest.x[f].lower = l
         end
         if u < Inf
-            dest.x[f.variable].upper = u
+            dest.x[f].upper = u
         end
     end
     return
@@ -488,14 +488,14 @@ end
 function _process_constraint(
     dest::Model,
     model,
-    F::Type{MOI.SingleVariable},
+    F::Type{MOI.VariableIndex},
     S::Type{<:Union{MOI.ZeroOne,MOI.Integer}},
     mapping,
 )
     for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         mapping[ci] = ci
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
-        dest.x[f.variable].type = S == MOI.ZeroOne ? _BINARY : _INTEGER
+        dest.x[f].type = S == MOI.ZeroOne ? _BINARY : _INTEGER
     end
     return
 end

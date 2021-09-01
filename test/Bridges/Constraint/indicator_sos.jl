@@ -108,7 +108,7 @@ function test_indicator_by_SOS1()
         model,
         MOI.ConstraintFunction(),
         bridge1.bound_constraint_index,
-    ) == MOI.SingleVariable(w1)
+    ) == w1
     @test MOI.get(model, MOI.ConstraintSet(), bridge1.bound_constraint_index) ==
           MOI.LessThan(0.0)
     @test MOI.get(
@@ -148,7 +148,7 @@ function test_indicator_by_SOS1()
         model,
         MOI.ConstraintFunction(),
         bridge3.bound_constraint_index,
-    ) == MOI.SingleVariable(w3)
+    ) == w3
     @test MOI.get(model, MOI.ConstraintSet(), bridge3.bound_constraint_index) ==
           MOI.GreaterThan(0.0)
     @test MOI.get(
@@ -219,7 +219,7 @@ function test_model_equality()
     MOI.set(mock, MOI.ConstraintName(), sos_cons_list[1], "sos1")
     single_less_cons = MOI.get(
         mock,
-        MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.LessThan{Float64}}(),
     )
     @test length(single_less_cons) == 1
 
@@ -232,11 +232,7 @@ function test_model_equality()
     )
     @test length(inequality_list) == 1
     MOI.set(mock, MOI.ConstraintName(), inequality_list[1], "ineq")
-    MOI.set(
-        mock,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(z),
-    )
+    MOI.set(mock, MOI.ObjectiveFunction{MOI.VariableIndex}(), z)
     MOI.set(mock, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     s = """
     variables: z, x, w
@@ -261,8 +257,8 @@ function test_model_equality()
         ci,
         2,
         (
-            (MOI.SingleVariable, MOI.ZeroOne, 1),
-            (MOI.SingleVariable, MathOptInterface.LessThan{Float64}, 0),
+            (MOI.VariableIndex, MOI.ZeroOne, 1),
+            (MOI.VariableIndex, MathOptInterface.LessThan{Float64}, 0),
             (MOI.VectorOfVariables, MathOptInterface.SOS1{Float64}, 0),
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 0),
         ),
@@ -335,7 +331,7 @@ function test_getting_primal_attributes()
     bridge_eq = MOI.Bridges.Constraint.bridge_constraint(BT, mock, f, iseteq)
     @test MOI.get(
         bridge_eq,
-        MOI.NumberOfConstraints{MOI.SingleVariable,MOI.EqualTo{Float64}}(),
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{Float64}}(),
     ) == 0
     @test MOI.get(
         bridge_eq,
@@ -348,7 +344,7 @@ function test_getting_primal_attributes()
         MOI.get(
             bridge_eq,
             MOI.ListOfConstraintIndices{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.EqualTo{Float64},
             }(),
         ),

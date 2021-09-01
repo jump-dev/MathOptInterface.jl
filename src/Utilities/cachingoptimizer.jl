@@ -376,7 +376,7 @@ function MOI.add_constrained_variable(
                         set,
                     )::Tuple{
                         MOI.VariableIndex,
-                        MOI.ConstraintIndex{MOI.SingleVariable,S},
+                        MOI.ConstraintIndex{MOI.VariableIndex,S},
                     }
             catch err
                 if err isa MOI.NotAllowedError
@@ -391,7 +391,7 @@ function MOI.add_constrained_variable(
                 set,
             )::Tuple{
                 MOI.VariableIndex,
-                MOI.ConstraintIndex{MOI.SingleVariable,S},
+                MOI.ConstraintIndex{MOI.VariableIndex,S},
             }
         end
     end
@@ -620,10 +620,10 @@ end
 function MOI.set(
     ::CachingOptimizer,
     ::MOI.ConstraintFunction,
-    ::MOI.ConstraintIndex{MOI.SingleVariable,S},
-    ::MOI.SingleVariable,
+    ::MOI.ConstraintIndex{MOI.VariableIndex,S},
+    ::MOI.VariableIndex,
 ) where {S}
-    return throw(MOI.SettingSingleVariableFunctionNotAllowed())
+    return throw(MOI.SettingVariableIndexNotAllowed())
 end
 
 function MOI.modify(

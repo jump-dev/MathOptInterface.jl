@@ -19,7 +19,7 @@ function runtests()
     return
 end
 
-_zero(::Type{MOI.SingleVariable}, T::Type) = zero(MOI.ScalarAffineFunction{T})
+_zero(::Type{MOI.VariableIndex}, T::Type) = zero(MOI.ScalarAffineFunction{T})
 _zero(x, ::Type) = zero(x)
 
 function _promote_operation_test(op::Function, T, x::Type, y::Type)
@@ -32,17 +32,17 @@ function _test_promote_operation_allocation(T)
     AffType = MOI.ScalarAffineFunction{T}
     QuadType = MOI.ScalarQuadraticFunction{T}
     for op in [+, -, *]
-        _promote_operation_test(op, T, T, MOI.SingleVariable)
-        _promote_operation_test(op, T, MOI.SingleVariable, T)
+        _promote_operation_test(op, T, T, MOI.VariableIndex)
+        _promote_operation_test(op, T, MOI.VariableIndex, T)
         _promote_operation_test(op, T, T, AffType)
         _promote_operation_test(op, T, AffType, T)
         _promote_operation_test(op, T, T, QuadType)
         _promote_operation_test(op, T, QuadType, T)
-        _promote_operation_test(op, T, MOI.SingleVariable, AffType)
-        _promote_operation_test(op, T, AffType, MOI.SingleVariable)
+        _promote_operation_test(op, T, MOI.VariableIndex, AffType)
+        _promote_operation_test(op, T, AffType, MOI.VariableIndex)
         if op != *
-            _promote_operation_test(op, T, MOI.SingleVariable, QuadType)
-            _promote_operation_test(op, T, QuadType, MOI.SingleVariable)
+            _promote_operation_test(op, T, MOI.VariableIndex, QuadType)
+            _promote_operation_test(op, T, QuadType, MOI.VariableIndex)
             _promote_operation_test(op, T, AffType, QuadType)
             _promote_operation_test(op, T, QuadType, AffType)
         end
@@ -61,9 +61,9 @@ function test_promote_operation_allocation_Float32()
 end
 
 function _test_promote_operation(T)
-    @test MA.promote_operation(*, MOI.SingleVariable, T) ==
+    @test MA.promote_operation(*, MOI.VariableIndex, T) ==
           MOI.ScalarAffineFunction{T}
-    @test MA.promote_operation(*, T, MOI.SingleVariable) ==
+    @test MA.promote_operation(*, T, MOI.VariableIndex) ==
           MOI.ScalarAffineFunction{T}
     @test MA.promote_operation(*, MOI.ScalarAffineFunction{T}, T) ==
           MOI.ScalarAffineFunction{T}
@@ -82,9 +82,8 @@ test_promote_operation_Float32() = _test_promote_operation(Float32)
 
 function _test_scaling(T)
     x = MOI.VariableIndex(1)
-    fx = MOI.SingleVariable(x)
-    @test T(3) == MA.scaling(T(0)fx + T(3))
-    f = T(2)fx + T(3)
+    @test T(3) == MA.scaling(T(0)x + T(3))
+    f = T(2)x + T(3)
     err = InexactError(:convert, T, f)
     @test_throws err MA.scaling(f)
 end
@@ -95,8 +94,7 @@ test_scaling_Float32() = _test_scaling(Float32)
 function test_unary_minus()
     for T in [Float64, Float32]
         x = MOI.VariableIndex(1)
-        fx = MOI.SingleVariable(x)
-        for f in [T(2)fx + T(3), T(4) * fx * fx + T(2)fx + T(3)]
+        for f in [T(2)x + T(3), T(4) * x * x + T(2)x + T(3)]
             g = -f
             @test g ≈ MA.operate!(-, f)
             @test g ≈ f
@@ -172,20 +170,19 @@ function _run_all_tests(T::Type, a, b, c, d, e, f, g)
     return
 end
 
-function test_SingleVariable()
+function test_VariableIndex()
     x = MOI.VariableIndex(1)
-    fx = MOI.SingleVariable(x)
-    a = 2fx
-    MA.Test.@test_rewrite(a + fx)
-    MA.Test.@test_rewrite(a + 3 * fx)
-    MA.Test.@test_rewrite(a + fx * 4)
-    MA.Test.@test_rewrite(a + 3 * fx * 4)
-    MA.Test.@test_rewrite(fx + a)
-    MA.Test.@test_rewrite(a - fx)
-    MA.Test.@test_rewrite(a - 3 * fx)
-    MA.Test.@test_rewrite(a - fx * 4)
-    MA.Test.@test_rewrite(a - 3 * fx * 4)
-    MA.Test.@test_rewrite(fx - a)
+    a = 2x
+    MA.Test.@test_rewrite(a + x)
+    MA.Test.@test_rewrite(a + 3 * x)
+    MA.Test.@test_rewrite(a + x * 4)
+    MA.Test.@test_rewrite(a + 3 * x * 4)
+    MA.Test.@test_rewrite(x + a)
+    MA.Test.@test_rewrite(a - x)
+    MA.Test.@test_rewrite(a - 3 * x)
+    MA.Test.@test_rewrite(a - x * 4)
+    MA.Test.@test_rewrite(a - 3 * x * 4)
+    MA.Test.@test_rewrite(x - a)
 end
 
 function test_ScalarAffineFunction()
@@ -196,15 +193,13 @@ function test_ScalarAffineFunction()
     )
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
-    fx = MOI.SingleVariable(x)
-    fy = MOI.SingleVariable(y)
-    a = T(2) * fx + T(1)
-    b = T(4) * fy + T(2)
-    c = T(3) * fx - T(2) * fy - T(3)
-    d = T(3) * fx - T(2) * fy + T(4) * fx
-    e = T(5) * fx - T(5)
-    f = T(1) * fy - T(2) * fx + T(2)
-    g = T(2) * fx + T(3) * fx
+    a = T(2) * x + T(1)
+    b = T(4) * y + T(2)
+    c = T(3) * x - T(2) * y - T(3)
+    d = T(3) * x - T(2) * y + T(4) * x
+    e = T(5) * x - T(5)
+    f = T(1) * y - T(2) * x + T(2)
+    g = T(2) * x + T(3) * x
     _run_all_tests(T, a, b, c, d, e, f, g)
     return
 end
@@ -217,15 +212,13 @@ function test_ScalarQuadraticFunction()
     )
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
-    fx = MOI.SingleVariable(x)
-    fy = MOI.SingleVariable(y)
-    a = T(2) * fx + T(1) + T(4) * fx * fy
-    b = T(4) * fy + T(3) * fy * fy - T(3) * fy * fx + T(2)
-    c = T(2) * fx * fx + T(3) * fx - T(2) * fy - T(3)
-    d = T(2) * fx * fx + T(3) * fx - T(2) * fy + T(4) * fx - T(1) * fy * fy
-    e = T(5) * fx - T(5) - T(4) * fx * fy
-    f = T(1) * fy + T(2) * fy * fy - T(2) * fx + T(2)
-    g = T(2) * fx + T(3) * fx + T(3) * fx * fy
+    a = T(2) * x + T(1) + T(4) * x * y
+    b = T(4) * y + T(3) * y * y - T(3) * y * x + T(2)
+    c = T(2) * x * x + T(3) * x - T(2) * y - T(3)
+    d = T(2) * x * x + T(3) * x - T(2) * y + T(4) * x - T(1) * y * y
+    e = T(5) * x - T(5) - T(4) * x * y
+    f = T(1) * y + T(2) * y * y - T(2) * x + T(2)
+    g = T(2) * x + T(3) * x + T(3) * x * y
     _run_all_tests(T, a, b, c, d, e, f, g)
     return
 end

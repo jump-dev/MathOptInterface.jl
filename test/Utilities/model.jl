@@ -163,7 +163,7 @@ function _test_ObjectiveFunction(T)
     model = MOI.Utilities.Model{T}()
     @test !MOI.supports(model, MOI.ObjectiveFunction{DummyFunction}())
     for F in [
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
     ]
@@ -182,10 +182,10 @@ function test_ObjectiveFunction()
     return
 end
 
-function _test_SingleVariable(T)
+function _test_VariableIndex(T)
     model = MOI.Utilities.Model{T}()
     @test !MOI.supports_constraint(model, DummyFunction, DummySet)
-    @test !MOI.supports_constraint(model, MOI.SingleVariable, DummySet)
+    @test !MOI.supports_constraint(model, MOI.VariableIndex, DummySet)
     @test !MOI.supports_add_constrained_variable(model, DummySet)
     for S in [
         MOI.EqualTo{T},
@@ -197,7 +197,7 @@ function _test_SingleVariable(T)
         MOI.Semicontinuous{T},
         MOI.Semiinteger{T},
     ]
-        @test MOI.supports_constraint(model, MOI.SingleVariable, S)
+        @test MOI.supports_constraint(model, MOI.VariableIndex, S)
         @test MOI.supports_add_constrained_variable(model, S)
     end
     U = Float32
@@ -209,15 +209,15 @@ function _test_SingleVariable(T)
         MOI.Semicontinuous{U},
         MOI.Semiinteger{U},
     ]
-        @test !MOI.supports_constraint(model, MOI.SingleVariable, S)
+        @test !MOI.supports_constraint(model, MOI.VariableIndex, S)
         @test !MOI.supports_add_constrained_variable(model, S)
     end
     return
 end
 
-function test_SingleVariable()
-    _test_SingleVariable(Float64)
-    _test_SingleVariable(Int)
+function test_VariableIndex()
+    _test_VariableIndex(Float64)
+    _test_VariableIndex(Int)
     return
 end
 
@@ -390,9 +390,7 @@ function test_quadratic_functions()
         }(),
     )
     @test MOI.get(model, MOI.ConstraintFunction(), c6).constants == f6.constants
-    fx = MOI.SingleVariable(x)
-    fy = MOI.SingleVariable(y)
-    obj = 1fx + 2fy
+    obj = 1x + 2y
     MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
     message = string(
         "Cannot delete variable as it is constrained with other",
@@ -400,7 +398,7 @@ function test_quadratic_functions()
     )
     err = MOI.DeleteNotAllowed(y, message)
     @test_throws err MOI.delete(model, y)
-    @test MOI.get(model, MOI.ObjectiveFunction{typeof(obj)}()) ≈ 1fx + 2fy
+    @test MOI.get(model, MOI.ObjectiveFunction{typeof(obj)}()) ≈ 1x + 2y
     @test MOI.is_valid(model, c8)
     MOI.delete(model, c8)
     @test !MOI.is_valid(model, c8)
@@ -409,7 +407,7 @@ function test_quadratic_functions()
         MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.SecondOrderCone}(),
     )
     MOI.delete(model, y)
-    @test MOI.get(model, MOI.ObjectiveFunction{typeof(obj)}()) ≈ 1fx
+    @test MOI.get(model, MOI.ObjectiveFunction{typeof(obj)}()) ≈ 1x
     f = MOI.get(model, MOI.ConstraintFunction(), c2)
     @test f.affine_terms ==
           MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([3, 1], [x, x]))
@@ -436,7 +434,7 @@ end
 function test_default_fallbacks()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
-    func = convert(MOI.ScalarAffineFunction{Float64}, MOI.SingleVariable(x))
+    func = convert(MOI.ScalarAffineFunction{Float64}, x)
     c = MOI.add_constraint(model, func, MOI.LessThan(0.0))
     @test !MOI.supports_constraint(
         model,

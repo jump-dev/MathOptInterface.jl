@@ -22,7 +22,7 @@ function _set_var_and_con_names(model::MOI.ModelLike)
     single_variable_constraints = Tuple[]
     for i in MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.Integer}(),
+        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.Integer}(),
     )
         idx += 1
         x = MOI.get(model, MOI.VariableName(), MOI.VariableIndex(i.value))
@@ -107,7 +107,7 @@ function test_support_errors()
         x in $set
         """
         model = CBF.Model()
-        err = MOI.UnsupportedConstraint{MOI.SingleVariable,typeof(set)}
+        err = MOI.UnsupportedConstraint{MOI.VariableIndex,typeof(set)}
         @test_throws err MOIU.loadfromstring!(model, model_string)
     end
 end
@@ -172,7 +172,7 @@ end
 
 const _WRITE_READ_MODELS = [
     (
-        "min SingleVariable",
+        "min VariableIndex",
         """
     variables: x
     minobjective: x
@@ -186,7 +186,7 @@ const _WRITE_READ_MODELS = [
 """,
     ),
     (
-        "max SingleVariable",
+        "max VariableIndex",
         """
     variables: x
     maxobjective: x
@@ -200,7 +200,7 @@ const _WRITE_READ_MODELS = [
 """,
     ),
     (
-        "SingleVariable in Integer",
+        "VariableIndex in Integer",
         """
     variables: x, y
     minobjective: 1.2x

@@ -33,7 +33,7 @@ extensible to other sets recognized by the solver.
 
 The function types implemented in MathOptInterface.jl are:
 
-* [`SingleVariable`](@ref): ``x_j``, i.e., projection onto a single coordinate
+* [`VariableIndex`](@ref): ``x_j``, i.e., projection onto a single coordinate
   defined by a variable index ``j``.
 * [`VectorOfVariables`](@ref): projection onto multiple coordinates (i.e.,
   extracting a subvector).

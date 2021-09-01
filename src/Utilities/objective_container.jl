@@ -8,7 +8,7 @@ mutable struct ObjectiveContainer{T} <: MOI.ModelLike
     is_sense_set::Bool
     sense::MOI.OptimizationSense
     is_function_set::Bool
-    single_variable::Union{Nothing,MOI.SingleVariable}
+    single_variable::Union{Nothing,MOI.VariableIndex}
     scalar_affine::Union{Nothing,MOI.ScalarAffineFunction{T}}
     scalar_quadratic::Union{Nothing,MOI.ScalarQuadraticFunction{T}}
     function ObjectiveContainer{T}() where {T}
@@ -59,7 +59,7 @@ function MOI.get(
     ::MOI.ObjectiveFunctionType,
 ) where {T}
     if o.single_variable !== nothing
-        return MOI.SingleVariable
+        return MOI.VariableIndex
     elseif o.scalar_quadratic !== nothing
         return MOI.ScalarQuadraticFunction{T}
     end
@@ -75,7 +75,7 @@ function MOI.supports(
     ::ObjectiveContainer{T},
     ::MOI.ObjectiveFunction{
         <:Union{
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.ScalarAffineFunction{T},
             MOI.ScalarQuadraticFunction{T},
         },
@@ -99,8 +99,8 @@ end
 
 function MOI.set(
     o::ObjectiveContainer,
-    ::MOI.ObjectiveFunction{MOI.SingleVariable},
-    f::MOI.SingleVariable,
+    ::MOI.ObjectiveFunction{MOI.VariableIndex},
+    f::MOI.VariableIndex,
 )
     o.is_function_set = true
     o.single_variable = copy(f)
@@ -176,7 +176,7 @@ end
 
 function MOI.delete(o::ObjectiveContainer, x::MOI.VariableIndex)
     if o.single_variable !== nothing
-        if x == o.single_variable.variable
+        if x == o.single_variable
             sense = o.sense
             MOI.empty!(o)
             if o.is_sense_set
@@ -195,7 +195,7 @@ end
 function MOI.delete(o::ObjectiveContainer, x::Vector{MOI.VariableIndex})
     keep = v -> !(v in x)
     if o.single_variable !== nothing
-        if o.single_variable.variable in x
+        if o.single_variable in x
             sense = o.sense
             MOI.empty!(o)
             if o.is_sense_set

@@ -118,6 +118,7 @@ end
 
 @head_to_val(
     head_to_function,
+    # TODO(odow): update once MathOptFormat finalized.
     SingleVariable,
     VectorOfVariables,
     ScalarAffineFunction,
@@ -162,7 +163,7 @@ function function_to_moi(
     object::Object,
     name_map::Dict{String,MOI.VariableIndex},
 )
-    return MOI.SingleVariable(name_map[object["variable"]::String])
+    return name_map[object["variable"]::String]
 end
 
 # ========== Typed scalar functions ==========

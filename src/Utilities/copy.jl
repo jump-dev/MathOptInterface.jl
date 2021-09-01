@@ -185,7 +185,7 @@ end
         ::Type{S},
     ) where {S<:MOI.AbstractScalarSet}
 
-Copy the constraints of type `MOI.SingleVariable`-in-`S` from the model `src` to
+Copy the constraints of type `MOI.VariableIndex`-in-`S` from the model `src` to
 the model `dest` and fill `index_map` accordingly. The copy is only done when the
 variables to be copied are not already keys of `index_map`.
 
@@ -197,18 +197,18 @@ function _try_constrain_variables_on_creation(
     index_map::IndexMap,
     ::Type{S},
 ) where {S<:MOI.AbstractScalarSet}
-    not_added = MOI.ConstraintIndex{MOI.SingleVariable,S}[]
+    not_added = MOI.ConstraintIndex{MOI.VariableIndex,S}[]
     for ci_src in
-        MOI.get(src, MOI.ListOfConstraintIndices{MOI.SingleVariable,S}())
+        MOI.get(src, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
-        if haskey(index_map, f_src.variable)
+        if haskey(index_map, f_src)
             # Can't add it because it contains a variable previously added
             push!(not_added, ci_src)
         else
             set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
             vi_dest, ci_dest = MOI.add_constrained_variable(dest, set)
             index_map[ci_src] = ci_dest
-            index_map[f_src.variable] = vi_dest
+            index_map[f_src] = vi_dest
         end
     end
     return not_added
@@ -347,7 +347,7 @@ function _copy_free_variables(dest::MOI.ModelLike, index_map::IndexMap, vis_src)
     return
 end
 
-_is_variable_function(::Type{MOI.SingleVariable}) = true
+_is_variable_function(::Type{MOI.VariableIndex}) = true
 _is_variable_function(::Type{MOI.VectorOfVariables}) = true
 _is_variable_function(::Any) = false
 
@@ -357,7 +357,7 @@ function _cost_of_bridging(
 ) where {S<:MOI.AbstractScalarSet}
     return (
         MOI.get(dest, MOI.VariableBridgingCost{S}()) -
-        MOI.get(dest, MOI.ConstraintBridgingCost{MOI.SingleVariable,S}()),
+        MOI.get(dest, MOI.ConstraintBridgingCost{MOI.VariableIndex,S}()),
         # In case of ties, we give priority to vector sets. See issue #987.
         false,
     )
@@ -378,7 +378,7 @@ end
 """
     sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
 
-Returns a `Vector{Type}` of the set types corresponding to `SingleVariable` and
+Returns a `Vector{Type}` of the set types corresponding to `VariableIndex` and
 `VectorOfVariables` constraints in the order in which they should be added.
 """
 function sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
@@ -438,7 +438,7 @@ function default_copy_to(
     vis_src = MOI.get(src, MOI.ListOfVariableIndices())
     index_map = IndexMap()
     # The `NLPBlock` assumes that the order of variables does not change (#849)
-    # Therefore, all SingleVariable and VectorOfVariable constraints are added
+    # Therefore, all VariableIndex and VectorOfVariable constraints are added
     # seprately, and no variables constrained-on-creation are added.
     has_nlp = MOI.NLPBlock() in MOI.get(src, MOI.ListOfModelAttributesSet())
     constraints_not_added = if has_nlp

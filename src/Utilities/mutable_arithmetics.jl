@@ -91,13 +91,13 @@ end
 function MA.promote_operation(
     op::PROMOTE_IMPLEMENTED_OP,
     F::Type{<:Number},
-    G::Type{<:Union{MOI.SingleVariable,MOI.VectorOfVariables}},
+    G::Type{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
 )
     return promote_operation(op, F, F, G)
 end
 function MA.promote_operation(
     op::PROMOTE_IMPLEMENTED_OP,
-    F::Type{<:Union{MOI.SingleVariable,MOI.VectorOfVariables}},
+    F::Type{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
     G::Type{<:Number},
 )
     return promote_operation(op, G, F, G)
@@ -143,9 +143,9 @@ end
 function MA.mutable_operate!(
     op::Union{typeof(+),typeof(-)},
     f::MOI.ScalarAffineFunction{T},
-    g::MOI.SingleVariable,
+    g::MOI.VariableIndex,
 ) where {T}
-    push!(f.terms, MOI.ScalarAffineTerm(op(one(T)), g.variable))
+    push!(f.terms, MOI.ScalarAffineTerm(op(one(T)), g))
     return f
 end
 function MA.mutable_operate_to!(
@@ -195,9 +195,9 @@ end
 function MA.mutable_operate!(
     op::Union{typeof(+),typeof(-)},
     f::MOI.ScalarQuadraticFunction{T},
-    g::MOI.SingleVariable,
+    g::MOI.VariableIndex,
 ) where {T}
-    push!(f.affine_terms, MOI.ScalarAffineTerm(op(one(T)), g.variable))
+    push!(f.affine_terms, MOI.ScalarAffineTerm(op(one(T)), g))
     return f
 end
 function MA.mutable_operate!(
@@ -221,7 +221,7 @@ function MA.mutable_operate!(
 end
 
 _constant(::Type{T}, α::T) where {T} = α
-_constant(::Type{T}, ::MOI.SingleVariable) where {T} = zero(T)
+_constant(::Type{T}, ::MOI.VariableIndex) where {T} = zero(T)
 _constant(::Type{T}, func::TypedScalarLike{T}) where {T} = MOI.constant(func)
 
 _affine_terms(f::MOI.ScalarAffineFunction) = f.terms
@@ -231,36 +231,36 @@ function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
     α::T,
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
     β::T,
 ) where {T}
-    push!(terms, MOI.ScalarAffineTerm(op(α * β), f.variable))
+    push!(terms, MOI.ScalarAffineTerm(op(α * β), f))
     return
 end
 function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
     β::T,
 ) where {T}
-    push!(terms, MOI.ScalarAffineTerm(op(β), f.variable))
+    push!(terms, MOI.ScalarAffineTerm(op(β), f))
     return
 end
 function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
     α::T,
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
 ) where {T}
-    push!(terms, MOI.ScalarAffineTerm(op(α), f.variable))
+    push!(terms, MOI.ScalarAffineTerm(op(α), f))
     return
 end
 function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
-    f::MOI.SingleVariable,
+    f::MOI.VariableIndex,
 ) where {T}
-    push!(terms, MOI.ScalarAffineTerm(op(one(T)), f.variable))
+    push!(terms, MOI.ScalarAffineTerm(op(one(T)), f))
     return
 end
 

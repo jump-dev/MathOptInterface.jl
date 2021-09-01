@@ -15,7 +15,7 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 AbstractFunction
 AbstractScalarFunction
 AbstractVectorFunction
-SingleVariable
+VariableIndex
 VectorOfVariables
 ScalarAffineTerm
 ScalarAffineFunction
@@ -33,7 +33,7 @@ VectorQuadraticFunction
 output_dimension
 constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction})
 constant(f::Union{VectorAffineFunction, VectorQuadraticFunction})
-constant(f::SingleVariable, ::Type)
+constant(f::VariableIndex, ::Type)
 constant(f::VectorOfVariables, T::Type)
 ```
 

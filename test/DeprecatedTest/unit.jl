@@ -127,8 +127,8 @@ end
                 MOI.OPTIMAL,
                 (MOI.FEASIBLE_POINT, [1]),
                 MOI.FEASIBLE_POINT,
-                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2.0],
-                (MOI.SingleVariable, MOI.LessThan{Float64}) => [0.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0],
+                (MOI.VariableIndex, MOI.LessThan{Float64}) => [0.0],
             ),
         )
         # x has two variable constraints
@@ -144,8 +144,8 @@ end
                 MOI.OPTIMAL,
                 (MOI.FEASIBLE_POINT, [1]),
                 MOI.FEASIBLE_POINT,
-                (MOI.SingleVariable, MOI.LessThan{Float64}) => [-2.0],
-                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0.0],
+                (MOI.VariableIndex, MOI.LessThan{Float64}) => [-2.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [0.0],
             ),
         )
         # x has two variable constraints
@@ -483,8 +483,8 @@ end
                 MOI.OPTIMAL,
                 (MOI.FEASIBLE_POINT, [1.0]),
                 MOI.FEASIBLE_POINT,
-                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0],
-                (MOI.SingleVariable, MOI.LessThan{Float64}) => [0.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [1.0],
+                (MOI.VariableIndex, MOI.LessThan{Float64}) => [0.0],
             ),
         )
         MOIT.solve_single_variable_dual_min(mock, config)
@@ -501,8 +501,8 @@ end
                 MOI.OPTIMAL,
                 (MOI.FEASIBLE_POINT, [1.0]),
                 MOI.FEASIBLE_POINT,
-                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0.0],
-                (MOI.SingleVariable, MOI.LessThan{Float64}) => [-1.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [0.0],
+                (MOI.VariableIndex, MOI.LessThan{Float64}) => [-1.0],
             ),
         )
         MOIT.solve_single_variable_dual_max(mock, config)
@@ -517,7 +517,7 @@ end
                 MOI.OPTIMAL,
                 (MOI.FEASIBLE_POINT, [1.0]),
                 MOI.FEASIBLE_POINT,
-                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [1.0],
             ),
         )
         MOIT.solve_result_index(mock, config)
@@ -531,8 +531,7 @@ end
                 MOI.INFEASIBLE,
                 (MOI.NO_SOLUTION, [NaN, NaN]),
                 MOI.INFEASIBILITY_CERTIFICATE,
-                (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                    [2.0, 1.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
                 (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                     [-1.0],
             ),
@@ -548,8 +547,7 @@ end
                 MOI.INFEASIBLE,
                 (MOI.NO_SOLUTION, [NaN, NaN]),
                 MOI.INFEASIBILITY_CERTIFICATE,
-                (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                    [2.0, 1.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
                 (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
                     [1.0],
             ),
@@ -565,8 +563,7 @@ end
                 MOI.INFEASIBLE,
                 (MOI.NO_SOLUTION, [NaN, NaN]),
                 MOI.INFEASIBILITY_CERTIFICATE,
-                (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                    [2.0, 1.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
                 (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1.0],
             ),
         )
@@ -581,8 +578,7 @@ end
                 MOI.INFEASIBLE,
                 (MOI.NO_SOLUTION, [NaN, NaN]),
                 MOI.INFEASIBILITY_CERTIFICATE,
-                (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                    [2.0, 1.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
                 (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [1.0],
             ),
         )
@@ -597,8 +593,7 @@ end
                 MOI.INFEASIBLE,
                 (MOI.NO_SOLUTION, [NaN, NaN]),
                 MOI.INFEASIBILITY_CERTIFICATE,
-                (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                    [2.0, 1.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
                 (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [-1.0],
             ),
         )
@@ -613,8 +608,7 @@ end
                 MOI.INFEASIBLE,
                 (MOI.NO_SOLUTION, [NaN, NaN]),
                 MOI.INFEASIBILITY_CERTIFICATE,
-                (MOI.SingleVariable, MOI.GreaterThan{Float64}) =>
-                    [2.0, 1.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0, 1.0],
                 (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}) => [1.0],
             ),
         )
@@ -629,7 +623,7 @@ end
                 MOI.INFEASIBLE,
                 (MOI.NO_SOLUTION, [NaN, NaN]),
                 MOI.INFEASIBILITY_CERTIFICATE,
-                (MOI.SingleVariable, MOI.LessThan{Float64}) => [-2.0, -1.0],
+                (MOI.VariableIndex, MOI.LessThan{Float64}) => [-2.0, -1.0],
                 (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [1.0],
             ),
         )
@@ -644,7 +638,7 @@ end
                 MOI.INFEASIBLE,
                 (MOI.NO_SOLUTION, [NaN, NaN]),
                 MOI.INFEASIBILITY_CERTIFICATE,
-                (MOI.SingleVariable, MOI.LessThan{Float64}) => [-2.0, -1.0],
+                (MOI.VariableIndex, MOI.LessThan{Float64}) => [-2.0, -1.0],
                 (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) => [1.0],
             ),
         )
@@ -859,7 +853,7 @@ end
                 MOI.OPTIMAL,
                 (MOI.FEASIBLE_POINT, [1.0]),
                 MOI.FEASIBLE_POINT,
-                (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [1.0],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [1.0],
             ),
         )
         MOIT.delete_variable_with_single_variable_obj(mock, config)

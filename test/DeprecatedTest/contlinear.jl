@@ -291,14 +291,14 @@ MOIU.set_mock_optimize!(
             MOI.NONBASIC_AT_UPPER,
         ],
         (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1],
-        (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [2, 0, 0],
-        (MOI.SingleVariable, MOI.LessThan{Float64}) => [-2],
+        (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2, 0, 0],
+        (MOI.VariableIndex, MOI.LessThan{Float64}) => [-2],
     ),
     (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
         mock,
         [1],
         (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) => [-1],
-        (MOI.SingleVariable, MOI.GreaterThan{Float64}) => [0],
+        (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [0],
     ),
 )
 # linear14 has double variable bounds for the z variable

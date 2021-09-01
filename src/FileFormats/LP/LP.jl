@@ -83,10 +83,10 @@ const NAME_REG = r"([^a-zA-Z0-9\!\"\#\$\%\&\(\)\/\,\.\;\?\@\_\`\'\{\}\|\~])"
 function write_function(
     io::IO,
     model::Model,
-    func::MOI.SingleVariable,
+    func::MOI.VariableIndex,
     variable_names::Dict{MOI.VariableIndex,String},
 )
-    print(io, variable_names[func.variable])
+    print(io, variable_names[func])
     return
 end
 
@@ -240,7 +240,7 @@ function Base.write(io::IO, model::Model)
     free_variables = Set(keys(variable_names))
     for S in SCALAR_SETS
         for index in
-            MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable,S}())
+            MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
             delete!(free_variables, MOI.VariableIndex(index.value))
             write_constraint(
                 io,
@@ -253,7 +253,7 @@ function Base.write(io::IO, model::Model)
     end
     for index in MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.ZeroOne}(),
+        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.ZeroOne}(),
     )
         delete!(free_variables, MOI.VariableIndex(index.value))
     end
@@ -262,7 +262,7 @@ function Base.write(io::IO, model::Model)
     end
     for (S, str_S) in [(MOI.Integer, "General"), (MOI.ZeroOne, "Binary")]
         indices =
-            MOI.get(model, MOI.ListOfConstraintIndices{MOI.SingleVariable,S}())
+            MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
         if length(indices) > 0
             println(io, str_S)
             for index in indices

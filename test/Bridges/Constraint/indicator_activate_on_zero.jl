@@ -64,7 +64,7 @@ function test_indicator_activate_on_zero()
     @test bridge isa BT
     z1comp = bridge.variable
     @test MOI.get(model, MOI.ConstraintFunction(), bridge.zero_one_cons) ==
-          MOI.SingleVariable(z1comp)
+          z1comp
     @test MOI.get(model, MOI.ConstraintSet(), bridge.disjunction_cons) ==
           MOI.EqualTo(1.0)
     disjunction_cons =

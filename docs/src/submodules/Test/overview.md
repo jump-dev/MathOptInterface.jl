@@ -221,7 +221,7 @@ function test_unit_optimize!_twice(
     # silently skip the test.
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{Float64},
     )
     @requires _supports(config, MOI.optimize!)
@@ -232,12 +232,12 @@ function test_unit_optimize!_twice(
     # Create a simple model. Try to make this as simple as possible so that the
     # majority of solvers can run the test.
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(one(T)))
+    MOI.add_constraint(model, x, MOI.GreaterThan(one(T)))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
+        MOI.ObjectiveFunction{MOI.VariableIndex}(),
+        x,
     )
     # The main component of the test: does calling `optimize!` twice error?
     MOI.optimize!(model)

@@ -29,7 +29,7 @@ function MOI.get(::BadModel, ::MOI.ListOfVariableAttributesSet)
 end
 
 function MOI.get(::BadModel, ::MOI.ListOfConstraintTypesPresent)
-    return [(MOI.SingleVariable, MOI.EqualTo{Float64})]
+    return [(MOI.VariableIndex, MOI.EqualTo{Float64})]
 end
 
 function MOI.get(::BadModel, ::MOI.ListOfConstraintIndices{F,S}) where {F,S}
@@ -39,15 +39,15 @@ end
 function MOI.get(
     ::BadModel,
     ::MOI.ConstraintFunction,
-    ::MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}},
+    ::MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}},
 )
-    return MOI.SingleVariable(MOI.VariableIndex(1))
+    return MOI.VariableIndex(1)
 end
 
 function MOI.get(
     ::BadModel,
     ::MOI.ConstraintSet,
-    ::MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}},
+    ::MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}},
 )
     return MOI.EqualTo(0.0)
 end
@@ -56,23 +56,23 @@ struct BadConstraintModel <: BadModel end
 
 function MOI.get(::BadConstraintModel, ::MOI.ListOfConstraintTypesPresent)
     return [
-        (MOI.SingleVariable, MOI.EqualTo{Float64}),
-        (MOI.SingleVariable, UnknownScalarSet{Float64}),
+        (MOI.VariableIndex, MOI.EqualTo{Float64}),
+        (MOI.VariableIndex, UnknownScalarSet{Float64}),
     ]
 end
 
 function MOI.get(
     ::BadModel,
     ::MOI.ConstraintFunction,
-    ::MOI.ConstraintIndex{MOI.SingleVariable,<:UnknownScalarSet},
+    ::MOI.ConstraintIndex{MOI.VariableIndex,<:UnknownScalarSet},
 )
-    return MOI.SingleVariable(MOI.VariableIndex(1))
+    return MOI.VariableIndex(1)
 end
 
 function MOI.get(
     ::BadModel,
     ::MOI.ConstraintSet,
-    ::MOI.ConstraintIndex{MOI.SingleVariable,UnknownScalarSet{T}},
+    ::MOI.ConstraintIndex{MOI.VariableIndex,UnknownScalarSet{T}},
 ) where {T}
     return UnknownScalarSet(one(T))
 end
@@ -201,21 +201,18 @@ function test_model_VariableName(model::MOI.ModelLike, ::Config)
 end
 
 """
-    test_model_SingleVariable_ConstraintName(
+    test_model_VariableIndex_ConstraintName(
         model::MOI.ModelLike,
         ::Config,
     )
 
-Test ConstraintName for SingleVariable constraints.
+Test ConstraintName for VariableIndex constraints.
 """
-function test_model_SingleVariable_ConstraintName(
-    model::MOI.ModelLike,
-    ::Config,
-)
+function test_model_VariableIndex_ConstraintName(model::MOI.ModelLike, ::Config)
     x = MOI.add_variable(model)
-    c = MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+    c = MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
     @test_throws(
-        MOI.SingleVariableConstraintNameError(),
+        MOI.VariableIndexConstraintNameError(),
         MOI.set(model, MOI.ConstraintName(), c, "c1"),
     )
     return
@@ -593,7 +590,7 @@ function test_model_copy_to_UnsupportedConstraint(
 )
     @test !MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         UnknownScalarSet{Float64},
     )
     @test_throws(
@@ -628,7 +625,7 @@ function test_model_copy_to_UnsupportedAttribute(model::MOI.ModelLike, ::Config)
     @test !MOI.supports(
         model,
         UnknownConstraintAttribute(),
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Float64}},
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}},
     )
     @test_throws(
         MOI.UnsupportedAttribute,
@@ -637,19 +634,15 @@ function test_model_copy_to_UnsupportedAttribute(model::MOI.ModelLike, ::Config)
     return
 end
 
-function test_model_supports_constraint_SingleVariable_EqualTo(
+function test_model_supports_constraint_VariableIndex_EqualTo(
     model::MOI.ModelLike,
     ::Config{T},
 ) where {T}
-    @requires MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{T})
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.EqualTo{T})
     # Pick a "bad" coefficient type that should fail tests.
-    @test !MOI.supports_constraint(
-        model,
-        MOI.SingleVariable,
-        MOI.EqualTo{UInt8},
-    )
+    @test !MOI.supports_constraint(model, MOI.VariableIndex, MOI.EqualTo{UInt8})
     # Scalar-in-vector
-    @test !MOI.supports_constraint(model, MOI.SingleVariable, MOI.Zeros)
+    @test !MOI.supports_constraint(model, MOI.VariableIndex, MOI.Zeros)
     return
 end
 
@@ -709,29 +702,29 @@ function test_model_ordered_indices(model::MOI.ModelLike, ::Config)
     v4 = MOI.add_variable(model)
     @test MOI.get(model, MOI.ListOfVariableIndices()) == [v2, v3, v4]
     # Note: there are too many combinations to test, so we're just going to
-    # check SingleVariable-in-LessThan and hope it works for the rest
-    c1 = MOI.add_constraint(model, MOI.SingleVariable(v2), MOI.LessThan(1.0))
+    # check VariableIndex-in-LessThan and hope it works for the rest
+    c1 = MOI.add_constraint(model, v2, MOI.LessThan(1.0))
     @test c1.value == v2.value
     @test MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.LessThan{Float64}}(),
     ) == [c1]
-    c2 = MOI.add_constraint(model, MOI.SingleVariable(v3), MOI.LessThan(2.0))
+    c2 = MOI.add_constraint(model, v3, MOI.LessThan(2.0))
     @test c2.value == v3.value
     @test MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.LessThan{Float64}}(),
     ) == [c1, c2]
     MOI.delete(model, c1)
     @test MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.LessThan{Float64}}(),
     ) == [c2]
-    c3 = MOI.add_constraint(model, MOI.SingleVariable(v4), MOI.LessThan(3.0))
+    c3 = MOI.add_constraint(model, v4, MOI.LessThan(3.0))
     @test c3.value == v4.value
     @test MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.SingleVariable,MOI.LessThan{Float64}}(),
+        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.LessThan{Float64}}(),
     ) == [c2, c3]
     return
 end
@@ -797,12 +790,11 @@ function test_model_LowerBoundAlreadySet(
 ) where {T}
     @requires MOI.supports_constraint(
         model,
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.GreaterThan{T},
     )
     @requires _supports(config, MOI.delete)
     x = MOI.add_variable(model)
-    f = MOI.SingleVariable(x)
     lb = zero(T)
     sets = [
         MOI.EqualTo(lb),
@@ -812,16 +804,16 @@ function test_model_LowerBoundAlreadySet(
     ]
     set2 = MOI.GreaterThan(lb)
     for set1 in sets
-        if !MOI.supports_constraint(model, MOI.SingleVariable, typeof(set1))
+        if !MOI.supports_constraint(model, MOI.VariableIndex, typeof(set1))
             continue
         end
-        ci = MOI.add_constraint(model, f, set1)
+        ci = MOI.add_constraint(model, x, set1)
         err = MOI.LowerBoundAlreadySet{typeof(set1),typeof(set2)}(x)
-        @test_throws err MOI.add_constraint(model, f, set2)
+        @test_throws err MOI.add_constraint(model, x, set2)
         MOI.delete(model, ci)
-        ci = MOI.add_constraint(model, f, set2)
+        ci = MOI.add_constraint(model, x, set2)
         err = MOI.LowerBoundAlreadySet{typeof(set2),typeof(set1)}(x)
-        @test_throws err MOI.add_constraint(model, f, set1)
+        @test_throws err MOI.add_constraint(model, x, set1)
         MOI.delete(model, ci)
     end
     return
@@ -840,13 +832,8 @@ function test_model_UpperBoundAlreadySet(
     ::Config{T},
 ) where {T}
     x = MOI.add_variable(model)
-    f = MOI.SingleVariable(x)
     ub = zero(T)
-    @requires MOI.supports_constraint(
-        model,
-        MOI.SingleVariable,
-        MOI.LessThan{T},
-    )
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.LessThan{T})
     sets = [
         MOI.EqualTo(ub),
         MOI.Interval(ub, ub),
@@ -855,16 +842,16 @@ function test_model_UpperBoundAlreadySet(
     ]
     set2 = MOI.LessThan(ub)
     for set1 in sets
-        if !MOI.supports_constraint(model, MOI.SingleVariable, typeof(set1))
+        if !MOI.supports_constraint(model, MOI.VariableIndex, typeof(set1))
             continue
         end
-        ci = MOI.add_constraint(model, f, set1)
+        ci = MOI.add_constraint(model, x, set1)
         err = MOI.UpperBoundAlreadySet{typeof(set1),typeof(set2)}(x)
-        @test_throws err MOI.add_constraint(model, f, set2)
+        @test_throws err MOI.add_constraint(model, x, set2)
         MOI.delete(model, ci)
-        ci = MOI.add_constraint(model, f, set2)
+        ci = MOI.add_constraint(model, x, set2)
         err = MOI.UpperBoundAlreadySet{typeof(set2),typeof(set1)}(x)
-        @test_throws err MOI.add_constraint(model, f, set1)
+        @test_throws err MOI.add_constraint(model, x, set1)
         MOI.delete(model, ci)
     end
     return
@@ -888,19 +875,19 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
     @test MOI.is_valid(model, y[4])
     @test MOI.is_valid(model, cx)
     @test MOI.is_valid(model, cy)
-    @test MOI.get(model, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(x)
+    @test MOI.get(model, MOI.ConstraintFunction(), cx) == x
     @test MOI.get(model, MOI.ConstraintSet(), cx) == MOI.GreaterThan(0.0)
     @test MOI.get(model, MOI.ConstraintFunction(), cy) ==
           MOI.VectorOfVariables(y)
     @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(4)
     @test Set(MOI.get(model, MOI.ListOfConstraintTypesPresent())) == Set([
-        (MOI.SingleVariable, MOI.GreaterThan{Float64}),
+        (MOI.VariableIndex, MOI.GreaterThan{Float64}),
         (MOI.VectorOfVariables, MOI.Nonpositives),
     ])
     @test MOI.get(
         model,
         MOI.ListOfConstraintIndices{
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.GreaterThan{Float64},
         }(),
     ) == [cx]
@@ -916,19 +903,19 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
     @test MOI.is_valid(model, y[4])
     @test MOI.is_valid(model, cx)
     @test MOI.is_valid(model, cy)
-    @test MOI.get(model, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(x)
+    @test MOI.get(model, MOI.ConstraintFunction(), cx) == x
     @test MOI.get(model, MOI.ConstraintSet(), cx) == MOI.GreaterThan(0.0)
     @test MOI.get(model, MOI.ConstraintFunction(), cy) ==
           MOI.VectorOfVariables(y[[1, 2, 4]])
     @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(3)
     @test Set(MOI.get(model, MOI.ListOfConstraintTypesPresent())) == Set([
-        (MOI.SingleVariable, MOI.GreaterThan{Float64}),
+        (MOI.VariableIndex, MOI.GreaterThan{Float64}),
         (MOI.VectorOfVariables, MOI.Nonpositives),
     ])
     @test MOI.get(
         model,
         MOI.ListOfConstraintIndices{
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.GreaterThan{Float64},
         }(),
     ) == [cx]
@@ -944,19 +931,19 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
     @test MOI.is_valid(model, y[4])
     @test MOI.is_valid(model, cx)
     @test MOI.is_valid(model, cy)
-    @test MOI.get(model, MOI.ConstraintFunction(), cx) == MOI.SingleVariable(x)
+    @test MOI.get(model, MOI.ConstraintFunction(), cx) == x
     @test MOI.get(model, MOI.ConstraintSet(), cx) == MOI.GreaterThan(0.0)
     @test MOI.get(model, MOI.ConstraintFunction(), cy) ==
           MOI.VectorOfVariables(y[[2, 4]])
     @test MOI.get(model, MOI.ConstraintSet(), cy) == MOI.Nonpositives(2)
     @test Set(MOI.get(model, MOI.ListOfConstraintTypesPresent())) == Set([
-        (MOI.SingleVariable, MOI.GreaterThan{Float64}),
+        (MOI.VariableIndex, MOI.GreaterThan{Float64}),
         (MOI.VectorOfVariables, MOI.Nonpositives),
     ])
     @test MOI.get(
         model,
         MOI.ListOfConstraintIndices{
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.GreaterThan{Float64},
         }(),
     ) == [cx]
@@ -981,7 +968,7 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
         MOI.get(
             model,
             MOI.ListOfConstraintIndices{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.GreaterThan{Float64},
             }(),
         ),
@@ -1003,7 +990,7 @@ function test_model_delete(model::MOI.ModelLike, config::Config)
         MOI.get(
             model,
             MOI.ListOfConstraintIndices{
-                MOI.SingleVariable,
+                MOI.VariableIndex,
                 MOI.GreaterThan{Float64},
             }(),
         ),
@@ -1033,7 +1020,7 @@ function test_model_ListOfConstraintAttributesSet(
     ::Config{T},
 ) where {T}
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(zero(T)))
+    MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(T), x)], zero(T)),
@@ -1050,7 +1037,7 @@ function test_model_ListOfConstraintAttributesSet(
     @test MOI.get(
         model,
         MOI.ListOfConstraintAttributesSet{
-            MOI.SingleVariable,
+            MOI.VariableIndex,
             MOI.GreaterThan{T},
         }(),
     ) == []

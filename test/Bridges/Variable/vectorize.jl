@@ -24,8 +24,7 @@ function test_get_scalar_constraint()
     )
     bridged_mock = MOI.Bridges.Variable.Vectorize{Float64}(mock)
     x, cx = MOI.add_constrained_variable(bridged_mock, MOI.GreaterThan(1.0))
-    fx = MOI.SingleVariable(x)
-    func = 2.0 * fx
+    func = 2.0 * x
     set = MOI.GreaterThan(5.0)
     err =
         MOI.ScalarFunctionConstantNotZero{Float64,typeof(func),typeof(set)}(1.0)
@@ -101,17 +100,15 @@ function test_exp3_with_add_constrained_variable_y()
     MOI.empty!(bridged_mock)
     x = MOI.add_variable(bridged_mock)
     @test MOI.get(bridged_mock, MOI.NumberOfVariables()) == 1
-    fx = MOI.SingleVariable(x)
-    xc = MOI.add_constraint(bridged_mock, 2.0fx, MOI.LessThan(4.0))
+    xc = MOI.add_constraint(bridged_mock, 2.0x, MOI.LessThan(4.0))
     y, yc = MOI.add_constrained_variable(bridged_mock, MOI.LessThan(5.0))
     @test yc.value == y.value == -1
     @test MOI.get(bridged_mock, MOI.NumberOfVariables()) == 2
     @test length(MOI.get(bridged_mock, MOI.ListOfVariableIndices())) == 2
     @test Set(MOI.get(bridged_mock, MOI.ListOfVariableIndices())) == Set([x, y])
-    fy = MOI.SingleVariable(y)
     ec = MOI.add_constraint(
         bridged_mock,
-        MOI.Utilities.operate(vcat, Float64, fx, 1.0, fy),
+        MOI.Utilities.operate(vcat, Float64, x, 1.0, y),
         MOI.ExponentialCone(),
     )
 
@@ -127,14 +124,10 @@ function test_exp3_with_add_constrained_variable_y()
           [-1.0, log(5) - 1, 1 / 5]
 
     err = ErrorException(
-        "Cannot add two `SingleVariable`-in-`MathOptInterface.LessThan{Float64}`" *
+        "Cannot add two `VariableIndex`-in-`MathOptInterface.LessThan{Float64}`" *
         " on the same variable MathOptInterface.VariableIndex(-1).",
     )
-    @test_throws err MOI.add_constraint(
-        bridged_mock,
-        MOI.SingleVariable(y),
-        MOI.LessThan(4.0),
-    )
+    @test_throws err MOI.add_constraint(bridged_mock, y, MOI.LessThan(4.0))
 
     cis = MOI.get(
         bridged_mock,
@@ -154,7 +147,7 @@ function test_exp3_with_add_constrained_variable_y()
         MOI.Test.UnknownVariableAttribute(),
         y,
     )
-    ci = MOI.ConstraintIndex{MOI.SingleVariable,MOI.LessThan{Float64}}(y.value)
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}}(y.value)
     attr = MOI.ConstraintSet()
     err = MOI.SetAttributeNotAllowed(
         attr,

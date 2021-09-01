@@ -90,9 +90,9 @@ function _test_basic_functionality(dict, k_values, v_values)
     @test length(dict) == 0
 
     dict[k_values[1]] = v_values[1]
-    idict = dict[MOI.SingleVariable, MOI.Integer]
-    bdict = dict[MOI.SingleVariable, MOI.ZeroOne]
-    idict_ = dict[MOI.SingleVariable, MOI.Integer]
+    idict = dict[MOI.VariableIndex, MOI.Integer]
+    bdict = dict[MOI.VariableIndex, MOI.ZeroOne]
+    idict_ = dict[MOI.VariableIndex, MOI.Integer]
     @test idict.dict === idict_.dict
     sizehint!(idict, 2)
     @test length(idict) == 1
@@ -126,8 +126,8 @@ function _test_basic_functionality(dict, k_values, v_values)
     bdict[k_values[3]] = v_values[3]
     length(bdict) == 1
 
-    edict = dict[MOI.SingleVariable, MOI.EqualTo{Bool}]
-    ek = MOI.ConstraintIndex{MOI.SingleVariable,MOI.EqualTo{Bool}}(1)
+    edict = dict[MOI.VariableIndex, MOI.EqualTo{Bool}]
+    ek = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Bool}}(1)
     delete!(edict, ek)
     @test_throws KeyError edict[ek]
     sizehint!(edict, 0)
@@ -141,9 +141,9 @@ end
 function test_DoubleDict()
     dict = DoubleDicts.DoubleDict{Float64}()
     keys = [
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(1),
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(2),
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(1),
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}(1),
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}(2),
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}(1),
     ]
     vals = [1.0, 2.0, 1.0]
     _test_basic_functionality(dict, keys, vals)
@@ -153,9 +153,9 @@ end
 function test_IndexDoubleDict()
     dict = DoubleDicts.IndexDoubleDict()
     keys = [
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(1),
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.Integer}(2),
-        MOI.ConstraintIndex{MOI.SingleVariable,MOI.ZeroOne}(1),
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}(1),
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}(2),
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}(1),
     ]
     vals = keys
     _test_basic_functionality(dict, keys, vals)

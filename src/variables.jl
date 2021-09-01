@@ -49,18 +49,18 @@ to belong to a set of type `S` either on creation of the variable with
 
 By default, this function falls back to
 `supports_add_constrained_variables(model, Reals) &&
-supports_constraint(model, MOI.SingleVariable, S)` which is the correct
+supports_constraint(model, MOI.VariableIndex, S)` which is the correct
 definition for most models.
 
 ## Example
 
 Suppose that a solver supports only two kind of variables: binary variables
 and continuous variables with a lower bound. If the solver decides not to
-support `SingleVariable`-in-`Binary` and `SingleVariable`-in-`GreaterThan`
+support `VariableIndex`-in-`Binary` and `VariableIndex`-in-`GreaterThan`
 constraints, it only has to implement `add_constrained_variable` for these
 two sets which prevents the user to add both a binary constraint and a
 lower bound on the same variable. Moreover, if the user adds a
-`SingleVariable`-in-`GreaterThan` constraint, implementing this interface (i.e.,
+`VariableIndex`-in-`GreaterThan` constraint, implementing this interface (i.e.,
 `supports_add_constrained_variables`) enables the constraint to be transparently
 bridged into a supported constraint.
 """
@@ -69,7 +69,7 @@ function supports_add_constrained_variable(
     S::Type{<:AbstractScalarSet},
 )
     return supports_add_constrained_variables(model, Reals) &&
-           supports_constraint(model, SingleVariable, S)
+           supports_constraint(model, VariableIndex, S)
 end
 
 """
@@ -77,7 +77,7 @@ end
         model::ModelLike,
         set::AbstractScalarSet
     )::Tuple{MOI.VariableIndex,
-             MOI.ConstraintIndex{MOI.SingleVariable, typeof(set)}}
+             MOI.ConstraintIndex{MOI.VariableIndex, typeof(set)}}
 
 Add to `model` a scalar variable constrained to belong to `set`, returning the
 index of the variable created and the index of the constraint constraining the
@@ -89,7 +89,7 @@ By default, this function falls back to creating a free variable with
 """
 function add_constrained_variable(model::ModelLike, set::AbstractScalarSet)
     variable = add_variable(model)
-    constraint = add_constraint(model, SingleVariable(variable), set)
+    constraint = add_constraint(model, variable, set)
     return variable, constraint
 end
 
@@ -156,7 +156,7 @@ supports_add_constrained_variables(::ModelLike, ::Type{Reals}) = true
         sets::AbstractVector{<:AbstractScalarSet}
     )::Tuple{
         Vector{MOI.VariableIndex},
-        Vector{MOI.ConstraintIndex{MOI.SingleVariable,eltype(sets)}},
+        Vector{MOI.ConstraintIndex{MOI.VariableIndex,eltype(sets)}},
     }
 
 Add to `model` scalar variables constrained to belong to `sets`, returning the
@@ -173,10 +173,8 @@ function add_constrained_variables(
     sets::AbstractVector{<:AbstractScalarSet},
 )
     variables = Vector{VariableIndex}(undef, length(sets))
-    constraints = Vector{ConstraintIndex{SingleVariable,eltype(sets)}}(
-        undef,
-        length(sets),
-    )
+    constraints =
+        Vector{ConstraintIndex{VariableIndex,eltype(sets)}}(undef, length(sets))
     for (i, set) in enumerate(sets)
         variables[i], constraints[i] = add_constrained_variable(model, set)
     end

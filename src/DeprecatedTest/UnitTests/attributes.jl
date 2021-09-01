@@ -81,13 +81,9 @@ function raw_status_string(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.GreaterThan(0.0))
+    MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     test_model_solution(
         model,
         config,
@@ -109,13 +105,9 @@ function solve_time(model::MOI.ModelLike, config::Config)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, MOI.SingleVariable(x), MOI.LessThan(0.0))
+    MOI.add_constraint(model, x, MOI.LessThan(0.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.SingleVariable}(),
-        MOI.SingleVariable(x),
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     test_model_solution(
         model,
         config,
