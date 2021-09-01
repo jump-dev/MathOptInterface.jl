@@ -68,7 +68,7 @@ method that is being dispatched, and so it cannot be precompiled.
     This is a slightly simplified explanation. Read the [precompilation tutorial](https://julialang.org/blog/2021/01/precompile_tutorial/)
     for a more in-depth discussion on back-edges.
 
-Unfortunately, the design of MOI means that this is a frequent occurence! We
+Unfortunately, the design of MOI means that this is a frequent occurrence! We
 have a bunch of types in `MOI.Utilities` that wrap types defined in external
 packages (i.e., the `Optimizer`s), which implement methods of functions defined
 in `MOI` (e.g., `add_variable`, `add_constraint`).
