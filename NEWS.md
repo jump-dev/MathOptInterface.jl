@@ -1,4 +1,4 @@
-MathOptInterface (MOI release notes)
+MathOptInterface (MOI) release notes
 ====================================
 
 Release notes for MathOptInterface have been moved to the documentation.
