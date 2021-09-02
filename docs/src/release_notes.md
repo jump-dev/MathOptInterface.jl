@@ -1,15 +1,18 @@
 # Release notes
 
-v0.10.0 (unreleased)
----------------------------
+## v0.10.0 (unreleased)
 
 **MOI v0.10 is a significant breaking release. There are a large number of
 user-visible breaking changes and code refactors, as well as a substantial
 number of new features.**
 
-Breaking changes in MOI
+### Breaking changes in MOI
 
 - `SingleVariable` has been removed; use `VariableIndex` instead
+- `SingleVariableConstraintNameError` has been renamed to
+  `VariableIndexConstraintNameError`
+- `SettingSingleVariableFunctionNotAllowed` has been renamed to
+  `SettingVariableIndexFunctionNotAllowed`
 - `VariableIndex` constraints should not support `ConstraintName`
 - `VariableIndex` constraints should not support `ConstraintBasisStatus`;
   implement `VariableBasisStatus` instead
@@ -35,8 +38,12 @@ Breaking changes in MOI
 - The `dimension` argument to `Complements(dimension::Int)` should now be the
   length of the corresponding function, instead of half the length. An
   `ArgumentError` is thrown if `dimension` is not even.
+- `copy_to` no longer takes keyword arguments:
+  - `copy_names`: now copy names if they are supported by the destination solver
+  - `filter_constraints`: use `Utilities.ModelFilter` instead
+  - `warn_attributes`: never warn about optimizer attributes
 
-Breaking changes in `Bridges`
+### Breaking changes in `Bridges`
 
 - `Constraint.RSOCBridge` has been renamed to `Constraint.RSOCtoSOCBridge`
 - `Constraint.SOCRBridge` has been renamed to `Constraint.SOCtoRSOCBridge`
@@ -44,14 +51,16 @@ Breaking changes in `Bridges`
   bridges returned views instead of copies.
 - `Bridges.IndexInVector` has been unified into a single type. Previously, there
   was a different type for each submodule within `Bridges`
+- The signature of indicator bridges has been fixed. Use
+  `MOI.Bridges.Constraint.IndicatortoSOS1{Float64}(model)`.
 
-Breaking changes in `FileFormats`
+### Breaking changes in `FileFormats`
 
 - `FileFormats.MOF.Model` no longer accepts `validate` argument. Use the
   JSONSchema package to validate the MOF file. See the documentation for more
   information.
 
-Breaking changes in `Utilities`
+### Breaking changes in `Utilities`
 
 - The datastructure of `Utilities.Model` (and models created with
   `Utilities.@model`) has been significantly refactored in a breaking way. This
@@ -67,19 +76,24 @@ Breaking changes in `Utilities`
 - The field names of `Utilities.IndexMap` have been renamed to `var_map` and
   `con_map`. Accessing these fields directly is considered a private detail that
   may change. Use the public `getindex` and `setindex!` API instead.
+- The size argument to `Utilities.CleverDicts.CleverDict(::Integer)` has been
+  removed.
+- The size argument to `Utilities.IndexMap(::Integer)` has been removed.
 - `Utilities.DoubleDicts` have been significantly refactored. Consult the source
   code for details.
+- `Utilities.test_models_equal` has been moved to `MOI.Test`
 
-Breaking changes in `Test`
+### Breaking changes in `Test`
 
 - `MOI.Test` has been renamed to `MOI.DeprecatedTest`
 - An entirely new `MOI.Test` submodule has been written. See the documentation
   for details. The new `MOI.Test` submodule may find many bugs in the
   implementations of existing solvers that were previously untested.
 
-Other changes:
+### Other changes:
 
 - `attribute_value_type` has been added
+- `copy_to_and_optimize!` has been added
 - `VariableBasisStatus` has been added
 - `print(model)` now prints a human-readable description of the model
 - Various improvements to the `FileFormats` submodule
@@ -89,6 +103,37 @@ Other changes:
     `OBJSENSE` and objective constants.
   - `FileFormats.NL` has been added to support nonlinear files
 - Improved type inference throughout to reduce latency
+
+### Updating
+
+A helpful script when updating is:
+```julia
+for (root, dirs, files) in walkdir(".")
+    for file in files
+        if !endswith(file, ".jl")
+            continue
+        end
+        s = read(joinpath(root, file), String)
+        for pair in [
+            ".variable_index" => ".variable",
+            "RawParameter" => "RawOptimizerAttribute",
+            "ListOfConstraints" => "ListOfConstraintTypesPresent",
+            "TestConfig" => "Config",
+            "attr.N" => "attr.result_index",
+            "SolveTime" => "SolveTimeSec",
+            "DataType" => "Type",
+            "Utilities.supports_default_copy_to" =>
+                "supports_incremental_interface",
+            "SingleVariableConstraintNameError" =>
+                "VariableIndexConstraintNameError",
+            "SettingSingleVariableFunctionNotAllowed" =>
+                "SettingVariableIndexFunctionNotAllowed",
+        ]
+            s = replace(s, pair)
+        end
+    end
+end
+```
 
 v0.9.22 (May 22, 2021)
 ---------------------------
