@@ -34,10 +34,10 @@ Bridges.Objective.bridge_objective
 ```
 
 When querying the [`NumberOfVariables`](@ref), [`NumberOfConstraints`](@ref)
-[`ListOfVariableIndices`](@ref), and [`ListOfConstraintIndices`](@ref), the 
+[`ListOfVariableIndices`](@ref), and [`ListOfConstraintIndices`](@ref), the
 variables and constraints created by the bridges in the underlying model are
 hidden by the bridge optimizer. For this purpose, the bridge should provide
-access to the variables and constraints it has created by implementing the 
+access to the variables and constraints it has created by implementing the
 following methods of [`get`](@ref):
 ```@docs
 get(::Bridges.Constraint.AbstractBridge, ::NumberOfVariables)
@@ -49,7 +49,7 @@ get(::Bridges.AbstractBridge, ::ListOfConstraintIndices)
 # SetMap bridges
 
 Implementing a constraint bridge relying on linear transformation between two
-sets is easier thanks to the [SetMap interface](constraint_set_map).
+sets is easier thanks to the [SetMap interface](@ref constraint_set_map).
 The bridge simply needs to be a subtype of [`Bridges.Variable.SetMapBridge`]
 for a variable bridge and [`Bridges.Constraint.SetMapBridge`] for a constraint
 bridge and the linear transformation is represented with
