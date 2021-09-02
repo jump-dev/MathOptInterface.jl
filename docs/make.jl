@@ -30,6 +30,7 @@ makedocs(
             "tutorials/mathprogbase.md",
             "tutorials/bridging_constraint.md",
             "tutorials/manipulating_expressions.md",
+            "tutorials/latency.md",
         ],
         "Manual" => [
             "manual/standard_form.md",
