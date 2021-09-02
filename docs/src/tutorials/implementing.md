@@ -20,6 +20,32 @@ MathOptInterface for a new solver.
     not answered by this guide, please ask them in the [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev)
     so we can improve this guide!
 
+## A note on the API
+
+The API of MathOptInterface is large and varied. In order to support the
+diversity of solvers and use-cases, we make heavy use of
+[duck-typing](https://en.wikipedia.org/wiki/Duck_typing). That is, solvers are
+not expected to implement the full API, nor is there a well-defined minimal
+subset of what must be implemented. Instead, you should implement the API as
+necessary in order to make the solver function as you require.
+
+The main reason for using duck-typing over a well-defined API is that solvers
+work in different ways and target different use-cases.
+
+For example:
+
+ * Some solvers support incremental problem construction, support modification
+   after a solve, and have native support for things like variable names.
+ * Other solvers are "one-shot" solvers that require all of the problem data to
+   construct and solve the problem in a single function call. They do not
+   support modification or things like variable names.
+ * Other "solvers" are not solvers at all, but things like file readers. These
+   may only support functions like [`read_from_file`](@ref), and may not even
+   support the ability to add variables or constraints directly!
+ * Finally, some "solvers" are layers which take a problem as input, transform
+   it according to some rules, and pass the transformed problem to an inner
+   solver.
+
 ## Preliminaries
 
 ### Decide if MathOptInterface is right for you
@@ -51,8 +77,8 @@ has a good list of solvers, along with the problem classes they support.
 
 ### Create a low-level interface
 
-Before writing a MathOptInterface wrapper, you first need to be able to call the solver
-from Julia.
+Before writing a MathOptInterface wrapper, you first need to be able to call the
+solver from Julia.
 
 #### Wrapping solvers written in Julia
 
@@ -280,9 +306,36 @@ For each attribute
     attribute. You should make sure that your [`get`](@ref) function correctly
     infers to this type (or a subtype of it).
 
-All `Optimizer`s must implement the [ModelLike API](@ref). See that section for
-details.
+Each column in the table indicates whether you need to implement the particular
+method for each attribute.
 
+| Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
+| ---------------------- | --------------| ------------- | ------------------ |
+| [`SolverName`](@ref)   | Yes           | No            | No                 |
+| [`RawSolver`](@ref)    | Yes           | No            | No                 |
+| [`Name`](@ref)         | Yes           | Yes           | Yes                |
+| [`Silent`](@ref)       | Yes           | Yes           | Yes                |
+| [`TimeLimitSec`](@ref) | Yes           | Yes           | Yes                |
+| [`RawOptimizerAttribute`](@ref) | Yes  | Yes           | Yes                |
+| [`NumberOfThreads`](@ref) | Yes        | Yes           | Yes                |
+
+For example:
+```julia
+function MOI.get(model::Optimizer, ::MOI.Silent)
+    return # true if MOI.Silent is set
+end
+
+function MOI.set(model::Optimizer, ::MOI.Silent, v::Bool)
+    if v
+        # Set a parameter to turn off printing
+    else
+        # Restore the default printing
+    end
+    return
+end
+
+MOI.supports(::Optimizer, ::MOI.Silent) = true
+```
 ### Define `supports_constraint`
 
 The next step is to define which constraints and objective functions you plan to
@@ -378,24 +431,33 @@ To implement the incremental interface, implement the following functions:
     in the function. Throw [`ScalarFunctionConstantNotZero`](@ref) if the
     function constant is not zero.
 
-In addition, you should implement the following model attributes if applicable.
-Each column in the table indicates whether you need to implement the particular
-method for each attribute.
+In addition, you should implement the following model attributes:
 
 | Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
 | ---------------------- | --------------| ------------- | ------------------ |
-| [`ConstraintFunction`](@ref)    | Yes  | Yes           | No                 |
-| [`ConstraintSet`](@ref)         | Yes  | Yes           | No                 |
-| [`Name`](@ref)                  | Yes  | Yes           | Yes                |
-| [`NumberOfThreads`](@ref)       | Yes  | Yes           | Yes                |
-| [`ObjectiveFunctionType`](@ref) | Yes  | No            | No                 |
-| [`ObjectiveFunction`](@ref)     | Yes  | Yes           | Yes                |
-| [`ObjectiveSense`](@ref)        | Yes  | Yes           | Yes                |
-| [`RawOptimizerAttribute`](@ref) | Yes  | Yes           | Yes                |
-| [`RawSolver`](@ref)             | Yes  | No            | No                 |
-| [`Silent`](@ref)                | Yes  | Yes           | Yes                |
-| [`SolverName`](@ref)            | Yes  | No            | No                 |
-| [`TimeLimitSec`](@ref)          | Yes  | Yes           | Yes                |
+| [`ListOfModelAttributesSet`](@ref) | Yes           | No            | No     |
+| [`ObjectiveFunctionType`](@ref)    | Yes           | No            | No     |
+| [`ObjectiveFunction`](@ref)        | Yes           | Yes           | Yes    |
+| [`ObjectiveSense`](@ref)           | Yes           | Yes           | Yes    |
+| [`Name`](@ref)                     | Yes           | Yes           | Yes    |
+
+Variable-related attributes:
+
+| Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
+| ---------------------- | --------------| ------------- | ------------------ |
+| [`ListOfVariableAttributesSet`](@ref)  | Yes           | No            | No |
+| [`NumberOfVariables`](@ref)            | Yes           | No            | No |
+| [`ListOfVariableIndices`](@ref)        | Yes           | No            | No |
+
+Constraint-related attributes:
+
+| Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
+| ---------------------- | --------------| ------------- | ------------------ |
+| [`ListOfConstraintAttributesSet`](@ref) | Yes          | No            | No |
+| [`NumberOfConstraints`](@ref)           | Yes          | No            | No |
+| [`ListOfConstraintTypesPresent`](@ref)  | Yes          | No            | No |
+| [`ConstraintFunction`](@ref)            | Yes          | Yes           | No |
+| [`ConstraintSet`](@ref)                 | Yes          | Yes           | No |
 
 #### Modifications
 

@@ -64,15 +64,7 @@ Consult the docstsrings of each attribute for information on what it represents.
 
 ## ModelLike API
 
-Objects subtyping [`ModelLike`](ref) must implement:
-
- * [`is_empty`](@ref)
- * [`empty!`](@ref)
-
-The following attributes are available. Some are required by all
-implementations, and others are optional.
-
-**Required**
+The following attributes are available:
 
  * [`ListOfConstraintAttributesSet`](@ref)
  * [`ListOfConstraintIndices`](@ref)
@@ -82,41 +74,19 @@ implementations, and others are optional.
  * [`ListOfVariableIndices`](@ref)
  * [`NumberOfConstraints`](@ref)
  * [`NumberOfVariables`](@ref)
-
-**Optional**
-
  * [`Name`](@ref)
  * [`ObjectiveFunction`](@ref)
  * [`ObjectiveFunctionType`](@ref)
  * [`ObjectiveSense`](@ref)
-
-!!! note
-    To be useful, a [`ModelLike`](@ref) should, in most cases, also implement
-    [`copy_to`](@ref) or the incremental interface ([`add_variable`](@ref),
-    [`add_constraint`](@ref), etc.) See [Implementing a solver interface](@ref)
-    for more details.
-
 ## AbstractOptimizer API
 
-There are two options for [`AbstractOptimizer`](@ref)s:
-
- 1. Implement the required portion of the [ModelLike API](@ref), plus
-    [`optimize!`](@ref)
- 2. Implement [`copy_to_and_optimize!`](@ref)
-
-The following attributes are available. Some are required by all
-implementations, and others are optional.
-
-**Required**
+The following attributes are available:
 
  * [`DualStatus`](@ref)
  * [`PrimalStatus`](@ref)
  * [`RawStatusString`](@ref)
  * [`ResultCount`](@ref)
  * [`TerminationStatus`](@ref)
-
-**Optional**
-
  * [`BarrierIterations`](@ref)
  * [`DualObjectiveValue`](@ref)
  * [`NodeCount`](@ref)

@@ -5,29 +5,6 @@ module MathOptInterface
 
 Abstract supertype for objects that implement the "Model" interface for defining
 an optimization problem.
-
-## Interface
-
-The API of MathOptInterface is large. At a minimum, objects subtyping
-`ModelLike` must implement [`get`](@ref) for the following attributes:
-
- * [`ListOfConstraintAttributesSet`](@ref)
- * [`ListOfConstraintIndices`](@ref)
- * [`ListOfConstraintTypesPresent`](@ref)
- * [`ListOfModelAttributesSet`](@ref)
- * [`ListOfVariableAttributesSet`](@ref)
- * [`ListOfVariableIndices`](@ref)
- * [`NumberOfConstraints`](@ref)
- * [`NumberOfVariables`](@ref)
-
-and the functions:
-
- * [`is_empty`](@ref)
- * [`empty!`](@ref)
-
-!!! warning
-    This is the _minimal_ API required. Consult the documentation for more
-    details on how to interface the full API.
 """
 abstract type ModelLike end
 
@@ -46,27 +23,6 @@ Abstract supertype for objects representing an instance of an optimization
 problem tied to a particular solver. This is typically a solver's in-memory
 representation. In addition to `ModelLike`, `AbstractOptimizer` objects let you
 solve the model and query the solution.
-
-## Interface
-
-The API of MathOptInterface is large. There are two options for
-[`AbstractOptimizer`](@ref)s:
-
- 1. Implement the required portion of the [`ModelLike`](@ref) API, plus
-    [`optimize!`](@ref)
- 2. Implement [`copy_to_and_optimize!`](@ref)
-
-In addition, they must implement [`get`](@ref) for the following attributes:
-
- * [`DualStatus`](@ref)
- * [`PrimalStatus`](@ref)
- * [`RawStatusString`](@ref)
- * [`ResultCount`](@ref)
- * [`TerminationStatus`](@ref)
-
-!!! warning
-    This is the _minimal_ API required. Consult the documentation for more
-    details on how to interface the full API.
 """
 abstract type AbstractOptimizer <: ModelLike end
 
