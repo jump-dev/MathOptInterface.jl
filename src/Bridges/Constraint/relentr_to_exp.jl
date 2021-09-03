@@ -1,16 +1,17 @@
 """
     RelativeEntropyBridge{T}
 
-The `RelativeEntropyCone` is representable with exponential cone and LP constraints, since
-``u \\ge \\sum_{i=1}^n w_i \\log (\\frac{w_i}{v_i})`` if and only if there exists a vector
-``y`` such that ``u \\ge \\sum_i y_i`` and ``y_i \\ge w_i \\log (\\frac{w_i}{v_i})`` or
-equivalently ``v_i \\ge w_i \\exp (\\frac{-y_i}{w_i})`` or equivalently
+The `RelativeEntropyCone` is representable with exponential cone and LP
+constraints, since ``u \\ge \\sum_{i=1}^n w_i \\log (\\frac{w_i}{v_i})`` if and
+only if there exists a vector ``y`` such that ``u \\ge \\sum_i y_i`` and
+``y_i \\ge w_i \\log (\\frac{w_i}{v_i})`` or equivalently
+``v_i \\ge w_i \\exp (\\frac{-y_i}{w_i})`` or equivalently
 ``(-y_i, w_i, v_i) \\in ExponentialCone``, for all ``i``.
 """
 struct RelativeEntropyBridge{T,F,G,H} <: AbstractBridge
     y::Vector{MOI.VariableIndex}
-    ge_index::CI{F,MOI.GreaterThan{T}}
-    exp_indices::Vector{CI{G,MOI.ExponentialCone}}
+    ge_index::MOI.ConstraintIndex{F,MOI.GreaterThan{T}}
+    exp_indices::Vector{MOI.ConstraintIndex{G,MOI.ExponentialCone}}
 end
 
 function bridge_constraint(
@@ -19,23 +20,23 @@ function bridge_constraint(
     f::H,
     s::MOI.RelativeEntropyCone,
 ) where {T,F,G,H}
-    f_scalars = MOIU.eachscalar(f)
+    f_scalars = MOI.Utilities.eachscalar(f)
     d = MOI.dimension(s)
     v_dim = div(d - 1, 2)
     y = MOI.add_variables(model, v_dim)
     rhs = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), y), zero(T))
-    ge_index = MOIU.normalize_and_add_constraint(
+    ge_index = MOI.Utilities.normalize_and_add_constraint(
         model,
-        MOIU.operate(-, T, f_scalars[1], rhs),
+        MOI.Utilities.operate(-, T, f_scalars[1], rhs),
         MOI.GreaterThan(zero(T)),
         allow_modify_function = true,
     )
     w_start = 1 + v_dim
     exp_funcs = [
-        MOIU.operate(
+        MOI.Utilities.operate(
             vcat,
             T,
-            MOIU.operate(-, T, y[i]),
+            MOI.Utilities.operate(-, T, y[i]),
             f_scalars[w_start+i],
             f_scalars[1+i],
         ) for i in 1:v_dim
@@ -55,11 +56,13 @@ function MOI.supports_constraint(
     return true
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:RelativeEntropyBridge})
+function MOI.Bridges.added_constrained_variable_types(
+    ::Type{<:RelativeEntropyBridge},
+)
     return Tuple{Type}[]
 end
 
-function MOIB.added_constraint_types(
+function MOI.Bridges.added_constraint_types(
     ::Type{RelativeEntropyBridge{T,F,G,H}},
 ) where {T,F,G,H}
     return Tuple{Type,Type}[(F, MOI.GreaterThan{T}), (G, MOI.ExponentialCone)]
@@ -70,18 +73,17 @@ function concrete_bridge_type(
     H::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.RelativeEntropyCone},
 ) where {T}
-    S = MOIU.scalar_type(H)
-    F = MOIU.promote_operation(-, T, S, S)
-    G = MOIU.promote_operation(
+    S = MOI.Utilities.scalar_type(H)
+    F = MOI.Utilities.promote_operation(-, T, S, S)
+    G = MOI.Utilities.promote_operation(
         vcat,
         T,
-        MOIU.promote_operation(-, T, MOI.VariableIndex),
+        MOI.Utilities.promote_operation(-, T, MOI.VariableIndex),
         S,
     )
     return RelativeEntropyBridge{T,F,G,H}
 end
 
-# Attributes, Bridge acting as a model
 function MOI.get(bridge::RelativeEntropyBridge, ::MOI.NumberOfVariables)::Int64
     return length(bridge.y)
 end
@@ -118,7 +120,6 @@ function MOI.get(
     return copy(bridge.exp_indices)
 end
 
-# References
 function MOI.delete(model::MOI.ModelLike, bridge::RelativeEntropyBridge)
     for exp_index_i in bridge.exp_indices
         MOI.delete(model, exp_index_i)
@@ -128,14 +129,13 @@ function MOI.delete(model::MOI.ModelLike, bridge::RelativeEntropyBridge)
     return
 end
 
-# Attributes, Bridge acting as a constraint
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.ConstraintFunction,
     bridge::RelativeEntropyBridge{T,F,G,H},
 ) where {T,F,G,H}
-    func = MOIU.zero_with_output_dimension(G, 1 + 2 * length(bridge.y))
-    MOIU.operate_output_index!(
+    func = MOI.Utilities.zero_with_output_dimension(G, 1 + 2 * length(bridge.y))
+    MOI.Utilities.operate_output_index!(
         +,
         T,
         1,
@@ -144,18 +144,27 @@ function MOI.get(
     )
     w_start = 1 + length(bridge.y)
     for i in eachindex(bridge.y)
-        exp_func_i = MOIU.eachscalar(
+        exp_func_i = MOI.Utilities.eachscalar(
             MOI.get(model, MOI.ConstraintFunction(), bridge.exp_indices[i]),
         )
-        MOIU.operate_output_index!(-, T, 1, func, exp_func_i[1])
-        MOIU.operate_output_index!(+, T, 1 + i, func, exp_func_i[3])
-        MOIU.operate_output_index!(+, T, w_start + i, func, exp_func_i[2])
+        MOI.Utilities.operate_output_index!(-, T, 1, func, exp_func_i[1])
+        MOI.Utilities.operate_output_index!(+, T, 1 + i, func, exp_func_i[3])
+        MOI.Utilities.operate_output_index!(
+            +,
+            T,
+            w_start + i,
+            func,
+            exp_func_i[2],
+        )
     end
-    return MOIU.convert_approx(H, MOIU.remove_variable(func, bridge.y))
+    return MOI.Utilities.convert_approx(
+        H,
+        MOI.Utilities.remove_variable(func, bridge.y),
+    )
 end
 
 function MOI.get(
-    model::MOI.ModelLike,
+    ::MOI.ModelLike,
     ::MOI.ConstraintSet,
     bridge::RelativeEntropyBridge,
 )
@@ -163,11 +172,13 @@ function MOI.get(
 end
 
 function MOI.supports(
-    ::MOI.ModelLike,
-    ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{<:RelativeEntropyBridge},
-)
-    return true
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    ::Type{RelativeEntropyBridge{T,F,G,H}},
+) where {T,F,G,H}
+    ci_1 = MOI.ConstraintIndex{F,MOI.GreaterThan{T}}
+    ci_2 = MOI.ConstraintIndex{G,MOI.ExponentialCone}
+    return MOI.supports(model, attr, ci_1) && MOI.supports(model, attr, ci_2)
 end
 
 function MOI.get(
@@ -214,8 +225,10 @@ function MOI.set(
     end
     return
 end
-# Given a is dual on u - sum(y) >= 0 and (b_i, c_i, d_i) is dual on (-y_i, w_i, v_i)
-# in ExponentialCone, the dual on (u, v, w) in RelativeEntropyCone is (a, d_i, c_i).
+
+# Given a is dual on u - sum(y) >= 0 and (b_i, c_i, d_i) is dual on
+# (-y_i, w_i, v_i) in ExponentialCone, the dual on
+# (u, v, w) in RelativeEntropyCone is (a, d_i, c_i).
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
@@ -231,9 +244,10 @@ function MOI.get(
     end
     return dual
 end
+
 # Given constraint dual start of (u, v, w), constraint dual on GreaterThan is u
-# and on exponential cone constraint i is (r_i, w_i, v_i), but since y_i is free,
-# its dual is 0, so we have -r_i + u == 0 hence r_i = u.
+# and on exponential cone constraint i is (r_i, w_i, v_i), but since y_i is
+# free, its dual is 0, so we have -r_i + u == 0 hence r_i = u.
 # Note: alternatively, we could use the Lambert W function to calculate
 # r_i = exp(W(-w_i / (-v_i * e))) * (-v_i * e), but this is more complicated.
 function MOI.set(
