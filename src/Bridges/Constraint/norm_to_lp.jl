@@ -7,7 +7,7 @@ The `NormInfinityCone` is representable with LP constraints, since
 """
 struct NormInfinityBridge{T,F,G} <:
        SetMapBridge{T,MOI.Nonnegatives,MOI.NormInfinityCone,F,G}
-    constraint::CI{F,MOI.Nonnegatives}
+    constraint::MOI.ConstraintIndex{F,MOI.Nonnegatives}
 end
 
 function concrete_bridge_type(
@@ -15,69 +15,77 @@ function concrete_bridge_type(
     G::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.NormInfinityCone},
 ) where {T}
-    F = MOIU.promote_operation(+, T, G, G)
+    F = MOI.Utilities.promote_operation(+, T, G, G)
     return NormInfinityBridge{T,F,G}
 end
 
-function MOIB.map_set(::Type{<:NormInfinityBridge}, set::MOI.NormInfinityCone)
+function MOI.Bridges.map_set(
+    ::Type{<:NormInfinityBridge},
+    set::MOI.NormInfinityCone,
+)
     return MOI.Nonnegatives(2 * (MOI.dimension(set) - 1))
 end
 
-function MOIB.inverse_map_set(
+function MOI.Bridges.inverse_map_set(
     ::Type{<:NormInfinityBridge},
     set::MOI.Nonnegatives,
 )
     return MOI.NormInfinityCone(div(MOI.dimension(set), 2) + 1)
 end
 
-function MOIB.map_function(::Type{<:NormInfinityBridge{T}}, func) where {T}
-    scalars = MOIU.eachscalar(func)
+function MOI.Bridges.map_function(
+    ::Type{<:NormInfinityBridge{T}},
+    func,
+) where {T}
+    scalars = MOI.Utilities.eachscalar(func)
     t = scalars[1]
     lb = scalars[2:end]
-    ub = MOIU.operate(-, T, lb)
-    f_new = MOIU.operate(vcat, T, ub, lb)
+    ub = MOI.Utilities.operate(-, T, lb)
+    f_new = MOI.Utilities.operate(vcat, T, ub, lb)
     for i in 1:(2*(length(scalars)-1))
-        MOIU.operate_output_index!(+, T, i, f_new, t)
+        MOI.Utilities.operate_output_index!(+, T, i, f_new, t)
     end
     return f_new
 end
 
-function MOIB.inverse_map_function(
+function MOI.Bridges.inverse_map_function(
     ::Type{<:NormInfinityBridge{T}},
     func,
 ) where {T}
-    scalars = MOIU.eachscalar(func)
-    t = MOIU.operate!(/, T, sum(scalars), T(length(scalars)))
+    scalars = MOI.Utilities.eachscalar(func)
+    t = MOI.Utilities.operate!(/, T, sum(scalars), T(length(scalars)))
     d = div(length(scalars), 2)
-    x = MOIU.operate!(
+    x = MOI.Utilities.operate!(
         /,
         T,
-        MOIU.operate!(-, T, scalars[(d+1):end], scalars[1:d]),
+        MOI.Utilities.operate!(-, T, scalars[(d+1):end], scalars[1:d]),
         T(2),
     )
-    return MOIU.operate(vcat, T, t, x)
+    return MOI.Utilities.operate(vcat, T, t, x)
 end
+
 # Given a_i is dual on t - x_i >= 0 and b_i is dual on t + x_i >= 0,
 # the dual on (t, x) in NormInfinityCone is (u, v) in NormOneCone, where
 # v_i = -a_i + b_i and u = sum(a) + sum(b).
-function MOIB.adjoint_map_function(::Type{<:NormInfinityBridge}, func)
-    scalars = MOIU.eachscalar(func)
+function MOI.Bridges.adjoint_map_function(::Type{<:NormInfinityBridge}, func)
+    scalars = MOI.Utilities.eachscalar(func)
     t = sum(scalars)
     d = div(length(scalars), 2)
     x = (scalars[(d+1):end] - scalars[1:d])
     return vcat(t, x)
 end
 
-function MOIB.inverse_adjoint_map_function(
+function MOI.Bridges.inverse_adjoint_map_function(
     ::Type{<:NormInfinityBridge{T}},
     func::AbstractVector{T},
 ) where {T}
     # This is used by `MOI.ConstraintDualStart`.
-    # The result should belong to `MOI.Nonnegatives` and the sum of the elements should
-    # be `t`.
-    # Only one of dual of the upper and lower bound should be active so one of the two
-    # duals is zero. We know which one since they should be nonnegative.
-    # Then if `t = sum abs(x_i)`, we will indeed have only one of them being zero.
+    # The result should belong to `MOI.Nonnegatives` and the sum of the elements
+    # should be `t`.
+    # Only one of dual of the upper and lower bound should be active so one of
+    # the two duals is zero. We know which one since they should be nonnegative.
+    # Then if `t = sum abs(x_i)`, we will indeed have only one of them being
+    # zero.
     t = func[1]
     y = func[2:end]
     lb = [x > 0 ? x : zero(x) for x in y]
@@ -90,12 +98,13 @@ end
     NormOneBridge{T}
 
 The `NormOneCone` is representable with LP constraints, since
-``t \\ge \\sum_i \\lvert x_i \\rvert`` if and only if there exists a vector y such that
+``t \\ge \\sum_i \\lvert x_i \\rvert`` if and only if there exists a vector y
+such that
 ``t \\ge \\sum_i y_i`` and ``y_i \\ge x_i``, ``y_i \\ge -x_i`` for all ``i``.
 """
 struct NormOneBridge{T,F,G} <: AbstractBridge
     y::Vector{MOI.VariableIndex}
-    nn_index::CI{F,MOI.Nonnegatives}
+    nn_index::MOI.ConstraintIndex{F,MOI.Nonnegatives}
 end
 
 function bridge_constraint(
@@ -104,16 +113,16 @@ function bridge_constraint(
     f::G,
     s::MOI.NormOneCone,
 ) where {T,F,G}
-    f_scalars = MOIU.eachscalar(f)
+    f_scalars = MOI.Utilities.eachscalar(f)
     d = MOI.dimension(s)
     y = MOI.add_variables(model, d - 1)
     rhs = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), y), zero(T))
-    ge = MOIU.operate(-, T, f_scalars[1], rhs)
+    ge = MOI.Utilities.operate(-, T, f_scalars[1], rhs)
     lb = f_scalars[2:d]
-    ub = MOIU.operate(-, T, lb)
-    lb = MOIU.operate!(+, T, lb, MOI.VectorOfVariables(y))
-    ub = MOIU.operate!(+, T, ub, MOI.VectorOfVariables(y))
-    f_new = MOIU.operate(vcat, T, ge, ub, lb)
+    ub = MOI.Utilities.operate(-, T, lb)
+    lb = MOI.Utilities.operate!(+, T, lb, MOI.VectorOfVariables(y))
+    ub = MOI.Utilities.operate!(+, T, ub, MOI.VectorOfVariables(y))
+    f_new = MOI.Utilities.operate(vcat, T, ge, ub, lb)
     nn_index = MOI.add_constraint(model, f_new, MOI.Nonnegatives(2d - 1))
     return NormOneBridge{T,F,G}(y, nn_index)
 end
@@ -126,11 +135,13 @@ function MOI.supports_constraint(
     return true
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:NormOneBridge})
+function MOI.Bridges.added_constrained_variable_types(::Type{<:NormOneBridge})
     return Tuple{Type}[]
 end
 
-function MOIB.added_constraint_types(::Type{<:NormOneBridge{T,F}}) where {T,F}
+function MOI.Bridges.added_constraint_types(
+    ::Type{<:NormOneBridge{T,F}},
+) where {T,F}
     return Tuple{Type,Type}[(F, MOI.Nonnegatives)]
 end
 
@@ -139,17 +150,16 @@ function concrete_bridge_type(
     G::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.NormOneCone},
 ) where {T}
-    S = MOIU.scalar_type(G)
-    F = MOIU.promote_operation(
+    S = MOI.Utilities.scalar_type(G)
+    F = MOI.Utilities.promote_operation(
         vcat,
         T,
-        MOIU.promote_operation(+, T, S, S),
-        MOIU.promote_operation(-, T, S, S),
+        MOI.Utilities.promote_operation(+, T, S, S),
+        MOI.Utilities.promote_operation(-, T, S, S),
     )
     return NormOneBridge{T,F,G}
 end
 
-# Attributes, Bridge acting as a model
 MOI.get(b::NormOneBridge, ::MOI.NumberOfVariables)::Int64 = length(b.y)
 
 MOI.get(b::NormOneBridge, ::MOI.ListOfVariableIndices) = copy(b.y)
@@ -168,32 +178,34 @@ function MOI.get(
     return [b.nn_index]
 end
 
-# References
 function MOI.delete(model::MOI.ModelLike, c::NormOneBridge)
     MOI.delete(model, c.nn_index)
     MOI.delete(model, c.y)
     return
 end
 
-# Attributes, Bridge acting as a constraint
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.ConstraintFunction,
     c::NormOneBridge{T,F,G},
 ) where {T,F,G}
-    nn_func =
-        MOIU.eachscalar(MOI.get(model, MOI.ConstraintFunction(), c.nn_index))
-    t = MOIU.operate!(/, T, nn_func[1] + sum(nn_func), T(2))
+    nn_func = MOI.Utilities.eachscalar(
+        MOI.get(model, MOI.ConstraintFunction(), c.nn_index),
+    )
+    t = MOI.Utilities.operate!(/, T, nn_func[1] + sum(nn_func), T(2))
     d = div(length(nn_func) - 1, 2)
-    x = MOIU.operate!(
+    x = MOI.Utilities.operate!(
         /,
         T,
-        MOIU.operate!(-, T, nn_func[(d+2):end], nn_func[2:(d+1)]),
+        MOI.Utilities.operate!(-, T, nn_func[(d+2):end], nn_func[2:(d+1)]),
         T(2),
     )
-    return MOIU.convert_approx(
+    return MOI.Utilities.convert_approx(
         G,
-        MOIU.remove_variable(MOIU.operate(vcat, T, t, x), c.y),
+        MOI.Utilities.remove_variable(
+            MOI.Utilities.operate(vcat, T, t, x),
+            c.y,
+        ),
     )
 end
 
@@ -206,11 +218,11 @@ function MOI.get(model::MOI.ModelLike, ::MOI.ConstraintSet, c::NormOneBridge)
 end
 
 function MOI.supports(
-    ::MOI.ModelLike,
-    ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{<:NormOneBridge},
-)
-    return true
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    ::Type{NormOneBridge{T,F,G}},
+) where {T,F,G}
+    return MOI.supports(model, attr, MOI.ConstraintIndex{F,MOI.Nonnegatives})
 end
 
 function MOI.set(
@@ -244,9 +256,10 @@ function MOI.get(
     x = (nn_primal[(d+2):end] - nn_primal[2:(d+1)]) / 2
     return vcat(t, x)
 end
-# Given a_i is dual on y_i - x_i >= 0 and b_i is dual on y_i + x_i >= 0 and c is dual on t - sum(y) >= 0,
-# the dual on (t, x) in NormOneCone is (u, v) in NormInfinityCone, where
-# v_i = -a_i + b_i and u = c.
+
+# Given a_i is dual on y_i - x_i >= 0 and b_i is dual on y_i + x_i >= 0 and c is
+# dual on t - sum(y) >= 0, the dual on (t, x) in NormOneCone is
+# (u, v) in NormInfinityCone, where v_i = -a_i + b_i and u = c.
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
@@ -257,6 +270,7 @@ function MOI.get(
     x = nn_dual[(d+2):end] - nn_dual[2:(d+1)]
     return vcat(nn_dual[1], x)
 end
+
 # value[1 + i] = nn_dual[1 + d + i] - nn_dual[1 + i]
 # and `nn_dual` is nonnegative. By complementarity slackness, only one of each
 # `nn_dual` can be nonzero (except if `x = 0`) so we can set
