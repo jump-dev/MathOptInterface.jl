@@ -274,7 +274,7 @@ All `Optimizer`s must implement the following methods:
  * [`optimize!`](@ref) (or [`copy_to_and_optimize!`](@ref))
 
 Other methods, detailed below, are optional or depend on how you implement the
-itnerface.
+interface.
 
 !!! tip
     For this and all future methods, read the docstrings to understand what each
