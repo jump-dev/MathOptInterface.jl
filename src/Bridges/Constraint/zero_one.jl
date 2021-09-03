@@ -23,7 +23,7 @@ function bridge_constraint(
 end
 
 function MOI.Bridges.added_constraint_types(
-    ::Type{<:ZeroOneBridge{T}}
+    ::Type{<:ZeroOneBridge{T}},
 ) where {T}
     return Tuple{Type,Type}[
         (MOI.VariableIndex, MOI.Interval{T}),

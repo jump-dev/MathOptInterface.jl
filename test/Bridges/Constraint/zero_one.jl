@@ -32,8 +32,6 @@ function test_ZeroOne()
         MOI.VariableIndex,
         MOI.ZeroOne,
     ) == bridge_type
-
-    @test MOI.supports(bridged_mock, MOI.ConstraintPrimalStart(), bridge_type)
     MOI.Test.test_basic_VariableIndex_ZeroOne(bridged_mock, config)
     MOI.empty!(bridged_mock)
     MOI.Utilities.set_mock_optimize!(
@@ -81,12 +79,6 @@ function test_ZeroOne()
             MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.ZeroOne}(),
         ),
     )
-    for attr in [MOI.ConstraintPrimalStart()]
-        @test MOI.supports(bridged_mock, attr, typeof(ci))
-        value = 1.0
-        MOI.set(bridged_mock, attr, ci, value)
-        @test MOI.get(bridged_mock, attr, ci) ≈ value
-    end
     s = """
     variables: x, y
     y == 1.0
