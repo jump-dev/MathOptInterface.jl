@@ -25,8 +25,8 @@ struct SplitIntervalBridge{
     LS<:MOI.AbstractSet,
     US<:MOI.AbstractSet,
 } <: AbstractBridge
-    lower::CI{F,LS}
-    upper::CI{F,US}
+    lower::MOI.ConstraintIndex{F,LS}
+    upper::MOI.ConstraintIndex{F,US}
 end
 
 function bridge_constraint(
@@ -53,14 +53,16 @@ function MOI.supports_constraint(
     F::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.Zeros},
 ) where {T}
-    return MOIU.is_coefficient_type(F, T)
+    return MOI.Utilities.is_coefficient_type(F, T)
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:SplitIntervalBridge})
+function MOI.Bridges.added_constrained_variable_types(
+    ::Type{<:SplitIntervalBridge},
+)
     return Tuple{Type}[]
 end
 
-function MOIB.added_constraint_types(
+function MOI.Bridges.added_constraint_types(
     ::Type{SplitIntervalBridge{T,F,S,LS,US}},
 ) where {T,F,S,LS,US}
     return Tuple{Type,Type}[(F, LS), (F, US)]
@@ -82,7 +84,6 @@ function concrete_bridge_type(
     return SplitIntervalBridge{T,F,MOI.Zeros,MOI.Nonnegatives,MOI.Nonpositives}
 end
 
-# Attributes, Bridge acting as a model
 function MOI.get(
     ::SplitIntervalBridge{T,F,S,LS},
     ::MOI.NumberOfConstraints{F,LS},
@@ -111,20 +112,20 @@ function MOI.get(
     return [bridge.upper]
 end
 
-# Indices
 function MOI.delete(model::MOI.ModelLike, bridge::SplitIntervalBridge)
     MOI.delete(model, bridge.lower)
     MOI.delete(model, bridge.upper)
     return
 end
 
-# Attributes, Bridge acting as a constraint
 function MOI.supports(
-    ::MOI.ModelLike,
-    ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{<:SplitIntervalBridge},
-)
-    return true
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    ::Type{SplitIntervalBridge{T,F,S,LS,US}},
+) where {T,F,S,LS,US}
+    ci_1 = MOI.ConstraintIndex{F,LS}
+    ci_2 = MOI.ConstraintIndex{F,US}
+    return MOI.supports(model, attr, ci_1) && MOI.supports(model, attr, ci_2)
 end
 
 function MOI.get(
@@ -146,6 +147,7 @@ function MOI.set(
     MOI.set(model, attr, bridge.upper, value)
     return
 end
+
 # The map is:
 # x ∈ S <=> [1 1]' * x ∈ LS × US
 # So the adjoint map is
@@ -195,35 +197,17 @@ function MOI.get(
     bridge::SplitIntervalBridge,
 )
     lower_stat = MOI.get(model, MOI.ConstraintBasisStatus(), bridge.lower)
-    upper_stat = MOI.get(model, MOI.ConstraintBasisStatus(), bridge.upper)
-    if lower_stat == MOI.NONBASIC_AT_LOWER
-        @warn(
-            "GreaterThan constraints should not have basis status:" *
-            " NONBASIC_AT_LOWER, instead use NONBASIC."
-        )
-    end
-    if upper_stat == MOI.NONBASIC_AT_UPPER
-        @warn(
-            "LessThan constraints should not have basis status:" *
-            " NONBASIC_AT_UPPER, instead use NONBASIC."
-        )
-    end
     if lower_stat == MOI.NONBASIC
         return MOI.NONBASIC_AT_LOWER
     end
+    upper_stat = MOI.get(model, MOI.ConstraintBasisStatus(), bridge.upper)
     if upper_stat == MOI.NONBASIC
         return MOI.NONBASIC_AT_UPPER
     end
-    if lower_stat != upper_stat
-        @warn(
-            "Basis status of lower (`$lower_stat`) and upper (`$upper_stat`) constraint are inconsistent," *
-            " both should be basic or super basic."
-        )
-    end
+    # Both statuses must be BASIC or SUPER_BASIC, so just return the lower.
     return lower_stat
 end
 
-# Constraints
 function MOI.modify(
     model::MOI.ModelLike,
     bridge::SplitIntervalBridge,
