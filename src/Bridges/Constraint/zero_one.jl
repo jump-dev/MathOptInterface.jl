@@ -22,14 +22,16 @@ function bridge_constraint(
     return ZeroOneBridge{T}(interval_index, integer_index)
 end
 
-function MOIB.added_constraint_types(::Type{<:ZeroOneBridge{T}}) where {T}
+function MOI.Bridges.added_constraint_types(
+    ::Type{<:ZeroOneBridge{T}}
+) where {T}
     return Tuple{Type,Type}[
         (MOI.VariableIndex, MOI.Interval{T}),
         (MOI.VariableIndex, MOI.Integer),
     ]
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:ZeroOneBridge})
+function MOI.Bridges.added_constrained_variable_types(::Type{<:ZeroOneBridge})
     return Tuple{Type}[]
 end
 
@@ -49,14 +51,7 @@ function MOI.supports_constraint(
     return true
 end
 
-# Attributes, Bridge acting as a constraint
-function MOI.get(
-    model::MOI.ModelLike,
-    attr::MOI.ConstraintSet,
-    bridge::ZeroOneBridge,
-)
-    return MOI.ZeroOne()
-end
+MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, ::ZeroOneBridge) = MOI.ZeroOne()
 
 function MOI.get(
     model::MOI.ModelLike,
@@ -74,32 +69,12 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
+    attr::Union{MOI.ConstraintPrimal},
     bridge::ZeroOneBridge,
 )
     return MOI.get(model, attr, bridge.interval_index)
 end
 
-function MOI.supports(
-    ::MOI.ModelLike,
-    ::MOI.ConstraintPrimalStart,
-    ::Type{<:ZeroOneBridge},
-)
-    return true
-end
-
-function MOI.set(
-    model::MOI.ModelLike,
-    attr::MOI.ConstraintPrimalStart,
-    bridge::ZeroOneBridge{T},
-    value,
-) where {T}
-    MOI.set(model, attr, bridge.integer_index, value)
-    MOI.set(model, attr, bridge.interval_index, value)
-    return
-end
-
-# Attributes, Bridge acting as a model
 function MOI.get(
     ::ZeroOneBridge{T},
     ::MOI.NumberOfConstraints{MOI.VariableIndex,MOI.Interval{T}},
