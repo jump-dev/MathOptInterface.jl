@@ -1218,19 +1218,14 @@ end
 function MOI.supports(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractConstraintAttribute,
-    IndexType::Type{MOI.ConstraintIndex{F,S}},
+    ::Type{MOI.ConstraintIndex{F,S}},
 ) where {F,S}
-    return reduce_bridged(
-        b,
-        F,
-        S,
-        true,
-        () -> MOI.supports(b.model, attr, IndexType),
-        ok -> ok && MOI.supports(b, attr, Variable.concrete_bridge_type(b, S)),
-        ok ->
-            ok &&
-                MOI.supports(b, attr, Constraint.concrete_bridge_type(b, F, S)),
-    )
+    if is_bridged(b, F, S)
+        return MOI.supports(b, attr, Constraint.concrete_bridge_type(b, F, S))
+    elseif is_bridged(b, S) && is_variable_bridged(b, S)
+        return MOI.supports(b, attr, Variable.concrete_bridge_type(b, S))
+    end
+    return MOI.supports(b.model, attr, MOI.ConstraintIndex{F,S})
 end
 
 function _set_substituted(

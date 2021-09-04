@@ -49,7 +49,7 @@ end
 function MOI.supports(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{AbstractSlackBridge{T,VF,ZS,F,S}},
+    ::Type{<:AbstractSlackBridge{T,VF,ZS,F,S}},
 ) where {T,VF,ZS,F,S}
     ret = true
     if attr isa MOI.ConstraintPrimalStart
