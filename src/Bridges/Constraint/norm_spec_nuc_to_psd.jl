@@ -7,7 +7,7 @@ The `NormSpectralCone` is representable with a PSD constraint, since
 struct NormSpectralBridge{T,F,G} <: AbstractBridge
     row_dim::Int # row dimension of X
     column_dim::Int # column dimension of X
-    psd_index::CI{F,MOI.PositiveSemidefiniteConeTriangle}
+    psd_index::MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle}
 end
 
 function bridge_constraint(
@@ -16,22 +16,29 @@ function bridge_constraint(
     f::G,
     s::MOI.NormSpectralCone,
 ) where {T,F,G}
-    f_scalars = MOIU.eachscalar(f)
+    f_scalars = MOI.Utilities.eachscalar(f)
     t = f_scalars[1]
     row_dim = s.row_dim
     column_dim = s.column_dim
     side_dim = row_dim + column_dim
     psd_set = MOI.PositiveSemidefiniteConeTriangle(side_dim)
-    psd_func = MOIU.zero_with_output_dimension(F, MOI.dimension(psd_set))
+    psd_func =
+        MOI.Utilities.zero_with_output_dimension(F, MOI.dimension(psd_set))
     for i in 1:side_dim
-        MOIU.operate_output_index!(+, T, MOIU.trimap(i, i), psd_func, t)
+        MOI.Utilities.operate_output_index!(
+            +,
+            T,
+            MOI.Utilities.trimap(i, i),
+            psd_func,
+            t,
+        )
     end
     X_idx = 2
     for j in 1:column_dim, i in (column_dim+1):side_dim
-        MOIU.operate_output_index!(
+        MOI.Utilities.operate_output_index!(
             +,
             T,
-            MOIU.trimap(i, j),
+            MOI.Utilities.trimap(i, j),
             psd_func,
             f_scalars[X_idx],
         )
@@ -49,11 +56,13 @@ function MOI.supports_constraint(
     return true
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:NormSpectralBridge})
+function MOI.Bridges.added_constrained_variable_types(
+    ::Type{<:NormSpectralBridge},
+)
     return Tuple{Type}[]
 end
 
-function MOIB.added_constraint_types(
+function MOI.Bridges.added_constraint_types(
     ::Type{NormSpectralBridge{T,F,G}},
 ) where {T,F,G}
     return Tuple{Type,Type}[(F, MOI.PositiveSemidefiniteConeTriangle)]
@@ -64,11 +73,15 @@ function concrete_bridge_type(
     G::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.NormSpectralCone},
 ) where {T}
-    F = MOIU.promote_operation(vcat, T, MOIU.scalar_type(G), T)
+    F = MOI.Utilities.promote_operation(
+        vcat,
+        T,
+        MOI.Utilities.scalar_type(G),
+        T,
+    )
     return NormSpectralBridge{T,F,G}
 end
 
-# Attributes, Bridge acting as a model
 function MOI.get(
     ::NormSpectralBridge{T,F,G},
     ::MOI.NumberOfConstraints{F,MOI.PositiveSemidefiniteConeTriangle},
@@ -83,32 +96,30 @@ function MOI.get(
     return [bridge.psd_index]
 end
 
-# References
 function MOI.delete(model::MOI.ModelLike, bridge::NormSpectralBridge)
     MOI.delete(model, bridge.psd_index)
     return
 end
 
-# Attributes, Bridge acting as a constraint
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.ConstraintFunction,
     bridge::NormSpectralBridge{T,F,G},
 ) where {T,F,G}
-    psd_func = MOIU.eachscalar(
+    psd_func = MOI.Utilities.eachscalar(
         MOI.get(model, MOI.ConstraintFunction(), bridge.psd_index),
     )
     t = psd_func[1]
     side_dim = bridge.row_dim + bridge.column_dim
     X = psd_func[[
-        MOIU.trimap(i, j) for j in 1:bridge.column_dim for
+        MOI.Utilities.trimap(i, j) for j in 1:bridge.column_dim for
         i in (bridge.column_dim+1):side_dim
     ]]
-    return MOIU.convert_approx(G, MOIU.operate(vcat, T, t, X))
+    return MOI.Utilities.convert_approx(G, MOI.Utilities.operate(vcat, T, t, X))
 end
 
 function MOI.get(
-    model::MOI.ModelLike,
+    ::MOI.ModelLike,
     ::MOI.ConstraintSet,
     bridge::NormSpectralBridge,
 )
@@ -116,11 +127,15 @@ function MOI.get(
 end
 
 function MOI.supports(
-    ::MOI.ModelLike,
-    ::MOI.ConstraintPrimalStart,
-    ::Type{<:NormSpectralBridge},
-)
-    return true
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    ::Type{NormSpectralBridge{T,F,G}},
+) where {T,F,G}
+    return MOI.supports(
+        model,
+        attr,
+        MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle},
+    )
 end
 
 function MOI.get(
@@ -132,7 +147,7 @@ function MOI.get(
     t = primal[1]
     side_dim = bridge.row_dim + bridge.column_dim
     X = primal[[
-        MOIU.trimap(i, j) for j in 1:bridge.column_dim for
+        MOI.Utilities.trimap(i, j) for j in 1:bridge.column_dim for
         i in (bridge.column_dim+1):side_dim
     ]]
     return vcat(t, X)
@@ -148,16 +163,17 @@ function MOI.set(
     side_dim = bridge.row_dim + column_dim
     primal = zeros(T, div(side_dim * (side_dim + 1), 2))
     for i in 1:side_dim
-        primal[MOIU.trimap(i, i)] = value[1]
+        primal[MOI.Utilities.trimap(i, i)] = value[1]
     end
     X_idx = 2
     for j in 1:column_dim, i in (column_dim+1):side_dim
-        primal[MOIU.trimap(i, j)] = value[X_idx]
+        primal[MOI.Utilities.trimap(i, j)] = value[X_idx]
         X_idx += 1
     end
     MOI.set(model, MOI.ConstraintPrimalStart(), bridge.psd_index, primal)
     return
 end
+
 # Given [U X'; X V] is dual on PSD constraint, the dual on NormSpectralCone
 # constraint is (tr(U) + tr(V), 2X) in NormNuclearCone.
 function MOI.get(
@@ -168,10 +184,10 @@ function MOI.get(
     dual = MOI.get(model, MOI.ConstraintDual(), bridge.psd_index)
     column_dim = bridge.column_dim
     side_dim = bridge.row_dim + column_dim
-    t = sum(dual[MOIU.trimap(i, i)] for i in 1:side_dim)
+    t = sum(dual[MOI.Utilities.trimap(i, i)] for i in 1:side_dim)
     X =
         2 * dual[[
-            MOIU.trimap(i, j) for j in 1:column_dim for
+            MOI.Utilities.trimap(i, j) for j in 1:column_dim for
             i in (column_dim+1):side_dim
         ]]
     return vcat(t, X)
@@ -180,17 +196,18 @@ end
 """
     NormNuclearBridge{T}
 
-The `NormNuclearCone` is representable with an SDP constraint and extra variables,
-since ``t \\ge \\sum_i \\sigma_i (X)`` if and only if there exists symmetric
-matrices ``U, V`` such that ``[U X^\\top; X V] \\succ 0`` and ``t \\ge (tr(U) + tr(V)) / 2``.
+The `NormNuclearCone` is representable with an SDP constraint and extra
+variables, since ``t \\ge \\sum_i \\sigma_i (X)`` if and only if there exists
+symmetric matrices ``U, V`` such that ``[U X^\\top; X V] \\succ 0`` and
+``t \\ge (tr(U) + tr(V)) / 2``.
 """
 struct NormNuclearBridge{T,F,G,H} <: AbstractBridge
     row_dim::Int # row dimension of X
     column_dim::Int # column dimension of X
     U::Vector{MOI.VariableIndex}
     V::Vector{MOI.VariableIndex}
-    ge_index::CI{F,MOI.GreaterThan{T}}
-    psd_index::CI{G,MOI.PositiveSemidefiniteConeTriangle}
+    ge_index::MOI.ConstraintIndex{F,MOI.GreaterThan{T}}
+    psd_index::MOI.ConstraintIndex{G,MOI.PositiveSemidefiniteConeTriangle}
 end
 
 function bridge_constraint(
@@ -199,7 +216,7 @@ function bridge_constraint(
     f::H,
     s::MOI.NormNuclearCone,
 ) where {T,F,G,H}
-    f_scalars = MOIU.eachscalar(f)
+    f_scalars = MOI.Utilities.eachscalar(f)
     row_dim = s.row_dim
     column_dim = s.column_dim
     side_dim = row_dim + column_dim
@@ -208,16 +225,21 @@ function bridge_constraint(
     U = MOI.add_variables(model, U_dim)
     V = MOI.add_variables(model, V_dim)
     diag_vars = vcat(
-        [U[MOIU.trimap(i, i)] for i in 1:column_dim],
-        [V[MOIU.trimap(i, i)] for i in 1:row_dim],
+        [U[MOI.Utilities.trimap(i, i)] for i in 1:column_dim],
+        [V[MOI.Utilities.trimap(i, i)] for i in 1:row_dim],
     )
     rhs = MOI.ScalarAffineFunction(
         MOI.ScalarAffineTerm.(one(T), diag_vars),
         zero(T),
     )
-    ge_index = MOIU.normalize_and_add_constraint(
+    ge_index = MOI.Utilities.normalize_and_add_constraint(
         model,
-        MOIU.operate(-, T, f_scalars[1], MOIU.operate!(/, T, rhs, T(2))),
+        MOI.Utilities.operate(
+            -,
+            T,
+            f_scalars[1],
+            MOI.Utilities.operate!(/, T, rhs, T(2)),
+        ),
         MOI.GreaterThan(zero(T)),
         allow_modify_function = true,
     )
@@ -226,12 +248,12 @@ function bridge_constraint(
     nuc_dim = 1 + row_dim * column_dim
     for i in 1:row_dim
         row_i = (1+i):row_dim:nuc_dim
-        psd_func = MOIU.operate(vcat, T, psd_func, f_scalars[row_i])
-        psd_func = MOIU.operate(
+        psd_func = MOI.Utilities.operate(vcat, T, psd_func, f_scalars[row_i])
+        psd_func = MOI.Utilities.operate(
             vcat,
             T,
             psd_func,
-            MOI.VectorOfVariables(V[[MOIU.trimap(i, j) for j in 1:i]]),
+            MOI.VectorOfVariables(V[[MOI.Utilities.trimap(i, j) for j in 1:i]]),
         )
     end
     psd_index = MOI.add_constraint(model, psd_func, psd_set)
@@ -253,11 +275,13 @@ function MOI.supports_constraint(
     return true
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:NormNuclearBridge})
+function MOI.Bridges.added_constrained_variable_types(
+    ::Type{<:NormNuclearBridge},
+)
     return Tuple{Type}[]
 end
 
-function MOIB.added_constraint_types(
+function MOI.Bridges.added_constraint_types(
     ::Type{NormNuclearBridge{T,F,G,H}},
 ) where {T,F,G,H}
     return Tuple{Type,Type}[
@@ -271,18 +295,22 @@ function concrete_bridge_type(
     H::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.NormNuclearCone},
 ) where {T}
-    S = MOIU.scalar_type(H)
-    F = MOIU.promote_operation(
+    S = MOI.Utilities.scalar_type(H)
+    F = MOI.Utilities.promote_operation(
         -,
         T,
         S,
-        MOIU.promote_operation(/, T, MOIU.promote_operation(+, T, T, T), T),
+        MOI.Utilities.promote_operation(
+            /,
+            T,
+            MOI.Utilities.promote_operation(+, T, T, T),
+            T,
+        ),
     )
-    G = MOIU.promote_operation(vcat, T, MOI.VectorOfVariables, H)
+    G = MOI.Utilities.promote_operation(vcat, T, MOI.VectorOfVariables, H)
     return NormNuclearBridge{T,F,G,H}
 end
 
-# Attributes, Bridge acting as a model
 function MOI.get(bridge::NormNuclearBridge, ::MOI.NumberOfVariables)::Int64
     return length(bridge.U) + length(bridge.V)
 end
@@ -319,7 +347,6 @@ function MOI.get(
     return [bridge.psd_index]
 end
 
-# References
 function MOI.delete(model::MOI.ModelLike, bridge::NormNuclearBridge)
     MOI.delete(model, bridge.ge_index)
     MOI.delete(model, bridge.psd_index)
@@ -328,43 +355,45 @@ function MOI.delete(model::MOI.ModelLike, bridge::NormNuclearBridge)
     return
 end
 
-# Attributes, Bridge acting as a constraint
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.ConstraintFunction,
     bridge::NormNuclearBridge{T,F,G,H},
 ) where {T,F,G,H}
     ge_func = MOI.get(model, MOI.ConstraintFunction(), bridge.ge_index)
-    psd_func = MOIU.eachscalar(
+    psd_func = MOI.Utilities.eachscalar(
         MOI.get(model, MOI.ConstraintFunction(), bridge.psd_index),
     )
     column_dim = bridge.column_dim
     side_dim = bridge.row_dim + column_dim
-    t = MOIU.operate(
+    t = MOI.Utilities.operate(
         +,
         T,
         ge_func,
-        MOIU.operate(
+        MOI.Utilities.operate(
             /,
             T,
-            MOIU.operate(
+            MOI.Utilities.operate(
                 +,
                 T,
-                [psd_func[MOIU.trimap(i, i)] for i in 1:side_dim]...,
+                [psd_func[MOI.Utilities.trimap(i, i)] for i in 1:side_dim]...,
             ),
             T(2),
         ),
     )
-    t = MOIU.remove_variable(MOIU.remove_variable(t, bridge.U), bridge.V)
+    t = MOI.Utilities.remove_variable(
+        MOI.Utilities.remove_variable(t, bridge.U),
+        bridge.V,
+    )
     X = psd_func[[
-        MOIU.trimap(i, j) for j in 1:bridge.column_dim for
+        MOI.Utilities.trimap(i, j) for j in 1:bridge.column_dim for
         i in (bridge.column_dim+1):side_dim
     ]]
-    return MOIU.convert_approx(H, MOIU.operate(vcat, T, t, X))
+    return MOI.Utilities.convert_approx(H, MOI.Utilities.operate(vcat, T, t, X))
 end
 
 function MOI.get(
-    model::MOI.ModelLike,
+    ::MOI.ModelLike,
     ::MOI.ConstraintSet,
     bridge::NormNuclearBridge,
 )
@@ -372,11 +401,13 @@ function MOI.get(
 end
 
 function MOI.supports(
-    ::MOI.ModelLike,
-    ::MOI.ConstraintDualStart,
-    ::Type{<:NormNuclearBridge},
-)
-    return true
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDualStart,
+    ::Type{NormNuclearBridge{T,F,G,H}},
+) where {T,F,G,H}
+    ci_1 = MOI.ConstraintIndex{F,MOI.GreaterThan{T}}
+    ci_2 = MOI.ConstraintIndex{G,MOI.PositiveSemidefiniteConeTriangle}
+    return MOI.supports(model, attr, ci_1) && MOI.supports(model, attr, ci_2)
 end
 
 function MOI.get(
@@ -387,15 +418,19 @@ function MOI.get(
     ge_primal = MOI.get(model, MOI.ConstraintPrimal(), bridge.ge_index)
     psd_primal = MOI.get(model, MOI.ConstraintPrimal(), bridge.psd_index)
     side_dim = bridge.row_dim + bridge.column_dim
-    t = ge_primal + sum(psd_primal[MOIU.trimap(i, i)] for i in 1:side_dim) / 2
+    t =
+        ge_primal +
+        sum(psd_primal[MOI.Utilities.trimap(i, i)] for i in 1:side_dim) / 2
     X = psd_primal[[
-        MOIU.trimap(i, j) for j in 1:bridge.column_dim for
+        MOI.Utilities.trimap(i, j) for j in 1:bridge.column_dim for
         i in (bridge.column_dim+1):side_dim
     ]]
     return vcat(t, X)
 end
-# Given t is dual on GreaterThan constraint and [U X'; X V] is dual on PSD constraint,
-# the dual on NormNuclearCone constraint is (t, 2X) in NormNuclearCone.
+
+# Given t is dual on GreaterThan constraint and [U X'; X V] is dual on PSD
+# constraint, the dual on NormNuclearCone constraint is
+# (t, 2X) in NormNuclearCone.
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
@@ -406,7 +441,7 @@ function MOI.get(
     side_dim = bridge.row_dim + bridge.column_dim
     X =
         2 * psd_dual[[
-            MOIU.trimap(i, j) for j in 1:bridge.column_dim for
+            MOI.Utilities.trimap(i, j) for j in 1:bridge.column_dim for
             i in (bridge.column_dim+1):side_dim
         ]]
     return vcat(t, X)
@@ -423,11 +458,11 @@ function MOI.set(
     side_dim = bridge.row_dim + column_dim
     dual = zeros(T, div(side_dim * (side_dim + 1), 2))
     for i in 1:side_dim
-        dual[MOIU.trimap(i, i)] = value[1]
+        dual[MOI.Utilities.trimap(i, i)] = value[1]
     end
     X_idx = 2
     for j in 1:column_dim, i in (column_dim+1):side_dim
-        dual[MOIU.trimap(i, j)] = value[X_idx] / 2
+        dual[MOI.Utilities.trimap(i, j)] = value[X_idx] / 2
         X_idx += 1
     end
     MOI.set(model, MOI.ConstraintDualStart(), bridge.psd_index, dual)
