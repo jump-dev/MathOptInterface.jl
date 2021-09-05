@@ -17,12 +17,12 @@ function Base.show(io::IO, model::ModelLike)
 end
 
 """
-    AbstractOptimizer
+    AbstractOptimizer <: ModelLike
 
-Abstract supertype for objects representing an instance of an optimization problem
-tied to a particular solver. This is typically a solver's in-memory representation.
-In addition to `ModelLike`, `AbstractOptimizer` objects let you solve the
-model and query the solution.
+Abstract supertype for objects representing an instance of an optimization
+problem tied to a particular solver. This is typically a solver's in-memory
+representation. In addition to `ModelLike`, `AbstractOptimizer` objects let you
+solve the model and query the solution.
 """
 abstract type AbstractOptimizer <: ModelLike end
 
@@ -82,7 +82,9 @@ function read_from_file end
 """
     is_empty(model::ModelLike)
 
-Returns `false` if the `model` has any model attribute set or has any variables or constraints.
+Returns `false` if the `model` has any model attribute set or has any variables
+or constraints.
+
 Note that an empty model can have optimizer attributes set.
 """
 function is_empty end
@@ -90,7 +92,8 @@ function is_empty end
 """
     empty!(model::ModelLike)
 
-Empty the model, that is, remove all variables, constraints and model attributes but not optimizer attributes.
+Empty the model, that is, remove all variables, constraints and model attributes
+but not optimizer attributes.
 """
 function empty! end
 

@@ -20,6 +20,32 @@ MathOptInterface for a new solver.
     not answered by this guide, please ask them in the [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev)
     so we can improve this guide!
 
+## A note on the API
+
+The API of MathOptInterface is large and varied. In order to support the
+diversity of solvers and use-cases, we make heavy use of
+[duck-typing](https://en.wikipedia.org/wiki/Duck_typing). That is, solvers are
+not expected to implement the full API, nor is there a well-defined minimal
+subset of what must be implemented. Instead, you should implement the API as
+necessary in order to make the solver function as you require.
+
+The main reason for using duck-typing is that solvers work in different ways and
+target different use-cases.
+
+For example:
+
+ * Some solvers support incremental problem construction, support modification
+   after a solve, and have native support for things like variable names.
+ * Other solvers are "one-shot" solvers that require all of the problem data to
+   construct and solve the problem in a single function call. They do not
+   support modification or things like variable names.
+ * Other "solvers" are not solvers at all, but things like file readers. These
+   may only support functions like [`read_from_file`](@ref), and may not even
+   support the ability to add variables or constraints directly!
+ * Finally, some "solvers" are layers which take a problem as input, transform
+   it according to some rules, and pass the transformed problem to an inner
+   solver.
+
 ## Preliminaries
 
 ### Decide if MathOptInterface is right for you
@@ -51,8 +77,8 @@ has a good list of solvers, along with the problem classes they support.
 
 ### Create a low-level interface
 
-Before writing a MathOptInterface wrapper, you first need to be able to call the solver
-from Julia.
+Before writing a MathOptInterface wrapper, you first need to be able to call the
+solver from Julia.
 
 #### Wrapping solvers written in Julia
 
@@ -241,9 +267,14 @@ Base.unsafe_convert(::Type{Ptr{Cvoid}}, model::Optimizer) = model.ptr
 
 ### Implement methods for `Optimizer`
 
-Now that we have an `Optimizer`, we need to implement a few basic methods.
+All `Optimizer`s must implement the following methods:
 
-* [`empty!`](@ref) and [`is_empty`](@ref)
+ * [`empty!`](@ref)
+ * [`is_empty`](@ref)
+ * [`optimize!`](@ref) (or [`copy_to_and_optimize!`](@ref))
+
+Other methods, detailed below, are optional or depend on how you implement the
+interface.
 
 !!! tip
     For this and all future methods, read the docstrings to understand what each
@@ -261,8 +292,7 @@ end
 
 ### Implement attributes
 
-You also need to implement the model and optimizer attributes in the following
-table.
+MathOptInterface uses attributes to manage different aspects of the problem.
 
 For each attribute
  * [`get`](@ref) gets the current value of the attribute
@@ -286,7 +316,7 @@ method for each attribute.
 | [`Name`](@ref)         | Yes           | Yes           | Yes                |
 | [`Silent`](@ref)       | Yes           | Yes           | Yes                |
 | [`TimeLimitSec`](@ref) | Yes           | Yes           | Yes                |
-| [`RawOptimizerAttribute`](@ref) | Yes           | Yes           | Yes                |
+| [`RawOptimizerAttribute`](@ref) | Yes  | Yes           | Yes                |
 | [`NumberOfThreads`](@ref) | Yes        | Yes           | Yes                |
 
 For example:
@@ -306,7 +336,6 @@ end
 
 MOI.supports(::Optimizer, ::MOI.Silent) = true
 ```
-
 ### Define `supports_constraint`
 
 The next step is to define which constraints and objective functions you plan to
@@ -410,6 +439,7 @@ In addition, you should implement the following model attributes:
 | [`ObjectiveFunctionType`](@ref)    | Yes           | No            | No     |
 | [`ObjectiveFunction`](@ref)        | Yes           | Yes           | Yes    |
 | [`ObjectiveSense`](@ref)           | Yes           | Yes           | Yes    |
+| [`Name`](@ref)                     | Yes           | Yes           | Yes    |
 
 Variable-related attributes:
 
@@ -429,9 +459,11 @@ Constraint-related attributes:
 | [`ConstraintFunction`](@ref)            | Yes          | Yes           | No |
 | [`ConstraintSet`](@ref)                 | Yes          | Yes           | No |
 
-If your solver supports modifying data in-place, implement:
+#### Modifications
 
-* [`modify`](@ref)
+If your solver supports modifying data in-place, implement [`modify`](@ref) for
+the following `AbstractModification`s:
+
 * [`ScalarConstantChange`](@ref)
 * [`ScalarCoefficientChange`](@ref)
 * [`VectorConstantChange`](@ref)
@@ -466,8 +498,8 @@ fallback:
 ```julia
 MOI.supports_incremental_interface(::Optimizer) = true
 
-function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kwargs...)
-    return MOI.Utilities.default_copy_to(dest, src; kwargs...)
+function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike)
+    return MOI.Utilities.default_copy_to(dest, src)
 end
 ```
 
@@ -481,7 +513,8 @@ the `Name` attribute for variables and constraints:
 | [`VariableName`](@ref)   | Yes         | Yes           | Yes                |
 | [`ConstraintName`](@ref) | Yes         | Yes           | Yes                |
 
-If you implement names, you should also implement the following three methods:
+If you implement names, you must also implement the following three methods:
+
 ```julia
 function MOI.get(model::Optimizer, ::Type{MOI.VariableIndex}, name::String)
     return # The variable named `name`.
@@ -536,17 +569,13 @@ Implement [`optimize!`](@ref) to solve the model:
 
 * [`optimize!`](@ref)
 
-At a minimum, implement the following attributes to allow the user to access
-solution information.
+All `Optimizer`s must implement the following attributes:
 
-* [`TerminationStatus`](@ref)
-* [`PrimalStatus`](@ref)
 * [`DualStatus`](@ref)
+* [`PrimalStatus`](@ref)
 * [`RawStatusString`](@ref)
 * [`ResultCount`](@ref)
-* [`ObjectiveValue`](@ref)
-* [`VariablePrimal`](@ref)
-* [`SolveTimeSec`](@ref)
+* [`TerminationStatus`](@ref)
 
 !!! info
     You only need to implement [`get`](@ref) for solution attributes. Don't
@@ -557,6 +586,12 @@ solution information.
     statuses. Statuses like `NEARLY_FEASIBLE_POINT` and `INFEASIBLE_POINT`, are
     designed to be used when the solver explicitly indicates that relaxed
     tolerances are satisfied or the returned point is infeasible, respectively.
+
+You should also implement the following attributes:
+
+* [`ObjectiveValue`](@ref)
+* [`SolveTimeSec`](@ref)
+* [`VariablePrimal`](@ref)
 
 !!! tip
     Attributes like [`VariablePrimal`](@ref) and [`ObjectiveValue`](@ref) are
