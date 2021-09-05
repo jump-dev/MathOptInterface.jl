@@ -29,8 +29,8 @@ not expected to implement the full API, nor is there a well-defined minimal
 subset of what must be implemented. Instead, you should implement the API as
 necessary in order to make the solver function as you require.
 
-The main reason for using duck-typing over a well-defined API is that solvers
-work in different ways and target different use-cases.
+The main reason for using duck-typing is that solvers work in different ways and
+target different use-cases.
 
 For example:
 
