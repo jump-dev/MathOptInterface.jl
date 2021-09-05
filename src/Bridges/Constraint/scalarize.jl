@@ -5,7 +5,7 @@ Transforms a constraint `AbstractVectorFunction`-in-`vector_set_type(S)` where
 `S <: LPCone{T}` to `F`-in-`S`.
 """
 mutable struct ScalarizeBridge{T,F,S} <: AbstractBridge
-    scalar_constraints::Vector{CI{F,S}}
+    scalar_constraints::Vector{MOI.ConstraintIndex{F,S}}
     constants::Vector{T}
 end
 
@@ -13,12 +13,12 @@ function bridge_constraint(
     ::Type{ScalarizeBridge{T,F,S}},
     model::MOI.ModelLike,
     f::MOI.AbstractVectorFunction,
-    set::MOIU.VectorLinearSet,
+    set::MOI.Utilities.VectorLinearSet,
 ) where {T,F,S}
     dimension = MOI.output_dimension(f)
     constants = MOI.constant(f, T)
-    new_f = MOIU.scalarize(f, true)
-    constraints = Vector{CI{F,S}}(undef, dimension)
+    new_f = MOI.Utilities.scalarize(f, true)
+    constraints = Vector{MOI.ConstraintIndex{F,S}}(undef, dimension)
     for i in 1:dimension
         constraints[i] = MOI.add_constraint(model, new_f[i], S(-constants[i]))
     end
@@ -28,19 +28,20 @@ end
 function MOI.supports_constraint(
     ::Type{ScalarizeBridge{T}},
     F::Type{<:MOI.AbstractVectorFunction},
-    ::Type{<:MOIU.VectorLinearSet},
+    ::Type{<:MOI.Utilities.VectorLinearSet},
 ) where {T}
-    # If `F` is `MOI.VectorAffineFunction{Complex{Float64}}`, `S` is `MOI.Zeros` and `T` is `Float64`,
-    # it would create a set `MOI.EqualTo{Float64}` which is incorrect hence we say
-    # we only support it if the coefficient type of `F` is `T`.
-    return MOIU.is_coefficient_type(F, T)
+    # If `F` is `MOI.VectorAffineFunction{Complex{Float64}}`, `S` is `MOI.Zeros`
+    # and `T` is `Float64`, it would create a set `MOI.EqualTo{Float64}` which
+    # is incorrect hence we say we only support it if the coefficient type of
+    # `F` is `T`.
+    return MOI.Utilities.is_coefficient_type(F, T)
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:ScalarizeBridge})
+function MOI.Bridges.added_constrained_variable_types(::Type{<:ScalarizeBridge})
     return Tuple{Type}[]
 end
 
-function MOIB.added_constraint_types(
+function MOI.Bridges.added_constraint_types(
     ::Type{ScalarizeBridge{T,F,S}},
 ) where {T,F,S}
     return Tuple{Type,Type}[(F, S)]
@@ -49,12 +50,15 @@ end
 function concrete_bridge_type(
     ::Type{<:ScalarizeBridge{T}},
     F::Type{<:MOI.AbstractVectorFunction},
-    S::Type{<:MOIU.VectorLinearSet},
+    S::Type{<:MOI.Utilities.VectorLinearSet},
 ) where {T}
-    return ScalarizeBridge{T,MOIU.scalar_type(F),MOIU.scalar_set_type(S, T)}
+    return ScalarizeBridge{
+        T,
+        MOI.Utilities.scalar_type(F),
+        MOI.Utilities.scalar_set_type(S, T),
+    }
 end
 
-# Attributes, Bridge acting as a model
 function MOI.get(
     bridge::ScalarizeBridge{T,F,S},
     ::MOI.NumberOfConstraints{F,S},
@@ -69,17 +73,17 @@ function MOI.get(
     return copy(bridge.scalar_constraints)
 end
 
-# References
 function MOI.delete(model::MOI.ModelLike, bridge::ScalarizeBridge)
     for ci in bridge.scalar_constraints
         MOI.delete(model, ci)
     end
+    return
 end
 
 function MOI.delete(
     model::MOI.ModelLike,
     bridge::ScalarizeBridge,
-    i::MOIB.IndexInVector,
+    i::MOI.Bridges.IndexInVector,
 )
     MOI.delete(model, bridge.scalar_constraints[i.value])
     deleteat!(bridge.scalar_constraints, i.value)
@@ -87,13 +91,14 @@ function MOI.delete(
     return
 end
 
-# Attributes, Bridge acting as a constraint
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintFunction,
     bridge::ScalarizeBridge{T},
 ) where {T}
-    func = MOIU.vectorize(MOI.get.(model, attr, bridge.scalar_constraints))
+    func = MOI.Utilities.vectorize(
+        MOI.get.(model, attr, bridge.scalar_constraints),
+    )
     if !(func isa MOI.VectorOfVariables)
         # `func` is in terms of bridged variables here while in
         # `bridge_constraint` it was in terms of the solver variables so
@@ -104,7 +109,13 @@ function MOI.get(
                 MOI.ConstraintSet(),
                 bridge.scalar_constraints[i],
             )
-            func = MOIU.operate_output_index!(-, T, i, func, MOI.constant(set))
+            func = MOI.Utilities.operate_output_index!(
+                -,
+                T,
+                i,
+                func,
+                MOI.constant(set),
+            )
         end
     end
     return func
@@ -115,15 +126,15 @@ function MOI.get(
     ::MOI.ConstraintSet,
     bridge::ScalarizeBridge{T,F,S},
 ) where {T,F,S}
-    return MOIU.vector_set_type(S)(length(bridge.scalar_constraints))
+    return MOI.Utilities.vector_set_type(S)(length(bridge.scalar_constraints))
 end
 
 function MOI.supports(
-    ::MOI.ModelLike,
-    ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{<:ScalarizeBridge},
-)
-    return true
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    ::Type{ScalarizeBridge{T,F,S}},
+) where {T,F,S}
+    return MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
 end
 
 function MOI.get(
@@ -226,7 +237,7 @@ function MOI.modify(
             MOI.ScalarCoefficientChange{T}(change.variable, value),
         )
     end
-    return nothing
+    return
 end
 
 function MOI.set(
@@ -237,7 +248,7 @@ function MOI.set(
 ) where {T,F,S}
     old_constants = bridge.constants
     bridge.constants = MOI.constant(func, T)
-    new_func = MOIU.scalarize(func, true)
+    new_func = MOI.Utilities.scalarize(func, true)
     MOI.set.(
         model,
         MOI.ConstraintFunction(),
@@ -254,6 +265,7 @@ function MOI.set(
             )
         end
     end
+    return
 end
 
 # TODO implement transform
