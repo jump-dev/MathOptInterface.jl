@@ -447,23 +447,9 @@ function MOI.delete(model::MOI.ModelLike, bridge::RootDetBridge)
     return
 end
 
-function MOI.supports(
-    model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{RootDetBridge{T}},
-) where {T}
-    ci_1 = MOI.ConstraintIndex{
-        MOI.VectorAffineFunction{T},
-        MOI.PositiveSemidefiniteConeTriangle,
-    }
-    ci_2 =
-        MOI.ConstraintIndex{MOI.VectorAffineFunction{T},MOI.GeometricMeanCone}
-    return MOI.supports(model, attr, ci_1) && MOI.supports(model, attr, ci_2)
-end
-
 function MOI.get(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
+    attr::Union{MOI.ConstraintPrimal},
     bridge::RootDetBridge,
 )
     t = MOI.get(model, attr, bridge.gmindex)[1]
@@ -486,7 +472,7 @@ end
 # let b = 0, so e_i = -c_i
 function MOI.get(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
+    attr::Union{MOI.ConstraintDual},
     bridge::RootDetBridge,
 )
     t_dual = MOI.get(model, attr, bridge.gmindex)[1]
