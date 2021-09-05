@@ -1,12 +1,12 @@
 abstract type AbstractSlackBridge{T,VF,ZS,F,S} <: AbstractBridge end
 
-function MOIB.added_constrained_variable_types(
+function MOI.Bridges.added_constrained_variable_types(
     ::Type{<:AbstractSlackBridge{T,VF,ZS,F,S}},
 ) where {T,VF,ZS,F,S}
     return Tuple{Type}[(S,)]
 end
 
-function MOIB.added_constraint_types(
+function MOI.Bridges.added_constraint_types(
     ::Type{<:AbstractSlackBridge{T,VF,ZS,F}},
 ) where {T,VF,ZS,F}
     return Tuple{Type,Type}[(F, ZS)]
@@ -40,20 +40,26 @@ function MOI.get(
     return [bridge.slack_in_set]
 end
 
-# Indices
 function MOI.delete(model::MOI.ModelLike, bridge::AbstractSlackBridge)
     MOI.delete(model, bridge.equality)
     MOI.delete(model, bridge.slack)
     return
 end
 
-# Attributes, Bridge acting as a constraint
 function MOI.supports(
-    ::MOI.ModelLike,
-    ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{<:AbstractSlackBridge},
-)
-    return true
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    ::Type{<:AbstractSlackBridge{T,VF,ZS,F,S}},
+) where {T,VF,ZS,F,S}
+    ret = true
+    if attr isa MOI.ConstraintPrimalStart
+        ret = MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    end
+    # .slack_in_set field is {VF,S}
+    # .equality field is {F,ZS}
+    return ret &&
+           MOI.supports(model, attr, MOI.ConstraintIndex{VF,S}) &&
+           MOI.supports(model, attr, MOI.ConstraintIndex{F,ZS})
 end
 
 function MOI.get(
@@ -61,7 +67,8 @@ function MOI.get(
     attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
     bridge::AbstractSlackBridge,
 )
-    # due to equality, slack should have the same value as original affine function
+    # Due to equality, slack should have the same value as original affine
+    # function.
     return MOI.get(model, attr, bridge.slack_in_set)
 end
 
@@ -150,16 +157,18 @@ end
 """
     ScalarSlackBridge{T, F, S}
 
-The `ScalarSlackBridge` converts a constraint `G`-in-`S` where `G` is a function different
-from `VariableIndex` into the constraints `F`-in-`EqualTo{T}` and `VariableIndex`-in-`S`.
-`F` is the result of subtracting a `VariableIndex` from `G`.
-Typically `G` is the same as `F`, but that is not mandatory.
+The `ScalarSlackBridge` converts a constraint `G`-in-`S` where `G` is a function
+different from `VariableIndex` into the constraints `F`-in-`EqualTo{T}` and
+`VariableIndex`-in-`S`.
+
+`F` is the result of subtracting a `VariableIndex` from `G`. Typically `G` is
+the same as `F`, but that is not mandatory.
 """
 struct ScalarSlackBridge{T,F,S} <:
        AbstractSlackBridge{T,MOI.VariableIndex,MOI.EqualTo{T},F,S}
     slack::MOI.VariableIndex
-    slack_in_set::CI{MOI.VariableIndex,S}
-    equality::CI{F,MOI.EqualTo{T}}
+    slack_in_set::MOI.ConstraintIndex{MOI.VariableIndex,S}
+    equality::MOI.ConstraintIndex{F,MOI.EqualTo{T}}
 end
 
 function bridge_constraint(
@@ -216,11 +225,9 @@ function concrete_bridge_type(
     return ScalarSlackBridge{T,F2,S}
 end
 
-# Attributes, Bridge acting as a model
 MOI.get(b::ScalarSlackBridge, ::MOI.NumberOfVariables)::Int64 = 1
 MOI.get(b::ScalarSlackBridge, ::MOI.ListOfVariableIndices) = [b.slack]
 
-# Attributes, Bridge acting as a constraint
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.ConstraintBasisStatus,
@@ -265,16 +272,18 @@ end
 """
     VectorSlackBridge{T, F, S}
 
-The `VectorSlackBridge` converts a constraint `G`-in-`S` where `G` is a function different
-from `VectorOfVariables` into the constraints `F`in-`Zeros` and `VectorOfVariables`-in-`S`.
-`F` is the result of subtracting a `VectorOfVariables` from `G`.
-Tipically `G` is the same as `F`, but that is not mandatory.
+The `VectorSlackBridge` converts a constraint `G`-in-`S` where `G` is a function
+different from `VectorOfVariables` into the constraints `F`in-`Zeros` and
+`VectorOfVariables`-in-`S`.
+
+`F` is the result of subtracting a `VectorOfVariables` from `G`. Typically `G`
+is the same as `F`, but that is not mandatory.
 """
 struct VectorSlackBridge{T,F,S} <:
        AbstractSlackBridge{T,MOI.VectorOfVariables,MOI.Zeros,F,S}
     slack::Vector{MOI.VariableIndex}
-    slack_in_set::CI{MOI.VectorOfVariables,S}
-    equality::CI{F,MOI.Zeros}
+    slack_in_set::MOI.ConstraintIndex{MOI.VectorOfVariables,S}
+    equality::MOI.ConstraintIndex{F,MOI.Zeros}
 end
 
 function bridge_constraint(
@@ -331,24 +340,18 @@ function concrete_bridge_type(
     return VectorSlackBridge{T,F2,S}
 end
 
-# Attributes, Bridge acting as a model
 MOI.get(b::VectorSlackBridge, ::MOI.NumberOfVariables)::Int64 = length(b.slack)
 
 MOI.get(b::VectorSlackBridge, ::MOI.ListOfVariableIndices) = copy(b.slack)
 
-# Attributes, Bridge acting as a constraint
 function MOI.set(
     model::MOI.ModelLike,
     ::MOI.ConstraintFunction,
     bridge::VectorSlackBridge{T,F,S},
     func::F,
 ) where {T,F,S}
-    new_func = MOIU.operate(
-        -,
-        T,
-        func,
-        MOI.VectorAffineFunction{T}(MOI.VectorOfVariables(bridge.slack)),
-    )
+    slack = MOI.VectorAffineFunction{T}(MOI.VectorOfVariables(bridge.slack))
+    new_func = MOIU.operate(-, T, func, slack)
     MOI.set(model, MOI.ConstraintFunction(), bridge.equality, new_func)
     return
 end

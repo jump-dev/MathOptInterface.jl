@@ -1226,10 +1226,18 @@ function MOI.supports(
         S,
         true,
         () -> MOI.supports(b.model, attr, IndexType),
-        ok -> ok && MOI.supports(b, attr, Variable.concrete_bridge_type(b, S)),
         ok ->
-            ok &&
-                MOI.supports(b, attr, Constraint.concrete_bridge_type(b, F, S)),
+            ok && MOI.supports(
+                recursive_model(b),
+                attr,
+                Variable.concrete_bridge_type(b, S),
+            ),
+        ok ->
+            ok && MOI.supports(
+                recursive_model(b),
+                attr,
+                Constraint.concrete_bridge_type(b, F, S),
+            ),
     )
 end
 
