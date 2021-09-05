@@ -1218,20 +1218,27 @@ end
 function MOI.supports(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractConstraintAttribute,
-    ::Type{MOI.ConstraintIndex{F,S}},
+    IndexType::Type{MOI.ConstraintIndex{F,S}},
 ) where {F,S}
-    # If `b` bridges `F`-in-`S`, check that the constraint bridge supports attr.
-    if is_bridged(b, F, S)
-        return MOI.supports(b, attr, Constraint.concrete_bridge_type(b, F, S))
-    end
-    # If the bridge is capable of bridging the set for `VFT-in-S`, and `b` will
-    # be used to bridge the set, check the variable bridge supports attr.
-    VFT = MOI.Utilities.variable_function_type(S)
-    if F == VFT && is_bridged(b, S) && is_variable_bridged(b, S)
-        return MOI.supports(b, attr, Variable.concrete_bridge_type(b, S))
-    end
-    # We're not bridging, so we check if the inner model supports it.
-    return MOI.supports(b.model, attr, MOI.ConstraintIndex{F,S})
+    return reduce_bridged(
+        b,
+        F,
+        S,
+        true,
+        () -> MOI.supports(b.model, attr, IndexType),
+        ok ->
+            ok && MOI.supports(
+                recursive_model(b),
+                attr,
+                Variable.concrete_bridge_type(b, S),
+            ),
+        ok ->
+            ok && MOI.supports(
+                recursive_model(b),
+                attr,
+                Constraint.concrete_bridge_type(b, F, S),
+            ),
+    )
 end
 
 function _set_substituted(
