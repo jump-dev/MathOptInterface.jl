@@ -17,8 +17,8 @@ of ones.
 """
 struct GeoMeantoRelEntrBridge{T,F,G,H} <: AbstractBridge
     y::MOI.VariableIndex
-    nn_index::CI{F,MOI.Nonnegatives} # for y >= 0
-    relentr_index::CI{G,MOI.RelativeEntropyCone}
+    nn_index::MOI.ConstraintIndex{F,MOI.Nonnegatives} # for y >= 0
+    relentr_index::MOI.ConstraintIndex{G,MOI.RelativeEntropyCone}
 end
 
 function bridge_constraint(
@@ -27,12 +27,15 @@ function bridge_constraint(
     f::H,
     s::MOI.GeometricMeanCone,
 ) where {T,F,G,H}
-    f_scalars = MOIU.eachscalar(f)
+    f_scalars = MOI.Utilities.eachscalar(f)
     (y, nn_index) = MOI.add_constrained_variables(model, MOI.Nonnegatives(1))
-    w_func = MOIU.vectorize(
-        fill(MOIU.operate(+, T, f_scalars[1], y[1]), MOI.dimension(s) - 1),
+    w_func = MOI.Utilities.vectorize(
+        fill(
+            MOI.Utilities.operate(+, T, f_scalars[1], y[1]),
+            MOI.dimension(s) - 1,
+        ),
     )
-    relentr_func = MOIU.operate(
+    relentr_func = MOI.Utilities.operate(
         vcat,
         T,
         zero(MOI.ScalarAffineFunction{Float64}),
@@ -55,11 +58,13 @@ function MOI.supports_constraint(
     return true
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:GeoMeantoRelEntrBridge})
+function MOI.Bridges.added_constrained_variable_types(
+    ::Type{<:GeoMeantoRelEntrBridge},
+)
     return Tuple{Type}[(MOI.Nonnegatives,)]
 end
 
-function MOIB.added_constraint_types(
+function MOI.Bridges.added_constraint_types(
     ::Type{<:GeoMeantoRelEntrBridge{T,F,G}},
 ) where {T,F,G}
     return Tuple{Type,Type}[(G, MOI.RelativeEntropyCone)]
@@ -71,18 +76,17 @@ function concrete_bridge_type(
     ::Type{MOI.GeometricMeanCone},
 ) where {T}
     F = MOI.VectorOfVariables
-    S = MOIU.scalar_type(H)
-    G = MOIU.promote_operation(
+    S = MOI.Utilities.scalar_type(H)
+    G = MOI.Utilities.promote_operation(
         vcat,
         T,
         T,
         S,
-        MOIU.promote_operation(+, T, S, MOI.VariableIndex),
+        MOI.Utilities.promote_operation(+, T, S, MOI.VariableIndex),
     )
     return GeoMeantoRelEntrBridge{T,F,G,H}
 end
 
-# Attributes, Bridge acting as a model
 MOI.get(::GeoMeantoRelEntrBridge, ::MOI.NumberOfVariables)::Int64 = 1
 
 function MOI.get(bridge::GeoMeantoRelEntrBridge, ::MOI.ListOfVariableIndices)
@@ -117,7 +121,6 @@ function MOI.get(
     return [bridge.relentr_index]
 end
 
-# References
 function MOI.delete(model::MOI.ModelLike, bridge::GeoMeantoRelEntrBridge)
     MOI.delete(model, bridge.relentr_index)
     MOI.delete(model, bridge.nn_index)
@@ -125,22 +128,24 @@ function MOI.delete(model::MOI.ModelLike, bridge::GeoMeantoRelEntrBridge)
     return
 end
 
-# Attributes, Bridge acting as a constraint
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.ConstraintFunction,
     bridge::GeoMeantoRelEntrBridge{T,F,G,H},
 ) where {T,F,G,H}
-    relentr_func = MOIU.eachscalar(
+    relentr_func = MOI.Utilities.eachscalar(
         MOI.get(model, MOI.ConstraintFunction(), bridge.relentr_index),
     )
     d = div(length(relentr_func) - 1, 2)
-    u_func = MOIU.remove_variable(
-        MOIU.operate(-, T, relentr_func[end], bridge.y),
+    u_func = MOI.Utilities.remove_variable(
+        MOI.Utilities.operate(-, T, relentr_func[end], bridge.y),
         bridge.y,
     )
     w_func = relentr_func[2:(1+d)]
-    return MOIU.convert_approx(H, MOIU.operate(vcat, T, u_func, w_func))
+    return MOI.Utilities.convert_approx(
+        H,
+        MOI.Utilities.operate(vcat, T, u_func, w_func),
+    )
 end
 
 function MOI.get(
@@ -159,11 +164,13 @@ function MOI.get(
 end
 
 function MOI.supports(
-    ::MOI.ModelLike,
-    ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{<:GeoMeantoRelEntrBridge},
-)
-    return true
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    ::Type{GeoMeantoRelEntrBridge{T,F,G,H}},
+) where {T,F,G,H}
+    ci_1 = MOI.ConstraintIndex{F,MOI.Nonnegatives}
+    ci_2 = MOI.ConstraintIndex{G,MOI.RelativeEntropyCone}
+    return MOI.supports(model, attr, ci_1) && MOI.supports(model, attr, ci_2)
 end
 
 function MOI.get(
@@ -213,8 +220,9 @@ function MOI.get(
     return vcat(u_dual, w_dual)
 end
 
-# Given GeometricMeanCone constraint dual start of (u, w), constraint dual on y >= 0 is -u
-# and on RelativeEntropyCone constraint is (-u/n, w, u/n * (log.(w/geomean(w)) .+ 1)).
+# Given GeometricMeanCone constraint dual start of (u, w), constraint dual on
+# y >= 0 is -u and on RelativeEntropyCone constraint is
+# (-u/n, w, u/n * (log.(w/geomean(w)) .+ 1)).
 # Note log.(w/geomean(w)) = log.(w) .- sum(log, w) / n.
 function MOI.set(
     model::MOI.ModelLike,
