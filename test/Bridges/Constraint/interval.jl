@@ -29,9 +29,11 @@ function test_split_basic()
         bridged_mock,
         config,
         include = [
-            "test_basic_$(F)_$(S)" for F in
-            ["VariableIndex", "ScalarAffineFunction", "ScalarQuadraticFunction"]
-            for S in ["Interval", "EqualTo"]
+            "test_basic_$(F)_$(S)" for F in [
+                "VariableIndex",
+                "ScalarAffineFunction",
+                "ScalarQuadraticFunction",
+            ] for S in ["Interval", "EqualTo"]
         ],
     )
     MOI.Test.runtests(
@@ -265,7 +267,9 @@ function test_conic_linear_VectorOfVariables()
 end
 
 function _test_interval(
-    mock, bridged_mock, set::MOI.Interval{T},
+    mock,
+    bridged_mock,
+    set::MOI.Interval{T},
     ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Interval{T}},
 ) where {T}
     haslb = set.lower != typemin(T)
@@ -299,17 +303,21 @@ function _test_interval(
     @test (hasub ? 1 : 0) == length(MOI.get(mock, attr))
     if haslb || hasub
         @test one(T) == MOI.get(bridged_mock, MOI.ConstraintPrimal(), ci)
-        @test MOI.BASIC == MOI.get(bridged_mock, MOI.ConstraintBasisStatus(), ci)
+        @test MOI.BASIC ==
+              MOI.get(bridged_mock, MOI.ConstraintBasisStatus(), ci)
         for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
             MOI.set(bridged_mock, attr, ci, T(2))
             @test T(2) == MOI.get(bridged_mock, attr, ci)
         end
     else
-        for attr in [MOI.ConstraintPrimal(), MOI.ConstraintPrimalStart(),
-                     MOI.ConstraintBasisStatus()]
+        for attr in [
+            MOI.ConstraintPrimal(),
+            MOI.ConstraintPrimalStart(),
+            MOI.ConstraintBasisStatus(),
+        ]
             err = ErrorException(
                 "Cannot get `$attr` for a constraint " *
-                "in the interval `[-Inf, Inf]`."
+                "in the interval `[-Inf, Inf]`.",
             )
             @test_throws err MOI.get(bridged_mock, attr, ci)
         end
@@ -318,7 +326,7 @@ function _test_interval(
     @test zero(T) == MOI.get(bridged_mock, MOI.ConstraintDual(), ci)
 end
 
-function test_infinite_bounds(::Type{T}=Float64) where {T<:AbstractFloat}
+function test_infinite_bounds(::Type{T} = Float64) where {T<:AbstractFloat}
     mock = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
     )
@@ -356,7 +364,7 @@ function test_infinite_bounds(::Type{T}=Float64) where {T<:AbstractFloat}
     )
     set = MOI.Interval(zero(T), typemax(T))
     ci = MOI.add_constraint(bridged_mock, x, set)
-    _test_interval(mock, bridged_mock, set, ci)
+    return _test_interval(mock, bridged_mock, set, ci)
 end
 
 end  # module
