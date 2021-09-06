@@ -540,11 +540,10 @@ argument to the feasible solution callback.
 
 ## Examples
 
-Suppose `fx = x` and `fx = y`
-where `x` and `y` are [`VariableIndex`](@ref)s of `optimizer`. To add a
+Suppose `x` and `y` are [`VariableIndex`](@ref)s of `optimizer`. To add a
 `LazyConstraint` for `2x + 3y <= 1`, write
 ```julia
-func = 2.0fx + 3.0fy
+func = 2.0x + 3.0y
 set = MOI.LessThan(1.0)
 MOI.submit(optimizer, MOI.LazyConstraint(callback_data), func, set)
 ```
