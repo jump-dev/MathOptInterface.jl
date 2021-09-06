@@ -264,6 +264,107 @@ function test_conic_linear_VectorOfVariables()
     return
 end
 
+function _test_interval(
+    mock,
+    bridged_mock,
+    set::MOI.Interval{T},
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Interval{T}},
+) where {T}
+    haslb = set.lower != typemin(T)
+    hasub = set.upper != typemax(T)
+    @test MOI.Bridges.is_bridged(bridged_mock, ci)
+    bridge = MOI.Bridges.bridge(bridged_mock, ci)
+    if haslb
+        @test bridge.lower !== nothing
+        MOI.set(mock, MOI.ConstraintBasisStatus(), bridge.lower, MOI.BASIC)
+    else
+        @test bridge.lower === nothing
+    end
+    if hasub
+        @test bridge.upper !== nothing
+        MOI.set(mock, MOI.ConstraintBasisStatus(), bridge.upper, MOI.BASIC)
+    else
+        @test bridge.upper === nothing
+    end
+    @test set == MOI.get(bridged_mock, MOI.ConstraintSet(), ci)
+    attr = MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}()
+    @test 0 == MOI.get(bridged_mock, attr)
+    @test (haslb ? 1 : 0) == MOI.get(mock, attr)
+    attr = MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{T}}()
+    @test 0 == MOI.get(bridged_mock, attr)
+    @test (hasub ? 1 : 0) == MOI.get(mock, attr)
+    attr = MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.GreaterThan{T}}()
+    @test isempty(MOI.get(bridged_mock, attr))
+    @test (haslb ? 1 : 0) == length(MOI.get(mock, attr))
+    attr = MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.LessThan{T}}()
+    @test isempty(MOI.get(bridged_mock, attr))
+    @test (hasub ? 1 : 0) == length(MOI.get(mock, attr))
+    if haslb || hasub
+        @test one(T) == MOI.get(bridged_mock, MOI.ConstraintPrimal(), ci)
+        @test MOI.BASIC ==
+              MOI.get(bridged_mock, MOI.ConstraintBasisStatus(), ci)
+        for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+            MOI.set(bridged_mock, attr, ci, T(2))
+            @test T(2) == MOI.get(bridged_mock, attr, ci)
+        end
+    else
+        for attr in [
+            MOI.ConstraintPrimal(),
+            MOI.ConstraintPrimalStart(),
+            MOI.ConstraintBasisStatus(),
+        ]
+            err = ErrorException(
+                "Cannot get `$attr` for a constraint " *
+                "in the interval `[-Inf, Inf]`.",
+            )
+            @test_throws err MOI.get(bridged_mock, attr, ci)
+        end
+        @test zero(T) == MOI.get(bridged_mock, MOI.ConstraintDualStart(), ci)
+    end
+    @test zero(T) == MOI.get(bridged_mock, MOI.ConstraintDual(), ci)
+end
+
+function test_infinite_bounds(::Type{T} = Float64) where {T<:AbstractFloat}
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    bridged_mock = MOI.Bridges.Constraint.SplitInterval{T}(mock)
+    x = MOI.add_variable(bridged_mock)
+    MOI.set(mock, MOI.VariablePrimal(), x, one(T))
+    set = MOI.Interval(typemin(T), one(T))
+    ci = MOI.add_constraint(bridged_mock, x, set)
+    _test_interval(mock, bridged_mock, set, ci)
+    set = MOI.Interval(zero(T), typemax(T))
+    MOI.set(bridged_mock, MOI.ConstraintSet(), ci, set)
+    _test_interval(mock, bridged_mock, set, ci)
+    set = MOI.Interval(typemin(T), typemax(T))
+    MOI.set(bridged_mock, MOI.ConstraintSet(), ci, set)
+    _test_interval(mock, bridged_mock, set, ci)
+    _test_delete_bridge(
+        bridged_mock,
+        ci,
+        1,
+        (
+            (MOI.VariableIndex, MOI.GreaterThan{T}, 0),
+            (MOI.VariableIndex, MOI.LessThan{T}, 0),
+        ),
+    )
+    ci = MOI.add_constraint(bridged_mock, x, set)
+    _test_interval(mock, bridged_mock, set, ci)
+    _test_delete_bridge(
+        bridged_mock,
+        ci,
+        1,
+        (
+            (MOI.VariableIndex, MOI.GreaterThan{T}, 0),
+            (MOI.VariableIndex, MOI.LessThan{T}, 0),
+        ),
+    )
+    set = MOI.Interval(zero(T), typemax(T))
+    ci = MOI.add_constraint(bridged_mock, x, set)
+    return _test_interval(mock, bridged_mock, set, ci)
+end
+
 end  # module
 
 TestConstraintSplitInterval.runtests()
