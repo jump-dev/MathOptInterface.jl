@@ -18,7 +18,7 @@ jobs:
         shell: julia --color=yes {0}
         run: |
           using Pkg
-          Pkg.add(PackageSpec(name="JuliaFormatter", version="0.13.2"))
+          Pkg.add(PackageSpec(name="JuliaFormatter", version="0.15.11"))
           using JuliaFormatter
           format("src", verbose=true)
           format("test", verbose=true)
