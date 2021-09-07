@@ -644,7 +644,8 @@ function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
         @test MOI.supports(dest, cdattr, MOI.ConstraintIndex{F2,S2})
     end
     @testset "Attribute set to no indices" begin
-        dict = MOI.copy_to(dest, src, copy_names = false)
+        filtered = MOI.Utilities.ModelFilter(name_filter, src)
+        dict = MOI.copy_to(dest, filtered)
         @test !(vpattr in MOI.get(dest, MOI.ListOfVariableAttributesSet()))
         @test MOI.get(dest, vpattr, dict[x]) === nothing
         @test MOI.get(dest, vpattr, dict[y]) === nothing
@@ -675,7 +676,8 @@ function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
         MOI.set(src, cpattr, b, 2.0)
         MOI.set(src, cdattr, b, 2.0)
         MOI.set(src, cdattr, c, [3.0])
-        dict = MOI.copy_to(dest, src, copy_names = false)
+        filtered = MOI.Utilities.ModelFilter(name_filter, src)
+        dict = MOI.copy_to(dest, filtered)
         @test vpattr in MOI.get(dest, MOI.ListOfVariableAttributesSet())
         @test MOI.get(dest, vpattr, dict[x]) == 1.0
         @test MOI.get(dest, vpattr, dict[y]) === nothing
@@ -694,6 +696,11 @@ function start_values_test(dest::MOI.ModelLike, src::MOI.ModelLike)
         @test MOI.get(dest, cdattr, dict[c]) == [3.0]
     end
 end
+
+name_filter(::Any) = true
+name_filter(::MOI.Name) = false
+name_filter(::MOI.VariableName) = false
+name_filter(::MOI.ConstraintName) = false
 
 function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
     @test MOI.supports_incremental_interface(src)
@@ -755,7 +762,12 @@ function copytest(dest::MOI.ModelLike, src::MOI.ModelLike; copy_names = false)
         MOI.VectorAffineFunction{Float64},
         MOI.Zeros,
     )
-    dict = MOI.copy_to(dest, src, copy_names = copy_names)
+    if copy_names
+        dict = MOI.copy_to(dest, src)
+    else
+        filtered = MOI.Utilities.ModelFilter(name_filter, src)
+        dict = MOI.copy_to(dest, filtered)
+    end
     dest_name(src_name) = copy_names ? src_name : ""
     @test !MOI.supports(dest, MOI.Name()) ||
           MOI.get(dest, MOI.Name()) == dest_name("ModelName")
