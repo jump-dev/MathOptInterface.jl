@@ -113,7 +113,8 @@ for (root, dirs, files) in walkdir(".")
         if !endswith(file, ".jl")
             continue
         end
-        s = read(joinpath(root, file), String)
+        path = joinpath(root, file)
+        s = read(path, String)
         for pair in [
             ".variable_index" => ".variable",
             "RawParameter" => "RawOptimizerAttribute",
@@ -128,9 +129,11 @@ for (root, dirs, files) in walkdir(".")
                 "VariableIndexConstraintNameError",
             "SettingSingleVariableFunctionNotAllowed" =>
                 "SettingVariableIndexFunctionNotAllowed",
+            "automatic_copy_to" => "default_copy_to",
         ]
             s = replace(s, pair)
         end
+        write(path, s)
     end
 end
 ```
