@@ -1,6 +1,6 @@
 # Release notes
 
-## v0.10.0 (unreleased)
+## v0.10.0 (September 6, 2021)
 
 **MOI v0.10 is a significant breaking release. There are a large number of
 user-visible breaking changes and code refactors, as well as a substantial
