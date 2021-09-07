@@ -70,11 +70,8 @@ function test_indicator_by_SOS1()
         typeof(iset1),
     )
     bridge1 = MOI.Bridges.Constraint.bridge_constraint(BT1, model, f1, iset1)
-    @test BT1 <: MOI.Bridges.Constraint.IndicatorSOS1Bridge{
-        Float64,
-        <:MOI.LessThan,
-        <:MOI.ConstraintIndex,
-    }
+    @test BT1 <:
+          MOI.Bridges.Constraint.IndicatorSOS1Bridge{Float64,<:MOI.LessThan}
     @test bridge1 isa BT1
 
     BT2 = MOI.Bridges.Constraint.concrete_bridge_type(
@@ -83,11 +80,8 @@ function test_indicator_by_SOS1()
         typeof(iset2),
     )
     bridge2 = MOI.Bridges.Constraint.bridge_constraint(BT2, model, f2, iset2)
-    @test BT2 <: MOI.Bridges.Constraint.IndicatorSOS1Bridge{
-        Float64,
-        <:MOI.EqualTo,
-        Nothing,
-    }
+    @test BT2 <:
+          MOI.Bridges.Constraint.IndicatorSOS1Bridge{Float64,<:MOI.EqualTo}
     @test bridge2 isa BT2
 
     BT3 = MOI.Bridges.Constraint.concrete_bridge_type(
@@ -96,27 +90,14 @@ function test_indicator_by_SOS1()
         typeof(iset3),
     )
     bridge3 = MOI.Bridges.Constraint.bridge_constraint(BT3, model, f3, iset3)
-    @test BT3 <: MOI.Bridges.Constraint.IndicatorSOS1Bridge{
-        Float64,
-        <:MOI.GreaterThan,
-        <:MOI.ConstraintIndex,
-    }
+    @test BT3 <:
+          MOI.Bridges.Constraint.IndicatorSOS1Bridge{Float64,<:MOI.GreaterThan}
     @test bridge3 isa BT3
 
-    w1 = bridge1.w_variable
-    @test MOI.get(
-        model,
-        MOI.ConstraintFunction(),
-        bridge1.bound_constraint_index,
-    ) == w1
-    @test MOI.get(model, MOI.ConstraintSet(), bridge1.bound_constraint_index) ==
-          MOI.LessThan(0.0)
-    @test MOI.get(
-        model,
-        MOI.ConstraintFunction(),
-        bridge1.sos_constraint_index,
-    ) == MOI.VectorOfVariables([w1, z1])
-    lin_cons1 = bridge1.linear_constraint_index
+    w1 = bridge1.slack
+    @test MOI.get(model, MOI.ConstraintFunction(), bridge1.sos_index) ==
+          MOI.VectorOfVariables([w1, z1])
+    lin_cons1 = bridge1.affine_index
     lin_func1 = MOI.get(model, MOI.ConstraintFunction(), lin_cons1)
     @test lin_func1 ≈ MOI.ScalarAffineFunction(
         [MOI.ScalarAffineTerm(1.0, x2), MOI.ScalarAffineTerm(1.0, w1)],
@@ -124,14 +105,10 @@ function test_indicator_by_SOS1()
     )
     @test MOI.get(model, MOI.ConstraintSet(), lin_cons1) == MOI.LessThan(8.0)
 
-    w2 = bridge2.w_variable
-    @test bridge2.bound_constraint_index === nothing
-    @test MOI.get(
-        model,
-        MOI.ConstraintFunction(),
-        bridge2.sos_constraint_index,
-    ) == MOI.VectorOfVariables([w2, z2])
-    lin_cons2 = bridge2.linear_constraint_index
+    w2 = bridge2.slack
+    @test MOI.get(model, MOI.ConstraintFunction(), bridge2.sos_index) ==
+          MOI.VectorOfVariables([w2, z2])
+    lin_cons2 = bridge2.affine_index
     lin_func2 = MOI.get(model, MOI.ConstraintFunction(), lin_cons2)
     @test lin_func2 ≈ MOI.ScalarAffineFunction(
         [
@@ -143,20 +120,11 @@ function test_indicator_by_SOS1()
     )
     @test MOI.get(model, MOI.ConstraintSet(), lin_cons2) == MOI.EqualTo(9.0)
 
-    w3 = bridge3.w_variable
-    @test MOI.get(
-        model,
-        MOI.ConstraintFunction(),
-        bridge3.bound_constraint_index,
-    ) == w3
-    @test MOI.get(model, MOI.ConstraintSet(), bridge3.bound_constraint_index) ==
-          MOI.GreaterThan(0.0)
-    @test MOI.get(
-        model,
-        MOI.ConstraintFunction(),
-        bridge3.sos_constraint_index,
-    ) == MOI.VectorOfVariables([w3, z3])
-    lin_cons3 = bridge3.linear_constraint_index
+    w3 = bridge3.slack
+    MOI.GreaterThan(0.0)
+    @test MOI.get(model, MOI.ConstraintFunction(), bridge3.sos_index) ==
+          MOI.VectorOfVariables([w3, z3])
+    lin_cons3 = bridge3.affine_index
     lin_func3 = MOI.get(model, MOI.ConstraintFunction(), lin_cons3)
     @test lin_func3 ≈ MOI.ScalarAffineFunction(
         [MOI.ScalarAffineTerm(1.0, x1), MOI.ScalarAffineTerm(1.0, w3)],
@@ -217,12 +185,6 @@ function test_model_equality()
     )
     @test length(sos_cons_list) == 1
     MOI.set(mock, MOI.ConstraintName(), sos_cons_list[1], "sos1")
-    single_less_cons = MOI.get(
-        mock,
-        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.LessThan{Float64}}(),
-    )
-    @test length(single_less_cons) == 1
-
     inequality_list = MOI.get(
         mock,
         MOI.ListOfConstraintIndices{
@@ -236,11 +198,10 @@ function test_model_equality()
     MOI.set(mock, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     s = """
     variables: z, x, w
+    maxobjective: z
     sos1: [w, z] in MathOptInterface.SOS1([0.4, 0.6])
-    w <= 0.0
     ineq: x + w <= 8.0
     z in MathOptInterface.ZeroOne()
-    maxobjective: z
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
@@ -249,16 +210,14 @@ function test_model_equality()
         model,
         var_names,
         ["sos1", "ineq"],
-        [("w", MOI.LessThan{Float64}(0.0)), ("z", MOI.ZeroOne())],
+        [("z", MOI.ZeroOne())],
     )
-
     _test_delete_bridge(
         bridged_mock,
         ci,
         2,
         (
             (MOI.VariableIndex, MOI.ZeroOne, 1),
-            (MOI.VariableIndex, MathOptInterface.LessThan{Float64}, 0),
             (MOI.VectorOfVariables, MathOptInterface.SOS1{Float64}, 0),
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 0),
         ),
@@ -304,19 +263,15 @@ function test_getting_primal_attributes()
     )
     bridge1 = MOI.Bridges.Constraint.bridge_constraint(BT, mock, f, iset)
     # w value should be defaulted to 0
-    MOI.set(mock, MOI.VariablePrimalStart(), bridge1.w_variable, 0.0)
+    MOI.set(mock, MOI.VariablePrimalStart(), bridge1.slack, 0.0)
     affine_value = 6.0
     MOI.set(mock, MOI.ConstraintPrimalStart(), bridge1, [1.0, affine_value])
     @test MOI.get(mock, MOI.VariablePrimalStart(), z) ≈ 1.0
-    @test MOI.get(
-        mock,
-        MOI.ConstraintPrimalStart(),
-        bridge1.linear_constraint_index,
-    ) ≈ 6.0
+    @test MOI.get(mock, MOI.ConstraintPrimalStart(), bridge1.affine_index) ≈ 6.0
 
     # after setting the w value
     w_value = 3.0
-    MOI.set(mock, MOI.VariablePrimalStart(), bridge1.w_variable, w_value)
+    MOI.set(mock, MOI.VariablePrimalStart(), bridge1.slack, w_value)
     # linear function should not move
     @test all(
         MOI.get(mock, MOI.ConstraintPrimalStart(), bridge1) .≈
@@ -331,39 +286,23 @@ function test_getting_primal_attributes()
     bridge_eq = MOI.Bridges.Constraint.bridge_constraint(BT, mock, f, iseteq)
     @test MOI.get(
         bridge_eq,
-        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{Float64}}(),
-    ) == 0
-    @test MOI.get(
-        bridge_eq,
         MOI.NumberOfConstraints{
             MOI.ScalarAffineFunction{Float64},
             MOI.EqualTo{Float64},
         }(),
     ) == 1
-    @test isempty(
-        MOI.get(
-            bridge_eq,
-            MOI.ListOfConstraintIndices{
-                MOI.VariableIndex,
-                MOI.EqualTo{Float64},
-            }(),
-        ),
-    )
     @test MOI.supports(
         mock,
         MOI.ConstraintPrimalStart(),
-        MOI.Bridges.Constraint.IndicatorSOS1Bridge{Float64},
+        MOI.Bridges.Constraint.IndicatorSOS1Bridge{
+            Float64,
+            MOI.LessThan{Float64},
+        },
     )
-    @test MOI.supports(
-        mock,
-        MOI.ConstraintPrimalStart(),
-        MOI.Bridges.Constraint.IndicatorSOS1Bridge,
-    )
-
     # VariablePrimal
-    MOI.set(mock, MOI.VariablePrimal(), bridge1.w_variable, 33.0)
+    MOI.set(mock, MOI.VariablePrimal(), bridge1.slack, 33.0)
     z_value = 1.0
-    MOI.set(mock, MOI.VariablePrimal(), bridge1.z_variable, z_value)
+    MOI.set(mock, MOI.VariablePrimal(), bridge1.z, z_value)
     MOI.set(mock, MOI.VariablePrimal(), x, affine_value)
 
     # linear function should not move
