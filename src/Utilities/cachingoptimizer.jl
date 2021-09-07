@@ -189,16 +189,32 @@ function attach_optimizer(model::CachingOptimizer)
     return _attach_optimizer(model, MOI.copy_to)
 end
 
+function __attach_optimizer(
+    model::CachingOptimizer,
+    copy_to::typeof(MOI.copy_to!),
+) where {F<:Function}
+    indexmap = MOI.copy_to!(model.optimizer, model.model_cache)::IndexMap
+    model.state = ATTACHED_OPTIMIZER
+    return indexmap
+end
+
+function __attach_optimizer(
+    model::CachingOptimizer,
+    copy_to::typeof(MOI.optimizer_model!),
+) where {F<:Function}
+    indexmap, copied = MOI.optimize_model!(model.optimizer, model.model_cache)
+    if copied
+        model.state = ATTACHED_OPTIMIZER
+    end
+    return indexmap::IndexMap
+end
+
 function _attach_optimizer(
     model::CachingOptimizer,
     copy_to::F,
 ) where {F<:Function}
     @assert model.state == EMPTY_OPTIMIZER
-    # We do not need to copy names because name-related operations are handled
-    # by `m.model_cache`
-    indexmap =
-        copy_to(model.optimizer, model.model_cache)::MOI.Utilities.IndexMap
-    model.state = ATTACHED_OPTIMIZER
+    indexmap = __attach_optimizer(model, copy_to)
     # MOI does not define the type of index_map, so we have to convert it
     # into an actual IndexMap. Also load the reverse IndexMap.
     model.model_to_optimizer_map = _standardize(indexmap)

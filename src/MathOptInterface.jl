@@ -164,6 +164,32 @@ function copy_to(dest, src; kwargs...)
 end
 
 """
+    optimize_model!(
+        dest::AbstractOptimizer,
+        src::ModelLike,
+    )::IndexMap
+
+A single call similar to calling [`copy_to`](@ref) followed by
+[`optimize!`](@ref). Return an [`IndexMap`](@ref) and a `Bool` `copied`.
+If `copied` is `true`, `src` was copied to `dest` so [`optimize!](@ref)
+can be called again on `dest`, e.g., after changing the starting values
+or optimizer attributes. On the other hand, if `copied` is `false`, the
+model was not copied to `dest` so calling [`optimize!`](@ref) is not allowed.
+However, attributes for which [`is_set_by_optimize`](@ref) is true can be
+queried from `dest`.
+
+An optimizer can decide to implement this function instead of implementing
+[`copy_to`](@ref) and [`optimize!`](@ref) individually.
+
+!!! warning
+    This is an experimental new feature of MOI v0.10.1 that may break in MOI v1.0.
+"""
+function optimize_model!(dest, src)
+    # The arguments above are untyped to avoid ambiguities.
+    return copy_to_and_optimize!(dest, src), true
+end
+
+"""
     copy_to_and_optimize!(
         dest::AbstractOptimizer,
         src::ModelLike,
@@ -172,15 +198,13 @@ end
 A single call equivalent to calling [`copy_to`](@ref) followed by
 [`optimize!`](@ref).  Like [`copy_to`](@ref), it returns an [`IndexMap`].
 
-Keyword arguments are passed to [`copy_to`](@ref).
-
 An optimizer can decide to implement this function instead of implementing
 [`copy_to`](@ref) and [`optimize!`](@ref) individually.
 
 !!! warning
     This is an experimental new feature of MOI v0.10 that may break in MOI v1.0.
 """
-function copy_to_and_optimize!(dest, src)
+function copy_to_and_optimize!(dest, src) # TODO remove in favor of `optimize_model!`
     # The arguments above are untyped to avoid ambiguities.
     index_map = copy_to(dest, src)
     optimize!(dest)
