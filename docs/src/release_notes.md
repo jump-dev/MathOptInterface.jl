@@ -1,10 +1,17 @@
 # Release notes
 
+## v0.10.1 (In development)
+
+- Various fixes to `MOI.Test`
+
 ## v0.10.0 (September 6, 2021)
 
 **MOI v0.10 is a significant breaking release. There are a large number of
 user-visible breaking changes and code refactors, as well as a substantial
 number of new features.**
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.0).
 
 ### Breaking changes in MOI
 
