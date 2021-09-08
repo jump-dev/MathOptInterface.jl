@@ -404,11 +404,7 @@ function _test_attribute_value_type(
     attribute::Union{MOI.AbstractModelAttribute,MOI.AbstractOptimizerAttribute},
 )
     T = MOI.attribute_value_type(attribute)
-    @static if VERSION < v"1.5"
-        @test MOI.get(model, attribute) isa T
-    else
-        @test @inferred(T, MOI.get(model, attribute)) isa T
-    end
+    @test MOI.get(model, attribute) isa T
     return
 end
 
