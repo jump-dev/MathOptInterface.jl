@@ -1408,7 +1408,7 @@ function test_solve_SOS2_add_and_delete(model::MOI.ModelLike, config::Config)
         MOI.VectorOfVariables,
         MOI.SOS2{Float64},
     )
-    function add_SOS2(x, y, xp, yp)
+    function _add_SOS2(model, x, y, xp, yp)
         λ = MOI.add_variables(model, length(xp))
         # 0 <= λ <= 1
         MOI.add_constraint.(model, λ, MOI.LessThan(1.0))
@@ -1447,9 +1447,14 @@ function test_solve_SOS2_add_and_delete(model::MOI.ModelLike, config::Config)
     end
     x = MOI.add_variables(model, 2)
     y = MOI.add_variables(model, 2)
-    λ, c1 = add_SOS2(x[1], y[1], [1.0, 2.0, 3.0], [2.0, 2.0, 1.0])
+    # !!! warning
+    #     Make sure the variable returned from `_add_SOS2` is named something
+    #     other than λ to avoid Julia's `Box`ing issue with closed over
+    #     variables.
+    vλ, c1 = _add_SOS2(model, x[1], y[1], [1.0, 2.0, 3.0], [2.0, 2.0, 1.0])
     MOI.add_constraint(model, x[1], MOI.LessThan(2.5))
-    η, c2 = add_SOS2(x[2], y[2], [1.0, 2.0, 3.0, 4.0], [0.5, 1.0, 0.2, 2.0])
+    vη, c2 =
+        _add_SOS2(model, x[2], y[2], [1.0, 2.0, 3.0, 4.0], [0.5, 1.0, 0.2, 2.0])
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, y), 0.0)
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
@@ -1476,18 +1481,20 @@ function test_solve_SOS2_add_and_delete(model::MOI.ModelLike, config::Config)
     @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 1.45, config)
     MOI.add_constraint(
         model,
-        MOI.VectorOfVariables(λ),
+        MOI.VectorOfVariables(vλ),
         MOI.SOS2{Float64}([1.0, 2.0, 3.0]),
     )
     MOI.add_constraint(
         model,
-        MOI.VectorOfVariables(λ),
+        MOI.VectorOfVariables(vη),
         MOI.SOS2{Float64}([1.0, 2.0, 3.0, 4.0]),
     )
     @test MOI.get(model, attr) == 2
     MOI.optimize!(model)
     @test isapprox(MOI.get(model, MOI.VariablePrimal(), x[1]), 2.5, config)
     @test isapprox(MOI.get(model, MOI.VariablePrimal(), x[2]), 3.0, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), y[1]), 1.5, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), y[2]), 0.2, config)
     @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 1.7, config)
     return
 end
