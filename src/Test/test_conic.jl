@@ -6529,7 +6529,7 @@ function test_conic_SecondOrderCone_no_initial_bound(
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
     MOI.delete(model, c_soc)
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.DUAL_INFEASIBLE
@@ -6583,10 +6583,10 @@ function test_conic_SecondOrderCone_nonnegative_initial_bound(
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
     MOI.delete(model, c_soc)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.VariablePrimal(), t) == 1.0
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 1.0, config)
     return
 end
 
@@ -6637,10 +6637,10 @@ function test_conic_SecondOrderCone_negative_initial_bound(
     MOI.optimize!(model)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
     MOI.delete(model, c_soc)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.VariablePrimal(), t) == -1.0
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), -1.0, config)
     return
 end
 
@@ -6691,10 +6691,10 @@ function test_conic_SecondOrderCone_nonnegative_post_bound(
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.VariablePrimal(), t) == 6.0
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 6.0, config)
     MOI.delete(model, c_lb)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
     return
 end
 
@@ -6745,10 +6745,10 @@ function test_conic_SecondOrderCone_negative_post_bound(
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
     MOI.delete(model, c_soc)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.VariablePrimal(), t) == -6.0
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), -6.0, config)
     return
 end
 
@@ -6800,10 +6800,10 @@ function test_conic_SecondOrderCone_negative_post_bound_ii(
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
     MOI.delete(model, c_lb)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
     MOI.delete(model, c_soc)
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.DUAL_INFEASIBLE
@@ -6861,10 +6861,10 @@ function test_conic_SecondOrderCone_negative_post_bound_iii(
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
     MOI.delete(model, c_lb)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.VariablePrimal(), t) == 5.0
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
     MOI.delete(model, c_soc)
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.DUAL_INFEASIBLE
