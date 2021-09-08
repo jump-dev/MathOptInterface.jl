@@ -6748,7 +6748,7 @@ function test_conic_SecondOrderCone_negative_post_bound(
     @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
     MOI.delete(model, c_soc)
     MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t) ,-6.0, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), -6.0, config)
     return
 end
 
