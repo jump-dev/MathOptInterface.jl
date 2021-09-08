@@ -1,6 +1,6 @@
 # Release notes
 
-## v0.10.1 (In development)
+## v0.10.1 (September 8, 2021)
 
 - Various fixes to `MOI.Test`
 
