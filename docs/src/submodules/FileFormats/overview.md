@@ -83,8 +83,8 @@ julia> print(read("file.mof.json", String))
 {
   "name": "MathOptFormat Model",
   "version": {
-    "major": 0,
-    "minor": 6
+    "major": 1,
+    "minor": 0
   },
   "variables": [
     {
@@ -218,8 +218,8 @@ Then, check if a model file is valid using `isvalid`:
 julia> good_model = JSON.parse("""
        {
          "version": {
-           "major": 0,
-           "minor": 6
+           "major": 1,
+           "minor": 0
          },
          "variables": [{"name": "x"}],
          "objective": {"sense": "feasibility"},
@@ -237,8 +237,8 @@ validation fails:
 julia> bad_model = JSON.parse("""
        {
          "version": {
-           "major": 0,
-           "minor": 6
+           "major": 1,
+           "minor": 0
          },
          "variables": [{"NaMe": "x"}],
          "objective": {"sense": "feasibility"},

@@ -117,10 +117,7 @@ function moi_to_object(
     foo::MOI.VariableIndex,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return OrderedObject(
-        "type" => "Variable",
-        "name" => name_map[foo],
-    )
+    return OrderedObject("type" => "Variable", "name" => name_map[foo])
 end
 
 # ========== Typed scalar functions ==========

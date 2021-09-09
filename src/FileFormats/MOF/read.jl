@@ -136,7 +136,7 @@ Convert `x` from an MOF representation into a MOI representation.
 function function_to_moi(x::Object, name_map::Dict{String,MOI.VariableIndex})
     if haskey(x, "type")
         return function_to_moi(head_to_function(x["type"]::String), x, name_map)
-            else
+    else
         # Required for v0.4
         return function_to_moi(head_to_function(x["head"]::String), x, name_map)
     end
