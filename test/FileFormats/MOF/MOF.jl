@@ -841,6 +841,26 @@ c1: [x, y, z] in NormNuclearCone(1, 2)
     )
 end
 
+function test_v04()
+    model = MOF.Model()
+    MOI.read_from_file(model, joinpath(@__DIR__, "v0.4.mof.json"))
+    model_2 = MOF.Model()
+    MOI.Utilities.loadfromstring!(model_2, """
+    variables: x, y
+    minobjective: x
+    c: x + y >= 1.0
+    x in Interval(0.0, 1.0)
+    y in ZeroOne()
+    """)
+    MOI.Test.util_test_models_equal(
+        model,
+        model_2,
+        ["x", "y"],
+        ["c"],
+    )
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")

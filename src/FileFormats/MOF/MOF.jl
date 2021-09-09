@@ -7,8 +7,9 @@ import MathOptInterface
 
 const MOI = MathOptInterface
 
-const SCHEMA_PATH = joinpath(@__DIR__, "mof.0.6.schema.json")
-const VERSION = v"0.6"
+const SCHEMA_PATH = joinpath(@__DIR__, "mof.1.0.schema.json")
+const VERSION = v"1.0"
+const SUPPORTED_VERSIONS = (v"1.0", v"0.6", v"0.5", v"0.4")
 
 const OrderedObject = OrderedCollections.OrderedDict{String,Any}
 const UnorderedObject = Dict{String,Any}

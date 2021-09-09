@@ -1,16 +1,16 @@
 {
   "name": "MathOptFormat Model",
   "version": {
-    "major": 0,
-    "minor": 6
+    "major": 1,
+    "minor": 0
   },
   "variables": [{"name": "x"}],
   "objective": {
     "sense": "min",
-    "function": {"type": "SingleVariable", "variable": "x"}
+    "function": {"type": "Variable", "name": "x"}
   },
   "constraints": [{
-    "function": {"type": "SingleVariable", "variable": "x"},
+    "function": {"type": "Variable", "name": "x"},
     "set": {"type": "UnsupportedConstraintSet"}
   }]
 }

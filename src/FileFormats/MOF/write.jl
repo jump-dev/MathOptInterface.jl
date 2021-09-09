@@ -118,8 +118,8 @@ function moi_to_object(
     name_map::Dict{MOI.VariableIndex,String},
 )
     return OrderedObject(
-        "type" => "SingleVariable",
-        "variable" => name_map[foo],
+        "type" => "Variable",
+        "name" => name_map[foo],
     )
 end
 
@@ -300,7 +300,7 @@ function moi_to_object(
 ) where {I,S}
     @assert I == MOI.ACTIVATE_ON_ONE || I == MOI.ACTIVATE_ON_ZERO
     return OrderedObject(
-        "type" => "IndicatorSet",
+        "type" => "Indicator",
         "set" => moi_to_object(set.set, name_map),
         "activate_on" => (I == MOI.ACTIVATE_ON_ONE) ? "one" : "zero",
     )
