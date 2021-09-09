@@ -21,7 +21,7 @@ function _validate(filename::String)
         MOI.FileFormats.AutomaticCompression(),
     ) do io
         object = JSON.parse(io)
-        ret = JSONSchema.validate(object, SCHEMA)
+        ret = JSONSchema.validate(SCHEMA, object)
         if ret !== nothing
             error(
                 "Unable to read file because it does not conform to the MOF " *
