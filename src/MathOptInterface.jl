@@ -202,7 +202,7 @@ An optimizer can decide to implement this function instead of implementing
 [`copy_to`](@ref) and [`optimize!`](@ref) individually.
 
 !!! warning
-    This is an experimental new feature of MOI v0.10 that may break in MOI v1.0.
+    This function will be removed in MOI v1.0, use `optimize_model!` instead.
 """
 function copy_to_and_optimize!(dest, src) # TODO remove in favor of `optimize_model!`
     # The arguments above are untyped to avoid ambiguities.

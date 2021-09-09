@@ -191,16 +191,16 @@ end
 
 function __attach_optimizer(
     model::CachingOptimizer,
-    copy_to::typeof(MOI.copy_to!),
+    ::typeof(MOI.copy_to),
 ) where {F<:Function}
-    indexmap = MOI.copy_to!(model.optimizer, model.model_cache)::IndexMap
+    indexmap = MOI.copy_to(model.optimizer, model.model_cache)::IndexMap
     model.state = ATTACHED_OPTIMIZER
     return indexmap
 end
 
 function __attach_optimizer(
     model::CachingOptimizer,
-    copy_to::typeof(MOI.optimizer_model!),
+    ::typeof(MOI.optimizer_model!),
 ) where {F<:Function}
     indexmap, copied = MOI.optimize_model!(model.optimizer, model.model_cache)
     if copied
