@@ -464,7 +464,7 @@ function test_nonlinear_hs071_NLPBlockDual(model::MOI.ModelLike, config::Config)
     MOI.set(model, MOI.NLPBlock(), block_data)
 
     for sense in [MOI.MIN_SENSE, MOI.MAX_SENSE]
-        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+        MOI.set(model, MOI.ObjectiveSense(), sense)
         MOI.optimize!(model)
         # Get primal solution
         x = MOI.get(model, MOI.VariablePrimal(), v)
