@@ -8,7 +8,7 @@
         "sense": "min", "function": {"head": "SingleVariable", "variable": "x"}
     },
     "constraints": [{
-        "name": "x + y >= 1",
+        "name": "c",
         "function": {
             "head": "ScalarAffineFunction",
             "terms": [

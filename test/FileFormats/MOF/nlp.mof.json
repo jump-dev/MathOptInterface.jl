@@ -1,8 +1,8 @@
 {
   "name": "MathOptFormat Model",
   "version": {
-    "major": 0,
-    "minor": 6
+    "major": 1,
+    "minor": 0
   },
   "variables": [
     {
@@ -204,8 +204,8 @@
     },
     {
       "function": {
-        "type": "SingleVariable",
-        "variable": "var_1"
+        "type": "Variable",
+        "name": "var_1"
       },
       "set": {
         "type": "Interval",
@@ -215,8 +215,8 @@
     },
     {
       "function": {
-        "type": "SingleVariable",
-        "variable": "var_2"
+        "type": "Variable",
+        "name": "var_2"
       },
       "set": {
         "type": "Interval",
@@ -226,8 +226,8 @@
     },
     {
       "function": {
-        "type": "SingleVariable",
-        "variable": "var_3"
+        "type": "Variable",
+        "name": "var_3"
       },
       "set": {
         "type": "Interval",
@@ -237,8 +237,8 @@
     },
     {
       "function": {
-        "type": "SingleVariable",
-        "variable": "var_4"
+        "type": "Variable",
+        "name": "var_4"
       },
       "set": {
         "type": "Interval",

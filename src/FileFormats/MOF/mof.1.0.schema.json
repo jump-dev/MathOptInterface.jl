@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/schema#",
-    "$id": "https://jump.dev/MathOptFormat/schemas/mof.0.6.schema.json",
+    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.0.schema.json",
     "title": "The schema for MathOptFormat",
     "type": "object",
     "required": ["version", "variables", "objective", "constraints"],
@@ -11,10 +11,10 @@
             "required": ["minor", "major"],
             "properties": {
                 "minor": {
-                    "const": 6
+                    "const": 0
                 },
                 "major": {
-                    "const": 0
+                    "const": 1
                 }
             }
         },
@@ -281,14 +281,14 @@
             "type": "object",
             "required": ["type"],
             "oneOf": [{
-                "description": "The scalar variable `variable`.",
-                "examples": ["{\"type\": \"SingleVariable\", \"variable\": \"x\"}"],
-                "required": ["variable"],
+                "description": "The scalar variable `x`.",
+                "examples": ["{\"type\": \"Variable\", \"name\": \"x\"}"],
+                "required": ["name"],
                 "properties": {
                     "type": {
-                        "const": "SingleVariable"
+                        "const": "Variable"
                     },
-                    "variable": {
+                    "name": {
                         "type": "string"
                     }
                 }
@@ -769,11 +769,11 @@
                 }
             }, {
                 "description": "If `activate_on=one`: (y, x) ∈ {0,1}×Rᴺ: y = 0 ⟹ x ∈ S, otherwise when `activate_on=zero`: (y, x) ∈ {0,1}×Rᴺ: y = 1 ⟹ x ∈ S.",
-                "examples": ["{\"type\": \"IndicatorSet\", \"set\": {\"type\": \"LessThan\", \"upper\": 2.0}, \"activate_on\": \"one\"}"],
+                "examples": ["{\"type\": \"Indicator\", \"set\": {\"type\": \"LessThan\", \"upper\": 2.0}, \"activate_on\": \"one\"}"],
                 "required": ["set", "activate_on"],
                 "properties": {
                     "type": {
-                        "const": "IndicatorSet"
+                        "const": "Indicator"
                     },
                     "set": {
                         "oneOf": [{
@@ -813,7 +813,7 @@
                     }
                 }
             }, {
-                "description": "(u, v, w) ∈ {R^{dimension}: u ≥ sumᵢ wᵢlog(wᵢ/vᵢ), vᵢ ≥ 0, wᵢ ≥ 0}",
+                "description": "(u, v, w) ∈ {R^{dimension}: u ≥ Σᵢ wᵢlog(wᵢ/vᵢ), vᵢ ≥ 0, wᵢ ≥ 0}",
                 "examples": ["{\"type\": \"RelativeEntropyCone\", \"dimension\": 3}"],
                 "required": ["dimension"],
                 "properties": {
@@ -843,7 +843,7 @@
                     }
                 }
             }, {
-                "description": "(t, X) ∈ {R^{1+row_dim×column_dim}: t ≥ σ₁(X)}",
+                "description": "(t, X) ∈ {R^{1+row_dim×column_dim}: t ≥ Σᵢ σᵢ(X)}",
                 "examples": ["{\"type\": \"NormNuclearCone\", \"row_dim\": 1, \"column_dim\": 2}"],
                 "required": ["row_dim", "column_dim"],
                 "properties": {
