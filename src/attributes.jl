@@ -1394,6 +1394,11 @@ end
 A constraint attribute for the assignment to some constraint's dual value(s) in
 result `result_index`. If `result_index` is omitted, it is 1 by default.
 
+If the solver does not have a dual value for the constraint (for instance, 
+because of an infeasibility or because there is no solution with the 
+requested `result_index`), the result is undefined. Users should first check
+[`DualStatus`](@ref) before accessing the `ConstraintDual` attribute.
+
 See [`ResultCount`](@ref) for information on how the results are ordered.
 """
 struct ConstraintDual <: AbstractConstraintAttribute
