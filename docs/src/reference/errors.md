@@ -71,7 +71,7 @@ UnsupportedSubmittable
 SubmitNotAllowed
 ```
 
-Note that setting the [`ConstraintFunction`](@ref) of a [`VariableIndex`]
+Note that setting the [`ConstraintFunction`](@ref) of a [`VariableIndex`](@ref)
 constraint is not allowed:
 ```@docs
 SettingVariableIndexNotAllowed
