@@ -22,6 +22,12 @@ be thrown:
 InvalidIndex
 ```
 
+When an invalid result index is used to retrieve an attribute, a 
+[`ResultIndexBoundsError`](@ref) should be thrown: 
+```@docs
+ResultIndexBoundsError
+```
+
 As discussed in [JuMP mapping](@ref), for scalar constraint with a nonzero
 function constant, a [`ScalarFunctionConstantNotZero`](@ref) exception may be
 thrown:
