@@ -1017,6 +1017,11 @@ end
 A model attribute for the value of the objective function of the dual problem
 for the `result_index`th dual result.
 
+If the solver does not have a dual value for the objective (for instance, 
+because of an infeasibility or because there is no solution with the 
+requested `result_index`), the result is undefined. Users should first check
+[`DualStatus`](@ref) before accessing the `DualObjectiveValue` attribute.
+
 See [`ResultCount`](@ref) for information on how the results are ordered.
 """
 struct DualObjectiveValue <: AbstractModelAttribute
