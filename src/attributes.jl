@@ -138,6 +138,17 @@ SubmitNotAllowed(sub::AbstractSubmittable) = SubmitNotAllowed(sub, "")
 operation_name(err::SubmitNotAllowed) = "Submitting $(err.sub)"
 message(err::SubmitNotAllowed) = err.message
 
+"""
+    struct ResultIndexBoundsError{AttrType} <: Exception
+        attr::AttrType
+        result_count::Int
+    end
+
+An error indicating that the requested attribute `attr` could not be retrieved,
+because the solver returned too few results compared to what was requested. 
+For instance, the user tries to retrieve `VariablePrimal(2)` when only one 
+solution is available, or when the model is infeasible and has no solution. 
+"""
 struct ResultIndexBoundsError{AttrType} <: Exception
     attr::AttrType
     result_count::Int
