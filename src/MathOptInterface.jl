@@ -171,7 +171,7 @@ end
 
 A single call similar to calling [`copy_to`](@ref) followed by
 [`optimize!`](@ref). Return an [`IndexMap`](@ref) and a `Bool` `copied`.
-If `copied` is `true`, `src` was copied to `dest` so [`optimize!](@ref)
+If `copied` is `true`, `src` was copied to `dest` so [`optimize!`](@ref)
 can be called again on `dest`, e.g., after changing the starting values
 or optimizer attributes. On the other hand, if `copied` is `false`, the
 model was not copied to `dest` so calling [`optimize!`](@ref) is not allowed.
