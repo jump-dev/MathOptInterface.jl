@@ -26,6 +26,7 @@ When an invalid result index is used to retrieve an attribute, a
 [`ResultIndexBoundsError`](@ref) should be thrown: 
 ```@docs
 ResultIndexBoundsError
+check_result_index_bounds
 ```
 
 As discussed in [JuMP mapping](@ref), for scalar constraint with a nonzero
