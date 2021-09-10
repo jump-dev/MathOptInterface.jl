@@ -154,6 +154,14 @@ struct ResultIndexBoundsError{AttrType} <: Exception
     result_count::Int
 end
 
+"""
+    check_result_index_bounds(model::ModelLike, attr)
+
+This function checks whether enough results are available in the `model` for 
+the requested `attr`, using its `result_index` member variable. If the model 
+does not have sufficient results to answer the query, it throws a 
+[`ResultIndexBoundsError`](@ref).
+"""
 function check_result_index_bounds(model::ModelLike, attr)
     result_count = get(model, ResultCount())
     if !(1 <= attr.result_index <= result_count)
