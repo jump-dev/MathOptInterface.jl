@@ -1257,6 +1257,11 @@ Possible values are:
 
 A variable attribute for the `BasisStatusCode` of a variable in result
 `result_index`, with respect to an available optimal solution basis.
+
+If the solver does not have a basis status for the variable (for instance, 
+because of an infeasibility or because there is no solution with the 
+requested `result_index`), the result is undefined. Users should first check
+[`PrimalStatus`](@ref) before accessing the `ConstraintPrimal` attribute.
 """
 struct VariableBasisStatus <: AbstractVariableAttribute
     result_index::Int
