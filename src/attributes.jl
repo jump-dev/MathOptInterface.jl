@@ -1190,7 +1190,7 @@ struct VariablePrimalStart <: AbstractVariableAttribute end
 
 A variable attribute for the assignment to some primal variable's value in
 result `result_index`. If `result_index` is omitted, it is 1 by default.
-        
+
 If the solver does not have a primal value for the variable (for instance, 
 because of an infeasibility or because there is no solution with the 
 requested `result_index`), the result is undefined. Users should first check
@@ -1357,6 +1357,11 @@ However, some conic solvers reformulate `b - Ax in S` to `s = b - Ax, s in S`.
 These solvers may return the value of `s` for `ConstraintPrimal`, rather than
 `b - Ax`. (Although these are constrained by an equality constraint, due to
 numerical tolerances they may not be identical.)
+
+If the solver does not have a primal value for the constraint (for instance, 
+because of an infeasibility or because there is no solution with the 
+requested `result_index`), the result is undefined. Users should first check
+[`PrimalStatus`](@ref) before accessing the `ConstraintPrimal` attribute.
 
 If `result_index` is omitted, it is 1 by default. See [`ResultCount`](@ref) for
 information on how the results are ordered.
