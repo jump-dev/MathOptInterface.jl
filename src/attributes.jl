@@ -158,7 +158,7 @@ end
     check_result_index_bounds(model::ModelLike, attr)
 
 This function checks whether enough results are available in the `model` for 
-the requested `attr`, using its `result_index` member variable. If the model 
+the requested `attr`, using its `result_index` field. If the model 
 does not have sufficient results to answer the query, it throws a 
 [`ResultIndexBoundsError`](@ref).
 """
