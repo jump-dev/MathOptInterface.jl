@@ -200,7 +200,7 @@ end
 
 function __attach_optimizer(
     model::CachingOptimizer,
-    ::typeof(MOI.optimizer_model!),
+    ::typeof(MOI.optimize_model!),
 ) where {F<:Function}
     indexmap, copied = MOI.optimize_model!(model.optimizer, model.model_cache)
     if copied
@@ -306,7 +306,7 @@ MOI.is_empty(m::CachingOptimizer) = MOI.is_empty(m.model_cache)
 
 function MOI.optimize!(m::CachingOptimizer)
     if m.mode == AUTOMATIC && m.state == EMPTY_OPTIMIZER
-        _attach_optimizer(m, MOI.copy_to_and_optimize!)
+        _attach_optimizer(m, MOI.optimize_model!)
     else
         # TODO: better error message if no optimizer is set
         @assert m.state == ATTACHED_OPTIMIZER

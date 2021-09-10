@@ -186,29 +186,9 @@ An optimizer can decide to implement this function instead of implementing
 """
 function optimize_model!(dest, src)
     # The arguments above are untyped to avoid ambiguities.
-    return copy_to_and_optimize!(dest, src), true
-end
-
-"""
-    copy_to_and_optimize!(
-        dest::AbstractOptimizer,
-        src::ModelLike,
-    )::IndexMap
-
-A single call equivalent to calling [`copy_to`](@ref) followed by
-[`optimize!`](@ref).  Like [`copy_to`](@ref), it returns an [`IndexMap`].
-
-An optimizer can decide to implement this function instead of implementing
-[`copy_to`](@ref) and [`optimize!`](@ref) individually.
-
-!!! warning
-    This function will be removed in MOI v1.0, use `optimize_model!` instead.
-"""
-function copy_to_and_optimize!(dest, src) # TODO remove in favor of `optimize_model!`
-    # The arguments above are untyped to avoid ambiguities.
     index_map = copy_to(dest, src)
     optimize!(dest)
-    return index_map
+    return index_map, true
 end
 
 include("error.jl")
