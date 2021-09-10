@@ -1004,6 +1004,11 @@ attribute_value_type(::ObjectiveFunctionType) = Type{<:AbstractFunction}
 
 A model attribute for the objective value of the primal solution `result_index`.
 
+If the solver does not have a primal value for the objective (for instance, 
+because of an infeasibility or because there is no solution with the 
+requested `result_index`), the result is undefined. Users should first check
+[`PrimalStatus`](@ref) before accessing the `ObjectiveValue` attribute.
+
 See [`ResultCount`](@ref) for information on how the results are ordered.
 """
 struct ObjectiveValue <: AbstractModelAttribute
