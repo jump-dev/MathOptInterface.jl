@@ -1193,7 +1193,8 @@ result `result_index`. If `result_index` is omitted, it is 1 by default.
         
 If the solver does not have a primal value for the variable (for instance, 
 because of an infeasibility or because there is no solution with the 
-requested `result_index`), the result is undefined.
+requested `result_index`), the result is undefined. Users should first check
+[`PrimalStatus`](@ref) before accessing the `VariablePrimal` attribute.
 
 See [`ResultCount`](@ref) for information on how the results are ordered.
 """
