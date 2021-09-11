@@ -1044,10 +1044,13 @@ end
 A model attribute for the value of the objective function of the dual problem
 for the `result_index`th dual result.
 
-If the solver does not have a dual value for the objective (for instance, 
-because of an infeasibility or because there is no solution with the 
-requested `result_index`), the result is undefined. Users should first check
-[`DualStatus`](@ref) before accessing the `DualObjectiveValue` attribute.
+If the solver does not have a dual value for the objective because the 
+`result_index` is beyond the available solutions (whose number is indicated by
+the [`ResultCount`](@ref) attribute), getting this attribute must throw a 
+[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for 
+another reason (for instance, only a primal solution is available), the result is
+undefined. Users should first check [`DualStatus`](@ref) before accessing the
+`DualObjectiveValue` attribute.
 
 See [`ResultCount`](@ref) for information on how the results are ordered.
 """
@@ -1223,10 +1226,13 @@ struct VariablePrimalStart <: AbstractVariableAttribute end
 A variable attribute for the assignment to some primal variable's value in
 result `result_index`. If `result_index` is omitted, it is 1 by default.
 
-If the solver does not have a primal value for the variable (for instance, 
-because of an infeasibility or because there is no solution with the 
-requested `result_index`), the result is undefined. Users should first check
-[`PrimalStatus`](@ref) before accessing the `VariablePrimal` attribute.
+If the solver does not have a primal value for the variable because the 
+`result_index` is beyond the available solutions (whose number is indicated by
+the [`ResultCount`](@ref) attribute), getting this attribute must throw a 
+[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for 
+another reason (for instance, only a dual solution is available), the result is
+undefined. Users should first check [`PrimalStatus`](@ref) before accessing the
+`VariablePrimal` attribute.
 
 See [`ResultCount`](@ref) for information on how the results are ordered.
 """
@@ -1290,10 +1296,13 @@ Possible values are:
 A variable attribute for the `BasisStatusCode` of a variable in result
 `result_index`, with respect to an available optimal solution basis.
 
-If the solver does not have a basis status for the variable (for instance, 
-because of an infeasibility or because there is no solution with the 
-requested `result_index`), the result is undefined. Users should first check
-[`PrimalStatus`](@ref) before accessing the `VariableBasisStatus` attribute.
+If the solver does not have a basis statue for the variable because the 
+`result_index` is beyond the available solutions (whose number is indicated by
+the [`ResultCount`](@ref) attribute), getting this attribute must throw a 
+[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for 
+another reason (for instance, only a dual solution is available), the result is
+undefined. Users should first check [`PrimalStatus`](@ref) before accessing the
+`VariableBasisStatus` attribute.
 
 See [`ResultCount`](@ref) for information on how the results are ordered.
 """
@@ -1416,10 +1425,13 @@ end
 A constraint attribute for the assignment to some constraint's dual value(s) in
 result `result_index`. If `result_index` is omitted, it is 1 by default.
 
-If the solver does not have a dual value for the constraint (for instance, 
-because of an infeasibility or because there is no solution with the 
-requested `result_index`), the result is undefined. Users should first check
-[`DualStatus`](@ref) before accessing the `ConstraintDual` attribute.
+If the solver does not have a dual value for the variable because the 
+`result_index` is beyond the available solutions (whose number is indicated by
+the [`ResultCount`](@ref) attribute), getting this attribute must throw a 
+[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for 
+another reason (for instance, only a primal solution is available), the result is
+undefined. Users should first check [`DualStatus`](@ref) before accessing the
+`ConstraintDual` attribute.
 
 See [`ResultCount`](@ref) for information on how the results are ordered.
 """
@@ -1435,12 +1447,15 @@ A constraint attribute for the `BasisStatusCode` of some constraint in result
 `result_index`, with respect to an available optimal solution basis. If
 `result_index` is omitted, it is 1 by default.
 
-See [`ResultCount`](@ref) for information on how the results are ordered.
+If the solver does not have a basis statue for the constraint because the 
+`result_index` is beyond the available solutions (whose number is indicated by
+the [`ResultCount`](@ref) attribute), getting this attribute must throw a 
+[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for 
+another reason (for instance, only a dual solution is available), the result is
+undefined. Users should first check [`PrimalStatus`](@ref) before accessing the
+`ConstraintBasisStatus` attribute.
 
-If the solver does not have a basis status for the constraint (for instance, 
-because of an infeasibility or because there is no solution with the 
-requested `result_index`), the result is undefined. Users should first check
-[`PrimalStatus`](@ref) before accessing the `ConstraintBasisStatus` attribute.
+See [`ResultCount`](@ref) for information on how the results are ordered.
 
 ## Notes
 
