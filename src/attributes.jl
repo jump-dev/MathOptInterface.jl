@@ -1406,10 +1406,13 @@ These solvers may return the value of `s` for `ConstraintPrimal`, rather than
 `b - Ax`. (Although these are constrained by an equality constraint, due to
 numerical tolerances they may not be identical.)
 
-If the solver does not have a primal value for the constraint (for instance, 
-because of an infeasibility or because there is no solution with the 
-requested `result_index`), the result is undefined. Users should first check
-[`PrimalStatus`](@ref) before accessing the `ConstraintPrimal` attribute.
+If the solver does not have a primal value for the constraint because the 
+`result_index` is beyond the available solutions (whose number is indicated by
+the [`ResultCount`](@ref) attribute), getting this attribute must throw a 
+[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for 
+another reason (for instance, only a dual solution is available), the result is
+undefined. Users should first check [`PrimalStatus`](@ref) before accessing the
+`ConstraintPrimal` attribute.
 
 If `result_index` is omitted, it is 1 by default. See [`ResultCount`](@ref) for
 information on how the results are ordered.
