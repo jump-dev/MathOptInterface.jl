@@ -181,6 +181,9 @@ queried from `dest`.
 An optimizer can decide to implement this function instead of implementing
 [`copy_to`](@ref) and [`optimize!`](@ref) individually.
 
+!!! note
+    The main purpose of this function is for use in [`Utilities.CachingOptimizer`](@ref).
+
 !!! warning
     This is an experimental new feature of MOI v0.10.1 that may break in MOI v1.0.
 """
