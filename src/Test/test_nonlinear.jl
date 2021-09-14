@@ -478,7 +478,12 @@ function test_nonlinear_hs071_NLPBlockDual(model::MOI.ModelLike, config::Config)
         MOI.eval_objective_gradient(evaluator, g, x)
         # Evaluate ∑ μᵢ * ∇cᵢ(x)
         jtv = zeros(n_variables)
-        MOI.eval_constraint_jacobian_transpose_product(evaluator, jtv, x, con_dual)
+        MOI.eval_constraint_jacobian_transpose_product(
+            evaluator,
+            jtv,
+            x,
+            con_dual,
+        )
 
         # Test that (x, μ, νl, νᵤ) satisfies stationarity condition
         # σ ∇f(x) - ∑ μᵢ * ∇cᵢ(x) - νₗ - νᵤ = 0
@@ -500,12 +505,7 @@ function setup_test(
             MOI.Utilities.mock_optimize!(
                 mock,
                 config.optimal_status,
-                [
-                    1.1,
-                    1.5735520521364397,
-                    2.6746837915674373,
-                    5.4,
-                ],
+                [1.1, 1.5735520521364397, 2.6746837915674373, 5.4],
                 (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
                     [28.590703804861093, 0.0, 0.0, 0.0],
                 (MOI.VariableIndex, MOI.LessThan{Float64}) =>
