@@ -525,8 +525,35 @@ end
 
 function_constants(b::Vector, rows) = b[rows]
 
-# FIXME does not work for all sets
-set_from_constants(::Vector, ::Type{S}, rows) where {S} = S(length(rows))
+function set_from_constants(
+    ::Vector,
+    ::Type{S},
+    rows,
+) where {S<:MOI.AbstractVectorSet}
+    return S(length(rows))
+end
+
+function set_from_constants(
+    ::Vector,
+    ::Type{S},
+    rows,
+) where {S<:MOI.AbstractSymmetricMatrixSetTriangle}
+    nnz = length(rows)
+    side_dimension = (-1 + sqrt(1 + 8nnz)) / 2
+    @assert side_dimension * (side_dimension + 1) == 2 * nnz
+    return S(Int(side_dimension))
+end
+
+function set_from_constants(
+    ::Vector,
+    ::Type{S},
+    rows,
+) where {S<:MOI.AbstractSymmetricMatrixSetSquare}
+    nnz = length(rows)
+    side_dimension = isqrt(nnz)
+    @assert length(rows) == side_dimension^2
+    return S(side_dimension)
+end
 
 function MOI.get(
     model::MatrixOfConstraints,

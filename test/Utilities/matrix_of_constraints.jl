@@ -49,6 +49,8 @@ MOI.Utilities.@product_of_sets(
     MOI.Nonnegatives,
     MOI.Nonpositives,
     MOI.SecondOrderCone,
+    MOI.PositiveSemidefiniteConeSquare,
+    MOI.PositiveSemidefiniteConeTriangle,
 )
 
 function _new_VectorSets()
@@ -395,6 +397,30 @@ function test_multicone()
         model.constraints.moi_nonnegatives.coefficients,
     ) == [zero(T) T(3); zero(T) zero(T); T(7) zero(T); zero(T) zero(T)]
     @test model.constraints.moi_nonnegatives.constants == T[1, 6, 0, 4]
+    return
+end
+
+function test_matrix_sets_Triangle()
+    S = MOI.PositiveSemidefiniteConeTriangle
+    model = MOI.Utilities.Model{Int}()
+    x = MOI.add_variables(model, 3)
+    f = MOI.Utilities.operate(vcat, Int, (1 .* x)...)
+    c = MOI.add_constraint(model, f, S(2))
+    dest = _new_VectorSets()
+    map = MOI.copy_to(dest, model)
+    @test MOI.get(dest, MOI.ConstraintSet(), map[c]) == S(2)
+    return
+end
+
+function test_matrix_sets_Square()
+    S = MOI.PositiveSemidefiniteConeSquare
+    model = MOI.Utilities.Model{Int}()
+    x = MOI.add_variables(model, 4)
+    f = MOI.Utilities.operate(vcat, Int, (1 .* x)...)
+    c = MOI.add_constraint(model, f, S(2))
+    dest = _new_VectorSets()
+    map = MOI.copy_to(dest, model)
+    @test MOI.get(dest, MOI.ConstraintSet(), map[c]) == S(2)
     return
 end
 
