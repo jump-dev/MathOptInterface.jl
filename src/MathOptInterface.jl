@@ -34,7 +34,7 @@ Start the solution procedure.
     optimize!(
         dest::AbstractOptimizer,
         src::ModelLike,
-    )::IndexMap
+    )::Tuple{IndexMap,Bool}
 
 A single call similar to calling [`copy_to(dest, src)`](@ref `copy_to`) followed
 by `optimize!(dest)`. Return an [`IndexMap`](@ref) and a `Bool` `copied`.
