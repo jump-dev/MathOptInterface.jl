@@ -535,24 +535,30 @@ This needs to be implemented for sets of type `S` to be useable with
 function set_with_dimension(::Type{S}, dim) where {S<:MOI.AbstractVectorSet}
     return S(dim)
 end
-function set_with_dimension(::Type{MOI.AbstractSymmetricMatrixSetTriangle}, dim)
+
+function set_with_dimension(::Type{<:MOI.AbstractSymmetricMatrixSetTriangle}, dim)
     side_dimension = side_dimension_for_vectorized_dimension(dim)
     return MOI.PositiveSemidefiniteConeTriangle(side_dimension)
 end
-function set_with_dimension(::Type{MOI.AbstractSymmetricMatrixSetSquare}, dim)
+
+function set_with_dimension(::Type{<:MOI.AbstractSymmetricMatrixSetSquare}, dim)
     return MOI.PositiveSemidefiniteConeSquare(isqrt(dim))
 end
+
 function set_with_dimension(::Type{MOI.LogDetConeTriangle}, dim)
     side_dimension = side_dimension_for_vectorized_dimension(dim - 2)
     return MOI.LogDetConeTriangle(side_dimension)
 end
+
 function set_with_dimension(::Type{MOI.LogDetConeSquare}, dim)
     return MOI.LogDetConeSquare(isqrt(dim - 2))
 end
+
 function set_with_dimension(::Type{MOI.RootDetConeTriangle}, dim)
     side_dimension = side_dimension_for_vectorized_dimension(dim - 1)
     return MOI.RootDetConeTriangle(side_dimension)
 end
+
 function set_with_dimension(::Type{MOI.RootDetConeSquare}, dim)
     return MOI.RootDetConeSquare(isqrt(dim - 1))
 end
