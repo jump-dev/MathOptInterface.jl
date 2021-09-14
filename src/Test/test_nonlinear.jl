@@ -483,7 +483,7 @@ function test_nonlinear_hs071_NLPBlockDual(model::MOI.ModelLike, config::Config)
         # Test that (x, μ, νl, νᵤ) satisfies stationarity condition
         # σ ∇f(x) - ∑ μᵢ * ∇cᵢ(x) - νₗ - νᵤ = 0
         σ = (sense == MOI.MAX_SENSE) ? -1.0 : 1.0
-        @test isapprox(σ .* g, jtv .- var_dual_ub .+ var_dual_lb, config)
+        @test isapprox(σ .* g, jtv .+ var_dual_ub .+ var_dual_lb, config)
     end
     return
 end
@@ -500,7 +500,16 @@ function setup_test(
             MOI.Utilities.mock_optimize!(
                 mock,
                 config.optimal_status,
-                [1.1, 1.57355205213644, 2.6746837915674373, 5.4],
+                [
+                    1.1,
+                    1.5735520521364397,
+                    2.6746837915674373,
+                    5.4,
+                ],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
+                    [28.590703804861093, 0.0, 0.0, 0.0],
+                (MOI.VariableIndex, MOI.LessThan{Float64}) =>
+                    [0.0, 0.0, 0.0, -5.582550550234756],
             )
             MOI.set(mock, MOI.NLPBlockDual(), [0.178761800, 0.985000823])
         end,
@@ -514,11 +523,16 @@ function setup_test(
                     1.7612041983937636,
                     3.6434497419346723,
                 ],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
+                    [0.0, 0.0, 0.0, 0.0],
+                (MOI.VariableIndex, MOI.LessThan{Float64}) =>
+                    [0.0, 0.0, 0.0, 0.0],
             )
             MOI.set(mock, MOI.NLPBlockDual(), [0.0, -5.008488315])
         end,
     )
-    return
+    model.eval_variable_constraint_dual = false
+    return () -> model.eval_variable_constraint_dual = true
 end
 
 """
