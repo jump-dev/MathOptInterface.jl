@@ -104,7 +104,9 @@ function MOI.Bridges.added_constrained_variable_types(::Type{<:LogDetBridge})
     return Tuple{Type}[]
 end
 
-function MOI.Bridges.added_constraint_types(::Type{<:LogDetBridge{T,F,G,H}}) where {T,F,G,H}
+function MOI.Bridges.added_constraint_types(
+    ::Type{<:LogDetBridge{T,F,G,H}},
+) where {T,F,G,H}
     return Tuple{Type,Type}[
         (F, MOI.PositiveSemidefiniteConeTriangle),
         (G, MOI.ExponentialCone),
