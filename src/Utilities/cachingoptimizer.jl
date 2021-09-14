@@ -189,9 +189,7 @@ function attach_optimizer(model::CachingOptimizer)
     @assert model.state == EMPTY_OPTIMIZER
     indexmap = MOI.copy_to(model.optimizer, model.model_cache)::IndexMap
     model.state = ATTACHED_OPTIMIZER
-    # MOI does not define the type of index_map, so we have to convert it
-    # into an actual IndexMap. Also load the reverse IndexMap.
-    model.model_to_optimizer_map = _standardize(indexmap)
+    model.model_to_optimizer_map = indexmap
     model.optimizer_to_model_map = _reverse_index_map(indexmap)
     return
 end
@@ -224,16 +222,6 @@ end
 function _reverse_dict(src::D) where {D<:Dict}
     return D(values(src) .=> keys(src))
 end
-
-function _standardize(d::AbstractDict)
-    map = IndexMap()
-    for (k, v) in d
-        map[k] = v
-    end
-    return map
-end
-
-_standardize(d::IndexMap) = d
 
 function pass_nonvariable_constraints(
     dest::CachingOptimizer,
@@ -284,10 +272,8 @@ function MOI.optimize!(m::CachingOptimizer)
         if copied
             m.state = ATTACHED_OPTIMIZER
         end
-        # MOI does not define the type of index_map, so we have to convert it
-        # into an actual IndexMap. Also load the reverse IndexMap.
-        model.model_to_optimizer_map = _standardize(indexmap)
-        model.optimizer_to_model_map = _reverse_index_map(indexmap)
+        m.model_to_optimizer_map = indexmap
+        m.optimizer_to_model_map = _reverse_index_map(indexmap)
     else
         # TODO: better error message if no optimizer is set
         @assert m.state == ATTACHED_OPTIMIZER
