@@ -1110,6 +1110,9 @@ function MOI.set(
     ci::MOI.ConstraintIndex{F},
     func::F,
 ) where {F}
+    if F == MOI.VariableIndex
+        throw(MOI.SettingVariableIndexNotAllowed())
+    end
     if Variable.has_bridges(Variable.bridges(b))
         set = MOI.get(b, MOI.ConstraintSet(), ci)
         func, new_set = bridged_constraint_function(b, func, set)
@@ -1170,7 +1173,7 @@ function MOI.set(
 ) where {S<:MOI.AbstractScalarSet}
     if Variable.has_bridges(Variable.bridges(b))
         func = MOI.get(b, MOI.ConstraintFunction(), ci)
-        new_func, set = bridged_constraint_function(b, func, set)
+        _, set = bridged_constraint_function(b, func, set)
     end
     _set_substituted(b, attr, ci, set)
     return
@@ -1239,6 +1242,42 @@ function MOI.supports(
                 Constraint.concrete_bridge_type(b, F, S),
             ),
     )
+end
+
+function _set_substituted(
+    b::AbstractBridgeOptimizer,
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{F,S},
+    value,
+) where {F,S}
+    if !(value isa S)
+        throw(ArgumentError("Invalid type when setting ConstraintSet."))
+    elseif is_bridged(b, ci)
+        MOI.throw_if_not_valid(b, ci)
+        call_in_context(MOI.set, b, ci, attr, value)
+    else
+        MOI.set(b.model, attr, ci, value)
+    end
+    return
+end
+
+function _set_substituted(
+    b::AbstractBridgeOptimizer,
+    ::MOI.ConstraintFunction,
+    ci::MOI.ConstraintIndex{F,S},
+    value,
+) where {F,S}
+    if F == MOI.VariableIndex
+        throw(MOI.SettingVariableIndexNotAllowed())
+    elseif !(value isa F)
+        throw(ArgumentError("Invalid type when setting ConstraintFunction."))
+    elseif is_bridged(b, ci)
+        MOI.throw_if_not_valid(b, ci)
+        call_in_context(MOI.set, b, ci, attr, value)
+    else
+        MOI.set(b.model, attr, ci, value)
+    end
+    return
 end
 
 function _set_substituted(

@@ -932,3 +932,29 @@ function setup_test(
     )
     return
 end
+
+"""
+    test_modification_incorrect(model::MOI.ModelLike, config::Config)
+
+Test that constraint sets cannot be set for the wrong set type, and that
+VariableIndex functions cannot be modified.
+"""
+function test_modification_incorrect(model::MOI.ModelLike, ::Config)
+    @requires MOI.supports_constraint(
+        model,
+        MOI.ScalarAffineFunction{Float64},
+        MOI.EqualTo{Float64},
+    )
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
+        MOI.EqualTo(1.0),
+    )
+    @test_throws(
+        ArgumentError,
+        MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(1.0)),
+    )
+    @test_throws(ArgumentError, MOI.set(model, MOI.ConstraintFunction(), c, x),)
+    return
+end
