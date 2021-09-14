@@ -481,8 +481,9 @@ function test_nonlinear_hs071_NLPBlockDual(model::MOI.ModelLike, config::Config)
         MOI.eval_constraint_jacobian_transpose_product(evaluator, jtv, x, con_dual)
 
         # Test that (x, μ, νl, νᵤ) satisfies stationarity condition
-        # ∇f(x) - ∑ μᵢ * ∇cᵢ(x) - νₗ - νᵤ = 0
-        @test isapprox(g, jtv .+ var_dual_ub .+ var_dual_lb, config)
+        # σ ∇f(x) - ∑ μᵢ * ∇cᵢ(x) - νₗ - νᵤ = 0
+        σ = (sense == MOI.MAX_SENSE) ? -1.0 : 1.0
+        @test isapprox(σ .* g, jtv .- var_dual_ub .+ var_dual_lb, config)
     end
     return
 end
