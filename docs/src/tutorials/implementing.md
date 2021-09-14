@@ -271,7 +271,7 @@ All `Optimizer`s must implement the following methods:
 
  * [`empty!`](@ref)
  * [`is_empty`](@ref)
- * [`optimize!`](@ref) (or [`optimize_model!`](@ref))
+ * [`optimize!`](@ref)
 
 Other methods, detailed below, are optional or depend on how you implement the
 interface.

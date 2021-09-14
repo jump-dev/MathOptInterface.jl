@@ -60,7 +60,6 @@ AbstractOptimizer
 OptimizerWithAttributes
 optimize!
 instantiate
-optimize_model!
 ```
 
 ## Optimizer attributes

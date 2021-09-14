@@ -765,7 +765,7 @@ end
 
 struct CopyToAndOptimizer <: MOI.AbstractOptimizer end
 MOI.is_empty(::CopyToAndOptimizer) = true
-function MOI.optimize_model!(::CopyToAndOptimizer, src; kws...)
+function MOI.optimize!(::CopyToAndOptimizer, src::MOI.ModelLike)
     return MOI.Utilities.IndexMap(), false
 end
 
