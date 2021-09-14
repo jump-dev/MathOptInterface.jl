@@ -6634,9 +6634,9 @@ function test_conic_SecondOrderCone_negative_initial_bound(
         MOI.VectorOfVariables([t; x]),
         MOI.SecondOrderCone(3),
     )
-    MOI.optimize!(model)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.optimize!(model)
     @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
     MOI.delete(model, c_soc)
     MOI.optimize!(model)

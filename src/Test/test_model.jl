@@ -1019,6 +1019,11 @@ function test_model_ListOfConstraintAttributesSet(
     model::MOI.ModelLike,
     ::Config{T},
 ) where {T}
+    @requires MOI.supports(
+        model,
+        MOI.ConstraintName(),
+        MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
+    )
     x = MOI.add_variable(model)
     MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
     c = MOI.add_constraint(

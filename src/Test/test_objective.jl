@@ -64,10 +64,10 @@ function test_objective_FEASIBILITY_SENSE_clears_objective(
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.ObjectiveValue()) == 1.0
+    @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 1.0, config)
     MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.ObjectiveValue()) == 0.0
+    @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 0.0, config)
     return
 end
 
