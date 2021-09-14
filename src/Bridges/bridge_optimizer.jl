@@ -1246,7 +1246,7 @@ end
 
 function _set_substituted(
     b::AbstractBridgeOptimizer,
-    ::MOI.ConstraintSet,
+    attr::MOI.ConstraintSet,
     ci::MOI.ConstraintIndex{F,S},
     value,
 ) where {F,S}
@@ -1263,7 +1263,7 @@ end
 
 function _set_substituted(
     b::AbstractBridgeOptimizer,
-    ::MOI.ConstraintFunction,
+    attr::MOI.ConstraintFunction,
     ci::MOI.ConstraintIndex{F,S},
     value,
 ) where {F,S}
