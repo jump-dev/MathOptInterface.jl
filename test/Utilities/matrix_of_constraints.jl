@@ -408,7 +408,7 @@ MOI.Utilities.@product_of_sets(
     MOI.RootDetConeSquare,
 )
 
-function test_matrix_sets(::Type{T}=Int) where {T}
+function test_matrix_sets(::Type{T} = Int) where {T}
     model = MOI.Utilities.GenericOptimizer{
         T,
         MOI.Utilities.ObjectiveContainer{T},
