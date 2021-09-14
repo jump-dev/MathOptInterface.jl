@@ -361,7 +361,9 @@ function MOI.Bridges.added_constrained_variable_types(::Type{<:RootDetBridge})
     return Tuple{Type}[]
 end
 
-function MOI.Bridges.added_constraint_types(::Type{<:RootDetBridge{T,F,G}}) where {T,F,G}
+function MOI.Bridges.added_constraint_types(
+    ::Type{<:RootDetBridge{T,F,G}},
+) where {T,F,G}
     return Tuple{Type,Type}[
         (F, MOI.PositiveSemidefiniteConeTriangle),
         (G, MOI.GeometricMeanCone),
