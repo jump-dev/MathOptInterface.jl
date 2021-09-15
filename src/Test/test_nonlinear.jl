@@ -136,6 +136,14 @@ function MOI.eval_constraint_jacobian(::HS071, J, x)
     return
 end
 
+function MOI.eval_constraint_jacobian_transpose_product(::HS071, y, x, w)
+    y[1] = (x[2] * x[3] * x[4]) * w[1] + (2 * x[1]) * w[2]
+    y[2] = (x[1] * x[3] * x[4]) * w[1] + (2 * x[2]) * w[2]
+    y[3] = (x[1] * x[2] * x[4]) * w[1] + (2 * x[3]) * w[2]
+    y[4] = (x[1] * x[2] * x[3]) * w[1] + (2 * x[4]) * w[2]
+    return
+end
+
 function MOI.eval_hessian_lagrangian(d::HS071, H, x, σ, μ)
     @assert d.enable_hessian
     # Again, only lower left triangle
@@ -442,25 +450,46 @@ function test_nonlinear_hs071_NLPBlockDual(model::MOI.ModelLike, config::Config)
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
-    v = MOI.add_variables(model, 4)
+    n_variables = 4
+    v = MOI.add_variables(model, n_variables)
     l = [1.1, 1.2, 1.3, 1.4]
     u = [5.1, 5.2, 5.3, 5.4]
     start = [2.1, 2.2, 2.3, 2.4]
-    MOI.add_constraint.(model, v, MOI.GreaterThan.(l))
-    MOI.add_constraint.(model, v, MOI.LessThan.(u))
+    cl = MOI.add_constraint.(model, v, MOI.GreaterThan.(l))
+    cu = MOI.add_constraint.(model, v, MOI.LessThan.(u))
     MOI.set.(model, MOI.VariablePrimalStart(), v, start)
     lb, ub = [25.0, 40.0], [Inf, 40.0]
     evaluator = MOI.Test.HS071(true)
     block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, true)
     MOI.set(model, MOI.NLPBlock(), block_data)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    MOI.optimize!(model)
-    dual = MOI.get(model, MOI.NLPBlockDual())
-    @test isapprox(dual, [0.178761800, 0.985000823], config)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    MOI.optimize!(model)
-    dual = MOI.get(model, MOI.NLPBlockDual())
-    @test isapprox(dual, [0.0, -5.008488315], config)
+
+    for sense in [MOI.MIN_SENSE, MOI.MAX_SENSE]
+        MOI.set(model, MOI.ObjectiveSense(), sense)
+        MOI.optimize!(model)
+        # Get primal solution
+        x = MOI.get(model, MOI.VariablePrimal(), v)
+        # Get dual solution
+        con_dual = MOI.get(model, MOI.NLPBlockDual())
+        var_dual_lb = MOI.get(model, MOI.ConstraintDual(), cl)
+        var_dual_ub = MOI.get(model, MOI.ConstraintDual(), cu)
+
+        # Evaluate ∇f(x)
+        g = zeros(n_variables)
+        MOI.eval_objective_gradient(evaluator, g, x)
+        # Evaluate ∑ μᵢ * ∇cᵢ(x)
+        jtv = zeros(n_variables)
+        MOI.eval_constraint_jacobian_transpose_product(
+            evaluator,
+            jtv,
+            x,
+            con_dual,
+        )
+
+        # Test that (x, μ, νl, νᵤ) satisfies stationarity condition
+        # σ ∇f(x) - ∑ μᵢ * ∇cᵢ(x) - νₗ - νᵤ = 0
+        σ = (sense == MOI.MAX_SENSE) ? -1.0 : 1.0
+        @test isapprox(σ .* g, jtv .+ var_dual_ub .+ var_dual_lb, config)
+    end
     return
 end
 
@@ -476,7 +505,11 @@ function setup_test(
             MOI.Utilities.mock_optimize!(
                 mock,
                 config.optimal_status,
-                [1.1, 1.57355205213644, 2.6746837915674373, 5.4],
+                [1.1, 1.5735520521364397, 2.6746837915674373, 5.4],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
+                    [28.590703804861093, 0.0, 0.0, 0.0],
+                (MOI.VariableIndex, MOI.LessThan{Float64}) =>
+                    [0.0, 0.0, 0.0, -5.582550550234756],
             )
             MOI.set(mock, MOI.NLPBlockDual(), [0.178761800, 0.985000823])
         end,
@@ -490,11 +523,16 @@ function setup_test(
                     1.7612041983937636,
                     3.6434497419346723,
                 ],
+                (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
+                    [0.0, 0.0, 0.0, 0.0],
+                (MOI.VariableIndex, MOI.LessThan{Float64}) =>
+                    [0.0, 0.0, 0.0, 0.0],
             )
             MOI.set(mock, MOI.NLPBlockDual(), [0.0, -5.008488315])
         end,
     )
-    return
+    model.eval_variable_constraint_dual = false
+    return () -> model.eval_variable_constraint_dual = true
 end
 
 """
@@ -513,7 +551,7 @@ function test_nonlinear_objective_and_moi_objective_test(
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
     lb = [1.0]
-    ub = [2.0]
+    ub = [1.0]
     block_data = MOI.NLPBlockData(
         MOI.NLPBoundsPair.(lb, ub),
         FeasibilitySenseEvaluator(true),
@@ -521,7 +559,7 @@ function test_nonlinear_objective_and_moi_objective_test(
     )
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    # Avoid starting at zero because it's a critial point.
+    # Avoid starting at zero because it's a critical point.
     MOI.set(model, MOI.VariablePrimalStart(), x, 1.5)
     MOI.set(model, MOI.NLPBlock(), block_data)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
@@ -566,7 +604,7 @@ function test_nonlinear_without_objective(model::MOI.ModelLike, config::Config)
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
     lb = [1.0]
-    ub = [2.0]
+    ub = [1.0]
     block_data = MOI.NLPBlockData(
         MOI.NLPBoundsPair.(lb, ub),
         FeasibilitySenseEvaluator(true),
@@ -574,7 +612,7 @@ function test_nonlinear_without_objective(model::MOI.ModelLike, config::Config)
     )
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    # Avoid starting at zero because it's a critial point.
+    # Avoid starting at zero because it's a critical point.
     MOI.set(model, MOI.VariablePrimalStart(), x, 1.5)
     MOI.set(model, MOI.NLPBlock(), block_data)
     MOI.optimize!(model)
