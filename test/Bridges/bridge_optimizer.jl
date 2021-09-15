@@ -757,6 +757,8 @@ function test_invalid_modifications()
     MOI.Test.test_modification_set_function_single_variable(model, config)
     MOI.empty!(model)
     MOI.Test.test_modification_incorrect(model, config)
+    MOI.empty!(model)
+    MOI.Test.test_modification_incorrect_VariableIndex(model, config)
     return
 end
 
