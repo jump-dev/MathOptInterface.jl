@@ -186,22 +186,10 @@ otherwise an error is thrown; see [`MathOptInterface.copy_to`](@ref) for more de
 errors can be thrown.
 """
 function attach_optimizer(model::CachingOptimizer)
-    return _attach_optimizer(model, MOI.copy_to)
-end
-
-function _attach_optimizer(
-    model::CachingOptimizer,
-    copy_to::F,
-) where {F<:Function}
     @assert model.state == EMPTY_OPTIMIZER
-    # We do not need to copy names because name-related operations are handled
-    # by `m.model_cache`
-    indexmap =
-        copy_to(model.optimizer, model.model_cache)::MOI.Utilities.IndexMap
+    indexmap = MOI.copy_to(model.optimizer, model.model_cache)::IndexMap
     model.state = ATTACHED_OPTIMIZER
-    # MOI does not define the type of index_map, so we have to convert it
-    # into an actual IndexMap. Also load the reverse IndexMap.
-    model.model_to_optimizer_map = _standardize(indexmap)
+    model.model_to_optimizer_map = indexmap
     model.optimizer_to_model_map = _reverse_index_map(indexmap)
     return
 end
@@ -234,16 +222,6 @@ end
 function _reverse_dict(src::D) where {D<:Dict}
     return D(values(src) .=> keys(src))
 end
-
-function _standardize(d::AbstractDict)
-    map = IndexMap()
-    for (k, v) in d
-        map[k] = v
-    end
-    return map
-end
-
-_standardize(d::IndexMap) = d
 
 function pass_nonvariable_constraints(
     dest::CachingOptimizer,
@@ -290,7 +268,12 @@ MOI.is_empty(m::CachingOptimizer) = MOI.is_empty(m.model_cache)
 
 function MOI.optimize!(m::CachingOptimizer)
     if m.mode == AUTOMATIC && m.state == EMPTY_OPTIMIZER
-        _attach_optimizer(m, MOI.copy_to_and_optimize!)
+        indexmap, copied = MOI.optimize!(m.optimizer, m.model_cache)
+        if copied
+            m.state = ATTACHED_OPTIMIZER
+        end
+        m.model_to_optimizer_map = indexmap
+        m.optimizer_to_model_map = _reverse_index_map(indexmap)
     else
         # TODO: better error message if no optimizer is set
         @assert m.state == ATTACHED_OPTIMIZER
