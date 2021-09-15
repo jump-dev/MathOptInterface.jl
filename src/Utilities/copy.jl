@@ -21,6 +21,12 @@ function pass_attributes(
     index_map::IndexMap,
 )
     for attr in MOI.get(src, MOI.ListOfModelAttributesSet())
+        if !MOI.supports(dest, attr)
+            if attr == MOI.Name()
+                continue  # Skipping names is okay.
+            end
+            throw(MOI.UnsupportedAttribute(attr))
+        end
         _pass_attribute(dest, src, index_map, attr)
     end
     return
@@ -32,9 +38,6 @@ function _pass_attribute(
     index_map::IndexMap,
     attr::MOI.AbstractModelAttribute,
 )
-    if attr == MOI.Name() && !MOI.supports(dest, attr)
-        return  # Skipping names is okay.
-    end
     value = MOI.get(src, attr)
     if value !== nothing
         MOI.set(dest, attr, map_indices(index_map, value))
@@ -59,6 +62,12 @@ function pass_attributes(
     vis_src::Vector{MOI.VariableIndex},
 )
     for attr in MOI.get(src, MOI.ListOfVariableAttributesSet())
+        if !MOI.supports(dest, attr, MOI.VariableIndex)
+            if attr == MOI.VariableName() || attr == MOI.VariablePrimalStart()
+                continue  # Skipping names and start values is okay.
+            end
+            throw(MOI.UnsupportedAttribute(attr))
+        end
         _pass_attribute(dest, src, index_map, vis_src, attr)
     end
     return
@@ -71,10 +80,6 @@ function _pass_attribute(
     vis_src::Vector{MOI.VariableIndex},
     attr::MOI.AbstractVariableAttribute,
 )
-    if (attr == MOI.VariableName() || attr == MOI.VariablePrimalStart()) &&
-       !MOI.supports(dest, attr, MOI.VariableIndex)
-        return  # Skipping names and start values is okay.
-    end
     for x in vis_src
         value = MOI.get(src, attr, x)
         if value !== nothing
@@ -102,6 +107,16 @@ function pass_attributes(
     cis_src::Vector{MOI.ConstraintIndex{F,S}},
 ) where {F,S}
     for attr in MOI.get(src, MOI.ListOfConstraintAttributesSet{F,S}())
+        if !MOI.supports(dest, attr, MOI.ConstraintIndex{F,S})
+            if (
+                attr == MOI.ConstraintName() ||
+                attr == MOI.ConstraintPrimalStart() ||
+                attr == MOI.ConstraintDualStart()
+            )
+                continue  # Skipping names and start values is okay.
+            end
+            throw(MOI.UnsupportedAttribute(attr))
+        end
         _pass_attribute(dest, src, index_map, cis_src, attr)
     end
     return
@@ -114,14 +129,6 @@ function _pass_attribute(
     cis_src::Vector{MOI.ConstraintIndex{F,S}},
     attr::MOI.AbstractConstraintAttribute,
 ) where {F,S}
-    !MOI.supports(dest, attr, MOI.ConstraintIndex{F,S})
-    if (
-        attr == MOI.ConstraintName() ||
-        attr == MOI.ConstraintPrimalStart() ||
-        attr == MOI.ConstraintDualStart()
-    ) && !MOI.supports(dest, attr, MOI.ConstraintIndex{F,S})
-        return  # Skipping names and start values is okay
-    end
     for ci in cis_src
         value = MOI.get(src, attr, ci)
         if value !== nothing

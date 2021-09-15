@@ -249,9 +249,19 @@ function MOI.get(
             if 2j <= bridge.d
                 func = MOI.get(model, attr, bridge.rsoc_constraints[offset+j])
                 func_scalars = MOIU.eachscalar(func)
-                f_scalars[2j] = func_scalars[1]
+                # Numerical issues can arise when a VectorOfVariables function
+                # is turned into a VectorAffineFunction, because the RSOC
+                # constraints might return something like `0.999999999x` instead
+                # of exactly `1.0x`. To counteract this, use `convert_approx`.
+                f_scalars[2j] = MOI.Utilities.convert_approx(
+                    MOI.Utilities.scalar_type(H),
+                    func_scalars[1],
+                )
                 if 2j + 1 <= bridge.d
-                    f_scalars[2j+1] = func_scalars[2]
+                    f_scalars[2j+1] = MOI.Utilities.convert_approx(
+                        MOI.Utilities.scalar_type(H),
+                        func_scalars[2],
+                    )
                 end
             end
         end

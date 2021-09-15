@@ -1,9 +1,10 @@
 """
     extract_eigenvalues(
         model,
-        f::MOI.VectorAffineFunction{T},
+        f::MOI.AbstractVectorFunction,
         d::Int,
         offset::Int,
+        ::Type{T},
     ) where {T}
 
 The vector `f` contains `t` (if `offset = 1`) or `(t, u)` (if `offset = 2`)
@@ -16,47 +17,33 @@ eigenvalues.
 """
 function extract_eigenvalues(
     model,
-    f::MOI.VectorAffineFunction{T},
+    f::MOI.AbstractVectorFunction,
     d::Int,
     offset::Int,
+    ::Type{T},
 ) where {T}
     f_scalars = MOI.Utilities.eachscalar(f)
     tu = [f_scalars[i] for i in 1:offset]
     n = MOI.Utilities.trimap(d, d)
     X = f_scalars[offset.+(1:n)]
-    m = length(X.terms)
-    M = m + n + d
-    terms = Vector{MOI.VectorAffineTerm{T}}(undef, M)
-    terms[1:m] = X.terms
     N = MOI.Utilities.trimap(2d, 2d)
-    constant = zeros(T, N)
-    constant[1:n] = X.constants
     Δ = MOI.add_variables(model, n)
-    cur = m
+    Z = [zero(MOI.ScalarAffineFunction{T}) for i in 1:(N-n)]
     for j in 1:d
         for i in j:d
-            cur += 1
-            terms[cur] = MOI.VectorAffineTerm(
-                MOI.Utilities.trimap(i, d + j),
-                MOI.ScalarAffineTerm(one(T), Δ[MOI.Utilities.trimap(i, j)]),
-            )
+            Z[MOI.Utilities.trimap(i, d + j)-n] = Δ[MOI.Utilities.trimap(i, j)]
         end
-        cur += 1
-        terms[cur] = MOI.VectorAffineTerm(
-            MOI.Utilities.trimap(d + j, d + j),
-            MOI.ScalarAffineTerm(one(T), Δ[MOI.Utilities.trimap(j, j)]),
-        )
+        Z[MOI.Utilities.trimap(d + j, d + j)-n] = Δ[MOI.Utilities.trimap(j, j)]
     end
-    @assert cur == M
-    Y = MOI.VectorAffineFunction(terms, constant)
-    sdindex =
-        MOI.add_constraint(model, Y, MOI.PositiveSemidefiniteConeTriangle(2d))
+    Y = MOIU.operate(vcat, T, X, MOI.Utilities.vectorize(Z))
+    set = MOI.PositiveSemidefiniteConeTriangle(2d)
+    sdindex = MOI.add_constraint(model, Y, set)
     D = Δ[MOI.Utilities.trimap.(1:d, 1:d)]
     return tu, D, Δ, sdindex
 end
 
 """
-    LogDetBridge{T}
+    LogDetBridge{T,F,G,H,I}
 
 The `LogDetConeTriangle` is representable by a
 `PositiveSemidefiniteConeTriangle` and `ExponentialCone` constraints.
@@ -82,51 +69,32 @@ that
     for Industrial and Applied Mathematics, 2001.
 ```
 """
-struct LogDetBridge{T} <: AbstractBridge
+struct LogDetBridge{T,F,G,H,I} <: AbstractBridge
     Δ::Vector{MOI.VariableIndex}
     l::Vector{MOI.VariableIndex}
-    sdindex::MOI.ConstraintIndex{
-        MOI.VectorAffineFunction{T},
-        MOI.PositiveSemidefiniteConeTriangle,
-    }
-    lcindex::Vector{
-        MOI.ConstraintIndex{MOI.VectorAffineFunction{T},MOI.ExponentialCone},
-    }
-    tlindex::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.LessThan{T}}
+    sdindex::MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle}
+    lcindex::Vector{MOI.ConstraintIndex{G,MOI.ExponentialCone}}
+    tlindex::MOI.ConstraintIndex{H,MOI.LessThan{T}}
 end
 
 function bridge_constraint(
-    ::Type{LogDetBridge{T}},
+    ::Type{LogDetBridge{T,F,G,H,I}},
     model,
-    f::MOI.VectorOfVariables,
+    f::I,
     s::MOI.LogDetConeTriangle,
-) where {T}
-    return bridge_constraint(
-        LogDetBridge{T},
-        model,
-        MOI.VectorAffineFunction{T}(f),
-        s,
-    )
-end
-
-function bridge_constraint(
-    ::Type{LogDetBridge{T}},
-    model,
-    f::MOI.VectorAffineFunction{T},
-    s::MOI.LogDetConeTriangle,
-) where {T}
+) where {T,F,G,H,I}
     d = s.side_dimension
-    tu, D, Δ, sdindex = extract_eigenvalues(model, f, d, 2)
+    tu, D, Δ, sdindex = extract_eigenvalues(model, f, d, 2, T)
     t, u = tu
     l = MOI.add_variables(model, d)
     lcindex = [sublog(model, l[i], u, D[i], T) for i in eachindex(l)]
     tlindex = subsum(model, t, l, T)
-    return LogDetBridge(Δ, l, sdindex, lcindex, tlindex)
+    return LogDetBridge{T,F,G,H,I}(Δ, l, sdindex, lcindex, tlindex)
 end
 
 function MOI.supports_constraint(
     ::Type{LogDetBridge{T}},
-    ::Type{<:Union{MOI.VectorOfVariables,MOI.VectorAffineFunction{T}}},
+    ::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.LogDetConeTriangle},
 ) where {T}
     return true
@@ -136,19 +104,33 @@ function MOI.Bridges.added_constrained_variable_types(::Type{<:LogDetBridge})
     return Tuple{Type}[]
 end
 
-function MOI.Bridges.added_constraint_types(::Type{LogDetBridge{T}}) where {T}
+function MOI.Bridges.added_constraint_types(
+    ::Type{<:LogDetBridge{T,F,G,H}},
+) where {T,F,G,H}
     return Tuple{Type,Type}[
-        (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle),
-        (MOI.VectorAffineFunction{T}, MOI.ExponentialCone),
-        (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}),
+        (F, MOI.PositiveSemidefiniteConeTriangle),
+        (G, MOI.ExponentialCone),
+        (H, MOI.LessThan{T}),
     ]
+end
+
+function concrete_bridge_type(
+    ::Type{<:LogDetBridge{T}},
+    I::Type{<:MOI.AbstractVectorFunction},
+    ::Type{MOI.LogDetConeTriangle},
+) where {T}
+    S = MOIU.scalar_type(I)
+    G = MOIU.promote_operation(vcat, T, S, MOI.VariableIndex)
+    F = MOIU.promote_operation(vcat, T, G, T)
+    H = MOIU.promote_operation(+, T, S, MOI.ScalarAffineFunction{T})
+    return LogDetBridge{T,F,G,H,I}
 end
 
 """
     sublog(
         model,
         x::MOI.VariableIndex,
-        y::MOI.VariableIndex,
+        y::MOI.AbstractScalarFunction,
         z::MOI.VariableIndex,
         ::Type{T},
     ) where {T}
@@ -158,7 +140,7 @@ Constrains ``x \\le y \\log(z/y)`` and returns the constraint index.
 function sublog(
     model,
     x::MOI.VariableIndex,
-    y::MOI.ScalarAffineFunction{T},
+    y::MOI.AbstractScalarFunction,
     z::MOI.VariableIndex,
     ::Type{T},
 ) where {T}
@@ -172,7 +154,7 @@ end
 """
     subsum(
         model,
-        t::MOI.ScalarAffineFunction,
+        t::MOI.AbstractScalarFunction,
         l::Vector{MOI.VariableIndex},
         ::Type{T}
     ) where {T}
@@ -182,7 +164,7 @@ returns the constraint index.
 """
 function subsum(
     model,
-    t::MOI.ScalarAffineFunction,
+    t::MOI.AbstractScalarFunction,
     l::Vector{MOI.VariableIndex},
     ::Type{T},
 ) where {T}
@@ -203,53 +185,44 @@ end
 MOI.get(b::LogDetBridge, ::MOI.ListOfVariableIndices) = [b.Δ; b.l]
 
 function MOI.get(
-    ::LogDetBridge{T},
-    ::MOI.NumberOfConstraints{
-        MOI.VectorAffineFunction{T},
-        MOI.PositiveSemidefiniteConeTriangle,
-    },
-)::Int64 where {T}
+    ::LogDetBridge{T,F},
+    ::MOI.NumberOfConstraints{F,MOI.PositiveSemidefiniteConeTriangle},
+)::Int64 where {T,F}
     return 1
 end
 
 function MOI.get(
-    b::LogDetBridge{T},
-    ::MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},MOI.ExponentialCone},
-)::Int64 where {T}
+    b::LogDetBridge{T,F,G},
+    ::MOI.NumberOfConstraints{G,MOI.ExponentialCone},
+)::Int64 where {T,F,G}
     return length(b.lcindex)
 end
 
 function MOI.get(
-    ::LogDetBridge{T},
-    ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.LessThan{T}},
-)::Int64 where {T}
+    ::LogDetBridge{T,F,G,H},
+    ::MOI.NumberOfConstraints{H,MOI.LessThan{T}},
+)::Int64 where {T,F,G,H}
     return 1
 end
 
 function MOI.get(
-    b::LogDetBridge{T},
-    ::MOI.ListOfConstraintIndices{
-        MOI.VectorAffineFunction{T},
-        MOI.PositiveSemidefiniteConeTriangle,
-    },
-) where {T}
+    b::LogDetBridge{T,F},
+    ::MOI.ListOfConstraintIndices{F,MOI.PositiveSemidefiniteConeTriangle},
+) where {T,F}
     return [b.sdindex]
 end
 
 function MOI.get(
-    b::LogDetBridge{T},
-    ::MOI.ListOfConstraintIndices{
-        MOI.VectorAffineFunction{T},
-        MOI.ExponentialCone,
-    },
-) where {T}
+    b::LogDetBridge{T,F,G},
+    ::MOI.ListOfConstraintIndices{G,MOI.ExponentialCone},
+) where {T,F,G}
     return copy(b.lcindex)
 end
 
 function MOI.get(
-    b::LogDetBridge{T},
-    ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},MOI.LessThan{T}},
-) where {T}
+    b::LogDetBridge{T,F,G,H},
+    ::MOI.ListOfConstraintIndices{H,MOI.LessThan{T}},
+) where {T,F,G,H}
     return [b.tlindex]
 end
 
@@ -310,8 +283,29 @@ function MOI.get(
     return vcat(t_dual, u_dual, x_dual)
 end
 
+function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::LogDetBridge)
+    return MOI.LogDetConeTriangle(length(bridge.l))
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintFunction,
+    bridge::LogDetBridge{T,F,G,H,I},
+) where {T,F,G,H,I}
+    n = length(bridge.Δ)
+    Y = MOI.get(model, attr, bridge.sdindex)::F
+    X = MOI.Utilities.convert_approx(I, MOI.Utilities.eachscalar(Y)[1:n])
+    slog = MOI.get(model, attr, first(bridge.lcindex))::G
+    u = MOI.Utilities.eachscalar(slog)[2]
+    ssu = MOI.get(model, attr, bridge.tlindex)::H
+    taff = MOI.Utilities.remove_variable(ssu, bridge.l)
+    SI = MOI.Utilities.scalar_type(I)
+    t = MOI.Utilities.convert_approx(SI, taff)
+    return MOI.Utilities.operate(vcat, T, t, u, X)::I
+end
+
 """
-    RootDetBridge{T}
+    RootDetBridge{T,F,G,H}
 
 The `RootDetConeTriangle` is representable by a
 `PositiveSemidefiniteConeTriangle` and an `GeometricMeanCone` constraints; see
@@ -333,53 +327,33 @@ matrix ``Δ`` such that:
     optimization: analysis, algorithms, and engineering applications*. Society
     for Industrial and Applied Mathematics, 2001.
 """
-struct RootDetBridge{T} <: AbstractBridge
+struct RootDetBridge{T,F,G,H} <: AbstractBridge
     Δ::Vector{MOI.VariableIndex}
-    sdindex::MOI.ConstraintIndex{
-        MOI.VectorAffineFunction{T},
-        MOI.PositiveSemidefiniteConeTriangle,
-    }
-    gmindex::MOI.ConstraintIndex{
-        MOI.VectorAffineFunction{T},
-        MOI.GeometricMeanCone,
-    }
+    sdindex::MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle}
+    gmindex::MOI.ConstraintIndex{G,MOI.GeometricMeanCone}
 end
 
 function bridge_constraint(
-    ::Type{RootDetBridge{T}},
+    ::Type{RootDetBridge{T,F,G,H}},
     model,
-    f::MOI.VectorOfVariables,
+    f::G,
     s::MOI.RootDetConeTriangle,
-) where {T}
-    return bridge_constraint(
-        RootDetBridge{T},
-        model,
-        MOI.VectorAffineFunction{T}(f),
-        s,
-    )
-end
-
-function bridge_constraint(
-    ::Type{RootDetBridge{T}},
-    model,
-    f::MOI.VectorAffineFunction{T},
-    s::MOI.RootDetConeTriangle,
-) where {T}
+) where {T,F,G,H}
     d = s.side_dimension
-    tu, D, Δ, sdindex = extract_eigenvalues(model, f, d, 1)
+    tu, D, Δ, sdindex = extract_eigenvalues(model, f, d, 1, T)
     t = tu[1]
-    DF = MOI.VectorAffineFunction{T}(MOI.VectorOfVariables(D))
+    DF = MOI.VectorOfVariables(D)
     gmindex = MOI.add_constraint(
         model,
         MOI.Utilities.operate(vcat, T, t, DF),
         MOI.GeometricMeanCone(d + 1),
     )
-    return RootDetBridge(Δ, sdindex, gmindex)
+    return RootDetBridge{T,F,G,H}(Δ, sdindex, gmindex)
 end
 
 function MOI.supports_constraint(
-    ::Type{RootDetBridge{T}},
-    ::Type{<:Union{MOI.VectorOfVariables,MOI.VectorAffineFunction{T}}},
+    ::Type{<:RootDetBridge{T}},
+    ::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.RootDetConeTriangle},
 ) where {T}
     return true
@@ -389,11 +363,24 @@ function MOI.Bridges.added_constrained_variable_types(::Type{<:RootDetBridge})
     return Tuple{Type}[]
 end
 
-function MOI.Bridges.added_constraint_types(::Type{RootDetBridge{T}}) where {T}
+function MOI.Bridges.added_constraint_types(
+    ::Type{<:RootDetBridge{T,F,G}},
+) where {T,F,G}
     return Tuple{Type,Type}[
-        (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeTriangle),
-        (MOI.VectorAffineFunction{T}, MOI.GeometricMeanCone),
+        (F, MOI.PositiveSemidefiniteConeTriangle),
+        (G, MOI.GeometricMeanCone),
     ]
+end
+
+function concrete_bridge_type(
+    ::Type{<:RootDetBridge{T}},
+    H::Type{<:MOI.AbstractVectorFunction},
+    ::Type{MOI.RootDetConeTriangle},
+) where {T}
+    S = MOIU.scalar_type(H)
+    G = MOIU.promote_operation(vcat, T, S, MOI.VariableIndex)
+    F = MOIU.promote_operation(vcat, T, G, T)
+    return RootDetBridge{T,F,G,H}
 end
 
 MOI.get(b::RootDetBridge, ::MOI.NumberOfVariables)::Int64 = length(b.Δ)
@@ -401,42 +388,30 @@ MOI.get(b::RootDetBridge, ::MOI.NumberOfVariables)::Int64 = length(b.Δ)
 MOI.get(b::RootDetBridge, ::MOI.ListOfVariableIndices) = copy(b.Δ)
 
 function MOI.get(
-    ::RootDetBridge{T},
-    ::MOI.NumberOfConstraints{
-        MOI.VectorAffineFunction{T},
-        MOI.PositiveSemidefiniteConeTriangle,
-    },
-)::Int64 where {T}
+    ::RootDetBridge{T,F},
+    ::MOI.NumberOfConstraints{F,MOI.PositiveSemidefiniteConeTriangle},
+)::Int64 where {T,F}
     return 1
 end
 
 function MOI.get(
-    ::RootDetBridge{T},
-    ::MOI.NumberOfConstraints{
-        MOI.VectorAffineFunction{T},
-        MOI.GeometricMeanCone,
-    },
-)::Int64 where {T}
+    ::RootDetBridge{T,F,G},
+    ::MOI.NumberOfConstraints{G,MOI.GeometricMeanCone},
+)::Int64 where {T,F,G}
     return 1
 end
 
 function MOI.get(
-    b::RootDetBridge{T},
-    ::MOI.ListOfConstraintIndices{
-        MOI.VectorAffineFunction{T},
-        MOI.PositiveSemidefiniteConeTriangle,
-    },
-) where {T}
+    b::RootDetBridge{T,F},
+    ::MOI.ListOfConstraintIndices{F,MOI.PositiveSemidefiniteConeTriangle},
+) where {T,F}
     return [b.sdindex]
 end
 
 function MOI.get(
-    b::RootDetBridge{T},
-    ::MOI.ListOfConstraintIndices{
-        MOI.VectorAffineFunction{T},
-        MOI.GeometricMeanCone,
-    },
-) where {T}
+    b::RootDetBridge{T,F,G},
+    ::MOI.ListOfConstraintIndices{G,MOI.GeometricMeanCone},
+) where {T,F,G}
     return [b.gmindex]
 end
 
@@ -449,7 +424,7 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimal},
+    attr::MOI.ConstraintPrimal,
     bridge::RootDetBridge,
 )
     t = MOI.get(model, attr, bridge.gmindex)[1]
@@ -478,4 +453,23 @@ function MOI.get(
     t_dual = MOI.get(model, attr, bridge.gmindex)[1]
     x_dual = MOI.get(model, attr, bridge.sdindex)[1:length(bridge.Δ)]
     return vcat(t_dual, x_dual)
+end
+
+function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::RootDetBridge)
+    n = length(bridge.Δ)
+    d = MOI.Utilities.side_dimension_for_vectorized_dimension(n)
+    return MOI.RootDetConeTriangle(d)
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintFunction,
+    bridge::RootDetBridge{T,F,G,H},
+) where {T,F,G,H}
+    n = length(bridge.Δ)
+    Y = MOI.get(model, attr, bridge.sdindex)::F
+    X = MOI.Utilities.convert_approx(H, MOI.Utilities.eachscalar(Y)[1:n])
+    func = MOI.get(model, attr, bridge.gmindex)::G
+    t = MOI.Utilities.eachscalar(func)[1]
+    return MOI.Utilities.operate(vcat, T, t, X)::H
 end

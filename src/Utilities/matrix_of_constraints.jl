@@ -525,8 +525,53 @@ end
 
 function_constants(b::Vector, rows) = b[rows]
 
-# FIXME does not work for all sets
-set_from_constants(::Vector, ::Type{S}, rows) where {S} = S(length(rows))
+"""
+    set_with_dimension(::Type{S}, dim) where {S<:MOI.AbstractVectorSet}
+
+Returns the instance of `S` of [`MathOptInterface.dimension`](@ref) `dim`.
+This needs to be implemented for sets of type `S` to be useable with
+[`MatrixOfConstraints`](@ref).
+"""
+function set_with_dimension(::Type{S}, dim) where {S<:MOI.AbstractVectorSet}
+    return S(dim)
+end
+
+function set_with_dimension(
+    ::Type{S},
+    dim,
+) where {S<:MOI.AbstractSymmetricMatrixSetTriangle}
+    side_dimension = side_dimension_for_vectorized_dimension(dim)
+    return S(side_dimension)
+end
+
+function set_with_dimension(
+    ::Type{S},
+    dim,
+) where {S<:MOI.AbstractSymmetricMatrixSetSquare}
+    return S(isqrt(dim))
+end
+
+function set_with_dimension(::Type{MOI.LogDetConeTriangle}, dim)
+    side_dimension = side_dimension_for_vectorized_dimension(dim - 2)
+    return MOI.LogDetConeTriangle(side_dimension)
+end
+
+function set_with_dimension(::Type{MOI.LogDetConeSquare}, dim)
+    return MOI.LogDetConeSquare(isqrt(dim - 2))
+end
+
+function set_with_dimension(::Type{MOI.RootDetConeTriangle}, dim)
+    side_dimension = side_dimension_for_vectorized_dimension(dim - 1)
+    return MOI.RootDetConeTriangle(side_dimension)
+end
+
+function set_with_dimension(::Type{MOI.RootDetConeSquare}, dim)
+    return MOI.RootDetConeSquare(isqrt(dim - 1))
+end
+
+function set_from_constants(::Vector, ::Type{S}, rows) where {S}
+    return set_with_dimension(S, length(rows))
+end
 
 function MOI.get(
     model::MatrixOfConstraints,

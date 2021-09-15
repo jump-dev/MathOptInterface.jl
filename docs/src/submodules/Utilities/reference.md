@@ -113,6 +113,7 @@ Utilities.set_index
 Utilities.set_types
 Utilities.add_set
 Utilities.rows
+Utilities.set_with_dimension
 ```
 
 ```@docs

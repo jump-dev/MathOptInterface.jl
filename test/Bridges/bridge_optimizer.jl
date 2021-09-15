@@ -762,6 +762,22 @@ function test_invalid_modifications()
     return
 end
 
+function test_ListOfConstraintAttributesSet()
+    model = MOI.Bridges.Constraint.SplitInterval{Float64}(
+        MOI.Utilities.Model{Float64}(),
+    )
+    x = MOI.add_variable(model)
+    f = 1.0 * x
+    s = MOI.Interval(0.0, 1.0)
+    c = MOI.add_constraint(model, f, s)
+    MOI.set(model, MOI.ConstraintName(), c, "c")
+    @test MOI.get(
+        model,
+        MOI.ListOfConstraintAttributesSet{typeof(f),typeof(s)}(),
+    ) == [MOI.ConstraintName()]
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()

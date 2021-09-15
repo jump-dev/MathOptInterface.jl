@@ -18,11 +18,27 @@ end
 
 include("../utilities.jl")
 
-function test_conic_LogDetConeTriangle()
+function test_LogDet_basic()
     mock = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
     )
     bridged_mock = MOI.Bridges.Constraint.LogDet{Float64}(mock)
+    MOI.Test.runtests(
+        bridged_mock,
+        MOI.Test.Config(),
+        include = [
+            "test_basic_VectorOfVariables_LogDetCone",
+            "test_basic_VectorAffineFunction_LogDetCone",
+            "test_basic_VectorQuadraticFunction_LogDetCone",
+        ],
+    )
+    return
+end
+
+function _setup_LogDetConeTriangle(
+    mock::MOI.Utilities.MockOptimizer,
+    ::Type{F},
+) where {F}
     var_primal = [0, 1, 0, 1, 1, 0, 1, 0, 0, 1]
     exp_duals = [[-1, -1, 1], [-1, -1, 1]]
     psd_dual = [1, 0, 1, -1, 0, 1, 0, -1, 0, 1]
@@ -30,24 +46,34 @@ function test_conic_LogDetConeTriangle()
         (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
             mock,
             var_primal,
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [2],
             (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
                 [-1],
             (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
                 [[1, 1]],
-            (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone) =>
-                exp_duals,
+            (F, MOI.ExponentialCone) => exp_duals,
             (
                 MOI.VectorAffineFunction{Float64},
                 MOI.PositiveSemidefiniteConeTriangle,
             ) => [psd_dual],
         )
+    return
+end
 
+function test_conic_LogDetConeTriangle()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+        eval_variable_constraint_dual = false,
+    )
+    bridged_mock = MOI.Bridges.Constraint.LogDet{Float64}(mock)
     config = MOI.Test.Config()
+    _setup_LogDetConeTriangle(mock, MOI.VectorOfVariables)
     MOI.Test.test_conic_LogDetConeTriangle_VectorOfVariables(
         bridged_mock,
         config,
     )
     MOI.empty!(bridged_mock)
+    _setup_LogDetConeTriangle(mock, MOI.VectorAffineFunction{Float64})
     MOI.Test.test_conic_LogDetConeTriangle_VectorAffineFunction(
         bridged_mock,
         config,
@@ -213,6 +239,23 @@ function test_conic_RootDetConeTriangle()
                 0,
             ),
         ),
+    )
+    return
+end
+
+function test_RootDet_basic()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    bridged_mock = MOI.Bridges.Constraint.RootDet{Float64}(mock)
+    MOI.Test.runtests(
+        bridged_mock,
+        MOI.Test.Config(),
+        include = [
+            "test_basic_VectorOfVariables_RootDetCone",
+            "test_basic_VectorAffineFunction_RootDetCone",
+            "test_basic_VectorQuadraticFunction_RootDetCone",
+        ],
     )
     return
 end

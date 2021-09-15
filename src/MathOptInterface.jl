@@ -29,9 +29,58 @@ abstract type AbstractOptimizer <: ModelLike end
 """
     optimize!(optimizer::AbstractOptimizer)
 
-Start the solution procedure.
+Optimize the problem contained in `optimizer`.
+
+Before calling `optimize!`, the problem should first be constructed using the 
+incremental interface (see [`supports_incremental_interface`](@ref)) or [`copy_to`](@ref).
 """
 function optimize! end
+
+"""
+    optimize!(dest::AbstractOptimizer, src::ModelLike)::Tuple{IndexMap,Bool}
+
+A "one-shot" call that copies the problem from `src` into `dest` and then uses
+`dest` to optimize the problem.
+
+Returns a tuple of an [`IndexMap`](@ref) and a `Bool` `copied`.
+
+ * The [`IndexMap`](@ref) object translates variable and constraint indices from
+   the `src` model to the corresponding indices in the `dest` optimizer. See 
+   [`copy_to`](@ref) for details.
+ * If `copied == true`, `src` was copied to `dest` and then cached, allowing
+   incremental modification if supported by the solver.
+ * If `copied == false`, a cache of the model was _not_ kept in `dest`.
+   Therefore, only the solution information (attributes for which 
+   [`is_set_by_optimize`](@ref) is true) is available to query.
+
+!!! note
+    The main purpose of `optimize!` method with two arguments is for use in 
+    [`Utilities.CachingOptimizer`](@ref).
+
+!!! warning
+    The new `optimize!` method with two arguments is an experimental new feature
+    of MOI v0.10.2 that may break in MOI v1.0.
+    
+## Relationship to the single-argument `optimize!`
+
+The default fallback of `optimize!(dest::AbstractOptimizer, src::ModelLike)` is
+```julia
+function optimize!(dest::AbstractOptimizer, src::ModelLike)
+    index_map = copy_to(dest, src)
+    optimize!(dest)
+    return index_map, true
+end
+```
+Therefore, subtypes of [`AbstractOptimizer`](@ref) should either implement this
+two-argument method, or implement both [`copy_to(::Optimizer, ::ModelLike)`](@ref copy_to)
+and `optimize!(::Optimizer)`.
+"""
+function optimize!(dest, src)
+    # The arguments above are untyped to avoid ambiguities.
+    index_map = copy_to(dest, src)
+    optimize!(dest)
+    return index_map, true
+end
 
 """
     compute_conflict!(optimizer::AbstractOptimizer)
@@ -161,30 +210,6 @@ function copy_to(dest, src; kwargs...)
         )
     end
     return copy_to(dest, src)
-end
-
-"""
-    copy_to_and_optimize!(
-        dest::AbstractOptimizer,
-        src::ModelLike,
-    )::IndexMap
-
-A single call equivalent to calling [`copy_to`](@ref) followed by
-[`optimize!`](@ref).  Like [`copy_to`](@ref), it returns an [`IndexMap`].
-
-Keyword arguments are passed to [`copy_to`](@ref).
-
-An optimizer can decide to implement this function instead of implementing
-[`copy_to`](@ref) and [`optimize!`](@ref) individually.
-
-!!! warning
-    This is an experimental new feature of MOI v0.10 that may break in MOI v1.0.
-"""
-function copy_to_and_optimize!(dest, src)
-    # The arguments above are untyped to avoid ambiguities.
-    index_map = copy_to(dest, src)
-    optimize!(dest)
-    return index_map
 end
 
 include("error.jl")

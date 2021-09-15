@@ -398,6 +398,51 @@ function test_multicone()
     return
 end
 
+MOI.Utilities.@product_of_sets(
+    MatrixSets,
+    MOI.PositiveSemidefiniteConeTriangle,
+    MOI.PositiveSemidefiniteConeSquare,
+    MOI.LogDetConeTriangle,
+    MOI.LogDetConeSquare,
+    MOI.RootDetConeTriangle,
+    MOI.RootDetConeSquare,
+)
+
+function test_matrix_sets(::Type{T} = Int) where {T}
+    model = MOI.Utilities.GenericOptimizer{
+        T,
+        MOI.Utilities.ObjectiveContainer{T},
+        MOI.Utilities.VariablesContainer{T},
+        MOI.Utilities.MatrixOfConstraints{
+            T,
+            MOI.Utilities.MutableSparseMatrixCSC{
+                T,
+                T,
+                MOI.Utilities.OneBasedIndexing,
+            },
+            Vector{T},
+            MatrixSets{T},
+        },
+    }()
+    function test_set(set)
+        MOI.empty!(model)
+        func = MOI.Utilities.zero_with_output_dimension(
+            MOI.VectorAffineFunction{T},
+            MOI.dimension(set),
+        )
+        ci = MOI.add_constraint(model, func, set)
+        MOI.Utilities.final_touch(model, nothing)
+        @test MOI.get(model, MOI.ConstraintSet(), ci) == set
+    end
+    test_set(MOI.PositiveSemidefiniteConeTriangle(2))
+    test_set(MOI.PositiveSemidefiniteConeSquare(2))
+    test_set(MOI.LogDetConeTriangle(2))
+    test_set(MOI.LogDetConeSquare(2))
+    test_set(MOI.RootDetConeTriangle(2))
+    test_set(MOI.RootDetConeSquare(2))
+    return
+end
+
 end
 
 TestMatrixOfConstraints.runtests()
