@@ -72,20 +72,6 @@ function MOI.delete(model::MOI.ModelLike, c::ScalarFunctionizeBridge)
 end
 
 # Constraints
-function MOI.set(
-    model::MOI.ModelLike,
-    ::MOI.ConstraintFunction,
-    c::ScalarFunctionizeBridge{T},
-    f::MOI.VariableIndex,
-) where {T}
-    MOI.set(
-        model,
-        MOI.ConstraintFunction(),
-        c.constraint,
-        MOI.ScalarAffineFunction{T}(f),
-    )
-    return
-end
 
 function MOI.get(
     model::MOI.ModelLike,
