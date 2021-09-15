@@ -815,6 +815,22 @@ function MOI.get(
     return unbridged_function(b, MOI.get(b.model, attr))
 end
 
+function MOI.get(
+    b::AbstractBridgeOptimizer,
+    attr::MOI.ListOfConstraintAttributesSet{F,S},
+) where {F,S}
+    list = unbridged_function(b, MOI.get(b.model, attr))
+    if !(MOI.ConstraintName() in list)
+        for key in keys(b.con_to_name)
+            if key isa MOI.ConstraintIndex{F,S}
+                push!(list, MOI.ConstraintName())
+                break
+            end
+        end
+    end
+    return list
+end
+
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::Union{MOI.AbstractModelAttribute,MOI.AbstractOptimizerAttribute},
