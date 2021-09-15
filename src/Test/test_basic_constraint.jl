@@ -167,11 +167,7 @@ function _basic_constraint_test_helper(
     if _supports(config, MOI.ConstraintFunction)
         # Don't compare directly, because `f` might not be canonicalized.
         f = MOI.get(model, MOI.ConstraintFunction(), c)
-        @test isapprox(
-            MOI.Utilities.canonical(f),
-            constraint_function,
-            config,
-        )
+        @test isapprox(MOI.Utilities.canonical(f), constraint_function, config)
         @test isapprox(
             MOI.get(model, MOI.CanonicalConstraintFunction(), c),
             constraint_function,
