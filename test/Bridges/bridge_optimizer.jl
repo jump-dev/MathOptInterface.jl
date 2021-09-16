@@ -748,6 +748,20 @@ function test_recursive_model_objective(::Type{T} = Int) where {T}
     @test MOI.get(b, attr) ≈ x
 end
 
+function test_invalid_modifications()
+    model = MOI.Bridges.full_bridge_optimizer(
+        MOI.Utilities.Model{Float64}(),
+        Float64,
+    )
+    config = MOI.Test.Config()
+    MOI.Test.test_modification_set_function_single_variable(model, config)
+    MOI.empty!(model)
+    MOI.Test.test_modification_incorrect(model, config)
+    MOI.empty!(model)
+    MOI.Test.test_modification_incorrect_VariableIndex(model, config)
+    return
+end
+
 function test_ListOfConstraintAttributesSet()
     model = MOI.Bridges.Constraint.SplitInterval{Float64}(
         MOI.Utilities.Model{Float64}(),

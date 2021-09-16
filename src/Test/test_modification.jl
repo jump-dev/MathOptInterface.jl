@@ -932,3 +932,63 @@ function setup_test(
     )
     return
 end
+
+"""
+    test_modification_incorrect(model::MOI.ModelLike, config::Config)
+
+Test that constraint sets and functions cannot be set for the wrong type.
+"""
+function test_modification_incorrect(model::MOI.ModelLike, ::Config)
+    @requires MOI.supports_constraint(
+        model,
+        MOI.ScalarAffineFunction{Float64},
+        MOI.EqualTo{Float64},
+    )
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
+        MOI.EqualTo(1.0),
+    )
+    @test_throws(
+        ArgumentError,
+        MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(1.0)),
+    )
+    @test_throws(ArgumentError, MOI.set(model, MOI.ConstraintFunction(), c, x))
+    return
+end
+
+"""
+    test_modification_incorrect_VariableIndex(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Test that constraint sets cannot be set for the wrong set type, and that
+VariableIndex functions cannot be modified.
+"""
+function test_modification_incorrect_VariableIndex(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.LessThan{T})
+    @requires(
+        MOI.supports_constraint(model, MOI.VariableIndex, MOI.GreaterThan{T}),
+    )
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
+    @test_throws(
+        ArgumentError,
+        MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(one(T))),
+    )
+    @test_throws(
+        ArgumentError,
+        MOI.set(model, MOI.ConstraintFunction(), c, one(T) * x),
+    )
+    y = MOI.add_variable(model)
+    @test_throws(
+        MOI.SettingVariableIndexNotAllowed(),
+        MOI.set(model, MOI.ConstraintFunction(), c, y),
+    )
+    return
+end
