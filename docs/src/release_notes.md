@@ -1,6 +1,22 @@
 # Release notes
 
+## v0.10.2 (September 16, 2021)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.2).
+
+- Updated MathOptFormat to v1.0
+- Updated JSONSchema to v1.0
+- Added `Utilities.set_with_dimension`
+- Added two-argument `optimize!(::AbstractOptimizer, ::ModelLike)`
+- The experimental feature `copy_to_and_optimize!` has been removed
+- Det bridges now support getting `ConstraintFunction` and `ConstraintSet`
+- Various minor bug fixes identified by improved testing
+
 ## v0.10.1 (September 8, 2021)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.1).
 
 - Various fixes to `MOI.Test`
 
