@@ -763,19 +763,33 @@ function test_status_codes()
     return
 end
 
-struct CopyToAndOptimizer <: MOI.AbstractOptimizer end
-MOI.is_empty(::CopyToAndOptimizer) = true
-function MOI.optimize!(::CopyToAndOptimizer, src::MOI.ModelLike)
+mutable struct CopyToAndOptimizer <: MOI.AbstractOptimizer
+    is_dirty::Bool
+end
+
+function MOI.empty!(x::CopyToAndOptimizer)
+    x.is_dirty = false
+    return
+end
+
+MOI.is_empty(x::CopyToAndOptimizer) = !x.is_dirty
+
+function MOI.optimize!(x::CopyToAndOptimizer, ::MOI.ModelLike)
+    x.is_dirty = true
     return MOI.Utilities.IndexMap(), false
 end
 
 function test_copy_to_and_optimize!()
-    optimizer = CopyToAndOptimizer()
+    optimizer = CopyToAndOptimizer(false)
     model = MOI.Utilities.CachingOptimizer(
         MOI.Utilities.Model{Float64}(),
         optimizer,
     )
     MOI.optimize!(model)
+    @test MOI.Utilities.state(model) == MOI.Utilities.EMPTY_OPTIMIZER
+    @test !MOI.is_empty(optimizer)
+    MOI.empty!(model)
+    @test MOI.is_empty(optimizer)
     @test MOI.Utilities.state(model) == MOI.Utilities.EMPTY_OPTIMIZER
     return
 end

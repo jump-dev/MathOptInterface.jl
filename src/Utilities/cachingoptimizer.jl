@@ -253,7 +253,10 @@ end
 
 function MOI.empty!(m::CachingOptimizer)
     MOI.empty!(m.model_cache)
-    if m.state == ATTACHED_OPTIMIZER
+    if m.state != NO_OPTIMIZER
+        # We call `empty!` even if the state is already `EMPTY_OPTIMIZER`
+        # because we may have used to two-argument `optimize!` for a single-shot
+        # solver.
         MOI.empty!(m.optimizer)
         m.state = EMPTY_OPTIMIZER
     end
