@@ -28,6 +28,10 @@ function MOI.get(::BadModel, ::MOI.ListOfVariableAttributesSet)
     return MOI.AbstractVariableAttribute[]
 end
 
+function MOI.get(::BadModel, ::MOI.ListOfConstraintAttributesSet)
+    return MOI.AbstractConstraintAttribute[]
+end
+
 function MOI.get(::BadModel, ::MOI.ListOfConstraintTypesPresent)
     return [(MOI.VariableIndex, MOI.EqualTo{Float64})]
 end
