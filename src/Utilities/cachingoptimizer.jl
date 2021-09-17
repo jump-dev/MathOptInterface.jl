@@ -271,6 +271,17 @@ MOI.is_empty(m::CachingOptimizer) = MOI.is_empty(m.model_cache)
 
 function MOI.optimize!(m::CachingOptimizer)
     if m.mode == AUTOMATIC && m.state == EMPTY_OPTIMIZER
+        # Here is a special case for callbacks: we can't use the two-argument
+        # call to optimize! because we need the `optimizer_to_model_map` to be
+        # set _prior_ to starting the optimization process. Therefore, we need
+        # to check if we have an `AbstractCallback` set and attach the optimizer
+        # before recalling `MOI.optimize!`.
+        for attr in MOI.get(m, MOI.ListOfModelAttributesSet())
+            if typeof(attr) <: MOI.AbstractCallback
+                attach_optimizer(m)
+                return MOI.optimize!(m)
+            end
+        end
         indexmap, copied = MOI.optimize!(m.optimizer, m.model_cache)
         if copied
             m.state = ATTACHED_OPTIMIZER
