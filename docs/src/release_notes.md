@@ -1,5 +1,13 @@
 # Release notes
 
+## v0.10.3 (September 18, 2021)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.3).
+
+- Fix bug which prevented callbacks from working through a CachingOptimizer
+- Fix bug in `Test` submodule
+
 ## v0.10.2 (September 16, 2021)
 
 For a detailed list of the closed issues and pull requests from this release,
