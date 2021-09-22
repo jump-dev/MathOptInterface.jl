@@ -450,6 +450,7 @@ function test_nonlinear_hs071_NLPBlockDual(model::MOI.ModelLike, config::Config)
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    @requires _supports(config, MOI.NLPBlockDual)
     n_variables = 4
     v = MOI.add_variables(model, n_variables)
     l = [1.1, 1.2, 1.3, 1.4]
@@ -469,29 +470,26 @@ function test_nonlinear_hs071_NLPBlockDual(model::MOI.ModelLike, config::Config)
         # Get primal solution
         x = MOI.get(model, MOI.VariablePrimal(), v)
         # Get dual solution
-        if _supports(config, MOI.BLPBlockDual) &&
-            _supports(config, MOI.ConstraintStatus)
-            con_dual = MOI.get(model, MOI.NLPBlockDual())
-            var_dual_lb = MOI.get(model, MOI.ConstraintDual(), cl)
-            var_dual_ub = MOI.get(model, MOI.ConstraintDual(), cu)
+        con_dual = MOI.get(model, MOI.NLPBlockDual())
+        var_dual_lb = MOI.get(model, MOI.ConstraintDual(), cl)
+        var_dual_ub = MOI.get(model, MOI.ConstraintDual(), cu)
 
-            # Evaluate ∇f(x)
-            g = zeros(n_variables)
-            MOI.eval_objective_gradient(evaluator, g, x)
-            # Evaluate ∑ μᵢ * ∇cᵢ(x)
-            jtv = zeros(n_variables)
-            MOI.eval_constraint_jacobian_transpose_product(
-                evaluator,
-                jtv,
-                x,
-                con_dual,
-            )
+        # Evaluate ∇f(x)
+        g = zeros(n_variables)
+        MOI.eval_objective_gradient(evaluator, g, x)
+        # Evaluate ∑ μᵢ * ∇cᵢ(x)
+        jtv = zeros(n_variables)
+        MOI.eval_constraint_jacobian_transpose_product(
+            evaluator,
+            jtv,
+            x,
+            con_dual,
+        )
 
-            # Test that (x, μ, νl, νᵤ) satisfies stationarity condition
-            # σ ∇f(x) - ∑ μᵢ * ∇cᵢ(x) - νₗ - νᵤ = 0
-            σ = (sense == MOI.MAX_SENSE) ? -1.0 : 1.0
-            @test isapprox(σ .* g, jtv .+ var_dual_ub .+ var_dual_lb, config)
-        end
+        # Test that (x, μ, νl, νᵤ) satisfies stationarity condition
+        # σ ∇f(x) - ∑ μᵢ * ∇cᵢ(x) - νₗ - νᵤ = 0
+        σ = (sense == MOI.MAX_SENSE) ? -1.0 : 1.0
+        @test isapprox(σ .* g, jtv .+ var_dual_ub .+ var_dual_lb, config)
     end
     return
 end
