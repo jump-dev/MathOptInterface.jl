@@ -27,7 +27,7 @@ Utilities.Model
 Utilities.UniversalFallback
 ```
 
-## Utilities.@macro
+## Utilities.@model
 
 ```@docs
 Utilities.@model
