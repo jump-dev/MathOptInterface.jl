@@ -450,6 +450,7 @@ function test_nonlinear_hs071_NLPBlockDual(model::MOI.ModelLike, config::Config)
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    @requires _supports(config, MOI.NLPBlockDual)
     n_variables = 4
     v = MOI.add_variables(model, n_variables)
     l = [1.1, 1.2, 1.3, 1.4]
