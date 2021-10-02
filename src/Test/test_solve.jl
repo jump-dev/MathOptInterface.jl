@@ -1411,7 +1411,7 @@ function test_solve_conflict_zeroone_ii(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    @requires !(T<:Integer)
+    @requires !(T <: Integer)
     @requires _supports(config, MOI.compute_conflict!)
     @requires _supports(config, MOI.optimize!)
     try
@@ -1423,7 +1423,7 @@ function test_solve_conflict_zeroone_ii(
     c2 = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), [x]), zero(T)),
-        MOI.EqualTo(div(one(T),T(2))),
+        MOI.EqualTo(div(one(T), T(2))),
     )
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
@@ -1437,7 +1437,7 @@ function test_solve_conflict_zeroone_ii(
 end
 
 function setup_test(
-    ::typeof(test_solve_conflict_zeroone),
+    ::typeof(test_solve_conflict_zeroone_ii),
     model::MOIU.MockOptimizer,
     ::Config,
 )
@@ -1450,12 +1450,8 @@ function setup_test(
                 MOI.NO_SOLUTION,
                 MOI.NO_SOLUTION;
                 constraint_conflict_status = [
-                    (MOI.VariableIndex, MOI.ZeroOne) =>
-                        [MOI.IN_CONFLICT],
-                    (
-                        MOI.ScalarAffineFunction{Float64},
-                        MOI.EqualTo{Float64},
-                    ) => [MOI.IN_CONFLICT],
+                    (MOI.VariableIndex, MOI.ZeroOne) => [MOI.IN_CONFLICT],
+                    (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) => [MOI.IN_CONFLICT],
                 ],
             )
             MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
