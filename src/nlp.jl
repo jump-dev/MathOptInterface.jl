@@ -9,7 +9,8 @@
 """
     AbstractNLPEvaluator
 
-Abstract supertype for the callback object used in `NLPBlock`.
+Abstract supertype for the callback object that is used to query function
+values, derivatives, and expression graphs. It is used in `NLPBlock`.
 """
 abstract type AbstractNLPEvaluator end
 
@@ -69,8 +70,13 @@ Nonlinear objectives *override* any objective set by using the
 to query function values, derivatives, and expression graphs. If
 `has_objective == false`, then it is an error to query properties of
 the objective function, and in Hessian-of-the-Lagrangian queries, `σ` must be
-set to zero. Throughout the evaluator, all variables are ordered according to
-ListOfVariableIndices(). """
+set to zero.
+
+!!! note
+    Throughout the evaluator, all variables are ordered according to
+    [`ListOfVariableIndices`](@ref). Hence, MOI copies of nonlinear problems should be
+    done with attention.
+"""
 struct NLPBlockData
     constraint_bounds::Vector{NLPBoundsPair}
     evaluator::AbstractNLPEvaluator
@@ -82,8 +88,8 @@ end
 
 Must be called before any other methods. The vector `requested_features`
 lists features requested by the solver. These may include `:Grad` for gradients
-of ``f``, `:Jac` for explicit Jacobians of ``g``, `:JacVec` for
-Jacobian-vector products, `:HessVec` for Hessian-vector
+of the obejctive, ``f``, `:Jac` for explicit Jacobians of constraints, ``g``,
+`:JacVec` for Jacobian-vector products, `:HessVec` for Hessian-vector
 and Hessian-of-Lagrangian-vector products, `:Hess` for explicit Hessians and
 Hessian-of-Lagrangians, and `:ExprGraph` for expression graphs.
 """
@@ -93,7 +99,7 @@ function initialize end
     features_available(d::AbstractNLPEvaluator)
 
 Returns the subset of features available for this problem instance, as a
-list of symbols in the same format as in `initialize`.
+vector of symbols in the same format as in `initialize`.
 """
 function features_available end
 
@@ -107,16 +113,16 @@ function eval_objective end
 """
     eval_constraint(d::AbstractNLPEvaluator, g, x)
 
-Evaluate the constraint function ``g(x)``, storing the result in the vector `g` which must be of the
-appropriate size.
+Evaluate the constraint function ``g(x)``, storing the result in the vector `g`
+which must be of the appropriate size.
 """
 function eval_constraint end
 
 """
-    eval_objective_gradient(d::AbstractNLPEvaluator, g, x)
+    eval_objective_gradient(d::AbstractNLPEvaluator, df, x)
 
 Evaluate ``\\nabla f(x)`` as a dense vector, storing the result in the vector
-`g` which must be of the appropriate size.
+`df` which must be of the appropriate size.
 """
 function eval_objective_gradient end
 
