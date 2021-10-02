@@ -74,7 +74,7 @@ set to zero.
 
 !!! note
     Throughout the evaluator, all variables are ordered according to
-    ListOfVariableIndices(). Hence, MOI copies of Non-Linear problems shoudl be
+    [`ListOfVariableIndices`](@ref). Hence, MOI copies of nonlinear problems should be
     done with attention.
 """
 struct NLPBlockData
