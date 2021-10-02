@@ -1401,6 +1401,69 @@ function setup_test(
     return
 end
 
+"""
+    test_solve_conflict_zeroone_ii(model::MOI.ModelLike, config::Config)
+
+Test the ConflictStatus API when an integrality is in the conflict.
+In this test, integrality is the conflict and no the upper bound == 1.
+"""
+function test_solve_conflict_zeroone_ii(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires !(T<:Integer)
+    @requires _supports(config, MOI.compute_conflict!)
+    @requires _supports(config, MOI.optimize!)
+    try
+        MOI.get(model, MOI.ConflictStatus())
+    catch
+        return  # If this fails, skip the test.
+    end
+    x, c1 = MOI.add_constrained_variable(model, MOI.ZeroOne())
+    c2 = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), [x]), zero(T)),
+        MOI.EqualTo(div(one(T),T(2))),
+    )
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    MOI.compute_conflict!(model)
+    @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+    zeroone_conflict = MOI.get(model, MOI.ConstraintConflictStatus(), c1)
+    @test zeroone_conflict == MOI.MAYBE_IN_CONFLICT ||
+          zeroone_conflict == MOI.IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(), c2) == MOI.IN_CONFLICT
+    return
+end
+
+function setup_test(
+    ::typeof(test_solve_conflict_zeroone),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOIU.set_mock_optimize!(
+        model,
+        mock::MOIU.MockOptimizer -> begin
+            MOIU.mock_optimize!(
+                mock,
+                MOI.INFEASIBLE,
+                MOI.NO_SOLUTION,
+                MOI.NO_SOLUTION;
+                constraint_conflict_status = [
+                    (MOI.VariableIndex, MOI.ZeroOne) =>
+                        [MOI.IN_CONFLICT],
+                    (
+                        MOI.ScalarAffineFunction{Float64},
+                        MOI.EqualTo{Float64},
+                    ) => [MOI.IN_CONFLICT],
+                ],
+            )
+            MOI.set(mock, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+        end,
+    )
+    return
+end
+
 function test_solve_SOS2_add_and_delete(model::MOI.ModelLike, config::Config)
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports_constraint(
