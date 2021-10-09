@@ -490,3 +490,19 @@ end
 end  # module
 
 TestModel.runtests()
+
+@testset "Model macro toplevel" begin
+    MathOptInterface.Utilities.@model(
+        NonconstModel,
+        (MathOptInterface.ZeroOne,),
+        (),
+        (),
+        (),
+        (),
+        (MathOptInterface.ScalarAffineFunction,),
+        (),
+        (),
+        false,
+        false,
+    )
+end

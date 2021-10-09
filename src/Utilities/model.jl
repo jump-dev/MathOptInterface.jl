@@ -578,7 +578,8 @@ end
         typed_scalar_functions,
         vector_functions,
         typed_vector_functions,
-        is_optimizer = false
+        is_optimizer = false,
+        define_const = true,
     )
 
 Creates a type `model_name` implementing the MOI model interface and containing
@@ -608,6 +609,9 @@ of [`GenericOptimizer`](@ref), which is a subtype of
 [`MathOptInterface.AbstractOptimizer`](@ref), otherwise, it is a
 [`GenericModel`](@ref), which is a subtype of
 [`MathOptInterface.ModelLike`](@ref).
+
+If `define_const = true`, the model variable is defined with a `const` identifier
+(does not work when the variable is local).
 
 ### Examples
 
@@ -678,6 +682,7 @@ macro model(
     vf,
     vft,
     is_optimizer = false,
+    define_const = true,
 )
     scalar_sets = [SymbolSet.(ss.args, false); SymbolSet.(sst.args, true)]
     vector_sets = [SymbolSet.(vs.args, false); SymbolSet.(vst.args, true)]
@@ -728,7 +733,11 @@ macro model(
             $func_typed,
         })
     end
-    model_code = :(const $esc_model_name{$T} = $generic)
+    model_code = if define_const
+        :(const $esc_model_name{$T} = $generic)
+    else
+        :($esc_model_name{$T} = $generic)
+    end
     expr = Expr(:block)
     if length(scalar_sets) >= 2
         push!(expr.args, struct_of_constraint_code(scname, scalar_sets))
