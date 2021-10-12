@@ -576,6 +576,44 @@ function test_nonlinear_objective_and_moi_objective_test(
     return
 end
 
+"""
+    test_nonlinear_objective_and_moi_objective_test(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Test that nonlinear objectives take precedence over MOI.ObjectiveFunction.
+"""
+function test_nonlinear_objective_test(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    @requires MOI.supports(model, MOI.NLPBlock())
+    @requires _supports(config, MOI.optimize!)
+    @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    lb = [1.0]
+    ub = [1.0]
+    block_data = MOI.NLPBlockData(
+        MOI.NLPBoundsPair.(lb, ub),
+        FeasibilitySenseEvaluator(true),
+        true,
+    )
+    x = MOI.add_variable(model)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+    # Avoid starting at zero because it's a critical point.
+    MOI.set(model, MOI.VariablePrimalStart(), x, 1.5)
+    MOI.set(model, MOI.NLPBlock(), block_data)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test MOI.get(model, MOI.ResultCount()) >= 1
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+    @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 0.0, config)
+    xv = MOI.get(model, MOI.VariablePrimal(), x)
+    @test isapprox(abs(xv), 1.0, config)
+    return
+end
+
 function setup_test(
     ::typeof(test_nonlinear_objective_and_moi_objective_test),
     model::MOIU.MockOptimizer,
