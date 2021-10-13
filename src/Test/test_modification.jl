@@ -955,7 +955,10 @@ function test_modification_incorrect(model::MOI.ModelLike, ::Config)
         MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(1.0)),
     )
     @test_throws(
-        MOI.FunctionTypeMismatch{MOI.ScalarAffineFunction{Float64},MOI.VariableIndex},
+        MOI.FunctionTypeMismatch{
+            MOI.ScalarAffineFunction{Float64},
+            MOI.VariableIndex,
+        },
         MOI.set(model, MOI.ConstraintFunction(), c, x),
     )
     return

@@ -116,10 +116,7 @@ function constraints(
 )
     return model.variables
 end
-function constraints(
-    model::AbstractModel,
-    ci::MOI.ConstraintIndex,
-)
+function constraints(model::AbstractModel, ci::MOI.ConstraintIndex)
     return model.constraints
 end
 
@@ -403,7 +400,7 @@ end
 function MOI.set(
     model::AbstractModel,
     attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet},
-    ci::MOI.ConstraintIndex{MOI.VariableIndex},
+    ci::MOI.ConstraintIndex,
     value,
 )
     MOI.set(constraints(model, ci), attr, ci, value)

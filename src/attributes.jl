@@ -1542,7 +1542,7 @@ attribute_value_type(::ConstraintFunction) = AbstractFunction
 
 struct FunctionTypeMismatch{F1,F2} <: Exception end
 function Base.showerror(io::IO, err::FunctionTypeMismatch{F1,F2}) where {F1,F2}
-    print(
+    return print(
         io,
         """$(typeof(err)): Cannot modify functions of different types.
   Constraint type is $F1 while the replacement function is of type $F2.""",
@@ -1580,7 +1580,7 @@ attribute_value_type(::ConstraintSet) = AbstractSet
 
 struct SetTypeMismatch{S1,S2} <: Exception end
 function Base.showerror(io::IO, err::SetTypeMismatch{S1,S2}) where {S1,S2}
-    print(
+    return print(
         io,
         """$(typeof(err)): Cannot modify sets of different types. Constraint
   type is $S1 while the replacement set is of type $S2. Use `transform`

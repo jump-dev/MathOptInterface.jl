@@ -188,7 +188,10 @@ function test_errors_ConstraintFunction_NotAllowed()
         MOI.set(model, MOI.ConstraintFunction(), ci, vi)
     )
     @test_throws(
-        MOI.SetTypeMismatch{MOI.VariableIndex,MOI.ScalarAffineFunction{Float64}},
+        MOI.FunctionTypeMismatch{
+            MOI.VariableIndex,
+            MOI.ScalarAffineFunction{Float64},
+        },
         MOI.set(
             model,
             MOI.ConstraintFunction(),
