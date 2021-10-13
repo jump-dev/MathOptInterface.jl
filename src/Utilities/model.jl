@@ -107,15 +107,24 @@ function MOI.delete(model::AbstractModel, vis::Vector{MOI.VariableIndex})
     return
 end
 
-function MOI.is_valid(
+# `AbstractModel` fields `.variables` and `.constraints` act like a
+# `StructOfConstraints` where `.variables` contains the `VariableIndex`-in-`S`
+# constraints and `.constraints` contains the other constraints.
+function constraints(
     model::AbstractModel,
-    ci::CI{MOI.VariableIndex,S},
-) where {S}
-    return MOI.is_valid(model.variables, ci)
+    ci::MOI.ConstraintIndex{MOI.VariableIndex},
+)
+    return model.variables
+end
+function constraints(
+    model::AbstractModel,
+    ci::MOI.ConstraintIndex,
+)
+    return model.constraints
 end
 
 function MOI.is_valid(model::AbstractModel, ci::MOI.ConstraintIndex)
-    return MOI.is_valid(model.constraints, ci)
+    return MOI.is_valid(constraints(model, ci), ci)
 end
 
 function MOI.is_valid(model::AbstractModel, x::MOI.VariableIndex)
@@ -375,21 +384,8 @@ function MOI.get(
     return MOI.get(model.constraints, attr, ci)
 end
 
-function _delete_constraint(
-    model::AbstractModel,
-    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
-) where {S}
-    MOI.throw_if_not_valid(model, ci)
-    MOI.delete(model.variables, ci)
-    return
-end
-
-function _delete_constraint(model::AbstractModel, ci::MOI.ConstraintIndex)
-    return MOI.delete(model.constraints, ci)
-end
-
 function MOI.delete(model::AbstractModel, ci::MOI.ConstraintIndex)
-    _delete_constraint(model, ci)
+    MOI.delete(constraints(model, ci), ci)
     model.name_to_con = nothing
     delete!(model.con_to_name, ci)
     return
@@ -405,42 +401,12 @@ function MOI.modify(
 end
 
 function MOI.set(
-    ::AbstractModel,
-    ::MOI.ConstraintFunction,
-    ::MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet},
-    ::MOI.VariableIndex,
+    model::AbstractModel,
+    attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet},
+    ci::MOI.ConstraintIndex{MOI.VariableIndex},
+    value,
 )
-    return throw(MOI.SettingVariableIndexNotAllowed())
-end
-
-function MOI.set(
-    model::AbstractModel{T},
-    attr::MOI.ConstraintSet,
-    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
-    set::S,
-) where {T,S<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}
-    MOI.throw_if_not_valid(model, ci)
-    MOI.set(model.variables, attr, ci, set)
-    return
-end
-
-function MOI.set(
-    model::AbstractModel,
-    attr::MOI.ConstraintSet,
-    ci::MOI.ConstraintIndex{<:MOI.AbstractFunction,S},
-    set::S,
-) where {S<:MOI.AbstractSet}
-    MOI.set(model.constraints, attr, ci, set)
-    return
-end
-
-function MOI.set(
-    model::AbstractModel,
-    attr::MOI.ConstraintFunction,
-    ci::MOI.ConstraintIndex{F,<:MOI.AbstractSet},
-    func::F,
-) where {F<:MOI.AbstractFunction}
-    MOI.set(model.constraints, attr, ci, func)
+    MOI.set(constraints(model, ci), attr, ci, value)
     return
 end
 
@@ -484,27 +450,10 @@ end
 
 function MOI.get(
     model::AbstractModel,
-    ::MOI.ConstraintFunction,
-    ci::CI{MOI.VariableIndex},
-)
-    MOI.throw_if_not_valid(model, ci)
-    return MOI.VariableIndex(ci.value)
-end
-function MOI.get(
-    model::AbstractModel,
     attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet},
     ci::MOI.ConstraintIndex,
 )
-    return MOI.get(model.constraints, attr, ci)
-end
-
-function MOI.get(
-    model::AbstractModel,
-    ::MOI.ConstraintSet,
-    ci::CI{MOI.VariableIndex,S},
-) where {S}
-    MOI.throw_if_not_valid(model, ci)
-    return set_from_constants(model.variables, S, ci.value)
+    return MOI.get(constraints(model, ci), attr, ci)
 end
 
 function MOI.is_empty(model::AbstractModel)

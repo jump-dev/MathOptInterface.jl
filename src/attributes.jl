@@ -145,9 +145,9 @@ message(err::SubmitNotAllowed) = err.message
     end
 
 An error indicating that the requested attribute `attr` could not be retrieved,
-because the solver returned too few results compared to what was requested. 
-For instance, the user tries to retrieve `VariablePrimal(2)` when only one 
-solution is available, or when the model is infeasible and has no solution. 
+because the solver returned too few results compared to what was requested.
+For instance, the user tries to retrieve `VariablePrimal(2)` when only one
+solution is available, or when the model is infeasible and has no solution.
 
 See also: [`check_result_index_bounds`](@ref).
 """
@@ -159,9 +159,9 @@ end
 """
     check_result_index_bounds(model::ModelLike, attr)
 
-This function checks whether enough results are available in the `model` for 
-the requested `attr`, using its `result_index` field. If the model 
-does not have sufficient results to answer the query, it throws a 
+This function checks whether enough results are available in the `model` for
+the requested `attr`, using its `result_index` field. If the model
+does not have sufficient results to answer the query, it throws a
 [`ResultIndexBoundsError`](@ref).
 """
 function check_result_index_bounds(model::ModelLike, attr)
@@ -1025,10 +1025,10 @@ attribute_value_type(::ObjectiveFunctionType) = Type{<:AbstractFunction}
 
 A model attribute for the objective value of the primal solution `result_index`.
 
-If the solver does not have a primal value for the objective because the 
+If the solver does not have a primal value for the objective because the
 `result_index` is beyond the available solutions (whose number is indicated by
-the [`ResultCount`](@ref) attribute), getting this attribute must throw a 
-[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for 
+the [`ResultCount`](@ref) attribute), getting this attribute must throw a
+[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
 another reason (for instance, only a dual solution is available), the result is
 undefined. Users should first check [`PrimalStatus`](@ref) before accessing the
 `ObjectiveValue` attribute.
@@ -1046,10 +1046,10 @@ end
 A model attribute for the value of the objective function of the dual problem
 for the `result_index`th dual result.
 
-If the solver does not have a dual value for the objective because the 
+If the solver does not have a dual value for the objective because the
 `result_index` is beyond the available solutions (whose number is indicated by
-the [`ResultCount`](@ref) attribute), getting this attribute must throw a 
-[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for 
+the [`ResultCount`](@ref) attribute), getting this attribute must throw a
+[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
 another reason (for instance, only a primal solution is available), the result is
 undefined. Users should first check [`DualStatus`](@ref) before accessing the
 `DualObjectiveValue` attribute.
@@ -1228,10 +1228,10 @@ struct VariablePrimalStart <: AbstractVariableAttribute end
 A variable attribute for the assignment to some primal variable's value in
 result `result_index`. If `result_index` is omitted, it is 1 by default.
 
-If the solver does not have a primal value for the variable because the 
+If the solver does not have a primal value for the variable because the
 `result_index` is beyond the available solutions (whose number is indicated by
-the [`ResultCount`](@ref) attribute), getting this attribute must throw a 
-[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for 
+the [`ResultCount`](@ref) attribute), getting this attribute must throw a
+[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
 another reason (for instance, only a dual solution is available), the result is
 undefined. Users should first check [`PrimalStatus`](@ref) before accessing the
 `VariablePrimal` attribute.
@@ -1298,10 +1298,10 @@ Possible values are:
 A variable attribute for the `BasisStatusCode` of a variable in result
 `result_index`, with respect to an available optimal solution basis.
 
-If the solver does not have a basis statue for the variable because the 
+If the solver does not have a basis statue for the variable because the
 `result_index` is beyond the available solutions (whose number is indicated by
-the [`ResultCount`](@ref) attribute), getting this attribute must throw a 
-[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for 
+the [`ResultCount`](@ref) attribute), getting this attribute must throw a
+[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
 another reason (for instance, only a dual solution is available), the result is
 undefined. Users should first check [`PrimalStatus`](@ref) before accessing the
 `VariableBasisStatus` attribute.
@@ -1408,10 +1408,10 @@ These solvers may return the value of `s` for `ConstraintPrimal`, rather than
 `b - Ax`. (Although these are constrained by an equality constraint, due to
 numerical tolerances they may not be identical.)
 
-If the solver does not have a primal value for the constraint because the 
+If the solver does not have a primal value for the constraint because the
 `result_index` is beyond the available solutions (whose number is indicated by
-the [`ResultCount`](@ref) attribute), getting this attribute must throw a 
-[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for 
+the [`ResultCount`](@ref) attribute), getting this attribute must throw a
+[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
 another reason (for instance, only a dual solution is available), the result is
 undefined. Users should first check [`PrimalStatus`](@ref) before accessing the
 `ConstraintPrimal` attribute.
@@ -1430,10 +1430,10 @@ end
 A constraint attribute for the assignment to some constraint's dual value(s) in
 result `result_index`. If `result_index` is omitted, it is 1 by default.
 
-If the solver does not have a dual value for the variable because the 
+If the solver does not have a dual value for the variable because the
 `result_index` is beyond the available solutions (whose number is indicated by
-the [`ResultCount`](@ref) attribute), getting this attribute must throw a 
-[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for 
+the [`ResultCount`](@ref) attribute), getting this attribute must throw a
+[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
 another reason (for instance, only a primal solution is available), the result is
 undefined. Users should first check [`DualStatus`](@ref) before accessing the
 `ConstraintDual` attribute.
@@ -1452,10 +1452,10 @@ A constraint attribute for the `BasisStatusCode` of some constraint in result
 `result_index`, with respect to an available optimal solution basis. If
 `result_index` is omitted, it is 1 by default.
 
-If the solver does not have a basis statue for the constraint because the 
+If the solver does not have a basis statue for the constraint because the
 `result_index` is beyond the available solutions (whose number is indicated by
-the [`ResultCount`](@ref) attribute), getting this attribute must throw a 
-[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for 
+the [`ResultCount`](@ref) attribute), getting this attribute must throw a
+[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
 another reason (for instance, only a dual solution is available), the result is
 undefined. Users should first check [`PrimalStatus`](@ref) before accessing the
 `ConstraintBasisStatus` attribute.
@@ -1540,6 +1540,15 @@ struct ConstraintFunction <: AbstractConstraintAttribute end
 
 attribute_value_type(::ConstraintFunction) = AbstractFunction
 
+struct FunctionTypeMismatch{F1,F2} <: Exception end
+function Base.showerror(io::IO, err::FunctionTypeMismatch{F1,F2}) where {F1,F2}
+    print(
+        io,
+        """$(typeof(err)): Cannot modify functions of different types.
+  Constraint type is $F1 while the replacement function is of type $F2.""",
+    )
+end
+
 function throw_set_error_fallback(
     ::ModelLike,
     attr::ConstraintFunction,
@@ -1553,15 +1562,11 @@ func_type(c::ConstraintIndex{F,S}) where {F,S} = F
 function throw_set_error_fallback(
     ::ModelLike,
     ::ConstraintFunction,
-    constraint_index::ConstraintIndex,
+    ci::ConstraintIndex,
     func::AbstractFunction;
     kwargs...,
 )
-    return throw(
-        ArgumentError("""Cannot modify functions of different types.
-  Constraint type is $(func_type(constraint_index)) while the replacement
-  function is of type $(typeof(func))."""),
-    )
+    return throw(FunctionTypeMismatch{func_type(ci),typeof(func)}())
 end
 
 """
@@ -1572,6 +1577,16 @@ A constraint attribute for the `AbstractSet` object used to define the constrain
 struct ConstraintSet <: AbstractConstraintAttribute end
 
 attribute_value_type(::ConstraintSet) = AbstractSet
+
+struct SetTypeMismatch{S1,S2} <: Exception end
+function Base.showerror(io::IO, err::SetTypeMismatch{S1,S2}) where {S1,S2}
+    print(
+        io,
+        """$(typeof(err)): Cannot modify sets of different types. Constraint
+  type is $S1 while the replacement set is of type $S2. Use `transform`
+  instead.""",
+    )
+end
 
 function throw_set_error_fallback(
     ::ModelLike,
@@ -1590,11 +1605,7 @@ function throw_set_error_fallback(
     set::AbstractSet;
     kwargs...,
 )
-    return throw(
-        ArgumentError("""Cannot modify sets of different types. Constraint
-  type is $(set_type(constraint_index)) while the replacement set is of
-  type $(typeof(set)). Use `transform` instead."""),
-    )
+    return throw(SetTypeMismatch{set_type(constraint_index),typeof(set)}())
 end
 
 """
