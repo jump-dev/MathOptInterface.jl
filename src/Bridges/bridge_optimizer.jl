@@ -1191,8 +1191,8 @@ function MOI.set(
     ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,S},
     set,
 ) where {S<:MOI.AbstractScalarSet}
-    if typeof(set) != S
-        throw(ArgumentError("Invalid type when setting ConstraintSet."))
+    if !(set isa S)
+        throw(MOI.SetTypeMismatch{S,typeof(value)}())
     end
     if Variable.has_bridges(Variable.bridges(b))
         func = MOI.get(b, MOI.ConstraintFunction(), ci)
