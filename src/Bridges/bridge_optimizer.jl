@@ -1127,8 +1127,8 @@ function MOI.set(
     ci::MOI.ConstraintIndex{F},
     func,
 ) where {F}
-    if typeof(func) != F
-        throw(ArgumentError("Invalid type when setting ConstraintFunction."))
+    if !(func isa F)
+        throw(MOI.FunctionTypeMismatch{F,typeof(func)}())
     end
     if Variable.has_bridges(Variable.bridges(b))
         set = MOI.get(b, MOI.ConstraintSet(), ci)
@@ -1165,8 +1165,8 @@ function MOI.set(
     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
     value,
 ) where {S<:MOI.AbstractScalarSet}
-    if typeof(value) != S
-        throw(ArgumentError("Invalid type when setting ConstraintSet."))
+    if !(value isa S)
+        throw(MOI.SetTypeMismatch{S,typeof(value)}())
     end
     _set_substituted(b, attr, ci, value)
     return
