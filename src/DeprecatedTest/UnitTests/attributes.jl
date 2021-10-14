@@ -11,6 +11,18 @@ end
 unittests["solver_name"] = solver_name
 
 """
+    solver_version(model::MOI.ModelLike, config::Config)
+
+Test that the [`MOI.SolverVersion`](@ref) attribute is implemented for `model`.
+"""
+function solver_version(model::MOI.ModelLike, config::Config)
+    if config.solve
+        @test MOI.get(model, MOI.SolverVersion()) isa AbstractString
+    end
+end
+unittests["solver_version"] = solver_version
+
+"""
     silent(model::MOI.ModelLike, config::Config)
 
 Test that the [`MOI.Silent`](@ref) attribute is implemented for `model`.

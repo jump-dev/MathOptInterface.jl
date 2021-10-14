@@ -312,6 +312,7 @@ method for each attribute.
 | Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
 | ---------------------- | --------------| ------------- | ------------------ |
 | [`SolverName`](@ref)   | Yes           | No            | No                 |
+| [`SolverVersion`](@ref) | Yes          | No            | No                 |
 | [`RawSolver`](@ref)    | Yes           | No            | No                 |
 | [`Name`](@ref)         | Yes           | Yes           | Yes                |
 | [`Silent`](@ref)       | Yes           | Yes           | Yes                |

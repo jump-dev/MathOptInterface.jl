@@ -715,6 +715,15 @@ struct SolverName <: AbstractOptimizerAttribute end
 attribute_value_type(::SolverName) = String
 
 """
+    SolverVersion()
+
+An optimizer attribute for the string identifying version of the solver/optimizer.
+"""
+struct SolverVersion <: AbstractOptimizerAttribute end
+
+attribute_value_type(::SolverVersion) = String
+
+"""
     Silent()
 
 An optimizer attribute for silencing the output of an optimizer. When `set`
