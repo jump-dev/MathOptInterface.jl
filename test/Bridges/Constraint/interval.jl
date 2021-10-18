@@ -29,11 +29,9 @@ function test_split_basic()
         bridged_mock,
         config,
         include = [
-            "test_basic_$(F)_$(S)" for F in [
-                "VariableIndex",
-                "ScalarAffineFunction",
-                "ScalarQuadraticFunction",
-            ] for S in ["Interval", "EqualTo"]
+            "test_basic_$(F)_$(S)" for F in
+            ["VariableIndex", "ScalarAffineFunction", "ScalarQuadraticFunction"]
+            for S in ["Interval", "EqualTo"]
         ],
     )
     MOI.Test.runtests(

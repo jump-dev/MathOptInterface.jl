@@ -113,7 +113,10 @@ test_attribute_SolverName(::MOI.ModelLike, ::Config) = nothing
 
 Test that the [`MOI.SolverVersion`](@ref) attribute is implemented for `model`.
 """
-function test_attribute_SolverVersion(model::MOI.AbstractOptimizer, config::Config)
+function test_attribute_SolverVersion(
+    model::MOI.AbstractOptimizer,
+    config::Config,
+)
     if _supports(config, MOI.SolverVersion)
         _test_attribute_value_type(model, MOI.SolverVersion())
     end

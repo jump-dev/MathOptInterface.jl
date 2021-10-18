@@ -718,10 +718,24 @@ attribute_value_type(::SolverName) = String
     SolverVersion()
 
 An optimizer attribute for the string identifying version of the solver/optimizer.
+
+!!! note "Note on SemVer"
+
+    For solvers supporting SemVer, the `SolverVersion` should be a string
+    of the form "vMAJOR.MINOR.PATCH", so that it can be converted to
+    a Julia `VersionNumber` (e.g., `VersionNumber("v1.2.3")).
+
+    We do not require Semantic Versioning because some solvers use
+    alternate versioning systems. For example, CPLEX uses Calendar
+    Versioning, so `SolverVersion` will return a string like `"202001"`.
 """
 struct SolverVersion <: AbstractOptimizerAttribute end
 
 attribute_value_type(::SolverVersion) = String
+
+function get(::AbstractOptimizer, ::SolverVersion)
+    return "unknown version"
+end
 
 """
     Silent()
