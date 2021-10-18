@@ -154,6 +154,7 @@ end
 mutable struct Optimizer <: MOI.AbstractOptimizer end
 
 MOI.get(model::Optimizer, ::MOI.SolverName) = "OnlyIntervalOptimizer"
+MOI.get(model::Optimizer, ::MOI.SolverVersion) = "v0.1.0"
 
 function MOI.supports_constraint(
     ::Optimizer,

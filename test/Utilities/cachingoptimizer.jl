@@ -114,7 +114,7 @@ function test_MOI_Test()
             MOI.Test.runtests(
                 model,
                 MOI.Test.Config(exclude = Any[MOI.optimize!]),
-                exclude = ["test_attribute_SolverName"],
+                exclude = ["test_attribute_SolverName", "test_attribute_SolverVersion"],
             )
         end
     end

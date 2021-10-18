@@ -733,10 +733,6 @@ struct SolverVersion <: AbstractOptimizerAttribute end
 
 attribute_value_type(::SolverVersion) = String
 
-function get(::AbstractOptimizer, ::SolverVersion)
-    return "unknown version"
-end
-
 """
     Silent()
 
