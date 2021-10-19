@@ -576,8 +576,26 @@ function test_nonlinear_objective_and_moi_objective_test(
     return
 end
 
+function setup_test(
+    ::typeof(test_nonlinear_objective_and_moi_objective_test),
+    model::MOIU.MockOptimizer,
+    config::Config,
+)
+    config.optimal_status = MOI.LOCALLY_SOLVED
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(mock, config.optimal_status, [-1.0]),
+            MOI.set(mock, MOI.ObjectiveValue(), 0.0)
+        end,
+    )
+    flag = model.eval_objective_value
+    model.eval_objective_value = false
+    return () -> model.eval_objective_value = flag
+end
+
 """
-    test_nonlinear_objective_and_moi_objective_test(
+    test_nonlinear_objective_test(
         model::MOI.ModelLike,
         config::Config,
     )
@@ -615,7 +633,7 @@ function test_nonlinear_objective_test(
 end
 
 function setup_test(
-    ::typeof(test_nonlinear_objective_and_moi_objective_test),
+    ::typeof(test_nonlinear_objective_test),
     model::MOIU.MockOptimizer,
     config::Config,
 )
