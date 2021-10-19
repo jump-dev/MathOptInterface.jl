@@ -70,7 +70,7 @@ const _PAGES = [
             "API Reference" => "submodules/Test/reference.md",
         ],
     ],
-    "Release notes" => "release_notes.md",
+    "release_notes.md",
 ]
 
 # ==============================================================================
