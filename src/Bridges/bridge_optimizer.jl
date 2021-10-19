@@ -1192,7 +1192,7 @@ function MOI.set(
     set,
 ) where {S<:MOI.AbstractScalarSet}
     if !(set isa S)
-        throw(MOI.SetTypeMismatch{S,typeof(value)}())
+        throw(MOI.SetTypeMismatch{S,typeof(set)}())
     end
     if Variable.has_bridges(Variable.bridges(b))
         func = MOI.get(b, MOI.ConstraintFunction(), ci)
