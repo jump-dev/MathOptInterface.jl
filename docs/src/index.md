@@ -1,12 +1,8 @@
-!!! warning
-    This documentation is still under construction. If you need help with JuMP,
-    read the [JuMP documentation](https://jump.dev/JuMP.jl/stable/) instead. If
-    you are writing a solver interface and need help with MOI, join the
-    [developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev) and ask away!
+!!! note
+    This documentation is also available in PDF format:
+    [MathOptInterface.pdf](MathOptInterface.pdf).
 
-# MathOptInterface
-
-# What is MathOptInterface?
+## What is MathOptInterface?
 
 [MathOptInterface.jl](https://github.com/jump-dev/MathOptInterface.jl) (MOI) is
 an abstraction layer designed to provide a unified interface to mathematical

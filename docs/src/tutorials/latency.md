@@ -264,7 +264,7 @@ ProfileView.view(flamegraph(tinf))
 ```
 
 Here's how things looked in mid-August 2021:
-![flamegraph](https://user-images.githubusercontent.com/8177701/129137091-fb78c4a0-2208-4418-968f-24ff15370351.png)
+![flamegraph](../assets/latency.png)
 
 There are a few opportunities for improvement (non-red flames, particularly on
 the right). But the main problem is a large red (non-precompilable due to method
