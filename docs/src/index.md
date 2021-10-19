@@ -1,3 +1,5 @@
+# Introduction
+
 !!! note
     This documentation is also available in PDF format:
     [MathOptInterface.pdf](MathOptInterface.pdf).
