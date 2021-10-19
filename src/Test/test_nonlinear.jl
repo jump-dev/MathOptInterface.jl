@@ -595,17 +595,11 @@ function setup_test(
 end
 
 """
-    test_nonlinear_objective_test(
-        model::MOI.ModelLike,
-        config::Config,
-    )
+    test_nonlinear_objective_test(model::MOI.ModelLike, config::Config)
 
 Test that nonlinear objectives take precedence over MOI.ObjectiveFunction.
 """
-function test_nonlinear_objective_test(
-    model::MOI.ModelLike,
-    config::Config,
-)
+function test_nonlinear_objective_test(model::MOI.ModelLike, config::Config)
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
