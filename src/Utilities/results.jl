@@ -512,9 +512,9 @@ function triangle_dot(
         for j in 1:i
             k += 1
             if i == j
-                result = MA.add_mul!(result, x[k], y[k])
+                result = MA.add_mul!!(result, x[k], y[k])
             else
-                result = MA.add_mul!(result, 2, x[k], y[k])
+                result = MA.add_mul!!(result, 2, x[k], y[k])
             end
         end
     end

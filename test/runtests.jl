@@ -1,3 +1,8 @@
+if get(ENV, "GITHUB_ACTIONS", "") == "true"
+    import Pkg
+    Pkg.add(Pkg.PackageSpec(name = "MutableArithmetics", rev = "master"))
+end
+
 using Test
 
 # This file gets called first. It it doesn't crash, all is well.
