@@ -717,7 +717,7 @@ attribute_value_type(::SolverName) = String
 """
     SolverVersion()
 
-An optimizer attribute for the string identifying version of the solver/optimizer.
+An optimizer attribute for the string identifying the version of the solver.
 
 !!! note "Note on SemVer"
 
