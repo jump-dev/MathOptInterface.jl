@@ -72,16 +72,16 @@ The one-dimensional set types implemented in MathOptInterface.jl are:
 The vector-valued set types implemented in MathOptInterface.jl are:
 
 * [`Reals(dimension)`](@ref MathOptInterface.Reals):
-  ``\mathbb{R}^\mbox{dimension}``
-* [`Zeros(dimension)`](@ref MathOptInterface.Zeros): ``0^\mbox{dimension}``
+  ``\mathbb{R}^{\mbox{dimension}}``
+* [`Zeros(dimension)`](@ref MathOptInterface.Zeros): ``0^{\mbox{dimension}}``
 * [`Nonnegatives(dimension)`](@ref MathOptInterface.Nonnegatives):
-  ``\{ x \in \mathbb{R}^\mbox{dimension} : x \ge 0 \}``
+  ``\{ x \in \mathbb{R}^{\mbox{dimension}} : x \ge 0 \}``
 * [`Nonpositives(dimension)`](@ref MathOptInterface.Nonpositives):
-  ``\{ x \in \mathbb{R}^\mbox{dimension} : x \le 0 \}``
+  ``\{ x \in \mathbb{R}^{\mbox{dimension}} : x \le 0 \}``
 * [`SecondOrderCone(dimension)`](@ref MathOptInterface.SecondOrderCone):
-  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_2 \}``
+  ``\{ (t,x) \in \mathbb{R}^{\mbox{dimension}} : t \ge \lVert x \rVert_2 \}``
 * [`RotatedSecondOrderCone(dimension)`](@ref MathOptInterface.RotatedSecondOrderCone):
-  ``\{ (t,u,x) \in \mathbb{R}^\mbox{dimension} : 2tu \ge \lVert x \rVert_2^2, t,u \ge 0 \}``
+  ``\{ (t,u,x) \in \mathbb{R}^{\mbox{dimension}} : 2tu \ge \lVert x \rVert_2^2, t,u \ge 0 \}``
 * [`ExponentialCone()`](@ref MathOptInterface.ExponentialCone):
   ``\{ (x,y,z) \in \mathbb{R}^3 : y \exp (x/y) \le z, y > 0 \}``
 * [`DualExponentialCone()`](@ref MathOptInterface.DualExponentialCone):
@@ -90,14 +90,14 @@ The vector-valued set types implemented in MathOptInterface.jl are:
   ``\{ (t,x) \in \mathbb{R}^{n+1} : x \ge 0, t \le \sqrt[n]{x_1 x_2 \cdots x_n} \}``
   where ``n`` is ``\mbox{dimension} - 1``
 * [`PowerCone(exponent)`](@ref MathOptInterface.PowerCone):
-  ``\{ (x,y,z) \in \mathbb{R}^3 : x^\mbox{exponent} y^{1-\mbox{exponent}} \ge |z|, x,y \ge 0 \}``
+  ``\{ (x,y,z) \in \mathbb{R}^3 : x^{\mbox{exponent}} y^{1-\mbox{exponent}} \ge |z|, x,y \ge 0 \}``
 * [`DualPowerCone(exponent)`](@ref MathOptInterface.DualPowerCone):
-  ``\{ (u,v,w) \in \mathbb{R}^3 : \frac{u}{\mbox{exponent}}^\mbox{exponent}\frac{v}{1-\mbox{exponent}}^{1-\mbox{exponent}} \ge |w|, u,v \ge 0 \}``
-* [`NormOneCone(dimension)`](@ref MathOptInterface.NormOneCone): ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_1 \}`` where ``\lVert x \rVert_1 = \sum_i \lvert x_i \rvert``
+  ``\{ (u,v,w) \in \mathbb{R}^3 : \frac{u}{\mbox{exponent}}^{\mbox{exponent}}\frac{v}{1-\mbox{exponent}}^{1-\mbox{exponent}} \ge |w|, u,v \ge 0 \}``
+* [`NormOneCone(dimension)`](@ref MathOptInterface.NormOneCone): ``\{ (t,x) \in \mathbb{R}^{\mbox{dimension}} : t \ge \lVert x \rVert_1 \}`` where ``\lVert x \rVert_1 = \sum_i \lvert x_i \rvert``
 * [`NormInfinityCone(dimension)`](@ref MathOptInterface.NormInfinityCone):
-  ``\{ (t,x) \in \mathbb{R}^\mbox{dimension} : t \ge \lVert x \rVert_\infty \}`` where ``\lVert x \rVert_\infty = \max_i \lvert x_i \rvert``.
+  ``\{ (t,x) \in \mathbb{R}^{\mbox{dimension}} : t \ge \lVert x \rVert_\infty \}`` where ``\lVert x \rVert_\infty = \max_i \lvert x_i \rvert``.
 * [`RelativeEntropyCone(dimension)`](@ref MathOptInterface.RelativeEntropyCone):
-  ``\{ (u, v, w) \in \mathbb{R}^\mbox{dimension} : u \ge \sum_i w_i \log (\frac{w_i}{v_i}), v_i \ge 0, w_i \ge 0 \}``
+  ``\{ (u, v, w) \in \mathbb{R}^{\mbox{dimension}} : u \ge \sum_i w_i \log (\frac{w_i}{v_i}), v_i \ge 0, w_i \ge 0 \}``
 
 ## Matrix cones
 
@@ -119,9 +119,9 @@ The matrix-valued set types implemented in MathOptInterface.jl are:
   ``\{ (t,u,X) \in \mathbb{R}^{2+\mbox{dimension}^2} : t \le u \log(\det(X/u)), X \mbox{ is a PSD matrix}, u > 0 \}``
 
 * [`NormSpectralCone(row_dim, column_dim)`](@ref MathOptInterface.NormSpectralCone):
-  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim}} : t \ge \sigma_1(X), X \mbox{ is a matrix with row_dim rows and column_dim columns} \}``
+  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row\_dim} \times \mbox{column\_dim}} : t \ge \sigma_1(X), X \mbox{ is a matrix with row\_dim rows and column\_dim columns} \}``
 * [`NormNuclearCone(row_dim, column_dim)`](@ref MathOptInterface.NormNuclearCone):
-  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row_dim} \times \mbox{column_dim}} : t \ge \sum_i \sigma_i(X), X \mbox{ is a matrix with row_dim rows and column_dim columns} \}``
+  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row\_dim} \times \mbox{column\_dim}} : t \ge \sum_i \sigma_i(X), X \mbox{ is a matrix with row\_dim rows and column\_dim columns} \}``
 
 Some of these cones can take two forms: `XXXConeTriangle` and `XXXConeSquare`.
 
