@@ -721,7 +721,7 @@ An optimizer attribute for the string identifying the version of the solver.
 
 !!! note
 
-    For solvers supporting SemVer, the `SolverVersion` should be a string
+    For solvers supporting [semantic versioning](https://semver.org), the `SolverVersion` should be a string
     of the form "vMAJOR.MINOR.PATCH", so that it can be converted to
     a Julia `VersionNumber` (e.g., `VersionNumber("v1.2.3")).
 
