@@ -719,7 +719,7 @@ attribute_value_type(::SolverName) = String
 
 An optimizer attribute for the string identifying the version of the solver.
 
-!!! note "Note on SemVer"
+!!! note
 
     For solvers supporting SemVer, the `SolverVersion` should be a string
     of the form "vMAJOR.MINOR.PATCH", so that it can be converted to
