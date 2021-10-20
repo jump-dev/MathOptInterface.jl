@@ -5,6 +5,6 @@ JSONSchema = "7d188eb4-7ad8-530c-ae41-71a32a6d4692"
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 
 [compat]
-Documenter = "0.27.9"
+Documenter = "0.27.10"
 JSON = "0.21"
 JSONSchema = "0.3"
