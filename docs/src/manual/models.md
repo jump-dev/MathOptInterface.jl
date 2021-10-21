@@ -99,5 +99,6 @@ The following attributes are available:
  * [`Silent`](@ref)
  * [`SimplexIterations`](@ref)
  * [`SolverName`](@ref)
+ * [`SolverVersion`](@ref)
  * [`SolveTimeSec`](@ref)
  * [`TimeLimitSec`](@ref)

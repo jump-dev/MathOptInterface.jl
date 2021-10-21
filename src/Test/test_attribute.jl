@@ -109,6 +109,22 @@ end
 test_attribute_SolverName(::MOI.ModelLike, ::Config) = nothing
 
 """
+    test_attribute_SolverVersion(model::MOI.AbstractOptimizer, config::Config)
+
+Test that the [`MOI.SolverVersion`](@ref) attribute is implemented for `model`.
+"""
+function test_attribute_SolverVersion(
+    model::MOI.AbstractOptimizer,
+    config::Config,
+)
+    if _supports(config, MOI.SolverVersion)
+        _test_attribute_value_type(model, MOI.SolverVersion())
+    end
+    return
+end
+test_attribute_SolverVersion(::MOI.ModelLike, ::Config) = nothing
+
+"""
     test_attribute_SolveTimeSec(model::MOI.AbstractOptimizer, config::Config)
 
 Test that the [`MOI.SolveTimeSec`](@ref) attribute is implemented for `model`.

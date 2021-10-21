@@ -67,6 +67,7 @@ instantiate
 ```@docs
 AbstractOptimizerAttribute
 SolverName
+SolverVersion
 Silent
 TimeLimitSec
 RawOptimizerAttribute

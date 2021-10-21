@@ -747,6 +747,7 @@ function _safe_get_result(
 end
 
 MOI.get(::MockOptimizer, ::MOI.SolverName) = "Mock"
+MOI.get(::MockOptimizer, ::MOI.SolverVersion) = "v0.1.0"
 
 function MOI.empty!(mock::MockOptimizer)
     MOI.empty!(mock.inner_model)
