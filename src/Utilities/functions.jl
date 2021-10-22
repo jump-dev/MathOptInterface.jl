@@ -1595,7 +1595,7 @@ function operate!(
     ::Type{T},
     f::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
 ) where {T}
-    return MA.mutable_operate!(-, f)
+    return MA.operate!(-, f)
 end
 
 # Scalar Affine +/-! ...
@@ -1605,7 +1605,7 @@ function operate!(
     f::MOI.ScalarAffineFunction{T},
     g::Union{T,MOI.VariableIndex,MOI.ScalarAffineFunction{T}},
 ) where {T}
-    return MA.mutable_operate!(op, f, g)
+    return MA.operate!(op, f, g)
 end
 
 function operate!(
@@ -1638,7 +1638,7 @@ function operate!(
         MOI.ScalarQuadraticFunction{T},
     },
 ) where {T}
-    return MA.mutable_operate!(op, f, g)
+    return MA.operate!(op, f, g)
 end
 
 ## operate
