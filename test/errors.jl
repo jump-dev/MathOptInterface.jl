@@ -188,7 +188,10 @@ function test_errors_ConstraintFunction_NotAllowed()
         MOI.set(model, MOI.ConstraintFunction(), ci, vi)
     )
     @test_throws(
-        ArgumentError,
+        MOI.FunctionTypeMismatch{
+            MOI.VariableIndex,
+            MOI.ScalarAffineFunction{Float64},
+        },
         MOI.set(
             model,
             MOI.ConstraintFunction(),
@@ -208,11 +211,11 @@ function test_errors_ConstraintSet_NotAllowed()
         MOI.set(model, MOI.ConstraintSet(), ci, MOI.EqualTo(1.0))
     )
     @test_throws(
-        ArgumentError,
+        MOI.SetTypeMismatch{MOI.EqualTo{Float64},MOI.EqualTo{Int}},
         MOI.set(model, MOI.ConstraintSet(), ci, MOI.EqualTo(1))
     )
     @test_throws(
-        ArgumentError,
+        MOI.SetTypeMismatch{MOI.EqualTo{Float64},MOI.GreaterThan{Float64}},
         MOI.set(model, MOI.ConstraintSet(), ci, MOI.GreaterThan(1.0))
     )
 end

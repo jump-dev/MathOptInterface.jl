@@ -288,20 +288,66 @@ function MOI.is_valid(
     return !iszero(b.set_mask[ci.value] & _single_variable_flag(S))
 end
 
+function MOI.get(
+    model::VariablesContainer,
+    ::MOI.ConstraintFunction,
+    ci::CI{MOI.VariableIndex},
+)
+    MOI.throw_if_not_valid(model, ci)
+    return MOI.VariableIndex(ci.value)
+end
+
 function MOI.set(
-    b::VariablesContainer,
+    ::VariablesContainer,
+    ::MOI.ConstraintFunction,
+    ::MOI.ConstraintIndex{MOI.VariableIndex},
+    ::MOI.VariableIndex,
+)
+    return throw(MOI.SettingVariableIndexNotAllowed())
+end
+
+function MOI.set(
+    ::VariablesContainer,
+    ::MOI.ConstraintFunction,
+    ci::MOI.ConstraintIndex,
+    func,
+)
+    return throw(MOI.FunctionTypeMismatch{MOI.func_type(ci),typeof(func)}())
+end
+
+function MOI.get(
+    model::VariablesContainer,
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
+) where {S}
+    MOI.throw_if_not_valid(model, ci)
+    return set_from_constants(model, S, ci.value)
+end
+
+function MOI.set(
+    model::VariablesContainer{T},
     ::MOI.ConstraintSet,
     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
     set::S,
-) where {S}
+) where {T,S<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}
+    MOI.throw_if_not_valid(model, ci)
     flag = _single_variable_flag(S)
     if !iszero(flag & _LOWER_BOUND_MASK)
-        b.lower[ci.value] = _lower_bound(set)
+        model.lower[ci.value] = _lower_bound(set)
     end
     if !iszero(flag & _UPPER_BOUND_MASK)
-        b.upper[ci.value] = _upper_bound(set)
+        model.upper[ci.value] = _upper_bound(set)
     end
     return
+end
+
+function MOI.set(
+    ::VariablesContainer,
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex},
+    set,
+)
+    return throw(MOI.SetTypeMismatch{MOI.set_type(ci),typeof(set)}())
 end
 
 function MOI.get(

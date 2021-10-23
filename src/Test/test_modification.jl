@@ -951,10 +951,16 @@ function test_modification_incorrect(model::MOI.ModelLike, ::Config)
         MOI.EqualTo(1.0),
     )
     @test_throws(
-        ArgumentError,
+        MOI.SetTypeMismatch{MOI.EqualTo{Float64},MOI.LessThan{Float64}},
         MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(1.0)),
     )
-    @test_throws(ArgumentError, MOI.set(model, MOI.ConstraintFunction(), c, x))
+    @test_throws(
+        MOI.FunctionTypeMismatch{
+            MOI.ScalarAffineFunction{Float64},
+            MOI.VariableIndex,
+        },
+        MOI.set(model, MOI.ConstraintFunction(), c, x),
+    )
     return
 end
 
@@ -978,11 +984,11 @@ function test_modification_incorrect_VariableIndex(
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
     @test_throws(
-        ArgumentError,
+        MOI.SetTypeMismatch{MOI.GreaterThan{T},MOI.LessThan{T}},
         MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(one(T))),
     )
     @test_throws(
-        ArgumentError,
+        MOI.FunctionTypeMismatch{MOI.VariableIndex,MOI.ScalarAffineFunction{T}},
         MOI.set(model, MOI.ConstraintFunction(), c, one(T) * x),
     )
     y = MOI.add_variable(model)
