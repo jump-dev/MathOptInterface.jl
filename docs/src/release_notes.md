@@ -1,5 +1,25 @@
 # Release notes
 
+## v0.10.4 (October 26, 2021)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.4).
+
+### New features
+
+- Add `SolverVersion` attribute
+- Add new tests:
+  - `test_solve_conflict_zeroone_ii`
+  - `test_nonlinear_objective`
+- `Utilities.VariablesContainer` now supports `ConstraintFunction` and
+  `ConstraintSet`
+- The documentation is now available as a PDF
+
+### Maintenance
+
+- Update to MutableArithmetics 0.3
+- Various improvements to the documentation
+
 ## v0.10.3 (September 18, 2021)
 
 For a detailed list of the closed issues and pull requests from this release,
