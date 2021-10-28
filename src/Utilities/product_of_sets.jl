@@ -245,6 +245,12 @@ function final_touch(sets::OrderedProductOfSets)
     return
 end
 
+"""
+    num_rows(sets::OrderedProductOfSets, ::Type{S}) where {S}
+
+Return the number of rows corresponding to a set of type `S`. That is, it is
+the sum of the dimensions of the sets of type `S`.
+"""
 function num_rows(sets::OrderedProductOfSets, ::Type{S}) where {S}
     i = set_index(sets, S)
     if !sets.final_touch || i == 1
