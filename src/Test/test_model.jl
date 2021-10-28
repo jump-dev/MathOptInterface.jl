@@ -10,6 +10,7 @@ MOI.constant(set::UnknownScalarSet) = set.constant
 
 Base.copy(set::UnknownScalarSet) = UnknownScalarSet(copy(MOI.constant(set)))
 
+MOIU.supports_shift_constant(::Type{<:UnknownScalarSet}) = true
 function MOIU.shift_constant(set::UnknownScalarSet, offset)
     return UnknownScalarSet(MOI.constant(set) + offset)
 end
