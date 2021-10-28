@@ -33,6 +33,10 @@ function test_normalize_and_add_constrant_ScalarAffineFunction()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 2.0)
+    int = MOI.Utilities.normalize_and_add_constraint(model, f, MOI.Integer())
+    @test f.constant == 2.0
+    @test MOI.get(model, MOI.ConstraintFunction(), int) ≈ f
+    @test MOI.get(model, MOI.ConstraintSet(), int) == MOI.Integer()
     g = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
     ci = MOI.Utilities.normalize_and_add_constraint(model, f, MOI.EqualTo(3.0))
     @test f.constant == 2.0

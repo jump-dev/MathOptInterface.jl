@@ -51,10 +51,12 @@ function normalize_constant(
     set::MOI.AbstractScalarSet;
     allow_modify_function::Bool = false,
 ) where {T}
-    set = shift_constant(set, -func.constant)
-    if !allow_modify_function
-        func = copy(func)
+    if supports_shift_constant(typeof(set))
+        set = shift_constant(set, -func.constant)
+        if !allow_modify_function
+            func = copy(func)
+        end
+        func.constant = zero(T)
     end
-    func.constant = zero(T)
     return func, set
 end
