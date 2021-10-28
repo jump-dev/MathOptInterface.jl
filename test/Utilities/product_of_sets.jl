@@ -62,6 +62,9 @@ function test_scalar_basic()
     )
     @test MOI.is_valid(sets, ci)
     @test MOI.Utilities.rows(sets, ci) == ci.value
+    @test MOI.Utilities.rows(sets, MOI.EqualTo{Float64}) == 1
+    @test MOI.Utilities.rows(sets, MOI.GreaterThan{Float64}) == 0
+    @test MOI.Utilities.rows(sets, MOI.EqualTo{Int}) == 0
 end
 
 function test_scalar_dimension()

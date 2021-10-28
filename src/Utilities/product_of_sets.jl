@@ -245,7 +245,7 @@ function final_touch(sets::OrderedProductOfSets)
     return
 end
 
-function _num_rows(sets::OrderedProductOfSets, ::Type{S}) where {S}
+function num_rows(sets::OrderedProductOfSets, ::Type{S}) where {S}
     i = set_index(sets, S)
     if !sets.final_touch || i == 1
         return sets.num_rows[i]
@@ -259,7 +259,7 @@ function MOI.get(
 ) where {T}
     return Tuple{Type,Type}[
         (_affine_function_type(T, S), S) for
-        S in set_types(sets) if _num_rows(sets, S) > 0
+        S in set_types(sets) if num_rows(sets, S) > 0
     ]
 end
 
@@ -312,7 +312,7 @@ function _range_iterator(
     if i === nothing || F != _affine_function_type(T, S)
         return
     end
-    return _range_iterator(sets, i, 1, _num_rows(sets, S), F)
+    return _range_iterator(sets, i, 1, num_rows(sets, S), F)
 end
 
 _length(::Nothing) = 0
