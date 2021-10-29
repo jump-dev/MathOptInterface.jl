@@ -373,6 +373,13 @@ function test_show()
     return
 end
 
+function test_missing_attribute()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    @test MOI.get(model, MOI.Test.UnknownModelAttribute()) === nothing
+    @test MOI.get(model, MOI.TimeLimitSec()) === nothing
+    return
+end
+
 end  # module
 
 TestUniversalFallback.runtests()
