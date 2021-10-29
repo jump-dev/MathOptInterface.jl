@@ -62,12 +62,9 @@ function write_nlpblock(
     model::Model,
     name_map::Dict{MOI.VariableIndex,String},
 ) where {T<:Object}
-    # TODO(odow): is there a better way of checking if the NLPBlock is set?
-    nlp_block = try
-        MOI.get(model, MOI.NLPBlock())
-    catch ex
-        @assert isa(ex, KeyError)
-        return  # No NLPBlock set.
+    nlp_block = MOI.get(model, MOI.NLPBlock())
+    if nlp_block === nothing
+        return
     end
     MOI.initialize(nlp_block.evaluator, [:ExprGraph])
     variables = MOI.get(model, MOI.ListOfVariableIndices())
