@@ -243,9 +243,10 @@ MOI.initialize(::_LinearNLPEvaluator, ::Vector{Symbol}) = nothing
 function MOI.copy_to(dest::Model, model::MOI.ModelLike)
     mapping = MOI.Utilities.IndexMap()
     # Initialize the NLP block.
-    nlp_block = try
+    has_nlp = MOI.NLPBlock() in MOI.get(model, MOI.ListOfModelAttributesSet())
+    nlp_block = if has_nlp
         MOI.get(model, MOI.NLPBlock())
-    catch
+    else
         MOI.NLPBlockData(MOI.NLPBoundsPair[], _LinearNLPEvaluator(), false)
     end
     if !(:ExprGraph in MOI.features_available(nlp_block.evaluator))

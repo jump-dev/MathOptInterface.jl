@@ -483,6 +483,9 @@ end
 function _nlp_block(model::MOI.ModelLike)
     try
         block = MOI.get(model, MOI.NLPBlock())
+        if block === nothing
+            return
+        end
         if :ExprGraph in MOI.features_available(block.evaluator)
             MOI.initialize(block.evaluator, [:ExprGraph])
         end

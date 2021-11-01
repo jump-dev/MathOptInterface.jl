@@ -258,10 +258,12 @@ end
 
 # Attributes
 function _get(uf::UniversalFallback, attr::MOI.AbstractOptimizerAttribute)
-    return uf.optattr[attr]
+    return get(uf.optattr, attr, nothing)
 end
 
-_get(uf::UniversalFallback, attr::MOI.AbstractModelAttribute) = uf.modattr[attr]
+function _get(uf::UniversalFallback, attr::MOI.AbstractModelAttribute)
+    return get(uf.modattr, attr, nothing)
+end
 
 function _get(
     uf::UniversalFallback,
