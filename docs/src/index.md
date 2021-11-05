@@ -46,9 +46,8 @@ is available on [arXiv](https://arxiv.org).
 
 If you find MathOptInterface useful in your work, we kindly request that you
 cite the following paper:
-```
-@article{
-    legat2021mathoptinterface,
+```bibtex
+@article{legat2021mathoptinterface,
     title={{MathOptInterface}: a data structure for mathematical optimization problems},
     author={Legat, Beno{\^\i}t and Dowson, Oscar and Garcia, Joaquim Dias and Lubin, Miles},
     journal={INFORMS Journal on Computing},
