@@ -1402,12 +1402,12 @@ function setup_test(
 end
 
 """
-    test_solve_conflict_zeroone_ii(model::MOI.ModelLike, config::Config)
+    test_solve_conflict_zeroone_2(model::MOI.ModelLike, config::Config)
 
 Test the ConflictStatus API when an integrality is in the conflict.
 In this test, integrality is the conflict and no the upper bound == 1.
 """
-function test_solve_conflict_zeroone_ii(
+function test_solve_conflict_zeroone_2(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
@@ -1437,7 +1437,7 @@ function test_solve_conflict_zeroone_ii(
 end
 
 function setup_test(
-    ::typeof(test_solve_conflict_zeroone_ii),
+    ::typeof(test_solve_conflict_zeroone_2),
     model::MOIU.MockOptimizer,
     ::Config,
 )
