@@ -1423,7 +1423,7 @@ function test_solve_conflict_zeroone_ii(
     c2 = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), [x]), zero(T)),
-        MOI.EqualTo(div(one(T), T(2))),
+        MOI.EqualTo(one(T) / T(2)),
     )
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
