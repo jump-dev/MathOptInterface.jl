@@ -1411,7 +1411,7 @@ function test_solve_conflict_zeroone_ii(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    @requires !(T <: Integer)
+    @requires (one(T) / T(2)) isa T
     @requires _supports(config, MOI.compute_conflict!)
     @requires _supports(config, MOI.optimize!)
     try
