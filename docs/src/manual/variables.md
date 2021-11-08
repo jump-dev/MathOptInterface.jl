@@ -17,8 +17,8 @@ Use [`add_variable`](@ref) to add a single variable.
 julia> x = MOI.add_variable(model)
 MathOptInterface.VariableIndex(1)
 ```
-[`add_variable`](@ref) returns a [`VariableIndex`](@ref) type, which should be
-used to refer to the added variable in other calls.
+[`add_variable`](@ref) returns a [`VariableIndex`](@ref) type, which is used to
+refer to the added variable in other calls.
 
 Check if a [`VariableIndex`](@ref) is valid using [`is_valid`](@ref).
 ```jldoctest variables

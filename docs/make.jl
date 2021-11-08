@@ -15,12 +15,10 @@ const _PDF = findfirst(isequal("--pdf"), ARGS) !== nothing || _IS_GITHUB_ACTIONS
 # ==============================================================================
 
 const _PAGES = [
-    "Introduction" => "index.md",
-    "Background" => [
+    "Introduction" => [
+        "index.md",
         "background/motivation.md",
-        "background/duality.md",
-        "background/naming_conventions.md",
-    ],
+    ]
     "Tutorials" => [
         "tutorials/example.md",
         "tutorials/implementing.md",
@@ -36,6 +34,10 @@ const _PAGES = [
         "manual/constraints.md",
         "manual/solutions.md",
         "manual/modification.md",
+    ],
+    "Background" => [
+        "background/duality.md",
+        "background/naming_conventions.md",
     ],
     "API Reference" => [
         "reference/standard_form.md",

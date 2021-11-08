@@ -53,7 +53,7 @@ defined outside of MOI (but still known at compile time), we provide the
 
 The `@model` macro takes a name (for a new type, which must not exist yet),
 eight tuples specifying the types of constraints that are supported, and then a
-`Bool` indicating the type should be a subtype of `MOI.AbstractOptimizer` (if
+`Bool` indicating the type is a subtype of `MOI.AbstractOptimizer` (if
 `true`) or `MOI.ModelLike` (if `false`).
 
 The eight tuples are in the following order:
@@ -66,7 +66,7 @@ The eight tuples are in the following order:
  7. Un-typed vector functions, e.g., [`VectorOfVariables`](@ref)
  8. Typed vector functions, e.g., [`VectorAffineFunction`](@ref)
 
-The tuples can contain more than one element. Typed-sets should be speficied
+The tuples can contain more than one element. Typed-sets must be specified
 without their type parameter, i.e., `MOI.LessThan`, not `MOI.LessThan{Float64}`.
 
 Here is an example:

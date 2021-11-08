@@ -9,7 +9,8 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 # Solving a problem using MathOptInterface
 
-In this example, we want to solve a binary-constrained knapsack problem:
+In this tutorial we demonstrate how to use MathOptInterface to solve the
+binary-constrained knapsack problem:
 ```math
 \begin{aligned}
 \max \; & c^\top x       \\
@@ -17,6 +18,8 @@ s.t. \; & w^\top x \le C \\
         & x_i \in \{0,1\},\quad \forall i=1,\ldots,n
 \end{aligned}
 ```
+
+## Required packages
 
 Load the MathOptInterface module and define the shorthand `MOI`:
 ```julia

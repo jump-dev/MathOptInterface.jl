@@ -7,8 +7,8 @@ However, it is not a direct replacement.
 
 MathOptInterface is more extensive than MathProgBase which may make its
 implementation seem daunting at first.
-There are however numerous utilities in MathOptInterface that should hopefully
-make the implementation as simple or simpler than MathProgBase.
+There are however numerous utilities in MathOptInterface that
+the simplify implementation process.
 
 For more information, read [Implementing a solver interface](@ref).
 

@@ -11,7 +11,7 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 The most significant part of MOI is the definition of the **model API** that is
 used to specify an instance of an optimization problem (e.g., by adding
-variables and constraints). Objects that implement the model API should inherit
+variables and constraints). Objects that implement the model API must inherit
 from the [`ModelLike`](@ref) abstract type.
 
 Notably missing from the model API is the method to solve an optimization

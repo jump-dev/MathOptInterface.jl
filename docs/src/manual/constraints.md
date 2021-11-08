@@ -18,8 +18,8 @@ julia> c = MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Nonnegatives(
 MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.Nonnegatives}(1)
 ```
 
-[`add_constraint`](@ref) returns a [`ConstraintIndex`](@ref) type, which should
-be used to refer to the added constraint in other calls.
+[`add_constraint`](@ref) returns a [`ConstraintIndex`](@ref) type, which is used
+to refer to the added constraint in other calls.
 
 Check if a [`ConstraintIndex`](@ref) is valid using [`is_valid`](@ref).
 
@@ -114,13 +114,13 @@ nonpositive) real numbers.
 
 By convention, solvers are not expected to support nonzero constant terms in the
 [`ScalarAffineFunction`](@ref)s the first four rows above, because they are
-redundant with the parameters of the sets. For example, ``2x + 1 \le 2`` should
-be encoded as ``2x \le 1``.
+redundant with the parameters of the sets. For example, encode ``2x + 1 \le 2``
+as ``2x \le 1``.
 
 Constraints with [`VariableIndex`](@ref) in [`LessThan`](@ref), [`GreaterThan`](@ref),
 [`EqualTo`](@ref), or [`Interval`](@ref) sets have a natural interpretation as
 variable bounds. As such, it is typically not natural to impose multiple lower-
-or upper-bounds on the same variable, and the solver interfaces should throw
+or upper-bounds on the same variable, and the solver interfaces will throw
 respectively [`LowerBoundAlreadySet`](@ref) or [`UpperBoundAlreadySet`](@ref).
 
 Moreover, adding two [`VariableIndex`](@ref) constraints on the same variable

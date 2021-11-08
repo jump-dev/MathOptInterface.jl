@@ -200,9 +200,7 @@ machine).
 **Step 3**
 
 Since the double-optimize error involves solving an optimization problem,
-add a new test to [src/Test/UnitTests/solve.jl](https://github.com/jump-dev/MathOptInterface.jl/blob/master/src/Test/UnitTests/solve.jl).
-
-The test should be something like
+add a new test to [src/Test/UnitTests/solve.jl](https://github.com/jump-dev/MathOptInterface.jl/blob/master/src/Test/UnitTests/solve.jl):
 ```julia
 """
     test_unit_optimize!_twice(model::MOI.ModelLike, config::Config)
