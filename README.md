@@ -23,14 +23,15 @@ An abstraction layer for mathematical optimization solvers. Replaces [MathProgBa
 ## Citing MathOptInterface
 
 If you find MathOptInterface useful in your work, we kindly request that you cite the
-following paper:
+following [paper](https://pubsonline.informs.org/doi/10.1287/ijoc.2021.1067):
 ```bibtex
-@article{MathOptInterface-2021,
-   title={MathOptInterface: a data structure for mathematical optimization problems},
-   author={Legat, Benoit and Dowson, Oscar and Garcia, Joaquim and Lubin, Miles},
-   journal={INFORMS Journal on Computing},
-   year={in press},
-   publisher={INFORMS}
- }
+@article{legat2021mathoptinterface,
+    title={{MathOptInterface}: a data structure for mathematical optimization problems},
+    author={Legat, Beno{\^\i}t and Dowson, Oscar and Garcia, Joaquim Dias and Lubin, Miles},
+    journal={INFORMS Journal on Computing},
+    year={2021},
+    doi={10.1287/ijoc.2021.1067},
+    publisher={INFORMS}
+}
 ```
 A preprint of this paper is [freely available](https://arxiv.org/abs/2002.03447). 
