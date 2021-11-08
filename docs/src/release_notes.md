@@ -1,5 +1,17 @@
 # Release notes
 
+## v0.10.5 (November 7, 2021)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.5).
+
+### Maintenance
+
+- Make `normalize_and_add_constraint` more flexible
+- Fix getter in `UniversalFallback`
+- Update paper BibTeX
+- Fix `test_solve_conflict_zeroone_ii`
+
 ## v0.10.4 (October 26, 2021)
 
 For a detailed list of the closed issues and pull requests from this release,
