@@ -221,7 +221,7 @@ function MOI.supports(
 end
 
 function MOI.set(model::Model, ::MOI.VariablePrimalStart, x, v::Real)
-    model.x[x].start = Float64(v)
+    model.x[x].start = convert(Float64, v)::Float64
     return
 end
 
@@ -237,7 +237,6 @@ end
 # ==============================================================================
 
 struct _LinearNLPEvaluator <: MOI.AbstractNLPEvaluator end
-MOI.features_available(::_LinearNLPEvaluator) = [:ExprGraph]
 MOI.initialize(::_LinearNLPEvaluator, ::Vector{Symbol}) = nothing
 
 function MOI.copy_to(dest::Model, model::MOI.ModelLike)

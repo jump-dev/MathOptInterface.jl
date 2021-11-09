@@ -464,7 +464,10 @@ function test_nlmodel_hs071_linear_obj()
     n = NL.Model()
     @test MOI.supports(n, MOI.VariablePrimalStart(), MOI.VariableIndex)
     @test MOI.supports(n, MOI.ObjectiveFunction{typeof(f)}())
-    MOI.copy_to(n, model)
+    index_map = MOI.copy_to(n, model)
+    for (vi, starti) in zip(v, start)
+        @test MOI.get(n, MOI.VariablePrimalStart(), index_map[vi]) == starti
+    end
     @test n.sense == MOI.MAX_SENSE
     @test n.f == NL._NLExpr(f)
     _test_nlexpr(
