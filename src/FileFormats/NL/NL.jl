@@ -220,13 +220,13 @@ function MOI.supports(
     return true
 end
 
-function MOI.set(model::Model, ::MOI.VariablePrimalStart, x, v::Real)
-    model.x[x].start = convert(Float64, v)::Float64
-    return
-end
-
-function MOI.set(model::Model, ::MOI.VariablePrimalStart, x, ::Nothing)
-    model.x[x].start = nothing
+function MOI.set(
+    model::Model,
+    ::MOI.VariablePrimalStart,
+    x::MOI.VariableIndex,
+    v::Union{Nothing,Real},
+)
+    model.x[x].start = v === nothing ? nothing : convert(Float64, v)::Float64
     return
 end
 
