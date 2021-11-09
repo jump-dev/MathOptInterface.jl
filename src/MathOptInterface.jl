@@ -31,7 +31,7 @@ abstract type AbstractOptimizer <: ModelLike end
 
 Optimize the problem contained in `optimizer`.
 
-Before calling `optimize!`, the problem should first be constructed using the 
+Before calling `optimize!`, the problem should first be constructed using the
 incremental interface (see [`supports_incremental_interface`](@ref)) or [`copy_to`](@ref).
 """
 function optimize! end
@@ -45,22 +45,22 @@ A "one-shot" call that copies the problem from `src` into `dest` and then uses
 Returns a tuple of an [`IndexMap`](@ref) and a `Bool` `copied`.
 
  * The [`IndexMap`](@ref) object translates variable and constraint indices from
-   the `src` model to the corresponding indices in the `dest` optimizer. See 
+   the `src` model to the corresponding indices in the `dest` optimizer. See
    [`copy_to`](@ref) for details.
  * If `copied == true`, `src` was copied to `dest` and then cached, allowing
    incremental modification if supported by the solver.
  * If `copied == false`, a cache of the model was _not_ kept in `dest`.
-   Therefore, only the solution information (attributes for which 
+   Therefore, only the solution information (attributes for which
    [`is_set_by_optimize`](@ref) is true) is available to query.
 
 !!! note
-    The main purpose of `optimize!` method with two arguments is for use in 
+    The main purpose of `optimize!` method with two arguments is for use in
     [`Utilities.CachingOptimizer`](@ref).
 
 !!! warning
     The new `optimize!` method with two arguments is an experimental new feature
     of MOI v0.10.2 that may break in MOI v1.0.
-    
+
 ## Relationship to the single-argument `optimize!`
 
 The default fallback of `optimize!(dest::AbstractOptimizer, src::ModelLike)` is
@@ -202,13 +202,18 @@ is_valid(dest, index_map[x]) # true
 ```
 """
 function copy_to(dest, src; kwargs...)
-    if length(kwargs) > 0
-        @warn(
-            "copy_to with keyword arguments is deprecated. Now names are " *
-            "copied by default",
-            maxlog = 1,
+    if length(kwargs) == 0
+        error(
+            "`copy_to` is not supported by the solver `$(typeof(dest))`. Did " *
+            "you mean to call " *
+            "`optimize!(dest::AbstractOptimizer, src::ModelLike)` instead?",
         )
     end
+    @warn(
+        "copy_to with keyword arguments is deprecated. Now names are " *
+        "copied by default",
+        maxlog = 1,
+    )
     return copy_to(dest, src)
 end
 
