@@ -18,7 +18,7 @@ const _PAGES = [
     "Introduction" => [
         "index.md",
         "background/motivation.md",
-    ]
+    ],
     "Tutorials" => [
         "tutorials/example.md",
         "tutorials/implementing.md",
