@@ -99,6 +99,8 @@ const _PAGES = [
 
 if _PDF
     latex_platform = _IS_GITHUB_ACTIONS ? "docker" : "native"
+    # Remove the Release Notes; we don't need them in the PDF.
+    pop!(_PAGES)
     @time Documenter.makedocs(
         sitename = "MathOptInterface",
         authors = "The JuMP core developers and contributors",
