@@ -156,7 +156,7 @@ function test_iterate()
     return
 end
 
-function test_iterate_ii()
+function test_iterate_2()
     d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
     key = CleverDicts.add_item(d, "first")
     key2 = CleverDicts.add_item(d, "second")
@@ -184,7 +184,7 @@ function test_iterate_ii()
     return
 end
 
-function test_iterate_iii()
+function test_iterate_3()
     d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
     y = 0
     for (k, v) in d

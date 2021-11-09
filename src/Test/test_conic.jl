@@ -6768,7 +6768,7 @@ function setup_test(
 end
 
 """
-    test_conic_SecondOrderCone_negative_post_bound_ii(
+    test_conic_SecondOrderCone_negative_post_bound_2(
         model::MOI.ModelLike,
         config::Config{T},
     ) where {T}
@@ -6776,7 +6776,7 @@ end
 Test a second order cosnstraint with an epigraph variable >= -M and the bound
 constraints added via `add_constraint`.
 """
-function test_conic_SecondOrderCone_negative_post_bound_ii(
+function test_conic_SecondOrderCone_negative_post_bound_2(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
@@ -6811,7 +6811,7 @@ function test_conic_SecondOrderCone_negative_post_bound_ii(
 end
 
 function setup_test(
-    ::typeof(test_conic_SecondOrderCone_negative_post_bound_ii),
+    ::typeof(test_conic_SecondOrderCone_negative_post_bound_2),
     model::MOIU.MockOptimizer,
     ::Config,
 )
@@ -6828,7 +6828,7 @@ function setup_test(
 end
 
 """
-    test_conic_SecondOrderCone_negative_post_bound_iii(
+    test_conic_SecondOrderCone_negative_post_bound_3(
         model::MOI.ModelLike,
         config::Config{T},
     ) where {T}
@@ -6836,7 +6836,7 @@ end
 Test a second order cosnstraint with an epigraph variable >= -M and the bound
 constraints added via `add_constraints`.
 """
-function test_conic_SecondOrderCone_negative_post_bound_iii(
+function test_conic_SecondOrderCone_negative_post_bound_3(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
@@ -6872,7 +6872,7 @@ function test_conic_SecondOrderCone_negative_post_bound_iii(
 end
 
 function setup_test(
-    ::typeof(test_conic_SecondOrderCone_negative_post_bound_iii),
+    ::typeof(test_conic_SecondOrderCone_negative_post_bound_3),
     model::MOIU.MockOptimizer,
     ::Config,
 )
