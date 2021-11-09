@@ -1002,6 +1002,15 @@ function test_empty()
     @test MOI.is_empty(n)
 end
 
+function test_moi()
+    MOI.Test.runtests(
+        NL.Model(),
+        MOI.Test.Config(exclude = Any[MOI.optimize!]),
+        include = ["test_model_copy_to_Unsupported"],
+    )
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$(name)", "test_")
