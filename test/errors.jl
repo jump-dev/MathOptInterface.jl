@@ -299,6 +299,21 @@ function test_errors_InvalidCalbackUsage()
           "InvalidCallbackUsage: Cannot submit $(MOI.UserCut(1)) inside a MathOptInterface.LazyConstraintCallback()."
 end
 
+struct TestCopyToFallback <: MOI.AbstractOptimizer end
+
+function test_errors_copy_to_fallback()
+    dest = TestCopyToFallback()
+    @test_throws(
+        ErrorException(
+            "`copy_to` is not supported by the solver `$(typeof(dest))`. Did " *
+            "you mean to call " *
+            "`optimize!(dest::AbstractOptimizer, src::ModelLike)` instead?",
+        ),
+        MOI.copy_to(dest, MOI.Utilities.Model{Float64}()),
+    )
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")
