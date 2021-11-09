@@ -220,13 +220,13 @@ function MOI.supports(
     return true
 end
 
-function MOI.set(model::Model, ::MOI.VariablePrimalStart, x, v::Real)
-    model.x[x].start = Float64(v)
-    return
-end
-
-function MOI.set(model::Model, ::MOI.VariablePrimalStart, x, ::Nothing)
-    model.x[x].start = nothing
+function MOI.set(
+    model::Model,
+    ::MOI.VariablePrimalStart,
+    x::MOI.VariableIndex,
+    v::Union{Nothing,Real},
+)
+    model.x[x].start = v === nothing ? nothing : convert(Float64, v)::Float64
     return
 end
 
@@ -237,34 +237,36 @@ end
 # ==============================================================================
 
 struct _LinearNLPEvaluator <: MOI.AbstractNLPEvaluator end
-MOI.features_available(::_LinearNLPEvaluator) = [:ExprGraph]
 MOI.initialize(::_LinearNLPEvaluator, ::Vector{Symbol}) = nothing
 
 function MOI.copy_to(dest::Model, model::MOI.ModelLike)
-    mapping = MOI.Utilities.IndexMap()
-    # Initialize the NLP block.
-    has_nlp = MOI.NLPBlock() in MOI.get(model, MOI.ListOfModelAttributesSet())
-    nlp_block = if has_nlp
-        MOI.get(model, MOI.NLPBlock())
-    else
-        MOI.NLPBlockData(MOI.NLPBoundsPair[], _LinearNLPEvaluator(), false)
+    if !MOI.is_empty(dest)
+        MOI.empty!(dest)
     end
-    if !(:ExprGraph in MOI.features_available(nlp_block.evaluator))
-        error(
-            "Unable to use AmplNLWriter because the nonlinear evaluator " *
-            "does not supply expression graphs.",
-        )
+    mapping = MOI.Utilities.IndexMap()
+    nlp_block =
+        MOI.NLPBlockData(MOI.NLPBoundsPair[], _LinearNLPEvaluator(), false)
+    for attr in MOI.get(model, MOI.ListOfModelAttributesSet())
+        if attr == MOI.NLPBlock()
+            nlp_block = MOI.get(model, MOI.NLPBlock())
+            if !(:ExprGraph in MOI.features_available(nlp_block.evaluator))
+                error(
+                    "Unable to use AmplNLWriter because the nonlinear " *
+                    "evaluator does not supply expression graphs.",
+                )
+            end
+        elseif attr == MOI.ObjectiveSense()
+            dest.sense = MOI.get(model, MOI.ObjectiveSense())
+        elseif attr isa MOI.ObjectiveFunction
+            dest.f = _NLExpr(MOI.get(model, attr))
+        else
+            throw(MOI.UnsupportedAttribute(attr))
+        end
     end
     MOI.initialize(nlp_block.evaluator, [:ExprGraph])
-    # Objective function.
-    if nlp_block.has_objective
+    if nlp_block.has_objective  # Nonlinear objective takes precedence.
         dest.f = _NLExpr(MOI.objective_expr(nlp_block.evaluator))
-    else
-        F = MOI.get(model, MOI.ObjectiveFunctionType())
-        obj = MOI.get(model, MOI.ObjectiveFunction{F}())
-        dest.f = _NLExpr(obj)
     end
-    # Nonlinear constraints
     for (i, bound) in enumerate(nlp_block.constraint_bounds)
         push!(
             dest.g,
@@ -272,25 +274,24 @@ function MOI.copy_to(dest::Model, model::MOI.ModelLike)
         )
     end
     dest.nlpblock_dim = length(dest.g)
-    starts = MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
-    for x in MOI.get(model, MOI.ListOfVariableIndices())
+    x_src = MOI.get(model, MOI.ListOfVariableIndices())
+    for x in x_src
         dest.x[x] = _VariableInfo()
-        if starts
-            start = MOI.get(model, MOI.VariablePrimalStart(), x)
-            MOI.set(dest, MOI.VariablePrimalStart(), x, start)
-        end
         mapping[x] = x
     end
-    dest.sense = MOI.get(model, MOI.ObjectiveSense())
+    MOI.Utilities.pass_attributes(dest, model, mapping, x_src)
     resize!(dest.order, length(dest.x))
     # Now deal with the normal MOI constraints.
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        if !MOI.supports_constraint(dest, F, S)
+            throw(MOI.UnsupportedConstraint{F,S}())
+        end
         _process_constraint(dest, model, F, S, mapping)
     end
     # Correct bounds of binary variables. Mainly because AMPL doesn't have the
     # concept of binary nonlinear variables, but it does have binary linear
     # variables! How annoying.
-    for (x, v) in dest.x
+    for (_, v) in dest.x
         if v.type == _BINARY
             v.lower = max(0.0, v.lower)
             v.upper = min(1.0, v.upper)
@@ -438,7 +439,8 @@ function _process_constraint(
     ::Type{S},
     mapping,
 ) where {F,S}
-    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+    ci_src = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+    for ci in ci_src
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
         s = MOI.get(model, MOI.ConstraintSet(), ci)
         op, l, u = _set_to_bounds(s)
@@ -461,6 +463,7 @@ function _process_constraint(
             mapping[ci] = MOI.ConstraintIndex{F,S}(length(dest.g))
         end
     end
+    MOI.Utilities.pass_attributes(dest, model, mapping, ci_src)
     return
 end
 
@@ -471,7 +474,8 @@ function _process_constraint(
     S::Type{<:_SCALAR_SETS},
     mapping,
 )
-    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+    ci_src = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+    for ci in ci_src
         mapping[ci] = ci
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
         s = MOI.get(model, MOI.ConstraintSet(), ci)
@@ -483,6 +487,7 @@ function _process_constraint(
             dest.x[f].upper = u
         end
     end
+    MOI.Utilities.pass_attributes(dest, model, mapping, ci_src)
     return
 end
 
@@ -493,11 +498,13 @@ function _process_constraint(
     S::Type{<:Union{MOI.ZeroOne,MOI.Integer}},
     mapping,
 )
-    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+    ci_src = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+    for ci in ci_src
         mapping[ci] = ci
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
         dest.x[f].type = S == MOI.ZeroOne ? _BINARY : _INTEGER
     end
+    MOI.Utilities.pass_attributes(dest, model, mapping, ci_src)
     return
 end
 
