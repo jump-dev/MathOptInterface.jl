@@ -12,7 +12,7 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 This guide outlines the basic steps to implement an interface to
 MathOptInterface for a new solver.
 
-!!! warning
+!!! danger
     Implementing an interface to MathOptInterface for a new solver is a lot of
     work. Before starting, we recommend that you join the
     [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev) and explain a
@@ -47,6 +47,9 @@ For example:
    solver.
 
 ## Preliminaries
+
+Before starting on your wrapper, you should do some background research and make
+the solver accessible via Julia.
 
 ### Decide if MathOptInterface is right for you
 
@@ -627,6 +630,8 @@ If your solver accepts primal or dual warm-starts, implement:
 
 ## Other tips
 
+Here are some other points to be aware of when writing your wrapper.
+
 ### Unsupported constraints at runtime
 
 In some cases, your solver may support a particular type of constraint (e.g.,
@@ -652,7 +657,7 @@ Only throw if the constraints conflict. It is okay to add
 
 ### Expect duplicate coefficients
 
-Solvers should expect that functions such as [`ScalarAffineFunction`](@ref) and
+Solvers must expect that functions such as [`ScalarAffineFunction`](@ref) and
 [`VectorQuadraticFunction`](@ref) may contain duplicate coefficents.
 
 For example,
@@ -663,14 +668,14 @@ coefficients aggregated together.
 
 ### Don't modify user-data
 
-All data passed to the solver should be copied immediately to internal data
-structures. Solvers may not modify any input vectors and should assume that
-input vectors may be modified by users in the future.
+All data passed to the solver must be copied immediately to internal data
+structures. Solvers may not modify any input vectors and must assume that
+input vectors will not be modified by users in the future.
 
 This applies, for example, to the `terms` vector in
 [`ScalarAffineFunction`](@ref). Vectors returned to the user, e.g., via
 [`ObjectiveFunction`](@ref) or
-[`ConstraintFunction`](@ref) attributes, should not be modified by the solver
+[`ConstraintFunction`](@ref) attributes, must not be modified by the solver
 afterwards. The in-place version of [`get!`](@ref) can be used by users to avoid
 extra copies in this case.
 
@@ -681,7 +686,7 @@ API for setting coefficients in existing constraints when adding a new variable,
 it is possible to queue modifications and new variables and then call the
 solver's API once all of the new coefficients are known.
 
-## Extra: solver-specific attributes
+### Solver-specific attributes
 
 You don't need to restrict yourself to the attributes defined in the
 MathOptInterface.jl package.

@@ -9,24 +9,25 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 # Bridge interface
 
-A bridge should implement the following functions to be usable by a bridge optimizer:
+To be usable by a bridge optimizer, a bridge must implement the following
+functions:
 ```@docs
 Bridges.added_constrained_variable_types
 Bridges.added_constraint_types
 ```
-Additionally, variable bridges should implement:
+Additionally, variable bridges must implement:
 ```@docs
 Bridges.Variable.supports_constrained_variable
 Bridges.Variable.concrete_bridge_type
 Bridges.Variable.bridge_constrained_variable
 ```
-constraint bridges should implement:
+constraint bridges must implement:
 ```@docs
 supports_constraint(::Type{<:Bridges.Constraint.AbstractBridge}, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet})
 Bridges.Constraint.concrete_bridge_type
 Bridges.Constraint.bridge_constraint
 ```
-and objective bridges should implement:
+and objective bridges must implement:
 ```@docs
 Bridges.set_objective_function_type
 Bridges.Objective.concrete_bridge_type
@@ -36,7 +37,7 @@ Bridges.Objective.bridge_objective
 When querying the [`NumberOfVariables`](@ref), [`NumberOfConstraints`](@ref)
 [`ListOfVariableIndices`](@ref), and [`ListOfConstraintIndices`](@ref), the
 variables and constraints created by the bridges in the underlying model are
-hidden by the bridge optimizer. For this purpose, the bridge should provide
+hidden by the bridge optimizer. For this purpose, the bridge must provide
 access to the variables and constraints it has created by implementing the
 following methods of [`get`](@ref):
 ```@docs

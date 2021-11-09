@@ -53,11 +53,10 @@ and the dual is a minimization problem in standard conic form:
 \end{align}
 ```
 
-A linear inequality constraint ``a^T x + b \ge c`` should be interpreted as
-``a^T x + b - c \in \mathbb{R}_+``, and similarly ``a^T x + b \le c`` should be
-interpreted as ``a^T x + b - c \in \mathbb{R}_-``. Variable-wise constraints
-should be interpreted as affine constraints with the appropriate identity
-mapping in place of ``A_i``.
+A linear inequality constraint ``a^T x + b \ge c`` is equivalent to
+``a^T x + b - c \in \mathbb{R}_+``, and ``a^T x + b \le c`` is equivalent to
+``a^T x + b - c \in \mathbb{R}_-``. Variable-wise constraints are affine
+constraints with the appropriate identity mapping in place of ``A_i``.
 
 For the special case of minimization LPs, the MOI primal form can be stated as:
 ```math

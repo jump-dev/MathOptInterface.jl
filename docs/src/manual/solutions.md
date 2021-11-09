@@ -38,7 +38,7 @@ else
 end
 ```
 
-After checking the [`TerminationStatus`](@ref), one should typically check
+After checking the [`TerminationStatus`](@ref), check
 [`ResultCount`](@ref). This attribute returns the number of results that the
 solver has available to return. *A result is defined as a primal-dual pair,
 but either the primal or the dual may be missing from the result.* While the
