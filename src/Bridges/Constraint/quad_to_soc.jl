@@ -78,15 +78,17 @@ function bridge_constraint(
     F = try
         LinearAlgebra.cholesky(LinearAlgebra.Symmetric(Q))
     catch
-        error("""
-            Unable to transform a quadratic constraint into a second-order cone
-            constraint because the quadratic constraint is not strongly convex.
-
-            Convex constraints that are not strongly convex (i.e., the matrix is
-            positive semidefinite but not positive definite) are not supported
-            yet.
-
-            Note that a quadratic equality constraint is non-convex.""")
+        throw(
+            MOI.UnsupportedConstraint{typeof(func),typeof(set)}(
+                "Unable to transform a quadratic constraint into a " *
+                "second-order cone constraint because the quadratic " *
+                "constraint is not strongly convex.\n\nConvex constraints " *
+                "that are not strongly convex (i.e., the matrix is positive " *
+                "semidefinite but not positive definite) are not supported " *
+                "yet.\n\nNote that a quadratic equality constraint is " *
+                "non-convex.",
+            ),
+        )
     end
     # Construct the VectorAffineFunction. We're aiming for:
     #  |          1 |

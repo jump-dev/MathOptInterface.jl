@@ -24,7 +24,8 @@ function test_error_for_nonconvex_quadratic_constraints()
     mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     bridged_mock = MOI.Bridges.Constraint.QuadtoSOC{Float64}(mock)
     x = MOI.add_variable(bridged_mock)
-    @test_throws ErrorException begin
+    @test_throws(
+        MOI.UnsupportedConstraint,
         MOI.add_constraint(
             bridged_mock,
             MOI.ScalarQuadraticFunction(
@@ -34,8 +35,9 @@ function test_error_for_nonconvex_quadratic_constraints()
             ),
             MOI.GreaterThan(0.0),
         )
-    end
-    @test_throws ErrorException begin
+    )
+    @test_throws(
+        MOI.UnsupportedConstraint,
         MOI.add_constraint(
             bridged_mock,
             MOI.ScalarQuadraticFunction(
@@ -45,7 +47,7 @@ function test_error_for_nonconvex_quadratic_constraints()
             ),
             MOI.LessThan(0.0),
         )
-    end
+    )
     return
 end
 
