@@ -1014,6 +1014,14 @@ function test_moi()
     return
 end
 
+function test_float_rounding()
+    @test NL._str(1.0) == "1"
+    @test NL._str(1.2) == "1.2"
+    @test NL._str(1e50) == "1.0e50"
+    @test NL._str(-1e50) == "-1.0e50"
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$(name)", "test_")
