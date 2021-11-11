@@ -508,7 +508,12 @@ function _process_constraint(
     return
 end
 
-_str(x::Float64) = isinteger(x) ? string(round(Int, x)) : string(x)
+function _str(x::Float64)
+    if isinteger(x) && (typemin(Int) <= x <= typemax(Int))
+        return string(round(Int, x))
+    end
+    return string(x)
+end
 
 _write_term(io, x::Float64, ::Any) = println(io, "n", _str(x))
 _write_term(io, x::Int, ::Any) = println(io, "o", x)
