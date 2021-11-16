@@ -1,8 +1,12 @@
 for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
     o = iszero(offset) ? "" : "_offset"
-    f_name = Symbol("test_unbounded_$(Symbol(sense))$(o)")
+    f_unbd_name = Symbol("test_unbounded_$(Symbol(sense))$(o)")
+    f_infeas_name = Symbol("test_infeasible_$(Symbol(sense))$(o)")
     @eval begin
-        function $(f_name)(model::MOI.ModelLike, config::Config)
+        """
+        Test the infeasibility certificates of an unbounded model.
+        """
+        function $(f_unbd_name)(model::MOI.ModelLike, config::Config)
             @requires _supports(config, MOI.optimize!)
             x = MOI.add_variable(model)
             MOI.set(model, MOI.ObjectiveSense(), $sense)
@@ -28,8 +32,9 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
             @test isapprox(2.2 * d, obj, config)
             return
         end
+
         function setup_test(
-            ::typeof($(f_name)),
+            ::typeof($(f_unbd_name)),
             mock::MOIU.MockOptimizer,
             config::Config,
         )
@@ -50,14 +55,11 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
             )
             return () -> mock.eval_objective_value = flag
         end
-    end
-end
 
-for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 0.2)
-    o = iszero(offset) ? "" : "_offset"
-    f_name = Symbol("test_infeasible_$(Symbol(sense))$(o)")
-    @eval begin
-        function $(f_name)(model::MOI.ModelLike, config::Config)
+        """
+        Test the infeasibility certificates of an infeasible model.
+        """
+        function $(f_infeas_name)(model::MOI.ModelLike, config::Config)
             @requires _supports(config, MOI.optimize!)
             x = MOI.add_variable(model)
             MOI.set(model, MOI.ObjectiveSense(), $sense)
@@ -83,8 +85,9 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 0.2)
             @test isapprox(1.4 * dl + 2.5 * du, obj, config)
             return
         end
+
         function setup_test(
-            ::typeof($(f_name)),
+            ::typeof($(f_infeas_name)),
             mock::MOIU.MockOptimizer,
             config::Config,
         )
@@ -101,8 +104,10 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 0.2)
                         MOI.INFEASIBLE,
                         MOI.NO_SOLUTION,
                         MOI.INFEASIBILITY_CERTIFICATE,
-                        (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [1.0],
-                        (MOI.VariableIndex, MOI.LessThan{Float64}) => [-1.0],
+                        (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
+                            [1.0],
+                        (MOI.VariableIndex, MOI.LessThan{Float64}) =>
+                            [-1.0],
                     )
                 end,
             )
