@@ -102,22 +102,22 @@ A certificate of primal infeasibility is an improving ray of the dual problem.
 However, because infeasibility is independent of the objective function, we
 first homogenize the primal problem by removing its objective.
 
-Therefore, a dual improving ray is some vector ``d`` such that for all
-``\eta > 0``:
+For a minimization problem, a dual improving ray is some vector ``d`` such that
+for all ``\eta > 0``:
 ```math
 \begin{align}
-\sum_{i=1}^m A_i^\top (y_i + \eta d_i) & = 0 \\
+\sum_{i=1}^m -A_i^\top (y_i + \eta d_i) & = 0 \\
 (y_i + \eta d_i) & \in \mathcal{C}_i^* & i = 1 \ldots m,
 \end{align}
 ```
 and:
 ```math
-\sum_{i=1}^m b_i^\top (y_i + \eta d_i) < \sum_{i=1}^m b_i^\top y_i,
+-\sum_{i=1}^m b_i^\top (y_i + \eta d_i) > -\sum_{i=1}^m b_i^\top y_i,
 ```
 for any feasible dual solution ``y``. The latter simplifies to
-``\sum_{i=1}^m b_i^\top d_i < 0``. Note that conic duality is defined such that
-this inequality is independent of whether the objective sense is minimization or
-maximization.
+``-\sum_{i=1}^m b_i^\top d_i > 0``. For a maximization problem, the inequality
+is ``\sum_{i=1}^m b_i^\top d_i < 0``. (Note that these are the same inequality,
+modulo a `-` sign.)
 
 If the solver has found a certificate of infeasibility:
 
@@ -125,7 +125,8 @@ If the solver has found a certificate of infeasibility:
  * [`DualStatus`](@ref) must be `INFEASIBILITY_CERTIFICATE`
  * [`ConstraintDual`](@ref) must be the corresponding value of ``d``
  * [`DualObjectiveValue`](@ref) must be the value
-   ``\sum_{i=1}^m b_i^\top d_i``.
+   ``-\sum_{i=1}^m b_i^\top d_i`` for minimization problems and
+   ``\sum_{i=1}^m b_i^\top d_i`` for maximization problems.
 
 !!! note
     The choice of whether to scale the ray ``d`` to have magnitude `1` is left

@@ -19,11 +19,16 @@ the `ObjectiveFunction` value.
 function get_fallback(model::MOI.ModelLike, attr::MOI.ObjectiveValue)
     F = MOI.get(model, MOI.ObjectiveFunctionType())
     f = MOI.get(model, MOI.ObjectiveFunction{F}())
-    # TODO do not include constant if primal solution is a ray
-    return eval_variables(
+    obj = eval_variables(
         vi -> MOI.get(model, MOI.VariablePrimal(attr.result_index), vi),
         f,
     )
+    if MOI.get(model, MOI.PrimalStatus()) == MOI.INFEASIBILITY_CERTIFICATE
+        # Dual infeasibiltiy certificates do not include the primal objective
+        # constant.
+        obj -= MOI.constant(f, Int)
+    end
+    return obj
 end
 
 function constraint_constant(

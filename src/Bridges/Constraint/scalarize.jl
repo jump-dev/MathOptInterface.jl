@@ -175,7 +175,6 @@ function MOI.set(
     bridge::ScalarizeBridge,
     value,
 )
-    # TODO do no add constant if the primal status is a ray like in Vectorize
     MOI.set.(model, attr, bridge.scalar_constraints, value .- bridge.constants)
     return
 end

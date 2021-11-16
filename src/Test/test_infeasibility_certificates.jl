@@ -38,22 +38,21 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
             mock::MOIU.MockOptimizer,
             config::Config,
         )
-            x = [$sense == MOI.MIN_SENSE ? -1.0 : 1.0]
-            flag = mock.eval_objective_value
-            mock.eval_objective_value = false
             MOIU.set_mock_optimize!(
                 mock,
                 (mock::MOIU.MockOptimizer) -> begin
-                    MOI.set(mock, MOI.ObjectiveValue(), 2.2 * x[1])
                     MOIU.mock_optimize!(
                         mock,
                         MOI.DUAL_INFEASIBLE,
-                        (MOI.INFEASIBILITY_CERTIFICATE, x),
+                        (
+                            MOI.INFEASIBILITY_CERTIFICATE,
+                            [$sense == MOI.MIN_SENSE ? -1.0 : 1.0],
+                        ),
                         MOI.NO_SOLUTION,
                     )
                 end,
             )
-            return () -> mock.eval_objective_value = flag
+            return
         end
 
         """
@@ -78,11 +77,16 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
             dl = MOI.get(model, MOI.ConstraintDual(), cl)
             du = MOI.get(model, MOI.ConstraintDual(), cu)
             obj = MOI.get(model, MOI.DualObjectiveValue())
+            if $sense == MOI.MIN_SENSE
+                @test obj > config.atol
+                @test isapprox(-(1.4 * dl + 2.5 * du), obj, config)
+            else
+                @test obj < -config.atol
+                @test isapprox(1.4 * dl + 2.5 * du, obj, config)
+            end
             @test dl > config.atol
             @test du < -config.atol
-            @test obj < -config.atol
             @test isapprox(dl + du, 0.0, config)
-            @test isapprox(1.4 * dl + 2.5 * du, obj, config)
             return
         end
 
@@ -91,14 +95,11 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
             mock::MOIU.MockOptimizer,
             config::Config,
         )
-            flag_obj = mock.eval_dual_objective_value
             flag_var = mock.eval_variable_constraint_dual
-            mock.eval_dual_objective_value = false
             mock.eval_variable_constraint_dual = false
             MOIU.set_mock_optimize!(
                 mock,
                 (mock::MOIU.MockOptimizer) -> begin
-                    MOI.set(mock, MOI.DualObjectiveValue(), -1.1)
                     MOIU.mock_optimize!(
                         mock,
                         MOI.INFEASIBLE,
@@ -111,10 +112,7 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
                     )
                 end,
             )
-            return () -> begin
-                mock.eval_dual_objective_value = flag_obj
-                mock.eval_variable_constraint_dual = flag_var
-            end
+            return () -> mock.eval_variable_constraint_dual = flag_var
         end
     end
 end
