@@ -66,7 +66,7 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
             f = 2.2 * x + $offset
             MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
             cl = MOI.add_constraint(model, x, MOI.GreaterThan(2.5))
-            cu = MOI.add_constraint(model, x, MOI.LessThan(1.4))
+            cu = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(1.4))
             MOI.optimize!(model)
             @requires(
                 MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE,
@@ -96,8 +96,6 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
             mock::MOIU.MockOptimizer,
             config::Config,
         )
-            flag_var = mock.eval_variable_constraint_dual
-            mock.eval_variable_constraint_dual = false
             MOIU.set_mock_optimize!(
                 mock,
                 (mock::MOIU.MockOptimizer) -> begin
@@ -108,12 +106,14 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
                         MOI.INFEASIBILITY_CERTIFICATE,
                         (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
                             [1.0],
-                        (MOI.VariableIndex, MOI.LessThan{Float64}) =>
-                            [-1.0],
+                        (
+                            MOI.ScalarAffineFunction{Float64},
+                            MOI.LessThan{Float64},
+                        ) => [-1.0],
                     )
                 end,
             )
-            return () -> mock.eval_variable_constraint_dual = flag_var
+            return
         end
 
         """
@@ -126,9 +126,8 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
             MOI.set(model, MOI.ObjectiveSense(), $sense)
             f = 2.2 * x + $offset
             MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
-            g = 1.0 * x
-            cl = MOI.add_constraint(model, g, MOI.GreaterThan(2.5))
-            cu = MOI.add_constraint(model, g, MOI.LessThan(1.4))
+            cl = MOI.add_constraint(model, 1.0 * x, MOI.GreaterThan(2.5))
+            cu = MOI.add_constraint(model, x, MOI.LessThan(1.4))
             MOI.optimize!(model)
             @requires(
                 MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE,
@@ -170,10 +169,8 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
                             MOI.ScalarAffineFunction{Float64},
                             MOI.GreaterThan{Float64},
                         ) => [1.0],
-                        (
-                            MOI.ScalarAffineFunction{Float64},
-                            MOI.LessThan{Float64},
-                        ) => [-1.0],
+                        (MOI.VariableIndex, MOI.LessThan{Float64}) =>
+                            [-1.0],
                     )
                 end,
             )
