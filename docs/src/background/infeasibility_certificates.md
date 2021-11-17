@@ -9,15 +9,17 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 # Infeasibility certificates
 
-When given an infeasible or unbounded model, some (conic) solvers can produce a
-certificate or infeasibility. This page explains what a certificate of
-infeasibility is for unbounded and infeasible models.
+When given a conic problem that is infeasible or unbounded, some solvers can
+produce a certificate or infeasibility. This page explains what a certificate of
+infeasibility is, and the related conventions that MathOptInterface adopts.
 
 ## Conic duality
 
 MathOptInterface uses conic duality, which we use to define infeasibility
 certificates. A full explanation is given in the section [Duality](@ref), but
 here is a brief overview.
+
+### Minimization problems
 
 For a minimization problem in geometric conic form, the primal is:
 ```math
@@ -40,6 +42,8 @@ and the dual is a maximization problem in standard conic form:
 where each ``\mathcal{C}_i`` is a closed convex cone and ``\mathcal{C}_i^*`` is
 its dual cone.
 
+### Maximization problems
+
 For a maximization problem in geometric conic form, the primal is:
 ```math
 \begin{align}
@@ -59,14 +63,14 @@ and the dual is a minimization problem in standard conic form:
 \end{align}
 ```
 
-## Unbounded models
+## Unbounded problems
 
-If a model is unbounded, two things are true:
+If a problem is unbounded, if and only if:
  1. there exists a feasible primal solution
  2. the dual is infeasible.
 
 A feasible primal solution---if one exists---can be obtained by setting
-[`ObjectiveSense`](@ref) to `FEASIBILITY_SENSE` and then optimizing. Therefore,
+[`ObjectiveSense`](@ref) to `FEASIBILITY_SENSE` before optimizing. Therefore,
 most solvers terminate after they prove the dual is infeasible via a certificate
 of dual infeasibility, but _before_ they have found a feasible primal solution.
 This is also the reason that MathOptInterface defines the `DUAL_INFEASIBLE`
@@ -96,7 +100,7 @@ If the solver has found a certificate of dual infeasibility:
     The choice of whether to scale the ray ``d`` to have magnitude `1` is left
     to the solver.
 
-## Infeasible models
+## Infeasible problems
 
 A certificate of primal infeasibility is an improving ray of the dual problem.
 However, because infeasibility is independent of the objective function, we
@@ -119,7 +123,7 @@ for any feasible dual solution ``y``. The latter simplifies to
 is ``\sum_{i=1}^m b_i^\top d_i < 0``. (Note that these are the same inequality,
 modulo a `-` sign.)
 
-If the solver has found a certificate of infeasibility:
+If the solver has found a certificate of primal infeasibility:
 
  * [`TerminationStatus`](@ref) must be `INFEASIBLE`
  * [`DualStatus`](@ref) must be `INFEASIBILITY_CERTIFICATE`
@@ -143,12 +147,13 @@ l_A \le A x \le u_A \\
 l_x \le x \le u_x,
 \end{align}
 ```
-the dual certificate of the variable bounds can be computed using the
-certificate associated with the affine constraints ``d``. (Note that ``d`` will
+the dual certificate of the variable bounds can be computed using  the
+certificate associated with the affine constraints, ``d``. (Note that ``d`` will
 have one element for each row of the ``A`` matrix, and that some or all of the
-vectors ``l_A`` and ``u_A`` may be ``\pm \infty``. If both ``l_A`` and ``u_A``
-are finite for some row, the corresponding element in ``d`` must be `0`.)
+elements in the vectors ``l_A`` and ``u_A`` may be ``\pm \infty``. If both
+``l_A`` and ``u_A`` are finite for some row, the corresponding element in ``d`
+ must be `0`.)
 
-Given ``d``, compute ``\bar{d} = d^\top A``. A certificate for the lower
-variable bound of ``x_i`` is ``\max\{\bar{d}_i, 0\}``, and a certificate for the
-upper variable bound is ``\min\{\bar{d}_i, 0\}``.
+Given ``d``, compute ``\bar{d} = d^\top A``. If the bound is finite, a
+certificate for the lower variable bound of ``x_i`` is ``\max\{\bar{d}_i, 0\}``,
+and a certificate for the upper variable bound is ``\min\{\bar{d}_i, 0\}``.
