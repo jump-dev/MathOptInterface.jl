@@ -65,7 +65,7 @@ and the dual is a minimization problem in standard conic form:
 
 ## Unbounded problems
 
-If a problem is unbounded, if and only if:
+A problem is unbounded if and only if:
  1. there exists a feasible primal solution
  2. the dual is infeasible.
 
@@ -139,7 +139,7 @@ If the solver has found a certificate of primal infeasibility:
 
 ### Infeasibility certificates of variable bounds
 
-Many linear solvers (e.g., Gurobi) do not provide explicit access to the dual
+Many linear solvers (e.g., Gurobi) do not provide explicit access to the
 infeasibility certificate of a variable bound. However, given a set of linear
 constraints:
 ```math
@@ -148,7 +148,7 @@ l_A \le A x \le u_A \\
 l_x \le x \le u_x,
 \end{align}
 ```
-the dual certificate of the variable bounds can be computed using  the
+the certificate of the variable bounds can be computed using  the
 certificate associated with the affine constraints, ``d``. (Note that ``d`` will
 have one element for each row of the ``A`` matrix, and that some or all of the
 elements in the vectors ``l_A`` and ``u_A`` may be ``\pm \infty``. If both
