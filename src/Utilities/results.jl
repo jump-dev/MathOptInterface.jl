@@ -23,7 +23,7 @@ function get_fallback(model::MOI.ModelLike, attr::MOI.ObjectiveValue)
         vi -> MOI.get(model, MOI.VariablePrimal(attr.result_index), vi),
         f,
     )
-    if MOI.get(model, MOI.PrimalStatus()) == MOI.INFEASIBILITY_CERTIFICATE
+    if is_ray(MOI.get(model, MOI.PrimalStatus()))
         # Dual infeasibiltiy certificates do not include the primal objective
         # constant.
         obj -= MOI.constant(f, Int)
@@ -178,11 +178,13 @@ function get_fallback(
     idx::MOI.ConstraintIndex,
 )
     f = MOI.get(model, MOI.ConstraintFunction(), idx)
-    # TODO do not include constant if primal solution is a ray
-    return eval_variables(
-        vi -> MOI.get(model, MOI.VariablePrimal(attr.result_index), vi),
-        f,
-    )
+    c = eval_variables(f) do vi
+        return MOI.get(model, MOI.VariablePrimal(attr.result_index), vi)
+    end
+    if is_ray(MOI.get(model, MOI.PrimalStatus()))
+        c -= MOI.constant(f, Int)
+    end
+    return c
 end
 
 ################ Constraint Dual for Variable-wise constraints #################

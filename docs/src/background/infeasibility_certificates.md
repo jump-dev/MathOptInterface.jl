@@ -93,6 +93,7 @@ If the solver has found a certificate of dual infeasibility:
  * [`TerminationStatus`](@ref) must be `DUAL_INFEASIBLE`
  * [`PrimalStatus`](@ref) must be `INFEASIBILITY_CERTIFICATE`
  * [`VariablePrimal`](@ref) must be the corresponding value of ``d``
+ * [`ConstraintPrimal`](@ref) must be the corresponding value of ``A_i d``
  * [`ObjectiveValue`](@ref) must be the value ``a_0^\top d``. Note that this is
    the value of the objective function at `d`, ignoring the constant `b_0`.
 

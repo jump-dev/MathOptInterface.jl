@@ -13,6 +13,11 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
             MOI.set(model, MOI.ObjectiveSense(), $sense)
             f = 2.2 * x + $offset
             MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+            c =  if $sense == MOI.MIN_SENSE
+                MOI.add_constraint(model, 1.3 * x, MOI.LessThan(1.1))
+            else
+                MOI.add_constraint(model, 1.3 * x, MOI.GreaterThan(1.1))
+            end
             MOI.optimize!(model)
             @requires(
                 MOI.get(model, MOI.TerminationStatus()) == MOI.DUAL_INFEASIBLE,
@@ -31,6 +36,8 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
                 @test obj > config.atol
             end
             @test isapprox(2.2 * d, obj, config)
+            Ad = MOI.get(model, MOI.ConstraintPrimal(), c)
+            @test isapprox(1.3 * d, Ad, config)
             return
         end
 
