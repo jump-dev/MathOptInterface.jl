@@ -83,7 +83,12 @@ function test_runtests()
         exclude = [
             "test_attribute_NumberOfThreads",
             "test_quadratic_",
-        ]
+        ],
+        # This argument is useful to prevent tests from failing on future
+        # releases of MOI that add new tests. Don't let this number get too far
+        # behind the current MOI release though! You should periodically check
+        # for new tests in order to fix bugs and implement new features.
+        exclude_tests_after = v"0.10.5",
     )
     return
 end
@@ -272,6 +277,12 @@ function setup_test(
     )
     return
 end
+```
+
+Finally, you also need to implement [`version_added`](@ref). If we added this
+test when the latest released version of MOI was `v0.10.5`, define:
+```julia
+version_added(::typeof(test_unit_optimize!_twice)) = v"0.10.6"
 ```
 
 **Step 6**

@@ -1436,6 +1436,8 @@ function test_solve_conflict_zeroone_2(
     return
 end
 
+version_added(::typeof(test_solve_conflict_zeroone_2)) = v"0.10.6"
+
 function setup_test(
     ::typeof(test_solve_conflict_zeroone_2),
     model::MOIU.MockOptimizer,
