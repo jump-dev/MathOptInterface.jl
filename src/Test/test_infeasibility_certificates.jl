@@ -13,7 +13,7 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
             MOI.set(model, MOI.ObjectiveSense(), $sense)
             f = 2.2 * x + $offset
             MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
-            c =  if $sense == MOI.MIN_SENSE
+            c = if $sense == MOI.MIN_SENSE
                 MOI.add_constraint(model, 1.3 * x, MOI.LessThan(1.1))
             else
                 MOI.add_constraint(model, 1.3 * x, MOI.GreaterThan(1.1))
