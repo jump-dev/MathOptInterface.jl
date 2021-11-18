@@ -1,5 +1,6 @@
 module Test
 
+import TOML
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
@@ -129,6 +130,36 @@ See the `exclude_tests_after` keyword of [`runtests`](@ref) for more details.
 """
 version_added(::F) where {F} = v"0.10.5"  # The default for any unlabeled tests.
 
+function check_version(mod::Union{Module, Nothing}, ver::VersionNumber)
+    if ver >= v"999.0.0"
+        return
+    end
+    if mod === nothing
+        throw(
+            ArgumentError(
+                "Flag exclude_tests_after was set to $ver, but no " *
+                "module_in_test was selected"
+            )
+        )
+    end
+    path = joinpath(dirname(pathof(mod)), "..")
+    project_file = normpath(joinpath(path, "Project.toml"))
+    @assert isfile(project_file)
+    data = TOML.parsefile(project_file)
+    if haskey(data, "compat") && haskey(data["compat"], "MathOptInterface")
+        moiv = VersionNumber(data["compat"]["MathOptInterface"])
+    else
+        error("MathOptInterface was not found in [compat] at $project_file")
+    end
+    if moiv > ver
+        error(
+            "Version $ver selected for testing is lower than version " *
+            "$moiv selected in $project_file"
+        )
+    end
+    return
+end
+
 """
     runtests(
         model::MOI.ModelLike,
@@ -185,7 +216,9 @@ function runtests(
     exclude::Vector{String} = String[],
     warn_unsupported::Bool = false,
     exclude_tests_after::VersionNumber = v"999.0.0",
+    module_in_test::Union{Module, Nothing} = nothing,
 )
+    check_version(module_in_test, exclude_tests_after)
     for name_sym in names(@__MODULE__; all = true)
         name = string(name_sym)
         if !startswith(name, "test_")
