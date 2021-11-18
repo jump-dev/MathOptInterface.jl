@@ -279,8 +279,8 @@ function setup_test(
 end
 ```
 
-Finally, you also need to implement [`version_added`](@ref). If we added this
-test when the latest released version of MOI was `v0.10.5`, define:
+Finally, you also need to implement [`Test.version_added`](@ref). If we added
+this test when the latest released version of MOI was `v0.10.5`, define:
 ```julia
 version_added(::typeof(test_unit_optimize!_twice)) = v"0.10.6"
 ```
