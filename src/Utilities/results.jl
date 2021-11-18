@@ -26,7 +26,7 @@ function get_fallback(model::MOI.ModelLike, attr::MOI.ObjectiveValue)
     if is_ray(MOI.get(model, MOI.PrimalStatus()))
         # Dual infeasibiltiy certificates do not include the primal objective
         # constant.
-        obj -= MOI.constant(f, Int)
+        obj -= MOI.constant(f, typeof(obj))
     end
     return obj
 end
