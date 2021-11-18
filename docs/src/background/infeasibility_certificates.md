@@ -10,14 +10,14 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 # Infeasibility certificates
 
 When given a conic problem that is infeasible or unbounded, some solvers can
-produce a certificate or infeasibility. This page explains what a certificate of
+produce a certificate of infeasibility. This page explains what a certificate of
 infeasibility is, and the related conventions that MathOptInterface adopts.
 
 ## Conic duality
 
-MathOptInterface uses conic duality, which we use to define infeasibility
-certificates. A full explanation is given in the section [Duality](@ref), but
-here is a brief overview.
+MathOptInterface uses conic duality to define infeasibility certificates. A full
+explanation is given in the section [Duality](@ref), but here is a brief
+overview.
 
 ### Minimization problems
 
@@ -69,7 +69,7 @@ A problem is unbounded if and only if:
  1. there exists a feasible primal solution
  2. the dual is infeasible.
 
-A feasible primal solution---if one exists---can be obtained by setting
+A feasible primal solution—if one exists—can be obtained by setting
 [`ObjectiveSense`](@ref) to `FEASIBILITY_SENSE` before optimizing. Therefore,
 most solvers terminate after they prove the dual is infeasible via a certificate
 of dual infeasibility, but _before_ they have found a feasible primal solution.
@@ -111,7 +111,7 @@ For a minimization problem, a dual improving ray is some vector ``d`` such that
 for all ``\eta > 0``:
 ```math
 \begin{align}
-\sum_{i=1}^m -A_i^\top (y_i + \eta d_i) & = 0 \\
+-\sum_{i=1}^m A_i^\top (y_i + \eta d_i) & = 0 \\
 (y_i + \eta d_i) & \in \mathcal{C}_i^* & i = 1 \ldots m,
 \end{align}
 ```
@@ -139,7 +139,7 @@ If the solver has found a certificate of primal infeasibility:
 
 ### Infeasibility certificates of variable bounds
 
-Many linear solvers (e.g., Gurobi) do not provide explicit access to the
+Many linear solvers (e.g., Gurobi) do not provide explicit access to the primal
 infeasibility certificate of a variable bound. However, given a set of linear
 constraints:
 ```math
@@ -148,7 +148,7 @@ l_A \le A x \le u_A \\
 l_x \le x \le u_x,
 \end{align}
 ```
-the certificate of the variable bounds can be computed using  the
+the primal certificate of the variable bounds can be computed using the primal
 certificate associated with the affine constraints, ``d``. (Note that ``d`` will
 have one element for each row of the ``A`` matrix, and that some or all of the
 elements in the vectors ``l_A`` and ``u_A`` may be ``\pm \infty``. If both
