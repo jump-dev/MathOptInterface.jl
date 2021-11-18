@@ -37,3 +37,14 @@ MOI.Test.runtests(
         "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
     ],
 )
+
+# Test exclude_tests_after. This should work despite no methods being added for IncompleteOptimizer
+# because every test should get skipped.
+
+struct IncompleteOptimizer <: MOI.AbstractOptimizer end
+
+MOI.Test.runtests(
+    IncompleteOptimizer(),
+    MOI.Test.Config();
+    exclude_tests_after = v"0.0.1",
+)

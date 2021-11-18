@@ -119,12 +119,24 @@ end
 setup_test(::Any, ::MOI.ModelLike, ::Config) = nothing
 
 """
+    version_added(::typeof(function_name))
+
+Returns the version of MOI in which the test `function_name` was added.
+
+This method should be implemented for all new tests.
+
+See the `exclude_tests_after` keyword of [`runtests`](@ref) for more details.
+"""
+version_added(::F) where {F} = v"0.10.5"  # The default for any unlabeled tests.
+
+"""
     runtests(
         model::MOI.ModelLike,
         config::Config;
         include::Vector{String} = String[],
         exclude::Vector{String} = String[],
         warn_unsupported::Bool = false,
+        exclude_tests_after::VersionNumber = v"999.0.0",
     )
 
 Run all tests in `MathOptInterface.Test` on `model`.
@@ -145,6 +157,10 @@ Run all tests in `MathOptInterface.Test` on `model`.
    functionality that is not supported by `model`. However, it can be useful to
    run  `warn_unsupported = true` to check you are not skipping tests due to a
    missing `supports_constraint` method or equivalent.
+ * `exclude_tests_after` is a version number that excludes any tests to MOI
+   added after that version number. This is useful for solvers who can declare a
+   fixed set of tests, and not cause their tests to break if a new patch of MOI
+   is released with a new test.
 
 See also: [`setup_test`](@ref).
 
@@ -158,6 +174,7 @@ MathOptInterface.Test.runtests(
     include = ["test_linear_"],
     exclude = ["VariablePrimalStart"],
     warn_unsupported = true,
+    exclude_tests_after = v"0.10.5",
 )
 ```
 """
@@ -167,6 +184,7 @@ function runtests(
     include::Vector{String} = String[],
     exclude::Vector{String} = String[],
     warn_unsupported::Bool = false,
+    exclude_tests_after::VersionNumber = v"999.0.0",
 )
     for name_sym in names(@__MODULE__; all = true)
         name = string(name_sym)
@@ -177,8 +195,11 @@ function runtests(
         elseif !isempty(exclude) && any(s -> occursin(s, name), exclude)
             continue
         end
+        test_function = getfield(@__MODULE__, name_sym)
+        if version_added(test_function) > exclude_tests_after
+            continue
+        end
         @testset "$(name)" begin
-            test_function = getfield(@__MODULE__, name_sym)
             c = copy(config)
             tear_down = setup_test(test_function, model, c)
             # Make sure to empty the model before every test!

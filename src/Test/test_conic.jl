@@ -6810,6 +6810,12 @@ function test_conic_SecondOrderCone_negative_post_bound_2(
     return
 end
 
+function version_added(
+    ::typeof(test_conic_SecondOrderCone_negative_post_bound_2),
+)
+    return v"0.10.6"
+end
+
 function setup_test(
     ::typeof(test_conic_SecondOrderCone_negative_post_bound_2),
     model::MOIU.MockOptimizer,
@@ -6869,6 +6875,12 @@ function test_conic_SecondOrderCone_negative_post_bound_3(
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.DUAL_INFEASIBLE
     return
+end
+
+function version_added(
+    ::typeof(test_conic_SecondOrderCone_negative_post_bound_3),
+)
+    return v"0.10.6"
 end
 
 function setup_test(
