@@ -804,8 +804,6 @@ function test_model_LowerBoundAlreadySet(
     sets = [
         MOI.EqualTo(lb),
         MOI.Interval(lb, lb),
-        MOI.Semicontinuous(lb, lb),
-        MOI.Semiinteger(lb, lb),
     ]
     set2 = MOI.GreaterThan(lb)
     for set1 in sets
@@ -842,8 +840,6 @@ function test_model_UpperBoundAlreadySet(
     sets = [
         MOI.EqualTo(ub),
         MOI.Interval(ub, ub),
-        MOI.Semicontinuous(ub, ub),
-        MOI.Semiinteger(ub, ub),
     ]
     set2 = MOI.LessThan(ub)
     for set1 in sets

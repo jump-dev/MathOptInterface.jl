@@ -235,6 +235,29 @@ function test_SemiToBinary()
     return
 end
 
+"""
+    test_lower_bound_already_set()
+
+The second call to `add_constraint` is broken because it should throw:
+```julia
+MOI.LowerBoundAlreadySet{
+    MOI.Semicontinuous{Float64},
+    MOI.GreaterThan{Float64},
+}
+```
+See MathOptInterface issue #1431.
+"""
+function test_lower_bound_already_set()
+    model = MOI.Utilities.Model{Float64}()
+    bridged = MOI.Bridges.Constraint.SemiToBinary{Float64}(model)
+    x = MOI.add_variable(bridged)
+    MOI.add_constraint(bridged, x, MOI.Semicontinuous(1.0, 2.0))
+    @test_broken(
+        MOI.add_constraint(bridged, x, MOI.GreaterThan(0.0)) === nothing,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintSemiToBinary.runtests()
