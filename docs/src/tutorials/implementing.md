@@ -197,10 +197,10 @@ involved option is to use [Documenter.jl](https://github.com/JuliaDocs/Documente
 
 Examples of packages with README-based documentation include:
  * [Cbc.jl](https://github.com/jump-dev/Cbc.jl)
- * [Gurobi.jl](https://github.com/jump-dev/Gurobi.jl)
+ * [HiGHS.jl](https://github.com/jump-dev/HiGHS.jl)
  * [SCS.jl](https://github.com/jump-dev/SCS.jl)
 
-Examples of packages with Documenter.jl-based documentation include:
+Examples of packages with Documenter-based documentation include:
  * [Alpine.jl](https://github.com/lanl-ansi/Alpine.jl)
  * [COSMO.jl](https://github.com/oxfordcontrol/COSMO.jl)
  * [Juniper.jl](https://github.com/lanl-ansi/Juniper.jl)
