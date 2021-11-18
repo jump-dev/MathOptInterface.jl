@@ -189,6 +189,22 @@ Project.toml
    code formatting using [JuliaFormatter.jl](https://github.com/domluna/JuliaFormatter.jl).
    Check existing solvers or JuMP.jl for details.
 
+### Documentation
+
+Your package must include documentation explaining how to use the package. The
+easiest approach is to include documentation in your `README.md`. A more
+involved option is to use [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl).
+
+Examples of packages with README-based documentation include:
+ * [Cbc.jl](https://github.com/jump-dev/Cbc.jl)
+ * [HiGHS.jl](https://github.com/jump-dev/HiGHS.jl)
+ * [SCS.jl](https://github.com/jump-dev/SCS.jl)
+
+Examples of packages with Documenter-based documentation include:
+ * [Alpine.jl](https://github.com/lanl-ansi/Alpine.jl)
+ * [COSMO.jl](https://github.com/oxfordcontrol/COSMO.jl)
+ * [Juniper.jl](https://github.com/lanl-ansi/Juniper.jl)
+
 ### Setup tests
 
 The best way to implement an interface to MathOptInterface is via
