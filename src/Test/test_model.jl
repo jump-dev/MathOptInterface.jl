@@ -801,10 +801,7 @@ function test_model_LowerBoundAlreadySet(
     @requires _supports(config, MOI.delete)
     x = MOI.add_variable(model)
     lb = zero(T)
-    sets = [
-        MOI.EqualTo(lb),
-        MOI.Interval(lb, lb),
-    ]
+    sets = [MOI.EqualTo(lb), MOI.Interval(lb, lb)]
     set2 = MOI.GreaterThan(lb)
     for set1 in sets
         if !MOI.supports_constraint(model, MOI.VariableIndex, typeof(set1))
@@ -837,10 +834,7 @@ function test_model_UpperBoundAlreadySet(
     x = MOI.add_variable(model)
     ub = zero(T)
     @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.LessThan{T})
-    sets = [
-        MOI.EqualTo(ub),
-        MOI.Interval(ub, ub),
-    ]
+    sets = [MOI.EqualTo(ub), MOI.Interval(ub, ub)]
     set2 = MOI.LessThan(ub)
     for set1 in sets
         if !MOI.supports_constraint(model, MOI.VariableIndex, typeof(set1))
