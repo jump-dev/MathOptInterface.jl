@@ -182,7 +182,7 @@ function get_fallback(
         return MOI.get(model, MOI.VariablePrimal(attr.result_index), vi)
     end
     if is_ray(MOI.get(model, MOI.PrimalStatus()))
-        c -= MOI.constant(f, Int)
+        c -= MOI.constant(f, typeof(c))
     end
     return c
 end
