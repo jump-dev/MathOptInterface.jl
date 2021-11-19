@@ -187,7 +187,7 @@ function test_linear_integration(
     else
         MOI.delete(model, c)
         cf = MOI.ScalarAffineFunction{T}(
-            MOI.ScalarAffineTerm{T}.([one(T), one(T), one(T)], v),
+            MOI.ScalarAffineTerm{T}.(one(T), v),
             zero(T),
         )
         c = MOI.add_constraint(model, cf, MOI.LessThan(one(T)))
@@ -550,7 +550,7 @@ function test_linear_integration_2(
     y = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
     cf = MOI.ScalarAffineFunction{T}(
-        MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x, y]),
+        MOI.ScalarAffineTerm{T}.(one(T), [x, y]),
         zero(T),
     )
     c = MOI.add_constraint(model, cf, MOI.LessThan(one(T)))
@@ -588,7 +588,7 @@ function test_linear_integration_2(
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(1) atol = atol rtol =
             rtol
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ T(1) atol = atol rtol =
+            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ T(-1) atol = atol rtol =
                 rtol
         end
         @test MOI.get(model, MOI.VariablePrimal(), x) ≈ T(1) atol = atol rtol =
@@ -599,7 +599,7 @@ function test_linear_integration_2(
             rtol
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ T(1) atol = atol rtol =
+            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ T(-1) atol = atol rtol =
                 rtol
             @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ zero(T) atol =
                 atol rtol = rtol
@@ -626,8 +626,8 @@ function setup_test(
         mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1, 0],
-            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => [-1],
+            T[1, 0],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-1],
             constraint_basis_status = [
                 (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) =>
                     [MOI.NONBASIC],
@@ -838,7 +838,7 @@ function test_linear_LessThan_and_GreaterThan(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
         MOI.ScalarAffineFunction{T}(
-            MOI.ScalarAffineTerm{T}.([one(T), -one(T)], [x, y]),
+            MOI.ScalarAffineTerm{T}.(T[1, -1], [x, y]),
             zero(T),
         ),
     )
@@ -899,9 +899,9 @@ function setup_test(
 ) where {T}
     MOIU.set_mock_optimize!(
         mock,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, -100]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[0, 0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[100, 0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[100, -100]),
     )
     return
 end
@@ -957,7 +957,7 @@ function test_linear_integration_modification(
         zero(T),
     )
     cf2 = MOI.ScalarAffineFunction{T}(
-        MOI.ScalarAffineTerm{T}.([one(T), T(2)], [x, y]),
+        MOI.ScalarAffineTerm{T}.(T[1, 2], [x, y]),
         zero(T),
     )
     c1 = MOI.add_constraint(model, cf1, MOI.LessThan(T(4)))
@@ -982,7 +982,7 @@ function test_linear_integration_modification(
         ) == 2
     end
     objf = MOI.ScalarAffineFunction{T}(
-        MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x, y]),
+        MOI.ScalarAffineTerm{T}.(one(T), [x, y]),
         zero(T),
     )
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), objf)
@@ -1068,10 +1068,10 @@ function setup_test(
 ) where {T}
     MOIU.set_mock_optimize!(
         mock,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [4 / 3, 4 / 3]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [4, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [2]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[4//3, 4//3]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[2, 0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[4, 0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[2]),
     )
     return
 end
@@ -1194,9 +1194,9 @@ function setup_test(
 ) where {T}
     MOIU.set_mock_optimize!(
         mock,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, -100]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[0, 0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[100, 0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[100, -100]),
     )
     return
 end
@@ -1362,9 +1362,9 @@ function setup_test(
 ) where {T}
     MOIU.set_mock_optimize!(
         mock,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, 0]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [100, -100]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[0, 0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[100, 0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[100, -100]),
     )
     return
 end
@@ -1461,7 +1461,7 @@ function setup_test(
             MOI.INFEASIBLE,
             MOI.NO_SOLUTION,
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => [-1],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-1],
         ),
     )
     return
@@ -1631,7 +1631,7 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.DUAL_INFEASIBLE,
-            (MOI.INFEASIBILITY_CERTIFICATE, [1, 1]),
+            (MOI.INFEASIBILITY_CERTIFICATE, T[1, 1]),
         ),
     )
     return
@@ -1825,7 +1825,7 @@ function test_linear_integration_Interval(
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction{T}(
-            MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x, y]),
+            MOI.ScalarAffineTerm{T}.(one(T), [x, y]),
             zero(T),
         ),
         MOI.Interval(T(5), T(10)),
@@ -1834,7 +1834,7 @@ function test_linear_integration_Interval(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
         MOI.ScalarAffineFunction{T}(
-            MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x, y]),
+            MOI.ScalarAffineTerm{T}.(one(T), [x, y]),
             zero(T),
         ),
     )
@@ -1855,7 +1855,7 @@ function test_linear_integration_Interval(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.ResultCount()) >= 1
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ T(1) atol = atol rtol =
+            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ T(-1) atol = atol rtol =
                 rtol
         end
         if _supports(config, MOI.ConstraintBasisStatus)
@@ -1873,7 +1873,7 @@ function test_linear_integration_Interval(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
         MOI.ScalarAffineFunction{T}(
-            MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x, y]),
+            MOI.ScalarAffineTerm{T}.(one(T), [x, y]),
             zero(T),
         ),
     )
@@ -1945,7 +1945,7 @@ function test_linear_integration_Interval(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
         MOI.ScalarAffineFunction{T}(
-            MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x, y]),
+            MOI.ScalarAffineTerm{T}.(one(T), [x, y]),
             zero(T),
         ),
     )
@@ -1986,7 +1986,7 @@ function setup_test(
                     [MOI.NONBASIC_AT_UPPER],
             ],
             variable_basis_status = [MOI.BASIC, MOI.BASIC],
-            (MOI.ScalarAffineFunction{T}, MOI.Interval{T}) => [-1],
+            (MOI.ScalarAffineFunction{T}, MOI.Interval{T}) => T[-1],
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
@@ -1996,12 +1996,12 @@ function setup_test(
                     [MOI.NONBASIC_AT_LOWER],
             ],
             variable_basis_status = [MOI.BASIC, MOI.BASIC],
-            (MOI.ScalarAffineFunction{T}, MOI.Interval{T}) => [1],
+            (MOI.ScalarAffineFunction{T}, MOI.Interval{T}) => T[1],
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [one(T), one(T)],
-            (MOI.ScalarAffineFunction{T}, MOI.Interval{T}) => [1],
+            T[1, 1],
+            (MOI.ScalarAffineFunction{T}, MOI.Interval{T}) => T[1],
             constraint_basis_status = [
                 (MOI.ScalarAffineFunction{T}, MOI.Interval{T}) =>
                     [MOI.NONBASIC_AT_LOWER],
@@ -2011,7 +2011,7 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             T[6, 6],
-            (MOI.ScalarAffineFunction{T}, MOI.Interval{T}) => [-1],
+            (MOI.ScalarAffineFunction{T}, MOI.Interval{T}) => T[-1],
             constraint_basis_status = [
                 (MOI.ScalarAffineFunction{T}, MOI.Interval{T}) =>
                     [MOI.NONBASIC_AT_UPPER],
@@ -2069,7 +2069,7 @@ function test_linear_Interval_inactive(
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction{T}(
-            MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x, y]),
+            MOI.ScalarAffineTerm{T}.(one(T), [x, y]),
             zero(T),
         ),
         MOI.Interval(-one(T), T(10)),
@@ -2078,7 +2078,7 @@ function test_linear_Interval_inactive(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
         MOI.ScalarAffineFunction{T}(
-            MOI.ScalarAffineTerm{T}.([one(T), one(T)], [x, y]),
+            MOI.ScalarAffineTerm{T}.(one(T), [x, y]),
             zero(T),
         ),
     )
@@ -2205,7 +2205,7 @@ function test_linear_transform(
     c1 = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction{T}(
-            MOI.ScalarAffineTerm{T}.([one(T), one(T)], v),
+            MOI.ScalarAffineTerm{T}.(one(T), v),
             zero(T),
         ),
         MOI.GreaterThan(one(T)),
@@ -2213,7 +2213,7 @@ function test_linear_transform(
     c2 = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction{T}(
-            MOI.ScalarAffineTerm{T}.([one(T), one(T)], v),
+            MOI.ScalarAffineTerm{T}.(one(T), v),
             zero(T),
         ),
         MOI.GreaterThan(T(2)),
@@ -2222,7 +2222,7 @@ function test_linear_transform(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
         MOI.ScalarAffineFunction{T}(
-            MOI.ScalarAffineTerm{T}.([one(T), one(T)], v),
+            MOI.ScalarAffineTerm{T}.(one(T), v),
             zero(T),
         ),
     )
@@ -2258,9 +2258,8 @@ function setup_test(
 ) where {T}
     MOIU.set_mock_optimize!(
         mock,
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, [one(T), one(T)]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0.5, 0.5]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[1, 1]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[1//2, 1//2]),
     )
     return
 end
@@ -2369,7 +2368,7 @@ function setup_test(
             MOI.INFEASIBLE,
             MOI.NO_SOLUTION,
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => [-1, -1],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-1, -1],
         ),
     )
     return
@@ -2462,9 +2461,9 @@ function setup_test(
         mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1 / 5, 1 / 5],
-            (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}) => [0],
-            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [0],
+            T[1//5, 1//5],
+            (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}) => T[0],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => T[0],
         ),
     )
     return
@@ -2559,7 +2558,7 @@ function test_linear_integration_delete_variables(
             rtol
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ T(1) atol = atol rtol =
+            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ T(-1) atol = atol rtol =
                 rtol
             @test MOI.get(model, MOI.ConstraintDual(), clbx) ≈ T(2) atol = atol rtol =
                 rtol
@@ -2598,7 +2597,7 @@ function test_linear_integration_delete_variables(
             rtol
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ T(1) atol = atol rtol =
+            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ T(-1) atol = atol rtol =
                 rtol
             @test MOI.get(model, MOI.ConstraintDual(), clby) ≈ zero(T) atol =
                 atol rtol = rtol
@@ -2615,7 +2614,7 @@ function setup_test(
         mock,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [0, 1 / 2, 1],
+            T[0, 1//2, 1],
             constraint_basis_status = [
                 (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) =>
                     [MOI.NONBASIC],
@@ -2625,15 +2624,15 @@ function setup_test(
                 MOI.BASIC,
                 MOI.NONBASIC_AT_UPPER,
             ],
-            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => [-1],
-            (MOI.VariableIndex, MOI.GreaterThan{T}) => [2, 0, 0],
-            (MOI.VariableIndex, MOI.LessThan{T}) => [-2],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-1],
+            (MOI.VariableIndex, MOI.GreaterThan{T}) => T[2, 0, 0],
+            (MOI.VariableIndex, MOI.LessThan{T}) => T[-2],
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1],
-            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => [-1],
-            (MOI.VariableIndex, MOI.GreaterThan{T}) => [0],
+            T[1],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-1],
+            (MOI.VariableIndex, MOI.GreaterThan{T}) => T[0],
         ),
     )
     # test_linear_integration_delete_variables has double variable bounds for
@@ -2849,10 +2848,8 @@ function test_linear_integer_integration(
             }(),
         ) == 1
     end
-    cf2 = MOI.ScalarAffineFunction(
-        MOI.ScalarAffineTerm.([one(T), T(2), one(T)], v),
-        zero(T),
-    )
+    cf2 =
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T[1, 2, 1], v), zero(T))
     c2 = MOI.add_constraint(model, cf2, MOI.LessThan(T(15)))
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
@@ -2981,12 +2978,12 @@ function test_linear_SOS1_integration(
     c1 = MOI.add_constraint(
         model,
         MOI.VectorOfVariables([v[1], v[2]]),
-        MOI.SOS1([one(T), T(2)]),
+        MOI.SOS1(T[1, 2]),
     )
     c2 = MOI.add_constraint(
         model,
         MOI.VectorOfVariables([v[1], v[3]]),
-        MOI.SOS1([one(T), T(2)]),
+        MOI.SOS1(T[1, 2]),
     )
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
@@ -3001,12 +2998,10 @@ function test_linear_SOS1_integration(
     cs_sos = MOI.get(model, MOI.ConstraintSet(), c2)
     cf_sos = MOI.get(model, MOI.ConstraintFunction(), c2)
     p = sortperm(cs_sos.weights)
-    @test isapprox(cs_sos.weights[p], [one(T), T(2)], config)
+    @test isapprox(cs_sos.weights[p], T[1, 2], config)
     @test cf_sos.variables[p] == v[[1, 3]]
-    objf = MOI.ScalarAffineFunction(
-        MOI.ScalarAffineTerm.([T(2), one(T), one(T)], v),
-        zero(T),
-    )
+    objf =
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T[2, 1, 1], v), zero(T))
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), objf)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
@@ -3016,10 +3011,10 @@ function test_linear_SOS1_integration(
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.ResultCount()) >= 1
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 3, config)
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(3), config)
         @test isapprox(
             MOI.get(model, MOI.VariablePrimal(), v),
-            [0, 1, 2],
+            T[0, 1, 2],
             config,
         )
     end
@@ -3030,10 +3025,10 @@ function test_linear_SOS1_integration(
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.ResultCount()) >= 1
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 5, config)
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(5), config)
         @test isapprox(
             MOI.get(model, MOI.VariablePrimal(), v),
-            [1, 1, 2],
+            T[1, 1, 2],
             config,
         )
     end
@@ -3047,8 +3042,8 @@ function setup_test(
 ) where {T}
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [0, 1, 2]),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, [1, 1, 2]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[0, 1, 2]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[1, 1, 2]),
     )
     return
 end
@@ -3119,7 +3114,7 @@ function test_linear_SOS2_integration(
     @test isapprox(cs_sos.weights[p], T[1, 2, 4, 5, 7], config)
     @test cf_sos.variables[p] == v[[8, 7, 5, 4, 6]]
     objf = MOI.ScalarAffineFunction(
-        MOI.ScalarAffineTerm.([one(T), one(T)], [v[9], v[10]]),
+        MOI.ScalarAffineTerm.(one(T), [v[9], v[10]]),
         zero(T),
     )
     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), objf)
@@ -3223,7 +3218,7 @@ function test_linear_integer_solve_twice(
             ),
             zero(T),
         ),
-        MOI.Interval(zero(T), T(999 / 1_000)),
+        MOI.Interval(zero(T), T(999 // 1_000)),
     )
     MOI.set(
         model,
