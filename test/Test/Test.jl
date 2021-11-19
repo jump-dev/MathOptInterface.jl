@@ -64,5 +64,5 @@ MOI.Test.runtests(
         "test_linear_add_constraints",
         "test_linear_integer_integration",
         "test_linear_integration",
-    ]
+    ],
 )

@@ -96,24 +96,33 @@ function test_linear_integration(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(-1) atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(-1), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ T(-1) atol = atol rtol =
-                rtol
+            @test isapprox(
+                MOI.get(model, MOI.DualObjectiveValue()),
+                T(-1),
+                config,
+            )
         end
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ T[1, 0] atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ T(1) atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), v), T[1, 0], config)
+        @test isapprox(MOI.get(model, MOI.ConstraintPrimal(), c), T(1), config)
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ T(-1) atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ T(0) atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), vc2) ≈ T(1) atol = atol rtol =
-                rtol
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), c),
+                T(-1),
+                config,
+            )
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), vc1),
+                T(0),
+                config,
+            )
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), vc2),
+                T(1),
+                config,
+            )
         end
     end
     # change objective to Max +x
@@ -134,22 +143,32 @@ function test_linear_integration(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(1) atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(1), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ T(1) atol = atol rtol =
-                rtol
+            @test isapprox(
+                MOI.get(model, MOI.DualObjectiveValue()),
+                T(1),
+                config,
+            )
         end
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ T[1, 0] atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), v), T[1, 0], config)
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ T(-1) atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ zero(T) atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), vc2) ≈ T(1) atol = atol rtol =
-                rtol
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), c),
+                T(-1),
+                config,
+            )
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), vc1),
+                zero(T),
+                config,
+            )
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), vc2),
+                T(1),
+                config,
+            )
         end
     end
     # add new variable to get :
@@ -215,26 +234,38 @@ function test_linear_integration(
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.ResultCount()) >= 1
         @test MOI.get(model, MOI.PrimalStatus(1)) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(2) atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(2), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ T(2) atol = atol rtol =
-                rtol
+            @test isapprox(
+                MOI.get(model, MOI.DualObjectiveValue()),
+                T(2),
+                config,
+            )
         end
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [0, 0, 1] atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ T(1) atol = atol rtol =
-            rtol
+        @test isapprox(
+            MOI.get(model, MOI.VariablePrimal(), v),
+            [0, 0, 1],
+            config,
+        )
+        @test isapprox(MOI.get(model, MOI.ConstraintPrimal(), c), T(1), config)
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -2 atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ T(1) atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), vc2) ≈ T(2) atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), vc3) ≈ zero(T) atol =
-                atol rtol = rtol
+            @test isapprox(MOI.get(model, MOI.ConstraintDual(), c), -2, config)
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), vc1),
+                T(1),
+                config,
+            )
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), vc2),
+                T(2),
+                config,
+            )
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), vc3),
+                zero(T),
+                config,
+            )
         end
     end
     # setting lb of x to -1 to get :
@@ -321,10 +352,12 @@ function test_linear_integration(
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.ResultCount()) >= 1
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(2) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ T[2, 0, 0] atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(2), config)
+        @test isapprox(
+            MOI.get(model, MOI.VariablePrimal(), v),
+            T[2, 0, 0],
+            config,
+        )
     end
     # modify objective function to x + 2y to get :
     # max x + 2y
@@ -347,10 +380,12 @@ function test_linear_integration(
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.ResultCount()) >= 1
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(4) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ T[0, 2, 0] atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(4), config)
+        @test isapprox(
+            MOI.get(model, MOI.VariablePrimal(), v),
+            T[0, 2, 0],
+            config,
+        )
     end
     # add constraint x - y >= 0 (c2) to get :
     # max x+2y
@@ -402,36 +437,63 @@ function test_linear_integration(
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.ResultCount()) >= 1
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(3) atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(3), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ T(3) atol = atol rtol =
-                rtol
+            @test isapprox(
+                MOI.get(model, MOI.DualObjectiveValue()),
+                T(3),
+                config,
+            )
         end
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ T[1, 1, 0] atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ T(2) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ T(0) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), vc1) ≈ T(1) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), vc2) ≈ T(1) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), vc3) ≈ zero(T) atol = atol rtol =
-            rtol
+        @test isapprox(
+            MOI.get(model, MOI.VariablePrimal(), v),
+            T[1, 1, 0],
+            config,
+        )
+        @test isapprox(MOI.get(model, MOI.ConstraintPrimal(), c), T(2), config)
+        @test isapprox(MOI.get(model, MOI.ConstraintPrimal(), c2), T(0), config)
+        @test isapprox(
+            MOI.get(model, MOI.ConstraintPrimal(), vc1),
+            T(1),
+            config,
+        )
+        @test isapprox(
+            MOI.get(model, MOI.ConstraintPrimal(), vc2),
+            T(1),
+            config,
+        )
+        @test isapprox(
+            MOI.get(model, MOI.ConstraintPrimal(), vc3),
+            zero(T),
+            config,
+        )
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus(1)) == MOI.FEASIBLE_POINT
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -T(3 // 2) atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ T(1 // 2) atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ zero(T) atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), vc2) ≈ zero(T) atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), vc3) ≈ T(3 // 2) atol =
-                atol rtol = rtol
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), c),
+                -T(3 // 2),
+                config,
+            )
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), c2),
+                T(1 // 2),
+                config,
+            )
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), vc1),
+                zero(T),
+                config,
+            )
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), vc2),
+                zero(T),
+                config,
+            )
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), vc3),
+                T(3 // 2),
+                config,
+            )
         end
     end
     if _supports(config, MOI.ConstraintFunction)
@@ -1021,10 +1083,12 @@ function test_linear_integration_modification(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(2) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), [x, y]) ≈ [T(2), zero(T)] atol =
-            atol rtol = rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(2), config)
+        @test isapprox(
+            MOI.get(model, MOI.VariablePrimal(), [x, y]),
+            T[2, 0],
+            config,
+        )
     end
     # delconstrs and solve
     #   maximize x + y
@@ -1038,9 +1102,12 @@ function test_linear_integration_modification(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 4 atol = atol rtol = rtol
-        @test MOI.get(model, MOI.VariablePrimal(), [x, y]) ≈ [T(4), zero(T)] atol =
-            atol rtol = rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 4, config)
+        @test isapprox(
+            MOI.get(model, MOI.VariablePrimal(), [x, y]),
+            T[4, 0],
+            config,
+        )
     end
     # delvars and solve
     #   maximize y
@@ -1136,12 +1203,9 @@ function test_linear_modify_GreaterThan_and_LessThan_constraints(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ zero(T) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ zero(T) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ zero(T) atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), zero(T), config)
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), x), zero(T), config)
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), y), zero(T), config)
     end
     # Min  x - y
     # s.t. T(100) <= x
@@ -1157,12 +1221,9 @@ function test_linear_modify_GreaterThan_and_LessThan_constraints(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(100) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ T(100) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ zero(T) atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(100), config)
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), x), T(100), config)
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), y), zero(T), config)
     end
     # Min  x - y
     # s.t. T(100) <= x
@@ -1178,12 +1239,9 @@ function test_linear_modify_GreaterThan_and_LessThan_constraints(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(200) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ T(100) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ -T(100) atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(200), config)
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), x), T(100), config)
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), y), -T(100), config)
     end
 end
 
@@ -1282,12 +1340,9 @@ function test_linear_VectorAffineFunction(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ zero(T) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ zero(T) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ zero(T) atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), zero(T), config)
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), x), zero(T), config)
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), y), zero(T), config)
     end
     # Min  x - y
     # s.t. T(100) <= x
@@ -1314,12 +1369,9 @@ function test_linear_VectorAffineFunction(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(100) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ T(100) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ zero(T) atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(100), config)
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), x), T(100), config)
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), y), zero(T), config)
     end
     # Min  x - y
     # s.t. T(100) <= x
@@ -1346,12 +1398,9 @@ function test_linear_VectorAffineFunction(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(200) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ T(100) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ -T(100) atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(200), config)
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), x), T(100), config)
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), y), -T(100), config)
     end
 end
 
@@ -1844,19 +1893,19 @@ function test_linear_integration_Interval(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(10) atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(10), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ T(10) atol = atol rtol =
-                rtol
+            @test isapprox(MOI.get(model, MOI.DualObjectiveValue()), T(10))
         end
-        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 10 atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.ConstraintPrimal(), c), T(10))
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.ResultCount()) >= 1
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ T(-1) atol = atol rtol =
-                rtol
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), c),
+                T(-1),
+                config,
+            )
         end
         if _supports(config, MOI.ConstraintBasisStatus)
             # There are multiple optimal bases. Either x or y can be in the
@@ -2535,39 +2584,69 @@ function test_linear_integration_delete_variables(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 8 atol = atol rtol = rtol
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(8), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 8 atol = atol rtol =
-                rtol
+            @test isapprox(
+                MOI.get(model, MOI.DualObjectiveValue()),
+                T(8),
+                config,
+            )
         end
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ zero(T) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ T(1 // 2) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), z) ≈ T(1) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ T(2) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), clbx) ≈ zero(T) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), clby) ≈ T(1 // 2) atol =
-            atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), clbz) ≈ T(1) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cubz) ≈ T(1) atol = atol rtol =
-            rtol
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), x), zero(T), config)
+        @test isapprox(
+            MOI.get(model, MOI.VariablePrimal(), y),
+            T(1 // 2),
+            config,
+        )
+        @test isapprox(MOI.get(model, MOI.VariablePrimal(), z), T(1), config)
+        @test isapprox(MOI.get(model, MOI.ConstraintPrimal(), c), T(2), config)
+        @test isapprox(
+            MOI.get(model, MOI.ConstraintPrimal(), clbx),
+            zero(T),
+            config,
+        )
+        @test isapprox(
+            MOI.get(model, MOI.ConstraintPrimal(), clby),
+            T(1 // 2),
+            config,
+        )
+        @test isapprox(
+            MOI.get(model, MOI.ConstraintPrimal(), clbz),
+            T(1),
+            config,
+        )
+        @test isapprox(
+            MOI.get(model, MOI.ConstraintPrimal(), cubz),
+            T(1),
+            config,
+        )
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ T(-1) atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), clbx) ≈ T(2) atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), clby) ≈ zero(T) atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), clbz) ≈ zero(T) atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cubz) ≈ -2 atol = atol rtol =
-                rtol
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), c),
+                T(-1),
+                config,
+            )
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), clbx),
+                T(2),
+                config,
+            )
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), clby),
+                zero(T),
+                config,
+            )
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), clbz),
+                zero(T),
+                config,
+            )
+            @test isapprox(
+                MOI.get(model, MOI.ConstraintDual(), cubz),
+                -2,
+                config,
+            )
             if _supports(config, MOI.ConstraintBasisStatus)
                 @test MOI.get(model, MOI.VariableBasisStatus(), x) ==
                       MOI.NONBASIC_AT_LOWER
@@ -2908,11 +2987,7 @@ function test_linear_integer_integration(
         @test MOI.get(model, MOI.ResultCount()) >= 1
         @test MOI.get(model, MOI.PrimalStatus()) in
               [MOI.FEASIBLE_POINT, MOI.NEARLY_FEASIBLE_POINT]
-        @test isapprox(
-            MOI.get(model, MOI.ObjectiveValue()),
-            T(97 // 5),
-            config,
-        )
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(97 // 5), config)
         @test isapprox(
             MOI.get(model, MOI.VariablePrimal(), v),
             T[4, 5, 1],
