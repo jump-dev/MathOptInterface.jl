@@ -585,7 +585,7 @@ function test_linear_integration_2(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(1) atol = atol rtol =
+        @test MOI.get(model, MOI.ObjectiveValue()) ≈ T(-1) atol = atol rtol =
             rtol
         if _supports(config, MOI.DualObjectiveValue)
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ T(-1) atol = atol rtol =
@@ -2910,7 +2910,7 @@ function test_linear_integer_integration(
               [MOI.FEASIBLE_POINT, MOI.NEARLY_FEASIBLE_POINT]
         @test isapprox(
             MOI.get(model, MOI.ObjectiveValue()),
-            T(97 // 50),
+            T(97 // 5),
             config,
         )
         @test isapprox(
@@ -2924,7 +2924,7 @@ function test_linear_integer_integration(
             T(15),
             config,
         )
-        @test MOI.get(model, MOI.ObjectiveBound()) >= T(97 // 50) - config.atol
+        @test MOI.get(model, MOI.ObjectiveBound()) >= T(97 // 5) - config.atol
         # FIXME the following are currently not implemented in MockOptimizer
         #        @test MOI.get(model, MOI.RelativeGap()) >= zero(T)
         #        @test MOI.get(model, MOI.SolveTimeSec()) >= zero(T)

@@ -59,7 +59,7 @@ MOI.Test.runtests(
     ),
     MOI.Test.Config(BigFloat),
     include = ["test_linear_"],
-    exclude = [
+    exclude = String[
         "test_linear_VectorAffineFunction_empty_row",
         "test_linear_add_constraints",
         "test_linear_integer_integration",
