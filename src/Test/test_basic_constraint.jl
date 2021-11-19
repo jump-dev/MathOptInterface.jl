@@ -104,14 +104,16 @@ _set(::Type{MOI.RootDetConeTriangle}) = MOI.RootDetConeTriangle(3)
 _set(::Type{MOI.RootDetConeSquare}) = MOI.RootDetConeSquare(3)
 _set(::Type{MOI.Complements}) = MOI.Complements(2)
 
-function _set(::Type{MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}}})
-    return MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(3.0))
+function _set(
+    ::Type{MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}},
+) where {T}
+    return MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(convert(T, 3)))
 end
 
 function _set(
-    ::Type{MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{Float64}}},
-)
-    return MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.GreaterThan(3.0))
+    ::Type{MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{T}}},
+) where {T}
+    return MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.GreaterThan(convert(T, 3)))
 end
 
 function _basic_constraint_test_helper(
@@ -285,26 +287,26 @@ end
 
 function test_basic_VectorAffineFunction_Indicator_LessThan(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _basic_constraint_test_helper(
         model,
         config,
         MOI.VectorAffineFunction,
-        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}},
     )
     return
 end
 
 function test_basic_VectorAffineFunction_Indicator_GreaterThan(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _basic_constraint_test_helper(
         model,
         config,
         MOI.VectorAffineFunction,
-        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{Float64}},
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{T}},
     )
     return
 end
