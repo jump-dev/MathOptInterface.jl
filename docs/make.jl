@@ -37,6 +37,7 @@ const _PAGES = [
     ],
     "Background" => [
         "background/duality.md",
+        "background/infeasibility_certificates.md",
         "background/naming_conventions.md",
     ],
     "API Reference" => [
