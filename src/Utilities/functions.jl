@@ -82,12 +82,20 @@ Substitute any [`MOI.VariableIndex`](@ref) (resp. [`MOI.ConstraintIndex`](@ref))
 in `x` by the [`MOI.VariableIndex`](@ref) (resp. [`MOI.ConstraintIndex`](@ref))
 of the same type given by `index_map(x)`.
 
-This function is used by implementations of [`MOI.copy_to`](@ref) on constraint
-functions, attribute values and submittable values hence it needs to be
-implemented for custom types that are meant to be used as attribute or
-submittable value.
+## When to implement this method for new types `X`
+
+This function is used by implementations of [`MOI.copy_to`](@ref) on
+constraint functions, attribute values and submittable values. If you define a
+new attribute whose values `x::X` contain variable or constraint indices, you
+must also implement this function.
+
+A default fallback of
+```julia
+map_indices(::F, x::Any) where {F<:Function} = x
+```
+exists for the case where the attribute value does not need to be changed.
 """
-function map_indices end
+map_indices(::F, x::Any) where {F<:Function} = x
 
 """
     map_indices(

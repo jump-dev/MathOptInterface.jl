@@ -859,6 +859,27 @@ function test_ConstraintPrimal_fallback_error()
     return
 end
 
+struct _OptimizerAttributeValue1670 end
+
+function test_map_indices_issue_1670()
+    optimizer = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+        optimizer,
+    )
+    MOI.Utilities.attach_optimizer(model)
+    MOI.set(
+        model,
+        MOI.RawOptimizerAttribute("1670"),
+        _OptimizerAttributeValue1670(),
+    )
+    @test MOI.get(optimizer, MOI.RawOptimizerAttribute("1670")) ==
+          _OptimizerAttributeValue1670()
+    return
+end
+
 end  # module
 
 TestCachingOptimizer.runtests()
