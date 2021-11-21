@@ -1432,9 +1432,8 @@ function test_linear_INFEASIBLE(
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE ||
-              MOI.get(model, MOI.TerminationStatus()) ==
-              MOI.INFEASIBLE_OR_UNBOUNDED
+        @test MOI.get(model, MOI.TerminationStatus()) in
+              (config.infeasible_status, MOI.INFEASIBLE_OR_UNBOUNDED)
         has_certificate =
             MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
         if _supports(config, MOI.ConstraintDual) && has_certificate
@@ -2334,9 +2333,8 @@ function test_linear_INFEASIBLE_2(
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE ||
-              MOI.get(model, MOI.TerminationStatus()) ==
-              MOI.INFEASIBLE_OR_UNBOUNDED
+        @test MOI.get(model, MOI.TerminationStatus()) in
+              (config.infeasible_status, MOI.INFEASIBLE_OR_UNBOUNDED)
         has_certificate =
             MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
         if _supports(config, MOI.ConstraintDual) && has_certificate
@@ -3982,9 +3980,8 @@ function _test_linear_SemiXXX_integration(
     MOI.set(model, MOI.ConstraintSet(), vc2, MOI.EqualTo(T(4)))
     if _supports(config, MOI.optimize!)
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE ||
-              MOI.get(model, MOI.TerminationStatus()) ==
-              MOI.INFEASIBLE_OR_UNBOUNDED
+        @test MOI.get(model, MOI.TerminationStatus()) in
+              (config.infeasible_status, MOI.INFEASIBLE_OR_UNBOUNDED)
     end
     return
 end
