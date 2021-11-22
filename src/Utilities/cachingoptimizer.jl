@@ -143,7 +143,7 @@ function reset_optimizer(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
             continue
         end
         value = MOI.get(m.model_cache, attr)
-        optimizer_value = map_indices(m.model_to_optimizer_map, value)
+        optimizer_value = map_indices(m.model_to_optimizer_map, attr, value)
         MOI.set(m.optimizer, attr, optimizer_value)
     end
     return
@@ -727,7 +727,7 @@ end
 
 function MOI.set(m::CachingOptimizer, attr::MOI.AbstractModelAttribute, value)
     if m.state == ATTACHED_OPTIMIZER
-        optimizer_value = map_indices(m.model_to_optimizer_map, value)
+        optimizer_value = map_indices(m.model_to_optimizer_map, attr, value)
         if m.mode == AUTOMATIC
             try
                 MOI.set(m.optimizer, attr, optimizer_value)
@@ -754,7 +754,7 @@ function MOI.set(
 )
     if m.state == ATTACHED_OPTIMIZER
         optimizer_index = m.model_to_optimizer_map[index]
-        optimizer_value = map_indices(m.model_to_optimizer_map, value)
+        optimizer_value = map_indices(m.model_to_optimizer_map, attr, value)
         if m.mode == AUTOMATIC
             try
                 MOI.set(m.optimizer, attr, optimizer_index, optimizer_value)
@@ -802,6 +802,7 @@ function MOI.get(model::CachingOptimizer, attr::MOI.AbstractModelAttribute)
         end
         return map_indices(
             model.optimizer_to_model_map,
+            attr,
             MOI.get(model.optimizer, attr)::MOI.attribute_value_type(attr),
         )
     else
@@ -843,6 +844,7 @@ function MOI.get(
         end
         return map_indices(
             model.optimizer_to_model_map,
+            attr,
             MOI.get(
                 model.optimizer,
                 attr,
@@ -868,6 +870,7 @@ function MOI.get(
         end
         return map_indices(
             model.optimizer_to_model_map,
+            attr,
             MOI.get(
                 model.optimizer,
                 attr,
@@ -969,7 +972,7 @@ function MOI.set(
     attr::MOI.AbstractOptimizerAttribute,
     value,
 )
-    optimizer_value = map_indices(model.model_to_optimizer_map, value)
+    optimizer_value = map_indices(model.model_to_optimizer_map, attr, value)
     if model.optimizer !== nothing
         MOI.set(model.optimizer, attr, optimizer_value)
     end
@@ -990,6 +993,7 @@ function MOI.get(model::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute)
     end
     return map_indices(
         model.optimizer_to_model_map,
+        attr,
         MOI.get(model.optimizer, attr)::MOI.attribute_value_type(attr),
     )
 end
@@ -1033,6 +1037,7 @@ function MOI.get(
     @assert m.state == ATTACHED_OPTIMIZER
     return map_indices(
         m.optimizer_to_model_map,
+        attr.attr,
         MOI.get(m.optimizer, attr.attr)::MOI.attribute_value_type(attr.attr),
     )
 end
@@ -1047,6 +1052,7 @@ function MOI.get(
     @assert m.state == ATTACHED_OPTIMIZER
     return map_indices(
         m.optimizer_to_model_map,
+        attr.attr,
         MOI.get(
             m.optimizer,
             attr.attr,
@@ -1065,6 +1071,7 @@ function MOI.get(
     @assert m.state == ATTACHED_OPTIMIZER
     return map_indices(
         m.optimizer_to_model_map,
+        attr.attr,
         MOI.get(
             m.optimizer,
             attr.attr,
@@ -1100,7 +1107,11 @@ function MOI.set(
     v,
 ) where {T<:MOI.AbstractModelAttribute}
     @assert m.state == ATTACHED_OPTIMIZER
-    MOI.set(m.optimizer, attr.attr, map_indices(m.model_to_optimizer_map, v))
+    MOI.set(
+        m.optimizer,
+        attr.attr,
+        map_indices(m.model_to_optimizer_map, attr.attr, v),
+    )
     return
 end
 
@@ -1127,7 +1138,7 @@ function MOI.set(
         m.optimizer,
         attr.attr,
         map_indices_to_optimizer(m, idx),
-        map_indices(m.model_to_optimizer_map, v),
+        map_indices(m.model_to_optimizer_map, attr.attr, v),
     )
     return
 end

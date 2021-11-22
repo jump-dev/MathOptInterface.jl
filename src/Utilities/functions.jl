@@ -76,7 +76,7 @@ function eval_term(varval::Function, t::MOI.ScalarQuadraticTerm)
 end
 
 """
-    map_indices(index_map::Function, x::X)::X where {X}
+    map_indices(index_map::Function, attr::MOI.AnyAttribute, x::X)::X where {X}
 
 Substitute any [`MOI.VariableIndex`](@ref) (resp. [`MOI.ConstraintIndex`](@ref))
 in `x` by the [`MOI.VariableIndex`](@ref) (resp. [`MOI.ConstraintIndex`](@ref))
@@ -88,14 +88,11 @@ This function is used by implementations of [`MOI.copy_to`](@ref) on
 constraint functions, attribute values and submittable values. If you define a
 new attribute whose values `x::X` contain variable or constraint indices, you
 must also implement this function.
-
-A default fallback of
-```julia
-map_indices(::F, x::Any) where {F<:Function} = x
-```
-exists for the case where the attribute value does not need to be changed.
 """
-map_indices(::F, x::Any) where {F<:Function} = x
+map_indices(f, ::MOI.AnyAttribute, x) = map_indices(f, x)
+
+# RawOptimizerAttribute values are passed through un-changed.
+map_indices(::Any, ::MOI.RawOptimizerAttribute, x) = x
 
 """
     map_indices(
@@ -3166,10 +3163,7 @@ function convert_approx(
     i = findfirst(t -> isapprox(t.coefficient, one(T), atol = tol), f.terms)
     if abs(f.constant) > tol ||
        i === nothing ||
-       any(
-           j -> j != i && abs(f.terms[j].coefficient) > tol,
-           eachindex(f.terms),
-       )
+       any(j -> j != i && abs(f.terms[j].coefficient) > tol, eachindex(f.terms))
         throw(InexactError(:convert_approx, MOI.VariableIndex, func))
     end
     return f.terms[i].variable
