@@ -841,17 +841,22 @@ function test_ConstraintPrimal_fallback()
     )
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
-    @test_throws(
-        ErrorException,
-        MOI.get(model, MOI.ConstraintPrimal(), c),
-    )
-    @test_throws(
-        ErrorException,
-        MOI.get(model, MOI.ConstraintPrimal(), [c]),
-    )
     MOI.optimize!(model)
     @test MOI.get(model, MOI.ConstraintPrimal(), c) == 1.2
     @test MOI.get(model, MOI.ConstraintPrimal(), [c]) == [1.2]
+    return
+end
+
+function test_ConstraintPrimal_fallback_error()
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.Model{Float64}(),
+        MOI.Utilities.AUTOMATIC,
+    )
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
+    @test_throws(ErrorException, MOI.get(model, MOI.ConstraintPrimal(), c))
+    @test_throws(ErrorException, MOI.get(model, MOI.ConstraintPrimal(), [c]))
+    return
 end
 
 end  # module
