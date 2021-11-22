@@ -853,6 +853,7 @@ function MOI.get(
         return MOI.get(model.model_cache, attr, index)
     end
 end
+
 function MOI.get(
     model::CachingOptimizer,
     attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
@@ -875,6 +876,58 @@ function MOI.get(
         )
     else
         return MOI.get(model.model_cache, attr, indices)
+    end
+end
+
+###
+### MOI.ConstraintPrimal
+###
+
+# ConstraintPrimal is slightly unique for CachingOptimizer because if the solver
+# doesn't support the attribute directly, we can use the fallback to query the
+# function from the cache and the variable value from the optimizer.
+
+function MOI.get(
+    model::CachingOptimizer,
+    attr::MOI.ConstraintPrimal,
+    index::MOI.ConstraintIndex,
+)
+    if state(model) == NO_OPTIMIZER
+        error(
+            "Cannot query $(attr) from caching optimizer because no " *
+            "optimizer is attached.",
+        )
+    end
+    try
+        return MOI.get(
+            model.optimizer,
+            attr,
+            model.model_to_optimizer_map[index],
+        )
+    catch
+        return get_fallback(model, attr, index)
+    end
+end
+
+function MOI.get(
+    model::CachingOptimizer,
+    attr::MOI.ConstraintPrimal,
+    indices::Vector{<:MOI.ConstraintIndex},
+)
+    if state(model) == NO_OPTIMIZER
+        error(
+            "Cannot query $(attr) from caching optimizer because no " *
+            "optimizer is attached.",
+        )
+    end
+    try
+        return MOI.get(
+            model.optimizer,
+            attr,
+            [model.model_to_optimizer_map[i] for i in indices],
+        )
+    catch
+        return [get_fallback(model, attr, i) for i in indices]
     end
 end
 
