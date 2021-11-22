@@ -143,7 +143,7 @@ end
 
 Test getting variables by name.
 """
-function test_variable_get_VariableIndex(model::MOI.ModelLike, config::Config)
+function test_variable_get_VariableIndex(model::MOI.ModelLike, ::Config)
     @requires MOI.supports(model, MOI.VariableName(), MOI.VariableIndex)
     variable = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), variable, "x")
@@ -179,23 +179,23 @@ Test setting the upper bound of a variable, confirm that it solves correctly.
 """
 function test_variable_solve_with_upperbound(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     x = MOI.add_variable(model)
-    c1 = MOI.add_constraint(model, x, MOI.LessThan(1.0))
+    c1 = MOI.add_constraint(model, x, MOI.LessThan(T(1)))
     @test x.value == c1.value
-    c2 = MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+    c2 = MOI.add_constraint(model, x, MOI.GreaterThan(T(0)))
     @test x.value == c2.value
-    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(2), x)], T(0))
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     _test_model_solution(
         model,
         config;
-        objective_value = 2.0,
-        variable_primal = [(x, 1.0)],
-        constraint_primal = [(c1, 1.0), (c2, 1.0)],
-        constraint_dual = [(c1, -2.0), (c2, 0.0)],
+        objective_value = T(2),
+        variable_primal = [(x, T(1))],
+        constraint_primal = [(c1, T(1)), (c2, T(1))],
+        constraint_dual = [(c1, T(-2)), (c2, T(0))],
     )
     return
 end
@@ -203,17 +203,17 @@ end
 function setup_test(
     ::typeof(test_variable_solve_with_upperbound),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1]),
+            (MOI.FEASIBLE_POINT, T[1]),
             MOI.FEASIBLE_POINT,
-            (MOI.VariableIndex, MOI.LessThan{Float64}) => [-2.0],
-            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [0.0],
+            (MOI.VariableIndex, MOI.LessThan{T}) => T[-2],
+            (MOI.VariableIndex, MOI.GreaterThan{T}) => T[0],
         ),
     )
     model.eval_variable_constraint_dual = false
@@ -227,21 +227,21 @@ Test setting the lower bound of a variable, confirm that it solves correctly.
 """
 function test_variable_solve_with_lowerbound(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     x = MOI.add_variable(model)
-    c1 = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
-    c2 = MOI.add_constraint(model, x, MOI.LessThan(2.0))
-    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
+    c1 = MOI.add_constraint(model, x, MOI.GreaterThan(T(1)))
+    c2 = MOI.add_constraint(model, x, MOI.LessThan(T(2)))
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(2), x)], T(0))
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     _test_model_solution(
         model,
         config;
-        objective_value = 2.0,
-        variable_primal = [(x, 1.0)],
-        constraint_primal = [(c1, 1.0), (c2, 1.0)],
-        constraint_dual = [(c1, 2.0), (c2, 0.0)],
+        objective_value = T(2),
+        variable_primal = [(x, T(1))],
+        constraint_primal = [(c1, T(1)), (c2, T(1))],
+        constraint_dual = [(c1, T(2)), (c2, T(0))],
     )
     return
 end
@@ -249,17 +249,17 @@ end
 function setup_test(
     ::typeof(test_variable_solve_with_lowerbound),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1]),
+            (MOI.FEASIBLE_POINT, T[1]),
             MOI.FEASIBLE_POINT,
-            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [2.0],
-            (MOI.VariableIndex, MOI.LessThan{Float64}) => [0.0],
+            (MOI.VariableIndex, MOI.GreaterThan{T}) => T[2],
+            (MOI.VariableIndex, MOI.LessThan{T}) => T[0],
         ),
     )
     model.eval_variable_constraint_dual = false
@@ -276,19 +276,19 @@ Test an integer variable with fractional lower bound.
 """
 function test_variable_solve_Integer_with_lower_bound(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, x, MOI.GreaterThan(1.5))
-    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
+    MOI.add_constraint(model, x, MOI.GreaterThan(T(3 // 2)))
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(2), x)], T(0))
     MOI.add_constraint(model, x, MOI.Integer())
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     _test_model_solution(
         model,
         config;
-        objective_value = 4.0,
-        variable_primal = [(x, 2.0)],
+        objective_value = T(4),
+        variable_primal = [(x, T(2))],
     )
     return
 end
@@ -296,12 +296,12 @@ end
 function setup_test(
     ::typeof(test_variable_solve_Integer_with_lower_bound),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [2.0])),
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[2])),
     )
     return
 end
@@ -316,19 +316,19 @@ Test an integer variable with fractional upper bound.
 """
 function test_variable_solve_Integer_with_upper_bound(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, x, MOI.LessThan(1.5))
-    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(-2.0, x)], 0.0)
+    MOI.add_constraint(model, x, MOI.LessThan(T(3 // 2)))
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(-2), x)], T(0))
     MOI.add_constraint(model, x, MOI.Integer())
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     _test_model_solution(
         model,
         config;
-        objective_value = -2.0,
-        variable_primal = [(x, 1.0)],
+        objective_value = T(-2),
+        variable_primal = [(x, T(1))],
     )
     return
 end
@@ -336,12 +336,12 @@ end
 function setup_test(
     ::typeof(test_variable_solve_Integer_with_upper_bound),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[1])),
     )
     return
 end
@@ -356,19 +356,19 @@ Test a binary variable `<= 2`.
 """
 function test_variable_solve_ZeroOne_with_upper_bound(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, x, MOI.LessThan(2.0))
-    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(-2.0, x)], 0.0)
+    MOI.add_constraint(model, x, MOI.LessThan(T(2)))
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(-2), x)], T(0))
     MOI.add_constraint(model, x, MOI.ZeroOne())
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     _test_model_solution(
         model,
         config;
-        objective_value = -2.0,
-        variable_primal = [(x, 1.0)],
+        objective_value = T(-2),
+        variable_primal = [(x, T(1))],
     )
     return
 end
@@ -376,12 +376,12 @@ end
 function setup_test(
     ::typeof(test_variable_solve_ZeroOne_with_upper_bound),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[1])),
     )
     return
 end
@@ -396,19 +396,19 @@ Test a binary variable `<= 0`.
 """
 function test_variable_solve_ZeroOne_with_0_upper_bound(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, x, MOI.LessThan(0.0))
-    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
+    MOI.add_constraint(model, x, MOI.LessThan(T(0)))
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), x)], T(0))
     MOI.add_constraint(model, x, MOI.ZeroOne())
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     _test_model_solution(
         model,
         config;
-        objective_value = 0.0,
-        variable_primal = [(x, 0.0)],
+        objective_value = T(0),
+        variable_primal = [(x, T(0))],
     )
     return
 end
@@ -416,12 +416,12 @@ end
 function setup_test(
     ::typeof(test_variable_solve_ZeroOne_with_0_upper_bound),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.0])),
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[0])),
     )
     return
 end
@@ -431,12 +431,15 @@ end
 
 Test VariablePrimalStart
 """
-function test_model_VariablePrimalStart(model::MOI.ModelLike, ::Config)
+function test_model_VariablePrimalStart(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.VariablePrimalStart(), x) === nothing
-    MOI.set(model, MOI.VariablePrimalStart(), x, 1.0)
-    @test MOI.get(model, MOI.VariablePrimalStart(), x) == 1.0
+    MOI.set(model, MOI.VariablePrimalStart(), x, T(1))
+    @test MOI.get(model, MOI.VariablePrimalStart(), x) == T(1)
     MOI.set(model, MOI.VariablePrimalStart(), x, nothing)
     @test MOI.get(model, MOI.VariablePrimalStart(), x) === nothing
     return
