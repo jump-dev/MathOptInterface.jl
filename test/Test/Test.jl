@@ -58,8 +58,9 @@ MOI.Test.runtests(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{BigFloat}()),
     ),
     MOI.Test.Config(BigFloat),
-    include = ["test_linear_"],
+    include = ["test_constraint_", "test_linear_"],
     exclude = String[
+        "test_constraint_qcp_duplicate_off_diagonal",
         "test_linear_VectorAffineFunction_empty_row",
         "test_linear_add_constraints",
         "test_linear_integer_integration",
