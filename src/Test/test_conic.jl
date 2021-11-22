@@ -521,7 +521,7 @@ function test_conic_linear_INFEASIBLE(model::MOI.ModelLike, config::Config)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) in
-              [MOI.INFEASIBLE, MOI.INFEASIBLE_OR_UNBOUNDED]
+              [config.infeasible_status, MOI.INFEASIBLE_OR_UNBOUNDED]
         # TODO test dual feasibility and objective sign
     end
     return
@@ -597,7 +597,7 @@ function test_conic_linear_INFEASIBLE_2(model::MOI.ModelLike, config::Config)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) in
-              [MOI.INFEASIBLE, MOI.INFEASIBLE_OR_UNBOUNDED]
+              [config.infeasible_status, MOI.INFEASIBLE_OR_UNBOUNDED]
         # TODO test dual feasibility and objective sign
     end
     return
@@ -928,7 +928,8 @@ function test_conic_NormInfinityCone_INFEASIBLE(
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+        @test MOI.get(model, MOI.TerminationStatus()) ==
+              config.infeasible_status
         @test MOI.get(model, MOI.PrimalStatus()) in
               (MOI.NO_SOLUTION, MOI.INFEASIBLE_POINT)
         # TODO test dual feasibility and objective sign
@@ -1351,7 +1352,8 @@ function test_conic_NormOneCone_INFEASIBLE(model::MOI.ModelLike, config::Config)
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+        @test MOI.get(model, MOI.TerminationStatus()) ==
+              config.infeasible_status
         @test MOI.get(model, MOI.PrimalStatus()) in
               (MOI.NO_SOLUTION, MOI.INFEASIBLE_POINT)
         # TODO test dual feasibility and objective sign
@@ -2005,7 +2007,8 @@ function test_conic_SecondOrderCone_INFEASIBLE(
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+        @test MOI.get(model, MOI.TerminationStatus()) ==
+              config.infeasible_status
         @test MOI.get(model, MOI.PrimalStatus()) in
               (MOI.NO_SOLUTION, MOI.INFEASIBLE_POINT)
         # TODO test dual feasibility and objective sign
@@ -2445,7 +2448,7 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE(
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) in
-              [MOI.INFEASIBLE, MOI.INFEASIBLE_OR_UNBOUNDED]
+              [config.infeasible_status, MOI.INFEASIBLE_OR_UNBOUNDED]
         has_certificate = MOI.get(model, MOI.DualStatus()) in [
             MOI.INFEASIBILITY_CERTIFICATE,
             MOI.NEARLY_INFEASIBILITY_CERTIFICATE,

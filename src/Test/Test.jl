@@ -12,6 +12,7 @@ mutable struct Config{T<:Real}
     atol::T
     rtol::T
     optimal_status::MOI.TerminationStatusCode
+    infeasible_status::MOI.TerminationStatusCode
     exclude::Vector{Any}
 end
 
@@ -21,6 +22,7 @@ end
         atol::Real = Base.rtoldefault(T),
         rtol::Real = Base.rtoldefault(T),
         optimal_status::MOI.TerminationStatusCode = MOI.OPTIMAL,
+        infeasible_status::MOI.TerminationStatusCode = MOI.INFEASIBLE,
         exclude::Vector{Any} = Any[],
     ) where {T}
 
@@ -34,6 +36,8 @@ Return an object that is used to configure various tests.
     when comparing solutions.
   * `optimal_status = MOI.OPTIMAL`: Set to `MOI.LOCALLY_SOLVED` if the solver
     cannot prove global optimality.
+  * `infeasible_status = MOI.INFEASIBLE`: Set to `MOI.LOCALLY_INFEASIBLE` if the
+    solver cannot prove global infeasibility.
   * `exclude = Vector{Any}`: Pass attributes or functions to `exclude` to skip
     parts of tests that require certain functionality. Common arguments include:
      - `MOI.delete` to skip deletion-related tests
@@ -64,9 +68,10 @@ function Config(
     atol::Real = Base.rtoldefault(T),
     rtol::Real = Base.rtoldefault(T),
     optimal_status::MOI.TerminationStatusCode = MOI.OPTIMAL,
+    infeasible_status::MOI.TerminationStatusCode = MOI.INFEASIBLE,
     exclude::Vector{Any} = Any[],
 ) where {T<:Real}
-    return Config{T}(atol, rtol, optimal_status, exclude)
+    return Config{T}(atol, rtol, optimal_status, infeasible_status, exclude)
 end
 
 function Base.copy(config::Config{T}) where {T}
@@ -74,6 +79,7 @@ function Base.copy(config::Config{T}) where {T}
         config.atol,
         config.rtol,
         config.optimal_status,
+        config.infeasible_status,
         copy(config.exclude),
     )
 end

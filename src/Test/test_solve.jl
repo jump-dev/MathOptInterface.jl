@@ -426,7 +426,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_EqualTo_upper(
         MOI.EqualTo(-1.0),
     )
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
         return
     end
@@ -481,7 +481,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_EqualTo_lower(
         MOI.EqualTo(1.0),
     )
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
         return
     end
@@ -535,7 +535,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_LessThan(
         MOI.LessThan(-1.0),
     )
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
         return
     end
@@ -590,7 +590,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_GreaterThan(
         MOI.GreaterThan(1.0),
     )
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
         return
     end
@@ -645,7 +645,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_Interval_upper(
         MOI.Interval(-2.0, -1.0),
     )
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
         return
     end
@@ -700,7 +700,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_Interval_lower(
         MOI.Interval(1.0, 2.0),
     )
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
         return
     end
@@ -755,7 +755,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_VariableIndex_LessThan(
         MOI.GreaterThan(1.0),
     )
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
         return
     end
@@ -814,7 +814,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_VariableIndex_LessThan_
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x[1])
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
         return
     end
@@ -910,7 +910,7 @@ function test_solve_conflict_bound_bound(
     @test MOI.get(model, MOI.ConflictStatus()) ==
           MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
     @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
     @test MOI.get(model, MOI.ConstraintConflictStatus(), c1) == MOI.IN_CONFLICT
@@ -974,7 +974,7 @@ function test_solve_conflict_two_affine(
     @test MOI.get(model, MOI.ConflictStatus()) ==
           MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
     @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
     @test MOI.get(model, MOI.ConstraintConflictStatus(), c1) == MOI.IN_CONFLICT
@@ -1033,7 +1033,7 @@ function test_solve_conflict_invalid_interval(
     @test MOI.get(model, MOI.ConflictStatus()) ==
           MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
     @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
     @test MOI.get(model, MOI.ConstraintConflictStatus(), c1) == MOI.IN_CONFLICT
@@ -1095,7 +1095,7 @@ function test_solve_conflict_affine_affine(
     @test MOI.get(model, MOI.ConflictStatus()) ==
           MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
     @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
     @test MOI.get(model, MOI.ConstraintConflictStatus(), b1) == MOI.IN_CONFLICT
@@ -1169,7 +1169,7 @@ function test_solve_conflict_EqualTo(
     @test MOI.get(model, MOI.ConflictStatus()) ==
           MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
     @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
     @test MOI.get(model, MOI.ConstraintConflictStatus(), b1) == MOI.IN_CONFLICT
@@ -1243,7 +1243,7 @@ function test_solve_conflict_NOT_IN_CONFLICT(
     @test MOI.get(model, MOI.ConflictStatus()) ==
           MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
     @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
     @test MOI.get(model, MOI.ConstraintConflictStatus(), b1) == MOI.IN_CONFLICT
@@ -1363,7 +1363,7 @@ function test_solve_conflict_zeroone(
         MOI.GreaterThan(T(2)),
     )
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
     @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
     zeroone_conflict = MOI.get(model, MOI.ConstraintConflictStatus(), c1)
@@ -1426,7 +1426,7 @@ function test_solve_conflict_zeroone_2(
         MOI.EqualTo(one(T) / T(2)),
     )
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
     @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
     zeroone_conflict = MOI.get(model, MOI.ConstraintConflictStatus(), c1)

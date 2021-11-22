@@ -609,7 +609,7 @@ function test_constraint_ZeroOne_bounds_3(model::MOI.ModelLike, config::Config)
     )
     x = MOI.get(model, MOI.VariableIndex, "x")
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE
+    @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     return
 end
 

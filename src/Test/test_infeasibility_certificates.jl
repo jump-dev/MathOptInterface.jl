@@ -76,7 +76,8 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
             cu = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(1.4))
             MOI.optimize!(model)
             @requires(
-                MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE,
+                MOI.get(model, MOI.TerminationStatus()) ==
+                config.infeasible_status,
             )
             @requires(
                 MOI.get(model, MOI.DualStatus()) ==
@@ -137,7 +138,8 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
             cu = MOI.add_constraint(model, x, MOI.LessThan(1.4))
             MOI.optimize!(model)
             @requires(
-                MOI.get(model, MOI.TerminationStatus()) == MOI.INFEASIBLE,
+                MOI.get(model, MOI.TerminationStatus()) ==
+                config.infeasible_status,
             )
             @requires(
                 MOI.get(model, MOI.DualStatus()) ==
