@@ -48,3 +48,21 @@ MOI.Test.runtests(
     MOI.Test.Config();
     exclude_tests_after = v"0.0.1",
 )
+
+# Non-Float64 tests
+
+# TODO(odow): fix excluded tests
+
+MOI.Test.runtests(
+    MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{BigFloat}()),
+    ),
+    MOI.Test.Config(BigFloat),
+    include = ["test_linear_"],
+    exclude = String[
+        "test_linear_VectorAffineFunction_empty_row",
+        "test_linear_add_constraints",
+        "test_linear_integer_integration",
+        "test_linear_integration",
+    ],
+)

@@ -122,7 +122,7 @@ function MOI.Test.setup_test(
 end
 ```
 """
-setup_test(::Any, ::MOI.ModelLike, ::Config) = nothing
+setup_test(::Any, ::MOI.ModelLike, ::Config{T}) where {T} = nothing
 
 """
     version_added(::typeof(function_name))
