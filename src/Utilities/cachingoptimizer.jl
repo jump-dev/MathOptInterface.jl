@@ -912,7 +912,7 @@ end
 function MOI.get(
     model::CachingOptimizer,
     attr::MOI.ConstraintPrimal,
-    indices::Vector{<:MOI.ConstraintIndex}
+    indices::Vector{<:MOI.ConstraintIndex},
 )
     if state(model) == NO_OPTIMIZER
         error(
