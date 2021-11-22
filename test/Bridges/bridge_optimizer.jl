@@ -514,11 +514,11 @@ function test_show()
     )
     @test_broken sprint(show, bridged_mock) == MOI.Utilities.replace_acronym(
         """
-$(MOI.Bridges.Constraint.SingleBridgeOptimizer{MOI.Bridges.Constraint.LessToGreaterBridge{Float64,F,G} where G<:MOI.AbstractScalarFunction where F<:MOI.AbstractScalarFunction,MOI.Bridges.Constraint.SingleBridgeOptimizer{MOI.Bridges.Constraint.SplitIntervalBridge{Float64,F,S,LS,US} where US<:MOI.AbstractSet where LS<:MOI.AbstractSet where S<:MOI.AbstractSet where F<:MOI.AbstractFunction,MOI.Utilities.MockOptimizer{NoIntervalModel{Float64}}}})
+$(MOI.Bridges.Constraint.SingleBridgeOptimizer{MOI.Bridges.Constraint.LessToGreaterBridge{Float64,F,G} where G<:MOI.AbstractScalarFunction where F<:MOI.AbstractScalarFunction,MOI.Bridges.Constraint.SingleBridgeOptimizer{MOI.Bridges.Constraint.SplitIntervalBridge{Float64,F,S,LS,US} where US<:MOI.AbstractSet where LS<:MOI.AbstractSet where S<:MOI.AbstractSet where F<:MOI.AbstractFunction,MOI.Utilities.MockOptimizer{NoIntervalModel{Float64},Float64}}})
 with 1 constraint bridge
-with inner model $(MOI.Bridges.Constraint.SingleBridgeOptimizer{MOI.Bridges.Constraint.SplitIntervalBridge{Float64,F,S,LS,US} where US<:MOI.AbstractSet where LS<:MOI.AbstractSet where S<:MOI.AbstractSet where F<:MOI.AbstractFunction,MOI.Utilities.MockOptimizer{NoIntervalModel{Float64}}})
+with inner model $(MOI.Bridges.Constraint.SingleBridgeOptimizer{MOI.Bridges.Constraint.SplitIntervalBridge{Float64,F,S,LS,US} where US<:MOI.AbstractSet where LS<:MOI.AbstractSet where S<:MOI.AbstractSet where F<:MOI.AbstractFunction,MOI.Utilities.MockOptimizer{NoIntervalModel{Float64},Float64}})
   with 0 constraint bridges
-  with inner model $(MOI.Utilities.MockOptimizer{NoIntervalModel{Float64}})""",
+  with inner model $(MOI.Utilities.MockOptimizer{NoIntervalModel{Float64},Float64})""",
     )
     return
 end

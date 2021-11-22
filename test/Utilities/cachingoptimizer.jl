@@ -137,6 +137,7 @@ function MOI.Test.setup_test(
     model::MOI.Utilities.CachingOptimizer{
         MOI.Utilities.MockOptimizer{
             MOI.Utilities.UniversalFallback{MOI.Utilities.Model{Float64}},
+            Float64,
         },
         MOI.Utilities.Model{Float64},
     },
@@ -627,7 +628,7 @@ function test_CachingOptimizer_AUTOMATIC_mode()
     in state ATTACHED_OPTIMIZER
     in mode AUTOMATIC
     with model cache $(MOIU.Model{Float64})
-    with optimizer $(MOIU.MockOptimizer{MOIU.Model{Float64}})""")
+    with optimizer $(MOIU.MockOptimizer{MOIU.Model{Float64},Float64})""")
 
     MOI.empty!(m)
     @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
@@ -644,11 +645,11 @@ function test_empty_model_and_optimizer()
     @test MOIU.mode(m) == MOIU.AUTOMATIC
     @test MOI.get(m, MOI.SolverName()) == "Mock"
     @test sprint(show, m) == MOI.Utilities.replace_acronym("""
-    $(MOIU.CachingOptimizer{MOIU.MockOptimizer{MOIU.Model{Float64}},MOIU.Model{Float64}})
+    $(MOIU.CachingOptimizer{MOIU.MockOptimizer{MOIU.Model{Float64},Float64},MOIU.Model{Float64}})
     in state EMPTY_OPTIMIZER
     in mode AUTOMATIC
     with model cache $(MOIU.Model{Float64})
-    with optimizer $(MOIU.MockOptimizer{MOIU.Model{Float64}})""")
+    with optimizer $(MOIU.MockOptimizer{MOIU.Model{Float64},Float64})""")
 end
 
 function test_empty_model_nonempty_optimizer()
