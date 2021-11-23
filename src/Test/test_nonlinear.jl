@@ -276,14 +276,12 @@ function MOI.eval_hessian_lagrangian(d::FeasibilitySenseEvaluator, H, x, σ, μ)
     return
 end
 
-# Skip for non-Float64 solvers!
-_test_HS071(::MOI.ModelLike, ::Config, ::HS071) = nothing
-
 function _test_HS071(
     model::MOI.ModelLike,
-    config::Config{Float64},
+    config::Config{T},
     evaluator::HS071,
-)
+) where {T}
+    @requires T == Float64
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports_constraint(
@@ -464,8 +462,9 @@ Test NLPBlockDual.
 """
 function test_nonlinear_hs071_NLPBlockDual(
     model::MOI.ModelLike,
-    config::Config{Float64},
-)
+    config::Config{T},
+) where {T}
+    @requires T == Float64
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
@@ -512,9 +511,6 @@ function test_nonlinear_hs071_NLPBlockDual(
     end
     return
 end
-
-# Skip for non-Float64 solvers
-test_nonlinear_hs071_NLPBlockDual(::MOI.ModelLike, ::Config) = nothing
 
 function setup_test(
     ::typeof(test_nonlinear_hs071_NLPBlockDual),
@@ -571,8 +567,9 @@ Test that nonlinear objectives take precedence over MOI.ObjectiveFunction.
 """
 function test_nonlinear_objective_and_moi_objective_test(
     model::MOI.ModelLike,
-    config::Config{Float64},
-)
+    config::Config{T},
+) where {T}
+    @requires T == Float64
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
@@ -602,13 +599,6 @@ function test_nonlinear_objective_and_moi_objective_test(
     return
 end
 
-function test_nonlinear_objective_and_moi_objective_test(
-    ::MOI.ModelLike,
-    ::Config,
-)
-    return
-end
-
 function setup_test(
     ::typeof(test_nonlinear_objective_and_moi_objective_test),
     model::MOIU.MockOptimizer,
@@ -635,7 +625,11 @@ end
 
 Test a nonlinear objective only.
 """
-function test_nonlinear_objective(model::MOI.ModelLike, config::Config{Float64})
+function test_nonlinear_objective(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires T == Float64
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
@@ -661,8 +655,6 @@ function test_nonlinear_objective(model::MOI.ModelLike, config::Config{Float64})
     @test isapprox(abs(xv), 1.0, config)
     return
 end
-
-test_nonlinear_objective(::MOI.ModelLike, ::Config) = nothing
 
 function setup_test(
     ::typeof(test_nonlinear_objective),
@@ -692,8 +684,9 @@ Test a nonlinear problem without an objective.
 """
 function test_nonlinear_without_objective(
     model::MOI.ModelLike,
-    config::Config{Float64},
-)
+    config::Config{T},
+) where {T}
+    @requires T == Float64
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
@@ -718,8 +711,6 @@ function test_nonlinear_without_objective(
     @test isapprox(abs(xv), 1.0, config)
     return
 end
-
-test_nonlinear_without_objective(::MOI.ModelLike, ::Config) = nothing
 
 function setup_test(
     ::typeof(test_nonlinear_without_objective),
@@ -1085,7 +1076,11 @@ end
 Test that a nonlinear model returns the TerminationStatus `INVALID_MODEL` if a
 NaN is detected in a function evaluation.
 """
-function test_nonlinear_invalid(model::MOI.ModelLike, config::Config{Float64})
+function test_nonlinear_invalid(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires T == Float64
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
     MOI.add_variable(model)
@@ -1099,8 +1094,6 @@ function test_nonlinear_invalid(model::MOI.ModelLike, config::Config{Float64})
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.INVALID_MODEL
     return
 end
-
-test_nonlinear_invalid(::MOI.ModelLike, ::Config) = nothing
 
 function setup_test(
     ::typeof(test_nonlinear_invalid),
