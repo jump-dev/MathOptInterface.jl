@@ -323,7 +323,7 @@ function MOI.set(
     if MOI.is_set_by_optimize(attr)
         mock.optimizer_attributes[attr] = value
     else
-        MOI.set(mock.inner_model, attr, xor_indices(value))
+        MOI.set(mock.inner_model, attr, value)
     end
     return
 end

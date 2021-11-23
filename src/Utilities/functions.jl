@@ -3163,7 +3163,10 @@ function convert_approx(
     i = findfirst(t -> isapprox(t.coefficient, one(T), atol = tol), f.terms)
     if abs(f.constant) > tol ||
        i === nothing ||
-       any(j -> j != i && abs(f.terms[j].coefficient) > tol, eachindex(f.terms))
+       any(
+           j -> j != i && abs(f.terms[j].coefficient) > tol,
+           eachindex(f.terms),
+       )
         throw(InexactError(:convert_approx, MOI.VariableIndex, func))
     end
     return f.terms[i].variable
