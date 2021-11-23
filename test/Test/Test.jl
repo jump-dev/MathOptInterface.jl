@@ -65,7 +65,6 @@ MOI.Test.runtests(
         "test_model_",
         "test_modification_",
         "test_nonlinear_",
-        "test_objective_",
         "test_quadratic_",
-    ]
+    ],
 )
