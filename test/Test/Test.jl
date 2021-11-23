@@ -57,10 +57,15 @@ MOI.Test.runtests(
         BigFloat,
     ),
     MOI.Test.Config(BigFloat),
-    include = [
-        "test_basic_",
-        "test_constraint_",
-        "test_linear_",
-        "test_variable_",
-    ],
+    # TODO(odow): fix these excluded tests.
+    exclude = [
+        "test_conic_",
+        "test_infeasible_",
+        "test_unbounded_",
+        "test_model_",
+        "test_modification_",
+        "test_nonlinear_",
+        "test_objective_",
+        "test_quadratic_",
+    ]
 )
