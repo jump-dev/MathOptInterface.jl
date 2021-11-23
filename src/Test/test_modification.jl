@@ -9,22 +9,13 @@ throws a [`SettingVariableIndexNotAllowed`](@ref) error.
 """
 function test_modification_set_function_single_variable(
     model::MOI.ModelLike,
-    ::Config,
-)
-    MOIU.loadfromstring!(
-        model,
-        """
-    variables: x, y
-    maxobjective: 1.0x + 1.0y
-    x <= 1.0
-""",
-    )
-    x = MOI.get(model, MOI.VariableIndex, "x")
-    y = MOI.get(model, MOI.VariableIndex, "y")
-    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}}(x.value)
-    # We test this after the creation of every `VariableIndex` constraint
-    # to ensure a good coverage of corner cases.
-    @test c.value == x.value
+    ::Config{T},
+) where {T}
+    x, y = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(1) * x + T(1) * y
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    c = MOI.add_constraint(model, x, MOI.LessThan(T(1)))
     err = MOI.SettingVariableIndexNotAllowed()
     @test_throws err MOI.set(model, MOI.ConstraintFunction(), c, y)
     return
@@ -42,36 +33,30 @@ Test set modification VariableIndex-in-LessThan constraint. If
 """
 function test_modification_set_singlevariable_lessthan(
     model::MOI.ModelLike,
-    config::Config,
-)
-    MOIU.loadfromstring!(
-        model,
-        """
-    variables: x
-    maxobjective: 1.0x
-    x <= 1.0
-""",
-    )
-    x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}}(x.value)
-    @test c.value == x.value
+    config::Config{T},
+) where {T}
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(1) * x
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    c = MOI.add_constraint(model, x, MOI.LessThan(T(1)))
     _test_model_solution(
         model,
         config;
-        objective_value = 1.0,
-        variable_primal = [(x, 1.0)],
-        constraint_primal = [(c, 1.0)],
-        constraint_dual = [(c, -1.0)],
+        objective_value = T(1),
+        variable_primal = [(x, T(1))],
+        constraint_primal = [(c, T(1))],
+        constraint_dual = [(c, T(-1))],
     )
-    MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(2.0))
-    @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.LessThan(2.0)
+    MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(T(2)))
+    @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.LessThan(T(2))
     _test_model_solution(
         model,
         config;
-        objective_value = 2.0,
-        variable_primal = [(x, 2.0)],
-        constraint_primal = [(c, 2.0)],
-        constraint_dual = [(c, -1.0)],
+        objective_value = T(2),
+        variable_primal = [(x, T(2))],
+        constraint_primal = [(c, T(2))],
+        constraint_dual = [(c, T(-1))],
     )
     return
 end
@@ -79,20 +64,20 @@ end
 function setup_test(
     ::typeof(test_modification_set_singlevariable_lessthan),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0]),
+            (MOI.FEASIBLE_POINT, T[1]),
             MOI.FEASIBLE_POINT,
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [2.0]),
+            (MOI.FEASIBLE_POINT, T[2]),
             MOI.FEASIBLE_POINT,
         ),
     )
@@ -111,38 +96,32 @@ Test set transformation of a VariableIndex-in-LessThan constraint. If
 """
 function test_modification_transform_singlevariable_lessthan(
     model::MOI.ModelLike,
-    config::Config,
-)
-    MOIU.loadfromstring!(
-        model,
-        """
-    variables: x
-    maxobjective: 1.0x
-    x <= 1.0
-""",
-    )
-    x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}}(x.value)
-    @test c.value == x.value
+    config::Config{T},
+) where {T}
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(1) * x
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    c = MOI.add_constraint(model, x, MOI.LessThan(T(1)))
     _test_model_solution(
         model,
         config;
-        objective_value = 1.0,
-        variable_primal = [(x, 1.0)],
-        constraint_primal = [(c, 1.0)],
-        constraint_dual = [(c, -1.0)],
+        objective_value = T(1),
+        variable_primal = [(x, T(1))],
+        constraint_primal = [(c, T(1))],
+        constraint_dual = [(c, T(-1))],
     )
-    c2 = MOI.transform(model, c, MOI.GreaterThan(2.0))
+    c2 = MOI.transform(model, c, MOI.GreaterThan(T(2)))
     @test !MOI.is_valid(model, c)
     @test MOI.is_valid(model, c2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     _test_model_solution(
         model,
         config;
-        objective_value = 2.0,
-        variable_primal = [(x, 2.0)],
-        constraint_primal = [(c2, 2.0)],
-        constraint_dual = [(c2, 1.0)],
+        objective_value = T(2),
+        variable_primal = [(x, T(2))],
+        constraint_primal = [(c2, T(2))],
+        constraint_dual = [(c2, T(1))],
     )
     return
 end
@@ -150,20 +129,20 @@ end
 function setup_test(
     ::typeof(test_modification_transform_singlevariable_lessthan),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0]),
+            (MOI.FEASIBLE_POINT, T[1]),
             MOI.FEASIBLE_POINT,
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [2.0]),
+            (MOI.FEASIBLE_POINT, T[2]),
             MOI.FEASIBLE_POINT,
         ),
     )
@@ -182,35 +161,30 @@ Test modifying set of ScalarAffineFunction-in-LessThan constraint. If
 """
 function test_modification_set_scalaraffine_lessthan(
     model::MOI.ModelLike,
-    config::Config,
-)
-    MOIU.loadfromstring!(
-        model,
-        """
-    variables: x
-    maxobjective: 1.0x
-    c: 1.0x <= 1.0
-""",
-    )
-    x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.get(model, MOI.ConstraintIndex, "c")
+    config::Config{T},
+) where {T}
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(1) * x
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    c = MOI.add_constraint(model, f, MOI.LessThan(T(1)))
     _test_model_solution(
         model,
         config;
-        objective_value = 1.0,
-        variable_primal = [(x, 1.0)],
-        constraint_primal = [(c, 1.0)],
-        constraint_dual = [(c, -1.0)],
+        objective_value = T(1),
+        variable_primal = [(x, T(1))],
+        constraint_primal = [(c, T(1))],
+        constraint_dual = [(c, T(-1))],
     )
-    MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(2.0))
-    @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.LessThan(2.0)
+    MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(T(2)))
+    @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.LessThan(T(2))
     _test_model_solution(
         model,
         config;
-        objective_value = 2.0,
-        variable_primal = [(x, 2.0)],
-        constraint_primal = [(c, 2.0)],
-        constraint_dual = [(c, -1.0)],
+        objective_value = T(2),
+        variable_primal = [(x, T(2))],
+        constraint_primal = [(c, T(2))],
+        constraint_dual = [(c, T(-1))],
     )
     return
 end
@@ -218,25 +192,23 @@ end
 function setup_test(
     ::typeof(test_modification_set_scalaraffine_lessthan),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0]),
+            (MOI.FEASIBLE_POINT, T[1]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
-                [-1.0],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-1],
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [2.0]),
+            (MOI.FEASIBLE_POINT, T[2]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
-                [-1.0],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-1],
         ),
     )
     return
@@ -254,34 +226,29 @@ constraint. If `config.solve=true` confirm that it solves correctly, and if
 """
 function test_modification_coef_scalaraffine_lessthan(
     model::MOI.ModelLike,
-    config::Config,
-)
-    MOIU.loadfromstring!(
-        model,
-        """
-    variables: x
-    maxobjective: 1.0x
-    c: 1.0x <= 1.0
-""",
-    )
-    x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.get(model, MOI.ConstraintIndex, "c")
+    config::Config{T},
+) where {T}
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(1) * x
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    c = MOI.add_constraint(model, f, MOI.LessThan(T(1)))
     _test_model_solution(
         model,
         config;
-        objective_value = 1.0,
-        variable_primal = [(x, 1.0)],
-        constraint_primal = [(c, 1.0)],
-        constraint_dual = [(c, -1.0)],
+        objective_value = T(1),
+        variable_primal = [(x, T(1))],
+        constraint_primal = [(c, T(1))],
+        constraint_dual = [(c, T(-1))],
     )
-    MOI.modify(model, c, MOI.ScalarCoefficientChange(x, 2.0))
+    MOI.modify(model, c, MOI.ScalarCoefficientChange(x, T(2)))
     _test_model_solution(
         model,
         config;
-        objective_value = 0.5,
-        variable_primal = [(x, 0.5)],
-        constraint_primal = [(c, 1.0)],
-        constraint_dual = [(c, -0.5)],
+        objective_value = T(1 // 2),
+        variable_primal = [(x, T(1 // 2))],
+        constraint_primal = [(c, T(1))],
+        constraint_dual = [(c, T(-1 // 2))],
     )
     return
 end
@@ -289,25 +256,23 @@ end
 function setup_test(
     ::typeof(test_modification_coef_scalaraffine_lessthan),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0]),
+            (MOI.FEASIBLE_POINT, T[1]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
-                [-1.0],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-1],
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [0.5]),
+            (MOI.FEASIBLE_POINT, T[1//2]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
-                [-0.5],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-1//2],
         ),
     )
     return
@@ -325,41 +290,36 @@ constraint. If `config.solve=true` confirm that it solves correctly, and if
 """
 function test_modification_func_scalaraffine_lessthan(
     model::MOI.ModelLike,
-    config::Config,
-)
-    MOIU.loadfromstring!(
-        model,
-        """
-    variables: x
-    maxobjective: 1.0x
-    c: 1.0x <= 1.0
-""",
-    )
-    x = MOI.get(model, MOI.VariableIndex, "x")
-    c = MOI.get(model, MOI.ConstraintIndex, "c")
+    config::Config{T},
+) where {T}
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(1) * x
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    c = MOI.add_constraint(model, f, MOI.LessThan(T(1)))
     _test_model_solution(
         model,
         config;
-        objective_value = 1.0,
-        variable_primal = [(x, 1.0)],
-        constraint_primal = [(c, 1.0)],
-        constraint_dual = [(c, -1.0)],
+        objective_value = T(1),
+        variable_primal = [(x, T(1))],
+        constraint_primal = [(c, T(1))],
+        constraint_dual = [(c, T(-1))],
     )
     MOI.set(
         model,
         MOI.ConstraintFunction(),
         c,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(2), x)], T(0)),
     )
     foo = MOI.get(model, MOI.ConstraintFunction(), c)
-    @test foo ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
+    @test foo ≈ MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(2), x)], T(0))
     _test_model_solution(
         model,
         config;
-        objective_value = 0.5,
-        variable_primal = [(x, 0.5)],
-        # constraint_primal = [(c, 1.0)],
-        constraint_dual = [(c, -0.5)],
+        objective_value = T(1 // 2),
+        variable_primal = [(x, T(1 // 2))],
+        # constraint_primal = [(c, T(1))],
+        constraint_dual = [(c, T(-1 // 2))],
     )
     return
 end
@@ -367,25 +327,23 @@ end
 function setup_test(
     ::typeof(test_modification_func_scalaraffine_lessthan),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0]),
+            (MOI.FEASIBLE_POINT, T[1]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
-                [-1.0],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-1],
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [0.5]),
+            (MOI.FEASIBLE_POINT, T[1//2]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
-                [-0.5],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-1//2],
         ),
     )
     return
@@ -403,25 +361,20 @@ constraint. If `config.solve=true` confirm that it solves correctly, and if
 """
 function test_modification_func_vectoraffine_nonneg(
     model::MOI.ModelLike,
-    config::Config,
-)
-    MOIU.loadfromstring!(
-        model,
-        """
-    variables: x, y
-    minobjective: 1.0x + 2.0y
-    c: [1.0x, 2.0y] in Nonnegatives(2)
-""",
-    )
-    x = MOI.get(model, MOI.VariableIndex, "x")
-    y = MOI.get(model, MOI.VariableIndex, "y")
-    c = MOI.get(model, MOI.ConstraintIndex, "c")
+    config::Config{T},
+) where {T}
+    x, y = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = T(1) * x + T(2) * y
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    g = MOI.Utilities.operate(vcat, T, T(1) * x, T(2) * y)
+    c = MOI.add_constraint(model, g, MOI.Nonnegatives(2))
     _test_model_solution(
         model,
         config;
-        objective_value = 0.0,
-        variable_primal = [(x, 0.0), (y, 0.0)],
-        constraint_primal = [(c, [0.0, 0.0])],
+        objective_value = T(0),
+        variable_primal = [(x, T(0)), (y, T(0))],
+        constraint_primal = [(c, T[0, 0])],
     )
     MOI.set(
         model,
@@ -429,26 +382,26 @@ function test_modification_func_vectoraffine_nonneg(
         c,
         MOI.VectorAffineFunction(
             [
-                MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x)),
-                MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(2.0, y)),
+                MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x)),
+                MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(T(2), y)),
             ],
-            [-1.0, -1.5],
+            T[-1, -3//2],
         ),
     )
     foo = MOI.get(model, MOI.ConstraintFunction(), c)
     @test foo ≈ MOI.VectorAffineFunction(
         [
-            MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x)),
-            MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(2.0, y)),
+            MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x)),
+            MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(T(2), y)),
         ],
-        [-1.0, -1.5],
+        T[-1, -3//2],
     )
     _test_model_solution(
         model,
         config;
-        objective_value = 2.5,
-        variable_primal = [(x, 1.0), (y, 0.75)],
-        constraint_primal = [(c, [0.0, 0.0])],
+        objective_value = T(5 // 2),
+        variable_primal = [(x, T(1)), (y, T(3 // 4))],
+        constraint_primal = [(c, T[0, 0])],
     )
     return
 end
@@ -456,19 +409,19 @@ end
 function setup_test(
     ::typeof(test_modification_func_vectoraffine_nonneg),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [0.0, 0.0]),
+            (MOI.FEASIBLE_POINT, T[0, 0]),
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0, 0.75]),
+            (MOI.FEASIBLE_POINT, T[1, 3//4]),
         ),
     )
     return
@@ -486,42 +439,37 @@ constraint. If `config.solve=true` confirm that it solves correctly, and if
 """
 function test_modification_const_vectoraffine_nonpos(
     model::MOI.ModelLike,
-    config::Config,
-)
-    MOIU.loadfromstring!(
-        model,
-        """
-    variables: x, y
-    maxobjective: 1.0x + 2.0y
-""",
-    )
-    x = MOI.get(model, MOI.VariableIndex, "x")
-    y = MOI.get(model, MOI.VariableIndex, "y")
+    config::Config{T},
+) where {T}
+    x, y = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(1) * x + T(2) * y
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     c = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
             [
-                MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x)),
-                MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(2.0, y)),
+                MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x)),
+                MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(T(2), y)),
             ],
-            [0.0, 0.0],
+            T[0, 0],
         ),
         MOI.Nonpositives(2),
     )
     _test_model_solution(
         model,
         config;
-        objective_value = 0.0,
-        variable_primal = [(x, 0.0), (y, 0.0)],
-        constraint_primal = [(c, [0.0, 0.0])],
+        objective_value = T(0),
+        variable_primal = [(x, T(0)), (y, T(0))],
+        constraint_primal = [(c, T[0, 0])],
     )
-    MOI.modify(model, c, MOI.VectorConstantChange([-1.0, -1.5]))
+    MOI.modify(model, c, MOI.VectorConstantChange(T[-1, -3//2]))
     _test_model_solution(
         model,
         config;
-        objective_value = 2.5,
-        variable_primal = [(x, 1.0), (y, 0.75)],
-        constraint_primal = [(c, [0.0, 0.0])],
+        objective_value = T(5 // 2),
+        variable_primal = [(x, T(1)), (y, T(3 // 4))],
+        constraint_primal = [(c, T[0, 0])],
     )
     return
 end
@@ -529,19 +477,19 @@ end
 function setup_test(
     ::typeof(test_modification_const_vectoraffine_nonpos),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [0.0, 0.0]),
+            (MOI.FEASIBLE_POINT, T[0, 0]),
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0, 0.75]),
+            (MOI.FEASIBLE_POINT, T[1, 3//4]),
         ),
     )
     return
@@ -559,37 +507,37 @@ that it solves correctly.
 """
 function test_modification_multirow_vectoraffine_nonpos(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     x = MOI.add_variable(model)
-    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), x)], T(0))
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     c = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
             [
-                MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x)),
-                MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(2.0, x)),
+                MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x)),
+                MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(T(2), x)),
             ],
-            [-1.0, -1.0],
+            T[-1, -1],
         ),
         MOI.Nonpositives(2),
     )
     _test_model_solution(
         model,
         config;
-        objective_value = 0.5,
-        variable_primal = [(x, 0.5)],
-        constraint_primal = [(c, [-0.5, 0.0])],
+        objective_value = T(1 // 2),
+        variable_primal = [(x, T(1 // 2))],
+        constraint_primal = [(c, T[-1//2, 0])],
     )
-    MOI.modify(model, c, MOI.MultirowChange(x, [(1, 4.0), (2, 3.0)]))
+    MOI.modify(model, c, MOI.MultirowChange(x, [(1, T(4)), (2, T(3))]))
     _test_model_solution(
         model,
         config;
-        objective_value = 0.25,
-        variable_primal = [(x, 0.25)],
-        constraint_primal = [(c, [0.0, -0.25])],
+        objective_value = T(1 // 4),
+        variable_primal = [(x, T(1 // 4))],
+        constraint_primal = [(c, T[0, -1//4])],
     )
     return
 end
@@ -597,16 +545,19 @@ end
 function setup_test(
     ::typeof(test_modification_multirow_vectoraffine_nonpos),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.5])),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [0.25]),
+            (MOI.FEASIBLE_POINT, T[1//2]),
+        ),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, T[1//4]),
         ),
     )
     return
@@ -623,29 +574,29 @@ that it solves correctly.
 """
 function test_modification_const_scalar_objective(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     x = MOI.add_variable(model)
-    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 2.0)
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), x)], T(2))
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    MOI.add_constraint(model, x, MOI.LessThan(1.0))
+    MOI.add_constraint(model, x, MOI.LessThan(T(1)))
     _test_model_solution(
         model,
         config;
-        objective_value = 3.0,
-        variable_primal = [(x, 1.0)],
+        objective_value = T(3),
+        variable_primal = [(x, T(1))],
     )
     MOI.modify(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarConstantChange(3.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarConstantChange(T(3)),
     )
     _test_model_solution(
         model,
         config;
-        objective_value = 4.0,
-        variable_primal = [(x, 1.0)],
+        objective_value = T(4),
+        variable_primal = [(x, T(1))],
     )
     return
 end
@@ -653,14 +604,14 @@ end
 function setup_test(
     ::typeof(test_modification_const_scalar_objective),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[1])),
         (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[1])),
     )
     return
 end
@@ -676,29 +627,29 @@ Test modifying a variable coefficient in a scalaraffine objective. If
 """
 function test_modification_coef_scalar_objective(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     x = MOI.add_variable(model)
-    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), x)], T(0))
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    MOI.add_constraint(model, x, MOI.LessThan(1.0))
+    MOI.add_constraint(model, x, MOI.LessThan(T(1)))
     _test_model_solution(
         model,
         config;
-        objective_value = 1.0,
-        variable_primal = [(x, 1.0)],
+        objective_value = T(1),
+        variable_primal = [(x, T(1))],
     )
     MOI.modify(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarCoefficientChange(x, 3.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarCoefficientChange(x, T(3)),
     )
     _test_model_solution(
         model,
         config;
-        objective_value = 3.0,
-        variable_primal = [(x, 1.0)],
+        objective_value = T(3),
+        variable_primal = [(x, T(1))],
     )
     return
 end
@@ -706,14 +657,14 @@ end
 function setup_test(
     ::typeof(test_modification_coef_scalar_objective),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[1])),
         (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[1])),
     )
     return
 end
@@ -728,21 +679,21 @@ Test deleting a variable that is the objective function.
 """
 function test_modification_delete_variable_with_single_variable_obj(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
+    c = MOI.add_constraint(model, x, MOI.GreaterThan(T(1)))
     MOI.delete(model, y)
     _test_model_solution(
         model,
         config;
-        objective_value = 1.0,
-        variable_primal = [(x, 1.0)],
-        constraint_primal = [(c, 1.0)],
-        constraint_dual = [(c, 1.0)],
+        objective_value = T(1),
+        variable_primal = [(x, T(1))],
+        constraint_primal = [(c, T(1))],
+        constraint_dual = [(c, T(1))],
     )
     return
 end
@@ -750,16 +701,16 @@ end
 function setup_test(
     ::typeof(test_modification_delete_variable_with_single_variable_obj),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0]),
+            (MOI.FEASIBLE_POINT, T[1]),
             MOI.FEASIBLE_POINT,
-            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [1.0],
+            (MOI.VariableIndex, MOI.GreaterThan{T}) => T[1],
         ),
     )
     return
@@ -777,25 +728,19 @@ solves correctly.
 """
 function test_modification_delete_variables_in_a_batch(
     model::MOI.ModelLike,
-    config::Config,
-)
-    MOIU.loadfromstring!(
-        model,
-        """
-    variables: x, y, z
-    minobjective: 1.0 * x + 2.0 * y + 3.0 * z
-    x >= 1.0
-    y >= 1.0
-    z >= 1.0
-""",
-    )
-    x, y, z = MOI.get(model, MOI.ListOfVariableIndices())
+    config::Config{T},
+) where {T}
+    x, y, z = MOI.add_variables(model, 3)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = T(1) * x + T(2) * y + T(3) * z
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.add_constraint.(model, [x, y, z], MOI.GreaterThan(T(1)))
     @test MOI.is_valid(model, x)
     @test MOI.is_valid(model, y)
     @test MOI.is_valid(model, z)
     if _supports(config, MOI.optimize!)
         MOI.optimize!(model)
-        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 6.0, config)
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(6), config)
     end
     MOI.delete(model, [x, z])
     @test !MOI.is_valid(model, x)
@@ -803,7 +748,7 @@ function test_modification_delete_variables_in_a_batch(
     @test !MOI.is_valid(model, z)
     if _supports(config, MOI.optimize!)
         MOI.optimize!(model)
-        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 2.0, config)
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(2), config)
     end
     return
 end
@@ -811,20 +756,20 @@ end
 function setup_test(
     ::typeof(test_modification_delete_variables_in_a_batch),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0, 1.0, 1.0]),
+            (MOI.FEASIBLE_POINT, T[1, 1, 1]),
             MOI.FEASIBLE_POINT,
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, [1.0]),
+            (MOI.FEASIBLE_POINT, T[1]),
             MOI.FEASIBLE_POINT,
         ),
     )
@@ -843,41 +788,37 @@ Test various edge cases relating to deleting affine constraints. This requires
 """
 function test_modification_affine_deletion_edge_cases(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     x = MOI.add_variable(model)
     # helpers. The function 1.0x + 0.0
-    saf = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
+    saf = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), x)], T(0))
     vaf = MOI.VectorAffineFunction(
-        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
-        [0.0],
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x))],
+        T[0],
     )
     vaf2 = MOI.VectorAffineFunction(
-        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
-        [-2.0],
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x))],
+        T[-2],
     )
     # max x
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        saf,
-    )
+    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), saf)
     # test adding a VectorAffineFunction -in- LessThan
     c1 = MOI.add_constraint(model, vaf, MOI.Nonpositives(1))
     _test_model_solution(
         model,
         config;
-        objective_value = 0.0,
-        constraint_primal = [(c1, [0.0])],
+        objective_value = T(0),
+        constraint_primal = [(c1, T[0])],
     )
     # test adding a ScalarAffineFunction -in- LessThan
-    c2 = MOI.add_constraint(model, saf, MOI.LessThan(1.0))
+    c2 = MOI.add_constraint(model, saf, MOI.LessThan(T(1)))
     _test_model_solution(
         model,
         config;
-        objective_value = 0.0,
-        constraint_primal = [(c1, [0.0]), (c2, 0.0)],
+        objective_value = T(0),
+        constraint_primal = [(c1, T[0]), (c2, T(0))],
     )
     # now delete the VectorAffineFunction
     MOI.delete(model, c1)
@@ -890,24 +831,24 @@ function test_modification_affine_deletion_edge_cases(
     _test_model_solution(
         model,
         config;
-        objective_value = 1.0,
-        constraint_primal = [(c2, 1.0)],
+        objective_value = T(1),
+        constraint_primal = [(c2, T(1))],
     )
     # add a different VectorAffineFunction constraint
     c3 = MOI.add_constraint(model, vaf2, MOI.Nonpositives(1))
     _test_model_solution(
         model,
         config;
-        objective_value = 1.0,
-        constraint_primal = [(c2, 1.0), (c3, [-1.0])],
+        objective_value = T(1),
+        constraint_primal = [(c2, T(1)), (c3, T[-1])],
     )
     # delete the ScalarAffineFunction
     MOI.delete(model, c2)
     _test_model_solution(
         model,
         config;
-        objective_value = 2.0,
-        constraint_primal = [(c3, [0.0])],
+        objective_value = T(2),
+        constraint_primal = [(c3, T[0])],
     )
     return
 end
@@ -915,50 +856,50 @@ end
 function setup_test(
     ::typeof(test_modification_affine_deletion_edge_cases),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.0])),
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[0])),
         (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [0.0])),
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[0])),
         (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[1])),
         (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [1.0])),
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[1])),
         (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, [2.0])),
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[2])),
     )
     return
 end
 
 """
-    test_modification_incorrect(model::MOI.ModelLike, config::Config)
+    test_modification_incorrect(model::MOI.ModelLike, config::Config{T}) where {T}
 
 Test that constraint sets and functions cannot be set for the wrong type.
 """
-function test_modification_incorrect(model::MOI.ModelLike, ::Config)
+function test_modification_incorrect(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
     @requires MOI.supports_constraint(
         model,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.EqualTo{Float64},
+        MOI.ScalarAffineFunction{T},
+        MOI.EqualTo{T},
     )
     x = MOI.add_variable(model)
     c = MOI.add_constraint(
         model,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
-        MOI.EqualTo(1.0),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), x)], T(0)),
+        MOI.EqualTo(T(1)),
     )
     @test_throws(
-        MOI.SetTypeMismatch{MOI.EqualTo{Float64},MOI.LessThan{Float64}},
-        MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(1.0)),
+        MOI.SetTypeMismatch{MOI.EqualTo{T},MOI.LessThan{T}},
+        MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(T(1))),
     )
     @test_throws(
-        MOI.FunctionTypeMismatch{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.VariableIndex,
-        },
+        MOI.FunctionTypeMismatch{MOI.ScalarAffineFunction{T},MOI.VariableIndex},
         MOI.set(model, MOI.ConstraintFunction(), c, x),
     )
     return
@@ -982,14 +923,14 @@ function test_modification_incorrect_VariableIndex(
         MOI.supports_constraint(model, MOI.VariableIndex, MOI.GreaterThan{T}),
     )
     x = MOI.add_variable(model)
-    c = MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
+    c = MOI.add_constraint(model, x, MOI.GreaterThan(T(0)))
     @test_throws(
         MOI.SetTypeMismatch{MOI.GreaterThan{T},MOI.LessThan{T}},
-        MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(one(T))),
+        MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(T(1))),
     )
     @test_throws(
         MOI.FunctionTypeMismatch{MOI.VariableIndex,MOI.ScalarAffineFunction{T}},
-        MOI.set(model, MOI.ConstraintFunction(), c, one(T) * x),
+        MOI.set(model, MOI.ConstraintFunction(), c, T(1) * x),
     )
     y = MOI.add_variable(model)
     @test_throws(
