@@ -18,12 +18,14 @@ function _test_instantiate(T)
     optimizer = MOI.instantiate(optimizer_constructor)
     @test optimizer isa MOI.Utilities.MockOptimizer{
         MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}},
+        Float64,
     }
     @test MOI.get(optimizer, MOI.Silent())
     optimizer = MOI.instantiate(optimizer_constructor, with_bridge_type = T)
     @test optimizer isa MOI.Bridges.LazyBridgeOptimizer{
         MOI.Utilities.MockOptimizer{
             MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}},
+            Float64,
         },
     }
     @test MOI.get(optimizer, MOI.Silent())

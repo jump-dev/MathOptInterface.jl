@@ -51,19 +51,16 @@ MOI.Test.runtests(
 
 # Non-Float64 tests
 
-# TODO(odow): fix excluded tests
-
 MOI.Test.runtests(
     MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{BigFloat}()),
+        BigFloat,
     ),
     MOI.Test.Config(BigFloat),
-    include = ["test_constraint_", "test_linear_", "test_variable"],
-    exclude = String[
-        "test_constraint_qcp_duplicate_off_diagonal",
-        "test_linear_VectorAffineFunction_empty_row",
-        "test_linear_add_constraints",
-        "test_linear_integer_integration",
-        "test_linear_integration",
+    include = [
+        "test_basic_",
+        "test_constraint_",
+        "test_linear_",
+        "test_variable_",
     ],
 )

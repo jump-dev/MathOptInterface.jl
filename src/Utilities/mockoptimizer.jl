@@ -15,7 +15,7 @@ struct MockConstraintAttribute <: MOI.AbstractConstraintAttribute end
 feature is that it can store the values that should be returned for each
 attribute.
 """
-mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
+mutable struct MockOptimizer{MT<:MOI.ModelLike,T} <: MOI.AbstractOptimizer
     inner_model::MT
     # Flags
     supports_names::Bool # Allows to test with optimizer not supporting names
@@ -47,12 +47,12 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
     optimize_called::Bool
     termination_status::MOI.TerminationStatusCode
     result_count::Int
-    objective_value::Dict{Int,Float64}
-    dual_objective_value::Dict{Int,Float64}
+    objective_value::Dict{Int,T}
+    dual_objective_value::Dict{Int,T}
     # Primal solution
     primal_status::Dict{Int,MOI.ResultStatusCode}
-    variable_primal::Dict{MOI.VariableIndex,Dict{Int,Float64}}
-    callback_variable_primal::Dict{MOI.VariableIndex,Float64}
+    variable_primal::Dict{MOI.VariableIndex,Dict{Int,T}}
+    callback_variable_primal::Dict{MOI.VariableIndex,T}
     # Dual solution
     dual_status::Dict{Int,MOI.ResultStatusCode}
     constraint_dual::Dict{MOI.ConstraintIndex,Dict{Int,Any}}
@@ -72,7 +72,8 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike} <: MOI.AbstractOptimizer
 end
 
 function MockOptimizer(
-    inner_model::MOI.ModelLike;
+    inner_model::MOI.ModelLike,
+    T = Float64;
     supports_names = true,
     add_var_allowed = true,
     add_con_allowed = true,
@@ -81,7 +82,7 @@ function MockOptimizer(
     eval_variable_constraint_dual = true,
     scalar_function_constant_non_zero = false,
 )
-    return MockOptimizer(
+    return MockOptimizer{typeof(inner_model),T}(
         inner_model,
         # Flags
         supports_names,
@@ -105,12 +106,12 @@ function MockOptimizer(
         false,
         MOI.OPTIMIZE_NOT_CALLED,
         1,
-        Dict{Int,Float64}(),
-        Dict{Int,Float64}(),
+        Dict{Int,T}(),
+        Dict{Int,T}(),
         # PrimalStatus
         Dict{Int,MOI.ResultStatusCode}(),
-        Dict{MOI.VariableIndex,Dict{Int,Float64}}(),
-        Dict{MOI.VariableIndex,Float64}(),
+        Dict{MOI.VariableIndex,Dict{Int,T}}(),
+        Dict{MOI.VariableIndex,T}(),
         # DualStatus
         Dict{Int,MOI.ResultStatusCode}(),
         Dict{MOI.ConstraintIndex,Dict{Int,Any}}(),
@@ -544,10 +545,13 @@ function MOI.get(mock::MockOptimizer, attr::MOI.ObjectiveValue)
     return get(mock.objective_value, attr.result_index, NaN)
 end
 
-function MOI.get(mock::MockOptimizer, attr::MOI.DualObjectiveValue)
+function MOI.get(
+    mock::MockOptimizer{<:MOI.ModelLike,T},
+    attr::MOI.DualObjectiveValue,
+) where {T}
     MOI.check_result_index_bounds(mock, attr)
     if mock.eval_dual_objective_value
-        return get_fallback(mock, attr, Float64)
+        return get_fallback(mock, attr, T)
     end
     return get(mock.dual_objective_value, attr.result_index, NaN)
 end
