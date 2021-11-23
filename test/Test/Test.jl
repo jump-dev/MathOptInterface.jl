@@ -58,9 +58,5 @@ MOI.Test.runtests(
     ),
     MOI.Test.Config(BigFloat),
     # TODO(odow): fix these excluded tests.
-    exclude = [
-        "test_conic_",
-        "test_model_",
-        "test_modification_",
-    ],
+    exclude = ["test_conic_", "test_model_", "test_modification_"],
 )
