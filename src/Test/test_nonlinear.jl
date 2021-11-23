@@ -276,7 +276,14 @@ function MOI.eval_hessian_lagrangian(d::FeasibilitySenseEvaluator, H, x, σ, μ)
     return
 end
 
-function _test_HS071(model::MOI.ModelLike, config::Config, evaluator::HS071)
+# Skip for non-Float64 solvers!
+_test_HS071(::MOI.ModelLike, ::Config, ::HS071) = nothing
+
+function _test_HS071(
+    model::MOI.ModelLike,
+    config::Config{Float64},
+    evaluator::HS071,
+)
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports_constraint(
@@ -340,8 +347,11 @@ end
 function setup_test(
     ::typeof(test_nonlinear_hs071),
     model::MOIU.MockOptimizer,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
     config.optimal_status = MOI.LOCALLY_SOLVED
     MOI.Utilities.set_mock_optimize!(
         model,
@@ -369,7 +379,7 @@ end
 
 Test the nonlinear HS071 problem without hessians.
 """
-function test_nonlinear_hs071_no_hessian(model, config)
+function test_nonlinear_hs071_no_hessian(model, config::Config)
     _test_HS071(model, config, HS071(false))
     return
 end
@@ -377,8 +387,11 @@ end
 function setup_test(
     ::typeof(test_nonlinear_hs071_no_hessian),
     model::MOIU.MockOptimizer,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
     config.optimal_status = MOI.LOCALLY_SOLVED
     MOI.Utilities.set_mock_optimize!(
         model,
@@ -417,8 +430,11 @@ end
 function setup_test(
     ::typeof(test_nonlinear_hs071_hessian_vector_product),
     model::MOIU.MockOptimizer,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
     config.optimal_status = MOI.LOCALLY_SOLVED
     MOI.Utilities.set_mock_optimize!(
         model,
@@ -446,7 +462,10 @@ end
 
 Test NLPBlockDual.
 """
-function test_nonlinear_hs071_NLPBlockDual(model::MOI.ModelLike, config::Config)
+function test_nonlinear_hs071_NLPBlockDual(
+    model::MOI.ModelLike,
+    config::Config{Float64},
+)
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
@@ -494,11 +513,17 @@ function test_nonlinear_hs071_NLPBlockDual(model::MOI.ModelLike, config::Config)
     return
 end
 
+# Skip for non-Float64 solvers
+test_nonlinear_hs071_NLPBlockDual(::MOI.ModelLike, ::Config) = nothing
+
 function setup_test(
     ::typeof(test_nonlinear_hs071_NLPBlockDual),
     model::MOIU.MockOptimizer,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
     config.optimal_status = MOI.LOCALLY_SOLVED
     MOI.Utilities.set_mock_optimize!(
         model,
@@ -546,7 +571,7 @@ Test that nonlinear objectives take precedence over MOI.ObjectiveFunction.
 """
 function test_nonlinear_objective_and_moi_objective_test(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{Float64},
 )
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
@@ -577,11 +602,21 @@ function test_nonlinear_objective_and_moi_objective_test(
     return
 end
 
+function test_nonlinear_objective_and_moi_objective_test(
+    ::MOI.ModelLike,
+    ::Config,
+)
+    return
+end
+
 function setup_test(
     ::typeof(test_nonlinear_objective_and_moi_objective_test),
     model::MOIU.MockOptimizer,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
     config.optimal_status = MOI.LOCALLY_SOLVED
     MOI.Utilities.set_mock_optimize!(
         model,
@@ -600,7 +635,7 @@ end
 
 Test a nonlinear objective only.
 """
-function test_nonlinear_objective(model::MOI.ModelLike, config::Config)
+function test_nonlinear_objective(model::MOI.ModelLike, config::Config{Float64})
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
@@ -627,11 +662,16 @@ function test_nonlinear_objective(model::MOI.ModelLike, config::Config)
     return
 end
 
+test_nonlinear_objective(::MOI.ModelLike, ::Config) = nothing
+
 function setup_test(
     ::typeof(test_nonlinear_objective),
     model::MOIU.MockOptimizer,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
     config.optimal_status = MOI.LOCALLY_SOLVED
     MOI.Utilities.set_mock_optimize!(
         model,
@@ -650,7 +690,10 @@ end
 
 Test a nonlinear problem without an objective.
 """
-function test_nonlinear_without_objective(model::MOI.ModelLike, config::Config)
+function test_nonlinear_without_objective(
+    model::MOI.ModelLike,
+    config::Config{Float64},
+)
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
@@ -676,11 +719,16 @@ function test_nonlinear_without_objective(model::MOI.ModelLike, config::Config)
     return
 end
 
+test_nonlinear_without_objective(::MOI.ModelLike, ::Config) = nothing
+
 function setup_test(
     ::typeof(test_nonlinear_without_objective),
     model::MOIU.MockOptimizer,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
     config.optimal_status = MOI.LOCALLY_SOLVED
     MOI.Utilities.set_mock_optimize!(
         model,
@@ -702,58 +750,56 @@ Test the solution of the linear mixed-complementarity problem:
 """
 function test_nonlinear_mixed_complementarity(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Complements,
     )
     @requires _supports(config, MOI.optimize!)
     x = MOI.add_variables(model, 4)
-    MOI.add_constraint.(model, x, MOI.Interval(0.0, 10.0))
-    MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
-    M = Float64[0 0 -1 -1; 0 0 1 -2; 1 -1 2 -2; 1 2 -2 4]
-    q = [2; 2; -2; -6]
-    terms = MOI.VectorAffineTerm{Float64}[]
+    MOI.add_constraint.(model, x, MOI.Interval(T(0), T(10)))
+    MOI.set.(model, MOI.VariablePrimalStart(), x, T(0))
+    M = T[0 0 -1 -1; 0 0 1 -2; 1 -1 2 -2; 1 2 -2 4]
+    q = T[2; 2; -2; -6]
+    terms = MOI.VectorAffineTerm{T}[]
     for i in 1:4
-        push!(
-            terms,
-            MOI.VectorAffineTerm(4 + i, MOI.ScalarAffineTerm(1.0, x[i])),
-        )
+        term = MOI.ScalarAffineTerm(T(1), x[i])
+        push!(terms, MOI.VectorAffineTerm(4 + i, term))
         for j in 1:4
-            iszero(M[i, j]) && continue
-            push!(
-                terms,
-                MOI.VectorAffineTerm(i, MOI.ScalarAffineTerm(M[i, j], x[j])),
-            )
+            if iszero(M[i, j])
+                continue
+            end
+            term = MOI.ScalarAffineTerm(M[i, j], x[j])
+            push!(terms, MOI.VectorAffineTerm(i, term))
         end
     end
     MOI.add_constraint(
         model,
-        MOI.VectorAffineFunction(terms, [q; 0.0; 0.0; 0.0; 0.0]),
+        MOI.VectorAffineFunction(terms, T[q; 0; 0; 0; 0]),
         MOI.Complements(8),
     )
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
     x_val = MOI.get.(model, MOI.VariablePrimal(), x)
-    @test isapprox(x_val, [2.8, 0.0, 0.8, 1.2], config)
+    @test isapprox(x_val, T[14//5, 0, 4//5, 6//5], config)
     return
 end
 
 function setup_test(
     ::typeof(test_nonlinear_mixed_complementarity),
     model::MOIU.MockOptimizer,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     config.optimal_status = MOI.LOCALLY_SOLVED
     MOI.Utilities.set_mock_optimize!(
         model,
         (mock) -> MOI.Utilities.mock_optimize!(
             mock,
             config.optimal_status,
-            [2.8, 0.0, 0.8, 1.2],
+            T[14//5, 0, 4//5, 6//5],
         ),
     )
     return
@@ -793,8 +839,8 @@ which rewrites, with auxiliary variables
 """
 function test_nonlinear_qp_complementarity_constraint(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     @requires MOI.supports_constraint(
         model,
         MOI.VectorOfVariables,
@@ -802,48 +848,48 @@ function test_nonlinear_qp_complementarity_constraint(
     )
     @requires _supports(config, MOI.optimize!)
     x = MOI.add_variables(model, 8)
-    MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
-    MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
+    MOI.set.(model, MOI.VariablePrimalStart(), x, T(0))
+    MOI.add_constraint.(model, x, MOI.GreaterThan(T(0)))
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}(),
         MOI.ScalarQuadraticFunction(
-            MOI.ScalarQuadraticTerm.([2.0, 8.0], x[1:2], x[1:2]),
-            MOI.ScalarAffineTerm.([-10.0, 4.0], x[[1, 2]]),
-            26.0,
+            MOI.ScalarQuadraticTerm.(T[2, 8], x[1:2], x[1:2]),
+            MOI.ScalarAffineTerm.(T[-10, 4], x[[1, 2]]),
+            T(26),
         ),
     )
     MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([-1.5, 2.0, 1.0, 0.5, 1.0], x[1:5]),
-            0.0,
+            MOI.ScalarAffineTerm.(T[-3//2, 2, 1, 1//2, 1], x[1:5]),
+            T(0),
         ),
-        MOI.EqualTo(2.0),
+        MOI.EqualTo(T(2)),
     )
     MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([3.0, -1.0, -1.0], x[[1, 2, 6]]),
-            0.0,
+            MOI.ScalarAffineTerm.(T[3, -1, -1], x[[1, 2, 6]]),
+            T(0),
         ),
-        MOI.EqualTo(3.0),
+        MOI.EqualTo(T(3)),
     )
     MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([-1.0, 0.5, -1.0], x[[1, 2, 7]]),
-            0.0,
+            MOI.ScalarAffineTerm.(T[-1, 1//2, -1], x[[1, 2, 7]]),
+            T(0),
         ),
-        MOI.EqualTo(-4.0),
+        MOI.EqualTo(T(-4)),
     )
     MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.(-1.0, x[[1, 2, 8]]),
-            0.0,
+            MOI.ScalarAffineTerm.(T(-1), x[[1, 2, 8]]),
+            T(0),
         ),
-        MOI.EqualTo(-7.0),
+        MOI.EqualTo(T(-7)),
     )
     MOI.add_constraint(
         model,
@@ -854,16 +900,16 @@ function test_nonlinear_qp_complementarity_constraint(
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
     x_val = MOI.get.(model, MOI.VariablePrimal(), x)
-    @test isapprox(x_val, [1.0, 0.0, 3.5, 0.0, 0.0, 0.0, 3.0, 6.0], config)
-    @test isapprox(MOI.get(model, MOI.ObjectiveValue()), 17.0, config)
+    @test isapprox(x_val, T[1, 0, 7//2, 0, 0, 0, 3, 6], config)
+    @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(17), config)
     return
 end
 
 function setup_test(
     ::typeof(test_nonlinear_qp_complementarity_constraint),
     model::MOIU.MockOptimizer,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     config.optimal_status = MOI.LOCALLY_SOLVED
     MOI.Utilities.set_mock_optimize!(
         model,
@@ -871,9 +917,9 @@ function setup_test(
             MOI.Utilities.mock_optimize!(
                 mock,
                 config.optimal_status,
-                [1.0, 0.0, 3.5, 0.0, 0.0, 0.0, 3.0, 6.0],
+                T[1, 0, 7//2, 0, 0, 0, 3, 6],
             )
-            MOI.set(mock, MOI.ObjectiveValue(), 17.0)
+            MOI.set(mock, MOI.ObjectiveValue(), T(17))
         end,
     )
     return
@@ -1039,7 +1085,7 @@ end
 Test that a nonlinear model returns the TerminationStatus `INVALID_MODEL` if a
 NaN is detected in a function evaluation.
 """
-function test_nonlinear_invalid(model::MOI.ModelLike, config::Config)
+function test_nonlinear_invalid(model::MOI.ModelLike, config::Config{Float64})
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
     MOI.add_variable(model)
@@ -1054,11 +1100,16 @@ function test_nonlinear_invalid(model::MOI.ModelLike, config::Config)
     return
 end
 
+test_nonlinear_invalid(::MOI.ModelLike, ::Config) = nothing
+
 function setup_test(
     ::typeof(test_nonlinear_invalid),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(mock, MOI.INVALID_MODEL, [NaN]),
