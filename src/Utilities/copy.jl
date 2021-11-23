@@ -39,7 +39,7 @@ function _pass_attribute(
 )
     value = MOI.get(src, attr)
     if value !== nothing
-        MOI.set(dest, attr, map_indices(index_map, value))
+        MOI.set(dest, attr, map_indices(index_map, attr, value))
     end
     return
 end
@@ -81,7 +81,12 @@ function _pass_attribute(
     for x in vis_src
         value = MOI.get(src, attr, x)
         if value !== nothing
-            MOI.set(dest, attr, index_map[x], map_indices(index_map, value))
+            MOI.set(
+                dest,
+                attr,
+                index_map[x],
+                map_indices(index_map, attr, value),
+            )
         end
     end
     return
@@ -129,7 +134,12 @@ function _pass_attribute(
     for ci in cis_src
         value = MOI.get(src, attr, ci)
         if value !== nothing
-            MOI.set(dest, attr, index_map[ci], map_indices(index_map, value))
+            MOI.set(
+                dest,
+                attr,
+                index_map[ci],
+                map_indices(index_map, attr, value),
+            )
         end
     end
     return

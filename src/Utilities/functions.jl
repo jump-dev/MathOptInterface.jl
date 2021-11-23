@@ -76,18 +76,23 @@ function eval_term(varval::Function, t::MOI.ScalarQuadraticTerm)
 end
 
 """
-    map_indices(index_map::Function, x::X)::X where {X}
+    map_indices(index_map::Function, attr::MOI.AnyAttribute, x::X)::X where {X}
 
 Substitute any [`MOI.VariableIndex`](@ref) (resp. [`MOI.ConstraintIndex`](@ref))
 in `x` by the [`MOI.VariableIndex`](@ref) (resp. [`MOI.ConstraintIndex`](@ref))
 of the same type given by `index_map(x)`.
 
-This function is used by implementations of [`MOI.copy_to`](@ref) on constraint
-functions, attribute values and submittable values hence it needs to be
-implemented for custom types that are meant to be used as attribute or
-submittable value.
+## When to implement this method for new types `X`
+
+This function is used by implementations of [`MOI.copy_to`](@ref) on
+constraint functions, attribute values and submittable values. If you define a
+new attribute whose values `x::X` contain variable or constraint indices, you
+must also implement this function.
 """
-function map_indices end
+map_indices(f, ::MOI.AnyAttribute, x) = map_indices(f, x)
+
+# RawOptimizerAttribute values are passed through un-changed.
+map_indices(::Any, ::MOI.RawOptimizerAttribute, x) = x
 
 """
     map_indices(

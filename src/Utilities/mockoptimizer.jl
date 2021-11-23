@@ -324,7 +324,7 @@ function MOI.set(
     if MOI.is_set_by_optimize(attr)
         mock.optimizer_attributes[attr] = value
     else
-        MOI.set(mock.inner_model, attr, xor_indices(value))
+        MOI.set(mock.inner_model, attr, value)
     end
     return
 end
@@ -450,7 +450,7 @@ function MOI.get(mock::MockOptimizer, attr::MOI.AbstractOptimizerAttribute)
     if MOI.is_set_by_optimize(attr)
         return mock.optimizer_attributes[attr]
     else
-        return xor_indices(MOI.get(mock.inner_model, attr))
+        return MOI.get(mock.inner_model, attr)
     end
 end
 function MOI.get(mock::MockOptimizer, attr::MOI.AbstractModelAttribute)
