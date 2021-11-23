@@ -1,4 +1,4 @@
-for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
+for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0, 6 // 5)
     o = iszero(offset) ? "" : "_offset"
     f_unbd_name = Symbol("test_unbounded_$(Symbol(sense))$(o)")
     f_infeas_name = Symbol("test_infeasible_$(Symbol(sense))$(o)")
@@ -7,16 +7,27 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
         """
         Test the infeasibility certificates of an unbounded model.
         """
-        function $(f_unbd_name)(model::MOI.ModelLike, config::Config)
+        function $(f_unbd_name)(
+            model::MOI.ModelLike,
+            config::Config{T},
+        ) where {T}
             @requires _supports(config, MOI.optimize!)
             x = MOI.add_variable(model)
             MOI.set(model, MOI.ObjectiveSense(), $sense)
-            f = 2.2 * x + $offset
+            f = T(11 // 5) * x + T($offset)
             MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
             c = if $sense == MOI.MIN_SENSE
-                MOI.add_constraint(model, 1.3 * x, MOI.LessThan(1.1))
+                MOI.add_constraint(
+                    model,
+                    T(13 // 10) * x,
+                    MOI.LessThan(T(11 // 10)),
+                )
             else
-                MOI.add_constraint(model, 1.3 * x, MOI.GreaterThan(1.1))
+                MOI.add_constraint(
+                    model,
+                    T(13 // 10) * x,
+                    MOI.GreaterThan(T(11 // 10)),
+                )
             end
             MOI.optimize!(model)
             @requires(
@@ -35,17 +46,17 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
                 @test d > config.atol
                 @test obj > config.atol
             end
-            @test isapprox(2.2 * d, obj, config)
+            @test isapprox(T(11 // 5) * d, obj, config)
             Ad = MOI.get(model, MOI.ConstraintPrimal(), c)
-            @test isapprox(1.3 * d, Ad, config)
+            @test isapprox(T(13 // 10) * d, Ad, config)
             return
         end
 
         function setup_test(
             ::typeof($(f_unbd_name)),
             mock::MOIU.MockOptimizer,
-            config::Config,
-        )
+            config::Config{T},
+        ) where {T}
             MOIU.set_mock_optimize!(
                 mock,
                 (mock::MOIU.MockOptimizer) -> begin
@@ -54,7 +65,7 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
                         MOI.DUAL_INFEASIBLE,
                         (
                             MOI.INFEASIBILITY_CERTIFICATE,
-                            [$sense == MOI.MIN_SENSE ? -1.0 : 1.0],
+                            [$sense == MOI.MIN_SENSE ? T(-1) : T(1)],
                         ),
                         MOI.NO_SOLUTION,
                     )
@@ -66,14 +77,17 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
         """
         Test the infeasibility certificates of an infeasible model.
         """
-        function $(f_infeas_name)(model::MOI.ModelLike, config::Config)
+        function $(f_infeas_name)(
+            model::MOI.ModelLike,
+            config::Config{T},
+        ) where {T}
             @requires _supports(config, MOI.optimize!)
             x = MOI.add_variable(model)
             MOI.set(model, MOI.ObjectiveSense(), $sense)
-            f = 2.2 * x + $offset
+            f = T(11 // 5) * x + T($offset)
             MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
-            cl = MOI.add_constraint(model, x, MOI.GreaterThan(2.5))
-            cu = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(1.4))
+            cl = MOI.add_constraint(model, x, MOI.GreaterThan(T(5 // 2)))
+            cu = MOI.add_constraint(model, T(1) * x, MOI.LessThan(T(7 // 5)))
             MOI.optimize!(model)
             @requires(
                 MOI.get(model, MOI.TerminationStatus()) ==
@@ -88,22 +102,22 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
             obj = MOI.get(model, MOI.DualObjectiveValue())
             if $sense == MOI.MIN_SENSE
                 @test obj > config.atol
-                @test isapprox(-(1.4 * dl + 2.5 * du), obj, config)
+                @test isapprox(-(T(7 // 5) * dl + T(5 // 2) * du), obj, config)
             else
                 @test obj < -config.atol
-                @test isapprox(1.4 * dl + 2.5 * du, obj, config)
+                @test isapprox(T(7 // 5) * dl + T(5 // 2) * du, obj, config)
             end
             @test dl > config.atol
             @test du < -config.atol
-            @test isapprox(dl + du, 0.0, config)
+            @test isapprox(dl + du, T(0), config)
             return
         end
 
         function setup_test(
             ::typeof($(f_infeas_name)),
             mock::MOIU.MockOptimizer,
-            config::Config,
-        )
+            config::Config{T},
+        ) where {T}
             MOIU.set_mock_optimize!(
                 mock,
                 (mock::MOIU.MockOptimizer) -> begin
@@ -112,12 +126,9 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
                         MOI.INFEASIBLE,
                         MOI.NO_SOLUTION,
                         MOI.INFEASIBILITY_CERTIFICATE,
-                        (MOI.VariableIndex, MOI.GreaterThan{Float64}) =>
-                            [1.0],
-                        (
-                            MOI.ScalarAffineFunction{Float64},
-                            MOI.LessThan{Float64},
-                        ) => [-1.0],
+                        (MOI.VariableIndex, MOI.GreaterThan{T}) => T[1],
+                        (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) =>
+                            T[-1],
                     )
                 end,
             )
@@ -128,14 +139,17 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
         Test the infeasibility certificates of an infeasible model with affine
         constraints.
         """
-        function $(f_infeas_affine_name)(model::MOI.ModelLike, config::Config)
+        function $(f_infeas_affine_name)(
+            model::MOI.ModelLike,
+            config::Config{T},
+        ) where {T}
             @requires _supports(config, MOI.optimize!)
             x = MOI.add_variable(model)
             MOI.set(model, MOI.ObjectiveSense(), $sense)
-            f = 2.2 * x + $offset
+            f = T(11 // 5) * x + T($offset)
             MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
-            cl = MOI.add_constraint(model, 1.0 * x, MOI.GreaterThan(2.5))
-            cu = MOI.add_constraint(model, x, MOI.LessThan(1.4))
+            cl = MOI.add_constraint(model, T(1) * x, MOI.GreaterThan(T(5 // 2)))
+            cu = MOI.add_constraint(model, x, MOI.LessThan(T(7 // 5)))
             MOI.optimize!(model)
             @requires(
                 MOI.get(model, MOI.TerminationStatus()) ==
@@ -150,22 +164,22 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
             obj = MOI.get(model, MOI.DualObjectiveValue())
             if $sense == MOI.MIN_SENSE
                 @test obj > config.atol
-                @test isapprox(-(1.4 * dl + 2.5 * du), obj, config)
+                @test isapprox(-(T(7 // 5) * dl + T(5 // 2) * du), obj, config)
             else
                 @test obj < -config.atol
-                @test isapprox(1.4 * dl + 2.5 * du, obj, config)
+                @test isapprox(T(7 // 5) * dl + T(5 // 2) * du, obj, config)
             end
             @test dl > config.atol
             @test du < -config.atol
-            @test isapprox(dl + du, 0.0, config)
+            @test isapprox(dl + du, T(0), config)
             return
         end
 
         function setup_test(
             ::typeof($(f_infeas_affine_name)),
             mock::MOIU.MockOptimizer,
-            config::Config,
-        )
+            config::Config{T},
+        ) where {T}
             MOIU.set_mock_optimize!(
                 mock,
                 (mock::MOIU.MockOptimizer) -> begin
@@ -174,12 +188,9 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0.0, 1.2)
                         MOI.INFEASIBLE,
                         MOI.NO_SOLUTION,
                         MOI.INFEASIBILITY_CERTIFICATE,
-                        (
-                            MOI.ScalarAffineFunction{Float64},
-                            MOI.GreaterThan{Float64},
-                        ) => [1.0],
-                        (MOI.VariableIndex, MOI.LessThan{Float64}) =>
-                            [-1.0],
+                        (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}) =>
+                            T[1],
+                        (MOI.VariableIndex, MOI.LessThan{T}) => T[-1],
                     )
                 end,
             )

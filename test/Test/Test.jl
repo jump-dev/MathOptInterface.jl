@@ -60,8 +60,6 @@ MOI.Test.runtests(
     # TODO(odow): fix these excluded tests.
     exclude = [
         "test_conic_",
-        "test_infeasible_",
-        "test_unbounded_",
         "test_model_",
         "test_modification_",
         "test_nonlinear_",
