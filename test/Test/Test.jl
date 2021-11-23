@@ -62,6 +62,5 @@ MOI.Test.runtests(
         "test_conic_",
         "test_model_",
         "test_modification_",
-        "test_nonlinear_",
     ],
 )
