@@ -845,6 +845,14 @@ function test_ConstraintPrimal_fallback()
     MOI.optimize!(model)
     @test MOI.get(model, MOI.ConstraintPrimal(), c) == 1.2
     @test MOI.get(model, MOI.ConstraintPrimal(), [c]) == [1.2]
+    @test_throws(
+        MOI.ResultIndexBoundsError(MOI.ConstraintPrimal(2), 1),
+        MOI.get(model, MOI.ConstraintPrimal(2), c),
+    )
+    @test_throws(
+        MOI.ResultIndexBoundsError(MOI.ConstraintPrimal(2), 1),
+        MOI.get(model, MOI.ConstraintPrimal(2), [c]),
+    )
     return
 end
 

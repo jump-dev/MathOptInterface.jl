@@ -907,7 +907,10 @@ function MOI.get(
             attr,
             model.model_to_optimizer_map[index],
         )
-    catch
+    catch err
+        if err isa MOI.ResultIndexBoundsError
+            rethrow(err)
+        end
         return get_fallback(model, attr, index)
     end
 end
@@ -929,7 +932,10 @@ function MOI.get(
             attr,
             [model.model_to_optimizer_map[i] for i in indices],
         )
-    catch
+    catch err
+        if err isa MOI.ResultIndexBoundsError
+            rethrow(err)
+        end
         return [get_fallback(model, attr, i) for i in indices]
     end
 end
