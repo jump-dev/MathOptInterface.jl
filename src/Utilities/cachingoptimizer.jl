@@ -901,16 +901,14 @@ function MOI.get(
             "optimizer is attached.",
         )
     end
+    MOI.check_result_index_bounds(model, attr)
     try
         return MOI.get(
             model.optimizer,
             attr,
             model.model_to_optimizer_map[index],
         )
-    catch err
-        if err isa MOI.ResultIndexBoundsError
-            rethrow(err)
-        end
+    catch
         return get_fallback(model, attr, index)
     end
 end
@@ -926,16 +924,14 @@ function MOI.get(
             "optimizer is attached.",
         )
     end
+    MOI.check_result_index_bounds(model, attr)
     try
         return MOI.get(
             model.optimizer,
             attr,
             [model.model_to_optimizer_map[i] for i in indices],
         )
-    catch err
-        if err isa MOI.ResultIndexBoundsError
-            rethrow(err)
-        end
+    catch
         return [get_fallback(model, attr, i) for i in indices]
     end
 end
