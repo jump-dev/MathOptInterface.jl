@@ -18,15 +18,13 @@ Opt obj = -11, soln x = 1, y = 0, z = 2
 """
 function _test_conic_linear_helper(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{T},
     use_VectorOfVariables::Bool,
-)
-    atol = config.atol
-    rtol = config.rtol
+) where {T}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     if use_VectorOfVariables
@@ -38,13 +36,13 @@ function _test_conic_linear_helper(
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             MOI.Nonnegatives,
         )
     end
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Zeros,
     )
     v = MOI.add_variables(model, 3)
@@ -55,7 +53,7 @@ function _test_conic_linear_helper(
     else
         vc = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{Float64}(vov),
+            MOI.VectorAffineFunction{T}(vov),
             MOI.Nonnegatives(3),
         )
     end
@@ -64,9 +62,9 @@ function _test_conic_linear_helper(
         MOI.VectorAffineFunction(
             MOI.VectorAffineTerm.(
                 [1, 1, 1, 2, 2],
-                MOI.ScalarAffineTerm.(1.0, [v; v[2]; v[3]]),
+                MOI.ScalarAffineTerm.(T(1), [v; v[2]; v[3]]),
             ),
-            [-3.0, -2.0],
+            T[-3, -2],
         ),
         MOI.Zeros(2),
     )
@@ -75,33 +73,27 @@ function _test_conic_linear_helper(
             model,
             MOI.NumberOfConstraints{
                 use_VectorOfVariables ? MOI.VectorOfVariables :
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonnegatives,
             }(),
         ) == 1
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
-            }(),
+            MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},MOI.Zeros}(),
         ) == 1
     end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (
         use_VectorOfVariables ? MOI.VectorOfVariables :
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Nonnegatives,
     ) in loc
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
+    @test (MOI.VectorAffineFunction{T}, MOI.Zeros) in loc
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([-3.0, -2.0, -4.0], v),
-            0.0,
-        ),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T[-3, -2, -4], v), T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if _supports(config, MOI.optimize!)
@@ -112,22 +104,20 @@ function _test_conic_linear_helper(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ -11 atol = atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), T(-11), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -11 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), T(-11), config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [1, 0, 2] atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [1, 0, 2] atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ zeros(2) atol = atol rtol =
-            rtol
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), v), T[1, 0, 2], config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), vc), T[1, 0, 2], config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), T[0, 0], config)
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), vc) ≈ [0, 2, 0] atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ [-3, -1] atol = atol rtol =
-                rtol
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), vc),
+                T[0, 2, 0],
+                config,
+            )
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), c), T[-3, -1], config)
         end
     end
     return
@@ -149,14 +139,14 @@ end
 function setup_test(
     ::typeof(test_conic_linear_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1.0, 0.0, 2.0],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-3, -1]],
+            T[1, 0, 2],
+            (MOI.VectorAffineFunction{T}, MOI.Zeros) => [T[-3, -1]],
         ),
     )
     return
@@ -178,16 +168,15 @@ end
 function setup_test(
     ::typeof(test_conic_linear_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1.0, 0.0, 2.0],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
-                [[0, 2, 0]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-3, -1]],
+            T[1, 0, 2],
+            (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) => [T[0, 2, 0]],
+            (MOI.VectorAffineFunction{T}, MOI.Zeros) => [T[-3, -1]],
         ),
     )
     return
@@ -218,15 +207,13 @@ x = -4, y = -3, z = 16, s == 0
 """
 function _test_conic_linear_helper_2(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{T},
     use_VectorOfVariables::Bool,
-)
-    atol = config.atol
-    rtol = config.rtol
+) where {T}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     if use_VectorOfVariables
@@ -247,18 +234,18 @@ function _test_conic_linear_helper_2(
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             MOI.Nonnegatives,
         )
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             MOI.Nonpositives,
         )
     end
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Zeros,
     )
     x = MOI.add_variable(model)
@@ -268,7 +255,7 @@ function _test_conic_linear_helper_2(
         y = ys[1]
     else
         y = MOI.add_variable(model)
-        func = MOI.VectorAffineFunction{Float64}(MOI.VectorOfVariables([y]))
+        func = MOI.VectorAffineFunction{T}(MOI.VectorOfVariables([y]))
         vc = MOI.add_constraint(model, func, MOI.Nonpositives(1))
     end
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -276,10 +263,10 @@ function _test_conic_linear_helper_2(
     @test MOI.get(model, MOI.NumberOfVariables()) == 4
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([3.0, 2.0, -4.0], [x, y, z]),
-            0.0,
+            MOI.ScalarAffineTerm.(T[3, 2, -4], [x, y, z]),
+            T(0),
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -288,12 +275,9 @@ function _test_conic_linear_helper_2(
         MOI.VectorAffineFunction(
             MOI.VectorAffineTerm.(
                 [1, 1, 2, 3, 3],
-                MOI.ScalarAffineTerm.(
-                    [1.0, -1.0, 1.0, 1.0, 1.0],
-                    [x, s, y, x, z],
-                ),
+                MOI.ScalarAffineTerm.(T[1, -1, 1, 1, 1], [x, s, y, x, z]),
             ),
-            [4.0, 3.0, -12.0],
+            T[4, 3, -12],
         ),
         MOI.Zeros(3),
     )
@@ -304,8 +288,8 @@ function _test_conic_linear_helper_2(
         vz = MOI.add_constraint(
             model,
             MOI.VectorAffineFunction(
-                [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, z))],
-                [0.0],
+                [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), z))],
+                T[0],
             ),
             MOI.Nonnegatives(1),
         )
@@ -316,23 +300,20 @@ function _test_conic_linear_helper_2(
     else
         vs = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{Float64}(vov),
+            MOI.VectorAffineFunction{T}(vov),
             MOI.Zeros(1),
         )
     end
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
-            }(),
+            MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},MOI.Zeros}(),
         ) == 2 - use_VectorOfVariables
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
                 use_VectorOfVariables ? MOI.VectorOfVariables :
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonpositives,
             }(),
         ) == 1
@@ -340,7 +321,7 @@ function _test_conic_linear_helper_2(
             model,
             MOI.NumberOfConstraints{
                 use_VectorOfVariables ? MOI.VectorOfVariables :
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonnegatives,
             }(),
         ) == 1
@@ -353,36 +334,27 @@ function _test_conic_linear_helper_2(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ -82 atol = atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), T(-82), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -82 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), T(-82), config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ -4 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ -3 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), z) ≈ 16 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), s) ≈ 0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ zeros(3) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [-3] atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), vz) ≈ [16] atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), vs) ≈ [0] atol = atol rtol =
-            rtol
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), x), T(-4), config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), y), T(-3), config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), z), T(16), config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), s), T(0), config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), T[0, 0, 0], config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), vc), T[-3], config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), vz), T[16], config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), vs), T[0], config)
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ [7, 2, -4] atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), vc) ≈ [0] atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), vz) ≈ [0] atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), vs) ≈ [7] atol = atol rtol =
-                rtol
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), c),
+                T[7, 2, -4],
+                config,
+            )
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), vc), T[0], config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), vz), T[0], config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), vs), T[7], config)
         end
     end
     return
@@ -407,14 +379,14 @@ end
 function setup_test(
     ::typeof(test_conic_linear_VectorOfVariables_2),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [-4, -3, 16, 0],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[7, 2, -4]],
+            T[-4, -3, 16, 0],
+            (MOI.VectorAffineFunction{T}, MOI.Zeros) => [T[7, 2, -4]],
         ),
     )
     return
@@ -439,24 +411,26 @@ end
 function setup_test(
     ::typeof(test_conic_linear_VectorAffineFunction_2),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [-4, -3, 16, 0],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [[0]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[0]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
-                [[7, 2, -4], [7]],
+            T[-4, -3, 16, 0],
+            (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) => [T[0]],
+            (MOI.VectorAffineFunction{T}, MOI.Nonpositives) => [T[0]],
+            (MOI.VectorAffineFunction{T}, MOI.Zeros) => [T[7, 2, -4], T[7]],
         ),
     )
     return
 end
 
 """
-    test_conic_linear_INFEASIBLE(model::MOI.ModelLike, config::Config)
+    test_conic_linear_INFEASIBLE(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
 
 Test an infeasible linear program in conic form.
 
@@ -467,37 +441,40 @@ s.t. -1 + x ∈ R₊
       1 + x ∈ R₋
 ```
 """
-function test_conic_linear_INFEASIBLE(model::MOI.ModelLike, config::Config)
+function test_conic_linear_INFEASIBLE(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Nonpositives,
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Nonnegatives,
     )
     x = MOI.add_variable(model)
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
-            [-1.0],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x))],
+            T[-1],
         ),
         MOI.Nonnegatives(1),
     )
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
-            [1.0],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x))],
+            T[1],
         ),
         MOI.Nonpositives(1),
     )
@@ -505,14 +482,14 @@ function test_conic_linear_INFEASIBLE(model::MOI.ModelLike, config::Config)
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonnegatives,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonpositives,
             }(),
         ) == 1
@@ -530,8 +507,8 @@ end
 function setup_test(
     ::typeof(test_conic_linear_INFEASIBLE),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -545,7 +522,10 @@ function setup_test(
 end
 
 """
-    test_conic_linear_INFEASIBLE_2(model::MOI.ModelLike, config::Config)
+    test_conic_linear_INFEASIBLE_2(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
 
 Test an infeasible linear program in conic form.
 
@@ -556,27 +536,29 @@ s.t. -1 + x ∈ R₊
           x ∈ R₋
 ```
 """
-function test_conic_linear_INFEASIBLE_2(model::MOI.ModelLike, config::Config)
+function test_conic_linear_INFEASIBLE_2(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Nonnegatives,
     )
     @requires MOI.supports_add_constrained_variables(model, MOI.Nonpositives)
-
     xs, cx = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
     x = xs[1]
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
-            [-1.0],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x))],
+            T[-1],
         ),
         MOI.Nonnegatives(1),
     )
@@ -584,7 +566,7 @@ function test_conic_linear_INFEASIBLE_2(model::MOI.ModelLike, config::Config)
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonnegatives,
             }(),
         ) == 1
@@ -606,8 +588,8 @@ end
 function setup_test(
     ::typeof(test_conic_linear_INFEASIBLE_2),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -631,17 +613,15 @@ A helper function for testing NormInfinityCone.
 """
 function _test_conic_NormInfinityCone_helper(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{T},
     use_VectorOfVariables::Bool,
-)
+) where {T}
     F = if use_VectorOfVariables
         MOI.VectorOfVariables
     else
-        MOI.VectorAffineFunction{Float64}
+        MOI.VectorAffineFunction{T}
     end
     @requires MOI.supports_constraint(model, F, MOI.NormInfinityCone)
-    atol = config.atol
-    rtol = config.rtol
     # Problem NormInf1
     # max 0x + 1y + 1z
     #  st  x == 1
@@ -650,7 +630,7 @@ function _test_conic_NormInfinityCone_helper(
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     if use_VectorOfVariables
@@ -662,7 +642,7 @@ function _test_conic_NormInfinityCone_helper(
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             MOI.Zeros,
         )
     end
@@ -671,30 +651,26 @@ function _test_conic_NormInfinityCone_helper(
         MOI.VectorOfVariables,
         MOI.NormInfinityCone,
     )
-
     x, y, z = MOI.add_variables(model, 3)
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([1.0, 1.0], [y, z]),
-            0.0,
-        ),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T[1, 1], [y, z]), T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     ceq1 = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
-            [-1.0],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x))],
+            T[-1],
         ),
         MOI.Zeros(1),
     )
     ceq2 = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))],
-            [-0.5],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), y))],
+            T[-1//2],
         ),
         MOI.Zeros(1),
     )
@@ -704,33 +680,30 @@ function _test_conic_NormInfinityCone_helper(
     else
         ccone = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{Float64}(vov),
+            MOI.VectorAffineFunction{T}(vov),
             MOI.NormInfinityCone(3),
         )
     end
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
-            }(),
+            MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},MOI.Zeros}(),
         ) == 2
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
                 use_VectorOfVariables ? MOI.VectorOfVariables :
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.NormInfinityCone,
             }(),
         ) == 1
     end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
+    @test (MOI.VectorAffineFunction{T}, MOI.Zeros) in loc
     @test (
         use_VectorOfVariables ? MOI.VectorOfVariables :
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.NormInfinityCone,
     ) in loc
     if _supports(config, MOI.optimize!)
@@ -741,30 +714,28 @@ function _test_conic_NormInfinityCone_helper(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1.5 atol = atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), T(3 // 2), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 1.5 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), T(3 // 2), config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 0.5 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), z) ≈ 1 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), ceq1) ≈ [0] atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), ceq2) ≈ [0] atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), ccone) ≈ [1.0, 0.5, 1.0] atol =
-            atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), x), T(1), config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), y), T(1 // 2), config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), z), T(1), config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), ceq1), T[0], config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), ceq2), T[0], config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), ccone),
+            T[1, 1//2, 1],
+            config,
+        )
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), ceq1) ≈ [-1] atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), ceq2) ≈ [-1] atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), ccone) ≈ [1.0, 0.0, -1.0] atol =
-                atol rtol = rtol
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), ceq1), T[-1], config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), ceq2), T[-1], config)
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), ccone),
+                T[1, 0, -1],
+                config,
+            )
         end
     end
     return
@@ -789,15 +760,15 @@ end
 function setup_test(
     ::typeof(test_conic_NormInfinityCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1, 0.5, 1],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [-1]],
-            (MOI.VectorOfVariables, MOI.NormInfinityCone) => [[1, 0, -1]],
+            T[1, 1//2, 1],
+            (MOI.VectorAffineFunction{T}, MOI.Zeros) => [T[-1], T[-1]],
+            (MOI.VectorOfVariables, MOI.NormInfinityCone) => [T[1, 0, -1]],
         ),
     )
     return
@@ -822,16 +793,16 @@ end
 function setup_test(
     ::typeof(test_conic_NormInfinityCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1, 0.5, 1],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [-1]],
-            (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) =>
-                [[1, 0, -1]],
+            T[1, 1//2, 1],
+            (MOI.VectorAffineFunction{T}, MOI.Zeros) => [T[-1], T[-1]],
+            (MOI.VectorAffineFunction{T}, MOI.NormInfinityCone) =>
+                [T[1, 0, -1]],
         ),
     )
     return
@@ -853,52 +824,51 @@ s.t. -2 + y ∈ R₊
 """
 function test_conic_NormInfinityCone_INFEASIBLE(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Nonnegatives,
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Nonpositives,
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.NormInfinityCone,
     )
-
     x, y = MOI.add_variables(model, 2)
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))],
-            [-2.0],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), y))],
+            T[-2],
         ),
         MOI.Nonnegatives(1),
     )
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
-            [-1.0],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x))],
+            T[-1],
         ),
         MOI.Nonpositives(1),
     )
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(1.0, [x, y])),
-            zeros(2),
+            MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(T(1), [x, y])),
+            zeros(T, 2),
         ),
         MOI.NormInfinityCone(2),
     )
@@ -906,21 +876,21 @@ function test_conic_NormInfinityCone_INFEASIBLE(
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonnegatives,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonpositives,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.NormInfinityCone,
             }(),
         ) == 1
@@ -940,8 +910,8 @@ end
 function setup_test(
     ::typeof(test_conic_NormInfinityCone_INFEASIBLE),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -955,7 +925,10 @@ function setup_test(
 end
 
 """
-    test_conic_NormInfinityCone_3(model::MOI.ModelLike, config::Config)
+    test_conic_NormInfinityCone_3(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
 
 Test the problem:
 ```
@@ -965,52 +938,52 @@ min x
 let n = 3. optimal solution: y .= -1, x = 2
 ```
 """
-function test_conic_NormInfinityCone_3(model::MOI.ModelLike, config::Config)
-    atol = config.atol
-    rtol = config.rtol
+function test_conic_NormInfinityCone_3(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.NormInfinityCone,
     )
-
     x = MOI.add_variable(model)
     y = MOI.add_variables(model, 3)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     norminf_vaf = MOI.VectorAffineFunction(
-        MOI.VectorAffineTerm.(1:4, MOI.ScalarAffineTerm.(1.0, vcat(x, y))),
-        [-1.0, 2, 2, 2],
+        MOI.VectorAffineTerm.(1:4, MOI.ScalarAffineTerm.(T(1), vcat(x, y))),
+        T[-1, 2, 2, 2],
     )
     norminf = MOI.add_constraint(model, norminf_vaf, MOI.NormInfinityCone(4))
     nonneg_vaf = MOI.VectorAffineFunction(
-        MOI.VectorAffineTerm.(1:3, MOI.ScalarAffineTerm.(1.0, y)),
-        ones(3),
+        MOI.VectorAffineTerm.(1:3, MOI.ScalarAffineTerm.(T(1), y)),
+        ones(T, 3),
     )
     nonneg = MOI.add_constraint(model, nonneg_vaf, MOI.Nonnegatives(3))
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.NormInfinityCone,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonnegatives,
             }(),
         ) == 1
     end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
-    @test (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) in loc
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) in loc
+    @test (MOI.VectorAffineFunction{T}, MOI.NormInfinityCone) in loc
+    @test (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) in loc
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
@@ -1019,25 +992,31 @@ function test_conic_NormInfinityCone_3(model::MOI.ModelLike, config::Config)
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2 atol = atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), T(2), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), T(2), config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 2 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ fill(-1.0, 3) atol =
-            atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), norminf) ≈ ones(4) atol =
-            atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), nonneg) ≈ zeros(3) atol =
-            atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), x), T(2), config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), y), fill(T(-1), 3), config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), norminf),
+            ones(T, 4),
+            config,
+        )
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), nonneg),
+            zeros(T, 3),
+            config,
+        )
         if _supports(config, MOI.ConstraintDual)
             dual_nonneg = MOI.get(model, MOI.ConstraintDual(), nonneg)
-            @test minimum(dual_nonneg) >= -atol
-            @test sum(dual_nonneg) ≈ 1.0 atol = atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), norminf) ≈
-                  vcat(1, -dual_nonneg) atol = atol rtol = rtol
+            @test minimum(dual_nonneg) >= -config.atol
+            @test ≈(sum(dual_nonneg), T(1), config)
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), norminf),
+                vcat(1, -dual_nonneg),
+                config,
+            )
         end
     end
     return
@@ -1046,17 +1025,17 @@ end
 function setup_test(
     ::typeof(test_conic_NormInfinityCone_3),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [2, -1, -1, -1],
-            (MOI.VectorAffineFunction{Float64}, MOI.NormInfinityCone) =>
-                [vcat(1, fill(-inv(3), 3))],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
-                [fill(inv(3), 3)],
+            T[2, -1, -1, -1],
+            (MOI.VectorAffineFunction{T}, MOI.NormInfinityCone) =>
+                [vcat(1, fill(-inv(T(3)), 3))],
+            (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) =>
+                [fill(inv(T(3)), 3)],
         ),
     )
     return
@@ -1064,11 +1043,9 @@ end
 
 function _test_conic_NormOneCone_helper(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{T},
     use_VectorOfVariables::Bool,
-)
-    atol = config.atol
-    rtol = config.rtol
+) where {T}
     # Problem NormOne1
     # max 0x + 1y + 1z
     #  st  x == 1
@@ -1077,7 +1054,7 @@ function _test_conic_NormOneCone_helper(
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     if use_VectorOfVariables
@@ -1089,7 +1066,7 @@ function _test_conic_NormOneCone_helper(
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             MOI.Zeros,
         )
     end
@@ -1098,30 +1075,26 @@ function _test_conic_NormOneCone_helper(
         MOI.VectorOfVariables,
         MOI.NormOneCone,
     )
-
     x, y, z = MOI.add_variables(model, 3)
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([1.0, 1.0], [y, z]),
-            0.0,
-        ),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T[1, 1], [y, z]), T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     ceq1 = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
-            [-1.0],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x))],
+            T[-1],
         ),
         MOI.Zeros(1),
     )
     ceq2 = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))],
-            [-0.5],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), y))],
+            T[-1//2],
         ),
         MOI.Zeros(1),
     )
@@ -1131,33 +1104,30 @@ function _test_conic_NormOneCone_helper(
     else
         ccone = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{Float64}(vov),
+            MOI.VectorAffineFunction{T}(vov),
             MOI.NormOneCone(3),
         )
     end
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
-            }(),
+            MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},MOI.Zeros}(),
         ) == 2
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
                 use_VectorOfVariables ? MOI.VectorOfVariables :
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.NormOneCone,
             }(),
         ) == 1
     end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
+    @test (MOI.VectorAffineFunction{T}, MOI.Zeros) in loc
     @test (
         use_VectorOfVariables ? MOI.VectorOfVariables :
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.NormOneCone,
     ) in loc
     if _supports(config, MOI.optimize!)
@@ -1168,30 +1138,28 @@ function _test_conic_NormOneCone_helper(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1 atol = atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), T(1), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 1 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), T(1), config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 0.5 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), z) ≈ 0.5 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), ceq1) ≈ [0] atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), ceq2) ≈ [0] atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), ccone) ≈ [1.0, 0.5, 0.5] atol =
-            atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), x), T(1), config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), y), T(1 // 2), config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), z), T(1 // 2), config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), ceq1), T[0], config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), ceq2), T[0], config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), ccone),
+            T[1, 1//2, 1//2],
+            config,
+        )
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), ceq1) ≈ [-1] atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), ceq2) ≈ [0] atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), ccone) ≈
-                  [1.0, -1.0, -1.0] atol = atol rtol = rtol
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), ceq1), T[-1], config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), ceq2), T[0], config)
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), ccone),
+                T[1, -1, -1],
+                config,
+            )
         end
     end
     return
@@ -1207,23 +1175,23 @@ Test NormOneCone in standard conic form.
 """
 function test_conic_NormOneCone_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     return _test_conic_NormOneCone_helper(model, config, true)
 end
 
 function setup_test(
     ::typeof(test_conic_NormOneCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1, 0.5, 0.5],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [0]],
-            (MOI.VectorOfVariables, MOI.NormOneCone) => [[1, -1, -1]],
+            T[1, 1//2, 1//2],
+            (MOI.VectorAffineFunction{T}, MOI.Zeros) => [T[-1], T[0]],
+            (MOI.VectorOfVariables, MOI.NormOneCone) => [T[1, -1, -1]],
         ),
     )
     return
@@ -1239,31 +1207,34 @@ Test NormOneCone in geometric conic form.
 """
 function test_conic_NormOneCone_VectorAffineFunction(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     return _test_conic_NormOneCone_helper(model, config, false)
 end
 
 function setup_test(
     ::typeof(test_conic_NormOneCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1, 0.5, 0.5],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-1], [0]],
-            (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) =>
-                [[1, -1, -1]],
+            T[1, 1//2, 1//2],
+            (MOI.VectorAffineFunction{T}, MOI.Zeros) => [T[-1], T[0]],
+            (MOI.VectorAffineFunction{T}, MOI.NormOneCone) =>
+                [T[1, -1, -1]],
         ),
     )
     return
 end
 
 """
-    test_conic_NormOneCone_INFEASIBLE(model::MOI.ModelLike, config::Config)
+    test_conic_NormOneCone_INFEASIBLE(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
 
 Test and infeasible problem with NormOneCone.
 
@@ -1278,51 +1249,53 @@ s.t. -2 + y ∈ R₊
      -1 + x ∈ R₋
       (x,y) ∈ NormOne₂
 """
-function test_conic_NormOneCone_INFEASIBLE(model::MOI.ModelLike, config::Config)
+function test_conic_NormOneCone_INFEASIBLE(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Nonnegatives,
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Nonpositives,
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.NormOneCone,
     )
-
     x, y = MOI.add_variables(model, 2)
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))],
-            [-2.0],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), y))],
+            T[-2],
         ),
         MOI.Nonnegatives(1),
     )
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
-            [-1.0],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x))],
+            T[-1],
         ),
         MOI.Nonpositives(1),
     )
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(1.0, [x, y])),
-            zeros(2),
+            MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(T(1), [x, y])),
+            zeros(T, 2),
         ),
         MOI.NormOneCone(2),
     )
@@ -1330,21 +1303,21 @@ function test_conic_NormOneCone_INFEASIBLE(model::MOI.ModelLike, config::Config)
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonnegatives,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonpositives,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.NormOneCone,
             }(),
         ) == 1
@@ -1364,8 +1337,8 @@ end
 function setup_test(
     ::typeof(test_conic_NormOneCone_INFEASIBLE),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -1379,7 +1352,7 @@ function setup_test(
 end
 
 """
-    test_conic_NormOneCone(model::MOI.ModelLike, config::Config)
+    test_conic_NormOneCone(model::MOI.ModelLike, config::Config{T}) where {T}
 
 Test the following problem:
 ```
@@ -1389,57 +1362,57 @@ min x
 let n = 3. optimal solution: y .= -1, x = 4
 ```
 """
-function test_conic_NormOneCone(model::MOI.ModelLike, config::Config)
+function test_conic_NormOneCone(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.NormOneCone,
     )
-    atol = config.atol
-    rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.NormOneCone,
     )
-
     x = MOI.add_variable(model)
     y = MOI.add_variables(model, 3)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     norminf_vaf = MOI.VectorAffineFunction(
-        MOI.VectorAffineTerm.(1:4, MOI.ScalarAffineTerm.(1.0, vcat(x, y))),
-        [-1.0, 2, 2, 2],
+        MOI.VectorAffineTerm.(1:4, MOI.ScalarAffineTerm.(T(1), vcat(x, y))),
+        T[-1, 2, 2, 2],
     )
     norminf = MOI.add_constraint(model, norminf_vaf, MOI.NormOneCone(4))
     nonneg_vaf = MOI.VectorAffineFunction(
-        MOI.VectorAffineTerm.(1:3, MOI.ScalarAffineTerm.(1.0, y)),
-        ones(3),
+        MOI.VectorAffineTerm.(1:3, MOI.ScalarAffineTerm.(T(1), y)),
+        ones(T, 3),
     )
     nonneg = MOI.add_constraint(model, nonneg_vaf, MOI.Nonnegatives(3))
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.NormOneCone,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonnegatives,
             }(),
         ) == 1
     end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
-    @test (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) in loc
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) in loc
+    @test (MOI.VectorAffineFunction{T}, MOI.NormOneCone) in loc
+    @test (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) in loc
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
@@ -1448,24 +1421,33 @@ function test_conic_NormOneCone(model::MOI.ModelLike, config::Config)
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 4 atol = atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), T(4), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 4 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), T(4), config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 4 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ fill(-1.0, 3) atol =
-            atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), norminf) ≈ vcat(3, ones(3)) atol =
-            atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), nonneg) ≈ zeros(3) atol =
-            atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), x), T(4), config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), y), fill(T(-1), 3), config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), norminf),
+            T[3, 1, 1, 1],
+            config,
+        )
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), nonneg),
+            zeros(T, 3),
+            config,
+        )
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), norminf) ≈
-                  vcat(1, fill(-1, 3)) atol = atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), nonneg) ≈ ones(3) atol =
-                atol rtol = rtol
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), norminf),
+                T[1, -1, -1, -1],
+                config,
+            )
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), nonneg),
+                ones(T, 3),
+                config,
+            )
         end
     end
     return
@@ -1474,17 +1456,16 @@ end
 function setup_test(
     ::typeof(test_conic_NormOneCone),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [4, -1, -1, -1],
-            (MOI.VectorAffineFunction{Float64}, MOI.NormOneCone) =>
-                [vcat(1, fill(-1, 3))],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
-                [ones(3)],
+            T[4, -1, -1, -1],
+            (MOI.VectorAffineFunction{T}, MOI.NormOneCone) =>
+                [T[1, -1, -1, -1]],
+            (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) => [ones(T, 3)],
         ),
     )
     return
@@ -1498,20 +1479,18 @@ max 0x + 1y + 1z
 """
 function _test_conic_SecondOrderCone_helper(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{T},
     use_VectorOfVariables::Bool,
-)
+) where {T}
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.SecondOrderCone,
     )
-    atol = config.atol
-    rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     if use_VectorOfVariables
@@ -1522,12 +1501,11 @@ function _test_conic_SecondOrderCone_helper(
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             MOI.SecondOrderCone,
         )
     end
     @requires MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Zeros)
-
     if use_VectorOfVariables
         xyz, csoc = MOI.add_constrained_variables(model, MOI.SecondOrderCone(3))
         x, y, z = xyz
@@ -1536,50 +1514,44 @@ function _test_conic_SecondOrderCone_helper(
         vov = MOI.VectorOfVariables([x, y, z])
         csoc = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{Float64}(vov),
+            MOI.VectorAffineFunction{T}(vov),
             MOI.SecondOrderCone(3),
         )
     end
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([1.0, 1.0], [y, z]),
-            0.0,
-        ),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T[1, 1], [y, z]), T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     ceq = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
-            [-1.0],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x))],
+            T[-1],
         ),
         MOI.Zeros(1),
     )
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
-            }(),
+            MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},MOI.Zeros}(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
                 use_VectorOfVariables ? MOI.VectorOfVariables :
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.SecondOrderCone,
             }(),
         ) == 1
     end
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
-    @test (MOI.VectorAffineFunction{Float64}, MOI.Zeros) in loc
+    @test (MOI.VectorAffineFunction{T}, MOI.Zeros) in loc
     @test (
         use_VectorOfVariables ? MOI.VectorOfVariables :
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.SecondOrderCone,
     ) in loc
     if _supports(config, MOI.optimize!)
@@ -1590,26 +1562,26 @@ function _test_conic_SecondOrderCone_helper(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ √2 atol = atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), √T(2), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ √2 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), √T(2), config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1 / √2 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), z) ≈ 1 / √2 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), ceq) ≈ [0.0] atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), csoc) ≈
-              [1.0, 1 / √2, 1 / √2] atol = atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), x), T(1), config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), y), 1 / √T(2), config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), z), 1 / √T(2), config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), ceq), T[0], config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), csoc),
+            T[1, 1/√T(2), 1/√T(2)],
+            config,
+        )
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), ceq) ≈ [-√2] atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), csoc) ≈ [√2, -1.0, -1.0] atol =
-                atol rtol = rtol
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), ceq), [-√T(2)], config)
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), csoc),
+                T[√T(2), -1, -1],
+                config,
+            )
         end
     end
 end
@@ -1624,8 +1596,8 @@ Test a SecondOrderCone in standard conic form.
 """
 function test_conic_SecondOrderCone_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_SecondOrderCone_helper(model, config, true)
     return
 end
@@ -1633,14 +1605,14 @@ end
 function setup_test(
     ::typeof(test_conic_SecondOrderCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1.0, 1 / √2, 1 / √2],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
+            T[1, 1/√T(2), 1/√T(2)],
+            (MOI.VectorAffineFunction{T}, MOI.Zeros) => [T[-√T(2)]],
         ),
     )
     return
@@ -1656,8 +1628,8 @@ Test a SecondOrderCone in geometric conic form.
 """
 function test_conic_SecondOrderCone_VectorAffineFunction(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_SecondOrderCone_helper(model, config, false)
     return
 end
@@ -1665,16 +1637,16 @@ end
 function setup_test(
     ::typeof(test_conic_SecondOrderCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1.0, 1 / √2, 1 / √2],
-            (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
-                [[√2, -1, -1]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[-√2]],
+            T[1, 1/√T(2), 1/√T(2)],
+            (MOI.VectorAffineFunction{T}, MOI.SecondOrderCone) =>
+                [T[√T(2), -1, -1]],
+            (MOI.VectorAffineFunction{T}, MOI.Zeros) => [T[-√T(2)]],
         ),
     )
     return
@@ -1682,68 +1654,65 @@ end
 
 function _test_conic_SecondOrderCone_helper_2(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{T},
     nonneg::Bool,
-)
+) where {T}
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.SecondOrderCone,
     )
-    atol = config.atol
-    rtol = config.rtol
     # Problem SOC2
     # min  x
-    # s.t. y ≥ 1/√2
+    # s.t. y ≥ 1/√T(2)
     #      x² + y² ≤ 1
     # in conic form:
     # min  x
-    # s.t.  -1/√2 + y ∈ R₊
+    # s.t.  -1/√T(2) + y ∈ R₊
     #        1 - t ∈ {0}
     #      (t,x,y) ∈ SOC₃
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Zeros,
     )
     if nonneg
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             MOI.Nonnegatives,
         )
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             MOI.Nonpositives,
         )
     end
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.SecondOrderCone,
     )
-
     x, y, t = MOI.add_variables(model, 3)
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), x)], T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if nonneg
         cnon = MOI.add_constraint(
             model,
             MOI.VectorAffineFunction(
-                [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))],
-                [-1 / √2],
+                [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), y))],
+                T[-1/√T(2)],
             ),
             MOI.Nonnegatives(1),
         )
@@ -1751,8 +1720,8 @@ function _test_conic_SecondOrderCone_helper_2(
         cnon = MOI.add_constraint(
             model,
             MOI.VectorAffineFunction(
-                [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(-1.0, y))],
-                [1 / √2],
+                [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(-1), y))],
+                T[1/√T(2)],
             ),
             MOI.Nonpositives(1),
         )
@@ -1760,8 +1729,8 @@ function _test_conic_SecondOrderCone_helper_2(
     ceq = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(-1.0, t))],
-            [1.0],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(-1), t))],
+            T[1],
         ),
         MOI.Zeros(1),
     )
@@ -1770,9 +1739,9 @@ function _test_conic_SecondOrderCone_helper_2(
         MOI.VectorAffineFunction(
             MOI.VectorAffineTerm.(
                 [1, 2, 3],
-                MOI.ScalarAffineTerm.(1.0, [t, x, y]),
+                MOI.ScalarAffineTerm.(T(1), [t, x, y]),
             ),
-            zeros(3),
+            zeros(T, 3),
         ),
         MOI.SecondOrderCone(3),
     )
@@ -1780,21 +1749,18 @@ function _test_conic_SecondOrderCone_helper_2(
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 nonneg ? MOI.Nonnegatives : MOI.Nonpositives,
             }(),
         ) == 1
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
-            }(),
+            MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},MOI.Zeros}(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.SecondOrderCone,
             }(),
         ) == 1
@@ -1807,31 +1773,27 @@ function _test_conic_SecondOrderCone_helper_2(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ -1 / √2 atol = atol rtol =
-            rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), -1 / √T(2), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -1 / √2 atol = atol rtol =
-                rtol
+            @test ≈(
+                MOI.get(model, MOI.DualObjectiveValue()),
+                -1 / √T(2),
+                config,
+            )
         end
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ -1 / √2 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1 / √2 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ 1 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cnon) ≈ [0.0] atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), ceq) ≈ [0.0] atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), csoc) ≈
-              [1.0, -1 / √2, 1 / √2] atol = atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), x), -1 / √T(2), config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), y), 1 / √T(2), config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), t), 1, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cnon), T[0], config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), ceq), T[0], config)
+        p = [1, -1 / √T(2), 1 / √T(2)]
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), csoc), p, config)
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), cnon) ≈
-                  [nonneg ? 1.0 : -1.0] atol = atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), ceq) ≈ [√2] atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), csoc) ≈ [√2, 1.0, -1.0] atol =
-                atol rtol = rtol
+            d = [nonneg ? 1 : -1]
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), cnon), d, config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), ceq), [√T(2)], config)
+            d2 = [√T(2), 1, -1]
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), csoc), d2, config)
         end
     end
     return
@@ -1847,8 +1809,8 @@ Test a SecondOrderCone with Nonnegatives constraints.
 """
 function test_conic_SecondOrderCone_Nonnegatives(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_SecondOrderCone_helper_2(model, config, true)
     return
 end
@@ -1856,18 +1818,17 @@ end
 function setup_test(
     ::typeof(test_conic_SecondOrderCone_Nonnegatives),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [-1 / √2, 1 / √2, 1.0],
-            (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
-                [[√2, 1, -1]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[√2]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
-                [[1.0]],
+            T[-1/√T(2), 1/√T(2), 1],
+            (MOI.VectorAffineFunction{T}, MOI.SecondOrderCone) =>
+                [T[√T(2), 1, -1]],
+            (MOI.VectorAffineFunction{T}, MOI.Zeros) => [T[√T(2)]],
+            (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) => [T[1]],
         ),
     )
     return
@@ -1883,8 +1844,8 @@ Test a SecondOrderCone with Nonpositives constraints.
 """
 function test_conic_SecondOrderCone_Nonpositives(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_SecondOrderCone_helper_2(model, config, false)
     return
 end
@@ -1892,25 +1853,27 @@ end
 function setup_test(
     ::typeof(test_conic_SecondOrderCone_Nonpositives),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [-1 / √2, 1 / √2, 1.0],
-            (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone) =>
-                [[√2, 1, -1]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) => [[√2]],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) =>
-                [[-1.0]],
+            T[-1/√T(2), 1/√T(2), 1],
+            (MOI.VectorAffineFunction{T}, MOI.SecondOrderCone) =>
+                [T[√T(2), 1, -1]],
+            (MOI.VectorAffineFunction{T}, MOI.Zeros) => [T[√T(2)]],
+            (MOI.VectorAffineFunction{T}, MOI.Nonpositives) => [T[-1]],
         ),
     )
     return
 end
 
 """
-    test_conic_SecondOrderCone_INFEASIBLE(model::MOI.ModelLike, config::Config)
+    test_conic_SecondOrderCone_INFEASIBLE(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
 
 Problem SOC3 - Infeasible
 min 0
@@ -1925,59 +1888,56 @@ s.t. -2 + y ∈ R₊
 """
 function test_conic_SecondOrderCone_INFEASIBLE(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.SecondOrderCone,
     )
-    atol = config.atol
-    rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Nonnegatives,
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Nonpositives,
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.SecondOrderCone,
     )
-
     x, y = MOI.add_variables(model, 2)
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y))],
-            [-2.0],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), y))],
+            T[-2],
         ),
         MOI.Nonnegatives(1),
     )
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
-            [-1.0],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x))],
+            T[-1],
         ),
         MOI.Nonpositives(1),
     )
     MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(1.0, [x, y])),
-            zeros(2),
+            MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.(T(1), [x, y])),
+            zeros(T, 2),
         ),
         MOI.SecondOrderCone(2),
     )
@@ -1985,21 +1945,21 @@ function test_conic_SecondOrderCone_INFEASIBLE(
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonnegatives,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonpositives,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.SecondOrderCone,
             }(),
         ) == 1
@@ -2019,8 +1979,8 @@ end
 function setup_test(
     ::typeof(test_conic_SecondOrderCone_INFEASIBLE),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -2054,24 +2014,22 @@ Tests out-of-order indices in cones
 """
 function test_conic_SecondOrderCone_out_of_order(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.SecondOrderCone,
     )
-    atol = config.atol
-    rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Zeros,
     )
     @requires MOI.supports_constraint(
@@ -2079,16 +2037,15 @@ function test_conic_SecondOrderCone_out_of_order(
         MOI.VectorOfVariables,
         MOI.SecondOrderCone,
     )
-
     x = MOI.add_variables(model, 5)
     c1 = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
             MOI.VectorAffineTerm.(
                 [1, 2, 3, 2, 3],
-                MOI.ScalarAffineTerm.([1.0, 1.0, 1.0, -1.0, -1.0], x),
+                MOI.ScalarAffineTerm.(T[1, 1, 1, -1, -1], x),
             ),
-            [-1.0, 0.0, 0.0],
+            T[-1, 0, 0],
         ),
         MOI.Zeros(3),
     )
@@ -2100,10 +2057,7 @@ function test_conic_SecondOrderCone_out_of_order(
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
-                MOI.Zeros,
-            }(),
+            MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},MOI.Zeros}(),
         ) == 1
         @test MOI.get(
             model,
@@ -2112,10 +2066,10 @@ function test_conic_SecondOrderCone_out_of_order(
     end
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([0.0, -2.0, -1.0, 0.0, 0.0], x),
-            0.0,
+            MOI.ScalarAffineTerm.(T[0, -2, -1, 0, 0], x),
+            T(0),
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -2127,22 +2081,32 @@ function test_conic_SecondOrderCone_out_of_order(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ -√5 atol = atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), -√T(5), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ -√5 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), -√T(5), config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈
-              [1.0, 2 / √5, 1 / √5, 2 / √5, 1 / √5] atol = atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ zeros(3) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ [1.0, 2 / √5, 1 / √5] atol =
-            atol rtol = rtol
+        @test ≈(
+            MOI.get(model, MOI.VariablePrimal(), x),
+            T[1, 2/√T(5), 1/√T(5), 2/√T(5), 1/√T(5)],
+            config,
+        )
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c1), zeros(T, 3), config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), c2),
+            T[1, 2/√T(5), 1/√T(5)],
+            config,
+        )
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ [-√5, -2.0, -1.0] atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ [√5, -2.0, -1.0] atol =
-                atol rtol = rtol
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), c1),
+                T[-√T(5), -2, -1],
+                config,
+            )
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), c2),
+                T[√T(5), -2, -1],
+                config,
+            )
         end
     end
     return
@@ -2151,15 +2115,14 @@ end
 function setup_test(
     ::typeof(test_conic_SecondOrderCone_out_of_order),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1.0, 2 / √5, 1 / √5, 2 / √5, 1 / √5],
-            (MOI.VectorAffineFunction{Float64}, MOI.Zeros) =>
-                [[-√5, -2.0, -1.0]],
+            T[1, 2/√T(5), 1/√T(5), 2/√T(5), 1/√T(5)],
+            (MOI.VectorAffineFunction{T}, MOI.Zeros) => [T[-√T(5), -2, -1]],
         ),
     )
     return
@@ -2173,29 +2136,27 @@ min 0a + 0b - 1x - 1y
      2a*b >= x^2+y^2
 Problem SOCRotated1f - Problem SOCRotated1v with a and b substituted
 min          -y - z
- st [0.5] - [      ] SOCRotated
-    [1.0] - [      ] SOCRotated
-    [0.0] - [-y    ] SOCRotated
-    [0.0] - [    -z] SOCRotated
+ st T[1//2] - [      ] SOCRotated
+    T[1] - [      ] SOCRotated
+    T[0] - [-y    ] SOCRotated
+    T[0] - [    -z] SOCRotated
 """
 function _test_conic_RotatedSecondOrderCone_helper(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{T},
     abvars::Bool,
-)
-    atol = config.atol
-    rtol = config.rtol
+) where {T}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     if abvars
         @requires MOI.supports_constraint(
             model,
             MOI.VariableIndex,
-            MOI.EqualTo{Float64},
+            MOI.EqualTo{T},
         )
         @requires MOI.supports_add_constrained_variables(
             model,
@@ -2204,34 +2165,33 @@ function _test_conic_RotatedSecondOrderCone_helper(
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             MOI.RotatedSecondOrderCone,
         )
     end
-
     if abvars
         abx, rsoc =
             MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(4))
         a, b, x1, x2 = abx
         x = [x1, x2]
-        vc1 = MOI.add_constraint(model, a, MOI.EqualTo(0.5))
+        vc1 = MOI.add_constraint(model, a, MOI.EqualTo(T(1 // 2)))
         # We test this after the creation of every `VariableIndex` constraint
         # to ensure a good coverage of corner cases.
         @test vc1.value == a.value
-        vc2 = MOI.add_constraint(model, b, MOI.EqualTo(1.0))
+        vc2 = MOI.add_constraint(model, b, MOI.EqualTo(T(1)))
         @test vc2.value == b.value
     else
         x = MOI.add_variables(model, 2)
-        a = 0.5
-        b = 1.0
+        a = T(1 // 2)
+        b = T(1)
         rsoc = MOI.add_constraint(
             model,
             MOI.VectorAffineFunction(
                 MOI.VectorAffineTerm.(
                     [3, 4],
-                    MOI.ScalarAffineTerm.([1.0, 1.0], x),
+                    MOI.ScalarAffineTerm.(T[1, 1], x),
                 ),
-                [a, b, 0.0, 0.0],
+                T[a, b, 0, 0],
             ),
             MOI.RotatedSecondOrderCone(4),
         )
@@ -2239,21 +2199,20 @@ function _test_conic_RotatedSecondOrderCone_helper(
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{Float64}}(),
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{T}}(),
         ) == (abvars ? 2 : 0)
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                abvars ? MOI.VectorOfVariables :
-                MOI.VectorAffineFunction{Float64},
+                abvars ? MOI.VectorOfVariables : MOI.VectorAffineFunction{T},
                 MOI.RotatedSecondOrderCone,
             }(),
         ) == 1
     end
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T(1), x), T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if _supports(config, MOI.optimize!)
@@ -2264,37 +2223,51 @@ function _test_conic_RotatedSecondOrderCone_helper(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ √2 atol = atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), √T(2), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ √2 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), √T(2), config)
         end
         if abvars
-            @test MOI.get(model, MOI.VariablePrimal(), a) ≈ 0.5 atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.VariablePrimal(), b) ≈ 1.0 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.VariablePrimal(), a), T(1 // 2), config)
+            @test ≈(MOI.get(model, MOI.VariablePrimal(), b), 1, config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [1 / √2, 1 / √2] atol =
-            atol rtol = rtol
+        @test ≈(
+            MOI.get(model, MOI.VariablePrimal(), x),
+            [1 / √T(2), 1 / √T(2)],
+            config,
+        )
         if abvars
-            @test MOI.get(model, MOI.ConstraintPrimal(), vc1) ≈ 0.5 atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintPrimal(), vc2) ≈ 1.0 atol = atol rtol =
-                rtol
+            @test ≈(
+                MOI.get(model, MOI.ConstraintPrimal(), vc1),
+                T(1 // 2),
+                config,
+            )
+            @test ≈(MOI.get(model, MOI.ConstraintPrimal(), vc2), T(1), config)
         end
-        @test MOI.get(model, MOI.ConstraintPrimal(), rsoc) ≈
-              [0.5, 1.0, 1 / √2, 1 / √2] atol = atol rtol = rtol
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), rsoc),
+            T[1//2, 1, 1/√T(2), 1/√T(2)],
+            config,
+        )
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus(1)) == MOI.FEASIBLE_POINT
             if abvars
-                @test MOI.get(model, MOI.ConstraintDual(), vc1) ≈ -√2 atol =
-                    atol rtol = rtol
-                @test MOI.get(model, MOI.ConstraintDual(), vc2) ≈ -1 / √2 atol =
-                    atol rtol = rtol
+                @test ≈(
+                    MOI.get(model, MOI.ConstraintDual(), vc1),
+                    -√T(2),
+                    config,
+                )
+                @test ≈(
+                    MOI.get(model, MOI.ConstraintDual(), vc2),
+                    -1 / √T(2),
+                    config,
+                )
             end
-            @test MOI.get(model, MOI.ConstraintDual(), rsoc) ≈
-                  [√2, 1 / √2, -1.0, -1.0] atol = atol rtol = rtol
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), rsoc),
+                T[√T(2), 1/√T(2), -1, -1],
+                config,
+            )
         end
     end
     return
@@ -2302,8 +2275,8 @@ end
 
 function test_conic_RotatedSecondOrderCone_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_RotatedSecondOrderCone_helper(model, config, true)
     return
 end
@@ -2311,16 +2284,16 @@ end
 function setup_test(
     ::typeof(test_conic_RotatedSecondOrderCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [0.5, 1.0, 1 / √2, 1 / √2],
-            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [-√2, -1 / √2],
+            T[1//2, 1, 1/√T(2), 1/√T(2)],
+            (MOI.VariableIndex, MOI.EqualTo{T}) => T[-√T(2), -1/√T(2)],
             (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) =>
-                [[√2, 1 / √2, -1.0, -1.0]],
+                [T[√T(2), 1/√T(2), -1, -1]],
         ),
     )
     model.eval_variable_constraint_dual = false
@@ -2329,8 +2302,8 @@ end
 
 function test_conic_RotatedSecondOrderCone_VectorAffineFunction(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_RotatedSecondOrderCone_helper(model, config, false)
     return
 end
@@ -2338,14 +2311,15 @@ end
 function setup_test(
     ::typeof(test_conic_RotatedSecondOrderCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1 / √2, 1 / √2],
-            (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [[√2, 1 / √2, -1.0, -1.0]],
+            T[1/√T(2), 1/√T(2)],
+            (MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone) =>
+                [T[√T(2), 1/√T(2), -1, -1]],
         ),
     )
     return
@@ -2374,74 +2348,52 @@ s.t.
 """
 function test_conic_RotatedSecondOrderCone_INFEASIBLE(
     model::MOI.ModelLike,
-    config::Config,
-)
-    atol = config.atol
-    rtol = config.rtol
-    b = [-2, -1, 1 / 2]
-    c = [0.0, 0.0, 0.0]
+    config::Config{T},
+) where {T}
+    b = T[-2, -1, 1//2]
+    c = T[0, 0, 0]
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.EqualTo{T})
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.LessThan{T})
     @requires MOI.supports_constraint(
         model,
         MOI.VariableIndex,
-        MOI.EqualTo{Float64},
-    )
-    @requires MOI.supports_constraint(
-        model,
-        MOI.VariableIndex,
-        MOI.LessThan{Float64},
-    )
-    @requires MOI.supports_constraint(
-        model,
-        MOI.VariableIndex,
-        MOI.GreaterThan{Float64},
+        MOI.GreaterThan{T},
     )
     @requires MOI.supports_add_constrained_variables(
         model,
         MOI.RotatedSecondOrderCone,
     )
-
     x, rsoc =
         MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(3))
-    vc1 = MOI.add_constraint(model, x[1], MOI.LessThan(1.0))
+    vc1 = MOI.add_constraint(model, x[1], MOI.LessThan(T(1)))
     @test vc1.value == x[1].value
-    vc2 = MOI.add_constraint(model, x[2], MOI.EqualTo(0.5))
+    vc2 = MOI.add_constraint(model, x[2], MOI.EqualTo(T(1 // 2)))
     @test vc2.value == x[2].value
-    vc3 = MOI.add_constraint(model, x[3], MOI.GreaterThan(2.0))
+    vc3 = MOI.add_constraint(model, x[3], MOI.GreaterThan(T(2)))
     @test vc3.value == x[3].value
     if _supports(config, MOI.NumberOfConstraints)
-        @test MOI.get(
-            model,
-            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{Float64}}(),
-        ) == 1
-        @test MOI.get(
-            model,
-            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{Float64}}(),
-        ) == 1
-        @test MOI.get(
-            model,
-            MOI.NumberOfConstraints{
-                MOI.VariableIndex,
-                MOI.GreaterThan{Float64},
-            }(),
-        ) == 1
-        @test MOI.get(
-            model,
-            MOI.NumberOfConstraints{
-                MOI.VectorOfVariables,
-                MOI.RotatedSecondOrderCone,
-            }(),
-        ) == 1
+        attr = MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{T}}()
+        @test MOI.get(model, attr) == 1
+        attr = MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{T}}()
+        @test MOI.get(model, attr) == 1
+        attr = MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}()
+        @test MOI.get(model, attr) == 1
+        attr = MOI.NumberOfConstraints{
+            MOI.VectorOfVariables,
+            MOI.RotatedSecondOrderCone,
+        }()
+        @test MOI.get(model, attr) == 1
     end
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(c, x), 0.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(c, x), T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if _supports(config, MOI.optimize!)
@@ -2455,15 +2407,15 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE(
         ]
         if _supports(config, MOI.ConstraintDual) && has_certificate
             y1 = MOI.get(model, MOI.ConstraintDual(), vc1)
-            @test y1 < -atol # Should be strictly negative
+            @test y1 < -config.atol # Should be strictly negative
             y2 = MOI.get(model, MOI.ConstraintDual(), vc2)
             y3 = MOI.get(model, MOI.ConstraintDual(), vc3)
-            @test y3 > atol # Should be strictly positive
+            @test y3 > config.atol # Should be strictly positive
             y = [y1, y2, y3]
             vardual = MOI.get(model, MOI.ConstraintDual(), rsoc)
-            @test vardual ≈ -y atol = atol rtol = rtol
-            @test 2 * vardual[1] * vardual[2] ≥ vardual[3]^2 - atol
-            @test b' * y > atol
+            @test ≈(vardual, -y, config)
+            @test 2 * vardual[1] * vardual[2] ≥ vardual[3]^2 - config.atol
+            @test b' * y > config.atol
         end
     end
     return
@@ -2472,8 +2424,8 @@ end
 function setup_test(
     ::typeof(test_conic_RotatedSecondOrderCone_INFEASIBLE),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -2481,11 +2433,11 @@ function setup_test(
             MOI.INFEASIBLE,
             MOI.NO_SOLUTION,
             MOI.INFEASIBILITY_CERTIFICATE,
-            (MOI.VariableIndex, MOI.LessThan{Float64}) => [-1],
-            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [-1],
-            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [1],
+            (MOI.VariableIndex, MOI.LessThan{T}) => T[-1],
+            (MOI.VariableIndex, MOI.EqualTo{T}) => T[-1],
+            (MOI.VariableIndex, MOI.GreaterThan{T}) => T[1],
             (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) =>
-                [[1, 1, -1]],
+                [T[1, 1, -1]],
         ),
     )
     model.eval_variable_constraint_dual = false
@@ -2501,54 +2453,43 @@ s.t.
      v
      t1 == 1
      t2 == 1
-[t1/√2, t2/√2, x] in SOC4
-[x1/√2, u/√2,  v] in SOC3
+[t1/√T(2), t2/√T(2), x] in SOC4
+[x1/√T(2), u/√T(2),  v] in SOC3
 """
 function test_conic_RotatedSecondOrderCone_INFEASIBLE_2(
     model::MOI.ModelLike,
-    config::Config;
+    config::Config{T};
     n = 2,
-    ub = 3.0,
-)
-    atol = config.atol
-    rtol = config.rtol
+    ub = T(3),
+) where {T}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
-    @requires MOI.supports_constraint(
-        model,
-        MOI.VariableIndex,
-        MOI.EqualTo{Float64},
-    )
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.EqualTo{T})
     @requires MOI.supports_add_constrained_variables(model, MOI.Nonnegatives)
     @requires MOI.supports_constraint(
         model,
         MOI.VariableIndex,
-        MOI.GreaterThan{Float64},
+        MOI.GreaterThan{T},
     )
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.LessThan{T})
     @requires MOI.supports_constraint(
         model,
-        MOI.VariableIndex,
-        MOI.LessThan{Float64},
-    )
-    @requires MOI.supports_constraint(
-        model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.RotatedSecondOrderCone,
     )
-
     x, cx = MOI.add_constrained_variables(model, MOI.Nonnegatives(n))
     u = MOI.add_variable(model)
     v = MOI.add_variable(model)
     t = MOI.add_variables(model, 2)
-    ct1 = MOI.add_constraint(model, t[1], MOI.EqualTo(1.0))
+    ct1 = MOI.add_constraint(model, t[1], MOI.EqualTo(T(1)))
     @test ct1.value == t[1].value
-    ct2 = MOI.add_constraint(model, t[2], MOI.EqualTo(1.0))
+    ct2 = MOI.add_constraint(model, t[2], MOI.EqualTo(T(1)))
     @test ct2.value == t[2].value
-    cu1 = MOI.add_constraint(model, u, MOI.GreaterThan(0.0))
+    cu1 = MOI.add_constraint(model, u, MOI.GreaterThan(T(0)))
     @test cu1.value == u.value
     cu2 = MOI.add_constraint(model, u, MOI.LessThan(ub))
     @test cu2.value == u.value
@@ -2557,9 +2498,12 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE_2(
         MOI.VectorAffineFunction(
             MOI.VectorAffineTerm.(
                 1:(2+n),
-                MOI.ScalarAffineTerm.([1 / √2; 1 / √2; ones(n)], [t; x]),
+                MOI.ScalarAffineTerm.(
+                    T[1 / √T(2); 1 / √T(2); ones(T, n)],
+                    [t; x],
+                ),
             ),
-            zeros(2 + n),
+            zeros(T, 2 + n),
         ),
         MOI.RotatedSecondOrderCone(2 + n),
     )
@@ -2568,51 +2512,38 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE_2(
         MOI.VectorAffineFunction(
             MOI.VectorAffineTerm.(
                 [1, 2, 3],
-                MOI.ScalarAffineTerm.([1 / √2; 1 / √2; 1.0], [x[1], u, v]),
+                MOI.ScalarAffineTerm.(
+                    T[1 / √T(2); 1 / √T(2); 1.0],
+                    [x[1], u, v],
+                ),
             ),
-            zeros(3),
+            zeros(T, 3),
         ),
         MOI.RotatedSecondOrderCone(3),
     )
     if _supports(config, MOI.NumberOfConstraints)
-        @test MOI.get(
-            model,
-            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{Float64}}(),
-        ) == 2
-        @test MOI.get(
-            model,
-            MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}(),
-        ) == 1
-        @test MOI.get(
-            model,
-            MOI.NumberOfConstraints{
-                MOI.VariableIndex,
-                MOI.GreaterThan{Float64},
-            }(),
-        ) == 1
-        @test MOI.get(
-            model,
-            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{Float64}}(),
-        ) == 1
+        attr = MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{T}}()
+        @test MOI.get(model, attr) == 2
+        attr = MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}()
+        @test MOI.get(model, attr) == 1
+        attr = MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}()
+        @test MOI.get(model, attr) == 1
+        attr = MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{T}}()
+        @test MOI.get(model, attr) == 1
+        attr = MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}()
+        @test MOI.get(model, attr) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VariableIndex,
-                MOI.GreaterThan{Float64},
-            }(),
-        ) == 1
-        @test MOI.get(
-            model,
-            MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.RotatedSecondOrderCone,
             }(),
         ) == 2
     end
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v)], 0.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), v)], T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if _supports(config, MOI.optimize!)
@@ -2623,49 +2554,63 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE_2(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ √ub atol = atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), √ub, config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ √ub atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), √ub, config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ [1.0; zeros(n - 1)] atol =
-            atol rtol = rtol
-        @test MOI.get(model, MOI.VariablePrimal(), u) ≈ ub atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ √ub atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ ones(2) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ [1.0; zeros(n - 1)] atol =
-            atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cu1) ≈ ub atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cu2) ≈ ub atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), ct1) ≈ 1.0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), ct2) ≈ 1.0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈
-              [1 / √2; 1 / √2; 1.0; zeros(n - 1)] atol = atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈
-              [1 / √2, ub / √2, √ub] atol = atol rtol = rtol
+        @test ≈(
+            MOI.get(model, MOI.VariablePrimal(), x),
+            [1; zeros(T, n - 1)],
+            config,
+        )
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), u), ub, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), v), √ub, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), t), ones(T, 2), config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), cx),
+            [1; zeros(T, n - 1)],
+            config,
+        )
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cu1), ub, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cu2), ub, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), ct1), 1, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), ct2), 1, config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), c1),
+            T[1 / √T(2); 1 / √T(2); 1; zeros(T, n - 1)],
+            config,
+        )
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), c2),
+            T[1/√T(2), ub/√T(2), √ub],
+            config,
+        )
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ zeros(n) atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cu1) ≈ 0.0 atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cu2) ≈ -1 / (2 * √ub) atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), ct1) ≈ -√ub / 4 atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), ct2) ≈ -√ub / 4 atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c1) ≈
-                  [√ub / (2 * √2); √ub / (2 * √2); -√ub / 2; zeros(n - 1)] atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈
-                  [√ub / √2, 1 / √(2 * ub), -1.0] atol = atol rtol = rtol
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), cx),
+                zeros(T, n),
+                config,
+            )
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), cu1), 0, config)
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), cu2),
+                -1 / (2 * √ub),
+                config,
+            )
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), ct1), -√ub / 4, config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), ct2), -√ub / 4, config)
+            d = [
+                √ub / (2 * √T(2))
+                √ub / (2 * √T(2))
+                -√ub / 2
+                zeros(T, n - 1)
+            ]
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), c1), d, config)
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), c2),
+                T[√ub/√T(2), 1/√(2 * ub), -1],
+                config,
+            )
         end
     end
     return
@@ -2674,23 +2619,27 @@ end
 function setup_test(
     ::typeof(test_conic_RotatedSecondOrderCone_INFEASIBLE_2),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     n = 2
-    ub = 3.0
+    ub = T(3)
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1.0; zeros(n - 1); ub; √ub; ones(2)],
-            (MOI.VariableIndex, MOI.EqualTo{Float64}) =>
-                [-√ub / 4, -√ub / 4],
-            (MOI.VectorOfVariables, MOI.Nonnegatives) => [zeros(n)],
-            (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [0.0],
-            (MOI.VariableIndex, MOI.LessThan{Float64}) => [-1 / (2 * √ub)],
-            (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone) => [
-                vcat(√ub / (2 * √2), √ub / (2 * √2), -√ub / 2, zeros(n - 1)),
-                [√ub / √2, 1 / √(2 * ub), -1.0],
+            [1.0; zeros(T, n - 1); ub; √ub; ones(T, 2)],
+            (MOI.VariableIndex, MOI.EqualTo{T}) => [-√ub / 4, -√ub / 4],
+            (MOI.VectorOfVariables, MOI.Nonnegatives) => [zeros(T, n)],
+            (MOI.VariableIndex, MOI.GreaterThan{T}) => T[0],
+            (MOI.VariableIndex, MOI.LessThan{T}) => [-1 / (2 * √ub)],
+            (MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone) => [
+                vcat(
+                    √ub / (2 * √T(2)),
+                    √ub / (2 * √T(2)),
+                    -√ub / 2,
+                    zeros(T, n - 1),
+                ),
+                [√ub / √T(2), 1 / √(2 * ub), -1.0],
             ],
         ),
     )
@@ -2727,30 +2676,27 @@ with objective value 2.
 """
 function test_conic_RotatedSecondOrderCone_out_of_order(
     model::MOI.ModelLike,
-    config::Config,
-)
-    atol = config.atol
-    rtol = config.rtol
+    config::Config{T},
+) where {T}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.LessThan{Float64},
+        MOI.ScalarAffineFunction{T},
+        MOI.LessThan{T},
     )
     @requires MOI.supports_add_constrained_variables(
         model,
         MOI.RotatedSecondOrderCone,
     )
-
     v, cv = MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(4))
     t, u, x, y = v
-    c = MOI.add_constraint(model, 1.0t + 1.0u, MOI.LessThan(2.0))
-    func = 1.0x + 1.0y
+    c = MOI.add_constraint(model, T(1)t + T(1)u, MOI.LessThan(T(2)))
+    func = T(1)x + T(1)y
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{typeof(func)}(), func)
     if _supports(config, MOI.optimize!)
@@ -2761,28 +2707,23 @@ function test_conic_RotatedSecondOrderCone_out_of_order(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2.0 atol = atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), 2, config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2.0 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), 2, config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ 1.0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), u) ≈ 1.0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 1.0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 1.0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cv) ≈ ones(4) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 2.0 atol = atol rtol =
-            rtol
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), t), 1, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), u), 1, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), x), 1, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), y), 1, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cv), ones(T, 4), config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), 2, config)
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), cv) ≈
-                  [1.0, 1.0, -1.0, -1.0] atol = atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -1.0 atol = atol rtol =
-                rtol
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), cv),
+                [1, 1, -1, -1],
+                config,
+            )
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), c), -1, config)
         end
     end
     return
@@ -2791,17 +2732,16 @@ end
 function setup_test(
     ::typeof(test_conic_RotatedSecondOrderCone_out_of_order),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(4),
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
-                [-1.0],
+            ones(T, 4),
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-1],
             (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) =>
-                [[1.0, 1.0, -1.0, -1.0]],
+                [T[1, 1, -1, -1]],
         ),
     )
     return
@@ -2809,12 +2749,10 @@ end
 
 function _test_conic_GeometricMeanCone_helper(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{T},
     use_VectorOfVariables,
     n = 3,
-)
-    atol = config.atol
-    rtol = config.rtol
+) where {T}
     # Problem GeoMean1
     # max (xyz)^(1/3)
     # s.t.
@@ -2831,7 +2769,7 @@ function _test_conic_GeometricMeanCone_helper(
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     if use_VectorOfVariables
@@ -2843,16 +2781,15 @@ function _test_conic_GeometricMeanCone_helper(
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             MOI.GeometricMeanCone,
         )
     end
     @requires MOI.supports_constraint(
         model,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.LessThan{Float64},
+        MOI.ScalarAffineFunction{T},
+        MOI.LessThan{T},
     )
-
     t = MOI.add_variable(model)
     x = MOI.add_variables(model, n)
     vov = MOI.VectorOfVariables([t; x])
@@ -2861,36 +2798,36 @@ function _test_conic_GeometricMeanCone_helper(
     else
         gmc = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{Float64}(vov),
+            MOI.VectorAffineFunction{T}(vov),
             MOI.GeometricMeanCone(n + 1),
         )
     end
     c = MOI.add_constraint(
         model,
-        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.0),
-        MOI.LessThan(Float64(n)),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T(1), x), T(0)),
+        MOI.LessThan(T(n)),
     )
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
                 use_VectorOfVariables ? MOI.VectorOfVariables :
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.GeometricMeanCone,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.ScalarAffineFunction{Float64},
-                MOI.LessThan{Float64},
+                MOI.ScalarAffineFunction{T},
+                MOI.LessThan{T},
             }(),
         ) == 1
     end
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, t)], 0.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), t)], T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if _supports(config, MOI.optimize!)
@@ -2898,20 +2835,22 @@ function _test_conic_GeometricMeanCone_helper(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1 atol = atol rtol = rtol
-        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ 1 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ ones(n) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), gmc) ≈ ones(n + 1) atol =
-            atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ n atol = atol rtol =
-            rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), 1, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), t), 1, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), x), ones(T, n), config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), gmc),
+            ones(T, n + 1),
+            config,
+        )
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), n, config)
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈
-                  vcat(-1.0, fill(inv(n), n)) atol = atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c) ≈ -inv(n) atol = atol rtol =
-                rtol
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), gmc),
+                vcat(T(-1), fill(inv(T(n)), n)),
+                config,
+            )
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), c), -inv(T(n)), config)
         end
     end
     return
@@ -2919,8 +2858,8 @@ end
 
 function test_conic_GeometricMeanCone_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_GeometricMeanCone_helper(model, config, true)
     return
 end
@@ -2928,15 +2867,14 @@ end
 function setup_test(
     ::typeof(test_conic_GeometricMeanCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(4),
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
-                [-inv(3)],
+            ones(T, 4),
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => [-inv(T(3))],
         ),
     )
     return
@@ -2944,8 +2882,8 @@ end
 
 function test_conic_GeometricMeanCone_VectorAffineFunction(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_GeometricMeanCone_helper(model, config, false)
     return
 end
@@ -2953,17 +2891,16 @@ end
 function setup_test(
     ::typeof(test_conic_GeometricMeanCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(4),
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
-                [-inv(3)],
-            (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone) =>
-                [vcat(-1.0, fill(inv(3), 3))],
+            ones(T, 4),
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => [-inv(T(3))],
+            (MOI.VectorAffineFunction{T}, MOI.GeometricMeanCone) =>
+                [vcat(T(-1), fill(inv(T(3)), 3))],
         ),
     )
     return
@@ -2979,15 +2916,13 @@ addresses bug https://github.com/jump-dev/MathOptInterface.jl/pull/962
 """
 function _test_conic_GeometricMeanCone_helper_2(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{T},
     use_VectorOfVariables,
-)
-    atol = config.atol
-    rtol = config.rtol
+) where {T}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     if use_VectorOfVariables
@@ -2999,11 +2934,10 @@ function _test_conic_GeometricMeanCone_helper_2(
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             MOI.GeometricMeanCone,
         )
     end
-
     n = 9
     t = MOI.add_variable(model)
     x = MOI.add_variables(model, n)
@@ -3014,24 +2948,20 @@ function _test_conic_GeometricMeanCone_helper_2(
     else
         gmc = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{Float64}(vov),
+            MOI.VectorAffineFunction{T}(vov),
             MOI.GeometricMeanCone(n + 1),
         )
     end
-    cx = Vector{
-        MOI.ConstraintIndex{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.EqualTo{Float64},
-        },
-    }(
-        undef,
-        n,
-    )
+    cx =
+        Vector{MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}}(
+            undef,
+            n,
+        )
     for i in 1:n
         cx[i] = MOI.add_constraint(
             model,
-            MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x[i])], 0.0),
-            MOI.EqualTo(1.0),
+            MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), x[i])], T(0)),
+            MOI.EqualTo(T(1)),
         )
     end
     if _supports(config, MOI.NumberOfConstraints)
@@ -3039,22 +2969,22 @@ function _test_conic_GeometricMeanCone_helper_2(
             model,
             MOI.NumberOfConstraints{
                 use_VectorOfVariables ? MOI.VectorOfVariables :
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.GeometricMeanCone,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.ScalarAffineFunction{Float64},
-                MOI.EqualTo{Float64},
+                MOI.ScalarAffineFunction{T},
+                MOI.EqualTo{T},
             }(),
         ) == n
     end
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, t)], 0.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), t)], T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if _supports(config, MOI.optimize!)
@@ -3062,20 +2992,26 @@ function _test_conic_GeometricMeanCone_helper_2(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1.0 atol = atol rtol = rtol
-        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ 1.0 atol = atol rtol =
-            rtol
-        @test MOI.get.(model, MOI.VariablePrimal(), x) ≈ ones(n) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), gmc) ≈ ones(n + 1) atol =
-            atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ ones(n) atol = atol rtol =
-            rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), 1, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), t), 1, config)
+        @test ≈(MOI.get.(model, MOI.VariablePrimal(), x), ones(T, n), config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), gmc),
+            ones(T, n + 1),
+            config,
+        )
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cx), ones(T, n), config)
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈
-                  vcat(-1, fill(inv(n), n)) atol = atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ fill(-inv(n), n) atol =
-                atol rtol = rtol
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), gmc),
+                vcat(-1, fill(inv(T(n)), n)),
+                config,
+            )
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), cx),
+                fill(-inv(T(n)), n),
+                config,
+            )
         end
     end
     return
@@ -3083,8 +3019,8 @@ end
 
 function test_conic_GeometricMeanCone_VectorOfVariables_2(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_GeometricMeanCone_helper_2(model, config, true)
     return
 end
@@ -3092,15 +3028,15 @@ end
 function setup_test(
     ::typeof(test_conic_GeometricMeanCone_VectorOfVariables_2),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(10),
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                fill(-inv(9), 9),
+            ones(T, 10),
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) =>
+                fill(-inv(T(9)), 9),
         ),
     )
     return
@@ -3108,8 +3044,8 @@ end
 
 function test_conic_GeometricMeanCone_VectorAffineFunction_2(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_GeometricMeanCone_helper_2(model, config, false)
     return
 end
@@ -3117,17 +3053,17 @@ end
 function setup_test(
     ::typeof(test_conic_GeometricMeanCone_VectorAffineFunction_2),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(10),
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                fill(-inv(9), 9),
-            (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone) =>
-                [vcat(-1.0, fill(inv(9), 9))],
+            ones(T, 10),
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) =>
+                fill(-inv(T(9)), 9),
+            (MOI.VectorAffineFunction{T}, MOI.GeometricMeanCone) =>
+                [vcat(T(-1), fill(inv(T(9)), 9))],
         ),
     )
     return
@@ -3144,15 +3080,13 @@ Tests case where the dimension of the geometric mean cone is 2
 """
 function _test_conic_GeometricMeanCone_helper_3(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{T},
     use_VectorOfVariables,
-)
-    atol = config.atol
-    rtol = config.rtol
+) where {T}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     if use_VectorOfVariables
@@ -3164,11 +3098,10 @@ function _test_conic_GeometricMeanCone_helper_3(
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             MOI.GeometricMeanCone,
         )
     end
-
     t = MOI.add_variable(model)
     x = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
@@ -3178,36 +3111,36 @@ function _test_conic_GeometricMeanCone_helper_3(
     else
         gmc = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{Float64}(vov),
+            MOI.VectorAffineFunction{T}(vov),
             MOI.GeometricMeanCone(2),
         )
     end
     cx = MOI.add_constraint(
         model,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
-        MOI.LessThan(2.0),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), x)], T(0)),
+        MOI.LessThan(T(2)),
     )
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
                 use_VectorOfVariables ? MOI.VectorOfVariables :
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.GeometricMeanCone,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.ScalarAffineFunction{Float64},
-                MOI.LessThan{Float64},
+                MOI.ScalarAffineFunction{T},
+                MOI.LessThan{T},
             }(),
         ) == 1
     end
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, t)], 0.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(2), t)], T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if _supports(config, MOI.optimize!)
@@ -3215,20 +3148,14 @@ function _test_conic_GeometricMeanCone_helper_3(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 4.0 atol = atol rtol = rtol
-        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ 2.0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ 2.0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), gmc) ≈ [2.0; 2.0] atol =
-            atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 2.0 atol = atol rtol =
-            rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), 4, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), t), 2, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), x), 2, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), gmc), [2, 2], config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cx), 2, config)
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), gmc) ≈ [-2.0, 2.0] atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ -2.0 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), gmc), [-2, 2], config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), cx), -2, config)
         end
     end
     return
@@ -3236,8 +3163,8 @@ end
 
 function test_conic_GeometricMeanCone_VectorOfVariables_3(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_GeometricMeanCone_helper_3(model, config, true)
     return
 end
@@ -3245,15 +3172,14 @@ end
 function setup_test(
     ::typeof(test_conic_GeometricMeanCone_VectorOfVariables_3),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [2.0, 2.0],
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
-                [-2.0],
+            T[2, 2],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-2],
         ),
     )
     return
@@ -3261,8 +3187,8 @@ end
 
 function test_conic_GeometricMeanCone_VectorAffineFunction_3(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_GeometricMeanCone_helper_3(model, config, false)
     return
 end
@@ -3270,17 +3196,16 @@ end
 function setup_test(
     ::typeof(test_conic_GeometricMeanCone_VectorAffineFunction_3),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [2.0, 2.0],
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
-                [-2.0],
-            (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone) =>
-                [[-2.0, 2.0]],
+            T[2, 2],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-2],
+            (MOI.VectorAffineFunction{T}, MOI.GeometricMeanCone) =>
+                [T[-2, 2]],
         ),
     )
     return
@@ -3288,17 +3213,15 @@ end
 
 function _test_conic_Exponential_helper(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{T},
     use_VectorOfVariables::Bool,
-)
+) where {T}
     F = if use_VectorOfVariables
         MOI.VectorOfVariables
     else
-        MOI.VectorAffineFunction{Float64}
+        MOI.VectorAffineFunction{T}
     end
     @requires MOI.supports_constraint(model, F, MOI.ExponentialCone)
-    atol = config.atol
-    rtol = config.rtol
     # Problem EXP1 - ExpPrimal
     # min x + y + z
     #  st  y e^(x/y) <= z, y > 0 (i.e (x, y, z) are in the exponential primal cone)
@@ -3307,7 +3230,7 @@ function _test_conic_Exponential_helper(
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     if use_VectorOfVariables
@@ -3319,14 +3242,14 @@ function _test_conic_Exponential_helper(
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             MOI.ExponentialCone,
         )
     end
     @requires MOI.supports_constraint(
         model,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.EqualTo{Float64},
+        MOI.ScalarAffineFunction{T},
+        MOI.EqualTo{T},
     )
 
     v = MOI.add_variables(model, 3)
@@ -3337,24 +3260,24 @@ function _test_conic_Exponential_helper(
     else
         vc = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{Float64}(vov),
+            MOI.VectorAffineFunction{T}(vov),
             MOI.ExponentialCone(),
         )
     end
     cx = MOI.add_constraint(
         model,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[1])], 0.0),
-        MOI.EqualTo(1.0),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), v[1])], T(0)),
+        MOI.EqualTo(T(1)),
     )
     cy = MOI.add_constraint(
         model,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[2])], 0.0),
-        MOI.EqualTo(2.0),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), v[2])], T(0)),
+        MOI.EqualTo(T(2)),
     )
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, v), 0.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T(1), v), T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if _supports(config, MOI.optimize!)
@@ -3365,29 +3288,26 @@ function _test_conic_Exponential_helper(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 + 2exp(1 / 2) atol = atol rtol =
-            rtol
+        eT = exp(T(1 // 2))
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), 3 + 2eT, config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 3 + 2exp(1 / 2) atol =
-                atol rtol = rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), 3 + 2eT, config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [1.0, 2.0, 2exp(1 / 2)] atol =
-            atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈
-              [1.0, 2.0, 2exp(1 / 2)] atol = atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 1 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cy) ≈ 2 atol = atol rtol =
-            rtol
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), v), [1, 2, 2eT], config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), vc), [1, 2, 2eT], config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cx), 1, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cy), 2, config)
         if _supports(config, MOI.ConstraintDual)
             u, v, w = MOI.get(model, MOI.ConstraintDual(), vc)
-            @test u ≈ -exp(1 / 2) atol = atol rtol = rtol
-            @test v ≈ -exp(1 / 2) / 2 atol = atol rtol = rtol
-            @test w ≈ 1 atol = atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ 1 + exp(1 / 2) atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cy) ≈ 1 + exp(1 / 2) / 2 atol =
-                atol rtol = rtol
+            @test ≈(u, -eT, config)
+            @test ≈(v, -eT / 2, config)
+            @test ≈(w, 1, config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), cx), 1 + eT, config)
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), cy),
+                1 + eT / 2,
+                config,
+            )
         end
     end
     return
@@ -3403,8 +3323,8 @@ Test an exponential cone in standard conic form.
 """
 function test_conic_Exponential_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_Exponential_helper(model, config, true)
     return
 end
@@ -3412,15 +3332,15 @@ end
 function setup_test(
     ::typeof(test_conic_Exponential_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1.0, 2.0, 2exp(1 / 2)],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [1 + exp(1 / 2), 1 + exp(1 / 2) / 2],
+            T[1, 2, 2exp(T(1 // 2))],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) =>
+                [1 + exp(T(1 // 2)), 1 + exp(T(1 // 2)) / 2],
         ),
     )
     return
@@ -3436,8 +3356,8 @@ Test an exponential cone in geometric conic form.
 """
 function test_conic_Exponential_VectorAffineFunction(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_Exponential_helper(model, config, false)
     return
 end
@@ -3445,62 +3365,65 @@ end
 function setup_test(
     ::typeof(test_conic_Exponential_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1.0, 2.0, 2exp(1 / 2)],
-            (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone) =>
-                [[-exp(1 / 2), -exp(1 / 2) / 2, 1.0]],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [1 + exp(1 / 2), 1 + exp(1 / 2) / 2],
+            [1, 2, 2exp(T(1 // 2))],
+            (MOI.VectorAffineFunction{T}, MOI.ExponentialCone) =>
+                [[-exp(T(1 // 2)), -exp(T(1 // 2)) / 2, 1]],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) =>
+                [1 + exp(T(1 // 2)), 1 + exp(T(1 // 2)) / 2],
         ),
     )
     return
 end
 
 """
-    test_conic_Exponential_hard_2(model::MOI.ModelLike, config::Config)
+    test_conic_Exponential_hard_2(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
 
 Test an exponential cone problem that ECOS failed.
 """
-function test_conic_Exponential_hard_2(model::MOI.ModelLike, config::Config)
+function test_conic_Exponential_hard_2(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.ExponentialCone,
     )
-    atol = config.atol
-    rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.ExponentialCone,
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.EqualTo{Float64},
+        MOI.ScalarAffineFunction{T},
+        MOI.EqualTo{T},
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.LessThan{Float64},
+        MOI.ScalarAffineFunction{T},
+        MOI.LessThan{T},
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Nonnegatives,
     )
-
     v = MOI.add_variables(model, 9)
     @test MOI.get(model, MOI.NumberOfVariables()) == 9
     ec1 = MOI.add_constraint(
@@ -3508,9 +3431,9 @@ function test_conic_Exponential_hard_2(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction(
             MOI.VectorAffineTerm.(
                 [1, 1, 3],
-                MOI.ScalarAffineTerm.(1.0, [v[2], v[3], v[4]]),
+                MOI.ScalarAffineTerm.(T(1), [v[2], v[3], v[4]]),
             ),
-            [0.0, 1.0, 0.0],
+            T[0, 1, 0],
         ),
         MOI.ExponentialCone(),
     )
@@ -3519,19 +3442,19 @@ function test_conic_Exponential_hard_2(model::MOI.ModelLike, config::Config)
         MOI.VectorAffineFunction(
             MOI.VectorAffineTerm.(
                 [1, 1, 3],
-                MOI.ScalarAffineTerm.([1.0, -1.0, 1.0], [v[2], v[3], v[5]]),
+                MOI.ScalarAffineTerm.(T[1, -1, 1], [v[2], v[3], v[5]]),
             ),
-            [0.0, 1.0, 0.0],
+            T[0, 1, 0],
         ),
         MOI.ExponentialCone(),
     )
     c1 = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([0.5, 0.5, -1.0], [v[4], v[5], v[6]]),
-            0.0,
+            MOI.ScalarAffineTerm.(T[1//2, 1//2, -1], [v[4], v[5], v[6]]),
+            T(0),
         ),
-        MOI.EqualTo(0.0),
+        MOI.EqualTo(T(0)),
     )
     c2 = MOI.add_constraint(
         model,
@@ -3539,11 +3462,11 @@ function test_conic_Exponential_hard_2(model::MOI.ModelLike, config::Config)
             MOI.VectorAffineTerm.(
                 [1, 2, 3, 1, 2, 3],
                 MOI.ScalarAffineTerm.(
-                    [1.0, 1.0, 1.0, 0.3, 0.3, 0.3],
+                    T[1, 1, 1, 3//10, 3//10, 3//10],
                     [v[1], v[2], v[3], v[7], v[8], v[9]],
                 ),
             ),
-            zeros(3),
+            zeros(T, 3),
         ),
         MOI.Nonnegatives(3),
     )
@@ -3553,31 +3476,31 @@ function test_conic_Exponential_hard_2(model::MOI.ModelLike, config::Config)
             MOI.VectorAffineTerm.(
                 [1, 2, 3, 1, 2, 3],
                 MOI.ScalarAffineTerm.(
-                    [-1.0, -1.0, -1.0, 0.3, 0.3, 0.3],
+                    T[-1, -1, -1, 3//10, 3//10, 3//10],
                     [v[1], v[2], v[3], v[7], v[8], v[9]],
                 ),
             ),
-            zeros(3),
+            zeros(T, 3),
         ),
         MOI.Nonnegatives(3),
     )
     c4 = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.(1.0, [v[7], v[8], v[9]]),
-            0.0,
+            MOI.ScalarAffineTerm.(T(1), [v[7], v[8], v[9]]),
+            T(0),
         ),
-        MOI.LessThan(1.0),
+        MOI.LessThan(T(1)),
     )
     c5 = MOI.add_constraint(
         model,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[7])], 0.0),
-        MOI.EqualTo(0.0),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), v[7])], T(0)),
+        MOI.EqualTo(T(0)),
     )
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[6])], 0.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), v[6])], T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     if _supports(config, MOI.optimize!)
@@ -3588,47 +3511,65 @@ function test_conic_Exponential_hard_2(model::MOI.ModelLike, config::Config)
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ exp(-0.3) atol = atol rtol =
-            rtol
+        eT = exp(T(-3 // 10))
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), eT, config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ exp(-0.3) atol =
-                atol rtol = rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), eT, config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈
-              [0.0, -0.3, 0.0, exp(-0.3), exp(-0.3), exp(-0.3), 0.0, 1.0, 0.0] atol =
-            atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), ec1) ≈
-              [-0.3, 1.0, exp(-0.3)] atol = atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), ec2) ≈
-              [-0.3, 1.0, exp(-0.3)] atol = atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ 0.0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ zeros(3) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c3) ≈ [0.0, 0.6, 0.0] atol =
-            atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c4) ≈ 1.0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c5) ≈ 0.0 atol = atol rtol =
-            rtol
+        @test ≈(
+            MOI.get(model, MOI.VariablePrimal(), v),
+            [0, -3 // 10, 0, eT, eT, eT, 0, 1, 0],
+            config,
+        )
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), ec1),
+            [-3 // 10, 1, eT],
+            config,
+        )
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), ec2),
+            [-3 // 10, 1, eT],
+            config,
+        )
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c1), 0, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c2), zeros(T, 3), config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), c3),
+            [0, 3 // 5, 0],
+            config,
+        )
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c4), 1, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c5), 0, config)
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), ec1) ≈
-                  [-exp(-0.3) / 2, -1.3exp(-0.3) / 2, 0.5] atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), ec2) ≈
-                  [-exp(-0.3) / 2, -1.3exp(-0.3) / 2, 0.5] atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ -1 atol = atol rtol =
-                rtol
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), ec1),
+                [-eT / 2, -13 * eT / 20, 1 // 2],
+                config,
+            )
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), ec2),
+                [-eT / 2, -13 * eT / 20, 1 // 2],
+                config,
+            )
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), c1), -1, config)
             d5 = MOI.get(model, MOI.ConstraintDual(), c5) # degree of freedom
-            d23 = (exp(-0.3) * 0.3 - d5) / 0.6 # dual constraint corresponding to v[7]
-            @test d23 >= -atol
-            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈
-                  [d23, exp(-0.3), exp(-0.3) / 2] atol = atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c3) ≈
-                  [d23, 0.0, exp(-0.3) / 2] atol = atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c4) ≈ -exp(-0.3) * 0.3 atol =
-                atol rtol = rtol
+            d23 = (eT * 3 / 10 - d5) / (3 // 5) # dual constraint corresponding to v[7]
+            @test d23 >= -config.atol
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), c2),
+                [d23, eT, eT / 2],
+                config,
+            )
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), c3),
+                [d23, 0, eT / 2],
+                config,
+            )
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), c4),
+                -eT * 3 / 10,
+                config,
+            )
         end
     end
     return
@@ -3637,87 +3578,85 @@ end
 function setup_test(
     ::typeof(test_conic_Exponential_hard_2),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
+    eT = exp(T(-3 // 10))
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [0.0, -0.3, 0.0, exp(-0.3), exp(-0.3), exp(-0.3), 0.0, 1.0, 0.0],
-            (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone) => [
-                [-exp(-0.3) / 2, -1.3exp(-0.3) / 2, 0.5],
-                [-exp(-0.3) / 2, -1.3exp(-0.3) / 2, 0.5],
+            [0, -3 // 10, 0, eT, eT, eT, 0, 1, 0],
+            (MOI.VectorAffineFunction{T}, MOI.ExponentialCone) => [
+                [-eT / 2, -13eT / 20, 1 // 2],
+                [-eT / 2, -13eT / 20, 1 // 2],
             ],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [-1.0, exp(-0.3) * 0.3],
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
-                [-exp(-0.3) * 0.3],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) => [
-                [0.0, exp(-0.3), exp(-0.3) / 2],
-                [0.0, 0.0, exp(-0.3) / 2],
-            ],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) =>
+                [-1, eT * 3 / 10],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) =>
+                [-eT * 3 / 10],
+            (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) =>
+                [[0, eT, eT / 2], [0, 0, eT / 2]],
         ),
     )
     return
 end
 
 """
-    test_conic_Exponential_hard(model::MOI.ModelLike, config::Config)
+    test_conic_Exponential_hard(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
 
 Test an exponential problem that ECOS failed.
 """
-function test_conic_Exponential_hard(model::MOI.ModelLike, config::Config)
+function test_conic_Exponential_hard(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.ExponentialCone,
     )
-    atol = config.atol
-    rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.LessThan{Float64},
+        MOI.ScalarAffineFunction{T},
+        MOI.LessThan{T},
     )
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.LessThan{T})
     @requires MOI.supports_constraint(
         model,
-        MOI.VariableIndex,
-        MOI.LessThan{Float64},
-    )
-    @requires MOI.supports_constraint(
-        model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.ExponentialCone,
     )
-
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 2
     xc = MOI.add_constraint(
         model,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0),
-        MOI.LessThan(4.0),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(2), x)], T(0)),
+        MOI.LessThan(T(4)),
     )
-    yc = MOI.add_constraint(model, y, MOI.LessThan(5.0))
+    yc = MOI.add_constraint(model, y, MOI.LessThan(T(5)))
     @test yc.value == y.value
     ec = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            MOI.VectorAffineTerm.([1, 3], MOI.ScalarAffineTerm.(1.0, [x, y])),
-            [0.0, 1.0, 0.0],
+            MOI.VectorAffineTerm.([1, 3], MOI.ScalarAffineTerm.(T(1), [x, y])),
+            T[0, 1, 0],
         ),
         MOI.ExponentialCone(),
     )
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), x)], T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if _supports(config, MOI.optimize!)
@@ -3728,29 +3667,32 @@ function test_conic_Exponential_hard(model::MOI.ModelLike, config::Config)
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ log(5) atol = atol rtol =
-            rtol
+
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), log(T(5)), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ log(5) atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), log(T(5)), config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ log(5) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), y) ≈ 5.0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), xc) ≈ 2log(5) atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), yc) ≈ 5 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), ec) ≈ [log(5), 1.0, 5.0] atol =
-            atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), x), log(T(5)), config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), y), 5, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), xc), 2log(T(5)), config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), yc), 5, config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), ec),
+            [log(T(5)), 1, 5],
+            config,
+        )
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), xc) ≈ 0.0 atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), yc) ≈ -1 / 5 atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), ec) ≈
-                  [-1.0, log(5) - 1, 1 / 5] atol = atol rtol = rtol
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), xc), 0, config)
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), yc),
+                T(-1 // 5),
+                config,
+            )
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), ec),
+                T[-1, log(T(5))-1, 1//5],
+                config,
+            )
         end
     end
     return
@@ -3759,17 +3701,16 @@ end
 function setup_test(
     ::typeof(test_conic_Exponential_hard),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [log(5), 5.0],
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
-                [0.0],
-            (MOI.VectorAffineFunction{Float64}, MOI.ExponentialCone) =>
-                [[-1.0, log(5) - 1, 1 / 5]],
+            T[log(T(5)), 5],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[0],
+            (MOI.VectorAffineFunction{T}, MOI.ExponentialCone) =>
+                [T[-1, log(T(5))-1, 1//5]],
         ),
     )
     return
@@ -3777,17 +3718,15 @@ end
 
 function _test_conic_DualExponentialCone_helper(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{T},
     use_VectorOfVariables::Bool,
-)
+) where {T}
     F = if use_VectorOfVariables
         MOI.VectorOfVariables
     else
-        MOI.VectorAffineFunction{Float64}
+        MOI.VectorAffineFunction{T}
     end
     @requires MOI.supports_constraint(model, F, MOI.DualExponentialCone)
-    atol = config.atol
-    rtol = config.rtol
     # Problem dual exp
     # max 2x_2 + x_1
     # s.t.
@@ -3798,7 +3737,7 @@ function _test_conic_DualExponentialCone_helper(
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     if use_VectorOfVariables
@@ -3810,16 +3749,15 @@ function _test_conic_DualExponentialCone_helper(
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             MOI.DualExponentialCone,
         )
     end
     @requires MOI.supports_constraint(
         model,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.EqualTo{Float64},
+        MOI.ScalarAffineFunction{T},
+        MOI.EqualTo{T},
     )
-
     v = MOI.add_variables(model, 3)
     x = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 5
@@ -3829,35 +3767,35 @@ function _test_conic_DualExponentialCone_helper(
     else
         vc = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{Float64}(vov),
+            MOI.VectorAffineFunction{T}(vov),
             MOI.DualExponentialCone(),
         )
     end
     cu = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([1.0, 1.0], [x[1], v[1]]),
-            0.0,
+            MOI.ScalarAffineTerm.(T[1, 1], [x[1], v[1]]),
+            T(0),
         ),
-        MOI.EqualTo(1.0),
+        MOI.EqualTo(T(1)),
     )
     cv = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([1.0, 1.0], [x[2], v[2]]),
-            0.0,
+            MOI.ScalarAffineTerm.(T[1, 1], [x[2], v[2]]),
+            T(0),
         ),
-        MOI.EqualTo(1.0),
+        MOI.EqualTo(T(1)),
     )
     cw = MOI.add_constraint(
         model,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[3])], 0.0),
-        MOI.EqualTo(1.0),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), v[3])], T(0)),
+        MOI.EqualTo(T(1)),
     )
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1.0, 2.0], x), 0.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T[1, 2], x), T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if _supports(config, MOI.optimize!)
@@ -3868,35 +3806,37 @@ function _test_conic_DualExponentialCone_helper(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 3 + 2exp(1 / 2) atol = atol rtol =
-            rtol
+        eT = exp(T(1 // 2))
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), 3 + 2eT, config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 3 + 2exp(1 / 2) atol =
-                atol rtol = rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), 3 + 2eT, config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈
-              [-exp(1 / 2), -exp(1 / 2) / 2, 1.0] atol = atol rtol = rtol
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈
-              [1 + exp(1 / 2), 1 + exp(1 / 2) / 2] atol = atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈
-              [-exp(1 / 2), -exp(1 / 2) / 2, 1.0] atol = atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cu) ≈ 1 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cv) ≈ 1 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cw) ≈ 1 atol = atol rtol =
-            rtol
+        @test ≈(
+            MOI.get(model, MOI.VariablePrimal(), v),
+            T[-eT, -eT/2, 1],
+            config,
+        )
+        @test ≈(
+            MOI.get(model, MOI.VariablePrimal(), x),
+            T[1+eT, 1+eT/2],
+            config,
+        )
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), vc),
+            T[-eT, -eT/2, 1],
+            config,
+        )
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cu), 1, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cv), 1, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cw), 1, config)
         if _supports(config, MOI.ConstraintDual)
             x, y, z = MOI.get(model, MOI.ConstraintDual(), vc)
-            @test x ≈ 1.0 atol = atol rtol = rtol
-            @test y ≈ 2.0 atol = atol rtol = rtol
-            @test z ≈ 2exp(1 / 2) atol = atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cu) ≈ -1 atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cv) ≈ -2 atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cw) ≈ -2exp(1 / 2) atol =
-                atol rtol = rtol
+            @test ≈(x, 1, config)
+            @test ≈(y, 2, config)
+            @test ≈(z, 2eT, config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), cu), -1, config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), cv), -2, config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), cw), -2eT, config)
         end
     end
     return
@@ -3904,8 +3844,8 @@ end
 
 function test_conic_DualExponentialCone_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_DualExponentialCone_helper(model, config, true)
     return
 end
@@ -3913,21 +3853,16 @@ end
 function setup_test(
     ::typeof(test_conic_DualExponentialCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
+    eT = exp(T(1 // 2))
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [
-                -exp(1 / 2),
-                -exp(1 / 2) / 2,
-                1.0,
-                1 + exp(1 / 2),
-                1 + exp(1 / 2) / 2,
-            ],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [-1.0, -2.0, -2exp(1 / 2)],
+            T[-eT, -eT/2, 1, 1+eT, 1+eT/2],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) =>
+                T[-1, -2, -2eT],
         ),
     )
     return
@@ -3935,8 +3870,8 @@ end
 
 function test_conic_DualExponentialCone_VectorAffineFunction(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_DualExponentialCone_helper(model, config, false)
     return
 end
@@ -3944,23 +3879,18 @@ end
 function setup_test(
     ::typeof(test_conic_DualExponentialCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
+    eT = exp(T(1 // 2))
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [
-                -exp(1 / 2),
-                -exp(1 / 2) / 2,
-                1.0,
-                1 + exp(1 / 2),
-                1 + exp(1 / 2) / 2,
-            ],
-            (MOI.VectorAffineFunction{Float64}, MOI.DualExponentialCone) =>
-                [[1.0, 2.0, 2exp(1 / 2)]],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [-1.0, -2.0, -2exp(1 / 2)],
+            T[-eT, -eT/2, 1, 1+eT, 1+eT/2],
+            (MOI.VectorAffineFunction{T}, MOI.DualExponentialCone) =>
+                [T[1, 2, 2eT]],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) =>
+                T[-1, -2, -2eT],
         ),
     )
     return
@@ -3984,43 +3914,41 @@ min -2α - β
 """
 function _test_conic_PowerCone_helper(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{T},
     use_VectorOfVariables::Bool,
-)
+) where {T}
+    @requires T == Float64
     F = if use_VectorOfVariables
         MOI.VectorOfVariables
     else
-        MOI.VectorAffineFunction{Float64}
+        MOI.VectorAffineFunction{T}
     end
-    @requires MOI.supports_constraint(model, F, MOI.PowerCone{Float64})
-    atol = config.atol
-    rtol = config.rtol
-    a = 0.9
+    @requires MOI.supports_constraint(model, F, MOI.PowerCone{T})
+    a = T(9 // 10)
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     if use_VectorOfVariables
         @requires MOI.supports_constraint(
             model,
             MOI.VectorOfVariables,
-            MOI.PowerCone{Float64},
+            MOI.PowerCone{T},
         )
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
-            MOI.PowerCone{Float64},
+            MOI.VectorAffineFunction{T},
+            MOI.PowerCone{T},
         )
     end
     @requires MOI.supports_constraint(
         model,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.EqualTo{Float64},
+        MOI.ScalarAffineFunction{T},
+        MOI.EqualTo{T},
     )
-
     v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
     vov = MOI.VectorOfVariables(v)
@@ -4029,24 +3957,24 @@ function _test_conic_PowerCone_helper(
     else
         vc = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{Float64}(vov),
+            MOI.VectorAffineFunction{T}(vov),
             MOI.PowerCone(a),
         )
     end
     cx = MOI.add_constraint(
         model,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[1])], 0.0),
-        MOI.EqualTo(2.0),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), v[1])], T(0)),
+        MOI.EqualTo(T(2)),
     )
     cy = MOI.add_constraint(
         model,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[2])], 0.0),
-        MOI.EqualTo(1.0),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), v[2])], T(0)),
+        MOI.EqualTo(T(1)),
     )
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[3])], 0.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), v[3])], T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if _supports(config, MOI.optimize!)
@@ -4057,28 +3985,21 @@ function _test_conic_PowerCone_helper(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 2^0.9 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈ [2.0, 1.0, 2^0.9] atol =
-            atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ [2.0, 1.0, 2^0.9] atol =
-            atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ 2.0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cy) ≈ 1.0 atol = atol rtol =
-            rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), 2^a, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), v), [2, 1, 2^a], config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), vc), [2, 1, 2^a], config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cx), 2, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cy), 1, config)
         if _supports(config, MOI.ConstraintDual)
             # Only real solution of u^10 - u^9 / 2^0.1 = -(0.1*0.9^9)/2
             u_value = 0.839729692
-            v_value = 2^0.9 - 2u_value
+            v_value = 2^a - 2u_value
             u, v, w = MOI.get(model, MOI.ConstraintDual(), vc)
-            @test u ≈ u_value atol = atol rtol = rtol
-            @test v ≈ v_value atol = atol rtol = rtol
-            @test w ≈ -1 atol = atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ -u_value atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cy) ≈ -v_value atol =
-                atol rtol = rtol
+            @test ≈(u, u_value, config)
+            @test ≈(v, v_value, config)
+            @test ≈(w, -1, config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), cx), -u_value, config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), cy), -v_value, config)
         end
     end
     return
@@ -4086,8 +4007,8 @@ end
 
 function test_conic_PowerCone_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_PowerCone_helper(model, config, true)
     return
 end
@@ -4095,18 +4016,22 @@ end
 function setup_test(
     ::typeof(test_conic_PowerCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
+    if T != Float64
+        return  # TODO(odow): compute u_value as an analytical expression.
+    end
+    a = T(9 // 10)
     u_value = 0.839729692
-    v_value = 2^0.9 - 2 * u_value
+    v_value = 2^a - 2 * u_value
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [2.0, 1.0, 2^0.9],
-            (MOI.VectorOfVariables, MOI.PowerCone{Float64}) =>
+            T[2, 1, 2^a],
+            (MOI.VectorOfVariables, MOI.PowerCone{T}) =>
                 [[u_value, v_value, -1]],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) =>
                 [-u_value, -v_value],
         ),
     )
@@ -4115,8 +4040,8 @@ end
 
 function test_conic_PowerCone_VectorAffineFunction(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_PowerCone_helper(model, config, false)
     return
 end
@@ -4124,18 +4049,22 @@ end
 function setup_test(
     ::typeof(test_conic_PowerCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
+    if T != Float64
+        return  # TODO(odow): compute u_value as an analytical expression.
+    end
+    a = T(9 // 10)
     u_value = 0.839729692
-    v_value = 2^0.9 - 2 * u_value
+    v_value = 2^a - 2 * u_value
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [2.0, 1.0, 2^0.9],
-            (MOI.VectorAffineFunction{Float64}, MOI.PowerCone{Float64}) =>
+            [2, 1, 2^a],
+            (MOI.VectorAffineFunction{T}, MOI.PowerCone{T}) =>
                 [[u_value, v_value, -1]],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) =>
                 [-u_value, -v_value],
         ),
     )
@@ -4147,7 +4076,7 @@ end
         model::MOI.ModelLike,
         config::Config,
         use_VectorOfVariables::Bool;
-        exponent::Float64 = 0.9,
+        exponent::T = 0.9,
     )
 
 Problem dual POW1
@@ -4170,43 +4099,40 @@ The same works for other values of exponent as key word argument
 """
 function _test_conic_DualPowerCone_helper(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{T},
     use_VectorOfVariables::Bool;
-    exponent::Float64 = 0.9,
-)
+    exponent::T = T(9 // 10),
+) where {T}
     F = if use_VectorOfVariables
         MOI.VectorOfVariables
     else
-        MOI.VectorAffineFunction{Float64}
+        MOI.VectorAffineFunction{T}
     end
-    @requires MOI.supports_constraint(model, F, MOI.DualPowerCone{Float64})
-    atol = config.atol
-    rtol = config.rtol
+    @requires MOI.supports_constraint(model, F, MOI.DualPowerCone{T})
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     if use_VectorOfVariables
         @requires MOI.supports_constraint(
             model,
             MOI.VectorOfVariables,
-            MOI.DualPowerCone{Float64},
+            MOI.DualPowerCone{T},
         )
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
-            MOI.DualPowerCone{Float64},
+            MOI.VectorAffineFunction{T},
+            MOI.DualPowerCone{T},
         )
     end
     @requires MOI.supports_constraint(
         model,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.EqualTo{Float64},
+        MOI.ScalarAffineFunction{T},
+        MOI.EqualTo{T},
     )
-
     v = MOI.add_variables(model, 3)
     x = MOI.add_variables(model, 2)
     @test MOI.get(model, MOI.NumberOfVariables()) == 5
@@ -4216,37 +4142,37 @@ function _test_conic_DualPowerCone_helper(
     else
         vc = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{Float64}(vov),
+            MOI.VectorAffineFunction{T}(vov),
             MOI.DualPowerCone(exponent),
         )
     end
     cu = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([1.0, 1.0], [x[1], v[1]]),
-            0.0,
+            MOI.ScalarAffineTerm.(T[1, 1], [x[1], v[1]]),
+            T(0),
         ),
-        MOI.EqualTo(0.0),
+        MOI.EqualTo(T(0)),
     )
     cv = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([1.0, 1.0], [x[2], v[2]]),
-            0.0,
+            MOI.ScalarAffineTerm.(T[1, 1], [x[2], v[2]]),
+            T(0),
         ),
-        MOI.EqualTo(0.0),
+        MOI.EqualTo(T(0)),
     )
     cw = MOI.add_constraint(
         model,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, v[3])], 0.0),
-        MOI.EqualTo(1.0),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), v[3])], T(0)),
+        MOI.EqualTo(T(1)),
     )
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([-1.0, -1.0], [x[1], x[2]]),
-            0.0,
+            MOI.ScalarAffineTerm.(T[-1, -1], [x[1], x[2]]),
+            T(0),
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -4258,30 +4184,26 @@ function _test_conic_DualPowerCone_helper(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ 1.0 atol = atol rtol = rtol
-        @test MOI.get(model, MOI.VariablePrimal(), v) ≈
-              [exponent, (1 - exponent), 1.0] atol = atol rtol = rtol
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈
-              [-exponent, -(1 - exponent)] atol = atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈
-              [exponent, (1 - exponent), 1.0] atol = atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cu) ≈ 0.0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cv) ≈ 0.0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cw) ≈ 1.0 atol = atol rtol =
-            rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), 1, config)
+        v_sol = T[exponent, 1-exponent, 1]
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), v), v_sol, config)
+        @test ≈(
+            MOI.get(model, MOI.VariablePrimal(), x),
+            T[-exponent, -(1 - exponent)],
+            config,
+        )
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), vc), v_sol, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cu), 0, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cv), 0, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cw), 1, config)
         if _supports(config, MOI.ConstraintDual)
             x, y, z = MOI.get(model, MOI.ConstraintDual(), vc)
-            @test x ≈ 1.0 atol = atol rtol = rtol
-            @test y ≈ 1.0 atol = atol rtol = rtol
-            @test z ≈ -1 atol = atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cu) ≈ -1.0 atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cv) ≈ -1.0 atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cw) ≈ 1.0 atol = atol rtol =
-                rtol
+            @test ≈(x, 1, config)
+            @test ≈(y, 1, config)
+            @test ≈(z, -1, config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), cu), -1, config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), cv), -1, config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), cw), 1, config)
         end
     end
     return
@@ -4297,8 +4219,8 @@ Test DualPowerCone in the standard conic form.
 """
 function test_conic_DualPowerCone_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_DualPowerCone_helper(model, config, true)
     return
 end
@@ -4306,15 +4228,14 @@ end
 function setup_test(
     ::typeof(test_conic_DualPowerCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [0.9, 0.1, 1.0, -0.9, -0.1],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [-1.0, -1.0, 1.0],
+            T[9//10, 1//10, 1, -9//10, -1//10],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => T[-1, -1, 1],
         ),
     )
     return
@@ -4330,8 +4251,8 @@ Test DualPowerCone in the geometric conic form.
 """
 function test_conic_DualPowerCone_VectorAffineFunction(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_DualPowerCone_helper(model, config, false)
     return
 end
@@ -4339,23 +4260,26 @@ end
 function setup_test(
     ::typeof(test_conic_DualPowerCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [0.9, 0.1, 1.0, -0.9, -0.1],
-            (MOI.VectorAffineFunction{Float64}, MOI.DualPowerCone{Float64}) => [[1.0, 1.0, -1.0]],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [-1.0, -1.0, 1.0],
+            T[9//10, 1//10, 1, -9//10, -1//10],
+            (MOI.VectorAffineFunction{T}, MOI.DualPowerCone{T}) =>
+                [T[1, 1, -1]],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => T[-1, -1, 1],
         ),
     )
     return
 end
 
 """
-    test_conic_RelativeEntropyCone(model::MOI.ModelLike, config::Config)
+    test_conic_RelativeEntropyCone(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
 
 Test the problem:
 ```
@@ -4374,24 +4298,21 @@ function test_conic_RelativeEntropyCone(
         MOI.VectorAffineFunction{T},
         MOI.RelativeEntropyCone,
     )
-    atol = config.atol
-    rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.RelativeEntropyCone,
     )
-
     u = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
     relentr = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, u))],
-            Float64[0, 1, 5, 2, 3],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), u))],
+            T[0, 1, 5, 2, 3],
         ),
         MOI.RelativeEntropyCone(5),
     )
@@ -4405,21 +4326,23 @@ function test_conic_RelativeEntropyCone(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        u_opt = 2 * log(2) + 3 * log(3 / 5)
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ u_opt atol = atol rtol =
-            rtol
+        u_opt = 2 * log(T(2)) + 3 * log(T(3 // 5))
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), u_opt, config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ u_opt atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), u_opt, config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), u) ≈ u_opt atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), relentr) ≈
-              [u_opt, 1, 5, 2, 3] atol = atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), u), u_opt, config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), relentr),
+            T[u_opt, 1, 5, 2, 3],
+            config,
+        )
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), relentr) ≈
-                  [1, 2, 0.6, log(0.5) - 1, log(5 / 3) - 1] atol = atol rtol =
-                rtol
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), relentr),
+                T[1, 2, 3//5, log(T(1 // 2))-1, log(T(5 // 3))-1],
+                config,
+            )
         end
     end
     return
@@ -4428,30 +4351,29 @@ end
 function setup_test(
     ::typeof(test_conic_RelativeEntropyCone),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
-    u_opt = 2 * log(2 / 1) + 3 * log(3 / 5)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [u_opt],
-            (MOI.VectorAffineFunction{Float64}, MOI.RelativeEntropyCone) =>
-                [[1, 2, 0.6, log(0.5) - 1, log(5 / 3) - 1]],
+            [2 * log(T(2 // 1)) + 3 * log(T(3 // 5))],
+            (MOI.VectorAffineFunction{T}, MOI.RelativeEntropyCone) =>
+                [T[1, 2, 3//5, log(T(1 // 2))-1, log(T(5 // 3))-1]],
         ),
     )
     return
 end
 
 """
-    test_conic_NormSpectralCone(model::MOI.ModelLike, config::Config)
+    test_conic_NormSpectralCone(model::MOI.ModelLike, config::Config{T}) where {T}
 
 Test the problem:
 ```
 min t
  st  t >= sigma_1([1 1 0; 1 -1 1]) (i.e (t, 1, 1, 1, -1, 0, 1]) is in NormSpectralCone(2, 3))
-Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
-t = sqrt(3)
+Singular values are [sqrt(T(3)), sqrt(T(2))], so optimal solution is:
+t = sqrt(T(3))
 ```
 """
 function test_conic_NormSpectralCone(
@@ -4463,25 +4385,23 @@ function test_conic_NormSpectralCone(
         MOI.VectorAffineFunction{T},
         MOI.NormSpectralCone,
     )
-    atol = config.atol
-    rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.NormSpectralCone,
     )
 
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    data = Float64[1, 1, 1, -1, 0, 1]
+    data = T[1, 1, 1, -1, 0, 1]
     spec = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t))],
-            vcat(0.0, data),
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), t))],
+            vcat(T(0), data),
         ),
         MOI.NormSpectralCone(2, 3),
     )
@@ -4495,21 +4415,21 @@ function test_conic_NormSpectralCone(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        rt3 = sqrt(3)
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ rt3 atol = atol rtol = rtol
+        rt3 = sqrt(T(3))
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), rt3, config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ rt3 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), rt3, config)
         end
-        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ rt3 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), spec) ≈ vcat(rt3, data) atol =
-            atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), t), rt3, config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), spec),
+            vcat(rt3, data),
+            config,
+        )
         if _supports(config, MOI.ConstraintDual)
             invrt3 = inv(rt3)
-            @test MOI.get(model, MOI.ConstraintDual(), spec) ≈
-                  Float64[1, 0, -invrt3, 0, invrt3, 0, -invrt3] atol = atol rtol =
-                rtol
+            d = T[1, 0, -invrt3, 0, invrt3, 0, -invrt3]
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), spec), d, config)
         end
     end
     return
@@ -4518,30 +4438,30 @@ end
 function setup_test(
     ::typeof(test_conic_NormSpectralCone),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
-    invrt3 = inv(sqrt(3))
+    ::Config{T},
+) where {T}
+    invrt3 = inv(sqrt(T(3)))
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [sqrt(3)],
-            (MOI.VectorAffineFunction{Float64}, MOI.NormSpectralCone) =>
-                [Float64[1, 0, -invrt3, 0, invrt3, 0, -invrt3]],
+            [sqrt(T(3))],
+            (MOI.VectorAffineFunction{T}, MOI.NormSpectralCone) =>
+                [T[1, 0, -invrt3, 0, invrt3, 0, -invrt3]],
         ),
     )
     return
 end
 
 """
-    test_conic_NormSpectralCone_2(model::MOI.ModelLike, config::Config)
+    test_conic_NormSpectralCone_2(model::MOI.ModelLike, config::Config{T}) where {T}
 
 Test the problem:
 ```
 min t
  st  t >= sigma_1([1 1; 1 -1; 0 1]) (i.e (t, 1, 1, 0, 1, -1, 1]) is in NormSpectralCone(3, 2))
-Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
-t = sqrt(3)
+Singular values are [sqrt(T(3)), sqrt(T(2))], so optimal solution is:
+t = sqrt(T(3))
 ```
 """
 function test_conic_NormSpectralCone_2(
@@ -4560,18 +4480,18 @@ function test_conic_NormSpectralCone_2(
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.NormSpectralCone,
     )
 
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    data = Float64[1, 1, 0, 1, -1, 1]
+    data = T[1, 1, 0, 1, -1, 1]
     spec = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t))],
-            vcat(0.0, data),
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), t))],
+            vcat(T(0), data),
         ),
         MOI.NormSpectralCone(3, 2),
     )
@@ -4585,7 +4505,7 @@ function test_conic_NormSpectralCone_2(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        rt3 = sqrt(3)
+        rt3 = sqrt(T(3))
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ rt3 atol = atol rtol = rtol
         if _supports(config, MOI.DualObjectiveValue)
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ rt3 atol = atol rtol =
@@ -4598,7 +4518,7 @@ function test_conic_NormSpectralCone_2(
         if _supports(config, MOI.ConstraintDual)
             invrt3 = inv(rt3)
             @test MOI.get(model, MOI.ConstraintDual(), spec) ≈
-                  Float64[1, 0, 0, 0, -invrt3, invrt3, -invrt3] atol = atol rtol =
+                  T[1, 0, 0, 0, -invrt3, invrt3, -invrt3] atol = atol rtol =
                 rtol
         end
     end
@@ -4608,30 +4528,30 @@ end
 function setup_test(
     ::typeof(test_conic_NormSpectralCone_2),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
-    invrt3 = inv(sqrt(3))
+    ::Config{T},
+) where {T}
+    invrt3 = inv(sqrt(T(3)))
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [sqrt(3)],
-            (MOI.VectorAffineFunction{Float64}, MOI.NormSpectralCone) =>
-                [Float64[1, 0, 0, 0, -invrt3, invrt3, -invrt3]],
+            [sqrt(T(3))],
+            (MOI.VectorAffineFunction{T}, MOI.NormSpectralCone) =>
+                [T[1, 0, 0, 0, -invrt3, invrt3, -invrt3]],
         ),
     )
     return
 end
 
 """
-    test_conic_NormNuclearCone(model::MOI.ModelLike, config::Config)
+    test_conic_NormNuclearCone(model::MOI.ModelLike, config::Config{T}) where {T}
 
 Test the problem:
 ```
 min t
  st  t >= sum_i sigma_i([1 1 0; 1 -1 1]) (i.e (t, 1, 1, 1, -1, 0, 1]) is in NormNuclearCone(2, 3))
-Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
-t = sqrt(3) + sqrt(2)
+Singular values are [sqrt(T(3)), sqrt(T(2))], so optimal solution is:
+t = sqrt(T(3)) + sqrt(T(2))
 ```
 """
 function test_conic_NormNuclearCone(
@@ -4650,18 +4570,18 @@ function test_conic_NormNuclearCone(
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.NormNuclearCone,
     )
 
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    data = Float64[1, 1, 1, -1, 0, 1]
+    data = T[1, 1, 1, -1, 0, 1]
     nuc = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t))],
-            vcat(0.0, data),
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), t))],
+            vcat(T(0), data),
         ),
         MOI.NormNuclearCone(2, 3),
     )
@@ -4675,8 +4595,8 @@ function test_conic_NormNuclearCone(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        rt3 = sqrt(3)
-        rt2 = sqrt(2)
+        rt3 = sqrt(T(3))
+        rt2 = sqrt(T(2))
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ rt3 + rt2 atol = atol rtol =
             rtol
         if _supports(config, MOI.DualObjectiveValue)
@@ -4691,7 +4611,7 @@ function test_conic_NormNuclearCone(
             invrt2 = inv(rt2)
             invrt3 = inv(rt3)
             @test MOI.get(model, MOI.ConstraintDual(), nuc) ≈
-                  Float64[1, -invrt2, -invrt3, -invrt2, invrt3, 0, -invrt3] atol =
+                  T[1, -invrt2, -invrt3, -invrt2, invrt3, 0, -invrt3] atol =
                 atol rtol = rtol
         end
     end
@@ -4701,31 +4621,31 @@ end
 function setup_test(
     ::typeof(test_conic_NormNuclearCone),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
-    invrt2 = inv(sqrt(2))
-    invrt3 = inv(sqrt(3))
+    ::Config{T},
+) where {T}
+    invrt2 = inv(sqrt(T(2)))
+    invrt3 = inv(sqrt(T(3)))
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [sqrt(2) + sqrt(3)],
-            (MOI.VectorAffineFunction{Float64}, MOI.NormNuclearCone) =>
-                [Float64[1, -invrt2, -invrt3, -invrt2, invrt3, 0, -invrt3]],
+            [sqrt(T(2)) + sqrt(T(3))],
+            (MOI.VectorAffineFunction{T}, MOI.NormNuclearCone) =>
+                [T[1, -invrt2, -invrt3, -invrt2, invrt3, 0, -invrt3]],
         ),
     )
     return
 end
 
 """
-    test_conic_NormNuclearCone_2(model::MOI.ModelLike, config::Config)
+    test_conic_NormNuclearCone_2(model::MOI.ModelLike, config::Config{T}) where {T}
 
 Test the problem:
 ```
 min t
  st  t >= sum_i sigma_i([1 1; 1 -1; 0 1]) (i.e (t, 1, 1, 0, 1, -1, 1]) is in NormNuclearCone(3, 2))
-Singular values are [sqrt(3), sqrt(2)], so optimal solution is:
-t = sqrt(3) + sqrt(2)
+Singular values are [sqrt(T(3)), sqrt(T(2))], so optimal solution is:
+t = sqrt(T(3)) + sqrt(T(2))
 ```
 """
 function test_conic_NormNuclearCone_2(
@@ -4744,18 +4664,18 @@ function test_conic_NormNuclearCone_2(
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.NormNuclearCone,
     )
 
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
-    data = Float64[1, 1, 0, 1, -1, 1]
+    data = T[1, 1, 0, 1, -1, 1]
     nuc = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t))],
-            vcat(0.0, data),
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), t))],
+            vcat(T(0), data),
         ),
         MOI.NormNuclearCone(3, 2),
     )
@@ -4769,8 +4689,8 @@ function test_conic_NormNuclearCone_2(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        rt3 = sqrt(3)
-        rt2 = sqrt(2)
+        rt3 = sqrt(T(3))
+        rt2 = sqrt(T(2))
         @test MOI.get(model, MOI.ObjectiveValue()) ≈ rt3 + rt2 atol = atol rtol =
             rtol
         if _supports(config, MOI.DualObjectiveValue)
@@ -4785,7 +4705,7 @@ function test_conic_NormNuclearCone_2(
             invrt2 = inv(rt2)
             invrt3 = inv(rt3)
             @test MOI.get(model, MOI.ConstraintDual(), nuc) ≈
-                  Float64[1, -invrt2, -invrt2, 0, -invrt3, invrt3, -invrt3] atol =
+                  T[1, -invrt2, -invrt2, 0, -invrt3, invrt3, -invrt3] atol =
                 atol rtol = rtol
         end
     end
@@ -4795,17 +4715,17 @@ end
 function setup_test(
     ::typeof(test_conic_NormNuclearCone_2),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
-    invrt2 = inv(sqrt(2))
-    invrt3 = inv(sqrt(3))
+    ::Config{T},
+) where {T}
+    invrt2 = inv(sqrt(T(2)))
+    invrt3 = inv(sqrt(T(3)))
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [sqrt(2) + sqrt(3)],
-            (MOI.VectorAffineFunction{Float64}, MOI.NormNuclearCone) =>
-                [Float64[1, -invrt2, -invrt2, 0, -invrt3, invrt3, -invrt3]],
+            [sqrt(T(2)) + sqrt(T(3))],
+            (MOI.VectorAffineFunction{T}, MOI.NormNuclearCone) =>
+                [T[1, -invrt2, -invrt2, 0, -invrt3, invrt3, -invrt3]],
         ),
     )
     return
@@ -4825,15 +4745,15 @@ function _test_conic_PositiveSemidefiniteCone_helper(
     model::MOI.ModelLike,
     use_VectorOfVariables::Bool,
     psdcone,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
     square = psdcone == MOI.PositiveSemidefiniteConeSquare
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     if use_VectorOfVariables
@@ -4841,14 +4761,14 @@ function _test_conic_PositiveSemidefiniteCone_helper(
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             psdcone,
         )
     end
     @requires MOI.supports_constraint(
         model,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.EqualTo{Float64},
+        MOI.ScalarAffineFunction{T},
+        MOI.EqualTo{T},
     )
 
     X = MOI.add_variables(model, square ? 4 : 3)
@@ -4859,38 +4779,38 @@ function _test_conic_PositiveSemidefiniteCone_helper(
     else
         cX = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{Float64}(vov),
+            MOI.VectorAffineFunction{T}(vov),
             psdcone(2),
         )
     end
     c = MOI.add_constraint(
         model,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, X[2])], 0.0),
-        MOI.EqualTo(1.0),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), X[2])], T(0)),
+        MOI.EqualTo(T(1)),
     )
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
                 use_VectorOfVariables ? MOI.VectorOfVariables :
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 psdcone,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.ScalarAffineFunction{Float64},
-                MOI.EqualTo{Float64},
+                MOI.ScalarAffineFunction{T},
+                MOI.EqualTo{T},
             }(),
         ) == 1
     end
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.(1.0, [X[1], X[end]]),
-            0.0,
+            MOI.ScalarAffineTerm.(T(1), [X[1], X[end]]),
+            T(0),
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -4907,7 +4827,7 @@ function _test_conic_PositiveSemidefiniteCone_helper(
             @test MOI.get(model, MOI.DualObjectiveValue()) ≈ 2 atol = atol rtol =
                 rtol
         end
-        Xv = square ? ones(4) : ones(3)
+        Xv = square ? ones(T, 4) : ones(T, 3)
         @test MOI.get(model, MOI.VariablePrimal(), X) ≈ Xv atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), cX) ≈ Xv atol = atol rtol =
@@ -4925,8 +4845,8 @@ end
 
 function test_conic_PositiveSemidefiniteConeTriangle_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_PositiveSemidefiniteCone_helper(
         model,
         true,
@@ -4939,15 +4859,14 @@ end
 function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeTriangle_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(3),
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [2],
+            ones(T, 3),
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [2],
         ),
     )
     return
@@ -4955,8 +4874,8 @@ end
 
 function test_conic_PositiveSemidefiniteConeTriangle_VectorAffineFunction(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_PositiveSemidefiniteCone_helper(
         model,
         false,
@@ -4969,19 +4888,18 @@ end
 function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeTriangle_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(3),
+            ones(T, 3),
             (
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.PositiveSemidefiniteConeTriangle,
             ) => [[1.0, -1.0, 1.0]],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [2],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [2],
         ),
     )
     return
@@ -4989,8 +4907,8 @@ end
 
 function test_conic_PositiveSemidefiniteConeSquare_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_PositiveSemidefiniteCone_helper(
         model,
         true,
@@ -5003,15 +4921,14 @@ end
 function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeSquare_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(4),
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [2],
+            ones(T, 4),
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [2],
         ),
     )
     return
@@ -5019,8 +4936,8 @@ end
 
 function test_conic_PositiveSemidefiniteConeSquare_VectorAffineFunction(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_PositiveSemidefiniteCone_helper(
         model,
         false,
@@ -5033,19 +4950,15 @@ end
 function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeSquare_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(4),
-            (
-                MOI.VectorAffineFunction{Float64},
-                MOI.PositiveSemidefiniteConeSquare,
-            ) => [[1.0, -2.0, 0.0, 1.0]],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [2],
+            ones(T, 4),
+            (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeSquare) => [[1.0, -2.0, 0.0, 1.0]],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [2],
         ),
     )
     return
@@ -5094,61 +5007,59 @@ function _test_conic_PositiveSemidefiniteCone_helper_2(
     model::MOI.ModelLike,
     use_VectorOfVariables::Bool,
     psdcone,
-    config::Config,
-)
-    atol = config.atol
-    rtol = config.rtol
+    config::Config{T},
+) where {T}
     square = psdcone == MOI.PositiveSemidefiniteConeSquare
     # The dual of the SDP constraint is rank two of the form
     # [γ, 0, -γ] * [γ, 0, γ'] + [δ, ε, δ] * [δ, ε, δ]'
-    # and the dual of the SOC constraint is of the form (√2*y2, -y2, -y2)
+    # and the dual of the SOC constraint is of the form (√T(2)*y2, -y2, -y2)
     #
     # The feasible set of the constraint dual contains only four points.
     # Eliminating, y1, y2 and γ from the dual constraints gives
     # -ε^2 + -εδ + 2δ^2 + 1
-    # (√2-2)ε^2 + (-2√2+2)δ^2 + 1
+    # (√T(2)-2)ε^2 + (-2√T(2)+2)δ^2 + 1
     # Eliminating ε from this set of equation give
-    # (-6√2+4)δ^4 + (3√2-2)δ^2 + (2√2-3)
+    # (-6√T(2)+4)δ^4 + (3√T(2)-2)δ^2 + (2√T(2)-3)
     # from which we find the solution
-    δ = √(1 + (3 * √2 + 2) * √(-116 * √2 + 166) / 14) / 2
+    δ = √(1 + (3 * √T(2) + 2) * √(-116 * √T(2) + 166) / 14) / 2
     # which is optimal
-    ε = √((1 - 2 * (√2 - 1) * δ^2) / (2 - √2))
+    ε = √((1 - 2 * (√T(2) - 1) * δ^2) / (2 - √T(2)))
     y2 = 1 - ε * δ
-    y1 = 1 - √2 * y2
+    y1 = 1 - √T(2) * y2
     obj = y1 + y2 / 2
     # The primal solution is rank one of the form
     # X = [α, β, α] * [α, β, α]'
-    # and by complementary slackness, x is of the form (√2*x2, x2, x2)
+    # and by complementary slackness, x is of the form (√T(2)*x2, x2, x2)
     # The primal reduces to
-    #      4α^2+4αβ+2β^2+√2*x2= obj
-    #      2α^2    + β^2+√2*x2 = 1 (1)
+    #      4α^2+4αβ+2β^2+√T(2)*x2= obj
+    #      2α^2    + β^2+√T(2)*x2 = 1 (1)
     #      8α^2+8αβ+2β^2+ 4 x2 = 1
     # Eliminating β, we get
     # 4α^2 + 4x2 = 3 - 2obj (2)
     # By complementary slackness, we have β = kα where
     k = -2 * δ / ε
     # Replacing β by kα in (1) allows to eliminate α^2 in (2) to get
-    x2 = ((3 - 2obj) * (2 + k^2) - 4) / (4 * (2 + k^2) - 4 * √2)
+    x2 = ((3 - 2obj) * (2 + k^2) - 4) / (4 * (2 + k^2) - 4 * √T(2))
     # With (2) we get
     α = √(3 - 2obj - 4x2) / 2
     β = k * α
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.EqualTo{Float64},
+        MOI.ScalarAffineFunction{T},
+        MOI.EqualTo{T},
     )
     if use_VectorOfVariables
         @requires MOI.supports_constraint(model, MOI.VectorOfVariables, psdcone)
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             psdcone,
         )
     end
@@ -5168,7 +5079,7 @@ function _test_conic_PositiveSemidefiniteCone_helper_2(
     else
         cX = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{Float64}(vov),
+            MOI.VectorAffineFunction{T}(vov),
             psdcone(3),
         )
     end
@@ -5181,32 +5092,32 @@ function _test_conic_PositiveSemidefiniteCone_helper_2(
         model,
         MOI.ScalarAffineFunction(
             MOI.ScalarAffineTerm.(
-                [1.0, 1, 1, 1],
+                T[1, 1, 1, 1],
                 [X[1], X[square ? 5 : 3], X[end], x[1]],
             ),
-            0.0,
+            T(0),
         ),
-        MOI.EqualTo(1.0),
+        MOI.EqualTo(T(1)),
     )
     c2 = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
             MOI.ScalarAffineTerm.(
-                square ? ones(11) : [1.0, 2, 1, 2, 2, 1, 1, 1],
+                square ? ones(T, 11) : T[1, 2, 1, 2, 2, 1, 1, 1],
                 [X; x[2]; x[3]],
             ),
-            0.0,
+            T(0),
         ),
-        MOI.EqualTo(1 / 2),
+        MOI.EqualTo(T(1 / 2)),
     )
-    objXidx = square ? [1:2; 4:6; 8:9] : [1:3; 5:6]
-    objXcoefs = square ? [2.0, 1.0, 1.0, 2.0, 1.0, 1.0, 2.0] : 2 * ones(5)
+    objXidx = square ? T[1:2; 4:6; 8:9] : T[1:3; 5:6]
+    objXcoefs = square ? T[2, 1, 1, 2, 1, 1, 2] : 2 * ones(T, 5)
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
         MOI.ScalarAffineFunction(
             MOI.ScalarAffineTerm.([objXcoefs; 1.0], [X[objXidx]; x[1]]),
-            0.0,
+            T(0),
         ),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -5215,15 +5126,15 @@ function _test_conic_PositiveSemidefiniteCone_helper_2(
             model,
             MOI.NumberOfConstraints{
                 use_VectorOfVariables ? MOI.VectorOfVariables :
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 psdcone,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.ScalarAffineFunction{Float64},
-                MOI.EqualTo{Float64},
+                MOI.ScalarAffineFunction{T},
+                MOI.EqualTo{T},
             }(),
         ) == 2
         @test MOI.get(
@@ -5239,42 +5150,35 @@ function _test_conic_PositiveSemidefiniteCone_helper_2(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ obj atol = atol rtol = rtol
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), obj, config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test MOI.get(model, MOI.DualObjectiveValue()) ≈ obj atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), obj, config)
         end
         Xv =
             square ? [α^2, α * β, α^2, α * β, β^2, α * β, α^2, α * β, α^2] :
             [α^2, α * β, β^2, α^2, α * β, α^2]
-        xv = [√2 * x2, x2, x2]
-        @test MOI.get(model, MOI.VariablePrimal(), X) ≈ Xv atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ xv atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cX) ≈ Xv atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), cx) ≈ xv atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ 1.0 atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈ 0.5 atol = atol rtol =
-            rtol
+        xv = [√T(2) * x2, x2, x2]
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), X), Xv, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), x), xv, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cX), Xv, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cx), xv, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c1), 1, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c2), T(1 // 2), config)
         if _supports(config, MOI.ConstraintDual)
-            cX0 = 1 + (√2 - 1) * y2
+            cX0 = 1 + (√T(2) - 1) * y2
             cX1 = 1 - y2
             cX2 = -y2
             cXv =
                 square ? [cX0, cX1, cX2, cX1, cX0, cX1, cX2, cX1, cX0] :
                 [cX0, cX1, cX0, cX2, cX1, cX0]
-            @test MOI.get(model, MOI.ConstraintDual(), cX) ≈ cXv atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ [1 - y1, -y2, -y2] atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ y1 atol = atol rtol =
-                rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ y2 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), cX), cXv, config)
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), cx),
+                [1 - y1, -y2, -y2],
+                config,
+            )
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), c1), y1, config)
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), c2), y2, config)
         end
     end
     return
@@ -5282,8 +5186,8 @@ end
 
 function test_conic_PositiveSemidefiniteConeTriangle_VectorOfVariables_2(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_PositiveSemidefiniteCone_helper_2(
         model,
         true,
@@ -5296,26 +5200,25 @@ end
 function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeTriangle_VectorOfVariables_2),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
-    δ = √(1 + (3 * √2 + 2) * √(-116 * √2 + 166) / 14) / 2
-    ε = √((1 - 2 * (√2 - 1) * δ^2) / (2 - √2))
+    ::Config{T},
+) where {T}
+    δ = √(1 + (3 * √T(2) + 2) * √(-116 * √T(2) + 166) / 14) / 2
+    ε = √((1 - 2 * (√T(2) - 1) * δ^2) / (2 - √T(2)))
     y2 = 1 - ε * δ
-    y1 = 1 - √2 * y2
+    y1 = 1 - √T(2) * y2
     obj = y1 + y2 / 2
     k = -2 * δ / ε
-    x2 = ((3 - 2obj) * (2 + k^2) - 4) / (4 * (2 + k^2) - 4 * √2)
+    x2 = ((3 - 2obj) * (2 + k^2) - 4) / (4 * (2 + k^2) - 4 * √T(2))
     α = √(3 - 2obj - 4x2) / 2
     β = k * α
     Xv = [α^2, α * β, β^2, α^2, α * β, α^2]
-    xv = [√2 * x2, x2, x2]
+    xv = [√T(2) * x2, x2, x2]
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [Xv; xv],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [y1, y2],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [y1, y2],
         ),
     )
     return
@@ -5323,8 +5226,8 @@ end
 
 function test_conic_PositiveSemidefiniteConeTriangle_VectorAffineFunction_2(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_PositiveSemidefiniteCone_helper_2(
         model,
         false,
@@ -5339,20 +5242,20 @@ function setup_test(
         test_conic_PositiveSemidefiniteConeTriangle_VectorAffineFunction_2,
     ),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
-    δ = √(1 + (3 * √2 + 2) * √(-116 * √2 + 166) / 14) / 2
-    ε = √((1 - 2 * (√2 - 1) * δ^2) / (2 - √2))
+    ::Config{T},
+) where {T}
+    δ = √(1 + (3 * √T(2) + 2) * √(-116 * √T(2) + 166) / 14) / 2
+    ε = √((1 - 2 * (√T(2) - 1) * δ^2) / (2 - √T(2)))
     y2 = 1 - ε * δ
-    y1 = 1 - √2 * y2
+    y1 = 1 - √T(2) * y2
     obj = y1 + y2 / 2
     k = -2 * δ / ε
-    x2 = ((3 - 2obj) * (2 + k^2) - 4) / (4 * (2 + k^2) - 4 * √2)
+    x2 = ((3 - 2obj) * (2 + k^2) - 4) / (4 * (2 + k^2) - 4 * √T(2))
     α = √(3 - 2obj - 4x2) / 2
     β = k * α
     Xv = [α^2, α * β, β^2, α^2, α * β, α^2]
-    xv = [√2 * x2, x2, x2]
-    cX0 = 1 + (√2 - 1) * y2
+    xv = [√T(2) * x2, x2, x2]
+    cX0 = 1 + (√T(2) - 1) * y2
     cX1 = 1 - y2
     cX2 = -y2
     cXv = [cX0, cX1, cX0, cX2, cX1, cX0]
@@ -5362,11 +5265,10 @@ function setup_test(
             mock,
             [Xv; xv],
             (
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.PositiveSemidefiniteConeTriangle,
             ) => [cXv],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [y1, y2],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [y1, y2],
         ),
     )
     return
@@ -5374,8 +5276,8 @@ end
 
 function test_conic_PositiveSemidefiniteConeSquare_VectorOfVariables_2(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_PositiveSemidefiniteCone_helper_2(
         model,
         true,
@@ -5388,26 +5290,25 @@ end
 function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeSquare_VectorOfVariables_2),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
-    δ = √(1 + (3 * √2 + 2) * √(-116 * √2 + 166) / 14) / 2
-    ε = √((1 - 2 * (√2 - 1) * δ^2) / (2 - √2))
+    ::Config{T},
+) where {T}
+    δ = √(1 + (3 * √T(2) + 2) * √(-116 * √T(2) + 166) / 14) / 2
+    ε = √((1 - 2 * (√T(2) - 1) * δ^2) / (2 - √T(2)))
     y2 = 1 - ε * δ
-    y1 = 1 - √2 * y2
+    y1 = 1 - √T(2) * y2
     obj = y1 + y2 / 2
     k = -2 * δ / ε
-    x2 = ((3 - 2obj) * (2 + k^2) - 4) / (4 * (2 + k^2) - 4 * √2)
+    x2 = ((3 - 2obj) * (2 + k^2) - 4) / (4 * (2 + k^2) - 4 * √T(2))
     α = √(3 - 2obj - 4x2) / 2
     β = k * α
     Xv = [α^2, α * β, α^2, α * β, β^2, α * β, α^2, α * β, α^2]
-    xv = [√2 * x2, x2, x2]
+    xv = [√T(2) * x2, x2, x2]
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [Xv; xv],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [y1, y2],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [y1, y2],
         ),
     )
     return
@@ -5415,8 +5316,8 @@ end
 
 function test_conic_PositiveSemidefiniteConeSquare_VectorAffineFunction_2(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_PositiveSemidefiniteCone_helper_2(
         model,
         false,
@@ -5429,19 +5330,19 @@ end
 function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeSquare_VectorAffineFunction_2),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
-    δ = √(1 + (3 * √2 + 2) * √(-116 * √2 + 166) / 14) / 2
-    ε = √((1 - 2 * (√2 - 1) * δ^2) / (2 - √2))
+    ::Config{T},
+) where {T}
+    δ = √(1 + (3 * √T(2) + 2) * √(-116 * √T(2) + 166) / 14) / 2
+    ε = √((1 - 2 * (√T(2) - 1) * δ^2) / (2 - √T(2)))
     y2 = 1 - ε * δ
-    y1 = 1 - √2 * y2
+    y1 = 1 - √T(2) * y2
     obj = y1 + y2 / 2
     k = -2 * δ / ε
-    x2 = ((3 - 2obj) * (2 + k^2) - 4) / (4 * (2 + k^2) - 4 * √2)
+    x2 = ((3 - 2obj) * (2 + k^2) - 4) / (4 * (2 + k^2) - 4 * √T(2))
     α = √(3 - 2obj - 4x2) / 2
     β = k * α
-    xv = [√2 * x2, x2, x2]
-    cX0 = 1 + (√2 - 1) * y2
+    xv = [√T(2) * x2, x2, x2]
+    cX0 = 1 + (√T(2) - 1) * y2
     cX1 = 1 - y2
     cX2 = -y2
     Xv = [α^2, α * β, α^2, α * β, β^2, α * β, α^2, α * β, α^2]
@@ -5451,12 +5352,8 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [Xv; xv],
-            (
-                MOI.VectorAffineFunction{Float64},
-                MOI.PositiveSemidefiniteConeSquare,
-            ) => [cXv],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [y1, y2],
+            (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeSquare) => [cXv],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [y1, y2],
         ),
     )
     return
@@ -5470,25 +5367,23 @@ end
 """
 function test_conic_PositiveSemidefiniteConeTriangle(
     model::MOI.ModelLike,
-    config::Config,
-)
-    atol = config.atol
-    rtol = config.rtol
+    config::Config{T},
+) where {T}
     # Caused getdual to fail on SCS and Mosek
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.GreaterThan{Float64},
+        MOI.ScalarAffineFunction{T},
+        MOI.GreaterThan{T},
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Nonpositives,
     )
     @requires MOI.supports_constraint(
@@ -5498,23 +5393,23 @@ function test_conic_PositiveSemidefiniteConeTriangle(
     )
     @requires MOI.supports_constraint(
         model,
-        MOI.ScalarAffineFunction{Float64},
-        MOI.EqualTo{Float64},
+        MOI.ScalarAffineFunction{T},
+        MOI.EqualTo{T},
     )
 
     x = MOI.add_variables(model, 7)
     @test MOI.get(model, MOI.NumberOfVariables()) == 7
-    η = 10.0
+    η = T(10)
     c1 = MOI.add_constraint(
         model,
-        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(-1.0, x[1:6]), 0.0),
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T(-1), x[1:6]), T(0)),
         MOI.GreaterThan(-η),
     )
     c2 = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            MOI.VectorAffineTerm.(1:6, MOI.ScalarAffineTerm.(-1.0, x[1:6])),
-            zeros(6),
+            MOI.VectorAffineTerm.(1:6, MOI.ScalarAffineTerm.(T(-1), x[1:6])),
+            zeros(T, 6),
         ),
         MOI.Nonpositives(6),
     )
@@ -5532,13 +5427,13 @@ function test_conic_PositiveSemidefiniteConeTriangle(
                         δ,
                         δ / 4,
                         δ / 8,
-                        0.0,
+                        T(0),
                         -1.0,
-                        -δ / (2 * √2),
+                        -δ / (2 * √T(2)),
                         -δ / 4,
                         0,
-                        -δ / (8 * √2),
-                        0.0,
+                        -δ / (8 * √T(2)),
+                        T(0),
                         δ / 2,
                         δ - α,
                         0,
@@ -5549,52 +5444,52 @@ function test_conic_PositiveSemidefiniteConeTriangle(
                     [x[1:7]; x[1:3]; x[5:6]; x[1:3]; x[5:7]],
                 ),
             ),
-            zeros(3),
+            zeros(T, 3),
         ),
         MOI.PositiveSemidefiniteConeTriangle(2),
     )
     c4 = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.(0.0, [x[1:3]; x[5:6]]),
-            0.0,
+            MOI.ScalarAffineTerm.(T(0), [x[1:3]; x[5:6]]),
+            T(0),
         ),
-        MOI.EqualTo(0.0),
+        MOI.EqualTo(T(0)),
     )
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.ScalarAffineFunction{Float64},
-                MOI.GreaterThan{Float64},
+                MOI.ScalarAffineFunction{T},
+                MOI.GreaterThan{T},
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonpositives,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.PositiveSemidefiniteConeTriangle,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.ScalarAffineFunction{Float64},
-                MOI.EqualTo{Float64},
+                MOI.ScalarAffineFunction{T},
+                MOI.EqualTo{T},
             }(),
         ) == 1
     end
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x[7])], 0.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), x[7])], T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if _supports(config, MOI.optimize!)
@@ -5605,34 +5500,52 @@ function test_conic_PositiveSemidefiniteConeTriangle(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈
-              [2η / 3, 0, η / 3, 0, 0, 0, η * δ * (1 - 1 / √3) / 2] atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c1) ≈ -η atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c2) ≈
-              [-2η / 3, 0, -η / 3, 0, 0, 0] atol = atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c3) ≈ [
-            η * δ * (1 / √3 + 1 / 3) / 2,
-            -η * δ / (3 * √2),
-            η * δ * (1 / √3 - 1 / 3) / 2,
-        ] atol = atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c4) ≈ 0.0 atol = atol rtol =
-            rtol
+        @test ≈(
+            MOI.get(model, MOI.VariablePrimal(), x),
+            [2η / 3, 0, η / 3, 0, 0, 0, η * δ * (1 - 1 / √3) / 2],
+            config,
+        )
+        rtol
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c1), -η, config)
+        rtol
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), c2),
+            [-2η / 3, 0, -η / 3, 0, 0, 0],
+            config,
+        )
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), c3),
+            [
+                η * δ * (1 / √3 + 1 / 3) / 2,
+                -η * δ / (3 * √T(2)),
+                η * δ * (1 / √3 - 1 / 3) / 2,
+            ],
+            config,
+        )
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c4), 0.0, config)
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), c1) ≈
-                  δ * (1 - 1 / √3) / 2 atol = atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ [
-                0,
-                -α / √3 + δ / (2 * √6) * (2 * √2 - 1),
-                0,
-                -3δ * (1 - 1 / √3) / 8,
-                -3δ * (1 - 1 / √3) / 8,
-                -δ * (3 - 2 * √3 + 1 / √3) / 8,
-            ] atol = atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c3) ≈
-                  [(1 - 1 / √3) / 2, 1 / √6, (1 + 1 / √3) / 2] atol = atol rtol =
-                rtol
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), c1),
+                δ * (1 - 1 / √3) / 2,
+                config,
+            )
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), c2),
+                [
+                    0,
+                    -α / √3 + δ / (2 * √6) * (2 * √T(2) - 1),
+                    0,
+                    -3δ * (1 - 1 / √3) / 8,
+                    -3δ * (1 - 1 / √3) / 8,
+                    -δ * (3 - 2 * √3 + 1 / √3) / 8,
+                ],
+                config,
+            )
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), c3),
+                [(1 - 1 / √3) / 2, 1 / √6, (1 + 1 / √3) / 2],
+                config,
+            )
             # Dual of c4 could be anything
         end
     end
@@ -5642,8 +5555,8 @@ end
 function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeTriangle),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     η = 10.0
     α = 0.8
     δ = 0.9
@@ -5652,22 +5565,21 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [2η / 3, 0, η / 3, 0, 0, 0, η * δ * (1 - 1 / √3) / 2],
-            (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
+            (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}) =>
                 [δ * (1 - 1 / √3) / 2],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonpositives) => [[
+            (MOI.VectorAffineFunction{T}, MOI.Nonpositives) => [[
                 0,
-                -α / √3 + δ / (2 * √6) * (2 * √2 - 1),
+                -α / √3 + δ / (2 * √6) * (2 * √T(2) - 1),
                 0,
                 -3δ * (1 - 1 / √3) / 8,
                 -3δ * (1 - 1 / √3) / 8,
                 -δ * (3 - 2 * √3 + 1 / √3) / 8,
             ]],
             (
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.PositiveSemidefiniteConeTriangle,
             ) => [[(1 - 1 / √3) / 2, 1 / √6, (1 + 1 / √3) / 2]],
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                [0],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [0],
         ),
     )
     return
@@ -5697,22 +5609,11 @@ function _test_conic_PositiveSemidefiniteCone_helper_3(
 
     x = MOI.add_variable(model)
     if psdcone == MOI.PositiveSemidefiniteConeTriangle
-        func = MOIU.operate(vcat, T, x, one(T), x, one(T), one(T), x)
+        func = MOIU.operate(vcat, T, x, T(1), x, T(1), T(1), x)
     else
         @assert psdcone == MOI.PositiveSemidefiniteConeSquare
-        func = MOIU.operate(
-            vcat,
-            T,
-            x,
-            one(T),
-            one(T),
-            one(T),
-            x,
-            one(T),
-            one(T),
-            one(T),
-            x,
-        )
+        func =
+            MOIU.operate(vcat, T, x, T(1), T(1), T(1), x, T(1), T(1), T(1), x)
     end
     c = MOI.add_constraint(model, func, psdcone(3))
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
@@ -5725,28 +5626,28 @@ function _test_conic_PositiveSemidefiniteCone_helper_3(
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         end
-        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ one(T) atol = atol rtol =
+        @test MOI.get(model, MOI.VariablePrimal(), x) ≈ T(1) atol = atol rtol =
             rtol
         @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈
               ones(T, MOI.output_dimension(func)) atol = atol rtol = rtol
         if _supports(config, MOI.ConstraintDual)
             if psdcone == MOI.PositiveSemidefiniteConeTriangle
                 @test MOI.get(model, MOI.ConstraintDual(), c) ≈
-                      [T(2), -one(T), T(2), -one(T), -one(T), T(2)] / T(6) atol =
-                    atol rtol = rtol
+                      [T(2), -T(1), T(2), -T(1), -T(1), T(2)] / T(6) atol = atol rtol =
+                    rtol
             else
                 @assert psdcone == MOI.PositiveSemidefiniteConeSquare
                 @test MOI.get(model, MOI.ConstraintDual(), c) ≈
                       [
-                    one(T),
-                    zero(T),
-                    zero(T),
-                    -one(T),
-                    one(T),
-                    zero(T),
-                    -one(T),
-                    -one(T),
-                    one(T),
+                    T(1),
+                    T(0),
+                    T(0),
+                    -T(1),
+                    T(1),
+                    T(0),
+                    -T(1),
+                    -T(1),
+                    T(1),
                 ] / T(3) atol = atol rtol = rtol
             end
         end
@@ -5762,8 +5663,8 @@ end
 """
 function test_conic_PositiveSemidefiniteConeTriangle_3(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_PositiveSemidefiniteCone_helper_3(
         model,
         MOI.PositiveSemidefiniteConeTriangle,
@@ -5775,15 +5676,15 @@ end
 function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeTriangle_3),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(1),
+            ones(T, 1),
             (
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.PositiveSemidefiniteConeTriangle,
             ) => [[2, -1, 2, -1, -1, 2] / 6],
         ),
@@ -5799,8 +5700,8 @@ end
 """
 function test_conic_PositiveSemidefiniteConeSquare_3(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_conic_PositiveSemidefiniteCone_helper_3(
         model,
         MOI.PositiveSemidefiniteConeSquare,
@@ -5812,17 +5713,14 @@ end
 function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeSquare_3),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(1),
-            (
-                MOI.VectorAffineFunction{Float64},
-                MOI.PositiveSemidefiniteConeSquare,
-            ) => [[1, 0, 0, -1, 1, 0, -1, -1, 1] / 3],
+            ones(T, 1),
+            (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeSquare) => [T[1, 0, 0, -1, 1, 0, -1, -1, 1] / 3],
         ),
     )
     return
@@ -5853,30 +5751,28 @@ max t
 """
 function _test_det_cone_helper_ellipsoid(
     model::MOI.ModelLike,
-    config::Config,
+    config::Config{T},
     use_VectorOfVariables::Bool,
     detcone,
-)
+) where {T}
     F =
         use_VectorOfVariables ? MOI.VectorOfVariables :
-        MOI.VectorAffineFunction{Float64}
+        MOI.VectorAffineFunction{T}
     @requires MOI.supports_constraint(model, F, detcone)
-    atol = config.atol
-    rtol = config.rtol
     square = detcone == MOI.LogDetConeSquare || detcone == MOI.RootDetConeSquare
     use_logdet =
         detcone == MOI.LogDetConeTriangle || detcone == MOI.LogDetConeSquare
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
     if use_logdet
         @requires MOI.supports_constraint(
             model,
             MOI.VariableIndex,
-            MOI.EqualTo{Float64},
+            MOI.EqualTo{T},
         )
     end
     if use_VectorOfVariables
@@ -5884,23 +5780,22 @@ function _test_det_cone_helper_ellipsoid(
     else
         @requires MOI.supports_constraint(
             model,
-            MOI.VectorAffineFunction{Float64},
+            MOI.VectorAffineFunction{T},
             detcone,
         )
     end
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         MOI.Nonnegatives,
     )
-
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
     Q = MOI.add_variables(model, square ? 4 : 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 5 : 4)
     if use_logdet
         u = MOI.add_variable(model)
-        vc = MOI.add_constraint(model, u, MOI.EqualTo(1.0))
+        vc = MOI.add_constraint(model, u, MOI.EqualTo(T(1)))
         @test vc.value == u.value
         vov = MOI.VectorOfVariables([t; u; Q])
     else
@@ -5911,7 +5806,7 @@ function _test_det_cone_helper_ellipsoid(
     else
         cX = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{Float64}(vov),
+            MOI.VectorAffineFunction{T}(vov),
             detcone(2),
         )
     end
@@ -5920,9 +5815,9 @@ function _test_det_cone_helper_ellipsoid(
         MOI.VectorAffineFunction(
             MOI.VectorAffineTerm.(
                 1:2,
-                MOI.ScalarAffineTerm.([-1.0, -1.0], [Q[1], Q[end]]),
+                MOI.ScalarAffineTerm.(T[-1, -1], [Q[1], Q[end]]),
             ),
-            ones(2),
+            ones(T, 2),
         ),
         MOI.Nonnegatives(2),
     )
@@ -5931,22 +5826,22 @@ function _test_det_cone_helper_ellipsoid(
             model,
             MOI.NumberOfConstraints{
                 use_VectorOfVariables ? MOI.VectorOfVariables :
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 detcone,
             }(),
         ) == 1
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                MOI.VectorAffineFunction{Float64},
+                MOI.VectorAffineFunction{T},
                 MOI.Nonnegatives,
             }(),
         ) == 1
     end
     MOI.set(
         model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, t)], 0.0),
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), t)], T(0)),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     if _supports(config, MOI.optimize!)
@@ -5954,48 +5849,47 @@ function _test_det_cone_helper_ellipsoid(
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        expectedobjval = use_logdet ? 0.0 : 1.0
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ expectedobjval atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ expectedobjval atol =
-            atol rtol = rtol
+        expectedobjval = use_logdet ? 0 : 1
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), expectedobjval, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), t), expectedobjval, config)
         if use_logdet
-            @test MOI.get(model, MOI.VariablePrimal(), u) ≈ 1.0 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.VariablePrimal(), u), 1, config)
         end
         Qv = MOI.get(model, MOI.VariablePrimal(), Q)
-        @test Qv[1] ≈ 1.0 atol = atol rtol = rtol
-        @test Qv[2] ≈ 0.0 atol = atol rtol = rtol
+        @test ≈(Qv[1], 1, config)
+        @test ≈(Qv[2], 0, config)
         if square
-            @test Qv[3] ≈ 0.0 atol = atol rtol = rtol
+            @test ≈(Qv[3], 0, config)
         end
-        @test Qv[end] ≈ 1.0 atol = atol rtol = rtol
+        @test ≈(Qv[end], 1, config)
         tQv = MOI.get(model, MOI.ConstraintPrimal(), cX)
-        @test tQv[1] ≈ expectedobjval atol = atol rtol = rtol
-        @test tQv[(use_logdet ? 3 : 2):end] ≈ Qv atol = atol rtol = rtol
-        @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ [0.0, 0.0] atol = atol rtol =
-            rtol
+        @test ≈(tQv[1], expectedobjval, config)
+        @test ≈(tQv[(use_logdet ? 3 : 2):end], Qv, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), T[0, 0], config)
         if use_logdet
-            @test MOI.get(model, MOI.ConstraintPrimal(), vc) ≈ 1.0 atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.ConstraintPrimal(), vc), 1, config)
         end
         if _supports(config, MOI.ConstraintDual)
             if use_logdet
-                @test MOI.get(model, MOI.ConstraintDual(), c) ≈ [1, 1] atol =
-                    atol rtol = rtol
-                @test MOI.get(model, MOI.ConstraintDual(), vc) ≈ 2 atol = atol rtol =
-                    rtol
-                dual = square ? [-1, -2, 1, 0, 0, 1] : [-1, -2, 1, 0, 1]
+                @test ≈(
+                    MOI.get(model, MOI.ConstraintDual(), c),
+                    T[1, 1],
+                    config,
+                )
+                @test ≈(MOI.get(model, MOI.ConstraintDual(), vc), 2, config)
+                dual = square ? T[-1, -2, 1, 0, 0, 1] : T[-1, -2, 1, 0, 1]
             else
-                @test MOI.get(model, MOI.ConstraintDual(), c) ≈ [0.5, 0.5] atol =
-                    atol rtol = rtol
-                dual =
-                    square ? [-1.0, 0.5, 0.0, 0.0, 0.5] : [-1.0, 0.5, 0.0, 0.5]
+                @test ≈(
+                    MOI.get(model, MOI.ConstraintDual(), c),
+                    T[1//2, 1//2],
+                    config,
+                )
+                dual = square ? T[-1, 1//2, 0, 0, 1//2] : T[-1, 1//2, 0, 1//2]
             end
-            @test MOI.get(model, MOI.ConstraintDual(), cX) ≈ dual atol = atol rtol =
-                rtol
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), cX), dual, config)
         end
     end
+    return
 end
 
 """
@@ -6013,10 +5907,14 @@ rootdet(mat) ≈ 1.709976
 logdet(mat)  ≈ 1.609438
 ```
 """
-function _test_det_cone_helper(model::MOI.ModelLike, config::Config, detcone)
+function _test_det_cone_helper(
+    model::MOI.ModelLike,
+    config::Config{T},
+    detcone,
+) where {T}
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         detcone,
     )
     atol = config.atol
@@ -6024,17 +5922,16 @@ function _test_det_cone_helper(model::MOI.ModelLike, config::Config, detcone)
     square = detcone == MOI.LogDetConeSquare || detcone == MOI.RootDetConeSquare
     use_logdet =
         detcone == MOI.LogDetConeTriangle || detcone == MOI.LogDetConeSquare
-    mat = Float64[3 2 1; 2 2 1; 1 1 3]
-    matL = Float64[3, 2, 2, 1, 1, 3]
+    mat = T[3 2 1; 2 2 1; 1 1 3]
+    matL = T[3, 2, 2, 1, 1, 3]
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports_constraint(
         model,
-        MOI.VectorAffineFunction{Float64},
+        MOI.VectorAffineFunction{T},
         detcone,
     )
-
     t = MOI.add_variable(model)
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
@@ -6042,14 +5939,14 @@ function _test_det_cone_helper(model::MOI.ModelLike, config::Config, detcone)
     constant_mat = square ? vec(mat) : matL
     constant_vec = use_logdet ? vcat(0, 1, constant_mat) : vcat(0, constant_mat)
     vaf = MOI.VectorAffineFunction(
-        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, t))],
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), t))],
         constant_vec,
     )
     det_constraint = MOI.add_constraint(model, vaf, detcone(3))
     if _supports(config, MOI.NumberOfConstraints)
         @test MOI.get(
             model,
-            MOI.NumberOfConstraints{MOI.VectorAffineFunction{Float64},detcone}(),
+            MOI.NumberOfConstraints{MOI.VectorAffineFunction{T},detcone}(),
         ) == 1
     end
     if _supports(config, MOI.optimize!)
@@ -6057,29 +5954,34 @@ function _test_det_cone_helper(model::MOI.ModelLike, config::Config, detcone)
         MOI.optimize!(model)
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        expected_objval = use_logdet ? log(5) : (5^inv(3))
-        @test MOI.get(model, MOI.ObjectiveValue()) ≈ expected_objval atol = atol rtol =
-            rtol
-        @test MOI.get(model, MOI.VariablePrimal(), t) ≈ expected_objval atol =
-            atol rtol = rtol
+        expected_objval = use_logdet ? log(T(5)) : 5^inv(T(3))
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), expected_objval, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), t), expected_objval)
         det_value = MOI.get(model, MOI.ConstraintPrimal(), det_constraint)
-        @test det_value[1] ≈ expected_objval atol = atol rtol = rtol
+        @test ≈(det_value[1], expected_objval, config)
         if use_logdet
-            @test det_value[2] ≈ 1.0 atol = atol rtol = rtol
+            @test ≈(det_value[2], 1, config)
         end
-        @test det_value[(use_logdet ? 3 : 2):end] ≈ (square ? vec(mat) : matL) atol =
-            atol rtol = rtol
+        @test ≈(
+            det_value[(use_logdet ? 3 : 2):end],
+            square ? vec(mat) : matL,
+            config,
+        )
         if _supports(config, MOI.ConstraintDual)
             psd_dual =
                 square ? [1, -1, 0, -1, 1.6, -0.2, 0, -0.2, 0.4] :
                 [1, -1, 1.6, 0, -0.2, 0.4]
             dual =
-                use_logdet ? vcat(-1, log(5) - 3, psd_dual) :
+                use_logdet ? vcat(-1, log(T(5)) - 3, psd_dual) :
                 vcat(-1, psd_dual / 3 * expected_objval)
-            @test MOI.get(model, MOI.ConstraintDual(), det_constraint) ≈ dual atol =
-                atol rtol = rtol
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), det_constraint),
+                dual,
+                config,
+            )
         end
     end
+    return
 end
 
 """
@@ -6092,8 +5994,8 @@ Test a problem with LogDetConeTriangle.
 """
 function test_conic_LogDetConeTriangle_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_det_cone_helper_ellipsoid(model, config, true, MOI.LogDetConeTriangle)
     return
 end
@@ -6101,18 +6003,17 @@ end
 function setup_test(
     ::typeof(test_conic_LogDetConeTriangle_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [0, 1, 0, 1, 1],
-            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [2],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
-                [[1, 1]],
+            T[0, 1, 0, 1, 1],
+            (MOI.VariableIndex, MOI.EqualTo{T}) => T[2],
+            (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) => [T[1, 1]],
             (MOI.VectorOfVariables, MOI.LogDetConeTriangle) =>
-                [[-1, -2, 1, 0, 1]],
+                [T[-1, -2, 1, 0, 1]],
         ),
     )
     flag = model.eval_variable_constraint_dual
@@ -6130,8 +6031,8 @@ Test a problem with LogDetConeTriangle.
 """
 function test_conic_LogDetConeTriangle_VectorAffineFunction(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_det_cone_helper_ellipsoid(
         model,
         config,
@@ -6144,18 +6045,17 @@ end
 function setup_test(
     ::typeof(test_conic_LogDetConeTriangle_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [0, 1, 0, 1, 1],
-            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [2],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
-                [[1, 1]],
-            (MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle) =>
-                [[-1, -2, 1, 0, 1]],
+            T[0, 1, 0, 1, 1],
+            (MOI.VariableIndex, MOI.EqualTo{T}) => T[2],
+            (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) => [T[1, 1]],
+            (MOI.VectorAffineFunction{T}, MOI.LogDetConeTriangle) =>
+                [T[-1, -2, 1, 0, 1]],
         ),
     )
     return
@@ -6171,8 +6071,8 @@ Test a problem with LogDetConeSquare.
 """
 function test_conic_LogDetConeSquare_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_det_cone_helper_ellipsoid(model, config, true, MOI.LogDetConeSquare)
     return
 end
@@ -6180,18 +6080,17 @@ end
 function setup_test(
     ::typeof(test_conic_LogDetConeSquare_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [0, 1, 0, 0, 1, 1],
-            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [2],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
-                [[1, 1]],
+            T[0, 1, 0, 0, 1, 1],
+            (MOI.VariableIndex, MOI.EqualTo{T}) => T[2],
+            (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) => [T[1, 1]],
             (MOI.VectorOfVariables, MOI.LogDetConeSquare) =>
-                [[-1, -2, 1, 0, 0, 1]],
+                [T[-1, -2, 1, 0, 0, 1]],
         ),
     )
     flag = model.eval_variable_constraint_dual
@@ -6209,8 +6108,8 @@ Test a problem with LogDetConeSquare.
 """
 function test_conic_LogDetConeSquare_VectorAffineFunction(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_det_cone_helper_ellipsoid(model, config, false, MOI.LogDetConeSquare)
     return
 end
@@ -6218,18 +6117,17 @@ end
 function setup_test(
     ::typeof(test_conic_LogDetConeSquare_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [0, 1, 0, 0, 1, 1],
-            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [2],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
-                [[1, 1]],
-            (MOI.VectorAffineFunction{Float64}, MOI.LogDetConeSquare) =>
-                [[-1, -2, 1, 0, 0, 1]],
+            T[0, 1, 0, 0, 1, 1],
+            (MOI.VariableIndex, MOI.EqualTo{T}) => T[2],
+            (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) => [T[1, 1]],
+            (MOI.VectorAffineFunction{T}, MOI.LogDetConeSquare) =>
+                [T[-1, -2, 1, 0, 0, 1]],
         ),
     )
     return
@@ -6245,8 +6143,8 @@ Test a problem with RootDetConeTriangle.
 """
 function test_conic_RootDetConeTriangle_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_det_cone_helper_ellipsoid(
         model,
         config,
@@ -6259,17 +6157,17 @@ end
 function setup_test(
     ::typeof(test_conic_RootDetConeTriangle_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1, 1, 0, 1],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
-                [[0.5, 0.5]],
+            T[1, 1, 0, 1],
+            (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) =>
+                [T[1//2, 1//2]],
             (MOI.VectorOfVariables, MOI.RootDetConeTriangle) =>
-                [[-1.0, 0.5, 0.0, 0.5]],
+                [T[-1, 1//2, 0, 1//2]],
         ),
     )
     return
@@ -6285,8 +6183,8 @@ Test a problem with RootDetConeTriangle.
 """
 function test_conic_RootDetConeTriangle_VectorAffineFunction(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_det_cone_helper_ellipsoid(
         model,
         config,
@@ -6299,17 +6197,17 @@ end
 function setup_test(
     ::typeof(test_conic_RootDetConeTriangle_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1, 1, 0, 1],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
-                [[0.5, 0.5]],
-            (MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle) =>
-                [[-1.0, 0.5, 0.0, 0.5]],
+            T[1, 1, 0, 1],
+            (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) =>
+                [T[1//2, 1//2]],
+            (MOI.VectorAffineFunction{T}, MOI.RootDetConeTriangle) =>
+                [T[-1, 1//2, 0, 1//2]],
         ),
     )
     return
@@ -6325,8 +6223,8 @@ Test a problem with RootDetConeSquare.
 """
 function test_conic_RootDetConeSquare_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_det_cone_helper_ellipsoid(model, config, true, MOI.RootDetConeSquare)
     return
 end
@@ -6334,15 +6232,15 @@ end
 function setup_test(
     ::typeof(test_conic_RootDetConeSquare_VectorOfVariables),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1, 1, 0, 0, 1],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
-                [[0.5, 0.5]],
+            T[1, 1, 0, 0, 1],
+            (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) =>
+                [T[1//2, 1//2]],
             (MOI.VectorOfVariables, MOI.RootDetConeSquare) =>
                 [[-1.0, 0.5, 0.0, 0.0, 0.5]],
         ),
@@ -6360,8 +6258,8 @@ Test a problem with RootDetConeSquare.
 """
 function test_conic_RootDetConeSquare_VectorAffineFunction(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     _test_det_cone_helper_ellipsoid(model, config, false, MOI.RootDetConeSquare)
     return
 end
@@ -6369,16 +6267,16 @@ end
 function setup_test(
     ::typeof(test_conic_RootDetConeSquare_VectorAffineFunction),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1, 1, 0, 0, 1],
-            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
-                [[0.5, 0.5]],
-            (MOI.VectorAffineFunction{Float64}, MOI.RootDetConeSquare) =>
+            T[1, 1, 0, 0, 1],
+            (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) =>
+                [T[1//2, 1//2]],
+            (MOI.VectorAffineFunction{T}, MOI.RootDetConeSquare) =>
                 [[-1.0, 0.5, 0.0, 0.0, 0.5]],
         ),
     )
@@ -6386,11 +6284,14 @@ function setup_test(
 end
 
 """
-    test_conic_LogDetConeTriangle(model::MOI.ModelLike, config::Config)
+    test_conic_LogDetConeTriangle(model::MOI.ModelLike, config::Config{T}) where {T}
 
 Test a problem with LogDetConeTriangle.
 """
-function test_conic_LogDetConeTriangle(model::MOI.ModelLike, config::Config)
+function test_conic_LogDetConeTriangle(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     _test_det_cone_helper(model, config, MOI.LogDetConeTriangle)
     return
 end
@@ -6398,15 +6299,15 @@ end
 function setup_test(
     ::typeof(test_conic_LogDetConeTriangle),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [log(5)],
-            (MOI.VectorAffineFunction{Float64}, MOI.LogDetConeTriangle) =>
-                [[-1, log(5) - 3, 1, -1, 1.6, 0, -0.2, 0.4]],
+            [log(T(5))],
+            (MOI.VectorAffineFunction{T}, MOI.LogDetConeTriangle) =>
+                [[-1, log(T(5)) - 3, 1, -1, 1.6, 0, -0.2, 0.4]],
         ),
     )
     flag = model.eval_variable_constraint_dual
@@ -6415,11 +6316,14 @@ function setup_test(
 end
 
 """
-    test_conic_LogDetConeSquare(model::MOI.ModelLike, config::Config)
+    test_conic_LogDetConeSquare(model::MOI.ModelLike, config::Config{T}) where {T}
 
 Test a problem with LogDetConeSquare.
 """
-function test_conic_LogDetConeSquare(model::MOI.ModelLike, config::Config)
+function test_conic_LogDetConeSquare(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     _test_det_cone_helper(model, config, MOI.LogDetConeSquare)
     return
 end
@@ -6427,26 +6331,40 @@ end
 function setup_test(
     ::typeof(test_conic_LogDetConeSquare),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [log(5)],
-            (MOI.VectorAffineFunction{Float64}, MOI.LogDetConeSquare) =>
-                [[-1, log(5) - 3, 1, -1, 0, -1, 1.6, -0.2, 0, -0.2, 0.4]],
+            [log(T(5))],
+            (MOI.VectorAffineFunction{T}, MOI.LogDetConeSquare) => [[
+                -1,
+                log(T(5)) - 3,
+                1,
+                -1,
+                0,
+                -1,
+                1.6,
+                -0.2,
+                0,
+                -0.2,
+                0.4,
+            ]],
         ),
     )
     return
 end
 
 """
-    test_conic_RootDetConeTriangle(model::MOI.ModelLike, config::Config)
+    test_conic_RootDetConeTriangle(model::MOI.ModelLike, config::Config{T}) where {T}
 
 Test a problem with RootDetConeTriangle.
 """
-function test_conic_RootDetConeTriangle(model::MOI.ModelLike, config::Config)
+function test_conic_RootDetConeTriangle(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     _test_det_cone_helper(model, config, MOI.RootDetConeTriangle)
     return
 end
@@ -6454,15 +6372,15 @@ end
 function setup_test(
     ::typeof(test_conic_RootDetConeTriangle),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [5^inv(3)],
-            (MOI.VectorAffineFunction{Float64}, MOI.RootDetConeTriangle) =>
-                [vcat(-1, [1, -1, 1.6, 0, -0.2, 0.4] / 3 * (5^inv(3)))],
+            [5^inv(T(3))],
+            (MOI.VectorAffineFunction{T}, MOI.RootDetConeTriangle) =>
+                [vcat(-1, [1, -1, 1.6, 0, -0.2, 0.4] / 3 * (5^inv(T(3))))],
         ),
     )
     flag = model.eval_variable_constraint_dual
@@ -6471,11 +6389,14 @@ function setup_test(
 end
 
 """
-    test_conic_RootDetConeSquare(model::MOI.ModelLike, config::Config)
+    test_conic_RootDetConeSquare(model::MOI.ModelLike, config::Config{T}) where {T}
 
 Test a problem with RootDetConeSquare.
 """
-function test_conic_RootDetConeSquare(model::MOI.ModelLike, config::Config)
+function test_conic_RootDetConeSquare(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     _test_det_cone_helper(model, config, MOI.RootDetConeSquare)
     return
 end
@@ -6483,17 +6404,17 @@ end
 function setup_test(
     ::typeof(test_conic_RootDetConeSquare),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [5^inv(3)],
-            (MOI.VectorAffineFunction{Float64}, MOI.RootDetConeSquare) => [
+            [5^inv(T(3))],
+            (MOI.VectorAffineFunction{T}, MOI.RootDetConeSquare) => [
                 vcat(
                     -1,
-                    [1, -1, 0, -1, 1.6, -0.2, 0, -0.2, 0.4] / 3 * (5^inv(3)),
+                    [1, -1, 0, -1, 1.6, -0.2, 0, -0.2, 0.4] / 3 * (5^inv(T(3))),
                 ),
             ],
         ),
@@ -6523,7 +6444,7 @@ function test_conic_SecondOrderCone_no_initial_bound(
     @requires _supports(config, MOI.optimize!)
     t = MOI.add_variable(model)
     x = MOI.add_variables(model, 2)
-    MOI.add_constraints(model, x, MOI.GreaterThan.(3.0:4.0))
+    MOI.add_constraints(model, x, MOI.GreaterThan.(T[3, 4]))
     c_soc = MOI.add_constraint(
         model,
         MOI.VectorOfVariables([t; x]),
@@ -6532,7 +6453,7 @@ function test_conic_SecondOrderCone_no_initial_bound(
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), T(5), config)
     MOI.delete(model, c_soc)
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.DUAL_INFEASIBLE
@@ -6542,12 +6463,11 @@ end
 function setup_test(
     ::typeof(test_conic_SecondOrderCone_no_initial_bound),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[5, 3, 4]),
         (mock::MOIU.MockOptimizer) ->
             MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE),
     )
@@ -6576,8 +6496,8 @@ function test_conic_SecondOrderCone_nonnegative_initial_bound(
     @requires _supports(config, MOI.optimize!)
     t = MOI.add_variable(model)
     x = MOI.add_variables(model, 2)
-    MOI.add_constraint(model, t, MOI.GreaterThan(1.0))
-    MOI.add_constraints(model, x, MOI.GreaterThan.(3.0:4.0))
+    MOI.add_constraint(model, t, MOI.GreaterThan(T(1)))
+    MOI.add_constraints(model, x, MOI.GreaterThan.(T[3, 4]))
     c_soc = MOI.add_constraint(
         model,
         MOI.VectorOfVariables([t; x]),
@@ -6586,24 +6506,22 @@ function test_conic_SecondOrderCone_nonnegative_initial_bound(
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), T(5), config)
     MOI.delete(model, c_soc)
     MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 1.0, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), T(1), config)
     return
 end
 
 function setup_test(
     ::typeof(test_conic_SecondOrderCone_nonnegative_initial_bound),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, [1.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[5, 3, 4]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[1, 3, 4]),
     )
     return
 end
@@ -6630,8 +6548,8 @@ function test_conic_SecondOrderCone_negative_initial_bound(
     @requires _supports(config, MOI.optimize!)
     t = MOI.add_variable(model)
     x = MOI.add_variables(model, 2)
-    MOI.add_constraint(model, t, MOI.GreaterThan(-1.0))
-    MOI.add_constraints(model, x, MOI.GreaterThan.(3.0:4.0))
+    MOI.add_constraint(model, t, MOI.GreaterThan(T(-1)))
+    MOI.add_constraints(model, x, MOI.GreaterThan.(T[3, 4]))
     c_soc = MOI.add_constraint(
         model,
         MOI.VectorOfVariables([t; x]),
@@ -6640,24 +6558,22 @@ function test_conic_SecondOrderCone_negative_initial_bound(
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), T(5), config)
     MOI.delete(model, c_soc)
     MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), -1.0, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), T(-1), config)
     return
 end
 
 function setup_test(
     ::typeof(test_conic_SecondOrderCone_negative_initial_bound),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, [-1.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[5, 3, 4]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[-1, 3, 4]),
     )
     return
 end
@@ -6684,34 +6600,32 @@ function test_conic_SecondOrderCone_nonnegative_post_bound(
     @requires _supports(config, MOI.optimize!)
     t = MOI.add_variable(model)
     x = MOI.add_variables(model, 2)
-    MOI.add_constraints(model, x, MOI.GreaterThan.(3.0:4.0))
+    MOI.add_constraints(model, x, MOI.GreaterThan.(T[3, 4]))
     MOI.add_constraint(
         model,
         MOI.VectorOfVariables([t; x]),
         MOI.SecondOrderCone(3),
     )
-    c_lb = MOI.add_constraint(model, t, MOI.GreaterThan(6.0))
+    c_lb = MOI.add_constraint(model, t, MOI.GreaterThan(T(6)))
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 6.0, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), T(6), config)
     MOI.delete(model, c_lb)
     MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), T(5), config)
     return
 end
 
 function setup_test(
     ::typeof(test_conic_SecondOrderCone_nonnegative_post_bound),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, [6.0, 3.0, 4.0]),
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[6, 3, 4]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[5, 3, 4]),
     )
     return
 end
@@ -6738,34 +6652,32 @@ function test_conic_SecondOrderCone_negative_post_bound(
     @requires _supports(config, MOI.optimize!)
     t = MOI.add_variable(model)
     x = MOI.add_variables(model, 2)
-    MOI.add_constraints(model, x, MOI.GreaterThan.(3.0:4.0))
+    MOI.add_constraints(model, x, MOI.GreaterThan.(T[3, 4]))
     c_soc = MOI.add_constraint(
         model,
         MOI.VectorOfVariables([t; x]),
         MOI.SecondOrderCone(3),
     )
-    MOI.add_constraint(model, t, MOI.GreaterThan(-6.0))
+    MOI.add_constraint(model, t, MOI.GreaterThan(T(-6)))
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), T(5), config)
     MOI.delete(model, c_soc)
     MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), -6.0, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), T(-6), config)
     return
 end
 
 function setup_test(
     ::typeof(test_conic_SecondOrderCone_negative_post_bound),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, [-6.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[5, 3, 4]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[-6, 3, 4]),
     )
     return
 end
@@ -6793,20 +6705,20 @@ function test_conic_SecondOrderCone_negative_post_bound_2(
     @requires _supports(config, MOI.optimize!)
     t = MOI.add_variable(model)
     x = MOI.add_variables(model, 2)
-    MOI.add_constraints(model, x, MOI.GreaterThan.(3.0:4.0))
+    MOI.add_constraints(model, x, MOI.GreaterThan.(T[3, 4]))
     c_soc = MOI.add_constraint(
         model,
         MOI.VectorOfVariables([t; x]),
         MOI.SecondOrderCone(3),
     )
-    c_lb = MOI.add_constraint(model, t, MOI.GreaterThan(-6.0))
+    c_lb = MOI.add_constraint(model, t, MOI.GreaterThan(T(-6)))
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), T(5), config)
     MOI.delete(model, c_lb)
     MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), T(5), config)
     MOI.delete(model, c_soc)
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.DUAL_INFEASIBLE
@@ -6822,14 +6734,12 @@ end
 function setup_test(
     ::typeof(test_conic_SecondOrderCone_negative_post_bound_2),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[5, 3, 4]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[5, 3, 4]),
         (mock::MOIU.MockOptimizer) ->
             MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE),
     )
@@ -6864,16 +6774,15 @@ function test_conic_SecondOrderCone_negative_post_bound_3(
         MOI.VectorOfVariables([t; x]),
         MOI.SecondOrderCone(3),
     )
-    c_lbs =
-        MOI.add_constraints(model, [t; x], MOI.GreaterThan.([-6.0, 3.0, 4.0]))
+    c_lbs = MOI.add_constraints(model, [t; x], MOI.GreaterThan.(T[-6, 3, 4]))
     c_lb = first(c_lbs)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), T(5), config)
     MOI.delete(model, c_lb)
     MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), 5.0, config)
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), t), T(5), config)
     MOI.delete(model, c_soc)
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.DUAL_INFEASIBLE
@@ -6889,14 +6798,12 @@ end
 function setup_test(
     ::typeof(test_conic_SecondOrderCone_negative_post_bound_3),
     model::MOIU.MockOptimizer,
-    ::Config,
-)
+    ::Config{T},
+) where {T}
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
-        (mock::MOIU.MockOptimizer) ->
-            MOIU.mock_optimize!(mock, [5.0, 3.0, 4.0]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[5, 3, 4]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[5, 3, 4]),
         (mock::MOIU.MockOptimizer) ->
             MOIU.mock_optimize!(mock, MOI.DUAL_INFEASIBLE),
     )

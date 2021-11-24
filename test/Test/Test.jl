@@ -58,9 +58,9 @@ MOI.Test.runtests(
     ),
     MOI.Test.Config(BigFloat),
     exclude = [
-        # ======================== Unexpected failures =========================
-        # TODO(odow): fix these excluded tests.
-        "test_conic_",
+        "test_conic_PositiveSemidefiniteConeSquare_VectorAffineFunction_2",
+        "test_conic_PositiveSemidefiniteConeSquare_VectorOfVariables_2",
+        "test_conic_PositiveSemidefiniteConeTriangle",
         # ========================= Expected failures ==========================
         # UniversalFallback supports these tests.
         "test_model_copy_to_UnsupportedAttribute",
