@@ -814,6 +814,8 @@ MOI.get(::_ConstraintPrimal1310, ::MOI.ListOfModelAttributesSet) = []
 
 MOI.get(::_ConstraintPrimal1310, ::MOI.PrimalStatus) = MOI.FEASIBLE_POINT
 
+MOI.get(::_ConstraintPrimal1310, ::MOI.ResultCount) = 1
+
 function MOI.optimize!(::_ConstraintPrimal1310, model::MOI.ModelLike)
     index_map = MOI.IndexMap()
     for x in MOI.get(model, MOI.ListOfVariableIndices())
