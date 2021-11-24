@@ -177,6 +177,7 @@ function get_fallback(
     attr::MOI.ConstraintPrimal,
     idx::MOI.ConstraintIndex,
 )
+    MOI.check_result_index_bounds(model, attr)
     f = MOI.get(model, MOI.ConstraintFunction(), idx)
     c = eval_variables(f) do vi
         return MOI.get(model, MOI.VariablePrimal(attr.result_index), vi)
