@@ -25,6 +25,7 @@ function pass_attributes(
             if attr == MOI.Name()
                 continue  # Skipping names is okay.
             end
+            throw(MOI.UnsupportedAttribute(attr))
         end
         _pass_attribute(dest, src, index_map, attr)
     end
@@ -65,6 +66,7 @@ function pass_attributes(
             if attr == MOI.VariableName() || attr == MOI.VariablePrimalStart()
                 continue  # Skipping names and start values is okay.
             end
+            throw(MOI.UnsupportedAttribute(attr))
         end
         _pass_attribute(dest, src, index_map, vis_src, attr)
     end
@@ -118,6 +120,7 @@ function pass_attributes(
             )
                 continue  # Skipping names and start values is okay.
             end
+            throw(MOI.UnsupportedAttribute(attr))
         end
         _pass_attribute(dest, src, index_map, cis_src, attr)
     end
