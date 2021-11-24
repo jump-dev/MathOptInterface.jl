@@ -901,6 +901,7 @@ function MOI.get(
             "optimizer is attached.",
         )
     end
+    MOI.check_result_index_bounds(model, attr)
     try
         return MOI.get(
             model.optimizer,
@@ -923,6 +924,7 @@ function MOI.get(
             "optimizer is attached.",
         )
     end
+    MOI.check_result_index_bounds(model, attr)
     try
         return MOI.get(
             model.optimizer,

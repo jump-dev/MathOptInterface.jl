@@ -814,6 +814,8 @@ MOI.get(::_ConstraintPrimal1310, ::MOI.ListOfModelAttributesSet) = []
 
 MOI.get(::_ConstraintPrimal1310, ::MOI.PrimalStatus) = MOI.FEASIBLE_POINT
 
+MOI.get(::_ConstraintPrimal1310, ::MOI.ResultCount) = 1
+
 function MOI.optimize!(::_ConstraintPrimal1310, model::MOI.ModelLike)
     index_map = MOI.IndexMap()
     for x in MOI.get(model, MOI.ListOfVariableIndices())
@@ -845,6 +847,14 @@ function test_ConstraintPrimal_fallback()
     MOI.optimize!(model)
     @test MOI.get(model, MOI.ConstraintPrimal(), c) == 1.2
     @test MOI.get(model, MOI.ConstraintPrimal(), [c]) == [1.2]
+    @test_throws(
+        MOI.ResultIndexBoundsError(MOI.ConstraintPrimal(2), 1),
+        MOI.get(model, MOI.ConstraintPrimal(2), c),
+    )
+    @test_throws(
+        MOI.ResultIndexBoundsError(MOI.ConstraintPrimal(2), 1),
+        MOI.get(model, MOI.ConstraintPrimal(2), [c]),
+    )
     return
 end
 
