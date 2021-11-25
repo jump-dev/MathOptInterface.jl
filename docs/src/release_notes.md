@@ -1,5 +1,29 @@
 # Release notes
 
+## v0.10.6 (In development)
+
+### New features
+
+ - Added new documentation and tests for infeasibility certificates
+ - Added a version control system for the tests in `MOI.Test.runtests`. Pass
+   `exclude_tests_after = v"0.10.5"` to run tests added in v0.10.5 and earlier.
+ - `MOI.Test.runtests` now supports generic number types. To specify the number
+   type `T`, pass `MOI.Test.Config(T)`.
+ - Added `infeasible_status` to `MOI.Test.Config` for solvers which return
+   `LOCALLY_INFEASIBLE
+ - CachingOptimizers now use a fallback for `ConstraintPrimal`. This should
+   enable solvers using a CachingOptimizer to pass tests requiring
+   `ConstraintPrimal`.
+
+### Bug fixes
+
+ - Fixed a StackOverflow bug in `copy_to`
+ - Fixed error thrown when nonconvex quadratic constraints cannot be bridged
+ - Fixed a bug in `copy_to` for `FileFormats.NL.Model`
+ - Fixed a bug in `FileFormats.NL` when printing large integers
+ - Remove a common test failure for `LowerBoundAlreadySet` tests
+ - `Utilities.num_rows` is now exported
+
 ## v0.10.5 (November 7, 2021)
 
 For a detailed list of the closed issues and pull requests from this release,
