@@ -10,7 +10,7 @@
  - `MOI.Test.runtests` now supports generic number types. To specify the number
    type `T`, pass `MOI.Test.Config(T)`.
  - Added `infeasible_status` to `MOI.Test.Config` for solvers which return
-   `LOCALLY_INFEASIBLE
+   `LOCALLY_INFEASIBLE`
  - CachingOptimizers now use a fallback for `ConstraintPrimal`. This should
    enable solvers using a CachingOptimizer to pass tests requiring
    `ConstraintPrimal`.
