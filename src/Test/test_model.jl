@@ -564,7 +564,7 @@ end
 Test an error is thrown when a constraint is unsupported.
 
 !!! note
-    This functon uses the two-argument `MOI.optimize!`. This ensures that we
+    This function uses the two-argument `MOI.optimize!`. This ensures that we
     test three cases:
      * models implementing the two-argument method
      * models using the generic fallback and erroring on `copy_to`
@@ -592,7 +592,7 @@ end
 Test an error is thrown when an attribute is unsupported.
 
 !!! note
-    This functon uses the two-argument `MOI.optimize!`. This ensures that we
+    This function uses the two-argument `MOI.optimize!`. This ensures that we
     test three cases:
      * models implementing the two-argument method
      * models using the generic fallback and erroring on `copy_to`
