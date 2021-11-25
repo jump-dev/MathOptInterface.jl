@@ -51,7 +51,7 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0, 6 // 5)
             @test isapprox(T(13 // 10) * d, Ad, config)
             return
         end
-
+        version_added(::typeof($(f_unbd_name))) = v"0.10.6"
         function setup_test(
             ::typeof($(f_unbd_name)),
             mock::MOIU.MockOptimizer,
@@ -112,7 +112,7 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0, 6 // 5)
             @test isapprox(dl + du, T(0), config)
             return
         end
-
+        version_added(::typeof($(f_infeas_name))) = v"0.10.6"
         function setup_test(
             ::typeof($(f_infeas_name)),
             mock::MOIU.MockOptimizer,
@@ -174,7 +174,7 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0, 6 // 5)
             @test isapprox(dl + du, T(0), config)
             return
         end
-
+        version_added(::typeof($(f_infeas_affine_name))) = v"0.10.6"
         function setup_test(
             ::typeof($(f_infeas_affine_name)),
             mock::MOIU.MockOptimizer,
