@@ -5942,7 +5942,11 @@ function _test_det_cone_helper(
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         expected_objval = use_logdet ? log(T(5)) : 5^inv(T(3))
         @test ≈(MOI.get(model, MOI.ObjectiveValue()), expected_objval, config)
-        @test ≈(MOI.get(model, MOI.VariablePrimal(), t), expected_objval, config)
+        @test ≈(
+            MOI.get(model, MOI.VariablePrimal(), t),
+            expected_objval,
+            config,
+        )
         det_value = MOI.get(model, MOI.ConstraintPrimal(), det_constraint)
         @test ≈(det_value[1], expected_objval, config)
         if use_logdet
