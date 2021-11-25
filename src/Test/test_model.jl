@@ -559,12 +559,16 @@ function test_model_empty(model::MOI.ModelLike, ::Config)
 end
 
 """
-    test_model_copy_to_UnsupportedConstraint(
-        model::MOI.ModelLike,
-        ::Config,
-    )
+    test_model_copy_to_UnsupportedConstraint(model::MOI.ModelLike, ::Config)
 
-Test `MOI.copy_to` when a constraint is unsupported.
+Test an error is thrown when a constraint is unsupported.
+
+!!! note
+    This functon uses the two-argument `MOI.optimize!`. This ensures that we
+    test three cases:
+     * models implementing the two-argument method
+     * models using the generic fallback and erroring on `copy_to`
+     * models using the generic fallback and erroring on `optimize!`.
 """
 function test_model_copy_to_UnsupportedConstraint(
     model::MOI.ModelLike,
@@ -577,18 +581,22 @@ function test_model_copy_to_UnsupportedConstraint(
     )
     @test_throws(
         MOI.UnsupportedConstraint,
-        MOI.copy_to(model, BadConstraintModel()),
+        MOI.optimize!(model, BadConstraintModel()),
     )
     return
 end
 
 """
-    test_model_copy_to_UnsupportedAttribute(
-        model::MOI.ModelLike,
-        ::Config,
-    )
+    test_model_copy_to_UnsupportedAttribute(model::MOI.ModelLike, ::Config)
 
-Test `MOI.copy_to` when an attribute is unsupported.
+Test an error is thrown when an attribute is unsupported.
+
+!!! note
+    This functon uses the two-argument `MOI.optimize!`. This ensures that we
+    test three cases:
+     * models implementing the two-argument method
+     * models using the generic fallback and erroring on `copy_to`
+     * models using the generic fallback and erroring on `optimize!`.
 """
 function test_model_copy_to_UnsupportedAttribute(
     model::MOI.ModelLike,
@@ -598,13 +606,13 @@ function test_model_copy_to_UnsupportedAttribute(
     @test !MOI.supports(model, UnknownModelAttribute())
     @test_throws(
         MOI.UnsupportedAttribute,
-        MOI.copy_to(model, BadModelAttributeModel(T)),
+        MOI.optimize!(model, BadModelAttributeModel(T)),
     )
     # VariableAttribute
     @test !MOI.supports(model, UnknownVariableAttribute(), MOI.VariableIndex)
     @test_throws(
         MOI.UnsupportedAttribute,
-        MOI.copy_to(model, BadVariableAttributeModel(T)),
+        MOI.optimize!(model, BadVariableAttributeModel(T)),
     )
     # ConstraintAttribute
     @test !MOI.supports(
@@ -614,7 +622,7 @@ function test_model_copy_to_UnsupportedAttribute(
     )
     @test_throws(
         MOI.UnsupportedAttribute,
-        MOI.copy_to(model, BadConstraintAttributeModel(T)),
+        MOI.optimize!(model, BadConstraintAttributeModel(T)),
     )
     return
 end
