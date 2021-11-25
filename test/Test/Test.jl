@@ -58,9 +58,6 @@ MOI.Test.runtests(
     ),
     MOI.Test.Config(BigFloat),
     exclude = [
-        # ======================== Unexpected failures =========================
-        # TODO(odow): fix these excluded tests.
-        "test_conic_",
         # ========================= Expected failures ==========================
         # UniversalFallback supports these tests.
         "test_model_copy_to_UnsupportedAttribute",
