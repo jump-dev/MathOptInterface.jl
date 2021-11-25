@@ -2449,7 +2449,7 @@ Problem SOCRotated3
 max v
 s.t.
      x[1:2] ≥ 0
-     0 ≤ u ≤ 3.0
+     0 ≤ u ≤ 3
      v
      t1 == 1
      t2 == 1
@@ -2512,10 +2512,7 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE_2(
         MOI.VectorAffineFunction(
             MOI.VectorAffineTerm.(
                 [1, 2, 3],
-                MOI.ScalarAffineTerm.(
-                    T[1 / √T(2); 1 / √T(2); 1.0],
-                    [x[1], u, v],
-                ),
+                MOI.ScalarAffineTerm.(T[1 / √T(2); 1 / √T(2); 1], [x[1], u, v]),
             ),
             zeros(T, 3),
         ),
@@ -2627,7 +2624,7 @@ function setup_test(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [1.0; zeros(T, n - 1); ub; √ub; ones(T, 2)],
+            T[1; zeros(T, n - 1); ub; √ub; ones(T, 2)],
             (MOI.VariableIndex, MOI.EqualTo{T}) => [-√ub / 4, -√ub / 4],
             (MOI.VectorOfVariables, MOI.Nonnegatives) => [zeros(T, n)],
             (MOI.VariableIndex, MOI.GreaterThan{T}) => T[0],
@@ -2639,7 +2636,7 @@ function setup_test(
                     -√ub / 2,
                     zeros(T, n - 1),
                 ),
-                [√ub / √T(2), 1 / √(2 * ub), -1.0],
+                T[√ub/√T(2), 1/√(2 * ub), -1],
             ],
         ),
     )
@@ -4898,8 +4895,8 @@ function setup_test(
             (
                 MOI.VectorAffineFunction{T},
                 MOI.PositiveSemidefiniteConeTriangle,
-            ) => [[1.0, -1.0, 1.0]],
-            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [2],
+            ) => [T[1, -1, 1]],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => T[2],
         ),
     )
     return
@@ -4957,8 +4954,8 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             ones(T, 4),
-            (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeSquare) => [[1.0, -2.0, 0.0, 1.0]],
-            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [2],
+            (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeSquare) => [T[1, -2, 0, 1]],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => T[2],
         ),
     )
     return
@@ -5110,13 +5107,13 @@ function _test_conic_PositiveSemidefiniteCone_helper_2(
         ),
         MOI.EqualTo(T(1 / 2)),
     )
-    objXidx = square ? T[1:2; 4:6; 8:9] : T[1:3; 5:6]
+    objXidx = square ? [1, 2, 4, 5, 6, 8, 9] : [1, 2, 3, 5, 6]
     objXcoefs = square ? T[2, 1, 1, 2, 1, 1, 2] : 2 * ones(T, 5)
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
         MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm.([objXcoefs; 1.0], [X[objXidx]; x[1]]),
+            MOI.ScalarAffineTerm.(T[objXcoefs; 1], [X[objXidx]; x[1]]),
             T(0),
         ),
     )
@@ -5413,33 +5410,33 @@ function test_conic_PositiveSemidefiniteConeTriangle(
         ),
         MOI.Nonpositives(6),
     )
-    α = 0.8
-    δ = 0.9
+    α = T(4 // 5)
+    δ = T(9 // 10)
     c3 = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
             MOI.VectorAffineTerm.(
                 [fill(1, 7); fill(2, 5); fill(3, 6)],
                 MOI.ScalarAffineTerm.(
-                    [
-                        δ / 2,
+                    T[
+                        δ/2,
                         α,
                         δ,
-                        δ / 4,
-                        δ / 8,
-                        T(0),
-                        -1.0,
-                        -δ / (2 * √T(2)),
-                        -δ / 4,
+                        δ/4,
+                        δ/8,
                         0,
-                        -δ / (8 * √T(2)),
-                        T(0),
-                        δ / 2,
-                        δ - α,
+                        -1,
+                        -δ/(2*√T(2)),
+                        -δ/4,
                         0,
-                        δ / 8,
-                        δ / 4,
-                        -1.0,
+                        -δ/(8*√T(2)),
+                        0,
+                        δ/2,
+                        δ-α,
+                        0,
+                        δ/8,
+                        δ/4,
+                        -1,
                     ],
                     [x[1:7]; x[1:3]; x[5:6]; x[1:3]; x[5:7]],
                 ),
@@ -5502,48 +5499,42 @@ function test_conic_PositiveSemidefiniteConeTriangle(
         end
         @test ≈(
             MOI.get(model, MOI.VariablePrimal(), x),
-            [2η / 3, 0, η / 3, 0, 0, 0, η * δ * (1 - 1 / √3) / 2],
+            T[2η/3, 0, η/3, 0, 0, 0, η*δ*(1-1/√T(3))/2],
             config,
         )
-        rtol
         @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c1), -η, config)
-        rtol
         @test ≈(
             MOI.get(model, MOI.ConstraintPrimal(), c2),
-            [-2η / 3, 0, -η / 3, 0, 0, 0],
+            T[-2η/3, 0, -η/3, 0, 0, 0],
             config,
         )
         @test ≈(
             MOI.get(model, MOI.ConstraintPrimal(), c3),
-            [
-                η * δ * (1 / √3 + 1 / 3) / 2,
-                -η * δ / (3 * √T(2)),
-                η * δ * (1 / √3 - 1 / 3) / 2,
-            ],
+            T[η*δ*(1/√T(3)+1//3)/2, -η*δ/(3*√T(2)), η*δ*(1/√T(3)-1//3)/2],
             config,
         )
-        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c4), 0.0, config)
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c4), 0, config)
         if _supports(config, MOI.ConstraintDual)
             @test ≈(
                 MOI.get(model, MOI.ConstraintDual(), c1),
-                δ * (1 - 1 / √3) / 2,
+                δ * (1 - 1 / √T(3)) / 2,
                 config,
             )
             @test ≈(
                 MOI.get(model, MOI.ConstraintDual(), c2),
-                [
+                T[
                     0,
-                    -α / √3 + δ / (2 * √6) * (2 * √T(2) - 1),
+                    -α/√T(3)+δ/(2*√T(6))*(2*√T(2)-1),
                     0,
-                    -3δ * (1 - 1 / √3) / 8,
-                    -3δ * (1 - 1 / √3) / 8,
-                    -δ * (3 - 2 * √3 + 1 / √3) / 8,
+                    -3δ*(1-1/√T(3))/8,
+                    -3δ*(1-1/√T(3))/8,
+                    -δ*(3-2*√T(3)+1/√T(3))/8,
                 ],
                 config,
             )
             @test ≈(
                 MOI.get(model, MOI.ConstraintDual(), c3),
-                [(1 - 1 / √3) / 2, 1 / √6, (1 + 1 / √3) / 2],
+                T[(1-1/√T(3))/2, 1/√T(6), (1+1/√T(3))/2],
                 config,
             )
             # Dual of c4 could be anything
@@ -5557,29 +5548,31 @@ function setup_test(
     model::MOIU.MockOptimizer,
     ::Config{T},
 ) where {T}
-    η = 10.0
-    α = 0.8
-    δ = 0.9
+    η = T(10)
+    α = T(4 // 5)
+    δ = T(9 // 10)
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [2η / 3, 0, η / 3, 0, 0, 0, η * δ * (1 - 1 / √3) / 2],
+            T[2η/3, 0, η/3, 0, 0, 0, η*δ*(1-1/√T(3))/2],
             (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}) =>
-                [δ * (1 - 1 / √3) / 2],
-            (MOI.VectorAffineFunction{T}, MOI.Nonpositives) => [[
-                0,
-                -α / √3 + δ / (2 * √6) * (2 * √T(2) - 1),
-                0,
-                -3δ * (1 - 1 / √3) / 8,
-                -3δ * (1 - 1 / √3) / 8,
-                -δ * (3 - 2 * √3 + 1 / √3) / 8,
-            ]],
+                T[δ*(1-1/√T(3))/2],
+            (MOI.VectorAffineFunction{T}, MOI.Nonpositives) => [
+                T[
+                    0,
+                    -α/√T(3)+δ/(2*√T(6))*(2*√T(2)-1),
+                    0,
+                    -3δ*(1-1/√T(3))/8,
+                    -3δ*(1-1/√T(3))/8,
+                    -δ*(3-2*√T(3)+1/√T(3))/8,
+                ],
+            ],
             (
                 MOI.VectorAffineFunction{T},
                 MOI.PositiveSemidefiniteConeTriangle,
-            ) => [[(1 - 1 / √3) / 2, 1 / √6, (1 + 1 / √3) / 2]],
-            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [0],
+            ) => [T[(1-1/√T(3))/2, 1/√T(6), (1+1/√T(3))/2]],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => T[0],
         ),
     )
     return
@@ -5632,23 +5625,18 @@ function _test_conic_PositiveSemidefiniteCone_helper_3(
               ones(T, MOI.output_dimension(func)) atol = atol rtol = rtol
         if _supports(config, MOI.ConstraintDual)
             if psdcone == MOI.PositiveSemidefiniteConeTriangle
-                @test MOI.get(model, MOI.ConstraintDual(), c) ≈
-                      [T(2), -T(1), T(2), -T(1), -T(1), T(2)] / T(6) atol = atol rtol =
-                    rtol
+                @test ≈(
+                    MOI.get(model, MOI.ConstraintDual(), c),
+                    T[2, -1, 2, -1, -1, 2] / T(6),
+                    config,
+                )
             else
                 @assert psdcone == MOI.PositiveSemidefiniteConeSquare
-                @test MOI.get(model, MOI.ConstraintDual(), c) ≈
-                      [
-                    T(1),
-                    T(0),
-                    T(0),
-                    -T(1),
-                    T(1),
-                    T(0),
-                    -T(1),
-                    -T(1),
-                    T(1),
-                ] / T(3) atol = atol rtol = rtol
+                @test ≈(
+                    MOI.get(model, MOI.ConstraintDual(), c),
+                    T[1, 0, 0, -1, 1, 0, -1, -1, 1] / T(3),
+                    config,
+                )
             end
         end
     end
@@ -5686,7 +5674,7 @@ function setup_test(
             (
                 MOI.VectorAffineFunction{T},
                 MOI.PositiveSemidefiniteConeTriangle,
-            ) => [[2, -1, 2, -1, -1, 2] / 6],
+            ) => [T[2, -1, 2, -1, -1, 2] / T(6)],
         ),
     )
     return
@@ -5917,8 +5905,6 @@ function _test_det_cone_helper(
         MOI.VectorAffineFunction{T},
         detcone,
     )
-    atol = config.atol
-    rtol = config.rtol
     square = detcone == MOI.LogDetConeSquare || detcone == MOI.RootDetConeSquare
     use_logdet =
         detcone == MOI.LogDetConeTriangle || detcone == MOI.LogDetConeSquare
@@ -5969,8 +5955,8 @@ function _test_det_cone_helper(
         )
         if _supports(config, MOI.ConstraintDual)
             psd_dual =
-                square ? [1, -1, 0, -1, 1.6, -0.2, 0, -0.2, 0.4] :
-                [1, -1, 1.6, 0, -0.2, 0.4]
+                square ? T[1, -1, 0, -1, 8//5, -1//5, 0, -1//5, 2//5] :
+                T[1, -1, 8//5, 0, -1//5, 2//5]
             dual =
                 use_logdet ? vcat(-1, log(T(5)) - 3, psd_dual) :
                 vcat(-1, psd_dual / 3 * expected_objval)
@@ -6242,7 +6228,7 @@ function setup_test(
             (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) =>
                 [T[1//2, 1//2]],
             (MOI.VectorOfVariables, MOI.RootDetConeSquare) =>
-                [[-1.0, 0.5, 0.0, 0.0, 0.5]],
+                [T[-1, 1//2, 0, 0, 1//2]],
         ),
     )
     return
@@ -6277,7 +6263,7 @@ function setup_test(
             (MOI.VectorAffineFunction{T}, MOI.Nonnegatives) =>
                 [T[1//2, 1//2]],
             (MOI.VectorAffineFunction{T}, MOI.RootDetConeSquare) =>
-                [[-1.0, 0.5, 0.0, 0.0, 0.5]],
+                [T[-1, 1//2, 0, 0, 1//2]],
         ),
     )
     return
@@ -6307,7 +6293,7 @@ function setup_test(
             mock,
             [log(T(5))],
             (MOI.VectorAffineFunction{T}, MOI.LogDetConeTriangle) =>
-                [[-1, log(T(5)) - 3, 1, -1, 1.6, 0, -0.2, 0.4]],
+                [T[-1, log(T(5))-3, 1, -1, 8//5, 0, -1//5, 2//5]],
         ),
     )
     flag = model.eval_variable_constraint_dual
@@ -6338,19 +6324,9 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [log(T(5))],
-            (MOI.VectorAffineFunction{T}, MOI.LogDetConeSquare) => [[
-                -1,
-                log(T(5)) - 3,
-                1,
-                -1,
-                0,
-                -1,
-                1.6,
-                -0.2,
-                0,
-                -0.2,
-                0.4,
-            ]],
+            (MOI.VectorAffineFunction{T}, MOI.LogDetConeSquare) => [
+                T[-1, log(T(5))-3, 1, -1, 0, -1, 8//5, -1//5, 0, -1//5, 2//5],
+            ],
         ),
     )
     return
@@ -6379,8 +6355,9 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             [5^inv(T(3))],
-            (MOI.VectorAffineFunction{T}, MOI.RootDetConeTriangle) =>
-                [vcat(-1, [1, -1, 1.6, 0, -0.2, 0.4] / 3 * (5^inv(T(3))))],
+            (MOI.VectorAffineFunction{T}, MOI.RootDetConeTriangle) => [
+                vcat(-1, T[1, -1, 8//5, 0, -1//5, 2//5] / 3 * (5^inv(T(3)))),
+            ],
         ),
     )
     flag = model.eval_variable_constraint_dual
@@ -6414,7 +6391,8 @@ function setup_test(
             (MOI.VectorAffineFunction{T}, MOI.RootDetConeSquare) => [
                 vcat(
                     -1,
-                    [1, -1, 0, -1, 1.6, -0.2, 0, -0.2, 0.4] / 3 * (5^inv(T(3))),
+                    T[1, -1, 0, -1, 8//5, -1//5, 0, -1//5, 2//5] / 3 *
+                    (5^inv(T(3))),
                 ),
             ],
         ),
