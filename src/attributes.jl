@@ -179,45 +179,53 @@ function Base.showerror(io::IO, err::ResultIndexBoundsError)
 end
 
 """
+    supports(model::ModelLike, attr, args...)::Bool
+
+A boolean helper function for checking if `model` supports the attribute `attr`.
+
+ * If `is_copyable(attr)`: return `true` if `model` supports calling
+   [`set`](@ref) with the attribute `attr`.
+ * If `is_set_by_optimize(attr)`: return `true` if `model` supports calling
+   [`get`](@ref) with the attribute `attr`.
+
+No other attribute should define `supports`.
+
+If the attribute is only not supported in specific circumstances, `supports`
+must still return `true`.
+
+## Methods
+
+The type  and number of `args` depends on the type of `attr`. Here are the
+possibilities:
+
+ * [`AbstractOptimizerAttribute`](@ref)
+   ```julia
+   supports(::ModelLike, ::AbstractOptimizerAttribute)
+   ```
+ * [`AbstractModelAttribute`](@ref)
+   ```julia
+   supports(::ModelLike, ::AbstractModelAttribute)
+   ```
+ * [`AbstractVariableAttribute`](@ref)
+   ```julia
+   supports(::ModelLike, ::AbstractVariableAttribute, ::Type{VariableIndex}
+   ```
+ * [`AbstractConstraintAttribute`](@ref)
+   ```julia
+   supports(
+       ::ModelLike,
+       ::AbstractConstraintAttribute,
+       ::Type{ConstraintIndex{F,S}},
+   )::Bool where {F,S}
+   ```
+"""
+function supports end
+
+"""
     supports(model::ModelLike, sub::AbstractSubmittable)::Bool
 
 Return a `Bool` indicating whether `model` supports the submittable `sub`.
-
-    supports(model::ModelLike, attr::AbstractOptimizerAttribute)::Bool
-
-Return a `Bool` indicating whether `model` supports the optimizer attribute
-`attr`. That is, it returns `false` if `copy_to(model, src)` shows a warning in
-case `attr` is in the [`ListOfOptimizerAttributesSet`](@ref) of `src`; see
-[`copy_to`](@ref) for more details on how unsupported optimizer attributes are
-handled in copy.
-
-    supports(model::ModelLike, attr::AbstractModelAttribute)::Bool
-
-Return a `Bool` indicating whether `model` supports the model attribute `attr`.
-That is, it returns `false` if `copy_to(model, src)` cannot be performed in case
-`attr` is in the [`ListOfModelAttributesSet`](@ref) of `src`.
-
-    supports(model::ModelLike, attr::AbstractVariableAttribute, ::Type{VariableIndex})::Bool
-
-Return a `Bool` indicating whether `model` supports the variable attribute
-`attr`. That is, it returns `false` if `copy_to(model, src)` cannot be performed
-in case `attr` is in the [`ListOfVariableAttributesSet`](@ref) of `src`.
-
-    supports(model::ModelLike, attr::AbstractConstraintAttribute, ::Type{ConstraintIndex{F,S}})::Bool where {F,S}
-
-Return a `Bool` indicating whether `model` supports the constraint attribute
-`attr` applied to an `F`-in-`S` constraint. That is, it returns `false` if
-`copy_to(model, src)` cannot be performed in case `attr` is in the
-[`ListOfConstraintAttributesSet`](@ref) of `src`.
-
-For all five methods, if the attribute is only not supported in specific
-circumstances, it should still return `true`.
-
-Note that `supports` is only defined for attributes for which
-[`is_copyable`](@ref) returns `true` as other attributes do not appear in the
-list of attributes set obtained by `ListOf...AttributesSet`.
 """
-function supports end
 supports(::ModelLike, ::AbstractSubmittable) = false
 
 function supports(model::ModelLike, attr::AnyAttribute, args...)

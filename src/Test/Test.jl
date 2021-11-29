@@ -370,19 +370,19 @@ function _test_model_solution(
         return
     end
     MOI.optimize!(model)
-    # No need to check supports. Everyone _must_ implement ObjectiveValue.
     @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-    if objective_value !== nothing && _supports(config, MOI.ObjectiveValue())
+    if objective_value !== nothing && _supports(config, MOI.ObjectiveValue)
+        @test MOI.supports(model, MOI.ObjectiveValue())
         @test isapprox(
             MOI.get(model, MOI.ObjectiveValue()),
             objective_value,
             config,
         )
     end
-    # No need to check supports. Everyone _must_ implement VariablePrimal.
-    if variable_primal !== nothing
+    if variable_primal !== nothing && _supports(config, MOI.VariablePrimal)
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         for (index, solution_value) in variable_primal
+            @test MOI.supports(model, MOI.VariablePrimal(), typeof(index))
             @test isapprox(
                 MOI.get(model, MOI.VariablePrimal(), index),
                 solution_value,
@@ -393,6 +393,7 @@ function _test_model_solution(
     if constraint_primal !== nothing && _supports(config, MOI.ConstraintPrimal)
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         for (index, solution_value) in constraint_primal
+            @test MOI.supports(model, MOI.ConstraintPrimal(), typeof(index))
             @test isapprox(
                 MOI.get(model, MOI.ConstraintPrimal(), index),
                 solution_value,
@@ -403,6 +404,7 @@ function _test_model_solution(
     if constraint_dual !== nothing && _supports(config, MOI.ConstraintDual)
         @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         for (index, solution_value) in constraint_dual
+            @test MOI.supports(model, MOI.ConstraintDual(), typeof(index))
             @test isapprox(
                 MOI.get(model, MOI.ConstraintDual(), index),
                 solution_value,
