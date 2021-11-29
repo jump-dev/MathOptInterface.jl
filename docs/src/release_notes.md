@@ -1,6 +1,9 @@
 # Release notes
 
-## v0.10.6 (In development)
+## v0.10.6 (November 30, 2021)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.6).
 
 ### New features
 
@@ -23,6 +26,7 @@
  - Fixed a bug in `FileFormats.NL` when printing large integers
  - Remove a common test failure for `LowerBoundAlreadySet` tests
  - `Utilities.num_rows` is now exported
+ - Remove parts of failing `test_model_copy_to_xxx` tests due to bridges
 
 ## v0.10.5 (November 7, 2021)
 
