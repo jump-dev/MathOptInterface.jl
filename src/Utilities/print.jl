@@ -111,8 +111,10 @@ function _shorten(options::_PrintOptions, x::Float64)
     return string(x)
 end
 
+_shorten(::_PrintOptions, x) = string("(", x, ")")
+
 """
-    _to_string(options::_PrintOptions, c::Float64, x::String)
+    _to_string(options::_PrintOptions, c::Real, x::String)
 
 Write a coefficient-name pair to string. There are a few cases to handle.
 
@@ -126,12 +128,7 @@ Write a coefficient-name pair to string. There are a few cases to handle.
     +1.0x | "x"      | " + x"
     -1.0x | "-x"     | " - x"
 """
-function _to_string(
-    options::_PrintOptions,
-    c::Float64,
-    x::String;
-    is_first::Bool,
-)
+function _to_string(options::_PrintOptions, c::Real, x::String; is_first::Bool)
     prefix = if is_first
         c < 0 ? "-" : ""
     else
@@ -143,6 +140,15 @@ function _to_string(
     else
         return string(prefix, s, " ", x)
     end
+end
+
+function _to_string(
+    options::_PrintOptions,
+    c::Number,
+    x::String;
+    is_first::Bool,
+)
+    return string(is_first ? "" : " + ", _shorten(options, c), " ", x)
 end
 
 function _to_string(
