@@ -58,6 +58,31 @@ function test_numbers()
     @test MOIU._to_string(options, -1.2, "x"; is_first = false) == " - 1.2 x"
 end
 
+function test_complex_numbers()
+    x = 1.0 + 1.0im
+    options =
+        MOIU._PrintOptions(MIME("text/plain"); simplify_coefficients = true)
+    @test MOIU._to_string(options, x, "x"; is_first = true) == "(1.0 + 1.0im) x"
+    @test MOIU._to_string(options, x, "x"; is_first = false) ==
+          " + (1.0 + 1.0im) x"
+    @test MOIU._to_string(options, -x, "x"; is_first = true) ==
+          "(-1.0 - 1.0im) x"
+    @test MOIU._to_string(options, -x, "x"; is_first = false) ==
+          " + (-1.0 - 1.0im) x"
+    return
+end
+
+function test_rational_numbers()
+    x = 1 // 2
+    options =
+        MOIU._PrintOptions(MIME("text/plain"); simplify_coefficients = true)
+    @test MOIU._to_string(options, x, "x"; is_first = true) == "(1//2) x"
+    @test MOIU._to_string(options, x, "x"; is_first = false) == " + (1//2) x"
+    @test MOIU._to_string(options, -x, "x"; is_first = true) == "-(1//2) x"
+    @test MOIU._to_string(options, -x, "x"; is_first = false) == " - (1//2) x"
+    return
+end
+
 function test_variable()
     model = MOIU.Model{Float64}()
     x = MOI.add_variable(model)
@@ -97,6 +122,16 @@ function test_ScalarAffineFunction()
     )
     @test MOIU._to_string(PLAIN, model, f) == "1.4 - 1.2 x + 1.3 x"
     @test MOIU._to_string(LATEX, model, f) == "1.4 - 1.2 x + 1.3 x"
+end
+
+function test_ScalarAffineFunction_complex()
+    model = MOI.Utilities.UniversalFallback(MOIU.Model{Float64}())
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariableName(), x, "x")
+    f = (1.0 + 1.0im)x
+    s = MOI.EqualTo(1.0 + 1.0im)
+    @test MOIU._to_string(PLAIN, model, f) == "(0.0 + 0.0im) + (1.0 + 1.0im) x"
+    @test MOIU._to_string(LATEX, model, f) == "(0.0 + 0.0im) + (1.0 + 1.0im) x"
 end
 
 function test_ScalarQuadraticTerm()
