@@ -195,7 +195,7 @@ must still return `true`.
 
 ## Methods
 
-The type  and number of `args` depends on the type of `attr`. Here are the
+The type and number of `args` depends on the type of `attr`. Here are the
 possibilities:
 
  * [`AbstractOptimizerAttribute`](@ref)
