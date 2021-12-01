@@ -3190,7 +3190,22 @@ function Base.one(F::Type{<:TypedScalarLike{T}}) where {T}
     return convert(F, one(T))
 end
 
-Base.promote_rule(::Type{F}, ::Type{T}) where {T,F<:TypedScalarLike{T}} = F
+# !!! note
+#     These two `promote_rules` are written explicitly instead of
+#     `TypedScalarLike` in order to avoid a method invalidation.
+function Base.promote_rule(
+    F::Type{MOI.ScalarAffineFunction{T}},
+    ::Type{T},
+) where {T}
+    return F
+end
+
+function Base.promote_rule(
+    F::Type{MOI.ScalarQuadraticFunction{T}},
+    ::Type{T},
+) where {T}
+    return F
+end
 
 function operate_coefficient(f, term::MOI.ScalarAffineTerm)
     return MOI.ScalarAffineTerm(f(term.coefficient), term.variable)
