@@ -1736,9 +1736,9 @@ function test_linear_integration_Interval(
         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
         @test ≈(MOI.get(model, MOI.ObjectiveValue()), T(10), config)
         if _supports(config, MOI.DualObjectiveValue)
-            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), T(10))
+            @test ≈(MOI.get(model, MOI.DualObjectiveValue()), T(10), config)
         end
-        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), T(10))
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), T(10), config)
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.ResultCount()) >= 1
             @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
