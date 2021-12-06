@@ -896,6 +896,57 @@ function test_copy_of_constraints_passed_as_copy_accross_layers()
     return
 end
 
+struct Optimizer1698_1 <: MOI.AbstractOptimizer end
+
+function MOI.supports_constraint(
+    ::Optimizer1698_1,
+    ::Type{MOI.VariableIndex},
+    ::Type{MOI.Integer},
+)
+    return true
+end
+
+function MOI.supports_constraint(
+    ::Optimizer1698_1,
+    ::Type{<:Union{MOI.VectorOfVariables,MOI.VectorAffineFunction{Float64}}},
+    ::Type{<:Union{MOI.Nonnegatives,MOI.SecondOrderCone}},
+)
+    return true
+end
+
+function test_sorted_variable_sets_by_cost_1()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(src)
+    y = MOI.add_variables(src, 2)
+    MOI.add_constraint(src, x, MOI.GreaterThan(1.0))
+    MOI.add_constraint(src, x, MOI.Integer())
+    MOI.add_constraint(src, y, MOI.SecondOrderCone(2))
+    dest = MOI.Bridges.full_bridge_optimizer(Optimizer1698_1(), Float64)
+    @test MOI.Utilities.sorted_variable_sets_by_cost(dest, src) ==
+          [MOI.Integer, MOI.GreaterThan{Float64}, MOI.SecondOrderCone]
+    return
+end
+
+struct Optimizer1698_2 <: MOI.AbstractOptimizer end
+
+function MOI.supports_constraint(
+    ::Optimizer1698_2,
+    ::Type{<:Union{MOI.VectorOfVariables,MOI.VectorAffineFunction{Float64}}},
+    ::Type{<:Union{MOI.Nonnegatives,MOI.Nonpositives}},
+)
+    return true
+end
+
+function test_sorted_variable_sets_by_cost_2()
+    src = MOI.Utilities.Model{Float64}()
+    MOI.add_constrained_variables(src, MOI.Nonnegatives(2))
+    MOI.add_constrained_variables(src, MOI.Zeros(2))
+    dest = MOI.Bridges.full_bridge_optimizer(Optimizer1698_2(), Float64)
+    @test MOI.Utilities.sorted_variable_sets_by_cost(dest, src) ==
+          [MOI.Nonnegatives, MOI.Zeros]
+    return
+end
+
 end  # module
 
 TestCopy.runtests()

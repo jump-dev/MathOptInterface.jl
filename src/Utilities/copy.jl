@@ -347,24 +347,20 @@ function _cost_of_bridging(
     dest::MOI.ModelLike,
     ::Type{S},
 ) where {S<:MOI.AbstractScalarSet}
-    return (
-        MOI.get(dest, MOI.VariableBridgingCost{S}()) +
-        MOI.get(dest, MOI.ConstraintBridgingCost{MOI.VariableIndex,S}()),
-        # In case of ties, we give priority to vector sets. See issue #987.
-        false,
-    )
+    x = MOI.get(dest, MOI.VariableBridgingCost{S}())
+    y = MOI.get(dest, MOI.ConstraintBridgingCost{MOI.VariableIndex,S}())
+    # In case of ties, we give priority to vector sets. See issue #987.
+    return (x - y, false, x + y)
 end
 
 function _cost_of_bridging(
     dest::MOI.ModelLike,
     ::Type{S},
 ) where {S<:MOI.AbstractVectorSet}
-    return (
-        MOI.get(dest, MOI.VariableBridgingCost{S}()) +
-        MOI.get(dest, MOI.ConstraintBridgingCost{MOI.VectorOfVariables,S}()),
-        # In case of ties, we give priority to vector sets. See issue #987
-        true,
-    )
+    x = MOI.get(dest, MOI.VariableBridgingCost{S}())
+    y = MOI.get(dest, MOI.ConstraintBridgingCost{MOI.VectorOfVariables,S}())
+    # In case of ties, we give priority to vector sets. See issue #987
+    return (x - y, true, x + y)
 end
 
 """
