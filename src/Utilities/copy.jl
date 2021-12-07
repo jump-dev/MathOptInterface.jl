@@ -374,11 +374,10 @@ The sorting happens in the `_cost_of_bridging` function and has three main
 considerations:
 
 1. First add sets for which the `VariableBridgingCost` is `0`. This ensures that
-   we minimize the number of variable bridges that get added. (Variable bridges
-   are bad because they produce an expression that needs substituting into the
-   remainder of the model.)
+   we minimize the number of variable bridges that get added.
 2. Then add sets for which the VariableBridgingCost is smaller than the
-   `ConstraintBridgingCost` (again avoiding variable bridges).
+   `ConstraintBridgingCost` so they can get added with
+   `add_constrained_variable(s)`.
 3. Finally, break any remaining ties in favor of `AbstractVectorSet`s. This
    ensures we attempt to add large blocks of variables (e.g., such as PSD
    matrices) before we add things like variable bounds.
