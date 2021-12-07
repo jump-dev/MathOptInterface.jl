@@ -349,8 +349,7 @@ function _cost_of_bridging(
 ) where {S<:MOI.AbstractScalarSet}
     x = MOI.get(dest, MOI.VariableBridgingCost{S}())
     y = MOI.get(dest, MOI.ConstraintBridgingCost{MOI.VariableIndex,S}())
-    # In case of ties, we give priority to vector sets. See issue #987.
-    return (x - y, false, x + y)
+    return !iszero(x), x - y, true
 end
 
 function _cost_of_bridging(
@@ -359,15 +358,30 @@ function _cost_of_bridging(
 ) where {S<:MOI.AbstractVectorSet}
     x = MOI.get(dest, MOI.VariableBridgingCost{S}())
     y = MOI.get(dest, MOI.ConstraintBridgingCost{MOI.VectorOfVariables,S}())
-    # In case of ties, we give priority to vector sets. See issue #987
-    return (x - y, true, x + y)
+    return !iszero(x), x - y, false
 end
 
 """
     sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
 
-Returns a `Vector{Type}` of the set types corresponding to `VariableIndex` and
+Return a `Vector{Type}` of the set types corresponding to `VariableIndex` and
 `VectorOfVariables` constraints in the order in which they should be added.
+
+The order is important because some solvers require variables to be added in
+particular order, and the order can also impact the bridging decisions.
+
+The sorting happens in the `_cost_of_bridging` function and has three main
+considerations:
+
+1. First add sets for which the `VariableBridgingCost` is `0`. This ensures that
+   we minimize the number of variable bridges that get added. (Variable bridges
+   are bad because they produce an expression that needs substituting into the
+   remainder of the model.)
+2. Then add sets for which the VariableBridgingCost is smaller than the
+   `ConstraintBridgingCost` (again avoiding variable bridges).
+3. Finally, break any remaining ties in favor of `AbstractVectorSet`s. This
+   ensures we attempt to add large blocks of variables (e.g., such as PSD
+   matrices) before we add things like variable bounds.
 """
 function sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
     constraint_types = MOI.get(src, MOI.ListOfConstraintTypesPresent())

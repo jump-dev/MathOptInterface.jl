@@ -449,7 +449,7 @@ function test_create_variables_using_supports_add_constrained_variable()
     dest = OrderConstrainedVariablesModel()
     bridged_dest = MOI.Bridges.full_bridge_optimizer(dest, Float64)
     @test MOIU.sorted_variable_sets_by_cost(bridged_dest, src) ==
-          Type[MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives]
+          Type[MOI.Nonnegatives, MOI.Zeros, MOI.Nonpositives]
     @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Nonnegatives)
     @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Nonnegatives}()) ==
           0.0
@@ -486,12 +486,12 @@ function test_create_variables_using_supports_add_constrained_variable()
         MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.Zeros}(),
     ) == 2.0
     index_map = MOI.copy_to(bridged_dest, src)
-    @test length(dest.constraintIndices) == 4
+    @test length(dest.constraintIndices) == 6
 
     dest = ReverseOrderConstrainedVariablesModel()
     bridged_dest = MOI.Bridges.full_bridge_optimizer(dest, Float64)
     @test MOIU.sorted_variable_sets_by_cost(bridged_dest, src) ==
-          Type[MOI.Zeros, MOI.Nonpositives, MOI.Nonnegatives]
+          Type[MOI.Nonpositives, MOI.Zeros, MOI.Nonnegatives]
     @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Nonnegatives)
     @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Nonnegatives}()) ==
           2.0
@@ -528,7 +528,7 @@ function test_create_variables_using_supports_add_constrained_variable()
         MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.Zeros}(),
     ) == 3.0
     index_map = MOI.copy_to(bridged_dest, src)
-    @test length(dest.constraintIndices) == 4
+    @test length(dest.constraintIndices) == 6
 
     # With single variables
     src = MOIU.Model{Float64}()
@@ -923,7 +923,7 @@ function test_sorted_variable_sets_by_cost_1()
     MOI.add_constraint(src, y, MOI.SecondOrderCone(2))
     dest = MOI.Bridges.full_bridge_optimizer(Optimizer1698_1(), Float64)
     @test MOI.Utilities.sorted_variable_sets_by_cost(dest, src) ==
-          [MOI.Integer, MOI.GreaterThan{Float64}, MOI.SecondOrderCone]
+          [MOI.SecondOrderCone, MOI.Integer, MOI.GreaterThan{Float64}]
     return
 end
 
