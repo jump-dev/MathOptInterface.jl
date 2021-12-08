@@ -91,8 +91,9 @@ function _cbf_to_moi_cone(
 end
 
 function _read_VER(io::IO)
-    if !(1 <= _read(io, Int) <= 3)
-        error("CBF version number $ver is not yet supported.")
+    version = _read(io, Int)
+    if !(1 <= version <= 3)
+        error("CBF version number $(version) is not yet supported.")
     end
     return
 end
