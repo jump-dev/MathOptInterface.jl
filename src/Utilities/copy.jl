@@ -397,8 +397,8 @@ of bridges that will need to be used.
 
 In fact, if the order does matter (in the sense that changing the order of the
 vector returned by this function leads to a different formulation), it means the
-variable _is_ in at least in one other variable constraint. Thus, in a sense we
-could do `x - y + sign(x)`` but `!iszero(x), x - y` is fine
+variable is in at least one other variable constraint. Thus, in a sense we
+could do `x - y + sign(x)`` but `!iszero(x), x - y` is fine.
 
 ## Example
 
