@@ -449,7 +449,7 @@ function test_create_variables_using_supports_add_constrained_variable()
     dest = OrderConstrainedVariablesModel()
     bridged_dest = MOI.Bridges.full_bridge_optimizer(dest, Float64)
     @test MOIU.sorted_variable_sets_by_cost(bridged_dest, src) ==
-          Type[MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives]
+          Type[MOI.Nonnegatives, MOI.Zeros, MOI.Nonpositives]
     @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Nonnegatives)
     @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Nonnegatives}()) ==
           0.0
@@ -486,12 +486,12 @@ function test_create_variables_using_supports_add_constrained_variable()
         MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.Zeros}(),
     ) == 2.0
     index_map = MOI.copy_to(bridged_dest, src)
-    @test length(dest.constraintIndices) == 4
+    @test length(dest.constraintIndices) == 6
 
     dest = ReverseOrderConstrainedVariablesModel()
     bridged_dest = MOI.Bridges.full_bridge_optimizer(dest, Float64)
     @test MOIU.sorted_variable_sets_by_cost(bridged_dest, src) ==
-          Type[MOI.Zeros, MOI.Nonpositives, MOI.Nonnegatives]
+          Type[MOI.Nonpositives, MOI.Zeros, MOI.Nonnegatives]
     @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Nonnegatives)
     @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Nonnegatives}()) ==
           2.0
@@ -528,7 +528,7 @@ function test_create_variables_using_supports_add_constrained_variable()
         MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.Zeros}(),
     ) == 3.0
     index_map = MOI.copy_to(bridged_dest, src)
-    @test length(dest.constraintIndices) == 4
+    @test length(dest.constraintIndices) == 6
 
     # With single variables
     src = MOIU.Model{Float64}()
@@ -893,6 +893,57 @@ end
 function test_copy_of_constraints_passed_as_copy_accross_layers()
     _test_copy_of_constraints_passed_as_copy_accross_layers(Int)
     _test_copy_of_constraints_passed_as_copy_accross_layers(Float64)
+    return
+end
+
+struct Optimizer1698_1 <: MOI.AbstractOptimizer end
+
+function MOI.supports_constraint(
+    ::Optimizer1698_1,
+    ::Type{MOI.VariableIndex},
+    ::Type{MOI.Integer},
+)
+    return true
+end
+
+function MOI.supports_constraint(
+    ::Optimizer1698_1,
+    ::Type{<:Union{MOI.VectorOfVariables,MOI.VectorAffineFunction{Float64}}},
+    ::Type{<:Union{MOI.Nonnegatives,MOI.SecondOrderCone}},
+)
+    return true
+end
+
+function test_sorted_variable_sets_by_cost_1()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(src)
+    y = MOI.add_variables(src, 2)
+    MOI.add_constraint(src, x, MOI.GreaterThan(1.0))
+    MOI.add_constraint(src, x, MOI.Integer())
+    MOI.add_constraint(src, y, MOI.SecondOrderCone(2))
+    dest = MOI.Bridges.full_bridge_optimizer(Optimizer1698_1(), Float64)
+    @test MOI.Utilities.sorted_variable_sets_by_cost(dest, src) ==
+          [MOI.SecondOrderCone, MOI.Integer, MOI.GreaterThan{Float64}]
+    return
+end
+
+struct Optimizer1698_2 <: MOI.AbstractOptimizer end
+
+function MOI.supports_constraint(
+    ::Optimizer1698_2,
+    ::Type{<:Union{MOI.VectorOfVariables,MOI.VectorAffineFunction{Float64}}},
+    ::Type{<:Union{MOI.Nonnegatives,MOI.Nonpositives}},
+)
+    return true
+end
+
+function test_sorted_variable_sets_by_cost_2()
+    src = MOI.Utilities.Model{Float64}()
+    MOI.add_constrained_variables(src, MOI.Nonnegatives(2))
+    MOI.add_constrained_variables(src, MOI.Zeros(2))
+    dest = MOI.Bridges.full_bridge_optimizer(Optimizer1698_2(), Float64)
+    @test MOI.Utilities.sorted_variable_sets_by_cost(dest, src) ==
+          [MOI.Nonnegatives, MOI.Zeros]
     return
 end
 
