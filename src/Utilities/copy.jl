@@ -367,8 +367,7 @@ end
 Return a `Vector{Type}` of the set types corresponding to `VariableIndex` and
 `VectorOfVariables` constraints in the order in which they should be added.
 
-The order is important because some solvers require variables to be added in
-particular order, and the order can also impact the bridging decisions.
+## How the order is computed
 
 The sorting happens in the `_cost_of_bridging` function and has three main
 considerations:
@@ -381,6 +380,54 @@ considerations:
 3. Finally, break any remaining ties in favor of `AbstractVectorSet`s. This
    ensures we attempt to add large blocks of variables (e.g., such as PSD
    matrices) before we add things like variable bounds.
+
+## Why the order is important
+
+The order is important because some solvers require variables to be added in
+particular order, and the order can also impact the bridging decisions.
+
+We favor adding first variables that won't use variables bridges because then
+the variable constraints on the same variable can still be added as
+`VariableIndex` or `VectorOfVariables` constraints.
+
+If a variable does need variable bridges and is part of another variable
+constraint, then the other variable constraint will be force-bridged into affine
+constraints, so there is a hidden cost in terms of number of additional number
+of bridges that will need to be used.
+
+In fact, if the order does matter (in the sense that changing the order of the
+vector returned by this function leads to a different formulation), it means the
+variable _is_ in at least in one other variable constraint. Thus, in a sense we
+could do `x - y + sign(x)`` but `!iszero(x), x - y` is fine
+
+## Example
+
+A key example is Pajarito. It supports `VariableIndex`-in-`Integer` and
+`VectorAffine`-in-`Nonnegatives`. If the user writes:
+```julia
+@variable(model, x >= 1, Int)
+```
+then we need to add two variable-related constraints:
+ * `VariableIndex`-in-`Integer`
+ * `VariableIndex`-in-`GreaterThan`
+The first is natively supported and the variable and constraint bridging cost is
+0. The second must be bridged to  `VectorAffineFunction`-in-`Nonnegatives` via
+`x - 1 in Nonnegatives(1)`, and the variable and constraint bridging cost is
+`1` in both cases.
+
+If the order is `[Integer, GreaterThan]`, then we add `x ∈ Integer` and
+`x - 1 in Nonnegatives`. Both are natively supported and it only requires a
+single constraint bridge.
+
+If the order is `[GreaterThan, Integer]`, then we add a new variable constrained
+to `y ∈ Nonnegatives` and end up with an expression from the variable bridge of
+`x = y + 1`. Then when we add the Integer constraint, we get `y + 1 in Integer`,
+which is not natively supported. Therefore, we need to add `y + 1 - z ∈ Zeros`
+and `z ∈ Integer`. Oops! This cost an extra variable, a variable bridge of
+`x = y + 1`and a `Zeros` constraint.
+
+Unfortunately, we don't have a good way of computing the updated costs for other
+constraints if a variable bridge is chosen.
 """
 function sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
     constraint_types = MOI.get(src, MOI.ListOfConstraintTypesPresent())
