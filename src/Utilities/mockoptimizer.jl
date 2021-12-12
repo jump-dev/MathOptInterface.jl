@@ -220,7 +220,28 @@ end
 
 function MOI.supports(
     ::MockOptimizer,
-    ::Union{MOI.VariablePrimal,MockVariableAttribute},
+    ::Union{
+        MOI.ConflictStatus,
+        MOI.RawSolver,
+        MOI.ResultCount,
+        MOI.TerminationStatus,
+        MOI.DualStatus,
+        MOI.PrimalStatus,
+        MOI.ObjectiveValue,
+        MOI.DualObjectiveValue,
+    },
+)
+    return true
+end
+
+function MOI.supports(
+    ::MockOptimizer,
+    ::Union{
+        MOI.VariablePrimal,
+        MOI.CallbackVariablePrimal,
+        MOI.VariableBasisStatus,
+        MockVariableAttribute,
+    },
     ::Type{MOI.VariableIndex},
 )
     return true
@@ -236,7 +257,12 @@ end
 
 function MOI.supports(
     ::MockOptimizer,
-    ::Union{MOI.ConstraintDual,MockConstraintAttribute},
+    ::Union{
+        MOI.ConstraintPrimal,
+        MOI.ConstraintDual,
+        MOI.ConstraintBasisStatus,
+        MockConstraintAttribute,
+    },
     ::Type{<:MOI.ConstraintIndex},
 )
     return true
@@ -453,6 +479,7 @@ function MOI.get(mock::MockOptimizer, attr::MOI.AbstractOptimizerAttribute)
         return MOI.get(mock.inner_model, attr)
     end
 end
+
 function MOI.get(mock::MockOptimizer, attr::MOI.AbstractModelAttribute)
     if MOI.is_set_by_optimize(attr)
         return mock.model_attributes[attr]
@@ -622,6 +649,7 @@ function MOI.get(
     return get_fallback(mock, attr, idx)
 end
 
+
 function MOI.get(
     mock::MockOptimizer,
     attr::MOI.AbstractConstraintAttribute,
@@ -669,6 +697,7 @@ function MOI.get(
         return _safe_get_result(mock.constraint_dual, attr, idx, "dual")
     end
 end
+
 function MOI.get(
     mock::MockOptimizer,
     ::MockConstraintAttribute,

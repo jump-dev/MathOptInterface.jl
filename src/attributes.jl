@@ -236,12 +236,12 @@ function supports_fallback(
     ::ModelLike,
     attr::Union{AbstractModelAttribute,AbstractOptimizerAttribute},
 )
-    if !is_copyable(attr)
+    if !is_copyable(attr) || !is_set_by_optimize(attr)
         throw(
             ArgumentError(
-                "`supports` is not defined for $attr, it is only" *
-                " defined for attributes such that `is_copyable`" *
-                " returns `true`.",
+                "`supports` is not defined for $attr, it is only " *
+                "defined for attributes such that `is_copyable` or " *
+                "`is_set_by_optimize` returns `true`.",
             ),
         )
     end
@@ -253,12 +253,12 @@ function supports_fallback(
     attr::Union{AbstractVariableAttribute,AbstractConstraintAttribute},
     ::Type{<:Index},
 )
-    if !is_copyable(attr)
+    if !is_copyable(attr) || !is_set_by_optimize(attr)
         throw(
             ArgumentError(
-                "`supports` is not defined for $attr, it is only" *
-                " defined for attributes such that `is_copyable`" *
-                " returns `true`.",
+                "`supports` is not defined for $attr, it is only " *
+                "defined for attributes such that `is_copyable` or " *
+                "`is_set_by_optimize` returns `true`.",
             ),
         )
     end
