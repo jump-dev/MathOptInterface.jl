@@ -314,6 +314,20 @@ function test_errors_copy_to_fallback()
     return
 end
 
+struct Optimizer1697 <: MOI.AbstractOptimizer end
+
+function test_compute_conflict_fallback()
+    model = Optimizer1697()
+    @test_throws(
+        ArgumentError(
+            "The optimizer $(typeof(model)) does not support " *
+            "`compute_conflict!`",
+        ),
+        MOI.compute_conflict!(model),
+    )
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

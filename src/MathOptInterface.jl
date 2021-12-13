@@ -100,7 +100,14 @@ is not obliged to purge the conflict. Any calls to the above attributes may
 return values for the original conflict without a warning. Similarly, when
 modifying the model, the conflict can be discarded.
 """
-function compute_conflict! end
+function compute_conflict!(optimizer::AbstractOptimizer)
+    return throw(
+        ArgumentError(
+            "The optimizer $(typeof(optimizer)) does not support " *
+            "`compute_conflict!`",
+        ),
+    )
+end
 
 """
     write_to_file(model::ModelLike, filename::String)
