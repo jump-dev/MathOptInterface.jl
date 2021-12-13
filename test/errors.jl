@@ -320,7 +320,7 @@ function test_compute_conflict_fallback()
     model = Optimizer1697()
     @test_throws(
         ArgumentError(
-            "The optimizer $(typeof(optimizer)) does not support " *
+            "The optimizer $(typeof(model)) does not support " *
             "`compute_conflict!`",
         ),
         MOI.compute_conflict!(model),
