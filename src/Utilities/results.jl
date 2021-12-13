@@ -17,6 +17,7 @@ Compute the objective function value using the `VariablePrimal` results and
 the `ObjectiveFunction` value.
 """
 function get_fallback(model::MOI.ModelLike, attr::MOI.ObjectiveValue)
+    MOI.check_result_index_bounds(model, attr)
     F = MOI.get(model, MOI.ObjectiveFunctionType())
     f = MOI.get(model, MOI.ObjectiveFunction{F}())
     obj = eval_variables(
@@ -149,6 +150,7 @@ function get_fallback(
     attr::MOI.DualObjectiveValue,
     T::Type,
 )
+    MOI.check_result_index_bounds(model, attr)
     value = zero(T) # sum will not work if there are zero constraints
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         value += dual_objective_value(model, F, S, T, attr.result_index)::T
@@ -177,6 +179,7 @@ function get_fallback(
     attr::MOI.ConstraintPrimal,
     idx::MOI.ConstraintIndex,
 )
+    MOI.check_result_index_bounds(model, attr)
     f = MOI.get(model, MOI.ConstraintFunction(), idx)
     c = eval_variables(f) do vi
         return MOI.get(model, MOI.VariablePrimal(attr.result_index), vi)
@@ -476,6 +479,7 @@ function get_fallback(
     attr::MOI.ConstraintDual,
     ci::MOI.ConstraintIndex{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
 )
+    MOI.check_result_index_bounds(model, attr)
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     return variable_dual(model, attr, ci, func)
 end

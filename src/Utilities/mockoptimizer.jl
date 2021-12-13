@@ -538,10 +538,10 @@ end
 MOI.get(mock::MockOptimizer, ::MOI.TerminationStatus) = mock.termination_status
 
 function MOI.get(mock::MockOptimizer, attr::MOI.ObjectiveValue)
-    MOI.check_result_index_bounds(mock, attr)
     if mock.eval_objective_value
         return get_fallback(mock, attr)
     end
+    MOI.check_result_index_bounds(mock, attr)
     return get(mock.objective_value, attr.result_index, NaN)
 end
 
@@ -549,10 +549,10 @@ function MOI.get(
     mock::MockOptimizer{<:MOI.ModelLike,T},
     attr::MOI.DualObjectiveValue,
 ) where {T}
-    MOI.check_result_index_bounds(mock, attr)
     if mock.eval_dual_objective_value
         return get_fallback(mock, attr, T)
     end
+    MOI.check_result_index_bounds(mock, attr)
     return get(mock.dual_objective_value, attr.result_index, NaN)
 end
 
@@ -618,7 +618,6 @@ function MOI.get(
     attr::MOI.ConstraintPrimal,
     idx::MOI.ConstraintIndex,
 )
-    MOI.check_result_index_bounds(mock, attr)
     return get_fallback(mock, attr, idx)
 end
 
@@ -660,12 +659,12 @@ function MOI.get(
     attr::MOI.ConstraintDual,
     idx::MOI.ConstraintIndex{F},
 ) where {F}
-    MOI.check_result_index_bounds(mock, attr)
     MOI.throw_if_not_valid(mock, idx)
     if mock.eval_variable_constraint_dual &&
        (F == MOI.VariableIndex || F == MOI.VectorOfVariables)
         return get_fallback(mock, attr, idx)
     else
+        MOI.check_result_index_bounds(mock, attr)
         return _safe_get_result(mock.constraint_dual, attr, idx, "dual")
     end
 end
