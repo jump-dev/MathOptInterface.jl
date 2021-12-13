@@ -649,7 +649,6 @@ function MOI.get(
     return get_fallback(mock, attr, idx)
 end
 
-
 function MOI.get(
     mock::MockOptimizer,
     attr::MOI.AbstractConstraintAttribute,
