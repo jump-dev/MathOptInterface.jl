@@ -701,6 +701,8 @@ function unsafe_add(
     return T(t1.output_index, scalar_term)
 end
 
+is_canonical(::MOI.AbstractFunction) = false
+
 is_canonical(::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = true
 
 """
