@@ -701,6 +701,8 @@ function unsafe_add(
     return T(t1.output_index, scalar_term)
 end
 
+is_canonical(::MOI.AbstractFunction) = false
+
 is_canonical(::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = true
 
 """
@@ -712,11 +714,7 @@ See [`canonical`](@ref).
 function is_canonical(
     f::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
 )
-    return is_strictly_sorted(
-        f.terms,
-        MOI.term_indices,
-        t -> !iszero(MOI.coefficient(t)),
-    )
+    return _is_strictly_sorted(f.terms)
 end
 
 """
@@ -728,39 +726,25 @@ See [`canonical`](@ref).
 function is_canonical(
     f::Union{MOI.ScalarQuadraticFunction,MOI.VectorQuadraticFunction},
 )
-    v = is_strictly_sorted(
-        f.affine_terms,
-        MOI.term_indices,
-        t -> !iszero(MOI.coefficient(t)),
-    )
-    return v & is_strictly_sorted(
-        f.quadratic_terms,
-        MOI.term_indices,
-        t -> !iszero(MOI.coefficient(t)),
-    )
+    return _is_strictly_sorted(f.affine_terms) &&
+           _is_strictly_sorted(f.quadratic_terms)
 end
 
-"""
-    is_strictly_sorted(x::Vector, by, filter)
-
-Returns `true` if `by(x[i]) < by(x[i + 1])` and `filter(x[i]) == true` for
-all indices i.
-"""
-function is_strictly_sorted(x::Vector, by, filter)
+function _is_strictly_sorted(x::Vector)
     if isempty(x)
         return true
     end
-    @inbounds current_x = first(x)
-    if !filter(current_x)
+    @inbounds current_x = x[1]
+    if iszero(MOI.coefficient(current_x))
         return false
     end
-    current_fx = by(current_x)
-    for i in eachindex(x)[2:end]
-        @inbounds next_x = x[i]
-        if !filter(next_x)
+    current_fx = MOI.term_indices(current_x)
+    @inbounds for i in 2:length(x)
+        next_x = x[i]
+        if iszero(MOI.coefficient(next_x))
             return false
         end
-        next_fx = by(next_x)
+        next_fx = MOI.term_indices(next_x)
         if next_fx <= current_fx
             return false
         end
@@ -796,7 +780,13 @@ If `x` (resp. `y`, `z`) is `VariableIndex(1)` (resp. 2, 3). The canonical
 representation of `ScalarAffineFunction([y, x, z, x, z], [2, 1, 3, -2, -3], 5)`
 is `ScalarAffineFunction([x, y], [-1, 2], 5)`.
 """
-canonical(f::MOI.AbstractFunction) = canonicalize!(copy(f))
+function canonical(f::MOI.AbstractFunction)
+    g = copy(f)
+    if !is_canonical(g)
+        canonicalize!(g)
+    end
+    return g
+end
 
 canonicalize!(f::Union{MOI.VectorOfVariables,MOI.VariableIndex}) = f
 
@@ -809,12 +799,7 @@ the result. See [`canonical`](@ref).
 function canonicalize!(
     f::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
 )
-    sort_and_compress!(
-        f.terms,
-        MOI.term_indices,
-        t -> !iszero(MOI.coefficient(t)),
-        unsafe_add,
-    )
+    _sort_and_compress!(f.terms)
     return f
 end
 
@@ -827,60 +812,40 @@ the result. See [`canonical`](@ref).
 function canonicalize!(
     f::Union{MOI.ScalarQuadraticFunction,MOI.VectorQuadraticFunction},
 )
-    sort_and_compress!(
-        f.affine_terms,
-        MOI.term_indices,
-        t -> !iszero(MOI.coefficient(t)),
-        unsafe_add,
-    )
-    sort_and_compress!(
-        f.quadratic_terms,
-        MOI.term_indices,
-        t -> !iszero(MOI.coefficient(t)),
-        unsafe_add,
-    )
+    _sort_and_compress!(f.affine_terms)
+    _sort_and_compress!(f.quadratic_terms)
     return f
 end
 
 """
-    sort_and_compress!(
-        x::AbstractVector,
-        by::Function,
-        keep::Function,
-        combine::Function,
-    )
+    _sort_and_compress!(x::Vector)
 
 Sort the vector `x` in-place using `by` as the function from elements to
 comparable keys, then combine all entries for which `by(x[i]) == by(x[j])` using
 the function `x[i] = combine(x[i], x[j])`, and remove any entries for which
 `keep(x[i]) == false`. This may result in `x` being resized to a shorter length.
 """
-function sort_and_compress!(x::AbstractVector, by, keep, combine)
-    if length(x) > 0
-        sort!(
-            x,
-            QuickSort,
-            Base.Order.ord(isless, by, false, Base.Sort.Forward),
-        )
-        i1 = firstindex(x)
-        for i2 in eachindex(x)[2:end]
-            if by(x[i1]) == by(x[i2])
-                x[i1] = combine(x[i1], x[i2])
-            else
-                if !keep(x[i1])
-                    x[i1] = x[i2]
-                else
-                    x[i1+1] = x[i2]
-                    i1 += 1
-                end
-            end
-        end
-        if !keep(x[i1])
-            i1 -= 1
-        end
-        resize!(x, i1)
+function _sort_and_compress!(x::Vector)
+    if length(x) == 0
+        return
     end
-    return x
+    sort!(x, QuickSort, Base.Order.ord(isless, MOI.term_indices, false))
+    i = 1
+    @inbounds for j in 2:length(x)
+        if MOI.term_indices(x[i]) == MOI.term_indices(x[j])
+            x[i] = unsafe_add(x[i], x[j])
+        elseif iszero(MOI.coefficient(x[i]))
+            x[i] = x[j]
+        else
+            x[i+1] = x[j]
+            i += 1
+        end
+    end
+    if iszero(MOI.coefficient(x[i]))
+        i -= 1
+    end
+    resize!(x, i)
+    return
 end
 
 """
