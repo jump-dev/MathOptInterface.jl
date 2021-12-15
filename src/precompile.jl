@@ -86,5 +86,12 @@ function precompile_model(model, constraints)
 end
 
 function _precompile_()
-    Base.precompile(Tuple{Core.kwftype(typeof(instantiate)),NamedTuple{(:with_bridge_type,), Tuple{DataType}},typeof(instantiate),Type})   # time: 0.481656
+    return Base.precompile(
+        Tuple{
+            Core.kwftype(typeof(instantiate)),
+            NamedTuple{(:with_bridge_type,),Tuple{DataType}},
+            typeof(instantiate),
+            Type,
+        },
+    )   # time: 0.481656
 end
