@@ -84,3 +84,14 @@ function precompile_model(model, constraints)
     end
     return Base.precompile(Tuple{typeof(add_constrained_variables),model,Reals})
 end
+
+function _precompile_()
+    return Base.precompile(
+        Tuple{
+            Core.kwftype(typeof(instantiate)),
+            NamedTuple{(:with_bridge_type,),Tuple{DataType}},
+            typeof(instantiate),
+            Type,
+        },
+    )   # time: 0.481656
+end
