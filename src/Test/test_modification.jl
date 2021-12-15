@@ -428,6 +428,76 @@ function setup_test(
 end
 
 """
+    test_modification_const_vectoraffine_zeros(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Test modifying the constant term in a VectorAffineFunction-in-Zeros constraint.
+If `config.solve=true` confirm that it solves correctly, and if
+`config.duals=true`, check that the duals are computed correctly.
+"""
+function test_modification_const_vectoraffine_zeros(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    x, y = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(1) * x + T(2) * y
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    c = MOI.add_constraint(
+        model,
+        MOI.VectorAffineFunction(
+            [
+                MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(1), x)),
+                MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(T(2), y)),
+            ],
+            T[0, 0],
+        ),
+        MOI.Zeros(2),
+    )
+    _test_model_solution(
+        model,
+        config;
+        objective_value = T(0),
+        variable_primal = [(x, T(0)), (y, T(0))],
+        constraint_primal = [(c, T[0, 0])],
+    )
+    MOI.modify(model, c, MOI.VectorConstantChange(T[-1, -3//2]))
+    _test_model_solution(
+        model,
+        config;
+        objective_value = T(5 // 2),
+        variable_primal = [(x, T(1)), (y, T(3 // 4))],
+        constraint_primal = [(c, T[0, 0])],
+    )
+    return
+end
+
+version_added(::typeof(test_modification_const_vectoraffine_zeros)) = v"0.10.7"
+
+function setup_test(
+    ::typeof(test_modification_const_vectoraffine_zeros),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, T[0, 0]),
+        ),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, T[1, 3//4]),
+        ),
+    )
+    return
+end
+
+"""
     test_modification_const_vectoraffine_nonpos(
         model::MOI.ModelLike,
         config::Config,
