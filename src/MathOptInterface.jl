@@ -249,6 +249,10 @@ include("instantiate.jl")
 include("deprecate.jl")
 include("DeprecatedTest/DeprecatedTest.jl")
 
+if VERSION > v"1.4.2"
+    _precompile_()
+end
+
 """
     IndexMap()
 
