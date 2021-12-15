@@ -80,3 +80,9 @@ if length(ARGS) > 0
     end
     exit(0)
 end
+
+# using SnoopCompileCore
+# tinf = @snoopi_deep example_diet(Clp.Optimizer, true)
+# using SnoopCompile, ProfileView
+# fg = flamegraph(tinf)
+# ProfileView.view(fg)

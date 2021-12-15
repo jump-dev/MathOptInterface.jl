@@ -40,5 +40,6 @@ function _precompile_()
         CachingOptimizer{MOI.AbstractOptimizer,UniversalFallback{Model{T}}},
         constraints,
     )
+    Base.precompile(UniversalFallback, (Model{T},))
     return
 end

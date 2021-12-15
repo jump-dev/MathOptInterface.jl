@@ -29,7 +29,7 @@ mutable struct UniversalFallback{MT} <: MOI.ModelLike
         return new{typeof(model)}(
             model,
             nothing,
-            OrderedDict{Tuple{Type,Type},OrderedDict}(),
+            OrderedDict{Type,OrderedDict}(),
             OrderedDict{Tuple{Type,Type},VectorOfConstraints}(),
             Dict{MOI.ConstraintIndex,String}(),
             nothing,
