@@ -1,5 +1,32 @@
 # Release notes
 
+## v0.10.7 (January 5, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.7).
+
+### New features
+
+ - Added test for modifying the constant vector in a
+   `VectorAffineFunction-in-Zeros` constraint.
+
+### Bug fixes
+
+ - Fixed the order in which sets are added to a `LazyBridgeOptimizer`. Compared
+   to v0.10.6, this may result in bridged models being created with a different
+   number (and order) of variables and constraints. However, it was necessary to
+   fix cases which were previously rejected as unsupported, even though there
+   was a valid bridge transformation.
+ - Fixed an error message in `FileFormats.CBF`
+ - Fixed comparison in `test_linear_integration_Interval`
+ - Fixed errors for `ConstraintPrimal` in a `CachingOptimizer`
+ - Fixed printing of models with non-`Float64` coefficients.
+
+### Performance and maintenance
+
+ - Various improvements to reduce time-to-first-solve latency
+ - Improved error message when an optimizer does not support `compute_conflict!`
+
 ## v0.10.6 (November 30, 2021)
 
 For a detailed list of the closed issues and pull requests from this release,
