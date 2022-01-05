@@ -27,8 +27,8 @@ allocation-free conversion of [`MutableSparseMatrixCSC`](@ref) to
 """
 struct OneBasedIndexing <: AbstractIndexing end
 
-_first_index(::ZeroBasedIndexing) = 0
-_first_index(::OneBasedIndexing) = 1
+_first_index(::Type{T}, ::ZeroBasedIndexing) where {T} = T(0)
+_first_index(::Type{T}, ::OneBasedIndexing) where {T} = T(1)
 
 _shift(x, ::T, ::T) where {T<:AbstractIndexing} = x
 _shift(x::Integer, ::ZeroBasedIndexing, ::OneBasedIndexing) = x + 1
@@ -65,8 +65,11 @@ mutable struct MutableSparseMatrixCSC{Tv,Ti<:Integer,I<:AbstractIndexing}
     colptr::Vector{Ti}
     rowval::Vector{Ti}
     nzval::Vector{Tv}
+    nz_added::Vector{Ti}
     function MutableSparseMatrixCSC{Tv,Ti,I}() where {Tv,Ti<:Integer,I}
-        return new{Tv,Ti,I}(I(), 0, 0, [zero(Ti)], Ti[], Tv[])
+        indexing = I()
+        colptr = [_first_index(Ti, indexing)]
+        return new{Tv,Ti,I}(indexing, 0, 0, colptr, Ti[], Tv[], Ti[])
     end
 end
 
@@ -80,43 +83,39 @@ function MOI.empty!(A::MutableSparseMatrixCSC{Tv,Ti}) where {Tv,Ti}
     A.m = 0
     A.n = 0
     resize!(A.colptr, 1)
-    A.colptr[1] = zero(Ti)
+    A.colptr[1] = _first_index(Ti, A.indexing)
     empty!(A.rowval)
     empty!(A.nzval)
+    empty!(A.nz_added)
     return
 end
 
 function add_column(A::MutableSparseMatrixCSC{Tv,Ti}) where {Tv,Ti}
     A.n += 1
-    push!(A.colptr, zero(Ti))
+    push!(A.colptr, _first_index(Ti, A.indexing))
+    push!(A.nz_added, Ti(0))
     return
 end
 
 function add_columns(A::MutableSparseMatrixCSC{Tv,Ti}, n) where {Tv,Ti}
-    A.n += n
     for _ in 1:n
-        push!(A.colptr, zero(Ti))
+        add_column(A)
     end
     return
 end
 
 function set_number_of_rows(A::MutableSparseMatrixCSC, num_rows)
     A.m = num_rows
+    offset = _first_index(Int, A.indexing)
     for i in 3:length(A.colptr)
-        A.colptr[i] += A.colptr[i-1]
+        A.colptr[i] += A.colptr[i-1] - offset
     end
-    resize!(A.rowval, A.colptr[end])
-    resize!(A.nzval, A.colptr[end])
+    resize!(A.rowval, A.colptr[end] - offset)
+    resize!(A.nzval, A.colptr[end] - offset)
     return
 end
 
-function final_touch(A::MutableSparseMatrixCSC)
-    for i in length(A.colptr):-1:2
-        A.colptr[i] = _shift(A.colptr[i-1], ZeroBasedIndexing(), A.indexing)
-    end
-    A.colptr[1] = _first_index(A.indexing)
-    return
-end
+final_touch(::MutableSparseMatrixCSC) = nothing
 
 _variable(term::MOI.ScalarAffineTerm) = term.variable
 _variable(term::MOI.VectorAffineTerm) = _variable(term.scalar_term)
@@ -141,11 +140,14 @@ function load_terms(
     func::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
     offset::Int,
 )
-    new_offset = _shift(offset, OneBasedIndexing(), A.indexing)
+    row_offset = _shift(offset, OneBasedIndexing(), A.indexing)
+    zero_offset = 1 - _first_index(Int, A.indexing)
     for term in func.terms
-        ptr = A.colptr[index_map[_variable(term)].value] += 1
-        A.rowval[ptr] = new_offset + _output_index(term)
+        col = index_map[_variable(term)].value
+        ptr = A.colptr[col] + A.nz_added[col] + zero_offset
+        A.rowval[ptr] = row_offset + _output_index(term)
         A.nzval[ptr] = MOI.coefficient(term)
+        A.nz_added[col] += 1
     end
     return
 end

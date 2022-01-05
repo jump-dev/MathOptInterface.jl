@@ -79,6 +79,11 @@ function test_VectorAffine_ZeroBased()
     @test A.rowval == [0, 0, 1, 0, 1]
     @test A.nzval == [1.0, 1.0, 2.0, 1.0, 3.0]
     @test A.colptr == [0, 1, 3, 5]
+    MOI.empty!(A)
+    MOI.Utilities.add_column(A)
+    C = convert(SparseArrays.SparseMatrixCSC{Float64,Int}, A)
+    @test size(C) == (0, 1)
+    return
 end
 
 function test_extract_function()
@@ -145,6 +150,11 @@ function test_VectorAffine_OneBased()
     @test A.rowval == [1, 1, 2, 1, 2]
     @test A.nzval == [1.0, 1.0, 2.0, 1.0, 3.0]
     @test A.colptr == [1, 2, 4, 6]
+    MOI.empty!(A)
+    MOI.Utilities.add_column(A)
+    C = convert(SparseArrays.SparseMatrixCSC{Float64,Int}, A)
+    @test size(C) == (0, 1)
+    return
 end
 
 function test_ScalarAffine_ZeroBased()
@@ -174,6 +184,11 @@ function test_ScalarAffine_ZeroBased()
     @test A.rowval == [0, 0, 1, 0, 1]
     @test A.nzval == [1.0, 1.0, 2.0, 1.0, 3.0]
     @test A.colptr == [0, 1, 3, 5]
+    MOI.empty!(A)
+    MOI.Utilities.add_column(A)
+    C = convert(SparseArrays.SparseMatrixCSC{Float64,Int}, A)
+    @test size(C) == (0, 1)
+    return
 end
 
 function test_ScalarAffine_OneBased()
@@ -203,6 +218,11 @@ function test_ScalarAffine_OneBased()
     @test A.rowval == [1, 1, 2, 1, 2]
     @test A.nzval == [1.0, 1.0, 2.0, 1.0, 3.0]
     @test A.colptr == [1, 2, 4, 6]
+    MOI.empty!(A)
+    MOI.Utilities.add_column(A)
+    C = convert(SparseArrays.SparseMatrixCSC{Float64,Int}, A)
+    @test size(C) == (0, 1)
+    return
 end
 
 end
