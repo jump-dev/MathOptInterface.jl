@@ -43,12 +43,15 @@ _shift(x::Array{<:Integer}, ::ZeroBasedIndexing, ::OneBasedIndexing) = x .+ 1
         colptr::Vector{Ti}
         rowval::Vector{Ti}
         nzval::Vector{Tv}
+        nz_added::Vector{Ti}
     end
 
 Matrix type loading sparse matrices in the Compressed Sparse Column format.
 The indexing used is `indexing`, see [`AbstractIndexing`](@ref). The other
 fields have the same meaning than for `SparseArrays.SparseMatrixCSC` except
-that the indexing is different unless `indexing` is `OneBasedIndexing`.
+that the indexing is different unless `indexing` is `OneBasedIndexing`. In
+addition, `nz_added` is used to cache the number of non-zero terms that have
+been added to each column due to the incremental nature of `load_terms`.
 
 The matrix is loaded in 5 steps:
 1) `MOI.empty!` is called.
