@@ -285,9 +285,429 @@ end
 #   Base.read!
 #
 # ==============================================================================
+const COMMENT_REG = r"(.*?)\\(.*)"
+function stripcomment(line::String)
+    if contains(line, "\\")
+        m = match(COMMENT_REG, line)
+        return strip(String(m[1]))
+    else
+        return strip(line)
+    end
+end
 
+# a list of section keywords in lower-case
+const KEYWORDS = Dict(
+    "max"      => Val{:obj},
+    "maximize" => Val{:obj},
+    "maximise" => Val{:obj},
+    "maximum"  => Val{:obj},
+    "min"      => Val{:obj},
+    "minimize" => Val{:obj},
+    "minimise" => Val{:obj},
+    "minimum"  => Val{:obj},
+
+    "subject to" => Val{:constraints},
+    "such that"  => Val{:constraints},
+    "st"         => Val{:constraints},
+    "s.t."       => Val{:constraints},
+
+    "bounds" => Val{:bounds},
+    "bound"  => Val{:bounds},
+
+    "gen"      => Val{:integer},
+    "general"  => Val{:integer},
+    "generals" => Val{:integer},
+
+    "bin"      => Val{:binary},
+    "binary"   => Val{:binary},
+    "binaries" => Val{:binary},
+
+    "end"      => Val{:quit}
+)
+
+const sense_alias = Dict(
+    "max"      => :Max,
+    "maximize" => :Max,
+    "maximise" => :Max,
+    "maximum"  => :Max,
+    "min"      => :Min,
+    "minimize" => :Min,
+    "minimise" => :Min,
+    "minimum"  => :Min
+)
+
+const subject_to_alias = ["subject to", "such that", "st", "s.t."]
+
+const CONSTRAINT_SENSE = Dict(
+    "<"  => :le,
+    "<=" => :le,
+    "="  => :eq,
+    "==" => :eq,
+    ">"  => :ge,
+    ">=" => :ge,
+)
+
+function verifyname(variable::String, maximum_length::Int)
+    if length(variable) > maximum_length
+        return false
+    end
+    # m = match(START_REG, variable)
+    # if !isnothing(m)
+    #     return false
+    # end
+    m = match(NAME_REG, variable)
+    if !isnothing(m)
+        return false
+    end
+    return true
+end
+
+# TODO Obj constant and SOS Variables
+mutable struct TempLPModel
+    model_name::String
+    A::Vector{Vector{Tuple{Int,Float64}}} # 
+    c::Vector{Float64}
+    col_lower::Vector{Float64}
+    col_upper::Vector{Float64}
+    row_lower::Vector{Float64}
+    row_upper::Vector{Float64}
+    sense::Symbol
+    colcat::Vector{Symbol}
+    sos::Vector
+    col_to_name::Vector{String}
+    row_to_name::Vector{String}
+    open_constraint::Bool
+    maximum_length::Int
+    function TempLPModel()
+        return new(
+            "",
+            Vector{Vector{Tuple{Int,Float64}}}[],
+            Float64[],
+            Float64[],
+            Float64[],
+            Float64[],
+            Float64[],
+            :Min,
+            Symbol[],
+            [],
+            String[],
+            String[],
+            false,
+            255 # TODO
+        )
+    end
+end
+
+setsense!(T, data::TempLPModel, line) = nothing
+function setsense!(::Type{Val{:obj}}, data::TempLPModel, line)
+    data.sense = sense_alias[lowercase(line)]
+end
+
+function addnewvariable!(data::TempLPModel, name::String)
+    push!(data.col_lower, -Inf)
+    push!(data.col_upper,  Inf)
+    push!(data.c, 0)
+    push!(data.colcat, :Cont)
+    push!(data.col_to_name, name)
+    return 
+end
+
+function getvariableindex!(data::TempLPModel, variable::String)
+    i = findfirst(isequal(variable), data.col_to_name)
+    if isnothing(i)
+        if !verifyname(variable, data.maximum_length)
+            error("Invalid variable name $variable")
+        end
+        addnewvariable!(data, variable)
+        return length(data.col_to_name)
+    end
+    return i
+end
+
+function tokenize(line::AbstractString)
+    items = String.(split(line, " "))
+    return items[items .!= ""]
+end
+
+function parsefloat(val::AbstractString)
+    if lowercase(val) == "-inf" || lowercase(val) == "-infinity"
+        return -Inf
+    elseif lowercase(val) == "+inf" || lowercase(val) == "+infinity"
+        return Inf
+    else
+        return parse(Float64, val)
+    end
+end
+
+function parse_affine_terms!(data::TempLPModel, tokens::Vector{String}, section::AbstractString)
+    v_idx = Int[]
+    v_coeff = Float64[]
+    while length(tokens) > 0
+        variable = String(pop!(tokens))
+        idx = getvariableindex!(data, variable)
+        push!(v_idx, idx)
+        if length(tokens) > 0
+            coef_token = pop!(tokens)
+        else
+            coeff = 1.0
+            push!(v_coeff, coeff)
+            continue
+        end
+        try
+            if coef_token == "+"
+                coeff = 1.0
+                push!(v_coeff, coeff)
+                continue
+            elseif coef_token == "-"
+                coeff = -1.0
+                push!(v_coeff, coeff)
+                continue
+            end
+            coeff = parse(Float64, coef_token)
+        catch
+            error("Unable to parse $section due to bad operator: $(_sign) $(line)")
+        end
+        if length(tokens) > 0
+            _sign = pop!(tokens)
+            if _sign == "-"
+                coeff *= -1
+            elseif _sign == "+"
+            else
+                error("Unable to parse $section due to bad operator: $(_sign) $(line)")
+            end
+        end
+        push!(v_coeff, coeff)
+    end
+    return v_idx, v_coeff
+end
+
+function parsevariabletype!(data, line, cat)
+    items = tokenize(line)
+    for v in items
+        i = getvariableindex!(data, v, data.maximum_length)
+        data.colcat[i] = cat
+    end
+end
+
+parsesection!(::Type{Val{:none}}, data::TempLPModel, line::String) = nothing
+parsesection!(::Type{Val{:quit}}, data::TempLPModel, line::String) = error("Corrupted LP File. You have the lne $(line) after an end.")
+parsesection!(::Type{Val{:integer}}, data, line) = parsevariabletype!(data, line, :Int)
+parsesection!(::Type{Val{:binary}}, data, line)  = parsevariabletype!(data, line, :Bin)
+
+function parsesection!(::Type{Val{:obj}}, data::TempLPModel, line::AbstractString)
+    # okay so line should be the start of the objective
+    if contains(line, ":")
+        # throw away name
+        m = match(r"(.*?)\:(.*)", line)
+        line = String(m[2])
+    end
+    tokens = tokenize(line)
+    if length(tokens) == 0 # no objective
+        return
+    end
+    v_idx, v_coeff = parse_affine_terms!(data, tokens, "objective")
+    data.c[v_idx] = v_coeff
+    return
+end
+
+function parsesection!(::Type{Val{:constraints}}, data::TempLPModel, line::AbstractString)
+    # if match(r" S([0-9]):: ", line) != nothing
+    #     # it's an SOS constraint
+    #     parsesos!(data, line)
+    #     return
+    # end
+    if data.open_constraint == false
+        push!(data.row_to_name, "R$(length(data.row_to_name) + 1)")
+        push!(data.row_lower, -Inf)
+        push!(data.row_upper, Inf)
+    end
+    if contains(line, ":")
+        if data.open_constraint == true
+            error("Malformed constraint $(line). Is the previous one valid?")
+        end
+        # throw away name
+        m = match(r"(.*?)\:(.*)", line)
+        data.row_to_name[end] = String(m[1])
+        line = String(m[2])
+    end
+    data.open_constraint = true
+
+    tokens = tokenize(line)
+    if length(tokens) == 0 # no entries
+        return
+    elseif length(tokens) >= 2 && haskey(CONSTRAINT_SENSE, tokens[end-1])# test if constraint ends this line
+        rhs = parsefloat(pop!(tokens))
+        sym = pop!(tokens)
+        if CONSTRAINT_SENSE[sym] == :le
+            data.row_upper[end] = rhs
+        elseif CONSTRAINT_SENSE[sym] == :ge
+            data.row_lower[end] = rhs
+        elseif CONSTRAINT_SENSE[sym] == :eq
+            data.row_lower[end] = rhs
+            data.row_upper[end] = rhs
+        end
+        data.open_constraint = false # finished
+    end
+    v_idx, v_coeff = parse_affine_terms!(data, tokens, "constraint")
+    row = length(data.row_to_name)
+    push!(data.A, Tuple{Int,Float64}[])
+    for j in 1:length(v_idx)
+        push!(data.A[row], (v_idx[j], v_coeff[j]))
+    end
+    return
+end
+
+bounderror(line::AbstractString) = error("Unable to parse bound: $(line)")
+function parsesection!(::Type{Val{:bounds}}, data::TempLPModel, line::AbstractString)
+    items = tokenize(line)
+    v = ""
+    lb = -Inf
+    ub = Inf
+    if length(items) == 5 # ranged bound
+        v = items[3]
+        if (items[2] == "<=" || items[2] == "<") &&  (items[4] == "<=" || items[4] == "<") # le
+            lb = parsefloat(items[1])
+            ub = parsefloat(items[5])
+        elseif (items[2] == ">=" || items[2] == ">") &&  (items[4] == ">=" || items[4] == ">") # ge
+            lb = parsefloat(items[5])
+            ub = parsefloat(items[1])
+        else
+            bounderror(line)
+        end
+    elseif length(items) == 3 # one sided
+        v = items[1]
+        if items[2] == "<=" || items[2] == "<" # le
+            lb = 0.0
+            ub = parsefloat(items[3])
+        elseif items[2] == ">=" || items[2] == ">" # ge
+            lb = parsefloat(items[3])
+            ub = 0.0
+        elseif items[2] == "==" || items[2] == "=" # eq
+            lb = ub = parsefloat(items[3])
+        else
+            bounderror(line)
+        end
+    elseif length(items) == 2 # free
+        if items[2] != "free"
+            bounderror(line)
+        end
+        v = items[1]
+    else
+        bounderror(line)
+    end
+    i = getvariableindex!(data, v)
+    data.col_lower[i] = lb
+    data.col_upper[i] = ub
+    return
+end
+
+# Repeated from MPS
+function bounds_to_set(lower, upper)
+    if -Inf < lower < upper < Inf
+        return MOI.Interval(lower, upper)
+    elseif -Inf < lower && upper == Inf
+        return MOI.GreaterThan(lower)
+    elseif -Inf == lower && upper < Inf
+        return MOI.LessThan(upper)
+    elseif lower == upper
+        return MOI.EqualTo(upper)
+    end
+    return  # free variable
+end
+
+# Very close from MPS
+function _add_variable(model::Model, data::TempLPModel, variable_map, i, name)
+    x = MOI.add_variable(model)
+    variable_map[name] = x
+    MOI.set(model, MOI.VariableName(), x, name)
+    set = bounds_to_set(data.col_lower[i], data.col_upper[i])
+    if set !== nothing
+        MOI.add_constraint(model, x, set)
+    end
+    if data.colcat[i] == :Int
+        MOI.add_constraint(model, x, MOI.Integer())
+    elseif data.colcat[i] == :Bin
+        MOI.add_constraint(model, x, MOI.ZeroOne())
+    end
+    return
+end
+
+# Very close from MPS
+function _add_objective(model::Model, data::TempLPModel, variable_map::Dict{String,MOI.VariableIndex})
+    if data.sense == :Min
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    else
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    end
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        MOI.ScalarAffineFunction(
+            [
+                MOI.ScalarAffineTerm(data.c[i], variable_map[v]) for
+                (i, v) in enumerate(data.col_to_name) if !iszero(data.c[i])
+            ],
+            0.0,
+        ),
+    )
+    return
+end
+
+# Very close from MPS
+function _add_linear_constraint(model::Model, data::TempLPModel, variable_map, j, c_name, set)
+    terms = MOI.ScalarAffineTerm{Float64}[
+        MOI.ScalarAffineTerm(coef, variable_map[data.col_to_name[i]]) for
+        (i, coef) in data.A[j]
+    ]
+    c = MOI.add_constraint(model, MOI.ScalarAffineFunction(terms, 0.0), set)
+    MOI.set(model, MOI.ConstraintName(), c, c_name)
+    return
+end
+
+# Very close from MPS
+function copy_to(model::Model, data::TempLPModel)
+    MOI.set(model, MOI.Name(), data.model_name)
+    variable_map = Dict{String,MOI.VariableIndex}()
+    for (i, name) in enumerate(data.col_to_name)
+        _add_variable(model, data, variable_map, i, name)
+    end
+    _add_objective(model, data, variable_map)
+    for (j, c_name) in enumerate(data.row_to_name)
+        set = bounds_to_set(data.row_lower[j], data.row_upper[j])
+        if set !== nothing
+            _add_linear_constraint(model, data, variable_map, j, c_name, set)
+        end
+        # `else` is a free constraint. Don't add it.
+    end
+    return
+end
+
+"""
+    Base.read!(io::IO, model::FileFormats.LP.Model)
+
+Read `io` in the LP file format and store the result in `model`.
+"""
 function Base.read!(io::IO, model::Model)
-    return error("read! is not implemented for LP files.")
+    if !MOI.is_empty(model)
+        error("Cannot read in file because model is not empty.")
+    end
+    data = TempLPModel()
+    section = Val{:none}
+    while !eof(io)
+        line = string(strip(readline(io)))
+        line = stripcomment(line)
+        if line == "" # skip blank lines
+            continue
+        end
+        if haskey(KEYWORDS, lowercase(line)) # section has changed
+            section = KEYWORDS[lowercase(line)]
+            setsense!(section, data, line)
+            continue
+        end
+        parsesection!(section, data, line)
+    end
+    copy_to(model, data)
+    return data
 end
 
 end

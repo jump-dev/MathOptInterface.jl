@@ -236,8 +236,14 @@ end
 
 function test_read()
     model = LP.Model()
-    exception = ErrorException("read! is not implemented for LP files.")
-    @test_throws exception MOI.read_from_file(model, LP_TEST_FILE)
+    MOI.read_from_file(model, joinpath(@__DIR__, "models", "example_lo1.lp"))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 4
+    constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) in constraints
+    @test (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) in constraints
+    @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in constraints
+    @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in constraints
+    @test (MOI.VariableIndex, MOI.Interval{Float64}) in constraints
 end
 
 function runtests()
