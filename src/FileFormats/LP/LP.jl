@@ -351,7 +351,7 @@ function _verify_name(variable::String, maximum_length::Int)
     #     return false
     # end
     m = match(NAME_REG, variable)
-    if !isnothing(m)
+    if m !== nothing
         return false
     end
     return true
