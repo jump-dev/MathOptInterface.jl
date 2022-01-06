@@ -417,7 +417,7 @@ end
 
 function _get_variable_index!(data::TempLPModel, variable::String)
     i = findfirst(isequal(variable), data.col_to_name)
-    if isnothing(i)
+    if i === nothing
         if !_verify_name(variable, data.maximum_length)
             error("Invalid variable name $variable")
         end
