@@ -24,10 +24,10 @@ MOI.Utilities.@model(
     (MOI.ZeroOne, MOI.Integer),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
     (),
-    (),
+    (MOI.SOS1, MOI.SOS2),
     (),
     (MOI.ScalarAffineFunction,),
-    (),
+    (MOI.VectorOfVariables,),
     ()
 )
 function MOI.supports(
@@ -285,10 +285,10 @@ end
 #   Base.read!
 #
 # ==============================================================================
-const COMMENT_REG = r"(.*?)\\(.*)"
-function stripcomment(line::String)
+const _COMMENT_REG = r"(.*?)\\(.*)"
+function _strip_comment(line::String)
     if occursin("\\", line)
-        m = match(COMMENT_REG, line)
+        m = match(_COMMENT_REG, line)
         return strip(String(m[1]))
     else
         return strip(line)
@@ -296,58 +296,53 @@ function stripcomment(line::String)
 end
 
 # a list of section keywords in lower-case
-const KEYWORDS = Dict(
-    "max"      => Val{:obj},
+const _KEYWORDS = Dict(
+    "max" => Val{:obj},
     "maximize" => Val{:obj},
     "maximise" => Val{:obj},
-    "maximum"  => Val{:obj},
-    "min"      => Val{:obj},
+    "maximum" => Val{:obj},
+    "min" => Val{:obj},
     "minimize" => Val{:obj},
     "minimise" => Val{:obj},
-    "minimum"  => Val{:obj},
-
+    "minimum" => Val{:obj},
     "subject to" => Val{:constraints},
-    "such that"  => Val{:constraints},
-    "st"         => Val{:constraints},
-    "s.t."       => Val{:constraints},
-
+    "such that" => Val{:constraints},
+    "st" => Val{:constraints},
+    "s.t." => Val{:constraints},
     "bounds" => Val{:bounds},
-    "bound"  => Val{:bounds},
-
-    "gen"      => Val{:integer},
-    "general"  => Val{:integer},
+    "bound" => Val{:bounds},
+    "gen" => Val{:integer},
+    "general" => Val{:integer},
     "generals" => Val{:integer},
-
-    "bin"      => Val{:binary},
-    "binary"   => Val{:binary},
+    "bin" => Val{:binary},
+    "binary" => Val{:binary},
     "binaries" => Val{:binary},
-
-    "end"      => Val{:quit}
+    "end" => Val{:quit},
 )
 
-const sense_alias = Dict(
-    "max"      => :Max,
+const _SENSE_ALIAS = Dict(
+    "max" => :Max,
     "maximize" => :Max,
     "maximise" => :Max,
-    "maximum"  => :Max,
-    "min"      => :Min,
+    "maximum" => :Max,
+    "min" => :Min,
     "minimize" => :Min,
     "minimise" => :Min,
-    "minimum"  => :Min
+    "minimum" => :Min,
 )
 
-const subject_to_alias = ["subject to", "such that", "st", "s.t."]
+const _SUBJECT_TO_ALIAS = ["subject to", "such that", "st", "s.t."]
 
-const CONSTRAINT_SENSE = Dict(
-    "<"  => :le,
+const _CONSTRAINT_SENSE = Dict(
+    "<" => :le,
     "<=" => :le,
-    "="  => :eq,
+    "=" => :eq,
     "==" => :eq,
-    ">"  => :ge,
+    ">" => :ge,
     ">=" => :ge,
 )
 
-function verifyname(variable::String, maximum_length::Int)
+function _verify_name(variable::String, maximum_length::Int)
     if length(variable) > maximum_length
         return false
     end
@@ -362,10 +357,16 @@ function verifyname(variable::String, maximum_length::Int)
     return true
 end
 
-# TODO Obj constant and SOS Variables
+struct _SOSConstraint
+    type::Int
+    weights::Vector{Float64}
+    columns::Vector{String}
+end
+
+# TODO Obj constant
 mutable struct TempLPModel
     model_name::String
-    A::Vector{Vector{Tuple{Int,Float64}}} # 
+    A::Vector{Vector{Tuple{Int,Float64}}}
     c::Vector{Float64}
     col_lower::Vector{Float64}
     col_upper::Vector{Float64}
@@ -373,12 +374,13 @@ mutable struct TempLPModel
     row_upper::Vector{Float64}
     sense::Symbol
     colcat::Vector{Symbol}
-    sos::Vector
+    sos_constraints::Vector{_SOSConstraint}
     col_to_name::Vector{String}
     row_to_name::Vector{String}
     open_constraint::Bool
     maximum_length::Int
-    function TempLPModel()
+    objective_constant::Float64
+    function TempLPModel(options::Options)
         return new(
             "",
             Vector{Vector{Tuple{Int,Float64}}}[],
@@ -389,47 +391,48 @@ mutable struct TempLPModel
             Float64[],
             :Min,
             Symbol[],
-            [],
+            _SOSConstraint[],
             String[],
             String[],
             false,
-            255 # TODO
+            options.maximum_length,
+            0.0,
         )
     end
 end
 
-setsense!(T, data::TempLPModel, line) = nothing
-function setsense!(::Type{Val{:obj}}, data::TempLPModel, line)
-    data.sense = sense_alias[lowercase(line)]
+_set_sense!(T, data::TempLPModel, line) = nothing
+function _set_sense!(::Type{Val{:obj}}, data::TempLPModel, line)
+    return data.sense = _SENSE_ALIAS[lowercase(line)]
 end
 
-function addnewvariable!(data::TempLPModel, name::String)
+function _add_new_variable!(data::TempLPModel, name::String)
     push!(data.col_lower, -Inf)
-    push!(data.col_upper,  Inf)
+    push!(data.col_upper, Inf)
     push!(data.c, 0)
     push!(data.colcat, :Cont)
     push!(data.col_to_name, name)
-    return 
+    return
 end
 
-function getvariableindex!(data::TempLPModel, variable::String)
+function _get_variable_index!(data::TempLPModel, variable::String)
     i = findfirst(isequal(variable), data.col_to_name)
     if isnothing(i)
-        if !verifyname(variable, data.maximum_length)
+        if !_verify_name(variable, data.maximum_length)
             error("Invalid variable name $variable")
         end
-        addnewvariable!(data, variable)
+        _add_new_variable!(data, variable)
         return length(data.col_to_name)
     end
     return i
 end
 
-function tokenize(line::AbstractString)
+function _tokenize(line::AbstractString)
     items = String.(split(line, " "))
-    return items[items .!= ""]
+    return items[items.!=""]
 end
 
-function parsefloat(val::AbstractString)
+function _parse_float(val::AbstractString)
     if lowercase(val) == "-inf" || lowercase(val) == "-infinity"
         return -Inf
     elseif lowercase(val) == "+inf" || lowercase(val) == "+infinity"
@@ -439,12 +442,37 @@ function parsefloat(val::AbstractString)
     end
 end
 
-function parse_affine_terms!(data::TempLPModel, tokens::Vector{String}, section::AbstractString)
+function _parse_affine_terms!(
+    data::TempLPModel,
+    tokens::Vector{String},
+    section::AbstractString,
+    line::AbstractString,
+)
     v_idx = Int[]
     v_coeff = Float64[]
     while length(tokens) > 0
         variable = String(pop!(tokens))
-        idx = getvariableindex!(data, variable)
+        # In the case of objective functions this can be an objective constant
+        if section == "objective"
+            try
+                obj_constant = parse(Float64, variable)
+                if length(tokens) > 0
+                    _sign = pop!(tokens)
+                    if _sign == "-"
+                        obj_constant *= -1
+                    elseif _sign == "+"
+                    else
+                        error(
+                            "Unable to parse $section due to bad operator: $(_sign) $(line)",
+                        )
+                    end
+                end
+                data.objective_constant += obj_constant
+                continue
+            catch
+            end
+        end
+        idx = _get_variable_index!(data, variable)
         push!(v_idx, idx)
         if length(tokens) > 0
             coef_token = pop!(tokens)
@@ -465,7 +493,9 @@ function parse_affine_terms!(data::TempLPModel, tokens::Vector{String}, section:
             end
             coeff = parse(Float64, coef_token)
         catch
-            error("Unable to parse $section due to bad operator: $(_sign) $(line)")
+            error(
+                "Unable to parse $section due to bad operator: $(_sign) $(line)",
+            )
         end
         if length(tokens) > 0
             _sign = pop!(tokens)
@@ -473,7 +503,9 @@ function parse_affine_terms!(data::TempLPModel, tokens::Vector{String}, section:
                 coeff *= -1
             elseif _sign == "+"
             else
-                error("Unable to parse $section due to bad operator: $(_sign) $(line)")
+                error(
+                    "Unable to parse $section due to bad operator: $(_sign) $(line)",
+                )
             end
         end
         push!(v_coeff, coeff)
@@ -481,41 +513,96 @@ function parse_affine_terms!(data::TempLPModel, tokens::Vector{String}, section:
     return v_idx, v_coeff
 end
 
-function parsevariabletype!(data, line, cat)
-    items = tokenize(line)
+function _parse_sos!(data::TempLPModel, line::AbstractString)
+    tokens = _tokenize(line)
+    if length(tokens) < 3
+        error(string("Malformed SOS constraint: ", line))
+    end
+    if tokens[2] == "S1::"
+        order = 1
+    elseif tokens[2] == "S2::"
+        order = 2
+    else
+        error("SOS of type $(tokens[2]) not recognised")
+    end
+    names = String[]
+    weights = Float64[]
+    for token in tokens[3:end]
+        items = split(token, ":")
+        if length(items) != 2
+            error(string("Invalid sequence: ", token))
+        end
+        push!(names, String(items[1]))
+        _get_variable_index!(data, names[end])
+        push!(weights, _parse_float(String(items[2])))
+    end
+    push!(data.sos_constraints, _SOSConstraint(order, weights, names))
+    return
+end
+
+function _parse_variable_type!(
+    data::TempLPModel,
+    line::AbstractString,
+    cat::Symbol,
+)
+    items = _tokenize(line)
     for v in items
-        i = getvariableindex!(data, v, data.maximum_length)
+        i = _get_variable_index!(data, v)
         data.colcat[i] = cat
     end
 end
 
-parsesection!(::Type{Val{:none}}, data::TempLPModel, line::String) = nothing
-parsesection!(::Type{Val{:quit}}, data::TempLPModel, line::String) = error("Corrupted LP File. You have the lne $(line) after an end.")
-parsesection!(::Type{Val{:integer}}, data, line) = parsevariabletype!(data, line, :Int)
-parsesection!(::Type{Val{:binary}}, data, line)  = parsevariabletype!(data, line, :Bin)
+function _parse_section!(
+    ::Type{Val{:none}},
+    data::TempLPModel,
+    line::AbstractString,
+)
+    return nothing
+end
+function _parse_section!(
+    ::Type{Val{:quit}},
+    data::TempLPModel,
+    line::AbstractString,
+)
+    return error("Corrupted LP File. You have the lne $(line) after an end.")
+end
+function _parse_section!(::Type{Val{:integer}}, data, line)
+    return _parse_variable_type!(data, line, :Int)
+end
+function _parse_section!(::Type{Val{:binary}}, data, line)
+    return _parse_variable_type!(data, line, :Bin)
+end
 
-function parsesection!(::Type{Val{:obj}}, data::TempLPModel, line::AbstractString)
+function _parse_section!(
+    ::Type{Val{:obj}},
+    data::TempLPModel,
+    line::AbstractString,
+)
     # okay so line should be the start of the objective
     if occursin(":", line)
         # throw away name
         m = match(r"(.*?)\:(.*)", line)
         line = String(m[2])
     end
-    tokens = tokenize(line)
+    tokens = _tokenize(line)
     if length(tokens) == 0 # no objective
         return
     end
-    v_idx, v_coeff = parse_affine_terms!(data, tokens, "objective")
+    v_idx, v_coeff = _parse_affine_terms!(data, tokens, "objective", line)
     data.c[v_idx] = v_coeff
     return
 end
 
-function parsesection!(::Type{Val{:constraints}}, data::TempLPModel, line::AbstractString)
-    # if match(r" S([0-9]):: ", line) != nothing
-    #     # it's an SOS constraint
-    #     parsesos!(data, line)
-    #     return
-    # end
+function _parse_section!(
+    ::Type{Val{:constraints}},
+    data::TempLPModel,
+    line::AbstractString,
+)
+    if match(r" S([0-9]):: ", line) !== nothing
+        # it's an SOS constraint
+        _parse_sos!(data, line)
+        return
+    end
     if data.open_constraint == false
         push!(data.row_to_name, "R$(length(data.row_to_name) + 1)")
         push!(data.row_lower, -Inf)
@@ -532,23 +619,23 @@ function parsesection!(::Type{Val{:constraints}}, data::TempLPModel, line::Abstr
     end
     data.open_constraint = true
 
-    tokens = tokenize(line)
+    tokens = _tokenize(line)
     if length(tokens) == 0 # no entries
         return
-    elseif length(tokens) >= 2 && haskey(CONSTRAINT_SENSE, tokens[end-1])# test if constraint ends this line
-        rhs = parsefloat(pop!(tokens))
+    elseif length(tokens) >= 2 && haskey(_CONSTRAINT_SENSE, tokens[end-1])# test if constraint ends this line
+        rhs = _parse_float(pop!(tokens))
         sym = pop!(tokens)
-        if CONSTRAINT_SENSE[sym] == :le
+        if _CONSTRAINT_SENSE[sym] == :le
             data.row_upper[end] = rhs
-        elseif CONSTRAINT_SENSE[sym] == :ge
+        elseif _CONSTRAINT_SENSE[sym] == :ge
             data.row_lower[end] = rhs
-        elseif CONSTRAINT_SENSE[sym] == :eq
+        elseif _CONSTRAINT_SENSE[sym] == :eq
             data.row_lower[end] = rhs
             data.row_upper[end] = rhs
         end
         data.open_constraint = false # finished
     end
-    v_idx, v_coeff = parse_affine_terms!(data, tokens, "constraint")
+    v_idx, v_coeff = _parse_affine_terms!(data, tokens, "constraint", line)
     row = length(data.row_to_name)
     push!(data.A, Tuple{Int,Float64}[])
     for j in 1:length(v_idx)
@@ -557,45 +644,55 @@ function parsesection!(::Type{Val{:constraints}}, data::TempLPModel, line::Abstr
     return
 end
 
-bounderror(line::AbstractString) = error("Unable to parse bound: $(line)")
-function parsesection!(::Type{Val{:bounds}}, data::TempLPModel, line::AbstractString)
-    items = tokenize(line)
+_bound_error(line::AbstractString) = error("Unable to parse bound: $(line)")
+function _parse_section!(
+    ::Type{Val{:bounds}},
+    data::TempLPModel,
+    line::AbstractString,
+)
+    items = _tokenize(line)
     v = ""
     lb = -Inf
     ub = Inf
     if length(items) == 5 # ranged bound
         v = items[3]
-        if (items[2] == "<=" || items[2] == "<") &&  (items[4] == "<=" || items[4] == "<") # le
-            lb = parsefloat(items[1])
-            ub = parsefloat(items[5])
-        elseif (items[2] == ">=" || items[2] == ">") &&  (items[4] == ">=" || items[4] == ">") # ge
-            lb = parsefloat(items[5])
-            ub = parsefloat(items[1])
+        if (items[2] == "<=" || items[2] == "<") &&
+           (items[4] == "<=" || items[4] == "<") # le
+            lb = _parse_float(items[1])
+            ub = _parse_float(items[5])
+        elseif (items[2] == ">=" || items[2] == ">") &&
+               (items[4] == ">=" || items[4] == ">") # ge
+            lb = _parse_float(items[5])
+            ub = _parse_float(items[1])
         else
-            bounderror(line)
+            _bound_error(line)
         end
     elseif length(items) == 3 # one sided
         v = items[1]
         if items[2] == "<=" || items[2] == "<" # le
-            lb = 0.0
-            ub = parsefloat(items[3])
+            ub = _parse_float(items[3])
+            if ub > 0.0
+                lb = 0.0
+            else
+                lb = -Inf
+            end
         elseif items[2] == ">=" || items[2] == ">" # ge
-            lb = parsefloat(items[3])
-            ub = 0.0
+            lb = _parse_float(items[3])
+            ub = +Inf
         elseif items[2] == "==" || items[2] == "=" # eq
-            lb = ub = parsefloat(items[3])
+            lb = ub = _parse_float(items[3])
         else
-            bounderror(line)
+            _bound_error(line)
         end
     elseif length(items) == 2 # free
         if items[2] != "free"
-            bounderror(line)
+            _bound_error(line)
         end
         v = items[1]
     else
-        bounderror(line)
+        _bound_error(line)
     end
-    i = getvariableindex!(data, v)
+    i = _get_variable_index!(data, v)
     data.col_lower[i] = lb
     data.col_upper[i] = ub
     return
@@ -633,7 +730,11 @@ function _add_variable(model::Model, data::TempLPModel, variable_map, i, name)
 end
 
 # Very close from MPS
-function _add_objective(model::Model, data::TempLPModel, variable_map::Dict{String,MOI.VariableIndex})
+function _add_objective(
+    model::Model,
+    data::TempLPModel,
+    variable_map::Dict{String,MOI.VariableIndex},
+)
     if data.sense == :Min
         MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     else
@@ -647,14 +748,21 @@ function _add_objective(model::Model, data::TempLPModel, variable_map::Dict{Stri
                 MOI.ScalarAffineTerm(data.c[i], variable_map[v]) for
                 (i, v) in enumerate(data.col_to_name) if !iszero(data.c[i])
             ],
-            0.0,
+            data.objective_constant,
         ),
     )
     return
 end
 
 # Very close from MPS
-function _add_linear_constraint(model::Model, data::TempLPModel, variable_map, j, c_name, set)
+function _add_linear_constraint(
+    model::Model,
+    data::TempLPModel,
+    variable_map,
+    j,
+    c_name,
+    set,
+)
     terms = MOI.ScalarAffineTerm{Float64}[
         MOI.ScalarAffineTerm(coef, variable_map[data.col_to_name[i]]) for
         (i, coef) in data.A[j]
@@ -679,6 +787,13 @@ function copy_to(model::Model, data::TempLPModel)
         end
         # `else` is a free constraint. Don't add it.
     end
+    for sos in data.sos_constraints
+        MOI.add_constraint(
+            model,
+            MOI.VectorOfVariables([variable_map[x] for x in sos.columns]),
+            sos.type == 1 ? MOI.SOS1(sos.weights) : MOI.SOS2(sos.weights),
+        )
+    end
     return
 end
 
@@ -691,23 +806,24 @@ function Base.read!(io::IO, model::Model)
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
     end
-    data = TempLPModel()
+    options = get_options(model)
+    data = TempLPModel(options)
     section = Val{:none}
     while !eof(io)
         line = string(strip(readline(io)))
-        line = stripcomment(line)
+        line = _strip_comment(line)
         if line == "" # skip blank lines
             continue
         end
-        if haskey(KEYWORDS, lowercase(line)) # section has changed
-            section = KEYWORDS[lowercase(line)]
-            setsense!(section, data, line)
+        if haskey(_KEYWORDS, lowercase(line)) # section has changed
+            section = _KEYWORDS[lowercase(line)]
+            _set_sense!(section, data, line)
             continue
         end
-        parsesection!(section, data, line)
+        _parse_section!(section, data, line)
     end
     copy_to(model, data)
-    return data
+    return
 end
 
 end

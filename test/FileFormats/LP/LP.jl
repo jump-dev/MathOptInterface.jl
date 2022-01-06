@@ -239,11 +239,71 @@ function test_read()
     MOI.read_from_file(model, joinpath(@__DIR__, "models", "example_lo1.lp"))
     @test MOI.get(model, MOI.NumberOfVariables()) == 4
     constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
-    @test (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) in constraints
-    @test (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) in constraints
-    @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in constraints
+    @test (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) in
+          constraints
+    @test (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) in
+          constraints
+    @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in
+          constraints
     @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in constraints
     @test (MOI.VariableIndex, MOI.Interval{Float64}) in constraints
+
+    model = TestLP.LP.Model()
+    MOI.read_from_file(model, joinpath(@__DIR__, "models", "model2.lp"))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 8
+    constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) in
+          constraints
+    @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in
+          constraints
+    @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in constraints
+    @test (MOI.VariableIndex, MOI.Interval{Float64}) in constraints
+    @test (MathOptInterface.VariableIndex, MathOptInterface.Integer) in
+          constraints
+    @test (MathOptInterface.VariableIndex, MathOptInterface.ZeroOne) in
+          constraints
+    # Adicionar testes dos bounds de V8
+    @test MOI.get(model, MOI.VariableName(), MOI.VariableIndex(8)) == "V8"
+    @test model.variables.lower[8] == -Inf
+    @test model.variables.upper[8] == -3
+    obj_type = MOI.get(model, MOI.ObjectiveFunctionType())
+    obj_func = MOI.get(model, MOI.ObjectiveFunction{obj_type}())
+    @test obj_func.constant == 2.5
+
+    model = LP.Model()
+    MOI.read_from_file(model, joinpath(@__DIR__, "models", "model1_tricky.lp"))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 8
+    var_names = MOI.get.(model, MOI.VariableName(), MOI.VariableIndex.(1:8))
+    @test Set(var_names) ==
+          Set(["Var4", "V5", "V1", "V2", "V3", "V6", "V7", "V8"])
+
+    model = LP.Model()
+    @test_throws ErrorException MOI.read_from_file(
+        model,
+        joinpath(@__DIR__, "models", "corrupt.lp"),
+    )
+
+    model = LP.Model()
+    MOI.read_from_file(model, joinpath(@__DIR__, "models", "model1.lp"))
+    constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) in
+          constraints
+    @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in
+          constraints
+    @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in constraints
+    @test (MOI.VariableIndex, MOI.Interval{Float64}) in constraints
+    @test (MathOptInterface.VariableIndex, MathOptInterface.Integer) in
+          constraints
+    @test (MathOptInterface.VariableIndex, MathOptInterface.ZeroOne) in
+          constraints
+    @test (
+        MathOptInterface.VectorOfVariables,
+        MathOptInterface.SOS1{Float64},
+    ) in constraints
+    @test (
+        MathOptInterface.VectorOfVariables,
+        MathOptInterface.SOS2{Float64},
+    ) in constraints
 end
 
 function runtests()
