@@ -287,7 +287,7 @@ end
 # ==============================================================================
 const COMMENT_REG = r"(.*?)\\(.*)"
 function stripcomment(line::String)
-    if contains(line, "\\")
+    if occursin("\\", line)
         m = match(COMMENT_REG, line)
         return strip(String(m[1]))
     else
@@ -496,7 +496,7 @@ parsesection!(::Type{Val{:binary}}, data, line)  = parsevariabletype!(data, line
 
 function parsesection!(::Type{Val{:obj}}, data::TempLPModel, line::AbstractString)
     # okay so line should be the start of the objective
-    if contains(line, ":")
+    if occursin(":", line)
         # throw away name
         m = match(r"(.*?)\:(.*)", line)
         line = String(m[2])
@@ -521,7 +521,7 @@ function parsesection!(::Type{Val{:constraints}}, data::TempLPModel, line::Abstr
         push!(data.row_lower, -Inf)
         push!(data.row_upper, Inf)
     end
-    if contains(line, ":")
+    if occursin(":", line)
         if data.open_constraint == true
             error("Malformed constraint $(line). Is the previous one valid?")
         end
