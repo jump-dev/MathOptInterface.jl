@@ -234,7 +234,7 @@ minobjective: 1.0*x*x
     )
 end
 
-function test_read()
+function test_read_example_lo1()
     model = LP.Model()
     MOI.read_from_file(model, joinpath(@__DIR__, "models", "example_lo1.lp"))
     @test MOI.get(model, MOI.NumberOfVariables()) == 4
@@ -247,8 +247,11 @@ function test_read()
           constraints
     @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in constraints
     @test (MOI.VariableIndex, MOI.Interval{Float64}) in constraints
+    return nothing
+end
 
-    model = TestLP.LP.Model()
+function test_read_model2()
+    model = LP.Model()
     MOI.read_from_file(model, joinpath(@__DIR__, "models", "model2.lp"))
     @test MOI.get(model, MOI.NumberOfVariables()) == 8
     constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
@@ -269,20 +272,29 @@ function test_read()
     obj_type = MOI.get(model, MOI.ObjectiveFunctionType())
     obj_func = MOI.get(model, MOI.ObjectiveFunction{obj_type}())
     @test obj_func.constant == 2.5
+    return nothing
+end
 
+function test_read_model1_tricky()
     model = LP.Model()
     MOI.read_from_file(model, joinpath(@__DIR__, "models", "model1_tricky.lp"))
     @test MOI.get(model, MOI.NumberOfVariables()) == 8
     var_names = MOI.get.(model, MOI.VariableName(), MOI.VariableIndex.(1:8))
     @test Set(var_names) ==
           Set(["Var4", "V5", "V1", "V2", "V3", "V6", "V7", "V8"])
+    return nothing
+end
 
+function test_read_corrupt()
     model = LP.Model()
     @test_throws ErrorException MOI.read_from_file(
         model,
         joinpath(@__DIR__, "models", "corrupt.lp"),
     )
+    return nothing
+end
 
+function test_read_model1()
     model = LP.Model()
     MOI.read_from_file(model, joinpath(@__DIR__, "models", "model1.lp"))
     constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
@@ -304,6 +316,7 @@ function test_read()
         MathOptInterface.VectorOfVariables,
         MathOptInterface.SOS2{Float64},
     ) in constraints
+    return nothing
 end
 
 function runtests()

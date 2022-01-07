@@ -433,12 +433,13 @@ function _tokenize(line::AbstractString)
 end
 
 function _parse_float(val::AbstractString)
-    if lowercase(val) == "-inf" || lowercase(val) == "-infinity"
+    lower_case_val = lowercase(val)
+    if lower_case_val == "-inf" || lower_case_val == "-infinity"
         return -Inf
-    elseif lowercase(val) == "+inf" || lowercase(val) == "+infinity"
+    elseif lower_case_val == "+inf" || lower_case_val == "+infinity"
         return Inf
     else
-        return parse(Float64, val)
+        return parse(Float64, lower_case_val)
     end
 end
 
