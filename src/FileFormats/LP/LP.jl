@@ -366,16 +366,12 @@ mutable struct CacheLPModel
     num_linear_constraints::Int
     function CacheLPModel()
         return new(
-            MOI.ScalarAffineFunction(
-                MOI.ScalarAffineTerm{Float64}[], 0.0
-            ),
-            MOI.ScalarAffineFunction(
-                MOI.ScalarAffineTerm{Float64}[], 0.0
-            ),
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
             MOI.EqualTo(0.0),
             false,
             "",
-            0
+            0,
         )
     end
 end
@@ -394,7 +390,8 @@ end
 function _get_variable_from_name(model::Model, variable_name::String)
     variables_inside_model = MOI.get(model, MOI.ListOfVariableIndices())
     for var_inside_model in variables_inside_model
-        var_inside_model_name = MOI.get(model, MOI.VariableName(), var_inside_model)
+        var_inside_model_name =
+            MOI.get(model, MOI.VariableName(), var_inside_model)
         if var_inside_model_name == variable_name
             return var_inside_model
         end
@@ -516,10 +513,10 @@ function _parse_sos!(model::Model, line::AbstractString)
         push!(weights, parse(Float64, items[2]))
     end
     sos_con = MOI.add_constraint(
-            model,
-            variables,
-            order == 1 ? MOI.SOS1(weights) : MOI.SOS2(weights),
-        )
+        model,
+        variables,
+        order == 1 ? MOI.SOS1(weights) : MOI.SOS2(weights),
+    )
     MOI.set(model, MOI.ConstraintName(), sos_con, sos_con_name)
     # TODO I think this only works for SOS of one line
     return
@@ -577,7 +574,8 @@ function _parse_section!(
     if length(tokens) == 0 # no objective
         return MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
     end
-    affine_terms = _parse_affine_terms!(model, data_cache, tokens, "objective", line)
+    affine_terms =
+        _parse_affine_terms!(model, data_cache, tokens, "objective", line)
     push!(data_cache.objective_function.terms, affine_terms...)
     return
 end
@@ -624,21 +622,26 @@ function _parse_section!(
         # Finished
         # Add constraint
         c = MOI.add_constraint(
-            model, 
-            data_cache.linear_constraint_function, 
-            data_cache.linear_constraint_set
+            model,
+            data_cache.linear_constraint_function,
+            data_cache.linear_constraint_set,
         )
-        MOI.set(model, MOI.ConstraintName(), c, data_cache.linear_constraint_name)
+        MOI.set(
+            model,
+            MOI.ConstraintName(),
+            c,
+            data_cache.linear_constraint_name,
+        )
         data_cache.num_linear_constraints += 1
         # Clear the constraint part of data_cache
         data_cache.linear_constraint_set = MOI.EqualTo(0.0)
-        data_cache.linear_constraint_function = MOI.ScalarAffineFunction(
-            MOI.ScalarAffineTerm{Float64}[], 0.0
-        )
+        data_cache.linear_constraint_function =
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0)
         data_cache.linear_constraint_name = ""
         data_cache.linear_constraint_open = false
     end
-    affine_terms = _parse_affine_terms!(model, data_cache, tokens, "constraint", line)
+    affine_terms =
+        _parse_affine_terms!(model, data_cache, tokens, "constraint", line)
     push!(data_cache.linear_constraint_function.terms, affine_terms...)
     return
 end
@@ -713,14 +716,11 @@ function bounds_to_set(lower::Float64, upper::Float64)
     return  # free variable
 end
 
-function _add_objective!(
-    model::Model,
-    data_cache::CacheLPModel,
-)
+function _add_objective!(model::Model, data_cache::CacheLPModel)
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        data_cache.objective_function
+        data_cache.objective_function,
     )
     return
 end
