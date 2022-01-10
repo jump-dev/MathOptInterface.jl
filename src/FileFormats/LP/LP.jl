@@ -321,14 +321,14 @@ const _KEYWORDS = Dict(
 )
 
 const _SENSE_ALIAS = Dict(
-    "max" => :Max,
-    "maximize" => :Max,
-    "maximise" => :Max,
-    "maximum" => :Max,
-    "min" => :Min,
-    "minimize" => :Min,
-    "minimise" => :Min,
-    "minimum" => :Min,
+    "max" => MOI.MAX_SENSE,
+    "maximize" => MOI.MAX_SENSE,
+    "maximise" => MOI.MAX_SENSE,
+    "maximum" => MOI.MAX_SENSE,
+    "min" => MOI.MIN_SENSE,
+    "minimize" => MOI.MIN_SENSE,
+    "minimise" => MOI.MIN_SENSE,
+    "minimum" => MOI.MIN_SENSE,
 )
 
 const _SUBJECT_TO_ALIAS = ["subject to", "such that", "st", "s.t."]
@@ -357,82 +357,61 @@ function _verify_name(variable::String, maximum_length::Int)
     return true
 end
 
-struct _SOSConstraint
-    type::Int
-    weights::Vector{Float64}
-    columns::Vector{String}
-end
-
-# TODO Obj constant
-mutable struct TempLPModel
-    model_name::String
-    A::Vector{Vector{Tuple{Int,Float64}}}
-    c::Vector{Float64}
-    col_lower::Vector{Float64}
-    col_upper::Vector{Float64}
-    row_lower::Vector{Float64}
-    row_upper::Vector{Float64}
-    sense::Symbol
-    colcat::Vector{Symbol}
-    sos_constraints::Vector{_SOSConstraint}
-    col_to_name::Vector{String}
-    row_to_name::Vector{String}
-    open_constraint::Bool
-    maximum_length::Int
-    objective_constant::Float64
-    function TempLPModel(options::Options)
+mutable struct CacheLPModel
+    objective_function::MOI.ScalarAffineFunction
+    linear_constraint_function::MOI.ScalarAffineFunction
+    linear_constraint_set::MOI.AbstractScalarSet
+    linear_constraint_open::Bool
+    linear_constraint_name::String
+    num_linear_constraints::Int
+    function CacheLPModel()
         return new(
-            "",
-            Vector{Vector{Tuple{Int,Float64}}}[],
-            Float64[],
-            Float64[],
-            Float64[],
-            Float64[],
-            Float64[],
-            :Min,
-            Symbol[],
-            _SOSConstraint[],
-            String[],
-            String[],
+            MOI.ScalarAffineFunction(
+                MOI.ScalarAffineTerm{Float64}[], 0.0
+            ),
+            MOI.ScalarAffineFunction(
+                MOI.ScalarAffineTerm{Float64}[], 0.0
+            ),
+            MOI.EqualTo(0.0),
             false,
-            options.maximum_length,
-            0.0,
+            "",
+            0
         )
     end
 end
 
-_set_sense!(T, data::TempLPModel, line) = nothing
-function _set_sense!(::Type{Val{:obj}}, data::TempLPModel, line)
-    return data.sense = _SENSE_ALIAS[lowercase(line)]
+_set_sense!(T, model::Model, line) = nothing
+function _set_sense!(::Type{Val{:obj}}, model::Model, line)
+    return MOI.set(model, MOI.ObjectiveSense(), _SENSE_ALIAS[lowercase(line)])
 end
 
-function _add_new_variable!(data::TempLPModel, name::String)
-    push!(data.col_lower, -Inf)
-    push!(data.col_upper, Inf)
-    push!(data.c, 0)
-    push!(data.colcat, :Cont)
-    push!(data.col_to_name, name)
-    return
+function _add_new_variable!(model::Model, name::String)
+    var = MOI.add_variable(model)
+    MOI.set(model, MOI.VariableName(), var, name)
+    return var
 end
 
-function _get_variable_index!(data::TempLPModel, variable::String)
-    i = findfirst(isequal(variable), data.col_to_name)
-    if i === nothing
-        if !_verify_name(variable, data.maximum_length)
-            error("Invalid variable name $variable")
+function _get_variable_from_name(model::Model, variable_name::String)
+    variables_inside_model = MOI.get(model, MOI.ListOfVariableIndices())
+    for var_inside_model in variables_inside_model
+        var_inside_model_name = MOI.get(model, MOI.VariableName(), var_inside_model)
+        if var_inside_model_name == variable_name
+            return var_inside_model
         end
-        _add_new_variable!(data, variable)
-        return length(data.col_to_name)
     end
-    return i
+    options = get_options(model)
+    if !_verify_name(variable_name, options.maximum_length)
+        error("Invalid variable name $variable_name")
+    end
+    return _add_new_variable!(model, variable_name)
 end
 
 function _tokenize(line::AbstractString)
     items = String.(split(line, " "))
-    return items[items.!=""]
+    return filter(!isequal(""), items)
 end
 
-function _parse_float(val::AbstractString)
+function _parse_float_from_bound(val::AbstractString)
     lower_case_val = lowercase(val)
     if lower_case_val == "-inf" || lower_case_val == "-infinity"
         return -Inf
@@ -444,13 +423,13 @@ function _parse_float(val::AbstractString)
 end
 
 function _parse_affine_terms!(
-    data::TempLPModel,
+    model::Model,
+    data_cache::CacheLPModel,
     tokens::Vector{String},
     section::AbstractString,
     line::AbstractString,
 )
-    v_idx = Int[]
-    v_coeff = Float64[]
+    affine_terms = MOI.ScalarAffineTerm{Float64}[]
     while length(tokens) > 0
         variable = String(pop!(tokens))
         # In the case of objective functions this can be an objective constant
@@ -468,28 +447,27 @@ function _parse_affine_terms!(
                         )
                     end
                 end
-                data.objective_constant += obj_constant
+                data_cache.objective_function.constant += obj_constant
                 continue
             catch
             end
         end
-        idx = _get_variable_index!(data, variable)
-        push!(v_idx, idx)
+        var = _get_variable_from_name(model, variable)
         if length(tokens) > 0
             coef_token = pop!(tokens)
         else
             coeff = 1.0
-            push!(v_coeff, coeff)
+            push!(affine_terms, MOI.ScalarAffineTerm(coeff, var))
             continue
         end
         try
             if coef_token == "+"
                 coeff = 1.0
-                push!(v_coeff, coeff)
+                push!(affine_terms, MOI.ScalarAffineTerm(coeff, var))
                 continue
             elseif coef_token == "-"
                 coeff = -1.0
-                push!(v_coeff, coeff)
+                push!(affine_terms, MOI.ScalarAffineTerm(coeff, var))
                 continue
             end
             coeff = parse(Float64, coef_token)
@@ -509,16 +487,17 @@ function _parse_affine_terms!(
                 )
             end
         end
-        push!(v_coeff, coeff)
+        push!(affine_terms, MOI.ScalarAffineTerm(coeff, var))
     end
-    return v_idx, v_coeff
+    return affine_terms
 end
 
-function _parse_sos!(data::TempLPModel, line::AbstractString)
+function _parse_sos!(model::Model, line::AbstractString)
     tokens = _tokenize(line)
     if length(tokens) < 3
         error(string("Malformed SOS constraint: ", line))
     end
+    sos_con_name = String.(split(tokens[1], ":"))[1]
     if tokens[2] == "S1::"
         order = 1
     elseif tokens[2] == "S2::"
@@ -526,57 +505,66 @@ function _parse_sos!(data::TempLPModel, line::AbstractString)
     else
         error("SOS of type $(tokens[2]) not recognised")
     end
-    names = String[]
+    variables = MOI.VariableIndex[]
     weights = Float64[]
     for token in tokens[3:end]
-        items = split(token, ":")
+        items = String.(split(token, ":"))
         if length(items) != 2
             error(string("Invalid sequence: ", token))
         end
-        push!(names, String(items[1]))
-        _get_variable_index!(data, names[end])
-        push!(weights, _parse_float(String(items[2])))
+        push!(variables, _get_variable_from_name(model, items[1]))
+        push!(weights, parse(Float64, items[2]))
     end
-    push!(data.sos_constraints, _SOSConstraint(order, weights, names))
+    sos_con = MOI.add_constraint(
+            model,
+            variables,
+            order == 1 ? MOI.SOS1(weights) : MOI.SOS2(weights),
+        )
+    MOI.set(model, MOI.ConstraintName(), sos_con, sos_con_name)
+    # TODO I think this only works for SOS of one line
     return
 end
 
 function _parse_variable_type!(
-    data::TempLPModel,
+    model::Model,
     line::AbstractString,
-    cat::Symbol,
+    set::MOI.AbstractSet,
 )
     items = _tokenize(line)
     for v in items
-        i = _get_variable_index!(data, v)
-        data.colcat[i] = cat
+        var = _get_variable_from_name(model, v)
+        MOI.add_constraint(model, var, set)
     end
+    return nothing
 end
 
 function _parse_section!(
     ::Type{Val{:none}},
-    data::TempLPModel,
+    model::Model,
+    data_cache::CacheLPModel,
     line::AbstractString,
 )
     return nothing
 end
 function _parse_section!(
     ::Type{Val{:quit}},
-    data::TempLPModel,
+    model::Model,
+    data_cache::CacheLPModel,
     line::AbstractString,
 )
     return error("Corrupted LP File. You have the lne $(line) after an end.")
 end
-function _parse_section!(::Type{Val{:integer}}, data, line)
-    return _parse_variable_type!(data, line, :Int)
+function _parse_section!(::Type{Val{:integer}}, model, data_cache, line)
+    return _parse_variable_type!(model, line, MOI.Integer())
 end
-function _parse_section!(::Type{Val{:binary}}, data, line)
-    return _parse_variable_type!(data, line, :Bin)
+function _parse_section!(::Type{Val{:binary}}, model, data_cache, line)
+    return _parse_variable_type!(model, line, MOI.ZeroOne())
 end
 
 function _parse_section!(
     ::Type{Val{:obj}},
-    data::TempLPModel,
+    model::Model,
+    data_cache::CacheLPModel,
     line::AbstractString,
 )
     # okay so line should be the start of the objective
@@ -587,68 +575,79 @@ function _parse_section!(
     end
     tokens = _tokenize(line)
     if length(tokens) == 0 # no objective
-        return
+        return MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
     end
-    v_idx, v_coeff = _parse_affine_terms!(data, tokens, "objective", line)
-    data.c[v_idx] = v_coeff
+    affine_terms = _parse_affine_terms!(model, data_cache, tokens, "objective", line)
+    push!(data_cache.objective_function.terms, affine_terms...)
     return
 end
 
 function _parse_section!(
     ::Type{Val{:constraints}},
-    data::TempLPModel,
+    model::Model,
+    data_cache::CacheLPModel,
     line::AbstractString,
 )
     if match(r" S([0-9]):: ", line) !== nothing
         # it's an SOS constraint
-        _parse_sos!(data, line)
+        _parse_sos!(model, line)
         return
     end
-    if data.open_constraint == false
-        push!(data.row_to_name, "R$(length(data.row_to_name) + 1)")
-        push!(data.row_lower, -Inf)
-        push!(data.row_upper, Inf)
+    if data_cache.linear_constraint_open == false
+        # parse the number of rows and add this name
+        data_cache.linear_constraint_name = "R$(data_cache.num_linear_constraints)"
     end
     if occursin(":", line)
-        if data.open_constraint == true
+        if data_cache.linear_constraint_open == true
             error("Malformed constraint $(line). Is the previous one valid?")
         end
         # throw away name
         m = match(r"(.*?)\:(.*)", line)
-        data.row_to_name[end] = String(m[1])
+        data_cache.linear_constraint_name = String(m[1])
         line = String(m[2])
     end
-    data.open_constraint = true
+    data_cache.linear_constraint_open = true
 
     tokens = _tokenize(line)
     if length(tokens) == 0 # no entries
         return
     elseif length(tokens) >= 2 && haskey(_CONSTRAINT_SENSE, tokens[end-1])# test if constraint ends this line
-        rhs = _parse_float(pop!(tokens))
+        rhs = parse(Float64, pop!(tokens))
         sym = pop!(tokens)
         if _CONSTRAINT_SENSE[sym] == :le
-            data.row_upper[end] = rhs
+            data_cache.linear_constraint_set = MOI.LessThan(rhs)
         elseif _CONSTRAINT_SENSE[sym] == :ge
-            data.row_lower[end] = rhs
+            data_cache.linear_constraint_set = MOI.GreaterThan(rhs)
         elseif _CONSTRAINT_SENSE[sym] == :eq
-            data.row_lower[end] = rhs
-            data.row_upper[end] = rhs
+            data_cache.linear_constraint_set = MOI.EqualTo(rhs)
         end
-        data.open_constraint = false # finished
+        # Finished
+        # Add constraint
+        c = MOI.add_constraint(
+            model, 
+            data_cache.linear_constraint_function, 
+            data_cache.linear_constraint_set
+        )
+        MOI.set(model, MOI.ConstraintName(), c, data_cache.linear_constraint_name)
+        data_cache.num_linear_constraints += 1
+        # Clear the constraint part of data_cache
+        data_cache.linear_constraint_set = MOI.EqualTo(0.0)
+        data_cache.linear_constraint_function = MOI.ScalarAffineFunction(
+            MOI.ScalarAffineTerm{Float64}[], 0.0
+        )
+        data_cache.linear_constraint_name = ""
+        data_cache.linear_constraint_open = false
     end
-    v_idx, v_coeff = _parse_affine_terms!(data, tokens, "constraint", line)
-    row = length(data.row_to_name)
-    push!(data.A, Tuple{Int,Float64}[])
-    for j in 1:length(v_idx)
-        push!(data.A[row], (v_idx[j], v_coeff[j]))
-    end
+    affine_terms = _parse_affine_terms!(model, data_cache, tokens, "constraint", line)
+    push!(data_cache.linear_constraint_function.terms, affine_terms...)
     return
 end
 
 _bound_error(line::AbstractString) = error("Unable to parse bound: $(line)")
 function _parse_section!(
     ::Type{Val{:bounds}},
-    data::TempLPModel,
+    model::Model,
+    data_cache::CacheLPModel,
     line::AbstractString,
 )
     items = _tokenize(line)
@@ -659,29 +658,29 @@ function _parse_section!(
         v = items[3]
         if (items[2] == "<=" || items[2] == "<") &&
            (items[4] == "<=" || items[4] == "<") # le
-            lb = _parse_float(items[1])
-            ub = _parse_float(items[5])
+            lb = _parse_float_from_bound(items[1])
+            ub = _parse_float_from_bound(items[5])
         elseif (items[2] == ">=" || items[2] == ">") &&
                (items[4] == ">=" || items[4] == ">") # ge
-            lb = _parse_float(items[5])
-            ub = _parse_float(items[1])
+            lb = _parse_float_from_bound(items[5])
+            ub = _parse_float_from_bound(items[1])
         else
             _bound_error(line)
         end
     elseif length(items) == 3 # one sided
         v = items[1]
         if items[2] == "<=" || items[2] == "<" # le
-            ub = _parse_float(items[3])
+            ub = _parse_float_from_bound(items[3])
             if ub > 0.0
                 lb = 0.0
             else
                 lb = -Inf
             end
         elseif items[2] == ">=" || items[2] == ">" # ge
-            lb = _parse_float(items[3])
+            lb = _parse_float_from_bound(items[3])
             ub = +Inf
         elseif items[2] == "==" || items[2] == "=" # eq
-            lb = ub = _parse_float(items[3])
+            lb = ub = _parse_float_from_bound(items[3])
         else
             _bound_error(line)
         end
@@ -693,14 +692,15 @@ function _parse_section!(
     else
         _bound_error(line)
     end
-    i = _get_variable_index!(data, v)
-    data.col_lower[i] = lb
-    data.col_upper[i] = ub
+    var = _get_variable_from_name(model, v)
+    set = bounds_to_set(lb, ub)
+    if set !== nothing
+        MOI.add_constraint(model, var, set)
+    end
     return
 end
 
-# Repeated from MPS
-function bounds_to_set(lower, upper)
+function bounds_to_set(lower::Float64, upper::Float64)
     if -Inf < lower < upper < Inf
         return MOI.Interval(lower, upper)
     elseif -Inf < lower && upper == Inf
@@ -713,88 +713,15 @@ function bounds_to_set(lower, upper)
     return  # free variable
 end
 
-# Very close from MPS
-function _add_variable(model::Model, data::TempLPModel, variable_map, i, name)
-    x = MOI.add_variable(model)
-    variable_map[name] = x
-    MOI.set(model, MOI.VariableName(), x, name)
-    set = bounds_to_set(data.col_lower[i], data.col_upper[i])
-    if set !== nothing
-        MOI.add_constraint(model, x, set)
-    end
-    if data.colcat[i] == :Int
-        MOI.add_constraint(model, x, MOI.Integer())
-    elseif data.colcat[i] == :Bin
-        MOI.add_constraint(model, x, MOI.ZeroOne())
-    end
-    return
-end
-
-# Very close from MPS
-function _add_objective(
+function _add_objective!(
     model::Model,
-    data::TempLPModel,
-    variable_map::Dict{String,MOI.VariableIndex},
+    data_cache::CacheLPModel,
 )
-    if data.sense == :Min
-        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    else
-        MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    end
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction(
-            [
-                MOI.ScalarAffineTerm(data.c[i], variable_map[v]) for
-                (i, v) in enumerate(data.col_to_name) if !iszero(data.c[i])
-            ],
-            data.objective_constant,
-        ),
+        data_cache.objective_function
     )
-    return
-end
-
-# Very close from MPS
-function _add_linear_constraint(
-    model::Model,
-    data::TempLPModel,
-    variable_map,
-    j,
-    c_name,
-    set,
-)
-    terms = MOI.ScalarAffineTerm{Float64}[
-        MOI.ScalarAffineTerm(coef, variable_map[data.col_to_name[i]]) for
-        (i, coef) in data.A[j]
-    ]
-    c = MOI.add_constraint(model, MOI.ScalarAffineFunction(terms, 0.0), set)
-    MOI.set(model, MOI.ConstraintName(), c, c_name)
-    return
-end
-
-# Very close from MPS
-function copy_to(model::Model, data::TempLPModel)
-    MOI.set(model, MOI.Name(), data.model_name)
-    variable_map = Dict{String,MOI.VariableIndex}()
-    for (i, name) in enumerate(data.col_to_name)
-        _add_variable(model, data, variable_map, i, name)
-    end
-    _add_objective(model, data, variable_map)
-    for (j, c_name) in enumerate(data.row_to_name)
-        set = bounds_to_set(data.row_lower[j], data.row_upper[j])
-        if set !== nothing
-            _add_linear_constraint(model, data, variable_map, j, c_name, set)
-        end
-        # `else` is a free constraint. Don't add it.
-    end
-    for sos in data.sos_constraints
-        MOI.add_constraint(
-            model,
-            MOI.VectorOfVariables([variable_map[x] for x in sos.columns]),
-            sos.type == 1 ? MOI.SOS1(sos.weights) : MOI.SOS2(sos.weights),
-        )
-    end
     return
 end
 
@@ -807,8 +734,7 @@ function Base.read!(io::IO, model::Model)
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
     end
-    options = get_options(model)
-    data = TempLPModel(options)
+    data_cache = CacheLPModel()
     section = Val{:none}
     while !eof(io)
         line = string(strip(readline(io)))
@@ -818,12 +744,12 @@ function Base.read!(io::IO, model::Model)
         end
         if haskey(_KEYWORDS, lowercase(line)) # section has changed
             section = _KEYWORDS[lowercase(line)]
-            _set_sense!(section, data, line)
+            _set_sense!(section, model, line)
             continue
         end
-        _parse_section!(section, data, line)
+        _parse_section!(section, model, data_cache, line)
     end
-    copy_to(model, data)
+    _add_objective!(model, data_cache)
     return
 end
 
