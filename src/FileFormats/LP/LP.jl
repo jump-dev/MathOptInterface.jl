@@ -407,10 +407,10 @@ function _get_variable_from_name(
 end
 
 function _tokenize(line::AbstractString)
-    return split(line, " "; keepempty = false)
+    return String.(split(line, " "; keepempty = false))
 end
 
-function _parse_float_from_bound(val::AbstractString)
+function _parse_float_from_bound(val::String)
     lower_case_val = lowercase(val)
     if lower_case_val == "-inf" || lower_case_val == "-infinity"
         return -Inf
@@ -424,8 +424,8 @@ end
 function _parse_affine_terms!(
     model::Model,
     data_cache::CacheLPModel,
-    tokens::Vector{SubString{String}},
-    section::AbstractString,
+    tokens::Vector{String},
+    section::String,
     line::AbstractString,
 )
     affine_terms = MOI.ScalarAffineTerm{Float64}[]
@@ -491,7 +491,7 @@ function _parse_affine_terms!(
     return affine_terms
 end
 
-function _parse_sos!(model::Model, line::AbstractString)
+function _parse_sos!(model::Model, data_cache::CacheLPModel, line::AbstractString)
     tokens = _tokenize(line)
     if length(tokens) < 3
         error(string("Malformed SOS constraint: ", line))
@@ -526,6 +526,7 @@ end
 
 function _parse_variable_type!(
     model::Model,
+    data_cache::CacheLPModel,
     line::AbstractString,
     set::MOI.AbstractSet,
 )
@@ -554,10 +555,10 @@ function _parse_section!(
     return error("Corrupted LP File. You have the lne $(line) after an end.")
 end
 function _parse_section!(::Type{Val{:integer}}, model, data_cache, line)
-    return _parse_variable_type!(model, line, MOI.Integer())
+    return _parse_variable_type!(model, data_cache, line, MOI.Integer())
 end
 function _parse_section!(::Type{Val{:binary}}, model, data_cache, line)
-    return _parse_variable_type!(model, line, MOI.ZeroOne())
+    return _parse_variable_type!(model, data_cache, line, MOI.ZeroOne())
 end
 
 function _parse_section!(
@@ -590,7 +591,7 @@ function _parse_section!(
 )
     if match(r" S([0-9]):: ", line) !== nothing
         # it's an SOS constraint
-        _parse_sos!(model, line)
+        _parse_sos!(model, data_cache, line)
         return
     end
     if data_cache.linear_constraint_open == false
