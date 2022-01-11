@@ -364,6 +364,7 @@ mutable struct CacheLPModel
     linear_constraint_open::Bool
     linear_constraint_name::String
     num_linear_constraints::Int
+    variables_in_model::Dict{String,MOI.VariableIndex}
     function CacheLPModel()
         return new(
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
@@ -372,6 +373,7 @@ mutable struct CacheLPModel
             false,
             "",
             0,
+            Dict{MOI.VariableIndex,String}(),
         )
     end
 end
@@ -381,31 +383,31 @@ function _set_sense!(::Type{Val{:obj}}, model::Model, line)
     return MOI.set(model, MOI.ObjectiveSense(), _SENSE_ALIAS[lowercase(line)])
 end
 
-function _add_new_variable!(model::Model, name::String)
+function _add_new_variable!(model::Model, data_cache::CacheLPModel, name)
     var = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), var, name)
+    data_cache.variables_in_model[name] = var
     return var
 end
 
-function _get_variable_from_name(model::Model, variable_name::String)
-    variables_inside_model = MOI.get(model, MOI.ListOfVariableIndices())
-    for var_inside_model in variables_inside_model
-        var_inside_model_name =
-            MOI.get(model, MOI.VariableName(), var_inside_model)
-        if var_inside_model_name == variable_name
-            return var_inside_model
-        end
+function _get_variable_from_name(
+    model::Model,
+    data_cache::CacheLPModel,
+    variable_name,
+)
+    var_inside_model = get(data_cache.variables_in_model, variable_name, "")
+    if var_inside_model != ""
+        return var_inside_model
     end
     options = get_options(model)
     if !_verify_name(variable_name, options.maximum_length)
         error("Invalid variable name $variable_name")
     end
-    return _add_new_variable!(model, variable_name)
+    return _add_new_variable!(model, data_cache, variable_name)
 end
 
 function _tokenize(line::AbstractString)
-    items = String.(split(line, " "))
-    return filter(!isequal(""), items)
+    return split(line, " "; keepempty = false)
 end
 
 function _parse_float_from_bound(val::AbstractString)
@@ -422,7 +424,7 @@ end
 function _parse_affine_terms!(
     model::Model,
     data_cache::CacheLPModel,
-    tokens::Vector{String},
+    tokens::Vector{SubString{String}},
     section::AbstractString,
     line::AbstractString,
 )
@@ -449,7 +451,7 @@ function _parse_affine_terms!(
             catch
             end
         end
-        var = _get_variable_from_name(model, variable)
+        var = _get_variable_from_name(model, data_cache, variable)
         if length(tokens) > 0
             coef_token = pop!(tokens)
         else
@@ -509,7 +511,7 @@ function _parse_sos!(model::Model, line::AbstractString)
         if length(items) != 2
             error(string("Invalid sequence: ", token))
         end
-        push!(variables, _get_variable_from_name(model, items[1]))
+        push!(variables, _get_variable_from_name(model, data_cache, items[1]))
         push!(weights, parse(Float64, items[2]))
     end
     sos_con = MOI.add_constraint(
@@ -529,7 +531,7 @@ function _parse_variable_type!(
 )
     items = _tokenize(line)
     for v in items
-        var = _get_variable_from_name(model, v)
+        var = _get_variable_from_name(model, data_cache, v)
         MOI.add_constraint(model, var, set)
     end
     return nothing
@@ -695,7 +697,7 @@ function _parse_section!(
     else
         _bound_error(line)
     end
-    var = _get_variable_from_name(model, v)
+    var = _get_variable_from_name(model, data_cache, v)
     set = bounds_to_set(lb, ub)
     if set !== nothing
         MOI.add_constraint(model, var, set)
