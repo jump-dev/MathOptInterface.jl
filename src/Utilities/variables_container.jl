@@ -179,12 +179,6 @@ function VariablesContainer{T}() where {T}
     return VariablesContainer{T}(UInt16[], T[], T[])
 end
 
-function MOI.throw_if_not_valid(b::VariablesContainer, index)
-    if !MOI.is_valid(b, index)
-        throw(MOI.InvalidIndex(index))
-    end
-end
-
 function Base.:(==)(a::VariablesContainer, b::VariablesContainer)
     return a.set_mask == b.set_mask && a.lower == b.lower && a.upper == b.upper
 end
