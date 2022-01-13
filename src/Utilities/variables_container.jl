@@ -424,7 +424,7 @@ function MOI.add_constraint(
     func::MOI.AbstractFunction,
     set::MOI.AbstractSet,
 )
-    throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}())
+    return throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}())
 end
 
 ###
