@@ -286,6 +286,7 @@ end
 #
 # ==============================================================================
 const _COMMENT_REG = r"(.*?)\\(.*)"
+const _READ_START_REG = r"^([\.0-9])"
 function _strip_comment(line::String)
     if occursin("\\", line)
         m = match(_COMMENT_REG, line)
@@ -346,12 +347,12 @@ function _verify_name(variable::String, maximum_length::Int)
     if length(variable) > maximum_length
         return false
     end
-    # m = match(START_REG, variable)
-    # if !isnothing(m)
-    #     return false
-    # end
+    m = match(_READ_START_REG, variable)
+    if !isnothing(m)
+        return false
+    end
     m = match(NAME_REG, variable)
-    if m !== nothing
+    if !isnothing(m)
         return false
     end
     return true
@@ -373,7 +374,7 @@ mutable struct CacheLPModel
             false,
             "",
             0,
-            Dict{MOI.VariableIndex,String}(),
+            Dict{String,MOI.VariableIndex}(),
         )
     end
 end
@@ -491,7 +492,11 @@ function _parse_affine_terms!(
     return affine_terms
 end
 
-function _parse_sos!(model::Model, data_cache::CacheLPModel, line::AbstractString)
+function _parse_sos!(
+    model::Model,
+    data_cache::CacheLPModel,
+    line::AbstractString,
+)
     tokens = _tokenize(line)
     if length(tokens) < 3
         error(string("Malformed SOS constraint: ", line))

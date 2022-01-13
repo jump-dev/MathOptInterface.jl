@@ -294,6 +294,69 @@ function test_read_corrupt()
     return nothing
 end
 
+function test_read_invalid_variable_name()
+    model = LP.Model()
+    @test_throws ErrorException MOI.read_from_file(
+        model,
+        joinpath(@__DIR__, "models", "invalid_variable_name.lp"),
+    )
+    return nothing
+end
+
+function test_read_invalid_affine_term_objective()
+    model = LP.Model()
+    @test_throws ErrorException MOI.read_from_file(
+        model,
+        joinpath(@__DIR__, "models", "invalid_affine_term_objective.lp"),
+    )
+    return nothing
+end
+
+function test_read_invalid_affine_term_constraint()
+    model = LP.Model()
+    @test_throws ErrorException MOI.read_from_file(
+        model,
+        joinpath(@__DIR__, "models", "invalid_affine_term_constraint.lp"),
+    )
+    return nothing
+end
+
+function test_read_invalid_sos_set()
+    model = LP.Model()
+    @test_throws ErrorException MOI.read_from_file(
+        model,
+        joinpath(@__DIR__, "models", "invalid_sos_set.lp"),
+    )
+    return nothing
+end
+
+function test_read_invalid_sos_constraint()
+    model = LP.Model()
+    @test_throws ErrorException MOI.read_from_file(
+        model,
+        joinpath(@__DIR__, "models", "invalid_sos_constraint.lp"),
+    )
+    return nothing
+end
+
+function test_read_invalid_bound()
+    model = LP.Model()
+    @test_throws ErrorException MOI.read_from_file(
+        model,
+        joinpath(@__DIR__, "models", "invalid_bound.lp"),
+    )
+    return nothing
+end
+
+function test_read_invalid_constraint()
+    model = LP.Model()
+    @test_throws ErrorException MOI.read_from_file(
+        model,
+        joinpath(@__DIR__, "models", "invalid_constraint.lp"),
+    )
+    return nothing
+end
+
 function test_read_model1()
     model = LP.Model()
     MOI.read_from_file(model, joinpath(@__DIR__, "models", "model1.lp"))
