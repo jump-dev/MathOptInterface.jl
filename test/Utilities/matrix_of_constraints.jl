@@ -55,7 +55,7 @@ function _new_VectorSets()
     return MOI.Utilities.GenericOptimizer{
         Int,
         MOI.Utilities.ObjectiveContainer{Int},
-        MOI.Utilities.VariablesContainer{Int},
+        MOI.Utilities.FreeVariables,
         MOI.Utilities.MatrixOfConstraints{
             Int,
             MOI.Utilities.MutableSparseMatrixCSC{
@@ -114,7 +114,9 @@ function test_VectorSets_basic()
         @test MOI.is_valid(src, k)
         @test MOI.is_valid(model, v)
     end
-    @test length(MOI.get(src, MOI.ListOfConstraintTypesPresent())) == 1
+    @test length(MOI.get(model, MOI.ListOfConstraintTypesPresent())) == 1
+    @test MOI.get(model, MOI.NumberOfVariables()) == 2
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == MOI.VariableIndex.(1:2)
     MOI.empty!(model)
     @test MOI.is_empty(model)
     return
