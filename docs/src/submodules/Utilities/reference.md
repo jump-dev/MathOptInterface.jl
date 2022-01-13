@@ -33,12 +33,31 @@ Utilities.UniversalFallback
 Utilities.@model
 Utilities.GenericModel
 Utilities.GenericOptimizer
+```
+
+### `.objective`
+
+```@docs
+Utilities.ObjectiveContainer
+```
+
+### `.variables`
+
+```@docs
+Utilities.VariablesContainer
+```
+
+### `.constraints`
+
+```@docs
+Utilities.VectorOfConstraints
+Utilities.StructOfConstraints
 Utilities.@struct_of_constraints_by_function_types
 Utilities.@struct_of_constraints_by_set_types
 Utilities.struct_of_constraint_code
 ```
 
-### Caching optimizer
+## Caching optimizer
 
 ```@docs
 Utilities.CachingOptimizer
@@ -49,7 +68,7 @@ Utilities.state
 Utilities.mode
 ```
 
-### Mock optimizer
+## Mock optimizer
 
 ```@docs
 Utilities.MockOptimizer
