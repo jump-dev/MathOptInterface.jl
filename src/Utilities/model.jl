@@ -343,11 +343,11 @@ end
 # Constraints
 
 function MOI.supports_constraint(
-    ::AbstractModel{T},
+    model::AbstractModel,
     ::Type{MOI.VariableIndex},
-    ::Type{<:SUPPORTED_VARIABLE_SCALAR_SETS{T}},
-) where {T}
-    return true
+    ::Type{S},
+) where {S<:MOI.AbstractScalarSet}
+    return MOI.supports_constraint(model.variables, MOI.VariableIndex, S)
 end
 function MOI.supports_constraint(
     model::AbstractModel,
@@ -358,10 +358,10 @@ function MOI.supports_constraint(
 end
 
 function MOI.add_constraint(
-    model::AbstractModel{T},
+    model::AbstractModel,
     f::MOI.VariableIndex,
-    s::SUPPORTED_VARIABLE_SCALAR_SETS{T},
-) where {T}
+    s::MOI.AbstractScalarSet,
+)
     return MOI.add_constraint(model.variables, f, s)
 end
 

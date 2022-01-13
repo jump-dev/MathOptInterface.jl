@@ -45,6 +45,7 @@ Utilities.ObjectiveContainer
 
 ```@docs
 Utilities.VariablesContainer
+Utilities.FreeVariables
 ```
 
 ### `.constraints`

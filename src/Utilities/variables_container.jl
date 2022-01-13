@@ -237,6 +237,14 @@ function MOI.get(b::VariablesContainer, ::MOI.NumberOfVariables)::Int64
     return sum(x != _DELETED_VARIABLE for x in b.set_mask)
 end
 
+function MOI.supports_constraint(
+    ::VariablesContainer{T},
+    ::Type{MOI.VariableIndex},
+    ::Type{<:SUPPORTED_VARIABLE_SCALAR_SETS{T}},
+) where {T}
+    return true
+end
+
 function MOI.add_constraint(
     b::VariablesContainer{T},
     f::MOI.VariableIndex,

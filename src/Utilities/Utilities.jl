@@ -61,6 +61,7 @@ include("variables.jl")
 
 include("objective_container.jl")
 include("variables_container.jl")
+include("free_variables.jl")
 include("vector_of_constraints.jl")
 include("struct_of_constraints.jl")
 include("model.jl")
