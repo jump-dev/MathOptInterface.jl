@@ -160,24 +160,41 @@ If ``\mathcal{C}_i`` is a vector set, the discussion remains valid with
 between ``y_i`` and the vector of scalar-valued quadratic functions.
 
 !!! note
-    For quadratic programs with only affine constraints, the optimality condition
-    ``\nabla_x L(x, y^\star) = 0`` can be simplified as follows:
+    For quadratic programs with only affine conic constraints,
     ```math
-    0 = \nabla_x L(x, y^\star) = Q_0x + a_0 - \sum_{i = 1}^m y_i^\star a_i
+    \begin{align*}
+    & \min_{x \in \mathbb{R}^n} & \frac{1}{2}x^TQ_0x + a_0^T x + b_0
+    \\
+    & \;\;\text{s.t.} & A_i x + b_i & \in \mathcal{C}_i & i = 1 \ldots m
+    \end{align*}
     ```
-    which gives
+    with cones ``\mathcal{C}_i \subseteq \mathbb{R}^{m_i}`` for ``i = 1 \ldots m``, consider the Lagrangian function
     ```math
-    Q_0x = \sum_{i = 1}^m y_i^\star a_i - a_0 .
+    L(x, y) = \frac{1}{2}x^TQ_0x + a_0^T x + b_0 - \sum_{i = 1}^m y_i^T (A_i x + b_i)
     ```
-    The Lagrangian function
+    Let ``z(y)`` denote ``\sum_{i = 1}^m A_i^T y_i - a_0``, the Lagrangian can be rewritten as
     ```math
-    L(x, y) = \frac{1}{2}x^TQ_0x + a_0^T x + b_0 - \sum_{i = 1}^m y_i (a_i^T x + b_i)
+    L(x, y) = \frac{1}{2}{x}^TQ_0x - z(y)^T x + b_0 - \sum_{i = 1}^m y_i b_i
     ```
-    can be rewritten as
+
+    The condition ``\nabla_x L(x, y) = 0`` can be simplified as follows:
     ```math
-    L(x, y) = \frac{1}{2}x^TQ_0x - (\sum_{i = 1}^m y_i a_i^T - a_0^T) x + b_0 - \sum_{i = 1}^m y_i (a_i^T x + b_i)
+    0 = \nabla_x L(x, y) = Q_0x + a_0 - \sum_{i = 1}^m y_i a_i
     ```
-    which, using the optimality condition ``\nabla_x L(x, y^\star) = 0``, can be simplified as
+    which gives ``Q_0x = z(y)``.
+    This allows to obtain that
     ```math
-    L(x, y) = -\frac{1}{2}x^TQ_0x + b_0 - \sum_{i = 1}^m y_i (a_i^T x + b_i)
+    \min_{x \in \R^n} L(x, y) = -\frac{1}{2}x^TQ_0x + b_0 - \sum_{i = 1}^m y_i b_i
+    ```
+    so the dual problem is
+    ```math
+    \max_{y \in \mathcal{C}_i^*} \min_{x \in \R^n} -\frac{1}{2}x^TQ_0x + b_0 - \sum_{i = 1}^m y_i b_i.
+    ```
+    If ``Q_0`` is invertible, we can eliminate ``x`` and obtain that
+    ```math
+    \min_{x \in \R^n} L(x, y) = -\frac{1}{2}z(y)^TQ_0^{-1}z(y) + b_0 - \sum_{i = 1}^m y_i b_i
+    ```
+    so the dual problem is
+    ```math
+    \max_{y \in \mathcal{C}_i^*} -\frac{1}{2}z(y)^TQ_0^{-1}z(y) + b_0 - \sum_{i = 1}^m y_i b_i
     ```
