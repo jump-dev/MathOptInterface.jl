@@ -129,7 +129,7 @@ Given a problem with quadratic functions:
 \begin{align*}
 & \min_{x \in \mathbb{R}^n} & \frac{1}{2}x^TQ_0x + a_0^T x + b_0
 \\
-& \;\;\text{s.t.} & \frac{1}{2}x^TQ_ix + a_i^T x + b_i & \in \mathcal{C}_i & i = 1 \ldots m
+& \;\;\text{s.t.} & \frac{1}{2}x^TQ_ix + a_i^T x + b_i & \in \mathcal{C}_i & i = 1 \ldots m.
 \end{align*}
 ```
 with cones ``\mathcal{C}_i \subseteq \mathbb{R}`` for ``i = 1 \ldots m``, consider the Lagrangian function
@@ -165,36 +165,36 @@ between ``y_i`` and the vector of scalar-valued quadratic functions.
     \begin{align*}
     & \min_{x \in \mathbb{R}^n} & \frac{1}{2}x^TQ_0x + a_0^T x + b_0
     \\
-    & \;\;\text{s.t.} & A_i x + b_i & \in \mathcal{C}_i & i = 1 \ldots m
+    & \;\;\text{s.t.} & A_i x + b_i & \in \mathcal{C}_i & i = 1 \ldots m.
     \end{align*}
     ```
-    with cones ``\mathcal{C}_i \subseteq \mathbb{R}^{m_i}`` for ``i = 1 \ldots m``, consider the Lagrangian function
+    with cones ``\mathcal{C}_i \subseteq \mathbb{R}^{m_i}`` for ``i = 1, \ldots, m``, consider the Lagrangian function
     ```math
-    L(x, y) = \frac{1}{2}x^TQ_0x + a_0^T x + b_0 - \sum_{i = 1}^m y_i^T (A_i x + b_i)
+    L(x, y) = \frac{1}{2}x^TQ_0x + a_0^T x + b_0 - \sum_{i = 1}^m y_i^T (A_i x + b_i).
     ```
     Let ``z(y)`` denote ``\sum_{i = 1}^m A_i^T y_i - a_0``, the Lagrangian can be rewritten as
     ```math
-    L(x, y) = \frac{1}{2}{x}^TQ_0x - z(y)^T x + b_0 - \sum_{i = 1}^m y_i b_i
+    L(x, y) = \frac{1}{2}{x}^TQ_0x - z(y)^T x + b_0 - \sum_{i = 1}^m y_i^T b_i.
     ```
 
-    The condition ``\nabla_x L(x, y) = 0`` can be simplified as follows:
+    The condition ``\nabla_x L(x, y) = 0`` gives
     ```math
-    0 = \nabla_x L(x, y) = Q_0x + a_0 - \sum_{i = 1}^m y_i a_i
+    0 = \nabla_x L(x, y) = Q_0x + a_0 - \sum_{i = 1}^m y_i^T b_i
     ```
     which gives ``Q_0x = z(y)``.
     This allows to obtain that
     ```math
-    \min_{x \in \R^n} L(x, y) = -\frac{1}{2}x^TQ_0x + b_0 - \sum_{i = 1}^m y_i b_i
+    \min_{x \in \mathbb{R}^n} L(x, y) = -\frac{1}{2}x^TQ_0x + b_0 - \sum_{i = 1}^m y_i^T b_i
     ```
     so the dual problem is
     ```math
-    \max_{y \in \mathcal{C}_i^*} \min_{x \in \R^n} -\frac{1}{2}x^TQ_0x + b_0 - \sum_{i = 1}^m y_i b_i.
+    \max_{y_i \in \mathcal{C}_i^*} \min_{x \in \mathbb{R}^n} -\frac{1}{2}x^TQ_0x + b_0 - \sum_{i = 1}^m y_i^T b_i.
     ```
-    If ``Q_0`` is invertible, we can eliminate ``x`` and obtain that
+    If ``Q_0`` is invertible, we have ``x = Q_0^{-1}z(y)`` hence
     ```math
-    \min_{x \in \R^n} L(x, y) = -\frac{1}{2}z(y)^TQ_0^{-1}z(y) + b_0 - \sum_{i = 1}^m y_i b_i
+    \min_{x \in \mathbb{R}^n} L(x, y) = -\frac{1}{2}z(y)^TQ_0^{-1}z(y) + b_0 - \sum_{i = 1}^m y_i^T b_i
     ```
     so the dual problem is
     ```math
-    \max_{y \in \mathcal{C}_i^*} -\frac{1}{2}z(y)^TQ_0^{-1}z(y) + b_0 - \sum_{i = 1}^m y_i b_i
+    \max_{y_i \in \mathcal{C}_i^*} -\frac{1}{2}z(y)^TQ_0^{-1}z(y) + b_0 - \sum_{i = 1}^m y_i^T b_i.
     ```
