@@ -73,7 +73,8 @@ function test_Vectorization_operate_vcat()
         b = zero(T)
         c = 2a
         x = [b, c]
-        @test MOI.Utilities.promote_operation(vcat, T, T, Vector{T}, T) == Vector{T}
+        @test MOI.Utilities.promote_operation(vcat, T, T, Vector{T}, T) ==
+              Vector{T}
         @test MOI.Utilities.operate(vcat, T, a, x, b) == vcat(a, x, b)
         @test MOI.Utilities.promote_operation(vcat, T, T) == Vector{T}
         @test MOI.Utilities.operate(vcat, T, a) == [a]
