@@ -162,6 +162,27 @@ function MOI.set(
     return
 end
 
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::VectorizeBridge,
+    value,
+)
+    MOI.set(model, attr, bridge.vector_constraint, [value - bridge.set_constant])
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDualStart,
+    bridge::VectorizeBridge,
+    value,
+)
+    MOI.set(model, attr, bridge.vector_constraint, [value])
+    return
+end
+
+
 function MOIB.bridged_function(bridge::VectorizeBridge{T}) where {T}
     return MOIU.operate(+, T, bridge.variable, bridge.set_constant)
 end

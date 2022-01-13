@@ -121,6 +121,16 @@ function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintPrimalStart,
     bridge::VectorizeBridge,
+    ::Nothing,
+)
+    MOI.set(model, attr, ci.vector_constraint, nothing)
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::VectorizeBridge,
     value,
 )
     MOI.set(

@@ -72,6 +72,34 @@ function MOI.get(
     return zero(T)
 end
 
+function MOI.supports(
+    model::MOI.ModelLike,
+    attr::MOI.VariablePrimalStart,
+    ::Type{<:ZerosBridge},
+)
+    return true
+end
+
+function MOI.set(
+    ::MOI.ModelLike,
+    ::MOI.VariablePrimalStart,
+    ::ZerosBridge,
+    value,
+    ::MOIB.IndexInVector,
+)
+    return # Starting values are ignored
+end
+
+function MOI.set(
+    ::MOI.ModelLike,
+    ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    ::ZerosBridge,
+    value,
+)
+    return # Starting values are ignored
+end
+
+
 function MOIB.bridged_function(::ZerosBridge{T}, ::MOIB.IndexInVector) where {T}
     return zero(MOI.ScalarAffineFunction{T})
 end
