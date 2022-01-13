@@ -15,6 +15,22 @@
 # vector, it readily gives the entries of `model.constrmap` that need to be
 # updated.
 
+"""
+    mutable struct VectorOfConstraints{
+        F<:MOI.AbstractFunction,
+        S<:MOI.AbstractSet,
+    } <: MOI.ModelLike
+        constraints::CleverDicts.CleverDict{
+            MOI.ConstraintIndex{F,S},
+            Tuple{F,S},
+            typeof(CleverDicts.key_to_index),
+            typeof(CleverDicts.index_to_key),
+        }
+    end
+
+A struct storing `F`-in-`S` constraints as a mapping between the constraint
+indices to the corresponding tuple of function and set.
+"""
 mutable struct VectorOfConstraints{
     F<:MOI.AbstractFunction,
     S<:MOI.AbstractSet,

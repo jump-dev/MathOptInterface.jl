@@ -1,3 +1,12 @@
+"""
+    abstract type StructOfConstraints <: MOI.ModelLike end
+
+A struct storing a subfields other structs storing constraints of different
+types.
+
+See [`Utilities.@struct_of_constraints_by_function_types`](@ref)
+and [`Utilities.@struct_of_constraints_by_set_types`](@ref).
+"""
 abstract type StructOfConstraints <: MOI.ModelLike end
 
 function _add_variable(model::StructOfConstraints)
