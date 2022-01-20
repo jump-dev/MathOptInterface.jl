@@ -2939,6 +2939,24 @@ function promote_operation(::typeof(vcat), ::Type{T}, ::Type{T}...) where {T}
     return Vector{T}
 end
 
+# TODO Remove `<:Number` when we drop Julia v1.1.1, otherwise it gives a `StackOverflowError`
+function promote_operation(
+    ::typeof(vcat),
+    ::Type{T},
+    ::Union{Type{T},Type{<:AbstractVector{T}}}...,
+) where {T<:Number}
+    return Vector{T}
+end
+
+# TODO Remove `<:Number` when we drop Julia v1.1.1, it's needed for disambiguation
+function operate(
+    ::typeof(vcat),
+    ::Type{T},
+    funcs::Union{T,AbstractVector{T}}...,
+) where {T<:Number}
+    return vcat(funcs...)
+end
+
 function promote_operation(
     ::typeof(vcat),
     ::Type{T},

@@ -68,6 +68,19 @@ function test_Vectorization_vectorize()
 end
 
 function test_Vectorization_operate_vcat()
+    for T in [Int, Float64]
+        a = one(T)
+        b = zero(T)
+        c = 2a
+        x = [b, c]
+        @test MOI.Utilities.promote_operation(vcat, T, T, Vector{T}, T) ==
+              Vector{T}
+        @test MOI.Utilities.operate(vcat, T, a, x, b) == vcat(a, x, b)
+        @test MOI.Utilities.promote_operation(vcat, T, T) == Vector{T}
+        @test MOI.Utilities.operate(vcat, T, a) == [a]
+        @test MOI.Utilities.promote_operation(vcat, T, Vector{T}) == Vector{T}
+        @test MOI.Utilities.operate(vcat, T, x) == x
+    end
     g = MOI.VectorAffineFunction(
         MOI.VectorAffineTerm.([3, 1], MOI.ScalarAffineTerm.([5, 2], [y, x])),
         [3, 1, 4],
