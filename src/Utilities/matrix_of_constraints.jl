@@ -413,16 +413,19 @@ function _load_constants(
     set::MOI.AbstractScalarSet,
 )
     MOI.throw_if_scalar_and_constant_not_zero(func, typeof(set))
-    return load_constants(constants, offset, set)
+    load_constants(constants, offset, set)
+    return
 end
 
 function _load_constants(
     constants,
     offset,
     func::MOI.AbstractVectorFunction,
-    ::MOI.AbstractVectorSet,
+    set::MOI.AbstractVectorSet,
 )
-    return load_constants(constants, offset, func)
+    load_constants(constants, offset, func)
+    load_constants(constants, offset, set)
+    return
 end
 
 function _load_constraints(
@@ -521,6 +524,22 @@ function load_constants(
 ) where {T}
     copyto!(b, offset + 1, func.constants)
     return
+end
+
+load_constants(::Vector, ::Any, ::MOI.AbstractVectorSet) = nothing
+
+function load_constants(::Vector, ::Any, ::MOI.PowerCone)
+    return error(
+        "PowerCone cannot be used with `Vector` as the set type in " *
+        "MatrixOfConstraints",
+    )
+end
+
+function load_constants(::Vector, ::Any, ::MOI.DualPowerCone)
+    return error(
+        "DualPowerCone cannot be used with `Vector` as the set type in " *
+        "MatrixOfConstraints",
+    )
 end
 
 function_constants(b::Vector, rows) = b[rows]
