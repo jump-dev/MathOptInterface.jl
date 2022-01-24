@@ -528,16 +528,13 @@ end
 
 load_constants(::Vector, ::Any, ::MOI.AbstractVectorSet) = nothing
 
-function load_constants(::Vector, ::Any, ::MOI.PowerCone)
+function load_constants(
+    ::Vector,
+    ::Any,
+    S::Union{MOI.PowerCone,MOI.DualPowerCone},
+)
     return error(
-        "PowerCone cannot be used with `Vector` as the set type in " *
-        "MatrixOfConstraints",
-    )
-end
-
-function load_constants(::Vector, ::Any, ::MOI.DualPowerCone)
-    return error(
-        "DualPowerCone cannot be used with `Vector` as the set type in " *
+        "`$(typeof(S))` cannot be used with `Vector` as the set type in " *
         "MatrixOfConstraints",
     )
 end

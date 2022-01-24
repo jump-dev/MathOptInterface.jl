@@ -443,6 +443,148 @@ function test_matrix_sets(::Type{T} = Int) where {T}
     return
 end
 
+MOI.Utilities.@product_of_sets(
+    PowerSets,
+    MOI.PowerCone{T},
+    MOI.DualPowerCone{T},
+)
+
+function test_power_cone_error()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(model, 3)
+    f = MOI.Utilities.operate(vcat, Float64, 1.0 .* x...)
+    s = MOI.PowerCone(0.2)
+    MOI.add_constraint(model, f, s)
+    cache = MOI.Utilities.GenericOptimizer{
+        Float64,
+        MOI.Utilities.ObjectiveContainer{Float64},
+        MOI.Utilities.VariablesContainer{Float64},
+        MOI.Utilities.MatrixOfConstraints{
+            Float64,
+            MOI.Utilities.MutableSparseMatrixCSC{
+                Float64,
+                Int,
+                MOI.Utilities.OneBasedIndexing,
+            },
+            Vector{Float64},
+            PowerSets{Float64},
+        },
+    }()
+    @test_throws(
+        ErrorException(
+            "`$(typeof(s))` cannot be used with `Vector` as the set type in " *
+            "MatrixOfConstraints",
+        ),
+        MOI.copy_to(cache, model),
+    )
+    return
+end
+
+function test_dual_power_cone_error()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(model, 3)
+    f = MOI.Utilities.operate(vcat, Float64, 1.0 .* x...)
+    s = MOI.DualPowerCone(0.2)
+    MOI.add_constraint(model, f, s)
+    cache = MOI.Utilities.GenericOptimizer{
+        Float64,
+        MOI.Utilities.ObjectiveContainer{Float64},
+        MOI.Utilities.VariablesContainer{Float64},
+        MOI.Utilities.MatrixOfConstraints{
+            Float64,
+            MOI.Utilities.MutableSparseMatrixCSC{
+                Float64,
+                Int,
+                MOI.Utilities.OneBasedIndexing,
+            },
+            Vector{Float64},
+            PowerSets{Float64},
+        },
+    }()
+    @test_throws(
+        ErrorException(
+            "`$(typeof(s))` cannot be used with `Vector` as the set type in " *
+            "MatrixOfConstraints",
+        ),
+        MOI.copy_to(cache, model),
+    )
+    return
+end
+
+struct _SetConstants{T}
+    b::Vector{T}
+    power_coefficients::Dict{Int,T}
+    _SetConstants{T}() where {T} = new{T}(T[], Dict{Int,T}())
+end
+
+function Base.empty!(x::_SetConstants)
+    empty!(x.b)
+    empty!(x.power_coefficients)
+    return x
+end
+
+Base.resize!(x::_SetConstants, n) = resize!(x.b, n)
+
+function MOI.Utilities.load_constants(x::_SetConstants, offset, f)
+    MOI.Utilities.load_constants(x.b, offset, f)
+    return
+end
+
+function MOI.Utilities.load_constants(
+    x::_SetConstants{T},
+    offset,
+    set::Union{MOI.PowerCone{T},MOI.DualPowerCone{T}},
+) where {T}
+    x.power_coefficients[offset+1] = set.exponent
+    return
+end
+
+function MOI.Utilities.function_constants(x::_SetConstants, rows)
+    return MOI.Utilities.function_constants(x.b, rows)
+end
+
+function MOI.Utilities.set_from_constants(x::_SetConstants, S, rows)
+    return MOI.Utilities.set_from_constants(x.b, S, rows)
+end
+
+function MOI.Utilities.set_from_constants(
+    x::_SetConstants{T},
+    ::Type{S},
+    rows,
+) where {T,S<:Union{MOI.PowerCone{T},MOI.DualPowerCone{T}}}
+    @assert length(rows) == 3
+    return S(x.power_coefficients[first(rows)])
+end
+
+function test_dual_power_cone()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(model, 3)
+    f = MOI.Utilities.operate(vcat, Float64, 1.0 .* x...)
+    p_cone = MOI.PowerCone(0.1)
+    p_ref = MOI.add_constraint(model, f, p_cone)
+    d_cone = MOI.DualPowerCone(0.2)
+    d_ref = MOI.add_constraint(model, f, d_cone)
+    cache = MOI.Utilities.GenericOptimizer{
+        Float64,
+        MOI.Utilities.ObjectiveContainer{Float64},
+        MOI.Utilities.VariablesContainer{Float64},
+        MOI.Utilities.MatrixOfConstraints{
+            Float64,
+            MOI.Utilities.MutableSparseMatrixCSC{
+                Float64,
+                Int,
+                MOI.Utilities.OneBasedIndexing,
+            },
+            _SetConstants{Float64},
+            PowerSets{Float64},
+        },
+    }()
+    map = MOI.copy_to(cache, model)
+    @test MOI.get(cache, MOI.ConstraintSet(), map[p_ref]) == p_cone
+    @test MOI.get(cache, MOI.ConstraintSet(), map[d_ref]) == d_cone
+    return
+end
+
 end
 
 TestMatrixOfConstraints.runtests()
