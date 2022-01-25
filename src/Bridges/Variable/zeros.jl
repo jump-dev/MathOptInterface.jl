@@ -99,7 +99,6 @@ function MOI.set(
     return # Starting values are ignored
 end
 
-
 function MOIB.bridged_function(::ZerosBridge{T}, ::MOIB.IndexInVector) where {T}
     return zero(MOI.ScalarAffineFunction{T})
 end
