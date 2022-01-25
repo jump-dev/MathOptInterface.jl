@@ -85,7 +85,7 @@ struct Config{T<:Real}
     Config(; kwargs...) = Config{Float64}(; kwargs...)
 end
 
-@deprecate TestConfig Config
+@deprecate TestConfig Config false
 
 """
     @moitestset setname subsets

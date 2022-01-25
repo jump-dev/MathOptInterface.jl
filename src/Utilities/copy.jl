@@ -1,8 +1,8 @@
 # This file contains default implementations for the `MOI.copy_to` function that
 # can be used by a model.
 
-@deprecate automatic_copy_to default_copy_to
-@deprecate supports_default_copy_to MOI.supports_incremental_interface
+@deprecate automatic_copy_to default_copy_to false
+@deprecate supports_default_copy_to MOI.supports_incremental_interface false
 
 include("copy/index_map.jl")
 
