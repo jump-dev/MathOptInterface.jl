@@ -187,7 +187,6 @@ function MOI.set(
     return
 end
 
-
 function MOIB.bridged_function(bridge::VectorizeBridge{T}) where {T}
     return MOIU.operate(+, T, bridge.variable, bridge.set_constant)
 end
