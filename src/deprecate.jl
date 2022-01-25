@@ -84,9 +84,14 @@ function SingleVariable(x::VariableIndex)
     return x
 end
 
-@deprecate(SingleVariableConstraintNameError, VariableIndexConstraintNameError)
+@deprecate(
+    SingleVariableConstraintNameError,
+    VariableIndexConstraintNameError,
+    false,
+)
 
 @deprecate(
     SettingSingleVariableFunctionNotAllowed,
     SettingVariableIndexNotAllowed,
+    false,
 )
