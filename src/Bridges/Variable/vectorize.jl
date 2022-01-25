@@ -169,9 +169,9 @@ function MOI.set(
     value,
 )
     MOI.set(
-        model, 
-        attr, 
-        bridge.vector_constraint, 
+        model,
+        attr,
+        bridge.vector_constraint,
         [value - bridge.set_constant],
     )
     return
