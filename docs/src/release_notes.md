@@ -1,5 +1,21 @@
 # Release notes
 
+## v0.10.8 (February 3, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.8).
+
+### New features
+
+ - Added a `Base.read!` for `FileFormats.LP`.
+ 
+### Bug fixes
+
+ - Fixed a bug in `MutableSparseMatrix`
+ - Fixed a bug when calling `operate!(vcat, ...)` with `Number` arguments
+ - Removed unintended export of deprecated symbols
+ - Fixed a bug with `PowerCone` and `DualPowerCone` in `MatrixOfConstraints`.
+
 ## v0.10.7 (January 5, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
