@@ -8,6 +8,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 ### New features
 
  - Added a `Base.read!` for `FileFormats.LP`.
+ 
 ### Bug fixes
 
  - Fixed a bug in `MutableSparseMatrix`
