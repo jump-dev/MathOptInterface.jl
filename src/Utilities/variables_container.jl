@@ -179,12 +179,6 @@ function VariablesContainer{T}() where {T}
     return VariablesContainer{T}(UInt16[], T[], T[])
 end
 
-function MOI.throw_if_not_valid(b::VariablesContainer, index)
-    if !MOI.is_valid(b, index)
-        throw(MOI.InvalidIndex(index))
-    end
-end
-
 function Base.:(==)(a::VariablesContainer, b::VariablesContainer)
     return a.set_mask == b.set_mask && a.lower == b.lower && a.upper == b.upper
 end
@@ -237,11 +231,19 @@ function MOI.get(b::VariablesContainer, ::MOI.NumberOfVariables)::Int64
     return sum(x != _DELETED_VARIABLE for x in b.set_mask)
 end
 
+function MOI.supports_constraint(
+    ::VariablesContainer{T},
+    ::Type{MOI.VariableIndex},
+    ::Type{<:SUPPORTED_VARIABLE_SCALAR_SETS{T}},
+) where {T}
+    return true
+end
+
 function MOI.add_constraint(
     b::VariablesContainer{T},
     f::MOI.VariableIndex,
     set::S,
-) where {T,S}
+) where {T,S<:SUPPORTED_VARIABLE_SCALAR_SETS}
     flag = _single_variable_flag(S)
     mask = b.set_mask[f.value]
     _throw_if_lower_bound_set(f, S, mask, T)
@@ -306,15 +308,6 @@ function MOI.set(
     return throw(MOI.SettingVariableIndexNotAllowed())
 end
 
-function MOI.set(
-    ::VariablesContainer,
-    ::MOI.ConstraintFunction,
-    ci::MOI.ConstraintIndex,
-    func,
-)
-    return throw(MOI.FunctionTypeMismatch{MOI.func_type(ci),typeof(func)}())
-end
-
 function MOI.get(
     model::VariablesContainer,
     ::MOI.ConstraintSet,
@@ -339,15 +332,6 @@ function MOI.set(
         model.upper[ci.value] = _upper_bound(set)
     end
     return
-end
-
-function MOI.set(
-    ::VariablesContainer,
-    ::MOI.ConstraintSet,
-    ci::MOI.ConstraintIndex{MOI.VariableIndex},
-    set,
-)
-    return throw(MOI.SetTypeMismatch{MOI.set_type(ci),typeof(set)}())
 end
 
 function MOI.get(
@@ -398,6 +382,49 @@ function MOI.get(
         end
     end
     return list
+end
+
+# These `MOI.ModelLike` fallbacks have to be redefined here as
+# `VariablesContainer` is not a subtype of `MOI.ModelLike`
+
+function MOI.throw_if_not_valid(b::VariablesContainer, index)
+    if !MOI.is_valid(b, index)
+        throw(MOI.InvalidIndex(index))
+    end
+end
+
+function MOI.set(
+    ::VariablesContainer,
+    ::MOI.ConstraintFunction,
+    ci::MOI.ConstraintIndex,
+    func,
+)
+    return throw(MOI.FunctionTypeMismatch{MOI.func_type(ci),typeof(func)}())
+end
+
+function MOI.set(
+    ::VariablesContainer,
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex},
+    set,
+)
+    return throw(MOI.SetTypeMismatch{MOI.set_type(ci),typeof(set)}())
+end
+
+function MOI.supports_constraint(
+    ::VariablesContainer,
+    ::Type{<:MOI.AbstractFunction},
+    ::Type{<:MOI.AbstractSet},
+)
+    return false
+end
+
+function MOI.add_constraint(
+    ::VariablesContainer,
+    func::MOI.AbstractFunction,
+    set::MOI.AbstractSet,
+)
+    return throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}())
 end
 
 ###
