@@ -297,11 +297,11 @@ end
 
 function _to_string(options::_PrintOptions{MIME"text/latex"}, set::MOI.Interval)
     return string(
-        "\\in \\[",
+        "\\in [",
         _shorten(options, set.lower),
         ", ",
         _shorten(options, set.upper),
-        "\\]",
+        "]",
     )
 end
 

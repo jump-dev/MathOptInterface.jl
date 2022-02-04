@@ -199,7 +199,7 @@ end
 function test_Interval()
     s = MOI.Interval(1.2, 1.3)
     @test MOIU._to_string(PLAIN, s) == "$(IN) [1.2, 1.3]"
-    @test MOIU._to_string(LATEX, s) == "\\in \\[1.2, 1.3\\]"
+    @test MOIU._to_string(LATEX, s) == "\\in [1.2, 1.3]"
 end
 
 function test_ZeroOne()
@@ -384,7 +384,7 @@ function test_latex()
          & \text{ScalarAffineFunction{Float64}-in-GreaterThan{Float64}} \\
          & 0.0 + 2.0 x \ge 1.0 \\
          & \text{ScalarAffineFunction{Float64}-in-Interval{Float64}} \\
-         & 0.0 + 2.0 x \in \[1.0, 2.0\] \\
+         & 0.0 + 2.0 x \in [1.0, 2.0] \\
          & \text{ScalarQuadraticFunction{Float64}-in-LessThan{Float64}} \\
          & 0.0 + 1.0 y - 1.0 z + 2.0 x^2 \le 1.0 \\
          & \text{VectorOfVariables-in-SecondOrderCone} \\
@@ -457,7 +457,7 @@ function test_latex_simplified()
         \text{Subject to}\\
          & x - y = 0 \\
          & 2 x \ge 1 \\
-         & 2 x \in \[1, 2\] \\
+         & 2 x \in [1, 2] \\
          & y - z + 2 x^2 \le 1 \\
          & \begin{bmatrix}
         x\\
