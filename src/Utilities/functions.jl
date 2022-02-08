@@ -2193,8 +2193,15 @@ function operate(
     return operate!(op, T, copy(f), g)
 end
 
-function Base.:+(args::VectorLike{T}...) where {T}
-    return operate(+, T, args...)
+function Base.:+(arg::VectorLike, args::VectorLike...)
+    T = _eltype(arg, args)
+    if T === nothing
+        error(
+            "Cannot add VectorOfVariables together without a coefficient " *
+            "type. Convert one argument to a VectorAffineFunction first.",
+        )
+    end
+    return operate(+, T, arg, args...)
 end
 
 # Base.:+(α::Vector{T}, f::VectorLike{T}...) is too general as it also covers
@@ -2207,8 +2214,15 @@ function Base.:+(f::VectorLike{T}, α::Vector{T}) where {T}
     return operate(+, T, f, α)
 end
 
-function Base.:-(args::VectorLike{T}...) where {T}
-    return operate(-, T, args...)
+function Base.:-(arg::VectorLike, args::VectorLike...)
+    T = _eltype(arg, args)
+    if T === nothing
+        error(
+            "Cannot subtract VectorOfVariables without a coefficient " *
+            "type. Convert one argument to a VectorAffineFunction first.",
+        )
+    end
+    return operate(-, T, arg, args...)
 end
 
 function Base.:-(f::VectorLike{T}, α::Vector{T}) where {T}
