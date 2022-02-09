@@ -40,6 +40,23 @@ struct GeoMeanBridge{T,F,G,H} <: AbstractBridge
         Nothing,
         MOI.ConstraintIndex{H,MOI.Nonnegatives},
     }
+    # We use an internal constructor here so that users cannot pass
+    # GeoMeanBridge(args..., nothing) can cause a `H not defined` error.
+    function GeoMeanBridge{T,F,G,H}(
+        d,
+        xij,
+        t_upper_bound_constraint,
+        rsoc,
+        x_nonnegative_constraint,
+    ) where {T,F,G,H}
+        return new{T,F,G,H}(
+            d,
+            xij,
+            t_upper_bound_constraint,
+            rsoc,
+            x_nonnegative_constraint,
+        )
+    end
 end
 
 _ilog2(n, i = 0) = n <= (1 << i) ? i : _ilog2(n, i + 1)
