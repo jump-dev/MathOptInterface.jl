@@ -79,10 +79,7 @@ mutable struct CachingOptimizer{O,M<:MOI.ModelLike} <: MOI.AbstractOptimizer
     # as the model_cache. model_to_optimizer_map maps from the model_cache
     # indices to the optimizer indices.
 
-    function CachingOptimizer(
-        cache::MOI.ModelLike,
-        mode::CachingOptimizerMode,
-    )
+    function CachingOptimizer(cache::MOI.ModelLike, mode::CachingOptimizerMode)
         return new{MOI.AbstractOptimizer,typeof(cache)}(
             nothing,
             cache,
