@@ -65,15 +65,32 @@ function MA.promote_operation(
     return F
 end
 
-# To avoid type piracy, we add at least one `ScalarLike` outside of the `...`.
 const PROMOTE_IMPLEMENTED_OP = Union{typeof(+),typeof(-),typeof(*),typeof(/)}
+
 function MA.promote_operation(
     op::PROMOTE_IMPLEMENTED_OP,
-    F::Type{<:ScalarLike{T}},
-    G::Type{<:ScalarLike{T}},
+    F::Type{<:TypedScalarLike{T}},
+    G::Type{MOI.VariableIndex},
 ) where {T}
     return promote_operation(op, T, F, G)
 end
+
+function MA.promote_operation(
+    op::PROMOTE_IMPLEMENTED_OP,
+    F::Type{MOI.VariableIndex},
+    G::Type{<:TypedScalarLike{T}},
+) where {T}
+    return promote_operation(op, T, F, G)
+end
+
+function MA.promote_operation(
+    op::PROMOTE_IMPLEMENTED_OP,
+    F::Type{<:TypedScalarLike{T}},
+    G::Type{<:TypedScalarLike{T}},
+) where {T}
+    return promote_operation(op, T, F, G)
+end
+
 function MA.promote_operation(
     op::PROMOTE_IMPLEMENTED_OP,
     F::Type{T},
