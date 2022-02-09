@@ -1732,7 +1732,6 @@ function operate(
     return operate!(op, T, copy(f), g)
 end
 
-
 _eltype(args::Tuple) = _eltype(first(args), Base.tail(args))
 _eltype(::Tuple{}) = nothing
 _eltype(::MOI.Utilities.TypedScalarLike{T}, tail) where {T} = T
@@ -2411,11 +2410,7 @@ end
 
 Base.:*(f::MOI.AbstractFunction) = f
 
-function Base.:*(
-    f::ScalarLike,
-    g::ScalarLike,
-    args::ScalarLike...,
-)
+function Base.:*(f::ScalarLike, g::ScalarLike, args::ScalarLike...)
     T = _eltype(f, (g, args...))
     if T === nothing
         error(
