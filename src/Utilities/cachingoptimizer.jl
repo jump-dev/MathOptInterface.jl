@@ -9,21 +9,52 @@
 @enum CachingOptimizerState NO_OPTIMIZER EMPTY_OPTIMIZER ATTACHED_OPTIMIZER
 @enum CachingOptimizerMode MANUAL AUTOMATIC
 
-# TODO: Benchmark to check if CachingOptimizer should be parameterized on the ModelLike type.
-
 """
     CachingOptimizer
 
-`CachingOptimizer` is an intermediate layer that stores a cache of the model
-and links it with an optimizer. It supports incremental model
-construction and modification even when the optimizer doesn't.
+`CachingOptimizer` is an intermediate layer that stores a cache of the model and
+links it with an optimizer. It supports incremental model construction and
+modification even when the optimizer doesn't.
 
-A `CachingOptimizer` may be in one of three possible states (`CachingOptimizerState`):
+## Constructors
+
+```julia
+    CachingOptimizer(cache::MOI.ModelLike, optimizer::AbstractOptimizer)
+```
+
+Creates a `CachingOptimizer` in `AUTOMATIC` mode, with the optimizer
+`optimizer`.
+
+The type of the optimizer returned is
+`CachingOptimizer{typeof(optimizer), typeof(cache)}` so it does not support the
+function `reset_optimizer(::CachingOptimizer, new_optimizer)` if the type of
+`new_optimizer` is different from the type of `optimizer`.
+
+```julia
+    CachingOptimizer(cache::MOI.ModelLike, mode::CachingOptimizerMode)
+```
+
+Creates a `CachingOptimizer` in the `NO_OPTIMIZER` state and mode `mode`.
+
+The type of the optimizer returned is
+`CachingOptimizer{MOI.AbstractOptimizer,typeof(cache)}` so it _does_ support the
+function `reset_optimizer(::CachingOptimizer, new_optimizer)` if the type of
+`new_optimizer` is different from the type of `optimizer`.
+
+## About the type
+
+### States
+
+A `CachingOptimizer` may be in one of three possible states
+(`CachingOptimizerState`):
 
 * `NO_OPTIMIZER`: The CachingOptimizer does not have any optimizer.
 * `EMPTY_OPTIMIZER`: The CachingOptimizer has an empty optimizer.
   The optimizer is not synchronized with the cached model.
-* `ATTACHED_OPTIMIZER`: The CachingOptimizer has an optimizer, and it is synchronized with the cached model.
+* `ATTACHED_OPTIMIZER`: The CachingOptimizer has an optimizer, and it is
+  synchronized with the cached model.
+
+### modes
 
 A `CachingOptimizer` has two modes of operation (`CachingOptimizerMode`):
 
@@ -37,31 +68,42 @@ A `CachingOptimizer` has two modes of operation (`CachingOptimizerMode`):
   perform a modification not supported by the optimizer results in a drop to
   `EMPTY_OPTIMIZER` mode.
 """
-mutable struct CachingOptimizer{OptimizerType,ModelType<:MOI.ModelLike} <:
-               MOI.AbstractOptimizer
-    optimizer::Union{Nothing,OptimizerType}
-    model_cache::ModelType
+mutable struct CachingOptimizer{O,M<:MOI.ModelLike} <: MOI.AbstractOptimizer
+    optimizer::Union{Nothing,O}
+    model_cache::M
     state::CachingOptimizerState
     mode::CachingOptimizerMode
     model_to_optimizer_map::IndexMap
     optimizer_to_model_map::IndexMap
     # CachingOptimizer externally uses the same variable and constraint indices
-    # as the model_cache. model_to_optimizer_map maps from the model_cache indices to the
-    # optimizer indices.
-end
+    # as the model_cache. model_to_optimizer_map maps from the model_cache
+    # indices to the optimizer indices.
 
-function CachingOptimizer(
-    model_cache::MOI.ModelLike,
-    mode::CachingOptimizerMode,
-)
-    return CachingOptimizer{MOI.AbstractOptimizer,typeof(model_cache)}(
-        nothing,
-        model_cache,
-        NO_OPTIMIZER,
-        mode,
-        IndexMap(),
-        IndexMap(),
+    function CachingOptimizer(cache::MOI.ModelLike, mode::CachingOptimizerMode)
+        return new{MOI.AbstractOptimizer,typeof(cache)}(
+            nothing,
+            cache,
+            NO_OPTIMIZER,
+            mode,
+            IndexMap(),
+            IndexMap(),
+        )
+    end
+
+    function CachingOptimizer(
+        cache::MOI.ModelLike,
+        optimizer::MOI.AbstractOptimizer,
     )
+        @assert MOI.is_empty(optimizer)
+        return new{typeof(optimizer),typeof(cache)}(
+            optimizer,
+            cache,
+            EMPTY_OPTIMIZER,
+            AUTOMATIC,
+            IndexMap(),
+            IndexMap(),
+        )
+    end
 end
 
 function Base.show(io::IO, C::CachingOptimizer)
@@ -73,32 +115,6 @@ function Base.show(io::IO, C::CachingOptimizer)
     show(IOContext(io, :indent => get(io, :indent, 0) + 2), C.model_cache)
     print(io, "\n$(indent)with optimizer ")
     return show(IOContext(io, :indent => get(io, :indent, 0) + 2), C.optimizer)
-end
-
-"""
-    CachingOptimizer(model_cache::MOI.ModelLike, optimizer::AbstractOptimizer)
-
-Creates an `CachingOptimizer` in `AUTOMATIC` mode, with the optimizer
-`optimizer`.
-
-The type of the optimizer returned is `CachingOptimizer{typeof(optimizer),
-typeof(model_cache)}` so it does not support the function
-`reset_optimizer(::CachingOptimizer, new_optimizer)` if the type of
-`new_optimizer` is different from the type of `optimizer`.
-"""
-function CachingOptimizer(
-    model_cache::MOI.ModelLike,
-    optimizer::MOI.AbstractOptimizer,
-)
-    @assert MOI.is_empty(optimizer)
-    return CachingOptimizer{typeof(optimizer),typeof(model_cache)}(
-        optimizer,
-        model_cache,
-        EMPTY_OPTIMIZER,
-        AUTOMATIC,
-        IndexMap(),
-        IndexMap(),
-    )
 end
 
 ## Methods for managing the state of CachingOptimizer.
