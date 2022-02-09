@@ -365,13 +365,24 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
             ),
         )
     end
+    # Here we make an internal constructor for our type. It needs to be an
+    # internal constructor to avoid someone trying to provide
+    # `typed_struct(args...)` which will throw an error about `T not defined`.
     constructor_code = :(function $typed_struct() where {$T}
-        return $typed_struct(0, $([:(nothing) for _ in field_types]...))
+        return new{$T}(0, $([:(nothing) for _ in field_types]...))
     end)
     if type_parametrized
+        # A bit confusing: we need to add the extra type parameters to `{T}`.
+        # Here's the `where {T}`
         append!(constructor_code.args[1].args, field_types)
+        # And here's the `new{T}`
+        append!(
+            constructor_code.args[2].args[end].args[1].args[1].args,
+            field_types,
+        )
     end
-    push!(code.args, constructor_code)
+    # Here's we we put the inner constructor.
+    push!(code.args[2].args[3].args, constructor_code)
     return code
 end
 
