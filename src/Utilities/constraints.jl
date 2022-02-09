@@ -15,7 +15,7 @@ function normalize_and_add_constraint(
     func::MOI.AbstractScalarFunction,
     set::MOI.AbstractScalarSet;
     allow_modify_function::Bool = false,
-) where {T}
+)
     return MOI.add_constraint(
         model,
         normalize_constant(

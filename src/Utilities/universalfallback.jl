@@ -455,7 +455,7 @@ function MOI.set(
     uf::UniversalFallback,
     attr::MOI.ObjectiveSense,
     sense::MOI.OptimizationSense,
-) where {T}
+)
     if sense == MOI.FEASIBILITY_SENSE
         uf.objective = nothing
     end
@@ -503,7 +503,7 @@ function MOI.modify(
     uf::UniversalFallback,
     obj::MOI.ObjectiveFunction,
     change::MOI.AbstractFunctionModification,
-) where {F}
+)
     if uf.objective === nothing
         MOI.modify(uf.model, obj, change)
     else
@@ -572,9 +572,7 @@ function check_type_and_multiple_names(
     return value
 end
 
-function check_type_and_multiple_names(::Type, ::Any, ::Nothing, name) where {T}
-    return nothing
-end
+check_type_and_multiple_names(::Type, ::Any, ::Nothing, name) = nothing
 
 function check_type_and_multiple_names(
     ::Type{T},
@@ -585,9 +583,7 @@ function check_type_and_multiple_names(
     return value
 end
 
-function check_type_and_multiple_names(::Type, ::Nothing, ::Any, name) where {T}
-    return nothing
-end
+check_type_and_multiple_names(::Type, ::Nothing, ::Any, name) = nothing
 
 function check_type_and_multiple_names(T::Type, ::Any, ::Any, name)
     return throw_multiple_name_error(T, name)
