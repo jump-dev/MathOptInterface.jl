@@ -1732,8 +1732,24 @@ function operate(
     return operate!(op, T, copy(f), g)
 end
 
-# To avoid type piracy, we add at least one `ScalarLike` outside of the `...`.
-function Base.:+(arg::ScalarLike{T}, args::ScalarLike{T}...) where {T}
+
+_eltype(args::Tuple) = _eltype(first(args), Base.tail(args))
+_eltype(::Tuple{}) = nothing
+_eltype(::MOI.Utilities.TypedScalarLike{T}, tail) where {T} = T
+_eltype(::MOI.VariableIndex, tail) = _eltype(tail)
+_eltype(::MOI.Utilities.TypedVectorLike{T}, tail) where {T} = T
+_eltype(::MOI.VectorOfVariables, tail) = _eltype(tail)
+
+function Base.:+(arg::ScalarLike, args::ScalarLike...)
+    T = _eltype(arg, args)
+    if T === nothing
+        error(
+            "Unable to add VariableIndex together because no coefficient type " *
+            "is specified. Instead of `x + y`, convert one of the terms to a " *
+            "`ScalarAffineFunction` first by left-multiplying by `one(T)` where " *
+            "`T` is the coefficient type For example: `1.0 * x + y`.",
+        )
+    end
     return operate(+, T, arg, args...)
 end
 
@@ -1757,7 +1773,16 @@ function Base.:+(f::MOI.VariableIndex, α::Number)
     return operate(+, typeof(α), f, α)
 end
 
-function Base.:-(arg::ScalarLike{T}, args::ScalarLike{T}...) where {T}
+function Base.:-(arg::ScalarLike, args::ScalarLike...)
+    T = _eltype(arg, args)
+    if T === nothing
+        error(
+            "Unable to subtract VariableIndex together because no coefficient " *
+            "type is specified. Instead of `x - y`, convert one of the terms to a " *
+            "`ScalarAffineFunction` first by left-multiplying by `one(T)` where " *
+            "`T` is the coefficient type For example: `1.0 * x - y`.",
+        )
+    end
     return operate(-, T, arg, args...)
 end
 
@@ -1775,37 +1800,6 @@ end
 
 function Base.:-(α::Number, f::MOI.VariableIndex)
     return operate(-, typeof(α), α, f)
-end
-
-function Base.:+(::MOI.VariableIndex, ::MOI.VariableIndex...)
-    return error(
-        "Unable to add VariableIndex together because no coefficient type " *
-        "is specified. Instead of `x + y`, convert one of the terms to a " *
-        "`ScalarAffineFunction` first by left-multiplying by `one(T)` where " *
-        "`T` is the coefficient type For example: `1.0 * x + y`.",
-    )
-end
-
-function Base.:-(::MOI.VariableIndex, ::MOI.VariableIndex...)
-    return error(
-        "Unable to subtract VariableIndex together because no coefficient " *
-        "type is specified. Instead of `x - y`, convert one of the terms to a " *
-        "`ScalarAffineFunction` first by left-multiplying by `one(T)` where " *
-        "`T` is the coefficient type For example: `1.0 * x - y`.",
-    )
-end
-
-function Base.:*(
-    ::MOI.VariableIndex,
-    ::MOI.VariableIndex,
-    ::MOI.VariableIndex...,
-)
-    return error(
-        "Unable to multiply VariableIndex together because no coefficient " *
-        "type is specified. Instead of `x * y`, convert one of the terms to a " *
-        "`ScalarAffineFunction` first by left-multiplying by `one(T)` where " *
-        "`T` is the coefficient type For example: `1.0 * x * y`.",
-    )
 end
 
 # Vector +/-
@@ -2417,12 +2411,20 @@ end
 
 Base.:*(f::MOI.AbstractFunction) = f
 
-# To avoid type piracy, we add at least one `ScalarLike` outside of the `...`.
 function Base.:*(
-    f::ScalarLike{T},
-    g::ScalarLike{T},
-    args::ScalarLike{T}...,
-) where {T}
+    f::ScalarLike,
+    g::ScalarLike,
+    args::ScalarLike...,
+)
+    T = _eltype(f, (g, args...))
+    if T === nothing
+        error(
+            "Unable to multiply VariableIndex together because no coefficient " *
+            "type is specified. Instead of `x * y`, convert one of the terms to a " *
+            "`ScalarAffineFunction` first by left-multiplying by `one(T)` where " *
+            "`T` is the coefficient type For example: `1.0 * x * y`.",
+        )
+    end
     return operate(*, T, f, g, args...)
 end
 
