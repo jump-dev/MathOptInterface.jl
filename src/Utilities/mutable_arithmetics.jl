@@ -65,7 +65,6 @@ function MA.promote_operation(
     return F
 end
 
-
 const PROMOTE_IMPLEMENTED_OP = Union{typeof(+),typeof(-),typeof(*),typeof(/)}
 
 function MA.promote_operation(
