@@ -54,7 +54,7 @@ A `CachingOptimizer` may be in one of three possible states
 * `ATTACHED_OPTIMIZER`: The CachingOptimizer has an optimizer, and it is
   synchronized with the cached model.
 
-### modes
+### Modes
 
 A `CachingOptimizer` has two modes of operation (`CachingOptimizerMode`):
 
