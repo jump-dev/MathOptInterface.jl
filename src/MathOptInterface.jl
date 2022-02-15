@@ -234,9 +234,7 @@ include("modifications.jl")
 include("variables.jl")
 include("nlp.jl")
 
-if VERSION > v"1.4.2"
-    include("precompile.jl")
-end
+include("precompile.jl")
 
 # submodules
 include("Utilities/Utilities.jl") # MOI.Utilities
@@ -249,9 +247,7 @@ include("instantiate.jl")
 include("deprecate.jl")
 include("DeprecatedTest/DeprecatedTest.jl")
 
-if VERSION > v"1.4.2"
-    _precompile_()
-end
+_precompile_()
 
 """
     IndexMap()

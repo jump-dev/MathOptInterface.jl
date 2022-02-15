@@ -441,11 +441,7 @@ function _test_attribute_value_type(
     ci::MOI.ConstraintIndex,
 )
     T = MOI.attribute_value_type(attribute)
-    @static if VERSION < v"1.5"
-        @test MOI.get(model, attribute, ci) isa T
-    else
-        @test @inferred(T, MOI.get(model, attribute, ci)) isa T
-    end
+    @test @inferred(T, MOI.get(model, attribute, ci)) isa T
     return
 end
 
@@ -455,11 +451,7 @@ function _test_attribute_value_type(
     x::MOI.VariableIndex,
 )
     T = MOI.attribute_value_type(attribute)
-    @static if VERSION < v"1.5"
-        @test MOI.get(model, attribute, x) isa T
-    else
-        @test @inferred(T, MOI.get(model, attribute, x)) isa T
-    end
+    @test @inferred(T, MOI.get(model, attribute, x)) isa T
     return
 end
 
