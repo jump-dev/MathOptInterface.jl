@@ -228,7 +228,7 @@ julia> good_model = JSON.parse("""
        }
        """);
 
-julia> isvalid(good_model, schema)
+julia> isvalid(schema, good_model)
 true
 ```
 
@@ -247,13 +247,13 @@ julia> bad_model = JSON.parse("""
        }
        """);
 
-julia> isvalid(bad_model, schema)
+julia> isvalid(schema, bad_model)
 false
 ```
 
 Use `JSONSchema.validate` to obtain more insight into why the validation failed:
 ```jldoctest schema_mof
-julia> JSONSchema.validate(bad_model, schema)
+julia> JSONSchema.validate(schema, bad_model)
 Validation failed:
 path:         [variables][1]
 instance:     Dict{String, Any}("NaMe" => "x")
