@@ -7,4 +7,4 @@ MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 [compat]
 Documenter = "0.27.10"
 JSON = "0.21"
-JSONSchema = "0.3"
+JSONSchema = "1"
