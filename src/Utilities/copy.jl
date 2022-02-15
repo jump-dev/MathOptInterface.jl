@@ -442,20 +442,6 @@ only once all the model information is gathered.
 """
 function final_touch(::MOI.ModelLike, index_map) end
 
-function default_copy_to(
-    dest::MOI.ModelLike,
-    src::MOI.ModelLike,
-    ::Bool,
-    filter_constraints::Union{Nothing,Function} = nothing,
-)
-    @warn(
-        "The `copy_names` and `filter_constraints` arguments to " *
-        "`default_copy_to` have been removed.",
-        maxlog = 1,
-    )
-    return default_copy_to(dest, src)
-end
-
 """
     default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
 

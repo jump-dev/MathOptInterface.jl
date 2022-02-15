@@ -85,11 +85,7 @@ mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
     function CleverDict{K,V}(
         hash::F = key_to_index,
         inverse_hash::I = index_to_key,
-        n = nothing,
     ) where {K,V,F<:Function,I<:Function}
-        if n !== nothing
-            @warn("The `n` argument to `CleverDict` has been removed.")
-        end
         return new{K,V,F,I}(
             0,
             hash,
