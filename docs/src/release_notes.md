@@ -1,5 +1,27 @@
 # Release notes
 
+## v0.10.9 (February 16, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.9).
+
+### New features
+
+ - Added `MOI.Utilities.FreeVariables` as a new `VariablesConstrainer` for conic
+   solvers
+ - Added `MOI.default_cache` for specifying the model used in `CachingOptimizer`
+
+### Bug fixes
+
+ - Fixed LaTeX printing of `MOI.Interval` sets
+
+### Performance and maintenance
+
+ - Added Aqua.jl as a CI check, and fixed suggested issues. The constructors of
+   GeoMeanBridge, StructOfConstraints, and CachingOptimizer were changed from
+   outer to inner constructors. This change is technically breaking, but does
+   not impact users who followed the documented API.
+
 ## v0.10.8 (February 3, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
@@ -8,7 +30,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 ### New features
 
  - Added a `Base.read!` for `FileFormats.LP`.
- 
+
 ### Bug fixes
 
  - Fixed a bug in `MutableSparseMatrix`
