@@ -1033,23 +1033,7 @@ function mock_optimize!(
     constraint_basis_status = [],
     variable_basis_status = MOI.BasisStatusCode[],
     constraint_conflict_status = [],
-    var_basis = nothing,
-    con_basis = nothing,
 )
-    if var_basis !== nothing
-        @warn(
-            "var_basis is deprecated. Use variable_basis_status instead.",
-            maxlog = 1,
-        )
-        variable_basis_status = var_basis
-    end
-    if con_basis !== nothing
-        @warn(
-            "con_basis is deprecated. Use constraint_basis_status instead.",
-            maxlog = 1,
-        )
-        constraint_basis_status = con_basis
-    end
     MOI.set(mock, MOI.TerminationStatus(), termination_status)
     MOI.set(mock, MOI.ResultCount(), 1)
     _set_mock_primal(mock, primal)
