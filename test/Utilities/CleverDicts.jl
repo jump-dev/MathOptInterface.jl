@@ -235,42 +235,6 @@ function test_delete!()
     return
 end
 
-function test_dense_operations()
-    # inverse_hash :: Int64 -> Int
-    inverse_hash(x::Int64) = Int(x * 2)
-    # hash :: Int -> Int64
-    hash(x::Int) = Int64(div(x, 2))
-    d = CleverDicts.CleverDict{Int,Float64}(hash, inverse_hash, 3)
-
-    d[4] = 0.25
-    @test !haskey(d, 2)
-    @test haskey(d, 4)
-    @test !haskey(d, 6)
-    @test length(d) == 1
-    @test collect(d) == [4 => 0.25]
-    @test d[4] == 0.25
-
-    d[2] = 1.5
-    @test haskey(d, 2)
-    @test haskey(d, 4)
-    @test !haskey(d, 6)
-    @test length(d) == 2
-    @test collect(d) == [4 => 0.25, 2 => 1.5]
-    @test d[2] == 1.5
-    @test d[4] == 0.25
-
-    d[6] = 0.75
-    @test haskey(d, 2)
-    @test haskey(d, 4)
-    @test haskey(d, 6)
-    @test length(d) == 3
-    @test collect(d) == [4 => 0.25, 2 => 1.5, 6 => 0.75]
-    @test d[2] == 1.5
-    @test d[4] == 0.25
-    @test d[6] == 0.75
-    return
-end
-
 function test_negative_index()
     d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
     d[MathOptInterface.VariableIndex(-3)] = "a"

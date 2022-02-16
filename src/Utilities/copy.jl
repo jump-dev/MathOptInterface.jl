@@ -1,9 +1,6 @@
 # This file contains default implementations for the `MOI.copy_to` function that
 # can be used by a model.
 
-@deprecate automatic_copy_to default_copy_to false
-@deprecate supports_default_copy_to MOI.supports_incremental_interface false
-
 include("copy/index_map.jl")
 
 """
@@ -444,20 +441,6 @@ the copy is finished. This allows `model` to perform thats that should be done
 only once all the model information is gathered.
 """
 function final_touch(::MOI.ModelLike, index_map) end
-
-function default_copy_to(
-    dest::MOI.ModelLike,
-    src::MOI.ModelLike,
-    ::Bool,
-    filter_constraints::Union{Nothing,Function} = nothing,
-)
-    @warn(
-        "The `copy_names` and `filter_constraints` arguments to " *
-        "`default_copy_to` have been removed.",
-        maxlog = 1,
-    )
-    return default_copy_to(dest, src)
-end
 
 """
     default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)

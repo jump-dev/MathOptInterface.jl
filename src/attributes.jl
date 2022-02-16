@@ -1002,7 +1002,6 @@ and `S` is a set type indicating that the attribute `NumberOfConstraints{F,S}()`
 has value greater than zero.
 """
 struct ListOfConstraintTypesPresent <: AbstractModelAttribute end
-@deprecate ListOfConstraints ListOfConstraintTypesPresent false
 
 """
     ObjectiveFunction{F<:AbstractScalarFunction}()
@@ -1110,8 +1109,6 @@ A model attribute for the total elapsed solution time (in seconds) as reported b
 struct SolveTimeSec <: AbstractModelAttribute end
 
 attribute_value_type(::SolveTimeSec) = Float64
-
-@deprecate SolveTime SolveTimeSec false
 
 """
     SimplexIterations()

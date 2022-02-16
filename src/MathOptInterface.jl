@@ -208,20 +208,12 @@ is_valid(dest, x) # false (unless index_map[x] == x)
 is_valid(dest, index_map[x]) # true
 ```
 """
-function copy_to(dest, src; kwargs...)
-    if length(kwargs) == 0
-        error(
-            "`copy_to` is not supported by the solver `$(typeof(dest))`. Did " *
-            "you mean to call " *
-            "`optimize!(dest::AbstractOptimizer, src::ModelLike)` instead?",
-        )
-    end
-    @warn(
-        "copy_to with keyword arguments is deprecated. Now names are " *
-        "copied by default",
-        maxlog = 1,
+function copy_to(dest, src)
+    return error(
+        "`copy_to` is not supported by the solver `$(typeof(dest))`. Did " *
+        "you mean to call " *
+        "`optimize!(dest::AbstractOptimizer, src::ModelLike)` instead?",
     )
-    return copy_to(dest, src)
 end
 
 include("error.jl")
@@ -244,8 +236,6 @@ include("Benchmarks/Benchmarks.jl")
 include("FileFormats/FileFormats.jl")
 
 include("instantiate.jl")
-include("deprecate.jl")
-include("DeprecatedTest/DeprecatedTest.jl")
 
 _precompile_()
 

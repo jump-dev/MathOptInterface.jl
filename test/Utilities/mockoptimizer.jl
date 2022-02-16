@@ -184,32 +184,6 @@ function test_DualObjectiveValue()
     return
 end
 
-function test_mock_deprecated()
-    mock = MOIU.MockOptimizer(MOIU.Model{Float64}())
-    x = MOI.add_variable(mock)
-    c = MOI.add_constraint(
-        mock,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
-        MOI.EqualTo(2.0),
-    )
-    MOIU.set_mock_optimize!(
-        mock,
-        m -> MOI.Utilities.mock_optimize!(
-            m,
-            MOI.OPTIMAL,
-            MOI.FEASIBLE_POINT,
-            MOI.NO_SOLUTION,
-            var_basis = [MOI.BASIC],
-            con_basis = [
-                (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
-                    [MOI.BASIC],
-            ],
-        ),
-    )
-    @test_logs (:warn,) (:warn,) MOI.optimize!(mock)
-    return
-end
-
 end  # module
 
 TestMockOptimizer.runtests()
