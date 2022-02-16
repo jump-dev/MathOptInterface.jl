@@ -1,6 +1,6 @@
 # Release notes
 
-## v1.0.0 (in development)
+## v1.0.0 (February 17, 2022)
 
 Although tagged as a breaking release, v1.0.0 is v0.10.9 with deprecations
 removed, similar to how Julia 1.0 was Julia 0.7 with deprecations removed.
