@@ -1,5 +1,36 @@
 # Release notes
 
+## v1.0.0 (in development)
+
+Although tagged as a breaking release, v1.0.0 is v0.10.9 with deprecations
+removed, similar to how Julia 1.0 was Julia 0.7 with deprecations removed.
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.0.0).
+
+### Breaking changes
+
+ - Julia 1.6 is now the minimum supported version
+ - All deprecations have been removed
+
+### Troubleshooting problems when updating
+
+If you experience problems when updating, you are likely using previously
+deprecated functionality. (By default, Julia does not warn when you use
+deprecated features.)
+
+To find the deprecated features you are using, start Julia with `--depwarn=yes`:
+```
+$ julia --depwarn=yes
+```
+Then install MathOptInterface v0.10.9:
+```julia
+julia> using Pkg
+julia> pkg"add MathOptInterface@0.10"
+```
+And then run your code. Apply any suggestions, or search the release notes below
+for advice on updating a specific deprecated feature.
+
 ## v0.10.9 (February 16, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
