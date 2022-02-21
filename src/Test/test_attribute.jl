@@ -40,7 +40,9 @@ function test_attribute_RawStatusString(
 )
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.RawStatusString)
+    _test_attribute_value_type(model, MOI.RawStatusString())
     MOI.add_variable(model)
+    _test_attribute_value_type(model, MOI.RawStatusString())
     MOI.optimize!(model)
     _test_attribute_value_type(model, MOI.RawStatusString())
     return
