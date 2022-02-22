@@ -891,6 +891,29 @@ function test_map_indices_issue_1670()
     return
 end
 
+function test_copy_optimizer_attributes_2887()
+    cache() = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    optimizer() = MOI.Utilities.MockOptimizer(cache())
+    # Test without calling Silent
+    model = cache()
+    opt = optimizer()
+    model = MOI.Utilities.CachingOptimizer(model, opt)
+    @test MOI.get(opt, MOI.Silent()) === nothing
+    # Test with Silent => true
+    model = cache()
+    MOI.set(model, MOI.Silent(), true)
+    opt = optimizer()
+    model = MOI.Utilities.CachingOptimizer(model, opt)
+    @test MOI.get(opt, MOI.Silent()) == true
+    # Test with Silent => false
+    model = cache()
+    MOI.set(model, MOI.Silent(), false)
+    opt = optimizer()
+    model = MOI.Utilities.CachingOptimizer(model, opt)
+    @test MOI.get(opt, MOI.Silent()) == false
+    return
+end
+
 end  # module
 
 TestCachingOptimizer.runtests()
