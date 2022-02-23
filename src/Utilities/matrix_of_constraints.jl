@@ -352,6 +352,7 @@ function _add_constraint(
     func::F,
     set::S,
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    func = MOI.Utilities.canonical(func)
     allocate_terms(model.coefficients, index_map, func)
     # Without this type annotation, the compiler is unable to know the type
     # of `caches[i]` so this is slower and produce an allocation.
@@ -378,6 +379,9 @@ function MOI.add_constraint(
                 _MATRIXOFCONSTRAINTS_MODIFY_NOT_ALLOWED_ERROR_MESSAGE,
             ),
         )
+    end
+    if !Utilities.is_canonical(func)
+        func = Utilities.canonical(func)
     end
     return _add_constraint(model, i, IdentityMap(), func, set)
 end
