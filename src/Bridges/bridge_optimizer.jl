@@ -571,7 +571,7 @@ function MOI.delete(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
         if is_variable_bridged(b, ci)
             throw(
                 MOI.DeleteNotAllowed(
-                    ci, 
+                    ci,
                     "Cannot delete constraint index of bridged constrained " *
                     "variables. Delete the scalar variable or the vector of " *
                     "variables instead.",
