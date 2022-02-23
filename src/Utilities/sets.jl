@@ -35,15 +35,19 @@ See also [`shift_constant`](@ref).
 """
 supports_shift_constant(::Type{S}) where {S<:MOI.AbstractSet} = false
 
-function shift_constant(
-    set::Union{MOI.LessThan{T},MOI.GreaterThan{T},MOI.EqualTo{T}},
-    offset::T,
-) where {T}
-    return typeof(set)(MOI.constant(set) + offset)
+function shift_constant(set::MOI.LessThan, offset)
+    return MOI.LessThan(MOI.constant(set) + offset)
 end
-
 supports_shift_constant(::Type{<:MOI.LessThan}) = true
+
+function shift_constant(set::MOI.GreaterThan, offset)
+    return MOI.GreaterThan(MOI.constant(set) + offset)
+end
 supports_shift_constant(::Type{<:MOI.GreaterThan}) = true
+
+function shift_constant(set::MOI.EqualTo, offset)
+    return MOI.EqualTo(MOI.constant(set) + offset)
+end
 supports_shift_constant(::Type{<:MOI.EqualTo}) = true
 
 function shift_constant(set::MOI.Interval, offset)
