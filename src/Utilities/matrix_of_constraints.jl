@@ -352,7 +352,6 @@ function _add_constraint(
     func::F,
     set::S,
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
-    func = MOI.Utilities.canonical(func)
     allocate_terms(model.coefficients, index_map, func)
     # Without this type annotation, the compiler is unable to know the type
     # of `caches[i]` so this is slower and produce an allocation.
