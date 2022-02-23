@@ -46,10 +46,13 @@ end
 function test_shifts()
     @test MOIU.supports_shift_constant(MOI.EqualTo{Int})
     @test MOIU.shift_constant(MOI.EqualTo(3), 1) == MOI.EqualTo(4)
+    @test MOIU.shift_constant(MOI.EqualTo(3), im) == MOI.EqualTo(3 + im)
     @test MOIU.supports_shift_constant(MOI.GreaterThan{Int})
     @test MOIU.shift_constant(MOI.GreaterThan(6), -1) == MOI.GreaterThan(5)
+    @test MOIU.shift_constant(MOI.GreaterThan(6), -1.0) == MOI.GreaterThan(5.0)
     @test MOIU.supports_shift_constant(MOI.LessThan{Int})
     @test MOIU.shift_constant(MOI.LessThan(2), 2) == MOI.LessThan(4)
+    @test MOIU.shift_constant(MOI.LessThan(2), 2.0) == MOI.LessThan(4.0)
     @test MOIU.supports_shift_constant(MOI.Interval{Int})
     @test MOIU.shift_constant(MOI.Interval(-2, 3), 1) == MOI.Interval(-1, 4)
     @test MOIU.supports_shift_constant(MOI.ZeroOne) == false
