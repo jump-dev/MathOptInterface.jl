@@ -72,9 +72,10 @@ function test_zeros()
         MOI.Bridges.IndexInVector(2),
     ) === nothing
 
-    err = ErrorException(
-        "Cannot delete constraint index of bridged constrained variables. Delete" *
-        " the scalar variable or the vector of variables instead.",
+    err = MOI.DeleteNotAllowed(
+        cyz,
+        "Cannot delete constraint index of bridged constrained variables. " *
+        "Delete the scalar variable or the vector of variables instead.",
     )
     @test_throws err MOI.delete(bridged_mock, cyz)
 
