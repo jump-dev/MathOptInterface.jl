@@ -1,5 +1,11 @@
 # Release notes
 
+## v1.0.1 (In development)
+
+### Bug fixes
+
+ - Fixed a bug in which OptimizerAttributes were not copied in CachingOptimizer
+
 ## v1.0.0 (February 17, 2022)
 
 Although tagged as a breaking release, v1.0.0 is v0.10.9 with deprecations

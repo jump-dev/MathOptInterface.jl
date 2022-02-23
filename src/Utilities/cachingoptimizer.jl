@@ -95,7 +95,7 @@ mutable struct CachingOptimizer{O,M<:MOI.ModelLike} <: MOI.AbstractOptimizer
         optimizer::MOI.AbstractOptimizer,
     )
         @assert MOI.is_empty(optimizer)
-        return new{typeof(optimizer),typeof(cache)}(
+        model = new{typeof(optimizer),typeof(cache)}(
             optimizer,
             cache,
             EMPTY_OPTIMIZER,
@@ -103,6 +103,10 @@ mutable struct CachingOptimizer{O,M<:MOI.ModelLike} <: MOI.AbstractOptimizer
             IndexMap(),
             IndexMap(),
         )
+        # Optimizer attributes should be copied now. Other attributes are copied
+        # later during `copy_to`.
+        _copy_optimizer_attributes(model)
+        return model
     end
 end
 
@@ -115,6 +119,26 @@ function Base.show(io::IO, C::CachingOptimizer)
     show(IOContext(io, :indent => get(io, :indent, 0) + 2), C.model_cache)
     print(io, "\n$(indent)with optimizer ")
     return show(IOContext(io, :indent => get(io, :indent, 0) + 2), C.optimizer)
+end
+
+function _copy_optimizer_attributes(m::CachingOptimizer)
+    @assert m.state == EMPTY_OPTIMIZER
+    for attr in MOI.get(m.model_cache, MOI.ListOfOptimizerAttributesSet())
+        # Skip attributes which don't apply to the new optimizer.
+        if attr isa MOI.RawOptimizerAttribute
+            # Even if the optimizer claims to `supports` `attr`, the value
+            # might have a different meaning (e.g., two solvers with `logLevel`
+            # as a RawOptimizerAttribute). To be on the safe side, just skip all
+            # raw parameters.
+            continue
+        elseif !MOI.is_copyable(attr) || !MOI.supports(m.optimizer, attr)::Bool
+            continue
+        end
+        value = MOI.get(m.model_cache, attr)
+        optimizer_value = map_indices(m.model_to_optimizer_map, attr, value)
+        MOI.set(m.optimizer, attr, optimizer_value)
+    end
+    return
 end
 
 ## Methods for managing the state of CachingOptimizer.
@@ -147,21 +171,7 @@ function reset_optimizer(m::CachingOptimizer, optimizer::MOI.AbstractOptimizer)
     @assert MOI.is_empty(optimizer)
     m.optimizer = optimizer
     m.state = EMPTY_OPTIMIZER
-    for attr in MOI.get(m.model_cache, MOI.ListOfOptimizerAttributesSet())
-        # Skip attributes which don't apply to the new optimizer.
-        if attr isa MOI.RawOptimizerAttribute
-            # Even if the optimizer claims to `supports` `attr`, the value
-            # might have a different meaning (e.g., two solvers with `logLevel`
-            # as a RawOptimizerAttribute). To be on the safe side, just skip all raw
-            # parameters.
-            continue
-        elseif !MOI.is_copyable(attr) || !MOI.supports(m.optimizer, attr)::Bool
-            continue
-        end
-        value = MOI.get(m.model_cache, attr)
-        optimizer_value = map_indices(m.model_to_optimizer_map, attr, value)
-        MOI.set(m.optimizer, attr, optimizer_value)
-    end
+    _copy_optimizer_attributes(m)
     return
 end
 
