@@ -104,7 +104,7 @@ mutable struct CachingOptimizer{O,M<:MOI.ModelLike} <: MOI.AbstractOptimizer
             IndexMap(),
         )
         # Optimizer attributes should be copied now. Other attributes are copied
-        # later.
+        # later during `copy_to`.
         _copy_optimizer_attributes(model)
         return model
     end
