@@ -379,6 +379,9 @@ function MOI.add_constraint(
             ),
         )
     end
+    if !Utilities.is_canonical(func)
+        func = Utilities.canonical(func)
+    end
     return _add_constraint(model, i, IdentityMap(), func, set)
 end
 
