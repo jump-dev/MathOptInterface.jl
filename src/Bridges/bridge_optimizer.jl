@@ -893,7 +893,10 @@ This function cannot be called for a constraint index that is variable bridged.
 """
 function _bridged_function end
 
-function _bridged_function(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveFunction)
+function _bridged_function(
+    b::AbstractBridgeOptimizer,
+    attr::MOI.ObjectiveFunction,
+)
     if is_bridged(b, attr)
         return MOI.get(recursive_model(b), attr, bridge(b, attr))
     else
@@ -1669,11 +1672,13 @@ _constant_change(new_constant::Vector) = MOI.VectorConstantChange(new_constant)
 function modify_bridged_change(
     b::AbstractBridgeOptimizer,
     ci_or_obj,
-    change::Union{MOI.ScalarConstantChange, MOI.VectorConstantChange},
+    change::Union{MOI.ScalarConstantChange,MOI.VectorConstantChange},
 )
     bridged_func = _bridged_function(b, ci_or_obj)
     unbridged_func = _unbridged_function(b, ci_or_obj)
-    bridged_const = MOI.constant(bridged_func) + change.new_constant - MOI.constant(unbridged_func)
+    bridged_const =
+        MOI.constant(bridged_func) + change.new_constant -
+        MOI.constant(unbridged_func)
     bridged_change = _constant_change(bridged_const)
     _modify_bridged_function(b, ci_or_obj, bridged_change)
     return
