@@ -587,6 +587,16 @@ function test_dual_power_cone()
     return
 end
 
+function test_duplicate()
+    model = _new_ScalarSets()
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0x + 2.0x, MOI.EqualTo(-1.0))
+    MOI.Utilities.final_touch(model, nothing)
+    @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ 3.0x
+    @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.EqualTo(-1.0)
+    return
+end
+
 end
 
 TestMatrixOfConstraints.runtests()
