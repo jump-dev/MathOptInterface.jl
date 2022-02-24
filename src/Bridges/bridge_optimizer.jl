@@ -880,6 +880,52 @@ function MOI.get(
     end
 end
 
+"""
+    _bridged_function(b::AbstractBridgeOptimizer, ::Union{MOI.ObjectiveFunction, MOI.ConstraintIndex})
+
+Returns the objective function (resp constraint function) as seen by the
+objective bridge (resp. constraint bridge) if it is bridged or by the inner
+model otherwise. That is, all the bridged variables (except those created by the
+bridge or by one of the bridges downstream of this bridge) have been
+substituted.
+
+This function cannot be called for a constraint index that is variable bridged.
+"""
+function _bridged_function end
+
+function _bridged_function(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveFunction)
+    if is_bridged(b, attr)
+        return MOI.get(recursive_model(b), attr, bridge(b, attr))
+    else
+        return MOI.get(b.model, attr)
+    end
+end
+
+function _bridged_function(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
+    attr = MOI.ConstraintFunction()
+    if is_bridged(b, ci)
+        @assert !is_variable_bridged(b, ci)
+        return call_in_context(MOI.get, b, ci, MOI.ConstraintFunction())
+    else
+        return MOI.get(b.model, attr, ci)
+    end
+end
+
+"""
+    _bridged_function(b::AbstractBridgeOptimizer, ::Union{MOI.ObjectiveFunction, MOI.ConstraintIndex})
+
+Returns the objective function (resp constraint function) as seen by the
+user. That is, none of the bridged variables (except those created by any
+bridge upstream) have been substituted.
+"""
+function _unbridged_function end
+
+_unbridged_function(b, obj::MOI.ObjectiveFunction) = MOI.get(b, obj)
+
+function _unbridged_function(b, ci::MOI.ConstraintIndex)
+    return MOI.get(b, MOI.ConstraintFunction(), ci)
+end
+
 # Objective
 
 """
@@ -959,14 +1005,6 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveSense)
     return MOI.get(b.model, attr)
 end
 
-function _bridged_function(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveFunction)
-    if is_bridged(b, attr)
-        return MOI.get(recursive_model(b), attr, bridge(b, attr))
-    else
-        return MOI.get(b.model, attr)
-    end
-end
-
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveFunction)
     return unbridged_function(b, _bridged_function(b, attr))
 end
@@ -1037,13 +1075,13 @@ end
 
 function _modify_bridged_function(
     b::AbstractBridgeOptimizer,
-    obj::MOI.ObjectiveFunction,
+    ci_or_obj,
     change::MOI.AbstractFunctionModification,
 )
-    if is_bridged(b, obj)
-        MOI.modify(recursive_model(b), bridge(b, obj), change)
+    if is_bridged(b, ci_or_obj)
+        MOI.modify(recursive_model(b), bridge(b, ci_or_obj), change)
     else
-        MOI.modify(b.model, obj, change)
+        MOI.modify(b.model, ci_or_obj, change)
     end
     return
 end
@@ -1625,19 +1663,18 @@ function modify_bridged_change(
     return
 end
 
-function _unbridged_function(b, obj::MOI.ObjectiveFunction)
-    return MOI.get(b, obj)
-end
+_constant_change(new_constant) = MOI.ScalarConstantChange(new_constant)
+_constant_change(new_constant::Vector) = MOI.VectorConstantChange(new_constant)
 
 function modify_bridged_change(
     b::AbstractBridgeOptimizer,
     ci_or_obj,
-    change::MOI.ScalarConstantChange,
+    change::Union{MOI.ScalarConstantChange, MOI.VectorConstantChange},
 )
     bridged_func = _bridged_function(b, ci_or_obj)
     unbridged_func = _unbridged_function(b, ci_or_obj)
     bridged_const = MOI.constant(bridged_func) + change.new_constant - MOI.constant(unbridged_func)
-    bridged_change = MOI.ScalarConstantChange(bridged_const)
+    bridged_change = _constant_change(bridged_const)
     _modify_bridged_function(b, ci_or_obj, bridged_change)
     return
 end
