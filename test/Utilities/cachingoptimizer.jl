@@ -914,6 +914,35 @@ function test_copy_optimizer_attributes_2887()
     return
 end
 
+mutable struct FinalTouchDetector <: MOI.ModelLike
+    index_map::Any
+end
+
+function MOI.Utilities.final_touch(model::FinalTouchDetector, index_map)
+    model.index_map = index_map
+    return
+end
+function MOI.copy_to(::MOI.Utilities.MockOptimizer, ::FinalTouchDetector)
+    return MOI.Utilities.IndexMap()
+end
+function MOI.get(::FinalTouchDetector, ::MOI.ListOfModelAttributesSet)
+    return MOI.AbstractModelAttribute[]
+end
+
+function test_final_touch_optimize()
+    model = MOI.Utilities.CachingOptimizer(
+        FinalTouchDetector(missing),
+        MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}()),
+    )
+    MOI.Utilities.attach_optimizer(model)
+    @test model.model_cache.index_map === nothing
+    MOI.Utilities.final_touch(model, missing)
+    @test model.model_cache.index_map === missing
+    MOI.Utilities.reset_optimizer(model)
+    MOI.optimize!(model)
+    @test model.model_cache.index_map === nothing
+end
+
 end  # module
 
 TestCachingOptimizer.runtests()
