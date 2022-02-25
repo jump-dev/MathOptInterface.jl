@@ -298,6 +298,7 @@ MOI.is_empty(m::CachingOptimizer) = MOI.is_empty(m.model_cache)
 
 function MOI.optimize!(m::CachingOptimizer)
     if m.mode == AUTOMATIC && m.state == EMPTY_OPTIMIZER
+        final_touch(m.model_cache, nothing)
         # Here is a special case for callbacks: we can't use the two-argument
         # call to optimize! because we need the `optimizer_to_model_map` to be
         # set _prior_ to starting the optimization process. Therefore, we need
