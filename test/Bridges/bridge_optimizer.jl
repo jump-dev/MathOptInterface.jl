@@ -778,6 +778,29 @@ function test_ListOfConstraintAttributesSet()
     return
 end
 
+function test_constant_modification_with_affine_variable_bridge()
+    model = MOI.Utilities.Model{Float64}()
+    b = MOI.Bridges.Variable.Vectorize{Float64}(model)
+    x, cx = MOI.add_constrained_variable(b, MOI.GreaterThan(1.0))
+    func = MOI.Utilities.vectorize([3.0x + 2.0])
+    ci = MOI.add_constraint(b, func, MOI.Zeros(1))
+    obj_func = 4.0x - 1.0
+    obj = MOI.ObjectiveFunction{typeof(obj_func)}()
+    MOI.set(b, obj, obj_func)
+    y = MOI.Bridges.bridged_variable_function(b, x)
+    attr = MOI.ConstraintFunction()
+    MOI.modify(b, ci, MOI.VectorConstantChange([-1.0]))
+    new_func = MOI.Utilities.vectorize([3.0x - 1.0])
+    new_inner_func = MOI.Utilities.vectorize([3.0y - 1.0])
+    @test MOI.get(b, MOI.ConstraintFunction(), ci) ≈ new_func
+    @test MOI.get(model, MOI.ConstraintFunction(), ci) ≈ new_inner_func
+    MOI.modify(b, obj, MOI.ScalarConstantChange(1.0))
+    new_obj = 4.0x + 1.0
+    new_inner_obj = 4.0y + 1.0
+    @test MOI.get(b, obj) ≈ new_obj
+    @test MOI.get(model, obj) ≈ new_inner_obj
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
