@@ -1,10 +1,22 @@
 # Release notes
 
-## v1.0.1 (In development)
+## v1.0.1 (February 25, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.0.1).
 
 ### Bug fixes
 
  - Fixed a bug in which OptimizerAttributes were not copied in CachingOptimizer
+ - Fixed a bug in which `shift_constant` did not promote mixed types of coefficients
+ - Fixed a bug in which deleting a constraint of a bridged variable threw
+   `ErrorException` instead of `MOI.DeleteNotAllowed`
+ - Fixed a bug in which `add_constraint` in `MatrixOfConstraints` did not
+   canonicalize the function
+ - Fixed a bug when modifying scalar constants of a function containing a
+   bridged variable
+ - Fixed a bug in which `final_touch` was not always called with a
+   `CachingOptimizer`
 
 ## v1.0.0 (February 17, 2022)
 
