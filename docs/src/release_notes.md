@@ -8,7 +8,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 ### Bug fixes
 
  - Fixed a bug in which OptimizerAttributes were not copied in CachingOptimizer
- - Fixed a bug in which `shift_constant` did promote mixed types
+ - Fixed a bug in which `shift_constant` did not promote mixed types of coefficients
  - Fixed a bug in which deleting a constraint of a bridged variable threw
    `ErrorException` instead of `MOI.DeleteNotAllowed`
  - Fixed a bug in which `add_constraint` in `MatrixOfConstraints` did not
