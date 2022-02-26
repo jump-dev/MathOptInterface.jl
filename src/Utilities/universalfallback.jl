@@ -129,6 +129,71 @@ function final_touch(uf::UniversalFallback, index_map)
     return final_touch(uf.model, index_map)
 end
 
+"""
+    throw_unsupported(uf::UniversalFallback; excluded_attributes = MOI.AnyAttribute[])
+
+Throws [`MathOptInterface.UnsupportedAttribute`](@ref) if there are any model,
+variable or constraint attribute such that 1) `is_copyable(attr)` returns
+`true`, 2) the attribute was set to `uf` but not to `uf.model` and 3) the
+attribute is not in `excluded_attributes`.
+
+Suppose `Optimizer` supports only the constraints and attributes
+that `OptimizerCache` supports in addition to
+[`MathOptInterface.VariablePrimalStart`](@ref).
+Then, this function can be used in the implementation of the following method:
+```julia
+function MOI.copy_to(
+    dest::Optimizer,
+    src::MOI.Utilities.UniversalFallback{OptimizerCache},
+)
+    attr = MOI.VariablePrimalStart()
+    MOI.Utilities.throw_unsupported(
+        src,
+        excluded_attributes = MOI.AnyAttribute[attr],
+    )
+    index_map = MOI.copy_to(dest, src.model)
+    if attr in MOI.get(src, MOI.ListOfModelAttributesSet())
+        for vi_src in MOI.get(src, MOI.ListOfVariableIndices())
+            vi_dest = index_map[vi_src]
+            value = MOI.get(src, attr, vi_src)
+            MOI.set(dest, attr, vi_dest, value)
+        end
+    end
+    return index_map
+end
+```
+"""
+function throw_unsupported(
+    uf::UniversalFallback;
+    excluded_attributes = MOI.AnyAttribute[],
+)
+    for attr in keys(uf.modattr)
+        if !(attr in excluded_attributes)
+            MOI.throw(MOI.UnsupportedAttribute(attr))
+        end
+    end
+    for attr in keys(uf.varattr)
+        if !isempty(uf.varattr[attr]) && !(attr in excluded_attributes)
+            MOI.throw(MOI.UnsupportedAttribute(attr))
+        end
+    end
+    for attr in keys(uf.conattr)
+        if !isempty(uf.conattr[attr]) && !(attr in excluded_attributes)
+            MOI.throw(MOI.UnsupportedAttribute(attr))
+        end
+    end
+    for S in keys(uf.single_variable_constraints)
+        if !isempty(uf.single_variable_constraints[S])
+            throw(MOI.UnsupportedConstraint{MOI.VariableIndex,S}())
+        end
+    end
+    for (F, S) in keys(uf.constraints)
+        if !MOI.is_empty(uf.constraints[(F, S)])
+            throw(MOI.UnsupportedConstraint{F,S}())
+        end
+    end
+end
+
 # References
 function MOI.is_valid(uf::UniversalFallback, vi::MOI.VariableIndex)
     return MOI.is_valid(uf.model, vi)
