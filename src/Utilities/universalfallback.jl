@@ -172,26 +172,27 @@ function throw_unsupported(
             MOI.throw(MOI.UnsupportedAttribute(attr))
         end
     end
-    for attr in keys(uf.varattr)
-        if !isempty(uf.varattr[attr]) && !(attr in excluded_attributes)
+    for (attr, val) in uf.varattr
+        if !isempty(val) && !(attr in excluded_attributes)
             MOI.throw(MOI.UnsupportedAttribute(attr))
         end
     end
-    for attr in keys(uf.conattr)
-        if !isempty(uf.conattr[attr]) && !(attr in excluded_attributes)
+    for (attr, val) in uf.conattr
+        if !isempty(val) && !(attr in excluded_attributes)
             MOI.throw(MOI.UnsupportedAttribute(attr))
         end
     end
-    for S in keys(uf.single_variable_constraints)
-        if !isempty(uf.single_variable_constraints[S])
+    for (S, val) in uf.single_variable_constraints
+        if !isempty(val)
             throw(MOI.UnsupportedConstraint{MOI.VariableIndex,S}())
         end
     end
-    for (F, S) in keys(uf.constraints)
-        if !MOI.is_empty(uf.constraints[(F, S)])
+    for ((F, S), val) in uf.constraints
+        if !MOI.is_empty(val)
             throw(MOI.UnsupportedConstraint{F,S}())
         end
     end
+    return
 end
 
 # References
