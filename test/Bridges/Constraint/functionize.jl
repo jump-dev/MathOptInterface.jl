@@ -206,6 +206,13 @@ function test_vector_functionize_lin1v()
     return
 end
 
+function test_unsupported_attribute_issue_1758()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.ScalarFunctionize{Float64}(inner)
+    MOI.Test.test_model_copy_to_UnsupportedAttribute(model, MOI.Test.Config())
+    return
+end
+
 end  # module
 
 TestConstraintFunctionize.runtests()
