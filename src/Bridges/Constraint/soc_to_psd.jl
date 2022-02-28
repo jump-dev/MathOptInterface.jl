@@ -185,7 +185,7 @@ function MOIB.map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where {T}
     if length(scalars) < 3
         error(
             "Unable to bridge RotatedSecondOrderCone to PSD because the ",
-            "dimension is too small.",
+            "dimension is too small: got $(length(scalars)), expected >= 3.",
         )
     end
     h = MOIU.operate!(*, T, scalars[2], convert(T, 2))
