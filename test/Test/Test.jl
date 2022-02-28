@@ -38,6 +38,16 @@ MOI.Test.runtests(
     ],
 )
 
+# Test for Issue #1757
+
+MOI.Test.test_model_ScalarFunctionConstantNotZero(
+    MOI.Utilities.MockOptimizer(
+        MOI.Utilities.Model{Float64}(),
+        scalar_function_constant_non_zero = false,
+    ),
+    MOI.Test.Config(exclude = Any[MOI.ConstraintFunction]),
+)
+
 # Test exclude_tests_after. This should work despite no methods being added for IncompleteOptimizer
 # because every test should get skipped.
 
