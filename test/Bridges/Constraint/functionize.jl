@@ -99,16 +99,21 @@ function test_scalar_functionize_linear2()
         Float64,
         MOI.GreaterThan{Float64},
     }
-    err = ArgumentError(
-        "Bridge of type `$(BT)` does not support setting the attribute " *
-        "`$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`.",
+    function _unsupported_attribute(attr, f)
+        return MOI.UnsupportedAttribute(
+            attr,
+            "Bridge of type `$(BT)` does not support $(f)ting the attribute " *
+            "`$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`.",
+        )
+    end
+    @test_throws(
+        _unsupported_attribute(attr, "set"),
+        MOI.set(bridged_mock, attr, ci, 1.0),
     )
-    @test_throws err MOI.set(bridged_mock, attr, ci, 1.0)
-    err = ArgumentError(
-        "Bridge of type `$(BT)` does not support accessing the attribute " *
-        "`$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`.",
+    @test_throws(
+        _unsupported_attribute(attr, "get"),
+        MOI.get(bridged_mock, attr, ci),
     )
-    @test_throws err MOI.get(bridged_mock, attr, ci)
     for (i, ci) in enumerate(cis)
         _test_delete_bridge(
             bridged_mock,
@@ -203,6 +208,13 @@ function test_vector_functionize_lin1v()
         2,
         ((MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0),),
     )
+    return
+end
+
+function test_unsupported_attribute_issue_1758()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.ScalarFunctionize{Float64}(inner)
+    MOI.Test.test_model_copy_to_UnsupportedAttribute(model, MOI.Test.Config())
     return
 end
 
