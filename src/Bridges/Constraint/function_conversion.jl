@@ -18,7 +18,7 @@ function MOI.get(
         throw(
             MOI.UnsupportedAttribute(
                 attr,
-                "Bridge of type `$(typeof(bridge))` does not support accessing the attribute `$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`.",
+                "Bridge of type `$(typeof(bridge))` does not support getting the attribute `$attr` because `MOIB.Constraint.invariant_under_function_conversion($attr)` returns `false`.",
             ),
         )
     end
