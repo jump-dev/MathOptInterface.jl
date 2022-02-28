@@ -748,16 +748,18 @@ function test_model_ScalarFunctionConstantNotZero(
     try
         f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], T(1))
         c = MOI.add_constraint(model, f, MOI.EqualTo(T(2)))
-        @requires _supports(config, MOI.ConstraintFunction)
-        @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ f
+        if _supports(config, MOI.ConstraintFunction)
+            @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ f
+        end
     catch err
         @test err == _error(MOI.EqualTo{T}, T(1))
     end
     try
         f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], T(2))
         c = MOI.add_constraint(model, f, MOI.GreaterThan(T(1)))
-        @requires _supports(config, MOI.ConstraintFunction)
-        @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ f
+        if _supports(config, MOI.ConstraintFunction)
+            @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ f
+        end
     catch err
         @test err == _error(MOI.GreaterThan{T}, T(2))
     end
