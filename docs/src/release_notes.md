@@ -1,5 +1,15 @@
 # Release notes
 
+## v1.1.0 (March 2, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.1.0).
+
+### New features
+
+ - Added `MOI.Utilities.throw_unsupported(::UniversalFallback)` for simplifying
+   solver wrappers which copy from a `UniversalFallback`.
+
 ## v1.0.2 (March 1, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
