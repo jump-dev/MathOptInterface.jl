@@ -380,6 +380,73 @@ function test_missing_attribute()
     return
 end
 
+function test_throw_unsupported_model_attribute()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    attr = MOI.Test.UnknownModelAttribute()
+    MOI.set(model, attr, 1)
+    err = MOI.UnsupportedAttribute(attr)
+    @test_throws err MOI.Utilities.throw_unsupported(model)
+    MOI.Utilities.throw_unsupported(
+        model,
+        excluded_attributes = MOI.AnyAttribute[attr],
+    )
+    return
+end
+
+function test_throw_unsupported_variable_attribute()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    attr = MOI.Test.UnknownVariableAttribute()
+    MOI.set(model, attr, x, 1)
+    err = MOI.UnsupportedAttribute(attr)
+    @test_throws err MOI.Utilities.throw_unsupported(model)
+    MOI.Utilities.throw_unsupported(
+        model,
+        excluded_attributes = MOI.AnyAttribute[attr],
+    )
+    return
+end
+
+function test_throw_unsupported_constraint_attribute()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, x, MOI.EqualTo(1.0))
+    attr = MOI.Test.UnknownConstraintAttribute()
+    MOI.set(model, attr, c, 1)
+    err = MOI.UnsupportedAttribute(attr)
+    @test_throws err MOI.Utilities.throw_unsupported(model)
+    MOI.Utilities.throw_unsupported(
+        model,
+        excluded_attributes = MOI.AnyAttribute[attr],
+    )
+    return
+end
+
+function test_throw_unsupported_variable_constraint()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    set = MOI.Test.UnknownScalarSet(1.0)
+    c = MOI.add_constraint(model, x, set)
+    @test_throws(
+        MOI.UnsupportedConstraint{typeof(x),typeof(set)}(),
+        MOI.Utilities.throw_unsupported(model),
+    )
+    return
+end
+
+function test_throw_unsupported_affine_constraint()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    func = 2.0x
+    set = MOI.Test.UnknownScalarSet(1.0)
+    c = MOI.add_constraint(model, func, set)
+    @test_throws(
+        MOI.UnsupportedConstraint{typeof(func),typeof(set)}(),
+        MOI.Utilities.throw_unsupported(model),
+    )
+    return
+end
+
 end  # module
 
 TestUniversalFallback.runtests()
