@@ -120,13 +120,16 @@ function MOIB.inverse_adjoint_map_function(
 end
 
 """
-The `RSOCtoPSDBridge` transforms the second order cone constraint ``\\lVert x \\rVert \\le 2tu`` with ``u \\ge 0`` into the semidefinite cone constraints
+The `RSOCtoPSDBridge` transforms the second order cone constraint
+``\\lVert x \\rVert \\le 2tu`` with ``u \\ge 0`` into the semidefinite cone
+constraints
 ```math
 \\begin{pmatrix}
   t & x^\\top\\\\
   x & 2uI
 \\end{pmatrix} \\succeq 0
 ```
+
 Indeed by the Schur Complement, it is positive definite iff
 ```math
 \\begin{align*}
@@ -179,6 +182,12 @@ end
 
 function MOIB.map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where {T}
     scalars = MOIU.eachscalar(func)
+    if length(scalars) < 3
+        error(
+            "Unable to bridge RotatedSecondOrderCone to PSD because the ",
+            "dimension is too small: got $(length(scalars)), expected >= 3.",
+        )
+    end
     h = MOIU.operate!(*, T, scalars[2], convert(T, 2))
     return _SOCtoPSDaff(T, scalars[[1; 3:length(scalars)]], h)
 end

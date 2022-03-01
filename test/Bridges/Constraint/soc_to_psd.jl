@@ -150,6 +150,22 @@ function test_RSOCtoPSD()
     return
 end
 
+# TODO(odow): we should fix this so it does not error.
+function test_rsoc_to_psd_dimension_2()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.RSOCtoPSD{Float64}(inner)
+    x = MOI.add_variables(model, 2)
+    @test_throws(
+        ErrorException,
+        MOI.add_constraint(
+            model,
+            MOI.VectorOfVariables(x),
+            MOI.RotatedSecondOrderCone(2),
+        ),
+    )
+    return
+end
+
 end  # module
 
 TestConstraintSOCtoPSD.runtests()
