@@ -1,5 +1,18 @@
 # Release notes
 
+## v1.0.2 (March 1, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.0.2).
+
+### Bug fixes
+
+ - Fixed a bug in the `test_model_ScalarFunctionConstantNotZero` test
+ - Fixed the error type when an `AbstractFunctionConversionBridge` cannot get or
+   set an attribute
+ - Identified a correctness bug in `RSOCtoPSDBridge`. We now thrown an error
+   instead of returning an incorrect result.
+
 ## v1.0.1 (February 25, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
