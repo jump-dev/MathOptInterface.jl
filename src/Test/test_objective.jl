@@ -192,7 +192,7 @@ function test_objective_ObjectiveFunction_blank(
     MOI.set(model, obj_attr, f)
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-    @test MOI.get(model, MOI.ObjectiveValue()) == T(0)
+    @test isapprox(MOI.get(model, MOI.ObjectiveValue()), T(0), config)
     return
 end
 
