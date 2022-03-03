@@ -27,7 +27,7 @@ following [paper](https://pubsonline.informs.org/doi/10.1287/ijoc.2021.1067):
 ```bibtex
 @article{legat2021mathoptinterface,
     title={{MathOptInterface}: a data structure for mathematical optimization problems},
-    author={Legat, Beno{\^\i}t and Dowson, Oscar and Garcia, Joaquim Dias and Lubin, Miles},
+    author={Legat, Beno{\^\i}t and Dowson, Oscar and Dias Garcia, Joaquim and Lubin, Miles},
     journal={INFORMS Journal on Computing},
     year={2021},
     doi={10.1287/ijoc.2021.1067},
