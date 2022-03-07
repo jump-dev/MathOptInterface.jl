@@ -816,11 +816,7 @@ function test_model_UpperBoundAlreadySet(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    @requires MOI.supports_constraint(
-        model,
-        MOI.VariableIndex,
-        MOI.LessThan{T},
-    )
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.LessThan{T})
     @requires _supports(config, MOI.delete)
     x = MOI.add_variable(model)
     ub = T(0)
