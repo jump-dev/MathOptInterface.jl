@@ -810,15 +810,16 @@ end
         ::Config{T},
     ) where {T}
 
-Test that setting a lower-bound twice throws `UpperBoundAlreadySet`.
+Test that setting an upper-bound twice throws `UpperBoundAlreadySet`.
 """
 function test_model_UpperBoundAlreadySet(
     model::MOI.ModelLike,
-    ::Config{T},
+    config::Config{T},
 ) where {T}
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.LessThan{T})
+    @requires _supports(config, MOI.delete)
     x = MOI.add_variable(model)
     ub = T(0)
-    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.LessThan{T})
     sets = [MOI.EqualTo(ub), MOI.Interval(ub, ub)]
     set2 = MOI.LessThan(ub)
     for set1 in sets
