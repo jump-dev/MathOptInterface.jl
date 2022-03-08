@@ -18,12 +18,24 @@ function _test_instantiate(T)
     end
     optimizer_constructor =
         MOI.OptimizerWithAttributes(f, MOI.Silent() => true, "a" => 1, "b" => 2)
+
     optimizer = MOI.instantiate(optimizer_constructor)
     @test optimizer isa MOI.Utilities.MockOptimizer{
         MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}},
         Float64,
     }
     @test MOI.get(optimizer, MOI.Silent())
+
+    optimizer =
+        MOI.instantiate(optimizer_constructor, with_incremental_interface = T)
+    @test optimizer isa MOI.Utilities.MockOptimizer{
+        MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}},
+        Float64,
+    }
+    @test MOI.get(optimizer, MOI.Silent())
+    @test MOI.get(optimizer, MOI.RawOptimizerAttribute("a")) == 1
+    @test MOI.get(optimizer, MOI.RawOptimizerAttribute("b")) == 2
+
     optimizer = MOI.instantiate(optimizer_constructor, with_bridge_type = T)
     @test optimizer isa MOI.Bridges.LazyBridgeOptimizer{
         MOI.Utilities.MockOptimizer{
@@ -34,14 +46,57 @@ function _test_instantiate(T)
     @test MOI.get(optimizer, MOI.Silent())
     @test MOI.get(optimizer, MOI.RawOptimizerAttribute("a")) == 1
     @test MOI.get(optimizer, MOI.RawOptimizerAttribute("b")) == 2
+    @test MOI.Bridges.Constraint.ScalarSlackBridge{T} in
+          optimizer.constraint_bridge_types
+
+    optimizer = MOI.instantiate(
+        optimizer_constructor,
+        with_bridge_type = T,
+        with_incremental_interface = Bool,
+    )
+    @test typeof(optimizer) == MOI.Bridges.LazyBridgeOptimizer{
+        MOI.Utilities.MockOptimizer{
+            MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}},
+            Float64,
+        },
+    }
+    @test MOI.get(optimizer, MOI.Silent())
+    @test MOI.get(optimizer, MOI.RawOptimizerAttribute("a")) == 1
+    @test MOI.get(optimizer, MOI.RawOptimizerAttribute("b")) == 2
+    @test MOI.Bridges.Constraint.ScalarSlackBridge{T} in
+          optimizer.constraint_bridge_types
 
     optimizer_constructor = MOI.OptimizerWithAttributes(DummyOptimizer, [])
+
     optimizer = MOI.instantiate(optimizer_constructor)
     @test optimizer isa DummyOptimizer
+
+    optimizer =
+        MOI.instantiate(optimizer_constructor, with_incremental_interface = T)
+    @test optimizer isa
+          MOI.Utilities.CachingOptimizer{DummyOptimizer,MOI.Utilities.Model{T}}
+
     optimizer = MOI.instantiate(optimizer_constructor, with_bridge_type = T)
     @test optimizer isa MOI.Bridges.LazyBridgeOptimizer{
         MOI.Utilities.CachingOptimizer{DummyOptimizer,MOI.Utilities.Model{T}},
     }
+    @test MOI.Bridges.Constraint.ScalarSlackBridge{T} in
+          optimizer.constraint_bridge_types
+
+    optimizer = MOI.instantiate(
+        optimizer_constructor,
+        with_bridge_type = T,
+        with_incremental_interface = Bool,
+    )
+    @test optimizer isa MOI.Bridges.LazyBridgeOptimizer{
+        MOI.Utilities.CachingOptimizer{
+            DummyOptimizer,
+            MOI.Utilities.Model{Bool},
+        },
+    }
+    @test MOI.Bridges.Constraint.ScalarSlackBridge{T} in
+          optimizer.constraint_bridge_types
+
     err = ErrorException(
         "The provided `optimizer_constructor` returned a non-empty optimizer.",
     )

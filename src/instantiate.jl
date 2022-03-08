@@ -96,6 +96,7 @@ end
     instantiate(
         optimizer_constructor,
         with_bridge_type::Union{Nothing, Type} = nothing,
+        with_incremental_interface = with_bridge_type,
     )
 
 Creates an instance of optimizer by either:
@@ -108,23 +109,27 @@ If `with_bridge_type` is not `nothing`, it enables all the bridges defined in
 the MathOptInterface.Bridges submodule with coefficient type `with_bridge_type`.
 
 If the optimizer created by `optimizer_constructor` does not support loading the
-problem incrementally (see [`supports_incremental_interface`](@ref)), then a
-[`Utilities.CachingOptimizer`](@ref) is added to store a cache of the bridged
-model.
+problem incrementally (see [`supports_incremental_interface`](@ref)) and either
+`with_incremental_interface` is not `nothing`, then a
+[`Utilities.CachingOptimizer`](@ref) is added to store a cache of coefficient
+type `with_incremental_interface` of the model. This cache stores the bridged
+model if `with_bridge_type` is not `nothing`.
 """
 function instantiate(
     optimizer_constructor;
     with_bridge_type::Union{Nothing,Type} = nothing,
+    with_incremental_interface::Union{Nothing,Type} = with_bridge_type,
 )
     optimizer = _instantiate_and_check(optimizer_constructor)
-    if with_bridge_type === nothing
-        return optimizer
-    end
-    if !supports_incremental_interface(optimizer)
-        cache = default_cache(optimizer, with_bridge_type)
+    if !isnothing(with_incremental_interface) &&
+       !supports_incremental_interface(optimizer)
+        cache = default_cache(optimizer, with_incremental_interface)
         optimizer = Utilities.CachingOptimizer(cache, optimizer)
     end
-    return Bridges.full_bridge_optimizer(optimizer, with_bridge_type)
+    if !isnothing(with_bridge_type)
+        optimizer = Bridges.full_bridge_optimizer(optimizer, with_bridge_type)
+    end
+    return optimizer
 end
 
 """
