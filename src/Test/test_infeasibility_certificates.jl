@@ -47,8 +47,10 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0, 6 // 5)
                 @test obj > config.atol
             end
             @test isapprox(T(11 // 5) * d, obj, config)
-            Ad = MOI.get(model, MOI.ConstraintPrimal(), c)
-            @test isapprox(T(13 // 10) * d, Ad, config)
+            if _supports(config, MOI.ConstraintPrimal)
+                Ad = MOI.get(model, MOI.ConstraintPrimal(), c)
+                @test isapprox(T(13 // 10) * d, Ad, config)
+            end
             return
         end
         version_added(::typeof($(f_unbd_name))) = v"0.10.6"
@@ -99,17 +101,20 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0, 6 // 5)
             )
             dl = MOI.get(model, MOI.ConstraintDual(), cl)
             du = MOI.get(model, MOI.ConstraintDual(), cu)
-            obj = MOI.get(model, MOI.DualObjectiveValue())
-            if $sense == MOI.MIN_SENSE
-                @test obj > config.atol
-                @test isapprox(-(T(7 // 5) * dl + T(5 // 2) * du), obj, config)
-            else
-                @test obj < -config.atol
-                @test isapprox(T(7 // 5) * dl + T(5 // 2) * du, obj, config)
-            end
             @test dl > config.atol
             @test du < -config.atol
             @test isapprox(dl + du, T(0), config)
+            if _supports(config, MOI.DualObjectiveValue)
+                obj = MOI.get(model, MOI.DualObjectiveValue())
+                target = T(7 // 5) * dl + T(5 // 2) * du
+                if $sense == MOI.MIN_SENSE
+                    @test obj > config.atol
+                    @test isapprox(-target, obj, config)
+                else
+                    @test obj < -config.atol
+                    @test isapprox(target, obj, config)
+                end
+            end
             return
         end
         version_added(::typeof($(f_infeas_name))) = v"0.10.6"
@@ -161,17 +166,20 @@ for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0, 6 // 5)
             )
             dl = MOI.get(model, MOI.ConstraintDual(), cl)
             du = MOI.get(model, MOI.ConstraintDual(), cu)
-            obj = MOI.get(model, MOI.DualObjectiveValue())
-            if $sense == MOI.MIN_SENSE
-                @test obj > config.atol
-                @test isapprox(-(T(7 // 5) * dl + T(5 // 2) * du), obj, config)
-            else
-                @test obj < -config.atol
-                @test isapprox(T(7 // 5) * dl + T(5 // 2) * du, obj, config)
-            end
             @test dl > config.atol
             @test du < -config.atol
             @test isapprox(dl + du, T(0), config)
+            if _supports(config, MOI.DualObjectiveValue)
+                obj = MOI.get(model, MOI.DualObjectiveValue())
+                target = T(7 // 5) * dl + T(5 // 2) * du
+                if $sense == MOI.MIN_SENSE
+                    @test obj > config.atol
+                    @test isapprox(-target, obj, config)
+                else
+                    @test obj < -config.atol
+                    @test isapprox(target, obj, config)
+                end
+            end
             return
         end
         version_added(::typeof($(f_infeas_affine_name))) = v"0.10.6"
