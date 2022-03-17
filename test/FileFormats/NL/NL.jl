@@ -443,6 +443,156 @@ function test_nlmodel_hs071()
     return
 end
 
+function test_nlmodel_hs071_bridged()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    v = MOI.add_variables(model, 4)
+    l = [1.1, 1.2, 1.3, 1.4]
+    u = [5.1, 5.2, 5.3, 5.4]
+    start = [2.1, 2.2, 2.3, 2.4]
+    MOI.add_constraint.(model, v, MOI.GreaterThan.(l))
+    MOI.add_constraint.(model, v, MOI.LessThan.(u))
+    MOI.set.(model, MOI.VariablePrimalStart(), v, start)
+    lb, ub = [25.0, 40.0], [Inf, 40.0]
+    evaluator = MOI.Test.HS071(true)
+    block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, true)
+    MOI.set(model, MOI.NLPBlock(), block_data)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    n = NL.Model()
+    @test MOI.supports(n, MOI.NLPBlock())
+    @test MOI.supports(n, MOI.ObjectiveSense())
+    @test MOI.is_empty(n)
+    # Replicate what JuMP does in write_to_file!
+    bridged = MOI.Bridges.full_bridge_optimizer(n, Float64)
+    MOI.copy_to(bridged, model)
+    @test !MOI.is_empty(n)
+    @test n.sense == MOI.MIN_SENSE
+    @test n.f == NL._NLExpr(MOI.objective_expr(evaluator))
+    _test_nlexpr(
+        n.g[1].expr,
+        [NL.OPMULT, v[1], NL.OPMULT, v[2], NL.OPMULT, v[3], v[4]],
+        Dict(v .=> 0.0),
+        0.0,
+    )
+    @test n.g[1].lower == 25.0
+    @test n.g[1].upper == Inf
+    @test n.g[1].opcode == 2
+    _test_nlexpr(
+        n.g[2].expr,
+        [
+            NL.OPSUMLIST,
+            4,
+            NL.OPPOW,
+            v[1],
+            2,
+            NL.OPPOW,
+            v[2],
+            2,
+            NL.OPPOW,
+            v[3],
+            2,
+            NL.OPPOW,
+            v[4],
+            2,
+        ],
+        Dict(v .=> 0.0),
+        0.0,
+    )
+    @test n.g[2].lower == 40.0
+    @test n.g[2].upper == 40.0
+    @test n.g[2].opcode == 4
+    @test length(n.h) == 0
+    for i in 1:4
+        @test n.x[v[i]].lower == l[i]
+        @test n.x[v[i]].upper == u[i]
+        @test n.x[v[i]].type == NL._CONTINUOUS
+        @test n.x[v[i]].jacobian_count == 2
+        @test n.x[v[i]].in_nonlinear_constraint
+        @test n.x[v[i]].in_nonlinear_objective
+        @test 0 <= n.x[v[i]].order <= 3
+    end
+    @test length(n.types[1]) == 4
+    @test sprint(write, n) == """
+    g3 1 1 0
+     4 2 1 0 1 0
+     2 1
+     0 0
+     4 4 4
+     0 0 0 1
+     0 0 0 0 0
+     8 4
+     0 0
+     0 0 0 0 0
+    C0
+    o2
+    v0
+    o2
+    v1
+    o2
+    v2
+    v3
+    C1
+    o54
+    4
+    o5
+    v0
+    n2
+    o5
+    v1
+    n2
+    o5
+    v2
+    n2
+    o5
+    v3
+    n2
+    O0 0
+    o0
+    o2
+    v0
+    o2
+    v3
+    o54
+    3
+    v0
+    v1
+    v2
+    v2
+    x4
+    0 2.1
+    1 2.2
+    2 2.3
+    3 2.4
+    r
+    2 25
+    4 40
+    b
+    0 1.1 5.1
+    0 1.2 5.2
+    0 1.3 5.3
+    0 1.4 5.4
+    k3
+    2
+    4
+    6
+    J0 4
+    0 0
+    1 0
+    2 0
+    3 0
+    J1 4
+    0 0
+    1 0
+    2 0
+    3 0
+    G0 4
+    0 0
+    1 0
+    2 0
+    3 0
+    """
+    return
+end
+
 function test_nlmodel_hs071_linear_obj()
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     v = MOI.add_variables(model, 4)

@@ -773,4 +773,85 @@ function Base.write(io::IO, nlmodel::Model)
     return nlmodel
 end
 
+# This part is needed for JuMP's write_to_file method.
+#
+# JuMP calls:
+# ```julia
+# dest = MOI.FileFormats.Model(format = format, filename = filename)
+# bridged_dest = MOI.Bridges.full_bridge_optimizer(dest, Float64)
+# MOI.copy_to(bridged_dest, model)
+# MOI.write_to_file(dest, filename)
+# ```
+# So we need a way of calling `copy_to` from a model to a bridged NL.Model.
+# However because we don't support the incremental interface, this would require
+# a CachingOptimizer. Except we can't use a CachingOptimizer because NL.Model
+# isn't an AbstractOptimizer!
+#
+# The solution, at least as a temporary measure, is to write a simplified
+# _CachingModel that acts as a cache during copy_to.
+#
+# The other FileFormats don't have this problem because they use
+# Utilities.@model, which supports the incremental interface.
+
+struct _CachingModel{C} <: MOI.AbstractOptimizer
+    inner::MOI.FileFormats.NL.Model
+    cache::C
+    function _CachingModel(model::MOI.FileFormats.NL.Model)
+        cache = MOI.Bridges.full_bridge_optimizer(
+            MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+            Float64,
+        )
+        return new{typeof(cache)}(model, cache)
+    end
+end
+
+MOI.supports_incremental_interface(::_CachingModel) = true
+
+MOI.is_empty(model::_CachingModel) = MOI.is_empty(model.cache)
+
+MOI.empty!(model::_CachingModel) = MOI.empty!(model.cache)
+
+function MOI.add_constraint(
+    model::_CachingModel,
+    f::MOI.AbstractFunction,
+    s::MOI.AbstractSet,
+)
+    return MOI.add_constraint(model.cache, f, s)
+end
+
+MOI.add_variable(model::_CachingModel) = MOI.add_variable(model.cache)
+
+function MOI.set(model::_CachingModel, attr::MOI.AnyAttribute, args...)
+    return MOI.set(model.cache, attr, args...)
+end
+
+function MOI.get(model::_CachingModel, attr::MOI.AnyAttribute, args...)
+    return MOI.get(model.cache, attr, args...)
+end
+
+function MOI.supports(
+    model::_CachingModel,
+    attr::MOI.AnyAttribute,
+    args...)
+    return MOI.supports(model.inner, attr, args...)
+end
+
+function MOI.supports_constraint(
+    model::_CachingModel,
+    f::MOI.AbstractFunction,
+    s::MOI.AbstractSet,
+)
+    return MOI.supports(model.inner, f, s)
+end
+
+function MOI.copy_to(
+    dest::MOI.Bridges.LazyBridgeOptimizer{MOI.FileFormats.NL.Model},
+    src::MOI.ModelLike
+)
+    model = _CachingModel(dest.model)
+    index_map = MOI.Utilities.default_copy_to(model, src)
+    MOI.copy_to(model.inner, model.cache)
+    return index_map
+end
+
 end
