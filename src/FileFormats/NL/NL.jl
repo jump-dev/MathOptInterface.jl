@@ -838,7 +838,7 @@ function MOI.supports_constraint(
     f::MOI.AbstractFunction,
     s::MOI.AbstractSet,
 )
-    return MOI.supports(model.inner, f, s)
+    return MOI.supports_constraint(model.inner, f, s)
 end
 
 function MOI.copy_to(
