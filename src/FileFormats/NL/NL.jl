@@ -829,10 +829,7 @@ function MOI.get(model::_CachingModel, attr::MOI.AnyAttribute, args...)
     return MOI.get(model.cache, attr, args...)
 end
 
-function MOI.supports(
-    model::_CachingModel,
-    attr::MOI.AnyAttribute,
-    args...)
+function MOI.supports(model::_CachingModel, attr::MOI.AnyAttribute, args...)
     return MOI.supports(model.inner, attr, args...)
 end
 
@@ -846,7 +843,7 @@ end
 
 function MOI.copy_to(
     dest::MOI.Bridges.LazyBridgeOptimizer{MOI.FileFormats.NL.Model},
-    src::MOI.ModelLike
+    src::MOI.ModelLike,
 )
     model = _CachingModel(dest.model)
     index_map = MOI.Utilities.default_copy_to(model, src)
