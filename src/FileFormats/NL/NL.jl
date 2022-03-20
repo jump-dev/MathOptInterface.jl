@@ -846,7 +846,9 @@ function MOI.copy_to(
     src::MOI.ModelLike,
 )
     model = _CachingModel(dest.model)
-    index_map = MOI.copy_to(model, src)
+    # This needs to be `default_copy_to` so that it uses the incremental
+    # interface.
+    index_map = MOI.Utilities.default_copy_to(model, src)
     MOI.copy_to(model.inner, model.cache)
     return index_map
 end
