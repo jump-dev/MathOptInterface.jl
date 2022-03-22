@@ -92,7 +92,7 @@ mutable struct CachingOptimizer{O,M<:MOI.ModelLike} <: MOI.AbstractOptimizer
 
     function CachingOptimizer(
         cache::MOI.ModelLike,
-        optimizer::MOI.AbstractOptimizer,
+        optimizer::MOI.ModelLike,
     )
         @assert MOI.is_empty(optimizer)
         model = new{typeof(optimizer),typeof(cache)}(

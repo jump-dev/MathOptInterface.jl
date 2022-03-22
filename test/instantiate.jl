@@ -67,7 +67,7 @@ function _test_instantiate(T)
 
     err = ErrorException(
         "The provided `optimizer_constructor` returned an object of type " *
-        "$Int. Expected a MathOptInterface.AbstractOptimizer.",
+        "$Int. Expected a MathOptInterface.ModelLike.",
     )
     h() = 1
     @test_throws err MOI.instantiate(h)
