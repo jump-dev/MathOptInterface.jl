@@ -114,7 +114,7 @@ julia> MOI.get(dest, MOI.ListOfVariableIndices())
 julia> rm("file.mof.json")  # Clean up after ourselves.
 ```
 
-## Detecing the filetype automatically
+## Detecting the filetype automatically
 
 Instead of the `format` keyword, you can also use the `filename` keyword
 argument to [`FileFormats.Model`](@ref). This will attempt to automatically
