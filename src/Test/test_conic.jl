@@ -6791,3 +6791,37 @@ function setup_test(
     )
     return
 end
+
+function test_conic_empty_matrix(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.optimize!)
+    F = MOI.VectorAffineFunction{T}
+    @requires MOI.supports_constraint(model, F, MOI.SecondOrderCone)
+    terms = MOI.VectorAffineTerm{T}[]
+    MOI.add_constraint(
+        model,
+        MOI.VectorAffineFunction(terms, [T(2), T(1), T(1)]),
+        MOI.SecondOrderCone(3),
+    )
+    MOI.optimize!(model)
+    status = MOI.get(model, MOI.TerminationStatus())
+    @test status in (config.optimal_status, MOI.INVALID_MODEL)
+    return
+end
+
+version_added(::typeof(test_conic_empty_matrix)) = v"1.1.1"
+
+function setup_test(
+    ::typeof(test_conic_empty_matrix),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.INVALID_MODEL),
+    )
+    return
+end
