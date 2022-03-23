@@ -49,6 +49,23 @@ function test_copying()
     end
 end
 
+function test_instantiate()
+    models = [
+        MOI.FileFormats.CBF.Model,
+        MOI.FileFormats.LP.Model,
+        MOI.FileFormats.MOF.Model,
+        MOI.FileFormats.MPS.Model,
+        MOI.FileFormats.SDPA.Model,
+    ]
+    for src in models
+        model = MOI.instantiate(src)
+        @test model isa src
+        bridged = MOI.instantiate(src; with_bridge_type = Float64)
+        @test bridged isa MOI.Bridges.LazyBridgeOptimizer
+    end
+    return
+end
+
 function test_compressed_open()
     for cs in [MOI.FileFormats.Bzip2(), MOI.FileFormats.Gzip()]
         for open_type in ["a", "r+", "w+", "a+"]

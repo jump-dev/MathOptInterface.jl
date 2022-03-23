@@ -55,18 +55,18 @@ const _INSTANTIATE_NOT_CALLABLE_MESSAGE =
     _instantiate_and_check(optimizer_constructor)
 
 Create an instance of optimizer by calling `optimizer_constructor`.
-Then check that the type returned is an empty [`AbstractOptimizer`](@ref).
+Then check that the type returned is an empty [`ModelLike`](@ref).
 """
 function _instantiate_and_check(optimizer_constructor)
     if !applicable(optimizer_constructor)
         error(_INSTANTIATE_NOT_CALLABLE_MESSAGE)
     end
     optimizer = optimizer_constructor()
-    if !isa(optimizer, AbstractOptimizer)
+    if !isa(optimizer, ModelLike)
         error(
             "The provided `optimizer_constructor` returned an object of type " *
             "$(typeof(optimizer)). Expected a " *
-            "MathOptInterface.AbstractOptimizer.",
+            "MathOptInterface.ModelLike.",
         )
     end
     if !is_empty(optimizer)
