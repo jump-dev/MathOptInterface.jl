@@ -1,5 +1,23 @@
 # Release notes
 
+## v1.1.1 (March 23, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.1.1).
+
+### Bug fixes
+
+ - Fix bug in `test_model_UpperBoundAlreadySet`
+ - Fix bug in `test_infeasible_` tests
+ - Fix bug in `test_objective_ObjectiveFunction_blank`
+ - Relax restriction of `MOI.AbstractOptimizer` to `MOI.ModelLike` in
+   `Utilities.CachingOptimizer` and `instantiate`.
+
+### New tests
+
+ - Add `test_conic_empty_matrix` that checks conic solvers support problems with
+   no variables.
+
 ## v1.1.0 (March 2, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
