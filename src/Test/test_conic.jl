@@ -6796,10 +6796,13 @@ function test_conic_empty_matrix(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
+    @requires _supports(config, MOI.optimize!)
+    F = MOI.VectorAffineFunction{T}
+    @requires MOI.supports_constraint(model, F, MOI.SecondOrderCone)
     terms = MOI.VectorAffineTerm{Float64}[]
     MOI.add_constraint(
         model,
-        MOI.VectorAffineFunction(terms, [1.0, 0.5, 0.5]),
+        MOI.VectorAffineFunction(terms, [T(2), T(1), T(1)]),
         MOI.SecondOrderCone(3),
     )
     MOI.optimize!(model)
