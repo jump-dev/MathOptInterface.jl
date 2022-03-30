@@ -537,14 +537,20 @@ function test_constraint_ZeroOne_bounds(
     try
         MOI.add_constraint(model, x, MOI.GreaterThan(T(0)))
     catch err
-        @test err isa MOI.LowerBoundAlreadySet
-        return
+        if err isa MOI.LowerBoundAlreadySet
+            return
+        else
+            rethrow(err)
+        end
     end
     try
         MOI.add_constraint(model, x, MOI.LessThan(T(1)))
     catch err
-        @test err isa MOI.UpperBoundAlreadySet
-        return
+        if err isa MOI.UpperBoundAlreadySet
+            return
+        else
+            rethrow(err)
+        end
     end
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = T(2) * x
@@ -589,14 +595,20 @@ function test_constraint_ZeroOne_bounds_2(
     try
         MOI.add_constraint(model, x, MOI.GreaterThan(T(0)))
     catch err
-        @test err isa MOI.LowerBoundAlreadySet
-        return
+        if err isa MOI.LowerBoundAlreadySet
+            return
+        else
+            rethrow(err)
+        end
     end
     try
         MOI.add_constraint(model, x, MOI.LessThan(T(1 // 2)))
     catch err
-        @test err isa MOI.UpperBoundAlreadySet
-        return
+        if err isa MOI.UpperBoundAlreadySet
+            return
+        else
+            rethrow(err)
+        end
     end
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = T(2) * x
@@ -642,14 +654,20 @@ function test_constraint_ZeroOne_bounds_3(
     try
         MOI.add_constraint(model, x, MOI.GreaterThan(T(1 // 5)))
     catch err
-        @test err isa MOI.LowerBoundAlreadySet
-        return
+        if err isa MOI.LowerBoundAlreadySet
+            return
+        else
+            rethrow(err)
+        end
     end
     try
         MOI.add_constraint(model, x, MOI.LessThan(T(1 // 2)))
     catch err
-        @test err isa MOI.UpperBoundAlreadySet
-        return
+        if err isa MOI.UpperBoundAlreadySet
+            return
+        else
+            rethrow(err)
+        end
     end
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = T(2) * x

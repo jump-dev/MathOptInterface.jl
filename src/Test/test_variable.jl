@@ -370,8 +370,11 @@ function test_variable_solve_ZeroOne_with_upper_bound(
     try
         MOI.add_constraint(model, x, MOI.ZeroOne())
     catch err
-        @test err isa MOI.UpperBoundAlreadySet
-        return
+        if err isa MOI.UpperBoundAlreadySet
+            return
+        else
+            rethrow(err)
+        end
     end
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -415,8 +418,11 @@ function test_variable_solve_ZeroOne_with_0_upper_bound(
     try
         MOI.add_constraint(model, x, MOI.ZeroOne())
     catch err
-        @test err isa MOI.UpperBoundAlreadySet
-        return
+        if err isa MOI.UpperBoundAlreadySet
+            return
+        else
+            rethrow(err)
+        end
     end
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
