@@ -510,7 +510,7 @@ end
         config::Config{T},
     ) where {T}
 
-Test that a SclaarAffineFunction can be set via modification without setting an
+Test that a ScalarAffineFunction can be set via modification without setting an
 objective prior.
 """
 function test_objective_set_via_modify(
