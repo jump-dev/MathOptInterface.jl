@@ -1,16 +1,3 @@
-const _COMMENT_REG = r"(.*?)\\(.*)"
-
-const _READ_START_REG = r"^([\.0-9])"
-
-function _strip_comment(line::String)
-    if occursin("\\", line)
-        m = match(_COMMENT_REG, line)
-        return strip(String(m[1]))
-    else
-        return strip(line)
-    end
-end
-
 const _KW_OBJECTIVE = Val{:objective}()
 const _KW_CONSTRAINTS = Val{:constraints}()
 const _KW_BOUNDS = Val{:bounds}()
@@ -48,29 +35,16 @@ const _KEYWORDS = Dict(
     "end" => _KW_END,
 )
 
-const _CONSTRAINT_SENSE = Dict(
-    "<" => :le,
-    "<=" => :le,
-    "=" => :eq,
-    "==" => :eq,
-    ">" => :ge,
-    ">=" => :ge,
-)
-
-mutable struct _CacheLPModel
-    objective_function::MOI.ScalarAffineFunction{Float64}
+mutable struct _ReadCache
+    objective::MOI.ScalarAffineFunction{Float64}
     constraint_function::MOI.ScalarAffineFunction{Float64}
-    constraint_set::MOI.AbstractScalarSet
-    constraint_open::Bool
-    contraint_name::String
+    constraint_name::String
     num_constraints::Int
     name_to_variable::Dict{String,MOI.VariableIndex}
-    function _CacheLPModel()
+    function _ReadCache()
         return new(
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
-            MOI.EqualTo(0.0),
-            false,
             "",
             0,
             Dict{String,MOI.VariableIndex}(),
@@ -78,28 +52,19 @@ mutable struct _CacheLPModel
     end
 end
 
-function _verify_name(name::String, maximum_length::Int)
-    if length(name) > maximum_length
-        error("Name exceeds maximum length: $name")
-    elseif match(_READ_START_REG, name) !== nothing
-        error("Name starts with invalid character: $name")
-    elseif match(NAME_REG, name) !== nothing
-        error("Name contains with invalid character: $name")
-    end
-    return
-end
-
-function _get_variable_from_name(
-    model::Model,
-    cache::_CacheLPModel,
-    name::String,
-)
+function _get_variable_from_name(model::Model, cache::_ReadCache, name::String)
     current_variable = get(cache.name_to_variable, name, nothing)
     if current_variable !== nothing
         return current_variable
     end
     options = get_options(model)
-    _verify_name(name, options.maximum_length)
+    if length(name) > options.maximum_length
+        error("Name exceeds maximum length: $name")
+    elseif match(r"^([\.0-9])", name) !== nothing
+        error("Name starts with invalid character: $name")
+    elseif match(NAME_REG, name) !== nothing
+        error("Name contains with invalid character: $name")
+    end
     x = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), x, name)
     cache.name_to_variable[name] = x
@@ -145,9 +110,9 @@ function _get_term(token_types, token_values, offset)
 end
 
 function _parse_affine_terms(
-    terms::Vector{MOI.ScalarAffineTerm{Float64}},
+    f::MOI.ScalarAffineFunction{Float64},
     model::Model,
-    cache::_CacheLPModel,
+    cache::_ReadCache,
     tokens::Vector{String},
 )
     N = length(tokens)
@@ -165,21 +130,21 @@ function _parse_affine_terms(
             token_values[i] = Float64(x.value)
         end
     end
-    offset, constant = 1, 0.0
+    offset = 1
     while offset <= length(tokens)
         term, offset = _get_term(token_types, token_values, offset)
         if term isa MOI.ScalarAffineTerm{Float64}
-            push!(terms, term::MOI.ScalarAffineTerm{Float64})
+            push!(f.terms, term::MOI.ScalarAffineTerm{Float64})
         else
-            constant += term::Float64
+            f.constant += term::Float64
         end
     end
-    return constant
+    return
 end
 
 # _KW_HEADER
 
-_parse_section(::Val{:header}, ::Model, ::_CacheLPModel, ::Any) = nothing
+_parse_section(::Val{:header}, ::Model, ::_ReadCache, ::Any) = nothing
 
 # _KW_OBJECTIVE
 
@@ -202,7 +167,7 @@ end
 function _parse_section(
     ::typeof(_KW_OBJECTIVE),
     model::Model,
-    cache::_CacheLPModel,
+    cache::_ReadCache,
     line::AbstractString,
 )
     if occursin(":", line)  # Strip name of the objective
@@ -210,11 +175,11 @@ function _parse_section(
     end
     tokens = _tokenize(line)
     if length(tokens) == 0
+        # Can happen if the name of the objective is on one line and the
+        # expression is on the next.
         return
     end
-    terms = cache.objective_function.terms
-    constant = _parse_affine_terms(terms, model, cache, tokens)
-    cache.objective_function.constant += constant
+    _parse_affine_terms(cache.objective, model, cache, tokens)
     return
 end
 
@@ -222,7 +187,7 @@ end
 
 function _parse_sos_constraint(
     model::Model,
-    cache::_CacheLPModel,
+    cache::_ReadCache,
     line::AbstractString,
 )
     tokens = _tokenize(line)
@@ -246,11 +211,12 @@ function _parse_sos_constraint(
         push!(variables, _get_variable_from_name(model, cache, items[1]))
         push!(weights, parse(Float64, items[2]))
     end
-    c_ref = MOI.add_constraint(
-        model,
-        variables,
-        order == 1 ? MOI.SOS1(weights) : MOI.SOS2(weights),
-    )
+    c_ref = if tokens[2] == "S1::"
+        MOI.add_constraint(model, variables, MOI.SOS1(weights))
+    else
+        @assert tokens[2] == "S2::"
+        MOI.add_constraint(model, variables, MOI.SOS2(weights))
+    end
     MOI.set(model, MOI.ConstraintName(), c_ref, name)
     return
 end
@@ -258,61 +224,50 @@ end
 function _parse_section(
     ::typeof(_KW_CONSTRAINTS),
     model::Model,
-    cache::_CacheLPModel,
+    cache::_ReadCache,
     line::AbstractString,
 )
-    if match(r" S([0-9]):: ", line) !== nothing
+    if match(r" S([1-2]):: ", line) !== nothing
         _parse_sos_constraint(model, cache, line)
         return
     end
-    if cache.constraint_open == false
-        # We're starting a new constraint. Give it a name for now, but we might
-        # replace it with a proper strinng in the next if-block.
-        cache.contraint_name = "R$(cache.num_constraints)"
-    end
-    if occursin(":", line)
-        if cache.constraint_open == true
-            error("Malformed constraint $(line). Is the previous one valid?")
+    if isempty(cache.constraint_name)
+        if occursin(":", line)
+            m = match(r"(.*?)\:(.*)", line)
+            cache.constraint_name = String(m[1])
+            line = String(m[2])
+        else
+            # Give it a temporary name for now
+            cache.constraint_name = "R$(cache.num_constraints)"
         end
-        m = match(r"(.*?)\:(.*)", line)
-        cache.contraint_name = String(m[1])
-        line = String(m[2])
     end
-    cache.constraint_open = true
     tokens = _tokenize(line)
     if length(tokens) == 0
+        # Can happen if the name is on one line and the constraint on the next.
         return
     end
-    is_finished = false
-    # This checks if the constaint is finishing on this like.
+    # This checks if the constaint is finishing on this line.
+    constraint_set = nothing
     if length(tokens) >= 2 && tokens[end-1] in ("<", "<=", ">", ">=", "=", "==")
         rhs = parse(Float64, pop!(tokens))
         sym = pop!(tokens)
-        if sym in ("<", "<=")
-            cache.constraint_set = MOI.LessThan(rhs)
+        constraint_set = if sym in ("<", "<=")
+            MOI.LessThan(rhs)
         elseif sym in (">", ">=")
-            cache.constraint_set = MOI.GreaterThan(rhs)
-        elseif sym in ("=", "==")
-            cache.constraint_set = MOI.EqualTo(rhs)
+            MOI.GreaterThan(rhs)
+        else
+            @assert sym in ("=", "==")
+            MOI.EqualTo(rhs)
         end
-        is_finished = true
     end
-    terms = cache.constraint_function.terms
-    constant = _parse_affine_terms(terms, model, cache, tokens)
-    cache.constraint_function.constant += constant
-    if is_finished
-        c = MOI.add_constraint(
-            model,
-            cache.constraint_function,
-            cache.constraint_set,
-        )
-        MOI.set(model, MOI.ConstraintName(), c, cache.contraint_name)
+    _parse_affine_terms(cache.constraint_function, model, cache, tokens)
+    if constraint_set !== nothing
+        c = MOI.add_constraint(model, cache.constraint_function, constraint_set)
+        MOI.set(model, MOI.ConstraintName(), c, cache.constraint_name)
         cache.num_constraints += 1
-        cache.constraint_set = MOI.EqualTo(0.0)
         empty!(cache.constraint_function.terms)
         cache.constraint_function.constant = 0.0
-        cache.contraint_name = ""
-        cache.constraint_open = false
+        cache.constraint_name = ""
     end
     return
 end
@@ -337,7 +292,7 @@ _is_equal_to(token) = token in ("==", "=")
 function _parse_section(
     ::typeof(_KW_BOUNDS),
     model::Model,
-    cache::_CacheLPModel,
+    cache::_ReadCache,
     line::AbstractString,
 )
     tokens = _tokenize(line)
@@ -411,10 +366,19 @@ end
 function _parse_section(
     ::typeof(_KW_END),
     ::Model,
-    ::_CacheLPModel,
+    ::_ReadCache,
     line::AbstractString,
 )
     return error("Corrupted LP File. You have the lne $(line) after an end.")
+end
+
+function _strip_comment(line::String)
+    if occursin("\\", line)
+        m = match(r"(.*?)\\(.*)", line)
+        return strip(String(m[1]))
+    else
+        return strip(line)
+    end
 end
 
 """
@@ -426,7 +390,7 @@ function Base.read!(io::IO, model::Model)
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
     end
-    cache = _CacheLPModel()
+    cache = _ReadCache()
     section = Val{:header}()
     while !eof(io)
         line = _strip_comment(string(readline(io)))
@@ -434,7 +398,7 @@ function Base.read!(io::IO, model::Model)
             continue
         end
         lower_line = lowercase(line)
-        if haskey(_KEYWORDS, lower_line) # section has changed
+        if haskey(_KEYWORDS, lower_line)
             section = _KEYWORDS[lower_line]
             _set_objective_sense(section, model, lower_line)
             continue
@@ -444,7 +408,7 @@ function Base.read!(io::IO, model::Model)
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        cache.objective_function,
+        cache.objective,
     )
     return
 end

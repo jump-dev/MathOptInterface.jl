@@ -4,10 +4,12 @@
 \ its a terrible idea
 Max \ this problem is a maximisation!
 
-obj: -1 Var4
+obj: 
+-1 Var4
  + 1 V5
 Subject To
-CON1: 1 V1 >= 0.0
+CON1:
+    1 V1 >= 0.0
 1 V2 >= 2.0 \ not named
 CON3: 1 V3 <= 2.5
 CON4: 1 V5 + 1 V6   \ split constraint. we know it hasn't ended as missing operator
