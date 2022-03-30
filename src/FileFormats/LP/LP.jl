@@ -573,9 +573,10 @@ function _parse_float(token::String)
     end
 end
 
-_is_less_than(token) = token in ("<=", "<")
-_is_greater_than(token) = token in (">=", ">")
-_is_equal_to(token) = token in ("==", "=")
+# Yes, the last elements here are really accepted by CPLEX...
+_is_less_than(token) = token in ("<=", "<", "=<")
+_is_greater_than(token) = token in (">=", ">", "=>")
+_is_equal_to(token) = token in ("=", "==")
 
 function _parse_section(
     ::typeof(_KW_BOUNDS),
@@ -673,6 +674,10 @@ end
     Base.read!(io::IO, model::FileFormats.LP.Model)
 
 Read `io` in the LP file format and store the result in `model`.
+
+This reader attempts to follow the CPLEX LP format, because others like the
+lpsolve version are very...flexible...in how they accept input. Read more about
+them here: http://lpsolve.sourceforge.net
 """
 function Base.read!(io::IO, model::Model)
     if !MOI.is_empty(model)
