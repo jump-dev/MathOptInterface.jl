@@ -235,6 +235,31 @@ function mat_to_vec_idx(i::Int, j::Int)
     end
 end
 
+function _dim_to_set(s::AbstractString)
+    block_dim = parse(Int, s)
+    if block_dim > 0
+        return MOI.PositiveSemidefiniteConeTriangle(block_dim)
+    else
+        return MOI.Nonnegatives(-block_dim)
+    end
+end
+function _parse_dimensions(dims)
+    isvalid(char) = isdigit(char) || char == '-'
+    start = findfirst(isvalid, dims)
+    stop = findlast(isvalid, dims)
+    if isnothing(start)
+        return Union{MOI.PositiveSemidefiniteConeTriangle,MOI.Nonnegatives}[]
+    end
+    function is_delimiter(char)
+        return isspace(char) || char == ','
+    end
+    s = split(dims[start:stop], is_delimiter)
+    s = filter(!isempty, s)
+    return Union{MOI.PositiveSemidefiniteConeTriangle,MOI.Nonnegatives}[
+        _dim_to_set(dim) for dim in s
+    ]
+end
+
 """
     Base.read!(io::IO, model::FileFormats.SDPA.Model)
 
@@ -247,14 +272,6 @@ function Base.read!(io::IO, model::Model{T}) where {T}
     num_variables_read = false
     num_blocks = nothing
     block_sets = nothing
-    function dim_to_set(s::AbstractString)
-        block_dim = parse(Int, s)
-        if block_dim > 0
-            return MOI.PositiveSemidefiniteConeTriangle(block_dim)
-        else
-            return MOI.Nonnegatives(-block_dim)
-        end
-    end
     objective_read = false
     integer_read = false
     scalar_vars = nothing
@@ -303,7 +320,7 @@ function Base.read!(io::IO, model::Model{T}) where {T}
             if isempty(line) && !iszero(num_blocks)
                 continue
             end
-            block_sets = dim_to_set.(split(line))
+            block_sets = _parse_dimensions(line)
             if length(block_sets) != num_blocks
                 error(
                     "The number of blocks ($num_blocks) does not match the length of the list of blocks dimensions ($(length(block_sets))).",
