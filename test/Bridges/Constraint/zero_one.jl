@@ -126,6 +126,19 @@ function test_ZeroOne()
     return
 end
 
+function test_double_bounds()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    config = MOI.Test.Config()
+    bridged_mock = MOI.Bridges.Constraint.ZeroOne{Float64}(mock)
+    MOI.Test.test_constraint_ZeroOne_bounds(bridged_mock, config)
+    MOI.Test.test_constraint_ZeroOne_bounds_2(bridged_mock, config)
+    MOI.Test.test_constraint_ZeroOne_bounds_3(bridged_mock, config)
+    MOI.Test.test_variable_solve_ZeroOne_with_0_upper_bound(bridged_mock, config)
+    MOI.Test.test_variable_solve_ZeroOne_with_upper_bound(bridged_mock, config)
+end
+
 end  # module
 
 TestConstraintZeroOne.runtests()

@@ -534,8 +534,18 @@ function test_constraint_ZeroOne_bounds(
     @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     x = MOI.add_variable(model)
     MOI.add_constraint(model, x, MOI.ZeroOne())
-    MOI.add_constraint(model, x, MOI.GreaterThan(T(0)))
-    MOI.add_constraint(model, x, MOI.LessThan(T(1)))
+    try
+        MOI.add_constraint(model, x, MOI.GreaterThan(T(0)))
+    catch err
+        @test err isa MOI.LowerBoundAlreadySet
+        return
+    end
+    try
+        MOI.add_constraint(model, x, MOI.LessThan(T(1)))
+    catch err
+        @test err isa MOI.UpperBoundAlreadySet
+        return
+    end
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = T(2) * x
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
@@ -576,8 +586,18 @@ function test_constraint_ZeroOne_bounds_2(
     @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.ZeroOne)
     x = MOI.add_variable(model)
     MOI.add_constraint(model, x, MOI.ZeroOne())
-    MOI.add_constraint(model, x, MOI.GreaterThan(T(0)))
-    MOI.add_constraint(model, x, MOI.LessThan(T(1 // 2)))
+    try
+        MOI.add_constraint(model, x, MOI.GreaterThan(T(0)))
+    catch err
+        @test err isa MOI.LowerBoundAlreadySet
+        return
+    end
+    try
+        MOI.add_constraint(model, x, MOI.LessThan(T(1 // 2)))
+    catch err
+        @test err isa MOI.UpperBoundAlreadySet
+        return
+    end
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = T(2) * x
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
@@ -619,8 +639,18 @@ function test_constraint_ZeroOne_bounds_3(
     @requires _supports(config, MOI.optimize!)
     x = MOI.add_variable(model)
     MOI.add_constraint(model, x, MOI.ZeroOne())
-    MOI.add_constraint(model, x, MOI.GreaterThan(T(1 // 5)))
-    MOI.add_constraint(model, x, MOI.LessThan(T(1 // 2)))
+    try
+        MOI.add_constraint(model, x, MOI.GreaterThan(T(1 // 5)))
+    catch err
+        @test err isa MOI.LowerBoundAlreadySet
+        return
+    end
+    try
+        MOI.add_constraint(model, x, MOI.LessThan(T(1 // 2)))
+    catch err
+        @test err isa MOI.UpperBoundAlreadySet
+        return
+    end
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = T(2) * x
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
