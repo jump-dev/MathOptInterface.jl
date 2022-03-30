@@ -4,17 +4,17 @@ import MathOptInterface
 using Test
 
 const MOI = MathOptInterface
-const MOIU = MOI.Utilities
 const LP = MOI.FileFormats.LP
 const LP_TEST_FILE = "test.lp"
 
 function test_show()
     @test sprint(show, LP.Model()) == "A .LP-file model"
+    return
 end
 
 function test_comprehensive_write()
     model = LP.Model()
-    MOIU.loadfromstring!(
+    MOI.Utilities.loadfromstring!(
         model,
         """
 variables: a, x, y, z
@@ -177,7 +177,7 @@ end
 
 function test_name_sanitization_other()
     model = LP.Model()
-    MOIU.loadfromstring!(
+    MOI.Utilities.loadfromstring!(
         model,
         """
 variables: x
@@ -196,7 +196,7 @@ end
 
 function test_free_variables()
     model = LP.Model()
-    MOIU.loadfromstring!(
+    MOI.Utilities.loadfromstring!(
         model,
         """
 variables: x, y, z
@@ -224,7 +224,7 @@ function test_quadratic_objective()
     model = LP.Model()
     @test_throws(
         MOI.UnsupportedAttribute,
-        MOIU.loadfromstring!(
+        MOI.Utilities.loadfromstring!(
             model,
             """
 variables: x
@@ -247,7 +247,20 @@ function test_read_example_lo1()
           constraints
     @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in constraints
     @test (MOI.VariableIndex, MOI.Interval{Float64}) in constraints
-    return nothing
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    file = read(io, String)
+    @test occursin("maximize", file)
+    @test occursin("obj: 3 x1 + 1 x2 + 5 x3 + 1 x4", file)
+    @test occursin("c1: 3 x1 + 1 x2 + 2 x3 = 30", file)
+    @test occursin("c2: 2 x1 + 1 x2 + 3 x3 + 1 x4 >= 15", file)
+    @test occursin("c3: 2 x2 + 3 x4 <= 25", file)
+    @test occursin("x1 >= 0", file)
+    @test occursin("0 <= x2 <= 10", file)
+    @test occursin("x3 >= 0", file)
+    @test occursin("x4 >= 0", file)
+    return
 end
 
 function test_read_model2()
@@ -272,7 +285,7 @@ function test_read_model2()
     obj_type = MOI.get(model, MOI.ObjectiveFunctionType())
     obj_func = MOI.get(model, MOI.ObjectiveFunction{obj_type}())
     @test obj_func.constant == 2.5
-    return nothing
+    return
 end
 
 function test_read_model1_tricky()
@@ -282,7 +295,7 @@ function test_read_model1_tricky()
     var_names = MOI.get.(model, MOI.VariableName(), MOI.VariableIndex.(1:8))
     @test Set(var_names) ==
           Set(["Var4", "V5", "V1", "V2", "V3", "V6", "V7", "V8"])
-    return nothing
+    return
 end
 
 function test_read_corrupt()
@@ -291,7 +304,7 @@ function test_read_corrupt()
         model,
         joinpath(@__DIR__, "models", "corrupt.lp"),
     )
-    return nothing
+    return
 end
 
 function test_read_invalid_variable_name()
@@ -300,7 +313,7 @@ function test_read_invalid_variable_name()
         model,
         joinpath(@__DIR__, "models", "invalid_variable_name.lp"),
     )
-    return nothing
+    return
 end
 
 function test_read_invalid_affine_term_objective()
@@ -309,7 +322,7 @@ function test_read_invalid_affine_term_objective()
         model,
         joinpath(@__DIR__, "models", "invalid_affine_term_objective.lp"),
     )
-    return nothing
+    return
 end
 
 function test_read_invalid_affine_term_constraint()
@@ -318,7 +331,7 @@ function test_read_invalid_affine_term_constraint()
         model,
         joinpath(@__DIR__, "models", "invalid_affine_term_constraint.lp"),
     )
-    return nothing
+    return
 end
 
 function test_read_invalid_sos_set()
@@ -327,7 +340,7 @@ function test_read_invalid_sos_set()
         model,
         joinpath(@__DIR__, "models", "invalid_sos_set.lp"),
     )
-    return nothing
+    return
 end
 
 function test_read_invalid_sos_constraint()
@@ -336,7 +349,7 @@ function test_read_invalid_sos_constraint()
         model,
         joinpath(@__DIR__, "models", "invalid_sos_constraint.lp"),
     )
-    return nothing
+    return
 end
 
 function test_read_invalid_bound()
@@ -345,7 +358,7 @@ function test_read_invalid_bound()
         model,
         joinpath(@__DIR__, "models", "invalid_bound.lp"),
     )
-    return nothing
+    return
 end
 
 function test_read_invalid_constraint()
@@ -354,7 +367,7 @@ function test_read_invalid_constraint()
         model,
         joinpath(@__DIR__, "models", "invalid_constraint.lp"),
     )
-    return nothing
+    return
 end
 
 function test_read_model1()
@@ -379,7 +392,26 @@ function test_read_model1()
         MathOptInterface.VectorOfVariables,
         MathOptInterface.SOS2{Float64},
     ) in constraints
-    return nothing
+    return
+end
+
+function test_objective_sense()
+    model = LP.Model()
+    cases = Dict(
+        "max" => MOI.MAX_SENSE,
+        "maximize" => MOI.MAX_SENSE,
+        "maximise" => MOI.MAX_SENSE,
+        "maximum" => MOI.MAX_SENSE,
+        "min" => MOI.MIN_SENSE,
+        "minimize" => MOI.MIN_SENSE,
+        "minimise" => MOI.MIN_SENSE,
+        "minimum" => MOI.MIN_SENSE,
+    )
+    for (sense, result) in cases
+        LP._set_objective_sense(LP._KW_OBJECTIVE, model, sense)
+        @test MOI.get(model, MOI.ObjectiveSense()) == result
+    end
+    return
 end
 
 function runtests()
