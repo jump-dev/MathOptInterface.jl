@@ -59,12 +59,12 @@ const _CONSTRAINT_SENSE = Dict(
 
 mutable struct _CacheLPModel
     objective_function::MOI.ScalarAffineFunction{Float64}
-    linear_constraint_function::MOI.ScalarAffineFunction{Float64}
-    linear_constraint_set::MOI.AbstractScalarSet
-    linear_constraint_open::Bool
-    linear_constraint_name::String
-    num_linear_constraints::Int
-    variables_in_model::Dict{String,MOI.VariableIndex}
+    constraint_function::MOI.ScalarAffineFunction{Float64}
+    constraint_set::MOI.AbstractScalarSet
+    constraint_open::Bool
+    contraint_name::String
+    num_constraints::Int
+    name_to_variable::Dict{String,MOI.VariableIndex}
     function _CacheLPModel()
         return new(
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
@@ -94,7 +94,7 @@ function _get_variable_from_name(
     cache::_CacheLPModel,
     name::String,
 )
-    current_variable = get(cache.variables_in_model, name, nothing)
+    current_variable = get(cache.name_to_variable, name, nothing)
     if current_variable !== nothing
         return current_variable
     end
@@ -102,7 +102,7 @@ function _get_variable_from_name(
     _verify_name(name, options.maximum_length)
     x = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), x, name)
-    cache.variables_in_model[name] = x
+    cache.name_to_variable[name] = x
     return x
 end
 
@@ -137,8 +137,7 @@ function _get_term(token_types, token_values, offset)
         error("Invalid line")
     end
     if offset > length(token_types) || token_types[offset] == _TOKEN_SIGN
-        # It's a standalone constant!
-        return coef, offset
+        return coef, offset  # It's a standalone constant!
     end
     @assert token_types[offset] == _TOKEN_VARIABLE
     x = MOI.VariableIndex(Int64(token_values[offset]))
@@ -166,8 +165,7 @@ function _parse_affine_terms(
             token_values[i] = Float64(x.value)
         end
     end
-    offset = 1
-    constant = 0.0
+    offset, constant = 1, 0.0
     while offset <= length(tokens)
         term, offset = _get_term(token_types, token_values, offset)
         if term isa MOI.ScalarAffineTerm{Float64}
@@ -207,8 +205,7 @@ function _parse_section(
     cache::_CacheLPModel,
     line::AbstractString,
 )
-    if occursin(":", line)
-        # Strip name of the objective
+    if occursin(":", line)  # Strip name of the objective
         line = String(match(r"(.*?)\:(.*)", line)[2])
     end
     tokens = _tokenize(line)
@@ -230,9 +227,9 @@ function _parse_sos_constraint(
 )
     tokens = _tokenize(line)
     if length(tokens) < 3
-        error(string("Malformed SOS constraint: ", line))
+        error("Malformed SOS constraint: $(line)")
     end
-    sos_con_name = String.(split(tokens[1], ":"))[1]
+    name = String(split(tokens[1], ":")[1])
     if tokens[2] == "S1::"
         order = 1
     elseif tokens[2] == "S2::"
@@ -240,23 +237,21 @@ function _parse_sos_constraint(
     else
         error("SOS of type $(tokens[2]) not recognised")
     end
-    variables = MOI.VariableIndex[]
-    weights = Float64[]
+    variables, weights = MOI.VariableIndex[], Float64[]
     for token in tokens[3:end]
         items = String.(split(token, ":"))
         if length(items) != 2
-            error(string("Invalid sequence: ", token))
+            error("Invalid sequence: $(token)")
         end
         push!(variables, _get_variable_from_name(model, cache, items[1]))
         push!(weights, parse(Float64, items[2]))
     end
-    sos_con = MOI.add_constraint(
+    c_ref = MOI.add_constraint(
         model,
         variables,
         order == 1 ? MOI.SOS1(weights) : MOI.SOS2(weights),
     )
-    MOI.set(model, MOI.ConstraintName(), sos_con, sos_con_name)
-    # TODO I think this only works for SOS of one line
+    MOI.set(model, MOI.ConstraintName(), c_ref, name)
     return
 end
 
@@ -270,68 +265,68 @@ function _parse_section(
         _parse_sos_constraint(model, cache, line)
         return
     end
-    if cache.linear_constraint_open == false
+    if cache.constraint_open == false
         # We're starting a new constraint. Give it a name for now, but we might
         # replace it with a proper strinng in the next if-block.
-        cache.linear_constraint_name = "R$(cache.num_linear_constraints)"
+        cache.contraint_name = "R$(cache.num_constraints)"
     end
     if occursin(":", line)
-        if cache.linear_constraint_open == true
+        if cache.constraint_open == true
             error("Malformed constraint $(line). Is the previous one valid?")
         end
         m = match(r"(.*?)\:(.*)", line)
-        cache.linear_constraint_name = String(m[1])
+        cache.contraint_name = String(m[1])
         line = String(m[2])
     end
-    cache.linear_constraint_open = true
-    # Now start parsing the coefficients.
+    cache.constraint_open = true
     tokens = _tokenize(line)
-    if length(tokens) == 0 # no entries
+    if length(tokens) == 0
         return
     end
     is_finished = false
+    # This checks if the constaint is finishing on this like.
     if length(tokens) >= 2 && tokens[end-1] in ("<", "<=", ">", ">=", "=", "==")
         rhs = parse(Float64, pop!(tokens))
         sym = pop!(tokens)
         if sym in ("<", "<=")
-            cache.linear_constraint_set = MOI.LessThan(rhs)
+            cache.constraint_set = MOI.LessThan(rhs)
         elseif sym in (">", ">=")
-            cache.linear_constraint_set = MOI.GreaterThan(rhs)
+            cache.constraint_set = MOI.GreaterThan(rhs)
         elseif sym in ("=", "==")
-            cache.linear_constraint_set = MOI.EqualTo(rhs)
+            cache.constraint_set = MOI.EqualTo(rhs)
         end
         is_finished = true
     end
-    terms = cache.linear_constraint_function.terms
+    terms = cache.constraint_function.terms
     constant = _parse_affine_terms(terms, model, cache, tokens)
-    cache.linear_constraint_function.constant += constant
+    cache.constraint_function.constant += constant
     if is_finished
         c = MOI.add_constraint(
             model,
-            cache.linear_constraint_function,
-            cache.linear_constraint_set,
+            cache.constraint_function,
+            cache.constraint_set,
         )
-        MOI.set(model, MOI.ConstraintName(), c, cache.linear_constraint_name)
-        cache.num_linear_constraints += 1
-        cache.linear_constraint_set = MOI.EqualTo(0.0)
-        cache.linear_constraint_function =
-            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0)
-        cache.linear_constraint_name = ""
-        cache.linear_constraint_open = false
+        MOI.set(model, MOI.ConstraintName(), c, cache.contraint_name)
+        cache.num_constraints += 1
+        cache.constraint_set = MOI.EqualTo(0.0)
+        empty!(cache.constraint_function.terms)
+        cache.constraint_function.constant = 0.0
+        cache.contraint_name = ""
+        cache.constraint_open = false
     end
     return
 end
 
 # _KW_BOUNDS
 
-function _parse_float(val::String)
-    lower_case_val = lowercase(val)
-    if lower_case_val in ("-inf", "-infinity")
+function _parse_float(token::String)
+    coef = lowercase(token)
+    if coef in ("-inf", "-infinity")
         return -Inf
-    elseif lower_case_val in ("+inf", "+infinity")
+    elseif coef in ("+inf", "+infinity")
         return Inf
     else
-        return parse(Float64, lower_case_val)
+        return parse(Float64, coef)
     end
 end
 
@@ -347,8 +342,7 @@ function _parse_section(
 )
     tokens = _tokenize(line)
     if length(tokens) == 2 && tokens[2] == "free"
-        # Do nothing. Variable is free
-        return
+        return  # Do nothing. Variable is free
     end
     lb, ub, name = -Inf, Inf, ""
     if length(tokens) == 5
