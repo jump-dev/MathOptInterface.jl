@@ -139,7 +139,10 @@ function test_double_bounds()
         bridged_mock,
         config,
     )
-    MOI.Test.test_variable_solve_ZeroOne_with_upper_bound(bridged_mock, config)
+    MOI.Test.test_variable_solve_ZeroOne_with_upper_bound(
+        bridged_mock,
+        config,
+    )
 end
 
 end  # module
