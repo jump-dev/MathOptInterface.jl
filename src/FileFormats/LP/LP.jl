@@ -212,12 +212,8 @@ function _write_integrality(
     end
     println(io, key)
     for index in indices
-        _write_function(
-            io,
-            model,
-            MOI.get(model, MOI.ConstraintFunction(), index),
-            variable_names,
-        )
+        f = MOI.get(model, MOI.ConstraintFunction(), index)
+        _write_function(io, model, f, variable_names)
         println(io)
     end
     return
