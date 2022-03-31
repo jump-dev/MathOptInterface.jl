@@ -29,4 +29,7 @@ Var4 V5 \ integer variables can be listed (MOSEK)
 V6 \ or each new line
 Binary
 V8
+SOS
+ sos1: S1:: V1 : 1 V2 : 2 V3 : 3
+ sos2: S2 :: V1:8.5 V2:10.2 V3:18.3
 End

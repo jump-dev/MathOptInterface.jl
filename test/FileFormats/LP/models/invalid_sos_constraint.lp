@@ -5,8 +5,9 @@ CON1: 1 V1 >= 0.0
 CON2: 1 V2 >= 2.0
 CON3: 1 V3 <= 2.5
 CON4: 1 V5 + 1 V6 + 1 V7 <= 1.0
-csos1: S1:: V1:1 V3:2 V5:3
-csos2: S2::
+SOS
+ csos1: S1:: V1:1 V3:2 V5:3
+ csos2: S2::
 Bounds
 -inf <= V1 <= 3
 -inf <= V2 <= 3

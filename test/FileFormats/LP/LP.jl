@@ -29,6 +29,8 @@ c7: 1.5a + 1.6 == 0.2
 c8: 1.7a + 1.8 in Interval(0.3, 0.4)
 x in ZeroOne()
 y in Integer()
+c11: [x, y, z] in SOS1{Float64}([1.0, 2.0, 3.0])
+c12: [x, y, z] in SOS2{Float64}([3.3, 1.1, 2.2])
 """,
     )
     MOI.write_to_file(model, LP_TEST_FILE)
@@ -50,6 +52,9 @@ y in Integer()
           "y\n" *
           "Binary\n" *
           "x\n" *
+          "SOS\n" *
+          "c11: S1:: x:1.0 y:2.0 z:3.0\n" *
+          "c12: S2:: x:3.3 y:1.1 z:2.2\n" *
           "End\n"
 
     @test !MOI.is_empty(model)
@@ -308,6 +313,8 @@ function test_read_model1_tricky()
     @test occursin("\nV5\n", file)
     @test occursin("\nV6\n", file)
     @test occursin("Binary\nV8\n", file)
+    @test occursin("sos1: S1:: V1:1.0 V2:2.0 V3:3.0", file)
+    @test occursin("sos2: S2:: V1:8.5 V2:10.2 V3:18.3", file)
     return
 end
 
