@@ -1,5 +1,14 @@
 # Release notes
 
+## v1.1.2 (March 31, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.1.2).
+
+### Bug fixes
+
+ - Fix a range of bugs in `FileFormats.LP`
+
 ## v1.1.1 (March 23, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
