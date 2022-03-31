@@ -226,13 +226,7 @@ end
 function _write_constraints(io, model, S, variable_names)
     F = MOI.ScalarAffineFunction{Float64}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-        _write_constraint(
-            io,
-            model,
-            index,
-            variable_names;
-            write_name = true,
-        )
+        _write_constraint(io, model, index, variable_names; write_name = true)
     end
     return
 end
@@ -241,13 +235,7 @@ function _write_bounds(io, model, S, variable_names, free_variables)
     F = MOI.VariableIndex
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         delete!(free_variables, MOI.VariableIndex(index.value))
-        _write_constraint(
-            io,
-            model,
-            index,
-            variable_names;
-            write_name = false,
-        )
+        _write_constraint(io, model, index, variable_names; write_name = false)
     end
     return
 end
