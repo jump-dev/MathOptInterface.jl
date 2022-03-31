@@ -380,6 +380,27 @@ function test_read_objective_sense()
     return
 end
 
+function test_read_nonempty_model()
+    filename = joinpath(@__DIR__, "models", "model2.lp")
+    model = LP.Model()
+    MOI.read_from_file(model, filename)
+    @test_throws(
+        ErrorException("Cannot read in file because model is not empty."),
+        MOI.read_from_file(model, filename),
+    )
+    return
+end
+
+function test_read_maximum_length_error()
+    filename = joinpath(@__DIR__, "models", "model2.lp")
+    model = LP.Model(; maximum_length = 1)
+    @test_throws(
+        ErrorException("Name exceeds maximum length: V4"),
+        MOI.read_from_file(model, filename),
+    )
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")

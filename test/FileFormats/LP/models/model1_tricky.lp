@@ -18,7 +18,7 @@ Bounds
 -inf <= V1 <= 3
 V2 <= 3
 V3 >= -3
-5.5 <=  Var4 <= +inf
++inf >=  Var4 >= 5.5
 V5 = 1 \ fixed variable
 
 V6 free

@@ -430,10 +430,6 @@ function _parse_affine_terms(
     return
 end
 
-# _KW_HEADER
-
-_parse_section(::Val{:header}, ::Model, ::_ReadCache, ::Any) = nothing
-
 # _KW_OBJECTIVE
 
 _set_objective_sense(::Any, ::Model, ::String) = nothing
