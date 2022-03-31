@@ -8,6 +8,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 ### Bug fixes
 
  - Fix a range of bugs in `FileFormats.LP`
+ - Fix reading of problem dimensions in `FileFormats.SDPA`
 
 ## v1.1.1 (March 23, 2022)
 
