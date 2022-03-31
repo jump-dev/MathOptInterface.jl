@@ -285,12 +285,43 @@ const _EXAMPLE_MODELS = [
     z in Integer()
 """,
     ),
+    (
+        "issue_1541.dat-s",
+        """
+    variables: x, y, z
+    minobjective: -1y + -2z
+    c1: [-1x + -1y + -1z + 1, 1x, 1y, 1z] in Nonnegatives(4)
+    c2: [1x + 3y, 4y + 2z, -1z] in PositiveSemidefiniteConeTriangle(2)
+""",
+    ),
 ]
 
 function test_examples()
     for (model_name, model_string) in _EXAMPLE_MODELS
         _test_read(joinpath(SDPA_MODELS_DIR, model_name), model_string)
         _test_write_then_read(model_string)
+    end
+end
+
+# See https://github.com/jump-dev/MathOptInterface.jl/issues/1541
+function _spacer(char)
+    return [" ", "$char", " $char", "$char ", " $char "]
+end
+function test_dim_reader()
+    for before in _spacer('{')
+        for sep in _spacer(',')
+            for after in _spacer('}')
+                line = string(before, "-4", sep, "2", after)
+                exp = [
+                    MOI.Nonnegatives(4),
+                    MOI.PositiveSemidefiniteConeTriangle(2),
+                ]
+                @test MOI.FileFormats.SDPA._parse_dimensions(line) == exp
+                line = string(before, "2", sep, "-4", after)
+                @test MOI.FileFormats.SDPA._parse_dimensions(line) ==
+                      exp[2:-1:1]
+            end
+        end
     end
 end
 
