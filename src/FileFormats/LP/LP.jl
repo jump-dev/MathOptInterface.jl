@@ -236,6 +236,46 @@ function _write_bounds(io, model, S, variable_names, free_variables)
     return
 end
 
+function _write_sos_constraints(io, model, variable_names)
+    T, F = Float64, MOI.VectorOfVariables
+    sos1_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,MOI.SOS1{T}}())
+    sos2_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,MOI.SOS2{T}}())
+    if length(sos1_indices) + length(sos2_indices) == 0
+        return
+    end
+    println(io, "SOS")
+    for index in sos1_indices
+        _write_constraint(io, model, index, variable_names)
+    end
+    for index in sos2_indices
+        _write_constraint(io, model, index, variable_names)
+    end
+    return
+end
+
+_to_string(::Type{MOI.SOS1{Float64}}) = "S1::"
+_to_string(::Type{MOI.SOS2{Float64}}) = "S2::"
+
+function _write_constraint(
+    io::IO,
+    model::Model,
+    index::MOI.ConstraintIndex{MOI.VectorOfVariables,S},
+    variable_names::Dict{MOI.VariableIndex,String},
+) where {S<:Union{MOI.SOS1{Float64},MOI.SOS2{Float64}}}
+    f = MOI.get(model, MOI.ConstraintFunction(), index)
+    s = MOI.get(model, MOI.ConstraintSet(), index)
+    name = MOI.get(model, MOI.ConstraintName(), index)
+    if name !== nothing && !isempty(name)
+        print(io, name, ": ")
+    end
+    print(io, _to_string(S))
+    for (w, x) in zip(s.weights, f.variables)
+        print(io, " ", variable_names[x], ":", w)
+    end
+    println(io)
+    return
+end
+
 """
     Base.write(io::IO, model::FileFormats.LP.Model)
 
@@ -280,6 +320,7 @@ function Base.write(io::IO, model::Model)
     end
     _write_integrality(io, model, "General", MOI.Integer, variable_names)
     _write_integrality(io, model, "Binary", MOI.ZeroOne, variable_names)
+    _write_sos_constraints(io, model, variable_names)
     println(io, "End")
     return
 end
@@ -295,6 +336,7 @@ const _KW_CONSTRAINTS = Val{:constraints}()
 const _KW_BOUNDS = Val{:bounds}()
 const _KW_INTEGER = Val{:integer}()
 const _KW_BINARY = Val{:binary}()
+const _KW_SOS = Val{:sos}()
 const _KW_END = Val{:end}()
 
 const _KEYWORDS = Dict(
@@ -323,6 +365,8 @@ const _KEYWORDS = Dict(
     "bin" => _KW_BINARY,
     "binary" => _KW_BINARY,
     "binaries" => _KW_BINARY,
+    # _KW_SOS
+    "sos" => _KW_SOS,
     # _KW_END
     "end" => _KW_END,
 )
@@ -473,50 +517,16 @@ end
 
 # _KW_CONSTRAINTS
 
-function _parse_sos_constraint(
-    model::Model,
-    cache::_ReadCache,
-    line::AbstractString,
-)
-    tokens = _tokenize(line)
-    if length(tokens) < 3
-        error("Malformed SOS constraint: $(line)")
-    end
-    name = String(split(tokens[1], ":")[1])
-    if tokens[2] == "S1::"
-        order = 1
-    elseif tokens[2] == "S2::"
-        order = 2
-    else
-        error("SOS of type $(tokens[2]) not recognised")
-    end
-    variables, weights = MOI.VariableIndex[], Float64[]
-    for token in tokens[3:end]
-        items = String.(split(token, ":"))
-        if length(items) != 2
-            error("Invalid sequence: $(token)")
-        end
-        push!(variables, _get_variable_from_name(model, cache, items[1]))
-        push!(weights, parse(Float64, items[2]))
-    end
-    c_ref = if tokens[2] == "S1::"
-        MOI.add_constraint(model, variables, MOI.SOS1(weights))
-    else
-        @assert tokens[2] == "S2::"
-        MOI.add_constraint(model, variables, MOI.SOS2(weights))
-    end
-    MOI.set(model, MOI.ConstraintName(), c_ref, name)
-    return
-end
-
 function _parse_section(
     ::typeof(_KW_CONSTRAINTS),
     model::Model,
     cache::_ReadCache,
     line::AbstractString,
 )
-    if match(r" S([1-2]):: ", line) !== nothing
-        _parse_sos_constraint(model, cache, line)
+    # SOS constraints should be in their own "SOS" section, but we can also
+    # recognize them if they're mixed into the constraint section.
+    if match(r" S([1-2])\w*:: ", line) !== nothing
+        _parse_section(_KW_SOS, model, cache, line)
         return
     end
     if isempty(cache.constraint_name)
@@ -647,6 +657,49 @@ function _parse_section(::typeof(_KW_BINARY), model, cache, line)
         x = _get_variable_from_name(model, cache, token)
         MOI.add_constraint(model, x, MOI.ZeroOne())
     end
+    return
+end
+
+# _KW_SOS
+
+function _parse_section(
+    ::typeof(_KW_SOS),
+    model::Model,
+    cache::_ReadCache,
+    line::AbstractString,
+)
+    # SOS constraints can have all manner of whitespace issues with them.
+    # Normalize them here before attempting to do anything else.
+    line = replace(line, r"\s+:\s+" => ":")
+    line = replace(line, r"\s+::" => "::")
+    tokens = _tokenize(line)
+    if length(tokens) < 3
+        error("Malformed SOS constraint: $(line)")
+    end
+    name = String(split(tokens[1], ":")[1])
+    if tokens[2] == "S1::"
+        order = 1
+    elseif tokens[2] == "S2::"
+        order = 2
+    else
+        error("SOS of type $(tokens[2]) not recognised")
+    end
+    variables, weights = MOI.VariableIndex[], Float64[]
+    for token in tokens[3:end]
+        items = String.(split(token, ":"))
+        if length(items) != 2
+            error("Invalid sequence: $(token)")
+        end
+        push!(variables, _get_variable_from_name(model, cache, items[1]))
+        push!(weights, parse(Float64, items[2]))
+    end
+    c_ref = if tokens[2] == "S1::"
+        MOI.add_constraint(model, variables, MOI.SOS1(weights))
+    else
+        @assert tokens[2] == "S2::"
+        MOI.add_constraint(model, variables, MOI.SOS2(weights))
+    end
+    MOI.set(model, MOI.ConstraintName(), c_ref, name)
     return
 end
 
