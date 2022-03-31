@@ -5,11 +5,11 @@ import MathOptInterface
 const MOI = MathOptInterface
 
 # Julia 1.6 removes Grisu from Base. Previously, we went
-#   print_shortest(io, x) = Base.Grisu.print_shortest(io, x)
+#   _print_shortest(io, x) = Base.Grisu.print_shortest(io, x)
 # To avoid adding Grisu as a dependency, use the following printing heuristic.
 # TODO(odow): consider printing 1.0 as 1.0 instead of 1, i.e., without the
 # rounding branch.
-function print_shortest(io::IO, x::Real)
+function _print_shortest(io::IO, x::Real)
     x_int = round(Int, x)
     if isapprox(x, x_int)
         print(io, x_int)
@@ -77,12 +77,12 @@ end
 #
 # ==============================================================================
 
-const START_REG = r"^([\.0-9eE])"
-const NAME_REG = r"([^a-zA-Z0-9\!\"\#\$\%\&\(\)\/\,\.\;\?\@\_\`\'\{\}\|\~])"
+const _START_REG = r"^([\.0-9eE])"
+const _NAME_REG = r"([^a-zA-Z0-9\!\"\#\$\%\&\(\)\/\,\.\;\?\@\_\`\'\{\}\|\~])"
 
-function write_function(
+function _write_function(
     io::IO,
-    model::Model,
+    ::Model,
     func::MOI.VariableIndex,
     variable_names::Dict{MOI.VariableIndex,String},
 )
@@ -90,70 +90,69 @@ function write_function(
     return
 end
 
-function write_function(
+function _write_function(
     io::IO,
-    model::Model,
+    ::Model,
     func::MOI.ScalarAffineFunction{Float64},
     variable_names::Dict{MOI.VariableIndex,String},
 )
     is_first_item = true
     if !(func.constant ≈ 0.0)
-        print_shortest(io, func.constant)
+        _print_shortest(io, func.constant)
         is_first_item = false
     end
     for term in func.terms
         if !(term.coefficient ≈ 0.0)
             if is_first_item
-                print_shortest(io, term.coefficient)
+                _print_shortest(io, term.coefficient)
                 is_first_item = false
             else
                 print(io, term.coefficient < 0 ? " - " : " + ")
-                print_shortest(io, abs(term.coefficient))
+                _print_shortest(io, abs(term.coefficient))
             end
-
             print(io, " ", variable_names[term.variable])
         end
     end
     return
 end
 
-function write_constraint_suffix(io::IO, set::MOI.LessThan)
+function _write_constraint_suffix(io::IO, set::MOI.LessThan)
     print(io, " <= ")
-    print_shortest(io, set.upper)
+    _print_shortest(io, set.upper)
     println(io)
     return
 end
 
-function write_constraint_suffix(io::IO, set::MOI.GreaterThan)
+function _write_constraint_suffix(io::IO, set::MOI.GreaterThan)
     print(io, " >= ")
-    print_shortest(io, set.lower)
+    _print_shortest(io, set.lower)
     println(io)
     return
 end
 
-function write_constraint_suffix(io::IO, set::MOI.EqualTo)
+function _write_constraint_suffix(io::IO, set::MOI.EqualTo)
     print(io, " = ")
-    print_shortest(io, set.value)
+    _print_shortest(io, set.value)
     println(io)
     return
 end
 
-function write_constraint_suffix(io::IO, set::MOI.Interval)
+function _write_constraint_suffix(io::IO, set::MOI.Interval)
     print(io, " <= ")
-    print_shortest(io, set.upper)
+    _print_shortest(io, set.upper)
     println(io)
     return
 end
 
-function write_constraint_prefix(io::IO, set::MOI.Interval)
-    print_shortest(io, set.lower)
+function _write_constraint_prefix(io::IO, set::MOI.Interval)
+    _print_shortest(io, set.lower)
     print(io, " <= ")
     return
 end
 
-write_constraint_prefix(io::IO, set) = nothing
+_write_constraint_prefix(::IO, ::Any) = nothing
 
-function write_constraint(
+function _write_constraint(
     io::IO,
     model::Model,
     index::MOI.ConstraintIndex,
@@ -165,19 +164,20 @@ function write_constraint(
     if write_name
         print(io, MOI.get(model, MOI.ConstraintName(), index), ": ")
     end
-    write_constraint_prefix(io, set)
-    write_function(io, model, func, variable_names)
-    return write_constraint_suffix(io, set)
+    _write_constraint_prefix(io, set)
+    _write_function(io, model, func, variable_names)
+    _write_constraint_suffix(io, set)
+    return
 end
 
-const SCALAR_SETS = (
+const _SCALAR_SETS = (
     MOI.LessThan{Float64},
     MOI.GreaterThan{Float64},
     MOI.EqualTo{Float64},
     MOI.Interval{Float64},
 )
 
-function write_sense(io::IO, model::Model)
+function _write_sense(io::IO, model::Model)
     if MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
         println(io, "maximize")
     else
@@ -186,16 +186,53 @@ function write_sense(io::IO, model::Model)
     return
 end
 
-function write_objective(
+function _write_objective(
     io::IO,
     model::Model,
     variable_names::Dict{MOI.VariableIndex,String},
 )
     print(io, "obj: ")
-    obj_func_type = MOI.get(model, MOI.ObjectiveFunctionType())
-    obj_func = MOI.get(model, MOI.ObjectiveFunction{obj_func_type}())
-    write_function(io, model, obj_func, variable_names)
+    F = MOI.get(model, MOI.ObjectiveFunctionType())
+    f = MOI.get(model, MOI.ObjectiveFunction{F}())
+    _write_function(io, model, f, variable_names)
     println(io)
+    return
+end
+
+function _write_integrality(
+    io::IO,
+    model::Model,
+    key::String,
+    ::Type{S},
+    variable_names::Dict{MOI.VariableIndex,String},
+) where {S}
+    indices = MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
+    if length(indices) == 0
+        return
+    end
+    println(io, key)
+    for index in indices
+        f = MOI.get(model, MOI.ConstraintFunction(), index)
+        _write_function(io, model, f, variable_names)
+        println(io)
+    end
+    return
+end
+
+function _write_constraints(io, model, S, variable_names)
+    F = MOI.ScalarAffineFunction{Float64}
+    for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        _write_constraint(io, model, index, variable_names; write_name = true)
+    end
+    return
+end
+
+function _write_bounds(io, model, S, variable_names, free_variables)
+    F = MOI.VariableIndex
+    for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        delete!(free_variables, MOI.VariableIndex(index.value))
+        _write_constraint(io, model, index, variable_names; write_name = false)
+    end
     return
 end
 
@@ -210,8 +247,8 @@ function Base.write(io::IO, model::Model)
         model,
         warn = options.warn,
         replacements = [
-            s -> match(START_REG, s) !== nothing ? "_" * s : s,
-            s -> replace(s, NAME_REG => "_"),
+            s -> match(_START_REG, s) !== nothing ? "_" * s : s,
+            s -> replace(s, _NAME_REG => "_"),
             s -> s[1:min(length(s), options.maximum_length)],
         ],
     )
@@ -219,63 +256,30 @@ function Base.write(io::IO, model::Model)
         index => MOI.get(model, MOI.VariableName(), index) for
         index in MOI.get(model, MOI.ListOfVariableIndices())
     )
-    write_sense(io, model)
-    write_objective(io, model, variable_names)
+    free_variables = Set(keys(variable_names))
+    _write_sense(io, model)
+    _write_objective(io, model, variable_names)
     println(io, "subject to")
-    for S in SCALAR_SETS
-        for index in MOI.get(
-            model,
-            MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64},S}(),
-        )
-            write_constraint(
-                io,
-                model,
-                index,
-                variable_names;
-                write_name = true,
-            )
-        end
+    for S in _SCALAR_SETS
+        _write_constraints(io, model, S, variable_names)
     end
     println(io, "Bounds")
-    free_variables = Set(keys(variable_names))
-    for S in SCALAR_SETS
-        for index in
-            MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
-            delete!(free_variables, MOI.VariableIndex(index.value))
-            write_constraint(
-                io,
-                model,
-                index,
-                variable_names;
-                write_name = false,
-            )
-        end
+    for S in _SCALAR_SETS
+        _write_bounds(io, model, S, variable_names, free_variables)
     end
-    for index in MOI.get(
-        model,
-        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.ZeroOne}(),
-    )
+    # If a variable is binary, it should not be listed as `free` in the bounds
+    # section.
+    attr = MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.ZeroOne}()
+    for index in MOI.get(model, attr)
         delete!(free_variables, MOI.VariableIndex(index.value))
     end
+    # By default, variables have bounds of [0, ∞), so we need to explicitly
+    # declare variables as free.
     for variable in sort(collect(free_variables), by = x -> x.value)
         println(io, variable_names[variable], " free")
     end
-    for (S, str_S) in [(MOI.Integer, "General"), (MOI.ZeroOne, "Binary")]
-        indices =
-            MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
-        if length(indices) > 0
-            println(io, str_S)
-            for index in indices
-                write_function(
-                    io,
-                    model,
-                    MOI.get(model, MOI.ConstraintFunction(), index),
-                    variable_names,
-                )
-                println(io)
-            end
-        end
-    end
+    _write_integrality(io, model, "General", MOI.Integer, variable_names)
+    _write_integrality(io, model, "Binary", MOI.ZeroOne, variable_names)
     println(io, "End")
     return
 end
@@ -350,7 +354,7 @@ function _get_variable_from_name(model::Model, cache::_ReadCache, name::String)
         error("Name exceeds maximum length: $name")
     elseif match(r"^([\.0-9])", name) !== nothing
         error("Name starts with invalid character: $name")
-    elseif match(NAME_REG, name) !== nothing
+    elseif match(_NAME_REG, name) !== nothing
         error("Name contains with invalid character: $name")
     end
     x = MOI.add_variable(model)
