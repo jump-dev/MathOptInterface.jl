@@ -4,17 +4,17 @@ import MathOptInterface
 using Test
 
 const MOI = MathOptInterface
-const MOIU = MOI.Utilities
 const LP = MOI.FileFormats.LP
 const LP_TEST_FILE = "test.lp"
 
 function test_show()
     @test sprint(show, LP.Model()) == "A .LP-file model"
+    return
 end
 
 function test_comprehensive_write()
     model = LP.Model()
-    MOIU.loadfromstring!(
+    MOI.Utilities.loadfromstring!(
         model,
         """
 variables: a, x, y, z
@@ -177,7 +177,7 @@ end
 
 function test_name_sanitization_other()
     model = LP.Model()
-    MOIU.loadfromstring!(
+    MOI.Utilities.loadfromstring!(
         model,
         """
 variables: x
@@ -196,7 +196,7 @@ end
 
 function test_free_variables()
     model = LP.Model()
-    MOIU.loadfromstring!(
+    MOI.Utilities.loadfromstring!(
         model,
         """
 variables: x, y, z
@@ -224,7 +224,7 @@ function test_quadratic_objective()
     model = LP.Model()
     @test_throws(
         MOI.UnsupportedAttribute,
-        MOIU.loadfromstring!(
+        MOI.Utilities.loadfromstring!(
             model,
             """
 variables: x
@@ -232,6 +232,22 @@ minobjective: 1.0*x*x
 """,
         )
     )
+end
+
+###
+### Read tests
+###
+
+function test_read_invalid()
+    models = joinpath(@__DIR__, "models")
+    for filename in filter(f -> startswith(f, "invalid_"), readdir(models))
+        model = LP.Model()
+        @test_throws(
+            ErrorException,
+            MOI.read_from_file(model, joinpath(models, filename)),
+        )
+    end
+    return
 end
 
 function test_read_example_lo1()
@@ -247,32 +263,20 @@ function test_read_example_lo1()
           constraints
     @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in constraints
     @test (MOI.VariableIndex, MOI.Interval{Float64}) in constraints
-    return nothing
-end
-
-function test_read_model2()
-    model = LP.Model()
-    MOI.read_from_file(model, joinpath(@__DIR__, "models", "model2.lp"))
-    @test MOI.get(model, MOI.NumberOfVariables()) == 8
-    constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
-    @test (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) in
-          constraints
-    @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in
-          constraints
-    @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in constraints
-    @test (MOI.VariableIndex, MOI.Interval{Float64}) in constraints
-    @test (MathOptInterface.VariableIndex, MathOptInterface.Integer) in
-          constraints
-    @test (MathOptInterface.VariableIndex, MathOptInterface.ZeroOne) in
-          constraints
-    # Adicionar testes dos bounds de V8
-    @test MOI.get(model, MOI.VariableName(), MOI.VariableIndex(8)) == "V8"
-    @test model.variables.lower[8] == -Inf
-    @test model.variables.upper[8] == -3
-    obj_type = MOI.get(model, MOI.ObjectiveFunctionType())
-    obj_func = MOI.get(model, MOI.ObjectiveFunction{obj_type}())
-    @test obj_func.constant == 2.5
-    return nothing
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    file = read(io, String)
+    @test occursin("maximize", file)
+    @test occursin("obj: 3 x1 + 1 x2 + 5 x3 + 1 x4", file)
+    @test occursin("c1: 3 x1 + 1 x2 + 2 x3 = 30", file)
+    @test occursin("c2: 2 x1 + 1 x2 + 3 x3 + 1 x4 >= 15", file)
+    @test occursin("c3: 2 x2 + 3 x4 <= 25", file)
+    @test occursin("x1 >= 0", file)
+    @test occursin("0 <= x2 <= 10", file)
+    @test occursin("x3 >= 0", file)
+    @test occursin("x4 >= 0", file)
+    return
 end
 
 function test_read_model1_tricky()
@@ -282,79 +286,29 @@ function test_read_model1_tricky()
     var_names = MOI.get.(model, MOI.VariableName(), MOI.VariableIndex.(1:8))
     @test Set(var_names) ==
           Set(["Var4", "V5", "V1", "V2", "V3", "V6", "V7", "V8"])
-    return nothing
-end
-
-function test_read_corrupt()
-    model = LP.Model()
-    @test_throws ErrorException MOI.read_from_file(
-        model,
-        joinpath(@__DIR__, "models", "corrupt.lp"),
-    )
-    return nothing
-end
-
-function test_read_invalid_variable_name()
-    model = LP.Model()
-    @test_throws ErrorException MOI.read_from_file(
-        model,
-        joinpath(@__DIR__, "models", "invalid_variable_name.lp"),
-    )
-    return nothing
-end
-
-function test_read_invalid_affine_term_objective()
-    model = LP.Model()
-    @test_throws ErrorException MOI.read_from_file(
-        model,
-        joinpath(@__DIR__, "models", "invalid_affine_term_objective.lp"),
-    )
-    return nothing
-end
-
-function test_read_invalid_affine_term_constraint()
-    model = LP.Model()
-    @test_throws ErrorException MOI.read_from_file(
-        model,
-        joinpath(@__DIR__, "models", "invalid_affine_term_constraint.lp"),
-    )
-    return nothing
-end
-
-function test_read_invalid_sos_set()
-    model = LP.Model()
-    @test_throws ErrorException MOI.read_from_file(
-        model,
-        joinpath(@__DIR__, "models", "invalid_sos_set.lp"),
-    )
-    return nothing
-end
-
-function test_read_invalid_sos_constraint()
-    model = LP.Model()
-    @test_throws ErrorException MOI.read_from_file(
-        model,
-        joinpath(@__DIR__, "models", "invalid_sos_constraint.lp"),
-    )
-    return nothing
-end
-
-function test_read_invalid_bound()
-    model = LP.Model()
-    @test_throws ErrorException MOI.read_from_file(
-        model,
-        joinpath(@__DIR__, "models", "invalid_bound.lp"),
-    )
-    return nothing
-end
-
-function test_read_invalid_constraint()
-    model = LP.Model()
-    @test_throws ErrorException MOI.read_from_file(
-        model,
-        joinpath(@__DIR__, "models", "invalid_constraint.lp"),
-    )
-    return nothing
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    file = read(io, String)
+    @test occursin("maximize", file)
+    @test occursin("obj: -1 Var4 + 1 V5", file)
+    @test occursin("CON3: 1 V3 <= 2.5", file)
+    @test occursin("CON4: 1 V5 + 1 V6 + 1 V7 <= 1", file)
+    @test occursin("CON1: 1 V1 >= 0", file)
+    @test occursin("R1: 1 V2 >= 2", file)
+    @test occursin("V1 <= 3", file)
+    @test occursin("Var4 >= 5.5", file)
+    @test occursin("V3 >= -3", file)
+    @test occursin("V5 = 1", file)
+    @test occursin("0 <= V2 <= 3", file)
+    @test occursin("0 <= V7 <= 1", file)
+    @test occursin("0 <= V8 <= 1", file)
+    @test occursin("V6 free", file)
+    @test occursin("\nVar4\n", file)
+    @test occursin("\nV5\n", file)
+    @test occursin("\nV6\n", file)
+    @test occursin("Binary\nV8\n", file)
+    return
 end
 
 function test_read_model1()
@@ -379,7 +333,72 @@ function test_read_model1()
         MathOptInterface.VectorOfVariables,
         MathOptInterface.SOS2{Float64},
     ) in constraints
-    return nothing
+    return
+end
+
+function test_read_model2()
+    model = LP.Model()
+    MOI.read_from_file(model, joinpath(@__DIR__, "models", "model2.lp"))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 8
+    constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) in
+          constraints
+    @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in
+          constraints
+    @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in constraints
+    @test (MOI.VariableIndex, MOI.Interval{Float64}) in constraints
+    @test (MathOptInterface.VariableIndex, MathOptInterface.Integer) in
+          constraints
+    @test (MathOptInterface.VariableIndex, MathOptInterface.ZeroOne) in
+          constraints
+    # Adicionar testes dos bounds de V8
+    @test MOI.get(model, MOI.VariableName(), MOI.VariableIndex(8)) == "V8"
+    @test model.variables.lower[8] == -Inf
+    @test model.variables.upper[8] == -3
+    obj_type = MOI.get(model, MOI.ObjectiveFunctionType())
+    obj_func = MOI.get(model, MOI.ObjectiveFunction{obj_type}())
+    @test obj_func.constant == 2.5
+    return
+end
+
+function test_read_objective_sense()
+    model = LP.Model()
+    cases = Dict(
+        "max" => MOI.MAX_SENSE,
+        "maximize" => MOI.MAX_SENSE,
+        "maximise" => MOI.MAX_SENSE,
+        "maximum" => MOI.MAX_SENSE,
+        "min" => MOI.MIN_SENSE,
+        "minimize" => MOI.MIN_SENSE,
+        "minimise" => MOI.MIN_SENSE,
+        "minimum" => MOI.MIN_SENSE,
+    )
+    for (sense, result) in cases
+        LP._set_objective_sense(LP._KW_OBJECTIVE, model, sense)
+        @test MOI.get(model, MOI.ObjectiveSense()) == result
+    end
+    return
+end
+
+function test_read_nonempty_model()
+    filename = joinpath(@__DIR__, "models", "model2.lp")
+    model = LP.Model()
+    MOI.read_from_file(model, filename)
+    @test_throws(
+        ErrorException("Cannot read in file because model is not empty."),
+        MOI.read_from_file(model, filename),
+    )
+    return
+end
+
+function test_read_maximum_length_error()
+    filename = joinpath(@__DIR__, "models", "model2.lp")
+    model = LP.Model(; maximum_length = 1)
+    @test_throws(
+        ErrorException("Name exceeds maximum length: V4"),
+        MOI.read_from_file(model, filename),
+    )
+    return
 end
 
 function runtests()

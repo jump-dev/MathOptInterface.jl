@@ -285,93 +285,54 @@ end
 #   Base.read!
 #
 # ==============================================================================
-const _COMMENT_REG = r"(.*?)\\(.*)"
-const _READ_START_REG = r"^([\.0-9])"
-function _strip_comment(line::String)
-    if occursin("\\", line)
-        m = match(_COMMENT_REG, line)
-        return strip(String(m[1]))
-    else
-        return strip(line)
-    end
-end
 
-# a list of section keywords in lower-case
+const _KW_OBJECTIVE = Val{:objective}()
+const _KW_CONSTRAINTS = Val{:constraints}()
+const _KW_BOUNDS = Val{:bounds}()
+const _KW_INTEGER = Val{:integer}()
+const _KW_BINARY = Val{:binary}()
+const _KW_END = Val{:end}()
+
 const _KEYWORDS = Dict(
-    "max" => Val{:obj},
-    "maximize" => Val{:obj},
-    "maximise" => Val{:obj},
-    "maximum" => Val{:obj},
-    "min" => Val{:obj},
-    "minimize" => Val{:obj},
-    "minimise" => Val{:obj},
-    "minimum" => Val{:obj},
-    "subject to" => Val{:constraints},
-    "such that" => Val{:constraints},
-    "st" => Val{:constraints},
-    "s.t." => Val{:constraints},
-    "bounds" => Val{:bounds},
-    "bound" => Val{:bounds},
-    "gen" => Val{:integer},
-    "general" => Val{:integer},
-    "generals" => Val{:integer},
-    "bin" => Val{:binary},
-    "binary" => Val{:binary},
-    "binaries" => Val{:binary},
-    "end" => Val{:quit},
+    # _KW_OBJECTIVE
+    "max" => _KW_OBJECTIVE,
+    "maximize" => _KW_OBJECTIVE,
+    "maximise" => _KW_OBJECTIVE,
+    "maximum" => _KW_OBJECTIVE,
+    "min" => _KW_OBJECTIVE,
+    "minimize" => _KW_OBJECTIVE,
+    "minimise" => _KW_OBJECTIVE,
+    "minimum" => _KW_OBJECTIVE,
+    # _KW_CONSTRAINTS
+    "subject to" => _KW_CONSTRAINTS,
+    "such that" => _KW_CONSTRAINTS,
+    "st" => _KW_CONSTRAINTS,
+    "s.t." => _KW_CONSTRAINTS,
+    # _KW_BOUNDS
+    "bounds" => _KW_BOUNDS,
+    "bound" => _KW_BOUNDS,
+    # _KW_INTEGER
+    "gen" => _KW_INTEGER,
+    "general" => _KW_INTEGER,
+    "generals" => _KW_INTEGER,
+    # _KW_BINARY
+    "bin" => _KW_BINARY,
+    "binary" => _KW_BINARY,
+    "binaries" => _KW_BINARY,
+    # _KW_END
+    "end" => _KW_END,
 )
 
-const _SENSE_ALIAS = Dict(
-    "max" => MOI.MAX_SENSE,
-    "maximize" => MOI.MAX_SENSE,
-    "maximise" => MOI.MAX_SENSE,
-    "maximum" => MOI.MAX_SENSE,
-    "min" => MOI.MIN_SENSE,
-    "minimize" => MOI.MIN_SENSE,
-    "minimise" => MOI.MIN_SENSE,
-    "minimum" => MOI.MIN_SENSE,
-)
-
-const _SUBJECT_TO_ALIAS = ["subject to", "such that", "st", "s.t."]
-
-const _CONSTRAINT_SENSE = Dict(
-    "<" => :le,
-    "<=" => :le,
-    "=" => :eq,
-    "==" => :eq,
-    ">" => :ge,
-    ">=" => :ge,
-)
-
-function _verify_name(variable::String, maximum_length::Int)
-    if length(variable) > maximum_length
-        return false
-    end
-    m = match(_READ_START_REG, variable)
-    if m !== nothing
-        return false
-    end
-    m = match(NAME_REG, variable)
-    if m !== nothing
-        return false
-    end
-    return true
-end
-
-mutable struct CacheLPModel
-    objective_function::MOI.ScalarAffineFunction
-    linear_constraint_function::MOI.ScalarAffineFunction
-    linear_constraint_set::MOI.AbstractScalarSet
-    linear_constraint_open::Bool
-    linear_constraint_name::String
-    num_linear_constraints::Int
-    variables_in_model::Dict{String,MOI.VariableIndex}
-    function CacheLPModel()
+mutable struct _ReadCache
+    objective::MOI.ScalarAffineFunction{Float64}
+    constraint_function::MOI.ScalarAffineFunction{Float64}
+    constraint_name::String
+    num_constraints::Int
+    name_to_variable::Dict{String,MOI.VariableIndex}
+    function _ReadCache()
         return new(
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
-            MOI.EqualTo(0.0),
-            false,
             "",
             0,
             Dict{String,MOI.VariableIndex}(),
@@ -379,129 +340,145 @@ mutable struct CacheLPModel
     end
 end
 
-_set_sense!(T, model::Model, line) = nothing
-function _set_sense!(::Type{Val{:obj}}, model::Model, line)
-    return MOI.set(model, MOI.ObjectiveSense(), _SENSE_ALIAS[lowercase(line)])
-end
-
-function _add_new_variable!(model::Model, data_cache::CacheLPModel, name)
-    var = MOI.add_variable(model)
-    MOI.set(model, MOI.VariableName(), var, name)
-    data_cache.variables_in_model[name] = var
-    return var
-end
-
-function _get_variable_from_name(
-    model::Model,
-    data_cache::CacheLPModel,
-    variable_name,
-)
-    var_inside_model = get(data_cache.variables_in_model, variable_name, "")
-    if var_inside_model != ""
-        return var_inside_model
+function _get_variable_from_name(model::Model, cache::_ReadCache, name::String)
+    current_variable = get(cache.name_to_variable, name, nothing)
+    if current_variable !== nothing
+        return current_variable
     end
     options = get_options(model)
-    if !_verify_name(variable_name, options.maximum_length)
-        error("Invalid variable name $variable_name")
+    if length(name) > options.maximum_length
+        error("Name exceeds maximum length: $name")
+    elseif match(r"^([\.0-9])", name) !== nothing
+        error("Name starts with invalid character: $name")
+    elseif match(NAME_REG, name) !== nothing
+        error("Name contains with invalid character: $name")
     end
-    return _add_new_variable!(model, data_cache, variable_name)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariableName(), x, name)
+    cache.name_to_variable[name] = x
+    return x
 end
 
-function _tokenize(line::AbstractString)
-    return String.(split(line, " "; keepempty = false))
-end
+_tokenize(line::AbstractString) = String.(split(line, " "; keepempty = false))
 
-function _parse_float_from_bound(val::String)
-    lower_case_val = lowercase(val)
-    if lower_case_val == "-inf" || lower_case_val == "-infinity"
-        return -Inf
-    elseif lower_case_val == "+inf" || lower_case_val == "+infinity"
-        return Inf
+@enum(_TokenType, _TOKEN_VARIABLE, _TOKEN_COEFFICIENT, _TOKEN_SIGN)
+
+function _parse_token(token::String)
+    if token == "+"
+        return _TOKEN_SIGN, +1.0
+    elseif token == "-"
+        return _TOKEN_SIGN, -1.0
+    end
+    coef = tryparse(Float64, token)
+    if coef === nothing
+        return _TOKEN_VARIABLE, token
     else
-        return parse(Float64, lower_case_val)
+        return _TOKEN_COEFFICIENT, coef
     end
 end
 
-function _parse_affine_terms!(
+function _get_term(token_types, token_values, offset)
+    coef = 1.0
+    if token_types[offset] == _TOKEN_SIGN
+        coef = token_values[offset]
+        offset += 1
+    end
+    if token_types[offset] == _TOKEN_COEFFICIENT
+        coef *= token_values[offset]
+        offset += 1
+    elseif token_types[offset] == _TOKEN_SIGN
+        error("Invalid line")
+    end
+    if offset > length(token_types) || token_types[offset] == _TOKEN_SIGN
+        return coef, offset  # It's a standalone constant!
+    end
+    @assert token_types[offset] == _TOKEN_VARIABLE
+    x = MOI.VariableIndex(Int64(token_values[offset]))
+    return MOI.ScalarAffineTerm(coef, x), offset + 1
+end
+
+function _parse_affine_terms(
+    f::MOI.ScalarAffineFunction{Float64},
     model::Model,
-    data_cache::CacheLPModel,
+    cache::_ReadCache,
     tokens::Vector{String},
-    section::String,
+)
+    N = length(tokens)
+    token_types = Vector{_TokenType}(undef, N)
+    token_values = Vector{Float64}(undef, N)
+    for i in 1:length(tokens)
+        token_type, token = _parse_token(tokens[i])
+        token_types[i] = token_type
+        if token_type in (_TOKEN_SIGN, _TOKEN_COEFFICIENT)
+            token_values[i] = token::Float64
+        else
+            @assert token_type == _TOKEN_VARIABLE
+            x = _get_variable_from_name(model, cache, token::String)
+            # A cheat for type-stability. Store `Float64` of the variable index!
+            token_values[i] = Float64(x.value)
+        end
+    end
+    offset = 1
+    while offset <= length(tokens)
+        term, offset = _get_term(token_types, token_values, offset)
+        if term isa MOI.ScalarAffineTerm{Float64}
+            push!(f.terms, term::MOI.ScalarAffineTerm{Float64})
+        else
+            f.constant += term::Float64
+        end
+    end
+    return
+end
+
+# _KW_OBJECTIVE
+
+_set_objective_sense(::Any, ::Model, ::String) = nothing
+
+function _set_objective_sense(
+    ::typeof(_KW_OBJECTIVE),
+    model::Model,
+    sense::String,
+)
+    if sense in ("max", "maximize", "maximise", "maximum")
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    else
+        @assert sense in ("min", "minimize", "minimise", "minimum")
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    end
+    return
+end
+
+function _parse_section(
+    ::typeof(_KW_OBJECTIVE),
+    model::Model,
+    cache::_ReadCache,
     line::AbstractString,
 )
-    affine_terms = MOI.ScalarAffineTerm{Float64}[]
-    while length(tokens) > 0
-        variable = String(pop!(tokens))
-        # In the case of objective functions this can be an objective constant
-        if section == "objective"
-            try
-                obj_constant = parse(Float64, variable)
-                if length(tokens) > 0
-                    _sign = pop!(tokens)
-                    if _sign == "-"
-                        obj_constant *= -1
-                    elseif _sign == "+"
-                    else
-                        error(
-                            "Unable to parse $section due to bad operator: $(_sign) $(line)",
-                        )
-                    end
-                end
-                data_cache.objective_function.constant += obj_constant
-                continue
-            catch
-            end
-        end
-        var = _get_variable_from_name(model, data_cache, variable)
-        if length(tokens) > 0
-            coef_token = pop!(tokens)
-        else
-            coeff = 1.0
-            push!(affine_terms, MOI.ScalarAffineTerm(coeff, var))
-            continue
-        end
-        try
-            if coef_token == "+"
-                coeff = 1.0
-                push!(affine_terms, MOI.ScalarAffineTerm(coeff, var))
-                continue
-            elseif coef_token == "-"
-                coeff = -1.0
-                push!(affine_terms, MOI.ScalarAffineTerm(coeff, var))
-                continue
-            end
-            coeff = parse(Float64, coef_token)
-        catch
-            error(
-                "Unable to parse $section due to bad operator: $(_sign) $(line)",
-            )
-        end
-        if length(tokens) > 0
-            _sign = pop!(tokens)
-            if _sign == "-"
-                coeff *= -1
-            elseif _sign == "+"
-            else
-                error(
-                    "Unable to parse $section due to bad operator: $(_sign) $(line)",
-                )
-            end
-        end
-        push!(affine_terms, MOI.ScalarAffineTerm(coeff, var))
+    if occursin(":", line)  # Strip name of the objective
+        line = String(match(r"(.*?)\:(.*)", line)[2])
     end
-    return affine_terms
+    tokens = _tokenize(line)
+    if length(tokens) == 0
+        # Can happen if the name of the objective is on one line and the
+        # expression is on the next.
+        return
+    end
+    _parse_affine_terms(cache.objective, model, cache, tokens)
+    return
 end
 
-function _parse_sos!(
+# _KW_CONSTRAINTS
+
+function _parse_sos_constraint(
     model::Model,
-    data_cache::CacheLPModel,
+    cache::_ReadCache,
     line::AbstractString,
 )
     tokens = _tokenize(line)
     if length(tokens) < 3
-        error(string("Malformed SOS constraint: ", line))
+        error("Malformed SOS constraint: $(line)")
     end
-    sos_con_name = String.(split(tokens[1], ":"))[1]
+    name = String(split(tokens[1], ":")[1])
     if tokens[2] == "S1::"
         order = 1
     elseif tokens[2] == "S2::"
@@ -509,255 +486,219 @@ function _parse_sos!(
     else
         error("SOS of type $(tokens[2]) not recognised")
     end
-    variables = MOI.VariableIndex[]
-    weights = Float64[]
+    variables, weights = MOI.VariableIndex[], Float64[]
     for token in tokens[3:end]
         items = String.(split(token, ":"))
         if length(items) != 2
-            error(string("Invalid sequence: ", token))
+            error("Invalid sequence: $(token)")
         end
-        push!(variables, _get_variable_from_name(model, data_cache, items[1]))
+        push!(variables, _get_variable_from_name(model, cache, items[1]))
         push!(weights, parse(Float64, items[2]))
     end
-    sos_con = MOI.add_constraint(
-        model,
-        variables,
-        order == 1 ? MOI.SOS1(weights) : MOI.SOS2(weights),
-    )
-    MOI.set(model, MOI.ConstraintName(), sos_con, sos_con_name)
-    # TODO I think this only works for SOS of one line
+    c_ref = if tokens[2] == "S1::"
+        MOI.add_constraint(model, variables, MOI.SOS1(weights))
+    else
+        @assert tokens[2] == "S2::"
+        MOI.add_constraint(model, variables, MOI.SOS2(weights))
+    end
+    MOI.set(model, MOI.ConstraintName(), c_ref, name)
     return
 end
 
-function _parse_variable_type!(
+function _parse_section(
+    ::typeof(_KW_CONSTRAINTS),
     model::Model,
-    data_cache::CacheLPModel,
+    cache::_ReadCache,
     line::AbstractString,
-    set::MOI.AbstractSet,
 )
-    items = _tokenize(line)
-    for v in items
-        var = _get_variable_from_name(model, data_cache, v)
-        MOI.add_constraint(model, var, set)
+    if match(r" S([1-2]):: ", line) !== nothing
+        _parse_sos_constraint(model, cache, line)
+        return
     end
-    return nothing
+    if isempty(cache.constraint_name)
+        if occursin(":", line)
+            m = match(r"(.*?)\:(.*)", line)
+            cache.constraint_name = String(m[1])
+            line = String(m[2])
+        else
+            # Give it a temporary name for now
+            cache.constraint_name = "R$(cache.num_constraints)"
+        end
+    end
+    tokens = _tokenize(line)
+    if length(tokens) == 0
+        # Can happen if the name is on one line and the constraint on the next.
+        return
+    end
+    # This checks if the constaint is finishing on this line.
+    constraint_set = nothing
+    if length(tokens) >= 2 && tokens[end-1] in ("<", "<=", ">", ">=", "=", "==")
+        rhs = parse(Float64, pop!(tokens))
+        sym = pop!(tokens)
+        constraint_set = if sym in ("<", "<=")
+            MOI.LessThan(rhs)
+        elseif sym in (">", ">=")
+            MOI.GreaterThan(rhs)
+        else
+            @assert sym in ("=", "==")
+            MOI.EqualTo(rhs)
+        end
+    end
+    _parse_affine_terms(cache.constraint_function, model, cache, tokens)
+    if constraint_set !== nothing
+        c = MOI.add_constraint(model, cache.constraint_function, constraint_set)
+        MOI.set(model, MOI.ConstraintName(), c, cache.constraint_name)
+        cache.num_constraints += 1
+        empty!(cache.constraint_function.terms)
+        cache.constraint_function.constant = 0.0
+        cache.constraint_name = ""
+    end
+    return
 end
 
-function _parse_section!(
-    ::Type{Val{:none}},
+# _KW_BOUNDS
+
+function _parse_float(token::String)
+    coef = lowercase(token)
+    if coef in ("-inf", "-infinity")
+        return -Inf
+    elseif coef in ("+inf", "+infinity")
+        return Inf
+    else
+        return parse(Float64, coef)
+    end
+end
+
+# Yes, the last elements here are really accepted by CPLEX...
+_is_less_than(token) = token in ("<=", "<", "=<")
+_is_greater_than(token) = token in (">=", ">", "=>")
+_is_equal_to(token) = token in ("=", "==")
+
+function _parse_section(
+    ::typeof(_KW_BOUNDS),
     model::Model,
-    data_cache::CacheLPModel,
+    cache::_ReadCache,
     line::AbstractString,
 )
-    return nothing
+    tokens = _tokenize(line)
+    if length(tokens) == 2 && tokens[2] == "free"
+        return  # Do nothing. Variable is free
+    end
+    lb, ub, name = -Inf, Inf, ""
+    if length(tokens) == 5
+        name = tokens[3]
+        if _is_less_than(tokens[2]) && _is_less_than(tokens[4])
+            lb = _parse_float(tokens[1])
+            ub = _parse_float(tokens[5])
+        elseif _is_greater_than(tokens[2]) && _is_greater_than(tokens[4])
+            lb = _parse_float(tokens[5])
+            ub = _parse_float(tokens[1])
+        else
+            error("Unable to parse bound due to invalid inequalities: $(line)")
+        end
+    elseif length(tokens) == 3
+        name = tokens[1]
+        if _is_less_than(tokens[2])
+            ub = _parse_float(tokens[3])
+            # LP files have default lower bounds of 0, unless the upper bound is
+            # less than 0.
+            lb = ub > 0.0 ? 0.0 : -Inf
+        elseif _is_greater_than(tokens[2])
+            lb = _parse_float(tokens[3])
+        elseif _is_equal_to(tokens[2])
+            lb = ub = _parse_float(tokens[3])
+        else
+            error("Unable to parse bound due to invalid inequalities: $(line)")
+        end
+    else
+        error("Unable to parse bound: $(line)")
+    end
+    x = _get_variable_from_name(model, cache, name)
+    if lb == ub
+        MOI.add_constraint(model, x, MOI.EqualTo(lb))
+    elseif -Inf < lb < ub < Inf
+        MOI.add_constraint(model, x, MOI.Interval(lb, ub))
+    elseif -Inf < lb
+        MOI.add_constraint(model, x, MOI.GreaterThan(lb))
+    else
+        MOI.add_constraint(model, x, MOI.LessThan(ub))
+    end
+    return
 end
-function _parse_section!(
-    ::Type{Val{:quit}},
-    model::Model,
-    data_cache::CacheLPModel,
+
+# _KW_INTEGER
+
+function _parse_section(::typeof(_KW_INTEGER), model, cache, line)
+    for token in _tokenize(line)
+        x = _get_variable_from_name(model, cache, token)
+        MOI.add_constraint(model, x, MOI.Integer())
+    end
+    return
+end
+
+# _KW_BINARY
+
+function _parse_section(::typeof(_KW_BINARY), model, cache, line)
+    for token in _tokenize(line)
+        x = _get_variable_from_name(model, cache, token)
+        MOI.add_constraint(model, x, MOI.ZeroOne())
+    end
+    return
+end
+
+# _KW_END
+
+function _parse_section(
+    ::typeof(_KW_END),
+    ::Model,
+    ::_ReadCache,
     line::AbstractString,
 )
     return error("Corrupted LP File. You have the lne $(line) after an end.")
 end
-function _parse_section!(::Type{Val{:integer}}, model, data_cache, line)
-    return _parse_variable_type!(model, data_cache, line, MOI.Integer())
-end
-function _parse_section!(::Type{Val{:binary}}, model, data_cache, line)
-    return _parse_variable_type!(model, data_cache, line, MOI.ZeroOne())
-end
 
-function _parse_section!(
-    ::Type{Val{:obj}},
-    model::Model,
-    data_cache::CacheLPModel,
-    line::AbstractString,
-)
-    # okay so line should be the start of the objective
-    if occursin(":", line)
-        # throw away name
-        m = match(r"(.*?)\:(.*)", line)
-        line = String(m[2])
-    end
-    tokens = _tokenize(line)
-    if length(tokens) == 0 # no objective
-        return MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
-    end
-    affine_terms =
-        _parse_affine_terms!(model, data_cache, tokens, "objective", line)
-    push!(data_cache.objective_function.terms, affine_terms...)
-    return
-end
-
-function _parse_section!(
-    ::Type{Val{:constraints}},
-    model::Model,
-    data_cache::CacheLPModel,
-    line::AbstractString,
-)
-    if match(r" S([0-9]):: ", line) !== nothing
-        # it's an SOS constraint
-        _parse_sos!(model, data_cache, line)
-        return
-    end
-    if data_cache.linear_constraint_open == false
-        # parse the number of rows and add this name
-        data_cache.linear_constraint_name = "R$(data_cache.num_linear_constraints)"
-    end
-    if occursin(":", line)
-        if data_cache.linear_constraint_open == true
-            error("Malformed constraint $(line). Is the previous one valid?")
-        end
-        # throw away name
-        m = match(r"(.*?)\:(.*)", line)
-        data_cache.linear_constraint_name = String(m[1])
-        line = String(m[2])
-    end
-    data_cache.linear_constraint_open = true
-
-    tokens = _tokenize(line)
-    if length(tokens) == 0 # no entries
-        return
-    elseif length(tokens) >= 2 && haskey(_CONSTRAINT_SENSE, tokens[end-1])# test if constraint ends this line
-        rhs = parse(Float64, pop!(tokens))
-        sym = pop!(tokens)
-        if _CONSTRAINT_SENSE[sym] == :le
-            data_cache.linear_constraint_set = MOI.LessThan(rhs)
-        elseif _CONSTRAINT_SENSE[sym] == :ge
-            data_cache.linear_constraint_set = MOI.GreaterThan(rhs)
-        elseif _CONSTRAINT_SENSE[sym] == :eq
-            data_cache.linear_constraint_set = MOI.EqualTo(rhs)
-        end
-        # Finished
-        # Add constraint
-        c = MOI.add_constraint(
-            model,
-            data_cache.linear_constraint_function,
-            data_cache.linear_constraint_set,
-        )
-        MOI.set(
-            model,
-            MOI.ConstraintName(),
-            c,
-            data_cache.linear_constraint_name,
-        )
-        data_cache.num_linear_constraints += 1
-        # Clear the constraint part of data_cache
-        data_cache.linear_constraint_set = MOI.EqualTo(0.0)
-        data_cache.linear_constraint_function =
-            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0)
-        data_cache.linear_constraint_name = ""
-        data_cache.linear_constraint_open = false
-    end
-    affine_terms =
-        _parse_affine_terms!(model, data_cache, tokens, "constraint", line)
-    push!(data_cache.linear_constraint_function.terms, affine_terms...)
-    return
-end
-
-_bound_error(line::AbstractString) = error("Unable to parse bound: $(line)")
-function _parse_section!(
-    ::Type{Val{:bounds}},
-    model::Model,
-    data_cache::CacheLPModel,
-    line::AbstractString,
-)
-    items = _tokenize(line)
-    v = ""
-    lb = -Inf
-    ub = Inf
-    if length(items) == 5 # ranged bound
-        v = items[3]
-        if (items[2] == "<=" || items[2] == "<") &&
-           (items[4] == "<=" || items[4] == "<") # le
-            lb = _parse_float_from_bound(items[1])
-            ub = _parse_float_from_bound(items[5])
-        elseif (items[2] == ">=" || items[2] == ">") &&
-               (items[4] == ">=" || items[4] == ">") # ge
-            lb = _parse_float_from_bound(items[5])
-            ub = _parse_float_from_bound(items[1])
-        else
-            _bound_error(line)
-        end
-    elseif length(items) == 3 # one sided
-        v = items[1]
-        if items[2] == "<=" || items[2] == "<" # le
-            ub = _parse_float_from_bound(items[3])
-            if ub > 0.0
-                lb = 0.0
-            else
-                lb = -Inf
-            end
-        elseif items[2] == ">=" || items[2] == ">" # ge
-            lb = _parse_float_from_bound(items[3])
-            ub = +Inf
-        elseif items[2] == "==" || items[2] == "=" # eq
-            lb = ub = _parse_float_from_bound(items[3])
-        else
-            _bound_error(line)
-        end
-    elseif length(items) == 2 # free
-        if items[2] != "free"
-            _bound_error(line)
-        end
-        v = items[1]
+function _strip_comment(line::String)
+    if occursin("\\", line)
+        m = match(r"(.*?)\\(.*)", line)
+        return strip(String(m[1]))
     else
-        _bound_error(line)
+        return strip(line)
     end
-    var = _get_variable_from_name(model, data_cache, v)
-    set = bounds_to_set(lb, ub)
-    if set !== nothing
-        MOI.add_constraint(model, var, set)
-    end
-    return
-end
-
-function bounds_to_set(lower::Float64, upper::Float64)
-    if -Inf < lower < upper < Inf
-        return MOI.Interval(lower, upper)
-    elseif -Inf < lower && upper == Inf
-        return MOI.GreaterThan(lower)
-    elseif -Inf == lower && upper < Inf
-        return MOI.LessThan(upper)
-    elseif lower == upper
-        return MOI.EqualTo(upper)
-    end
-    return  # free variable
-end
-
-function _add_objective!(model::Model, data_cache::CacheLPModel)
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        data_cache.objective_function,
-    )
-    return
 end
 
 """
     Base.read!(io::IO, model::FileFormats.LP.Model)
 
 Read `io` in the LP file format and store the result in `model`.
+
+This reader attempts to follow the CPLEX LP format, because others like the
+lpsolve version are very...flexible...in how they accept input. Read more about
+them here: http://lpsolve.sourceforge.net
 """
 function Base.read!(io::IO, model::Model)
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
     end
-    data_cache = CacheLPModel()
-    section = Val{:none}
+    cache = _ReadCache()
+    section = Val{:header}()
     while !eof(io)
-        line = string(strip(readline(io)))
-        line = _strip_comment(line)
-        if line == "" # skip blank lines
+        line = _strip_comment(string(readline(io)))
+        if isempty(line)
             continue
         end
-        if haskey(_KEYWORDS, lowercase(line)) # section has changed
-            section = _KEYWORDS[lowercase(line)]
-            _set_sense!(section, model, line)
+        lower_line = lowercase(line)
+        if haskey(_KEYWORDS, lower_line)
+            section = _KEYWORDS[lower_line]
+            _set_objective_sense(section, model, lower_line)
             continue
         end
-        _parse_section!(section, model, data_cache, line)
+        _parse_section(section, model, cache, line)
     end
-    _add_objective!(model, data_cache)
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        cache.objective,
+    )
     return
 end
 
