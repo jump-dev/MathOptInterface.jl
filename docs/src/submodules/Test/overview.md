@@ -171,6 +171,25 @@ in the `src/Test/test_category.jl` file.
     for. Use `? MOI.Test.test_category_name_that_failed` from the REPL to
     read it.
 
+Periodically, you should re-run excluded tests to see if they now pass. The
+easiest way to do this is to swap the `exclude` keyword argument of `runtests`
+to `include`. For example:
+```julia
+MOI.Test.runtests(
+    model,
+    config;
+    exclude = String["test_to_exclude", "test_conic_"],
+)
+```
+becomes
+```julia
+MOI.Test.runtests(
+    model,
+    config;
+    include = String["test_to_exclude", "test_conic_"],
+)
+```
+
 ## How to add a test
 
 To detect bugs in solvers, we add new tests to `MOI.Test`.
