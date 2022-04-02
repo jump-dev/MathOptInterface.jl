@@ -54,13 +54,68 @@ get_options(m::Model) = get(m.ext, :SDPA_OPTIONS, Options())
 
 Create an empty instance of `FileFormats.SDPA.Model{number_type}`.
 
-Note that the model is in geometric form. That is, the SDP model is represented
-as a minimization with free variables and affine constraints in either the
-nonnegative orthant or the positive semidefinite cone.
+It is important to be aware that the SDPA file format is interpreted in
+*geometric* form and not *standard conic* form.
+The *standard conic* form and *geometric conic* form are two dual standard forms
+for semidefinite programs (SDPs).
+The *geometric conic* form of an SDP is as follows:
+```math
+\begin{align}
+& \min_{y \in \mathbb{R}^m} & b^T y
+\\
+& \;\;\text{s.t.} & \sum_{i=1}^m A_i y_i - C & \in \mathbb{K}
+\end{align}
+```
+where ``\mathcal{K}`` is a cartesian product of nonnegative orthant and
+positive semidefinite matrices that align with a block diagonal structure
+shared with the matrices `A_i` and `C`.
 
-If a model is in standard form, that is, nonnegative and positive semidefinite
-variables with equality constraints, use `Dualization.jl` to transform it into
-the geometric form.
+In other words, the geometric conic form contains free variables and affine
+constraints in either the nonnegative orthant or the positive semidefinite cone.
+That is, in the MathOptInterface's terminology,
+[`MathOptInterface.VectorAffineFunction`](@ref)-in-[`MathOptInterface.Nonnegatives`](@ref)
+and
+[`MathOptInterface.VectorAffineFunction`](@ref)-in-[`MathOptInterface.PositiveSemidefiniteConeTriangle`](@ref)
+constraints.
+
+The corresponding *standard conic* form of the dual SDP is as follows:
+```math
+\begin{align}
+& \max_{X \in \mathbb{K}} & \text{tr}(CX)
+\\
+& \;\;\text{s.t.} & \text{tr}(A_iX) & = b_i & i = 1, \ldots, m.
+\end{align}
+```
+
+In other words, the standard conic form contains nonnegative and positive
+semidefinite variables with equality constraints.
+That is, in the MathOptInterface's terminology,
+[`MathOptInterface.VectorOfVariables`](@ref)-in-[`MathOptInterface.Nonnegatives`](@ref),
+[`MathOptInterface.VectorOfVariables`](@ref)-in-[`MathOptInterface.PositiveSemidefiniteConeTriangle`](@ref)
+and
+[`MathOptInterface.ScalarAffineFunction`](@ref)-in-[`MathOptInterface.EqualTo`](@ref)
+constraints.
+
+If a model is in standard conic form, use `Dualization.jl` to transform it into
+the geometric conic form before writting it. Otherwise, the nonnegative (resp.
+positive semidefinite) variables will be bridged into free variables with
+affine constraints constraining them to belong to the nonnegative orthant
+(resp. positive semidefinite cone) by the
+[`Bridges.Constraint.VectorFunctionizeBridge`](@ref). Moreover, equality
+constraints will be bridged into pairs of affine constraints in the nonnegative
+orthant by the
+[`Bridges.Constraint.SplitIntervalBridge`](@ref)
+and then the
+[`Bridges.Constraint.VectorizeBridge`](@ref).
+
+If a solver is in standard conic form, use `Dualization.jl` to transform the
+model read into standard conic form before copying it to the solver. Otherwise,
+the free variables will be bridged into pairs of variables in the nonnegative
+orthant by the
+[`Bridges.Variable.FreeBridge`](@ref)
+and affine constraints will be bridged into equality constraints
+by creating a slack variable by the
+[`MathOptInterface.Bridges.Consraints.VectorSlackBridge`](@ref).
 """
 function Model(; number_type::Type = Float64)
     model = Model{number_type}()
