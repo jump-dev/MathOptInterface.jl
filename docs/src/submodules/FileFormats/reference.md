@@ -23,5 +23,10 @@ Functions to help read and write MOI models to/from various file formats. See
 ```@docs
 FileFormats.Model
 FileFormats.FileFormat
+FileFormats.CBF.Model
+FileFormats.LP.Model
+FileFormats.MOF.Model
+FileFormats.MPS.Model
+FileFormats.NL.Model
 FileFormats.SDPA.Model
 ```
