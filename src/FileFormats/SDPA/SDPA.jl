@@ -101,21 +101,21 @@ the geometric conic form before writting it. Otherwise, the nonnegative (resp.
 positive semidefinite) variables will be bridged into free variables with
 affine constraints constraining them to belong to the nonnegative orthant
 (resp. positive semidefinite cone) by the
-[`Bridges.Constraint.VectorFunctionizeBridge`](@ref). Moreover, equality
+[`MathOptInterface.Bridges.Constraint.VectorFunctionizeBridge`](@ref). Moreover, equality
 constraints will be bridged into pairs of affine constraints in the nonnegative
 orthant by the
-[`Bridges.Constraint.SplitIntervalBridge`](@ref)
+[`MathOptInterface.Bridges.Constraint.SplitIntervalBridge`](@ref)
 and then the
-[`Bridges.Constraint.VectorizeBridge`](@ref).
+[`MathOptInterface.Bridges.Constraint.VectorizeBridge`](@ref).
 
 If a solver is in standard conic form, use `Dualization.jl` to transform the
 model read into standard conic form before copying it to the solver. Otherwise,
 the free variables will be bridged into pairs of variables in the nonnegative
 orthant by the
-[`Bridges.Variable.FreeBridge`](@ref)
+[`MathOptInterface.Bridges.Variable.FreeBridge`](@ref)
 and affine constraints will be bridged into equality constraints
 by creating a slack variable by the
-[`MathOptInterface.Bridges.Consraints.VectorSlackBridge`](@ref).
+[`MathOptInterface.Bridges.Constraint.VectorSlackBridge`](@ref).
 """
 function Model(; number_type::Type = Float64)
     model = Model{number_type}()
