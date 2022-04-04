@@ -23,4 +23,5 @@ Functions to help read and write MOI models to/from various file formats. See
 ```@docs
 FileFormats.Model
 FileFormats.FileFormat
+FileFormats.SDPA.Model
 ```
