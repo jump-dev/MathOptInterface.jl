@@ -60,13 +60,13 @@ The *standard conic* form and *geometric conic* form are two dual standard forms
 for semidefinite programs (SDPs).
 The *geometric conic* form of an SDP is as follows:
 ```math
-\begin{align}
-& \min_{y \in \mathbb{R}^m} & b^T y
-\\
-& \;\;\text{s.t.} & \sum_{i=1}^m A_i y_i - C & \in \mathbb{K}
-\end{align}
+\\begin{align}
+& \\min_{y \\in \\mathbb{R}^m} & b^T y
+\\\\
+& \\;\\;\\text{s.t.} & \\sum_{i=1}^m A_i y_i - C & \\in \\mathbb{K}
+\\end{align}
 ```
-where ``\mathcal{K}`` is a cartesian product of nonnegative orthant and
+where ``\\mathcal{K}`` is a cartesian product of nonnegative orthant and
 positive semidefinite matrices that align with a block diagonal structure
 shared with the matrices `A_i` and `C`.
 
@@ -80,11 +80,11 @@ constraints.
 
 The corresponding *standard conic* form of the dual SDP is as follows:
 ```math
-\begin{align}
-& \max_{X \in \mathbb{K}} & \text{tr}(CX)
-\\
-& \;\;\text{s.t.} & \text{tr}(A_iX) & = b_i & i = 1, \ldots, m.
-\end{align}
+\\begin{align}
+& \\max_{X \\in \\mathbb{K}} & \\text{tr}(CX)
+\\\\
+& \\;\\;\\text{s.t.} & \\text{tr}(A_iX) & = b_i & i = 1, \\ldots, m.
+\\end{align}
 ```
 
 In other words, the standard conic form contains nonnegative and positive
