@@ -112,6 +112,11 @@ mutable struct _VariableInfo
     end
 end
 
+"""
+    Model()
+
+Create a new Optimizer object.
+"""
 mutable struct Model <: MOI.ModelLike
     # Store MOI.Name().
     name::String
@@ -131,12 +136,7 @@ mutable struct Model <: MOI.ModelLike
     # A vector of the final ordering of the variables.
     order::Vector{MOI.VariableIndex}
 
-    """
-    Model()
-
-    Create a new Optimizer object.
-    """
-    function Model(; kwargs...)
+    function Model()
         return new(
             "",
             _NLExpr(false, _NLTerm[], Dict{MOI.VariableIndex,Float64}(), 0.0),
