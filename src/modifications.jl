@@ -102,8 +102,24 @@ end
 
 function modify(
     model::ModelLike,
+    cis::Vector{ConstraintIndex},
+    changes::Vector{AbstractFunctionModification},
+)
+    return throw_modify_not_allowed.(cis, changes)
+end
+
+function modify(
+    model::ModelLike,
     attr::ObjectiveFunction,
     change::AbstractFunctionModification,
 )
     return throw_modify_not_allowed(attr, change)
+end
+
+function modify(
+    model::ModelLike,
+    attr::ObjectiveFunction,
+    changes::Vector{AbstractFunctionModification},
+)
+    return throw_modify_not_allowed.(attr, changes)
 end
