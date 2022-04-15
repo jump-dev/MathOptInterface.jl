@@ -102,10 +102,14 @@ end
 
 function modify(
     model::ModelLike,
-    cis::Vector{ConstraintIndex},
-    changes::Vector{AbstractFunctionModification},
+    cis::AbstractVector{ConstraintIndex},
+    changes::AbstractVector{<:AbstractFunctionModification},
 )
-    return throw_modify_not_allowed.(cis, changes)
+    @assert length(cis) == length(changes)
+    for (i, ci) in enumerate(cis)
+        MOI.modify(model, ci, changes[i])
+    end
+    return
 end
 
 function modify(
@@ -119,7 +123,10 @@ end
 function modify(
     model::ModelLike,
     attr::ObjectiveFunction,
-    changes::Vector{AbstractFunctionModification},
+    changes::AbstractVector{<:AbstractFunctionModification},
 )
-    return throw_modify_not_allowed.(attr, changes)
+    for change in changes
+        MOI.modify(model, attr, change)
+    end
+    return
 end
