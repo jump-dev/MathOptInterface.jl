@@ -50,4 +50,6 @@ include("parse.jl")
 include("model.jl")
 include("evaluator.jl")
 
+include("ReverseAD/ReverseAD.jl")
+
 end  # module

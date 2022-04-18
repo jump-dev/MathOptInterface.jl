@@ -70,6 +70,7 @@ Nonlinear.eval_comparison_function
 Nonlinear.Evaluator
 Nonlinear.AbstractAutomaticDifferentiation
 Nonlinear.ExprGraphOnly
+Nonlinear.SparseReverseMode
 ```
 
 ## Data-structure
