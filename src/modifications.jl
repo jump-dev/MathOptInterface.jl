@@ -102,9 +102,9 @@ end
 
 function modify(
     model::ModelLike,
-    cis::AbstractVector{ConstraintIndex},
+    cis::AbstractVector{ConstraintIndex{F,S}},
     changes::AbstractVector{<:AbstractFunctionModification},
-)
+) where {F,S}
     @assert length(cis) == length(changes)
     for (i, ci) in enumerate(cis)
         MOI.modify(model, ci, changes[i])
