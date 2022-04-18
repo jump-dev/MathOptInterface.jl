@@ -240,6 +240,7 @@ include("Test/Test.jl")
 include("Bridges/Bridges.jl")     # MOI.Bridges
 include("Benchmarks/Benchmarks.jl")
 include("FileFormats/FileFormats.jl")
+include("Nonlinear/Nonlinear.jl")
 
 include("instantiate.jl")
 
