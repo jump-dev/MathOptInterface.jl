@@ -816,7 +816,7 @@ end
 function test_NLPBlockData()
     data = Nonlinear.NonlinearData()
     x = MOI.VariableIndex(1)
-    block = MOI.test_NLPBlockData(data, [x])
+    block = MOI.NLPBlockData(data, [x])
     @test block.has_objective == false
     @test length(block.constraint_bounds) == 0
     return
