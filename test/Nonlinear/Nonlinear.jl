@@ -799,6 +799,29 @@ function test_evaluate_logic()
     return
 end
 
+function test_evaluate_subexpressions()
+    data = Nonlinear.NonlinearData()
+    x = MOI.VariableIndex(1)
+    p = Nonlinear.add_parameter(data, 1.23)
+    ex = Nonlinear.add_expression(data, :(*($p, $x, $x)))
+    ex = Nonlinear.add_expression(data, :($ex + sqrt($ex)))
+    ex_v = 1.23 * 1.1 * 1.1
+    @test Nonlinear.evaluate(Dict(x => 1.1), data, ex) ≈ ex_v + sqrt(ex_v)
+    data[p] = 3.21
+    ex_v = 3.21 * 1.2 * 1.2
+    @test Nonlinear.evaluate(Dict(x => 1.2), data, ex) ≈ ex_v + sqrt(ex_v)
+    return
+end
+
+function test_NLPBlockData()
+    data = Nonlinear.NonlinearData()
+    x = MOI.VariableIndex(1)
+    block = MOI.test_NLPBlockData(data, [x])
+    @test block.has_objective == false
+    @test length(block.constraint_bounds) == 0
+    return
+end
+
 end
 
 TestNonlinear.runtests()
