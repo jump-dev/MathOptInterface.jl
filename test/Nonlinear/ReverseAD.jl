@@ -1,7 +1,9 @@
 module TestReverseAD
 
 using Test
+import LinearAlgebra
 import MathOptInterface
+import SparseArrays
 
 const MOI = MathOptInterface
 const Nonlinear = MOI.Nonlinear
@@ -795,6 +797,49 @@ function test_gradient_nested_subexpressions()
     ∇f = fill(NaN, 2)
     MOI.eval_objective_gradient(data, ∇f, [2.0, 3.0])
     @test ∇f ≈ [2 * 2.0 * cos(2.0^2), -4 * sin(3.0 * 4) / 5]
+    return
+end
+
+function _dense_hessian(hessian_sparsity, V, n)
+    I = [i for (i, _) in hessian_sparsity]
+    J = [j for (_, j) in hessian_sparsity]
+    raw = SparseArrays.sparse(I, J, V, n, n)
+    return Matrix(
+        raw + raw' -
+        SparseArrays.sparse(LinearAlgebra.diagm(0 => LinearAlgebra.diag(raw))),
+    )
+end
+
+# This covers the code that computes Hessians in odd chunks of Hess-vec
+# products.
+function test_odd_chunks_Hessian_products()
+    for i in 1:18
+        _test_odd_chunks_Hessian_products(i)
+    end
+    return
+end
+
+function _test_odd_chunks_Hessian_products(N)
+    data = Nonlinear.NonlinearData()
+    x = MOI.VariableIndex.(1:N)
+    Nonlinear.set_objective(data, Expr(:call, :*, x...))
+    Nonlinear.set_differentiation_backend(
+        data,
+        Nonlinear.SparseReverseMode(),
+        x,
+    )
+    MOI.initialize(data, [:Hess])
+    hessian_sparsity = MOI.hessian_lagrangian_structure(data)
+    V = zeros(length(hessian_sparsity))
+    values = ones(N)
+    MOI.eval_hessian_lagrangian(data, V, values, 1.0, Float64[])
+    H = _dense_hessian(hessian_sparsity, V, N)
+    @test H ≈ (ones(N, N) - LinearAlgebra.diagm(0 => ones(N)))
+    values[1] = 0.5
+    MOI.eval_hessian_lagrangian(data, V, values, 1.0, Float64[])
+    H = _dense_hessian(hessian_sparsity, V, N)
+    H_22 = (ones(N - 1, N - 1) - LinearAlgebra.diagm(0 => ones(N - 1))) / 2
+    @test H ≈ [0 ones(N - 1)'; ones(N - 1) H_22]
     return
 end
 
