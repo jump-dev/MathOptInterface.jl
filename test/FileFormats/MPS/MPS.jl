@@ -8,8 +8,8 @@ const MOIU = MOI.Utilities
 const MPS = MOI.FileFormats.MPS
 const MPS_TEST_FILE = "test.mps"
 
-function _test_model_equality(model_string, variables, constraints)
-    model = MPS.Model()
+function _test_model_equality(model_string, variables, constraints; kwargs...)
+    model = MPS.Model(; kwargs...)
     MOIU.loadfromstring!(model, model_string)
     MOI.write_to_file(model, MPS_TEST_FILE)
     model_2 = MPS.Model()
@@ -114,7 +114,18 @@ function test_maximization()
     MOI.set(model, MOI.VariableName(), x, "x")
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
-    @test sprint(MPS.write_columns, model, ["x"], Dict(x => "x")) ==
+    @test sprint(MPS.write_columns, model, true, ["x"], Dict(x => "x")) ==
+          "COLUMNS\n    x         OBJ       -1\n"
+end
+
+function test_maximization_objsense_false()
+    model = MPS.Model(; print_objsense = true)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariableName(), x, "x")
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
+    sprint(MPS.write, model)
+    @test sprint(MPS.write_columns, model, false, ["x"], Dict(x => "x")) ==
           "COLUMNS\n    x         OBJ       1\n"
 end
 
@@ -290,7 +301,7 @@ c1: 1.1 * x in Interval(1.0, 2.0)
 end
 
 function test_objsense_max()
-    return _test_model_equality(
+    _test_model_equality(
         """
 variables: x
 maxobjective: 1.2x
@@ -298,7 +309,19 @@ c1: 1.0 * x >= 0.0
 """,
         ["x"],
         ["c1"],
+        print_objsense = true,
     )
+    _test_model_equality(
+        """
+variables: x
+minobjective: 1.2x
+c1: 1.0 * x >= 0.0
+""",
+        ["x"],
+        ["c1"],
+        print_objsense = true,
+    )
+    return
 end
 
 function test_MARKER_INT()
@@ -400,7 +423,6 @@ a_really_long_name <= 2.0
     MOI.write_to_file(model, MPS_TEST_FILE)
     @test read(MPS_TEST_FILE, String) ==
           "NAME          \n" *
-          "OBJSENSE MIN\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           "COLUMNS\n" *
@@ -446,7 +468,6 @@ function test_names_with_spaces()
     MOI.set(model, MOI.ConstraintName(), c, "c c")
     @test sprint(write, model) ==
           "NAME          \n" *
-          "OBJSENSE MIN\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           " E  c_c\n" *
@@ -457,6 +478,45 @@ function test_names_with_spaces()
           "RANGES\n" *
           "BOUNDS\n" *
           " FR bounds    x[1,_2]\n" *
+          "ENDATA\n"
+end
+
+function test_objsense_default()
+    model = MPS.Model()
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariableName(), x, "x")
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
+    @test sprint(write, model) ==
+          "NAME          \n" *
+          "ROWS\n" *
+          " N  OBJ\n" *
+          "COLUMNS\n" *
+          "    x         OBJ       -1\n" *
+          "RHS\n" *
+          "RANGES\n" *
+          "BOUNDS\n" *
+          " FR bounds    x\n" *
+          "ENDATA\n"
+end
+
+function test_objsense_true()
+    model = MPS.Model(; print_objsense = true)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariableName(), x, "x")
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
+    @test sprint(write, model) ==
+          "NAME          \n" *
+          "OBJSENSE MAX\n" *
+          "ROWS\n" *
+          " N  OBJ\n" *
+          "COLUMNS\n" *
+          "    x         OBJ       1\n" *
+          "RHS\n" *
+          "RANGES\n" *
+          "BOUNDS\n" *
+          " FR bounds    x\n" *
           "ENDATA\n"
 end
 
@@ -476,7 +536,6 @@ function test_sos_constraints()
     )
     @test sprint(write, model) ==
           "NAME          \n" *
-          "OBJSENSE MIN\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           "COLUMNS\n" *
