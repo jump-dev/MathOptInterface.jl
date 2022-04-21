@@ -41,9 +41,10 @@ end
 
 struct Options
     warn::Bool
+    objsense::Bool
 end
 
-get_options(m::Model) = get(m.ext, :MPS_OPTIONS, Options(false))
+get_options(m::Model) = get(m.ext, :MPS_OPTIONS, Options(false, true))
 
 """
     Model(; kwargs...)
@@ -53,10 +54,11 @@ Create an empty instance of FileFormats.MPS.Model.
 Keyword arguments are:
 
  - `warn::Bool=false`: print a warning when variables or constraints are renamed.
+ - `print_objsense::Bool=false`: print the OBJSENSE section when writing
 """
-function Model(; warn::Bool = false)
+function Model(; warn::Bool = false, print_objsense::Bool = false)
     model = Model{Float64}()
-    model.ext[:MPS_OPTIONS] = Options(warn)
+    model.ext[:MPS_OPTIONS] = Options(warn, print_objsense)
     return model
 end
 
@@ -171,13 +173,18 @@ function Base.write(io::IO, model::Model)
         names[x] = n
     end
     write_model_name(io, model)
-    if MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
-        println(io, "OBJSENSE MAX")
+    flip_obj = false
+    if options.objsense
+        if MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
+            println(io, "OBJSENSE MAX")
+        else
+            println(io, "OBJSENSE MIN")
+        end
     else
-        println(io, "OBJSENSE MIN")
+        flip_obj = MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
     end
     write_rows(io, model)
-    obj_const = write_columns(io, model, ordered_names, names)
+    obj_const = write_columns(io, model, flip_obj, ordered_names, names)
     write_rhs(io, model, obj_const)
     write_ranges(io, model)
     write_bounds(io, model, ordered_names, names)
@@ -256,10 +263,12 @@ function _extract_terms(
     coefficients::Dict{String,Vector{Tuple{String,Float64}}},
     row_name::String,
     func::MOI.ScalarAffineFunction,
+    flip_sign::Bool = false,
 )
     for term in func.terms
         variable_name = v_names[term.variable]
-        push!(coefficients[variable_name], (row_name, term.coefficient))
+        coef = flip_sign ? -term.coefficient : term.coefficient
+        push!(coefficients[variable_name], (row_name, coef))
     end
     return
 end
@@ -281,7 +290,7 @@ function _collect_coefficients(
     return
 end
 
-function write_columns(io::IO, model::Model, ordered_names, names)
+function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
     coefficients = Dict{String,Vector{Tuple{String,Float64}}}(
         n => Tuple{String,Float64}[] for n in ordered_names
     )
@@ -294,7 +303,7 @@ function write_columns(io::IO, model::Model, ordered_names, names)
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
     )
-    _extract_terms(names, coefficients, "OBJ", obj_func)
+    _extract_terms(names, coefficients, "OBJ", obj_func, flip_obj)
     integer_variables = list_of_integer_variables(model, names)
     println(io, "COLUMNS")
     int_open = false
