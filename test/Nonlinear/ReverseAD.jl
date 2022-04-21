@@ -451,7 +451,12 @@ function test_NLPBlockData()
     Nonlinear.add_constraint(data, :($x >= 2))
     Nonlinear.add_constraint(data, :($x == 3))
     Nonlinear.add_constraint(data, :(4 <= $x <= 5))
-    block = MOI.NLPBlockData(data, [x])
+    Nonlinear.set_differentiation_backend(
+        data,
+        Nonlinear.SparseReverseMode(),
+        [x],
+    )
+    block = MOI.NLPBlockData(data)
     @test block.constraint_bounds == [
         MOI.NLPBoundsPair(-Inf, 0.0),
         MOI.NLPBoundsPair(0.0, Inf),
