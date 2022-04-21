@@ -408,6 +408,21 @@ function test_read_maximum_length_error()
     return
 end
 
+function test_default_bound()
+    io = IOBuffer()
+    write(io, "minimize\nobj: x + y")
+    seekstart(io)
+    model = LP.Model()
+    MOI.read!(io, model)
+    x = MOI.get(model, MOI.ListOfVariableIndices())
+    F, S = MOI.VariableIndex,MOI.GreaterThan{Float64}
+    c = [MOI.ConstraintIndex{F,S}(xi.value) for xi in x]
+    sets = MOI.get.(model, MOI.ConstraintSet(), c)
+    @test all(s -> s == MOI.GreaterThan(0.0), sets)
+    @test length(sets) == 2
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")

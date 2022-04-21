@@ -377,6 +377,7 @@ mutable struct _ReadCache
     constraint_name::String
     num_constraints::Int
     name_to_variable::Dict{String,MOI.VariableIndex}
+    has_default_bound::Set{MOI.VariableIndex}
     function _ReadCache()
         return new(
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
@@ -384,6 +385,7 @@ mutable struct _ReadCache
             "",
             0,
             Dict{String,MOI.VariableIndex}(),
+            Set{MOI.VariableIndex}(),
         )
     end
 end
@@ -403,6 +405,10 @@ function _get_variable_from_name(model::Model, cache::_ReadCache, name::String)
     end
     x = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), x, name)
+    # By default, all variables have a lower bound of 0 unless otherwise
+    # specified.
+    MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+    push!(cache.has_default_bound, x)
     cache.name_to_variable[name] = x
     return x
 end
@@ -629,14 +635,33 @@ function _parse_section(
     end
     x = _get_variable_from_name(model, cache, name)
     if lb == ub
+        _delete_default_lower_bound_if_present(model, cache, x)
         MOI.add_constraint(model, x, MOI.EqualTo(lb))
     elseif -Inf < lb < ub < Inf
+        _delete_default_lower_bound_if_present(model, cache, x)
         MOI.add_constraint(model, x, MOI.Interval(lb, ub))
     elseif -Inf < lb
+        _delete_default_lower_bound_if_present(model, cache, x)
         MOI.add_constraint(model, x, MOI.GreaterThan(lb))
     else
+        if ub < 0
+            # We only need to delete the default lower bound if the upper bound
+            # is less than 0.
+            _delete_default_lower_bound_if_present(model, cache, x)
+            MOI.delete(model, c)
+        end
         MOI.add_constraint(model, x, MOI.LessThan(ub))
     end
+    return
+end
+
+function _delete_default_lower_bound_if_present(model, cache, x)
+    if !(x in cache.has_default_bound)
+        return
+    end
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(x.value)
+    MOI.delete(model, c)
+    delete!(cache.has_default_bound, x)
     return
 end
 
