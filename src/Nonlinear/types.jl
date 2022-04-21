@@ -183,6 +183,25 @@ mutable struct NonlinearData <: MOI.AbstractNLPEvaluator
     end
 end
 
+_bound(s::MOI.LessThan) = MOI.NLPBoundsPair(-Inf, s.upper)
+_bound(s::MOI.GreaterThan) = MOI.NLPBoundsPair(s.lower, Inf)
+_bound(s::MOI.EqualTo) = MOI.NLPBoundsPair(s.value, s.value)
+_bound(s::MOI.Interval) = MOI.NLPBoundsPair(s.lower, s.upper)
+
+"""
+    MOI.NLPBlockData(data::NonlinearData)
+
+Create an [`MOI.NLPBlockData`](@ref) object from a [`NonlinearData`](@ref)
+object.
+"""
+function MOI.NLPBlockData(data::NonlinearData)
+    return MOI.NLPBlockData(
+        [_bound(c.set) for (_, c) in data.constraints],
+        data,
+        data.objective !== nothing,
+    )
+end
+
 """
     AbstractAutomaticDifferentiation
 
@@ -223,16 +242,3 @@ function set_differentiation_backend(
     return
 end
 
-"""
-    MOI.NLPBlockData(data::NonlinearData)
-
-Create an [`MOI.NLPBlockData`](@ref) object from a [`NonlinearData`](@ref)
-object.
-"""
-function MOI.NLPBlockData(data::NonlinearData)
-    return MOI.NLPBlockData(
-        [_bound(c.set) for (_, c) in data.constraints],
-        data,
-        data.objective !== nothing,
-    )
-end
