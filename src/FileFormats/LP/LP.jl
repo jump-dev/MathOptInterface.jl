@@ -602,7 +602,9 @@ function _parse_section(
 )
     tokens = _tokenize(line)
     if length(tokens) == 2 && tokens[2] == "free"
-        return  # Do nothing. Variable is free
+        x = _get_variable_from_name(model, cache, tokens[1])
+        _delete_default_lower_bound_if_present(model, cache, x)
+        return
     end
     lb, ub, name = -Inf, Inf, ""
     if length(tokens) == 5
