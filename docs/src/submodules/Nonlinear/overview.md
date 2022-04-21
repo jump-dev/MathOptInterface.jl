@@ -381,7 +381,7 @@ end
 
 # Replace `model` and `backend` with your optimizer and backend of choice.
 model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
-build_model(model; backend = MOI.Nonlinear.ExprGraphOnly())
+build_model(model; backend = MOI.Nonlinear.SparseReverseMode())
 ```
 
 ## Expression-graph representation
