@@ -209,15 +209,19 @@ MathOptInterface communicates the nonlinear portion of an optimization problem
 to solvers using concrete subtypes of [`AbstractNLPEvaluator`](@ref), which
 implement the [Nonlinear programming](@ref) API.
 
-[`NonlinearData`](@ref) is a subtype of [`AbstractNLPEvaluator`](@ref), but the
-functions of the [Nonlinear programming](@ref) API that it implements depends
-upon the chosen [`Nonlinear.AbstractAutomaticDifferentiation`](@ref) backend.
+[`Nonlinear.NonlinearData`](@ref) is a subtype of [`AbstractNLPEvaluator`](@ref),
+but the functions of the [Nonlinear programming](@ref) API that it implements
+depends upon the chosen [`Nonlinear.AbstractAutomaticDifferentiation`](@ref
+backend.
 
-There are two to choose from within MOI, although other packages may add more
-options by sub-typing [`Nonlinear.AbstractAutomaticDifferentiation`](@ref):
+There following backends are available to choose from within MOI, although other
+packages may add more options by sub-typing
+[`Nonlinear.AbstractAutomaticDifferentiation`](@ref):
  * [`Nonlinear.ExprGraphOnly`](@ref)
 
-Set the differentiation backend using [`Nonlinear.set_differentiation_backend`](@ref).
+Set the differentiation backend using
+`Nonlinear.set_differentiation_backend`](@ref).
+
 If we set [`Nonlinear.ExprGraphOnly`](@ref), then we get access to `:ExprGraph`:
 ```jldoctest nonlinear_developer
 julia> Nonlinear.set_differentiation_backend(
