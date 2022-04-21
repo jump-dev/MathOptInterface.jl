@@ -54,7 +54,7 @@ Create an empty instance of FileFormats.MPS.Model.
 Keyword arguments are:
 
  - `warn::Bool=false`: print a warning when variables or constraints are renamed.
- - `print_objsense::Bool=true`: print the OBJSENSE section when writing
+ - `print_objsense::Bool=false`: print the OBJSENSE section when writing
 """
 function Model(; warn::Bool = false, print_objsense::Bool = false)
     model = Model{Float64}()
