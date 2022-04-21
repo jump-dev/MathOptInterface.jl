@@ -362,6 +362,28 @@ julia> MOI.set(model, MOI.NLPBlock(), block);
     Only call [`NLPBlockData`](@ref) once you have finished modifying the
     problem in `model`.
 
+Putting everything together, you can create a nonlinear optimization problem in
+MathOptInterface as follows:
+```@example
+import MathOptInterface
+const MOI = MathOptInterface
+
+function build_model(model; backend)
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    data = MOI.Nonlinear.NonlinearData()
+    MOI.Nonlinear.set_objective(data, :($x^2 + $y^2))
+    MOI.Nonlinear.set_differentiation_backend(data, backend, [x, y])
+    MOI.set(model, MOI.NLPBlock(), MOI.NLPBlockData(data))
+    return
+end
+
+# Replace `model` and `backend` with your optimizer and backend of choice.
+model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+build_model(model; backend = MOI.Nonlinear.ExprGraphOnly())
+```
+
 ## Expression-graph representation
 
 [`Nonlinear.Model`](@ref) stores nonlinear expressions in
