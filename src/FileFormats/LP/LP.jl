@@ -648,7 +648,6 @@ function _parse_section(
             # We only need to delete the default lower bound if the upper bound
             # is less than 0.
             _delete_default_lower_bound_if_present(model, cache, x)
-            MOI.delete(model, c)
         end
         MOI.add_constraint(model, x, MOI.LessThan(ub))
     end
