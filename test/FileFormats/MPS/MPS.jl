@@ -581,7 +581,6 @@ function test_generic_names()
     MOI.add_constraint(model, y, MOI.GreaterThan(2.0))
     @test sprint(write, model) ==
           "NAME          \n" *
-          "OBJSENSE MIN\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           " E  R1\n" *
