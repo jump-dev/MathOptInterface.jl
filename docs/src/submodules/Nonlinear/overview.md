@@ -248,7 +248,7 @@ MathOptInterface instead passes an [`NLPBlockData`](@ref), which wraps an
 bounds and whether the evaluator has a nonlinear objective. Create an
 `NLPBlockData`](@ref) as follows:
 ```jldoctest nonlinear_developer
-julia> MOI.NLPBlockData(data)
+julia> MOI.NLPBlockData(data);
 ```
 
 ## Expression-graph representation

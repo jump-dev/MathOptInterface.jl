@@ -42,6 +42,8 @@ function of `data`.
 
 `obj` must be a type that is supported by [`parse_expression`](@ref).
 
+To remove the objective, pass `nothing`.
+
 ## Examples
 
 ```julia
@@ -49,10 +51,16 @@ data = NonlinearData()
 x = MOI.VariableIndex(1)
 set_objective(data, :(\$x^2 + 1))
 set_objective(data, x)
+set_objective(data, nothing)
 ```
 """
 function set_objective(data::NonlinearData, obj)
     data.objective = parse_expression(data, obj)
+    return
+end
+
+function set_objective(data::NonlinearData, ::Nothing)
+    data.objective = nothing
     return
 end
 
