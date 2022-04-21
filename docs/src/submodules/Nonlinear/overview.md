@@ -302,6 +302,50 @@ However, we cannot call gradient terms such as
 [`eval_objective_gradient`](@ref) because [`Nonlinear.ExprGraphOnly`](@ref) does
 not have the capability to differentiate a nonlinear expression.
 
+If, instead, we pass [`Nonlinear.SparseReverseMode`](@ref), then we get access
+to `:Grad`, the gradient of the objective function, `:Jac`, the jacobian matrix
+of the constraints, `:JacVec`, the ability to compute Jacobian-vector products,
+and `:ExprGraph`.
+```jldoctest nonlinear_developer
+julia> evaluator = Nonlinear.Evaluator(
+           model,
+           Nonlinear.SparseReverseMode(),
+           [x],
+       )
+Nonlinear.Evaluator with available features:
+  * :Grad
+  * :Jac
+  * :JacVec
+  * :ExprGraph
+```
+
+However, before calling anything, we need to call [`initialize`](@ref):
+```jldoctest nonlinear_developer
+julia> MOI.initialize(evaluator, [:Grad, :Jac, :JacVec, :ExprGraph])
+```
+
+Now we can call methods like [`eval_objective`](@ref):
+```jldoctest nonlinear_developer
+julia> x = [1.0]
+1-element Vector{Float64}:
+ 1.0
+
+julia> MOI.eval_objective(evaluator, x)
+7.268073418273571
+```
+and [`eval_objective_gradient`](@ref):
+```jldoctest nonlinear_developer
+julia> grad = [NaN]
+1-element Vector{Float64}:
+ NaN
+
+julia> MOI.eval_objective_gradient(evaluator, grad, x)
+
+julia> grad
+1-element Vector{Float64}:
+ 1.909297426825682
+```
+
 Instead of passing [`Nonlinear.Evaluator`](@ref) directly to solvers,
 solvers query the [`NLPBlock`](@ref) attribute, which returns an
 [`NLPBlockData`](@ref). This object wraps an [`Nonlinear.Evaluator`](@ref) and
@@ -317,52 +361,6 @@ julia> MOI.set(model, MOI.NLPBlock(), block);
 !!! warning
     Only call [`NLPBlockData`](@ref) once you have finished modifying the
     problem in `model`.
-
-If, instead, we set [`Nonlinear.SparseReverseMode`](@ref), then we get access to
-`:Grad`, the gradient of the objective function, `:Jac`, the jacobian matrix of
-the constraints, `:JacVec`, the ability to compute Jacobian-vector products, and
-`:ExprGraph`.
-```jldoctest nonlinear_developer
-julia> Nonlinear.set_differentiation_backend(
-           data,
-           Nonlinear.SparseReverseMode(),
-           [x],
-       )
-
-julia> data
-NonlinearData with available features:
-  * :Grad
-  * :Jac
-  * :JacVec
-  * :ExprGraph
-```
-
-However, before calling anything, we need to call [`initialize`](@ref):
-```jldoctest nonlinear_developer
-julia> MOI.initialize(data, [:Grad, :Jac, :JacVec, :ExprGraph])
-```
-
-Now we can call methods like [`eval_objective`](@ref):
-```jldoctest nonlinear_developer
-julia> x = [1.0]
-1-element Vector{Float64}:
- 1.0
-
-julia> MOI.eval_objective(data, x)
-7.268073418273571
-```
-and [`eval_objective_gradient`](@ref):
-```jldoctest nonlinear_developer
-julia> grad = [NaN]
-1-element Vector{Float64}:
- NaN
-
-julia> MOI.eval_objective_gradient(data, grad, x)
-
-julia> grad
-1-element Vector{Float64}:
- 1.909297426825682
-```
 
 ## Expression-graph representation
 
