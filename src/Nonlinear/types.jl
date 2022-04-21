@@ -223,12 +223,13 @@ function set_differentiation_backend(
     return
 end
 
-function MOI.NLPBlockData(
-    data::NonlinearData,
-    x::Vector{MOI.VariableIndex},
-    backend::AbstractAutomaticDifferentiation = ExprGraphOnly(),
-)
-    set_differentiation_backend(data, backend, x)
+"""
+    MOI.NLPBlockData(data::NonlinearData)
+
+Create an [`MOI.NLPBlockData`](@ref) object from a [`NonlinearData`](@ref)
+object.
+"""
+function MOI.NLPBlockData(data::NonlinearData)
     return MOI.NLPBlockData(
         [_bound(c.set) for (_, c) in data.constraints],
         data,

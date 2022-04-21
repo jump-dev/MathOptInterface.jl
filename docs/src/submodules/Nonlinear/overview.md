@@ -15,8 +15,8 @@ DocTestFilters = [r"MathOptInterface|MOI"]
     MathOptInterface.
 
 The `Nonlinear` submodule contains data structures and functions for
-working with a nonlinear program in the form of an expression tree. This page
-explains the API and describes the rationale behind its design.
+working with a nonlinear optimization problem in the form of an expression
+graph. This page explains the API and describes the rationale behind its design.
 
 ## Standard form
 
@@ -49,12 +49,13 @@ nonlinear information added to the model.
 
 ### Decision variables
 
-Decision variables are represented by [`VariableIndex`](@ref)s. The user is
-responsible for creating these.
+Decision variables are represented by [`VariableIndex`](@ref)es. The user is
+responsible for creating these using `MOI.VariableIndex(i)`, where `i` is the
+column associated with the variable.
 
 ### [Expressions](@id Nonlinear_Expressions)
 
-The input data-structure is a Julia `Expr`. The input expressions can
+The input data structure is a Julia `Expr`. The input expressions can
 incorporate [`VariableIndex`](@ref)es, but these must be interpolated into
 the expression with `$`:
 ```jldoctest nonlinear_developer
@@ -83,9 +84,9 @@ then be interpolated into other input expressions.
 ### [Parameters](@id Nonlinear_Parameters)
 
 In addition to constant literals like `1` or `1.23`, you can create parameters.
-Parameter are constants that you can change before passing the expression to the
-solver. Create a parameter using [`Nonlinear.add_parameter`](@ref), which
-accepts a default value:
+Parameters are placeholders whose values can change before passing the
+expression to the solver. Create a parameter using
+[`Nonlinear.add_parameter`](@ref), which accepts a default value:
 ```jldoctest nonlinear_developer
 julia> p = Nonlinear.add_parameter(data, 1.23)
 MathOptInterface.Nonlinear.ParameterIndex(1)
@@ -110,6 +111,10 @@ julia> data[p]
 Set a nonlinear objective using [`Nonlinear.set_objective`](@ref):
 ```jldoctest nonlinear_developer
 julia> Nonlinear.set_objective(data, :($p + $expr + $x))
+```
+Clear a nonlinear objective by passing `nothing`:
+```jldoctest nonlinear_developer
+julia> Nonlinear.set_objective(data, nothing)
 ```
 
 ### [Constraints](@id Nonlinear_Constraints)
@@ -186,7 +191,7 @@ MathOptInterface.Nonlinear.ExpressionIndex(3)
 ```
 By default, `Nonlinear` will compute the gradient of the registered
 operator using `ForwardDiff.jl`. (Hessian information is not supported.)
-Over-ride this by passing a function to compute the gradient:
+Override this by passing a function to compute the gradient:
 ```jldoctest nonlinear_developer
 julia> function ∇g(ret, x...)
            ret[1] = 2 * x[1] + x[2]
@@ -200,34 +205,51 @@ julia> Nonlinear.register_operator(data, :my_g2, 2, g, ∇g)
 
 ### [MathOptInterface](@id Nonlinear_MOI_interface)
 
-`Nonlinear` implements the MathOptInterface API to allow solvers to query the
-function and derivative information of our nonlinear model `data`. However,
-before we can call [`initialize`](@ref), we need to set an
-[`Nonlinear.AbstractAutomaticDifferentiation`](@ref).
+MathOptInterface communicates the nonlinear portion of an optimization problem
+to solvers using concrete subtypes of [`AbstractNLPEvaluator`](@ref), which
+implement the [Nonlinear programming](@ref) API.
+
+[`NonlinearData`](@ref) is a subtype of [`AbstractNLPEvaluator`](@ref), but the
+functions of the [Nonlinear programming](@ref) API that it implements depends
+upon the chosen [`Nonlinear.AbstractAutomaticDifferentiation`](@ref) backend.
 
 There are two to choose from within MOI, although other packages may add more
 options by sub-typing [`Nonlinear.AbstractAutomaticDifferentiation`](@ref):
  * [`Nonlinear.ExprGraphOnly`](@ref)
 
+Set the differentiation backend using [`Nonlinear.set_differentiation_backend`](@ref).
 If we set [`Nonlinear.ExprGraphOnly`](@ref), then we get access to `:ExprGraph`:
 ```jldoctest nonlinear_developer
-julia> Nonlinear.set_differentiation_backend(data, Nonlinear.ExprGraphOnly(), [x])
+julia> Nonlinear.set_differentiation_backend(
+           data,
+           Nonlinear.ExprGraphOnly(),
+           [x],
+       )
 
 julia> data
 NonlinearData with available features:
   * :ExprGraph
 ```
-!!! note
-    [`Nonlinear.set_differentiation_backend`](@ref) requires an ordered list of
-    the variables that are included in the model. This order corresponds to the
-    the order of the primal decision vector `x` which is passed to the various
-    functions in MOI's nonlinear API.
+
+[`Nonlinear.set_differentiation_backend`](@ref) requires an ordered list of the
+variables that are included in the model. This order corresponds to the order of
+the primal decision vector `x` which is passed to the various functions in MOI's
+nonlinear API.
 
 The `:ExprGraph` feature means we can call [`objective_expr`](@ref) and
 [`constraint_expr`](@ref) to retrieve the expression graph of the problem.
 However, we cannot call gradient terms such as
 [`eval_objective_gradient`](@ref) because [`Nonlinear.ExprGraphOnly`](@ref) does
-not know how to differentiate a nonlinear expression.
+not have the capability to differentiate a nonlinear expression.
+
+Instead of passing [`AbstractNLPEvaluator`](@ref)s directly to solvers,
+MathOptInterface instead passes an [`NLPBlockData`](@ref), which wraps an
+[`AbstractNLPEvaluator`](@ref) and includes other information such as constraint
+bounds and whether the evaluator has a nonlinear objective. Create an
+`NLPBlockData`](@ref) as follows:
+```jldoctest nonlinear_developer
+julia> MOI.NLPBlockData(data)
+```
 
 ## Expression-graph representation
 
@@ -235,8 +257,9 @@ not know how to differentiate a nonlinear expression.
 [`Nonlinear.NonlinearExpression`](@ref)s. This section explains the design of
 the expression graph datastructure in [`Nonlinear.NonlinearExpression`](@ref).
 
-Given a nonlinear function like `f(x) = sin(x)^2 + x`, the first step is to
-convert it into [Polish prefix notation](https://en.wikipedia.org/wiki/Polish_notation):
+Given a nonlinear function like `f(x) = sin(x)^2 + x`, a conceptual aid for
+thinking about the graph representation of the expression is to convert it into
+[Polish prefix notation](https://en.wikipedia.org/wiki/Polish_notation):
 ```
 f(x, y) = (+ (^ (sin x) 2) x)
 ```
@@ -365,7 +388,7 @@ each expression, `nodes` and `values`, as well as two constant vectors for the
 For our third goal, it is not easy to identify the children of a node, but it is
 easy to identify the _parent_ of any node. Therefore, we can use
 [`Nonlinear.adjacency_matrix`](@ref) to compute a sparse matrix that maps
-children to their parents.
+parents to their children.
 
 The tape is also ordered topologically, so that a reverse pass of the nodes
 evaluates all children nodes before their parent.
@@ -374,7 +397,7 @@ evaluates all children nodes before their parent.
 
 In practice, `Node` and `NonlinearExpression` are exactly [`Nonlinear.Node`](@ref)
 and [`Nonlinear.NonlinearExpression`](@ref). However, [`Nonlinear.NodeType`](@ref)
-has more terms to account for comparison operators such as `:>=` and `:<=`,
+has more fields to account for comparison operators such as `:>=` and `:<=`,
 logic operators such as `:&&` and `:||`, nonlinear parameters, and nested
 subexpressions.
 

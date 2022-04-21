@@ -126,20 +126,23 @@ function delete(data::NonlinearData, c::ConstraintIndex)
 end
 
 """
-    row(data::NonlinearData, c::ConstraintIndex)::Int
+    ordinal_index(data::NonlinearData, c::ConstraintIndex)::Int
 
-Return the 1-indexed row of the constraint index `c` in `data`.
+Return the 1-indexed value of the constraint index `c` in `data`.
 
 ## Examples
 
 ```julia
 data = NonlinearData()
 x = MOI.VariableIndex(1)
-c = add_constraint(data, :(\$x^2 <= 1))
-row(data, c)  # Returns 1
+c1 = add_constraint(data, :(\$x^2 <= 1))
+c2 = add_constraint(data, :(\$x^2 <= 1))
+ordinal_index(data, c2)  # Returns 2
+delete(data, c1)
+ordinal_index(data, c2)  # Returns 1
 ```
 """
-function row(data::NonlinearData, c::ConstraintIndex)
+function ordinal_index(data::NonlinearData, c::ConstraintIndex)
     # TODO(odow): replace with a cache that maps indices to their 1-indexed
     # row in the constraint matrix. But failing that, since we know that
     # constraints are added in increasing order and that they can be deleted, we
@@ -286,7 +289,12 @@ function MOI.initialize(data::NonlinearData, features::Vector{Symbol})
 end
 
 function MOI.objective_expr(data::NonlinearData)
-    @assert data.objective !== nothing
+    if data.objective === nothing
+        error(
+            "Unable to query objective_expr because no nonlinear objective " *
+            "was set",
+        )
+    end
     return convert_to_expr(data, data.objective; moi_output_format = true)
 end
 

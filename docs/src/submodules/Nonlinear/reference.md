@@ -81,4 +81,5 @@ Nonlinear.NonlinearConstraint
 Nonlinear.adjacency_matrix
 Nonlinear.parse_expression
 Nonlinear.convert_to_expr
+Nonlinear.ordinal_index
 ```

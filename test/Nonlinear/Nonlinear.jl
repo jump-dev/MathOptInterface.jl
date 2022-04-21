@@ -749,13 +749,13 @@ function test_features_available_Default()
     return
 end
 
-function test_add_constraint_rows()
+function test_add_constraint_ordinal_index()
     data = Nonlinear.NonlinearData()
     x = MOI.VariableIndex(1)
     constraints = [Nonlinear.add_constraint(data, :($x <= $i)) for i in 1:4]
     MOI.initialize(data, Symbol[])
     for i in 1:4
-        @test Nonlinear.row(data, constraints[i]) == i
+        @test Nonlinear.ordinal_index(data, constraints[i]) == i
         @test MOI.is_valid(data, constraints[i])
     end
     Nonlinear.delete(data, constraints[1])
@@ -763,14 +763,14 @@ function test_add_constraint_rows()
     MOI.initialize(data, Symbol[])
     @test !MOI.is_valid(data, constraints[1])
     @test MOI.is_valid(data, constraints[2])
-    @test Nonlinear.row(data, constraints[2]) == 1
+    @test Nonlinear.ordinal_index(data, constraints[2]) == 1
     @test !MOI.is_valid(data, constraints[3])
     @test_throws(
         ErrorException("Invalid constraint index $(constraints[3])"),
-        Nonlinear.row(data, constraints[3]),
+        Nonlinear.ordinal_index(data, constraints[3]),
     )
     @test MOI.is_valid(data, constraints[4])
-    @test Nonlinear.row(data, constraints[4]) == 2
+    @test Nonlinear.ordinal_index(data, constraints[4]) == 2
     return
 end
 
@@ -816,7 +816,8 @@ end
 function test_NLPBlockData()
     data = Nonlinear.NonlinearData()
     x = MOI.VariableIndex(1)
-    block = MOI.NLPBlockData(data, [x])
+    Nonlinear.set_differentiation_backend(data, Nonlinear.ExprGraphOnly(), [x])
+    block = MOI.NLPBlockData(data)
     @test block.has_objective == false
     @test length(block.constraint_bounds) == 0
     return
