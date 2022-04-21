@@ -569,6 +569,35 @@ function test_sos_constraints()
     return
 end
 
+function test_generic_names()
+    model = MPS.Model(; generic_names = true)
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, [x, y]), 0.0),
+        MOI.EqualTo(1.0),
+    )
+    MOI.add_constraint(model, y, MOI.GreaterThan(2.0))
+    @test sprint(write, model) ==
+          "NAME          \n" *
+          "OBJSENSE MIN\n" *
+          "ROWS\n" *
+          " N  OBJ\n" *
+          " E  R1\n" *
+          "COLUMNS\n" *
+          "    C1        R1        1\n" *
+          "    C2        R1        1\n" *
+          "RHS\n" *
+          "    rhs       R1        1\n" *
+          "RANGES\n" *
+          "BOUNDS\n" *
+          " FR bounds    C1\n" *
+          " LO bounds    C2        2\n" *
+          " PL bounds    C2\n" *
+          "ENDATA\n"
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")

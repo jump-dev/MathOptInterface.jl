@@ -6,7 +6,7 @@
     create_unique_names(
         model::MOI.ModelLike;
         warn::Bool = false,
-        replacements::Vector{Function} = Function[]
+        replacements::Vector{Function} = Function[],
     )
 
 Rename variables in `model` to ensure that all variables and constraints have
@@ -23,6 +23,29 @@ function create_unique_names(
     create_unique_variable_names(model, warn, replacements)
     create_unique_constraint_names(model, warn, replacements)
     return
+end
+
+"""
+    create_generic_names(model::MOI.ModelLike)
+
+Rename all variables and constraints in `model` to have generic names.
+
+This is helpful for users with proprietary models to avoid leaking information.
+"""
+function create_generic_names(model::MOI.ModelLike)
+    for (i, x) in enumerate(MOI.get(model, MOI.ListOfVariableIndices()))
+        MOI.set(model, MOI.VariableName(), x, "C$i")
+    end
+    i = 1
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        if F == MOI.VariableIndex
+            continue  # VariableIndex constraints do not need a name.
+        end
+        for c in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+            MOI.set(model, MOI.ConstraintName(), c, "R$i")
+            i += 1
+        end
+    end
 end
 
 function _replace(s::String, replacements::Vector{Function})

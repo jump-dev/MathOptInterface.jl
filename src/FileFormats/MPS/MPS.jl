@@ -42,9 +42,10 @@ end
 struct Options
     warn::Bool
     objsense::Bool
+    generic_names::Bool
 end
 
-get_options(m::Model) = get(m.ext, :MPS_OPTIONS, Options(false, true))
+get_options(m::Model) = get(m.ext, :MPS_OPTIONS, Options(false, false, false))
 
 """
     Model(; kwargs...)
@@ -55,10 +56,17 @@ Keyword arguments are:
 
  - `warn::Bool=false`: print a warning when variables or constraints are renamed.
  - `print_objsense::Bool=false`: print the OBJSENSE section when writing
+ - `generic_names::Bool=false`: strip all names in the model and replace them
+   with the generic names `C\$i` and `R\$i` for the i'th column and row
+   respectively.
 """
-function Model(; warn::Bool = false, print_objsense::Bool = false)
+function Model(;
+    warn::Bool = false,
+    print_objsense::Bool = false,
+    generic_names::Bool = false,
+)
     model = Model{Float64}()
-    model.ext[:MPS_OPTIONS] = Options(warn, print_objsense)
+    model.ext[:MPS_OPTIONS] = Options(warn, print_objsense, generic_names)
     return model
 end
 
@@ -160,11 +168,15 @@ Write `model` to `io` in the MPS file format.
 """
 function Base.write(io::IO, model::Model)
     options = get_options(model)
-    FileFormats.create_unique_names(
-        model;
-        warn = options.warn,
-        replacements = Function[s->replace(s, ' ' => '_')],
-    )
+    if options.generic_names
+        FileFormats.create_generic_names(model)
+    else
+        FileFormats.create_unique_names(
+            model;
+            warn = options.warn,
+            replacements = Function[s->replace(s, ' ' => '_')],
+        )
+    end
     ordered_names = String[]
     names = Dict{MOI.VariableIndex,String}()
     for x in MOI.get(model, MOI.ListOfVariableIndices())
