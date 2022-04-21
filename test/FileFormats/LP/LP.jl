@@ -415,7 +415,7 @@ function test_default_bound()
     model = LP.Model()
     MOI.read!(io, model)
     x = MOI.get(model, MOI.ListOfVariableIndices())
-    F, S = MOI.VariableIndex,MOI.GreaterThan{Float64}
+    F, S = MOI.VariableIndex, MOI.GreaterThan{Float64}
     c = [MOI.ConstraintIndex{F,S}(xi.value) for xi in x]
     sets = MOI.get.(model, MOI.ConstraintSet(), c)
     @test all(s -> s == MOI.GreaterThan(0.0), sets)
