@@ -273,11 +273,10 @@ features in the MOI nonlinear interface.
 """
 struct SparseReverseMode <: AbstractAutomaticDifferentiation end
 
-function set_differentiation_backend(
-    data::NonlinearData,
+function Evaluator(
+    model::Model,
     ::SparseReverseMode,
     ordered_variables::Vector{MOI.VariableIndex},
 )
-    data.inner = ReverseAD.NLPEvaluator(data, ordered_variables)
-    return
+    return Evaluator(model, ReverseAD.NLPEvaluator(model, ordered_variables))
 end

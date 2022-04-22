@@ -11,7 +11,7 @@ mutable struct _SubexpressionStorage
     linearity::Linearity
 
     function _SubexpressionStorage(
-        expr::Nonlinear.NonlinearExpression,
+        expr::Nonlinear.Expression,
         subexpression_linearity,
         moi_index_to_consecutive_index,
     )
@@ -131,7 +131,7 @@ end
 
 """
     NLPEvaluator(
-        data::Nonlinear.NonlinearData,
+        model::Nonlinear.Model,
         ordered_variables::Vector{MOI.VariableIndex},
     )
 
@@ -142,7 +142,7 @@ interface.
     Before using, you must initialize the evaluator using `MOI.initialize`.
 """
 mutable struct NLPEvaluator <: MOI.AbstractNLPEvaluator
-    data::Nonlinear.NonlinearData
+    data::Nonlinear.Model
     ordered_variables::Vector{MOI.VariableIndex}
 
     objective::Union{Nothing,_FunctionStorage}
@@ -180,7 +180,7 @@ mutable struct NLPEvaluator <: MOI.AbstractNLPEvaluator
     max_chunk::Int # chunk size for which we've allocated storage
 
     function NLPEvaluator(
-        data::Nonlinear.NonlinearData,
+        data::Nonlinear.Model,
         ordered_variables::Vector{MOI.VariableIndex},
     )
         return new(data, ordered_variables)

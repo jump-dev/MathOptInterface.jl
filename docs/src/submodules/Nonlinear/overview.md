@@ -372,10 +372,10 @@ function build_model(model; backend)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    data = MOI.Nonlinear.NonlinearData()
-    MOI.Nonlinear.set_objective(data, :($x^2 + $y^2))
-    MOI.Nonlinear.set_differentiation_backend(data, backend, [x, y])
-    MOI.set(model, MOI.NLPBlock(), MOI.NLPBlockData(data))
+    nl_model = MOI.Nonlinear.Model()
+    MOI.Nonlinear.set_objective(nl_model, :($x^2 + $y^2))
+    evaluator = MOI.Nonlinear.Evaluator(nl_model, backend, [x, y])
+    MOI.set(model, MOI.NLPBlock(), MOI.NLPBlockData(evaluator))
     return
 end
 
@@ -388,7 +388,7 @@ build_model(model; backend = MOI.Nonlinear.SparseReverseMode())
 
 [`Nonlinear.Model`](@ref) stores nonlinear expressions in
 [`Nonlinear.Expression`](@ref)s. This section explains the design of
-the expression graph datastructure in [`Nonlinear.Expression`](@ref).
+the expression graph data structure in [`Nonlinear.Expression`](@ref).
 
 Given a nonlinear function like `f(x) = sin(x)^2 + x`, a conceptual aid for
 thinking about the graph representation of the expression is to convert it into
@@ -411,7 +411,7 @@ julia> struct ExprNode
 julia> expr = ExprNode(:+, [ExprNode(:^, [ExprNode(:sin, [x]), 2.0]), x]);
 ```
 
-This datastructure follows our Polish prefix notation very closely, and we can
+This data structure follows our Polish prefix notation very closely, and we can
 easily identify the arguments to an operator. However, it has a significant
 draw-back: each node in the graph requires a `Vector`, which is heap-allocated
 and tracked by Julia's garbage collector (GC). For large models, we can expect
@@ -447,7 +447,7 @@ challenges:
 
 ### Sketch of the design in Nonlinear
 
-`Nonlinear` overcomes these problems by decomposing the datastructure into a
+`Nonlinear` overcomes these problems by decomposing the data structure into a
 number of different concrete-typed vectors.
 
 First, we create vectors of the supported uni- and multivariate operators.
@@ -510,7 +510,7 @@ julia> expr = Expression(
        );
 ```
 
-This is less readable than the other options, but does this datastructure meet
+This is less readable than the other options, but does this data structure meet
 our design goals?
 
 Instead of a heap-allocated object for each node, we only have two `Vector`s for
@@ -547,9 +547,8 @@ subexpressions in the model.
 
 ## ReverseAD
 
-`Nonlinear.ReverseAD` is a submodule for computing derivatives of the problem
-inside [`Nonlinear.NonlinearData`](@ref) using sparse reverse-mode automatic
-differentiation (AD).
+`Nonlinear.ReverseAD` is a submodule for computing derivatives of a nonlinear
+optimization problem using sparse reverse-mode automatic differentiation (AD).
 
 This section does not attempt to explain how sparse reverse-mode AD works, but
 instead explains why MOI contains it's own implementation, and highlights
@@ -557,8 +556,7 @@ notable differences from similar packages.
 
 !!! warning
     You should not interact with `ReverseAD` directly. Instead, you should
-    create a [`Nonlinear.NonlinearData`](@ref) object, call
-    [`Nonlinear.set_differentiation_backend`](@ref) with
+    create a [`Nonlinear.Evaluator`](@ref) object with
     [`Nonlinear.SparseReverseMode`](@ref), and then query the MOI API methods.
 
 ### Why another AD package?
@@ -582,10 +580,10 @@ Here are four reasons:
    input and then trace an expression graph using operator overloading. This
    means they must deal (or detect and ignore) with control flow, I/O, and other
    vagaries of Julia. In contrast, `ReverseAD` only accepts functions in the
-   form of [`Nonlinear.NonlinearExpression`](@ref), which greatly limits the
-   range of syntax that it must deal with. By reducing the scope of what we
-   accept as input to functions relevant for mathematical optimization, we can
-   provide a simpler implementation with various performance optimizations.
+   form of [`Nonlinear.Expression`](@ref), which greatly limits the range of
+   syntax that it must deal with. By reducing the scope of what we accept as
+   input to functions relevant for mathematical optimization, we can provide a
+   simpler implementation with various performance optimizations.
  * **Historical:** `ReverseAD` started life as [ReverseDiffSparse.jl](https://github.com/mlubin/ReverseDiffSparse.jl),
    development of which begain in early 2014(!). This was well before the other
    packages started development. Because we had a well-tested, working AD in
