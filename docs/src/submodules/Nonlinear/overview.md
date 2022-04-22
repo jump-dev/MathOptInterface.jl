@@ -222,8 +222,8 @@ julia> new_expr = Nonlinear.add_expression(model, :(my_f($x + 1)))
 MathOptInterface.Nonlinear.ExpressionIndex(2)
 ```
 By default, `Nonlinear` will compute first- and second-derivatives of the
-registered operator using `ForwardDiff.jl`. Override this by passing functions
-which compute the respective derivative:
+registered operator using [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl).
+Override this by passing functions which compute the respective derivative:
 ```jldoctest nonlinear_developer
 julia> f′(x) = 2 * sin(x) * cos(x)
 f′ (generic function with 1 method)
@@ -248,14 +248,15 @@ g (generic function with 1 method)
 
 julia> Nonlinear.register_operator(model, :my_g, 2, g)
 ```
-Now, you can use `:my_f` in expressions:
+Now, you can use `:my_g` in expressions:
 ```jldoctest nonlinear_developer
 julia> new_expr = Nonlinear.add_expression(model, :(my_g($x + 1, $x)))
 MathOptInterface.Nonlinear.ExpressionIndex(3)
 ```
 By default, `Nonlinear` will compute the gradient of the registered
-operator using `ForwardDiff.jl`. (Hessian information is not supported.)
-Override this by passing a function to compute the gradient:
+operator using [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl).
+(Hessian information is not supported.) Override this by passing a function to
+compute the gradient:
 ```jldoctest nonlinear_developer
 julia> function ∇g(ret, x...)
            ret[1] = 2 * x[1] + x[2]
@@ -292,7 +293,7 @@ Nonlinear.Evaluator with available features:
 ```
 The functions of the [Nonlinear programming](@ref) API implemented by
 [`Nonlinear.Evaluator`](@ref) depends upon the chosen
-[`Nonlinear.AbstractAutomaticDifferentiation`](@ref backend.
+[`Nonlinear.AbstractAutomaticDifferentiation`](@ref) backend.
 
 The `:ExprGraph` feature means we can call [`objective_expr`](@ref) and
 [`constraint_expr`](@ref) to retrieve the expression graph of the problem.
@@ -341,7 +342,7 @@ easily identify the arguments to an operator. However, it has a significant
 draw-back: each node in the graph requires a `Vector`, which is heap-allocated
 and tracked by Julia's garbage collector (GC). For large models, we can expect
 to have millions of nodes in the expression graph, so this overhead quickly
-becomes prohibiative for computation.
+becomes prohibitive for computation.
 
 An alternative is to record the expression as a linear tape:
 ```jldoctest expr_graph

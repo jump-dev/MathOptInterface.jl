@@ -249,8 +249,8 @@ end
 """
     ExprGraphOnly() <: AbstractAutomaticDifferentiation
 
-The default implementation of `AbstractAutomaticDifferentiation`. This only
-supported `:ExprGraph`.
+The default implementation of `AbstractAutomaticDifferentiation`. The only
+supported feature is `:ExprGraph`.
 """
 struct ExprGraphOnly <: AbstractAutomaticDifferentiation end
 
