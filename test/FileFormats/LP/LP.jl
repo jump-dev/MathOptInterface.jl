@@ -423,6 +423,27 @@ function test_default_bound()
     return
 end
 
+function test_default_bound_double_bound()
+    io = IOBuffer()
+    write(io, "minimize\nobj: x\nsubject to\nbounds\n x <= -1\n x >= -2")
+    seekstart(io)
+    model = LP.Model()
+    MOI.read!(io, model)
+    x = first(MOI.get(model, MOI.ListOfVariableIndices()))
+    F = MOI.VariableIndex
+    @test MOI.get(
+        model,
+        MOI.ConstraintSet(),
+        MOI.ConstraintIndex{F,MOI.GreaterThan{Float64}}(x.value),
+    ) == MOI.GreaterThan(-2.0)
+    @test MOI.get(
+        model,
+        MOI.ConstraintSet(),
+        MOI.ConstraintIndex{F,MOI.LessThan{Float64}}(x.value),
+    ) == MOI.LessThan(-1.0)
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")
