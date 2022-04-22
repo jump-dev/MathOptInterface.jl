@@ -302,12 +302,16 @@ However, we cannot call gradient terms such as
 not have the capability to differentiate a nonlinear expression.
 
 Instead of passing [`Nonlinear.Evaluator`](@ref) directly to solvers,
-MathOptInterface instead passes an [`NLPBlockData`](@ref), which wraps an
-[`Nonlinear.Evaluator`](@ref) and includes other information such as constraint
-bounds and whether the evaluator has a nonlinear objective. Create an
-[`NLPBlockData`](@ref) as follows:
+solvers query the [`NLPBlock`](@ref) attribute, which returns an
+[`NLPBlockData`](@ref). This object wraps an [`Nonlinear.Evaluator`](@ref) and
+includes other information such as constraint bounds and whether the evaluator
+has a nonlinear objective. Create and set [`NLPBlockData`](@ref) as follows:
 ```jldoctest nonlinear_developer
-julia> MOI.NLPBlockData(evaluator);
+julia> block = MOI.NLPBlockData(evaluator);
+
+julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}());
+
+julia> MOI.set(model, MOI.NLPBlock(), block);
 ```
 
 ## Expression-graph representation
