@@ -13,7 +13,7 @@ More information can be found in the [Nonlinear](@ref nonlinear_developers)
 section of the manual.
 
 ```@docs
-Nonlinear.NonlinearData
+Nonlinear.Model
 ```
 
 ## [Expressions](@id nonlinear_api_expressions)
@@ -66,9 +66,9 @@ Nonlinear.eval_comparison_function
 ## Automatic-differentiation backends
 
 ```@docs
+Nonlinear.Evaluator
 Nonlinear.AbstractAutomaticDifferentiation
 Nonlinear.ExprGraphOnly
-Nonlinear.set_differentiation_backend
 ```
 
 ## Data-structure
@@ -76,8 +76,8 @@ Nonlinear.set_differentiation_backend
 ```@docs
 Nonlinear.Node
 Nonlinear.NodeType
-Nonlinear.NonlinearExpression
-Nonlinear.NonlinearConstraint
+Nonlinear.Expression
+Nonlinear.Constraint
 Nonlinear.adjacency_matrix
 Nonlinear.parse_expression
 Nonlinear.convert_to_expr

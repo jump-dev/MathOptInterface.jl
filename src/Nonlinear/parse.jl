@@ -1,38 +1,38 @@
 """
-    parse_expression(data::NonlinearData, input)::NonlinearExpression
+    parse_expression(data::Model, input)::Expression
 
-Parse `input` into a [`NonlinearExpression`](@ref).
+Parse `input` into a [`Expression`](@ref).
 """
-function parse_expression(data::NonlinearData, input)
-    expr = NonlinearExpression()
+function parse_expression(data::Model, input)
+    expr = Expression()
     parse_expression(data, expr, input, -1)
     return expr
 end
 
 """
     parse_expression(
-        data::NonlinearData,
-        expr::NonlinearExpression,
+        data::Model,
+        expr::Expression,
         input::Any,
         parent_index::Int,
-    )::NonlinearExpression
+    )::Expression
 
-Parse `input` into a [`NonlinearExpression`](@ref), and add it to `expr` as a
+Parse `input` into a [`Expression`](@ref), and add it to `expr` as a
 child of `expr.nodes[parent_index]`. Existing subexpressions and parameters are
 stored in `data`.
 
 You can extend parsing support to new types of objects by overloading this
 method with a different type on `input::Any`.
 """
-function parse_expression(::NonlinearData, ::NonlinearExpression, x::Any, ::Int)
+function parse_expression(::Model, ::Expression, x::Any, ::Int)
     return error(
         "Unexpected object $x of type $(typeof(x)) in nonlinear expression.",
     )
 end
 
 function parse_expression(
-    data::NonlinearData,
-    expr::NonlinearExpression,
+    data::Model,
+    expr::Expression,
     x::Expr,
     parent_index::Int,
 )
@@ -75,8 +75,8 @@ function _parse_splat_expression(data, expr, x, parent_index)
 end
 
 function _parse_univariate_expression(
-    data::NonlinearData,
-    expr::NonlinearExpression,
+    data::Model,
+    expr::Expression,
     x::Expr,
     parent_index::Int,
 )
@@ -96,8 +96,8 @@ function _parse_univariate_expression(
 end
 
 function _parse_multivariate_expression(
-    data::NonlinearData,
-    expr::NonlinearExpression,
+    data::Model,
+    expr::Expression,
     x::Expr,
     parent_index::Int,
 )
@@ -120,8 +120,8 @@ end
 # confused with `_parse_comparison_expression`, which handles things like
 # `a <= b <= c`.
 function _parse_inequality_expression(
-    data::NonlinearData,
-    expr::NonlinearExpression,
+    data::Model,
+    expr::Expression,
     x::Expr,
     parent_index::Int,
 )
@@ -138,8 +138,8 @@ end
 # confused with `_parse_inequality_expression`, which handles things like
 # `a <= b`.
 function _parse_comparison_expression(
-    data::NonlinearData,
-    expr::NonlinearExpression,
+    data::Model,
+    expr::Expression,
     x::Expr,
     parent_index::Int,
 )
@@ -156,8 +156,8 @@ function _parse_comparison_expression(
 end
 
 function _parse_logic_expression(
-    data::NonlinearData,
-    expr::NonlinearExpression,
+    data::Model,
+    expr::Expression,
     x::Expr,
     parent_index::Int,
 )
@@ -170,8 +170,8 @@ function _parse_logic_expression(
 end
 
 function parse_expression(
-    ::NonlinearData,
-    expr::NonlinearExpression,
+    ::Model,
+    expr::Expression,
     x::MOI.VariableIndex,
     parent_index::Int,
 )
@@ -179,20 +179,15 @@ function parse_expression(
     return
 end
 
-function parse_expression(
-    ::NonlinearData,
-    expr::NonlinearExpression,
-    x::Real,
-    parent_index::Int,
-)
+function parse_expression(::Model, expr::Expression, x::Real, parent_index::Int)
     push!(expr.values, convert(Float64, x)::Float64)
     push!(expr.nodes, Node(NODE_VALUE, length(expr.values), parent_index))
     return
 end
 
 function parse_expression(
-    ::NonlinearData,
-    expr::NonlinearExpression,
+    ::Model,
+    expr::Expression,
     x::ParameterIndex,
     parent_index::Int,
 )
@@ -201,8 +196,8 @@ function parse_expression(
 end
 
 function parse_expression(
-    ::NonlinearData,
-    expr::NonlinearExpression,
+    ::Model,
+    expr::Expression,
     x::ExpressionIndex,
     parent_index::Int,
 )
@@ -211,8 +206,8 @@ function parse_expression(
 end
 
 function parse_expression(
-    ::NonlinearData,
-    expr::NonlinearExpression,
+    ::Model,
+    expr::Expression,
     x::AbstractArray,
     parent_index::Int,
 )
@@ -258,62 +253,31 @@ function _expr_to_constraint(expr::Expr)
 end
 
 """
-    convert_to_expr(
-        data::NonlinearData,
-        expr::NonlinearExpression;
-        moi_output_format::Bool,
-    )
+    convert_to_expr(data::Model, expr::Expression)
 
-Convert the [`NonlinearExpression`](@ref) `expr` into a Julia `Expr`.
+Convert the [`Expression`](@ref) `expr` into a Julia `Expr`.
 
-If `moi_output_format = true`:
- * subexpressions will be converted to Julia `Expr` and substituted into the
-   output expression.
- * the current value of each parameter will be interpolated into the expression
- * variables will be represented in the form `x[MOI.VariableIndex(i)]`
-
-If `moi_output_format = false`:
- * subexpressions will be represented by a [`ExpressionIndex`](@ref) object.
- * parameters will be represented by a [`ParameterIndex`](@ref) object.
- * variables will be represennted by an [`MOI.VariableIndex`](@ref) object.
-
-!!! warning
-    To use `moi_output_format = true`, you must have first called
-    [`MOI.initialize`](@ref) with `:ExprGraph` as a requested feature.
+ * subexpressions are represented by a [`ExpressionIndex`](@ref) object.
+ * parameters are represented by a [`ParameterIndex`](@ref) object.
+ * variables are represennted by an [`MOI.VariableIndex`](@ref) object.
 """
-function convert_to_expr(
-    data::NonlinearData,
-    expr::NonlinearExpression;
-    moi_output_format::Bool,
-)
+function convert_to_expr(model::Model, expr::Expression)
     tree = Any[]
     for node in expr.nodes
         node_expr = if node.type == NODE_CALL_UNIVARIATE
-            Expr(:call, data.operators.univariate_operators[node.index])
+            Expr(:call, model.operators.univariate_operators[node.index])
         elseif node.type == NODE_CALL_MULTIVARIATE
-            Expr(:call, data.operators.multivariate_operators[node.index])
+            Expr(:call, model.operators.multivariate_operators[node.index])
         elseif node.type == NODE_COMPARISON
-            Expr(:call, data.operators.comparison_operators[node.index])
+            Expr(:call, model.operators.comparison_operators[node.index])
         elseif node.type == NODE_LOGIC
-            Expr(data.operators.logic_operators[node.index])
+            Expr(model.operators.logic_operators[node.index])
         elseif node.type == NODE_MOI_VARIABLE
-            if moi_output_format
-                :(x[$(MOI.VariableIndex(node.index))])
-            else
-                MOI.VariableIndex(node.index)
-            end
+            MOI.VariableIndex(node.index)
         elseif node.type == NODE_PARAMETER
-            if moi_output_format
-                data.parameters[node.index]
-            else
-                ParameterIndex(node.index)
-            end
+            ParameterIndex(node.index)
         elseif node.type == NODE_SUBEXPRESSION
-            if moi_output_format
-                data.julia_expressions[node.index]
-            else
-                ExpressionIndex(node.index)
-            end
+            ExpressionIndex(node.index)
         else
             @assert node.type == NODE_VALUE
             expr.values[node.index]

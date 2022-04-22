@@ -36,15 +36,18 @@ best dealt with by other components of MathOptInterface.
 ## API overview
 
 The core element of the `Nonlinear` submodule is
-[`Nonlinear.NonlinearData`](@ref):
+[`Nonlinear.Model`](@ref):
 ```jldoctest nonlinear_developer
 julia> const Nonlinear = MathOptInterface.Nonlinear;
 
-julia> data = Nonlinear.NonlinearData()
-NonlinearData with available features:
-  * :ExprGraph
+julia> model = Nonlinear.Model()
+A Nonlinear.Model with:
+ 0 objectives
+ 0 parameters
+ 0 expressions
+ 0 constraints
 ```
-[`Nonlinear.NonlinearData`](@ref) is a mutable struct that stores all of the
+[`Nonlinear.Model`](@ref) is a mutable struct that stores all of the
 nonlinear information added to the model.
 
 ### Decision variables
@@ -75,11 +78,21 @@ There are a number of restrictions on the input `Expr`:
 Given an input expression, add an expression using
 [`Nonlinear.add_expression`](@ref):
 ```jldoctest nonlinear_developer
-julia> expr = Nonlinear.add_expression(data, input)
+julia> expr = Nonlinear.add_expression(model, input)
 MathOptInterface.Nonlinear.ExpressionIndex(1)
 ```
 The return value, `expr`, is a [`Nonlinear.ExpressionIndex`](@ref) that can
 then be interpolated into other input expressions.
+
+Looking  again at `model`, we see:
+```jldoctest nonlinear_developer
+julia> model
+A Nonlinear.Model with:
+ 0 objectives
+ 0 parameters
+ 1 expression
+ 0 constraints
+```
 
 ### [Parameters](@id Nonlinear_Parameters)
 
@@ -88,21 +101,31 @@ Parameters are placeholders whose values can change before passing the
 expression to the solver. Create a parameter using
 [`Nonlinear.add_parameter`](@ref), which accepts a default value:
 ```jldoctest nonlinear_developer
-julia> p = Nonlinear.add_parameter(data, 1.23)
+julia> p = Nonlinear.add_parameter(model, 1.23)
 MathOptInterface.Nonlinear.ParameterIndex(1)
 ```
 The return value, `p`, is a [`Nonlinear.ParameterIndex`](@ref) that can then be
 interpolated into other input expressions.
 
+Looking  again at `model`, we see:
+```jldoctest nonlinear_developer
+julia> model
+A Nonlinear.Model with:
+ 0 objectives
+ 1 parameter
+ 1 expression
+ 0 constraints
+```
+
 Update a parameter as follows:
 ```jldoctest nonlinear_developer
-julia> data[p]
+julia> model[p]
 1.23
 
-julia> data[p] = 4.56
+julia> model[p] = 4.56
 4.56
 
-julia> data[p]
+julia> model[p]
 4.56
 ```
 
@@ -110,30 +133,71 @@ julia> data[p]
 
 Set a nonlinear objective using [`Nonlinear.set_objective`](@ref):
 ```jldoctest nonlinear_developer
-julia> Nonlinear.set_objective(data, :($p + $expr + $x))
+julia> Nonlinear.set_objective(model, :($p + $expr + $x))
+
+julia> model
+A Nonlinear.Model with:
+ 1 objective
+ 1 parameter
+ 1 expression
+ 0 constraints
 ```
+
 Clear a nonlinear objective by passing `nothing`:
 ```jldoctest nonlinear_developer
-julia> Nonlinear.set_objective(data, nothing)
+julia> Nonlinear.set_objective(model, nothing)
+
+julia> model
+A Nonlinear.Model with:
+ 0 objectives
+ 1 parameter
+ 1 expression
+ 0 constraints
+```
+
+But we'll re-add the objective for later:
+```jldoctest nonlinear_developer
+julia> Nonlinear.set_objective(model, :($p + $expr + $x));
 ```
 
 ### [Constraints](@id Nonlinear_Constraints)
 
 Add a constraint using [`Nonlinear.add_constraint`](@ref):
 ```jldoctest nonlinear_developer
-julia> c = Nonlinear.add_constraint(data, :(1 + sqrt($x) <= 2.0))
+julia> c = Nonlinear.add_constraint(model, :(1 + sqrt($x) <= 2.0))
 MathOptInterface.Nonlinear.ConstraintIndex(1)
+
+julia> model
+A Nonlinear.Model with:
+ 1 objective
+ 1 parameter
+ 1 expression
+ 1 constraint
 ```
 The return value, `c`, is a [`Nonlinear.ConstraintIndex`](@ref) that is a unique
 identifier for the constraint. Interval constraints are also supported:
 ```jldoctest nonlinear_developer
-julia> c2 = Nonlinear.add_constraint(data, :(-1.0 <= 1 + sqrt($x) <= 2.0))
+julia> c2 = Nonlinear.add_constraint(model, :(-1.0 <= 1 + sqrt($x) <= 2.0))
 MathOptInterface.Nonlinear.ConstraintIndex(2)
+
+julia> model
+A Nonlinear.Model with:
+ 1 objective
+ 1 parameter
+ 1 expression
+ 2 constraints
 ```
 
 Delete a constraint using [`Nonlinear.delete`](@ref):
 ```jldoctest nonlinear_developer
-julia> Nonlinear.delete(data, c2)
+julia> Nonlinear.delete(model, c2)
+
+julia> model
+A Nonlinear.Model with:
+ 1 objective
+ 1 parameter
+ 1 expression
+ 1 constraint
 ```
 
 ### User-defined operators
@@ -150,11 +214,11 @@ Register a univariate user-defined operator using
 julia> f(x) = 1 + sin(x)^2
 f (generic function with 1 method)
 
-julia> Nonlinear.register_operator(data, :my_f, 1, f)
+julia> Nonlinear.register_operator(model, :my_f, 1, f)
 ```
 Now, you can use `:my_f` in expressions:
 ```jldoctest nonlinear_developer
-julia> new_expr = Nonlinear.add_expression(data, :(my_f($x + 1)))
+julia> new_expr = Nonlinear.add_expression(model, :(my_f($x + 1)))
 MathOptInterface.Nonlinear.ExpressionIndex(2)
 ```
 By default, `Nonlinear` will compute first- and second-derivatives of the
@@ -164,14 +228,14 @@ which compute the respective derivative:
 julia> f′(x) = 2 * sin(x) * cos(x)
 f′ (generic function with 1 method)
 
-julia> Nonlinear.register_operator(data, :my_f2, 1, f, f′)
+julia> Nonlinear.register_operator(model, :my_f2, 1, f, f′)
 ```
 or
 ```jldoctest nonlinear_developer
 julia> f′′(x) = 2 * (cos(x)^2 - sin(x)^2)
 f′′ (generic function with 1 method)
 
-julia> Nonlinear.register_operator(data, :my_f3, 1, f, f′, f′′)
+julia> Nonlinear.register_operator(model, :my_f3, 1, f, f′, f′′)
 ```
 
 #### Multivariate operators
@@ -182,11 +246,11 @@ Register a multivariate user-defined operator using
 julia> g(x...) = x[1]^2 + x[1] * x[2] + x[2]^2
 g (generic function with 1 method)
 
-julia> Nonlinear.register_operator(data, :my_g, 2, g)
+julia> Nonlinear.register_operator(model, :my_g, 2, g)
 ```
 Now, you can use `:my_f` in expressions:
 ```jldoctest nonlinear_developer
-julia> new_expr = Nonlinear.add_expression(data, :(my_g($x + 1, $x)))
+julia> new_expr = Nonlinear.add_expression(model, :(my_g($x + 1, $x)))
 MathOptInterface.Nonlinear.ExpressionIndex(3)
 ```
 By default, `Nonlinear` will compute the gradient of the registered
@@ -200,7 +264,7 @@ julia> function ∇g(ret, x...)
        end
 ∇g (generic function with 1 method)
 
-julia> Nonlinear.register_operator(data, :my_g2, 2, g, ∇g)
+julia> Nonlinear.register_operator(model, :my_g2, 2, g, ∇g)
 ```
 
 ### [MathOptInterface](@id Nonlinear_MOI_interface)
@@ -209,36 +273,26 @@ MathOptInterface communicates the nonlinear portion of an optimization problem
 to solvers using concrete subtypes of [`AbstractNLPEvaluator`](@ref), which
 implement the [Nonlinear programming](@ref) API.
 
-[`Nonlinear.NonlinearData`](@ref) is a subtype of [`AbstractNLPEvaluator`](@ref),
-but the functions of the [Nonlinear programming](@ref) API that it implements
-depends upon the chosen [`Nonlinear.AbstractAutomaticDifferentiation`](@ref
-backend.
+Create an [`AbstractNLPEvaluator`](@ref) from [`Nonlinear.Model`](@ref) using
+[`Nonlinear.Evaluator`](@ref).
+
+[`Nonlinear.Evaluator`](@ref) requires an
+[`Nonlinear.AbstractAutomaticDifferentiation`](@ref) backend and an ordered list
+of the variables that are included in the model.
 
 There following backends are available to choose from within MOI, although other
 packages may add more options by sub-typing
 [`Nonlinear.AbstractAutomaticDifferentiation`](@ref):
  * [`Nonlinear.ExprGraphOnly`](@ref)
 
-Set the differentiation backend using
-`Nonlinear.set_differentiation_backend`](@ref).
-
-If we set [`Nonlinear.ExprGraphOnly`](@ref), then we get access to `:ExprGraph`:
 ```jldoctest nonlinear_developer
-julia> Nonlinear.set_differentiation_backend(
-           data,
-           Nonlinear.ExprGraphOnly(),
-           [x],
-       )
-
-julia> data
-NonlinearData with available features:
+julia> evaluator = Nonlinear.Evaluator(model, Nonlinear.ExprGraphOnly(), [x])
+Nonlinear.Evaluator with available features:
   * :ExprGraph
 ```
-
-[`Nonlinear.set_differentiation_backend`](@ref) requires an ordered list of the
-variables that are included in the model. This order corresponds to the order of
-the primal decision vector `x` which is passed to the various functions in MOI's
-nonlinear API.
+The functions of the [Nonlinear programming](@ref) API implemented by
+[`Nonlinear.Evaluator`](@ref) depends upon the chosen
+[`Nonlinear.AbstractAutomaticDifferentiation`](@ref backend.
 
 The `:ExprGraph` feature means we can call [`objective_expr`](@ref) and
 [`constraint_expr`](@ref) to retrieve the expression graph of the problem.
@@ -246,20 +300,20 @@ However, we cannot call gradient terms such as
 [`eval_objective_gradient`](@ref) because [`Nonlinear.ExprGraphOnly`](@ref) does
 not have the capability to differentiate a nonlinear expression.
 
-Instead of passing [`AbstractNLPEvaluator`](@ref)s directly to solvers,
+Instead of passing [`Nonlinear.Evaluator`](@ref) directly to solvers,
 MathOptInterface instead passes an [`NLPBlockData`](@ref), which wraps an
-[`AbstractNLPEvaluator`](@ref) and includes other information such as constraint
+[`Nonlinear.Evaluator`](@ref) and includes other information such as constraint
 bounds and whether the evaluator has a nonlinear objective. Create an
-`NLPBlockData`](@ref) as follows:
+[`NLPBlockData`](@ref) as follows:
 ```jldoctest nonlinear_developer
-julia> MOI.NLPBlockData(data);
+julia> MOI.NLPBlockData(evaluator);
 ```
 
 ## Expression-graph representation
 
-[`Nonlinear.NonlinearData`](@ref) stores nonlinear expressions in
-[`Nonlinear.NonlinearExpression`](@ref)s. This section explains the design of
-the expression graph datastructure in [`Nonlinear.NonlinearExpression`](@ref).
+[`Nonlinear.Model`](@ref) stores nonlinear expressions in
+[`Nonlinear.Expression`](@ref)s. This section explains the design of
+the expression graph datastructure in [`Nonlinear.Expression`](@ref).
 
 Given a nonlinear function like `f(x) = sin(x)^2 + x`, a conceptual aid for
 thinking about the graph representation of the expression is to convert it into
@@ -350,7 +404,7 @@ julia> struct Node
            index::Int
        end
 
-julia> struct NonlinearExpression
+julia> struct Expression
            nodes::Vector{Node}
            values::Vector{Float64}
        end
@@ -368,7 +422,7 @@ The `.parent` field of each node is the integer index of the parent node in
 
 Therefore, we can represent our function as:
 ```jldoctest expr_graph
-julia> expr = NonlinearExpression(
+julia> expr = Expression(
            [
                Node(NODE_CALL_MULTIVARIATE, 1, -1),
                Node(NODE_CALL_MULTIVARIATE, 2, 1),
@@ -399,8 +453,8 @@ evaluates all children nodes before their parent.
 
 ### The design in practice
 
-In practice, `Node` and `NonlinearExpression` are exactly [`Nonlinear.Node`](@ref)
-and [`Nonlinear.NonlinearExpression`](@ref). However, [`Nonlinear.NodeType`](@ref)
+In practice, `Node` and `Expression` are exactly [`Nonlinear.Node`](@ref)
+and [`Nonlinear.Expression`](@ref). However, [`Nonlinear.NodeType`](@ref)
 has more fields to account for comparison operators such as `:>=` and `:<=`,
 logic operators such as `:&&` and `:||`, nonlinear parameters, and nested
 subexpressions.
@@ -412,6 +466,6 @@ operators and a vector of comparison operators. In addition to
 [`Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS`](@ref), you can register
 user-defined functions using [`Nonlinear.register_operator`](@ref).
 
-[`Nonlinear.NonlinearData`](@ref) is a struct that stores the
+[`Nonlinear.Model`](@ref) is a struct that stores the
 [`Nonlinear.OperatorRegistry`](@ref), as well as a list of parameters and
 subexpressions in the model.

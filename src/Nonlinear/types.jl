@@ -11,7 +11,7 @@ field, which should be interpreted as follows:
  * `NODE_MOI_VARIABLE`: the value of `MOI.VariableIndex(index)` in the user's
    space of the model.
  * `NODE_VARIABLE`: the 1-based index of the internal vector
- * `NODE_VALUE`: the index into the `.values` field of `NonlinearExpression`
+ * `NODE_VALUE`: the index into the `.values` field of `Expression`
  * `NODE_PARAMETER`: the index into `data.parameters`
  * `NODE_SUBEXPRESSION`:  the index into `data.expressions`
 """
@@ -46,7 +46,7 @@ field, which should be interpreted as follows:
     end
 
 A single node in a nonlinear expression tree. Used by
-[`NonlinearExpression`](@ref).
+[`Expression`](@ref).
 
 See the MathOptInterface documentation for information on how the nodes and
 values form an expression tree.
@@ -58,7 +58,7 @@ struct Node
 end
 
 """
-    struct NonlinearExpression
+    struct Expression
         nodes::Vector{Node}
         values::Vector{Float64}
     end
@@ -67,19 +67,19 @@ The core type that represents a nonlinear expression. See the MathOptInterface
 documentation for information on how the nodes and values form an expression
 tree.
 """
-struct NonlinearExpression
+struct Expression
     nodes::Vector{Node}
     values::Vector{Float64}
-    NonlinearExpression() = new(Node[], Float64[])
+    Expression() = new(Node[], Float64[])
 end
 
-function Base.:(==)(x::NonlinearExpression, y::NonlinearExpression)
+function Base.:(==)(x::Expression, y::Expression)
     return x.nodes == y.nodes && x.values == y.values
 end
 
 """
-    struct NonlinearConstraint
-        expression::NonlinearExpression
+    struct Constraint
+        expression::Expression
         set::Union{
             MOI.LessThan{Float64},
             MOI.GreaterThan{Float64},
@@ -91,8 +91,8 @@ end
 A type to hold information relating to the nonlinear constraint `f(x) in S`,
 where `f(x)` is defined by `.expression`, and `S` is `.set`.
 """
-struct NonlinearConstraint
-    expression::NonlinearExpression
+struct Constraint
+    expression::Expression
     set::Union{
         MOI.LessThan{Float64},
         MOI.GreaterThan{Float64},
@@ -105,7 +105,7 @@ end
     ParameterIndex
 
 An index to a nonlinear parameter that is returned by [`add_parameter`](@ref).
-Given `data::NonlinearData` and `p::ParameterIndex`, use `data[p]` to retrieve
+Given `data::Model` and `p::ParameterIndex`, use `data[p]` to retrieve
 the current value of the parameter and `data[p] = value` to set a new value.
 """
 struct ParameterIndex
@@ -117,8 +117,8 @@ end
 
 An index to a nonlinear expression that is returned by [`add_expression`](@ref).
 
-Given `data::NonlinearData` and `ex::ExpressionIndex`, use `data[ex]` to
-retrieve the corresponding [`NonlinearExpression`](@ref).
+Given `data::Model` and `ex::ExpressionIndex`, use `data[ex]` to
+retrieve the corresponding [`Expression`](@ref).
 """
 struct ExpressionIndex
     value::Int
@@ -129,31 +129,77 @@ end
 
 An index to a nonlinear constraint that is returned by [`add_constraint`](@ref).
 
-Given `data::NonlinearData` and `c::ConstraintIndex`, use `data[c]` to
-retrieve the corresponding [`NonlinearConstraint`](@ref).
+Given `data::Model` and `c::ConstraintIndex`, use `data[c]` to
+retrieve the corresponding [`Constraint`](@ref).
 """
 struct ConstraintIndex
     value::Int
 end
 
 """
-    NonlinearData()
+    Model()
 
-Construct a new [`MOI.AbstractNLPEvaluator`](@ref) object.
+The core datastructure for representing a nonlinear optimization problem.
+
+It has the following fields:
+ * `objective::Union{Nothing,Expression}` : holds the nonlinear objective
+   function, if one exists, otherwise `nothing`.
+ * `expressions::Vector{Expression}` : a vector of expressions in the model.
+ * `constraints::OrderedDict{ConstraintIndex,Constraint}` : a map from
+   [`ConstraintIndex`](@ref) to the corresponding [`Constraint`](@ref). An
+   `OrderedDict` is used instead of a `Vector` to support constraint deletion.
+ * `parameters::Vector{Float64}` : holds the current values of the parameters.
+ * `operators::OperatorRegistry` : stores the operators used in the model.
 """
-mutable struct NonlinearData <: MOI.AbstractNLPEvaluator
-    inner::Union{Nothing,MOI.AbstractNLPEvaluator}
-    objective::Union{Nothing,NonlinearExpression}
-    expressions::Vector{NonlinearExpression}
-    constraints::OrderedDict{ConstraintIndex,NonlinearConstraint}
+mutable struct Model
+    objective::Union{Nothing,Expression}
+    expressions::Vector{Expression}
+    constraints::OrderedDict{ConstraintIndex,Constraint}
     parameters::Vector{Float64}
     operators::OperatorRegistry
+    # This is a private field, used only to increment the ConstraintIndex.
     last_constraint_index::Int64
-    # Fields for initialize
-    julia_expressions::Vector{Any}  # Any because expressions may be constants
+    function Model()
+        return new(
+            nothing,
+            Expression[],
+            OrderedDict{ConstraintIndex,Constraint}(),
+            Float64[],
+            OperatorRegistry(),
+            0,
+        )
+    end
+end
+
+"""
+    AbstractAutomaticDifferentiation
+
+An abstract type for extending [`Evaluator`](@ref).
+"""
+abstract type AbstractAutomaticDifferentiation end
+
+"""
+    Evaluator(
+        model::Model,
+        backend::AbstractAutomaticDifferentiation,
+        ordered_variables::Vector{MOI.VariableIndex},
+    )
+
+Create `Evaluator`, a subtype of `MOI.AbstractNLPEvaluator`, from `Model`.
+"""
+mutable struct Evaluator{B} <: MOI.AbstractNLPEvaluator
+    # The internal datastructure.
+    model::Model
+    # The abstract-differentiation backend
+    backend::B
+    # A vector to store expressions in Julia's Expr form. The eltype is Any
+    # because expressions may be constants, and `:(1)` is just `1`.
+    julia_expressions::Vector{Any}
     # ordered_constraints is needed because `OrderedDict` doesn't support
     # looking up a key by the linear index.
     ordered_constraints::Vector{ConstraintIndex}
+    # Storage for the NLPBlockDual, so that we can query the dual of individual
+    # constraints without needing to query the full vector each time.
     constraint_dual::Vector{Float64}
     # Timers
     eval_objective_timer::Float64
@@ -162,15 +208,13 @@ mutable struct NonlinearData <: MOI.AbstractNLPEvaluator
     eval_constraint_jacobian_timer::Float64
     eval_hessian_lagrangian_timer::Float64
 
-    function NonlinearData()
-        return new(
-            nothing,
-            nothing,
-            NonlinearExpression[],
-            OrderedDict{ConstraintIndex,NonlinearConstraint}(),
-            Float64[],
-            OperatorRegistry(),
-            0,
+    function Evaluator(
+        model::Model,
+        backend::B = nothing,
+    ) where {B<:Union{Nothing,MOI.AbstractNLPEvaluator}}
+        return new{B}(
+            model,
+            backend,
             Expr[],
             ConstraintIndex[],
             Float64[],
@@ -189,41 +233,18 @@ _bound(s::MOI.EqualTo) = MOI.NLPBoundsPair(s.value, s.value)
 _bound(s::MOI.Interval) = MOI.NLPBoundsPair(s.lower, s.upper)
 
 """
-    MOI.NLPBlockData(data::NonlinearData)
+    MOI.NLPBlockData(evaluator::Evaluator)
 
-Create an [`MOI.NLPBlockData`](@ref) object from a [`NonlinearData`](@ref)
+Create an [`MOI.NLPBlockData`](@ref) object from an [`Evaluator`](@ref)
 object.
 """
-function MOI.NLPBlockData(data::NonlinearData)
+function MOI.NLPBlockData(evaluator::Evaluator)
     return MOI.NLPBlockData(
-        [_bound(c.set) for (_, c) in data.constraints],
-        data,
-        data.objective !== nothing,
+        [_bound(c.set) for (_, c) in evaluator.model.constraints],
+        evaluator,
+        evaluator.model.objective !== nothing,
     )
 end
-
-"""
-    AbstractAutomaticDifferentiation
-
-An abstract type for extending
-"""
-abstract type AbstractAutomaticDifferentiation end
-
-"""
-    set_differentiation_backend(
-        data::NonlinearData,
-        backend::AbstractAutomaticDifferentiation,
-        ordered_variables::Vector{MOI.VariableIndex}
-    )
-
-Set the automatic differentiation backend of `data` to `backend`.
-
-`ordered_variables` is an ordered vector containing all of the variables that
-are present in the model. This order corresponds to the order of the primal
-solution vector `x` that is passed to the various functions in MOI's nonlinear
-API.
-"""
-function set_differentiation_backend end
 
 """
     ExprGraphOnly() <: AbstractAutomaticDifferentiation
@@ -233,11 +254,6 @@ supported `:ExprGraph`.
 """
 struct ExprGraphOnly <: AbstractAutomaticDifferentiation end
 
-function set_differentiation_backend(
-    data::NonlinearData,
-    ::ExprGraphOnly,
-    ::Vector{MOI.VariableIndex},
-)
-    data.inner = nothing
-    return
+function Evaluator(model::Model, ::ExprGraphOnly, ::Vector{MOI.VariableIndex})
+    return Evaluator(model)
 end

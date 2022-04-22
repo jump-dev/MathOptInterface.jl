@@ -22,115 +22,126 @@ end
 _hessian(f, x) = LinearAlgebra.LowerTriangular(ForwardDiff.hessian(f, x))
 
 function test_copy()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     @test_throws(
         ErrorException("Copying nonlinear problems not yet implemented"),
-        copy(data),
+        copy(model),
     )
     return
 end
 
 function test_parse_unable()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
     input = :(f($x))
     @test_throws(
         ErrorException("Unable to parse: $input"),
-        Nonlinear.set_objective(data, input),
+        Nonlinear.set_objective(model, input),
     )
     return
 end
 
 function test_parse_sin()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    Nonlinear.set_objective(data, :(sin($x)))
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.objective_expr(data) == :(sin(x[$x]))
+    Nonlinear.set_objective(model, :(sin($x)))
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.objective_expr(evaluator) == :(sin(x[$x]))
     return
 end
 
 function test_parse_sin_squared()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    Nonlinear.set_objective(data, :(sin($x)^2))
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.objective_expr(data) == :(sin(x[$x])^2)
+    Nonlinear.set_objective(model, :(sin($x)^2))
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.objective_expr(evaluator) == :(sin(x[$x])^2)
     return
 end
 
 function test_parse_ifelse()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    Nonlinear.set_objective(data, :(ifelse($x, 1, 2)))
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.objective_expr(data) == :(ifelse(x[$x], 1, 2))
+    Nonlinear.set_objective(model, :(ifelse($x, 1, 2)))
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.objective_expr(evaluator) == :(ifelse(x[$x], 1, 2))
     return
 end
 
 function test_parse_ifelse_inequality_less()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    Nonlinear.set_objective(data, :(ifelse($x < 1, $x - 1, $x + 1)))
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.objective_expr(data) == :(ifelse(x[$x] < 1, x[$x] - 1, x[$x] + 1))
+    Nonlinear.set_objective(model, :(ifelse($x < 1, $x - 1, $x + 1)))
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.objective_expr(evaluator) ==
+          :(ifelse(x[$x] < 1, x[$x] - 1, x[$x] + 1))
     return
 end
 
 function test_parse_ifelse_inequality_greater()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    Nonlinear.set_objective(data, :(ifelse($x > 1, $x - 1, $x + 1)))
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.objective_expr(data) == :(ifelse(x[$x] > 1, x[$x] - 1, x[$x] + 1))
+    Nonlinear.set_objective(model, :(ifelse($x > 1, $x - 1, $x + 1)))
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.objective_expr(evaluator) ==
+          :(ifelse(x[$x] > 1, x[$x] - 1, x[$x] + 1))
     return
 end
 
 function test_parse_ifelse_comparison()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    Nonlinear.set_objective(data, :(ifelse(0 <= $x <= 1, $x - 1, $x + 1)))
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.objective_expr(data) ==
+    Nonlinear.set_objective(model, :(ifelse(0 <= $x <= 1, $x - 1, $x + 1)))
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.objective_expr(evaluator) ==
           :(ifelse(0 <= x[$x] <= 1, x[$x] - 1, x[$x] + 1))
     return
 end
 
 function test_parse_ifelse_logic_inequality()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
     expr = :(ifelse($x < 1.0 || $x > 2.0, $x - 1.0, $x + 1.0))
-    Nonlinear.set_objective(data, expr)
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.objective_expr(data) ==
+    Nonlinear.set_objective(model, expr)
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.objective_expr(evaluator) ==
           :(ifelse(x[$x] < 1.0 || x[$x] > 2.0, x[$x] - 1.0, x[$x] + 1.0))
     return
 end
 
 function test_parse_splat_prod()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex.(1:3)
-    Nonlinear.set_objective(data, :(*($x...)))
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.objective_expr(data) == :(x[$(x[1])] * x[$(x[2])] * x[$(x[3])])
+    Nonlinear.set_objective(model, :(*($x...)))
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.objective_expr(evaluator) ==
+          :(x[$(x[1])] * x[$(x[2])] * x[$(x[3])])
     return
 end
 
 function test_parse_splat_top_level()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex.(1:3)
     @test_throws(
         ErrorException(
             "Unsupported use of the splatting operator. This is only " *
             "supported in the arguments of a function call.",
         ),
-        Nonlinear.set_objective(data, :(x...)),
+        Nonlinear.set_objective(model, :(x...)),
     )
     return
 end
 
 function test_parse_splat_expr()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex.(1:3)
     @test_throws(
         ErrorException(
@@ -138,34 +149,35 @@ function test_parse_splat_expr()
             "splatting only symbols. For example, `x...` is ok, but " *
             "`(x + 1)...`, `[x; y]...` and `g(f(y)...)` are not.",
         ),
-        Nonlinear.set_objective(data, :(*((x ./ 2)...))),
+        Nonlinear.set_objective(model, :(*((x ./ 2)...))),
     )
     return
 end
 
 function test_parse_univariate_prod()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    Nonlinear.set_objective(data, :(*($x)))
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.objective_expr(data) == :(*(x[$x]))
+    Nonlinear.set_objective(model, :(*($x)))
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.objective_expr(evaluator) == :(*(x[$x]))
     return
 end
 
 function test_parse_string()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
     @test_throws(
         ErrorException(
             "Unexpected object abc of type String in nonlinear expression.",
         ),
-        Nonlinear.set_objective(data, :($x + "abc")),
+        Nonlinear.set_objective(model, :($x + "abc")),
     )
     return
 end
 
 function test_parse_array()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = [MOI.VariableIndex(1)]
     c = [1.0]
     @test_throws(
@@ -173,178 +185,190 @@ function test_parse_array()
             "Unexpected array $(c') in nonlinear expression. Nonlinear " *
             "expressions may contain only scalar expressions.",
         ),
-        Nonlinear.set_objective(data, :($(c') * $x)),
+        Nonlinear.set_objective(model, :($(c') * $x)),
     )
     return
 end
 
 function test_parse_unsupported_expression()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = (y = 1,)
     @test_throws(
         ErrorException("Unsupported expression: $(:(x.y))"),
-        Nonlinear.set_objective(data, :(x.y)),
+        Nonlinear.set_objective(model, :(x.y)),
     )
     return
 end
 
 function test_moi_variable_parse()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    expr = Nonlinear.parse_expression(data, :($x))
+    expr = Nonlinear.parse_expression(model, :($x))
     @test expr.nodes == [Nonlinear.Node(Nonlinear.NODE_MOI_VARIABLE, 1, -1)]
     @test isempty(expr.values)
     return
 end
 
 function test_expression_parse()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    ex = Nonlinear.add_expression(data, :(sin($x)^2))
-    @test data[ex] isa Nonlinear.NonlinearExpression
+    ex = Nonlinear.add_expression(model, :(sin($x)^2))
+    @test model[ex] isa Nonlinear.Expression
     return
 end
 
 function test_parameter_parse()
-    data = Nonlinear.NonlinearData()
-    p = Nonlinear.add_parameter(data, 1.2)
-    expr = Nonlinear.parse_expression(data, :($p))
+    model = Nonlinear.Model()
+    p = Nonlinear.add_parameter(model, 1.2)
+    expr = Nonlinear.parse_expression(model, :($p))
     @test expr.nodes == [Nonlinear.Node(Nonlinear.NODE_PARAMETER, 1, -1)]
     @test isempty(expr.values)
-    @test data.parameters == [1.2]
+    @test model.parameters == [1.2]
     return
 end
 
 function test_parameter_set()
-    data = Nonlinear.NonlinearData()
-    p = Nonlinear.add_parameter(data, 1.2)
-    @test data.parameters == [1.2]
-    @test data[p] == 1.2
-    data[p] = 2.1
-    @test data.parameters == [2.1]
-    @test data[p] == 2.1
+    model = Nonlinear.Model()
+    p = Nonlinear.add_parameter(model, 1.2)
+    @test model.parameters == [1.2]
+    @test model[p] == 1.2
+    model[p] = 2.1
+    @test model.parameters == [2.1]
+    @test model[p] == 2.1
     return
 end
 
 function test_set_objective()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
     input = :($x^2 + 1)
-    Nonlinear.set_objective(data, input)
-    @test data.objective == Nonlinear.parse_expression(data, input)
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.objective_expr(data) == :(x[$x]^2 + 1)
+    Nonlinear.set_objective(model, input)
+    @test model.objective == Nonlinear.parse_expression(model, input)
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.objective_expr(evaluator) == :(x[$x]^2 + 1)
     return
 end
 
 function test_set_objective_subexpression()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
     input = :($x^2 + 1)
-    expr = Nonlinear.add_expression(data, input)
-    Nonlinear.set_objective(data, :($expr^2))
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.objective_expr(data) == :((x[$x]^2 + 1)^2)
+    expr = Nonlinear.add_expression(model, input)
+    Nonlinear.set_objective(model, :($expr^2))
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.objective_expr(evaluator) == :((x[$x]^2 + 1)^2)
     return
 end
 
 function test_set_objective_nested_subexpression()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
     input = :($x^2 + 1)
-    expr = Nonlinear.add_expression(data, input)
-    expr_2 = Nonlinear.add_expression(data, :($expr^2))
-    Nonlinear.set_objective(data, :($expr_2^2))
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.objective_expr(data) == :(((x[$x]^2 + 1)^2)^2)
+    expr = Nonlinear.add_expression(model, input)
+    expr_2 = Nonlinear.add_expression(model, :($expr^2))
+    Nonlinear.set_objective(model, :($expr_2^2))
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.objective_expr(evaluator) == :(((x[$x]^2 + 1)^2)^2)
     return
 end
 
 function test_set_objective_parameter()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    p = Nonlinear.add_parameter(data, 1.2)
-    Nonlinear.set_objective(data, :($x^2 + $p))
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.objective_expr(data) == :(x[$x]^2 + 1.2)
+    p = Nonlinear.add_parameter(model, 1.2)
+    Nonlinear.set_objective(model, :($x^2 + $p))
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.objective_expr(evaluator) == :(x[$x]^2 + 1.2)
     return
 end
 
 function test_add_constraint_less_than()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
     input = :($x^2 + 1 <= 1.0)
-    c = Nonlinear.add_constraint(data, input)
-    @test data[c].set == MOI.LessThan(0.0)
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.constraint_expr(data, 1) == :((x[$x]^2 + 1) - 1.0 <= 0.0)
+    c = Nonlinear.add_constraint(model, input)
+    @test model[c].set == MOI.LessThan(0.0)
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.constraint_expr(evaluator, 1) == :((x[$x]^2 + 1) - 1.0 <= 0.0)
     return
 end
 
 function test_add_constraint_delete()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    c1 = Nonlinear.add_constraint(data, :($x^2 + 1 <= 1.0))
-    _ = Nonlinear.add_constraint(data, :(sqrt($x) <= 1.0))
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.constraint_expr(data, 1) == :((x[$x]^2 + 1) - 1.0 <= 0.0)
-    @test MOI.constraint_expr(data, 2) == :((sqrt(x[$x])) - 1.0 <= 0.0)
-    Nonlinear.delete(data, c1)
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.constraint_expr(data, 1) == :(sqrt(x[$x]) - 1.0 <= 0.0)
-    @test_throws BoundsError MOI.constraint_expr(data, 2)
+    c1 = Nonlinear.add_constraint(model, :($x^2 + 1 <= 1.0))
+    _ = Nonlinear.add_constraint(model, :(sqrt($x) <= 1.0))
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.constraint_expr(evaluator, 1) == :((x[$x]^2 + 1) - 1.0 <= 0.0)
+    @test MOI.constraint_expr(evaluator, 2) == :((sqrt(x[$x])) - 1.0 <= 0.0)
+    Nonlinear.delete(model, c1)
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.constraint_expr(evaluator, 1) == :(sqrt(x[$x]) - 1.0 <= 0.0)
+    @test_throws BoundsError MOI.constraint_expr(evaluator, 2)
     return
 end
 
 function test_add_constraint_less_than_normalize()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
     input = :(1 <= 1.0 + $x^2)
-    c = Nonlinear.add_constraint(data, input)
-    @test data[c].set == MOI.LessThan(0.0)
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.constraint_expr(data, 1) == :(1 - (1.0 + x[$x]^2) - 0.0 <= 0.0)
+    c = Nonlinear.add_constraint(model, input)
+    @test model[c].set == MOI.LessThan(0.0)
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.constraint_expr(evaluator, 1) ==
+          :(1 - (1.0 + x[$x]^2) - 0.0 <= 0.0)
     return
 end
 
 function test_add_constraint_greater_than()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
     input = :($x^2 + 1 >= 1.0)
-    c = Nonlinear.add_constraint(data, input)
-    @test data[c].set == MOI.GreaterThan(0.0)
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.constraint_expr(data, 1) == :((x[$x]^2 + 1) - 1.0 >= 0.0)
+    c = Nonlinear.add_constraint(model, input)
+    @test model[c].set == MOI.GreaterThan(0.0)
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.constraint_expr(evaluator, 1) == :((x[$x]^2 + 1) - 1.0 >= 0.0)
     return
 end
 
 function test_add_constraint_equal_to()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
     input = :($x^2 + 1 == 1.0)
-    c = Nonlinear.add_constraint(data, input)
-    @test data[c].set == MOI.EqualTo(0.0)
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.constraint_expr(data, 1) == :((x[$x]^2 + 1) - 1.0 == 0.0)
+    c = Nonlinear.add_constraint(model, input)
+    @test model[c].set == MOI.EqualTo(0.0)
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.constraint_expr(evaluator, 1) == :((x[$x]^2 + 1) - 1.0 == 0.0)
     return
 end
 
 function test_add_constraint_interval()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
     input = :(-1.0 <= $x^2 + 1 <= 1.0)
-    c = Nonlinear.add_constraint(data, input)
-    @test data[c].set == MOI.Interval(-1.0, 1.0)
-    MOI.initialize(data, [:ExprGraph])
-    @test MOI.constraint_expr(data, 1) == :(-1.0 <= x[$x]^2 + 1 <= 1.0)
+    c = Nonlinear.add_constraint(model, input)
+    @test model[c].set == MOI.Interval(-1.0, 1.0)
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.constraint_expr(evaluator, 1) == :(-1.0 <= x[$x]^2 + 1 <= 1.0)
     return
 end
 
 function test_add_constraint_interval_normalize()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
     input = :(-1.0 + $x <= $x^2 + 1 <= 1.0)
-    @test_throws(ErrorException, Nonlinear.add_constraint(data, input))
+    @test_throws(ErrorException, Nonlinear.add_constraint(model, input))
     return
 end
 
@@ -376,14 +400,14 @@ function test_eval_univariate_hessian()
 end
 
 function test_eval_univariate_function_registered_method_error()
-    r = Nonlinear.NonlinearData()
+    r = Nonlinear.Model()
     f(x::Float64) = sin(x)^2
     @test_throws ErrorException Nonlinear.register_operator(r, :f, 1, f)
     return
 end
 
 function test_univariate_function_register_twice()
-    r = Nonlinear.NonlinearData()
+    r = Nonlinear.Model()
     f(x) = x
     Nonlinear.register_operator(r, :f, 1, f)
     @test_throws(
@@ -398,7 +422,7 @@ function test_univariate_function_register_twice()
 end
 
 function test_multivariate_function_register_twice()
-    r = Nonlinear.NonlinearData()
+    r = Nonlinear.Model()
     f(x, y) = x + y
     Nonlinear.register_operator(r, :f, 2, f)
     @test_throws(
@@ -733,91 +757,96 @@ function test_eval_comprison_function()
 end
 
 function test_features_available()
-    data = Nonlinear.NonlinearData()
-    @test MOI.features_available(data) == [:ExprGraph]
+    model = Nonlinear.Model()
+    evaluator = Nonlinear.Evaluator(model)
+    @test MOI.features_available(evaluator) == [:ExprGraph]
     return
 end
 
 function test_features_available_Default()
-    data = Nonlinear.NonlinearData()
-    Nonlinear.set_differentiation_backend(
-        data,
+    model = Nonlinear.Model()
+    evaluator = Nonlinear.Evaluator(
+        model,
         Nonlinear.ExprGraphOnly(),
         MOI.VariableIndex[],
     )
-    @test MOI.features_available(data) == [:ExprGraph]
+    @test MOI.features_available(evaluator) == [:ExprGraph]
     return
 end
 
 function test_add_constraint_ordinal_index()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    constraints = [Nonlinear.add_constraint(data, :($x <= $i)) for i in 1:4]
-    MOI.initialize(data, Symbol[])
+    constraints = [Nonlinear.add_constraint(model, :($x <= $i)) for i in 1:4]
     for i in 1:4
-        @test Nonlinear.ordinal_index(data, constraints[i]) == i
-        @test MOI.is_valid(data, constraints[i])
+        @test MOI.is_valid(model, constraints[i])
     end
-    Nonlinear.delete(data, constraints[1])
-    Nonlinear.delete(data, constraints[3])
-    MOI.initialize(data, Symbol[])
-    @test !MOI.is_valid(data, constraints[1])
-    @test MOI.is_valid(data, constraints[2])
-    @test Nonlinear.ordinal_index(data, constraints[2]) == 1
-    @test !MOI.is_valid(data, constraints[3])
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, Symbol[])
+    for i in 1:4
+        @test Nonlinear.ordinal_index(evaluator, constraints[i]) == i
+    end
+    Nonlinear.delete(model, constraints[1])
+    Nonlinear.delete(model, constraints[3])
+    @test !MOI.is_valid(model, constraints[1])
+    @test MOI.is_valid(model, constraints[2])
+    @test !MOI.is_valid(model, constraints[3])
+    @test MOI.is_valid(model, constraints[4])
+    MOI.initialize(evaluator, Symbol[])
+    @test Nonlinear.ordinal_index(evaluator, constraints[2]) == 1
     @test_throws(
         ErrorException("Invalid constraint index $(constraints[3])"),
-        Nonlinear.ordinal_index(data, constraints[3]),
+        Nonlinear.ordinal_index(evaluator, constraints[3]),
     )
-    @test MOI.is_valid(data, constraints[4])
-    @test Nonlinear.ordinal_index(data, constraints[4]) == 2
+    @test Nonlinear.ordinal_index(evaluator, constraints[4]) == 2
     return
 end
 
 function test_show()
-    data = Nonlinear.NonlinearData()
-    @test occursin(":ExprGraph", sprint(show, data))
+    model = Nonlinear.Model()
+    evaluator = Nonlinear.Evaluator(model)
+    @test occursin(":ExprGraph", sprint(show, evaluator))
     return
 end
 
 function test_evaluate_comparison()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    ex = Nonlinear.add_expression(data, :(ifelse($x < 1, -1.0, 1.0)))
-    @test Nonlinear.evaluate(Dict(x => 1.1), data, ex) == 1.0
-    @test Nonlinear.evaluate(Dict(x => 0.9), data, ex) == -1.0
+    ex = Nonlinear.add_expression(model, :(ifelse($x < 1, -1.0, 1.0)))
+    @test Nonlinear.evaluate(Dict(x => 1.1), model, ex) == 1.0
+    @test Nonlinear.evaluate(Dict(x => 0.9), model, ex) == -1.0
     return
 end
 
 function test_evaluate_logic()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    ex = Nonlinear.add_expression(data, :(ifelse($x < 0 || $x > 1, -1.0, 1.0)))
-    @test Nonlinear.evaluate(Dict(x => 1.1), data, ex) == -1.0
-    @test Nonlinear.evaluate(Dict(x => 0.9), data, ex) == 1.0
-    @test Nonlinear.evaluate(Dict(x => -0.9), data, ex) == -1.0
+    ex = Nonlinear.add_expression(model, :(ifelse($x < 0 || $x > 1, -1.0, 1.0)))
+    @test Nonlinear.evaluate(Dict(x => 1.1), model, ex) == -1.0
+    @test Nonlinear.evaluate(Dict(x => 0.9), model, ex) == 1.0
+    @test Nonlinear.evaluate(Dict(x => -0.9), model, ex) == -1.0
     return
 end
 
 function test_evaluate_subexpressions()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    p = Nonlinear.add_parameter(data, 1.23)
-    ex = Nonlinear.add_expression(data, :(*($p, $x, $x)))
-    ex = Nonlinear.add_expression(data, :($ex + sqrt($ex)))
+    p = Nonlinear.add_parameter(model, 1.23)
+    ex = Nonlinear.add_expression(model, :(*($p, $x, $x)))
+    ex = Nonlinear.add_expression(model, :($ex + sqrt($ex)))
     ex_v = 1.23 * 1.1 * 1.1
-    @test Nonlinear.evaluate(Dict(x => 1.1), data, ex) ≈ ex_v + sqrt(ex_v)
-    data[p] = 3.21
+    @test Nonlinear.evaluate(Dict(x => 1.1), model, ex) ≈ ex_v + sqrt(ex_v)
+    model[p] = 3.21
     ex_v = 3.21 * 1.2 * 1.2
-    @test Nonlinear.evaluate(Dict(x => 1.2), data, ex) ≈ ex_v + sqrt(ex_v)
+    @test Nonlinear.evaluate(Dict(x => 1.2), model, ex) ≈ ex_v + sqrt(ex_v)
     return
 end
 
 function test_NLPBlockData()
-    data = Nonlinear.NonlinearData()
+    model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    Nonlinear.set_differentiation_backend(data, Nonlinear.ExprGraphOnly(), [x])
-    block = MOI.NLPBlockData(data)
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.ExprGraphOnly(), [x])
+    block = MOI.NLPBlockData(evaluator)
     @test block.has_objective == false
     @test length(block.constraint_bounds) == 0
     return
