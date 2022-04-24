@@ -32,7 +32,7 @@ following [paper](https://pubsonline.informs.org/doi/10.1287/ijoc.2021.1067):
     year={2021},
     volume={34},
     number={2},
-    pages={672-689},
+    pages={672--689},
     doi={10.1287/ijoc.2021.1067},
     publisher={INFORMS}
 }
