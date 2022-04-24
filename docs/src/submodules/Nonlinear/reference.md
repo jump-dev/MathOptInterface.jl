@@ -13,6 +13,7 @@ More information can be found in the [Nonlinear](@ref nonlinear_developers)
 section of the manual.
 
 ```@docs
+Nonlinear
 Nonlinear.Model
 ```
 
