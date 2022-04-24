@@ -1,3 +1,9 @@
+# Copyright (c) 2017: Miles Lubin and contributors
+# Copyright (c) 2017: Google Inc.
+#
+# Use of this source code is governed by an MIT-style license that can be found
+# in the LICENSE.md file or at https://opensource.org/licenses/MIT.
+
 # JuMP requires first and second-order symbolic derivatives for univariate
 # functions. Calculus.jl is a package for computing them, and JuMP 1.0.0 used to
 # dynamically compute them during precompilation. The benefit of this approach

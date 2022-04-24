@@ -1,3 +1,9 @@
+# Copyright (c) 2017: Miles Lubin and contributors
+# Copyright (c) 2017: Google Inc.
+#
+# Use of this source code is governed by an MIT-style license that can be found
+# in the LICENSE.md file or at https://opensource.org/licenses/MIT.
+
 function _create_binary_switch(ids, exprs)
     if length(exprs) <= 3
         out = Expr(:if, Expr(:call, :(==), :id, ids[1]), exprs[1])
