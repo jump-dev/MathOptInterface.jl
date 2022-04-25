@@ -187,13 +187,13 @@ end
 function test_constraint_quadratic_univariate()
     x = MOI.VariableIndex(1)
     model = Nonlinear.Model()
-    Nonlinear.add_constraint(model, :($x^2 <= 2.0))
+    Nonlinear.add_constraint(model, :($x^2), MOI.LessThan(2.0))
     evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
     MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
     g = [NaN]
     x_val = [1.2]
     MOI.eval_constraint(evaluator, g, x_val)
-    @test g == x_val .^ 2 .- 2
+    @test g == x_val .^ 2
     @test MOI.jacobian_structure(evaluator) == [(1, 1)]
     J = [NaN]
     MOI.eval_constraint_jacobian(evaluator, J, x_val)
@@ -209,14 +209,14 @@ function test_constraint_quadratic_multivariate()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     model = Nonlinear.Model()
-    Nonlinear.add_constraint(model, :($x^2 + $x * $y + $y^2 <= 2.0))
+    Nonlinear.add_constraint(model, :($x^2 + $x * $y + $y^2), MOI.LessThan(2.0))
     evaluator =
         Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x, y])
     MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
     g = [NaN]
     x_val = [1.2, 2.3]
     MOI.eval_constraint(evaluator, g, x_val)
-    @test g == [x_val[1]^2 + x_val[1] * x_val[2] + x_val[2]^2] .- 2
+    @test g == [x_val[1]^2 + x_val[1] * x_val[2] + x_val[2]^2]
     @test MOI.jacobian_structure(evaluator) == [(1, 1), (1, 2)]
     J = [NaN, NaN]
     MOI.eval_constraint_jacobian(evaluator, J, x_val)
@@ -236,14 +236,14 @@ function test_constraint_quadratic_multivariate_subexpressions()
     ex = Nonlinear.add_expression(model, :($x^2))
     ey = Nonlinear.add_expression(model, :($y^2))
     exy = Nonlinear.add_expression(model, :($ex + $x * $y))
-    Nonlinear.add_constraint(model, :($exy + $ey <= 2.0))
+    Nonlinear.add_constraint(model, :($exy + $ey), MOI.LessThan(2.0))
     evaluator =
         Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x, y])
     MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
     g = [NaN]
     x_val = [1.2, 2.3]
     MOI.eval_constraint(evaluator, g, x_val)
-    @test g ≈ [x_val[1]^2 + x_val[1] * x_val[2] + x_val[2]^2] .- 2
+    @test g ≈ [x_val[1]^2 + x_val[1] * x_val[2] + x_val[2]^2]
     # Jacobian
     @test MOI.jacobian_structure(evaluator) == [(1, 1), (1, 2)]
     J = [NaN, NaN]
@@ -436,10 +436,10 @@ end
 function test_NLPBlockData()
     model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    Nonlinear.add_constraint(model, :($x <= 1))
-    Nonlinear.add_constraint(model, :($x >= 2))
-    Nonlinear.add_constraint(model, :($x == 3))
-    Nonlinear.add_constraint(model, :(4 <= $x <= 5))
+    Nonlinear.add_constraint(model, :($x - 1), MOI.LessThan(0.0))
+    Nonlinear.add_constraint(model, :($x - 2), MOI.GreaterThan(0.0))
+    Nonlinear.add_constraint(model, :($x - 3), MOI.EqualTo(0.0))
+    Nonlinear.add_constraint(model, :($x), MOI.Interval(4.0, 5.0))
     evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
     block = MOI.NLPBlockData(evaluator)
     @test block.constraint_bounds == [
