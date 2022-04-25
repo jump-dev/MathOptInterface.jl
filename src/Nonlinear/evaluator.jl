@@ -18,8 +18,8 @@ Return the 1-indexed value of the constraint index `c` in `evaluator`.
 ```julia
 model = Model()
 x = MOI.VariableIndex(1)
-c1 = add_constraint(model, :(\$x^2 <= 1))
-c2 = add_constraint(model, :(\$x^2 <= 1))
+c1 = add_constraint(model, :(\$x^2), MOI.LessThan(1.0))
+c2 = add_constraint(model, :(\$x^2), MOI.LessThan(1.0))
 evaluator = Evaluator(model)
 MOI.initialize(evaluator, Symbol[])
 ordinal_index(evaluator, c2)  # Returns 2

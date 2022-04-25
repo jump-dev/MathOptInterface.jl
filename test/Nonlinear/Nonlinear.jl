@@ -295,86 +295,67 @@ end
 function test_add_constraint_less_than()
     model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    input = :($x^2 + 1 <= 1.0)
-    c = Nonlinear.add_constraint(model, input)
-    @test model[c].set == MOI.LessThan(0.0)
+    func = :($x^2 + 1)
+    set = MOI.LessThan(1.0)
+    c = Nonlinear.add_constraint(model, func, set)
+    @test model[c].set == set
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.constraint_expr(evaluator, 1) == :((x[$x]^2 + 1) - 1.0 <= 0.0)
+    @test MOI.constraint_expr(evaluator, 1) == :(x[$x]^2 + 1 <= 1.0)
     return
 end
 
 function test_add_constraint_delete()
     model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    c1 = Nonlinear.add_constraint(model, :($x^2 + 1 <= 1.0))
-    _ = Nonlinear.add_constraint(model, :(sqrt($x) <= 1.0))
+    c1 = Nonlinear.add_constraint(model, :($x^2 + 1), MOI.LessThan(1.0))
+    _ = Nonlinear.add_constraint(model, :(sqrt($x)), MOI.LessThan(1.0))
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.constraint_expr(evaluator, 1) == :((x[$x]^2 + 1) - 1.0 <= 0.0)
-    @test MOI.constraint_expr(evaluator, 2) == :((sqrt(x[$x])) - 1.0 <= 0.0)
+    @test MOI.constraint_expr(evaluator, 1) == :(x[$x]^2 + 1 <= 1.0)
+    @test MOI.constraint_expr(evaluator, 2) == :(sqrt(x[$x]) <= 1.0)
     Nonlinear.delete(model, c1)
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.constraint_expr(evaluator, 1) == :(sqrt(x[$x]) - 1.0 <= 0.0)
+    @test MOI.constraint_expr(evaluator, 1) == :(sqrt(x[$x]) <= 1.0)
     @test_throws BoundsError MOI.constraint_expr(evaluator, 2)
-    return
-end
-
-function test_add_constraint_less_than_normalize()
-    model = Nonlinear.Model()
-    x = MOI.VariableIndex(1)
-    input = :(1 <= 1.0 + $x^2)
-    c = Nonlinear.add_constraint(model, input)
-    @test model[c].set == MOI.LessThan(0.0)
-    evaluator = Nonlinear.Evaluator(model)
-    MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.constraint_expr(evaluator, 1) ==
-          :(1 - (1.0 + x[$x]^2) - 0.0 <= 0.0)
     return
 end
 
 function test_add_constraint_greater_than()
     model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    input = :($x^2 + 1 >= 1.0)
-    c = Nonlinear.add_constraint(model, input)
-    @test model[c].set == MOI.GreaterThan(0.0)
+    func = :($x^2 + 1)
+    set = MOI.GreaterThan(1.0)
+    c = Nonlinear.add_constraint(model, func, set)
+    @test model[c].set == set
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.constraint_expr(evaluator, 1) == :((x[$x]^2 + 1) - 1.0 >= 0.0)
+    @test MOI.constraint_expr(evaluator, 1) == :(x[$x]^2 + 1 >= 1.0)
     return
 end
 
 function test_add_constraint_equal_to()
     model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    input = :($x^2 + 1 == 1.0)
-    c = Nonlinear.add_constraint(model, input)
-    @test model[c].set == MOI.EqualTo(0.0)
+    func, set = :($x^2 + 1), MOI.EqualTo(1.0)
+    c = Nonlinear.add_constraint(model, func, set)
+    @test model[c].set == set
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.constraint_expr(evaluator, 1) == :((x[$x]^2 + 1) - 1.0 == 0.0)
+    @test MOI.constraint_expr(evaluator, 1) == :(x[$x]^2 + 1 == 1.0)
     return
 end
 
 function test_add_constraint_interval()
     model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    input = :(-1.0 <= $x^2 + 1 <= 1.0)
-    c = Nonlinear.add_constraint(model, input)
-    @test model[c].set == MOI.Interval(-1.0, 1.0)
+    func, set = :($x^2 + 1), MOI.Interval(-1.0, 1.0)
+    c = Nonlinear.add_constraint(model, func, set)
+    @test model[c].set == set
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
     @test MOI.constraint_expr(evaluator, 1) == :(-1.0 <= x[$x]^2 + 1 <= 1.0)
-    return
-end
-
-function test_add_constraint_interval_normalize()
-    model = Nonlinear.Model()
-    x = MOI.VariableIndex(1)
-    input = :(-1.0 + $x <= $x^2 + 1 <= 1.0)
-    @test_throws(ErrorException, Nonlinear.add_constraint(model, input))
     return
 end
 
@@ -783,7 +764,10 @@ end
 function test_add_constraint_ordinal_index()
     model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
-    constraints = [Nonlinear.add_constraint(model, :($x <= $i)) for i in 1:4]
+    constraints = [
+        Nonlinear.add_constraint(model, :($x), MOI.LessThan(1.0 * i)) for
+        i in 1:4
+    ]
     for i in 1:4
         @test MOI.is_valid(model, constraints[i])
     end

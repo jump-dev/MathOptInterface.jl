@@ -76,9 +76,18 @@ function Base.getindex(model::Model, index::ExpressionIndex)
 end
 
 """
-    add_constraint(model::Model, input::Expr)::ConstraintIndex
+    add_constraint(
+        model::Model,
+        func,
+        set::Union{
+            MOI.GreaterThan{Float64},
+            MOI.LessThan{Float64},
+            MOI.Interval{Float64},
+            MOI.EqualTo{Float64},
+        },
+    )
 
-Parse `input` into a [`Constraint`](@ref) and add to `model`. Returns a
+Parse `func` and `set` into a [`Constraint`](@ref) and add to `model`. Returns a
 [`ConstraintIndex`](@ref) that can be used to delete the constraint or query
 solution information.
 
@@ -87,12 +96,20 @@ solution information.
 ```julia
 model = Model()
 x = MOI.VariableIndex(1)
-c = add_constraint(model, :(\$x^2 <= 1))
+c = add_constraint(model, :(\$x^2), MOI.LessThan(1.0))
 ```
 """
-function add_constraint(model::Model, input::Expr)
-    expr, set = _expr_to_constraint(input)
-    f = parse_expression(model, expr)
+function add_constraint(
+    model::Model,
+    func,
+    set::Union{
+        MOI.GreaterThan{Float64},
+        MOI.LessThan{Float64},
+        MOI.Interval{Float64},
+        MOI.EqualTo{Float64},
+    },
+)
+    f = parse_expression(model, func)
     model.last_constraint_index += 1
     index = ConstraintIndex(model.last_constraint_index)
     model.constraints[index] = Constraint(f, set)
@@ -109,7 +126,7 @@ Delete the constraint index `c` from `model`.
 ```julia
 model = Model()
 x = MOI.VariableIndex(1)
-c = add_constraint(model, :(\$x^2 <= 1))
+c = add_constraint(model, :(\$x^2), MOI.LessThan(1.0))
 delete(model, c)
 ```
 """
@@ -139,7 +156,7 @@ and used to modify the value of the parameter.
 model = Model()
 x = MOI.VariableIndex(1)
 p = add_parameter(model, 1.2)
-c = add_constraint(model, :(\$x^2 <= \$p))
+c = add_constraint(model, :(\$x^2 - \$p), MOI.LessThan(0.0))
 ```
 """
 function add_parameter(model::Model, value::Float64)
