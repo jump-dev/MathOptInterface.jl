@@ -70,6 +70,10 @@ const _PAGES = [
             "Overview" => "submodules/FileFormats/overview.md",
             "API Reference" => "submodules/FileFormats/reference.md",
         ],
+        "Nonlinear" => [
+            "Overview" => "submodules/Nonlinear/overview.md",
+            "API Reference" => "submodules/Nonlinear/reference.md",
+        ],
         "Utilities" => [
             "Overview" => "submodules/Utilities/overview.md",
             "API Reference" => "submodules/Utilities/reference.md",

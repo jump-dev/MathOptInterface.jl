@@ -21,6 +21,7 @@ for file in readdir(@__DIR__)
 end
 
 @testset "MOI.$(submodule)" for submodule in [
+    "Nonlinear",
     "Bridges",
     "FileFormats",
     "Test",
