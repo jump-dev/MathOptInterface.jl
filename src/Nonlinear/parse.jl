@@ -223,41 +223,6 @@ function parse_expression(
     )
 end
 
-function _normalize_constraint_expr(lhs::Real, body, rhs::Real)
-    return Float64(lhs), body, Float64(rhs)
-end
-
-function _normalize_constraint_expr(lhs, body, rhs)
-    return error(
-        "Interval constraint contains non-constant left- or right-hand " *
-        "sides. Reformulate as two separate constraints, or move all " *
-        "variables into the central term.",
-    )
-end
-
-_normalize_constraint_expr(lhs, rhs::Real) = lhs, Float64(rhs)
-
-_normalize_constraint_expr(lhs, rhs) = Expr(:call, :-, lhs, rhs), 0.0
-
-function _expr_to_constraint(expr::Expr)
-    if isexpr(expr, :comparison)
-        @assert expr.args[2] == expr.args[4]
-        @assert expr.args[2] in (:<=, :>=)
-        lhs, body, rhs =
-            _normalize_constraint_expr(expr.args[1], expr.args[3], expr.args[5])
-        return body, MOI.Interval(lhs, rhs)
-    end
-    lhs, rhs = _normalize_constraint_expr(expr.args[2], expr.args[3])
-    if expr.args[1] == :<=
-        return :($lhs - $rhs), MOI.LessThan(0.0)
-    elseif expr.args[1] == :>=
-        return :($lhs - $rhs), MOI.GreaterThan(0.0)
-    else
-        @assert expr.args[1] == :(==)
-        return :($lhs - $rhs), MOI.EqualTo(0.0)
-    end
-end
-
 """
     convert_to_expr(data::Model, expr::Expression)
 

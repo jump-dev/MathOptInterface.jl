@@ -164,7 +164,7 @@ julia> Nonlinear.set_objective(model, :($p + $expr + $x));
 
 Add a constraint using [`Nonlinear.add_constraint`](@ref):
 ```jldoctest nonlinear_developer
-julia> c = Nonlinear.add_constraint(model, :(1 + sqrt($x) <= 2.0))
+julia> c = Nonlinear.add_constraint(model, :(1 + sqrt($x)), MOI.LessThan(2.0))
 MathOptInterface.Nonlinear.ConstraintIndex(1)
 
 julia> model
@@ -177,7 +177,7 @@ A Nonlinear.Model with:
 The return value, `c`, is a [`Nonlinear.ConstraintIndex`](@ref) that is a unique
 identifier for the constraint. Interval constraints are also supported:
 ```jldoctest nonlinear_developer
-julia> c2 = Nonlinear.add_constraint(model, :(-1.0 <= 1 + sqrt($x) <= 2.0))
+julia> c2 = Nonlinear.add_constraint(model, :(1 + sqrt($x)), MOI.Interval(-1.0, 2.0))
 MathOptInterface.Nonlinear.ConstraintIndex(2)
 
 julia> model
