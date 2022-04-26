@@ -287,14 +287,13 @@ function test_hessian_sparsity_registered_function()
     Nonlinear.set_objective(model, :(f($x, $z) + $y^2))
     evaluator =
         Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x, y, z])
-    @test_broken :Hess in MOI.features_available(evaluator)
-    # TODO(odow): re-enable these tests when user-defined hessians are supported
-    # MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
-    # @test MOI.hessian_lagrangian_structure(evaluator) ==
-    #       [(1, 1), (2, 2), (3, 3), (3, 1)]
-    # H = fill(NaN, 4)
-    # MOI.eval_hessian_lagrangian(evaluator, H, rand(3), 1.5, Float64[])
-    # @test H == 1.5 .* [2.0, 2.0, 2.0, 0.0]
+    @test :Hess in MOI.features_available(evaluator)
+    MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
+    @test MOI.hessian_lagrangian_structure(evaluator) ==
+          [(1, 1), (2, 2), (3, 3), (3, 1)]
+    H = fill(NaN, 4)
+    MOI.eval_hessian_lagrangian(evaluator, H, rand(3), 1.5, Float64[])
+    @test H == 1.5 .* [2.0, 2.0, 2.0, 0.0]
     return
 end
 
@@ -318,13 +317,12 @@ function test_hessian_sparsity_registered_rosenbrock()
     Nonlinear.set_objective(model, :(rosenbrock($x, $y)))
     evaluator =
         Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x, y])
-    @test_broken :Hess in MOI.features_available(evaluator)
-    # TODO(odow): re-enable these tests when user-defined hessians are supported
-    # MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
-    # @test MOI.hessian_lagrangian_structure(evaluator) == [(1, 1), (2, 2), (2, 1)]
-    # H = fill(NaN, 3)
-    # MOI.eval_hessian_lagrangian(evaluator, H, [1.0, 1.0], 1.5, Float64[])
-    # @test H == 1.5 .* [802, 200, -400]
+    @test :Hess in MOI.features_available(evaluator)
+    MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
+    @test MOI.hessian_lagrangian_structure(evaluator) == [(1, 1), (2, 2), (2, 1)]
+    H = fill(NaN, 3)
+    MOI.eval_hessian_lagrangian(evaluator, H, [1.0, 1.0], 1.5, Float64[])
+    @test H == 1.5 .* [802, 200, -400]
     return
 end
 

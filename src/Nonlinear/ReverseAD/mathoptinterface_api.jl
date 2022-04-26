@@ -7,8 +7,10 @@
 function MOI.features_available(d::NLPEvaluator)
     # Check if we have any user-defined multivariate operators, in which case we
     # need to disable hessians. The result of features_available depends on this.
-    d.disable_2ndorder =
-        length(d.data.operators.registered_multivariate_operators) > 0
+    d.disable_2ndorder = any(
+        op -> op.∇²f === nothing,
+        d.data.operators.registered_multivariate_operators,
+    )
     if d.disable_2ndorder
         return [:Grad, :Jac, :JacVec]
     end
@@ -286,6 +288,7 @@ function MOI.eval_hessian_lagrangian_product(d::NLPEvaluator, h, x, v, σ, μ)
     for i in d.subexpression_order
         subexpr = d.subexpressions[i]
         subexpr_forward_values_ϵ[i] = _forward_eval_ϵ(
+            d,
             subexpr,
             reinterpret(T, subexpr.forward_storage_ϵ),
             reinterpret(T, subexpr.partials_storage_ϵ),
@@ -302,6 +305,7 @@ function MOI.eval_hessian_lagrangian_product(d::NLPEvaluator, h, x, v, σ, μ)
     fill!(output_ϵ, zero(T))
     if d.objective !== nothing
         _forward_eval_ϵ(
+            d,
             d.objective,
             reinterpret(T, d.forward_storage_ϵ),
             reinterpret(T, d.partials_storage_ϵ),
@@ -322,6 +326,7 @@ function MOI.eval_hessian_lagrangian_product(d::NLPEvaluator, h, x, v, σ, μ)
     end
     for (i, con) in enumerate(d.constraints)
         _forward_eval_ϵ(
+            d,
             con,
             reinterpret(T, d.forward_storage_ϵ),
             reinterpret(T, d.partials_storage_ϵ),

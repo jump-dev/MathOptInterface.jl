@@ -126,6 +126,7 @@ function _hessian_slice_inner(d, ex, input_ϵ, output_ϵ, ::Type{T}) where {T}
     for i in ex.dependent_subexpressions
         subexpr = d.subexpressions[i]
         subexpr_forward_values_ϵ[i] = _forward_eval_ϵ(
+            d,
             subexpr,
             _reinterpret_unsafe(T, subexpr.forward_storage_ϵ),
             _reinterpret_unsafe(T, subexpr.partials_storage_ϵ),
@@ -135,6 +136,7 @@ function _hessian_slice_inner(d, ex, input_ϵ, output_ϵ, ::Type{T}) where {T}
         )
     end
     _forward_eval_ϵ(
+        d,
         ex,
         _reinterpret_unsafe(T, d.forward_storage_ϵ),
         _reinterpret_unsafe(T, d.partials_storage_ϵ),
@@ -178,6 +180,7 @@ end
 
 """
     _forward_eval_ϵ(
+        d::NLPEvaluator,
         ex::Union{_FunctionStorage,_SubexpressionStorage},
         storage_ϵ::AbstractVector{ForwardDiff.Partials{N,T}},
         partials_storage_ϵ::AbstractVector{ForwardDiff.Partials{N,T}},
@@ -195,6 +198,7 @@ components separate so that we don't need to recompute the real components.
 This assumes that `_reverse_model(d, x)` has already been called.
 """
 function _forward_eval_ϵ(
+    d::NLPEvaluator,
     ex::Union{_FunctionStorage,_SubexpressionStorage},
     storage_ϵ::AbstractVector{ForwardDiff.Partials{N,T}},
     partials_storage_ϵ::AbstractVector{ForwardDiff.Partials{N,T}},
@@ -328,10 +332,35 @@ function _forward_eval_ϵ(
                         recip_denominator,
                     )
                 elseif op > 6
-                    error(
-                        "User-defined operators not supported for hessian " *
-                        "computations",
+                    f_input = _UnsafeVectorView(d.jac_storage, n_children)
+                    for (i, c) in enumerate(children_idx)
+                        f_input[i] = ex.forward_storage[children_arr[c]]
+                    end
+                    H = _UnsafeHessianView(d.user_output_buffer, n_children)
+                    has_hessian = Nonlinear.eval_multivariate_hessian(
+                        user_operators,
+                        user_operators.multivariate_operators[node.index],
+                        H,
+                        f_input,
                     )
+                    if !has_hessian
+                        continue
+                    end
+                    for col in 1:n_children
+                        dual = zero(ForwardDiff.Partials{N,T})
+                        for row in 1:n_children
+                            # Make sure we get the lower-triangular component.
+                            h = row >= col ? H[row, col] : H[col, row]
+                            # Performance optimization: hessians can be quite
+                            # sparse
+                            if !iszero(h)
+                                i = children_arr[children_idx[row]]
+                                dual += h * storage_ϵ[i]
+                            end
+                        end
+                        i = children_arr[children_idx[col]]
+                        partials_storage_ϵ[i] = dual
+                    end
                 end
             elseif node.type == Nonlinear.NODE_CALL_UNIVARIATE
                 @inbounds child_idx = children_arr[ex.adj.colptr[k]]
