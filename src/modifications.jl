@@ -89,6 +89,36 @@ objectives is not supported by the model `model`.
 ```julia
 modify(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarConstantChange(10.0))
 ```
+
+## Multiple modifications in Constraint Functions
+
+    modify(model::ModelLike, cis::AbstractVector{<:ConstraintIndex}, changes::AbstractVector{<:AbstractFunctionModification})
+
+Apply multiple modifications specified by `changes` to the functions of constraints `cis`.
+
+An [`ModifyConstraintNotAllowed`](@ref) error is thrown if modifying
+constraints is not supported by the model `model`.
+
+### Examples
+
+```julia
+modify(model, [ci, ci], [ScalarCoefficientChange{Float64}(VariableIndex(1), 1.0); ScalarCoefficientChange{Float64}(VariableIndex(2), 0.5)])
+```
+
+## Multiple modifications in the Objective Function
+
+    modify(model::ModelLike, attr::ObjectiveFunction, changes::AbstractVector{<:AbstractFunctionModification})
+
+Apply multiple modifications specified by `changes` to the functions of constraints `cis`.
+
+An [`ModifyConstraintNotAllowed`](@ref) error is thrown if modifying
+constraints is not supported by the model `model`.
+
+### Examples
+
+```julia
+modify(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), [ScalarCoefficientChange{Float64}(VariableIndex(1), 1.0); ScalarCoefficientChange{Float64}(VariableIndex(2), 0.5)])
+```
 """
 function modify end
 
@@ -102,12 +132,12 @@ end
 
 function modify(
     model::ModelLike,
-    cis::AbstractVector{ConstraintIndex{F,S}},
+    cis::AbstractVector{<:ConstraintIndex},
     changes::AbstractVector{<:AbstractFunctionModification},
-) where {F,S}
+)
     @assert length(cis) == length(changes)
     for (i, ci) in enumerate(cis)
-        MOI.modify(model, ci, changes[i])
+        modify(model, ci, changes[i])
     end
     return
 end
@@ -126,7 +156,7 @@ function modify(
     changes::AbstractVector{<:AbstractFunctionModification},
 )
     for change in changes
-        MOI.modify(model, attr, change)
+        modify(model, attr, change)
     end
     return
 end

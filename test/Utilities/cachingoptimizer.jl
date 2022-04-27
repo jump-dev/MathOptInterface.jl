@@ -946,6 +946,58 @@ function test_final_touch_optimize()
     @test model.model_cache.index_map === nothing
 end
 
+function test_multiple_modifications()
+    m = MOIU.CachingOptimizer(MOIU.Model{Float64}(), MOIU.AUTOMATIC)
+
+    x = MOI.add_variables(m, 3)
+
+    saf = MOI.ScalarAffineFunction(
+        [
+            MOI.ScalarAffineTerm(1.0, x[1]),
+            MOI.ScalarAffineTerm(1.0, x[2]),
+            MOI.ScalarAffineTerm(1.0, x[3]),
+        ],
+        0.0,
+    )
+    ci1 = MOI.add_constraint(m, saf, MOI.LessThan(1.0))
+    ci2 = MOI.add_constraint(m, saf, MOI.LessThan(2.0))
+
+    MOI.set(m, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), saf)
+
+    fc1 = MOI.get(m, MOI.ConstraintFunction(), ci1)
+    @test MOI.coefficient.(fc1.terms) == [1.0, 1.0, 1.0]
+    fc2 = MOI.get(m, MOI.ConstraintFunction(), ci2)
+    @test MOI.coefficient.(fc2.terms) == [1.0, 1.0, 1.0]
+    obj = MOI.get(m, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.coefficient.(obj.terms) == [1.0, 1.0, 1.0]
+
+    changes_cis = [
+        MOI.ScalarCoefficientChange(MOI.VariableIndex(1), 4.0)
+        MOI.ScalarCoefficientChange(MOI.VariableIndex(1), 0.5)
+        MOI.ScalarCoefficientChange(MOI.VariableIndex(3), 2.0)
+    ]
+    MOI.modify(m, [ci1, ci2, ci2], changes_cis)
+
+    fc1 = MOI.get(m, MOI.ConstraintFunction(), ci1)
+    @test MOI.coefficient.(fc1.terms) == [4.0, 1.0, 1.0]
+    fc2 = MOI.get(m, MOI.ConstraintFunction(), ci2)
+    @test MOI.coefficient.(fc2.terms) == [0.5, 1.0, 2.0]
+
+    changes_obj = [
+        MOI.ScalarCoefficientChange(MOI.VariableIndex(1), 4.0)
+        MOI.ScalarCoefficientChange(MOI.VariableIndex(2), 10.0)
+        MOI.ScalarCoefficientChange(MOI.VariableIndex(3), 2.0)
+    ]
+    MOI.modify(
+        m,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        changes_obj,
+    )
+
+    obj = MOI.get(m, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
+    @test MOI.coefficient.(obj.terms) == [4.0, 10.0, 2.0]
+end
+
 end  # module
 
 TestCachingOptimizer.runtests()
