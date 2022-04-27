@@ -157,9 +157,9 @@ where ``\mathcal{E}`` is the exponential cone (see [`ExponentialCone`](@ref)),
 
 | Mathematical Constraint       | MOI Function                 | MOI Set                       |
 |-------------------------------|------------------------------|-------------------------------|
-| ``x^TQx + a^Tx + b \ge 0``    | `ScalarQuadraticFunction`    | `GreaterThan`                 |
-| ``x^TQx + a^Tx + b \le 0``    | `ScalarQuadraticFunction`    | `LessThan`                    |
-| ``x^TQx + a^Tx + b = 0``      | `ScalarQuadraticFunction`    | `EqualTo`                     |
+| ``\frac{1}{2}x^TQx + a^Tx + b \ge 0``    | `ScalarQuadraticFunction`    | `GreaterThan`                 |
+| ``\frac{1}{2}x^TQx + a^Tx + b \le 0``    | `ScalarQuadraticFunction`    | `LessThan`                    |
+| ``\frac{1}{2}x^TQx + a^Tx + b = 0``      | `ScalarQuadraticFunction`    | `EqualTo`                     |
 | Bilinear matrix inequality    | `VectorQuadraticFunction`    | `PositiveSemidefiniteCone...` |
 
 ### Discrete and logical constraints
