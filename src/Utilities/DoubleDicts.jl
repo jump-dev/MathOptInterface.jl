@@ -94,7 +94,10 @@ mutable struct IndexDoubleDictInner{F,S} <:
                AbstractDoubleDictInner{F,S,MOI.ConstraintIndex{F,S}}
     dict::Dict{Int64,Int64}
     function IndexDoubleDictInner{F,S}(d::IndexDoubleDict) where {F,S}
-        return new{F,S}(get!(d.dict, (F, S), Dict{Int64,Int64}()))
+        if !haskey(d.dict, (F, S))
+            d.dict[(F, S)] = Dict{Int64,Int64}()
+        end
+        return new{F,S}(d.dict[(F, S)])
     end
 end
 
