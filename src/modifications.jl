@@ -92,7 +92,11 @@ modify(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarConstant
 
 ## Multiple modifications in Constraint Functions
 
-    modify(model::ModelLike, cis::AbstractVector{<:ConstraintIndex}, changes::AbstractVector{<:AbstractFunctionModification})
+    modify(
+        model::ModelLike,
+        cis::AbstractVector{<:ConstraintIndex},
+        changes::AbstractVector{<:AbstractFunctionModification},
+    )
 
 Apply multiple modifications specified by `changes` to the functions of constraints `cis`.
 
@@ -102,12 +106,23 @@ constraints is not supported by the model `model`.
 ### Examples
 
 ```julia
-modify(model, [ci, ci], [ScalarCoefficientChange{Float64}(VariableIndex(1), 1.0); ScalarCoefficientChange{Float64}(VariableIndex(2), 0.5)])
+modify(
+    model,
+    [ci, ci],
+    [
+        ScalarCoefficientChange{Float64}(VariableIndex(1), 1.0),
+        ScalarCoefficientChange{Float64}(VariableIndex(2), 0.5),
+    ],
+)
 ```
 
 ## Multiple modifications in the Objective Function
 
-    modify(model::ModelLike, attr::ObjectiveFunction, changes::AbstractVector{<:AbstractFunctionModification})
+    modify(
+        model::ModelLike,
+        attr::ObjectiveFunction,
+        changes::AbstractVector{<:AbstractFunctionModification},
+    )
 
 Apply multiple modifications specified by `changes` to the functions of constraints `cis`.
 
@@ -117,7 +132,14 @@ constraints is not supported by the model `model`.
 ### Examples
 
 ```julia
-modify(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), [ScalarCoefficientChange{Float64}(VariableIndex(1), 1.0); ScalarCoefficientChange{Float64}(VariableIndex(2), 0.5)])
+modify(
+    model,
+    ObjectiveFunction{ScalarAffineFunction{Float64}}(),
+    [
+        ScalarCoefficientChange{Float64}(VariableIndex(1), 1.0),
+        ScalarCoefficientChange{Float64}(VariableIndex(2), 0.5),
+    ],
+)
 ```
 """
 function modify end
@@ -136,8 +158,8 @@ function modify(
     changes::AbstractVector{<:AbstractFunctionModification},
 )
     @assert length(cis) == length(changes)
-    for (i, ci) in enumerate(cis)
-        modify(model, ci, changes[i])
+    for (ci, change) in zip(cis, changes)
+        modify(model, ci, change)
     end
     return
 end
