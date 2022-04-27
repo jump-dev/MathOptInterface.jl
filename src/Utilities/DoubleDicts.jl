@@ -61,7 +61,7 @@ mutable struct DoubleDictInner{F,S,V} <: AbstractDoubleDictInner{F,S,V}
         if !haskey(d.dict, (F, S))
             d.dict[(F, S)] = Dict{Int64,V}()
         end
-        return new{F,S, V}(d.dict[(F, S)])
+        return new{F,S,V}(d.dict[(F, S)])
     end
 end
 
