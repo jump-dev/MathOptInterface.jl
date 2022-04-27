@@ -67,6 +67,10 @@ function Base.getindex(map::IndexMap, key::MOI.ConstraintIndex{F,S}) where {F,S}
     return map.con_map[key]::MOI.ConstraintIndex{F,S}
 end
 
+function Base.getindex(map::IndexMap, ::Type{F}, ::Type{S}) where {F,S}
+    return map.con_map[F, S]
+end
+
 function Base.setindex!(
     map::IndexMap,
     value::MOI.VariableIndex,
