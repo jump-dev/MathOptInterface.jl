@@ -313,6 +313,9 @@ julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}());
 
 julia> MOI.set(model, MOI.NLPBlock(), block);
 ```
+!!! warning
+    Only call [`NLPBlockData`](@ref) once you have finished modifying the
+    problem in `model`.
 
 ## Expression-graph representation
 
