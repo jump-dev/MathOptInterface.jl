@@ -100,8 +100,8 @@ modify(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarConstant
 
 Apply multiple modifications specified by `changes` to the functions of constraints `cis`.
 
-An [`ModifyConstraintNotAllowed`](@ref) error is thrown if modifying
-constraints is not supported by the model `model`.
+A [`ModifyConstraintNotAllowed`](@ref) error is thrown if modifying
+constraints is not supported by `model`.
 
 ### Examples
 
@@ -126,8 +126,8 @@ modify(
 
 Apply multiple modifications specified by `changes` to the functions of constraints `cis`.
 
-An [`ModifyConstraintNotAllowed`](@ref) error is thrown if modifying
-constraints is not supported by the model `model`.
+A [`ModifyObjectiveNotAllowed`](@ref) error is thrown if modifying
+objective coefficients is not supported by `model`.
 
 ### Examples
 
