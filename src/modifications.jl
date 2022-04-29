@@ -95,6 +95,58 @@ objectives is not supported by the model `model`.
 ```julia
 modify(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarConstantChange(10.0))
 ```
+
+## Multiple modifications in Constraint Functions
+
+    modify(
+        model::ModelLike,
+        cis::AbstractVector{<:ConstraintIndex},
+        changes::AbstractVector{<:AbstractFunctionModification},
+    )
+
+Apply multiple modifications specified by `changes` to the functions of constraints `cis`.
+
+A [`ModifyConstraintNotAllowed`](@ref) error is thrown if modifying
+constraints is not supported by `model`.
+
+### Examples
+
+```julia
+modify(
+    model,
+    [ci, ci],
+    [
+        ScalarCoefficientChange{Float64}(VariableIndex(1), 1.0),
+        ScalarCoefficientChange{Float64}(VariableIndex(2), 0.5),
+    ],
+)
+```
+
+## Multiple modifications in the Objective Function
+
+    modify(
+        model::ModelLike,
+        attr::ObjectiveFunction,
+        changes::AbstractVector{<:AbstractFunctionModification},
+    )
+
+Apply multiple modifications specified by `changes` to the functions of constraints `cis`.
+
+A [`ModifyObjectiveNotAllowed`](@ref) error is thrown if modifying
+objective coefficients is not supported by `model`.
+
+### Examples
+
+```julia
+modify(
+    model,
+    ObjectiveFunction{ScalarAffineFunction{Float64}}(),
+    [
+        ScalarCoefficientChange{Float64}(VariableIndex(1), 1.0),
+        ScalarCoefficientChange{Float64}(VariableIndex(2), 0.5),
+    ],
+)
+```
 """
 function modify end
 
@@ -108,8 +160,31 @@ end
 
 function modify(
     model::ModelLike,
+    cis::AbstractVector{<:ConstraintIndex},
+    changes::AbstractVector{<:AbstractFunctionModification},
+)
+    @assert length(cis) == length(changes)
+    for (ci, change) in zip(cis, changes)
+        modify(model, ci, change)
+    end
+    return
+end
+
+function modify(
+    model::ModelLike,
     attr::ObjectiveFunction,
     change::AbstractFunctionModification,
 )
     return throw_modify_not_allowed(attr, change)
+end
+
+function modify(
+    model::ModelLike,
+    attr::ObjectiveFunction,
+    changes::AbstractVector{<:AbstractFunctionModification},
+)
+    for change in changes
+        modify(model, attr, change)
+    end
+    return
 end
