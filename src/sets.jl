@@ -1128,8 +1128,8 @@ This constraint is sometimes called `distinct`.
 
 ```julia
 model = Utilities.Model{Float64}()
-x = [add_constrained_variable(model, MOI.Integer()) for _ in 1:3]
-add_constraint(model, x, AllDifferent(3))
+x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables(x), AllDifferent(3))
 # enforces `x[1] != x[2]` AND `x[1] != x[3]` AND `x[2] != x[3]`.
 ```
 """
