@@ -100,6 +100,7 @@ Complements
 
 ```@docs
 AllDifferent
+CountDistinct
 ```
 
 ## Matrix sets
