@@ -109,6 +109,7 @@ _set(::Type{MOI.LogDetConeSquare}) = MOI.LogDetConeSquare(3)
 _set(::Type{MOI.RootDetConeTriangle}) = MOI.RootDetConeTriangle(3)
 _set(::Type{MOI.RootDetConeSquare}) = MOI.RootDetConeSquare(3)
 _set(::Type{MOI.Complements}) = MOI.Complements(2)
+_set(::Type{MOI.AllDifferent}) = MOI.AllDifferent(3)
 
 function _set(
     ::Type{MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}},
@@ -272,6 +273,7 @@ for s in [
     :RootDetConeTriangle,
     :RootDetConeSquare,
     :Complements,
+    :AllDifferent,
 ]
     S = getfield(MOI, s)
     functions = if S <: MOI.AbstractScalarSet

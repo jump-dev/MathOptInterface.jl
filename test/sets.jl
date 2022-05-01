@@ -139,6 +139,7 @@ function test_sets_DimensionMismatch()
         (MOI.LogDetConeSquare, 0),
         (MOI.RootDetConeTriangle, 0),
         (MOI.RootDetConeSquare, 0),
+        (MOI.AllDifferent, 0),
     )
         @test_throws DimensionMismatch S(min_dimension - 1)
         @test S(min_dimension) isa S

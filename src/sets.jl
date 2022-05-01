@@ -1116,6 +1116,33 @@ struct Complements <: AbstractVectorSet
     end
 end
 
+"""
+    AllDifferent(dimension::Int)
+
+Constrain the elements of a vector-valued function so that no two elements take
+the same value.
+
+This constraint is sometimes called `distinct`.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables(x), AllDifferent(3))
+# enforces `x[1] != x[2]` AND `x[1] != x[3]` AND `x[2] != x[3]`.
+```
+"""
+struct AllDifferent <: AbstractVectorSet
+    dimension::Int
+    function AllDifferent(dimension::Base.Integer)
+        if dimension < 0
+            throw(DimensionMismatch("Dimension of AllDifferent must be >= 0."))
+        end
+        return new(dimension)
+    end
+end
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
@@ -1150,6 +1177,7 @@ function Base.copy(
         ZeroOne,
         Semicontinuous,
         Semiinteger,
+        AllDifferent,
     },
 )
     return set

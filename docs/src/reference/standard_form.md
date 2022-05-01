@@ -96,6 +96,12 @@ Indicator
 Complements
 ```
 
+## Constraint programming sets
+
+```@docs
+AllDifferent
+```
+
 ## Matrix sets
 
 Matrix sets are vectorized in order to be subtypes of
