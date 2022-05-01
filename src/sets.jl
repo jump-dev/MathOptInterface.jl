@@ -1156,8 +1156,8 @@ This constraint is sometimes called `nvalues`.
 ```julia
 model = Utilities.Model{Float64}()
 n = add_constrained_variable(model, MOI.Integer())
-x = [add_constrained_variable(model, MOI.Integer()) for _ in 1:3]
-add_constraint(model, vcat(n, x), CountDistinct(4))
+x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables(vcat(n, x)), CountDistinct(4))
 # if n == 1, then x[1] == x[2] == x[3]
 # if n == 2, then x[1] == x[2] != x[3] || x[1] != x[2] == x[3]
 # if n == 3, then x[1] != x[2] != x[3]
@@ -1170,10 +1170,10 @@ When the first element is `dimension - 1`, `CountDistinct` is equivalent to an
 
 ```julia
 model = Utilities.Model{Float64}()
-x = [add_constrained_variable(model, MOI.Integer()) for _ in 1:3]
-add_constraint(model, vcat(3, x), CountDistinct(4))
+x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables(vcat(3, x)), CountDistinct(4))
 # equivalent to
-add_constraint(model, x, AllDifferent(3))
+add_constraint(model, VectorOfVariables(x), AllDifferent(3))
 ```
 """
 struct CountDistinct <: AbstractVectorSet
