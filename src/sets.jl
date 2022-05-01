@@ -1216,6 +1216,38 @@ end
 
 Base.:(==)(x::Among, y::Among) = x.dimension == y.dimension && x.set == y.set
 
+"""
+    CountAtLeast{T}(dimension::Int, n::Int, set::Set{Int})
+
+The set ``\\{x \\in \\mathbb{R}^d\\}`` such that at least `n` elements of the
+vector `x` take one of the values in `set`.
+
+This constraint is sometimes called `at_least`.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables(x), CountAtLeast(3, 2, Set([3, 4, 5])))
+```
+"""
+struct CountAtLeast <: AbstractVectorSet
+    dimension::Int
+    n::Int
+    set::Set{Int}
+    function Among(dimension::Base.Integer, n::Base.Integer, set::Set{Int})
+        if dimension < 0
+            throw(DimensionMismatch("Dimension of CountAtLeast must be >= 0."))
+        end
+        return new(dimension, n, set)
+    end
+end
+
+function Base.:(==)(x::CountAtLeast, y::CountAtLeast)
+    return x.dimension == y.dimension && x.n == y.n && x.set == y.set
+end
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
@@ -1253,12 +1285,14 @@ function Base.copy(
         AllDifferent,
         CountDistinct,
         Among,
+        CountAtLeast,
     },
 )
     return set
 end
 Base.copy(set::S) where {S<:Union{SOS1,SOS2}} = S(copy(set.weights))
 Base.copy(set::Among) = Among(set.dimension, copy(set.set))
+Base.copy(set::CountAtLeast) = CountAtLeast(set.dimension, set.n, copy(set.set))
 
 """
     supports_dimension_update(S::Type{<:MOI.AbstractVectorSet})

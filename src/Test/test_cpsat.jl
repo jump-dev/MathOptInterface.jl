@@ -122,3 +122,45 @@ function setup_test(
     )
     return
 end
+
+"""
+    test_cpsat_CountAtLeast(model::MOI.ModelLike, config::Config)
+
+Add a VectorOfVariables-in-Among constraint.
+"""
+function test_cpsat_CountAtLeast(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.CountAtLeast,
+    )
+    @requires MOI.supports_add_constrained_variable(model, MOI.Integer)
+    @requires _supports(config, MOI.optimize!)
+    y = [MOI.add_constrained_variable(model, MOI.Integer()) for _ in 1:3]
+    x = first.(y)
+    set = Set([3, 4])
+    MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Among(3, 2, set))
+    MOI.optimize!(model)
+    x_val = round.(Int, MOI.get.(model, MOI.VariablePrimal(), x))
+    @test sum(x_val[i] in set for i in 1:length(x)) >= 2
+    return
+end
+
+function setup_test(
+    ::typeof(test_cpsat_CountAtLeast),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, T[3, 4, 0]),
+        ),
+    )
+    return
+end
