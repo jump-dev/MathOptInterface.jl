@@ -1221,6 +1221,52 @@ end
 
 Base.:(==)(x::Among, y::Among) = x.dimension == y.dimension && x.set == y.set
 
+"""
+    CountAtLeast(n::Int, d::Vector{Int}, set::Set{Int})
+
+The set ``\\{x \\in \\mathbb{Z}^{d_1 + d_2 + \\ldots d_N}\\}``, where `x` is
+partitioned into `N` subsets (``\\{x_1,  \\ldots, x_{d_1}\\}``,
+``\\{x_{d_1, 1},  \\ldots, x_{d_1 + d_2}\\}`` and so on), and at least ``n``
+elements of each subset take one of the values in `set`.
+
+## Also known as
+
+This constraint is called `at_least` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+a, _ = add_constrained_variable(model, Integer())
+b, _ = add_constrained_variable(model, Integer())
+c, _ = add_constrained_variable(model, Integer())
+# To ensure that `3` appears at least once in each of the subsets {a, b}, {b, c}
+x, d, set = [a, b, b, c], [2, 2], [3]
+add_constraint(model, VectorOfVariables(x), CountAtLeast(1, d, Set(set)))
+```
+"""
+struct CountAtLeast <: AbstractVectorSet
+    n::Int
+    partitions::Vector{Int}
+    set::Set{Int}
+    function CountAtLeast(
+        n::Base.Integer,
+        partitions::Vector{Int},
+        set::Set{Int},
+    )
+        if any(p <= 0 for p in partitions)
+            throw(DimensionMismatch("Invalid partition dimension."))
+        end
+        return new(n, partitions, set)
+    end
+end
+
+dimension(s::CountAtLeast) = sum(s.partitions)
+
+function Base.:(==)(x::CountAtLeast, y::CountAtLeast)
+    return x.n == y.n && x.partitions == y.partitions && x.set == y.set
+end
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
@@ -1258,12 +1304,17 @@ function Base.copy(
         AllDifferent,
         CountDistinct,
         Among,
+        CountAtLeast,
     },
 )
     return set
 end
 Base.copy(set::S) where {S<:Union{SOS1,SOS2}} = S(copy(set.weights))
 Base.copy(set::Among) = Among(set.dimension, copy(set.set))
+
+function Base.copy(set::CountAtLeast)
+    return CountAtLeast(set.n, copy(set.partitions), copy(set.set))
+end
 
 """
     supports_dimension_update(S::Type{<:MOI.AbstractVectorSet})
