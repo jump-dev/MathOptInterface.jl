@@ -1143,6 +1143,54 @@ struct AllDifferent <: AbstractVectorSet
     end
 end
 
+"""
+    CountDistinct(d::Int)
+
+The set ``\\{(n, x) \\in \\mathbb{Z}^{1+d}\\}`` such that the number of distinct
+values in `x` is `n`.
+
+## Also known as
+
+This constraint is called `nvalues` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+n = add_constrained_variable(model, Integer())
+x = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables(vcat(n, x)), CountDistinct(4))
+# if n == 1, then x[1] == x[2] == x[3]
+# if n == 2, then
+#   x[1] == x[2] != x[3] ||
+#   x[1] != x[2] == x[3] ||
+#   x[1] == x[3] != x[2]
+# if n == 3, then x[1] != x[2], x[2] != x[3] and x[3] != x[1]
+```
+
+## Relationship to AllDifferent
+
+When the first element is `d - 1`, `CountDistinct` is equivalent to an
+[`AllDifferent`](@ref) constraint.
+
+```julia
+model = Utilities.Model{Float64}()
+x = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables(vcat(3, x)), CountDistinct(4))
+# equivalent to
+add_constraint(model, VectorOfVariables(x), AllDifferent(3))
+```
+"""
+struct CountDistinct <: AbstractVectorSet
+    dimension::Int
+    function CountDistinct(dimension::Base.Integer)
+        if dimension < 1
+            throw(DimensionMismatch("Dimension of CountDistinct must be >= 1."))
+        end
+        return new(dimension)
+    end
+end
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
@@ -1178,6 +1226,7 @@ function Base.copy(
         Semicontinuous,
         Semiinteger,
         AllDifferent,
+        CountDistinct,
     },
 )
     return set
