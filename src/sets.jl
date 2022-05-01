@@ -1217,7 +1217,7 @@ end
 Base.:(==)(x::Among, y::Among) = x.dimension == y.dimension && x.set == y.set
 
 """
-    CountAtLeast{T}(dimension::Int, n::Int, set::Set{Int})
+    CountAtLeast(dimension::Int, n::Int, set::Set{Int})
 
 The set ``\\{x \\in \\mathbb{R}^d\\}`` such that at least `n` elements of the
 vector `x` take one of the values in `set`.

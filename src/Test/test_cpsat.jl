@@ -126,7 +126,7 @@ end
 """
     test_cpsat_CountAtLeast(model::MOI.ModelLike, config::Config)
 
-Add a VectorOfVariables-in-Among constraint.
+Add a VectorOfVariables-in-CountAtLeast constraint.
 """
 function test_cpsat_CountAtLeast(
     model::MOI.ModelLike,
