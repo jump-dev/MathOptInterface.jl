@@ -101,6 +101,7 @@ Complements
 ```@docs
 AllDifferent
 Among
+CountAtLeast
 CountDistinct
 ```
 

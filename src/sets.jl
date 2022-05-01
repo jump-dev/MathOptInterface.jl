@@ -1216,6 +1216,55 @@ end
 
 Base.:(==)(x::Among, y::Among) = x.dimension == y.dimension && x.set == y.set
 
+"""
+    CountAtLeast(n::Int, partitions::Vector{Int}, set::Set{Int})
+
+The set ``\\{x \\in \\mathbb{R}^{d_1 + d_2 + \\ldots d_N}\\}``, where `x` is
+partitioned into `N` subsets (``\\{x_1,  \\ldots, x_{d_1}\\}``,
+``\\{x_{1 + d_1},  \\ldots, x_{d_1 + d_2}\\}`` and so on), and at least ``n``
+elements of each subset take one of the values in `set`.
+
+This constraint is sometimes called `at_least`.
+
+## Example
+
+```julia
+model = MOI.Utilities.Model{Float64}()
+x, _ = MOI.add_constrained_variable(model, MOI.Integer())
+y, _ = MOI.add_constrained_variable(model, MOI.Integer())
+z, _ = MOI.add_constrained_variable(model, MOI.Integer())
+# To represent the subsets [{x, y}, {y, z}]
+variables = [x, y, y, z]
+partitions = [2, 2]
+MOI.add_constraint(
+    model,
+    MOI.VectorOfVariables(variables),
+    MOI.CountAtLeast(1, partitions, Set([3])),
+)
+```
+"""
+struct CountAtLeast <: AbstractVectorSet
+    n::Int
+    partitions::Vector{Int}
+    set::Set{Int}
+    function CountAtLeast(
+        n::Base.Integer,
+        partitions::Vector{Int},
+        set::Set{Int},
+    )
+        if any(p <= 0 for p in partitions)
+            throw(DimensionMismatch("Invalid partition dimension."))
+        end
+        return new(n, partitions, set)
+    end
+end
+
+dimension(s::CountAtLeast) = sum(s.partitions)
+
+function Base.:(==)(x::CountAtLeast, y::CountAtLeast)
+    return x.n == y.n && x.partitions == y.partitions && x.set == y.set
+end
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
@@ -1253,12 +1302,17 @@ function Base.copy(
         AllDifferent,
         CountDistinct,
         Among,
+        CountAtLeast,
     },
 )
     return set
 end
 Base.copy(set::S) where {S<:Union{SOS1,SOS2}} = S(copy(set.weights))
 Base.copy(set::Among) = Among(set.dimension, copy(set.set))
+
+function Base.copy(set::CountAtLeast)
+    return CountAtLeast(set.n, copy(set.partitions), copy(set.set))
+end
 
 """
     supports_dimension_update(S::Type{<:MOI.AbstractVectorSet})
