@@ -155,6 +155,7 @@ function test_sets_DimensionMismatch()
     @test_throws DimensionMismatch MOI.RelativeEntropyCone(2)
     @test_throws DimensionMismatch MOI.Complements(-3)
     @test_throws DimensionMismatch MOI.Complements(3)
+    @test_throws DimensionMismatch MOI.Among(0, Set([1, 2]))
     return
 end
 
