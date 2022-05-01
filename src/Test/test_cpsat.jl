@@ -122,3 +122,53 @@ function setup_test(
     )
     return
 end
+
+"""
+    test_cpsat_CountAtLeast(model::MOI.ModelLike, config::Config)
+
+Add a VectorOfVariables-in-CountAtLeast constraint.
+"""
+function test_cpsat_CountAtLeast(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.CountAtLeast,
+    )
+    @requires MOI.supports_add_constrained_variable(model, MOI.Integer)
+    @requires _supports(config, MOI.optimize!)
+    x, _ = MOI.add_constrained_variable(model, MOI.Integer())
+    y, _ = MOI.add_constrained_variable(model, MOI.Integer())
+    z, _ = MOI.add_constrained_variable(model, MOI.Integer())
+    variables = [x, y, y, z]
+    partitions = [2, 2]
+    set = Set([3])
+    MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables(variables),
+        MOI.CountAtLeast(1, partitions, set),
+    )
+    MOI.optimize!(model)
+    x_val = round.(Int, MOI.get.(model, MOI.VariablePrimal(), [x, y, z]))
+    @test x_val[1] == 3 || x_val[2] == 3
+    @test x_val[2] == 3 || x_val[3] == 3
+    return
+end
+
+function setup_test(
+    ::typeof(test_cpsat_CountAtLeast),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, T[0, 3, 0]),
+        ),
+    )
+    return
+end
