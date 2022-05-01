@@ -1236,7 +1236,11 @@ struct CountAtLeast <: AbstractVectorSet
     dimension::Int
     n::Int
     set::Set{Int}
-    function Among(dimension::Base.Integer, n::Base.Integer, set::Set{Int})
+    function CountAtLeast(
+        dimension::Base.Integer,
+        n::Base.Integer,
+        set::Set{Int},
+    )
         if dimension < 0
             throw(DimensionMismatch("Dimension of CountAtLeast must be >= 0."))
         end
