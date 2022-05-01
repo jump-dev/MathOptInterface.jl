@@ -111,6 +111,7 @@ _set(::Type{MOI.RootDetConeSquare}) = MOI.RootDetConeSquare(3)
 _set(::Type{MOI.Complements}) = MOI.Complements(2)
 _set(::Type{MOI.AllDifferent}) = MOI.AllDifferent(3)
 _set(::Type{MOI.CountDistinct}) = MOI.CountDistinct(4)
+_set(::Type{MOI.Among}) = MOI.Among(4, Set([3, 4]))
 
 function _set(
     ::Type{MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}},
@@ -276,6 +277,7 @@ for s in [
     :Complements,
     :AllDifferent,
     :CountDistinct,
+    :Among,
 ]
     S = getfield(MOI, s)
     functions = if S <: MOI.AbstractScalarSet
