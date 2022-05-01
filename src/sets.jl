@@ -1187,7 +1187,7 @@ struct CountDistinct <: AbstractVectorSet
 end
 
 """
-    Among{T}(dimension::Int, set::Set{Int})
+    Among(dimension::Int, set::Set{Int})
 
 The set ``\\{(n, x) \\in \\mathbb{R}^{1+d}\\}`` such that `n` elements of the
 vector `x` take on of the values in `set`.
@@ -1199,8 +1199,8 @@ This constraint is sometimes called `among`.
 ```julia
 model = Utilities.Model{Float64}()
 n = add_constrained_variable(model, MOI.Integer())
-x = [add_constrained_variable(model, MOI.Integer()) for _ in 1:3]
-add_constraint(model, vcat(n, x), Among(2, Set([3, 4, 5])))
+x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables(vcat(n, x)), Among(2, Set([3, 4, 5])))
 ```
 """
 struct Among <: AbstractVectorSet

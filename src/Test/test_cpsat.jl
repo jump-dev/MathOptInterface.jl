@@ -94,11 +94,7 @@ end
 Add a VectorOfVariables-in-Among constraint.
 """
 function test_cpsat_Among(model::MOI.ModelLike, config::Config{T}) where {T}
-    @requires MOI.supports_constraint(
-        model,
-        MOI.VectorOfVariables,
-        MOI.Among{Int},
-    )
+    @requires MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Among)
     @requires MOI.supports_add_constrained_variable(model, MOI.Integer)
     @requires _supports(config, MOI.optimize!)
     y = [MOI.add_constrained_variable(model, MOI.Integer()) for _ in 1:4]
