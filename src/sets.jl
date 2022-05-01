@@ -1214,6 +1214,8 @@ struct Among <: AbstractVectorSet
     end
 end
 
+Base.:(==)(x::Among, y::Among) = x.dimension == y.dimension && x.set == y.set
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
