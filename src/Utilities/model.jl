@@ -788,6 +788,7 @@ const LessThanIndicatorZero{T} =
         MOI.LogDetConeTriangle,
         MOI.LogDetConeSquare,
         MOI.AllDifferent,
+        MOI.CountDistinct,
     ),
     (
         MOI.PowerCone,

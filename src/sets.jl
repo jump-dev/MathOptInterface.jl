@@ -1143,6 +1143,49 @@ struct AllDifferent <: AbstractVectorSet
     end
 end
 
+"""
+    CountDistinct(dimension::Int)
+
+The set ``\\{(n, x) \\in \\mathbb{R}^{1+d}\\}`` such that the number of distinct
+values in `x` is `n`.
+
+This constraint is sometimes called `nvalues`.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+n = add_constrained_variable(model, MOI.Integer())
+x = [add_constrained_variable(model, MOI.Integer()) for _ in 1:3]
+add_constraint(model, vcat(n, x), CountDistinct(4))
+# if n == 1, then x[1] == x[2] == x[3]
+# if n == 2, then x[1] == x[2] != x[3] || x[1] != x[2] == x[3]
+# if n == 3, then x[1] != x[2] != x[3]
+```
+
+## Relationship to AllDifferent
+
+When the first element is `dimension - 1`, `CountDistinct` is equivalent to an
+[`AllDifferent`](@ref) constraint.
+
+```julia
+model = Utilities.Model{Float64}()
+x = [add_constrained_variable(model, MOI.Integer()) for _ in 1:3]
+add_constraint(model, vcat(3, x), CountDistinct(4))
+# equivalent to
+add_constraint(model, x, AllDifferent(3))
+```
+"""
+struct CountDistinct <: AbstractVectorSet
+    dimension::Int
+    function CountDistinct(dimension::Base.Integer)
+        if dimension < 1
+            throw(DimensionMismatch("Dimension of CountDistinct must be >= 1."))
+        end
+        return new(dimension)
+    end
+end
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
@@ -1178,6 +1221,7 @@ function Base.copy(
         Semicontinuous,
         Semiinteger,
         AllDifferent,
+        CountDistinct,
     },
 )
     return set
