@@ -1186,6 +1186,34 @@ struct CountDistinct <: AbstractVectorSet
     end
 end
 
+"""
+    Among{T}(dimension::Int, set::Set{Int})
+
+The set ``\\{(n, x) \\in \\mathbb{R}^{1+d}\\}`` such that `n` elements of the
+vector `x` take on of the values in `set`.
+
+This constraint is sometimes called `among`.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+n = add_constrained_variable(model, MOI.Integer())
+x = [add_constrained_variable(model, MOI.Integer()) for _ in 1:3]
+add_constraint(model, vcat(n, x), Among(2, Set([3, 4, 5])))
+```
+"""
+struct Among <: AbstractVectorSet
+    dimension::Int
+    set::Set{Int}
+    function Among(dimension::Base.Integer, set::Set{Int})
+        if dimension < 1
+            throw(DimensionMismatch("Dimension of Among must be >= 1."))
+        end
+        return new(dimension, set)
+    end
+end
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
@@ -1222,11 +1250,13 @@ function Base.copy(
         Semiinteger,
         AllDifferent,
         CountDistinct,
+        Among,
     },
 )
     return set
 end
 Base.copy(set::S) where {S<:Union{SOS1,SOS2}} = S(copy(set.weights))
+Base.copy(set::Among) = Among(set.dimension, copy(set.set))
 
 """
     supports_dimension_update(S::Type{<:MOI.AbstractVectorSet})
