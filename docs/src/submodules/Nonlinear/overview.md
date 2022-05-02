@@ -303,7 +303,7 @@ However, we cannot call gradient terms such as
 not have the capability to differentiate a nonlinear expression.
 
 If, instead, we pass [`Nonlinear.SparseReverseMode`](@ref), then we get access
-to `:Grad`, the gradient of the objective function, `:Jac`, the jacobian matrix
+to `:Grad`, the gradient of the objective function, `:Jac`, the Jacobian matrix
 of the constraints, `:JacVec`, the ability to compute Jacobian-vector products,
 and `:ExprGraph`.
 ```jldoctest nonlinear_developer
@@ -319,7 +319,7 @@ Nonlinear.Evaluator with available features:
   * :ExprGraph
 ```
 
-However, before calling anything, we need to call [`initialize`](@ref):
+However, before using the evaluator, we need to call [`initialize`](@ref):
 ```jldoctest nonlinear_developer
 julia> MOI.initialize(evaluator, [:Grad, :Jac, :JacVec, :ExprGraph])
 ```
@@ -335,9 +335,9 @@ julia> MOI.eval_objective(evaluator, x)
 ```
 and [`eval_objective_gradient`](@ref):
 ```jldoctest nonlinear_developer
-julia> grad = [NaN]
+julia> grad = [0.0]
 1-element Vector{Float64}:
- NaN
+ 0.0
 
 julia> MOI.eval_objective_gradient(evaluator, grad, x)
 
@@ -551,52 +551,59 @@ subexpressions in the model.
 optimization problem using sparse reverse-mode automatic differentiation (AD).
 
 This section does not attempt to explain how sparse reverse-mode AD works, but
-instead explains why MOI contains it's own implementation, and highlights
+instead explains why MOI contains its own implementation, and highlights
 notable differences from similar packages.
 
 !!! warning
-    You should not interact with `ReverseAD` directly. Instead, you should
-    create a [`Nonlinear.Evaluator`](@ref) object with
-    [`Nonlinear.SparseReverseMode`](@ref), and then query the MOI API methods.
+    Don't use the API in `ReverseAD` to compute derivatives. Instead, create a
+    [`Nonlinear.Evaluator`](@ref) object with [`Nonlinear.SparseReverseMode`](@ref)
+    as the backend, and then query the MOI API methods.
 
-### Why another AD package?
+### Design goals
 
 The JuliaDiff organization maintains a [list of packages](https://juliadiff.org)
-for doing AD in Julia. At last count, there were at least ten packages–not
-including `ReverseAD`–for reverse-mode AD in Julia. Given this multitude, why
-does MOI maintain another implementation instead of re-using existing tooling?
+for doing AD in Julia. At last count, there were at least ten packages–-not
+including `ReverseAD`-–for reverse-mode AD in Julia. `ReverseAD` exists because
+it has a different set of design goals.
 
-Here are four reasons:
+ * **Goal: handle scale and sparsity**
+   The types of functions that MOI computes derivatives of have two key
+   characteristics: they can be very large scale (10^5 or more functions across
+   10^5 or more variables) and they are very sparse. For large problems, it is
+   common for the hessian to have `O(n)` non-zero elements instead of `O(n^2)`
+   if it was dense. To the best of our knowledge, `ReverseAD` is the only
+   reverse-mode AD system in Julia that handles sparsity by default.
+ * **Goal: limit the scope to improve robustness**
+   Most other AD packages accept arbitrary Julia functions as input and then
+   trace an expression graph using operator overloading. This means they must
+   deal (or detect and ignore) with control flow, I/O, and other vagaries of
+   Julia. In contrast, `ReverseAD` only accepts functions in the form of
+   [`Nonlinear.Expression`](@ref), which greatly limits the range of syntax that
+   it must deal with. By reducing the scope of what we accept as input to
+   functions relevant for mathematical optimization, we can provide a simpler
+   implementation with various performance optimizations.
+ * **Goal: provide outputs which match what solvers expect**
+   Other AD packages focus on differentiating individual Julia functions. In
+   constrast, `ReverseAD` has a very specific use-case: to generate outputs
+   needed by the MOI nonlinear API. This means it needs to efficiently compute
+   sparse Hessians, and it needs subexpression handling to avoid recomputing
+   subexpressions that are shared between functions.
 
- * **Scale and Sparsity:** the types of functions that MOI computes derivatives
-   of have two key characteristics: they can be very large scale (10^5 or more
-   functions across 10^5 or more variables) and they are very sparse. For large
-   problems, it is common for the hessian to have `O(n)` non-zero elements
-   instead of `O(n^2)` if it was dense. To the best of our knowledge,
-   `ReverseAD` is the only reverse-mode AD system in Julia that handles sparsity
-   by default. The lack of sparsity support is _the_ main reason why we do no
-   use a generic package.
- * **Limited scope:** most other AD packages accept arbitrary Julia functions as
-   input and then trace an expression graph using operator overloading. This
-   means they must deal (or detect and ignore) with control flow, I/O, and other
-   vagaries of Julia. In contrast, `ReverseAD` only accepts functions in the
-   form of [`Nonlinear.Expression`](@ref), which greatly limits the range of
-   syntax that it must deal with. By reducing the scope of what we accept as
-   input to functions relevant for mathematical optimization, we can provide a
-   simpler implementation with various performance optimizations.
- * **Historical:** `ReverseAD` started life as [ReverseDiffSparse.jl](https://github.com/mlubin/ReverseDiffSparse.jl),
-   development of which begain in early 2014(!). This was well before the other
-   packages started development. Because we had a well-tested, working AD in
-   JuMP, there was less motivation to contribute to and explore other AD
-   packages. The lack of historical interaction also meant that other packages
-   were not optimized for the types of problems that JuMP is built for (i.e.,
-   large-scale sparse problems). When we first created MathOptInterface, we kept
-   the AD in JuMP to simplify the transition, and post-poned the development of
-   a first-class nonlinear interface in MathOptInterface.
- * **Technical debt** Prior to the introduction of `Nonlinear`, JuMP's nonlinear
-   implementation was a confusing mix of functions and types spread across the
-   code base and in the private `_Derivatives` submodule. This made it hard to
-   swap the AD system for another. The main motivation for refactoring JuMP to
-   create the `Nonlinear` submodule in MathOptInterface was to abstract the
-   interface between JuMP and the AD system, allowing us to swap-in and test new
-   AD systems in the future.
+### History
+
+`ReverseAD` started life as [ReverseDiffSparse.jl](https://github.com/mlubin/ReverseDiffSparse.jl),
+development of which begain in early 2014(!). This was well before the other
+packages started development. Because we had a well-tested, working AD in JuMP,
+there was less motivation to contribute to and explore other AD packages. The
+lack of historical interaction also meant that other packages were not optimized
+for the types of problems that JuMP is built for (i.e., large-scale sparse
+problems). When we first created MathOptInterface, we kept the AD in JuMP to
+simplify the transition, and post-poned the development of a first-class
+nonlinear interface in MathOptInterface.
+
+Prior to the introduction of `Nonlinear`, JuMP's nonlinear implementation was a
+confusing mix of functions and types spread across the code base and in the
+private `_Derivatives` submodule. This made it hard to swap the AD system for
+another. The main motivation for refactoring JuMP to create the `Nonlinear`
+submodule in MathOptInterface was to abstract the interface between JuMP and the
+AD system, allowing us to swap-in and test new AD systems in the future.
