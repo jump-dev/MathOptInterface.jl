@@ -94,7 +94,7 @@ function UndirectedGraph(I, J, nel)
         offsets[k+1] = offsets[k] + adjcount[k]
     end
     fill!(adjcount, 0)
-    edges = Array{Tuple{Int,Int}}(undef, n_edges)
+    edges = Vector{Tuple{Int,Int}}(undef, n_edges)
     adjlist = Vector{Int}(undef, offsets[nel+1] - 1)
     edgeindex = Vector{Int}(undef, length(adjlist))
     edge_count = 0
@@ -321,7 +321,7 @@ function recovery_preprocess(
         edge_count[idx] += 1
     end
     # edges sorted by twocolor subgraph
-    sorted_edges = Array{Vector{Tuple{Int,Int}}}(undef, seen_twocolors)
+    sorted_edges = Vector{Vector{Tuple{Int,Int}}}(undef, seen_twocolors)
     for idx in 1:seen_twocolors
         sorted_edges[idx] = Tuple{Int,Int}[]
         sizehint!(sorted_edges[idx], edge_count[idx])
@@ -334,9 +334,9 @@ function recovery_preprocess(
         push!(sorted_edges[idx], (u, v))
     end
     # list of unique vertices in each twocolor subgraph
-    vertexmap = Array{Vector{Int}}(undef, seen_twocolors)
-    postorder = Array{Vector{Int}}(undef, seen_twocolors)
-    parents = Array{Vector{Int}}(undef, seen_twocolors)
+    vertexmap = Vector{Vector{Int}}(undef, seen_twocolors)
+    postorder = Vector{Vector{Int}}(undef, seen_twocolors)
+    parents = Vector{Vector{Int}}(undef, seen_twocolors)
     # temporary lookup map from global index to subgraph index
     revmap = zeros(Int, _num_vertices(g))
     adjcount = zeros(Int, _num_vertices(g))
@@ -485,7 +485,7 @@ end
 Allocate a seed matrix for the Coloring.
 """
 function seed_matrix(rinfo::RecoveryInfo)
-    return Array{Float64}(undef, length(rinfo.local_indices), rinfo.num_colors)
+    return Matrix{Float64}(undef, length(rinfo.local_indices), rinfo.num_colors)
 end
 
 """

@@ -108,25 +108,122 @@ function _forward_eval(
         elseif node.type == Nonlinear.NODE_CALL_MULTIVARIATE
             children_indices = SparseArrays.nzrange(f.adj, k)
             N = length(children_indices)
-            f_input = _UnsafeVectorView(d.jac_storage, N)
-            ∇f = _UnsafeVectorView(d.user_output_buffer, N)
-            for (r, i) in enumerate(children_indices)
-                f_input[r] = f.forward_storage[children_arr[i]]
-                ∇f[r] = 0.0
-            end
-            f.forward_storage[k] = Nonlinear.eval_multivariate_function(
-                operators,
-                operators.multivariate_operators[node.index],
-                f_input,
-            )
-            Nonlinear.eval_multivariate_gradient(
-                operators,
-                operators.multivariate_operators[node.index],
-                ∇f,
-                f_input,
-            )
-            for (r, i) in enumerate(children_indices)
-                f.partials_storage[children_arr[i]] = ∇f[r]
+            # TODO(odow);
+            # With appropriate benchmarking, the special-cased if-statements can
+            # be removed in favor of the generic user-defined function case.
+            if node.index == 1 # :+
+                tmp_sum = zero(T)
+                for c_idx in children_indices
+                    @inbounds ix = children_arr[c_idx]
+                    @inbounds f.partials_storage[ix] = one(T)
+                    @inbounds tmp_sum += f.forward_storage[ix]
+                end
+                f.forward_storage[k] = tmp_sum
+            elseif node.index == 2 # :-
+                @assert N == 2
+                child1 = first(children_indices)
+                @inbounds ix1 = children_arr[child1]
+                @inbounds ix2 = children_arr[child1+1]
+                @inbounds tmp_sub = f.forward_storage[ix1]
+                @inbounds tmp_sub -= f.forward_storage[ix2]
+                @inbounds f.partials_storage[ix1] = one(T)
+                @inbounds f.partials_storage[ix2] = -one(T)
+                f.forward_storage[k] = tmp_sub
+            elseif node.index == 3 # :*
+                tmp_prod = one(T)
+                for c_idx in children_indices
+                    @inbounds tmp_prod *= f.forward_storage[children_arr[c_idx]]
+                end
+                if tmp_prod == zero(T) || N <= 2
+                    # This is inefficient if there are a lot of children.
+                    # 2 is chosen as a limit because (x*y)/y does not always
+                    # equal x for floating-point numbers. This can produce
+                    # unexpected error in partials. There's still an error when
+                    # multiplying three or more terms, but users are less likely
+                    # to complain about it.
+                    for c_idx in children_indices
+                        prod_others = one(T)
+                        for c_idx2 in children_indices
+                            (c_idx == c_idx2) && continue
+                            ix = children_arr[c_idx2]
+                            prod_others *= f.forward_storage[ix]
+                        end
+                        f.partials_storage[children_arr[c_idx]] = prod_others
+                    end
+                else
+                    # Compute all-minus-one partial derivatives by dividing from
+                    # the total product.
+                    for c_idx in children_indices
+                        ix = children_arr[c_idx]
+                        f.partials_storage[ix] =
+                            tmp_prod / f.forward_storage[ix]
+                    end
+                end
+                @inbounds f.forward_storage[k] = tmp_prod
+            elseif node.index == 4 # :^
+                @assert N == 2
+                idx1 = first(children_indices)
+                idx2 = last(children_indices)
+                @inbounds ix1 = children_arr[idx1]
+                @inbounds ix2 = children_arr[idx2]
+                @inbounds base = f.forward_storage[ix1]
+                @inbounds exponent = f.forward_storage[ix2]
+                if exponent == 2
+                    @inbounds f.forward_storage[k] = base * base
+                    @inbounds f.partials_storage[ix1] = 2 * base
+                elseif exponent == 1
+                    @inbounds f.forward_storage[k] = base
+                    @inbounds f.partials_storage[ix1] = 1.0
+                else
+                    f.forward_storage[k] = pow(base, exponent)
+                    f.partials_storage[ix1] = exponent * pow(base, exponent - 1)
+                end
+                f.partials_storage[ix2] = f.forward_storage[k] * log(base)
+            elseif node.index == 5 # :/
+                @assert N == 2
+                idx1 = first(children_indices)
+                idx2 = last(children_indices)
+                @inbounds ix1 = children_arr[idx1]
+                @inbounds ix2 = children_arr[idx2]
+                @inbounds numerator = f.forward_storage[ix1]
+                @inbounds denominator = f.forward_storage[ix2]
+                recip_denominator = 1 / denominator
+                @inbounds f.partials_storage[ix1] = recip_denominator
+                f.partials_storage[ix2] =
+                    -numerator * recip_denominator * recip_denominator
+                f.forward_storage[k] = numerator * recip_denominator
+            elseif node.index == 6 # ifelse
+                @assert N == 3
+                idx1 = first(children_indices)
+                @inbounds condition = f.forward_storage[children_arr[idx1]]
+                @inbounds lhs = f.forward_storage[children_arr[idx1+1]]
+                @inbounds rhs = f.forward_storage[children_arr[idx1+2]]
+                @inbounds f.partials_storage[children_arr[idx1+1]] =
+                    condition == 1
+                @inbounds f.partials_storage[children_arr[idx1+2]] =
+                    !(condition == 1)
+                f.forward_storage[k] = ifelse(condition == 1, lhs, rhs)
+            else
+                f_input = _UnsafeVectorView(d.jac_storage, N)
+                ∇f = _UnsafeVectorView(d.user_output_buffer, N)
+                for (r, i) in enumerate(children_indices)
+                    f_input[r] = f.forward_storage[children_arr[i]]
+                    ∇f[r] = 0.0
+                end
+                f.forward_storage[k] = Nonlinear.eval_multivariate_function(
+                    operators,
+                    operators.multivariate_operators[node.index],
+                    f_input,
+                )
+                Nonlinear.eval_multivariate_gradient(
+                    operators,
+                    operators.multivariate_operators[node.index],
+                    ∇f,
+                    f_input,
+                )
+                for (r, i) in enumerate(children_indices)
+                    f.partials_storage[children_arr[i]] = ∇f[r]
+                end
             end
         elseif node.type == Nonlinear.NODE_CALL_UNIVARIATE
             child_idx = children_arr[f.adj.colptr[k]]
