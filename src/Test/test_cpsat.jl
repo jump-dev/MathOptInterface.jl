@@ -146,7 +146,7 @@ function test_cpsat_CountAtLeast(
         model,
         MOI.VectorOfVariables(x),
         MOI.CountAtLeast(3, 2, set),
-)
+    )
     MOI.optimize!(model)
     x_val = round.(Int, MOI.get.(model, MOI.VariablePrimal(), x))
     @test sum(x_val[i] in set for i in 1:length(x)) >= 2
