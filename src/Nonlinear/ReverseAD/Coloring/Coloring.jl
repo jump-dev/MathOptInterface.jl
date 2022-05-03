@@ -28,10 +28,8 @@ function Base.push!(v::IndexedSet, i::Integer)
 end
 
 function Base.empty!(v::IndexedSet)
-    nzidx = v.nzidx
-    empty = v.empty
     for i in 1:v.nnz
-        empty[nzidx[i]] = true
+        v.empty[v.nzidx[i]] = true
     end
     v.nnz = 0
     return v
