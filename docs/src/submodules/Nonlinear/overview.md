@@ -368,7 +368,10 @@ MathOptInterface as follows:
 import MathOptInterface
 const MOI = MathOptInterface
 
-function build_model(model; backend::Nonlinear.AbstractAutomaticDifferentiation)
+function build_model(
+    model::MOI.ModelLike;
+    backend::MOI.Nonlinear.AbstractAutomaticDifferentiation,
+)
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
