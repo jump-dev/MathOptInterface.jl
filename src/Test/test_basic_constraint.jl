@@ -112,7 +112,7 @@ _set(::Type{MOI.Complements}) = MOI.Complements(2)
 _set(::Type{MOI.AllDifferent}) = MOI.AllDifferent(3)
 _set(::Type{MOI.CountDistinct}) = MOI.CountDistinct(4)
 _set(::Type{MOI.Among}) = MOI.Among(4, Set([3, 4]))
-_set(::Type{MOI.CountAtLeast}) = MOI.CountAtLeast(3, 2, Set([3, 4]))
+_set(::Type{MOI.CountAtLeast}) = MOI.CountAtLeast(1, [2, 2], Set([3]))
 
 function _set(
     ::Type{MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}},
