@@ -4,23 +4,12 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-"""
-    Nonlinear
+module ReverseAD
 
-!!! warning
-    The Nonlinear submodule is experimental. Until this message is removed,
-    breaking changes may be introduced in any minor or patch release of
-    MathOptInterface.
-"""
-module Nonlinear
-
-import Base.Meta: isexpr
 import ForwardDiff
-import ..MathOptInterface
-import OrderedCollections: OrderedDict
+import MathOptInterface
+import ..Nonlinear
 import SparseArrays
-
-using SpecialFunctions
 
 const MOI = MathOptInterface
 
@@ -43,13 +32,15 @@ import NaNMath:
     pow,
     sqrt
 
-include("univariate_expressions.jl")
-include("operators.jl")
+include("Coloring/Coloring.jl")
+include("graph_tools.jl")
 include("types.jl")
-include("parse.jl")
-include("model.jl")
-include("evaluator.jl")
+include("utils.jl")
 
-include("ReverseAD/ReverseAD.jl")
+include("reverse_mode.jl")
+include("forward_over_reverse.jl")
+include("mathoptinterface_api.jl")
+
+include("precompile.jl")
 
 end  # module

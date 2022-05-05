@@ -263,3 +263,20 @@ struct ExprGraphOnly <: AbstractAutomaticDifferentiation end
 function Evaluator(model::Model, ::ExprGraphOnly, ::Vector{MOI.VariableIndex})
     return Evaluator(model)
 end
+
+"""
+    SparseReverseMode() <: AbstractAutomaticDifferentiation
+
+An implementation of `AbstractAutomaticDifferentiation` that uses sparse
+reverse-mode automatic differentiation to compute derivatives. Supports all
+features in the MOI nonlinear interface.
+"""
+struct SparseReverseMode <: AbstractAutomaticDifferentiation end
+
+function Evaluator(
+    model::Model,
+    ::SparseReverseMode,
+    ordered_variables::Vector{MOI.VariableIndex},
+)
+    return Evaluator(model, ReverseAD.NLPEvaluator(model, ordered_variables))
+end

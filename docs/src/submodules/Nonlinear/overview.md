@@ -285,6 +285,7 @@ There following backends are available to choose from within MOI, although other
 packages may add more options by sub-typing
 [`Nonlinear.AbstractAutomaticDifferentiation`](@ref):
  * [`Nonlinear.ExprGraphOnly`](@ref)
+ * [`Nonlinear.SparseReverseMode`](@ref).
 
 ```jldoctest nonlinear_developer
 julia> evaluator = Nonlinear.Evaluator(model, Nonlinear.ExprGraphOnly(), [x])
@@ -300,6 +301,50 @@ The `:ExprGraph` feature means we can call [`objective_expr`](@ref) and
 However, we cannot call gradient terms such as
 [`eval_objective_gradient`](@ref) because [`Nonlinear.ExprGraphOnly`](@ref) does
 not have the capability to differentiate a nonlinear expression.
+
+If, instead, we pass [`Nonlinear.SparseReverseMode`](@ref), then we get access
+to `:Grad`, the gradient of the objective function, `:Jac`, the Jacobian matrix
+of the constraints, `:JacVec`, the ability to compute Jacobian-vector products,
+and `:ExprGraph`.
+```jldoctest nonlinear_developer
+julia> evaluator = Nonlinear.Evaluator(
+           model,
+           Nonlinear.SparseReverseMode(),
+           [x],
+       )
+Nonlinear.Evaluator with available features:
+  * :Grad
+  * :Jac
+  * :JacVec
+  * :ExprGraph
+```
+
+However, before using the evaluator, we need to call [`initialize`](@ref):
+```jldoctest nonlinear_developer
+julia> MOI.initialize(evaluator, [:Grad, :Jac, :JacVec, :ExprGraph])
+```
+
+Now we can call methods like [`eval_objective`](@ref):
+```jldoctest nonlinear_developer
+julia> x = [1.0]
+1-element Vector{Float64}:
+ 1.0
+
+julia> MOI.eval_objective(evaluator, x)
+7.268073418273571
+```
+and [`eval_objective_gradient`](@ref):
+```jldoctest nonlinear_developer
+julia> grad = [0.0]
+1-element Vector{Float64}:
+ 0.0
+
+julia> MOI.eval_objective_gradient(evaluator, grad, x)
+
+julia> grad
+1-element Vector{Float64}:
+ 1.909297426825682
+```
 
 Instead of passing [`Nonlinear.Evaluator`](@ref) directly to solvers,
 solvers query the [`NLPBlock`](@ref) attribute, which returns an
@@ -317,11 +362,36 @@ julia> MOI.set(model, MOI.NLPBlock(), block);
     Only call [`NLPBlockData`](@ref) once you have finished modifying the
     problem in `model`.
 
+Putting everything together, you can create a nonlinear optimization problem in
+MathOptInterface as follows:
+```@example
+import MathOptInterface
+const MOI = MathOptInterface
+
+function build_model(
+    model::MOI.ModelLike;
+    backend::MOI.Nonlinear.AbstractAutomaticDifferentiation,
+)
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    nl_model = MOI.Nonlinear.Model()
+    MOI.Nonlinear.set_objective(nl_model, :($x^2 + $y^2))
+    evaluator = MOI.Nonlinear.Evaluator(nl_model, backend, [x, y])
+    MOI.set(model, MOI.NLPBlock(), MOI.NLPBlockData(evaluator))
+    return
+end
+
+# Replace `model` and `backend` with your optimizer and backend of choice.
+model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+build_model(model; backend = MOI.Nonlinear.SparseReverseMode())
+```
+
 ## Expression-graph representation
 
 [`Nonlinear.Model`](@ref) stores nonlinear expressions in
 [`Nonlinear.Expression`](@ref)s. This section explains the design of
-the expression graph datastructure in [`Nonlinear.Expression`](@ref).
+the expression graph data structure in [`Nonlinear.Expression`](@ref).
 
 Given a nonlinear function like `f(x) = sin(x)^2 + x`, a conceptual aid for
 thinking about the graph representation of the expression is to convert it into
@@ -344,7 +414,7 @@ julia> struct ExprNode
 julia> expr = ExprNode(:+, [ExprNode(:^, [ExprNode(:sin, [x]), 2.0]), x]);
 ```
 
-This datastructure follows our Polish prefix notation very closely, and we can
+This data structure follows our Polish prefix notation very closely, and we can
 easily identify the arguments to an operator. However, it has a significant
 draw-back: each node in the graph requires a `Vector`, which is heap-allocated
 and tracked by Julia's garbage collector (GC). For large models, we can expect
@@ -380,7 +450,7 @@ challenges:
 
 ### Sketch of the design in Nonlinear
 
-`Nonlinear` overcomes these problems by decomposing the datastructure into a
+`Nonlinear` overcomes these problems by decomposing the data structure into a
 number of different concrete-typed vectors.
 
 First, we create vectors of the supported uni- and multivariate operators.
@@ -443,7 +513,7 @@ julia> expr = Expression(
        );
 ```
 
-This is less readable than the other options, but does this datastructure meet
+This is less readable than the other options, but does this data structure meet
 our design goals?
 
 Instead of a heap-allocated object for each node, we only have two `Vector`s for
@@ -477,3 +547,65 @@ user-defined functions using [`Nonlinear.register_operator`](@ref).
 [`Nonlinear.Model`](@ref) is a struct that stores the
 [`Nonlinear.OperatorRegistry`](@ref), as well as a list of parameters and
 subexpressions in the model.
+
+## ReverseAD
+
+`Nonlinear.ReverseAD` is a submodule for computing derivatives of a nonlinear
+optimization problem using sparse reverse-mode automatic differentiation (AD).
+
+This section does not attempt to explain how sparse reverse-mode AD works, but
+instead explains why MOI contains its own implementation, and highlights
+notable differences from similar packages.
+
+!!! warning
+    Don't use the API in `ReverseAD` to compute derivatives. Instead, create a
+    [`Nonlinear.Evaluator`](@ref) object with [`Nonlinear.SparseReverseMode`](@ref)
+    as the backend, and then query the MOI API methods.
+
+### Design goals
+
+The JuliaDiff organization maintains a [list of packages](https://juliadiff.org)
+for doing AD in Julia. At last count, there were at least ten packages–-not
+including `ReverseAD`-–for reverse-mode AD in Julia. `ReverseAD` exists because
+it has a different set of design goals.
+
+ * **Goal: handle scale and sparsity**
+   The types of nonlinear optimization problems that MOI represents can be large
+   scale (10^5 or more functions across 10^5 or more variables) with very sparse
+   derivatives. The ability to compute a sparse Hessian matrix is essential. To
+   the best of our knowledge, `ReverseAD` is the only reverse-mode AD system in
+   Julia that handles sparsity by default.
+ * **Goal: limit the scope to improve robustness**
+   Most other AD packages accept arbitrary Julia functions as input and then
+   trace an expression graph using operator overloading. This means they must
+   deal (or detect and ignore) with control flow, I/O, and other vagaries of
+   Julia. In contrast, `ReverseAD` only accepts functions in the form of
+   [`Nonlinear.Expression`](@ref), which greatly limits the range of syntax that
+   it must deal with. By reducing the scope of what we accept as input to
+   functions relevant for mathematical optimization, we can provide a simpler
+   implementation with various performance optimizations.
+ * **Goal: provide outputs which match what solvers expect**
+   Other AD packages focus on differentiating individual Julia functions. In
+   constrast, `ReverseAD` has a very specific use-case: to generate outputs
+   needed by the MOI nonlinear API. This means it needs to efficiently compute
+   sparse Hessians, and it needs subexpression handling to avoid recomputing
+   subexpressions that are shared between functions.
+
+### History
+
+`ReverseAD` started life as [ReverseDiffSparse.jl](https://github.com/mlubin/ReverseDiffSparse.jl),
+development of which begain in early 2014(!). This was well before the other
+packages started development. Because we had a well-tested, working AD in JuMP,
+there was less motivation to contribute to and explore other AD packages. The
+lack of historical interaction also meant that other packages were not optimized
+for the types of problems that JuMP is built for (i.e., large-scale sparse
+problems). When we first created MathOptInterface, we kept the AD in JuMP to
+simplify the transition, and post-poned the development of a first-class
+nonlinear interface in MathOptInterface.
+
+Prior to the introduction of `Nonlinear`, JuMP's nonlinear implementation was a
+confusing mix of functions and types spread across the code base and in the
+private `_Derivatives` submodule. This made it hard to swap the AD system for
+another. The main motivation for refactoring JuMP to create the `Nonlinear`
+submodule in MathOptInterface was to abstract the interface between JuMP and the
+AD system, allowing us to swap-in and test new AD systems in the future.
