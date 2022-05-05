@@ -570,12 +570,11 @@ including `ReverseAD`-–for reverse-mode AD in Julia. `ReverseAD` exists becaus
 it has a different set of design goals.
 
  * **Goal: handle scale and sparsity**
-   The types of functions that MOI computes derivatives of have two key
-   characteristics: they can be very large scale (10^5 or more functions across
-   10^5 or more variables) and they are very sparse. For large problems, it is
-   common for the hessian to have `O(n)` non-zero elements instead of `O(n^2)`
-   if it was dense. To the best of our knowledge, `ReverseAD` is the only
-   reverse-mode AD system in Julia that handles sparsity by default.
+   The types of nonlinear optimization problems that MOI represents can be large
+   scale (10^5 or more functions across 10^5 or more variables) with very sparse
+   derivatives. The ability to compute a sparse Hessian matrix is essential. To
+   the best of our knowledge, `ReverseAD` is the only reverse-mode AD system in
+   Julia that handles sparsity by default.
  * **Goal: limit the scope to improve robustness**
    Most other AD packages accept arbitrary Julia functions as input and then
    trace an expression graph using operator overloading. This means they must
