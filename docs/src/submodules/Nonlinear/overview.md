@@ -502,11 +502,11 @@ Therefore, we can represent our function as:
 ```jldoctest expr_graph
 julia> expr = Expression(
            [
-               Node(NODE_CALL_MULTIVARIATE, 1, -1),
-               Node(NODE_CALL_MULTIVARIATE, 2, 1),
-               Node(NODE_CALL_UNIVARIATE, 1, 2),
-               Node(NODE_VARIABLE, 1, 3),
-               Node(NODE_VALUE, 1, 2),
+               Node(NODE_CALL_MULTIVARIATE, -1, 1),
+               Node(NODE_CALL_MULTIVARIATE, 1, 2),
+               Node(NODE_CALL_UNIVARIATE, 2, 1),
+               Node(NODE_VARIABLE, 3, 1),
+               Node(NODE_VALUE, 2, 1),
                Node(NODE_VARIABLE, 1, 1),
            ],
            [2.0],
