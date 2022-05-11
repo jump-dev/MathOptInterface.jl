@@ -216,8 +216,12 @@ end
 
 function _parse_header(io::IO, model::_CacheModel)
     # Line 1
-    # This has some magic bytes for AMPL internals. We don't support the binary
-    # format.
+    #
+    # This has some magic bytes for AMPL internals (to quote David, "The numbers
+    # on the first line matter to AMPL; for other uses, it is best simply to
+    # supply the ones shown above.")
+    #
+    # We don't support the binary format.
     byte = read(io, UInt8)
     if byte != UInt8('g')
         error("Unable to parse NL file : unsupported mode $(Char(byte))")
