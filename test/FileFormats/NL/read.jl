@@ -121,10 +121,6 @@ end
 function test_parse_header_assertion_errors()
     model = NL._CacheModel()
     for header in [
-        "g4 1 1 0\n",
-        "g4 1 1 0\n",
-        "g3 1 0 0\n",
-        "g3 1 1 1\n",
         "g4 1 1 0\n3 3 2 0 0 0\n",
         "g4 1 1 0\n3 3 1 0 0 0\n0 2\n",
         "g4 1 1 0\n3 3 1 0 0 0\n0 0\n1 0\n",
@@ -136,6 +132,21 @@ function test_parse_header_assertion_errors()
         "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n0 -1\n",
         "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n8 4\n1 0\n",
         "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n8 4\n0 1\n",
+    ]
+        io = IOBuffer()
+        write(io, header)
+        seekstart(io)
+        @test_throws(AssertionError, NL._parse_header(io, model))
+    end
+    return
+end
+
+function test_parse_header_assertion_errors()
+    model = NL._CacheModel()
+    err = ErrorException(
+        "Unable to parse NL file : we don't support common exprs",
+    )
+    for header in [
         "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n8 4\n0 0\n1 0 0 0 0\n",
         "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n8 4\n0 0\n0 1 0 0 0\n",
         "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n8 4\n0 0\n0 0 1 0 0\n",
@@ -145,7 +156,7 @@ function test_parse_header_assertion_errors()
         io = IOBuffer()
         write(io, header)
         seekstart(io)
-        @test_throws(AssertionError, NL._parse_header(io, model))
+        @test_throws(err, NL._parse_header(io, model))
     end
     return
 end
@@ -220,6 +231,24 @@ x3
     NL._parse_section(io, model)
     @test eof(io)
     @test model.variable_primal == [1.1, 0.0, 3.3, 2.2, 0.0]
+    return
+end
+
+function test_parse_d()
+    model = NL._CacheModel()
+    io = IOBuffer()
+    write(
+        io,
+        """
+d3
+0 1.1# can stick a comment anywhere
+3 2.2
+2 3.3  # can stick a comment anywhere
+""",
+    )
+    seekstart(io)
+    NL._parse_section(io, model)
+    @test eof(io)
     return
 end
 
@@ -472,10 +501,53 @@ function test_hs071()
     model = open(joinpath(@__DIR__, "data", "hs071.nl"), "r") do io
         return read(io, NL.Model)
     end
-    dest = NL.Model()
-    MOI.copy_to(dest, model)
-    new_model = sprint(write, dest)
-    # print(new_model)
+    model_print = sprint(print, model)
+    _in_ = @static Sys.iswindows() ? "in" : "∈"
+    for line in [
+        "(1.1 * v[1] + 1.4 * v[2] + 1.2 * v[3] + 1.3 * v[4]) + +2.0",
+        "v[1] >= 1.1",
+        "v[2] >= 1.4",
+        "v[3] >= 1.2",
+        "v[4] >= 1.3",
+        "v[1] <= 5.1",
+        "v[2] <= 5.4",
+        "v[3] <= 1.0",
+        "v[4] <= 5.3",
+        "v[3] $_in_ ℤ",
+        "v[4] $_in_ ℤ",
+        "v[1] * (v[3] * (v[4] * v[2])) >= 25.0",
+        "v[1] ^ 2.0 + v[3] ^ 2.0 + v[4] ^ 2.0 + v[2] ^ 2.0 == 40.0",
+    ]
+        @test occursin(line, model_print)
+    end
+    return
+end
+
+"""
+    test_mac_minlp()
+
+This function tests reading the files in Sven Leyffer's MINLP testset, which is
+available at: https://wiki.mcs.anl.gov/leyffer/index.php/MacMINLP.
+
+If the folder isn't available locally, the test is skipped.
+"""
+function test_mac_minlp()
+    dir = joinpath(@__DIR__, "MacMINLP")
+    if !isdir(dir)
+        return
+    end
+    exclude = [
+        # Has subexpressions
+        "space-25-r.nl",
+        "space-960-ir.nl",
+        "space-960-r.nl",
+        "top1-15x05.nl",
+    ]
+    for file in filter(f -> !(f in exclude) && endswith(f, ".nl"), readdir(dir))
+        open(joinpath(dir, file), "r") do io
+            return read(io, NL.Model)
+        end
+    end
     return
 end
 

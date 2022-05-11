@@ -51,3 +51,67 @@ Table 4: Ordering of Nonlinear Variables.
 | integer    | just in constraints  | `nlcvi`                       |
 | continuous | just in objectives   | `max{0, nlvo - nlvc}`         |
 | integer    | just in objectives   | `nlvoi`                       |
+
+## Putting the tables together
+
+The two tables are clearly asking that we do something like this.
+
+| Smoothness | Appearance           | Count                         |
+| ---------- | -------------------- | ------------------------------|
+| continous  | in an objective and in a constraint | `nlvb - nlbvi` |
+| integer    | in an objective and in a constraint | `nlvbi`        |
+| continous  | just in constraints  | `nlvc - (nlvb + nlvci)`       |
+| integer    | just in constraints  | `nlcvi`                       |
+| continuous | just in objectives   | `max{0, nlvo - nlvc}`         |
+| integer    | just in objectives   | `nlvoi`                       |
+| linear arcs                 |     | `nwv`                         |
+| other linear                |     | `n_var - (max{nlvc,nlvo} + niv + nbv + nwv)`|
+| linearly used binary        |     | `nbv`                         |
+| linearly used other integer |     | `niv`                         |
+
+We can drop the "linear arcs" row and `nwv` because MOI doesn't represent
+network problems, which leaves us with:
+
+| Smoothness | Appearance           | Count                         |
+| ---------- | -------------------- | ------------------------------|
+| continous  | in an objective and in a constraint | `nlvb - nlbvi` |
+| integer    | in an objective and in a constraint | `nlvbi`        |
+| continous  | just in constraints  | `nlvc - (nlvb + nlvci)`       |
+| integer    | just in constraints  | `nlcvi`                       |
+| continuous | just in objectives   | `max{0, nlvo - nlvc}`         |
+| integer    | just in objectives   | `nlvoi`                       |
+| other linear                |     | `n_var - (max{nlvc,nlvo} + niv + nbv)`|
+| linearly used binary        |     | `nbv`                         |
+| linearly used other integer |     | `niv`                         |
+
+But does this table make sense? No. Here's the header from `geartrain.nl`:
+```
+g3 0 1 0	# problem geartrain
+ 4 0 1 0 0	# vars, constraints, objectives, ranges, eqns
+ 0 1	# nonlinear constraints, objectives
+ 0 0	# network constraints: nonlinear, linear
+ 0 4 0	# nonlinear vars in constraints, objectives, both
+ 0 0 0 1	# linear network variables; functions; arith, flags
+ 0 0 0 0 4	# discrete variables: binary, integer, nonlinear (b,c,o)
+ 0 4	# nonzeros in Jacobian, gradients
+ 0 0	# max name lengths: constraints, variables
+ 0 0 0 0 0	# common exprs: b,c,o,c1,o1
+```
+
+It has `n_var = 4`, `nlvo = 4`, and `nlvoi = 4` (all others are `0`).
+
+| Smoothness | Appearance           | Count                         | `geartrain.nl`  |
+| ---------- | -------------------- | ------------------------------| - |
+| continous  | in an objective and in a constraint | `nlvb - nlbvi` | 0 |
+| integer    | in an objective and in a constraint | `nlvbi`        | 0 |
+| continous  | just in constraints  | `nlvc - (nlvb + nlvci)`       | 0 |
+| integer    | just in constraints  | `nlcvi`                       | 0 |
+| continuous | just in objectives   | `max{0, nlvo - nlvc}`         | 4 |
+| integer    | just in objectives   | `nlvoi`                       | 4 |
+| other linear                |     | `n_var - (max{nlvc,nlvo} + niv + nbv)`| 0 |
+| linearly used binary        |     | `nbv`                         | 0 |
+| linearly used other integer |     | `niv`                         | 0 |
+
+But the rows would sum to give `8`, not `4`!
+
+I think `max{0, nlvo - nlvc}` should be `max{0, nlvo - nlvc - nlvoi}`.

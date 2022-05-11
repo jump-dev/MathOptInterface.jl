@@ -206,95 +206,108 @@ end
 
 function _parse_header(io::IO, model::_CacheModel)
     # Line 1
-    #
-    # This has some magic bytes for AMPL internals (to quote David, "The numbers
-    # on the first line matter to AMPL; for other uses, it is best simply to
-    # supply the ones shown above.")
-    #
     # We don't support the binary format.
     byte = read(io, UInt8)
     if byte != UInt8('g')
         error("Unable to parse NL file : unsupported mode $(Char(byte))")
     end
-    @assert _next(Int, io, model) == 3
-    @assert _next(Int, io, model) == 1
-    @assert _next(Int, io, model) == 1
-    @assert _next(Int, io, model) == 0
+    # L1 has some magic bytes for AMPL internals (to quote David, "The numbers
+    # on the first line matter to AMPL; for other uses, it is best simply to
+    # supply the ones shown above.")
     _read_til_newline(io)
     # Line 2
-    num_variables = _next(Int, io, model)
-    _resize_variables(model, num_variables)
+    # The number of variables
+    n_var = _next(Int, io, model)
+    _resize_variables(model, n_var)
+    # The number of constraints
     _resize_constraints(model, _next(Int, io, model))
+    # The number of linear objectives
     @assert 0 <= _next(Int, io, model) <= 1
+    # The number of range constraints
     @assert _next(Int, io, model) >= 0
+    # The number of equations
     @assert _next(Int, io, model) >= 0
-    @assert _next(Int, io, model) == 0
+    # The number of logical constraints. This one is optional, so just read til
+    # the end of the line.
+    # @assert _next(Int, io, model) == 0
     _read_til_newline(io)
     # Line 3
+    # The number of nonlinear constraints
     @assert _next(Int, io, model) >= 0
+    # The number of nonlinear objectives
     @assert 0 <= _next(Int, io, model) <= 1
     _read_til_newline(io)
     # Line 4
-    # We don't support network constraints or objectives
-    for _ in 1:2
-        @assert _next(Int, io, model) == 0
-    end
+    # The number of nonlinear network constraints
+    @assert _next(Int, io, model) == 0
+    # The number of linear network constraints
+    @assert _next(Int, io, model) == 0
     _read_til_newline(io)
     # Line 5
+    # The number of nonlienar variables in constraints
     nlvc = _next(Int, io, model)
+    # The number of nonlienar variables in objectives
     nlvo = _next(Int, io, model)
+    # The number of nonlienar variables in constraints and objectives (both)
     nlvb = _next(Int, io, model)
     _read_til_newline(io)
     # Line 6
-    # We don't support network variables, or user-defined functions
-    for _ in 1:3
-        @assert _next(Int, io, model) == 0
-    end
-    _next(Int, io, model)  # flags. Don't know what it is. Ignore.
+    # The number of linear network variables
+    @assert _next(Int, io, model) == 0
+    # The number of user-defined functions
+    @assert _next(Int, io, model) == 0
+    # The number of "arith"
+    # TODO(odow): I don't know what this is.
+    @assert _next(Int, io, model) == 0
+    # The "flags" entry. This is mainly used for specifying that we want duals.
+    # Ignore when reading.
+    _next(Int, io, model)
     _read_til_newline(io)
     # Line 7
+    # Number of binary variables
     nbv = _next(Int, io, model)
+    # Number of integer variables
     niv = _next(Int, io, model)
-    nl_both = _next(Int, io, model)
-    nl_cons = _next(Int, io, model)
-    nl_obj = _next(Int, io, model)
+    # Number of integer variables in nonlinear constraints AND objectives
+    nlvbi = _next(Int, io, model)
+    # Number of integer variables in nonlinear constraints
+    nlvci = _next(Int, io, model)
+    # Number of integer variables in nonlinear objectives
+    nlvoi = _next(Int, io, model)
     _read_til_newline(io)
     # Line 8
     # Read the number of nonzeros in Jacobian and gradient, but don't do
     # anything with that information.
-    for _ in 1:2
-        @assert _next(Int, io, model) >= 0
-    end
+    @assert _next(Int, io, model) >= 0
+    @assert _next(Int, io, model) >= 0
     _read_til_newline(io)
     # Line 9
     # We don't support reading variable and constraint names
-    for _ in 1:2
-        @assert _next(Int, io, model) == 0
-    end
+    @assert _next(Int, io, model) == 0
+    @assert _next(Int, io, model) == 0
     _read_til_newline(io)
     # Line 10
     # We don't support reading common subexpressions
     for _ in 1:5
-        @assert _next(Int, io, model) == 0
+        if _next(Int, io, model) > 0
+            error("Unable to parse NL file : we don't support common exprs")
+        end
     end
     _read_til_newline(io)
     # ==========================================================================
     # Deal with the integrality of variables
     offsets = [
-        nlvb - nl_both,
-        nl_both,
-        nlvc - nl_cons,
-        nl_cons,
-        nlvo - nl_obj,
-        nlvo,
-        num_variables - (nbv + niv) - (nlvc + nlvo - nlvb),
+        nlvb - nlvbi,
+        nlvbi,
+        nlvc - (nlvb + nlvci),
+        nlvci,
+        # max(0, nlvo - nlvc),
+        max(0, nlvo - nlvc - nlvoi),
+        nlvoi,
+        n_var - (max(nlvc, nlvo) + nbv + niv),
         nbv,
         niv,
     ]
-    if nlvo > nlvc
-        offsets[3], offsets[5] = offsets[5], offsets[3]
-        offsets[4], offsets[6] = offsets[6], offsets[4]
-    end
     types = [
         _CONTINUOUS,
         _INTEGER,
@@ -365,6 +378,16 @@ function _parse_section(io::IO, ::Val{'x'}, model::_CacheModel)
         xi = _next(Int, io, model) + 1
         v = _next(Float64, io, model)
         model.variable_primal[xi] = v
+        _read_til_newline(io)
+    end
+    return
+end
+
+# TODO(odow): we don't read in dual starts.
+function _parse_section(io::IO, ::Val{'d'}, model::_CacheModel)
+    index = _next(Int, io, model)
+    _read_til_newline(io)
+    for _ in 1:index
         _read_til_newline(io)
     end
     return
