@@ -306,7 +306,13 @@ end
 function _parse_section(io::IO, ::Val{'C'}, model::_CacheModel)
     index = _next(Int, io, model) + 1
     _read_til_newline(io)
-    model.constraints[index] = _force_expr(_parse_expr(io, model))
+    expr = _force_expr(_parse_expr(io, model))
+    current = model.constraints[index]
+    if current == :()
+        model.constraints[index] = expr
+    else
+        model.constraints[index] = Expr(:call, :+, current, expr)
+    end
     return
 end
 
@@ -320,7 +326,12 @@ function _parse_section(io::IO, ::Val{'O'}, model::_CacheModel)
         model.sense = MOI.MIN_SENSE
     end
     _read_til_newline(io)
-    model.objective = _force_expr(_parse_expr(io, model))
+    expr = _force_expr(_parse_expr(io, model))
+    if model.objective == :()
+        model.objective = expr
+    else
+        model.objective = Expr(:call, :+, model.objective, expr)
+    end
     return
 end
 

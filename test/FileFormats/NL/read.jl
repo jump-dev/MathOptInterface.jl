@@ -79,8 +79,23 @@ v1
     seekstart(io)
     NL._parse_section(io, model)
     @test eof(io)
+    @test model.sense == MOI.MIN_SENSE
     x = MOI.VariableIndex.(1:4)
     @test model.objective == :($(x[1]) * ($(x[3]) * ($(x[4]) * $(x[2]))))
+    return
+end
+
+function test_parse_O_max()
+    model = NL._CacheModel()
+    NL._resize_variables(model, 4)
+    io = IOBuffer()
+    write(io, "O0 1\nv0\n")
+    seekstart(io)
+    NL._parse_section(io, model)
+    @test eof(io)
+    @test model.sense == MOI.MAX_SENSE
+    x = MOI.VariableIndex(1)
+    @test model.objective == :(+$x)
     return
 end
 
@@ -190,6 +205,75 @@ J1 2  # can stick a comment anywhere
     return
 end
 
+function test_parse_J_zeros()
+    model = NL._CacheModel()
+    NL._resize_constraints(model, 1)
+    io = IOBuffer()
+    write(
+        io,
+        """
+J0 2
+0 0
+1 0
+""",
+    )
+    seekstart(io)
+    NL._parse_section(io, model)
+    @test eof(io)
+    @test model.constraints[1] == :()
+    return
+end
+
+function test_parse_C_J()
+    model = NL._CacheModel()
+    NL._resize_constraints(model, 1)
+    io = IOBuffer()
+    write(
+        io,
+        """
+C0
+o2
+v0
+v1
+J0 2
+0 1.1
+1 2.2
+""",
+    )
+    seekstart(io)
+    NL._parse_section(io, model)
+    NL._parse_section(io, model)
+    @test eof(io)
+    x, y = MOI.VariableIndex(1), MOI.VariableIndex(2)
+    @test model.constraints[1] == :((1.1 * $x + 2.2 * $y) + $x * $y)
+    return
+end
+
+function test_parse_J_C()
+    model = NL._CacheModel()
+    NL._resize_constraints(model, 1)
+    io = IOBuffer()
+    write(
+        io,
+        """
+J0 2
+0 1.1
+1 2.2
+C0
+o2
+v0
+v1
+""",
+    )
+    seekstart(io)
+    NL._parse_section(io, model)
+    NL._parse_section(io, model)
+    @test eof(io)
+    x, y = MOI.VariableIndex(1), MOI.VariableIndex(2)
+    @test model.constraints[1] == :((1.1 * $x + 2.2 * $y) + $x * $y)
+    return
+end
+
 function test_parse_G()
     model = NL._CacheModel()
     NL._resize_constraints(model, 3)
@@ -207,6 +291,76 @@ G0 2 # can stick a comment anywhere
     @test eof(io)
     x, y = MOI.VariableIndex(3), MOI.VariableIndex(4)
     @test model.objective == :(1.1 * $x + 2.2 * $y)
+    return
+end
+
+function test_parse_G_zeros()
+    model = NL._CacheModel()
+    NL._resize_constraints(model, 3)
+    io = IOBuffer()
+    write(
+        io,
+        """
+G0 3
+0 0
+1 0
+2 0
+""",
+    )
+    seekstart(io)
+    NL._parse_section(io, model)
+    @test eof(io)
+    @test model.objective == :()
+    return
+end
+
+function test_parse_O_G()
+    model = NL._CacheModel()
+    NL._resize_variables(model, 4)
+    io = IOBuffer()
+    write(
+        io,
+        """
+O0 0
+o2
+v0
+v1
+G0 2
+0 1.1
+1 2.2
+""",
+    )
+    seekstart(io)
+    NL._parse_section(io, model)
+    NL._parse_section(io, model)
+    @test eof(io)
+    x, y = MOI.VariableIndex(1), MOI.VariableIndex(2)
+    @test model.objective == :((1.1 * $x + 2.2 * $y) + $x * $y)
+    return
+end
+
+function test_parse_G_O()
+    model = NL._CacheModel()
+    NL._resize_variables(model, 4)
+    io = IOBuffer()
+    write(
+        io,
+        """
+G0 2
+0 1.1
+1 2.2
+O0 0
+o2
+v0
+v1
+""",
+    )
+    seekstart(io)
+    NL._parse_section(io, model)
+    NL._parse_section(io, model)
+    @test eof(io)
+    x, y = MOI.VariableIndex(1), MOI.VariableIndex(2)
+    @test model.objective == :((1.1 * $x + 2.2 * $y) + $x * $y)
     return
 end
 
