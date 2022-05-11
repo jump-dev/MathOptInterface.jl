@@ -792,6 +792,8 @@ const LessThanIndicatorZero{T} =
         MOI.Among,
         MOI.CountAtLeast,
         MOI.CountGreaterThan,
+        MOI.Circuit,
+        MOI.Cumulative,
     ),
     (
         MOI.PowerCone,
@@ -800,6 +802,8 @@ const LessThanIndicatorZero{T} =
         MOI.SOS2,
         LessThanIndicatorOne,
         LessThanIndicatorZero,
+        MOI.Table,
+        MOI.BinPacking,
     ),
     (),
     (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),

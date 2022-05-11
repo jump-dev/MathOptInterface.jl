@@ -1297,6 +1297,131 @@ struct CountGreaterThan <: AbstractVectorSet
     end
 end
 
+"""
+    BinPacking(capacity::T, weights::Vector{T}) where {T}
+
+The set ``\\{x \\in \\mathbb{R}^d\\}`` such that
+``\\sum\\limits_{i=1}^d w_i x_i \\le c``.
+
+This constraint is sometimes called `bin_packing`.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables(x), BinPacking(0.5, rand(3)))
+```
+"""
+struct BinPacking{T} <: AbstractVectorSet
+    capacity::T
+    weights::Vector{T}
+    function BinPacking(capacity::T, weights::Vector{T}) where {T}
+        if capacity < zero(T)
+            throw(DomainError(capacity, "capacity must be non-negative"))
+        end
+        if any(w -> w < zero(T), weights)
+            throw(DomainError(weights, "weights must be non-negative"))
+        end
+        return new{T}(capacity, weights)
+    end
+end
+
+dimension(set::BinPacking) = length(set.weights)
+
+function Base.copy(set::BinPacking{T}) where {T}
+    return BinPacking{T}(set.capacity, copy(set.weights))
+end
+
+function Base.:(==)(x::BinPacking{T}, y::BinPacking{T}) where {T}
+    return x.capacity == y.capacity && x.weights == y.weights
+end
+
+"""
+    Cumulative(dimension::Int)
+
+The set ``\\{(s, d, r, b) \\in \\mathbb{R}^{s+d+r+1}\\}`` representing the
+``cumulative`` global constraint. It requires that a set of tasks given by start
+times ``s``, durations ``d``, and resource requirements ``r``, never requires
+more than the global resource bound ``b`` at any one time.
+
+This constraint is sometimes called `cumulative`.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+s = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+d = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+r = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+b, _ = add_constrained_variable(model, MOI.Integer())
+add_constraint(model, VectorOfVariables([s; d; r; b]), Cumulative(10))
+```
+"""
+struct Cumulative <: AbstractVectorSet
+    dimension::Int
+    function Cumulative(dimension::Base.Integer)
+        if dimension < 1
+            throw(DimensionMismatch("Dimension of Cumulative must be >= 1."))
+        end
+        return new(dimension)
+    end
+end
+
+"""
+    Table(table::Matrix{T}) where {T}
+
+The set ``\\{x \\in \\mathbb{R}^d\\}`` such that `x` belongs to one row of
+`table`. That is, there exists some `j` in `1:size(table, 1)`, such that
+`x[i] = table[j, i]`.
+
+This constraint is sometimes called `table`.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+table = [1 1 0; 0 1 1; 1 0 1; 1 1 1]
+add_constraint(model, VectorOfVariables(x), Table(table))
+```
+"""
+struct Table{T} <: AbstractVectorSet
+    table::Matrix{T}
+end
+
+dimension(set::Table) = size(set.table, 2)
+
+Base.copy(set::Table) = Table(copy(set.table))
+
+Base.:(==)(x::Table{T}, y::Table{T}) where {T} = x.table == y.table
+
+"""
+    Circuit(dimension::Int)
+
+The set ``\\{x \\in \\mathbb{R}^d\\}`` that constraints ``x`` to be a circuit,
+such that ``x_i = j`` means that ``j`` is the successor of ``i``.
+
+This constraint is sometimes called `circuit`.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables(x), Circuit(3))
+```
+"""
+struct Circuit <: AbstractVectorSet
+    dimension::Int
+    function Circuit(dimension::Base.Integer)
+        if dimension < 0
+            throw(DimensionMismatch("Dimension of Circuit must be >= 0."))
+        end
+        return new(dimension)
+    end
+end
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
@@ -1336,6 +1461,8 @@ function Base.copy(
         Among,
         CountAtLeast,
         CountGreaterThan,
+        Circuit,
+        Cumulative,
     },
 )
     return set
