@@ -83,6 +83,28 @@ function test_parse_expr_nary()
     return
 end
 
+function test_parse_expr_minimum()
+    model = NL._CacheModel()
+    io = IOBuffer()
+    write(io, "o11\n3\nv0\nv1\nv2\n")
+    seekstart(io)
+    x = MOI.VariableIndex.(1:3)
+    @test NL._parse_expr(io, model) == :(min($(x[1]), $(x[2]), $(x[3])))
+    @test eof(io)
+    return
+end
+
+function test_parse_expr_maximum()
+    model = NL._CacheModel()
+    io = IOBuffer()
+    write(io, "o12\n3\nv0\nv1\nv2\n")
+    seekstart(io)
+    x = MOI.VariableIndex.(1:3)
+    @test NL._parse_expr(io, model) == :(max($(x[1]), $(x[2]), $(x[3])))
+    @test eof(io)
+    return
+end
+
 function test_parse_header_binary()
     model = NL._CacheModel()
     NL._resize_variables(model, 4)

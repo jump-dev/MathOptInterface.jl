@@ -114,16 +114,6 @@ function _read_til_newline(io::IO)
     return
 end
 
-function _get_trailing_int(line)
-    y = 0
-    mult = 1
-    for i in length(line):-1:2
-        y += mult * Int(line[i] - '0')
-        mult *= 10
-    end
-    return y
-end
-
 _force_expr(expr::Expr) = expr
 _force_expr(expr) = Expr(:call, :+, expr)
 
