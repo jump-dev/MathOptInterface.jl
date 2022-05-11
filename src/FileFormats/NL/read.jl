@@ -129,7 +129,49 @@ function _resize_constraints(model::_CacheModel, n::Int)
     return
 end
 
-function Base.read(io::IO, ::Type{_CacheModel})
+function to_model(data::_CacheModel)
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variables(model, length(data.variable_primal))
+    for (xi, lb, ub) in zip(x, data.variable_lower, data.variable_upper)
+        if lb > -Inf
+            MOI.add_constraint(model, xi, MOI.GreaterThan(lb))
+        end
+        if ub < Inf
+            MOI.add_constraint(model, xi, MOI.LessThan(ub))
+        end
+    end
+    for (xi, type) in zip(x, data.variable_type)
+        if type == _INTEGER
+            MOI.add_constraint(model, xi, MOI.Integer())
+        elseif type == _BINARY
+            MOI.add_constraint(model, xi, MOI.ZeroOne())
+        end
+    end
+    MOI.set.(model, MOI.VariablePrimalStart(), x, data.variable_primal)
+    MOI.set(model, MOI.ObjectiveSense(), data.sense)
+    nlp = MOI.Nonlinear.Model()
+    MOI.Nonlinear.set_objective(nlp, data.objective)
+    for (i, expr) in enumerate(data.constraints)
+        lb, ub = data.constraint_lower[i], data.constraint_upper[i]
+        if lb == ub
+            MOI.Nonlinear.add_constraint(nlp, expr, MOI.EqualTo(lb))
+        elseif -Inf < lb < ub < Inf
+            MOI.Nonlinear.add_constraint(nlp, expr, MOI.Interval(lb, ub))
+        elseif -Inf == lb && ub < Inf
+            MOI.Nonlinear.add_constraint(nlp, expr, MOI.LessThan(ub))
+        else
+            @assert -Inf < lb && ub == Inf
+            MOI.Nonlinear.add_constraint(nlp, expr, MOI.GreaterThan(lb))
+        end
+    end
+    evaluator =
+        MOI.Nonlinear.Evaluator(nlp, MOI.Nonlinear.SparseReverseMode(), x)
+    block = MOI.NLPBlockData(evaluator)
+    MOI.set(model, MOI.NLPBlock(), block)
+    return model
+end
+
+function Base.read(io::IO, ::Type{Model})
     model = _CacheModel()
     # ==========================================================================
     # Header
@@ -138,7 +180,7 @@ function Base.read(io::IO, ::Type{_CacheModel})
     # format.
     @assert readline(io) == "g3 1 1 0"
     # Line 2
-    items = parse.(Int, split(readline(io), ' '))
+    line = items = parse.(Int, split(readline(io), ' '; keepempty = false))
     @assert length(items) == 6
     num_variables = items[1]
     _resize_variables(model, num_variables)
@@ -148,7 +190,7 @@ function Base.read(io::IO, ::Type{_CacheModel})
     @assert items[5] >= 0
     @assert items[6] == 0  # logical constraints
     # Line 3
-    items = parse.(Int, split(readline(io), ' '))
+    items = parse.(Int, split(readline(io), ' '; keepempty = false))
     @assert items[1] >= 0
     @assert 0 <= items[2] <= 1
     # Line 4
@@ -182,7 +224,7 @@ function Base.read(io::IO, ::Type{_CacheModel})
         nlvo,
         num_variables - (nbv + niv) - (nlvc + nlvo - nlvb),
         nbv,
-        niv
+        niv,
     ]
     if nlvo > nlvc
         offsets[3], offsets[5] = offsets[5], offsets[3]
@@ -211,10 +253,10 @@ function Base.read(io::IO, ::Type{_CacheModel})
         line = readline(io)
         _parse_section(io, Val(line[1]), model, line)
     end
-    return model
+    return to_model(model)
 end
 
-function _parse_section(::IO, ::Val, ::_CacheModel, line ::String)
+function _parse_section(::IO, ::Val, ::_CacheModel, line::String)
     return error("Unable to parse NL file: unhandled header:\n\n$line")
 end
 
@@ -226,10 +268,10 @@ end
 
 function _parse_section(io::IO, ::Val{'O'}, model::_CacheModel, line::String)
     if line[end] == '1'
-        model.sense == MOI.MAX_SENSE
+        model.sense = MOI.MAX_SENSE
     else
         @assert line[end] == '0'
-        model.sense == MOI.MIN_SENSE
+        model.sense = MOI.MIN_SENSE
     end
     model.objective = _force_expr(_parse_expr(io))
     return
@@ -304,9 +346,13 @@ function _parse_section(io::IO, ::Val{'J'}, model::_CacheModel, line::String)
     for _ in 1:parse(Int, line[index+1:end])
         x = _next(Int, io, model.cache)
         c = _next(Float64, io, model.cache)
-        push!(expr.args, Expr(:call, :*, c, MOI.VariableIndex(x + 1)))
+        if !iszero(c)
+            push!(expr.args, Expr(:call, :*, c, MOI.VariableIndex(x + 1)))
+        end
     end
-    if model.constraints[i] == :()
+    if length(expr.args) == 1
+        # Linear part is just zeros
+    elseif model.constraints[i] == :()
         model.constraints[i] = expr
     else
         model.constraints[i] = Expr(:call, :+, expr, model.constraints[i])
@@ -320,9 +366,13 @@ function _parse_section(io::IO, ::Val{'G'}, model::_CacheModel, line::String)
     for _ in 1:parse(Int, line[index+1:end])
         x = _next(Int, io, model.cache)
         c = _next(Float64, io, model.cache)
-        push!(expr.args, Expr(:call, :*, c, MOI.VariableIndex(x + 1)))
+        if !iszero(c)
+            push!(expr.args, Expr(:call, :*, c, MOI.VariableIndex(x + 1)))
+        end
     end
-    if model.objective == :()
+    if length(expr.args) == 1
+        # Linear part is just zeros
+    elseif model.objective == :()
         model.objective = expr
     else
         model.objective = Expr(:call, :+, expr, model.objective)
