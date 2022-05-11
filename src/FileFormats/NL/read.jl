@@ -55,8 +55,10 @@ function _resize_constraints(model::_CacheModel, n::Int)
     return
 end
 
-function _is_valid_number(x::UInt8)
-    if UInt8('0') <= x <= UInt8('9')
+_is_valid_number(::Type{Int}, x::UInt8) = UInt8('0') <= x <= UInt8('9')
+
+function _is_valid_number(::Type{Float64}, x::UInt8)
+    if _is_valid_number(Int, x)
         return true
     elseif x == UInt8('+') || x == UInt8('-')
         return true
@@ -66,16 +68,16 @@ function _is_valid_number(x::UInt8)
     return false
 end
 
-function _next_token(io::IO, cache::Vector{UInt8})
+function _next_token(::Type{T}, io::IO, cache::Vector{UInt8}) where {T}
     # Skip all spaces
     byte = UInt8(' ')
     while byte == UInt8(' ')
         byte = read(io, UInt8)
     end
-    @assert _is_valid_number(byte)
+    @assert _is_valid_number(T, byte)
     cache[1] = byte
     i = 1
-    while _is_valid_number(peek(io, UInt8))
+    while _is_valid_number(T, peek(io, UInt8))
         i += 1
         cache[i] = read(io, UInt8)
     end
@@ -83,12 +85,14 @@ function _next_token(io::IO, cache::Vector{UInt8})
 end
 
 function _next(::Type{Float64}, io::IO, model::_CacheModel)
-    nnz = _next_token(io, model.cache)
+    nnz = _next_token(Float64, io, model.cache)
+    @assert nnz > 0
     return parse(Float64, String(model.cache[1:nnz]))
 end
 
 function _next(::Type{Int}, io::IO, model::_CacheModel)
-    nnz = _next_token(io, model.cache)
+    nnz = _next_token(Int, io, model.cache)
+    @assert nnz > 0
     y = 0
     mult = 1
     for i in nnz:-1:1
@@ -214,7 +218,10 @@ function _parse_header(io::IO, model::_CacheModel)
     # Line 1
     # This has some magic bytes for AMPL internals. We don't support the binary
     # format.
-    @assert read(io, UInt8) == UInt8('g')
+    byte = read(io, UInt8)
+    if byte != UInt8('g')
+        error("Unable to parse NL file : unsupported mode $(Char(byte))")
+    end
     @assert _next(Int, io, model) == 3
     @assert _next(Int, io, model) == 1
     @assert _next(Int, io, model) == 1
@@ -234,6 +241,10 @@ function _parse_header(io::IO, model::_CacheModel)
     @assert 0 <= _next(Int, io, model) <= 1
     _read_til_newline(io)
     # Line 4
+    # We don't support network constraints or objectives
+    for _ in 1:2
+        @assert _next(Int, io, model) == 0
+    end
     _read_til_newline(io)
     # Line 5
     nlvc = _next(Int, io, model)
@@ -241,6 +252,11 @@ function _parse_header(io::IO, model::_CacheModel)
     nlvb = _next(Int, io, model)
     _read_til_newline(io)
     # Line 6
+    # We don't support network variables, or user-defined functions
+    for _ in 1:3
+        @assert _next(Int, io, model) == 0
+    end
+    _next(Int, io, model)  # flags. Don't know what it is. Ignore.
     _read_til_newline(io)
     # Line 7
     nbv = _next(Int, io, model)
@@ -250,10 +266,23 @@ function _parse_header(io::IO, model::_CacheModel)
     nl_obj = _next(Int, io, model)
     _read_til_newline(io)
     # Line 8
+    # Read the number of nonzeros in Jacobian and gradient, but don't do
+    # anything with that information.
+    for _ in 1:2
+        @assert _next(Int, io, model) >= 0
+    end
     _read_til_newline(io)
     # Line 9
+    # We don't support reading variable and constraint names
+    for _ in 1:2
+        @assert _next(Int, io, model) == 0
+    end
     _read_til_newline(io)
     # Line 10
+    # We don't support reading common subexpressions
+    for _ in 1:5
+        @assert _next(Int, io, model) == 0
+    end
     _read_til_newline(io)
     # ==========================================================================
     # Deal with the integrality of variables

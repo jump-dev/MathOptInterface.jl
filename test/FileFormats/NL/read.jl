@@ -59,6 +59,64 @@ function test_parse_expr_nary()
     return
 end
 
+function test_parse_header_binary()
+    model = NL._CacheModel()
+    NL._resize_variables(model, 4)
+    io = IOBuffer()
+    write(io, "b3 1 1 0\n")
+    seekstart(io)
+    @test_throws(
+        ErrorException("Unable to parse NL file : unsupported mode b"),
+        NL._parse_header(io, model),
+    )
+    return
+end
+
+function test_parse_header_assertion_errors()
+    model = NL._CacheModel()
+    for header in [
+        "g4 1 1 0\n",
+        "g4 1 1 0\n",
+        "g3 1 0 0\n",
+        "g3 1 1 1\n",
+        "g4 1 1 0\n3 3 2 0 0 0\n",
+        "g4 1 1 0\n3 3 1 0 0 0\n0 2\n",
+        "g4 1 1 0\n3 3 1 0 0 0\n0 0\n1 0\n",
+        "g4 1 1 0\n3 3 1 0 0 0\n0 0\n0 1\n",
+        "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n1 0 0 1\n",
+        "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 1 0 1\n",
+        "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 1 1\n",
+        "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n-1 0\n",
+        "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n0 -1\n",
+        "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n8 4\n1 0\n",
+        "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n8 4\n0 1\n",
+        "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n8 4\n0 0\n1 0 0 0 0\n",
+        "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n8 4\n0 0\n0 1 0 0 0\n",
+        "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n8 4\n0 0\n0 0 1 0 0\n",
+        "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n8 4\n0 0\n0 0 0 1 0\n",
+        "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n8 4\n0 0\n0 0 0 0 1\n",
+    ]
+        io = IOBuffer()
+        write(io, header)
+        seekstart(io)
+        @test_throws(AssertionError, NL._parse_header(io, model))
+    end
+    return
+end
+
+function test_parse_y_error()
+    model = NL._CacheModel()
+    NL._resize_variables(model, 4)
+    io = IOBuffer()
+    write(io, "y\n")
+    seekstart(io)
+    @test_throws(
+        ErrorException("Unable to parse NL file: unhandled header y"),
+        NL._parse_section(io, model),
+    )
+    return
+end
+
 function test_parse_O()
     model = NL._CacheModel()
     NL._resize_variables(model, 4)
