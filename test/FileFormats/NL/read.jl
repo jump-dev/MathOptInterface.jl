@@ -426,7 +426,6 @@ function test_hs071()
     model = open(joinpath(@__DIR__, "data", "hs071.nl"), "r") do io
         return read(io, NL.Model)
     end
-    print(model)
     dest = NL.Model()
     MOI.copy_to(dest, model)
     new_model = sprint(write, dest)
