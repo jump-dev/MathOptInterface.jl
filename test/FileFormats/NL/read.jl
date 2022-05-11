@@ -35,6 +35,30 @@ function test_next_int()
     return
 end
 
+function test_next_float()
+    model = NL._CacheModel()
+    for (s, x) in [
+        ("-1", -1.0),
+        ("1", 1.0),
+        ("-2.1e+1", -21.0),
+        ("2.1e+1", 21.0),
+        ("-2.1e-01", -0.21),
+        ("2.1e-01", 0.21),
+        ("-2.1E-01", -0.21),
+        ("2.1E-01", 0.21),
+        ("-20.1e+0", -20.1),
+        ("20.1e+00", 20.1),
+        ("  20.1e+00", 20.1),
+    ]
+        io = IOBuffer()
+        print(io, "$s\n")
+        seekstart(io)
+        @test NL._next(Float64, io, model) == x
+        @test peek(io) == UInt8('\n')
+    end
+    return
+end
+
 function test_parse_expr()
     model = NL._CacheModel()
     io = IOBuffer()
@@ -405,8 +429,8 @@ function test_parse_G_O()
         io,
         """
 G0 2
-0 1.1
-1 2.2
+0 -1.1
+1 2.2e+01
 O0 0
 o2
 v0
@@ -418,7 +442,7 @@ v1
     NL._parse_section(io, model)
     @test eof(io)
     x, y = MOI.VariableIndex(1), MOI.VariableIndex(2)
-    @test model.objective == :((1.1 * $x + 2.2 * $y) + $x * $y)
+    @test model.objective == :((-1.1 * $x + 22.0 * $y) + $x * $y)
     return
 end
 
