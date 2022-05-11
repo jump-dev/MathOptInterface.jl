@@ -4,80 +4,6 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-function _next_token(io::IO, cache::Vector{UInt8})
-    byte = UInt8(' ')
-    while byte in (UInt8(' '), UInt8('\n'), UInt8('\r'))
-        byte = read(io, UInt8)
-    end
-    i = 0
-    while byte != UInt8(' ') && byte != UInt8('\n')
-        i += 1
-        cache[i] = byte
-        byte = read(io, UInt8)
-    end
-    return i
-end
-
-function _next(::Type{T}, io::IO, cache::Vector{UInt8}) where {T}
-    nnz = _next_token(io, cache)
-    return parse(T, String(cache[1:nnz]))
-end
-
-function _next(::Type{Int}, io::IO, cache::Vector{UInt8})
-    nnz = _next_token(io, cache)
-    y = 0
-    mult = 1
-    for i in nnz:-1:1
-        y += mult * (cache[i] - UInt8('0'))
-        mult *= 10
-    end
-    return y
-end
-
-function _get_trailing_int(line)
-    y = 0
-    mult = 1
-    for i in length(line):-1:2
-        y += mult * Int(line[i] - '0')
-        mult *= 10
-    end
-    return y
-end
-
-_force_expr(expr::Expr) = expr
-_force_expr(expr) = Expr(:call, :+, expr)
-
-function _parse_expr(io::IO)
-    line = readline(io)
-    if line[1] == 'o'
-        opcode = _get_trailing_int(line)
-        arity, op_func = _AMPL_TO_JULIA[opcode]
-        op_sym = Symbol(op_func)
-        if arity == -1
-            arity = parse(Int, readline(io))
-            if op_sym == :sum
-                op_sym = :+
-            elseif op_sym == :minimum
-                op_sym = :min
-            elseif op_sym == :maximum
-                op_sym = :max
-            end
-        end
-        parent = Expr(:call, op_sym)
-        for _ in 1:arity
-            child = _parse_expr(io)
-            push!(parent.args, child)
-        end
-        return parent
-    elseif line[1] == 'v'
-        index = _get_trailing_int(line)
-        return MOI.VariableIndex(index + 1)
-    else
-        @assert line[1] == 'n'
-        return parse(Float64, line[2:end])
-    end
-end
-
 mutable struct _CacheModel
     cache::Vector{UInt8}
     variable_type::Vector{_VariableType}
@@ -129,6 +55,110 @@ function _resize_constraints(model::_CacheModel, n::Int)
     return
 end
 
+function _is_valid_number(x::UInt8)
+    if UInt8('0') <= x <= UInt8('9')
+        return true
+    elseif x == UInt8('+') || x == UInt8('-')
+        return true
+    elseif x == UInt8('.') || x == UInt8('e') || x == UInt8('E')
+        return true
+    end
+    return false
+end
+
+function _next_token(io::IO, cache::Vector{UInt8})
+    # Skip all spaces
+    byte = UInt8(' ')
+    while byte == UInt8(' ')
+        byte = read(io, UInt8)
+    end
+    @assert _is_valid_number(byte)
+    cache[1] = byte
+    i = 1
+    while _is_valid_number(peek(io, UInt8))
+        i += 1
+        cache[i] = read(io, UInt8)
+    end
+    return i
+end
+
+function _next(::Type{Float64}, io::IO, model::_CacheModel)
+    nnz = _next_token(io, model.cache)
+    return parse(Float64, String(model.cache[1:nnz]))
+end
+
+function _next(::Type{Int}, io::IO, model::_CacheModel)
+    nnz = _next_token(io, model.cache)
+    y = 0
+    mult = 1
+    for i in nnz:-1:1
+        y += mult * (model.cache[i] - UInt8('0'))
+        mult *= 10
+    end
+    return y
+end
+
+"""
+    _read_til_newline(io::IO)
+
+This function reads until it finds a new line character. This is useful for
+skipping comments.
+"""
+function _read_til_newline(io::IO)
+    while read(io, UInt8) != UInt8('\n')
+    end
+    return
+end
+
+function _get_trailing_int(line)
+    y = 0
+    mult = 1
+    for i in length(line):-1:2
+        y += mult * Int(line[i] - '0')
+        mult *= 10
+    end
+    return y
+end
+
+_force_expr(expr::Expr) = expr
+_force_expr(expr) = Expr(:call, :+, expr)
+
+function _parse_expr(io::IO, model::_CacheModel)
+    char = Char(read(io, UInt8))
+    if char == 'o'
+        opcode = _next(Int, io, model)
+        _read_til_newline(io)
+        arity, op_func = _AMPL_TO_JULIA[opcode]
+        op_sym = Symbol(op_func)
+        if arity == -1
+            arity = _next(Int, io, model)
+            _read_til_newline(io)
+            if op_sym == :sum
+                op_sym = :+
+            elseif op_sym == :minimum
+                op_sym = :min
+            elseif op_sym == :maximum
+                op_sym = :max
+            end
+        end
+        parent = Expr(:call, op_sym)
+        for _ in 1:arity
+            child = _parse_expr(io, model)
+            push!(parent.args, child)
+        end
+        return parent
+    elseif char == 'v'
+        index = _next(Int, io, model)
+        _read_til_newline(io)
+        return MOI.VariableIndex(index + 1)
+    else
+        @assert char == 'n'
+        ret = _next(Float64, io, model)
+        _read_til_newline(io)
+        return ret
+    end
+end
+
 function to_model(data::_CacheModel)
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     x = MOI.add_variables(model, length(data.variable_primal))
@@ -173,46 +203,58 @@ end
 
 function Base.read(io::IO, ::Type{Model})
     model = _CacheModel()
-    # ==========================================================================
-    # Header
+    _parse_header(io, model)
+    while !eof(io)
+        _parse_section(io, model)
+    end
+    return to_model(model)
+end
+
+function _parse_header(io::IO, model::_CacheModel)
     # Line 1
     # This has some magic bytes for AMPL internals. We don't support the binary
     # format.
-    @assert readline(io) == "g3 1 1 0"
+    @assert read(io, UInt8) == UInt8('g')
+    @assert _next(Int, io, model) == 3
+    @assert _next(Int, io, model) == 1
+    @assert _next(Int, io, model) == 1
+    @assert _next(Int, io, model) == 0
+    _read_til_newline(io)
     # Line 2
-    line = items = parse.(Int, split(readline(io), ' '; keepempty = false))
-    @assert length(items) == 6
-    num_variables = items[1]
+    num_variables = _next(Int, io, model)
     _resize_variables(model, num_variables)
-    _resize_constraints(model, items[2])
-    @assert 0 <= items[3] <= 1  # num objectives
-    @assert items[4] >= 0
-    @assert items[5] >= 0
-    @assert items[6] == 0  # logical constraints
+    _resize_constraints(model, _next(Int, io, model))
+    @assert 0 <= _next(Int, io, model) <= 1
+    @assert _next(Int, io, model) >= 0
+    @assert _next(Int, io, model) >= 0
+    @assert _next(Int, io, model) == 0
+    _read_til_newline(io)
     # Line 3
-    items = parse.(Int, split(readline(io), ' '; keepempty = false))
-    @assert items[1] >= 0
-    @assert 0 <= items[2] <= 1
+    @assert _next(Int, io, model) >= 0
+    @assert 0 <= _next(Int, io, model) <= 1
+    _read_til_newline(io)
     # Line 4
-    _ = readline(io)
+    _read_til_newline(io)
     # Line 5
-    nlvc = _next(Int, io, model.cache)
-    nlvo = _next(Int, io, model.cache)
-    nlvb = _next(Int, io, model.cache)
+    nlvc = _next(Int, io, model)
+    nlvo = _next(Int, io, model)
+    nlvb = _next(Int, io, model)
+    _read_til_newline(io)
     # Line 6
-    _ = readline(io)
+    _read_til_newline(io)
     # Line 7
-    nbv = _next(Int, io, model.cache)
-    niv = _next(Int, io, model.cache)
-    nl_both = _next(Int, io, model.cache)
-    nl_cons = _next(Int, io, model.cache)
-    nl_obj = _next(Int, io, model.cache)
+    nbv = _next(Int, io, model)
+    niv = _next(Int, io, model)
+    nl_both = _next(Int, io, model)
+    nl_cons = _next(Int, io, model)
+    nl_obj = _next(Int, io, model)
+    _read_til_newline(io)
     # Line 8
-    _ = readline(io)
+    _read_til_newline(io)
     # Line 9
-    _ = readline(io)
+    _read_til_newline(io)
     # Line 10
-    _ = readline(io)
+    _read_til_newline(io)
     # ==========================================================================
     # Deal with the integrality of variables
     offsets = [
@@ -248,107 +290,121 @@ function Base.read(io::IO, ::Type{Model})
             model.variable_type[offset] = types[i]
         end
     end
-    # ==========================================================================
-    while !eof(io)
-        line = readline(io)
-        _parse_section(io, Val(line[1]), model, line)
-    end
-    return to_model(model)
-end
-
-function _parse_section(::IO, ::Val, ::_CacheModel, line::String)
-    return error("Unable to parse NL file: unhandled header:\n\n$line")
-end
-
-function _parse_section(io::IO, ::Val{'C'}, model::_CacheModel, line::String)
-    index = _get_trailing_int(line) + 1
-    model.constraints[index] = _force_expr(_parse_expr(io))
     return
 end
 
-function _parse_section(io::IO, ::Val{'O'}, model::_CacheModel, line::String)
-    if line[end] == '1'
+function _parse_section(io::IO, model::_CacheModel)
+    char = Char(read(io, UInt8))
+    _parse_section(io, Val(char), model)
+    return
+end
+
+function _parse_section(::IO, ::Val{T}, ::_CacheModel) where {T}
+    return error("Unable to parse NL file: unhandled header $T")
+end
+
+function _parse_section(io::IO, ::Val{'C'}, model::_CacheModel)
+    index = _next(Int, io, model) + 1
+    _read_til_newline(io)
+    model.constraints[index] = _force_expr(_parse_expr(io, model))
+    return
+end
+
+function _parse_section(io::IO, ::Val{'O'}, model::_CacheModel)
+    @assert _next(Int, io, model) == 0
+    sense = _next(Int, io, model)
+    if sense == 1
         model.sense = MOI.MAX_SENSE
     else
-        @assert line[end] == '0'
+        @assert sense == 0
         model.sense = MOI.MIN_SENSE
     end
-    model.objective = _force_expr(_parse_expr(io))
+    _read_til_newline(io)
+    model.objective = _force_expr(_parse_expr(io, model))
     return
 end
 
-function _parse_section(io::IO, ::Val{'x'}, model::_CacheModel, line::String)
-    index = _get_trailing_int(line)
+function _parse_section(io::IO, ::Val{'x'}, model::_CacheModel)
+    index = _next(Int, io, model)
+    _read_til_newline(io)
     for _ in 1:index
-        xi = _next(Int, io, model.cache) + 1
-        v = _next(Float64, io, model.cache)
+        xi = _next(Int, io, model) + 1
+        v = _next(Float64, io, model)
         model.variable_primal[xi] = v
+        _read_til_newline(io)
     end
     return
 end
 
-function _parse_section(io::IO, ::Val{'r'}, model::_CacheModel, ::String)
+function _parse_section(io::IO, ::Val{'r'}, model::_CacheModel)
+    _read_til_newline(io)
     for i in 1:length(model.constraint_lower)
-        type = _next(Int, io, model.cache)
+        type = _next(Int, io, model)
         if type == 0
-            model.constraint_lower[i] = _next(Float64, io, model.cache)
-            model.constraint_upper[i] = _next(Float64, io, model.cache)
+            model.constraint_lower[i] = _next(Float64, io, model)
+            model.constraint_upper[i] = _next(Float64, io, model)
         elseif type == 1
-            model.constraint_upper[i] = _next(Float64, io, model.cache)
+            model.constraint_upper[i] = _next(Float64, io, model)
         elseif type == 2
-            model.constraint_lower[i] = _next(Float64, io, model.cache)
+            model.constraint_lower[i] = _next(Float64, io, model)
         elseif type == 3
             # Free constraint
         else
             @assert type == 4
-            value = _next(Float64, io, model.cache)
+            value = _next(Float64, io, model)
             model.constraint_lower[i] = value
             model.constraint_upper[i] = value
         end
+        _read_til_newline(io)
     end
     return
 end
 
-function _parse_section(io::IO, ::Val{'b'}, model::_CacheModel, ::String)
+function _parse_section(io::IO, ::Val{'b'}, model::_CacheModel)
+    _read_til_newline(io)
     for i in 1:length(model.variable_lower)
-        type = _next(Int, io, model.cache)
+        type = _next(Int, io, model)
         if type == 0
-            model.variable_lower[i] = _next(Float64, io, model.cache)
-            model.variable_upper[i] = _next(Float64, io, model.cache)
+            model.variable_lower[i] = _next(Float64, io, model)
+            model.variable_upper[i] = _next(Float64, io, model)
         elseif type == 1
-            model.variable_upper[i] = _next(Float64, io, model.cache)
+            model.variable_upper[i] = _next(Float64, io, model)
         elseif type == 2
-            model.variable_lower[i] = _next(Float64, io, model.cache)
+            model.variable_lower[i] = _next(Float64, io, model)
         elseif type == 3
             # Free variable
         else
             @assert type == 4
-            value = _next(Float64, io, model.cache)
+            value = _next(Float64, io, model)
             model.variable_lower[i] = value
             model.variable_upper[i] = value
         end
+        _read_til_newline(io)
     end
     return
 end
 
-function _parse_section(io::IO, ::Val{'k'}, model::_CacheModel, ::String)
-    # We ignore jacobian counts for now
+# We ignore jacobian counts for now
+function _parse_section(io::IO, ::Val{'k'}, model::_CacheModel)
+    _read_til_newline(io)
     for _ in 2:length(model.variable_lower)
-        _ = readline(io)
+        _read_til_newline(io)
     end
     return
 end
 
-function _parse_section(io::IO, ::Val{'J'}, model::_CacheModel, line::String)
-    index = findfirst(isequal(' '), line)
-    i = parse(Int, line[2:index]) + 1
+function _parse_section(io::IO, ::Val{'J'}, model::_CacheModel)
+    i = _next(Int, io, model) + 1
+    nnz = _next(Int, io, model)
+    _read_til_newline(io)
     expr = Expr(:call, :+)
-    for _ in 1:parse(Int, line[index+1:end])
-        x = _next(Int, io, model.cache)
-        c = _next(Float64, io, model.cache)
+    for _ in 1:nnz
+        x = _next(Int, io, model)
+        c = _next(Float64, io, model)
         if !iszero(c)
             push!(expr.args, Expr(:call, :*, c, MOI.VariableIndex(x + 1)))
         end
+        _read_til_newline(io)
     end
     if length(expr.args) == 1
         # Linear part is just zeros
@@ -360,15 +416,18 @@ function _parse_section(io::IO, ::Val{'J'}, model::_CacheModel, line::String)
     return
 end
 
-function _parse_section(io::IO, ::Val{'G'}, model::_CacheModel, line::String)
-    index = findfirst(isequal(' '), line)
+function _parse_section(io::IO, ::Val{'G'}, model::_CacheModel)
+    i = _next(Int, io, model) + 1
+    nnz = _next(Int, io, model)
+    _read_til_newline(io)
     expr = Expr(:call, :+)
-    for _ in 1:parse(Int, line[index+1:end])
-        x = _next(Int, io, model.cache)
-        c = _next(Float64, io, model.cache)
+    for _ in 1:nnz
+        x = _next(Int, io, model)
+        c = _next(Float64, io, model)
         if !iszero(c)
             push!(expr.args, Expr(:call, :*, c, MOI.VariableIndex(x + 1)))
         end
+        _read_til_newline(io)
     end
     if length(expr.args) == 1
         # Linear part is just zeros
