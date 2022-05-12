@@ -172,3 +172,51 @@ function setup_test(
     )
     return
 end
+
+"""
+    test_cpsat_CountGreaterThan(model::MOI.ModelLike, config::Config)
+
+Add a VectorOfVariables-in-CountGreaterThan constraint.
+"""
+function test_cpsat_CountGreaterThan(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.CountGreaterThan,
+    )
+    @requires MOI.supports_add_constrained_variable(model, MOI.Integer)
+    @requires _supports(config, MOI.optimize!)
+    c, _ = MOI.add_constrained_variable(model, MOI.Integer())
+    y, _ = MOI.add_constrained_variable(model, MOI.Integer())
+    x = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+    MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([c; y; x]),
+        MOI.CountGreaterThan(5),
+    )
+    MOI.optimize!(model)
+    c_val = round(Int, MOI.get(model, MOI.VariablePrimal(), c))
+    y_val = round(Int, MOI.get(model, MOI.VariablePrimal(), y))
+    x_val = round.(Int, MOI.get.(model, MOI.VariablePrimal(), x))
+    @test c_val > sum(x_val[i] == y_val for i in 1:length(x))
+    return
+end
+
+function setup_test(
+    ::typeof(test_cpsat_CountGreaterThan),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, T[2, 4, 0, 4, 0]),
+        ),
+    )
+    return
+end
