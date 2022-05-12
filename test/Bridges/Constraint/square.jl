@@ -114,6 +114,32 @@ function test_runtests()
         [x11, x12, x22] in PositiveSemidefiniteConeTriangle(2)
         """,
     )
+end
+
+function test_symmetric_square()
+    mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    mock.optimize! =
+        (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
+            mock,
+            ones(5),
+            (
+                MOI.VectorAffineFunction{Float64},
+                MOI.PositiveSemidefiniteConeTriangle,
+            ) => [[0.0, 0.0, 1.0, 0.0, 1.0, 1.0]],
+        )
+    model = MOI.Bridges.Constraint.Square{Float64}(mock)
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
+    X = MOI.add_variables(model, 3)
+    y = [1.0, x[1], x[2], x[1], X[1], X[2], x[2], X[2], X[3]]
+    g = MOI.Utilities.operate(vcat, Float64, 1.0 * y...)
+    c = MOI.add_constraint(model, g, MOI.PositiveSemidefiniteConeSquare(3))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = sum(1.0 * x) + sum(1.0 * X) + X[2]
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.optimize!(model)
+    dual = MOI.get(model, MOI.ConstraintDual(), c)
+    @test reshape(dual, 3, 3) == Float64[0 0 0; 0 1 1; 0 1 1]
     return
 end
 
