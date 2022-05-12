@@ -1301,6 +1301,198 @@ struct CountGreaterThan <: AbstractVectorSet
     end
 end
 
+"""
+    BinPacking(c::T, w::Vector{T}) where {T}
+
+The set ``\\{x \\in \\mathbb{R}^d\\}`` such that each item `i` in `1:d` of
+weight `w[i]` is put into bin `x[i]`, and the total weight of each bin does not
+exceed `c`.
+
+There are additional assumptions that the capacity, `c`, and the weights, `w`,
+must all be non-negative.
+
+## Also known as
+
+This constraint is called `bin_packing` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+bins = add_variables(model, 5)
+weights = [1, 1, 2, 2, 3]
+add_constraint.(model, bins, MOI.Integer())
+add_constraint.(model, bins, MOI.Interval(1, 3))
+add_constraint(model, VectorOfVariables(bins), BinPacking(3, weights))
+```
+"""
+struct BinPacking{T} <: AbstractVectorSet
+    capacity::T
+    weights::Vector{T}
+    function BinPacking(capacity::T, weights::Vector{T}) where {T}
+        if capacity < zero(T)
+            throw(DomainError(capacity, "capacity must be non-negative"))
+        end
+        if any(w -> w < zero(T), weights)
+            throw(DomainError(weights, "weights must be non-negative"))
+        end
+        return new{T}(capacity, weights)
+    end
+end
+
+dimension(set::BinPacking) = length(set.weights)
+
+function Base.copy(set::BinPacking{T}) where {T}
+    return BinPacking(set.capacity, copy(set.weights))
+end
+
+function Base.:(==)(x::BinPacking{T}, y::BinPacking{T}) where {T}
+    return x.capacity == y.capacity && x.weights == y.weights
+end
+
+"""
+    Cumulative(dimension::Int)
+
+The set ``\\{(s, d, r, b) \\in \\mathbb{Z}^{length(s)+length(d)+length(r)+1}\\}``
+representing the ``cumulative`` global constraint.
+
+It requires that a set of tasks given by start times ``s``, durations ``d``, and
+resource requirements ``r``, never requires more than the global resource bound
+``b`` at any one time.
+
+## Also known as
+
+This constraint is called `cumulative` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+s = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+d = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+r = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+b, _ = add_constrained_variable(model, Integer())
+add_constraint(model, VectorOfVariables([s; d; r; b]), Cumulative(10))
+```
+"""
+struct Cumulative <: AbstractVectorSet
+    dimension::Int
+    function Cumulative(dimension::Base.Integer)
+        if dimension < 1
+            throw(DimensionMismatch("Dimension of Cumulative must be >= 1."))
+        end
+        return new(dimension)
+    end
+end
+
+"""
+    Table(table::Matrix{T}) where {T}
+
+The set ``\\{x \\in \\mathbb{R}^d\\}`` where `d = size(table, 2)`, such that `x`
+belongs to one row of `table`. That is, there exists some `j` in
+`1:size(table, 1)`, such that `x[i] = table[j, i]` for all `i=1:size(table, 2)`.
+
+## Also known as
+
+This constraint is called `table` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+x = add_variables(model, 3)
+table = [1 1 0; 0 1 1; 1 0 1; 1 1 1]
+add_constraint(model, VectorOfVariables(x), Table(table))
+```
+"""
+struct Table{T} <: AbstractVectorSet
+    table::Matrix{T}
+end
+
+dimension(set::Table) = size(set.table, 2)
+
+Base.copy(set::Table) = Table(copy(set.table))
+
+Base.:(==)(x::Table{T}, y::Table{T}) where {T} = x.table == y.table
+
+"""
+    Circuit(dimension::Int)
+
+The set ``\\{x \\in \\{1..d\\}^d\\}`` that constraints ``x`` to be a circuit,
+such that ``x_i = j`` means that ``j`` is the successor of ``i``.
+
+## Also known as
+
+This constraint is called `circuit` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+x = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables(x), Circuit(3))
+```
+"""
+struct Circuit <: AbstractVectorSet
+    dimension::Int
+    function Circuit(dimension::Base.Integer)
+        if dimension < 0
+            throw(DimensionMismatch("Dimension of Circuit must be >= 0."))
+        end
+        return new(dimension)
+    end
+end
+
+"""
+    Path(from::Vector{Int}, to::Vector{Int})
+
+Given a graph comprised of a set of nodes `1..N` and a set of arcs `1..E`
+represented by an edge from node `from[i]` to node `to[i]`, `Path` constraints
+the set
+``(s, t, ns, es) \\in (1..N)\\times(1..N)\\times\\{0,1\\}^N\\times\\{0,1\\}^E``,
+to form subgraph that is a path from node `s` to node `t`, where node `n` is in
+the path if `ns[n]` is `1`, and edge `e` is in the path if `es[e]` is `1`.
+
+## Also known as
+
+This constraint is called `path` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+from = [1, 1, 2, 2, 3]
+to = [2, 3, 3, 4, 4]
+s, _ = add_constrained_variable(model, Integer())
+t, _ = add_constrained_variable(model, Integer())
+ns = add_variables(model, N)
+add_constraint.(model, ns, ZeroOne())
+es = add_variables(model, E)
+add_constraint.(model, es, ZeroOne())
+add_constraint(model, VectorOfVariables([s; t; ns; es]), Path(from, to))
+```
+"""
+struct Path <: AbstractVectorSet
+    N::Int
+    E::Int
+    from::Vector{Int}
+    to::Vector{Int}
+    function Path(from::Vector{Int}, to::Vector{Int})
+        @assert length(from) == length(to)
+        E = length(from)
+        N = max(maximum(from), maximum(to))
+        return new(N, E, from, to)
+    end
+end
+
+dimension(set::Path) = 2 + set.N + set.E
+
+Base.copy(set::Path) = Path(copy(set.from), copy(set.to))
+
+function Base.:(==)(x::Path, y::Path)
+    return x.N == y.N && x.E == y.E && x.from == y.from && x.to == y.to
+end
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
@@ -1340,6 +1532,8 @@ function Base.copy(
         Among,
         CountAtLeast,
         CountGreaterThan,
+        Circuit,
+        Cumulative,
     },
 )
     return set

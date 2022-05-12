@@ -101,9 +101,14 @@ Complements
 ```@docs
 AllDifferent
 Among
+BinPacking
 CountAtLeast
 CountDistinct
 CountGreaterThan
+Circuit
+Cumulative
+Path
+Table
 ```
 
 ## Matrix sets
