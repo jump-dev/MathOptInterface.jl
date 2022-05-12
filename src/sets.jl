@@ -1457,7 +1457,7 @@ end
 
 dimension(set::Path) = 2 + set.N + set.E
 
-Base.copy(set::Path) = Path(set.N, set.E, copy(set.from), copy(set.to))
+Base.copy(set::Path) = Path(copy(set.from), copy(set.to))
 
 function Base.:(==)(x::Path, y::Path)
     return x.N == y.N && x.E == y.E && x.from == y.from && x.to == y.to
