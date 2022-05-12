@@ -113,6 +113,7 @@ _set(::Type{MOI.AllDifferent}) = MOI.AllDifferent(3)
 _set(::Type{MOI.CountDistinct}) = MOI.CountDistinct(4)
 _set(::Type{MOI.Among}) = MOI.Among(4, Set([3, 4]))
 _set(::Type{MOI.CountAtLeast}) = MOI.CountAtLeast(1, [2, 2], Set([3]))
+_set(::Type{MOI.CountGreaterThan}) = MOI.CountGreaterThan(5)
 
 function _set(
     ::Type{MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}},
@@ -280,6 +281,7 @@ for s in [
     :CountDistinct,
     :Among,
     :CountAtLeast,
+    :CountGreaterThan,
 ]
     S = getfield(MOI, s)
     functions = if S <: MOI.AbstractScalarSet
