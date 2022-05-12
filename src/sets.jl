@@ -1298,7 +1298,7 @@ struct CountGreaterThan <: AbstractVectorSet
 end
 
 """
-    BinPacking(capacity::T, weights::Vector{T}) where {T}
+    BinPacking(c::T, w::Vector{T}) where {T}
 
 The set ``\\{x \\in \\mathbb{R}^d\\}`` such that
 ``\\sum\\limits_{i=1}^d w_i x_i \\le c``.
@@ -1340,10 +1340,12 @@ end
 """
     Cumulative(dimension::Int)
 
-The set ``\\{(s, d, r, b) \\in \\mathbb{R}^{s+d+r+1}\\}`` representing the
-``cumulative`` global constraint. It requires that a set of tasks given by start
-times ``s``, durations ``d``, and resource requirements ``r``, never requires
-more than the global resource bound ``b`` at any one time.
+The set ``\\{(s, d, r, b) \\in \\mathbb{R}^{length(s)+length(d)+length(r)+1}\\}``
+representing the ``cumulative`` global constraint.
+
+It requires that a set of tasks given by start times ``s``, durations ``d``, and
+resource requirements ``r``, never requires more than the global resource bound
+``b`` at any one time.
 
 This constraint is sometimes called `cumulative`.
 
