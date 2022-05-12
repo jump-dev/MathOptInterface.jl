@@ -103,6 +103,7 @@ AllDifferent
 Among
 CountAtLeast
 CountDistinct
+CountGreaterThan
 ```
 
 ## Matrix sets
