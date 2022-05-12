@@ -141,6 +141,7 @@ function test_sets_DimensionMismatch()
         (MOI.RootDetConeSquare, 0),
         (MOI.AllDifferent, 0),
         (MOI.CountDistinct, 1),
+        (MOI.CountGreaterThan, 2),
     )
         @test_throws DimensionMismatch S(min_dimension - 1)
         @test S(min_dimension) isa S

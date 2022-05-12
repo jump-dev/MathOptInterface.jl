@@ -791,6 +791,7 @@ const LessThanIndicatorZero{T} =
         MOI.CountDistinct,
         MOI.Among,
         MOI.CountAtLeast,
+        MOI.CountGreaterThan,
     ),
     (
         MOI.PowerCone,

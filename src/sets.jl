@@ -1267,6 +1267,40 @@ function Base.:(==)(x::CountAtLeast, y::CountAtLeast)
     return x.n == y.n && x.partitions == y.partitions && x.set == y.set
 end
 
+"""
+    CountGreaterThan(dimension::Int)
+
+The set ``\\{(c, y, x) \\in \\mathbb{Z}^{1+1+d}\\}`` such that `c` is strictly
+greater than the number of occurances of `y` in `x`.
+
+## Also known as
+
+This constraint is called `count_gt` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+c, _ = add_constrained_variable(model, Integer())
+y, _ = add_constrained_variable(model, Integer())
+x = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables([c; y; x]), CountGreaterThan(5))
+```
+"""
+struct CountGreaterThan <: AbstractVectorSet
+    dimension::Int
+    function CountGreaterThan(dimension::Base.Integer)
+        if dimension < 2
+            throw(
+                DimensionMismatch(
+                    "Dimension of CountGreaterThan must be >= 2.",
+                ),
+            )
+        end
+        return new(dimension)
+    end
+end
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
@@ -1305,6 +1339,7 @@ function Base.copy(
         CountDistinct,
         Among,
         CountAtLeast,
+        CountGreaterThan,
     },
 )
     return set
