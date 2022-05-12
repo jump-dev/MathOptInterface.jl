@@ -1,3 +1,9 @@
+# Copyright (c) 2017: Miles Lubin and contributors
+# Copyright (c) 2017: Google Inc.
+#
+# Use of this source code is governed by an MIT-style license that can be found
+# in the LICENSE.md file or at https://opensource.org/licenses/MIT.
+
 function _test_num_constraints(bridged_mock, F, S, n)
     @test MOI.get(bridged_mock, MOI.NumberOfConstraints{F,S}()) == n
     @test length(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{F,S}())) == n

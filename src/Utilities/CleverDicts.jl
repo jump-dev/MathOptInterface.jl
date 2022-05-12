@@ -1,3 +1,9 @@
+# Copyright (c) 2017: Miles Lubin and contributors
+# Copyright (c) 2017: Google Inc.
+#
+# Use of this source code is governed by an MIT-style license that can be found
+# in the LICENSE.md file or at https://opensource.org/licenses/MIT.
+
 module CleverDicts
 
 # The following two functions are overloaded for `MOI.VariableIndex` here
@@ -57,10 +63,6 @@ Note that querying a `LinearIndex` immediately after deleting a key via
 
 Store an item `val` using `add_item(c::CleverDict, val)`. `add_item` returns a
 key corresponding to the stored item.
-
-It is possible to initialize the CleverDict as `CleverDict{K, V}(n)` so that
-`n` elements are pre-allocated and can be efficiently added even out of order
-as long as their key hashes are between 1 and `n`.
 
 Overload the functions `index_to_key` and `key_to_index` to enable mappings
 between the integer index of the vector and the dictionary key.

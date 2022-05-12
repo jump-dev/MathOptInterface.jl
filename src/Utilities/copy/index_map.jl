@@ -1,3 +1,9 @@
+# Copyright (c) 2017: Miles Lubin and contributors
+# Copyright (c) 2017: Google Inc.
+#
+# Use of this source code is governed by an MIT-style license that can be found
+# in the LICENSE.md file or at https://opensource.org/licenses/MIT.
+
 # IndexMap is defined here because there is a boostrapping problem.
 #  * IndexMap requires `Utilities.CleverDicts` and `Utilities.DoubleDicts`, so
 #    if it were to be defined in MOI proper, it must be included after
@@ -59,6 +65,10 @@ Base.getindex(map::IndexMap, key::MOI.VariableIndex) = map.var_map[key]
 
 function Base.getindex(map::IndexMap, key::MOI.ConstraintIndex{F,S}) where {F,S}
     return map.con_map[key]::MOI.ConstraintIndex{F,S}
+end
+
+function Base.getindex(map::IndexMap, ::Type{F}, ::Type{S}) where {F,S}
+    return map.con_map[F, S]
 end
 
 function Base.setindex!(

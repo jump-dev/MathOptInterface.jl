@@ -1,3 +1,9 @@
+# Copyright (c) 2017: Miles Lubin and contributors
+# Copyright (c) 2017: Google Inc.
+#
+# Use of this source code is governed by an MIT-style license that can be found
+# in the LICENSE.md file or at https://opensource.org/licenses/MIT.
+
 # This file contains default implementations for the `MOI.copy_to` function that
 # can be used by a model.
 
@@ -236,15 +242,26 @@ Copy the constraints `cis_src` from the model `src` to the model `dest` and fill
 function _copy_constraints(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    index_map::IndexMap,
+    index_map,
+    index_map_FS,
     cis_src::Vector{<:MOI.ConstraintIndex},
 )
     for ci in cis_src
         f = MOI.get(src, MOI.ConstraintFunction(), ci)
         s = MOI.get(src, MOI.ConstraintSet(), ci)
-        index_map[ci] = MOI.add_constraint(dest, map_indices(index_map, f), s)
+        index_map_FS[ci] =
+            MOI.add_constraint(dest, map_indices(index_map, f), s)
     end
     return
+end
+
+function _copy_constraints(
+    dest::MOI.ModelLike,
+    src::MOI.ModelLike,
+    index_map,
+    cis_src::Vector{MOI.ConstraintIndex{F,S}},
+) where {F,S}
+    return _copy_constraints(dest, src, index_map, index_map[F, S], cis_src)
 end
 
 function pass_nonvariable_constraints_fallback(

@@ -30,6 +30,9 @@ following [paper](https://pubsonline.informs.org/doi/10.1287/ijoc.2021.1067):
     author={Legat, Beno{\^\i}t and Dowson, Oscar and Dias Garcia, Joaquim and Lubin, Miles},
     journal={INFORMS Journal on Computing},
     year={2021},
+    volume={34},
+    number={2},
+    pages={672--689},
     doi={10.1287/ijoc.2021.1067},
     publisher={INFORMS}
 }

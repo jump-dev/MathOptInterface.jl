@@ -1,3 +1,9 @@
+# Copyright (c) 2017: Miles Lubin and contributors
+# Copyright (c) 2017: Google Inc.
+#
+# Use of this source code is governed by an MIT-style license that can be found
+# in the LICENSE.md file or at https://opensource.org/licenses/MIT.
+
 # TODO The mutability of the coefficient type `T` is currently not exploited yet.
 #      We first need to make sure that it is copied with `MA.copy_if_mutable` when it
 #      is passed from one function to a mutable one.

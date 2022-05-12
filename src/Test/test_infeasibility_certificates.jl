@@ -1,3 +1,9 @@
+# Copyright (c) 2017: Miles Lubin and contributors
+# Copyright (c) 2017: Google Inc.
+#
+# Use of this source code is governed by an MIT-style license that can be found
+# in the LICENSE.md file or at https://opensource.org/licenses/MIT.
+
 for sense in (MOI.MIN_SENSE, MOI.MAX_SENSE), offset in (0, 6 // 5)
     o = iszero(offset) ? "" : "_offset"
     f_unbd_name = Symbol("test_unbounded_$(Symbol(sense))$(o)")

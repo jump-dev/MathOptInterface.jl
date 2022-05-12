@@ -1,3 +1,9 @@
+# Copyright (c) 2017: Miles Lubin and contributors
+# Copyright (c) 2017: Google Inc.
+#
+# Use of this source code is governed by an MIT-style license that can be found
+# in the LICENSE.md file or at https://opensource.org/licenses/MIT.
+
 variable_function_type(::Type{<:MOI.AbstractScalarSet}) = MOI.VariableIndex
 variable_function_type(::Type{<:MOI.AbstractVectorSet}) = MOI.VectorOfVariables
 
@@ -178,22 +184,25 @@ end
 # Functions
 
 function map_indices(index_map::F, f::MOI.VectorOfVariables) where {F<:Function}
-    return MOI.VectorOfVariables(index_map.(f.variables))
+    return MOI.VectorOfVariables([index_map(x) for x in f.variables])
 end
 
 function map_indices(
     index_map::F,
     f::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
 ) where {F<:Function}
-    return typeof(f)(map_indices.(index_map, f.terms), MOI.constant(f))
+    return typeof(f)(
+        [map_indices(index_map, t) for t in f.terms],
+        MOI.constant(f),
+    )
 end
 
 function map_indices(
     index_map::F,
     f::Union{MOI.ScalarQuadraticFunction,MOI.VectorQuadraticFunction},
 ) where {F<:Function}
-    affine_terms = map_indices.(index_map, f.affine_terms)
-    quadratic_terms = map_indices.(index_map, f.quadratic_terms)
+    affine_terms = [map_indices(index_map, t) for t in f.affine_terms]
+    quadratic_terms = [map_indices(index_map, t) for t in f.quadratic_terms]
     return typeof(f)(quadratic_terms, affine_terms, MOI.constant(f))
 end
 

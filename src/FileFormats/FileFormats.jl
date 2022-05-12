@@ -1,3 +1,9 @@
+# Copyright (c) 2017: Miles Lubin and contributors
+# Copyright (c) 2017: Google Inc.
+#
+# Use of this source code is governed by an MIT-style license that can be found
+# in the LICENSE.md file or at https://opensource.org/licenses/MIT.
+
 module FileFormats
 
 import MathOptInterface
@@ -26,6 +32,7 @@ List of accepted export formats.
 - `FORMAT_MOF`: the MathOptFormat file format
 - `FORMAT_MPS`: the MPS file format
 - `FORMAT_NL`: the AMPL .nl file format
+- `FORMAT_REW`: the .rew file format, which is MPS with generic names
 - `FORMAT_SDPA`: the SemiDefinite Programming Algorithm format
 """
 @enum(
@@ -36,6 +43,7 @@ List of accepted export formats.
     FORMAT_MOF,
     FORMAT_MPS,
     FORMAT_NL,
+    FORMAT_REW,
     FORMAT_SDPA,
 )
 
@@ -69,6 +77,8 @@ function Model(;
         return MPS.Model(; kwargs...)
     elseif format == FORMAT_NL
         return NL.Model(; kwargs...)
+    elseif format == FORMAT_REW
+        return MPS.Model(; generic_names = true, kwargs...)
     elseif format == FORMAT_SDPA
         return SDPA.Model(; kwargs...)
     else
@@ -81,6 +91,10 @@ function Model(;
             (".lp", LP.Model),
             (".mof.json", MOF.Model),
             (".mps", MPS.Model),
+            (
+                ".rew",
+                (; kwargs...) -> MPS.Model(; generic_names = true, kwargs...),
+            ),
             (".nl", NL.Model),
             (".dat-s", SDPA.Model),
             (".sdpa", SDPA.Model),

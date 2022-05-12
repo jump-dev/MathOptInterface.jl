@@ -1,5 +1,20 @@
 # Release notes
 
+## v1.2.0 (April 25, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.2.0).
+
+### New features
+
+ - Add support for the `FORMAT_REW`/`.rew` file format in `FileFormats`.
+
+### Bug fixes
+
+ - Fix bug handling of default variable bounds in `FileFormats.LP`
+ - Fix `FileFormats.MPS` to not write `OBJSENSE` by default since this is only
+   supported by some readers.
+
 ## v1.1.2 (March 31, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,

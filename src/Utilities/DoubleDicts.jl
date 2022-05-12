@@ -1,3 +1,9 @@
+# Copyright (c) 2017: Miles Lubin and contributors
+# Copyright (c) 2017: Google Inc.
+#
+# Use of this source code is governed by an MIT-style license that can be found
+# in the LICENSE.md file or at https://opensource.org/licenses/MIT.
+
 module DoubleDicts
 
 import MathOptInterface
@@ -52,7 +58,10 @@ A type stable inner dictionary of [`DoubleDict`](@ref).
 mutable struct DoubleDictInner{F,S,V} <: AbstractDoubleDictInner{F,S,V}
     dict::Dict{Int64,V}
     function DoubleDictInner{F,S}(d::DoubleDict{V}) where {F,S,V}
-        return new{F,S,V}(get!(d.dict, (F, S), Dict{Int64,V}()))
+        if !haskey(d.dict, (F, S))
+            d.dict[(F, S)] = Dict{Int64,V}()
+        end
+        return new{F,S,V}(d.dict[(F, S)])
     end
 end
 
@@ -88,7 +97,10 @@ mutable struct IndexDoubleDictInner{F,S} <:
                AbstractDoubleDictInner{F,S,MOI.ConstraintIndex{F,S}}
     dict::Dict{Int64,Int64}
     function IndexDoubleDictInner{F,S}(d::IndexDoubleDict) where {F,S}
-        return new{F,S}(get!(d.dict, (F, S), Dict{Int64,Int64}()))
+        if !haskey(d.dict, (F, S))
+            d.dict[(F, S)] = Dict{Int64,Int64}()
+        end
+        return new{F,S}(d.dict[(F, S)])
     end
 end
 
