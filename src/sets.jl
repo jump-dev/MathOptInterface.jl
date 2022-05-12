@@ -1303,13 +1303,19 @@ end
 The set ``\\{x \\in \\mathbb{R}^d\\}`` such that
 ``\\sum\\limits_{i=1}^d w_i x_i \\le c``.
 
-This constraint is sometimes called `bin_packing`.
+There are additional assumptions that the capacity, `c`, and the weights, `w`,
+must all be non-negative.
+
+## Also known as
+
+This constraint is called `bin_packing` in MiniZinc, and it is also known as a
+knapsack constraint.
 
 ## Example
 
 ```julia
 model = Utilities.Model{Float64}()
-x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+x = add_variables(model, 3)
 add_constraint(model, VectorOfVariables(x), BinPacking(0.5, rand(3)))
 ```
 """
@@ -1340,23 +1346,25 @@ end
 """
     Cumulative(dimension::Int)
 
-The set ``\\{(s, d, r, b) \\in \\mathbb{R}^{length(s)+length(d)+length(r)+1}\\}``
+The set ``\\{(s, d, r, b) \\in \\mathbb{Z}^{length(s)+length(d)+length(r)+1}\\}``
 representing the ``cumulative`` global constraint.
 
 It requires that a set of tasks given by start times ``s``, durations ``d``, and
 resource requirements ``r``, never requires more than the global resource bound
 ``b`` at any one time.
 
-This constraint is sometimes called `cumulative`.
+## Also known as
+
+This constraint is called `cumulative` in MiniZinc.
 
 ## Example
 
 ```julia
 model = Utilities.Model{Float64}()
-s = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
-d = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
-r = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
-b, _ = add_constrained_variable(model, MOI.Integer())
+s = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+d = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+r = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+b, _ = add_constrained_variable(model, Integer())
 add_constraint(model, VectorOfVariables([s; d; r; b]), Cumulative(10))
 ```
 """
@@ -1373,17 +1381,19 @@ end
 """
     Table(table::Matrix{T}) where {T}
 
-The set ``\\{x \\in \\mathbb{R}^d\\}`` such that `x` belongs to one row of
-`table`. That is, there exists some `j` in `1:size(table, 1)`, such that
-`x[i] = table[j, i]`.
+The set ``\\{x \\in \\mathbb{R}^d\\}`` where `d = size(table, 2)`, such that `x`
+belongs to one row of `table`. That is, there exists some `j` in
+`1:size(table, 1)`, such that `x[i] = table[j, i]` for all `i=1:size(table, 2)`.
 
-This constraint is sometimes called `table`.
+## Also known as
+
+This constraint is called `table` in MiniZinc.
 
 ## Example
 
 ```julia
 model = Utilities.Model{Float64}()
-x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+x = add_variables(model, 3)
 table = [1 1 0; 0 1 1; 1 0 1; 1 1 1]
 add_constraint(model, VectorOfVariables(x), Table(table))
 ```
@@ -1401,16 +1411,18 @@ Base.:(==)(x::Table{T}, y::Table{T}) where {T} = x.table == y.table
 """
     Circuit(dimension::Int)
 
-The set ``\\{x \\in \\mathbb{R}^d\\}`` that constraints ``x`` to be a circuit,
+The set ``\\{x \\in \\{1..d\\}^d\\}`` that constraints ``x`` to be a circuit,
 such that ``x_i = j`` means that ``j`` is the successor of ``i``.
 
-This constraint is sometimes called `circuit`.
+## Also known as
+
+This constraint is called `circuit` in MiniZinc.
 
 ## Example
 
 ```julia
 model = Utilities.Model{Float64}()
-x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+x = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
 add_constraint(model, VectorOfVariables(x), Circuit(3))
 ```
 """
@@ -1427,7 +1439,16 @@ end
 """
     Path(from::Vector{Int}, to::Vector{Int})
 
-This constraint is sometimes called `path`.
+Given a graph comprised of a set of nodes `1..N` and a set of arcs `1..E`
+represented by an edge from node `from[i]` to node `to[i]`, `Path` constraints
+the set
+``(s, t, ns, es) \\in (1..N)\\times(1..N)\\times\\{0,1\\}^N\\times\\{0,1\\}^E``,
+to form subgraph that is a path from node `s` to node `t`, where node `n` is in
+the path if `ns[n]` is `1`, and edge `e` is in the path if `es[e]` is `1`.
+
+## Also known as
+
+This constraint is called `path` in MiniZinc.
 
 ## Example
 
@@ -1435,12 +1456,12 @@ This constraint is sometimes called `path`.
 model = Utilities.Model{Float64}()
 from = [1, 1, 2, 2, 3]
 to = [2, 3, 3, 4, 4]
-s, _ = add_constrained_variable(model, MOI.Integer())
-t, _ = add_constrained_variable(model, MOI.Integer())
+s, _ = add_constrained_variable(model, Integer())
+t, _ = add_constrained_variable(model, Integer())
 ns = add_variables(model, N)
-add_constraint.(model, ns, MOI.ZeroOne())
+add_constraint.(model, ns, ZeroOne())
 es = add_variables(model, E)
-add_constraint.(model, es, MOI.ZeroOne())
+add_constraint.(model, es, ZeroOne())
 add_constraint(model, VectorOfVariables([s; t; ns; es]), Path(from, to))
 ```
 """
