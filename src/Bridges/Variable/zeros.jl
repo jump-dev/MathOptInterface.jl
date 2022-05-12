@@ -71,6 +71,20 @@ end
 
 function MOI.get(
     ::MOI.ModelLike,
+    ::MOI.ConstraintDual,
+    ::ZerosBridge{T},
+) where {T}
+    return error(
+        "Unable to query the dual of a variable bound that was reformulated " *
+        "using `ZerosBridge`. This usually arises in conic models when a " *
+        "variable is fixed to a value. As a work-around, instead of creating " *
+        "a fixed variable using variable bounds like `p == 1`, add an affine " *
+        "equality constraint like `1 * p == 1` (or `[1 * p - 1,] in Zeros(1)`).",
+    )
+end
+
+function MOI.get(
+    ::MOI.ModelLike,
     ::MOI.VariablePrimal,
     ::ZerosBridge{T},
     ::MOIB.IndexInVector,
