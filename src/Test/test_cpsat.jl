@@ -64,8 +64,8 @@ function test_cpsat_CountDistinct(
     @requires MOI.supports_add_constrained_variable(model, MOI.Integer)
     @requires _supports(config, MOI.optimize!)
     y = [MOI.add_constrained_variable(model, MOI.Integer()) for _ in 1:4]
-    MOI.add_constraint.(model, y, MOI.Interval(T(0), T(4)))
     x = first.(y)
+    MOI.add_constraint.(model, x, MOI.Interval(T(0), T(4)))
     MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.CountDistinct(4))
     MOI.optimize!(model)
     x_val = round.(Int, MOI.get.(model, MOI.VariablePrimal(), x))
@@ -431,7 +431,7 @@ function test_cpsat_Path(model::MOI.ModelLike, config::Config{T}) where {T}
     ns_val = round.(Int, MOI.get.(model, MOI.VariablePrimal(), ns))
     es_val = round.(Int, MOI.get.(model, MOI.VariablePrimal(), es))
     outs = Vector{Int}[[1, 2], [3, 4], [5], Int[]]
-    ins = Vector{Int}[[], [1], [2], [3, 4]]
+    ins = Vector{Int}[[], [1], [2, 3], [4, 5]]
     has_edges = s_val == t_val ? 0 : 1
     # source: must have no incoming and one outgoing (if s != t)
     @test sum(es_val[o] for o in ins[s_val]; init = 0) == 0
