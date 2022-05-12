@@ -392,3 +392,68 @@ function setup_test(
     )
     return
 end
+
+"""
+    test_cpsat_Path(model::MOI.ModelLike, config::Config)
+
+Add a VectorOfVariables-in-Path constraint.
+"""
+function test_cpsat_Path(model::MOI.ModelLike, config::Config{T}) where {T}
+    @requires MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.Path)
+    @requires MOI.supports_add_constrained_variable(model, MOI.Integer)
+    @requires _supports(config, MOI.optimize!)
+    from = [1, 1, 2, 2, 3]
+    to = [2, 3, 3, 4, 4]
+    s, _ = MOI.add_constrained_variable(model, MOI.Integer())
+    t, _ = MOI.add_constrained_variable(model, MOI.Integer())
+    ns = MOI.add_variables(model, N)
+    MOI.add_constraint.(model, ns, MOI.ZeroOne())
+    es = MOI.add_variables(model, E)
+    MOI.add_constraint.(model, es, MOI.ZeroOne())
+    MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([s; t; ns; es]),
+        MOI.Path(from, to),
+    )
+    MOI.optimize!(model)
+    s_val = round(Int, MOI.get(model, MOI.VariablePrimal(), s))
+    @test 1 <= s_val <= 4
+    t_val = round(Int, MOI.get(model, MOI.VariablePrimal(), t))
+    @test 1 <= t_val <= 4
+    ns_val = round.(Int, MOI.get.(model, MOI.VariablePrimal(), ns))
+    es_val = round.(Int, MOI.get.(model, MOI.VariablePrimal(), es))
+    outs = Vector{Int}[[1, 2], [3, 4], [5], Int[]]
+    ins = Vector{Int}[[], [1], [2], [3, 4]]
+    has_edges = s_val == t_val ? 0 : 1
+    # source: must have no incoming and one outgoing (if s != t)
+    @test sum(es_val[o] for o in ins[s_val]; init = 0) == 0
+    @test sum(es_val[o] for o in outs[s_val]; init = 0) == has_edges
+    # dest: must have no outgoing and one incoming (if s != t)
+    @test sum(es_val[o] for o in ins[t_val]; init = 0) == has_edges
+    @test sum(es_val[o] for o in outs[t_val]; init = 0) == 0
+    for i in 1:4
+        if i != s_val && i != t_val
+            # other nodes: must have one incoming and one outgoing iff node is
+            # in subgraph.
+            @test sum(es_val[o] for o in outs[i]; init = 0) == ns_val[i]
+            @test sum(es_val[o] for o in ins[i]; init = 0) == ns_val[i]
+        end
+    end
+    return
+end
+
+function setup_test(
+    ::typeof(test_cpsat_Path),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, T[1, 4, 1, 1, 0, 1, 1, 0, 0, 1, 0]),
+        ),
+    )
+    return
+end

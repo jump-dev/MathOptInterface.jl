@@ -107,6 +107,7 @@ CountDistinct
 CountGreaterThan
 Circuit
 Cumulative
+Path
 Table
 ```
 

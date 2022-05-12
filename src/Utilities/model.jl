@@ -794,6 +794,7 @@ const LessThanIndicatorZero{T} =
         MOI.CountGreaterThan,
         MOI.Circuit,
         MOI.Cumulative,
+        MOI.Path,
     ),
     (
         MOI.PowerCone,

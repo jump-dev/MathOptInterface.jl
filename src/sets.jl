@@ -1422,6 +1422,47 @@ struct Circuit <: AbstractVectorSet
     end
 end
 
+"""
+    Path(from::Vector{Int}, to::Vector{Int})
+
+This constraint is sometimes called `path`.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+from = [1, 1, 2, 2, 3]
+to = [2, 3, 3, 4, 4]
+s, _ = add_constrained_variable(model, MOI.Integer())
+t, _ = add_constrained_variable(model, MOI.Integer())
+ns = add_variables(model, N)
+add_constraint.(model, ns, MOI.ZeroOne())
+es = add_variables(model, E)
+add_constraint.(model, es, MOI.ZeroOne())
+add_constraint(model, VectorOfVariables([s; t; ns; es]), Path(from, to))
+```
+"""
+struct Path <: AbstractVectorSet
+    N::Int
+    E::Int
+    from::Vector{Int}
+    to::Vector{Int}
+    function Path(from::Vector{Int}, to::Vector{Int})
+        @assert length(from) == length(to)
+        E = length(from)
+        N = max(maximum(from), maximum(to))
+        return new(N, E, from, to)
+    end
+end
+
+dimension(set::Path) = 2 + set.N + set.E
+
+Base.copy(set::Path) = Path(set.N, set.E, copy(set.from), copy(set.to))
+
+function Base.:(==)(x::Path, y::Path)
+    return x.N == y.N && x.E == y.E && x.from == y.from && x.to == y.to
+end
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
