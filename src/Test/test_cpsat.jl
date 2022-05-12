@@ -295,11 +295,11 @@ function test_cpsat_Cumulative(
     d_val = round.(Int, MOI.get.(model, MOI.VariablePrimal(), d))
     r_val = round.(Int, MOI.get.(model, MOI.VariablePrimal(), r))
     b_val = round(Int, MOI.get(model, MOI.VariablePrimal(), b))
-    times = zeros(maximum(s_val) + maximum(d_val))
+    times = zeros(1 + maximum(s_val) + maximum(d_val))
     for i in 1:3
         for j in 0:(d_val[i]-1)
             t = s_val[i] + j
-            times[t] += r_val[i]
+            times[t+1] += r_val[i]
         end
     end
     @test all(times .<= b_val)

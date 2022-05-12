@@ -1330,7 +1330,7 @@ end
 dimension(set::BinPacking) = length(set.weights)
 
 function Base.copy(set::BinPacking{T}) where {T}
-    return BinPacking{T}(set.capacity, copy(set.weights))
+    return BinPacking(set.capacity, copy(set.weights))
 end
 
 function Base.:(==)(x::BinPacking{T}, y::BinPacking{T}) where {T}
