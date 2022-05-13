@@ -100,12 +100,12 @@ Complements
 
 ```@docs
 AllDifferent
-CountBelongs
 BinPacking
+Circuit
 CountAtLeast
+CountBelongs
 CountDistinct
 CountGreaterThan
-Circuit
 Cumulative
 Path
 Table
