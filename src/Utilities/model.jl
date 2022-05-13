@@ -789,7 +789,7 @@ const LessThanIndicatorZero{T} =
         MOI.LogDetConeSquare,
         MOI.AllDifferent,
         MOI.CountDistinct,
-        MOI.Among,
+        MOI.CountBelongs,
         MOI.CountAtLeast,
         MOI.CountGreaterThan,
         MOI.Circuit,

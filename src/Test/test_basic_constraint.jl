@@ -111,7 +111,7 @@ _set(::Type{MOI.RootDetConeSquare}) = MOI.RootDetConeSquare(3)
 _set(::Type{MOI.Complements}) = MOI.Complements(2)
 _set(::Type{MOI.AllDifferent}) = MOI.AllDifferent(3)
 _set(::Type{MOI.CountDistinct}) = MOI.CountDistinct(4)
-_set(::Type{MOI.Among}) = MOI.Among(4, Set([3, 4]))
+_set(::Type{MOI.CountBelongs}) = MOI.CountBelongs(4, Set([3, 4]))
 _set(::Type{MOI.CountAtLeast}) = MOI.CountAtLeast(1, [2, 2], Set([3]))
 _set(::Type{MOI.CountGreaterThan}) = MOI.CountGreaterThan(5)
 _set(::Type{MOI.Circuit}) = MOI.Circuit(3)
@@ -290,7 +290,7 @@ for s in [
     :Complements,
     :AllDifferent,
     :CountDistinct,
-    :Among,
+    :CountBelongs,
     :CountAtLeast,
     :CountGreaterThan,
     :BinPacking,
