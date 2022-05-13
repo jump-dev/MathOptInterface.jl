@@ -164,7 +164,7 @@ function test_sets_DimensionMismatch()
     @test_throws DimensionMismatch MOI.RelativeEntropyCone(2)
     @test_throws DimensionMismatch MOI.Complements(-3)
     @test_throws DimensionMismatch MOI.Complements(3)
-    @test_throws DimensionMismatch MOI.Among(0, Set([1, 2]))
+    @test_throws DimensionMismatch MOI.CountBelongs(0, Set([1, 2]))
     @test_throws DimensionMismatch MOI.CountAtLeast(1, [-1, 2], Set([1, 2]))
     return
 end
