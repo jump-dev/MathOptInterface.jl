@@ -448,21 +448,16 @@ function test_cpsat_Path(model::MOI.ModelLike, config::Config{T}) where {T}
     @test 1 <= t_val <= 4
     ns_val = round.(Int, MOI.get.(model, MOI.VariablePrimal(), ns))
     es_val = round.(Int, MOI.get.(model, MOI.VariablePrimal(), es))
-    outs = Vector{Int}[[1, 2], [3, 4], [5], Int[]]
-    ins = Vector{Int}[[], [1], [2, 3], [4, 5]]
+    # The graph is un-directed, so check the number of edges at each node.
+    edges = Vector{Int}[[1, 2], [1, 3, 4], [2, 3, 5], [4, 5]]
     has_edges = s_val == t_val ? 0 : 1
-    # source: must have no incoming and one outgoing (if s != t)
-    @test sum(es_val[o] for o in ins[s_val]; init = 0) == 0
-    @test sum(es_val[o] for o in outs[s_val]; init = 0) == has_edges
-    # dest: must have no outgoing and one incoming (if s != t)
-    @test sum(es_val[o] for o in ins[t_val]; init = 0) == has_edges
-    @test sum(es_val[o] for o in outs[t_val]; init = 0) == 0
+    # source and sink: must have one edge (if s != t), otherwise 0
+    @test sum(es_val[o] for o in edges[s_val]; init = 0) == has_edges
+    @test sum(es_val[o] for o in edges[t_val]; init = 0) == has_edges
     for i in 1:4
         if i != s_val && i != t_val
-            # other nodes: must have one incoming and one outgoing iff node is
-            # in subgraph.
-            @test sum(es_val[o] for o in outs[i]; init = 0) == ns_val[i]
-            @test sum(es_val[o] for o in ins[i]; init = 0) == ns_val[i]
+            # other nodes: must have two edges if node is in subgraph, else 0.
+            @test sum(es_val[o] for o in edges[i]; init = 0) == 2 * ns_val[i]
         end
     end
     return
