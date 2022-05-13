@@ -1192,12 +1192,14 @@ struct CountDistinct <: AbstractVectorSet
 end
 
 """
-    Among(dimension::Int, set::Set{Int})
+    CountBelongs(d::Int, set::Set{Int})
 
-The set ``\\{(n, x) \\in \\mathbb{R}^{1+d}\\}`` such that `n` elements of the
+The set ``\\{(n, x) \\in \\mathbb{Z}^{d}\\}`` such that `n` elements of the
 vector `x` take on of the values in `set`.
 
-This constraint is sometimes called `among`.
+## Also known as
+
+This constraint is called `among` by MiniZinc.
 
 ## Example
 
@@ -1205,21 +1207,24 @@ This constraint is sometimes called `among`.
 model = Utilities.Model{Float64}()
 n = add_constrained_variable(model, MOI.Integer())
 x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
-add_constraint(model, VectorOfVariables(vcat(n, x)), Among(2, Set([3, 4, 5])))
+set = Set([3, 4, 5])
+add_constraint(model, VectorOfVariables([n; x]), CountBelongs(4, set))
 ```
 """
-struct Among <: AbstractVectorSet
+struct CountBelongs <: AbstractVectorSet
     dimension::Int
     set::Set{Int}
-    function Among(dimension::Base.Integer, set::Set{Int})
+    function CountBelongs(dimension::Base.Integer, set::Set{Int})
         if dimension < 1
-            throw(DimensionMismatch("Dimension of Among must be >= 1."))
+            throw(DimensionMismatch("Dimension of CountBelongs must be >= 1."))
         end
         return new(dimension, set)
     end
 end
 
-Base.:(==)(x::Among, y::Among) = x.dimension == y.dimension && x.set == y.set
+function Base.:(==)(x::CountBelongs, y::CountBelongs)
+    return x.dimension == y.dimension && x.set == y.set
+end
 
 """
     CountAtLeast(n::Int, d::Vector{Int}, set::Set{Int})
@@ -1529,7 +1534,7 @@ function Base.copy(
         Semiinteger,
         AllDifferent,
         CountDistinct,
-        Among,
+        CountBelongs,
         CountAtLeast,
         CountGreaterThan,
         Circuit,
@@ -1539,7 +1544,7 @@ function Base.copy(
     return set
 end
 Base.copy(set::S) where {S<:Union{SOS1,SOS2}} = S(copy(set.weights))
-Base.copy(set::Among) = Among(set.dimension, copy(set.set))
+Base.copy(set::CountBelongs) = CountBelongs(set.dimension, copy(set.set))
 
 function Base.copy(set::CountAtLeast)
     return CountAtLeast(set.n, copy(set.partitions), copy(set.set))

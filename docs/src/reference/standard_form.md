@@ -100,7 +100,7 @@ Complements
 
 ```@docs
 AllDifferent
-Among
+CountBelongs
 BinPacking
 CountAtLeast
 CountDistinct
