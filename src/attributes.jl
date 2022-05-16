@@ -959,7 +959,7 @@ attribute_value_type(::Name) = String
 A model attribute for the objective sense of the objective function, which
 must be an `OptimizationSense`: `MIN_SENSE`, `MAX_SENSE`, or
 `FEASIBILITY_SENSE`. The default is `FEASIBILITY_SENSE`.
-When setting the sense as `FEASIBILITY_SENSE`, the objective function must be erased.
+When setting the sense as `FEASIBILITY_SENSE`, the optimizer must erase the objective function.
 """
 struct ObjectiveSense <: AbstractModelAttribute end
 
