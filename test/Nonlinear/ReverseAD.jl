@@ -53,6 +53,34 @@ function test_objective_quadratic_univariate()
     return
 end
 
+function test_objective_and_constraints_quadratic_univariate()
+    x = MOI.VariableIndex(1)
+    model = Nonlinear.Model()
+    Nonlinear.set_objective(model, :($x^2 + 1))
+    Nonlinear.add_constraint(model, :($x^2), MOI.LessThan(2.0))
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
+    @test MOI.eval_objective(evaluator, [1.2]) == 1.2^2 + 1
+    g = [NaN]
+    MOI.eval_objective_gradient(evaluator, g, [1.2])
+    @test g == [2.4]
+    @test MOI.hessian_lagrangian_structure(evaluator) == [(1, 1), (1, 1)]
+    H = [NaN, NaN]
+    MOI.eval_hessian_lagrangian(evaluator, H, [1.2], 1.5, Float64[1.3])
+    @test H == [1.5, 1.3] .* [2.0, 2.0]
+    Hp = [NaN]
+    MOI.eval_hessian_lagrangian_product(
+        evaluator,
+        Hp,
+        [1.2],
+        [1.2],
+        1.5,
+        Float64[1.3],
+    )
+    @test Hp == [1.5 * 2.0 * 1.2 + 1.3 * 2.0 * 1.2]
+    return
+end
+
 function test_objective_quadratic_multivariate()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
@@ -307,6 +335,7 @@ function test_hessian_sparsity_registered_rosenbrock()
         return
     end
     function ∇²f(H, x...)
+        @assert size(H) == (2, 2)
         H[1, 1] = 1200 * x[1]^2 - 400 * x[2] + 2
         H[2, 1] = -400 * x[1]
         H[2, 2] = 200.0
@@ -324,6 +353,36 @@ function test_hessian_sparsity_registered_rosenbrock()
     H = fill(NaN, 3)
     MOI.eval_hessian_lagrangian(evaluator, H, [1.0, 1.0], 1.5, Float64[])
     @test H == 1.5 .* [802, 200, -400]
+    return
+end
+
+function test_hessian_registered_error()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    f(x...) = (1 - x[1])^2 + 100 * (x[2] - x[1]^2)^2
+    function ∇f(g, x...)
+        g[1] = 400 * x[1]^3 - 400 * x[1] * x[2] + 2 * x[1] - 2
+        g[2] = 200 * (x[2] - x[1]^2)
+        return
+    end
+    function ∇²f(H, x...)
+        H[1, 1] = 1200 * x[1]^2 - 400 * x[2] + 2
+        # Wrong index! Should be [2, 1]
+        H[1, 2] = -400 * x[1]
+        H[2, 2] = 200.0
+        return
+    end
+    model = Nonlinear.Model()
+    Nonlinear.register_operator(model, :rosenbrock, 2, f, ∇f, ∇²f)
+    Nonlinear.set_objective(model, :(rosenbrock($x, $y)))
+    evaluator =
+        Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x, y])
+    MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
+    H = fill(NaN, 3)
+    @test_throws(
+        ErrorException("Unable to access upper-triangular component: (1, 2)"),
+        MOI.eval_hessian_lagrangian(evaluator, H, [1.0, 1.0], 1.5, Float64[]),
+    )
     return
 end
 

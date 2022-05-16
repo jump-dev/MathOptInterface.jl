@@ -343,9 +343,9 @@ function _forward_eval_ϵ(
                         H,
                         f_input,
                     )
-                    if !has_hessian
-                        continue
-                    end
+                    # This might be `false` if we extend this code to all
+                    # multivariate functions.
+                    @assert has_hessian
                     for col in 1:n_children
                         dual = zero(ForwardDiff.Partials{N,T})
                         for row in 1:n_children
