@@ -61,15 +61,16 @@ function _UnsafeVectorView(x::Vector, N::Int)
 end
 
 """
-    _UnsafeHessianView(x, N)
+    _UnsafeLowerTriangularMatrixView(x, N)
 
 Lightweight unsafe view that converts a vector `x` into the lower-triangular
 component of a symmetric `N`-by-`N` matrix.
 
 ## Motivation
 
-`_UnsafeHessianView` is needed as an allocation-free equivalent of `view`. Other
-alternatives, like `reshape(view(x, 1:N^2), N, N)` or a struct like
+`_UnsafeLowerTriangularMatrixView` is needed as an allocation-free equivalent of
+`view`. Other alternatives, like `reshape(view(x, 1:N^2), N, N)` or a struct
+like
 ```julia
 struct _SafeView{T}
     x::Vector{T}
@@ -77,23 +78,24 @@ struct _SafeView{T}
 end
 ```
 will allocate so that `x` can be tracked by Julia's GC.
-`_UnsafeHessianView` relies on the fact that the use-cases of
-`_UnsafeHessianView` only temporarily wrap a long-lived vector like
-`d.jac_storage` so that we don't have to worry about the GC removing
-`d.jac_storage` while `_UnsafeHessianView` exists. This lets us use a `Ptr{T}`
-and create a struct that is `isbitstype` and therefore does not allocate.
+`_UnsafeLowerTriangularMatrixView` relies on the fact that the use-cases of
+`_UnsafeLowerTriangularMatrixView` only temporarily wrap a long-lived vector
+like `d.jac_storage` so that we don't have to worry about the GC removing
+`d.jac_storage` while `_UnsafeLowerTriangularMatrixView` exists. This lets us
+use a `Ptr{T}` and create a struct that is `isbitstype` and therefore does not
+allocate.
 
 ## Unsafe behavior
 
-`_UnsafeHessianView` is unsafe because it assumes that the vector `x` remains
-valid during the usage of `_UnsafeHessianView`.
+`_UnsafeLowerTriangularMatrixView` is unsafe because it assumes that the vector
+`x` remains valid during the usage of `_UnsafeLowerTriangularMatrixView`.
 """
-struct _UnsafeHessianView <: AbstractMatrix{Float64}
+struct _UnsafeLowerTriangularMatrixView <: AbstractMatrix{Float64}
     N::Int
     ptr::Ptr{Float64}
 end
 
-Base.size(x::_UnsafeHessianView) = (x.N, x.N)
+Base.size(x::_UnsafeLowerTriangularMatrixView) = (x.N, x.N)
 
 function _linear_index(row, col)
     if row < col
@@ -102,16 +104,16 @@ function _linear_index(row, col)
     return div((row - 1) * row, 2) + col
 end
 
-function Base.getindex(x::_UnsafeHessianView, i, j)
+function Base.getindex(x::_UnsafeLowerTriangularMatrixView, i, j)
     return unsafe_load(x.ptr, _linear_index(i, j))
 end
 
-function Base.setindex!(x::_UnsafeHessianView, value, i, j)
+function Base.setindex!(x::_UnsafeLowerTriangularMatrixView, value, i, j)
     unsafe_store!(x.ptr, value, _linear_index(i, j))
     return value
 end
 
-function _UnsafeHessianView(x::Vector, N::Int)
+function _UnsafeLowerTriangularMatrixView(x::Vector, N::Int)
     z = div(N * (N + 1), 2)
     if length(x) < z
         resize!(x, z)
@@ -119,7 +121,7 @@ function _UnsafeHessianView(x::Vector, N::Int)
     for i in 1:z
         x[i] = 0.0
     end
-    return _UnsafeHessianView(N, pointer(x))
+    return _UnsafeLowerTriangularMatrixView(N, pointer(x))
 end
 
 function _reinterpret_unsafe(::Type{T}, x::Vector{R}) where {T,R}

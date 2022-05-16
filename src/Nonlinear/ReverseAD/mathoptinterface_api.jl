@@ -5,8 +5,8 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 function MOI.features_available(d::NLPEvaluator)
-    # Check if we have any user-defined multivariate operators, in which case we
-    # need to disable hessians. The result of features_available depends on this.
+    # Check if we are missing any hessians for user-defined multivariate
+    # operators, in which case we need to disable :Hess and :HessVec.
     d.disable_2ndorder = any(
         op -> op.∇²f === nothing,
         d.data.operators.registered_multivariate_operators,

@@ -336,7 +336,10 @@ function _forward_eval_ϵ(
                     for (i, c) in enumerate(children_idx)
                         f_input[i] = ex.forward_storage[children_arr[c]]
                     end
-                    H = _UnsafeHessianView(d.user_output_buffer, n_children)
+                    H = _UnsafeLowerTriangularMatrixView(
+                        d.user_output_buffer,
+                        n_children,
+                    )
                     has_hessian = Nonlinear.eval_multivariate_hessian(
                         user_operators,
                         user_operators.multivariate_operators[node.index],

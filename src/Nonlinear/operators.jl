@@ -631,7 +631,24 @@ end
 
 _nan_to_zero(x) = isnan(x) ? 0.0 : x
 
-# No docstring because this function is still a WIP.
+"""
+    eval_multivariate_hessian(
+        registry::OperatorRegistry,
+        op::Symbol,
+        H::AbstractMatrix,
+        x::AbstractVector{T},
+    ) where {T}
+
+Evaluate the Hessian of operator `∇²op(x)`, where `op` is a multivariate
+function in `registry`.
+
+The Hessian is stored in the lower-triangular part of the matrix `H`.
+
+!!! note
+    Implementations of the Hessian operators will not fill structural zeros.
+    Therefore, before calling this function you should pre-populate the matrix
+    `H` with `0`.
+"""
 function eval_multivariate_hessian(
     registry::OperatorRegistry,
     op::Symbol,
