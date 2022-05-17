@@ -127,17 +127,13 @@ function test_zeros()
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), cx) == 0.0
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), c1) == 0.0
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), c2) == 1.0
-    bridge = MathOptInterface.Bridges.Variable.ZerosBridge{Float64}
     attr = MOI.ConstraintDual()
-    err = ArgumentError(
-        "Bridge of type `$(bridge)` does not support accessing " *
-        "the attribute `$attr`. If you encountered this error " *
-        "unexpectedly, it probably means your model has been " *
-        "reformulated using the bridge, and you are attempting to query " *
-        "an attribute that we haven't implemented yet for this bridge. " *
-        "Please open an issue at https://github.com/jump-dev/MathOptInterface.jl/issues/new " *
-        "and provide a reproducible example explaining what you were " *
-        "trying to do.",
+    err = ErrorException(
+        "Unable to query the dual of a variable bound that was reformulated " *
+        "using `ZerosBridge`. This usually arises in conic solvers when a " *
+        "variable is fixed to a value. As a work-around, instead of creating " *
+        "a fixed variable using variable bounds like `p == 1`, add an affine " *
+        "equality constraint like `1 * p == 1` (or `[1 * p - 1,] in Zeros(1)`).",
     )
     @test_throws err MOI.get(bridged_mock, attr, cyz)
 
