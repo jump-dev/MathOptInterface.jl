@@ -153,7 +153,7 @@ function _parse_expr(io::IO, model::_CacheModel)
     end
 end
 
-function to_model(data::_CacheModel)
+function _to_model(data::_CacheModel)
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     x = MOI.add_variables(model, length(data.variable_primal))
     for (xi, lb, ub) in zip(x, data.variable_lower, data.variable_upper)
@@ -195,13 +195,13 @@ function to_model(data::_CacheModel)
     return model
 end
 
-function Base.read(io::IO, ::Type{Model})
+function _read_from_io(io::IO)
     model = _CacheModel()
     _parse_header(io, model)
     while !eof(io)
         _parse_section(io, model)
     end
-    return to_model(model)
+    return _to_model(model)
 end
 
 function _parse_header(io::IO, model::_CacheModel)
