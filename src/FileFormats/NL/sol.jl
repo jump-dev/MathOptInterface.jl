@@ -190,7 +190,7 @@ function _interpret_status(solve_result_num::Int, raw_status_string::String)
         # uses this for non-convex problems it isn't sure is the global optima.
         return MOI.LOCALLY_SOLVED, MOI.FEASIBLE_POINT
     elseif 200 <= solve_result_num < 300
-        return MOI.INFEASIBLE, MOI.UNKNOWN_RESULT_STATUS
+        return MOI.LOCALLY_INFEASIBLE, MOI.UNKNOWN_RESULT_STATUS
     elseif 300 <= solve_result_num < 400
         return MOI.DUAL_INFEASIBLE, MOI.UNKNOWN_RESULT_STATUS
     elseif 400 <= solve_result_num < 500
@@ -205,7 +205,7 @@ function _interpret_status(solve_result_num::Int, raw_status_string::String)
     if occursin("optimal", message)
         return MOI.LOCALLY_SOLVED, MOI.FEASIBLE_POINT
     elseif occursin("infeasible", message)
-        return MOI.INFEASIBLE, MOI.UNKNOWN_RESULT_STATUS
+        return MOI.LOCALLY_INFEASIBLE, MOI.UNKNOWN_RESULT_STATUS
     elseif occursin("unbounded", message)
         return MOI.DUAL_INFEASIBLE, MOI.UNKNOWN_RESULT_STATUS
     elseif occursin("limit", message)
@@ -256,8 +256,8 @@ function SolFileResults(io::IO, model::Model)
     raw_status_string = ""
     line = ""
     while !startswith(line, "Options")
-        line = _readline(io)
         raw_status_string *= line
+        line = _readline(io)
     end
     # Read through all the options. Direct copy of reference implementation.
     @assert startswith(line, "Options")
