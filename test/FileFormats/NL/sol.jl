@@ -139,6 +139,43 @@ function test_sol_hs071_max_sense()
     return
 end
 
+function test_sol_quadratic_constraint()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    g = MOI.ScalarQuadraticFunction(
+        [MOI.ScalarQuadraticTerm(2.0, x, x)],
+        [MOI.ScalarAffineTerm(1.0, x)],
+        3.0,
+    )
+    c = MOI.add_constraint(model, g, MOI.Interval(1.0, 10.0))
+    nl_model = NL.Model()
+    index_map = MOI.copy_to(nl_model, model)
+    filename = joinpath(@__DIR__, "data", "quadratic.sol")
+    sol = NL.SolFileResults(filename, nl_model)
+    xv = MOI.get(sol, MOI.VariablePrimal(), index_map[x])
+    @test ≈(MOI.get(sol, MOI.ConstraintPrimal(), index_map[c]), xv^2 + xv + 3)
+    @test ≈(MOI.get(sol, MOI.ConstraintDual(), index_map[c]), 0.0)
+    return
+end
+
+function test_sol_linear_constraint()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    g = MOI.ScalarAffineFunction(
+        [MOI.ScalarAffineTerm(1.2, x)],
+        3.0,
+    )
+    c = MOI.add_constraint(model, g, MOI.Interval(1.0, 10.0))
+    nl_model = NL.Model()
+    index_map = MOI.copy_to(nl_model, model)
+    filename = joinpath(@__DIR__, "data", "quadratic.sol")
+    sol = NL.SolFileResults(filename, nl_model)
+    xv = MOI.get(sol, MOI.VariablePrimal(), index_map[x])
+    @test ≈(MOI.get(sol, MOI.ConstraintPrimal(), index_map[c]), 1.2xv + 3)
+    @test ≈(MOI.get(sol, MOI.ConstraintDual(), index_map[c]), 0.0)
+    return
+end
+
 function test_sol_attr_out_of_bounds()
     model, v = _hs071()
     nl_model = NL.Model()
@@ -166,6 +203,20 @@ function test_sol_infeasible()
     )
     @test MOI.get(sol, MOI.TerminationStatus()) == MOI.LOCALLY_INFEASIBLE
     @test MOI.get(sol, MOI.PrimalStatus()) == MOI.UNKNOWN_RESULT_STATUS
+    @test MOI.get(sol, MOI.DualStatus()) == MOI.NO_SOLUTION
+    return
+end
+
+function test_sol_no_duals()
+    model, _ = _hs071()
+    nl_model = NL.Model()
+    _ = MOI.copy_to(nl_model, model)
+    sol = NL.SolFileResults(
+        joinpath(@__DIR__, "data", "hs071_noduals.sol"),
+        nl_model,
+    )
+    @test MOI.get(sol, MOI.TerminationStatus()) == MOI.LOCALLY_SOLVED
+    @test MOI.get(sol, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
     @test MOI.get(sol, MOI.DualStatus()) == MOI.NO_SOLUTION
     return
 end
@@ -199,6 +250,14 @@ function test_statuses()
     for ((a, b), (t, p)) in statuses
         @test NL._interpret_status(a, b) == (t, p)
     end
+    return
+end
+
+function test_sol_empty()
+    sol = NL.SolFileResults("optimize not called", MOI.OPTIMIZE_NOT_CALLED)
+    @test MOI.get(sol, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+    @test MOI.get(sol, MOI.PrimalStatus()) == MOI.NO_SOLUTION
+    @test MOI.get(sol, MOI.DualStatus()) == MOI.NO_SOLUTION
     return
 end
 
