@@ -780,5 +780,6 @@ function Base.write(io::IO, nlmodel::Model)
 end
 
 include("read.jl")
+include("sol.jl")
 
 end
