@@ -161,10 +161,7 @@ end
 function test_sol_linear_constraint()
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     x = MOI.add_variable(model)
-    g = MOI.ScalarAffineFunction(
-        [MOI.ScalarAffineTerm(1.2, x)],
-        3.0,
-    )
+    g = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.2, x)], 3.0)
     c = MOI.add_constraint(model, g, MOI.Interval(1.0, 10.0))
     nl_model = NL.Model()
     index_map = MOI.copy_to(nl_model, model)
