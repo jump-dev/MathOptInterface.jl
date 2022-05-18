@@ -567,7 +567,7 @@ end
 ###
 
 for file in readdir(@__DIR__)
-    if startswith(file, "test_")
+    if startswith(file, "test_") && endswith(file, ".jl")
         include(file)
     end
 end
