@@ -264,9 +264,7 @@ function SolFileResults(io::IO, model::Model)
     num_options = _readline(io, Int)
     need_vbtol = false
     if num_options > 0
-        if !(3 <= num_options <= 9)
-            error("expected num_options between 3 and 9; " * "got $num_options")
-        end
+        @assert 3 <= num_options <= 9
         _readline(io, Int)  # Skip this line
         if _readline(io, Int) == 3
             num_options -= 2
@@ -321,6 +319,9 @@ function SolFileResults(io::IO, model::Model)
             n_suffix = parse(Int, items[3])
             suffix = _readline(io)
             if !(suffix == "ipopt_zU_out" || suffix == "ipopt_zL_out")
+                for _ in 1:n_suffix
+                    _ = readline(io)
+                end
                 continue
             end
             for i in 1:n_suffix
