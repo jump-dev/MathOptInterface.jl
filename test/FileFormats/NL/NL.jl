@@ -1043,3 +1043,4 @@ end
 TestNLModel.runtests()
 
 include("read.jl")
+include("sol.jl")
