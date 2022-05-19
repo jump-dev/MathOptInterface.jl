@@ -18,6 +18,32 @@ struct SolFileResults <: MOI.ModelLike
     zU_out::Dict{MOI.VariableIndex,Float64}
 end
 
+"""
+    SolFileResults(filename::String, model::Model)
+
+Parse the `.sol` file `filename` created by solving `model` and return a
+`SolFileResults` struct.
+
+The returned struct supports the `MOI.get` API for querying result attributes
+such as [`MOI.TerminationStatus`](@ref), [`MOI.VariablePrimal`](@ref), and
+[`MOI.ConstraintDual`](@ref).
+"""
+function SolFileResults(filename::String, model::Model)
+    return open(io -> SolFileResults(io, model), filename, "r")
+end
+
+"""
+    SolFileResults(
+        raw_status::String,
+        termination_status::MOI.TerminationStatusCode,
+    )
+
+Return a `SolFileResults` struct with [`MOI.RawStatusString`](@ref) set to
+`raw_status`, [`MOI.TerminationStatus`](@ref) set to `termination_status`, and
+[`MOI.PrimalStatus`](@ref) and [`MOI.DualStatus`](@ref) set to `NO_SOLUTION`.
+
+All other attributes are un-set.
+"""
 function SolFileResults(
     raw_status::String,
     termination_status::MOI.TerminationStatusCode,
@@ -226,33 +252,25 @@ end
 
 _readline(io::IO, T) = parse(T, _readline(io))
 
-function SolFileResults(filename::String, model::Model)
-    return open(io -> SolFileResults(io, model), filename, "r")
-end
-
-"""
-    SolFileResults(io::IO, model::Model)
-
-This function is based on a Julia translation of readsol.c, available at
-https://github.com/ampl/asl/blob/64919f75fa7a438f4b41bce892dcbe2ae38343ee/src/solvers/readsol.c
-and under the following license:
-
-Copyright (C) 2017 AMPL Optimization, Inc.; written by David M. Gay.
-Permission to use, copy, modify, and distribute this software and its
-documentation for any purpose and without fee is hereby granted,
-provided that the above copyright notice appear in all copies and that
-both that the copyright notice and this permission notice and warranty
-disclaimer appear in supporting documentation.
-
-The author and AMPL Optimization, Inc. disclaim all warranties with
-regard to this software, including all implied warranties of
-merchantability and fitness.  In no event shall the author be liable
-for any special, indirect or consequential damages or any damages
-whatsoever resulting from loss of use, data or profits, whether in an
-action of contract, negligence or other tortious action, arising out
-of or in connection with the use or performance of this software.
-"""
 function SolFileResults(io::IO, model::Model)
+    # This function is based on a Julia translation of readsol.c, available at
+    # https://github.com/ampl/asl/blob/64919f75fa7a438f4b41bce892dcbe2ae38343ee/src/solvers/readsol.c
+    # and under the following license:
+    #
+    # Copyright (C) 2017 AMPL Optimization, Inc.; written by David M. Gay.
+    # Permission to use, copy, modify, and distribute this software and its
+    # documentation for any purpose and without fee is hereby granted,
+    # provided that the above copyright notice appear in all copies and that
+    # both that the copyright notice and this permission notice and warranty
+    # disclaimer appear in supporting documentation.
+    #
+    # The author and AMPL Optimization, Inc. disclaim all warranties with
+    # regard to this software, including all implied warranties of
+    # merchantability and fitness.  In no event shall the author be liable
+    # for any special, indirect or consequential damages or any damages
+    # whatsoever resulting from loss of use, data or profits, whether in an
+    # action of contract, negligence or other tortious action, arising out
+    # of or in connection with the use or performance of this software.
     raw_status_string = ""
     line = ""
     while !startswith(line, "Options")
