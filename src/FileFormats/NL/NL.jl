@@ -141,6 +141,10 @@ mutable struct Model <: MOI.ModelLike
     types::Vector{Vector{MOI.VariableIndex}}
     # A vector of the final ordering of the variables.
     order::Vector{MOI.VariableIndex}
+    model::Union{
+        Nothing,
+        MOI.Utilities.UniversalFallback{MOI.Utilities.Model{Float64}},
+    }
 
     function Model()
         return new(
@@ -153,6 +157,7 @@ mutable struct Model <: MOI.ModelLike
             Dict{MOI.VariableIndex,_VariableInfo}(),
             [MOI.VariableIndex[] for _ in 1:9],
             MOI.VariableIndex[],
+            nothing,
         )
     end
 end
@@ -177,6 +182,7 @@ function MOI.empty!(model::Model)
         empty!(model.types[i])
     end
     empty!(model.order)
+    model.model = nothing
     return
 end
 
@@ -236,13 +242,10 @@ function MOI.set(
     return
 end
 
-function MOI.get(model::Model, ::MOI.VariablePrimalStart, x::MOI.VariableIndex)
-    return model.x[x].start
-end
-
 # ==============================================================================
 
 struct _LinearNLPEvaluator <: MOI.AbstractNLPEvaluator end
+
 MOI.initialize(::_LinearNLPEvaluator, ::Vector{Symbol}) = nothing
 
 function MOI.copy_to(dest::Model, model::MOI.ModelLike)
@@ -521,25 +524,28 @@ function _str(x::Float64)
     return string(x)
 end
 
-_write_term(io, x::Float64, ::Any) = println(io, "n", _str(x))
-_write_term(io, x::Int, ::Any) = println(io, "o", x)
-function _write_term(io, x::MOI.VariableIndex, nlmodel)
-    return println(io, "v", nlmodel.x[x].order)
+_write_term(io::IO, ::Model, x::Float64) = println(io, "n", _str(x))
+
+_write_term(io::IO, ::Model, x::Int) = println(io, "o", x)
+
+function _write_term(io::IO, model::Model, x::MOI.VariableIndex)
+    return println(io, "v", model.x[x].order)
 end
 
 _is_nary(x::Int) = x in _NARY_OPCODES
+
 _is_nary(x) = false
 
-function _write_nlexpr(io::IO, expr::_NLExpr, nlmodel::Model)
+function _write_nlexpr(io::IO, expr::_NLExpr, model::Model)
     if expr.is_linear || length(expr.nonlinear_terms) == 0
         # If the expression is linear, just write out the constant term.
-        _write_term(io, expr.constant, nlmodel)
+        _write_term(io, model, expr.constant)
         return
     end
     if !iszero(expr.constant)
         # If the constant term is non-zero, we need to write it out.
-        _write_term(io, OPPLUS, nlmodel)
-        _write_term(io, expr.constant, nlmodel)
+        _write_term(io, model, OPPLUS)
+        _write_term(io, model, expr.constant)
     end
     last_nary = false
     for term in expr.nonlinear_terms
@@ -547,22 +553,22 @@ function _write_nlexpr(io::IO, expr::_NLExpr, nlmodel::Model)
             println(io, term::Int)
             last_nary = false
         else
-            _write_term(io, term, nlmodel)
+            _write_term(io, model, term)
             last_nary = _is_nary(term)
         end
     end
     return
 end
 
-function _write_linear_block(io::IO, expr::_NLExpr, nlmodel::Model)
-    elements = [(c, nlmodel.x[v].order) for (v, c) in expr.linear_terms]
+function _write_linear_block(io::IO, expr::_NLExpr, model::Model)
+    elements = [(c, model.x[v].order) for (v, c) in expr.linear_terms]
     for (c, x) in sort!(elements; by = i -> i[2])
         println(io, x, " ", _str(c))
     end
     return
 end
 
-function Base.write(io::IO, nlmodel::Model)
+function Base.write(io::IO, model::Model)
     # ==========================================================================
     # Header
     # Line 1: Always the same
@@ -574,7 +580,7 @@ function Base.write(io::IO, nlmodel::Model)
     # Notes:
     #  * We assume there is always one objective, even if it is just `min 0`.
     n_con, n_ranges, n_eqns = 0, 0, 0
-    for cons in (nlmodel.g, nlmodel.h), c in cons
+    for cons in (model.g, model.h), c in cons
         n_con += 1
         if c.opcode == 0
             n_ranges += 1
@@ -582,12 +588,12 @@ function Base.write(io::IO, nlmodel::Model)
             n_eqns += 1
         end
     end
-    println(io, " $(length(nlmodel.x)) $(n_con) 1 $(n_ranges) $(n_eqns) 0")
+    println(io, " $(length(model.x)) $(n_con) 1 $(n_ranges) $(n_eqns) 0")
 
     # Line 3: nonlinear constraints, objectives
     # Notes:
     #  * We assume there is always one objective, even if it is just `min 0`.
-    n_nlcon = length(nlmodel.g)
+    n_nlcon = length(model.g)
     println(io, " ", n_nlcon, " ", 1)
 
     # Line 4: network constraints: nonlinear, linear
@@ -599,9 +605,9 @@ function Base.write(io::IO, nlmodel::Model)
     # Line 5: nonlinear vars in constraints, objectives, both
     # Notes:
     #  * This order is confusingly different to the standard "b, c, o" order.
-    nlvb = length(nlmodel.types[1]) + length(nlmodel.types[2])
-    nlvc = nlvb + length(nlmodel.types[3]) + length(nlmodel.types[4])
-    nlvo = nlvb + length(nlmodel.types[5]) + length(nlmodel.types[6])
+    nlvb = length(model.types[1]) + length(model.types[2])
+    nlvc = nlvb + length(model.types[3]) + length(model.types[4])
+    nlvo = nlvb + length(model.types[5]) + length(model.types[6])
     println(io, " ", nlvc, " ", nlvo, " ", nlvb)
 
     # Line 6: linear network variables; functions; arith, flags
@@ -618,11 +624,11 @@ function Base.write(io::IO, nlmodel::Model)
     #    - binary or integer variables in nonlinear objective and constraint
     #    - binary or integer variables in nonlinear constraint
     #    - binary or integer variables in nonlinear objective
-    nbv = length(nlmodel.types[8])
-    niv = length(nlmodel.types[9])
-    nl_both = length(nlmodel.types[2])
-    nl_cons = length(nlmodel.types[4])
-    nl_obj = length(nlmodel.types[6])
+    nbv = length(model.types[8])
+    niv = length(model.types[9])
+    nl_both = length(model.types[2])
+    nl_cons = length(model.types[4])
+    nl_obj = length(model.types[6])
     println(io, " ", nbv, " ", niv, " ", nl_both, " ", nl_cons, " ", nl_obj)
 
     # Line 8: nonzeros in Jacobian, gradients
@@ -630,13 +636,13 @@ function Base.write(io::IO, nlmodel::Model)
     #  * Make sure to include a 0 element for every variable that appears in an
     #    objective or constraint, even if the linear coefficient is 0.
     nnz_jacobian = 0
-    for g in nlmodel.g
+    for g in model.g
         nnz_jacobian += length(g.expr.linear_terms)
     end
-    for h in nlmodel.h
+    for h in model.h
         nnz_jacobian += length(h.expr.linear_terms)
     end
-    nnz_gradient = length(nlmodel.f.linear_terms)
+    nnz_gradient = length(model.f.linear_terms)
     println(io, " ", nnz_jacobian, " ", nnz_gradient)
 
     # Line 9: max name lengths: constraints, variables
@@ -659,13 +665,13 @@ function Base.write(io::IO, nlmodel::Model)
     # Notes:
     #  * Nonlinear constraints first, then linear.
     #  * For linear constraints, write out the constant term here.
-    for (i, g) in enumerate(nlmodel.g)
+    for (i, g) in enumerate(model.g)
         println(io, "C", i - 1)
-        _write_nlexpr(io, g.expr, nlmodel)
+        _write_nlexpr(io, g.expr, model)
     end
-    for (i, h) in enumerate(nlmodel.h)
+    for (i, h) in enumerate(model.h)
         println(io, "C", i - 1 + n_nlcon)
-        _write_nlexpr(io, h.expr, nlmodel)
+        _write_nlexpr(io, h.expr, model)
     end
     # ==========================================================================
     # Objective
@@ -673,15 +679,15 @@ function Base.write(io::IO, nlmodel::Model)
     #  * NL files support multiple objectives, but we're just going to write 1,
     #    so it's always `O0`.
     #  * For linear objectives, write out the constant term here.
-    println(io, "O0 ", nlmodel.sense == MOI.MAX_SENSE ? "1" : "0")
-    _write_nlexpr(io, nlmodel.f, nlmodel)
+    println(io, "O0 ", model.sense == MOI.MAX_SENSE ? "1" : "0")
+    _write_nlexpr(io, model.f, model)
     # ==========================================================================
     # VariablePrimalStart
     # Notes:
     #  * Make sure to write out the variables in order.
-    println(io, "x", length(nlmodel.x))
-    for (i, x) in enumerate(nlmodel.order)
-        start = MOI.get(nlmodel, MOI.VariablePrimalStart(), x)
+    println(io, "x", length(model.x))
+    for (i, x) in enumerate(model.order)
+        start = model.x[x].start
         println(io, i - 1, " ", start === nothing ? 0 : _str(start))
     end
     # ==========================================================================
@@ -693,7 +699,7 @@ function Base.write(io::IO, nlmodel::Model)
     if n_con > 0
         println(io, "r")
         # Nonlinear constraints
-        for g in nlmodel.g
+        for g in model.g
             print(io, g.opcode)
             if g.opcode == 0
                 println(io, " ", _str(g.lower), " ", _str(g.upper))
@@ -707,7 +713,7 @@ function Base.write(io::IO, nlmodel::Model)
             end
         end
         # Linear constraints
-        for h in nlmodel.h
+        for h in model.h
             print(io, h.opcode)
             if h.opcode == 0
                 println(io, " ", _str(h.lower), " ", _str(h.upper))
@@ -727,8 +733,8 @@ function Base.write(io::IO, nlmodel::Model)
     #  * Not much to note, other than to make sure you iterate the variables in
     #    the correct order.
     println(io, "b")
-    for x in nlmodel.order
-        v = nlmodel.x[x]
+    for x in model.order
+        v = model.x[x]
         if v.lower == v.upper
             println(io, "4 ", _str(v.lower))
         elseif -Inf < v.lower && v.upper < Inf
@@ -752,19 +758,19 @@ function Base.write(io::IO, nlmodel::Model)
     #    inferred from the total number of elements in the Jacobian as given in
     #    the header.
     if n_con > 0
-        println(io, "k", length(nlmodel.x) - 1)
+        println(io, "k", length(model.x) - 1)
         total = 0
-        for i in 1:length(nlmodel.order)-1
-            total += nlmodel.x[nlmodel.order[i]].jacobian_count
+        for i in 1:length(model.order)-1
+            total += model.x[model.order[i]].jacobian_count
             println(io, total)
         end
-        for (i, g) in enumerate(nlmodel.g)
+        for (i, g) in enumerate(model.g)
             println(io, "J", i - 1, " ", length(g.expr.linear_terms))
-            _write_linear_block(io, g.expr, nlmodel)
+            _write_linear_block(io, g.expr, model)
         end
-        for (i, h) in enumerate(nlmodel.h)
+        for (i, h) in enumerate(model.h)
             println(io, "J", i - 1 + n_nlcon, " ", length(h.expr.linear_terms))
-            _write_linear_block(io, h.expr, nlmodel)
+            _write_linear_block(io, h.expr, model)
         end
     end
     # ==========================================================================
@@ -774,12 +780,44 @@ function Base.write(io::IO, nlmodel::Model)
     #    objective.
     if nnz_gradient > 0
         println(io, "G0 ", nnz_gradient)
-        _write_linear_block(io, nlmodel.f, nlmodel)
+        _write_linear_block(io, model.f, model)
     end
-    return nlmodel
+    return model
 end
 
 include("read.jl")
 include("sol.jl")
+
+function _assert_has_model(::Nothing, attr)
+    return error(
+        "Unable get attribute $attr because `NL.Model` only supports getting " *
+        "attributes when the model was read from a file.",
+    )
+end
+
+_assert_has_model(::MOI.Utilities.UniversalFallback, ::Any) = nothing
+
+function MOI.get(model::Model, attr::MOI.AbstractModelAttribute)
+    _assert_has_model(model.model, attr)
+    return MOI.get(model.model, attr)
+end
+
+function MOI.get(
+    model::Model,
+    attr::MOI.AbstractConstraintAttribute,
+    ci::MOI.ConstraintIndex,
+)
+    _assert_has_model(model.model, attr)
+    return MOI.get(model.model, attr, ci)
+end
+
+function MOI.get(
+    model::Model,
+    attr::MOI.AbstractVariableAttribute,
+    x::MOI.VariableIndex,
+)
+    _assert_has_model(model.model, attr)
+    return MOI.get(model.model, attr, x)
+end
 
 end

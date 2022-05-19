@@ -471,9 +471,6 @@ function test_nlmodel_hs071_linear_obj()
     @test MOI.supports(n, MOI.VariablePrimalStart(), MOI.VariableIndex)
     @test MOI.supports(n, MOI.ObjectiveFunction{typeof(f)}())
     index_map = MOI.copy_to(n, model)
-    for (vi, starti) in zip(v, start)
-        @test MOI.get(n, MOI.VariablePrimalStart(), index_map[vi]) == starti
-    end
     @test n.sense == MOI.MAX_SENSE
     @test n.f == NL._NLExpr(f)
     _test_nlexpr(
@@ -513,6 +510,7 @@ function test_nlmodel_hs071_linear_obj()
     types = [NL._CONTINUOUS, NL._BINARY, NL._INTEGER, NL._CONTINUOUS]
     u[2] = 1.0
     for i in 1:4
+        @test n.x[v[i]].start == start[i]
         @test n.x[v[i]].lower == l[i]
         @test n.x[v[i]].upper == u[i]
         @test n.x[v[i]].type == types[i]
@@ -1025,6 +1023,19 @@ function test_float_rounding()
     @test NL._str(1.2) == "1.2"
     @test NL._str(1e50) == "1.0e50"
     @test NL._str(-1e50) == "-1.0e50"
+    return
+end
+
+function test_attribute_error()
+    model = NL.Model()
+    attr = MOI.ObjectiveSense()
+    @test_throws(
+        ErrorException(
+            "Unable get attribute $attr because `NL.Model` only supports " *
+            "getting attributes when the model was read from a file.",
+        ),
+        MOI.get(model, attr),
+    )
     return
 end
 
