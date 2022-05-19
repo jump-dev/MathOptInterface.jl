@@ -30,3 +30,9 @@ FileFormats.MPS.Model
 FileFormats.NL.Model
 FileFormats.SDPA.Model
 ```
+
+## Other helpers
+
+```@docs
+FileFormats.NL.SolFileResults
+```
