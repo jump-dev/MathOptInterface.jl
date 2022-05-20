@@ -255,9 +255,13 @@ function MOI.get(
     attr::MOI.ConstraintDual,
     bridge::SquareBridge,
 )
+    # The constraint dual of the triangular constraint.
     tri = MOI.get(model, attr, bridge.triangle)
+    # Our output will be a dense square matrix.
     dim = MOI.side_dimension(bridge.square_set)
-    sqr = Vector{eltype(tri)}(undef, dim^2)
+    dual = Vector{eltype(tri)}(undef, dim^2)
+    # Start by converting the triangular dual to the square dual, assuming that
+    # all elements are symmetrical.
     k = 0
     for j in 1:dim, i in 1:j
         k += 1
@@ -274,5 +278,5 @@ function MOI.get(
         sqr[i+(j-1)*dim] += dual
         sqr[j+(i-1)*dim] -= dual
     end
-    return sqr
+    return dual
 end
