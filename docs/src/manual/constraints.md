@@ -162,6 +162,10 @@ where ``\mathcal{E}`` is the exponential cone (see [`ExponentialCone`](@ref)),
 | ``\frac{1}{2}x^TQx + a^Tx + b = 0``      | `ScalarQuadraticFunction`    | `EqualTo`                     |
 | Bilinear matrix inequality    | `VectorQuadraticFunction`    | `PositiveSemidefiniteCone...` |
 
+!!! note
+    For more details on the internal format of the quadratic functions see
+    [`ScalarQuadraticFunction`](@ref) or [`VectorQuadraticFunction`](@ref).
+
 ### Discrete and logical constraints
 
 | Mathematical Constraint                                                                    | MOI Function           | MOI Set                            |
