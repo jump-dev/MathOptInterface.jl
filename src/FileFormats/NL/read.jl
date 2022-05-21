@@ -31,6 +31,16 @@ mutable struct _CacheModel
     end
 end
 
+function Base.read!(io::IO, model::Model)
+    cache = _CacheModel()
+    _parse_header(io, cache)
+    while !eof(io)
+        _parse_section(io, cache)
+    end
+    model.model = _to_model(cache)
+    return
+end
+
 function _resize_variables(model::_CacheModel, n::Int)
     resize!(model.variable_type, n)
     fill!(model.variable_type, _CONTINUOUS)
@@ -193,15 +203,6 @@ function _to_model(data::_CacheModel)
     block = MOI.NLPBlockData(evaluator)
     MOI.set(model, MOI.NLPBlock(), block)
     return model
-end
-
-function _read_from_io(io::IO)
-    model = _CacheModel()
-    _parse_header(io, model)
-    while !eof(io)
-        _parse_section(io, model)
-    end
-    return _to_model(model)
 end
 
 function _parse_header(io::IO, model::_CacheModel)

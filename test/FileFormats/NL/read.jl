@@ -498,8 +498,9 @@ v1
 end
 
 function test_hs071()
-    model = open(joinpath(@__DIR__, "data", "hs071.nl"), "r") do io
-        return NL._read_from_io(io)
+    model = NL.Model()
+    open(joinpath(@__DIR__, "data", "hs071.nl"), "r") do io
+        return read!(io, model)
     end
     model_print = sprint(print, model)
     _in_ = @static Sys.iswindows() ? "in" : "∈"
@@ -544,8 +545,9 @@ function test_mac_minlp()
         "top1-15x05.nl",
     ]
     for file in filter(f -> !(f in exclude) && endswith(f, ".nl"), readdir(dir))
+        model = NL.Model()
         open(joinpath(dir, file), "r") do io
-            return NL._read_from_io(io)
+            return read!(io, model)
         end
     end
     return
