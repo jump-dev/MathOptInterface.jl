@@ -296,13 +296,13 @@ function _parse_header(io::IO, model::_CacheModel)
     end
     _read_til_newline(io)
     # ==========================================================================
-    # Deal with the integrality of variables
+    # Deal with the integrality of variables. This is quite complicated, so go
+    # read the README in this folder.
     offsets = [
         nlvb - nlvbi,
         nlvbi,
         nlvc - (nlvb + nlvci),
         nlvci,
-        # max(0, nlvo - nlvc),
         max(0, nlvo - nlvc - nlvoi),
         nlvoi,
         n_var - (max(nlvc, nlvo) + nbv + niv),
