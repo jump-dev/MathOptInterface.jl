@@ -960,7 +960,16 @@ A model attribute for the objective sense of the objective function, which
 must be an `OptimizationSense`: `MIN_SENSE`, `MAX_SENSE`, or
 `FEASIBILITY_SENSE`. The default is `FEASIBILITY_SENSE`.
 
-When setting the sense to `FEASIBILITY_SENSE`, the optimizer must erase the [`ObjectiveFunction`](@ref) attribute.
+## Interaction with `ObjectiveFunction`
+
+Setting the sense to `FEASIBILITY_SENSE` unsets the [`ObjectiveFunction`](@ref)
+attribute. That is, if you first set [`ObjectiveFunction`](@ref) and then set
+`ObjectiveSense` to be `FEASIBILITY_SENSE`, no objective function will be
+passed to the solver.
+
+In addition, some reformulations of [`ObjectiveFunction`](@ref) via bridges rely
+on the value of `ObjectiveSense`. Therefore, you should set `ObjectiveSense`
+before setting [`ObjectiveFunction`](@ref).
 """
 struct ObjectiveSense <: AbstractModelAttribute end
 
