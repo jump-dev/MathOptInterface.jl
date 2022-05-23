@@ -369,6 +369,7 @@ function MOI.copy_to(dest::Model, model::MOI.ModelLike)
             end
         end
     end
+    # This ordering is quite confusing. Consult the README for details.
     types = dest.types
     for (x, v) in dest.x
         if v.in_nonlinear_constraint && v.in_nonlinear_objective
@@ -386,44 +387,9 @@ function MOI.copy_to(dest::Model, model::MOI.ModelLike)
             push!(types[9], x)
         end
     end
-    # However! Don't let Tables 3 and 4 fool you, because the ordering actually
-    # depends on whether the number of nonlinear variables in the objective only
-    # is _strictly_ greater than the number of nonlinear variables in the
-    # constraints only. Quoting:
-    #
-    #   For all versions, the first nlvc variables appear nonlinearly in at
-    #   least one constraint. If nlvo > nlvc, the first nlvc variables may or
-    #   may not appear nonlinearly in an objective, but the next nlvo – nlvc
-    #   variables do appear nonlinearly in at least one objective. Otherwise
-    #   all of the first nlvo variables appear nonlinearly in an objective.
-    #
-    # However, even this is slightly incorrect, because I think it should read
-    # "For all versions, the first nlvb variables appear nonlinearly." The "nlvo
-    # - nlvc" part is also clearly incorrect, and should probably read "nlvo -
-    # nlvb."
-    #
-    # It's a bit confusing, so here is the relevant code from Couenne:
-    # https://github.com/coin-or/Couenne/blob/683c5b305d78a009d59268a4bca01e0ad75ebf02/src/readnl/readnl.cpp#L76-L87
-    #
-    # They interpret this paragraph to mean the switch on nlvo > nlvc determines
-    # whether the next block of variables are the ones that appear in the
-    # objective only, or the constraints only.
-    #
-    # That makes sense as a design choice, because you can read them in two
-    # contiguous blocks.
-    #
-    # Essentially, what all this means is if !(nlvo > nlvc), then swap 3-4 for
-    # 5-6 in the variable order.
-    nlvc = length(types[3]) + length(types[4])
-    nlvo = length(types[5]) + length(types[6])
-    order_i = if nlvo > nlvc
-        [1, 2, 3, 4, 5, 6, 7, 8, 9]
-    else
-        [1, 2, 5, 6, 3, 4, 7, 8, 9]
-    end
     # Now we can order the variables.
     n = 0
-    for i in order_i
+    for i in 1:9
         # Since variables come from a dictionary, there may be differences in
         # the order depending on platform and Julia version. Sort by creation
         # time for consistency.
@@ -605,10 +571,17 @@ function Base.write(io::IO, model::Model)
     # Line 5: nonlinear vars in constraints, objectives, both
     # Notes:
     #  * This order is confusingly different to the standard "b, c, o" order.
+    #  * It's also confusing because nlvo doesn't mean what you think it means.
+    #    Consult the README for details.
     nlvb = length(model.types[1]) + length(model.types[2])
     nlvc = nlvb + length(model.types[3]) + length(model.types[4])
     nlvo = nlvb + length(model.types[5]) + length(model.types[6])
-    println(io, " ", nlvc, " ", nlvo, " ", nlvb)
+    if nlvo == nlvb
+        println(io, " ", nlvc, " ", nlvo, " ", nlvb)
+    else
+        nl_total = nlvo + nlvc - nlvb
+        println(io, " ", nlvc, " ", nl_total, " ", nlvb)
+    end
 
     # Line 6: linear network variables; functions; arith, flags
     # Notes:

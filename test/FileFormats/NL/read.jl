@@ -524,6 +524,90 @@ function test_hs071()
     return
 end
 
+function test_parse_header_integrality_obj()
+    model = NL._CacheModel()
+    NL._resize_variables(model, 4)
+    io = IOBuffer()
+    write(io, """g3 0 1 0	# problem test_simple
+    2 1 1 0 0	# vars, constraints, objectives, ranges, eqns
+    1 1	# nonlinear constraints, objectives
+    0 0	# network constraints: nonlinear, linear
+    1 2 0	# nonlinear vars in constraints, objectives, both
+    0 0 0 1	# linear network variables; functions; arith, flags
+    0 0 0 0 0	# discrete variables: binary, integer, nonlinear (b,c,o)
+    1 1	# nonzeros in Jacobian, gradients
+    0 0	# max name lengths: constraints, variables
+    0 0 0 0 0	# common exprs: b,c,o,c1,o1\n""")
+    seekstart(io)
+    NL._parse_header(io, model)
+    @test model.variable_type[1] == NL._CONTINUOUS
+    @test model.variable_type[2] == NL._CONTINUOUS
+    return
+end
+
+function test_parse_header_integrality_obj_int()
+    model = NL._CacheModel()
+    NL._resize_variables(model, 4)
+    io = IOBuffer()
+    write(io, """g3 0 1 0	# problem test_simple
+    2 1 1 0 0	# vars, constraints, objectives, ranges, eqns
+    1 1	# nonlinear constraints, objectives
+    0 0	# network constraints: nonlinear, linear
+    1 2 0	# nonlinear vars in constraints, objectives, both
+    0 0 0 1	# linear network variables; functions; arith, flags
+    0 0 0 0 1	# discrete variables: binary, integer, nonlinear (b,c,o)
+    1 1	# nonzeros in Jacobian, gradients
+    0 0	# max name lengths: constraints, variables
+    0 0 0 0 0	# common exprs: b,c,o,c1,o1\n""")
+    seekstart(io)
+    NL._parse_header(io, model)
+    @test model.variable_type[1] == NL._CONTINUOUS
+    @test model.variable_type[2] == NL._INTEGER
+    return
+end
+
+function test_parse_header_integrality_both()
+    model = NL._CacheModel()
+    NL._resize_variables(model, 4)
+    io = IOBuffer()
+    write(io, """g3 0 1 0	# problem test_simple
+    2 1 1 0 0	# vars, constraints, objectives, ranges, eqns
+    1 1	# nonlinear constraints, objectives
+    0 0	# network constraints: nonlinear, linear
+    2 1 1	# nonlinear vars in constraints, objectives, both
+    0 0 0 1	# linear network variables; functions; arith, flags
+    0 0 0 0 0	# discrete variables: binary, integer, nonlinear (b,c,o)
+    1 1	# nonzeros in Jacobian, gradients
+    0 0	# max name lengths: constraints, variables
+    0 0 0 0 0	# common exprs: b,c,o,c1,o1\n""")
+    seekstart(io)
+    NL._parse_header(io, model)
+    @test model.variable_type[1] == NL._CONTINUOUS
+    @test model.variable_type[2] == NL._CONTINUOUS
+    return
+end
+
+function test_parse_header_integrality_both_int()
+    model = NL._CacheModel()
+    NL._resize_variables(model, 4)
+    io = IOBuffer()
+    write(io, """g3 0 1 0	# problem test_simple
+    2 1 1 0 0	# vars, constraints, objectives, ranges, eqns
+    1 1	# nonlinear constraints, objectives
+    0 0	# network constraints: nonlinear, linear
+    2 1 1	# nonlinear vars in constraints, objectives, both
+    0 0 0 1	# linear network variables; functions; arith, flags
+    0 0 1 0 0	# discrete variables: binary, integer, nonlinear (b,c,o)
+    1 1	# nonzeros in Jacobian, gradients
+    0 0	# max name lengths: constraints, variables
+    0 0 0 0 0	# common exprs: b,c,o,c1,o1\n""")
+    seekstart(io)
+    NL._parse_header(io, model)
+    @test model.variable_type[1] == NL._INTEGER
+    @test model.variable_type[2] == NL._CONTINUOUS
+    return
+end
+
 """
     test_mac_minlp()
 
