@@ -1,5 +1,25 @@
 # Release notes
 
+## v1.3.0 (In development)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.3.0).
+
+### New features
+
+ - Add `MOI.Nonlinear` submodule. This is a large new submodule that has been
+   refactored from code that was in JuMP. For now, it should be considered
+   experimental.
+ - Add `FileFormats.NL.SolFileResults(::IO, ::Model)`
+ - Add `FileFormats.NL.read!(::IO, ::Model)`
+ - Add `MOI.modify` that accepts a vector of modifications
+
+### Performance and maintenance
+
+ - Fixed a performance issue in `Utilities.DoubleDict`
+ - Fixed a bug in `Test` which attempted to include non-`.jl` files
+ - Various minor improvements to the documentation
+
 ## v1.2.0 (April 25, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
