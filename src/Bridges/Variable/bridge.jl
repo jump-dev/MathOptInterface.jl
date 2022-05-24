@@ -5,7 +5,7 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    AbstractBridge
+    abstract type AbstractBridge <: MOI.Bridges.AbstractBridge end
 
 Subtype of [`MathOptInterface.Bridges.AbstractBridge`](@ref) for variable
 bridges.
@@ -13,16 +13,94 @@ bridges.
 abstract type AbstractBridge <: MOIB.AbstractBridge end
 
 """
+    supports_constrained_variable(
+        BT::Type{<:AbstractBridge},
+        S::Type{<:MOI.AbstractSet},
+    )::Bool
+
+Return a `Bool` indicating whether the bridges of type `BT` support bridging
+constrained variables in `S`. That is, it returns `true` if the bridge of type
+`BT` converts constrained variables of type `S` into a form supported by the
+solver.
+
+## Implementation notes
+
+ * This method depends only on the type of the bridge and set, not the runtime
+   values.
+ * There is a default fallback, so you need only implement this method for sets
+   that the bridge implements.
+
+## Example
+
+```jldoctest; setup=(using MathOptInterface; const MOI = MathOptInterface)
+julia> MOI.Bridges.Variable.supports_constrained_variable(
+           MOI.Bridges.Variable.NonposToNonnegBridge{Float64},
+           MOI.Nonpositives,
+       )
+true
+
+julia> MOI.Bridges.Variable.supports_constrained_variable(
+           MOI.Bridges.Variable.NonposToNonnegBridge{Float64},
+           MOI.Nonnegatives,
+       )
+false
+```
+"""
+function supports_constrained_variable(
+    ::Type{<:AbstractBridge},
+    ::Type{<:MOI.AbstractSet},
+)
+    return false
+end
+
+"""
+    concrete_bridge_type(
+        BT::Type{<:AbstractBridge},
+        S::Type{<:MOI.AbstractSet},
+    )::Type
+
+Return the concrete type of the bridge supporting variables in `S` constraints.
+
+This function can only be called if `MOI.supports_constrained_variable(BT, S)`
+is `true`.
+
+## Examples
+
+As a variable in [`MathOptInterface.GreaterThan`](@ref) is bridged into
+variables in [`MathOptInterface.Nonnegatives`](@ref) by the
+[`VectorizeBridge`](@ref):
+
+```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+julia> MOI.Bridges.Variable.concrete_bridge_type(
+           MOI.Bridges.Variable.VectorizeBridge{Float64},
+           MOI.GreaterThan{Float64},
+       )
+MathOptInterface.Bridges.Variable.VectorizeBridge{Float64, MathOptInterface.Nonnegatives}
+```
+"""
+concrete_bridge_type(::Type{BT}, ::Type{<:MOI.AbstractSet}) where {BT} = BT
+
+function concrete_bridge_type(
+    b::MOIB.AbstractBridgeOptimizer,
+    S::Type{<:MOI.AbstractSet},
+)
+    return concrete_bridge_type(MOIB.bridge_type(b, S), S)
+end
+
+"""
     bridge_constrained_variable(
         BT::Type{<:AbstractBridge},
         model::MOI.ModelLike,
         set::MOI.AbstractSet,
-    )
+    )::BT
 
 Bridge the constrained variable in `set` using bridge `BT` to `model` and
-returns a bridge object of type `BT`. The bridge type `BT` should be a concrete
-type, that is, all the type parameters of the bridge should be set. Use
-[`concrete_bridge_type`](@ref) to obtain a concrete type for given set types.
+returns a bridge object of type `BT`.
+
+## Implementation notes
+
+ * The bridge type `BT` must be a concrete type, that is, all the type
+   parameters of the bridge must be set.
 """
 function bridge_constrained_variable end
 
@@ -116,46 +194,28 @@ function MOI.set(
 end
 
 """
-    supports_constrained_variable(
-        ::Type{<:AbstractBridge},
-        ::Type{<:MOI.AbstractSet},
-    )::Bool
-
-Return a `Bool` indicating whether the bridges of type `BT` support bridging
-constrained variables in `S`.
-"""
-function supports_constrained_variable(
-    ::Type{<:AbstractBridge},
-    ::Type{<:MOI.AbstractSet},
-)
-    return false
-end
-
-"""
     added_constrained_variable_types(
         BT::Type{<:MOI.Bridges.Variable.AbstractBridge},
         S::Type{<:MOI.AbstractSet},
     )
 
 Return a list of the types of constrained variables that bridges of type `BT`
-add for bridging constrained variabled in `S`. This falls back to
-`added_constrained_variable_types(concrete_bridge_type(BT, S))`
-so bridges should not implement this.
+add for bridging constrained variabled in `S`.
 
-## Examples
+## Implementation notes
+
+ * This method has a default fallback so bridges should _not_ implement it.
+
+## Example
 
 As a variable in [`MathOptInterface.GreaterThan`](@ref) is bridged into
 variables in [`MathOptInterface.Nonnegatives`](@ref) by the
 [`VectorizeBridge`](@ref):
-
 ```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
-MOI.Bridges.added_constrained_variable_types(
-    MOI.Bridges.Variable.VectorizeBridge{Float64},
-    MOI.GreaterThan{Float64},
-)
-
-# output
-
+julia> MOI.Bridges.added_constrained_variable_types(
+           MOI.Bridges.Variable.VectorizeBridge{Float64},
+           MOI.GreaterThan{Float64},
+       )
 1-element Vector{Tuple{Type}}:
  (MathOptInterface.Nonnegatives,)
 ```
@@ -174,9 +234,11 @@ end
     )
 
 Return a list of the types of constraints that bridges of type `BT` add for
-for bridging constrained variabled in `S`. This falls back to
-`added_constraint_types(concrete_bridge_type(BT, S))`
-so bridges should not implement this method.
+for bridging constrained variabled in `S`.
+
+## Implementation notes
+
+ * This method has a default fallback so bridges should _not_ implement it.
 
 ## Examples
 
@@ -205,44 +267,6 @@ function MOIB.added_constraint_types(
     S::Type{<:MOI.AbstractSet},
 )
     return MOIB.added_constraint_types(concrete_bridge_type(BT, S))
-end
-
-"""
-    concrete_bridge_type(
-        BT::Type{<:AbstractBridge},
-        S::Type{<:MOI.AbstractSet},
-    )::Type
-
-Return the concrete type of the bridge supporting variables in `S` constraints.
-This function can only be called if `MOI.supports_constrained_variable(BT, S)`
-is `true`.
-
-## Examples
-
-As a variable in [`MathOptInterface.GreaterThan`](@ref) is bridged into
-variables in [`MathOptInterface.Nonnegatives`](@ref) by the
-[`VectorizeBridge`](@ref):
-
-```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
-MOI.Bridges.Variable.concrete_bridge_type(
-    MOI.Bridges.Variable.VectorizeBridge{Float64},
-    MOI.GreaterThan{Float64},
-)
-
-# output
-
-MathOptInterface.Bridges.Variable.VectorizeBridge{Float64, MathOptInterface.Nonnegatives}
-```
-"""
-function concrete_bridge_type(bridge_type::Type, ::Type{<:MOI.AbstractSet})
-    return bridge_type
-end
-
-function concrete_bridge_type(
-    b::MOIB.AbstractBridgeOptimizer,
-    S::Type{<:MOI.AbstractSet},
-)
-    return concrete_bridge_type(MOIB.bridge_type(b, S), S)
 end
 
 """

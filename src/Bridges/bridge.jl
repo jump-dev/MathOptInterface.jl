@@ -5,23 +5,24 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    AbstractBridge
+    abstract type AbstractBridge end
 
-Represents a bridged constraint or variable in a
-[`MathOptInterface.Bridges.AbstractBridgeOptimizer`](@ref). It contains the
-indices of the variables and constraints that it has created in the model. These
-can be obtained using [`MathOptInterface.NumberOfVariables`](@ref),
-[`MathOptInterface.ListOfVariableIndices`](@ref),
-[`MathOptInterface.NumberOfConstraints`](@ref) and
-[`MathOptInterface.ListOfConstraintIndices`](@ref) using
-[`MathOptInterface.get`](@ref) with the bridge in place of the
-[`MathOptInterface.ModelLike`](@ref). Attributes of the bridged model such as
-[`MathOptInterface.ConstraintDual`](@ref) and
-[`MathOptInterface.ConstraintPrimal`](@ref), can be obtained using
-[`MathOptInterface.get`](@ref) with the bridge in place of the constraint index.
-These calls are used by the
-[`MathOptInterface.Bridges.AbstractBridgeOptimizer`](@ref) to communicate with
-the bridge so they should be implemented by the bridge.
+An abstract type representing a bridged constraint or variable in a
+[`MathOptInterface.Bridges.AbstractBridgeOptimizer`](@ref).
+
+Subtypes must implement [`MathOptInterface.get`](@ref) for the following
+attributes with the bridge in place of the [`MathOptInterface.ModelLike`](@ref):
+
+ * [`MathOptInterface.NumberOfVariables`](@ref)
+ * [`MathOptInterface.ListOfVariableIndices`](@ref)
+ * [`MathOptInterface.NumberOfConstraints`](@ref)
+ * [`MathOptInterface.ListOfConstraintIndices`](@ref)
+
+In addition, subtypes may optionally implement the following constraint
+attributes with the bridge in place of the constraint index:
+
+ * [`MathOptInterface.ConstraintDual`](@ref)
+ * [`MathOptInterface.ConstraintPrimal`](@ref)
 """
 abstract type AbstractBridge end
 
@@ -35,19 +36,60 @@ struct IndexInVector
 end
 
 """
-    MOI.get(b::AbstractBridge, ::MOI.NumberOfConstraints{F, S}) where {F, S}
+    MOI.get(b::AbstractBridge, ::MOI.NumberOfVariables)::Int64
 
-The number of constraints of the type `F`-in-`S` created by the bridge `b` in
-the model.
+Return the number of variables created by the bridge `b` in the model.
+
+See also [`MOI.NumberOfConstraints`](@ref).
+
+## Implementation notes
+
+ * There is a default fallback, so you need only implement this if the bridge
+   adds new variables.
+"""
+MOI.get(::AbstractBridge, ::MOI.NumberOfVariables)::Int64 = 0
+
+"""
+    MOI.get(b::AbstractBridge, ::MOI.ListOfVariableIndices)
+
+Return the list of variables created by the bridge `b`.
+
+See also [`MOI.ListOfVariableIndices`](@ref).
+
+## Implementation notes
+
+ * There is a default fallback, so you need only implement this if the bridge
+   adds new variables.
+"""
+MOI.get(::AbstractBridge, ::MOI.ListOfVariableIndices) = MOI.VariableIndex[]
+
+"""
+    MOI.get(b::AbstractBridge, ::MOI.NumberOfConstraints{F,S})::Int64 where {F,S}
+
+Return the number of constraints of the type `F`-in-`S` created by the bridge
+`b`.
+
+See also [`MOI.NumberOfConstraints`](@ref).
+
+## Implementation notes
+
+ * There is a default fallback, so you need only implement this for the
+   constraint types returned by [`added_constraint_types`](@ref).
 """
 MOI.get(::AbstractBridge, ::MOI.NumberOfConstraints)::Int64 = 0
 
 """
-    MOI.get(b::AbstractBridge, ::MOI.ListOfConstraintIndices{F, S}) where {F, S}
+    MOI.get(b::AbstractBridge, ::MOI.ListOfConstraintIndices{F,S}) where {F,S}
 
-A `Vector{ConstraintIndex{F,S}}` with indices of all constraints of
-type `F`-in`S` created by the bride `b` in the model (i.e., of length equal to
-the value of `NumberOfConstraints{F,S}()`).
+Return a  `Vector{ConstraintIndex{F,S}}` with indices of all constraints of
+type `F`-in-`S` created by the bride `b`.
+
+See also [`MOI.ListOfConstraintIndices`](@ref).
+
+## Implementation notes
+
+ * There is a default fallback, so you need only implement this for the
+   constraint types returned by [`added_constraint_types`](@ref).
 """
 function MOI.get(
     ::AbstractBridge,
@@ -142,17 +184,46 @@ end
     )::Vector{Tuple{Type}}
 
 Return a list of the types of constrained variables that bridges of concrete
-type `BT` add. This is used by the [`LazyBridgeOptimizer`](@ref).
+type `BT` add.
+
+## Implementation notes
+
+ * This method depends only on the type of the bridge, not the runtime value.
+
+## Example
+
+```jldoctest; setup=(using MathOptInterface; const MOI = MathOptInterface)
+julia> MOI.Bridges.added_constrained_variable_types(
+           MOI.Bridges.Variable.NonposToNonnegBridge{Float64},
+       )
+1-element Vector{Tuple{Type}}:
+ (MathOptInterface.Nonnegatives,)
+```
 """
 function added_constrained_variable_types end
 
 """
     added_constraint_types(
         BT::Type{<:Constraint.AbstractBridge},
-    )::Vector{Tuple{Type, Type}}
+    )::Vector{Tuple{Type,Type}}
 
 Return a list of the types of constraints that bridges of concrete type `BT`
-add. This is used by the [`LazyBridgeOptimizer`](@ref).
+add.
+
+## Implementation notes
+
+ * This method depends only on the type of the bridge, not the runtime value.
+
+## Example
+
+```jldoctest; setup=(using MathOptInterface; const MOI = MathOptInterface)
+julia> MOI.Bridges.added_constraint_types(
+           MOI.Bridges.Constraint.ZeroOneBridge{Float64},
+       )
+2-element Vector{Tuple{Type, Type}}:
+ (MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64})
+ (MathOptInterface.VariableIndex, MathOptInterface.Integer)
+```
 """
 function added_constraint_types end
 
@@ -162,6 +233,19 @@ function added_constraint_types end
     )::Type{<:MOI.AbstractScalarFunction}
 
 Return the type of objective function that bridges of concrete type `BT`
-set. This is used by the [`LazyBridgeOptimizer`](@ref).
+set.
+
+## Implementation notes
+
+ * This method depends only on the type of the bridge, not the runtime value.
+
+## Example
+
+```jldoctest; setup=(using MathOptInterface; const MOI = MathOptInterface)
+julia> MOI.Bridges.set_objective_function_type(
+           MOI.Bridges.Objective.FunctionizeBridge{Float64},
+       )
+MathOptInterface.ScalarAffineFunction{Float64}
+```
 """
 function set_objective_function_type end

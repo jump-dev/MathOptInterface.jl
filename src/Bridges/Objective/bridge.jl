@@ -5,7 +5,7 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    AbstractBridge
+    abstract type AbstractBridge <: MOI.Bridges.AbstractBridge end
 
 Subtype of [`MathOptInterface.Bridges.AbstractBridge`](@ref) for objective
 bridges.
@@ -13,17 +13,67 @@ bridges.
 abstract type AbstractBridge <: MOIB.AbstractBridge end
 
 """
+    supports_objective_function(
+        BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
+        F::Type{<:MOI.AbstractScalarFunction},
+    )::Bool
+
+Return a `Bool` indicating whether the bridges of type `BT` support bridging
+objective functions of type `F`.
+
+## Implementation notes
+
+ * This method depends only on the type of the inputs, not the runtime values.
+ * There is a default fallback, so you need only implement this method For
+   objective functions that the bridge implements.
+"""
+function supports_objective_function(
+    ::Type{<:AbstractBridge},
+    ::Type{<:MOI.AbstractScalarFunction},
+)
+    return false
+end
+
+"""
+    concrete_bridge_type(
+        BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
+        F::Type{<:MOI.AbstractScalarFunction},
+    )::Type
+
+Return the concrete type of the bridge supporting objective functions of type
+`F`.
+
+This function can only be called if `MOI.supports_objective_function(BT, F)` is
+`true`.
+"""
+function concrete_bridge_type(
+    ::Type{BT},
+    ::Type{<:MOI.AbstractScalarFunction},
+) where {BT}
+    return BT
+end
+
+function concrete_bridge_type(
+    b::MOIB.AbstractBridgeOptimizer,
+    F::Type{<:MOI.AbstractScalarFunction},
+)
+    return concrete_bridge_type(MOIB.bridge_type(b, F), F)
+end
+
+"""
     bridge_objective(
         BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
         model::MOI.ModelLike,
         func::MOI.AbstractScalarFunction,
-    )
+    )::BT
 
 Bridge the objective function `func` using bridge `BT` to `model` and returns
-a bridge object of type `BT`. The bridge type `BT` should be a concrete type,
-that is, all the type parameters of the bridge should be set. Use
-[`concrete_bridge_type`](@ref) to obtain a concrete type for a given function
-type.
+a bridge object of type `BT`.
+
+## Implementation notes
+
+ * The bridge type `BT` must be a concrete type, that is, all the type
+   parameters of the bridge must be set.
 """
 function bridge_objective(
     ::Type{<:AbstractBridge},
@@ -102,22 +152,6 @@ function MOI.delete(::MOI.ModelLike, bridge::AbstractBridge)
 end
 
 """
-    supports_objective_function(
-        BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
-        F::Type{<:MOI.AbstractScalarFunction},
-    )::Bool
-
-Return a `Bool` indicating whether the bridges of type `BT` support bridging
-objective functions of type `F`.
-"""
-function supports_objective_function(
-    ::Type{<:AbstractBridge},
-    ::Type{<:MOI.AbstractScalarFunction},
-)
-    return false
-end
-
-"""
     added_constrained_variable_types(
         BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
         F::Type{<:MOI.AbstractScalarFunction},
@@ -170,28 +204,4 @@ function MOIB.set_objective_function_type(
     F::Type{<:MOI.AbstractScalarFunction},
 )
     return MOIB.set_objective_function_type(concrete_bridge_type(BT, F))
-end
-
-"""
-    concrete_bridge_type(
-        BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
-        F::Type{<:MOI.AbstractScalarFunction},
-    )::Type
-
-Return the concrete type of the bridge supporting objective functions of type
-`F`. This function can only be called if `MOI.supports_objective_function(BT, F)`
-is `true`.
-"""
-function concrete_bridge_type(
-    bridge_type::Type,
-    ::Type{<:MOI.AbstractScalarFunction},
-)
-    return bridge_type
-end
-
-function concrete_bridge_type(
-    b::MOIB.AbstractBridgeOptimizer,
-    F::Type{<:MOI.AbstractScalarFunction},
-)
-    return concrete_bridge_type(MOIB.bridge_type(b, F), F)
 end

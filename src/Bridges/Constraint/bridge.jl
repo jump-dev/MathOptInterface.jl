@@ -5,42 +5,12 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    AbstractBridge
+    abstract type AbstractBridge <: MOI.Bridges.AbstractType
 
-Subtype of [`MathOptInterface.Bridges.AbstractBridge`](@ref) for constraint
+Subtype of [`MOI.Bridges.AbstractBridge`](@ref) for constraint
 bridges.
 """
 abstract type AbstractBridge <: MOIB.AbstractBridge end
-
-"""
-    bridge_constraint(
-        BT::Type{<:AbstractBridge},
-        model::MOI.ModelLike,
-        func::AbstractFunction,
-        set::MOI.AbstractSet,
-    )
-
-Bridge the constraint `func`-in-`set` using bridge `BT` to `model` and returns
-a bridge object of type `BT`. The bridge type `BT` should be a concrete type,
-that is, all the type parameters of the bridge should be set. Use
-[`concrete_bridge_type`](@ref) to obtain a concrete type for given function
-and set types.
-"""
-function bridge_constraint end
-
-"""
-    MOI.get(b::AbstractBridge, ::MOI.NumberOfVariables)
-
-The number of variables created by the bridge `b` in the model.
-"""
-MOI.get(::AbstractBridge, ::MOI.NumberOfVariables)::Int64 = 0
-
-"""
-    MOI.get(b::AbstractBridge, ::MOI.ListOfVariableIndices)
-
-The list of variables created by the bridge `b` in the model.
-"""
-MOI.get(::AbstractBridge, ::MOI.ListOfVariableIndices) = MOI.VariableIndex[]
 
 """
     MOI.supports_constraint(
@@ -51,6 +21,12 @@ MOI.get(::AbstractBridge, ::MOI.ListOfVariableIndices) = MOI.VariableIndex[]
 
 Return a `Bool` indicating whether the bridges of type `BT` support bridging
 `F`-in-`S` constraints.
+
+## Implementation notes
+
+ * This method depends only on the type of the inputs, not the runtime values.
+ * There is a default fallback, so you need only implement this method for
+   constraint types that the bridge implements.
 """
 function MOI.supports_constraint(
     ::Type{<:AbstractBridge},
@@ -59,6 +35,67 @@ function MOI.supports_constraint(
 )
     return false
 end
+
+"""
+    concrete_bridge_type(
+        BT::Type{<:AbstractBridge},
+        F::Type{<:MOI.AbstractFunction},
+        S::Type{<:MOI.AbstractSet}
+    )::Type
+
+Return the concrete type of the bridge supporting `F`-in-`S` constraints.
+
+This function can only be called if `MOI.supports_constraint(BT, F, S)` is
+`true`.
+
+## Example
+
+The [`SplitIntervalBridge`](@ref) bridges a [`MOI.VariableIndex`](@ref)-in-[`MOI.Interval`](@ref)
+constraint into a [`MOI.VariableIndex`](@ref)-in-[`MOI.GreaterThan`](@ref) and a
+[`MOI.VariableIndex`](@ref)-in-[`MOI.LessThan`](@ref) constraint.
+
+```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+julia> MOI.Bridges.Constraint.concrete_bridge_type(
+           MOI.Bridges.Constraint.SplitIntervalBridge{Float64},
+           MOI.VariableIndex,
+           MOI.Interval{Float64},
+       )
+MathOptInterface.Bridges.Constraint.SplitIntervalBridge{Float64, MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64}, MathOptInterface.GreaterThan{Float64}, MathOptInterface.LessThan{Float64}}
+```
+"""
+function concrete_bridge_type(
+    ::Type{BT},
+    ::Type{<:MOI.AbstractFunction},
+    ::Type{<:MOI.AbstractSet},
+) where {BT}
+    return BT
+end
+
+function concrete_bridge_type(
+    b::MOIB.AbstractBridgeOptimizer,
+    F::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet},
+)
+    return concrete_bridge_type(MOIB.bridge_type(b, F, S), F, S)
+end
+
+"""
+    bridge_constraint(
+        BT::Type{<:AbstractBridge},
+        model::MOI.ModelLike,
+        func::AbstractFunction,
+        set::MOI.AbstractSet,
+    )::BT
+
+Bridge the constraint `func`-in-`set` using bridge `BT` to `model` and returns
+a bridge object of type `BT`.
+
+## Implementation notes
+
+ * The bridge type `BT` should be a concrete type, that is, all the type
+   parameters of the bridge must be set.
+"""
+function bridge_constraint end
 
 """
     added_constrained_variable_types(
@@ -92,7 +129,7 @@ bridging `F`-in-`S` constraints. This falls back to
 `added_constraint_types(concrete_bridge_type(BT, F, S))`
 so bridges should not implement this method.
 
-This function should not repeat the constraints added on variables when they 
+This function should not repeat the constraints added on variables when they
 are created (this is the role of `added_constrained_variable_types`), but only
 the constraints that are added with `MOI.add_constraint`.
 """
@@ -102,51 +139,4 @@ function MOIB.added_constraint_types(
     S::Type{<:MOI.AbstractSet},
 )
     return MOIB.added_constraint_types(concrete_bridge_type(BT, F, S))
-end
-
-"""
-    concrete_bridge_type(
-        BT::Type{<:AbstractBridge},
-        F::Type{<:MOI.AbstractFunction},
-        S::Type{<:MOI.AbstractSet}
-    )::Type
-
-Return the concrete type of the bridge supporting `F`-in-`S` constraints. This
-function can only be called if `MOI.supports_constraint(BT, F, S)` is `true`.
-
-## Examples
-
-As a [`MathOptInterface.VariableIndex`](@ref)-in-[`MathOptInterface.Interval`](@ref)
-constraint is bridged into a
-[`MathOptInterface.VariableIndex`](@ref)-in-[`MathOptInterface.GreaterThan`](@ref)
-and a
-[`MathOptInterface.VariableIndex`](@ref)-in-[`MathOptInterface.LessThan`](@ref)
-by the [`SplitIntervalBridge`](@ref):
-
-```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
-MOI.Bridges.Constraint.concrete_bridge_type(
-    MOI.Bridges.Constraint.SplitIntervalBridge{Float64},
-    MOI.VariableIndex,
-    MOI.Interval{Float64},
-)
-
-# output
-
-MathOptInterface.Bridges.Constraint.SplitIntervalBridge{Float64, MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64}, MathOptInterface.GreaterThan{Float64}, MathOptInterface.LessThan{Float64}}
-```
-"""
-function concrete_bridge_type(
-    bridge_type::Type,
-    ::Type{<:MOI.AbstractFunction},
-    ::Type{<:MOI.AbstractSet},
-)
-    return bridge_type
-end
-
-function concrete_bridge_type(
-    b::MOIB.AbstractBridgeOptimizer,
-    F::Type{<:MOI.AbstractFunction},
-    S::Type{<:MOI.AbstractSet},
-)
-    return concrete_bridge_type(MOIB.bridge_type(b, F, S), F, S)
 end

@@ -7,25 +7,29 @@
 """
     abstract type SetMapBridge{T,S2,S1,F,G} <: AbstractBridge end
 
-Consider two type of sets `S1`, `S2` and a linear mapping `A` that
+Consider two type of sets, `S1` and `S2`, and a linear mapping `A` such that
 the image of a set of type `S1` under `A` is a set of type `S2`.
+
 A `SetMapBridge{T,S2,S1,F,G}` is a bridge that maps `G`-in-`S2` constraints
 into `F`-in-`S1` by mapping the function through `A`.
 
-The linear map `A` is described by
-[`MathOptInterface.Bridges.map_set`](@ref),
-[`MathOptInterface.Bridges.map_function`](@ref).
+The linear map `A` is described by;
+
+ * [`MathOptInterface.Bridges.map_set`](@ref)
+ * [`MathOptInterface.Bridges.map_function`](@ref).
+
 Implementing a method for these two functions is sufficient to bridge
-constraints. In order for the getters and setters of dual solutions,
-starting values, etc...  to work as well a method for the following
-functions should be implemented as well:
-[`MathOptInterface.Bridges.inverse_map_set`](@ref),
-[`MathOptInterface.Bridges.inverse_map_function`](@ref),
-[`MathOptInterface.Bridges.adjoint_map_function`](@ref) and
-[`MathOptInterface.Bridges.inverse_adjoint_map_function`](@ref).
-See the docstrings of the function
-to see which feature would be missing it it was not implemented for a given
-bridge.
+constraints. However, in order for the getters and setters of attributes such as
+dual solutions and starting values to work as well, a method for the following
+functions must be implemented:
+
+ * [`MathOptInterface.Bridges.inverse_map_set`](@ref)
+ * [`MathOptInterface.Bridges.inverse_map_function`](@ref)
+ * [`MathOptInterface.Bridges.adjoint_map_function`](@ref)
+ * [`MathOptInterface.Bridges.inverse_adjoint_map_function`](@ref)
+
+See the docstrings of each function to see which feature would be missing if it
+was not implemented for a given bridge.
 """
 abstract type SetMapBridge{T,S2,S1,F,G} <: AbstractBridge end
 
