@@ -82,10 +82,3 @@ function invariant_under_function_conversion(
 )
     return true
 end
-
-include("functionize.jl")
-const ScalarFunctionize{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{ScalarFunctionizeBridge{T},OT}
-const VectorFunctionize{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{VectorFunctionizeBridge{T},OT}
-# TODO add affine -> quadratic conversion bridge

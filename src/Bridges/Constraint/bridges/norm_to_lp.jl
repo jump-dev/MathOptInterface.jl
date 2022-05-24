@@ -16,6 +16,9 @@ struct NormInfinityBridge{T,F,G} <:
     constraint::MOI.ConstraintIndex{F,MOI.Nonnegatives}
 end
 
+const NormInfinity{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{NormInfinityBridge{T},OT}
+
 function concrete_bridge_type(
     ::Type{<:NormInfinityBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
@@ -112,6 +115,8 @@ struct NormOneBridge{T,F,G} <: AbstractBridge
     y::Vector{MOI.VariableIndex}
     nn_index::MOI.ConstraintIndex{F,MOI.Nonnegatives}
 end
+
+const NormOne{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{NormOneBridge{T},OT}
 
 function bridge_constraint(
     ::Type{NormOneBridge{T,F,G}},

@@ -68,6 +68,9 @@ struct QuadtoSOCBridge{T} <: AbstractBridge
     set_constant::T # the constant that was on the set
 end
 
+const QuadtoSOC{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{QuadtoSOCBridge{T},OT}
+
 function bridge_constraint(
     ::Type{QuadtoSOCBridge{T}},
     model,

@@ -177,6 +177,9 @@ struct ScalarSlackBridge{T,F,S} <:
     equality::MOI.ConstraintIndex{F,MOI.EqualTo{T}}
 end
 
+const ScalarSlack{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{ScalarSlackBridge{T},OT}
+
 function bridge_constraint(
     ::Type{ScalarSlackBridge{T,F,S}},
     model,
@@ -291,6 +294,9 @@ struct VectorSlackBridge{T,F,S} <:
     slack_in_set::MOI.ConstraintIndex{MOI.VectorOfVariables,S}
     equality::MOI.ConstraintIndex{F,MOI.Zeros}
 end
+
+const VectorSlack{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{VectorSlackBridge{T},OT}
 
 function bridge_constraint(
     ::Type{VectorSlackBridge{T,F,S}},

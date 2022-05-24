@@ -15,13 +15,10 @@ const MOIB = MOI.Bridges
 
 const CI = MOI.ConstraintIndex
 
-# Definition of a constraint bridge
 include("bridge.jl")
-
-# Mapping between constraint indices and bridges
+include("function_conversion.jl")
 include("map.jl")
-
-# Bridge optimizer bridging a specific constraint bridge
+include("set_map.jl")
 include("single_bridge_optimizer.jl")
 
 # TODO(odow): the compiler in Julia <= 1.2 (and in later versions unless
@@ -32,83 +29,28 @@ function MOI.Bridges.Constraint.bridge_constraint(BridgeType, b, f, s)
     return throw(MOI.UnsupportedConstraint{typeof(f),typeof(s)}())
 end
 
-# Constraint bridges
-# Function conversion bridges
-include("function_conversion.jl")
-# Transformation between a set S1 and a set S2 such that A*S1 = S2 for some linear map A
-include("set_map.jl")
-
-include("vectorize.jl")
-const Vectorize{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{VectorizeBridge{T},OT}
-
-include("scalarize.jl")
-const Scalarize{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{ScalarizeBridge{T},OT}
-
-include("slack.jl")
-const ScalarSlack{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{ScalarSlackBridge{T},OT}
-const VectorSlack{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{VectorSlackBridge{T},OT}
-
-include("interval.jl")
-const SplitInterval{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{SplitIntervalBridge{T},OT}
-
-include("quad_to_soc.jl")
-const QuadtoSOC{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{QuadtoSOCBridge{T},OT}
-
-include("soc_to_nonconvex_quad.jl") # do not add these bridges by default
-const SOCtoNonConvexQuad{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{SOCtoNonConvexQuadBridge{T},OT}
-const RSOCtoNonConvexQuad{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{RSOCtoNonConvexQuadBridge{T},OT}
-
-include("norm_to_lp.jl")
-const NormInfinity{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{NormInfinityBridge{T},OT}
-const NormOne{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{NormOneBridge{T},OT}
-
-include("geomean_to_relentr.jl")
-const GeoMeantoRelEntr{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{GeoMeantoRelEntrBridge{T},OT}
-
-include("geomean.jl")
-const GeoMean{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{GeoMeanBridge{T},OT}
-
-include("relentr_to_exp.jl")
-const RelativeEntropy{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{RelativeEntropyBridge{T},OT}
-
-include("norm_spec_nuc_to_psd.jl")
-const NormSpectral{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{NormSpectralBridge{T},OT}
-const NormNuclear{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{NormNuclearBridge{T},OT}
-
-include("square.jl")
-const Square{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SquareBridge{T},OT}
-
-include("det.jl")
-const LogDet{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{LogDetBridge{T},OT}
-const RootDet{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{RootDetBridge{T},OT}
-
-include("indicator_activate_on_zero.jl")
-const IndicatorActiveOnFalse{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{IndicatorActiveOnFalseBridge{T},OT}
-
-include("indicator_sos.jl")
-const IndicatortoSOS1{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{IndicatorSOS1Bridge{T},OT}
-
-include("semi_to_binary.jl")
-const SemiToBinary{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{SemiToBinaryBridge{T},OT}
-
-include("zero_one.jl")
-const ZeroOne{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{ZeroOneBridge{T},OT}
+include("bridges/det.jl")
+include("bridges/flip_sign.jl")
+include("bridges/functionize.jl")
+include("bridges/geomean_to_relentr.jl")
+include("bridges/geomean.jl")
+include("bridges/indicator_activate_on_zero.jl")
+include("bridges/indicator_sos.jl")
+include("bridges/interval.jl")
+include("bridges/ltgt_to_interval.jl")
+include("bridges/norm_spec_nuc_to_psd.jl")
+include("bridges/norm_to_lp.jl")
+include("bridges/quad_to_soc.jl")
+include("bridges/relentr_to_exp.jl")
+include("bridges/scalarize.jl")
+include("bridges/semi_to_binary.jl")
+include("bridges/slack.jl")
+include("bridges/soc_rsoc.jl")
+include("bridges/soc_to_nonconvex_quad.jl") # do not add these bridges by default
+include("bridges/soc_to_psd.jl")
+include("bridges/square.jl")
+include("bridges/vectorize.jl")
+include("bridges/zero_one.jl")
 
 """
     add_all_bridges(bridged_model, ::Type{T}) where {T}

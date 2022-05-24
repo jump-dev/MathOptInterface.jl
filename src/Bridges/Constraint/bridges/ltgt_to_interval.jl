@@ -73,6 +73,9 @@ struct GreaterToIntervalBridge{T,F<:MOI.AbstractScalarFunction} <:
     constraint::CI{F,MOI.Interval{T}}
 end
 
+const GreaterToInterval{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{GreaterToIntervalBridge{T},OT}
+
 function MOIB.map_set(::Type{<:GreaterToIntervalBridge}, set::MOI.GreaterThan)
     return MOI.Interval(set.lower, typemax(set.lower))
 end
@@ -103,6 +106,9 @@ struct LessToIntervalBridge{T,F<:MOI.AbstractScalarFunction} <:
        AbstractToIntervalBridge{T,MOI.LessThan{T},F}
     constraint::CI{F,MOI.Interval{T}}
 end
+
+const LessToInterval{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{LessToIntervalBridge{T},OT}
 
 function MOIB.map_set(::Type{<:LessToIntervalBridge}, set::MOI.LessThan)
     return MOI.Interval(typemin(set.upper), set.upper)

@@ -16,6 +16,8 @@ struct ZeroOneBridge{T} <: AbstractBridge
     integer_index::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}
 end
 
+const ZeroOne{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{ZeroOneBridge{T},OT}
+
 function bridge_constraint(
     ::Type{ZeroOneBridge{T}},
     model::MOI.ModelLike,

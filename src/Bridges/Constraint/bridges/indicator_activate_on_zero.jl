@@ -31,6 +31,9 @@ struct IndicatorActiveOnFalseBridge{
     }
 end
 
+const IndicatorActiveOnFalse{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{IndicatorActiveOnFalseBridge{T},OT}
+
 function bridge_constraint(
     ::Type{IndicatorActiveOnFalseBridge{T,F,S}},
     model::MOI.ModelLike,

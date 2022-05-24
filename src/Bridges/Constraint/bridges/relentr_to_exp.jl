@@ -20,6 +20,9 @@ struct RelativeEntropyBridge{T,F,G,H} <: AbstractBridge
     exp_indices::Vector{MOI.ConstraintIndex{G,MOI.ExponentialCone}}
 end
 
+const RelativeEntropy{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{RelativeEntropyBridge{T},OT}
+
 function bridge_constraint(
     ::Type{RelativeEntropyBridge{T,F,G,H}},
     model::MOI.ModelLike,

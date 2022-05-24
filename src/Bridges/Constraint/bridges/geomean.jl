@@ -65,6 +65,8 @@ struct GeoMeanBridge{T,F,G,H} <: AbstractBridge
     end
 end
 
+const GeoMean{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{GeoMeanBridge{T},OT}
+
 _ilog2(n, i = 0) = n <= (1 << i) ? i : _ilog2(n, i + 1)
 
 function bridge_constraint(

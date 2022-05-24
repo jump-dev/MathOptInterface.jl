@@ -37,6 +37,9 @@ struct SOCtoNonConvexQuadBridge{T} <: AbstractSOCtoNonConvexQuadBridge{T}
     vars::Vector{MOI.VariableIndex}
 end
 
+const SOCtoNonConvexQuad{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{SOCtoNonConvexQuadBridge{T},OT}
+
 function bridge_constraint(
     ::Type{SOCtoNonConvexQuadBridge{T}},
     model,
@@ -95,6 +98,9 @@ struct RSOCtoNonConvexQuadBridge{T} <: AbstractSOCtoNonConvexQuadBridge{T}
     var_pos::Vector{CI{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}}}
     vars::Vector{MOI.VariableIndex}
 end
+
+const RSOCtoNonConvexQuad{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{RSOCtoNonConvexQuadBridge{T},OT}
 
 function bridge_constraint(
     ::Type{RSOCtoNonConvexQuadBridge{T}},
