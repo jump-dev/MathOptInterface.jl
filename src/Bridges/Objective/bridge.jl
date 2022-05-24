@@ -85,18 +85,6 @@ function bridge_objective(
     )
 end
 
-"""
-    function MOI.set(
-        model::MOI.ModelLike,
-        ::MOI.ObjectiveSense,
-        bridge::MOI.Bridges.Objective.AbstractBridge,
-        sense::MOI.ObjectiveSense,
-    )
-
-Informs `bridge` that the objective sense is changed to `sense`. If changing
-the objective sense is not supported, the bridge should not implement this
-method.
-"""
 function MOI.set(
     ::MOI.ModelLike,
     ::MOI.ObjectiveSense,
@@ -105,23 +93,14 @@ function MOI.set(
 )
     return throw(
         ArgumentError(
-            "Objective bridge of type `$(typeof(bridge))` does not support" *
-            " modifying the objective sense. As a workaround, set the sense to" *
-            " `MOI.FEASIBILITY_SENSE` to clear the objective function and" *
-            " bridges.",
+            "Objective bridge of type `$(typeof(bridge))` does not support " *
+            "modifying the objective sense. As a workaround, set the sense " *
+            "to `MOI.FEASIBILITY_SENSE` to clear the objective function and " *
+            "bridges.",
         ),
     )
 end
 
-"""
-    function MOI.get(
-        model::MOI.ModelLike,
-        attr::MOI.ObjectiveFunction,
-        bridge::MOI.Bridges.Objective.AbstractBridge,
-    )
-
-Return the objective function object bridged by `bridge` for the model `model`.
-"""
 function MOI.get(
     ::MOI.ModelLike,
     ::MOI.ObjectiveFunction,
@@ -135,34 +114,15 @@ function MOI.get(
     )
 end
 
-"""
-    function MOI.delete(
-        model::MOI.ModelLike,
-        bridge::MOI.Bridges.Objective.AbstractBridge,
-    )
-
-Delete any variable or constraint added by `bridge`.
-"""
 function MOI.delete(::MOI.ModelLike, bridge::AbstractBridge)
     return throw(
         ArgumentError(
-            "`MOI.delete` not implemented for `ObjectiveFunction` bridges of type `$(typeof(bridge))`",
+            "`MOI.delete` not implemented for `ObjectiveFunction` bridges of " *
+            "type `$(typeof(bridge))`",
         ),
     )
 end
 
-"""
-    added_constrained_variable_types(
-        BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
-        F::Type{<:MOI.AbstractScalarFunction},
-    )
-
-Return a list of the types of constrained variables that bridges of type `BT`
-add for bridging objective functions of type `F`. This fallbacks to
-`added_constrained_variable_types(concrete_bridge_type(BT, F))`
-so bridges should not implement this method.
-```
-"""
 function MOIB.added_constrained_variable_types(
     BT::Type{<:AbstractBridge},
     F::Type{<:MOI.AbstractScalarFunction},
@@ -170,17 +130,6 @@ function MOIB.added_constrained_variable_types(
     return MOIB.added_constrained_variable_types(concrete_bridge_type(BT, F))
 end
 
-"""
-    added_constraint_types(
-        BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
-        F::Type{<:MOI.AbstractScalarFunction},
-    )
-
-Return a list of the types of constraints that bridges of type `BT` add for
-bridging objective functions of type `F`. This fallbacks to
-`added_constraint_types(concrete_bridge_type(BT, S))` so bridges should not
-implement this method.
-"""
 function MOIB.added_constraint_types(
     BT::Type{<:AbstractBridge},
     F::Type{<:MOI.AbstractScalarFunction},
@@ -188,17 +137,6 @@ function MOIB.added_constraint_types(
     return MOIB.added_constraint_types(concrete_bridge_type(BT, F))
 end
 
-"""
-    set_objective_function_type(
-        BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
-        F::Type{<:MOI.AbstractScalarFunction},
-    )
-
-Return the type of objective function that bridges of type `BT` set for bridging
-objective functions of type `F`. This fallbacks to
-`set_objective_function_type(concrete_bridge_type(BT, F))` so bridges should not
-implement this method.
-"""
 function MOIB.set_objective_function_type(
     BT::Type{<:AbstractBridge},
     F::Type{<:MOI.AbstractScalarFunction},

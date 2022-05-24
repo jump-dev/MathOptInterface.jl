@@ -104,16 +104,6 @@ returns a bridge object of type `BT`.
 """
 function bridge_constrained_variable end
 
-"""
-    function MOI.get(
-        model::MOI.ModelLike,
-        attr::MOI.AbstractVariableAttribute,
-        bridge::AbstractBridge,
-    )
-
-Return the value of the attribute `attr` of the model `model` for the variable
-bridged by `bridge`.
-"""
 function MOI.get(
     ::MOI.ModelLike,
     attr::MOI.AbstractVariableAttribute,
@@ -121,22 +111,12 @@ function MOI.get(
 )
     return throw(
         ArgumentError(
-            "Variable bridge of type `$(typeof(bridge))` does not support accessing the attribute `$attr`.",
+            "Variable bridge of type `$(typeof(bridge))` does not support " *
+            "accessing the attribute `$attr`.",
         ),
     )
 end
 
-"""
-    function MOI.get(
-        model::MOI.ModelLike,
-        attr::MOI.AbstractVariableAttribute,
-        bridge::AbstractBridge,
-        i::MOIB.IndexInVector,
-    )
-
-Return the value of the attribute `attr` of the model `model` for the variable
-at index `i` in the vector of variables bridged by `bridge`.
-"""
 function MOI.get(
     ::MOI.ModelLike,
     attr::MOI.AbstractVariableAttribute,
@@ -145,20 +125,12 @@ function MOI.get(
 )
     return throw(
         ArgumentError(
-            "Variable bridge of type `$(typeof(bridge))` does not support accessing the attribute `$attr`.",
+            "Variable bridge of type `$(typeof(bridge))` does not support " *
+            "accessing the attribute `$attr`.",
         ),
     )
 end
 
-"""
-    MOI.supports(
-        model::MOI.ModelLike,
-        attr::MOI.AbstractVariableAttribute,
-        BT::Type{<:AbstractBridge},
-    )
-
-Return a `Bool` indicating whether `BT` supports setting `attr` to `model`.
-"""
 function MOI.supports(
     ::MOI.ModelLike,
     ::MOI.AbstractVariableAttribute,
@@ -167,18 +139,6 @@ function MOI.supports(
     return false
 end
 
-"""
-    function MOI.set(
-        model::MOI.ModelLike,
-        attr::MOI.AbstractVariableAttribute,
-        bridge::AbstractBridge,
-        value[,
-        ::MOIB.IndexInVector],
-    )
-
-Return the value of the attribute `attr` of the model `model` for the variable
-bridged by `bridge`.
-"""
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.AbstractVariableAttribute,
@@ -193,33 +153,6 @@ function MOI.set(
     end
 end
 
-"""
-    added_constrained_variable_types(
-        BT::Type{<:MOI.Bridges.Variable.AbstractBridge},
-        S::Type{<:MOI.AbstractSet},
-    )
-
-Return a list of the types of constrained variables that bridges of type `BT`
-add for bridging constrained variabled in `S`.
-
-## Implementation notes
-
- * This method has a default fallback so bridges should _not_ implement it.
-
-## Example
-
-As a variable in [`MathOptInterface.GreaterThan`](@ref) is bridged into
-variables in [`MathOptInterface.Nonnegatives`](@ref) by the
-[`VectorizeBridge`](@ref):
-```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
-julia> MOI.Bridges.added_constrained_variable_types(
-           MOI.Bridges.Variable.VectorizeBridge{Float64},
-           MOI.GreaterThan{Float64},
-       )
-1-element Vector{Tuple{Type}}:
- (MathOptInterface.Nonnegatives,)
-```
-"""
 function MOIB.added_constrained_variable_types(
     BT::Type{<:AbstractBridge},
     S::Type{<:MOI.AbstractSet},
@@ -227,41 +160,6 @@ function MOIB.added_constrained_variable_types(
     return MOIB.added_constrained_variable_types(concrete_bridge_type(BT, S))
 end
 
-"""
-    added_constraint_types(
-        BT::Type{<:MOI.Bridges.Variable.AbstractBridge},
-        S::Type{<:MOI.AbstractSet},
-    )
-
-Return a list of the types of constraints that bridges of type `BT` add for
-for bridging constrained variabled in `S`.
-
-## Implementation notes
-
- * This method has a default fallback so bridges should _not_ implement it.
-
-## Examples
-
-In addition to creating variables in
-[`MathOptInterface.PositiveSemidefiniteConeTriangle`](@ref), the
-[`RSOCtoPSDBridge`](@ref) also creates
-[`MathOptInterface.VariableIndex`](@ref)-in-[`MathOptInterface.EqualTo`](@ref) and
-[`MathOptInterface.ScalarAffineFunction`](@ref)-in-[`MathOptInterface.EqualTo`](@ref)
-constraints:
-
-```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
-MOI.Bridges.added_constraint_types(
-    MOI.Bridges.Variable.RSOCtoPSDBridge{Float64},
-    MOI.RotatedSecondOrderCone,
-)
-
-# output
-
-2-element Vector{Tuple{Type, Type}}:
- (MathOptInterface.VariableIndex, MathOptInterface.EqualTo{Float64})
- (MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.EqualTo{Float64})
-```
-"""
 function MOIB.added_constraint_types(
     BT::Type{<:AbstractBridge},
     S::Type{<:MOI.AbstractSet},
