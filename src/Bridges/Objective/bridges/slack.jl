@@ -28,6 +28,8 @@ struct SlackBridge{
     }
 end
 
+const Slack{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SlackBridge{T},OT}
+
 function bridge_objective(
     ::Type{SlackBridge{T,F,G}},
     model::MOI.ModelLike,

@@ -7,36 +7,28 @@
 module Objective
 
 using MathOptInterface
+
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 const MOIB = MOI.Bridges
 
-# Definition of an objective bridge
 include("bridge.jl")
-
-# Mapping between objective function attributes and bridges
 include("map.jl")
-
-# Bridge optimizer bridging a specific objective bridge
 include("single_bridge_optimizer.jl")
 
-# Objective bridges
-include("functionize.jl")
-const Functionize{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{FunctionizeBridge{T},OT}
-
-include("slack.jl")
-const Slack{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SlackBridge{T},OT}
+include("bridges/functionize.jl")
+include("bridges/slack.jl")
 
 """
-    add_all_bridges(bridged_model, ::Type{T}) where {T}
+    add_all_bridges(model, ::Type{T}) where {T}
 
-Add all bridges defined in the `Bridges.Objective` submodule to `bridged_model`.
+Add all bridges defined in the `Bridges.Objective` submodule to `model`.
+
 The coefficient type used is `T`.
 """
-function add_all_bridges(bridged_model, ::Type{T}) where {T}
-    MOIB.add_bridge(bridged_model, FunctionizeBridge{T})
-    MOIB.add_bridge(bridged_model, SlackBridge{T})
+function add_all_bridges(model, ::Type{T}) where {T}
+    MOI.Bridges.add_bridge(model, FunctionizeBridge{T})
+    MOI.Bridges.add_bridge(model, SlackBridge{T})
     return
 end
 
