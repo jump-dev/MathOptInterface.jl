@@ -24,7 +24,7 @@ That means in particular that the norm of constraint primal and dual values are 
 """
 struct RSOCtoSOCBridge{T,F,G} <:
        SetMapBridge{T,MOI.SecondOrderCone,MOI.RotatedSecondOrderCone,F,G}
-    constraint::CI{F,MOI.SecondOrderCone}
+    constraint::MOI.ConstraintIndex{F,MOI.SecondOrderCone}
 end
 
 const RSOC{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCtoSOCBridge{T},OT}
@@ -52,7 +52,7 @@ transformation is an involution, we do the same transformation.
 """
 struct SOCtoRSOCBridge{T,F,G} <:
        SetMapBridge{T,MOI.RotatedSecondOrderCone,MOI.SecondOrderCone,F,G}
-    constraint::CI{F,MOI.RotatedSecondOrderCone}
+    constraint::MOI.ConstraintIndex{F,MOI.RotatedSecondOrderCone}
 end
 
 const SOCR{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCtoRSOCBridge{T},OT}

@@ -32,8 +32,10 @@ with ``t \\ge 0``.  (3)
     Care is recommended when adding this bridge to a optimizer.
 """
 struct SOCtoNonConvexQuadBridge{T} <: AbstractSOCtoNonConvexQuadBridge{T}
-    quad::CI{MOI.ScalarQuadraticFunction{T},MOI.LessThan{T}}
-    var_pos::Vector{CI{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}}}
+    quad::MOI.ConstraintIndex{MOI.ScalarQuadraticFunction{T},MOI.LessThan{T}}
+    var_pos::Vector{
+        MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}},
+    }
     vars::Vector{MOI.VariableIndex}
 end
 
@@ -94,8 +96,10 @@ For these reasons, this bridge is not automatically added by [`MOI.Bridges.full_
 Care is recommended when adding this bridge to an optimizer.
 """
 struct RSOCtoNonConvexQuadBridge{T} <: AbstractSOCtoNonConvexQuadBridge{T}
-    quad::CI{MOI.ScalarQuadraticFunction{T},MOI.LessThan{T}}
-    var_pos::Vector{CI{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}}}
+    quad::MOI.ConstraintIndex{MOI.ScalarQuadraticFunction{T},MOI.LessThan{T}}
+    var_pos::Vector{
+        MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}},
+    }
     vars::Vector{MOI.VariableIndex}
 end
 

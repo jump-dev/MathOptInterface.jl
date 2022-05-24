@@ -79,7 +79,7 @@ struct GreaterToLessBridge{
     F<:MOI.AbstractScalarFunction,
     G<:MOI.AbstractScalarFunction,
 } <: FlipSignBridge{T,MOI.GreaterThan{T},MOI.LessThan{T},F,G}
-    constraint::CI{F,MOI.LessThan{T}}
+    constraint::MOI.ConstraintIndex{F,MOI.LessThan{T}}
 end
 
 const GreaterToLess{T,OT<:MOI.ModelLike} =
@@ -117,7 +117,7 @@ struct LessToGreaterBridge{
     F<:MOI.AbstractScalarFunction,
     G<:MOI.AbstractScalarFunction,
 } <: FlipSignBridge{T,MOI.LessThan{T},MOI.GreaterThan{T},F,G}
-    constraint::CI{F,MOI.GreaterThan{T}}
+    constraint::MOI.ConstraintIndex{F,MOI.GreaterThan{T}}
 end
 
 const LessToGreater{T,OT<:MOI.ModelLike} =
@@ -158,7 +158,7 @@ mutable struct NonnegToNonposBridge{
     F<:MOI.AbstractVectorFunction,
     G<:MOI.AbstractVectorFunction,
 } <: FlipSignBridge{T,MOI.Nonnegatives,MOI.Nonpositives,F,G}
-    constraint::CI{F,MOI.Nonpositives}
+    constraint::MOI.ConstraintIndex{F,MOI.Nonpositives}
 end
 
 const NonnegToNonpos{T,OT<:MOI.ModelLike} =
@@ -188,7 +188,7 @@ mutable struct NonposToNonnegBridge{
     F<:MOI.AbstractVectorFunction,
     G<:MOI.AbstractVectorFunction,
 } <: FlipSignBridge{T,MOI.Nonpositives,MOI.Nonnegatives,F,G}
-    constraint::CI{F,MOI.Nonnegatives}
+    constraint::MOI.ConstraintIndex{F,MOI.Nonnegatives}
 end
 
 const NonposToNonneg{T,OT<:MOI.ModelLike} =

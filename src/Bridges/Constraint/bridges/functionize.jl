@@ -14,7 +14,7 @@ into the constraint `ScalarAffineFunction{T}`-in-`S`.
 """
 struct ScalarFunctionizeBridge{T,S} <:
        AbstractFunctionConversionBridge{MOI.ScalarAffineFunction{T},S}
-    constraint::CI{MOI.ScalarAffineFunction{T},S}
+    constraint::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},S}
 end
 
 const ScalarFunctionize{T,OT<:MOI.ModelLike} =
@@ -108,7 +108,7 @@ into the constraint `VectorAffineFunction{T}`-in-`S`.
 """
 mutable struct VectorFunctionizeBridge{T,S} <:
                AbstractFunctionConversionBridge{MOI.VectorAffineFunction{T},S}
-    constraint::CI{MOI.VectorAffineFunction{T},S}
+    constraint::MOI.ConstraintIndex{MOI.VectorAffineFunction{T},S}
 end
 
 const VectorFunctionize{T,OT<:MOI.ModelLike} =

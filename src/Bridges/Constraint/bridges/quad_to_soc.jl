@@ -62,7 +62,10 @@ into `≥ 0`) then the bridge is no longer valid. For this reason the homogeneou
 version of the bridge is not implemented yet.
 """
 struct QuadtoSOCBridge{T} <: AbstractBridge
-    soc::CI{MOI.VectorAffineFunction{T},MOI.RotatedSecondOrderCone}
+    soc::MOI.ConstraintIndex{
+        MOI.VectorAffineFunction{T},
+        MOI.RotatedSecondOrderCone,
+    }
     dimension::Int  # dimension of the SOC constraint
     less_than::Bool # whether the constraint was ≤ or ≥
     set_constant::T # the constant that was on the set

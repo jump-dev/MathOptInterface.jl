@@ -10,8 +10,6 @@ using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
-const CI = MOI.ConstraintIndex
-
 include("bridge.jl")
 include("set_map.jl")
 include("bridge_optimizer.jl")
