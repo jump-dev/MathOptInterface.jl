@@ -659,6 +659,38 @@ function test_rew_format()
           "ENDATA\n"
 end
 
+function test_infinite_interval()
+    model = MPS.Model()
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, 1.0 * x, MOI.Interval(-Inf, Inf))
+    MOI.add_constraint(model, 1.0 * x, MOI.Interval(-Inf, 1.0))
+    MOI.add_constraint(model, 1.0 * x, MOI.Interval(2.0, Inf))
+    MOI.add_constraint(model, 1.0 * x, MOI.Interval(3.0, 4.0))
+    @test sprint(write, model) ==
+          "NAME          \n" *
+          "ROWS\n" *
+          " N  OBJ\n" *
+          " N  c1\n" *
+          " L  c2\n" *
+          " G  c3\n" *
+          " L  c4\n" *
+          "COLUMNS\n" *
+          "    x1        c1        1\n" *
+          "    x1        c2        1\n" *
+          "    x1        c3        1\n" *
+          "    x1        c4        1\n" *
+          "RHS\n" *
+          "    rhs       c2        1\n" *
+          "    rhs       c3        2\n" *
+          "    rhs       c4        4\n" *
+          "RANGES\n" *
+          "    rhs       c4        1\n" *
+          "BOUNDS\n" *
+          " FR bounds    x1\n" *
+          "ENDATA\n"
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")
