@@ -80,8 +80,8 @@ struct SquareBridge{
     ST<:MOI.AbstractSymmetricMatrixSetSquare,
 } <: AbstractBridge
     square_set::ST
-    triangle::CI{F,TT}
-    sym::Vector{Pair{Tuple{Int,Int},CI{G,MOI.EqualTo{T}}}}
+    triangle::MOI.ConstraintIndex{F,TT}
+    sym::Vector{Pair{Tuple{Int,Int},MOI.ConstraintIndex{G,MOI.EqualTo{T}}}}
 end
 
 const Square{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SquareBridge{T},OT}
@@ -93,7 +93,7 @@ function bridge_constraint(
     s::ST,
 ) where {T,F,G,TT,ST}
     f_scalars = MOIU.eachscalar(f)
-    sym = Pair{Tuple{Int,Int},CI{G,MOI.EqualTo{T}}}[]
+    sym = Pair{Tuple{Int,Int},MOI.ConstraintIndex{G,MOI.EqualTo{T}}}[]
     dim = MOI.side_dimension(s)
     upper_triangle_indices = Int[]
     trilen = div(dim * (dim + 1), 2)

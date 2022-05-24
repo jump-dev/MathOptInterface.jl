@@ -15,8 +15,6 @@ const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 const MOIB = MOI.Bridges
 
-const CI = MOI.ConstraintIndex
-
 include("bridge.jl")
 include("function_conversion.jl")
 include("map.jl")

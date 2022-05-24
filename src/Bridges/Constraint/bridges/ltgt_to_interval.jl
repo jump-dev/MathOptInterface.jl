@@ -70,7 +70,7 @@ constraint.
 """
 struct GreaterToIntervalBridge{T,F<:MOI.AbstractScalarFunction} <:
        AbstractToIntervalBridge{T,MOI.GreaterThan{T},F}
-    constraint::CI{F,MOI.Interval{T}}
+    constraint::MOI.ConstraintIndex{F,MOI.Interval{T}}
 end
 
 const GreaterToInterval{T,OT<:MOI.ModelLike} =
@@ -104,7 +104,7 @@ constraint.
 """
 struct LessToIntervalBridge{T,F<:MOI.AbstractScalarFunction} <:
        AbstractToIntervalBridge{T,MOI.LessThan{T},F}
-    constraint::CI{F,MOI.Interval{T}}
+    constraint::MOI.ConstraintIndex{F,MOI.Interval{T}}
 end
 
 const LessToInterval{T,OT<:MOI.ModelLike} =
