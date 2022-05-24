@@ -28,6 +28,9 @@ struct NonposToNonnegBridge{T} <:
     constraint::MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
 end
 
+const NonposToNonneg{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{NonposToNonnegBridge{T},OT}
+
 function MOI.delete(
     model::MOI.ModelLike,
     bridge::NonposToNonnegBridge,

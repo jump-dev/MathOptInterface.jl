@@ -30,6 +30,9 @@ struct RSOCtoPSDBridge{T} <: AbstractBridge
     }
 end
 
+const RSOCtoPSD{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{RSOCtoPSDBridge{T},OT}
+
 function bridge_constrained_variable(
     ::Type{RSOCtoPSDBridge{T}},
     model::MOI.ModelLike,

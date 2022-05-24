@@ -217,13 +217,3 @@ function unbridged_map(
         bridge.variables[i] => scalars[i] for i in eachindex(vis)
     ]
 end
-
-include("flip_sign.jl")
-const NonposToNonneg{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{NonposToNonnegBridge{T},OT}
-
-include("soc_rsoc.jl")
-const SOCtoRSOC{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{SOCtoRSOCBridge{T},OT}
-const RSOCtoSOC{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{RSOCtoSOCBridge{T},OT}

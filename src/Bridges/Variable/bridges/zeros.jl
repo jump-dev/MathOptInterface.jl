@@ -25,6 +25,8 @@ struct ZerosBridge{T} <: AbstractBridge
     n::Int # Number of variables
 end
 
+const Zeros{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{ZerosBridge{T},OT}
+
 function bridge_constrained_variable(
     ::Type{ZerosBridge{T}},
     model::MOI.ModelLike,

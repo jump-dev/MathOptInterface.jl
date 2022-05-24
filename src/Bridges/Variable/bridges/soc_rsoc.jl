@@ -18,6 +18,9 @@ struct SOCtoRSOCBridge{T} <:
     }
 end
 
+const SOCtoRSOC{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{SOCtoRSOCBridge{T},OT}
+
 """
     RSOCtoSOCBridge{T} <: Bridges.Variable.SetMapBridge{T,MOI.SecondOrderCone,MOI.RotatedSecondOrderCone}
 
@@ -28,3 +31,6 @@ struct RSOCtoSOCBridge{T} <:
     variables::Vector{MOI.VariableIndex}
     constraint::MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.SecondOrderCone}
 end
+
+const RSOCtoSOC{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{RSOCtoSOCBridge{T},OT}
