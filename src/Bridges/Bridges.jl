@@ -6,7 +6,9 @@
 
 module Bridges
 
-using MathOptInterface
+import MathOptInterface
+import OrderedCollections: OrderedDict
+
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
