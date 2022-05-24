@@ -7,17 +7,14 @@
 module Variable
 
 using MathOptInterface
+
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 const MOIB = MOI.Bridges
 
-# Definition of a variable bridge
 include("bridge.jl")
-
-# Mapping between variable indices and bridges
 include("map.jl")
-
-# Bridge optimizer bridging a specific variable bridge
+include("set_map.jl")
 include("single_bridge_optimizer.jl")
 
 # TODO(odow): the compiler in Julia <= 1.2 (and in later versions unless
@@ -33,38 +30,28 @@ function MOI.Bridges.Variable.bridge_constrained_variable(BridgeType, b, s)
     )
 end
 
-# Variable bridges
-# Transformation between a set S1 and a set S2 such that A*S1 = S2 for some linear map A
-include("set_map.jl")
-
-include("zeros.jl")
-const Zeros{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{ZerosBridge{T},OT}
-
-include("free.jl")
-const Free{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{FreeBridge{T},OT}
-
-include("vectorize.jl")
-const Vectorize{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{VectorizeBridge{T},OT}
-
-include("rsoc_to_psd.jl")
-const RSOCtoPSD{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{RSOCtoPSDBridge{T},OT}
+include("bridges/flip_sign.jl")
+include("bridges/free.jl")
+include("bridges/rsoc_to_psd.jl")
+include("bridges/soc_rsoc.jl")
+include("bridges/vectorize.jl")
+include("bridges/zeros.jl")
 
 """
-    add_all_bridges(bridged_model, ::Type{T}) where {T}
+    add_all_bridges(model, ::Type{T}) where {T}
 
-Add all bridges defined in the `Bridges.Variable` submodule to `bridged_model`.
+Add all bridges defined in the `Bridges.Variable` submodule to `model`.
+
 The coefficient type used is `T`.
 """
-function add_all_bridges(bridged_model, ::Type{T}) where {T}
-    MOIB.add_bridge(bridged_model, ZerosBridge{T})
-    MOIB.add_bridge(bridged_model, FreeBridge{T})
-    MOIB.add_bridge(bridged_model, NonposToNonnegBridge{T})
-    MOIB.add_bridge(bridged_model, VectorizeBridge{T})
-    MOIB.add_bridge(bridged_model, SOCtoRSOCBridge{T})
-    MOIB.add_bridge(bridged_model, RSOCtoSOCBridge{T})
-    MOIB.add_bridge(bridged_model, RSOCtoPSDBridge{T})
+function add_all_bridges(model, ::Type{T}) where {T}
+    MOI.Bridges.add_bridge(model, ZerosBridge{T})
+    MOI.Bridges.add_bridge(model, FreeBridge{T})
+    MOI.Bridges.add_bridge(model, NonposToNonnegBridge{T})
+    MOI.Bridges.add_bridge(model, VectorizeBridge{T})
+    MOI.Bridges.add_bridge(model, SOCtoRSOCBridge{T})
+    MOI.Bridges.add_bridge(model, RSOCtoSOCBridge{T})
+    MOI.Bridges.add_bridge(model, RSOCtoPSDBridge{T})
     return
 end
 

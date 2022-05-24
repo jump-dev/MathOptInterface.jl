@@ -15,6 +15,8 @@ struct FreeBridge{T} <: AbstractBridge
     constraint::MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
 end
 
+const Free{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{FreeBridge{T},OT}
+
 function bridge_constrained_variable(
     ::Type{FreeBridge{T}},
     model::MOI.ModelLike,
