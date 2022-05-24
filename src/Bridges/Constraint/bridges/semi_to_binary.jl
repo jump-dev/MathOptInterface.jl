@@ -43,6 +43,9 @@ mutable struct SemiToBinaryBridge{T,S<:_SemiSets{T}} <: AbstractBridge
     }
 end
 
+const SemiToBinary{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{SemiToBinaryBridge{T},OT}
+
 function bridge_constraint(
     ::Type{SemiToBinaryBridge{T,S}},
     model::MOI.ModelLike,

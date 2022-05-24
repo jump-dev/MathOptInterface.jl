@@ -83,6 +83,8 @@ struct LogDetBridge{T,F,G,H,I} <: AbstractBridge
     tlindex::MOI.ConstraintIndex{H,MOI.LessThan{T}}
 end
 
+const LogDet{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{LogDetBridge{T},OT}
+
 function bridge_constraint(
     ::Type{LogDetBridge{T,F,G,H,I}},
     model,
@@ -338,6 +340,8 @@ struct RootDetBridge{T,F,G,H} <: AbstractBridge
     sdindex::MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle}
     gmindex::MOI.ConstraintIndex{G,MOI.GeometricMeanCone}
 end
+
+const RootDet{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{RootDetBridge{T},OT}
 
 function bridge_constraint(
     ::Type{RootDetBridge{T,F,G,H}},

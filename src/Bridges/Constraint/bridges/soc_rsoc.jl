@@ -27,6 +27,8 @@ struct RSOCtoSOCBridge{T,F,G} <:
     constraint::CI{F,MOI.SecondOrderCone}
 end
 
+const RSOC{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{RSOCtoSOCBridge{T},OT}
+
 function rotate_function_type(G::Type{<:MOI.AbstractVectorFunction}, T::Type)
     S = MOIU.promote_operation(/, T, MOIU.scalar_type(G), T)
     Y = MOIU.promote_operation(-, T, S, S)
@@ -52,6 +54,8 @@ struct SOCtoRSOCBridge{T,F,G} <:
        SetMapBridge{T,MOI.RotatedSecondOrderCone,MOI.SecondOrderCone,F,G}
     constraint::CI{F,MOI.RotatedSecondOrderCone}
 end
+
+const SOCR{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SOCtoRSOCBridge{T},OT}
 
 function concrete_bridge_type(
     ::Type{<:SOCtoRSOCBridge{T}},

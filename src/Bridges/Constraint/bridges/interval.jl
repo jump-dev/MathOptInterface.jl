@@ -64,6 +64,9 @@ mutable struct SplitIntervalBridge{
     func::Union{Nothing,F}
 end
 
+const SplitInterval{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{SplitIntervalBridge{T},OT}
+
 function bridge_constraint(
     ::Type{SplitIntervalBridge{T,F,S,LS,US}},
     model::MOI.ModelLike,

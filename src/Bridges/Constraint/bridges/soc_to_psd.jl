@@ -68,6 +68,9 @@ struct SOCtoPSDBridge{T,F,G} <: SetMapBridge{
     constraint::MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle}
 end
 
+const SOCtoPSD{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{SOCtoPSDBridge{T},OT}
+
 function concrete_bridge_type(
     ::Type{<:SOCtoPSDBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
@@ -160,6 +163,9 @@ struct RSOCtoPSDBridge{T,F,G} <: SetMapBridge{
 }
     constraint::MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle}
 end
+
+const RSOCtoPSD{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{RSOCtoPSDBridge{T},OT}
 
 function concrete_bridge_type(
     ::Type{<:RSOCtoPSDBridge{T}},

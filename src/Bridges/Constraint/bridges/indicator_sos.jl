@@ -19,6 +19,9 @@ struct IndicatorSOS1Bridge{T,S<:MOI.AbstractScalarSet} <: AbstractBridge
     affine_index::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},S}
 end
 
+const IndicatortoSOS1{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{IndicatorSOS1Bridge{T},OT}
+
 function bridge_constraint(
     ::Type{IndicatorSOS1Bridge{T,S}},
     model::MOI.ModelLike,

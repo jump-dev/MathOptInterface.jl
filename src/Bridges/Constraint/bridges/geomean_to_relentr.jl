@@ -27,6 +27,9 @@ struct GeoMeantoRelEntrBridge{T,F,G,H} <: AbstractBridge
     relentr_index::MOI.ConstraintIndex{G,MOI.RelativeEntropyCone}
 end
 
+const GeoMeantoRelEntr{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{GeoMeantoRelEntrBridge{T},OT}
+
 function bridge_constraint(
     ::Type{GeoMeantoRelEntrBridge{T,F,G,H}},
     model::MOI.ModelLike,

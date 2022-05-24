@@ -22,6 +22,9 @@ mutable struct VectorizeBridge{T,F,S,G} <: AbstractBridge
     set_constant::T # constant in scalar set
 end
 
+const Vectorize{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{VectorizeBridge{T},OT}
+
 function bridge_constraint(
     ::Type{VectorizeBridge{T,F,S,G}},
     model::MOI.ModelLike,

@@ -84,6 +84,8 @@ struct SquareBridge{
     sym::Vector{Pair{Tuple{Int,Int},CI{G,MOI.EqualTo{T}}}}
 end
 
+const Square{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SquareBridge{T},OT}
+
 function bridge_constraint(
     ::Type{SquareBridge{T,F,G,TT,ST}},
     model::MOI.ModelLike,

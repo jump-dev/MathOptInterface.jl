@@ -17,6 +17,9 @@ struct ScalarFunctionizeBridge{T,S} <:
     constraint::CI{MOI.ScalarAffineFunction{T},S}
 end
 
+const ScalarFunctionize{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{ScalarFunctionizeBridge{T},OT}
+
 function bridge_constraint(
     ::Type{ScalarFunctionizeBridge{T,S}},
     model,
@@ -107,6 +110,9 @@ mutable struct VectorFunctionizeBridge{T,S} <:
                AbstractFunctionConversionBridge{MOI.VectorAffineFunction{T},S}
     constraint::CI{MOI.VectorAffineFunction{T},S}
 end
+
+const VectorFunctionize{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{VectorFunctionizeBridge{T},OT}
 
 function bridge_constraint(
     ::Type{VectorFunctionizeBridge{T,S}},

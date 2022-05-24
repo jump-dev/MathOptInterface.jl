@@ -16,6 +16,9 @@ struct NormSpectralBridge{T,F,G} <: AbstractBridge
     psd_index::MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle}
 end
 
+const NormSpectral{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{NormSpectralBridge{T},OT}
+
 function bridge_constraint(
     ::Type{NormSpectralBridge{T,F,G}},
     model::MOI.ModelLike,
@@ -215,6 +218,9 @@ struct NormNuclearBridge{T,F,G,H} <: AbstractBridge
     ge_index::MOI.ConstraintIndex{F,MOI.GreaterThan{T}}
     psd_index::MOI.ConstraintIndex{G,MOI.PositiveSemidefiniteConeTriangle}
 end
+
+const NormNuclear{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{NormNuclearBridge{T},OT}
 
 function bridge_constraint(
     ::Type{NormNuclearBridge{T,F,G,H}},

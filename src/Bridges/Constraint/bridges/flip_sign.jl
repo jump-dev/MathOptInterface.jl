@@ -82,6 +82,9 @@ struct GreaterToLessBridge{
     constraint::CI{F,MOI.LessThan{T}}
 end
 
+const GreaterToLess{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{GreaterToLessBridge{T},OT}
+
 function MOIB.map_set(::Type{<:GreaterToLessBridge}, set::MOI.GreaterThan)
     return MOI.LessThan(-set.lower)
 end
@@ -116,6 +119,9 @@ struct LessToGreaterBridge{
 } <: FlipSignBridge{T,MOI.LessThan{T},MOI.GreaterThan{T},F,G}
     constraint::CI{F,MOI.GreaterThan{T}}
 end
+
+const LessToGreater{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{LessToGreaterBridge{T},OT}
 
 function MOIB.map_set(::Type{<:LessToGreaterBridge}, set::MOI.LessThan)
     return MOI.GreaterThan(-set.upper)
@@ -155,6 +161,9 @@ mutable struct NonnegToNonposBridge{
     constraint::CI{F,MOI.Nonpositives}
 end
 
+const NonnegToNonpos{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{NonnegToNonposBridge{T},OT}
+
 function concrete_bridge_type(
     ::Type{<:NonnegToNonposBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
@@ -181,6 +190,9 @@ mutable struct NonposToNonnegBridge{
 } <: FlipSignBridge{T,MOI.Nonpositives,MOI.Nonnegatives,F,G}
     constraint::CI{F,MOI.Nonnegatives}
 end
+
+const NonposToNonneg{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{NonposToNonnegBridge{T},OT}
 
 function MOIB.map_set(::Type{<:NonposToNonnegBridge}, set::MOI.Nonpositives)
     return MOI.Nonnegatives(set.dimension)
