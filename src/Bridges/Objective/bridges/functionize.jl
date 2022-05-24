@@ -12,6 +12,9 @@ The `FunctionizeBridge` converts a `VariableIndex` objective into a
 """
 struct FunctionizeBridge{T} <: AbstractBridge end
 
+const Functionize{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{FunctionizeBridge{T},OT}
+
 function bridge_objective(
     ::Type{FunctionizeBridge{T}},
     model::MOI.ModelLike,
