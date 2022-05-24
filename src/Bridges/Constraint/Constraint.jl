@@ -6,9 +6,11 @@
 
 module Constraint
 
-using OrderedCollections # for OrderedDict in Map
+import LinearAlgebra
+import MathOptInterface
+import OrderedCollections: OrderedDict
+import SparseArrays
 
-using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 const MOIB = MOI.Bridges
