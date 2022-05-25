@@ -76,9 +76,18 @@ end
 
 MOI.Bridges.is_bridged(::SingleBridgeOptimizer, ::MOI.VariableIndex) = false
 
+# We need the next two methods to remove method ambiguities.
+
 function MOI.Bridges.is_bridged(
     ::SingleBridgeOptimizer,
-    ::MOI.ConstraintIndex{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
+    ::MOI.ConstraintIndex{MOI.VariableIndex},
+)
+    return false
+end
+
+function MOI.Bridges.is_bridged(
+    ::SingleBridgeOptimizer,
+    ::MOI.ConstraintIndex{MOI.VectorOfVariables},
 )
     return false
 end
