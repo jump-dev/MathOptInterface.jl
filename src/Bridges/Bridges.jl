@@ -20,7 +20,6 @@ include("Variable/Variable.jl")
 include("Constraint/Constraint.jl")
 include("Objective/Objective.jl")
 
-include("flip_sign.jl")
 include("soc_rsoc.jl")
 
 include("lazy_bridge_optimizer.jl")

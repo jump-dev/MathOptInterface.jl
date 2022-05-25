@@ -5,12 +5,14 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    FlipSignBridge{T, S1, S2, F, G}
+    FlipSignBridge{T,S1,S2,F,G}
 
 Bridge a `G`-in-`S1` constraint into an `F`-in-`S2` constraint by multiplying
 the function by `-1` and taking the point reflection of the set across the
-origin. The flipped `F`-in-`S` constraint is stored in the `constraint`
-field by convention.
+origin.
+
+The flipped `F`-in-`S` constraint is stored in the `constraint` field by
+convention.
 """
 abstract type FlipSignBridge{
     T,
@@ -20,14 +22,36 @@ abstract type FlipSignBridge{
     G<:MOI.AbstractFunction,
 } <: SetMapBridge{T,S2,S1,F,G} end
 
+function MOI.Bridges.map_function(::Type{<:FlipSignBridge{T}}, func) where {T}
+    return MOI.Utilities.operate(-, T, func)
+end
+
+# The map is an involution
+function MOI.Bridges.inverse_map_function(BT::Type{<:FlipSignBridge}, func)
+    return MOI.Bridges.map_function(BT, func)
+end
+
+# The map is symmetric
+function MOI.Bridges.adjoint_map_function(BT::Type{<:FlipSignBridge}, func)
+    return MOI.Bridges.map_function(BT, func)
+end
+
+# The map is a symmetric involution
+function MOI.Bridges.inverse_adjoint_map_function(
+    BT::Type{<:FlipSignBridge},
+    func,
+)
+    return MOI.Bridges.map_function(BT, func)
+end
+
 function MOI.delete(
     model::MOI.ModelLike,
     bridge::FlipSignBridge,
-    i::MOIB.IndexInVector,
+    i::MOI.Bridges.IndexInVector,
 )
     func = MOI.get(model, MOI.ConstraintFunction(), bridge.constraint)
     idx = setdiff(1:MOI.output_dimension(func), i.value)
-    new_func = MOIU.eachscalar(func)[idx]
+    new_func = MOI.Utilities.eachscalar(func)[idx]
     set = MOI.get(model, MOI.ConstraintSet(), bridge.constraint)
     new_set = MOI.update_dimension(set, MOI.dimension(set) - 1)
     MOI.delete(model, bridge.constraint)
@@ -85,11 +109,17 @@ end
 const GreaterToLess{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{GreaterToLessBridge{T},OT}
 
-function MOIB.map_set(::Type{<:GreaterToLessBridge}, set::MOI.GreaterThan)
+function MOI.Bridges.map_set(
+    ::Type{<:GreaterToLessBridge},
+    set::MOI.GreaterThan,
+)
     return MOI.LessThan(-set.lower)
 end
 
-function MOIB.inverse_map_set(::Type{<:GreaterToLessBridge}, set::MOI.LessThan)
+function MOI.Bridges.inverse_map_set(
+    ::Type{<:GreaterToLessBridge},
+    set::MOI.LessThan,
+)
     return MOI.GreaterThan(-set.upper)
 end
 
@@ -98,7 +128,7 @@ function concrete_bridge_type(
     G::Type{<:MOI.AbstractScalarFunction},
     ::Type{MOI.GreaterThan{T}},
 ) where {T}
-    F = MOIU.promote_operation(-, T, G)
+    F = MOI.Utilities.promote_operation(-, T, G)
     return GreaterToLessBridge{T,F,G}
 end
 
@@ -123,11 +153,11 @@ end
 const LessToGreater{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{LessToGreaterBridge{T},OT}
 
-function MOIB.map_set(::Type{<:LessToGreaterBridge}, set::MOI.LessThan)
+function MOI.Bridges.map_set(::Type{<:LessToGreaterBridge}, set::MOI.LessThan)
     return MOI.GreaterThan(-set.upper)
 end
 
-function MOIB.inverse_map_set(
+function MOI.Bridges.inverse_map_set(
     ::Type{<:LessToGreaterBridge},
     set::MOI.GreaterThan,
 )
@@ -139,7 +169,7 @@ function concrete_bridge_type(
     G::Type{<:MOI.AbstractScalarFunction},
     ::Type{MOI.LessThan{T}},
 ) where {T}
-    F = MOIU.promote_operation(-, T, G)
+    F = MOI.Utilities.promote_operation(-, T, G)
     return LessToGreaterBridge{T,F,G}
 end
 
@@ -164,12 +194,26 @@ end
 const NonnegToNonpos{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{NonnegToNonposBridge{T},OT}
 
+function MOI.Bridges.map_set(
+    ::Type{<:NonnegToNonposBridge},
+    set::MOI.Nonnegatives,
+)
+    return MOI.Nonpositives(set.dimension)
+end
+
+function MOI.Bridges.inverse_map_set(
+    ::Type{<:NonnegToNonposBridge},
+    set::MOI.Nonpositives,
+)
+    return MOI.Nonnegatives(set.dimension)
+end
+
 function concrete_bridge_type(
     ::Type{<:NonnegToNonposBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.Nonnegatives},
 ) where {T}
-    F = MOIU.promote_operation(-, T, G)
+    F = MOI.Utilities.promote_operation(-, T, G)
     return NonnegToNonposBridge{T,F,G}
 end
 
@@ -194,11 +238,14 @@ end
 const NonposToNonneg{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{NonposToNonnegBridge{T},OT}
 
-function MOIB.map_set(::Type{<:NonposToNonnegBridge}, set::MOI.Nonpositives)
+function MOI.Bridges.map_set(
+    ::Type{<:NonposToNonnegBridge},
+    set::MOI.Nonpositives,
+)
     return MOI.Nonnegatives(set.dimension)
 end
 
-function MOIB.inverse_map_set(
+function MOI.Bridges.inverse_map_set(
     ::Type{<:NonposToNonnegBridge},
     set::MOI.Nonnegatives,
 )
@@ -210,6 +257,6 @@ function concrete_bridge_type(
     G::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.Nonpositives},
 ) where {T}
-    F = MOIU.promote_operation(-, T, G)
+    F = MOI.Utilities.promote_operation(-, T, G)
     return NonposToNonnegBridge{T,F,G}
 end
