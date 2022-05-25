@@ -450,6 +450,28 @@ function test_default_bound_double_bound()
     return
 end
 
+function test_infinite_interval()
+    model = LP.Model()
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, 1.0 * x, MOI.Interval(-Inf, Inf))
+    MOI.add_constraint(model, 1.0 * x, MOI.Interval(-Inf, 1.0))
+    MOI.add_constraint(model, 1.0 * x, MOI.Interval(2.0, Inf))
+    MOI.add_constraint(model, 1.0 * x, MOI.Interval(3.0, 4.0))
+    @test sprint(write, model) ==
+          "minimize\n" *
+          "obj: \n" *
+          "subject to\n" *
+          "c1: -inf <= 1 x1 <= inf\n" *
+          "c2: -inf <= 1 x1 <= 1\n" *
+          "c3: 2 <= 1 x1 <= inf\n" *
+          "c4: 3 <= 1 x1 <= 4\n" *
+          "Bounds\n" *
+          "x1 free\n" *
+          "End\n"
+
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")

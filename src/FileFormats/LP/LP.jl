@@ -15,10 +15,13 @@ const MOI = MathOptInterface
 # To avoid adding Grisu as a dependency, use the following printing heuristic.
 # TODO(odow): consider printing 1.0 as 1.0 instead of 1, i.e., without the
 # rounding branch.
-function _print_shortest(io::IO, x::Real)
-    x_int = round(Int, x)
-    if isapprox(x, x_int)
-        print(io, x_int)
+function _print_shortest(io::IO, x::Float64)
+    if x == -Inf
+        print(io, "-inf")
+    elseif x == Inf
+        print(io, "inf")
+    elseif isinteger(x) && (typemin(Int) <= x <= typemax(Int))
+        print(io, round(Int, x))
     else
         print(io, x)
     end

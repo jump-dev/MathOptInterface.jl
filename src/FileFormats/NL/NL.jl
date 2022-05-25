@@ -38,7 +38,7 @@ The six NL constraint types are:
     l <= g(x) <= u : 0
          g(x) >= l : 1
          g(x) <= u : 2
-         g(x)      : 3  # We don't support this
+         g(x)      : 3
          g(x) == c : 4
      x ⟂ g(x)      : 5  # TODO(odow): Complementarity constraints
 """
@@ -402,7 +402,18 @@ function MOI.copy_to(dest::Model, model::MOI.ModelLike)
     return mapping
 end
 
-_set_to_bounds(set::MOI.Interval) = (0, set.lower, set.upper)
+function _set_to_bounds(set::MOI.Interval)
+    if set.lower == -Inf && set.upper == Inf
+        return (3, set.lower, set.upper)
+    elseif set.lower == -Inf
+        return (1, set.lower, set.upper)
+    elseif set.upper == Inf
+        return (2, set.lower, set.upper)
+    else
+        return (0, set.lower, set.upper)
+    end
+end
+
 _set_to_bounds(set::MOI.LessThan) = (1, -Inf, set.upper)
 _set_to_bounds(set::MOI.GreaterThan) = (2, set.lower, Inf)
 _set_to_bounds(set::MOI.EqualTo) = (4, set.value, set.value)
@@ -680,6 +691,9 @@ function Base.write(io::IO, model::Model)
                 println(io, " ", _str(g.upper))
             elseif g.opcode == 2
                 println(io, " ", _str(g.lower))
+                # Free constraints aren't supported for nonlinear.
+                # elseif g.opcode == 3
+                #     println(io)
             else
                 @assert g.opcode == 4
                 println(io, " ", _str(g.lower))
@@ -694,6 +708,8 @@ function Base.write(io::IO, model::Model)
                 println(io, " ", _str(h.upper))
             elseif h.opcode == 2
                 println(io, " ", _str(h.lower))
+            elseif h.opcode == 3
+                println(io)
             else
                 @assert h.opcode == 4
                 println(io, " ", _str(h.lower))

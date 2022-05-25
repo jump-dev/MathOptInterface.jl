@@ -1039,6 +1039,58 @@ function test_attribute_error()
     return
 end
 
+function test_infinite_interval()
+    model = NL.Model()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(src)
+    MOI.add_constraint(src, 1.0 * x, MOI.Interval(-Inf, Inf))
+    MOI.add_constraint(src, 1.0 * x, MOI.Interval(-Inf, 1.0))
+    MOI.add_constraint(src, 1.0 * x, MOI.Interval(2.0, Inf))
+    MOI.add_constraint(src, 1.0 * x, MOI.Interval(3.0, 4.0))
+    MOI.copy_to(model, src)
+    @test sprint(write, model) == """
+g3 1 1 0
+ 1 4 1 1 0 0
+ 0 1
+ 0 0
+ 0 0 0
+ 0 0 0 1
+ 0 0 0 0 0
+ 4 0
+ 0 0
+ 0 0 0 0 0
+C0
+n0
+C1
+n0
+C2
+n0
+C3
+n0
+O0 0
+n0
+x1
+0 0
+r
+3
+1 1
+2 2
+0 3 4
+b
+3
+k0
+J0 1
+0 1
+J1 1
+0 1
+J2 1
+0 1
+J3 1
+0 1
+"""
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$(name)", "test_")
