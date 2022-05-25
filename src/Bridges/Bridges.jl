@@ -31,23 +31,31 @@ include("debug.jl")
 
 Returns a [`LazyBridgeOptimizer`](@ref) bridging `model` for every bridge
 defined in this package (see below for the few exceptions) and for the
-coefficient type `T` in addition to the bridges in the list returned by
-`MOI.get(model, MOI.Bridges.ListOfNonstandardBridges{T}())`.
+coefficient type `T`, as well as the bridges in the list returned by the
+[`ListOfNonstandardBridges`](@ref) attribute.
 
-See also [`ListOfNonstandardBridges`](@ref).
+## Example
 
-!!! note
-    The following bridges are not added by `full_bridge_optimizer` except if
-    they are in the list returned by `MOI.get(model, MOI.Bridges.ListOfNonstandardBridges{T}())`
-    (see the docstrings of the corresponding bridge for the reason they are not
-    added):
-    * [`Constraint.SOCtoNonConvexQuadBridge`](@ref),
-      [`Constraint.RSOCtoNonConvexQuadBridge`](@ref) and
-      [`Constraint.SOCtoPSDBridge`](@ref).
-    * The subtypes of [`Constraint.AbstractToIntervalBridge`](@ref) (i.e.
-      [`Constraint.GreaterToIntervalBridge`](@ref) and
-      [`Constraint.LessToIntervalBridge`](@ref)) if `T` is not a subtype of
-      `AbstractFloat`.
+```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> bridged_model = MOI.Bridges.full_bridge_optimizer(model, Float64);
+```
+
+## Exceptions
+
+The following bridges are not added by `full_bridge_optimizer`, except if
+they are in the list returned by the [`ListOfNonstandardBridges`](@ref) attribute:
+
+ * [`Constraint.SOCtoNonConvexQuadBridge`](@ref)
+ * `Constraint.RSOCtoNonConvexQuadBridge`](@ref)
+ * [`Constraint.SOCtoPSDBridge`](@ref)
+ * If `T` is not a subtype of `AbstractFloat`, subtypes of
+   [`Constraint.AbstractToIntervalBridge`](@ref)
+    * [`Constraint.GreaterToIntervalBridge`](@ref)
+    * [`Constraint.LessToIntervalBridge`](@ref))
+
+See the docstring of the each bridge for the reason they are not added.
 """
 function full_bridge_optimizer(model::MOI.ModelLike, ::Type{T}) where {T}
     bridged_model = LazyBridgeOptimizer(model)
