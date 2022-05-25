@@ -153,20 +153,6 @@ function MOI.set(
     end
 end
 
-function MOIB.added_constrained_variable_types(
-    BT::Type{<:AbstractBridge},
-    S::Type{<:MOI.AbstractSet},
-)
-    return MOIB.added_constrained_variable_types(concrete_bridge_type(BT, S))
-end
-
-function MOIB.added_constraint_types(
-    BT::Type{<:AbstractBridge},
-    S::Type{<:MOI.AbstractSet},
-)
-    return MOIB.added_constraint_types(concrete_bridge_type(BT, S))
-end
-
 """
    unbridged_map(
        bridge::MOI.Bridges.Variable.AbstractBridge,
