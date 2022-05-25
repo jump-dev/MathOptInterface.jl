@@ -32,15 +32,17 @@ function supports_objective_function(
     return true
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:FunctionizeBridge})
+function MOI.Bridges.added_constrained_variable_types(
+    ::Type{<:FunctionizeBridge},
+)
     return Tuple{Type}[]
 end
 
-function MOIB.added_constraint_types(::Type{<:FunctionizeBridge})
+function MOI.Bridges.added_constraint_types(::Type{<:FunctionizeBridge})
     return Tuple{Type,Type}[]
 end
 
-function MOIB.set_objective_function_type(
+function MOI.Bridges.set_objective_function_type(
     ::Type{FunctionizeBridge{T}},
 ) where {T}
     return MOI.ScalarAffineFunction{T}
@@ -55,7 +57,7 @@ end
 
 # No variables or constraints are created in this bridge so there is nothing to
 # delete.
-MOI.delete(model::MOI.ModelLike, bridge::FunctionizeBridge) = nothing
+MOI.delete(::MOI.ModelLike, ::FunctionizeBridge) = nothing
 
 function MOI.set(
     ::MOI.ModelLike,
@@ -70,11 +72,12 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOIB.ObjectiveFunctionValue{MOI.VariableIndex},
+    attr::MOI.Bridges.ObjectiveFunctionValue{MOI.VariableIndex},
     ::FunctionizeBridge{T},
 ) where {T}
     F = MOI.ScalarAffineFunction{T}
-    return MOI.get(model, MOIB.ObjectiveFunctionValue{F}(attr.result_index))
+    attr_f = MOI.Bridges.ObjectiveFunctionValue{F}(attr.result_index)
+    return MOI.get(model, attr_f)
 end
 
 function MOI.get(

@@ -5,16 +5,18 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    SlackBridge{T, F, G}
+    SlackBridge{T,F,G}
 
 The `SlackBridge` converts an objective function of type `G` into a
 [`MOI.VariableIndex`](@ref) objective by creating a slack variable and a
 `F`-in-[`MOI.LessThan`](@ref) constraint for minimization or
-`F`-in-[`MOI.LessThan`](@ref) constraint for maximization where `F` is
+`F`-in-[`MOI.GreaterThan`](@ref) constraint for maximization where `F` is
 `MOI.Utilities.promote_operation(-, T, G, MOI.VariableIndex}`.
-Note that when using this bridge, changing the optimization sense
-is not supported. Set the sense to `MOI.FEASIBILITY_SENSE` first
-to delete the bridge in order to change the sense, then re-add the objective.
+
+!!! note
+    When using this bridge, changing the optimization sense is not supported.
+    Set the sense to `MOI.FEASIBILITY_SENSE` first to delete the bridge, then
+    set [`MOI.ObjectiveSense`](@ref) and re-add the objective.
 """
 struct SlackBridge{
     T,
@@ -36,7 +38,7 @@ function bridge_objective(
     func::G,
 ) where {T,F,G<:MOI.AbstractScalarFunction}
     slack = MOI.add_variable(model)
-    f = MOIU.operate(-, T, func, slack)
+    f = MOI.Utilities.operate(-, T, func, slack)
     if MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
         set = MOI.LessThan(zero(T))
     elseif MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
@@ -47,7 +49,7 @@ function bridge_objective(
             " using `MOI.Bridges.Objective.SlackBridge`.",
         )
     end
-    constraint = MOIU.normalize_and_add_constraint(model, f, set)
+    constraint = MOI.Utilities.normalize_and_add_constraint(model, f, set)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), slack)
     return SlackBridge{T,F,G}(slack, constraint)
 end
@@ -66,13 +68,17 @@ function supports_objective_function(
     return true
 end
 
-MOIB.added_constrained_variable_types(::Type{<:SlackBridge}) = Tuple{Type}[]
+function MOI.Bridges.added_constrained_variable_types(::Type{<:SlackBridge})
+    return Tuple{Type}[]
+end
 
-function MOIB.added_constraint_types(::Type{<:SlackBridge{T,F}}) where {T,F}
+function MOI.Bridges.added_constraint_types(
+    ::Type{<:SlackBridge{T,F}},
+) where {T,F}
     return Tuple{Type,Type}[(F, MOI.GreaterThan{T}), (F, MOI.LessThan{T})]
 end
 
-function MOIB.set_objective_function_type(::Type{<:SlackBridge})
+function MOI.Bridges.set_objective_function_type(::Type{<:SlackBridge})
     return MOI.VariableIndex
 end
 
@@ -80,7 +86,7 @@ function concrete_bridge_type(
     ::Type{<:SlackBridge{T}},
     G::Type{<:MOI.AbstractScalarFunction},
 ) where {T}
-    F = MOIU.promote_operation(-, T, G, MOI.VariableIndex)
+    F = MOI.Utilities.promote_operation(-, T, G, MOI.VariableIndex)
     return SlackBridge{T,F,G}
 end
 
@@ -117,12 +123,14 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOIB.ObjectiveFunctionValue{G},
+    attr::MOI.Bridges.ObjectiveFunctionValue{G},
     bridge::SlackBridge{T,F,G},
 ) where {T,F,G}
     slack = MOI.get(
         model,
-        MOIB.ObjectiveFunctionValue{MOI.VariableIndex}(attr.result_index),
+        MOI.Bridges.ObjectiveFunctionValue{MOI.VariableIndex}(
+            attr.result_index,
+        ),
     )
     # There may be a gap between the value of the original objective `g` and the
     # value of `bridge.slack`. Since `bridge.constraint` is `g - slack`, we can
@@ -146,6 +154,7 @@ function MOI.get(
 ) where {T,F,G<:MOI.AbstractScalarFunction}
     func = MOI.get(model, MOI.ConstraintFunction(), bridge.constraint)
     set = MOI.get(model, MOI.ConstraintSet(), bridge.constraint)
-    f = MOIU.operate(-, T, func, _constant_term(set))
-    return MOIU.convert_approx(G, MOIU.remove_variable(f, bridge.slack))
+    f = MOI.Utilities.operate(-, T, func, _constant_term(set))
+    g = MOI.Utilities.remove_variable(f, bridge.slack)
+    return MOI.Utilities.convert_approx(G, g)
 end

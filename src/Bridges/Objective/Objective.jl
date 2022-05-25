@@ -9,8 +9,6 @@ module Objective
 import MathOptInterface
 
 const MOI = MathOptInterface
-const MOIU = MOI.Utilities
-const MOIB = MOI.Bridges
 
 include("bridge.jl")
 include("map.jl")
