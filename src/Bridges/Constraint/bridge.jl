@@ -96,19 +96,3 @@ a bridge object of type `BT`.
    parameters of the bridge must be set.
 """
 function bridge_constraint end
-
-function MOIB.added_constrained_variable_types(
-    BT::Type{<:AbstractBridge},
-    F::Type{<:MOI.AbstractFunction},
-    S::Type{<:MOI.AbstractSet},
-)
-    return MOIB.added_constrained_variable_types(concrete_bridge_type(BT, F, S))
-end
-
-function MOIB.added_constraint_types(
-    BT::Type{<:AbstractBridge},
-    F::Type{<:MOI.AbstractFunction},
-    S::Type{<:MOI.AbstractSet},
-)
-    return MOIB.added_constraint_types(concrete_bridge_type(BT, F, S))
-end

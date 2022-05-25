@@ -122,24 +122,3 @@ function MOI.delete(::MOI.ModelLike, bridge::AbstractBridge)
         ),
     )
 end
-
-function MOIB.added_constrained_variable_types(
-    BT::Type{<:AbstractBridge},
-    F::Type{<:MOI.AbstractScalarFunction},
-)
-    return MOIB.added_constrained_variable_types(concrete_bridge_type(BT, F))
-end
-
-function MOIB.added_constraint_types(
-    BT::Type{<:AbstractBridge},
-    F::Type{<:MOI.AbstractScalarFunction},
-)
-    return MOIB.added_constraint_types(concrete_bridge_type(BT, F))
-end
-
-function MOIB.set_objective_function_type(
-    BT::Type{<:AbstractBridge},
-    F::Type{<:MOI.AbstractScalarFunction},
-)
-    return MOIB.set_objective_function_type(concrete_bridge_type(BT, F))
-end
