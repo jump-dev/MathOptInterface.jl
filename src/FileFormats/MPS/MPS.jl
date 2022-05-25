@@ -245,15 +245,12 @@ function _write_rows(io, model, S, sense_char)
     return
 end
 
-function _write_rows(io, model, S::Type{MOI.Interval{Float64}}, sense_char)
+function _write_rows(io, model, S::Type{MOI.Interval{Float64}}, ::Any)
     for index in MOI.get(
         model,
         MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{Float64},S}(),
     )
         row_name = MOI.get(model, MOI.ConstraintName(), index)
-        if row_name == ""
-            error("Row name is empty: $(index).")
-        end
         set = MOI.get(model, MOI.ConstraintSet(), index)
         if set.lower == -Inf && set.upper == Inf
             println(io, Card(f1 = "N", f2 = row_name))
@@ -382,7 +379,6 @@ end
 _value(set::MOI.LessThan) = set.upper
 _value(set::MOI.GreaterThan) = set.lower
 _value(set::MOI.EqualTo) = set.value
-_value(set::MOI.Interval) = set.upper  # See the note in the RANGES section.
 
 function _write_rhs(io, model, S)
     for index in MOI.get(
