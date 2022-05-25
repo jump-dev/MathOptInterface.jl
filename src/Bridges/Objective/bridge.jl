@@ -10,7 +10,7 @@
 Subtype of [`MathOptInterface.Bridges.AbstractBridge`](@ref) for objective
 bridges.
 """
-abstract type AbstractBridge <: MOIB.AbstractBridge end
+abstract type AbstractBridge <: MOI.Bridges.AbstractBridge end
 
 """
     supports_objective_function(
@@ -54,10 +54,10 @@ function concrete_bridge_type(
 end
 
 function concrete_bridge_type(
-    b::MOIB.AbstractBridgeOptimizer,
+    b::MOI.Bridges.AbstractBridgeOptimizer,
     F::Type{<:MOI.AbstractScalarFunction},
 )
-    return concrete_bridge_type(MOIB.bridge_type(b, F), F)
+    return concrete_bridge_type(MOI.Bridges.bridge_type(b, F), F)
 end
 
 """

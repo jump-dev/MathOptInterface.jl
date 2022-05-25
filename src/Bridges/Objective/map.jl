@@ -5,7 +5,7 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    Map <: AbstractDict{MOI.ObjectiveFunction, AbstractBridge}
+    Map <: AbstractDict{MOI.ObjectiveFunction,AbstractBridge}
 
 A mapping from a bridged objective function type to the bridge responsible for
 bridging that type of objective function.
@@ -15,9 +15,7 @@ mutable struct Map <: AbstractDict{MOI.ObjectiveFunction,AbstractBridge}
     function_type::Union{Nothing,Type{<:MOI.AbstractScalarFunction}}
 end
 
-function Map()
-    return Map(Dict{MOI.ObjectiveFunction,AbstractBridge}(), nothing)
-end
+Map() = Map(Dict{MOI.ObjectiveFunction,AbstractBridge}(), nothing)
 
 # Implementation of `AbstractDict` interface.
 
@@ -68,42 +66,44 @@ end
     add_key_for_bridge(
         map::Map,
         bridge::AbstractBridge,
-        func::MOI.AbstractScalarFunction,
-    )
+        ::F,
+    ) where {F<:MOI.AbstractScalarFunction}
 
 Stores the mapping `attr => bridge` where `attr` is
-`MOI.ObjectiveFunction{typeof(func)}()` and set [`function_type`](@ref) to
-`typeof(func)`.
+`MOI.ObjectiveFunction{F}()` and set [`function_type`](@ref) to `F`.
 """
 function add_key_for_bridge(
     map::Map,
     bridge::AbstractBridge,
-    func::MOI.AbstractScalarFunction,
-)
-    attr = MOI.ObjectiveFunction{typeof(func)}()
-    map.function_type = typeof(func)
-    return map.bridges[attr] = bridge
+    ::F,
+) where {F<:MOI.AbstractScalarFunction}
+    attr = MOI.ObjectiveFunction{F}()
+    map.function_type = F
+    map.bridges[attr] = bridge
+    return
 end
 
 """
-    EmptyMap <: AbstractDict{MOI.ObjectiveFunction, AbstractBridge}
+    EmptyMap <: AbstractDict{MOI.ObjectiveFunction,AbstractBridge}
 
-Empty version of [`Map`](@ref). It is used by
-[`MathOptInterface.Bridges.Variable.SingleBridgeOptimizer`](@ref) and
-[`MathOptInterface.Bridges.Constraint.SingleBridgeOptimizer`](@ref) as they do
-not bridge any objective function.
+Empty version of [`Map`](@ref).
+
+It is used by
+[`MOI.Bridges.Variable.SingleBridgeOptimizer`](@ref) and
+[`MOI.Bridges.Constraint.SingleBridgeOptimizer`](@ref) as they do not bridge any
+objective function.
 """
 struct EmptyMap <: AbstractDict{MOI.ObjectiveFunction,AbstractBridge} end
 
 Base.isempty(::EmptyMap) = true
 
-function Base.empty!(::EmptyMap) end
+Base.empty!(::EmptyMap) = nothing
 
 Base.length(::EmptyMap) = 0
 
 Base.haskey(::EmptyMap, ::MOI.ObjectiveFunction) = false
 
-Base.values(::EmptyMap) = MOIU.EmptyVector{AbstractBridge}()
+Base.values(::EmptyMap) = MOI.Utilities.EmptyVector{AbstractBridge}()
 
 Base.iterate(::EmptyMap) = nothing
 
