@@ -163,15 +163,23 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::Union{MOI.VariablePrimal,MOI.VariablePrimalStart},
+    attr::MOI.VariablePrimal,
     bridge::VectorizeBridge,
 )
     value = MOI.get(model, attr, bridge.variable)
     status = MOI.get(model, MOI.PrimalStatus(attr.result_index))
-    if !(attr isa MOI.VariablePrimal) && MOI.Utilities.is_ray(status)
-        value += bridge.set_constant
+    if MOI.Utilities.is_ray(status)
+        return value  # Return the homogenized value.
     end
-    return value
+    return value + bridge.set_constant
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.VariablePrimalStart,
+    bridge::VectorizeBridge,
+)
+    return MOI.get(model, attr, bridge.variable) + bridge.set_constant
 end
 
 function MOI.supports(
