@@ -5,13 +5,34 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    VectorizeBridge{T, S}
+    VectorizeBridge{T,S} <: Bridges.Variable.AbstractBridge
 
-Transforms a constrained variable in `scalar_set_type(S, T)` where
-`S <: VectorLinearSet` into a constrained vector of one variable in `S`. For
-instance, `VectorizeBridge{Float64, MOI.Nonnegatives}` transforms a constrained
-variable in `MOI.GreaterThan{Float64}` into a constrained vector of one
-variable in `MOI.Nonnegatives`.
+`VectorizeBridge` implements the following reformulations:
+
+ * ``x \\ge a`` into ``[y] \\in \\mathbb{R}_+`` with the substitution
+   rule ``x = a + y``
+ * ``x \\le a`` into ``[y] \\in \\mathbb{R}_-`` with the substitution
+   rule ``x = a + y``
+ * ``x == a`` into ``[y] \\in \\{0\\}`` with the substitution
+   rule ``x = a + y``
+
+where `T` is the coefficient type of `a + y`.
+
+## Source node
+
+`VectorizeBridge` supports:
+
+ * [`MOI.VariableIndex`](@ref) in [`MOI.GreaterThan{T}`](@ref)
+ * [`MOI.VariableIndex`](@ref) in [`MOI.LessThan{T}`](@ref)
+ * [`MOI.VariableIndex`](@ref) in [`MOI.EqualTo{T}`](@ref)
+
+## Target nodes
+
+`VectorizeBridge` creates:
+
+ * One variable node: [`MOI.VectorOfVariables`](@ref) in `S`, where `S` is one
+   of [`MOI.Nonnegatives`](@ref), [`MOI.Nonpositives`](@ref),
+   [`MOI.Zeros`](@ref) depending on the type of ``S``.
 """
 mutable struct VectorizeBridge{T,S} <: AbstractBridge
     variable::MOI.VariableIndex
@@ -25,7 +46,7 @@ const Vectorize{T,OT<:MOI.ModelLike} =
 function bridge_constrained_variable(
     ::Type{VectorizeBridge{T,S}},
     model::MOI.ModelLike,
-    set::MOIU.ScalarLinearSet{T},
+    set::MOI.Utilities.ScalarLinearSet{T},
 ) where {T,S}
     set_constant = MOI.constant(set)
     variables, vector_constraint = MOI.add_constrained_variables(model, S(1))
@@ -34,26 +55,26 @@ end
 
 function supports_constrained_variable(
     ::Type{VectorizeBridge{T}},
-    ::Type{<:MOIU.ScalarLinearSet{T}},
+    ::Type{<:MOI.Utilities.ScalarLinearSet{T}},
 ) where {T}
     return true
 end
 
-function MOIB.added_constrained_variable_types(
+function MOI.Bridges.added_constrained_variable_types(
     ::Type{VectorizeBridge{T,S}},
 ) where {T,S}
     return Tuple{Type}[(S,)]
 end
 
-function MOIB.added_constraint_types(::Type{<:VectorizeBridge})
+function MOI.Bridges.added_constraint_types(::Type{<:VectorizeBridge})
     return Tuple{Type,Type}[]
 end
 
 function concrete_bridge_type(
     ::Type{<:VectorizeBridge{T}},
-    S::Type{<:MOIU.ScalarLinearSet{T}},
+    S::Type{<:MOI.Utilities.ScalarLinearSet{T}},
 ) where {T}
-    return VectorizeBridge{T,MOIU.vector_set_type(S)}
+    return VectorizeBridge{T,MOI.Utilities.vector_set_type(S)}
 end
 
 # Attributes, Bridge acting as a model
@@ -90,21 +111,22 @@ function MOI.get(
     ::MOI.ConstraintSet,
     bridge::VectorizeBridge{T,S},
 ) where {T,S}
-    return MOIU.scalar_set_type(S, T)(bridge.set_constant)
+    return MOI.Utilities.scalar_set_type(S, T)(bridge.set_constant)
 end
 
 function MOI.set(
     ::MOI.ModelLike,
     attr::MOI.ConstraintSet,
     bridge::VectorizeBridge,
-    ::MOIU.ScalarLinearSet,
+    ::MOI.Utilities.ScalarLinearSet,
 )
     # This would require modifing any constraint which uses the bridged
     # variable.
     return throw(
         MOI.SetAttributeNotAllowed(
             attr,
-            "The variable `$(bridge.variable)` is bridged by the `VectorizeBridge`.",
+            "The variable `$(bridge.variable)` is bridged by the " *
+            "`VectorizeBridge`.",
         ),
     )
 end
@@ -117,7 +139,8 @@ function MOI.get(
     x = MOI.get(model, attr, bridge.vector_constraint)
     @assert length(x) == 1
     y = x[1]
-    if !MOIU.is_ray(MOI.get(model, MOI.PrimalStatus(attr.result_index)))
+    status = MOI.get(model, MOI.PrimalStatus(attr.result_index))
+    if !MOI.Utilities.is_ray(status)
         # If it is an infeasibility certificate, it is a ray and satisfies the
         # homogenized problem, see https://github.com/jump-dev/MathOptInterface.jl/issues/433
         # Otherwise, we need to add the set constant since the ConstraintPrimal
@@ -144,10 +167,8 @@ function MOI.get(
     bridge::VectorizeBridge,
 )
     value = MOI.get(model, attr, bridge.variable)
-    if !(
-        attr isa MOI.VariablePrimal &&
-        MOIU.is_ray(MOI.get(model, MOI.PrimalStatus(attr.result_index)))
-    )
+    status = MOI.get(model, MOI.PrimalStatus(attr.result_index))
+    if !(attr isa MOI.VariablePrimal) && MOI.Utilities.is_ray(status)
         value += bridge.set_constant
     end
     return value
@@ -171,14 +192,14 @@ function MOI.set(
     return
 end
 
-function MOIB.bridged_function(bridge::VectorizeBridge{T}) where {T}
-    return MOIU.operate(+, T, bridge.variable, bridge.set_constant)
+function MOI.Bridges.bridged_function(bridge::VectorizeBridge{T}) where {T}
+    return MOI.Utilities.operate(+, T, bridge.variable, bridge.set_constant)
 end
 
 function unbridged_map(
     bridge::VectorizeBridge{T},
     vi::MOI.VariableIndex,
 ) where {T}
-    func = MOIU.operate(-, T, vi, bridge.set_constant)
+    func = MOI.Utilities.operate(-, T, vi, bridge.set_constant)
     return (bridge.variable => func,)
 end

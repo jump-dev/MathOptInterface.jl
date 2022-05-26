@@ -5,11 +5,9 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    FlipSignBridge{T,S1,S2} <: SetMapBridge{T,S2,S1}
+    abstract type FlipSignBridge{T,S1,S2} <: SetMapBridge{T,S2,S1} end
 
-Bridge constrained variables in `S1` into constrained variables in `S2` by
-multiplying the variables by `-1` and taking the point reflection of the set
-across the origin.
+An abstract type that simplifies the creation of other bridges.
 """
 abstract type FlipSignBridge{T,S1<:MOI.AbstractSet,S2<:MOI.AbstractSet} <:
               SetMapBridge{T,S2,S1} end
@@ -47,11 +45,26 @@ function MOI.delete(
 end
 
 """
-    NonposToNonnegBridge{T} <:
-    FlipSignBridge{T,MOI.Nonpositives,MOI.Nonnegatives}
+    NonposToNonnegBridge{T} <: Bridges.Variable.AbstractBridge
 
-Transforms constrained variables in [`MOI.Nonpositives`](@ref) into constrained
-variables in [`MOI.Nonnegatives`](@ref).
+`NonposToNonnegBridge` implements the following reformulation:
+
+* ``x \\in \\mathbb{R}_-`` into ``y \\in \\mathbb{R}_+`` with the substitution
+  rule ``x = -y``,
+
+where `T` is the coefficient type of `-y`.
+
+## Source node
+
+`NonposToNonnegBridge` supports:
+
+* [`MOI.VectorOfVariables`](@ref) in [`MOI.Nonpositives`](@ref)
+
+## Target nodes
+
+`NonposToNonnegBridge` creates:
+
+* One variable node: [`MOI.VectorOfVariables`](@ref) in [`MOI.Nonnegatives`](@ref),
 """
 struct NonposToNonnegBridge{T} <:
        FlipSignBridge{T,MOI.Nonpositives,MOI.Nonnegatives}
