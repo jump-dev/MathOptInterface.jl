@@ -7,19 +7,38 @@
 """
     ZerosBridge{T} <: Bridges.Variable.AbstractBridge
 
-Transforms constrained variables in [`MathOptInterface.Zeros`](@ref) to zeros,
-which ends up creating no variables in the underlying model.
+`ZerosBridge` implements the following reformulation:
 
-The bridged variables are therefore similar to parameters with zero values.
-Parameters with non-zero value can be created with constrained variables in
+* ``x \\in \\{0\\}`` into the substitution rule ``x = 0``,
+
+where `T` is the coefficient type of `0`.
+
+## Source node
+
+`ZerosBridge` supports:
+
+ * [`MOI.VectorOfVariables`](@ref) in [`MOI.Zeros`](@ref)
+
+## Target nodes
+
+`ZerosBridge` does not create target nodes. It replaces all instances of `x`
+with `0` via substitution. This means that no variables are created in the
+underlying model.
+
+## Caveats
+
+The bridged variables are similar to parameters with zero values. Parameters
+with non-zero values can be created with constrained variables in
 [`MOI.EqualTo`](@ref) by combining a [`VectorizeBridge`](@ref) and this bridge.
-The functions cannot be unbridged, given a function, we cannot determine, if
-the bridged variables were used.
 
-The dual values cannot be determined by the bridge but they can be determined
-by the bridged optimizer using [`MathOptInterface.Utilities.get_fallback`](@ref)
-if a `CachingOptimizer` is used (since `ConstraintFunction` cannot be got
-as functions cannot be unbridged).
+However, functions modified by `ZerosBridge` cannot be unbridged. That is, for a
+given function, we cannot determine if the bridged variables were used.
+
+A related implication is that this bridge does not support
+[`MOI.ConstraintDual`](@ref). However, if a [`MOI.Utilities.CachingOptimizer`](@ref)
+is used, the dual can be determined by the bridged optimizer using
+[`MOI.Utilities.get_fallback`](@ref) because the caching optimizer records the
+unbridged function.
 """
 struct ZerosBridge{T} <: AbstractBridge
     n::Int # Number of variables
@@ -39,20 +58,18 @@ function supports_constrained_variable(::Type{<:ZerosBridge}, ::Type{MOI.Zeros})
     return true
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:ZerosBridge})
+function MOI.Bridges.added_constrained_variable_types(::Type{<:ZerosBridge})
     return Tuple{Type}[]
 end
 
-function MOIB.added_constraint_types(::Type{<:ZerosBridge})
+function MOI.Bridges.added_constraint_types(::Type{<:ZerosBridge})
     return Tuple{Type,Type}[]
 end
 
 # Attributes, Bridge acting as a model
 MOI.get(::ZerosBridge, ::MOI.NumberOfVariables)::Int64 = 0
 
-function MOI.get(bridge::ZerosBridge, ::MOI.ListOfVariableIndices)
-    return MOI.VariableIndex[]
-end
+MOI.get(::ZerosBridge, ::MOI.ListOfVariableIndices) = MOI.VariableIndex[]
 
 # References
 MOI.delete(::MOI.ModelLike, ::ZerosBridge) = nothing
@@ -89,15 +106,24 @@ function MOI.get(
     ::MOI.ModelLike,
     ::MOI.VariablePrimal,
     ::ZerosBridge{T},
-    ::MOIB.IndexInVector,
+    ::MOI.Bridges.IndexInVector,
 ) where {T}
     return zero(T)
 end
 
-function MOIB.bridged_function(::ZerosBridge{T}, ::MOIB.IndexInVector) where {T}
+function MOI.Bridges.bridged_function(
+    ::ZerosBridge{T},
+    ::MOI.Bridges.IndexInVector,
+) where {T}
     return zero(MOI.ScalarAffineFunction{T})
 end
 
-function unbridged_map(::ZerosBridge, ::MOI.VariableIndex, ::MOIB.IndexInVector)
+function unbridged_map(
+    ::ZerosBridge,
+    ::MOI.VariableIndex,
+    ::MOI.Bridges.IndexInVector,
+)
+    # The transformation is not recoverable, so we explicitly return `nothing`
+    # here. See the docstring of `unbridged_map` for details.
     return nothing
 end

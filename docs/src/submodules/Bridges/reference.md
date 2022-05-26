@@ -31,23 +31,11 @@ Bridges.debug_supports
 Bridges.bridged_variable_function
 Bridges.unbridged_variable_function
 Bridges.bridged_function
-Bridges.Variable.unbridged_map
 ```
 
-## Constraint bridges
+### [SetMap API](@id constraint_set_map)
 
 ```@docs
-Bridges.Constraint.AbstractBridge
-Bridges.Constraint.AbstractFunctionConversionBridge
-Bridges.Constraint.SingleBridgeOptimizer
-Bridges.Constraint.add_all_bridges
-```
-
-### [SetMap bridges](@id constraint_set_map)
-
-```@docs
-Bridges.Variable.SetMapBridge
-Bridges.Constraint.SetMapBridge
 Bridges.map_set
 Bridges.inverse_map_set
 Bridges.map_function
@@ -56,11 +44,21 @@ Bridges.adjoint_map_function
 Bridges.inverse_adjoint_map_function
 ```
 
-### [Bridges implemented](@id constraint_bridges_ref)
+## Constraint bridge API
 
 ```@docs
+Bridges.Constraint.AbstractBridge
+Bridges.Constraint.AbstractFunctionConversionBridge
+Bridges.Constraint.SingleBridgeOptimizer
+Bridges.Constraint.add_all_bridges
 Bridges.Constraint.FlipSignBridge
 Bridges.Constraint.AbstractToIntervalBridge
+Bridges.Constraint.SetMapBridge
+```
+
+## [Constraint bridges implemented](@id constraint_bridges_ref)
+
+```@docs
 Bridges.Constraint.GreaterToIntervalBridge
 Bridges.Constraint.LessToIntervalBridge
 Bridges.Constraint.GreaterToLessBridge
@@ -97,18 +95,20 @@ Bridges.Constraint.SemiToBinaryBridge
 Bridges.Constraint.ZeroOneBridge
 ```
 
-## [Variable bridges](@id ref_variable_bridges)
+## [Variable bridge API](@id ref_variable_bridges)
 
 ```@docs
 Bridges.Variable.AbstractBridge
 Bridges.Variable.SingleBridgeOptimizer
 Bridges.Variable.add_all_bridges
+Bridges.Variable.FlipSignBridge
+Bridges.Variable.SetMapBridge
+Bridges.Variable.unbridged_map
 ```
 
-### [Bridges implemented](@id variable_bridges_ref)
+## [Variable bridges implemented](@id variable_bridges_ref)
 
 ```@docs
-Bridges.Variable.FlipSignBridge
 Bridges.Variable.ZerosBridge
 Bridges.Variable.FreeBridge
 Bridges.Variable.NonposToNonnegBridge
@@ -118,7 +118,7 @@ Bridges.Variable.RSOCtoSOCBridge
 Bridges.Variable.RSOCtoPSDBridge
 ```
 
-## Objective bridges
+## Objective bridge API
 
 ```@docs
 Bridges.Objective.AbstractBridge
@@ -126,7 +126,7 @@ Bridges.Objective.SingleBridgeOptimizer
 Bridges.Objective.add_all_bridges
 ```
 
-### [Bridges implemented](@id objective_bridges_ref)
+### [Objective bridges implemented](@id objective_bridges_ref)
 
 ```@docs
 Bridges.Objective.SlackBridge

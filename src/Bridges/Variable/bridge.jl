@@ -10,7 +10,7 @@
 Subtype of [`MathOptInterface.Bridges.AbstractBridge`](@ref) for variable
 bridges.
 """
-abstract type AbstractBridge <: MOIB.AbstractBridge end
+abstract type AbstractBridge <: MOI.Bridges.AbstractBridge end
 
 """
     supports_constrained_variable(
@@ -81,10 +81,10 @@ MathOptInterface.Bridges.Variable.VectorizeBridge{Float64, MathOptInterface.Nonn
 concrete_bridge_type(::Type{BT}, ::Type{<:MOI.AbstractSet}) where {BT} = BT
 
 function concrete_bridge_type(
-    b::MOIB.AbstractBridgeOptimizer,
+    b::MOI.Bridges.AbstractBridgeOptimizer,
     S::Type{<:MOI.AbstractSet},
 )
-    return concrete_bridge_type(MOIB.bridge_type(b, S), S)
+    return concrete_bridge_type(MOI.Bridges.bridge_type(b, S), S)
 end
 
 """
@@ -121,7 +121,7 @@ function MOI.get(
     ::MOI.ModelLike,
     attr::MOI.AbstractVariableAttribute,
     bridge::AbstractBridge,
-    ::MOIB.IndexInVector,
+    ::MOI.Bridges.IndexInVector,
 )
     return throw(
         ArgumentError(
@@ -144,7 +144,7 @@ function MOI.set(
     attr::MOI.AbstractVariableAttribute,
     bridge::AbstractBridge,
     value,
-    ::MOIB.IndexInVector...,
+    ::MOI.Bridges.IndexInVector...,
 )
     if MOI.is_copyable(attr) && !MOI.supports(model, attr, typeof(bridge))
         throw(MOI.UnsupportedAttribute(attr))
@@ -154,7 +154,7 @@ function MOI.set(
 end
 
 """
-   unbridged_map(
+    unbridged_map(
        bridge::MOI.Bridges.Variable.AbstractBridge,
         vi::MOI.VariableIndex,
     )
@@ -163,21 +163,25 @@ For a bridged variable in a scalar set, return a tuple of pairs mapping the
 variables created by the bridge to an affine expression in terms of the
 bridged variable `vi`.
 
-    unbridged_map(
-        bridge::MOI.Bridges.Variable.AbstractBridge,
-        vis::Vector{MOI.VariableIndex},
-    )
+```julia
+unbridged_map(
+    bridge::MOI.Bridges.Variable.AbstractBridge,
+    vis::Vector{MOI.VariableIndex},
+)
+```
 
 For a bridged variable in a vector set, return a tuple of pairs mapping the
 variables created by the bridge to an affine expression in terms of the bridged
 variable `vis`. If this method is not implemented, it falls back to calling
 the following method for every variable of `vis`.
 
-    unbridged_map(
-        bridge::MOI.Bridges.Variable.AbstractBridge,
-        vi::MOI.VariableIndex,
-        i::MOIB.IndexInVector,
-    )
+```julia
+unbridged_map(
+    bridge::MOI.Bridges.Variable.AbstractBridge,
+    vi::MOI.VariableIndex,
+    i::MOI.Bridges.IndexInVector,
+)
+```
 
 For a bridged variable in a vector set, return a tuple of pairs mapping the
 variables created by the bridge to an affine expression in terms of the bridged
@@ -192,7 +196,7 @@ function unbridged_map end
 function unbridged_map(bridge::AbstractBridge, vis::Vector{MOI.VariableIndex})
     mappings = Pair{MOI.VariableIndex,MOI.AbstractScalarFunction}[]
     for (i, vi) in enumerate(vis)
-        vi_mappings = unbridged_map(bridge, vi, MOIB.IndexInVector(i))
+        vi_mappings = unbridged_map(bridge, vi, MOI.Bridges.IndexInVector(i))
         if vi_mappings === nothing
             return
         end

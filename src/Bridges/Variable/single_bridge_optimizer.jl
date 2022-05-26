@@ -5,21 +5,51 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    SingleBridgeOptimizer{BT<:AbstractBridge, OT<:MOI.ModelLike} <:
-    AbstractBridgeOptimizer
+    SingleBridgeOptimizer{BT<:AbstractBridge}(model::MOI.ModelLike)
 
-The `SingleBridgeOptimizer` bridges any constrained variables supported by the
-bridge `BT`. This is in contrast with the [`MathOptInterface.Bridges.LazyBridgeOptimizer`](@ref)
-which only bridges the constrained variables that are unsupported by the
-internal model, even if they are supported by one of its bridges.
+Return [`MOI.Bridges.AbstractBridgeOptimizer`](@ref) that always bridges any
+variables constrained on creation supported by the bridge `BT`.
 
-!!! note
-    Two bridge optimizers using variable bridges cannot be used together as both
-    of them assume that the underlying model only returns variable indices with
-    nonnegative values.
+This is in contrast with the [`MOI.Bridges.LazyBridgeOptimizer`](@ref),
+which only bridges the variables constrained on creation if they are supported
+by the bridge `BT` and unsupported by `model`.
+
+!!! warning
+    Two `SingleBridgeOptimizer`s cannot be used together as both of them assume
+    that the underlying model only returns variable indices with nonnegative
+    values. Use [`MOI.Bridges.LazyBridgeOptimizer`](@ref) instead.
+
+## Example
+
+```jldoctest var_singlebridgeoptimizer; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+julia> struct MyNewBridge{T} <: MOI.Bridges.Variable.AbstractBridge end
+
+julia> bridge = MOI.Bridges.Variable.SingleBridgeOptimizer{MyNewBridge{Float64}}(
+           MOI.Utilities.Model{Float64}(),
+       )
+MOIB.Variable.SingleBridgeOptimizer{MyNewBridge{Float64}, MOIU.Model{Float64}}
+with 0 variable bridges
+with inner model MOIU.Model{Float64}
+```
+
+## Implementation notes
+
+All bridges should simplify the creation of `SingleBridgeOptimizer`s by defining
+a constant that wraps the bridge in a `SingleBridgeOptimizer`.
+```jldoctest var_singlebridgeoptimizer
+julia> const MyNewBridgeModel{T,OT<:MOI.ModelLike} =
+           MOI.Bridges.Variable.SingleBridgeOptimizer{MyNewBridge{T},OT};
+```
+This enables users to create bridged models as follows:
+```jldoctest var_singlebridgeoptimizer
+julia> MyNewBridgeModel{Float64}(MOI.Utilities.Model{Float64}())
+MOIB.Variable.SingleBridgeOptimizer{MyNewBridge{Float64}, MOIU.Model{Float64}}
+with 0 variable bridges
+with inner model MOIU.Model{Float64}
+```
 """
 mutable struct SingleBridgeOptimizer{BT<:AbstractBridge,OT<:MOI.ModelLike} <:
-               MOIB.AbstractBridgeOptimizer
+               MOI.Bridges.AbstractBridgeOptimizer
     model::OT
     map::Map # index of bridged variable -> variable bridge
     var_to_name::Dict{MOI.VariableIndex,String}
@@ -39,33 +69,34 @@ function SingleBridgeOptimizer{BT}(model::OT) where {BT,OT<:MOI.ModelLike}
     )
 end
 
-function bridges(::MOI.Bridges.AbstractBridgeOptimizer)
-    return EmptyMap()
-end
+bridges(::MOI.Bridges.AbstractBridgeOptimizer) = EmptyMap()
 
 bridges(bridge::SingleBridgeOptimizer) = bridge.map
 
-MOIB.supports_constraint_bridges(::SingleBridgeOptimizer) = false
+MOI.Bridges.supports_constraint_bridges(::SingleBridgeOptimizer) = false
 
-function MOIB.supports_bridging_constrained_variable(
+function MOI.Bridges.supports_bridging_constrained_variable(
     ::SingleBridgeOptimizer{BT},
     S::Type{<:MOI.AbstractSet},
 ) where {BT}
     return supports_constrained_variable(BT, S)
 end
 
-function MOIB.is_variable_bridged(
+function MOI.Bridges.is_variable_bridged(
     ::SingleBridgeOptimizer,
     ::Type{<:MOI.AbstractSet},
 )
     return true
 end
 
-function MOIB.is_bridged(b::SingleBridgeOptimizer, S::Type{<:MOI.AbstractSet})
-    return MOIB.supports_bridging_constrained_variable(b, S)
+function MOI.Bridges.is_bridged(
+    b::SingleBridgeOptimizer,
+    S::Type{<:MOI.AbstractSet},
+)
+    return MOI.Bridges.supports_bridging_constrained_variable(b, S)
 end
 
-function MOIB.is_bridged(
+function MOI.Bridges.is_bridged(
     ::SingleBridgeOptimizer,
     ::Type{<:MOI.AbstractFunction},
     ::Type{<:MOI.AbstractSet},
@@ -73,20 +104,20 @@ function MOIB.is_bridged(
     return false
 end
 
-function MOIB.is_bridged(
+function MOI.Bridges.is_bridged(
     ::SingleBridgeOptimizer,
     ::Type{<:MOI.AbstractScalarFunction},
 )
     return false
 end
 
-function MOIB.bridge_type(
+function MOI.Bridges.bridge_type(
     ::SingleBridgeOptimizer{BT},
     ::Type{<:MOI.AbstractSet},
 ) where {BT}
     return BT
 end
 
-MOIB.bridging_cost(::SingleBridgeOptimizer, args...) = 1.0
+MOI.Bridges.bridging_cost(::SingleBridgeOptimizer, args...) = 1.0
 
-MOIB.recursive_model(b::SingleBridgeOptimizer) = b.model
+MOI.Bridges.recursive_model(b::SingleBridgeOptimizer) = b.model

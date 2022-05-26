@@ -7,8 +7,24 @@
 """
     FreeBridge{T} <: Bridges.Variable.AbstractBridge
 
-Transforms constrained variables in [`MOI.Reals`](@ref) to the difference of
-constrained variables in [`MOI.Nonnegatives`](@ref).
+`FreeBridge` implements the following reformulation:
+
+* ``x \\in \\mathbb{R}`` into ``y, z \\ge 0`` with the substitution
+  rule ``x = y - z``,
+
+where `T` is the coefficient type of `y - z`.
+
+## Source node
+
+`FreeBridge` supports:
+
+ * [`MOI.VectorOfVariables`](@ref) in [`MOI.Reals`](@ref)
+
+## Target nodes
+
+`FreeBridge` creates:
+
+ * One variable node: [`MOI.VectorOfVariables`](@ref) in [`MOI.Nonnegatives`](@ref)
 """
 struct FreeBridge{T} <: AbstractBridge
     variables::Vector{MOI.VariableIndex}
@@ -24,20 +40,18 @@ function bridge_constrained_variable(
 ) where {T}
     variables, constraint = MOI.add_constrained_variables(
         model,
-        MOI.Nonnegatives(2MOI.dimension(set)),
+        MOI.Nonnegatives(2 * MOI.dimension(set)),
     )
     return FreeBridge{T}(variables, constraint)
 end
 
-function supports_constrained_variable(::Type{<:FreeBridge}, ::Type{MOI.Reals})
-    return true
-end
+supports_constrained_variable(::Type{<:FreeBridge}, ::Type{MOI.Reals}) = true
 
-function MOIB.added_constrained_variable_types(::Type{<:FreeBridge})
+function MOI.Bridges.added_constrained_variable_types(::Type{<:FreeBridge})
     return Tuple{Type}[(MOI.Nonnegatives,)]
 end
 
-function MOIB.added_constraint_types(::Type{FreeBridge{T}}) where {T}
+function MOI.Bridges.added_constraint_types(::Type{FreeBridge{T}}) where {T}
     return Tuple{Type,Type}[]
 end
 
@@ -73,7 +87,7 @@ end
 function MOI.delete(
     model::MOI.ModelLike,
     bridge::FreeBridge,
-    i::MOIB.IndexInVector,
+    i::MOI.Bridges.IndexInVector,
 )
     n = div(length(bridge.variables), 2)
     MOI.delete(model, bridge.variables[i.value])
@@ -113,24 +127,21 @@ function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.VariablePrimal,MOI.VariablePrimalStart},
     bridge::FreeBridge{T},
-    i::MOIB.IndexInVector,
+    i::MOI.Bridges.IndexInVector,
 ) where {T}
     n = div(length(bridge.variables), 2)
     return MOI.get(model, attr, bridge.variables[i.value]) -
            MOI.get(model, attr, bridge.variables[n+i.value])
 end
 
-function MOIB.bridged_function(
+function MOI.Bridges.bridged_function(
     bridge::FreeBridge{T},
-    i::MOIB.IndexInVector,
+    i::MOI.Bridges.IndexInVector,
 ) where {T}
     n = div(length(bridge.variables), 2)
-    return MOIU.operate(
-        -,
-        T,
-        bridge.variables[i.value],
-        bridge.variables[n+i.value],
-    )
+    y = bridge.variables[i.value]
+    z = bridge.variables[n+i.value]
+    return MOI.Utilities.operate(-, T, y, z)
 end
 
 # x_free has been replaced by x[i] - x[n + i].
@@ -138,13 +149,12 @@ end
 function unbridged_map(
     bridge::FreeBridge{T},
     vi::MOI.VariableIndex,
-    i::MOIB.IndexInVector,
+    i::MOI.Bridges.IndexInVector,
 ) where {T}
-    # `unbridged_map` is required to return a `MOI.ScalarAffineFunction`.
-    func = convert(MOI.ScalarAffineFunction{T}, vi)
     n = div(length(bridge.variables), 2)
-    return bridge.variables[i.value] =>
-        func, bridge.variables[n+i.value] => zero(MOI.ScalarAffineFunction{T})
+    y = bridge.variables[i.value] => convert(MOI.ScalarAffineFunction{T}, vi)
+    z = bridge.variables[n+i.value] => zero(MOI.ScalarAffineFunction{T})
+    return y, z
 end
 
 function MOI.supports(
@@ -160,17 +170,10 @@ function MOI.set(
     attr::MOI.VariablePrimalStart,
     bridge::FreeBridge,
     value,
-    i::MOIB.IndexInVector,
+    i::MOI.Bridges.IndexInVector,
 )
-    if value < 0
-        nonneg = zero(value)
-        nonpos = -value
-    else
-        nonneg = value
-        nonpos = zero(value)
-    end
     n = div(length(bridge.variables), 2)
-    MOI.set(model, attr, bridge.variables[i.value], nonneg)
-    MOI.set(model, attr, bridge.variables[n+i.value], nonpos)
+    MOI.set(model, attr, bridge.variables[i.value], max(zero(value), value))
+    MOI.set(model, attr, bridge.variables[n+i.value], -min(zero(value), value))
     return
 end
