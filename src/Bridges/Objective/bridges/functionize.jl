@@ -7,8 +7,24 @@
 """
     FunctionizeBridge{T}
 
-The `FunctionizeBridge` converts a `VariableIndex` objective into a
-`ScalarAffineFunction{T}` objective.
+`FunctionizeBridge` implements the following reformulations:
+
+ * ``\\min \\{x\\}`` into ``\\min\\{1x + 0\\}``
+ * ``\\max \\{x\\}`` into ``\\max\\{1x + 0\\}``
+
+where `T` is the coefficient type of `1` and `0`.
+
+## Source node
+
+`FunctionizeBridge` supports:
+
+ * [`MOI.ObjectiveFunction{MOI.VariableIndex}`](@ref)
+
+## Target nodes
+
+`FunctionizeBridge` creates:
+
+ * One objective node: [`MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}`](@ref)
 """
 struct FunctionizeBridge{T} <: AbstractBridge end
 

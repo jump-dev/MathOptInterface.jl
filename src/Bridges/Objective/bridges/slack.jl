@@ -7,13 +7,31 @@
 """
     SlackBridge{T,F,G}
 
-The `SlackBridge` converts an objective function of type `G` into a
-[`MOI.VariableIndex`](@ref) objective by creating a slack variable and a
-`F`-in-[`MOI.LessThan`](@ref) constraint for minimization or
-`F`-in-[`MOI.GreaterThan`](@ref) constraint for maximization where `F` is
-`MOI.Utilities.promote_operation(-, T, G, MOI.VariableIndex}`.
+`SlackBridge` implements the following reformulations:
 
-!!! note
+ * ``\\min\\{f(x)\\}`` into ``\\min\\{y\\;|\\; f(x) - y \\le 0\\}``
+ * ``\\max\\{f(x)\\}`` into ``\\max\\{y\\;|\\; f(x) - y \\ge 0\\}``
+
+where `F` is the type of `f(x) - y`, `G` is the type of `f(x)`, and `T` is the
+coefficient type of `f(x)`.
+
+## Source node
+
+`SlackBridge` supports:
+
+ * [`MOI.ObjectiveFunction{G}`](@ref)
+
+## Target nodes
+
+`SlackBridge` creates:
+
+ * One variable node: [`MOI.VariableIndex`](@ref) in [`MOI.Reals`](@ref)
+ * One objective node: [`MOI.ObjectiveFunction{MOI.VariableIndex}`](@ref)
+ * One constraint node, that depends on the [`MOI.ObjectiveSense`](@ref):
+   * `F`-in-[`MOI.LessThan`](@ref) if `MIN_SENSE`
+   * `F`-in-[`MOI.GreaterThan`](@ref) if `MAX_SENSE`
+
+!!! warning
     When using this bridge, changing the optimization sense is not supported.
     Set the sense to `MOI.FEASIBILITY_SENSE` first to delete the bridge, then
     set [`MOI.ObjectiveSense`](@ref) and re-add the objective.
