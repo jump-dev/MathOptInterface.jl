@@ -5,24 +5,33 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    AbstractBridgeOptimizer
+    abstract type AbstractBridgeOptimizer <: MOI.AbstractOptimizer end
 
-A bridge optimizer applies given constraint bridges to a given optimizer thus
-extending the types of supported constraints. The attributes of the inner
-optimizer are automatically transformed to make the bridges transparent, e.g.
-the variables and constraints created by the bridges are hidden.
+An abstract type that implements generic functions for bridges.
 
-By convention, the inner optimizer should be stored in a `model` field and
-the dictionary mapping constraint indices to bridges should be stored in a
-`bridges` field. If a bridge optimizer deviates from these conventions, it
-should implement the functions `MOI.optimize!` and `bridge` respectively.
+## Implementation notes
+
+By convention, the inner optimizer should be stored in a `model` field. If not,
+the optimizer must implement [`MOI.optimize!`](@ref).
 """
 abstract type AbstractBridgeOptimizer <: MOI.AbstractOptimizer end
 
 # AbstractBridgeOptimizer interface
 
+"""
+    recursive_model(b::AbstractBridgeOptimizer)
+
+If a variable, constraint, or objective is bridged, return the context of the
+inner variables. For most optimizers, this should be `b.model`.
+"""
 function recursive_model end
 
+"""
+    supports_constraint_bridges(b::AbstractBridgeOptimizer)::Bool
+
+Return a `Bool` indicating if `b` supports
+[`MOI.Bridges.Constraint.AbstractBridge`](@ref).
+"""
 function supports_constraint_bridges end
 
 """
@@ -351,8 +360,8 @@ end
 
 # Implementation of the MOI interface for AbstractBridgeOptimizer
 
-MOI.optimize!(b::AbstractBridgeOptimizer) = MOI.optimize!(b.model)
 # By convention, the model should be stored in a `model` field
+MOI.optimize!(b::AbstractBridgeOptimizer) = MOI.optimize!(b.model)
 
 function MOI.is_empty(b::AbstractBridgeOptimizer)
     return isempty(Variable.bridges(b)) &&

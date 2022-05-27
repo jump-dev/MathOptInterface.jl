@@ -20,20 +20,27 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 ```@docs
 Bridges.AbstractBridge
 Bridges.AbstractBridgeOptimizer
-Bridges.LazyBridgeOptimizer
-Bridges.add_bridge
-Bridges.remove_bridge
-Bridges.has_bridge
-Bridges.full_bridge_optimizer
-Bridges.ListOfNonstandardBridges
-Bridges.debug_supports_constraint
-Bridges.debug_supports
 Bridges.bridged_variable_function
 Bridges.unbridged_variable_function
 Bridges.bridged_function
+Bridges.supports_constraint_bridges
+Bridges.recursive_model
 ```
 
-### [SetMap API](@id constraint_set_map)
+## LazyBridgeOptimizer API
+
+```@docs
+Bridges.LazyBridgeOptimizer
+Bridges.full_bridge_optimizer
+Bridges.ListOfNonstandardBridges
+Bridges.add_bridge
+Bridges.remove_bridge
+Bridges.has_bridge
+Bridges.debug_supports_constraint
+Bridges.debug_supports
+```
+
+## [SetMap API](@id constraint_set_map)
 
 ```@docs
 Bridges.map_set

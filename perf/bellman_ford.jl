@@ -30,11 +30,11 @@ function interval_constraint()
     S = MOI.Interval{Float64}
     MOIB.bridge_index(bridged, F, S)
     display(@benchmark begin
-        MOIB._reset_dist($bridged)
+        MOIB._reset_bridge_graph($bridged)
         MOIB.node($bridged, $F, $S)
     end)
     display(@benchmark begin
-        MOIB._reset_dist($bridged)
+        MOIB._reset_bridge_graph($bridged)
         MOIB.bridge_index($bridged, $F, $S)
     end)
 end
@@ -47,11 +47,11 @@ function quadratic_objective()
     F = MOI.ScalarQuadraticFunction{Float64}
     MOIB.bridge_index(bridged, F)
     display(@benchmark begin
-        MOIB._reset_dist($bridged)
+        MOIB._reset_bridge_graph($bridged)
         MOIB.node($bridged, $F)
     end)
     display(@benchmark begin
-        MOIB._reset_dist($bridged)
+        MOIB._reset_bridge_graph($bridged)
         MOIB.bridge_index($bridged, $F)
     end)
 end

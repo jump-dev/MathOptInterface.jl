@@ -38,7 +38,7 @@ function bridges(bridge::SingleBridgeOptimizer)
     return bridge.map
 end
 
-MOIB.supports_constraint_bridges(::SingleBridgeOptimizer) = true
+MOI.Bridges.supports_constraint_bridges(::SingleBridgeOptimizer) = true
 
 # If `BT` bridges `MOI.Reals` (such as `Constraint.FunctionizeBridge` bridge,
 # without this method, it creates a `StackOverflow` with
