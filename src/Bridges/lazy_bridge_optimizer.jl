@@ -389,6 +389,7 @@ function bridge_index(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction})
 end
 
 supports_constraint_bridges(::LazyBridgeOptimizer) = true
+
 function supports_bridging_constrained_variable(
     b::LazyBridgeOptimizer,
     S::Type{<:MOI.AbstractSet},
