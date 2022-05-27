@@ -169,7 +169,6 @@ function _edge(
     )
 end
 
-
 _functionized_type(::Nothing) = nothing
 
 function _functionized_type(
@@ -443,7 +442,7 @@ function supports_bridging_constrained_variable(
     end
     constraint_node = b.graph.variable_constraint_node[variable_node.index]
     return constraint_node.index != INVALID_NODE_INDEX &&
-        !iszero(bridge_index(b.graph, constraint_node))
+           !iszero(bridge_index(b.graph, constraint_node))
 end
 
 function supports_bridging_constraint(
