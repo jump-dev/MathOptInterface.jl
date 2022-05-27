@@ -19,7 +19,7 @@ In general, you should use [`full_bridge_optimizer`](@ref) instead of this
 constructor because [`full_bridge_optimizer`](@ref) automatically adds a large
 number of supported bridges.
 
-See also: [`add_bridge`](@ref), [`delete_bridge`](@ref), [`has_bridge`](@ref)
+See also: [`add_bridge`](@ref), [`remove_bridge`](@ref), [`has_bridge`](@ref)
 and [`full_bridge_optimizer`](@ref).
 
 ## Example
@@ -109,7 +109,7 @@ remove the bridges that have been added.
 We need to reset the graph whenever we add or delete bridges from `b`, because
 it might change the optimal hyper-paths. Recomputing from scratch is a lot of
 work, but it will only happen if we interleave calls to [`add_bridge`](@ref),
-[`delete_bridge`](@ref), and model builders like [`MOI.add_constraint`](@ref).
+[`remove_bridge`](@ref), and model builders like [`MOI.add_constraint`](@ref).
 """
 function _reset_bridge_graph(b::LazyBridgeOptimizer)
     empty!(b.variable_node)
