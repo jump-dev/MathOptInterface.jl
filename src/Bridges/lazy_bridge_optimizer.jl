@@ -146,23 +146,23 @@ function _constraint_nodes(b::LazyBridgeOptimizer, ::Type{BT}) where {BT}
 end
 
 """
-    _edge(b::LazyBridgeOptimizer, parent::Int, BT::Type{<:AbstractBridge})
+    _edge(b::LazyBridgeOptimizer, index::Int, BT::Type{<:AbstractBridge})
 
 Return the `Edge` or `ObjectiveEdge` in the hyper-graph associated with the
-bridge `BT`, where `parent` is the index of the node from which `BT` is applied.
+bridge `BT`, where `index` is the index of `BT` in the list of bridges.
 """
-function _edge(b::LazyBridgeOptimizer, parent::Int, BT::Type{<:AbstractBridge})
-    return Edge(parent, _variable_nodes(b, BT), _constraint_nodes(b, BT))
+function _edge(b::LazyBridgeOptimizer, index::Int, BT::Type{<:AbstractBridge})
+    return Edge(index, _variable_nodes(b, BT), _constraint_nodes(b, BT))
 end
 
 # Method for objective bridges because they produce ObjectiveEdge.
 function _edge(
     b::LazyBridgeOptimizer,
-    parent::Int,
+    index::Int,
     BT::Type{<:Objective.AbstractBridge},
 )
     return ObjectiveEdge(
-        parent,
+        index,
         _variable_nodes(b, BT),
         _constraint_nodes(b, BT),
         node(b, set_objective_function_type(BT)),
