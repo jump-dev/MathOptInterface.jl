@@ -29,12 +29,7 @@ MOI.Utilities.@model(
     Model,
     (),
     (),
-    (
-        MOI.Reals,
-        MOI.Zeros,
-        MOI.Nonnegatives,
-        MOI.RotatedSecondOrderCone,
-    ),
+    (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.RotatedSecondOrderCone),
     (),
     (),
     (),
@@ -50,9 +45,7 @@ function MOI.supports_constraint(
     return false
 end
 
-function MOI.supports(::Model, ::MOI.ObjectiveFunction{MOI.VariableIndex})
-    return false
-end
+MOI.supports(::Model, ::MOI.ObjectiveFunction{MOI.VariableIndex}) = false
 
 function MOI.supports(
     ::Model{T},
@@ -61,19 +54,9 @@ function MOI.supports(
     return false
 end
 
-function MOI.supports_add_constrained_variables(
-    ::Model,
-    ::Type{MOI.Reals},
-)
-    return false
-end
+MOI.supports_add_constrained_variables(::Model, ::Type{MOI.Reals}) = false
 
-function MOI.supports_add_constrained_variables(
-    ::Model,
-    ::Type{MOI.Nonnegatives},
-)
-    return true
-end
+MOI.supports_add_constrained_variables(::Model, ::Type{MOI.Nonnegatives}) = true
 
 function test_print_active_bridges()
     model = MOI.Bridges.full_bridge_optimizer(Model{Float64}(), Float64)
