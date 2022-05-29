@@ -73,7 +73,7 @@ function _print_constraint_tree(io, b, F, S, offset)
     if !MOI.Bridges.is_bridged(b, F, S)
         # This constraint is natively supported.
         print(io, offset, " * ")
-        _print_supported(io, "Constraint :: $F-in-$S\n")
+        _print_supported(io, "Supported constraint: $F-in-$S\n")
         return
     end
     for (ci, bridge) in b.constraint_map
@@ -81,7 +81,7 @@ function _print_constraint_tree(io, b, F, S, offset)
         if ci isa MOI.ConstraintIndex{F,S}
             # The exact `ci` doesn't matter, only the type.
             print(io, offset, " * ")
-            _print_unsupported(io, "Unsupported constraint :: $F-in-$S\n")
+            _print_unsupported(io, "Unsupported constraint: $F-in-$S\n")
             BT = typeof(bridge)
             println(io, offset, " |  bridged by:")
             print(io, offset, " |   ")
@@ -101,7 +101,7 @@ end
 function _print_variable(io, b, S, x, offset)
     if !haskey(b.variable_map, x)
         print(io, offset, " * ")
-        _print_supported(io, "Variable: $S\n")
+        _print_supported(io, "Supported variable: $S\n")
         return
     end
     print(io, offset, " * ")
@@ -118,7 +118,7 @@ end
 function _print_variable_tree(io, b, S::Type{<:MOI.AbstractVectorSet}, offset)
     if !MOI.Bridges.is_bridged(b, S)
         print(io, offset, " * ")
-        _print_supported(io, "Variable: $S\n")
+        _print_supported(io, "Supported variable: $S\n")
         return
     end
     for ci in MOI.get(b, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S}())
