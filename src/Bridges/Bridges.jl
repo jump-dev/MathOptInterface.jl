@@ -8,6 +8,7 @@ module Bridges
 
 import MathOptInterface
 import OrderedCollections: OrderedDict
+import Printf
 
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
