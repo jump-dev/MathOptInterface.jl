@@ -203,8 +203,15 @@ Register the user-defined operator `op` with `nargs` input arguments in `model`.
 * `∇f(g::AbstractVector{T}, x::T...)::T` is a function that takes a cache vector
   `g` of length `length(x)`, and fills each element `g[i]` with the partial
   derivative of `f` with respect to `x[i]`.
+* `∇²f(H::AbstractMatrix, x::T...)::T` is a function that takes a matrix `H` and
+  fills the lower-triangular components `H[i, j]` with the Hessian of `f` with
+  respect to `x[i]` and `x[j]` for `i >= j`.
 
-Hessian are not supported for multivariate functions.
+### Notes for multivariate Hessians
+
+ * `H` has `size(H) == (length(x), length(x))`, but you must not access
+   elements `H[i, j]` for `i > j`.
+ * `H` is dense, but you do not need to fill structural zeros.
 """
 function register_operator(model::Model, op::Symbol, nargs::Int, f::Function...)
     return register_operator(model.operators, op, nargs, f...)
