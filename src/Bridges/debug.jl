@@ -527,7 +527,10 @@ Print the set of bridges that are active in the model `b`.
 function print_active_bridges(io::IO, b::MOI.Bridges.LazyBridgeOptimizer)
     F = MOI.get(b, MOI.ObjectiveFunctionType())
     _print_objective_tree(io, b, F, "")
-    for (F, S) in MOI.get(b, MOI.ListOfConstraintTypesPresent())
+    types = MOI.get(b, MOI.ListOfConstraintTypesPresent())
+    # We add a sort here to make the order reproducible, and to group similar
+    # constraints together.
+    for (F, S) in sort(types; by = string)
         _print_constraint_tree(io, b, F, S, "")
     end
     return
