@@ -125,10 +125,11 @@ function test_print_active_bridges()
     # Prints to stdout, but just check it doesn't error.
     mktemp() do _, io
         redirect_stdout(io) do
-            MOI.Bridges.print_active_bridges(model)
+            return MOI.Bridges.print_active_bridges(model)
         end
         seekstart(io)
         @test read(io, String) == content
+        return
     end
     @test sprint(MOI.Bridges.print_active_bridges, model) == content
     return
