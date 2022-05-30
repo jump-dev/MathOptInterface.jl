@@ -13,6 +13,10 @@
    ``t = \\frac{u}{\\sqrt 2} + \\frac{v}{\\sqrt 2}``,
    ``x = (\\frac{u}{\\sqrt 2} - \\frac{v}{\\sqrt 2}, w)``.
 
+## Assumptions
+
+ * `SOCtoRSOCBridge` assumes that ``|x| \\ge 1``.
+
 ## Source node
 
 `SOCtoRSOCBridge` supports:
@@ -48,6 +52,13 @@ function MOI.Bridges.inverse_map_set(
     ::Type{<:SOCtoRSOCBridge},
     set::MOI.SecondOrderCone,
 )
+    if MOI.dimension(set) == 1
+        error(
+            "Unable to reformulate a `SecondOrderCone` into a " *
+            "`RotatedSecondOrderCone` because the dimension of `1` is too " *
+            "small",
+        )
+    end
     return MOI.RotatedSecondOrderCone(MOI.dimension(set))
 end
 
