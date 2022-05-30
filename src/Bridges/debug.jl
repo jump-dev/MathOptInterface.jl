@@ -617,11 +617,6 @@ function _print_constraint_tree(io, b, F, S, offset)
 end
 
 function _print_variable(io, b, S, x, offset)
-    if !haskey(b.variable_map, x)
-        print(io, offset, " * ")
-        _print_supported(io, "Supported variable: $S\n")
-        return
-    end
     print(io, offset, " * ")
     _print_unsupported(io, "Unsupported variable: $S\n")
     bridge = b.variable_map[x]
@@ -639,16 +634,17 @@ function _print_variable_tree(io, b, S::Type{<:MOI.AbstractVectorSet}, offset)
         _print_supported(io, "Supported variable: $S\n")
         return
     end
-    for ci in MOI.get(b, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S}())
+    indices = MOI.get(b, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S}())
+    if length(indices) > 0
         @assert MOI.Bridges.is_bridged(b, MOI.VectorOfVariables, S)
+        ci = first(indices)
         f = MOI.get(b, MOI.ConstraintFunction(), ci)
         for x in f.variables
             if haskey(b.variable_map, x)
                 _print_variable(io, b, S, x, offset)
-                return
+                break
             end
         end
-        return
     end
     return
 end

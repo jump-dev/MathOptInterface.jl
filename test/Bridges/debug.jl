@@ -68,7 +68,7 @@ function test_print_active_bridges()
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     f = 1.0 * x * x
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
-    @test sprint(MOI.Bridges.print_active_bridges, model) === """
+    content = """
  * Unsupported objective: MOI.ScalarQuadraticFunction{Float64}
  |  bridged by:
  |   MOIB.Objective.SlackBridge{Float64, MOI.ScalarQuadraticFunction{Float64}, MOI.ScalarQuadraticFunction{Float64}}
@@ -122,6 +122,15 @@ function test_print_active_bridges()
  |  introduces:
  |   * Supported variable: MOI.Nonnegatives
 """
+    # Prints to stdout, but just check it doesn't error.
+    mktemp() do _, io
+        redirect_stdout(io) do
+            MOI.Bridges.print_active_bridges(model)
+        end
+        seekstart(io)
+        @test read(io, String) == content
+    end
+    @test sprint(MOI.Bridges.print_active_bridges, model) == content
     return
 end
 
