@@ -4,8 +4,7 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-const _SOCtoRSOCMap{T} =
-    Union{Constraint.SOCtoRSOCBridge{T},Variable.RSOCtoSOCBridge{T}}
+const _SOCtoRSOCMap{T} = Constraint.SOCtoRSOCBridge{T}
 
 function map_set(::Type{<:_SOCtoRSOCMap}, set::MOI.SecondOrderCone)
     return MOI.RotatedSecondOrderCone(MOI.dimension(set))
@@ -18,8 +17,7 @@ function inverse_map_set(
     return MOI.SecondOrderCone(MOI.dimension(set))
 end
 
-const _RSOCtoSOCMap{T} =
-    Union{Constraint.RSOCtoSOCBridge{T},Variable.SOCtoRSOCBridge{T}}
+const _RSOCtoSOCMap{T} = Constraint.RSOCtoSOCBridge{T}
 
 function map_set(::Type{<:_RSOCtoSOCMap}, set::MOI.RotatedSecondOrderCone)
     return MOI.SecondOrderCone(MOI.dimension(set))
