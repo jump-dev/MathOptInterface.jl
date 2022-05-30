@@ -101,8 +101,7 @@ function test_map()
 
     delete!(map, c1)
     @test length(map) == 2
-    @test sprint(MOI.Bridges.print_num_bridges, map) ==
-          "\nwith 2 constraint bridges"
+    @test sprint(show, map) == "\nwith 2 constraint bridges"
     @test !isempty(map)
     @test MOI.Bridges.Constraint.has_bridges(map)
 
@@ -118,8 +117,7 @@ function test_map()
 
     delete!(map, c2)
     @test length(map) == 1
-    @test sprint(MOI.Bridges.print_num_bridges, map) ==
-          "\nwith 1 constraint bridge"
+    @test sprint(show, map) == "\nwith 1 constraint bridge"
     @test !isempty(map)
     @test MOI.Bridges.Constraint.has_bridges(map)
 
@@ -150,7 +148,7 @@ function test_map()
     @test iszero(MOI.Bridges.Constraint.number_of_type(map, typeof(c1)))
     @test iszero(MOI.Bridges.Constraint.number_of_type(map, typeof(c2)))
     @test iszero(MOI.Bridges.Constraint.number_of_type(map, typeof(c3)))
-    @test sprint(MOI.Bridges.print_num_bridges, map) == ""
+    @test sprint(show, map) == ""
 end
 
 end  # module
