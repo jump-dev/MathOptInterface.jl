@@ -53,6 +53,19 @@ Base.length(v::_UnsafeVectorView) = v.len
 
 Base.size(v::_UnsafeVectorView) = (v.len,)
 
+"""
+    _UnsafeVectorView(x::Vector, N::Int)
+
+Create a new [`_UnsafeVectorView`](@ref) from `x`, and resize `x` if needed to
+ensure it has a length of at least `N`.
+
+## Unsafe behavior
+
+In addition to the usafe behavior of `_UnsafeVectorView`, this constructor is
+additionally unsafe because it may resize `x`. Only call it if you are sure that
+the usage of `_UnsafeVectorView(x, N)` is short-lived, and that there are no
+other views to `x` while the returned value is within scope.
+"""
 function _UnsafeVectorView(x::Vector, N::Int)
     if length(x) < N
         resize!(x, N)
@@ -113,7 +126,22 @@ function Base.setindex!(x::_UnsafeLowerTriangularMatrixView, value, i, j)
     return value
 end
 
-function _UnsafeLowerTriangularMatrixView(x::Vector, N::Int)
+"""
+    _UnsafeLowerTriangularMatrixView(x::Vector{Float64}, N::Int)
+
+Create a new [`_UnsafeLowerTriangularMatrixView`](@ref) from `x`, zero the
+elements in `x`, and resize `x` if needed to ensure it has a length of at least
+`N * (N + 1) / 2`.
+
+## Unsafe behavior
+
+In addition to the usafe behavior of `_UnsafeLowerTriangularMatrixView`, this
+constructor is additionally unsafe because it may resize `x`. Only call it if
+you are sure that the usage of `_UnsafeLowerTriangularMatrixView(x, N)` is
+short-lived, and that there are no other views to `x` while the returned value
+is within scope.
+"""
+function _UnsafeLowerTriangularMatrixView(x::Vector{Float64}, N::Int)
     z = div(N * (N + 1), 2)
     if length(x) < z
         resize!(x, z)
