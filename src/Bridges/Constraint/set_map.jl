@@ -39,8 +39,9 @@ function bridge_constraint(
     func::G,
     set::S1,
 ) where {T,S2,S1,F,G}
-    mapped_func = MOIB.map_function(BT, func)
-    constraint = MOI.add_constraint(model, mapped_func, MOIB.map_set(BT, set))
+    mapped_func = MOI.Bridges.map_function(BT, func)
+    mapped_set = MOI.Bridges.map_set(BT, set)
+    constraint = MOI.add_constraint(model, mapped_func, mapped_set)
     return BT(constraint)
 end
 
@@ -60,17 +61,18 @@ function MOI.supports_constraint(
     return true
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:SetMapBridge})
+function MOI.Bridges.added_constrained_variable_types(::Type{<:SetMapBridge})
     return Tuple{Type}[]
 end
 
-function MOIB.added_constraint_types(
+function MOI.Bridges.added_constraint_types(
     ::Type{<:SetMapBridge{T,S2,S1,F}},
 ) where {T,S2,S1,F}
     return Tuple{Type,Type}[(F, S2)]
 end
 
 # Attributes, Bridge acting as a model
+
 function MOI.get(
     ::SetMapBridge{T,S2,S1,F},
     ::MOI.NumberOfConstraints{F,S2},
@@ -86,20 +88,22 @@ function MOI.get(
 end
 
 # References
+
 function MOI.delete(model::MOI.ModelLike, bridge::SetMapBridge)
     MOI.delete(model, bridge.constraint)
     return
 end
 
 # Attributes, Bridge acting as a constraint
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintFunction,
     bridge::SetMapBridge{T,S2,S1,F,G},
 ) where {T,S2,S1,F,G}
     mapped_func = MOI.get(model, attr, bridge.constraint)
-    func = MOIB.inverse_map_function(typeof(bridge), mapped_func)
-    return MOIU.convert_approx(G, func)
+    func = MOI.Bridges.inverse_map_function(typeof(bridge), mapped_func)
+    return MOI.Utilities.convert_approx(G, func)
 end
 
 function MOI.set(
@@ -108,12 +112,8 @@ function MOI.set(
     bridge::SetMapBridge{T,S2,S1,F,G},
     func::G,
 ) where {T,S2,S1,F,G}
-    MOI.set(
-        model,
-        attr,
-        bridge.constraint,
-        MOIB.map_function(typeof(bridge), func),
-    )
+    new_f = MOI.Bridges.map_function(typeof(bridge), func)
+    MOI.set(model, attr, bridge.constraint, new_f)
     return
 end
 
@@ -123,21 +123,17 @@ function MOI.get(
     bridge::SetMapBridge,
 )
     set = MOI.get(model, attr, bridge.constraint)
-    return MOIB.inverse_map_set(typeof(bridge), set)
+    return MOI.Bridges.inverse_map_set(typeof(bridge), set)
 end
 
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintSet,
     bridge::SetMapBridge{T,S2,S1},
-    new_set::S1,
+    set::S1,
 ) where {T,S2,S1}
-    MOI.set(
-        model,
-        attr,
-        bridge.constraint,
-        MOIB.map_set(typeof(bridge), new_set),
-    )
+    new_set = MOI.Bridges.map_set(typeof(bridge), set)
+    MOI.set(model, attr, bridge.constraint, new_set)
     return
 end
 
@@ -155,7 +151,7 @@ function MOI.get(
     bridge::SetMapBridge,
 )
     value = MOI.get(model, attr, bridge.constraint)
-    return MOIB.inverse_map_function(typeof(bridge), value)
+    return MOI.Bridges.inverse_map_function(typeof(bridge), value)
 end
 
 function MOI.set(
@@ -164,7 +160,7 @@ function MOI.set(
     bridge::SetMapBridge,
     value,
 )
-    mapped_value = MOIB.map_function(typeof(bridge), value)
+    mapped_value = MOI.Bridges.map_function(typeof(bridge), value)
     MOI.set(model, attr, bridge.constraint, mapped_value)
     return
 end
@@ -175,47 +171,64 @@ function MOI.get(
     bridge::SetMapBridge,
 )
     value = MOI.get(model, attr, bridge.constraint)
-    return MOIB.adjoint_map_function(typeof(bridge), value)
+    return MOI.Bridges.adjoint_map_function(typeof(bridge), value)
 end
 
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDualStart,
-    bridge::SetMapBridge,
+    bridge::BT,
     value,
-)
-    mapped_value = MOIB.inverse_adjoint_map_function(typeof(bridge), value)
+) where {BT<:SetMapBridge}
+    mapped_value = MOI.Bridges.inverse_adjoint_map_function(BT, value)
     MOI.set(model, attr, bridge.constraint, mapped_value)
     return
 end
 
 # By linearity of the map, we can just change the constant/coefficient
-function _map_change(::Type{BT}, change::MOI.ScalarConstantChange) where {BT}
-    constant = MOIB.map_function(BT, change.new_constant)
-    return MOI.ScalarConstantChange(constant)
-end
-function _map_change(::Type{BT}, change::MOI.VectorConstantChange) where {BT}
-    constant = MOIB.map_function(BT, change.new_constant)
-    return MOI.VectorConstantChange(constant)
-end
-function _map_change(::Type{BT}, change::MOI.ScalarCoefficientChange) where {BT}
-    coefficient = MOIB.map_function(BT, change.new_coefficient)
-    return MOI.ScalarCoefficientChange(change.variable, coefficient)
-end
-function _map_change(::Type{BT}, change::MOI.MultirowChange) where {BT}
-    # It is important here that `change.new_coefficients` contains
-    # the complete new sparse column associated to the variable.
-    # Calling modify twice with part of the column won't work since
-    # the linear map might reset all the column each time.
-    coefficients = MOIB.map_function(BT, change.new_coefficients)
-    return MOI.MultirowChange(change.variable, coefficients)
+
+function MOI.modify(
+    model::MOI.ModelLike,
+    bridge::BT,
+    change::MOI.ScalarConstantChange,
+) where {BT<:SetMapBridge}
+    new_constant = MOI.Bridges.map_function(BT, change.new_constant)
+    MOI.modify(model, bridge.constraint, MOI.ScalarConstantChange(new_constant))
+    return
 end
 
 function MOI.modify(
     model::MOI.ModelLike,
-    bridge::SetMapBridge,
-    change::MOI.AbstractFunctionModification,
-)
-    MOI.modify(model, bridge.constraint, _map_change(typeof(bridge), change))
+    bridge::BT,
+    change::MOI.VectorConstantChange,
+) where {BT<:SetMapBridge}
+    new_constant = MOI.Bridges.map_function(BT, change.new_constant)
+    MOI.modify(model, bridge.constraint, MOI.VectorConstantChange(new_constant))
+    return
+end
+
+function MOI.modify(
+    model::MOI.ModelLike,
+    bridge::BT,
+    change::MOI.ScalarCoefficientChange,
+) where {BT<:SetMapBridge}
+    new_coefficient = MOI.Bridges.map_function(BT, change.new_coefficient)
+    new_change = MOI.ScalarCoefficientChange(change.variable, new_coefficient)
+    MOI.modify(model, bridge.constraint, new_change)
+    return
+end
+
+function MOI.modify(
+    model::MOI.ModelLike,
+    bridge::BT,
+    change::MOI.MultirowChange,
+) where {BT<:SetMapBridge}
+    # It is important here that `change.new_coefficients` contains the complete
+    # new sparse column associated to the variable. Calling modify twice with
+    # part of the column won't work since  the linear map might reset all the
+    # column each time.
+    coefficients = MOI.Bridges.map_function(BT, change.new_coefficients)
+    new_change = MOI.MultirowChange(change.variable, coefficients)
+    MOI.modify(model, bridge.constraint, new_change)
     return
 end
