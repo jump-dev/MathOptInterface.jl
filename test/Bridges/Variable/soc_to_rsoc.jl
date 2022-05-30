@@ -124,9 +124,8 @@ function test_soc1v()
 end
 
 function test_dimension_1()
-    model = MOI.Bridges.Variable.SOCtoRSOC{Float64}(
-        MOI.Utilities.Model{Float64}(),
-    )
+    model =
+        MOI.Bridges.Variable.SOCtoRSOC{Float64}(MOI.Utilities.Model{Float64}())
     @test_throws(
         ErrorException,
         MOI.add_constrained_variables(model, MOI.SecondOrderCone(1)),
