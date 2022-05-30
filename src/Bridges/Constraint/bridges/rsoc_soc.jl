@@ -47,16 +47,16 @@ end
 
 function MOI.Bridges.map_set(
     ::Type{<:RSOCtoSOCBridge},
-    set::MOI.SecondOrderCone,
+    set::MOI.RotatedSecondOrderCone,
 )
-    return MOI.RotatedSecondOrderCone(MOI.dimension(set))
+    return MOI.SecondOrderCone(MOI.dimension(set))
 end
 
 function MOI.Bridges.inverse_map_set(
     ::Type{<:RSOCtoSOCBridge},
-    set::MOI.RotatedSecondOrderCone,
+    set::MOI.SecondOrderCone,
 )
-    return MOI.SecondOrderCone(MOI.dimension(set))
+    return MOI.RotatedSecondOrderCone(MOI.dimension(set))
 end
 
 function MOI.Bridges.map_function(

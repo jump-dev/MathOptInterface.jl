@@ -50,13 +50,6 @@ end
 
 function MOI.Bridges.map_set(
     ::Type{<:SOCtoRSOCBridge},
-    set::MOI.RotatedSecondOrderCone,
-)
-    return MOI.SecondOrderCone(MOI.dimension(set))
-end
-
-function MOI.Bridges.inverse_map_set(
-    ::Type{<:SOCtoRSOCBridge},
     set::MOI.SecondOrderCone,
 )
     if MOI.dimension(set) == 1
@@ -67,6 +60,13 @@ function MOI.Bridges.inverse_map_set(
         )
     end
     return MOI.RotatedSecondOrderCone(MOI.dimension(set))
+end
+
+function MOI.Bridges.inverse_map_set(
+    ::Type{<:SOCtoRSOCBridge},
+    set::MOI.RotatedSecondOrderCone,
+)
+    return MOI.SecondOrderCone(MOI.dimension(set))
 end
 
 function MOI.Bridges.map_function(
