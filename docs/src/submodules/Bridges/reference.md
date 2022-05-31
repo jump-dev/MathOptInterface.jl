@@ -139,3 +139,19 @@ Bridges.Objective.add_all_bridges
 Bridges.Objective.SlackBridge
 Bridges.Objective.FunctionizeBridge
 ```
+
+### Bridging graph API
+
+```@docs
+Bridges.Graph
+Bridges.VariableNode
+Bridges.ConstraintNode
+Bridges.ObjectiveNode
+Bridges.Edge
+Bridges.ObjectiveEdge
+Bridges.add_node
+Bridges.add_edge
+Bridges.set_variable_constraint_node
+Bridges.bridge_index
+Bridges.is_variable_edge_best
+```

@@ -73,9 +73,9 @@ function print_graph(io::IO, b::LazyBridgeOptimizer; kwargs...)
     print_nodes(
         io,
         b,
-        variable_nodes(b.graph),
-        constraint_nodes(b.graph),
-        objective_nodes(b.graph);
+        VariableNode.(eachindex(b.graph.variable_best)),
+        ConstraintNode.(eachindex(b.graph.constraint_best)),
+        ObjectiveNode.(eachindex(b.graph.objective_best));
         kwargs...,
     )
     return

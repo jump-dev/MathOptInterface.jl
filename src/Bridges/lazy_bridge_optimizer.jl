@@ -227,7 +227,7 @@ function node(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
         return variable_node
     end
     # This is a new (S,). We need to add it to the graph.
-    variable_node = add_variable_node(b.graph)
+    variable_node = add_node(b.graph, VariableNode)
     b.variable_node[(S,)] = variable_node
     push!(b.variable_types, (S,))
     F = MOI.Utilities.variable_function_type(S)
@@ -281,7 +281,7 @@ function node(
         return constraint_node
     end
     # This is a new (F, S). We need to add it to the graph.
-    constraint_node = add_constraint_node(b.graph)
+    constraint_node = add_node(b.graph, ConstraintNode)
     b.constraint_node[(F, S)] = constraint_node
     push!(b.constraint_types, (F, S))
     for (i, BT) in enumerate(b.constraint_bridge_types)
@@ -310,7 +310,7 @@ function node(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractScalarFunction})
         return objective_node
     end
     # This is a new (F,). We need to add it to the graph.
-    objective_node = add_objective_node(b.graph)
+    objective_node = add_node(b.graph, ObjectiveNode)
     b.objective_node[(F,)] = objective_node
     push!(b.objective_types, (F,))
     for (i, BT) in enumerate(b.objective_bridge_types)
