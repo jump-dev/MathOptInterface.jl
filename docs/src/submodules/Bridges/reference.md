@@ -17,8 +17,21 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 # Bridges
 
+## AbstractBridge API
+
 ```@docs
 Bridges.AbstractBridge
+Bridges.added_constrained_variable_types
+Bridges.added_constraint_types
+get(::Bridges.AbstractBridge, ::NumberOfVariables)
+get(::Bridges.AbstractBridge, ::ListOfVariableIndices)
+get(::Bridges.AbstractBridge, ::NumberOfConstraints)
+get(::Bridges.AbstractBridge, ::ListOfConstraintIndices)
+```
+
+## AbstractBridgeOptimizer API
+
+```@docs
 Bridges.AbstractBridgeOptimizer
 Bridges.bridged_variable_function
 Bridges.unbridged_variable_function
@@ -55,6 +68,9 @@ Bridges.inverse_adjoint_map_function
 
 ```@docs
 Bridges.Constraint.AbstractBridge
+supports_constraint(::Type{<:Bridges.Constraint.AbstractBridge}, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet})
+Bridges.Constraint.concrete_bridge_type
+Bridges.Constraint.bridge_constraint
 Bridges.Constraint.AbstractFunctionConversionBridge
 Bridges.Constraint.SingleBridgeOptimizer
 Bridges.Constraint.add_all_bridges
@@ -106,6 +122,9 @@ Bridges.Constraint.ZeroOneBridge
 
 ```@docs
 Bridges.Variable.AbstractBridge
+Bridges.Variable.supports_constrained_variable
+Bridges.Variable.concrete_bridge_type
+Bridges.Variable.bridge_constrained_variable
 Bridges.Variable.SingleBridgeOptimizer
 Bridges.Variable.add_all_bridges
 Bridges.Variable.FlipSignBridge
@@ -129,6 +148,10 @@ Bridges.Variable.RSOCtoPSDBridge
 
 ```@docs
 Bridges.Objective.AbstractBridge
+Bridges.Objective.supports_objective_function
+Bridges.set_objective_function_type
+Bridges.Objective.concrete_bridge_type
+Bridges.Objective.bridge_objective
 Bridges.Objective.SingleBridgeOptimizer
 Bridges.Objective.add_all_bridges
 ```
@@ -140,7 +163,7 @@ Bridges.Objective.SlackBridge
 Bridges.Objective.FunctionizeBridge
 ```
 
-### Bridging graph API
+## Bridging graph API
 
 ```@docs
 Bridges.Graph

@@ -7,8 +7,16 @@
 """
     abstract type AbstractBridge <: MOI.Bridges.AbstractBridge end
 
-Subtype of [`MathOptInterface.Bridges.AbstractBridge`](@ref) for objective
-bridges.
+Subtype of [`MOI.Bridges.AbstractBridge`](@ref) for objective bridges.
+
+In addition to the required implementation described in
+[`MOI.Bridges.AbstractBridge`](@ref), subtypes of `AbstractBridge` must
+additionally implement:
+
+ * [`supports_objective_function`](@ref)
+ * [`concrete_bridge_type`](@ref)
+ * [`bridge_objective`](@ref)
+ * [`MOI.Bridges.set_objective_function_type`](@ref)
 """
 abstract type AbstractBridge <: MOI.Bridges.AbstractBridge end
 

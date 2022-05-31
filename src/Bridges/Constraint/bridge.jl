@@ -7,8 +7,15 @@
 """
     abstract type AbstractBridge <: MOI.Bridges.AbstractType
 
-Subtype of [`MOI.Bridges.AbstractBridge`](@ref) for constraint
-bridges.
+Subtype of [`MOI.Bridges.AbstractBridge`](@ref) for constraint bridges.
+
+In addition to the required implementation described in
+[`MOI.Bridges.AbstractBridge`](@ref), subtypes of `AbstractBridge` must
+additionally implement:
+
+ * [`MOI.supports_constraint(::Type{<:AbstractBridge}, ::Type{<:MOI.AbstractFunction}, ::Type{<:MOI.AbstractSet})`](@ref)
+ * [`concrete_bridge_type`](@ref)
+ * [`bridge_constraint`](@ref)
 """
 abstract type AbstractBridge <: MOI.Bridges.AbstractBridge end
 
