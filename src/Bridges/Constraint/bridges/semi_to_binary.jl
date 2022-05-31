@@ -4,27 +4,50 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-const _SemiSets{T} = Union{MOI.Semicontinuous{T},MOI.Semiinteger{T}}
-
 """
-    SemiToBinaryBridge{T, S <: MOI.AbstractScalarSet}
+    SemiToBinaryBridge{T,S} <: Bridges.Constraint.AbstractBridge
 
-The `SemiToBinaryBridge` replaces a Semicontinuous constraint:
-``x \\in \\mathsf{Semicontinuous}(l, u)``
-is replaced by:
-``z \\in \\{0, 1\\}``,
-``x \\leq z \\cdot u ``,
-``x \\geq z \\cdot l ``.
+`SemiToBinaryBridge` implements the following reformulations:
 
-The `SemiToBinaryBridge` replaces a Semiinteger constraint:
-``x \\in Semiinteger(l, u)``
-is replaced by:
-``z \\in \\{0, 1\\}``,
-``x \\in \\mathbb{Z}``,
-``x \\leq z \\cdot u ``,
-``x \\geq z \\cdot l ``.
+  * ``x \\in \\{0\\} \\cup [l, u]`` into
+    ```math
+    \\begin{aligned}
+    x \\leq z \\times u \\
+    x \\geq z \\times l \\
+    z \\in \\{0, 1\\}
+    \\end{aligned}
+    ```
+  * ``x \\in \\{0\\} \\cup \\{l, \ldots, u\\}`` into
+    ```math
+    \\begin{aligned}
+    x \\leq z \\times u \\
+    x \\geq z \\times l \\
+    z \\in \\{0, 1\\} \\
+    x \\in \\mathbb{Z}
+    \\end{aligned}
+    ```
+
+## Source node
+
+`SemiToBinaryBridge` supports:
+
+  * [`MOI.VariableIndex`](@ref) in [`MOI.Semicontinuous{T}`](@ref)
+  * [`MOI.VariableIndex`](@ref) in [`MOI.Semiinteger{T}`](@ref)
+
+## Target nodes
+
+`SemiToBinaryBridge` creates:
+
+  * [`MOI.VariableIndex`](@ref) in [`MOI.ZeroOne`](@ref)
+  * [`MOI.ScalarAffineFunction{T}`](@ref) in [`MOI.LessThan{T}`](@ref)
+  * [`MOI.ScalarAffineFunction{T}`](@ref) in [`MOI.GreaterThan{T}`](@ref)
+  * [`MOI.VariableIndex{T}`](@ref) in [`MOI.Integer`](@ref) (if `S` is
+    [`MOI.Semiinteger{T}`](@ref)
 """
-mutable struct SemiToBinaryBridge{T,S<:_SemiSets{T}} <: AbstractBridge
+mutable struct SemiToBinaryBridge{
+    T,
+    S<:Union{MOI.Semicontinuous{T},MOI.Semiinteger{T}},
+} <: AbstractBridge
     semi_set::S
     variable::MOI.VariableIndex
     binary_variable::MOI.VariableIndex
@@ -51,7 +74,7 @@ function bridge_constraint(
     model::MOI.ModelLike,
     f::MOI.VariableIndex,
     s::S,
-) where {T<:Real,S<:_SemiSets{T}}
+) where {T<:Real,S<:Union{MOI.Semicontinuous{T},MOI.Semiinteger{T}}}
     binary, binary_con = MOI.add_constrained_variable(model, MOI.ZeroOne())
     # var - LB * bin >= 0
     lb = MOI.Utilities.operate(*, T, -s.lower, binary)
@@ -106,15 +129,15 @@ function concrete_bridge_type(
     ::Type{<:SemiToBinaryBridge{T}},
     ::Type{MOI.VariableIndex},
     ::Type{S},
-) where {T,S<:_SemiSets}
+) where {T,S<:Union{MOI.Semicontinuous{T},MOI.Semiinteger{T}}}
     return SemiToBinaryBridge{T,S}
 end
 
 function MOI.supports_constraint(
-    ::Type{<:SemiToBinaryBridge},
+    ::Type{<:SemiToBinaryBridge{T}},
     ::Type{MOI.VariableIndex},
-    ::Type{<:_SemiSets},
-)
+    ::Type{<:Union{MOI.Semicontinuous{T},MOI.Semiinteger{T}}},
+) where {T}
     return true
 end
 
@@ -200,7 +223,7 @@ function MOI.set(
     value,
 ) where {T}
     MOI.set(model, MOI.VariablePrimalStart(), bridge.variable, value)
-    bin_value = iszero(value) ? 0.0 : 1.0
+    bin_value = iszero(value) ? zero(T) : one(T)
     MOI.set(model, MOI.VariablePrimalStart(), bridge.binary_variable, bin_value)
     MOI.set(
         model,
