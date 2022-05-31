@@ -5,11 +5,24 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    ZeroOneBridge{T}
+    ZeroOneBridge{T} <: Bridges.Constraint.AbstractBridge
 
-The `ZeroOneBridge` splits a `MOI.VariableIndex`-in-`MOI.ZeroOne` constraint
-into a `MOI.VariableIndex`-in-`MOI.Integer` constraint
-and a `MOI.VariableIndex`-in-`MOI.Interval(0, 1)` constraint.
+`ZeroOneBridge` implements the following reformulation:
+
+  * ``x \\in \\{0, 1\\}`` into ``z \\in \\mathbb{Z}``, ``z \\in [0, 1]``.
+
+## Source node
+
+`ZeroOneBridge` supports:
+
+    * [`MOI.VariableIndex`](@ref) in [`MOI.ZeroOne`](@ref)
+
+## Target nodes
+
+`ZeroOneBridge` creates:
+
+    * [`MOI.VariableIndex`](@ref) in [`MOI.Integer`](@ref)
+    * [`MOI.VariableIndex`](@ref) in [`MOI.Interval{T}`](@ref)
 """
 struct ZeroOneBridge{T} <: AbstractBridge
     interval_index::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Interval{T}}
@@ -24,10 +37,9 @@ function bridge_constraint(
     f::MOI.VariableIndex,
     ::MOI.ZeroOne,
 ) where {T<:Real}
-    interval_index =
-        MOI.add_constraint(model, f, MOI.Interval{T}(zero(T), one(T)))
-    integer_index = MOI.add_constraint(model, f, MOI.Integer())
-    return ZeroOneBridge{T}(interval_index, integer_index)
+    interval = MOI.add_constraint(model, f, MOI.Interval{T}(zero(T), one(T)))
+    integer = MOI.add_constraint(model, f, MOI.Integer())
+    return ZeroOneBridge{T}(interval, integer)
 end
 
 function MOI.Bridges.added_constraint_types(

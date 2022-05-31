@@ -5,17 +5,31 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    VectorizeBridge{T,F,S,G}
+    VectorizeBridge{T,F,S,G} <: Bridges.Constraint.AbstractBridge
 
-Transforms a constraint `G`-in-`scalar_set_type(S, T)` where
-`S <: VectorLinearSet` to `F`-in-`S`.
+`VectorizeBridge` implements the following reformulations:
 
-## Examples
+  * ``g(x) \\ge a`` into ``[g(x) - a] \\in \\mathbb{R}_+``
+  * ``g(x) \\le a`` into ``[g(x) - a] \\in \\mathbb{R}_-``
+  * ``g(x) == a`` into ``[g(x) - a] \\in \\{0\\}``
 
-The constraint `VariableIndex`-in-`LessThan{Float64}` becomes
-`VectorAffineFunction{Float64}`-in-`Nonpositives`, where `T = Float64`,
-`F = VectorAffineFunction{Float64}`, `S = Nonpositives`, and
-`G = VariableIndex`.
+where `T` is the coefficient type of `g(x) - a`.
+
+## Source node
+
+`VectorizeBridge` supports:
+
+  * `G` in [`MOI.GreaterThan{T}`](@ref)
+  * `G` in [`MOI.LessThan{T}`](@ref)
+  * `G` in [`MOI.EqualTo{T}`](@ref)
+
+## Target nodes
+
+`VectorizeBridge` creates:
+
+  * `F` in `S`, where `S` is one of [`MOI.Nonnegatives`](@ref),
+    [`MOI.Nonpositives`](@ref), [`MOI.Zeros`](@ref) depending on the type of the
+    input set.
 """
 mutable struct VectorizeBridge{T,F,S,G} <: AbstractBridge
     vector_constraint::MOI.ConstraintIndex{F,S}
@@ -50,11 +64,11 @@ function MOI.supports_constraint(
     return true
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:VectorizeBridge})
+function MOI.Bridges.added_constrained_variable_types(::Type{<:VectorizeBridge})
     return Tuple{Type}[]
 end
 
-function MOIB.added_constraint_types(
+function MOI.Bridges.added_constraint_types(
     ::Type{<:VectorizeBridge{T,F,S}},
 ) where {T,F,S}
     return Tuple{Type,Type}[(F, S)]
