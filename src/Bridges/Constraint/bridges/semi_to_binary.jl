@@ -17,7 +17,7 @@
     z \\in \\{0, 1\\}
     \\end{aligned}
     ```
-  * ``x \\in \\{0\\} \\cup \\{l, \ldots, u\\}`` into
+  * ``x \\in \\{0\\} \\cup \\{l, \\ldots, u\\}`` into
     ```math
     \\begin{aligned}
     x \\leq z \\times u \\
