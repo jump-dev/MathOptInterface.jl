@@ -29,6 +29,47 @@ get(::Bridges.AbstractBridge, ::NumberOfConstraints)
 get(::Bridges.AbstractBridge, ::ListOfConstraintIndices)
 ```
 
+## Constraint bridge API
+
+```@docs
+Bridges.Constraint.AbstractBridge
+supports_constraint(::Type{<:Bridges.Constraint.AbstractBridge}, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet})
+Bridges.Constraint.concrete_bridge_type
+Bridges.Constraint.bridge_constraint
+Bridges.Constraint.AbstractFunctionConversionBridge
+Bridges.Constraint.SingleBridgeOptimizer
+Bridges.Constraint.add_all_bridges
+Bridges.Constraint.FlipSignBridge
+Bridges.Constraint.AbstractToIntervalBridge
+Bridges.Constraint.SetMapBridge
+```
+
+## Objective bridge API
+
+```@docs
+Bridges.Objective.AbstractBridge
+Bridges.Objective.supports_objective_function
+Bridges.set_objective_function_type
+Bridges.Objective.concrete_bridge_type
+Bridges.Objective.bridge_objective
+Bridges.Objective.SingleBridgeOptimizer
+Bridges.Objective.add_all_bridges
+```
+
+## [Variable bridge API](@id ref_variable_bridges)
+
+```@docs
+Bridges.Variable.AbstractBridge
+Bridges.Variable.supports_constrained_variable
+Bridges.Variable.concrete_bridge_type
+Bridges.Variable.bridge_constrained_variable
+Bridges.Variable.SingleBridgeOptimizer
+Bridges.Variable.add_all_bridges
+Bridges.Variable.FlipSignBridge
+Bridges.Variable.SetMapBridge
+Bridges.Variable.unbridged_map
+```
+
 ## AbstractBridgeOptimizer API
 
 ```@docs
@@ -62,105 +103,6 @@ Bridges.map_function
 Bridges.inverse_map_function
 Bridges.adjoint_map_function
 Bridges.inverse_adjoint_map_function
-```
-
-## Constraint bridge API
-
-```@docs
-Bridges.Constraint.AbstractBridge
-supports_constraint(::Type{<:Bridges.Constraint.AbstractBridge}, ::Type{<:AbstractFunction}, ::Type{<:AbstractSet})
-Bridges.Constraint.concrete_bridge_type
-Bridges.Constraint.bridge_constraint
-Bridges.Constraint.AbstractFunctionConversionBridge
-Bridges.Constraint.SingleBridgeOptimizer
-Bridges.Constraint.add_all_bridges
-Bridges.Constraint.FlipSignBridge
-Bridges.Constraint.AbstractToIntervalBridge
-Bridges.Constraint.SetMapBridge
-```
-
-## [Constraint bridges implemented](@id constraint_bridges_ref)
-
-```@docs
-Bridges.Constraint.GreaterToIntervalBridge
-Bridges.Constraint.LessToIntervalBridge
-Bridges.Constraint.GreaterToLessBridge
-Bridges.Constraint.LessToGreaterBridge
-Bridges.Constraint.NonnegToNonposBridge
-Bridges.Constraint.NonposToNonnegBridge
-Bridges.Constraint.VectorizeBridge
-Bridges.Constraint.ScalarizeBridge
-Bridges.Constraint.ScalarSlackBridge
-Bridges.Constraint.VectorSlackBridge
-Bridges.Constraint.ScalarFunctionizeBridge
-Bridges.Constraint.VectorFunctionizeBridge
-Bridges.Constraint.SplitIntervalBridge
-Bridges.Constraint.SOCtoRSOCBridge
-Bridges.Constraint.RSOCtoSOCBridge
-Bridges.Constraint.SOCtoNonConvexQuadBridge
-Bridges.Constraint.RSOCtoNonConvexQuadBridge
-Bridges.Constraint.QuadtoSOCBridge
-Bridges.Constraint.SOCtoPSDBridge
-Bridges.Constraint.RSOCtoPSDBridge
-Bridges.Constraint.NormInfinityBridge
-Bridges.Constraint.NormOneBridge
-Bridges.Constraint.GeoMeantoRelEntrBridge
-Bridges.Constraint.GeoMeanBridge
-Bridges.Constraint.RelativeEntropyBridge
-Bridges.Constraint.NormSpectralBridge
-Bridges.Constraint.NormNuclearBridge
-Bridges.Constraint.SquareBridge
-Bridges.Constraint.RootDetBridge
-Bridges.Constraint.LogDetBridge
-Bridges.Constraint.IndicatorActiveOnFalseBridge
-Bridges.Constraint.IndicatorSOS1Bridge
-Bridges.Constraint.SemiToBinaryBridge
-Bridges.Constraint.ZeroOneBridge
-```
-
-## [Variable bridge API](@id ref_variable_bridges)
-
-```@docs
-Bridges.Variable.AbstractBridge
-Bridges.Variable.supports_constrained_variable
-Bridges.Variable.concrete_bridge_type
-Bridges.Variable.bridge_constrained_variable
-Bridges.Variable.SingleBridgeOptimizer
-Bridges.Variable.add_all_bridges
-Bridges.Variable.FlipSignBridge
-Bridges.Variable.SetMapBridge
-Bridges.Variable.unbridged_map
-```
-
-## [Variable bridges implemented](@id variable_bridges_ref)
-
-```@docs
-Bridges.Variable.ZerosBridge
-Bridges.Variable.FreeBridge
-Bridges.Variable.NonposToNonnegBridge
-Bridges.Variable.VectorizeBridge
-Bridges.Variable.SOCtoRSOCBridge
-Bridges.Variable.RSOCtoSOCBridge
-Bridges.Variable.RSOCtoPSDBridge
-```
-
-## Objective bridge API
-
-```@docs
-Bridges.Objective.AbstractBridge
-Bridges.Objective.supports_objective_function
-Bridges.set_objective_function_type
-Bridges.Objective.concrete_bridge_type
-Bridges.Objective.bridge_objective
-Bridges.Objective.SingleBridgeOptimizer
-Bridges.Objective.add_all_bridges
-```
-
-### [Objective bridges implemented](@id objective_bridges_ref)
-
-```@docs
-Bridges.Objective.SlackBridge
-Bridges.Objective.FunctionizeBridge
 ```
 
 ## Bridging graph API

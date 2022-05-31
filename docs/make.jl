@@ -63,6 +63,7 @@ const _PAGES = [
         ],
         "Bridges" => [
             "Overview" => "submodules/Bridges/overview.md",
+            "List of bridges" => "submodules/Bridges/list_of_bridges.md",
             "API Reference" => "submodules/Bridges/reference.md",
         ],
         "FileFormats" => [
