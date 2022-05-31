@@ -59,25 +59,6 @@ function MOI.Bridges.inverse_map_set(
     return MOI.RotatedSecondOrderCone(MOI.dimension(set))
 end
 
-function MOI.Bridges.map_function(
-    ::Type{<:RSOCtoSOCBridge{T}},
-    func,
-    i::MOI.Bridges.IndexInVector,
-) where {T}
-    scalars = MOI.Utilities.eachscalar(func)
-    if i.value > 2
-        return scalars[i.value]
-    end
-    t, u = scalars[1], scalars[2]
-    ts = MOI.Utilities.operate!(/, T, t, sqrt(T(2)))
-    us = MOI.Utilities.operate!(/, T, u, sqrt(T(2)))
-    if i.value == 1
-        return MOI.Utilities.operate!(+, T, ts, us)
-    else
-        return MOI.Utilities.operate!(-, T, ts, us)
-    end
-end
-
 function MOI.Bridges.map_function(::Type{<:RSOCtoSOCBridge{T}}, func) where {T}
     scalars = MOI.Utilities.eachscalar(func)
     t, u, x = scalars[1], scalars[2], scalars[3:end]
