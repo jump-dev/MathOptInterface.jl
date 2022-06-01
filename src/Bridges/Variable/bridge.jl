@@ -7,8 +7,15 @@
 """
     abstract type AbstractBridge <: MOI.Bridges.AbstractBridge end
 
-Subtype of [`MathOptInterface.Bridges.AbstractBridge`](@ref) for variable
-bridges.
+Subtype of [`MOI.Bridges.AbstractBridge`](@ref) for variable bridges.
+
+In addition to the required implementation described in
+[`MOI.Bridges.AbstractBridge`](@ref), subtypes of `AbstractBridge` must
+additionally implement:
+
+ * [`supports_constrained_variable`](@ref)
+ * [`concrete_bridge_type`](@ref)
+ * [`bridge_constrained_variable`](@ref)
 """
 abstract type AbstractBridge <: MOI.Bridges.AbstractBridge end
 
