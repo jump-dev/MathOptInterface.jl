@@ -37,22 +37,18 @@ end
 function test_Map()
     map = MOI.Bridges.Objective.Map()
     _test_empty(map)
-    @test sprint(MOI.Bridges.print_num_bridges, map) ==
-          "\nwith 0 objective bridges"
+    @test sprint(show, map) == "\nwith 0 objective bridges"
     x = MOI.VariableIndex(1)
     MOI.Bridges.Objective.add_key_for_bridge(map, ObjectiveDummyBridge(1), x)
     @test MOI.Bridges.Objective.root_bridge(map) == ObjectiveDummyBridge(1)
-    @test sprint(MOI.Bridges.print_num_bridges, map) ==
-          "\nwith 1 objective bridge"
+    @test sprint(show, map) == "\nwith 1 objective bridge"
     func = 1.0x
     MOI.Bridges.Objective.add_key_for_bridge(map, ObjectiveDummyBridge(2), func)
     @test MOI.Bridges.Objective.root_bridge(map) == ObjectiveDummyBridge(2)
-    @test sprint(MOI.Bridges.print_num_bridges, map) ==
-          "\nwith 2 objective bridges"
+    @test sprint(show, map) == "\nwith 2 objective bridges"
     empty!(map)
     _test_empty(map)
-    @test sprint(MOI.Bridges.print_num_bridges, map) ==
-          "\nwith 0 objective bridges"
+    @test sprint(show, map) == "\nwith 0 objective bridges"
     return
 end
 
@@ -61,7 +57,7 @@ function test_EmptyMap()
     _test_empty(map)
     empty!(map)
     _test_empty(map)
-    @test sprint(MOI.Bridges.print_num_bridges, map) == ""
+    @test sprint(show, map) == ""
     return
 end
 

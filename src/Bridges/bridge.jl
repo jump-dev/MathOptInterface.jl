@@ -10,15 +10,19 @@
 An abstract type representing a bridged constraint or variable in a
 [`MathOptInterface.Bridges.AbstractBridgeOptimizer`](@ref).
 
-Subtypes must implement [`MathOptInterface.get`](@ref) for the following
-attributes with the bridge in place of the [`MathOptInterface.ModelLike`](@ref):
+All bridges must implement:
 
- * [`MathOptInterface.NumberOfVariables`](@ref)
- * [`MathOptInterface.ListOfVariableIndices`](@ref)
- * [`MathOptInterface.NumberOfConstraints`](@ref)
- * [`MathOptInterface.ListOfConstraintIndices`](@ref)
+ * [`added_constrained_variable_types`](@ref)
+ * [`added_constraint_types`](@ref)
+ * [`MOI.get(::AbstractBridge, ::MOI.NumberOfVariables)`](@ref)
+ * [`MOI.get(::AbstractBridge, ::MOI.ListOfVariableIndices)`](@ref)
+ * [`MOI.get(::AbstractBridge, ::MOI.NumberOfConstraints)`](@ref)
+ * [`MOI.get(::AbstractBridge, ::MOI.ListOfConstraintIndices)`](@ref)
 
-In addition, subtypes may optionally implement the following constraint
+Subtypes of `AbstractBridge` may have additional requirements. Consult their
+docstrings for details.
+
+In addition, all subtypes may optionally implement the following constraint
 attributes with the bridge in place of the constraint index:
 
  * [`MathOptInterface.ConstraintDual`](@ref)
@@ -180,7 +184,7 @@ end
 
 """
     added_constrained_variable_types(
-        BT::Type{<:Variable.AbstractBridge},
+        BT::Type{<:AbstractBridge},
     )::Vector{Tuple{Type}}
 
 Return a list of the types of constrained variables that bridges of concrete
@@ -204,7 +208,7 @@ function added_constrained_variable_types end
 
 """
     added_constraint_types(
-        BT::Type{<:Constraint.AbstractBridge},
+        BT::Type{<:AbstractBridge},
     )::Vector{Tuple{Type,Type}}
 
 Return a list of the types of constraints that bridges of concrete type `BT`

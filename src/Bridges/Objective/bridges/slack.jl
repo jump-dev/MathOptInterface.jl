@@ -46,6 +46,7 @@ struct SlackBridge{
         MOI.ConstraintIndex{F,MOI.LessThan{T}},
         MOI.ConstraintIndex{F,MOI.GreaterThan{T}},
     }
+    constant::T
 end
 
 const Slack{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SlackBridge{T},OT}
@@ -69,7 +70,7 @@ function bridge_objective(
     end
     constraint = MOI.Utilities.normalize_and_add_constraint(model, f, set)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), slack)
-    return SlackBridge{T,F,G}(slack, constraint)
+    return SlackBridge{T,F,G}(slack, constraint, MOI.constant(f))
 end
 
 function supports_objective_function(
@@ -156,14 +157,8 @@ function MOI.get(
     # with the `ConstraintPrimal` of the constraint.
     obj_slack_constant =
         MOI.get(model, MOI.ConstraintPrimal(), bridge.constraint)
-    # The constant was moved to the set as it is a scalar constraint.
-    constant =
-        MOI.constant(MOI.get(model, MOI.ConstraintSet(), bridge.constraint))
-    return obj_slack_constant + slack - constant
+    return obj_slack_constant + slack + bridge.constant
 end
-
-_constant_term(set::MOI.LessThan) = set.upper
-_constant_term(set::MOI.GreaterThan) = set.lower
 
 function MOI.get(
     model::MOI.ModelLike,
@@ -171,8 +166,7 @@ function MOI.get(
     bridge::SlackBridge{T,F,G},
 ) where {T,F,G<:MOI.AbstractScalarFunction}
     func = MOI.get(model, MOI.ConstraintFunction(), bridge.constraint)
-    set = MOI.get(model, MOI.ConstraintSet(), bridge.constraint)
-    f = MOI.Utilities.operate(-, T, func, _constant_term(set))
+    f = MOI.Utilities.operate(+, T, func, bridge.constant)
     g = MOI.Utilities.remove_variable(f, bridge.slack)
     return MOI.Utilities.convert_approx(G, g)
 end

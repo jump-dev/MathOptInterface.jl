@@ -21,8 +21,6 @@ include("Variable/Variable.jl")
 include("Constraint/Constraint.jl")
 include("Objective/Objective.jl")
 
-include("soc_rsoc.jl")
-
 include("lazy_bridge_optimizer.jl")
 include("debug.jl")
 
@@ -145,49 +143,6 @@ attribute_value_type(::ListOfNonstandardBridges) = Vector{Type}
 MOI.is_copyable(::ListOfNonstandardBridges) = false
 
 MOI.get_fallback(model::MOI.ModelLike, ::ListOfNonstandardBridges) = Type[]
-
-print_num_bridges(io::IO, ::Variable.EmptyMap) = nothing
-
-print_num_bridges(io::IO, ::Constraint.EmptyMap) = nothing
-
-print_num_bridges(io::IO, ::Objective.EmptyMap) = nothing
-
-function print_num_bridges(io::IO, B::Variable.Map)
-    s(n) = n == 1 ? "" : "s"
-    indent = " "^get(io, :indent, 0)
-    n = length(B)
-    print(io, "\n$(indent)with $(n) variable bridge$(s(n))")
-    return
-end
-
-function print_num_bridges(io::IO, B::Constraint.Map)
-    s(n) = n == 1 ? "" : "s"
-    indent = " "^get(io, :indent, 0)
-    n = length(B)
-    print(io, "\n$(indent)with $(n) constraint bridge$(s(n))")
-    return
-end
-
-function print_num_bridges(io::IO, B::Objective.Map)
-    s(n) = n == 1 ? "" : "s"
-    indent = " "^get(io, :indent, 0)
-    n = length(B)
-    print(io, "\n$(indent)with $(n) objective bridge$(s(n))")
-    return
-end
-
-function Base.show(io::IO, B::AbstractBridgeOptimizer)
-    MOIU.print_with_acronym(io, summary(B))
-    print_num_bridges(io, Variable.bridges(B))
-    print_num_bridges(io, Constraint.bridges(B))
-    print_num_bridges(io, Objective.bridges(B))
-    if :model in propertynames(B)
-        indent = " "^get(io, :indent, 0)
-        print(io, "\n$(indent)with inner model ")
-        show(IOContext(io, :indent => get(io, :indent, 0) + 2), B.model)
-    end
-    return
-end
 
 include("precompile.jl")
 

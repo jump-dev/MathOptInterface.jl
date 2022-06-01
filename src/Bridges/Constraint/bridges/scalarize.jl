@@ -5,10 +5,29 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    ScalarizeBridge{T, F, S}
+    ScalarizeBridge{T,F,S}
 
-Transforms a constraint `AbstractVectorFunction`-in-`vector_set_type(S)` where
-`S <: LPCone{T}` to `F`-in-`S`.
+`ScalarizeBridge` implements the following reformulations:
+
+  * ``f(x) - a \\in \\mathbb{R}_+`` into ``f_i(x) \\ge a_i`` for all ``i``
+  * ``f(x) - a \\in \\mathbb{R}_-`` into ``f_i(x) \\le a_i`` for all ``i``
+  * ``f(x) - a \\in \\{0\\}`` into ``f_i(x) == a_i`` for all ``i``
+
+## Source node
+
+`ScalarizeBridge` supports:
+
+  * `G` in [`MOI.Nonnegatives{T}`](@ref)
+  * `G` in [`MOI.Nonpositives{T}`](@ref)
+  * `G` in [`MOI.Zeros{T}`](@ref)
+
+## Target nodes
+
+`ScalarizeBridge` creates:
+
+  * `F` in `S`, where `S` is one of [`MOI.GreaterThan{T}`](@ref),
+    [`MOI.LessThan{T}`](@ref), and [`MOI.EqualTo{T}`](@ref), depending on the
+    type of the input set.
 """
 mutable struct ScalarizeBridge{T,F,S} <: AbstractBridge
     scalar_constraints::Vector{MOI.ConstraintIndex{F,S}}
@@ -108,23 +127,17 @@ function MOI.get(
     func = MOI.Utilities.vectorize(
         MOI.get.(model, attr, bridge.scalar_constraints),
     )
-    if !(func isa MOI.VectorOfVariables)
-        # `func` is in terms of bridged variables here while in
-        # `bridge_constraint` it was in terms of the solver variables so
-        # `MOI.constant(set)` might be different than `bridge.constants[i]`.
-        for i in eachindex(bridge.scalar_constraints)
-            set = MOI.get(
-                model,
-                MOI.ConstraintSet(),
-                bridge.scalar_constraints[i],
-            )
-            func = MOI.Utilities.operate_output_index!(
-                -,
-                T,
-                i,
-                func,
-                MOI.constant(set),
-            )
+    if func isa MOI.VectorOfVariables
+        return func
+    end
+    # `func` is in terms of bridged variables here while in `bridge_constraint`
+    # it was in terms of the solver variables so `MOI.constant(set)` might be
+    # different than `bridge.constants[i]`.
+    for i in eachindex(bridge.scalar_constraints)
+        set = MOI.get(model, MOI.ConstraintSet(), bridge.scalar_constraints[i])
+        rhs = MOI.constant(set)
+        if !iszero(rhs)
+            func = MOI.Utilities.operate_output_index!(-, T, i, func, rhs)
         end
     end
     return func
@@ -160,7 +173,7 @@ function MOI.get(
     bridge::ScalarizeBridge,
 )
     values = MOI.get.(model, attr, bridge.scalar_constraints)
-    if any(value -> value === nothing, values)
+    if any(isnothing, values)
         return
     end
     return values .+ bridge.constants
@@ -202,7 +215,7 @@ function MOI.get(
     bridge::ScalarizeBridge,
 )
     values = MOI.get.(model, attr, bridge.scalar_constraints)
-    if any(value -> value === nothing, values)
+    if any(isnothing, values)
         return
     end
     return values
