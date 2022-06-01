@@ -5,9 +5,10 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    GeoMeanBridge{T, F, G, H}
+    GeoMeanBridge{T,F,G,H} <: Bridges.Constraint.AbstractBridge
 
-The `GeometricMeanCone` is `SecondOrderCone` representable; see [1, p. 105].
+`GeoMeanBridge` implements a reformulation from [`MOI.GeometricMeanCone`](@ref)
+into [`MOI.RotatedSecondOrderCone`](@ref).
 
 The reformulation is best described in an example.
 
@@ -15,39 +16,58 @@ Consider the cone of dimension 4:
 ```math
 t \\le \\sqrt[3]{x_1 x_2 x_3}
 ```
-This can be rewritten as ``\\exists x_{21} \\ge 0`` such that:
+This can be rewritten as ``\\exists y \\ge 0`` such that:
 ```math
 \\begin{align*}
-  t & \\le x_{21},\\\\
-  x_{21}^4 & \\le x_1 x_2 x_3 x_{21}.
+  t & \\le y,\\\\
+  y^4 & \\le x_1 x_2 x_3 y.
+\\end{align*}
+```
+Note that we need to create ``y`` and not use ``t^4`` directly because ``t`` is
+allowed to be negative.
+
+This is equivalent to:
+```math
+\\begin{align*}
+    t & \\le \\frac{y_1}{\\sqrt{4}},\\\\
+    y_1^2 & \\le 2y_2 y_3,\\\\
+    y_2^2 & \\le 2x_1 x_2, \\\\
+    y_3^2 & \\le 2x_3(y_1/\\sqrt{4}) \\\\
+    y \\ge 0.
 \\end{align*}
 ```
 
-Note that we need to create ``x_{21}`` and not use ``t^4`` directly as ``t`` is
-allowed to be negative. Now, this is equivalent to:
-```math
-\\begin{align*}
-  t & \\le x_{21}/\\sqrt{4},\\\\
-  x_{21}^2 & \\le 2x_{11} x_{12},\\\\
-  x_{11}^2 & \\le 2x_1 x_2, & x_{12}^2 & \\le 2x_3(x_{21}/\\sqrt{4}).
-\\end{align*}
-```
+More generally, you can show how the geometric mean code is recursively expanded
+into a set of new variables ``y`` in [`MOI.Nonnegatives`](@ref), a set of
+[`MOI.RotatedSecondOrderCone`](@ref) constraints, and a [`MOI.LessThan`](@ref)
+constraint between ``t`` and ``y_1``.
 
-[1] Ben-Tal, Aharon, and Arkadi Nemirovski. *Lectures on modern convex
-    optimization: analysis, algorithms, and engineering applications*. Society
-    for Industrial and Applied Mathematics, 2001.
+## Source node
+
+`GeoMeanBridge` supports:
+
+  * `H` in [`MOI.GeometricMeanCone`](@ref)
+
+## Target nodes
+
+`GeoMeanBridge` creates:
+
+  * `F` in [`MOI.LessThan{T}`](@ref)
+  * `G` in [`MOI.RotatedSecondOrderCone`](@ref)
+  * `G` in [`MOI.Nonnegatives`](@ref)
 """
 struct GeoMeanBridge{T,F,G,H} <: AbstractBridge
     d::Int
     xij::Vector{MOI.VariableIndex}
     t_upper_bound_constraint::MOI.ConstraintIndex{F,MOI.LessThan{T}}
     rsoc_constraints::Vector{MOI.ConstraintIndex{G,MOI.RotatedSecondOrderCone}}
+    # Ihe case that `d > 2`, this is `Nothing` because the new variables are
+    # non-negative due to the RotatedSecondOrderCone constraint.
     x_nonnegative_constraint::Union{
         Nothing,
         MOI.ConstraintIndex{H,MOI.Nonnegatives},
     }
-    # We use an internal constructor here so that users cannot pass
-    # GeoMeanBridge(args..., nothing) can cause a `H not defined` error.
+
     function GeoMeanBridge{T,F,G,H}(
         d,
         xij,
@@ -75,30 +95,26 @@ function bridge_constraint(
     f::MOI.AbstractVectorFunction,
     s::MOI.GeometricMeanCone,
 ) where {T,F,G,H}
+    d = MOI.dimension(s)
     f_scalars = MOI.Utilities.eachscalar(f)
-    t = f_scalars[1]
-    if MOI.dimension(s) == 2
-        # The case {(t, x) ∈ R²: x₁ >= 0, t <= x₁}
-        # The constraint t <= x₁
-        t_upper_bound_constraint = MOI.Utilities.normalize_and_add_constraint(
-            model,
-            MOI.Utilities.operate!(-, T, t, f_scalars[2]),
-            MOI.LessThan(zero(T)),
-            allow_modify_function = true,
-        )
-        # The constraint x₁ >= 0
-        x_nonnegative_constraint =
-            MOI.add_constraint(model, f_scalars[2:2], MOI.Nonnegatives(1))
+    if d == 2
+        # We have a special case for two-dimensional set, because this doesn't
+        # require adding a rotated second order cone.
         return GeoMeanBridge{T,F,G,H}(
-            MOI.dimension(s),
+            d,
             MOI.VariableIndex[],
-            t_upper_bound_constraint,
+            MOI.Utilities.normalize_and_add_constraint(
+                model,
+                MOI.Utilities.operate!(-, T, f_scalars[1], f_scalars[2]),
+                MOI.LessThan(zero(T));
+                allow_modify_function = true,
+            ),
             MOI.ConstraintIndex{G,MOI.RotatedSecondOrderCone}[],
-            x_nonnegative_constraint,
+            MOI.add_constraint(model, f_scalars[2:2], MOI.Nonnegatives(1)),
         )
     end
-    SG = MOIU.scalar_type(G)
-    d = MOI.dimension(s)
+    t = f_scalars[1]
+    SG = MOI.Utilities.scalar_type(G)
     n = d - 1
     l = _ilog2(n)
     N = 1 << l
@@ -111,9 +127,9 @@ function bridge_constraint(
 
     # With sqrt(2)^l*t - xl1, we should scale both the ConstraintPrimal and
     # ConstraintDual
-    t_upper_bound_constraint = MOIU.normalize_and_add_constraint(
+    t_upper_bound_constraint = MOI.Utilities.normalize_and_add_constraint(
         model,
-        MOIU.operate!(+, T, t, -sN * xl1),
+        MOI.Utilities.operate!(+, T, t, -sN * xl1),
         MOI.LessThan(zero(T)),
         allow_modify_function = true,
     )
@@ -132,7 +148,7 @@ function bridge_constraint(
             c = xij[offset+j]
             rsoc_constraints[offset+j] = MOI.add_constraint(
                 model,
-                MOIU.operate(vcat, T, a, b, c),
+                MOI.Utilities.operate(vcat, T, a, b, c),
                 MOI.RotatedSecondOrderCone(3),
             )
         end
@@ -156,11 +172,11 @@ function MOI.supports_constraint(
     return true
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:GeoMeanBridge})
+function MOI.Bridges.added_constrained_variable_types(::Type{<:GeoMeanBridge})
     return Tuple{Type}[]
 end
 
-function MOIB.added_constraint_types(
+function MOI.Bridges.added_constraint_types(
     ::Type{<:GeoMeanBridge{T,F,G}},
 ) where {T,F,G}
     return Tuple{Type,Type}[
@@ -175,10 +191,10 @@ function concrete_bridge_type(
     H::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.GeometricMeanCone},
 ) where {T}
-    S = MOIU.scalar_type(H)
-    A = MOIU.promote_operation(*, T, T, MOI.VariableIndex)
-    F = MOIU.promote_operation(+, T, S, A)
-    G = MOIU.promote_operation(vcat, T, A, S, MOI.VariableIndex)
+    S = MOI.Utilities.scalar_type(H)
+    A = MOI.Utilities.promote_operation(*, T, T, MOI.VariableIndex)
+    F = MOI.Utilities.promote_operation(+, T, S, A)
+    G = MOI.Utilities.promote_operation(vcat, T, A, S, MOI.VariableIndex)
     return GeoMeanBridge{T,F,G,H}
 end
 
@@ -253,18 +269,18 @@ function MOI.get(
     bridge::GeoMeanBridge{T,F,G,H},
 ) where {T,F,G,H}
     d = bridge.d
-    f_scalars = Vector{MOIU.scalar_type(H)}(undef, bridge.d)
+    f_scalars = Vector{MOI.Utilities.scalar_type(H)}(undef, bridge.d)
     tub = MOI.get(model, attr, bridge.t_upper_bound_constraint)
     rhs = MOI.constant(
         MOI.get(model, MOI.ConstraintSet(), bridge.t_upper_bound_constraint),
     )
-    tub = MOIU.operate(-, T, tub, rhs)
+    tub = MOI.Utilities.operate(-, T, tub, rhs)
     if d == 2
         x = MOI.get(model, attr, bridge.x_nonnegative_constraint)
-        f_scalars[2] = MOIU.eachscalar(x)[1]
-        f_scalars[1] = MOIU.operate(+, T, tub, f_scalars[2])
+        f_scalars[2] = MOI.Utilities.eachscalar(x)[1]
+        f_scalars[1] = MOI.Utilities.operate(+, T, tub, f_scalars[2])
     else
-        t = MOIU.remove_variable(tub, bridge.xij[1])
+        t = MOI.Utilities.remove_variable(tub, bridge.xij[1])
         f_scalars[1] = t
         n = d - 1
         l = _ilog2(n)
@@ -273,7 +289,7 @@ function MOI.get(
         for j in 1:num_lvars
             if 2j <= bridge.d
                 func = MOI.get(model, attr, bridge.rsoc_constraints[offset+j])
-                func_scalars = MOIU.eachscalar(func)
+                func_scalars = MOI.Utilities.eachscalar(func)
                 # Numerical issues can arise when a VectorOfVariables function
                 # is turned into a VectorAffineFunction, because the RSOC
                 # constraints might return something like `0.999999999x` instead
@@ -291,10 +307,10 @@ function MOI.get(
             end
         end
     end
-    return MOIU.vectorize(f_scalars)
+    return MOI.Utilities.vectorize(f_scalars)
 end
 
-function _getconstrattr(model, attr, bridge::GeoMeanBridge{T}) where {T}
+function _get_attribute(model, attr, bridge::GeoMeanBridge{T}) where {T}
     output = Vector{T}(undef, bridge.d)
     output[1] = MOI.get(model, attr, bridge.t_upper_bound_constraint)
     if bridge.d == 2
@@ -318,7 +334,7 @@ function MOI.get(
     attr::MOI.ConstraintPrimal,
     bridge::GeoMeanBridge,
 )
-    output = _getconstrattr(model, attr, bridge)
+    output = _get_attribute(model, attr, bridge)
     N = length(bridge.xij) + 1
     # the constraint is t - x_l1/sqrt(2^l) ≤ 0, we need to add the value of x_l1
     if bridge.d == 2
@@ -335,7 +351,7 @@ function MOI.get(
     attr::MOI.ConstraintDual,
     bridge::GeoMeanBridge,
 )
-    output = _getconstrattr(model, attr, bridge)
+    output = _get_attribute(model, attr, bridge)
     if bridge.d == 2
         # The transformation is:
         # [t]                [1 -1] [t]

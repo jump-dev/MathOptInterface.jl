@@ -4,45 +4,37 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-# The code here is mostly copied from the flip_sign.jl code for FlipSignBridge and GreaterToLessBridge
-
 """
-    AbstractToIntervalBridge{T, S1, F}
+    AbstractToIntervalBridge{T<:AbstractFloat,S,F}
 
-Bridge a `F`-in-`Interval` constraint into an `F`-in-`Interval{T}` constraint where we have either:
-* `S1 = MOI.GreaterThan{T}`
-* `S1 = MOI.LessThan{T}`
-
-The `F`-in-`Interval{T}` constraint is stored in the `constraint`
-field by convention.
+An abstract type that simplifies the creation of other bridges.
 
 !!! warning
-    It is required that `T` be a `AbstractFloat` type because otherwise
-    `typemin` and `typemax` would either be not implemented (e.g. `BigInt`)
-    or would not give infinite value (e.g. `Int`). For this reason,
-    this bridge is only added to
-    [`MathOptInterface.Bridges.full_bridge_optimizer`](@ref).
-
-    when `T` is a subtype of `AbstractFloat`.
+    `T` must be a `AbstractFloat` type because otherwise `typemin` and `typemax`
+    would either be not implemented (e.g. `BigInt`), or would not give infinite
+    value (e.g. `Int`). For this reason, this bridge is only added to
+    [`MOI.Bridges.full_bridge_optimizer`](@ref) when `T` is a subtype of
+    `AbstractFloat`.
 """
 abstract type AbstractToIntervalBridge{
     T<:AbstractFloat,
-    S1<:MOI.AbstractScalarSet,
+    S<:MOI.AbstractScalarSet,
     F<:MOI.AbstractScalarFunction,
-} <: SetMapBridge{T,MOI.Interval{T},S1,F,F} end
+} <: SetMapBridge{T,MOI.Interval{T},S,F,F} end
 
-# The function map is the identity. It is also an involution, symmetric, and a symmetric involution.
-MOIB.map_function(::Type{<:AbstractToIntervalBridge{T}}, func) where {T} = func
-MOIB.inverse_map_function(::Type{<:AbstractToIntervalBridge}, func) = func
-MOIB.adjoint_map_function(::Type{<:AbstractToIntervalBridge}, func) = func
-function MOIB.inverse_adjoint_map_function(
+MOI.Bridges.map_function(::Type{<:AbstractToIntervalBridge}, f) = f
+
+MOI.Bridges.inverse_map_function(::Type{<:AbstractToIntervalBridge}, f) = f
+
+MOI.Bridges.adjoint_map_function(::Type{<:AbstractToIntervalBridge}, f) = f
+
+function MOI.Bridges.inverse_adjoint_map_function(
     ::Type{<:AbstractToIntervalBridge},
-    func,
+    f,
 )
-    return func
+    return f
 end
 
-# FIXME are these modify functions necessary?
 function MOI.modify(
     model::MOI.ModelLike,
     bridge::AbstractToIntervalBridge,
@@ -52,21 +44,24 @@ function MOI.modify(
     return
 end
 
-function MOI.modify(
-    model::MOI.ModelLike,
-    bridge::AbstractToIntervalBridge,
-    change::MOI.MultirowChange{T},
-) where {T}
-    MOI.modify(model, bridge.constraint, change)
-    return
-end
-
 """
-    GreaterToIntervalBridge{T, F<:MOI.AbstractScalarFunction} <:
-        AbstractToIntervalBridge{T, MOI.GreaterThan{T}, F}
+    GreaterToIntervalBridge{T,F} <: Bridges.Constraint.AbstractBridge
 
-Transforms a `F`-in-`GreaterThan{T}` constraint into an `F`-in-`Interval{T}`
-constraint.
+`GreaterToIntervalBridge` implements the following reformulations:
+
+  * ``f(x) \\ge l`` into ``f(x) \\in [l, \\infty)``
+
+## Source node
+
+`GreaterToIntervalBridge` supports:
+
+  * `F` in [`MOI.GreaterThan{T}`](@ref)
+
+## Target nodes
+
+`GreaterToIntervalBridge` creates:
+
+  * `F` in [`MOI.Interval{T}`](@ref)
 """
 struct GreaterToIntervalBridge{T,F<:MOI.AbstractScalarFunction} <:
        AbstractToIntervalBridge{T,MOI.GreaterThan{T},F}
@@ -76,11 +71,14 @@ end
 const GreaterToInterval{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{GreaterToIntervalBridge{T},OT}
 
-function MOIB.map_set(::Type{<:GreaterToIntervalBridge}, set::MOI.GreaterThan)
+function MOI.Bridges.map_set(
+    ::Type{<:GreaterToIntervalBridge},
+    set::MOI.GreaterThan,
+)
     return MOI.Interval(set.lower, typemax(set.lower))
 end
 
-function MOIB.inverse_map_set(
+function MOI.Bridges.inverse_map_set(
     ::Type{<:GreaterToIntervalBridge},
     set::MOI.Interval,
 )
@@ -96,11 +94,23 @@ function concrete_bridge_type(
 end
 
 """
-    LessToIntervalBridge{T, F<:MOI.AbstractScalarFunction} <:
-        AbstractToIntervalBridge{T, MOI.LessThan{T}, F}
+    LessToIntervalBridge{T,F} <: Bridges.Constraint.AbstractBridge
 
-Transforms a `F`-in-`LessThan{T}` constraint into an `F`-in-`Interval{T}`
-constraint.
+`LessToIntervalBridge` implements the following reformulations:
+
+  * ``f(x) \\le u`` into ``f(x) \\in (-\\infty, u]``
+
+## Source node
+
+`LessToIntervalBridge` supports:
+
+  * `F` in [`MOI.LessThan{T}`](@ref)
+
+## Target nodes
+
+`LessToIntervalBridge` creates:
+
+  * `F` in [`MOI.Interval{T}`](@ref)
 """
 struct LessToIntervalBridge{T,F<:MOI.AbstractScalarFunction} <:
        AbstractToIntervalBridge{T,MOI.LessThan{T},F}
@@ -110,11 +120,14 @@ end
 const LessToInterval{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{LessToIntervalBridge{T},OT}
 
-function MOIB.map_set(::Type{<:LessToIntervalBridge}, set::MOI.LessThan)
+function MOI.Bridges.map_set(::Type{<:LessToIntervalBridge}, set::MOI.LessThan)
     return MOI.Interval(typemin(set.upper), set.upper)
 end
 
-function MOIB.inverse_map_set(::Type{<:LessToIntervalBridge}, set::MOI.Interval)
+function MOI.Bridges.inverse_map_set(
+    ::Type{<:LessToIntervalBridge},
+    set::MOI.Interval,
+)
     return MOI.LessThan(set.upper)
 end
 

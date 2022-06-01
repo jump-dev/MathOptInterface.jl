@@ -4,45 +4,42 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-_lower_set(set::MOI.Interval) = MOI.GreaterThan(set.lower)
-function _lower_set(set::MOI.Interval{T}) where {T<:AbstractFloat}
-    if set.lower == typemin(T)
-        return nothing
-    else
-        return MOI.GreaterThan(set.lower)
-    end
-end
-_upper_set(set::MOI.Interval) = MOI.LessThan(set.upper)
-function _upper_set(set::MOI.Interval{T}) where {T<:AbstractFloat}
-    if set.upper == typemax(T)
-        return nothing
-    else
-        return MOI.LessThan(set.upper)
-    end
-end
-_lower_set(set::MOI.EqualTo) = MOI.GreaterThan(set.value)
-_upper_set(set::MOI.EqualTo) = MOI.LessThan(set.value)
-_lower_set(set::MOI.Zeros) = MOI.Nonnegatives(set.dimension)
-_upper_set(set::MOI.Zeros) = MOI.Nonpositives(set.dimension)
-
 """
-    SplitIntervalBridge{T, F, S, LS, US}
+    SplitIntervalBridge{T,F,S,LS,US} <: Bridges.Constraint.AbstractBridge
 
-The `SplitIntervalBridge` splits a `F`-in-`S` constraint into a `F`-in-`LS` and
-a `F`-in-`US` constraint where we have either:
-* `S = MOI.Interval{T}`, `LS = MOI.GreaterThan{T}` and `US = MOI.LessThan{T}`,
-* `S = MOI.EqualTo{T}`, `LS = MOI.GreaterThan{T}` and `US = MOI.LessThan{T}`, or
-* `S = MOI.Zeros`, `LS = MOI.Nonnegatives` and `US = MOI.Nonpositives`.
+`SplitIntervalBridge` implements the following reformulations:
 
-For instance, if `F` is `MOI.ScalarAffineFunction` and `S` is `MOI.Interval`,
-it transforms the constraint ``l ≤ ⟨a, x⟩ + α ≤ u`` into the constraints
-``⟨a, x⟩ + α ≥ l`` and ``⟨a, x⟩ + α ≤ u``.
+  * ``l \\le f(x) \\le u`` into ``f(x) \\ge l`` and ``f(x) \\le u``
+  * ``f(x) = b`` into ``f(x) \\ge b`` and ``f(x) \\le b``
+  * ``f(x) \\in \\{0\\}`` into ``f(x) \\in \\mathbb{R}_+`` and
+    ``f(x) \\in \\mathbb{R}_-``
+
+## Source node
+
+`SplitIntervalBridge` supports:
+
+  * `F` in [`MOI.Interval{T}`](@ref)
+  * `F` in [`MOI.EqualTo{T}`](@ref)
+  * `F` in [`MOI.Zeros`](@ref)
+
+## Target nodes
+
+`SplitIntervalBridge` creates:
+
+  * `F` in [`MOI.LessThan{T}`](@ref)
+  * `F` in [`MOI.GreaterThan{T}`](@ref)
+
+or
+
+  * `F` in [`MOI.Nonnegatives`](@ref)
+  * `F` in [`MOI.Nonpositives`](@ref)
+
 
 !!! note
     If `T<:AbstractFloat` and `S` is `MOI.Interval{T}` then no lower (resp.
     upper) bound constraint is created if the lower (resp. upper) bound is
     `typemin(T)` (resp. `typemax(T)`). Similarly, when
-    [`MathOptInterface.ConstraintSet`](@ref) is set, a lower or upper bound
+    [`MOI.ConstraintSet`](@ref) is set, a lower or upper bound
     constraint may be deleted or created accordingly.
 """
 mutable struct SplitIntervalBridge{
@@ -67,28 +64,47 @@ end
 const SplitInterval{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{SplitIntervalBridge{T},OT}
 
+_lower_set(set::MOI.Interval) = MOI.GreaterThan(set.lower)
+_upper_set(set::MOI.Interval) = MOI.LessThan(set.upper)
+
+function _lower_set(set::MOI.Interval{T}) where {T<:AbstractFloat}
+    if set.lower == typemin(T)
+        return nothing
+    else
+        return MOI.GreaterThan(set.lower)
+    end
+end
+
+function _upper_set(set::MOI.Interval{T}) where {T<:AbstractFloat}
+    if set.upper == typemax(T)
+        return nothing
+    else
+        return MOI.LessThan(set.upper)
+    end
+end
+
+_lower_set(set::MOI.EqualTo) = MOI.GreaterThan(set.value)
+_upper_set(set::MOI.EqualTo) = MOI.LessThan(set.value)
+
+_lower_set(set::MOI.Zeros) = MOI.Nonnegatives(set.dimension)
+_upper_set(set::MOI.Zeros) = MOI.Nonpositives(set.dimension)
+
 function bridge_constraint(
     ::Type{SplitIntervalBridge{T,F,S,LS,US}},
     model::MOI.ModelLike,
     f::F,
     set::S,
 ) where {T,F,S,LS,US}
-    lower_set = _lower_set(set)
-    if lower_set === nothing
-        lower = nothing
-    else
-        lower = MOI.add_constraint(model, f, _lower_set(set))
+    lower, upper, func = nothing, nothing, nothing
+    lower_set, upper_set = _lower_set(set), _upper_set(set)
+    if lower_set !== nothing
+        lower = MOI.add_constraint(model, f, lower_set)
     end
-    upper_set = _upper_set(set)
-    if upper_set === nothing
-        upper = nothing
-    else
-        upper = MOI.add_constraint(model, f, _upper_set(set))
+    if upper_set !== nothing
+        upper = MOI.add_constraint(model, f, upper_set)
     end
     if lower === nothing && upper === nothing
         func = f
-    else
-        func = nothing
     end
     return SplitIntervalBridge{T,F,S,LS,US}(lower, upper, func)
 end
@@ -201,25 +217,20 @@ function MOI.supports(
     return MOI.supports(model, attr, ci_1) && MOI.supports(model, attr, ci_2)
 end
 
-function _error_double_inf(attr)
-    return error(
-        "Cannot get `$attr` for a constraint in the interval `[-Inf, Inf]`.",
-    )
-end
-
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
     bridge::SplitIntervalBridge,
 )
-    # lower and upper should give the same value
     if bridge.lower !== nothing
         return MOI.get(model, attr, bridge.lower)
     end
     if bridge.upper !== nothing
         return MOI.get(model, attr, bridge.upper)
     end
-    return _error_double_inf(attr)
+    return error(
+        "Cannot get `$attr` for a constraint in the interval `[-Inf, Inf]`.",
+    )
 end
 
 function MOI.set(
@@ -238,29 +249,26 @@ function MOI.set(
 end
 
 # The map is:
-# x ∈ S <=> [1 1]' * x ∈ LS × US
+#   x ∈ S <=> [1 1]' * x ∈ LS × US
 # So the adjoint map is
-# [1 1] * y ∈ S* <=> y ∈ (LS × US)*
-# where [1 1] * y = y[1] + y[2]
+#   [1 1] * y ∈ S* <=> y ∈ (LS × US)*
+# where
+#   [1 1] * y = y[1] + y[2]
 # so we can just sum the dual values.
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
     bridge::SplitIntervalBridge{T},
 ) where {T}
-    if bridge.lower === nothing
-        if bridge.upper === nothing
-            return zero(T)
-        else
-            return MOI.get(model, attr, bridge.upper)
-        end
+    if bridge.lower === nothing && bridge.upper === nothing
+        return zero(T)
+    elseif bridge.lower === nothing
+        return MOI.get(model, attr, bridge.upper)
+    elseif bridge.upper === nothing
+        return MOI.get(model, attr, bridge.lower)
     else
-        if bridge.upper === nothing
-            return MOI.get(model, attr, bridge.lower)
-        else
-            return MOI.get(model, attr, bridge.lower) +
-                   MOI.get(model, attr, bridge.upper)
-        end
+        return MOI.get(model, attr, bridge.lower) +
+               MOI.get(model, attr, bridge.upper)
     end
 end
 
@@ -318,18 +326,19 @@ function MOI.get(
             # The only case where the interval `[-∞, ∞]` is allowed is for
             # `VariableIndex` constraints but `ConstraintBasisStatus` is not
             # defined for `VariableIndex` constraints.
-            _error_double_inf(attr)
-        else
-            return upper_stat
+            error(
+                "Cannot get `$attr` for a constraint in the interval " *
+                "`[-Inf, Inf]`.",
+            )
         end
-    else
-        lower_stat = MOI.get(model, attr, bridge.lower)
-        if lower_stat == MOI.NONBASIC
-            return MOI.NONBASIC_AT_LOWER
-        end
-        # Both statuses must be BASIC or SUPER_BASIC, so just return the lower.
-        return lower_stat
+        return upper_stat
     end
+    lower_stat = MOI.get(model, attr, bridge.lower)
+    if lower_stat == MOI.NONBASIC
+        return MOI.NONBASIC_AT_LOWER
+    end
+    # Both statuses must be BASIC or SUPER_BASIC, so just return the lower.
+    return lower_stat
 end
 
 function MOI.modify(
@@ -367,8 +376,7 @@ function MOI.set(
     bridge::SplitIntervalBridge{T,F,S},
     change::S,
 ) where {T,F,S}
-    lower_set = _lower_set(change)
-    upper_set = _upper_set(change)
+    lower_set, upper_set = _lower_set(change), _upper_set(change)
     if lower_set === nothing && upper_set === nothing
         # The constraints are going to be deleted, we store the function before
         # it is lost.
@@ -422,14 +430,11 @@ function MOI.get(
     attr::MOI.ConstraintSet,
     bridge::SplitIntervalBridge{T,F,MOI.Interval{T}},
 ) where {T,F}
-    if bridge.lower === nothing
-        lower = typemin(T)
-    else
+    lower, upper = typemin(T), typemax(T)
+    if bridge.lower !== nothing
         lower = MOI.get(model, attr, bridge.lower).lower
     end
-    if bridge.upper === nothing
-        upper = typemax(T)
-    else
+    if bridge.upper !== nothing
         upper = MOI.get(model, attr, bridge.upper).upper
     end
     return MOI.Interval(lower, upper)
