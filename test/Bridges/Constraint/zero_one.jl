@@ -59,7 +59,7 @@ function test_ZeroOne()
         5,
         (
             (MOI.VariableIndex, MOI.Integer, 0),
-            (MOI.VariableIndex, MOI.Interval{Float64}, 0),
+            (MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}, 0),
         ),
         num_bridged = 5,
     )
@@ -97,7 +97,7 @@ function test_ZeroOne()
     variables: x, y
     y == 1.0
     x in Integer()
-    x in Interval(0.0,1.0)
+    c: 1.0 * x in Interval(0.0,1.0)
     minobjective: x
     """
     modelb = MOI.Utilities.Model{Float64}()
@@ -112,16 +112,30 @@ function test_ZeroOne()
         String[],
         [("y", MOI.EqualTo{Float64}(1.0)), ("x", MOI.ZeroOne())],
     )
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}
+    ci = first(MOI.get(mock, MOI.ListOfConstraintIndices{F,S}()))
+    MOI.set(mock, MOI.ConstraintName(), ci, "c")
     MOI.Test.util_test_models_equal(
         mock,
         modelb,
         ["x", "y"],
-        String[],
-        [
-            ("y", MOI.EqualTo{Float64}(1.0)),
-            ("x", MOI.Integer()),
-            ("x", MOI.Interval{Float64}(0.0, 1.0)),
-        ],
+        String["c"],
+        [("y", MOI.EqualTo{Float64}(1.0)), ("x", MOI.Integer())],
+    )
+    return
+end
+
+function test_double_bounds()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    # These tests run, but don't actually evaluate any `@test`s because of
+    # the exclude on `MOI.optimize!`. However, we only really care that the
+    # models build without error.
+    MOI.Test.runtests(
+        MOI.Bridges.Constraint.ZeroOne{Float64}(mock),
+        MOI.Test.Config(exclude = Any[MOI.optimize!]);
+        include = ["test_constraint_ZeroOne_", "test_variable_solve_ZeroOne_"],
     )
     return
 end

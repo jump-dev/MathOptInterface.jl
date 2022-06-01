@@ -9,7 +9,7 @@
 
 `ZeroOneBridge` implements the following reformulation:
 
-  * ``x \\in \\{0, 1\\}`` into ``z \\in \\mathbb{Z}``, ``z \\in [0, 1]``.
+  * ``x \\in \\{0, 1\\}`` into ``x \\in \\mathbb{Z}``, ``1x \\in [0, 1]``.
 
 ## Source node
 
@@ -22,10 +22,13 @@
 `ZeroOneBridge` creates:
 
   * [`MOI.VariableIndex`](@ref) in [`MOI.Integer`](@ref)
-  * [`MOI.VariableIndex`](@ref) in [`MOI.Interval{T}`](@ref)
+  * [`MOI.ScalarAffineFunction{T}`](@ref) in [`MOI.Interval{T}`](@ref)
 """
 struct ZeroOneBridge{T} <: AbstractBridge
-    interval_index::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Interval{T}}
+    interval_index::MOI.ConstraintIndex{
+        MOI.ScalarAffineFunction{T},
+        MOI.Interval{T},
+    }
     integer_index::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}
 end
 
@@ -34,11 +37,12 @@ const ZeroOne{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{ZeroOneBridge{T},OT}
 function bridge_constraint(
     ::Type{ZeroOneBridge{T}},
     model::MOI.ModelLike,
-    f::MOI.VariableIndex,
+    x::MOI.VariableIndex,
     ::MOI.ZeroOne,
 ) where {T<:Real}
+    f = convert(MOI.ScalarAffineFunction{T}, x)
     interval = MOI.add_constraint(model, f, MOI.Interval{T}(zero(T), one(T)))
-    integer = MOI.add_constraint(model, f, MOI.Integer())
+    integer = MOI.add_constraint(model, x, MOI.Integer())
     return ZeroOneBridge{T}(interval, integer)
 end
 
@@ -46,7 +50,7 @@ function MOI.Bridges.added_constraint_types(
     ::Type{<:ZeroOneBridge{T}},
 ) where {T}
     return Tuple{Type,Type}[
-        (MOI.VariableIndex, MOI.Interval{T}),
+        (MOI.ScalarAffineFunction{T}, MOI.Interval{T}),
         (MOI.VariableIndex, MOI.Integer),
     ]
 end
@@ -78,7 +82,7 @@ function MOI.get(
     attr::MOI.ConstraintFunction,
     bridge::ZeroOneBridge,
 )
-    return MOI.get(model, attr, bridge.interval_index)
+    return MOI.get(model, attr, bridge.integer_index)
 end
 
 function MOI.delete(model::MOI.ModelLike, bridge::ZeroOneBridge)
@@ -92,12 +96,12 @@ function MOI.get(
     attr::Union{MOI.ConstraintPrimal},
     bridge::ZeroOneBridge,
 )
-    return MOI.get(model, attr, bridge.interval_index)
+    return MOI.get(model, attr, bridge.integer_index)
 end
 
 function MOI.get(
     ::ZeroOneBridge{T},
-    ::MOI.NumberOfConstraints{MOI.VariableIndex,MOI.Interval{T}},
+    ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.Interval{T}},
 )::Int64 where {T}
     return 1
 end
@@ -111,7 +115,7 @@ end
 
 function MOI.get(
     bridge::ZeroOneBridge,
-    ::MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.Interval{T}},
+    ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},MOI.Interval{T}},
 ) where {T}
     return [bridge.interval_index]
 end
