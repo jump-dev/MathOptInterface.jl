@@ -15,14 +15,14 @@
 
 `ZeroOneBridge` supports:
 
-    * [`MOI.VariableIndex`](@ref) in [`MOI.ZeroOne`](@ref)
+  * [`MOI.VariableIndex`](@ref) in [`MOI.ZeroOne`](@ref)
 
 ## Target nodes
 
 `ZeroOneBridge` creates:
 
-    * [`MOI.VariableIndex`](@ref) in [`MOI.Integer`](@ref)
-    * [`MOI.VariableIndex`](@ref) in [`MOI.Interval{T}`](@ref)
+  * [`MOI.VariableIndex`](@ref) in [`MOI.Integer`](@ref)
+  * [`MOI.VariableIndex`](@ref) in [`MOI.Interval{T}`](@ref)
 """
 struct ZeroOneBridge{T} <: AbstractBridge
     interval_index::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Interval{T}}
