@@ -17,6 +17,13 @@ end
 
 Map() = Map(Dict{MOI.ObjectiveFunction,AbstractBridge}(), nothing)
 
+function Base.show(io::IO, B::Map)
+    indent = " "^get(io, :indent, 0)
+    n = length(B)
+    s = n == 1 ? "" : "s"
+    return print(io, "\n$(indent)with $(n) objective bridge$s")
+end
+
 # Implementation of `AbstractDict` interface.
 
 Base.isempty(map::Map) = isempty(map.bridges)
@@ -94,6 +101,8 @@ It is used by
 objective function.
 """
 struct EmptyMap <: AbstractDict{MOI.ObjectiveFunction,AbstractBridge} end
+
+Base.show(::IO, ::EmptyMap) = nothing
 
 Base.isempty(::EmptyMap) = true
 
