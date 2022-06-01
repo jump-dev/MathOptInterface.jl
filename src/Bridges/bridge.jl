@@ -225,7 +225,7 @@ julia> MOI.Bridges.added_constraint_types(
            MOI.Bridges.Constraint.ZeroOneBridge{Float64},
        )
 2-element Vector{Tuple{Type, Type}}:
- (MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64})
+ (MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.Interval{Float64})
  (MathOptInterface.VariableIndex, MathOptInterface.Integer)
 ```
 """
