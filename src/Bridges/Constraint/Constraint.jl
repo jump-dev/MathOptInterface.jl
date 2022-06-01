@@ -16,7 +16,6 @@ const MOIU = MOI.Utilities
 const MOIB = MOI.Bridges
 
 include("bridge.jl")
-include("function_conversion.jl")
 include("map.jl")
 include("set_map.jl")
 include("single_bridge_optimizer.jl")
