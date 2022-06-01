@@ -5,12 +5,30 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    IndicatorSOS1Bridge{T,S<:MOI.AbstractScalarSet}
+    IndicatorSOS1Bridge{T,S} <: Bridges.Constraint.AbstractBridge
 
-The `IndicatorSOS1Bridge` replaces an indicator constraint of the following
-form:
-``z \\in \\mathbb{B}, z == 1 \\implies f(x) \\in S`` with a SOS1 constraint:
-``z \\in \\mathbb{B}, slack \\text{ free}, f(x) + slack \\in S, SOS1(slack, z)``.
+`IndicatorSOS1Bridge` implements the following reformulation:
+
+  * ``z \\implies {f(x) \\in S}`` into ``f(x) + y \\in S``,
+    ``SOS1(y, z)``
+
+!!! warning
+    This bridge assumes that the solver supports [`MOI.SOS1{T}`](@ref)
+    constraints in which one of the variables (``y``) is continuous.
+
+## Source node
+
+`IndicatorSOS1Bridge` supports:
+
+  * [`MOI.VectorAffineFunction{T}`](@ref) in
+    [`MOI.Indicator{MOI.ACTIVATE_ON_ONE,S}`](@ref)
+
+## Target nodes
+
+`IndicatorSOS1Bridge` creates:
+
+  * [`MOI.ScalarAffineFunction{T}`](@ref) in `S`
+  * [`MOI.VectorOfVariables`](@ref) in [`MOI.SOS1{T}`](@ref)
 """
 struct IndicatorSOS1Bridge{T,S<:MOI.AbstractScalarSet} <: AbstractBridge
     slack::MOI.VariableIndex

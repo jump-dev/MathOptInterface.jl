@@ -7,12 +7,7 @@
 """
     FlipSignBridge{T,S1,S2,F,G}
 
-Bridge a `G`-in-`S1` constraint into an `F`-in-`S2` constraint by multiplying
-the function by `-1` and taking the point reflection of the set across the
-origin.
-
-The flipped `F`-in-`S` constraint is stored in the `constraint` field by
-convention.
+An abstract type that simplifies the creation of other bridges.
 """
 abstract type FlipSignBridge{
     T,
@@ -89,14 +84,23 @@ function MOI.modify(
 end
 
 """
-    GreaterToLessBridge{
-        T,
-        F<:MOI.AbstractScalarFunction,
-        G<:MOI.AbstractScalarFunction
-    } <: FlipSignBridge{T, MOI.GreaterThan{T}, MOI.LessThan{T}, F, G}
+    GreaterToLessBridge{T,F,G} <: Bridges.Constraint.AbstractBridge
 
-Transforms a `G`-in-`GreaterThan{T}` constraint into an `F`-in-`LessThan{T}`
-constraint.
+`GreaterToLessBridge` implements the following reformulation:
+
+  * ``f(x) \\ge l`` into ``-f(x) \\le -l``
+
+## Source node
+
+`GreaterToLessBridge` supports:
+
+  * `G` in [`MOI.GreaterThan{T}`](@ref)
+
+## Target nodes
+
+`GreaterToLessBridge` creates:
+
+  * `F` in [`MOI.LessThan{T}`](@ref)
 """
 struct GreaterToLessBridge{
     T,
@@ -133,14 +137,23 @@ function concrete_bridge_type(
 end
 
 """
-    LessToGreaterBridge{
-        T,
-        F<:MOI.AbstractScalarFunction,
-        G<:MOI.AbstractScalarFunction
-    } <: FlipSignBridge{T, MOI.LessThan{T}, MOI.GreaterThan{T}, F, G}
+    LessToGreaterBridge{T,F,G} <: Bridges.Constraint.AbstractBridge
 
-Transforms a `G`-in-`LessThan{T}` constraint into an `F`-in-`GreaterThan{T}`
-constraint.
+`LessToGreaterBridge` implements the following reformulation:
+
+* ``f(x) \\le u`` into ``-f(x) \\ge -u``
+
+## Source node
+
+`LessToGreaterBridge` supports:
+
+* `G` in [`MOI.LessThan{T}`](@ref)
+
+## Target nodes
+
+`LessToGreaterBridge` creates:
+
+* `F` in [`MOI.GreaterThan{T}`](@ref)
 """
 struct LessToGreaterBridge{
     T,
@@ -174,14 +187,23 @@ function concrete_bridge_type(
 end
 
 """
-    NonnegToNonposBridge{
-        T,
-        F<:MOI.AbstractVectorFunction,
-        G<:MOI.AbstractVectorFunction
-    } <: FlipSignBridge{T, MOI.Nonnegatives, MOI.Nonpositives, F, G}
+    NonnegToNonposBridge{T,F,G} <: Bridges.Constraint.AbstractBridge
 
-Transforms a `G`-in-`Nonnegatives` constraint into a `F`-in-`Nonpositives`
-constraint.
+`NonnegToNonposBridge` implements the following reformulation:
+
+  * ``f(x) \\in \\mathbb{R}_+`` into ``-f(x) \\in \\mathbb{R}_-``
+
+## Source node
+
+`NonnegToNonposBridge` supports:
+
+  * `G` in [`MOI.Nonnegatives`](@ref)
+
+## Target nodes
+
+`NonnegToNonposBridge` creates:
+
+  * `F` in [`MOI.Nonpositives`](@ref)
 """
 mutable struct NonnegToNonposBridge{
     T,
@@ -218,14 +240,23 @@ function concrete_bridge_type(
 end
 
 """
-    NonposToNonnegBridge{
-        T,
-        F<:MOI.AbstractVectorFunction,
-        G<:MOI.AbstractVectorFunction,
-    } <: FlipSignBridge{T, MOI.Nonpositives, MOI.Nonnegatives, F, G}
+    NonposToNonnegBridge{T,F,G} <: Bridges.Constraint.AbstractBridge
 
-Transforms a `G`-in-`Nonpositives` constraint into a `F`-in-`Nonnegatives`
-constraint.
+`NonposToNonnegBridge` implements the following reformulation:
+
+  * ``f(x) \\in \\mathbb{R}_-`` into ``-f(x) \\in \\mathbb{R}_+``
+
+## Source node
+
+`NonposToNonnegBridge` supports:
+
+  * `G` in [`MOI.Nonpositives`](@ref)
+
+## Target nodes
+
+`NonposToNonnegBridge` creates:
+
+  * `F` in [`MOI.Nonnegatives`](@ref)
 """
 mutable struct NonposToNonnegBridge{
     T,

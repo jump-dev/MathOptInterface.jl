@@ -5,21 +5,45 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    GeoMeantoRelEntrBridge{T}
+    GeoMeantoRelEntrBridge{T,F,G,H} <: Bridges.Constraint.AbstractBridge
 
-The `geometric mean cone` is representable with a relative entropy constraint
-and a nonnegative auxiliary variable.
+`GeoMeantoRelEntrBridge` implements the following reformulation:
 
-This is because ``u \\le \\prod_{i=1}^n w_i^{1/n}`` is equivalent to
-``y \\ge 0`` and ``0 \\le u + y \\le \\prod_{i=1}^n w_i^{1/n}``,
-and the latter inequality is equivalent to
-``1 \\le \\prod_{i=1}^n (\\frac{w_i}{u + y})^{1/n}``, which is equivalent to
-``0 \\le \\sum_{i=1}^n \\log (\\frac{w_i}{u + y})^{1/n}``, which is
-equivalent to ``0 \\ge \\sum_{i=1}^n (u + y) \\log (\\frac{u + y}{w_i})``.
+  * ``(u, w) \\in GeometricMeanCone`` into
+    ``(0, w, (u + y)\\mathbf{1})\\in RelativeEntropyCone`` and ``y \\ge 0``
 
-Thus ``(u, w) \\in GeometricMeanCone(1 + n)`` is representable as ``y \\ge 0``,
-``(0, w, (u + y) e) \\in RelativeEntropyCone(1 + 2n)``, where ``e`` is a vector
-of ones.
+## Source node
+
+`GeoMeantoRelEntrBridge` supports:
+
+  * `H` in [`MOI.GeometricMeanCone`](@ref)
+
+## Target nodes
+
+`GeoMeantoRelEntrBridge` creates:
+
+  * `G` in [`MOI.RelativeEntropyCone`](@ref)
+  * `F` in [`MOI.Nonnegatives`](@ref)
+
+## Derivation
+
+The derivation of the bridge is as follows:
+
+```math
+\\begin{aligned}
+(u, w) \\in GeometricMeanCone \\iff & u \\le \\left(\\prod_{i=1}^n w_i\\right)^{1/n} \\\\
+\\iff & 0 \\le u + y \\le \\left(\\prod_{i=1}^n w_i\\right)^{1/n}, y \\ge 0 \\\\
+\\iff & 1 \\le \\frac{\\left(\\prod_{i=1}^n w_i\\right)^{1/n}}{u + y}, y \\ge 0 \\\\
+\\iff & 1 \\le \\left(\\prod_{i=1}^n \\frac{w_i}{u + y}\\right)^{1/n}, y \\ge 0 \\\\
+\\iff & 0 \\le \\sum_{i=1}^n \\log\\left(\\frac{w_i}{u + y}\\right), y \\ge 0 \\\\
+\\iff & 0 \\ge \\sum_{i=1}^n \\log\\left(\\frac{u + y}{w_i}\\right), y \\ge 0 \\\\
+\\iff & 0 \\ge \\sum_{i=1}^n (u + y) \\log\\left(\\frac{u + y}{w_i}\\right), y \\ge 0 \\\\
+\\iff & (0, w, (u + y)\\mathbf{1}) \\in RelativeEntropyCone, y \\ge 0 \\\\
+\\end{aligned}
+```
+
+This derivation assumes that ``u + y > 0``, which is enforced by the relative
+entropy cone.
 """
 struct GeoMeantoRelEntrBridge{T,F,G,H} <: AbstractBridge
     y::MOI.VariableIndex
