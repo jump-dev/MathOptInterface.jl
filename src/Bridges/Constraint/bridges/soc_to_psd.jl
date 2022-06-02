@@ -22,17 +22,17 @@ function _soc_to_psd_matrix(
     f::Union{MOI.AbstractVectorFunction,AbstractVector{T}},
     g::Union{MOI.AbstractScalarFunction,T},
 ) where {T}
-    F = MOI.Utilties.promote_operation(vcat, T, typeof(g), T)
-    f_scalars = MOI.Utilties.eachscalar(f)
+    F = MOI.Utilities.promote_operation(vcat, T, typeof(g), T)
+    f_scalars = MOI.Utilities.eachscalar(f)
     dim = length(f_scalars)
     n = div(dim * (dim + 1), 2)
-    h = MOI.Utilties.zero_with_output_dimension(F, n)
-    row = MOI.Utilties.trimap(1, 1)
-    MOI.Utilties.operate_output_index!(+, T, row, h, f_scalars[1])
+    h = MOI.Utilities.zero_with_output_dimension(F, n)
+    row = MOI.Utilities.trimap(1, 1)
+    MOI.Utilities.operate_output_index!(+, T, row, h, f_scalars[1])
     for i in 2:dim
-        row = MOI.Utilties.trimap(1, i)
-        MOI.Utilties.operate_output_index!(+, T, row, h, f_scalars[i])
-        MOI.Utilties.operate_output_index!(+, T, row, h, g)
+        row = MOI.Utilities.trimap(1, i)
+        MOI.Utilities.operate_output_index!(+, T, row, h, f_scalars[i])
+        MOI.Utilities.operate_output_index!(+, T, row, h, g)
     end
     return h
 end
@@ -81,7 +81,7 @@ function concrete_bridge_type(
     G::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.SecondOrderCone},
 ) where {T}
-    F = MOI.Utilties.promote_operation(vcat, T, MOI.Utilties.scalar_type(G), T)
+    F = MOI.Utilities.promote_operation(vcat, T, MOI.Utilities.scalar_type(G), T)
     return SOCtoPSDBridge{T,F,G}
 end
 
@@ -98,30 +98,30 @@ end
 
 function MOI.Bridges.map_function(::Type{<:SOCtoPSDBridge{T}}, func) where {T}
     # func is (t, x), and we need [t x'; x tI]
-    return _soc_to_psd_matrix(T, func, MOI.Utilties.eachscalar(func)[1])
+    return _soc_to_psd_matrix(T, func, MOI.Utilities.eachscalar(func)[1])
 end
 
 function MOI.Bridges.inverse_map_function(::Type{<:SOCtoPSDBridge}, func)
-    scalars = MOI.Utilties.eachscalar(func)
-    dim = MOI.Utilties.side_dimension_for_vectorized_dimension(length(scalars))
+    scalars = MOI.Utilities.eachscalar(func)
+    dim = MOI.Utilities.side_dimension_for_vectorized_dimension(length(scalars))
     # The inverse function is the top row of [t x'; x tI]
-    return [scalars[MOI.Utilties.trimap(1, i)] for i in 1:dim]
+    return [scalars[MOI.Utilities.trimap(1, i)] for i in 1:dim]
 end
 
 function MOI.Bridges.adjoint_map_function(
     ::Type{<:SOCtoPSDBridge{T}},
     func,
 ) where {T}
-    scalars = MOI.Utilties.eachscalar(func)
-    dim = MOI.Utilties.side_dimension_for_vectorized_dimension(length(scalars))
-    return MOI.Utilties.operate(
+    scalars = MOI.Utilities.eachscalar(func)
+    dim = MOI.Utilities.side_dimension_for_vectorized_dimension(length(scalars))
+    return MOI.Utilities.operate(
         vcat,
         T,
         # The dual of `t` variable is the sum of the diagonal
         sum(func[MOI.Utilities.trimap(i, i)] for i in 1:dim),
         # The dual of `x` is the top row or first column, excluding (1, 1).
         # There's a factor of 2 as well.
-        [2 * func[MOI.Utilties.trimap(i, 1)] for i in 2:dim],
+        [2 * func[MOI.Utilities.trimap(i, 1)] for i in 2:dim],
     )
 end
 
@@ -186,9 +186,9 @@ function concrete_bridge_type(
     G::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.RotatedSecondOrderCone},
 ) where {T}
-    S = MOI.Utilties.scalar_type(G)
-    H = MOI.Utilties.promote_operation(*, T, T, S)
-    F = MOI.Utilties.promote_operation(vcat, T, S, H, T)
+    S = MOI.Utilities.scalar_type(G)
+    H = MOI.Utilities.promote_operation(*, T, T, S)
+    F = MOI.Utilities.promote_operation(vcat, T, S, H, T)
     return RSOCtoPSDBridge{T,F,G}
 end
 
@@ -207,7 +207,7 @@ function MOI.Bridges.inverse_map_set(
 end
 
 function MOI.Bridges.map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where {T}
-    scalars = MOI.Utilties.eachscalar(func)
+    scalars = MOI.Utilities.eachscalar(func)
     if length(scalars) < 3
         error(
             "Unable to bridge RotatedSecondOrderCone to PSD because the ",
@@ -215,7 +215,7 @@ function MOI.Bridges.map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where {T}
         )
     end
     # Input is (t, u, x), and we need [t x'; x 2uI]
-    h = MOI.Utilties.operate!(*, T, scalars[2], convert(T, 2))
+    h = MOI.Utilities.operate!(*, T, scalars[2], convert(T, 2))
     return _soc_to_psd_matrix(T, scalars[[1; 3:length(scalars)]], h)
 end
 
@@ -225,29 +225,29 @@ function MOI.Bridges.inverse_map_function(
 ) where {T}
     t = scalars[1]
     # scalars[3] is 2u, so it needs to be divided by 2 to get u.
-    u = MOI.Utilties.operate!(/, T, scalars[3], convert(T, 2))
+    u = MOI.Utilities.operate!(/, T, scalars[3], convert(T, 2))
     # x is the top row of the func, excluding (1, 1)
-    scalars = MOI.Utilties.eachscalar(func)
-    dim = MOI.Utilties.side_dimension_for_vectorized_dimension(length(scalars))
-    x = [scalars[MOI.Utilties.trimap(1, i)] for i in 2:dim]
-    return MOI.Utilties.operate(vcat, T, t, u, x)
+    scalars = MOI.Utilities.eachscalar(func)
+    dim = MOI.Utilities.side_dimension_for_vectorized_dimension(length(scalars))
+    x = [scalars[MOI.Utilities.trimap(1, i)] for i in 2:dim]
+    return MOI.Utilities.operate(vcat, T, t, u, x)
 end
 
 function MOI.Bridges.adjoint_map_function(
     ::Type{<:RSOCtoPSDBridge{T}},
     func,
 ) where {T}
-    scalars = MOI.Utilties.eachscalar(func)
-    dim = MOI.Utilties.side_dimension_for_vectorized_dimension(length(scalars))
-    return MOI.Utilties.operate(
+    scalars = MOI.Utilities.eachscalar(func)
+    dim = MOI.Utilities.side_dimension_for_vectorized_dimension(length(scalars))
+    return MOI.Utilities.operate(
         vcat,
         T,
         # `t` is the (1, 1) element
         func[1],
         # `u` is sum of diagonals
-        2 * sum(func[MOI.Utilties.trimap(i, i)] for i in 2:dim),
+        2 * sum(func[MOI.Utilities.trimap(i, i)] for i in 2:dim),
         # x is the first column, excluding (1, 1)
-        [2 * func[MOI.Utilties.trimap(i, 1)] for i in 2:dim],
+        [2 * func[MOI.Utilities.trimap(i, 1)] for i in 2:dim],
     )
 end
 
