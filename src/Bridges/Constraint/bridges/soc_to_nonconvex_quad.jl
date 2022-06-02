@@ -4,34 +4,114 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-abstract type AbstractSOCtoNonConvexQuadBridge{T} <: AbstractBridge end
+abstract type _AbstractSOCtoNonConvexQuadBridge{T} <: AbstractBridge end
+
+function MOI.get(
+    ::MOI.ModelLike,
+    ::MOI.ConstraintFunction,
+    b::_AbstractSOCtoNonConvexQuadBridge{T},
+) where {T}
+    return MOI.VectorOfVariables(b.vars)
+end
+
+function MOI.Bridges.added_constrained_variable_types(
+    ::Type{<:_AbstractSOCtoNonConvexQuadBridge},
+)
+    return Tuple{Type}[]
+end
+
+function MOI.Bridges.added_constraint_types(
+    ::Type{<:_AbstractSOCtoNonConvexQuadBridge{T}},
+) where {T}
+    return Tuple{Type,Type}[
+        (MOI.ScalarQuadraticFunction{T}, MOI.LessThan{T}),
+        (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}),
+    ]
+end
+
+function MOI.get(
+    ::_AbstractSOCtoNonConvexQuadBridge{T},
+    ::MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{T},MOI.LessThan{T}},
+)::Int64 where {T}
+    return 1
+end
+
+function MOI.get(
+    bridge::_AbstractSOCtoNonConvexQuadBridge{T},
+    ::MOI.ListOfConstraintIndices{
+        MOI.ScalarQuadraticFunction{T},
+        MOI.LessThan{T},
+    },
+) where {T}
+    return [bridge.quad]
+end
+
+function MOI.get(
+    bridge::_AbstractSOCtoNonConvexQuadBridge{T},
+    ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}},
+)::Int64 where {T}
+    return length(bridge.var_pos)
+end
+
+function MOI.get(
+    bridge::_AbstractSOCtoNonConvexQuadBridge{T},
+    ::MOI.ListOfConstraintIndices{
+        MOI.ScalarAffineFunction{T},
+        MOI.GreaterThan{T},
+    },
+) where {T}
+    return copy(bridge.var_pos)
+end
+
+function MOI.delete(
+    model::MOI.ModelLike,
+    bridge::_AbstractSOCtoNonConvexQuadBridge,
+)
+    MOI.delete(model, bridge.quad)
+    MOI.delete.(model, bridge.var_pos)
+    return
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimal,
+    bridge::_AbstractSOCtoNonConvexQuadBridge,
+)
+    return MOI.get.(model, MOI.VariablePrimal(attr.result_index), bridge.vars)
+end
 
 """
-    SOCtoNonConvexQuadBridge{T}
+    SOCtoNonConvexQuadBridge{T} <: Bridges.Constraint.AbstractBridge
 
-Constraints of the form `VectorOfVariables`-in-`SecondOrderCone` can be
-transformed into a `ScalarQuadraticFunction`-in-`LessThan` and a
-`ScalarAffineFunction`-in-`GreaterThan`. Indeed, the definition of the
-second-order cone
-```math
-t \\ge \\lVert x \\rVert_2 \\  (1)
-```
-is equivalent to
-```math
-\\sum x_i^2 \\le t^2  (2)
-```
-with ``t \\ge 0``.  (3)
+`SOCtoNonConvexQuadBridge` implements the following reformulations:
+
+  * ``||x||_2 \\le t`` into ``\\sum x^2 - t^2 \\le 0`` and ``1t + 0 \\ge 0``
+
+The [`MOI.ScalarAffineFunction`](@ref) ``1t + 0`` is used in case the variable
+has other bound constraints.
 
 !!! warning
-    This transformation starts from a convex constraint (1) and creates a
-    non-convex constraint (2), because the Q matrix associated with the constraint (2)
-    has one negative eigenvalue. This might be wrongly interpreted by a solver.
-    Some solvers can look at (2) and understand that it is a second order cone, but
-    this is not a general rule.
-    For these reasons this bridge is not automatically added by [`MOI.Bridges.full_bridge_optimizer`](@ref).
-    Care is recommended when adding this bridge to a optimizer.
+    This transformation starts from a convex constraint and creates a
+    non-convex constraint. Unless the solver has explicit support for detecting
+    second-order cones in quadratic form, this may (wrongly) be interpreted by
+    the solver as being non-convex. Therefore, this bridge is not added
+    automatically by [`MOI.Bridges.full_bridge_optimizer`](@ref). Care is
+    recommended when adding this bridge to a optimizer.
+
+## Source node
+
+`SOCtoNonConvexQuadBridge` supports:
+
+  * [`MOI.VectorOfVariables`](@ref) in [`MOI.SecondOrderCone`](@ref)
+
+## Target nodes
+
+`SOCtoNonConvexQuadBridge` creates:
+
+  * [`MOI.ScalarQuadraticFunction{T}`](@ref) in [`MOI.LessThan{T}`](@ref)
+  * [`MOI.ScalarAffineFunction{T}`](@ref) in [`MOI.GreaterThan{T}`](@ref)
 """
-struct SOCtoNonConvexQuadBridge{T} <: AbstractSOCtoNonConvexQuadBridge{T}
+struct SOCtoNonConvexQuadBridge{T} <: _AbstractSOCtoNonConvexQuadBridge{T}
     quad::MOI.ConstraintIndex{MOI.ScalarQuadraticFunction{T},MOI.LessThan{T}}
     var_pos::Vector{
         MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}},
@@ -48,54 +128,74 @@ function bridge_constraint(
     func::MOI.VectorOfVariables,
     set::MOI.SecondOrderCone,
 ) where {T}
-    vis = func.variables
-
-    t = vis[1]
-    x = vis[2:end]
+    t, x = func.variables[1], func.variables[2:end]
     a_terms = MOI.ScalarAffineTerm{T}[]
-    q_terms = MOI.ScalarQuadraticTerm{T}[]
+    q_terms = MOI.ScalarQuadraticTerm.(T(2), x, x)
     push!(q_terms, MOI.ScalarQuadraticTerm(-T(2), t, t))
-    for var in x
-        push!(q_terms, MOI.ScalarQuadraticTerm(T(2), var, var))
-    end
-
     fq = MOI.ScalarQuadraticFunction(q_terms, a_terms, zero(T))
     quad = MOI.add_constraint(model, fq, MOI.LessThan(zero(T)))
-    # ScalarAffineFunction's are added instead of VariableIndex's
-    # because models can only have one VariableIndex per variable.
-    # Hence, adding a VariableIndex constraint here could conflict with
-    # a user defined VariableIndex
     fp = convert(MOI.ScalarAffineFunction{T}, t)
     var_pos = MOI.add_constraint(model, fp, MOI.GreaterThan(zero(T)))
+    return SOCtoNonConvexQuadBridge(quad, [var_pos], func.variables)
+end
 
-    return SOCtoNonConvexQuadBridge(quad, [var_pos], vis)
+function MOI.supports_constraint(
+    ::Type{SOCtoNonConvexQuadBridge},
+    ::Type{MOI.VectorOfVariables},
+    ::Type{MOI.SecondOrderCone},
+)
+    return true
+end
+
+function concrete_bridge_type(
+    ::Type{SOCtoNonConvexQuadBridge{T}},
+    ::Type{MOI.VectorOfVariables},
+    ::Type{MOI.SecondOrderCone},
+) where {T}
+    return SOCtoNonConvexQuadBridge{T}
+end
+
+function MOI.get(
+    ::MOI.ModelLike,
+    ::MOI.ConstraintSet,
+    b::SOCtoNonConvexQuadBridge,
+)
+    return MOI.SecondOrderCone(length(b.vars))
 end
 
 """
-    RSOCtoNonConvexQuadBridge{T}
+    RSOCtoNonConvexQuadBridge{T} <: Bridges.Constraint.AbstractBridge
 
-Constraints of the form `VectorOfVariables`-in-`SecondOrderCone` can be
-transformed into a `ScalarQuadraticFunction`-in-`LessThan` and a
-`ScalarAffineFunction`-in-`GreaterThan`. Indeed, the definition of the
-second-order cone
-```math
-2tu \\ge \\lVert x \\rVert_2^2, t,u \\ge 0  (1)
-```
-is equivalent to
-```math
-\\sum x_i^2 \\le 2tu  (2)
-```
-with ``t,u \\ge 0``.  (3)
+`RSOCtoNonConvexQuadBridge` implements the following reformulations:
 
-*WARNING* This transformation starts from a convex constraint (1) and creates a
-non-convex constraint (2), because the Q matrix associated with the constraint 2
-has two negative eigenvalues. This might be wrongly interpreted by a solver.
-Some solvers can look at (2) and understand that it is a rotated second order cone, but
-this is not a general rule.
-For these reasons, this bridge is not automatically added by [`MOI.Bridges.full_bridge_optimizer`](@ref).
-Care is recommended when adding this bridge to an optimizer.
+  * ``||x||_2 \\le t \\cdot u`` into ``\\sum x^2 - t\\cdot u \\le 0``,
+    ``1t + 0 \\ge 0``, and ``1u + 0 \\ge 0``.
+
+The [`MOI.ScalarAffineFunction`](@ref)s ``1t + 0`` and ``1u + 0`` are used
+in case the variables have other bound constraints.
+
+!!! warning
+    This transformation starts from a convex constraint and creates a
+    non-convex constraint. Unless the solver has explicit support for detecting
+    rotated second-order cones in quadratic form, this may (wrongly) be
+    interpreted by the solver as being non-convex. Therefore, this bridge is not
+    added automatically by [`MOI.Bridges.full_bridge_optimizer`](@ref). Care is
+    recommended when adding this bridge to a optimizer.
+
+## Source node
+
+`RSOCtoNonConvexQuadBridge` supports:
+
+  * [`MOI.VectorOfVariables`](@ref) in [`MOI.RotatedSecondOrderCone`](@ref)
+
+## Target nodes
+
+`RSOCtoNonConvexQuadBridge` creates:
+
+  * [`MOI.ScalarQuadraticFunction{T}`](@ref) in [`MOI.LessThan{T}`](@ref)
+  * [`MOI.ScalarAffineFunction{T}`](@ref) in [`MOI.GreaterThan{T}`](@ref)
 """
-struct RSOCtoNonConvexQuadBridge{T} <: AbstractSOCtoNonConvexQuadBridge{T}
+struct RSOCtoNonConvexQuadBridge{T} <: _AbstractSOCtoNonConvexQuadBridge{T}
     quad::MOI.ConstraintIndex{MOI.ScalarQuadraticFunction{T},MOI.LessThan{T}}
     var_pos::Vector{
         MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}},
@@ -112,69 +212,25 @@ function bridge_constraint(
     func::MOI.VectorOfVariables,
     set::MOI.RotatedSecondOrderCone,
 ) where {T}
-    vis = func.variables
-
-    t = vis[1]
-    u = vis[2]
-    x = vis[3:end]
+    t, u, x = func.variables[1], func.variables[2], func.variables[3:end]
     a_terms = MOI.ScalarAffineTerm{T}[]
-    q_terms = MOI.ScalarQuadraticTerm{T}[]
+    q_terms = MOI.ScalarQuadraticTerm.(T(2), x, x)
     push!(q_terms, MOI.ScalarQuadraticTerm(-T(2), t, u))
-    for var in x
-        push!(q_terms, MOI.ScalarQuadraticTerm(T(2), var, var))
-    end
-
     fq = MOI.ScalarQuadraticFunction(q_terms, a_terms, zero(T))
     quad = MOI.add_constraint(model, fq, MOI.LessThan(zero(T)))
-    # ScalarAffineFunction's are added instead of VariableIndex's
-    # because models can only have one VariableIndex per variable.
-    # Hence, adding a VariableIndex constraint here could conflict with
-    # a user defined VariableIndex
     fp1 = convert(MOI.ScalarAffineFunction{T}, t)
     var_pos1 = MOI.add_constraint(model, fp1, MOI.GreaterThan(zero(T)))
     fp2 = convert(MOI.ScalarAffineFunction{T}, u)
     var_pos2 = MOI.add_constraint(model, fp2, MOI.GreaterThan(zero(T)))
-
-    return RSOCtoNonConvexQuadBridge(quad, [var_pos1, var_pos2], vis)
+    return RSOCtoNonConvexQuadBridge(quad, [var_pos1, var_pos2], func.variables)
 end
 
 function MOI.supports_constraint(
-    ::Type{SOCtoNonConvexQuadBridge{T}},
-    ::Type{MOI.VectorOfVariables},
-    ::Type{MOI.SecondOrderCone},
-) where {T}
-    return true
-end
-
-function MOI.supports_constraint(
-    ::Type{RSOCtoNonConvexQuadBridge{T}},
+    ::Type{RSOCtoNonConvexQuadBridge},
     ::Type{MOI.VectorOfVariables},
     ::Type{MOI.RotatedSecondOrderCone},
-) where {T}
-    return true
-end
-
-function MOIB.added_constrained_variable_types(
-    ::Type{<:AbstractSOCtoNonConvexQuadBridge},
 )
-    return Tuple{Type}[]
-end
-
-function MOIB.added_constraint_types(
-    ::Type{<:AbstractSOCtoNonConvexQuadBridge{T}},
-) where {T}
-    return Tuple{Type,Type}[
-        (MOI.ScalarQuadraticFunction{T}, MOI.LessThan{T}),
-        (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}),
-    ]
-end
-
-function concrete_bridge_type(
-    ::Type{SOCtoNonConvexQuadBridge{T}},
-    ::Type{MOI.VectorOfVariables},
-    ::Type{MOI.SecondOrderCone},
-) where {T}
-    return SOCtoNonConvexQuadBridge{T}
+    return true
 end
 
 function concrete_bridge_type(
@@ -185,81 +241,10 @@ function concrete_bridge_type(
     return RSOCtoNonConvexQuadBridge{T}
 end
 
-# Attributes, Bridge acting as a model
 function MOI.get(
-    ::AbstractSOCtoNonConvexQuadBridge{T},
-    ::MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{T},MOI.LessThan{T}},
-)::Int64 where {T}
-    return 1
-end
-
-function MOI.get(
-    bridge::AbstractSOCtoNonConvexQuadBridge{T},
-    ::MOI.ListOfConstraintIndices{
-        MOI.ScalarQuadraticFunction{T},
-        MOI.LessThan{T},
-    },
-) where {T}
-    return [bridge.quad]
-end
-
-function MOI.get(
-    bridge::AbstractSOCtoNonConvexQuadBridge{T},
-    ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}},
-)::Int64 where {T}
-    return length(bridge.var_pos)
-end
-
-function MOI.get(
-    bridge::AbstractSOCtoNonConvexQuadBridge{T},
-    ::MOI.ListOfConstraintIndices{
-        MOI.ScalarAffineFunction{T},
-        MOI.GreaterThan{T},
-    },
-) where {T}
-    return copy(bridge.var_pos)
-end
-
-# References
-function MOI.delete(
-    model::MOI.ModelLike,
-    bridge::AbstractSOCtoNonConvexQuadBridge,
+    ::MOI.ModelLike,
+    ::MOI.ConstraintSet,
+    b::RSOCtoNonConvexQuadBridge,
 )
-    MOI.delete(model, bridge.quad)
-    MOI.delete.(model, bridge.var_pos)
-    return
-end
-
-# Attributes, Bridge acting as a constraint
-function MOI.get(
-    model::MOI.ModelLike,
-    attr::MOI.ConstraintPrimal,
-    bridge::AbstractSOCtoNonConvexQuadBridge,
-)
-    vals = MOI.get.(model, MOI.VariablePrimal(attr.result_index), bridge.vars)
-    return vals
-end
-
-function MOI.get(
-    model::MOI.ModelLike,
-    attr::MOI.ConstraintSet,
-    b::SOCtoNonConvexQuadBridge{T},
-) where {T}
-    return MOI.SecondOrderCone(length(b.vars))
-end
-
-function MOI.get(
-    model::MOI.ModelLike,
-    attr::MOI.ConstraintSet,
-    b::RSOCtoNonConvexQuadBridge{T},
-) where {T}
     return MOI.RotatedSecondOrderCone(length(b.vars))
-end
-
-function MOI.get(
-    model::MOI.ModelLike,
-    attr::MOI.ConstraintFunction,
-    b::AbstractSOCtoNonConvexQuadBridge{T},
-) where {T}
-    return MOI.VectorOfVariables(b.vars)
 end
