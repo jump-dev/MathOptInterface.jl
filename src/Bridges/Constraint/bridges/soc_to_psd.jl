@@ -32,7 +32,8 @@ function _soc_to_psd_matrix(
     for i in 2:dim
         row = MOI.Utilities.trimap(1, i)
         MOI.Utilities.operate_output_index!(+, T, row, h, f_scalars[i])
-        MOI.Utilities.operate_output_index!(+, T, row, h, g)
+        diag = MOI.Utilities.trimap(i, i)
+        MOI.Utilities.operate_output_index!(+, T, diag, h, g)
     end
     return h
 end
