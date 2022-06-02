@@ -447,6 +447,34 @@ function test_quadratic_nonhomogeneous()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Objective.SlackBridge,
+        """
+        variables: x
+        minobjective: 1.1 * x + 2.2
+        """,
+        """
+        variables: x, y
+        minobjective: y
+        1.1 * x + -1.0 * y <= -2.2
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Objective.SlackBridge,
+        """
+        variables: x
+        maxobjective: 1.1 * x + 2.2
+        """,
+        """
+        variables: x, y
+        maxobjective: y
+        1.1 * x + -1.0 * y >= -2.2
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestObjectiveSlack.runtests()

@@ -162,7 +162,9 @@ function _test_structural_identical(a::MOI.ModelLike, b::MOI.ModelLike)
     b_x = MOI.get(a, MOI.ListOfVariableIndices())
     Test.@test length(a_x) == length(b_x)
     x_map = Dict(bx => a_x[i] for (i, bx) in enumerate(b_x))
-    for (F, S) in MOI.get(b, MOI.ListOfConstraintTypesPresent())
+    b_constraint_types = MOI.get(b, MOI.ListOfConstraintTypesPresent())
+    Test.@test length(constraints) == length(b_constraint_types)
+    for (F, S) in b_constraint_types
         attr = MOI.NumberOfConstraints{F,S}()
         Test.@test MOI.get(a, attr) == MOI.get(b, attr)
         Test.@test MOI.supports_constraint(b, F, S)
@@ -178,6 +180,20 @@ function _test_structural_identical(a::MOI.ModelLike, b::MOI.ModelLike)
             Test.@test any(constraints[(F, S)]) do (f, s)
                 return s_b == s && isapprox(f, f_b)
             end
+        end
+    end
+    a_attrs = MOI.get(a, MOI.ListOfModelAttributesSet())
+    b_attrs = MOI.get(b, MOI.ListOfModelAttributesSet())
+    Test.@test length(a_attrs) == length(b_attrs)
+    for attr in b_attrs
+        Test.@test attr in a_attrs
+        if attr == MOI.ObjectiveSense()
+            Test.@test MOI.get(a, attr) == MOI.get(b, attr)
+        else
+            Test.@test isapprox(
+                MOI.Utilities.map_indices(x_map, MOI.get(b, attr)),
+                MOI.get(a, attr),
+            )
         end
     end
     return
@@ -211,7 +227,7 @@ julia> MOI.Bridges.runtests(
 function runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
     # Load model and bridge it
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
-    model = Constraint.SingleBridgeOptimizer{Bridge{Float64}}(inner)
+    model = _bridged_model(Bridge, inner)
     MOI.Utilities.loadfromstring!(model, input)
     # Load a non-bridged input model, and check that getters are the same.
     test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
@@ -222,6 +238,18 @@ function runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
     MOI.Utilities.loadfromstring!(target, output)
     _test_structural_identical(test, model)
     return
+end
+
+function _bridged_model(Bridge::Type{<:Constraint.AbstractBridge}, inner)
+    return Constraint.SingleBridgeOptimizer{Bridge{Float64}}(inner)
+end
+
+function _bridged_model(Bridge::Type{<:Objective.AbstractBridge}, inner)
+    return Objective.SingleBridgeOptimizer{Bridge{Float64}}(inner)
+end
+
+function _bridged_model(Bridge::Type{<:Variable.AbstractBridge}, inner)
+    return Variable.SingleBridgeOptimizer{Bridge{Float64}}(inner)
 end
 
 end
