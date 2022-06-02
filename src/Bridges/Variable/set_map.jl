@@ -47,7 +47,7 @@ function bridge_constrained_variable(
     set::S2,
 ) where {T,S1,S2}
     variables, constraint =
-        _add_constrained_var(model, MOIB.inverse_map_set(BT, set))
+        _add_constrained_var(model, MOI.Bridges.inverse_map_set(BT, set))
     return BT(variables, constraint)
 end
 
@@ -58,13 +58,13 @@ function supports_constrained_variable(
     return true
 end
 
-function MOIB.added_constrained_variable_types(
+function MOI.Bridges.added_constrained_variable_types(
     ::Type{<:SetMapBridge{T,S1}},
 ) where {T,S1}
     return Tuple{Type}[(S1,)]
 end
 
-function MOIB.added_constraint_types(::Type{<:SetMapBridge})
+function MOI.Bridges.added_constraint_types(::Type{<:SetMapBridge})
     return Tuple{Type,Type}[]
 end
 
@@ -129,7 +129,7 @@ function MOI.get(
     bridge::SetMapBridge,
 )
     set = MOI.get(model, attr, bridge.constraint)
-    return MOIB.map_set(typeof(bridge), set)
+    return MOI.Bridges.map_set(typeof(bridge), set)
 end
 
 function MOI.set(
@@ -138,7 +138,7 @@ function MOI.set(
     bridge::SetMapBridge{T,S1},
     set::S1,
 ) where {T,S1}
-    mapped = MOIB.inverse_map_set(typeof(bridge), set)
+    mapped = MOI.Bridges.inverse_map_set(typeof(bridge), set)
     MOI.set(model, attr, bridge.constraint, mapped)
     return
 end
@@ -149,7 +149,7 @@ function MOI.get(
     bridge::SetMapBridge,
 )
     value = MOI.get(model, attr, bridge.constraint)
-    return MOIB.map_function(typeof(bridge), value)
+    return MOI.Bridges.map_function(typeof(bridge), value)
 end
 
 function MOI.get(
@@ -158,17 +158,17 @@ function MOI.get(
     bridge::SetMapBridge,
 )
     value = MOI.get(model, attr, bridge.constraint)
-    return MOIB.inverse_adjoint_map_function(typeof(bridge), value)
+    return MOI.Bridges.inverse_adjoint_map_function(typeof(bridge), value)
 end
 
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.VariablePrimal,MOI.VariablePrimalStart},
     bridge::SetMapBridge,
-    i::MOIB.IndexInVector,
+    i::MOI.Bridges.IndexInVector,
 )
     value = MOI.get(model, attr, bridge.variables)
-    return MOIB.map_function(typeof(bridge), value, i)
+    return MOI.Bridges.map_function(typeof(bridge), value, i)
 end
 
 function MOI.supports(
@@ -184,18 +184,18 @@ function MOI.set(
     attr::MOI.VariablePrimalStart,
     bridge::SetMapBridge,
     value,
-    i::MOIB.IndexInVector,
+    i::MOI.Bridges.IndexInVector,
 )
-    bridged_value = MOIB.inverse_map_function(typeof(bridge), value)
+    bridged_value = MOI.Bridges.inverse_map_function(typeof(bridge), value)
     MOI.set(model, attr, bridge.variables[i.value], bridged_value)
     return
 end
 
-function MOIB.bridged_function(
+function MOI.Bridges.bridged_function(
     bridge::SetMapBridge{T},
-    i::MOIB.IndexInVector,
+    i::MOI.Bridges.IndexInVector,
 ) where {T}
-    func = MOIB.map_function(
+    func = MOI.Bridges.map_function(
         typeof(bridge),
         MOI.VectorOfVariables(bridge.variables),
         i,
@@ -205,7 +205,7 @@ end
 
 function unbridged_map(bridge::SetMapBridge{T}, vi::MOI.VariableIndex) where {T}
     F = MOI.ScalarAffineFunction{T}
-    mapped = MOIB.inverse_map_function(typeof(bridge), vi)
+    mapped = MOI.Bridges.inverse_map_function(typeof(bridge), vi)
     return Pair{MOI.VariableIndex,F}[bridge.variable=>mapped]
 end
 
@@ -215,8 +215,8 @@ function unbridged_map(
 ) where {T}
     F = MOI.ScalarAffineFunction{T}
     func = MOI.VectorOfVariables(vis)
-    funcs = MOIB.inverse_map_function(typeof(bridge), func)
-    scalars = MOIU.eachscalar(funcs)
+    funcs = MOI.Bridges.inverse_map_function(typeof(bridge), func)
+    scalars = MOI.Utilities.eachscalar(funcs)
     return Pair{MOI.VariableIndex,F}[
         bridge.variables[i] => scalars[i] for i in eachindex(vis)
     ]
