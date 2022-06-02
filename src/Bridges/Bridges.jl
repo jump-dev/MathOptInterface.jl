@@ -8,6 +8,7 @@ module Bridges
 
 import MathOptInterface
 import OrderedCollections: OrderedDict
+import Test
 
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
@@ -144,5 +145,84 @@ MOI.is_copyable(::ListOfNonstandardBridges) = false
 MOI.get_fallback(model::MOI.ModelLike, ::ListOfNonstandardBridges) = Type[]
 
 include("precompile.jl")
+
+function _test_structural_identical(a::MOI.ModelLike, b::MOI.ModelLike)
+    a_x = MOI.get(a, MOI.ListOfVariableIndices())
+    constraints = Dict()
+    for (F, S) in MOI.get(a, MOI.ListOfConstraintTypesPresent())
+        Test.@test MOI.supports_constraint(a, F, S)
+        constraints[(F, S)] = map(
+            MOI.get(a, MOI.ListOfConstraintIndices{F,S}()),
+        ) do ci
+            return (
+                MOI.get(a, MOI.ConstraintFunction(), ci),
+                MOI.get(a, MOI.ConstraintSet(), ci),
+            )
+        end
+    end
+    b_x = MOI.get(a, MOI.ListOfVariableIndices())
+    Test.@test length(a_x) == length(b_x)
+    x_map = Dict(bx => a_x[i] for (i, bx) in enumerate(b_x))
+    for (F, S) in MOI.get(b, MOI.ListOfConstraintTypesPresent())
+        attr = MOI.NumberOfConstraints{F,S}()
+        Test.@test MOI.get(a, attr) == MOI.get(b, attr)
+        Test.@test MOI.supports_constraint(b, F, S)
+        for ci in MOI.get(b, MOI.ListOfConstraintIndices{F,S}())
+            # We need to map the variables from b to a.
+            f_b = MOI.Utilities.map_indices(
+                x_map,
+                MOI.get(b, MOI.ConstraintFunction(), ci),
+            )
+            s_b = MOI.get(b, MOI.ConstraintSet(), ci)
+            # We don't care about the order that constraints are added, only
+            # that one matches.
+            Test.@test any(constraints[(F, S)]) do (f, s)
+                return s_b == s && isapprox(f, f_b)
+            end
+        end
+    end
+    return
+end
+
+"""
+    runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
+
+Run a series of tests that check the correctness of `Bridge`.
+
+`input` and `output` are models in the style of
+[`MOI.Utilities.loadfromstring!`](@ref).
+
+## Example
+
+```jldoctest
+julia> MOI.Bridges.runtests(
+           MOI.Bridges.Constraint.ZeroOneBridge,
+           \"\"\"
+           variables: x
+           x in ZeroOne()
+           \"\"\",
+           \"\"\"
+           variables: x
+           x in Integer()
+           x in Interval(0.0, 1.0)
+           \"\"\",
+       )
+```
+"""
+function runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
+    # Load model and bridge it
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = Constraint.SingleBridgeOptimizer{Bridge{Float64}}(inner)
+    MOI.Utilities.loadfromstring!(model, input)
+    # Load a non-bridged input model, and check that getters are the same.
+    test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    MOI.Utilities.loadfromstring!(test, input)
+    _test_structural_identical(test, model)
+    # Load a bridged target model, and check that getters are the same.
+    target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    MOI.Utilities.loadfromstring!(target, output)
+    _test_structural_identical(test, model)
+    return
+end
 
 end

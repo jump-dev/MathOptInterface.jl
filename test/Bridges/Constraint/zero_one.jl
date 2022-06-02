@@ -126,6 +126,22 @@ function test_ZeroOne()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.ZeroOneBridge,
+        """
+        variables: x
+        x in ZeroOne()
+        """,
+        """
+        variables: x
+        x in Integer()
+        x in Interval(0.0, 1.0)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintZeroOne.runtests()
