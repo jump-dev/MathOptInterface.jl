@@ -232,11 +232,7 @@ julia> MOI.Bridges.runtests(
        )
 ```
 """
-function runtests(
-    Bridge::Type{<:AbstractBridge},
-    input::String,
-    output::String,
-)
+function runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
     # Load model and bridge it
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     model = _bridged_model(Bridge, inner)
