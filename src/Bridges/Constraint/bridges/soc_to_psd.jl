@@ -224,12 +224,12 @@ function MOI.Bridges.inverse_map_function(
     ::Type{<:RSOCtoPSDBridge{T}},
     func,
 ) where {T}
+    scalars = MOI.Utilities.eachscalar(func)
+    dim = MOI.Utilities.side_dimension_for_vectorized_dimension(length(scalars))
     t = scalars[1]
     # scalars[3] is 2u, so it needs to be divided by 2 to get u.
     u = MOI.Utilities.operate!(/, T, scalars[3], convert(T, 2))
     # x is the top row of the func, excluding (1, 1)
-    scalars = MOI.Utilities.eachscalar(func)
-    dim = MOI.Utilities.side_dimension_for_vectorized_dimension(length(scalars))
     x = [scalars[MOI.Utilities.trimap(1, i)] for i in 2:dim]
     return MOI.Utilities.operate(vcat, T, t, u, x)
 end
