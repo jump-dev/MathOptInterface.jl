@@ -81,7 +81,8 @@ function concrete_bridge_type(
     G::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.SecondOrderCone},
 ) where {T}
-    F = MOI.Utilities.promote_operation(vcat, T, MOI.Utilities.scalar_type(G), T)
+    SG = MOI.Utilities.scalar_type(G)
+    F = MOI.Utilities.promote_operation(vcat, T, SG, T)
     return SOCtoPSDBridge{T,F,G}
 end
 
