@@ -327,7 +327,6 @@ function test_runtests()
         -1.0 * x <= -1.0
         """,
     )
-
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.GreaterToLessBridge,
         """
@@ -339,7 +338,6 @@ function test_runtests()
         -1.5 * x <= -1.0
         """,
     )
-
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.LessToGreaterBridge,
         """
@@ -351,7 +349,6 @@ function test_runtests()
         -1.0 * x >= -1.0
         """,
     )
-
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.LessToGreaterBridge,
         """
@@ -363,7 +360,6 @@ function test_runtests()
         -1.5 * x >= -1.0
         """,
     )
-
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.NonnegToNonposBridge,
         """
@@ -375,7 +371,6 @@ function test_runtests()
         [-1.0 * x + 0.0] in Nonpositives(1)
         """,
     )
-
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.NonnegToNonposBridge,
         """
@@ -387,7 +382,6 @@ function test_runtests()
         [-2.1 * x + 1.0] in Nonpositives(1)
         """,
     )
-
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.NonposToNonnegBridge,
         """
@@ -399,7 +393,6 @@ function test_runtests()
         [-1.0 * x + 0.0] in Nonnegatives(1)
         """,
     )
-
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.NonposToNonnegBridge,
         """

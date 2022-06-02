@@ -245,6 +245,20 @@ function runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
     target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     MOI.Utilities.loadfromstring!(target, output)
     _test_structural_identical(target, inner)
+    # Test deletion of things in the bridge.
+    #  * We reset the objective
+    MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+    #  * and delete all constraints
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        MOI.delete.(model, MOI.get(model, MOI.ListOfConstraintIndices{F,S}()))
+    end
+    #  * So now there should be no constraints in the problem
+    for (F, S) in MOI.get(inner, MOI.ListOfConstraintTypesPresent())
+        Test.@test MOI.get(inner, MOI.NumberOfConstraints{F,S}()) == 0
+    end
+    #  * And there should be the same number of variables
+    attr = MOI.NumberOfVariables()
+    Test.@test MOI.get(inner, attr) == MOI.get(model, attr)
     return
 end
 

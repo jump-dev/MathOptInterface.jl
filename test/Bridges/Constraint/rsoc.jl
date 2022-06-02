@@ -166,7 +166,6 @@ function test_runtests()
         [0.7071067811865475 * t + 0.7071067811865475 * x, 0.7071067811865475 * t + -0.7071067811865475 * x, y] in RotatedSecondOrderCone(3)
         """,
     )
-
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.RSOCtoSOCBridge,
         """
