@@ -140,7 +140,7 @@ function bridge_constraint(
 end
 
 function MOI.supports_constraint(
-    ::Type{SOCtoNonConvexQuadBridge},
+    ::Type{<:SOCtoNonConvexQuadBridge},
     ::Type{MOI.VectorOfVariables},
     ::Type{MOI.SecondOrderCone},
 )
@@ -226,7 +226,7 @@ function bridge_constraint(
 end
 
 function MOI.supports_constraint(
-    ::Type{RSOCtoNonConvexQuadBridge},
+    ::Type{<:RSOCtoNonConvexQuadBridge},
     ::Type{MOI.VectorOfVariables},
     ::Type{MOI.RotatedSecondOrderCone},
 )
