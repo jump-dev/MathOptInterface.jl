@@ -151,14 +151,13 @@ function _test_structural_identical(a::MOI.ModelLike, b::MOI.ModelLike)
     constraints = Dict()
     for (F, S) in MOI.get(a, MOI.ListOfConstraintTypesPresent())
         Test.@test MOI.supports_constraint(a, F, S)
-        constraints[(F, S)] = map(
-            MOI.get(a, MOI.ListOfConstraintIndices{F,S}()),
-        ) do ci
-            return (
-                MOI.get(a, MOI.ConstraintFunction(), ci),
-                MOI.get(a, MOI.ConstraintSet(), ci),
-            )
-        end
+        constraints[(F, S)] =
+            map(MOI.get(a, MOI.ListOfConstraintIndices{F,S}())) do ci
+                return (
+                    MOI.get(a, MOI.ConstraintFunction(), ci),
+                    MOI.get(a, MOI.ConstraintSet(), ci),
+                )
+            end
     end
     b_x = MOI.get(a, MOI.ListOfVariableIndices())
     Test.@test length(a_x) == length(b_x)
@@ -194,7 +193,7 @@ Run a series of tests that check the correctness of `Bridge`.
 
 ## Example
 
-```jldoctest
+```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
 julia> MOI.Bridges.runtests(
            MOI.Bridges.Constraint.ZeroOneBridge,
            \"\"\"
