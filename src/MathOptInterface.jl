@@ -254,7 +254,7 @@ The dictionary-like object returned by [`copy_to`](@ref).
 ## IndexMap
 
 Implementations of [`copy_to`](@ref) must return an [`IndexMap`](@ref). For
-technical reasons, the `IndexMap` type is defined in the Utilties submodule as
+technical reasons, the `IndexMap` type is defined in the Utilities submodule as
 `MOI.Utilities.IndexMap`. However, since it is an integral part of the MOI API,
 we provide this `MOI.IndexMap` as an alias.
 """

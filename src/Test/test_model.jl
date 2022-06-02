@@ -1027,7 +1027,7 @@ end
         ::Config{T},
     ) where {T}
 
-Tests `Utilties.ModelFilter` of `AbstractModelAttribute`.
+Tests `Utilities.ModelFilter` of `AbstractModelAttribute`.
 """
 function test_model_ModelFilter_AbstractModelAttribute(
     src::MOI.ModelLike,
@@ -1049,7 +1049,7 @@ end
         ::Config{T},
     ) where {T}
 
-Tests `Utilties.ModelFilter` of `AbstractVariableAttribute`.
+Tests `Utilities.ModelFilter` of `AbstractVariableAttribute`.
 """
 function test_model_ModelFilter_AbstractVariableAttribute(
     src::MOI.ModelLike,
@@ -1075,7 +1075,7 @@ end
         ::Config{T},
     ) where {T}
 
-Tests `Utilties.ModelFilter` of `AbstractConstraintAttribute`.
+Tests `Utilities.ModelFilter` of `AbstractConstraintAttribute`.
 """
 function test_model_ModelFilter_AbstractConstraintAttribute(
     src::MOI.ModelLike,
@@ -1120,7 +1120,7 @@ end
         ::Config{T},
     ) where {T}
 
-Tests `Utilties.ModelFilter` of `ListOfConstraintIndices`.
+Tests `Utilities.ModelFilter` of `ListOfConstraintIndices`.
 """
 function test_model_ModelFilter_ListOfConstraintIndices(
     src::MOI.ModelLike,
@@ -1157,7 +1157,7 @@ end
         ::Config{T},
     ) where {T}
 
-Tests `Utilties.ModelFilter` of `ListOfConstraintTypesPresent`.
+Tests `Utilities.ModelFilter` of `ListOfConstraintTypesPresent`.
 """
 function test_model_ModelFilter_ListOfConstraintTypesPresent(
     src::MOI.ModelLike,
