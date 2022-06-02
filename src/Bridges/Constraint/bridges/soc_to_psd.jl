@@ -106,7 +106,7 @@ function MOI.Bridges.inverse_map_function(::Type{<:SOCtoPSDBridge}, func)
     scalars = MOI.Utilities.eachscalar(func)
     dim = MOI.Utilities.side_dimension_for_vectorized_dimension(length(scalars))
     # The inverse function is the top row of [t x'; x tI]
-    return [scalars[MOI.Utilities.trimap(1, i)] for i in 1:dim]
+    return scalars[[MOI.Utilities.trimap(1, i) for i in 1:dim]]
 end
 
 function MOI.Bridges.adjoint_map_function(
@@ -230,7 +230,7 @@ function MOI.Bridges.inverse_map_function(
     # scalars[3] is 2u, so it needs to be divided by 2 to get u.
     u = MOI.Utilities.operate!(/, T, scalars[3], convert(T, 2))
     # x is the top row of the func, excluding (1, 1)
-    x = [scalars[MOI.Utilities.trimap(1, i)] for i in 2:dim]
+    x = scalars[[MOI.Utilities.trimap(1, i) for i in 2:dim]]
     return MOI.Utilities.operate(vcat, T, t, u, x)
 end
 
