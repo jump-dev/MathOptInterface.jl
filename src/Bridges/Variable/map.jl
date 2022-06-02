@@ -142,7 +142,7 @@ end
 function Base.keys(map::Map)
     return Base.Iterators.Filter(
         vi -> haskey(map, vi),
-        MOIU.LazyMap{MOI.VariableIndex}(
+        MOI.Utilities.LazyMap{MOI.VariableIndex}(
             i -> MOI.VariableIndex(-i),
             eachindex(map.bridges),
         ),
@@ -208,7 +208,7 @@ end
 
 function constraint(map::Map, vi::MOI.VariableIndex)
     S = constrained_set(map, vi)
-    F = MOIU.variable_function_type(S)
+    F = MOI.Utilities.variable_function_type(S)
     return MOI.ConstraintIndex{F,S}(-bridge_index(map, vi))
 end
 
@@ -218,7 +218,7 @@ end
 Return the list of constraints corresponding to bridged variables in `S`.
 """
 function constraints_with_set(map::Map, S::Type{<:MOI.AbstractSet})
-    F = MOIU.variable_function_type(S)
+    F = MOI.Utilities.variable_function_type(S)
     return [
         MOI.ConstraintIndex{F,S}(-i) for
         i in eachindex(map.sets) if map.sets[i] == S
@@ -237,8 +237,7 @@ function list_of_constraint_types(map::Map)
         if map.bridges[i] !== nothing
             S = map.sets[i]
             if S != MOI.Reals
-                F = MOIU.variable_function_type(S)
-                push!(list, (F, S))
+                push!(list, (MOI.Utilities.variable_function_type(S), S))
             end
         end
     end
@@ -274,12 +273,15 @@ function length_of_vector_of_variables(map::Map, vi::MOI.VariableIndex)
 end
 
 """
-    index_in_vector_of_variables(map::Map, vi::MOI.VariableIndex)::MOIB.IndexInVector
+    index_in_vector_of_variables(
+        map::Map,
+        vi::MOI.VariableIndex,
+    )::MOI.Bridges.IndexInVector
 
 Return the index of `vi` in the vector of variables in which it was bridged.
 """
 function index_in_vector_of_variables(map::Map, vi::MOI.VariableIndex)
-    return MOIB.IndexInVector(map.index_in_vector[-vi.value])
+    return MOI.Bridges.IndexInVector(map.index_in_vector[-vi.value])
 end
 
 """
@@ -532,9 +534,9 @@ function Base.empty!(::EmptyMap) end
 
 Base.length(::EmptyMap) = 0
 
-Base.keys(::EmptyMap) = MOIU.EmptyVector{MOI.VariableIndex}()
+Base.keys(::EmptyMap) = MOI.Utilities.EmptyVector{MOI.VariableIndex}()
 
-Base.values(::EmptyMap) = MOIU.EmptyVector{AbstractBridge}()
+Base.values(::EmptyMap) = MOI.Utilities.EmptyVector{AbstractBridge}()
 
 has_bridges(::EmptyMap) = false
 
@@ -543,7 +545,7 @@ number_of_variables(::EmptyMap) = 0
 number_with_set(::EmptyMap, ::Type{<:MOI.AbstractSet}) = 0
 
 function constraints_with_set(::EmptyMap, S::Type{<:MOI.AbstractSet})
-    return MOI.ConstraintIndex{MOIU.variable_function_type(S),S}[]
+    return MOI.ConstraintIndex{MOI.Utilities.variable_function_type(S),S}[]
 end
 
 register_context(::EmptyMap, ::MOI.ConstraintIndex) = nothing
