@@ -29,8 +29,9 @@ include("bridges/indicator_activate_on_zero.jl")
 include("bridges/indicator_sos.jl")
 include("bridges/interval.jl")
 include("bridges/ltgt_to_interval.jl")
+include("bridges/norm_infinity.jl")
+include("bridges/norm_one.jl")
 include("bridges/norm_spec_nuc_to_psd.jl")
-include("bridges/norm_to_lp.jl")
 include("bridges/quad_to_soc.jl")
 include("bridges/relentr_to_exp.jl")
 include("bridges/rsoc_soc.jl")
@@ -84,6 +85,7 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, SOCtoRSOCBridge{T})
     # We do not add `SOCtoPSDBridge` as transforming the `SOC` to `RSOC` and
     # then to `PSD` produces a smaller SDP constraint.
+    # MOI.Bridges.add_bridge(bridged_model, SOCtoPSDBridge{T})
     MOI.Bridges.add_bridge(bridged_model, RSOCtoPSDBridge{T})
     MOI.Bridges.add_bridge(bridged_model, IndicatorActiveOnFalseBridge{T})
     MOI.Bridges.add_bridge(bridged_model, IndicatorSOS1Bridge{T})
