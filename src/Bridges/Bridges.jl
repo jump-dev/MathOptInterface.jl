@@ -147,8 +147,18 @@ MOI.get_fallback(model::MOI.ModelLike, ::ListOfNonstandardBridges) = Type[]
 include("precompile.jl")
 
 function _test_structural_identical(a::MOI.ModelLike, b::MOI.ModelLike)
+    # Test that the variables are the same. We make the strong assumption that
+    # the variables are added in the same order to both models.
     a_x = MOI.get(a, MOI.ListOfVariableIndices())
-    constraints = Dict()
+    b_x = MOI.get(a, MOI.ListOfVariableIndices())
+    attr = MOI.NumberOfVariables()
+    Test.@test MOI.get(a, attr) == MOI.get(b, attr)
+    Test.@test length(a_x) == length(b_x)
+    # A dictionary that maps things from `b`-space to `a`-space.
+    x_map = Dict(bx => a_x[i] for (i, bx) in enumerate(b_x))
+    # To check that the constraints, we need to first cache all of the
+    # constraints in `a`.
+    constraints = Dict{Any,Any}()
     for (F, S) in MOI.get(a, MOI.ListOfConstraintTypesPresent())
         Test.@test MOI.supports_constraint(a, F, S)
         constraints[(F, S)] =
@@ -159,41 +169,39 @@ function _test_structural_identical(a::MOI.ModelLike, b::MOI.ModelLike)
                 )
             end
     end
-    b_x = MOI.get(a, MOI.ListOfVariableIndices())
-    Test.@test length(a_x) == length(b_x)
-    x_map = Dict(bx => a_x[i] for (i, bx) in enumerate(b_x))
+    # Now compare the constraints in `b` with the cache in `constraints`.
     b_constraint_types = MOI.get(b, MOI.ListOfConstraintTypesPresent())
     Test.@test length(constraints) == length(b_constraint_types)
     for (F, S) in b_constraint_types
+        # Check that the same number of constraints are present
         attr = MOI.NumberOfConstraints{F,S}()
         Test.@test MOI.get(a, attr) == MOI.get(b, attr)
+        # Check that supports_constraint is implemented
         Test.@test MOI.supports_constraint(b, F, S)
+        # Check that each function in `b` matches a function in `a`
         for ci in MOI.get(b, MOI.ListOfConstraintIndices{F,S}())
-            # We need to map the variables from b to a.
-            f_b = MOI.Utilities.map_indices(
-                x_map,
-                MOI.get(b, MOI.ConstraintFunction(), ci),
-            )
+            f_b = MOI.get(b, MOI.ConstraintFunction(), ci)
+            f_b = MOI.Utilities.map_indices(x_map, f_b)
             s_b = MOI.get(b, MOI.ConstraintSet(), ci)
             # We don't care about the order that constraints are added, only
             # that one matches.
             Test.@test any(constraints[(F, S)]) do (f, s)
-                return s_b == s && isapprox(f, f_b)
+                return s_b == s && isapprox(f, f_b) && typeof(f) == typeof(f_b)
             end
         end
     end
+    # Test model attributes are set, like ObjectiveSense and ObjectiveFunction.
     a_attrs = MOI.get(a, MOI.ListOfModelAttributesSet())
     b_attrs = MOI.get(b, MOI.ListOfModelAttributesSet())
     Test.@test length(a_attrs) == length(b_attrs)
     for attr in b_attrs
         Test.@test attr in a_attrs
         if attr == MOI.ObjectiveSense()
+            # map_indices isn't defined for `OptimizationSense`
             Test.@test MOI.get(a, attr) == MOI.get(b, attr)
         else
-            Test.@test isapprox(
-                MOI.Utilities.map_indices(x_map, MOI.get(b, attr)),
-                MOI.get(a, attr),
-            )
+            attr_b = MOI.Utilities.map_indices(x_map, MOI.get(b, attr))
+            Test.@test isapprox(MOI.get(a, attr), attr_b)
         end
     end
     return
@@ -236,7 +244,7 @@ function runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
     # Load a bridged target model, and check that getters are the same.
     target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     MOI.Utilities.loadfromstring!(target, output)
-    _test_structural_identical(test, model)
+    _test_structural_identical(target, inner)
     return
 end
 

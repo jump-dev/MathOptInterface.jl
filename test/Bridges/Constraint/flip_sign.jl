@@ -324,7 +324,7 @@ function test_runtests()
         """,
         """
         variables: x
-        -1.0 * x <= 1.0
+        -1.0 * x <= -1.0
         """,
     )
 
@@ -336,7 +336,7 @@ function test_runtests()
         """,
         """
         variables: x
-        -1.5 * x <= 1.0
+        -1.5 * x <= -1.0
         """,
     )
 
@@ -348,7 +348,7 @@ function test_runtests()
         """,
         """
         variables: x
-        -1.0 * x >= 1.0
+        -1.0 * x >= -1.0
         """,
     )
 
@@ -360,7 +360,7 @@ function test_runtests()
         """,
         """
         variables: x
-        -1.5 * x >= 1.0
+        -1.5 * x >= -1.0
         """,
     )
 
