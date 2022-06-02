@@ -216,7 +216,7 @@ function unbridged_map(
     F = MOI.ScalarAffineFunction{T}
     func = MOI.VectorOfVariables(vis)
     funcs = MOI.Bridges.inverse_map_function(typeof(bridge), func)
-    scalars = MOI.UtilitiesU.eachscalar(funcs)
+    scalars = MOI.Utilities.eachscalar(funcs)
     return Pair{MOI.VariableIndex,F}[
         bridge.variables[i] => scalars[i] for i in eachindex(vis)
     ]
