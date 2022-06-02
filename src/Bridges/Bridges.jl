@@ -232,7 +232,11 @@ julia> MOI.Bridges.runtests(
        )
 ```
 """
-function runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
+function runtests(
+    Bridge::Type{<:AbstractBridge},
+    input::String,
+    output::String,
+)
     # Load model and bridge it
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     model = _bridged_model(Bridge, inner)
@@ -245,6 +249,20 @@ function runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
     target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     MOI.Utilities.loadfromstring!(target, output)
     _test_structural_identical(target, inner)
+    # Test ConstraintPrimalStart and ConstraintDualStart
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+            set = MOI.get(model, MOI.ConstraintSet(), ci)
+            for attr in (MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart())
+                if MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
+                    MOI.set(model, attr, ci, nothing)
+                    Test.@test MOI.get(model, attr, ci) === nothing
+                    MOI.set(model, attr, ci, _fake_start(set))
+                    Test.@test MOI.get(model, attr, ci) ≈ _fake_start(set)
+                end
+            end
+        end
+    end
     # Test deletion of things in the bridge.
     #  * We reset the objective
     MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
@@ -261,6 +279,10 @@ function runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
     Test.@test MOI.get(inner, attr) == MOI.get(model, attr)
     return
 end
+
+_fake_start(::MOI.AbstractScalarSet) = 1.2
+
+_fake_start(set::MOI.AbstractVectorSet) = fill(1.2, MOI.dimension(set))
 
 function _bridged_model(Bridge::Type{<:Constraint.AbstractBridge}, inner)
     return Constraint.SingleBridgeOptimizer{Bridge{Float64}}(inner)
