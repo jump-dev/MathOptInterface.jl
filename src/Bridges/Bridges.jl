@@ -248,8 +248,4 @@ function _bridged_model(Bridge::Type{<:Objective.AbstractBridge}, inner)
     return Objective.SingleBridgeOptimizer{Bridge{Float64}}(inner)
 end
 
-function _bridged_model(Bridge::Type{<:Variable.AbstractBridge}, inner)
-    return Variable.SingleBridgeOptimizer{Bridge{Float64}}(inner)
-end
-
 end
