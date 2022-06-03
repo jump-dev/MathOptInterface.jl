@@ -315,6 +315,98 @@ function test_NonposToNonneg()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GreaterToLessBridge,
+        """
+        variables: x
+        x >= 1.0
+        """,
+        """
+        variables: x
+        -1.0 * x <= -1.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GreaterToLessBridge,
+        """
+        variables: x
+        1.5 * x >= 1.0
+        """,
+        """
+        variables: x
+        -1.5 * x <= -1.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.LessToGreaterBridge,
+        """
+        variables: x
+        x <= 1.0
+        """,
+        """
+        variables: x
+        -1.0 * x >= -1.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.LessToGreaterBridge,
+        """
+        variables: x
+        1.5 * x <= 1.0
+        """,
+        """
+        variables: x
+        -1.5 * x >= -1.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.NonnegToNonposBridge,
+        """
+        variables: x
+        [x] in Nonnegatives(1)
+        """,
+        """
+        variables: x
+        [-1.0 * x + 0.0] in Nonpositives(1)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.NonnegToNonposBridge,
+        """
+        variables: x
+        [2.1 * x + -1.0] in Nonnegatives(1)
+        """,
+        """
+        variables: x
+        [-2.1 * x + 1.0] in Nonpositives(1)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.NonposToNonnegBridge,
+        """
+        variables: x
+        [x] in Nonpositives(1)
+        """,
+        """
+        variables: x
+        [-1.0 * x + 0.0] in Nonnegatives(1)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.NonposToNonnegBridge,
+        """
+        variables: x
+        [2.1 * x + -1.0] in Nonpositives(1)
+        """,
+        """
+        variables: x
+        [-2.1 * x + 1.0] in Nonnegatives(1)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintFlipSign.runtests()

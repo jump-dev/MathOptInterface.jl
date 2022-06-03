@@ -300,6 +300,82 @@ function test_vector_slack()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.ScalarSlackBridge,
+        """
+        variables: x
+        1.0 * x >= 2.0
+        """,
+        """
+        variables: x, y
+        1.0 * x + -1.0 * y == 0.0
+        y >= 2.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.ScalarSlackBridge,
+        """
+        variables: x
+        1.0 * x <= 2.0
+        """,
+        """
+        variables: x, y
+        1.0 * x + -1.0 * y == 0.0
+        y <= 2.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.ScalarSlackBridge,
+        """
+        variables: x
+        1.0 * x in ZeroOne()
+        """,
+        """
+        variables: x, y
+        1.0 * x + -1.0 * y == 0.0
+        y in ZeroOne()
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.VectorSlackBridge,
+        """
+        variables: x
+        [1.0 * x] in Nonnegatives(1)
+        """,
+        """
+        variables: x, y
+        [1.0 * x + -1.0 * y] in Zeros(1)
+        [y] in Nonnegatives(1)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.VectorSlackBridge,
+        """
+        variables: x
+        [1.0 * x] in Nonpositives(1)
+        """,
+        """
+        variables: x, y
+        [1.0 * x + -1.0 * y] in Zeros(1)
+        [y] in Nonpositives(1)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.VectorSlackBridge,
+        """
+        variables: x, t
+        [1.0 * t, 2.0 * x] in SecondOrderCone(2)
+        """,
+        """
+        variables: x, t, y, z
+        [1.0 * t + -1.0 * y, 2.0 * x + -1.0 * z] in Zeros(2)
+        [y, z] in SecondOrderCone(2)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintSlack.runtests()

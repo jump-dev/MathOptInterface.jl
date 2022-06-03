@@ -117,6 +117,9 @@ function MOI.get(
     bridge::VectorizeBridge,
 )
     x = MOI.get(model, attr, bridge.vector_constraint)
+    if x === nothing
+        return nothing
+    end
     @assert length(x) == 1
     return x[1] + bridge.set_constant
 end
@@ -155,12 +158,25 @@ function MOI.set(
     return
 end
 
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::VectorizeBridge,
+    ::Nothing,
+)
+    MOI.set(model, attr, bridge.vector_constraint, nothing)
+    return
+end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
     bridge::VectorizeBridge,
 )
     x = MOI.get(model, attr, bridge.vector_constraint)
+    if x === nothing
+        return nothing
+    end
     @assert length(x) == 1
     return x[1]
 end
@@ -171,7 +187,11 @@ function MOI.set(
     bridge::VectorizeBridge,
     value,
 )
-    MOI.set(model, attr, bridge.vector_constraint, [value])
+    if value === nothing
+        MOI.set(model, attr, bridge.vector_constraint, nothing)
+    else
+        MOI.set(model, attr, bridge.vector_constraint, [value])
+    end
     return
 end
 

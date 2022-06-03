@@ -137,6 +137,35 @@ function test_SOCtoNonConvexQuad()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SOCtoNonConvexQuadBridge,
+        """
+        variables: t, x, y
+        [t, x, y] in SecondOrderCone(3)
+        """,
+        """
+        variables: t, x, y
+        1.0 * x * x + 1.0 * y * y + -1.0 * t * t <= 0.0
+        1.0 * t >= 0.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.RSOCtoNonConvexQuadBridge,
+        """
+        variables: t, u, x
+        [t, u, x] in RotatedSecondOrderCone(3)
+        """,
+        """
+        variables: t, u, x
+        1.0 * x * x + -2.0 * t * u <= 0.0
+        1.0 * t >= 0.0
+        1.0 * u >= 0.0
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintSOCtoNonConvexQuad.runtests()

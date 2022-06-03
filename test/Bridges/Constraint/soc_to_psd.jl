@@ -172,6 +172,32 @@ function test_rsoc_to_psd_dimension_2()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SOCtoPSDBridge,
+        """
+        variables: t, x, y
+        [t, x, y] in SecondOrderCone(3)
+        """,
+        """
+        variables: t, x, y
+        [t, x, t, y, 0.0, t] in PositiveSemidefiniteConeTriangle(3)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.RSOCtoPSDBridge,
+        """
+        variables: t, u, x
+        [t, u, x] in RotatedSecondOrderCone(3)
+        """,
+        """
+        variables: t, u, x
+        [t, x, 2u] in PositiveSemidefiniteConeTriangle(2)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintSOCtoPSD.runtests()

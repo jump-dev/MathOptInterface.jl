@@ -154,6 +154,32 @@ function test_SOCR()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SOCtoRSOCBridge,
+        """
+        variables: t, x, y
+        [t, x, y] in SecondOrderCone(3)
+        """,
+        """
+        variables: t, x, y
+        [0.7071067811865475 * t + 0.7071067811865475 * x, 0.7071067811865475 * t + -0.7071067811865475 * x, y] in RotatedSecondOrderCone(3)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.RSOCtoSOCBridge,
+        """
+        variables: t, u, x
+        [t, u, x] in RotatedSecondOrderCone(3)
+        """,
+        """
+        variables: t, u, x
+        [0.7071067811865475 * t + 0.7071067811865475 * u, 0.7071067811865475 * t + -0.7071067811865475 * u, x] in SecondOrderCone(3)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintRSOC.runtests()

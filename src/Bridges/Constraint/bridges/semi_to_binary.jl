@@ -240,6 +240,29 @@ function MOI.set(
     return
 end
 
+function MOI.set(
+    model::MOI.ModelLike,
+    ::MOI.ConstraintPrimalStart,
+    bridge::SemiToBinaryBridge{T},
+    ::Nothing,
+) where {T}
+    MOI.set(model, MOI.VariablePrimalStart(), bridge.variable, nothing)
+    MOI.set(model, MOI.VariablePrimalStart(), bridge.binary_variable, nothing)
+    MOI.set(
+        model,
+        MOI.ConstraintPrimalStart(),
+        bridge.upper_bound_index,
+        nothing,
+    )
+    MOI.set(
+        model,
+        MOI.ConstraintPrimalStart(),
+        bridge.lower_bound_index,
+        nothing,
+    )
+    return
+end
+
 MOI.get(::SemiToBinaryBridge, ::MOI.NumberOfVariables)::Int64 = 1
 
 function MOI.get(b::SemiToBinaryBridge, ::MOI.ListOfVariableIndices)

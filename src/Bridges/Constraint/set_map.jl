@@ -151,6 +151,9 @@ function MOI.get(
     bridge::SetMapBridge,
 )
     value = MOI.get(model, attr, bridge.constraint)
+    if value === nothing
+        return nothing
+    end
     return MOI.Bridges.inverse_map_function(typeof(bridge), value)
 end
 
@@ -160,8 +163,12 @@ function MOI.set(
     bridge::SetMapBridge,
     value,
 )
-    mapped_value = MOI.Bridges.map_function(typeof(bridge), value)
-    MOI.set(model, attr, bridge.constraint, mapped_value)
+    if value === nothing
+        MOI.set(model, attr, bridge.constraint, nothing)
+    else
+        mapped_value = MOI.Bridges.map_function(typeof(bridge), value)
+        MOI.set(model, attr, bridge.constraint, mapped_value)
+    end
     return
 end
 
@@ -171,6 +178,9 @@ function MOI.get(
     bridge::SetMapBridge,
 )
     value = MOI.get(model, attr, bridge.constraint)
+    if value === nothing
+        return nothing
+    end
     return MOI.Bridges.adjoint_map_function(typeof(bridge), value)
 end
 
@@ -180,8 +190,12 @@ function MOI.set(
     bridge::BT,
     value,
 ) where {BT<:SetMapBridge}
-    mapped_value = MOI.Bridges.inverse_adjoint_map_function(BT, value)
-    MOI.set(model, attr, bridge.constraint, mapped_value)
+    if value === nothing
+        MOI.set(model, attr, bridge.constraint, nothing)
+    else
+        mapped_value = MOI.Bridges.inverse_adjoint_map_function(BT, value)
+        MOI.set(model, attr, bridge.constraint, mapped_value)
+    end
     return
 end
 

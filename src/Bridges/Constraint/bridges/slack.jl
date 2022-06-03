@@ -90,7 +90,8 @@ function MOI.set(
         MOI.set.(model, MOI.VariablePrimalStart(), bridge.slack, value)
     end
     MOI.set(model, attr, bridge.slack_in_set, value)
-    MOI.set(model, attr, bridge.equality, zero(value))
+    start = value === nothing ? nothing : zero(value)
+    MOI.set(model, attr, bridge.equality, start)
     return
 end
 
