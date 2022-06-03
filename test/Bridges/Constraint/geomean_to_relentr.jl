@@ -490,6 +490,22 @@ function test_conic_GeometricMeanCone_VectorAffineFunction_3()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GeoMeantoRelEntrBridge,
+        """
+        variables: u, w1, w2
+        [u, w1, w2] in GeometricMeanCone(3)
+        """,
+        """
+        variables: u, w1, w2, y
+        [0, w1, w2, u + y, u + y] in RelativeEntropyCone(5)
+        [y] in Nonnegatives(1)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintGeomeanToRelentr.runtests()

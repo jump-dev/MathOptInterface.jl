@@ -171,11 +171,23 @@ function _test_structural_identical(a::MOI.ModelLike, b::MOI.ModelLike)
     end
     # Now compare the constraints in `b` with the cache in `constraints`.
     b_constraint_types = MOI.get(b, MOI.ListOfConstraintTypesPresent())
-    Test.@test length(constraints) == length(b_constraint_types)
+    # There may be constraint types reported in `a` that are not in `b`, but
+    # have zero constraints in `a`.
+    for (F, S) in keys(constraints)
+        attr = MOI.NumberOfConstraints{F,S}()
+        Test.@test (F, S) in b_constraint_types || MOI.get(a, attr) == 0
+    end
     for (F, S) in b_constraint_types
         # Check that the same number of constraints are present
         attr = MOI.NumberOfConstraints{F,S}()
-        Test.@test MOI.get(a, attr) == MOI.get(b, attr)
+        if !haskey(constraints, (F, S))
+            # Constraint is reported in `b`, but not in `a`. Check that there
+            # are no actual constraints in `b`.
+            Test.@test MOI.get(b, attr) == 0
+            continue
+        else
+            Test.@test MOI.get(a, attr) == MOI.get(b, attr)
+        end
         # Check that supports_constraint is implemented
         Test.@test MOI.supports_constraint(b, F, S)
         # Check that each function in `b` matches a function in `a`

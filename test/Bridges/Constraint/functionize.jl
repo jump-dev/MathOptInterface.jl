@@ -224,6 +224,76 @@ function test_unsupported_attribute_issue_1758()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.ScalarFunctionizeBridge,
+        """
+        variables: x
+        x >= 1.0
+        """,
+        """
+        variables: x
+        1.0 * x >= 1.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.ScalarFunctionizeBridge,
+        """
+        variables: x
+        x <= 1.0
+        """,
+        """
+        variables: x
+        1.0 * x <= 1.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.ScalarFunctionizeBridge,
+        """
+        variables: x
+        x in ZeroOne()
+        """,
+        """
+        variables: x
+        1.0 * x in ZeroOne()
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.VectorFunctionizeBridge,
+        """
+        variables: x
+        [x] in Nonnegatives(1)
+        """,
+        """
+        variables: x
+        [1.0 * x] in Nonnegatives(1)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.VectorFunctionizeBridge,
+        """
+        variables: x
+        [x] in Nonpositives(1)
+        """,
+        """
+        variables: x
+        [1.0 * x] in Nonpositives(1)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.VectorFunctionizeBridge,
+        """
+        variables: t, x
+        [t, x] in SecondOrderCone(2)
+        """,
+        """
+        variables: t, x
+        [1.0 * t, 1.0 * x] in SecondOrderCone(2)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintFunctionize.runtests()

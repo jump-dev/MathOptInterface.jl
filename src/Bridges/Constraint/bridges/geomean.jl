@@ -218,9 +218,9 @@ function MOI.get(
 end
 
 function MOI.get(
-    b::GeoMeanBridge{T,F,G},
-    ::MOI.NumberOfConstraints{G,MOI.Nonnegatives},
-)::Int64 where {T,F,G}
+    b::GeoMeanBridge{T,F,G,H},
+    ::MOI.NumberOfConstraints{H,MOI.Nonnegatives},
+)::Int64 where {T,F,G,H}
     return b.d > 2 ? 0 : 1
 end
 
@@ -278,7 +278,10 @@ function MOI.get(
     if d == 2
         x = MOI.get(model, attr, bridge.x_nonnegative_constraint)
         f_scalars[2] = MOI.Utilities.eachscalar(x)[1]
-        f_scalars[1] = MOI.Utilities.operate(+, T, tub, f_scalars[2])
+        f_scalars[1] = MOI.Utilities.convert_approx(
+            MOI.Utilities.scalar_type(H),
+            MOI.Utilities.operate(+, T, tub, f_scalars[2]),
+        )
     else
         t = MOI.Utilities.remove_variable(tub, bridge.xij[1])
         f_scalars[1] = t
