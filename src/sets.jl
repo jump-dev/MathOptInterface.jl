@@ -1116,6 +1116,405 @@ struct Complements <: AbstractVectorSet
     end
 end
 
+"""
+    AllDifferent(dimension::Int)
+
+The set ``\\{x \\in \\mathbb{Z}^{d}\\}`` such that no two elements in ``x`` take
+the same value and `dimension = d`.
+
+## Also known as
+
+This constraint is called `all_different` in MiniZinc, and is sometimes also
+called `distinct`.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables(x), AllDifferent(3))
+# enforces `x[1] != x[2]` AND `x[1] != x[3]` AND `x[2] != x[3]`.
+```
+"""
+struct AllDifferent <: AbstractVectorSet
+    dimension::Int
+    function AllDifferent(dimension::Base.Integer)
+        if dimension < 0
+            throw(DimensionMismatch("Dimension of AllDifferent must be >= 0."))
+        end
+        return new(dimension)
+    end
+end
+
+"""
+    BinPacking(c::T, w::Vector{T}) where {T}
+
+The set ``\\{x \\in \\mathbb{R}^d\\}`` where `d = length(w)`, such that each
+item `i` in `1:d` of weight `w[i]` is put into bin `x[i]`, and the total weight
+of each bin does not exceed `c`.
+
+There are additional assumptions that the capacity, `c`, and the weights, `w`,
+must all be non-negative.
+
+## Also known as
+
+This constraint is called `bin_packing` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+bins = add_variables(model, 5)
+weights = [1, 1, 2, 2, 3]
+add_constraint.(model, bins, MOI.Integer())
+add_constraint.(model, bins, MOI.Interval(1, 3))
+add_constraint(model, VectorOfVariables(bins), BinPacking(3, weights))
+```
+"""
+struct BinPacking{T} <: AbstractVectorSet
+    capacity::T
+    weights::Vector{T}
+    function BinPacking(capacity::T, weights::Vector{T}) where {T}
+        if capacity < zero(T)
+            throw(DomainError(capacity, "capacity must be non-negative"))
+        end
+        if any(w -> w < zero(T), weights)
+            throw(DomainError(weights, "weights must be non-negative"))
+        end
+        return new{T}(capacity, weights)
+    end
+end
+
+dimension(set::BinPacking) = length(set.weights)
+
+function Base.copy(set::BinPacking{T}) where {T}
+    return BinPacking(set.capacity, copy(set.weights))
+end
+
+function Base.:(==)(x::BinPacking{T}, y::BinPacking{T}) where {T}
+    return x.capacity == y.capacity && x.weights == y.weights
+end
+
+"""
+    Circuit(dimension::Int)
+
+The set ``\\{x \\in \\{1..d\\}^d\\}`` that constraints ``x`` to be a circuit,
+such that ``x_i = j`` means that ``j`` is the successor of ``i``, and
+`dimension = d`.
+
+Graphs with multiple independent circuits, such as `[2, 1, 3]` and
+`[2, 1, 4, 3]`, are not valid.
+
+## Also known as
+
+This constraint is called `circuit` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+x = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables(x), Circuit(3))
+```
+"""
+struct Circuit <: AbstractVectorSet
+    dimension::Int
+    function Circuit(dimension::Base.Integer)
+        if dimension < 0
+            throw(DimensionMismatch("Dimension of Circuit must be >= 0."))
+        end
+        return new(dimension)
+    end
+end
+
+"""
+    CountAtLeast(n::Int, d::Vector{Int}, set::Set{Int})
+
+The set ``\\{x \\in \\mathbb{Z}^{d_1 + d_2 + \\ldots d_N}\\}``, where `x` is
+partitioned into `N` subsets (``\\{x_1,  \\ldots, x_{d_1}\\}``,
+``\\{x_{d_1 + 1},  \\ldots, x_{d_1 + d_2}\\}`` and so on), and at least ``n``
+elements of each subset take one of the values in `set`.
+
+## Also known as
+
+This constraint is called `at_least` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+a, _ = add_constrained_variable(model, Integer())
+b, _ = add_constrained_variable(model, Integer())
+c, _ = add_constrained_variable(model, Integer())
+# To ensure that `3` appears at least once in each of the subsets {a, b}, {b, c}
+x, d, set = [a, b, b, c], [2, 2], [3]
+add_constraint(model, VectorOfVariables(x), CountAtLeast(1, d, Set(set)))
+```
+"""
+struct CountAtLeast <: AbstractVectorSet
+    n::Int
+    partitions::Vector{Int}
+    set::Set{Int}
+    function CountAtLeast(
+        n::Base.Integer,
+        partitions::Vector{Int},
+        set::Set{Int},
+    )
+        if any(p <= 0 for p in partitions)
+            throw(DimensionMismatch("Invalid partition dimension."))
+        end
+        return new(n, partitions, set)
+    end
+end
+
+dimension(s::CountAtLeast) = sum(s.partitions)
+
+function Base.copy(set::CountAtLeast)
+    return CountAtLeast(set.n, copy(set.partitions), copy(set.set))
+end
+
+function Base.:(==)(x::CountAtLeast, y::CountAtLeast)
+    return x.n == y.n && x.partitions == y.partitions && x.set == y.set
+end
+
+"""
+    CountBelongs(dimenson::Int, set::Set{Int})
+
+The set ``\\{(n, x) \\in \\mathbb{Z}^{1+d}\\}``, such that `n` elements of the
+vector `x` take on of the values in `set` and `dimension = 1 + d`.
+
+## Also known as
+
+This constraint is called `among` by MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+n = add_constrained_variable(model, MOI.Integer())
+x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+set = Set([3, 4, 5])
+add_constraint(model, VectorOfVariables([n; x]), CountBelongs(4, set))
+```
+"""
+struct CountBelongs <: AbstractVectorSet
+    dimension::Int
+    set::Set{Int}
+    function CountBelongs(dimension::Base.Integer, set::Set{Int})
+        if dimension < 1
+            throw(DimensionMismatch("Dimension of CountBelongs must be >= 1."))
+        end
+        return new(dimension, set)
+    end
+end
+
+function Base.:(==)(x::CountBelongs, y::CountBelongs)
+    return x.dimension == y.dimension && x.set == y.set
+end
+
+Base.copy(set::CountBelongs) = CountBelongs(set.dimension, copy(set.set))
+
+"""
+    CountDistinct(dimension::Int)
+
+The set ``\\{(n, x) \\in \\mathbb{Z}^{1+d}\\}``, such that the number of distinct
+values in `x` is `n` and `dimension = 1 + d`.
+
+## Also known as
+
+This constraint is called `nvalues` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+n = add_constrained_variable(model, Integer())
+x = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables(vcat(n, x)), CountDistinct(4))
+# if n == 1, then x[1] == x[2] == x[3]
+# if n == 2, then
+#   x[1] == x[2] != x[3] ||
+#   x[1] != x[2] == x[3] ||
+#   x[1] == x[3] != x[2]
+# if n == 3, then x[1] != x[2], x[2] != x[3] and x[3] != x[1]
+```
+
+## Relationship to AllDifferent
+
+When the first element is `d`, `CountDistinct` is equivalent to an
+[`AllDifferent`](@ref) constraint.
+
+```julia
+model = Utilities.Model{Float64}()
+x = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables(vcat(3, x)), CountDistinct(4))
+# equivalent to
+add_constraint(model, VectorOfVariables(x), AllDifferent(3))
+```
+"""
+struct CountDistinct <: AbstractVectorSet
+    dimension::Int
+    function CountDistinct(dimension::Base.Integer)
+        if dimension < 1
+            throw(DimensionMismatch("Dimension of CountDistinct must be >= 1."))
+        end
+        return new(dimension)
+    end
+end
+
+"""
+    CountGreaterThan(dimension::Int)
+
+The set ``\\{(c, y, x) \\in \\mathbb{Z}^{1+1+d}\\}``, such that `c` is strictly
+greater than the number of occurances of `y` in `x` and `dimension = 1 + 1 + d`.
+
+## Also known as
+
+This constraint is called `count_gt` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+c, _ = add_constrained_variable(model, Integer())
+y, _ = add_constrained_variable(model, Integer())
+x = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+add_constraint(model, VectorOfVariables([c; y; x]), CountGreaterThan(5))
+```
+"""
+struct CountGreaterThan <: AbstractVectorSet
+    dimension::Int
+    function CountGreaterThan(dimension::Base.Integer)
+        if dimension < 2
+            throw(
+                DimensionMismatch(
+                    "Dimension of CountGreaterThan must be >= 2.",
+                ),
+            )
+        end
+        return new(dimension)
+    end
+end
+
+"""
+    Cumulative(dimension::Int)
+
+The set ``\\{(s, d, r, b) \\in \\mathbb{R}^{3n+1}\\}``, representing the
+`cumulative`` global constraint, where
+`n == length(s) == length(r) == length(b)` and `dimension = 3n + 1`.
+
+`Cumulative` requires that a set of tasks given by start times ``s``, durations
+``d``, and resource requirements ``r``, never requires more than the global
+resource bound ``b`` at any one time.
+
+## Also known as
+
+This constraint is called `cumulative` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+s = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+d = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+r = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
+b, _ = add_constrained_variable(model, Integer())
+add_constraint(model, VectorOfVariables([s; d; r; b]), Cumulative(10))
+```
+"""
+struct Cumulative <: AbstractVectorSet
+    dimension::Int
+    function Cumulative(dimension::Base.Integer)
+        if dimension < 1
+            throw(DimensionMismatch("Dimension of Cumulative must be >= 1."))
+        end
+        return new(dimension)
+    end
+end
+
+"""
+    Path(from::Vector{Int}, to::Vector{Int})
+
+Given a graph comprised of a set of nodes `1..N` and a set of arcs `1..E`
+represented by an edge from node `from[i]` to node `to[i]`, `Path` constrains
+the set
+``(s, t, ns, es) \\in (1..N)\\times(1..N)\\times\\{0,1\\}^N\\times\\{0,1\\}^E``,
+to form subgraph that is a path from node `s` to node `t`, where node `n` is in
+the path if `ns[n]` is `1`, and edge `e` is in the path if `es[e]` is `1`.
+
+The path must be acyclic, and it must traverse all nodes `n` for which `ns[n]`
+is `1`, and all edges `e` for which `es[e]` is `1`.
+
+## Also known as
+
+This constraint is called `path` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+from = [1, 1, 2, 2, 3]
+to = [2, 3, 3, 4, 4]
+s, _ = add_constrained_variable(model, Integer())
+t, _ = add_constrained_variable(model, Integer())
+ns = add_variables(model, N)
+add_constraint.(model, ns, ZeroOne())
+es = add_variables(model, E)
+add_constraint.(model, es, ZeroOne())
+add_constraint(model, VectorOfVariables([s; t; ns; es]), Path(from, to))
+```
+"""
+struct Path <: AbstractVectorSet
+    N::Int
+    E::Int
+    from::Vector{Int}
+    to::Vector{Int}
+    function Path(from::Vector{Int}, to::Vector{Int})
+        @assert length(from) == length(to)
+        E = length(from)
+        N = max(maximum(from), maximum(to))
+        return new(N, E, from, to)
+    end
+end
+
+dimension(set::Path) = 2 + set.N + set.E
+
+Base.copy(set::Path) = Path(copy(set.from), copy(set.to))
+
+function Base.:(==)(x::Path, y::Path)
+    return x.N == y.N && x.E == y.E && x.from == y.from && x.to == y.to
+end
+
+"""
+    Table(table::Matrix{T}) where {T}
+
+The set ``\\{x \\in \\mathbb{R}^d\\}`` where `d = size(table, 2)`, such that `x`
+belongs to one row of `table`. That is, there exists some `j` in
+`1:size(table, 1)`, such that `x[i] = table[j, i]` for all `i=1:size(table, 2)`.
+
+## Also known as
+
+This constraint is called `table` in MiniZinc.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+x = add_variables(model, 3)
+table = [1 1 0; 0 1 1; 1 0 1; 1 1 1]
+add_constraint(model, VectorOfVariables(x), Table(table))
+```
+"""
+struct Table{T} <: AbstractVectorSet
+    table::Matrix{T}
+end
+
+dimension(set::Table) = size(set.table, 2)
+
+Base.copy(set::Table) = Table(copy(set.table))
+
+Base.:(==)(x::Table{T}, y::Table{T}) where {T} = x.table == y.table
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{
@@ -1150,6 +1549,13 @@ function Base.copy(
         ZeroOne,
         Semicontinuous,
         Semiinteger,
+        AllDifferent,
+        CountDistinct,
+        CountBelongs,
+        CountAtLeast,
+        CountGreaterThan,
+        Circuit,
+        Cumulative,
     },
 )
     return set

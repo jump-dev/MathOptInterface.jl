@@ -96,6 +96,21 @@ Indicator
 Complements
 ```
 
+## Constraint programming sets
+
+```@docs
+AllDifferent
+BinPacking
+Circuit
+CountAtLeast
+CountBelongs
+CountDistinct
+CountGreaterThan
+Cumulative
+Path
+Table
+```
+
 ## Matrix sets
 
 Matrix sets are vectorized in order to be subtypes of

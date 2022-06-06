@@ -120,6 +120,12 @@ function test_sets_dimension()
     @test MOI.dimension(MOI.Complements(10)) == 10
 end
 
+function test_sets_bin_packing_errors()
+    @test_throws DomainError MOI.BinPacking(-1.0, [1.0, 2.0])
+    @test_throws DomainError MOI.BinPacking(1.0, [1.0, -2.0])
+    return
+end
+
 function test_sets_DimensionMismatch()
     for (S, min_dimension) in (
         (MOI.Reals, 0),
@@ -139,6 +145,11 @@ function test_sets_DimensionMismatch()
         (MOI.LogDetConeSquare, 0),
         (MOI.RootDetConeTriangle, 0),
         (MOI.RootDetConeSquare, 0),
+        (MOI.AllDifferent, 0),
+        (MOI.CountDistinct, 1),
+        (MOI.CountGreaterThan, 2),
+        (MOI.Cumulative, 1),
+        (MOI.Circuit, 0),
     )
         @test_throws DimensionMismatch S(min_dimension - 1)
         @test S(min_dimension) isa S
@@ -153,6 +164,8 @@ function test_sets_DimensionMismatch()
     @test_throws DimensionMismatch MOI.RelativeEntropyCone(2)
     @test_throws DimensionMismatch MOI.Complements(-3)
     @test_throws DimensionMismatch MOI.Complements(3)
+    @test_throws DimensionMismatch MOI.CountBelongs(0, Set([1, 2]))
+    @test_throws DimensionMismatch MOI.CountAtLeast(1, [-1, 2], Set([1, 2]))
     return
 end
 
