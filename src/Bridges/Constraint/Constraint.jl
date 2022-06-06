@@ -43,6 +43,7 @@ include("bridges/soc_rsoc.jl")
 include("bridges/soc_to_nonconvex_quad.jl") # do not add these bridges by default
 include("bridges/soc_to_psd.jl")
 include("bridges/square.jl")
+include("bridges/table.jl")
 include("bridges/vectorize.jl")
 include("bridges/zero_one.jl")
 
@@ -94,6 +95,7 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, ZeroOneBridge{T})
     # Constraint programming bridges
     MOI.Bridges.add_bridge(bridged_model, BinPackingToMILP{T})
+    MOI.Bridges.add_bridge(bridged_model, TableToMILP{T})
     return
 end
 
