@@ -94,8 +94,8 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, SemiToBinaryBridge{T})
     MOI.Bridges.add_bridge(bridged_model, ZeroOneBridge{T})
     # Constraint programming bridges
-    MOI.Bridges.add_bridge(bridged_model, BinPackingToMILP{T})
-    MOI.Bridges.add_bridge(bridged_model, TableToMILP{T})
+    MOI.Bridges.add_bridge(bridged_model, BinPackingToMILPBridge{T})
+    MOI.Bridges.add_bridge(bridged_model, TableToMILPBridge{T})
     return
 end
 
