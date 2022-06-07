@@ -422,6 +422,9 @@ function _process_expr!(expr::_NLExpr, args::Vector{Any})
             args[end] = Expr(:call, :*, args[end], arg)
             N = length(args) - 1
         end
+    elseif op == :* && N == 1
+        # Unary multiplication! We can drop the op and process the args.
+        return _process_expr!(expr, args[2])
     end
     # Now convert the Julia expression into an _NLExpr.
     opcode = get(_JULIA_TO_AMPL, op, nothing)
