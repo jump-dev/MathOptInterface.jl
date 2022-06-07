@@ -9,7 +9,14 @@
 
 `TableToMILPBridge` implements the following reformulation:
 
-  * ``x \\in Table(c, w)`` into
+  * ``x \\in Table(t)`` into
+    ```math
+    \\begin{aligned}
+    z_{j} \\in \\{0, 1\\}                     & \\forall i, j \\\\
+    \\sum\\limits_{j=1}^n z_{j} = 1                           \\\\
+    \\sum\\limits_{j=1}^n t_{ij} z_{j} == x_i & \\forall i
+    \\end{aligned}
+    ```
 
 ## Source node
 
