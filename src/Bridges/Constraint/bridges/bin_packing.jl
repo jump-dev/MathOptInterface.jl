@@ -17,7 +17,7 @@
     \\sum\\limits_{i=1}^n w_i z_{ij} \\le c & \\forall j \\\\
     \\sum\\limits_{j=1}^n j z_{ij} == x_i   & \\forall i
     \\end{aligned}
-  ```
+    ```
 ## Source node
 
 `BinPackingToMILPBridge` supports:
