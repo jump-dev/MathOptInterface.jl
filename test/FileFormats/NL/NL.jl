@@ -188,7 +188,7 @@ end
 
 function test_nlexpr_unary_multiplication()
     x = MOI.VariableIndex(1)
-    return _test_nlexpr(:(*$x), [x], Dict(x => 0), 0.0)
+    return _test_nlexpr(:(*($x)), [x], Dict(x => 0), 0.0)
 end
 
 function test_nlexpr_unary_specialcase()
