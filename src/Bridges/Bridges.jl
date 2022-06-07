@@ -150,7 +150,7 @@ function _test_structural_identical(a::MOI.ModelLike, b::MOI.ModelLike)
     # Test that the variables are the same. We make the strong assumption that
     # the variables are added in the same order to both models.
     a_x = MOI.get(a, MOI.ListOfVariableIndices())
-    b_x = MOI.get(a, MOI.ListOfVariableIndices())
+    b_x = MOI.get(b, MOI.ListOfVariableIndices())
     attr = MOI.NumberOfVariables()
     Test.@test MOI.get(a, attr) == MOI.get(b, attr)
     Test.@test length(a_x) == length(b_x)
@@ -271,6 +271,16 @@ function runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
             end
         end
     end
+    # Test other bridge functions
+    for b in values(Constraint.bridges(model))
+        _general_bridge_tests(b)
+    end
+    for b in values(Objective.bridges(model))
+        _general_bridge_tests(b)
+    end
+    for b in values(Variable.bridges(model))
+        _general_bridge_tests(b)
+    end
     # Test deletion of things in the bridge.
     #  * We reset the objective
     MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
@@ -298,6 +308,21 @@ end
 
 function _bridged_model(Bridge::Type{<:Objective.AbstractBridge}, inner)
     return Objective.SingleBridgeOptimizer{Bridge{Float64}}(inner)
+end
+
+function _general_bridge_tests(bridge::B) where {B<:AbstractBridge}
+    Test.@test added_constrained_variable_types(B) isa Vector{Tuple{Type}}
+    for (F, S) in added_constraint_types(B)
+        Test.@test(
+            length(MOI.get(bridge, MOI.ListOfConstraintIndices{F,S}())) ==
+            MOI.get(bridge, MOI.NumberOfConstraints{F,S}())
+        )
+    end
+    Test.@test(
+        length(MOI.get(bridge, MOI.ListOfVariableIndices())) ==
+        MOI.get(bridge, MOI.NumberOfVariables())
+    )
+    return
 end
 
 end
