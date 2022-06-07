@@ -150,7 +150,7 @@ function test_runtests()
         """
         variables: x
         x in Integer()
-        x in Interval(0.0, 1.0)
+        1.0 * x in Interval(0.0, 1.0)
         """,
     )
     return
