@@ -1,5 +1,35 @@
 # Release notes
 
+## v1.4.0 (In development)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.4.0).
+
+### New features
+
+ - Added a number of sets for constraint programming:
+   - `AllDifferent`
+   - `BinPacking`
+   - `Circuit`
+   - `CountAtLeast`
+   - `CountBelongs`
+   - `CountDistinct`
+   - `CountGreaterThan`
+   - `Cumulative`
+   - `Path`
+   - `Table`
+ - Added support for user-defined hessians in `Nonlinear`
+ - Added `Bridges.runtests` to simplify the testing of bridge implementations
+
+### Bug fixes
+
+ - Fixed a bug in `FileFormats.NL` when writing univariate `*`
+
+### Performance and maintenance
+
+ - Began a large refactoring of the `Bridges` submodule, with greatly improved
+   documentation.
+
 ## v1.3.0 (May 27, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
