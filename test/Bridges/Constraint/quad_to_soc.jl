@@ -197,6 +197,32 @@ function test_fill_reducing_permutation()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.QuadtoSOCBridge,
+        """
+        variables: x, y
+        2.0 * x * x + 2.0 * y * y <= 0.0
+        """,
+        """
+        variables: x, y
+        [1.0, 0.0, 2.0 * x, 2.0 * y] in RotatedSecondOrderCone(4)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.QuadtoSOCBridge,
+        """
+        variables: x, y
+        -2.0 * x * x + -2.0 * y * y >= 0.0
+        """,
+        """
+        variables: x, y
+        [1.0, 0.0, 2.0 * x, 2.0 * y] in RotatedSecondOrderCone(4)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintQuadToSOC.runtests()

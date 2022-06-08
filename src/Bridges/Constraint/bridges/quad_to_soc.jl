@@ -5,58 +5,38 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    QuadtoSOCBridge{T}
+    QuadtoSOCBridge{T} <: Bridges.Constraint.AbstractBridge
 
-The set of points `x` satisfying the constraint
+`QuadtoSOCBridge` converts quadratic inequalities
 ```math
 \\frac{1}{2}x^T Q x + a^T x + b \\le 0
 ```
-is a convex set if `Q` is positive semidefinite and is the union of two convex
-cones if `a` and `b` are zero (i.e. *homogeneous* case) and `Q` has only one
-negative eigenvalue. Currently, only the non-homogeneous transformation
-is implemented, see the Note section below for more details.
+into [`MOI.RotatedSecondOrderCone`](@ref) constraints, but it only applies when
+``Q`` is positive semidefinite.
 
-## Non-homogeneous case
-
-If `Q` is positive semidefinite, there exists `U` such that ``Q = U^T U``, the
-inequality can then be rewritten as
+This is because, if `Q` is positive semidefinite, there exists `U` such that
+``Q = U^T U``, and so the inequality can then be rewritten as;
 ```math
 \\|U x\\|_2^2 \\le 2 (-a^T x - b)
 ```
-which is equivalent to the membership of `(1, -a^T x - b, Ux)` to the rotated
-second-order cone.
 
-## Homogeneous case
+Therefore, `QuadtoSOCBridge` implements the following reformulation:
 
-If `Q` has only one negative eigenvalue, the set of `x` such that ``x^T Q x \\le
-0`` is the union of a convex cone and its opposite. We can choose which one to
-model by checking the existence of bounds on variables as shown below.
+  * ``\\frac{1}{2}x^T Q x + a^T x + b \\le 0`` into
+    ``(1, -a^T x - b, Ux) \\in RotatedSecondOrderCone``
 
-### Second-order cone
+## Source node
 
-If `Q` is diagonal and has eigenvalues `(1, 1, -1)`, the inequality
-``x^2 + x^2 \\le z^2`` combined with ``z \\ge 0`` defines the Lorenz cone (i.e.
-the second-order cone) but when combined with ``z \\le 0``, it gives the
-opposite of the second order cone. Therefore, we need to check if the variable
-`z` has a lower bound 0 or an upper bound 0 in order to determine which cone is
+`QuadtoSOCBridge` supports:
 
-### Rotated second-order cone
+  * [`MOI.ScalarAffineFunction{T}`](@ref) in [`MOI.LessThan{T}`](@ref)
+  * [`MOI.ScalarAffineFunction{T}`](@ref) in [`MOI.GreaterThan{T}`](@ref)
 
-The matrix `Q` corresponding to the inequality ``x^2 \\le 2yz`` has one
-eigenvalue 1 with eigenvectors `(1, 0, 0)` and `(0, 1, -1)` and one eigenvalue
-`-1` corresponding to the eigenvector `(0, 1, 1)`. Hence if we intersect this
-union of two convex cone with the halfspace ``x + y \\ge 0``, we get the rotated
-second-order cone and if we intersect it with the halfspace ``x + y \\le 0`` we
-get the opposite of the rotated second-order cone. Note that `y` and `z` have
-the same sign since `yz` is nonnegative hence ``x + y \\ge 0`` is equivalent to
-``x \\ge 0`` and ``y \\ge 0``.
+## Target nodes
 
-### Note
+`RelativeEntropyBridge` creates:
 
-The check for existence of bound can be implemented (but inefficiently) with the
-current interface but if bound is removed or transformed (e.g. `≤ 0` transformed
-into `≥ 0`) then the bridge is no longer valid. For this reason the homogeneous
-version of the bridge is not implemented yet.
+  * [`MOI.VectorAffineFunction{T}`](@ref) in [`MOI.RotatedSecondOrderCone`](@ref)
 """
 struct QuadtoSOCBridge{T} <: AbstractBridge
     soc::MOI.ConstraintIndex{
@@ -283,8 +263,8 @@ function MOI.get(
 end
 
 function MOI.get(
-    model::MOI.ModelLike,
-    attr::MOI.ConstraintSet,
+    ::MOI.ModelLike,
+    ::MOI.ConstraintSet,
     b::QuadtoSOCBridge{T},
 ) where {T}
     if b.less_than
