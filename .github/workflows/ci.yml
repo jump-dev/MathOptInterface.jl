@@ -16,22 +16,19 @@ jobs:
         # Since MOI doesn't have binary dependencies, only test on a subset of
         # possible platforms.
         group: ["base;Benchmarks;FileFormats;Nonlinear", "Bridges", "Test", "Utilities"]
+        version: ['1.6', '1', 'nightly']
         include:
-          - version: 'nightly'
-            os: ubuntu-latest
+          # Add ubuntu-latest with x64 for all combinations
+          - os: ubuntu-latest
             arch: x64
-          - version: '1'
-            os: ubuntu-latest
+            # Add windows-latest with x64, but only  for version '1'
+          - os: windows-latest
             arch: x64
-          - version: '1'
-            os: windows-latest
-            arch: x64
-          - version: '1.6'
-            os: ubuntu-latest
-            arch: x64
-          - version: '1.6'
-            os: ubuntu-latest
+            version: '1'
+            # Add windows-latest with x686 but only  for version '1.6'
+          - os: ubuntu-latest
             arch: x86
+            version: '1.6'
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
