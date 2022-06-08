@@ -6,17 +6,28 @@
 
 using Test
 
-# This file gets called first. It it doesn't crash, all is well.
-include("issue980.jl")
+# Should be of form
+#   "base", "Nonlinear", "Bridges", "FileFormats", "Test", "Utilities", "Benchmarks"
+# or some combination, separated by `;`
+#   "base;Benchmarks;FileFormats"
+MODULES_TO_TEST = get(
+    ENV,
+    "JULIA_TEST_MATHOPTINTERFACE",
+    "base;Nonlinear;Bridges;FileFormats;Test;Utilities;Benchmarks",
+)
 
-for file in readdir(@__DIR__)
-    if file in ["issue980.jl", "dummy.jl", "hygiene.jl", "runtests.jl"]
-        continue
-    elseif !endswith(file, ".jl")
-        continue
-    end
-    @testset "$(file)" begin
-        include(file)
+if occursin("base", MODULES_TO_TEST)
+    # This file gets called first. It it doesn't crash, all is well.
+    include("issue980.jl")
+    for file in readdir(@__DIR__)
+        if file in ["issue980.jl", "dummy.jl", "hygiene.jl", "runtests.jl"]
+            continue
+        elseif !endswith(file, ".jl")
+            continue
+        end
+        @testset "$(file)" begin
+            include(file)
+        end
     end
 end
 
@@ -28,8 +39,12 @@ end
     "Utilities",
     "Benchmarks",
 ]
-    include("$(submodule)/$(submodule).jl")
+    if occursin(submodule, MODULES_TO_TEST)
+        include("$(submodule)/$(submodule).jl")
+    end
 end
 
-# Test hygiene of @model macro
-include("hygiene.jl")
+if occursin("base", MODULES_TO_TEST)
+    # Test hygiene of @model macro
+    include("hygiene.jl")
+end

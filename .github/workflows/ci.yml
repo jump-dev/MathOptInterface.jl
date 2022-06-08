@@ -15,6 +15,12 @@ jobs:
       matrix:
         # Since MOI doesn't have binary dependencies, only test on a subset of
         # possible platforms.
+        group:
+          - "base;Benchmarks;FileFormats"
+          - "Bridges"
+          - "Nonlinear"
+          - "Test"
+          - "Utilities"
         include:
           - version: 'nightly'
             os: ubuntu-latest
@@ -49,6 +55,8 @@ jobs:
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
+        env:
+          JULIA_TEST_MATHOPTINTERFACE: ${{ matrix.group }}
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v1
         with:
