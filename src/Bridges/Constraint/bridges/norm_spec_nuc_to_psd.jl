@@ -5,14 +5,28 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    NormSpectralBridge{T}
+    NormSpectralBridge{T,F,G} <: Bridges.Constraint.AbstractBridge
 
-The `NormSpectralCone` is representable with a PSD constraint, since
-``t \\ge \\sigma_1(X)`` if and only if ``[tI X^\\top; X tI] \\succ 0``.
+`NormSpectralBridge` implements the following reformulation:
+
+  * ``t \\ge \\sigma_1(X)`` into
+    ``\\left[\\begin{array}{c c}t\\mathbf{I} & X^\\top \\\\ X & t \\mathbf{I}\\end{array}\\right] \\succ 0``
+
+## Source node
+
+`NormSpectralBridge` supports:
+
+  * `G` in [`MOI.NormSpectralCone`](@ref)
+
+## Target nodes
+
+`NormSpectralBridge` creates:
+
+  * `F` in [`MOI.PositiveSemidefiniteConeTriangle`](@ref)
 """
 struct NormSpectralBridge{T,F,G} <: AbstractBridge
-    row_dim::Int # row dimension of X
-    column_dim::Int # column dimension of X
+    row_dim::Int
+    column_dim::Int
     psd_index::MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle}
 end
 
@@ -26,31 +40,18 @@ function bridge_constraint(
     s::MOI.NormSpectralCone,
 ) where {T,F,G}
     f_scalars = MOI.Utilities.eachscalar(f)
-    t = f_scalars[1]
-    row_dim = s.row_dim
-    column_dim = s.column_dim
-    side_dim = row_dim + column_dim
-    psd_set = MOI.PositiveSemidefiniteConeTriangle(side_dim)
+    row_dim, column_dim = s.row_dim, s.column_dim
+    psd_set = MOI.PositiveSemidefiniteConeTriangle(row_dim + column_dim)
     psd_func =
         MOI.Utilities.zero_with_output_dimension(F, MOI.dimension(psd_set))
-    for i in 1:side_dim
-        MOI.Utilities.operate_output_index!(
-            +,
-            T,
-            MOI.Utilities.trimap(i, i),
-            psd_func,
-            t,
-        )
+    for i in 1:(row_dim+column_dim)
+        k = MOI.Utilities.trimap(i, i)
+        MOI.Utilities.operate_output_index!(+, T, k, psd_func, f_scalars[1])
     end
     X_idx = 2
-    for j in 1:column_dim, i in (column_dim+1):side_dim
-        MOI.Utilities.operate_output_index!(
-            +,
-            T,
-            MOI.Utilities.trimap(i, j),
-            psd_func,
-            f_scalars[X_idx],
-        )
+    for j in 1:column_dim, i in (column_dim+1):(row_dim+column_dim)
+        k = MOI.Utilities.trimap(i, j)
+        MOI.Utilities.operate_output_index!(+, T, k, psd_func, f_scalars[X_idx])
         X_idx += 1
     end
     psd_index = MOI.add_constraint(model, psd_func, psd_set)
@@ -119,10 +120,9 @@ function MOI.get(
         MOI.get(model, MOI.ConstraintFunction(), bridge.psd_index),
     )
     t = psd_func[1]
-    side_dim = bridge.row_dim + bridge.column_dim
     X = psd_func[[
         MOI.Utilities.trimap(i, j) for j in 1:bridge.column_dim for
-        i in (bridge.column_dim+1):side_dim
+        i in (bridge.column_dim+1):(bridge.row_dim+bridge.column_dim)
     ]]
     return MOI.Utilities.convert_approx(G, MOI.Utilities.operate(vcat, T, t, X))
 end
@@ -153,6 +153,9 @@ function MOI.get(
     bridge::NormSpectralBridge,
 )
     primal = MOI.get(model, attr, bridge.psd_index)
+    if primal === nothing
+        return nothing
+    end
     t = primal[1]
     side_dim = bridge.row_dim + bridge.column_dim
     X = primal[[
@@ -183,6 +186,16 @@ function MOI.set(
     return
 end
 
+function MOI.set(
+    model::MOI.ModelLike,
+    ::MOI.ConstraintPrimalStart,
+    bridge::NormSpectralBridge{T},
+    ::Nothing,
+) where {T}
+    MOI.set(model, MOI.ConstraintPrimalStart(), bridge.psd_index, nothing)
+    return
+end
+
 # Given [U X'; X V] is dual on PSD constraint, the dual on NormSpectralCone
 # constraint is (tr(U) + tr(V), 2X) in NormNuclearCone.
 function MOI.get(
@@ -203,16 +216,30 @@ function MOI.get(
 end
 
 """
-    NormNuclearBridge{T}
+    NormNuclearBridge{T,F,G,H} <: Bridges.Constraint.AbstractBridge
 
-The `NormNuclearCone` is representable with an SDP constraint and extra
-variables, since ``t \\ge \\sum_i \\sigma_i (X)`` if and only if there exists
-symmetric matrices ``U, V`` such that ``[U X^\\top; X V] \\succ 0`` and
-``t \\ge (tr(U) + tr(V)) / 2``.
+`NormNuclearBridge` implements the following reformulation:
+
+  * ``t \\ge \\sum_i \\sigma_i (X)`` into
+    ``\\left[\\begin{array}{c c}U & X^\\top \\\\ X & V\\end{array}\\right] \\succ 0``
+    and ``t \\ge (tr(U) + tr(V)) / 2``.
+
+## Source node
+
+`NormNuclearBridge` supports:
+
+  * `H` in [`MOI.NormNuclearCone`](@ref)
+
+## Target nodes
+
+`NormNuclearBridge` creates:
+
+  * `F` in [`MOI.GreaterThan{T}`](@ref)
+  * `G` in [`MOI.PositiveSemidefiniteConeTriangle`](@ref)
 """
 struct NormNuclearBridge{T,F,G,H} <: AbstractBridge
-    row_dim::Int # row dimension of X
-    column_dim::Int # column dimension of X
+    row_dim::Int
+    column_dim::Int
     U::Vector{MOI.VariableIndex}
     V::Vector{MOI.VariableIndex}
     ge_index::MOI.ConstraintIndex{F,MOI.GreaterThan{T}}
@@ -229,8 +256,7 @@ function bridge_constraint(
     s::MOI.NormNuclearCone,
 ) where {T,F,G,H}
     f_scalars = MOI.Utilities.eachscalar(f)
-    row_dim = s.row_dim
-    column_dim = s.column_dim
+    row_dim, column_dim = s.row_dim, s.column_dim
     side_dim = row_dim + column_dim
     U_dim = div(column_dim * (column_dim + 1), 2)
     V_dim = div(row_dim * (row_dim + 1), 2)
@@ -449,6 +475,9 @@ function MOI.get(
     bridge::NormNuclearBridge,
 )
     t = MOI.get(model, attr, bridge.ge_index)
+    if t === nothing
+        return nothing
+    end
     psd_dual = MOI.get(model, attr, bridge.psd_index)
     side_dim = bridge.row_dim + bridge.column_dim
     X =
@@ -478,5 +507,16 @@ function MOI.set(
         X_idx += 1
     end
     MOI.set(model, MOI.ConstraintDualStart(), bridge.psd_index, dual)
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    ::MOI.ConstraintDualStart,
+    bridge::NormNuclearBridge{T},
+    ::Nothing,
+) where {T}
+    MOI.set(model, MOI.ConstraintDualStart(), bridge.ge_index, nothing)
+    MOI.set(model, MOI.ConstraintDualStart(), bridge.psd_index, nothing)
     return
 end
