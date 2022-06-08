@@ -7,29 +7,20 @@
 """
     NormOneBridge{T,F,G} <: Bridges.Constraint.AbstractBridge
 
-The `NormOneCone` is representable with LP constraints, since
-``t \\ge \\sum_i \\lvert x_i \\rvert`` if and only if there exists a vector y
-such that
-``t \\ge \\sum_i y_i`` and ``y_i \\ge x_i``, ``y_i \\ge -x_i`` for all ``i``.
-"""
+`NormOneBridge` implements the following reformulation:
 
-"""
-    NormInfinityBridge{T,F,G} <: Bridges.Constraint.AbstractBridge
-
-`NormInfinityBridge` implements the following reformulation:
-
-  * ``\\sum |x_i| \\le t`` into ``\\sum y_i \\le t`` and ``y_i \\ge x_i`` and
-    ``y_ \\ge -x_i`` for all ``i``.
+  * ``\\sum |x_i| \\le t`` into
+    ``[t - \\sum y_i, y_i - x_i, y_i + x_i] \\in \\mathbb{R}_+``.
 
 ## Source node
 
-`NormInfinityBridge` supports:
+`NormOneBridge` supports:
 
-  * `G` in [`MOI.NormInfinityCone{T}`](@ref)
+  * `G` in [`MOI.NormOneCone{T}`](@ref)
 
 ## Target nodes
 
-`NormInfinityBridge` creates:
+`NormOneBridge` creates:
 
   * `F` in [`MOI.Nonnegatives`](@ref)
 """
