@@ -298,6 +298,33 @@ function test_NormNuclear()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.NormSpectralBridge,
+        """
+        variables: t, x11, x12, x21, x22
+        [t, x11, x21, x12, x22] in NormSpectralCone(2, 2)
+        """,
+        """
+        variables: t, x11, x12, x21, x22
+        [t, 0, t, x11, x12, t, x21, x22, 0, t] in PositiveSemidefiniteConeTriangle(4)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.NormNuclearBridge,
+        """
+        variables: t, x11, x12, x21, x22
+        [t, x11, x21, x12, x22] in NormNuclearCone(2, 2)
+        """,
+        """
+        variables: t, x11, x12, x21, x22, u1, u2, u3, v1, v2, v3
+        t + -0.5 * u1 + -0.5 * u3 + -0.5 * v1 + -0.5 * v3 >= 0.0
+        [u1, u2, u3, x11, x12, v1, x21, x22, v2, v3] in PositiveSemidefiniteConeTriangle(4)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintNormSpectral.runtests()

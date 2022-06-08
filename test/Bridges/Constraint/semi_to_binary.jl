@@ -264,6 +264,37 @@ function test_lower_bound_already_set()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SemiToBinaryBridge,
+        """
+        variables: x
+        x in Semicontinuous(1.5, 2.5)
+        """,
+        """
+        variables: x, z
+        x + -2.5 * z <= 0.0
+        x + -1.5 * z >= 0.0
+        z in ZeroOne()
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SemiToBinaryBridge,
+        """
+        variables: x
+        x in Semiinteger(2.0, 3.0)
+        """,
+        """
+        variables: x, z
+        x + -3.0 * z <= 0.0
+        x + -2.0 * z >= 0.0
+        z in ZeroOne()
+        x in Integer()
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintSemiToBinary.runtests()

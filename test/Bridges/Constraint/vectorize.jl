@@ -202,6 +202,43 @@ function test_conic_PositiveSemidefiniteConeTriangle_VectorOfVariables()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.VectorizeBridge,
+        """
+        variables: x
+        x >= 2.0
+        """,
+        """
+        variables: x
+        [-2.0 + 1.0 * x] in Nonnegatives(1)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.VectorizeBridge,
+        """
+        variables: x
+        x <= -2.0
+        """,
+        """
+        variables: x
+        [2.0 + 1.0 * x] in Nonpositives(1)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.VectorizeBridge,
+        """
+        variables: x
+        x == 1.1
+        """,
+        """
+        variables: x
+        [-1.1 + 1.0 * x] in Zeros(1)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintVectorize.runtests()

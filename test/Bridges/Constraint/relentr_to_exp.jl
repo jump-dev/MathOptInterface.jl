@@ -166,6 +166,23 @@ function test_RelativeEntropy()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.RelativeEntropyBridge,
+        """
+        variables: u, v1, v2, w1, w2
+        [u, v1, v2, w1, w2] in RelativeEntropyCone(5)
+        """,
+        """
+        variables: u, v1, v2, w1, w2, y1, y2
+        u + -1.0 * y1 + -1.0 * y2 >= 0.0
+        [-1.0 * y1, w1, v1] in ExponentialCone()
+        [-1.0 * y2, w2, v2] in ExponentialCone()
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintRelativeEntropyToExponential.runtests()

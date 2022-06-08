@@ -109,6 +109,22 @@ _set(::Type{MOI.LogDetConeSquare}) = MOI.LogDetConeSquare(3)
 _set(::Type{MOI.RootDetConeTriangle}) = MOI.RootDetConeTriangle(3)
 _set(::Type{MOI.RootDetConeSquare}) = MOI.RootDetConeSquare(3)
 _set(::Type{MOI.Complements}) = MOI.Complements(2)
+_set(::Type{MOI.AllDifferent}) = MOI.AllDifferent(3)
+_set(::Type{MOI.CountDistinct}) = MOI.CountDistinct(4)
+_set(::Type{MOI.CountBelongs}) = MOI.CountBelongs(4, Set([3, 4]))
+_set(::Type{MOI.CountAtLeast}) = MOI.CountAtLeast(1, [2, 2], Set([3]))
+_set(::Type{MOI.CountGreaterThan}) = MOI.CountGreaterThan(5)
+_set(::Type{MOI.Circuit}) = MOI.Circuit(3)
+_set(::Type{MOI.Cumulative}) = MOI.Cumulative(7)
+_set(::Type{MOI.Path}) = MOI.Path([1, 1, 2, 2, 3], [2, 3, 3, 4, 4])
+
+function _set(::Type{T}, ::Type{MOI.BinPacking}) where {T}
+    return MOI.BinPacking(T(2), T[1, 2])
+end
+
+function _set(::Type{T}, ::Type{MOI.Table}) where {T}
+    return MOI.Table(T[0 1 1; 1 0 1; 1 1 0])
+end
 
 function _set(
     ::Type{MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}},
@@ -272,6 +288,16 @@ for s in [
     :RootDetConeTriangle,
     :RootDetConeSquare,
     :Complements,
+    :AllDifferent,
+    :CountDistinct,
+    :CountBelongs,
+    :CountAtLeast,
+    :CountGreaterThan,
+    :BinPacking,
+    :Circuit,
+    :Cumulative,
+    :Table,
+    :Path,
 ]
     S = getfield(MOI, s)
     functions = if S <: MOI.AbstractScalarSet

@@ -5,7 +5,7 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    extract_eigenvalues(
+    _extract_eigenvalues(
         model,
         f::MOI.AbstractVectorFunction,
         d::Int,
@@ -21,7 +21,7 @@ This functions extracts the eigenvalues of `X` and returns a vector containing
 the variables created and the index of the constraint created to extract the
 eigenvalues.
 """
-function extract_eigenvalues(
+function _extract_eigenvalues(
     model,
     f::MOI.AbstractVectorFunction,
     d::Int,
@@ -49,13 +49,14 @@ function extract_eigenvalues(
 end
 
 """
-    LogDetBridge{T,F,G,H,I}
+    LogDetBridge{T,F,G,H,I} <: Bridges.Constraint.AbstractBridge
 
-The `LogDetConeTriangle` is representable by a
-`PositiveSemidefiniteConeTriangle` and `ExponentialCone` constraints.
+The [`MOI.LogDetConeTriangle`](@ref) is representable by
+[`MOI.PositiveSemidefiniteConeTriangle`](@ref) and [`MOI.ExponentialCone`](@ref)
+constraints.
 
-Indeed, ``\\log\\det(X) = \\log(\\delta_1) + \\cdots + \\log(\\delta_n)`` where
-``\\delta_1``, ..., ``\\delta_n`` are the eigenvalues of ``X``.
+Indeed, ``\\log\\det(X) = \\sum\\limits_{i=1}^n \\log(\\delta_i)`` where
+``\\delta_i`` are the eigenvalues of ``X``.
 
 Adapting the method from [1, p. 149], we see that ``t \\le u \\log(\\det(X/u))``
 for ``u > 0`` if and only if there exists a lower triangular matrix ``Δ`` such
@@ -66,14 +67,38 @@ that
     X & Δ\\\\
     Δ^\\top & \\mathrm{Diag}(Δ)
   \\end{pmatrix} & \\succeq 0\\\\
-  t & \\le u \\log(Δ_{11}/u) + u \\log(Δ_{22}/u) + \\cdots + u \\log(Δ_{nn}/u)
+  t - \\sum_{i=1}^n u \\log(Δ_{ii}/u) & \\le 0
 \\end{align*}
 ```
+Which we reformulate further into
+```math
+\\begin{align*}
+  \\begin{pmatrix}
+    X & Δ\\\\
+    Δ^\\top & \\mathrm{Diag}(Δ)
+  \\end{pmatrix} & \\succeq 0\\\\
+  (l_i, u , Δ_{ii}) in ExponentialCone & \\forall i \\\\
+  t - \\sum_{i=1}^n l_i & \\le 0
+\\end{align*}
+```
+
+## Source node
+
+`LogDetBridge` supports:
+
+  * `I` in [`MOI.LogDetConeTriangle`](@ref)
+
+## Target nodes
+
+`LogDetBridge` creates:
+
+  * `F` in [`MOI.PositiveSemidefiniteConeTriangle`](@ref)
+  * `G` in [`MOI.ExponentialCone`](@ref)
+  * `H` in [`MOI.LessThan{T}`](@ref)
 
 [1] Ben-Tal, Aharon, and Arkadi Nemirovski. *Lectures on modern convex
     optimization: analysis, algorithms, and engineering applications*. Society
     for Industrial and Applied Mathematics, 2001.
-```
 """
 struct LogDetBridge{T,F,G,H,I} <: AbstractBridge
     Δ::Vector{MOI.VariableIndex}
@@ -92,11 +117,21 @@ function bridge_constraint(
     s::MOI.LogDetConeTriangle,
 ) where {T,F,G,H,I}
     d = s.side_dimension
-    tu, D, Δ, sdindex = extract_eigenvalues(model, f, d, 2, T)
+    tu, D, Δ, sdindex = _extract_eigenvalues(model, f, d, 2, T)
     t, u = tu
     l = MOI.add_variables(model, d)
-    lcindex = [sublog(model, l[i], u, D[i], T) for i in eachindex(l)]
-    tlindex = subsum(model, t, l, T)
+    lcindex = MOI.ConstraintIndex{G,MOI.ExponentialCone}[]
+    for i in eachindex(l)
+        fi = MOI.Utilities.operate(vcat, T, l[i], u, D[i])
+        push!(lcindex, MOI.add_constraint(model, fi, MOI.ExponentialCone()))
+    end
+    rhs = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), l), zero(T))
+    tlindex = MOI.Utilities.normalize_and_add_constraint(
+        model,
+        MOI.Utilities.operate!(-, T, t, rhs),
+        MOI.LessThan(zero(T));
+        allow_modify_function = true,
+    )
     return LogDetBridge{T,F,G,H,I}(Δ, l, sdindex, lcindex, tlindex)
 end
 
@@ -132,58 +167,6 @@ function concrete_bridge_type(
     F = MOIU.promote_operation(vcat, T, G, T)
     H = MOIU.promote_operation(+, T, S, MOI.ScalarAffineFunction{T})
     return LogDetBridge{T,F,G,H,I}
-end
-
-"""
-    sublog(
-        model,
-        x::MOI.VariableIndex,
-        y::MOI.AbstractScalarFunction,
-        z::MOI.VariableIndex,
-        ::Type{T},
-    ) where {T}
-
-Constrains ``x \\le y \\log(z/y)`` and returns the constraint index.
-"""
-function sublog(
-    model,
-    x::MOI.VariableIndex,
-    y::MOI.AbstractScalarFunction,
-    z::MOI.VariableIndex,
-    ::Type{T},
-) where {T}
-    return MOI.add_constraint(
-        model,
-        MOI.Utilities.operate(vcat, T, x, y, z),
-        MOI.ExponentialCone(),
-    )
-end
-
-"""
-    subsum(
-        model,
-        t::MOI.AbstractScalarFunction,
-        l::Vector{MOI.VariableIndex},
-        ::Type{T}
-    ) where {T}
-
-Constrains ``t \\le l_1 + \\cdots + l_n`` where `n` is the length of `l` and
-returns the constraint index.
-"""
-function subsum(
-    model,
-    t::MOI.AbstractScalarFunction,
-    l::Vector{MOI.VariableIndex},
-    ::Type{T},
-) where {T}
-    rhs = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), l), zero(T))
-    f = MOI.Utilities.operate!(-, T, t, rhs)
-    return MOI.Utilities.normalize_and_add_constraint(
-        model,
-        f,
-        MOI.LessThan(zero(T)),
-        allow_modify_function = true,
-    )
 end
 
 function MOI.get(b::LogDetBridge, ::MOI.NumberOfVariables)::Int64
@@ -313,11 +296,11 @@ function MOI.get(
 end
 
 """
-    RootDetBridge{T,F,G,H}
+    RootDetBridge{T,F,G,H} <: Bridges.Constraint.AbstractBridge
 
-The `RootDetConeTriangle` is representable by a
-`PositiveSemidefiniteConeTriangle` and an `GeometricMeanCone` constraints; see
-[1, p. 149].
+The [`MOI.RootDetConeTriangle`](@ref) is representable by
+[`MOI.PositiveSemidefiniteConeTriangle`](@ref) and [`MOI.GeometricMeanCone`](@ref)
+constraints, see [1, p. 149].
 
 Indeed, ``t \\le \\det(X)^{1/n}`` if and only if there exists a lower triangular
 matrix ``Δ`` such that:
@@ -327,9 +310,22 @@ matrix ``Δ`` such that:
     X & Δ\\\\
     Δ^\\top & \\mathrm{Diag}(Δ)
   \\end{pmatrix} & \\succeq 0\\\\
-  t & \\le (Δ_{11} Δ_{22} \\cdots Δ_{nn})^{1/n}
+  (t, \\mathrm{Diag}(Δ)) in GeometricMeanCone
 \\end{align*}
 ```
+
+## Source node
+
+`RootDetBridge` supports:
+
+  * `I` in [`MOI.RootDetConeTriangle`](@ref)
+
+## Target nodes
+
+`RootDetBridge` creates:
+
+  * `F` in [`MOI.PositiveSemidefiniteConeTriangle`](@ref)
+  * `G` in [`MOI.GeometricMeanCone`](@ref)
 
 [1] Ben-Tal, Aharon, and Arkadi Nemirovski. *Lectures on modern convex
     optimization: analysis, algorithms, and engineering applications*. Society
@@ -350,7 +346,7 @@ function bridge_constraint(
     s::MOI.RootDetConeTriangle,
 ) where {T,F,G,H}
     d = s.side_dimension
-    tu, D, Δ, sdindex = extract_eigenvalues(model, f, d, 1, T)
+    tu, D, Δ, sdindex = _extract_eigenvalues(model, f, d, 1, T)
     t = tu[1]
     DF = MOI.VectorOfVariables(D)
     gmindex = MOI.add_constraint(

@@ -4,49 +4,49 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-abstract type AbstractSlackBridge{T,VF,ZS,F,S} <: AbstractBridge end
+abstract type _AbstractSlackBridge{T,VF,ZS,F,S} <: AbstractBridge end
 
 function MOI.Bridges.added_constrained_variable_types(
-    ::Type{<:AbstractSlackBridge{T,VF,ZS,F,S}},
+    ::Type{<:_AbstractSlackBridge{T,VF,ZS,F,S}},
 ) where {T,VF,ZS,F,S}
     return Tuple{Type}[(S,)]
 end
 
 function MOI.Bridges.added_constraint_types(
-    ::Type{<:AbstractSlackBridge{T,VF,ZS,F}},
+    ::Type{<:_AbstractSlackBridge{T,VF,ZS,F}},
 ) where {T,VF,ZS,F}
     return Tuple{Type,Type}[(F, ZS)]
 end
 
 function MOI.get(
-    ::AbstractSlackBridge{T,VF,ZS,F},
+    ::_AbstractSlackBridge{T,VF,ZS,F},
     ::MOI.NumberOfConstraints{F,ZS},
 )::Int64 where {T,VF,ZS,F}
     return 1
 end
 
 function MOI.get(
-    ::AbstractSlackBridge{T,VF,ZS,F,S},
+    ::_AbstractSlackBridge{T,VF,ZS,F,S},
     ::MOI.NumberOfConstraints{VF,S},
 )::Int64 where {T,VF,ZS,F,S}
     return 1
 end
 
 function MOI.get(
-    bridge::AbstractSlackBridge{T,VF,ZS,F},
+    bridge::_AbstractSlackBridge{T,VF,ZS,F},
     ::MOI.ListOfConstraintIndices{F,ZS},
 ) where {T,VF,ZS,F}
     return [bridge.equality]
 end
 
 function MOI.get(
-    bridge::AbstractSlackBridge{T,VF,ZS,F,S},
+    bridge::_AbstractSlackBridge{T,VF,ZS,F,S},
     ::MOI.ListOfConstraintIndices{VF,S},
 ) where {T,VF,ZS,F,S}
     return [bridge.slack_in_set]
 end
 
-function MOI.delete(model::MOI.ModelLike, bridge::AbstractSlackBridge)
+function MOI.delete(model::MOI.ModelLike, bridge::_AbstractSlackBridge)
     MOI.delete(model, bridge.equality)
     MOI.delete(model, bridge.slack)
     return
@@ -55,7 +55,7 @@ end
 function MOI.supports(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{<:AbstractSlackBridge{T,VF,ZS,F,S}},
+    ::Type{<:_AbstractSlackBridge{T,VF,ZS,F,S}},
 ) where {T,VF,ZS,F,S}
     ret = true
     if attr isa MOI.ConstraintPrimalStart
@@ -71,7 +71,7 @@ end
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
-    bridge::AbstractSlackBridge,
+    bridge::_AbstractSlackBridge,
 )
     # Due to equality, slack should have the same value as original affine
     # function.
@@ -81,7 +81,7 @@ end
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintPrimalStart,
-    bridge::AbstractSlackBridge,
+    bridge::_AbstractSlackBridge,
     value,
 )
     if bridge isa ScalarSlackBridge
@@ -90,14 +90,15 @@ function MOI.set(
         MOI.set.(model, MOI.VariablePrimalStart(), bridge.slack, value)
     end
     MOI.set(model, attr, bridge.slack_in_set, value)
-    MOI.set(model, attr, bridge.equality, zero(value))
+    start = value === nothing ? nothing : zero(value)
+    MOI.set(model, attr, bridge.equality, start)
     return
 end
 
 function MOI.get(
     model::MOI.ModelLike,
     a::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
-    bridge::AbstractSlackBridge,
+    bridge::_AbstractSlackBridge,
 )
     # The dual constraint on slack (since it is free) is
     # -dual_slack_in_set + dual_equality = 0 so the two duals are
@@ -108,7 +109,7 @@ end
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDualStart,
-    bridge::AbstractSlackBridge,
+    bridge::_AbstractSlackBridge,
     value,
 )
     # As the slack appears `+slack` in `slack_in_set` and `-slack` in equality,
@@ -122,7 +123,7 @@ end
 
 function MOI.modify(
     model::MOI.ModelLike,
-    bridge::AbstractSlackBridge,
+    bridge::_AbstractSlackBridge,
     change::MOI.AbstractFunctionModification,
 )
     MOI.modify(model, bridge.equality, change)
@@ -132,7 +133,7 @@ end
 function MOI.set(
     model::MOI.ModelLike,
     ::MOI.ConstraintSet,
-    bridge::AbstractSlackBridge{T,VF,ZS,F,S},
+    bridge::_AbstractSlackBridge{T,VF,ZS,F,S},
     change::S,
 ) where {T,VF,ZS,F,S}
     MOI.set(model, MOI.ConstraintSet(), bridge.slack_in_set, change)
@@ -142,9 +143,9 @@ end
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintFunction,
-    bridge::AbstractSlackBridge,
+    bridge::_AbstractSlackBridge,
 )
-    return MOIU.remove_variable(
+    return MOI.Utilities.remove_variable(
         MOI.get(model, attr, bridge.equality),
         bridge.slack,
     )
@@ -153,25 +154,34 @@ end
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintSet,
-    bridge::AbstractSlackBridge,
+    bridge::_AbstractSlackBridge,
 )
     return MOI.get(model, attr, bridge.slack_in_set)
 end
 
-# scalar version
-
 """
-    ScalarSlackBridge{T, F, S}
+    ScalarSlackBridge{T,F,S} <: Bridges.Constraint.AbstractBridge
 
-The `ScalarSlackBridge` converts a constraint `G`-in-`S` where `G` is a function
-different from `VariableIndex` into the constraints `F`-in-`EqualTo{T}` and
-`VariableIndex`-in-`S`.
+`ScalarSlackBridge` implements the following reformulation:
 
-`F` is the result of subtracting a `VariableIndex` from `G`. Typically `G` is
-the same as `F`, but that is not mandatory.
+  * ``f(x) \\in S`` into ``f(x) - y == 0`` and ``y \\in S``
+
+## Source node
+
+`ScalarSlackBridge` supports:
+
+  * `G` in `S`, where `G` is not [`MOI.VariableIndex`](@ref) and `S` is not
+    [`MOI.EqualTo`](@ref)
+
+## Target nodes
+
+`ScalarSlackBridge` creates:
+
+  * `F` in [`MOI.EqualTo{T}`](@ref)
+  * [`MOI.VariableIndex`](@ref) in `S`
 """
 struct ScalarSlackBridge{T,F,S} <:
-       AbstractSlackBridge{T,MOI.VariableIndex,MOI.EqualTo{T},F,S}
+       _AbstractSlackBridge{T,MOI.VariableIndex,MOI.EqualTo{T},F,S}
     slack::MOI.VariableIndex
     slack_in_set::MOI.ConstraintIndex{MOI.VariableIndex,S}
     equality::MOI.ConstraintIndex{F,MOI.EqualTo{T}}
@@ -187,20 +197,23 @@ function bridge_constraint(
     s::S,
 ) where {T,F,S}
     slack, slack_in_set = MOI.add_constrained_variable(model, s)
-    new_f = MOIU.operate(-, T, f, slack)
+    new_f = MOI.Utilities.operate(-, T, f, slack)
     equality = MOI.add_constraint(model, new_f, MOI.EqualTo(zero(T)))
     return ScalarSlackBridge{T,F,S}(slack, slack_in_set, equality)
 end
 
-# start allowing everything (scalar)
+# Start by allowing all scalar constraints:
+
 function MOI.supports_constraint(
     ::Type{ScalarSlackBridge{T}},
     F::Type{<:MOI.AbstractScalarFunction},
     ::Type{<:MOI.AbstractScalarSet},
 ) where {T}
-    return MOIU.is_coefficient_type(F, T)
+    return MOI.Utilities.is_coefficient_type(F, T)
 end
-# then restrict (careful with ambiguity)
+
+# Then restrict, being careful with method ambiguities
+
 function MOI.supports_constraint(
     ::Type{ScalarSlackBridge{T}},
     ::Type{<:MOI.VariableIndex},
@@ -230,11 +243,12 @@ function concrete_bridge_type(
     F::Type{<:MOI.AbstractScalarFunction},
     S::Type{<:MOI.AbstractScalarSet},
 ) where {T}
-    F2 = MOIU.promote_operation(-, T, F, MOI.VariableIndex)
+    F2 = MOI.Utilities.promote_operation(-, T, F, MOI.VariableIndex)
     return ScalarSlackBridge{T,F2,S}
 end
 
 MOI.get(b::ScalarSlackBridge, ::MOI.NumberOfVariables)::Int64 = 1
+
 MOI.get(b::ScalarSlackBridge, ::MOI.ListOfVariableIndices) = [b.slack]
 
 function MOI.get(
@@ -271,25 +285,34 @@ function MOI.set(
     bridge::ScalarSlackBridge{T,F,S},
     func::F,
 ) where {T,F,S}
-    new_func = MOIU.operate(-, T, func, bridge.slack)
+    new_func = MOI.Utilities.operate(-, T, func, bridge.slack)
     MOI.set(model, MOI.ConstraintFunction(), bridge.equality, new_func)
     return
 end
 
-# vector version
-
 """
-    VectorSlackBridge{T, F, S}
+    VectorSlackBridge{T,F,S} <: Bridges.Constraint.AbstractBridge
 
-The `VectorSlackBridge` converts a constraint `G`-in-`S` where `G` is a function
-different from `VectorOfVariables` into the constraints `F`in-`Zeros` and
-`VectorOfVariables`-in-`S`.
+`VectorSlackBridge` implements the following reformulation:
 
-`F` is the result of subtracting a `VectorOfVariables` from `G`. Typically `G`
-is the same as `F`, but that is not mandatory.
+  * ``f(x) \\in S`` into ``f(x) - y \\in \\{0\\}`` and ``y \\in S``
+
+## Source node
+
+`VectorSlackBridge` supports:
+
+  * `G` in `S`, where `G` is not [`MOI.VectorOfVariables`](@ref) and `S` is not
+    [`MOI.Zeros`](@ref)
+
+## Target nodes
+
+`VectorSlackBridge` creates:
+
+  * `F` in [`MOI.Zeros`](@ref)
+  * [`MOI.VectorOfVariables`](@ref) in `S`
 """
 struct VectorSlackBridge{T,F,S} <:
-       AbstractSlackBridge{T,MOI.VectorOfVariables,MOI.Zeros,F,S}
+       _AbstractSlackBridge{T,MOI.VectorOfVariables,MOI.Zeros,F,S}
     slack::Vector{MOI.VariableIndex}
     slack_in_set::MOI.ConstraintIndex{MOI.VectorOfVariables,S}
     equality::MOI.ConstraintIndex{F,MOI.Zeros}
@@ -306,7 +329,7 @@ function bridge_constraint(
 ) where {T,F,S}
     d = MOI.dimension(s)
     slack, slack_in_set = MOI.add_constrained_variables(model, s)
-    new_f = MOIU.operate(-, T, f, MOI.VectorOfVariables(slack))
+    new_f = MOI.Utilities.operate(-, T, f, MOI.VectorOfVariables(slack))
     equality = MOI.add_constraint(model, new_f, MOI.Zeros(d))
     return VectorSlackBridge{T,F,S}(slack, slack_in_set, equality)
 end
@@ -316,7 +339,7 @@ function MOI.supports_constraint(
     F::Type{<:MOI.AbstractVectorFunction},
     ::Type{<:MOI.AbstractVectorSet},
 ) where {T}
-    return MOIU.is_coefficient_type(F, T)
+    return MOI.Utilities.is_coefficient_type(F, T)
 end
 
 function MOI.supports_constraint(
@@ -348,7 +371,7 @@ function concrete_bridge_type(
     F::Type{<:MOI.AbstractVectorFunction},
     S::Type{<:MOI.AbstractVectorSet},
 ) where {T}
-    F2 = MOIU.promote_operation(-, T, F, MOI.VectorOfVariables)
+    F2 = MOI.Utilities.promote_operation(-, T, F, MOI.VectorOfVariables)
     return VectorSlackBridge{T,F2,S}
 end
 
@@ -363,7 +386,7 @@ function MOI.set(
     func::F,
 ) where {T,F,S}
     slack = MOI.VectorAffineFunction{T}(MOI.VectorOfVariables(bridge.slack))
-    new_func = MOIU.operate(-, T, func, slack)
+    new_func = MOI.Utilities.operate(-, T, func, slack)
     MOI.set(model, MOI.ConstraintFunction(), bridge.equality, new_func)
     return
 end

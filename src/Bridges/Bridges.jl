@@ -9,6 +9,7 @@ module Bridges
 import MathOptInterface
 import OrderedCollections: OrderedDict
 import Printf
+import Test
 
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
@@ -145,5 +146,184 @@ MOI.is_copyable(::ListOfNonstandardBridges) = false
 MOI.get_fallback(model::MOI.ModelLike, ::ListOfNonstandardBridges) = Type[]
 
 include("precompile.jl")
+
+function _test_structural_identical(a::MOI.ModelLike, b::MOI.ModelLike)
+    # Test that the variables are the same. We make the strong assumption that
+    # the variables are added in the same order to both models.
+    a_x = MOI.get(a, MOI.ListOfVariableIndices())
+    b_x = MOI.get(b, MOI.ListOfVariableIndices())
+    attr = MOI.NumberOfVariables()
+    Test.@test MOI.get(a, attr) == MOI.get(b, attr)
+    Test.@test length(a_x) == length(b_x)
+    # A dictionary that maps things from `b`-space to `a`-space.
+    x_map = Dict(bx => a_x[i] for (i, bx) in enumerate(b_x))
+    # To check that the constraints, we need to first cache all of the
+    # constraints in `a`.
+    constraints = Dict{Any,Any}()
+    for (F, S) in MOI.get(a, MOI.ListOfConstraintTypesPresent())
+        Test.@test MOI.supports_constraint(a, F, S)
+        constraints[(F, S)] =
+            map(MOI.get(a, MOI.ListOfConstraintIndices{F,S}())) do ci
+                return (
+                    MOI.get(a, MOI.ConstraintFunction(), ci),
+                    MOI.get(a, MOI.ConstraintSet(), ci),
+                )
+            end
+    end
+    # Now compare the constraints in `b` with the cache in `constraints`.
+    b_constraint_types = MOI.get(b, MOI.ListOfConstraintTypesPresent())
+    # There may be constraint types reported in `a` that are not in `b`, but
+    # have zero constraints in `a`.
+    for (F, S) in keys(constraints)
+        attr = MOI.NumberOfConstraints{F,S}()
+        Test.@test (F, S) in b_constraint_types || MOI.get(a, attr) == 0
+    end
+    for (F, S) in b_constraint_types
+        # Check that the same number of constraints are present
+        attr = MOI.NumberOfConstraints{F,S}()
+        if !haskey(constraints, (F, S))
+            # Constraint is reported in `b`, but not in `a`. Check that there
+            # are no actual constraints in `b`.
+            Test.@test MOI.get(b, attr) == 0
+            continue
+        else
+            Test.@test MOI.get(a, attr) == MOI.get(b, attr)
+        end
+        # Check that supports_constraint is implemented
+        Test.@test MOI.supports_constraint(b, F, S)
+        # Check that each function in `b` matches a function in `a`
+        for ci in MOI.get(b, MOI.ListOfConstraintIndices{F,S}())
+            f_b = MOI.get(b, MOI.ConstraintFunction(), ci)
+            f_b = MOI.Utilities.map_indices(x_map, f_b)
+            s_b = MOI.get(b, MOI.ConstraintSet(), ci)
+            # We don't care about the order that constraints are added, only
+            # that one matches.
+            Test.@test any(constraints[(F, S)]) do (f, s)
+                return s_b == s && isapprox(f, f_b) && typeof(f) == typeof(f_b)
+            end
+        end
+    end
+    # Test model attributes are set, like ObjectiveSense and ObjectiveFunction.
+    a_attrs = MOI.get(a, MOI.ListOfModelAttributesSet())
+    b_attrs = MOI.get(b, MOI.ListOfModelAttributesSet())
+    Test.@test length(a_attrs) == length(b_attrs)
+    for attr in b_attrs
+        Test.@test attr in a_attrs
+        if attr == MOI.ObjectiveSense()
+            # map_indices isn't defined for `OptimizationSense`
+            Test.@test MOI.get(a, attr) == MOI.get(b, attr)
+        else
+            attr_b = MOI.Utilities.map_indices(x_map, MOI.get(b, attr))
+            Test.@test isapprox(MOI.get(a, attr), attr_b)
+        end
+    end
+    return
+end
+
+"""
+    runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
+
+Run a series of tests that check the correctness of `Bridge`.
+
+`input` and `output` are models in the style of
+[`MOI.Utilities.loadfromstring!`](@ref).
+
+## Example
+
+```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+julia> MOI.Bridges.runtests(
+           MOI.Bridges.Constraint.ZeroOneBridge,
+           \"\"\"
+           variables: x
+           x in ZeroOne()
+           \"\"\",
+           \"\"\"
+           variables: x
+           x in Integer()
+           x in Interval(0.0, 1.0)
+           \"\"\",
+       )
+```
+"""
+function runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
+    # Load model and bridge it
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = _bridged_model(Bridge, inner)
+    MOI.Utilities.loadfromstring!(model, input)
+    # Load a non-bridged input model, and check that getters are the same.
+    test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    MOI.Utilities.loadfromstring!(test, input)
+    _test_structural_identical(test, model)
+    # Load a bridged target model, and check that getters are the same.
+    target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    MOI.Utilities.loadfromstring!(target, output)
+    _test_structural_identical(target, inner)
+    # Test ConstraintPrimalStart and ConstraintDualStart
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+            set = MOI.get(model, MOI.ConstraintSet(), ci)
+            for attr in (MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart())
+                if MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
+                    MOI.set(model, attr, ci, nothing)
+                    Test.@test MOI.get(model, attr, ci) === nothing
+                    MOI.set(model, attr, ci, _fake_start(set))
+                    Test.@test MOI.get(model, attr, ci) ≈ _fake_start(set)
+                end
+            end
+        end
+    end
+    # Test other bridge functions
+    for b in values(Constraint.bridges(model))
+        _general_bridge_tests(b)
+    end
+    for b in values(Objective.bridges(model))
+        _general_bridge_tests(b)
+    end
+    for b in values(Variable.bridges(model))
+        _general_bridge_tests(b)
+    end
+    # Test deletion of things in the bridge.
+    #  * We reset the objective
+    MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+    #  * and delete all constraints
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        MOI.delete.(model, MOI.get(model, MOI.ListOfConstraintIndices{F,S}()))
+    end
+    #  * So now there should be no constraints in the problem
+    for (F, S) in MOI.get(inner, MOI.ListOfConstraintTypesPresent())
+        Test.@test MOI.get(inner, MOI.NumberOfConstraints{F,S}()) == 0
+    end
+    #  * And there should be the same number of variables
+    attr = MOI.NumberOfVariables()
+    Test.@test MOI.get(inner, attr) == MOI.get(model, attr)
+    return
+end
+
+_fake_start(::MOI.AbstractScalarSet) = 1.2
+
+_fake_start(set::MOI.AbstractVectorSet) = fill(1.2, MOI.dimension(set))
+
+function _bridged_model(Bridge::Type{<:Constraint.AbstractBridge}, inner)
+    return Constraint.SingleBridgeOptimizer{Bridge{Float64}}(inner)
+end
+
+function _bridged_model(Bridge::Type{<:Objective.AbstractBridge}, inner)
+    return Objective.SingleBridgeOptimizer{Bridge{Float64}}(inner)
+end
+
+function _general_bridge_tests(bridge::B) where {B<:AbstractBridge}
+    Test.@test added_constrained_variable_types(B) isa Vector{Tuple{Type}}
+    for (F, S) in added_constraint_types(B)
+        Test.@test(
+            length(MOI.get(bridge, MOI.ListOfConstraintIndices{F,S}())) ==
+            MOI.get(bridge, MOI.NumberOfConstraints{F,S}())
+        )
+    end
+    Test.@test(
+        length(MOI.get(bridge, MOI.ListOfVariableIndices())) ==
+        MOI.get(bridge, MOI.NumberOfVariables())
+    )
+    return
+end
 
 end

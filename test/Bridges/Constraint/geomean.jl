@@ -490,6 +490,36 @@ function test_conic_GeometricMeanCone_VectorAffineFunction_3()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GeoMeanBridge,
+        """
+        variables: t, x1, x2, x3
+        [t, x1, x2, x3] in GeometricMeanCone(4)
+        """,
+        """
+        variables: t, x1, x2, x3, y1, y2, y3
+        1.0 * t + -0.5 * y1 <= 0.0
+        [1.0 * y2, 1.0 * y3, 1.0 * y1] in RotatedSecondOrderCone(3)
+        [1.0 * x1, 1.0 * x2, 1.0 * y2] in RotatedSecondOrderCone(3)
+        [1.0 * x3, 0.5 * y1, 1.0 * y3] in RotatedSecondOrderCone(3)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GeoMeanBridge,
+        """
+        variables: t, x1
+        [t, x1] in GeometricMeanCone(2)
+        """,
+        """
+        variables: t, x1
+        1.0 * t + -1.0 * x1 <= 0.0
+        [x1] in Nonnegatives(1)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintGeomean.runtests()

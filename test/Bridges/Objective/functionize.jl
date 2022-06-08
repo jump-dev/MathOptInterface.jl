@@ -73,6 +73,32 @@ function test_solve_result_index()
     return MOI.Test.test_solve_result_index(bridged_mock, MOI.Test.Config())
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Objective.FunctionizeBridge,
+        """
+        variables: x
+        minobjective: x
+        """,
+        """
+        variables: x
+        minobjective: 1.0 * x + 0.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Objective.FunctionizeBridge,
+        """
+        variables: x
+        maxobjective: x
+        """,
+        """
+        variables: x
+        maxobjective: 1.0 * x + 0.0
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestObjectiveFunctionize.runtests()

@@ -212,6 +212,9 @@ function MOI.get(
     bridge::GeoMeantoRelEntrBridge,
 )
     relentr_primal = MOI.get(model, attr, bridge.relentr_index)
+    if relentr_primal === nothing
+        return nothing
+    end
     d = div(length(relentr_primal) - 1, 2)
     y_val = MOI.get(model, attr, bridge.nn_index)[1]
     u_val = sum(relentr_primal[(2+d):end]) / d - y_val
@@ -238,6 +241,18 @@ function MOI.set(
     return
 end
 
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::GeoMeantoRelEntrBridge,
+    ::Nothing,
+)
+    MOI.set(model, MOI.VariablePrimalStart(), bridge.y, nothing)
+    MOI.set(model, attr, bridge.nn_index, nothing)
+    MOI.set(model, attr, bridge.relentr_index, nothing)
+    return
+end
+
 # Given a is dual on y >= 0 and (b, c, d) is dual on RelativeEntropyCone
 # constraint, dual on (u, w) in GeometricMeanCone is (-a, c). Note that
 # sum(d) = -a, so we could instead use (sum(d), c).
@@ -246,11 +261,14 @@ function MOI.get(
     attr::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
     bridge::GeoMeantoRelEntrBridge,
 )
-    u_dual = -MOI.get(model, attr, bridge.nn_index)[1]
+    nn_attr = MOI.get(model, attr, bridge.nn_index)
+    if nn_attr === nothing
+        return nothing
+    end
     relentr_dual = MOI.get(model, attr, bridge.relentr_index)
     d = div(length(relentr_dual) - 1, 2)
     w_dual = relentr_dual[2:(d+1)]
-    return vcat(u_dual, w_dual)
+    return vcat(-nn_attr[1], w_dual)
 end
 
 # Given GeometricMeanCone constraint dual start of (u, w), constraint dual on
@@ -275,5 +293,16 @@ function MOI.set(
         bridge.relentr_index,
         relentr_dual,
     )
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDualStart,
+    bridge::GeoMeantoRelEntrBridge,
+    ::Nothing,
+)
+    MOI.set(model, attr, bridge.nn_index, nothing)
+    MOI.set(model, attr, bridge.relentr_index, nothing)
     return
 end

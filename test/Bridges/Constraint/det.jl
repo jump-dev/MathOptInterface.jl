@@ -338,6 +338,36 @@ function test_conic_RootDetConeTriangle_2()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.LogDetBridge,
+        """
+        variables: t, u, x11, x21, x22
+        [t, u, x11, x21, x22] in LogDetConeTriangle(2)
+        """,
+        """
+        variables: t, u, x11, x21, x22, v1, v2, v3, v4, v5
+        [v4, u, v1] in ExponentialCone()
+        [v5, u, v3] in ExponentialCone()
+        t + -1.0 * v4 + -1.0 * v5 <= 0.0
+        [x11, x21, x22, v1, v2, v1, 0, v3, 0, v3] in PositiveSemidefiniteConeTriangle(4)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.RootDetBridge,
+        """
+        variables: t, x11, x21, x22
+        [t, x11, x21, x22] in RootDetConeTriangle(2)
+        """,
+        """
+        variables: t, x11, x21, x22, v1, v2, v3
+        [t, v1, v3] in GeometricMeanCone(3)
+        [x11, x21, x22, v1, v2, v1, 0, v3, 0, v3] in PositiveSemidefiniteConeTriangle(4)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintDet.runtests()
