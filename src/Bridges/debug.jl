@@ -89,6 +89,8 @@ Note that this hyper-graph is the full list of possible transformations. When
 the bridged model is created, we select the shortest hyper-path(s) from this
 graph, so many nodes may be un-used.
 
+To see which nodes are used, call [`print_active_bridges`](@ref).
+
 For more information, see Legat, B., Dowson, O., Garcia, J., and Lubin, M.
 (2020).  "MathOptInterface: a data structure for mathematical optimization
 problems." URL: [https://arxiv.org/abs/2002.03447](https://arxiv.org/abs/2002.03447)
