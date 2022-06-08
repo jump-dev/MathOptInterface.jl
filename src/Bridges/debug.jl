@@ -73,7 +73,7 @@ end
 
 Print the hyper-graph containing all variable, constraint, and objective types
 that could be obtained by bridging the variables, constraints, and objectives
-that are present in the model.
+that are present in the model by all the bridges added to `b`.
 
 Each node in the hyper-graph corresponds to a variable, constraint, or objective
 type.
