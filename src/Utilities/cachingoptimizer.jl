@@ -827,7 +827,7 @@ function _get_model_attribute(model::CachingOptimizer, attr::MOI.ObjectiveValue)
     try
         return MOI.get(model.optimizer, attr)
     catch err
-        if !(err isa ArgumentError)
+        if !(err isa MOI.GetAttributeNotAllowed)
             rethrow(err)
         end
         return get_fallback(model, attr)
@@ -841,7 +841,7 @@ function _get_model_attribute(
     try
         return MOI.get(model.optimizer, attr)
     catch err
-        if !(err isa ArgumentError)
+        if !(err isa MOI.GetAttributeNotAllowed)
             rethrow(err)
         end
         MOI.check_result_index_bounds(model, attr)
