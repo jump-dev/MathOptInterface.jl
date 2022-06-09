@@ -90,6 +90,34 @@ function test_Square()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SquareBridge,
+        """
+        variables: x11, x21, x12, x22
+        [x11, x21, x12, x22] in PositiveSemidefiniteConeSquare(2)
+        """,
+        """
+        variables: x11, x21, x12, x22
+        [x11, x12, x22] in PositiveSemidefiniteConeTriangle(2)
+        x12 + -1.0 * x21 == 0.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SquareBridge,
+        """
+        variables: x11, x12, x22
+        [x11, x12, x12, x22] in PositiveSemidefiniteConeSquare(2)
+        """,
+        """
+        variables: x11, x12, x22
+        [x11, x12, x22] in PositiveSemidefiniteConeTriangle(2)
+        """,
+    )
+    return
+end
+
+
 end  # module
 
 TestConstraintSquare.runtests()

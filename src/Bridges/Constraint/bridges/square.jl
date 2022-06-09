@@ -41,17 +41,13 @@
 # In the last primal program, we have the variables Z = X + Xᵀ and a upper triangular matrix S such that X = Z + S - Sᵀ
 
 """
-    SquareBridge{T, F<:MOI.AbstractVectorFunction,
-                 G<:MOI.AbstractScalarFunction,
-                 TT<:MOI.AbstractSymmetricMatrixSetTriangle,
-                 ST<:MOI.AbstractSymmetricMatrixSetSquare} <: AbstractBridge
+    SquareBridge{T,F,G,TT,ST} <: Bridges.Constraint.AbstractBridge
 
-The `SquareBridge` reformulates the constraint of a square matrix to be in `ST`
-to a list of equality constraints for pair or off-diagonal entries with
-different expressions and a `TT` constraint the upper triangular part of the
-matrix.
+`SquareBridge` reformulates the constraint of a square matrix belong to `ST`,
+into the upper triangular part of the matrix belonging to `TT` and a list of
+equality constraints constraining off-diagonal symmetry.
 
-For instance, the constraint for the matrix
+For example, the constraint for the matrix
 ```math
 \\begin{pmatrix}
   1      & 1 + x & 2 - 3x\\\\
@@ -68,9 +64,21 @@ to be PSD can be broken down to the constraint of the symmetric matrix
 \\end{pmatrix}
 ```
 and the equality constraint between the off-diagonal entries (2, 3) and (3, 2)
-``2x == 1``. Note that now symmetrization constraint need to be added between
-the off-diagonal entries (1, 2) and (2, 1) or between (1, 3) and (3, 1) since
-the expressions are the same.
+``3 - x == 2 + x``. Note that no symmetrization constraint needs to be added
+between the off-diagonal entries (1, 2) and (2, 1) or between (1, 3) and (3, 1)
+because the expressions are the same.
+
+## Source node
+
+`VectorizeBridge` supports:
+
+  * `F` in `ST`
+
+## Target nodes
+
+`VectorizeBridge` creates:
+
+  * `G` in `TT`
 """
 struct SquareBridge{
     T,
@@ -92,7 +100,7 @@ function bridge_constraint(
     f::F,
     s::ST,
 ) where {T,F,G,TT,ST}
-    f_scalars = MOIU.eachscalar(f)
+    f_scalars = MOI.Utilities.eachscalar(f)
     sym = Pair{Tuple{Int,Int},MOI.ConstraintIndex{G,MOI.EqualTo{T}}}[]
     dim = MOI.side_dimension(s)
     upper_triangle_indices = Int[]
@@ -104,31 +112,30 @@ function bridge_constraint(
             k += 1
             push!(upper_triangle_indices, k)
             # We constrain the entries (i, j) and (j, i) to be equal
-            upper = f_scalars[i+(j-1)*dim]
-            lower = f_scalars[j+(i-1)*dim]
-            diff = MOIU.operate!(-, T, upper, lower)
-            MOIU.canonicalize!(diff)
+            f_ij, f_ji = f_scalars[i+(j-1)*dim], f_scalars[j+(i-1)*dim]
+            diff = MOI.Utilities.operate!(-, T, f_ij, f_ji)
+            MOI.Utilities.canonicalize!(diff)
             # The value 1e-10 was decided in https://github.com/jump-dev/JuMP.jl/pull/976
             # This avoid generating symmetrization constraints when the
             # functions at entries (i, j) and (j, i) are almost identical
-            if !MOIU.isapprox_zero(diff, 1e-10)
-                if MOIU.isapprox_zero(diff, 1e-8)
-                    @warn "The entries ($i, $j) and ($j, $i) of the" *
-                          " positive semidefinite constraint are almost" *
-                          " identical but a constraint is added to ensure their" *
-                          " equality because the largest difference between the" *
-                          " coefficients is smaller than 1e-8 but larger than" *
-                          " 1e-10."
+            if !MOI.Utilities.isapprox_zero(diff, 1e-10)
+                if MOI.Utilities.isapprox_zero(diff, 1e-8)
+                    @warn(
+                        "The entries ($i, $j) and ($j, $i) of the positive " *
+                        "semidefinite constraint are almost identical but a " *
+                        "constraint is added to ensure their equality " *
+                        "because the largest difference between the " *
+                        "coefficients is smaller than 1e-8 but larger than" *
+                        "1e-10.",
+                    )
                 end
-                push!(
-                    sym,
-                    (i, j) => MOIU.normalize_and_add_constraint(
-                        model,
-                        diff,
-                        MOI.EqualTo(zero(T)),
-                        allow_modify_function = true,
-                    ),
+                ci = MOI.Utilities.normalize_and_add_constraint(
+                    model,
+                    diff,
+                    MOI.EqualTo(zero(T));
+                    allow_modify_function = true,
                 )
+                push!(sym, (i, j) => ci)
             end
         end
         k += dim - j
@@ -150,11 +157,11 @@ function MOI.supports_constraint(
     return true
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:SquareBridge})
+function MOI.Bridges.added_constrained_variable_types(::Type{<:SquareBridge})
     return Tuple{Type}[]
 end
 
-function MOIB.added_constraint_types(
+function MOI.Bridges.added_constraint_types(
     ::Type{SquareBridge{T,F,G,TT,ST}},
 ) where {T,F,G,TT,ST}
     return Tuple{Type,Type}[(F, TT), (G, MOI.EqualTo{T})]
@@ -165,13 +172,12 @@ function concrete_bridge_type(
     F::Type{<:MOI.AbstractVectorFunction},
     ST::Type{<:MOI.AbstractSymmetricMatrixSetSquare},
 ) where {T}
-    S = MOIU.scalar_type(F)
-    G = MOIU.promote_operation(-, T, S, S)
+    S = MOI.Utilities.scalar_type(F)
+    G = MOI.Utilities.promote_operation(-, T, S, S)
     TT = MOI.triangular_form(ST)
     return SquareBridge{T,F,G,TT,ST}
 end
 
-# Attributes, Bridge acting as a model
 function MOI.get(
     ::SquareBridge{T,F,G,TT},
     ::MOI.NumberOfConstraints{F,TT},
@@ -197,45 +203,41 @@ function MOI.get(
     bridge::SquareBridge{T,F,G},
     ::MOI.ListOfConstraintIndices{G,MOI.EqualTo{T}},
 ) where {T,F,G}
-    return map(pair -> pair.second, bridge.sym)
+    return [ci for (_, ci) in bridge.sym]
 end
 
-# Indices
 function MOI.delete(model::MOI.ModelLike, bridge::SquareBridge)
     MOI.delete(model, bridge.triangle)
-    for pair in bridge.sym
-        MOI.delete(model, pair.second)
+    for (_, ci) in bridge.sym
+        MOI.delete(model, ci)
     end
+    return
 end
 
-# Attributes, Bridge acting as a constraint
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintFunction,
     bridge::SquareBridge{T},
 ) where {T}
-    tri = MOIU.eachscalar(MOI.get(model, attr, bridge.triangle))
+    value = MOI.Utilities.eachscalar(MOI.get(model, attr, bridge.triangle))
     dim = MOI.side_dimension(bridge.square_set)
-    sqr = Vector{eltype(tri)}(undef, dim^2)
-    sqrmap(i, j) = (j - 1) * dim + i
+    f = Vector{eltype(value)}(undef, dim^2)
     k = 0
-    for j in 1:dim
-        for i in 1:j
-            k += 1
-            sqr[sqrmap(i, j)] = tri[k]
-            sqr[sqrmap(j, i)] = tri[k]
-        end
+    for j in 1:dim, i in 1:j
+        k += 1
+        f[i+(j-1)*dim] = f[j+(i-1)*dim] = value[k]
     end
-    for sym in bridge.sym
-        i, j = sym.first
-        diff = MOI.get(model, attr, sym.second)
-        set = MOI.get(model, MOI.ConstraintSet(), sym.second)
-        upper = sqr[sqrmap(i, j)]
-        lower = MOIU.operate(-, T, upper, diff)
-        lower = MOIU.operate!(-, T, lower, MOI.constant(set))
-        sqr[sqrmap(j, i)] = MOIU.convert_approx(eltype(tri), lower)
+    for ((i, j), ci) in bridge.sym
+        # diff is f_ij - f_ji = 0
+        diff = MOI.get(model, MOI.ConstraintFunction(), ci)
+        # f_ij - (fij - f_ji) = f_ji
+        f_ji = MOI.Utilities.operate(-, T, f[i+(j-1)*dim], diff)
+        # But we need to account for the constant moved into the set
+        rhs = MOI.constant(MOI.get(model, MOI.ConstraintSet(), ci))
+        f_ji = MOI.Utilities.operate!(-, T, f_ji, rhs)
+        f[j+(i-1)*dim] = MOI.Utilities.convert_approx(eltype(f), f_ji)
     end
-    return MOIU.vectorize(sqr)
+    return MOI.Utilities.vectorize(f)
 end
 
 function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::SquareBridge)
@@ -247,17 +249,15 @@ function MOI.get(
     attr::MOI.ConstraintPrimal,
     bridge::SquareBridge{T},
 ) where {T}
-    tri = MOI.get(model, attr, bridge.triangle)
+    value = MOI.get(model, attr, bridge.triangle)
     dim = MOI.side_dimension(bridge.square_set)
-    sqr = Vector{eltype(tri)}(undef, dim^2)
+    primal = Vector{eltype(value)}(undef, dim^2)
     k = 0
-    for j in 1:dim
-        for i in 1:j
-            k += 1
-            sqr[i+(j-1)*dim] = sqr[j+(i-1)*dim] = tri[k]
-        end
+    for j in 1:dim, i in 1:j
+        k += 1
+        primal[i+(j-1)*dim] = primal[j+(i-1)*dim] = value[k]
     end
-    return sqr
+    return primal
 end
 
 function MOI.get(
@@ -269,21 +269,18 @@ function MOI.get(
     dim = MOI.side_dimension(bridge.square_set)
     sqr = Vector{eltype(tri)}(undef, dim^2)
     k = 0
-    for j in 1:dim
-        for i in 1:j
-            k += 1
-            # The triangle constraint uses only the upper triangular part
-            if i == j
-                sqr[i+(j-1)*dim] = tri[k]
-            else
-                sqr[i+(j-1)*dim] = 2tri[k]
-                sqr[j+(i-1)*dim] = zero(eltype(sqr))
-            end
+    for j in 1:dim, i in 1:j
+        k += 1
+        # The triangle constraint uses only the upper triangular part
+        if i == j
+            sqr[i+(j-1)*dim] = tri[k]
+        else
+            sqr[i+(j-1)*dim] = 2tri[k]
+            sqr[j+(i-1)*dim] = zero(eltype(sqr))
         end
     end
-    for pair in bridge.sym
-        i, j = pair.first
-        dual = MOI.get(model, attr, pair.second)
+    for ((i, j), ci) in bridge.sym
+        dual = MOI.get(model, attr, ci)
         sqr[i+(j-1)*dim] += dual
         sqr[j+(i-1)*dim] -= dual
     end
