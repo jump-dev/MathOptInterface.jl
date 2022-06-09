@@ -823,22 +823,57 @@ function MOI.supports(
            (m.state == NO_OPTIMIZER || MOI.supports(m.optimizer, attr)::Bool)
 end
 
-function MOI.get(model::CachingOptimizer, attr::MOI.AbstractModelAttribute)
-    if MOI.is_set_by_optimize(attr)
-        if state(model) == NO_OPTIMIZER
-            error(
-                "Cannot query $(attr) from caching optimizer because no " *
-                "optimizer is attached.",
-            )
+function _get_model_attribute(model::CachingOptimizer, attr::MOI.ObjectiveValue)
+    try
+        return MOI.get(model.optimizer, attr)
+    catch err
+        if !(err isa MOI.GetAttributeNotAllowed)
+            rethrow(err)
         end
-        return map_indices(
-            model.optimizer_to_model_map,
-            attr,
-            MOI.get(model.optimizer, attr)::MOI.attribute_value_type(attr),
-        )
-    else
-        return MOI.get(model.model_cache, attr)
+        return get_fallback(model, attr)
     end
+end
+
+function _get_model_attribute(
+    model::CachingOptimizer,
+    attr::MOI.DualObjectiveValue,
+)
+    try
+        return MOI.get(model.optimizer, attr)
+    catch err
+        if !(err isa MOI.GetAttributeNotAllowed)
+            rethrow(err)
+        end
+        MOI.check_result_index_bounds(model, attr)
+        # We don't know what coefficient type to use, so just use whatever the
+        # objective value type is. This is slightly inefficient, but it
+        # shouldn't be a bottleneck.
+        obj = _get_model_attribute(model, MOI.ObjectiveValue(attr.result_index))
+        return get_fallback(model, attr, typeof(obj))
+    end
+end
+
+function _get_model_attribute(
+    model::CachingOptimizer,
+    attr::MOI.AbstractModelAttribute,
+)
+    return map_indices(
+        model.optimizer_to_model_map,
+        attr,
+        MOI.get(model.optimizer, attr)::MOI.attribute_value_type(attr),
+    )
+end
+
+function MOI.get(model::CachingOptimizer, attr::MOI.AbstractModelAttribute)
+    if !MOI.is_set_by_optimize(attr)
+        return MOI.get(model.model_cache, attr)
+    elseif state(model) == NO_OPTIMIZER
+        error(
+            "Cannot query $(attr) from caching optimizer because no " *
+            "optimizer is attached.",
+        )
+    end
+    return _get_model_attribute(model, attr)
 end
 
 function MOI.get(
