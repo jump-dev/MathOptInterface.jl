@@ -112,9 +112,11 @@ the error string).
 struct GetAttributeNotAllowed{AttrType<:AnyAttribute} <: NotAllowedError
     attr::AttrType
     message::String
-end
 
-GetAttributeNotAllowed(attr::AnyAttribute) = GetAttributeNotAllowed(attr, "")
+    function GetAttributeNotAllowed(attr::AnyAttribute, message::String = "")
+        return new(attr, message)
+    end
+end
 
 operation_name(err::GetAttributeNotAllowed) = "Getting attribute $(err.attr)"
 
