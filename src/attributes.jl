@@ -114,7 +114,7 @@ struct GetAttributeNotAllowed{AttrType<:AnyAttribute} <: NotAllowedError
     message::String
 
     function GetAttributeNotAllowed(attr::AnyAttribute, message::String = "")
-        return new(attr, message)
+        return new{typeof(attr)}(attr, message)
     end
 end
 
