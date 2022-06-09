@@ -233,6 +233,57 @@ function test_attribute_value_type()
           Float64
 end
 
+MOI.Utilities.@model(
+    _Model1777,
+    (),
+    (MOI.LessThan,),
+    (MOI.Nonnegatives,),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (MOI.VectorOfVariables,),
+    ()
+)
+
+function MOI.supports_constraint(
+    ::_Model1777,
+    ::Type{MOI.VectorOfVariables},
+    ::Type{MOI.Reals},
+)
+    return false
+end
+
+function MOI.supports_add_constrained_variables(
+    ::_Model1777,
+    ::Type{MOI.Nonnegatives},
+)
+    return true
+end
+
+MOI.supports_add_constrained_variables(::_Model1777, ::Type{MOI.Reals}) = false
+
+function MOI.get(
+    model::_Model1777,
+    attr::MOI.ConstraintFunction,
+    ci::MOI.ConstraintIndex,
+)
+    return MOI.get_fallback(model, attr, ci)
+end
+
+function test_issue_1777()
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+        MOI.Bridges.full_bridge_optimizer(_Model1777{Float64}(), Float64),
+    )
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(1.0))
+    MOI.Utilities.attach_optimizer(model)
+    MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(2.0))
+    @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.LessThan(2.0)
+    @test MOI.Utilities.state(model) == MOI.Utilities.EMPTY_OPTIMIZER
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")
