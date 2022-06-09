@@ -117,7 +117,6 @@ function test_runtests()
     return
 end
 
-
 end  # module
 
 TestConstraintSquare.runtests()
