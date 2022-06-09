@@ -805,24 +805,25 @@ function test_copy_to_and_optimize!()
 end
 
 ###
-### Test ConstraintPrimal fallback in CachingOptimizer.
+### Test get_fallback in CachingOptimizer.
 ###
-### It's a bit complicated because we need an optimizer that errors on
-### ConstraintPrimal. This is the minimal set of methods needed to test the
-### fallback.
+### It's a bit complicated because we need an optimizer with the minimal set of
+### methods needed to test the fallbacks.
 ###
 
-struct _ConstraintPrimal1310 <: MOI.AbstractOptimizer end
+struct _GetFallbackModel1310 <: MOI.AbstractOptimizer end
 
-MOI.is_empty(::_ConstraintPrimal1310) = true
+MOI.is_empty(::_GetFallbackModel1310) = true
 
-MOI.get(::_ConstraintPrimal1310, ::MOI.ListOfModelAttributesSet) = []
+MOI.get(::_GetFallbackModel1310, ::MOI.ListOfModelAttributesSet) = []
 
-MOI.get(::_ConstraintPrimal1310, ::MOI.PrimalStatus) = MOI.FEASIBLE_POINT
+MOI.get(::_GetFallbackModel1310, ::MOI.PrimalStatus) = MOI.FEASIBLE_POINT
 
-MOI.get(::_ConstraintPrimal1310, ::MOI.ResultCount) = 1
+MOI.get(::_GetFallbackModel1310, ::MOI.DualStatus) = MOI.FEASIBLE_POINT
 
-function MOI.optimize!(::_ConstraintPrimal1310, model::MOI.ModelLike)
+MOI.get(::_GetFallbackModel1310, ::MOI.ResultCount) = 1
+
+function MOI.optimize!(::_GetFallbackModel1310, model::MOI.ModelLike)
     index_map = MOI.IndexMap()
     for x in MOI.get(model, MOI.ListOfVariableIndices())
         index_map[x] = x
@@ -836,9 +837,17 @@ function MOI.optimize!(::_ConstraintPrimal1310, model::MOI.ModelLike)
 end
 
 function MOI.get(
-    ::_ConstraintPrimal1310,
+    ::_GetFallbackModel1310,
     ::MOI.VariablePrimal,
     ::MOI.VariableIndex,
+)
+    return 1.2
+end
+
+function MOI.get(
+    ::_GetFallbackModel1310,
+    ::MOI.ConstraintDual,
+    ::MOI.ConstraintIndex,
 )
     return 1.2
 end
@@ -846,7 +855,7 @@ end
 function test_ConstraintPrimal_fallback()
     model = MOI.Utilities.CachingOptimizer(
         MOI.Utilities.Model{Float64}(),
-        _ConstraintPrimal1310(),
+        _GetFallbackModel1310(),
     )
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
@@ -873,6 +882,42 @@ function test_ConstraintPrimal_fallback_error()
     c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
     @test_throws(ErrorException, MOI.get(model, MOI.ConstraintPrimal(), c))
     @test_throws(ErrorException, MOI.get(model, MOI.ConstraintPrimal(), [c]))
+    return
+end
+
+function test_ObjectiveValue_fallback()
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.Model{Float64}(),
+        _GetFallbackModel1310(),
+    )
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(x)}(), x)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.ObjectiveValue()) == 1.2
+    @test_throws(
+        MOI.ResultIndexBoundsError(MOI.ObjectiveValue(2), 1),
+        MOI.get(model, MOI.ObjectiveValue(2)),
+    )
+    return
+end
+
+function test_DualObjectiveValue_fallback()
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.Model{Float64}(),
+        _GetFallbackModel1310(),
+    )
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(x)}(), x)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.DualObjectiveValue()) == 1.2
+    @test_throws(
+        MOI.ResultIndexBoundsError(MOI.DualObjectiveValue(2), 1),
+        MOI.get(model, MOI.DualObjectiveValue(2)),
+    )
     return
 end
 
