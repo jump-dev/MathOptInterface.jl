@@ -844,6 +844,7 @@ function _get_model_attribute(
         if !(err isa ArgumentError)
             rethrow(err)
         end
+        MOI.check_result_index_bounds(model, attr)
         # We don't know what coefficient type to use, so just use whatever the
         # objective value type is. This is slightly inefficient, but it
         # shouldn't be a bottleneck.
