@@ -823,10 +823,7 @@ function MOI.supports(
            (m.state == NO_OPTIMIZER || MOI.supports(m.optimizer, attr)::Bool)
 end
 
-function _get_model_attribute(
-    model::CachingOptimizer,
-    attr::MOI.ObjectiveValue,
-)
+function _get_model_attribute(model::CachingOptimizer, attr::MOI.ObjectiveValue)
     try
         return MOI.get(model.optimizer, attr)
     catch err
