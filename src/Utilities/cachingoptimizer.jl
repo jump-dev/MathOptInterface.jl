@@ -939,11 +939,11 @@ function MOI.get(
             model.model_to_optimizer_map[index],
         )
     catch err
-        if err isa ArgumentError  # Thrown if .optimizer doesn't support attr
-            return get_fallback(model, attr, index)
-        else
+        # Thrown if .optimizer doesn't support attr
+        if !(err isa MOI.GetAttributeNotAllowed)
             rethrow(err)
         end
+        return get_fallback(model, attr, index)
     end
 end
 
@@ -965,11 +965,11 @@ function MOI.get(
             [model.model_to_optimizer_map[i] for i in indices],
         )
     catch err
-        if err isa ArgumentError  # Thrown if .optimizer doesn't support attr
-            return [get_fallback(model, attr, i) for i in indices]
-        else
+        # Thrown if .optimizer doesn't support attr
+        if !(err isa MOI.GetAttributeNotAllowed)
             rethrow(err)
         end
+        return [get_fallback(model, attr, i) for i in indices]
     end
 end
 

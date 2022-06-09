@@ -334,6 +334,21 @@ function test_compute_conflict_fallback()
     return
 end
 
+function test_get_fallback_error()
+    model = MOI.Utilities.Model{Float64}()
+    @test_throws(
+        MOI.GetAttributeNotAllowed,
+        MOI.get(model, MOI.SolveTimeSec()),
+    )
+    err = MOI.GetAttributeNotAllowed(MOI.SolveTimeSec(), "")
+    @test sprint(showerror, err) ==
+          "$(typeof(err)): Getting attribute $(MOI.SolveTimeSec()) cannot be " *
+          "performed. You may want to use a `CachingOptimizer` in " *
+          "`AUTOMATIC` mode or you may need to call `reset_optimizer` before " *
+          "doing this operation if the `CachingOptimizer` is in `MANUAL` mode."
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

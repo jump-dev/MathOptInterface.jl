@@ -150,30 +150,48 @@ function test_get_fallback()
     model = DummyModelWithAdd()
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, x, MOI.EqualTo(0.0))
-    err = ArgumentError(
-        "$(typeof(model)) does not support getting the attribute " *
-        "$(MOI.SolveTimeSec()).",
-    )
-    @test_throws(err, MOI.get(model, MOI.SolveTimeSec()))
-    output = Ref{Cdouble}()
-    @test_throws(err, MOI.get!(output, model, MOI.SolveTimeSec()))
-    errv = ArgumentError(
-        "$(typeof(model)) does not support getting the attribute " *
-        "$(MOI.VariablePrimal()).",
-    )
-    @test_throws(errv, MOI.get(model, MOI.VariablePrimal(), x))
-    errc = ArgumentError(
-        "$(typeof(model)) does not support getting the attribute " *
-        "$(MOI.ConstraintPrimal()).",
-    )
-    @test_throws(errc, MOI.get(model, MOI.ConstraintPrimal(), c))
     @test_throws(
-        ArgumentError(
+        MOI.GetAttributeNotAllowed(
+            MOI.SolveTimeSec(),
+            "$(typeof(model)) does not support getting the attribute " *
+            "$(MOI.SolveTimeSec()).",
+        ),
+        MOI.get(model, MOI.SolveTimeSec()),
+    )
+    output = Ref{Cdouble}()
+    @test_throws(
+        MOI.GetAttributeNotAllowed(
+            MOI.SolveTimeSec(),
+            "$(typeof(model)) does not support getting the attribute " *
+            "$(MOI.SolveTimeSec()).",
+        ),
+        MOI.get!(output, model, MOI.SolveTimeSec()),
+    )
+    @test_throws(
+        MOI.GetAttributeNotAllowed(
+            MOI.VariablePrimal(),
+            "$(typeof(model)) does not support getting the attribute " *
+            "$(MOI.VariablePrimal()).",
+        ),
+        MOI.get(model, MOI.VariablePrimal(), x),
+    )
+    @test_throws(
+        MOI.GetAttributeNotAllowed(
+            MOI.ConstraintPrimal(),
+            "$(typeof(model)) does not support getting the attribute " *
+            "$(MOI.ConstraintPrimal()).",
+        ),
+        MOI.get(model, MOI.ConstraintPrimal(), c),
+    )
+    @test_throws(
+        MOI.GetAttributeNotAllowed(
+            MOI.VariablePrimal(),
             "Unable to get attribute $(MOI.VariablePrimal()): invalid " *
             "arguments $((c,)).",
         ),
         MOI.get(model, MOI.VariablePrimal(), c),
     )
+    return
 end
 
 function test_ConstraintBasisStatus_fallback()
@@ -213,6 +231,57 @@ function test_attribute_value_type()
     ) == Float64
     @test MOI.attribute_value_type(MOI.VariableBridgingCost{MOI.ZeroOne}()) ==
           Float64
+end
+
+MOI.Utilities.@model(
+    _Model1777,
+    (),
+    (MOI.LessThan,),
+    (MOI.Nonnegatives,),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (MOI.VectorOfVariables,),
+    ()
+)
+
+function MOI.supports_constraint(
+    ::_Model1777,
+    ::Type{MOI.VectorOfVariables},
+    ::Type{MOI.Reals},
+)
+    return false
+end
+
+function MOI.supports_add_constrained_variables(
+    ::_Model1777,
+    ::Type{MOI.Nonnegatives},
+)
+    return true
+end
+
+MOI.supports_add_constrained_variables(::_Model1777, ::Type{MOI.Reals}) = false
+
+function MOI.get(
+    model::_Model1777,
+    attr::MOI.ConstraintFunction,
+    ci::MOI.ConstraintIndex,
+)
+    return MOI.get_fallback(model, attr, ci)
+end
+
+function test_issue_1777()
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+        MOI.Bridges.full_bridge_optimizer(_Model1777{Float64}(), Float64),
+    )
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(1.0))
+    MOI.Utilities.attach_optimizer(model)
+    MOI.set(model, MOI.ConstraintSet(), c, MOI.LessThan(2.0))
+    @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.LessThan(2.0)
+    @test MOI.Utilities.state(model) == MOI.Utilities.EMPTY_OPTIMIZER
+    return
 end
 
 function runtests()
