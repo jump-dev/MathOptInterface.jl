@@ -101,6 +101,26 @@ operation_name(err::SetAttributeNotAllowed) = "Setting attribute $(err.attr)"
 message(err::SetAttributeNotAllowed) = err.message
 
 """
+    struct GetAttributeNotAllowed{AttrType} <: NotAllowedError
+        attr::AttrType
+        message::String
+    end
+
+An error indicating that the attribute `attr` cannot be got for some reason (see
+the error string).
+"""
+struct GetAttributeNotAllowed{AttrType<:AnyAttribute} <: NotAllowedError
+    attr::AttrType
+    message::String
+end
+
+GetAttributeNotAllowed(attr::AnyAttribute) = GetAttributeNotAllowed(attr, "")
+
+operation_name(err::GetAttributeNotAllowed) = "Getting attribute $(err.attr)"
+
+message(err::GetAttributeNotAllowed) = err.message
+
+"""
     AbstractSubmittable
 
 Abstract supertype for objects that can be submitted to the model.
@@ -341,7 +361,8 @@ function get_fallback(
     attr::Union{AbstractModelAttribute,AbstractOptimizerAttribute},
 )
     return throw(
-        ArgumentError(
+        GetAttributeNotAllowed(
+            attr,
             "$(typeof(model)) does not support getting the attribute $(attr).",
         ),
     )
@@ -353,7 +374,8 @@ function get_fallback(
     ::VariableIndex,
 )
     return throw(
-        ArgumentError(
+        GetAttributeNotAllowed(
+            attr,
             "$(typeof(model)) does not support getting the attribute $(attr).",
         ),
     )
@@ -365,7 +387,8 @@ function get_fallback(
     ::ConstraintIndex,
 )
     return throw(
-        ArgumentError(
+        GetAttributeNotAllowed(
+            attr,
             "$(typeof(model)) does not support getting the attribute $(attr).",
         ),
     )
@@ -373,7 +396,8 @@ end
 
 function get_fallback(::ModelLike, attr::AnyAttribute, args...)
     return throw(
-        ArgumentError(
+        GetAttributeNotAllowed(
+            attr,
             "Unable to get attribute $(attr): invalid arguments $(args).",
         ),
     )
