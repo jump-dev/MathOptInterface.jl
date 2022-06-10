@@ -335,6 +335,23 @@ function test_linear_transform()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Variable.FreeBridge,
+        """
+        variables: x
+        minobjective: 1.0 * x
+        c: 2.0 * x <= 1.0
+        """,
+        """
+        constrainedvariable: [x, y] in Nonnegatives(2)
+        minobjective: 1.0 * x + -1.0 * y
+        c: 2.0 * x + -2.0 * y <= 1.0
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestVariableFree.runtests()

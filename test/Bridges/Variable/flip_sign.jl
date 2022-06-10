@@ -192,6 +192,23 @@ function test_delete_in_vector()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Variable.NonposToNonnegBridge,
+        """
+        constrainedvariable: [x, y] in Nonpositives(2)
+        minobjective: x + y
+        c: 2.0 * x + -3.0 * y <= 1.0
+        """,
+        """
+        constrainedvariable: [x, y] in Nonnegatives(2)
+        minobjective: -1.0 * x + -1.0 * y
+        c: -2.0 * x + 3.0 * y <= 1.0
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestVariableFlipSign.runtests()

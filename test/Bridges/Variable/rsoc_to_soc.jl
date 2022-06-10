@@ -126,6 +126,25 @@ function test_rotatedsoc4()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Variable.RSOCtoSOCBridge,
+        """
+        constrainedvariable: [t, u, x] in RotatedSecondOrderCone(3)
+        a: 1.0 * t <= 1.0
+        b: 1.0 * u <= 1.0
+        c: 1.0 * x <= 1.0
+        """,
+        """
+        constrainedvariable: [t, u, x] in SecondOrderCone(3)
+        a: 0.7071067811865475 * t + 0.7071067811865475 * u <= 1.0
+        b: 0.7071067811865475 * t + -0.7071067811865475 * u <= 1.0
+        c: 1.0 * x <= 1.0
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestVariableRSOCtoSOC.runtests()

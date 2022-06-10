@@ -271,17 +271,17 @@ instead.
 
 ## Example
 
-```
-MOI.Utilities.loadfromstring!(
-    model,
-    \"\"\"
-    variables: x, y, z
-    minobjective: 2x + 3y
-    con1: x + y <= 1
-    con2: [x, y] in MOI.Nonnegatives(2)
-    x >= 0.0
-    \"\"\"
-)
+```jldoctest
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> MOI.Utilities.loadfromstring!(model, \"\"\"
+       variables: x, y, z
+       constrainedvariable: [a, b, c] in Nonnegatives(3)
+       minobjective: 2x + 3y
+       con1: x + y <= 1.0
+       con2: [x, y] in Nonnegatives(2)
+       x >= 0.0
+       \"\"\")
 ```
 
 ## Notes
@@ -313,6 +313,24 @@ function loadfromstring!(model, s)
                 @assert isa(ex, Symbol)
                 vindex = MOI.add_variable(model)
                 MOI.set(model, MOI.VariableName(), vindex, String(ex))
+            end
+        elseif label == :constrainedvariable
+            @assert length(ex.args) == 3
+            @assert ex.args[1] == :in
+            set = Core.eval(MOI, ex.args[3])
+            if isa(ex.args[2], Symbol)
+                # constrainedvariable: x in LessThan(1.0)
+                x, _ = MOI.add_constrained_variable(model, set)
+                MOI.set(model, MOI.VariableName(), x, String(ex.args[2]))
+            else
+                # constraintedvariable: [a, b, c] in Set
+                @assert isa(ex.args[2], Expr)
+                @assert ex.args[2].head == :vect
+                x, _ = MOI.add_constrained_variables(model, set)
+                for i in 1:length(x)
+                    name = String(ex.args[2].args[i])
+                    MOI.set(model, MOI.VariableName(), x[i], name)
+                end
             end
         elseif label == :maxobjective
             f = _parsed_to_moi(model, _parse_function(ex))
