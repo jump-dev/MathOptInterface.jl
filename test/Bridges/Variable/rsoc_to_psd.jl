@@ -261,6 +261,21 @@ function test_RSOC4()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Variable.RSOCtoPSDBridge,
+        """
+        constrainedvariable: [t, u, x] in RotatedSecondOrderCone(3)
+        c: t + u + x <= 1.0
+        """,
+        """
+        constrainedvariable: [t, x, u] in PositiveSemidefiniteConeTriangle(2)
+        c: t + 0.5 * u + x <= 1.0
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestVariableRSOCtoPSD.runtests()

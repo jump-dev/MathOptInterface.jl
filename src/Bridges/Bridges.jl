@@ -281,6 +281,13 @@ function runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
     for b in values(Variable.bridges(model))
         _general_bridge_tests(b)
     end
+    _test_delete(Bridge, model, inner)
+    return
+end
+
+_test_delete(::Type{<:Variable.AbstractBridge}, model, inner) = nothing
+
+function _test_delete(Bridge, model, inner)
     # Test deletion of things in the bridge.
     #  * We reset the objective
     MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
@@ -308,6 +315,10 @@ end
 
 function _bridged_model(Bridge::Type{<:Objective.AbstractBridge}, inner)
     return Objective.SingleBridgeOptimizer{Bridge{Float64}}(inner)
+end
+
+function _bridged_model(Bridge::Type{<:Variable.AbstractBridge}, inner)
+    return Variable.SingleBridgeOptimizer{Bridge{Float64}}(inner)
 end
 
 function _general_bridge_tests(bridge::B) where {B<:AbstractBridge}

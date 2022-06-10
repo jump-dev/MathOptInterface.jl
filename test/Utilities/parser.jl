@@ -293,6 +293,36 @@ function test_Invalid_variable_name()
     return
 end
 
+function test_constrained_variables()
+    model = MOI.Utilities.Model{Float64}()
+    text = """
+    constrainedvariable: [a, b, c] in Nonnegatives(3)
+    constrainedvariable: d in LessThan(2.0)
+    """
+    MOI.Utilities.loadfromstring!(model, text)
+    MOI.set(
+        model,
+        MOI.ConstraintName(),
+        MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}(1),
+        "con1",
+    )
+    model2 = MOI.Utilities.Model{Float64}()
+    text2 = """
+    variables: a, b, c, d
+    con1: [a, b, c] in Nonnegatives(3)
+    d <= 2.0
+    """
+    MOI.Utilities.loadfromstring!(model2, text2)
+    MOI.Test.util_test_models_equal(
+        model,
+        model2,
+        ["a", "b", "c", "d"],
+        ["con1"],
+        [("d", MOI.LessThan{Float64}(2.0))],
+    )
+    return
+end
+
 end  # module
 
 TestParser.runtests()

@@ -245,6 +245,49 @@ function test_exp3_with_add_constrained_variable_y()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Variable.VectorizeBridge,
+        """
+        constrainedvariable: x in GreaterThan(2.0)
+        minobjective: 1.0 * x
+        c: 2.0 * x <= 1.0
+        """,
+        """
+        constrainedvariable: [x] in Nonnegatives(1)
+        minobjective: 2.0 + 1.0 * x
+        c: 2.0 * x <= -3.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Variable.VectorizeBridge,
+        """
+        constrainedvariable: x in LessThan(2.0)
+        minobjective: 1.0 * x
+        c: 2.0 * x <= 1.0
+        """,
+        """
+        constrainedvariable: [x] in Nonpositives(1)
+        minobjective: 2.0 + 1.0 * x
+        c: 2.0 * x <= -3.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Variable.VectorizeBridge,
+        """
+        constrainedvariable: x in EqualTo(2.0)
+        minobjective: 1.0 * x
+        c: 2.0 * x <= 1.0
+        """,
+        """
+        constrainedvariable: [x] in Zeros(1)
+        minobjective: 2.0 + 1.0 * x
+        c: 2.0 * x <= -3.0
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestVariableVectorize.runtests()
