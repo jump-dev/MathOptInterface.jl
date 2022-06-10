@@ -112,3 +112,80 @@ function concrete_bridge_type(
 ) where {F<:MOI.VectorAffineFunction,S<:MOI.AbstractScalarSet}
     return IndicatorActiveOnFalseBridge{Float64,F,S}
 end
+
+MOI.get(::IndicatorActiveOnFalseBridge, ::MOI.NumberOfVariables)::Int64 = 1
+
+function MOI.get(b::IndicatorActiveOnFalseBridge, ::MOI.ListOfVariableIndices)
+    return [b.variable]
+end
+
+function MOI.get(
+    ::IndicatorActiveOnFalseBridge{T},
+    ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
+)::Int64 where {T}
+    return 1
+end
+
+function MOI.get(
+    b::IndicatorActiveOnFalseBridge{T},
+    ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
+) where {T}
+    return [b.disjunction_cons]
+end
+
+function MOI.get(
+    ::IndicatorActiveOnFalseBridge{T,F,S},
+    ::MOI.NumberOfConstraints{F,MOI.Indicator{MOI.ACTIVATE_ON_ONE,S}},
+)::Int64 where {T,F,S}
+    return 1
+end
+
+function MOI.get(
+    b::IndicatorActiveOnFalseBridge{T,F,S},
+    ::MOI.ListOfConstraintIndices{F,MOI.Indicator{MOI.ACTIVATE_ON_ONE,S}},
+) where {T,F,S}
+    return [b.indicator_cons_index]
+end
+
+function MOI.get(
+    ::IndicatorActiveOnFalseBridge{T},
+    ::MOI.NumberOfConstraints{MOI.VariableIndex,MOI.ZeroOne},
+)::Int64 where {T}
+    return 1
+end
+
+function MOI.get(
+    b::IndicatorActiveOnFalseBridge{T},
+    ::MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.ZeroOne},
+) where {T}
+    return [b.zero_one_cons]
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintSet,
+    b::IndicatorActiveOnFalseBridge,
+)
+    set = MOI.get(model, attr, b.indicator_cons_index)
+    return MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(set.set)
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintFunction,
+    b::IndicatorActiveOnFalseBridge{T},
+) where {T}
+    f = MOI.get(model, attr, b.indicator_cons_index)
+    y, fz = MOI.Utilities.eachscalar(f)
+    z_plus_y = MOI.get(model, MOI.ConstraintFunction(), b.disjunction_cons)
+    z = MOI.Utilities.operate(-, T, z_plus_y, y)
+    MOI.Utilities.canonicalize!(z)
+    return MOI.Utilities.operate(vcat, T, z, fz)
+end
+
+function MOI.delete(model::MOI.ModelLike, bridge::IndicatorActiveOnFalseBridge)
+    MOI.delete(model, bridge.disjunction_cons)
+    MOI.delete(model, bridge.indicator_cons_index)
+    MOI.delete(model, bridge.variable)
+    return
+end
