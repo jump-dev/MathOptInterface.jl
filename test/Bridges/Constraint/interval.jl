@@ -373,6 +373,34 @@ function test_infinite_bounds(::Type{T} = Float64) where {T<:AbstractFloat}
     return _test_interval(mock, bridged_mock, set, ci)
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitIntervalBridge,
+        """
+        variables: x
+        x in Interval(1.0, 2.0)
+        """,
+        """
+        variables: x
+        x >= 1.0
+        x <= 2.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitIntervalBridge,
+        """
+        variables: x
+        3.0 * x in Interval(1.0, 2.0)
+        """,
+        """
+        variables: x
+        3.0 * x >= 1.0
+        3.0 * x <= 2.0
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintSplitInterval.runtests()

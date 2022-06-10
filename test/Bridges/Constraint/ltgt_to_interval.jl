@@ -229,6 +229,54 @@ function test_GreaterOrLessToInterval_unmocked()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GreaterToIntervalBridge,
+        """
+        variables: x
+        x >= 1.0
+        """,
+        """
+        variables: x
+        x in Interval(1.0, Inf)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GreaterToIntervalBridge,
+        """
+        variables: x
+        2.0 * x >= 1.0
+        """,
+        """
+        variables: x
+        2.0 * x in Interval(1.0, Inf)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.LessToIntervalBridge,
+        """
+        variables: x
+        x <= 1.0
+        """,
+        """
+        variables: x
+        x in Interval(-Inf, 1.0)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.LessToIntervalBridge,
+        """
+        variables: x
+        2.0 * x <= 1.0
+        """,
+        """
+        variables: x
+        2.0 * x in Interval(-Inf, 1.0)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintToInterval.runtests()

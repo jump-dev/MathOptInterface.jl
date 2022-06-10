@@ -573,6 +573,32 @@ function test_conic_NormOneCone()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.NormOneBridge,
+        """
+        variables: t, x
+        [t, x] in NormOneCone(2)
+        """,
+        """
+        variables: t, x, y
+        [t + -1.0 * y, y + -1.0 * x, y + x] in Nonnegatives(3)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.NormInfinityBridge,
+        """
+        variables: t, x
+        [t, x] in NormInfinityCone(2)
+        """,
+        """
+        variables: t, x
+        [t + -1.0 * x, t + x] in Nonnegatives(2)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintNormInfinity.runtests()

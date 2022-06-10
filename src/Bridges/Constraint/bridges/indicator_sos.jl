@@ -182,6 +182,9 @@ function MOI.get(
     z = MOI.get(model, MOI.VariablePrimalStart(), bridge.z)
     w = MOI.get(model, MOI.VariablePrimalStart(), bridge.slack)
     f = MOI.get(model, attr, bridge.affine_index)
+    if any(isnothing, (z, w, f))
+        return nothing
+    end
     return [z, f - w]
 end
 
@@ -189,14 +192,23 @@ function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintPrimalStart,
     bridge::IndicatorSOS1Bridge{T},
-    value::AbstractVector,
+    value,
 ) where {T}
     @assert length(value) == 2
     MOI.set(model, MOI.VariablePrimalStart(), bridge.z, value[1])
-    w = something(
-        MOI.get(model, MOI.VariablePrimalStart(), bridge.slack),
-        zero(T),
-    )
-    MOI.set(model, attr, bridge.affine_index, value[2] + w)
+    MOI.set(model, MOI.VariablePrimalStart(), bridge.slack, zero(T))
+    MOI.set(model, attr, bridge.affine_index, value[2])
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::IndicatorSOS1Bridge{T},
+    ::Nothing,
+) where {T}
+    MOI.set(model, MOI.VariablePrimalStart(), bridge.z, nothing)
+    MOI.set(model, MOI.VariablePrimalStart(), bridge.slack, nothing)
+    MOI.set(model, attr, bridge.affine_index, nothing)
     return
 end

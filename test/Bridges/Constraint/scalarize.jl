@@ -208,6 +208,25 @@ function test_scalarize()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.ScalarizeBridge,
+        """
+        variables: x
+        [2.0 * x + -1.0] in Nonnegatives(1)
+        [3.0 * x + 1.0] in Nonpositives(1)
+        [4.0 * x + -5.0] in Zeros(1)
+        """,
+        """
+        variables: x
+        2.0 * x >= 1.0
+        3.0 * x <= -1.0
+        4.0 * x == 5.0
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintScalarize.runtests()

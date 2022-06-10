@@ -318,6 +318,24 @@ function test_getting_primal_attributes()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.IndicatorSOS1Bridge,
+        """
+        variables: x, z
+        [z, 2.0 * x] in Indicator{ACTIVATE_ON_ONE}(LessThan(2.0))
+        z in ZeroOne()
+        """,
+        """
+        variables: x, z, y
+        2.0 * x + 1.0 * y <= 2.0
+        z in ZeroOne()
+        [y, z] in SOS1([0.4, 0.6])
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintIndicatorSOS1.runtests()
