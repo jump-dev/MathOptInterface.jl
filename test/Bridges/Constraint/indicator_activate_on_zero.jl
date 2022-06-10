@@ -81,6 +81,25 @@ function test_indicator_activate_on_zero()
     end
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.IndicatorActiveOnFalseBridge,
+        """
+        variables: x, z
+        [z, 2.0 * x] in Indicator{ACTIVATE_ON_ZERO}(LessThan(2.0))
+        z in ZeroOne()
+        """,
+        """
+        variables: x, z, y
+        [y, 2.0 * x] in Indicator{ACTIVATE_ON_ONE}(LessThan(2.0))
+        z + y == 1.0
+        z in ZeroOne()
+        y in ZeroOne()
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintIndicatorActiveOnFalse.runtests()
