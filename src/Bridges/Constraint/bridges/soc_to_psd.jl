@@ -44,7 +44,7 @@ end
 `SOCtoPSDBridge` implements the following reformulation:
 
   * ``||x||_2 \\le t`` into
-    ``\\left[\\begin{array}{c c}t & x^\\top \\\\ x & t \\mathbf{I}\\end{array}\\right]``
+    ``\\left[\\begin{array}{c c}t & x^\\top \\\\ x & t \\mathbf{I}\\end{array}\\right]\\succeq 0``
 
 !!! warning
     This bridge is not added by default by [`MOI.Bridges.full_bridge_optimizer`](@ref)
@@ -155,8 +155,8 @@ end
 
 `RSOCtoPSDBridge` implements the following reformulation:
 
-  * ``||x||_2 \\le t\\cdot u`` into
-    ``\\left[\\begin{array}{c c}t & x^\\top \\\\ x & 2tu \\mathbf{I}\\end{array}\\right]``
+  * ``||x||_2^2 \\le 2t\\cdot u`` into
+    ``\\left[\\begin{array}{c c}t & x^\\top \\\\ x & 2tu \\mathbf{I}\\end{array}\\right]\\succeq 0``
 
 ## Source node
 

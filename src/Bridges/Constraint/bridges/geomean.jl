@@ -33,7 +33,7 @@ This is equivalent to:
     y_1^2 & \\le 2y_2 y_3,\\\\
     y_2^2 & \\le 2x_1 x_2, \\\\
     y_3^2 & \\le 2x_3(y_1/\\sqrt{4}) \\\\
-    y \\ge 0.
+    y     & \\ge 0.
 \\end{align*}
 ```
 

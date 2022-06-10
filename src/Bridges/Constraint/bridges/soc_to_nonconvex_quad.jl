@@ -168,7 +168,7 @@ end
 
 `RSOCtoNonConvexQuadBridge` implements the following reformulations:
 
-  * ``||x||_2 \\le t \\cdot u`` into ``\\sum x^2 - t\\cdot u \\le 0``,
+  * ``||x||_2^2 \\le 2tu`` into ``\\sum x^2 - 2tu \\le 0``,
     ``1t + 0 \\ge 0``, and ``1u + 0 \\ge 0``.
 
 The [`MOI.ScalarAffineFunction`](@ref)s ``1t + 0`` and ``1u + 0`` are used

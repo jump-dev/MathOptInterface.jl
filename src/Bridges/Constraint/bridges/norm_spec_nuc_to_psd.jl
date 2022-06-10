@@ -10,7 +10,7 @@
 `NormSpectralBridge` implements the following reformulation:
 
   * ``t \\ge \\sigma_1(X)`` into
-    ``\\left[\\begin{array}{c c}t\\mathbf{I} & X^\\top \\\\ X & t \\mathbf{I}\\end{array}\\right] \\succ 0``
+    ``\\left[\\begin{array}{c c}t\\mathbf{I} & X^\\top \\\\ X & t \\mathbf{I}\\end{array}\\right] \\succeq 0``
 
 ## Source node
 
@@ -221,8 +221,8 @@ end
 `NormNuclearBridge` implements the following reformulation:
 
   * ``t \\ge \\sum_i \\sigma_i (X)`` into
-    ``\\left[\\begin{array}{c c}U & X^\\top \\\\ X & V\\end{array}\\right] \\succ 0``
-    and ``t \\ge (tr(U) + tr(V)) / 2``.
+    ``\\left[\\begin{array}{c c}U & X^\\top \\\\ X & V\\end{array}\\right] \\succeq 0``
+    and ``2t \\ge tr(U) + tr(V)``.
 
 ## Source node
 
