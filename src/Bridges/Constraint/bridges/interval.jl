@@ -267,10 +267,15 @@ function MOI.get(
     elseif bridge.upper === nothing
         return MOI.get(model, attr, bridge.lower)
     else
-        return MOI.get(model, attr, bridge.lower) +
-               MOI.get(model, attr, bridge.upper)
+        lower = MOI.get(model, attr, bridge.lower)
+        if lower === nothing
+            return nothing
+        end
+        return lower + MOI.get(model, attr, bridge.upper)
     end
 end
+
+_split_dual_start(::Nothing) = nothing, nothing
 
 function _split_dual_start(value)
     if value < 0

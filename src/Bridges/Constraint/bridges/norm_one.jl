@@ -169,12 +169,26 @@ function MOI.set(
     return
 end
 
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::NormOneBridge{T},
+    ::Nothing,
+) where {T}
+    MOI.set.(model, MOI.VariablePrimalStart(), bridge.y, nothing)
+    MOI.set(model, attr, bridge.nn_index, nothing)
+    return
+end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
     bridge::NormOneBridge,
 )
     nn_primal = MOI.get(model, attr, bridge.nn_index)
+    if nn_primal == nothing
+        return nothing
+    end
     t = (nn_primal[1] + sum(nn_primal)) / 2
     d = length(bridge.y)
     x = (nn_primal[(d+2):end] - nn_primal[2:(d+1)]) / 2
@@ -190,6 +204,9 @@ function MOI.get(
     bridge::NormOneBridge,
 )
     nn_dual = MOI.get(model, attr, bridge.nn_index)
+    if nn_dual === nothing
+        return nothing
+    end
     d = length(bridge.y)
     x = nn_dual[(d+2):end] - nn_dual[2:(d+1)]
     return vcat(nn_dual[1], x)
@@ -216,5 +233,15 @@ function MOI.set(
         end
     end
     MOI.set(model, MOI.ConstraintDualStart(), bridge.nn_index, nn_dual)
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    ::MOI.ConstraintDualStart,
+    bridge::NormOneBridge,
+    ::Nothing,
+)
+    MOI.set(model, MOI.ConstraintDualStart(), bridge.nn_index, nothing)
     return
 end
