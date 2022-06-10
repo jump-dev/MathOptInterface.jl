@@ -271,7 +271,7 @@ instead.
 
 ## Example
 
-```jldoctest
+```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> MOI.Utilities.loadfromstring!(model, \"\"\"
