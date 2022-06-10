@@ -9,9 +9,7 @@
 
 `SOCtoRSOCBridge` implements the following reformulation:
 
-  * ``||x||_2 \\le t`` into ``2uv \\ge ||w||_2^2``, with the substitution rules
-    ``t = \\frac{u}{\\sqrt 2} + \\frac{v}{\\sqrt 2}``,
-    ``x = (\\frac{u}{\\sqrt 2} - \\frac{v}{\\sqrt 2}, w)``.
+  * ``||x||_2 \\le t`` into ``(t+x_1)(t-x_1)\\ge ||(x_2\\ldots,x_N)||_2^2``
 
 ## Assumptions
 

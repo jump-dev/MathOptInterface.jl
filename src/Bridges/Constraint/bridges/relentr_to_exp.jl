@@ -11,7 +11,7 @@
 [`MOI.RelativeEntropyCone`](@ref) into an [`MOI.ExponentialCone`](@ref):
 
   * ``u \\ge \\sum_{i=1}^n w_i \\log \\left(\\frac{w_i}{v_i}\\right)`` into
-    ``y_i \\ge 0``, ``\\sum_{i=1}^n y_i``, and
+    ``y_i \\ge 0``, ``u \\ge \\sum_{i=1}^n y_i``, and
     ``(-y_i, w_i, v_i) \\in ExponentialCone``.
 
 ## Source node

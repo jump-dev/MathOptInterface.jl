@@ -12,17 +12,17 @@
   * ``x \\in \\{0\\} \\cup [l, u]`` into
     ```math
     \\begin{aligned}
-    x \\leq z \\times u \\
-    x \\geq z \\times l \\
+    x \\leq z u \\\\
+    x \\geq z l \\\\
     z \\in \\{0, 1\\}
     \\end{aligned}
     ```
   * ``x \\in \\{0\\} \\cup \\{l, \\ldots, u\\}`` into
     ```math
     \\begin{aligned}
-    x \\leq z \\times u \\
-    x \\geq z \\times l \\
-    z \\in \\{0, 1\\} \\
+    x \\leq z u \\\\
+    x \\geq z l \\\\
+    z \\in \\{0, 1\\} \\\\
     x \\in \\mathbb{Z}
     \\end{aligned}
     ```

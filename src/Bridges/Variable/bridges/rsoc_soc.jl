@@ -9,7 +9,7 @@
 
 `RSOCtoSOCBridge` implements the following reformulation:
 
- * ``||x||_2^2 \\le 2tu`` into ``||v|| \\le w ``, with the substitution rules
+ * ``||x||_2^2 \\le 2tu`` into ``||v||_2 \\le w ``, with the substitution rules
    ``t = \\frac{w}{\\sqrt 2} + \\frac{v_1}{\\sqrt 2}``,
    ``u = \\frac{w}{\\sqrt 2} - \\frac{v_1}{\\sqrt 2}``, and
    ``x = (v_2,\\ldots,v_N)``.

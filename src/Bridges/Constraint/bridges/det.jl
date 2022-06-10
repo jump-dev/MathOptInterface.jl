@@ -67,7 +67,7 @@ that
     X & Δ\\\\
     Δ^\\top & \\mathrm{Diag}(Δ)
   \\end{pmatrix} & \\succeq 0\\\\
-  t - \\sum_{i=1}^n u \\log(Δ_{ii}/u) & \\le 0
+  t - \\sum_{i=1}^n u \\log\\left(\\frac{Δ_{ii}}{u}\\right) & \\le 0
 \\end{align*}
 ```
 Which we reformulate further into
@@ -77,7 +77,7 @@ Which we reformulate further into
     X & Δ\\\\
     Δ^\\top & \\mathrm{Diag}(Δ)
   \\end{pmatrix} & \\succeq 0\\\\
-  (l_i, u , Δ_{ii}) in ExponentialCone & \\forall i \\\\
+  (l_i, u , Δ_{ii}) & \\in ExponentialCone\\quad \\forall i \\\\
   t - \\sum_{i=1}^n l_i & \\le 0
 \\end{align*}
 ```
@@ -310,7 +310,7 @@ matrix ``Δ`` such that:
     X & Δ\\\\
     Δ^\\top & \\mathrm{Diag}(Δ)
   \\end{pmatrix} & \\succeq 0\\\\
-  (t, \\mathrm{Diag}(Δ)) in GeometricMeanCone
+  (t, \\mathrm{Diag}(Δ)) & \\in GeometricMeanCone
 \\end{align*}
 ```
 

@@ -9,8 +9,8 @@
 
 `IndicatorActiveOnFalseBridge` implements the following reformulation:
 
-  * ``!z \\implies {f(x) \\in S}`` into ``y \\implies {f(x) \\in S}``,
-    ``z + y == 1``, and ``y \\in \\{0, \\}``
+  * ``\\neg z \\implies {f(x) \\in S}`` into ``y \\implies {f(x) \\in S}``,
+    ``z + y = 1``, and ``y \\in \\{0, 1\\}``
 
 ## Source node
 
