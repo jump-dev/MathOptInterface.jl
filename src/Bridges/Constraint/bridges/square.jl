@@ -119,6 +119,14 @@ function bridge_constraint(
             # This avoid generating symmetrization constraints when the
             # functions at entries (i, j) and (j, i) are almost identical
             if !MOI.Utilities.isapprox_zero(diff, 1e-10)
+                if MOIU.isapprox_zero(diff, 1e-8)
+                    @warn "The entries ($i, $j) and ($j, $i) of the" *
+                          " positive semidefinite constraint are almost" *
+                          " identical but a constraint is added to ensure their" *
+                          " equality because the largest difference between the" *
+                          " coefficients is smaller than 1e-8 but larger than" *
+                          " 1e-10."
+                end
                 ci = MOI.Utilities.normalize_and_add_constraint(
                     model,
                     diff,
@@ -263,20 +271,43 @@ function MOI.get(
     # Start by converting the triangular dual to the square dual, assuming that
     # all elements are symmetrical.
     k = 0
+    sym_index = 1
     for j in 1:dim, i in 1:j
         k += 1
-        # The triangle constraint uses only the upper triangular part
+        upper_index = i+(j-1)*dim
+        lower_index = j+(i-1)*dim
         if i == j
-            sqr[i+(j-1)*dim] = tri[k]
+            dual[upper_index] = tri[k]
+        elseif sym_index <= length(bridge.sym) && bridge.sym[sym_index].first == (i, j)
+            # The PSD constraint uses only the upper triangular part.
+            # Therefore, for KKT to hold for the user model, the dual given by the
+            # user needs to be attributed to the upper triangular entry.
+            # Suppose for instance the matrix is
+            # [0 x
+            #  y 0] is PSDSquare.
+            # If the dual is
+            # [λ1 λ3
+            #  λ2 λ4]
+            # then we have `y λ2 + x λ3` in the lagrangian.
+            #
+            # In the bridged model, the constraint is
+            # [0, x, 0] in PSDTriangle.
+            # If the dual is
+            # [η1, η2, η3]
+            # then we have `2x η2` in the lagrangian.
+            # To have the same lagrangian value, we should set `λ3 = 2η2` and
+            # `λ2 = 0`.
+            sym_dual = MOI.get(model, attr, bridge.sym[sym_index].second)
+            dual[upper_index] = 2tri[k] + sym_dual
+            dual[lower_index] = -sym_dual
+            sym_index += 1
         else
-            sqr[i+(j-1)*dim] = 2tri[k]
-            sqr[j+(i-1)*dim] = zero(eltype(sqr))
+            # If there are no symmetry constraint, it means that the entries are
+            # symbolically the same so we can consider we have the average
+            # of the lower and upper triangular entries to the bridged model
+            # in which case we can give the dual to both upper and triangular entries.
+            dual[upper_index] = dual[lower_index] = tri[k]
         end
-    end
-    for ((i, j), ci) in bridge.sym
-        dual = MOI.get(model, attr, ci)
-        sqr[i+(j-1)*dim] += dual
-        sqr[j+(i-1)*dim] -= dual
     end
     return dual
 end
