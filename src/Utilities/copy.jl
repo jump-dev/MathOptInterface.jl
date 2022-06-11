@@ -505,7 +505,7 @@ end
 
 A layer to filter out various components of `model`.
 
-The filter function takes a single argument, which is eacy element from the list
+The filter function takes a single argument, which is each element from the list
 returned by the attributes below. It returns `true` if the element should be
 visible in the filtered model and `false` otherwise.
 
