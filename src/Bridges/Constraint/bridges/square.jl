@@ -274,38 +274,40 @@ function MOI.get(
     sym_index = 1
     for j in 1:dim, i in 1:j
         k += 1
-        upper_index = i+(j-1)*dim
-        lower_index = j+(i-1)*dim
+        upper_index, lower_index = i + (j - 1) * dim, j + (i - 1) * dim
         if i == j
             dual[upper_index] = tri[k]
-        elseif sym_index <= length(bridge.sym) && bridge.sym[sym_index].first == (i, j)
-            # The PSD constraint uses only the upper triangular part.
-            # Therefore, for KKT to hold for the user model, the dual given by the
-            # user needs to be attributed to the upper triangular entry.
-            # Suppose for instance the matrix is
-            # [0 x
-            #  y 0] is PSDSquare.
+        elseif sym_index <= length(bridge.sym) &&
+               bridge.sym[sym_index].first == (i, j)
+            # The PSD constraint uses only the upper triangular part. Therefore,
+            # for KKT to hold for the user model, the dual given by the user
+            # needs to be attributed to the upper triangular entry. For example,
+            # suppose the constraint is
+            #   [0 x; y 0] in PositiveSemidefiniteConeSquare(2).
             # If the dual is
-            # [λ1 λ3
-            #  λ2 λ4]
-            # then we have `y λ2 + x λ3` in the lagrangian.
+            #   [λ1 λ3; λ2 λ4]
+            # then we have `y λ2 + x λ3` in the Lagrangian.
             #
             # In the bridged model, the constraint is
-            # [0, x, 0] in PSDTriangle.
+            #   [0, x, 0] in PositiveSemidefiniteConeTriangle(2).
+            #   [x - y] in Zeros(1)
             # If the dual is
-            # [η1, η2, η3]
-            # then we have `2x η2` in the lagrangian.
-            # To have the same lagrangian value, we should set `λ3 = 2η2` and
-            # `λ2 = 0`.
-            sym_dual = MOI.get(model, attr, bridge.sym[sym_index].second)
-            dual[upper_index] = 2tri[k] + sym_dual
-            dual[lower_index] = -sym_dual
+            #   [η1, η2, η3] in PositiveSemidefiniteConeTriangle(2).
+            #   [π] in Reals(1)
+            # then we have `2x η2 + x * π - y * π` in the Lagrangian.
+            #
+            # To have the same Lagrangian value, we should set `λ3 = 2η2 + π`
+            # and `λ2 = 0 - π`.
+            π = MOI.get(model, attr, bridge.sym[sym_index].second)
+            dual[upper_index] = 2tri[k] + π
+            dual[lower_index] = -π
             sym_index += 1
         else
             # If there are no symmetry constraint, it means that the entries are
             # symbolically the same so we can consider we have the average
             # of the lower and upper triangular entries to the bridged model
-            # in which case we can give the dual to both upper and triangular entries.
+            # in which case we can give the dual to both upper and triangular
+            # entries.
             dual[upper_index] = dual[lower_index] = tri[k]
         end
     end

@@ -114,6 +114,7 @@ function test_runtests()
         [x11, x12, x22] in PositiveSemidefiniteConeTriangle(2)
         """,
     )
+    return
 end
 
 function test_symmetric_square()
