@@ -90,6 +90,8 @@ Bridges.ListOfNonstandardBridges
 Bridges.add_bridge
 Bridges.remove_bridge
 Bridges.has_bridge
+Bridges.print_active_bridges
+Bridges.print_graph
 Bridges.debug_supports_constraint
 Bridges.debug_supports
 ```
