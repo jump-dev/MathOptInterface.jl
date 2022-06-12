@@ -119,14 +119,6 @@ function bridge_constraint(
             # This avoid generating symmetrization constraints when the
             # functions at entries (i, j) and (j, i) are almost identical
             if !MOI.Utilities.isapprox_zero(diff, 1e-10)
-                if MOIU.isapprox_zero(diff, 1e-8)
-                    @warn "The entries ($i, $j) and ($j, $i) of the" *
-                          " positive semidefinite constraint are almost" *
-                          " identical but a constraint is added to ensure their" *
-                          " equality because the largest difference between the" *
-                          " coefficients is smaller than 1e-8 but larger than" *
-                          " 1e-10."
-                end
                 ci = MOI.Utilities.normalize_and_add_constraint(
                     model,
                     diff,
