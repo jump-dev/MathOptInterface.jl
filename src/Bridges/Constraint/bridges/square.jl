@@ -255,24 +255,53 @@ function MOI.get(
     attr::MOI.ConstraintDual,
     bridge::SquareBridge,
 )
+    # The constraint dual of the triangular constraint.
     tri = MOI.get(model, attr, bridge.triangle)
+    # Our output will be a dense square matrix.
     dim = MOI.side_dimension(bridge.square_set)
-    sqr = Vector{eltype(tri)}(undef, dim^2)
+    dual = Vector{eltype(tri)}(undef, dim^2)
+    # Start by converting the triangular dual to the square dual, assuming that
+    # all elements are symmetrical.
     k = 0
+    sym_index = 1
     for j in 1:dim, i in 1:j
         k += 1
-        # The triangle constraint uses only the upper triangular part
+        upper_index, lower_index = i + (j - 1) * dim, j + (i - 1) * dim
         if i == j
-            sqr[i+(j-1)*dim] = tri[k]
+            dual[upper_index] = tri[k]
+        elseif sym_index <= length(bridge.sym) &&
+               bridge.sym[sym_index].first == (i, j)
+            # The PSD constraint uses only the upper triangular part. Therefore,
+            # for KKT to hold for the user model, the dual given by the user
+            # needs to be attributed to the upper triangular entry. For example,
+            # suppose the constraint is
+            #   [0 x; y 0] in PositiveSemidefiniteConeSquare(2).
+            # If the dual is
+            #   [λ1 λ3; λ2 λ4]
+            # then we have `y λ2 + x λ3` in the Lagrangian.
+            #
+            # In the bridged model, the constraint is
+            #   [0, x, 0] in PositiveSemidefiniteConeTriangle(2).
+            #   [x - y] in Zeros(1)
+            # If the dual is
+            #   [η1, η2, η3] in PositiveSemidefiniteConeTriangle(2).
+            #   [π] in Reals(1)
+            # then we have `2x η2 + x * π - y * π` in the Lagrangian.
+            #
+            # To have the same Lagrangian value, we should set `λ3 = 2η2 + π`
+            # and `λ2 = 0 - π`.
+            π = MOI.get(model, attr, bridge.sym[sym_index].second)
+            dual[upper_index] = 2tri[k] + π
+            dual[lower_index] = -π
+            sym_index += 1
         else
-            sqr[i+(j-1)*dim] = 2tri[k]
-            sqr[j+(i-1)*dim] = zero(eltype(sqr))
+            # If there are no symmetry constraint, it means that the entries are
+            # symbolically the same so we can consider we have the average
+            # of the lower and upper triangular entries to the bridged model
+            # in which case we can give the dual to both upper and triangular
+            # entries.
+            dual[upper_index] = dual[lower_index] = tri[k]
         end
     end
-    for ((i, j), ci) in bridge.sym
-        dual = MOI.get(model, attr, ci)
-        sqr[i+(j-1)*dim] += dual
-        sqr[j+(i-1)*dim] -= dual
-    end
-    return sqr
+    return dual
 end
