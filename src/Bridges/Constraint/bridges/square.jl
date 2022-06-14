@@ -52,7 +52,7 @@
 
 where ``Y`` is the upper triangluar component of ``X``.
 
-In addition, constraints are added as necessary to constraint the matrix ``X``
+In addition, constraints are added as necessary to constrain the matrix ``X``
 to be symmetric. For example, the constraint for the matrix:
 ```math
 \\begin{pmatrix}
