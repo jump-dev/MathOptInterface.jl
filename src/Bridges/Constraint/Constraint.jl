@@ -21,7 +21,6 @@ include("set_map.jl")
 include("single_bridge_optimizer.jl")
 
 include("bridges/det.jl")
-include("bridges/det_square.jl")
 include("bridges/flip_sign.jl")
 include("bridges/functionize.jl")
 include("bridges/geomean_to_relentr.jl")
@@ -82,7 +81,6 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, SquareBridge{T})
     MOI.Bridges.add_bridge(bridged_model, LogDetBridge{T})
     MOI.Bridges.add_bridge(bridged_model, RootDetBridge{T})
-    MOI.Bridges.add_bridge(bridged_model, DetSquareBridge{T})
     MOI.Bridges.add_bridge(bridged_model, RSOCtoSOCBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SOCtoRSOCBridge{T})
     # We do not add `SOCtoPSDBridge` as transforming the `SOC` to `RSOC` and

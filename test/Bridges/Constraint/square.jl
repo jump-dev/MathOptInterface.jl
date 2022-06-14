@@ -144,6 +144,68 @@ function test_symmetric_square()
     return
 end
 
+function test_runtests_symmetric_logdet()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SquareBridge,
+        """
+        variables: t, u, x11, x21, x22
+        [t, u, x11, x21, x21, x22] in LogDetConeSquare(2)
+        """,
+        """
+        variables: t, u, x11, x21, x22
+        [t, u, x11, x21, x22] in LogDetConeTriangle(2)
+        """,
+    )
+    return
+end
+
+function test_runtests_non_symmetric_logdet()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SquareBridge,
+        """
+        variables: t, u, x11, x12, x21, x22
+        [t, u, x11, x21, x12, x22] in LogDetConeSquare(2)
+        """,
+        """
+        variables: t, u, x11, x12, x21, x22
+        [t, u, x11, x12, x22] in LogDetConeTriangle(2)
+        1.0 * x12 + -1.0 * x21 == 0.0
+        """,
+    )
+    return
+end
+
+function test_runtests_symmetric_rootdet()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SquareBridge,
+        """
+        variables: t, x11, x21, x22
+        [t, x11, x21, x21, x22] in RootDetConeSquare(2)
+        """,
+        """
+        variables: t, x11, x21, x22
+        [t, x11, x21, x22] in RootDetConeTriangle(2)
+        """,
+    )
+    return
+end
+
+function test_runtests_non_symmetric_rootdet()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SquareBridge,
+        """
+        variables: t, x11, x12, x21, x22
+        [t, x11, x21, x12, x22] in RootDetConeSquare(2)
+        """,
+        """
+        variables: t, x11, x12, x21, x22
+        [t, x11, x12, x22] in RootDetConeTriangle(2)
+        x12 + -1.0 * x21 == 0.0
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintSquare.runtests()

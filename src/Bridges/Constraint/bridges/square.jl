@@ -43,11 +43,17 @@
 """
     SquareBridge{T,F,G,TT,ST} <: Bridges.Constraint.AbstractBridge
 
-`SquareBridge` reformulates the constraint of a square matrix belong to `ST`,
-into the upper triangular part of the matrix belonging to `TT` and a list of
-equality constraints constraining off-diagonal symmetry.
+`SquareBridge` implements the following reformulations:
 
-For example, the constraint for the matrix
+  * ``(t, u, X) \\in LogDetConeSquare`` into ``(t, u, Y) in LogDetConeTriangle``
+  * ``(t, X) \\in RootDetConeSquare`` into ``(t, Y) in RootDetConeTriangle``
+  * ``X \\in AbstractSymmetricMatrixSetSquare`` into
+    ``Y in AbstractSymmetricMatrixSetTriangle``
+
+where ``Y`` is the upper triangluar component of ``X``.
+
+In addition, constraints are added as necessary to constraint the matrix ``X``
+to be symmetric. For example, the constraint for the matrix:
 ```math
 \\begin{pmatrix}
   1      & 1 + x & 2 - 3x\\\\
@@ -55,7 +61,7 @@ For example, the constraint for the matrix
   2 - 3x & 2 + x &     2x
 \\end{pmatrix}
 ```
-to be PSD can be broken down to the constraint of the symmetric matrix
+can be broken down to the constraint of the symmetric matrix
 ```math
 \\begin{pmatrix}
   1      & 1 + x & 2 - 3x\\\\
@@ -70,13 +76,13 @@ because the expressions are the same.
 
 ## Source node
 
-`VectorizeBridge` supports:
+`SquareBridge` supports:
 
   * `F` in `ST`
 
 ## Target nodes
 
-`VectorizeBridge` creates:
+`SquareBridge` creates:
 
   * `G` in `TT`
 """
@@ -84,8 +90,16 @@ struct SquareBridge{
     T,
     F<:MOI.AbstractVectorFunction,
     G<:MOI.AbstractScalarFunction,
-    TT<:MOI.AbstractSymmetricMatrixSetTriangle,
-    ST<:MOI.AbstractSymmetricMatrixSetSquare,
+    TT<:Union{
+        MOI.LogDetConeTriangle,
+        MOI.RootDetConeTriangle,
+        MOI.AbstractSymmetricMatrixSetTriangle,
+    },
+    ST<:Union{
+        MOI.LogDetConeSquare,
+        MOI.RootDetConeSquare,
+        MOI.AbstractSymmetricMatrixSetSquare,
+    }
 } <: AbstractBridge
     square_set::ST
     triangle::MOI.ConstraintIndex{F,TT}
@@ -93,6 +107,10 @@ struct SquareBridge{
 end
 
 const Square{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SquareBridge{T},OT}
+
+_square_offset(::MOI.AbstractSymmetricMatrixSetSquare) = Int[]
+_square_offset(::MOI.RootDetConeSquare) = Int[1]
+_square_offset(::MOI.LogDetConeSquare) = Int[1, 2]
 
 function bridge_constraint(
     ::Type{SquareBridge{T,F,G,TT,ST}},
@@ -103,16 +121,17 @@ function bridge_constraint(
     f_scalars = MOI.Utilities.eachscalar(f)
     sym = Pair{Tuple{Int,Int},MOI.ConstraintIndex{G,MOI.EqualTo{T}}}[]
     dim = MOI.side_dimension(s)
-    upper_triangle_indices = Int[]
-    trilen = div(dim * (dim + 1), 2)
-    sizehint!(upper_triangle_indices, trilen)
-    k = 0
+    upper_triangle_indices = _square_offset(s)
+    offset = length(upper_triangle_indices)
+    sizehint!(upper_triangle_indices, offset + div(dim * (dim + 1), 2))
+    k = offset
     for j in 1:dim
         for i in 1:j
             k += 1
             push!(upper_triangle_indices, k)
             # We constrain the entries (i, j) and (j, i) to be equal
-            f_ij, f_ji = f_scalars[i+(j-1)*dim], f_scalars[j+(i-1)*dim]
+            f_ij = f_scalars[offset+i+(j-1)*dim]
+            f_ji = f_scalars[offset+j+(i-1)*dim]
             diff = MOI.Utilities.operate!(-, T, f_ij, f_ji)
             MOI.Utilities.canonicalize!(diff)
             # The value 1e-10 was decided in https://github.com/jump-dev/JuMP.jl/pull/976
@@ -130,7 +149,6 @@ function bridge_constraint(
         end
         k += dim - j
     end
-    @assert length(upper_triangle_indices) == trilen
     triangle = MOI.add_constraint(
         model,
         f_scalars[upper_triangle_indices],
@@ -142,7 +160,11 @@ end
 function MOI.supports_constraint(
     ::Type{SquareBridge{T}},
     ::Type{<:MOI.AbstractVectorFunction},
-    ::Type{<:MOI.AbstractSymmetricMatrixSetSquare},
+    ::Type{<:Union{
+        MOI.LogDetConeSquare,
+        MOI.RootDetConeSquare,
+        MOI.AbstractSymmetricMatrixSetSquare,
+    }},
 ) where {T}
     return true
 end
@@ -160,7 +182,11 @@ end
 function concrete_bridge_type(
     ::Type{<:SquareBridge{T}},
     F::Type{<:MOI.AbstractVectorFunction},
-    ST::Type{<:MOI.AbstractSymmetricMatrixSetSquare},
+    ST::Type{<:Union{
+        MOI.LogDetConeSquare,
+        MOI.RootDetConeSquare,
+        MOI.AbstractSymmetricMatrixSetSquare,
+    }},
 ) where {T}
     S = MOI.Utilities.scalar_type(F)
     G = MOI.Utilities.promote_operation(-, T, S, S)
@@ -211,21 +237,25 @@ function MOI.get(
 ) where {T}
     value = MOI.Utilities.eachscalar(MOI.get(model, attr, bridge.triangle))
     dim = MOI.side_dimension(bridge.square_set)
-    f = Vector{eltype(value)}(undef, dim^2)
-    k = 0
+    offset = length(_square_offset(bridge.square_set))
+    f = Vector{eltype(value)}(undef, offset + dim^2)
+    for i in 1:offset
+        f[i] = value[i]
+    end
+    k = offset
     for j in 1:dim, i in 1:j
         k += 1
-        f[i+(j-1)*dim] = f[j+(i-1)*dim] = value[k]
+        f[offset+i+(j-1)*dim] = f[offset+j+(i-1)*dim] = value[k]
     end
     for ((i, j), ci) in bridge.sym
         # diff is f_ij - f_ji = 0
         diff = MOI.get(model, MOI.ConstraintFunction(), ci)
         # f_ij - (fij - f_ji) = f_ji
-        f_ji = MOI.Utilities.operate(-, T, f[i+(j-1)*dim], diff)
+        f_ji = MOI.Utilities.operate(-, T, f[offset+i+(j-1)*dim], diff)
         # But we need to account for the constant moved into the set
         rhs = MOI.constant(MOI.get(model, MOI.ConstraintSet(), ci))
         f_ji = MOI.Utilities.operate!(-, T, f_ji, rhs)
-        f[j+(i-1)*dim] = MOI.Utilities.convert_approx(eltype(f), f_ji)
+        f[offset+j+(i-1)*dim] = MOI.Utilities.convert_approx(eltype(f), f_ji)
     end
     return MOI.Utilities.vectorize(f)
 end
@@ -241,11 +271,15 @@ function MOI.get(
 ) where {T}
     value = MOI.get(model, attr, bridge.triangle)
     dim = MOI.side_dimension(bridge.square_set)
-    primal = Vector{eltype(value)}(undef, dim^2)
-    k = 0
+    offset = length(_square_offset(bridge.square_set))
+    primal = Vector{eltype(value)}(undef, offset + dim^2)
+    for i in 1:offset
+        primal[i] = value[i]
+    end
+    k = offset
     for j in 1:dim, i in 1:j
         k += 1
-        primal[i+(j-1)*dim] = primal[j+(i-1)*dim] = value[k]
+        primal[offset+i+(j-1)*dim] = primal[offset+j+(i-1)*dim] = value[k]
     end
     return primal
 end
@@ -259,14 +293,19 @@ function MOI.get(
     tri = MOI.get(model, attr, bridge.triangle)
     # Our output will be a dense square matrix.
     dim = MOI.side_dimension(bridge.square_set)
-    dual = Vector{eltype(tri)}(undef, dim^2)
+    offset = length(_square_offset(bridge.square_set))
+    dual = Vector{eltype(tri)}(undef, offset + dim^2)
     # Start by converting the triangular dual to the square dual, assuming that
     # all elements are symmetrical.
-    k = 0
+    for i in 1:offset
+        dual[i] = tri[i]
+    end
+    k = offset
     sym_index = 1
     for j in 1:dim, i in 1:j
         k += 1
-        upper_index, lower_index = i + (j - 1) * dim, j + (i - 1) * dim
+        upper_index = offset + i + (j - 1) * dim
+        lower_index = offset + j + (i - 1) * dim
         if i == j
             dual[upper_index] = tri[k]
         elseif sym_index <= length(bridge.sym) &&
