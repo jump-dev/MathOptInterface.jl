@@ -374,7 +374,11 @@ end
 # Implementation of the MOI interface for AbstractBridgeOptimizer
 
 # By convention, the model should be stored in a `model` field
-MOI.optimize!(b::AbstractBridgeOptimizer) = MOI.optimize!(b.model)
+function MOI.optimize!(b::AbstractBridgeOptimizer)
+    MOI.Utilities.final_touch(Constraint.bridges(b))
+    MOI.optimize!(b.model)
+    return
+end
 
 function MOI.is_empty(b::AbstractBridgeOptimizer)
     return isempty(Variable.bridges(b)) &&
@@ -454,6 +458,7 @@ function MOI.supports_incremental_interface(b::AbstractBridgeOptimizer)
     return MOI.supports_incremental_interface(b.model)
 end
 function MOI.Utilities.final_touch(uf::AbstractBridgeOptimizer, index_map)
+    MOI.Utilities.final_touch(Constraint.bridges(b))
     return MOI.Utilities.final_touch(uf.model, index_map)
 end
 

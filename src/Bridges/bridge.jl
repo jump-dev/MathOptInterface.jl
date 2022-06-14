@@ -253,3 +253,14 @@ MathOptInterface.ScalarAffineFunction{Float64}
 ```
 """
 function set_objective_function_type end
+
+"""
+    needs_final_touch(bridge::AbstractBridge)
+
+Return whether [`Utilities.final_touch`](@ref) needs to be called on `bridge`.
+For instance, if the correctness of `bridge` depends on bounds of variable
+or the fact that variables are integer, then the bridging is only valid
+if these do not change. In that case, the bridge can check in `final_touch`
+that they did not change and change the bridging in case it did.
+"""
+needs_final_touch(::AbstractBridge) = false

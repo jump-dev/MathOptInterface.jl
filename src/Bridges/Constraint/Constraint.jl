@@ -8,7 +8,7 @@ module Constraint
 
 import LinearAlgebra
 import MathOptInterface
-import OrderedCollections: OrderedDict
+import OrderedCollections: OrderedDict, OrderedSet
 import SparseArrays
 
 const MOI = MathOptInterface
