@@ -47,6 +47,7 @@ Bridges.Constraint.NormNuclearBridge
 Bridges.Constraint.SquareBridge
 Bridges.Constraint.RootDetBridge
 Bridges.Constraint.LogDetBridge
+Bridges.Constraint.DetSquareBridge
 Bridges.Constraint.IndicatorActiveOnFalseBridge
 Bridges.Constraint.IndicatorSOS1Bridge
 Bridges.Constraint.SemiToBinaryBridge

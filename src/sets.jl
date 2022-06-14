@@ -856,6 +856,10 @@ end
 
 dimension(s::LogDetConeSquare) = 2 + s.side_dimension^2
 
+triangular_form(::Type{LogDetConeSquare}) = LogDetConeTriangle
+
+triangular_form(set::LogDetConeSquare) = LogDetConeTriangle(set.side_dimension)
+
 """
     RootDetConeTriangle(side_dimension)
 
@@ -916,6 +920,12 @@ struct RootDetConeSquare <: AbstractVectorSet
 end
 
 dimension(s::RootDetConeSquare) = 1 + s.side_dimension^2
+
+triangular_form(::Type{RootDetConeSquare}) = RootDetConeTriangle
+
+function triangular_form(set::RootDetConeSquare)
+    return RootDetConeTriangle(set.side_dimension)
+end
 
 """
     Integer()
