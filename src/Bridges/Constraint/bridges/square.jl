@@ -99,7 +99,7 @@ struct SquareBridge{
         MOI.LogDetConeSquare,
         MOI.RootDetConeSquare,
         MOI.AbstractSymmetricMatrixSetSquare,
-    }
+    },
 } <: AbstractBridge
     square_set::ST
     triangle::MOI.ConstraintIndex{F,TT}
@@ -160,11 +160,13 @@ end
 function MOI.supports_constraint(
     ::Type{SquareBridge{T}},
     ::Type{<:MOI.AbstractVectorFunction},
-    ::Type{<:Union{
-        MOI.LogDetConeSquare,
-        MOI.RootDetConeSquare,
-        MOI.AbstractSymmetricMatrixSetSquare,
-    }},
+    ::Type{
+        <:Union{
+            MOI.LogDetConeSquare,
+            MOI.RootDetConeSquare,
+            MOI.AbstractSymmetricMatrixSetSquare,
+        },
+    },
 ) where {T}
     return true
 end
@@ -182,11 +184,13 @@ end
 function concrete_bridge_type(
     ::Type{<:SquareBridge{T}},
     F::Type{<:MOI.AbstractVectorFunction},
-    ST::Type{<:Union{
-        MOI.LogDetConeSquare,
-        MOI.RootDetConeSquare,
-        MOI.AbstractSymmetricMatrixSetSquare,
-    }},
+    ST::Type{
+        <:Union{
+            MOI.LogDetConeSquare,
+            MOI.RootDetConeSquare,
+            MOI.AbstractSymmetricMatrixSetSquare,
+        },
+    },
 ) where {T}
     S = MOI.Utilities.scalar_type(F)
     G = MOI.Utilities.promote_operation(-, T, S, S)
