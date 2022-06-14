@@ -206,6 +206,29 @@ function test_runtests_non_symmetric_rootdet()
     return
 end
 
+function test_conic_LogDetConeSquare_VectorOfVariables()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.Model{Float64}();
+        eval_variable_constraint_dual = false,
+    )
+    model = MOI.Bridges.Constraint.Square{Float64}(mock)
+    mock.optimize! =
+        (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
+            mock,
+            [0.0, 1.0, 0.0, 0.0, 1.0, 1.0],
+            (MOI.VariableIndex, MOI.EqualTo{Float64}) => [2.0],
+            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives) =>
+                [[1.0, 1.0]],
+            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}) =>
+                [0.0],
+            (MOI.VectorOfVariables, MOI.LogDetConeTriangle) =>
+                [Float64[-1, -2, 1, 0, 1]],
+        )
+    config = MOI.Test.Config()
+    MOI.Test.test_conic_LogDetConeSquare_VectorOfVariables(model, config)
+    return
+end
+
 end  # module
 
 TestConstraintSquare.runtests()
