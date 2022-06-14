@@ -519,7 +519,7 @@ our design goals?
 Instead of a heap-allocated object for each node, we only have two `Vector`s for
 each expression, `nodes` and `values`, as well as two constant vectors for the
 `OPERATORS`. In addition, all fields are concretely typed, and there are no
-`Union` or `Any` tyypes.
+`Union` or `Any` types.
 
 For our third goal, it is not easy to identify the children of a node, but it is
 easy to identify the _parent_ of any node. Therefore, we can use
@@ -569,13 +569,13 @@ for doing AD in Julia. At last count, there were at least ten packages–-not
 including `ReverseAD`-–for reverse-mode AD in Julia. `ReverseAD` exists because
 it has a different set of design goals.
 
- * **Goal: handle scale and sparsity**
+ * **Goal: handle scale and sparsity.**
    The types of nonlinear optimization problems that MOI represents can be large
    scale (10^5 or more functions across 10^5 or more variables) with very sparse
    derivatives. The ability to compute a sparse Hessian matrix is essential. To
    the best of our knowledge, `ReverseAD` is the only reverse-mode AD system in
    Julia that handles sparsity by default.
- * **Goal: limit the scope to improve robustness**
+ * **Goal: limit the scope to improve robustness.**
    Most other AD packages accept arbitrary Julia functions as input and then
    trace an expression graph using operator overloading. This means they must
    deal (or detect and ignore) with control flow, I/O, and other vagaries of
@@ -584,7 +584,7 @@ it has a different set of design goals.
    it must deal with. By reducing the scope of what we accept as input to
    functions relevant for mathematical optimization, we can provide a simpler
    implementation with various performance optimizations.
- * **Goal: provide outputs which match what solvers expect**
+ * **Goal: provide outputs which match what solvers expect.**
    Other AD packages focus on differentiating individual Julia functions. In
    constrast, `ReverseAD` has a very specific use-case: to generate outputs
    needed by the MOI nonlinear API. This means it needs to efficiently compute
@@ -594,8 +594,8 @@ it has a different set of design goals.
 ### History
 
 `ReverseAD` started life as [ReverseDiffSparse.jl](https://github.com/mlubin/ReverseDiffSparse.jl),
-development of which begain in early 2014(!). This was well before the other
-packages started development. Because we had a well-tested, working AD in JuMP,
+development of which began in early 2014(!). This was well before the other
+AD packages started development. Because we had a well-tested, working AD in JuMP,
 there was less motivation to contribute to and explore other AD packages. The
 lack of historical interaction also meant that other packages were not optimized
 for the types of problems that JuMP is built for (i.e., large-scale sparse
