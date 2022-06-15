@@ -20,6 +20,7 @@ include("map.jl")
 include("set_map.jl")
 include("single_bridge_optimizer.jl")
 
+include("bridges/bin_packing.jl")
 include("bridges/det.jl")
 include("bridges/flip_sign.jl")
 include("bridges/functionize.jl")
@@ -42,6 +43,7 @@ include("bridges/soc_rsoc.jl")
 include("bridges/soc_to_nonconvex_quad.jl") # do not add these bridges by default
 include("bridges/soc_to_psd.jl")
 include("bridges/square.jl")
+include("bridges/table.jl")
 include("bridges/vectorize.jl")
 include("bridges/zero_one.jl")
 
@@ -91,6 +93,9 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, IndicatorSOS1Bridge{T})
     MOI.Bridges.add_bridge(bridged_model, SemiToBinaryBridge{T})
     MOI.Bridges.add_bridge(bridged_model, ZeroOneBridge{T})
+    # Constraint programming bridges
+    MOI.Bridges.add_bridge(bridged_model, BinPackingToMILPBridge{T})
+    MOI.Bridges.add_bridge(bridged_model, TableToMILPBridge{T})
     return
 end
 

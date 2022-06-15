@@ -51,6 +51,8 @@ Bridges.Constraint.IndicatorActiveOnFalseBridge
 Bridges.Constraint.IndicatorSOS1Bridge
 Bridges.Constraint.SemiToBinaryBridge
 Bridges.Constraint.ZeroOneBridge
+Bridges.Constraint.BinPackingToMILPBridge
+Bridges.Constraint.TableToMILPBridge
 ```
 
 ## [Objective bridges](@id objective_bridges_ref)
