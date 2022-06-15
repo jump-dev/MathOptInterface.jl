@@ -1170,6 +1170,9 @@ of each bin does not exceed `c`.
 There are additional assumptions that the capacity, `c`, and the weights, `w`,
 must all be non-negative.
 
+The bin numbers depend on the bounds of `x`, so they may be something other than
+the integers `1:d`.
+
 ## Also known as
 
 This constraint is called `bin_packing` in MiniZinc.
@@ -1181,7 +1184,8 @@ model = Utilities.Model{Float64}()
 bins = add_variables(model, 5)
 weights = [1, 1, 2, 2, 3]
 add_constraint.(model, bins, MOI.Integer())
-add_constraint.(model, bins, MOI.Interval(1, 3))
+# Available bins are #4, #5, and #6.
+add_constraint.(model, bins, MOI.Interval(4, 6))
 add_constraint(model, VectorOfVariables(bins), BinPacking(3, weights))
 ```
 """
