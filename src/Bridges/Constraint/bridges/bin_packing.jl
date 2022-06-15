@@ -13,9 +13,9 @@
     ```math
     \\begin{aligned}
     z_{ij} \\in \\{0, 1\\}                  & \\forall i, j \\\\
-    \\sum\\limits_{j=1}^n z_{ij} = 1        & \\forall i \\\\
-    \\sum\\limits_{i=1}^n w_i z_{ij} \\le c & \\forall j \\\\
-    \\sum\\limits_{j=1}^n j z_{ij} == x_i   & \\forall i
+    \\sum\\limits_{j=1}^d z_{ij} = 1        & \\forall i \\\\
+    \\sum\\limits_{i=1}^d w_i z_{ij} \\le c & \\forall j \\\\
+    \\sum\\limits_{j=1}^d j z_{ij} == x_i   & \\forall i
     \\end{aligned}
     ```
 ## Source node
