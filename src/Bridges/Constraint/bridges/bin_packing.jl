@@ -18,6 +18,10 @@
     \\sum\\limits_{j=1}^d j z_{ij} == x_i   & \\forall i
     \\end{aligned}
     ```
+
+!!! warning
+    This reformulation assumes the bins are numbered ``1\\ldots d``.
+
 ## Source node
 
 `BinPackingToMILPBridge` supports:
