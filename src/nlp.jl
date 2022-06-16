@@ -51,7 +51,7 @@ An initial assignment of the Lagrange multipliers on the constraints from the
 struct NLPBlockDualStart <: AbstractModelAttribute end
 
 """
-    NLPBoundsPair(lower,upper)
+    NLPBoundsPair(lower, upper)
 
 A struct holding a pair of lower and upper bounds. `-Inf` and `Inf`
 can be used to indicate no lower or upper bound, respectively.
@@ -68,20 +68,24 @@ end
         has_objective::Bool
     end
 
-A `struct` encoding a set of nonlinear constraints of the form ``lb \\le g(x)
-\\le ub`` and, if `has_objective == true`, a nonlinear objective function
-``f(x)``. `constraint_bounds` holds the pairs of ``lb`` and ``ub`` elements.
+A `struct` encoding a set of nonlinear constraints of the form
+``lb \\le g(x) \\le ub`` and, if `has_objective == true`, a nonlinear objective
+function ``f(x)``.
+
+`constraint_bounds` holds the pairs of ``lb`` and ``ub`` elements.
+
 Nonlinear objectives *override* any objective set by using the
-`ObjectiveFunction` attribute. The `evaluator` is a callback object that is used
-to query function values, derivatives, and expression graphs. If
-`has_objective == false`, then it is an error to query properties of
-the objective function, and in Hessian-of-the-Lagrangian queries, `σ` must be
-set to zero.
+[`ObjectiveFunction`](@ref) attribute.
+
+The `evaluator` is a callback object that is used to query function values,
+derivatives, and expression graphs. If `has_objective == false`, then it is an
+error to query properties of the objective function, and in
+Hessian-of-the-Lagrangian queries, `σ` must be set to zero.
 
 !!! note
     Throughout the evaluator, all variables are ordered according to
-    [`ListOfVariableIndices`](@ref). Hence, MOI copies of nonlinear problems should be
-    done with attention.
+    [`ListOfVariableIndices`](@ref). Hence, MOI copies of nonlinear problems
+    must not re-order variables.
 """
 struct NLPBlockData
     constraint_bounds::Vector{NLPBoundsPair}
@@ -90,37 +94,58 @@ struct NLPBlockData
 end
 
 """
-    initialize(d::AbstractNLPEvaluator, requested_features::Vector{Symbol})
+    initialize(
+        d::AbstractNLPEvaluator,
+        requested_features::Vector{Symbol},
+    )::Nothing
 
-Must be called before any other methods. The vector `requested_features`
-lists features requested by the solver. These may include `:Grad` for gradients
-of the obejctive, ``f``, `:Jac` for explicit Jacobians of constraints, ``g``,
-`:JacVec` for Jacobian-vector products, `:HessVec` for Hessian-vector
-and Hessian-of-Lagrangian-vector products, `:Hess` for explicit Hessians and
-Hessian-of-Lagrangians, and `:ExprGraph` for expression graphs.
+Initialize `d` with the set of features in `requested_features`. Check
+[`features_available`](@ref) before calling `initialize` to see what features
+are supported by `d`.
+
+!!! warning
+    This method must be called before any other methods.
+
+## Features
+
+The following features are defined:
+
+ * `:Grad`: enables [`eval_objective_gradient`](@ref)
+ * `:Jac`: enables [`eval_constraint_jacobian`](@ref)
+ * `:JacVec`: enables [`eval_constraint_jacobian_product`](@ref) and
+   [`eval_constraint_jacobian_transpose_product`](@ref)
+ * `:Hess`: enables [`eval_hessian_lagrangian`](@ref)
+ * `:HessVec`: enables [`eval_hessian_lagrangian_product`](@ref)
+ * `:ExprGraph`: enables [`objective_expr`](@ref) and [`constraint_expr`](@ref).
 """
 function initialize end
 
 """
-    features_available(d::AbstractNLPEvaluator)
+    features_available(d::AbstractNLPEvaluator)::Vector{Symbol}
 
-Returns the subset of features available for this problem instance, as a
-vector of symbols in the same format as in `initialize`.
+Returns the subset of features available for this problem instance. See
+[`initialize`](@ref) for the list of defined features.
 """
 function features_available end
 
 """
-    eval_objective(d::AbstractNLPEvaluator, x)
+    eval_objective(d::AbstractNLPEvaluator, x)::Float64
 
 Evaluate the objective ``f(x)``, returning a scalar value.
 """
 function eval_objective end
 
 """
-    eval_constraint(d::AbstractNLPEvaluator, g, x)
+    eval_constraint(d::AbstractNLPEvaluator, g, x)::Nothing
 
 Evaluate the constraint function ``g(x)``, storing the result in the vector `g`
 which must be of the appropriate size.
+
+## Implementation notes
+
+When implementing this method, you must not assume that `g` is
+`Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
+For example, it may be the `view` of a vector.
 """
 function eval_constraint end
 
@@ -129,32 +154,48 @@ function eval_constraint end
 
 Evaluate ``\\nabla f(x)`` as a dense vector, storing the result in the vector
 `df` which must be of the appropriate size.
+
+## Implementation notes
+
+When implementing this method, you must not assume that `g` is
+`Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
+For example, it may be the `view` of a vector.
 """
 function eval_objective_gradient end
 
 """
     jacobian_structure(d::AbstractNLPEvaluator)::Vector{Tuple{Int64,Int64}}
 
-Returns the sparsity structure of the Jacobian matrix
-``J_g(x) = \\left[ \\begin{array}{c} \\nabla g_1(x) \\\\ \\nabla g_2(x) \\\\ \\vdots \\\\ \\nabla g_m(x) \\end{array}\\right]``
-where ``g_i`` is the ``i\\text{th}`` component of ``g``. The sparsity structure
-is assumed to be independent of the point ``x``. Returns a vector of tuples,
-`(row, column)`, where each indicates the position of a structurally nonzero element.
+Returns a vector of tuples, `(row, column)`, where each indicates the position
+of a structurally nonzero element in the Jacobian matrix:
+``J_g(x) = \\left[ \\begin{array}{c} \\nabla g_1(x) \\\\ \\nabla g_2(x) \\\\ \\vdots \\\\ \\nabla g_m(x) \\end{array}\\right],``
+where ``g_i`` is the ``i\\text{th}`` component of ``g``.
+
 These indices are not required to be sorted and can contain duplicates, in which
-case the solver should combine the corresponding elements by adding them together.
+case the solver should combine the corresponding elements by adding them
+together.
+
+The sparsity structure is assumed to be independent of the point ``x``.
 """
 function jacobian_structure end
 
 """
-    hessian_lagrangian_structure(d::AbstractNLPEvaluator)::Vector{Tuple{Int64,Int64}}
+    hessian_lagrangian_structure(
+        d::AbstractNLPEvaluator,
+    )::Vector{Tuple{Int64,Int64}}
 
-Returns the sparsity structure of the Hessian-of-the-Lagrangian matrix
-``\\nabla^2 f + \\sum_{i=1}^m \\nabla^2 g_i`` as a vector of tuples, where
-each indicates the position of a structurally nonzero element. These indices are
-not required to be sorted and can contain duplicates, in which case the solver
-should combine the corresponding elements by adding them together. Any mix of
-lower and upper-triangular indices is valid. Elements `(i,j)` and
+Returns a vector of tuples, `(row, column)`, where each indicates the position
+of a structurally nonzero element in the Hessian-of-the-Lagrangian matrix:
+``\\nabla^2 f(x) + \\sum_{i=1}^m \\nabla^2 g_i(x)``.
+
+The indices are not required to be sorted and can contain duplicates, in which
+case the solver should combine the corresponding elements by adding them
+together.
+
+Any mix of lower and upper-triangular indices is valid. Elements `(i,j)` and
 `(j,i)`, if both present, should be treated as duplicates.
+
+The sparsity structure is assumed to be independent of the point ``x``.
 """
 function hessian_lagrangian_structure end
 
@@ -163,15 +204,29 @@ function hessian_lagrangian_structure end
 
 Evaluates the sparse Jacobian matrix
 ``J_g(x) = \\left[ \\begin{array}{c} \\nabla g_1(x) \\\\ \\nabla g_2(x) \\\\ \\vdots \\\\ \\nabla g_m(x) \\end{array}\\right]``.
+
 The result is stored in the vector `J` in the same order as the indices returned
-by `jacobian_structure`.
+by [`jacobian_structure`](@ref).
+
+## Implementation notes
+
+When implementing this method, you must not assume that `J` is
+`Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
+For example, it may be the `view` of a vector.
 """
 function eval_constraint_jacobian end
 
 """
     eval_constraint_jacobian_product(d::AbstractNLPEvaluator, y, x, w)
 
-Computes the Jacobian-vector product ``J_g(x)w``, storing the result in the vector `y`.
+Computes the Jacobian-vector product ``J_g(x)w``, storing the result in the
+vector `y`.
+
+## Implementation notes
+
+When implementing this method, you must not assume that `y` is
+`Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
+For example, it may be the `view` of a vector.
 """
 function eval_constraint_jacobian_product end
 
@@ -180,6 +235,12 @@ function eval_constraint_jacobian_product end
 
 Computes the Jacobian-transpose-vector product ``J_g(x)^Tw``, storing the result
 in the vector `y`.
+
+## Implementation notes
+
+When implementing this method, you must not assume that `y` is
+`Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
+For example, it may be the `view` of a vector.
 """
 function eval_constraint_jacobian_transpose_product end
 
@@ -190,47 +251,103 @@ Given scalar weight `σ` and vector of constraint weights `μ`,
 computes the Hessian-of-the-Lagrangian-vector product
 ``\\left(\\sigma\\nabla^2 f(x) + \\sum_{i=1}^m \\mu_i \\nabla^2 g_i(x)\\right)v``,
 storing the result in the vector `h`.
+
+## Implementation notes
+
+When implementing this method, you must not assume that `h` is
+`Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
+For example, it may be the `view` of a vector.
 """
 function eval_hessian_lagrangian_product end
 
 """
     eval_hessian_lagrangian(d::AbstractNLPEvaluator, H, x, σ, μ)
 
-Given scalar weight `σ` and vector of constraint weights `μ`,
-computes the sparse Hessian-of-the-Lagrangian matrix
+Given scalar weight `σ` and vector of constraint weights `μ`, this function
+computes the sparse Hessian-of-the-Lagrangian matrix:
 ``\\sigma\\nabla^2 f(x) + \\sum_{i=1}^m \\mu_i \\nabla^2 g_i(x)``,
 storing the result in the vector `H` in the same order as the indices
-returned by `hessian_lagrangian_structure`.
+returned by [`hessian_lagrangian_structure`](@ref).
+
+## Implementation notes
+
+When implementing this method, you must not assume that `H` is
+`Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
+For example, it may be the `view` of a vector.
 """
 function eval_hessian_lagrangian end
 
 """
-    objective_expr(d::AbstractNLPEvaluator)
+    objective_expr(d::AbstractNLPEvaluator)::Expr
 
-Returns an expression graph for the objective function as a standard Julia `Expr`
-object. All sums and products are flattened out as simple `Expr(:+,...)` and
-`Expr(:*,...)` objects. The symbol `x` is used as a placeholder for the
-vector of decision variables. No other undefined symbols are permitted;
-coefficients are embedded as explicit values. For example, the expression
-``x_1+\\sin(x_2/\\exp(x_3))`` would be represented as the Julia object
-`:(x[1] + sin(x[2]/exp(x[3])))`. Each integer index is wrapped in a [`VariableIndex`](@ref).
-See the [Julia manual](https://docs.julialang.org/en/release-0.6/manual/metaprogramming/)
-for more information on the structure of `Expr` objects.
-There are currently no restrictions on recognized functions; typically these
-will be built-in Julia functions like `^`, `exp`, `log`, `cos`, `tan`, `sqrt`,
-etc., but modeling interfaces may choose to extend these basic functions.
+Returns a Julia `Expr` object representing the expression graph of the objective
+function.
+
+## Format
+
+The expression has a number of limitations, compared with arbitrary Julia
+expressions:
+
+ * All sums and products are flattened out as simple `Expr(:+,...)` and
+   `Expr(:*,...)` objects.
+ * All decision variables must be of the form
+   `Expr(:ref, :x, MOI.VariableIndex(i))`
+ * There are currently no restrictions on recognized functions; typically these
+   will be built-in Julia functions like `^`, `exp`, `log`, `cos`, `tan`, `sqrt`,
+   etc., but modeling interfaces may choose to extend these basic functions, or
+   error if they encounter unsupported functions.
+
+## Examples
+
+The ``x_1+\\sin(x_2/\\exp(x_3))`` would be represented as
+```julia
+:(x[MOI.VariableIndex(1)] + sin(x[MOI.VariableIndex(2)] / exp(x[MOI.VariableIndex[3]])))
+```
+or equivalently
+```julia
+Expr(
+    :call,
+    :+,
+    Expr(:ref, :x, MOI.VariableIndex(1)),
+    Expr(
+        :call,
+        :/,
+        Expr(:call, :sin, Expr(:ref, :x, MOI.VariableIndex(2))),
+        Expr(:call, :exp, Expr(:ref, :x, MOI.VariableIndex(3))),
+    ),
+)
+```
 """
 function objective_expr end
 
 """
-    constraint_expr(d::AbstractNLPEvaluator, i)
+    constraint_expr(d::AbstractNLPEvaluator, i::Integer)::Expr
 
-Returns an expression graph for the ``i\\text{th}`` constraint in the same
-format as described above, with an additional comparison operator indicating
-the sense of and bounds on the constraint. The right-hand side of the comparison
-must be a constant; that is, `:(x[1]^3 <= 1)` is allowed, while
-`:(1 <= x[1]^3)` is not valid. Double-sided constraints are allowed, in which
-case both the lower bound and upper bounds should be constants; for example,
-`:(-1 <= cos(x[1]) + sin(x[2]) <= 1)` is valid.
+Returns a Julia `Expr` object representing the expression graph for the
+``i\\text{th}`` nonlinear constraint.
+
+## Format
+
+The format is the same as [`objective_expr`], with an additional comparison
+operator indicating the sense of and bounds on the constraint.
+
+For single (in)equalities, the body of the constraint must be on the left-hand
+side, and the right-hand side must be a constant.
+
+For double-sided constraints (that is, ``l \\le f(x) \\le u``), the body of the
+constraint must be in the middle, and the left- and right-hand sides must be
+constants.
+
+The bounds on the constraints must match the [`NLPBoundsPair`](@ref)s passed to
+[`NLPBlockData`](@ref).
+
+## Examples
+
+```julia
+:(x[MOI.VariableIndex(1)]^2 <= 1.0)
+:(x[MOI.VariableIndex(1)]^2 >= 2.0)
+:(x[MOI.VariableIndex(1)]^2 == 3.0)
+:(4.0 <= x[MOI.VariableIndex(1)]^2 <= 5.0)
+```
 """
 function constraint_expr end
