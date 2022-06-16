@@ -60,9 +60,10 @@ function _convert_to_nlpblock(model::Model)
         )
     end
     if has_constraints
+        options = get_options(model)
         evaluator = MOI.Nonlinear.Evaluator(
             nlp_model,
-            MOI.Nonlinear.SparseReverseMode(),
+            options.differentiation_backend,
             MOI.get(model, MOI.ListOfVariableIndices()),
         )
         MOI.set(model, MOI.NLPBlock(), MOI.NLPBlockData(evaluator))
