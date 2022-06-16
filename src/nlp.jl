@@ -16,45 +16,51 @@
     AbstractNLPEvaluator
 
 Abstract supertype for the callback object that is used to query function
-values, derivatives, and expression graphs. It is used in `NLPBlock`.
+values, derivatives, and expression graphs.
+
+It is used in [`NLPBlockData`](@ref).
 """
 abstract type AbstractNLPEvaluator end
 
 """
     NLPBlock()
 
-Holds the `NLPBlockData` that represents a set of nonlinear constraints, and
-optionally a nonlinear objective.
+An [`AbstractModelAttribute`](@ref) that stores an [`NLPBlockData`](@ref),
+representing a set of nonlinear constraints, and optionally a nonlinear
+objective.
 """
 struct NLPBlock <: AbstractModelAttribute end
 
 """
-    NLPBlockDual(result_index::Int)
-    NLPBlockDual()
+    NLPBlockDual(result_index::Int = 1)
 
-The Lagrange multipliers on the constraints from the `NLPBlock` in result
-`result_index`. If `result_index` is omitted, it is 1 by default.
+An [`AbstractModelAttribute`](@ref) for the Lagrange multipliers on the
+constraints from the [`NLPBlock`](@ref) in result `result_index`.
+
+If `result_index` is omitted, it is `1` by default.
 """
 struct NLPBlockDual <: AbstractModelAttribute
     result_index::Int
+    NLPBlockDual() = new(result_index::Int = 1)
 end
-NLPBlockDual() = NLPBlockDual(1)
 
 is_set_by_optimize(::NLPBlockDual) = true
 
 """
     NLPBlockDualStart()
 
-An initial assignment of the Lagrange multipliers on the constraints from the
-`NLPBlock` that the solver may use to warm-start the solve.
+An [`AbstractModelAttribute`](@ref) for the initial assignment of the Lagrange
+multipliers on the constraints from the [`NLPBlock`](@ref) that the solver may
+use to warm-start the solve.
 """
 struct NLPBlockDualStart <: AbstractModelAttribute end
 
 """
-    NLPBoundsPair(lower, upper)
+    NLPBoundsPair(lower::Float64, upper::Float64)
 
-A struct holding a pair of lower and upper bounds. `-Inf` and `Inf`
-can be used to indicate no lower or upper bound, respectively.
+A struct holding a pair of lower and upper bounds.
+
+`-Inf` and `Inf` can be used to indicate no lower or upper bound, respectively.
 """
 struct NLPBoundsPair
     lower::Float64
@@ -68,11 +74,9 @@ end
         has_objective::Bool
     end
 
-A `struct` encoding a set of nonlinear constraints of the form
+A struct encoding a set of nonlinear constraints of the form
 ``lb \\le g(x) \\le ub`` and, if `has_objective == true`, a nonlinear objective
 function ``f(x)``.
-
-`constraint_bounds` holds the pairs of ``lb`` and ``ub`` elements.
 
 Nonlinear objectives *override* any objective set by using the
 [`ObjectiveFunction`](@ref) attribute.
@@ -117,29 +121,44 @@ The following features are defined:
  * `:Hess`: enables [`eval_hessian_lagrangian`](@ref)
  * `:HessVec`: enables [`eval_hessian_lagrangian_product`](@ref)
  * `:ExprGraph`: enables [`objective_expr`](@ref) and [`constraint_expr`](@ref).
+
+In all cases, including when `requested_features` is empty,
+[`eval_objective`](@ref) and [`eval_constraint`](@ref) are supported.
+
+## Examples
+
+```julia
+MOI.initialize(d, Symbol[])
+MOI.initialize(d, [:ExprGraph])
+MOI.initialize(d, MOI.features_available(d))
+```
 """
 function initialize end
 
 """
     features_available(d::AbstractNLPEvaluator)::Vector{Symbol}
 
-Returns the subset of features available for this problem instance. See
-[`initialize`](@ref) for the list of defined features.
+Returns the subset of features available for this problem instance.
+
+See [`initialize`](@ref) for the list of defined features.
 """
 function features_available end
 
 """
-    eval_objective(d::AbstractNLPEvaluator, x)::Float64
+    eval_objective(d::AbstractNLPEvaluator, x::AbstractVector{Float64})::Float64
 
 Evaluate the objective ``f(x)``, returning a scalar value.
 """
 function eval_objective end
 
 """
-    eval_constraint(d::AbstractNLPEvaluator, g, x)::Nothing
+    eval_constraint(d::AbstractNLPEvaluator,
+        g::AbstractVector{Float64},
+        x::AbstractVector{Float64},
+    )::Nothing
 
-Evaluate the constraint function ``g(x)``, storing the result in the vector `g`
-which must be of the appropriate size.
+Given a set of vector-valued constraints ``l \\le g(x) \\le u``, evaluate the
+constraint function ``g(x)``, storing the result in the vector `g`.
 
 ## Implementation notes
 
@@ -150,10 +169,14 @@ For example, it may be the `view` of a vector.
 function eval_constraint end
 
 """
-    eval_objective_gradient(d::AbstractNLPEvaluator, df, x)
+    eval_objective_gradient(
+        d::AbstractNLPEvaluator,
+        df::AbstractVector{Float64},
+        x::AbstractVector{Float64},
+    )::Nothing
 
-Evaluate ``\\nabla f(x)`` as a dense vector, storing the result in the vector
-`df` which must be of the appropriate size.
+Evaluate the gradient of the objective function ``\\nabla f(x)`` as a dense
+vector, storing the result in the vector `df`.
 
 ## Implementation notes
 
@@ -169,9 +192,10 @@ function eval_objective_gradient end
 Returns a vector of tuples, `(row, column)`, where each indicates the position
 of a structurally nonzero element in the Jacobian matrix:
 ``J_g(x) = \\left[ \\begin{array}{c} \\nabla g_1(x) \\\\ \\nabla g_2(x) \\\\ \\vdots \\\\ \\nabla g_m(x) \\end{array}\\right],``
-where ``g_i`` is the ``i\\text{th}`` component of ``g``.
+where ``g_i`` is the ``i\\text{th}`` component of the nonlinear constraints
+``g(x)``.
 
-These indices are not required to be sorted and can contain duplicates, in which
+Thee indices are not required to be sorted and can contain duplicates, in which
 case the solver should combine the corresponding elements by adding them
 together.
 
@@ -200,7 +224,10 @@ The sparsity structure is assumed to be independent of the point ``x``.
 function hessian_lagrangian_structure end
 
 """
-    eval_constraint_jacobian(d::AbstractNLPEvaluator, J, x)
+    eval_constraint_jacobian(d::AbstractNLPEvaluator,
+        J::AbstractVector{Float64},
+        x::AbstractVector{Float64},
+    )::Nothing
 
 Evaluates the sparse Jacobian matrix
 ``J_g(x) = \\left[ \\begin{array}{c} \\nabla g_1(x) \\\\ \\nabla g_2(x) \\\\ \\vdots \\\\ \\nabla g_m(x) \\end{array}\\right]``.
@@ -217,7 +244,12 @@ For example, it may be the `view` of a vector.
 function eval_constraint_jacobian end
 
 """
-    eval_constraint_jacobian_product(d::AbstractNLPEvaluator, y, x, w)
+    eval_constraint_jacobian_product(
+        d::AbstractNLPEvaluator,
+        y::AbstractVector{Float64},
+        x::AbstractVector{Float64},
+        w::AbstractVector{Float64},
+    )::Nothing
 
 Computes the Jacobian-vector product ``J_g(x)w``, storing the result in the
 vector `y`.
@@ -231,7 +263,12 @@ For example, it may be the `view` of a vector.
 function eval_constraint_jacobian_product end
 
 """
-    eval_constraint_jacobian_transpose_product(d::AbstractNLPEvaluator, y, x, w)
+    eval_constraint_jacobian_transpose_product(
+        d::AbstractNLPEvaluator,
+        y::AbstractVector{Float64},
+        x::AbstractVector{Float64},
+        w::AbstractVector{Float64},
+    )::Nothing
 
 Computes the Jacobian-transpose-vector product ``J_g(x)^Tw``, storing the result
 in the vector `y`.
@@ -245,7 +282,14 @@ For example, it may be the `view` of a vector.
 function eval_constraint_jacobian_transpose_product end
 
 """
-    eval_hessian_lagrangian_product(d::AbstractNLPEvaluator, h, x, v, σ, μ)
+    eval_hessian_lagrangian_product(
+        d::AbstractNLPEvaluator,
+        h::AbstractVector{Float64},
+        x::AbstractVector{Float64},
+        v::AbstractVector{Float64},
+        σ::Float64,
+        μ::AbstractVector{Float64},
+    )::Nothing
 
 Given scalar weight `σ` and vector of constraint weights `μ`,
 computes the Hessian-of-the-Lagrangian-vector product
@@ -261,7 +305,13 @@ For example, it may be the `view` of a vector.
 function eval_hessian_lagrangian_product end
 
 """
-    eval_hessian_lagrangian(d::AbstractNLPEvaluator, H, x, σ, μ)
+    eval_hessian_lagrangian(
+        d::AbstractNLPEvaluator,
+        H::AbstractVector{Float64},
+        x::AbstractVector{Float64},
+        σ::Float64,
+        μ::AbstractVector{Float64},
+    )::Nothing
 
 Given scalar weight `σ` and vector of constraint weights `μ`, this function
 computes the sparse Hessian-of-the-Lagrangian matrix:
@@ -288,10 +338,11 @@ function.
 The expression has a number of limitations, compared with arbitrary Julia
 expressions:
 
- * All sums and products are flattened out as simple `Expr(:+,...)` and
-   `Expr(:*,...)` objects.
+ * All sums and products are flattened out as simple `Expr(:+, ...)` and
+   `Expr(:*, ...)` objects.
  * All decision variables must be of the form
-   `Expr(:ref, :x, MOI.VariableIndex(i))`
+   `Expr(:ref, :x, MOI.VariableIndex(i))`, where `i` is the ``i``th variable in
+   [`ListOfVariableIndices`](@ref).
  * There are currently no restrictions on recognized functions; typically these
    will be built-in Julia functions like `^`, `exp`, `log`, `cos`, `tan`, `sqrt`,
    etc., but modeling interfaces may choose to extend these basic functions, or
@@ -299,7 +350,7 @@ expressions:
 
 ## Examples
 
-The ``x_1+\\sin(x_2/\\exp(x_3))`` would be represented as
+The expression ``x_1+\\sin(x_2/\\exp(x_3))`` is represented as
 ```julia
 :(x[MOI.VariableIndex(1)] + sin(x[MOI.VariableIndex(2)] / exp(x[MOI.VariableIndex[3]])))
 ```
@@ -328,13 +379,13 @@ Returns a Julia `Expr` object representing the expression graph for the
 
 ## Format
 
-The format is the same as [`objective_expr`], with an additional comparison
-operator indicating the sense of and bounds on the constraint.
+The format is the same as [`objective_expr`](@ref), with an additional
+comparison operator indicating the sense of and bounds on the constraint.
 
-For single (in)equalities, the body of the constraint must be on the left-hand
-side, and the right-hand side must be a constant.
+For single-sided comparisons, the body of the constraint must be on the
+left-hand side, and the right-hand side must be a constant.
 
-For double-sided constraints (that is, ``l \\le f(x) \\le u``), the body of the
+For double-sided comparisons (that is, ``l \\le f(x) \\le u``), the body of the
 constraint must be in the middle, and the left- and right-hand sides must be
 constants.
 
