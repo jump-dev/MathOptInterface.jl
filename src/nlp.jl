@@ -41,7 +41,7 @@ If `result_index` is omitted, it is `1` by default.
 """
 struct NLPBlockDual <: AbstractModelAttribute
     result_index::Int
-    NLPBlockDual() = new(result_index::Int = 1)
+    NLPBlockDual(result_index::Int = 1) = new(result_index)
 end
 
 is_set_by_optimize(::NLPBlockDual) = true
