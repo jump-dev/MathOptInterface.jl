@@ -145,7 +145,7 @@ See [`initialize`](@ref) for the list of defined features.
 function features_available end
 
 """
-    eval_objective(d::AbstractNLPEvaluator, x::AbstractVector{Float64})::Float64
+    eval_objective(d::AbstractNLPEvaluator, x::AbstractVector{T})::T where {T}
 
 Evaluate the objective ``f(x)``, returning a scalar value.
 """
@@ -153,9 +153,9 @@ function eval_objective end
 
 """
     eval_constraint(d::AbstractNLPEvaluator,
-        g::AbstractVector{Float64},
-        x::AbstractVector{Float64},
-    )::Nothing
+        g::AbstractVector{T},
+        x::AbstractVector{T},
+    )::Nothing where {T}
 
 Given a set of vector-valued constraints ``l \\le g(x) \\le u``, evaluate the
 constraint function ``g(x)``, storing the result in the vector `g`.
@@ -171,9 +171,9 @@ function eval_constraint end
 """
     eval_objective_gradient(
         d::AbstractNLPEvaluator,
-        grad::AbstractVector{Float64},
-        x::AbstractVector{Float64},
-    )::Nothing
+        grad::AbstractVector{T},
+        x::AbstractVector{T},
+    )::Nothing where {T}
 
 Evaluate the gradient of the objective function ``grad = \\nabla f(x)`` as a
 dense vector, storing the result in the vector `grad`.
@@ -225,9 +225,9 @@ function hessian_lagrangian_structure end
 
 """
     eval_constraint_jacobian(d::AbstractNLPEvaluator,
-        J::AbstractVector{Float64},
-        x::AbstractVector{Float64},
-    )::Nothing
+        J::AbstractVector{T},
+        x::AbstractVector{T},
+    )::Nothing where {T}
 
 Evaluates the sparse Jacobian matrix
 ``J_g(x) = \\left[ \\begin{array}{c} \\nabla g_1(x) \\\\ \\nabla g_2(x) \\\\ \\vdots \\\\ \\nabla g_m(x) \\end{array}\\right]``.
@@ -246,10 +246,10 @@ function eval_constraint_jacobian end
 """
     eval_constraint_jacobian_product(
         d::AbstractNLPEvaluator,
-        y::AbstractVector{Float64},
-        x::AbstractVector{Float64},
-        w::AbstractVector{Float64},
-    )::Nothing
+        y::AbstractVector{T},
+        x::AbstractVector{T},
+        w::AbstractVector{T},
+    )::Nothing where {T}
 
 Computes the Jacobian-vector product ``y = J_g(x)w``, storing the result in the
 vector `y`.
@@ -268,10 +268,10 @@ function eval_constraint_jacobian_product end
 """
     eval_constraint_jacobian_transpose_product(
         d::AbstractNLPEvaluator,
-        y::AbstractVector{Float64},
-        x::AbstractVector{Float64},
-        w::AbstractVector{Float64},
-    )::Nothing
+        y::AbstractVector{T},
+        x::AbstractVector{T},
+        w::AbstractVector{T},
+    )::Nothing where {T}
 
 Computes the Jacobian-transpose-vector product ``y = J_g(x)^Tw``, storing the
 result in the vector `y`.
@@ -290,12 +290,12 @@ function eval_constraint_jacobian_transpose_product end
 """
     eval_hessian_lagrangian_product(
         d::AbstractNLPEvaluator,
-        h::AbstractVector{Float64},
-        x::AbstractVector{Float64},
-        v::AbstractVector{Float64},
-        σ::Float64,
-        μ::AbstractVector{Float64},
-    )::Nothing
+        h::AbstractVector{T},
+        x::AbstractVector{T},
+        v::AbstractVector{T},
+        σ::T,
+        μ::AbstractVector{T},
+    )::Nothing where {T}
 
 Given scalar weight `σ` and vector of constraint weights `μ`,
 computes the Hessian-of-the-Lagrangian-vector product
@@ -315,11 +315,11 @@ function eval_hessian_lagrangian_product end
 """
     eval_hessian_lagrangian(
         d::AbstractNLPEvaluator,
-        H::AbstractVector{Float64},
-        x::AbstractVector{Float64},
-        σ::Float64,
-        μ::AbstractVector{Float64},
-    )::Nothing
+        H::AbstractVector{T},
+        x::AbstractVector{T},
+        σ::T,
+        μ::AbstractVector{T},
+    )::Nothing where {T}
 
 Given scalar weight `σ` and vector of constraint weights `μ`, this function
 computes the sparse Hessian-of-the-Lagrangian matrix:
