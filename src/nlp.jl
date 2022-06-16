@@ -171,16 +171,16 @@ function eval_constraint end
 """
     eval_objective_gradient(
         d::AbstractNLPEvaluator,
-        df::AbstractVector{Float64},
+        grad::AbstractVector{Float64},
         x::AbstractVector{Float64},
     )::Nothing
 
-Evaluate the gradient of the objective function ``\\nabla f(x)`` as a dense
-vector, storing the result in the vector `df`.
+Evaluate the gradient of the objective function ``grad = \\nabla f(x)`` as a
+dense vector, storing the result in the vector `grad`.
 
 ## Implementation notes
 
-When implementing this method, you must not assume that `g` is
+When implementing this method, you must not assume that `grad` is
 `Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
 For example, it may be the `view` of a vector.
 """
@@ -195,7 +195,7 @@ of a structurally nonzero element in the Jacobian matrix:
 where ``g_i`` is the ``i\\text{th}`` component of the nonlinear constraints
 ``g(x)``.
 
-Thee indices are not required to be sorted and can contain duplicates, in which
+The indices are not required to be sorted and can contain duplicates, in which
 case the solver should combine the corresponding elements by adding them
 together.
 
@@ -251,8 +251,11 @@ function eval_constraint_jacobian end
         w::AbstractVector{Float64},
     )::Nothing
 
-Computes the Jacobian-vector product ``J_g(x)w``, storing the result in the
+Computes the Jacobian-vector product ``y = J_g(x)w``, storing the result in the
 vector `y`.
+
+The vectors have dimensions such that `length(w) == length(x)`, and `length(y)`
+is the number of nonlinear constraints.
 
 ## Implementation notes
 
@@ -270,8 +273,11 @@ function eval_constraint_jacobian_product end
         w::AbstractVector{Float64},
     )::Nothing
 
-Computes the Jacobian-transpose-vector product ``J_g(x)^Tw``, storing the result
-in the vector `y`.
+Computes the Jacobian-transpose-vector product ``y = J_g(x)^Tw``, storing the
+result in the vector `y`.
+
+The vectors have dimensions such that `length(y) == length(x)`, and `length(w)`
+is the number of nonlinear constraints.
 
 ## Implementation notes
 
@@ -293,8 +299,10 @@ function eval_constraint_jacobian_transpose_product end
 
 Given scalar weight `σ` and vector of constraint weights `μ`,
 computes the Hessian-of-the-Lagrangian-vector product
-``\\left(\\sigma\\nabla^2 f(x) + \\sum_{i=1}^m \\mu_i \\nabla^2 g_i(x)\\right)v``,
+``h = \\left(\\sigma\\nabla^2 f(x) + \\sum_{i=1}^m \\mu_i \\nabla^2 g_i(x)\\right)v``,
 storing the result in the vector `h`.
+
+The vectors have dimensions such that `length(h) == length(x) == length(v)`.
 
 ## Implementation notes
 
