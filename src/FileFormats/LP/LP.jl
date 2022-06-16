@@ -758,6 +758,15 @@ function _strip_comment(line::String)
     end
 end
 
+function _parse_section(
+    ::Val{:header},
+    ::Model,
+    ::_ReadCache,
+    line::AbstractString,
+)
+    return error("Unable to read LP file: unexpected line: $(line)")
+end
+
 """
     Base.read!(io::IO, model::FileFormats.LP.Model)
 
