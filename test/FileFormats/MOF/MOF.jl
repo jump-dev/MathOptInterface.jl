@@ -92,7 +92,28 @@ function test_HS071()
     MOI.write_to_file(model, TEST_MOF_FILE)
     @test replace(read(TEST_MOF_FILE, String), '\r' => "") ==
           replace(read(joinpath(@__DIR__, "nlp.mof.json"), String), '\r' => "")
-    return _validate(TEST_MOF_FILE)
+    _validate(TEST_MOF_FILE)
+    return
+end
+
+function test_read_HS071()
+    model = MOF.Model()
+    MOI.read_from_file(model, joinpath(@__DIR__, "nlp.mof.json"))
+    @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) ==
+          Tuple{Type,Type}[(MOI.VariableIndex, MOI.Interval{Float64})]
+    x = MOI.get(model, MOI.ListOfVariableIndices())
+    @test length(x) == 4
+    @test MOI.get(model, MOI.VariableName(), x) == ["var_$i" for i in 1:4]
+    block = MOI.get(model, MOI.NLPBlock())
+    evaluator = block.evaluator
+    MOI.initialize(evaluator, [:ExprGraph])
+    hs071_block = HS071(x)
+    hs071 = hs071_block.evaluator
+    @test MOI.objective_expr(evaluator) == MOI.objective_expr(hs071)
+    for i in 1:2
+        @test MOI.constraint_expr(evaluator, i) == MOI.constraint_expr(hs071, i)
+    end
+    return
 end
 
 function test_nonlinear_error_handling()
@@ -206,7 +227,6 @@ function test_Roundtrip_nonlinear_expressions()
 end
 
 function test_nonlinear_readingwriting()
-    # Write to file.
     model = MOF.Model()
     (x, y) = MOI.add_variables(model, 2)
     MOI.set(model, MOI.VariableName(), x, "var_x")
@@ -221,13 +241,12 @@ function test_nonlinear_readingwriting()
     # Read the model back in.
     model2 = MOF.Model()
     MOI.read_from_file(model2, TEST_MOF_FILE)
-    con2 = MOI.get(model2, MOI.ConstraintIndex, "con")
-    foo2 = MOI.get(model2, MOI.ConstraintFunction(), con2)
-    # Test that we recover the constraint.
-    @test foo2.expr == :(2 * $x + sin($x)^2 - $y)
-    @test MOI.get(model, MOI.ConstraintSet(), con) ==
-          MOI.get(model2, MOI.ConstraintSet(), con2)
-    return _validate(TEST_MOF_FILE)
+    block = MOI.get(model2, MOI.NLPBlock())
+    MOI.initialize(block.evaluator, [:ExprGraph])
+    @test MOI.constraint_expr(block.evaluator, 1) ==
+          :(2 * x[$x] + sin(x[$x])^2 - x[$y] == 1.0)
+    _validate(TEST_MOF_FILE)
+    return
 end
 
 function test_show()

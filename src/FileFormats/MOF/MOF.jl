@@ -78,10 +78,15 @@ const Model = MOI.Utilities.UniversalFallback{InnerModel{Float64}}
 struct Options
     print_compact::Bool
     warn::Bool
+    differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation
 end
 
 function get_options(m::Model)
-    return get(m.model.ext, :MOF_OPTIONS, Options(false, false))
+    return get(
+        m.model.ext,
+        :MOF_OPTIONS,
+        Options(false, false, MOI.Nonlinear.SparseReverseMode()),
+    )
 end
 
 """
@@ -93,12 +98,19 @@ Keyword arguments are:
 
  - `print_compact::Bool=false`: print the JSON file in a compact format without
    spaces or newlines.
-
  - `warn::Bool=false`: print a warning when variables or constraints are renamed
+ - `differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation = MOI.Nonlinear.SparseReverseMode()`:
+   automatic differentiation backend to use when reading models with nonlinear
+   constraints and objectives.
 """
-function Model(; print_compact::Bool = false, warn::Bool = false)
+function Model(;
+    print_compact::Bool = false,
+    warn::Bool = false,
+    differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation = MOI.Nonlinear.SparseReverseMode(),
+)
     model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
-    model.model.ext[:MOF_OPTIONS] = Options(print_compact, warn)
+    model.model.ext[:MOF_OPTIONS] =
+        Options(print_compact, warn, differentiation_backend)
     return model
 end
 

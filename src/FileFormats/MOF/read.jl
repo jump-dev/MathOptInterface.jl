@@ -25,6 +25,49 @@ function Base.read!(io::IO, model::Model)
     name_map = read_variables(model, object)
     read_objective(model, object, name_map)
     read_constraints(model, object, name_map)
+    _convert_to_nlpblock(model)
+    return
+end
+
+function _convert_to_nlpblock(model::Model)
+    has_constraints = false
+    nlp_model = MOI.Nonlinear.Model()
+    for S in (
+        MOI.LessThan{Float64},
+        MOI.GreaterThan{Float64},
+        MOI.EqualTo{Float64},
+        MOI.Interval{Float64},
+    )
+        for ci in MOI.get(model, MOI.ListOfConstraintIndices{Nonlinear,S}())
+            f = MOI.get(model, MOI.ConstraintFunction(), ci)
+            set = MOI.get(model, MOI.ConstraintSet(), ci)
+            MOI.Nonlinear.add_constraint(nlp_model, f.expr, set)
+            # We don't need this in `model` any more.
+            MOI.delete(model, ci)
+            has_constraints = true
+        end
+    end
+    if MOI.get(model, MOI.ObjectiveFunctionType()) == Nonlinear
+        obj = MOI.get(model, MOI.ObjectiveFunction{Nonlinear}())
+        MOI.Nonlinear.set_objective(nlp_model, obj.expr)
+        MOI.set(
+            model,
+            MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+            MOI.ScalarAffineFunction{Float64}(
+                MOI.ScalarAffineTerm{Float64}[],
+                0.0,
+            ),
+        )
+    end
+    if has_constraints
+        options = get_options(model)
+        evaluator = MOI.Nonlinear.Evaluator(
+            nlp_model,
+            options.differentiation_backend,
+            MOI.get(model, MOI.ListOfVariableIndices()),
+        )
+        MOI.set(model, MOI.NLPBlock(), MOI.NLPBlockData(evaluator))
+    end
     return
 end
 
@@ -357,27 +400,27 @@ end
 # ========== Typed scalar sets ==========
 
 function set_to_moi(::Val{:LessThan}, object::Object)
-    return MOI.LessThan(object["upper"])
+    return MOI.LessThan{Float64}(object["upper"])
 end
 
 function set_to_moi(::Val{:GreaterThan}, object::Object)
-    return MOI.GreaterThan(object["lower"])
+    return MOI.GreaterThan{Float64}(object["lower"])
 end
 
 function set_to_moi(::Val{:EqualTo}, object::Object)
-    return MOI.EqualTo(object["value"])
+    return MOI.EqualTo{Float64}(object["value"])
 end
 
 function set_to_moi(::Val{:Interval}, object::Object)
-    return MOI.Interval(object["lower"], object["upper"])
+    return MOI.Interval{Float64}(object["lower"], object["upper"])
 end
 
 function set_to_moi(::Val{:Semiinteger}, object::Object)
-    return MOI.Semiinteger(object["lower"], object["upper"])
+    return MOI.Semiinteger{Float64}(object["lower"], object["upper"])
 end
 
 function set_to_moi(::Val{:Semicontinuous}, object::Object)
-    return MOI.Semicontinuous(object["lower"], object["upper"])
+    return MOI.Semicontinuous{Float64}(object["lower"], object["upper"])
 end
 
 # ========== Non-typed vector sets ==========
@@ -469,19 +512,19 @@ end
 # ========== Typed vector sets ==========
 
 function set_to_moi(::Val{:PowerCone}, object::Object)
-    return MOI.PowerCone(object["exponent"]::Float64)
+    return MOI.PowerCone{Float64}(object["exponent"])
 end
 
 function set_to_moi(::Val{:DualPowerCone}, object::Object)
-    return MOI.DualPowerCone(object["exponent"]::Float64)
+    return MOI.DualPowerCone{Float64}(object["exponent"])
 end
 
 function set_to_moi(::Val{:SOS1}, object::Object)
-    return MOI.SOS1(Float64.(object["weights"]))
+    return MOI.SOS1(convert(Vector{Float64}, object["weights"]))
 end
 
 function set_to_moi(::Val{:SOS2}, object::Object)
-    return MOI.SOS2(Float64.(object["weights"]))
+    return MOI.SOS2(convert(Vector{Float64}, object["weights"]))
 end
 
 # :IndicatorSet is required for v0.6
