@@ -261,6 +261,19 @@ function test_read_invalid()
     return
 end
 
+function test_read_unexpected_line()
+    io = IOBuffer()
+    line = "MinimizeSubject to x + y = 0"
+    print(io, line)
+    seekstart(io)
+    model = LP.Model()
+    @test_throws(
+        ErrorException("Unable to read LP file: unexpected line: $(line)"),
+        read!(io, model),
+    )
+    return
+end
+
 function test_read_example_lo1()
     model = LP.Model()
     MOI.read_from_file(model, joinpath(@__DIR__, "models", "example_lo1.lp"))
