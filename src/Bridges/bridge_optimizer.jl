@@ -457,9 +457,9 @@ end
 function MOI.supports_incremental_interface(b::AbstractBridgeOptimizer)
     return MOI.supports_incremental_interface(b.model)
 end
-function MOI.Utilities.final_touch(uf::AbstractBridgeOptimizer, index_map)
+function MOI.Utilities.final_touch(b::AbstractBridgeOptimizer, index_map)
     MOI.Utilities.final_touch(Constraint.bridges(b))
-    return MOI.Utilities.final_touch(uf.model, index_map)
+    return MOI.Utilities.final_touch(b.model, index_map)
 end
 
 # References
