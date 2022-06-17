@@ -6,7 +6,7 @@
 
 function print_node(io::IO, b::LazyBridgeOptimizer, node::VariableNode)
     S, = b.variable_types[node.index]
-    MOIU.print_with_acronym(
+    MOI.Utilities.print_with_acronym(
         io,
         "[$(node.index)] constrained variables in `$S` are",
     )
@@ -15,13 +15,16 @@ end
 
 function print_node(io::IO, b::LazyBridgeOptimizer, node::ConstraintNode)
     F, S = b.constraint_types[node.index]
-    MOIU.print_with_acronym(io, "($(node.index)) `$F`-in-`$S` constraints are")
+    MOI.Utilities.print_with_acronym(
+        io,
+        "($(node.index)) `$F`-in-`$S` constraints are",
+    )
     return
 end
 
 function print_node(io::IO, b::LazyBridgeOptimizer, node::ObjectiveNode)
     F, = b.objective_types[node.index]
-    MOIU.print_with_acronym(
+    MOI.Utilities.print_with_acronym(
         io,
         "|$(node.index)| objective function of type `$F` is",
     )
@@ -56,7 +59,10 @@ function print_node_info(
             )
         else
             print(io, " bridged (distance $d) by ")
-            MOIU.print_with_acronym(io, string(_bridge_type(b, node, index)))
+            MOI.Utilities.print_with_acronym(
+                io,
+                string(_bridge_type(b, node, index)),
+            )
             println(io, ".")
         end
     end
@@ -175,7 +181,7 @@ function print_unsupported(
             println(io, ":")
             no_bridge = false
         end
-        MOIU.print_with_acronym(
+        MOI.Utilities.print_with_acronym(
             io,
             "   Cannot use `$(index_to_bridge(edge.bridge_index))` because:\n",
         )
@@ -415,12 +421,12 @@ function debug(
         S <: MOI.AbstractVectorSet &&
         MOI.supports_add_constrained_variables(b, S)
     )
-        MOIU.print_with_acronym(
+        MOI.Utilities.print_with_acronym(
             io,
             "Constrained variables in `$S` are supported.\n",
         )
     else
-        MOIU.print_with_acronym(io, "Constrained variables in `$S`")
+        MOI.Utilities.print_with_acronym(io, "Constrained variables in `$S`")
         println(io, UNSUPPORTED_MESSAGE)
         debug_unsupported(io, b, node(b, S))
     end
@@ -453,9 +459,12 @@ function debug(
     io::IO = Base.stdout,
 )
     if MOI.supports_constraint(b, F, S)
-        MOIU.print_with_acronym(io, "`$F`-in-`$S` constraints are supported.\n")
+        MOI.Utilities.print_with_acronym(
+            io,
+            "`$F`-in-`$S` constraints are supported.\n",
+        )
     else
-        MOIU.print_with_acronym(io, "`$F`-in-`$S` constraints")
+        MOI.Utilities.print_with_acronym(io, "`$F`-in-`$S` constraints")
         println(io, UNSUPPORTED_MESSAGE)
         debug_unsupported(io, b, node(b, F, S))
     end
@@ -487,11 +496,11 @@ function debug(
     F::Type{<:MOI.AbstractScalarFunction};
     io::IO = Base.stdout,
 )
-    MOIU.print_with_acronym(io, "Objective function of type `$F` is")
+    MOI.Utilities.print_with_acronym(io, "Objective function of type `$F` is")
     if supports_bridging_objective_function(b, F)
-        MOIU.print_with_acronym(io, " supported.\n")
+        MOI.Utilities.print_with_acronym(io, " supported.\n")
     else
-        MOIU.print_with_acronym(
+        MOI.Utilities.print_with_acronym(
             io,
             " not supported and cannot be bridged" *
             " into a supported objective function by adding only supported" *

@@ -157,11 +157,13 @@ function MOI.supports_constraint(
     return true
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:QuadtoSOCBridge})
+function MOI.Bridges.added_constrained_variable_types(::Type{<:QuadtoSOCBridge})
     return Tuple{Type}[]
 end
 
-function MOIB.added_constraint_types(::Type{QuadtoSOCBridge{T}}) where {T}
+function MOI.Bridges.added_constraint_types(
+    ::Type{QuadtoSOCBridge{T}},
+) where {T}
     return Tuple{Type,Type}[(
         MOI.VectorAffineFunction{T},
         MOI.RotatedSecondOrderCone,
@@ -280,16 +282,16 @@ function MOI.get(
     b::QuadtoSOCBridge{T},
 ) where {T}
     f = MOI.get(model, attr, b.soc)
-    fs = MOIU.eachscalar(f)
+    fs = MOI.Utilities.eachscalar(f)
     q = zero(MOI.ScalarQuadraticFunction{T})
     for i in 3:MOI.output_dimension(f)
-        term = MOIU.operate(*, T, fs[i], fs[i])
-        term = MOIU.operate!(/, T, term, 2 * one(T))
-        MOIU.operate!(+, T, q, term)
+        term = MOI.Utilities.operate(*, T, fs[i], fs[i])
+        term = MOI.Utilities.operate!(/, T, term, 2 * one(T))
+        MOI.Utilities.operate!(+, T, q, term)
     end
-    MOIU.operate!(-, T, q, fs[2])
+    MOI.Utilities.operate!(-, T, q, fs[2])
     if !b.less_than
-        MOIU.operate!(-, T, q)
+        MOI.Utilities.operate!(-, T, q)
     end
     q.constant += b.set_constant
     return q
