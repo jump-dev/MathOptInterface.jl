@@ -406,16 +406,16 @@ function MOI.supports(
     return MOI.supports(b.model, attr)
 end
 
-function MOIU.pass_nonvariable_constraints(
+function MOI.Utilities.pass_nonvariable_constraints(
     dest::AbstractBridgeOptimizer,
     src::MOI.ModelLike,
-    idxmap::MOIU.IndexMap,
+    idxmap::MOI.Utilities.IndexMap,
     constraint_types,
 )
     if Variable.has_bridges(Variable.bridges(dest))
         # The functions may contained bridged variables which needs to be
         # substituted so we use the fallback.
-        return MOIU.pass_nonvariable_constraints_fallback(
+        return MOI.Utilities.pass_nonvariable_constraints_fallback(
             dest,
             src,
             idxmap,
@@ -431,29 +431,30 @@ function MOIU.pass_nonvariable_constraints(
             push!(not_bridged_types, (F, S))
         end
     end
-    MOIU.pass_nonvariable_constraints(
+    MOI.Utilities.pass_nonvariable_constraints(
         dest.model,
         src,
         idxmap,
         not_bridged_types,
     )
-    MOIU.pass_nonvariable_constraints_fallback(dest, src, idxmap, bridged_types)
+    MOI.Utilities.pass_nonvariable_constraints_fallback(
+        dest,
+        src,
+        idxmap,
+        bridged_types,
+    )
     return
 end
 
-function MOI.copy_to(
-    dest::AbstractBridgeOptimizer,
-    src::MOI.ModelLike;
-    kwargs...,
-)
-    return MOIU.default_copy_to(dest, src; kwargs...)
+function MOI.copy_to(dest::AbstractBridgeOptimizer, src::MOI.ModelLike)
+    return MOI.Utilities.default_copy_to(dest, src)
 end
 
 function MOI.supports_incremental_interface(b::AbstractBridgeOptimizer)
     return MOI.supports_incremental_interface(b.model)
 end
-function MOIU.final_touch(uf::AbstractBridgeOptimizer, index_map)
-    return MOIU.final_touch(uf.model, index_map)
+function MOI.Utilities.final_touch(uf::AbstractBridgeOptimizer, index_map)
+    return MOI.Utilities.final_touch(uf.model, index_map)
 end
 
 # References
@@ -498,7 +499,7 @@ function _delete_variables_in_vector_of_variables_constraint(
                 if MOI.supports_dimension_update(S)
                     call_in_context(MOI.delete, b, ci, IndexInVector(i))
                 else
-                    MOIU.throw_delete_variable_in_vov(vi)
+                    MOI.Utilities.throw_delete_variable_in_vov(vi)
                 end
             end
         end
@@ -576,7 +577,7 @@ function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
             )
                 call_in_context(MOI.delete, b, vi, _index(b, vi)...)
             else
-                MOIU.throw_delete_variable_in_vov(vi)
+                MOI.Utilities.throw_delete_variable_in_vov(vi)
             end
         else
             call_in_context(MOI.delete, b, vi)
@@ -657,7 +658,7 @@ function reduce_bridged(
     operate_variable_bridges!::Function,
     operate_constraint_bridges!::Function,
 )::T where {T}
-    variable_function = F == MOIU.variable_function_type(S)
+    variable_function = F == MOI.Utilities.variable_function_type(S)
     # A `F`-in-`S` could be added to the model either if it this constraint
     # is not bridged or if variables constrained on creations to `S` are not
     # bridged and `F` is `VariableIndex` or `VectorOfVariables`.
@@ -1308,7 +1309,7 @@ function MOI.get(
             func = MOI.get(b.model, MOI.ConstraintFunction(), ci)
         end
         f = unbridged_function(b, func)
-        set = MOIU.shift_constant(set, -MOI.constant(f))
+        set = MOI.Utilities.shift_constant(set, -MOI.constant(f))
     end
     return set
 end
@@ -1394,7 +1395,7 @@ function MOI.get(
     vi::MOI.VariableIndex,
 )
     if is_bridged(b, vi)
-        return get(b.var_to_name, vi, MOIU.EMPTYSTRING)
+        return get(b.var_to_name, vi, MOI.Utilities.EMPTYSTRING)
     else
         return MOI.get(b.model, attr, vi)
     end
@@ -1421,7 +1422,7 @@ function MOI.get(
     constraint_index::MOI.ConstraintIndex,
 )
     if is_bridged(b, constraint_index)
-        return get(b.con_to_name, constraint_index, MOIU.EMPTYSTRING)
+        return get(b.con_to_name, constraint_index, MOI.Utilities.EMPTYSTRING)
     else
         return MOI.get(b.model, attr, constraint_index)
     end
@@ -1478,11 +1479,11 @@ function MOI.get(
         return vi
     end
     if b.name_to_var === nothing
-        b.name_to_var = MOIU.build_name_to_var_map(b.var_to_name)
+        b.name_to_var = MOI.Utilities.build_name_to_var_map(b.var_to_name)
     end
     vi_bridged = get(b.name_to_var, name, nothing)
-    MOIU.throw_if_multiple_with_name(vi_bridged, name)
-    return MOIU.check_type_and_multiple_names(
+    MOI.Utilities.throw_if_multiple_with_name(vi_bridged, name)
+    return MOI.Utilities.check_type_and_multiple_names(
         MOI.VariableIndex,
         vi_bridged,
         vi,
@@ -1501,7 +1502,7 @@ function MOI.get(
         return MOI.get(b.model, IdxT, name)
     end
     if b.name_to_con === nothing
-        b.name_to_con = MOIU.build_name_to_con_map(b.con_to_name)
+        b.name_to_con = MOI.Utilities.build_name_to_con_map(b.con_to_name)
     end
     if is_bridged(b, F, S)
         # There is no `F`-in-`S` constraint in `b.model`, `ci` is only got
@@ -1511,8 +1512,13 @@ function MOI.get(
         ci = MOI.get(b.model, IdxT, name)
     end
     ci_bridged = get(b.name_to_con, name, nothing)
-    MOIU.throw_if_multiple_with_name(ci_bridged, name)
-    return MOIU.check_type_and_multiple_names(IdxT, ci_bridged, ci, name)
+    MOI.Utilities.throw_if_multiple_with_name(ci_bridged, name)
+    return MOI.Utilities.check_type_and_multiple_names(
+        IdxT,
+        ci_bridged,
+        ci,
+        name,
+    )
 end
 
 function MOI.get(
@@ -1526,11 +1532,11 @@ function MOI.get(
         return MOI.get(b.model, IdxT, name)
     end
     if b.name_to_con === nothing
-        b.name_to_con = MOIU.build_name_to_con_map(b.con_to_name)
+        b.name_to_con = MOI.Utilities.build_name_to_con_map(b.con_to_name)
     end
     ci_bridged = get(b.name_to_con, name, nothing)
-    MOIU.throw_if_multiple_with_name(ci_bridged, name)
-    return MOIU.check_type_and_multiple_names(
+    MOI.Utilities.throw_if_multiple_with_name(ci_bridged, name)
+    return MOI.Utilities.check_type_and_multiple_names(
         IdxT,
         ci_bridged,
         MOI.get(b.model, IdxT, name),
@@ -1910,7 +1916,7 @@ function bridged_function(bridge::AbstractBridgeOptimizer, value)
     # We assume that the type of `value` is not altered. This restricts
     # variable bridges to only return `ScalarAffineFunction` but otherwise,
     # the peformance would be bad.
-    return MOIU.substitute_variables(
+    return MOI.Utilities.substitute_variables(
         vi -> bridged_variable_function(bridge, vi),
         value,
     )::typeof(value)
@@ -1929,7 +1935,7 @@ end
 # Shortcut to avoid `Variable.throw_if_cannot_unbridge(Variable.bridges(b))`
 function bridge_function(
     ::AbstractBridgeOptimizer,
-    value::MOIU.ObjectOrTupleOrArrayWithoutIndex,
+    value::MOI.Utilities.ObjectOrTupleOrArrayWithoutIndex,
 )
     return value
 end
@@ -1974,7 +1980,7 @@ function unbridged_function(b::AbstractBridgeOptimizer, value)
     # `unbridged_variable_function` hence it might silently return an incorrect
     # value so we call `throw_if_cannot_unbridge` here.
     Variable.throw_if_cannot_unbridge(Variable.bridges(b))
-    return MOIU.substitute_variables(
+    return MOI.Utilities.substitute_variables(
         vi -> unbridged_variable_function(b, vi),
         value,
     )::typeof(value)
@@ -1990,7 +1996,7 @@ end
 # Shortcut to avoid `Variable.throw_if_cannot_unbridge(Variable.bridges(b))`
 function unbridged_function(
     ::AbstractBridgeOptimizer,
-    value::MOIU.ObjectOrTupleOrArrayWithoutIndex,
+    value::MOI.Utilities.ObjectOrTupleOrArrayWithoutIndex,
 )
     return value
 end
@@ -2028,7 +2034,7 @@ function bridged_constraint_function(
     # `MOI.ConstraintSet`. See `unbridged_constraint_function`.
     MOI.throw_if_scalar_and_constant_not_zero(func, typeof(set))
     f = bridged_function(b, func)::typeof(func)
-    return MOIU.normalize_constant(f, set)
+    return MOI.Utilities.normalize_constant(f, set)
 end
 
 function bridged_constraint_function(

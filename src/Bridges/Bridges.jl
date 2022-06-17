@@ -12,7 +12,6 @@ import Printf
 import Test
 
 const MOI = MathOptInterface
-const MOIU = MOI.Utilities
 
 include("bridge.jl")
 include("set_map.jl")

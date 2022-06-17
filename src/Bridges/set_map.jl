@@ -45,7 +45,7 @@ the [`MathOptInterface.VariablePrimal`](@ref) and
 function map_function end
 
 function map_function(::Type{BT}, func, i::IndexInVector) where {BT}
-    return MOIU.eachscalar(map_function(BT, func))[i.value]
+    return MOI.Utilities.eachscalar(map_function(BT, func))[i.value]
 end
 
 """

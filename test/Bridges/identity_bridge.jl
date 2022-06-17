@@ -9,33 +9,32 @@ module IdentityBridges
 
 import MathOptInterface
 const MOI = MathOptInterface
-const MOIB = MOI.Bridges
 
 const F{T} = MOI.ScalarAffineFunction{T}
 const S{T} = MOI.EqualTo{T}
 
-struct VariableBridge{T} <: MOIB.Variable.SetMapBridge{T,S{T},S{T}}
+struct VariableBridge{T} <: MOI.Bridges.Variable.SetMapBridge{T,S{T},S{T}}
     variable::MOI.VariableIndex
     constraint::MOI.ConstraintIndex{MOI.VariableIndex,S{T}}
 end
 
 struct ConstraintBridge{T} <:
-       MOIB.Constraint.SetMapBridge{T,S{T},S{T},F{T},F{T}}
+       MOI.Bridges.Constraint.SetMapBridge{T,S{T},S{T},F{T},F{T}}
     constraint::MOI.ConstraintIndex{F{T},S{T}}
 end
 
 const IdentityBridge{T} = Union{VariableBridge{T},ConstraintBridge{T}}
 
-MOIB.map_set(::Type{<:IdentityBridge}, set::S) = set
-MOIB.inverse_map_set(::Type{<:IdentityBridge}, set::S) = set
-MOIB.map_function(::Type{<:IdentityBridge}, func) = func
-MOIB.inverse_map_function(::Type{<:IdentityBridge}, func) = func
-MOIB.adjoint_map_function(::Type{<:IdentityBridge}, func) = func
-MOIB.inverse_adjoint_map_function(::Type{<:IdentityBridge}, func) = func
+MOI.Bridges.map_set(::Type{<:IdentityBridge}, set::S) = set
+MOI.Bridges.inverse_map_set(::Type{<:IdentityBridge}, set::S) = set
+MOI.Bridges.map_function(::Type{<:IdentityBridge}, func) = func
+MOI.Bridges.inverse_map_function(::Type{<:IdentityBridge}, func) = func
+MOI.Bridges.adjoint_map_function(::Type{<:IdentityBridge}, func) = func
+MOI.Bridges.inverse_adjoint_map_function(::Type{<:IdentityBridge}, func) = func
 
-struct ObjectiveBridge{T} <: MOIB.Objective.AbstractBridge end
+struct ObjectiveBridge{T} <: MOI.Bridges.Objective.AbstractBridge end
 
-function MOIB.Objective.bridge_objective(
+function MOI.Bridges.Objective.bridge_objective(
     ::Type{ObjectiveBridge{T}},
     model::MOI.ModelLike,
     func::F{T},
@@ -44,22 +43,24 @@ function MOIB.Objective.bridge_objective(
     return ObjectiveBridge{T}()
 end
 
-function MOIB.Objective.supports_objective_function(
+function MOI.Bridges.Objective.supports_objective_function(
     ::Type{ObjectiveBridge{T}},
     ::Type{F{T}},
 ) where {T}
     return true
 end
 
-function MOIB.added_constrained_variable_types(::Type{<:ObjectiveBridge})
+function MOI.Bridges.added_constrained_variable_types(::Type{<:ObjectiveBridge})
     return Tuple{DataType}[]
 end
 
-function MOIB.added_constraint_types(::Type{<:ObjectiveBridge})
+function MOI.Bridges.added_constraint_types(::Type{<:ObjectiveBridge})
     return Tuple{DataType,DataType}[]
 end
 
-function MOIB.set_objective_function_type(::Type{ObjectiveBridge{T}}) where {T}
+function MOI.Bridges.set_objective_function_type(
+    ::Type{ObjectiveBridge{T}},
+) where {T}
     return F{T}
 end
 
@@ -89,7 +90,10 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::Union{MOIB.ObjectiveFunctionValue{F{T}},MOI.ObjectiveFunction{F{T}}},
+    attr::Union{
+        MOI.Bridges.ObjectiveFunctionValue{F{T}},
+        MOI.ObjectiveFunction{F{T}},
+    },
     ::ObjectiveBridge{T},
 ) where {T}
     return MOI.get(model, attr)

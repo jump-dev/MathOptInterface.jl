@@ -41,7 +41,7 @@ function _extract_eigenvalues(
         end
         Z[MOI.Utilities.trimap(d + j, d + j)-n] = Δ[MOI.Utilities.trimap(j, j)]
     end
-    Y = MOIU.operate(vcat, T, X, MOI.Utilities.vectorize(Z))
+    Y = MOI.Utilities.operate(vcat, T, X, MOI.Utilities.vectorize(Z))
     set = MOI.PositiveSemidefiniteConeTriangle(2d)
     sdindex = MOI.add_constraint(model, Y, set)
     D = Δ[MOI.Utilities.trimap.(1:d, 1:d)]
@@ -162,10 +162,10 @@ function concrete_bridge_type(
     I::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.LogDetConeTriangle},
 ) where {T}
-    S = MOIU.scalar_type(I)
-    G = MOIU.promote_operation(vcat, T, S, MOI.VariableIndex)
-    F = MOIU.promote_operation(vcat, T, G, T)
-    H = MOIU.promote_operation(+, T, S, MOI.ScalarAffineFunction{T})
+    S = MOI.Utilities.scalar_type(I)
+    G = MOI.Utilities.promote_operation(vcat, T, S, MOI.VariableIndex)
+    F = MOI.Utilities.promote_operation(vcat, T, G, T)
+    H = MOI.Utilities.promote_operation(+, T, S, MOI.ScalarAffineFunction{T})
     return LogDetBridge{T,F,G,H,I}
 end
 
@@ -383,9 +383,9 @@ function concrete_bridge_type(
     H::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.RootDetConeTriangle},
 ) where {T}
-    S = MOIU.scalar_type(H)
-    G = MOIU.promote_operation(vcat, T, S, MOI.VariableIndex)
-    F = MOIU.promote_operation(vcat, T, G, T)
+    S = MOI.Utilities.scalar_type(H)
+    G = MOI.Utilities.promote_operation(vcat, T, S, MOI.VariableIndex)
+    F = MOI.Utilities.promote_operation(vcat, T, G, T)
     return RootDetBridge{T,F,G,H}
 end
 

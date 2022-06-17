@@ -471,7 +471,8 @@ function bridge_type(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     end
     index = bridge_index(b, S)
     if iszero(index)
-        throw(MOI.UnsupportedConstraint{MOIU.variable_function_type(S),S}())
+        F = MOI.Utilities.variable_function_type(S)
+        throw(MOI.UnsupportedConstraint{F,S}())
     end
     new_bt = Variable.concrete_bridge_type(b.variable_bridge_types[index], S)
     b.cached_bridge_type[(S,)] = new_bt
