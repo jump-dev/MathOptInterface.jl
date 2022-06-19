@@ -409,7 +409,7 @@ function test_variable_solve_ZeroOne_with_0_upper_bound(
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), x)], T(0))
     MOI.add_constraint(model, x, MOI.ZeroOne())
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     _test_model_solution(
         model,
         config;
@@ -430,6 +430,106 @@ function setup_test(
             MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[0])),
     )
     return
+end
+
+"""
+    test_variable_solve_ZeroOne_with_1_lower_bound(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Test a binary variable `>= 1`.
+"""
+function test_variable_solve_ZeroOne_with_1_lower_bound(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, x, MOI.GreaterThan(T(1)))
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), x)], T(0))
+    MOI.add_constraint(model, x, MOI.ZeroOne())
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    _test_model_solution(
+        model,
+        config;
+        objective_value = T(1),
+        variable_primal = [(x, T(1))],
+    )
+    return
+end
+
+function setup_test(
+    ::typeof(test_variable_solve_ZeroOne_with_1_lower_bound),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[1])),
+    )
+    return
+end
+
+function version_added(::typeof(test_variable_solve_ZeroOne_with_1_lower_bound))
+    return v"1.4.1"
+end
+
+"""
+    test_variable_solve_ZeroOne_with_bounds_then_delete(
+        model::MOI.ModelLike,
+        config::Config,
+    )
+
+Test `min: x >= 1, x in {0, 1}`, then delete the bound and check we get `x = 0`.
+"""
+function test_variable_solve_ZeroOne_with_bounds_then_delete(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.delete)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, x, MOI.GreaterThan(T(1)))
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), x)], T(0))
+    MOI.add_constraint(model, x, MOI.ZeroOne())
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    _test_model_solution(
+        model,
+        config;
+        objective_value = T(1),
+        variable_primal = [(x, T(1))],
+    )
+    MOI.delete(model, c)
+    _test_model_solution(
+        model,
+        config;
+        objective_value = T(0),
+        variable_primal = [(x, T(0))],
+    )
+    return
+end
+
+function setup_test(
+    ::typeof(test_variable_solve_ZeroOne_with_bounds_then_delete),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[1])),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, (MOI.FEASIBLE_POINT, T[0])),
+    )
+    return
+end
+
+function version_added(
+    ::typeof(test_variable_solve_ZeroOne_with_bounds_then_delete),
+)
+    return v"1.4.1"
 end
 
 """
