@@ -204,7 +204,7 @@ If ``\mathcal{C}_i`` is a vector set, the discussion remains valid with
 ``y_i(\frac{1}{2}x^TQ_ix + a_i^T x + b_i)`` replaced with the scalar product
 between ``y_i`` and the vector of scalar-valued quadratic functions.
 
-## Dual for square semi-definite matrices
+## Dual for square semidefinite matrices
 
 The set [`PositiveSemidefiniteConeTriangle`](@ref) is a self-dual. That is,
 querying [`ConstraintDual`](@ref) of a [`PositiveSemidefiniteConeTriangle`](@ref)
