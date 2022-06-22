@@ -301,33 +301,36 @@ function add_key_for_bridge(
     return MOI.ConstraintIndex{MOI.VariableIndex,S}(func.value)
 end
 
-function _register_for_final_touch(map::Map, bridge)
+function _register_for_final_touch(map::Map, bridge::BT) where {BT}
     if MOI.Bridges.needs_final_touch(bridge)
-        if !haskey(map.needs_final_touch, typeof(bridge))
-            map.needs_final_touch[typeof(bridge)] = OrderedSet{typeof(bridge)}()
+        if !haskey(map.needs_final_touch, BT)
+            map.needs_final_touch[BT] = OrderedSet{BT}()
         end
-        push!(map.needs_final_touch[typeof(bridge)], bridge)
-    end
-    return
-end
-function _unregister_for_final_touch(b::Map, bridge)
-    if MOI.Bridges.needs_final_touch(bridge)
-        delete!(b.needs_final_touch[typeof(bridge)], bridge)
+        push!(map.needs_final_touch[BT], bridge)
     end
     return
 end
 
-# function barrier to iterate over bridges of the same type in an efficient way
+function _unregister_for_final_touch(b::Map, bridge::BT) where {BT}
+    if MOI.Bridges.needs_final_touch(bridge)
+        delete!(b.needs_final_touch[BT], bridge)
+    end
+    return
+end
+
+# Function barrier to iterate over bridges of the same type in an efficient way.
 function _final_touch(bridges)
     for bridge in bridges
         MOI.Utilities.final_touch(bridge)
     end
+    return
 end
 
 function MOI.Utilities.final_touch(map::Map)
     for bridges in values(map.needs_final_touch)
         _final_touch(bridges)
     end
+    return
 end
 
 """
