@@ -27,7 +27,7 @@ get(::Bridges.AbstractBridge, ::NumberOfVariables)
 get(::Bridges.AbstractBridge, ::ListOfVariableIndices)
 get(::Bridges.AbstractBridge, ::NumberOfConstraints)
 get(::Bridges.AbstractBridge, ::ListOfConstraintIndices)
-needs_final_touch
+Bridges.needs_final_touch
 ```
 
 ## Constraint bridge API
