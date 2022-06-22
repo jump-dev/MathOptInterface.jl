@@ -12,9 +12,9 @@
 \\frac{1}{2}x^T Q x + a^T x + b \\le 0
 ```
 into [`MOI.RotatedSecondOrderCone`](@ref) constraints, but it only applies when
-``Q`` is positive semidefinite.
+``Q`` is positive definite.
 
-This is because, if `Q` is positive semidefinite, there exists `U` such that
+This is because, if `Q` is positive definite, there exists `U` such that
 ``Q = U^T U``, and so the inequality can then be rewritten as;
 ```math
 \\|U x\\|_2^2 \\le 2 (-a^T x - b)
@@ -37,6 +37,10 @@ Therefore, `QuadtoSOCBridge` implements the following reformulation:
 `RelativeEntropyBridge` creates:
 
   * [`MOI.VectorAffineFunction{T}`](@ref) in [`MOI.RotatedSecondOrderCone`](@ref)
+
+## Errors
+
+This bridge errors if `Q` is not positive definite.
 """
 struct QuadtoSOCBridge{T} <: AbstractBridge
     soc::MOI.ConstraintIndex{
