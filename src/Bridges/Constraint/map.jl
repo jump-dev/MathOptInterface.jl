@@ -319,16 +319,16 @@ function _unregister_for_final_touch(b::Map, bridge::BT) where {BT}
 end
 
 # Function barrier to iterate over bridges of the same type in an efficient way.
-function _final_touch(bridges)
+function _final_touch(bridges, model)
     for bridge in bridges
-        MOI.Utilities.final_touch(bridge)
+        MOI.Utilities.final_touch(bridge, model)
     end
     return
 end
 
-function MOI.Utilities.final_touch(map::Map)
+function MOI.Utilities.final_touch(map::Map, model::MOI.ModelLike)
     for bridges in values(map.needs_final_touch)
-        _final_touch(bridges)
+        _final_touch(bridges, model)
     end
     return
 end
@@ -356,4 +356,4 @@ has_bridges(::EmptyMap) = false
 
 number_of_type(::EmptyMap, ::Type{<:MOI.ConstraintIndex}) = 0
 
-MOI.Utilities.final_touch(::EmptyMap) = nothing
+MOI.Utilities.final_touch(::MOI.ModelLike, ::EmptyMap) = nothing
