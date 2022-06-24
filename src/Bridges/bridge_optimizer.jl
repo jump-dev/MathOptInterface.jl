@@ -459,7 +459,7 @@ function MOI.supports_incremental_interface(b::AbstractBridgeOptimizer)
 end
 
 function MOI.Utilities.final_touch(b::AbstractBridgeOptimizer)
-    MOI.Utilities.final_touch(Constraint.bridges(b), b)
+    MOI.Utilities.final_touch(Constraint.bridges(b), recursive_model(b))
     return
 end
 

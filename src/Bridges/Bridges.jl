@@ -249,6 +249,7 @@ function runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     model = _bridged_model(Bridge, inner)
     MOI.Utilities.loadfromstring!(model, input)
+    MOI.Utilities.final_touch(model)
     # Load a non-bridged input model, and check that getters are the same.
     test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     MOI.Utilities.loadfromstring!(test, input)
