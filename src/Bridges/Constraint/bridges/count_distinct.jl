@@ -124,6 +124,7 @@ function MOI.delete(model::MOI.ModelLike, bridge::CountDistinctToMILPBridge)
         MOI.delete(model, ci)
     end
     MOI.delete(model, bridge.count)
+    bridge.count = nothing
     for (_, α) in bridge.α
         MOI.delete(model, α)
     end
