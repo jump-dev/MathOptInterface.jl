@@ -356,4 +356,4 @@ has_bridges(::EmptyMap) = false
 
 number_of_type(::EmptyMap, ::Type{<:MOI.ConstraintIndex}) = 0
 
-MOI.Utilities.final_touch(::MOI.ModelLike, ::EmptyMap) = nothing
+MOI.Utilities.final_touch(::EmptyMap, ::MOI.ModelLike) = nothing
