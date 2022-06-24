@@ -102,6 +102,16 @@ function bridge_constraint(
             # This avoid generating symmetrization constraints when the
             # functions at entries (i, j) and (j, i) are almost identical
             if !MOI.Utilities.isapprox_zero(diff, 1e-10)
+                if MOI.Utilities.isapprox_zero(diff, 1e-8)
+                    @warn(
+                        "The entries ($i, $j) and ($j, $i) of the matrix are " *
+                        "almost identical, but a constraint has been added " *
+                        "to ensure their equality because the largest " *
+                        "difference between the coefficients is smaller than " *
+                        "1e-8 but larger than 1e-10. This usually means that " *
+                        "there is a modeling error in your formulation.",
+                    )
+                end
                 ci = MOI.Utilities.normalize_and_add_constraint(
                     model,
                     diff,
