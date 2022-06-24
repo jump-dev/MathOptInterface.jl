@@ -229,6 +229,18 @@ function test_conic_LogDetConeSquare_VectorOfVariables()
     return
 end
 
+function test_square_warning()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.Square{Float64}(inner)
+    x = 1.0 * MOI.add_variable(model)
+    f = MOI.Utilities.operate(vcat, Float64, x, x + 1e-9, x, x)
+    @test_logs(
+        (:warn,),
+        MOI.add_constraint(model, f, MOI.PositiveSemidefiniteConeSquare(2)),
+    )
+    return
+end
+
 end  # module
 
 TestConstraintSquare.runtests()
