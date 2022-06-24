@@ -32,11 +32,12 @@ mutable struct CountDistinctToMILPBridge{T} <: AbstractBridge
         Nothing,
         MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
     }
-    # x_i => x_i - ∑_j z_ij = 0 ∀i
+    # x_i - ∑_j z_ij = 0 ∀i
     unit_expansion::Vector{
         MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
     }
-    # j => ∑_i z_ij <= α_j ∀j
+    # ∑_i z_ij - |I| α_j <= 0 ∀j
+    # α_j - ∑_i z_ij <= 0 ∀j
     big_M::Vector{
         MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.LessThan{T}},
     }
@@ -115,7 +116,7 @@ end
 
 function MOI.delete(model::MOI.ModelLike, bridge::CountDistinctToMILPBridge)
     if bridge.count === nothing
-        return
+        return # Nothing to do, because we haven't initialized the bridge yet.
     end
     for ci in bridge.unit_expansion
         MOI.delete(model, ci)
@@ -124,13 +125,17 @@ function MOI.delete(model::MOI.ModelLike, bridge::CountDistinctToMILPBridge)
         MOI.delete(model, ci)
     end
     MOI.delete(model, bridge.count)
-    bridge.count = nothing
     for (_, α) in bridge.α
         MOI.delete(model, α)
     end
     for (_, z) in bridge.z
         MOI.delete(model, z)
     end
+    empty!(bridge.z)
+    empty!(bridge.α)
+    empty!(bridge.unit_expansion)
+    empty!(bridge.big_M)
+    bridge.count = nothing
     return
 end
 
@@ -274,6 +279,16 @@ function MOI.Utilities.final_touch(
             MOI.add_constraint(
                 model,
                 MOI.ScalarAffineFunction(big_M_terms, zero(T)),
+                MOI.LessThan(zero(T)),
+            ),
+        )
+        big_M_terms_upper = [MOI.ScalarAffineTerm(T(-1), z) for z in terms]
+        push!(big_M_terms_upper, MOI.ScalarAffineTerm(T(1), new_var))
+        push!(
+            bridge.big_M,
+            MOI.add_constraint(
+                model,
+                MOI.ScalarAffineFunction(big_M_terms_upper, zero(T)),
                 MOI.LessThan(zero(T)),
             ),
         )
