@@ -22,7 +22,7 @@ function runtests()
     return
 end
 
-function test_runtests()
+function test_runtests_VectorOfVariables()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.AllDifferentToCountDistinctBridge,
         """
@@ -41,6 +41,29 @@ function test_runtests()
         y <= 3.0
         z == 2.0
         n == 3.0
+        """,
+    )
+    return
+end
+
+function test_runtests_VectorAffineFunction()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.AllDifferentToCountDistinctBridge,
+        """
+        variables: x, y, z
+        [2.0 * x + -1.0, y, z] in AllDifferent(3)
+        x in Interval(1.0, 2.0)
+        y >= 2.0
+        y <= 3.0
+        z == 2.0
+        """,
+        """
+        variables: x, y, z
+        [3.0, 2.0 * x + -1.0, y, z] in CountDistinct(4)
+        x in Interval(1.0, 2.0)
+        y >= 2.0
+        y <= 3.0
+        z == 2.0
         """,
     )
     return

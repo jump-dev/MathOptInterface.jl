@@ -22,7 +22,7 @@ function runtests()
     return
 end
 
-function test_runtests()
+function test_runtests_VectorOfVariables()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.CountDistinctToMILPBridge,
         """
@@ -58,6 +58,43 @@ function test_runtests()
     return
 end
 
+function test_runtests_VectorAffineFunction()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.CountDistinctToMILPBridge,
+        """
+        variables: x, y
+        [2.0, 2.0 * x + -1.0, y] in CountDistinct(3)
+        x in Interval(1.0, 2.0)
+        y >= 2.0
+        y <= 3.0
+        """,
+        """
+        variables: x, y, z_x1, z_x2, z_x3, z_y2, z_y3, a_1, a_2, a_3
+        2.0 * x + -1.0 * z_x1 + -2.0 * z_x2 + -3.0 * z_x3 == 1.0
+        1.0 * y + -2.0 * z_y2 + -3.0 * z_y3 == 0.0
+        a_1 + a_2 + a_3 == 2.0
+        z_x1 + -1.0 * a_1 <= 0.0
+        z_x2 + z_y2 + -2.0 * a_2 <= 0.0
+        z_x3 + z_y3 + -2.0 * a_3 <= 0.0
+        a_1 + -1.0 * z_x1 <= 0.0
+        a_2 + -1.0 * z_x2 + -1.0 * z_y2 <= 0.0
+        a_3 + -1.0 * z_x3 + -1.0 * z_y3 <= 0.0
+        x in Interval(1.0, 2.0)
+        y >= 2.0
+        y <= 3.0
+        z_x1 in ZeroOne()
+        z_x2 in ZeroOne()
+        z_x3 in ZeroOne()
+        z_y2 in ZeroOne()
+        z_y3 in ZeroOne()
+        a_1 in ZeroOne()
+        a_2 in ZeroOne()
+        a_3 in ZeroOne()
+        """,
+    )
+    return
+end
+
 function test_runtests_err()
     inner = MOI.Utilities.Model{Int}()
     model = MOI.Bridges.Constraint.CountDistinctToMILP{Int}(inner)
@@ -65,8 +102,8 @@ function test_runtests_err()
     MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.CountDistinct(3))
     @test_throws(
         ErrorException(
-            "Unable to use CountDistinctToMILPBridge because variable $(x[2]) " *
-            "has a non-finite domain.",
+            "Unable to use CountDistinctToMILPBridge because element 2 in " *
+            "the function has a non-finite domain: $(x[2])",
         ),
         MOI.Utilities.final_touch(model),
     )
