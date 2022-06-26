@@ -1,5 +1,37 @@
 # Release notes
 
+## v1.5.0 (June 27, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.5.0).
+
+### New features
+
+ - Added `GetAttributeNotAllowed` for solvers to indicate when getting an
+   attribute encounters an error
+ - Added `Utilities.get_fallback` support for `ObjectiveValue` and
+   `DualObjectiveValue`
+ - Added new bridges:
+   - `RootDetConeSquare` to `RootDetConeTriangle`
+   - `LogDetConeSquare` to `LogDetConeTriangle`
+   - `BinPacking` to a mixed-integer linear program
+   - `Table` to a mixed-integer linear program
+ - Added `Bridges.print_active_bridges` to display the current optimal
+   hyper-path in a `Bridges.LazyBridgeOptimizer`
+
+### Bug fixes
+
+ - Fixed `ZeroOne` tests with lower and upper bounds
+ - Fixed error in `FileFormats.LP` when reading a malformed file
+ - Fixed reading of nonlinear programs in `FileFormats.MOF`
+ - Fixed bug in `ConstraintDual` when using `SquareBridge`
+
+### Performance and maintenance
+
+ - Improved documentation of nonlinear API
+ - Documented duality convention for `PositiveSemidefiniteConeSquare` sets
+ - Fixed typo in `Bridges.Constraint.QuadToSOCBridge` docstring
+
 ## v1.4.0 (June 9, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
