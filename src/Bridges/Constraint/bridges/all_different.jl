@@ -35,6 +35,21 @@ mutable struct AllDifferentToCountDistinctBridge{
     f::F
     y::Union{Nothing,MOI.VariableIndex}
     ci::MOI.ConstraintIndex{F,MOI.CountDistinct}
+
+    function AllDifferentToCountDistinctBridge{T}(
+        f::MOI.VectorOfVariables,
+        y::MOI.VariableIndex,
+        ci::MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.CountDistinct},
+    ) where {T}
+        return new{T,MOI.VectorOfVariables}(f, y, ci)
+    end
+
+    function AllDifferentToCountDistinctBridge{T}(
+        f::MOI.VectorAffineFunction{T},
+        ci::MOI.ConstraintIndex{MOI.VectorAffineFunction{T},MOI.CountDistinct},
+    ) where {T}
+        return new{T,MOI.VectorAffineFunction{T}}(f, nothing, ci)
+    end
 end
 
 const AllDifferentToCountDistinct{T,OT<:MOI.ModelLike} =
@@ -53,7 +68,7 @@ function bridge_constraint(
         MOI.Utilities.operate(vcat, T, y, f),
         MOI.CountDistinct(d + 1),
     )
-    return AllDifferentToCountDistinctBridge{T,F}(f, y, ci)
+    return AllDifferentToCountDistinctBridge{T}(f, y, ci)
 end
 
 function bridge_constraint(
@@ -68,7 +83,7 @@ function bridge_constraint(
         MOI.Utilities.operate(vcat, T, T(d), f),
         MOI.CountDistinct(d + 1),
     )
-    return AllDifferentToCountDistinctBridge{T,F}(f, nothing, ci)
+    return AllDifferentToCountDistinctBridge{T}(f, ci)
 end
 
 function MOI.supports_constraint(
