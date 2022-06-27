@@ -1044,7 +1044,6 @@ function _modifycoefficient(
     variable::MOI.VariableIndex,
     new_coefficient::T,
 ) where {T}
-    terms = copy(terms)
     i = something(findfirst(t -> t.variable == variable, terms), 0)
     if iszero(i)  # The variable was not already in the function
         if !iszero(new_coefficient)
@@ -1092,7 +1091,6 @@ function _modifycoefficients(
     variable::MOI.VariableIndex,
     new_coefficients::Vector{Tuple{Int64,T}},
 ) where {T}
-    terms = copy(terms)
     coef_dict = Dict(k => v for (k, v) in new_coefficients)
     elements_to_delete = Int[]
     for (i, term) in enumerate(terms)
