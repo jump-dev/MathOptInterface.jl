@@ -197,7 +197,7 @@ function MOI.get(
     bridge::CountDistinctToMILPBridge{T},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
 )::Int64 where {T}
-    return (count === nothing ? 0 : 1) + length(bridge.equal_to)
+    return length(bridge.equal_to)
 end
 
 function MOI.get(

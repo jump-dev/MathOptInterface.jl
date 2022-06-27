@@ -99,7 +99,7 @@ function test_runtests_VectorAffineFunction()
     return
 end
 
-function test_runtests_err()
+function test_runtests_error_variable()
     inner = MOI.Utilities.Model{Int}()
     model = MOI.Bridges.Constraint.CountDistinctToMILP{Int}(inner)
     x = MOI.add_variables(model, 3)
@@ -108,6 +108,22 @@ function test_runtests_err()
         ErrorException(
             "Unable to use CountDistinctToMILPBridge because element 2 in " *
             "the function has a non-finite domain: $(x[2])",
+        ),
+        MOI.Utilities.final_touch(model),
+    )
+    return
+end
+
+function test_runtests_error_affine()
+    inner = MOI.Utilities.Model{Int}()
+    model = MOI.Bridges.Constraint.CountDistinctToMILP{Int}(inner)
+    x = MOI.add_variables(model, 2)
+    f = MOI.Utilities.operate(vcat, Int, 2, 1 * x[1], x[2])
+    MOI.add_constraint(model, f, MOI.CountDistinct(3))
+    @test_throws(
+        ErrorException(
+            "Unable to use CountDistinctToMILPBridge because element 2 in " *
+            "the function has a non-finite domain: $(1 * x[1])",
         ),
         MOI.Utilities.final_touch(model),
     )
