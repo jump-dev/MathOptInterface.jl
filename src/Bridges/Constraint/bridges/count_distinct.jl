@@ -5,25 +5,24 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    CountDistinctToMILPBridge{T} <: Bridges.Constraint.AbstractBridge
+    CountDistinctToMILPBridge{T,F} <: Bridges.Constraint.AbstractBridge
 
 `CountDistinctToMILPBridge` implements the following reformulation:
 
-  * ``(n, x) in CountDistinct(1+d)`` into a mixed-integer linear program.
+  * ``(n, x) \\in \\textsf{CountDistinct}(1+d)`` into a mixed-integer linear program.
 
 ## Reformulation
 
-The reformulation is non-trivial, and it depends on the domain of each variable
-``x_i``. As helpers, we define ``S_i`` to be the finite domain
-``\\{l_i,\\ldots,u_i\\}`` associated with each variable ``x_i``.
+The reformulation is non-trivial, and it depends on the finite domain of each
+variable ``x_i``, which we as define ``S_i = \\{l_i,\\ldots,u_i\\}``.
 
 First, we introduce new binary variables ``z_{ij}``, which are ``1`` if variable
 ``x_i`` takes the value ``j`` in the optimal solution and ``0`` otherwise:
 ```math
 \\begin{aligned}
-z_{ij} \\in \\{0, 1\\}                  & \\forall i \\in 1\\ldots d, j \\in S_i  \\\\
-x_i - \\sum\\limits_{j\\in S_i} j \\cdot z_{ij} = 0        & \\forall i \\in 1\\ldots d \\\\
-\\sum\\limits_{j\\in S_i} z_{ij} = 1    & \\forall i \\in 1\\ldots d \\\\
+z_{ij} \\in \\{0, 1\\}                              & \\;\\; \\forall i \\in 1\\ldots d, j \\in S_i  \\\\
+x_i - \\sum\\limits_{j\\in S_i} j \\cdot z_{ij} = 0 & \\;\\; \\forall i \\in 1\\ldots d              \\\\
+\\sum\\limits_{j\\in S_i} z_{ij} = 1                & \\;\\; \\forall i \\in 1\\ldots d              \\\\
 \\end{aligned}
 ```
 
@@ -31,22 +30,25 @@ Then, we introduce new binary variables ``y_j``, which are ``1`` if a variable
 takes the value ``j`` in the optimal solution and ``0`` otherwise.
 ```math
 \\begin{aligned}
-y_{j} \\in \\{0, 1\\}                   & \\forall j in \\cup\\limits_{i=1}^d S_i \\\\
-y_j \\le \\sum\\limits_{i} z_{ij} \\le M y_j &  \\forall j \\\\
+y_{j} \\in \\{0, 1\\}                        & \\;\\; \\forall j \\in \\bigcup_{i=1,\\ldots,d} S_i \\\\
+y_j \\le \\sum\\limits_{i \\in 1\\ldots d: j \\in S_i} z_{ij} \\le M y_j & \\;\\; \\forall j \\in \\bigcup_{i=1,\\ldots,d} S_i\\\\
 \\end{aligned}
 ```
 
 Finally, ``n`` is constrained to be the number of ``y_j`` elements that are
 non-zero:
 ```math
-n - \\sum\\limits_{j} y_{j} = 0
+n - \\sum\\limits_{j \\in \\bigcup_{i=1,\\ldots,d} S_i} y_{j} = 0
 ```
 
 ## Source node
 
 `CountDistinctToMILPBridge` supports:
 
-  * [`MOI.VectorOfVariables`] in [`MOI.AllDifferent`](@ref)
+  * `F` in [`MOI.CountDistinct`](@ref)
+
+where `F` is [`MOI.VectorOfVariables`](@ref) or
+[`MOI.VectorAffineFunction{T}`](@ref).
 
 ## Target nodes
 

@@ -7,10 +7,11 @@
 """
     AllDifferentToCountDistinctBridge{T,F} <: Bridges.Constraint.AbstractBridge
 
-`AllDifferentToCountDistinctBridge` implements the following reformulation:
+`AllDifferentToCountDistinctBridge` implements the following reformulations:
 
-  * ``f(x) in AllDifferent(d)`` to ``[n, f(x)] in CountDistinct(d+1)`` and
-    ``n = d``
+  * ``x \\in \\textsf{AllDifferent}(d)`` to ``(n, x) \\in \\textsf{CountDistinct}(1+d)``
+    and ``n = d``
+  * ``f(x) \\in \\textsf{AllDifferent}(d)`` to ``(d, f(x)) \\in \\textsf{CountDistinct}(1+d)``
 
 ## Source node
 
