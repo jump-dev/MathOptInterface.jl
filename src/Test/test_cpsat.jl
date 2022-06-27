@@ -22,7 +22,6 @@ function test_cpsat_AllDifferent(
     @requires _supports(config, MOI.optimize!)
     y = [MOI.add_constrained_variable(model, MOI.Integer()) for _ in 1:3]
     x = first.(y)
-    MOI.add_constraint.(model, x, MOI.Interval(zero(T), T(2)))
     MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.AllDifferent(3))
     MOI.optimize!(model)
     x_val = MOI.get.(model, MOI.VariablePrimal(), x)
