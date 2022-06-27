@@ -109,7 +109,7 @@ function test_runtests_error_variable()
             "Unable to use CountDistinctToMILPBridge because element 2 in " *
             "the function has a non-finite domain: $(x[2])",
         ),
-        MOI.Utilities.final_touch(model),
+        MOI.Bridges.final_touch(model),
     )
     return
 end
@@ -125,7 +125,7 @@ function test_runtests_error_affine()
             "Unable to use CountDistinctToMILPBridge because element 2 in " *
             "the function has a non-finite domain: $(1 * x[1])",
         ),
-        MOI.Utilities.final_touch(model),
+        MOI.Bridges.final_touch(model),
     )
     return
 end

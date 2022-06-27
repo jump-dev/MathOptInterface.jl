@@ -343,7 +343,7 @@ end
 
 MOI.Bridges.needs_final_touch(b::SemiToBinaryBridge) = true
 
-function MOI.Utilities.final_touch(
+function MOI.Bridges.final_touch(
     b::SemiToBinaryBridge{T,S},
     model::MOI.ModelLike,
 ) where {T,S}

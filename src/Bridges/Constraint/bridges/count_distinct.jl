@@ -270,7 +270,7 @@ function _get_bounds(::Type{T}, model, bounds, x::MOI.VariableIndex) where {T}
     return lb, ub
 end
 
-function MOI.Utilities.final_touch(
+function MOI.Bridges.final_touch(
     bridge::CountDistinctToMILPBridge{T,F},
     model::MOI.ModelLike,
 ) where {T,F}

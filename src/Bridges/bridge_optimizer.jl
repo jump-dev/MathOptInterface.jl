@@ -375,7 +375,7 @@ end
 
 # By convention, the model should be stored in a `model` field
 function MOI.optimize!(b::AbstractBridgeOptimizer)
-    MOI.Utilities.final_touch(b)
+    final_touch(b)
     MOI.optimize!(b.model)
     return
 end
@@ -458,13 +458,13 @@ function MOI.supports_incremental_interface(b::AbstractBridgeOptimizer)
     return MOI.supports_incremental_interface(b.model)
 end
 
-function MOI.Utilities.final_touch(b::AbstractBridgeOptimizer)
-    MOI.Utilities.final_touch(Constraint.bridges(b), recursive_model(b))
+function final_touch(b::AbstractBridgeOptimizer)
+    final_touch(Constraint.bridges(b), recursive_model(b))
     return
 end
 
 function MOI.Utilities.final_touch(b::AbstractBridgeOptimizer, index_map)
-    MOI.Utilities.final_touch(b)
+    final_touch(b)
     MOI.Utilities.final_touch(b.model, index_map)
     return
 end

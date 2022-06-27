@@ -244,7 +244,7 @@ end
 """
 Test an error is thrown if a bound is added _after_ the semi-xxx constraint.
 
-Note that this means the error is thrown from `Utilties.final_touch`.
+Note that this means the error is thrown from `Bridges.final_touch`.
 """
 function test_bounds_already_set_final_touch()
     for set in [MOI.GreaterThan(0.0), MOI.EqualTo(1.4), MOI.Interval(0.0, 2.0)]
@@ -256,7 +256,7 @@ function test_bounds_already_set_final_touch()
         MOI.add_constraint(bridged, x, set)
         @test_throws(
             MOI.LowerBoundAlreadySet{typeof(semi_set),typeof(set)}(x),
-            MOI.Utilities.final_touch(bridged),
+            MOI.Bridges.final_touch(bridged),
         )
     end
     for set in [MOI.LessThan(2.0)]
@@ -268,7 +268,7 @@ function test_bounds_already_set_final_touch()
         MOI.add_constraint(bridged, x, set)
         @test_throws(
             MOI.UpperBoundAlreadySet{typeof(semi_set),typeof(set)}(x),
-            MOI.Utilities.final_touch(bridged),
+            MOI.Bridges.final_touch(bridged),
         )
     end
     return
