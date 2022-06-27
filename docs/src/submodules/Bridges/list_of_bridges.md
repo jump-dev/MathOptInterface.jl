@@ -52,6 +52,7 @@ Bridges.Constraint.IndicatorSOS1Bridge
 Bridges.Constraint.SemiToBinaryBridge
 Bridges.Constraint.ZeroOneBridge
 Bridges.Constraint.BinPackingToMILPBridge
+Bridges.Constraint.CountBelongsToMILPBridge
 Bridges.Constraint.CountDistinctToMILPBridge
 Bridges.Constraint.TableToMILPBridge
 ```
