@@ -37,6 +37,8 @@ function test_runtests_VectorOfVariables()
         1.0 * x + -1.0 * z_x1 + -2.0 * z_x2 == 0.0
         1.0 * y + -2.0 * z_y2 + -3.0 * z_y3 == 0.0
         -1.0 * n + a_1 + a_2 + a_3 == 0.0
+        z_x1 + z_x2 == 1.0
+        z_y2 + z_y3 == 1.0
         z_x1 + -1.0 * a_1 <= 0.0
         z_x2 + z_y2 + -2.0 * a_2 <= 0.0
         z_y3 + -1.0 * a_3 <= 0.0
@@ -73,6 +75,8 @@ function test_runtests_VectorAffineFunction()
         2.0 * x + -1.0 * z_x1 + -2.0 * z_x2 + -3.0 * z_x3 == 1.0
         1.0 * y + -2.0 * z_y2 + -3.0 * z_y3 == 0.0
         a_1 + a_2 + a_3 == 2.0
+        z_x1 + z_x2 + z_x3 == 1.0
+        z_y2 + z_y3 == 1.0
         z_x1 + -1.0 * a_1 <= 0.0
         z_x2 + z_y2 + -2.0 * a_2 <= 0.0
         z_x3 + z_y3 + -2.0 * a_3 <= 0.0

@@ -9,6 +9,39 @@
 
 `CountDistinctToMILPBridge` implements the following reformulation:
 
+  * ``(n, x) in CountDistinct(1+d)`` into a mixed-integer linear program.
+
+## Reformulation
+
+The reformulation is non-trivial, and it depends on the domain of each variable
+``x_i``. As helpers, we define ``S_i`` to be the finite domain
+``\\{l_i,\\ldots,u_i\\}`` associated with each variable ``x_i``.
+
+First, we introduce new binary variables ``z_{ij}``, which are ``1`` if variable
+``x_i`` takes the value ``j`` in the optimal solution and ``0`` otherwise:
+```math
+\\begin{aligned}
+z_{ij} \\in \\{0, 1\\}                  & \\forall i \\in 1\\ldots d, j \\in S_i  \\\\
+x_i - \\sum\\limits_{j\\in S_i} j \\cdot z_{ij} = 0        & \\forall i \\in 1\\ldots d \\\\
+\\sum\\limits_{j\\in S_i} z_{ij} = 1    & \\forall i \\in 1\\ldots d \\\\
+\\end{aligned}
+```
+
+Then, we introduce new binary variables ``y_j``, which are ``1`` if a variable
+takes the value ``j`` in the optimal solution and ``0`` otherwise.
+```math
+\\begin{aligned}
+y_{j} \\in \\{0, 1\\}                   & \\forall j in \\cup\\limits_{i=1}^d S_i \\\\
+y_j \\le \\sum\\limits_{i} z_{ij} \\le M y_j &  \\forall j \\\\
+\\end{aligned}
+```
+
+Finally, ``n`` is constrained to be the number of ``y_j`` elements that are
+non-zero:
+```math
+n - \\sum\\limits_{j} y_{j} = 0
+```
+
 ## Source node
 
 `CountDistinctToMILPBridge` supports:
@@ -33,17 +66,14 @@ mutable struct CountDistinctToMILPBridge{
     # which variable doesn't matter.
     variables::Vector{MOI.VariableIndex}
     # ∑_j a_j + -1.0 * n == 0.0
-    count::Union{
-        Nothing,
-        MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
-    }
     # x_i - ∑_j z_ij = 0 ∀i
-    unit_expansion::Vector{
+    # ∑_j z_ij = 1 ∀i
+    equal_to::Vector{
         MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
     }
     # ∑_i z_ij - |I| α_j <= 0 ∀j
     # α_j - ∑_i z_ij <= 0 ∀j
-    big_M::Vector{
+    less_than::Vector{
         MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.LessThan{T}},
     }
     function CountDistinctToMILPBridge{T}(
@@ -52,7 +82,6 @@ mutable struct CountDistinctToMILPBridge{
         return new{T,typeof(f)}(
             f,
             MOI.VariableIndex[],
-            nothing,
             MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}[],
             MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.LessThan{T}}[],
         )
@@ -121,22 +150,18 @@ function MOI.get(
 end
 
 function MOI.delete(model::MOI.ModelLike, bridge::CountDistinctToMILPBridge)
-    if bridge.count !== nothing
-        MOI.delete(model, bridge.count)
-    end
-    for ci in bridge.unit_expansion
+    for ci in bridge.equal_to
         MOI.delete(model, ci)
     end
-    for ci in bridge.big_M
+    empty!(bridge.equal_to)
+    for ci in bridge.less_than
         MOI.delete(model, ci)
     end
+    empty!(bridge.less_than)
     for x in bridge.variables
         MOI.delete(model, x)
     end
     empty!(bridge.variables)
-    bridge.count = nothing
-    empty!(bridge.unit_expansion)
-    empty!(bridge.big_M)
     return
 end
 
@@ -172,28 +197,28 @@ function MOI.get(
     bridge::CountDistinctToMILPBridge{T},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
 )::Int64 where {T}
-    return (count === nothing ? 0 : 1) + length(bridge.unit_expansion)
+    return (count === nothing ? 0 : 1) + length(bridge.equal_to)
 end
 
 function MOI.get(
     bridge::CountDistinctToMILPBridge{T},
     ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
 ) where {T}
-    return vcat(bridge.count, bridge.unit_expansion)
+    return copy(bridge.equal_to)
 end
 
 function MOI.get(
     bridge::CountDistinctToMILPBridge{T},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.LessThan{T}},
 )::Int64 where {T}
-    return length(bridge.big_M)
+    return length(bridge.less_than)
 end
 
 function MOI.get(
     bridge::CountDistinctToMILPBridge{T},
     ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},MOI.LessThan{T}},
 ) where {T}
-    return copy(bridge.big_M)
+    return copy(bridge.less_than)
 end
 
 MOI.Bridges.needs_final_touch(::CountDistinctToMILPBridge) = true
@@ -247,9 +272,8 @@ function MOI.Utilities.final_touch(
     bridge::CountDistinctToMILPBridge{T,F},
     model::MOI.ModelLike,
 ) where {T,F}
-    if bridge.count !== nothing
-        MOI.delete(model, bridge)
-    end
+    # Clear any existing reformulations!
+    MOI.delete(model, bridge)
     S = Dict{T,Vector{MOI.VariableIndex}}()
     scalars = collect(MOI.Utilities.eachscalar(bridge.f))
     bounds = Dict{MOI.VariableIndex,NTuple{2,Union{T,Nothing}}}()
@@ -263,6 +287,7 @@ function MOI.Utilities.final_touch(
             )
         end
         unit_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
+        convex_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
         for xi in lb:ub
             new_var, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
             push!(bridge.variables, new_var)
@@ -271,15 +296,20 @@ function MOI.Utilities.final_touch(
             end
             push!(S[xi], new_var)
             push!(unit_f.terms, MOI.ScalarAffineTerm(T(-xi), new_var))
+            push!(convex_f.terms, MOI.ScalarAffineTerm(one(T), new_var))
         end
         push!(
-            bridge.unit_expansion,
+            bridge.equal_to,
             MOI.Utilities.normalize_and_add_constraint(
                 model,
                 MOI.Utilities.operate(+, T, x, unit_f),
                 MOI.EqualTo(zero(T));
                 allow_modify_function = true,
             ),
+        )
+        push!(
+            bridge.equal_to,
+            MOI.add_constraint(model, convex_f, MOI.EqualTo(one(T))),
         )
     end
     count_terms = MOI.ScalarAffineTerm{T}[]
@@ -292,7 +322,7 @@ function MOI.Utilities.final_touch(
         big_M_terms = [MOI.ScalarAffineTerm(T(1), z) for z in terms]
         push!(big_M_terms, MOI.ScalarAffineTerm(T(-length(terms)), new_var))
         push!(
-            bridge.big_M,
+            bridge.less_than,
             MOI.add_constraint(
                 model,
                 MOI.ScalarAffineFunction(big_M_terms, zero(T)),
@@ -302,7 +332,7 @@ function MOI.Utilities.final_touch(
         big_M_terms_upper = [MOI.ScalarAffineTerm(T(-1), z) for z in terms]
         push!(big_M_terms_upper, MOI.ScalarAffineTerm(T(1), new_var))
         push!(
-            bridge.big_M,
+            bridge.less_than,
             MOI.add_constraint(
                 model,
                 MOI.ScalarAffineFunction(big_M_terms_upper, zero(T)),
@@ -312,11 +342,14 @@ function MOI.Utilities.final_touch(
     end
     count_f = MOI.ScalarAffineFunction(count_terms, zero(T))
     MOI.Utilities.operate!(-, T, count_f, scalars[1])
-    bridge.count = MOI.Utilities.normalize_and_add_constraint(
-        model,
-        count_f,
-        MOI.EqualTo(zero(T));
-        allow_modify_function = true,
+    push!(
+        bridge.equal_to,
+        MOI.Utilities.normalize_and_add_constraint(
+            model,
+            count_f,
+            MOI.EqualTo(zero(T));
+            allow_modify_function = true,
+        ),
     )
     return
 end
