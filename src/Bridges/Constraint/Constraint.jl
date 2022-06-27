@@ -20,6 +20,7 @@ include("single_bridge_optimizer.jl")
 
 include("bridges/all_different.jl")
 include("bridges/bin_packing.jl")
+include("bridges/count_at_least.jl")
 include("bridges/count_belongs.jl")
 include("bridges/count_distinct.jl")
 include("bridges/det.jl")
@@ -99,6 +100,7 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     # TODO(odow): this reformulation assumes the bins are numbered 1..N. We
     # should fix this to use the variable bounds before adding automatically.
     # MOI.Bridges.add_bridge(bridged_model, BinPackingToMILPBridge{T})
+    MOI.Bridges.add_bridge(bridged_model, CountAtLeastToCountBelongsBridge{T})
     MOI.Bridges.add_bridge(bridged_model, CountBelongsToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, CountDistinctToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, TableToMILPBridge{T})
