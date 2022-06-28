@@ -8,7 +8,7 @@ module Constraint
 
 import LinearAlgebra
 import MathOptInterface
-import OrderedCollections: OrderedDict
+import OrderedCollections: OrderedDict, OrderedSet
 import SparseArrays
 
 const MOI = MathOptInterface
@@ -19,6 +19,7 @@ include("set_map.jl")
 include("single_bridge_optimizer.jl")
 
 include("bridges/bin_packing.jl")
+include("bridges/count_distinct.jl")
 include("bridges/det.jl")
 include("bridges/flip_sign.jl")
 include("bridges/functionize.jl")
@@ -95,6 +96,7 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     # TODO(odow): this reformulation assumes the bins are numbered 1..N. We
     # should fix this to use the variable bounds before adding automatically.
     # MOI.Bridges.add_bridge(bridged_model, BinPackingToMILPBridge{T})
+    MOI.Bridges.add_bridge(bridged_model, CountDistinctToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, TableToMILPBridge{T})
     return
 end

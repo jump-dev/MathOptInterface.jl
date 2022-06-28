@@ -20,12 +20,14 @@ struct Map <: AbstractDict{MOI.ConstraintIndex,AbstractBridge}
     # of creation so we need `OrderedDict` and not `Dict`.
     # For `VariableIndex` constraints: (variable, set type) -> bridge
     single_variable_constraints::OrderedDict{Tuple{Int64,Type},AbstractBridge}
+    needs_final_touch::OrderedDict{Type,OrderedSet}
 
     function Map()
         return new(
             Union{Nothing,AbstractBridge}[],
             Tuple{Type,Type}[],
             OrderedDict{Tuple{Int64,Type},AbstractBridge}(),
+            OrderedDict{Type,OrderedSet}(),
         )
     end
 end
@@ -48,6 +50,7 @@ function Base.empty!(map::Map)
     empty!(map.bridges)
     empty!(map.constraint_types)
     empty!(map.single_variable_constraints)
+    empty!(map.needs_final_touch)
     return map
 end
 
@@ -83,6 +86,7 @@ function Base.getindex(
 end
 
 function Base.delete!(map::Map, ci::MOI.ConstraintIndex)
+    _unregister_for_final_touch(map, map.bridges[_index(ci)])
     map.bridges[_index(ci)] = nothing
     return map
 end
@@ -91,6 +95,8 @@ function Base.delete!(
     map::Map,
     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
 ) where {S}
+    bridge = map.single_variable_constraints[(ci.value, S)]
+    _unregister_for_final_touch(map, bridge)
     delete!(map.single_variable_constraints, (ci.value, S))
     return map
 end
@@ -278,6 +284,7 @@ function add_key_for_bridge(
     ::F,
     ::S,
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    _register_for_final_touch(map, bridge)
     push!(map.bridges, bridge)
     push!(map.constraint_types, (F, S))
     return _index(length(map.bridges), F, S)
@@ -289,8 +296,41 @@ function add_key_for_bridge(
     func::MOI.VariableIndex,
     ::S,
 ) where {S<:MOI.AbstractScalarSet}
+    _register_for_final_touch(map, bridge)
     map.single_variable_constraints[(func.value, S)] = bridge
     return MOI.ConstraintIndex{MOI.VariableIndex,S}(func.value)
+end
+
+function _register_for_final_touch(map::Map, bridge::BT) where {BT}
+    if MOI.Bridges.needs_final_touch(bridge)
+        if !haskey(map.needs_final_touch, BT)
+            map.needs_final_touch[BT] = OrderedSet{BT}()
+        end
+        push!(map.needs_final_touch[BT], bridge)
+    end
+    return
+end
+
+function _unregister_for_final_touch(b::Map, bridge::BT) where {BT}
+    if MOI.Bridges.needs_final_touch(bridge)
+        delete!(b.needs_final_touch[BT], bridge)
+    end
+    return
+end
+
+# Function barrier to iterate over bridges of the same type in an efficient way.
+function _final_touch(bridges, model)
+    for bridge in bridges
+        MOI.Bridges.final_touch(bridge, model)
+    end
+    return
+end
+
+function MOI.Bridges.final_touch(map::Map, model::MOI.ModelLike)
+    for bridges in values(map.needs_final_touch)
+        _final_touch(bridges, model)
+    end
+    return
 end
 
 """
@@ -315,3 +355,5 @@ Base.values(::EmptyMap) = MOI.Utilities.EmptyVector{AbstractBridge}()
 has_bridges(::EmptyMap) = false
 
 number_of_type(::EmptyMap, ::Type{<:MOI.ConstraintIndex}) = 0
+
+MOI.Bridges.final_touch(::EmptyMap, ::MOI.ModelLike) = nothing

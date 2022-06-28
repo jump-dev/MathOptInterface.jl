@@ -253,3 +253,27 @@ MathOptInterface.ScalarAffineFunction{Float64}
 ```
 """
 function set_objective_function_type end
+
+"""
+    needs_final_touch(bridge::AbstractBridge)::Bool
+
+Return whether [`final_touch`](@ref) is implemented by `bridge`.
+"""
+needs_final_touch(::AbstractBridge) = false
+
+"""
+    final_touch(bridge::AbstractBridge, model::MOI.ModelLike)::Nothing
+
+A function that is called immediately prior to [`MOI.optimize!`](@ref) to allow
+bridges to modify their reformulations with repsect to other variables and
+constraints in `model`.
+
+For example, if the correctness of `bridge` depends on the bounds of a variable
+or the fact that variables are integer, then the bridge can implement
+[`final_touch`](@ref) to check assumptions immediately before a call to
+[`MOI.optimize!`](@ref).
+
+If you implement this method, you must also implement
+[`needs_final_touch`](@ref).
+"""
+function final_touch end
