@@ -203,3 +203,115 @@ A pair of primal-dual variables $(x^\star, y^\star)$ is optimal if
 If ``\mathcal{C}_i`` is a vector set, the discussion remains valid with
 ``y_i(\frac{1}{2}x^TQ_ix + a_i^T x + b_i)`` replaced with the scalar product
 between ``y_i`` and the vector of scalar-valued quadratic functions.
+
+## Dual for square semidefinite matrices
+
+The set [`PositiveSemidefiniteConeTriangle`](@ref) is a self-dual. That is,
+querying [`ConstraintDual`](@ref) of a [`PositiveSemidefiniteConeTriangle`](@ref)
+constraint returns a vector that is itself a member of
+[`PositiveSemidefiniteConeTriangle`](@ref).
+
+However, the dual of [`PositiveSemidefiniteConeSquare`](@ref) is not so straight
+forward. This section explains the duality convention we use, and how it is
+derived.
+
+!!! info "tl;dr"
+    If you have a [`PositiveSemidefiniteConeSquare`](@ref) constraint, the
+    result matrix ``A`` from [`ConstraintDual`](@ref) is not positive
+    semidefinite. However, ``A + A^\top`` is positive semidefinite.
+
+Let ``\mathcal{S}_+`` be the cone of symmetric semidefinite matrices in
+the ``\frac{n(n+1)}{2}`` dimensional space of symmetric ``\mathbb{R}^{n \times n}``
+matrices. That is, ``\mathcal{S}_+`` is the set [`PositiveSemidefiniteConeTriangle`](@ref).
+It is well known that ``\mathcal{S}_+`` is a self-dual proper cone.
+
+Let ``\mathcal{P}_+`` be the cone of symmetric semidefinite matrices in
+the ``n^2`` dimensional space of ``\mathbb{R}^{n \times n}`` matrices. That is
+``\mathcal{P}_+`` is the set [`PositiveSemidefiniteConeSquare`](@ref).
+
+In addition, let ``\mathcal{D}_+`` be the cone of matrices ``A`` such that
+``A+A^\top \in \mathcal{P}_+``.
+
+``\mathcal{P}_+`` is not proper because it is not solid (it is not ``n^2``
+dimensional), so it is not necessarily true that ``\mathcal{P}_+^{**} = \mathcal{P}_+``.
+
+However, this _is_ the case, because we will show that ``\mathcal{P}_+^{*} = \mathcal{D}_+``
+and ``\mathcal{D}_+^{*} = \mathcal{P}_+``.
+
+First, let us see why ``\mathcal{P}_+^{*} = \mathcal{D}_+``.
+
+If ``B`` is symmetric, then
+```math
+\langle A,B \rangle = \langle A^\top, B^\top \rangle = \langle A^\top, B\rangle
+```
+so
+```math
+2\langle A, B \rangle = \langle A, B \rangle + \langle A^\top, B \rangle = \langle A + A^\top , B \rangle.
+```
+Therefore, ``\langle A,B\rangle \ge 0`` for all ``B \in \mathcal{P}_+`` if and only if
+``\langle A+A^\top,B\rangle \ge 0`` for all ``B \in \mathcal{P}_+``. Since ``A+A^\top`` is
+symmetric, and we know that ``\mathcal{S}_+`` is self-dual, we have shown that
+``\mathcal{P}_+^{*}`` is the set of matrices ``A`` such that
+``A+A^\top \in \mathcal{P}_+``.
+
+Second, let us see why ``\mathcal{D}_+^{*} = \mathcal{P}_+``.
+
+Since ``A \in \mathcal{D}_+`` implies that ``A^\top \in \mathcal{D}_+``,
+``B \in \mathcal{D}_+^{*}`` means that ``\langle A+A^\top,B\rangle \ge 0``
+for all ``A \in \mathcal{D}_+``, and hence ``B \in \\mathcal{P}_+``.
+
+To see why it should be symmetric, simply notice that if ``B_{i,j} < B_{j,i}``,
+then ``\langle A,B\rangle`` can be made arbitrarily small by setting
+``A_{i,j} = A_{i,j} + s`` and ``A_{j,i} = A_{j,i} - s``, with ``s`` arbitrarily
+large, and ``A`` stays in ``\mathcal{D}_+`` because ``A+A^\top`` does not
+change.
+
+Typically, the primal/dual pair for semidefinite programs is presented as:
+```math
+\begin{align}
+       \min & \langle C, X \rangle \\
+\text{s.t.} \;\; & \langle A_k, X\rangle = b_k \forall k \\
+            & X                     \in \mathcal{S}_+
+\end{align}
+```
+with the dual
+```math
+\begin{align}
+       \max & \sum_k b_k y_k \\
+\text{s.t.} \;\; & C - \sum A_k y_k \in \mathcal{S}_+
+\end{align}
+```
+
+If we allow ``A_k`` to be non-symmetric, we should instead use:
+```math
+\begin{align}
+       \min & \langle C, X \rangle \\
+\text{s.t.} \;\; & \langle A_k, X\rangle = b_k \forall k \\
+            & X                     \in \mathcal{D}_+
+\end{align}
+```
+with the dual
+```math
+\begin{align}
+       \max & \sum b_k y_k \\
+\text{s.t.} \;\; & C - \sum A_k y_k \in \mathcal{P}_+
+\end{align}
+```
+
+This is implemented as:
+```math
+\begin{align}
+       \min & \langle C,   Z \rangle + \langle C - C^\top, S \rangle \\
+\text{s.t.} \;\; & \langle A_k, Z \rangle + \langle A_k - A_k^\top, S \rangle = b_k \forall k \\
+            & Z \in \mathcal{S}_+
+\end{align}
+```
+with the dual
+```math
+\begin{align}
+       \max & \sum b_k y_k \\
+\text{s.t.} \;\; & C+C^\top - \sum (A_k+A_k^\top) y_k \in \mathcal{S}_+ \\
+            & C-C^\top - \sum(A_k-A_k^\top) y_k = 0
+\end{align}
+```
+and we recover ``Z = X + X^\top``.

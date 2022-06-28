@@ -1218,7 +1218,7 @@ function MOI.set(
     return
 end
 
-# Constraint attributes
+## MOI.ConstraintFunction
 
 function MOI.set(
     b::AbstractBridgeOptimizer,
@@ -1229,14 +1229,48 @@ function MOI.set(
     if !(func isa F)
         throw(MOI.FunctionTypeMismatch{F,typeof(func)}())
     end
+    # If there are variable bridges, the function we are setting might need
+    # to be mapped through the bridge substitution. This includes moving
+    # constants into the set.
     if Variable.has_bridges(Variable.bridges(b))
         set = MOI.get(b, MOI.ConstraintSet(), ci)
-        func, new_set = bridged_constraint_function(b, func, set)
+        # This moves any constant in func over to set, and returns new functions
+        # and sets.
+        new_func, new_set = bridged_constraint_function(b, func, set)
+        _set_substituted(b, attr, ci, new_func)
         if new_set !== set
+            # We only need to update the set if it has changed.
             _set_substituted(b, MOI.ConstraintSet(), ci, new_set)
         end
+    else
+        _set_substituted(b, attr, ci, func)
     end
-    _set_substituted(b, attr, ci, func)
+    return
+end
+
+"""
+    _set_substituted(
+        b::AbstractBridgeOptimizer,
+        attr::MOI.AbstractConstraintAttribute,
+        ci::MOI.ConstraintIndex,
+        value,
+    )
+
+A helpful wrapper that calls `call_in_context` if `ci` is bridged, and `MOI.set`
+if not.
+"""
+function _set_substituted(
+    b::AbstractBridgeOptimizer,
+    attr::MOI.AbstractConstraintAttribute,
+    ci::MOI.ConstraintIndex,
+    value,
+)
+    if is_bridged(b, ci)
+        MOI.throw_if_not_valid(b, ci)
+        call_in_context(MOI.set, b, ci, attr, value)
+    else
+        MOI.set(b.model, attr, ci, value)
+    end
     return
 end
 
@@ -1248,15 +1282,25 @@ function MOI.get(
     if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
         if is_variable_bridged(b, ci)
+            # If it is a variable bridge, we can get the original variable quite
+            # easily.
             return Variable.function_for(Variable.bridges(b), ci)
         else
+            # Otherwise, we need to query ConstraintFunction in the context of
+            # the bridge...
             func = call_in_context(MOI.get, b, ci, attr)
+            # and then unbridge this function (because it may contain variables
+            # that are themselves bridged).
             return unbridged_constraint_function(b, func)
         end
     else
+        # This constraint is not bridged, but it might contain variables that
+        # are.
         return unbridged_constraint_function(b, MOI.get(b.model, attr, ci))
     end
 end
+
+## MOI.ConstraintSet
 
 function MOI.set(
     b::AbstractBridgeOptimizer,
@@ -1293,8 +1337,13 @@ function MOI.set(
     if !(set isa S)
         throw(MOI.SetTypeMismatch{S,typeof(set)}())
     end
+    # If there are variable bridges, the set we are setting might need to be
+    # mapped through the bridge substitution. This includes moving constants
+    # into the set.
     if Variable.has_bridges(Variable.bridges(b))
         func = MOI.get(b, MOI.ConstraintFunction(), ci)
+        # Updating the set will not modify the function, so we don't care about
+        # the first argument. We only care about the new set.
         _, set = bridged_constraint_function(b, func, set)
     end
     _set_substituted(b, attr, ci, set)
@@ -1306,36 +1355,40 @@ function MOI.get(
     attr::MOI.ConstraintSet,
     ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction},
 )
-    if is_bridged(b, ci)
+    set = if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
-        set = call_in_context(MOI.get, b, ci, attr)
+        call_in_context(MOI.get, b, ci, attr)
     else
-        set = MOI.get(b.model, attr, ci)
+        MOI.get(b.model, attr, ci)
     end
-    if Variable.has_bridges(Variable.bridges(b))
-        # The function constant of the bridged function was moved to the set,
-        # we need to remove it.
-        if is_bridged(b, ci)
-            func = call_in_context(MOI.get, b, ci, MOI.ConstraintFunction())
-        else
-            func = MOI.get(b.model, MOI.ConstraintFunction(), ci)
-        end
-        f = unbridged_function(b, func)
-        set = MOI.Utilities.shift_constant(set, -MOI.constant(f))
+    # This is a scalar function, so if there are variable bridges, it might
+    # contain constants that have been moved into the set.
+    if !Variable.has_bridges(Variable.bridges(b))
+        return set
     end
-    return set
+    # The function constant of the bridged function was moved to the set,
+    # we need to remove it.
+    func = if is_bridged(b, ci)
+        call_in_context(MOI.get, b, ci, MOI.ConstraintFunction())
+    else
+        MOI.get(b.model, MOI.ConstraintFunction(), ci)
+    end
+    f = unbridged_function(b, func)
+    return MOI.Utilities.shift_constant(set, -MOI.constant(f))
 end
+
+## Other constraint attributes
 
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractConstraintAttribute,
     ci::MOI.ConstraintIndex,
 )
-    if is_bridged(b, ci)
+    func = if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
-        func = call_in_context(MOI.get, b, ci, attr)
+        call_in_context(MOI.get, b, ci, attr)
     else
-        func = MOI.get(b.model, attr, ci)
+        MOI.get(b.model, attr, ci)
     end
     return unbridged_function(b, func)
 end
@@ -1364,21 +1417,6 @@ function MOI.supports(
                 Constraint.concrete_bridge_type(b, F, S),
             ),
     )
-end
-
-function _set_substituted(
-    b::AbstractBridgeOptimizer,
-    attr::MOI.AbstractConstraintAttribute,
-    ci::MOI.ConstraintIndex,
-    value,
-)
-    if is_bridged(b, ci)
-        MOI.throw_if_not_valid(b, ci)
-        call_in_context(MOI.set, b, ci, attr, value)
-    else
-        MOI.set(b.model, attr, ci, value)
-    end
-    return
 end
 
 function MOI.set(
@@ -2042,8 +2080,9 @@ function bridged_constraint_function(
         return func, set
     end
     # We use the fact that the initial function constant was zero to
-    # implement getters for `MOI.ConstraintFunction` and
-    # `MOI.ConstraintSet`. See `unbridged_constraint_function`.
+    # implement getters for `MOI.ConstraintFunction` and `MOI.ConstraintSet`.
+    #
+    # See `unbridged_constraint_function` for more details.
     MOI.throw_if_scalar_and_constant_not_zero(func, typeof(set))
     f = bridged_function(b, func)::typeof(func)
     return MOI.Utilities.normalize_constant(f, set)
@@ -2068,6 +2107,19 @@ scalar.
 """
 function unbridged_constraint_function end
 
+# The purpose of unbridged_constraint_function is to convert the result of
+# ConstraintFunction into the un-bridged form. Since variable bridges create
+# substitution rules which are scalar functions, e.g., `x => y_1 - y_2`, if the
+# result is a VariableIndex or an AbstractVectorFunction we can return the
+# unbridged function:
+
+function unbridged_constraint_function(
+    b::AbstractBridgeOptimizer,
+    func::MOI.VariableIndex,
+)
+    return unbridged_function(b, func)
+end
+
 function unbridged_constraint_function(
     b::AbstractBridgeOptimizer,
     func::MOI.AbstractVectorFunction,
@@ -2075,26 +2127,36 @@ function unbridged_constraint_function(
     return unbridged_function(b, func)
 end
 
+# (These are separate methods to avoid ambiguity issues.)
+
+# But if the result is an AbstractScalarFunction, we need to be more careful.
+
 function unbridged_constraint_function(
     b::AbstractBridgeOptimizer,
     func::MOI.AbstractScalarFunction,
 )
+    # If `b` has no variable bridges, no substitution can occur, so we return
+    # func.
     if !Variable.has_bridges(Variable.bridges(b))
         return func
     end
+    # Otherwise, first unbridge the function:
     f = unbridged_function(b, func)::typeof(func)
-    if !iszero(MOI.constant(f))
-        f = copy(f)
-        f.constant = zero(f.constant)
+    # But now we have to deal with an issue. Something like x in [1, ∞) might
+    # get bridged into y in R₊, with x => y + 1, so if the orginal constraint is
+    # 2x >= 1, the bridged function is 2y >= -1. Unbridging this with y = x - 1
+    # gives 2x - 2, but we only care about 2x! Where did the -2 come from? It
+    # was moved into the set. This gets handled separately, so for
+    # ConstraintFunction it is sufficient to drop any non-zero constant terms.
+    #
+    # It's also safe to do this because ScalarFunctionConstantNotZero will be
+    # thrown if we can't move the constant into the set, and there is a test to
+    # catch this.
+    c = MOI.constant(f)
+    if !iszero(c)
+        f = MOI.Utilities.operate(-, typeof(c), f, c)
     end
     return f
-end
-
-function unbridged_constraint_function(
-    b::AbstractBridgeOptimizer,
-    func::MOI.VariableIndex,
-)
-    return unbridged_function(b, func)
 end
 
 # TODO add transform

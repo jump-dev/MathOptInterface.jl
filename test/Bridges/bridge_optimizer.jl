@@ -30,6 +30,20 @@ struct DummyEvaluator <: MOI.AbstractNLPEvaluator end
 struct DummyVariableAttribute <: MOI.AbstractVariableAttribute end
 struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
 
+function test_subsitution_of_variables_constant()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    bridged = MOI.Bridges.Variable.Vectorize{Float64}(mock)
+    x, _ = MOI.add_constrained_variable(bridged, MOI.GreaterThan(1.0))
+    f, s = 2.0x + 1.0, MOI.Integer()
+    @test_throws(
+        MOI.ScalarFunctionConstantNotZero{Float64,typeof(f),typeof(s)}(1.0),
+        MOI.add_constraint(bridged, f, s),
+    )
+    return
+end
+
 function test_subsitution_of_variables()
     mock = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
