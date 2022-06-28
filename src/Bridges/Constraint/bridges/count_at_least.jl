@@ -7,11 +7,11 @@
 """
     CountAtLeastToCountBelongsBridge{T,F} <: Bridges.Constraint.AbstractBridge
 
-`CountAtLeastToCountBelongsBridge` implements the following reformulations:
+`CountAtLeastToCountBelongsBridge` implements the following reformulation:
 
-  * ``x \\in \\textsf{CountAtLeast}(n, d, set)`` to ``(n, x) \\in \\textsf{CountCount}(1+d)``
-    and ``n = d``
-  * ``f(x) \\in \\textsf{CountAtLeast}(n, d, set)`` to ``(d, f(x)) \\in \\textsf{CountBelongs}(1+d)``
+  * ``x \\in \\textsf{CountAtLeast}(n, d, set)`` to
+    ``(n_i, x_{d_i}) \\in \\textsf{CountBelongs}(1+d)``
+    and ``\\sum\\limits n_i \\ge n``
 
 ## Source node
 
