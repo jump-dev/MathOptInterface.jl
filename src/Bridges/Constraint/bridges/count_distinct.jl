@@ -225,49 +225,41 @@ end
 
 MOI.Bridges.needs_final_touch(::CountDistinctToMILPBridge) = true
 
+# We use the bridge as the first argument to avoid type piracy of other methods.
 function _get_bounds(
-    ::Type{T},
-    model,
-    bounds,
+    bridge::CountDistinctToMILPBridge{T},
+    model::MOI.ModelLike,
+    bounds::Dict{MOI.VariableIndex,NTuple{2,T}},
     f::MOI.ScalarAffineFunction{T},
 ) where {T}
     lb = ub = f.constant
     for term in f.terms
-        l, u = _get_bounds(T, model, bounds, term.variable)
-        if l === nothing || u === nothing
-            return nothing, nothing
+        ret = _get_bounds(bridge, model, bounds, term.variable)
+        if ret === nothing
+            return nothing
         end
-        lb += term.coefficient * l
-        ub += term.coefficient * u
+        lb += term.coefficient * ret[1]
+        ub += term.coefficient * ret[2]
     end
     return lb, ub
 end
 
-function _get_bounds(::Type{T}, model, bounds, x::MOI.VariableIndex) where {T}
+# We use the bridge as the first argument to avoid type piracy of other methods.
+function _get_bounds(
+    ::CountDistinctToMILPBridge{T},
+    model::MOI.ModelLike,
+    bounds::Dict{MOI.VariableIndex,NTuple{2,T}},
+    x::MOI.VariableIndex,
+) where {T}
     if haskey(bounds, x)
         return bounds[x]
     end
-    lb, ub = nothing, nothing
-    F, f = MOI.VariableIndex, x.value
-    ci = MOI.ConstraintIndex{F,MOI.GreaterThan{T}}(f)
-    if MOI.is_valid(model, ci)
-        lb = MOI.get(model, MOI.ConstraintSet(), ci).lower
+    ret = MOI.Utilities.get_bounds(model, T, x)
+    if ret == (typemin(T), typemax(T))
+        return nothing
     end
-    ci = MOI.ConstraintIndex{F,MOI.LessThan{T}}(f)
-    if MOI.is_valid(model, ci)
-        ub = MOI.get(model, MOI.ConstraintSet(), ci).upper
-    end
-    ci = MOI.ConstraintIndex{F,MOI.EqualTo{T}}(f)
-    if MOI.is_valid(model, ci)
-        lb = ub = MOI.get(model, MOI.ConstraintSet(), ci).value
-    end
-    ci = MOI.ConstraintIndex{F,MOI.Interval{T}}(f)
-    if MOI.is_valid(model, ci)
-        set = MOI.get(model, MOI.ConstraintSet(), ci)
-        lb, ub = set.lower, set.upper
-    end
-    bounds[x] = (lb, ub)
-    return lb, ub
+    bounds[x] = ret
+    return ret
 end
 
 function MOI.Bridges.final_touch(
@@ -278,11 +270,11 @@ function MOI.Bridges.final_touch(
     MOI.delete(model, bridge)
     S = Dict{T,Vector{MOI.VariableIndex}}()
     scalars = collect(MOI.Utilities.eachscalar(bridge.f))
-    bounds = Dict{MOI.VariableIndex,NTuple{2,Union{T,Nothing}}}()
+    bounds = Dict{MOI.VariableIndex,NTuple{2,T}}()
     for i in 2:length(scalars)
         x = scalars[i]
-        lb, ub = _get_bounds(T, model, bounds, x)
-        if lb === nothing || ub === nothing
+        ret = _get_bounds(bridge, model, bounds, x)
+        if ret === nothing
             error(
                 "Unable to use CountDistinctToMILPBridge because element $i " *
                 "in the function has a non-finite domain: $x",
@@ -290,7 +282,7 @@ function MOI.Bridges.final_touch(
         end
         unit_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
         convex_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
-        for xi in lb:ub
+        for xi in ret[1]::T:ret[2]::T
             new_var, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
             push!(bridge.variables, new_var)
             if !haskey(S, xi)
