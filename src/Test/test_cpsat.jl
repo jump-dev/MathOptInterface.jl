@@ -107,6 +107,7 @@ function test_cpsat_CountBelongs(
     @requires _supports(config, MOI.optimize!)
     y = [MOI.add_constrained_variable(model, MOI.Integer()) for _ in 1:4]
     x = first.(y)
+    MOI.add_constraint.(model, x, MOI.Interval(T(0), T(4)))
     set = Set([3, 4])
     MOI.add_constraint(
         model,
