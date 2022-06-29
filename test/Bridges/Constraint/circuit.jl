@@ -26,11 +26,13 @@ function test_runtests_VectorOfVariables()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.CircuitToMILPBridge,
         """
-        variables: a, b, c
+        variables: x_bin, x_int, a, b, c
         [a, b, c] in Circuit(3)
+        x_bin in ZeroOne()
+        x_int in Integer()
         """,
         """
-        variables: a, b, c, z11, z21, z31, z12, z22, z32, z13, z23, z33, u2, u3
+        variables: x_bin, x_int, a, b, c, z11, z21, z31, z12, z22, z32, z13, z23, z33, u2, u3
         1.0 * a + -2.0 * z12 + -3.0 * z13 == 0.0
         1.0 * b + -1.0 * z21 + -3.0 * z23 == 0.0
         1.0 * c + -1.0 * z31 + -2.0 * z32 == 0.0
@@ -55,6 +57,8 @@ function test_runtests_VectorOfVariables()
         u3 in Integer()
         u2 in Interval(1.0, 2.0)
         u3 in Interval(1.0, 2.0)
+        x_bin in ZeroOne()
+        x_int in Integer()
         """,
     )
     return
