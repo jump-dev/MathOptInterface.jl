@@ -242,25 +242,35 @@ function test_SemiToBinary()
 end
 
 """
-    test_lower_bound_already_set()
+Test an error is thrown if a bound is added _after_ the semi-xxx constraint.
 
-The second call to `add_constraint` is broken because it should throw:
-```julia
-MOI.LowerBoundAlreadySet{
-    MOI.Semicontinuous{Float64},
-    MOI.GreaterThan{Float64},
-}
-```
-See MathOptInterface issue #1431.
+Note that this means the error is thrown from `Bridges.final_touch`.
 """
-function test_lower_bound_already_set()
-    model = MOI.Utilities.Model{Float64}()
-    bridged = MOI.Bridges.Constraint.SemiToBinary{Float64}(model)
-    x = MOI.add_variable(bridged)
-    MOI.add_constraint(bridged, x, MOI.Semicontinuous(1.0, 2.0))
-    @test_broken(
-        MOI.add_constraint(bridged, x, MOI.GreaterThan(0.0)) === nothing,
-    )
+function test_bounds_already_set_final_touch()
+    for set in [MOI.GreaterThan(0.0), MOI.EqualTo(1.4), MOI.Interval(0.0, 2.0)]
+        model = MOI.Utilities.Model{Float64}()
+        bridged = MOI.Bridges.Constraint.SemiToBinary{Float64}(model)
+        x = MOI.add_variable(bridged)
+        semi_set = MOI.Semicontinuous(1.0, 2.0)
+        MOI.add_constraint(bridged, x, semi_set)
+        MOI.add_constraint(bridged, x, set)
+        @test_throws(
+            MOI.LowerBoundAlreadySet{typeof(semi_set),typeof(set)}(x),
+            MOI.Bridges.final_touch(bridged),
+        )
+    end
+    for set in [MOI.LessThan(2.0)]
+        model = MOI.Utilities.Model{Float64}()
+        bridged = MOI.Bridges.Constraint.SemiToBinary{Float64}(model)
+        x = MOI.add_variable(bridged)
+        semi_set = MOI.Semicontinuous(1.0, 2.0)
+        MOI.add_constraint(bridged, x, semi_set)
+        MOI.add_constraint(bridged, x, set)
+        @test_throws(
+            MOI.UpperBoundAlreadySet{typeof(semi_set),typeof(set)}(x),
+            MOI.Bridges.final_touch(bridged),
+        )
+    end
     return
 end
 
