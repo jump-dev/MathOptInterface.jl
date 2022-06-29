@@ -96,6 +96,46 @@ function test_runtests_VectorAffineFunction()
     return
 end
 
+function test_runtests_error_variable()
+    inner = MOI.Utilities.Model{Int}()
+    model = MOI.Bridges.Constraint.BinPackingToMILP{Int}(inner)
+    x = MOI.add_variables(model, 3)
+    f = MOI.VectorOfVariables(x)
+    MOI.add_constraint(model, f, MOI.BinPacking(3, [1, 2, 3]))
+    BT = MOI.Bridges.Constraint.BinPackingToMILPBridge{
+        Int,
+        MOI.VectorOfVariables,
+    }
+    @test_throws(
+        ErrorException(
+            "Unable to use $BT because an element in the " *
+            "function has a non-finite domain: $(x[1])",
+        ),
+        MOI.Bridges.final_touch(model),
+    )
+    return
+end
+
+function test_runtests_error_affine()
+    inner = MOI.Utilities.Model{Int}()
+    model = MOI.Bridges.Constraint.BinPackingToMILP{Int}(inner)
+    x = MOI.add_variables(model, 2)
+    f = MOI.Utilities.operate(vcat, Int, 2, 1 * x[1], x[2])
+    MOI.add_constraint(model, f, MOI.BinPacking(3, [1, 2, 3]))
+    BT = MOI.Bridges.Constraint.BinPackingToMILPBridge{
+        Int,
+        MOI.VectorAffineFunction{Int},
+    }
+    @test_throws(
+        ErrorException(
+            "Unable to use $BT because an element in the " *
+            "function has a non-finite domain: $(1 * x[1])",
+        ),
+        MOI.Bridges.final_touch(model),
+    )
+    return
+end
+
 end  # module
 
 TestConstraintBinPacking.runtests()

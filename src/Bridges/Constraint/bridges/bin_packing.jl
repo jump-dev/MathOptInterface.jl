@@ -230,8 +230,8 @@ function MOI.Bridges.final_touch(
         ret = _get_bounds(bridge, model, bounds, x)
         if ret === nothing
             error(
-                "Unable to use CountDistinctToMILPBridge because element $i " *
-                "in the function has a non-finite domain: $x",
+                "Unable to use $(typeof(bridge)) because an element in the " *
+                "function has a non-finite domain: $x",
             )
         end
         unit_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
@@ -274,4 +274,3 @@ function MOI.Bridges.final_touch(
     end
     return
 end
-
