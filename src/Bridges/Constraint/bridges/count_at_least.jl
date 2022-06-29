@@ -47,7 +47,7 @@ mutable struct CountAtLeastToCountBelongsBridge{
             f,
             s,
             MOI.VariableIndex[],
-            MOI.ConstraintIndex{F,MOI.CountBelongs}[],
+            MOI.ConstraintIndex{typeof(f),MOI.CountBelongs}[],
         )
     end
 end
