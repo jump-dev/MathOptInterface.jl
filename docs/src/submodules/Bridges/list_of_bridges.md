@@ -56,6 +56,7 @@ Bridges.Constraint.BinPackingToMILPBridge
 Bridges.Constraint.CountAtLeastToCountBelongsBridge
 Bridges.Constraint.CountBelongsToMILPBridge
 Bridges.Constraint.CountDistinctToMILPBridge
+Bridges.Constraint.CountGreaterThanToMILPBridge
 Bridges.Constraint.TableToMILPBridge
 ```
 

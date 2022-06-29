@@ -207,6 +207,8 @@ function test_cpsat_CountGreaterThan(
     c, _ = MOI.add_constrained_variable(model, MOI.Integer())
     y, _ = MOI.add_constrained_variable(model, MOI.Integer())
     x = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+    MOI.add_constraint.(model, x, MOI.Interval(T(0), T(4)))
+    MOI.add_constraint(model, y, MOI.Interval(T(0), T(4)))
     MOI.add_constraint(
         model,
         MOI.VectorOfVariables([c; y; x]),
