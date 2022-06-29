@@ -274,36 +274,6 @@ function test_bounds_already_set_final_touch()
     return
 end
 
-"""
-Test an error is thrown if a bound exists prior to adding the semi-xxx
-constraint.
-"""
-function test_bounds_already_set()
-    for set in [MOI.GreaterThan(0.0), MOI.EqualTo(1.4), MOI.Interval(0.0, 2.0)]
-        model = MOI.Utilities.Model{Float64}()
-        bridged = MOI.Bridges.Constraint.SemiToBinary{Float64}(model)
-        x = MOI.add_variable(bridged)
-        semi_set = MOI.Semicontinuous(1.0, 2.0)
-        MOI.add_constraint(bridged, x, set)
-        @test_throws(
-            MOI.LowerBoundAlreadySet{typeof(set),typeof(semi_set)}(x),
-            MOI.add_constraint(bridged, x, semi_set),
-        )
-    end
-    for set in [MOI.LessThan(2.0)]
-        model = MOI.Utilities.Model{Float64}()
-        bridged = MOI.Bridges.Constraint.SemiToBinary{Float64}(model)
-        x = MOI.add_variable(bridged)
-        semi_set = MOI.Semicontinuous(1.0, 2.0)
-        MOI.add_constraint(bridged, x, set)
-        @test_throws(
-            MOI.UpperBoundAlreadySet{typeof(set),typeof(semi_set)}(x),
-            MOI.add_constraint(bridged, x, semi_set)
-        )
-    end
-    return
-end
-
 function test_runtests()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.SemiToBinaryBridge,
