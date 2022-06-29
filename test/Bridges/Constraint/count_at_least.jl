@@ -30,7 +30,8 @@ function test_runtests_VectorOfVariables()
         [a, b, b, c] in CountAtLeast(1, [2, 2], Set([3]))
         a in Interval(1.0, 3.0)
         b in Interval(1.0, 3.0)
-        c in Interval(1.0, 3.0)
+        c >= 1.0
+        c <= 3.0
         """,
         """
         variables: a, b, c, y1, y2
@@ -40,7 +41,8 @@ function test_runtests_VectorOfVariables()
         y2 >= 1.0
         a in Interval(1.0, 3.0)
         b in Interval(1.0, 3.0)
-        c in Interval(1.0, 3.0)
+        c >= 1.0
+        c <= 3.0
         """,
     )
     return
