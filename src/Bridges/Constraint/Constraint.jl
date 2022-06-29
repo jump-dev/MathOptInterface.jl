@@ -97,9 +97,7 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, ZeroOneBridge{T})
     # Constraint programming bridges
     MOI.Bridges.add_bridge(bridged_model, AllDifferentToCountDistinctBridge{T})
-    # TODO(odow): this reformulation assumes the bins are numbered 1..N. We
-    # should fix this to use the variable bounds before adding automatically.
-    # MOI.Bridges.add_bridge(bridged_model, BinPackingToMILPBridge{T})
+    MOI.Bridges.add_bridge(bridged_model, BinPackingToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, CountAtLeastToCountBelongsBridge{T})
     MOI.Bridges.add_bridge(bridged_model, CountBelongsToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, CountDistinctToMILPBridge{T})
