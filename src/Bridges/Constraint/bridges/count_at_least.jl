@@ -11,7 +11,7 @@
 
   * ``x \\in \\textsf{CountAtLeast}(n, d, set)`` to
     ``(n_i, x_{d_i}) \\in \\textsf{CountBelongs}(1+d)``
-    and ``\\sum\\limits n_i \\ge n``
+    and ``n_i \\ge n``
 
 ## Source node
 
@@ -27,7 +27,7 @@ where `F` is [`MOI.VectorOfVariables`](@ref) or
 `CountAtLeastToCountBelongsBridge` creates:
 
   * `F` in [`MOI.CountBelongs`](@ref)
-  * [`MOI.ScalarAffineFunction{T}`](@ref) in [`MOI.GreaterThan{T}`](@ref)
+  * [`MOI.VariableIndex`](@ref) in [`MOI.GreaterThan{T}`](@ref)
 """
 mutable struct CountAtLeastToCountBelongsBridge{
     T,
@@ -37,7 +37,6 @@ mutable struct CountAtLeastToCountBelongsBridge{
     s::MOI.CountAtLeast
     variables::Vector{MOI.VariableIndex}
     ci::Vector{MOI.ConstraintIndex{F,MOI.CountBelongs}}
-    count::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}}
 end
 
 const CountAtLeastToCountBelongs{T,OT<:MOI.ModelLike} =
@@ -52,13 +51,11 @@ function bridge_constraint(
     x = collect(MOI.Utilities.eachscalar(f))
     variables = MOI.VariableIndex[]
     cis = MOI.ConstraintIndex{F,MOI.CountBelongs}[]
-    count_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
     offset = 0
     for p in s.partitions
         indices = offset .+ (1:p)
-        y = MOI.add_variable(model)
+        y, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(T(s.n)))
         push!(variables, y)
-        push!(count_f.terms, MOI.ScalarAffineTerm(one(T), y))
         ci = MOI.add_constraint(
             model,
             MOI.Utilities.operate(vcat, T, y, x[indices]...),
@@ -67,8 +64,7 @@ function bridge_constraint(
         push!(cis, ci)
         offset += p
     end
-    count = MOI.add_constraint(model, count_f, MOI.GreaterThan(T(s.n)))
-    return CountAtLeastToCountBelongsBridge{T,F}(f, s, variables, cis, count)
+    return CountAtLeastToCountBelongsBridge{T,F}(f, s, variables, cis)
 end
 
 function MOI.supports_constraint(
@@ -80,18 +76,15 @@ function MOI.supports_constraint(
 end
 
 function MOI.Bridges.added_constrained_variable_types(
-    ::Type{<:CountAtLeastToCountBelongsBridge},
-)
-    return Tuple{Type}[]
+    ::Type{<:CountAtLeastToCountBelongsBridge{T}},
+) where {T}
+    return Tuple{Type}[(MOI.GreaterThan{T},)]
 end
 
 function MOI.Bridges.added_constraint_types(
     ::Type{CountAtLeastToCountBelongsBridge{T,F}},
 ) where {T,F}
-    return Tuple{Type,Type}[
-        (F, MOI.CountBelongs),
-        (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}),
-    ]
+    return Tuple{Type,Type}[(F, MOI.CountBelongs)]
 end
 
 function concrete_bridge_type(
@@ -125,7 +118,6 @@ function MOI.delete(
     for ci in bridge.ci
         MOI.delete(model, ci)
     end
-    MOI.delete(model, bridge.count)
     for x in bridge.variables
         MOI.delete(model, x)
     end
@@ -161,18 +153,18 @@ function MOI.get(
 end
 
 function MOI.get(
-    ::CountAtLeastToCountBelongsBridge{T,F},
-    ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}},
-)::Int64 where {T,F}
-    return 1
+    bridge::CountAtLeastToCountBelongsBridge{T},
+    ::MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}},
+)::Int64 where {T}
+    return length(bridge.variables)
 end
 
 function MOI.get(
-    bridge::CountAtLeastToCountBelongsBridge{T,F},
-    ::MOI.ListOfConstraintIndices{
-        MOI.ScalarAffineFunction{T},
-        MOI.GreaterThan{T},
-    },
-) where {T,F}
-    return [bridge.count]
+    bridge::CountAtLeastToCountBelongsBridge{T},
+    ::MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.GreaterThan{T}},
+) where {T}
+    return [
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{T}}(x.value) for
+        x in bridge.variables
+    ]
 end
