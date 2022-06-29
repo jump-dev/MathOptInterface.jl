@@ -75,19 +75,6 @@ function bridge_constraint(
     f::MOI.VariableIndex,
     s::S,
 ) where {T<:Real,S<:Union{MOI.Semicontinuous{T},MOI.Semiinteger{T}}}
-    F = MOI.VariableIndex
-    if MOI.is_valid(model, MOI.ConstraintIndex{F,MOI.GreaterThan{T}}(f.value))
-        throw(MOI.LowerBoundAlreadySet{MOI.GreaterThan{T},S}(f))
-    end
-    if MOI.is_valid(model, MOI.ConstraintIndex{F,MOI.LessThan{T}}(f.value))
-        throw(MOI.UpperBoundAlreadySet{MOI.LessThan{T},S}(f))
-    end
-    if MOI.is_valid(model, MOI.ConstraintIndex{F,MOI.EqualTo{T}}(f.value))
-        throw(MOI.LowerBoundAlreadySet{MOI.EqualTo{T},S}(f))
-    end
-    if MOI.is_valid(model, MOI.ConstraintIndex{F,MOI.Interval{T}}(f.value))
-        throw(MOI.LowerBoundAlreadySet{MOI.Interval{T},S}(f))
-    end
     binary, binary_con = MOI.add_constrained_variable(model, MOI.ZeroOne())
     # var - LB * bin >= 0
     lb = MOI.Utilities.operate(*, T, -s.lower, binary)
@@ -339,26 +326,4 @@ function MOI.get(
     },
 ) where {T,S}
     return [b.lower_bound_index]
-end
-
-MOI.Bridges.needs_final_touch(b::SemiToBinaryBridge) = true
-
-function MOI.Bridges.final_touch(
-    b::SemiToBinaryBridge{T,S},
-    model::MOI.ModelLike,
-) where {T,S}
-    F, f = MOI.VariableIndex, b.variable
-    if MOI.is_valid(model, MOI.ConstraintIndex{F,MOI.GreaterThan{T}}(f.value))
-        throw(MOI.LowerBoundAlreadySet{S,MOI.GreaterThan{T}}(f))
-    end
-    if MOI.is_valid(model, MOI.ConstraintIndex{F,MOI.LessThan{T}}(f.value))
-        throw(MOI.UpperBoundAlreadySet{S,MOI.LessThan{T}}(f))
-    end
-    if MOI.is_valid(model, MOI.ConstraintIndex{F,MOI.EqualTo{T}}(f.value))
-        throw(MOI.LowerBoundAlreadySet{S,MOI.EqualTo{T}}(f))
-    end
-    if MOI.is_valid(model, MOI.ConstraintIndex{F,MOI.Interval{T}}(f.value))
-        throw(MOI.LowerBoundAlreadySet{S,MOI.Interval{T}}(f))
-    end
-    return
 end
