@@ -37,6 +37,19 @@ mutable struct CountAtLeastToCountBelongsBridge{
     s::MOI.CountAtLeast
     variables::Vector{MOI.VariableIndex}
     ci::Vector{MOI.ConstraintIndex{F,MOI.CountBelongs}}
+    # We need an explicit inner constructor to avoid the unbound type parameter
+    # T (it doesn't appear in the fields).
+    function CountAtLeastToCountBelongsBridge{T}(
+        f::Union{MOI.VectorOfVariables,MOI.VectorAffineFunction{T}},
+        s::MOI.CountAtLeast,
+    ) where {T}
+        return new{T,typeof(f)}(
+            f,
+            s,
+            MOI.VariableIndex[],
+            MOI.ConstraintIndex{F,MOI.CountBelongs}[],
+        )
+    end
 end
 
 const CountAtLeastToCountBelongs{T,OT<:MOI.ModelLike} =
@@ -49,22 +62,21 @@ function bridge_constraint(
     s::MOI.CountAtLeast,
 ) where {T,F<:Union{MOI.VectorOfVariables,MOI.VectorAffineFunction{T}}}
     x = collect(MOI.Utilities.eachscalar(f))
-    variables = MOI.VariableIndex[]
-    cis = MOI.ConstraintIndex{F,MOI.CountBelongs}[]
+    bridge = CountAtLeastToCountBelongsBridge{T}(f, s)
     offset = 0
     for p in s.partitions
         indices = offset .+ (1:p)
         y, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(T(s.n)))
-        push!(variables, y)
+        push!(bridge.variables, y)
         ci = MOI.add_constraint(
             model,
             MOI.Utilities.operate(vcat, T, y, x[indices]...),
             MOI.CountBelongs(1 + p, s.set),
         )
-        push!(cis, ci)
+        push!(bridge.ci, ci)
         offset += p
     end
-    return CountAtLeastToCountBelongsBridge{T,F}(f, s, variables, cis)
+    return bridge
 end
 
 function MOI.supports_constraint(
