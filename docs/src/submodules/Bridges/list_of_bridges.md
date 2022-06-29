@@ -53,6 +53,7 @@ Bridges.Constraint.SemiToBinaryBridge
 Bridges.Constraint.ZeroOneBridge
 Bridges.Constraint.AllDifferentToCountDistinctBridge
 Bridges.Constraint.BinPackingToMILPBridge
+Bridges.Constraint.CircuitToMILPBridge
 Bridges.Constraint.CountAtLeastToCountBelongsBridge
 Bridges.Constraint.CountBelongsToMILPBridge
 Bridges.Constraint.CountDistinctToMILPBridge

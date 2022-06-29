@@ -20,6 +20,7 @@ include("single_bridge_optimizer.jl")
 
 include("bridges/all_different.jl")
 include("bridges/bin_packing.jl")
+include("bridges/circuit.jl")
 include("bridges/count_at_least.jl")
 include("bridges/count_belongs.jl")
 include("bridges/count_distinct.jl")
@@ -99,6 +100,7 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     # Constraint programming bridges
     MOI.Bridges.add_bridge(bridged_model, AllDifferentToCountDistinctBridge{T})
     MOI.Bridges.add_bridge(bridged_model, BinPackingToMILPBridge{T})
+    MOI.Bridges.add_bridge(bridged_model, CircuitToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, CountAtLeastToCountBelongsBridge{T})
     MOI.Bridges.add_bridge(bridged_model, CountBelongsToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, CountDistinctToMILPBridge{T})
