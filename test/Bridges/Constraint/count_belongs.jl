@@ -26,14 +26,15 @@ function test_runtests_VectorOfVariables()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.CountBelongsToMILPBridge,
         """
-        variables: n, x, y
+        variables: a, n, x, y
         [n, x, y] in CountBelongs(3, Set([2, 4]))
         x in Interval(1.0, 2.0)
         y >= 2.0
         y <= 3.0
+        a in ZeroOne()
         """,
         """
-        variables: n, x, y, z_x1, z_x2, z_y2, z_y3
+        variables: a, n, x, y, z_x1, z_x2, z_y2, z_y3
         1.0 * x + -1.0 * z_x1 + -2.0 * z_x2 == 0.0
         1.0 * y + -2.0 * z_y2 + -3.0 * z_y3 == 0.0
         z_x1 + z_x2 == 1.0
@@ -46,6 +47,7 @@ function test_runtests_VectorOfVariables()
         z_x2 in ZeroOne()
         z_y2 in ZeroOne()
         z_y3 in ZeroOne()
+        a in ZeroOne()
         """,
     )
     return

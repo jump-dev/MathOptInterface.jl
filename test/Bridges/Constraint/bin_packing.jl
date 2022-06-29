@@ -26,15 +26,16 @@ function test_runtests_VectorOfVariables()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.BinPackingToMILPBridge,
         """
-        variables: x, y, z
+        variables: a, x, y, z
         [x, y, z] in BinPacking(3.0, [1.1, 1.9, 2.8])
         x in Interval(1.0, 3.0)
         y >= 2.0
         y <= 3.0
         z == 3.0
+        a in ZeroOne()
         """,
         """
-        variables: x, y, z, x1, x2, x3, y2, y3, z3
+        variables: a, x, y, z, x1, x2, x3, y2, y3, z3
         1.1 * x1 <= 3.0
         1.1 * x2 + 1.9 * y2 <= 3.0
         1.1 * x3 + 1.9 * y3 + 2.8 * z3 <= 3.0
@@ -54,6 +55,7 @@ function test_runtests_VectorOfVariables()
         y >= 2.0
         y <= 3.0
         z == 3.0
+        a in ZeroOne()
         """,
     )
     return
