@@ -22,34 +22,114 @@ function runtests()
     return
 end
 
-function test_runtests()
+function test_runtests_VectorOfVariables()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.BinPackingToMILPBridge,
         """
         variables: x, y, z
-        [x, y, z] in BinPacking(3.0, [1.0, 2.0, 3.0])
+        [x, y, z] in BinPacking(3.0, [1.1, 1.9, 2.8])
+        x in Interval(1.0, 3.0)
+        y >= 2.0
+        y <= 3.0
+        z == 3.0
         """,
         """
-        variables: x, y, z, a11, a12, a13, a21, a22, a23, a31, a32, a33
-        1.0 * a11 + 2.0 * a12 + 3.0 * a13 <= 3.0
-        1.0 * a21 + 2.0 * a22 + 3.0 * a23 <= 3.0
-        1.0 * a31 + 2.0 * a32 + 3.0 * a33 <= 3.0
-        a11 + a21 + a31 == 1.0
-        a12 + a22 + a32 == 1.0
-        a13 + a23 + a33 == 1.0
-        1.0 * a11 + 2.0 * a21 + 3.0 * a31 + -1.0 * x == 0.0
-        1.0 * a12 + 2.0 * a22 + 3.0 * a32 + -1.0 * y == 0.0
-        1.0 * a13 + 2.0 * a23 + 3.0 * a33 + -1.0 * z == 0.0
-        a11 in ZeroOne()
-        a12 in ZeroOne()
-        a13 in ZeroOne()
-        a21 in ZeroOne()
-        a22 in ZeroOne()
-        a23 in ZeroOne()
-        a31 in ZeroOne()
-        a32 in ZeroOne()
-        a33 in ZeroOne()
+        variables: x, y, z, x1, x2, x3, y2, y3, z3
+        1.1 * x1 <= 3.0
+        1.1 * x2 + 1.9 * y2 <= 3.0
+        1.1 * x3 + 1.9 * y3 + 2.8 * z3 <= 3.0
+        1.0 * x + -1.0 * x1 + -2.0 * x2 + -3.0 * x3 == 0.0
+        1.0 * y + -2.0 * y2 + -3.0 * y3 == 0.0
+        1.0 * z + -3.0 * z3 == 0.0
+        1.0 * x1 + 1.0 * x2 + 1.0 * x3 == 1.0
+        1.0 * y2 + 1.0 * y3 == 1.0
+        1.0 * z3 == 1.0
+        x1 in ZeroOne()
+        x2 in ZeroOne()
+        x3 in ZeroOne()
+        y2 in ZeroOne()
+        y3 in ZeroOne()
+        z3 in ZeroOne()
+        x in Interval(1.0, 3.0)
+        y >= 2.0
+        y <= 3.0
+        z == 3.0
         """,
+    )
+    return
+end
+
+function test_runtests_VectorAffineFunction()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.BinPackingToMILPBridge,
+        """
+        variables: x, y, z
+        [1.0 * x + 1.0, 1.0 * y, z] in BinPacking(3.0, [1.1, 1.9, 2.8])
+        x in Interval(1.0, 3.0)
+        y >= 2.0
+        y <= 3.0
+        z == 3.0
+        """,
+        """
+        variables: x, y, z, x2, x3, x4, y2, y3, z3
+        1.1 * x2 + 1.9 * y2 <= 3.0
+        1.1 * x3 + 1.9 * y3 + 2.8 * z3 <= 3.0
+        1.1 * x4 <= 3.0
+        1.0 * x + -2.0 * x2 + -3.0 * x3 + -4.0 * x4 == -1.0
+        1.0 * y + -2.0 * y2 + -3.0 * y3 == 0.0
+        1.0 * z + -3.0 * z3 == 0.0
+        1.0 * x2 + 1.0 * x3 + 1.0 * x4 == 1.0
+        1.0 * y2 + 1.0 * y3 == 1.0
+        1.0 * z3 == 1.0
+        x2 in ZeroOne()
+        x3 in ZeroOne()
+        x4 in ZeroOne()
+        y2 in ZeroOne()
+        y3 in ZeroOne()
+        z3 in ZeroOne()
+        x in Interval(1.0, 3.0)
+        y >= 2.0
+        y <= 3.0
+        z == 3.0
+        """,
+    )
+    return
+end
+
+function test_runtests_error_variable()
+    inner = MOI.Utilities.Model{Int}()
+    model = MOI.Bridges.Constraint.BinPackingToMILP{Int}(inner)
+    x = MOI.add_variables(model, 3)
+    f = MOI.VectorOfVariables(x)
+    MOI.add_constraint(model, f, MOI.BinPacking(3, [1, 2, 3]))
+    BT =
+        MOI.Bridges.Constraint.BinPackingToMILPBridge{Int,MOI.VectorOfVariables}
+    @test_throws(
+        ErrorException(
+            "Unable to use $BT because an element in the " *
+            "function has a non-finite domain: $(x[1])",
+        ),
+        MOI.Bridges.final_touch(model),
+    )
+    return
+end
+
+function test_runtests_error_affine()
+    inner = MOI.Utilities.Model{Int}()
+    model = MOI.Bridges.Constraint.BinPackingToMILP{Int}(inner)
+    x = MOI.add_variables(model, 2)
+    f = MOI.Utilities.operate(vcat, Int, 2, 1 * x[1], x[2])
+    MOI.add_constraint(model, f, MOI.BinPacking(3, [1, 2, 3]))
+    BT = MOI.Bridges.Constraint.BinPackingToMILPBridge{
+        Int,
+        MOI.VectorAffineFunction{Int},
+    }
+    @test_throws(
+        ErrorException(
+            "Unable to use $BT because an element in the " *
+            "function has a non-finite domain: $(1 * x[1])",
+        ),
+        MOI.Bridges.final_touch(model),
     )
     return
 end
