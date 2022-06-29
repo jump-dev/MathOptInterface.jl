@@ -65,15 +65,16 @@ function test_runtests_VectorAffineFunction()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.CountGreaterThanToMILPBridge,
         """
-        variables: c, y, a, b
+        variables: z, c, y, a, b
         [2.0, y, a, b] in CountGreaterThan(4)
         a in Interval(1.0, 3.0)
         b in Interval(1.0, 3.0)
         y >= 1.0
         y <= 2.0
+        z in ZeroOne()
         """,
         """
-        variables: c, y, a, b, y1, y2, a1, a2, a3, b1, b2, b3
+        variables: z, c, y, a, b, y1, y2, a1, a2, a3, b1, b2, b3
         y + -1.0 * y1 + -2.0 * y2 == 0.0
         y1 + y2 == 1.0
         a + -1.0 * a1 + -2.0 * a2 + -3.0 * a3 == 0.0
@@ -94,7 +95,7 @@ function test_runtests_VectorAffineFunction()
         b in Interval(1.0, 3.0)
         y >= 1.0
         y <= 2.0
-
+        z in ZeroOne()
         """,
     )
     return
