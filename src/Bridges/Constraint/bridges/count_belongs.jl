@@ -30,7 +30,7 @@ x_i - \\sum\\limits_{j\\in S_i} j \\cdot z_{ij} = 0 & \\;\\; \\forall i \\in 1\\
 Finally, ``n`` is constrained to be the number of ``z_{ij}`` elements that are
 in ``\\mathcal{S}``:
 ```math
-n - \\sum\\limits_{j \\in \\mathcal{S}} y_{j} = 0
+n - \\sum\\limits_{i\\in 1\\ldots d, j \\in \\mathcal{S}} z_{ij} = 0
 ```
 
 ## Source node

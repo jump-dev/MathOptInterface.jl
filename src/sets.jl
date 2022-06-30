@@ -1163,7 +1163,7 @@ end
 """
     BinPacking(c::T, w::Vector{T}) where {T}
 
-The set ``\\{x \\in \\mathbb{R}^d\\}`` where `d = length(w)`, such that each
+The set ``\\{x \\in \\mathbb{Z}^d\\}`` where `d = length(w)`, such that each
 item `i` in `1:d` of weight `w[i]` is put into bin `x[i]`, and the total weight
 of each bin does not exceed `c`.
 
@@ -1225,7 +1225,8 @@ Graphs with multiple independent circuits, such as `[2, 1, 3]` and
 
 ## Also known as
 
-This constraint is called `circuit` in MiniZinc.
+This constraint is called `circuit` in MiniZinc, and it is equivalent to forming
+a (potentially sub-optimal) tour in the travelling salesperson problem.
 
 ## Example
 
@@ -1417,8 +1418,8 @@ end
 """
     Cumulative(dimension::Int)
 
-The set ``\\{(s, d, r, b) \\in \\mathbb{R}^{3n+1}\\}``, representing the
-`cumulative`` global constraint, where
+The set ``\\{(s, d, r, b) \\in \\mathbb{Z}^{3n+1}\\}``, representing the
+`cumulative` global constraint, where
 `n == length(s) == length(r) == length(b)` and `dimension = 3n + 1`.
 
 `Cumulative` requires that a set of tasks given by start times ``s``, durations
@@ -1456,7 +1457,7 @@ end
 Given a graph comprised of a set of nodes `1..N` and a set of arcs `1..E`
 represented by an edge from node `from[i]` to node `to[i]`, `Path` constrains
 the set
-``(s, t, ns, es) \\in (1..N)\\times(1..N)\\times\\{0,1\\}^N\\times\\{0,1\\}^E``,
+``(s, t, ns, es) \\in (1..N)\\times(1..E)\\times\\{0,1\\}^N\\times\\{0,1\\}^E``,
 to form subgraph that is a path from node `s` to node `t`, where node `n` is in
 the path if `ns[n]` is `1`, and edge `e` is in the path if `es[e]` is `1`.
 
