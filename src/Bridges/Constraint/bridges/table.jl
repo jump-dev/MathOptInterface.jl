@@ -12,9 +12,9 @@
   * ``x \\in Table(t)`` into
     ```math
     \\begin{aligned}
-    z_{j} \\in \\{0, 1\\}                     & \\forall i, j \\\\
+    z_{j} \\in \\{0, 1\\}                     & \\quad \\forall i, j \\\\
     \\sum\\limits_{j=1}^n z_{j} = 1                           \\\\
-    \\sum\\limits_{j=1}^n t_{ij} z_{j} == x_i & \\forall i
+    \\sum\\limits_{j=1}^n t_{ij} z_{j} = x_i & \\quad \\forall i
     \\end{aligned}
     ```
 
@@ -30,7 +30,6 @@
 
   * [`MOI.VariableIndex`](@ref) in [`MOI.ZeroOne`](@ref)
   * [`MOI.ScalarAffineFunction{T}`](@ref) in [`MOI.EqualTo{T}`](@ref)
-  * [`MOI.ScalarAffineFunction{T}`](@ref) in [`MOI.LessThan{T}`](@ref)
 """
 struct TableToMILPBridge{T,F<:MOI.AbstractVectorFunction} <: AbstractBridge
     z::Vector{MOI.VariableIndex}

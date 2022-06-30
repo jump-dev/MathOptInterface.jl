@@ -9,15 +9,27 @@
 
 `BinPackingToMILPBridge` implements the following reformulation:
 
-  * ``x \\in BinPacking(c, w)`` into
-    ```math
-    \\begin{aligned}
-    z_{ij} \\in \\{0, 1\\}              & \\forall i, j \\\\
-    \\sum\\limits_{j} z_{ij} = 1        & \\forall i \\\\
-    \\sum\\limits_{i} w_i z_{ij} \\le c & \\forall j \\\\
-    \\sum\\limits_{j} j z_{ij} == x_i   & \\forall i
-    \\end{aligned}
-    ```
+  * ``x \\in BinPacking(c, w)`` into a mixed-integer linear program.
+
+## Reformulation
+
+The reformulation is non-trivial, and it depends on the finite domain of each
+variable ``x_i``, which we as define ``S_i = \\{l_i,\\ldots,u_i\\}``.
+
+First, we introduce new binary variables ``z_{ij}``, which are ``1`` if variable
+``x_i`` takes the value ``j`` in the optimal solution and ``0`` otherwise:
+```math
+\\begin{aligned}
+z_{ij} \\in \\{0, 1\\}                              & \\;\\; \\forall i \\in 1\\ldots d, j \\in S_i  \\\\
+x_i - \\sum\\limits_{j\\in S_i} j \\cdot z_{ij} = 0 & \\;\\; \\forall i \\in 1\\ldots d              \\\\
+\\sum\\limits_{j\\in S_i} z_{ij} = 1                & \\;\\; \\forall i \\in 1\\ldots d              \\\\
+\\end{aligned}
+```
+
+Then, we add the capacity constraint for all possible bins ``j``:
+```math
+\\sum\\limits_{i} w_i z_{ij} \\le c \\forall j \\in \\bigcup_{i=1,\\ldots,d} S_i
+```
 
 ## Source node
 

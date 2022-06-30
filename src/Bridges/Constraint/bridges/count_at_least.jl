@@ -9,9 +9,9 @@
 
 `CountAtLeastToCountBelongsBridge` implements the following reformulation:
 
-  * ``x \\in \\textsf{CountAtLeast}(n, d, set)`` to
-    ``(n_i, x_{d_i}) \\in \\textsf{CountBelongs}(1+d)``
-    and ``n_i \\ge n``
+  * ``x \\in \\textsf{CountAtLeast}(n, d, \\mathcal{S})`` to
+    ``(n_i, x_{d_i}) \\in \\textsf{CountBelongs}(1+d, \\mathcal{S})``
+    and ``n_i \\ge n`` for all ``i``.
 
 ## Source node
 
