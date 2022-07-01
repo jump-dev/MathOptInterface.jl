@@ -312,7 +312,7 @@ end
 
 """
     _extract_reverse_pass(
-        g::Vector{T},
+        g::AbstractVector{T},
         d::NLPEvaluator,
         f::Union{_FunctionStorage,_SubexpressionStorage},
     ) where {T}
@@ -321,7 +321,7 @@ Fill the gradient vector `g` with the values from the reverse pass. Assumes you
 have already called `_reverse_eval_all(d, x)`.
 """
 function _extract_reverse_pass(
-    g::Vector{T},
+    g::AbstractVector{T},
     d::NLPEvaluator,
     f::Union{_FunctionStorage,_SubexpressionStorage},
 ) where {T}

@@ -850,6 +850,35 @@ function test_gradient_nested_subexpressions()
     return
 end
 
+function test_gradient_view()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    model = Nonlinear.Model()
+    Nonlinear.set_objective(model, :(($x - 1)^2 + 4 * ($y - $x^2)^2))
+    evaluator = Nonlinear.Evaluator(
+        model,
+        Nonlinear.SparseReverseMode(),
+        MOI.VariableIndex[x, y],
+    )
+    MOI.initialize(evaluator, [:Grad])
+    X_input = [0.0; 1.0; 2.0; 3.0]
+    for idx in [1:2, 3:4, [1, 3], 4:-2:2]
+      x_input = view(X_input, idx)
+      x_vec = Vector(x_input)
+      ∇f = fill(Inf, 2)
+      ∇fv = fill(Inf, 2)
+      MOI.eval_objective_gradient(evaluator, ∇f, x_input)
+      MOI.eval_objective_gradient(evaluator, ∇fv, x_vec)
+      @test ∇f == ∇fv
+      ∇f = fill(Inf, 2)
+      ∇fv = view(fill(Inf, 4), idx)
+      MOI.eval_objective_gradient(evaluator, ∇f, x_input)
+      MOI.eval_objective_gradient(evaluator, ∇fv, x_input)
+      @test ∇f == ∇fv
+    end
+    return
+end
+
 function _dense_hessian(hessian_sparsity, V, n)
     I = [i for (i, _) in hessian_sparsity]
     J = [j for (_, j) in hessian_sparsity]
