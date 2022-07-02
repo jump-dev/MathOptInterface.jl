@@ -1,5 +1,28 @@
 # Release notes
 
+## v1.6.0 (July 2, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.6.0).
+
+### New features
+
+ - Added `Bridges.needs_final_touch` and `Bridges.final_touch`
+ - Added new bridges from constraint programming sets to mixed-integer linear
+   programs:
+   - `AllDifferentToCountDistinctBridge`
+   - `CountAtLeastToCountBelongsBridge`
+   - `CountBelongsToMILPBridge`
+   - `CountDistinctToMILPBridge`
+   - `CountGreaterThanToMILPBridge`
+   - `CircuitToMILPBridge`
+
+### Bug fixes
+
+ - Relax an instance of `::Vector` to `::AbstractVector` in `MOI.Nonlinear`
+ - Fix `BinPackingToMILPBridge` to respect variable bounds
+ - Fix `SemiToBinaryBridge` to throw error if other bounds are set
+
 ## v1.5.0 (June 27, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
