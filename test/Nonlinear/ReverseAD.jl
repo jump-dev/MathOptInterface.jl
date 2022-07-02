@@ -863,18 +863,18 @@ function test_gradient_view()
     MOI.initialize(evaluator, [:Grad])
     X_input = [0.0; 1.0; 2.0; 3.0]
     for idx in [1:2, 3:4, [1, 3], 4:-2:2]
-      x_input = view(X_input, idx)
-      x_vec = Vector(x_input)
-      ∇f = fill(Inf, 2)
-      ∇fv = fill(Inf, 2)
-      MOI.eval_objective_gradient(evaluator, ∇f, x_input)
-      MOI.eval_objective_gradient(evaluator, ∇fv, x_vec)
-      @test ∇f == ∇fv
-      ∇f = fill(Inf, 2)
-      ∇fv = view(fill(Inf, 4), idx)
-      MOI.eval_objective_gradient(evaluator, ∇f, x_input)
-      MOI.eval_objective_gradient(evaluator, ∇fv, x_input)
-      @test ∇f == ∇fv
+        x_input = view(X_input, idx)
+        x_vec = Vector(x_input)
+        ∇f = fill(Inf, 2)
+        ∇fv = fill(Inf, 2)
+        MOI.eval_objective_gradient(evaluator, ∇f, x_input)
+        MOI.eval_objective_gradient(evaluator, ∇fv, x_vec)
+        @test ∇f == ∇fv
+        ∇f = fill(Inf, 2)
+        ∇fv = view(fill(Inf, 4), idx)
+        MOI.eval_objective_gradient(evaluator, ∇f, x_input)
+        MOI.eval_objective_gradient(evaluator, ∇fv, x_input)
+        @test ∇f == ∇fv
     end
     return
 end
