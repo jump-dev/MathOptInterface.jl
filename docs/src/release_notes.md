@@ -1,6 +1,6 @@
 # Release notes
 
-## v1.6.0 (July 1, 2022)
+## v1.6.0 (July 2, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
 see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.6.0).
@@ -19,6 +19,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 ### Bug fixes
 
+ - Relax an instance of `::Vector` to `::AbstractVector` in `MOI.Nonlinear`
  - Fix `BinPackingToMILPBridge` to respect variable bounds
  - Fix `SemiToBinaryBridge` to throw error if other bounds are set
 
