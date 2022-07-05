@@ -216,13 +216,16 @@ function MOI.eval_constraint_jacobian(d::NLPEvaluator, J, x)
 end
 
 function MOI.eval_constraint_jacobian_product(d::NLPEvaluator, y, x, w)
+    _reverse_mode(d, x)
     fill!(y, 0.0)
-    J_struct = MOI.jacobian_structure(d)
-    nnz = length(J_struct)
-    J = zeros(nnz)
-    MOI.eval_constraint_jacobian(d, J, x)
-    for (k, (i, j)) in enumerate(J_struct)
-        y[i] += J[k] * w[j]
+    for (row, expr) in enumerate(d.constraints)
+        for col in expr.grad_sparsity
+            d.jac_storage[col] = 0.0
+        end
+        _extract_reverse_pass(d.jac_storage, d, expr)
+        for (k, col) in enumerate(expr.grad_sparsity)
+            y[row] += d.jac_storage[k] * w[col]
+        end
     end
     return
 end
@@ -233,15 +236,18 @@ function MOI.eval_constraint_jacobian_transpose_product(
     x::AbstractVector{Float64},
     w::AbstractVector{Float64},
 )
+    _reverse_mode(d, x)
     fill!(y, 0.0)
-    J_struct = MOI.jacobian_structure(d)
-    nnz = length(J_struct)
-    J = zeros(nnz)
-    MOI.eval_constraint_jacobian(d, J, x)
-    for (k, (i, j)) in enumerate(J_struct)
-        y[j] += J[k] * w[i]
+    for (row, expr) in enumerate(d.constraints)
+        for col in expr.grad_sparsity
+            d.jac_storage[col] = 0.0
+        end
+        _extract_reverse_pass(d.jac_storage, d, expr)
+        for (k, col) in enumerate(expr.grad_sparsity)
+            y[col] += d.jac_storage[k] * w[row]
+        end
     end
-    return y
+    return
 end
 
 function MOI.hessian_lagrangian_structure(d::NLPEvaluator)
