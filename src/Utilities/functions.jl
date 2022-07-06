@@ -1093,11 +1093,7 @@ function modify_function!(
     f::MOI.ScalarQuadraticFunction{T},
     change::MOI.ScalarCoefficientChange{T},
 ) where {T}
-    _modify_coefficient(
-        f.affine_terms,
-        change.variable,
-        change.new_coefficient,
-    )
+    _modify_coefficient(f.affine_terms, change.variable, change.new_coefficient)
     return f
 end
 
@@ -1149,7 +1145,8 @@ function modify_function!(
     f::MOI.VectorQuadraticFunction{T},
     change::MOI.MultirowChange{T},
 ) where {T}
-    _modify_coefficients(f.affine_terms,
+    _modify_coefficients(
+        f.affine_terms,
         change.variable,
         change.new_coefficients,
     )
