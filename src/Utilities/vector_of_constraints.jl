@@ -163,7 +163,7 @@ function MOI.modify(
     change::MOI.AbstractFunctionModification,
 ) where {F,S}
     func, set = v.constraints[ci]
-    v.constraints[ci] = (modify_function(func, change), set)
+    v.constraints[ci] = (modify_function!(func, change), set)
     return
 end
 
