@@ -743,7 +743,7 @@ function MOI.get(
     # If constraint bridged, get the indices from the constraint bridges.
     if is_bridged(b, F, S) ||
        (is_variable_function && supports_constraint_bridges(b))
-       num += Constraint.number_of_type(
+        num += Constraint.number_of_type(
             Constraint.bridges(b),
             MOI.ConstraintIndex{F,S},
         )
