@@ -1002,49 +1002,63 @@ end
 """
     modify_function(f::AbstractFunction, change::AbstractFunctionModification)
 
-Return a new function `f` modified according to `change`.
+Return a copy of the function `f`, modified according to `change`.
 """
 function modify_function(
+    f::MOI.AbstractFunction,
+    change::MOI.AbstractFunctionModification,
+)
+    new_f = copy(f)
+    modify_function!(new_f, change)
+    return new_f
+end
+
+"""
+    modify_function!(f::AbstractFunction, change::AbstractFunctionModification)
+
+Modify the function `f` in-place, according to `change`.
+"""
+function modify_function!(
     f::MOI.ScalarAffineFunction,
     change::MOI.ScalarConstantChange,
 )
-    return MOI.ScalarAffineFunction(f.terms, change.new_constant)
+    f.constant = change.new_constant
+    return f
 end
 
-function modify_function(
+function modify_function!(
     f::MOI.VectorAffineFunction,
     change::MOI.VectorConstantChange,
 )
-    return MOI.VectorAffineFunction(f.terms, change.new_constant)
+    for (i, constant) in enumerate(change.new_constant)
+        f.constants[i] = constant
+    end
+    return f
 end
 
-function modify_function(
+function modify_function!(
     f::MOI.ScalarQuadraticFunction,
     change::MOI.ScalarConstantChange,
 )
-    return MOI.ScalarQuadraticFunction(
-        f.quadratic_terms,
-        f.affine_terms,
-        change.new_constant,
-    )
+    f.constant = change.new_constant
+    return f
 end
-function modify_function(
+
+function modify_function!(
     f::MOI.VectorQuadraticFunction,
     change::MOI.VectorConstantChange,
 )
-    return MOI.VectorQuadraticFunction(
-        f.quadratic_terms,
-        f.affine_terms,
-        change.new_constant,
-    )
+    for (i, constant) in enumerate(change.new_constant)
+        f.constants[i] = constant
+    end
+    return f
 end
 
-function _modifycoefficient(
+function _modify_coefficient(
     terms::Vector{MOI.ScalarAffineTerm{T}},
     variable::MOI.VariableIndex,
     new_coefficient::T,
 ) where {T}
-    terms = copy(terms)
     i = something(findfirst(t -> t.variable == variable, terms), 0)
     if iszero(i)  # The variable was not already in the function
         if !iszero(new_coefficient)
@@ -1064,35 +1078,30 @@ function _modifycoefficient(
             end
         end
     end
-    return terms
+    return
 end
 
-function modify_function(
+function modify_function!(
     f::MOI.ScalarAffineFunction{T},
     change::MOI.ScalarCoefficientChange{T},
 ) where {T}
-    terms = _modifycoefficient(f.terms, change.variable, change.new_coefficient)
-    return MOI.ScalarAffineFunction(terms, f.constant)
+    _modify_coefficient(f.terms, change.variable, change.new_coefficient)
+    return f
 end
 
-function modify_function(
+function modify_function!(
     f::MOI.ScalarQuadraticFunction{T},
     change::MOI.ScalarCoefficientChange{T},
 ) where {T}
-    terms = _modifycoefficient(
-        f.affine_terms,
-        change.variable,
-        change.new_coefficient,
-    )
-    return MOI.ScalarQuadraticFunction(f.quadratic_terms, terms, f.constant)
+    _modify_coefficient(f.affine_terms, change.variable, change.new_coefficient)
+    return f
 end
 
-function _modifycoefficients(
+function _modify_coefficients(
     terms::Vector{MOI.VectorAffineTerm{T}},
     variable::MOI.VariableIndex,
     new_coefficients::Vector{Tuple{Int64,T}},
 ) where {T}
-    terms = copy(terms)
     coef_dict = Dict(k => v for (k, v) in new_coefficients)
     elements_to_delete = Int[]
     for (i, term) in enumerate(terms)
@@ -1121,28 +1130,27 @@ function _modifycoefficients(
         end
         push!(terms, MOI.VectorAffineTerm(k, MOI.ScalarAffineTerm(v, variable)))
     end
-    return terms
+    return
 end
 
-function modify_function(
+function modify_function!(
     f::MOI.VectorAffineFunction{T},
     change::MOI.MultirowChange{T},
 ) where {T}
-    terms =
-        _modifycoefficients(f.terms, change.variable, change.new_coefficients)
-    return MOI.VectorAffineFunction(terms, f.constants)
+    _modify_coefficients(f.terms, change.variable, change.new_coefficients)
+    return f
 end
 
-function modify_function(
+function modify_function!(
     f::MOI.VectorQuadraticFunction{T},
     change::MOI.MultirowChange{T},
 ) where {T}
-    terms = _modifycoefficients(
+    _modify_coefficients(
         f.affine_terms,
         change.variable,
         change.new_coefficients,
     )
-    return MOI.VectorQuadraticFunction(f.quadratic_terms, terms, f.constants)
+    return f
 end
 
 # Arithmetic

@@ -165,13 +165,13 @@ function MOI.modify(
     change::MOI.AbstractFunctionModification,
 )
     if o.single_variable !== nothing
-        o.single_variable = modify_function(o.single_variable, change)
+        o.single_variable = modify_function!(o.single_variable, change)
     elseif o.scalar_quadratic !== nothing
-        o.scalar_quadratic = modify_function(o.scalar_quadratic, change)
+        o.scalar_quadratic = modify_function!(o.scalar_quadratic, change)
     else
         @assert o.scalar_affine !== nothing
         o.is_function_set = true
-        o.scalar_affine = modify_function(o.scalar_affine, change)
+        o.scalar_affine = modify_function!(o.scalar_affine, change)
     end
     return
 end
