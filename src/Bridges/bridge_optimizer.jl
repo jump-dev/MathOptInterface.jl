@@ -144,9 +144,6 @@ function is_bridged(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveFunction)
     return haskey(Objective.bridges(b), attr)
 end
 
-const ObjectiveAttribute =
-    Union{MOI.ObjectiveSense,MOI.ObjectiveFunction,MOI.ObjectiveFunctionType}
-
 """
     supports_bridging_constrained_variable(
         ::AbstractBridgeOptimizer,
