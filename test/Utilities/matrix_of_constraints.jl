@@ -603,6 +603,15 @@ function test_duplicate()
     return
 end
 
+function test_set_with_dimension()
+    for S in (MOI.ExponentialCone, MOI.DualExponentialCone)
+        @test MOI.Utilities.set_with_dimension(S, 3) == S()
+        @test_throws AssertionError MOI.Utilities.set_with_dimension(S, 2)
+        @test_throws AssertionError MOI.Utilities.set_with_dimension(S, 4)
+    end
+    return
+end
+
 end
 
 TestMatrixOfConstraints.runtests()

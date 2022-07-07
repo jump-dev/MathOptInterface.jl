@@ -594,6 +594,16 @@ function set_with_dimension(::Type{MOI.RootDetConeSquare}, dim)
     return MOI.RootDetConeSquare(isqrt(dim - 1))
 end
 
+function set_with_dimension(::Type{MOI.ExponentialCone}, dim)
+    @assert dim == 3
+    return MOI.ExponentialCone(dim)
+end
+
+function set_with_dimension(::Type{MOI.DualExponentialCone}, dim)
+    @assert dim == 3
+    return MOI.DualExponentialCone(dim)
+end
+
 function set_from_constants(::Vector, ::Type{S}, rows) where {S}
     return set_with_dimension(S, length(rows))
 end
