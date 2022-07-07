@@ -635,62 +635,7 @@ end
 
 # Attributes
 
-"""
-    function reduce_bridged(
-        b::AbstractBridgeOptimizer,
-        args,
-        F::Type{<:MOI.AbstractFunction},
-        S::Type{<:MOI.AbstractSet},
-        value::T,
-        operate_variable_bridges!,
-        operate_constraint_bridges!,
-    )::T where {T}
-
-If `F`-in-`S` constraints may be added to `b.model`, starts with
-`value = MOI.get(b.model, args...)`, otherwise, starts with `value`.
-
-Then:
- * if `F`-in-`S` constraints may correspond to bridged variables, modify it with
-   `operate_variable_bridges!`
- * if `F`-in-`S` constraints may correspond to bridged constraints, modify it
-   with `operate_constraint_bridges!`
-then return the final `value`.
-
-For example, [`MOI.supports`](@ref) calls this function with
- * `value = true`
- * `operate_variable_bridges(ok) = ok && MOI.supports(b, attr, Variable.concrete_bridge_type(b, S))`
- * `operate_constraint_bridges(ok) = ok && MOI.supports(b, attr, Constraint.concrete_bridge_type(b, F, S))`.
-"""
-function reduce_bridged(
-    b::AbstractBridgeOptimizer,
-    F::Type{<:MOI.AbstractFunction},
-    S::Type{<:MOI.AbstractSet},
-    value::T,
-    model_value::Function,
-    operate_variable_bridges!::Function,
-    operate_constraint_bridges!::Function,
-)::T where {T}
-    variable_function = F == MOI.Utilities.variable_function_type(S)
-    # A `F`-in-`S` could be added to the model either if it this constraint
-    # is not bridged or if variables constrained on creations to `S` are not
-    # bridged and `F` is `VariableIndex` or `VectorOfVariables`.
-    if !is_bridged(b, F, S) || (variable_function && !is_bridged(b, S))
-        value = model_value()
-    end
-    if variable_function && is_bridged(b, S) && is_variable_bridged(b, S)
-        value = operate_variable_bridges!(value)
-    end
-    # Even if it is not bridged, it may have been force-bridged because one of
-    # the variable in the function was bridged.
-    if is_bridged(b, F, S) ||
-       (variable_function && supports_constraint_bridges(b))
-        value = operate_constraint_bridges!(value)
-    end
-    return value
-end
-
-# List of indices of all constraints, including those bridged
-function get_all_including_bridged(
+function _get_all_including_bridged(
     b::AbstractBridgeOptimizer,
     attr::MOI.ListOfVariableIndices,
 )
@@ -702,31 +647,36 @@ function get_all_including_bridged(
     return list
 end
 
-function get_all_including_bridged(
+function _get_all_including_bridged(
     b::AbstractBridgeOptimizer,
     attr::MOI.ListOfConstraintIndices{F,S},
 ) where {F,S}
-    return reduce_bridged(
-        b,
-        F,
-        S,
-        MOI.ConstraintIndex{F,S}[],
-        () -> MOI.get(b.model, attr),
-        list -> append!(
-            list,
-            Variable.constraints_with_set(Variable.bridges(b), S),
-        ),
-        list -> append!(
+    list = MOI.ConstraintIndex{F,S}[]
+    is_variable_function = F == MOI.Utilities.variable_function_type(S)
+    # A `F`-in-`S` constraint could be added to the model either if it this
+    # constraint is not bridged or if variables constrained on creations to `S`
+    # are not bridged and `F` is `VariableIndex` or `VectorOfVariables`.
+    if !is_bridged(b, F, S) || (is_variable_function && !is_bridged(b, S))
+        append!(list, MOI.get(b.model, attr))
+    end
+    # If variable bridged, get the indices from the variable bridges.
+    if is_variable_function && is_bridged(b, S) && is_variable_bridged(b, S)
+        append!(list, Variable.constraints_with_set(Variable.bridges(b), S))
+    end
+    # If constraint bridged, get the indices from the constraint bridges.
+    if is_bridged(b, F, S) ||
+       (is_variable_function && supports_constraint_bridges(b))
+        append!(
             list,
             Constraint.keys_of_type(
                 Constraint.bridges(b),
                 MOI.ConstraintIndex{F,S},
             ),
-        ),
-    )
+        )
+    end
+    return list
 end
 
-# Remove constraints bridged by `bridge` from `list`
 function _remove_bridged(list, bridge, attr)
     for c in MOI.get(bridge, attr)
         i = findfirst(isequal(c), list)
@@ -737,11 +687,16 @@ function _remove_bridged(list, bridge, attr)
     return
 end
 
+# The tactic for this function is to first query all possible indices, and then
+# to filter out the indices that have been bridged.
+#
+# TODO(odow): this seems slightly inefficient, but no one seems to have
+# complained that it is a bottleneck.
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::Union{MOI.ListOfConstraintIndices,MOI.ListOfVariableIndices},
 )
-    list = get_all_including_bridged(b, attr)
+    list = _get_all_including_bridged(b, attr)
     for bridge in values(Variable.bridges(b))
         _remove_bridged(list, bridge, attr)
     end
@@ -755,9 +710,8 @@ function MOI.get(
 end
 
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.NumberOfVariables)::Int64
-    s =
-        MOI.get(b.model, attr) +
-        Variable.number_of_variables(Variable.bridges(b))
+    s = MOI.get(b.model, attr)
+    s += Variable.number_of_variables(Variable.bridges(b))
     for bridge in values(Variable.bridges(b))
         s -= MOI.get(bridge, attr)
     end
@@ -768,44 +722,42 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.NumberOfVariables)::Int64
         s -= MOI.get(bridge, attr)
     end
     return s
-end
-
-# Number of all constraints, including those bridged
-function get_all_including_bridged(
-    b::AbstractBridgeOptimizer,
-    attr::MOI.NumberOfConstraints{F,S},
-) where {F,S}
-    return reduce_bridged(
-        b,
-        F,
-        S,
-        Int64(0),
-        () -> MOI.get(b.model, attr),
-        num -> num + Variable.number_with_set(Variable.bridges(b), S),
-        num ->
-            num + Constraint.number_of_type(
-                Constraint.bridges(b),
-                MOI.ConstraintIndex{F,S},
-            ),
-    )
 end
 
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.NumberOfConstraints{F,S},
 )::Int64 where {F,S}
-    s = get_all_including_bridged(b, attr)
-    # The constraints counted in `s` may have been added by bridges
+    num = Int64(0)
+    is_variable_function = F == MOI.Utilities.variable_function_type(S)
+    # A `F`-in-`S` constraint could be added to the model either if it this
+    # constraint is not bridged or if variables constrained on creations to `S`
+    # are not bridged and `F` is `VariableIndex` or `VectorOfVariables`.
+    if !is_bridged(b, F, S) || (is_variable_function && !is_bridged(b, S))
+        num += MOI.get(b.model, attr)
+    end
+    # If variable bridged, get the indices from the variable bridges.
+    if is_variable_function && is_bridged(b, S) && is_variable_bridged(b, S)
+        num += Variable.number_with_set(Variable.bridges(b), S)
+    end
+    # If constraint bridged, get the indices from the constraint bridges.
+    if is_bridged(b, F, S) ||
+       (is_variable_function && supports_constraint_bridges(b))
+       num += Constraint.number_of_type(
+            Constraint.bridges(b),
+            MOI.ConstraintIndex{F,S},
+        )
+    end
     for bridge in values(Variable.bridges(b))
-        s -= MOI.get(bridge, attr)
+        num -= MOI.get(bridge, attr)
     end
     for bridge in values(Constraint.bridges(b))
-        s -= MOI.get(bridge, attr)
+        num -= MOI.get(bridge, attr)
     end
     for bridge in values(Objective.bridges(b))
-        s -= MOI.get(bridge, attr)
+        num -= MOI.get(bridge, attr)
     end
-    return s
+    return num
 end
 
 function MOI.get(
@@ -1398,25 +1350,30 @@ function MOI.supports(
     attr::MOI.AbstractConstraintAttribute,
     IndexType::Type{MOI.ConstraintIndex{F,S}},
 ) where {F,S}
-    return reduce_bridged(
-        b,
-        F,
-        S,
-        true,
-        () -> MOI.supports(b.model, attr, IndexType),
-        ok ->
-            ok && MOI.supports(
-                recursive_model(b),
-                attr,
-                Variable.concrete_bridge_type(b, S),
-            ),
-        ok ->
-            ok && MOI.supports(
-                recursive_model(b),
-                attr,
-                Constraint.concrete_bridge_type(b, F, S),
-            ),
-    )
+    is_variable_function = F == MOI.Utilities.variable_function_type(S)
+    # A `F`-in-`S` constraint could be added to the model either if it this
+    # constraint is not bridged or if variables constrained on creations to `S`
+    # are not bridged and `F` is `VariableIndex` or `VectorOfVariables`.
+    if !is_bridged(b, F, S) || (is_variable_function && !is_bridged(b, S))
+        if !MOI.supports(b.model, attr, IndexType)
+            return false
+        end
+    end
+    bridge = recursive_model(b)
+    # If variable bridged, get the indices from the variable bridges.
+    if is_variable_function && is_bridged(b, S) && is_variable_bridged(b, S)
+        if !MOI.supports(bridge, attr, Variable.concrete_bridge_type(b, S))
+            return false
+        end
+    end
+    # If constraint bridged, get the indices from the constraint bridges.
+    if is_bridged(b, F, S) ||
+       (is_variable_function && supports_constraint_bridges(b))
+        if !MOI.supports(bridge, attr, Constraint.concrete_bridge_type(b, F, S))
+            return false
+        end
+    end
+    return true
 end
 
 function MOI.set(
