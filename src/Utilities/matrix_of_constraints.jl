@@ -596,12 +596,12 @@ end
 
 function set_with_dimension(::Type{MOI.ExponentialCone}, dim)
     @assert dim == 3
-    return MOI.ExponentialCone(dim)
+    return MOI.ExponentialCone()
 end
 
 function set_with_dimension(::Type{MOI.DualExponentialCone}, dim)
     @assert dim == 3
-    return MOI.DualExponentialCone(dim)
+    return MOI.DualExponentialCone()
 end
 
 function set_from_constants(::Vector, ::Type{S}, rows) where {S}
