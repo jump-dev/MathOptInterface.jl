@@ -82,7 +82,9 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
-function MOI.Bridges.added_constrained_variable_types(::Type{<:SplitZerosBridge})
+function MOI.Bridges.added_constrained_variable_types(
+    ::Type{<:SplitZerosBridge},
+)
     return Tuple{DataType}[]
 end
 function MOI.Bridges.added_constraint_types(

@@ -3906,7 +3906,7 @@ function test_linear_complex_Zeros(optimizer, config::Config{T}) where {T}
     o = one(T)
     t = 2o
     x, cx = MOI.add_constrained_variables(optimizer, MOI.Nonnegatives(2))
-    func = (o + t*im) * x[1] + (o - o*im) * x[2] + (-o + -o*im)
+    func = (o + t * im) * x[1] + (o - o * im) * x[2] + (-o + -o * im)
     c = MOI.add_constraint(
         optimizer,
         MOI.Utilities.operate(vcat, Complex{T}, func),
@@ -3914,15 +3914,17 @@ function test_linear_complex_Zeros(optimizer, config::Config{T}) where {T}
     )
     MOI.optimize!(optimizer)
     @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.OPTIMAL
-    @test MOI.get(optimizer, MOI.VariablePrimal(), x) ≈ T[2 / 3, 1 / 3] atol =
-        atol rtol = rtol
-    @test MOI.get(optimizer, MOI.ConstraintPrimal(), cx) ≈ T[2 / 3, 1 / 3] atol =
+    @test MOI.get(optimizer, MOI.VariablePrimal(), x) ≈ T[2/3, 1/3] atol = atol rtol =
+        rtol
+    @test MOI.get(optimizer, MOI.ConstraintPrimal(), cx) ≈ T[2/3, 1/3] atol =
         atol rtol = rtol
     @test MOI.get(optimizer, MOI.ConstraintDual(), cx) ≈ zeros(T, 2) atol = atol rtol =
         rtol
     z = [zero(Complex{T})]
-    @test MOI.get(optimizer, MOI.ConstraintPrimal(), c) ≈ z atol = atol rtol = rtol
-    @test MOI.get(optimizer, MOI.ConstraintDual(), c) ≈ z atol = atol rtol = rtol
+    @test MOI.get(optimizer, MOI.ConstraintPrimal(), c) ≈ z atol = atol rtol =
+        rtol
+    @test MOI.get(optimizer, MOI.ConstraintDual(), c) ≈ z atol = atol rtol =
+        rtol
     return
 end
 
@@ -3936,15 +3938,19 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> begin
             MOIU.mock_optimize!(
                 mock,
-                T[2 / 3, 1 / 3],
-                (MOI.VectorAffineFunction{Complex{T}}, MOI.Zeros) => [zeros(Complex{T}, 1)],
+                T[2/3, 1/3],
+                (MOI.VectorAffineFunction{Complex{T}}, MOI.Zeros) =>
+                    [zeros(Complex{T}, 1)],
             )
         end,
     )
     return
 end
 
-function test_linear_complex_Zeros_duplicate(optimizer, config::Config{T}) where {T}
+function test_linear_complex_Zeros_duplicate(
+    optimizer,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
 
@@ -3952,7 +3958,9 @@ function test_linear_complex_Zeros_duplicate(optimizer, config::Config{T}) where
     o = one(T)
     t = 2o
     x, cx = MOI.add_constrained_variables(optimizer, MOI.Nonnegatives(1))
-    func = (o + zero(T)*im) * x[1] + o*im * x[1] - t*im - (o + zero(T)*im) * x[1]
+    func =
+        (o + zero(T) * im) * x[1] + o * im * x[1] - t * im -
+        (o + zero(T) * im) * x[1]
     c = MOI.add_constraint(
         optimizer,
         MOI.Utilities.operate(vcat, Complex{T}, func),
@@ -3967,8 +3975,10 @@ function test_linear_complex_Zeros_duplicate(optimizer, config::Config{T}) where
     @test MOI.get(optimizer, MOI.ConstraintDual(), cx) ≈ zeros(T, 1) atol = atol rtol =
         rtol
     z = [zero(Complex{T})]
-    @test MOI.get(optimizer, MOI.ConstraintPrimal(), c) ≈ z atol = atol rtol = rtol
-    @test MOI.get(optimizer, MOI.ConstraintDual(), c) ≈ z atol = atol rtol = rtol
+    @test MOI.get(optimizer, MOI.ConstraintPrimal(), c) ≈ z atol = atol rtol =
+        rtol
+    @test MOI.get(optimizer, MOI.ConstraintDual(), c) ≈ z atol = atol rtol =
+        rtol
     return
 end
 
@@ -3983,7 +3993,8 @@ function setup_test(
             MOIU.mock_optimize!(
                 mock,
                 T[2],
-                (MOI.VectorAffineFunction{Complex{T}}, MOI.Zeros) => [zeros(Complex{T}, 1)],
+                (MOI.VectorAffineFunction{Complex{T}}, MOI.Zeros) =>
+                    [zeros(Complex{T}, 1)],
             )
         end,
     )

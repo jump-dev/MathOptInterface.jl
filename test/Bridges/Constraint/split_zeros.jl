@@ -34,7 +34,7 @@ function test_complex_zeros()
         mock,
         (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
             mock,
-            [2/3, 1/3],
+            [2 / 3, 1 / 3],
             (MOI.VectorAffineFunction{T}, MOI.Zeros) => [zeros(T, 2)],
         ),
     )
@@ -50,10 +50,7 @@ function test_complex_zeros()
     @test length(cis) == 0
     cis = MOI.get(
         mock,
-        MOI.ListOfConstraintIndices{
-            MOI.VectorAffineFunction{T},
-            MOI.Zeros,
-        }(),
+        MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{T},MOI.Zeros}(),
     )
     @test length(cis) == 1
 
@@ -68,10 +65,7 @@ function test_complex_zeros()
     MOI.Test.test_linear_complex_Zeros_duplicate(bridged_mock, config)
     cis = MOI.get(
         mock,
-        MOI.ListOfConstraintIndices{
-            MOI.VectorAffineFunction{T},
-            MOI.Zeros,
-        }(),
+        MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{T},MOI.Zeros}(),
     )
     @test length(cis) == 1
 end
