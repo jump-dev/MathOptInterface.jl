@@ -45,6 +45,7 @@ function _nonzero_indices(func::MOI.AbstractVectorFunction)
         !iszero(scalar_func)
     ]
 end
+
 function bridge_constraint(
     ::Type{SplitZerosBridge{T,F,G}},
     model::MOI.ModelLike,
@@ -82,32 +83,35 @@ function MOI.supports_constraint(
 ) where {T}
     return true
 end
+
 function MOI.Bridges.added_constrained_variable_types(
     ::Type{<:SplitZerosBridge},
 )
     return Tuple{DataType}[]
 end
+
 function MOI.Bridges.added_constraint_types(
     ::Type{SplitZerosBridge{T,F,G}},
 ) where {T,F,G}
     return Tuple{DataType,DataType}[(F, MOI.Zeros)]
 end
+
 function concrete_bridge_type(
     ::Type{<:SplitZerosBridge{T}},
     G::Type{<:MOI.Utilities.TypedLike},
     ::Type{MOI.Zeros},
 ) where {T}
-    F = MA.promote_operation(imag, G)
+    F = MutableArithmetics.promote_operation(imag, G)
     return SplitZerosBridge{T,F,G}
 end
 
-# Attributes, Bridge acting as a model
 function MOI.get(
     ::SplitZerosBridge{T,F},
     ::MOI.NumberOfConstraints{F,MOI.Zeros},
-) where {T,F}
+)::Int64 where {T,F}
     return 1
 end
+
 function MOI.get(
     bridge::SplitZerosBridge{T,F},
     ::MOI.ListOfConstraintIndices{F,MOI.Zeros},
@@ -115,12 +119,11 @@ function MOI.get(
     return [bridge.constraint]
 end
 
-# Indices
 function MOI.delete(model::MOI.ModelLike, bridge::SplitZerosBridge)
-    return MOI.delete(model, bridge.constraint)
+    MOI.delete(model, bridge.constraint)
+    return
 end
 
-# Attributes, Bridge acting as a constraint
 function MOI.supports(
     ::MOI.ModelLike,
     ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
@@ -128,6 +131,7 @@ function MOI.supports(
 )
     return true
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{
@@ -148,6 +152,7 @@ function MOI.get(
     end
     return output
 end
+
 function MOI.set(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},

@@ -8,7 +8,6 @@ module Constraint
 
 import LinearAlgebra
 import MutableArithmetics
-const MA = MutableArithmetics
 import MathOptInterface
 import OrderedCollections: OrderedDict, OrderedSet
 import SparseArrays

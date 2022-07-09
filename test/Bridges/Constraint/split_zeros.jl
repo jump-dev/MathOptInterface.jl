@@ -68,6 +68,7 @@ function test_complex_zeros()
         MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{T},MOI.Zeros}(),
     )
     @test length(cis) == 1
+    return
 end
 
 end  # module
