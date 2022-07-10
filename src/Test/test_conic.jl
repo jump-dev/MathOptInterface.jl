@@ -5640,7 +5640,7 @@ function _test_conic_PositiveSemidefiniteCone_helper_3(
                 @assert psdcone == MOI.PositiveSemidefiniteConeSquare
                 @test ≈(
                     MOI.get(model, MOI.ConstraintDual(), c),
-                    T[1, 0, 0, -1, 1, 0, -1, -1, 1] / T(3),
+                    T[1, -1/2, -1/2, -1/2, 1, -1/2, -1/2, -1/2, 1] / T(3),
                     config,
                 )
             end
@@ -5714,7 +5714,7 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             ones(T, 1),
-            (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeSquare) => [T[1, 0, 0, -1, 1, 0, -1, -1, 1] / 3],
+            (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeSquare) => [T[1, -1/2, -1/2, -1/2, 1, -1/2, -1/2, -1/2, 1] / 3],
         ),
     )
     return
