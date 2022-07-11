@@ -81,6 +81,7 @@ function test_runtests()
         real,
         real,
     )
+    return
 end
 
 end  # module
