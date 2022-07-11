@@ -71,6 +71,18 @@ function test_complex_zeros()
     return
 end
 
+function test_runtests()
+    real = """
+    variables: x
+    [x + 1.0] in Zeros(1)
+    """
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitZerosBridge,
+        real,
+        real,
+    )
+end
+
 end  # module
 
 TestConstraintSplitZeros.runtests()
