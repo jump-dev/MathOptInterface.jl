@@ -3912,19 +3912,23 @@ function test_linear_complex_Zeros(optimizer, config::Config{T}) where {T}
         MOI.Utilities.operate(vcat, Complex{T}, func),
         MOI.Zeros(1),
     )
-    MOI.optimize!(optimizer)
-    @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.OPTIMAL
-    @test MOI.get(optimizer, MOI.VariablePrimal(), x) ≈ T[2/3, 1/3] atol = atol rtol =
-        rtol
-    @test MOI.get(optimizer, MOI.ConstraintPrimal(), cx) ≈ T[2/3, 1/3] atol =
-        atol rtol = rtol
-    @test MOI.get(optimizer, MOI.ConstraintDual(), cx) ≈ zeros(T, 2) atol = atol rtol =
-        rtol
-    z = [zero(Complex{T})]
-    @test MOI.get(optimizer, MOI.ConstraintPrimal(), c) ≈ z atol = atol rtol =
-        rtol
-    @test MOI.get(optimizer, MOI.ConstraintDual(), c) ≈ z atol = atol rtol =
-        rtol
+    if _supports(config, MOI.optimize!)
+        MOI.optimize!(optimizer)
+        @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.OPTIMAL
+        @test MOI.get(optimizer, MOI.VariablePrimal(), x) ≈ T[2/3, 1/3] atol =
+            atol rtol = rtol
+        @test MOI.get(optimizer, MOI.ConstraintPrimal(), cx) ≈ T[2/3, 1/3] atol =
+            atol rtol = rtol
+        z = [zero(Complex{T})]
+        @test MOI.get(optimizer, MOI.ConstraintPrimal(), c) ≈ z atol = atol rtol =
+            rtol
+        if _supports(config, MOI.ConstraintDual)
+            @test MOI.get(optimizer, MOI.ConstraintDual(), cx) ≈ zeros(T, 2) atol =
+                atol rtol = rtol
+            @test MOI.get(optimizer, MOI.ConstraintDual(), c) ≈ z atol = atol rtol =
+                rtol
+        end
+    end
     return
 end
 
@@ -3966,19 +3970,23 @@ function test_linear_complex_Zeros_duplicate(
         MOI.Utilities.operate(vcat, Complex{T}, func),
         MOI.Zeros(1),
     )
-    MOI.optimize!(optimizer)
-    @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.OPTIMAL
-    @test MOI.get(optimizer, MOI.VariablePrimal(), x) ≈ T[2] atol = atol rtol =
-        rtol
-    @test MOI.get(optimizer, MOI.ConstraintPrimal(), cx) ≈ T[2] atol = atol rtol =
-        rtol
-    @test MOI.get(optimizer, MOI.ConstraintDual(), cx) ≈ zeros(T, 1) atol = atol rtol =
-        rtol
-    z = [zero(Complex{T})]
-    @test MOI.get(optimizer, MOI.ConstraintPrimal(), c) ≈ z atol = atol rtol =
-        rtol
-    @test MOI.get(optimizer, MOI.ConstraintDual(), c) ≈ z atol = atol rtol =
-        rtol
+    if _supports(config, MOI.optimize!)
+        MOI.optimize!(optimizer)
+        @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.OPTIMAL
+        @test MOI.get(optimizer, MOI.VariablePrimal(), x) ≈ T[2] atol = atol rtol =
+            rtol
+        @test MOI.get(optimizer, MOI.ConstraintPrimal(), cx) ≈ T[2] atol = atol rtol =
+            rtol
+        z = [zero(Complex{T})]
+        @test MOI.get(optimizer, MOI.ConstraintPrimal(), c) ≈ z atol = atol rtol =
+            rtol
+        if _supports(config, MOI.ConstraintDual)
+            @test MOI.get(optimizer, MOI.ConstraintDual(), cx) ≈ zeros(T, 1) atol =
+                atol rtol = rtol
+            @test MOI.get(optimizer, MOI.ConstraintDual(), c) ≈ z atol = atol rtol =
+                rtol
+        end
+    end
     return
 end
 
