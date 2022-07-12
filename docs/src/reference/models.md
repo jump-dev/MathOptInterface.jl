@@ -74,6 +74,8 @@ TimeLimitSec
 RawOptimizerAttribute
 NumberOfThreads
 RawSolver
+AbsoluteGapTolerance
+RelativeGapTolerance
 ```
 
 List of attributes useful for optimizers
