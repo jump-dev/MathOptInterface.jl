@@ -826,7 +826,7 @@ An optimizer attribute for setting the relative gap tolerance for an optimizatio
 This is an _optimizer_ attribute, and should be set before calling `optimize!`.
 
 If you are looking for the relative gap of the current best solution, see
-[RelativeGap](@ref). If no limit nor issue is encountered during the optimization,
+[`RelativeGap`](@ref). If no limit nor issue is encountered during the optimization,
 the value of `RelativeGap` should be at most as large as `RelativeGapTolerance`.
 
 ```julia
@@ -848,6 +848,25 @@ MOI.get(model, MOI.RelativeGap())  # should return something ≤ 1e-3
 struct RelativeGapTolerance <: AbstractOptimizerAttribute end
 
 attribute_value_type(::RelativeGapTolerance) = Union{Nothing,Float64}
+
+"""
+    AbsoluteGapTolerance()
+
+An optimizer attribute for setting the absolute gap tolerance for an optimization.
+This is an _optimizer_ attribute, and should be set before calling `optimize!`.
+
+To set a _relative_ gap tolerance, see [`RelativeGapTolerance``](@ref).
+
+!!! warning
+    The mathematical definition of "absolute gap", and its treatment during the optimization,
+    are solver-dependent. However, assuming no other limit nor issue is encountered during the
+    optimization, most solvers that implement this attribute will stop once ``|f - b| ≤ g_{abs}``,
+    where ``b`` is the best bound, ``f`` is the best feasible objective value, and ``g_{abs}``
+    is the absolute gap.
+"""
+struct AbsoluteGapTolerance <: AbstractOptimizerAttribute end
+
+attribute_value_type(::AbsoluteGapTolerance) = Union{Nothing,Float64}
 
 ### Callbacks
 
