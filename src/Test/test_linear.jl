@@ -3915,10 +3915,10 @@ function test_linear_complex_Zeros(optimizer, config::Config{T}) where {T}
     if _supports(config, MOI.optimize!)
         MOI.optimize!(optimizer)
         @test MOI.get(optimizer, MOI.TerminationStatus()) == MOI.OPTIMAL
-        @test MOI.get(optimizer, MOI.VariablePrimal(), x) ≈ T[2/3, 1/3] atol =
-            atol rtol = rtol
-        @test MOI.get(optimizer, MOI.ConstraintPrimal(), cx) ≈ T[2/3, 1/3] atol =
-            atol rtol = rtol
+        @test MOI.get(optimizer, MOI.VariablePrimal(), x) ≈
+              [T(2) / T(3), T(1) / T(3)] atol = atol rtol = rtol
+        @test MOI.get(optimizer, MOI.ConstraintPrimal(), cx) ≈
+              [T(2) / T(3), T(1) / T(3)] atol = atol rtol = rtol
         z = [zero(Complex{T})]
         @test MOI.get(optimizer, MOI.ConstraintPrimal(), c) ≈ z atol = atol rtol =
             rtol
@@ -3942,7 +3942,7 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> begin
             MOIU.mock_optimize!(
                 mock,
-                T[2/3, 1/3],
+                [T(2) / T(3), T(1) / T(3)],
                 (MOI.VectorAffineFunction{Complex{T}}, MOI.Zeros) =>
                     [zeros(Complex{T}, 1)],
             )
