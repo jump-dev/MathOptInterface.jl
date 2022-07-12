@@ -196,7 +196,10 @@ end
 Test that the [`MOI.AbsoluteGapTolerance`](@ref) attribute is implemented for
 `model`.
 """
-function test_attribute_AbsoluteGapTolerance(model::MOI.AbstractOptimizer, ::Config)
+function test_attribute_AbsoluteGapTolerance(
+    model::MOI.AbstractOptimizer,
+    ::Config,
+)
     @requires MOI.supports(model, MOI.AbsoluteGapTolerance())
     # Get the current value to restore it at the end of the test
     value = MOI.get(model, MOI.AbsoluteGapTolerance())
@@ -226,7 +229,10 @@ end
 Test that the [`MOI.RelativeGapTolerance`](@ref) attribute is implemented for
 `model`.
 """
-function test_attribute_RelativeGapTolerance(model::MOI.AbstractOptimizer, ::Config)
+function test_attribute_RelativeGapTolerance(
+    model::MOI.AbstractOptimizer,
+    ::Config,
+)
     @requires MOI.supports(model, MOI.RelativeGapTolerance())
     # Get the current value to restore it at the end of the test
     value = MOI.get(model, MOI.RelativeGapTolerance())
