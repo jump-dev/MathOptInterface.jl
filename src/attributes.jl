@@ -823,7 +823,7 @@ attribute_value_type(::NumberOfThreads) = Union{Nothing,Int}
     RelativeGapTolerance()
 
 An optimizer attribute for setting the relative gap tolerance for an optimization.
-This is an _optimizer_ attribute, and should be set before calling `optimize!`.
+This is an _optimizer_ attribute, and should be set before calling [`optimize!`](@ref).
 
 If you are looking for the relative gap of the current best solution, see
 [`RelativeGap`](@ref). If no limit nor issue is encountered during the optimization,
