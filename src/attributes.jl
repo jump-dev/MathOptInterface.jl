@@ -844,7 +844,6 @@ MOI.get(model, MOI.RelativeGap())  # should return something ≤ 1e-3
 !!! warning
     The mathematical definition of "relative gap", and its allowed range, are solver-dependent.
     Typically, solvers expect a value between `0` and `1`.
-
 """
 struct RelativeGapTolerance <: AbstractOptimizerAttribute end
 
