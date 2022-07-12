@@ -76,11 +76,7 @@ function test_runtests()
     variables: x
     [x + 1.0] in Zeros(1)
     """
-    MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.SplitZerosBridge,
-        real,
-        real,
-    )
+    MOI.Bridges.runtests(MOI.Bridges.Constraint.SplitZerosBridge, real, real)
     return
 end
 

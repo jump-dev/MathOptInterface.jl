@@ -1928,7 +1928,10 @@ function test_wrong_coefficient()
     for (S, T) in [(Complex{Float64}, Float64), (Float64, Int)]
         model = MOI.Utilities.Model{T}()
         bridged = MOI.Bridges.full_bridge_optimizer(model, T)
-        MOI.Bridges.remove_bridge(bridged, MOI.Bridges.Constraint.SplitZerosBridge{T})
+        MOI.Bridges.remove_bridge(
+            bridged,
+            MOI.Bridges.Constraint.SplitZerosBridge{T},
+        )
         x = MOI.add_variable(bridged)
         f_scalar = one(S) * x
         f_vector = MOI.Utilities.vectorize([f_scalar])
