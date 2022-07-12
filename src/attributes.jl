@@ -827,7 +827,7 @@ This is an _optimizer_ attribute, and should be set before calling `optimize!`.
 
 If you are looking for the relative gap of the current best solution, see
 [RelativeGap](@ref). If no limit nor issue is encountered during the optimization,
-    the value of `RelativeGap` should be at most as large as `RelativeGapTolerance`.
+the value of `RelativeGap` should be at most as large as `RelativeGapTolerance`.
 
 ```julia
 # Before optimizing: set relative gap tolerance
