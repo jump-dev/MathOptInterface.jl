@@ -4,7 +4,7 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-module TestConstraintSplitEqualTo
+module TestConstraintSplitComplexEqualTo
 
 using Test
 
@@ -29,7 +29,7 @@ function test_complex_zeros()
     mock = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}()),
     )
-    _bridged_mock = MOI.Bridges.Constraint.SplitEqualTo{T}(mock)
+    _bridged_mock = MOI.Bridges.Constraint.SplitComplexEqualTo{T}(mock)
     bridged_mock = MOI.Bridges.Constraint.Scalarize{Complex{T}}(_bridged_mock)
     MOI.Utilities.set_mock_optimize!(
         mock,
@@ -80,4 +80,4 @@ end
 
 end  # module
 
-TestConstraintSplitEqualTo.runtests()
+TestConstraintSplitComplexEqualTo.runtests()

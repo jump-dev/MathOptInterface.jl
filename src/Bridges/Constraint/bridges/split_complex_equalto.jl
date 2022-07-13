@@ -5,15 +5,15 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    SplitEqualToBridge{T,F,G} <: Bridges.Constraint.AbstractBridge
+    SplitComplexEqualToBridge{T,F,G} <: Bridges.Constraint.AbstractBridge
 
-`SplitEqualToBridge` implements the following reformulation:
+`SplitComplexEqualToBridge` implements the following reformulation:
 
   * ``f(x) + g(x) * im = a + b * im`` into ``f(x) = a`` and ``g(x) = b``
 
 ## Source node
 
-`SplitEqualToBridge` supports:
+`SplitComplexEqualToBridge` supports:
 
   * `G` in [`MOI.EqualTo{Complex{T}}`](@ref)
 
@@ -21,13 +21,13 @@ where `G` is a function with `Complex` coefficients.
 
 ## Target nodes
 
-`SplitEqualToBridge` creates:
+`SplitComplexEqualToBridge` creates:
 
   * `F` in [`MOI.EqualTo{T}`](@ref)
 
 where `F` is the type of the real/imaginary part of `G`.
 """
-struct SplitEqualToBridge{
+struct SplitComplexEqualToBridge{
     T,
     F<:MOI.Utilities.TypedScalarLike{T},
     G<:MOI.Utilities.TypedScalarLike{Complex{T}},
@@ -36,8 +36,8 @@ struct SplitEqualToBridge{
     imag_constraint::Union{Nothing,MOI.ConstraintIndex{F,MOI.EqualTo{T}}}
 end
 
-const SplitEqualTo{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{SplitEqualToBridge{T},OT}
+const SplitComplexEqualTo{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{SplitComplexEqualToBridge{T},OT}
 
 function _add_constraint_if_nonzero(model, func, set)
     if iszero(func) && iszero(MOI.constant(set))
@@ -48,7 +48,7 @@ function _add_constraint_if_nonzero(model, func, set)
 end
 
 function bridge_constraint(
-    ::Type{SplitEqualToBridge{T,F,G}},
+    ::Type{SplitComplexEqualToBridge{T,F,G}},
     model::MOI.ModelLike,
     func::G,
     set::MOI.EqualTo,
@@ -59,13 +59,13 @@ function bridge_constraint(
     imag_set = MOI.EqualTo(imag(MOI.constant(set)))
     real_constraint = _add_constraint_if_nonzero(model, real_func, real_set)
     imag_constraint = _add_constraint_if_nonzero(model, imag_func, imag_set)
-    return SplitEqualToBridge{T,F,G}(real_constraint, imag_constraint)
+    return SplitComplexEqualToBridge{T,F,G}(real_constraint, imag_constraint)
 end
 
 # We don't support `MOI.VariableIndex` as it would be a self-loop in the bridge
 # graph.
 function MOI.supports_constraint(
-    ::Type{<:SplitEqualToBridge{T}},
+    ::Type{<:SplitComplexEqualToBridge{T}},
     ::Type{<:MOI.Utilities.TypedLike{Complex{T}}},
     ::Type{<:MOI.EqualTo},
 ) where {T}
@@ -73,28 +73,28 @@ function MOI.supports_constraint(
 end
 
 function MOI.Bridges.added_constrained_variable_types(
-    ::Type{<:SplitEqualToBridge},
+    ::Type{<:SplitComplexEqualToBridge},
 )
     return Tuple{DataType}[]
 end
 
 function MOI.Bridges.added_constraint_types(
-    ::Type{SplitEqualToBridge{T,F,G}},
+    ::Type{SplitComplexEqualToBridge{T,F,G}},
 ) where {T,F,G}
     return Tuple{DataType,DataType}[(F, MOI.EqualTo{T})]
 end
 
 function concrete_bridge_type(
-    ::Type{<:SplitEqualToBridge{T}},
+    ::Type{<:SplitComplexEqualToBridge{T}},
     G::Type{<:MOI.Utilities.TypedLike},
     ::Type{<:MOI.EqualTo},
 ) where {T}
     F = MutableArithmetics.promote_operation(imag, G)
-    return SplitEqualToBridge{T,F,G}
+    return SplitComplexEqualToBridge{T,F,G}
 end
 
 function MOI.get(
-    bridge::SplitEqualToBridge{T,F},
+    bridge::SplitComplexEqualToBridge{T,F},
     ::MOI.NumberOfConstraints{F,MOI.EqualTo{T}},
 )::Int64 where {T,F}
     ret = 0
@@ -108,7 +108,7 @@ function MOI.get(
 end
 
 function MOI.get(
-    bridge::SplitEqualToBridge{T,F},
+    bridge::SplitComplexEqualToBridge{T,F},
     ::MOI.ListOfConstraintIndices{F,MOI.EqualTo{T}},
 ) where {T,F}
     list = MOI.ConstraintIndex{F,MOI.EqualTo{T}}[]
@@ -121,7 +121,7 @@ function MOI.get(
     return list
 end
 
-function MOI.delete(model::MOI.ModelLike, bridge::SplitEqualToBridge)
+function MOI.delete(model::MOI.ModelLike, bridge::SplitComplexEqualToBridge)
     if bridge.real_constraint !== nothing
         MOI.delete(model, bridge.real_constraint)
     end
@@ -134,7 +134,7 @@ end
 function MOI.supports(
     ::MOI.ModelLike,
     ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{<:SplitEqualToBridge},
+    ::Type{<:SplitComplexEqualToBridge},
 )
     return true
 end
@@ -147,7 +147,7 @@ function MOI.get(
         MOI.ConstraintDual,
         MOI.ConstraintDualStart,
     },
-    bridge::SplitEqualToBridge{T},
+    bridge::SplitComplexEqualToBridge{T},
 ) where {T}
     real_value, imag_value = zero(T), zero(T)
     if bridge.real_constraint !== nothing
@@ -162,7 +162,7 @@ end
 function MOI.set(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    bridge::SplitEqualToBridge{T},
+    bridge::SplitComplexEqualToBridge{T},
     value,
 ) where {T}
     if bridge.real_constraint !== nothing

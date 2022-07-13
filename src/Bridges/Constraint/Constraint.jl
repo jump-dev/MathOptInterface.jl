@@ -47,7 +47,7 @@ include("bridges/slack.jl")
 include("bridges/soc_rsoc.jl")
 include("bridges/soc_to_nonconvex_quad.jl") # do not add these bridges by default
 include("bridges/soc_to_psd.jl")
-include("bridges/split_equalto.jl")
+include("bridges/split_complex_equalto.jl")
 include("bridges/split_complex_zeros.jl")
 include("bridges/square.jl")
 include("bridges/table.jl")
@@ -76,7 +76,7 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, ScalarFunctionizeBridge{T})
     MOI.Bridges.add_bridge(bridged_model, VectorFunctionizeBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SplitIntervalBridge{T})
-    MOI.Bridges.add_bridge(bridged_model, SplitEqualToBridge{T})
+    MOI.Bridges.add_bridge(bridged_model, SplitComplexEqualToBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SplitComplexZerosBridge{T})
     MOI.Bridges.add_bridge(bridged_model, QuadtoSOCBridge{T})
     # We do not add `(R)SOCtoNonConvexQuad` because it starts with a convex
