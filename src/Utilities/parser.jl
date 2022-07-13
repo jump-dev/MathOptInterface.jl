@@ -388,7 +388,7 @@ _split_type(ex) = Float64, ex
 function _split_type(ex::Expr)
     if isexpr(ex, Symbol("::"), 1)
         return Core.eval(Base, ex.args[1]), Symbol("")
-    else isexpr(ex, Symbol("::"), 2)
+    elseif isexpr(ex, Symbol("::"), 2)
         return Core.eval(Base, ex.args[2]), ex.args[1]
     end
     return Float64, ex

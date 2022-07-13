@@ -378,6 +378,28 @@ function test_eltypes_rational_int()
     return
 end
 
+function test_eltypes_complex_float64()
+    # Work-around for https://github.com/jump-dev/MathOptInterface.jl/issues/1947
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    text = """
+    variables: x
+    c::Complex{Float64}: (2.0 + 1im) * x == 0.0 + 0.0im
+    """
+    MOI.Utilities.loadfromstring!(model, text)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    c = MOI.get(model, MOI.ConstraintIndex, "c")
+    f = MOI.get(model, MOI.ConstraintFunction(), c)
+    @test f isa MOI.ScalarAffineFunction{Complex{Float64}}
+    @test isapprox(
+        MOI.ScalarAffineFunction(
+            [MOI.ScalarAffineTerm(2.0 + 1.0im, x)],
+            0.0 + 0.0im,
+        ),
+        f,
+    )
+    return
+end
+
 end  # module
 
 TestParser.runtests()
