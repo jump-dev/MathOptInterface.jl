@@ -62,7 +62,8 @@ function MOI.supports_constraint(
     # and `T` is `Float64`, it would create a set `MOI.EqualTo{Float64}` which
     # is incorrect hence we say we only support it if the coefficient type of
     # `F` is `T`.
-    return MOI.Utilities.is_coefficient_type(F, T) && (S == MOI.Zeros || !(T <: Complex))
+    return MOI.Utilities.is_coefficient_type(F, T) &&
+           (S == MOI.Zeros || !(T <: Complex))
 end
 
 function MOI.Bridges.added_constrained_variable_types(::Type{<:ScalarizeBridge})
