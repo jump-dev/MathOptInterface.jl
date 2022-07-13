@@ -46,6 +46,7 @@ function _add_constraint_if_nonzero(model, func, set)
         return MOI.add_constraint(model, func, set)
     end
 end
+
 function bridge_constraint(
     ::Type{SplitEqualToBridge{T,F,G}},
     model::MOI.ModelLike,
@@ -61,22 +62,28 @@ function bridge_constraint(
     return SplitEqualToBridge{T,F,G}(real_constraint, imag_constraint)
 end
 
-# We don't support `MOI.VariableIndex` as it would be a self-loop in the bridge graph
+# We don't support `MOI.VariableIndex` as it would be a self-loop in the bridge
+# graph.
 function MOI.supports_constraint(
-    ::Type{SplitEqualToBridge{T}},
+    ::Type{<:SplitEqualToBridge{T}},
     ::Type{<:MOI.Utilities.TypedLike{Complex{T}}},
     ::Type{<:MOI.EqualTo},
 ) where {T}
     return true
 end
-function MOI.Bridges.added_constrained_variable_types(::Type{<:SplitEqualToBridge})
+
+function MOI.Bridges.added_constrained_variable_types(
+    ::Type{<:SplitEqualToBridge},
+)
     return Tuple{DataType}[]
 end
+
 function MOI.Bridges.added_constraint_types(
     ::Type{SplitEqualToBridge{T,F,G}},
 ) where {T,F,G}
     return Tuple{DataType,DataType}[(F, MOI.EqualTo{T})]
 end
+
 function concrete_bridge_type(
     ::Type{<:SplitEqualToBridge{T}},
     G::Type{<:MOI.Utilities.TypedLike},
@@ -86,39 +93,44 @@ function concrete_bridge_type(
     return SplitEqualToBridge{T,F,G}
 end
 
-# Attributes, Bridge acting as a model
 function MOI.get(
     bridge::SplitEqualToBridge{T,F},
     ::MOI.NumberOfConstraints{F,MOI.EqualTo{T}},
-) where {T,F}
-    return !isnothing(bridge.real_constraint) +
-           !isnothing(bridge.imag_constraint)
+)::Int64 where {T,F}
+    ret = 0
+    if bridge.real_constraint !== nothing
+        ret += 1
+    end
+    if bridge.imag_constraint !== nothing
+        ret += 1
+    end
+    return ret
 end
+
 function MOI.get(
     bridge::SplitEqualToBridge{T,F},
     ::MOI.ListOfConstraintIndices{F,MOI.EqualTo{T}},
 ) where {T,F}
     list = MOI.ConstraintIndex{F,MOI.EqualTo{T}}[]
-    if !isnothing(bridge.real_constraint)
+    if bridge.real_constraint !== nothing
         push!(list, bridge.real_constraint)
     end
-    if !isnothing(bridge.imag_constraint)
+    if bridge.imag_constraint !== nothing
         push!(list, bridge.imag_constraint)
     end
     return list
 end
 
-# Indices
 function MOI.delete(model::MOI.ModelLike, bridge::SplitEqualToBridge)
-    if !isnothing(bridge.real_constraint)
+    if bridge.real_constraint !== nothing
         MOI.delete(model, bridge.real_constraint)
     end
-    if !isnothing(bridge.imag_constraint)
+    if bridge.imag_constraint !== nothing
         MOI.delete(model, bridge.imag_constraint)
     end
+    return
 end
 
-# Attributes, Bridge acting as a constraint
 function MOI.supports(
     ::MOI.ModelLike,
     ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
@@ -126,6 +138,7 @@ function MOI.supports(
 )
     return true
 end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{
@@ -136,28 +149,26 @@ function MOI.get(
     },
     bridge::SplitEqualToBridge{T},
 ) where {T}
-    if isnothing(bridge.real_constraint)
-        real_value = zero(T)
-    else
+    real_value, imag_value = zero(T), zero(T)
+    if bridge.real_constraint !== nothing
         real_value = MOI.get(model, attr, bridge.real_constraint)
     end
-    if isnothing(bridge.imag_constraint)
-        imag_value = zero(T)
-    else
+    if bridge.imag_constraint !== nothing
         imag_value = MOI.get(model, attr, bridge.imag_constraint)
     end
     return real_value + imag_value * im
 end
+
 function MOI.set(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
     bridge::SplitEqualToBridge{T},
     value,
 ) where {T}
-    if !isnothing(bridge.real_constraint)
+    if bridge.real_constraint !== nothing
         MOI.set(model, attr, bridge.real_constraint, real(value))
     end
-    if !isnothing(bridge.imag_constraint)
+    if bridge.imag_constraint !== nothing
         MOI.set(model, attr, bridge.real_constraint, imag(value))
     end
     return
