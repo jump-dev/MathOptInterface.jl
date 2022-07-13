@@ -3206,6 +3206,13 @@ function Base.promote_rule(
     return F
 end
 
+function Base.promote_rule(
+    F::Type{<:Union{MOI.ScalarAffineFunction,MOI.ScalarQuadraticFunction}},
+    ::Type{MOI.VariableIndex},
+)
+    return F
+end
+
 function operate_coefficient(f, term::MOI.ScalarAffineTerm)
     return MOI.ScalarAffineTerm(f(term.coefficient), term.variable)
 end
