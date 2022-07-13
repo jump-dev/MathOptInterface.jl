@@ -72,7 +72,7 @@ function test__parse_function()
         MOIU._parse_function(:([x, 2x + y + 5.0])),
         MOIU._ParsedVectorAffineFunction(
             MOIU._ParsedVectorAffineTerm.(
-                [1, 2, 2],
+                Int64[1, 2, 2],
                 MOIU._ParsedScalarAffineTerm.([1.0, 2.0, 1.0], [:x, :x, :y]),
             ),
             [0.0, 5.0],
@@ -82,11 +82,11 @@ function test__parse_function()
         MOIU._parse_function(:([x, 2x + y + 5.0, 1 * x * x])),
         MOIU._ParsedVectorQuadraticFunction(
             MOIU._ParsedVectorQuadraticTerm.(
-                [3],
+                Int64[3],
                 MOIU._ParsedScalarQuadraticTerm.([2.0], [:x], [:x]),
             ),
             MOIU._ParsedVectorAffineTerm.(
-                [1, 2, 2],
+                Int64[1, 2, 2],
                 MOIU._ParsedScalarAffineTerm.([1.0, 2.0, 1.0], [:x, :x, :y]),
             ),
             [0.0, 5.0, 0.0],
@@ -319,6 +319,83 @@ function test_constrained_variables()
         ["a", "b", "c", "d"],
         ["con1"],
         [("d", MOI.LessThan{Float64}(2.0))],
+    )
+    return
+end
+
+function test_eltypes_int()
+    model = MOI.Utilities.Model{Int}()
+    text = """
+    variables: x, y
+    ::Int: x >= 1
+    c::Int: 2 * x <= 3
+    d::Int: [x, 4 * y] in Zeros(2)
+    e::Int: [2 * x * x] in Nonnegatives(1)
+    """
+    MOI.Utilities.loadfromstring!(model, text)
+    c = MOI.get(model, MOI.ConstraintIndex, "c")
+    @test isa(
+        MOI.get(model, MOI.ConstraintFunction(), c),
+        MOI.ScalarAffineFunction{Int},
+    )
+    d = MOI.get(model, MOI.ConstraintIndex, "d")
+    @test isa(
+        MOI.get(model, MOI.ConstraintFunction(), d),
+        MOI.VectorAffineFunction{Int},
+    )
+    e = MOI.get(model, MOI.ConstraintIndex, "e")
+    @test isa(
+        MOI.get(model, MOI.ConstraintFunction(), e),
+        MOI.VectorQuadraticFunction{Int},
+    )
+    return
+end
+
+function test_eltypes_rational_int()
+    model = MOI.Utilities.Model{Rational{Int}}()
+    text = """
+    variables: x, y
+    c::Rational{Int}: 2 // 1 * x <= 1 // 3
+    d::Rational{Int}: [x, 4 // 2 * y] in Zeros(2)
+    e::Rational{Int}: [2 // 2 * x * x] in Nonnegatives(1)
+    """
+    MOI.Utilities.loadfromstring!(model, text)
+    c = MOI.get(model, MOI.ConstraintIndex, "c")
+    @test isa(
+        MOI.get(model, MOI.ConstraintFunction(), c),
+        MOI.ScalarAffineFunction{Rational{Int}},
+    )
+    d = MOI.get(model, MOI.ConstraintIndex, "d")
+    @test isa(
+        MOI.get(model, MOI.ConstraintFunction(), d),
+        MOI.VectorAffineFunction{Rational{Int}},
+    )
+    e = MOI.get(model, MOI.ConstraintIndex, "e")
+    @test isa(
+        MOI.get(model, MOI.ConstraintFunction(), e),
+        MOI.VectorQuadraticFunction{Rational{Int}},
+    )
+    return
+end
+
+function test_eltypes_complex_float64()
+    # Work-around for https://github.com/jump-dev/MathOptInterface.jl/issues/1947
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    text = """
+    variables: x
+    c::Complex{Float64}: (2.0 + 1im) * x == 0.0 + 0.0im
+    """
+    MOI.Utilities.loadfromstring!(model, text)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    c = MOI.get(model, MOI.ConstraintIndex, "c")
+    f = MOI.get(model, MOI.ConstraintFunction(), c)
+    @test f isa MOI.ScalarAffineFunction{Complex{Float64}}
+    @test isapprox(
+        MOI.ScalarAffineFunction(
+            [MOI.ScalarAffineTerm(2.0 + 1.0im, x)],
+            0.0 + 0.0im,
+        ),
+        f,
     )
     return
 end
