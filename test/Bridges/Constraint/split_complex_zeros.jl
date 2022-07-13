@@ -4,7 +4,7 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-module TestConstraintSplitZeros
+module TestConstraintSplitComplexZeros
 
 using Test
 
@@ -29,7 +29,7 @@ function test_complex_zeros()
     mock = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}()),
     )
-    bridged_mock = MOI.Bridges.Constraint.SplitZeros{T}(mock)
+    bridged_mock = MOI.Bridges.Constraint.SplitComplexZeros{T}(mock)
     MOI.Utilities.set_mock_optimize!(
         mock,
         (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
@@ -72,14 +72,20 @@ function test_complex_zeros()
 end
 
 function test_runtests()
-    real = """
-    variables: x
-    [x + 1.0] in Zeros(1)
-    """
-    MOI.Bridges.runtests(MOI.Bridges.Constraint.SplitZerosBridge, real, real)
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitComplexZerosBridge,
+        """
+        variables: x
+        [x + 1.0] in Zeros(1)
+        """,
+        """
+        variables: x
+        [x + 1.0] in Zeros(1)
+        """,
+    )
     return
 end
 
 end  # module
 
-TestConstraintSplitZeros.runtests()
+TestConstraintSplitComplexZeros.runtests()

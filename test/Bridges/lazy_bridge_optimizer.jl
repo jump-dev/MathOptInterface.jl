@@ -1930,7 +1930,7 @@ function test_wrong_coefficient()
         bridged = MOI.Bridges.full_bridge_optimizer(model, T)
         MOI.Bridges.remove_bridge(
             bridged,
-            MOI.Bridges.Constraint.SplitZerosBridge{T},
+            MOI.Bridges.Constraint.SplitComplexZerosBridge{T},
         )
         x = MOI.add_variable(bridged)
         f_scalar = one(S) * x
