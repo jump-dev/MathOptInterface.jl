@@ -7,6 +7,7 @@
 module Constraint
 
 import LinearAlgebra
+import MutableArithmetics
 import MathOptInterface
 import OrderedCollections: OrderedDict, OrderedSet
 import SparseArrays
@@ -33,6 +34,7 @@ include("bridges/geomean.jl")
 include("bridges/indicator_activate_on_zero.jl")
 include("bridges/indicator_sos.jl")
 include("bridges/interval.jl")
+include("bridges/split_zeros.jl")
 include("bridges/ltgt_to_interval.jl")
 include("bridges/norm_infinity.jl")
 include("bridges/norm_one.jl")
@@ -73,6 +75,7 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, ScalarFunctionizeBridge{T})
     MOI.Bridges.add_bridge(bridged_model, VectorFunctionizeBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SplitIntervalBridge{T})
+    MOI.Bridges.add_bridge(bridged_model, SplitZerosBridge{T})
     MOI.Bridges.add_bridge(bridged_model, QuadtoSOCBridge{T})
     # We do not add `(R)SOCtoNonConvexQuad` because it starts with a convex
     # conic constraint and generate a non-convex constraint (in the QCP
