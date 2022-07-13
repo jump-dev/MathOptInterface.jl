@@ -6,47 +6,47 @@
 
 using Base.Meta: isexpr
 
-struct _ParsedScalarAffineTerm
-    coefficient::Float64
+struct _ParsedScalarAffineTerm{T}
+    coefficient::T
     variable::Symbol
 end
 
-struct _ParsedScalarAffineFunction
-    terms::Vector{_ParsedScalarAffineTerm}
-    constant::Float64
+struct _ParsedScalarAffineFunction{T}
+    terms::Vector{_ParsedScalarAffineTerm{T}}
+    constant::T
 end
 
-struct _ParsedVectorAffineTerm
+struct _ParsedVectorAffineTerm{T}
     output_index::Int64
-    scalar_term::_ParsedScalarAffineTerm
+    scalar_term::_ParsedScalarAffineTerm{T}
 end
 
-struct _ParsedVectorAffineFunction
-    terms::Vector{_ParsedVectorAffineTerm}
-    constant::Vector{Float64}
+struct _ParsedVectorAffineFunction{T}
+    terms::Vector{_ParsedVectorAffineTerm{T}}
+    constant::Vector{T}
 end
 
-struct _ParsedScalarQuadraticTerm
-    coefficient::Float64
+struct _ParsedScalarQuadraticTerm{T}
+    coefficient::T
     variable_1::Symbol
     variable_2::Symbol
 end
 
-struct _ParsedScalarQuadraticFunction
-    quadratic_terms::Vector{_ParsedScalarQuadraticTerm}
-    affine_terms::Vector{_ParsedScalarAffineTerm}
-    constant::Float64
+struct _ParsedScalarQuadraticFunction{T}
+    quadratic_terms::Vector{_ParsedScalarQuadraticTerm{T}}
+    affine_terms::Vector{_ParsedScalarAffineTerm{T}}
+    constant::T
 end
 
-struct _ParsedVectorQuadraticTerm
+struct _ParsedVectorQuadraticTerm{T}
     output_index::Int64
-    scalar_term::_ParsedScalarQuadraticTerm
+    scalar_term::_ParsedScalarQuadraticTerm{T}
 end
 
-struct _ParsedVectorQuadraticFunction
-    quadratic_terms::Vector{_ParsedVectorQuadraticTerm}
-    affine_terms::Vector{_ParsedVectorAffineTerm}
-    constant::Vector{Float64}
+struct _ParsedVectorQuadraticFunction{T}
+    quadratic_terms::Vector{_ParsedVectorQuadraticTerm{T}}
+    affine_terms::Vector{_ParsedVectorAffineTerm{T}}
+    constant::Vector{T}
 end
 
 struct _ParsedVariableIndex
@@ -58,35 +58,35 @@ struct _ParsedVectorOfVariables
 end
 
 # Not written with any considerations for performance
-function _parse_function(ex)
+function _parse_function(ex, ::Type{T} = Float64) where {T}
     if isa(ex, Symbol)
         return _ParsedVariableIndex(ex)
     elseif isexpr(ex, :vect)
         if all(s -> isa(s, Symbol), ex.args)
             return _ParsedVectorOfVariables(copy(ex.args))
         else
-            singlefunctions = _parse_function.(ex.args)
-            affine_terms = _ParsedVectorAffineTerm[]
-            quadratic_terms = _ParsedVectorQuadraticTerm[]
-            constant = Float64[]
+            singlefunctions = _parse_function.(ex.args, T)
+            affine_terms = _ParsedVectorAffineTerm{T}[]
+            quadratic_terms = _ParsedVectorQuadraticTerm{T}[]
+            constant = T[]
             for (outindex, f) in enumerate(singlefunctions)
                 if isa(f, _ParsedVariableIndex)
                     push!(
                         affine_terms,
                         _ParsedVectorAffineTerm(
                             outindex,
-                            _ParsedScalarAffineTerm(1.0, f.variable),
+                            _ParsedScalarAffineTerm(one(T), f.variable),
                         ),
                     )
-                    push!(constant, 0.0)
-                elseif isa(f, _ParsedScalarAffineFunction)
+                    push!(constant, zero(T))
+                elseif isa(f, _ParsedScalarAffineFunction{T})
                     append!(
                         affine_terms,
                         _ParsedVectorAffineTerm.(outindex, f.terms),
                     )
                     push!(constant, f.constant)
                 else
-                    @assert isa(f, _ParsedScalarQuadraticFunction)
+                    @assert isa(f, _ParsedScalarQuadraticFunction{T})
                     append!(
                         affine_terms,
                         _ParsedVectorAffineTerm.(outindex, f.affine_terms),
@@ -129,33 +129,42 @@ function _parse_function(ex)
                 "`x * x`.",
             )
         end
-        affine_terms = _ParsedScalarAffineTerm[]
-        quadratic_terms = _ParsedScalarQuadraticTerm[]
-        constant = 0.0
+        affine_terms = _ParsedScalarAffineTerm{T}[]
+        quadratic_terms = _ParsedScalarQuadraticTerm{T}[]
+        constant = zero(T)
         for subex in ex.args[2:end]
             if isexpr(subex, :call) && subex.args[1] == :*
                 if length(subex.args) == 3
                     # constant * variable
-                    @assert isa(subex.args[2], Number)
+                    coef = if isa(subex.args[2], Number)
+                        subex.args[2]
+                    else
+                        Core.eval(Base, subex.args[2])
+                    end
                     @assert isa(subex.args[3], Symbol)
                     push!(
                         affine_terms,
-                        _ParsedScalarAffineTerm(subex.args[2], subex.args[3]),
+                        _ParsedScalarAffineTerm{T}(
+                            convert(T, coef),
+                            subex.args[3],
+                        ),
                     )
                 else
                     # constant * variable * variable for quadratic
                     @assert length(subex.args) == 4 "Multiplication with more than three terms not supported"
-                    @assert isa(subex.args[2], Number)
+                    coefficient = if isa(subex.args[2], Number)
+                        subex.args[2]
+                    else
+                        Core.eval(Base, subex.args[2])
+                    end
                     @assert isa(subex.args[3], Symbol)
                     @assert isa(subex.args[4], Symbol)
                     if subex.args[3] == subex.args[4]
-                        coefficient = 2 * subex.args[2]
-                    else
-                        coefficient = subex.args[2]
+                        coefficient *= T(2)
                     end
                     push!(
                         quadratic_terms,
-                        _ParsedScalarQuadraticTerm(
+                        _ParsedScalarQuadraticTerm{T}(
                             coefficient,
                             subex.args[3],
                             subex.args[4],
@@ -163,7 +172,7 @@ function _parse_function(ex)
                     )
                 end
             elseif isa(subex, Symbol)
-                push!(affine_terms, _ParsedScalarAffineTerm(1.0, subex))
+                push!(affine_terms, _ParsedScalarAffineTerm(one(T), subex))
             else
                 @assert isa(subex, Number)
                 constant += subex
@@ -222,7 +231,7 @@ end
 # Vector{_ParsedVectorQuadraticTerm}.
 _parsed_to_moi(model, s::Vector) = _parsed_to_moi.(model, s)
 
-_parsed_to_moi(model, s::Union{Float64,Int64}) = s
+_parsed_to_moi(model, s::Number) = s
 
 for typename in [
     :_ParsedScalarAffineTerm,
@@ -262,7 +271,7 @@ end
 
 A utility function to aid writing tests.
 
-## WARNING
+!!! warning
 
 This function is not intended for widespread use! It is mainly used as a tool to
 simplify writing tests in MathOptInterface. Do not use it as an exchange format
@@ -277,7 +286,7 @@ julia> model = MOI.Utilities.Model{Float64}();
 julia> MOI.Utilities.loadfromstring!(model, \"\"\"
        variables: x, y, z
        constrainedvariable: [a, b, c] in Nonnegatives(3)
-       minobjective: 2x + 3y
+       minobjective::Float64: 2x + 3y
        con1: x + y <= 1.0
        con2: [x, y] in Nonnegatives(2)
        x >= 0.0
@@ -287,10 +296,14 @@ julia> MOI.Utilities.loadfromstring!(model, \"\"\"
 ## Notes
 
 Special labels are:
+
  - variables
  - minobjective
  - maxobjectives
+
 Everything else denotes a constraint with a name.
+
+Append `::T` to use an element type of `T` when parsing the function.
 
 Do not name `VariableIndex` constraints.
 
@@ -303,6 +316,7 @@ function loadfromstring!(model, s)
     parsedlines = filter(ex -> ex !== nothing, Meta.parse.(split(s, "\n")))
     for line in parsedlines
         label, ex = _separate_label(line)
+        T, label = _split_type(label)
         if label == :variables
             if isexpr(ex, :tuple)
                 for v in ex.args
@@ -333,26 +347,26 @@ function loadfromstring!(model, s)
                 end
             end
         elseif label == :maxobjective
-            f = _parsed_to_moi(model, _parse_function(ex))
+            f = _parsed_to_moi(model, _parse_function(ex, T))
             MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
             MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
         elseif label == :minobjective
-            f = _parsed_to_moi(model, _parse_function(ex))
+            f = _parsed_to_moi(model, _parse_function(ex, T))
             MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
             MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
         else
             # constraint
             @assert isexpr(ex, :call)
-            f = _parsed_to_moi(model, _parse_function(ex.args[2]))
+            f = _parsed_to_moi(model, _parse_function(ex.args[2], T))
             if ex.args[1] == :in
                 # Could be safer here
                 set = Core.eval(MOI, ex.args[3])
             elseif ex.args[1] == :<=
-                set = MOI.LessThan(ex.args[3])
+                set = MOI.LessThan(Core.eval(Base, ex.args[3]))
             elseif ex.args[1] == :>=
-                set = MOI.GreaterThan(ex.args[3])
+                set = MOI.GreaterThan(Core.eval(Base, ex.args[3]))
             elseif ex.args[1] == :(==)
-                set = MOI.EqualTo(ex.args[3])
+                set = MOI.EqualTo(Core.eval(Base, ex.args[3]))
             else
                 error("Unrecognized expression $ex")
             end
@@ -366,4 +380,16 @@ function loadfromstring!(model, s)
             end
         end
     end
+    return
+end
+
+_split_type(ex) = Float64, ex
+
+function _split_type(ex::Expr)
+    if isexpr(ex, Symbol("::"), 1)
+        return Core.eval(Base, ex.args[1]), Symbol("")
+    else isexpr(ex, Symbol("::"), 2)
+        return Core.eval(Base, ex.args[2]), ex.args[1]
+    end
+    return Float64, ex
 end

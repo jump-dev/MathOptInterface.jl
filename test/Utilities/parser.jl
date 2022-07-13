@@ -323,6 +323,61 @@ function test_constrained_variables()
     return
 end
 
+function test_eltypes_int()
+    model = MOI.Utilities.Model{Int}()
+    text = """
+    variables: x, y
+    ::Int: x >= 1
+    c::Int: 2 * x <= 3
+    d::Int: [x, 4 * y] in Zeros(2)
+    e::Int: [2 * x * x] in Nonnegatives(1)
+    """
+    MOI.Utilities.loadfromstring!(model, text)
+    c = MOI.get(model, MOI.ConstraintIndex, "c")
+    @test isa(
+        MOI.get(model, MOI.ConstraintFunction(), c),
+        MOI.ScalarAffineFunction{Int},
+    )
+    d = MOI.get(model, MOI.ConstraintIndex, "d")
+    @test isa(
+        MOI.get(model, MOI.ConstraintFunction(), d),
+        MOI.VectorAffineFunction{Int},
+    )
+    e = MOI.get(model, MOI.ConstraintIndex, "e")
+    @test isa(
+        MOI.get(model, MOI.ConstraintFunction(), e),
+        MOI.VectorQuadraticFunction{Int},
+    )
+    return
+end
+
+function test_eltypes_rational_int()
+    model = MOI.Utilities.Model{Rational{Int}}()
+    text = """
+    variables: x, y
+    c::Rational{Int}: 2 // 1 * x <= 1 // 3
+    d::Rational{Int}: [x, 4 // 2 * y] in Zeros(2)
+    e::Rational{Int}: [2 // 2 * x * x] in Nonnegatives(1)
+    """
+    MOI.Utilities.loadfromstring!(model, text)
+    c = MOI.get(model, MOI.ConstraintIndex, "c")
+    @test isa(
+        MOI.get(model, MOI.ConstraintFunction(), c),
+        MOI.ScalarAffineFunction{Rational{Int}},
+    )
+    d = MOI.get(model, MOI.ConstraintIndex, "d")
+    @test isa(
+        MOI.get(model, MOI.ConstraintFunction(), d),
+        MOI.VectorAffineFunction{Rational{Int}},
+    )
+    e = MOI.get(model, MOI.ConstraintIndex, "e")
+    @test isa(
+        MOI.get(model, MOI.ConstraintFunction(), e),
+        MOI.VectorQuadraticFunction{Rational{Int}},
+    )
+    return
+end
+
 end  # module
 
 TestParser.runtests()
