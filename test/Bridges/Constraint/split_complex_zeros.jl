@@ -93,9 +93,7 @@ function test_runtests()
         variables: x
         ::Float64: [2 * x + 4] in Zeros(1)
         """;
-        # The default start vectors that we test aren't feasible, because the
-        # 0 in Zeros(1) part of the real constraint should have a dual of 0.
-        exclude = [MOI.ConstraintDualStart(), MOI.ConstraintPrimalStart()],
+        constraint_start = 0.0 + 1.2im,
     )
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.SplitComplexZerosBridge,
@@ -107,9 +105,7 @@ function test_runtests()
         variables: x
         ::Float64: [2 * x + 4] in Zeros(1)
         """;
-        # The default start vectors that we test aren't feasible, because the
-        # 0 in Zeros(1) part of the real constraint should have a dual of 0.
-        exclude = [MOI.ConstraintDualStart(), MOI.ConstraintPrimalStart()],
+        constraint_start = 1.2 + 0.0im,
     )
     return
 end

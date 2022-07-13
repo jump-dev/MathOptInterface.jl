@@ -248,7 +248,7 @@ function runtests(
     Bridge::Type{<:AbstractBridge},
     input::String,
     output::String;
-    exclude = Any[],
+    constraint_start = 1.2,
 )
     # Load model and bridge it
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
@@ -268,14 +268,12 @@ function runtests(
         for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             set = MOI.get(model, MOI.ConstraintSet(), ci)
             for attr in (MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart())
-                if attr in exclude
-                    continue
-                end
                 if MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
                     MOI.set(model, attr, ci, nothing)
                     Test.@test MOI.get(model, attr, ci) === nothing
-                    MOI.set(model, attr, ci, _fake_start(F, set))
-                    Test.@test MOI.get(model, attr, ci) ≈ _fake_start(F, set)
+                    start = _fake_start(constraint_start, set)
+                    MOI.set(model, attr, ci, start)
+                    Test.@test MOI.get(model, attr, ci) ≈ start
                 end
             end
         end
@@ -314,16 +312,9 @@ function _test_delete(Bridge, model, inner)
     return
 end
 
-_fake_start(F, ::MOI.AbstractScalarSet) = 1.2
+_fake_start(value, ::MOI.AbstractScalarSet) = value
 
-_fake_start(F, set::MOI.AbstractVectorSet) = fill(1.2, MOI.dimension(set))
-
-function _fake_start(
-    ::Type{MOI.VectorAffineFunction{Complex{T}}},
-    set::MOI.AbstractVectorSet,
-) where {T}
-    return fill(1.2 + 2.3 * im, MOI.dimension(set))
-end
+_fake_start(value, set::MOI.AbstractVectorSet) = fill(value, MOI.dimension(set))
 
 function _bridged_model(Bridge::Type{<:Constraint.AbstractBridge}, inner)
     return Constraint.SingleBridgeOptimizer{Bridge{Float64}}(inner)
