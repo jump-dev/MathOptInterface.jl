@@ -3207,7 +3207,7 @@ function Base.promote_rule(
 end
 
 function Base.promote_rule(
-    F::Type{<:Union{MOI.ScalarAffineFunction,MOI.ScalarQuadraticFunction},
+    F::Type{<:Union{MOI.ScalarAffineFunction,MOI.ScalarQuadraticFunction}},
     ::Type{MOI.VariableIndex},
 )
     return F
