@@ -94,7 +94,7 @@ function _parse_function(ex, ::Type{T} = Float64) where {T}
                     )
                     append!(
                         quadratic_terms,
-                        _ParsedVectorQuadraticTerm{T}.(
+                        _ParsedVectorQuadraticTerm.(
                             outindex,
                             f.quadratic_terms,
                         ),

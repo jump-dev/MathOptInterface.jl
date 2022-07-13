@@ -72,7 +72,7 @@ function test__parse_function()
         MOIU._parse_function(:([x, 2x + y + 5.0])),
         MOIU._ParsedVectorAffineFunction(
             MOIU._ParsedVectorAffineTerm.(
-                [1, 2, 2],
+                Int64[1, 2, 2],
                 MOIU._ParsedScalarAffineTerm.([1.0, 2.0, 1.0], [:x, :x, :y]),
             ),
             [0.0, 5.0],
@@ -82,11 +82,11 @@ function test__parse_function()
         MOIU._parse_function(:([x, 2x + y + 5.0, 1 * x * x])),
         MOIU._ParsedVectorQuadraticFunction(
             MOIU._ParsedVectorQuadraticTerm.(
-                [3],
+                Int64[3],
                 MOIU._ParsedScalarQuadraticTerm.([2.0], [:x], [:x]),
             ),
             MOIU._ParsedVectorAffineTerm.(
-                [1, 2, 2],
+                Int64[1, 2, 2],
                 MOIU._ParsedScalarAffineTerm.([1.0, 2.0, 1.0], [:x, :x, :y]),
             ),
             [0.0, 5.0, 0.0],
