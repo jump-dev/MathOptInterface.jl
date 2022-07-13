@@ -167,6 +167,11 @@ function test_promote_operation_Quadratic()
         MOI.VariableIndex,
         Int,
     ) == MOI.VectorQuadraticFunction{Int}
+    for T in (Float64, Int)
+        for TV in (MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T})
+            @test promote_type(TV, MOI.VariableIndex) == TV
+        end
+    end
     return
 end
 
