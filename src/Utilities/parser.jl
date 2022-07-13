@@ -70,30 +70,31 @@ function _parse_function(ex, ::Type{T} = Float64) where {T}
             quadratic_terms = _ParsedVectorQuadraticTerm{T}[]
             constant = T[]
             for (outindex, f) in enumerate(singlefunctions)
+                outindex = Int64(outindex)
                 if isa(f, _ParsedVariableIndex)
                     push!(
                         affine_terms,
-                        _ParsedVectorAffineTerm(
+                        _ParsedVectorAffineTerm{T}(
                             outindex,
-                            _ParsedScalarAffineTerm(one(T), f.variable),
+                            _ParsedScalarAffineTerm{T}(one(T), f.variable),
                         ),
                     )
                     push!(constant, zero(T))
                 elseif isa(f, _ParsedScalarAffineFunction{T})
                     append!(
                         affine_terms,
-                        _ParsedVectorAffineTerm.(outindex, f.terms),
+                        _ParsedVectorAffineTerm{T}.(outindex, f.terms),
                     )
                     push!(constant, f.constant)
                 else
                     @assert isa(f, _ParsedScalarQuadraticFunction{T})
                     append!(
                         affine_terms,
-                        _ParsedVectorAffineTerm.(outindex, f.affine_terms),
+                        _ParsedVectorAffineTerm{T}.(outindex, f.affine_terms),
                     )
                     append!(
                         quadratic_terms,
-                        _ParsedVectorQuadraticTerm.(
+                        _ParsedVectorQuadraticTerm{T}.(
                             outindex,
                             f.quadratic_terms,
                         ),
@@ -102,9 +103,9 @@ function _parse_function(ex, ::Type{T} = Float64) where {T}
                 end
             end
             if length(quadratic_terms) == 0
-                return _ParsedVectorAffineFunction(affine_terms, constant)
+                return _ParsedVectorAffineFunction{T}(affine_terms, constant)
             else
-                return _ParsedVectorQuadraticFunction(
+                return _ParsedVectorQuadraticFunction{T}(
                     quadratic_terms,
                     affine_terms,
                     constant,
@@ -172,16 +173,16 @@ function _parse_function(ex, ::Type{T} = Float64) where {T}
                     )
                 end
             elseif isa(subex, Symbol)
-                push!(affine_terms, _ParsedScalarAffineTerm(one(T), subex))
+                push!(affine_terms, _ParsedScalarAffineTerm{T}(one(T), subex))
             else
                 @assert isa(subex, Number)
                 constant += subex
             end
         end
         if length(quadratic_terms) == 0
-            return _ParsedScalarAffineFunction(affine_terms, constant)
+            return _ParsedScalarAffineFunction{T}(affine_terms, constant)
         else
-            return _ParsedScalarQuadraticFunction(
+            return _ParsedScalarQuadraticFunction{T}(
                 quadratic_terms,
                 affine_terms,
                 constant,
