@@ -34,6 +34,7 @@ struct SplitComplexZerosBridge{
     G<:MOI.Utilities.TypedLike{Complex{T}},
 } <: AbstractBridge
     dimension::Int
+    func::G  # Simplify querying ConstraintFunction.
     constraint::MOI.ConstraintIndex{F,MOI.Zeros}
     real_indices::Vector{Int}
     imag_indices::Vector{Int}
@@ -72,6 +73,7 @@ function bridge_constraint(
     )
     return SplitComplexZerosBridge{T,F,G}(
         MOI.dimension(set),
+        f,
         constraint,
         real_indices,
         imag_indices,
@@ -91,13 +93,13 @@ end
 function MOI.Bridges.added_constrained_variable_types(
     ::Type{<:SplitComplexZerosBridge},
 )
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOI.Bridges.added_constraint_types(
     ::Type{SplitComplexZerosBridge{T,F,G}},
 ) where {T,F,G}
-    return Tuple{DataType,DataType}[(F, MOI.Zeros)]
+    return Tuple{Type,Type}[(F, MOI.Zeros)]
 end
 
 function concrete_bridge_type(
@@ -107,6 +109,22 @@ function concrete_bridge_type(
 ) where {T}
     F = MutableArithmetics.promote_operation(imag, G)
     return SplitComplexZerosBridge{T,F,G}
+end
+
+function MOI.get(
+    ::MOI.ModelLike,
+    ::MOI.ConstraintFunction,
+    bridge::SplitComplexZerosBridge,
+)
+    return bridge.func
+end
+
+function MOI.get(
+    ::MOI.ModelLike,
+    ::MOI.ConstraintSet,
+    bridge::SplitComplexZerosBridge,
+)
+    return MOI.Zeros(bridge.dimension)
 end
 
 function MOI.get(
@@ -147,12 +165,15 @@ function MOI.get(
     bridge::SplitComplexZerosBridge,
 )
     values = MOI.get(model, attr, bridge.constraint)
+    if values === nothing
+        return nothing
+    end
     output = zeros(Complex{eltype(values)}, bridge.dimension)
     for (i, idx) in enumerate(bridge.real_indices)
         output[idx] = values[i]
     end
     for (i, idx) in enumerate(bridge.imag_indices)
-        output[idx] = values[length(bridge.real_indices)+i] * im
+        output[idx] += values[length(bridge.real_indices)+i] * im
     end
     return output
 end
@@ -173,5 +194,16 @@ function MOI.set(
     for (i, idx) in enumerate(bridge.imag_indices)
         input[length(bridge.real_indices)+i] = imag(value[idx])
     end
-    return MOI.set(model, attr, bridge.constraint, input)
+    MOI.set(model, attr, bridge.constraint, input)
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    bridge::SplitComplexZerosBridge{T},
+    ::Nothing,
+) where {T}
+    MOI.set(model, attr, bridge.constraint, nothing)
+    return
 end
