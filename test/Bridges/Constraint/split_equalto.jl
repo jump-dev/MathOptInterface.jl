@@ -51,7 +51,10 @@ function test_complex_zeros()
     @test length(cis) == 0
     cis = MOI.get(
         mock,
-        MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}(),
+        MOI.ListOfConstraintIndices{
+            MOI.ScalarAffineFunction{T},
+            MOI.EqualTo{T},
+        }(),
     )
     @test length(cis) == 2
 
@@ -66,7 +69,10 @@ function test_complex_zeros()
     MOI.Test.test_linear_complex_Zeros_duplicate(bridged_mock, config)
     cis = MOI.get(
         mock,
-        MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}(),
+        MOI.ListOfConstraintIndices{
+            MOI.ScalarAffineFunction{T},
+            MOI.EqualTo{T},
+        }(),
     )
     @test length(cis) == 1
     return
