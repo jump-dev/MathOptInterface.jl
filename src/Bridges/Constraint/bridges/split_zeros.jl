@@ -17,6 +17,8 @@
 
   * `G` in [`MOI.Zeros`](@ref)
 
+where `G` is a function with `Complex` coefficients.
+
 ## Target nodes
 
 `SplitZerosBridge` creates:
@@ -77,7 +79,7 @@ end
 
 # We don't support `MOI.VectorOfVariables` as it would be a self-loop in the bridge graph
 function MOI.supports_constraint(
-    ::Type{SplitZerosBridge{T}},
+    ::Type{<:SplitZerosBridge{T}},
     ::Type{<:MOI.Utilities.TypedLike{Complex{T}}},
     ::Type{MOI.Zeros},
 ) where {T}
