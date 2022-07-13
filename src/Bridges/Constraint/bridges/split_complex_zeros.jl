@@ -5,15 +5,16 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    SplitZerosBridge{T,F,G} <: Bridges.Constraint.AbstractBridge
+    SplitComplexZerosBridge{T,F,G} <: Bridges.Constraint.AbstractBridge
 
-`SplitZerosBridge` implements the following reformulation:
+`SplitComplexZerosBridge` implements the following reformulation:
 
-  * ``f(x) \\in \\{0\\}^n`` into ``\\text{Re}(f(x)) \\in \\{0\\}^n`` and ``\\text{Im}(f(x)) \\in \\{0\\}^n``
+  * ``f(x) \\in \\{0\\}^n`` into ``\\text{Re}(f(x)) \\in \\{0\\}^n`` and
+    ``\\text{Im}(f(x)) \\in \\{0\\}^n``
 
 ## Source node
 
-`SplitZerosBridge` supports:
+`SplitComplexZerosBridge` supports:
 
   * `G` in [`MOI.Zeros`](@ref)
 
@@ -21,13 +22,13 @@ where `G` is a function with `Complex` coefficients.
 
 ## Target nodes
 
-`SplitZerosBridge` creates:
+`SplitComplexZerosBridge` creates:
 
   * `F` in [`MOI.Zeros`](@ref)
 
 where `F` is the type of the real/imaginary part of `G`.
 """
-struct SplitZerosBridge{
+struct SplitComplexZerosBridge{
     T,
     F<:MOI.Utilities.TypedLike{T},
     G<:MOI.Utilities.TypedLike{Complex{T}},
@@ -38,8 +39,8 @@ struct SplitZerosBridge{
     imag_indices::Vector{Int}
 end
 
-const SplitZeros{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{SplitZerosBridge{T},OT}
+const SplitComplexZeros{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{SplitComplexZerosBridge{T},OT}
 
 function _nonzero_indices(func::MOI.AbstractVectorFunction)
     return [
@@ -49,7 +50,7 @@ function _nonzero_indices(func::MOI.AbstractVectorFunction)
 end
 
 function bridge_constraint(
-    ::Type{SplitZerosBridge{T,F,G}},
+    ::Type{SplitComplexZerosBridge{T,F,G}},
     model::MOI.ModelLike,
     f::G,
     set::MOI.Zeros,
@@ -69,7 +70,7 @@ function bridge_constraint(
         func,
         MOI.Zeros(length(real_indices) + length(imag_indices)),
     )
-    return SplitZerosBridge{T,F,G}(
+    return SplitComplexZerosBridge{T,F,G}(
         MOI.dimension(set),
         constraint,
         real_indices,
@@ -77,9 +78,10 @@ function bridge_constraint(
     )
 end
 
-# We don't support `MOI.VectorOfVariables` as it would be a self-loop in the bridge graph
+# We don't support `MOI.VectorOfVariables` as it would be a self-loop in the
+# bridge graph
 function MOI.supports_constraint(
-    ::Type{<:SplitZerosBridge{T}},
+    ::Type{<:SplitComplexZerosBridge{T}},
     ::Type{<:MOI.Utilities.TypedLike{Complex{T}}},
     ::Type{MOI.Zeros},
 ) where {T}
@@ -87,41 +89,41 @@ function MOI.supports_constraint(
 end
 
 function MOI.Bridges.added_constrained_variable_types(
-    ::Type{<:SplitZerosBridge},
+    ::Type{<:SplitComplexZerosBridge},
 )
     return Tuple{DataType}[]
 end
 
 function MOI.Bridges.added_constraint_types(
-    ::Type{SplitZerosBridge{T,F,G}},
+    ::Type{SplitComplexZerosBridge{T,F,G}},
 ) where {T,F,G}
     return Tuple{DataType,DataType}[(F, MOI.Zeros)]
 end
 
 function concrete_bridge_type(
-    ::Type{<:SplitZerosBridge{T}},
+    ::Type{<:SplitComplexZerosBridge{T}},
     G::Type{<:MOI.Utilities.TypedLike},
     ::Type{MOI.Zeros},
 ) where {T}
     F = MutableArithmetics.promote_operation(imag, G)
-    return SplitZerosBridge{T,F,G}
+    return SplitComplexZerosBridge{T,F,G}
 end
 
 function MOI.get(
-    ::SplitZerosBridge{T,F},
+    ::SplitComplexZerosBridge{T,F},
     ::MOI.NumberOfConstraints{F,MOI.Zeros},
 )::Int64 where {T,F}
     return 1
 end
 
 function MOI.get(
-    bridge::SplitZerosBridge{T,F},
+    bridge::SplitComplexZerosBridge{T,F},
     ::MOI.ListOfConstraintIndices{F,MOI.Zeros},
 ) where {T,F}
     return [bridge.constraint]
 end
 
-function MOI.delete(model::MOI.ModelLike, bridge::SplitZerosBridge)
+function MOI.delete(model::MOI.ModelLike, bridge::SplitComplexZerosBridge)
     MOI.delete(model, bridge.constraint)
     return
 end
@@ -129,7 +131,7 @@ end
 function MOI.supports(
     ::MOI.ModelLike,
     ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{<:SplitZerosBridge},
+    ::Type{<:SplitComplexZerosBridge},
 )
     return true
 end
@@ -142,7 +144,7 @@ function MOI.get(
         MOI.ConstraintDual,
         MOI.ConstraintDualStart,
     },
-    bridge::SplitZerosBridge,
+    bridge::SplitComplexZerosBridge,
 )
     values = MOI.get(model, attr, bridge.constraint)
     output = zeros(Complex{eltype(values)}, bridge.dimension)
@@ -158,7 +160,7 @@ end
 function MOI.set(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    bridge::SplitZerosBridge{T},
+    bridge::SplitComplexZerosBridge{T},
     value,
 ) where {T}
     input = Vector{T}(
