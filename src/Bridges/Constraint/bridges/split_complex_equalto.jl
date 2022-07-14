@@ -32,19 +32,8 @@ struct SplitComplexEqualToBridge{
     F<:MOI.Utilities.TypedScalarLike{T},
     G<:MOI.Utilities.TypedScalarLike{Complex{T}},
 } <: AbstractBridge
-    func::G
     real_constraint::Union{Nothing,MOI.ConstraintIndex{F,MOI.EqualTo{T}}}
     imag_constraint::Union{Nothing,MOI.ConstraintIndex{F,MOI.EqualTo{T}}}
-    # We need an explicit inner constructor to avoid the unbound type parameters
-    # `T` and `F`, which might occur if `nothing` is passed for both
-    # constraints.
-    function SplitComplexEqualToBridge{T,F}(
-        func::G,
-        real_ci::Union{Nothing,MOI.ConstraintIndex{F,MOI.EqualTo{T}}},
-        imag_ci::Union{Nothing,MOI.ConstraintIndex{F,MOI.EqualTo{T}}},
-    ) where {T,F,G}
-        return new{T,F,G}(func, real_ci, imag_ci)
-    end
 end
 
 const SplitComplexEqualTo{T,OT<:MOI.ModelLike} =
@@ -69,7 +58,7 @@ function bridge_constraint(
     imag_set = MOI.EqualTo(imag(MOI.constant(set)))
     real_ci = _add_constraint_if_nonzero(model, real_func, real_set)
     imag_ci = _add_constraint_if_nonzero(model, imag_func, imag_set)
-    return SplitComplexEqualToBridge{T,F}(func, real_ci, imag_ci)
+    return SplitComplexEqualToBridge{T,F,G}(real_ci, imag_ci)
 end
 
 # We don't support `MOI.VariableIndex` as it would be a self-loop in the bridge
@@ -104,11 +93,20 @@ function concrete_bridge_type(
 end
 
 function MOI.get(
-    ::MOI.ModelLike,
-    ::MOI.ConstraintFunction,
-    bridge::SplitComplexEqualToBridge,
-)
-    return bridge.func
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintFunction,
+    bridge::SplitComplexEqualToBridge{T,F,G},
+) where {T,F,G}
+    g = zero(G)
+    if bridge.real_constraint !== nothing
+        f = MOI.get(model, attr, bridge.real_constraint)
+        g = MOI.Utilities.operate!(+, Complex{T}, g, convert(G, f))
+    end
+    if bridge.imag_constraint !== nothing
+        f = MOI.get(model, attr, bridge.imag_constraint)
+        g = MOI.Utilities.operate!(+, Complex{T}, g, im * f)
+    end
+    return g
 end
 
 function MOI.get(
