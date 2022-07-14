@@ -244,7 +244,12 @@ julia> MOI.Bridges.runtests(
        )
 ```
 """
-function runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
+function runtests(
+    Bridge::Type{<:AbstractBridge},
+    input::String,
+    output::String;
+    constraint_start = 1.2,
+)
     # Load model and bridge it
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     model = _bridged_model(Bridge, inner)
@@ -266,8 +271,9 @@ function runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
                 if MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
                     MOI.set(model, attr, ci, nothing)
                     Test.@test MOI.get(model, attr, ci) === nothing
-                    MOI.set(model, attr, ci, _fake_start(set))
-                    Test.@test MOI.get(model, attr, ci) ≈ _fake_start(set)
+                    start = _fake_start(constraint_start, set)
+                    MOI.set(model, attr, ci, start)
+                    Test.@test MOI.get(model, attr, ci) ≈ start
                 end
             end
         end
@@ -306,9 +312,9 @@ function _test_delete(Bridge, model, inner)
     return
 end
 
-_fake_start(::MOI.AbstractScalarSet) = 1.2
+_fake_start(value, ::MOI.AbstractScalarSet) = value
 
-_fake_start(set::MOI.AbstractVectorSet) = fill(1.2, MOI.dimension(set))
+_fake_start(value, set::MOI.AbstractVectorSet) = fill(value, MOI.dimension(set))
 
 function _bridged_model(Bridge::Type{<:Constraint.AbstractBridge}, inner)
     return Constraint.SingleBridgeOptimizer{Bridge{Float64}}(inner)

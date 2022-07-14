@@ -76,12 +76,36 @@ function test_runtests()
         MOI.Bridges.Constraint.SplitComplexZerosBridge,
         """
         variables: x
-        [x + 1.0] in Zeros(1)
+        ::Complex{Float64}: [(1 + 2im) * x + (3 + 4im)] in Zeros(1)
         """,
         """
         variables: x
-        [x + 1.0] in Zeros(1)
+        ::Float64: [1 * x + 3, 2 * x + 4] in Zeros(2)
         """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitComplexZerosBridge,
+        """
+        variables: x
+        ::Complex{Float64}: [(0 + 2im) * x + (0 + 4im)] in Zeros(1)
+        """,
+        """
+        variables: x
+        ::Float64: [2 * x + 4] in Zeros(1)
+        """;
+        constraint_start = 0.0 + 1.2im,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitComplexZerosBridge,
+        """
+        variables: x
+        ::Complex{Float64}: [(2 + 0im) * x + (4 + 0im)] in Zeros(1)
+        """,
+        """
+        variables: x
+        ::Float64: [2 * x + 4] in Zeros(1)
+        """;
+        constraint_start = 1.2 + 0.0im,
     )
     return
 end

@@ -174,9 +174,10 @@ function _parse_function(ex, ::Type{T} = Float64) where {T}
                 end
             elseif isa(subex, Symbol)
                 push!(affine_terms, _ParsedScalarAffineTerm{T}(one(T), subex))
-            else
-                @assert isa(subex, Number)
+            elseif isa(subex, Number)
                 constant += subex
+            else
+                constant += Core.eval(Base, subex)
             end
         end
         if length(quadratic_terms) == 0
