@@ -122,7 +122,8 @@ function MOI.get(
         MOI.Utilities.operate_output_index!(+, Complex{T}, g_i, g, complex_f)
     end
     for (f_i, g_i) in enumerate(bridge.imag_indices)
-        complex_f = im * MOI.Utilities.eachscalar(f)[length(bridge.real_indices) + f_i]
+        scalar = MOI.Utilities.eachscalar(f)[length(bridge.real_indices)+f_i]
+        complex_f = im * scalar
         MOI.Utilities.operate_output_index!(+, Complex{T}, g_i, g, complex_f)
     end
     return g
