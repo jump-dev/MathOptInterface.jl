@@ -34,7 +34,6 @@ struct SplitComplexZerosBridge{
     G<:MOI.Utilities.TypedLike{Complex{T}},
 } <: AbstractBridge
     dimension::Int
-    func::G  # Simplify querying ConstraintFunction.
     constraint::MOI.ConstraintIndex{F,MOI.Zeros}
     real_indices::Vector{Int}
     imag_indices::Vector{Int}
@@ -73,7 +72,6 @@ function bridge_constraint(
     )
     return SplitComplexZerosBridge{T,F,G}(
         MOI.dimension(set),
-        f,
         constraint,
         real_indices,
         imag_indices,
@@ -112,11 +110,22 @@ function concrete_bridge_type(
 end
 
 function MOI.get(
-    ::MOI.ModelLike,
-    ::MOI.ConstraintFunction,
-    bridge::SplitComplexZerosBridge,
-)
-    return bridge.func
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintFunction,
+    bridge::SplitComplexZerosBridge{T,F,G},
+) where {T,F,G}
+    g = MOI.Utilities.zero_with_output_dimension(G, bridge.dimension)
+    f = MOI.get(model, attr, bridge.constraint)
+    S = MOI.Utilities.scalar_type(G)
+    for (f_i, g_i) in enumerate(bridge.real_indices)
+        complex_f = convert(S, MOI.Utilities.eachscalar(f)[f_i])
+        MOI.Utilities.operate_output_index!(+, Complex{T}, g_i, g, complex_f)
+    end
+    for (f_i, g_i) in enumerate(bridge.imag_indices)
+        complex_f = im * MOI.Utilities.eachscalar(f)[length(bridge.real_indices) + f_i]
+        MOI.Utilities.operate_output_index!(+, Complex{T}, g_i, g, complex_f)
+    end
+    return g
 end
 
 function MOI.get(
