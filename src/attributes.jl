@@ -824,6 +824,7 @@ attribute_value_type(::NumberOfThreads) = Union{Nothing,Int}
 
 An optimizer attribute for setting the relative gap tolerance for an optimization.
 This is an _optimizer_ attribute, and should be set before calling [`optimize!`](@ref).
+When set to `nothing` (if supported), uses solver default.
 
 If you are looking for the relative gap of the current best solution, see
 [`RelativeGap`](@ref). If no limit nor issue is encountered during the optimization,
@@ -854,6 +855,7 @@ attribute_value_type(::RelativeGapTolerance) = Union{Nothing,Float64}
 
 An optimizer attribute for setting the absolute gap tolerance for an optimization.
 This is an _optimizer_ attribute, and should be set before calling [`optimize!`](@ref).
+When set to `nothing` (if supported), uses solver default.
 
 To set a _relative_ gap tolerance, see [`RelativeGapTolerance`](@ref).
 

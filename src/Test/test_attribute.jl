@@ -205,8 +205,8 @@ function test_attribute_AbsoluteGapTolerance(
     value = MOI.get(model, MOI.AbsoluteGapTolerance())
     MOI.set(model, MOI.AbsoluteGapTolerance(), 1e-2)
     @test MOI.get(model, MOI.AbsoluteGapTolerance()) == 1e-2
-    MOI.set(model, MOI.AbsoluteGapTolerance(), 100)
-    @test MOI.get(model, MOI.AbsoluteGapTolerance()) == 100
+    MOI.set(model, MOI.AbsoluteGapTolerance(), 100.0)
+    @test MOI.get(model, MOI.AbsoluteGapTolerance()) == 100.0
     MOI.set(model, MOI.AbsoluteGapTolerance(), value)
     @test value == MOI.get(model, MOI.AbsoluteGapTolerance())
     _test_attribute_value_type(model, MOI.AbsoluteGapTolerance())
