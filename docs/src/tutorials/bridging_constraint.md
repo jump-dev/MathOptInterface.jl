@@ -327,7 +327,7 @@ end
     footprint of the bridges as the garbage collector won't be able to delete
     that object. The convention is to not store the function in the bridge
     and not care too much about the efficiency of these getters. If the user
-    needs efficient getters for [`ConstraintFunction`](@ref) then he should
+    needs efficient getters for [`ConstraintFunction`](@ref) then they should
     use a [`Utilities.CachingOptimizer`](@ref).
 
 ### Model modifications
