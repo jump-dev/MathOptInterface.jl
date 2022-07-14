@@ -78,6 +78,46 @@ function test_complex_zeros()
     return
 end
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitComplexEqualToBridge,
+        """
+        variables: x
+        ::Complex{Float64}: (1.0 + 2.0im) * x == (3.0 + 4.0im)
+        """,
+        """
+        variables: x
+        ::Float64: 1.0 * x == 3.0
+        ::Float64: 2.0 * x == 4.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitComplexEqualToBridge,
+        """
+        variables: x
+        ::Complex{Float64}: (0.0 + 2.0im) * x == (0.0 + 4.0im)
+        """,
+        """
+        variables: x
+        ::Float64: 2.0 * x == 4.0
+        """;
+        constraint_start = 0.0 + 1.2im,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitComplexEqualToBridge,
+        """
+        variables: x
+        ::Complex{Float64}: (2.0 + 0.0im) * x == (4.0 + 0.0im)
+        """,
+        """
+        variables: x
+        ::Float64: 2.0 * x == 4.0
+        """;
+        constraint_start = 1.2 + 0.0im,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintSplitComplexEqualTo.runtests()

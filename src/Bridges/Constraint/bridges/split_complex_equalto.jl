@@ -32,6 +32,7 @@ struct SplitComplexEqualToBridge{
     F<:MOI.Utilities.TypedScalarLike{T},
     G<:MOI.Utilities.TypedScalarLike{Complex{T}},
 } <: AbstractBridge
+    func::G
     real_constraint::Union{Nothing,MOI.ConstraintIndex{F,MOI.EqualTo{T}}}
     imag_constraint::Union{Nothing,MOI.ConstraintIndex{F,MOI.EqualTo{T}}}
 end
@@ -42,9 +43,8 @@ const SplitComplexEqualTo{T,OT<:MOI.ModelLike} =
 function _add_constraint_if_nonzero(model, func, set)
     if iszero(func) && iszero(MOI.constant(set))
         return nothing
-    else
-        return MOI.add_constraint(model, func, set)
     end
+    return MOI.add_constraint(model, func, set)
 end
 
 function bridge_constraint(
@@ -57,9 +57,9 @@ function bridge_constraint(
     imag_func = MOI.Utilities.operate(imag, T, func)
     real_set = MOI.EqualTo(real(MOI.constant(set)))
     imag_set = MOI.EqualTo(imag(MOI.constant(set)))
-    real_constraint = _add_constraint_if_nonzero(model, real_func, real_set)
-    imag_constraint = _add_constraint_if_nonzero(model, imag_func, imag_set)
-    return SplitComplexEqualToBridge{T,F,G}(real_constraint, imag_constraint)
+    real_ci = _add_constraint_if_nonzero(model, real_func, real_set)
+    imag_ci = _add_constraint_if_nonzero(model, imag_func, imag_set)
+    return SplitComplexEqualToBridge{T,F,G}(func, real_ci, imag_ci)
 end
 
 # We don't support `MOI.VariableIndex` as it would be a self-loop in the bridge
@@ -75,13 +75,13 @@ end
 function MOI.Bridges.added_constrained_variable_types(
     ::Type{<:SplitComplexEqualToBridge},
 )
-    return Tuple{DataType}[]
+    return Tuple{Type}[]
 end
 
 function MOI.Bridges.added_constraint_types(
     ::Type{SplitComplexEqualToBridge{T,F,G}},
 ) where {T,F,G}
-    return Tuple{DataType,DataType}[(F, MOI.EqualTo{T})]
+    return Tuple{Type,Type}[(F, MOI.EqualTo{T})]
 end
 
 function concrete_bridge_type(
@@ -94,17 +94,36 @@ function concrete_bridge_type(
 end
 
 function MOI.get(
+    ::MOI.ModelLike,
+    ::MOI.ConstraintFunction,
+    bridge::SplitComplexEqualToBridge,
+)
+    return bridge.func
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    ::MOI.ConstraintSet,
+    bridge::SplitComplexEqualToBridge{T},
+) where {T}
+    rhs = zero(T) + zero(T) * im
+    if bridge.real_constraint !== nothing
+        set = MOI.get(model, MOI.ConstraintSet(), bridge.real_constraint)
+        rhs += set.value
+    end
+    if bridge.imag_constraint !== nothing
+        set = MOI.get(model, MOI.ConstraintSet(), bridge.imag_constraint)
+        rhs += set.value * im
+    end
+    return MOI.EqualTo(rhs)
+end
+
+function MOI.get(
     bridge::SplitComplexEqualToBridge{T,F},
     ::MOI.NumberOfConstraints{F,MOI.EqualTo{T}},
 )::Int64 where {T,F}
-    ret = 0
-    if bridge.real_constraint !== nothing
-        ret += 1
-    end
-    if bridge.imag_constraint !== nothing
-        ret += 1
-    end
-    return ret
+    return Int64(bridge.real_constraint !== nothing) +
+           Int64(bridge.imag_constraint !== nothing)
 end
 
 function MOI.get(
@@ -152,9 +171,15 @@ function MOI.get(
     real_value, imag_value = zero(T), zero(T)
     if bridge.real_constraint !== nothing
         real_value = MOI.get(model, attr, bridge.real_constraint)
+        if real_value === nothing
+            return nothing
+        end
     end
     if bridge.imag_constraint !== nothing
         imag_value = MOI.get(model, attr, bridge.imag_constraint)
+        if imag_value === nothing
+            return nothing
+        end
     end
     return real_value + imag_value * im
 end
@@ -169,7 +194,22 @@ function MOI.set(
         MOI.set(model, attr, bridge.real_constraint, real(value))
     end
     if bridge.imag_constraint !== nothing
-        MOI.set(model, attr, bridge.real_constraint, imag(value))
+        MOI.set(model, attr, bridge.imag_constraint, imag(value))
+    end
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    bridge::SplitComplexEqualToBridge,
+    ::Nothing,
+)
+    if bridge.real_constraint !== nothing
+        MOI.set(model, attr, bridge.real_constraint, nothing)
+    end
+    if bridge.imag_constraint !== nothing
+        MOI.set(model, attr, bridge.imag_constraint, nothing)
     end
     return
 end
