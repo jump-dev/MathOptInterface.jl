@@ -296,6 +296,40 @@ function get(
 end
 ```
 
+In order for the user to be able to access the function and set of the original
+constraint, the bridge needs to implement getters for the
+[`ConstraintFunction`](@ref) and [`ConstraintSet`](@ref)
+attributes:
+
+```julia
+function get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintFunction,
+    bridge::SignBridge,
+)
+    return -MOI.get(model, attr, bridge.constraint)
+end
+
+function get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintSet,
+    bridge::SignBridge,
+)
+    set = MOI.get(model, attr, bridge.constraint)
+    return MOI.LessThan(-set.lower)
+end
+```
+
+!!! warning
+    Alternatively, one could store the original function and set in `SignBridge`
+    during [`Bridges.Constraint.bridge_constraint`](@ref) to make these getters
+    simpler and more efficient. On the other hand, this will increase the memory
+    footprint of the bridges as the garbage collector won't be able to delete
+    that object. The convention is to not store the function in the bridge
+    and not care too much about the efficiency of these getters. If the user
+    needs efficient getters for [`ConstraintFunction`](@ref) then they should
+    use a [`Utilities.CachingOptimizer`](@ref).
+
 ### Model modifications
 
 To avoid copying the model when the user request to change a constraint, MOI
