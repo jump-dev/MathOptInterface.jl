@@ -338,6 +338,8 @@ method for each attribute.
 | [`TimeLimitSec`](@ref) | Yes           | Yes           | Yes                |
 | [`RawOptimizerAttribute`](@ref) | Yes  | Yes           | Yes                |
 | [`NumberOfThreads`](@ref) | Yes        | Yes           | Yes                |
+| [`AbsoluteGapTolerance`](@ref) | Yes   | Yes           | Yes                |
+| [`RelativeGapTolerance`](@ref) | Yes   | Yes           | Yes                |
 
 For example:
 ```julia

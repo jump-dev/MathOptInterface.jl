@@ -819,6 +819,57 @@ struct NumberOfThreads <: AbstractOptimizerAttribute end
 
 attribute_value_type(::NumberOfThreads) = Union{Nothing,Int}
 
+"""
+    RelativeGapTolerance()
+
+An optimizer attribute for setting the relative gap tolerance for an optimization.
+This is an _optimizer_ attribute, and should be set before calling [`optimize!`](@ref).
+When set to `nothing` (if supported), uses solver default.
+
+If you are looking for the relative gap of the current best solution, see
+[`RelativeGap`](@ref). If no limit nor issue is encountered during the optimization,
+the value of [`RelativeGap`](@ref) should be at most as large as `RelativeGapTolerance`.
+
+```julia
+# Before optimizing: set relative gap tolerance
+MOI.set(model, MOI.RelativeGapTolerance(), 1e-3)  # set 0.1% relative gap tolerance
+MOI.optimize!(model)
+
+# After optimizing (assuming all went well)
+# The relative gap tolerance has not changed...
+MOI.get(model, MOI.RelativeGapTolerance())  # returns 1e-3
+# ... and the relative gap of the obtained solution is smaller or equal to the tolerance
+MOI.get(model, MOI.RelativeGap())  # should return something ≤ 1e-3
+```
+
+!!! warning
+    The mathematical definition of "relative gap", and its allowed range, are solver-dependent.
+    Typically, solvers expect a value between `0` and `1`.
+"""
+struct RelativeGapTolerance <: AbstractOptimizerAttribute end
+
+attribute_value_type(::RelativeGapTolerance) = Union{Nothing,Float64}
+
+"""
+    AbsoluteGapTolerance()
+
+An optimizer attribute for setting the absolute gap tolerance for an optimization.
+This is an _optimizer_ attribute, and should be set before calling [`optimize!`](@ref).
+When set to `nothing` (if supported), uses solver default.
+
+To set a _relative_ gap tolerance, see [`RelativeGapTolerance`](@ref).
+
+!!! warning
+    The mathematical definition of "absolute gap", and its treatment during the optimization,
+    are solver-dependent. However, assuming no other limit nor issue is encountered during the
+    optimization, most solvers that implement this attribute will stop once ``|f - b| ≤ g_{abs}``,
+    where ``b`` is the best bound, ``f`` is the best feasible objective value, and ``g_{abs}``
+    is the absolute gap.
+"""
+struct AbsoluteGapTolerance <: AbstractOptimizerAttribute end
+
+attribute_value_type(::AbsoluteGapTolerance) = Union{Nothing,Float64}
+
 ### Callbacks
 
 """

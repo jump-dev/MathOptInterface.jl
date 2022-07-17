@@ -191,6 +191,72 @@ function setup_test(
 end
 
 """
+    test_attribute_AbsoluteGapTolerance(model::MOI.AbstractOptimizer, config::Config)
+
+Test that the [`MOI.AbsoluteGapTolerance`](@ref) attribute is implemented for
+`model`.
+"""
+function test_attribute_AbsoluteGapTolerance(
+    model::MOI.AbstractOptimizer,
+    ::Config,
+)
+    @requires MOI.supports(model, MOI.AbsoluteGapTolerance())
+    # Get the current value to restore it at the end of the test
+    value = MOI.get(model, MOI.AbsoluteGapTolerance())
+    MOI.set(model, MOI.AbsoluteGapTolerance(), 1e-2)
+    @test MOI.get(model, MOI.AbsoluteGapTolerance()) == 1e-2
+    MOI.set(model, MOI.AbsoluteGapTolerance(), 100.0)
+    @test MOI.get(model, MOI.AbsoluteGapTolerance()) == 100.0
+    MOI.set(model, MOI.AbsoluteGapTolerance(), value)
+    @test value == MOI.get(model, MOI.AbsoluteGapTolerance())
+    _test_attribute_value_type(model, MOI.AbsoluteGapTolerance())
+    return
+end
+test_attribute_AbsoluteGapTolerance(::MOI.ModelLike, ::Config) = nothing
+
+function setup_test(
+    ::typeof(test_attribute_AbsoluteGapTolerance),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOI.set(model, MOI.AbsoluteGapTolerance(), nothing)
+    return
+end
+
+"""
+    test_attribute_RelativeGapTolerance(model::MOI.AbstractOptimizer, config::Config)
+
+Test that the [`MOI.RelativeGapTolerance`](@ref) attribute is implemented for
+`model`.
+"""
+function test_attribute_RelativeGapTolerance(
+    model::MOI.AbstractOptimizer,
+    ::Config,
+)
+    @requires MOI.supports(model, MOI.RelativeGapTolerance())
+    # Get the current value to restore it at the end of the test
+    value = MOI.get(model, MOI.RelativeGapTolerance())
+    MOI.set(model, MOI.RelativeGapTolerance(), 1e-2)
+    @test MOI.get(model, MOI.RelativeGapTolerance()) == 1e-2
+    MOI.set(model, MOI.RelativeGapTolerance(), 5e-5)
+    @test MOI.get(model, MOI.RelativeGapTolerance()) == 5e-5
+    MOI.set(model, MOI.RelativeGapTolerance(), value)
+    @test value == MOI.get(model, MOI.RelativeGapTolerance())
+    _test_attribute_value_type(model, MOI.RelativeGapTolerance())
+    return
+end
+test_attribute_RelativeGapTolerance(::MOI.ModelLike, ::Config) = nothing
+
+function setup_test(
+    ::typeof(test_attribute_RelativeGapTolerance),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOI.set(model, MOI.RelativeGapTolerance(), nothing)
+    return
+end
+
+"""
     test_attribute_after_empty(model::MOI.AbstractOptimizer, config::Config)
 
 Test that optimizer attributes such as `Silent` are not cleared by `MOI.empty!`.
