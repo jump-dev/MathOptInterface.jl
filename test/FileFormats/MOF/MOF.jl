@@ -884,6 +884,116 @@ y in ZeroOne()
     return
 end
 
+function test_AllDifferent()
+    return _test_model_equality(
+        """
+variables: x, y, z
+c1: [x, y, z] in AllDifferent(3)
+""",
+        ["x", "y", "z"],
+        ["c1"],
+    )
+end
+
+function test_BinPacking()
+    return _test_model_equality(
+        """
+variables: x, y, z
+c1: [x, y, z] in BinPacking(3.0, [1.0, 2.0, 3.0])
+""",
+        ["x", "y", "z"],
+        ["c1"],
+    )
+end
+
+function test_Circuit()
+    return _test_model_equality(
+        """
+variables: x, y, z
+c1: [x, y, z] in Circuit(3)
+""",
+        ["x", "y", "z"],
+        ["c1"],
+    )
+end
+
+function test_CountAtLeast()
+    return _test_model_equality(
+        """
+variables: x, y, z
+c1: [x, y, y, z] in CountAtLeast(1, [2, 2], Set([3]))
+""",
+        ["x", "y", "z"],
+        ["c1"],
+    )
+end
+
+function test_CountBelongs()
+    return _test_model_equality(
+        """
+variables: x, y, z
+c1: [x, y, z] in CountBelongs(3, Set([3, 4, 5]))
+""",
+        ["x", "y", "z"],
+        ["c1"],
+    )
+end
+
+function test_CountDistinct()
+    return _test_model_equality(
+        """
+variables: x, y, z
+c1: [x, y, z] in CountDistinct(3)
+""",
+        ["x", "y", "z"],
+        ["c1"],
+    )
+end
+
+function test_CountGreaterThan()
+    return _test_model_equality(
+        """
+variables: x, y, z
+c1: [x, y, z] in CountGreaterThan(3)
+""",
+        ["x", "y", "z"],
+        ["c1"],
+    )
+end
+
+function test_Cumulative()
+    return _test_model_equality(
+        """
+variables: a, b, c, d, e, f, g, h, i, j
+c1: [a, b, c, d, e, f, g, h, i, j] in Cumulative(10)
+""",
+        ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"],
+        ["c1"],
+    )
+end
+
+function test_Path()
+    return _test_model_equality(
+        """
+variables: s, t, n1, n2, n3, n4, e1, e2, e3, e4, e5
+c1: [s, t, n1, n2, n3, n4, e1, e2, e3, e4, e5] in Path([1, 1, 2, 2, 3], [2, 3, 3, 4, 4])
+""",
+        ["s", "t", "n1", "n2", "n3", "n4", "e1", "e2", "e3", "e4", "e5"],
+        ["c1"],
+    )
+end
+
+function test_Table()
+    return _test_model_equality(
+        """
+variables: x, y, z
+c1: [x, y, z] in Table([1.0 1.0 0.0; 0.0 0.0 0.0])
+""",
+        ["x", "y", "z"],
+        ["c1"],
+    )
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")

@@ -291,11 +291,21 @@ function head_name(::Type{MOI.PositiveSemidefiniteConeSquare})
 end
 head_name(::Type{MOI.Complements}) = "Complements"
 
+head_name(::Type{MOI.AllDifferent}) = "AllDifferent"
+head_name(::Type{MOI.Circuit}) = "Circuit"
+head_name(::Type{MOI.CountAtLeast}) = "CountAtLeast"
+head_name(::Type{MOI.CountBelongs}) = "CountBelongs"
+head_name(::Type{MOI.CountDistinct}) = "CountDistinct"
+head_name(::Type{MOI.CountGreaterThan}) = "CountGreaterThan"
+head_name(::Type{MOI.Cumulative}) = "Cumulative"
+head_name(::Type{MOI.Path}) = "Path"
+
 # ========== Typed vector sets ==========
 head_name(::Type{<:MOI.PowerCone}) = "PowerCone"
 head_name(::Type{<:MOI.DualPowerCone}) = "DualPowerCone"
 head_name(::Type{<:MOI.SOS1}) = "SOS1"
 head_name(::Type{<:MOI.SOS2}) = "SOS2"
+head_name(::Type{<:MOI.BinPacking}) = "BinPacking"
 
 function moi_to_object(
     set::MOI.Indicator{I,S},
@@ -306,5 +316,15 @@ function moi_to_object(
         "type" => "Indicator",
         "set" => moi_to_object(set.set, name_map),
         "activate_on" => (I == MOI.ACTIVATE_ON_ONE) ? "one" : "zero",
+    )
+end
+
+function moi_to_object(
+    set::MOI.Table{T},
+    ::Dict{MOI.VariableIndex,String},
+) where {T}
+    return OrderedObject(
+        "type" => "Table",
+        "table" => [set.table[i, :] for i in 1:size(set.table, 1)],
     )
 end

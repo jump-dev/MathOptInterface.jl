@@ -371,6 +371,17 @@ end
     IndicatorSet,   # Required for v0.6
     Indicator,      # Required for v1.0
     Complements,
+    AllDifferent,
+    Circuit,
+    CountAtLeast,
+    CountBelongs,
+    CountDistinct,
+    CountGreaterThan,
+    Cumulative,
+    Path,
+    BinPacking,
+    Table,
+
 )
 
 """
@@ -509,6 +520,42 @@ function set_to_moi(::Val{:Complements}, object::Object)
     return MOI.Complements(object["dimension"])
 end
 
+function set_to_moi(::Val{:AllDifferent}, object::Object)
+    return MOI.AllDifferent(object["dimension"])
+end
+
+function set_to_moi(::Val{:Circuit}, object::Object)
+    return MOI.Circuit(object["dimension"])
+end
+
+function set_to_moi(::Val{:CountAtLeast}, object::Object)
+    return MOI.CountAtLeast(
+        object["n"],
+        convert(Vector{Int}, object["partitions"]),
+        Set{Int}(object["set"]),
+    )
+end
+
+function set_to_moi(::Val{:CountBelongs}, object::Object)
+    return MOI.CountBelongs(object["dimension"], Set{Int}(object["set"]))
+end
+
+function set_to_moi(::Val{:CountDistinct}, object::Object)
+    return MOI.CountDistinct(object["dimension"])
+end
+
+function set_to_moi(::Val{:CountGreaterThan}, object::Object)
+    return MOI.CountGreaterThan(object["dimension"])
+end
+
+function set_to_moi(::Val{:Cumulative}, object::Object)
+    return MOI.Cumulative(object["dimension"])
+end
+
+function set_to_moi(::Val{:Path}, object::Object)
+    return MOI.Path(Int.(object["from"]), Int.(object["to"]))
+end
+
 # ========== Typed vector sets ==========
 
 function set_to_moi(::Val{:PowerCone}, object::Object)
@@ -537,4 +584,16 @@ function set_to_moi(::Union{Val{:Indicator},Val{:IndicatorSet}}, object::Object)
         @assert object["activate_on"]::String == "zero"
         return MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(set)
     end
+end
+
+function set_to_moi(::Val{:BinPacking}, object::Object)
+    return MOI.BinPacking(
+        convert(Float64, object["capacity"]),
+        convert(Vector{Float64}, object["weights"]),
+    )
+end
+
+function set_to_moi(::Val{:Table}, object::Object)
+    table = convert(Matrix{Float64}, vcat([t' for t in object["table"]]...))
+    return MOI.Table(table)
 end

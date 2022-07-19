@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/schema#",
-    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.0.schema.json",
+    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.1.schema.json",
     "title": "The schema for MathOptFormat",
     "type": "object",
     "required": ["version", "variables", "objective", "constraints"],
@@ -11,7 +11,7 @@
             "required": ["minor", "major"],
             "properties": {
                 "minor": {
-                    "const": 0
+                    "const": 1
                 },
                 "major": {
                     "const": 1
@@ -870,6 +870,172 @@
                     "dimension": {
                         "type": "integer",
                         "minimum": 2
+                    }
+                }
+            }, {
+                "description": "The set {x in Z^d} such that no two elements in x take the same value and dimension=d.",
+                "examples": ["{\"type\": \"AllDifferent\", \"dimension\": 2}"],
+                "required": ["dimension"],
+                "properties": {
+                    "type": {
+                        "const": "AllDifferent"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "The set `{x in Z^d}` where `d = length(w)`, such that each item `i` in `1:d` of weight `w[i]` is put into bin `x[i]`, and the total weight of each bin does not exceed `c`.",
+                "examples": ["{\"type\": \"BinPacking\", \"capacity\": 3.0, \"weights\": [1.0, 2.0, 3.0]}"],
+                "required": ["capacity", "weights"],
+                "properties": {
+                    "type": {
+                        "const": "BinPacking"
+                    },
+                    "capacity": {
+                        "type": "number"
+                    },
+                    "weights": {
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        }
+                    }
+                }
+            }, {
+                "description": "The set `{x in {1..d}^d}` that constraints `x` to be a circuit, such that `x_i = j` means that `j` is the successor of `i`, and `dimension = d`.",
+                "examples": ["{\"type\": \"Circuit\", \"dimension\": 3}"],
+                "required": ["dimension"],
+                "properties": {
+                    "type": {
+                        "const": "Circuit"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "The set `{x in Z^{d_1 + d_2 + ldots d_N}}`, where `x` is partitioned into `N` subsets (`{x_1,  ldots, x_{d_1}}`, `{x_{d_1 + 1},  ldots, x_{d_1 + d_2}}` and so on), and at least `n` elements of each subset take one of the values in `set`.",
+                "examples": ["{\"type\": \"CountAtLeast\", \"n\": 1, \"partitions\": [2, 2], \"set\": [3]}"],
+                "required": ["n", "partitions", "set"],
+                "properties": {
+                    "type": {
+                        "const": "CountAtLeast"
+                    },
+                    "n": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "partitions": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "set": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }, {
+                "description": "The set `{(n, x) in Z^{1+d}}`, such that `n` elements of the vector `x` take on of the values in `set` and `dimension = 1 + d`.",
+                "examples": ["{\"type\": \"CountBelongs\", \"dimension\": 3, \"set\": [3, 4, 5]}"],
+                "required": ["dimension", "set"],
+                "properties": {
+                    "type": {
+                        "const": "CountBelongs"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "set": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }, {
+                "description": "The set `{(n, x) in Z^{1+d}}`, such that the number of distinct values in `x` is `n` and `dimension = 1 + d`.",
+                "examples": ["{\"type\": \"CountDistinct\", \"dimension\": 3}"],
+                "required": ["dimension"],
+                "properties": {
+                    "type": {
+                        "const": "CountDistinct"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "The set `{(c, y, x) in Z^{1+1+d}}`, such that `c` is strictly greater than the number of occurances of `y` in `x` and `dimension = 1 + 1 + d`.",
+                "examples": ["{\"type\": \"CountGreaterThan\", \"dimension\": 3}"],
+                "required": ["dimension"],
+                "properties": {
+                    "type": {
+                        "const": "CountGreaterThan"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "The set `{(s, d, r, b) in Z^{3n+1}}`, representing the `cumulative` global constraint, where `n == length(s) == length(r) == length(b)` and `dimension = 3n + 1`. `Cumulative` requires that a set of tasks given by start times `s`, durations `d`, and resource requirements `r`, never requires more than the global resource bound `b` at any one time.",
+                "examples": ["{\"type\": \"Cumulative\", \"dimension\": 10}"],
+                "required": ["dimension"],
+                "properties": {
+                    "type": {
+                        "const": "Cumulative"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
+                "description": "Given a graph comprised of a set of nodes `1..N` and a set of arcs `1..E` represented by an edge from node `from[i]` to node `to[i]`, `Path` constrains the set `(s, t, ns, es) in (1..N)times(1..E)times{0,1}^Ntimes{0,1}^E`, to form subgraph that is a path from node `s` to node `t`, where node `n` is in the path if `ns[n]` is `1`, and edge `e` is in the path if `es[e]` is `1`. The path must be acyclic, and it must traverse all nodes `n` for which `ns[n]` is `1`, and all edges `e` for which `es[e]` is `1`.",
+                "examples": ["{\"type\": \"Path\", \"from\": [1, 1, 2, 2, 3], \"to\": [2, 3, 3, 4, 4]}"],
+                "required": ["from", "to"],
+                "properties": {
+                    "type": {
+                        "const": "Path"
+                    },
+                    "from": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "to": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }, {
+                "description": "The set `{x in R^d}` where `d = size(table, 2)`, such that `x` belongs to one row of `table`. That is, there exists some `j` in `1:size(table, 1)`, such that `x[i] = table[j, i]` for all `i=1:size(table, 2)`.",
+                "examples": ["{\"type\": \"Table\", \"table\": [[1, 1, 0], [0, 1, 1]]}"],
+                "required": ["table"],
+                "properties": {
+                    "type": {
+                        "const": "Table"
+                    },
+                    "table": {
+                        "type": "array",
+                        "items": {
+                            "type": "array",
+                            "items": {
+                                "type": "number"
+                            }
+                        }
                     }
                 }
             }]
