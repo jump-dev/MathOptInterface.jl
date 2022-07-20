@@ -13,9 +13,9 @@ import MathOptInterface
 
 const MOI = MathOptInterface
 
-const SCHEMA_PATH = joinpath(@__DIR__, "mof.1.0.schema.json")
-const VERSION = v"1.0"
-const SUPPORTED_VERSIONS = (v"1.0", v"0.6", v"0.5", v"0.4")
+const SCHEMA_PATH = joinpath(@__DIR__, "mof.1.1.schema.json")
+const VERSION = v"1.1"
+const SUPPORTED_VERSIONS = (v"1.1", v"1.0", v"0.6", v"0.5", v"0.4")
 
 const OrderedObject = OrderedCollections.OrderedDict{String,Any}
 const UnorderedObject = Dict{String,Any}
@@ -63,8 +63,23 @@ MOI.Utilities.@model(
         MOI.LogDetConeSquare,
         MOI.PositiveSemidefiniteConeTriangle,
         MOI.PositiveSemidefiniteConeSquare,
+        MOI.AllDifferent,
+        MOI.Circuit,
+        MOI.CountAtLeast,
+        MOI.CountBelongs,
+        MOI.CountDistinct,
+        MOI.CountGreaterThan,
+        MOI.Cumulative,
+        MOI.Path,
     ),
-    (MOI.PowerCone, MOI.DualPowerCone, MOI.SOS1, MOI.SOS2),
+    (
+        MOI.PowerCone,
+        MOI.DualPowerCone,
+        MOI.SOS1,
+        MOI.SOS2,
+        MOI.BinPacking,
+        MOI.Table,
+    ),
     (Nonlinear,),
     (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
     (MOI.VectorOfVariables,),
