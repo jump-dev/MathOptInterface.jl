@@ -1613,6 +1613,24 @@ function Base.:(==)(x::HyperRectangle{T}, y::HyperRectangle{T}) where {T}
     return x.lower == y.lower && x.upper == y.upper
 end
 
+"""
+    Reified(set::MOI.AbstractSet)
+
+The constraint ``[z; f(x)] \\in Reified(S)`` ensures that ``f(x) \\in S`` if and
+only if ``z == 1``, where ``z \\in \\{0, 1\\}``.
+"""
+struct Reified{S<:MOI.AbstractSet} <: MOI.AbstractVectorSet
+    set::S
+end
+
+MOI.dimension(s::Reified) = 1 + MOI.dimension(s.set)
+
+Base.copy(s::Reified) = Reified(copy(s.set))
+
+function Base.:(==)(x::Reified{S}, y::Reified{S}) where {S}
+    return x.set == y.set
+end
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{

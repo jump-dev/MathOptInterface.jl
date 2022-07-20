@@ -109,6 +109,7 @@ CountDistinct
 CountGreaterThan
 Cumulative
 Path
+Reified
 Table
 ```
 
