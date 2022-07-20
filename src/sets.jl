@@ -1614,16 +1614,16 @@ function Base.:(==)(x::HyperRectangle{T}, y::HyperRectangle{T}) where {T}
 end
 
 """
-    Reified(set::MOI.AbstractSet)
+    Reified(set::AbstractSet)
 
 The constraint ``[z; f(x)] \\in Reified(S)`` ensures that ``f(x) \\in S`` if and
 only if ``z == 1``, where ``z \\in \\{0, 1\\}``.
 """
-struct Reified{S<:MOI.AbstractSet} <: MOI.AbstractVectorSet
+struct Reified{S<:AbstractSet} <: AbstractVectorSet
     set::S
 end
 
-MOI.dimension(s::Reified) = 1 + MOI.dimension(s.set)
+dimension(s::Reified) = 1 + dimension(s.set)
 
 Base.copy(s::Reified) = Reified(copy(s.set))
 
