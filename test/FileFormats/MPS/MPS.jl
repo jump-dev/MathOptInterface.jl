@@ -937,6 +937,21 @@ c1: [z, 1.0 * x + 1.0 * y] in Indicator{ACTIVATE_ON_ZERO}(GreaterThan(1.0))
     return
 end
 
+function test_vector_supports_constraint()
+    model = MPS.Model()
+    @test !MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}},
+    )
+    @test !MOI.supports_constraint(
+        model,
+        MOI.VectorAffineFunction{Float64},
+        MOI.SOS1{Float64},
+    )
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")
