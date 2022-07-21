@@ -14,7 +14,13 @@ const MOIU = MOI.Utilities
 const MPS = MOI.FileFormats.MPS
 const MPS_TEST_FILE = "test.mps"
 
-function _test_model_equality(model_string, variables, constraints; kwargs...)
+function _test_model_equality(
+    model_string,
+    variables,
+    constraints,
+    args...;
+    kwargs...,
+)
     model = MPS.Model(; kwargs...)
     MOIU.loadfromstring!(model, model_string)
     MOI.write_to_file(model, MPS_TEST_FILE)
@@ -25,6 +31,7 @@ function _test_model_equality(model_string, variables, constraints; kwargs...)
         model_2,
         variables,
         constraints,
+        args...,
     )
 end
 
@@ -866,6 +873,66 @@ c1: 1.2x + 2.1 * x * x + 1.2 * x * y + 0.2 * y * x + 0.5 * y * y <= 1.0
         ["x", "y"],
         ["c1"];
         quadratic_format = MPS.kQuadraticFormatMosek,
+    )
+    return
+end
+
+function test_round_trip_indicator_lessthan()
+    _test_model_equality(
+        """
+variables: x, y, z
+minobjective: 1.0 * x + y + z
+z in ZeroOne()
+c1: [z, 1.0 * x + 1.0 * y] in Indicator{ACTIVATE_ON_ONE}(LessThan(1.0))
+""",
+        ["x", "y", "z"],
+        ["c1"],
+        [("z", MOI.ZeroOne())],
+    )
+    return
+end
+
+function test_round_trip_indicator_greaterthan()
+    _test_model_equality(
+        """
+variables: x, y, z
+minobjective: 1.0 * x + y + z
+z in ZeroOne()
+c1: [z, 1.0 * x + 1.0 * y] in Indicator{ACTIVATE_ON_ONE}(GreaterThan(1.0))
+""",
+        ["x", "y", "z"],
+        ["c1"],
+        [("z", MOI.ZeroOne())],
+    )
+    return
+end
+
+function test_round_trip_indicator_lessthan_false()
+    _test_model_equality(
+        """
+variables: x, y, z
+minobjective: 1.0 * x + y + z
+z in ZeroOne()
+c1: [z, 1.0 * x + 1.0 * y] in Indicator{ACTIVATE_ON_ZERO}(LessThan(1.0))
+""",
+        ["x", "y", "z"],
+        ["c1"],
+        [("z", MOI.ZeroOne())],
+    )
+    return
+end
+
+function test_round_trip_indicator_greaterthan_false()
+    _test_model_equality(
+        """
+variables: x, y, z
+minobjective: 1.0 * x + y + z
+z in ZeroOne()
+c1: [z, 1.0 * x + 1.0 * y] in Indicator{ACTIVATE_ON_ZERO}(GreaterThan(1.0))
+""",
+        ["x", "y", "z"],
+        ["c1"],
+        [("z", MOI.ZeroOne())],
     )
     return
 end
