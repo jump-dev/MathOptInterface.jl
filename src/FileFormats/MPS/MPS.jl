@@ -25,17 +25,59 @@ function print_shortest(io::IO, x::Real)
     return
 end
 
+const IndicatorLessThanTrue{T} =
+    MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}
+
+const IndicatorGreaterThanTrue{T} =
+    MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{T}}
+
+const IndicatorLessThanFalse{T} =
+    MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{T}}
+
+const IndicatorGreaterThanFalse{T} =
+    MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.GreaterThan{T}}
+
 MOI.Utilities.@model(
     Model,
     (MOI.ZeroOne, MOI.Integer),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
     (),
-    (MOI.SOS1, MOI.SOS2),
+    (
+        MOI.SOS1,
+        MOI.SOS2,
+        IndicatorLessThanTrue,
+        IndicatorLessThanFalse,
+        IndicatorGreaterThanTrue,
+        IndicatorGreaterThanFalse,
+    ),
     (),
     (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
     (MOI.VectorOfVariables,),
-    ()
+    (MOI.VectorAffineFunction,)
 )
+
+function MOI.supports_constraint(
+    ::Model{T},
+    ::Type{MOI.VectorAffineFunction{T}},
+    ::Type{<:Union{MOI.SOS1{T},MOI.SOS2{T}}},
+) where {T}
+    return false
+end
+
+function MOI.supports_constraint(
+    ::Model{T},
+    ::Type{MOI.VectorOfVariables},
+    ::Type{
+        <:Union{
+            IndicatorLessThanTrue{T},
+            IndicatorLessThanFalse{T},
+            IndicatorGreaterThanTrue{T},
+            IndicatorGreaterThanFalse{T},
+        },
+    },
+) where {T}
+    return false
+end
 
 @enum(
     QuadraticFormat,
@@ -216,7 +258,8 @@ function Base.write(io::IO, model::Model)
         flip_obj = MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
     end
     write_rows(io, model)
-    obj_const = write_columns(io, model, flip_obj, ordered_names, names)
+    obj_const, indicators =
+        write_columns(io, model, flip_obj, ordered_names, names)
     write_rhs(io, model, obj_const)
     write_ranges(io, model)
     write_bounds(io, model, ordered_names, names)
@@ -230,6 +273,7 @@ function Base.write(io::IO, model::Model)
         # CPLEX needs qcons _after_ SOS.
         write_quadcons(io, model, ordered_names, var_to_column)
     end
+    write_indicators(io, indicators)
     println(io, "ENDATA")
     return
 end
@@ -294,6 +338,11 @@ function write_rows(io::IO, model::Model)
             _write_rows(io, model, F, set_type, sense_char)
         end
     end
+    F = MOI.VectorAffineFunction{Float64}
+    _write_rows(io, model, F, IndicatorLessThanTrue{Float64}, "L")
+    _write_rows(io, model, F, IndicatorLessThanFalse{Float64}, "L")
+    _write_rows(io, model, F, IndicatorGreaterThanTrue{Float64}, "G")
+    _write_rows(io, model, F, IndicatorGreaterThanFalse{Float64}, "G")
     return
 end
 
@@ -363,6 +412,25 @@ function _collect_coefficients(
     return
 end
 
+_activation_condition(::Type{<:MOI.Indicator{A}}) where {A} = A
+
+function _collect_indicator(model, S, names, coefficients, indicators)
+    F = MOI.VectorAffineFunction{Float64}
+    for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        row_name = MOI.get(model, MOI.ConstraintName(), index)
+        func = MOI.get(model, MOI.ConstraintFunction(), index)
+        funcs = MOI.Utilities.eachscalar(func)
+        z = convert(MOI.VariableIndex, funcs[1])
+        _extract_terms(names, coefficients, row_name, funcs[2])
+        condition = _activation_condition(S)
+        push!(
+            indicators,
+            (row_name, MOI.get(model, MOI.VariableName(), z), condition),
+        )
+    end
+    return
+end
+
 function _get_objective(model)
     F = MOI.get(model, MOI.ObjectiveFunctionType())
     f = MOI.get(model, MOI.ObjectiveFunction{F}())
@@ -373,6 +441,7 @@ function _get_objective(model)
 end
 
 function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
+    indicators = Tuple{String,String,MOI.ActivationCondition}[]
     coefficients = Dict{String,Vector{Tuple{String,Float64}}}(
         n => Tuple{String,Float64}[] for n in ordered_names
     )
@@ -381,6 +450,14 @@ function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
         for F in FUNC_TYPES
             _collect_coefficients(model, F, S, names, coefficients)
         end
+    end
+    for S in (
+        IndicatorLessThanTrue{Float64},
+        IndicatorLessThanFalse{Float64},
+        IndicatorGreaterThanTrue{Float64},
+        IndicatorGreaterThanFalse{Float64},
+    )
+        _collect_indicator(model, S, names, coefficients, indicators)
     end
     # Build objective
     obj_func = _get_objective(model)
@@ -413,7 +490,7 @@ function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
             )
         end
     end
-    return obj_func.constant
+    return obj_func.constant, indicators
 end
 
 # ==============================================================================
@@ -423,6 +500,7 @@ end
 _value(set::MOI.LessThan) = set.upper
 _value(set::MOI.GreaterThan) = set.lower
 _value(set::MOI.EqualTo) = set.value
+_value(set::MOI.Indicator) = _value(set.set)
 
 function _write_rhs(io, model, F, S)
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
@@ -467,6 +545,11 @@ function write_rhs(io::IO, model::Model, obj_const)
             _write_rhs(io, model, F, set_type)
         end
     end
+    F = MOI.VectorAffineFunction{Float64}
+    _write_rhs(io, model, F, IndicatorLessThanTrue{Float64})
+    _write_rhs(io, model, F, IndicatorLessThanFalse{Float64})
+    _write_rhs(io, model, F, IndicatorGreaterThanTrue{Float64})
+    _write_rhs(io, model, F, IndicatorGreaterThanFalse{Float64})
     # Objective constants are added to the RHS as a negative offset.
     # https://www.ibm.com/docs/en/icos/20.1.0?topic=standard-records-in-mps-format
     if !iszero(obj_const)
@@ -787,6 +870,25 @@ function write_sos(io::IO, model::Model, names)
 end
 
 # ==============================================================================
+#   INDICATORS
+# ==============================================================================
+
+function write_indicators(io::IO, indicators)
+    if isempty(indicators)
+        return
+    end
+    println(io, "INDICATORS")
+    for (row, var, condition) in indicators
+        if condition == MOI.ACTIVATE_ON_ONE
+            println(io, Card(f1 = "IF", f2 = row, f3 = var, f4 = "1"))
+        else
+            println(io, Card(f1 = "IF", f2 = row, f3 = var, f4 = "0"))
+        end
+    end
+    return
+end
+
+# ==============================================================================
 #
 #   Base.read!
 #
@@ -861,6 +963,7 @@ mutable struct TempMPSModel
     quad_obj::Vector{Tuple{String,String,Float64}}
     qc_matrix::Dict{String,Vector{Tuple{String,String,Float64}}}
     current_qc_matrix::String
+    indicators::Dict{String,Tuple{String,MOI.ActivationCondition}}
 end
 
 function TempMPSModel()
@@ -886,6 +989,7 @@ function TempMPSModel()
         Tuple{String,String,Float64}[],
         Dict{String,Vector{Tuple{String,String,Float64}}}(),
         "",
+        Dict{String,Tuple{String,MOI.ActivationCondition}}(),
     )
 end
 
@@ -905,6 +1009,7 @@ end
     HEADER_QMATRIX,
     HEADER_QCMATRIX,
     HEADER_QSECTION,
+    HEADER_INDICATORS,
 )
 
 # Headers(s) gets called _alot_ (on every line), so we try very hard to be
@@ -940,6 +1045,10 @@ function Headers(s::AbstractString)
             elseif header == "QMATRIX"
                 return HEADER_QMATRIX
             end
+        end
+    elseif N == 10
+        if (x == 'I' || x == 'i') && uppercase(s) == "INDICATORS"
+            return HEADER_INDICATORS
         end
     elseif N == 12
         if (x == 'O' || x == 'o') && startswith(uppercase(s), "OBJSENSE")
@@ -1028,6 +1137,8 @@ function Base.read!(io::IO, model::Model)
             parse_qcmatrix_line(data, items)
         elseif header == HEADER_QSECTION
             parse_qsection_line(data, items)
+        elseif header == HEADER_INDICATORS
+            parse_indicators_line(data, items)
         else
             @assert header == HEADER_ENDATA
             break
@@ -1119,9 +1230,27 @@ end
 function _add_constraint(model, data, variable_map, j, c_name, set)
     if haskey(data.qc_matrix, c_name)
         _add_quad_constraint(model, data, variable_map, j, c_name, set)
+    elseif haskey(data.indicators, c_name)
+        _add_indicator_constraint(model, data, variable_map, j, c_name, set)
     else
         _add_linear_constraint(model, data, variable_map, j, c_name, set)
     end
+    return
+end
+
+function _add_indicator_constraint(model, data, variable_map, j, c_name, set)
+    z, activate = data.indicators[c_name]
+    terms = MOI.VectorAffineTerm{Float64}[MOI.VectorAffineTerm(
+        1,
+        MOI.ScalarAffineTerm(1.0, variable_map[z]),
+    ),]
+    for (i, coef) in data.A[j]
+        scalar = MOI.ScalarAffineTerm(coef, variable_map[data.col_to_name[i]])
+        push!(terms, MOI.VectorAffineTerm(2, scalar))
+    end
+    f = MOI.VectorAffineFunction(terms, [0.0, 0.0])
+    c = MOI.add_constraint(model, f, MOI.Indicator{activate}(set))
+    MOI.set(model, MOI.ConstraintName(), c, c_name)
     return
 end
 
@@ -1576,6 +1705,24 @@ function parse_qsection_line(data, items)
             (items[1], items[2], parse(Float64, items[3])),
         )
     end
+    return
+end
+
+# ==============================================================================
+#   INDICATORS
+# ==============================================================================
+
+function parse_indicators_line(data, items)
+    if length(items) != 4
+        error("Malformed INDICATORS line: $(join(items, " "))")
+    end
+    condition = if items[4] == "0"
+        MOI.ACTIVATE_ON_ZERO
+    else
+        @assert items[4] == "1"
+        MOI.ACTIVATE_ON_ONE
+    end
+    data.indicators[items[2]] = (items[3], condition)
     return
 end
 
