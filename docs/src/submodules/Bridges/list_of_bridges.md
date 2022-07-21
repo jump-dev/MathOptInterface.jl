@@ -50,6 +50,7 @@ Bridges.Constraint.SquareBridge
 Bridges.Constraint.RootDetBridge
 Bridges.Constraint.LogDetBridge
 Bridges.Constraint.IndicatorActiveOnFalseBridge
+Bridges.Constraint.IndicatorFlipSign
 Bridges.Constraint.IndicatorSOS1Bridge
 Bridges.Constraint.SemiToBinaryBridge
 Bridges.Constraint.ZeroOneBridge
