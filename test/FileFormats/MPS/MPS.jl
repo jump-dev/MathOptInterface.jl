@@ -704,6 +704,7 @@ minobjective: x + y + 5.0 * x * x + 1.0 * x * y + 1.0 * y * x + 1.2 * y * y
           "    x         y         2\n" *
           "    y         y         2.4\n" *
           "ENDATA\n"
+    return
 end
 
 function test_quadobj_cplex()
@@ -734,6 +735,7 @@ minobjective: x + y + 5.0 * x * x + 1.0 * x * y + 1.0 * y * x + 1.2 * y * y
           "    y         x         2\n" *
           "    y         y         2.4\n" *
           "ENDATA\n"
+    return
 end
 
 function test_quadcon_gurobi()
@@ -766,6 +768,7 @@ c1: x + y + 5.0 * x * x + 1.0 * x * y + 1.0 * y * x + 1.2 * y * y <= 1.0
           "    y         x         2\n" *
           "    y         y         2.4\n" *
           "ENDATA\n"
+    return
 end
 
 function test_quadcon_cplex()
@@ -798,6 +801,59 @@ c1: x + y + 5.0 * x * x + 1.0 * x * y + 1.0 * y * x + 1.2 * y * y <= 1.0
           "    y         x         2\n" *
           "    y         y         2.4\n" *
           "ENDATA\n"
+    return
+end
+
+function test_round_trip_quadobj_gurobi()
+    _test_model_equality(
+        """
+variables: x, y
+minobjective: 1.2x + 2.1 * x * x + 1.2 * x * y + 0.2 * y * x + 0.5 * y * y
+""",
+        ["x", "y"],
+        String[],
+    )
+    return
+end
+
+function test_round_trip_qmatrix_cplex()
+    _test_model_equality(
+        """
+variables: x, y
+minobjective: 1.2x + 2.1 * x * x + 1.2 * x * y + 0.2 * y * x + 0.5 * y * y
+""",
+        ["x", "y"],
+        String[];
+        quadratic_format = MPS.kQuadraticFormatCPLEX,
+    )
+    return
+end
+
+function test_round_trip_qcmatrix_gurobi()
+    _test_model_equality(
+        """
+variables: x, y
+minobjective: 1.3 * x * x + 0.5 * x * y
+c1: 1.2x + 2.1 * x * x + 1.2 * x * y + 0.2 * y * x + 0.5 * y * y <= 1.0
+""",
+        ["x", "y"],
+        ["c1"],
+    )
+    return
+end
+
+function test_round_trip_qcmatrix_cplex()
+    _test_model_equality(
+        """
+variables: x, y
+minobjective: 1.3 * x * x + 0.5 * x * y
+c1: 1.2x + 2.1 * x * x + 1.2 * x * y + 0.2 * y * x + 0.5 * y * y <= 1.0
+""",
+        ["x", "y"],
+        ["c1"];
+        quadratic_format = MPS.kQuadraticFormatCPLEX,
+    )
+    return
 end
 
 function runtests()

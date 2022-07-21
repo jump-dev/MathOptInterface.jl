@@ -848,6 +848,9 @@ mutable struct TempMPSModel
     row_to_name::Vector{String}
     intorg_flag::Bool  # A flag used to parse COLUMNS section.
     sos_constraints::Vector{_SOSConstraint}
+    quad_obj::Vector{Tuple{String,String,Float64}}
+    qc_matrix::Dict{String,Vector{Tuple{String,String,Float64}}}
+    current_qc_matrix::String
 end
 
 function TempMPSModel()
@@ -870,6 +873,9 @@ function TempMPSModel()
         String[],
         false,
         _SOSConstraint[],
+        Tuple{String,String,Float64}[],
+        Dict{String,Vector{Tuple{String,String,Float64}}}(),
+        "",
     )
 end
 
@@ -885,6 +891,9 @@ end
     HEADER_SOS,
     HEADER_ENDATA,
     HEADER_UNKNOWN,
+    HEADER_QUADOBJ,
+    HEADER_QMATRIX,
+    HEADER_QCMATRIX,
 )
 
 # Headers(s) gets called _alot_ (on every line), so we try very hard to be
@@ -913,10 +922,21 @@ function Headers(s::AbstractString)
     elseif N == 7
         if (x == 'C' || x == 'c') && (uppercase(s) == "COLUMNS")
             return HEADER_COLUMNS
+        elseif (x == 'Q' || x == 'q')
+            header = uppercase(s)
+            if header == "QUADOBJ"
+                return HEADER_QUADOBJ
+            elseif header == "QMATRIX"
+                return HEADER_QMATRIX
+            end
         end
     elseif N == 12
         if (x == 'O' || x == 'o') && startswith(uppercase(s), "OBJSENSE")
             return HEADER_OBJSENSE
+        end
+    elseif N > 12
+        if (x == 'Q' || x == 'q') && startswith(uppercase(s), "QCMATRIX")
+            return HEADER_QCMATRIX
         end
     end
     return HEADER_UNKNOWN
@@ -952,6 +972,14 @@ function Base.read!(io::IO, model::Model)
             @assert sense == "MAX" || sense == "MIN"
             data.is_minimization = sense == "MIN"
             continue
+        elseif h == HEADER_QCMATRIX
+            items = line_to_items(line)
+            @assert length(items) == 2
+            data.current_qc_matrix = String(items[2])
+            header = HEADER_QCMATRIX
+            data.qc_matrix[data.current_qc_matrix] =
+                Tuple{String,String,Float64}[]
+            continue
         elseif h != HEADER_UNKNOWN
             header = h
             continue
@@ -976,6 +1004,12 @@ function Base.read!(io::IO, model::Model)
             parse_bounds_line(data, items)
         elseif header == HEADER_SOS
             parse_sos_line(data, items)
+        elseif header == HEADER_QUADOBJ
+            parse_quadobj_line(data, items)
+        elseif header == HEADER_QMATRIX
+            parse_qmatrix_line(data, items)
+        elseif header == HEADER_QCMATRIX
+            parse_qcmatrix_line(data, items)
         else
             @assert header == HEADER_ENDATA
             break
@@ -1008,7 +1042,7 @@ function copy_to(model::Model, data::TempMPSModel)
     for (j, c_name) in enumerate(data.row_to_name)
         set = bounds_to_set(data.row_lower[j], data.row_upper[j])
         if set !== nothing
-            _add_linear_constraint(model, data, variable_map, j, c_name, set)
+            _add_constraint(model, data, variable_map, j, c_name, set)
         end
         # `else` is a free constraint. Don't add it.
     end
@@ -1044,17 +1078,32 @@ function _add_objective(model, data, variable_map)
     else
         MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     end
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        MOI.ScalarAffineFunction(
-            [
-                MOI.ScalarAffineTerm(data.c[i], variable_map[v]) for
-                (i, v) in enumerate(data.col_to_name) if !iszero(data.c[i])
-            ],
-            -data.obj_constant,
-        ),
-    )
+    affine_terms = MOI.ScalarAffineTerm{Float64}[
+        MOI.ScalarAffineTerm(data.c[i], variable_map[v]) for
+        (i, v) in enumerate(data.col_to_name) if !iszero(data.c[i])
+    ]
+    q_terms = MOI.ScalarQuadraticTerm{Float64}[]
+    for (i, j, q) in data.quad_obj
+        x = variable_map[i]
+        y = variable_map[j]
+        push!(q_terms, MOI.ScalarQuadraticTerm(q, x, y))
+    end
+    obj = if length(q_terms) == 0
+        MOI.ScalarAffineFunction(affine_terms, -data.obj_constant)
+    else
+        MOI.ScalarQuadraticFunction(q_terms, affine_terms, -data.obj_constant)
+    end
+
+    MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
+    return
+end
+
+function _add_constraint(model, data, variable_map, j, c_name, set)
+    if haskey(data.qc_matrix, c_name)
+        _add_quad_constraint(model, data, variable_map, j, c_name, set)
+    else
+        _add_linear_constraint(model, data, variable_map, j, c_name, set)
+    end
     return
 end
 
@@ -1064,6 +1113,24 @@ function _add_linear_constraint(model, data, variable_map, j, c_name, set)
         (i, coef) in data.A[j]
     ]
     c = MOI.add_constraint(model, MOI.ScalarAffineFunction(terms, 0.0), set)
+    MOI.set(model, MOI.ConstraintName(), c, c_name)
+    return
+end
+
+function _add_quad_constraint(model, data, variable_map, j, c_name, set)
+    aff_terms = MOI.ScalarAffineTerm{Float64}[
+        MOI.ScalarAffineTerm(coef, variable_map[data.col_to_name[i]]) for
+        (i, coef) in data.A[j]
+    ]
+    quad_terms = MOI.ScalarQuadraticTerm{Float64}[]
+    for (x, y, q) in data.qc_matrix[c_name]
+        push!(
+            quad_terms,
+            MOI.ScalarQuadraticTerm(q, variable_map[x], variable_map[y]),
+        )
+    end
+    f = MOI.ScalarQuadraticFunction(quad_terms, aff_terms, 0.0)
+    c = MOI.add_constraint(model, f, set)
     MOI.set(model, MOI.ConstraintName(), c, c_name)
     return
 end
@@ -1409,6 +1476,10 @@ function parse_bounds_line(data::TempMPSModel, items::Vector{String})
     return
 end
 
+# ==============================================================================
+#   SOS
+# ==============================================================================
+
 function parse_sos_line(data, items)
     if length(items) != 2
         error("Malformed SOS line: $(join(items, " "))")
@@ -1420,6 +1491,53 @@ function parse_sos_line(data, items)
         sos = data.sos_constraints[end]
         push!(sos.columns, items[1])
         push!(sos.weights, parse(Float64, items[2]))
+    end
+    return
+end
+
+# ==============================================================================
+#   QUADOBJ
+# ==============================================================================
+
+function parse_quadobj_line(data, items)
+    if length(items) != 3
+        error("Malformed QUADOBJ line: $(join(items, " "))")
+    end
+    push!(data.quad_obj, (items[1], items[2], parse(Float64, items[3])))
+    return
+end
+
+# ==============================================================================
+#   QMATRIX
+# ==============================================================================
+
+function parse_qmatrix_line(data, items)
+    if length(items) != 3
+        error("Malformed QMATRIX line: $(join(items, " "))")
+    end
+    if data.name_to_col[items[1]] <= data.name_to_col[items[2]]
+        # Off-diagonals have duplicate entries! We don't need to store both
+        # triangles.
+        push!(data.quad_obj, (items[1], items[2], parse(Float64, items[3])))
+    end
+    return
+end
+
+# ==============================================================================
+#   QMATRIX
+# ==============================================================================
+
+function parse_qcmatrix_line(data, items)
+    if length(items) != 3
+        error("Malformed QCMATRIX line: $(join(items, " "))")
+    end
+    if data.name_to_col[items[1]] <= data.name_to_col[items[2]]
+        # Off-diagonals have duplicate entries! We don't need to store both
+        # triangles.
+        push!(
+            data.qc_matrix[data.current_qc_matrix],
+            (items[1], items[2], parse(Float64, items[3])),
+        )
     end
     return
 end
