@@ -58,20 +58,22 @@ MOI.Utilities.@model(
 
 function MOI.supports_constraint(
     ::Model{T},
-    ::MOI.VectorAffineFunction{T},
-    ::Union{MOI.SOS1{T},MOI.SOS2{T}},
+    ::Type{MOI.VectorAffineFunction{T}},
+    ::Type{<:Union{MOI.SOS1{T},MOI.SOS2{T}}},
 ) where {T}
     return false
 end
 
 function MOI.supports_constraint(
     ::Model{T},
-    ::MOI.VectorOfVariables,
-    ::Union{
-        IndicatorLessThanTrue{T},
-        IndicatorLessThanFalse{T},
-        IndicatorGreaterThanTrue{T},
-        IndicatorGreaterThanFalse{T},
+    ::Type{MOI.VectorOfVariables},
+    ::Type{
+        <:Union{
+            IndicatorLessThanTrue{T},
+            IndicatorLessThanFalse{T},
+            IndicatorGreaterThanTrue{T},
+            IndicatorGreaterThanFalse{T},
+        },
     },
 ) where {T}
     return false
