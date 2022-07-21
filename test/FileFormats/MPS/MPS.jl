@@ -856,6 +856,20 @@ c1: 1.2x + 2.1 * x * x + 1.2 * x * y + 0.2 * y * x + 0.5 * y * y <= 1.0
     return
 end
 
+function test_round_trip_qcmatrix_mosek()
+    _test_model_equality(
+        """
+variables: x, y
+minobjective: 1.3 * x * x + 0.5 * x * y
+c1: 1.2x + 2.1 * x * x + 1.2 * x * y + 0.2 * y * x + 0.5 * y * y <= 1.0
+""",
+        ["x", "y"],
+        ["c1"];
+        quadratic_format = MPS.kQuadraticFormatMosek,
+    )
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")

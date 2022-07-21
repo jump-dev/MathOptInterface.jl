@@ -41,7 +41,7 @@ MOI.Utilities.@model(
     QuadraticFormat,
     kQuadraticFormatCPLEX,
     kQuadraticFormatGurobi,
-    # TODO(odow): kQuadraticFormatMosek
+    kQuadraticFormatMosek,
 )
 
 struct Options
@@ -73,7 +73,8 @@ Keyword arguments are:
    respectively.
  - `quadratic_format::QuadraticFormat = kQuadraticFormatGurobi`: specify the
    solver-specific extension used when writing the quadratic components of the
-   model. Options are `kQuadraticFormatGurobi` and `kQuadraticFormatCPLEX`.
+   model. Options are `kQuadraticFormatGurobi`, `kQuadraticFormatCPLEX`, and
+   `kQuadraticFormatMosek`.
 """
 function Model(;
     warn::Bool = false,
@@ -220,7 +221,7 @@ function Base.write(io::IO, model::Model)
     write_ranges(io, model)
     write_bounds(io, model, ordered_names, names)
     write_quadobj(io, model, ordered_names, var_to_column)
-    if options.quadratic_format == kQuadraticFormatGurobi
+    if options.quadratic_format != kQuadraticFormatCPLEX
         # Gurobi needs qcons _after_ quadobj and _before_ SOS.
         write_quadcons(io, model, ordered_names, var_to_column)
     end
@@ -655,8 +656,11 @@ function write_quadobj(io::IO, model::Model, ordered_names, var_to_column)
     options = get_options(model)
     if options.quadratic_format == kQuadraticFormatGurobi
         println(io, "QUADOBJ")
-    else
+    elseif options.quadratic_format == kQuadraticFormatCPLEX
         println(io, "QMATRIX")
+    else
+        @assert options.quadratic_format == kQuadraticFormatMosek
+        println(io, "QSECTION      OBJ")
     end
     _write_q_matrix(
         io,
@@ -720,18 +724,24 @@ end
 # ==============================================================================
 
 function write_quadcons(io::IO, model::Model, ordered_names, var_to_column)
+    options = get_options(model)
     F = MOI.ScalarQuadraticFunction{Float64}
     for (S, _) in SET_TYPES
         for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             name = MOI.get(model, MOI.ConstraintName(), ci)
-            println(io, "QCMATRIX   $name")
+            if options.quadratic_format == kQuadraticFormatMosek
+                println(io, "QSECTION      $name")
+            else
+                println(io, "QCMATRIX   $name")
+            end
             f = MOI.get(model, MOI.ConstraintFunction(), ci)
             _write_q_matrix(
                 io,
                 f,
                 ordered_names,
                 var_to_column;
-                duplicate_off_diagonal = true,
+                duplicate_off_diagonal = options.quadratic_format !=
+                                         kQuadraticFormatMosek,
             )
         end
     end
@@ -894,6 +904,7 @@ end
     HEADER_QUADOBJ,
     HEADER_QMATRIX,
     HEADER_QCMATRIX,
+    HEADER_QSECTION,
 )
 
 # Headers(s) gets called _alot_ (on every line), so we try very hard to be
@@ -935,8 +946,13 @@ function Headers(s::AbstractString)
             return HEADER_OBJSENSE
         end
     elseif N > 12
-        if (x == 'Q' || x == 'q') && startswith(uppercase(s), "QCMATRIX")
-            return HEADER_QCMATRIX
+        if (x == 'Q' || x == 'q')
+            header = uppercase(s)
+            if startswith(header, "QCMATRIX")
+                return HEADER_QCMATRIX
+            elseif startswith(header, "QSECTION")
+                return HEADER_QSECTION
+            end
         end
     end
     return HEADER_UNKNOWN
@@ -972,11 +988,11 @@ function Base.read!(io::IO, model::Model)
             @assert sense == "MAX" || sense == "MIN"
             data.is_minimization = sense == "MIN"
             continue
-        elseif h == HEADER_QCMATRIX
+        elseif h == HEADER_QCMATRIX || h == HEADER_QSECTION
             items = line_to_items(line)
             @assert length(items) == 2
             data.current_qc_matrix = String(items[2])
-            header = HEADER_QCMATRIX
+            header = h
             data.qc_matrix[data.current_qc_matrix] =
                 Tuple{String,String,Float64}[]
             continue
@@ -1010,6 +1026,8 @@ function Base.read!(io::IO, model::Model)
             parse_qmatrix_line(data, items)
         elseif header == HEADER_QCMATRIX
             parse_qcmatrix_line(data, items)
+        elseif header == HEADER_QSECTION
+            parse_qsection_line(data, items)
         else
             @assert header == HEADER_ENDATA
             break
@@ -1534,6 +1552,25 @@ function parse_qcmatrix_line(data, items)
     if data.name_to_col[items[1]] <= data.name_to_col[items[2]]
         # Off-diagonals have duplicate entries! We don't need to store both
         # triangles.
+        push!(
+            data.qc_matrix[data.current_qc_matrix],
+            (items[1], items[2], parse(Float64, items[3])),
+        )
+    end
+    return
+end
+
+# ==============================================================================
+#   QSECTION
+# ==============================================================================
+
+function parse_qsection_line(data, items)
+    if length(items) != 3
+        error("Malformed QSECTION line: $(join(items, " "))")
+    end
+    if data.current_qc_matrix == "OBJ"
+        push!(data.quad_obj, (items[1], items[2], parse(Float64, items[3])))
+    else
         push!(
             data.qc_matrix[data.current_qc_matrix],
             (items[1], items[2], parse(Float64, items[3])),
