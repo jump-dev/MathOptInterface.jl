@@ -33,20 +33,6 @@ function test_show()
           "A Mathematical Programming System (MPS) model"
 end
 
-function test_quadratic()
-    model = MPS.Model()
-    @test_throws(
-        MOI.UnsupportedAttribute,
-        MOIU.loadfromstring!(
-            model,
-            """
-variables: x
-minobjective: 1.0*x*x
-""",
-        )
-    )
-end
-
 function test_nonempty()
     model = MPS.Model()
     @test MOI.is_empty(model)
@@ -688,6 +674,199 @@ function test_infinite_interval()
           "BOUNDS\n" *
           " FR bounds    x1\n" *
           "ENDATA\n"
+    return
+end
+
+function test_quadobj_gurobi()
+    model = MPS.Model()
+    MOIU.loadfromstring!(
+        model,
+        """
+variables: x, y
+minobjective: x + y + 5.0 * x * x + 1.0 * x * y + 1.0 * y * x + 1.2 * y * y
+""",
+    )
+    MOI.write_to_file(model, MPS_TEST_FILE)
+    @test read(MPS_TEST_FILE, String) ==
+          "NAME          \n" *
+          "ROWS\n" *
+          " N  OBJ\n" *
+          "COLUMNS\n" *
+          "    x         OBJ       1\n" *
+          "    y         OBJ       1\n" *
+          "RHS\n" *
+          "RANGES\n" *
+          "BOUNDS\n" *
+          " FR bounds    x\n" *
+          " FR bounds    y\n" *
+          "QUADOBJ\n" *
+          "    x         x         10\n" *
+          "    x         y         2\n" *
+          "    y         y         2.4\n" *
+          "ENDATA\n"
+    return
+end
+
+function test_quadobj_cplex()
+    model = MPS.Model(; quadratic_format = MPS.kQuadraticFormatCPLEX)
+    MOIU.loadfromstring!(
+        model,
+        """
+variables: x, y
+minobjective: x + y + 5.0 * x * x + 1.0 * x * y + 1.0 * y * x + 1.2 * y * y
+""",
+    )
+    MOI.write_to_file(model, MPS_TEST_FILE)
+    @test read(MPS_TEST_FILE, String) ==
+          "NAME          \n" *
+          "ROWS\n" *
+          " N  OBJ\n" *
+          "COLUMNS\n" *
+          "    x         OBJ       1\n" *
+          "    y         OBJ       1\n" *
+          "RHS\n" *
+          "RANGES\n" *
+          "BOUNDS\n" *
+          " FR bounds    x\n" *
+          " FR bounds    y\n" *
+          "QMATRIX\n" *
+          "    x         x         10\n" *
+          "    x         y         2\n" *
+          "    y         x         2\n" *
+          "    y         y         2.4\n" *
+          "ENDATA\n"
+    return
+end
+
+function test_quadcon_gurobi()
+    model = MPS.Model()
+    MOIU.loadfromstring!(
+        model,
+        """
+variables: x, y
+c1: x + y + 5.0 * x * x + 1.0 * x * y + 1.0 * y * x + 1.2 * y * y <= 1.0
+""",
+    )
+    MOI.write_to_file(model, MPS_TEST_FILE)
+    @test read(MPS_TEST_FILE, String) ==
+          "NAME          \n" *
+          "ROWS\n" *
+          " N  OBJ\n" *
+          " L  c1\n" *
+          "COLUMNS\n" *
+          "    x         c1        1\n" *
+          "    y         c1        1\n" *
+          "RHS\n" *
+          "    rhs       c1        1\n" *
+          "RANGES\n" *
+          "BOUNDS\n" *
+          " FR bounds    x\n" *
+          " FR bounds    y\n" *
+          "QCMATRIX   c1\n" *
+          "    x         x         10\n" *
+          "    x         y         2\n" *
+          "    y         x         2\n" *
+          "    y         y         2.4\n" *
+          "ENDATA\n"
+    return
+end
+
+function test_quadcon_cplex()
+    model = MPS.Model(; quadratic_format = MPS.kQuadraticFormatCPLEX)
+    MOIU.loadfromstring!(
+        model,
+        """
+variables: x, y
+c1: x + y + 5.0 * x * x + 1.0 * x * y + 1.0 * y * x + 1.2 * y * y <= 1.0
+""",
+    )
+    MOI.write_to_file(model, MPS_TEST_FILE)
+    @test read(MPS_TEST_FILE, String) ==
+          "NAME          \n" *
+          "ROWS\n" *
+          " N  OBJ\n" *
+          " L  c1\n" *
+          "COLUMNS\n" *
+          "    x         c1        1\n" *
+          "    y         c1        1\n" *
+          "RHS\n" *
+          "    rhs       c1        1\n" *
+          "RANGES\n" *
+          "BOUNDS\n" *
+          " FR bounds    x\n" *
+          " FR bounds    y\n" *
+          "QCMATRIX   c1\n" *
+          "    x         x         10\n" *
+          "    x         y         2\n" *
+          "    y         x         2\n" *
+          "    y         y         2.4\n" *
+          "ENDATA\n"
+    return
+end
+
+function test_round_trip_quadobj_gurobi()
+    _test_model_equality(
+        """
+variables: x, y
+minobjective: 1.2x + 2.1 * x * x + 1.2 * x * y + 0.2 * y * x + 0.5 * y * y
+""",
+        ["x", "y"],
+        String[],
+    )
+    return
+end
+
+function test_round_trip_qmatrix_cplex()
+    _test_model_equality(
+        """
+variables: x, y
+minobjective: 1.2x + 2.1 * x * x + 1.2 * x * y + 0.2 * y * x + 0.5 * y * y
+""",
+        ["x", "y"],
+        String[];
+        quadratic_format = MPS.kQuadraticFormatCPLEX,
+    )
+    return
+end
+
+function test_round_trip_qcmatrix_gurobi()
+    _test_model_equality(
+        """
+variables: x, y
+minobjective: 1.3 * x * x + 0.5 * x * y
+c1: 1.2x + 2.1 * x * x + 1.2 * x * y + 0.2 * y * x + 0.5 * y * y <= 1.0
+""",
+        ["x", "y"],
+        ["c1"],
+    )
+    return
+end
+
+function test_round_trip_qcmatrix_cplex()
+    _test_model_equality(
+        """
+variables: x, y
+minobjective: 1.3 * x * x + 0.5 * x * y
+c1: 1.2x + 2.1 * x * x + 1.2 * x * y + 0.2 * y * x + 0.5 * y * y <= 1.0
+""",
+        ["x", "y"],
+        ["c1"];
+        quadratic_format = MPS.kQuadraticFormatCPLEX,
+    )
+    return
+end
+
+function test_round_trip_qcmatrix_mosek()
+    _test_model_equality(
+        """
+variables: x, y
+minobjective: 1.3 * x * x + 0.5 * x * y
+c1: 1.2x + 2.1 * x * x + 1.2 * x * y + 0.2 * y * x + 0.5 * y * y <= 1.0
+""",
+        ["x", "y"],
+        ["c1"];
+        quadratic_format = MPS.kQuadraticFormatMosek,
+    )
     return
 end
 
