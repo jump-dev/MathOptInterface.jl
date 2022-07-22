@@ -138,6 +138,10 @@ function _set(
     return MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.GreaterThan(convert(T, 3)))
 end
 
+function _set(::Type{T}, ::Type{MOI.HyperRectangle}) where {T}
+    return MOI.HyperRectangle(zeros(T, 3), ones(T, 3))
+end
+
 function _basic_constraint_test_helper(
     model::MOI.ModelLike,
     config::Config{T},
@@ -298,6 +302,7 @@ for s in [
     :Cumulative,
     :Table,
     :Path,
+    :HyperRectangle,
 ]
     S = getfield(MOI, s)
     functions = if S <: MOI.AbstractScalarSet

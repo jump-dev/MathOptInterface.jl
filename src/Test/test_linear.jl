@@ -4059,3 +4059,99 @@ function setup_test(
 end
 
 version_added(::typeof(test_linear_open_intervals)) = v"1.7.0"
+
+"""
+    test_linear_HyperRectangle_VectorOfVariables(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Run an integration test on HyperRectangle constraints.
+"""
+function test_linear_HyperRectangle_VectorOfVariables(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.HyperRectangle{T},
+    )
+    set = MOI.HyperRectangle(T[-1, -2], T[3, 4])
+    x, _ = MOI.add_constrained_variables(model, set)
+    f = T(1) * x[1] + T(-1) * x[2]
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.optimize!(model)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), x), [T(-1), T(4)], config)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.optimize!(model)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), x), [T(3), T(-2)], config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_linear_HyperRectangle_VectorOfVariables),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[-1, 4]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[3, -2]),
+    )
+    return
+end
+
+version_added(::typeof(test_linear_HyperRectangle_VectorOfVariables)) = v"1.7.0"
+
+"""
+    test_linear_HyperRectangle_VectorAffinneFunction(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Run an integration test on HyperRectangle constraints.
+"""
+function test_linear_HyperRectangle_VectorAffineFunction(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.HyperRectangle{T},
+    )
+    set = MOI.HyperRectangle(T[-1, -2], T[3, 4])
+    x = MOI.add_variables(model, 2)
+    fx = MOI.Utilities.operate(vcat, T, T(1) * x[1], T(1) * x[2])
+    MOI.add_constraint(model, fx, set)
+    f = T(1) * x[1] + T(-1) * x[2]
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.optimize!(model)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), x), [T(-1), T(4)], config)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.optimize!(model)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), x), [T(3), T(-2)], config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_linear_HyperRectangle_VectorAffineFunction),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[-1, 4]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[3, -2]),
+    )
+    return
+end
+
+function version_added(
+    ::typeof(test_linear_HyperRectangle_VectorAffineFunction),
+)
+    return v"1.7.0"
+end

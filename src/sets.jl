@@ -1574,6 +1574,45 @@ Base.copy(set::Table) = Table(copy(set.table))
 
 Base.:(==)(x::Table{T}, y::Table{T}) where {T} = x.table == y.table
 
+"""
+    HyperRectangle(lower::Vector{T}, upper::Vector{T}) where {T}
+
+The set ``\\{x \\in \\bar{\\mathbb{R}}^d: x_i \\in [lower_i, upper_i] \\forall i=1,\\ldots,d\\}``.
+
+## Example
+
+```julia
+model = Utilities.Model{Float64}()
+x = add_variables(model, 3)
+add_constraint(model, VectorOfVariables(x), HyperRectangle(zeros(3), ones(3)))
+```
+"""
+struct HyperRectangle{T} <: AbstractVectorSet
+    lower::Vector{T}
+    upper::Vector{T}
+    function HyperRectangle(lower::Vector{T}, upper::Vector{T}) where {T}
+        l, u = length(lower), length(upper)
+        if l != u
+            throw(
+                ArgumentError(
+                    "length of lower (=$l) and upper (=$u) bounds must match.",
+                ),
+            )
+        end
+        return new{T}(lower, upper)
+    end
+end
+
+dimension(set::HyperRectangle) = length(set.lower)
+
+function Base.copy(set::HyperRectangle)
+    return HyperRectangle(copy(set.lower), copy(set.upper))
+end
+
+function Base.:(==)(x::HyperRectangle{T}, y::HyperRectangle{T}) where {T}
+    return x.lower == y.lower && x.upper == y.upper
+end
+
 # isbits types, nothing to copy
 function Base.copy(
     set::Union{

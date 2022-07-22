@@ -322,6 +322,11 @@ function test_sets_Interval()
     @test MOI.Interval(MOI.Interval(1, 2)) == MOI.Interval(1, 2)
 end
 
+function test_sets_hyperrectangle()
+    @test_throws ArgumentError MOI.HyperRectangle([1.0], [2.0, 3.0])
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")
