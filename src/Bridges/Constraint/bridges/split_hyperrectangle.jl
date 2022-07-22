@@ -26,6 +26,7 @@
 """
 mutable struct SplitHyperRectangleBridge{T,G,F} <: AbstractBridge
     ci::MOI.ConstraintIndex{G,MOI.Nonnegatives}
+    func::F
     set::MOI.HyperRectangle{T}
 end
 
@@ -38,15 +39,18 @@ function bridge_constraint(
     f::F,
     s::MOI.HyperRectangle,
 ) where {T,G,F}
-    g = MOI.Utilities.operate(
-        vcat,
-        T,
-        MOI.Utilities.operate(-, T, f, s.lower),
-        MOI.Utilities.operate(-, T, s.upper, f),
-    )
-    d = MOI.dimension(s)
-    ci = MOI.add_constraint(model, g, MOI.Nonnegatives(2 * d))
-    return SplitHyperRectangleBridge{T,typeof(g),F}(ci, s)
+    scalars = MOI.Utilities.eachscalar(f)
+    lower = [
+        MOI.Utilities.operate(-, T, fi, s.lower[i]) for
+        (i, fi) in enumerate(scalars) if isfinite(s.lower[i])
+    ]
+    upper = [
+        MOI.Utilities.operate(-, T, s.upper[i], fi) for
+        (i, fi) in enumerate(scalars) if isfinite(s.upper[i])
+    ]
+    g = MOI.Utilities.operate(vcat, T, lower..., upper...)
+    ci = MOI.add_constraint(model, g, MOI.Nonnegatives(MOI.output_dimension(g)))
+    return SplitHyperRectangleBridge{T,typeof(g),F}(ci, f, s)
 end
 
 function MOI.supports_constraint(
@@ -79,16 +83,11 @@ function concrete_bridge_type(
 end
 
 function MOI.get(
-    model::MOI.ModelLike,
+    ::MOI.ModelLike,
     ::MOI.ConstraintFunction,
-    bridge::SplitHyperRectangleBridge{T,G,F},
-) where {T,G,F}
-    g = MOI.get(model, MOI.ConstraintFunction(), bridge.ci)
-    scalars = MOI.Utilities.eachscalar(g)
-    d = MOI.dimension(bridge.set)
-    f = scalars[1:d]
-    MOI.Utilities.operate!(+, T, f, bridge.set.lower)
-    return MOI.Utilities.convert_approx(F, f)
+    bridge::SplitHyperRectangleBridge,
+)
+    return bridge.func
 end
 
 function MOI.get(
