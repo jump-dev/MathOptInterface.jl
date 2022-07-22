@@ -4077,6 +4077,7 @@ function test_linear_HyperRectangle_VectorOfVariables(
         MOI.VectorOfVariables,
         MOI.HyperRectangle{T},
     )
+    @requires _supports(config, MOI.optimize!)
     set = MOI.HyperRectangle(T[-1, -2], T[3, 4])
     x, _ = MOI.add_constrained_variables(model, set)
     f = T(1) * x[1] + T(-1) * x[2]
