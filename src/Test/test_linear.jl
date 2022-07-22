@@ -4122,6 +4122,7 @@ function test_linear_HyperRectangle_VectorAffineFunction(
         MOI.VectorOfVariables,
         MOI.HyperRectangle{T},
     )
+    @requires _supports(config, MOI.optimize!)
     set = MOI.HyperRectangle(T[-1, -2], T[3, 4])
     x = MOI.add_variables(model, 2)
     fx = MOI.Utilities.operate(vcat, T, T(1) * x[1], T(1) * x[2])
