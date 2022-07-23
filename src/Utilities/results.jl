@@ -546,6 +546,19 @@ function set_dot(
     return triangle_dot(x, y, MOI.side_dimension(set), 0)
 end
 
+function MOI.Utilities.set_dot(
+    x::AbstractVector,
+    y::AbstractVector,
+    set::MOI.HermitianPositiveSemidefiniteConeTriangle,
+)
+    sym = MOI.PositiveSemidefiniteConeTriangle(set.side_dimension)
+    result = set_dot(x, y, sym)
+    for k in (MOI.dimension(sym)+1):MOI.dimension(set)
+        result = MA.add_mul!!(result, 2, x[k], y[k])
+    end
+    return result
+end
+
 function set_dot(
     x::AbstractVector,
     y::AbstractVector,
@@ -594,6 +607,18 @@ function dot_coefficients(
 )
     b = copy(a)
     triangle_coefficients!(b, MOI.side_dimension(set), 0)
+    return b
+end
+
+function dot_coefficients(
+    a::AbstractVector,
+    set::MOI.HermitianPositiveSemidefiniteConeTriangle,
+)
+    sym = MOI.PositiveSemidefiniteConeTriangle(set.side_dimension)
+    b = dot_coefficients(a, sym)
+    for k in (MOI.dimension(sym)+1):MOI.dimension(set)
+        b[k] /= 2
+    end
     return b
 end
 

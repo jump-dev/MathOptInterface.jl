@@ -795,6 +795,18 @@ function triangular_form(::Type{PositiveSemidefiniteConeSquare})
     return PositiveSemidefiniteConeTriangle
 end
 
+struct HermitianPositiveSemidefiniteConeTriangle <: AbstractVectorSet
+    side_dimension::Int
+end
+
+function dimension(set::HermitianPositiveSemidefiniteConeTriangle)
+    return dimension(
+        PositiveSemidefiniteConeTriangle(set.side_dimension),
+    ) + dimension(
+        PositiveSemidefiniteConeTriangle(set.side_dimension - 1),
+    )
+end
+
 """
     LogDetConeTriangle(side_dimension)
 
@@ -1559,6 +1571,7 @@ function Base.copy(
         NormNuclearCone,
         PositiveSemidefiniteConeTriangle,
         PositiveSemidefiniteConeSquare,
+        HermitianPositiveSemidefiniteConeTriangle,
         LogDetConeTriangle,
         LogDetConeSquare,
         RootDetConeTriangle,
