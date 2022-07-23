@@ -228,7 +228,8 @@ function MOI.delete(model::MOI.ModelLike, bridge::HermitianToSymmetricPSDBridge)
     for ci in bridge.con_12_21
         MOI.delete(model, ci)
     end
-    return MOI.delete(model, bridge.variables)
+    MOI.delete(model, bridge.variables)
+    return
 end
 
 # Attributes, Bridge acting as a constraint
