@@ -4,8 +4,6 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-const EQ{T} = MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}
-
 """
     HermitianToSymmetricPSDBridge{T} <: Bridges.Variable.AbstractBridge
 
@@ -72,9 +70,15 @@ struct HermitianToSymmetricPSDBridge{T} <: AbstractBridge
         MOI.VectorOfVariables,
         MOI.PositiveSemidefiniteConeTriangle,
     }
-    con_11_22::Vector{EQ{T}}
-    con12diag::Vector{EQ{T}}
-    con_12_21::Vector{EQ{T}}
+    con_11_22::Vector{
+        MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
+    }
+    con12diag::Vector{
+        MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
+    }
+    con_12_21::Vector{
+        MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
+    }
 end
 
 const HermitianToSymmetricPSD{T,OT<:MOI.ModelLike} =
@@ -104,9 +108,12 @@ function bridge_constrained_variable(
         return variables[k21]
     end
     X22() = variables[k22]
-    con_11_22 = EQ{T}[]
-    con12diag = EQ{T}[]
-    con_12_21 = EQ{T}[]
+    con_11_22 =
+        MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}[]
+    con12diag =
+        MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}[]
+    con_12_21 =
+        MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}[]
     for j in 1:n
         k22 += n
         for i in 1:j
@@ -152,9 +159,6 @@ function bridge_constrained_variable(
         con_12_21,
     )
 end
-
-const HermitianToSymmetricPSD{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{HermitianToSymmetricPSDBridge{T},OT}
 
 function supports_constrained_variable(
     ::Type{<:HermitianToSymmetricPSDBridge},
