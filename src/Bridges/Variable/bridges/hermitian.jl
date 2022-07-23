@@ -272,7 +272,10 @@ function _variable_map(idx::MOI.Bridges.IndexInVector, n)
                i
     end
 end
-function _variable(bridge::HermitianToSymmetricPSDBridge, i::MOI.Bridges.IndexInVector)
+function _variable(
+    bridge::HermitianToSymmetricPSDBridge,
+    i::MOI.Bridges.IndexInVector,
+)
     return bridge.variables[_variable_map(i, length(bridge.con12diag))]
 end
 

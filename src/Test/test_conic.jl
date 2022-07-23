@@ -6858,7 +6858,10 @@ which is
 [-1/2+im/2 (-1+√3)/2]
 ```
 """
-function test_conic_HermitianPositiveSemidefiniteConeTriangle_1(optimizer::MOI.ModelLike, config::Config{T}) where {T}
+function test_conic_HermitianPositiveSemidefiniteConeTriangle_1(
+    optimizer::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
 
@@ -6885,7 +6888,12 @@ function test_conic_HermitianPositiveSemidefiniteConeTriangle_1(optimizer::MOI.M
     MOI.set(optimizer, MOI.ObjectiveFunction{typeof(t)}(), t)
     if _supports(config, MOI.optimize!)
         MOI.optimize!(optimizer)
-        primal = [(T(1) + √T(3)) / T(2), -T(1) / T(2), (-T(1) + √T(3)) / T(2), T(1) / T(2)]
+        primal = [
+            (T(1) + √T(3)) / T(2),
+            -T(1) / T(2),
+            (-T(1) + √T(3)) / T(2),
+            T(1) / T(2),
+        ]
         soc_primal = [
             primal[1] - one(T),
             √T(2) * (primal[2] + one(T)),
@@ -6894,22 +6902,31 @@ function test_conic_HermitianPositiveSemidefiniteConeTriangle_1(optimizer::MOI.M
         ]
         t_value = LinearAlgebra.norm(soc_primal)
         soc_primal = [t_value; soc_primal]
-        dual = [(T(3) - √T(3)) / T(6), √T(3)/T(6), (T(3) + √T(3)) / T(6), -√T(3)/T(6)]
-        @test MOI.Utilities.set_dot(primal, dual, set) ≈ 0 atol = atol rtol = rtol
-        soc_dual = [one(T), -dual[1], -dual[2]*√T(2), -dual[3], -dual[4]*√T(2)]
-        @test MOI.Utilities.set_dot(soc_primal, soc_dual, soc_set) ≈ 0 atol = atol rtol = rtol
+        dual = [
+            (T(3) - √T(3)) / T(6),
+            √T(3) / T(6),
+            (T(3) + √T(3)) / T(6),
+            -√T(3) / T(6),
+        ]
+        @test MOI.Utilities.set_dot(primal, dual, set) ≈ 0 atol = atol rtol =
+            rtol
+        soc_dual =
+            [one(T), -dual[1], -dual[2] * √T(2), -dual[3], -dual[4] * √T(2)]
+        @test MOI.Utilities.set_dot(soc_primal, soc_dual, soc_set) ≈ 0 atol =
+            atol rtol = rtol
         @test ≈(MOI.get(optimizer, MOI.VariablePrimal(), x), primal, config)
+        rtol
+        @test MOI.get(optimizer, MOI.VariablePrimal(), t) ≈ t_value atol = atol rtol =
             rtol
-        @test MOI.get(optimizer, MOI.VariablePrimal(), t) ≈ t_value atol = atol rtol = rtol
-        @test MOI.get(optimizer, MOI.ConstraintPrimal(), cx) ≈ primal atol = atol rtol =
-            rtol
-        @test MOI.get(optimizer, MOI.ConstraintPrimal(), con_soc) ≈ soc_primal atol = atol rtol =
-            rtol
+        @test MOI.get(optimizer, MOI.ConstraintPrimal(), cx) ≈ primal atol =
+            atol rtol = rtol
+        @test MOI.get(optimizer, MOI.ConstraintPrimal(), con_soc) ≈ soc_primal atol =
+            atol rtol = rtol
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(optimizer, MOI.ConstraintDual(), cx) ≈ dual atol = atol rtol =
-                rtol
-            @test MOI.get(optimizer, MOI.ConstraintDual(), con_soc) ≈ soc_dual atol = atol rtol =
-                rtol
+            @test MOI.get(optimizer, MOI.ConstraintDual(), cx) ≈ dual atol =
+                atol rtol = rtol
+            @test MOI.get(optimizer, MOI.ConstraintDual(), con_soc) ≈ soc_dual atol =
+                atol rtol = rtol
         end
     end
     return
@@ -6920,7 +6937,12 @@ function setup_test(
     model::MOIU.MockOptimizer,
     ::Config{T},
 ) where {T}
-    primal = [(T(1) + √T(3)) / T(2), -T(1) / T(2), (-T(1) + √T(3)) / T(2), T(1) / T(2)]
+    primal = [
+        (T(1) + √T(3)) / T(2),
+        -T(1) / T(2),
+        (-T(1) + √T(3)) / T(2),
+        T(1) / T(2),
+    ]
     soc_primal = [
         primal[1] - one(T),
         √T(2) * (primal[2] + one(T)),
@@ -6930,14 +6952,20 @@ function setup_test(
     t_value = LinearAlgebra.norm(soc_primal)
     push!(primal, t_value)
     soc_primal = [t_value; soc_primal]
-    dual = [(T(3) - √T(3)) / T(6), √T(3)/T(6), (T(3) + √T(3)) / T(6), -√T(3)/T(6)]
-    soc_dual = [one(T), -dual[1], -dual[2]*√T(2), -dual[3], -dual[4]*√T(2)]
+    dual = [
+        (T(3) - √T(3)) / T(6),
+        √T(3) / T(6),
+        (T(3) + √T(3)) / T(6),
+        -√T(3) / T(6),
+    ]
+    soc_dual = [one(T), -dual[1], -dual[2] * √T(2), -dual[3], -dual[4] * √T(2)]
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             primal,
-            (MOI.VectorAffineFunction{T}, MOI.SecondOrderCone) => [soc_dual],
+            (MOI.VectorAffineFunction{T}, MOI.SecondOrderCone) =>
+                [soc_dual],
         ),
     )
     return
@@ -6951,7 +6979,10 @@ on [`MathOptInterface.HermitianPositiveSemidefiniteConeTriangle`](@ref)
 variables.
 ```
 """
-function test_conic_HermitianPositiveSemidefiniteConeTriangle_2(optimizer::MOI.ModelLike, config::Config{T}) where {T}
+function test_conic_HermitianPositiveSemidefiniteConeTriangle_2(
+    optimizer::MOI.ModelLike,
+    config::Config{T},
+) where {T}
     atol = config.atol
     rtol = config.rtol
 
@@ -6959,20 +6990,16 @@ function test_conic_HermitianPositiveSemidefiniteConeTriangle_2(optimizer::MOI.M
     set = MOI.HermitianPositiveSemidefiniteConeTriangle(3)
     x, cx = MOI.add_constrained_variables(optimizer, set)
     primal = T[1, 0, 1, 0, 0, 0, -1, 0, 0]
-    MOI.add_constraints(
-        optimizer,
-        x,
-        MOI.EqualTo.(primal),
-    )
+    MOI.add_constraints(optimizer, x, MOI.EqualTo.(primal))
     if _supports(config, MOI.optimize!)
         MOI.optimize!(optimizer)
         @test MOI.get(optimizer, MOI.VariablePrimal(), x) ≈ primal atol = atol rtol =
             rtol
-        @test MOI.get(optimizer, MOI.ConstraintPrimal(), cx) ≈ primal atol = atol rtol =
-            rtol
+        @test MOI.get(optimizer, MOI.ConstraintPrimal(), cx) ≈ primal atol =
+            atol rtol = rtol
         if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(optimizer, MOI.ConstraintDual(), cx) ≈ zeros(9) atol = atol rtol =
-                rtol
+            @test MOI.get(optimizer, MOI.ConstraintDual(), cx) ≈ zeros(9) atol =
+                atol rtol = rtol
         end
     end
 end
@@ -6987,7 +7014,10 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             T[1, 0, 1, 0, 0, 0, -1, 0, 0],
-            (MOI.VectorOfVariables, MOI.HermitianPositiveSemidefiniteConeTriangle) => [zeros(T, 9)],
+            (
+                MOI.VectorOfVariables,
+                MOI.HermitianPositiveSemidefiniteConeTriangle,
+            ) => [zeros(T, 9)],
         ),
     )
     model.eval_variable_constraint_dual = false

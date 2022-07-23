@@ -800,11 +800,8 @@ struct HermitianPositiveSemidefiniteConeTriangle <: AbstractVectorSet
 end
 
 function dimension(set::HermitianPositiveSemidefiniteConeTriangle)
-    return dimension(
-        PositiveSemidefiniteConeTriangle(set.side_dimension),
-    ) + dimension(
-        PositiveSemidefiniteConeTriangle(set.side_dimension - 1),
-    )
+    return dimension(PositiveSemidefiniteConeTriangle(set.side_dimension)) +
+           dimension(PositiveSemidefiniteConeTriangle(set.side_dimension - 1))
 end
 
 """
