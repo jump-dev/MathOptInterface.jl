@@ -795,6 +795,33 @@ function triangular_form(::Type{PositiveSemidefiniteConeSquare})
     return PositiveSemidefiniteConeTriangle
 end
 
+"""
+    HermitianPositiveSemidefiniteConeTriangle(side_dimension) <: AbstractVectorSet
+
+The (vectorized) cone of hermitian positive semidefinite matrices, with
+`side_dimension` rows and columns.
+
+As the matrix is hermitian, the diagonal is real and the lower triangular
+entries are obtained as the conjugate of corresponding upper triangular entries.
+The vectorized form starts with real part of the entries of the upper-right
+triangular part of the matrix given column by column as explained in
+[`AbstractSymmetricMatrixSetSquare`](@ref).
+It is then followed by the imaginary part of the off-diagonal entries of the
+upper-right triangular part given column by column.
+
+
+### Examples
+
+The matrix
+```math
+\\begin{bmatrix}
+  1 & 2 + 7im & 4 + 8im\\\\
+  2 - 7im & 3 & 5 + 9im\\\\
+  4 - 8im & 5 - 9im & 6
+\\end{bmatrix}
+```
+has [`side_dimension`](@ref) 3 and vectorization ``(1, 2, 3, 4, 5, 6, 7, 8, 9)``.
+"""
 struct HermitianPositiveSemidefiniteConeTriangle <: AbstractVectorSet
     side_dimension::Int
 end
