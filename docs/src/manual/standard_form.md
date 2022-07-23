@@ -33,18 +33,14 @@ extensible to other sets recognized by the solver.
 
 The function types implemented in MathOptInterface.jl are:
 
-* [`VariableIndex`](@ref): ``x_j``, i.e., projection onto a single coordinate
-  defined by a variable index ``j``.
-* [`VectorOfVariables`](@ref): projection onto multiple coordinates (i.e.,
-  extracting a subvector).
-* [`ScalarAffineFunction`](@ref): ``a^T x + b``, where ``a`` is a vector and
-  ``b`` scalar.
-* [`VectorAffineFunction`](@ref): ``A x + b``, where ``A`` is a matrix and
-  ``b`` is a vector.
-* [`ScalarQuadraticFunction`](@ref): ``\frac{1}{2} x^T Q x + a^T x + b``,
-  where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant.
-* [`VectorQuadraticFunction`](@ref): a vector of scalar-valued quadratic
-  functions.
+| Function         | Description |
+| :--------------- | :---------- |
+| [`VariableIndex`](@ref) | ``x_j``, i.e., projection onto a single coordinate defined by a variable index ``j``. |
+| [`VectorOfVariables`](@ref) | The projection onto multiple coordinates (i.e., extracting a subvector). |
+| [`ScalarAffineFunction`](@ref) | ``a^T x + b``, where ``a`` is a vector and ``b`` scalar. |
+| [`VectorAffineFunction`](@ref) | ``A x + b``, where ``A`` is a matrix and ``b`` is a vector. |
+| [`ScalarQuadraticFunction`](@ref) | ``\frac{1}{2} x^T Q x + a^T x + b``, where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant. |
+| [`VectorQuadraticFunction`](@ref) | A vector of scalar-valued quadratic functions. |
 
 Extensions for nonlinear programming are present but not yet well documented.
 
@@ -52,76 +48,52 @@ Extensions for nonlinear programming are present but not yet well documented.
 
 The one-dimensional set types implemented in MathOptInterface.jl are:
 
-* [`LessThan(upper)`](@ref MathOptInterface.LessThan):
-  ``\{ x \in \mathbb{R} : x \le \mbox{upper} \}``
-* [`GreaterThan(lower)`](@ref MathOptInterface.GreaterThan):
-  ``\{ x \in \mathbb{R} : x \ge \mbox{lower} \}``
-* [`EqualTo(value)`](@ref MathOptInterface.GreaterThan):
-  ``\{ x \in \mathbb{R} : x = \mbox{value} \}``
-* [`Interval(lower, upper)`](@ref MathOptInterface.Interval):
-  ``\{ x \in \mathbb{R} : x \in [\mbox{lower},\mbox{upper}] \}``
-* [`Integer()`](@ref MathOptInterface.Integer): ``\mathbb{Z}``
-* [`ZeroOne()`](@ref MathOptInterface.ZeroOne): ``\{ 0, 1 \}``
-* [`Semicontinuous(lower,upper)`](@ref MathOptInterface.Semicontinuous):
-  ``\{ 0\} \cup [\mbox{lower},\mbox{upper}]``
-* [`Semiinteger(lower,upper)`](@ref MathOptInterface.Semiinteger):
-  ``\{ 0\} \cup \{\mbox{lower},\mbox{lower}+1,\ldots,\mbox{upper}-1,\mbox{upper}\}``
+| Set                                                            | Description                            |
+| :------------------------------------------------------------- | :------------------------------------- |
+| [`LessThan(u)`](@ref MathOptInterface.LessThan)                | ``(-\infty, u]``                       |
+| [`GreaterThan(l)`](@ref MathOptInterface.GreaterThan)          | ``[l, \infty)``                        |
+| [`EqualTo(v)`](@ref MathOptInterface.GreaterThan)              | ``\{v\}``                              |
+| [`Interval(l, u)`](@ref MathOptInterface.Interval)             | ``[l, u]``                             |
+| [`Integer()`](@ref MathOptInterface.Integer)                   | ``\mathbb{Z}``                         |
+| [`ZeroOne()`](@ref MathOptInterface.ZeroOne)                   | ``\{ 0, 1 \}``                         |
+| [`Semicontinuous(l, u)`](@ref MathOptInterface.Semicontinuous) | ``\{ 0\} \cup [l, u]``                 |
+| [`Semiinteger(l, u)`](@ref MathOptInterface.Semiinteger)       | ``\{ 0\} \cup \{l,l+1,\ldots,u-1,u\}`` |
 
 ## Vector cones
 
 The vector-valued set types implemented in MathOptInterface.jl are:
 
-* [`Reals(dimension)`](@ref MathOptInterface.Reals):
-  ``\mathbb{R}^{\mbox{dimension}}``
-* [`Zeros(dimension)`](@ref MathOptInterface.Zeros): ``0^{\mbox{dimension}}``
-* [`Nonnegatives(dimension)`](@ref MathOptInterface.Nonnegatives):
-  ``\{ x \in \mathbb{R}^{\mbox{dimension}} : x \ge 0 \}``
-* [`Nonpositives(dimension)`](@ref MathOptInterface.Nonpositives):
-  ``\{ x \in \mathbb{R}^{\mbox{dimension}} : x \le 0 \}``
-* [`SecondOrderCone(dimension)`](@ref MathOptInterface.SecondOrderCone):
-  ``\{ (t,x) \in \mathbb{R}^{\mbox{dimension}} : t \ge \lVert x \rVert_2 \}``
-* [`RotatedSecondOrderCone(dimension)`](@ref MathOptInterface.RotatedSecondOrderCone):
-  ``\{ (t,u,x) \in \mathbb{R}^{\mbox{dimension}} : 2tu \ge \lVert x \rVert_2^2, t,u \ge 0 \}``
-* [`ExponentialCone()`](@ref MathOptInterface.ExponentialCone):
-  ``\{ (x,y,z) \in \mathbb{R}^3 : y \exp (x/y) \le z, y > 0 \}``
-* [`DualExponentialCone()`](@ref MathOptInterface.DualExponentialCone):
-  ``\{ (u,v,w) \in \mathbb{R}^3 : -u \exp (v/u) \le \exp(1) w, u < 0 \}``
-* [`GeometricMeanCone(dimension)`](@ref MathOptInterface.GeometricMeanCone):
-  ``\{ (t,x) \in \mathbb{R}^{n+1} : x \ge 0, t \le \sqrt[n]{x_1 x_2 \cdots x_n} \}``
-  where ``n`` is ``\mbox{dimension} - 1``
-* [`PowerCone(exponent)`](@ref MathOptInterface.PowerCone):
-  ``\{ (x,y,z) \in \mathbb{R}^3 : x^{\mbox{exponent}} y^{1-\mbox{exponent}} \ge |z|, x,y \ge 0 \}``
-* [`DualPowerCone(exponent)`](@ref MathOptInterface.DualPowerCone):
-  ``\{ (u,v,w) \in \mathbb{R}^3 : \frac{u}{\mbox{exponent}}^{\mbox{exponent}}\frac{v}{1-\mbox{exponent}}^{1-\mbox{exponent}} \ge |w|, u,v \ge 0 \}``
-* [`NormOneCone(dimension)`](@ref MathOptInterface.NormOneCone): ``\{ (t,x) \in \mathbb{R}^{\mbox{dimension}} : t \ge \lVert x \rVert_1 \}`` where ``\lVert x \rVert_1 = \sum_i \lvert x_i \rvert``
-* [`NormInfinityCone(dimension)`](@ref MathOptInterface.NormInfinityCone):
-  ``\{ (t,x) \in \mathbb{R}^{\mbox{dimension}} : t \ge \lVert x \rVert_\infty \}`` where ``\lVert x \rVert_\infty = \max_i \lvert x_i \rvert``.
-* [`RelativeEntropyCone(dimension)`](@ref MathOptInterface.RelativeEntropyCone):
-  ``\{ (u, v, w) \in \mathbb{R}^{\mbox{dimension}} : u \ge \sum_i w_i \log (\frac{w_i}{v_i}), v_i \ge 0, w_i \ge 0 \}``
+| Set                                                                   | Description |
+| :---------------------------------------------------------------------| :---------- |
+| [`Reals(d)`](@ref MathOptInterface.Reals)                             | ``\mathbb{R}^{d}`` |
+| [`Zeros(d)`](@ref MathOptInterface.Zeros)                             | ``0^{d}`` |
+| [`Nonnegatives(d)`](@ref MathOptInterface.Nonnegatives)               | ``\{ x \in \mathbb{R}^{d} : x \ge 0 \}`` |
+| [`Nonpositives(d)`](@ref MathOptInterface.Nonpositives)               | ``\{ x \in \mathbb{R}^{d} : x \le 0 \}`` |
+| [`SecondOrderCone(d)`](@ref MathOptInterface.SecondOrderCone)         | ``\{ (t,x) \in \mathbb{R}^{d} : t \ge \lVert x \rVert_2 \}`` |
+| [`RotatedSecondOrderCone(d)`](@ref MathOptInterface.RotatedSecondOrderCone) | ``\{ (t,u,x) \in \mathbb{R}^{d} : 2tu \ge \lVert x \rVert_2^2, t \ge 0,u \ge 0 \}`` |
+| [`ExponentialCone()`](@ref MathOptInterface.ExponentialCone)          | ``\{ (x,y,z) \in \mathbb{R}^3 : y \exp (x/y) \le z, y > 0 \}`` |
+| [`DualExponentialCone()`](@ref MathOptInterface.DualExponentialCone)  | ``\{ (u,v,w) \in \mathbb{R}^3 : -u \exp (v/u) \le \exp(1) w, u < 0 \}`` |
+| [`GeometricMeanCone(d)`](@ref MathOptInterface.GeometricMeanCone)     | ``\{ (t,x) \in \mathbb{R}^{1+n} : x \ge 0, t \le \sqrt[n]{x_1 x_2 \cdots x_n} \}`` where ``n`` is ``d - 1`` |
+| [`PowerCone(α)`](@ref MathOptInterface.PowerCone)                     | ``\{ (x,y,z) \in \mathbb{R}^3 : x^{\alpha} y^{1-\alpha} \ge \|z\|, x \ge 0,y \ge 0 \}`` |
+| [`DualPowerCone(α)`](@ref MathOptInterface.DualPowerCone)             | ``\{ (u,v,w) \in \mathbb{R}^3 : \left(\frac{u}{\alpha}\right(^{\alpha}\left(\frac{v}{1-\alpha}\right)^{1-\alpha} \ge \|w\|, u,v \ge 0 \}`` |
+| [`NormOneCone(d)`](@ref MathOptInterface.NormOneCone)                 | ``\{ (t,x) \in \mathbb{R}^{d} : t \ge \sum_i \lvert x_i \rvert \}`` |
+| [`NormInfinityCone(d)`](@ref MathOptInterface.NormInfinityCone)       | ``\{ (t,x) \in \mathbb{R}^{d} : t \ge \max_i \lvert x_i \rvert \}`` |
+| [`RelativeEntropyCone(d)`](@ref MathOptInterface.RelativeEntropyCone) | ``\{ (u, v, w) \in \mathbb{R}^{d} : u \ge \sum_i w_i \log (\frac{w_i}{v_i}), v_i \ge 0, w_i \ge 0 \}`` |
 
 ## Matrix cones
 
 The matrix-valued set types implemented in MathOptInterface.jl are:
 
-* [`RootDetConeTriangle(dimension)`](@ref MathOptInterface.RootDetConeTriangle):
-  ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}(1+\mbox{dimension})/2} : t \le \det(X)^{1/\mbox{dimension}}, X \mbox{ is the upper triangle of a PSD matrix} \}``
-* [`RootDetConeSquare(dimension)`](@ref MathOptInterface.RootDetConeSquare):
-  ``\{ (t,X) \in \mathbb{R}^{1+\mbox{dimension}^2} : t \le \det(X)^{1/\mbox{dimension}}, X \mbox{ is a PSD matrix} \}``
-
-* [`PositiveSemidefiniteConeTriangle(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle):
-  ``\{ X \in \mathbb{R}^{\mbox{dimension}(\mbox{dimension}+1)/2} : X \mbox{ is the upper triangle of a PSD matrix} \}``
-* [`PositiveSemidefiniteConeSquare(dimension)`](@ref MathOptInterface.PositiveSemidefiniteConeSquare):
-  ``\{ X \in \mathbb{R}^{\mbox{dimension}^2} : X \mbox{ is a PSD matrix} \}``
-
-* [`LogDetConeTriangle(dimension)`](@ref MathOptInterface.LogDetConeTriangle):
-  ``\{ (t,u,X) \in \mathbb{R}^{2+\mbox{dimension}(1+\mbox{dimension})/2} : t \le u\log(\det(X/u)), X \mbox{ is the upper triangle of a PSD matrix}, u > 0 \}``
-* [`LogDetConeSquare(dimension)`](@ref MathOptInterface.LogDetConeSquare):
-  ``\{ (t,u,X) \in \mathbb{R}^{2+\mbox{dimension}^2} : t \le u \log(\det(X/u)), X \mbox{ is a PSD matrix}, u > 0 \}``
-
-* [`NormSpectralCone(row_dim, column_dim)`](@ref MathOptInterface.NormSpectralCone):
-  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row\_dim} \times \mbox{column\_dim}} : t \ge \sigma_1(X), X \mbox{ is a matrix with row\_dim rows and column\_dim columns} \}``
-* [`NormNuclearCone(row_dim, column_dim)`](@ref MathOptInterface.NormNuclearCone):
-  ``\{ (t, X) \in \mathbb{R}^{1 + \mbox{row\_dim} \times \mbox{column\_dim}} : t \ge \sum_i \sigma_i(X), X \mbox{ is a matrix with row\_dim rows and column\_dim columns} \}``
+| Set              | Descriptionn |
+| :--------------- | :----------- |
+| [`RootDetConeTriangle(d)`](@ref MathOptInterface.RootDetConeTriangle) | ``\{ (t,X) \in \mathbb{R}^{1+d(1+d)/2} : t \le \det(X)^{1/d}, X \mbox{ is the upper triangle of a PSD matrix} \}`` |
+| [`RootDetConeSquare(d)`](@ref MathOptInterface.RootDetConeSquare)     | ``\{ (t,X) \in \mathbb{R}^{1+d^2} : t \le \det(X)^{1/d}, X \mbox{ is a PSD matrix} \}`` |
+| [`PositiveSemidefiniteConeTriangle(d)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle) | ``\{ X \in \mathbb{R}^{d(d+1)/2} : X \mbox{ is the upper triangle of a PSD matrix} \}`` |
+| [`PositiveSemidefiniteConeSquare(d)`](@ref MathOptInterface.PositiveSemidefiniteConeSquare) | ``\{ X \in \mathbb{R}^{d^2} : X \mbox{ is a PSD matrix} \}`` |
+| [`LogDetConeTriangle(d)`](@ref MathOptInterface.LogDetConeTriangle)   | ``\{ (t,u,X) \in \mathbb{R}^{2+d(1+d)/2} : t \le u\log(\det(X/u)), X \mbox{ is the upper triangle of a PSD matrix}, u > 0  \}`` |
+| [`LogDetConeSquare(d)`](@ref MathOptInterface.LogDetConeSquare)       | ``\{ (t,u,X) \in \mathbb{R}^{2+d^2} : t \le u \log(\det(X/u)), X \mbox{ is a PSD matrix}, u > 0 \}`` |
+| [`NormSpectralCone(r, c)`](@ref MathOptInterface.NormSpectralCone)    | ``\{ (t, X) \in \mathbb{R}^{1 + r \times c} : t \ge \sigma_1(X), X \mbox{ is a } r\times c\mbox{ matrix} \}``
+| [`NormNuclearCone(r, c)`](@ref MathOptInterface.NormNuclearCone)      | ``\{ (t, X) \in \mathbb{R}^{1 + r \times c} : t \ge \sum_i \sigma_i(X), X \mbox{ is a } r\times c\mbox{ matrix} \}``
 
 Some of these cones can take two forms: `XXXConeTriangle` and `XXXConeSquare`.
 
@@ -144,11 +116,22 @@ or solver developers.
 
 ## Multi-dimensional sets with combinatorial structure
 
-* [`SOS1(weights)`](@ref MathOptInterface.SOS1):
-  A special ordered set of Type I.
-* [`SOS2(weights)`](@ref MathOptInterface.SOS2):
-  A special ordered set of Type II.
-* [`Indicator(set)`](@ref MathOptInterface.Indicator):
-  A set to specify indicator constraints.
-* [`Complements(dimension)`](@ref MathOptInterface.Complements):
-  A set for mixed complementarity constraints.
+Other sets are vector-valued, with a particular combinatorial structure. Read
+their docstrings for more information on how to interpret them.
+
+| Set                        | Description |
+| :------------------------- | :---------- |
+| [`SOS1`](@ref)             | A Special Ordered Set (SOS) of Type I |
+| [`SOS2`](@ref)             | A Special Ordered Set (SOS) of Type II |
+| [`Indicator`](@ref)        | A set to specify an indicator constraint |
+| [`Complements`](@ref)      | A set to specify a mixed complementarity constraint |
+| [`AllDifferent`](@ref)     | The `all_different` global constraint |
+| [`BinPacking`](@ref)       | The `bin_packing` global constraint |
+| [`Circuit`](@ref)          | The `circuit` global constraint |
+| [`CountAtLeast`](@ref)     | The `at_least` global constraint |
+| [`CountBelongs`](@ref)     | The `nvalue` global constraint |
+| [`CountDistinct`](@ref)    | The `distinct` global constraint |
+| [`CountGreaterThan`](@ref) | The `count_gt` global constraint |
+| [`Cumulative`](@ref)       | The `cumulative` global constraint |
+| [`Path`](@ref)             | The `path` global constraint |
+| [`Table`](@ref)            | The `table` global constraint |
