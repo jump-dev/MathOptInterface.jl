@@ -6913,6 +6913,7 @@ function test_conic_HermitianPositiveSemidefiniteConeTriangle_1(optimizer::MOI.M
                 rtol
         end
     end
+    return
 end
 
 function setup_test(
