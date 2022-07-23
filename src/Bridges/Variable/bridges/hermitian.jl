@@ -330,7 +330,7 @@ function MOI.get(
     bridge::HermitianToSymmetricPSDBridge{T},
     i::MOI.Bridges.IndexInVector,
 ) where {T}
-    return value = MOI.get(model, attr, _variable(bridge, i))
+    return MOI.get(model, attr, _variable(bridge, i))
 end
 
 function MOI.Bridges.bridged_function(
