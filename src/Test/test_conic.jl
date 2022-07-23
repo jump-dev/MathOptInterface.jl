@@ -6899,7 +6899,7 @@ function test_conic_HermitianPositiveSemidefiniteConeTriangle_1(optimizer::MOI.M
         @test MOI.Utilities.set_dot(primal, dual, set) ≈ 0 atol = atol rtol = rtol
         soc_dual = [one(T), -dual[1], -dual[2]*√T(2), -dual[3], -dual[4]*√T(2)]
         @test MOI.Utilities.set_dot(soc_primal, soc_dual, soc_set) ≈ 0 atol = atol rtol = rtol
-        @test MOI.get(optimizer, MOI.VariablePrimal(), x) ≈ primal atol = atol rtol =
+        @test ≈(MOI.get(optimizer, MOI.VariablePrimal(), x), primal, config)
             rtol
         @test MOI.get(optimizer, MOI.VariablePrimal(), t) ≈ t_value atol = atol rtol = rtol
         @test MOI.get(optimizer, MOI.ConstraintPrimal(), cx) ≈ primal atol = atol rtol =
