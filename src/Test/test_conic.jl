@@ -6862,7 +6862,6 @@ function test_conic_HermitianPositiveSemidefiniteConeTriangle_1(optimizer::MOI.M
     atol = config.atol
     rtol = config.rtol
 
-    MOI.empty!(optimizer)
     set = MOI.HermitianPositiveSemidefiniteConeTriangle(2)
     x, cx = MOI.add_constrained_variables(optimizer, set)
     x11 = x[1:3]
