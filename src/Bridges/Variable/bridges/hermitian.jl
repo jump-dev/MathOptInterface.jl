@@ -189,7 +189,7 @@ function MOI.get(
         MOI.VectorOfVariables,
         MOI.PositiveSemidefiniteConeTriangle,
     },
-)
+)::Int64
     return 1
 end
 function MOI.get(
