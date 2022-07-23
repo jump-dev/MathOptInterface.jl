@@ -162,6 +162,7 @@ function supports_constrained_variable(
 )
     return true
 end
+
 function MOI.Bridges.added_constrained_variable_types(
     ::Type{<:HermitianToSymmetricPSDBridge},
 )
