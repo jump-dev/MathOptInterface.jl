@@ -88,6 +88,9 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     bridge::SplitHyperRectangleBridge,
 )
+    # We cache the function to simplify cases in which the box is (-Inf, Inf).
+    # This contributes some memory overhead, so if someone complains in future
+    # we could reconsider this decision.
     return bridge.func
 end
 
