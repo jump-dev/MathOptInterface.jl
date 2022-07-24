@@ -3913,7 +3913,8 @@ function test_linear_complex_Zeros(optimizer, config::Config{T}) where {T}
         MOI.Zeros(1),
     )
     if _supports(config, MOI.optimize!)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+        @test MOI.get(optimizer, MOI.TerminationStatus()) ==
+              MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(optimizer)
         @test MOI.get(optimizer, MOI.TerminationStatus()) ==
               config.optimal_status
@@ -3980,7 +3981,8 @@ function test_linear_complex_Zeros_duplicate(
         MOI.Zeros(1),
     )
     if _supports(config, MOI.optimize!)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+        @test MOI.get(optimizer, MOI.TerminationStatus()) ==
+              MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(optimizer)
         @test MOI.get(optimizer, MOI.TerminationStatus()) ==
               config.optimal_status
