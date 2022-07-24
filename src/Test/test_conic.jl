@@ -6838,8 +6838,8 @@ end
         config::Config,
     )
 
-Test the computation of the projection of a hermitian matrix to the cone
-of hermitian positive semidefinite matrices.
+Test the computation of the projection of a Hermitian matrix to the cone
+of Hermitian positive semidefinite matrices.
 The matrix is:
 ```
 [ 1    -1+im]   [ 1-im  ?]   [√3    ]   [ 1+im  -1+√3]

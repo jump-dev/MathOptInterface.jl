@@ -798,22 +798,23 @@ end
 """
     HermitianPositiveSemidefiniteConeTriangle(side_dimension) <: AbstractVectorSet
 
-The (vectorized) cone of hermitian positive semidefinite matrices, with
+The (vectorized) cone of Hermitian positive semidefinite matrices, with
 `side_dimension` rows and columns.
 
-As the matrix is hermitian, the diagonal is real and the lower triangular
-entries are obtained as the conjugate of corresponding upper triangular entries.
+Becaue the matrix is Hermitian, the diagonal elements are real, and the
+complex-valued lower triangular entries are obtained as the conjugate of
+corresponding upper triangular entries.
 
-The vectorized form starts with real part of the entries of the upper-right
-triangular part of the matrix given column by column as explained in
+### Vectorization format
+
+The vectorized form starts with real part of the entries of the upper triangular
+part of the matrix, given column by column as explained in
 [`AbstractSymmetricMatrixSetSquare`](@ref).
 
 It is then followed by the imaginary part of the off-diagonal entries of the
-upper-right triangular part given column by column.
+upper triangular part, also given column by column.
 
-### Examples
-
-The matrix
+For example, the matrix
 ```math
 \\begin{bmatrix}
   1 & 2 + 7im & 4 + 8im\\\\
@@ -821,15 +822,17 @@ The matrix
   4 - 8im & 5 - 9im & 6
 \\end{bmatrix}
 ```
-has [`side_dimension`](@ref) 3 and vectorization ``(1, 2, 3, 4, 5, 6, 7, 8, 9)``.
+has [`side_dimension`](@ref) 3 and is represented as the vector
+``[1, 2, 3, 4, 5, 6, 7, 8, 9]``.
 """
 struct HermitianPositiveSemidefiniteConeTriangle <: AbstractVectorSet
     side_dimension::Int
 end
 
 function dimension(set::HermitianPositiveSemidefiniteConeTriangle)
-    return dimension(PositiveSemidefiniteConeTriangle(set.side_dimension)) +
-           dimension(PositiveSemidefiniteConeTriangle(set.side_dimension - 1))
+    real_nnz = div(set.side_dimension * (set.side_dimension + 1), 2)
+    imag_nnz = div((set.side_dimension - 1) * set.side_dimension, 2)
+    return real_nnz + imag_nnz
 end
 
 """
