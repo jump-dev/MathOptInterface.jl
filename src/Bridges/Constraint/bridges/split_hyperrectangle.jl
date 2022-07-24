@@ -39,16 +39,17 @@ function bridge_constraint(
     f::F,
     s::MOI.HyperRectangle,
 ) where {T,G,F}
-    scalars = MOI.Utilities.eachscalar(f)
-    lower = [
-        MOI.Utilities.operate(-, T, fi, s.lower[i]) for
-        (i, fi) in enumerate(scalars) if isfinite(s.lower[i])
-    ]
-    upper = [
-        MOI.Utilities.operate(-, T, s.upper[i], fi) for
-        (i, fi) in enumerate(scalars) if isfinite(s.upper[i])
-    ]
-    g = MOI.Utilities.operate(vcat, T, lower..., upper...)
+    lower = MOI.Utilities.operate(-, T, f, s.lower)
+    upper = MOI.Utilities.operate(-, T, s.upper, f)
+    if any(!isfinite, s.lower)
+        indices = [i for (i, l) in enumerate(s.lower) if isfinite(l)]
+        lower = MOI.Utilities.eachscalar(lower)[indices]
+    end
+    if any(!isfinite, s.upper)
+        indices = [i for (i, u) in enumerate(s.upper) if isfinite(u)]
+        upper = MOI.Utilities.eachscalar(upper)[indices]
+    end
+    g = MOI.Utilities.operate(vcat, T, lower, upper)
     ci = MOI.add_constraint(model, g, MOI.Nonnegatives(MOI.output_dimension(g)))
     return SplitHyperRectangleBridge{T,typeof(g),F}(ci, f, s)
 end
