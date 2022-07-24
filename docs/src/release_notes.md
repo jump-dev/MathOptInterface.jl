@@ -7,7 +7,6 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 ### New features
 
- - Added support for `ExponentialCone` in `MatrixOfConstraints`
  - Added `SplitComplexZerosBridge` and `SplitComplexEqualToBridge` which bridges
    complex-valued equality constraints into their real and imaginary parts
  - Added support for generic nunmber types in `Utilities.loadfromstring!`
@@ -20,8 +19,6 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 ### Bug fixes
 
- - Fix `PSDSquare_3` test to reflect a previously fixed bug getting the
-   `ConstraintDual` of a `PositiveSemidefiniteConeSquare` constraint
  - Fixed some missing promotion rules
 
 ### Performance and maintenance
@@ -29,6 +26,17 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
  - Improved the performance of Jacobian products in `Nonlinear`
  - Removed an un-needed `copy` in `Utilities.modify_function`
  - Various clean-ups in `Bridges/bridge_optimizer.jl`
+
+## v1.6.1 (July 23, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.6.1).
+
+### Bug fixes
+
+ - Added support for `ExponentialCone` in `MatrixOfConstraints`
+ - Fix `PSDSquare_3` test to reflect a previously fixed bug getting the
+   `ConstraintDual` of a `PositiveSemidefiniteConeSquare` constraint
 
 ## v1.6.0 (July 2, 2022)
 
