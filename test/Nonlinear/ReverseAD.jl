@@ -918,6 +918,76 @@ function _test_odd_chunks_Hessian_products(N)
     return
 end
 
+function _dense_jacobian(jacobian_sparsity, V, m, n)
+    I = [i for (i, j) in jacobian_sparsity]
+    J = [j for (i, j) in jacobian_sparsity]
+    raw = SparseArrays.sparse(I, J, V, m, n)
+    return Matrix(raw)
+end
+
+function test_jacobians_and_jacvec()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex.(1:3)
+    a, b, c = x
+    Nonlinear.set_objective(model, :($a * $b + $c^2))
+    Nonlinear.add_constraint(model, :($c * $b), MOI.LessThan(1.0))
+    Nonlinear.add_constraint(model, :($a^2 / 2), MOI.LessThan(1.0))
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), x)
+    MOI.initialize(evaluator, [:Jac, :JacVec])
+    values = [1.0, 2.0, 3.0] # For a, b, c.
+    jacobian_sparsity = MOI.jacobian_structure(evaluator)
+    V = zeros(length(jacobian_sparsity))
+    MOI.eval_constraint_jacobian(evaluator, V, values)
+    correct_jacobian = [0.0 3.0 2.0; 1.0 0.0 0.0]
+    @test _dense_jacobian(jacobian_sparsity, V, 2, 3) ≈ correct_jacobian
+    v = [2.4, 3.5, 1.2]
+    product_storage = zeros(2)
+    MOI.eval_constraint_jacobian_product(evaluator, product_storage, values, v)
+    @test product_storage ≈ correct_jacobian * v
+    w = [0.6, 4.3]
+    product_storage = zeros(3)
+    MOI.eval_constraint_jacobian_transpose_product(
+        evaluator,
+        product_storage,
+        values,
+        w,
+    )
+    @test product_storage ≈ correct_jacobian' * w
+    return
+end
+
+function test_jacobians_and_jacvec_with_subexpressions()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex.(1:3)
+    a, b, c = x
+    bc = Nonlinear.add_expression(model, :($b * $c))
+    Nonlinear.set_objective(model, :($a * $b + $c^2))
+    Nonlinear.add_constraint(model, :($bc), MOI.LessThan(1.0))
+    Nonlinear.add_constraint(model, :($a^2 / 2), MOI.LessThan(1.0))
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), x)
+    MOI.initialize(evaluator, [:Jac, :JacVec])
+    values = [1.0, 2.0, 3.0] # For a, b, c.
+    jacobian_sparsity = MOI.jacobian_structure(evaluator)
+    V = zeros(length(jacobian_sparsity))
+    MOI.eval_constraint_jacobian(evaluator, V, values)
+    correct_jacobian = [0.0 3.0 2.0; 1.0 0.0 0.0]
+    @test _dense_jacobian(jacobian_sparsity, V, 2, 3) ≈ correct_jacobian
+    v = [2.4, 3.5, 1.2]
+    product_storage = zeros(2)
+    MOI.eval_constraint_jacobian_product(evaluator, product_storage, values, v)
+    @test product_storage ≈ correct_jacobian * v
+    w = [0.6, 4.3]
+    product_storage = zeros(3)
+    MOI.eval_constraint_jacobian_transpose_product(
+        evaluator,
+        product_storage,
+        values,
+        w,
+    )
+    @test product_storage ≈ correct_jacobian' * w
+    return
+end
+
 end  # module
 
 TestReverseAD.runtests()

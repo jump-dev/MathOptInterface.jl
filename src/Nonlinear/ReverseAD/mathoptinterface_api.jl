@@ -223,8 +223,8 @@ function MOI.eval_constraint_jacobian_product(d::NLPEvaluator, y, x, w)
             d.jac_storage[col] = 0.0
         end
         _extract_reverse_pass(d.jac_storage, d, expr)
-        for (k, col) in enumerate(expr.grad_sparsity)
-            y[row] += d.jac_storage[k] * w[col]
+        for col in expr.grad_sparsity
+            y[row] += d.jac_storage[col] * w[col]
         end
     end
     return
@@ -243,8 +243,8 @@ function MOI.eval_constraint_jacobian_transpose_product(
             d.jac_storage[col] = 0.0
         end
         _extract_reverse_pass(d.jac_storage, d, expr)
-        for (k, col) in enumerate(expr.grad_sparsity)
-            y[col] += d.jac_storage[k] * w[row]
+        for col in expr.grad_sparsity
+            y[col] += d.jac_storage[col] * w[row]
         end
     end
     return
