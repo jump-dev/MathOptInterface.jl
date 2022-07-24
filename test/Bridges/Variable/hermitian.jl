@@ -6,10 +6,12 @@
 
 module TestVariableHermitianToSymmetricPSD
 
-using LinearAlgebra, Test
+using Test
 
 using MathOptInterface
 const MOI = MathOptInterface
+
+import LinearAlgebra
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -40,7 +42,7 @@ function test_conic_HermitianPositiveSemidefiniteConeTriangle_1()
         primal[3] + one(T),
         √T(2) * (primal[4] - one(T)),
     ]
-    t_value = norm(soc_primal)
+    t_value = LinearAlgebra.norm(soc_primal)
     real_primal = [
         primal[1:3]
         zero(T)
