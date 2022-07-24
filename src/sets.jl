@@ -803,12 +803,13 @@ The (vectorized) cone of hermitian positive semidefinite matrices, with
 
 As the matrix is hermitian, the diagonal is real and the lower triangular
 entries are obtained as the conjugate of corresponding upper triangular entries.
+
 The vectorized form starts with real part of the entries of the upper-right
 triangular part of the matrix given column by column as explained in
 [`AbstractSymmetricMatrixSetSquare`](@ref).
+
 It is then followed by the imaginary part of the off-diagonal entries of the
 upper-right triangular part given column by column.
-
 
 ### Examples
 

@@ -9,22 +9,23 @@
 
 `HermitianToSymmetricPSDBridge` implements the following reformulation:
 
-* Hermitian positive semidefinite `n x n` complex matrix to a symmetric
-  positive semidefinite `2n x 2n` real matrix satisfying equality constraints
-  described below.
+  * Hermitian positive semidefinite `n x n` complex matrix to a symmetric
+    positive semidefinite `2n x 2n` real matrix satisfying equality constraints
+    described below.
 
 ## Source node
 
 `HermitianToSymmetricPSDBridge` supports:
 
- * [`MOI.VectorOfVariables`](@ref) in [`MOI.HermitianPositiveSemidefiniteConeTriangle`](@ref)
+  * [`MOI.VectorOfVariables`](@ref) in
+    [`MOI.HermitianPositiveSemidefiniteConeTriangle`](@ref)
 
 ## Target node
 
 `HermitianToSymmetricPSDBridge` creates:
 
- * [`MOI.VectorOfVariables`](@ref) in [`MOI.PositiveSemidefiniteConeTriangle`](@ref)
- * [`MOI.ScalarAffineFunction{T}`](@ref) in [`MOI.EqualTo{T}`](@ref)
+  * [`MOI.VectorOfVariables`](@ref) in [`MOI.PositiveSemidefiniteConeTriangle`](@ref)
+  * [`MOI.ScalarAffineFunction{T}`](@ref) in [`MOI.EqualTo{T}`](@ref)
 
 ## Duality notes
 
@@ -39,9 +40,11 @@ Suppose for simplicity that the elements of a `2n x 2n` matrix are ordered as:
 ```
 Let `H = HermitianToSymmetricPSDBridge(n)`,
 `S = PositiveSemidefiniteConeTriangle(2n)` and `con_11_22` (resp. `con_12_21`,
-`con12diag`) be the set of `2n x 2n` symmetric matrices such that the block `1` and `5` are equal (resp. `2` and `4` are opposite, `3` is zero).
-We consider the cone `P = S ∩ con_11_22 ∩ con_12_21 ∩ con12diag`.
-We have `P = A * H` where
+`con12diag`) be the set of `2n x 2n` symmetric matrices such that the block `1`
+and `5` are equal (resp. `2` and `4` are opposite, `3` is zero).
+
+We consider the cone `P = S ∩ con_11_22 ∩ con_12_21 ∩ con12diag`. We have
+`P = A * H` where
 ```
     [I  0]
     [0  I]
@@ -58,11 +61,13 @@ Moreover, as `(S ∩ T)* = S* + T*` for cones `S` and `T`, we have
 ```
 P* = S* + con_11_22* + con_12_21* + con12diag*
 ```
-the dual vector of `P*` is the dual vector of `S*` for which we add in the corresponding
-entries the dual of the three constraints, multiplied by the coefficients for the `EqualTo` constraints.
+the dual vector of `P*` is the dual vector of `S*` for which we add in the
+corresponding entries the dual of the three constraints, multiplied by the
+coefficients for the `EqualTo` constraints.
+
 Note that these contributions cancel out when we multiply them by `A*`:
-A* * (S* + con_11_22* + con_12_21* + con12diag*) = A* * S*
-so we can just ignore them.
+A* * (S* + con_11_22* + con_12_21* + con12diag*) = A* * S* so we can just ignore
+them.
 """
 struct HermitianToSymmetricPSDBridge{T} <: AbstractBridge
     variables::Vector{MOI.VariableIndex}
@@ -94,7 +99,6 @@ function bridge_constrained_variable(
         model,
         MOI.PositiveSemidefiniteConeTriangle(2n),
     )
-
     k11 = 0
     k12 = MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(n))
     k21 = MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(2n)) + 1
@@ -150,7 +154,6 @@ function bridge_constrained_variable(
         end
         k12 += n
     end
-
     return HermitianToSymmetricPSDBridge(
         variables,
         psd_constraint,
@@ -170,26 +173,28 @@ end
 function MOI.Bridges.added_constrained_variable_types(
     ::Type{<:HermitianToSymmetricPSDBridge},
 )
-    return [(MOI.PositiveSemidefiniteConeTriangle,)]
+    return Tuple{Type}[(MOI.PositiveSemidefiniteConeTriangle,)]
 end
+
 function MOI.Bridges.added_constraint_types(
     ::Type{HermitianToSymmetricPSDBridge{T}},
 ) where {T}
-    return [(MOI.ScalarAffineFunction{T}, MOI.EqualTo{T})]
+    return Tuple{Type,Type}[(MOI.ScalarAffineFunction{T}, MOI.EqualTo{T})]
 end
 
-# Attributes, Bridge acting as a model
 function MOI.get(bridge::HermitianToSymmetricPSDBridge, ::MOI.NumberOfVariables)
     return length(bridge.variables)
 end
+
 function MOI.get(
     bridge::HermitianToSymmetricPSDBridge,
     ::MOI.ListOfVariableIndices,
 )
-    return bridge.variables
+    return copy(bridge.variables)
 end
+
 function MOI.get(
-    bridge::HermitianToSymmetricPSDBridge,
+    ::HermitianToSymmetricPSDBridge,
     ::MOI.NumberOfConstraints{
         MOI.VectorOfVariables,
         MOI.PositiveSemidefiniteConeTriangle,
@@ -197,6 +202,7 @@ function MOI.get(
 )::Int64
     return 1
 end
+
 function MOI.get(
     bridge::HermitianToSymmetricPSDBridge,
     ::MOI.ListOfConstraintIndices{
@@ -206,6 +212,7 @@ function MOI.get(
 )
     return [bridge.psd_constraint]
 end
+
 function MOI.get(
     bridge::HermitianToSymmetricPSDBridge{T},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
@@ -214,6 +221,7 @@ function MOI.get(
            length(bridge.con12diag) +
            length(bridge.con_12_21)
 end
+
 function MOI.get(
     bridge::HermitianToSymmetricPSDBridge{T},
     ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
@@ -221,7 +229,6 @@ function MOI.get(
     return [bridge.con_11_22; bridge.con12diag; bridge.con_12_21]
 end
 
-# References
 function MOI.delete(model::MOI.ModelLike, bridge::HermitianToSymmetricPSDBridge)
     for ci in bridge.con_11_22
         MOI.delete(model, ci)
@@ -236,16 +243,13 @@ function MOI.delete(model::MOI.ModelLike, bridge::HermitianToSymmetricPSDBridge)
     return
 end
 
-# Attributes, Bridge acting as a constraint
-
 function MOI.get(
-    model::MOI.ModelLike,
+    ::MOI.ModelLike,
     ::MOI.ConstraintSet,
     bridge::HermitianToSymmetricPSDBridge,
 )
-    return MOI.HermitianPositiveSemidefiniteConeTriangle(
-        length(bridge.con12diag),
-    )
+    dimension = length(bridge.con12diag)
+    return MOI.HermitianPositiveSemidefiniteConeTriangle(dimension)
 end
 
 function _matrix_indices(k)
@@ -255,9 +259,11 @@ function _matrix_indices(k)
     if s^2 == n
         j = div(s, 2)
     else
-        # Otherwise, if it is after the diagonal index `k` but before the diagonal
-        # index `k'` with `s(k') = s(k) + 2`, we have `s(k) <= s < s(k) + 2`.
-        # By shifting by `+1` before `div`, we make sure to have the right column.
+        # Otherwise, if it is after the diagonal index `k` but before the
+        # diagonal index `k'` with `s(k') = s(k) + 2`, we have
+        # `s(k) <= s < s(k) + 2`.
+        # By shifting by `+1` before `div`, we make sure to have the right
+        # column.
         j = div(s + 1, 2)
     end
     i = k - MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(j - 1))
@@ -268,14 +274,12 @@ function _variable_map(idx::MOI.Bridges.IndexInVector, n)
     N = MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(n))
     if idx.value <= N
         return idx.value
-    else
-        i, j = _matrix_indices(idx.value - N)
-        return N +
-               j * n +
-               MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(j)) +
-               i
     end
+    i, j = _matrix_indices(idx.value - N)
+    d = MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(j))
+    return N + j * n + d + i
 end
+
 function _variable(
     bridge::HermitianToSymmetricPSDBridge,
     i::MOI.Bridges.IndexInVector,
@@ -349,6 +353,7 @@ function MOI.Bridges.bridged_function(
     func = _variable(bridge, i)
     return convert(MOI.ScalarAffineFunction{T}, func)
 end
+
 function unbridged_map(
     bridge::HermitianToSymmetricPSDBridge{T},
     vi::MOI.VariableIndex,
