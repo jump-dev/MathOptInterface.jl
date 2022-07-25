@@ -4020,3 +4020,49 @@ function setup_test(
     )
     return
 end
+
+"""
+    test_linear_open_intervals(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Test that the solver supports open-intervals like `(-Inf, u]`, `[l, Inf)`, and
+`(-Inf, Inf)`.
+"""
+function test_linear_open_intervals(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.optimize!)
+    @requires MOI.supports_constraint(
+        model,
+        MOI.ScalarAffineFunction{T},
+        MOI.Interval{T},
+    )
+    x = MOI.add_variables(model, 3)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(1) * x[1] + T(-1) * x[2] + T(1) * x[3]
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.add_constraint(model, T(1) * x[1], MOI.Interval(typemin(T), T(1)))
+    MOI.add_constraint(model, T(1) * x[2], MOI.Interval(T(-1), typemax(T)))
+    MOI.add_constraint(model, T(1) * x[3], MOI.Interval(typemin(T), typemax(T)))
+    MOI.add_constraint(model, x[3], MOI.LessThan(T(1)))
+    MOI.optimize!(model)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), x), T[1, -1, 1], config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_linear_open_intervals),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[1, -1, 1]),
+    )
+    return
+end
+
+version_added(::typeof(test_linear_open_intervals)) = v"1.7.0"
