@@ -10,7 +10,8 @@
 `GeoMeanToPowerBridge` implements the following reformulation:
 
   * ``(y, x...) \\in GeometricMeanCone(1+d)`` into
-    ``(x_1, t, y) \\in PowerCone(1/d)`` and ``(t, x_2, ..., x_d) in GeometricMeanCone(d)``.
+    ``(x_1, t, y) \\in PowerCone(1/d)`` and ``(t, x_2, ..., x_d) in GeometricMeanCone(d)``,
+    which is then recursively expanded into more `PowerCone` constraints.
 
 ## Source node
 

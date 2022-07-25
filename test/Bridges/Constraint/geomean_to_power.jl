@@ -44,12 +44,14 @@ function test_runtests_dimension_4()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.GeoMeanToPowerBridge,
         """
-        variables: t, x1, x2, x3
+        variables: a, t, x1, x2, x3
         [t, x1, x2, x3] in GeometricMeanCone(4)
+        [a] in Nonnegatives(1)
         """,
         """
-        variables: t, x1, x2, x3
+        variables: a, t, x1, x2, x3
         constrainedvariable: [y] in Nonnegatives(1)
+        [a] in Nonnegatives(1)
         [x1, y, t] in PowerCone(0.3333333333333333)
         [x2, x3, y] in PowerCone(0.5)
         """,
@@ -61,12 +63,14 @@ function test_runtests_dimension_3()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.GeoMeanToPowerBridge,
         """
-        variables: t, x1, x2
+        variables: a, t, x1, x2
         [t, x1, x2] in GeometricMeanCone(3)
+        [a] in Nonnegatives(1)
         """,
         """
-        variables: t, x1, x2
+        variables: a, t, x1, x2
         [x1, x2, t] in PowerCone(0.5)
+        [a] in Nonnegatives(1)
         """,
     )
     return
@@ -76,12 +80,14 @@ function test_runtests_dimension_2()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.GeoMeanToPowerBridge,
         """
-        variables: t, x1
+        variables: a, t, x1
         [t, x1] in GeometricMeanCone(2)
+        [a] in Nonnegatives(1)
         """,
         """
-        variables: t, x1
+        variables: a, t, x1
         [x1, x1, t] in PowerCone(0.5)
+        [a] in Nonnegatives(1)
         """,
     )
     return
