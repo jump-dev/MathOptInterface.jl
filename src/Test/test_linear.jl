@@ -3898,46 +3898,38 @@ function setup_test(
     return
 end
 
-function test_linear_complex_Zeros(optimizer, config::Config{T}) where {T}
-    atol = config.atol
-    rtol = config.rtol
+"""
+    test_linear_complex_Zeros(model::MOI.ModelLike, config::Config{T}) where {T}
 
-    MOI.empty!(optimizer)
-    o = one(T)
-    t = 2o
-    x, cx = MOI.add_constrained_variables(optimizer, MOI.Nonnegatives(2))
-    func = (o + t * im) * x[1] + (o - o * im) * x[2] + (-o + -o * im)
-    c = MOI.add_constraint(
-        optimizer,
-        MOI.Utilities.operate(vcat, Complex{T}, func),
-        MOI.Zeros(1),
+Run an integration test on complex-valued affine constraints in Zeros.
+"""
+function test_linear_complex_Zeros(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.optimize!)
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorAffineFunction{Complex{T}},
+        MOI.Zeros,
     )
-    if _supports(config, MOI.optimize!)
-        @test MOI.get(optimizer, MOI.TerminationStatus()) ==
-              MOI.OPTIMIZE_NOT_CALLED
-        MOI.optimize!(optimizer)
-        @test MOI.get(optimizer, MOI.TerminationStatus()) ==
-              config.optimal_status
-        @test ≈(
-            MOI.get(optimizer, MOI.VariablePrimal(), x),
-            [T(2) / T(3), T(1) / T(3)],
-            config,
-        )
-        @test ≈(
-            MOI.get(optimizer, MOI.ConstraintPrimal(), cx),
-            [T(2) / T(3), T(1) / T(3)],
-            config,
-        )
-        z = [zero(Complex{T})]
-        @test ≈(MOI.get(optimizer, MOI.ConstraintPrimal(), c), z, config)
-        if _supports(config, MOI.ConstraintDual)
-            @test ≈(
-                MOI.get(optimizer, MOI.ConstraintDual(), cx),
-                zeros(T, 2),
-                config,
-            )
-            @test ≈(MOI.get(optimizer, MOI.ConstraintDual(), c), z, config)
-        end
+    x, cx = MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
+    scalar_f =
+        (T(1) + T(2) * im) * x[1] + (T(1) - T(1) * im) * x[2] -
+        (T(1) + T(1) * im)
+    vector_f = MOI.Utilities.operate(vcat, Complex{T}, scalar_f)
+    c = MOI.add_constraint(model, vector_f, MOI.Zeros(1))
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    primal = [T(2) / T(3), T(1) / T(3)]
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), x), primal, config)
+    @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cx), primal, config)
+    z = [zero(Complex{T})]
+    @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), z, config)
+    if _supports(config, MOI.ConstraintDual)
+        @test ≈(MOI.get(model, MOI.ConstraintDual(), cx), T[0, 0], config)
+        @test ≈(MOI.get(model, MOI.ConstraintDual(), c), z, config)
     end
     return
 end
@@ -3961,43 +3953,42 @@ function setup_test(
     return
 end
 
+version_added(::typeof(test_linear_complex_Zeros)) = v"1.7.0"
+
+"""
+    test_linear_complex_Zeros_duplicate(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T}
+
+Run an integration test on complex-valued affine constraints in Zeros.
+"""
 function test_linear_complex_Zeros_duplicate(
-    optimizer,
+    model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    atol = config.atol
-    rtol = config.rtol
-
-    MOI.empty!(optimizer)
-    o = one(T)
-    t = 2o
-    x, cx = MOI.add_constrained_variables(optimizer, MOI.Nonnegatives(1))
-    func =
-        (o + zero(T) * im) * x[1] + o * im * x[1] - t * im -
-        (o + zero(T) * im) * x[1]
-    c = MOI.add_constraint(
-        optimizer,
-        MOI.Utilities.operate(vcat, Complex{T}, func),
-        MOI.Zeros(1),
+    @requires _supports(config, MOI.optimize!)
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorAffineFunction{Complex{T}},
+        MOI.Zeros,
     )
-    if _supports(config, MOI.optimize!)
-        @test MOI.get(optimizer, MOI.TerminationStatus()) ==
-              MOI.OPTIMIZE_NOT_CALLED
-        MOI.optimize!(optimizer)
-        @test MOI.get(optimizer, MOI.TerminationStatus()) ==
-              config.optimal_status
-        @test ≈(MOI.get(optimizer, MOI.VariablePrimal(), x), T[2], config)
-        @test ≈(MOI.get(optimizer, MOI.ConstraintPrimal(), cx), T[2], config)
-        z = [zero(Complex{T})]
-        @test ≈(MOI.get(optimizer, MOI.ConstraintPrimal(), c), z, config)
-        if _supports(config, MOI.ConstraintDual)
-            @test ≈(
-                MOI.get(optimizer, MOI.ConstraintDual(), cx),
-                zeros(T, 1),
-                config,
-            )
-            @test ≈(MOI.get(optimizer, MOI.ConstraintDual(), c), z, config)
-        end
+    x, cx = MOI.add_constrained_variables(model, MOI.Nonnegatives(1))
+    scalar_f =
+        (T(1) + T(0) * im) * x[1] + T(1) * im * x[1] - T(2) * im -
+        (T(1) + T(0) * im) * x[1]
+    vector_f = MOI.Utilities.operate(vcat, Complex{T}, scalar_f)
+    c = MOI.add_constraint(model, vector_f, MOI.Zeros(1))
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), x), T[2], config)
+    @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cx), T[2], config)
+    z = [zero(Complex{T})]
+    @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), z, config)
+    if _supports(config, MOI.ConstraintDual)
+        @test ≈(MOI.get(model, MOI.ConstraintDual(), cx), T[0], config)
+        @test ≈(MOI.get(model, MOI.ConstraintDual(), c), z, config)
     end
     return
 end
@@ -4020,6 +4011,8 @@ function setup_test(
     )
     return
 end
+
+version_added(::typeof(test_linear_complex_Zeros_duplicate)) = v"1.7.0"
 
 """
     test_linear_open_intervals(
