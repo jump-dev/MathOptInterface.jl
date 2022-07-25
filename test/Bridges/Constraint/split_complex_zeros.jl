@@ -39,6 +39,7 @@ function test_complex_zeros()
         ),
     )
     config = MOI.Test.Config()
+    MOI.empty!(bridged_mock)
     MOI.Test.test_linear_complex_Zeros(bridged_mock, config)
     cis = MOI.get(
         mock,
@@ -62,6 +63,7 @@ function test_complex_zeros()
             (MOI.VectorAffineFunction{T}, MOI.Zeros) => [zeros(T, 1)],
         ),
     )
+    MOI.empty!(bridged_mock)
     MOI.Test.test_linear_complex_Zeros_duplicate(bridged_mock, config)
     cis = MOI.get(
         mock,
