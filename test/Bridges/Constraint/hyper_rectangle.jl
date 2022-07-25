@@ -37,17 +37,34 @@ function test_runtests_VectorOfVariables()
     return
 end
 
-function test_runtests_infinity()
+function test_runtests_infinity_lower()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.SplitHyperRectangleBridge,
         """
-        variables: x, y, z
-        [x, y, z] in HyperRectangle([-Inf, 2.0, 3.0], [1.1, Inf, 3.3])
+        variables: x, z
+        [x, z] in HyperRectangle([-Inf, 3.0], [1.1, 3.3])
         """,
         """
-        variables: x, y, z
-        [1.0 * y + -2.0, 1.0 * z + -3.0, 1.1 + -1.0 * x, 3.3 + -1.0 * z] in Nonnegatives(4)
+        variables: x, z
+        [1.0 * z + -3.0, 1.1 + -1.0 * x, 3.3 + -1.0 * z] in Nonnegatives(3)
         """,
+        constraint_start = -1.2,
+    )
+    return
+end
+
+function test_runtests_infinity_upper()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitHyperRectangleBridge,
+        """
+        variables: y, z
+        [y, z] in HyperRectangle([2.0, 3.0], [Inf, 3.3])
+        """,
+        """
+        variables: y, z
+        [1.0 * y + -2.0, 1.0 * z + -3.0, 3.3 + -1.0 * z] in Nonnegatives(3)
+        """,
+        constraint_start = 1.2,
     )
     return
 end

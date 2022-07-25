@@ -120,3 +120,102 @@ function MOI.get(
 ) where {T,G}
     return [bridge.ci]
 end
+
+function MOI.supports(
+    ::MOI.ModelLike,
+    ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    ::Type{<:SplitHyperRectangleBridge},
+)
+    return true
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::SplitHyperRectangleBridge{T},
+    value::AbstractVector{T}
+) where {T}
+    new_values = vcat(
+        T[v for (v, l) in zip(value, bridge.set.lower) if isfinite(l)],
+        T[v for (v, u) in zip(value, bridge.set.upper) if isfinite(u)],
+    )
+    MOI.set(model, attr, bridge.ci, new_values)
+    return
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::SplitHyperRectangleBridge{T},
+) where {T}
+    values = MOI.get(model, attr, bridge.ci)
+    if values === nothing
+        return nothing
+    end
+    ret = zeros(T, MOI.dimension(bridge.set))
+    row = 0
+    for (i, l) in enumerate(bridge.set.lower)
+        if isfinite(l)
+            row += 1
+            ret[i] = values[row]
+        end
+    end
+    for (i, u) in enumerate(bridge.set.upper)
+        if isfinite(u)
+            row += 1
+            ret[i] = values[row]
+        end
+    end
+    return ret
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDualStart,
+    bridge::SplitHyperRectangleBridge{T},
+    values::AbstractVector{T}
+) where {T}
+    set = bridge.set
+    new_values = vcat(
+        T[max(T(0), v) for (v, l) in zip(values, set.lower) if isfinite(l)],
+        T[min(T(0), v) for (v, u) in zip(values, set.upper) if isfinite(u)],
+    )
+    MOI.set(model, attr, bridge.ci, new_values)
+    return
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDualStart,
+    bridge::SplitHyperRectangleBridge{T},
+) where {T}
+    values = MOI.get(model, attr, bridge.ci)
+    if values === nothing
+        return nothing
+    end
+    ret = zeros(T, MOI.dimension(bridge.set))
+    row = 0
+    for (i, l) in enumerate(bridge.set.lower)
+        if isfinite(l)
+            row += 1
+            ret[i] += values[row]
+        end
+    end
+    for (i, u) in enumerate(bridge.set.upper)
+        if isfinite(u)
+            row += 1
+            ret[i] += values[row]
+        end
+    end
+    return ret
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    bridge::SplitHyperRectangleBridge{T},
+    ::Nothing
+) where {T}
+    MOI.set(model, attr, bridge.ci, nothing)
+    return
+end
