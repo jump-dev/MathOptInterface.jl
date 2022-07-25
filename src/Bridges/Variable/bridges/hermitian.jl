@@ -240,6 +240,42 @@ end
 # We don't need to take into account the equality constraints. We just need to
 # sum up (with appropriate +/-) each dual variable associated with the original
 # x or y element.
+# The reason for this is as follows:
+# Suppose for simplicity that the elements of a `2n x 2n` matrix are ordered as:
+# ```
+# \\ 1 |\\ 2
+#  \\  | 3
+#   \\ |4_\\
+#    \\  5
+#     \\
+#      \\
+# ```
+# Let `H = HermitianToSymmetricPSDBridge(n)`,
+# `S = PositiveSemidefiniteConeTriangle(2n)` and `ceq` be the linear space of
+# `2n x 2n` symmetric matrices such that the block `1` and `5` are equal, `2` and `4` are opposite and `3` is zero.
+# We consider the cone `P = S ∩ ceq`.
+# We have `P = A * H` where
+# ```
+#     [I  0]
+#     [0  I]
+# A = [0  0]
+#     [0 -I]
+#     [I  0]
+# ```
+# Therefore, `H* = A* * P*` where
+# ```
+#      [I 0 0  0 I]
+# A* = [0 I 0 -I 0]
+# ```
+# Moreover, as `(S ∩ T)* = S* + T*` for cones `S` and `T`, we have
+# ```
+# P* = S* + ceq*
+# ```
+# the dual vector of `P*` is the dual vector of `S*` for which we add in the corresponding
+# entries the dual of the three constraints, multiplied by the coefficients for the `EqualTo` constraints.
+# Note that these contributions cancel out when we multiply them by `A*`:
+# A* * (S* + ceq*) = A* * S*
+# so we can just ignore them.
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,
