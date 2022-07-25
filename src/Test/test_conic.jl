@@ -6865,6 +6865,16 @@ function test_conic_HermitianPositiveSemidefiniteConeTriangle_1(
     optimizer::MOI.ModelLike,
     config::Config{T},
 ) where {T}
+    @requires _supports(config, MOI.optimize!)
+    @requires MOI.supports_add_constrained_variables(
+        model,
+        MOI.HermitianPositiveSemidefiniteConeTriangle,
+    )
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorAffineFunction{T},
+        MOI.SecondOrderCone,
+    )
     set = MOI.HermitianPositiveSemidefiniteConeTriangle(2)
     x, cx = MOI.add_constrained_variables(optimizer, set)
     t = MOI.add_variable(optimizer)
@@ -6884,52 +6894,45 @@ function test_conic_HermitianPositiveSemidefiniteConeTriangle_1(
     )
     MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(optimizer, MOI.ObjectiveFunction{typeof(t)}(), t)
-    if _supports(config, MOI.optimize!)
-        MOI.optimize!(optimizer)
-        primal = [
-            (T(1) + √T(3)) / T(2),
-            -T(1) / T(2),
-            (-T(1) + √T(3)) / T(2),
-            T(1) / T(2),
-        ]
-        soc_primal = [
-            primal[1] - one(T),
-            √T(2) * (primal[2] + one(T)),
-            primal[3] + one(T),
-            √T(2) * (primal[4] - one(T)),
-        ]
-        t_value = LinearAlgebra.norm(soc_primal)
-        soc_primal = [t_value; soc_primal]
-        dual = [
-            (T(3) - √T(3)) / T(6),
-            √T(3) / T(6),
-            (T(3) + √T(3)) / T(6),
-            -√T(3) / T(6),
-        ]
-        @test ≈(MOI.Utilities.set_dot(primal, dual, set), T(0), config)
-        soc_dual =
-            [one(T), -dual[1], -dual[2] * √T(2), -dual[3], -dual[4] * √T(2)]
+    MOI.optimize!(optimizer)
+    primal = [
+        (T(1) + √T(3)) / T(2),
+        -T(1) / T(2),
+        (-T(1) + √T(3)) / T(2),
+        T(1) / T(2),
+    ]
+    soc_primal = [
+        primal[1] - one(T),
+        √T(2) * (primal[2] + one(T)),
+        primal[3] + one(T),
+        √T(2) * (primal[4] - one(T)),
+    ]
+    t_value = LinearAlgebra.norm(soc_primal)
+    soc_primal = [t_value; soc_primal]
+    dual = [
+        (T(3) - √T(3)) / T(6),
+        √T(3) / T(6),
+        (T(3) + √T(3)) / T(6),
+        -√T(3) / T(6),
+    ]
+    @test ≈(MOI.Utilities.set_dot(primal, dual, set), T(0), config)
+    soc_dual = [one(T), -dual[1], -dual[2] * √T(2), -dual[3], -dual[4] * √T(2)]
+    @test ≈(MOI.Utilities.set_dot(soc_primal, soc_dual, soc_set), T(0), config)
+    @test ≈(MOI.get(optimizer, MOI.VariablePrimal(), x), primal, config)
+    @test ≈(MOI.get(optimizer, MOI.VariablePrimal(), t), t_value, config)
+    @test ≈(MOI.get(optimizer, MOI.ConstraintPrimal(), cx), primal, config)
+    @test ≈(
+        MOI.get(optimizer, MOI.ConstraintPrimal(), con_soc),
+        soc_primal,
+        config,
+    )
+    if _supports(config, MOI.ConstraintDual)
+        @test ≈(MOI.get(optimizer, MOI.ConstraintDual(), cx), dual, config)
         @test ≈(
-            MOI.Utilities.set_dot(soc_primal, soc_dual, soc_set),
-            T(0),
+            MOI.get(optimizer, MOI.ConstraintDual(), con_soc),
+            soc_dual,
             config,
         )
-        @test ≈(MOI.get(optimizer, MOI.VariablePrimal(), x), primal, config)
-        @test ≈(MOI.get(optimizer, MOI.VariablePrimal(), t), t_value, config)
-        @test ≈(MOI.get(optimizer, MOI.ConstraintPrimal(), cx), primal, config)
-        @test ≈(
-            MOI.get(optimizer, MOI.ConstraintPrimal(), con_soc),
-            soc_primal,
-            config,
-        )
-        if _supports(config, MOI.ConstraintDual)
-            @test ≈(MOI.get(optimizer, MOI.ConstraintDual(), cx), dual, config)
-            @test ≈(
-                MOI.get(optimizer, MOI.ConstraintDual(), con_soc),
-                soc_dual,
-                config,
-            )
-        end
     end
     return
 end
@@ -6973,6 +6976,12 @@ function setup_test(
     return
 end
 
+function version_added(
+    ::typeof(test_conic_HermitianPositiveSemidefiniteConeTriangle_1),
+)
+    v"1.7.0"
+end
+
 """
     test_conic_HermitianPositiveSemidefiniteConeTriangle_2(
         model::MOI.ModelLike,
@@ -6988,18 +6997,22 @@ function test_conic_HermitianPositiveSemidefiniteConeTriangle_2(
     optimizer::MOI.ModelLike,
     config::Config{T},
 ) where {T}
+    @requires _supports(config, MOI.optimize!)
+    @requires MOI.supports_add_constrained_variables(
+        model,
+        MOI.HermitianPositiveSemidefiniteConeTriangle,
+    )
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.EqualTo{T})
     set = MOI.HermitianPositiveSemidefiniteConeTriangle(3)
     x, cx = MOI.add_constrained_variables(optimizer, set)
     primal = T[1, 0, 1, 0, 0, 0, -1, 0, 0]
     MOI.add_constraints(optimizer, x, MOI.EqualTo.(primal))
-    if _supports(config, MOI.optimize!)
-        MOI.optimize!(optimizer)
-        @test ≈(MOI.get(optimizer, MOI.VariablePrimal(), x), primal, config)
-        @test ≈(MOI.get(optimizer, MOI.ConstraintPrimal(), cx), primal, config)
-        if _supports(config, MOI.ConstraintDual)
-            dual = zeros(T, 9)
-            @test ≈(MOI.get(optimizer, MOI.ConstraintDual(), cx), dual, config)
-        end
+    MOI.optimize!(optimizer)
+    @test ≈(MOI.get(optimizer, MOI.VariablePrimal(), x), primal, config)
+    @test ≈(MOI.get(optimizer, MOI.ConstraintPrimal(), cx), primal, config)
+    if _supports(config, MOI.ConstraintDual)
+        dual = zeros(T, 9)
+        @test ≈(MOI.get(optimizer, MOI.ConstraintDual(), cx), dual, config)
     end
     return
 end
@@ -7022,4 +7035,10 @@ function setup_test(
     )
     model.eval_variable_constraint_dual = false
     return () -> model.eval_variable_constraint_dual = true
+end
+
+function version_added(
+    ::typeof(test_conic_HermitianPositiveSemidefiniteConeTriangle_2),
+)
+    v"1.7.0"
 end
