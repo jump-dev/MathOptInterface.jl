@@ -133,7 +133,7 @@ function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintPrimalStart,
     bridge::SplitHyperRectangleBridge{T},
-    value::AbstractVector{T}
+    value::AbstractVector{T},
 ) where {T}
     new_values = vcat(
         T[v for (v, l) in zip(value, bridge.set.lower) if isfinite(l)],
@@ -173,7 +173,7 @@ function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDualStart,
     bridge::SplitHyperRectangleBridge{T},
-    values::AbstractVector{T}
+    values::AbstractVector{T},
 ) where {T}
     set = bridge.set
     new_values = vcat(
@@ -214,7 +214,7 @@ function MOI.set(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
     bridge::SplitHyperRectangleBridge{T},
-    ::Nothing
+    ::Nothing,
 ) where {T}
     MOI.set(model, attr, bridge.ci, nothing)
     return
