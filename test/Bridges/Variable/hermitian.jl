@@ -86,13 +86,16 @@ function test_runtests()
     MOI.Bridges.runtests(
         MOI.Bridges.Variable.HermitianToSymmetricPSDBridge,
         """
+        variables: a, b, c
         constrainedvariable: [r11, r12, r22, c12] in HermitianPositiveSemidefiniteConeTriangle(2)
         1.0 * r11 >= 1.0
         1.0 * r12 >= 2.0
         1.0 * r22 >= 3.0
         1.0 * c12 >= 4.0
+        [a, b, c] in PositiveSemidefiniteConeTriangle(2)
         """,
         """
+        variables: a, b, c
         constrainedvariable: [v11, v12, v22, v13, v23, v33, v14, v24, v34, v44] in PositiveSemidefiniteConeTriangle(4)
         1.0 * v11 >= 1.0
         1.0 * v12 >= 2.0
@@ -104,6 +107,7 @@ function test_runtests()
         1.0 * v23 + 1.0 * v14 == 0.0
         1.0 * v22 + -1.0 * v44 == 0.0
         1.0 * v24 == 0.0
+        [a, b, c] in PositiveSemidefiniteConeTriangle(2)
         """,
     )
     return
