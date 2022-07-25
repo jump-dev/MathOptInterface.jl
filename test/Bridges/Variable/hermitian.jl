@@ -75,6 +75,7 @@ function test_conic_HermitianPositiveSemidefiniteConeTriangle_1()
                 zero(T)
             ],
         )
+    MOI.empty!(bridged_mock)
     MOI.Test.test_conic_HermitianPositiveSemidefiniteConeTriangle_1(
         bridged_mock,
         MOI.Test.Config(),
