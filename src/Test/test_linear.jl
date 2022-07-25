@@ -4044,9 +4044,9 @@ function test_linear_open_intervals(
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = T(1) * x[1] + T(-1) * x[2] + T(1) * x[3]
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
-    MOI.add_constraint(model, T(1) * x[1],  MOI.Interval(typemin(T), T(1)))
-    MOI.add_constraint(model, T(1) * x[2],  MOI.Interval(T(-1), typemax(T)))
-    MOI.add_constraint(model, T(1) * x[3],  MOI.Interval(typemin(T), typemax(T)))
+    MOI.add_constraint(model, T(1) * x[1], MOI.Interval(typemin(T), T(1)))
+    MOI.add_constraint(model, T(1) * x[2], MOI.Interval(T(-1), typemax(T)))
+    MOI.add_constraint(model, T(1) * x[3], MOI.Interval(typemin(T), typemax(T)))
     MOI.add_constraint(model, x[3], MOI.LessThan(T(1)))
     MOI.optimize!(model)
     @test ≈(MOI.get(model, MOI.VariablePrimal(), x), T[1, -1, 1], config)
