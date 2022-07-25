@@ -7032,5 +7032,5 @@ end
 function version_added(
     ::typeof(test_conic_HermitianPositiveSemidefiniteConeTriangle_2),
 )
-    return sv"1.7.0"
+    return v"1.7.0"
 end
