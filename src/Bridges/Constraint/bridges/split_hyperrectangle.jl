@@ -5,7 +5,7 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    SplitHyperRectangleBridge{T,G,F} <: Bridges.Constraint.AbstractBridge
+    SplitHyperRectangleBridge{T,G} <: Bridges.Constraint.AbstractBridge
 
 `SplitHyperRectangleBridge` implements the following reformulation:
 
@@ -24,9 +24,8 @@
 
   * `G` in [`MOI.Nonnegatives`](@ref)
 """
-mutable struct SplitHyperRectangleBridge{T,G,F} <: AbstractBridge
+mutable struct SplitHyperRectangleBridge{T,G} <: AbstractBridge
     ci::MOI.ConstraintIndex{G,MOI.Nonnegatives}
-    func::F
     set::MOI.HyperRectangle{T}
 end
 
@@ -34,11 +33,11 @@ const SplitHyperRectangle{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{SplitHyperRectangleBridge{T},OT}
 
 function bridge_constraint(
-    ::Type{SplitHyperRectangleBridge{T,G,F}},
+    ::Type{SplitHyperRectangleBridge{T,G}},
     model::MOI.ModelLike,
-    f::F,
+    f::MOI.AbstractVectorFunction,
     s::MOI.HyperRectangle,
-) where {T,G,F}
+) where {T,G}
     lower = MOI.Utilities.operate(-, T, f, s.lower)
     upper = MOI.Utilities.operate(-, T, s.upper, f)
     if any(!isfinite, s.lower)
@@ -51,7 +50,7 @@ function bridge_constraint(
     end
     g = MOI.Utilities.operate(vcat, T, lower, upper)
     ci = MOI.add_constraint(model, g, MOI.Nonnegatives(MOI.output_dimension(g)))
-    return SplitHyperRectangleBridge{T,typeof(g),F}(ci, f, s)
+    return SplitHyperRectangleBridge{T,typeof(g)}(ci, s)
 end
 
 function MOI.supports_constraint(
@@ -80,18 +79,7 @@ function concrete_bridge_type(
     ::Type{MOI.HyperRectangle{T}},
 ) where {T,F<:MOI.AbstractVectorFunction}
     G = MOI.Utilities.promote_operation(-, T, F, Vector{T})
-    return SplitHyperRectangleBridge{T,G,F}
-end
-
-function MOI.get(
-    ::MOI.ModelLike,
-    ::MOI.ConstraintFunction,
-    bridge::SplitHyperRectangleBridge,
-)
-    # We cache the function to simplify cases in which the box is (-Inf, Inf).
-    # This contributes some memory overhead, so if someone complains in future
-    # we could reconsider this decision.
-    return bridge.func
+    return SplitHyperRectangleBridge{T,G}
 end
 
 function MOI.get(
