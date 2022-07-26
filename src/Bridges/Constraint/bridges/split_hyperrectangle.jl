@@ -136,8 +136,8 @@ function MOI.set(
     value::AbstractVector{T},
 ) where {T}
     new_values = vcat(
-        T[v for (v, l) in zip(value, bridge.set.lower) if isfinite(l)],
-        T[v for (v, u) in zip(value, bridge.set.upper) if isfinite(u)],
+        T[v - l for (v, l) in zip(value, bridge.set.lower) if isfinite(l)],
+        T[u - v for (v, u) in zip(value, bridge.set.upper) if isfinite(u)],
     )
     MOI.set(model, attr, bridge.ci, new_values)
     return
@@ -157,13 +157,13 @@ function MOI.get(
     for (i, l) in enumerate(bridge.set.lower)
         if isfinite(l)
             row += 1
-            ret[i] = values[row]
+            ret[i] = l + values[row]
         end
     end
     for (i, u) in enumerate(bridge.set.upper)
         if isfinite(u)
             row += 1
-            ret[i] = values[row]
+            ret[i] = u - values[row]
         end
     end
     return ret
