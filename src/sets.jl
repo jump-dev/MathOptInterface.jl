@@ -796,6 +796,46 @@ function triangular_form(::Type{PositiveSemidefiniteConeSquare})
 end
 
 """
+    HermitianPositiveSemidefiniteConeTriangle(side_dimension) <: AbstractVectorSet
+
+The (vectorized) cone of Hermitian positive semidefinite matrices, with
+`side_dimension` rows and columns.
+
+Becaue the matrix is Hermitian, the diagonal elements are real, and the
+complex-valued lower triangular entries are obtained as the conjugate of
+corresponding upper triangular entries.
+
+### Vectorization format
+
+The vectorized form starts with real part of the entries of the upper triangular
+part of the matrix, given column by column as explained in
+[`AbstractSymmetricMatrixSetSquare`](@ref).
+
+It is then followed by the imaginary part of the off-diagonal entries of the
+upper triangular part, also given column by column.
+
+For example, the matrix
+```math
+\\begin{bmatrix}
+  1 & 2 + 7im & 4 + 8im\\\\
+  2 - 7im & 3 & 5 + 9im\\\\
+  4 - 8im & 5 - 9im & 6
+\\end{bmatrix}
+```
+has [`side_dimension`](@ref) 3 and is represented as the vector
+``[1, 2, 3, 4, 5, 6, 7, 8, 9]``.
+"""
+struct HermitianPositiveSemidefiniteConeTriangle <: AbstractVectorSet
+    side_dimension::Int
+end
+
+function dimension(set::HermitianPositiveSemidefiniteConeTriangle)
+    real_nnz = div(set.side_dimension * (set.side_dimension + 1), 2)
+    imag_nnz = div((set.side_dimension - 1) * set.side_dimension, 2)
+    return real_nnz + imag_nnz
+end
+
+"""
     LogDetConeTriangle(side_dimension)
 
 The log-determinant cone
@@ -1559,6 +1599,7 @@ function Base.copy(
         NormNuclearCone,
         PositiveSemidefiniteConeTriangle,
         PositiveSemidefiniteConeSquare,
+        HermitianPositiveSemidefiniteConeTriangle,
         LogDetConeTriangle,
         LogDetConeSquare,
         RootDetConeTriangle,

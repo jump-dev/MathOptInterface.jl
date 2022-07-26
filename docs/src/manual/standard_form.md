@@ -93,7 +93,9 @@ The matrix-valued set types implemented in MathOptInterface.jl are:
 | [`LogDetConeTriangle(d)`](@ref MathOptInterface.LogDetConeTriangle)   | ``\{ (t,u,X) \in \mathbb{R}^{2+d(1+d)/2} : t \le u\log(\det(X/u)), X \mbox{ is the upper triangle of a PSD matrix}, u > 0  \}`` |
 | [`LogDetConeSquare(d)`](@ref MathOptInterface.LogDetConeSquare)       | ``\{ (t,u,X) \in \mathbb{R}^{2+d^2} : t \le u \log(\det(X/u)), X \mbox{ is a PSD matrix}, u > 0 \}`` |
 | [`NormSpectralCone(r, c)`](@ref MathOptInterface.NormSpectralCone)    | ``\{ (t, X) \in \mathbb{R}^{1 + r \times c} : t \ge \sigma_1(X), X \mbox{ is a } r\times c\mbox{ matrix} \}``
-| [`NormNuclearCone(r, c)`](@ref MathOptInterface.NormNuclearCone)      | ``\{ (t, X) \in \mathbb{R}^{1 + r \times c} : t \ge \sum_i \sigma_i(X), X \mbox{ is a } r\times c\mbox{ matrix} \}``
+| [`NormNuclearCone(r, c)`](@ref MathOptInterface.NormNuclearCone)      | ``\{ (t, X) \in \mathbb{R}^{1 + r \times c} : t \ge \sum_i \sigma_i(X), X \mbox{ is a } r\times c\mbox{ matrix} \}`` |
+| [`HermitianPositiveSemidefiniteConeTriangle(d)`](@ref MathOptInterface.HermitianPositiveSemidefiniteConeTriangle) | The cone of Hermitian positive semidefinite matrices, with
+`side_dimension` rows and columns. |
 
 Some of these cones can take two forms: `XXXConeTriangle` and `XXXConeSquare`.
 
