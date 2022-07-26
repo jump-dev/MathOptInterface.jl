@@ -145,7 +145,7 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintPrimalStart,
+    attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
     bridge::SplitHyperRectangleBridge{T},
 ) where {T}
     values = MOI.get(model, attr, bridge.ci)
@@ -186,7 +186,7 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstriantDual,MOI.ConstraintDualStart},
     bridge::SplitHyperRectangleBridge{T},
 ) where {T}
     values = MOI.get(model, attr, bridge.ci)
