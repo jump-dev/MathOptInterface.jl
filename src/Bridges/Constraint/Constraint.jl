@@ -101,7 +101,8 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, RSOCtoPSDBridge{T})
     MOI.Bridges.add_bridge(bridged_model, IndicatorActiveOnFalseBridge{T})
     MOI.Bridges.add_bridge(bridged_model, IndicatorSOS1Bridge{T})
-    MOI.Bridges.add_bridge(bridged_model, IndicatorFlipSignBridge{T})
+    MOI.Bridges.add_bridge(bridged_model, IndicatorLessToGreaterThanBridge{T})
+    MOI.Bridges.add_bridge(bridged_model, IndicatorGreaterToLessThanBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SemiToBinaryBridge{T})
     MOI.Bridges.add_bridge(bridged_model, ZeroOneBridge{T})
     # Constraint programming bridges

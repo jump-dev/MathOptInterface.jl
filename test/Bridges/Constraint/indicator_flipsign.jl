@@ -22,9 +22,9 @@ function runtests()
     return
 end
 
-function test_runtests()
+function test_runtests_lesstogreaterthan()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.IndicatorFlipSignBridge,
+        MOI.Bridges.Constraint.IndicatorLessToGreaterThanBridge,
         """
         variables: x, z
         [z, 2.0 * x] in Indicator{ACTIVATE_ON_ONE}(LessThan(2.0))
@@ -36,8 +36,12 @@ function test_runtests()
         z in ZeroOne()
         """,
     )
+    return
+end
+
+function test_runtests_greatertolessthann()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.IndicatorFlipSignBridge,
+        MOI.Bridges.Constraint.IndicatorGreaterToLessThanBridge,
         """
         variables: x, z
         [z, 2.0 * x] in Indicator{ACTIVATE_ON_ONE}(GreaterThan(2.0))
