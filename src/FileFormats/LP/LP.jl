@@ -635,6 +635,9 @@ function _parse_section(
     if occursin("^", line)
         line = replace(line, "^" => " ^ ")
     end
+    if occursin(r"\][\s/][\s/]+2", line)
+        line = replace(line, r"\][\s/][\s/]+2" => "]/2")
+    end
     tokens = _tokenize(line)
     if length(tokens) == 0
         # Can happen if the name of the objective is on one line and the
@@ -675,6 +678,10 @@ function _parse_section(
         # Simplify parsing of constraints with ^2 terms by turning them into
         # explicit " ^ 2" terms. This avoids ambiguity when parsing names.
         line = replace(line, "^" => " ^ ")
+    end
+    if occursin(r"\][\s/][\s/]+2", line)
+        # Simplify parsing of ]/2 end blocks, which may contain whitespace.
+        line = replace(line, r"\][\s/][\s/]+2" => "]/2")
     end
     tokens = _tokenize(line)
     if length(tokens) == 0

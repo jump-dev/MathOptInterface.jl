@@ -7,7 +7,7 @@ Max \ this problem is a maximisation!
 obj: 
 -1 Var4
  + 1 V5 + [ Var4^2
- - 1.2 V5 * V1 ]/2
+ - 1.2 V5 * V1 ] /2
 Subject To
 CON1:
     1 V1 >= 0.0
