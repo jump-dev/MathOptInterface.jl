@@ -158,9 +158,7 @@ function _write_function(
             if !print_half && term.variable_1 == term.variable_2
                 coefficient /= 2
             end
-            if coefficient ≈ 0.0
-                continue
-            elseif is_first_item
+            if is_first_item
                 _print_shortest(io, coefficient)
                 is_first_item = false
             else

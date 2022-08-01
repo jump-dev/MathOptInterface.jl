@@ -599,6 +599,24 @@ function test_infinite_interval()
     return
 end
 
+function test_read_tricky_quadratic()
+    model = LP.Model()
+    filename = joinpath(@__DIR__, "models", "tricky_quadratic.lp")
+    MOI.read_from_file(model, filename)
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    file = read(io, String)
+    print(file)
+    @test occursin("minimize", file)
+    @test occursin("obj: [ 2 x ^ 2 + 1 x * y ]/2", file)
+    @test occursin("c1: [ 1 x ^ 2 - 1 x * y ] <= 0", file)
+    @test occursin("c2: [ 0.5 x ^ 2 - 1 x * y ] <= 0", file)
+    @test occursin("x free", file)
+    @test occursin("y free", file)
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")
