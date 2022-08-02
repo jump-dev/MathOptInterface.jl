@@ -183,3 +183,161 @@ function MOI.get(
 )
     return MOI.GeometricMeanCone(bridge.dimension)
 end
+
+function MOI.supports(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    ::Type{GeoMeanToPowerBridge{T,F}},
+) where {T,F}
+    return MOI.supports(model, attr, MOI.ConstraintIndex{F,MOI.PowerCone{T}})
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintPrimal},
+    bridge::GeoMeanToPowerBridge{T,F},
+) where {T,F}
+    fi_s = MOI.get(model, attr, bridge.power[1])
+    if fi_s === nothing
+        return nothing
+    end
+    if bridge.dimension == 2
+        return fi_s[[3, 1]]
+    elseif bridge.dimension == 3
+        return fi_s[[3, 1, 2]]
+    end
+    g = fi_s[[3, 1]]
+    for i in 2:(length(bridge.power)-1)
+        fi_s = MOI.get(model, attr, bridge.power[i])
+        push!(g, fi_s[1])
+    end
+    fi_s = MOI.get(model, attr, bridge.power[end])
+    append!(g, fi_s[1:2])
+    return g
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::GeoMeanToPowerBridge{T,F},
+    start::AbstractVector{T},
+) where {T,F}
+    if bridge.dimension == 2
+        MOI.set(model, attr, bridge.power[1], start[[2, 2, 1]])
+        return
+    elseif bridge.dimension == 3
+        MOI.set(model, attr, bridge.power[1], start[[2, 3, 1]])
+        return
+    end
+    # [x, y, z] in PowerCone(a)
+    # ⟺ x^a * y^(1-a) >= z
+    # ⟺ log(y^(1-a)) = log(z / x^a)
+    # ⟺ (1-a) * log(y) = log(z / x^a)
+    # ⟺ log(y) = log(z / x^a) / (1 - a)
+    # ⟺ y = exp(log(z / x^a) / (1 - a))
+    z, x = start[1:2]
+    y = zero(T)
+    for i in 1:(length(bridge.power)-1)
+        ci = bridge.power[i]
+        set = MOI.get(model, MOI.ConstraintSet(), ci)
+        y = exp(log(z / x^set.exponent) / (1 - set.exponent))
+        MOI.set(model, attr, ci, [x, y, z])
+        z, x = y, start[i+2]
+    end
+    MOI.set(model, attr, bridge.power[end], [start[end-1], start[end], y])
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::GeoMeanToPowerBridge,
+    ::Nothing,
+)
+    for ci in bridge.power
+        MOI.set(model, attr, ci, nothing)
+    end
+    return
+end
+
+function MOI.supports(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDualStart,
+    ::Type{GeoMeanToPowerBridge{T,F}},
+) where {T,F}
+    return MOI.supports(model, attr, MOI.ConstraintIndex{F,MOI.PowerCone{T}})
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
+    bridge::GeoMeanToPowerBridge{T,F},
+) where {T,F}
+    fi_s = MOI.get(model, attr, bridge.power[1])
+    if fi_s === nothing
+        return nothing
+    end
+    if bridge.dimension == 2
+        # Power constraint is [x, x, t] in PowerCone(0.5), so we need to sum the
+        # first two elements to get the dual of x.
+        return [fi_s[3], fi_s[1] + fi_s[2]]
+    elseif bridge.dimension == 3
+        return fi_s[[3, 1, 2]]
+    end
+    g = fi_s[[3, 1]]
+    for i in 2:(length(bridge.power)-1)
+        fi_s = MOI.get(model, attr, bridge.power[i])
+        push!(g, fi_s[1])
+    end
+    fi_s = MOI.get(model, attr, bridge.power[end])
+    append!(g, fi_s[1:2])
+    return g
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDualStart,
+    bridge::GeoMeanToPowerBridge{T,F},
+    start::AbstractVector{T},
+) where {T,F}
+    if bridge.dimension == 2
+        new_start = [start[2] / 2, start[2] / 2, start[1]]
+        MOI.set(model, attr, bridge.power[1], new_start)
+        return
+    elseif bridge.dimension == 3
+        MOI.set(model, attr, bridge.power[1], start[[2, 3, 1]])
+        return
+    end
+    # [x, y, z] in PowerCone(a)
+    # [u, v, w] in PowerCone*(a)
+    # ⟺ (u/a)^a * (v / (1-a))^(1-a) >= w
+    # ⟺ (v / (1-a))^(1-a) >= w / (u/a)^a
+    # ⟺ (1-a) * log(v / (1-a)) >= log(w / (u/a)^a)
+    # ⟺ log(v / (1-a)) >= log(w / (u/a)^a) / (1 - a)
+    # ⟺ v / (1-a) >= exp(log(w / (u/a)^a) / (1 - a))
+    # ⟺ v >= (1-a) * exp(log(w / (u/a)^a) / (1 - a))
+    w, u = start[1:2]
+    v = zero(T)
+    for i in 1:(length(bridge.power)-1)
+        ci = bridge.power[i]
+        set = MOI.get(model, MOI.ConstraintSet(), ci)
+        a = set.exponent
+        v = (1 - a) * exp(log(w * (u / a)^-a) / (1 - a))
+        MOI.set(model, attr, ci, [u, v, w])
+        w, u = v, start[i+2]
+    end
+    MOI.set(model, attr, bridge.power[end], [start[end-1], start[end], v])
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDualStart,
+    bridge::GeoMeanToPowerBridge,
+    ::Nothing,
+)
+    for ci in bridge.power
+        MOI.set(model, attr, ci, nothing)
+    end
+    return
+end
