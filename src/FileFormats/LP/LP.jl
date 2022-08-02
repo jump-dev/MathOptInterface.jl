@@ -35,16 +35,10 @@ MOI.Utilities.@model(
     (),
     (MOI.SOS1, MOI.SOS2),
     (),
-    (MOI.ScalarAffineFunction,),
+    (MOI.ScalarQuadraticFunction, MOI.ScalarAffineFunction),
     (MOI.VectorOfVariables,),
     ()
 )
-function MOI.supports(
-    ::Model{T},
-    ::MOI.ObjectiveFunction{<:MOI.ScalarQuadraticFunction{T}},
-) where {T}
-    return false
-end
 
 struct Options
     maximum_length::Int
@@ -93,7 +87,8 @@ function _write_function(
     io::IO,
     ::Model,
     func::MOI.VariableIndex,
-    variable_names::Dict{MOI.VariableIndex,String},
+    variable_names::Dict{MOI.VariableIndex,String};
+    kwargs...,
 )
     print(io, variable_names[func])
     return
@@ -103,7 +98,8 @@ function _write_function(
     io::IO,
     ::Model,
     func::MOI.ScalarAffineFunction{Float64},
-    variable_names::Dict{MOI.VariableIndex,String},
+    variable_names::Dict{MOI.VariableIndex,String};
+    kwargs...,
 )
     is_first_item = true
     if !(func.constant ≈ 0.0)
@@ -120,6 +116,66 @@ function _write_function(
                 _print_shortest(io, abs(term.coefficient))
             end
             print(io, " ", variable_names[term.variable])
+        end
+    end
+    return
+end
+
+function _write_function(
+    io::IO,
+    ::Model,
+    func::MOI.ScalarQuadraticFunction{Float64},
+    variable_names::Dict{MOI.VariableIndex,String};
+    print_half::Bool = true,
+    kwargs...,
+)
+    is_first_item = true
+    if !(func.constant ≈ 0.0)
+        _print_shortest(io, func.constant)
+        is_first_item = false
+    end
+    for term in func.affine_terms
+        if !(term.coefficient ≈ 0.0)
+            if is_first_item
+                _print_shortest(io, term.coefficient)
+                is_first_item = false
+            else
+                print(io, term.coefficient < 0 ? " - " : " + ")
+                _print_shortest(io, abs(term.coefficient))
+            end
+            print(io, " ", variable_names[term.variable])
+        end
+    end
+    if length(func.quadratic_terms) > 0
+        if is_first_item
+            print(io, "[ ")
+        else
+            print(io, " + [ ")
+        end
+        is_first_item = true
+        for term in func.quadratic_terms
+            coefficient = term.coefficient
+            if !print_half && term.variable_1 == term.variable_2
+                coefficient /= 2
+            end
+            if is_first_item
+                _print_shortest(io, coefficient)
+                is_first_item = false
+            else
+                print(io, coefficient < 0 ? " - " : " + ")
+                _print_shortest(io, abs(coefficient))
+            end
+            print(io, " ", variable_names[term.variable_1])
+            if term.variable_1 == term.variable_2
+                print(io, " ^ 2")
+            else
+                print(io, " * ", variable_names[term.variable_2])
+            end
+        end
+        if print_half
+            print(io, " ]/2")
+        else
+            print(io, " ]")
         end
     end
     return
@@ -174,7 +230,7 @@ function _write_constraint(
         print(io, MOI.get(model, MOI.ConstraintName(), index), ": ")
     end
     _write_constraint_prefix(io, set)
-    _write_function(io, model, func, variable_names)
+    _write_function(io, model, func, variable_names; print_half = false)
     _write_constraint_suffix(io, set)
     return
 end
@@ -230,6 +286,10 @@ end
 
 function _write_constraints(io, model, S, variable_names)
     F = MOI.ScalarAffineFunction{Float64}
+    for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        _write_constraint(io, model, index, variable_names; write_name = true)
+    end
+    F = MOI.ScalarQuadraticFunction{Float64}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         _write_constraint(io, model, index, variable_names; write_name = true)
     end
@@ -382,7 +442,9 @@ const _KEYWORDS = Dict(
 
 mutable struct _ReadCache
     objective::MOI.ScalarAffineFunction{Float64}
+    quad_obj_terms::Vector{MOI.ScalarQuadraticTerm{Float64}}
     constraint_function::MOI.ScalarAffineFunction{Float64}
+    quad_terms::Vector{MOI.ScalarQuadraticTerm{Float64}}
     constraint_name::String
     num_constraints::Int
     name_to_variable::Dict{String,MOI.VariableIndex}
@@ -390,7 +452,9 @@ mutable struct _ReadCache
     function _ReadCache()
         return new(
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
+            MOI.ScalarQuadraticTerm{Float64}[],
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
+            MOI.ScalarQuadraticTerm{Float64}[],
             "",
             0,
             Dict{String,MOI.VariableIndex}(),
@@ -424,13 +488,30 @@ end
 
 _tokenize(line::AbstractString) = String.(split(line, " "; keepempty = false))
 
-@enum(_TokenType, _TOKEN_VARIABLE, _TOKEN_COEFFICIENT, _TOKEN_SIGN)
+@enum(
+    _TokenType,
+    _TOKEN_VARIABLE,
+    _TOKEN_COEFFICIENT,
+    _TOKEN_SIGN,
+    _TOKEN_QUADRATIC_OPEN,
+    _TOKEN_QUADRATIC_CLOSE,
+    _TOKEN_QUADRATIC_DIAG,
+    _TOKEN_QUADRATIC_OFF_DIAG,
+)
 
 function _parse_token(token::String)
     if token == "+"
         return _TOKEN_SIGN, +1.0
     elseif token == "-"
         return _TOKEN_SIGN, -1.0
+    elseif startswith(token, "[")
+        return _TOKEN_QUADRATIC_OPEN, +1.0
+    elseif startswith(token, "]")
+        return _TOKEN_QUADRATIC_CLOSE, 0.5
+    elseif token == "^"
+        return _TOKEN_QUADRATIC_DIAG, +1.0
+    elseif token == "*"
+        return _TOKEN_QUADRATIC_OFF_DIAG, +1.0
     end
     coef = tryparse(Float64, token)
     if coef === nothing
@@ -455,12 +536,30 @@ function _get_term(token_types, token_values, offset)
     if offset > length(token_types) || token_types[offset] == _TOKEN_SIGN
         return coef, offset  # It's a standalone constant!
     end
+    if token_types[offset] == _TOKEN_QUADRATIC_OPEN
+        return _get_term(token_types, token_values, offset + 1)
+    end
     @assert token_types[offset] == _TOKEN_VARIABLE
     x = MOI.VariableIndex(Int64(token_values[offset]))
-    return MOI.ScalarAffineTerm(coef, x), offset + 1
+    offset += 1
+    if offset > length(token_types) || token_types[offset] == _TOKEN_SIGN
+        return MOI.ScalarAffineTerm(coef, x), offset
+    end
+    term = if token_types[offset] == _TOKEN_QUADRATIC_DIAG
+        MOI.ScalarQuadraticTerm(coef, x, x)
+    else
+        @assert token_types[offset] == _TOKEN_QUADRATIC_OFF_DIAG
+        y = MOI.VariableIndex(Int64(token_values[offset+1]))
+        MOI.ScalarQuadraticTerm(coef, x, y)
+    end
+    if get(token_types, offset + 2, nothing) == _TOKEN_QUADRATIC_CLOSE
+        return term, offset + 3
+    else
+        return term, offset + 2
+    end
 end
 
-function _parse_affine_terms(
+function _parse_function(
     f::MOI.ScalarAffineFunction{Float64},
     model::Model,
     cache::_ReadCache,
@@ -474,6 +573,10 @@ function _parse_affine_terms(
         token_types[i] = token_type
         if token_type in (_TOKEN_SIGN, _TOKEN_COEFFICIENT)
             token_values[i] = token::Float64
+        elseif token_type in (_TOKEN_QUADRATIC_OPEN, _TOKEN_QUADRATIC_CLOSE)
+            token_values[i] = NaN
+        elseif token_type in (_TOKEN_QUADRATIC_DIAG, _TOKEN_QUADRATIC_OFF_DIAG)
+            token_values[i] = NaN
         else
             @assert token_type == _TOKEN_VARIABLE
             x = _get_variable_from_name(model, cache, token::String)
@@ -486,6 +589,15 @@ function _parse_affine_terms(
         term, offset = _get_term(token_types, token_values, offset)
         if term isa MOI.ScalarAffineTerm{Float64}
             push!(f.terms, term::MOI.ScalarAffineTerm{Float64})
+        elseif term isa MOI.ScalarQuadraticTerm{Float64}
+            push!(cache.quad_terms, term::MOI.ScalarQuadraticTerm{Float64})
+            if tokens[offset-1] == "]"
+                for (i, term) in enumerate(cache.quad_terms)
+                    x, y = term.variable_1, term.variable_2
+                    scale = (x == y ? 2 : 1) * term.coefficient
+                    cache.quad_terms[i] = MOI.ScalarQuadraticTerm(scale, x, y)
+                end
+            end
         else
             f.constant += term::Float64
         end
@@ -520,13 +632,21 @@ function _parse_section(
     if occursin(":", line)  # Strip name of the objective
         line = String(match(r"(.*?)\:(.*)", line)[2])
     end
+    if occursin("^", line)
+        line = replace(line, "^" => " ^ ")
+    end
+    if occursin(r"\][\s/][\s/]+2", line)
+        line = replace(line, r"\][\s/][\s/]+2" => "]/2")
+    end
     tokens = _tokenize(line)
     if length(tokens) == 0
         # Can happen if the name of the objective is on one line and the
         # expression is on the next.
         return
     end
-    _parse_affine_terms(cache.objective, model, cache, tokens)
+    _parse_function(cache.objective, model, cache, tokens)
+    append!(cache.quad_obj_terms, cache.quad_terms)
+    empty!(cache.quad_terms)
     return
 end
 
@@ -554,6 +674,15 @@ function _parse_section(
             cache.constraint_name = "R$(cache.num_constraints)"
         end
     end
+    if occursin("^", line)
+        # Simplify parsing of constraints with ^2 terms by turning them into
+        # explicit " ^ 2" terms. This avoids ambiguity when parsing names.
+        line = replace(line, "^" => " ^ ")
+    end
+    if occursin(r"\][\s/][\s/]+2", line)
+        # Simplify parsing of ]/2 end blocks, which may contain whitespace.
+        line = replace(line, r"\][\s/][\s/]+2" => "]/2")
+    end
     tokens = _tokenize(line)
     if length(tokens) == 0
         # Can happen if the name is on one line and the constraint on the next.
@@ -573,12 +702,22 @@ function _parse_section(
             MOI.EqualTo(rhs)
         end
     end
-    _parse_affine_terms(cache.constraint_function, model, cache, tokens)
+    _parse_function(cache.constraint_function, model, cache, tokens)
     if constraint_set !== nothing
-        c = MOI.add_constraint(model, cache.constraint_function, constraint_set)
+        f = if isempty(cache.quad_terms)
+            cache.constraint_function
+        else
+            MOI.ScalarQuadraticFunction(
+                cache.quad_terms,
+                cache.constraint_function.terms,
+                cache.constraint_function.constant,
+            )
+        end
+        c = MOI.add_constraint(model, f, constraint_set)
         MOI.set(model, MOI.ConstraintName(), c, cache.constraint_name)
         cache.num_constraints += 1
         empty!(cache.constraint_function.terms)
+        empty!(cache.quad_terms)
         cache.constraint_function.constant = 0.0
         cache.constraint_name = ""
     end
@@ -795,11 +934,16 @@ function Base.read!(io::IO, model::Model)
         end
         _parse_section(section, model, cache, line)
     end
-    MOI.set(
-        model,
-        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        cache.objective,
-    )
+    obj = if isempty(cache.quad_obj_terms)
+        cache.objective
+    else
+        MOI.ScalarQuadraticFunction(
+            cache.quad_obj_terms,
+            cache.objective.terms,
+            cache.objective.constant,
+        )
+    end
+    MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
     return
 end
 

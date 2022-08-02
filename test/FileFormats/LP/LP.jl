@@ -231,18 +231,131 @@ y in Integer()
           "End\n"
 end
 
-function test_quadratic_objective()
+function test_quadratic_objective_diag()
     model = LP.Model()
-    @test_throws(
-        MOI.UnsupportedAttribute,
-        MOI.Utilities.loadfromstring!(
-            model,
-            """
+    MOI.Utilities.loadfromstring!(
+        model,
+        """
 variables: x
 minobjective: 1.0*x*x
 """,
-        )
     )
+    MOI.write_to_file(model, LP_TEST_FILE)
+    @test read(LP_TEST_FILE, String) ==
+          "minimize\n" *
+          "obj: [ 2 x ^ 2 ]/2\n" *
+          "subject to\n" *
+          "Bounds\n" *
+          "x free\n" *
+          "End\n"
+    return
+end
+
+function test_quadratic_objective_off_diag()
+    model = LP.Model()
+    MOI.Utilities.loadfromstring!(
+        model,
+        """
+variables: x, y
+minobjective: 1.1 * x + 1.2 * y + 1.5*x*y + 1.3
+""",
+    )
+    MOI.write_to_file(model, LP_TEST_FILE)
+    @test read(LP_TEST_FILE, String) ==
+          "minimize\n" *
+          "obj: 1.3 + 1.1 x + 1.2 y + [ 1.5 x * y ]/2\n" *
+          "subject to\n" *
+          "Bounds\n" *
+          "x free\n" *
+          "y free\n" *
+          "End\n"
+    return
+end
+
+function test_quadratic_objective_complicated()
+    model = LP.Model()
+    MOI.Utilities.loadfromstring!(
+        model,
+        """
+variables: x, y
+minobjective: 1.1 * x + 1.2 * y + -1.1 * x * x + 1.5*x*y + 1.3
+""",
+    )
+    MOI.write_to_file(model, LP_TEST_FILE)
+    @test read(LP_TEST_FILE, String) ==
+          "minimize\n" *
+          "obj: 1.3 + 1.1 x + 1.2 y + [ -2.2 x ^ 2 + 1.5 x * y ]/2\n" *
+          "subject to\n" *
+          "Bounds\n" *
+          "x free\n" *
+          "y free\n" *
+          "End\n"
+    return
+end
+
+function test_quadratic_constraint_diag()
+    model = LP.Model()
+    MOI.Utilities.loadfromstring!(
+        model,
+        """
+variables: x
+c: 1.0*x*x <= 1.4
+""",
+    )
+    MOI.write_to_file(model, LP_TEST_FILE)
+    @test read(LP_TEST_FILE, String) ==
+          "minimize\n" *
+          "obj: \n" *
+          "subject to\n" *
+          "c: [ 1 x ^ 2 ] <= 1.4\n" *
+          "Bounds\n" *
+          "x free\n" *
+          "End\n"
+    return
+end
+
+function test_quadratic_constraint_off_diag()
+    model = LP.Model()
+    MOI.Utilities.loadfromstring!(
+        model,
+        """
+variables: x, y
+c: 1.1 * x + 1.2 * y + 1.5*x*y + 1.3 == 1.5
+""",
+    )
+    MOI.write_to_file(model, LP_TEST_FILE)
+    @test read(LP_TEST_FILE, String) ==
+          "minimize\n" *
+          "obj: \n" *
+          "subject to\n" *
+          "c: 1.3 + 1.1 x + 1.2 y + [ 1.5 x * y ] = 1.5\n" *
+          "Bounds\n" *
+          "x free\n" *
+          "y free\n" *
+          "End\n"
+    return
+end
+
+function test_quadratic_constraint_complicated()
+    model = LP.Model()
+    MOI.Utilities.loadfromstring!(
+        model,
+        """
+variables: x, y
+c: 1.1 * x + 1.2 * y + -1.1 * x * x + 1.5*x*y + 1.3 in Interval(-1.1, 1.4)
+""",
+    )
+    MOI.write_to_file(model, LP_TEST_FILE)
+    @test read(LP_TEST_FILE, String) ==
+          "minimize\n" *
+          "obj: \n" *
+          "subject to\n" *
+          "c: -1.1 <= 1.3 + 1.1 x + 1.2 y + [ -1.1 x ^ 2 + 1.5 x * y ] <= 1.4\n" *
+          "Bounds\n" *
+          "x free\n" *
+          "y free\n" *
+          "End\n"
+    return
 end
 
 ###
@@ -315,10 +428,11 @@ function test_read_model1_tricky()
     seekstart(io)
     file = read(io, String)
     @test occursin("maximize", file)
-    @test occursin("obj: -1 Var4 + 1 V5", file)
+    @test occursin("obj: -1 Var4 + 1 V5 + [ 1 Var4 ^ 2 - 1.2 V5 * V1 ]/2", file)
     @test occursin("CON3: 1 V3 <= 2.5", file)
     @test occursin("CON4: 1 V5 + 1 V6 + 1 V7 <= 1", file)
     @test occursin("CON1: 1 V1 >= 0", file)
+    @test occursin("CON5: [ 1 Var4 ^ 2 - 1.2 V5 * V1 ] <= 0", file)
     @test occursin("R1: 1 V2 >= 2", file)
     @test occursin("V1 <= 3", file)
     @test occursin("Var4 >= 5.5", file)
@@ -482,6 +596,24 @@ function test_infinite_interval()
           "x1 free\n" *
           "End\n"
 
+    return
+end
+
+function test_read_tricky_quadratic()
+    model = LP.Model()
+    filename = joinpath(@__DIR__, "models", "tricky_quadratic.lp")
+    MOI.read_from_file(model, filename)
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    file = read(io, String)
+    @test occursin("minimize", file)
+    @test occursin("obj: [ 2 x ^ 2 + 1 x * y ]/2", file)
+    @test occursin("c1: [ 1 x ^ 2 - 1 x * y ] <= 0", file)
+    @test occursin("c2: [ 0.5 x ^ 2 - 1 x * y ] <= 0", file)
+    @test occursin("c3: [ 0.5 x ^ 2 - 1 x * y ] <= 0", file)
+    @test occursin("x free", file)
+    @test occursin("y free", file)
     return
 end
 

@@ -6,7 +6,8 @@ Max \ this problem is a maximisation!
 
 obj: 
 -1 Var4
- + 1 V5
+ + 1 V5 + [ Var4^2
+ - 1.2 V5 * V1 ] /2
 Subject To
 CON1:
     1 V1 >= 0.0
@@ -14,6 +15,8 @@ CON1:
 CON3: 1 V3 <= 2.5
 CON4: 1 V5 + 1 V6   \ split constraint. we know it hasn't ended as missing operator
  + 1 V7 <= 1.0
+
+CON5: [ Var4^2 - 1.2 V5 * V1 ] <= 0.0
 Bounds
 -inf <= V1 <= 3
 V2 <= 3
