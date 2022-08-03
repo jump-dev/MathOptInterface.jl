@@ -1,6 +1,6 @@
 # Release notes
 
-## v1.7.0 (July 23, 2022)
+## v1.7.0 (In progress)
 
 For a detailed list of the closed issues and pull requests from this release,
 see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.7.0).
@@ -9,6 +9,8 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
  - Added `SplitComplexZerosBridge` and `SplitComplexEqualToBridge` which bridges
    complex-valued equality constraints into their real and imaginary parts
+ - Added the `HermitianPositiveSemidefiniteConeTriangle` set, with bridges to
+   `PositiveSemidefiniteConeTriangle`
  - Added support for generic nunmber types in `Utilities.loadfromstring!`
  - Add new optimizer-independent options `RelativeGapTolerance` and
    `AbsoluteGapTolerance`
@@ -16,6 +18,9 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
    constraint programming sets in the `MOF` file format
  - Added support for quadratic constraints and an objective to `FileFormats.MPS`
  - Added support for indicator constraints to `FileFormats.MPS`
+ - Added support for quadratic constraints and an objective to `FileFormats.LP`
+ - Added `IndicatorGreaterToLessThanBridge` and
+   `IndicatorLessToGreaterThanBridge`
 
 ### Bug fixes
 
