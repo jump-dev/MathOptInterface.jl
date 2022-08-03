@@ -11,7 +11,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
    complex-valued equality constraints into their real and imaginary parts
  - Added the `HermitianPositiveSemidefiniteConeTriangle` set, with bridges to
    `PositiveSemidefiniteConeTriangle`
- - Added support for generic nunmber types in `Utilities.loadfromstring!`
+ - Added support for generic number types in `Utilities.loadfromstring!`
  - Add new optimizer-independent options `RelativeGapTolerance` and
    `AbsoluteGapTolerance`
  - Updated `FileFormats.MOF` to MathOptFormat v1.1, enabling support for
