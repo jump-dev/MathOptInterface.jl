@@ -13,7 +13,7 @@
 
 ## Assumptions
 
-  * `SOCtoRSOCBridge` assumes that the dimension of the cone is at least one.
+  * `SOCtoRSOCBridge` assumes that the length of `x` is at least one.
 
 ## Source node
 
