@@ -576,6 +576,17 @@ function set_with_dimension(
     return S(isqrt(dim))
 end
 
+function set_with_dimension(
+    ::Type{MOI.HermitianPositiveSemidefiniteConeTriangle},
+    dim,
+)
+    # We have `n*(n+1)/2 + n*(n-1)/2 = dim` so
+    # `n² + n + n² - n = 2dim` hence `n² = dim`
+    # This can be seen geometrically as the vectorization
+    # contains the upper triangular followed by the strictly upper triangular.
+    return MOI.HermitianPositiveSemidefiniteConeTriangle(isqrt(dim))
+end
+
 function set_with_dimension(::Type{MOI.LogDetConeTriangle}, dim)
     side_dimension = side_dimension_for_vectorized_dimension(dim - 2)
     return MOI.LogDetConeTriangle(side_dimension)

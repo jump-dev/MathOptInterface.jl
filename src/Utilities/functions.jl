@@ -403,6 +403,10 @@ end
 Type of functions obtained by indexing objects obtained by calling `eachscalar`
 on functions of type `F`.
 """
+function scalar_type end
+
+scalar_type(::Type{<:AbstractVector{T}}) where {T} = T
+
 scalar_type(::Type{MOI.VectorOfVariables}) = MOI.VariableIndex
 
 function scalar_type(::Type{MOI.VectorAffineFunction{T}}) where {T}
@@ -1527,10 +1531,14 @@ const TypedLike{T} = Union{TypedScalarLike{T},TypedVectorLike{T}}
 ###################################### +/- #####################################
 ## promote_operation
 
+function promote_operation(::typeof(-), ::Type{T}, ::Type{T}) where {T}
+    return T
+end
+
 function promote_operation(
     ::typeof(-),
     ::Type{T},
-    ::Type{<:ScalarAffineLike{T}},
+    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
 ) where {T}
     return MOI.ScalarAffineFunction{T}
 end
@@ -2894,6 +2902,13 @@ function fill_constant(
     constant[offset.+(1:n)] .= func.constants
     return
 end
+
+"""
+    vectorize(x::AbstractVector{<:Number})
+
+Returns `x`.
+"""
+vectorize(x::AbstractVector{<:Number}) = x
 
 """
     vectorize(x::AbstractVector{MOI.VariableIndex})

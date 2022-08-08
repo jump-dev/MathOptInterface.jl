@@ -49,6 +49,7 @@ include("bridges/soc_to_nonconvex_quad.jl") # do not add these bridges by defaul
 include("bridges/soc_to_psd.jl")
 include("bridges/split_complex_equalto.jl")
 include("bridges/split_complex_zeros.jl")
+include("bridges/hermitian.jl")
 include("bridges/square.jl")
 include("bridges/table.jl")
 include("bridges/vectorize.jl")
