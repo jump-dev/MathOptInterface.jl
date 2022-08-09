@@ -231,16 +231,13 @@ function MOI.set(
     end
     # [x, y, z] in PowerCone(a)
     # ⟺ x^a * y^(1-a) >= z
-    # ⟺ log(y^(1-a)) = log(z / x^a)
-    # ⟺ (1-a) * log(y) = log(z / x^a)
-    # ⟺ log(y) = log(z / x^a) / (1 - a)
-    # ⟺ y = exp(log(z / x^a) / (1 - a))
+    # ⟺ y = (z / x^a)^(1 / (1-a))
     z, x = start[1:2]
     y = zero(T)
     for i in 1:(length(bridge.power)-1)
         ci = bridge.power[i]
         set = MOI.get(model, MOI.ConstraintSet(), ci)
-        y = exp(log(z / x^set.exponent) / (1 - set.exponent))
+        y = (z / x^set.exponent)^inv(1 - set.exponent)
         MOI.set(model, attr, ci, [x, y, z])
         z, x = y, start[i+2]
     end
@@ -312,17 +309,15 @@ function MOI.set(
     # [u, v, w] in PowerCone*(a)
     # ⟺ (u/a)^a * (v / (1-a))^(1-a) >= w
     # ⟺ (v / (1-a))^(1-a) >= w / (u/a)^a
-    # ⟺ (1-a) * log(v / (1-a)) >= log(w / (u/a)^a)
-    # ⟺ log(v / (1-a)) >= log(w / (u/a)^a) / (1 - a)
-    # ⟺ v / (1-a) >= exp(log(w / (u/a)^a) / (1 - a))
-    # ⟺ v >= (1-a) * exp(log(w / (u/a)^a) / (1 - a))
+    # ⟺ v / (1-a) >= (w / (u/a)^a)^(1/(1-a))
+    # ⟺ v = (1-a) * (w / (u/a)^a)^(1/(1-a))
     w, u = start[1:2]
     v = zero(T)
     for i in 1:(length(bridge.power)-1)
         ci = bridge.power[i]
         set = MOI.get(model, MOI.ConstraintSet(), ci)
         a = set.exponent
-        v = (1 - a) * exp(log(w * (u / a)^-a) / (1 - a))
+        v = (1 - a) * (w / (u / a)^a)^inv(1 - a)
         MOI.set(model, attr, ci, [u, v, w])
         w, u = v, start[i+2]
     end
