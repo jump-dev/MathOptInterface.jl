@@ -317,7 +317,7 @@ function MOI.set(
         ci = bridge.power[i]
         set = MOI.get(model, MOI.ConstraintSet(), ci)
         a = set.exponent
-        v = (1 - a) * (w / (u / a)^a)^inv(1 - a)
+        v = (1 - a) * (abs(w) / (u / a)^a)^inv(1 - a)
         MOI.set(model, attr, ci, [u, v, w])
         w, u = v, start[i+2]
     end
