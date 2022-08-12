@@ -11,8 +11,6 @@ using Test
 using MathOptInterface
 const MOI = MathOptInterface
 
-import LinearAlgebra
-
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$(name)", "test_")
@@ -23,8 +21,6 @@ function runtests()
     end
     return
 end
-
-include("../utilities.jl")
 
 function test_runtests()
     MOI.Bridges.runtests(
