@@ -307,10 +307,10 @@ function MOI.set(
     end
     # [x, y, z] in PowerCone(a)
     # [u, v, w] in PowerCone*(a)
-    # ⟺ (u/a)^a * (v / (1-a))^(1-a) >= w
-    # ⟺ (v / (1-a))^(1-a) >= w / (u/a)^a
-    # ⟺ v / (1-a) >= (w / (u/a)^a)^(1/(1-a))
-    # ⟺ v = (1-a) * (w / (u/a)^a)^(1/(1-a))
+    # ⟺ (u/a)^a * (v / (1-a))^(1-a) >= |w|
+    # ⟺ (v / (1-a))^(1-a) >= |w| / (u/a)^a
+    # ⟺ v / (1-a) >= (|w| / (u/a)^a)^(1/(1-a))
+    # ⟺ v = (1-a) * (|w| / (u/a)^a)^(1/(1-a))
     w, u = start[1:2]
     v = zero(T)
     for i in 1:(length(bridge.power)-1)
