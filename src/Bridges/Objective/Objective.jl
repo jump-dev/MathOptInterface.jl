@@ -15,6 +15,7 @@ include("map.jl")
 include("single_bridge_optimizer.jl")
 
 include("bridges/functionize.jl")
+include("bridges/quadratize.jl")
 include("bridges/slack.jl")
 
 """
@@ -26,6 +27,7 @@ The coefficient type used is `T`.
 """
 function add_all_bridges(model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(model, FunctionizeBridge{T})
+    MOI.Bridges.add_bridge(model, QuadratizeBridge{T})
     MOI.Bridges.add_bridge(model, SlackBridge{T})
     return
 end

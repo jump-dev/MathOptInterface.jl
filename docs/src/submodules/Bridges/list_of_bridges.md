@@ -71,6 +71,7 @@ These bridges are subtyptes of [`Bridges.Objective.AbstractBridge`](@ref).
 
 ```@docs
 Bridges.Objective.FunctionizeBridge
+Bridges.Objective.QuadratizeBridge
 Bridges.Objective.SlackBridge
 ```
 
