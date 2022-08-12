@@ -340,6 +340,9 @@ function _general_bridge_tests(bridge::B) where {B<:AbstractBridge}
         length(MOI.get(bridge, MOI.ListOfVariableIndices())) ==
         MOI.get(bridge, MOI.NumberOfVariables())
     )
+    if B <: Objective.AbstractBridge
+        Test.@test set_objective_function_type(B) <: MOI.AbstractScalarFunction
+    end
     return
 end
 
