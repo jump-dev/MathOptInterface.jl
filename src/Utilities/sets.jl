@@ -130,6 +130,10 @@ Return the dimension `d` such that
 `MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(d))` is `n`.
 """
 function side_dimension_for_vectorized_dimension(n::Base.Integer)
+    # We have `d*(d+1)/2 = n` so
+    # `d² + d - 2n = 0` hence `d = (-1 ± √(1 + 8d)) / 2`
+    # The integer `√(1 + 8d)` is odd and `√(1 + 8d) - 1` is even.
+    # We can drop the `- 1` as `div` already discards it.
     return div(isqrt(1 + 8n), 2)
 end
 
