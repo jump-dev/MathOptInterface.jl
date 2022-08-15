@@ -7012,10 +7012,8 @@ function setup_test(
 ) where {T}
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            T[1, 0, 1, 0, 0, 0, -1, 0, 0],
-        ),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, T[1, 0, 1, 0, 0, 0, -1, 0, 0]),
     )
     return
 end
