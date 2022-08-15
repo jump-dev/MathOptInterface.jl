@@ -34,11 +34,11 @@ const SplitHyperRectangle{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{SplitHyperRectangleBridge{T},OT}
 
 function bridge_constraint(
-    ::Type{SplitHyperRectangleBridge{T,G}},
+    ::Type{SplitHyperRectangleBridge{T,G,F}},
     model::MOI.ModelLike,
-    f::MOI.AbstractVectorFunction,
+    f::F,
     s::MOI.HyperRectangle,
-) where {T,G}
+) where {T,G,F}
     lower = MOI.Utilities.operate(-, T, f, s.lower)
     upper = MOI.Utilities.operate(-, T, s.upper, f)
     if any(!isfinite, s.lower)
@@ -58,7 +58,7 @@ function bridge_constraint(
     free_rows = MOI.Utilities.eachscalar(f)[free_indices]
     g = MOI.Utilities.operate(vcat, T, lower, upper)
     ci = MOI.add_constraint(model, g, MOI.Nonnegatives(MOI.output_dimension(g)))
-    return SplitHyperRectangleBridge{T,typeof(g),typeof(free_rows)}(ci, s, free_rows)
+    return SplitHyperRectangleBridge{T,G,F}(ci, s, free_rows)
 end
 
 function MOI.supports_constraint(
@@ -87,7 +87,7 @@ function concrete_bridge_type(
     ::Type{MOI.HyperRectangle{T}},
 ) where {T,F<:MOI.AbstractVectorFunction}
     G = MOI.Utilities.promote_operation(-, T, F, Vector{T})
-    return SplitHyperRectangleBridge{T,G}
+    return SplitHyperRectangleBridge{T,G,F}
 end
 
 function MOI.get(
