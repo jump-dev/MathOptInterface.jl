@@ -32,8 +32,7 @@ function test_runtests_VectorOfVariables()
         """
         variables: x, y, z
         [1.0 * x + 1.0, 1.0 * y + -2.0, 1.0 * z + -3.0, 1.1 + -1.0 * x, 2.2 + -1.0 * y, 3.3 + -1.0 * z] in Nonnegatives(6)
-        """;
-        exclude = Any[MOI.ConstraintFunction],
+        """,
     )
     return
 end
@@ -50,7 +49,6 @@ function test_runtests_infinity_lower()
         [1.0 * z + -3.0, 1.1 + -1.0 * x, 3.3 + -1.0 * z] in Nonnegatives(3)
         """;
         constraint_start = -1.2,
-        exclude = Any[MOI.ConstraintFunction],
     )
     return
 end
@@ -67,7 +65,6 @@ function test_runtests_infinity_upper()
         [1.0 * y + -2.0, 1.0 * z + -3.0, 3.3 + -1.0 * z] in Nonnegatives(3)
         """;
         constraint_start = 1.2,
-        exclude = Any[MOI.ConstraintFunction],
     )
     return
 end
@@ -82,8 +79,23 @@ function test_runtests_VectorAffineFunction()
         """
         variables: x, y, z
         [1.0 * x + 1.0, -2.0 * y + -2.0, 3.0 * z + -3.0, 1.1 + -1.0 * x, 2.2 + 2.0 * y, 3.3 + -3.0 * z] in Nonnegatives(6)
+        """,
+    )
+    return
+end
+
+function test_runtests_free_row()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitHyperRectangleBridge,
+        """
+        variables: x, z
+        [x, z] in HyperRectangle([-Inf, 3.0], [Inf, 3.3])
+        """,
+        """
+        variables: x, z
+        [1.0 * z + -3.0, 3.3 + -1.0 * z] in Nonnegatives(2)
         """;
-        exclude = Any[MOI.ConstraintFunction],
+        constraint_start = 0.0,
     )
     return
 end

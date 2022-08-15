@@ -5,7 +5,7 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    SplitHyperRectangleBridge{T,G} <: Bridges.Constraint.AbstractBridge
+    SplitHyperRectangleBridge{T,G,F} <: Bridges.Constraint.AbstractBridge
 
 `SplitHyperRectangleBridge` implements the following reformulation:
 
@@ -24,9 +24,10 @@
 
   * `G` in [`MOI.Nonnegatives`](@ref)
 """
-mutable struct SplitHyperRectangleBridge{T,G} <: AbstractBridge
+mutable struct SplitHyperRectangleBridge{T,G,F} <: AbstractBridge
     ci::MOI.ConstraintIndex{G,MOI.Nonnegatives}
     set::MOI.HyperRectangle{T}
+    free_rows::F
 end
 
 const SplitHyperRectangle{T,OT<:MOI.ModelLike} =
@@ -48,9 +49,16 @@ function bridge_constraint(
         indices = [i for (i, u) in enumerate(s.upper) if isfinite(u)]
         upper = MOI.Utilities.eachscalar(upper)[indices]
     end
+    free_indices = Int[]
+    for (i, (l, u)) in enumerate(zip(s.lower, s.upper))
+        if !isfinite(l) && !isfinite(u)
+            push!(free_indices, i)
+        end
+    end
+    free_rows = MOI.Utilities.eachscalar(f)[free_indices]
     g = MOI.Utilities.operate(vcat, T, lower, upper)
     ci = MOI.add_constraint(model, g, MOI.Nonnegatives(MOI.output_dimension(g)))
-    return SplitHyperRectangleBridge{T,typeof(g)}(ci, s)
+    return SplitHyperRectangleBridge{T,typeof(g),typeof(free_rows)}(ci, s, free_rows)
 end
 
 function MOI.supports_constraint(
@@ -80,6 +88,42 @@ function concrete_bridge_type(
 ) where {T,F<:MOI.AbstractVectorFunction}
     G = MOI.Utilities.promote_operation(-, T, F, Vector{T})
     return SplitHyperRectangleBridge{T,G}
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    ::MOI.ConstraintFunction,
+    bridge::SplitHyperRectangleBridge{T,G,F},
+) where {T,G,F}
+    f = MOI.get(model, MOI.ConstraintFunction(), bridge.ci)
+    f_s = MOI.Utilities.eachscalar(f)
+    s = bridge.set
+    func = Vector{eltype(f_s)}(undef, MOI.dimension(s))
+
+    lower_indices = [i for (i, l) in enumerate(s.lower) if isfinite(l)]
+    for (i, index) in enumerate(lower_indices)
+        func[index] = MOI.Utilities.operate(+, T, f_s[i], s.lower[index])
+    end
+
+    upper_indices = [i for (i, u) in enumerate(s.upper) if isfinite(u)]
+    for (j, index) in enumerate(upper_indices)
+        i = length(lower_indices) + j
+        if !(index in lower_indices)
+            func[index] = MOI.Utilities.operate(-, T, s.upper[index], f_s[i])
+        end
+    end
+    free_s = MOI.Utilities.eachscalar(bridge.free_rows)
+    free_indices = Int[]
+    for (i, (l, u)) in enumerate(zip(s.lower, s.upper))
+        if !isfinite(l) && !isfinite(u)
+            push!(free_indices, i)
+        end
+    end
+    for (i, index) in enumerate(free_indices)
+        func[index] = free_s[i]
+    end
+    g = MOI.Utilities.operate(vcat, T, func...)
+    return MOI.Utilities.convert_approx(F, g)
 end
 
 function MOI.get(

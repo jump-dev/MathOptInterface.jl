@@ -146,11 +146,7 @@ MOI.get_fallback(model::MOI.ModelLike, ::ListOfNonstandardBridges) = Type[]
 
 include("precompile.jl")
 
-function _test_structural_identical(
-    a::MOI.ModelLike,
-    b::MOI.ModelLike;
-    exclude::Vector{Any},
-)
+function _test_structural_identical(a::MOI.ModelLike, b::MOI.ModelLike)
     # Test that the variables are the same. We make the strong assumption that
     # the variables are added in the same order to both models.
     a_x = MOI.get(a, MOI.ListOfVariableIndices())
@@ -167,12 +163,10 @@ function _test_structural_identical(
         Test.@test MOI.supports_constraint(a, F, S)
         constraints[(F, S)] =
             map(MOI.get(a, MOI.ListOfConstraintIndices{F,S}())) do ci
-                f = true
-                if !(MOI.ConstraintFunction in exclude)
-                    f = MOI.get(a, MOI.ConstraintFunction(), ci)
-                end
-                s = MOI.get(a, MOI.ConstraintSet(), ci)
-                return (f, s)
+                return (
+                    MOI.get(a, MOI.ConstraintFunction(), ci),
+                    MOI.get(a, MOI.ConstraintSet(), ci),
+                )
             end
     end
     # Now compare the constraints in `b` with the cache in `constraints`.
@@ -198,11 +192,8 @@ function _test_structural_identical(
         Test.@test MOI.supports_constraint(b, F, S)
         # Check that each function in `b` matches a function in `a`
         for ci in MOI.get(b, MOI.ListOfConstraintIndices{F,S}())
-            f_b = true
-            if !(MOI.ConstraintFunction in exclude)
-                f_b = MOI.get(b, MOI.ConstraintFunction(), ci)
-                f_b = MOI.Utilities.map_indices(x_map, f_b)
-            end
+            f_b = MOI.get(b, MOI.ConstraintFunction(), ci)
+            f_b = MOI.Utilities.map_indices(x_map, f_b)
             s_b = MOI.get(b, MOI.ConstraintSet(), ci)
             # We don't care about the order that constraints are added, only
             # that one matches.
@@ -229,13 +220,7 @@ function _test_structural_identical(
 end
 
 """
-    runtests(
-        Bridge::Type{<:AbstractBridge},
-        input::String,
-        output::String;
-        constraint_start = 1.2,
-        exclude = Any[]
-    )
+    runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
 
 Run a series of tests that check the correctness of `Bridge`.
 
@@ -256,7 +241,6 @@ julia> MOI.Bridges.runtests(
            x in Integer()
            x in Interval(0.0, 1.0)
            \"\"\",
-           exclude = Any[MOI.ConstraintFunction],
        )
 ```
 """
@@ -265,7 +249,6 @@ function runtests(
     input::String,
     output::String;
     constraint_start = 1.2,
-    exclude::Vector{Any} = Any[],
 )
     # Load model and bridge it
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
@@ -275,11 +258,11 @@ function runtests(
     # Load a non-bridged input model, and check that getters are the same.
     test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     MOI.Utilities.loadfromstring!(test, input)
-    _test_structural_identical(test, model; exclude = exclude)
+    _test_structural_identical(test, model)
     # Load a bridged target model, and check that getters are the same.
     target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     MOI.Utilities.loadfromstring!(target, output)
-    _test_structural_identical(target, inner; exclude = exclude)
+    _test_structural_identical(target, inner)
     # Test ConstraintPrimalStart and ConstraintDualStart
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
@@ -305,9 +288,7 @@ function runtests(
     for b in values(Variable.bridges(model))
         _general_bridge_tests(b)
     end
-    if !(MOI.delete in exclude)
-        _test_delete(Bridge, model, inner)
-    end
+    _test_delete(Bridge, model, inner)
     return
 end
 
