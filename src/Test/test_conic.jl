@@ -7002,10 +7002,6 @@ function test_conic_HermitianPositiveSemidefiniteConeTriangle_2(
     MOI.optimize!(model)
     @test ≈(MOI.get(model, MOI.VariablePrimal(), x), primal, config)
     @test ≈(MOI.get(model, MOI.ConstraintPrimal(), cx), primal, config)
-    if _supports(config, MOI.ConstraintDual)
-        dual = zeros(T, 9)
-        @test ≈(MOI.get(model, MOI.ConstraintDual(), cx), dual, config)
-    end
     return
 end
 
@@ -7019,14 +7015,9 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             T[1, 0, 1, 0, 0, 0, -1, 0, 0],
-            (
-                MOI.VectorOfVariables,
-                MOI.HermitianPositiveSemidefiniteConeTriangle,
-            ) => [zeros(T, 9)],
         ),
     )
-    model.eval_variable_constraint_dual = false
-    return () -> model.eval_variable_constraint_dual = true
+    return
 end
 
 function version_added(
