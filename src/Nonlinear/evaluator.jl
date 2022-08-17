@@ -65,26 +65,13 @@ end
 
 function MOI.initialize(evaluator::Evaluator, features::Vector{Symbol})
     empty!(evaluator.ordered_constraints)
-    empty!(evaluator.julia_expressions)
     evaluator.eval_objective_timer = 0.0
     evaluator.eval_objective_gradient_timer = 0.0
     evaluator.eval_constraint_timer = 0.0
     evaluator.eval_constraint_jacobian_timer = 0.0
     evaluator.eval_hessian_lagrangian_timer = 0.0
     append!(evaluator.ordered_constraints, keys(evaluator.model.constraints))
-    if :ExprGraph in features
-        for i in 1:length(evaluator.model.expressions)
-            push!(
-                evaluator.julia_expressions,
-                convert_to_expr(
-                    evaluator,
-                    evaluator.model.expressions[i];
-                    moi_output_format = true,
-                ),
-            )
-        end
-        filter!(f -> f != :ExprGraph, features)
-    end
+    filter!(f -> f != :ExprGraph, features)
     if evaluator.backend !== nothing
         MOI.initialize(evaluator.backend, features)
     end
@@ -270,7 +257,11 @@ function _convert_to_moi_format(evaluator::Evaluator, p::ParameterIndex)
 end
 
 function _convert_to_moi_format(evaluator::Evaluator, x::ExpressionIndex)
-    return evaluator.julia_expressions[x.value]
+    return convert_to_expr(
+        evaluator,
+        evaluator.model.expressions[x.value];
+        moi_output_format = true,
+    )
 end
 
 _convert_to_moi_format(::Evaluator, x) = x
