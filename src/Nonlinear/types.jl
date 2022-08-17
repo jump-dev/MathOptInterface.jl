@@ -198,9 +198,6 @@ mutable struct Evaluator{B} <: MOI.AbstractNLPEvaluator
     model::Model
     # The abstract-differentiation backend
     backend::B
-    # A vector to store expressions in Julia's Expr form. The eltype is Any
-    # because expressions may be constants, and `:(1)` is just `1`.
-    julia_expressions::Vector{Any}
     # ordered_constraints is needed because `OrderedDict` doesn't support
     # looking up a key by the linear index.
     ordered_constraints::Vector{ConstraintIndex}
@@ -221,7 +218,6 @@ mutable struct Evaluator{B} <: MOI.AbstractNLPEvaluator
         return new{B}(
             model,
             backend,
-            Expr[],
             ConstraintIndex[],
             Float64[],
             0.0,
