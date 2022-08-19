@@ -31,6 +31,7 @@ Bridges.Constraint.ScalarFunctionizeBridge
 Bridges.Constraint.VectorFunctionizeBridge
 Bridges.Constraint.SplitComplexEqualToBridge
 Bridges.Constraint.SplitComplexZerosBridge
+Bridges.Constraint.SplitHyperRectangleBridge
 Bridges.Constraint.SplitIntervalBridge
 Bridges.Constraint.SOCtoRSOCBridge
 Bridges.Constraint.RSOCtoSOCBridge

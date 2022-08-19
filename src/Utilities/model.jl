@@ -805,6 +805,7 @@ const LessThanIndicatorZero{T} =
         LessThanIndicatorZero,
         MOI.Table,
         MOI.BinPacking,
+        MOI.HyperRectangle,
     ),
     (),
     (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),

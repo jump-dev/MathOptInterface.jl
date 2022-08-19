@@ -94,6 +94,7 @@ SOS1
 SOS2
 Indicator
 Complements
+HyperRectangle
 ```
 
 ## Constraint programming sets
