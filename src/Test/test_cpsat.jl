@@ -98,12 +98,12 @@ function setup_test(
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, T[0, 1, 2]),
+            (MOI.FEASIBLE_POINT, T[1, 0, 1, 2]),
         ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             MOI.OPTIMAL,
-            (MOI.FEASIBLE_POINT, T[0, 1, 1]),
+            (MOI.FEASIBLE_POINT, T[0, 0, 1, 1]),
         ),
     )
     return
