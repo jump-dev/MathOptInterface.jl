@@ -64,6 +64,7 @@ Bridges.Constraint.CircuitToMILPBridge
 Bridges.Constraint.CountAtLeastToCountBelongsBridge
 Bridges.Constraint.CountBelongsToMILPBridge
 Bridges.Constraint.CountDistinctToMILPBridge
+Bridges.Constraint.ReifiedCountDistinctToMILPBridge
 Bridges.Constraint.CountGreaterThanToMILPBridge
 Bridges.Constraint.TableToMILPBridge
 ```
