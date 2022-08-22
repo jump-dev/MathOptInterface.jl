@@ -37,12 +37,17 @@ y_j \\le \\sum\\limits_{i \\in 1\\ldots d: j \\in S_i} z_{ij} \\le M y_j & \\;\\
 ```
 
 Finally, ``n`` is constrained to be the number of ``y_j`` elements that are
-non-zero:
+non-zero, with some slack:
+```math
+n - \\sum\\limits_{j \\in \\bigcup_{i=1,\\ldots,d} S_i} y_{j} = \\delta^+ - \\delta^-
+```
+And then the slack is constrained to respect the reif variable ``r``:
 ```math
 \\begin{aligned}
-n - \\sum\\limits_{j \\in \\bigcup_{i=1,\\ldots,d} S_i} y_{j} = \\delta \\\\
-\\delta \\le M (1 - r) \\\\
-\\delta \\ge -M (1 - r)
+d_1 \\le \\delta^+ \\le M d_1 \\\\
+d_2 \\le \\delta^- \\le M d_s \\\\
+d_1 + d_2 + r = 1             \\\\
+d_1, d_2 \\in \\{0, 1\\}
 \\end{aligned}
 ```
 
@@ -195,7 +200,7 @@ function MOI.get(
     bridge::ReifiedCountDistinctToMILPBridge,
     ::MOI.NumberOfConstraints{MOI.VariableIndex,MOI.ZeroOne},
 )::Int64
-    return length(bridge.variables) - 1
+    return length(bridge.variables) - 2
 end
 
 function MOI.get(
@@ -204,7 +209,7 @@ function MOI.get(
 )
     return MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}[
         MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}(x.value) for
-        x in bridge.variables[1:end-1]
+        x in bridge.variables[1:end-2]
     ]
 end
 
@@ -347,37 +352,39 @@ function MOI.Bridges.final_touch(
             ),
         )
     end
-    δ = MOI.add_variable(model)
-    push!(bridge.variables, δ)
-    count_f = MOI.ScalarAffineFunction(count_terms, zero(T))
-    MOI.Utilities.operate!(-, T, count_f, scalars[2])
-    MOI.Utilities.operate!(-, T, count_f, δ)
+    z = MOI.add_variables(model, 4)
+    append!(bridge.variables, z)
+    MOI.add_constraint(model, z[1], MOI.ZeroOne())
+    MOI.add_constraint(model, z[2], MOI.ZeroOne())
+    # ∑y - n - δ⁺ + δ⁻ = 0
+    f_0 = MOI.ScalarAffineFunction(count_terms, zero(T))
+    MOI.Utilities.operate!(-, T, f_0, scalars[2])
+    MOI.Utilities.operate!(-, T, f_0, z[3])
+    MOI.Utilities.operate!(+, T, f_0, z[4])
     push!(
         bridge.equal_to,
         MOI.Utilities.normalize_and_add_constraint(
             model,
-            count_f,
+            f_0,
             MOI.EqualTo(zero(T));
             allow_modify_function = true,
         ),
     )
     M = T(length(scalars) - 2)
-    M_r = MOI.Utilities.operate(*, T, M, scalars[1])
-    push!(
-        bridge.less_than,
-        MOI.add_constraint(
-            model,
-            MOI.Utilities.operate(+, T, M_r, δ),
-            MOI.LessThan(M),
-        ),
-    )
-    push!(
-        bridge.less_than,
-        MOI.add_constraint(
-            model,
-            MOI.Utilities.operate(-, T, M_r, δ),
-            MOI.LessThan(M),
-        ),
-    )
+    # δ⁺ <= M * z₁
+    f_1 = MOI.Utilities.operate(-, T, z[3], M * z[1])
+    push!(bridge.less_than, MOI.add_constraint(model, f_1, MOI.LessThan(T(0))))
+    # z₁ <= δ⁺
+    f_2 = MOI.Utilities.operate(-, T, z[1], z[3])
+    push!(bridge.less_than, MOI.add_constraint(model, f_2, MOI.LessThan(T(0))))
+    # δ⁻ <= M * z₂
+    f_3 = MOI.Utilities.operate(-, T, z[4], M * z[2])
+    push!(bridge.less_than, MOI.add_constraint(model, f_3, MOI.LessThan(T(0))))
+    # z₁ <= δ⁺
+    f_4 = MOI.Utilities.operate(-, T, z[2], z[4])
+    push!(bridge.less_than, MOI.add_constraint(model, f_4, MOI.LessThan(T(0))))
+    # z₁ + z₂ + r == 1
+    f_4 = MOI.Utilities.operate(+, T, z[1], z[2], scalars[1])
+    push!(bridge.equal_to, MOI.add_constraint(model, f_4, MOI.EqualTo(T(1))))
     return
 end
