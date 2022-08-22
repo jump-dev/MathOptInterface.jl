@@ -113,7 +113,9 @@ function MOI.Bridges.added_constrained_variable_types(
 end
 
 function MOI.Bridges.added_constrained_variable_types(
-    ::Type{ReifiedAllDifferentToCountDistinctBridge{T,MOI.VectorAffineFunction{T}}},
+    ::Type{
+        ReifiedAllDifferentToCountDistinctBridge{T,MOI.VectorAffineFunction{T}},
+    },
 ) where {T}
     return Tuple{Type}[]
 end
