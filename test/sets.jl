@@ -327,6 +327,16 @@ function test_sets_hyperrectangle()
     return
 end
 
+function test_sets_reified()
+    set = MOI.Reified(MOI.AllDifferent(2))
+    @test MOI.dimension(set) == 3
+    @test set == copy(set)
+    set = MOI.Reified(MOI.GreaterThan(1))
+    @test MOI.dimension(set) == 2
+    @test set == copy(set)
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

@@ -49,6 +49,69 @@ function setup_test(
 end
 
 """
+    test_cpsat_ReifiedAllDifferent(model::MOI.ModelLike, config::Config)
+
+Add a VectorOfVariables-in-Reified{AllDifferent} constraint.
+"""
+function test_cpsat_ReifiedAllDifferent(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.Reified{MOI.AllDifferent},
+    )
+    @requires MOI.supports_add_constrained_variable(model, MOI.Integer)
+    @requires _supports(config, MOI.optimize!)
+    z, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
+    y = [MOI.add_constrained_variable(model, MOI.Integer()) for _ in 1:3]
+    x = first.(y)
+    MOI.add_constraint.(model, x, MOI.Interval(zero(T), T(2)))
+    MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([z; x]),
+        MOI.Reified(MOI.AllDifferent(3)),
+    )
+    c = MOI.add_constraint(model, z, MOI.EqualTo(T(1)))
+    MOI.optimize!(model)
+    x_val = MOI.get.(model, MOI.VariablePrimal(), x)
+    @test abs(x_val[1] - x_val[2]) > 0.5
+    @test abs(x_val[1] - x_val[3]) > 0.5
+    @test abs(x_val[2] - x_val[3]) > 0.5
+    MOI.set(model, MOI.ConstraintSet(), c, MOI.EqualTo(T(0)))
+    MOI.optimize!(model)
+    x_val = MOI.get.(model, MOI.VariablePrimal(), x)
+    @test abs(x_val[1] - x_val[2]) < 0.5 ||
+          abs(x_val[1] - x_val[3]) < 0.5 ||
+          abs(x_val[2] - x_val[3]) < 0.5
+    return
+end
+
+function setup_test(
+    ::typeof(test_cpsat_ReifiedAllDifferent),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, T[1, 0, 1, 2]),
+        ),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, T[0, 0, 1, 1]),
+        ),
+    )
+    return
+end
+
+version_added(::typeof(test_cpsat_ReifiedAllDifferent)) = v"1.8.0"
+
+"""
     test_cpsat_CountDistinct(model::MOI.ModelLike, config::Config)
 
 Add a VectorOfVariables-in-CountDistinct constraint.

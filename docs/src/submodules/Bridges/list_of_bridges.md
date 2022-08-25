@@ -59,11 +59,13 @@ Bridges.Constraint.IndicatorSOS1Bridge
 Bridges.Constraint.SemiToBinaryBridge
 Bridges.Constraint.ZeroOneBridge
 Bridges.Constraint.AllDifferentToCountDistinctBridge
+Bridges.Constraint.ReifiedAllDifferentToCountDistinctBridge
 Bridges.Constraint.BinPackingToMILPBridge
 Bridges.Constraint.CircuitToMILPBridge
 Bridges.Constraint.CountAtLeastToCountBelongsBridge
 Bridges.Constraint.CountBelongsToMILPBridge
 Bridges.Constraint.CountDistinctToMILPBridge
+Bridges.Constraint.ReifiedCountDistinctToMILPBridge
 Bridges.Constraint.CountGreaterThanToMILPBridge
 Bridges.Constraint.TableToMILPBridge
 ```
