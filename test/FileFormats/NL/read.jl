@@ -118,6 +118,28 @@ function test_parse_header_binary()
     return
 end
 
+function test_parse_expr_atan2()
+    model = NL._CacheModel()
+    io = IOBuffer()
+    write(io, "o48\nv0\nv1\n")
+    seekstart(io)
+    x = MOI.VariableIndex.(1:2)
+    @test NL._parse_expr(io, model) == :(atan($(x[1]), $(x[2])))
+    @test eof(io)
+    return
+end
+
+function test_parse_expr_atan()
+    model = NL._CacheModel()
+    io = IOBuffer()
+    write(io, "o49\nv0\n")
+    seekstart(io)
+    x = MOI.VariableIndex.(1:1)
+    @test NL._parse_expr(io, model) == :(atan($(x[1])))
+    @test eof(io)
+    return
+end
+
 function test_parse_header_assertion_errors()
     model = NL._CacheModel()
     for header in [

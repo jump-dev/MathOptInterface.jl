@@ -842,6 +842,34 @@ function test_NLPBlockData()
     return
 end
 
+function test_parse_atan2()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    θ = π / 4
+    Nonlinear.add_constraint(model, :(atan($x, $y)), MOI.LessThan(θ))
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, [:ExprGraph])
+    @test MOI.constraint_expr(evaluator, 1) == :(atan(x[$x], x[$y]) <= $θ)
+    return
+end
+
+function test_eval_atan2()
+    r = Nonlinear.OperatorRegistry()
+    x = [1.1, 2.2]
+    @test Nonlinear.eval_multivariate_function(r, :atan, x) ≈ atan(x[1], x[2])
+    g = zeros(2)
+    Nonlinear.eval_multivariate_gradient(r, :atan, g, x)
+    @test g[1] ≈ -x[2] / (x[1]^2 + x[2]^2)
+    @test g[2] ≈ x[1] / (x[1]^2 + x[2]^2)
+    H = LinearAlgebra.LowerTriangular(zeros(2, 2))
+    @test Nonlinear.eval_multivariate_hessian(r, :atan, H, x)
+    @test H[1, 1] ≈ 2 * x[1] * x[2] / (x[1]^2 + x[2]^2)^2
+    @test H[2, 1] ≈ (x[2]^2 - x[1]^2) / (x[1]^2 + x[2]^2)^2
+    @test H[2, 2] ≈ -2 * x[1] * x[2] / (x[1]^2 + x[2]^2)^2
+    return
+end
+
 end
 
 TestNonlinear.runtests()
