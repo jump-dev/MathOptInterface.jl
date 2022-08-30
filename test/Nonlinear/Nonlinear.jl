@@ -860,13 +860,13 @@ function test_eval_atan2()
     @test Nonlinear.eval_multivariate_function(r, :atan, x) ≈ atan(x[1], x[2])
     g = zeros(2)
     Nonlinear.eval_multivariate_gradient(r, :atan, g, x)
-    @test g[1] ≈ -x[2] / (x[1]^2 + x[2]^2)
-    @test g[2] ≈ x[1] / (x[1]^2 + x[2]^2)
+    @test g[1] ≈ x[2] / (x[1]^2 + x[2]^2)
+    @test g[2] ≈ -x[1] / (x[1]^2 + x[2]^2)
     H = LinearAlgebra.LowerTriangular(zeros(2, 2))
     @test Nonlinear.eval_multivariate_hessian(r, :atan, H, x)
-    @test H[1, 1] ≈ 2 * x[1] * x[2] / (x[1]^2 + x[2]^2)^2
-    @test H[2, 1] ≈ (x[2]^2 - x[1]^2) / (x[1]^2 + x[2]^2)^2
-    @test H[2, 2] ≈ -2 * x[1] * x[2] / (x[1]^2 + x[2]^2)^2
+    @test H[1, 1] ≈ -2 * x[2] * x[1] / (x[1]^2 + x[2]^2)^2
+    @test H[2, 1] ≈ (x[1]^2 - x[2]^2) / (x[1]^2 + x[2]^2)^2
+    @test H[2, 2] ≈ 2 * x[2] * x[1] / (x[1]^2 + x[2]^2)^2
     return
 end
 
