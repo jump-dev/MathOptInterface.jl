@@ -62,7 +62,7 @@ const _JULIA_TO_AMPL = Dict{Symbol,Int}(
     :cosh => OP_cosh,
     :cos => OP_cos,
     :atanh => OP_atanh,
-    # Because :atan is also a univariate operator, the is special cased in
+    # Because :atan is also a univariate operator, this is special cased in
     # process_expr!.
     # :atan = OP_atan2,
     :atan => OP_atan,
