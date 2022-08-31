@@ -212,6 +212,19 @@ function test_nlexpr_binary_specialcase()
     )
 end
 
+function test_nlexpr_atan_and_atan2()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    _test_nlexpr(:(atan($x)), [NL.OP_atan, x], Dict(x => 0.0), 0.0)
+    _test_nlexpr(
+        :(atan($x, $y)),
+        [NL.OP_atan2, x, y],
+        Dict(x => 0.0, y => 0.0),
+        0.0,
+    )
+    return
+end
+
 function test_nlexpr_unsupportedoperation()
     x = MOI.VariableIndex(1)
     err = ErrorException("Unsupported operation foo")

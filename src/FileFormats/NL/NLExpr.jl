@@ -62,7 +62,9 @@ const _JULIA_TO_AMPL = Dict{Symbol,Int}(
     :cosh => OP_cosh,
     :cos => OP_cos,
     :atanh => OP_atanh,
-    # OP_atan2 = 48,
+    # Because :atan is also a univariate operator, this is special cased in
+    # process_expr!.
+    # :atan = OP_atan2,
     :atan => OP_atan,
     :asinh => OP_asinh,
     :asin => OP_asin,
@@ -146,7 +148,7 @@ const _AMPL_TO_JULIA = Dict{Int,Tuple{Int,Function}}(
     OP_cosh => (1, cosh),
     OP_cos => (1, cos),
     OP_atanh => (1, atanh),
-    # OP_atan2 = 48,
+    OP_atan2 => (2, atan),
     OP_atan => (1, atan),
     OP_asinh => (1, asinh),
     OP_asin => (1, asin),
@@ -430,6 +432,11 @@ function _process_expr!(expr::_NLExpr, args::Vector{Any})
     opcode = get(_JULIA_TO_AMPL, op, nothing)
     if opcode === nothing
         error("Unsupported operation $(op)")
+    end
+    if op == :atan && N == 2
+        # Special case binary use of atan, because Julia uses method overloading
+        # instead of having an explicit atan2 function.
+        opcode = OP_atan2
     end
     push!(expr.nonlinear_terms, opcode)
     if opcode in _NARY_OPCODES

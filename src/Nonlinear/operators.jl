@@ -82,7 +82,7 @@ const DEFAULT_UNIVARIATE_OPERATORS = first.(SYMBOLIC_UNIVARIATE_EXPRESSIONS)
 
 The list of multivariate operators that are supported by default.
 """
-const DEFAULT_MULTIVARIATE_OPERATORS = [:+, :-, :*, :^, :/, :ifelse]
+const DEFAULT_MULTIVARIATE_OPERATORS = [:+, :-, :*, :^, :/, :ifelse, :atan]
 
 """
     OperatorRegistry()
@@ -544,6 +544,9 @@ function eval_multivariate_function(
     elseif op == :ifelse
         @assert length(x) == 3
         return ifelse(Bool(x[1]), x[2], x[3])
+    elseif op == :atan
+        @assert length(x) == 2
+        return atan(x[1], x[2])
     end
     id = registry.multivariate_operator_to_id[op]
     offset = id - registry.multivariate_user_operator_start
@@ -619,6 +622,11 @@ function eval_multivariate_gradient(
         g[1] = zero(T)  # It doesn't matter what this is.
         g[2] = x[1] == one(T)
         g[3] = x[1] == zero(T)
+    elseif op == :atan
+        @assert length(x) == 2
+        base = x[1]^2 + x[2]^2
+        g[1] = x[2] / base
+        g[2] = -x[1] / base
     else
         id = registry.multivariate_operator_to_id[op]
         offset = id - registry.multivariate_user_operator_start
@@ -707,6 +715,18 @@ function eval_multivariate_hessian(
         d = 1 / x[2]^2
         H[2, 1] = -d
         H[2, 2] = 2 * x[1] * d / x[2]
+    elseif op == :atan
+        # f(x)  = atan(y, x)
+        #
+        # ∇f(x) = +x/(x^2+y^2)
+        #         -y/(x^2+y^2)
+        #
+        # ∇²(x) = -(2xy)/(x^2+y^2)^2
+        #         (y^2-x^2)/(x^2+y^2)^2 (2xy)/(x^2+y^2)^2
+        base = (x[1]^2 + x[2]^2)^2
+        H[1, 1] = -2 * x[2] * x[1] / base
+        H[2, 1] = (x[1]^2 - x[2]^2) / base
+        H[2, 2] = 2 * x[2] * x[1] / base
     else
         id = registry.multivariate_operator_to_id[op]
         offset = id - registry.multivariate_user_operator_start
