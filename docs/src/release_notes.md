@@ -1,5 +1,27 @@
 # Release notes
 
+## v1.8.0 (September 1, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.8.0).
+
+### New features
+
+ - Added new sets
+   - `HyperRectangle`
+   - `Reified`
+ - Added new bridges
+   - `ReifiedAllDifferentToCountDistinctBridge`
+   - `ReifiedCountDistinctToMILPBridge`
+   - `SplitHyperRectangleBridge`
+ - Added support for `atan(y, x)` in `Nonlinear`
+
+### Bug fixes
+
+ - Lazily construct expressions in `Nonlinear` so that expressions are updated
+   when `Nonlinear.Parameter` values are updated.
+ - Allow `NORM_LIMIT` as a `TerminationStatus` for unbounded problems in `Test`.
+
 ## v1.7.0 (August 16, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
