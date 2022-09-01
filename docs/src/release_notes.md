@@ -1,6 +1,6 @@
 # Release notes
 
-## v1.8.0 (September 2, 2022)
+## v1.8.0 (September 1, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
 see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.8.0).
