@@ -210,7 +210,11 @@ function test_solve_TerminationStatus_DUAL_INFEASIBLE(
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.DUAL_INFEASIBLE
+    status = MOI.get(model, MOI.TerminationStatus())
+    @test in(
+        status,
+        (MOI.DUAL_INFEASIBLE, MOI.NORM_LIMIT, MOI.INFEASIBLE_OR_UNBOUNDED),
+    )
     return
 end
 

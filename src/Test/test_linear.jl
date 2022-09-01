@@ -1432,9 +1432,11 @@ function test_linear_DUAL_INFEASIBLE(
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.DUAL_INFEASIBLE ||
-              MOI.get(model, MOI.TerminationStatus()) ==
-              MOI.INFEASIBLE_OR_UNBOUNDED
+        status = MOI.get(model, MOI.TerminationStatus())
+        @test in(
+            status,
+            (MOI.DUAL_INFEASIBLE, MOI.NORM_LIMIT, MOI.INFEASIBLE_OR_UNBOUNDED),
+        )
         if MOI.get(model, MOI.PrimalStatus()) == MOI.INFEASIBILITY_CERTIFICATE
             # solver returned an unbounded ray
             @test MOI.get(model, MOI.ResultCount()) >= 1
@@ -1517,9 +1519,11 @@ function test_linear_DUAL_INFEASIBLE_2(
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.DUAL_INFEASIBLE ||
-              MOI.get(model, MOI.TerminationStatus()) ==
-              MOI.INFEASIBLE_OR_UNBOUNDED
+        status = MOI.get(model, MOI.TerminationStatus())
+        @test in(
+            status,
+            (MOI.DUAL_INFEASIBLE, MOI.NORM_LIMIT, MOI.INFEASIBLE_OR_UNBOUNDED),
+        )
         if MOI.get(model, MOI.PrimalStatus()) == MOI.INFEASIBILITY_CERTIFICATE
             # solver returned an unbounded ray
             @test MOI.get(model, MOI.ResultCount()) >= 1
