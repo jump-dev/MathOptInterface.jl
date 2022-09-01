@@ -20,6 +20,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
  - Lazily construct expressions in `Nonlinear` so that expressions are updated
    when `Nonlinear.Parameter` values are updated.
+ - Allow `NORM_LIMIT` as a `TerminationStatus` for unbounded problems in `Test`.
 
 ## v1.7.0 (August 16, 2022)
 
