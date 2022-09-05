@@ -1352,9 +1352,7 @@ function MOI.supports(
     # constraint is not bridged or if variables constrained on creations to `S`
     # are not bridged and `F` is `VariableIndex` or `VectorOfVariables`.
     if !is_bridged(b, F, S) || (is_variable_function && !is_bridged(b, S))
-        if !MOI.supports(b.model, attr, IndexType)
-            return false
-        end
+        return MOI.supports(b.model, attr, IndexType)
     end
     bridge = recursive_model(b)
     # If variable bridged, get the indices from the variable bridges.

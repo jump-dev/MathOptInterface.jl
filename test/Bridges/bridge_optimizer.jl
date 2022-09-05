@@ -821,6 +821,32 @@ function test_constant_modification_with_affine_variable_bridge()
     @test MOI.get(model, obj) ≈ new_inner_obj
 end
 
+struct _IssueIpopt333 <: MOI.AbstractOptimizer end
+
+function MOI.supports(
+    ::_IssueIpopt333,
+    ::MOI.ConstraintDualStart,
+    ::Type{MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}},
+)
+    return true
+end
+
+function MOI.supports_constraint(
+    ::_IssueIpopt333,
+    ::Type{MOI.VariableIndex},
+    ::Type{MOI.GreaterThan{Float64}},
+)
+    return true
+end
+
+function test_IssueIpopt333_supports_ConstraintDualStart_VariableIndex()
+    model = MOI.Bridges.full_bridge_optimizer(_IssueIpopt333(), Float64)
+    attr = MOI.ConstraintDualStart()
+    IndexType = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}
+    @test MOI.supports(model, attr, IndexType)
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
