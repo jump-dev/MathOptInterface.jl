@@ -1351,7 +1351,7 @@ function MOI.supports(
     # A `F`-in-`S` constraint could be added to the model either if it this
     # constraint is not bridged or if variables constrained on creations to `S`
     # are not bridged and `F` is `VariableIndex` or `VectorOfVariables`.
-    if !is_bridged(b, F, S) || (is_variable_function && !is_bridged(b, S))
+    if !is_bridged(b, F, S) && (is_variable_function && !is_bridged(b, S))
         return MOI.supports(b.model, attr, IndexType)
     end
     bridge = recursive_model(b)
