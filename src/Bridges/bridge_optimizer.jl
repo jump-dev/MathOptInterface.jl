@@ -1347,30 +1347,15 @@ function MOI.supports(
     attr::MOI.AbstractConstraintAttribute,
     IndexType::Type{MOI.ConstraintIndex{F,S}},
 ) where {F,S}
-    is_variable_function = F == MOI.Utilities.variable_function_type(S)
-    # A `F`-in-`S` constraint could be added to the model either if it this
-    # constraint is not bridged or if variables constrained on creations to `S`
-    # are not bridged and `F` is `VariableIndex` or `VectorOfVariables`.
-    if !is_bridged(b, F, S) || (is_variable_function && !is_bridged(b, S))
-        if !MOI.supports(b.model, attr, IndexType)
-            return false
-        end
+    if is_bridged(b, F, S)
+        bridge = Constraint.concrete_bridge_type(b, F, S)
+        return MOI.supports(recursive_model(b), attr, bridge)
+    elseif F == MOI.Utilities.variable_function_type(S) && is_bridged(b, S)
+        bridge = Variable.concrete_bridge_type(b, S)
+        return MOI.supports(recursive_model(b), attr, bridge)
+    else
+        return MOI.supports(b.model, attr, IndexType)
     end
-    bridge = recursive_model(b)
-    # If variable bridged, get the indices from the variable bridges.
-    if is_variable_function && is_bridged(b, S) && is_variable_bridged(b, S)
-        if !MOI.supports(bridge, attr, Variable.concrete_bridge_type(b, S))
-            return false
-        end
-    end
-    # If constraint bridged, get the indices from the constraint bridges.
-    if is_bridged(b, F, S) ||
-       (is_variable_function && supports_constraint_bridges(b))
-        if !MOI.supports(bridge, attr, Constraint.concrete_bridge_type(b, F, S))
-            return false
-        end
-    end
-    return true
 end
 
 function MOI.set(
