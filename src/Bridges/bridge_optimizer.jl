@@ -1347,14 +1347,44 @@ function MOI.supports(
     attr::MOI.AbstractConstraintAttribute,
     IndexType::Type{MOI.ConstraintIndex{F,S}},
 ) where {F,S}
-    if is_bridged(b, F, S)
-        bridge = Constraint.concrete_bridge_type(b, F, S)
-        return MOI.supports(recursive_model(b), attr, bridge)
-    elseif F == MOI.Utilities.variable_function_type(S) && is_bridged(b, S)
-        bridge = Variable.concrete_bridge_type(b, S)
-        return MOI.supports(recursive_model(b), attr, bridge)
+    # !!! warning
+    #     This function is slightly confusing, because we need to account for
+    #     the different ways in which a constraint might be added.
+    is_variable = F == MOI.Utilities.variable_function_type(S)
+    if is_variable
+        # There are three ways an `is_variable` constraint might be added:
+        #  1. It is supported natively
+        #  2. It is added as a free variable, followed by a constraint bridge
+        #  3. It is added by a variable bridge
+        # To distinguish between {1.} and {2., 3.}, we call `is_bridged`:
+        if is_bridged(b, S)
+            # To distinguish between {2.} and {3.}, we call
+            # `is_variable_bridged`:
+            if is_variable_bridged(b, S)
+                # Case 3: check if the variable bridge supports the attribute.
+                bridge = Variable.concrete_bridge_type(b, S)
+                return MOI.supports(recursive_model(b), attr, bridge)
+            else
+                # Case 2: check if the constraint bridge supports the attribute.
+                bridge = Constraint.concrete_bridge_type(b, F, S)
+                return MOI.supports(recursive_model(b), attr, bridge)
+            end
+        else
+            # Case 1: check if the native model supports the attribute.
+            return MOI.supports(b.model, attr, IndexType)
+        end
     else
-        return MOI.supports(b.model, attr, IndexType)
+        # There are two ways an `is_variable` constraint might be added:
+        #  1. It is supported natively
+        #  2. It is added as a constraint bridge
+        if is_bridged(b, F, S)
+            # Case 2: check if the constraint bridge supports the attribute.
+            bridge = Constraint.concrete_bridge_type(b, F, S)
+            return MOI.supports(recursive_model(b), attr, bridge)
+        else
+            # Case 1: check if the native model supports the attribute.
+            return MOI.supports(b.model, attr, IndexType)
+        end
     end
 end
 
