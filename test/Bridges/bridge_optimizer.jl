@@ -847,6 +847,77 @@ function test_IssueIpopt333_supports_ConstraintDualStart_VariableIndex()
     return
 end
 
+"""
+This optimizer mimics SDPA, that is, an optimizer that does not support free
+variables. This can cause all sorts of problems, because it involves both
+variable and constraint bridges.
+"""
+mutable struct _Issue1992 <: MOI.AbstractOptimizer
+    supports::Bool
+    variables::Int
+    constraints::Int
+    _Issue1992(flag) = new(flag, 0, 0)
+end
+
+MOI.supports_add_constrained_variables(::_Issue1992, ::Type{MOI.Reals}) = false
+
+function MOI.supports_add_constrained_variables(
+    ::_Issue1992,
+    ::Type{MOI.Nonnegatives},
+)
+    return true
+end
+
+function MOI.add_constrained_variables(
+    model::_Issue1992,
+    set::S,
+) where {S<:MOI.Nonnegatives}
+    model.variables += 1
+    ci = MOI.ConstraintIndex{MOI.VectorOfVariables,S}(model.variables)
+    return MOI.VariableIndex.(1:set.dimension), ci
+end
+
+function MOI.add_constraint(
+    model::_Issue1992,
+    ::F,
+    ::S,
+) where {F<:MOI.ScalarAffineFunction{Float64},S<:MOI.EqualTo{Float64}}
+    model.constraints += 1
+    return MOI.ConstraintIndex{F,S}(model.constraints)
+end
+
+function MOI.supports_constraint(
+    ::_Issue1992,
+    ::Type{MOI.ScalarAffineFunction{Float64}},
+    ::Type{MOI.EqualTo{Float64}},
+)
+    return true
+end
+
+function MOI.supports(
+    model::_Issue1992,
+    ::MOI.ConstraintDualStart,
+    ::Type{MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}},
+)
+    return model.supports
+end
+
+function test_Issue1992_supports_ConstraintDualStart_VariableIndex()
+    for flag in (true, false)
+        model = MOI.Bridges.full_bridge_optimizer(_Issue1992(flag), Float64)
+        x = MOI.add_variable(model)
+        MOI.add_constraint(
+            model,
+            MOI.VectorOfVariables([x]),
+            MOI.Nonnegatives(1),
+        )
+        attr = MOI.ConstraintDualStart()
+        IndexType = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
+        @test MOI.supports(model, attr, IndexType) == flag
+    end
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
