@@ -918,6 +918,26 @@ function test_Issue1992_supports_ConstraintDualStart_VariableIndex()
     return
 end
 
+function test_bridge_supports_issue_1992()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Variable.NonposToNonneg{Float64}(inner)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([x]),
+        MOI.Nonpositives(1),
+    )
+    # !!! warning
+    #     This test is broken with a false negative. (Getting and setting the
+    #     attribute works, even though supports is false) See the discussion in
+    #     PR#1992.
+    @test_broken MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
+    @test MOI.get(model, MOI.ConstraintDualStart(), c) === nothing
+    MOI.set(model, MOI.ConstraintDualStart(), c, [1.0])
+    @test MOI.get(model, MOI.ConstraintDualStart(), c) == [1.0]
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()

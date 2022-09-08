@@ -1353,8 +1353,18 @@ function MOI.supports(
     if F == MOI.Utilities.variable_function_type(S)
         # These are VariableIndex and VectorOfVariable constraints.
         if is_bridged(b, S)
-            # If S needs to be bridged, it either means that there is a
-            # variable bridge:
+            # If S needs to be bridged, it usually means that either there is a
+            # variable bridge, or that there is a free variable followed by a
+            # constraint bridge (i.e., the two cases handled below).
+            #
+            # However, it might be the case, like the tests in
+            # Variable/flip_sign.jl, that the model supports F-in-S constraints,
+            # but force-bridges S sets. If so, we might be in the unusual
+            # situation where we support the attribute if the index was added
+            # via add_constraint, but not if it was added via
+            # add_constrained_variable. Because MOI lacks the ability to tell
+            # which happened just based on the type, we're going to default to
+            # asking the variable bridge, at the risk of a false negative.
             if is_variable_bridged(b, S)
                 bridge = Variable.concrete_bridge_type(b, S)
                 return MOI.supports(recursive_model(b), attr, bridge)
@@ -1363,6 +1373,9 @@ function MOI.supports(
                 return MOI.supports(recursive_model(b), attr, bridge)
             end
         else
+            # If S doesn't need to be bridged, it either means that the solver
+            # supports add_constrained_variable, or it supports free variables
+            # and add_constraint. Either way, we can defer to the model.
             return MOI.supports(b.model, attr, MOI.ConstraintIndex{F,S})
         end
     else
