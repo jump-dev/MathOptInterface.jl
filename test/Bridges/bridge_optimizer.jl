@@ -847,11 +847,6 @@ function test_IssueIpopt333_supports_ConstraintDualStart_VariableIndex()
     return
 end
 
-"""
-This optimizer mimics SDPA, that is, an optimizer that does not support free
-variables. This can cause all sorts of problems, because it involves both
-variable and constraint bridges.
-"""
 mutable struct _Issue1992 <: MOI.AbstractOptimizer
     supports::Bool
     variables::Int
