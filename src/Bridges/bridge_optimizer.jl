@@ -1342,49 +1342,38 @@ function MOI.get(
     return unbridged_function(b, func)
 end
 
-function _supports_constraint(
-    model::MOI.ModelLike,
-    ::Type{F},
-    ::Type{S},
-) where {F, S}
-    return MOI.supports_constraint(model, F, S)
-end
-
-function _supports_constraint(
-    model::MOI.ModelLike,
-    ::Type{MOI.VariableIndex},
-    ::Type{S},
-) where {S}
-    return MOI.supports_constraint(model, MOI.VariableIndex, S) ||
-           MOI.supports_add_constrained_variable(model, S)
-end
-
-function _supports_constraint(
-    model::MOI.ModelLike,
-    ::Type{MOI.VectorOfVariables},
-    ::Type{S},
-) where {S}
-    return MOI.supports_constraint(model, MOI.VectorOfVariables, S) ||
-           MOI.supports_add_constrained_variables(model, S)
-end
-
 function MOI.supports(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractConstraintAttribute,
-    IndexType::Type{MOI.ConstraintIndex{F,S}},
+    ::Type{MOI.ConstraintIndex{F,S}},
 ) where {F,S}
     # !!! warning
     #     This function is slightly confusing, because we need to account for
     #     the different ways in which a constraint might be added.
-    is_variable = F == MOI.Utilities.variable_function_type(S)
-    if _supports_constraint(b.model, F, S)
-        return MOI.supports(b.model, attr, IndexType)
-    elseif is_variable && is_bridged(b, S) && is_variable_bridged(b, S)
-        bridge = Variable.concrete_bridge_type(b, S)
-        return MOI.supports(recursive_model(b), attr, bridge)
+    if F == MOI.Utilities.variable_function_type(S)
+        # These are VariableIndex and VectorOfVariable constraints.
+        if is_bridged(b, S)
+            # If S needs to be bridged, it either means that there is a
+            # variable bridge:
+            if is_variable_bridged(b, S)
+                bridge = Variable.concrete_bridge_type(b, S)
+                return MOI.supports(recursive_model(b), attr, bridge)
+            else
+                bridge = Constraint.concrete_bridge_type(b, F, S)
+                return MOI.supports(recursive_model(b), attr, bridge)
+            end
+        else
+            return MOI.supports(b.model, attr, MOI.ConstraintIndex{F,S})
+        end
     else
-        bridge = Constraint.concrete_bridge_type(b, F, S)
-        return MOI.supports(recursive_model(b), attr, bridge)
+        # These are normal add_constraints, so we just check if they are
+        # bridged.
+        if is_bridged(b, F, S)
+            bridge = Constraint.concrete_bridge_type(b, F, S)
+            return MOI.supports(recursive_model(b), attr, bridge)
+        else
+            return MOI.supports(b.model, attr, MOI.ConstraintIndex{F,S})
+        end
     end
 end
 
