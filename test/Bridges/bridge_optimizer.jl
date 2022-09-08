@@ -859,11 +859,9 @@ mutable struct _Issue1992 <: MOI.AbstractOptimizer
     _Issue1992(flag) = new(flag, 0, 0)
 end
 
-MOI.supports_add_constrained_variables(::_Issue1992, ::Type{MOI.Reals}) = false
-
 function MOI.supports_add_constrained_variables(
     ::_Issue1992,
-    ::Type{MOI.Nonnegatives},
+    ::Type{<:Union{MOI.Nonpositives,MOI.Nonnegatives}},
 )
     return true
 end
@@ -871,7 +869,7 @@ end
 function MOI.add_constrained_variables(
     model::_Issue1992,
     set::S,
-) where {S<:MOI.Nonnegatives}
+) where {S<:Union{MOI.Nonpositives,MOI.Nonnegatives}}
     model.variables += 1
     ci = MOI.ConstraintIndex{MOI.VectorOfVariables,S}(model.variables)
     return MOI.VariableIndex.(1:set.dimension), ci
@@ -881,15 +879,15 @@ function MOI.add_constraint(
     model::_Issue1992,
     ::F,
     ::S,
-) where {F<:MOI.ScalarAffineFunction{Float64},S<:MOI.EqualTo{Float64}}
+) where {F<:MOI.VectorAffineFunction{Float64},S<:MOI.Nonnegatives}
     model.constraints += 1
     return MOI.ConstraintIndex{F,S}(model.constraints)
 end
 
 function MOI.supports_constraint(
     ::_Issue1992,
-    ::Type{MOI.ScalarAffineFunction{Float64}},
-    ::Type{MOI.EqualTo{Float64}},
+    ::Type{MOI.VectorAffineFunction{Float64}},
+    ::Type{MOI.Nonnegatives},
 )
     return true
 end
@@ -897,24 +895,33 @@ end
 function MOI.supports(
     model::_Issue1992,
     ::MOI.ConstraintDualStart,
-    ::Type{MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}},
-)
+    ::Type{MOI.ConstraintIndex{F,MOI.Nonnegatives}},
+) where {F<:MOI.VectorAffineFunction{Float64}}
     return model.supports
 end
 
 function test_Issue1992_supports_ConstraintDualStart_VariableIndex()
-    for flag in (true, false)
-        model = MOI.Bridges.full_bridge_optimizer(_Issue1992(flag), Float64)
-        x = MOI.add_variable(model)
-        MOI.add_constraint(
-            model,
-            MOI.VectorOfVariables([x]),
-            MOI.Nonnegatives(1),
-        )
-        attr = MOI.ConstraintDualStart()
-        IndexType = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
-        @test MOI.supports(model, attr, IndexType) == flag
-    end
+    # supports should be false
+    model = MOI.Bridges.full_bridge_optimizer(_Issue1992(false), Float64)
+    x, _ = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+    c2 = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables(x),
+        MOI.Nonnegatives(1),
+    )
+    @test !MOI.supports(model, MOI.ConstraintDualStart(), typeof(c2))
+    # supports should be true
+    model = MOI.Bridges.full_bridge_optimizer(_Issue1992(true), Float64)
+    x, _ = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+    c2 = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables(x),
+        MOI.Nonnegatives(1),
+    )
+    # !!! warning
+    #     This test is broken with a false negative. See the discussion in
+    #     PR#1992.
+    @test_broken MOI.supports(model, MOI.ConstraintDualStart(), typeof(c2))
     return
 end
 

@@ -1373,9 +1373,16 @@ function MOI.supports(
                 return MOI.supports(recursive_model(b), attr, bridge)
             end
         else
-            # If S doesn't need to be bridged, it either means that the solver
-            # supports add_constrained_variable, or it supports free variables
-            # and add_constraint. Either way, we can defer to the model.
+            # If S doesn't need to be bridged, it usually means that either the
+            # solver supports add_constrained_variable, or it supports free
+            # variables and add_constraint.
+            #
+            # In some cases, it might be that the solver supports
+            # add_constrained_variable, but ends up bridging add_constraint.
+            # Because MOI lacks the ability to tell which one was called based
+            # on the index type, asking the model might give a false negative
+            # (we support the attribute via add_constrained_variable, but the
+            # bridge doesn't via add_constraint because it will be bridged).
             return MOI.supports(b.model, attr, MOI.ConstraintIndex{F,S})
         end
     else
