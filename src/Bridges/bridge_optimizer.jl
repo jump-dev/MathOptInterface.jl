@@ -1345,16 +1345,55 @@ end
 function MOI.supports(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractConstraintAttribute,
-    IndexType::Type{MOI.ConstraintIndex{F,S}},
+    ::Type{MOI.ConstraintIndex{F,S}},
 ) where {F,S}
-    if is_bridged(b, F, S)
-        bridge = Constraint.concrete_bridge_type(b, F, S)
-        return MOI.supports(recursive_model(b), attr, bridge)
-    elseif F == MOI.Utilities.variable_function_type(S) && is_bridged(b, S)
-        bridge = Variable.concrete_bridge_type(b, S)
-        return MOI.supports(recursive_model(b), attr, bridge)
+    # !!! warning
+    #     This function is slightly confusing, because we need to account for
+    #     the different ways in which a constraint might be added.
+    if F == MOI.Utilities.variable_function_type(S)
+        # These are VariableIndex and VectorOfVariable constraints.
+        if is_bridged(b, S)
+            # If S needs to be bridged, it usually means that either there is a
+            # variable bridge, or that there is a free variable followed by a
+            # constraint bridge (i.e., the two cases handled below).
+            #
+            # However, it might be the case, like the tests in
+            # Variable/flip_sign.jl, that the model supports F-in-S constraints,
+            # but force-bridges S sets. If so, we might be in the unusual
+            # situation where we support the attribute if the index was added
+            # via add_constraint, but not if it was added via
+            # add_constrained_variable. Because MOI lacks the ability to tell
+            # which happened just based on the type, we're going to default to
+            # asking the variable bridge, at the risk of a false negative.
+            if is_variable_bridged(b, S)
+                bridge = Variable.concrete_bridge_type(b, S)
+                return MOI.supports(recursive_model(b), attr, bridge)
+            else
+                bridge = Constraint.concrete_bridge_type(b, F, S)
+                return MOI.supports(recursive_model(b), attr, bridge)
+            end
+        else
+            # If S doesn't need to be bridged, it usually means that either the
+            # solver supports add_constrained_variable, or it supports free
+            # variables and add_constraint.
+            #
+            # In some cases, it might be that the solver supports
+            # add_constrained_variable, but ends up bridging add_constraint.
+            # Because MOI lacks the ability to tell which one was called based
+            # on the index type, asking the model might give a false negative
+            # (we support the attribute via add_constrained_variable, but the
+            # bridge doesn't via add_constraint because it will be bridged).
+            return MOI.supports(b.model, attr, MOI.ConstraintIndex{F,S})
+        end
     else
-        return MOI.supports(b.model, attr, IndexType)
+        # These are normal add_constraints, so we just check if they are
+        # bridged.
+        if is_bridged(b, F, S)
+            bridge = Constraint.concrete_bridge_type(b, F, S)
+            return MOI.supports(recursive_model(b), attr, bridge)
+        else
+            return MOI.supports(b.model, attr, MOI.ConstraintIndex{F,S})
+        end
     end
 end
 

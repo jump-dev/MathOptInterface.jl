@@ -847,6 +847,91 @@ function test_IssueIpopt333_supports_ConstraintDualStart_VariableIndex()
     return
 end
 
+mutable struct _Issue1992 <: MOI.AbstractOptimizer
+    supports::Bool
+    variables::Int
+    constraints::Int
+    _Issue1992(flag) = new(flag, 0, 0)
+end
+
+function MOI.supports_add_constrained_variables(
+    ::_Issue1992,
+    ::Type{<:Union{MOI.Nonpositives,MOI.Nonnegatives}},
+)
+    return true
+end
+
+function MOI.add_constrained_variables(
+    model::_Issue1992,
+    set::S,
+) where {S<:Union{MOI.Nonpositives,MOI.Nonnegatives}}
+    model.variables += 1
+    ci = MOI.ConstraintIndex{MOI.VectorOfVariables,S}(model.variables)
+    return MOI.VariableIndex.(1:set.dimension), ci
+end
+
+function MOI.add_constraint(
+    model::_Issue1992,
+    ::F,
+    ::S,
+) where {F<:MOI.VectorAffineFunction{Float64},S<:MOI.Nonnegatives}
+    model.constraints += 1
+    return MOI.ConstraintIndex{F,S}(model.constraints)
+end
+
+function MOI.supports_constraint(
+    ::_Issue1992,
+    ::Type{MOI.VectorAffineFunction{Float64}},
+    ::Type{MOI.Nonnegatives},
+)
+    return true
+end
+
+function MOI.supports(
+    model::_Issue1992,
+    ::MOI.ConstraintDualStart,
+    ::Type{MOI.ConstraintIndex{F,MOI.Nonnegatives}},
+) where {F<:MOI.VectorAffineFunction{Float64}}
+    return model.supports
+end
+
+function test_Issue1992_supports_ConstraintDualStart_VariableIndex()
+    # supports should be false
+    model = MOI.Bridges.full_bridge_optimizer(_Issue1992(false), Float64)
+    x, _ = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+    c = MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Nonnegatives(1))
+    @test !MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
+    # supports should be true
+    model = MOI.Bridges.full_bridge_optimizer(_Issue1992(true), Float64)
+    x, _ = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+    c = MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Nonnegatives(1))
+    # !!! warning
+    #     This test is broken with a false negative. See the discussion in
+    #     PR#1992.
+    @test_broken MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
+    return
+end
+
+function test_bridge_supports_issue_1992()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Variable.NonposToNonneg{Float64}(inner)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([x]),
+        MOI.Nonpositives(1),
+    )
+    # !!! warning
+    #     This test is broken with a false negative. (Getting and setting the
+    #     attribute works, even though supports is false) See the discussion in
+    #     PR#1992.
+    @test_broken MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
+    @test MOI.get(model, MOI.ConstraintDualStart(), c) === nothing
+    MOI.set(model, MOI.ConstraintDualStart(), c, [1.0])
+    @test MOI.get(model, MOI.ConstraintDualStart(), c) == [1.0]
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
