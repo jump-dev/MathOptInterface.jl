@@ -10,7 +10,7 @@
     ) <: MOI.AbstractModelAttribute
 
 A model attribute that, when set, destructively modifies the model in-place to
-create a feasibility relxation.
+create a feasibility relaxation.
 
 !!! warning
     This is a destructive routine that modifies the model in-place. If you don't
@@ -35,7 +35,7 @@ constraints, because these cannot be modified in-place.
 
 ## Example
 
-```jldoctest
+```jldoctest; setup=:(import MathOptInterface; const MOI = MathOptInterface)
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model);
