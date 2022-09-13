@@ -90,6 +90,12 @@ Utilities.identity_index_map
 Utilities.ModelFilter
 ```
 
+## Feasibility relaxation
+
+```@docs
+Utilities.FeasibilityRelaxation
+```
+
 ## MatrixOfConstraints
 
 ```@docs

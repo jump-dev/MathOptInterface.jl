@@ -315,6 +315,36 @@ $$ \begin{aligned}
     In IJulia, calling `print` or ending a cell with
     [`Utilities.latex_formulation`](@ref) will render the model in LaTeX.
 
+## Utilities.FeasibilityRelaxation
+
+Set the [`Utilities.FeasibilityRelaxation`](@ref) attribute to relax the
+problem by adding penalized slack variables to the constraints. This is helpful
+when debugging sources of infeasible models.
+
+```jldoctest
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(model);
+
+julia> MOI.set(model, MOI.VariableName(), x, "x")
+
+julia> c = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0));
+
+julia> MOI.set(model, MOI.Utilities.FeasibilityRelaxation(Dict(c => 2.0)))
+
+julia> print(model)
+Minimize ScalarAffineFunction{Float64}:
+ 0.0 + 2.0 v[2]
+
+Subject to:
+
+ScalarAffineFunction{Float64}-in-LessThan{Float64}
+ 0.0 + 1.0 x - 1.0 v[2] <= 2.0
+
+VariableIndex-in-GreaterThan{Float64}
+ v[2] >= 0.0
+```
+
 ## Utilities.MatrixOfConstraints
 
 The constraints of [`Utilities.Model`](@ref) are stored as a vector of tuples
