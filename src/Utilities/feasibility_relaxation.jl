@@ -28,7 +28,7 @@ constraint that is being relaxed. If no value exists, the default is `1.0`.
 The feasibility relaxation is limited to modifying constraint types for which
 `MOI.supports(model, ::FeasibilityRelaxation, MOI.ConstraintIndex{F,S})` is
 `true`. By default, this is only true for [`MOI.ScalarAffineFunction`](@ref) and
-[`MOI.MOI.ScalarQuadraticFunction`](@ref) constraints in the linear sets
+[`MOI.ScalarQuadraticFunction`](@ref) constraints in the linear sets
 [`MOI.LessThan`](@ref), [`MOI.GreaterThan`](@ref), [`MOI.EqualTo`](@ref) and
 [`MOI.Interval`](@ref). It does not include variable bound or integrality
 constraints, because these cannot be modified in-place.
