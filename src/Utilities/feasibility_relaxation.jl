@@ -111,7 +111,7 @@ end
 function MOI.supports(
     ::MOI.ModelLike,
     ::FeasibilityRelaxation,
-    ::Type{MOI.ConstraintIndex{F,<:MOI.AbstractScalarSet}},
+    ::Type{<:MOI.ConstraintIndex{F,<:MOI.AbstractScalarSet}},
 ) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
     return true
 end
