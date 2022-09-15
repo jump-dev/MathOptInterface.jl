@@ -4,39 +4,42 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-# Attributes
-
 """
     AbstractOptimizerAttribute
 
-Abstract supertype for attribute objects that can be used to set or get attributes (properties) of the optimizer.
+Abstract supertype for attribute objects that can be used to set or get
+attributes (properties) of the optimizer.
 
-### Note
+## Notes
 
-The difference between `AbstractOptimizerAttribute` and `AbstractModelAttribute`
-lies in the behavior of `is_empty`, `empty!` and `copy_to`. Typically optimizer
-attributes only affect how the model is solved.
+The difference between `AbstractOptimizerAttribute` and
+[`AbstractModelAttribute`](@ref) lies in the behavior of [`is_empty`](@ref),
+[`empty!`](@ref) and [`copy_to`](@ref). Typically optimizer attributes affect
+only how the model is solved.
 """
 abstract type AbstractOptimizerAttribute end
 
 """
     AbstractModelAttribute
 
-Abstract supertype for attribute objects that can be used to set or get attributes (properties) of the model.
+Abstract supertype for attribute objects that can be used to set or get
+attributes (properties) of the model.
 """
 abstract type AbstractModelAttribute end
 
 """
     AbstractVariableAttribute
 
-Abstract supertype for attribute objects that can be used to set or get attributes (properties) of variables in the model.
+Abstract supertype for attribute objects that can be used to set or get
+attributes (properties) of variables in the model.
 """
 abstract type AbstractVariableAttribute end
 
 """
     AbstractConstraintAttribute
 
-Abstract supertype for attribute objects that can be used to set or get attributes (properties) of constraints in the model.
+Abstract supertype for attribute objects that can be used to set or get
+attributes (properties) of constraints in the model.
 """
 abstract type AbstractConstraintAttribute end
 
@@ -59,7 +62,7 @@ Base.broadcastable(attribute::AnyAttribute) = Ref(attribute)
 Given an attribute `attr`, return the type of value expected by [`get`](@ref),
 or returned by [`set`](@ref).
 
-# Notes
+## Notes
 
  * Only implement this if it make sense to do so. If un-implemented, the default
    is `Any`.
@@ -79,13 +82,15 @@ struct UnsupportedAttribute{AttrType<:AnyAttribute} <: UnsupportedError
     attr::AttrType
     message::String
 end
+
 UnsupportedAttribute(attr::AnyAttribute) = UnsupportedAttribute(attr, "")
+
 element_name(err::UnsupportedAttribute) = "Attribute $(err.attr)"
 
 """
     struct SetAttributeNotAllowed{AttrType} <: NotAllowedError
         attr::AttrType
-        message::String # Human-friendly explanation why the attribute cannot be set
+        message::String
     end
 
 An error indicating that the attribute `attr` is supported (see
@@ -95,9 +100,11 @@ struct SetAttributeNotAllowed{AttrType<:AnyAttribute} <: NotAllowedError
     attr::AttrType
     message::String # Human-friendly explanation why the attribute cannot be set
 end
+
 SetAttributeNotAllowed(attr::AnyAttribute) = SetAttributeNotAllowed(attr, "")
 
 operation_name(err::SetAttributeNotAllowed) = "Setting attribute $(err.attr)"
+
 message(err::SetAttributeNotAllowed) = err.message
 
 """
@@ -151,7 +158,7 @@ end
 """
     struct SubmitNotAllowed{SubmitTyp<:AbstractSubmittable} <: NotAllowedError
         sub::SubmitType
-        message::String # Human-friendly explanation why the attribute cannot be set
+        message::String
     end
 
 An error indicating that the submittable `sub` is supported (see
@@ -161,9 +168,11 @@ struct SubmitNotAllowed{SubmitType<:AbstractSubmittable} <: NotAllowedError
     sub::SubmitType
     message::String # Human-friendly explanation why the attribute cannot be set
 end
+
 SubmitNotAllowed(sub::AbstractSubmittable) = SubmitNotAllowed(sub, "")
 
 operation_name(err::SubmitNotAllowed) = "Submitting $(err.sub)"
+
 message(err::SubmitNotAllowed) = err.message
 
 """
@@ -197,7 +206,9 @@ function check_result_index_bounds(model::ModelLike, attr)
     if !(1 <= attr.result_index <= result_count)
         throw(ResultIndexBoundsError(attr, result_count))
     end
+    return
 end
+
 function Base.showerror(io::IO, err::ResultIndexBoundsError)
     return print(
         io,
@@ -211,7 +222,9 @@ end
 
 Return a `Bool` indicating whether `model` supports the submittable `sub`.
 
-    supports(model::ModelLike, attr::AbstractOptimizerAttribute)::Bool
+```julia
+supports(model::ModelLike, attr::AbstractOptimizerAttribute)::Bool
+```
 
 Return a `Bool` indicating whether `model` supports the optimizer attribute
 `attr`. That is, it returns `false` if `copy_to(model, src)` shows a warning in
@@ -219,19 +232,33 @@ case `attr` is in the [`ListOfOptimizerAttributesSet`](@ref) of `src`; see
 [`copy_to`](@ref) for more details on how unsupported optimizer attributes are
 handled in copy.
 
-    supports(model::ModelLike, attr::AbstractModelAttribute)::Bool
+```julia
+supports(model::ModelLike, attr::AbstractModelAttribute)::Bool
+```
 
 Return a `Bool` indicating whether `model` supports the model attribute `attr`.
 That is, it returns `false` if `copy_to(model, src)` cannot be performed in case
 `attr` is in the [`ListOfModelAttributesSet`](@ref) of `src`.
 
-    supports(model::ModelLike, attr::AbstractVariableAttribute, ::Type{VariableIndex})::Bool
+```julia
+supports(
+    model::ModelLike,
+    attr::AbstractVariableAttribute,
+    ::Type{VariableIndex},
+)::Bool
+```
 
 Return a `Bool` indicating whether `model` supports the variable attribute
 `attr`. That is, it returns `false` if `copy_to(model, src)` cannot be performed
 in case `attr` is in the [`ListOfVariableAttributesSet`](@ref) of `src`.
 
-    supports(model::ModelLike, attr::AbstractConstraintAttribute, ::Type{ConstraintIndex{F,S}})::Bool where {F,S}
+```julia
+supports(
+    model::ModelLike,
+    attr::AbstractConstraintAttribute,
+    ::Type{ConstraintIndex{F,S}},
+)::Bool where {F,S}
+```
 
 Return a `Bool` indicating whether `model` supports the constraint attribute
 `attr` applied to an `F`-in-`S` constraint. That is, it returns `false` if
@@ -245,12 +272,11 @@ Note that `supports` is only defined for attributes for which
 [`is_copyable`](@ref) returns `true` as other attributes do not appear in the
 list of attributes set obtained by `ListOf...AttributesSet`.
 """
-function supports end
-supports(::ModelLike, ::AbstractSubmittable) = false
-
 function supports(model::ModelLike, attr::AnyAttribute, args...)
     return supports_fallback(model, attr, args...)
 end
+
+supports(::ModelLike, ::AbstractSubmittable) = false
 
 function supports_fallback(
     ::ModelLike,
@@ -290,72 +316,87 @@ end
 
 Return an attribute `attr` of the optimizer `optimizer`.
 
-    get(model::ModelLike, attr::AbstractModelAttribute)
+```julia
+get(model::ModelLike, attr::AbstractModelAttribute)
+```
 
 Return an attribute `attr` of the model `model`.
 
-    get(model::ModelLike, attr::AbstractVariableAttribute, v::VariableIndex)
+```julia
+get(model::ModelLike, attr::AbstractVariableAttribute, v::VariableIndex)
+```
 
 If the attribute `attr` is set for the variable `v` in the model `model`, return
 its value, return `nothing` otherwise. If the attribute `attr` is not supported
 by `model` then an error should be thrown instead of returning `nothing`.
 
-    get(model::ModelLike, attr::AbstractVariableAttribute, v::Vector{VariableIndex})
+```julia
+get(model::ModelLike, attr::AbstractVariableAttribute, v::Vector{VariableIndex})
+```
 
-Return a vector of attributes corresponding to each variable in the collection `v` in the model `model`.
+Return a vector of attributes corresponding to each variable in the collection
+`v` in the model `model`.
 
-    get(model::ModelLike, attr::AbstractConstraintAttribute, c::ConstraintIndex)
+```julia
+get(model::ModelLike, attr::AbstractConstraintAttribute, c::ConstraintIndex)
+```
 
 If the attribute `attr` is set for the constraint `c` in the model `model`,
 return its value, return `nothing` otherwise. If the attribute `attr` is not
 supported by `model` then an error should be thrown instead of returning
 `nothing`.
 
-    get(model::ModelLike, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}})
+```julia
+get(
+    model::ModelLike,
+    attr::AbstractConstraintAttribute,
+    c::Vector{ConstraintIndex{F,S}},
+) where {F,S}
+```
 
-Return a vector of attributes corresponding to each constraint in the collection `c` in the model `model`.
+Return a vector of attributes corresponding to each constraint in the collection
+`c` in the model `model`.
 
-    get(model::ModelLike, ::Type{VariableIndex}, name::String)
+```julia
+get(model::ModelLike, ::Type{VariableIndex}, name::String)
+```
 
 If a variable with name `name` exists in the model `model`, return the
 corresponding index, otherwise return `nothing`. Errors if two variables
 have the same name.
 
-    get(model::ModelLike, ::Type{ConstraintIndex{F,S}}, name::String) where {F<:AbstractFunction,S<:AbstractSet}
+```julia
+get(
+    model::ModelLike,
+    ::Type{ConstraintIndex{F,S}},
+    name::String,
+) where {F,S}
+```
 
 If an `F`-in-`S` constraint with name `name` exists in the model `model`, return
 the corresponding index, otherwise return `nothing`. Errors if two constraints
 have the same name.
 
-    get(model::ModelLike, ::Type{ConstraintIndex}, name::String)
+```julia
+get(model::ModelLike, ::Type{ConstraintIndex}, name::String)
+```
 
 If *any* constraint with name `name` exists in the model `model`, return the
 corresponding index, otherwise return `nothing`. This version is available for
 convenience but may incur a performance penalty because it is not type stable.
 Errors if two constraints have the same name.
-
-### Examples
-
-```julia
-get(model, ObjectiveValue())
-get(model, VariablePrimal(), ref)
-get(model, VariablePrimal(5), [ref1, ref2])
-get(model, OtherAttribute("something specific to cplex"))
-get(model, VariableIndex, "var1")
-get(model, ConstraintIndex{ScalarAffineFunction{Float64},LessThan{Float64}}, "con1")
-get(model, ConstraintIndex, "con1")
-```
 """
-function get end
-# We want to avoid being too specific in the type arguments to avoid method ambiguity.
-# For model, get(::ModelLike, ::AbstractVariableAttribute, ::Vector{VariableIndex}) would not allow
-# to define get(::SomeModel, ::AnyAttribute, ::Vector)
-function get(model::ModelLike, attr::AnyAttribute, idxs::Vector)
-    return get.(model, attr, idxs)
-end
-
 function get(model::ModelLike, attr::AnyAttribute, args...)
     return get_fallback(model, attr, args...)
+end
+
+# !!! danger
+#     We want to avoid being too specific in the type arguments to avoid method
+#     ambiguity. For example,
+#         get(::ModelLike, ::AbstractVariableAttribute, ::Vector{VariableIndex})
+#     would not allow us to define get(::SomeModel, ::AnyAttribute, ::Vector).
+function get(model::ModelLike, attr::AnyAttribute, idxs::Vector)
+    return get.(model, attr, idxs)
 end
 
 function get_fallback(
@@ -423,73 +464,92 @@ end
 
 Assign `value` to the attribute `attr` of the optimizer `optimizer`.
 
-    set(model::ModelLike, attr::AbstractModelAttribute, value)
+```julia
+set(model::ModelLike, attr::AbstractModelAttribute, value)
+```
 
 Assign `value` to the attribute `attr` of the model `model`.
 
-    set(model::ModelLike, attr::AbstractVariableAttribute, v::VariableIndex, value)
+```julia
+set(model::ModelLike, attr::AbstractVariableAttribute, v::VariableIndex, value)
+```
 
 Assign `value` to the attribute `attr` of variable `v` in model `model`.
 
-    set(model::ModelLike, attr::AbstractVariableAttribute, v::Vector{VariableIndex}, vector_of_values)
+```julia
+set(
+    model::ModelLike,
+    attr::AbstractVariableAttribute,
+    v::Vector{VariableIndex},
+    vector_of_values,
+)
+```
 
-Assign a value respectively to the attribute `attr` of each variable in the collection `v` in model `model`.
+Assign a value respectively to the attribute `attr` of each variable in the
+collection `v` in model `model`.
 
-    set(model::ModelLike, attr::AbstractConstraintAttribute, c::ConstraintIndex, value)
+```julia
+set(
+    model::ModelLike,
+    attr::AbstractConstraintAttribute,
+    c::ConstraintIndex,
+    value,
+)
+```
 
 Assign a value to the attribute `attr` of constraint `c` in model `model`.
 
-    set(model::ModelLike, attr::AbstractConstraintAttribute, c::Vector{ConstraintIndex{F,S}}, vector_of_values)
+```julia
+set(
+    model::ModelLike,
+    attr::AbstractConstraintAttribute,
+    c::Vector{ConstraintIndex{F,S}},
+    vector_of_values,
+) where {F,S}
+```
 
-Assign a value respectively to the attribute `attr` of each constraint in the collection `c` in model `model`.
+Assign a value respectively to the attribute `attr` of each constraint in the
+collection `c` in model `model`.
 
 An [`UnsupportedAttribute`](@ref) error is thrown if `model` does not support
 the attribute `attr` (see [`supports`](@ref)) and a [`SetAttributeNotAllowed`](@ref)
 error is thrown if it supports the attribute `attr` but it cannot be set.
 
-### Replace set in a constraint
-
-    set(model::ModelLike, ::ConstraintSet, c::ConstraintIndex{F,S}, set::S)
+```julia
+set(
+    model::ModelLike,
+    ::ConstraintSet,
+    c::ConstraintIndex{F,S},
+    set::S,
+) where {F,S}
+```
 
 Change the set of constraint `c` to the new set `set` which should be of the
 same type as the original set.
 
-#### Examples
-
-If `c` is a `ConstraintIndex{F,Interval}`
-
 ```julia
-set(model, ConstraintSet(), c, Interval(0, 5))
-set(model, ConstraintSet(), c, GreaterThan(0.0))  # Error
+set(
+    model::ModelLike,
+    ::ConstraintFunction,
+    c::ConstraintIndex{F,S},
+    func::F,
+) where {F,S}
 ```
-
-### Replace function in a constraint
-
-    set(model::ModelLike, ::ConstraintFunction, c::ConstraintIndex{F,S}, func::F)
 
 Replace the function in constraint `c` with `func`. `F` must match the original
 function type used to define the constraint.
 
-#### Note
-
-Setting the constraint function is not allowed if `F` is
-[`VariableIndex`](@ref), it throws a
-[`SettingVariableIndexNotAllowed`](@ref) error. Indeed, it would
-require changing the index `c` as the index of `VariableIndex` constraints
-should be the same as the index of the variable.
-
-#### Examples
-
-If `c` is a `ConstraintIndex{ScalarAffineFunction,S}` and `v1` and `v2` are
-`VariableIndex` objects,
-
-```julia
-set(model, ConstraintFunction(), c,
-    ScalarAffineFunction(ScalarAffineTerm.([1.0, 2.0], [v1, v2]), 5.0))
-set(model, ConstraintFunction(), c, v1) # Error
-```
+!!! note
+    Setting the constraint function is not allowed if `F` is
+    [`VariableIndex`](@ref); a [`SettingVariableIndexNotAllowed`](@ref) error is
+    thrown instead. This is because, it would require changing the index `c`
+    since the index of [`VariableIndex`](@ref) constraints must be the same as
+    the index of the variable.
 """
-function set end
+function set(model::ModelLike, attr::AnyAttribute, args...)
+    return throw_set_error_fallback(model, attr, args...)
+end
+
 # See note with get
 function set(
     model::ModelLike,
@@ -509,13 +569,11 @@ function set(
     return set.(model, attr, idxs, vector_of_values)
 end
 
-function set(model::ModelLike, attr::AnyAttribute, args...)
-    return throw_set_error_fallback(model, attr, args...)
-end
 # throw_set_error_fallback is included so that we can return type-specific error
 # messages without needing to overload set and cause ambiguity errors. For
-# examples, see ConstraintSet and ConstraintFunction. throw_set_error_fallback should
-# not be overloaded by users of MOI.
+# examples, see ConstraintSet and ConstraintFunction.
+#
+# throw_set_error_fallback should not be overloaded by users of MOI.
 function throw_set_error_fallback(
     model::ModelLike,
     attr::Union{AbstractModelAttribute,AbstractOptimizerAttribute},
@@ -528,6 +586,7 @@ function throw_set_error_fallback(
         throw(UnsupportedAttribute(attr))
     end
 end
+
 function throw_set_error_fallback(
     model::ModelLike,
     attr::Union{AbstractVariableAttribute,AbstractConstraintAttribute},
@@ -551,16 +610,18 @@ the [`ConstraintFunction`](@ref) of a [`VariableIndex`](@ref) constraint.
 struct SettingVariableIndexNotAllowed <: Exception end
 
 """
-    submit(optimizer::AbstractOptimizer, sub::AbstractSubmittable,
-           values...)::Nothing
+    submit(
+        optimizer::AbstractOptimizer,
+        sub::AbstractSubmittable,
+        values...,
+    )::Nothing
 
 Submit `values` to the submittable `sub` of the optimizer `optimizer`.
 
 An [`UnsupportedSubmittable`](@ref) error is thrown if `model` does not support
 the attribute `attr` (see [`supports`](@ref)) and a [`SubmitNotAllowed`](@ref)
 error is thrown if it supports the submittable `sub` but it cannot be submitted.
-""" # TODO add an example once we have an attribute which can be submitted, e.g. Lazy constraint
-function submit end
+"""
 function submit(model::ModelLike, sub::AbstractSubmittable, args...)
     if supports(model, sub)
         throw(
@@ -577,8 +638,6 @@ function submit(model::ModelLike, sub::AbstractSubmittable, args...)
         )
     end
 end
-
-## Submittables
 
 """
     LazyConstraint(callback_data)
@@ -610,12 +669,14 @@ end
     HeuristicSolutionStatus
 
 An Enum of possible return values for [`submit`](@ref) with
-[`HeuristicSolution`](@ref).
-This informs whether the heuristic solution was accepted or rejected.
+[`HeuristicSolution`](@ref). This informs whether the heuristic solution was
+accepted or rejected.
+
 Possible values are:
-* `HEURISTIC_SOLUTION_ACCEPTED`: The heuristic solution was accepted.
-* `HEURISTIC_SOLUTION_REJECTED`: The heuristic solution was rejected.
-* `HEURISTIC_SOLUTION_UNKNOWN`: No information available on the acceptance.
+
+ * `HEURISTIC_SOLUTION_ACCEPTED`: The heuristic solution was accepted
+ * `HEURISTIC_SOLUTION_REJECTED`: The heuristic solution was rejected
+ * `HEURISTIC_SOLUTION_UNKNOWN`: No information available on the acceptance
 """
 @enum(
     HeuristicSolutionStatus,
@@ -697,12 +758,12 @@ An Enum of possible return values from calling [`get`](@ref) with
 
 Possible values are:
 
-* `CALLBACK_NODE_STATUS_INTEGER`: the primal solution available from
-  [`CallbackVariablePrimal`](@ref) is integer feasible.
-* `CALLBACK_NODE_STATUS_FRACTIONAL`: the primal solution available from
-  [`CallbackVariablePrimal`](@ref) is integer infeasible.
-* `CALLBACK_NODE_STATUS_UNKNOWN`: the primal solution available from
-  [`CallbackVariablePrimal`](@ref) might be integer feasible or infeasible.
+ * `CALLBACK_NODE_STATUS_INTEGER`: the primal solution available from
+   [`CallbackVariablePrimal`](@ref) is integer feasible.
+ * `CALLBACK_NODE_STATUS_FRACTIONAL`: the primal solution available from
+   [`CallbackVariablePrimal`](@ref) is integer infeasible.
+ * `CALLBACK_NODE_STATUS_UNKNOWN`: the primal solution available from
+   [`CallbackVariablePrimal`](@ref) might be integer feasible or infeasible.
 """
 @enum(
     CallbackNodeStatusCode,
@@ -728,12 +789,11 @@ is_set_by_optimize(::CallbackNodeStatus) = true
 
 attribute_value_type(::CallbackNodeStatus) = CallbackNodeStatusCode
 
-## Optimizer attributes
-
 """
     ListOfOptimizerAttributesSet()
 
-An optimizer attribute for the `Vector{AbstractOptimizerAttribute}` of all optimizer attributes that were set.
+An optimizer attribute for the `Vector{AbstractOptimizerAttribute}` of all
+optimizer attributes that were set.
 """
 struct ListOfOptimizerAttributesSet <: AbstractOptimizerAttribute end
 
@@ -753,13 +813,13 @@ An optimizer attribute for the string identifying the version of the solver.
 
 !!! note
 
-    For solvers supporting [semantic versioning](https://semver.org), the `SolverVersion` should be a string
-    of the form "vMAJOR.MINOR.PATCH", so that it can be converted to
-    a Julia `VersionNumber` (e.g., `VersionNumber("v1.2.3")).
+    For solvers supporting [semantic versioning](https://semver.org), the
+    `SolverVersion` should be a string of the form "vMAJOR.MINOR.PATCH", so that
+    it can be converted to a Julia `VersionNumber` (e.g., `VersionNumber("v1.2.3")).
 
-    We do not require Semantic Versioning because some solvers use
-    alternate versioning systems. For example, CPLEX uses Calendar
-    Versioning, so `SolverVersion` will return a string like `"202001"`.
+    We do not require Semantic Versioning because some solvers use alternate
+    versioning systems. For example, CPLEX uses Calendar Versioning, so
+    `SolverVersion` will return a string like `"202001"`.
 """
 struct SolverVersion <: AbstractOptimizerAttribute end
 
@@ -791,10 +851,10 @@ attribute_value_type(::Silent) = Bool
 """
     TimeLimitSec()
 
-An optimizer attribute for setting a time limit for an optimization. When `set`
-to `nothing`, it deactivates the solver time limit. The default value is
-`nothing`. The time limit is in seconds.
-""" # TODO add a test checking if the solver returns TIME_LIMIT status when the time limit is hit
+An optimizer attribute for setting a time limit (in seconnds) for an
+optimization. When `set` to `nothing`, it deactivates the solver time limit. The
+default value is `nothing`.
+"""
 struct TimeLimitSec <: AbstractOptimizerAttribute end
 
 attribute_value_type(::TimeLimitSec) = Union{Nothing,Float64}
@@ -822,29 +882,32 @@ attribute_value_type(::NumberOfThreads) = Union{Nothing,Int}
 """
     RelativeGapTolerance()
 
-An optimizer attribute for setting the relative gap tolerance for an optimization.
-This is an _optimizer_ attribute, and should be set before calling [`optimize!`](@ref).
-When set to `nothing` (if supported), uses solver default.
+An optimizer attribute for setting the relative gap tolerance for an
+optimization. This is an _optimizer_ attribute, and should be set before calling
+[`optimize!`](@ref). When set to `nothing` (if supported), uses solver default.
 
 If you are looking for the relative gap of the current best solution, see
-[`RelativeGap`](@ref). If no limit nor issue is encountered during the optimization,
-the value of [`RelativeGap`](@ref) should be at most as large as `RelativeGapTolerance`.
+[`RelativeGap`](@ref). If no limit nor issue is encountered during the
+optimization, the value of [`RelativeGap`](@ref) should be at most as large as
+`RelativeGapTolerance`.
 
 ```julia
 # Before optimizing: set relative gap tolerance
-MOI.set(model, MOI.RelativeGapTolerance(), 1e-3)  # set 0.1% relative gap tolerance
+# set 0.1% relative gap tolerance
+MOI.set(model, MOI.RelativeGapTolerance(), 1e-3)
 MOI.optimize!(model)
 
 # After optimizing (assuming all went well)
 # The relative gap tolerance has not changed...
 MOI.get(model, MOI.RelativeGapTolerance())  # returns 1e-3
-# ... and the relative gap of the obtained solution is smaller or equal to the tolerance
+# ... and the relative gap of the obtained solution is smaller or equal to the
+# tolerance
 MOI.get(model, MOI.RelativeGap())  # should return something ≤ 1e-3
 ```
 
 !!! warning
-    The mathematical definition of "relative gap", and its allowed range, are solver-dependent.
-    Typically, solvers expect a value between `0` and `1`.
+    The mathematical definition of "relative gap", and its allowed range, are
+    solver-dependent. Typically, solvers expect a value between `0.0` and `1.0`.
 """
 struct RelativeGapTolerance <: AbstractOptimizerAttribute end
 
@@ -853,24 +916,23 @@ attribute_value_type(::RelativeGapTolerance) = Union{Nothing,Float64}
 """
     AbsoluteGapTolerance()
 
-An optimizer attribute for setting the absolute gap tolerance for an optimization.
-This is an _optimizer_ attribute, and should be set before calling [`optimize!`](@ref).
-When set to `nothing` (if supported), uses solver default.
+An optimizer attribute for setting the absolute gap tolerance for an
+optimization. This is an _optimizer_ attribute, and should be set before calling
+[`optimize!`](@ref). When set to `nothing` (if supported), uses solver default.
 
 To set a _relative_ gap tolerance, see [`RelativeGapTolerance`](@ref).
 
 !!! warning
-    The mathematical definition of "absolute gap", and its treatment during the optimization,
-    are solver-dependent. However, assuming no other limit nor issue is encountered during the
-    optimization, most solvers that implement this attribute will stop once ``|f - b| ≤ g_{abs}``,
-    where ``b`` is the best bound, ``f`` is the best feasible objective value, and ``g_{abs}``
-    is the absolute gap.
+    The mathematical definition of "absolute gap", and its treatment during the
+    optimization, are solver-dependent. However, assuming no other limit nor
+    issue is encountered during the optimization, most solvers that implement
+    this attribute will stop once ``|f - b| ≤ g_{abs}``, where ``b`` is the best
+    bound, ``f`` is the best feasible objective value, and ``g_{abs}`` is the
+    absolute gap.
 """
 struct AbsoluteGapTolerance <: AbstractOptimizerAttribute end
 
 attribute_value_type(::AbsoluteGapTolerance) = Union{Nothing,Float64}
-
-### Callbacks
 
 """
     struct OptimizeInProgress{AttrType<:AnyAttribute} <: Exception
@@ -904,9 +966,9 @@ attributes (i.e, the attributes `attr` such that `is_set_by_optimize(attr)`)
 may not be accessible from the callback, hence trying to get result attributes
 might throw a [`OptimizeInProgress`](@ref) error.
 
-At most one callback of each type can be registered. If an optimizer already
-has a function for a callback type, and the user registers a new function,
-then the old one is replaced.
+At most one callback of each type can be registered. If an optimizer already has
+a function for a callback type, and the user registers a new function, then the
+old one is replaced.
 
 The value of the attribute should be a function taking only one argument,
 commonly called `callback_data`, that can be used for instance in
@@ -950,16 +1012,14 @@ struct LazyConstraintCallback <: AbstractCallback end
     HeuristicCallback() <: AbstractCallback
 
 The callback can be used to submit [`HeuristicSolution`](@ref) given the
-current primal solution.
-For instance, it may be called at fractional (i.e., non-integer) nodes in the
-branch and bound tree of a mixed-integer problem. Note that there is not
-guarantee that the callback is called *everytime* the solver has an infeasible
-solution.
+current primal solution. For example, it may be called at fractional (i.e.,
+non-integer) nodes in the branch and bound tree of a mixed-integer problem. Note
+that there is no guarantee that the callback is called *every* time the solver
+has an infeasible solution.
 
-The current primal solution is accessed through
-[`CallbackVariablePrimal`](@ref). Trying to access other result
-attributes will throw [`OptimizeInProgress`](@ref) as discussed in
-[`AbstractCallback`](@ref).
+The current primal solution is accessed through [`CallbackVariablePrimal`](@ref).
+Trying to access other result attributes will throw [`OptimizeInProgress`](@ref)
+as discussed in [`AbstractCallback`](@ref).
 
 ## Examples
 
@@ -986,10 +1046,9 @@ in the branch and bound tree of a mixed-integer problem. Note that there is not
 guarantee that the callback is called *everytime* the solver has an infeasible
 solution.
 
-The infeasible solution is accessed through
-[`CallbackVariablePrimal`](@ref). Trying to access other result
-attributes will throw [`OptimizeInProgress`](@ref) as discussed in
-[`AbstractCallback`](@ref).
+The infeasible solution is accessed through [`CallbackVariablePrimal`](@ref).
+Trying to access other result attributes will throw [`OptimizeInProgress`](@ref)
+as discussed in [`AbstractCallback`](@ref).
 
 ## Examples
 
@@ -1007,14 +1066,14 @@ end
 """
 struct UserCutCallback <: AbstractCallback end
 
-## Model attributes
-
 """
     ListOfModelAttributesSet()
 
 A model attribute for the `Vector{AbstractModelAttribute}` of all model
-attributes `attr` such that 1) `is_copyable(attr)` returns `true` and 2) the
-attribute was set to the model.
+attributes `attr` such that:
+
+ 1. `is_copyable(attr)` returns `true`, and
+ 2. the attribute was set to the model
 """
 struct ListOfModelAttributesSet <: AbstractModelAttribute end
 
@@ -1028,7 +1087,7 @@ struct Name <: AbstractModelAttribute end
 
 attribute_value_type(::Name) = String
 
-@enum OptimizationSense MIN_SENSE MAX_SENSE FEASIBILITY_SENSE
+@enum(OptimizationSense, MIN_SENSE, MAX_SENSE, FEASIBILITY_SENSE)
 
 """
     ObjectiveSense()
@@ -1064,25 +1123,26 @@ attribute_value_type(::NumberOfVariables) = Int64
 """
     ListOfVariableIndices()
 
-A model attribute for the `Vector{VariableIndex}` of all variable indices present in the model
-(i.e., of length equal to the value of `NumberOfVariables()`) in the order in
-which they were added.
+A model attribute for the `Vector{VariableIndex}` of all variable indices
+present in the model (i.e., of length equal to the value of
+[`NumberOfVariables`](@ref) in the order in which they were added.
 """
 struct ListOfVariableIndices <: AbstractModelAttribute end
 
 """
     ListOfConstraintIndices{F,S}()
 
-A model attribute for the `Vector{ConstraintIndex{F,S}}` of all constraint indices of type
-`F`-in-`S` in the model (i.e., of length equal to the value of
-`NumberOfConstraints{F,S}()`) in the order in which they were added.
+A model attribute for the `Vector{ConstraintIndex{F,S}}` of all constraint
+indices of type `F`-in-`S` in the model (i.e., of length equal to the value of
+[`NumberOfConstraints{F,S}`](@ref)) in the order in which they were added.
 """
 struct ListOfConstraintIndices{F,S} <: AbstractModelAttribute end
 
 """
     NumberOfConstraints{F,S}()
 
-A model attribute for the number of constraints of the type `F`-in-`S` present in the model.
+A model attribute for the number of constraints of the type `F`-in-`S` present
+in the model.
 """
 struct NumberOfConstraints{F,S} <: AbstractModelAttribute end
 
@@ -1091,20 +1151,25 @@ attribute_value_type(::NumberOfConstraints) = Int64
 """
     ListOfConstraintTypesPresent()
 
-A model attribute for the list of tuples of the form `(F,S)`, where `F` is a function type
-and `S` is a set type indicating that the attribute `NumberOfConstraints{F,S}()`
-has value greater than zero.
+A model attribute for the list of tuples of the form `(F,S)`, where `F` is a
+function type and `S` is a set type indicating that the attribute
+[`NumberOfConstraints{F,S}`](@ref) has a value greater than zero.
 """
 struct ListOfConstraintTypesPresent <: AbstractModelAttribute end
 
 """
     ObjectiveFunction{F<:AbstractScalarFunction}()
 
-A model attribute for the objective function which has a type `F<:AbstractScalarFunction`.
-`F` should be guaranteed to be equivalent but not necessarily identical to the function type provided by the user.
+A model attribute for the objective function which has a type
+`F<:AbstractScalarFunction`.
+
+`F` should be guaranteed to be equivalent but not necessarily identical to the
+function type provided by the user.
+
 Throws an `InexactError` if the objective function cannot be converted to `F`,
-e.g. the objective function is quadratic and `F` is `ScalarAffineFunction{Float64}` or
-it has non-integer coefficient and `F` is `ScalarAffineFunction{Int}`.
+e.g., the objective function is quadratic and `F` is
+`ScalarAffineFunction{Float64}` or it has non-integer coefficient and `F` is
+`ScalarAffineFunction{Int}`.
 """
 struct ObjectiveFunction{F<:AbstractScalarFunction} <: AbstractModelAttribute end
 
@@ -1114,23 +1179,20 @@ attribute_value_type(::ObjectiveFunction{F}) where {F} = F
     ObjectiveFunctionType()
 
 A model attribute for the type `F` of the objective function set using the
-`ObjectiveFunction{F}` attribute.
+[`ObjectiveFunction{F}`](@ref) attribute.
 
 ## Examples
 
 In the following code, `attr` should be equal to `MOI.VariableIndex`:
 ```julia
 x = MOI.add_variable(model)
-MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(),
-         x)
+MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
 attr = MOI.get(model, MOI.ObjectiveFunctionType())
 ```
 """
 struct ObjectiveFunctionType <: AbstractModelAttribute end
 
 attribute_value_type(::ObjectiveFunctionType) = Type{<:AbstractFunction}
-
-## Optimizer attributes
 
 """
     ObjectiveValue(result_index::Int = 1)
@@ -1162,8 +1224,8 @@ If the solver does not have a dual value for the objective because the
 `result_index` is beyond the available solutions (whose number is indicated by
 the [`ResultCount`](@ref) attribute), getting this attribute must throw a
 [`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
-another reason (for instance, only a primal solution is available), the result is
-undefined. Users should first check [`DualStatus`](@ref) before accessing the
+another reason (for instance, only a primal solution is available), the result
+is undefined. Users should first check [`DualStatus`](@ref) before accessing the
 `DualObjectiveValue` attribute.
 
 See [`ResultCount`](@ref) for information on how the results are ordered.
@@ -1198,7 +1260,8 @@ attribute_value_type(::RelativeGap) = Float64
 """
     SolveTimeSec()
 
-A model attribute for the total elapsed solution time (in seconds) as reported by the optimizer.
+A model attribute for the total elapsed solution time (in seconds) as reported
+by the optimizer.
 """
 struct SolveTimeSec <: AbstractModelAttribute end
 
@@ -1207,8 +1270,11 @@ attribute_value_type(::SolveTimeSec) = Float64
 """
     SimplexIterations()
 
-A model attribute for the cumulative number of simplex iterations during the optimization process.
-In particular, for a mixed-integer program (MIP), the total simplex iterations for all nodes.
+A model attribute for the cumulative number of simplex iterations during the
+optimization process.
+
+For a mixed-integer program (MIP), the return value is the total simplex
+iterations for all nodes.
 """
 struct SimplexIterations <: AbstractModelAttribute end
 
@@ -1217,7 +1283,8 @@ attribute_value_type(::SimplexIterations) = Int64
 """
     BarrierIterations()
 
-A model attribute for the cumulative number of barrier iterations while solving a problem.
+A model attribute for the cumulative number of barrier iterations while solving
+a problem.
 """
 struct BarrierIterations <: AbstractModelAttribute end
 
@@ -1226,7 +1293,8 @@ attribute_value_type(::BarrierIterations) = Int64
 """
     NodeCount()
 
-A model attribute for the total number of branch-and-bound nodes explored while solving a mixed-integer program (MIP).
+A model attribute for the total number of branch-and-bound nodes explored while
+solving a mixed-integer program (MIP).
 """
 struct NodeCount <: AbstractModelAttribute end
 
@@ -1235,7 +1303,8 @@ attribute_value_type(::NodeCount) = Int64
 """
     RawSolver()
 
-A model attribute for the object that may be used to access a solver-specific API for this optimizer.
+A model attribute for the object that may be used to access a solver-specific
+API for this optimizer.
 """
 struct RawSolver <: AbstractModelAttribute end
 
@@ -1295,14 +1364,12 @@ end
 """
     ConflictStatus()
 
-A model attribute for the [`ConflictStatusCode`](@ref) explaining why the conflict
-refiner stopped when computing the conflict.
+A model attribute for the [`ConflictStatusCode`](@ref) explaining why the
+conflict refiner stopped when computing the conflict.
 """
 struct ConflictStatus <: AbstractModelAttribute end
 
 attribute_value_type(::ConflictStatus) = ConflictStatusCode
-
-## Variable attributes
 
 """
     ListOfVariableAttributesSet()
@@ -1328,7 +1395,9 @@ attribute_value_type(::VariableName) = String
 """
     VariablePrimalStart()
 
-A variable attribute for the initial assignment to some primal variable's value that the optimizer may use to warm-start the solve. May be a number or `nothing` (unset).
+A variable attribute for the initial assignment to some primal variable's value
+that the optimizer may use to warm-start the solve.
+May be a number or `nothing` (unset).
 """
 struct VariablePrimalStart <: AbstractVariableAttribute end
 
@@ -1425,14 +1494,14 @@ end
 
 attribute_value_type(::VariableBasisStatus) = BasisStatusCode
 
-## Constraint attributes
-
 """
     ListOfConstraintAttributesSet{F, S}()
 
 A model attribute for the `Vector{AbstractConstraintAttribute}` of all
-constraint attributes `attr` such that 1) `is_copyable(attr)` returns `true` and
-2) the attribute was set to `F`-in-`S` constraints.
+constraint attributes `attr` such that:
+
+ 1. `is_copyable(attr)` returns `true` and
+ 2. the attribute was set to `F`-in-`S` constraints.
 
 ## Note
 
@@ -1603,6 +1672,7 @@ end
 
 A constraint attribute for a canonical representation of the
 [`AbstractFunction`](@ref) object used to define the constraint.
+
 Getting this attribute is guaranteed to return a function that is equivalent but
 not necessarily identical to the function provided by the user.
 
@@ -1643,14 +1713,18 @@ end
 """
     ConstraintFunction()
 
-A constraint attribute for the `AbstractFunction` object used to define the constraint.
-It is guaranteed to be equivalent but not necessarily identical to the function provided by the user.
+A constraint attribute for the `AbstractFunction` object used to define the
+constraint.
+
+It is guaranteed to be equivalent but not necessarily identical to the function
+provided by the user.
 """
 struct ConstraintFunction <: AbstractConstraintAttribute end
 
 attribute_value_type(::ConstraintFunction) = AbstractFunction
 
 struct FunctionTypeMismatch{F1,F2} <: Exception end
+
 function Base.showerror(io::IO, err::FunctionTypeMismatch{F1,F2}) where {F1,F2}
     return print(
         io,
@@ -1668,7 +1742,9 @@ function throw_set_error_fallback(
 ) where {F<:AbstractFunction,S}
     return throw(error_if_supported)
 end
-func_type(c::ConstraintIndex{F,S}) where {F,S} = F
+
+func_type(::ConstraintIndex{F,S}) where {F,S} = F
+
 function throw_set_error_fallback(
     ::ModelLike,
     ::ConstraintFunction,
@@ -1682,13 +1758,15 @@ end
 """
     ConstraintSet()
 
-A constraint attribute for the `AbstractSet` object used to define the constraint.
+A constraint attribute for the `AbstractSet` object used to define the
+constraint.
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
 
 attribute_value_type(::ConstraintSet) = AbstractSet
 
 struct SetTypeMismatch{S1,S2} <: Exception end
+
 function Base.showerror(io::IO, err::SetTypeMismatch{S1,S2}) where {S1,S2}
     return print(
         io,
@@ -1707,7 +1785,9 @@ function throw_set_error_fallback(
 ) where {F,S<:AbstractSet}
     return throw(error_if_supported)
 end
+
 set_type(::ConstraintIndex{F,S}) where {F,S} = S
+
 function throw_set_error_fallback(
     ::ModelLike,
     ::ConstraintSet,
@@ -1750,8 +1830,6 @@ struct ConstraintConflictStatus <: AbstractConstraintAttribute end
 function attribute_value_type(::ConstraintConflictStatus)
     return ConflictParticipationStatusCode
 end
-
-## Termination status
 
 """
     TerminationStatusCode
@@ -1868,7 +1946,8 @@ This group of statuses means that something unexpected or problematic happened.
 """
     TerminationStatus()
 
-A model attribute for the `TerminationStatusCode` explaining why the optimizer stopped.
+A model attribute for the `TerminationStatusCode` explaining why the optimizer
+stopped.
 """
 struct TerminationStatus <: AbstractModelAttribute end
 
@@ -1883,8 +1962,6 @@ stopped.
 struct RawStatusString <: AbstractModelAttribute end
 
 attribute_value_type(::RawStatusString) = String
-
-## Result status
 
 """
     ResultStatusCode
@@ -1978,6 +2055,7 @@ function get_fallback(
 ) where {S<:AbstractScalarSet}
     return supports_add_constrained_variable(model, S) ? 0.0 : Inf
 end
+
 function get_fallback(
     model::ModelLike,
     ::VariableBridgingCost{S},
@@ -2011,6 +2089,7 @@ This function returns `false` by default so it should be implemented for
 attributes that are modified by [`optimize!`](@ref).
 """
 is_set_by_optimize(::AnyAttribute) = false
+
 function is_set_by_optimize(
     ::Union{
         ObjectiveValue,
@@ -2070,6 +2149,7 @@ method should be defined for attributes which are copied indirectly during
 function is_copyable(attr::AnyAttribute)
     return !is_set_by_optimize(attr)
 end
+
 function is_copyable(
     ::Union{
         ListOfOptimizerAttributesSet,
