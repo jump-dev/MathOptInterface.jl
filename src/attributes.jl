@@ -4,8 +4,6 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-# Attributes
-
 """
     AbstractOptimizerAttribute
 
@@ -387,22 +385,6 @@ If *any* constraint with name `name` exists in the model `model`, return the
 corresponding index, otherwise return `nothing`. This version is available for
 convenience but may incur a performance penalty because it is not type stable.
 Errors if two constraints have the same name.
-
-## Examples
-
-```julia
-get(model, ObjectiveValue())
-get(model, VariablePrimal(), ref)
-get(model, VariablePrimal(5), [ref1, ref2])
-get(model, OtherAttribute("something specific to cplex"))
-get(model, VariableIndex, "var1")
-get(
-    model,
-    ConstraintIndex{ScalarAffineFunction{Float64},LessThan{Float64}},
-    "con1",
-)
-get(model, ConstraintIndex, "con1")
-```
 """
 function get(model::ModelLike, attr::AnyAttribute, args...)
     return get_fallback(model, attr, args...)
@@ -545,40 +527,24 @@ set(
 Change the set of constraint `c` to the new set `set` which should be of the
 same type as the original set.
 
-#### Examples
-
-If `c` is a `ConstraintIndex{F,Interval}`
-
 ```julia
-set(model, ConstraintSet(), c, Interval(0, 5))
-set(model, ConstraintSet(), c, GreaterThan(0.0))  # Error
+set(
+    model::ModelLike,
+    ::ConstraintFunction,
+    c::ConstraintIndex{F,S},
+    func::F,
+) where {F,S}
 ```
-
-### Replace function in a constraint
-
-    set(model::ModelLike, ::ConstraintFunction, c::ConstraintIndex{F,S}, func::F)
 
 Replace the function in constraint `c` with `func`. `F` must match the original
 function type used to define the constraint.
 
-#### Note
-
-Setting the constraint function is not allowed if `F` is
-[`VariableIndex`](@ref), it throws a
-[`SettingVariableIndexNotAllowed`](@ref) error. Indeed, it would
-require changing the index `c` as the index of `VariableIndex` constraints
-should be the same as the index of the variable.
-
-#### Examples
-
-If `c` is a `ConstraintIndex{ScalarAffineFunction,S}` and `v1` and `v2` are
-`VariableIndex` objects,
-
-```julia
-set(model, ConstraintFunction(), c,
-    ScalarAffineFunction(ScalarAffineTerm.([1.0, 2.0], [v1, v2]), 5.0))
-set(model, ConstraintFunction(), c, v1) # Error
-```
+!!! note
+    Setting the constraint function is not allowed if `F` is
+    [`VariableIndex`](@ref); a [`SettingVariableIndexNotAllowed`](@ref) error is
+    thrown instead. This is because, it would require changing the index `c`
+    since the index of [`VariableIndex`](@ref) constraints must be the same as
+    the index of the variable.
 """
 function set(model::ModelLike, attr::AnyAttribute, args...)
     return throw_set_error_fallback(model, attr, args...)
@@ -605,8 +571,9 @@ end
 
 # throw_set_error_fallback is included so that we can return type-specific error
 # messages without needing to overload set and cause ambiguity errors. For
-# examples, see ConstraintSet and ConstraintFunction. throw_set_error_fallback should
-# not be overloaded by users of MOI.
+# examples, see ConstraintSet and ConstraintFunction.
+#
+# throw_set_error_fallback should not be overloaded by users of MOI.
 function throw_set_error_fallback(
     model::ModelLike,
     attr::Union{AbstractModelAttribute,AbstractOptimizerAttribute},
@@ -1120,7 +1087,7 @@ struct Name <: AbstractModelAttribute end
 
 attribute_value_type(::Name) = String
 
-@enum OptimizationSense MIN_SENSE MAX_SENSE FEASIBILITY_SENSE
+@enum(OptimizationSense, MIN_SENSE, MAX_SENSE, FEASIBILITY_SENSE)
 
 """
     ObjectiveSense()
@@ -1158,7 +1125,7 @@ attribute_value_type(::NumberOfVariables) = Int64
 
 A model attribute for the `Vector{VariableIndex}` of all variable indices
 present in the model (i.e., of length equal to the value of
-[`MOI.NumberOfVariables`](@ref) in the order in which they were added.
+[`NumberOfVariables`](@ref) in the order in which they were added.
 """
 struct ListOfVariableIndices <: AbstractModelAttribute end
 
@@ -1167,7 +1134,7 @@ struct ListOfVariableIndices <: AbstractModelAttribute end
 
 A model attribute for the `Vector{ConstraintIndex{F,S}}` of all constraint
 indices of type `F`-in-`S` in the model (i.e., of length equal to the value of
-`NumberOfConstraints{F,S}()`) in the order in which they were added.
+[`NumberOfConstraints{F,S}`](@ref)) in the order in which they were added.
 """
 struct ListOfConstraintIndices{F,S} <: AbstractModelAttribute end
 
