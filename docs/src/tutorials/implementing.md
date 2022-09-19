@@ -713,7 +713,7 @@ Solver-specific attributes should be specified by creating an appropriate
 subtype of [`AbstractModelAttribute`](@ref), [`AbstractOptimizerAttribute`](@ref),
 [`AbstractVariableAttribute`](@ref), or [`AbstractConstraintAttribute`](@ref).
 
-For example, Gurobi.jl adds attributes for multi-objective optimization by
+For example, Gurobi.jl adds attributes for multiobjective optimization by
 [defining](https://github.com/jump-dev/Gurobi.jl/blob/d9cebe4ec05a102df8917ff2602e6c38abdac090/src/MOI_multi_objective.jl#L1-L15):
 ```julia
 struct NumberOfObjectives <: MOI.AbstractModelAttribute end
