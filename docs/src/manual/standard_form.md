@@ -36,7 +36,7 @@ The function types implemented in MathOptInterface.jl are:
 | Function         | Description |
 | :--------------- | :---------- |
 | [`VariableIndex`](@ref) | ``x_j``, i.e., projection onto a single coordinate defined by a variable index ``j``. |
-| [`VectorOfVariables`](@ref) | The projection onto multiple coordinates (i.e., extracting a subvector). |
+| [`VectorOfVariables`](@ref) | The projection onto multiple coordinates (i.e., extracting a sub-vector). |
 | [`ScalarAffineFunction`](@ref) | ``a^T x + b``, where ``a`` is a vector and ``b`` scalar. |
 | [`VectorAffineFunction`](@ref) | ``A x + b``, where ``A`` is a matrix and ``b`` is a vector. |
 | [`ScalarQuadraticFunction`](@ref) | ``\frac{1}{2} x^T Q x + a^T x + b``, where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant. |
@@ -85,7 +85,7 @@ The vector-valued set types implemented in MathOptInterface.jl are:
 
 The matrix-valued set types implemented in MathOptInterface.jl are:
 
-| Set              | Descriptionn |
+| Set              | Description |
 | :--------------- | :----------- |
 | [`RootDetConeTriangle(d)`](@ref MathOptInterface.RootDetConeTriangle) | ``\{ (t,X) \in \mathbb{R}^{1+d(1+d)/2} : t \le \det(X)^{1/d}, X \mbox{ is the upper triangle of a PSD matrix} \}`` |
 | [`RootDetConeSquare(d)`](@ref MathOptInterface.RootDetConeSquare)     | ``\{ (t,X) \in \mathbb{R}^{1+d^2} : t \le \det(X)^{1/d}, X \mbox{ is a PSD matrix} \}`` |

@@ -398,7 +398,7 @@ modification means implementing functions like [`add_variable`](@ref) and
 [`add_constraint`](@ref).
 
 The alternative is to accept the problem data in a single [`copy_to`](@ref)
-function call, afterwhich it cannot be modified. Because [`copy_to`](@ref) sees
+function call, after which it cannot be modified. Because [`copy_to`](@ref) sees
 all of the data at once, it can typically call a more efficient function to load
 data into the underlying solver.
 
@@ -676,7 +676,7 @@ Only throw if the constraints conflict. It is okay to add
 ### Expect duplicate coefficients
 
 Solvers must expect that functions such as [`ScalarAffineFunction`](@ref) and
-[`VectorQuadraticFunction`](@ref) may contain duplicate coefficents.
+[`VectorQuadraticFunction`](@ref) may contain duplicate coefficients.
 
 For example,
 `ScalarAffineFunction([ScalarAffineTerm(x, 1), ScalarAffineTerm(x, 1)], 0.0)`.
@@ -713,7 +713,7 @@ Solver-specific attributes should be specified by creating an appropriate
 subtype of [`AbstractModelAttribute`](@ref), [`AbstractOptimizerAttribute`](@ref),
 [`AbstractVariableAttribute`](@ref), or [`AbstractConstraintAttribute`](@ref).
 
-For example, Gurobi.jl adds attributes for multiobjective optimization by
+For example, Gurobi.jl adds attributes for multi-objective optimization by
 [defining](https://github.com/jump-dev/Gurobi.jl/blob/d9cebe4ec05a102df8917ff2602e6c38abdac090/src/MOI_multi_objective.jl#L1-L15):
 ```julia
 struct NumberOfObjectives <: MOI.AbstractModelAttribute end
