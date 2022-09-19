@@ -524,7 +524,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 - The datastructure of `Utilities.Model` (and models created with
   `Utilities.@model`) has been significantly refactored in a breaking way. This
-  includes the way that objecive functions and variable-related information is
+  includes the way that objective functions and variable-related information is
   stored.
 - `Utilities.supports_default_copy` has been renamed to
   `supports_incremental_interface`
@@ -626,7 +626,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
   initial latency.
 - `RawParameter`s are now ignored when resetting a `CachingOptimizer`.
   Previously, changing the underlying optimizer after `RawParameter`s were set
-  would throw an errror.
+  would throw an error.
 - `Utilities.AbstractModel` is being refactored. This may break users
   interacting with private fields of a model generated using `@model`.
 
@@ -742,7 +742,7 @@ v0.9.14 (May 30, 2020)
   * Fix StackOverflow in `debug` (#1063).
 - FileFormats improvements:
   * [SDPA] Implement the extension for integer variables (#1079).
-  * [SDPA] Ignore comments aftere `m` and `nblocks` and detect `dat-s` extension (#1077).
+  * [SDPA] Ignore comments after `m` and `nblocks` and detect `dat-s` extension (#1077).
   * [SDPA] No scaling of off-diagonal coefficient (#1076).
   * [SDPA] Add missing negation of constant (#1075).
 
@@ -751,7 +751,7 @@ v0.9.13 (March 24, 2020)
 
 - Added tests for `Semicontinuous` and `Semiinteger` variables (#1033).
 - Added tests for using `ExprGraph`s from NLP evaluators (#1043).
-- Update version compatibilities of depedencies (#1034, #1051, #1052).
+- Update version compatibilities of dependencies (#1034, #1051, #1052).
 - Fixed typos in documentation (#1044).
 
 v0.9.12 (February 28, 2020)
@@ -902,7 +902,7 @@ v0.9.3 (September 20, 2019)
   * Added more comprehensive tests for names (#882).
   * Added tests for `SingleVariable` duals (#883).
   * Added tests for `DualExponentialCone` and `DualPowerCone` (#873).
-- Improvements for arbitary coefficient type:
+- Improvements for arbitrary coefficient type:
   * Fixed `==` for sets with mutable fields (#887).
   * Removed some `Float64` assumptions in bridges (#878).
   * Automatic selection of `Constraint.[Scalar|Vector]FunctionizeBridge` (#889).
@@ -912,7 +912,7 @@ v0.9.2 (September 5, 2019)
 
 - Implemented model printing for `MOI.ModelLike` and specialized it for models
   defined in MOI (864).
-- Generalized `contlinear` tests for arbitary coefficient type (#855).
+- Generalized `contlinear` tests for arbitrary coefficient type (#855).
 - Fixed `supports_constraint` for `Semiinteger` and `Semicontinuous` and
   `supports` for `ObjectiveFunction` (#859).
 - Fixed Allocate-Load copy for single variable constraints (#856).
@@ -952,7 +952,7 @@ v0.9.0 (August 13, 2019)
 - `RawParameter` attribute was added (#733).
 - A `dual_set` function was added (#804).
 - A `Benchmarks` submodule was added to facilitate solver benchmarking (#769).
-- A `submit` function was added, this may for intance allow the user to submit
+- A `submit` function was added, this may for instance allow the user to submit
   solutions or cuts to the solver from a callback (#775).
 - The field of `ObjectiveValue` was renamed to `result_index` (#729).
 - The `_constant` and `Utilities.getconstant` function were renamed to `constant`
@@ -987,7 +987,7 @@ v0.9.0 (August 13, 2019)
   * The `set_dot` function was extended to work with sparse arrays (#805).
 - Bridges improvements:
   * The bridges no longer store the constraint function and set before it is
-    briged, the bridges now have to implement `ConstraintFunction` and
+    bridged, the bridges now have to implement `ConstraintFunction` and
     `ConstraintSet` if the user wants to recover them. As a consequence, the
     `@bridge` macro was removed (#722).
   * Bridge are now instantiated with a `bridge_constraint` function instead of
@@ -1163,7 +1163,7 @@ v0.6.0 (August 30, 2018)
   the distinction between `UnsupportedError` and `NotAllowedError` is now
   about whether the element is not supported (i.e. it cannot be copied a
   model containing this element) or the operation is not allowed (either
-  because it is not implemented, because it cannot be performemd in the current
+  because it is not implemented, because it cannot be performed in the current
   state of the model, because it cannot be performed for a specific index, ...)
 - `canget` is removed. `NoSolution` is added as a result status to indicate
   that the solver does not have either a primal or dual solution available

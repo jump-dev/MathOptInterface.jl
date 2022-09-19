@@ -39,7 +39,7 @@ constraint primal and dual translations.
 
 Several bridges can be used in combination to transform a single constraint
 into a form that the solver may understand. Choosing the bridges to use
-takes the form of finding a shortest path in the hypergraph of bridges. The
+takes the form of finding a shortest path in the hyper-graph of bridges. The
 methodology is detailed in [the MOI paper](https://arxiv.org/abs/2002.03447).
 
 ## The three types of bridges

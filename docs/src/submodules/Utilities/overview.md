@@ -319,7 +319,7 @@ $$ \begin{aligned}
 
 The constraints of [`Utilities.Model`](@ref) are stored as a vector of tuples
 of function and set in a `Utilities.VectorOfConstraints`. Other representations
-can be used by parametrizing the type [`Utilities.GenericModel`](@ref)
+can be used by parameterizing the type [`Utilities.GenericModel`](@ref)
 (resp. [`Utilities.GenericOptimizer`](@ref)). For instance, if all
 non-`VariableIndex` constraints are affine, the coefficients of all the
 constraints can be stored in a single sparse matrix using

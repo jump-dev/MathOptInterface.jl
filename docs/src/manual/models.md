@@ -60,7 +60,7 @@ while other attributes can be modified by the user.
 All interactions with attributes occur through the [`get`](@ref) and [`set`](@ref)
 functions.
 
-Consult the docstsrings of each attribute for information on what it represents.
+Consult the docstrings of each attribute for information on what it represents.
 
 ## ModelLike API
 

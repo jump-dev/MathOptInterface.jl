@@ -14,7 +14,7 @@ models using [`write_to_file`](@ref) and [`read_from_file`](@ref).
 
 ## Supported file types
 
-You must read and write files to a [`FileFormats.Model`](@ref) object. Specifc
+You must read and write files to a [`FileFormats.Model`](@ref) object. Specific
 the file-type by passing a [`FileFormats.FileFormat`](@ref) enum. For example:
 
 **The Conic Benchmark Format**
@@ -125,7 +125,7 @@ julia> MOI.get(dest, MOI.ListOfVariableIndices())
 julia> rm("file.mof.json")  # Clean up after ourselves.
 ```
 
-## Detecting the filetype automatically
+## Detecting the file-type automatically
 
 Instead of the `format` keyword, you can also use the `filename` keyword
 argument to [`FileFormats.Model`](@ref). This will attempt to automatically

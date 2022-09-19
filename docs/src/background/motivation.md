@@ -17,7 +17,7 @@ To address a number of limitations of MathProgBase, MOI is designed to:
 - Be fast
    * by allowing access to a solver's in-memory representation of a problem
      without writing intermediate files (when possible)
-   * by using multiple dispatch and avoiding requiring containers of nonconcrete
+   * by using multiple dispatch and avoiding requiring containers of non-concrete
      types
 - Allow a solver to return multiple results (e.g., a pool of solutions)
 - Allow a solver to return extra arbitrary information via attributes (e.g.,

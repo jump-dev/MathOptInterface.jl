@@ -586,7 +586,7 @@ it has a different set of design goals.
    implementation with various performance optimizations.
  * **Goal: provide outputs which match what solvers expect.**
    Other AD packages focus on differentiating individual Julia functions. In
-   constrast, `ReverseAD` has a very specific use-case: to generate outputs
+   contrast, `ReverseAD` has a very specific use-case: to generate outputs
    needed by the MOI nonlinear API. This means it needs to efficiently compute
    sparse Hessians, and it needs subexpression handling to avoid recomputing
    subexpressions that are shared between functions.

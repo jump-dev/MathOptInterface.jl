@@ -43,7 +43,7 @@ After checking the [`TerminationStatus`](@ref), check
 solver has available to return. *A result is defined as a primal-dual pair,
 but either the primal or the dual may be missing from the result.* While the
 `OPTIMAL` termination status normally implies that at least one result is
-available, other statuses do not. For example, in the case of infeasiblity, a
+available, other statuses do not. For example, in the case of infeasibility, a
 solver may return no result or a proof of infeasibility. The [`ResultCount`](@ref)
 attribute distinguishes between these two cases.
 

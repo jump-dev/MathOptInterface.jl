@@ -35,7 +35,7 @@ julia> y = MOI.add_variables(model, 2)
 ```
 
 !!! warning
-    The integer does not necessarily corresond to the column inside an
+    The integer does not necessarily correspond to the column inside an
     optimizer!
 
 ## Delete a variable

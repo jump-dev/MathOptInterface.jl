@@ -398,7 +398,7 @@ modification means implementing functions like [`add_variable`](@ref) and
 [`add_constraint`](@ref).
 
 The alternative is to accept the problem data in a single [`copy_to`](@ref)
-function call, afterwhich it cannot be modified. Because [`copy_to`](@ref) sees
+function call, after which it cannot be modified. Because [`copy_to`](@ref) sees
 all of the data at once, it can typically call a more efficient function to load
 data into the underlying solver.
 
@@ -676,7 +676,7 @@ Only throw if the constraints conflict. It is okay to add
 ### Expect duplicate coefficients
 
 Solvers must expect that functions such as [`ScalarAffineFunction`](@ref) and
-[`VectorQuadraticFunction`](@ref) may contain duplicate coefficents.
+[`VectorQuadraticFunction`](@ref) may contain duplicate coefficients.
 
 For example,
 `ScalarAffineFunction([ScalarAffineTerm(x, 1), ScalarAffineTerm(x, 1)], 0.0)`.

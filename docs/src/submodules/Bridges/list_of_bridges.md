@@ -14,7 +14,7 @@ implemented in MathOptInterface.
 
 ## [Constraint bridges](@id constraint_bridges_ref)
 
-These bridges are subtyptes of [`Bridges.Constraint.AbstractBridge`](@ref).
+These bridges are subtypes of [`Bridges.Constraint.AbstractBridge`](@ref).
 
 ```@docs
 Bridges.Constraint.GreaterToIntervalBridge
@@ -72,7 +72,7 @@ Bridges.Constraint.TableToMILPBridge
 
 ## [Objective bridges](@id objective_bridges_ref)
 
-These bridges are subtyptes of [`Bridges.Objective.AbstractBridge`](@ref).
+These bridges are subtypes of [`Bridges.Objective.AbstractBridge`](@ref).
 
 ```@docs
 Bridges.Objective.FunctionizeBridge
@@ -82,7 +82,7 @@ Bridges.Objective.SlackBridge
 
 ## [Variable bridges](@id variable_bridges_ref)
 
-These bridges are subtyptes of [`Bridges.Variable.AbstractBridge`](@ref).
+These bridges are subtypes of [`Bridges.Variable.AbstractBridge`](@ref).
 
 ```@docs
 Bridges.Variable.FreeBridge

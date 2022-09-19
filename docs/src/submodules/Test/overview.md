@@ -275,7 +275,7 @@ end
 ```
 
 !!! info
-    Make sure the function is agnoistic to the number type `T`! Don't assume it
+    Make sure the function is agnostic to the number type `T`! Don't assume it
     is a `Float64` capable solver!
 
 We also need to write a test for the test. Place this function immediately below
