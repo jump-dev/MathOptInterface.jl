@@ -15,7 +15,6 @@ flamegraph
 getters
 [Jj]ulia
 [Pp]recompil(ation|(e(?d)))
-[Pp]resolve
 src
 subexpression(?s)
 
@@ -31,14 +30,13 @@ multiobjective
 nonconvex
 [Nn]on(posi|nega)tive(?s)
 parameterizing
-[Pp]recompil(ation|(e(?d)))
 [Pp]resolve
 [Ss]emi(continuous|integer|definite)
 tl
 unboundedness
 [Un]nivariate
 
-% Proper nouns
+% Other
 Clp
 Gurobi
 GZip
