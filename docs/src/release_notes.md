@@ -1,5 +1,16 @@
 # Release notes
 
+## v1.8.2 (September 20, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.8.2).
+
+### Documentation
+
+ - Add vale as a documentation linter
+ - Improve styling of code blocks in the PDF
+ - Fix a number of typos in the documentation
+
 ## v1.8.1 (September 12, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
