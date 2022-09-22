@@ -267,7 +267,7 @@ end
 function MOI.delete(
     b::VariablesContainer{T},
     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
-) where {T,S}
+) where {T,S<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}
     MOI.throw_if_not_valid(b, ci)
     flag = _single_variable_flag(S)
     b.set_mask[ci.value] &= ~flag
@@ -287,9 +287,9 @@ function MOI.delete(b::VariablesContainer, x::MOI.VariableIndex)
 end
 
 function MOI.is_valid(
-    b::VariablesContainer,
+    b::VariablesContainer{T},
     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
-) where {S}
+) where {T,S<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}
     if !(1 <= ci.value <= length(b.set_mask))
         return false
     end
@@ -315,10 +315,10 @@ function MOI.set(
 end
 
 function MOI.get(
-    model::VariablesContainer,
+    model::VariablesContainer{T},
     ::MOI.ConstraintSet,
     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
-) where {S}
+) where {T,S<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}
     MOI.throw_if_not_valid(model, ci)
     return set_from_constants(model, S, ci.value)
 end
@@ -341,9 +341,9 @@ function MOI.set(
 end
 
 function MOI.get(
-    b::VariablesContainer,
+    b::VariablesContainer{T},
     ::MOI.NumberOfConstraints{MOI.VariableIndex,S},
-)::Int64 where {S}
+)::Int64 where {T,S<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}
     flag = _single_variable_flag(S)
     return count(mask -> !iszero(flag & mask), b.set_mask)
 end
@@ -377,9 +377,9 @@ function MOI.get(
 end
 
 function MOI.get(
-    b::VariablesContainer,
+    b::VariablesContainer{T},
     ::MOI.ListOfConstraintIndices{MOI.VariableIndex,S},
-) where {S}
+) where {T,S<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}
     list = MOI.ConstraintIndex{MOI.VariableIndex,S}[]
     flag = _single_variable_flag(S)
     for (index, mask) in enumerate(b.set_mask)
