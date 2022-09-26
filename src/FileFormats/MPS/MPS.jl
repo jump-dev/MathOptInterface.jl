@@ -1170,10 +1170,12 @@ function copy_to(model::Model, data::TempMPSModel)
     _add_objective(model, data, variable_map)
     for (j, c_name) in enumerate(data.row_to_name)
         set = bounds_to_set(data.row_lower[j], data.row_upper[j])
-        if set !== nothing
+        if set === nothing
+            free_set = MOI.Interval(-Inf, Inf)
+            _add_constraint(model, data, variable_map, j, c_name, free_set)
+        else
             _add_constraint(model, data, variable_map, j, c_name, set)
         end
-        # `else` is a free constraint. Don't add it.
     end
     for sos in data.sos_constraints
         MOI.add_constraint(
@@ -1313,11 +1315,11 @@ function parse_rows_line(data::TempMPSModel, items::Vector{String})
         error("Invalid row sense: $(join(items, " "))")
     end
     if sense == SENSE_N
-        if data.obj_name != ""
-            return name  # Detected a duplicate objective. Skip it.
+        if data.obj_name == ""
+            # The first N row is the objective
+            data.obj_name = name
+            return
         end
-        data.obj_name = name
-        return
     end
     if name == data.obj_name
         error("Found row with same name as objective: $(join(items, " ")).")
@@ -1335,10 +1337,13 @@ function parse_rows_line(data::TempMPSModel, items::Vector{String})
     elseif sense == SENSE_L
         push!(data.row_lower, -Inf)
         push!(data.row_upper, 0.0)
-    else
-        @assert sense == SENSE_E
+    elseif sense == SENSE_E
         push!(data.row_lower, 0.0)
         push!(data.row_upper, 0.0)
+    else
+        @assert sense == SENSE_N
+        push!(data.row_lower, -Inf)
+        push!(data.row_upper, Inf)
     end
     return
 end
