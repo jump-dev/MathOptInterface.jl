@@ -137,6 +137,7 @@ function test_stacked_data()
         """
 variables: x, y, z
 maxobjective: x + y + z + 2.5
+blank_obj: 1.0 * x + 2.0 * y in Interval(-Inf, Inf)
 con1: 1.0 * x in Interval(1.0, 5.0)
 con2: 1.0 * x in Interval(2.0, 6.0)
 con3: 1.0 * x in Interval(3.0, 7.0)
@@ -151,7 +152,7 @@ z in ZeroOne()
         model,
         model_2,
         ["x", "y", "z"],
-        ["con1", "con2", "con3", "con4"],
+        ["blank_obj", "con1", "con2", "con3", "con4"],
         [
             ("y", MOI.Integer()),
             ("y", MOI.Interval{Float64}(1.0, 4.0)),

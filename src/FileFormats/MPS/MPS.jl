@@ -1170,10 +1170,12 @@ function copy_to(model::Model, data::TempMPSModel)
     _add_objective(model, data, variable_map)
     for (j, c_name) in enumerate(data.row_to_name)
         set = bounds_to_set(data.row_lower[j], data.row_upper[j])
-        if set !== nothing
+        if set === nothing
+            free_set = MOI.Interval(-Inf, Inf)
+            _add_constraint(model, data, variable_map, j, c_name, free_set)
+        else
             _add_constraint(model, data, variable_map, j, c_name, set)
         end
-        # `else` is a free constraint. Don't add it.
     end
     for sos in data.sos_constraints
         MOI.add_constraint(
