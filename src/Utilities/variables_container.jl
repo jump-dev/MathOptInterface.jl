@@ -341,6 +341,12 @@ function MOI.set(
 end
 
 function MOI.get(
+    b::VariablesContainer,
+    ::MOI.NumberOfConstraints{MOI.VariableIndex},
+)::Int64
+    return 0
+end
+function MOI.get(
     b::VariablesContainer{T},
     ::MOI.NumberOfConstraints{MOI.VariableIndex,S},
 )::Int64 where {T,S<:SUPPORTED_VARIABLE_SCALAR_SETS{T}}
@@ -376,6 +382,12 @@ function MOI.get(
     return list
 end
 
+function MOI.get(
+    b::VariablesContainer,
+    ::MOI.ListOfConstraintIndices{MOI.VariableIndex,S},
+) where {S}
+    return MOI.ConstraintIndex{MOI.VariableIndex,S}[]
+end
 function MOI.get(
     b::VariablesContainer{T},
     ::MOI.ListOfConstraintIndices{MOI.VariableIndex,S},
