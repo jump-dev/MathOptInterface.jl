@@ -1148,7 +1148,7 @@ function _may_have_been_added(
         (S == MOI.VectorOfVariables && MOI.supports_add_constrained_variables(model, S))
 end
 
-function get_fallback(
+function get(
     model::ModelLike,
     attr::ListOfConstraintIndices{F,S},
 ) where {F,S}
