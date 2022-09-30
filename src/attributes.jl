@@ -1169,7 +1169,7 @@ struct NumberOfConstraints{F,S} <: AbstractModelAttribute end
 
 attribute_value_type(::NumberOfConstraints) = Int64
 
-function get_fallback(
+function get(
     ::ModelLike,
     ::NumberOfConstraints{F,S},
 ) where {F,S}
