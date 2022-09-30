@@ -493,19 +493,6 @@ function test_extension_dictionary()
     return
 end
 
-struct _UnsupportedSetIssue2005 <: MOI.AbstractScalarSet end
-
-function test_get_unsupported_constraint()
-    model = MOI.Utilities.Model{Float64}()
-    S = _UnsupportedSetIssue2005
-    for F in (MOI.VariableIndex, MOI.ScalarAffineFunction{Float64})
-        @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 0
-        @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) ==
-              MOI.ConstraintIndex{F,S}[]
-    end
-    return
-end
-
 end  # module
 
 TestModel.runtests()

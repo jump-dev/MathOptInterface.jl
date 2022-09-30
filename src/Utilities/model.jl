@@ -416,10 +416,7 @@ end
 function MOI.get(
     model::AbstractModel,
     attr::MOI.NumberOfConstraints{MOI.VariableIndex,S},
-)::Int64 where {S}
-    if !MOI.supports_constraint(model, MOI.VariableIndex, S)
-        return 0
-    end
+) where {S}
     return MOI.get(model.variables, attr)
 end
 
@@ -444,9 +441,6 @@ function MOI.get(
     model::AbstractModel,
     attr::MOI.ListOfConstraintIndices{MOI.VariableIndex,S},
 ) where {S}
-    if !MOI.supports_constraint(model, MOI.VariableIndex, S)
-        return MOI.ConstraintIndex{MOI.VariableIndex,S}[]
-    end
     return MOI.get(model.variables, attr)
 end
 
