@@ -1138,6 +1138,27 @@ indices of type `F`-in-`S` in the model (i.e., of length equal to the value of
 """
 struct ListOfConstraintIndices{F,S} <: AbstractModelAttribute end
 
+function _may_have_been_added(
+    model::ModelLike,
+    ::Type{F},
+    ::Type{S}
+) where {F, S}
+    return MOI.supports_constraint(model, F, S) ||
+        (S === MOI.VariableIndex && MOI.supports_add_constrained_variable(model, S)) ||
+        (S == MOI.VectorOfVariables && MOI.supports_add_constrained_variables(model, S))
+end
+
+function get_fallback(
+    model::ModelLike,
+    attr::ListOfConstraintIndices{F,S},
+) where {F,S}
+    if _may_have_been_added(model, F, S)
+        error("Not implemented")
+    else
+        return MOI.ConstraintIndex{F,S}[]
+    end
+end
+
 """
     NumberOfConstraints{F,S}()
 
@@ -1147,6 +1168,17 @@ in the model.
 struct NumberOfConstraints{F,S} <: AbstractModelAttribute end
 
 attribute_value_type(::NumberOfConstraints) = Int64
+
+function get_fallback(
+    ::ModelLike,
+    ::NumberOfConstraints{F,S},
+) where {F,S}
+    if _may_have_been_added(model, F, S)
+        error("Not implemented")
+    else
+        return Int64(0)
+    end
+end
 
 """
     ListOfConstraintTypesPresent()
