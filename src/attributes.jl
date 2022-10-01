@@ -1145,7 +1145,7 @@ function _may_have_been_added(
 ) where {F, S}
     return MOI.supports_constraint(model, F, S) ||
         (S === MOI.VariableIndex && MOI.supports_add_constrained_variable(model, S)) ||
-        (S == MOI.VectorOfVariables && MOI.supports_add_constrained_variables(model, S))
+        (S === MOI.VectorOfVariables && MOI.supports_add_constrained_variables(model, S))
 end
 
 function get(
