@@ -7,7 +7,7 @@
 """
     FeasibilityRelaxation(
         penalties = Dict{MOI.ConstraintIndex,Float64}(),
-    ) <: MOI.AbstractFunctionModification
+    )
 
 A problem modifier that, when passed to [`MOI.modify`](@ref), destructively
 modifies the model in-place to create a feasibility relaxation.
@@ -62,7 +62,7 @@ VariableIndex-in-GreaterThan{Float64}
  v[2] >= 0.0
 ```
 """
-mutable struct FeasibilityRelaxation{T} <: MOI.AbstractFunctionModification
+mutable struct FeasibilityRelaxation{T}
     penalties::Dict{MOI.ConstraintIndex,T}
     scale::T
     function FeasibilityRelaxation(p::Dict{MOI.ConstraintIndex,T}) where {T}
@@ -122,7 +122,7 @@ end
 function MOI.modify(
     model::MOI.ModelLike,
     ci::MOI.ConstraintIndex{F,<:MOI.AbstractScalarSet},
-    relax::FeasibilityRelaxation,
+    relax::FeasibilityRelaxation{T},
 ) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
     y = MOI.add_variable(model)
     z = MOI.add_variable(model)
@@ -141,7 +141,7 @@ end
 function MOI.modify(
     model::MOI.ModelLike,
     ci::MOI.ConstraintIndex{F,MOI.GreaterThan{T}},
-    relax::FeasibilityRelaxation,
+    relax::FeasibilityRelaxation{T},
 ) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
     # Performance optimization: we don't need the z relaxation variable.
     y = MOI.add_variable(model)
@@ -157,7 +157,7 @@ end
 function MOI.modify(
     model::MOI.ModelLike,
     ci::MOI.ConstraintIndex{F,MOI.LessThan{T}},
-    relax::FeasibilityRelaxation,
+    relax::FeasibilityRelaxation{T},
 ) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
     # Performance optimization: we don't need the y relaxation variable.
     z = MOI.add_variable(model)
