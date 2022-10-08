@@ -330,7 +330,7 @@ julia> MOI.set(model, MOI.VariableName(), x, "x")
 
 julia> c = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0));
 
-julia> MOI.set(model, MOI.Utilities.FeasibilityRelaxation(Dict(c => 2.0)))
+julia> MOI.modify(model, MOI.Utilities.FeasibilityRelaxation(Dict(c => 2.0)))
 
 julia> print(model)
 Minimize ScalarAffineFunction{Float64}:

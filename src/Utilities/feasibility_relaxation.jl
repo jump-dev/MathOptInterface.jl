@@ -7,15 +7,15 @@
 """
     FeasibilityRelaxation(
         penalties = Dict{MOI.ConstraintIndex,Float64}(),
-    ) <: MOI.AbstractModelAttribute
+    ) <: MOI.AbstractFunctionModification
 
-A model attribute that, when set, destructively modifies the model in-place to
-create a feasibility relaxation.
+A problem modifier that, when passed to [`MOI.modify`](@ref), destructively
+modifies the model in-place to create a feasibility relaxation.
 
 !!! warning
     This is a destructive routine that modifies the model in-place. If you don't
-    want to modify the original model, use `copy_model` to create a copy before
-    setting this attribute.
+    want to modify the original model, use `JuMP.copy_model` to create a copy
+    before setting this attribute.
 
 ## Reformulation
 
@@ -25,13 +25,18 @@ term into the objective of ``a \\times (y + z)`` (if minimizing, else ``-a``),
 where `a` is the value in the `penalties` dictionary associated with the
 constraint that is being relaxed. If no value exists, the default is `1.0`.
 
-The feasibility relaxation is limited to modifying constraint types for which
-`MOI.supports(model, ::FeasibilityRelaxation, MOI.ConstraintIndex{F,S})` is
-`true`. By default, this is only true for [`MOI.ScalarAffineFunction`](@ref) and
-[`MOI.ScalarQuadraticFunction`](@ref) constraints in the linear sets
-[`MOI.LessThan`](@ref), [`MOI.GreaterThan`](@ref), [`MOI.EqualTo`](@ref) and
-[`MOI.Interval`](@ref). It does not include variable bound or integrality
-constraints, because these cannot be modified in-place.
+When `S` is [`MOI.LessThan`](@ref) or [`MOI.GreaterThan`](@ref), we omit `y` or
+`z` respectively as a performance optimization.
+
+## Supported constraint types
+
+The feasibility relaxation is currently limited to modifying
+[`MOI.ScalarAffineFunction`](@ref) and [`MOI.ScalarQuadraticFunction`](@ref)
+constraints in the linear sets [`MOI.LessThan`](@ref), [`MOI.GreaterThan`](@ref),
+[`MOI.EqualTo`](@ref) and [`MOI.Interval`](@ref).
+
+It does not include variable bound or integrality constraints, because these
+cannot be modified in-place.
 
 ## Example
 
@@ -42,7 +47,7 @@ julia> x = MOI.add_variable(model);
 
 julia> c = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0));
 
-julia> MOI.set(model, MOI.Utilities.FeasibilityRelaxation(Dict(c => 2.0)))
+julia> MOI.modify(model, MOI.Utilities.FeasibilityRelaxation(Dict(c => 2.0)))
 
 julia> print(model)
 Minimize ScalarAffineFunction{Float64}:
@@ -57,7 +62,7 @@ VariableIndex-in-GreaterThan{Float64}
  v[2] >= 0.0
 ```
 """
-mutable struct FeasibilityRelaxation{T} <: MOI.AbstractModelAttribute
+mutable struct FeasibilityRelaxation{T} <: MOI.AbstractFunctionModification
     penalties::Dict{MOI.ConstraintIndex,T}
     scale::T
     function FeasibilityRelaxation(p::Dict{MOI.ConstraintIndex,T}) where {T}
@@ -73,7 +78,7 @@ function FeasibilityRelaxation(d::Dict{<:MOI.ConstraintIndex,T}) where {T}
     return FeasibilityRelaxation(convert(Dict{MOI.ConstraintIndex,T}, d))
 end
 
-function MOI.set(
+function MOI.modify(
     model::MOI.ModelLike,
     relax::FeasibilityRelaxation{T},
 ) where {T}
@@ -89,45 +94,35 @@ function MOI.set(
         relax.scale = -one(T)
     end
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        MOI.set(model, relax, F, S)
+        _modify_feasibility_relaxation(model, relax, F, S)
     end
     return
 end
 
-function MOI.set(
+function _modify_feasibility_relaxation(
     model::MOI.ModelLike,
     relax::FeasibilityRelaxation,
     ::Type{F},
     ::Type{S},
 ) where {F,S}
-    if MOI.supports(model, relax, MOI.ConstraintIndex{F,S})
-        for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            MOI.set(model, relax, ci)
-        end
+    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        MOI.modify(model, ci, relax)
     end
     return
 end
 
-function MOI.supports(
+function MOI.modify(
     ::MOI.ModelLike,
+    ::MOI.ConstraintIndex,
     ::FeasibilityRelaxation,
-    ::Type{<:MOI.ConstraintIndex{F,<:MOI.AbstractScalarSet}},
-) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
-    return true
+)
+    return  # Silently skip modifying other constraint types.
 end
 
-function MOI.supports_fallback(
-    ::MOI.ModelLike,
-    ::FeasibilityRelaxation,
-    ::Type{MOI.ConstraintIndex{F,S}},
-) where {F,S}
-    return false
-end
-
-function MOI.set(
+function MOI.modify(
     model::MOI.ModelLike,
-    relax::FeasibilityRelaxation,
     ci::MOI.ConstraintIndex{F,<:MOI.AbstractScalarSet},
+    relax::FeasibilityRelaxation,
 ) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
     y = MOI.add_variable(model)
     z = MOI.add_variable(model)
@@ -143,10 +138,10 @@ function MOI.set(
     return
 end
 
-function MOI.set(
+function MOI.modify(
     model::MOI.ModelLike,
-    relax::FeasibilityRelaxation,
     ci::MOI.ConstraintIndex{F,MOI.GreaterThan{T}},
+    relax::FeasibilityRelaxation,
 ) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
     # Performance optimization: we don't need the z relaxation variable.
     y = MOI.add_variable(model)
@@ -159,10 +154,10 @@ function MOI.set(
     return
 end
 
-function MOI.set(
+function MOI.modify(
     model::MOI.ModelLike,
-    relax::FeasibilityRelaxation,
     ci::MOI.ConstraintIndex{F,MOI.LessThan{T}},
+    relax::FeasibilityRelaxation,
 ) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
     # Performance optimization: we don't need the y relaxation variable.
     z = MOI.add_variable(model)

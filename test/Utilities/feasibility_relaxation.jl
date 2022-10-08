@@ -25,7 +25,7 @@ end
 function _test_roundtrip(src_str, relaxed_str)
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, src_str)
-    MOI.set(model, MOI.Utilities.FeasibilityRelaxation())
+    MOI.modify(model, MOI.Utilities.FeasibilityRelaxation())
     dest = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(dest, relaxed_str)
     MOI.Bridges._test_structural_identical(model, dest)
@@ -212,7 +212,7 @@ function test_penalties()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, 1.0 * x, MOI.EqualTo(2.0))
-    MOI.set(model, MOI.Utilities.FeasibilityRelaxation(Dict(c => 2.0)))
+    MOI.modify(model, MOI.Utilities.FeasibilityRelaxation(Dict(c => 2.0)))
     @test sprint(print, model) === """
     Minimize ScalarAffineFunction{Float64}:
      0.0 + 2.0 v[2] + 2.0 v[3]
