@@ -317,7 +317,7 @@ $$ \begin{aligned}
 
 ## Utilities.FeasibilityRelaxation
 
-Set the [`Utilities.FeasibilityRelaxation`](@ref) attribute to relax the
+Pass [`Utilities.FeasibilityRelaxation`](@ref) to [`modify`](@ref) to relax the
 problem by adding penalized slack variables to the constraints. This is helpful
 when debugging sources of infeasible models.
 
