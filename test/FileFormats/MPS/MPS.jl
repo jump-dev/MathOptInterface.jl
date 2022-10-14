@@ -953,6 +953,43 @@ function test_vector_supports_constraint()
     return
 end
 
+function test_objsense_next_line()
+    for (sense, enum) in [("MIN", MOI.MIN_SENSE), ("MAX", MOI.MAX_SENSE)]
+        io = IOBuffer()
+        write(
+            io,
+            """
+            NAME          model
+            OBJSENSE
+            $sense
+            ROWS
+            N  Obj
+            """,
+        )
+        seekstart(io)
+        model = MPS.Model()
+        Base.read!(io, model)
+        @test MOI.get(model, MOI.ObjectiveSense()) == enum
+    end
+    for (sense, enum) in [("MIN", MOI.MIN_SENSE), ("MAX", MOI.MAX_SENSE)]
+        io = IOBuffer()
+        write(
+            io,
+            """
+            NAME          model
+            OBJSENSE $sense
+            ROWS
+            N  Obj
+            """,
+        )
+        seekstart(io)
+        model = MPS.Model()
+        Base.read!(io, model)
+        @test MOI.get(model, MOI.ObjectiveSense()) == enum
+    end
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")

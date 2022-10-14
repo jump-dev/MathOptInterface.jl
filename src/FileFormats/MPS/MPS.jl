@@ -1050,7 +1050,7 @@ function Headers(s::AbstractString)
         if (x == 'I' || x == 'i') && uppercase(s) == "INDICATORS"
             return HEADER_INDICATORS
         end
-    elseif N == 12
+    elseif N == 8 || N == 12
         if (x == 'O' || x == 'o') && startswith(uppercase(s), "OBJSENSE")
             return HEADER_OBJSENSE
         end
@@ -1092,10 +1092,13 @@ function Base.read!(io::IO, model::Model)
         h = Headers(line)
         if h == HEADER_OBJSENSE
             items = line_to_items(line)
-            @assert length(items) == 2
-            sense = uppercase(items[2])
-            @assert sense == "MAX" || sense == "MIN"
-            data.is_minimization = sense == "MIN"
+            if length(items) == 2
+                sense = uppercase(items[2])
+                @assert sense == "MAX" || sense == "MIN"
+                data.is_minimization = sense == "MIN"
+            else
+                header = HEADER_OBJSENSE
+            end
             continue
         elseif h == HEADER_QCMATRIX || h == HEADER_QSECTION
             items = line_to_items(line)
@@ -1114,6 +1117,11 @@ function Base.read!(io::IO, model::Model)
         items = line_to_items(line)
         if header == HEADER_NAME
             parse_name_line(data, items)
+        elseif header == HEADER_OBJSENSE
+            @assert length(items) == 1
+            sense = uppercase(items[1])
+            @assert sense == "MAX" || sense == "MIN"
+            data.is_minimization = sense == "MIN"
         elseif header == HEADER_ROWS
             multi_obj = parse_rows_line(data, items)
             if multi_obj !== nothing
