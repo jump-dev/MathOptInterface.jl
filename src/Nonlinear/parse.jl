@@ -42,25 +42,38 @@ function parse_expression(
     x::Expr,
     parent_index::Int,
 )
-    if isexpr(x, :call)
-        if length(x.args) == 2 && !isexpr(x.args[2], :...)
-            _parse_univariate_expression(data, expr, x, parent_index)
+    stack = Tuple{Int,Any}[]
+    push!(stack, (parent_index, x))
+    while !isempty(stack)
+        parent, item = pop!(stack)
+        if item isa Expr
+            _parse_expression(stack, data, expr, item, parent)
         else
-            _parse_multivariate_expression(data, expr, x, parent_index)
+            parse_expression(data, expr, item, parent)
         end
-    elseif isexpr(x, :comparison)
-        _parse_comparison_expression(data, expr, x, parent_index)
-    elseif isexpr(x, :...)
-        _parse_splat_expression(data, expr, x, parent_index)
-    elseif isexpr(x, :&&) || isexpr(x, :||)
-        _parse_logic_expression(data, expr, x, parent_index)
-    else
-        error("Unsupported expression: $x")
     end
     return
 end
 
-function _parse_splat_expression(data, expr, x, parent_index)
+function _parse_expression(stack, data, expr, x, parent_index)
+    if isexpr(x, :call)
+        if length(x.args) == 2 && !isexpr(x.args[2], :...)
+            _parse_univariate_expression(stack, data, expr, x, parent_index)
+        else
+            _parse_multivariate_expression(stack, data, expr, x, parent_index)
+        end
+    elseif isexpr(x, :comparison)
+        _parse_comparison_expression(stack, data, expr, x, parent_index)
+    elseif isexpr(x, :...)
+        _parse_splat_expression(stack, data, expr, x, parent_index)
+    elseif isexpr(x, :&&) || isexpr(x, :||)
+        _parse_logic_expression(stack, data, expr, x, parent_index)
+    else
+        error("Unsupported expression: $x")
+    end
+end
+
+function _parse_splat_expression(stack, data, expr, x, parent_index)
     @assert isexpr(x, :...) && length(x.args) == 1
     if parent_index == -1
         error(
@@ -74,13 +87,14 @@ function _parse_splat_expression(data, expr, x, parent_index)
             "`(x + 1)...`, `[x; y]...` and `g(f(y)...)` are not.",
         )
     end
-    for xi in x.args[1]
-        parse_expression(data, expr, xi, parent_index)
+    for xi in reverse(x.args[1])
+        push!(stack, (parent_index, xi))
     end
     return
 end
 
 function _parse_univariate_expression(
+    stack::Vector{Tuple{Int,Any}},
     data::Model,
     expr::Expression,
     x::Expr,
@@ -91,17 +105,18 @@ function _parse_univariate_expression(
     if id === nothing
         # It may also be a multivariate operator like * with one argument.
         if haskey(data.operators.multivariate_operator_to_id, x.args[1])
-            _parse_multivariate_expression(data, expr, x, parent_index)
+            _parse_multivariate_expression(stack, data, expr, x, parent_index)
             return
         end
         error("Unable to parse: $x")
     end
     push!(expr.nodes, Node(NODE_CALL_UNIVARIATE, id, parent_index))
-    parse_expression(data, expr, x.args[2], length(expr.nodes))
+    push!(stack, (length(expr.nodes), x.args[2]))
     return
 end
 
 function _parse_multivariate_expression(
+    stack::Vector{Tuple{Int,Any}},
     data::Model,
     expr::Expression,
     x::Expr,
@@ -111,13 +126,12 @@ function _parse_multivariate_expression(
     id = get(data.operators.multivariate_operator_to_id, x.args[1], nothing)
     if id === nothing
         @assert x.args[1] in data.operators.comparison_operators
-        _parse_inequality_expression(data, expr, x, parent_index)
+        _parse_inequality_expression(stack, data, expr, x, parent_index)
         return
     end
     push!(expr.nodes, Node(NODE_CALL_MULTIVARIATE, id, parent_index))
-    parent_var = length(expr.nodes)
-    for i in 2:length(x.args)
-        parse_expression(data, expr, x.args[i], parent_var)
+    for i in length(x.args):-1:2
+        push!(stack, (length(expr.nodes), x.args[i]))
     end
     return
 end
@@ -126,6 +140,7 @@ end
 # confused with `_parse_comparison_expression`, which handles things like
 # `a <= b <= c`.
 function _parse_inequality_expression(
+    stack::Vector{Tuple{Int,Any}},
     data::Model,
     expr::Expression,
     x::Expr,
@@ -133,9 +148,8 @@ function _parse_inequality_expression(
 )
     operator_id = data.operators.comparison_operator_to_id[x.args[1]]
     push!(expr.nodes, Node(NODE_COMPARISON, operator_id, parent_index))
-    parent_var = length(expr.nodes)
-    for i in 2:length(x.args)
-        parse_expression(data, expr, x.args[i], parent_var)
+    for i in length(x.args):-1:2
+        push!(stack, (length(expr.nodes), x.args[i]))
     end
     return
 end
@@ -144,6 +158,7 @@ end
 # confused with `_parse_inequality_expression`, which handles things like
 # `a <= b`.
 function _parse_comparison_expression(
+    stack::Vector{Tuple{Int,Any}},
     data::Model,
     expr::Expression,
     x::Expr,
@@ -154,14 +169,14 @@ function _parse_comparison_expression(
     end
     operator_id = data.operators.comparison_operator_to_id[x.args[2]]
     push!(expr.nodes, Node(NODE_COMPARISON, operator_id, parent_index))
-    parent_var = length(expr.nodes)
-    for i in 1:2:length(x.args)
-        parse_expression(data, expr, x.args[i], parent_var)
+    for i in length(x.args):-2:1
+        push!(stack, (length(expr.nodes), x.args[i]))
     end
     return
 end
 
 function _parse_logic_expression(
+    stack::Vector{Tuple{Int,Any}},
     data::Model,
     expr::Expression,
     x::Expr,
@@ -170,8 +185,8 @@ function _parse_logic_expression(
     id = data.operators.logic_operator_to_id[x.head]
     push!(expr.nodes, Node(NODE_LOGIC, id, parent_index))
     parent_var = length(expr.nodes)
-    parse_expression(data, expr, x.args[1], parent_var)
-    parse_expression(data, expr, x.args[2], parent_var)
+    push!(stack, (parent_var, x.args[2]))
+    push!(stack, (parent_var, x.args[1]))
     return
 end
 
