@@ -250,9 +250,9 @@ function Base.write(io::IO, model::Model)
     flip_obj = false
     if options.objsense
         if MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
-            println(io, "OBJSENSE MAX")
+            println(io, "OBJSENSE\n    MAX")
         else
-            println(io, "OBJSENSE MIN")
+            println(io, "OBJSENSE\n    MIN")
         end
     else
         flip_obj = MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
@@ -1046,16 +1046,18 @@ function Headers(s::AbstractString)
                 return HEADER_QMATRIX
             end
         end
+    elseif N == 8
+        if (x == 'O' || x == 'o') && startswith(uppercase(s), "OBJSENSE")
+            return HEADER_OBJSENSE
+        end
     elseif N == 10
         if (x == 'I' || x == 'i') && uppercase(s) == "INDICATORS"
             return HEADER_INDICATORS
         end
-    elseif N == 8 || N == 12
+    elseif N >= 12
         if (x == 'O' || x == 'o') && startswith(uppercase(s), "OBJSENSE")
             return HEADER_OBJSENSE
-        end
-    elseif N > 12
-        if (x == 'Q' || x == 'q')
+        elseif (x == 'Q' || x == 'q')
             header = uppercase(s)
             if startswith(header, "QCMATRIX")
                 return HEADER_QCMATRIX

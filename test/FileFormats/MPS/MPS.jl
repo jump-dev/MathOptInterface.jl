@@ -508,7 +508,8 @@ function test_objsense_true()
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     @test sprint(write, model) ==
           "NAME          \n" *
-          "OBJSENSE MAX\n" *
+          "OBJSENSE\n" *
+          "    MAX\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           "COLUMNS\n" *
@@ -961,7 +962,7 @@ function test_objsense_next_line()
             """
             NAME          model
             OBJSENSE
-            $sense
+                $sense
             ROWS
             N  Obj
             """,
@@ -978,6 +979,22 @@ function test_objsense_next_line()
             """
             NAME          model
             OBJSENSE $sense
+            ROWS
+            N  Obj
+            """,
+        )
+        seekstart(io)
+        model = MPS.Model()
+        Base.read!(io, model)
+        @test MOI.get(model, MOI.ObjectiveSense()) == enum
+    end
+    for (sense, enum) in [("MIN", MOI.MIN_SENSE), ("MAX", MOI.MAX_SENSE)]
+        io = IOBuffer()
+        write(
+            io,
+            """
+            NAME          model
+            OBJSENSE      $sense
             ROWS
             N  Obj
             """,
