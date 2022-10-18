@@ -870,6 +870,20 @@ function test_eval_atan2()
     return
 end
 
+function test_deep_recursion()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    y = Expr(:call, :sin, x)
+    for _ in 1:20_000
+        y = Expr(:call, :^, Expr(:call, :sqrt, y), 2)
+    end
+    start = time()
+    @test Nonlinear.parse_expression(model, y) isa Nonlinear.Expression
+    # A conservative bound to check we're not doing something expensive.
+    @test time() - start < 1.0
+    return
+end
+
 end
 
 TestNonlinear.runtests()
