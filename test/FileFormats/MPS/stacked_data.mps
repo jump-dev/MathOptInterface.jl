@@ -6,7 +6,8 @@
 *       y ∈ {1, 2, 3, 4}
 *2345678901234567890123456789012345678901234567890
 NAME stacked_data
-OBJSENSE MAX
+OBJSENSE
+    MAX
 ROWS
  N  obj
  N  blank_obj
