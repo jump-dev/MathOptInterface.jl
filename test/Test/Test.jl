@@ -83,3 +83,12 @@ MOI.Test.runtests(
         "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
     ],
 )
+
+# Special test for issue #2010
+
+struct _UnsupportedModel <: MOI.ModelLike end
+
+MOI.Test.test_attribute_unsupported_constraint(
+    _UnsupportedModel(),
+    MOI.Test.Config(),
+)

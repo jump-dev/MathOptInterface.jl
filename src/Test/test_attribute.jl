@@ -276,3 +276,20 @@ function test_attribute_after_empty(model::MOI.AbstractOptimizer, ::Config)
 end
 
 test_attribute_after_empty(::MOI.ModelLike, ::Config) = nothing
+
+struct _UnsupportedVectorSet2010 <: MOI.AbstractVectorSet end
+
+"""
+    test_attribute_unsupported_constraint(model::MOI.ModelLike, config::Config)
+
+Test that `ListOfConstraintIndices` and `NumberOfConstraints` return the correct
+values if the constraint type is unsupported.
+"""
+function test_attribute_unsupported_constraint(model::MOI.ModelLike, ::Config)
+    F, S = MOI.VectorOfVariables, _UnsupportedVectorSet2010
+    @requires !MOI.supports_constraint(model, F, S)
+    @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) ==
+          MOI.ConstraintIndex{F,S}[]
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == Int64(0)
+    return
+end
