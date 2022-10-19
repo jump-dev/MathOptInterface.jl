@@ -1138,7 +1138,13 @@ indices of type `F`-in-`S` in the model (i.e., of length equal to the value of
 """
 struct ListOfConstraintIndices{F,S} <: AbstractModelAttribute end
 
-function get_fallback(::ModelLike, ::ListOfConstraintIndices{F,S}) where {F,S}
+function get_fallback(
+    model::ModelLike,
+    ::ListOfConstraintIndices{F,S},
+) where {F,S}
+    if MOI.supports_constraint(model, F, S)
+        throw(MOI.GetAttributeNotAllowed(MOI.ListOfConstraintIndices{F,S}()))
+    end
     return ConstraintIndex{F,S}[]
 end
 
@@ -1152,7 +1158,12 @@ struct NumberOfConstraints{F,S} <: AbstractModelAttribute end
 
 attribute_value_type(::NumberOfConstraints) = Int64
 
-get_fallback(::ModelLike, ::NumberOfConstraints{F,S}) where {F,S} = Int64(0)
+function get_fallback(model::ModelLike, ::NumberOfConstraints{F,S}) where {F,S}
+    if MOI.supports_constraint(model, F, S)
+        throw(MOI.GetAttributeNotAllowed(MOI.NumberOfConstraints{F,S}()))
+    end
+    return Int64(0)
+end
 
 """
     ListOfConstraintTypesPresent()
