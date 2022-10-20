@@ -1142,7 +1142,9 @@ function get_fallback(
     model::ModelLike,
     ::ListOfConstraintIndices{F,S},
 ) where {F,S}
-    if supports_constraint(model, F, S)
+    if supports_constraint(model, F, S) ||
+       (S === VariableIndex && supports_add_constrained_variable(model, S)) ||
+       (S === VectorOfVariables && supports_add_constrained_variables(model, S))
         throw(GetAttributeNotAllowed(ListOfConstraintIndices{F,S}()))
     end
     return ConstraintIndex{F,S}[]
@@ -1159,7 +1161,9 @@ struct NumberOfConstraints{F,S} <: AbstractModelAttribute end
 attribute_value_type(::NumberOfConstraints) = Int64
 
 function get_fallback(model::ModelLike, ::NumberOfConstraints{F,S}) where {F,S}
-    if supports_constraint(model, F, S)
+    if supports_constraint(model, F, S) ||
+       (S === VariableIndex && supports_add_constrained_variable(model, S)) ||
+       (S === VectorOfVariables && supports_add_constrained_variables(model, S))
         throw(GetAttributeNotAllowed(NumberOfConstraints{F,S}()))
     end
     return Int64(0)
