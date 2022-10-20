@@ -31,11 +31,17 @@ const IndicatorLessThanTrue{T} =
 const IndicatorGreaterThanTrue{T} =
     MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{T}}
 
+const IndicatorEqualToTrue{T} =
+    MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.EqualTo{T}}
+
 const IndicatorLessThanFalse{T} =
     MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{T}}
 
 const IndicatorGreaterThanFalse{T} =
     MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.GreaterThan{T}}
+
+const IndicatorEqualToFalse{T} =
+    MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.EqualTo{T}}
 
 MOI.Utilities.@model(
     Model,
@@ -49,6 +55,8 @@ MOI.Utilities.@model(
         IndicatorLessThanFalse,
         IndicatorGreaterThanTrue,
         IndicatorGreaterThanFalse,
+        IndicatorEqualToTrue,
+        IndicatorEqualToFalse,
     ),
     (),
     (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
@@ -73,6 +81,8 @@ function MOI.supports_constraint(
             IndicatorLessThanFalse{T},
             IndicatorGreaterThanTrue{T},
             IndicatorGreaterThanFalse{T},
+            IndicatorEqualToTrue{T},
+            IndicatorEqualToFalse{T},
         },
     },
 ) where {T}
@@ -343,6 +353,9 @@ function write_rows(io::IO, model::Model)
     _write_rows(io, model, F, IndicatorLessThanFalse{Float64}, "L")
     _write_rows(io, model, F, IndicatorGreaterThanTrue{Float64}, "G")
     _write_rows(io, model, F, IndicatorGreaterThanFalse{Float64}, "G")
+    _write_rows(io, model, F, IndicatorEqualToTrue{Float64}, "E")
+    _write_rows(io, model, F, IndicatorEqualToFalse{Float64}, "E")
+
     return
 end
 
@@ -456,6 +469,8 @@ function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
         IndicatorLessThanFalse{Float64},
         IndicatorGreaterThanTrue{Float64},
         IndicatorGreaterThanFalse{Float64},
+        IndicatorEqualToTrue{Float64},
+        IndicatorEqualToFalse{Float64},
     )
         _collect_indicator(model, S, names, coefficients, indicators)
     end
@@ -550,6 +565,8 @@ function write_rhs(io::IO, model::Model, obj_const)
     _write_rhs(io, model, F, IndicatorLessThanFalse{Float64})
     _write_rhs(io, model, F, IndicatorGreaterThanTrue{Float64})
     _write_rhs(io, model, F, IndicatorGreaterThanFalse{Float64})
+    _write_rhs(io, model, F, IndicatorEqualToTrue{Float64})
+    _write_rhs(io, model, F, IndicatorEqualToFalse{Float64})
     # Objective constants are added to the RHS as a negative offset.
     # https://www.ibm.com/docs/en/icos/20.1.0?topic=standard-records-in-mps-format
     if !iszero(obj_const)
