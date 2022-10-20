@@ -4,6 +4,8 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
+using Test
+
 using MathOptInterface
 const MOI = MathOptInterface
 
@@ -88,7 +90,24 @@ MOI.Test.runtests(
 
 struct _UnsupportedModel <: MOI.ModelLike end
 
+function MOI.supports_constraint(
+    ::_UnsupportedModel,
+    ::Type{MOI.VariableIndex},
+    ::Type{MOI.ZeroOne},
+)
+    return true
+end
+
 MOI.Test.test_attribute_unsupported_constraint(
     _UnsupportedModel(),
     MOI.Test.Config(),
 )
+
+@testset "test_attribute_unsupported_constraint_fallback" begin
+    model = _UnsupportedModel()
+    F, S = MOI.VariableIndex, MOI.ZeroOne
+    attr = MOI.ListOfConstraintIndices{F,S}()
+    @test_throws MOI.GetAttributeNotAllowed(attr) MOI.get(model, attr)
+    attr = MOI.NumberOfConstraints{F,S}()
+    @test_throws MOI.GetAttributeNotAllowed(attr) MOI.get(model, attr)
+end
