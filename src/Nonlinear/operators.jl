@@ -82,7 +82,8 @@ const DEFAULT_UNIVARIATE_OPERATORS = first.(SYMBOLIC_UNIVARIATE_EXPRESSIONS)
 
 The list of multivariate operators that are supported by default.
 """
-const DEFAULT_MULTIVARIATE_OPERATORS = [:+, :-, :*, :^, :/, :ifelse, :atan]
+const DEFAULT_MULTIVARIATE_OPERATORS =
+    [:+, :-, :*, :^, :/, :ifelse, :atan, :min, :max]
 
 """
     OperatorRegistry()
@@ -547,6 +548,10 @@ function eval_multivariate_function(
     elseif op == :atan
         @assert length(x) == 2
         return atan(x[1], x[2])
+    elseif op == :min
+        return minimum(x)
+    elseif op == :max
+        return maximum(x)
     end
     id = registry.multivariate_operator_to_id[op]
     offset = id - registry.multivariate_user_operator_start
@@ -627,6 +632,14 @@ function eval_multivariate_gradient(
         base = x[1]^2 + x[2]^2
         g[1] = x[2] / base
         g[2] = -x[1] / base
+    elseif op == :min
+        fill!(g, zero(T))
+        _, i = findmin(x)
+        g[i] = one(T)
+    elseif op == :max
+        fill!(g, zero(T))
+        _, i = findmax(x)
+        g[i] = one(T)
     else
         id = registry.multivariate_operator_to_id[op]
         offset = id - registry.multivariate_user_operator_start
@@ -727,6 +740,12 @@ function eval_multivariate_hessian(
         H[1, 1] = -2 * x[2] * x[1] / base
         H[2, 1] = (x[1]^2 - x[2]^2) / base
         H[2, 2] = 2 * x[2] * x[1] / base
+    elseif op == :min
+        _, i = findmin(x)
+        H[i, i] = one(T)
+    elseif op == :max
+        _, i = findmax(x)
+        H[i, i] = one(T)
     else
         id = registry.multivariate_operator_to_id[op]
         offset = id - registry.multivariate_user_operator_start
