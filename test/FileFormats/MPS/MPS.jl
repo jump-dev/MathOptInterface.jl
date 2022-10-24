@@ -909,6 +909,21 @@ c1: [z, 1.0 * x + 1.0 * y] in Indicator{ACTIVATE_ON_ONE}(GreaterThan(1.0))
     return
 end
 
+function test_round_trip_indicator_equalto()
+    _test_model_equality(
+        """
+variables: x, y, z
+minobjective: 1.0 * x + y + z
+z in ZeroOne()
+c1: [z, 1.0 * x + 1.0 * y] in Indicator{ACTIVATE_ON_ONE}(EqualTo(1.0))
+""",
+        ["x", "y", "z"],
+        ["c1"],
+        [("z", MOI.ZeroOne())],
+    )
+    return
+end
+
 function test_round_trip_indicator_lessthan_false()
     _test_model_equality(
         """
@@ -931,6 +946,21 @@ variables: x, y, z
 minobjective: 1.0 * x + y + z
 z in ZeroOne()
 c1: [z, 1.0 * x + 1.0 * y] in Indicator{ACTIVATE_ON_ZERO}(GreaterThan(1.0))
+""",
+        ["x", "y", "z"],
+        ["c1"],
+        [("z", MOI.ZeroOne())],
+    )
+    return
+end
+
+function test_round_trip_indicator_equalto_false()
+    _test_model_equality(
+        """
+variables: x, y, z
+minobjective: 1.0 * x + y + z
+z in ZeroOne()
+c1: [z, 1.0 * x + 1.0 * y] in Indicator{ACTIVATE_ON_ZERO}(EqualTo(1.0))
 """,
         ["x", "y", "z"],
         ["c1"],
