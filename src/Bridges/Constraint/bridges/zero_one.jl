@@ -11,6 +11,10 @@
 
   * ``x \\in \\{0, 1\\}`` into ``x \\in \\mathbb{Z}``, ``1x \\in [0, 1]``.
 
+!!! note
+    `ZeroOneBridge` adds a linear constraint instead of adding variable bounds
+    to avoid modifying bounds set by the user.
+
 ## Source node
 
 `ZeroOneBridge` supports:
