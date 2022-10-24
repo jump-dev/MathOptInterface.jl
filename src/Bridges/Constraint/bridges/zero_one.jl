@@ -13,7 +13,7 @@
 
 !!! note
     `ZeroOneBridge` adds a linear constraint instead of adding variable bounds
-    to avoid modifying bounds set by the user.
+    to avoid conflicting with bounds set by the user.
 
 ## Source node
 
