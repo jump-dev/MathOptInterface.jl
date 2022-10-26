@@ -17,7 +17,8 @@ function test_constraint_get_ConstraintIndex(
     ::Config{T},
 ) where {T}
     f = T(1) * x
-    @requires MOI.supports(model, MOI.ConstraintName(), MOI.ConstraintIndex{typeof(f), MOI.GreaterThan{T}})
+    CI = MOI.ConstraintIndex{typeof(f),MOI.GreaterThan{T}}
+    @requires MOI.supports(model, MOI.ConstraintName(), CI)
     x = MOI.add_variable(model)
     c1 = MOI.add_constraint(model, f, MOI.GreaterThan(T(1)))
     MOI.set(model, MOI.ConstraintName(), c1, "c1")
