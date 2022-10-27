@@ -98,7 +98,7 @@ mutable struct PenaltyRelaxation{T}
 
     function PenaltyRelaxation(
         p::Dict{MOI.ConstraintIndex,T};
-        default::T = one(T),
+        default::Union{Nothing,T} = one(T),
     ) where {T}
         return new{T}(default, p)
     end
@@ -122,24 +122,29 @@ function MOI.modify(model::MOI.ModelLike, relax::PenaltyRelaxation{T}) where {T}
         f = zero(MOI.ScalarAffineFunction{T})
         MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     end
+    map = Dict{MOI.ConstraintIndex,MOI.ScalarAffineFunction{T}}()
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        _modify_penalty_relaxation(model, relax, F, S)
+        _modify_penalty_relaxation(map, model, relax, F, S)
     end
-    return
+    return map
 end
 
 function _modify_penalty_relaxation(
+    map::Dict{MOI.ConstraintIndex,MOI.ScalarAffineFunction{T}},
     model::MOI.ModelLike,
     relax::PenaltyRelaxation,
     ::Type{F},
     ::Type{S},
-) where {F,S}
+) where {T,F,S}
     for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         if relax.default !== nothing || haskey(relax.penalties, ci)
-            MOI.modify(model, ci, relax)
+            f = MOI.modify(model, ci, relax)
+            if f !== nothing
+                map[ci] = f
+            end
         end
     end
-    return
+    return map
 end
 
 function MOI.modify(
@@ -176,7 +181,7 @@ function MOI.modify(
     obj = MOI.ObjectiveFunction{O}()
     MOI.modify(model, obj, MOI.ScalarCoefficientChange(y, a))
     MOI.modify(model, obj, MOI.ScalarCoefficientChange(z, a))
-    return
+    return one(T) * y + one(T) * z
 end
 
 function MOI.modify(
@@ -194,7 +199,7 @@ function MOI.modify(
     O = MOI.get(model, MOI.ObjectiveFunctionType())
     obj = MOI.ObjectiveFunction{O}()
     MOI.modify(model, obj, MOI.ScalarCoefficientChange(y, a))
-    return
+    return one(T) * y
 end
 
 function MOI.modify(
@@ -212,5 +217,5 @@ function MOI.modify(
     O = MOI.get(model, MOI.ObjectiveFunctionType())
     obj = MOI.ObjectiveFunction{O}()
     MOI.modify(model, obj, MOI.ScalarCoefficientChange(z, a))
-    return
+    return one(T) * z
 end

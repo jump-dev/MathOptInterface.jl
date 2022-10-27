@@ -25,7 +25,10 @@ end
 function _test_roundtrip(src_str, relaxed_str)
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, src_str)
-    MOI.modify(model, MOI.Utilities.PenaltyRelaxation())
+    map = MOI.modify(model, MOI.Utilities.PenaltyRelaxation())
+    for (c, v) in map
+        @test v isa MOI.ScalarAffineFunction{Float64}
+    end
     dest = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(dest, relaxed_str)
     MOI.Bridges._test_structural_identical(model, dest)
@@ -218,11 +221,105 @@ function test_relax_quadratic_greaterthanthan()
     return
 end
 
-function test_penalties()
+function test_penalty_dict()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, 1.0 * x, MOI.EqualTo(2.0))
-    MOI.modify(model, MOI.Utilities.PenaltyRelaxation(Dict(c => 2.0)))
+    map = MOI.modify(model, MOI.Utilities.PenaltyRelaxation(Dict(c => 2.0)))
+    @test map[c] isa MOI.ScalarAffineFunction{Float64}
+    @test sprint(print, model) === """
+    Minimize ScalarAffineFunction{Float64}:
+     0.0 + 2.0 v[2] + 2.0 v[3]
+
+    Subject to:
+
+    ScalarAffineFunction{Float64}-in-EqualTo{Float64}
+     0.0 + 1.0 v[1] + 1.0 v[2] - 1.0 v[3] == 2.0
+
+    VariableIndex-in-GreaterThan{Float64}
+     v[2] >= 0.0
+     v[3] >= 0.0
+    """
+    return
+end
+
+function test_default()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0 * x, MOI.EqualTo(2.0))
+    map = MOI.modify(model, MOI.Utilities.PenaltyRelaxation(default = 2.0))
+    @test map[c] isa MOI.ScalarAffineFunction{Float64}
+    @test sprint(print, model) === """
+    Minimize ScalarAffineFunction{Float64}:
+     0.0 + 2.0 v[2] + 2.0 v[3]
+
+    Subject to:
+
+    ScalarAffineFunction{Float64}-in-EqualTo{Float64}
+     0.0 + 1.0 v[1] + 1.0 v[2] - 1.0 v[3] == 2.0
+
+    VariableIndex-in-GreaterThan{Float64}
+     v[2] >= 0.0
+     v[3] >= 0.0
+    """
+    return
+end
+
+function test_default_nothing()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0 * x, MOI.EqualTo(2.0))
+    map = MOI.modify(model, MOI.Utilities.PenaltyRelaxation(default = nothing))
+    @test !haskey(map, c)
+    @test sprint(print, model) === """
+    Minimize ScalarAffineFunction{Float64}:
+     0.0
+
+    Subject to:
+
+    ScalarAffineFunction{Float64}-in-EqualTo{Float64}
+     0.0 + 1.0 v[1] == 2.0
+    """
+    return
+end
+
+function test_brige_optimizer()
+    model = MOI.instantiate(
+        MOI.Utilities.Model{Float64};
+        with_bridge_type = Float64,
+    )
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0 * x, MOI.EqualTo(2.0))
+    map = MOI.modify(model, MOI.Utilities.PenaltyRelaxation(default = 2.0))
+    @test map[c] isa MOI.ScalarAffineFunction{Float64}
+    @test sprint(print, model) === """
+    Minimize ScalarAffineFunction{Float64}:
+     0.0 + 2.0 v[2] + 2.0 v[3]
+
+    Subject to:
+
+    ScalarAffineFunction{Float64}-in-EqualTo{Float64}
+     0.0 + 1.0 v[1] + 1.0 v[2] - 1.0 v[3] == 2.0
+
+    VariableIndex-in-GreaterThan{Float64}
+     v[2] >= 0.0
+     v[3] >= 0.0
+    """
+    return
+end
+
+function test_caching_optimizer()
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+        MOI.Bridges.full_bridge_optimizer(
+            MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}()),
+            Float64,
+        ),
+    )
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0 * x, MOI.EqualTo(2.0))
+    map = MOI.modify(model, MOI.Utilities.PenaltyRelaxation(default = 2.0))
+    @test map[c] isa MOI.ScalarAffineFunction{Float64}
     @test sprint(print, model) === """
     Minimize ScalarAffineFunction{Float64}:
      0.0 + 2.0 v[2] + 2.0 v[3]
