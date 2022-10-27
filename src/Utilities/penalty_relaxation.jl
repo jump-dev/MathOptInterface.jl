@@ -115,10 +115,7 @@ function PenaltyRelaxation(
     return PenaltyRelaxation(convert(Dict{MOI.ConstraintIndex,T}, d); kwargs...)
 end
 
-function MOI.modify(
-    model::MOI.ModelLike,
-    relax::PenaltyRelaxation{T},
-) where {T}
+function MOI.modify(model::MOI.ModelLike, relax::PenaltyRelaxation{T}) where {T}
     sense = MOI.get(model, MOI.ObjectiveSense())
     if sense == MOI.FEASIBILITY_SENSE
         MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -147,10 +144,18 @@ end
 
 function MOI.modify(
     ::MOI.ModelLike,
-    ::MOI.ConstraintIndex,
+    ci::MOI.ConstraintIndex,
     ::PenaltyRelaxation,
 )
-    return  # Silently skip modifying other constraint types.
+    # We use this fallback to avoid ambiguity errors that would occur if we
+    # added {F,S} directly to the argument.
+    _eltype(::MOI.ConstraintIndex{F,S}) where {F,S} = F, S
+    F, S = _eltype(ci)
+    @warn(
+        "Skipping PenaltyRelaxation of constraints of type $F-in-$S",
+        maxlog = 1,
+    )
+    return
 end
 
 function MOI.modify(

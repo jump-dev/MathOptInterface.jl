@@ -33,24 +33,34 @@ function _test_roundtrip(src_str, relaxed_str)
 end
 
 function test_relax_bounds()
-    _test_roundtrip(
-        """
-        variables: x, y
-        minobjective: x + y
-        x >= 0.0
-        y <= 0.0
-        x in ZeroOne()
-        y in Integer()
-        """,
-        """
-        variables: x, y
-        minobjective: x + y
-        x >= 0.0
-        y <= 0.0
-        x in ZeroOne()
-        y in Integer()
-        """,
+    src_str = """
+    variables: x, y
+    minobjective: x + y
+    x >= 0.0
+    y <= 0.0
+    x in ZeroOne()
+    y in Integer()
+    """
+    relaxed_str = """
+    variables: x, y
+    minobjective: x + y
+    x >= 0.0
+    y <= 0.0
+    x in ZeroOne()
+    y in Integer()
+    """
+    model = MOI.Utilities.Model{Float64}()
+    MOI.Utilities.loadfromstring!(model, src_str)
+    @test_logs(
+        (:warn,),
+        (:warn,),
+        (:warn,),
+        (:warn,),
+        MOI.modify(model, MOI.Utilities.PenaltyRelaxation()),
     )
+    dest = MOI.Utilities.Model{Float64}()
+    MOI.Utilities.loadfromstring!(dest, relaxed_str)
+    MOI.Bridges._test_structural_identical(model, dest)
     return
 end
 
