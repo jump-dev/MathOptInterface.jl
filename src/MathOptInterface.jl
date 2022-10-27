@@ -118,28 +118,41 @@ end
 """
     write_to_file(model::ModelLike, filename::String)
 
-Writes the current model data to the given file.
+Write the current model to the file at `filename`.
+
 Supported file types depend on the model type.
 """
-function write_to_file end
+function write_to_file(model::ModelLike, filename::String)
+    dest = FileFormats.Model(; filename = filename)
+    copy_to(dest, model)
+    write_to_file(dest, filename)
+    return
+end
 
 """
     read_from_file(model::ModelLike, filename::String)
 
-Read the file `filename` into the model `model`. If `model` is non-empty, this may
-throw an error.
+Read the file `filename` into the model `model`. If `model` is non-empty, this
+may throw an error.
 
 Supported file types depend on the model type.
 
 ### Note
 
-Once the contents of the file are loaded into the model, users can query the variables via
-`get(model, ListOfVariableIndices())`. However, some filetypes, such as LP files, do not
-maintain an explicit ordering of the variables. Therefore, the returned list may be in an
-arbitrary order. To avoid depending on the order of the indices, users should look up each
-variable index by name: `get(model, VariableIndex, "name")`.
+Once the contents of the file are loaded into the model, users can query the
+variables via `get(model, ListOfVariableIndices())`. However, some filetypes,
+such as LP files, do not maintain an explicit ordering of the variables.
+Therefore, the returned list may be in an arbitrary order.
+
+To avoid depending on the order of the indices, look up each variable index by
+name using  `get(model, VariableIndex, "name")`.
 """
-function read_from_file end
+function read_from_file(model::ModelLike, filename::String)
+    src = FileFormats.Model(; filename = filename)
+    read_from_file(src, filename)
+    copy_to(model, src)
+    return
+end
 
 """
     is_empty(model::ModelLike)
