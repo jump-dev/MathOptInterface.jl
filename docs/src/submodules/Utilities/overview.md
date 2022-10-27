@@ -315,9 +315,9 @@ $$ \begin{aligned}
     In IJulia, calling `print` or ending a cell with
     [`Utilities.latex_formulation`](@ref) will render the model in LaTeX.
 
-## Utilities.FeasibilityRelaxation
+## Utilities.PenaltyRelaxation
 
-Pass [`Utilities.FeasibilityRelaxation`](@ref) to [`modify`](@ref) to relax the
+Pass [`Utilities.PenaltyRelaxation`](@ref) to [`modify`](@ref) to relax the
 problem by adding penalized slack variables to the constraints. This is helpful
 when debugging sources of infeasible models.
 
@@ -330,7 +330,7 @@ julia> MOI.set(model, MOI.VariableName(), x, "x")
 
 julia> c = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0));
 
-julia> MOI.modify(model, MOI.Utilities.FeasibilityRelaxation(Dict(c => 2.0)))
+julia> MOI.modify(model, MOI.Utilities.PenaltyRelaxation(Dict(c => 2.0)))
 
 julia> print(model)
 Minimize ScalarAffineFunction{Float64}:

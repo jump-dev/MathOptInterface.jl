@@ -93,7 +93,7 @@ Utilities.ModelFilter
 ## Feasibility relaxation
 
 ```@docs
-Utilities.FeasibilityRelaxation
+Utilities.PenaltyRelaxation
 ```
 
 ## MatrixOfConstraints
