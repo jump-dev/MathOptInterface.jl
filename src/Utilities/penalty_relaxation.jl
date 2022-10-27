@@ -63,7 +63,7 @@ julia> x = MOI.add_variable(model);
 
 julia> c = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0));
 
-julia> MOI.modify(model, MOI.Utilities.PenaltyRelaxation(default = 2.0))
+julia> map = MOI.modify(model, MOI.Utilities.PenaltyRelaxation(default = 2.0));
 
 julia> print(model)
 Minimize ScalarAffineFunction{Float64}:
@@ -76,6 +76,9 @@ ScalarAffineFunction{Float64}-in-LessThan{Float64}
 
 VariableIndex-in-GreaterThan{Float64}
  v[2] >= 0.0
+
+julia> map[c] isa MOI.ScalarAffineFunction{Float64}
+true
 ```
 
 ```jldoctest; setup=:(import MathOptInterface; const MOI = MathOptInterface)
@@ -85,7 +88,7 @@ julia> x = MOI.add_variable(model);
 
 julia> c = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0));
 
-julia> MOI.modify(model, MOI.Utilities.PenaltyRelaxation(Dict(c => 3.0)))
+julia> map = MOI.modify(model, MOI.Utilities.PenaltyRelaxation(Dict(c => 3.0)));
 
 julia> print(model)
 Minimize ScalarAffineFunction{Float64}:
@@ -98,6 +101,9 @@ ScalarAffineFunction{Float64}-in-LessThan{Float64}
 
 VariableIndex-in-GreaterThan{Float64}
  v[2] >= 0.0
+
+julia> map[c] isa MOI.ScalarAffineFunction{Float64}
+true
 ```
 """
 mutable struct PenaltyRelaxation{T}
