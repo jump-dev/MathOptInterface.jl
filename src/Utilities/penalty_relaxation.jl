@@ -138,7 +138,11 @@ function MOI.modify(model::MOI.ModelLike, relax::PenaltyRelaxation{T}) where {T}
     end
     map = Dict{MOI.ConstraintIndex,MOI.ScalarAffineFunction{T}}()
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        _modify_penalty_relaxation(map, model, relax, F, S)
+        if MOI.supports(model, relax, MOI.ConstraintIndex{F,S})
+            _modify_penalty_relaxation(map, model, relax, F, S)
+        else
+            @warn("Skipping PenaltyRelaxation of constraints of type $F-in-$S")
+        end
     end
     return map
 end
@@ -161,20 +165,20 @@ function _modify_penalty_relaxation(
     return map
 end
 
-function MOI.modify(
+function MOI.supports(
     ::MOI.ModelLike,
-    ci::MOI.ConstraintIndex,
+    ::PenaltyRelaxation{T},
+    ::Type{<:MOI.ConstraintIndex{F,<:MOI.AbstractScalarSet}},
+) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
+    return true
+end
+
+function MOI.supports(
+    ::MOI.ModelLike,
     ::PenaltyRelaxation,
+    ::Type{<:MOI.ConstraintIndex},
 )
-    # We use this fallback to avoid ambiguity errors that would occur if we
-    # added {F,S} directly to the argument.
-    _eltype(::MOI.ConstraintIndex{F,S}) where {F,S} = F, S
-    F, S = _eltype(ci)
-    @warn(
-        "Skipping PenaltyRelaxation of constraints of type $F-in-$S",
-        maxlog = 1,
-    )
-    return
+    return false
 end
 
 function MOI.modify(
