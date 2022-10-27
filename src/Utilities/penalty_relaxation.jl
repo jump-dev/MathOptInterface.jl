@@ -29,9 +29,17 @@ constraint that is being relaxed. If no value exists, the default is `default`.
 When `S` is [`MOI.LessThan`](@ref) or [`MOI.GreaterThan`](@ref), we omit `y` or
 `z` respectively as a performance optimization.
 
+## Return value
+
+`MOI.modify(model, PenaltyRelaxation())` returns a
+`Dict{MOI.ConstraintIndex,MOI.ScalarAffineFunction}` that maps constraint
+indices to a [`MOI.ScalarAffineFunction`](@ref) comprised of `y + z`. In an
+optimal solution, query the value of these functions to compute the violation of
+each constraint.
+
 ## Relax a subset of constraints
 
-To relax a subset of constraints, pass a `penalties` dictionary` and set
+To relax a subset of constraints, pass a `penalties` dictionary and set
 `default = nothing`.
 
 ## Supported constraint types

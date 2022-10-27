@@ -330,7 +330,7 @@ julia> MOI.set(model, MOI.VariableName(), x, "x")
 
 julia> c = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0));
 
-julia> MOI.modify(model, MOI.Utilities.PenaltyRelaxation(Dict(c => 2.0)))
+julia> map = MOI.modify(model, MOI.Utilities.PenaltyRelaxation(Dict(c => 2.0)));
 
 julia> print(model)
 Minimize ScalarAffineFunction{Float64}:
@@ -343,6 +343,9 @@ ScalarAffineFunction{Float64}-in-LessThan{Float64}
 
 VariableIndex-in-GreaterThan{Float64}
  v[2] >= 0.0
+
+julia> map[c]
+MathOptInterface.ScalarAffineFunction{Float64}(MathOptInterface.ScalarAffineTerm{Float64}[MathOptInterface.ScalarAffineTerm{Float64}(1.0, MathOptInterface.VariableIndex(2))], 0.0)
 ```
 
 ## Utilities.MatrixOfConstraints
