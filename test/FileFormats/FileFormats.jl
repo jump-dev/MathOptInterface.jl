@@ -11,6 +11,32 @@ using Test
 
 const MOI = MathOptInterface
 
+function runtests()
+    for name in names(@__MODULE__, all = true)
+        if startswith("$(name)", "test_")
+            @testset "$name" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
+
+function test_default_fallbacks()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariableName(), x, "x")
+    set = MOI.GreaterThan(0.0)
+    c = MOI.add_constraint(model, x, set)
+    MOI.write_to_file(model, "tmp.lp")
+    dest = MOI.Utilities.Model{Float64}()
+    MOI.read_from_file(dest, "tmp.lp")
+    x_dest = MOI.get(dest, MOI.VariableIndex, "x")
+    @test MOI.get(dest, MOI.ConstraintSet(), typeof(c)(x_dest.value)) == set
+    rm("tmp.lp")
+    return
+end
+
 function test_CBF()
     return include(joinpath(@__DIR__, "CBF", "CBF.jl"))
 end
@@ -140,17 +166,6 @@ function test_Model()
         ErrorException("Unable to automatically detect format of a.b."),
         MOI.FileFormats.Model(filename = "a.b")
     )
-end
-
-function runtests()
-    for name in names(@__MODULE__, all = true)
-        if startswith("$(name)", "test_")
-            @testset "$name" begin
-                getfield(@__MODULE__, name)()
-            end
-        end
-    end
-    return
 end
 
 end
