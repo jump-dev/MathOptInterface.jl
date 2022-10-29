@@ -7,7 +7,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 ### New features
 
- - Added default fallback for `get`ing `ListOfConstraintIndices` and
+ - Added default fallback for getting `ListOfConstraintIndices` and
    `NumberOfConstraints` when the constraint type is unsupported by the model
  - Added support for `min` and `max` in nonlinear expressions
  - Added support for `Indicator{EqualTo{T}}` constraints in `FileFormats.MPS`
