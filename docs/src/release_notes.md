@@ -1,5 +1,29 @@
 # Release notes
 
+## v1.9.0 (October 29, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.9.0).
+
+### New features
+
+ - Added default fallback for getting `ListOfConstraintIndices` and
+   `NumberOfConstraints` when the constraint type is unsupported by the model
+ - Added support for `min` and `max` in nonlinear expressions
+ - Added support for `Indicator{EqualTo{T}}` constraints in `FileFormats.MPS`
+ - Added default fallback for `write_to_file(::ModelLike, ::String)` and
+   `read_from_file(::ModelLike, ::String)`
+
+### Bug fixes
+
+ - Fixed `Constraint.ZeroOneBridge` by adding new bounds as affine constraints
+   instead of variable bounds
+ - Fixed reading free rows in `FileFormats.MPS` files
+ - Fixed parsing of `OBJSENSE` blocks in `FileFormats.MPS` files
+ - Fix the parsing of deeply nested nonlinear expressions by removing the use of
+   recursion
+ - Fixed the requirements check in `Test.test_constrainnt_get_ConstraintIndex`
+
 ## v1.8.2 (September 20, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
