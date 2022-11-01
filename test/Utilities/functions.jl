@@ -1058,7 +1058,9 @@ function _test_canonicalization(
     @test MOI.Utilities.canonical(g) !== g
     # There are some changes to sorting in Julia v1.9 that now mean sorting
     # allocates.
-    @test @allocated(MOI.Utilities.canonicalize!(f)) == 0
+    if VERSION < v"1.9"
+        @test @allocated(MOI.Utilities.canonicalize!(f)) == 0
+    end
     return
 end
 
