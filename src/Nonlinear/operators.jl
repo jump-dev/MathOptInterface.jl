@@ -143,12 +143,23 @@ end
 const _FORWARD_DIFF_METHOD_ERROR_HELPER = raw"""
 Common reasons for this include:
 
- * the function assumes `Float64` will be passed as input, it must work for any
+ * The function takes `f(x::Vector)` as input, instead of the splatted
+   `f(x...)`.
+ * The function assumes `Float64` will be passed as input, it must work for any
    generic `Real` type.
- * the function allocates temporary storage using `zeros(3)` or similar. This
+ * The function allocates temporary storage using `zeros(3)` or similar. This
    defaults to `Float64`, so use `zeros(T, 3)` instead.
 
-As an example, instead of:
+As examples, instead of:
+```julia
+my_function(x::Vector) = sum(x.^2)
+```
+use:
+```julia
+my_function(x::T...) where {T<:Real} = sum(x[i]^2 for i in 1:length(x))
+```
+
+Instead of:
 ```julia
 function my_function(x::Float64...)
     y = zeros(length(x))
@@ -231,7 +242,7 @@ function _validate_register_assumptions(
         if dimension == 1
             y = f(0.0)
         else
-            y = f(zeros(dimension))
+            y = f(zeros(dimension)...)
         end
     catch
         # We hit some other error, perhaps we called a function like log(0).
@@ -254,8 +265,7 @@ function _validate_register_assumptions(
     catch err
         if err isa MethodError
             error(
-                "Unable to register the function :$name because it does not " *
-                "support differentiation via ForwardDiff.\n\n" *
+                "Unable to register the function :$name.\n\n" *
                 _FORWARD_DIFF_METHOD_ERROR_HELPER,
             )
         end
