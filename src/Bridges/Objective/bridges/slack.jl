@@ -87,6 +87,20 @@ function supports_objective_function(
     return true
 end
 
+function supports_objective_function(
+    ::Type{<:SlackBridge},
+    ::Type{<:MOI.ScalarAffineFunction{<:Complex}},
+)
+    return false
+end
+
+function supports_objective_function(
+    ::Type{<:SlackBridge},
+    ::Type{<:MOI.ScalarQuadraticFunction{<:Complex}},
+)
+    return false
+end
+
 function MOI.Bridges.added_constrained_variable_types(::Type{<:SlackBridge})
     return Tuple{Type}[]
 end
