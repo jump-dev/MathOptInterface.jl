@@ -74,9 +74,9 @@ function bridge_objective(
 end
 
 function supports_objective_function(
-    ::Type{<:SlackBridge},
+    ::Type{<:SlackBridge{T}},
     ::Type{MOI.VariableIndex},
-)
+) where {T}
     return false
 end
 
