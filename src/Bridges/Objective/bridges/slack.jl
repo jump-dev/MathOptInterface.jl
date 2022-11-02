@@ -83,7 +83,7 @@ end
 function supports_objective_function(
     ::Type{<:SlackBridge{T}},
     ::Type{F},
-) where {T,F<:<:MOI.AbstractScalarFunction}
+) where {T,F<:MOI.AbstractScalarFunction}
     return MOI.Utilities.is_coefficient_type(F, T)
 end
 
