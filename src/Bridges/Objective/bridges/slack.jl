@@ -81,24 +81,10 @@ function supports_objective_function(
 end
 
 function supports_objective_function(
-    ::Type{<:SlackBridge},
-    ::Type{<:MOI.AbstractScalarFunction},
-)
-    return true
-end
-
-function supports_objective_function(
-    ::Type{<:SlackBridge},
-    ::Type{<:MOI.ScalarAffineFunction{<:Complex}},
-)
-    return false
-end
-
-function supports_objective_function(
-    ::Type{<:SlackBridge},
-    ::Type{<:MOI.ScalarQuadraticFunction{<:Complex}},
-)
-    return false
+    ::Type{<:SlackBridge{T}},
+    ::Type{F},
+) where {T,F<:<:MOI.AbstractScalarFunction}
+    return MOI.Utilities.is_coefficient_type(F, T)
 end
 
 function MOI.Bridges.added_constrained_variable_types(::Type{<:SlackBridge})
