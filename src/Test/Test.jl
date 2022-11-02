@@ -165,12 +165,14 @@ Run all tests in `MathOptInterface.Test` on `model`.
    in their name.
  * `exclude` takes priority over `include`.
  * If `warn_unsupported` is `false`, `runtests` will silently skip tests that
-   fail with `UnsupportedConstraint` or `UnsupportedAttribute`. When
-   `warn_unsupported` is `true`, a warning will be printed. For most cases the
-   default behavior (`false`) is what you want, since these tests likely test
-   functionality that is not supported by `model`. However, it can be useful to
-   run  `warn_unsupported = true` to check you are not skipping tests due to a
-   missing `supports_constraint` method or equivalent.
+   fail with a `MOI.NotAllowedError`, `MOI.UnsupportedError`, or
+   `RequirementUnmet` error. (The latter is thrown when an `@requires` statement
+   returns `false`.) When `warn_unsupported` is `true`, a warning will be
+   printed. For most cases the default behavior, `false`, is what you want,
+   since these tests likely test functionality that is not supported by `model`.
+   However, it can be useful to run  `warn_unsupported = true` to check you are
+   not skipping tests due to a missing `supports_constraint` method or
+   equivalent.
  * `exclude_tests_after` is a version number that excludes any tests to MOI
    added after that version number. This is useful for solvers who can declare a
    fixed set of tests, and not cause their tests to break if a new patch of MOI
