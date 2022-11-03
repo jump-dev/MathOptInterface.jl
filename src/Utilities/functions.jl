@@ -833,7 +833,7 @@ function _sort_and_compress!(x::Vector)
     if length(x) == 0
         return
     end
-    sort!(x, QuickSort, Base.Order.ord(isless, MOI.term_indices, false))
+    sort!(x, InsertionSort, Base.Order.ord(isless, MOI.term_indices, false))
     i = 1
     @inbounds for j in 2:length(x)
         if MOI.term_indices(x[i]) == MOI.term_indices(x[j])
