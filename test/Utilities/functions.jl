@@ -1056,11 +1056,7 @@ function _test_canonicalization(
     @test MOI.Utilities.is_canonical(expected)
     @test _isapprox_ordered(MOI.Utilities.canonical(g), g)
     @test MOI.Utilities.canonical(g) !== g
-    # There are some changes to sorting in Julia v1.9 that now mean sorting
-    # allocates.
-    if true # VERSION < v"1.9.0-DEV"
-        @test @allocated(MOI.Utilities.canonicalize!(f)) == 0
-    end
+    @test @allocated(MOI.Utilities.canonicalize!(f)) == 0
     return
 end
 
