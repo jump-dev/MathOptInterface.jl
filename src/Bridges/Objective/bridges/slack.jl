@@ -74,17 +74,17 @@ function bridge_objective(
 end
 
 function supports_objective_function(
-    ::Type{<:SlackBridge},
+    ::Type{<:SlackBridge{T}},
     ::Type{MOI.VariableIndex},
-)
+) where {T}
     return false
 end
 
 function supports_objective_function(
-    ::Type{<:SlackBridge},
-    ::Type{<:MOI.AbstractScalarFunction},
-)
-    return true
+    ::Type{<:SlackBridge{T}},
+    ::Type{F},
+) where {T,F<:MOI.AbstractScalarFunction}
+    return MOI.Utilities.is_coefficient_type(F, T)
 end
 
 function MOI.Bridges.added_constrained_variable_types(::Type{<:SlackBridge})

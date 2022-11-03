@@ -475,6 +475,21 @@ function test_runtests()
     return
 end
 
+function test_complex_objective()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    for f in ((1.0 + 1.0im) * x, (1.0 + 1.0im) * x * x)
+        attr = MOI.ObjectiveFunction{typeof(f)}()
+        MOI.set(model, attr, f)
+        dest = MOI.Bridges.full_bridge_optimizer(
+            MOI.Utilities.Model{Float64}(),
+            Float64,
+        )
+        @test_throws MOI.UnsupportedAttribute(attr) MOI.copy_to(dest, model)
+    end
+    return
+end
+
 end  # module
 
 TestObjectiveSlack.runtests()
