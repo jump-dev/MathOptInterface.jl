@@ -617,6 +617,28 @@ function test_read_tricky_quadratic()
     return
 end
 
+function test_quadratic_newline_edge_cases()
+    for case in [
+        "Minimize\nobj: x +\n[ x^2 ]/2",
+        "Minimize\nobj: x + [ x^2\n]/2",
+        "Minimize\nobj: x + [ x^2 ]\n/2",
+        "Minimize\nobj: x + [ x^2\n]\n/2",
+        "Minimize\nobj: x + \n[ x^2\n]\n/2",
+    ]
+        io = IOBuffer()
+        write(io, case)
+        seekstart(io)
+        model = MOI.FileFormats.LP.Model()
+        read!(io, model)
+        out = IOBuffer()
+        write(out, model)
+        seekstart(out)
+        file = read(out, String)
+        @test occursin("obj: 1 x + [ 1 x ^ 2 ]/2", file)
+    end
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")
