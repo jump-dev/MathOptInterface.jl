@@ -620,11 +620,13 @@ end
 function test_quadratic_newline_edge_cases()
     for case in [
         "+\n[ x^2 ]/2",
+        "+ [\n x^2 ]/2",
         "+ [ x^2\n]/2",
         "+ [ x^2 ]\n/2",
         "+ [ x^2\n]\n/2",
         "+ \n[ x^2\n]\n/2",
         "+\n[ x^2 ]/2 \\ comment\n",
+        "+ [ \\comment\n x^2 ]/2",
         "+ [ x^2\n]/2 \\ comment\n",
         "+ [ x^2 ]\n/2 \\ comment\n",
         "+ [ x^2\n]\n/2 \\ comment\n",
@@ -643,11 +645,13 @@ function test_quadratic_newline_edge_cases()
     end
     for case in [
         "+\n[ x^2 ]",
+        "+ [\n x^2 ]",
         "+ [ x^2\n]",
         "+ [ x^2 ]",
         "+ [ x^2\n]",
         "+ \n[ x^2\n]",
         "+\n[ x^2 ] \\ comment",
+        "+ [ \\comment\n x^2 ]",
         "+ [ x^2\n] \\ comment",
         "+ [ x^2 ] \\ comment",
         "+ [ x^2\n] \\ comment",
