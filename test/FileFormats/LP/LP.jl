@@ -633,6 +633,60 @@ function test_read_tricky_quadratic()
     return
 end
 
+function test_quadratic_newline_edge_cases()
+    for case in [
+        "+\n[ x^2 ]/2",
+        "+ [\n x^2 ]/2",
+        "+ [ x^2\n]/2",
+        "+ [ x^2 ]\n/2",
+        "+ [ x^2\n]\n/2",
+        "+ \n[ x^2\n]\n/2",
+        "+\n[ x^2 ]/2 \\ comment\n",
+        "+ [ \\comment\n x^2 ]/2",
+        "+ [ x^2\n]/2 \\ comment\n",
+        "+ [ x^2 ]\n/2 \\ comment\n",
+        "+ [ x^2\n]\n/2 \\ comment\n",
+        "+ \n[ x^2\n]\n/2 \\ comment\n",
+    ]
+        io = IOBuffer()
+        write(io, "Minimize\nobj: x $(case)\nEnd")
+        seekstart(io)
+        model = MOI.FileFormats.LP.Model()
+        read!(io, model)
+        out = IOBuffer()
+        write(out, model)
+        seekstart(out)
+        file = read(out, String)
+        @test occursin("obj: 1 x + [ 1 x ^ 2 ]/2", file)
+    end
+    for case in [
+        "+\n[ x^2 ]",
+        "+ [\n x^2 ]",
+        "+ [ x^2\n]",
+        "+ [ x^2 ]",
+        "+ [ x^2\n]",
+        "+ \n[ x^2\n]",
+        "+\n[ x^2 ] \\ comment",
+        "+ [ \\comment\n x^2 ]",
+        "+ [ x^2\n] \\ comment",
+        "+ [ x^2 ] \\ comment",
+        "+ [ x^2\n] \\ comment",
+        "+ \n[ x^2\n] \\ comment",
+    ]
+        io = IOBuffer()
+        write(io, "Minimize\nobj: x $(case)\nEnd")
+        seekstart(io)
+        model = MOI.FileFormats.LP.Model()
+        read!(io, model)
+        out = IOBuffer()
+        write(out, model)
+        seekstart(out)
+        file = read(out, String)
+        @test occursin("obj: 1 x + [ 2 x ^ 2 ]/2", file)
+    end
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")

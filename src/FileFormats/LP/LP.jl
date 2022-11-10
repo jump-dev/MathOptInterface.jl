@@ -921,11 +921,9 @@ function Base.read!(io::IO, model::Model)
     end
     cache = _ReadCache()
     section = Val{:header}()
-    while !eof(io)
-        line = _strip_comment(string(readline(io)))
-        if isempty(line)
-            continue
-        end
+    peeked_line = ""
+    while peeked_line !== nothing
+        line, peeked_line = _readline(io, peeked_line)
         lower_line = lowercase(line)
         if haskey(_KEYWORDS, lower_line)
             section = _KEYWORDS[lower_line]
@@ -945,6 +943,23 @@ function Base.read!(io::IO, model::Model)
     end
     MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
     return
+end
+
+function _readline(io::IO, line::AbstractString)
+    if eof(io)
+        return line, nothing
+    end
+    peeked_line = _strip_comment(string(readline(io)))
+    if isempty(line)
+        return _readline(io, peeked_line)
+    elseif isempty(peeked_line)
+        return _readline(io, line)
+    elseif endswith(line, '+') || endswith(line, '-') || endswith(line, '[')
+        return _readline(io, string(line, ' ', peeked_line))
+    elseif startswith(peeked_line, ']') || startswith(peeked_line, '/')
+        return _readline(io, string(line, ' ', peeked_line))
+    end
+    return line, peeked_line
 end
 
 end
