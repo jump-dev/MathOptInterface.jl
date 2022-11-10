@@ -231,6 +231,22 @@ y in Integer()
           "End\n"
 end
 
+function test_free_variables_reading()
+    for case in ["free", "Free", "FreE", "frEe"]
+        io = IOBuffer()
+        write(io, "Minimize\nobj: x\nsubject to\nBounds\nx $case\nEnd")
+        seekstart(io)
+        model = MOI.FileFormats.LP.Model()
+        read!(io, model)
+        out = IOBuffer()
+        write(out, model)
+        seekstart(out)
+        file = read(out, String)
+        @test occursin("Bounds\nx free\nEnd", file)
+    end
+    return
+end
+
 function test_quadratic_objective_diag()
     model = LP.Model()
     MOI.Utilities.loadfromstring!(
