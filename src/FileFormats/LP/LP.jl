@@ -538,8 +538,6 @@ function _get_term(token_types, token_values, offset)
     end
     if token_types[offset] == _TOKEN_QUADRATIC_OPEN
         return _get_term(token_types, token_values, offset + 1)
-    elseif token_types[offset] == _TOKEN_QUADRATIC_CLOSE
-        return nothing, offset + 1
     end
     @assert token_types[offset] == _TOKEN_VARIABLE
     x = MOI.VariableIndex(Int64(token_values[offset]))
@@ -589,9 +587,7 @@ function _parse_function(
     offset = 1
     while offset <= length(tokens)
         term, offset = _get_term(token_types, token_values, offset)
-        if term === nothing
-            # If ]/2 is on a new line.
-        elseif term isa MOI.ScalarAffineTerm{Float64}
+        if term isa MOI.ScalarAffineTerm{Float64}
             push!(f.terms, term::MOI.ScalarAffineTerm{Float64})
         elseif term isa MOI.ScalarQuadraticTerm{Float64}
             push!(cache.quad_terms, term::MOI.ScalarQuadraticTerm{Float64})
