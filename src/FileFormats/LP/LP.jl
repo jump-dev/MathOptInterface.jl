@@ -749,7 +749,7 @@ function _parse_section(
     line::AbstractString,
 )
     tokens = _tokenize(line)
-    if length(tokens) == 2 && tokens[2] == "free"
+    if length(tokens) == 2 && lowercase(tokens[2]) == "free"
         x = _get_variable_from_name(model, cache, tokens[1])
         _delete_default_lower_bound_if_present(model, cache, x)
         return
