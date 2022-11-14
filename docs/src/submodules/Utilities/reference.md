@@ -213,6 +213,14 @@ Utilities.is_diagonal_vectorized_index
 Utilities.side_dimension_for_vectorized_dimension
 ```
 
+## Function utilities
+
+The following utilities are available for sets:
+
+```@docs
+Utilities.distance_to_set
+```
+
 ## DoubleDicts
 
 ```@docs
