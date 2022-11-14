@@ -11,12 +11,35 @@
         set::MOI.AbstractVectorSet,
     ) where {T}
 
-Compute an upper bound on the Euclidean distance between `point` and the closest
+Compute an upper bound on the minimum distance between `point` and the closest
 feasible point in `set`. If `point` is in the set `set`, this function _must_
 return `zero(T)`.
 
-In most cases, this function should return the smallest upper bound, but it may
-return a larger value if the smallest upper bound is expensive to compute.
+## Definition of distance
+
+The minimum distance is computed as
+```math
+d(x, \\mathcal{K}) = \\min\\_{y \\in \\mathcal{K}} || x - y ||
+```
+where ``x`` is `point` and ``\\mathcal{K}`` is `set`. The norm is computed as
+```math
+||x|| = \\sqrt{\\texttt{set\\_dot}(x, x, \\mathcal{K})}
+```
+where ``\\texttt{set\\_dot}`` is [`Utilities.set_dot`](@ref).
+
+In the default case, where the set does not have a specialized method for
+[`Utilities.set_dot`](@ref), the norm is equivalent to the Euclidean norm
+``||x|| = \\sqrt{\\sum x_i^2}``.
+
+## Why an upper bound?
+
+In most cases, `distance_to_set` should return the smallest upper bound, but it
+may return a larger value if the smallest upper bound is expensive to compute.
+
+For example, given an epigraph from of a conic set, ``(t, x) \\in \\mathcal{K}``,
+it may be simpler to return ``\\delta`` such that
+``(t + \\delta, x) \\in \\mathcal{K}``, rather than computing the nearest
+projection onto ``\\mathcal{K}``.
 """
 function distance_to_set(::Any, set::MOI.AbstractSet)
     return error(
