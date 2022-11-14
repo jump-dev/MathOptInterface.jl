@@ -782,7 +782,9 @@ function _parse_section(
             elseif _is_equal_to(tokens[2])
                 lb = ub = rhs
             else
-                error("Unable to parse bound due to invalid inequalities: $(line)")
+                error(
+                    "Unable to parse bound due to invalid inequalities: $(line)",
+                )
             end
         else # bound [comparison] name
             @assert rhs === nothing
@@ -799,7 +801,9 @@ function _parse_section(
             elseif _is_equal_to(tokens[2])
                 lb = ub = lhs
             else
-                error("Unable to parse bound due to invalid inequalities: $(line)")
+                error(
+                    "Unable to parse bound due to invalid inequalities: $(line)",
+                )
             end
         end
     else
