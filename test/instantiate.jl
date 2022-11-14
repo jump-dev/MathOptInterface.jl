@@ -106,6 +106,8 @@ function test_get_set_Optimizer_with_attributes()
     @test MOI.get(opt, MOI.RawOptimizerAttribute("a")) === nothing
     MOI.set(opt, MOI.RawOptimizerAttribute("a"), 1.0)
     @test MOI.get(opt, MOI.RawOptimizerAttribute("a")) == 1.0
+    MOI.set(opt, MOI.RawOptimizerAttribute("a"), 2.0)
+    @test MOI.get(opt, MOI.RawOptimizerAttribute("a")) == 2.0
     return
 end
 
