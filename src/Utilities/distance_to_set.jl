@@ -89,18 +89,12 @@ function distance_to_set(
     return LinearAlgebra.norm(max(xi, zero(T)) for xi in x)
 end
 
-function distance_to_set(
-    x::AbstractVector{T},
-    set::MOI.Zeros,
-) where {T<:Number}
+function distance_to_set(x::AbstractVector{T}, set::MOI.Zeros) where {T<:Number}
     _check_dimension(x, set)
     return LinearAlgebra.norm(x)
 end
 
-function distance_to_set(
-    x::AbstractVector{T},
-    set::MOI.Reals,
-) where {T<:Real}
+function distance_to_set(x::AbstractVector{T}, set::MOI.Reals) where {T<:Real}
     _check_dimension(x, set)
     return zero(T)
 end
