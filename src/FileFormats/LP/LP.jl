@@ -732,9 +732,8 @@ function _parse_float(token::String)
         return -Inf
     elseif coef in ("+inf", "+infinity")
         return Inf
-    else
-        return parse(Float64, coef)
     end
+    return tryparse(Float64, coef)
 end
 
 # Yes, the last elements here are really accepted by CPLEX...
@@ -758,27 +757,54 @@ function _parse_section(
     if length(tokens) == 5
         name = tokens[3]
         if _is_less_than(tokens[2]) && _is_less_than(tokens[4])
-            lb = _parse_float(tokens[1])
-            ub = _parse_float(tokens[5])
+            lb = _parse_float(tokens[1])::Float64
+            ub = _parse_float(tokens[5])::Float64
         elseif _is_greater_than(tokens[2]) && _is_greater_than(tokens[4])
-            lb = _parse_float(tokens[5])
-            ub = _parse_float(tokens[1])
+            lb = _parse_float(tokens[5])::Float64
+            ub = _parse_float(tokens[1])::Float64
         else
             error("Unable to parse bound due to invalid inequalities: $(line)")
         end
     elseif length(tokens) == 3
-        name = tokens[1]
-        if _is_less_than(tokens[2])
-            ub = _parse_float(tokens[3])
-            # LP files have default lower bounds of 0, unless the upper bound is
-            # less than 0.
-            lb = ub > 0.0 ? 0.0 : -Inf
-        elseif _is_greater_than(tokens[2])
-            lb = _parse_float(tokens[3])
-        elseif _is_equal_to(tokens[2])
-            lb = ub = _parse_float(tokens[3])
-        else
-            error("Unable to parse bound due to invalid inequalities: $(line)")
+        lhs, rhs = _parse_float(tokens[1]), _parse_float(tokens[3])
+        if lhs === nothing  # name [comparison] bound
+            @assert rhs !== nothing
+            name = tokens[1]
+            if _is_less_than(tokens[2])
+                # name <= bound
+                ub = rhs
+                # LP files have default lower bounds of 0, unless the upper
+                # bound is less than 0.
+                lb = ub > 0.0 ? 0.0 : -Inf
+            elseif _is_greater_than(tokens[2])
+                # name >= bound
+                lb = rhs
+            elseif _is_equal_to(tokens[2])
+                lb = ub = rhs
+            else
+                error(
+                    "Unable to parse bound due to invalid inequalities: $(line)",
+                )
+            end
+        else # bound [comparison] name
+            @assert rhs === nothing
+            name = tokens[3]
+            if _is_less_than(tokens[2])
+                # bound <= name
+                lb = lhs
+            elseif _is_greater_than(tokens[2])
+                # bound >= name
+                ub = lhs
+                # LP files have default lower bounds of 0, unless the upper
+                # bound is less than 0.
+                lb = ub > 0.0 ? 0.0 : -Inf
+            elseif _is_equal_to(tokens[2])
+                lb = ub = lhs
+            else
+                error(
+                    "Unable to parse bound due to invalid inequalities: $(line)",
+                )
+            end
         end
     else
         error("Unable to parse bound: $(line)")
@@ -954,7 +980,7 @@ function _readline(io::IO, line::AbstractString)
         return _readline(io, peeked_line)
     elseif isempty(peeked_line)
         return _readline(io, line)
-    elseif endswith(line, '+') || endswith(line, '-') || endswith(line, '[')
+    elseif any(c -> endswith(line, c), ('+', '-', '[', '='))
         return _readline(io, string(line, ' ', peeked_line))
     elseif startswith(peeked_line, ']') || startswith(peeked_line, '/')
         return _readline(io, string(line, ' ', peeked_line))
