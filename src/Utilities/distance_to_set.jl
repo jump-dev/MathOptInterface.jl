@@ -23,9 +23,9 @@ d(x, \\mathcal{K}) = \\min_{y \\in \\mathcal{K}} || x - y ||
 ```
 where ``x`` is `point` and ``\\mathcal{K}`` is `set`. The norm is computed as:
 ```math
-||x|| = \\sqrt{\\texttt{set_dot}(x, x, \\mathcal{K})}
+||x|| = \\sqrt{f(x, x, \\mathcal{K})}
 ```
-where ``\\texttt{set_dot}`` is [`Utilities.set_dot`](@ref).
+where ``f`` is [`Utilities.set_dot`](@ref).
 
 In the default case, where the set does not have a specialized method for
 [`Utilities.set_dot`](@ref), the norm is equivalent to the Euclidean norm
@@ -36,10 +36,13 @@ In the default case, where the set does not have a specialized method for
 In most cases, `distance_to_set` should return the smallest upper bound, but it
 may return a larger value if the smallest upper bound is expensive to compute.
 
-For example, given an epigraph from of a conic set, ``(t, x) \\in \\mathcal{K}``,
-it may be simpler to return ``\\delta`` such that
-``(t + \\delta, x) \\in \\mathcal{K}``, rather than computing the nearest
-projection onto ``\\mathcal{K}``.
+For example, given an epigraph from of a conic set, ``\\{(t, x) | f(x) \\le t\\}``,
+it may be simpler to return ``\\delta`` such that ``f(x) \\le t + \\delta``,
+rather than computing the nearest projection onto the set.
+
+If the distance is not the smallest upper bound, the docstring of the
+appropriate `distance_to_set` method _must_ describe the way that the distance
+is computed.
 """
 function distance_to_set(::Any, set::MOI.AbstractSet)
     return error(
