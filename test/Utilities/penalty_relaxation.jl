@@ -272,8 +272,7 @@ function test_default_nothing()
     map = MOI.modify(model, MOI.Utilities.PenaltyRelaxation(default = nothing))
     @test !haskey(map, c)
     @test sprint(print, model) === """
-    Minimize ScalarAffineFunction{Float64}:
-     0.0
+    Feasibility
 
     Subject to:
 
@@ -336,6 +335,27 @@ function test_caching_optimizer()
     return
 end
 
+function test_scalar_penalty_relaxation()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0))
+    f = MOI.modify(model, c, MOI.Utilities.ScalarPenaltyRelaxation(2.0))
+    @test f isa MOI.ScalarAffineFunction{Float64}
+    @test sprint(print, model) === """
+    Minimize ScalarAffineFunction{Float64}:
+     0.0 + 2.0 v[2]
+
+    Subject to:
+
+    ScalarAffineFunction{Float64}-in-LessThan{Float64}
+     0.0 + 1.0 v[1] - 1.0 v[2] <= 2.0
+
+    VariableIndex-in-GreaterThan{Float64}
+     v[2] >= 0.0
+    """
+    return
 end
+
+end  # module
 
 TestPenaltyRelaxation.runtests()
