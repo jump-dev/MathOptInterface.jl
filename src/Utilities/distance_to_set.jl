@@ -17,15 +17,15 @@ return `zero(T)`.
 
 ## Definition of distance
 
-The minimum distance is computed as
+The minimum distance is computed as:
 ```math
-d(x, \\mathcal{K}) = \\min\\_{y \\in \\mathcal{K}} || x - y ||
+d(x, \\mathcal{K}) = \\min_{y \\in \\mathcal{K}} || x - y ||
 ```
-where ``x`` is `point` and ``\\mathcal{K}`` is `set`. The norm is computed as
+where ``x`` is `point` and ``\\mathcal{K}`` is `set`. The norm is computed as:
 ```math
-||x|| = \\sqrt{\\texttt{set\\_dot}(x, x, \\mathcal{K})}
+||x|| = \\sqrt{\\texttt{set_dot}(x, x, \\mathcal{K})}
 ```
-where ``\\texttt{set\\_dot}`` is [`Utilities.set_dot`](@ref).
+where ``\\texttt{set_dot}`` is [`Utilities.set_dot`](@ref).
 
 In the default case, where the set does not have a specialized method for
 [`Utilities.set_dot`](@ref), the norm is equivalent to the Euclidean norm
