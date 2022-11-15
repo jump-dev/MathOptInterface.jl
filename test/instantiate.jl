@@ -96,6 +96,21 @@ function test_instantiate_Int()
     return
 end
 
+function test_get_set_Optimizer_with_attributes()
+    opt = MOI.OptimizerWithAttributes() do
+        return MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    end
+    @test MOI.get(opt, MOI.Silent()) === nothing
+    MOI.set(opt, MOI.Silent(), true)
+    @test MOI.get(opt, MOI.Silent()) == true
+    @test MOI.get(opt, MOI.RawOptimizerAttribute("a")) === nothing
+    MOI.set(opt, MOI.RawOptimizerAttribute("a"), 1.0)
+    @test MOI.get(opt, MOI.RawOptimizerAttribute("a")) == 1.0
+    MOI.set(opt, MOI.RawOptimizerAttribute("a"), 2.0)
+    @test MOI.get(opt, MOI.RawOptimizerAttribute("a")) == 2.0
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

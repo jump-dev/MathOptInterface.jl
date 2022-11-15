@@ -50,6 +50,30 @@ function OptimizerWithAttributes(
     return OptimizerWithAttributes(optimizer_constructor, params)
 end
 
+function get(opt::OptimizerWithAttributes, attr::AbstractOptimizerAttribute)
+    for (param, value) in opt.params
+        if param == attr
+            return value
+        end
+    end
+    return nothing
+end
+
+function set(
+    opt::OptimizerWithAttributes,
+    attr::AbstractOptimizerAttribute,
+    value,
+)
+    for (i, (param, _)) in enumerate(opt.params)
+        if param == attr
+            opt.params[i] = attr => value
+            return
+        end
+    end
+    push!(opt.params, attr => value)
+    return
+end
+
 const _INSTANTIATE_NOT_CALLABLE_MESSAGE =
     "The provided `optimizer_constructor` is invalid. It must be callable with zero " *
     "arguments. For example, \"Ipopt.Optimizer\" or " *
