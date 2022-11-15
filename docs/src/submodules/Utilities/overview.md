@@ -348,6 +348,34 @@ julia> map[c]
 MathOptInterface.ScalarAffineFunction{Float64}(MathOptInterface.ScalarAffineTerm{Float64}[MathOptInterface.ScalarAffineTerm{Float64}(1.0, MathOptInterface.VariableIndex(2))], 0.0)
 ```
 
+You can also modify a single constraint using [`Utilities.ScalarPenaltyRelaxation`](@ref):
+```jldoctest
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(model);
+
+julia> MOI.set(model, MOI.VariableName(), x, "x")
+
+julia> c = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0));
+
+julia> f = MOI.modify(model, c, MOI.Utilities.ScalarPenaltyRelaxation(2.0));
+
+julia> print(model)
+Minimize ScalarAffineFunction{Float64}:
+ 0.0 + 2.0 v[2]
+
+Subject to:
+
+ScalarAffineFunction{Float64}-in-LessThan{Float64}
+ 0.0 + 1.0 x - 1.0 v[2] <= 2.0
+
+VariableIndex-in-GreaterThan{Float64}
+ v[2] >= 0.0
+
+julia> f
+MathOptInterface.ScalarAffineFunction{Float64}(MathOptInterface.ScalarAffineTerm{Float64}[MathOptInterface.ScalarAffineTerm{Float64}(1.0, MathOptInterface.VariableIndex(2))], 0.0)
+```
+
 ## Utilities.MatrixOfConstraints
 
 The constraints of [`Utilities.Model`](@ref) are stored as a vector of tuples
