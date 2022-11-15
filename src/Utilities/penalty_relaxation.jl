@@ -46,15 +46,15 @@ julia> f = MOI.modify(model, c, MOI.Utilities.ScalarPenaltyRelaxation(2.0));
 
 julia> print(model)
 Minimize ScalarAffineFunction{Float64}:
-    0.0 + 2.0 v[2]
+ 0.0 + 2.0 v[2]
 
 Subject to:
 
 ScalarAffineFunction{Float64}-in-LessThan{Float64}
-    0.0 + 1.0 v[1] - 1.0 v[2] <= 2.0
+ 0.0 + 1.0 v[1] - 1.0 v[2] <= 2.0
 
 VariableIndex-in-GreaterThan{Float64}
-    v[2] >= 0.0
+ v[2] >= 0.0
 
 julia> f isa MOI.ScalarAffineFunction{Float64}
 true
