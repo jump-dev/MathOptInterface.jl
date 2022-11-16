@@ -500,5 +500,15 @@ function _evaluate(
     for n in 1:N
         args[n], head_i = _evaluate(terms[head_i], terms, x, head_i)
     end
+    # A few special cases to work-around domain issues and other mistakes.
+    if f === ifelse
+        # ifelse requires ::Bool as the first argument, not ::Float64.
+        @assert N == 3
+        return ifelse(Bool(args[1]), args[2], args[3]), head_i
+    elseif f === ^
+        return NaNMath.pow(args...), head_i
+    elseif f === log
+        return NaNMath.log(args...), head_i
+    end
     return is_nary ? f(args) : f(args...), head_i
 end
