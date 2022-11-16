@@ -970,6 +970,7 @@ function test_pow_complex_result()
     H = LinearAlgebra.LowerTriangular(zeros(2, 2))
     Nonlinear.eval_multivariate_hessian(r, :^, H, x)
     @test all(iszero, H)
+    @test Nonlinear.eval_multivariate_function(r, :^, Int[-2, 3]) == -8
     return
 end
 
