@@ -948,6 +948,19 @@ function test_max_operator()
     return
 end
 
+function test_pow_complex_result()
+    r = Nonlinear.OperatorRegistry()
+    x = [-1.0, 1.5]
+    @test isnan(Nonlinear.eval_multivariate_function(r, :^, x))
+    g = zeros(2)
+    Nonlinear.eval_multivariate_gradient(r, :^, g, x)
+    @test all(isnan, g)
+    H = LinearAlgebra.LowerTriangular(zeros(2, 2))
+    Nonlinear.eval_multivariate_hessian(r, :^, H, x)
+    @test all(iszero, H)
+    return
+end
+
 end
 
 TestNonlinear.runtests()

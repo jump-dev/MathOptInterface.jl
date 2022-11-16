@@ -988,6 +988,24 @@ function test_jacobians_and_jacvec_with_subexpressions()
     return
 end
 
+function test_pow_complex_result()
+    x = MOI.VariableIndex(1)
+    model = Nonlinear.Model()
+    Nonlinear.set_objective(model, :(ifelse($x > 0, $x^1.5, -(-$x)^1.5)))
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
+    x = [-2.0]
+    @test MOI.eval_objective(evaluator, x) ≈ -(2^1.5)
+    g = [NaN]
+    MOI.eval_objective_gradient(evaluator, g, x)
+    @test g ≈ [1.5 * 2.0^0.5]
+    @test MOI.hessian_lagrangian_structure(evaluator) == [(1, 1)]
+    H = [NaN]
+    MOI.eval_hessian_lagrangian(evaluator, H, x, 1.5, Float64[])
+    @test H ≈ 1.5 .* [-0.5 * 1.5 / sqrt(2.0)]
+    return
+end
+
 end  # module
 
 TestReverseAD.runtests()
