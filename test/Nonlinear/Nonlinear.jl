@@ -814,7 +814,7 @@ function test_evaluate_domain_error()
     ex = Nonlinear.add_expression(model, :(ifelse($x > 0, log($x), 0.0)))
     @test Nonlinear.evaluate(Dict(x => 1.1), model, ex) == log(1.1)
     @test Nonlinear.evaluate(Dict(x => 0.0), model, ex) == 0.0
-    ex = Nonlinear.add_expression(model, :(ifelse($x > 0, $x^1.5, (-$x)^1.5)))
+    ex = Nonlinear.add_expression(model, :(ifelse($x > 0, $x^1.5, -(-$x)^1.5)))
     @test Nonlinear.evaluate(Dict(x => 1.1), model, ex) ≈ 1.1^1.5
     @test Nonlinear.evaluate(Dict(x => -1.1), model, ex) ≈ -(1.1^1.5)
     return
