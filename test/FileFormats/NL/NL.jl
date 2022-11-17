@@ -824,6 +824,17 @@ function test_eval_binary_specialcases()
     end
 end
 
+function test_evaluate_domain_error()
+    x = MOI.VariableIndex(1)
+    expr = NL._NLExpr(:(ifelse($x > 0, log($x), 0.0)))
+    @test NL._evaluate(expr, Dict(x => 1.1)) == log(1.1)
+    @test NL._evaluate(expr, Dict(x => 0.0)) == 0.0
+    expr = NL._NLExpr(:(ifelse($x > 0, $x^1.5, -(-$x)^1.5)))
+    @test NL._evaluate(expr, Dict(x => 1.1)) ≈ 1.1^1.5
+    @test NL._evaluate(expr, Dict(x => -1.1)) ≈ -(1.1^1.5)
+    return
+end
+
 """
     test_issue_79()
 

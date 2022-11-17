@@ -525,6 +525,16 @@ function eval_univariate_hessian(
 end
 
 """
+    _nan_pow(x, y)
+
+An alternative for `x^y` that avoids throwing an error in common situations like
+`(-1.0)^1.5`. This optimization applies only to Float32 and Float64 inputs; if
+a different type is provided as input we fallback to `x^y`.
+"""
+_nan_pow(x::T, y::T) where {T<:Union{Float32,Float64}} = pow(x, y)
+_nan_pow(x, y) = x^y
+
+"""
     eval_multivariate_function(
         registry::OperatorRegistry,
         op::Symbol,
@@ -548,7 +558,9 @@ function eval_multivariate_function(
         return prod(x; init = one(T))
     elseif op == :^
         @assert length(x) == 2
-        return x[1]^x[2]
+        # Use _nan_pow here to avoid throwing an error in common situations like
+        # (-1.0)^1.5.
+        return _nan_pow(x[1], x[2])
     elseif op == :/
         @assert length(x) == 2
         return x[1] / x[2]
@@ -621,10 +633,10 @@ function eval_multivariate_gradient(
         elseif x[2] == T(2)
             g[1] = T(2) * x[1]
         else
-            g[1] = x[2] * x[1]^(x[2] - one(T))
+            g[1] = x[2] * _nan_pow(x[1], x[2] - one(T))
         end
         if x[1] > zero(T)
-            g[2] = x[1]^x[2] * log(x[1])
+            g[2] = _nan_pow(x[1], x[2]) * log(x[1])
         else
             g[2] = T(NaN)
         end
@@ -723,9 +735,9 @@ function eval_multivariate_hessian(
             H[2, 1] = _nan_to_zero(x[1] * (T(2) * ln + one(T)))
             H[2, 2] = _nan_to_zero(ln^2 * x[1]^2)
         else
-            H[1, 1] = x[2] * (x[2] - 1) * x[1]^(x[2] - 2)
-            H[2, 1] = _nan_to_zero(x[1]^(x[2] - 1) * (x[2] * ln + 1))
-            H[2, 2] = _nan_to_zero(ln^2 * x[1]^x[2])
+            H[1, 1] = _nan_to_zero(x[2] * (x[2] - 1) * _nan_pow(x[1], x[2] - 2))
+            H[2, 1] = _nan_to_zero(_nan_pow(x[1], x[2] - 1) * (x[2] * ln + 1))
+            H[2, 2] = _nan_to_zero(ln^2 * _nan_pow(x[1], x[2]))
         end
     elseif op == :/
         # f(x)  = x[1]/x[2]

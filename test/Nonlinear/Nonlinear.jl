@@ -808,6 +808,18 @@ function test_evaluate_comparison()
     return
 end
 
+function test_evaluate_domain_error()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    ex = Nonlinear.add_expression(model, :(ifelse($x > 0, log($x), 0.0)))
+    @test Nonlinear.evaluate(Dict(x => 1.1), model, ex) == log(1.1)
+    @test Nonlinear.evaluate(Dict(x => 0.0), model, ex) == 0.0
+    ex = Nonlinear.add_expression(model, :(ifelse($x > 0, $x^1.5, -(-$x)^1.5)))
+    @test Nonlinear.evaluate(Dict(x => 1.1), model, ex) ≈ 1.1^1.5
+    @test Nonlinear.evaluate(Dict(x => -1.1), model, ex) ≈ -(1.1^1.5)
+    return
+end
+
 function test_evaluate_logic()
     model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
@@ -945,6 +957,20 @@ function test_max_operator()
     @test Nonlinear.eval_multivariate_hessian(r, :max, H, x)
     @test H[2, 2] == 1.0
     @test H[1, 1] == H[2, 1] == 0.0
+    return
+end
+
+function test_pow_complex_result()
+    r = Nonlinear.OperatorRegistry()
+    x = [-1.0, 1.5]
+    @test isnan(Nonlinear.eval_multivariate_function(r, :^, x))
+    g = zeros(2)
+    Nonlinear.eval_multivariate_gradient(r, :^, g, x)
+    @test all(isnan, g)
+    H = LinearAlgebra.LowerTriangular(zeros(2, 2))
+    Nonlinear.eval_multivariate_hessian(r, :^, H, x)
+    @test all(iszero, H)
+    @test Nonlinear.eval_multivariate_function(r, :^, Int[-2, 3]) == -8
     return
 end
 

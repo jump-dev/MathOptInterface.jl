@@ -7,6 +7,8 @@
 module NL
 
 import MathOptInterface
+import NaNMath
+
 const MOI = MathOptInterface
 
 include("NLExpr.jl")
