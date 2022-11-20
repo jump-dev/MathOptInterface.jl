@@ -6,7 +6,7 @@
 
 using Test
 
-# This file gets called first. It it doesn't crash, all is well.
+# This file gets called first. If it doesn't crash, all is well.
 include("issue980.jl")
 
 for file in readdir(@__DIR__)
