@@ -299,6 +299,55 @@ function Base.keys(d::AbstractDoubleDictInner{F,S}) where {F,S}
     return MOI.ConstraintIndex{F,S}.(keys(d.dict))
 end
 
+"""
+    outer_keys(d::AbstractDoubleDict)
+
+Return an iterator over the outer keys of the `AbstractDoubleDict` `d`.
+Each outer key is a `Tuple{DataType,DataType}` so that a double loop can
+be easily used
+```julia
+for (F, S) in DoubleDicts.outer_keys(dict)
+    for (k, v) in dict[F, S]
+        # ...
+    end
+end
+For performance, it is recommended that the inner loop lies in a separate
+function to gurantee type-stability.
+Some outer keys `(F, S)` might lead to an empty `dict[F, S]`.
+If you only want nonempty `dict[F, S]` use [`outer_keys_vector`](@ref).
+```
+"""
+outer_keys(d::AbstractDoubleDict) = keys(d.dict)
+
+"""
+    outer_keys_vector(d::AbstractDoubleDict; only_nonempty::Bool = true)
+
+Return a vector of outer keys of the `AbstractDoubleDict` `d`.
+If `only_nonempty` is set to true only outer keys that have a nonempty
+set of inner keys will be returned.
+Each outer key is a `Tuple{DataType,DataType}` so that a double loop can
+be easily used
+```julia
+for (F, S) in DoubleDicts.outer_keys_vector(dict)
+    for (k, v) in dict[F, S]
+        # ...
+    end
+end
+For performance, it is recommended that the inner loop lies in a separate
+function to gurantee type-stability.
+If you only want an iterator rather than a vector use [`outer_keys`](@ref).
+```
+"""
+function outer_keys_vector(d::AbstractDoubleDict; only_nonempty::Bool = true)
+    out = Tuple{DataType, DataType}[]
+    for ((F, S), d) in d.dict
+        if only_nonempty && length(d) > 0
+            push!(out, (F, S))
+        end
+    end
+    return out
+end
+
 # Base.iterate
 
 function Base.iterate(d::AbstractDoubleDict)
