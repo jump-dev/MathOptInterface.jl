@@ -177,7 +177,6 @@ function test_IndexDoubleDict()
     return
 end
 
-
 function test_IndexDoubleDict_double_loop()
     dict = DoubleDicts.IndexDoubleDict()
     keys = [

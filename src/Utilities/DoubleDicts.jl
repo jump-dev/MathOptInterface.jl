@@ -339,7 +339,7 @@ If you only want an iterator rather than a vector use [`outer_keys`](@ref).
 ```
 """
 function outer_keys_vector(d::AbstractDoubleDict; only_nonempty::Bool = true)
-    out = Tuple{DataType, DataType}[]
+    out = Tuple{DataType,DataType}[]
     for ((F, S), d) in d.dict
         if !only_nonempty || length(d) > 0
             push!(out, (F, S))
