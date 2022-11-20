@@ -148,13 +148,6 @@ function Base.haskey(c::CleverDict{K}, key::K) where {K}
     return haskey(c.dict, key)
 end
 
-function Base.keys(c::CleverDict{K}) where {K}
-    if _is_dense(c)
-        return K[_inverse_hash(c, i) for i in 1:length(c.vector)]
-    end
-    return collect(keys(c.dict))
-end
-
 function Base.get(c::CleverDict, key, default)
     if _is_dense(c)
         if !haskey(c, key)
@@ -315,8 +308,6 @@ function Base.resize!(c::CleverDict{K,V}, n) where {K,V}
     end
     return
 end
-
-Base.values(d::CleverDict) = _is_dense(d) ? d.vector : values(d.dict)
 
 # TODO `map!(f, values(dict::AbstractDict))` requires Julia 1.2 or later,
 #      use `map_values` once we drop Julia 1.1 and earlier.
