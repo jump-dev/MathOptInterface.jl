@@ -154,7 +154,7 @@ function MOI.get(
     v::VectorOfConstraints{F,S},
     ::MOI.ListOfConstraintIndices{F,S},
 ) where {F,S}
-    return keys(v.constraints)
+    return collect(keys(v.constraints))
 end
 
 function MOI.modify(
