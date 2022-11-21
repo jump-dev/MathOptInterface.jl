@@ -188,6 +188,7 @@ function test_IndexDoubleDict_double_loop()
     for (k, v) in zip(keys, vals)
         dict[k] = v
     end
+    # outer_keys
     number_elements = 0
     number_outer_pairs = 0
     for (F, S) in DoubleDicts.outer_keys(dict)
@@ -199,9 +200,10 @@ function test_IndexDoubleDict_double_loop()
     end
     @test number_elements == 3
     @test number_outer_pairs == 2
+    # nonempty_outer_keys
     number_elements = 0
     number_outer_pairs = 0
-    for (F, S) in DoubleDicts.outer_keys_vector(dict)
+    for (F, S) in DoubleDicts.nonempty_outer_keys(dict)
         number_outer_pairs += 1
         for (k, v) in dict[F, S]
             @test dict[k] == v
@@ -237,10 +239,10 @@ function test_IndexDoubleDict_double_loop_with_delete()
     end
     @test number_elements == 2
     @test number_outer_pairs == 2
-    # outer_keys_vector
+    # nonempty_outer_keys
     number_elements = 0
     number_outer_pairs = 0
-    for (F, S) in DoubleDicts.outer_keys_vector(dict)
+    for (F, S) in DoubleDicts.nonempty_outer_keys(dict)
         number_outer_pairs += 1
         for (k, v) in dict[F, S]
             @test dict[k] == v
@@ -249,18 +251,6 @@ function test_IndexDoubleDict_double_loop_with_delete()
     end
     @test number_elements == 2
     @test number_outer_pairs == 1
-    # outer_keys_vector with only_nonempty = false
-    number_elements = 0
-    number_outer_pairs = 0
-    for (F, S) in DoubleDicts.outer_keys_vector(dict; only_nonempty = false)
-        number_outer_pairs += 1
-        for (k, v) in dict[F, S]
-            @test dict[k] == v
-            number_elements += 1
-        end
-    end
-    @test number_elements == 2
-    @test number_outer_pairs == 2
     return
 end
 

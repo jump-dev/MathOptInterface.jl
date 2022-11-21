@@ -316,22 +316,21 @@ end
 For performance, it is recommended that the inner loop lies in a separate
 function to gurantee type-stability.
 Some outer keys `(F, S)` might lead to an empty `dict[F, S]`.
-If you want only nonempty `dict[F, S]`, use [`outer_keys_vector`](@ref).
+If you want only nonempty `dict[F, S]`, use [`nonempty_outer_keys`](@ref).
 """
 outer_keys(d::AbstractDoubleDict) = keys(d.dict)
 
 """
-    outer_keys_vector(d::AbstractDoubleDict; only_nonempty::Bool = true)
+    nonempty_outer_keys(d::AbstractDoubleDict)
 
 Return a vector of outer keys of the `AbstractDoubleDict` `d`.
 
-If `only_nonempty` is set to true only outer keys that have a nonempty
-set of inner keys will be returned.
+Only outer keys that have a nonempty set of inner keys will be returned.
 
 Each outer key is a `Tuple{Type,Type}` so that a double loop can
 be easily used
 ```julia
-for (F, S) in DoubleDicts.outer_keys_vector(dict)
+for (F, S) in DoubleDicts.nonempty_outer_keys(dict)
     for (k, v) in dict[F, S]
         # ...
     end
@@ -339,17 +338,14 @@ end
 For performance, it is recommended that the inner loop lies in a separate
 function to gurantee type-stability.
 
-If you want an iterator rather than a vector use [`outer_keys`](@ref).
+If you want an iterator of all current outer keys, use [`outer_keys`](@ref).
 ```
 """
-function outer_keys_vector(d::AbstractDoubleDict; only_nonempty::Bool = true)
-    out = Tuple{Type,Type}[]
-    for ((F, S), d) in d.dict
-        if !only_nonempty || length(d) > 0
-            push!(out, (F, S))
-        end
-    end
-    return out
+function nonempty_outer_keys(d::AbstractDoubleDict)
+    return Base.Iterators.Filter(
+        fs -> length(d[fs[1], fs[2]]) > 0,
+        outer_keys(d)
+    )
 end
 
 # Base.iterate

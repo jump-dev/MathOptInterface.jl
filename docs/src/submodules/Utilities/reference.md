@@ -221,5 +221,5 @@ Utilities.DoubleDicts.DoubleDictInner
 Utilities.DoubleDicts.IndexDoubleDict
 Utilities.DoubleDicts.IndexDoubleDictInner
 Utilities.DoubleDicts.outer_keys
-Utilities.DoubleDicts.outer_keys_vector
+Utilities.DoubleDicts.nonempty_outer_keys
 ```
