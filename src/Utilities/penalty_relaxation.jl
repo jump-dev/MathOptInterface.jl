@@ -21,8 +21,7 @@ constraint.
 The penalty relaxation modifies constraints of the form ``f(x) \\in S`` into
 ``f(x) + y - z \\in S``, where ``y, z \\ge 0``, and then it introduces a penalty
 term into the objective of ``a \\times (y + z)`` (if minimizing, else ``-a``),
-where `a` is the value in the `penalties` dictionary associated with the
-constraint that is being relaxed. If no value exists, the default is `default`.
+where ``a`` is `penalty`
 
 When `S` is [`MOI.LessThan`](@ref) or [`MOI.GreaterThan`](@ref), we omit `y` or
 `z` respectively as a performance optimization.
@@ -60,24 +59,12 @@ julia> f isa MOI.ScalarAffineFunction{Float64}
 true
 ```
 """
-struct ScalarPenaltyRelaxation{T}
+struct ScalarPenaltyRelaxation{T} # <: MOI.AbstractFunctionModification
+    # We don't make this a subtype of AbstractFunctionModification to avoid some
+    # ambiguities with generic methods in Utilities and Bridges. The underlying
+    # reason is that these reformulations can be written using the high-level
+    # MOI API, so we don't need special handling for bridges and utilities.
     penalty::T
-end
-
-function MOI.supports(
-    ::MOI.ModelLike,
-    ::ScalarPenaltyRelaxation{T},
-    ::Type{<:MOI.ConstraintIndex{F,<:MOI.AbstractScalarSet}},
-) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
-    return true
-end
-
-function MOI.supports(
-    ::MOI.ModelLike,
-    ::ScalarPenaltyRelaxation,
-    ::Type{<:MOI.ConstraintIndex},
-)
-    return false
 end
 
 function _change_set_to_min_if_necessary(
@@ -92,6 +79,15 @@ function _change_set_to_min_if_necessary(
     f = zero(MOI.ScalarAffineFunction{T})
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     return MOI.MIN_SENSE
+end
+
+function MOI.modify(
+    ::MOI.ModelLike,
+    ::MOI.ConstraintIndex,
+    ::ScalarPenaltyRelaxation,
+)
+    # A generic fallback if modification is not supported.
+    return nothing
 end
 
 function MOI.modify(
@@ -167,17 +163,13 @@ modifies the model in-place to create a penalized relaxation of the constraints.
 
 ## Reformulation
 
-The penalty relaxation modifies constraints of the form ``f(x) \\in S`` into
-``f(x) + y - z \\in S``, where ``y, z \\ge 0``, and then it introduces a penalty
-term into the objective of ``a \\times (y + z)`` (if minimizing, else ``-a``),
-where `a` is the value in the `penalties` dictionary associated with the
-constraint that is being relaxed.
+See [`Utilities.ScalarPenaltyRelaxation`](@ref) for details of the
+reformulation.
 
-If no value exists for the constraint in `penalties`, the penalty is `default`.
-If `default` is also `nothing`, then the constraint is skipped.
-
-When `S` is [`MOI.LessThan`](@ref) or [`MOI.GreaterThan`](@ref), we omit `y` or
-`z` respectively as a performance optimization.
+For each constraint `ci`, the penalty passed to [`Utilities.ScalarPenaltyRelaxation`](@ref)
+is `get(penalties, ci, default)`. If the value is `nothing`, because `ci` does
+not exist in `penalties` and `default = nothing`, then the constraint is
+skipped.
 
 ## Return value
 
@@ -299,12 +291,12 @@ function _modify_penalty_relaxation(
         if penalty === nothing
             continue
         end
-        attr = ScalarPenaltyRelaxation(penalty)
-        if !MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
-            @warn("Skipping PenaltyRelaxation of constraints of type $F-in-$S")
+        delta = MOI.modify(model, ci, ScalarPenaltyRelaxation(penalty))
+        if delta === nothing
+            @warn("Skipping PenaltyRelaxation for constraints of type $F-in-$S")
             return
         end
-        map[ci] = MOI.modify(model, ci, attr)
+        map[ci] = delta
     end
-    return map
+    return
 end
