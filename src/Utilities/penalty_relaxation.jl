@@ -28,9 +28,9 @@ When `S` is [`MOI.LessThan`](@ref) or [`MOI.GreaterThan`](@ref), we omit `y` or
 
 ## Return value
 
-`MOI.modify(model, ci, ScalarPenaltyRelaxation(penalty))` returns a
-[`MOI.ScalarAffineFunction`](@ref) comprised of `y + z`. In an optimal solution,
-query the value of this function to compute the violation of the constraint.
+`MOI.modify(model, ci, ScalarPenaltyRelaxation(penalty))` returns `y + z` as a
+[`MOI.ScalarAffineFunction`](@ref). In an optimal solution, query the value of
+this function to compute the violation of the constraint.
 
 ## Examples
 
@@ -174,10 +174,10 @@ skipped.
 ## Return value
 
 `MOI.modify(model, PenaltyRelaxation())` returns a
-`Dict{MOI.ConstraintIndex,MOI.ScalarAffineFunction}` that maps constraint
-indices to a [`MOI.ScalarAffineFunction`](@ref) comprised of `y + z`. In an
-optimal solution, query the value of these functions to compute the violation of
-each constraint.
+`Dict{MOI.ConstraintIndex,MOI.ScalarAffineFunction}` that maps each constraint
+index to the corresponding `y + z` as a [`MOI.ScalarAffineFunction`](@ref). In
+an optimal solution, query the value of these functions to compute the violation
+of each constraint.
 
 ## Relax a subset of constraints
 
