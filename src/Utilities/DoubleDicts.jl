@@ -344,7 +344,7 @@ If you want an iterator of all current outer keys, use [`outer_keys`](@ref).
 function nonempty_outer_keys(d::AbstractDoubleDict)
     return Base.Iterators.Filter(
         fs -> length(d[fs[1], fs[2]]) > 0,
-        outer_keys(d)
+        outer_keys(d),
     )
 end
 
