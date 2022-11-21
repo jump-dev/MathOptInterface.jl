@@ -5,15 +5,18 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    distance_to_set(point::T, set::MOI.AbstractScalarSet) where {T}
-    distance_to_set(
-        point::AbstractVector{T},
-        set::MOI.AbstractVectorSet,
-    ) where {T}
+    abstract type AbstractDistance end
 
-Compute an upper bound on the minimum distance between `point` and the closest
-feasible point in `set`. If `point` is in the set `set`, this function _must_
-return `zero(T)`.
+An abstract type used to enabble dispatch of
+[`Utilities.distance_to_set`](@ref).
+"""
+abstract type AbstractDistance end
+
+"""
+    DefaultDistance() <: AbstractDistance
+
+An upper bound on the minimum distance between `point` and the closest
+feasible point in `set`.
 
 ## Definition of distance
 
@@ -44,10 +47,32 @@ If the distance is not the smallest upper bound, the docstring of the
 appropriate `distance_to_set` method _must_ describe the way that the distance
 is computed.
 """
-function distance_to_set(::Any, set::MOI.AbstractSet)
+struct DefaultDistance <: AbstractDistance end
+
+"""
+    distance_to_set(
+        [d::AbstractDistance = DefaultDistance()],]
+        point::T,
+        set::MOI.AbstractScalarSet,
+    ) where {T}
+
+    distance_to_set(
+        [d::AbstractDistance = DefaultDistance(),]
+        point::AbstractVector{T},
+        set::MOI.AbstractVectorSet,
+    ) where {T}
+
+Compute the distance between `point` and `set` using the distance metric `d`. If
+`point` is in the set `set`, this function _must_ return `zero(T)`.
+
+If `d` is omitted, the default distance is [`Utilities.DefaultDistance`](@ref).
+"""
+distance_to_set(point, set) = distance_to_set(DefaultDistance(), point, set)
+
+function distance_to_set(d::AbstractDistance, ::Any, set::MOI.AbstractSet)
     return error(
-        "distance_to_set for set type $(typeof(set)) has not been " *
-        "implemented yet.",
+        "distance_to_set using the distance metric $d for set type " *
+        "$(typeof(set)) has not been implemented yet.",
     )
 end
 
@@ -55,35 +80,59 @@ end
 ### MOI.AbstractScalarSets
 ###
 
-function distance_to_set(x::T, set::MOI.LessThan{T}) where {T<:Real}
+function distance_to_set(
+    ::DefaultDistance,
+    x::T,
+    set::MOI.LessThan{T},
+) where {T<:Real}
     return max(x - set.upper, zero(T))
 end
 
-function distance_to_set(x::T, set::MOI.GreaterThan{T}) where {T<:Real}
+function distance_to_set(
+    ::DefaultDistance,
+    x::T,
+    set::MOI.GreaterThan{T},
+) where {T<:Real}
     return max(set.lower - x, zero(T))
 end
 
-function distance_to_set(x::T, set::MOI.EqualTo{T}) where {T<:Number}
+function distance_to_set(
+    ::DefaultDistance,
+    x::T,
+    set::MOI.EqualTo{T},
+) where {T<:Number}
     return abs(set.value - x)
 end
 
-function distance_to_set(x::T, set::MOI.Interval{T}) where {T<:Real}
+function distance_to_set(
+    ::DefaultDistance,
+    x::T,
+    set::MOI.Interval{T},
+) where {T<:Real}
     return max(x - set.upper, set.lower - x, zero(T))
 end
 
-function distance_to_set(x::T, ::MOI.ZeroOne) where {T<:Real}
+function distance_to_set(::DefaultDistance, x::T, ::MOI.ZeroOne) where {T<:Real}
     return min(abs(x - zero(T)), abs(x - one(T)))
 end
 
-function distance_to_set(x::T, ::MOI.Integer) where {T<:Real}
+function distance_to_set(::DefaultDistance, x::T, ::MOI.Integer) where {T<:Real}
     return abs(x - round(x))
 end
 
-function distance_to_set(x::T, set::MOI.Semicontinuous{T}) where {T<:Real}
+function distance_to_set(
+    ::DefaultDistance,
+    x::T,
+    set::MOI.Semicontinuous{T},
+) where {T<:Real}
     return min(max(x - set.upper, set.lower - x, zero(T)), abs(x))
 end
 
-function distance_to_set(x::T, set::MOI.Semiinteger{T}) where {T<:Real}
+function distance_to_set(
+    ::DefaultDistance,
+    x::T,
+    set::MOI.Semiinteger{T},
+) where {T<:Real}
     d = max(ceil(set.lower) - x, x - floor(set.upper), abs(x - round(x)))
     return min(d, abs(x))
 end
@@ -100,6 +149,7 @@ function _check_dimension(v::AbstractVector, s)
 end
 
 function distance_to_set(
+    ::DefaultDistance,
     x::AbstractVector{T},
     set::MOI.Nonnegatives,
 ) where {T<:Real}
@@ -108,6 +158,7 @@ function distance_to_set(
 end
 
 function distance_to_set(
+    ::DefaultDistance,
     x::AbstractVector{T},
     set::MOI.Nonpositives,
 ) where {T<:Real}
@@ -115,12 +166,20 @@ function distance_to_set(
     return LinearAlgebra.norm(max(xi, zero(T)) for xi in x)
 end
 
-function distance_to_set(x::AbstractVector{T}, set::MOI.Zeros) where {T<:Number}
+function distance_to_set(
+    ::DefaultDistance,
+    x::AbstractVector{T},
+    set::MOI.Zeros,
+) where {T<:Number}
     _check_dimension(x, set)
     return LinearAlgebra.norm(x)
 end
 
-function distance_to_set(x::AbstractVector{T}, set::MOI.Reals) where {T<:Real}
+function distance_to_set(
+    ::DefaultDistance,
+    x::AbstractVector{T},
+    set::MOI.Reals,
+) where {T<:Real}
     _check_dimension(x, set)
     return zero(T)
 end

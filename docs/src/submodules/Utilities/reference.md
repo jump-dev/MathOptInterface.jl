@@ -218,6 +218,8 @@ Utilities.side_dimension_for_vectorized_dimension
 The following utilities are available for sets:
 
 ```@docs
+Utilities.AbstractDistance
+Utilities.DefaultDistance
 Utilities.distance_to_set
 Utilities.set_dot
 ```
