@@ -1,5 +1,33 @@
 # Release notes
 
+## v1.10.0 (November 22, 2022)
+
+For a detailed list of the closed issues and pull requests from this release,
+see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.10.0).
+
+### New features
+
+ - Added new methods `set(::OptimizerWithAttributes, ::RawOptimizerAttribute, value)`
+   and `get(::OptimizerWithAttributes, ::RawOptimizerAttribute)`
+ - Added new methods `Utilities.DoubleDicts.outer_keys(d::AbstractDoubleDict)`
+   and `Utilities.DoubleDicts.nonempty_outer_keys(d::AbstractDoubleDict)` 
+
+### Bug fixes
+
+ - Fix `Bridges.Objective.SlackBridge` when the objective function is
+   complex-valued
+ - Fix docstring of `Test.runtests` to clarify the `warn_unsupported `argument
+ - Fix reading of free variables in `FileFormats.LP`
+ - Fix numerous edge cases reading files from QPLIB using `FileFormats.LP`
+ - Fix situations in which `x^y` returns a complex value in `Nonlinear`
+
+### Performance and maintenance
+
+ - Improved the error message thrown when a user-defined nonlinear function does
+   not accept splatted input
+ - Remove specialized iterators for `keys` and `values` in
+   `Utilities.CleverDicts`
+
 ## v1.9.0 (October 29, 2022)
 
 For a detailed list of the closed issues and pull requests from this release,
