@@ -107,20 +107,13 @@ function fix_release_line(
     return line
 end
 
-function fix_release_notes()
-    in_filename = joinpath(@__DIR__, "src", "changelog.md")
-    out_filename = joinpath(@__DIR__, "src", "release_notes.md")
-    open(in_filename, "r") do in_io
-        open(out_filename, "w") do out_io
-            for line in readlines(in_io; keep = true)
-                write(out_io, fix_release_line(line))
-            end
+open(joinpath(@__DIR__, "src", "changelog.md"), "r") do in_io
+    open(joinpath(@__DIR__, "src", "release_notes.md"), "w") do out_io
+        for line in readlines(in_io; keep = true)
+            write(out_io, fix_release_line(line))
         end
     end
-    return
 end
-
-fix_release_notes()
 
 # ==============================================================================
 #  Build the HTML docs

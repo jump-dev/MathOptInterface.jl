@@ -1,9 +1,11 @@
+```@meta
+CurrentModule = MathOptInterface
+```
+
 # Release notes
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## Unreleased
 
 ## v1.10.0 (November 22, 2022)
 
@@ -11,16 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Added new methods `set(::OptimizerWithAttributes, ::RawOptimizerAttribute, value)`
    and `get(::OptimizerWithAttributes, ::RawOptimizerAttribute)` (#2049)
- - Added new methods `Utilities.DoubleDicts.outer_keys(d::AbstractDoubleDict)`
-   and `Utilities.DoubleDicts.nonempty_outer_keys(d::AbstractDoubleDict)`
-   (#2052)
+ - Added new methods [`Utilities.DoubleDicts.outer_keys`](@ref) and
+   [`Utilities.DoubleDicts.nonempty_outer_keys`](@ref) (#2052)
 
 ### Fixed
 
- - Fixed `Bridges.Objective.SlackBridge` when the objective function is
+ - Fixed [`Bridges.Objective.SlackBridge`](@ref) when the objective function is
    complex-valued (#2036) (#2038)
- - Fixed docstring of `Test.runtests` to clarify the `warn_unsupported `argument
-   (#2037)
+ - Fixed docstring of [`Test.runtests`](@ref) to clarify the `warn_unsupported`
+   argument (#2037)
  - Fixed reading of free variables in `FileFormats.LP` (#2044)
  - Fixed numerous edge cases reading files from QPLIB using `FileFormats.LP`
    (#2042) (#2044)
@@ -31,29 +32,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Improved the error message thrown when a user-defined nonlinear function does
    not accept splatted input (#2032)
- - Remove specialized iterators for `keys` and `values` in
+ - Removed specialized iterators for `keys` and `values` in
    `Utilities.CleverDicts` (#2051)
 
 ## v1.9.0 (October 29, 2022)
 
 ### Added
 
- - Added default fallback for getting `ListOfConstraintIndices` and
-   `NumberOfConstraints` when the constraint type is unsupported by the model
- - Added support for `min` and `max` in nonlinear expressions
+ - Added default fallback for getting [`ListOfConstraintIndices`](@ref) and
+   [`NumberOfConstraints`](@ref) when the constraint type is unsupported by the
+   model (#2021)
+ - Added support for `min` and `max` in nonlinear expressions (#2023)
  - Added support for `Indicator{EqualTo{T}}` constraints in `FileFormats.MPS`
- - Added default fallback for `write_to_file(::ModelLike, ::String)` and
-   `read_from_file(::ModelLike, ::String)`
+   (#2022)
+ - Added default fallback for [`write_to_file`](@ref) and [`read_from_file`](@ref)
+   (#2029)
 
 ### Fixed
 
  - Fixed `Constraint.ZeroOneBridge` by adding new bounds as affine constraints
-   instead of variable bounds
- - Fixed reading free rows in `FileFormats.MPS` files
- - Fixed parsing of `OBJSENSE` blocks in `FileFormats.MPS` files
+   instead of variable bounds (#1879)
+ - Fixed reading free rows in `FileFormats.MPS` files (2009)
+ - Fixed parsing of `OBJSENSE` blocks in `FileFormats.MPS` files (#2016) (#2019)
  - Fixed the parsing of deeply nested nonlinear expressions by removing the use
-   of recursion
+   of recursion (#2020)
  - Fixed the requirements check in `Test.test_constrainnt_get_ConstraintIndex`
+   (#2024)
 
 ## v1.8.2 (September 20, 2022)
 
@@ -68,43 +72,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
  - Fixed a bug in `supports(::AbstractBridgeOptimizer` for constraint attributes
+   (#1991) (#1992)
 
 ## v1.8.0 (September 1, 2022)
 
 ### Added
 
  - Added new sets
-   - `HyperRectangle`
-   - `Reified`
- - Added new bridges
-   - `ReifiedAllDifferentToCountDistinctBridge`
-   - `ReifiedCountDistinctToMILPBridge`
-   - `SplitHyperRectangleBridge`
- - Added support for `atan(y, x)` in `Nonlinear`
+   - [`HyperRectangle`](@ref) (#1961)
+   - [`Reified`](@ref) (#1955)
+ - Added new bridges (#1955)
+   - [`Bridges.Constraint.ReifiedAllDifferentToCountDistinctBridge`](@ref)
+   - [`Bridges.Constraint.ReifiedCountDistinctToMILPBridge`](@ref)
+   - [`Bridges.Constraint.SplitHyperRectangleBridge`](@ref)
+ - Added support for `atan(y, x)` in `Nonlinear` (#1987)
 
 ### Fixed
 
  - Lazily construct expressions in `Nonlinear` so that expressions are updated
-   when `Nonlinear.Parameter` values are updated.
- - Allow `NORM_LIMIT` as a `TerminationStatus` for unbounded problems in `Test`.
+   when `Nonlinear.Parameter` values are updated (#1984)
+ - Allow `NORM_LIMIT` as a `TerminationStatus` for unbounded problems in `Test`
+   (#1990)
 
 ## v1.7.0 (August 16, 2022)
 
 ### Added
 
  - Added new sets
-   - `HermitianPositiveSemidefiniteConeTriangle`
+   - [`HermitianPositiveSemidefiniteConeTriangle`](@ref)
  - Added new optimizer-independent options
-   - `RelativeGapTolerance`
-   - `AbsoluteGapTolerance`
+   - [`RelativeGapTolerance`](@ref)
+   - [`AbsoluteGapTolerance`](@ref)
  - Added new bridges
-   - `Constraint.GeoMeanToPowerBridge`
-   - `Constraint.HermitianToSymmetricPSDBridge`
-   - `Constraint.IndicatorGreaterToLessThanBridge`
-   - `Constraint.IndicatorLessToGreaterThanBridge`
-   - `Constraint.SplitComplexZerosBridge`
-   - `Constraint.SplitComplexEqualToBridge`
-   - `Objective.QuadratizeBridge`
+   - [`Bridges.Constraint.GeoMeanToPowerBridge`](@ref)
+   - [`Bridges.Constraint.HermitianToSymmetricPSDBridge`](@ref)
+   - [`Bridges.Constraint.IndicatorGreaterToLessThanBridge`](@ref)
+   - [`Bridges.Constraint.IndicatorLessToGreaterThanBridge`](@ref)
+   - [`Bridges.Constraint.SplitComplexZerosBridge`](@ref)
+   - [`Bridges.Constraint.SplitComplexEqualToBridge`](@ref)
+   - [`Bridges.Objective.QuadratizeBridge`](@ref)
  - Added support for generic number types in `Utilities.loadfromstring!`
  - Updated `FileFormats.MOF` to MathOptFormat v1.1, enabling support for
    constraint programming sets in the `MOF` file format
