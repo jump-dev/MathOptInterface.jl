@@ -97,7 +97,7 @@ function fix_release_line(
     # (#XXXX) -> ([#XXXX](url/issue/XXXX))
     while (m = match(r"\(\#([0-9]+)\)", line)) !== nothing
        id = m.captures[1]
-       line = replace(line, m.match => "([#$id]($url/issue/$id))")
+       line = replace(line, m.match => "([#$id]($url/issues/$id))")
     end
     # ## vX.Y.Z -> [vX.Y.Z](url/releases/tag/vX.Y.Z)
     while (m = match(r"\#\# (v[0-9]+.[0-9]+.[0-9]+)", line)) !== nothing
