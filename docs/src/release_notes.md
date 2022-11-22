@@ -1,39 +1,40 @@
 # Release notes
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 ## v1.10.0 (November 22, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.10.0).
-
-### New features
+### Added
 
  - Added new methods `set(::OptimizerWithAttributes, ::RawOptimizerAttribute, value)`
-   and `get(::OptimizerWithAttributes, ::RawOptimizerAttribute)`
+   and `get(::OptimizerWithAttributes, ::RawOptimizerAttribute)` (#2049)
  - Added new methods `Utilities.DoubleDicts.outer_keys(d::AbstractDoubleDict)`
-   and `Utilities.DoubleDicts.nonempty_outer_keys(d::AbstractDoubleDict)` 
+   and `Utilities.DoubleDicts.nonempty_outer_keys(d::AbstractDoubleDict)`
+   (#2052)
 
-### Bug fixes
+### Fixed
 
- - Fix `Bridges.Objective.SlackBridge` when the objective function is
-   complex-valued
- - Fix docstring of `Test.runtests` to clarify the `warn_unsupported `argument
- - Fix reading of free variables in `FileFormats.LP`
- - Fix numerous edge cases reading files from QPLIB using `FileFormats.LP`
- - Fix situations in which `x^y` returns a complex value in `Nonlinear`
+ - Fixed `Bridges.Objective.SlackBridge` when the objective function is
+   complex-valued (#2036) (#2038)
+ - Fixed docstring of `Test.runtests` to clarify the `warn_unsupported `argument
+   (#2037)
+ - Fixed reading of free variables in `FileFormats.LP` (#2044)
+ - Fixed numerous edge cases reading files from QPLIB using `FileFormats.LP`
+   (#2042) (#2044)
+ - Fixed situations in which `x^y` returns a complex value in `Nonlinear`
+   (#2050)
 
-### Performance and maintenance
+### Other
 
  - Improved the error message thrown when a user-defined nonlinear function does
-   not accept splatted input
+   not accept splatted input (#2032)
  - Remove specialized iterators for `keys` and `values` in
-   `Utilities.CleverDicts`
+   `Utilities.CleverDicts` (#2051)
 
 ## v1.9.0 (October 29, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.9.0).
-
-### New features
+### Added
 
  - Added default fallback for getting `ListOfConstraintIndices` and
    `NumberOfConstraints` when the constraint type is unsupported by the model
@@ -42,42 +43,33 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
  - Added default fallback for `write_to_file(::ModelLike, ::String)` and
    `read_from_file(::ModelLike, ::String)`
 
-### Bug fixes
+### Fixed
 
  - Fixed `Constraint.ZeroOneBridge` by adding new bounds as affine constraints
    instead of variable bounds
  - Fixed reading free rows in `FileFormats.MPS` files
  - Fixed parsing of `OBJSENSE` blocks in `FileFormats.MPS` files
- - Fix the parsing of deeply nested nonlinear expressions by removing the use of
-   recursion
+ - Fixed the parsing of deeply nested nonlinear expressions by removing the use
+   of recursion
  - Fixed the requirements check in `Test.test_constrainnt_get_ConstraintIndex`
 
 ## v1.8.2 (September 20, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.8.2).
-
 ### Documentation
 
- - Add vale as a documentation linter
- - Improve styling of code blocks in the PDF
- - Fix a number of typos in the documentation
+ - Added [vale](https://vale.sh) as a documentation linter (#2002)
+ - Improved styling of code blocks in the PDF (#1999) (#2000)
+ - Fixed a number of typos in the documentation (#2001) (#2003)
 
 ## v1.8.1 (September 12, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.8.1).
+### Fixed
 
-### Bug fixes
-
- - Fix a bug in `supports(::AbstractBridgeOptimizer` for constraint attributes
+ - Fixed a bug in `supports(::AbstractBridgeOptimizer` for constraint attributes
 
 ## v1.8.0 (September 1, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.8.0).
-
-### New features
+### Added
 
  - Added new sets
    - `HyperRectangle`
@@ -88,7 +80,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
    - `SplitHyperRectangleBridge`
  - Added support for `atan(y, x)` in `Nonlinear`
 
-### Bug fixes
+### Fixed
 
  - Lazily construct expressions in `Nonlinear` so that expressions are updated
    when `Nonlinear.Parameter` values are updated.
@@ -96,10 +88,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 ## v1.7.0 (August 16, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.7.0).
-
-### New features
+### Added
 
  - Added new sets
    - `HermitianPositiveSemidefiniteConeTriangle`
@@ -122,11 +111,11 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
    - quadratic constraints and an objective in `FileFormats.LP`
    - quadratic constraints and an objective in `FileFormats.MPS`
 
-### Bug fixes
+### Fixed
 
  - Fixed some missing promotion rules
 
-### Performance and maintenance
+### Other
 
  - Improved the performance of Jacobian products in `Nonlinear`
  - Removed an un-needed `copy` in `Utilities.modify_function`
@@ -134,10 +123,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 ## v1.6.1 (July 23, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.6.1).
-
-### Bug fixes
+### Fixed
 
  - Added support for `ExponentialCone` in `MatrixOfConstraints`
  - Fix `PSDSquare_3` test to reflect a previously fixed bug getting the
@@ -145,10 +131,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 ## v1.6.0 (July 2, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.6.0).
-
-### New features
+### Added
 
  - Added `Bridges.needs_final_touch` and `Bridges.final_touch`
  - Added new bridges from constraint programming sets to mixed-integer linear
@@ -160,7 +143,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
    - `CountGreaterThanToMILPBridge`
    - `CircuitToMILPBridge`
 
-### Bug fixes
+### Fixed
 
  - Relax an instance of `::Vector` to `::AbstractVector` in `MOI.Nonlinear`
  - Fix `BinPackingToMILPBridge` to respect variable bounds
@@ -168,10 +151,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 ## v1.5.0 (June 27, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.5.0).
-
-### New features
+### Added
 
  - Added `GetAttributeNotAllowed` for solvers to indicate when getting an
    attribute encounters an error
@@ -185,14 +165,14 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
  - Added `Bridges.print_active_bridges` to display the current optimal
    hyper-path in a `Bridges.LazyBridgeOptimizer`
 
-### Bug fixes
+### Fixed
 
  - Fixed `ZeroOne` tests with lower and upper bounds
  - Fixed error in `FileFormats.LP` when reading a malformed file
  - Fixed reading of nonlinear programs in `FileFormats.MOF`
  - Fixed bug in `ConstraintDual` when using `SquareBridge`
 
-### Performance and maintenance
+### Other
 
  - Improved documentation of nonlinear API
  - Documented duality convention for `PositiveSemidefiniteConeSquare` sets
@@ -200,10 +180,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 ## v1.4.0 (June 9, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.4.0).
-
-### New features
+### Added
 
  - Added a number of sets for constraint programming:
    - `AllDifferent`
@@ -219,21 +196,18 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
  - Added support for user-defined hessians in `Nonlinear`
  - Added `Bridges.runtests` to simplify the testing of bridge implementations
 
-### Bug fixes
+### Fixed
 
  - Fixed a bug in `FileFormats.NL` when writing univariate `*`
 
-### Performance and maintenance
+### Other
 
  - Began a large refactoring of the `Bridges` submodule, with greatly improved
    documentation.
 
 ## v1.3.0 (May 27, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.3.0).
-
-### New features
+### Added
 
  - Add `MOI.Nonlinear` submodule. This is a large new submodule that has been
    refactored from code that was in JuMP. For now, it should be considered
@@ -242,26 +216,23 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
  - Add `FileFormats.NL.read!(::IO, ::Model)`
  - Add `MOI.modify` that accepts a vector of modifications
 
-### Bug fixes
+### Fixed
 
  - Fixed a bug in `Test` which attempted to include non-`.jl` files
  - Fixed a bug in `FileFormats` for models with open interval constraints
 
-### Performance and maintenance
+### Other
 
  - Fixed a performance issue in `Utilities.DoubleDict`
  - Various minor improvements to the documentation
 
 ## v1.2.0 (April 25, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.2.0).
-
-### New features
+### Added
 
  - Add support for the `FORMAT_REW`/`.rew` file format in `FileFormats`.
 
-### Bug fixes
+### Fixed
 
  - Fix bug handling of default variable bounds in `FileFormats.LP`
  - Fix `FileFormats.MPS` to not write `OBJSENSE` by default since this is only
@@ -269,20 +240,14 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 ## v1.1.2 (March 31, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.1.2).
-
-### Bug fixes
+### Fixed
 
  - Fix a range of bugs in `FileFormats.LP`
  - Fix reading of problem dimensions in `FileFormats.SDPA`
 
 ## v1.1.1 (March 23, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.1.1).
-
-### Bug fixes
+### Fixed
 
  - Fix bug in `test_model_UpperBoundAlreadySet`
  - Fix bug in `test_infeasible_` tests
@@ -297,20 +262,14 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 ## v1.1.0 (March 2, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.1.0).
-
-### New features
+### Added
 
  - Added `MOI.Utilities.throw_unsupported(::UniversalFallback)` for simplifying
    solver wrappers which copy from a `UniversalFallback`.
 
 ## v1.0.2 (March 1, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.0.2).
-
-### Bug fixes
+### Fixed
 
  - Fixed a bug in the `test_model_ScalarFunctionConstantNotZero` test
  - Fixed the error type when an `AbstractFunctionConversionBridge` cannot get or
@@ -320,10 +279,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 ## v1.0.1 (February 25, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.0.1).
-
-### Bug fixes
+### Fixed
 
  - Fixed a bug in which OptimizerAttributes were not copied in CachingOptimizer
  - Fixed a bug in which `shift_constant` did not promote mixed types of coefficients
@@ -341,10 +297,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 Although tagged as a breaking release, v1.0.0 is v0.10.9 with deprecations
 removed, similar to how Julia 1.0 was Julia 0.7 with deprecations removed.
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v1.0.0).
-
-### Breaking changes
+### Breaking
 
  - Julia 1.6 is now the minimum supported version
  - All deprecations have been removed
@@ -369,36 +322,30 @@ for advice on updating a specific deprecated feature.
 
 ## v0.10.9 (February 16, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.9).
-
-### New features
+### Added
 
  - Added `MOI.Utilities.FreeVariables` as a new `VariablesConstrainer` for conic
    solvers
  - Added `MOI.default_cache` for specifying the model used in `CachingOptimizer`
 
-### Bug fixes
+### Fixed
 
  - Fixed LaTeX printing of `MOI.Interval` sets
 
-### Performance and maintenance
+### Other
 
- - Added Aqua.jl as a CI check, and fixed suggested issues. The constructors of
-   GeoMeanBridge, StructOfConstraints, and CachingOptimizer were changed from
-   outer to inner constructors. This change is technically breaking, but does
-   not impact users who followed the documented API.
+ - Added Aqua.jl as a CI check, and fixed suggested issues
+ - The constructors of GeoMeanBridge, StructOfConstraints, and CachingOptimizer
+   were changed from outer to inner constructors. This change is technically
+   breaking, but does not impact users who followed the documented API.
 
 ## v0.10.8 (February 3, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.8).
-
-### New features
+### Added
 
  - Added a `Base.read!` for `FileFormats.LP`.
 
-### Bug fixes
+### Fixed
 
  - Fixed a bug in `MutableSparseMatrix`
  - Fixed a bug when calling `operate!(vcat, ...)` with `Number` arguments
@@ -407,15 +354,12 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 ## v0.10.7 (January 5, 2022)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.7).
-
-### New features
+### Added
 
  - Added test for modifying the constant vector in a
    `VectorAffineFunction-in-Zeros` constraint.
 
-### Bug fixes
+### Fixed
 
  - Fixed the order in which sets are added to a `LazyBridgeOptimizer`. Compared
    to v0.10.6, this may result in bridged models being created with a different
@@ -427,17 +371,14 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
  - Fixed errors for `ConstraintPrimal` in a `CachingOptimizer`
  - Fixed printing of models with non-`Float64` coefficients.
 
-### Performance and maintenance
+### Other
 
  - Various improvements to reduce time-to-first-solve latency
  - Improved error message when an optimizer does not support `compute_conflict!`
 
 ## v0.10.6 (November 30, 2021)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.6).
-
-### New features
+### Added
 
  - Added new documentation and tests for infeasibility certificates
  - Added a version control system for the tests in `MOI.Test.runtests`. Pass
@@ -450,7 +391,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
    enable solvers using a CachingOptimizer to pass tests requiring
    `ConstraintPrimal`.
 
-### Bug fixes
+### Fixed
 
  - Fixed a StackOverflow bug in `copy_to`
  - Fixed error thrown when nonconvex quadratic constraints cannot be bridged
@@ -462,22 +403,19 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 ## v0.10.5 (November 7, 2021)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.5).
+### Fixed
 
-### Maintenance
+- Fixed getter in `UniversalFallback`
+- Fixed `test_solve_conflict_zeroone_ii`
+
+### Other
 
 - Make `normalize_and_add_constraint` more flexible
-- Fix getter in `UniversalFallback`
 - Update paper BibTeX
-- Fix `test_solve_conflict_zeroone_ii`
 
 ## v0.10.4 (October 26, 2021)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.4).
-
-### New features
+### Added
 
 - Add `SolverVersion` attribute
 - Add new tests:
@@ -487,23 +425,19 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
   `ConstraintSet`
 - The documentation is now available as a PDF
 
-### Maintenance
+### Other
 
 - Update to MutableArithmetics 0.3
 - Various improvements to the documentation
 
 ## v0.10.3 (September 18, 2021)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.3).
+### Fixed
 
-- Fix bug which prevented callbacks from working through a CachingOptimizer
-- Fix bug in `Test` submodule
+- Fixed bug which prevented callbacks from working through a CachingOptimizer
+- Fixed bug in `Test` submodule
 
 ## v0.10.2 (September 16, 2021)
-
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.2).
 
 - Updated MathOptFormat to v1.0
 - Updated JSONSchema to v1.0
@@ -515,9 +449,6 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
 ## v0.10.1 (September 8, 2021)
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.1).
-
 - Various fixes to `MOI.Test`
 
 ## v0.10.0 (September 6, 2021)
@@ -526,10 +457,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 user-visible breaking changes and code refactors, as well as a substantial
 number of new features.**
 
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.10.0).
-
-### Breaking changes in MOI
+### Breaking in MOI
 
 - `SingleVariable` has been removed; use `VariableIndex` instead
 - `SingleVariableConstraintNameError` has been renamed to
@@ -566,7 +494,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
   - `filter_constraints`: use `Utilities.ModelFilter` instead
   - `warn_attributes`: never warn about optimizer attributes
 
-### Breaking changes in `Bridges`
+### Breaking in `Bridges`
 
 - `Constraint.RSOCBridge` has been renamed to `Constraint.RSOCtoSOCBridge`
 - `Constraint.SOCRBridge` has been renamed to `Constraint.SOCtoRSOCBridge`
@@ -577,13 +505,13 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 - The signature of indicator bridges has been fixed. Use
   `MOI.Bridges.Constraint.IndicatortoSOS1{Float64}(model)`.
 
-### Breaking changes in `FileFormats`
+### Breaking in `FileFormats`
 
 - `FileFormats.MOF.Model` no longer accepts `validate` argument. Use the
   JSONSchema package to validate the MOF file. See the documentation for more
   information.
 
-### Breaking changes in `Utilities`
+### Breaking in `Utilities`
 
 - The datastructure of `Utilities.Model` (and models created with
   `Utilities.@model`) has been significantly refactored in a breaking way. This
@@ -606,7 +534,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
   code for details.
 - `Utilities.test_models_equal` has been moved to `MOI.Test`
 
-### Breaking changes in `Test`
+### Breaking in `Test`
 
 - `MOI.Test` has been renamed to `MOI.DeprecatedTest`
 - An entirely new `MOI.Test` submodule has been written. See the documentation
@@ -661,12 +589,9 @@ for (root, dirs, files) in walkdir(".")
 end
 ```
 
-v0.9.22 (May 22, 2021)
----------------------------
+## v0.9.22 (May 22, 2021)
 
 This release contains backports from the ongoing development of the v0.10 release.
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.22).
 
 - Improved type inference in `Utilities`, `Bridges` and `FileFormats` submodules
   to reduce latency.
@@ -675,11 +600,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 - Fixed performance regression of `Utilities.Model`.
 - Fixed ordering of objective setting in parser.
 
-v0.9.21 (April 23, 2021)
----------------------------
-
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.21).
+## v0.9.21 (April 23, 2021)
 
 - Added `supports_shift_constant`.
 - Improve performance of bridging quadratic constraints.
@@ -693,11 +614,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 - `Utilities.AbstractModel` is being refactored. This may break users
   interacting with private fields of a model generated using `@model`.
 
-v0.9.20 (February 20, 2021)
----------------------------
-
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.20).
+## v0.9.20 (February 20, 2021)
 
 - Improved performance of `Utilities.ScalarFunctionIterator`
 - Added support for `compute_conflict` to MOI layers
@@ -710,11 +627,7 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 - Formatted code with JuliaFormatter
 - Clarified `BasisStatusCode`'s docstring
 
-v0.9.19 (December 1, 2020)
----------------------------
-
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.19).
+## v0.9.19 (December 1, 2020)
 
 - Added `CallbackNodeStatus` attribute
 - Added bridge from `GreaterThan` or `LessThan` to `Interval`
@@ -722,42 +635,24 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 - Fixed support for Julia v1.6
 - Re-organized MOI docs and added documentation for adding a test
 
-v0.9.18 (November 3, 2020)
----------------------------
-
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.18).
+## v0.9.18 (November 3, 2020)
 
 - Various improvements for working with complex numbers
 - Added `GeoMeantoRelEntrBridge` to bridge a geomean constraint to a relative entropy constraint
 
-v0.9.17 (September 21, 2020)
----------------------------
-
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.17).
+## v0.9.17 (September 21, 2020)
 
 - Fixed `CleverDict` with variable of negative index value
 - Implement `supports_add_constrained_variable` for `MockOptimizer`
 
-v0.9.16 (September 17, 2020)
----------------------------
-
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.16).
+## v0.9.16 (September 17, 2020)
 
 - Various fixes:
   * 32-bit support
   * `CleverDict` with abstract value type
   * Checks in test suite
 
-v0.9.15 (September 14, 2020)
----------------------------
-
-For a detailed list of the closed issues and pull requests from this release,
-see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v0.9.15).
-
-A summary of changes are as follows:
+## v0.9.15 (September 14, 2020)
 
 - Bridges improvements:
   - (R)SOCtoNonConvexQuad bridge
@@ -778,8 +673,7 @@ A summary of changes are as follows:
   - Fix bug with duplicate terms
   - Fix order of `LinearOfConstraintIndices`
 
-v0.9.14 (May 30, 2020)
----------------------
+## v0.9.14 (May 30, 2020)
 
 - Add a solver-independent interface for accessing the set of conflicting
   constraints an Irreducible Inconsistent Subsystem (#1056).
@@ -809,23 +703,20 @@ v0.9.14 (May 30, 2020)
   * [SDPA] No scaling of off-diagonal coefficient (#1076).
   * [SDPA] Add missing negation of constant (#1075).
 
-v0.9.13 (March 24, 2020)
----------------------
+## v0.9.13 (March 24, 2020)
 
 - Added tests for `Semicontinuous` and `Semiinteger` variables (#1033).
 - Added tests for using `ExprGraph`s from NLP evaluators (#1043).
 - Update version compatibilities of dependencies (#1034, #1051, #1052).
 - Fixed typos in documentation (#1044).
 
-v0.9.12 (February 28, 2020)
----------------------
+## v0.9.12 (February 28, 2020)
 
 - Fixed writing `NLPBlock` in MathOptFormat (#1037).
 - Fixed `MockOptimizer` for result attributes with non-one result index (#1039).
 - Updated test template with `instantiate` (#1032).
 
-v0.9.11 (February 21, 2020)
----------------------
+## v0.9.11 (February 21, 2020)
 
 - Add an option for the model created by `Utilities.@model` to be a subtype
   of `AbstractOptimizer` (#1031).
@@ -839,8 +730,7 @@ v0.9.11 (February 21, 2020)
   and test duals in tests with `GeoMeanCone` and `RootDetConeTriangle` and
   `LogDetConeTriangle` cones (#1025, #1026).
 
-v0.9.10 (January 31, 2020)
----------------------
+## v0.9.10 (January 31, 2020)
 
 - Added `OptimizerWithAttributes` grouping an optimizer constructor and a list
   of optimizer attributes (#1008).
@@ -858,8 +748,7 @@ v0.9.10 (January 31, 2020)
 - Fixed `Utilities.vectorize` for empty vector (#1003).
 - Fixed free variables in LP writer (#1006).
 
-v0.9.9 (December 29, 2019)
----------------------
+## v0.9.9 (December 29, 2019)
 
 - Incorporated MathOptFormat.jl as the FileFormats submodule. FileFormats
   provides readers and writers for a number of standard file formats and MOF, a
@@ -870,8 +759,7 @@ v0.9.9 (December 29, 2019)
 - Added `MutableArithmetics.promote_operation` allocation tests (#975).
 - Fixed inference issue on Julia v1.1 (#982).
 
-v0.9.8 (December 19, 2019)
----------------------
+## v0.9.8 (December 19, 2019)
 
 - Implemented MutableArithmetics API (#924).
 - Fixed callbacks with `CachingOptimizer` (#959).
@@ -891,8 +779,7 @@ v0.9.8 (December 19, 2019)
   * Added docstring for `test_delete_bridge` (#954).
   * Added Variable bridge tests (#952).
 
-v0.9.7 (October 30, 2019)
----------------------
+## v0.9.7 (October 30, 2019)
 
 - Implemented `_result_index_field` for `NLPBlockDual` (#934).
 - Fixed copy of model with starting values for vector constraints (#941).
@@ -905,8 +792,7 @@ v0.9.7 (October 30, 2019)
     `SOCRBridge` `NormInfinityBridge`, `SOCtoPSDBridge` and `RSOCtoPSDBridge`
     (#933, #936, #937, #938, #939).
 
-v0.9.6 (October 25, 2019)
----------------------
+## v0.9.6 (October 25, 2019)
 
 - Added complementarity constraints (#913).
 - Allowed `ModelLike` objects as value of attributes (#928).
@@ -919,8 +805,7 @@ v0.9.6 (October 25, 2019)
   * Added variable indices context to variable bridges (#920).
   * Fixed a typo in printing o `debug_supports` (#927).
 
-v0.9.5 (October 9, 2019)
----------------------
+## v0.9.5 (October 9, 2019)
 
 - Clarified `PrimalStatus`/`DualStatus` to be `NO_SOLUTION` if `result_index` is
   out of bounds (#912).
@@ -933,8 +818,7 @@ v0.9.5 (October 9, 2019)
   * Fixed deletion of variables in bridged `VectorOfVariables` constraints (#909).
   * Fixed `result_index` with objective bridges (#911).
 
-v0.9.4 (October 2, 2019)
----------------------
+## v0.9.4 (October 2, 2019)
 
 - Added solver-independent MIP callbacks (#782).
 - Implements submit for `Utilities.CachingOptimizer` and
@@ -952,8 +836,7 @@ v0.9.4 (October 2, 2019)
   * Implemented `MOI.get` for `ConstraintFunction`/`ConstraintSet` for
     `Bridges.Constraint.SquareBridge` (#899).
 
-v0.9.3 (September 20, 2019)
----------------------
+## v0.9.3 (September 20, 2019)
 
 - Fixed ambiguity detected in Julia v1.3 (#891, #893).
 - Fixed missing sets from `ListOfSupportedConstraints` (#880).
@@ -970,8 +853,7 @@ v0.9.3 (September 20, 2019)
   * Removed some `Float64` assumptions in bridges (#878).
   * Automatic selection of `Constraint.[Scalar|Vector]FunctionizeBridge` (#889).
 
-v0.9.2 (September 5, 2019)
----------------------
+## v0.9.2 (September 5, 2019)
 
 - Implemented model printing for `MOI.ModelLike` and specialized it for models
   defined in MOI (864).
@@ -988,8 +870,7 @@ v0.9.2 (September 5, 2019)
   * Fixed `added_constraint_types` for `Contraint.LogDetBridge` and
     `Constraint.RootDetBridge` (#870).
 
-v0.9.1 (August 22, 2019)
----------------------
+## v0.9.1 (August 22, 2019)
 
 - Fix support for Julia v1.2 (#834).
 - L_1 and L_∞ norm epigraph cones and corresponding bridges to LP were added (#818).
@@ -1003,8 +884,7 @@ v0.9.1 (August 22, 2019)
 - Fix transformation of constant terms for `MOI.Bridges.Constraint.SOCtoPSDBridge`
   and `MOI.Bridges.Constraint.RSOCtoPSDBridge` (#840).
 
-v0.9.0 (August 13, 2019)
----------------------
+## v0.9.0 (August 13, 2019)
 
 - Support for Julia v0.6 and v0.7 was dropped (#714, #717).
 - A `MOI.Utilities.Model` implementation of `ModelLike`, this should replace
@@ -1063,8 +943,7 @@ v0.9.0 (August 13, 2019)
   * Variable bridges were added in (#759).
   * Various improvements (#746, #747).
 
-v0.8.4 (March 13, 2019)
------------------------
+## v0.8.4 (March 13, 2019)
 
 - Performance improvement in `default_copy_to` and bridge optimizer (#696).
 - Add `Silent` and implement setting optimizer attributes in caching and mock
@@ -1072,8 +951,7 @@ v0.8.4 (March 13, 2019)
 - Add functionize bridges (SingleVariable and VectorOfVariables) (#659).
 - Minor typo fixes (#694).
 
-v0.8.3 (March 6, 2019)
-----------------------
+## v0.8.3 (March 6, 2019)
 
 - Use zero constant in scalar constraint function of `MOI.Test.copytest` (#691).
 - Fix variable deletion with `SingleVariable` objective function (#690).
@@ -1086,8 +964,7 @@ v0.8.3 (March 6, 2019)
 - Fix inference of `NumberOfVariables` and `NumberOfConstraints` (#677).
 - Implement division between a quadratic function and a number (#675).
 
-v0.8.2 (February 7, 2019)
--------------------------
+## v0.8.2 (February 7, 2019)
 
 - Add `RawStatusString` attribute (#629).
 - Do not set names to the optimizer but only to the cache in `CachingOptimizer`
@@ -1115,8 +992,7 @@ v0.8.2 (February 7, 2019)
 - Use a zero constant in `ScalarAffineFunction` of constraints in `psdt2`
   (#622).
 
-v0.8.1 (January 7, 2019)
--------------------------
+## v0.8.1 (January 7, 2019)
 
 - Adding an NLP objective now overrides any objective set using the
   `ObjectiveFunction` attribute (#619).
@@ -1125,8 +1001,7 @@ v0.8.1 (January 7, 2019)
 - Add `Vectorize` bridge which transforms scalar linear constraints into vector
   linear constraints (#615).
 
-v0.8.0 (December 18, 2018)
---------------------------
+## v0.8.0 (December 18, 2018)
 
 - Rename all enum values to follow the JuMP naming guidelines for constants,
   e.g., `Optimal` becomes `OPTIMAL`, and `DualInfeasible` becomes
@@ -1134,8 +1009,7 @@ v0.8.0 (December 18, 2018)
 - Rename CachingOptimizer methods for style compliance.
 - Add an `MOI.TerminationStatusCode` called `ALMOST_DUAL_INFEASIBLE`.
 
-v0.7.0 (December 13, 2018)
---------------------------
+## v0.7.0 (December 13, 2018)
 
 - Test that `MOI.TerminationStatus` is `MOI.OptimizeNotCalled` before
   `MOI.optimize!` is called.
@@ -1145,8 +1019,7 @@ v0.7.0 (December 13, 2018)
   result statuses in addition to the termination status.
 - Add perspective dimension to log-det cone (#593).
 
-v0.6.4 (November 27, 2018)
---------------------------
+## v0.6.4 (November 27, 2018)
 
 - Add `OptimizeNotCalled` termination status (#577) and improve documentation of
   other statuses (#575).
@@ -1157,8 +1030,7 @@ v0.6.4 (November 27, 2018)
 - Document solver-specific attributes (#580) and implement them in
   `Utilities.CachingOptimizer` (#565).
 
-v0.6.3 (November 16, 2018)
---------------------------
+## v0.6.3 (November 16, 2018)
 
 - Variables and constraints are now allowed to have duplicate names. An error is
   thrown only on lookup. This change breaks some existing tests. (#549)
@@ -1169,8 +1041,7 @@ v0.6.3 (November 16, 2018)
   control caching behavior.
 - Documentation improvements.
 
-v0.6.2 (October 26, 2018)
----------------------------
+## v0.6.2 (October 26, 2018)
 
 - Improve hygiene of `@model` macro (#544).
 - Fix bug in copy tests (#543).
@@ -1182,8 +1053,7 @@ v0.6.2 (October 26, 2018)
 - Add the `QuadtoSOC` bridge which transforms `ScalarQuadraticFunction`
   constraints into `RotatedSecondOrderCone` (#483).
 
-v0.6.1 (September 22, 2018)
----------------------------
+## v0.6.1 (September 22, 2018)
 
 - Enable `PositiveSemidefiniteConeSquare` set and quadratic functions
   in `MOIB.fullbridgeoptimizer` (#524).
@@ -1194,8 +1064,7 @@ v0.6.1 (September 22, 2018)
 - Add missing keyword argument in one of `MOIU.add_scalar_constraint` methods
   (#520).
 
-v0.6.0 (August 30, 2018)
-------------------------
+## v0.6.0 (August 30, 2018)
 
 - The `MOIU.@model` and `MOIB.@bridge` macros now support functions and sets
   defined in external modules. As a consequence, function and set names in the
@@ -1232,8 +1101,7 @@ v0.6.0 (August 30, 2018)
   that the solver does not have either a primal or dual solution available
   (See #479).
 
-v0.5.0 (August 5, 2018)
------------------------
+## v0.5.0 (August 5, 2018)
 
 - Fix names with CachingOptimizer.
 - Cleanup thanks to @mohamed82008.
@@ -1250,16 +1118,14 @@ v0.5.0 (August 5, 2018)
  - The API for `copy!` is updated to remove the CopyResult type.
  - Updates for the new JuMP style guide.
 
-v0.4.1 (June 28, 2018)
-----------------------
+## v0.4.1 (June 28, 2018)
 
 - Fixes vector function modification on 32 bits.
 - Fixes Bellman-Ford algorithm for bridges.
 - Added an NLP test with `FeasibilitySense`.
 - Update modification documentation.
 
-v0.4.0 (June 23, 2018)
-----------------------
+## v0.4.0 (June 23, 2018)
 
 - Helper constructors for `VectorAffineTerm` and `VectorQuadraticTerm`.
 - Added `modify_lhs` to `TestConfig`.
@@ -1269,8 +1135,7 @@ v0.4.0 (June 23, 2018)
 - Tests pass without deprecation warnings on Julia 0.7.
 - Small fixes and documentation updates.
 
-v0.3.0 (May 25, 2018)
----------------------
+## v0.3.0 (May 25, 2018)
 
 - Functions have been redefined to use arrays-of-structs instead of
   structs-of-arrays.
@@ -1279,9 +1144,7 @@ v0.3.0 (May 25, 2018)
 - New and improved unit tests.
 - Fixes for Julia 0.7.
 
-
-v0.2.0 (April 24, 2018)
------------------------
+## v0.2.0 (April 24, 2018)
 
 - Improvements to and better coverage of `Tests`.
 - Documentation fixes.
@@ -1293,9 +1156,7 @@ v0.2.0 (April 24, 2018)
 - `copynames` keyword argument to `MOI.copy!`.
 - Add Bridges submodule.
 
-
-v0.1.0 (February 28, 2018)
---------------------------
+## v0.1.0 (February 28, 2018)
 
 - Initial public release.
 - The framework for MOI was developed at the JuMP-dev workshop at MIT in June

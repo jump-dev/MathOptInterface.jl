@@ -87,6 +87,46 @@ const _PAGES = [
 ]
 
 # ==============================================================================
+#  Modify the release notes
+# ==============================================================================
+
+function fix_release_line(line)
+    # (#XXXX) -> ([#XXXX](https://github.com/jump-dev/MathOptInterface.jl/issue/XXXX))
+    while (m = match(r"\(\#([0-9]+)\)", line)) !== nothing
+       id = m.captures[1]
+       line = replace(
+           line,
+           m.match => "([#$id](https://github.com/jump-dev/MathOptInterface.jl/issue/$id))",
+       )
+    end
+    # ## vX.Y.Z -> [vX.Y.Z](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/vX.Y.Z)
+    while (m = match(r"\#\# (v[0-9]+.[0-9]+.[0-9]+)", line)) !== nothing
+        tag = m.captures[1]
+        line = replace(
+            line,
+            m.match => "## [$tag](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/$tag)",
+        )
+    end
+    return line
+end
+
+function fix_release_notes()
+    in_filename = joinpath(@__DIR__, "src", "release_notes.md")
+    out_filename = joinpath(@__DIR__, "src", "__release_notes__.md")
+    open(in_filename, "r") do in_io
+        open(out_filename, "w") do out_io
+            for line in readlines(in_io; keep = true)
+                write(out_io, fix_release_line(line))
+            end
+        end
+    end
+    _PAGES[end] = "Release notes" => "__release_notes__.md"
+    return
+end
+
+fix_release_notes()
+
+# ==============================================================================
 #  Build the HTML docs
 # ==============================================================================
 
