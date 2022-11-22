@@ -90,29 +90,26 @@ const _PAGES = [
 #  Modify the release notes
 # ==============================================================================
 
-function fix_release_line(line)
-    # (#XXXX) -> ([#XXXX](https://github.com/jump-dev/MathOptInterface.jl/issue/XXXX))
+function fix_release_line(
+    line::String,
+    url::String = "https://github.com/jump-dev/MathOptInterface.jl"
+)
+    # (#XXXX) -> ([#XXXX](url/issue/XXXX))
     while (m = match(r"\(\#([0-9]+)\)", line)) !== nothing
        id = m.captures[1]
-       line = replace(
-           line,
-           m.match => "([#$id](https://github.com/jump-dev/MathOptInterface.jl/issue/$id))",
-       )
+       line = replace(line, m.match => "([#$id]($url/issue/$id))")
     end
-    # ## vX.Y.Z -> [vX.Y.Z](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/vX.Y.Z)
+    # ## vX.Y.Z -> [vX.Y.Z](url/releases/tag/vX.Y.Z)
     while (m = match(r"\#\# (v[0-9]+.[0-9]+.[0-9]+)", line)) !== nothing
         tag = m.captures[1]
-        line = replace(
-            line,
-            m.match => "## [$tag](https://github.com/jump-dev/MathOptInterface.jl/releases/tag/$tag)",
-        )
+        line = replace(line, m.match => "## [$tag]($url/releases/tag/$tag)")
     end
     return line
 end
 
 function fix_release_notes()
-    in_filename = joinpath(@__DIR__, "src", "release_notes.md")
-    out_filename = joinpath(@__DIR__, "src", "__release_notes__.md")
+    in_filename = joinpath(@__DIR__, "src", "changelog.md")
+    out_filename = joinpath(@__DIR__, "src", "release_notes.md")
     open(in_filename, "r") do in_io
         open(out_filename, "w") do out_io
             for line in readlines(in_io; keep = true)
@@ -120,7 +117,6 @@ function fix_release_notes()
             end
         end
     end
-    _PAGES[end] = "Release notes" => "__release_notes__.md"
     return
 end
 
