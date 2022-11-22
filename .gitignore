@@ -8,3 +8,4 @@ docs/site/
 test/Benchmarks/*.json
 Manifest.toml
 *.swp
+docs/src/release_notes.md
