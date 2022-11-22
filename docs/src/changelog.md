@@ -52,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Fixed `Constraint.ZeroOneBridge` by adding new bounds as affine constraints
    instead of variable bounds (#1879)
- - Fixed reading free rows in `FileFormats.MPS` files (2009)
+ - Fixed reading free rows in `FileFormats.MPS` files (#2009)
  - Fixed parsing of `OBJSENSE` blocks in `FileFormats.MPS` files (#2016) (#2019)
  - Fixed the parsing of deeply nested nonlinear expressions by removing the use
    of recursion (#2020)
