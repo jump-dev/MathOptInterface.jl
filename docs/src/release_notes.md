@@ -9,6 +9,8 @@ see the [tag notes](https://github.com/jump-dev/MathOptInterface.jl/releases/tag
 
  - Added new methods `set(::OptimizerWithAttributes, ::RawOptimizerAttribute, value)`
    and `get(::OptimizerWithAttributes, ::RawOptimizerAttribute)`
+ - Added new methods `Utilities.DoubleDicts.outer_keys(d::AbstractDoubleDict)`
+   and `Utilities.DoubleDicts.nonempty_outer_keys(d::AbstractDoubleDict)` 
 
 ### Bug fixes
 
