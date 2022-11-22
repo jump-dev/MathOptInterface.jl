@@ -177,6 +177,83 @@ function test_IndexDoubleDict()
     return
 end
 
+function test_IndexDoubleDict_double_loop()
+    dict = DoubleDicts.IndexDoubleDict()
+    keys = [
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}(1),
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}(2),
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}(1),
+    ]
+    vals = keys
+    for (k, v) in zip(keys, vals)
+        dict[k] = v
+    end
+    # outer_keys
+    number_elements = 0
+    number_outer_pairs = 0
+    for (F, S) in DoubleDicts.outer_keys(dict)
+        number_outer_pairs += 1
+        for (k, v) in dict[F, S]
+            @test dict[k] == v
+            number_elements += 1
+        end
+    end
+    @test number_elements == 3
+    @test number_outer_pairs == 2
+    # nonempty_outer_keys
+    number_elements = 0
+    number_outer_pairs = 0
+    for (F, S) in DoubleDicts.nonempty_outer_keys(dict)
+        number_outer_pairs += 1
+        for (k, v) in dict[F, S]
+            @test dict[k] == v
+            number_elements += 1
+        end
+    end
+    @test number_elements == 3
+    @test number_outer_pairs == 2
+    return
+end
+
+function test_IndexDoubleDict_double_loop_with_delete()
+    dict = DoubleDicts.IndexDoubleDict()
+    keys = [
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}(1),
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}(2),
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}(1),
+    ]
+    vals = keys
+    for (k, v) in zip(keys, vals)
+        dict[k] = v
+    end
+    delete!(dict, MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}(1))
+    # outer_keys
+    number_elements = 0
+    number_outer_pairs = 0
+    for (F, S) in DoubleDicts.outer_keys(dict)
+        number_outer_pairs += 1
+        for (k, v) in dict[F, S]
+            @test dict[k] == v
+            number_elements += 1
+        end
+    end
+    @test number_elements == 2
+    @test number_outer_pairs == 2
+    # nonempty_outer_keys
+    number_elements = 0
+    number_outer_pairs = 0
+    for (F, S) in DoubleDicts.nonempty_outer_keys(dict)
+        number_outer_pairs += 1
+        for (k, v) in dict[F, S]
+            @test dict[k] == v
+            number_elements += 1
+        end
+    end
+    @test number_elements == 2
+    @test number_outer_pairs == 1
+    return
+end
+
 end  # module
 
 TestDoubleDicts.runtests()

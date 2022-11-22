@@ -220,4 +220,6 @@ Utilities.DoubleDicts.DoubleDict
 Utilities.DoubleDicts.DoubleDictInner
 Utilities.DoubleDicts.IndexDoubleDict
 Utilities.DoubleDicts.IndexDoubleDictInner
+Utilities.DoubleDicts.outer_keys
+Utilities.DoubleDicts.nonempty_outer_keys
 ```

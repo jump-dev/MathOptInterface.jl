@@ -299,6 +299,55 @@ function Base.keys(d::AbstractDoubleDictInner{F,S}) where {F,S}
     return MOI.ConstraintIndex{F,S}.(keys(d.dict))
 end
 
+"""
+    outer_keys(d::AbstractDoubleDict)
+
+Return an iterator over the outer keys of the `AbstractDoubleDict` `d`.
+Each outer key is a `Tuple{Type,Type}` so that a double loop can
+be easily used:
+```julia
+for (F, S) in DoubleDicts.outer_keys(dict)
+    for (k, v) in dict[F, S]
+        # ...
+    end
+end
+```
+
+For performance, it is recommended that the inner loop lies in a separate
+function to gurantee type-stability.
+Some outer keys `(F, S)` might lead to an empty `dict[F, S]`.
+If you want only nonempty `dict[F, S]`, use [`nonempty_outer_keys`](@ref).
+"""
+outer_keys(d::AbstractDoubleDict) = keys(d.dict)
+
+"""
+    nonempty_outer_keys(d::AbstractDoubleDict)
+
+Return a vector of outer keys of the `AbstractDoubleDict` `d`.
+
+Only outer keys that have a nonempty set of inner keys will be returned.
+
+Each outer key is a `Tuple{Type,Type}` so that a double loop can
+be easily used
+```julia
+for (F, S) in DoubleDicts.nonempty_outer_keys(dict)
+    for (k, v) in dict[F, S]
+        # ...
+    end
+end
+For performance, it is recommended that the inner loop lies in a separate
+function to gurantee type-stability.
+
+If you want an iterator of all current outer keys, use [`outer_keys`](@ref).
+```
+"""
+function nonempty_outer_keys(d::AbstractDoubleDict)
+    return Base.Iterators.Filter(
+        fs -> length(d[fs[1], fs[2]]) > 0,
+        outer_keys(d),
+    )
+end
+
 # Base.iterate
 
 function Base.iterate(d::AbstractDoubleDict)
