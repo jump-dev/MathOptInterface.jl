@@ -219,7 +219,7 @@ The following utilities are available for sets:
 
 ```@docs
 Utilities.AbstractDistance
-Utilities.DefaultDistance
+Utilities.ProjectionUpperBoundDistance
 Utilities.distance_to_set
 Utilities.set_dot
 ```
