@@ -13,7 +13,7 @@ An abstract type used to enabble dispatch of
 abstract type AbstractDistance end
 
 """
-    DefaultDistance() <: AbstractDistance
+    ProjectionUpperBoundDistance() <: AbstractDistance
 
 An upper bound on the minimum distance between `point` and the closest
 feasible point in `set`.
@@ -47,17 +47,17 @@ If the distance is not the smallest upper bound, the docstring of the
 appropriate `distance_to_set` method _must_ describe the way that the distance
 is computed.
 """
-struct DefaultDistance <: AbstractDistance end
+struct ProjectionUpperBoundDistance <: AbstractDistance end
 
 """
     distance_to_set(
-        [d::AbstractDistance = DefaultDistance()],]
+        [d::AbstractDistance = ProjectionUpperBoundDistance()],]
         point::T,
         set::MOI.AbstractScalarSet,
     ) where {T}
 
     distance_to_set(
-        [d::AbstractDistance = DefaultDistance(),]
+        [d::AbstractDistance = ProjectionUpperBoundDistance(),]
         point::AbstractVector{T},
         set::MOI.AbstractVectorSet,
     ) where {T}
@@ -65,9 +65,11 @@ struct DefaultDistance <: AbstractDistance end
 Compute the distance between `point` and `set` using the distance metric `d`. If
 `point` is in the set `set`, this function _must_ return `zero(T)`.
 
-If `d` is omitted, the default distance is [`Utilities.DefaultDistance`](@ref).
+If `d` is omitted, the default distance is [`Utilities.ProjectionUpperBoundDistance`](@ref).
 """
-distance_to_set(point, set) = distance_to_set(DefaultDistance(), point, set)
+function distance_to_set(point, set)
+    return distance_to_set(ProjectionUpperBoundDistance(), point, set)
+end
 
 function distance_to_set(d::AbstractDistance, ::Any, set::MOI.AbstractSet)
     return error(
@@ -81,7 +83,7 @@ end
 ###
 
 function distance_to_set(
-    ::DefaultDistance,
+    ::ProjectionUpperBoundDistance,
     x::T,
     set::MOI.LessThan{T},
 ) where {T<:Real}
@@ -89,7 +91,7 @@ function distance_to_set(
 end
 
 function distance_to_set(
-    ::DefaultDistance,
+    ::ProjectionUpperBoundDistance,
     x::T,
     set::MOI.GreaterThan{T},
 ) where {T<:Real}
@@ -97,7 +99,7 @@ function distance_to_set(
 end
 
 function distance_to_set(
-    ::DefaultDistance,
+    ::ProjectionUpperBoundDistance,
     x::T,
     set::MOI.EqualTo{T},
 ) where {T<:Number}
@@ -105,23 +107,31 @@ function distance_to_set(
 end
 
 function distance_to_set(
-    ::DefaultDistance,
+    ::ProjectionUpperBoundDistance,
     x::T,
     set::MOI.Interval{T},
 ) where {T<:Real}
     return max(x - set.upper, set.lower - x, zero(T))
 end
 
-function distance_to_set(::DefaultDistance, x::T, ::MOI.ZeroOne) where {T<:Real}
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::T,
+    ::MOI.ZeroOne,
+) where {T<:Real}
     return min(abs(x - zero(T)), abs(x - one(T)))
 end
 
-function distance_to_set(::DefaultDistance, x::T, ::MOI.Integer) where {T<:Real}
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::T,
+    ::MOI.Integer,
+) where {T<:Real}
     return abs(x - round(x))
 end
 
 function distance_to_set(
-    ::DefaultDistance,
+    ::ProjectionUpperBoundDistance,
     x::T,
     set::MOI.Semicontinuous{T},
 ) where {T<:Real}
@@ -129,7 +139,7 @@ function distance_to_set(
 end
 
 function distance_to_set(
-    ::DefaultDistance,
+    ::ProjectionUpperBoundDistance,
     x::T,
     set::MOI.Semiinteger{T},
 ) where {T<:Real}
@@ -149,7 +159,7 @@ function _check_dimension(v::AbstractVector, s)
 end
 
 function distance_to_set(
-    ::DefaultDistance,
+    ::ProjectionUpperBoundDistance,
     x::AbstractVector{T},
     set::MOI.Nonnegatives,
 ) where {T<:Real}
@@ -158,7 +168,7 @@ function distance_to_set(
 end
 
 function distance_to_set(
-    ::DefaultDistance,
+    ::ProjectionUpperBoundDistance,
     x::AbstractVector{T},
     set::MOI.Nonpositives,
 ) where {T<:Real}
@@ -167,7 +177,7 @@ function distance_to_set(
 end
 
 function distance_to_set(
-    ::DefaultDistance,
+    ::ProjectionUpperBoundDistance,
     x::AbstractVector{T},
     set::MOI.Zeros,
 ) where {T<:Number}
@@ -176,7 +186,7 @@ function distance_to_set(
 end
 
 function distance_to_set(
-    ::DefaultDistance,
+    ::ProjectionUpperBoundDistance,
     x::AbstractVector{T},
     set::MOI.Reals,
 ) where {T<:Real}
