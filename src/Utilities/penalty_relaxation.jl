@@ -67,7 +67,7 @@ struct ScalarPenaltyRelaxation{T} # <: MOI.AbstractFunctionModification
     penalty::T
 end
 
-function _change_set_to_min_if_necessary(
+function _change_sense_to_min_if_necessary(
     ::Type{T},
     model::MOI.ModelLike,
 ) where {T}
@@ -82,20 +82,11 @@ function _change_set_to_min_if_necessary(
 end
 
 function MOI.modify(
-    ::MOI.ModelLike,
-    ::MOI.ConstraintIndex,
-    ::ScalarPenaltyRelaxation,
-)
-    # A generic fallback if modification is not supported.
-    return nothing
-end
-
-function MOI.modify(
     model::MOI.ModelLike,
     ci::MOI.ConstraintIndex{F,<:MOI.AbstractScalarSet},
     relax::ScalarPenaltyRelaxation{T},
 ) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
-    sense = _change_set_to_min_if_necessary(T, model)
+    sense = _change_sense_to_min_if_necessary(T, model)
     y = MOI.add_variable(model)
     z = MOI.add_variable(model)
     MOI.add_constraint(model, y, MOI.GreaterThan(zero(T)))
@@ -116,7 +107,7 @@ function MOI.modify(
     ci::MOI.ConstraintIndex{F,MOI.GreaterThan{T}},
     relax::ScalarPenaltyRelaxation{T},
 ) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
-    sense = _change_set_to_min_if_necessary(T, model)
+    sense = _change_sense_to_min_if_necessary(T, model)
     # Performance optimization: we don't need the z relaxation variable.
     y = MOI.add_variable(model)
     MOI.add_constraint(model, y, MOI.GreaterThan(zero(T)))
@@ -134,7 +125,7 @@ function MOI.modify(
     ci::MOI.ConstraintIndex{F,MOI.LessThan{T}},
     relax::ScalarPenaltyRelaxation{T},
 ) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
-    sense = _change_set_to_min_if_necessary(T, model)
+    sense = _change_sense_to_min_if_necessary(T, model)
     # Performance optimization: we don't need the y relaxation variable.
     z = MOI.add_variable(model)
     MOI.add_constraint(model, z, MOI.GreaterThan(zero(T)))
@@ -291,12 +282,15 @@ function _modify_penalty_relaxation(
         if penalty === nothing
             continue
         end
-        delta = MOI.modify(model, ci, ScalarPenaltyRelaxation(penalty))
-        if delta === nothing
-            @warn("Skipping PenaltyRelaxation for constraints of type $F-in-$S")
-            return
+        try
+            map[ci] = MOI.modify(model, ci, ScalarPenaltyRelaxation(penalty))
+        catch err
+            if err isa MethodError && err.f == MOI.modify
+                @warn("Skipping PenaltyRelaxation for ConstraintIndex{$F,$S}")
+                return
+            end
+            rethrow(err)
         end
-        map[ci] = delta
     end
     return
 end
