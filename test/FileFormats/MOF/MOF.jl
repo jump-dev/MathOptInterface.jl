@@ -1007,8 +1007,16 @@ function test_VariablePrimalStart()
     MOI.write_to_file(model_w, TEST_MOF_FILE)
     model_r = MOF.Model()
     MOI.read_from_file(model_r, TEST_MOF_FILE)
-    start_x = MOI.get(model_r, MOI.VariablePrimalStart(), MOI.get(model_r, MOI.VariableIndex, "x"))
-    start_y = MOI.get(model_r, MOI.VariablePrimalStart(), MOI.get(model_r, MOI.VariableIndex, "y"))
+    start_x = MOI.get(
+        model_r,
+        MOI.VariablePrimalStart(),
+        MOI.get(model_r, MOI.VariableIndex, "x"),
+    )
+    start_y = MOI.get(
+        model_r,
+        MOI.VariablePrimalStart(),
+        MOI.get(model_r, MOI.VariableIndex, "y"),
+    )
     @test isnothing(start_x)
     @test start_y == 1e+3
 end
@@ -1028,8 +1036,16 @@ function test_ConstraintDualStart()
     MOI.write_to_file(model_w, TEST_MOF_FILE)
     model_r = MOF.Model()
     MOI.read_from_file(model_r, TEST_MOF_FILE)
-    start_c1 = MOI.get(model_r, MOI.ConstraintDualStart(), MOI.get(model_r, MOI.ConstraintIndex, "c1"))
-    start_c2 = MOI.get(model_r, MOI.ConstraintDualStart(), MOI.get(model_r, MOI.ConstraintIndex, "c2"))
+    start_c1 = MOI.get(
+        model_r,
+        MOI.ConstraintDualStart(),
+        MOI.get(model_r, MOI.ConstraintIndex, "c1"),
+    )
+    start_c2 = MOI.get(
+        model_r,
+        MOI.ConstraintDualStart(),
+        MOI.get(model_r, MOI.ConstraintIndex, "c2"),
+    )
     @test isnothing(start_c1)
     @test start_c2 == 1e+3
 end

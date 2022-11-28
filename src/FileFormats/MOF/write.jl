@@ -81,13 +81,16 @@ function moi_to_object end
 
 function moi_to_object(index::MOI.VariableIndex, model::Model)
     name = MOI.get(model, MOI.VariableName(), index)
-    primal_start = MOI.get(model, MOI.VariablePrimalStart(),index)
+    primal_start = MOI.get(model, MOI.VariablePrimalStart(), index)
     if name == ""
         error("Variable name for $(index) cannot be blank in an MOF file.")
     elseif isnothing(primal_start)
         return OrderedObject("name" => name)
     else
-        return OrderedObject("name" => name, "VariablePrimalStart" => primal_start)
+        return OrderedObject(
+            "name" => name,
+            "VariablePrimalStart" => primal_start,
+        )
     end
 end
 

@@ -119,7 +119,12 @@ function _add_constraint(
         MOI.set(model, MOI.ConstraintName(), index, object["name"]::String)
     end
     if haskey(object, "ConstraintDualStart")
-        MOI.set(model, MOI.ConstraintDualStart(), index, object["ConstraintDualStart"])
+        MOI.set(
+            model,
+            MOI.ConstraintDualStart(),
+            index,
+            object["ConstraintDualStart"],
+        )
     end
     return
 end
