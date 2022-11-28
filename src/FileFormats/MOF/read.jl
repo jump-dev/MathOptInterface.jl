@@ -75,6 +75,7 @@ function read_variables(model::Model, object::Object)
     name_map = Dict{String,MOI.VariableIndex}()
     for variable::typeof(object) in object["variables"]
         name = get(variable, "name", "")::String
+        primal_start = get(variable, "VariablePrimalStart", nothing)
         if isempty(name)
             error(
                 "Variable name is `\"\"`. MathOptFormat variable names must " *
@@ -83,6 +84,7 @@ function read_variables(model::Model, object::Object)
         end
         name_map[name] = index = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), index, name)
+        MOI.set(model, MOI.VariablePrimalStart(), index, primal_start)
     end
     return name_map
 end
@@ -115,6 +117,9 @@ function _add_constraint(
     )
     if haskey(object, "name")
         MOI.set(model, MOI.ConstraintName(), index, object["name"]::String)
+    end
+    if haskey(object, "ConstraintDualStart")
+        MOI.set(model, MOI.ConstraintDualStart(), index, object["ConstraintDualStart"])
     end
     return
 end

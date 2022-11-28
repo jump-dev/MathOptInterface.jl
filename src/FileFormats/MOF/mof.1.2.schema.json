@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/schema#",
-    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.1.schema.json",
+    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.2.schema.json",
     "title": "The schema for MathOptFormat",
     "type": "object",
     "required": ["version", "variables", "objective", "constraints"],
@@ -11,7 +11,7 @@
             "required": ["minor", "major"],
             "properties": {
                 "minor": {
-                    "const": 1
+                    "const": 2
                 },
                 "major": {
                     "const": 1
@@ -40,9 +40,9 @@
                     "name": {
                         "type": "string"
                     },
-                    "primal_start": {
-                        "description": "An initial value that the optimizer may use to warm-start the solution process.",
-                        "type": "number"
+                    "VariablePrimalStart": {
+                        "description": "An initial variable value that the optimizer may use to warm-start the solution process.",
+                        "type": ["number", "null"]
                     }
                 }
             },
@@ -82,6 +82,10 @@
                 "properties": {
                     "name": {
                         "type": "string"
+                    },
+                    "ConstraintDualStart": {
+                        "description": "An initial value for constraint duals that the optimizer may use to warm-start the solution process.",
+                        "type": ["number","null"]
                     }
                 },
                 "oneOf": [{

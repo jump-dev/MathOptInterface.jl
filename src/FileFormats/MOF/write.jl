@@ -81,10 +81,14 @@ function moi_to_object end
 
 function moi_to_object(index::MOI.VariableIndex, model::Model)
     name = MOI.get(model, MOI.VariableName(), index)
+    primal_start = MOI.get(model, MOI.VariablePrimalStart(),index)
     if name == ""
         error("Variable name for $(index) cannot be blank in an MOF file.")
+    elseif isnothing(primal_start)
+        return OrderedObject("name" => name)
+    else
+        return OrderedObject("name" => name, "VariablePrimalStart" => primal_start)
     end
-    return OrderedObject("name" => name)
 end
 
 function moi_to_object(
@@ -94,6 +98,7 @@ function moi_to_object(
 ) where {F,S}
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
+    dual_start = MOI.get(model, MOI.ConstraintDualStart(), index)
     object = OrderedObject()
     if F != MOI.VariableIndex
         name = MOI.get(model, MOI.ConstraintName(), index)
@@ -103,6 +108,9 @@ function moi_to_object(
     end
     object["function"] = moi_to_object(func, name_map)
     object["set"] = moi_to_object(set, name_map)
+    if !isnothing(dual_start)
+        object["ConstraintDualStart"] = dual_start
+    end
     return object
 end
 
