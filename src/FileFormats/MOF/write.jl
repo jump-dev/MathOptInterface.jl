@@ -89,7 +89,7 @@ function moi_to_object(index::MOI.VariableIndex, model::Model)
     else
         return OrderedObject(
             "name" => name,
-            "VariablePrimalStart" => primal_start,
+            "primal_start" => primal_start,
         )
     end
 end
@@ -112,7 +112,7 @@ function moi_to_object(
     object["function"] = moi_to_object(func, name_map)
     object["set"] = moi_to_object(set, name_map)
     if !isnothing(dual_start)
-        object["ConstraintDualStart"] = dual_start
+        object["dual_start"] = dual_start
     end
     return object
 end

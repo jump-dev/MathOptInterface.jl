@@ -40,9 +40,9 @@
                     "name": {
                         "type": "string"
                     },
-                    "VariablePrimalStart": {
+                    "primal_start": {
                         "description": "An initial variable value that the optimizer may use to warm-start the solution process.",
-                        "type": ["number", "null"]
+                        "type": "number"
                     }
                 }
             },
@@ -82,10 +82,6 @@
                 "properties": {
                     "name": {
                         "type": "string"
-                    },
-                    "ConstraintDualStart": {
-                        "description": "An initial value for constraint duals that the optimizer may use to warm-start the solution process.",
-                        "type": ["number","null"]
                     }
                 },
                 "oneOf": [{
@@ -96,6 +92,10 @@
                         },
                         "set": {
                             "$ref": "#/definitions/scalar_sets"
+                        },
+                        "dual_start": {
+                            "description": "An initial scalar value for constraint duals that the optimizer may use to warm-start the solution process.",
+                            "type": "number"
                         }
                     }
                 }, {
@@ -106,6 +106,13 @@
                         },
                         "set": {
                             "$ref": "#/definitions/vector_sets"
+                        },
+                        "dual_start": {
+                            "description": "An initial vector for constraint duals that the optimizer may use to warm-start the solution process.",
+                            "type": "array",
+                            "items": {
+                                "type": "number"
+                            }
                         }
                     }
                 }]

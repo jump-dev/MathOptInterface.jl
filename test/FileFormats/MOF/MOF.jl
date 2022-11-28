@@ -1005,6 +1005,7 @@ function test_VariablePrimalStart()
     c1 = MOI.add_constraint(model_w, f, MOI.LessThan(1.0))
     c2 = MOI.add_constraint(model_w, f, MOI.GreaterThan(0.0))
     MOI.write_to_file(model_w, TEST_MOF_FILE)
+    _validate(TEST_MOF_FILE)
     model_r = MOF.Model()
     MOI.read_from_file(model_r, TEST_MOF_FILE)
     start_x = MOI.get(
@@ -1021,7 +1022,7 @@ function test_VariablePrimalStart()
     @test start_y == 1e+3
 end
 
-function test_ConstraintDualStart()
+function test_ConstraintDualStart_scalar()
     model_w = MOF.Model()
     x = MOI.add_variable(model_w)
     MOI.set(model_w, MOI.VariableName(), x, "x")
@@ -1034,6 +1035,7 @@ function test_ConstraintDualStart()
     MOI.set(model_w, MOI.ConstraintName(), c2, "c2")
     MOI.set(model_w, MOI.ConstraintDualStart(), c2, 1e+3)
     MOI.write_to_file(model_w, TEST_MOF_FILE)
+    _validate(TEST_MOF_FILE)
     model_r = MOF.Model()
     MOI.read_from_file(model_r, TEST_MOF_FILE)
     start_c1 = MOI.get(
@@ -1048,6 +1050,35 @@ function test_ConstraintDualStart()
     )
     @test isnothing(start_c1)
     @test start_c2 == 1e+3
+end
+
+function test_ConstraintDualStart_conic()
+    model_w = MOF.Model()
+    x = MOI.add_variables(model_w, 4)
+    for (index, variable) in enumerate(x)
+        MOI.set(model_w, MOI.VariableName(), variable, "var_$(index)")
+    end
+    c1 = MOI.add_constraint(model_w, [i for i in x], MOI.SecondOrderCone(4))
+    MOI.set(model_w, MOI.ConstraintName(), c1, "c1")
+    MOI.set(model_w, MOI.ConstraintDualStart(), c1, [1,0,0,0])
+    c2 = MOI.add_constraint(model_w, [i for i in x], MOI.SecondOrderCone(4))
+    MOI.set(model_w, MOI.ConstraintName(), c2, "c2")
+    MOI.write_to_file(model_w, TEST_MOF_FILE)
+    _validate(TEST_MOF_FILE)
+    model_r = MOF.Model()
+    MOI.read_from_file(model_r, TEST_MOF_FILE)
+    start_c1 = MOI.get(
+        model_r,
+        MOI.ConstraintDualStart(),
+        MOI.get(model_r, MOI.ConstraintIndex, "c1"),
+    )
+    start_c2 = MOI.get(
+        model_r,
+        MOI.ConstraintDualStart(),
+        MOI.get(model_r, MOI.ConstraintIndex, "c2"),
+    )
+    @test start_c1 == [1,0,0,0]
+    @test isnothing(start_c2)
 end
 
 function runtests()
