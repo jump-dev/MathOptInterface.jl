@@ -87,10 +87,7 @@ function moi_to_object(index::MOI.VariableIndex, model::Model)
     elseif isnothing(primal_start)
         return OrderedObject("name" => name)
     else
-        return OrderedObject(
-            "name" => name,
-            "primal_start" => primal_start,
-        )
+        return OrderedObject("name" => name, "primal_start" => primal_start)
     end
 end
 

@@ -1060,7 +1060,7 @@ function test_ConstraintDualStart_conic()
     end
     c1 = MOI.add_constraint(model_w, [i for i in x], MOI.SecondOrderCone(4))
     MOI.set(model_w, MOI.ConstraintName(), c1, "c1")
-    MOI.set(model_w, MOI.ConstraintDualStart(), c1, [1,0,0,0])
+    MOI.set(model_w, MOI.ConstraintDualStart(), c1, [1, 0, 0, 0])
     c2 = MOI.add_constraint(model_w, [i for i in x], MOI.SecondOrderCone(4))
     MOI.set(model_w, MOI.ConstraintName(), c2, "c2")
     MOI.write_to_file(model_w, TEST_MOF_FILE)
@@ -1077,7 +1077,7 @@ function test_ConstraintDualStart_conic()
         MOI.ConstraintDualStart(),
         MOI.get(model_r, MOI.ConstraintIndex, "c2"),
     )
-    @test start_c1 == [1,0,0,0]
+    @test start_c1 == [1, 0, 0, 0]
     @test isnothing(start_c2)
 end
 
