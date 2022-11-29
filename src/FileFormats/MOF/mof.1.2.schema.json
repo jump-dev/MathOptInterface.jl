@@ -41,7 +41,7 @@
                         "type": "string"
                     },
                     "primal_start": {
-                        "description": "An initial variable value that the optimizer may use to warm-start the solution process.",
+                        "description": "An initial value for the variable's primal solution that the optimizer may use to warm-start the solution process.",
                         "type": "number"
                     }
                 }
@@ -94,11 +94,11 @@
                             "$ref": "#/definitions/scalar_sets"
                         },
                         "primal_start": {
-                            "description": "An initial scalar value for the constraint primal start that the optimizer may use to warm-start the solution process.",
+                            "description": "An initial scalar value for the constraint's primal solution that the optimizer may use to warm-start the solution process.",
                             "type": "number"
                         },
                         "dual_start": {
-                            "description": "An initial scalar value for the constraint dual that the optimizer may use to warm-start the solution process.",
+                            "description": "An initial scalar value for the constraint's dual solution that the optimizer may use to warm-start the solution process.",
                             "type": "number"
                         }
                     }
@@ -112,14 +112,14 @@
                             "$ref": "#/definitions/vector_sets"
                         },
                         "primal_start": {
-                            "description": "An initial vector for a constraints primal starts that the optimizer may use to warm-start the solution process.",
+                            "description": "An initial vector for the constraint's primal solution that the optimizer may use to warm-start the solution process.",
                             "type": "array",
                             "items": {
                                 "type": "number"
                             }
                         },
                         "dual_start": {
-                            "description": "An initial vector for duals of a constraint that the optimizer may use to warm-start the solution process.",
+                            "description": "An initial vector for the constraint's dual solution that the optimizer may use to warm-start the solution process.",
                             "type": "array",
                             "items": {
                                 "type": "number"
