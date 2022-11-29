@@ -93,6 +93,9 @@
                         "set": {
                             "$ref": "#/definitions/scalar_sets"
                         },
+                        "primal_start": {
+                            "type": "number"
+                        },
                         "dual_start": {
                             "description": "An initial scalar value for constraint duals that the optimizer may use to warm-start the solution process.",
                             "type": "number"
@@ -106,6 +109,12 @@
                         },
                         "set": {
                             "$ref": "#/definitions/vector_sets"
+                        },
+                        "primal_start": {
+                            "type": "array",
+                            "items": {
+                                "type": "number"
+                            }
                         },
                         "dual_start": {
                             "description": "An initial vector for constraint duals that the optimizer may use to warm-start the solution process.",

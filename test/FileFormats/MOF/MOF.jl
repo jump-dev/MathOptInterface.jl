@@ -1022,7 +1022,7 @@ function test_VariablePrimalStart()
     @test start_y == 1e+3
 end
 
-function test_ConstraintDualStart_scalar()
+function test_constraint_start_scalar()
     model_w = MOF.Model()
     x = MOI.add_variable(model_w)
     MOI.set(model_w, MOI.VariableName(), x, "x")
@@ -1034,25 +1034,38 @@ function test_ConstraintDualStart_scalar()
     c2 = MOI.add_constraint(model_w, f, MOI.GreaterThan(0.0))
     MOI.set(model_w, MOI.ConstraintName(), c2, "c2")
     MOI.set(model_w, MOI.ConstraintDualStart(), c2, 1e+3)
+    MOI.set(model_w, MOI.ConstraintPrimalStart(), c2, 1e+4)
     MOI.write_to_file(model_w, TEST_MOF_FILE)
     _validate(TEST_MOF_FILE)
     model_r = MOF.Model()
     MOI.read_from_file(model_r, TEST_MOF_FILE)
-    start_c1 = MOI.get(
+    dual_start_c1 = MOI.get(
         model_r,
         MOI.ConstraintDualStart(),
         MOI.get(model_r, MOI.ConstraintIndex, "c1"),
     )
-    start_c2 = MOI.get(
+    dual_start_c2 = MOI.get(
         model_r,
         MOI.ConstraintDualStart(),
         MOI.get(model_r, MOI.ConstraintIndex, "c2"),
     )
-    @test isnothing(start_c1)
-    @test start_c2 == 1e+3
+    primal_start_c1 = MOI.get(
+        model_r,
+        MOI.ConstraintPrimalStart(),
+        MOI.get(model_r, MOI.ConstraintIndex, "c1"),
+    )
+    primal_start_c2 = MOI.get(
+        model_r,
+        MOI.ConstraintPrimalStart(),
+        MOI.get(model_r, MOI.ConstraintIndex, "c2"),
+    )
+    @test isnothing(dual_start_c1)
+    @test dual_start_c2 == 1e+3
+    @test isnothing(primal_start_c1)
+    @test primal_start_c2 == 1e+4
 end
 
-function test_ConstraintDualStart_conic()
+function test_constraint_start_conic()
     model_w = MOF.Model()
     x = MOI.add_variables(model_w, 4)
     for (index, variable) in enumerate(x)
@@ -1061,24 +1074,38 @@ function test_ConstraintDualStart_conic()
     c1 = MOI.add_constraint(model_w, [i for i in x], MOI.SecondOrderCone(4))
     MOI.set(model_w, MOI.ConstraintName(), c1, "c1")
     MOI.set(model_w, MOI.ConstraintDualStart(), c1, [1, 0, 0, 0])
+    MOI.set(model_w, MOI.ConstraintPrimalStart(), c1, [1, 1, 1, 1])
     c2 = MOI.add_constraint(model_w, [i for i in x], MOI.SecondOrderCone(4))
     MOI.set(model_w, MOI.ConstraintName(), c2, "c2")
     MOI.write_to_file(model_w, TEST_MOF_FILE)
     _validate(TEST_MOF_FILE)
     model_r = MOF.Model()
     MOI.read_from_file(model_r, TEST_MOF_FILE)
-    start_c1 = MOI.get(
+    dual_start_c1 = MOI.get(
         model_r,
         MOI.ConstraintDualStart(),
         MOI.get(model_r, MOI.ConstraintIndex, "c1"),
     )
-    start_c2 = MOI.get(
+    dual_start_c2 = MOI.get(
         model_r,
         MOI.ConstraintDualStart(),
         MOI.get(model_r, MOI.ConstraintIndex, "c2"),
     )
-    @test start_c1 == [1, 0, 0, 0]
-    @test isnothing(start_c2)
+    primal_start_c1 = MOI.get(
+        model_r,
+        MOI.ConstraintPrimalStart(),
+        MOI.get(model_r, MOI.ConstraintIndex, "c1"),
+    )
+    primal_start_c2 = MOI.get(
+        model_r,
+        MOI.ConstraintPrimalStart(),
+        MOI.get(model_r, MOI.ConstraintIndex, "c2"),
+    )
+
+    @test dual_start_c1 == [1, 0, 0, 0]
+    @test isnothing(dual_start_c2)
+    @test primal_start_c1 == [1, 1, 1, 1]
+    @test isnothing(primal_start_c2)
 end
 
 function runtests()

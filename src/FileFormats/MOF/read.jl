@@ -127,6 +127,9 @@ function _add_constraint(
     if haskey(object, "dual_start")
         MOI.set(model, MOI.ConstraintDualStart(), index, object["dual_start"])
     end
+    if haskey(object, "primal_start")
+        MOI.set(model, MOI.ConstraintPrimalStart(), index, object["primal_start"])
+    end
     return
 end
 

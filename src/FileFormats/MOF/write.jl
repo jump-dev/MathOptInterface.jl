@@ -99,6 +99,7 @@ function moi_to_object(
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
     dual_start = MOI.get(model, MOI.ConstraintDualStart(), index)
+    primal_start = MOI.get(model, MOI.ConstraintPrimalStart(), index)
     object = OrderedObject()
     if F != MOI.VariableIndex
         name = MOI.get(model, MOI.ConstraintName(), index)
@@ -110,6 +111,9 @@ function moi_to_object(
     object["set"] = moi_to_object(set, name_map)
     if !isnothing(dual_start)
         object["dual_start"] = dual_start
+    end
+    if !isnothing(primal_start)
+        object["primal_start"] = primal_start
     end
     return object
 end
