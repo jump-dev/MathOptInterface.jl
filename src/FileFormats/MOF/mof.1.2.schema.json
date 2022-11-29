@@ -11,7 +11,7 @@
             "required": ["minor", "major"],
             "properties": {
                 "minor": {
-                    "const": 2
+                    "enum": [0, 1, 2]
                 },
                 "major": {
                     "const": 1
