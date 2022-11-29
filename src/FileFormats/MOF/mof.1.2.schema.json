@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/schema#",
-    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.1.schema.json",
+    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.2.schema.json",
     "title": "The schema for MathOptFormat",
     "type": "object",
     "required": ["version", "variables", "objective", "constraints"],
@@ -11,7 +11,7 @@
             "required": ["minor", "major"],
             "properties": {
                 "minor": {
-                    "const": 1
+                    "enum": [0, 1, 2]
                 },
                 "major": {
                     "const": 1
@@ -41,7 +41,7 @@
                         "type": "string"
                     },
                     "primal_start": {
-                        "description": "An initial value that the optimizer may use to warm-start the solution process.",
+                        "description": "An initial value for the variable's primal solution that the optimizer may use to warm-start the solution process.",
                         "type": "number"
                     }
                 }
@@ -92,6 +92,14 @@
                         },
                         "set": {
                             "$ref": "#/definitions/scalar_sets"
+                        },
+                        "primal_start": {
+                            "description": "An initial scalar value for the constraint's primal solution that the optimizer may use to warm-start the solution process.",
+                            "type": "number"
+                        },
+                        "dual_start": {
+                            "description": "An initial scalar value for the constraint's dual solution that the optimizer may use to warm-start the solution process.",
+                            "type": "number"
                         }
                     }
                 }, {
@@ -102,6 +110,20 @@
                         },
                         "set": {
                             "$ref": "#/definitions/vector_sets"
+                        },
+                        "primal_start": {
+                            "description": "An initial vector for the constraint's primal solution that the optimizer may use to warm-start the solution process.",
+                            "type": "array",
+                            "items": {
+                                "type": "number"
+                            }
+                        },
+                        "dual_start": {
+                            "description": "An initial vector for the constraint's dual solution that the optimizer may use to warm-start the solution process.",
+                            "type": "array",
+                            "items": {
+                                "type": "number"
+                            }
                         }
                     }
                 }]

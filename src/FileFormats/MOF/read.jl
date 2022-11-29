@@ -83,6 +83,14 @@ function read_variables(model::Model, object::Object)
         end
         name_map[name] = index = MOI.add_variable(model)
         MOI.set(model, MOI.VariableName(), index, name)
+        if haskey(variable, "primal_start")
+            MOI.set(
+                model,
+                MOI.VariablePrimalStart(),
+                index,
+                variable["primal_start"],
+            )
+        end
     end
     return name_map
 end
@@ -115,6 +123,17 @@ function _add_constraint(
     )
     if haskey(object, "name")
         MOI.set(model, MOI.ConstraintName(), index, object["name"]::String)
+    end
+    if haskey(object, "dual_start")
+        MOI.set(model, MOI.ConstraintDualStart(), index, object["dual_start"])
+    end
+    if haskey(object, "primal_start")
+        MOI.set(
+            model,
+            MOI.ConstraintPrimalStart(),
+            index,
+            object["primal_start"],
+        )
     end
     return
 end
