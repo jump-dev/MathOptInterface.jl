@@ -77,7 +77,7 @@ include("mockoptimizer.jl")
 include("cachingoptimizer.jl")
 include("universalfallback.jl")
 include("print.jl")
-
+include("penalty_relaxation.jl")
 include("lazy_iterators.jl")
 
 include("precompile.jl")

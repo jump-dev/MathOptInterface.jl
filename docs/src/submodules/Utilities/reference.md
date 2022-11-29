@@ -90,6 +90,13 @@ Utilities.identity_index_map
 Utilities.ModelFilter
 ```
 
+## Penalty relaxation
+
+```@docs
+Utilities.PenaltyRelaxation
+Utilities.ScalarPenaltyRelaxation
+```
+
 ## MatrixOfConstraints
 
 ```@docs
