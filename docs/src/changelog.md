@@ -7,12 +7,13 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.11.0 (November 30, 2022)
+## v1.11.0 (December 2, 2022)
 
 ### Added
 
  - Added [`Utilities.PenaltyRelaxation`](@ref) and
    [`Utilities.ScalarPenaltyRelaxation`](@ref) (#1995)
+ - Added [`Utilities.distance_to_set`](@ref) (#2048)
  - Added support for [`ConstraintPrimalStart`](@ref) and [`ConstraintDualStart`](@ref)
    in `FileFormats.MOF` (#2056)
 
