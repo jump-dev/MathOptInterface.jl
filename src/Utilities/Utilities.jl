@@ -80,6 +80,8 @@ include("print.jl")
 include("penalty_relaxation.jl")
 include("lazy_iterators.jl")
 
+include("distance_to_set.jl")
+
 include("precompile.jl")
 _precompile_()
 
