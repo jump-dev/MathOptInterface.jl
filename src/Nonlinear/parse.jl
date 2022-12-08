@@ -39,6 +39,44 @@ end
 function parse_expression(
     data::Model,
     expr::Expression,
+    x::MOI.ScalarNonlinearFunction,
+    parent::Int,
+)
+    stack = Tuple{Int,Any}[(parent, x)]
+    while !isempty(stack)
+        parent_node, arg = pop!(stack)
+        if arg isa MOI.ScalarNonlinearFunction
+            _parse_without_recursion_inner(stack, data, expr, arg, parent_node)
+        else
+            # We can use recursion here, because ScalarNonlinearFunction only
+            # occur in other ScalarNonlinearFunction.
+            parse_expression(data, expr, arg, parent_node)
+        end
+    end
+    return
+end
+
+function _parse_without_recursion_inner(stack, data, expr, x, parent)
+    id = get(data.operators.univariate_operator_to_id, x.head, nothing)
+    node_type = if length(x.args) == 1 && id !== nothing
+        NODE_CALL_UNIVARIATE
+    else
+        id = get(data.operators.multivariate_operator_to_id, x.head, nothing)
+        @assert id !== nothing
+        NODE_CALL_MULTIVARIATE
+    end
+    push!(expr.nodes, Node(node_type, id, parent))
+    parent = length(expr.nodes)
+    # Args need to be pushed onto the stack in reverse
+    for arg in reverse(x.args)
+        push!(stack, (parent, arg))
+    end
+    return
+end
+
+function parse_expression(
+    data::Model,
+    expr::Expression,
     x::Expr,
     parent_index::Int,
 )

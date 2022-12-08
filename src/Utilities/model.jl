@@ -818,7 +818,11 @@ const LessThanIndicatorZero{T} =
         MOI.HyperRectangle,
     ),
     (),
-    (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
+    (
+        MOI.ScalarAffineFunction,
+        MOI.ScalarQuadraticFunction,
+        MOI.ScalarNonlinearFunction,
+    ),
     (MOI.VectorOfVariables,),
     (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
 )

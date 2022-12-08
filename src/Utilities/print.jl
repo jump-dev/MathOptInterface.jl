@@ -230,6 +230,34 @@ end
 function _to_string(
     options::_PrintOptions,
     model::MOI.ModelLike,
+    f::MOI.ScalarNonlinearFunction,
+)
+    io, stack, is_open = IOBuffer(), Any[f], true
+    while !isempty(stack)
+        arg = pop!(stack)
+        if !is_open && arg != ')'
+            print(io, ", ")
+        end
+        if arg isa MOI.ScalarNonlinearFunction
+            print(io, arg.head, "(")
+            push!(stack, ')')
+            for i in length(arg.args):-1:1
+                push!(stack, arg.args[i])
+            end
+        elseif arg isa Char
+            print(io, arg)
+        else
+            print(io, _to_string(options, model, arg))
+        end
+        is_open = arg isa MOI.ScalarNonlinearFunction
+    end
+    seekstart(io)
+    return read(io, String)
+end
+
+function _to_string(
+    options::_PrintOptions,
+    model::MOI.ModelLike,
     f::MOI.AbstractVectorFunction,
 )
     rows = map(fi -> _to_string(options, model, fi), eachscalar(f))

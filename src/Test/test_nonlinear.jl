@@ -1115,3 +1115,342 @@ function setup_test(
     )
     return
 end
+
+function test_nonlinear_expression_hs071(
+    model::MOI.ModelLike,
+    config::MOI.Test.Config{T},
+) where {T}
+    @requires T == Float64
+    @requires _supports(config, MOI.optimize!)
+    F = MOI.ScalarNonlinearFunction{Float64}
+    @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
+    @requires MOI.supports_constraint(model, F, MOI.GreaterThan{Float64})
+    MOI.Utilities.loadfromstring!(
+        model,
+        """
+variables: w, x, y, z
+minobjective: ScalarNonlinearFunction(w * z * (w + x + y) + y)
+c2: ScalarNonlinearFunction(w * x * y * z) >= 25.0
+c3: ScalarNonlinearFunction(w^2 + x^2 + y^2 + z^2) == 40.0
+w in Interval(1.0, 5.0)
+x in Interval(1.0, 5.0)
+y in Interval(1.0, 5.0)
+z in Interval(1.0, 5.0)
+""",
+    )
+    x = MOI.get(model, MOI.ListOfVariableIndices())
+    MOI.set.(model, MOI.VariablePrimalStart(), x, [1.0, 5.0, 5.0, 1.0])
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test ≈(
+        MOI.get.(model, MOI.VariablePrimal(), x),
+        [1.0, 4.742999, 3.821150, 1.379408],
+        config,
+    )
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_expression_hs071),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(
+                mock,
+                config.optimal_status,
+                [1.0, 4.742999, 3.821150, 1.379408],
+            )
+        end,
+    )
+    return
+end
+
+function test_nonlinear_expression_hs071_epigraph(
+    model::MOI.ModelLike,
+    config::MOI.Test.Config{T},
+) where {T}
+    @requires T == Float64
+    @requires _supports(config, MOI.optimize!)
+    F = MOI.ScalarNonlinearFunction{Float64}
+    @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
+    @requires MOI.supports_constraint(model, F, MOI.GreaterThan{Float64})
+    MOI.Utilities.loadfromstring!(
+        model,
+        """
+variables: t, w, x, y, z
+minobjective: t
+c1: ScalarNonlinearFunction(t - (w * z * (w + x + y) + y)) >= 0.0
+c2: ScalarNonlinearFunction(w * x * y * z) >= 25.0
+c3: ScalarNonlinearFunction(w^2 + x^2 + y^2 + z^2) == 40.0
+w in Interval(1.0, 5.0)
+x in Interval(1.0, 5.0)
+y in Interval(1.0, 5.0)
+z in Interval(1.0, 5.0)
+""",
+    )
+    x = MOI.get(model, MOI.ListOfVariableIndices())
+    MOI.set.(model, MOI.VariablePrimalStart(), x, [16.0, 1.0, 5.0, 5.0, 1.0])
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test ≈(
+        MOI.get.(model, MOI.VariablePrimal(), x),
+        [17.014013643792, 1.0, 4.742999, 3.821150, 1.379408],
+        config,
+    )
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_expression_hs071_epigraph),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(
+                mock,
+                config.optimal_status,
+                [17.014013643792, 1.0, 4.742999, 3.821150, 1.379408],
+            )
+        end,
+    )
+    return
+end
+
+function test_nonlinear_expression_hs109(
+    model::MOI.ModelLike,
+    config::MOI.Test.Config{T},
+) where {T}
+    @requires T == Float64
+    @requires _supports(config, MOI.optimize!)
+    F = MOI.ScalarNonlinearFunction{Float64}
+    @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
+    @requires MOI.supports_constraint(model, F, MOI.GreaterThan{Float64})
+    MOI.Utilities.loadfromstring!(
+        model,
+        """
+variables: x1, x2, x3, x4, x5, x6, x7, x8, x9
+minobjective: ScalarNonlinearFunction(3 * x1 + 1e-6 * x1^3 + 2 * x2 + 0.522074e-6 * x2^3)
+x1 >= 0.0
+x2 >= 0.0
+x3 in Interval(-0.55, 0.55)
+x4 in Interval(-0.55, 0.55)
+x5 in Interval(196.0, 252.0)
+x6 in Interval(196.0, 252.0)
+x7 in Interval(196.0, 252.0)
+x8 in Interval(-400.0, 800.0)
+x9 in Interval(-400.0, 800.0)
+c1: ScalarNonlinearFunction(x4 - x3 + 0.55) >= 0.0
+c2: ScalarNonlinearFunction(x3 - x4 + 0.55) >= 0.0
+c3: ScalarNonlinearFunction(2250000 - x1^2 - x8^2) >= 0.0
+c4: ScalarNonlinearFunction(2250000 - x2^2 - x9^2) >= 0.0
+c5: ScalarNonlinearFunction(x5 * x6 * sin(-x3 - 0.25) + x5 * x7 * sin(-x4 - 0.25) + 2 * 0.24740395925452294 * x5^2 - 50.176 * x1 + 400 * 50.176) == 0.0
+c6: ScalarNonlinearFunction(x5 * x6 * sin(x3 - 0.25) + x6 * x7 * sin(x3 - x4 - 0.25) + 2 * 0.24740395925452294 * x6^2 - 50.176 * x2 + 400 * 50.176) == 0.0
+c7: ScalarNonlinearFunction(x5 * x7 * sin(x4 - 0.25) + x6 * x7 * sin(x4 - x3 - 0.25) + 2 * 0.24740395925452294 * x7^2 + 881.779 * 50.176) == 0.0
+c8: ScalarNonlinearFunction(50.176 * x8 + x5 * x6 * cos(-x3 - 0.25) + x5 * x7 * cos(-x4 - 0.25) - 200 * 50.176 - 2 * 0.9689124217106447 * x5^2 + 0.7533e-3 * 50.176 * x5^2) == 0.0
+c9: ScalarNonlinearFunction(50.176 * x9 + x5 * x6 * cos(x3 - 0.25) + x6 * x7 * cos(x3 - x4 - 0.25) - 2 * 0.9689124217106447 * x6^2 + 0.7533e-3 * 50.176 * x6^2 - 200 * 50.176) == 0.0
+c10: ScalarNonlinearFunction(x5 * x7 * cos(x4 - 0.25) + x6 * x7 * cos(x4 - x3 - 0.25) - 2 * 0.9689124217106447 * x7^2 + 22.938 * 50.176 + 0.7533e-3 * 50.176 * x7^2) == 0.0
+""",
+    )
+    x = MOI.get(model, MOI.ListOfVariableIndices())
+    MOI.set.(model, MOI.VariablePrimalStart(), x, 0.0)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test ≈(MOI.get(model, MOI.ObjectiveValue()), 5326.851310161077, config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_expression_hs109),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    flag = model.eval_objective_value
+    model.eval_objective_value = false
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(
+                mock,
+                config.optimal_status,
+                MOI.FEASIBLE_POINT,
+            )
+            MOI.set(mock, MOI.ObjectiveValue(), 5326.851310161077)
+        end,
+    )
+    return () -> model.eval_objective_value = flag
+end
+
+function test_nonlinear_expression_hs110(
+    model::MOI.ModelLike,
+    config::MOI.Test.Config{T},
+) where {T}
+    @requires T == Float64
+    @requires _supports(config, MOI.optimize!)
+    F = MOI.ScalarNonlinearFunction{Float64}
+    @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
+    f = "log(x1 - 2)^2 + log(10 - x1)^2"
+    for i in 2:10
+        f *= " + log(x$i - 2)^2 + log(10 - x$i)^2"
+    end
+    f *= " - (x1 * x2 * x3 * x4 * x5 * x6 * x7 * x8 * x9 * x10)^0.2"
+    MOI.Utilities.loadfromstring!(
+        model,
+        """
+variables: x1, x2, x3, x4, x5, x6, x7, x8, x9, x10
+minobjective: ScalarNonlinearFunction($f)
+x1 in Interval(-2.001, 9.999)
+x2 in Interval(-2.001, 9.999)
+x3 in Interval(-2.001, 9.999)
+x4 in Interval(-2.001, 9.999)
+x5 in Interval(-2.001, 9.999)
+x6 in Interval(-2.001, 9.999)
+x7 in Interval(-2.001, 9.999)
+x8 in Interval(-2.001, 9.999)
+x9 in Interval(-2.001, 9.999)
+x10 in Interval(-2.001, 9.999)
+""",
+    )
+    x = MOI.get(model, MOI.ListOfVariableIndices())
+    MOI.set.(model, MOI.VariablePrimalStart(), x, 9.0)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test ≈(MOI.get(model, MOI.ObjectiveValue()), -45.77846971, config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_expression_hs110),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    flag = model.eval_objective_value
+    model.eval_objective_value = false
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(
+                mock,
+                config.optimal_status,
+                MOI.FEASIBLE_POINT,
+            )
+            MOI.set(mock, MOI.ObjectiveValue(), -45.77846971)
+        end,
+    )
+    return () -> model.eval_objective_value = flag
+end
+
+function test_nonlinear_expression_quartic(
+    model::MOI.ModelLike,
+    config::MOI.Test.Config{T},
+) where {T}
+    @requires T == Float64
+    @requires _supports(config, MOI.optimize!)
+    F = MOI.ScalarNonlinearFunction{Float64}
+    @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
+    MOI.Utilities.loadfromstring!(
+        model,
+        """
+variables: x
+minobjective: ScalarNonlinearFunction(x^4)
+x >= -1.0
+""",
+    )
+    x = MOI.get(model, MOI.ListOfVariableIndices())
+    MOI.set.(model, MOI.VariablePrimalStart(), x, [-0.5])
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test ≈(MOI.get(model, MOI.ObjectiveValue()), 0.0, config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_expression_quartic),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    flag = model.eval_objective_value
+    model.eval_objective_value = false
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(
+                mock,
+                config.optimal_status,
+                MOI.FEASIBLE_POINT,
+            )
+            MOI.set(mock, MOI.ObjectiveValue(), 0.0)
+        end,
+    )
+    return () -> model.eval_objective_value = flag
+end
+
+function test_nonlinear_expression_overrides_objective(
+    model::MOI.ModelLike,
+    config::MOI.Test.Config{T},
+) where {T}
+    @requires T == Float64
+    @requires _supports(config, MOI.optimize!)
+    F = MOI.ScalarNonlinearFunction{Float64}
+    @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
+    MOI.add_constraint(model, 1.0 * x[1] + 2.0 * x[2], MOI.LessThan(1.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = MOI.ScalarNonlinearFunction{Float64}(:+, Any[x[1], x[2]])
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test ≈(MOI.get.(model, MOI.VariablePrimal(), x), [1.0, 0.0], config)
+    @test ≈(MOI.get(model, MOI.ObjectiveValue()), 1.0, config)
+    f = 2.0 * x[1] + x[2]
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test ≈(MOI.get.(model, MOI.VariablePrimal(), x), [1.0, 0.0], config)
+    @test ≈(MOI.get(model, MOI.ObjectiveValue()), 2.0, config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_expression_overrides_objective),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    flag = model.eval_objective_value
+    model.eval_objective_value = false
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(mock, config.optimal_status, [1.0, 0.0])
+            MOI.set(mock, MOI.ObjectiveValue(), 1.0)
+        end,
+        (mock) -> begin
+            MOI.Utilities.mock_optimize!(mock, config.optimal_status, [1.0, 0.0])
+            MOI.set(mock, MOI.ObjectiveValue(), 2.0)
+        end,
+    )
+    return () -> model.eval_objective_value = flag
+end

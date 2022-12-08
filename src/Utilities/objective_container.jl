@@ -17,6 +17,7 @@ mutable struct ObjectiveContainer{T} <: MOI.ModelLike
     single_variable::Union{Nothing,MOI.VariableIndex}
     scalar_affine::Union{Nothing,MOI.ScalarAffineFunction{T}}
     scalar_quadratic::Union{Nothing,MOI.ScalarQuadraticFunction{T}}
+    scalar_nonlinear::Union{Nothing,MOI.ScalarNonlinearFunction{T}}
     vector_variables::Union{Nothing,MOI.VectorOfVariables}
     vector_affine::Union{Nothing,MOI.VectorAffineFunction{T}}
     vector_quadratic::Union{Nothing,MOI.VectorQuadraticFunction{T}}
@@ -34,6 +35,7 @@ function MOI.empty!(o::ObjectiveContainer{T}) where {T}
     o.single_variable = nothing
     o.scalar_affine = nothing
     o.scalar_quadratic = nothing
+    o.scalar_nonlinear = nothing
     o.vector_variables = nothing
     o.vector_affine = nothing
     o.vector_quadratic = nothing
@@ -75,6 +77,8 @@ function MOI.get(
         return MOI.VariableIndex
     elseif o.scalar_quadratic !== nothing
         return MOI.ScalarQuadraticFunction{T}
+    elseif o.scalar_nonlinear !== nothing
+        return MOI.ScalarNonlinearFunction{T}
     elseif o.vector_variables !== nothing
         return MOI.VectorOfVariables
     elseif o.vector_affine !== nothing
@@ -97,6 +101,7 @@ function MOI.supports(
             MOI.VariableIndex,
             MOI.ScalarAffineFunction{T},
             MOI.ScalarQuadraticFunction{T},
+            MOI.ScalarNonlinearFunction{T},
             MOI.VectorOfVariables,
             MOI.VectorAffineFunction{T},
             MOI.VectorQuadraticFunction{T},
@@ -116,6 +121,8 @@ function MOI.get(
         return convert(F, o.single_variable)
     elseif o.scalar_quadratic !== nothing
         return convert(F, o.scalar_quadratic)
+    elseif o.scalar_nonlinear !== nothing
+        return convert(F, o.scalar_nonlinear)
     elseif o.vector_variables !== nothing
         return convert(F, o.vector_variables)
     elseif o.vector_affine !== nothing
@@ -164,6 +171,16 @@ function MOI.set(
     _empty_keeping_sense(o)
     o.is_function_set = true
     o.scalar_quadratic = copy(f)
+    return
+end
+
+function MOI.set(
+    o::ObjectiveContainer{T},
+    ::MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction{T}},
+    f::MOI.ScalarNonlinearFunction{T},
+) where {T}
+    o.is_function_set = true
+    o.scalar_nonlinear = copy(f)
     return
 end
 
@@ -231,6 +248,14 @@ function MOI.modify(
         o.scalar_affine = modify_function!(o.scalar_affine, change)
     elseif o.scalar_quadratic !== nothing
         o.scalar_quadratic = modify_function!(o.scalar_quadratic, change)
+    elseif o.scalar_nonlinear !== nothing
+        throw(
+            MOI.ModifyObjectiveNotAllowed(
+                change,
+                "Cannot modify objective when there is a " *
+                "`ScalarNonlinearFunction` objective",
+            ),
+        )
     elseif o.vector_variables !== nothing
         o.vector_variables = modify_function!(o.vector_variables, change)
     elseif o.vector_quadratic !== nothing
@@ -259,6 +284,14 @@ function MOI.delete(o::ObjectiveContainer, x::MOI.VariableIndex)
         o.scalar_affine = remove_variable(o.scalar_affine, x)
     elseif o.scalar_quadratic !== nothing
         o.scalar_quadratic = remove_variable(o.scalar_quadratic, x)
+    elseif o.scalar_nonlinear !== nothing
+        throw(
+            MOI.DeleteNotAllowed(
+                MOI.VariableIndex,
+                "Cannot delete variable when there is a " *
+                "`ScalarNonlinearFunction` objective",
+            ),
+        )
     elseif o.vector_variables !== nothing
         o.vector_variables = remove_variable(o.vector_variables, x)
         if isempty(o.vector_variables.variables)
@@ -282,6 +315,14 @@ function MOI.delete(o::ObjectiveContainer, x::Vector{MOI.VariableIndex})
         o.scalar_affine = filter_variables(keep, o.scalar_affine)
     elseif o.scalar_quadratic !== nothing
         o.scalar_quadratic = filter_variables(keep, o.scalar_quadratic)
+    elseif o.scalar_nonlinear !== nothing
+        throw(
+            MOI.DeleteNotAllowed(
+                MOI.VariableIndex,
+                "Cannot delete variable when there is a " *
+                "`ScalarNonlinearFunction` objective",
+            ),
+        )
     elseif o.vector_variables !== nothing
         o.vector_variables = filter_variables(keep, o.vector_variables)
         if isempty(o.vector_variables.variables)

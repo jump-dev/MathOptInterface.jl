@@ -283,6 +283,33 @@ function test_issue_1777()
     return
 end
 
+function test_scalar_nonlinear_function_ConstraintName()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction{Float64}(
+        :+,
+        Any[x, MOI.ScalarNonlinearFunction{Float64}(:sin, Any[x])],
+    )
+    c = MOI.add_constraint(model, f, MOI.EqualTo(0.0))
+    MOI.set(model, MOI.ConstraintName(), c, "c")
+    @test MOI.get(model, MOI.ConstraintName(), c) == "c"
+    return
+end
+
+function test_scalar_nonlinear_function_set_objective()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction{Float64}(
+        :+,
+        Any[x, MOI.ScalarNonlinearFunction{Float64}(:sin, Any[x])],
+    )
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    attr = MOI.ObjectiveFunction{typeof(f)}()
+    MOI.set(model, attr, f)
+    @test isapprox(MOI.get(model, attr), f)
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

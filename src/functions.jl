@@ -550,6 +550,15 @@ function Base.copy(f::VectorQuadraticFunction)
     )
 end
 
+struct ScalarNonlinearFunction{T} <: AbstractScalarFunction
+    head::Symbol
+    args::Vector{Any}
+end
+
+function Base.copy(f::ScalarNonlinearFunction{T}) where {T}
+    return ScalarNonlinearFunction{T}(f.head, copy(f.args))
+end
+
 # Function modifications
 
 """
@@ -697,6 +706,22 @@ end
 ###
 ### Base.convert
 ###
+
+function Base.isapprox(
+    f::ScalarNonlinearFunction{T},
+    g::ScalarNonlinearFunction{T};
+    kwargs...,
+) where {T}
+    if f.head != g.head || length(f.args) != length(g.args)
+        return false
+    end
+    for (fi, gi) in zip(f.args, g.args)
+        if !isapprox(fi, gi; kwargs...)
+            return false
+        end
+    end
+    return true
+end
 
 # VariableIndex
 

@@ -264,6 +264,16 @@ function map_indices(
     return typeof(f)(quadratic_terms, affine_terms, MOI.constant(f))
 end
 
+function map_indices(
+    index_map::F,
+    f::MOI.ScalarNonlinearFunction{T},
+) where {F<:Function,T}
+    return MOI.ScalarNonlinearFunction{T}(
+        f.head,
+        Any[map_indices(index_map, arg) for arg in f.args],
+    )
+end
+
 # Function changes
 
 function map_indices(
@@ -864,6 +874,8 @@ function canonicalize!(
     _sort_and_compress!(f.terms)
     return f
 end
+
+canonicalize!(f::MOI.ScalarNonlinearFunction) = f
 
 """
     canonicalize!(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
@@ -1771,6 +1783,19 @@ function operate(
 ) where {T}
     return operate!(op, T, copy(f), g)
 end
+
+### ScalarNonlinearFunction
+
+function promote_operation(
+    ::typeof(-),
+    ::Type{T},
+    ::Type{MOI.ScalarNonlinearFunction{T}},
+    ::Type{MOI.VariableIndex},
+) where {T}
+    return MOI.ScalarNonlinearFunction{T}
+end
+
+### Base methods
 
 _eltype(args::Tuple) = _eltype(first(args), Base.tail(args))
 _eltype(::Tuple{}) = nothing
@@ -3346,6 +3371,15 @@ end
 is_coefficient_type(::Type{<:TypedLike{T}}, ::Type{T}) where {T} = true
 
 is_coefficient_type(::Type{<:TypedLike}, ::Type) = false
+
+function is_coefficient_type(
+    ::Type{MOI.ScalarNonlinearFunction{T}},
+    ::Type{T},
+) where {T}
+    return true
+end
+
+is_coefficient_type(::Type{<:MOI.ScalarNonlinearFunction}, ::Type) = false
 
 similar_type(::Type{F}, ::Type{T}) where {F,T} = F
 

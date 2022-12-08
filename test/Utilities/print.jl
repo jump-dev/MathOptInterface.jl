@@ -701,6 +701,19 @@ function test_default_printing()
     return
 end
 
+function test_scalar_nonlinear_function_print()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariableName(), x, "x")
+    f = MOI.ScalarNonlinearFunction{Float64}(
+        :+,
+        Any[x, MOI.ScalarNonlinearFunction{Float64}(:sin, Any[x])],
+    )
+    options = MOI.Utilities._PrintOptions(MIME("text/plain"))
+    @test MOI.Utilities._to_string(options, model, f) == "+(x, sin(x))"
+    return
+end
+
 end
 
 TestPrint.runtests()
