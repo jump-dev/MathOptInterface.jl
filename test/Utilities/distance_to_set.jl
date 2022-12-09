@@ -138,7 +138,7 @@ function test_secondordercone()
     @test MOI.Utilities.distance_to_set([-sqrt(2), 1, 1], set) ≈ 2
     @test MOI.Utilities.distance_to_set([-2, 1, 1], set) ≈ sqrt(6)
     # According to Boyd, (t, x) = (1, [1, 1]), projects to:
-    d = ((1/2) * (1 + 1 / √2) * [√2, 1, 1]) .- [1, 1, 1]
+    d = ((1 / 2) * (1 + 1 / √2) * [√2, 1, 1]) .- [1, 1, 1]
     @test MOI.Utilities.distance_to_set([1, 1, 1], set) ≈ LinearAlgebra.norm(d)
     return
 end
@@ -151,7 +151,8 @@ function test_exponentialcone()
     set = MOI.ExponentialCone()
     @test MOI.Utilities.distance_to_set([1, 1, exp(1)], set) ≈ 0.0
     @test MOI.Utilities.distance_to_set([2, 3, 3], set) ≈ 3 * exp(2 / 3) - 3
-    @test MOI.Utilities.distance_to_set([2, -1, 3], set) ≈ sqrt(2^2 + (exp(2) - 3)^2)
+    @test MOI.Utilities.distance_to_set([2, -1, 3], set) ≈
+          sqrt(2^2 + (exp(2) - 3)^2)
     return
 end
 
