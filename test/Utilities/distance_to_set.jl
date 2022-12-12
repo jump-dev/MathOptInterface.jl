@@ -153,6 +153,7 @@ function test_exponentialcone()
     @test MOI.Utilities.distance_to_set([2, 3, 3], set) ≈ 3 * exp(2 / 3) - 3
     @test MOI.Utilities.distance_to_set([2, -1, 3], set) ≈
           sqrt(2^2 + (exp(2) - 3)^2)
+    @test MOI.Utilities.distance_to_set([10.0, 0.01, 0.0], set) ≈ Inf
     return
 end
 
