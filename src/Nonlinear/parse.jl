@@ -67,7 +67,8 @@ function _parse_without_recursion_inner(stack, data, expr, x, parent)
     end
     push!(expr.nodes, Node(node_type, id, parent))
     parent = length(expr.nodes)
-    # Args need to be pushed onto the stack in reverse
+    # Args need to be pushed onto the stack in reverse because the stack is a
+    # first-in last-out datastructure.
     for arg in reverse(x.args)
         push!(stack, (parent, arg))
     end

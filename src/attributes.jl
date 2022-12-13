@@ -1857,6 +1857,36 @@ function attribute_value_type(::ConstraintConflictStatus)
 end
 
 """
+    UserDefinedFunction(name::Symbol, arity::Int)
+
+Set a user-defined function by the name of `Name` with `arity` arguments.
+
+The value to be set is a tuple containg one to three functions, representing the
+zero, first, and second-order derivatives of the function.
+
+## Examples
+
+```julia
+f(x, y) = x^2 + y^2
+function ∇f(g, x, y)
+    g .= 2 * x, 2 * y
+    return
+end
+function ∇²f(H, x...)
+    H[1, 1] = H[2, 2] = 2.0
+    return
+end
+MOI.set(model, MOI.UserDefinedFunction(:f, 2), (f,))
+MOI.set(model, MOI.UserDefinedFunction(:f, 2), (f, ∇f))
+MOI.set(model, MOI.UserDefinedFunction(:f, 2), (f, ∇f, ∇²f))
+```
+"""
+struct UserDefinedFunction <: AbstractModelAttribute
+    name::Symbol
+    arity::Int
+end
+
+"""
     TerminationStatusCode
 
 An Enum of possible values for the `TerminationStatus` attribute. This attribute

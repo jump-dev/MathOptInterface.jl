@@ -1454,3 +1454,86 @@ function setup_test(
     )
     return () -> model.eval_objective_value = flag
 end
+
+function test_nonlinear_expression_univariate_function(
+    model::MOI.ModelLike,
+    config::MOI.Test.Config{T},
+) where {T}
+    @requires T == Float64
+    @requires _supports(config, MOI.optimize!)
+    F = MOI.ScalarNonlinearFunction{Float64}
+    @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
+    @requires MOI.supports(model, MOI.UserDefinedFunction(:my_square, 1))
+    my_square(x) = (x - 1)^2
+    MOI.set(model, MOI.UserDefinedFunction(:my_square, 1), (my_square,))
+    x = MOI.add_variable(model)
+    obj = MOI.ScalarNonlinearFunction{Float64}(:my_square, Any[x])
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), x), T(1), config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_expression_univariate_function),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> MOI.Utilities.mock_optimize!(mock, config.optimal_status, [1]),
+    )
+    return
+end
+
+function test_nonlinear_expression_multivariate_function(
+    model::MOI.ModelLike,
+    config::MOI.Test.Config{T},
+) where {T}
+    @requires T == Float64
+    @requires _supports(config, MOI.optimize!)
+    F = MOI.ScalarNonlinearFunction{Float64}
+    @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
+    @requires MOI.supports(model, MOI.UserDefinedFunction(:my_square, 2))
+    f(x, y) = (x - 1)^2 + (y - 2)^2
+    function ∇f(g, x, y)
+        g[1] = 2 * (x - 1)
+        g[2] = 2 * (y - 2)
+        return
+    end
+    MOI.set(model, MOI.UserDefinedFunction(:my_square, 2), (f, ∇f))
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    obj = MOI.ScalarNonlinearFunction{Float64}(:my_square, Any[x, y])
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), x), T(1), config)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), y), T(2), config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_expression_multivariate_function),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> MOI.Utilities.mock_optimize!(
+            mock,
+            config.optimal_status,
+            [1.0, 2.0],
+        ),
+    )
+    return
+end

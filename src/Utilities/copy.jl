@@ -9,6 +9,9 @@
 
 include("copy/index_map.jl")
 
+_is_user_defined_function(::Any) = false
+_is_user_defined_function(::MOI.UserDefinedFunction) = true
+
 """
     pass_attributes(
         dest::MOI.ModelLike,
@@ -23,7 +26,11 @@ function pass_attributes(
     src::MOI.ModelLike,
     index_map::IndexMap,
 )
-    for attr in MOI.get(src, MOI.ListOfModelAttributesSet())
+    attrs = MOI.get(src, MOI.ListOfModelAttributesSet())
+    # We need to deal with the UserDefinedFunctions first, so that they are in
+    # the model before we deal with the objective function or the constraints.
+    sort!(attrs; by = _is_user_defined_function, rev = true)
+    for attr in attrs
         if !MOI.supports(dest, attr)
             if attr == MOI.Name()
                 continue  # Skipping names is okay.

@@ -25,6 +25,7 @@ ScalarAffineTerm
 ScalarAffineFunction
 ScalarQuadraticTerm
 ScalarQuadraticFunction
+ScalarNonlinearFunction
 ```
 
 ## Vector functions

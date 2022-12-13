@@ -550,6 +550,53 @@ function Base.copy(f::VectorQuadraticFunction)
     )
 end
 
+"""
+    ScalarNonlinearFunction{T<:Number}(head::Symbol, args::Vector{Any})
+
+The scalar-valued nonlinear function `head(args...)`, represented as a symbolic
+expression tree, with the call operator `head` and ordered arguments in `args`.
+
+## `head`
+
+The `head::Symbol` must be a scalar operator recognized by the model.
+
+By default, the list of supported uni-variate operators is given by the list:
+
+ * [`Nonlinear.DEFAULT_UNIVARIATE_OPERATORS`](@ref)
+
+and the list of supported multi-variate operators is given by the list:
+
+ * [`Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS`](@ref)
+
+## `args`
+
+The vector `args` contains the arguments to the nonlinear function. If the
+operator is univariate, it must contain one element. Otherwise, it may contain
+multiple elements. Each element must be one of the folowing:
+
+ * A number of type `T`
+ * A variable of type [`VariableIndex`](@ref)
+ * A [`ScalarAffineFunction`](@ref)
+ * A [`ScalarQuadraticFunction`](@ref)
+ * A [`ScalarNonlinearFunction`](@ref)
+
+## Example
+
+To represent the function ``f(x) = sin(x)^2``, do:
+
+```jldoctest
+julia> using MathOptInterface; const MOI = MathOptInterface;
+
+julia> x = MOI.VariableIndex(1)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.ScalarNonlinearFunction{Float64}(
+           :^,
+           Any[MOI.ScalarNonlinearFunction{Float64}(:sin, Any[x]), 2],
+       )
+MathOptInterface.ScalarNonlinearFunction{Float64}(:^, Any[MathOptInterface.ScalarNonlinearFunction{Float64}(:sin, Any[MathOptInterface.VariableIndex(1)]), 2])
+```
+"""
 struct ScalarNonlinearFunction{T} <: AbstractScalarFunction
     head::Symbol
     args::Vector{Any}
