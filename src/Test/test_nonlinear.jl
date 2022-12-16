@@ -1089,7 +1089,7 @@ function test_nonlinear_invalid(
     @requires T == Float64
     @requires MOI.supports(model, MOI.NLPBlock())
     @requires _supports(config, MOI.optimize!)
-    MOI.add_variable(model)
+    x = MOI.add_variable(model)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(
         model,
@@ -1098,6 +1098,14 @@ function test_nonlinear_invalid(
     )
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.INVALID_MODEL
+    @test MOI.get(model, MOI.ResultCount()) == 0
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.NO_SOLUTION
+    attr = MOI.VariablePrimal()
+    err = MOI.ResultIndexBoundsError(attr, 0)
+    @test_throws err MOI.get(model, attr, x)
+    if _supports(config, MOI.ConstraintDual)
+        @test MOI.get(model, MOI.DualStatus()) == MOI.NO_SOLUTION
+    end
     return
 end
 
