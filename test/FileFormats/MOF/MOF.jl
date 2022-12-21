@@ -1108,6 +1108,55 @@ function test_constraint_start_conic()
     @test isnothing(primal_start_c2)
 end
 
+function test_parse_int_coefficient_scalaraffineterm()
+    x = MOI.VariableIndex(1)
+    object = Dict{String,Any}("coefficient" => 2, "variable" => "x")
+    @test MOF.parse_scalar_affine_term(object, Dict("x" => x)) ==
+          MOI.ScalarAffineTerm{Float64}(2.0, x)
+    return
+end
+
+function test_parse_int_coefficient_scalaraffinefunction()
+    x = MOI.VariableIndex(1)
+    object = Dict{String,Any}(
+        "type" => "ScalarAffineFunction",
+        "terms" => [],
+        "constant" => 2,
+    )
+    @test MOF.function_to_moi(object, Dict("x" => x)) ≈
+          MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 2.0)
+    return
+end
+
+function test_parse_int_coefficient_scalarquadraticterm()
+    x = MOI.VariableIndex(1)
+    object = Dict{String,Any}(
+        "coefficient" => 2,
+        "variable_1" => "x",
+        "variable_2" => "x",
+    )
+    @test MOF.parse_scalar_quadratic_term(object, Dict("x" => x)) ==
+          MOI.ScalarQuadraticTerm{Float64}(2.0, x, x)
+    return
+end
+
+function test_parse_int_coefficient_scalarquadraticfunction()
+    x = MOI.VariableIndex(1)
+    object = Dict{String,Any}(
+        "type" => "ScalarQuadraticFunction",
+        "quadratic_terms" => [],
+        "affine_terms" => [],
+        "constant" => 2,
+    )
+    f = MOI.ScalarQuadraticFunction(
+        MOI.ScalarQuadraticTerm{Float64}[],
+        MOI.ScalarAffineTerm{Float64}[],
+        2.0,
+    )
+    @test MOF.function_to_moi(object, Dict("x" => x)) ≈ f
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")

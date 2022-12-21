@@ -252,7 +252,7 @@ function parse_scalar_affine_term(
     name_map::Dict{String,MOI.VariableIndex},
 )
     return MOI.ScalarAffineTerm(
-        object["coefficient"]::Float64,
+        convert(Float64, object["coefficient"]),
         name_map[object["variable"]::String],
     )
 end
@@ -264,7 +264,7 @@ function function_to_moi(
 )
     return MOI.ScalarAffineFunction{Float64}(
         parse_scalar_affine_term.(object["terms"], Ref(name_map)),
-        object["constant"]::Float64,
+        convert(Float64, object["constant"]),
     )
 end
 
@@ -273,7 +273,7 @@ function parse_scalar_quadratic_term(
     name_map::Dict{String,MOI.VariableIndex},
 )
     return MOI.ScalarQuadraticTerm(
-        object["coefficient"]::Float64,
+        convert(Float64, object["coefficient"]),
         name_map[object["variable_1"]::String],
         name_map[object["variable_2"]::String],
     )
@@ -287,7 +287,7 @@ function function_to_moi(
     return MOI.ScalarQuadraticFunction{Float64}(
         parse_scalar_quadratic_term.(object["quadratic_terms"], Ref(name_map)),
         parse_scalar_affine_term.(object["affine_terms"], Ref(name_map)),
-        object["constant"]::Float64,
+        convert(Float64, object["constant"]),
     )
 end
 
