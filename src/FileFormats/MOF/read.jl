@@ -116,12 +116,10 @@ function _add_constraint(
     object::Object,
     name_map::Dict{String,MOI.VariableIndex},
 )
-    index = MOI.add_constraint(
-        model,
-        function_to_moi(object["function"]::typeof(object), name_map),
-        set_to_moi(object["set"]::typeof(object)),
-    )
-    if haskey(object, "name")
+    f = function_to_moi(object["function"]::typeof(object), name_map)
+    s = set_to_moi(object["set"]::typeof(object))
+    index = MOI.add_constraint(model, f, s)
+    if haskey(object, "name") && typeof(f) != MOI.VariableIndex
         MOI.set(model, MOI.ConstraintName(), index, object["name"]::String)
     end
     if haskey(object, "dual_start")

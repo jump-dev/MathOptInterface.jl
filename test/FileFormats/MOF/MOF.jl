@@ -1157,6 +1157,50 @@ function test_parse_int_coefficient_scalarquadraticfunction()
     return
 end
 
+function test_parse_constraintname_variable()
+    io = IOBuffer()
+    print(
+        io,
+        """{
+    "version": {"major": 1, "minor": 2},
+    "variables": [{"name": "x", "primal_start": 0.0}],
+    "objective": {"sense": "min", "function": {"type": "Variable", "name": "x"}},
+    "constraints": [{
+        "name": "x >= 1",
+        "function": {
+            "type": "ScalarAffineFunction",
+            "terms": [{"coefficient": 1, "variable": "x"}],
+            "constant": 0
+        },
+        "set": {"type": "GreaterThan", "lower": 1},
+        "primal_start": 1,
+        "dual_start": 0
+    }, {
+        "name": "x ∈ [0, 1]",
+        "function": {"type": "Variable", "name": "x"},
+        "set": {"type": "Interval", "lower": 0, "upper": 1}
+    }]
+}""",
+    )
+    seekstart(io)
+    model = MOF.Model()
+    read!(io, model)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+    @test MOI.get(model, MOI.VariablePrimalStart(), x) == 0.0
+    F, S = MOI.VariableIndex, MOI.Interval{Float64}
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+    ci = first(MOI.get(model, MOI.ListOfConstraintIndices{F,S}()))
+    @test MOI.get(model, MOI.ConstraintFunction(), ci) == x
+    @test MOI.get(model, MOI.ConstraintSet(), ci) == MOI.Interval(0.0, 1.0)
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}
+    @test isa(
+        MOI.get(model, MOI.ConstraintIndex, "x >= 1"),
+        MOI.ConstraintIndex{F,S},
+    )
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")
