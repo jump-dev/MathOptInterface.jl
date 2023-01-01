@@ -1226,7 +1226,7 @@ function test_parse_nonlinear_objective_only()
     @test block isa MOI.NLPBlockData
     @test block.has_objective
     MOI.initialize(block.evaluator, Symbol[])
-    @test MOI.eval_objective(block.evaluator, [2.0]) ≈ sinn(2.0)
+    @test MOI.eval_objective(block.evaluator, [2.0]) ≈ sin(2.0)
     return
 end
 
