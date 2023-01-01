@@ -30,7 +30,7 @@ function Base.read!(io::IO, model::Model)
 end
 
 function _convert_to_nlpblock(model::Model)
-    has_constraints = false
+    needs_nlp_block = false
     nlp_model = MOI.Nonlinear.Model()
     for S in (
         MOI.LessThan{Float64},
@@ -44,7 +44,7 @@ function _convert_to_nlpblock(model::Model)
             MOI.Nonlinear.add_constraint(nlp_model, f.expr, set)
             # We don't need this in `model` any more.
             MOI.delete(model, ci)
-            has_constraints = true
+            needs_nlp_block = true
         end
     end
     if MOI.get(model, MOI.ObjectiveFunctionType()) == Nonlinear
@@ -58,8 +58,9 @@ function _convert_to_nlpblock(model::Model)
                 0.0,
             ),
         )
+        needs_nlp_block = true
     end
-    if has_constraints
+    if needs_nlp_block
         options = get_options(model)
         evaluator = MOI.Nonlinear.Evaluator(
             nlp_model,
