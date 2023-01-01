@@ -1201,6 +1201,35 @@ function test_parse_constraintname_variable()
     return
 end
 
+function test_parse_nonlinear_objective_only()
+    io = IOBuffer()
+    print(
+        io,
+        """{
+    "version": {"major": 1, "minor": 2},
+    "variables": [{"name": "x"}],
+    "objective": {
+        "sense": "min",
+        "function": {
+            "type": "ScalarNonlinearFunction",
+            "root": {"type": "node", "index": 1},
+            "node_list": [{"type": "sin", "args": [{"type": "variable", "name": "x"}]}]
+        }
+    },
+    "constraints": []
+}""",
+    )
+    seekstart(io)
+    model = MOF.Model()
+    read!(io, model)
+    block = MOI.get(model, MOI.NLPBlock())
+    @test block isa MOI.NLPBlockData
+    @test block.has_objective
+    MOI.initialize(block.evaluator, Symbol[])
+    @test MOI.eval_objective(block.evaluator, [2.0]) ≈ sin(2.0)
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")
