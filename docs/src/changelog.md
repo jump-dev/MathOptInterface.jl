@@ -7,6 +7,15 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.11.2 (January 2, 2022)
+
+### Fixed
+
+ - Fixed a bug reading `.mof.json` files with `ConstraintName` set for
+   `VariableIndex` constraints (#2066)
+ - Fixed a bug reading `.mof.json` files with nonlinear objectives and no
+   constraints (#2068)
+
 ## v1.11.1 (December 22, 2022)
 
 ### Fixed
