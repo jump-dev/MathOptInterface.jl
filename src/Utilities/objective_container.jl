@@ -79,7 +79,7 @@ function MOI.get(
         return MOI.VectorOfVariables
     elseif o.vector_affine !== nothing
         return MOI.VectorAffineFunction{T}
-    else o.vector_quadratic !== nothing
+    elseif o.vector_quadratic !== nothing
         return MOI.VectorQuadraticFunction{T}
     end
     # The default if no objective is set.
@@ -133,6 +133,7 @@ function _empty_keeping_sense(o::ObjectiveContainer)
     o.sense, o.is_sense_set = sense, is_sense_set
     return
 end
+
 function MOI.set(
     o::ObjectiveContainer,
     ::MOI.ObjectiveFunction{MOI.VariableIndex},
