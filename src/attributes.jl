@@ -1196,7 +1196,7 @@ e.g., the objective function is quadratic and `F` is
 `ScalarAffineFunction{Float64}` or it has non-integer coefficient and `F` is
 `ScalarAffineFunction{Int}`.
 """
-struct ObjectiveFunction{F<:AbstractScalarFunction} <: AbstractModelAttribute end
+struct ObjectiveFunction{F<:AbstractFunction} <: AbstractModelAttribute end
 
 attribute_value_type(::ObjectiveFunction{F}) where {F} = F
 
