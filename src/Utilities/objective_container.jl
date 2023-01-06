@@ -221,10 +221,10 @@ end
 ###
 
 function MOI.modify(
-    o::ObjectiveContainer,
+    o::ObjectiveContainer{T},
     ::MOI.ObjectiveFunction,
     change::MOI.AbstractFunctionModification,
-)
+) where {T}
     if o.single_variable !== nothing
         o.single_variable = modify_function!(o.single_variable, change)
     elseif o.scalar_affine !== nothing

@@ -126,7 +126,7 @@ function test_multiobjective_vector_affine_function_delete_vector(
     @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ f
     MOI.delete(model, x)
     @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈
-          MOI.VectorAffineFunction{T}(MOI.VectorAffieTerm{T}[], T[0, 3])
+          MOI.VectorAffineFunction{T}(MOI.VectorAffineTerm{T}[], T[0, 3])
     return
 end
 
@@ -179,7 +179,7 @@ function test_multiobjective_vector_quadratic_function_delete_vector(
     new_f = MOI.VectorQuadraticFunction{T}(
         MOI.VectorQuadraticTerm{T}[],
         MOI.VectorAffineTerm{T}[],
-        zeros(T, 2)
+        zeros(T, 2),
     )
     @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ new_f
     return
