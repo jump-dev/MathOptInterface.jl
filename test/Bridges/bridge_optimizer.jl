@@ -932,6 +932,31 @@ function test_bridge_supports_issue_1992()
     return
 end
 
+function test_delete_constraint_vector()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.GreaterToLess{Float64}(inner)
+    x = MOI.add_variables(model, 3)
+    c = MOI.add_constraint.(model, 1.0 .* x, MOI.GreaterThan.(1.0:3.0))
+    c_eq = MOI.add_constraint.(model, 1.0 .* x, MOI.EqualTo.(1.0:3.0))
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 3
+    MOI.delete(model, c)
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 0
+    c = MOI.add_constraint.(model, 1.0 .* x, MOI.GreaterThan.(1.0:3.0))
+    MOI.delete(model, [c[1], c[3]])
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+    @test MOI.get(model, MOI.ConstraintSet(), c[2]) == MOI.GreaterThan(2.0)
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 3
+    MOI.delete(model, c_eq)
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 0
+    c_eq = MOI.add_constraint.(model, 1.0 .* x, MOI.EqualTo.(1.0:3.0))
+    MOI.delete(model, [c_eq[1], c_eq[3]])
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+    @test MOI.get(model, MOI.ConstraintSet(), c_eq[2]) == MOI.EqualTo(2.0)
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()

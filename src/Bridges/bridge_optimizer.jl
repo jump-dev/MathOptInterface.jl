@@ -630,6 +630,20 @@ function MOI.delete(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
     end
 end
 
+function MOI.delete(
+    b::AbstractBridgeOptimizer,
+    ci::Vector{<:MOI.ConstraintIndex},
+)
+    if any(c -> is_bridged(b, c), ci)
+        # This is a potentially complicated case, so default to the slow case of
+        # deleting each constraint one-by-one.
+        MOI.delete.(b, ci)
+    else
+        MOI.delete(b.model, ci)
+    end
+    return
+end
+
 # Attributes
 
 function _get_all_including_bridged(
