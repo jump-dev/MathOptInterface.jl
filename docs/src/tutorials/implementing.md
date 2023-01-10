@@ -290,7 +290,6 @@ All `Optimizer`s must implement the following methods:
 
  * [`empty!`](@ref)
  * [`is_empty`](@ref)
- * [`optimize!`](@ref)
 
 Other methods, detailed below, are optional or depend on how you implement the
 interface.
@@ -387,7 +386,7 @@ end
 !!! tip
     Only support a constraint if your solver has native support for it.
 
-## The big decision: copy-to or incremental modifications?
+## The big decision: incremental modification?
 
 Now you need to decide whether to support incremental modification or not.
 
@@ -397,19 +396,19 @@ the problem data after an [`optimize!`](@ref) call. Supporting incremental
 modification means implementing functions like [`add_variable`](@ref) and
 [`add_constraint`](@ref).
 
-The alternative is to accept the problem data in a single [`copy_to`](@ref)
-function call, after which it cannot be modified. Because [`copy_to`](@ref) sees
-all of the data at once, it can typically call a more efficient function to load
-data into the underlying solver.
+The alternative is to accept the problem data in a single [`optimize!`](@ref) or
+[`copy_to`](@ref) function call. Because these functions see all of the data at
+once, it can typically call a more efficient function to load data into the
+underlying solver.
 
 Good examples of solvers supporting incremental modification are MILP solvers
 like [GLPK.jl](https://github.com/jump-dev/GLPK.jl) and
-[Gurobi.jl](https://github.com/jump-dev/Gurobi.jl). Examples of [`copy_to`](@ref)
+[Gurobi.jl](https://github.com/jump-dev/Gurobi.jl). Examples of non-incremental
 solvers are [AmplNLWriter.jl](https://github.com/jump-dev/AmplNLWriter.jl) and
 [SCS.jl](https://github.com/jump-dev/SCS.jl)
 
-It is possible to implement both approaches, but you should probably start with
-one for simplicity.
+It is possible for a solver to implement both approaches, but you should
+probably start with one for simplicity.
 
 !!! tip
     Only support incremental modification if your solver has native support for
@@ -423,14 +422,25 @@ modification, it's usually not much extra work to add a [`copy_to`](@ref)
 interface. The converse is not true.
 
 !!! tip
-    If this is your first time writing an interface, start with
-    [`copy_to`](@ref).
+    If this is your first time writing an interface, start with the one-shot
+    [`optimize!`](@ref).
 
-### The `copy_to` interface
+### The non-incremental interface
 
-To implement the [`copy_to`](@ref) interface, implement the following function:
+There are two ways to implement the non-incremental interface. The first uses a
+two-argument version of [`optimize!`](@ref), the second implements [`copy_to`](@ref)
+followed by the one-argument version of [`optimize!`](@ref).
 
-* [`copy_to`](@ref)
+If your solver does not support modification, and requires all data to solve the
+problem in a single function call, you should implement the "one-shot" [`optimize!`](@ref).
+
+ * [`optimize!(::ModelLike, ::ModelLike)`](@ref)
+
+If your solver separates data loading and the actual optimization into separate
+steps, implement the [`copy_to`](@ref) interface.
+
+ * [`copy_to(::ModelLike, ::ModelLike)`](@ref)
+ * [`optimize!(::ModelLike)`](@ref)
 
 ### The incremental interface
 
@@ -446,6 +456,7 @@ To implement the incremental interface, implement the following functions:
 * [`add_constraints`](@ref)
 * [`is_valid`](@ref)
 * [`delete`](@ref)
+* [`optimize!(::ModelLike)`](@ref)
 
 !!! info
     Solvers do not have to support `AbstractScalarFunction` in
