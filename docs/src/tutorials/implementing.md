@@ -456,7 +456,7 @@ To implement the incremental interface, implement the following functions:
 * [`add_constraints`](@ref)
 * [`is_valid`](@ref)
 * [`delete`](@ref)
-* [`optimize!(::ModelLike)](@ref)
+* [`optimize!(::ModelLike)`](@ref)
 
 !!! info
     Solvers do not have to support `AbstractScalarFunction` in
