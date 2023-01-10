@@ -407,10 +407,7 @@ function is_bridged(
     return !MOI.supports_constraint(b.model, F, S)
 end
 
-function is_bridged(
-    b::LazyBridgeOptimizer,
-    F::Type{<:MOI.AbstractFunction},
-)
+function is_bridged(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction})
     return !MOI.supports(b.model, MOI.ObjectiveFunction{F}())
 end
 
@@ -498,10 +495,7 @@ function bridge_type(
     return new_bt::Type
 end
 
-function bridge_type(
-    b::LazyBridgeOptimizer,
-    F::Type{<:MOI.AbstractFunction},
-)
+function bridge_type(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction})
     bt = get(b.cached_bridge_type, (F,), nothing)
     if bt !== nothing
         return bt::Type
