@@ -63,10 +63,6 @@ Returns a tuple of an [`IndexMap`](@ref) and a `Bool` `copied`.
     The main purpose of `optimize!` method with two arguments is for use in
     [`Utilities.CachingOptimizer`](@ref).
 
-!!! warning
-    The new `optimize!` method with two arguments is an experimental new feature
-    of MOI v0.10.2 that may break in MOI v1.0.
-
 ## Relationship to the single-argument `optimize!`
 
 The default fallback of `optimize!(dest::AbstractOptimizer, src::ModelLike)` is
