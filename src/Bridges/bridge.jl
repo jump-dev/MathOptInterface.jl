@@ -234,7 +234,7 @@ function added_constraint_types end
 """
     set_objective_function_type(
         BT::Type{<:Objective.AbstractBridge},
-    )::Type{<:MOI.AbstractScalarFunction}
+    )::Type{<:MOI.AbstractFunction}
 
 Return the type of objective function that bridges of concrete type `BT`
 set.

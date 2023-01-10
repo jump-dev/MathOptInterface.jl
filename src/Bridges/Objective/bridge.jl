@@ -23,7 +23,7 @@ abstract type AbstractBridge <: MOI.Bridges.AbstractBridge end
 """
     supports_objective_function(
         BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
-        F::Type{<:MOI.AbstractScalarFunction},
+        F::Type{<:MOI.AbstractFunction},
     )::Bool
 
 Return a `Bool` indicating whether the bridges of type `BT` support bridging
@@ -37,7 +37,7 @@ objective functions of type `F`.
 """
 function supports_objective_function(
     ::Type{<:AbstractBridge},
-    ::Type{<:MOI.AbstractScalarFunction},
+    ::Type{<:MOI.AbstractFunction},
 )
     return false
 end
@@ -45,7 +45,7 @@ end
 """
     concrete_bridge_type(
         BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
-        F::Type{<:MOI.AbstractScalarFunction},
+        F::Type{<:MOI.AbstractFunction},
     )::Type
 
 Return the concrete type of the bridge supporting objective functions of type
@@ -56,14 +56,14 @@ This function can only be called if `MOI.supports_objective_function(BT, F)` is
 """
 function concrete_bridge_type(
     ::Type{BT},
-    ::Type{<:MOI.AbstractScalarFunction},
+    ::Type{<:MOI.AbstractFunction},
 ) where {BT}
     return BT
 end
 
 function concrete_bridge_type(
     b::MOI.Bridges.AbstractBridgeOptimizer,
-    F::Type{<:MOI.AbstractScalarFunction},
+    F::Type{<:MOI.AbstractFunction},
 )
     return concrete_bridge_type(MOI.Bridges.bridge_type(b, F), F)
 end
@@ -72,7 +72,7 @@ end
     bridge_objective(
         BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
         model::MOI.ModelLike,
-        func::MOI.AbstractScalarFunction,
+        func::MOI.AbstractFunction,
     )::BT
 
 Bridge the objective function `func` using bridge `BT` to `model` and returns
@@ -86,7 +86,7 @@ a bridge object of type `BT`.
 function bridge_objective(
     ::Type{<:AbstractBridge},
     ::MOI.ModelLike,
-    func::MOI.AbstractScalarFunction,
+    func::MOI.AbstractFunction,
 )
     return throw(
         MOI.UnsupportedAttribute(MOI.ObjectiveFunction{typeof(func)}()),

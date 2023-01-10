@@ -218,7 +218,7 @@ end
 """
     supports_bridging_objective_function(
         b::AbstractBridgeOptimizer,
-        F::Type{<:MOI.AbstractScalarFunction},
+        F::Type{<:MOI.AbstractFunction},
     )::Bool
 
 Return a `Bool` indicating whether `b` supports bridging objective functions of
@@ -226,7 +226,7 @@ type `F`.
 """
 function supports_bridging_objective_function(
     ::AbstractBridgeOptimizer,
-    ::Type{<:MOI.AbstractScalarFunction},
+    ::Type{<:MOI.AbstractFunction},
 )
     return false
 end
@@ -965,14 +965,14 @@ function MOI.supports(
 end
 
 """
-    struct ObjectiveFunctionValue{F<:MOI.AbstractScalarFunction} end
+    struct ObjectiveFunctionValue{F<:MOI.AbstractFunction} end
 
 Attribute for the value of the objective function of type `F`. If the objective
 of the objective function does not depend on `F`, the type `F` determines
 whether the computation is redirected to an objective bridge or to the
 underlying model.
 """
-struct ObjectiveFunctionValue{F<:MOI.AbstractScalarFunction}
+struct ObjectiveFunctionValue{F<:MOI.AbstractFunction}
     result_index::Int
 end
 
@@ -985,7 +985,7 @@ end
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::ObjectiveFunctionValue{F},
-) where {F<:MOI.AbstractScalarFunction} # Need `<:` to avoid ambiguity
+) where {F<:MOI.AbstractFunction} # Need `<:` to avoid ambiguity
     obj_attr = MOI.ObjectiveFunction{F}()
     if is_bridged(b, obj_attr)
         return MOI.get(recursive_model(b), attr, bridge(b, obj_attr))
@@ -1046,7 +1046,7 @@ end
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::MOI.ObjectiveFunction,
-    func::MOI.AbstractScalarFunction,
+    func::MOI.AbstractFunction,
 )
     if is_objective_bridged(b)
         # Clear objective function by setting sense to `MOI.FEASIBILITY_SENSE`

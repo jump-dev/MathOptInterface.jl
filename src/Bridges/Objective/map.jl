@@ -12,7 +12,7 @@ bridging that type of objective function.
 """
 mutable struct Map <: AbstractDict{MOI.ObjectiveFunction,AbstractBridge}
     bridges::Dict{MOI.ObjectiveFunction,AbstractBridge}
-    function_type::Union{Nothing,Type{<:MOI.AbstractScalarFunction}}
+    function_type::Union{Nothing,Type{<:MOI.AbstractFunction}}
 end
 
 Map() = Map(Dict{MOI.ObjectiveFunction,AbstractBridge}(), nothing)
@@ -74,7 +74,7 @@ end
         map::Map,
         bridge::AbstractBridge,
         ::F,
-    ) where {F<:MOI.AbstractScalarFunction}
+    ) where {F<:MOI.AbstractFunction}
 
 Stores the mapping `attr => bridge` where `attr` is
 `MOI.ObjectiveFunction{F}()` and set [`function_type`](@ref) to `F`.
@@ -83,7 +83,7 @@ function add_key_for_bridge(
     map::Map,
     bridge::AbstractBridge,
     ::F,
-) where {F<:MOI.AbstractScalarFunction}
+) where {F<:MOI.AbstractFunction}
     attr = MOI.ObjectiveFunction{F}()
     map.function_type = F
     map.bridges[attr] = bridge

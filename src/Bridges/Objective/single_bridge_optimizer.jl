@@ -94,21 +94,21 @@ end
 
 function MOI.Bridges.supports_bridging_objective_function(
     ::SingleBridgeOptimizer{BT},
-    F::Type{<:MOI.AbstractScalarFunction},
+    F::Type{<:MOI.AbstractFunction},
 ) where {BT}
     return supports_objective_function(BT, F)
 end
 
 function MOI.Bridges.is_bridged(
     bridge::SingleBridgeOptimizer,
-    F::Type{<:MOI.AbstractScalarFunction},
+    F::Type{<:MOI.AbstractFunction},
 )
     return MOI.Bridges.supports_bridging_objective_function(bridge, F)
 end
 
 function MOI.Bridges.bridge_type(
     ::SingleBridgeOptimizer{BT},
-    ::Type{<:MOI.AbstractScalarFunction},
+    ::Type{<:MOI.AbstractFunction},
 ) where {BT}
     return BT
 end
