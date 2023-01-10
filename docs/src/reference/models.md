@@ -59,6 +59,7 @@ ListOfConstraintAttributesSet
 AbstractOptimizer
 OptimizerWithAttributes
 optimize!
+optimize!(::ModelLike, ::ModelLike)
 instantiate
 default_cache
 ```
