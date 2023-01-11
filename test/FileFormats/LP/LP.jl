@@ -738,6 +738,21 @@ function test_wrong_way_bounds()
     return
 end
 
+function test_variable_coefficient_variable()
+    io = IOBuffer()
+    write(io, "Minimize\nobj: x -1 y\nEnd")
+    seekstart(io)
+    model = MOI.FileFormats.LP.Model()
+    read!(io, model)
+    out = IOBuffer()
+    write(out, model)
+    seekstart(out)
+    file = read(out, String)
+    @test file ==
+          "minimize\nobj: 1 x - 1 y\nsubject to\nBounds\nx >= 0\ny >= 0\nEnd\n"
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")
