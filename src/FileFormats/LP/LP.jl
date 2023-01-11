@@ -542,7 +542,8 @@ function _get_term(token_types, token_values, offset)
     @assert token_types[offset] == _TOKEN_VARIABLE
     x = MOI.VariableIndex(Int64(token_values[offset]))
     offset += 1
-    if offset > length(token_types) || token_types[offset] == _TOKEN_SIGN
+    if offset > length(token_types) ||
+       token_types[offset] in (_TOKEN_SIGN, _TOKEN_COEFFICIENT)
         return MOI.ScalarAffineTerm(coef, x), offset
     end
     term = if token_types[offset] == _TOKEN_QUADRATIC_DIAG
