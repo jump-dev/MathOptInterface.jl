@@ -748,7 +748,8 @@ function test_variable_coefficient_variable()
     write(out, model)
     seekstart(out)
     file = read(out, String)
-    @test file == "minimize\nobj: 1 x - 1 y\nsubject to\nBounds\nx >= 0\ny >= 0\nEnd\n"
+    @test file ==
+          "minimize\nobj: 1 x - 1 y\nsubject to\nBounds\nx >= 0\ny >= 0\nEnd\n"
     return
 end
 
