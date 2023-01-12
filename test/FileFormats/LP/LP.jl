@@ -247,6 +247,22 @@ function test_free_variables_reading()
     return
 end
 
+function test_integer_variables_reading()
+    for case in ["general", "GeneRalS", "Integer", "InTegeRs"]
+        io = IOBuffer()
+        write(io, "Minimize\nobj: x\nsubject to\n$case\nx\nEnd")
+        seekstart(io)
+        model = MOI.FileFormats.LP.Model()
+        read!(io, model)
+        out = IOBuffer()
+        write(out, model)
+        seekstart(out)
+        file = read(out, String)
+        @test occursin("General\nx\nEnd", file)
+    end
+    return
+end
+
 function test_quadratic_objective_diag()
     model = LP.Model()
     MOI.Utilities.loadfromstring!(

@@ -430,6 +430,8 @@ const _KEYWORDS = Dict(
     "gen" => _KW_INTEGER,
     "general" => _KW_INTEGER,
     "generals" => _KW_INTEGER,
+    "integer" => _KW_INTEGER,
+    "integers" => _KW_INTEGER,
     # _KW_BINARY
     "bin" => _KW_BINARY,
     "binary" => _KW_BINARY,
