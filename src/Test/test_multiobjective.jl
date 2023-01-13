@@ -94,6 +94,28 @@ function test_multiobjective_vector_affine_function(
     return
 end
 
+function test_multiobjective_vector_affine_function_modify(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    F = MOI.VectorAffineFunction{T}
+    @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
+    x = MOI.add_variables(model, 2)
+    f = MOI.Utilities.operate(vcat, T, T(1) * x[1], T(2) * x[2] + T(3))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{F}(), f)
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) == F
+    @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ f
+    MOI.modify(
+        model,
+        MOI.ObjectiveFunction{F}(),
+        MOI.VectorConstantChange(T[4, 5]),
+    )
+    f.constants .= T[4, 5]
+    @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ f
+    return
+end
+
 function test_multiobjective_vector_affine_function_delete(
     model::MOI.ModelLike,
     ::Config{T},
@@ -141,6 +163,28 @@ function test_multiobjective_vector_quadratic_function(
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{F}(), f)
     @test MOI.get(model, MOI.ObjectiveFunctionType()) == F
+    @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ f
+    return
+end
+
+function test_multiobjective_vector_quadratic_function_modify(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    F = MOI.VectorQuadraticFunction{T}
+    @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
+    x = MOI.add_variables(model, 2)
+    f = MOI.Utilities.operate(vcat, T, (T(1) .* x .* x)...)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{F}(), f)
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) == F
+    @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ f
+    MOI.modify(
+        model,
+        MOI.ObjectiveFunction{F}(),
+        MOI.VectorConstantChange(T[4, 5]),
+    )
+    f.constants .= T[4, 5]
     @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ f
     return
 end
