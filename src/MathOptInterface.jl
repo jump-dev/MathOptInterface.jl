@@ -274,9 +274,10 @@ import SnoopPrecompile
 SnoopPrecompile.@precompile_setup begin
     SnoopPrecompile.@precompile_all_calls begin
         let
-            optimizer = () -> Utilities.MockOptimizer(
-                Utilities.UniversalFallback(Utilities.Model{Float64}())
-            )
+            optimizer =
+                () -> Utilities.MockOptimizer(
+                    Utilities.UniversalFallback(Utilities.Model{Float64}()),
+                )
             model = Utilities.CachingOptimizer(
                 Utilities.UniversalFallback(Utilities.Model{Float64}()),
                 instantiate(optimizer; with_bridge_type = Float64),
