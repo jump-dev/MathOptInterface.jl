@@ -87,7 +87,7 @@ const _INSTANTIATE_NOT_CALLABLE_MESSAGE =
 Create an instance of optimizer by calling `optimizer_constructor`.
 Then check that the type returned is an empty [`ModelLike`](@ref).
 """
-function _instantiate_and_check(optimizer_constructor)
+function _instantiate_and_check((@nospecialize optimizer_constructor))
     if !applicable(optimizer_constructor)
         error(_INSTANTIATE_NOT_CALLABLE_MESSAGE)
     end
@@ -143,7 +143,7 @@ problem incrementally (see [`supports_incremental_interface`](@ref)), then a
 model.
 """
 function instantiate(
-    optimizer_constructor;
+    (@nospecialize optimizer_constructor);
     with_bridge_type::Union{Nothing,Type} = nothing,
 )
     optimizer = _instantiate_and_check(optimizer_constructor)
