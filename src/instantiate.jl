@@ -143,7 +143,7 @@ problem incrementally (see [`supports_incremental_interface`](@ref)), then a
 model.
 """
 function instantiate(
-   (@nospecialize optimizer_constructor);
+    (@nospecialize optimizer_constructor);
     with_bridge_type::Union{Nothing,Type} = nothing,
 )
     optimizer = _instantiate_and_check(optimizer_constructor)
