@@ -39,7 +39,8 @@ struct VectorSlackBridge{
     F<:MOI.AbstractVectorFunction,
     G<:MOI.AbstractVectorFunction,
 } <: AbstractBridge
-    slack::MOI.VectorOfVariables
+    variables::Vector{MOI.VariableIndex}
+    slacked_objectives::Vector{Int}
     constraint::MOI.ConstraintIndex{F,MOI.Nonnegatives}
 end
 
@@ -51,9 +52,21 @@ function bridge_objective(
     model::MOI.ModelLike,
     func::G,
 ) where {T,F,G<:MOI.AbstractVectorFunction}
-    dim = MOI.output_dimension(func)
-    slack = MOI.VectorOfVariables(MOI.add_variables(model, dim))
-    MOI.set(model, MOI.ObjectiveFunction{MOI.VectorOfVariables}(), slack)
+    variables, slacked_objectives = MOI.VariableIndex[], Int[]
+    funcs = MOI.Utilities.eachscalar(func)
+    for (i, fi) in enumerate(funcs)
+        try
+            push!(variables, convert(MOI.VariableIndex, fi))
+        catch
+            push!(variables, MOI.add_variable(model))
+            push!(slacked_objectives, i)
+        end
+    end
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.VectorOfVariables}(),
+        MOI.VectorOfVariables(variables),
+    )
     sense = MOI.get(model, MOI.ObjectiveSense())
     if sense == MOI.FEASIBILITY_SENSE
         error(
@@ -61,14 +74,15 @@ function bridge_objective(
             " using `MOI.Bridges.Objective.VectorSlackBridge`.",
         )
     end
+    slacks = MOI.VectorOfVariables(variables[slacked_objectives])
     f = if sense == MOI.MIN_SENSE
-        MOI.Utilities.operate(-, T, slack, func)
+        MOI.Utilities.operate(-, T, slacks, funcs[slacked_objectives])
     elseif sense == MOI.MAX_SENSE
-        MOI.Utilities.operate(-, T, func, slack)
+        MOI.Utilities.operate(-, T, funcs[slacked_objectives], slacks)
     end
-    set = MOI.Nonnegatives(dim)
+    set = MOI.Nonnegatives(length(slacked_objectives))
     ci = MOI.add_constraint(model, f, set)
-    return VectorSlackBridge{T,F,G}(slack, ci)
+    return VectorSlackBridge{T,F,G}(variables, slacked_objectives, ci)
 end
 
 function supports_objective_function(
@@ -110,11 +124,11 @@ function concrete_bridge_type(
 end
 
 function MOI.get(bridge::VectorSlackBridge, ::MOI.NumberOfVariables)::Int64
-    return MOI.output_dimension(bridge.slack)
+    return length(bridge.slacked_objectives)
 end
 
 function MOI.get(bridge::VectorSlackBridge, ::MOI.ListOfVariableIndices)
-    return copy(bridge.slack.variables)
+    return bridge.variables[bridge.slacked_objectives]
 end
 
 function MOI.get(
@@ -133,7 +147,7 @@ end
 
 function MOI.delete(model::MOI.ModelLike, bridge::VectorSlackBridge)
     MOI.delete(model, bridge.constraint)
-    MOI.delete(model, bridge.slack.variables)
+    MOI.delete(model, MOI.get(bridge, MOI.ListOfVariableIndices()))
     return
 end
 
@@ -144,17 +158,22 @@ function MOI.get(
 ) where {T,F,G}
     N = attr_g.result_index
     attr_f = MOI.Bridges.ObjectiveFunctionValue{MOI.VectorOfVariables}(N)
-    y_val = MOI.get(model, attr_f)
+    objective_value = MOI.get(model, attr_f)
     con_primal = MOI.get(model, MOI.ConstraintPrimal(), bridge.constraint)
     sense = MOI.get(model, MOI.ObjectiveSense())
     if sense == MOI.MIN_SENSE
-        # con_primal = y - func => func = y - con_primal
-        return y_val - con_primal
+        # con_primal = objective_value - f(x)
+        for (i, con_p) in zip(bridge.slacked_objectives, con_primal)
+            objective_value[i] -= con_p
+        end
     else
         @assert sense == MOI.MAX_SENSE
-        # con_primal = func - y => func = con_primal + y
-        return con_primal + y_val
+        # con_primal = f(x) - objective_value
+        for (i, con_p) in zip(bridge.slacked_objectives, con_primal)
+            objective_value[i] += con_p
+        end
     end
+    return objective_value
 end
 
 function MOI.get(
@@ -162,12 +181,19 @@ function MOI.get(
     ::MOI.ObjectiveFunction{G},
     bridge::VectorSlackBridge{T,F,G},
 ) where {T,F,G<:MOI.AbstractVectorFunction}
+    f = MOI.VectorOfVariables(bridge.variables)
+
     con_f = MOI.get(model, MOI.ConstraintFunction(), bridge.constraint)
     if MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
         # con_f = y - func so we need to negate it. Nothing to do in the
         # MAX_SENSE case.
         con_f = MOI.Utilities.operate(-, T, con_f)
     end
-    g = MOI.Utilities.remove_variable(con_f, bridge.slack.variables)
+    con_fs = MOI.Utilities.eachscalar(con_f)
+    f_map = Dict(i => fi for (i, fi) in zip(bridge.slacked_objectives, con_fs))
+    args = [get(f_map, i, x) for (i, x) in enumerate(bridge.variables)]
+    g = MOI.Utilities.operate(vcat, T, args...)
+    slacks = bridge.variables[bridge.slacked_objectives]
+    g = MOI.Utilities.remove_variable(g, slacks)
     return MOI.Utilities.convert_approx(G, g)
 end

@@ -75,6 +75,30 @@ function test_runtests()
         MOI.Bridges.Objective.VectorSlackBridge,
         """
         variables: x
+        maxobjective: [1.0 * x, -1.1 * x]
+        """,
+        """
+        variables: x, y
+        maxobjective: [x, y]
+        [-1.0 * y + -1.1 * x] in Nonnegatives(1)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Objective.VectorSlackBridge,
+        """
+        variables: x
+        minobjective: [-1.1 * x, 1.0 * x]
+        """,
+        """
+        variables: x, y
+        minobjective: [y, x]
+        [1.0 * y + 1.1 * x] in Nonnegatives(1)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Objective.VectorSlackBridge,
+        """
+        variables: x
         maxobjective: [x]
         """,
         """
