@@ -295,7 +295,7 @@ minobjective: 1.1 * x + 1.2 * y + 1.5*x*y + 1.3
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
           "minimize\n" *
-          "obj: 1.3 + 1.1 x + 1.2 y + [ 1.5 x * y ]/2\n" *
+          "obj: 1.3 + 1.1 x + 1.2 y + [ 3 x * y ]/2\n" *
           "subject to\n" *
           "Bounds\n" *
           "x free\n" *
@@ -316,7 +316,7 @@ minobjective: 1.1 * x + 1.2 * y + -1.1 * x * x + 1.5*x*y + 1.3
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
           "minimize\n" *
-          "obj: 1.3 + 1.1 x + 1.2 y + [ -2.2 x ^ 2 + 1.5 x * y ]/2\n" *
+          "obj: 1.3 + 1.1 x + 1.2 y + [ -2.2 x ^ 2 + 3 x * y ]/2\n" *
           "subject to\n" *
           "Bounds\n" *
           "x free\n" *
@@ -460,7 +460,7 @@ function test_read_model1_tricky()
     seekstart(io)
     file = read(io, String)
     @test occursin("maximize", file)
-    @test occursin("obj: -1 Var4 + 1 V5 + [ 1 Var4 ^ 2 - 1.2 V5 * V1 ]/2", file)
+    @test occursin("obj: -1 Var4 + 1 V5 + [ 1 Var4 ^ 2 - 2.4 V5 * V1 ]/2", file)
     @test occursin("CON3: 1 V3 <= 2.5", file)
     @test occursin("CON4: 1 V5 + 1 V6 + 1 V7 <= 1", file)
     @test occursin("CON1: 1 V1 >= 0", file)
@@ -640,7 +640,7 @@ function test_read_tricky_quadratic()
     seekstart(io)
     file = read(io, String)
     @test occursin("minimize", file)
-    @test occursin("obj: [ 2 x ^ 2 + 1 x * y ]/2", file)
+    @test occursin("obj: [ 2 x ^ 2 + 2 x * y ]/2", file)
     @test occursin("c1: [ 1 x ^ 2 - 1 x * y ] <= 0", file)
     @test occursin("c2: [ 0.5 x ^ 2 - 1 x * y ] <= 0", file)
     @test occursin("c3: [ 0.5 x ^ 2 - 1 x * y ] <= 0", file)
