@@ -7,6 +7,18 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.11.5 (January 24, 2022)
+
+### Fixed
+
+ - Fixed a bug writing `.lp` files with an off-diagonal quadratic objective
+   (#2082)
+
+### Other
+
+ - Added `SnoopPrecompile` directives for reduced time-to-first-X in Julia v1.9
+   (#2080)
+
 ## v1.11.4 (January 12, 2022)
 
 ### Fixed
