@@ -533,3 +533,57 @@ function test_objective_set_via_modify(
     @test MOI.get(model, MOI.ListOfModelAttributesSet()) == [attr]
     return
 end
+
+function test_objective_ObjectiveSense_in_ListOfModelAttributesSet(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    attr = MOI.ObjectiveSense()
+    @requires MOI.supports(model, attr)
+    @test (attr in MOI.get(model, MOI.ListOfModelAttributesSet())) == false
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    @test (attr in MOI.get(model, MOI.ListOfModelAttributesSet())) == true
+    return
+end
+
+function test_objective_VariableIndex_in_ListOfModelAttributesSet(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    attr = MOI.ObjectiveFunction{MOI.VariableIndex}()
+    @requires MOI.supports(model, attr)
+    @test (attr in MOI.get(model, MOI.ListOfModelAttributesSet())) == false
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    x = MOI.add_variable(model)
+    MOI.set(model, attr, x)
+    @test (attr in MOI.get(model, MOI.ListOfModelAttributesSet())) == true
+    return
+end
+
+function test_objective_ScalarAffineFunction_in_ListOfModelAttributesSet(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}()
+    @requires MOI.supports(model, attr)
+    @test (attr in MOI.get(model, MOI.ListOfModelAttributesSet())) == false
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    x = MOI.add_variable(model)
+    MOI.set(model, attr, one(T) * x + one(T))
+    @test (attr in MOI.get(model, MOI.ListOfModelAttributesSet())) == true
+    return
+end
+
+function test_objective_ScalarQuadraticFunction_in_ListOfModelAttributesSet(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    attr = MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}()
+    @requires MOI.supports(model, attr)
+    @test (attr in MOI.get(model, MOI.ListOfModelAttributesSet())) == false
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    x = MOI.add_variable(model)
+    MOI.set(model, attr, one(T) * x * x + one(T))
+    @test (attr in MOI.get(model, MOI.ListOfModelAttributesSet())) == true
+    return
+end
