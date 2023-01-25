@@ -576,9 +576,11 @@ function _print_model(
     if sense == MOI.FEASIBILITY_SENSE
         println(io, "\\text{feasibility}\\\\")
     else
-        F, f = _objective_function_string(options, model, nlp_block)
+        _, f = _objective_function_string(options, model, nlp_block)
         sense_s = sense == MOI.MIN_SENSE ? "min" : "max"
-        println(io, "\\", sense_s, "\\quad & ", f, " \\\\")
+        for f in fs
+            println(io, "\\", sense_s, "\\quad & ", f, " \\\\")
+        end
     end
     println(io, "\\text{Subject to}\\\\")
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
