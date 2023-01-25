@@ -196,6 +196,7 @@ function MOI.modify(
     if objective === nothing
         # If not set, set a default objective.
         MOI.set(o, attr, zero(F))
+        MOI.modify(o, attr, change)
     end
     MOI.modify(objective, attr, change)
     return

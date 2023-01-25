@@ -536,7 +536,7 @@ function MOI.set(
 end
 
 function MOI.get(uf::UniversalFallback, attr::MOI.ObjectiveFunctionType)
-    obj = get(uf.objective, attr.objective_index)
+    obj = get(uf.objective, attr.objective_index, nothing)
     if obj === nothing
         return MOI.get(uf.model, attr)
     end
@@ -547,7 +547,7 @@ function MOI.get(
     uf::UniversalFallback,
     attr::MOI.ObjectiveFunction{F},
 )::F where {F}
-    obj = get(uf.objective, attr.objective_index)
+    obj = get(uf.objective, attr.objective_index, nothing)
     if obj === nothing
         return MOI.get(uf.model, attr)
     end
