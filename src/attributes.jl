@@ -1183,9 +1183,11 @@ function type and `S` is a set type indicating that the attribute
 struct ListOfConstraintTypesPresent <: AbstractModelAttribute end
 
 """
-    ObjectiveFunction{F<:AbstractScalarFunction}()
+    ObjectiveFunction{F}(
+        objective_index::Int = 1,
+    ) where {F<:AbstractScalarFunction}
 
-A model attribute for the objective function which has a type
+A model attribute for the objective function `objective_index`, which has a type
 `F<:AbstractScalarFunction`.
 
 `F` should be guaranteed to be equivalent but not necessarily identical to the
@@ -1196,33 +1198,44 @@ e.g., the objective function is quadratic and `F` is
 `ScalarAffineFunction{Float64}` or it has non-integer coefficient and `F` is
 `ScalarAffineFunction{Int}`.
 """
-struct ObjectiveFunction{F<:AbstractScalarFunction} <: AbstractModelAttribute end
+struct ObjectiveFunction{F<:AbstractScalarFunction} <: AbstractModelAttribute
+    objective_index::Int
+    function ObjectiveFunction{F}(
+        objective_index::Int = 1,
+    ) where {F<:AbstractScalarFunction}
+        return new{F}(objective_index)
+    end
+end
 
 attribute_value_type(::ObjectiveFunction{F}) where {F} = F
 
 """
-    ObjectiveFunctionType()
+    ObjectiveFunctionType(objective_index::Int = 1)
 
-A model attribute for the type `F` of the objective function set using the
-[`ObjectiveFunction{F}`](@ref) attribute.
+A model attribute for the type `F` of the objective function `objective_index`
+set using the [`ObjectiveFunction{F}`](@ref) attribute.
 
 ## Examples
 
 In the following code, `attr` should be equal to `MOI.VariableIndex`:
 ```julia
 x = MOI.add_variable(model)
-MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
-attr = MOI.get(model, MOI.ObjectiveFunctionType())
+MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(1), x)
+attr = MOI.get(model, MOI.ObjectiveFunctionType(1))
 ```
 """
-struct ObjectiveFunctionType <: AbstractModelAttribute end
+struct ObjectiveFunctionType <: AbstractModelAttribute
+    objective_index::Int
+    ObjectiveFunctionType(objective_index::Int = 1) = new(objective_index)
+end
 
 attribute_value_type(::ObjectiveFunctionType) = Type{<:AbstractFunction}
 
 """
-    ObjectiveValue(result_index::Int = 1)
+    ObjectiveValue(result_index::Int = 1, objective_index::Int = 1)
 
-A model attribute for the objective value of the primal solution `result_index`.
+A model attribute for the objective value of the primal solution `result_index`
+and objective `objective_index`.
 
 If the solver does not have a primal value for the objective because the
 `result_index` is beyond the available solutions (whose number is indicated by
@@ -1236,7 +1249,10 @@ See [`ResultCount`](@ref) for information on how the results are ordered.
 """
 struct ObjectiveValue <: AbstractModelAttribute
     result_index::Int
-    ObjectiveValue(result_index::Int = 1) = new(result_index)
+    objective_index::Int
+    function ObjectiveValue(result_index::Int = 1, objective_index::Int = 1)
+        return new(result_index, objective_index)
+    end
 end
 
 """
@@ -1261,11 +1277,14 @@ struct DualObjectiveValue <: AbstractModelAttribute
 end
 
 """
-    ObjectiveBound()
+    ObjectiveBound(objective_index::Int = 1)
 
 A model attribute for the best known bound on the optimal objective value.
 """
-struct ObjectiveBound <: AbstractModelAttribute end
+struct ObjectiveBound <: AbstractModelAttribute
+    objective_index::Int
+    ObjectiveBound(objective_index::Int = 1) = new(objective_index)
+end
 
 """
     RelativeGap()

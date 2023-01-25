@@ -24,8 +24,8 @@ the `ObjectiveFunction` value.
 """
 function get_fallback(model::MOI.ModelLike, attr::MOI.ObjectiveValue)
     MOI.check_result_index_bounds(model, attr)
-    F = MOI.get(model, MOI.ObjectiveFunctionType())
-    f = MOI.get(model, MOI.ObjectiveFunction{F}())
+    F = MOI.get(model, MOI.ObjectiveFunctionType(attr.objective_index))
+    f = MOI.get(model, MOI.ObjectiveFunction{F}(attr.objective_index))
     obj = eval_variables(
         vi -> MOI.get(model, MOI.VariablePrimal(attr.result_index), vi),
         f,

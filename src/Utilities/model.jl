@@ -322,6 +322,18 @@ function MOI.set(
     return
 end
 
+function MOI.set(
+    model::AbstractModel,
+    attr::MOI.ObjectiveFunction{F},
+    ::Nothing,
+) where {F<:MOI.AbstractFunction}
+    if !MOI.supports(model, attr)
+        throw(MOI.UnsupportedAttribute(attr))
+    end
+    MOI.set(model.objective, attr, nothing)
+    return
+end
+
 function MOI.modify(
     model::AbstractModel,
     attr::MOI.ObjectiveFunction,

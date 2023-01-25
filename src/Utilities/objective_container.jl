@@ -4,6 +4,24 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
+mutable struct _ScalarObjective{T}
+    single_variable::Union{Nothing,MOI.VariableIndex}
+    scalar_affine::Union{Nothing,MOI.ScalarAffineFunction{T}}
+    scalar_quadratic::Union{Nothing,MOI.ScalarQuadraticFunction{T}}
+end
+
+function _ScalarObjective(f::MOI.VariableIndex)
+    return _ScalarObjective{Float64}(copy(f), nothing, nothing)
+end
+
+function _ScalarObjective(f::MOI.ScalarAffineFunction{T}) where {T}
+    return _ScalarObjective{T}(nothing, copy(f), nothing)
+end
+
+function _ScalarObjective(f::MOI.ScalarQuadraticFunction{T}) where {T}
+    return _ScalarObjective{T}(nothing, nothing, copy(f))
+end
+
 """
     ObjectiveContainer{T}
 
@@ -13,30 +31,25 @@ Utilities.Model.
 mutable struct ObjectiveContainer{T} <: MOI.ModelLike
     is_sense_set::Bool
     sense::MOI.OptimizationSense
-    is_function_set::Bool
-    single_variable::Union{Nothing,MOI.VariableIndex}
-    scalar_affine::Union{Nothing,MOI.ScalarAffineFunction{T}}
-    scalar_quadratic::Union{Nothing,MOI.ScalarQuadraticFunction{T}}
+    objectives::Dict{Int,_ScalarObjective{T}}
     function ObjectiveContainer{T}() where {T}
-        o = new{T}()
-        MOI.empty!(o)
-        return o
+        return new{T}(
+            false,
+            MOI.FEASIBILITY_SENSE,
+            Dict{Int,_ScalarObjective{T}}(),
+        )
     end
 end
 
 function MOI.empty!(o::ObjectiveContainer{T}) where {T}
     o.is_sense_set = false
     o.sense = MOI.FEASIBILITY_SENSE
-    o.is_function_set = false
-    o.single_variable = nothing
-    o.scalar_affine =
-        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
-    o.scalar_quadratic = nothing
+    empty!(o.objectives)
     return
 end
 
 function MOI.is_empty(o::ObjectiveContainer)
-    return !o.is_sense_set && !o.is_function_set
+    return !o.is_sense_set && isempty(o.objectives)
 end
 
 ###
@@ -61,16 +74,29 @@ end
 ###
 
 function MOI.get(
-    o::ObjectiveContainer{T},
+    o::_ScalarObjective{T},
     ::MOI.ObjectiveFunctionType,
 ) where {T}
-    if o.single_variable !== nothing
+    if o.scalar_affine !== nothing
+        return MOI.ScalarAffineFunction{T}
+    elseif o.single_variable !== nothing
         return MOI.VariableIndex
-    elseif o.scalar_quadratic !== nothing
+    else
+        @assert o.scalar_quadratic !== nothing
         return MOI.ScalarQuadraticFunction{T}
     end
-    @assert o.scalar_affine !== nothing
-    return MOI.ScalarAffineFunction{T}
+end
+
+function MOI.get(
+    o::ObjectiveContainer{T},
+    attr::MOI.ObjectiveFunctionType,
+) where {T}
+    objective = get(o.objectives, attr.objective_index, nothing)
+    if objective === nothing
+        # Default if not set
+        return MOI.ScalarAffineFunction{T}
+    end
+    return MOI.get(objective, attr)
 end
 
 ###
@@ -91,8 +117,8 @@ function MOI.supports(
 end
 
 function MOI.get(
-    o::ObjectiveContainer{T},
-    ::MOI.ObjectiveFunction{F},
+    o::_ScalarObjective{T},
+    attr::MOI.ObjectiveFunction{F},
 ) where {T,F}
     if o.single_variable !== nothing
         return convert(F, o.single_variable)
@@ -103,39 +129,32 @@ function MOI.get(
     return convert(F, o.scalar_affine)
 end
 
+function MOI.get(
+    o::ObjectiveContainer{T},
+    attr::MOI.ObjectiveFunction{F},
+) where {T,F}
+    objective = get(o.objectives, attr.objective_index, nothing)
+    if objective === nothing
+        return zero(MOI.ScalarAffineFunction{T})
+    end
+    return MOI.get(objective, attr)
+end
+
 function MOI.set(
     o::ObjectiveContainer,
-    ::MOI.ObjectiveFunction{MOI.VariableIndex},
-    f::MOI.VariableIndex,
+    attr::MOI.ObjectiveFunction{F},
+    f::F,
+) where {F}
+    o.objectives[attr.objective_index] = _ScalarObjective(f)
+    return
+end
+
+function MOI.set(
+    o::ObjectiveContainer,
+    attr::MOI.ObjectiveFunction,
+    ::Nothing,
 )
-    o.is_function_set = true
-    o.single_variable = copy(f)
-    o.scalar_affine = nothing
-    o.scalar_quadratic = nothing
-    return
-end
-
-function MOI.set(
-    o::ObjectiveContainer{T},
-    ::MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}},
-    f::MOI.ScalarAffineFunction{T},
-) where {T}
-    o.is_function_set = true
-    o.single_variable = nothing
-    o.scalar_affine = copy(f)
-    o.scalar_quadratic = nothing
-    return
-end
-
-function MOI.set(
-    o::ObjectiveContainer{T},
-    ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}},
-    f::MOI.ScalarQuadraticFunction{T},
-) where {T}
-    o.is_function_set = true
-    o.single_variable = nothing
-    o.scalar_affine = nothing
-    o.scalar_quadratic = copy(f)
+    delete!(o.objectives, attr.objective_index)
     return
 end
 
@@ -148,9 +167,9 @@ function MOI.get(o::ObjectiveContainer, ::MOI.ListOfModelAttributesSet)
     if o.is_sense_set
         push!(ret, MOI.ObjectiveSense())
     end
-    if o.is_function_set
-        F = MOI.get(o, MOI.ObjectiveFunctionType())
-        push!(ret, MOI.ObjectiveFunction{F}())
+    for objective_index in keys(o.objectives)
+        F = MOI.get(o, MOI.ObjectiveFunctionType(objective_index))
+        push!(ret, MOI.ObjectiveFunction{F}(objective_index))
     end
     return ret
 end
@@ -160,7 +179,7 @@ end
 ###
 
 function MOI.modify(
-    o::ObjectiveContainer,
+    o::_ScalarObjective,
     ::MOI.ObjectiveFunction,
     change::MOI.AbstractFunctionModification,
 )
@@ -170,9 +189,22 @@ function MOI.modify(
         o.scalar_quadratic = modify_function!(o.scalar_quadratic, change)
     else
         @assert o.scalar_affine !== nothing
-        o.is_function_set = true
         o.scalar_affine = modify_function!(o.scalar_affine, change)
     end
+    return
+end
+
+function MOI.modify(
+    o::ObjectiveContainer,
+    attr::MOI.ObjectiveFunction{F},
+    change::MOI.AbstractFunctionModification,
+) where {F<:MOI.AbstractScalarFunction}
+    objective = get(o.objectives, attr.objective_index, nothing)
+    if objective === nothing
+        # If not set, set a default objective.
+        MOI.set(o, attr, zero(F))
+    end
+    MOI.modify(objective, attr, change)
     return
 end
 
@@ -180,15 +212,9 @@ end
 ### MOI.delete
 ###
 
-function MOI.delete(o::ObjectiveContainer, x::MOI.VariableIndex)
+function MOI.delete(o::_ScalarObjective, x::MOI.VariableIndex)
     if o.single_variable !== nothing
-        if x == o.single_variable
-            sense = o.sense
-            MOI.empty!(o)
-            if o.is_sense_set
-                MOI.set(o, MOI.ObjectiveSense(), sense)
-            end
-        end
+        # Handled in the ObjectiveContainer method
     elseif o.scalar_quadratic !== nothing
         o.scalar_quadratic = remove_variable(o.scalar_quadratic, x)
     else
@@ -198,21 +224,45 @@ function MOI.delete(o::ObjectiveContainer, x::MOI.VariableIndex)
     return
 end
 
-function MOI.delete(o::ObjectiveContainer, x::Vector{MOI.VariableIndex})
+function MOI.delete(o::ObjectiveContainer, x::MOI.VariableIndex)
+    to_delete = Int[]
+    for (objective_index, objective) in o.objectives
+        if objective.single_variable === x
+            push!(to_delete, objective_index)
+        else
+            MOI.delete(objective, x)
+        end
+    end
+    for objective_index in to_delete
+        delete!(o.objectives, objective_index)
+    end
+    return
+end
+
+function MOI.delete(o::_ScalarObjective, x::Vector{MOI.VariableIndex})
     keep = v -> !(v in x)
     if o.single_variable !== nothing
-        if o.single_variable in x
-            sense = o.sense
-            MOI.empty!(o)
-            if o.is_sense_set
-                MOI.set(o, MOI.ObjectiveSense(), sense)
-            end
-        end
+        # Handled in the ObjectiveContainer method
     elseif o.scalar_quadratic !== nothing
         o.scalar_quadratic = filter_variables(keep, o.scalar_quadratic)
     else
         @assert o.scalar_affine !== nothing
         o.scalar_affine = filter_variables(keep, o.scalar_affine)
+    end
+    return
+end
+
+function MOI.delete(o::ObjectiveContainer, x::Vector{MOI.VariableIndex})
+    to_delete = Int[]
+    for (objective_index, objective) in o.objectives
+        if objective.single_variable in x
+            push!(to_delete, objective_index)
+        else
+            MOI.delete(objective, x)
+        end
+    end
+    for objective_index in to_delete
+        delete!(o.objectives, objective_index)
     end
     return
 end
