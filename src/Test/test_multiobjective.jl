@@ -65,8 +65,6 @@ function test_multiobjective_vector_of_variables_delete_vector(
     return
 end
 
-
-
 function test_multiobjective_vector_affine_function(
     model::MOI.ModelLike,
     ::Config{T},
@@ -264,10 +262,7 @@ function test_multiobjective_vector_quadratic_function_delete_vector(
     return
 end
 
-function test_multiobjective_mixed(
-    model::MOI.ModelLike,
-    ::Config{T},
-) where {T}
+function test_multiobjective_mixed(model::MOI.ModelLike, ::Config{T}) where {T}
     F = Any[
         MOI.VariableIndex,
         MOI.ScalarAffineFunction{T},
@@ -278,11 +273,7 @@ function test_multiobjective_mixed(
     @requires MOI.supports(model, MOI.ObjectiveFunction{F[3]}(3))
     x = MOI.add_variables(model, 2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    f = Any[
-        x[1],
-        T(1) * x[1] + T(2),
-        T(3) * x[1] * x[1] + T(4) * x[2] + T(5)
-    ]
+    f = Any[x[1], T(1)*x[1]+T(2), T(3)*x[1]*x[1]+T(4)*x[2]+T(5)]
     for i in 1:3
         MOI.set(model, MOI.ObjectiveFunction{typeof(f[i])}(i), f[i])
     end
@@ -309,9 +300,13 @@ function test_multiobjective_solve(
     x = MOI.add_variables(model, 2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.add_constraint(model, T(1) * x[1] + x[2], MOI.GreaterThan(T(1)))
-    MOI.add_constraint(model, T(1//2) * x[1] + x[2], MOI.GreaterThan(T(3//4)))
+    MOI.add_constraint(
+        model,
+        T(1 // 2) * x[1] + x[2],
+        MOI.GreaterThan(T(3 // 4)),
+    )
     MOI.add_constraint(model, x[1], MOI.GreaterThan(T(0)))
-    MOI.add_constraint(model, x[2], MOI.GreaterThan(T(1//4)))
+    MOI.add_constraint(model, x[2], MOI.GreaterThan(T(1 // 4)))
     f = [T(2) * x[1] + x[2], T(1) * x[1] + T(3) * x[2]]
     for i in 1:2
         MOI.set(model, MOI.ObjectiveFunction{F}(i), f[i])
@@ -324,9 +319,9 @@ function test_multiobjective_solve(
         @test MOI.get(model, MOI.DualStatus(i)) == MOI.NO_SOLUTION
         sol = MOI.get.(model, MOI.VariablePrimal(i), x)
         @test sum(sol) >= T(1) - config.atol
-        @test T(1//2) * sol[1] + sol[2] >= T(3//4) - config.atol
+        @test T(1 // 2) * sol[1] + sol[2] >= T(3 // 4) - config.atol
         @test sol[1] >= T(0) - config.atol
-        @test sol[2] >= T(1//4) - config.atol
+        @test sol[2] >= T(1 // 4) - config.atol
         f_val = [T(2) * sol[1] + sol[2], T(1) * sol[1] + T(3) * sol[2]]
         @test ≈(MOI.get(model, MOI.ObjectiveValue(i, 1)), f_val[1], config)
         @test ≈(MOI.get(model, MOI.ObjectiveValue(i, 2)), f_val[2], config)

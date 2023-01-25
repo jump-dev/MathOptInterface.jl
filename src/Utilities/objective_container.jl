@@ -8,18 +8,18 @@ mutable struct _ScalarObjective{T}
     single_variable::Union{Nothing,MOI.VariableIndex}
     scalar_affine::Union{Nothing,MOI.ScalarAffineFunction{T}}
     scalar_quadratic::Union{Nothing,MOI.ScalarQuadraticFunction{T}}
-end
 
-function _ScalarObjective(f::MOI.VariableIndex)
-    return _ScalarObjective{Float64}(copy(f), nothing, nothing)
-end
+    function _ScalarObjective(f::MOI.VariableIndex)
+        return new{Float64}(copy(f), nothing, nothing)
+    end
 
-function _ScalarObjective(f::MOI.ScalarAffineFunction{T}) where {T}
-    return _ScalarObjective{T}(nothing, copy(f), nothing)
-end
+    function _ScalarObjective(f::MOI.ScalarAffineFunction{T}) where {T}
+        return new{T}(nothing, copy(f), nothing)
+    end
 
-function _ScalarObjective(f::MOI.ScalarQuadraticFunction{T}) where {T}
-    return _ScalarObjective{T}(nothing, nothing, copy(f))
+    function _ScalarObjective(f::MOI.ScalarQuadraticFunction{T}) where {T}
+        return new{T}(nothing, nothing, copy(f))
+    end
 end
 
 """
@@ -73,10 +73,7 @@ end
 ### ObjectiveFunctionType
 ###
 
-function MOI.get(
-    o::_ScalarObjective{T},
-    ::MOI.ObjectiveFunctionType,
-) where {T}
+function MOI.get(o::_ScalarObjective{T}, ::MOI.ObjectiveFunctionType) where {T}
     if o.scalar_affine !== nothing
         return MOI.ScalarAffineFunction{T}
     elseif o.single_variable !== nothing
@@ -149,11 +146,7 @@ function MOI.set(
     return
 end
 
-function MOI.set(
-    o::ObjectiveContainer,
-    attr::MOI.ObjectiveFunction,
-    ::Nothing,
-)
+function MOI.set(o::ObjectiveContainer, attr::MOI.ObjectiveFunction, ::Nothing)
     delete!(o.objectives, attr.objective_index)
     return
 end
