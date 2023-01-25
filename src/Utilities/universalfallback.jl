@@ -19,7 +19,7 @@ optimizer bridges should be used instead.
 """
 mutable struct UniversalFallback{MT} <: MOI.ModelLike
     model::MT
-    objective::Union{MOI.AbstractScalarFunction,Nothing}
+    objective::Dict{Int,MOI.AbstractScalarFunction}
     # See https://github.com/jump-dev/JuMP.jl/issues/1152 and
     # https://github.com/jump-dev/JuMP.jl/issues/2238 for why we use an
     # `OrderedDict`
@@ -34,7 +34,7 @@ mutable struct UniversalFallback{MT} <: MOI.ModelLike
     function UniversalFallback{MT}(model::MOI.ModelLike) where {MT}
         return new{typeof(model)}(
             model,
-            nothing,
+            Dict{Int,MOI.AbstractScalarFunction}(),
             OrderedDict{Type,OrderedDict}(),
             OrderedDict{Tuple{Type,Type},VectorOfConstraints}(),
             Dict{MOI.ConstraintIndex,String}(),
@@ -58,8 +58,8 @@ function Base.show(io::IO, U::UniversalFallback)
     s(n) = n == 1 ? "" : "s"
     indent = " "^get(io, :indent, 0)
     MOIU.print_with_acronym(io, summary(U))
-    !(U.objective === nothing) && print(io, "\n$(indent)with objective")
     for (attr, name) in (
+        (U.objective, "objective"),
         (U.single_variable_constraints, "`VariableIndex` constraint"),
         (U.constraints, "constraint"),
         (U.optattr, "optimizer attribute"),
@@ -78,7 +78,7 @@ end
 
 function MOI.is_empty(uf::UniversalFallback)
     return MOI.is_empty(uf.model) &&
-           uf.objective === nothing &&
+           isempty(uf.objective) &&
            isempty(uf.single_variable_constraints) &&
            isempty(uf.constraints) &&
            isempty(uf.modattr) &&
@@ -88,7 +88,7 @@ end
 
 function MOI.empty!(uf::UniversalFallback)
     MOI.empty!(uf.model)
-    uf.objective = nothing
+    empty!(uf.objective)
     empty!(uf.single_variable_constraints)
     empty!(uf.constraints)
     empty!(uf.con_to_name)
@@ -279,8 +279,8 @@ function MOI.delete(uf::UniversalFallback, vi::MOI.VariableIndex)
     for d in values(uf.varattr)
         delete!(d, vi)
     end
-    if uf.objective !== nothing
-        uf.objective = remove_variable(uf.objective, vi)
+    for (index, objective) in uf.objective
+        uf.objective[index] = remove_variable(objective, vi)
     end
     for constraints in values(uf.single_variable_constraints)
         _remove_variable(uf, constraints, vi)
@@ -308,8 +308,8 @@ function MOI.delete(uf::UniversalFallback, vis::Vector{MOI.VariableIndex})
             delete!(d, vi)
         end
     end
-    if uf.objective !== nothing
-        uf.objective = remove_variable(uf.objective, vis)
+    for (index, objective) in uf.objective
+        uf.objective[index] = remove_variable(objective, vis)
     end
     for constraints in values(uf.single_variable_constraints)
         for vi in vis
@@ -480,8 +480,8 @@ end
 
 function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfModelAttributesSet)
     list = MOI.get(uf.model, listattr)
-    if uf.objective !== nothing
-        push!(list, MOI.ObjectiveFunction{typeof(uf.objective)}())
+    for (index, objective) in uf.objective
+        push!(list, MOI.ObjectiveFunction{typeof(objective)}(index))
     end
     for attr in keys(uf.modattr)
         push!(list, attr)
@@ -529,27 +529,29 @@ function MOI.set(
     sense::MOI.OptimizationSense,
 )
     if sense == MOI.FEASIBILITY_SENSE
-        uf.objective = nothing
+        empty!(uf.objective)
     end
     MOI.set(uf.model, attr, sense)
     return
 end
 
 function MOI.get(uf::UniversalFallback, attr::MOI.ObjectiveFunctionType)
-    if uf.objective === nothing
+    obj = get(uf.objective, attr.objective_index)
+    if obj === nothing
         return MOI.get(uf.model, attr)
     end
-    return typeof(uf.objective)
+    return typeof(obj)
 end
 
 function MOI.get(
     uf::UniversalFallback,
     attr::MOI.ObjectiveFunction{F},
 )::F where {F}
-    if uf.objective === nothing
+    obj = get(uf.objective, attr.objective_index)
+    if obj === nothing
         return MOI.get(uf.model, attr)
     end
-    return uf.objective
+    return obj
 end
 
 function MOI.set(
@@ -560,9 +562,9 @@ function MOI.set(
     if MOI.supports(uf.model, attr)
         MOI.set(uf.model, attr, func)
         # Clear any fallback objective
-        uf.objective = nothing
+        delete!(uf.objective, attr.objective_index)
     else
-        uf.objective = copy(func)
+        uf.objective[attr.objective_index] = copy(func)
         # Clear any `model` objective
         sense = MOI.get(uf.model, MOI.ObjectiveSense())
         MOI.set(uf.model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
@@ -576,10 +578,11 @@ function MOI.modify(
     obj::MOI.ObjectiveFunction,
     change::MOI.AbstractFunctionModification,
 )
-    if uf.objective === nothing
+    obj = get(uf.objective, obj.objective_index, nothing)
+    if obj === nothing
         MOI.modify(uf.model, obj, change)
     else
-        uf.objective = modify_function(uf.objective, change)
+        uf.objective[obj.objective_index] = modify_function(obj, change)
     end
     return
 end

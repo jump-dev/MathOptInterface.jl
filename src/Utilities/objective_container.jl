@@ -9,15 +9,15 @@ mutable struct _ScalarObjective{T}
     scalar_affine::Union{Nothing,MOI.ScalarAffineFunction{T}}
     scalar_quadratic::Union{Nothing,MOI.ScalarQuadraticFunction{T}}
 
-    function _ScalarObjective(f::MOI.VariableIndex)
-        return new{Float64}(copy(f), nothing, nothing)
+    function _ScalarObjective{T}(f::MOI.VariableIndex) where {T}
+        return new{T}(copy(f), nothing, nothing)
     end
 
-    function _ScalarObjective(f::MOI.ScalarAffineFunction{T}) where {T}
+    function _ScalarObjective{T}(f::MOI.ScalarAffineFunction{T}) where {T}
         return new{T}(nothing, copy(f), nothing)
     end
 
-    function _ScalarObjective(f::MOI.ScalarQuadraticFunction{T}) where {T}
+    function _ScalarObjective{T}(f::MOI.ScalarQuadraticFunction{T}) where {T}
         return new{T}(nothing, nothing, copy(f))
     end
 end
@@ -138,11 +138,11 @@ function MOI.get(
 end
 
 function MOI.set(
-    o::ObjectiveContainer,
+    o::ObjectiveContainer{T},
     attr::MOI.ObjectiveFunction{F},
     f::F,
-) where {F}
-    o.objectives[attr.objective_index] = _ScalarObjective(f)
+) where {T,F}
+    o.objectives[attr.objective_index] = _ScalarObjective{T}(f)
     return
 end
 

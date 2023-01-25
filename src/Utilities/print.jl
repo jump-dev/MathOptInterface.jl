@@ -464,9 +464,13 @@ function _objective_function_string(
     model::MOI.ModelLike,
     ::Nothing,
 )
-    F = MOI.get(model, MOI.ObjectiveFunctionType())
-    f = MOI.get(model, MOI.ObjectiveFunction{F}())
-    return _drop_moi(F), _to_string(options, model, f)
+    attrs = filter(MOI.get(model, MOI.ListOfModelAttributesSet())) do attr
+        return attr isa MOI.ObjectiveFunction
+    end
+    sort!(attrs; by = attr -> attr.objective_index)
+    funcs = [MOI.get(model, attr) for attr in attrs]
+    strs = [_to_string(options, model, f) for f in funcs]
+    return _drop_moi.(typeof.(funcs)), strs
 end
 
 function _objective_function_string(
@@ -482,7 +486,7 @@ function _objective_function_string(
             f = string(_replace_names(options, model, ex, lookup))
             f = _replace_nonlinear_latex(options, f)
         end
-        return "Nonlinear", f
+        return ["Nonlinear"], [f]
     else
         return _objective_function_string(options, model, nothing)
     end
@@ -526,12 +530,16 @@ function _print_model(
     if sense == MOI.FEASIBILITY_SENSE
         println(io, "Feasibility")
     else
-        F, f = _objective_function_string(options, model, nlp_block)
+        Fs, fs = _objective_function_string(options, model, nlp_block)
         sense_s = sense == MOI.MIN_SENSE ? "Minimize" : "Maximize"
         if options.print_types
-            println(io, sense_s, " ", F, ":\n ", f)
+            for (F, f) in zip(Fs, fs)
+                println(io, sense_s, " ", F, ":\n ", f)
+            end
         else
-            println(io, sense_s, ": ", f)
+            for f in fs
+                println(io, sense_s, ": ", f)
+            end
         end
     end
     println(io, "\nSubject to:")
