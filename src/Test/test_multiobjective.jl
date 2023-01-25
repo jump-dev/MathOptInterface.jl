@@ -287,6 +287,9 @@ function test_multiobjective_mixed(model::MOI.ModelLike, ::Config{T}) where {T}
     @test MOI.ObjectiveFunction{F[1]}(1) in attrs
     @test !(MOI.ObjectiveFunction{F[2]}(2) in attrs)
     @test MOI.ObjectiveFunction{F[3]}(3) in attrs
+    MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+    attrs = MOI.get(model, MOI.ListOfModelAttributesSet())
+    @test !any(attr -> attr isa MOI.ObjectiveFunction, attrs)
     return
 end
 
