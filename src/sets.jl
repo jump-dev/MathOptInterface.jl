@@ -24,14 +24,19 @@ Return the [`output_dimension`](@ref) that an [`AbstractFunction`](@ref) should 
 
 ### Examples
 
-```julia-repl
-julia> dimension(Reals(4))
+```jldoctest
+julia> using MathOptInterface
+
+julia> const MOI = MathOptInterface
+MathOptInterface
+
+julia> MOI.dimension(MOI.Reals(4))
 4
 
-julia> dimension(LessThan(3.0))
+julia> MOI.dimension(MOI.LessThan(3.0))
 1
 
-julia> dimension(PositiveSemidefiniteConeTriangle(2))
+julia> MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(2))
 3
 ```
 
@@ -51,15 +56,20 @@ If the dual cone is not defined it returns an error.
 
 ### Examples
 
-```jldocstest
-julia> dual_set(Reals(4))
-Zeros(4)
+```jldoctest
+julia> using MathOptInterface
 
-julia> dual_set(SecondOrderCone(5))
-SecondOrderCone(5)
+julia> const MOI = MathOptInterface
+MathOptInterface
 
-julia> dual_set(ExponentialCone())
-DualExponentialCone()
+julia> MOI.dual_set(MOI.Reals(4))
+MathOptInterface.Zeros(4)
+
+julia> MOI.dual_set(MOI.SecondOrderCone(5))
+MathOptInterface.SecondOrderCone(5)
+
+julia> MOI.dual_set(MOI.ExponentialCone())
+MathOptInterface.DualExponentialCone()
 ```
 """
 function dual_set end
@@ -74,15 +84,20 @@ Return the type of dual set of sets of type `S`, as returned by
 
 ### Examples
 
-```jldocstest
-julia> dual_set_type(Reals)
-Zeros
+```jldoctest
+julia> using MathOptInterface
 
-julia> dual_set_type(SecondOrderCone)
-SecondOrderCone
+julia> const MOI = MathOptInterface
+MathOptInterface
 
-julia> dual_set_type(ExponentialCone)
-DualExponentialCone
+julia> MOI.dual_set_type(MOI.Reals)
+MathOptInterface.Zeros
+
+julia> MOI.dual_set_type(MOI.SecondOrderCone)
+MathOptInterface.SecondOrderCone
+
+julia> MOI.dual_set_type(MOI.ExponentialCone)
+MathOptInterface.DualExponentialCone
 ```
 """
 function dual_set_type end
@@ -1076,17 +1091,38 @@ not the case.
 The constraint
 ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^2 : y = 1 \\implies x_1 + x_2 \\leq 9 \\}``
 is defined as
-```julia
-f = MOI.VectorAffineFunction(
-    [
-        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y)),
-        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x1)),
-        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x2)),
-    ],
-    [0.0, 0.0],
-)
-s = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
-MOI.add_constraint(model, f, s)
+```jldoctest
+julia> using MathOptInterface
+
+julia> const MOI = MathOptInterface
+MathOptInterface
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 2)
+2-element Vector{MathOptInterface.VariableIndex}:
+ MathOptInterface.VariableIndex(1)
+ MathOptInterface.VariableIndex(2)
+
+julia> y, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
+(MathOptInterface.VariableIndex(3), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(3))
+
+julia> f = MOI.VectorAffineFunction(
+           [
+               MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y)),
+               MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x[1])),
+               MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x[2])),
+           ],
+           [0.0, 0.0],
+       )
+MathOptInterface.VectorAffineFunction{Float64}(MathOptInterface.VectorAffineTerm{Float64}[MathOptInterface.VectorAffineTerm{Float64}(1, MathOptInterface.ScalarAffineTerm{Float64}(1.0, MathOptInterface.VariableIndex(3))), MathOptInterface.VectorAffineTerm{Float64}(2, MathOptInterface.ScalarAffineTerm{Float64}(1.0, MathOptInterface.VariableIndex(1))), MathOptInterface.VectorAffineTerm{Float64}(2, MathOptInterface.ScalarAffineTerm{Float64}(1.0, MathOptInterface.VariableIndex(2)))], [0.0, 0.0])
+
+julia> s = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(9.0))
+MathOptInterface.Indicator{MathOptInterface.ACTIVATE_ON_ONE, MathOptInterface.LessThan{Float64}}(MathOptInterface.LessThan{Float64}(9.0))
+
+julia> MOI.add_constraint(model, f, s)
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorAffineFunction{Float64}, MathOptInterface.Indicator{MathOptInterface.ACTIVATE_ON_ONE, MathOptInterface.LessThan{Float64}}}(1)
 ```
 """
 struct Indicator{A,S<:AbstractScalarSet} <: AbstractVectorSet
@@ -1183,11 +1219,25 @@ called `distinct`.
 
 ## Example
 
-```julia
-model = Utilities.Model{Float64}()
-x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
-add_constraint(model, VectorOfVariables(x), AllDifferent(3))
-# enforces `x[1] != x[2]` AND `x[1] != x[3]` AND `x[2] != x[3]`.
+To enforce `x[1] != x[2]` AND `x[1] != x[3]` AND `x[2] != x[3]`:
+
+```jldoctest
+julia> using MathOptInterface
+
+julia> const MOI = MathOptInterface
+MathOptInterface
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+3-element Vector{MathOptInterface.VariableIndex}:
+ MathOptInterface.VariableIndex(1)
+ MathOptInterface.VariableIndex(2)
+ MathOptInterface.VariableIndex(3)
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.AllDifferent(3))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.AllDifferent}(1)
 ```
 """
 struct AllDifferent <: AbstractVectorSet
@@ -1219,14 +1269,49 @@ This constraint is called `bin_packing` in MiniZinc.
 
 ## Example
 
-```julia
-model = Utilities.Model{Float64}()
-bins = add_variables(model, 5)
-weights = [1, 1, 2, 2, 3]
-add_constraint.(model, bins, MOI.Integer())
-# Available bins are #4, #5, and #6.
-add_constraint.(model, bins, MOI.Interval(4, 6))
-add_constraint(model, VectorOfVariables(bins), BinPacking(3, weights))
+```jldoctest
+julia> using MathOptInterface
+
+julia> const MOI = MathOptInterface
+MathOptInterface
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> bins = MOI.add_variables(model, 5)
+5-element Vector{MathOptInterface.VariableIndex}:
+ MathOptInterface.VariableIndex(1)
+ MathOptInterface.VariableIndex(2)
+ MathOptInterface.VariableIndex(3)
+ MathOptInterface.VariableIndex(4)
+ MathOptInterface.VariableIndex(5)
+
+julia> weights = Float64[1, 1, 2, 2, 3]
+5-element Vector{Float64}:
+ 1.0
+ 1.0
+ 2.0
+ 2.0
+ 3.0
+
+julia> MOI.add_constraint.(model, bins, MOI.Integer())
+5-element Vector{MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}}:
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(2)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(3)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(4)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(5)
+
+julia> MOI.add_constraint.(model, bins, MOI.Interval(4.0, 6.0))
+5-element Vector{MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64}}}:
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64}}(1)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64}}(2)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64}}(3)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64}}(4)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64}}(5)
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables(bins), MOI.BinPacking(3.0, weights))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.BinPacking{Float64}}(1)
 ```
 """
 struct BinPacking{T} <: AbstractVectorSet
@@ -1270,10 +1355,23 @@ a (potentially sub-optimal) tour in the travelling salesperson problem.
 
 ## Example
 
-```julia
-model = Utilities.Model{Float64}()
-x = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
-add_constraint(model, VectorOfVariables(x), Circuit(3))
+```jldoctest
+julia> using MathOptInterface
+
+julia> const MOI = MathOptInterface
+MathOptInterface
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+3-element Vector{MathOptInterface.VariableIndex}:
+ MathOptInterface.VariableIndex(1)
+ MathOptInterface.VariableIndex(2)
+ MathOptInterface.VariableIndex(3)
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Circuit(3))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.Circuit}(1)
 ```
 """
 struct Circuit <: AbstractVectorSet
@@ -1300,14 +1398,32 @@ This constraint is called `at_least` in MiniZinc.
 
 ## Example
 
-```julia
-model = Utilities.Model{Float64}()
-a, _ = add_constrained_variable(model, Integer())
-b, _ = add_constrained_variable(model, Integer())
-c, _ = add_constrained_variable(model, Integer())
-# To ensure that `3` appears at least once in each of the subsets {a, b}, {b, c}
-x, d, set = [a, b, b, c], [2, 2], [3]
-add_constraint(model, VectorOfVariables(x), CountAtLeast(1, d, Set(set)))
+To ensure that `3` appears at least once in each of the subsets `{a, b}` and
+`{b, c}`:
+
+```jldoctest
+julia> using MathOptInterface
+
+julia> const MOI = MathOptInterface
+MathOptInterface
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> a, _ = MOI.add_constrained_variable(model, MOI.Integer())
+(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
+
+julia> b, _ = MOI.add_constrained_variable(model, MOI.Integer())
+(MathOptInterface.VariableIndex(2), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(2))
+
+julia> c, _ = MOI.add_constrained_variable(model, MOI.Integer())
+(MathOptInterface.VariableIndex(3), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(3))
+
+julia> x, d, set = [a, b, b, c], [2, 2], [3]
+(MathOptInterface.VariableIndex[MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2), MathOptInterface.VariableIndex(2), MathOptInterface.VariableIndex(3)], [2, 2], [3])
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.CountAtLeast(1, d, Set(set)))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.CountAtLeast}(1)
 ```
 """
 struct CountAtLeast <: AbstractVectorSet
@@ -1348,12 +1464,32 @@ This constraint is called `among` by MiniZinc.
 
 ## Example
 
-```julia
-model = Utilities.Model{Float64}()
-n = add_constrained_variable(model, MOI.Integer())
-x = [add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
-set = Set([3, 4, 5])
-add_constraint(model, VectorOfVariables([n; x]), CountBelongs(4, set))
+```jldoctest
+julia> using MathOptInterface
+
+julia> const MOI = MathOptInterface
+MathOptInterface
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> n, _ = MOI.add_constrained_variable(model, MOI.Integer())
+(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
+
+julia> x = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+3-element Vector{MathOptInterface.VariableIndex}:
+ MathOptInterface.VariableIndex(2)
+ MathOptInterface.VariableIndex(3)
+ MathOptInterface.VariableIndex(4)
+
+julia> set = Set([3, 4, 5])
+Set{Int64} with 3 elements:
+  5
+  4
+  3
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables([n; x]), MOI.CountBelongs(4, set))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.CountBelongs}(1)
 ```
 """
 struct CountBelongs <: AbstractVectorSet
@@ -1385,31 +1521,41 @@ This constraint is called `nvalues` in MiniZinc.
 
 ## Example
 
-```julia
-model = Utilities.Model{Float64}()
-n = add_constrained_variable(model, Integer())
-x = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
-add_constraint(model, VectorOfVariables(vcat(n, x)), CountDistinct(4))
-# if n == 1, then x[1] == x[2] == x[3]
-# if n == 2, then
-#   x[1] == x[2] != x[3] ||
-#   x[1] != x[2] == x[3] ||
-#   x[1] == x[3] != x[2]
-# if n == 3, then x[1] != x[2], x[2] != x[3] and x[3] != x[1]
+To model:
+
+ * if `n == 1```, then `x[1] == x[2] == x[3]`
+ * if `n == 2`, then
+    * `x[1] == x[2] != x[3]` or
+    * `x[1] != x[2] == x[3]` or
+    * `x[1] == x[3] != x[2]`
+ * if `n == 3`, then `x[1] != x[2]`, `x[2] != x[3]` and `x[3] != x[1]`
+
+```jldoctest
+julia> using MathOptInterface
+
+julia> const MOI = MathOptInterface
+MathOptInterface
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> n, _ = MOI.add_constrained_variable(model, MOI.Integer())
+(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
+
+julia> x = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+3-element Vector{MathOptInterface.VariableIndex}:
+ MathOptInterface.VariableIndex(2)
+ MathOptInterface.VariableIndex(3)
+ MathOptInterface.VariableIndex(4)
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables(vcat(n, x)), MOI.CountDistinct(4))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.CountDistinct}(1)
 ```
 
 ## Relationship to AllDifferent
 
 When the first element is `d`, `CountDistinct` is equivalent to an
 [`AllDifferent`](@ref) constraint.
-
-```julia
-model = Utilities.Model{Float64}()
-x = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
-add_constraint(model, VectorOfVariables(vcat(3, x)), CountDistinct(4))
-# equivalent to
-add_constraint(model, VectorOfVariables(x), AllDifferent(3))
-```
 """
 struct CountDistinct <: AbstractVectorSet
     dimension::Int
@@ -1433,12 +1579,29 @@ This constraint is called `count_gt` in MiniZinc.
 
 ## Example
 
-```julia
-model = Utilities.Model{Float64}()
-c, _ = add_constrained_variable(model, Integer())
-y, _ = add_constrained_variable(model, Integer())
-x = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
-add_constraint(model, VectorOfVariables([c; y; x]), CountGreaterThan(5))
+```jldoctest
+julia> using MathOptInterface
+
+julia> const MOI = MathOptInterface
+MathOptInterface
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> c, _ = MOI.add_constrained_variable(model, MOI.Integer())
+(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
+
+julia> y, _ = MOI.add_constrained_variable(model, MOI.Integer())
+(MathOptInterface.VariableIndex(2), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(2))
+
+julia> x = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+3-element Vector{MathOptInterface.VariableIndex}:
+ MathOptInterface.VariableIndex(3)
+ MathOptInterface.VariableIndex(4)
+ MathOptInterface.VariableIndex(5)
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables([c; y; x]), MOI.CountGreaterThan(5))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.CountGreaterThan}(1)
 ```
 """
 struct CountGreaterThan <: AbstractVectorSet
@@ -1472,13 +1635,38 @@ This constraint is called `cumulative` in MiniZinc.
 
 ## Example
 
-```julia
-model = Utilities.Model{Float64}()
-s = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
-d = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
-r = [add_constrained_variable(model, Integer())[1] for _ in 1:3]
-b, _ = add_constrained_variable(model, Integer())
-add_constraint(model, VectorOfVariables([s; d; r; b]), Cumulative(10))
+```jldoctest
+julia> using MathOptInterface
+
+julia> const MOI = MathOptInterface
+MathOptInterface
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> s = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+3-element Vector{MathOptInterface.VariableIndex}:
+ MathOptInterface.VariableIndex(1)
+ MathOptInterface.VariableIndex(2)
+ MathOptInterface.VariableIndex(3)
+
+julia> d = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+3-element Vector{MathOptInterface.VariableIndex}:
+ MathOptInterface.VariableIndex(4)
+ MathOptInterface.VariableIndex(5)
+ MathOptInterface.VariableIndex(6)
+
+julia> r = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
+3-element Vector{MathOptInterface.VariableIndex}:
+ MathOptInterface.VariableIndex(7)
+ MathOptInterface.VariableIndex(8)
+ MathOptInterface.VariableIndex(9)
+
+julia> b, _ = MOI.add_constrained_variable(model, MOI.Integer())
+(MathOptInterface.VariableIndex(10), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(10))
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables([s; d; r; b]), MOI.Cumulative(10))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.Cumulative}(1)
 ```
 """
 struct Cumulative <: AbstractVectorSet
@@ -1510,17 +1698,72 @@ This constraint is called `path` in MiniZinc.
 
 ## Example
 
-```julia
-model = Utilities.Model{Float64}()
-from = [1, 1, 2, 2, 3]
-to = [2, 3, 3, 4, 4]
-s, _ = add_constrained_variable(model, Integer())
-t, _ = add_constrained_variable(model, Integer())
-ns = add_variables(model, N)
-add_constraint.(model, ns, ZeroOne())
-es = add_variables(model, E)
-add_constraint.(model, es, ZeroOne())
-add_constraint(model, VectorOfVariables([s; t; ns; es]), Path(from, to))
+```jldoctest
+julia> using MathOptInterface
+
+julia> const MOI = MathOptInterface
+MathOptInterface
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> N, E = 4, 5
+(4, 5)
+
+julia> from = [1, 1, 2, 2, 3]
+5-element Vector{Int64}:
+ 1
+ 1
+ 2
+ 2
+ 3
+
+julia> to = [2, 3, 3, 4, 4]
+5-element Vector{Int64}:
+ 2
+ 3
+ 3
+ 4
+ 4
+
+julia> s, _ = MOI.add_constrained_variable(model, MOI.Integer())
+(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
+
+julia> t, _ = MOI.add_constrained_variable(model, MOI.Integer())
+(MathOptInterface.VariableIndex(2), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(2))
+
+julia> ns = MOI.add_variables(model, N)
+4-element Vector{MathOptInterface.VariableIndex}:
+ MathOptInterface.VariableIndex(3)
+ MathOptInterface.VariableIndex(4)
+ MathOptInterface.VariableIndex(5)
+ MathOptInterface.VariableIndex(6)
+
+julia> MOI.add_constraint.(model, ns, MOI.ZeroOne())
+4-element Vector{MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}}:
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(3)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(4)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(5)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(6)
+
+julia> es = MOI.add_variables(model, E)
+5-element Vector{MathOptInterface.VariableIndex}:
+ MathOptInterface.VariableIndex(7)
+ MathOptInterface.VariableIndex(8)
+ MathOptInterface.VariableIndex(9)
+ MathOptInterface.VariableIndex(10)
+ MathOptInterface.VariableIndex(11)
+
+julia> MOI.add_constraint.(model, es, MOI.ZeroOne())
+5-element Vector{MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}}:
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(7)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(8)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(9)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(10)
+ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(11)
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables([s; t; ns; es]), MOI.Path(from, to))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.Path}(1)
 ```
 """
 struct Path <: AbstractVectorSet
@@ -1557,11 +1800,30 @@ This constraint is called `table` in MiniZinc.
 
 ## Example
 
-```julia
-model = Utilities.Model{Float64}()
-x = add_variables(model, 3)
-table = [1 1 0; 0 1 1; 1 0 1; 1 1 1]
-add_constraint(model, VectorOfVariables(x), Table(table))
+```jldoctest
+julia> using MathOptInterface
+
+julia> const MOI = MathOptInterface
+MathOptInterface
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 3)
+3-element Vector{MathOptInterface.VariableIndex}:
+ MathOptInterface.VariableIndex(1)
+ MathOptInterface.VariableIndex(2)
+ MathOptInterface.VariableIndex(3)
+
+julia> table = Float64[1 1 0; 0 1 1; 1 0 1; 1 1 1]
+4×3 Matrix{Float64}:
+ 1.0  1.0  0.0
+ 0.0  1.0  1.0
+ 1.0  0.0  1.0
+ 1.0  1.0  1.0
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Table(table))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.Table{Float64}}(1)
 ```
 """
 struct Table{T} <: AbstractVectorSet
@@ -1581,10 +1843,27 @@ The set ``\\{x \\in \\bar{\\mathbb{R}}^d: x_i \\in [lower_i, upper_i] \\forall i
 
 ## Example
 
-```julia
-model = Utilities.Model{Float64}()
-x = add_variables(model, 3)
-add_constraint(model, VectorOfVariables(x), HyperRectangle(zeros(3), ones(3)))
+```jldoctest
+julia> using MathOptInterface
+
+julia> const MOI = MathOptInterface
+MathOptInterface
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 3)
+3-element Vector{MathOptInterface.VariableIndex}:
+ MathOptInterface.VariableIndex(1)
+ MathOptInterface.VariableIndex(2)
+ MathOptInterface.VariableIndex(3)
+
+julia> MOI.add_constraint(
+           model,
+           MOI.VectorOfVariables(x),
+           MOI.HyperRectangle(zeros(3), ones(3)),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.HyperRectangle{Float64}}(1)
 ```
 """
 struct HyperRectangle{T} <: AbstractVectorSet
