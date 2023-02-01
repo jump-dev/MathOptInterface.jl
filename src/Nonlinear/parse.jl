@@ -239,6 +239,28 @@ function parse_expression(
     return
 end
 
+function parse_expression(
+    data::Model,
+    expr::Expression,
+    x::MOI.ScalarAffineFunction{T},
+    parent::Int,
+) where {T}
+    f = convert(MOI.ScalarNonlinearFunction{T}, x)
+    parse_expression(data, expr, f, parent)
+    return
+end
+
+function parse_expression(
+    data::Model,
+    expr::Expression,
+    x::MOI.ScalarQuadraticFunction{T},
+    parent::Int,
+) where {T}
+    f = convert(MOI.ScalarNonlinearFunction{T}, x)
+    parse_expression(data, expr, f, parent)
+    return
+end
+
 function parse_expression(::Model, expr::Expression, x::Real, parent_index::Int)
     push!(expr.values, convert(Float64, x)::Float64)
     push!(expr.nodes, Node(NODE_VALUE, length(expr.values), parent_index))

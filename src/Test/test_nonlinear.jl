@@ -1537,3 +1537,93 @@ function setup_test(
     )
     return
 end
+
+function test_nonlinear_vector_complements(
+    model::MOI.ModelLike,
+    config::MOI.Test.Config{T},
+) where {T}
+    @requires T == Float64
+    @requires _supports(config, MOI.optimize!)
+    F = MOI.ScalarNonlinearFunction{Float64}
+    @requires MOI.supports_constraint(model, F, MOI.Complements)
+    x = MOI.add_variables(model, 4)
+    MOI.add_constraint.(model, x, MOI.Interval(T(0), T(10)))
+    MOI.set.(model, MOI.VariablePrimalStart(), x, T(1))
+    # f = [
+    #     -1 * x3^2 + -1 * x4 + 2.0
+    #     x3^3 + -1.0 * 2x4^2 + 2.0
+    #     x1^5 + -1.0 * x2 + 2.0 * x3 + -2.0 * x4 + -2.0
+    #     x1 + 2.0 * x2^3 + -2.0 * x3 + 4.0 * x4 + -6.0
+    #     x...
+    # ]
+    f = MOI.VectorNonlinearFunction{T}([
+        MOI.ScalarNonlinearFunction{T}(
+            :+,
+            Any[
+                MOI.ScalarNonlinearFunction{T}(:*, Any[-T(1), x[3], x[3]]),
+                MOI.ScalarNonlinearFunction{T}(:*, Any[-T(1), x[4]]),
+                T(2),
+            ],
+        ),
+        MOI.ScalarNonlinearFunction{T}(
+            :+,
+            Any[
+                MOI.ScalarNonlinearFunction{T}(:^, Any[x[3], 3]),
+                MOI.ScalarNonlinearFunction{T}(:*, Any[-T(2), x[4], x[4]]),
+                T(2),
+            ],
+        ),
+        MOI.ScalarNonlinearFunction{T}(
+            :+,
+            Any[
+                MOI.ScalarNonlinearFunction{T}(:^, Any[x[1], 5]),
+                MOI.ScalarAffineFunction{T}(
+                    MOI.ScalarAffineTerm.(T[-1, 2, -2], x[2:4]),
+                    -T(2),
+                ),
+            ],
+        ),
+        MOI.ScalarNonlinearFunction{T}(
+            :+,
+            Any[
+                MOI.ScalarNonlinearFunction{T}(:*, Any[T(2), x[2], x[2], x[2]]),
+                MOI.ScalarAffineFunction{T}(
+                    MOI.ScalarAffineTerm.(T[1, -2, 4], [x[1], x[3], x[4]]),
+                    -T(6),
+                ),
+            ],
+        ),
+        x[1],
+        x[2],
+        x[3],
+        x[4],
+    ])
+    MOI.add_constraint(model, f, MOI.Complements(8))
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test ≈(
+        MOI.get.(model, MOI.VariablePrimal(), x),
+        T[1.2847523, 0.9729165, 0.9093762, 1.1730350],
+        config,
+    )
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_vector_complements),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> MOI.Utilities.mock_optimize!(
+            mock,
+            config.optimal_status,
+            T[1.2847523, 0.9729165, 0.9093762, 1.1730350],
+        ),
+    )
+    return
+end

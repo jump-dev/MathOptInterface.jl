@@ -115,6 +115,8 @@ function _parse_function(ex, ::Type{T} = Float64) where {T}
     else
         if isexpr(ex, :call, 2) && ex.args[1] == :ScalarNonlinearFunction
             return ex
+        elseif isexpr(ex, :call, 2) && ex.args[1] == :VectorNonlinearFunction
+            return ex
         end
         # For simplicity, only accept Expr(:call, :+, ...); no recursive
         # expressions
@@ -240,10 +242,22 @@ _parsed_to_moi(model, s::Number) = s
 
 function _parsed_to_moi(model, s::Expr)
     if isexpr(s, :call, 2) && s.args[1] == :ScalarNonlinearFunction
-        return _parsed_to_moi(model, s.args[2])
+        return _parsed_scalar_to_moi(model, s.args[2])
+    elseif isexpr(s, :call, 2) && s.args[1] == :VectorNonlinearFunction
+        return _parsed_vector_to_moi(model, s.args[2])
     end
     args = Any[_parsed_to_moi(model, arg) for arg in s.args[2:end]]
     return MOI.ScalarNonlinearFunction{Float64}(s.args[1], args)
+end
+
+function _parsed_scalar_to_moi(model, s::Expr)
+    args = Any[_parsed_to_moi(model, arg) for arg in s.args[2:end]]
+    return MOI.ScalarNonlinearFunction{Float64}(s.args[1], args)
+end
+
+function _parsed_vector_to_moi(model, s::Expr)
+    args = Any[_parsed_to_moi(model, arg) for arg in s.args]
+    return MOI.VectorNonlinearFunction{Float64}(args)
 end
 
 for typename in [

@@ -75,6 +75,10 @@ _to_string(::_PrintOptions, ::typeof(in)) = @static Sys.iswindows() ? "in" : "âˆ
 # Functions
 #------------------------------------------------------------------------
 
+function _to_string(options::_PrintOptions, ::MOI.ModelLike, c::Real)
+    return _shorten(options, c)
+end
+
 function _to_string(
     options::_PrintOptions,
     model::MOI.ModelLike,

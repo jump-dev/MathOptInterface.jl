@@ -228,3 +228,82 @@ function test_multiobjective_vector_quadratic_function_delete_vector(
     @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ new_f
     return
 end
+
+function test_multiobjective_vector_nonlinear(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    F = MOI.VectorNonlinearFunction{T}
+    @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint.(model, x, MOI.GreaterThan(T(0)))
+    f = MOI.VectorNonlinearFunction{T}(
+        Any[MOI.ScalarNonlinearFunction{T}(:^, Any[x[1], 2]), x[2]],
+    )  # [x[1]^2, x[2]
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{F}(), f)
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) == F
+    @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ f
+    return
+end
+
+function test_multiobjective_vector_nonlinear_delete(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    F = MOI.VectorNonlinearFunction{T}
+    @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint.(model, x, MOI.GreaterThan(T(0)))
+    f = MOI.VectorNonlinearFunction{T}(
+        Any[MOI.ScalarNonlinearFunction{T}(:^, Any[x[1], 2]), x[2]],
+    )  # [x[1]^2, x[2]
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{F}(), f)
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) == F
+    @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ f
+    @test_throws MOI.DeleteNotAllowed MOI.delete(model, x[1])
+    return
+end
+
+function test_multiobjective_vector_nonlinear_delete_vector(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    F = MOI.VectorNonlinearFunction{T}
+    @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint.(model, x, MOI.GreaterThan(T(0)))
+    f = MOI.VectorNonlinearFunction{T}(
+        Any[MOI.ScalarNonlinearFunction{T}(:^, Any[x[1], 2]), x[2]],
+    )  # [x[1]^2, x[2]
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{F}(), f)
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) == F
+    @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ f
+    @test_throws MOI.DeleteNotAllowed MOI.delete(model, x)
+    return
+end
+
+function test_multiobjective_vector_nonlinear_modify(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    F = MOI.VectorNonlinearFunction{T}
+    attr = MOI.ObjectiveFunction{F}()
+    @requires MOI.supports(model, attr)
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint.(model, x, MOI.GreaterThan(T(0)))
+    f = MOI.VectorNonlinearFunction{T}(
+        Any[MOI.ScalarNonlinearFunction{T}(:^, Any[x[1], 2]), x[2]],
+    )  # [x[1]^2, x[2]
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, attr, f)
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) == F
+    @test MOI.get(model, attr) ≈ f
+    @test_throws(
+        MOI.ModifyObjectiveNotAllowed,
+        MOI.modify(model, attr, MOI.VectorConstantChange(T[1, 2])),
+    )
+    return
+end

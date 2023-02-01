@@ -274,6 +274,15 @@ function map_indices(
     )
 end
 
+function map_indices(
+    index_map::F,
+    f::MOI.VectorNonlinearFunction{T},
+) where {F<:Function,T}
+    return MOI.VectorNonlinearFunction{T}(
+        Any[map_indices(index_map, arg) for arg in f.args],
+    )
+end
+
 # Function changes
 
 function map_indices(
@@ -573,6 +582,8 @@ Returns an iterator for the scalar components of the vector function.
 See also [`scalarize`](@ref).
 """
 eachscalar(f::MOI.AbstractVectorFunction) = ScalarFunctionIterator(f)
+
+eachscalar(f::MOI.VectorNonlinearFunction) = f.args
 
 """
     eachscalar(f::MOI.AbstractVector)
@@ -876,6 +887,7 @@ function canonicalize!(
 end
 
 canonicalize!(f::MOI.ScalarNonlinearFunction) = f
+canonicalize!(f::MOI.VectorNonlinearFunction) = f
 
 """
     canonicalize!(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
@@ -1793,6 +1805,15 @@ function promote_operation(
     ::Type{MOI.VariableIndex},
 ) where {T}
     return MOI.ScalarNonlinearFunction{T}
+end
+
+function promote_operation(
+    ::typeof(-),
+    ::Type{T},
+    ::Type{MOI.VectorNonlinearFunction{T}},
+    ::Type{MOI.VectorOfVariables},
+) where {T}
+    return MOI.VectorNonlinearFunction{T}
 end
 
 ### Base methods
@@ -3380,6 +3401,15 @@ function is_coefficient_type(
 end
 
 is_coefficient_type(::Type{<:MOI.ScalarNonlinearFunction}, ::Type) = false
+
+function is_coefficient_type(
+    ::Type{MOI.VectorNonlinearFunction{T}},
+    ::Type{T},
+) where {T}
+    return true
+end
+
+is_coefficient_type(::Type{<:MOI.VectorNonlinearFunction}, ::Type) = false
 
 similar_type(::Type{F}, ::Type{T}) where {F,T} = F
 
