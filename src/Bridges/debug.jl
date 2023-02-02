@@ -493,7 +493,7 @@ end
 
 function debug(
     b::LazyBridgeOptimizer,
-    F::Type{<:MOI.AbstractScalarFunction};
+    F::Type{<:MOI.AbstractFunction};
     io::IO = Base.stdout,
 )
     MOI.Utilities.print_with_acronym(io, "Objective function of type `$F` is")

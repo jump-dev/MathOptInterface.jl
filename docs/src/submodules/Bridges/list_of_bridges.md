@@ -78,6 +78,7 @@ These bridges are subtypes of [`Bridges.Objective.AbstractBridge`](@ref).
 Bridges.Objective.FunctionizeBridge
 Bridges.Objective.QuadratizeBridge
 Bridges.Objective.SlackBridge
+Bridges.Objective.VectorSlackBridge
 ```
 
 ## [Variable bridges](@id variable_bridges_ref)

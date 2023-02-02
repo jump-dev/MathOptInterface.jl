@@ -341,7 +341,7 @@ function _general_bridge_tests(bridge::B) where {B<:AbstractBridge}
         MOI.get(bridge, MOI.NumberOfVariables())
     )
     if B <: Objective.AbstractBridge
-        Test.@test set_objective_function_type(B) <: MOI.AbstractScalarFunction
+        Test.@test set_objective_function_type(B) <: MOI.AbstractFunction
     end
     return
 end

@@ -298,7 +298,7 @@ end
 
 Return the `ObjectiveNode` associated with constraint `F` in `b`.
 """
-function node(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractScalarFunction})
+function node(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction})
     # If we support the objective function, the node is 0.
     if MOI.supports(b.model, MOI.ObjectiveFunction{F}())
         return ObjectiveNode(0)
@@ -407,10 +407,7 @@ function is_bridged(
     return !MOI.supports_constraint(b.model, F, S)
 end
 
-function is_bridged(
-    b::LazyBridgeOptimizer,
-    F::Type{<:MOI.AbstractScalarFunction},
-)
+function is_bridged(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction})
     return !MOI.supports(b.model, MOI.ObjectiveFunction{F}())
 end
 
@@ -455,7 +452,7 @@ end
 
 function supports_bridging_objective_function(
     b::LazyBridgeOptimizer,
-    F::Type{<:MOI.AbstractScalarFunction},
+    F::Type{<:MOI.AbstractFunction},
 )
     return !iszero(bridge_index(b, F))
 end
@@ -498,10 +495,7 @@ function bridge_type(
     return new_bt::Type
 end
 
-function bridge_type(
-    b::LazyBridgeOptimizer,
-    F::Type{<:MOI.AbstractScalarFunction},
-)
+function bridge_type(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction})
     bt = get(b.cached_bridge_type, (F,), nothing)
     if bt !== nothing
         return bt::Type

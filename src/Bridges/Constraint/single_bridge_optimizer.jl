@@ -122,7 +122,7 @@ end
 
 function MOI.Bridges.is_bridged(
     ::SingleBridgeOptimizer,
-    ::Type{<:MOI.AbstractScalarFunction},
+    ::Type{<:MOI.AbstractFunction},
 )
     return false
 end
