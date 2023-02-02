@@ -204,35 +204,13 @@ function distance_to_set(
     # Parikh, N., & Boyd, S. (2014). Proximal algorithms. Foundations and
     # trends in Optimization, page 184, section 6.3.2.
     t, rhs = x[1], LinearAlgebra.norm(@views x[2:end])
+    if t >= rhs
+        return zero(T) # The point is feasible!
+    end
     if rhs <= -t  # Projection to the point (0, [0])
         return LinearAlgebra.norm(x)
-    elseif t >= rhs  # Projection to the point (t, x)
-        return zero(T)
     end
     # Projection to the point (t, x) + 0.5 * (|x|_2 - t, (t/|x|_2 - 1) * x)
-    c = t / rhs - one(T)
-    return sqrt((rhs - t)^2 + sum((c * x[i])^2 for i in 2:length(x))) / 2
-end
+    return sqrt(2) / 2 * abs(t - rhs)
 
-"""
-    distance_to_set(::ProjectionUpperBoundDistance, x, ::MOI.ExponentialCone)
-
-Given `x = (u, v, w)`, this is distance:
-
- * `d`, such that `v * exp(u / v) <= w + d`, if `v > 0`
- * `√(1^2 + d^2)`, such that `1 * exp(u / 1) <= w + d`, if `v <= 0`.
-"""
-function distance_to_set(
-    ::ProjectionUpperBoundDistance,
-    x::AbstractVector{T},
-    set::MOI.ExponentialCone,
-) where {T<:Real}
-    _check_dimension(x, set)
-    u, v, w = x[1], x[2], x[3]
-    if v <= 0
-        # Projection to the point (u, 1, max(w, exp(u)))
-        return sqrt((1 - v)^2 + max(zero(T), exp(u) - w)^2)
-    end
-    # Projection to the point (u, v, max(w, v * exp(u / v)))
-    return max(zero(T), v * exp(u / v) - w)
 end

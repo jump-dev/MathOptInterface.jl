@@ -143,20 +143,6 @@ function test_secondordercone()
     return
 end
 
-function test_exponentialcone()
-    @test_throws(
-        DimensionMismatch,
-        MOI.Utilities.distance_to_set([-1.0, 1.0], MOI.ExponentialCone())
-    )
-    set = MOI.ExponentialCone()
-    @test MOI.Utilities.distance_to_set([1, 1, exp(1)], set) ≈ 0.0
-    @test MOI.Utilities.distance_to_set([2, 3, 3], set) ≈ 3 * exp(2 / 3) - 3
-    @test MOI.Utilities.distance_to_set([2, -1, 3], set) ≈
-          sqrt(2^2 + (exp(2) - 3)^2)
-    @test MOI.Utilities.distance_to_set([10.0, 0.01, 0.0], set) ≈ Inf
-    return
-end
-
 end
 
 TestFeasibilityChecker.runtests()
