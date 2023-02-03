@@ -212,5 +212,4 @@ function distance_to_set(
     end
     # Projection to the point (t, x) + 0.5 * (|x|_2 - t, (t/|x|_2 - 1) * x)
     return sqrt(2) / 2 * abs(t - rhs)
-
 end
