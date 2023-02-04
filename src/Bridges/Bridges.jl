@@ -255,6 +255,8 @@ function runtests(
     model = _bridged_model(Bridge, inner)
     MOI.Utilities.loadfromstring!(model, input)
     final_touch(model)
+    # Should be able to call final_touch multiple times.
+    final_touch(model)
     # Load a non-bridged input model, and check that getters are the same.
     test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     MOI.Utilities.loadfromstring!(test, input)

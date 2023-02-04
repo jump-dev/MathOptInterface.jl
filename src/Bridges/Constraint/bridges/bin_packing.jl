@@ -59,6 +59,7 @@ struct BinPackingToMILPBridge{
     equal_to::Vector{
         MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
     }
+    bounds::Vector{NTuple{2,T}}
 end
 
 const BinPackingToMILP{T,OT<:MOI.ModelLike} =
@@ -76,6 +77,7 @@ function bridge_constraint(
         MOI.VariableIndex[],
         MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.LessThan{T}}[],
         MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}[],
+        NTuple{2,T}[],
     )
 end
 
@@ -133,6 +135,7 @@ function MOI.delete(model::MOI.ModelLike, bridge::BinPackingToMILPBridge)
     empty!(bridge.equal_to)
     MOI.delete.(model, bridge.variables)
     empty!(bridge.variables)
+    empty!(bridge.bounds)
     return
 end
 
@@ -232,8 +235,6 @@ function MOI.Bridges.final_touch(
     bridge::BinPackingToMILPBridge{T,F},
     model::MOI.ModelLike,
 ) where {T,F}
-    # Clear any existing reformulations!
-    MOI.delete(model, bridge)
     S = Dict{T,Vector{Tuple{Float64,MOI.VariableIndex}}}()
     scalars = collect(MOI.Utilities.eachscalar(bridge.f))
     bounds = Dict{MOI.VariableIndex,NTuple{2,T}}()
@@ -245,6 +246,21 @@ function MOI.Bridges.final_touch(
                 "Unable to use $(typeof(bridge)) because an element in the " *
                 "function has a non-finite domain: $x",
             )
+        end
+        if length(bridge.bounds) < i
+            # This is the first time calling final_touch
+            push!(bridge.bounds, ret)
+        elseif bridge.bounds[i] == ret
+            # We've called final_touch before, and the bounds match. No need to
+            # reformulate a second time.
+            continue
+        elseif bridge.bounds[i] != ret
+            # There is a stored bound, and the current bounds do not match. This
+            # means the model has been modified since the previous call to
+            # final_touch. We need to delete the bridge and start again.
+            MOI.delete(model, bridge)
+            MOI.Bridges.final_touch(bridge, model)
+            return
         end
         unit_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
         convex_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
