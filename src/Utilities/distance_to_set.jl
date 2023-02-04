@@ -193,3 +193,23 @@ function distance_to_set(
     _check_dimension(x, set)
     return zero(T)
 end
+
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.SecondOrderCone,
+) where {T<:Real}
+    _check_dimension(x, set)
+    # Projections come from:
+    # Parikh, N., & Boyd, S. (2014). Proximal algorithms. Foundations and
+    # trends in Optimization, page 184, section 6.3.2.
+    t, rhs = x[1], LinearAlgebra.norm(@views x[2:end])
+    if t >= rhs
+        return zero(T) # The point is feasible!
+    end
+    if rhs <= -t  # Projection to the point (0, [0])
+        return LinearAlgebra.norm(x)
+    end
+    # Projection to the point (t, x) + 0.5 * (|x|_2 - t, (t/|x|_2 - 1) * x)
+    return sqrt(2) / 2 * abs(t - rhs)
+end
