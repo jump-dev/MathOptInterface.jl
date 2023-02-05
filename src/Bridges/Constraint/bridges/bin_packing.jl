@@ -235,7 +235,7 @@ function MOI.Bridges.final_touch(
     bridge::BinPackingToMILPBridge{T,F},
     model::MOI.ModelLike,
 ) where {T,F}
-    S = Dict{T,Vector{Tuple{Float64,MOI.VariableIndex}}}()
+    S = Dict{T,Vector{Tuple{T,MOI.VariableIndex}}}()
     scalars = collect(MOI.Utilities.eachscalar(bridge.f))
     bounds = Dict{MOI.VariableIndex,NTuple{2,T}}()
     for i in 1:length(scalars)
@@ -268,35 +268,35 @@ function MOI.Bridges.final_touch(
             new_var, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
             push!(bridge.variables, new_var)
             if !haskey(S, xi)
-                S[xi] = Tuple{Float64,MOI.VariableIndex}[]
+                S[xi] = Tuple{T,MOI.VariableIndex}[]
             end
             push!(S[xi], (bridge.s.weights[i], new_var))
-            push!(unit_f.terms, MOI.ScalarAffineTerm(T(-xi), new_var))
-            push!(convex_f.terms, MOI.ScalarAffineTerm(one(T), new_var))
+            push!(unit_f.terms, MOI.ScalarAffineTerm{T}(T(-xi), new_var))
+            push!(convex_f.terms, MOI.ScalarAffineTerm{T}(one(T), new_var))
         end
         push!(
             bridge.equal_to,
             MOI.Utilities.normalize_and_add_constraint(
                 model,
                 MOI.Utilities.operate(+, T, x, unit_f),
-                MOI.EqualTo(zero(T));
+                MOI.EqualTo{T}(zero(T));
                 allow_modify_function = true,
             ),
         )
         push!(
             bridge.equal_to,
-            MOI.add_constraint(model, convex_f, MOI.EqualTo(one(T))),
+            MOI.add_constraint(model, convex_f, MOI.EqualTo{T}(one(T))),
         )
     end
     # We use a sort so that the model order is deterministic.
     for s in sort!(collect(keys(S)))
         ci = MOI.add_constraint(
             model,
-            MOI.ScalarAffineFunction(
-                [MOI.ScalarAffineTerm(w, z) for (w, z) in S[s]],
+            MOI.ScalarAffineFunction{T}(
+                [MOI.ScalarAffineTerm{T}(w, z) for (w, z) in S[s]],
                 zero(T),
             ),
-            MOI.LessThan(bridge.s.capacity),
+            MOI.LessThan{T}(bridge.s.capacity),
         )
         push!(bridge.less_than, ci)
     end

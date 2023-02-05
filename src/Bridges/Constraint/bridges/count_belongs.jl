@@ -264,7 +264,7 @@ function _unit_expansion(
             # final_touch. We need to delete the bridge and start again.
             MOI.delete(model, bridge)
             MOI.Bridges.final_touch(bridge, model)
-            return
+            break
         end
         unit_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
         convex_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))

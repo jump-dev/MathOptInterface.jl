@@ -101,6 +101,21 @@ function test_runtests_VectorAffineFunction()
     return
 end
 
+function test_resolve_with_modified()
+    inner = MOI.Utilities.Model{Int}()
+    model = MOI.Bridges.Constraint.CountGreaterThanToMILP{Int}(inner)
+    x = MOI.add_variables(model, 3)
+    c = MOI.add_constraint.(model, x, MOI.Interval(0, 2))
+    MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.CountGreaterThan(3))
+    @test MOI.get(inner, MOI.NumberOfVariables()) == 3
+    MOI.Bridges.final_touch(model)
+    @test MOI.get(inner, MOI.NumberOfVariables()) == 9
+    MOI.set(model, MOI.ConstraintSet(), c[3], MOI.Interval(0, 1))
+    MOI.Bridges.final_touch(model)
+    @test MOI.get(inner, MOI.NumberOfVariables()) == 8
+    return
+end
+
 function test_runtests_error_variable()
     inner = MOI.Utilities.Model{Int}()
     model = MOI.Bridges.Constraint.CountGreaterThanToMILP{Int}(inner)

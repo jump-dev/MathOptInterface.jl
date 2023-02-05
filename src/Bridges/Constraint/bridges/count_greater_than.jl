@@ -255,7 +255,7 @@ function _add_unit_expansion(
         new_var, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
         push!(bridge.variables, new_var)
         if !haskey(S, xi)
-            S[xi] = Tuple{Float64,MOI.VariableIndex}[]
+            S[xi] = Tuple{T,MOI.VariableIndex}[]
         end
         push!(S[xi], new_var)
         push!(unit_f.terms, MOI.ScalarAffineTerm(T(-xi), new_var))

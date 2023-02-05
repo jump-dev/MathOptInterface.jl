@@ -281,14 +281,14 @@ function MOI.Bridges.final_touch(
                 "in the function has a non-finite domain: $x",
             )
         end
-        if length(bridge.bounds) < i
+        if length(bridge.bounds) < i - 1
             # This is the first time calling final_touch
             push!(bridge.bounds, ret)
-        elseif bridge.bounds[i] == ret
+        elseif bridge.bounds[i-1] == ret
             # We've called final_touch before, and the bounds match. No need to
             # reformulate a second time.
             continue
-        elseif bridge.bounds[i] != ret
+        elseif bridge.bounds[i-1] != ret
             # There is a stored bound, and the current bounds do not match. This
             # means the model has been modified since the previous call to
             # final_touch. We need to delete the bridge and start again.
