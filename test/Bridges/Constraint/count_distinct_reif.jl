@@ -117,6 +117,22 @@ function test_runtests_VectorAffineFunction()
     return
 end
 
+function test_resolve_with_modified()
+    inner = MOI.Utilities.Model{Int}()
+    model = MOI.Bridges.Constraint.ReifiedCountDistinctToMILP{Int}(inner)
+    x = MOI.add_variables(model, 4)
+    c = MOI.add_constraint.(model, x, MOI.Interval(0, 2))
+    f = MOI.VectorOfVariables(x)
+    MOI.add_constraint(model, f, MOI.Reified(MOI.CountDistinct(3)))
+    @test MOI.get(inner, MOI.NumberOfVariables()) == 4
+    MOI.Bridges.final_touch(model)
+    @test MOI.get(inner, MOI.NumberOfVariables()) == 17
+    MOI.set(model, MOI.ConstraintSet(), c[3], MOI.Interval(0, 1))
+    MOI.Bridges.final_touch(model)
+    @test MOI.get(inner, MOI.NumberOfVariables()) == 16
+    return
+end
+
 function test_runtests_error_variable()
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Int}())
     model = MOI.Bridges.Constraint.ReifiedCountDistinctToMILP{Int}(inner)

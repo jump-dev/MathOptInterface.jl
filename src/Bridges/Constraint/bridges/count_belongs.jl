@@ -59,6 +59,7 @@ mutable struct CountBelongsToMILPBridge{
     equal_to::Vector{
         MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
     }
+    bounds::Vector{NTuple{2,T}}
     function CountBelongsToMILPBridge{T}(
         f::Union{MOI.VectorOfVariables,MOI.VectorAffineFunction{T}},
         s::MOI.CountBelongs,
@@ -68,6 +69,7 @@ mutable struct CountBelongsToMILPBridge{
             s,
             MOI.VariableIndex[],
             MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}[],
+            NTuple{2,T}[],
         )
     end
 end
@@ -139,6 +141,7 @@ function MOI.delete(model::MOI.ModelLike, bridge::CountBelongsToMILPBridge)
         MOI.delete(model, x)
     end
     empty!(bridge.variables)
+    empty!(bridge.bounds)
     return
 end
 
@@ -248,6 +251,21 @@ function _unit_expansion(
                 "non-finite domain: $(f[i])",
             )
         end
+        if length(bridge.bounds) < i
+            # This is the first time calling final_touch
+            push!(bridge.bounds, ret)
+        elseif bridge.bounds[i] == ret
+            # We've called final_touch before, and the bounds match. No need to
+            # reformulate a second time.
+            continue
+        elseif bridge.bounds[i] != ret
+            # There is a stored bound, and the current bounds do not match. This
+            # means the model has been modified since the previous call to
+            # final_touch. We need to delete the bridge and start again.
+            MOI.delete(model, bridge)
+            MOI.Bridges.final_touch(bridge, model)
+            break
+        end
         unit_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
         convex_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
         for xi in ret[1]:ret[2]
@@ -277,9 +295,11 @@ function MOI.Bridges.final_touch(
     bridge::CountBelongsToMILPBridge{T,F},
     model::MOI.ModelLike,
 ) where {T,F}
-    MOI.delete(model, bridge)
     scalars = collect(MOI.Utilities.eachscalar(bridge.f))
     S, ci = _unit_expansion(bridge, model, scalars[2:end])
+    if isempty(S) && isempty(ci)
+        return # Nothing to bridge. We must have already called final_touch.
+    end
     append!(bridge.equal_to, ci)
     for (_, s) in S
         append!(bridge.variables, s)

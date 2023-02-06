@@ -98,6 +98,22 @@ function test_runtests_VectorAffineFunction()
     return
 end
 
+function test_resolve_with_modified()
+    inner = MOI.Utilities.Model{Int}()
+    model = MOI.Bridges.Constraint.BinPackingToMILP{Int}(inner)
+    x = MOI.add_variables(model, 3)
+    c = MOI.add_constraint.(model, x, MOI.Interval(1, 2))
+    f = MOI.VectorOfVariables(x)
+    MOI.add_constraint(model, f, MOI.BinPacking(3, [1, 2, 3]))
+    @test MOI.get(inner, MOI.NumberOfVariables()) == 3
+    MOI.Bridges.final_touch(model)
+    @test MOI.get(inner, MOI.NumberOfVariables()) == 9
+    MOI.set(model, MOI.ConstraintSet(), c[2], MOI.Interval(1, 3))
+    MOI.Bridges.final_touch(model)
+    @test MOI.get(inner, MOI.NumberOfVariables()) == 10
+    return
+end
+
 function test_runtests_error_variable()
     inner = MOI.Utilities.Model{Int}()
     model = MOI.Bridges.Constraint.BinPackingToMILP{Int}(inner)

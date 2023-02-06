@@ -59,6 +59,7 @@ struct BinPackingToMILPBridge{
     equal_to::Vector{
         MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
     }
+    bounds::Vector{NTuple{2,T}}
 end
 
 const BinPackingToMILP{T,OT<:MOI.ModelLike} =
@@ -76,6 +77,7 @@ function bridge_constraint(
         MOI.VariableIndex[],
         MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.LessThan{T}}[],
         MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}[],
+        NTuple{2,T}[],
     )
 end
 
@@ -133,6 +135,7 @@ function MOI.delete(model::MOI.ModelLike, bridge::BinPackingToMILPBridge)
     empty!(bridge.equal_to)
     MOI.delete.(model, bridge.variables)
     empty!(bridge.variables)
+    empty!(bridge.bounds)
     return
 end
 
@@ -232,9 +235,7 @@ function MOI.Bridges.final_touch(
     bridge::BinPackingToMILPBridge{T,F},
     model::MOI.ModelLike,
 ) where {T,F}
-    # Clear any existing reformulations!
-    MOI.delete(model, bridge)
-    S = Dict{T,Vector{Tuple{Float64,MOI.VariableIndex}}}()
+    S = Dict{T,Vector{Tuple{T,MOI.VariableIndex}}}()
     scalars = collect(MOI.Utilities.eachscalar(bridge.f))
     bounds = Dict{MOI.VariableIndex,NTuple{2,T}}()
     for i in 1:length(scalars)
@@ -246,41 +247,56 @@ function MOI.Bridges.final_touch(
                 "function has a non-finite domain: $x",
             )
         end
+        if length(bridge.bounds) < i
+            # This is the first time calling final_touch
+            push!(bridge.bounds, ret)
+        elseif bridge.bounds[i] == ret
+            # We've called final_touch before, and the bounds match. No need to
+            # reformulate a second time.
+            continue
+        elseif bridge.bounds[i] != ret
+            # There is a stored bound, and the current bounds do not match. This
+            # means the model has been modified since the previous call to
+            # final_touch. We need to delete the bridge and start again.
+            MOI.delete(model, bridge)
+            MOI.Bridges.final_touch(bridge, model)
+            return
+        end
         unit_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
         convex_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
         for xi in ret[1]::T:ret[2]::T
             new_var, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
             push!(bridge.variables, new_var)
             if !haskey(S, xi)
-                S[xi] = Tuple{Float64,MOI.VariableIndex}[]
+                S[xi] = Tuple{T,MOI.VariableIndex}[]
             end
             push!(S[xi], (bridge.s.weights[i], new_var))
-            push!(unit_f.terms, MOI.ScalarAffineTerm(T(-xi), new_var))
-            push!(convex_f.terms, MOI.ScalarAffineTerm(one(T), new_var))
+            push!(unit_f.terms, MOI.ScalarAffineTerm{T}(T(-xi), new_var))
+            push!(convex_f.terms, MOI.ScalarAffineTerm{T}(one(T), new_var))
         end
         push!(
             bridge.equal_to,
             MOI.Utilities.normalize_and_add_constraint(
                 model,
                 MOI.Utilities.operate(+, T, x, unit_f),
-                MOI.EqualTo(zero(T));
+                MOI.EqualTo{T}(zero(T));
                 allow_modify_function = true,
             ),
         )
         push!(
             bridge.equal_to,
-            MOI.add_constraint(model, convex_f, MOI.EqualTo(one(T))),
+            MOI.add_constraint(model, convex_f, MOI.EqualTo{T}(one(T))),
         )
     end
     # We use a sort so that the model order is deterministic.
     for s in sort!(collect(keys(S)))
         ci = MOI.add_constraint(
             model,
-            MOI.ScalarAffineFunction(
-                [MOI.ScalarAffineTerm(w, z) for (w, z) in S[s]],
+            MOI.ScalarAffineFunction{T}(
+                [MOI.ScalarAffineTerm{T}(w, z) for (w, z) in S[s]],
                 zero(T),
             ),
-            MOI.LessThan(bridge.s.capacity),
+            MOI.LessThan{T}(bridge.s.capacity),
         )
         push!(bridge.less_than, ci)
     end
