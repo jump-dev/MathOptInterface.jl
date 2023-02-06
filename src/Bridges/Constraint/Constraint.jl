@@ -42,6 +42,7 @@ include("bridges/ltgt_to_interval.jl")
 include("bridges/norm_infinity.jl")
 include("bridges/norm_one.jl")
 include("bridges/norm_spec_nuc_to_psd.jl")
+include("bridges/number_conversion.jl")
 include("bridges/quad_to_soc.jl")
 include("bridges/relentr_to_exp.jl")
 include("bridges/rsoc_soc.jl")
@@ -112,6 +113,8 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, IndicatorGreaterToLessThanBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SemiToBinaryBridge{T})
     MOI.Bridges.add_bridge(bridged_model, ZeroOneBridge{T})
+    # Do not add by default
+    # MOI.Bridges.add_bridge(bridged_model, NumberConversionBridge{T})
     # Constraint programming bridges
     MOI.Bridges.add_bridge(bridged_model, AllDifferentToCountDistinctBridge{T})
     MOI.Bridges.add_bridge(

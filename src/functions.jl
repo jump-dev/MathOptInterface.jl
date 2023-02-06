@@ -641,3 +641,49 @@ function Base.convert(
         [g.constant],
     )
 end
+
+function Base.convert(
+    ::Type{ScalarQuadraticTerm{T}},
+    f::ScalarQuadraticTerm,
+) where {T}
+    return ScalarQuadraticTerm{T}(f.coefficient, f.variable_1, f.variable_2)
+end
+
+function Base.convert(
+    ::Type{ScalarQuadraticFunction{T}},
+    f::ScalarQuadraticFunction,
+) where {T}
+    return ScalarQuadraticFunction{T}(f.quadratic_terms, f.affine_terms, f.constant)
+end
+
+function Base.convert(
+    ::Type{VectorAffineTerm{T}},
+    f::VectorAffineTerm,
+) where {T}
+    return VectorAffineTerm{T}(f.output_index, f.scalar_term)
+end
+
+function Base.convert(
+    ::Type{VectorAffineFunction{T}},
+    f::VectorAffineFunction,
+) where {T}
+    return VectorAffineFunction{T}(f.terms, f.constants)
+end
+
+function Base.convert(
+    ::Type{VectorQuadraticTerm{T}},
+    f::VectorQuadraticTerm,
+) where {T}
+    return VectorQuadraticTerm{T}(f.output_index, f.scalar_term)
+end
+
+function Base.convert(
+    ::Type{VectorQuadraticFunction{T}},
+    f::VectorQuadraticFunction,
+) where {T}
+    return VectorQuadraticFunction{T}(
+        f.quadratic_terms,
+        f.affine_terms,
+        f.constants,
+    )
+end

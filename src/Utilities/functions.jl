@@ -3171,6 +3171,8 @@ tol_default(T::Type{<:AbstractFloat}) = sqrt(eps(T))
 
 convert_approx(::Type{T}, func::T; kws...) where {T} = func
 
+convert_approx(::Type{F}, func::T; kws...) where {F, T} = convert(F, func)
+
 function convert_approx(
     ::Type{MOI.VariableIndex},
     func::MOI.ScalarAffineFunction{T};
@@ -3320,6 +3322,8 @@ end
 is_coefficient_type(::Type{<:TypedLike{T}}, ::Type{T}) where {T} = true
 
 is_coefficient_type(::Type{<:TypedLike}, ::Type) = false
+
+similar_type(::Type{F}, ::Type{T}) where {F,T} = F
 
 function similar_type(::Type{<:MOI.ScalarAffineFunction}, ::Type{T}) where {T}
     return MOI.ScalarAffineFunction{T}
