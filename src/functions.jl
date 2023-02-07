@@ -515,23 +515,9 @@ end
 
 function Base.convert(
     ::Type{ScalarAffineTerm{T}},
-    t::ScalarAffineTerm{T},
-) where {T}
-    return t
-end
-
-function Base.convert(
-    ::Type{ScalarAffineTerm{T}},
     t::ScalarAffineTerm,
 ) where {T}
     return ScalarAffineTerm{T}(t.coefficient, t.variable)
-end
-
-function Base.convert(
-    ::Type{ScalarAffineFunction{T}},
-    f::ScalarAffineFunction{T},
-) where {T}
-    return f
 end
 
 function Base.convert(
@@ -653,7 +639,11 @@ function Base.convert(
     ::Type{ScalarQuadraticFunction{T}},
     f::ScalarQuadraticFunction,
 ) where {T}
-    return ScalarQuadraticFunction{T}(f.quadratic_terms, f.affine_terms, f.constant)
+    return ScalarQuadraticFunction{T}(
+        f.quadratic_terms,
+        f.affine_terms,
+        f.constant,
+    )
 end
 
 function Base.convert(
@@ -686,4 +676,17 @@ function Base.convert(
         f.affine_terms,
         f.constants,
     )
+end
+
+for f in (
+    :ScalarAffineTerm,
+    :ScalarAffineFunction,
+    :ScalarQuadraticTerm,
+    :ScalarQuadraticFunction,
+    :VectorAffineTerm,
+    :VectorAffineFunction,
+    :VectorQuadraticTerm,
+    :VectorQuadraticFunction,
+)
+    @eval Base.convert(::Type{$f{T}}, x::$f{T}) where {T} = x
 end

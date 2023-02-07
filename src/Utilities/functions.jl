@@ -3171,7 +3171,7 @@ tol_default(T::Type{<:AbstractFloat}) = sqrt(eps(T))
 
 convert_approx(::Type{T}, func::T; kws...) where {T} = func
 
-convert_approx(::Type{F}, func::T; kws...) where {F, T} = convert(F, func)
+convert_approx(::Type{F}, func::T; kws...) where {F,T} = convert(F, func)
 
 function convert_approx(
     ::Type{MOI.VariableIndex},
