@@ -27,6 +27,7 @@ include("bridges/count_distinct.jl")
 include("bridges/count_distinct_reif.jl")
 include("bridges/count_greater_than.jl")
 include("bridges/det.jl")
+include("bridges/fix_parametric_variables.jl")
 include("bridges/flip_sign.jl")
 include("bridges/functionize.jl")
 include("bridges/geomean_to_power.jl")
@@ -127,6 +128,8 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, ReifiedCountDistinctToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, CountGreaterThanToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, TableToMILPBridge{T})
+    # We do not add `FixParametricVariablesBridge` since it it only valid for
+    # a special case of problem formulations.
     return
 end
 
