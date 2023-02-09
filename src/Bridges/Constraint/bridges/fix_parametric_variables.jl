@@ -28,10 +28,10 @@ end
 
 function MOI.supports_constraint(
     ::Type{<:FixParametricVariablesBridge{T}},
-	::Type{MOI.ScalarQuadraticFunction{T}},
-	::Type{<:MOI.AbstractScalarSet},
+    ::Type{MOI.ScalarQuadraticFunction{T}},
+    ::Type{<:MOI.AbstractScalarSet},
 ) where {T}
-	return true
+    return true
 end
 
 function concrete_bridge_type(
@@ -45,13 +45,13 @@ end
 function MOI.Bridges.added_constrained_variable_types(
     ::Type{<:FixParametricVariablesBridge},
 )
-	return Tuple{Type}[]
+    return Tuple{Type}[]
 end
 
 function MOI.Bridges.added_constraint_types(
     ::Type{FixParametricVariablesBridge{T,S}},
 ) where {T,S}
-	return Tuple{Type,Type}[(MOI.ScalarAffineFunction{T}, S)]
+    return Tuple{Type,Type}[(MOI.ScalarAffineFunction{T}, S)]
 end
 
 function MOI.get(
@@ -70,20 +70,14 @@ function MOI.get(
     return MOI.get(model, MOI.ConstraintSet(), bridge.affine_constraint)
 end
 
-function MOI.delete(
-    model::MOI.ModelLike,
-    bridge::FixParametricVariablesBridge,
-)
+function MOI.delete(model::MOI.ModelLike, bridge::FixParametricVariablesBridge)
     MOI.delete(model, bridge.affine_constraint)
     return
 end
 
 MOI.get(::FixParametricVariablesBridge, ::MOI.NumberOfVariables)::Int64 = 0
 
-function MOI.get(
-    ::FixParametricVariablesBridge,
-    ::MOI.ListOfVariableIndices,
-)
+function MOI.get(::FixParametricVariablesBridge, ::MOI.ListOfVariableIndices)
     return MOI.VariableIndex[]
 end
 

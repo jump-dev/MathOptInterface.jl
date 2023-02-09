@@ -92,7 +92,6 @@ function test_runtests_duplicates()
     return
 end
 
-
 end  # module
 
 TestConstraintFixParametricVariables.runtests()
