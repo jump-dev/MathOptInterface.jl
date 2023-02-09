@@ -10,6 +10,8 @@
 struct FixParametricVariablesBridge{T,S} <: AbstractBridge
     affine_constraint::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},S}
     f::MOI.ScalarQuadraticFunction{T}
+    values::Dict{MOI.VariableIndex,Union{Nothing,T}}
+    new_coefs::Dict{MOI.VariableIndex,T}
 end
 
 const FixParametricVariables{T,OT<:MOI.ModelLike} =
@@ -23,7 +25,15 @@ function bridge_constraint(
 ) where {T,S<:MOI.AbstractScalarSet}
     affine = MOI.ScalarAffineFunction(f.affine_terms, f.constant)
     ci = MOI.add_constraint(model, affine, s)
-    return FixParametricVariablesBridge{T,S}(ci, f)
+    values = Dict{MOI.VariableIndex,Union{Nothing,T}}()
+    new_coefs = Dict{MOI.VariableIndex,T}()
+    for term in f.quadratic_terms
+        values[term.variable_1] = nothing
+        values[term.variable_2] = nothing
+        new_coefs[term.variable_1] = zero(T)
+        new_coefs[term.variable_2] = zero(T)
+    end
+    return FixParametricVariablesBridge{T,S}(ci, f, values, new_coefs)
 end
 
 function MOI.supports_constraint(
@@ -95,62 +105,52 @@ function MOI.get(
     return [bridge.affine_constraint]
 end
 
+function MOI.modify(
+    model::MOI.ModelLike,
+    bridge::FixParametricVariablesBridge{T,S},
+    chg::MOI.ScalarCoefficientChange{T},
+) where {T,S}
+    MOI.modify(model, bridge.affine_constraint, chg)
+    MOI.Utilities.modify_function!(bridge.f, chg)
+    return
+end
+
 MOI.Bridges.needs_final_touch(::FixParametricVariablesBridge) = true
-
-function _get_fix_value(model, values::Dict{MOI.VariableIndex,T}, x) where {T}
-    v = get(values, x, nothing)
-    if v !== nothing
-        return v
-    end
-    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{T}}(x.value)
-    if MOI.is_valid(model, ci)
-        v = MOI.get(model, MOI.ConstraintSet(), ci).value
-        values[x] = v
-        return v
-    end
-    return nothing
-end
-
-function _get_affine_coefficient(f::MOI.ScalarQuadraticFunction{T}, x) where {T}
-    c = zero(T)
-    for t in f.affine_terms
-        if t.variable == x
-            c += t.coefficient
-        end
-    end
-    return c
-end
 
 function MOI.Bridges.final_touch(
     bridge::FixParametricVariablesBridge{T,S},
     model::MOI.ModelLike,
 ) where {T,S}
-    values = Dict{MOI.VariableIndex,T}()
-    new_coefs = Dict{MOI.VariableIndex,T}()
+    for x in keys(bridge.values)
+        ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{T}}(x.value)
+        if MOI.is_valid(model, ci)
+            bridge.values[x] = MOI.get(model, MOI.ConstraintSet(), ci).value
+        else
+            bridge.values[x] = nothing
+        end
+        new_coef = zero(T)
+        for term in bridge.f.affine_terms
+            if term.variable == x
+                new_coef += term.coefficient
+            end
+        end
+        bridge.new_coefs[x] = new_coef
+    end
     for term in bridge.f.quadratic_terms
-        v1 = _get_fix_value(model, values, term.variable_1)
-        v2 = _get_fix_value(model, values, term.variable_2)
+        v1, v2 = bridge.values[term.variable_1], bridge.values[term.variable_2]
         if v1 !== nothing
-            new_coef = v1 * term.coefficient
-            if haskey(new_coefs, term.variable_2)
-                new_coefs[term.variable_2] += new_coef
+            if term.variable_1 == term.variable_2
+                bridge.new_coefs[term.variable_2] += v1 * term.coefficient / 2
             else
-                coef = _get_affine_coefficient(bridge.f, term.variable_2)
-                new_coefs[term.variable_2] = coef + new_coef
+                bridge.new_coefs[term.variable_2] += v1 * term.coefficient
             end
         elseif v2 !== nothing
-            new_coef = v2 * term.coefficient
-            if haskey(new_coefs, term.variable_1)
-                new_coefs[term.variable_1] += new_coef
-            else
-                coef = _get_affine_coefficient(bridge.f, term.variable_1)
-                new_coefs[term.variable_1] = coef + new_coef
-            end
+            bridge.new_coefs[term.variable_1] += v2 * term.coefficient
         else
             error("At least one variable is not fixed")
         end
     end
-    for (k, v) in new_coefs
+    for (k, v) in bridge.new_coefs
         MOI.modify(
             model,
             bridge.affine_constraint,
