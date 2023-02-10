@@ -7,6 +7,26 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.12.0 (February 10, 2022)
+
+### Added
+
+ - Added support for vector-valued objective functions (#2070)
+ - Added a [`Utilities.distance_to_set`](@ref) method for
+   [`SecondOrderCone`](@ref) (#2060)
+
+### Fixed
+
+ - Fixed a number of constraint bridges so that `Bridges.final_touch` can be
+   called multiple times without forcing a rebuild of the reformulation (#2089)
+
+### Other
+
+ - Added new tests that a set [`ObjectiveFunction`](@ref) appears in
+   [`ListOfModelAttributesSet`](@ref) (#2085)
+ - Improved the docstrings of a number of constraint-programming related sets
+   (#2087)
+
 ## v1.11.5 (January 24, 2022)
 
 ### Fixed
