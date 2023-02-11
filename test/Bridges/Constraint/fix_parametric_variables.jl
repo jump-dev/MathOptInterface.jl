@@ -131,13 +131,13 @@ function test_resolve_with_modified()
     MOI.add_constraint(model, x, MOI.EqualTo(2))
     MOI.Bridges.final_touch(model)
     z = MOI.get(inner, MOI.ListOfVariableIndices())
+    F = MOI.ScalarAffineFunction{Int}
     cis = MOI.get(inner, MOI.ListOfConstraintIndices{F,MOI.EqualTo{Int}}())
     @test length(cis) == 1
     f = MOI.get(inner, MOI.ConstraintFunction(), cis[1])
     @test f ≈ 2 * z[1] + 5 * z[2]
     MOI.modify(model, c, MOI.ScalarCoefficientChange(y, 4))
     MOI.Bridges.final_touch(model)
-    F = MOI.ScalarAffineFunction{Int}
     z = MOI.get(inner, MOI.ListOfVariableIndices())
     cis = MOI.get(inner, MOI.ListOfConstraintIndices{F,MOI.EqualTo{Int}}())
     @test length(cis) == 1
