@@ -116,7 +116,10 @@ function test_at_least_one_variable_is_not_fixed()
     f = 1 * x * y + 2 * x + 3 * y
     MOI.add_constraint(model, f, MOI.EqualTo(0))
     @test_throws(
-        ErrorException("At least one variable is not fixed"),
+        ErrorException(
+            "unable to use `FixParametricVariablesBridge: at least one " *
+            "variable is not fixed",
+        ),
         MOI.Bridges.final_touch(model),
     )
     return
