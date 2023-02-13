@@ -9,13 +9,18 @@
 
 `FixParametricVariablesBridge` implements the following reformulation:
 
-  * ``f(x) \\in S`` into ``g(x) \\in S``, where ``g(x)`` is a
-    [`MOI.ScalarQuadraticFunction{T}`](@ref) and ``f(x)`` is a
-    [`MOI.ScalarAffineFunction{T}`](@ref) with all variables fixed using a
-    [`MOI.VariableIndex`](@ref)-in-[`MOI.EqualTo`](@ref) constraint replaced by
-    their corresponding constant.
+  * ``f(x) \\in S`` into ``g(x) \\in S``, where ``f(x)`` is a
+    [`MOI.ScalarQuadraticFunction{T}`](@ref) and ``g(x)`` is a
+    [`MOI.ScalarAffineFunction{T}`](@ref), where all variables that are fixed
+    using a [`MOI.VariableIndex`](@ref)-in-[`MOI.EqualTo`](@ref) constraint and
+    that appear in a quadratic term are replaced by their corresponding
+    constant.
 
-An error is thrown if, after fixing variables, ``f(x)`` is not an affine
+For example, if `p == 3`, this bridge converts the quadratic term `0.3 * p * x`
+into the linear term `0.9 * x`. Moreover, a linear term such as `0.3 * p` is
+left as `0.3 * p`.
+
+An error is thrown if, after fixing variables, ``g(x)`` is not an affine
 function,
 
 !!! warning
