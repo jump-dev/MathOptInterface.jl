@@ -6,6 +6,36 @@
 
 """
     FixParametricVariablesBridge{T,S} <: AbstractBridge
+
+`FixParametricVariablesBridge` implements the following reformulation:
+
+  * ``f(x) \\in S`` into ``g(x) \\in S``, where ``g(x)`` is a
+    [`MOI.ScalarQuadraticFunction{T}`](@ref) and ``f(x)`` is a
+    [`MOI.ScalarAffineFunction{T}`](@ref) with all variables fixed using a
+    [`MOI.VariableIndex`](@ref)-in-[`MOI.EqualTo`](@ref) constraint replaced by
+    their corresponding constant.
+
+An error is thrown if, after fixing variables, ``f(x)`` is not an affine
+function,
+
+!!! warning
+    This transformation turns a quadratic function into an affine function by
+    substituting decision variables for their fixed values. This can cause the
+    dual solution of the substituted fixed variable to be incorrect. Therefore,
+    this bridge is not added automatically by [`MOI.Bridges.full_bridge_optimizer`](@ref).
+    Care is recommended when adding this bridge to a optimizer.
+
+## Source node
+
+`FixParametricVariablesBridge` supports:
+
+* [`MOI.ScalarQuadraticFunction{T}`](@ref) in `S`
+
+## Target nodes
+
+`FixParametricVariablesBridge` creates:
+
+  * [`MOI.ScalarAffineFunction{T}`](@ref) in `S`
 """
 struct FixParametricVariablesBridge{T,S} <: AbstractBridge
     affine_constraint::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},S}
@@ -122,19 +152,17 @@ function MOI.Bridges.final_touch(
     model::MOI.ModelLike,
 ) where {T,S}
     for x in keys(bridge.values)
+        bridge.values[x] = nothing
+        bridge.new_coefs[x] = zero(T)
         ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{T}}(x.value)
         if MOI.is_valid(model, ci)
             bridge.values[x] = MOI.get(model, MOI.ConstraintSet(), ci).value
-        else
-            bridge.values[x] = nothing
         end
-        new_coef = zero(T)
-        for term in bridge.f.affine_terms
-            if term.variable == x
-                new_coef += term.coefficient
-            end
+    end
+    for term in bridge.f.affine_terms
+        if haskey(bridge.new_coefs, term.variable)
+            bridge.new_coefs[term.variable] += term.coefficient
         end
-        bridge.new_coefs[x] = new_coef
     end
     for term in bridge.f.quadratic_terms
         v1, v2 = bridge.values[term.variable_1], bridge.values[term.variable_2]
@@ -147,7 +175,10 @@ function MOI.Bridges.final_touch(
         elseif v2 !== nothing
             bridge.new_coefs[term.variable_1] += v2 * term.coefficient
         else
-            error("At least one variable is not fixed")
+            error(
+                "unable to use `FixParametricVariablesBridge: at least one " *
+                "variable is not fixed",
+            )
         end
     end
     for (k, v) in bridge.new_coefs
