@@ -416,6 +416,39 @@ maxobjective: 1.2x + 0.5
     )
 end
 
+function test_min_vector_of_variables()
+    return _test_model_equality(
+        """
+variables: x, y
+minobjective: [x, y]
+""",
+        ["x", "y"],
+        String[],
+    )
+end
+
+function test_max_vector_affine()
+    return _test_model_equality(
+        """
+variables: x, y
+maxobjective: [1.0 * x, 2.0 * y, 3.0 * x + 4.0 * y + 5.0]
+""",
+        ["x", "y"],
+        String[],
+    )
+end
+
+function test_max_vector_quadratic()
+    return _test_model_equality(
+        """
+variables: x, y
+maxobjective: [1.0 * x * x + 2.0 * x * y]
+""",
+        ["x", "y"],
+        String[],
+    )
+end
+
 function test_singlevariable_in_lower()
     return _test_model_equality(
         """
