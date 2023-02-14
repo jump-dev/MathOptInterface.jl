@@ -152,3 +152,32 @@ function trimap(row::Integer, column::Integer)
     end
     return div((row - 1) * row, 2) + column
 end
+
+similar_type(::Type{<:MOI.LessThan}, ::Type{T}) where {T} = MOI.LessThan{T}
+
+function similar_type(::Type{<:MOI.GreaterThan}, ::Type{T}) where {T}
+    return MOI.GreaterThan{T}
+end
+
+similar_type(::Type{<:MOI.EqualTo}, ::Type{T}) where {T} = MOI.EqualTo{T}
+
+similar_type(::Type{<:MOI.Interval}, ::Type{T}) where {T} = MOI.Interval{T}
+
+function convert_approx(::Type{MOI.LessThan{T}}, set::MOI.LessThan) where {T}
+    return MOI.LessThan{T}(set.upper)
+end
+
+function convert_approx(
+    ::Type{MOI.GreaterThan{T}},
+    set::MOI.GreaterThan,
+) where {T}
+    return MOI.GreaterThan{T}(set.lower)
+end
+
+function convert_approx(::Type{MOI.EqualTo{T}}, set::MOI.EqualTo) where {T}
+    return MOI.EqualTo{T}(set.value)
+end
+
+function convert_approx(::Type{MOI.Interval{T}}, set::MOI.Interval) where {T}
+    return MOI.Interval{T}(set.lower, set.upper)
+end
