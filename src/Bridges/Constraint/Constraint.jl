@@ -128,7 +128,7 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, ReifiedCountDistinctToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, CountGreaterThanToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, TableToMILPBridge{T})
-    # We do not add `FixParametricVariablesBridge` since it it only valid for
+    # We do not add `_FixParametricVariablesBridge` since it it only valid for
     # a special case of problem formulations.
     return
 end

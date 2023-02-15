@@ -24,7 +24,7 @@ end
 
 function test_runtests_x_fixed()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.FixParametricVariablesBridge,
+        MOI.Bridges.Constraint._FixParametricVariablesBridge,
         """
         variables: x, y
         c: 1.0 * x * y + x + y >= 1.0
@@ -41,7 +41,7 @@ end
 
 function test_runtests_y_fixed()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.FixParametricVariablesBridge,
+        MOI.Bridges.Constraint._FixParametricVariablesBridge,
         """
         variables: x, y
         c: 1.0 * x * y + x + y >= 1.0
@@ -58,7 +58,7 @@ end
 
 function test_runtests_both_fixed()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.FixParametricVariablesBridge,
+        MOI.Bridges.Constraint._FixParametricVariablesBridge,
         """
         variables: x, y
         c: 1.0 * x * y + x + y >= 1.0
@@ -77,7 +77,7 @@ end
 
 function test_runtests_duplicates()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.FixParametricVariablesBridge,
+        MOI.Bridges.Constraint._FixParametricVariablesBridge,
         """
         variables: x, y
         c: 1.0 * x * y + 2.0 * x * y + x + y + x >= 1.0
@@ -94,7 +94,7 @@ end
 
 function test_runtests_squared()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.FixParametricVariablesBridge,
+        MOI.Bridges.Constraint._FixParametricVariablesBridge,
         """
         variables: x, y
         c: 2.0 * x * x + y >= 1.0
@@ -117,7 +117,7 @@ function test_at_least_one_variable_is_not_fixed()
     MOI.add_constraint(model, f, MOI.EqualTo(0))
     @test_throws(
         ErrorException(
-            "unable to use `FixParametricVariablesBridge: at least one " *
+            "unable to use `_FixParametricVariablesBridge: at least one " *
             "variable is not fixed",
         ),
         MOI.Bridges.final_touch(model),

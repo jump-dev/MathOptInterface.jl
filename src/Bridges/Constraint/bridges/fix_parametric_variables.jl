@@ -5,9 +5,13 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    FixParametricVariablesBridge{T,S} <: AbstractBridge
+    _FixParametricVariablesBridge{T,S} <: AbstractBridge
 
-`FixParametricVariablesBridge` implements the following reformulation:
+!!! danger
+    `_FixParametricVariablesBridge` is experimental, and the functionality may
+    change in any future release.
+
+`_FixParametricVariablesBridge` implements the following reformulation:
 
   * ``f(x) \\in S`` into ``g(x) \\in S``, where ``f(x)`` is a
     [`MOI.ScalarQuadraticFunction{T}`](@ref) and ``g(x)`` is a
@@ -32,17 +36,17 @@ function,
 
 ## Source node
 
-`FixParametricVariablesBridge` supports:
+`_FixParametricVariablesBridge` supports:
 
 * [`MOI.ScalarQuadraticFunction{T}`](@ref) in `S`
 
 ## Target nodes
 
-`FixParametricVariablesBridge` creates:
+`_FixParametricVariablesBridge` creates:
 
   * [`MOI.ScalarAffineFunction{T}`](@ref) in `S`
 """
-struct FixParametricVariablesBridge{T,S} <: AbstractBridge
+struct _FixParametricVariablesBridge{T,S} <: AbstractBridge
     affine_constraint::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},S}
     f::MOI.ScalarQuadraticFunction{T}
     values::Dict{MOI.VariableIndex,Union{Nothing,T}}
@@ -50,10 +54,10 @@ struct FixParametricVariablesBridge{T,S} <: AbstractBridge
 end
 
 const FixParametricVariables{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{FixParametricVariablesBridge{T},OT}
+    SingleBridgeOptimizer{_FixParametricVariablesBridge{T},OT}
 
 function bridge_constraint(
-    ::Type{FixParametricVariablesBridge{T,S}},
+    ::Type{_FixParametricVariablesBridge{T,S}},
     model::MOI.ModelLike,
     f::MOI.ScalarQuadraticFunction{T},
     s::S,
@@ -68,11 +72,11 @@ function bridge_constraint(
         new_coefs[term.variable_1] = zero(T)
         new_coefs[term.variable_2] = zero(T)
     end
-    return FixParametricVariablesBridge{T,S}(ci, f, values, new_coefs)
+    return _FixParametricVariablesBridge{T,S}(ci, f, values, new_coefs)
 end
 
 function MOI.supports_constraint(
-    ::Type{<:FixParametricVariablesBridge{T}},
+    ::Type{<:_FixParametricVariablesBridge{T}},
     ::Type{MOI.ScalarQuadraticFunction{T}},
     ::Type{<:MOI.AbstractScalarSet},
 ) where {T}
@@ -80,21 +84,21 @@ function MOI.supports_constraint(
 end
 
 function concrete_bridge_type(
-    ::Type{<:FixParametricVariablesBridge},
+    ::Type{<:_FixParametricVariablesBridge},
     ::Type{MOI.ScalarQuadraticFunction{T}},
     ::Type{S},
 ) where {T,S<:MOI.AbstractScalarSet}
-    return FixParametricVariablesBridge{T,S}
+    return _FixParametricVariablesBridge{T,S}
 end
 
 function MOI.Bridges.added_constrained_variable_types(
-    ::Type{<:FixParametricVariablesBridge},
+    ::Type{<:_FixParametricVariablesBridge},
 )
     return Tuple{Type}[]
 end
 
 function MOI.Bridges.added_constraint_types(
-    ::Type{FixParametricVariablesBridge{T,S}},
+    ::Type{_FixParametricVariablesBridge{T,S}},
 ) where {T,S}
     return Tuple{Type,Type}[(MOI.ScalarAffineFunction{T}, S)]
 end
@@ -102,7 +106,7 @@ end
 function MOI.get(
     ::MOI.ModelLike,
     ::MOI.ConstraintFunction,
-    bridge::FixParametricVariablesBridge,
+    bridge::_FixParametricVariablesBridge,
 )
     return bridge.f
 end
@@ -110,31 +114,31 @@ end
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.ConstraintSet,
-    bridge::FixParametricVariablesBridge,
+    bridge::_FixParametricVariablesBridge,
 )
     return MOI.get(model, MOI.ConstraintSet(), bridge.affine_constraint)
 end
 
-function MOI.delete(model::MOI.ModelLike, bridge::FixParametricVariablesBridge)
+function MOI.delete(model::MOI.ModelLike, bridge::_FixParametricVariablesBridge)
     MOI.delete(model, bridge.affine_constraint)
     return
 end
 
-MOI.get(::FixParametricVariablesBridge, ::MOI.NumberOfVariables)::Int64 = 0
+MOI.get(::_FixParametricVariablesBridge, ::MOI.NumberOfVariables)::Int64 = 0
 
-function MOI.get(::FixParametricVariablesBridge, ::MOI.ListOfVariableIndices)
+function MOI.get(::_FixParametricVariablesBridge, ::MOI.ListOfVariableIndices)
     return MOI.VariableIndex[]
 end
 
 function MOI.get(
-    bridge::FixParametricVariablesBridge{T,S},
+    bridge::_FixParametricVariablesBridge{T,S},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},S},
 )::Int64 where {T,S}
     return 1
 end
 
 function MOI.get(
-    bridge::FixParametricVariablesBridge{T,S},
+    bridge::_FixParametricVariablesBridge{T,S},
     ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},S},
 ) where {T,S}
     return [bridge.affine_constraint]
@@ -142,7 +146,7 @@ end
 
 function MOI.modify(
     model::MOI.ModelLike,
-    bridge::FixParametricVariablesBridge{T,S},
+    bridge::_FixParametricVariablesBridge{T,S},
     chg::MOI.ScalarCoefficientChange{T},
 ) where {T,S}
     MOI.modify(model, bridge.affine_constraint, chg)
@@ -150,10 +154,10 @@ function MOI.modify(
     return
 end
 
-MOI.Bridges.needs_final_touch(::FixParametricVariablesBridge) = true
+MOI.Bridges.needs_final_touch(::_FixParametricVariablesBridge) = true
 
 function MOI.Bridges.final_touch(
-    bridge::FixParametricVariablesBridge{T,S},
+    bridge::_FixParametricVariablesBridge{T,S},
     model::MOI.ModelLike,
 ) where {T,S}
     for x in keys(bridge.values)
@@ -173,6 +177,8 @@ function MOI.Bridges.final_touch(
         v1, v2 = bridge.values[term.variable_1], bridge.values[term.variable_2]
         if v1 !== nothing
             if term.variable_1 == term.variable_2
+                # This is needed because `ScalarQuadraticFunction` has a factor
+                # of 0.5 in front of the Q matrix.
                 bridge.new_coefs[term.variable_2] += v1 * term.coefficient / 2
             else
                 bridge.new_coefs[term.variable_2] += v1 * term.coefficient
@@ -181,7 +187,7 @@ function MOI.Bridges.final_touch(
             bridge.new_coefs[term.variable_1] += v2 * term.coefficient
         else
             error(
-                "unable to use `FixParametricVariablesBridge: at least one " *
+                "unable to use `_FixParametricVariablesBridge: at least one " *
                 "variable is not fixed",
             )
         end
