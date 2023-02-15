@@ -72,6 +72,7 @@ _set(::Any, ::Type{S}) where {S} = _set(S)
 _set(::Type{T}, ::Type{MOI.LessThan}) where {T} = MOI.LessThan(one(T))
 _set(::Type{T}, ::Type{MOI.GreaterThan}) where {T} = MOI.GreaterThan(one(T))
 _set(::Type{T}, ::Type{MOI.EqualTo}) where {T} = MOI.EqualTo(one(T))
+_set(::Type{T}, ::Type{MOI.Parameter}) where {T} = MOI.Parameter(one(T))
 _set(::Type{T}, ::Type{MOI.Interval}) where {T} = MOI.Interval(zero(T), one(T))
 _set(::Type{MOI.ZeroOne}) = MOI.ZeroOne()
 _set(::Type{MOI.Integer}) = MOI.Integer()
@@ -264,6 +265,7 @@ for s in [
     :GreaterThan,
     :LessThan,
     :EqualTo,
+    :Parameter,
     :Interval,
     :ZeroOne,
     :Semicontinuous,

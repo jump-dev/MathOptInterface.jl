@@ -67,6 +67,7 @@ Integer
 ZeroOne
 Semicontinuous
 Semiinteger
+Parameter
 ```
 
 ## Vector sets

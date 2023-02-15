@@ -47,6 +47,14 @@ function set_from_constants(
     return S()
 end
 
+function set_from_constants(
+    b::AbstractVectorBounds,
+    ::Type{<:MOI.Parameter},
+    index,
+)
+    return MOI.Parameter(b.lower[index])
+end
+
 """
     SUPPORTED_VARIABLE_SCALAR_SETS{T}
 
@@ -62,12 +70,13 @@ const SUPPORTED_VARIABLE_SCALAR_SETS{T} = Union{
     MOI.ZeroOne,
     MOI.Semicontinuous{T},
     MOI.Semiinteger{T},
+    MOI.Parameter{T},
 }
 
-# 0xcb = 0x0080 | 0x0040 | 0x0008 | 0x0002 | 0x0001
-const _LOWER_BOUND_MASK = 0x00cb
-# 0xcd = 0x0080 | 0x0040 | 0x0008 | 0x0004 | 0x0001
-const _UPPER_BOUND_MASK = 0x00cd
+# 0x01cb = 0x0080 | 0x0040 | 0x0008 | 0x0002 | 0x0001 | 0x0100
+const _LOWER_BOUND_MASK = 0x01cb
+# 0x01cd = 0x0080 | 0x0040 | 0x0008 | 0x0004 | 0x0001 | 0x0100
+const _UPPER_BOUND_MASK = 0x01cd
 
 const _DELETED_VARIABLE = 0x8000
 
@@ -79,6 +88,7 @@ _single_variable_flag(::Type{MOI.Integer}) = 0x0010
 _single_variable_flag(::Type{MOI.ZeroOne}) = 0x0020
 _single_variable_flag(::Type{<:MOI.Semicontinuous}) = 0x0040
 _single_variable_flag(::Type{<:MOI.Semiinteger}) = 0x0080
+_single_variable_flag(::Type{<:MOI.Parameter}) = 0x0100
 
 function _flag_to_set_type(flag::UInt16, ::Type{T}) where {T}
     if flag == 0x0001
@@ -95,9 +105,11 @@ function _flag_to_set_type(flag::UInt16, ::Type{T}) where {T}
         return MOI.ZeroOne
     elseif flag == 0x0040
         return MOI.Semicontinuous{T}
-    else
-        @assert flag == 0x0080
+    elseif flag == 0x0080
         return MOI.Semiinteger{T}
+    else
+        @assert flag == 0x0100
+        return MOI.Parameter{T}
     end
 end
 
@@ -143,7 +155,7 @@ function _lower_bound(
     return set.lower
 end
 
-_lower_bound(set::MOI.EqualTo) = set.value
+_lower_bound(set::Union{MOI.EqualTo,MOI.Parameter}) = set.value
 
 function _upper_bound(
     set::Union{MOI.LessThan,MOI.Interval,MOI.Semicontinuous,MOI.Semiinteger},
@@ -151,7 +163,7 @@ function _upper_bound(
     return set.upper
 end
 
-_upper_bound(set::MOI.EqualTo) = set.value
+_upper_bound(set::Union{MOI.EqualTo,MOI.Parameter}) = set.value
 
 # Use `-Inf` and `Inf` for `AbstractFloat` subtypes.
 _no_lower_bound(::Type{T}) where {T} = zero(T)
@@ -373,6 +385,7 @@ function MOI.get(
     _add_constraint_type(list, b, MOI.Semiinteger{T})
     _add_constraint_type(list, b, MOI.Integer)
     _add_constraint_type(list, b, MOI.ZeroOne)
+    _add_constraint_type(list, b, MOI.Parameter{T})
     return list
 end
 
