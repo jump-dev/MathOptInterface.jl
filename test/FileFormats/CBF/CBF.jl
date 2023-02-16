@@ -9,7 +9,7 @@ module TestCBF
 using Test
 
 import MathOptInterface as MOI
-const MOIU = MOI.Utilities
+import MathOptInterface.Utilities as MOIU
 const CBF = MOI.FileFormats.CBF
 const CBF_TEST_FILE = "test.cbf"
 const MODELS_DIR = joinpath(@__DIR__, "models")

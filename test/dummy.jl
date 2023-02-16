@@ -5,7 +5,7 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 import MathOptInterface as MOI
-const MOIU = MOI.Utilities
+import MathOptInterface.Utilities as MOIU
 
 abstract type AbstractDummyModel <: MOI.ModelLike end
 

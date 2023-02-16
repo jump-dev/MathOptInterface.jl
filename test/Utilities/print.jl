@@ -9,7 +9,7 @@ module TestPrint
 using Test
 
 import MathOptInterface as MOI
-const MOIU = MOI.Utilities
+import MathOptInterface.Utilities as MOIU
 
 function runtests()
     for name in names(@__MODULE__; all = true)

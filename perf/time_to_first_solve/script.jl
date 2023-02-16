@@ -4,10 +4,9 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-using MathOptInterface
-import GLPK
 import Clp
-const MOI = MathOptInterface
+import GLPK
+import MathOptInterface as MOI
 
 function example_diet(optimizer, bridge)
     category_data = [

@@ -6,7 +6,7 @@
 
 using Test
 import MathOptInterface as MOI
-const MOIU = MOI.Utilities
+import MathOptInterface.Utilities as MOIU
 
 const NUM_BENCHMARKS = length(MOI.Benchmarks.BENCHMARKS)
 

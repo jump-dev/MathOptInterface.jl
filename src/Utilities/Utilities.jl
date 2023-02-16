@@ -12,7 +12,7 @@ using OrderedCollections # for OrderedDict in UniversalFallback
 import MathOptInterface as MOI
 import MutableArithmetics as MA
 
-const MOIU = MOI.Utilities # used in macro
+import MathOptInterface.Utilities as MOIU # used in macro
 
 const SVF = MOI.VariableIndex
 const VVF = MOI.VectorOfVariables

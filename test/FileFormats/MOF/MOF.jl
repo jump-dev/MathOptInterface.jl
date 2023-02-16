@@ -11,7 +11,7 @@ import JSONSchema
 using Test
 
 import MathOptInterface as MOI
-const MOIU = MOI.Utilities
+import MathOptInterface.Utilities as MOIU
 const MOF = MOI.FileFormats.MOF
 
 const TEST_MOF_FILE = "test.mof.json"

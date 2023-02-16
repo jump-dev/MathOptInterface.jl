@@ -9,7 +9,7 @@ module TestCopy
 using Test
 
 import MathOptInterface as MOI
-const MOIU = MOI.Utilities
+import MathOptInterface.Utilities as MOIU
 
 const DoubleDicts = MathOptInterface.Utilities.DoubleDicts
 

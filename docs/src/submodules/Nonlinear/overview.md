@@ -37,7 +37,7 @@ best dealt with by other components of MathOptInterface.
 The core element of the `Nonlinear` submodule is
 [`Nonlinear.Model`](@ref):
 ```jldoctest nonlinear_developer
-julia> const Nonlinear = MathOptInterface.Nonlinear;
+julia> const Nonlinear = MOI.Nonlinear;
 
 julia> model = Nonlinear.Model()
 A Nonlinear.Model with:
