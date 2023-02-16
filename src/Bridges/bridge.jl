@@ -8,7 +8,7 @@
     abstract type AbstractBridge end
 
 An abstract type representing a bridged constraint or variable in a
-[`MathOptInterface.Bridges.AbstractBridgeOptimizer`](@ref).
+[`MOI.Bridges.AbstractBridgeOptimizer`](@ref).
 
 All bridges must implement:
 
@@ -25,8 +25,8 @@ docstrings for details.
 In addition, all subtypes may optionally implement the following constraint
 attributes with the bridge in place of the constraint index:
 
- * [`MathOptInterface.ConstraintDual`](@ref)
- * [`MathOptInterface.ConstraintPrimal`](@ref)
+ * [`MOI.ConstraintDual`](@ref)
+ * [`MOI.ConstraintPrimal`](@ref)
 """
 abstract type AbstractBridge end
 

@@ -21,7 +21,7 @@ end
 
 This is called by `AbstractModel` to inform the `constraints` field that a
 variable has been added. This is similar to
-[`MathOptInterface.add_variable`](@ref) except that it should return `nothing`.
+[`MOI.add_variable`](@ref) except that it should return `nothing`.
 """
 function _add_variable end
 
@@ -546,14 +546,14 @@ functions, `typed_scalar_functions` typed scalar functions, `vector_functions`
 vector functions and `typed_vector_functions` typed vector functions.
 To give no set/function, write `()`, to give one set `S`, write `(S,)`.
 
-The function [`MathOptInterface.VariableIndex`](@ref) should not be given in
-`scalar_functions`. The model supports [`MathOptInterface.VariableIndex`](@ref)-in-`S`
-constraints where `S` is [`MathOptInterface.EqualTo`](@ref),
-[`MathOptInterface.GreaterThan`](@ref), [`MathOptInterface.LessThan`](@ref),
-[`MathOptInterface.Interval`](@ref), [`MathOptInterface.Integer`](@ref),
-[`MathOptInterface.ZeroOne`](@ref), [`MathOptInterface.Semicontinuous`](@ref)
-or [`MathOptInterface.Semiinteger`](@ref). The sets supported
-with the [`MathOptInterface.VariableIndex`](@ref) cannot be controlled from the
+The function [`MOI.VariableIndex`](@ref) should not be given in
+`scalar_functions`. The model supports [`MOI.VariableIndex`](@ref)-in-`S`
+constraints where `S` is [`MOI.EqualTo`](@ref),
+[`MOI.GreaterThan`](@ref), [`MOI.LessThan`](@ref),
+[`MOI.Interval`](@ref), [`MOI.Integer`](@ref),
+[`MOI.ZeroOne`](@ref), [`MOI.Semicontinuous`](@ref)
+or [`MOI.Semiinteger`](@ref). The sets supported
+with the [`MOI.VariableIndex`](@ref) cannot be controlled from the
 macro, use the [`UniversalFallback`](@ref) to support more sets.
 
 This macro creates a model specialized for specific types of constraint,
@@ -563,9 +563,9 @@ constraints and attributes, use [`UniversalFallback`](@ref).
 
 If `is_optimizer = true`, the resulting struct is a
 of [`GenericOptimizer`](@ref), which is a subtype of
-[`MathOptInterface.AbstractOptimizer`](@ref), otherwise, it is a
+[`MOI.AbstractOptimizer`](@ref), otherwise, it is a
 [`GenericModel`](@ref), which is a subtype of
-[`MathOptInterface.ModelLike`](@ref).
+[`MOI.ModelLike`](@ref).
 
 ### Examples
 

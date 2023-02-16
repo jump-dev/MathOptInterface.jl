@@ -88,7 +88,7 @@ package-specific functions or sets to be used if the non-standard bridges
 are not added. Therefore, you are recommended to use
 `model = MOI.instantiate(Package.Optimizer; with_bridge_type = T)` instead of
 `model = MOI.instantiate(Package.Optimizer)`. See
-[`MathOptInterface.instantiate`](@ref).
+[`MOI.instantiate`](@ref).
 
 ## Examples
 

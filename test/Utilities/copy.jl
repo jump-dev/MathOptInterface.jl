@@ -10,8 +10,7 @@ using Test
 
 import MathOptInterface as MOI
 import MathOptInterface.Utilities as MOIU
-
-const DoubleDicts = MathOptInterface.Utilities.DoubleDicts
+import MathOptInterface.Utilities.DoubleDicts
 
 function runtests()
     for name in names(@__MODULE__; all = true)

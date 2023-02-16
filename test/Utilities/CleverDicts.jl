@@ -9,8 +9,7 @@ module TestCleverDicts
 using Test
 
 import MathOptInterface as MOI
-
-const CleverDicts = MOI.Utilities.CleverDicts
+import MathOptInterface.Utilities.CleverDicts
 
 function runtests()
     for name in names(@__MODULE__; all = true)

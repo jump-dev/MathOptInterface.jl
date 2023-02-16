@@ -7,14 +7,14 @@
 """
     UniversalFallback
 
-The `UniversalFallback` can be applied on a [`MathOptInterface.ModelLike`](@ref)
+The `UniversalFallback` can be applied on a [`MOI.ModelLike`](@ref)
 `model` to create the model `UniversalFallback(model)` supporting *any*
 constraint and attribute. This allows to have a specialized implementation in
 `model` for performance critical constraints and attributes while still
 supporting other attributes with a small performance penalty. Note that `model`
 is unaware of constraints and attributes stored by `UniversalFallback` so this
 is not appropriate if `model` is an optimizer (for this reason,
-[`MathOptInterface.optimize!`](@ref) has not been implemented). In that case,
+[`MOI.optimize!`](@ref) has not been implemented). In that case,
 optimizer bridges should be used instead.
 """
 mutable struct UniversalFallback{MT} <: MOI.ModelLike
@@ -138,14 +138,14 @@ end
 """
     throw_unsupported(uf::UniversalFallback; excluded_attributes = MOI.AnyAttribute[])
 
-Throws [`MathOptInterface.UnsupportedAttribute`](@ref) if there are any model,
+Throws [`MOI.UnsupportedAttribute`](@ref) if there are any model,
 variable or constraint attribute such that 1) `is_copyable(attr)` returns
 `true`, 2) the attribute was set to `uf` but not to `uf.model` and 3) the
 attribute is not in `excluded_attributes`.
 
 Suppose `Optimizer` supports only the constraints and attributes
 that `OptimizerCache` supports in addition to
-[`MathOptInterface.VariablePrimalStart`](@ref).
+[`MOI.VariablePrimalStart`](@ref).
 Then, this function can be used in the implementation of the following method:
 ```julia
 function MOI.copy_to(

@@ -219,7 +219,7 @@ end
 """
     variable_constraints(map::Map, vi::MOI.VariableIndex)
 
-Return the list of all keys corresponding to [`MathOptInterface.VariableIndex`](@ref)
+Return the list of all keys corresponding to [`MOI.VariableIndex`](@ref)
 constraints on the variable `vi`.
 """
 function variable_constraints(map::Map, vi::MOI.VariableIndex)
@@ -236,7 +236,7 @@ end
     vector_of_variables_constraints(map::Map)
 
 Return the list of all keys that correspond to
-[`MathOptInterface.VectorOfVariables`](@ref) constraints.
+[`MOI.VectorOfVariables`](@ref) constraints.
 """
 function vector_of_variables_constraints(map::Map)
     return MOI.Utilities.LazyMap{MOI.ConstraintIndex{MOI.VectorOfVariables}}(

@@ -73,8 +73,8 @@ is `true`.
 
 ## Examples
 
-As a variable in [`MathOptInterface.GreaterThan`](@ref) is bridged into
-variables in [`MathOptInterface.Nonnegatives`](@ref) by the
+As a variable in [`MOI.GreaterThan`](@ref) is bridged into
+variables in [`MOI.Nonnegatives`](@ref) by the
 [`VectorizeBridge`](@ref):
 
 ```jldoctest; setup=:(import MathOptInterface as MOI)

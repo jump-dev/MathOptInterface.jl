@@ -211,7 +211,7 @@ end
 Attaches the optimizer to `model`, copying all model data into it. Can be called
 only from the `EMPTY_OPTIMIZER` state. If the copy succeeds, the
 `CachingOptimizer` will be in state `ATTACHED_OPTIMIZER` after the call,
-otherwise an error is thrown; see [`MathOptInterface.copy_to`](@ref) for more details on which
+otherwise an error is thrown; see [`MOI.copy_to`](@ref) for more details on which
 errors can be thrown.
 """
 function attach_optimizer(model::CachingOptimizer)

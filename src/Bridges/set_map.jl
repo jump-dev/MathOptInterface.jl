@@ -10,7 +10,7 @@
 Return the image of `set` through the linear map `A` defined in
 [`Variable.SetMapBridge`](@ref) and [`Constraint.SetMapBridge`](@ref). This is
 used for bridging the constraint and setting
-the [`MathOptInterface.ConstraintSet`](@ref).
+the [`MOI.ConstraintSet`](@ref).
 """
 function map_set end
 
@@ -19,7 +19,7 @@ function map_set end
 
 Return the preimage of `set` through the linear map `A` defined in
 [`Variable.SetMapBridge`](@ref) and [`Constraint.SetMapBridge`](@ref). This is
-used for getting the [`MathOptInterface.ConstraintSet`](@ref).
+used for getting the [`MOI.ConstraintSet`](@ref).
 """
 function inverse_map_set end
 
@@ -28,19 +28,19 @@ function inverse_map_set end
 
 Return the image of `func` through the linear map `A` defined in
 [`Variable.SetMapBridge`](@ref) and [`Constraint.SetMapBridge`](@ref). This is
-used for getting the [`MathOptInterface.ConstraintPrimal`](@ref) of variable
+used for getting the [`MOI.ConstraintPrimal`](@ref) of variable
 bridges. For constraint bridges, this is used for bridging the constraint,
-setting the [`MathOptInterface.ConstraintFunction`](@ref) and
-[`MathOptInterface.ConstraintPrimalStart`](@ref) and
-modifying the function with [`MathOptInterface.modify`](@ref).
+setting the [`MOI.ConstraintFunction`](@ref) and
+[`MOI.ConstraintPrimalStart`](@ref) and
+modifying the function with [`MOI.modify`](@ref).
 
     map_function(::Type{BT}, func, i::IndexInVector) where {BT}
 
 Return the scalar function at the `i`th index of the vector function that
 would be returned by `map_function(BT, func)` except that it may compute the
 `i`th element. This is used by [`bridged_function`](@ref) and for getting
-the [`MathOptInterface.VariablePrimal`](@ref) and
-[`MathOptInterface.VariablePrimalStart`](@ref) of variable bridges.
+the [`MOI.VariablePrimal`](@ref) and
+[`MOI.VariablePrimalStart`](@ref) of variable bridges.
 """
 function map_function end
 
@@ -54,10 +54,10 @@ end
 Return the image of `func` through the inverse of the linear map `A` defined in
 [`Variable.SetMapBridge`](@ref) and [`Constraint.SetMapBridge`](@ref). This is
 used by [`Variable.unbridged_map`](@ref) and for setting the
-[`MathOptInterface.VariablePrimalStart`](@ref) of variable bridges
-and for getting the [`MathOptInterface.ConstraintFunction`](@ref),
-the [`MathOptInterface.ConstraintPrimal`](@ref) and the
-[`MathOptInterface.ConstraintPrimalStart`](@ref) of constraint bridges.
+[`MOI.VariablePrimalStart`](@ref) of variable bridges
+and for getting the [`MOI.ConstraintFunction`](@ref),
+the [`MOI.ConstraintPrimal`](@ref) and the
+[`MOI.ConstraintPrimalStart`](@ref) of constraint bridges.
 """
 function inverse_map_function end
 
@@ -66,8 +66,8 @@ function inverse_map_function end
 
 Return the image of `func` through the adjoint of the linear map `A` defined in
 [`Variable.SetMapBridge`](@ref) and [`Constraint.SetMapBridge`](@ref). This is
-used for getting the [`MathOptInterface.ConstraintDual`](@ref) and
-[`MathOptInterface.ConstraintDualStart`](@ref) of constraint bridges.
+used for getting the [`MOI.ConstraintDual`](@ref) and
+[`MOI.ConstraintDualStart`](@ref) of constraint bridges.
 """
 function adjoint_map_function end
 
@@ -77,7 +77,7 @@ function adjoint_map_function end
 Return the image of `func` through the inverse of the adjoint of the linear map
 `A` defined in [`Variable.SetMapBridge`](@ref) and
 [`Constraint.SetMapBridge`](@ref). This is used for getting the
-[`MathOptInterface.ConstraintDual`](@ref) of variable bridges and setting the
-[`MathOptInterface.ConstraintDualStart`](@ref) of constraint bridges.
+[`MOI.ConstraintDual`](@ref) of variable bridges and setting the
+[`MOI.ConstraintDualStart`](@ref) of constraint bridges.
 """
 function inverse_adjoint_map_function end

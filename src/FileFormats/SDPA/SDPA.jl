@@ -77,9 +77,9 @@ shared with the matrices `A_i` and `C`.
 In other words, the geometric conic form contains free variables and affine
 constraints in either the nonnegative orthant or the positive semidefinite cone.
 That is, in the MathOptInterface's terminology,
-[`MathOptInterface.VectorAffineFunction`](@ref)-in-[`MathOptInterface.Nonnegatives`](@ref)
+[`MOI.VectorAffineFunction`](@ref)-in-[`MOI.Nonnegatives`](@ref)
 and
-[`MathOptInterface.VectorAffineFunction`](@ref)-in-[`MathOptInterface.PositiveSemidefiniteConeTriangle`](@ref)
+[`MOI.VectorAffineFunction`](@ref)-in-[`MOI.PositiveSemidefiniteConeTriangle`](@ref)
 constraints.
 
 The corresponding *standard conic* form of the dual SDP is as follows:
@@ -94,10 +94,10 @@ The corresponding *standard conic* form of the dual SDP is as follows:
 In other words, the standard conic form contains nonnegative and positive
 semidefinite variables with equality constraints.
 That is, in the MathOptInterface's terminology,
-[`MathOptInterface.VectorOfVariables`](@ref)-in-[`MathOptInterface.Nonnegatives`](@ref),
-[`MathOptInterface.VectorOfVariables`](@ref)-in-[`MathOptInterface.PositiveSemidefiniteConeTriangle`](@ref)
+[`MOI.VectorOfVariables`](@ref)-in-[`MOI.Nonnegatives`](@ref),
+[`MOI.VectorOfVariables`](@ref)-in-[`MOI.PositiveSemidefiniteConeTriangle`](@ref)
 and
-[`MathOptInterface.ScalarAffineFunction`](@ref)-in-[`MathOptInterface.EqualTo`](@ref)
+[`MOI.ScalarAffineFunction`](@ref)-in-[`MOI.EqualTo`](@ref)
 constraints.
 
 If a model is in standard conic form, use `Dualization.jl` to transform it into
@@ -105,21 +105,21 @@ the geometric conic form before writting it. Otherwise, the nonnegative (resp.
 positive semidefinite) variables will be bridged into free variables with
 affine constraints constraining them to belong to the nonnegative orthant
 (resp. positive semidefinite cone) by the
-[`MathOptInterface.Bridges.Constraint.VectorFunctionizeBridge`](@ref). Moreover, equality
+[`MOI.Bridges.Constraint.VectorFunctionizeBridge`](@ref). Moreover, equality
 constraints will be bridged into pairs of affine constraints in the nonnegative
 orthant by the
-[`MathOptInterface.Bridges.Constraint.SplitIntervalBridge`](@ref)
+[`MOI.Bridges.Constraint.SplitIntervalBridge`](@ref)
 and then the
-[`MathOptInterface.Bridges.Constraint.VectorizeBridge`](@ref).
+[`MOI.Bridges.Constraint.VectorizeBridge`](@ref).
 
 If a solver is in standard conic form, use `Dualization.jl` to transform the
 model read into standard conic form before copying it to the solver. Otherwise,
 the free variables will be bridged into pairs of variables in the nonnegative
 orthant by the
-[`MathOptInterface.Bridges.Variable.FreeBridge`](@ref)
+[`MOI.Bridges.Variable.FreeBridge`](@ref)
 and affine constraints will be bridged into equality constraints
 by creating a slack variable by the
-[`MathOptInterface.Bridges.Constraint.VectorSlackBridge`](@ref).
+[`MOI.Bridges.Constraint.VectorSlackBridge`](@ref).
 """
 function Model(; number_type::Type = Float64)
     model = Model{number_type}()

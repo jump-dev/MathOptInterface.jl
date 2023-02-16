@@ -9,8 +9,7 @@ module TestDoubleDicts
 using Test
 
 import MathOptInterface as MOI
-
-const DoubleDicts = MOI.Utilities.DoubleDicts
+import MathOptInterface.Utilities.DoubleDicts
 
 function runtests()
     for name in names(@__MODULE__; all = true)

@@ -10,7 +10,7 @@
 Return `AbstractBridgeOptimizer` that always bridges any objective function
 supported by the bridge `BT`.
 
-This is in contrast with the [`MathOptInterface.Bridges.LazyBridgeOptimizer`](@ref),
+This is in contrast with the [`MOI.Bridges.LazyBridgeOptimizer`](@ref),
 which only bridges the objective function if it is supported by the bridge `BT`
 and unsupported by `model`.
 
