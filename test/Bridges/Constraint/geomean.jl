@@ -8,8 +8,7 @@ module TestConstraintGeomean
 
 using Test
 
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -93,11 +92,11 @@ function test_conic_GeometricMeanCone_VectorAffineFunction()
     MOI.set.(mock, MOI.ConstraintName(), rsoc, ["rsoc21", "rsoc11", "rsoc12"])
     s = """
     variables: t, x, y, z, x21, x11, x12
-    lessthan1: t + -0.5 * x21 in MathOptInterface.LessThan(0.0)
-    lessthan2: x + y + z in MathOptInterface.LessThan(3.0)
-    rsoc11: [1.0x, y, x11] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc12: [z, 0.5 * x21, x12] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc21: [1.0x11, x12, x21] in MathOptInterface.RotatedSecondOrderCone(3)
+    lessthan1: t + -0.5 * x21 in LessThan(0.0)
+    lessthan2: x + y + z in LessThan(3.0)
+    rsoc11: [1.0x, y, x11] in RotatedSecondOrderCone(3)
+    rsoc12: [z, 0.5 * x21, x12] in RotatedSecondOrderCone(3)
+    rsoc21: [1.0x11, x12, x21] in RotatedSecondOrderCone(3)
     maxobjective: t
     """
     model = MOI.Utilities.Model{Float64}()
@@ -135,8 +134,8 @@ function test_conic_GeometricMeanCone_VectorAffineFunction()
     MOI.set(bridged_mock, MOI.ConstraintName(), geomean[1], "geomean")
     s = """
     variables: t, x, y, z
-    lessthan: x + y + z in MathOptInterface.LessThan(3.0)
-    geomean: [1.0t, x, y, z] in MathOptInterface.GeometricMeanCone(4)
+    lessthan: x + y + z in LessThan(3.0)
+    geomean: [1.0t, x, y, z] in GeometricMeanCone(4)
     maxobjective: t
     """
     model = MOI.Utilities.Model{Float64}()
@@ -250,31 +249,31 @@ function test_conic_GeometricMeanCone_VectorAffineFunction_2()
     varnames_str = vcat("t", [", " * v for v in var_names[2:end]])
     s = """
     variables: $(varnames_str...)
-    lessthan: t + -0.25 * x41 in MathOptInterface.LessThan(0.0)
-    equalto1: 1.0x1 in MathOptInterface.EqualTo(1.0)
-    equalto2: 1.0x2 in MathOptInterface.EqualTo(1.0)
-    equalto3: 1.0x3 in MathOptInterface.EqualTo(1.0)
-    equalto4: 1.0x4 in MathOptInterface.EqualTo(1.0)
-    equalto5: 1.0x5 in MathOptInterface.EqualTo(1.0)
-    equalto6: 1.0x6 in MathOptInterface.EqualTo(1.0)
-    equalto7: 1.0x7 in MathOptInterface.EqualTo(1.0)
-    equalto8: 1.0x8 in MathOptInterface.EqualTo(1.0)
-    equalto9: 1.0x9 in MathOptInterface.EqualTo(1.0)
-    rsoc41: [1.0x31, x32, x41] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc31: [1.0x21, x22, x31] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc32: [1.0x23, x24, x32] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc21: [1.0x11, x12, x21] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc22: [1.0x13, x14, x22] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc23: [1.0x15, x16, x23] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc24: [1.0x17, x18, x24] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc11: [1.0x1, x2, x11] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc12: [1.0x3, x4, x12] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc13: [1.0x5, x6, x13] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc14: [1.0x7, x8, x14] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc15: [1.0x9, 0.25 * x41, x15] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc16: [0.25 * x41, 0.25 * x41, x16] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc17: [0.25 * x41, 0.25 * x41, x17] in MathOptInterface.RotatedSecondOrderCone(3)
-    rsoc18: [0.25 * x41, 0.25 * x41, x18] in MathOptInterface.RotatedSecondOrderCone(3)
+    lessthan: t + -0.25 * x41 in LessThan(0.0)
+    equalto1: 1.0x1 in EqualTo(1.0)
+    equalto2: 1.0x2 in EqualTo(1.0)
+    equalto3: 1.0x3 in EqualTo(1.0)
+    equalto4: 1.0x4 in EqualTo(1.0)
+    equalto5: 1.0x5 in EqualTo(1.0)
+    equalto6: 1.0x6 in EqualTo(1.0)
+    equalto7: 1.0x7 in EqualTo(1.0)
+    equalto8: 1.0x8 in EqualTo(1.0)
+    equalto9: 1.0x9 in EqualTo(1.0)
+    rsoc41: [1.0x31, x32, x41] in RotatedSecondOrderCone(3)
+    rsoc31: [1.0x21, x22, x31] in RotatedSecondOrderCone(3)
+    rsoc32: [1.0x23, x24, x32] in RotatedSecondOrderCone(3)
+    rsoc21: [1.0x11, x12, x21] in RotatedSecondOrderCone(3)
+    rsoc22: [1.0x13, x14, x22] in RotatedSecondOrderCone(3)
+    rsoc23: [1.0x15, x16, x23] in RotatedSecondOrderCone(3)
+    rsoc24: [1.0x17, x18, x24] in RotatedSecondOrderCone(3)
+    rsoc11: [1.0x1, x2, x11] in RotatedSecondOrderCone(3)
+    rsoc12: [1.0x3, x4, x12] in RotatedSecondOrderCone(3)
+    rsoc13: [1.0x5, x6, x13] in RotatedSecondOrderCone(3)
+    rsoc14: [1.0x7, x8, x14] in RotatedSecondOrderCone(3)
+    rsoc15: [1.0x9, 0.25 * x41, x15] in RotatedSecondOrderCone(3)
+    rsoc16: [0.25 * x41, 0.25 * x41, x16] in RotatedSecondOrderCone(3)
+    rsoc17: [0.25 * x41, 0.25 * x41, x17] in RotatedSecondOrderCone(3)
+    rsoc18: [0.25 * x41, 0.25 * x41, x18] in RotatedSecondOrderCone(3)
     maxobjective: t
     """
     model = MOI.Utilities.Model{Float64}()
@@ -314,16 +313,16 @@ function test_conic_GeometricMeanCone_VectorAffineFunction_2()
 
     s = """
     variables: t, x1, x2, x3, x4, x5, x6, x7, x8, x9
-    equalto1: 1.0x1 in MathOptInterface.EqualTo(1.0)
-    equalto2: 1.0x2 in MathOptInterface.EqualTo(1.0)
-    equalto3: 1.0x3 in MathOptInterface.EqualTo(1.0)
-    equalto4: 1.0x4 in MathOptInterface.EqualTo(1.0)
-    equalto5: 1.0x5 in MathOptInterface.EqualTo(1.0)
-    equalto6: 1.0x6 in MathOptInterface.EqualTo(1.0)
-    equalto7: 1.0x7 in MathOptInterface.EqualTo(1.0)
-    equalto8: 1.0x8 in MathOptInterface.EqualTo(1.0)
-    equalto9: 1.0x9 in MathOptInterface.EqualTo(1.0)
-    geomean: [1.0t, x1, x2, x3, x4, x5, x6, x7, x8, x9] in MathOptInterface.GeometricMeanCone(10)
+    equalto1: 1.0x1 in EqualTo(1.0)
+    equalto2: 1.0x2 in EqualTo(1.0)
+    equalto3: 1.0x3 in EqualTo(1.0)
+    equalto4: 1.0x4 in EqualTo(1.0)
+    equalto5: 1.0x5 in EqualTo(1.0)
+    equalto6: 1.0x6 in EqualTo(1.0)
+    equalto7: 1.0x7 in EqualTo(1.0)
+    equalto8: 1.0x8 in EqualTo(1.0)
+    equalto9: 1.0x9 in EqualTo(1.0)
+    geomean: [1.0t, x1, x2, x3, x4, x5, x6, x7, x8, x9] in GeometricMeanCone(10)
     maxobjective: t
     """
     model = MOI.Utilities.Model{Float64}()
@@ -415,9 +414,9 @@ function test_conic_GeometricMeanCone_VectorAffineFunction_3()
 
     s = """
     variables: t, x
-    lessthan1: t + -1.0x in MathOptInterface.LessThan(0.0)
-    lessthan2: 1.0x in MathOptInterface.LessThan(2.0)
-    nonneg: [1.0x] in MathOptInterface.Nonnegatives(1)
+    lessthan1: t + -1.0x in LessThan(0.0)
+    lessthan2: 1.0x in LessThan(2.0)
+    nonneg: [1.0x] in Nonnegatives(1)
     maxobjective: 2.0 * t
     """
     model = MOI.Utilities.Model{Float64}()
@@ -455,8 +454,8 @@ function test_conic_GeometricMeanCone_VectorAffineFunction_3()
 
     s = """
     variables: t, x
-    lessthan: 1.0x in MathOptInterface.LessThan(2.0)
-    geomean: [1.0t, x] in MathOptInterface.GeometricMeanCone(2)
+    lessthan: 1.0x in LessThan(2.0)
+    geomean: [1.0t, x] in GeometricMeanCone(2)
     maxobjective: 2.0 * t
     """
     model = MOI.Utilities.Model{Float64}()

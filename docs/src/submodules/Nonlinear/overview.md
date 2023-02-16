@@ -1,8 +1,7 @@
 ```@meta
 CurrentModule = MathOptInterface
 DocTestSetup = quote
-    using MathOptInterface
-    const MOI = MathOptInterface
+    import MathOptInterface as MOI
 end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
@@ -365,8 +364,7 @@ julia> MOI.set(model, MOI.NLPBlock(), block);
 Putting everything together, you can create a nonlinear optimization problem in
 MathOptInterface as follows:
 ```@example
-import MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 function build_model(
     model::MOI.ModelLike;

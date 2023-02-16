@@ -6,8 +6,7 @@
 
 module FileFormats
 
-import MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 import CodecBzip2
 import CodecZlib

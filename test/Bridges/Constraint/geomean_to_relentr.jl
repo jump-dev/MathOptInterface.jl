@@ -8,8 +8,7 @@ module TestConstraintGeomeanToRelentr
 
 using Test
 
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -105,9 +104,9 @@ function test_conic_GeometricMeanCone_VectorAffineFunction()
 
     s = """
     variables: t, x, y, z, aux
-    less: x + y + z in MathOptInterface.LessThan(3.0)
-    nonneg: [aux] in MathOptInterface.Nonnegatives(1)
-    relentr: [0.0, x, y, z, t + aux, t + aux, t + aux] in MathOptInterface.RelativeEntropyCone(7)
+    less: x + y + z in LessThan(3.0)
+    nonneg: [aux] in Nonnegatives(1)
+    relentr: [0.0, x, y, z, t + aux, t + aux, t + aux] in RelativeEntropyCone(7)
     maxobjective: t
     """
     model = MOI.Utilities.Model{Float64}()
@@ -139,8 +138,8 @@ function test_conic_GeometricMeanCone_VectorAffineFunction()
 
     s = """
     variables: t, x, y, z
-    less: x + y + z in MathOptInterface.LessThan(3.0)
-    geomean: [1.0t, x, y, z] in MathOptInterface.GeometricMeanCone(4)
+    less: x + y + z in LessThan(3.0)
+    geomean: [1.0t, x, y, z] in GeometricMeanCone(4)
     maxobjective: t
     """
     model = MOI.Utilities.Model{Float64}()
@@ -249,17 +248,17 @@ function test_conic_GeometricMeanCone_VectorAffineFunction_2()
 
     s = """
     variables: t, x1, x2, x3, x4, x5, x6, x7, x8, x9, aux
-    equalto1: 1.0x1 in MathOptInterface.EqualTo(1.0)
-    equalto2: 1.0x2 in MathOptInterface.EqualTo(1.0)
-    equalto3: 1.0x3 in MathOptInterface.EqualTo(1.0)
-    equalto4: 1.0x4 in MathOptInterface.EqualTo(1.0)
-    equalto5: 1.0x5 in MathOptInterface.EqualTo(1.0)
-    equalto6: 1.0x6 in MathOptInterface.EqualTo(1.0)
-    equalto7: 1.0x7 in MathOptInterface.EqualTo(1.0)
-    equalto8: 1.0x8 in MathOptInterface.EqualTo(1.0)
-    equalto9: 1.0x9 in MathOptInterface.EqualTo(1.0)
-    nonneg: [aux] in MathOptInterface.Nonnegatives(1)
-    relentr: [0.0, x1, x2, x3, x4, x5, x6, x7, x8, x9, t + aux, t + aux, t + aux, t + aux, t + aux, t + aux, t + aux, t + aux, t + aux] in MathOptInterface.RelativeEntropyCone(19)
+    equalto1: 1.0x1 in EqualTo(1.0)
+    equalto2: 1.0x2 in EqualTo(1.0)
+    equalto3: 1.0x3 in EqualTo(1.0)
+    equalto4: 1.0x4 in EqualTo(1.0)
+    equalto5: 1.0x5 in EqualTo(1.0)
+    equalto6: 1.0x6 in EqualTo(1.0)
+    equalto7: 1.0x7 in EqualTo(1.0)
+    equalto8: 1.0x8 in EqualTo(1.0)
+    equalto9: 1.0x9 in EqualTo(1.0)
+    nonneg: [aux] in Nonnegatives(1)
+    relentr: [0.0, x1, x2, x3, x4, x5, x6, x7, x8, x9, t + aux, t + aux, t + aux, t + aux, t + aux, t + aux, t + aux, t + aux, t + aux] in RelativeEntropyCone(19)
     maxobjective: t
     """
     model = MOI.Utilities.Model{Float64}()
@@ -292,16 +291,16 @@ function test_conic_GeometricMeanCone_VectorAffineFunction_2()
 
     s = """
     variables: t, x1, x2, x3, x4, x5, x6, x7, x8, x9
-    equalto1: 1.0x1 in MathOptInterface.EqualTo(1.0)
-    equalto2: 1.0x2 in MathOptInterface.EqualTo(1.0)
-    equalto3: 1.0x3 in MathOptInterface.EqualTo(1.0)
-    equalto4: 1.0x4 in MathOptInterface.EqualTo(1.0)
-    equalto5: 1.0x5 in MathOptInterface.EqualTo(1.0)
-    equalto6: 1.0x6 in MathOptInterface.EqualTo(1.0)
-    equalto7: 1.0x7 in MathOptInterface.EqualTo(1.0)
-    equalto8: 1.0x8 in MathOptInterface.EqualTo(1.0)
-    equalto9: 1.0x9 in MathOptInterface.EqualTo(1.0)
-    geomean: [1.0t, x1, x2, x3, x4, x5, x6, x7, x8, x9] in MathOptInterface.GeometricMeanCone(10)
+    equalto1: 1.0x1 in EqualTo(1.0)
+    equalto2: 1.0x2 in EqualTo(1.0)
+    equalto3: 1.0x3 in EqualTo(1.0)
+    equalto4: 1.0x4 in EqualTo(1.0)
+    equalto5: 1.0x5 in EqualTo(1.0)
+    equalto6: 1.0x6 in EqualTo(1.0)
+    equalto7: 1.0x7 in EqualTo(1.0)
+    equalto8: 1.0x8 in EqualTo(1.0)
+    equalto9: 1.0x9 in EqualTo(1.0)
+    geomean: [1.0t, x1, x2, x3, x4, x5, x6, x7, x8, x9] in GeometricMeanCone(10)
     maxobjective: t
     """
     model = MOI.Utilities.Model{Float64}()
@@ -408,9 +407,9 @@ function test_conic_GeometricMeanCone_VectorAffineFunction_3()
     MOI.set(mock, MOI.ConstraintName(), less[1], "less")
     s = """
     variables: t, x, aux
-    less: 1.0x in MathOptInterface.LessThan(2.0)
-    nonneg: [aux] in MathOptInterface.Nonnegatives(1)
-    relentr: [0.0, x, t + aux] in MathOptInterface.RelativeEntropyCone(3)
+    less: 1.0x in LessThan(2.0)
+    nonneg: [aux] in Nonnegatives(1)
+    relentr: [0.0, x, t + aux] in RelativeEntropyCone(3)
     maxobjective: 2.0t
     """
     model = MOI.Utilities.Model{Float64}()
@@ -442,8 +441,8 @@ function test_conic_GeometricMeanCone_VectorAffineFunction_3()
 
     s = """
     variables: t, x
-    less: 1.0x in MathOptInterface.LessThan(2.0)
-    geomean: [1.0t, x] in MathOptInterface.GeometricMeanCone(2)
+    less: 1.0x in LessThan(2.0)
+    geomean: [1.0t, x] in GeometricMeanCone(2)
     maxobjective: 2.0t
     """
     model = MOI.Utilities.Model{Float64}()

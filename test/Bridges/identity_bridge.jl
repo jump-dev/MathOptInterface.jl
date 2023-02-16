@@ -7,8 +7,7 @@
 # Dummy bridges used for testing
 module IdentityBridges
 
-import MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 const F{T} = MOI.ScalarAffineFunction{T}
 const S{T} = MOI.EqualTo{T}

@@ -6,10 +6,9 @@
 
 module TestLP
 
-import MathOptInterface
 using Test
 
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 const LP = MOI.FileFormats.LP
 const LP_TEST_FILE = "test.lp"
 
@@ -493,18 +492,10 @@ function test_read_model1()
           constraints
     @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in constraints
     @test (MOI.VariableIndex, MOI.Interval{Float64}) in constraints
-    @test (MathOptInterface.VariableIndex, MathOptInterface.Integer) in
-          constraints
-    @test (MathOptInterface.VariableIndex, MathOptInterface.ZeroOne) in
-          constraints
-    @test (
-        MathOptInterface.VectorOfVariables,
-        MathOptInterface.SOS1{Float64},
-    ) in constraints
-    @test (
-        MathOptInterface.VectorOfVariables,
-        MathOptInterface.SOS2{Float64},
-    ) in constraints
+    @test (MOI.VariableIndex, MOI.Integer) in constraints
+    @test (MOI.VariableIndex, MOI.ZeroOne) in constraints
+    @test (MOI.VectorOfVariables, MOI.SOS1{Float64}) in constraints
+    @test (MOI.VectorOfVariables, MOI.SOS2{Float64}) in constraints
     return
 end
 
@@ -519,10 +510,8 @@ function test_read_model2()
           constraints
     @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in constraints
     @test (MOI.VariableIndex, MOI.Interval{Float64}) in constraints
-    @test (MathOptInterface.VariableIndex, MathOptInterface.Integer) in
-          constraints
-    @test (MathOptInterface.VariableIndex, MathOptInterface.ZeroOne) in
-          constraints
+    @test (MOI.VariableIndex, MOI.Integer) in constraints
+    @test (MOI.VariableIndex, MOI.ZeroOne) in constraints
     # Adicionar testes dos bounds de V8
     @test MOI.get(model, MOI.VariableName(), MOI.VariableIndex(8)) == "V8"
     @test model.variables.lower[8] == -Inf

@@ -9,9 +9,7 @@ module MOF
 import ..FileFormats
 import OrderedCollections
 import JSON
-import MathOptInterface
-
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 const SCHEMA_PATH = joinpath(@__DIR__, "mof.1.2.schema.json")
 const VERSION = v"1.2"

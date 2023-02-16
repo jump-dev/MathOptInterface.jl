@@ -196,7 +196,7 @@ type `BT` add.
 
 ## Example
 
-```jldoctest; setup=(using MathOptInterface; const MOI = MathOptInterface)
+```jldoctest; setup=(import MathOptInterface as MOI)
 julia> MOI.Bridges.added_constrained_variable_types(
            MOI.Bridges.Variable.NonposToNonnegBridge{Float64},
        )
@@ -220,7 +220,7 @@ add.
 
 ## Example
 
-```jldoctest; setup=(using MathOptInterface; const MOI = MathOptInterface)
+```jldoctest; setup=(import MathOptInterface as MOI)
 julia> MOI.Bridges.added_constraint_types(
            MOI.Bridges.Constraint.ZeroOneBridge{Float64},
        )
@@ -245,7 +245,7 @@ set.
 
 ## Example
 
-```jldoctest; setup=(using MathOptInterface; const MOI = MathOptInterface)
+```jldoctest; setup=(import MathOptInterface as MOI)
 julia> MOI.Bridges.set_objective_function_type(
            MOI.Bridges.Objective.FunctionizeBridge{Float64},
        )

@@ -8,10 +8,8 @@ module TestMatrixOfConstraints
 
 using Test
 
-import MathOptInterface
+import MathOptInterface as MOI
 import SparseArrays
-
-const MOI = MathOptInterface
 
 function runtests()
     for name in names(@__MODULE__; all = true)

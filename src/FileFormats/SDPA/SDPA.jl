@@ -9,9 +9,7 @@ module SDPA
 # See http://plato.asu.edu/ftp/sdpa_format.txt
 
 import ..FileFormats
-import MathOptInterface
-
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 MOI.Utilities.@model(
     Model,

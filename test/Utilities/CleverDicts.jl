@@ -6,11 +6,11 @@
 
 module TestCleverDicts
 
-using MathOptInterface
 using Test
 
-const CleverDicts = MathOptInterface.Utilities.CleverDicts
-const MOI = MathOptInterface
+import MathOptInterface as MOI
+
+const CleverDicts = MOI.Utilities.CleverDicts
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -40,13 +40,13 @@ function test_MyKey()
 end
 
 function test_Abstract_Value()
-    d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,Any}()
+    d = CleverDicts.CleverDict{MOI.VariableIndex,Any}()
     key = CleverDicts.add_item(d, :a)
-    @test key == MathOptInterface.VariableIndex(1)
-    @test d[MathOptInterface.VariableIndex(1)] == :a
+    @test key == MOI.VariableIndex(1)
+    @test d[MOI.VariableIndex(1)] == :a
     key = CleverDicts.add_item(d, "b")
-    @test key == MathOptInterface.VariableIndex(2)
-    @test d[MathOptInterface.VariableIndex(2)] == "b"
+    @test key == MOI.VariableIndex(2)
+    @test d[MOI.VariableIndex(2)] == "b"
     for (k, v) in d
         if k.value == 1
             @test v == :a
@@ -59,17 +59,17 @@ function test_Abstract_Value()
 end
 
 function test_get_set()
-    d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
+    d = CleverDicts.CleverDict{MOI.VariableIndex,String}()
     key = CleverDicts.add_item(d, "first")
-    @test key == MathOptInterface.VariableIndex(1)
+    @test key == MOI.VariableIndex(1)
     @test get(d, key, nothing) == "first"
-    @test get(d, MathOptInterface.VariableIndex(2), nothing) === nothing
+    @test get(d, MOI.VariableIndex(2), nothing) === nothing
     @test Dict(key => "first") == d
     @test Dict(key => "second") != d
     sizehint!(d, 1)
     @test d[key] == "first"
     @test haskey(d, key) == true
-    @test_throws KeyError d[MathOptInterface.VariableIndex(2)]
+    @test_throws KeyError d[MOI.VariableIndex(2)]
     delete!(d, key)
     sizehint!(d, 2)
     @test_throws KeyError d[key]
@@ -77,7 +77,7 @@ function test_get_set()
     # @test_throws KeyError d[key] = "key"
     @test haskey(d, key) == false
     key2 = CleverDicts.add_item(d, "second")
-    @test key2 == MathOptInterface.VariableIndex(2)
+    @test key2 == MOI.VariableIndex(2)
     @test d[key2] == "second"
     d[key2] = "third"
     @test d[key2] == "third"
@@ -89,25 +89,25 @@ function test_get_set()
     empty!(d)
 
     key = CleverDicts.add_item(d, "first")
-    @test key == MathOptInterface.VariableIndex(1)
+    @test key == MOI.VariableIndex(1)
     @test d[key] == "first"
     d[key] = "zeroth"
     @test d[key] == "zeroth"
     @test haskey(d, key) == true
-    @test_throws KeyError d[MathOptInterface.VariableIndex(2)]
+    @test_throws KeyError d[MOI.VariableIndex(2)]
     delete!(d, key)
     @test_throws KeyError d[key]
     # set index is valid now
     # @test_throws KeyError d[key] = "key"
     @test haskey(d, key) == false
     key2 = CleverDicts.add_item(d, "second")
-    @test key2 == MathOptInterface.VariableIndex(2)
+    @test key2 == MOI.VariableIndex(2)
     @test d[key2] == "second"
     return
 end
 
 function test_LinearIndex()
-    d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
+    d = CleverDicts.CleverDict{MOI.VariableIndex,String}()
     key = CleverDicts.add_item(d, "first")
     @test d[CleverDicts.LinearIndex(1)] == "first"
     key2 = CleverDicts.add_item(d, "second")
@@ -121,77 +121,71 @@ function test_LinearIndex()
 end
 
 function test_keys_values()
-    d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
+    d = CleverDicts.CleverDict{MOI.VariableIndex,String}()
     key = CleverDicts.add_item(d, "first")
     key2 = CleverDicts.add_item(d, "second")
-    @test collect(keys(d)) ==
-          [MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2)]
+    @test collect(keys(d)) == [MOI.VariableIndex(1), MOI.VariableIndex(2)]
     @test collect(values(d)) == ["first", "second"]
     delete!(d, key)
     key3 = CleverDicts.add_item(d, "third")
-    @test collect(keys(d)) ==
-          [MathOptInterface.VariableIndex(2), MathOptInterface.VariableIndex(3)]
+    @test collect(keys(d)) == [MOI.VariableIndex(2), MOI.VariableIndex(3)]
     @test collect(values(d)) == ["second", "third"]
     return
 end
 
 function test_iterate()
-    d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
+    d = CleverDicts.CleverDict{MOI.VariableIndex,String}()
     key = CleverDicts.add_item(d, "first")
     key2 = CleverDicts.add_item(d, "second")
-    my_keys = MathOptInterface.VariableIndex[]
+    my_keys = MOI.VariableIndex[]
     my_values = String[]
     for (k, v) in d
         push!(my_keys, k)
         push!(my_values, v)
     end
-    @test my_keys ==
-          [MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2)]
+    @test my_keys == [MOI.VariableIndex(1), MOI.VariableIndex(2)]
     @test my_values == ["first", "second"]
     delete!(d, key)
     key3 = CleverDicts.add_item(d, "third")
-    my_keys = MathOptInterface.VariableIndex[]
+    my_keys = MOI.VariableIndex[]
     my_values = String[]
     for (k, v) in d
         push!(my_keys, k)
         push!(my_values, v)
     end
-    @test my_keys ==
-          [MathOptInterface.VariableIndex(2), MathOptInterface.VariableIndex(3)]
+    @test my_keys == [MOI.VariableIndex(2), MOI.VariableIndex(3)]
     @test my_values == ["second", "third"]
     return
 end
 
 function test_iterate_2()
-    d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
+    d = CleverDicts.CleverDict{MOI.VariableIndex,String}()
     key = CleverDicts.add_item(d, "first")
     key2 = CleverDicts.add_item(d, "second")
-    my_keys = MathOptInterface.VariableIndex[]
+    my_keys = MOI.VariableIndex[]
     my_values = String[]
     for (k, v) in d
         push!(my_keys, k)
         push!(my_values, v)
     end
-    @test my_keys ==
-          [MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2)]
+    @test my_keys == [MOI.VariableIndex(1), MOI.VariableIndex(2)]
     @test my_values == ["first", "second"]
     delete!(d, key)
     @test d[CleverDicts.LinearIndex(1)] == "second"
     key3 = CleverDicts.add_item(d, "third")
-    my_keys = MathOptInterface.VariableIndex[]
+    my_keys = MOI.VariableIndex[]
     my_values = String[]
     for (k, v) in d
         push!(my_keys, k)
         push!(my_values, v)
     end
-    @test my_keys ==
-          [MathOptInterface.VariableIndex(2), MathOptInterface.VariableIndex(3)]
+    @test my_keys == [MOI.VariableIndex(2), MOI.VariableIndex(3)]
     @test my_values == ["second", "third"]
     return
 end
 
 function test_iterate_3()
-    d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
+    d = CleverDicts.CleverDict{MOI.VariableIndex,String}()
     y = 0
     for (k, v) in d
         y += 1
@@ -201,7 +195,7 @@ function test_iterate_3()
 end
 
 function test_haskey()
-    d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
+    d = CleverDicts.CleverDict{MOI.VariableIndex,String}()
     @test !haskey(d, 1)
     k = CleverDicts.add_item(d, "a")
     @test haskey(d, k)
@@ -214,7 +208,7 @@ function test_haskey()
 end
 
 function test_isempty()
-    d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
+    d = CleverDicts.CleverDict{MOI.VariableIndex,String}()
     @test isempty(d) == true
     k = CleverDicts.add_item(d, "a")
     @test isempty(d) == false
@@ -226,9 +220,9 @@ function test_isempty()
 end
 
 function test_delete!()
-    d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
+    d = CleverDicts.CleverDict{MOI.VariableIndex,String}()
     @test length(d) == 0
-    @test delete!(d, MathOptInterface.VariableIndex(0)) == d
+    @test delete!(d, MOI.VariableIndex(0)) == d
     k1 = CleverDicts.add_item(d, "a")
     k2 = CleverDicts.add_item(d, "b")
     d[CleverDicts.LinearIndex(2)] == "b"
@@ -242,20 +236,20 @@ function test_delete!()
 end
 
 function test_negative_index()
-    d = CleverDicts.CleverDict{MathOptInterface.VariableIndex,String}()
-    d[MathOptInterface.VariableIndex(-3)] = "a"
-    @test d[MathOptInterface.VariableIndex(-3)] == "a"
+    d = CleverDicts.CleverDict{MOI.VariableIndex,String}()
+    d[MOI.VariableIndex(-3)] = "a"
+    @test d[MOI.VariableIndex(-3)] == "a"
     @test_throws ErrorException CleverDicts.add_item(d, "b")
-    d[MathOptInterface.VariableIndex(0)] = "b"
-    @test d[MathOptInterface.VariableIndex(-3)] == "a"
-    @test d[MathOptInterface.VariableIndex(0)] == "b"
+    d[MOI.VariableIndex(0)] = "b"
+    @test d[MOI.VariableIndex(-3)] == "a"
+    @test d[MOI.VariableIndex(0)] == "b"
     @test_throws ErrorException CleverDicts.add_item(d, "c")
     return
 end
 
 function test_convert()
-    vals = [MathOptInterface.VariableIndex(-i) for i in 1:10]
-    d = Dict(MathOptInterface.VariableIndex(i) => vals[i] for i in 1:10)
+    vals = [MOI.VariableIndex(-i) for i in 1:10]
+    d = Dict(MOI.VariableIndex(i) => vals[i] for i in 1:10)
     T = CleverDicts.CleverDict{
         MOI.VariableIndex,
         MOI.VariableIndex,

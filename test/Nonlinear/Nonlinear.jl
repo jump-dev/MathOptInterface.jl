@@ -7,11 +7,10 @@
 module TestNonlinear
 
 using Test
-import MathOptInterface
+import MathOptInterface as MOI
 import ForwardDiff
 import LinearAlgebra
 
-const MOI = MathOptInterface
 const Nonlinear = MOI.Nonlinear
 
 function runtests()

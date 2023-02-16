@@ -8,8 +8,7 @@ module TestVariableHermitianToSymmetricPSD
 
 using Test
 
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 import LinearAlgebra
 

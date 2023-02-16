@@ -7,8 +7,7 @@
 module TestConstraints
 
 using Test
-import MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 function runtests()
     for name in names(@__MODULE__; all = true)

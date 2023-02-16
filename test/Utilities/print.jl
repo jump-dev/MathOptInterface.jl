@@ -8,8 +8,7 @@ module TestPrint
 
 using Test
 
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 const MOIU = MOI.Utilities
 
 function runtests()

@@ -1,8 +1,7 @@
 ```@meta
 CurrentModule = MathOptInterface
 DocTestSetup = quote
-    using MathOptInterface
-    const MOI = MathOptInterface
+    import MathOptInterface as MOI
 
     # For compatibility with both Julia 1.0.5 and 1.5.2
     # Upon the Julia LTS version becoming 1.6, these imports could be dropped,

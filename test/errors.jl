@@ -7,8 +7,7 @@
 module TestErrors
 
 using Test
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 include("dummy.jl")
 
@@ -139,8 +138,8 @@ function test_errors_DeleteNotAllowed()
         MOI.delete(model, ci)
     catch err
         @test sprint(showerror, err) ==
-              "$(MathOptInterface.DeleteNotAllowed{MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex,MathOptInterface.EqualTo{Float64}}}):" *
-              " Deleting the index $(MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex,MathOptInterface.EqualTo{Float64}}(1))" *
+              "$(MOI.DeleteNotAllowed{MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}}):" *
+              " Deleting the index $(MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}(1))" *
               " cannot be performed. You may want to use a `CachingOptimizer`" *
               " in `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
               " before doing this operation if the `CachingOptimizer` is in" *
@@ -234,8 +233,8 @@ function test_errors_ModifyNotAllowed_constraint()
     err = MOI.ModifyConstraintNotAllowed(ci, change)
     @test_throws err MOI.modify(model, ci, change)
     @test sprint(showerror, err) ==
-          "$(MathOptInterface.ModifyConstraintNotAllowed{MathOptInterface.VariableIndex,MathOptInterface.EqualTo{Float64},MathOptInterface.ScalarConstantChange{Float64}}):" *
-          " Modifying the constraints $(MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex,MathOptInterface.EqualTo{Float64}}(1))" *
+          "$(MOI.ModifyConstraintNotAllowed{MOI.VariableIndex,MOI.EqualTo{Float64},MOI.ScalarConstantChange{Float64}}):" *
+          " Modifying the constraints $(MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}(1))" *
           " with MathOptInterface.ScalarConstantChange{Float64}(1.0) cannot" *
           " be performed. You may want to use a `CachingOptimizer` in" *
           " `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
@@ -250,8 +249,8 @@ function test_errors_ModifyNotAllowed_objective()
     err = MOI.ModifyObjectiveNotAllowed(change)
     @test_throws err MOI.modify(model, attr, change)
     @test sprint(showerror, err) ==
-          "$(MathOptInterface.ModifyObjectiveNotAllowed{MathOptInterface.ScalarConstantChange{Float64}}):" *
-          " Modifying the objective function with $(MathOptInterface.ScalarConstantChange{Float64}(1.0))" *
+          "$(MOI.ModifyObjectiveNotAllowed{MOI.ScalarConstantChange{Float64}}):" *
+          " Modifying the objective function with $(MOI.ScalarConstantChange{Float64}(1.0))" *
           " cannot be performed. You may want to use a `CachingOptimizer`" *
           " in `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
           " before doing this operation if the `CachingOptimizer` is in" *

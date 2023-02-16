@@ -8,8 +8,7 @@ module TestCopy
 
 using Test
 
-import MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 const MOIU = MOI.Utilities
 
 const DoubleDicts = MathOptInterface.Utilities.DoubleDicts

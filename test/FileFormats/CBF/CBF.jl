@@ -6,10 +6,9 @@
 
 module TestCBF
 
-import MathOptInterface
 using Test
 
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 const MOIU = MOI.Utilities
 const CBF = MOI.FileFormats.CBF
 const CBF_TEST_FILE = "test.cbf"

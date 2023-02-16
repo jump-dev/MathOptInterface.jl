@@ -10,8 +10,7 @@ import LinearAlgebra
 import SparseArrays
 using Test
 
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 function runtests()
     for name in names(@__MODULE__; all = true)

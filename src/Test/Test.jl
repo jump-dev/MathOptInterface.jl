@@ -8,8 +8,7 @@ module Test
 
 import LinearAlgebra
 
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 const MOIU = MOI.Utilities
 
 using Test

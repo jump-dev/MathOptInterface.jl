@@ -1,8 +1,7 @@
 ```@meta
 CurrentModule = MathOptInterface
 DocTestSetup = quote
-    using MathOptInterface
-    const MOI = MathOptInterface
+    import MathOptInterface as MOI
 end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```

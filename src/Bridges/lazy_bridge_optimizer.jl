@@ -24,7 +24,7 @@ and [`full_bridge_optimizer`](@ref).
 
 ## Example
 
-```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+```jldoctest; setup=:(import MathOptInterface as MOI)
 julia> model = MOI.Bridges.LazyBridgeOptimizer(MOI.Utilities.Model{Float64}())
 MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
 with 0 variable bridges

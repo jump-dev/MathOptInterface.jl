@@ -10,7 +10,7 @@ module CleverDicts
 # it is the original use-case for `CleverDict`, and it would be type-piracy for
 # solvers using `CleverDicts` to implement it themselves.
 
-import MathOptInterface
+import MathOptInterface as MOI
 import OrderedCollections
 
 """
@@ -28,18 +28,18 @@ deletions.
 """
 function key_to_index end
 
-function index_to_key(::Type{MathOptInterface.VariableIndex}, index::Int64)
-    return MathOptInterface.VariableIndex(index)
+function index_to_key(::Type{MOI.VariableIndex}, index::Int64)
+    return MOI.VariableIndex(index)
 end
 
 function index_to_key(
-    ::Type{MathOptInterface.ConstraintIndex{F,S}},
+    ::Type{MOI.ConstraintIndex{F,S}},
     index::Int64,
 ) where {F,S}
-    return MathOptInterface.ConstraintIndex{F,S}(index)
+    return MOI.ConstraintIndex{F,S}(index)
 end
 
-key_to_index(key::MathOptInterface.Index) = key.value
+key_to_index(key::MOI.Index) = key.value
 
 # Now, on with `CleverDicts`.
 

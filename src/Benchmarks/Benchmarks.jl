@@ -6,9 +6,10 @@
 
 module Benchmarks
 
-using BenchmarkTools, MathOptInterface
+using BenchmarkTools
 
-const MOI = MathOptInterface
+import MathOptInterface as MOI
+
 const BENCHMARKS = Dict{String,Function}()
 
 """

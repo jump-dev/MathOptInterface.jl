@@ -7,8 +7,7 @@
 module TestAttributes
 
 using Test
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 include("dummy.jl")
 

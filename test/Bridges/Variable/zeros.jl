@@ -8,8 +8,7 @@ module TestVariableZeros
 
 using Test
 
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -43,7 +42,7 @@ function test_zeros()
     s = """
     variables: x, y, z
     x >= 0.0
-    cyz: [y, z] in MathOptInterface.Zeros(2)
+    cyz: [y, z] in Zeros(2)
     minobjective: x
     """
     model = MOI.Utilities.Model{Float64}()

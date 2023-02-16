@@ -16,7 +16,7 @@ and unsupported by `model`.
 
 ## Example
 
-```jldoctest obj_singlebridgeoptimizer; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+```jldoctest obj_singlebridgeoptimizer; setup=:(import MathOptInterface as MOI)
 julia> struct MyNewBridge{T} <: MOI.Bridges.Objective.AbstractBridge end
 
 julia> bridge = MOI.Bridges.Objective.SingleBridgeOptimizer{MyNewBridge{Float64}}(

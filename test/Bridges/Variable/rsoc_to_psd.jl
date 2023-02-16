@@ -8,8 +8,7 @@ module TestVariableRSOCtoPSD
 
 using Test
 
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -69,7 +68,7 @@ function test_RSOC_of_dimension_2()
     MOI.set(mock, MOI.ConstraintName(), nonneg[1], "cab")
     s = """
     variables: a, b
-    cab: [a, b] in MathOptInterface.Nonnegatives(2)
+    cab: [a, b] in Nonnegatives(2)
     c: a + 0.5b <= 1.0
     maxobjective: 0.5b
     """
@@ -86,7 +85,7 @@ function test_RSOC_of_dimension_2()
     MOI.set(bridged_mock, MOI.ConstraintName(), cxy, "cxy")
     s = """
     variables: x, y
-    cxy: [x, y] in MathOptInterface.RotatedSecondOrderCone(2)
+    cxy: [x, y] in RotatedSecondOrderCone(2)
     c: x + y <= 1.0
     maxobjective: 1.0y
     """
@@ -177,7 +176,7 @@ function test_RSOC4()
 
     s = """
     variables: Q11, Q12, Q13, Q22, Q23, Q33
-    psd: [Q11, Q12, Q22, Q13, Q23, Q33] in MathOptInterface.PositiveSemidefiniteConeTriangle(3)
+    psd: [Q11, Q12, Q22, Q13, Q23, Q33] in PositiveSemidefiniteConeTriangle(3)
     Q23 == 0.0
     diag33: Q22 + -1.0Q33 == 0.0
     c: Q11 + 0.5Q22 <= 2.0
@@ -221,7 +220,7 @@ function test_RSOC4()
 
     s = """
     variables: t, u, x, y
-    rsoc: [t, u, x, y] in MathOptInterface.RotatedSecondOrderCone(4)
+    rsoc: [t, u, x, y] in RotatedSecondOrderCone(4)
     c: t + u <= 2.0
     maxobjective: x + y
     """

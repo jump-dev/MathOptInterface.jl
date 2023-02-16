@@ -8,11 +8,8 @@ module TestMutableArithmetics
 
 using Test
 
-import MutableArithmetics
-const MA = MutableArithmetics
-
-using MathOptInterface
-const MOI = MathOptInterface
+import MutableArithmetics as MA
+import MathOptInterface as MOI
 
 function runtests()
     for name in names(@__MODULE__; all = true)

@@ -7,8 +7,7 @@
 module TestInstantiate
 
 using Test
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 struct DummyOptimizer <: MOI.AbstractOptimizer end
 MOI.is_empty(::DummyOptimizer) = true

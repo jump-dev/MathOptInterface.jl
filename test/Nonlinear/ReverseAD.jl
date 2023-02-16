@@ -8,10 +8,9 @@ module TestReverseAD
 
 using Test
 import LinearAlgebra
-import MathOptInterface
+import MathOptInterface as MOI
 import SparseArrays
 
-const MOI = MathOptInterface
 const Nonlinear = MOI.Nonlinear
 const ReverseAD = Nonlinear.ReverseAD
 const Coloring = ReverseAD.Coloring

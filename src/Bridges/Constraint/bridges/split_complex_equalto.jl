@@ -88,7 +88,7 @@ function concrete_bridge_type(
     G::Type{<:MOI.Utilities.TypedLike},
     ::Type{<:MOI.EqualTo},
 ) where {T}
-    F = MutableArithmetics.promote_operation(imag, G)
+    F = MA.promote_operation(imag, G)
     return SplitComplexEqualToBridge{T,F,G}
 end
 

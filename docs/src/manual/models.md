@@ -1,8 +1,7 @@
 ```@meta
 CurrentModule = MathOptInterface
 DocTestSetup = quote
-    using MathOptInterface
-    const MOI = MathOptInterface
+    import MathOptInterface as MOI
 end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
@@ -29,8 +28,7 @@ section for more details.
     MOI does not export functions, but for brevity we often omit qualifying
     names with the MOI module. Best practice is to have
     ```julia
-    using MathOptInterface
-    const MOI = MathOptInterface
+    import MathOptInterface as MOI
     ```
     and prefix all MOI methods with `MOI.` in user code. If a name is also
     available in base Julia, we always explicitly use the module prefix, for

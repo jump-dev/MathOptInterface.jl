@@ -6,6 +6,8 @@
 
 module MathOptInterface
 
+import MutableArithmetics as MA
+
 """
     ModelLike
 

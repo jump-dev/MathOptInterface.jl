@@ -8,9 +8,7 @@ module TestCachingOptimizer
 
 using Test
 
-import MathOptInterface
-
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 const MOIU = MOI.Utilities
 
 function runtests()
