@@ -6,11 +6,10 @@
 
 module TestSDPA
 
-import MathOptInterface
 using Test
 
-const MOI = MathOptInterface
-const MOIU = MOI.Utilities
+import MathOptInterface as MOI
+import MathOptInterface.Utilities as MOIU
 const SDPA = MOI.FileFormats.SDPA
 const SDPA_TEST_FILE = "test.sdpa"
 const SDPA_MODELS_DIR = joinpath(@__DIR__, "models")

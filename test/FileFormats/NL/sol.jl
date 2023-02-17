@@ -7,9 +7,7 @@
 module TestNonlinearSolFiles
 
 using Test
-import MathOptInterface
-
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 const NL = MOI.FileFormats.NL
 
 function runtests()

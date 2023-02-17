@@ -8,9 +8,7 @@ module TestModel
 
 using Test
 
-import MathOptInterface
-
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -35,33 +33,33 @@ defined in a testset. If it runs without error, then we're okay.
 """
 module TestExternalModel
 
-using MathOptInterface
+import MathOptInterface as MOI
 
-struct NewSet <: MathOptInterface.AbstractScalarSet end
+struct NewSet <: MOI.AbstractScalarSet end
 
-struct NewFunction <: MathOptInterface.AbstractScalarFunction end
+struct NewFunction <: MOI.AbstractScalarFunction end
 
-MathOptInterface.Utilities.canonicalize!(f::NewFunction) = f
+MOI.Utilities.canonicalize!(f::NewFunction) = f
 
 Base.copy(::NewFunction) = NewFunction()
 
 Base.copy(::NewSet) = NewSet()
 
-MathOptInterface.Utilities.@model(
+MOI.Utilities.@model(
     ExternalModel,
-    (MathOptInterface.ZeroOne, NewSet),
+    (MOI.ZeroOne, NewSet),
     (),
     (),
     (),
     (NewFunction,),
-    (MathOptInterface.ScalarAffineFunction,),
+    (MOI.ScalarAffineFunction,),
     (),
     (),
 )
 
-MathOptInterface.Utilities.@model(
+MOI.Utilities.@model(
     ExternalOptimizer,
-    (MathOptInterface.ZeroOne, NewSet),
+    (MOI.ZeroOne, NewSet),
     (),
     (),
     (),

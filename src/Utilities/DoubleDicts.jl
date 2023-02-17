@@ -6,9 +6,7 @@
 
 module DoubleDicts
 
-import MathOptInterface
-
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 abstract type AbstractDoubleDict{V} <: AbstractDict{MOI.ConstraintIndex,V} end
 

@@ -290,7 +290,7 @@ end
 Return a `Bool` indicating whether any bridge was added yet. Note that it
 returns `false` even if all bridges were deleted while `isempty` would return
 `true`. It is computed in `O(1)` while `isempty` needs `O(n)` hence it is used
-by [`MathOptInterface.Bridges.AbstractBridgeOptimizer`](@ref) to shortcut
+by [`MOI.Bridges.AbstractBridgeOptimizer`](@ref) to shortcut
 operations in case variable bridges are not used.
 """
 has_bridges(map::Map) = !isempty(map.info)
@@ -521,7 +521,7 @@ end
     EmptyMap <: AbstractDict{MOI.VariableIndex, AbstractBridge}
 
 Empty version of [`Map`](@ref). It is used by
-[`MathOptInterface.Bridges.Constraint.SingleBridgeOptimizer`](@ref) as it does
+[`MOI.Bridges.Constraint.SingleBridgeOptimizer`](@ref) as it does
 not bridge any variable.
 """
 struct EmptyMap <: AbstractDict{MOI.VariableIndex,AbstractBridge} end

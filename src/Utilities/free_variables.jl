@@ -19,7 +19,7 @@ that does not support any constraint nor objective function.
 The following model type represents a conic model in geometric form. As opposed
 to [`VariablesContainer`](@ref), `FreeVariables` does not support constraint
 bounds so they are bridged into an affine constraint in the
-[`MathOptInterface.Nonnegatives`](@ref) cone as expected for the geometric
+[`MOI.Nonnegatives`](@ref) cone as expected for the geometric
 conic form.
 ```jldocstest
 julia> MOI.Utilities.@product_of_sets(

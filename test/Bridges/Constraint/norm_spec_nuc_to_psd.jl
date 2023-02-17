@@ -8,8 +8,7 @@ module TestConstraintNormSpectral
 
 using Test
 
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -89,7 +88,7 @@ function test_NormSpectral()
 
     s = """
     variables: t
-    psd: [t, 0.0, t, 0.0, 0.0, t, 1.0, 1.0, 0.0, t, 1.0, -1.0, 1.0, 0.0, t] in MathOptInterface.PositiveSemidefiniteConeTriangle(5)
+    psd: [t, 0.0, t, 0.0, 0.0, t, 1.0, 1.0, 0.0, t, 1.0, -1.0, 1.0, 0.0, t] in PositiveSemidefiniteConeTriangle(5)
     minobjective: t
     """
     model = MOI.Utilities.Model{Float64}()
@@ -107,7 +106,7 @@ function test_NormSpectral()
 
     s = """
     variables: t
-    spec: [t, 1.0, 1.0, 1.0, -1.0, 0.0, 1.0] in MathOptInterface.NormSpectralCone(2, 3)
+    spec: [t, 1.0, 1.0, 1.0, -1.0, 0.0, 1.0] in NormSpectralCone(2, 3)
     minobjective: t
     """
     model = MOI.Utilities.Model{Float64}()
@@ -235,7 +234,7 @@ function test_NormNuclear()
     s = """
     variables: t, U11, U12, U22, U31, U32, U33, V11, V12, V22
     greater: t + -0.5U11 + -0.5U22 + -0.5U33 + -0.5V11 + -0.5V22 >= 0.0
-    psd: [U11, U12, U22, U31, U32, U33, 1.0, 1.0, 0.0, V11, 1.0, -1.0, 1.0, V12, V22] in MathOptInterface.PositiveSemidefiniteConeTriangle(5)
+    psd: [U11, U12, U22, U31, U32, U33, 1.0, 1.0, 0.0, V11, 1.0, -1.0, 1.0, V12, V22] in PositiveSemidefiniteConeTriangle(5)
     minobjective: t
     """
     model = MOI.Utilities.Model{Float64}()
@@ -259,7 +258,7 @@ function test_NormNuclear()
 
     s = """
     variables: t
-    nuc: [t, 1.0, 1.0, 1.0, -1.0, 0.0, 1.0] in MathOptInterface.NormNuclearCone(2, 3)
+    nuc: [t, 1.0, 1.0, 1.0, -1.0, 0.0, 1.0] in NormNuclearCone(2, 3)
     minobjective: t
     """
     model = MOI.Utilities.Model{Float64}()

@@ -6,11 +6,10 @@
 
 module TestCBF
 
-import MathOptInterface
 using Test
 
-const MOI = MathOptInterface
-const MOIU = MOI.Utilities
+import MathOptInterface as MOI
+import MathOptInterface.Utilities as MOIU
 const CBF = MOI.FileFormats.CBF
 const CBF_TEST_FILE = "test.cbf"
 const MODELS_DIR = joinpath(@__DIR__, "models")

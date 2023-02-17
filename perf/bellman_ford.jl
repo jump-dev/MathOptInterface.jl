@@ -5,10 +5,8 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 using BenchmarkTools
-using MathOptInterface
-const MOI = MathOptInterface
-const MOIU = MOI.Utilities
-const MOIB = MOI.Bridges
+import MathOptInterface as MOI
+import MathOptInterface.Utilities as MOIU
 
 # Model similar to SDPA format, it gives a good example because it does not
 # support a lot hence need a lot of bridges
@@ -25,17 +23,17 @@ MOI.supports(::SDPAModel, ::MOI.ObjectiveFunction{MOI.VariableIndex}) = false
 
 function interval_constraint()
     model = SDPAModel{Float64}()
-    bridged = MOIB.full_bridge_optimizer(model, Float64)
+    bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     F = MOI.ScalarAffineFunction{Float64}
     S = MOI.Interval{Float64}
-    MOIB.bridge_index(bridged, F, S)
+    MOI.Bridges.bridge_index(bridged, F, S)
     display(@benchmark begin
-        MOIB._reset_bridge_graph($bridged)
-        MOIB.node($bridged, $F, $S)
+        MOI.Bridges._reset_bridge_graph($bridged)
+        MOI.Bridges.node($bridged, $F, $S)
     end)
     display(@benchmark begin
-        MOIB._reset_bridge_graph($bridged)
-        MOIB.bridge_index($bridged, $F, $S)
+        MOI.Bridges._reset_bridge_graph($bridged)
+        MOI.Bridges.bridge_index($bridged, $F, $S)
     end)
 end
 
@@ -43,16 +41,16 @@ interval_constraint()
 
 function quadratic_objective()
     model = SDPAModel{Float64}()
-    bridged = MOIB.full_bridge_optimizer(model, Float64)
+    bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     F = MOI.ScalarQuadraticFunction{Float64}
-    MOIB.bridge_index(bridged, F)
+    MOI.Bridges.bridge_index(bridged, F)
     display(@benchmark begin
-        MOIB._reset_bridge_graph($bridged)
-        MOIB.node($bridged, $F)
+        MOI.Bridges._reset_bridge_graph($bridged)
+        MOI.Bridges.node($bridged, $F)
     end)
     display(@benchmark begin
-        MOIB._reset_bridge_graph($bridged)
-        MOIB.bridge_index($bridged, $F)
+        MOI.Bridges._reset_bridge_graph($bridged)
+        MOI.Bridges.bridge_index($bridged, $F)
     end)
 end
 

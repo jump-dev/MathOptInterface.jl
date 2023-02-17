@@ -1,8 +1,7 @@
 ```@meta
 CurrentModule = MathOptInterface
 DocTestSetup = quote
-    using MathOptInterface
-    const MOI = MathOptInterface
+    import MathOptInterface as MOI
 end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
@@ -27,10 +26,9 @@ The skeleton below can be used for the wrapper test file of a solver named
 module TestFooBar
 
 import FooBar
-using MathOptInterface
 using Test
 
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 const OPTIMIZER = MOI.instantiate(
     MOI.OptimizerWithAttributes(FooBar.Optimizer, MOI.Silent() => true),

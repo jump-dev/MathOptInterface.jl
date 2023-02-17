@@ -15,18 +15,18 @@ into `F`-in-`S1` by mapping the function through `A`.
 
 The linear map `A` is described by;
 
- * [`MathOptInterface.Bridges.map_set`](@ref)
- * [`MathOptInterface.Bridges.map_function`](@ref).
+ * [`MOI.Bridges.map_set`](@ref)
+ * [`MOI.Bridges.map_function`](@ref).
 
 Implementing a method for these two functions is sufficient to bridge
 constraints. However, in order for the getters and setters of attributes such as
 dual solutions and starting values to work as well, a method for the following
 functions must be implemented:
 
- * [`MathOptInterface.Bridges.inverse_map_set`](@ref)
- * [`MathOptInterface.Bridges.inverse_map_function`](@ref)
- * [`MathOptInterface.Bridges.adjoint_map_function`](@ref)
- * [`MathOptInterface.Bridges.inverse_adjoint_map_function`](@ref)
+ * [`MOI.Bridges.inverse_map_set`](@ref)
+ * [`MOI.Bridges.inverse_map_function`](@ref)
+ * [`MOI.Bridges.adjoint_map_function`](@ref)
+ * [`MOI.Bridges.inverse_adjoint_map_function`](@ref)
 
 See the docstrings of each function to see which feature would be missing if it
 was not implemented for a given bridge.

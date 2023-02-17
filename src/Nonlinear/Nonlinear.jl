@@ -16,13 +16,11 @@ module Nonlinear
 
 import Base.Meta: isexpr
 import ForwardDiff
-import ..MathOptInterface
+import ..MathOptInterface as MOI
 import OrderedCollections: OrderedDict
 import SparseArrays
 
 using SpecialFunctions
-
-const MOI = MathOptInterface
 
 # Override basic math functions to return NaN instead of throwing errors.
 # This is what NLP solvers expect, and sometimes the results aren't needed

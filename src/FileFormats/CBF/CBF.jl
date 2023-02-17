@@ -7,9 +7,7 @@
 module CBF
 
 import ..FileFormats
-import MathOptInterface
-
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 MOI.Utilities.@model(
     Model,

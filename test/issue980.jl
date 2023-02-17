@@ -6,8 +6,7 @@
 
 module Issue980
 
-import MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 abstract type StaticArray end
 (::Type{SA})(x...) where {SA<:StaticArray} = SA(x)

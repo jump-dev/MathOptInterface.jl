@@ -553,7 +553,7 @@ function_constants(b::Vector, rows) = b[rows]
 """
     set_with_dimension(::Type{S}, dim) where {S<:MOI.AbstractVectorSet}
 
-Returns the instance of `S` of [`MathOptInterface.dimension`](@ref) `dim`.
+Returns the instance of `S` of [`MOI.dimension`](@ref) `dim`.
 This needs to be implemented for sets of type `S` to be useable with
 [`MatrixOfConstraints`](@ref).
 """

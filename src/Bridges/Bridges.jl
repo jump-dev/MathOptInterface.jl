@@ -6,12 +6,10 @@
 
 module Bridges
 
-import MathOptInterface
+import MathOptInterface as MOI
 import OrderedCollections: OrderedDict
 import Printf
 import Test
-
-const MOI = MathOptInterface
 
 include("bridge.jl")
 include("set_map.jl")
@@ -34,7 +32,7 @@ coefficient type `T`, as well as the bridges in the list returned by the
 
 ## Example
 
-```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+```jldoctest; setup=:(import MathOptInterface as MOI)
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> bridged_model = MOI.Bridges.full_bridge_optimizer(model, Float64);
@@ -90,7 +88,7 @@ package-specific functions or sets to be used if the non-standard bridges
 are not added. Therefore, you are recommended to use
 `model = MOI.instantiate(Package.Optimizer; with_bridge_type = T)` instead of
 `model = MOI.instantiate(Package.Optimizer)`. See
-[`MathOptInterface.instantiate`](@ref).
+[`MOI.instantiate`](@ref).
 
 ## Examples
 
@@ -229,7 +227,7 @@ Run a series of tests that check the correctness of `Bridge`.
 
 ## Example
 
-```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+```jldoctest; setup=:(import MathOptInterface as MOI)
 julia> MOI.Bridges.runtests(
            MOI.Bridges.Constraint.ZeroOneBridge,
            \"\"\"

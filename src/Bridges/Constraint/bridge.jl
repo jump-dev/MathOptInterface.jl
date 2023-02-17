@@ -61,7 +61,7 @@ The [`SplitIntervalBridge`](@ref) bridges a [`MOI.VariableIndex`](@ref)-in-[`MOI
 constraint into a [`MOI.VariableIndex`](@ref)-in-[`MOI.GreaterThan`](@ref) and a
 [`MOI.VariableIndex`](@ref)-in-[`MOI.LessThan`](@ref) constraint.
 
-```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+```jldoctest; setup=:(import MathOptInterface as MOI)
 julia> MOI.Bridges.Constraint.concrete_bridge_type(
            MOI.Bridges.Constraint.SplitIntervalBridge{Float64},
            MOI.VariableIndex,

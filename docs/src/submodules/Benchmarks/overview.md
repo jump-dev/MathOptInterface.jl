@@ -1,8 +1,7 @@
 ```@meta
 CurrentModule = MathOptInterface
 DocTestSetup = quote
-    using MathOptInterface
-    const MOI = MathOptInterface
+    import MathOptInterface as MOI
 end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
@@ -17,9 +16,7 @@ benchmark suite as follows:
 
 ```julia
 using SolverPackage  # Replace with your choice of solver.
-
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 suite = MOI.Benchmarks.suite() do
     SolverPackage.Optimizer()
@@ -36,9 +33,8 @@ Second, after making changes to the package, re-run the benchmark suite and
 compare to the prior saved results:
 
 ```julia
-using SolverPackage, MathOptInterface
-
-const MOI = MathOptInterface
+using SolverPackage
+import MathOptInterface as MOI
 
 suite = MOI.Benchmarks.suite() do
     SolverPackage.Optimizer()

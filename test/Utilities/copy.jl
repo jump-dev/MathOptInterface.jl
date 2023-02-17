@@ -8,11 +8,9 @@ module TestCopy
 
 using Test
 
-import MathOptInterface
-const MOI = MathOptInterface
-const MOIU = MOI.Utilities
-
-const DoubleDicts = MathOptInterface.Utilities.DoubleDicts
+import MathOptInterface as MOI
+import MathOptInterface.Utilities as MOIU
+import MathOptInterface.Utilities.DoubleDicts
 
 function runtests()
     for name in names(@__MODULE__; all = true)

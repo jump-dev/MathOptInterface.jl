@@ -1,8 +1,7 @@
 ```@meta
 CurrentModule = MathOptInterface
 DocTestSetup = quote
-    using MathOptInterface
-    const MOI = MathOptInterface
+    import MathOptInterface as MOI
 end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
@@ -23,8 +22,7 @@ s.t. \; & w^\top x \le C \\
 
 Load the MathOptInterface module and define the shorthand `MOI`:
 ```julia
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 ```
 
 As an optimizer, we choose GLPK:

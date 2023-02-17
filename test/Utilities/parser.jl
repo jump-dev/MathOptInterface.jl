@@ -6,11 +6,10 @@
 
 module TestParser
 
-using MathOptInterface
 using Test
 
-const MOI = MathOptInterface
-const MOIU = MOI.Utilities
+import MathOptInterface as MOI
+import MathOptInterface.Utilities as MOIU
 
 function runtests()
     for name in names(@__MODULE__; all = true)

@@ -6,13 +6,10 @@
 
 module TestFunctions
 
-using MathOptInterface: VectorOfVariables
 using Test
-using MathOptInterface
-import MutableArithmetics
 
-const MOI = MathOptInterface
-const MA = MutableArithmetics
+import MathOptInterface as MOI
+import MutableArithmetics as MA
 
 function runtests()
     for name in names(@__MODULE__; all = true)

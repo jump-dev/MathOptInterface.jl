@@ -6,8 +6,7 @@
 
 module TestNLModel
 
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 const NL = MOI.FileFormats.NL
 
 using Test

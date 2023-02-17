@@ -9,9 +9,8 @@
 #     https://github.com/jump-dev/MathOptInterface.jl/pull/390
 
 using BenchmarkTools
-using MathOptInterface
-const MOI = MathOptInterface
-const MOIU = MOI.Utilities
+import MathOptInterface as MOI
+import MathOptInterface.Utilities as MOIU
 
 @MOIU.model Model () (MOI.Interval,) () () () (MOI.ScalarAffineFunction,) () ()
 optimizer = MOIU.MockOptimizer(Model{Float64}())

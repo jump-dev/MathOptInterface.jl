@@ -25,10 +25,7 @@ Return the [`output_dimension`](@ref) that an [`AbstractFunction`](@ref) should 
 ### Examples
 
 ```jldoctest
-julia> using MathOptInterface
-
-julia> const MOI = MathOptInterface
-MathOptInterface
+julia> import MathOptInterface as MOI
 
 julia> MOI.dimension(MOI.Reals(4))
 4
@@ -57,10 +54,7 @@ If the dual cone is not defined it returns an error.
 ### Examples
 
 ```jldoctest
-julia> using MathOptInterface
-
-julia> const MOI = MathOptInterface
-MathOptInterface
+julia> import MathOptInterface as MOI
 
 julia> MOI.dual_set(MOI.Reals(4))
 MathOptInterface.Zeros(4)
@@ -85,10 +79,7 @@ Return the type of dual set of sets of type `S`, as returned by
 ### Examples
 
 ```jldoctest
-julia> using MathOptInterface
-
-julia> const MOI = MathOptInterface
-MathOptInterface
+julia> import MathOptInterface as MOI
 
 julia> MOI.dual_set_type(MOI.Reals)
 MathOptInterface.Zeros
@@ -1092,10 +1083,7 @@ The constraint
 ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^2 : y = 1 \\implies x_1 + x_2 \\leq 9 \\}``
 is defined as
 ```jldoctest
-julia> using MathOptInterface
-
-julia> const MOI = MathOptInterface
-MathOptInterface
+julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
@@ -1222,10 +1210,7 @@ called `distinct`.
 To enforce `x[1] != x[2]` AND `x[1] != x[3]` AND `x[2] != x[3]`:
 
 ```jldoctest
-julia> using MathOptInterface
-
-julia> const MOI = MathOptInterface
-MathOptInterface
+julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
@@ -1270,10 +1255,7 @@ This constraint is called `bin_packing` in MiniZinc.
 ## Example
 
 ```jldoctest
-julia> using MathOptInterface
-
-julia> const MOI = MathOptInterface
-MathOptInterface
+julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
@@ -1356,10 +1338,7 @@ a (potentially sub-optimal) tour in the travelling salesperson problem.
 ## Example
 
 ```jldoctest
-julia> using MathOptInterface
-
-julia> const MOI = MathOptInterface
-MathOptInterface
+julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
@@ -1402,10 +1381,7 @@ To ensure that `3` appears at least once in each of the subsets `{a, b}` and
 `{b, c}`:
 
 ```jldoctest
-julia> using MathOptInterface
-
-julia> const MOI = MathOptInterface
-MathOptInterface
+julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
@@ -1465,10 +1441,7 @@ This constraint is called `among` by MiniZinc.
 ## Example
 
 ```jldoctest
-julia> using MathOptInterface
-
-julia> const MOI = MathOptInterface
-MathOptInterface
+julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
@@ -1531,10 +1504,7 @@ To model:
  * if `n == 3`, then `x[1] != x[2]`, `x[2] != x[3]` and `x[3] != x[1]`
 
 ```jldoctest
-julia> using MathOptInterface
-
-julia> const MOI = MathOptInterface
-MathOptInterface
+julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
@@ -1580,10 +1550,7 @@ This constraint is called `count_gt` in MiniZinc.
 ## Example
 
 ```jldoctest
-julia> using MathOptInterface
-
-julia> const MOI = MathOptInterface
-MathOptInterface
+julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
@@ -1636,10 +1603,7 @@ This constraint is called `cumulative` in MiniZinc.
 ## Example
 
 ```jldoctest
-julia> using MathOptInterface
-
-julia> const MOI = MathOptInterface
-MathOptInterface
+julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
@@ -1699,10 +1663,7 @@ This constraint is called `path` in MiniZinc.
 ## Example
 
 ```jldoctest
-julia> using MathOptInterface
-
-julia> const MOI = MathOptInterface
-MathOptInterface
+julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
@@ -1801,10 +1762,7 @@ This constraint is called `table` in MiniZinc.
 ## Example
 
 ```jldoctest
-julia> using MathOptInterface
-
-julia> const MOI = MathOptInterface
-MathOptInterface
+julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
@@ -1844,10 +1802,7 @@ The set ``\\{x \\in \\bar{\\mathbb{R}}^d: x_i \\in [lower_i, upper_i] \\forall i
 ## Example
 
 ```jldoctest
-julia> using MathOptInterface
-
-julia> const MOI = MathOptInterface
-MathOptInterface
+julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}

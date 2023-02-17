@@ -8,11 +8,10 @@ module TestMOF
 
 import JSON
 import JSONSchema
-import MathOptInterface
 using Test
 
-const MOI = MathOptInterface
-const MOIU = MOI.Utilities
+import MathOptInterface as MOI
+import MathOptInterface.Utilities as MOIU
 const MOF = MOI.FileFormats.MOF
 
 const TEST_MOF_FILE = "test.mof.json"

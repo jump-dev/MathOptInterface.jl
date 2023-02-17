@@ -7,12 +7,10 @@
 module Constraint
 
 import LinearAlgebra
-import MutableArithmetics
-import MathOptInterface
+import MutableArithmetics as MA
+import MathOptInterface as MOI
 import OrderedCollections: OrderedDict, OrderedSet
 import SparseArrays
-
-const MOI = MathOptInterface
 
 include("bridge.jl")
 include("map.jl")

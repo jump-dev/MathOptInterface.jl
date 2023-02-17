@@ -8,8 +8,7 @@ module TestVariableVectorize
 
 using Test
 
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -62,7 +61,7 @@ function test_get_scalar_constraint()
         )
         s = """
         variables: y
-        cy: [y] in MathOptInterface.Nonnegatives(1)
+        cy: [y] in Nonnegatives(1)
         c: 2.0y >= 3.0
         """
         model = MOI.Utilities.Model{Float64}()
@@ -145,7 +144,7 @@ function test_exp3_with_add_constrained_variable_y()
     @test length(cis) == 1
 
     err = ArgumentError(
-        "Variable bridge of type `$(MathOptInterface.Bridges.Variable.VectorizeBridge{Float64,MathOptInterface.Nonpositives})`" *
+        "Variable bridge of type `$(MOI.Bridges.Variable.VectorizeBridge{Float64,MOI.Nonpositives})`" *
         " does not support accessing the attribute `MathOptInterface.Test.UnknownVariableAttribute()`.",
     )
     @test_throws err MOI.get(
@@ -196,9 +195,9 @@ function test_exp3_with_add_constrained_variable_y()
     )
     s = """
     variables: x, z
-    zc: [z] in MathOptInterface.Nonpositives(1)
+    zc: [z] in Nonpositives(1)
     xc: 2.0x <= 4.0
-    ec: [x, 1.0, z + 5.0] in MathOptInterface.ExponentialCone()
+    ec: [x, 1.0, z + 5.0] in ExponentialCone()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)
@@ -209,7 +208,7 @@ function test_exp3_with_add_constrained_variable_y()
     variables: x, y
     y <= 5.0
     xc: 2.0x <= 4.0
-    ec: [x, 1.0, y] in MathOptInterface.ExponentialCone()
+    ec: [x, 1.0, y] in ExponentialCone()
     """
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, s)

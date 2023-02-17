@@ -21,7 +21,7 @@ by the bridge `BT` and unsupported by `model`.
 
 ## Example
 
-```jldoctest var_singlebridgeoptimizer; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+```jldoctest var_singlebridgeoptimizer; setup=:(import MathOptInterface as MOI)
 julia> struct MyNewBridge{T} <: MOI.Bridges.Variable.AbstractBridge end
 
 julia> bridge = MOI.Bridges.Variable.SingleBridgeOptimizer{MyNewBridge{Float64}}(

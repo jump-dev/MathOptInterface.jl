@@ -1,8 +1,7 @@
 ```@meta
 CurrentModule = MathOptInterface
 DocTestSetup = quote
-    using MathOptInterface
-    const MOI = MathOptInterface
+    import MathOptInterface as MOI
 end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
@@ -236,8 +235,7 @@ By convention, these optimizers should not be exported and should be named
 `PackageName.Optimizer`.
 
 ```julia
-import MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 struct Optimizer <: MOI.AbstractOptimizer
     # Fields go here

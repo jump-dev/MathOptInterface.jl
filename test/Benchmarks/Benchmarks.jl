@@ -4,10 +4,9 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-using MathOptInterface, Test
-
-const MOI = MathOptInterface
-const MOIU = MOI.Utilities
+using Test
+import MathOptInterface as MOI
+import MathOptInterface.Utilities as MOIU
 
 const NUM_BENCHMARKS = length(MOI.Benchmarks.BENCHMARKS)
 

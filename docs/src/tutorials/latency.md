@@ -1,8 +1,7 @@
 ```@meta
 CurrentModule = MathOptInterface
 DocTestSetup = quote
-    using MathOptInterface
-    const MOI = MathOptInterface
+    import MathOptInterface as MOI
 end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
@@ -179,8 +178,8 @@ tracks progress on reducing latency in MathOptInterface.
 
 A useful script is the following (replace GLPK as needed):
 ```julia
-using MathOptInterface, GLPK
-const MOI = MathOptInterface
+import GLPK
+import MathOptInterface as MOI
 
 function example_diet(optimizer, bridge)
     category_data = [

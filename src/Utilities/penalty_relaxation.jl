@@ -34,7 +34,7 @@ this function to compute the violation of the constraint.
 
 ## Examples
 
-```jldoctest; setup=:(import MathOptInterface; const MOI = MathOptInterface)
+```jldoctest; setup=:(import MathOptInterface as MOI)
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model);
@@ -189,7 +189,7 @@ To modify variable bounds, rewrite them as linear constraints.
 
 ## Examples
 
-```jldoctest; setup=:(import MathOptInterface; const MOI = MathOptInterface)
+```jldoctest; setup=:(import MathOptInterface as MOI)
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model);
@@ -214,7 +214,7 @@ julia> map[c] isa MOI.ScalarAffineFunction{Float64}
 true
 ```
 
-```jldoctest; setup=:(import MathOptInterface; const MOI = MathOptInterface)
+```jldoctest; setup=:(import MathOptInterface as MOI)
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model);

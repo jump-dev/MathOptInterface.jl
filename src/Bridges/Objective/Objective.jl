@@ -6,9 +6,7 @@
 
 module Objective
 
-import MathOptInterface
-
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 include("bridge.jl")
 include("map.jl")

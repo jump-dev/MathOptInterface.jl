@@ -4,14 +4,12 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-import MutableArithmetics
-
 """
     AbstractFunction
 
 Abstract supertype for function objects.
 """
-abstract type AbstractFunction <: MutableArithmetics.AbstractMutable end
+abstract type AbstractFunction <: MA.AbstractMutable end
 
 """
     AbstractScalarFunction

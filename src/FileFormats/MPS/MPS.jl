@@ -8,8 +8,7 @@ module MPS
 
 import ..FileFormats
 
-import MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 # Julia 1.6 removes Grisu from Base. Previously, we went
 #   print_shortest(io, x) = Base.Grisu.print_shortest(io, x)

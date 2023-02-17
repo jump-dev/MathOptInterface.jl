@@ -8,7 +8,7 @@
     abstract type AbstractBridge end
 
 An abstract type representing a bridged constraint or variable in a
-[`MathOptInterface.Bridges.AbstractBridgeOptimizer`](@ref).
+[`MOI.Bridges.AbstractBridgeOptimizer`](@ref).
 
 All bridges must implement:
 
@@ -25,8 +25,8 @@ docstrings for details.
 In addition, all subtypes may optionally implement the following constraint
 attributes with the bridge in place of the constraint index:
 
- * [`MathOptInterface.ConstraintDual`](@ref)
- * [`MathOptInterface.ConstraintPrimal`](@ref)
+ * [`MOI.ConstraintDual`](@ref)
+ * [`MOI.ConstraintPrimal`](@ref)
 """
 abstract type AbstractBridge end
 
@@ -196,7 +196,7 @@ type `BT` add.
 
 ## Example
 
-```jldoctest; setup=(using MathOptInterface; const MOI = MathOptInterface)
+```jldoctest; setup=(import MathOptInterface as MOI)
 julia> MOI.Bridges.added_constrained_variable_types(
            MOI.Bridges.Variable.NonposToNonnegBridge{Float64},
        )
@@ -220,7 +220,7 @@ add.
 
 ## Example
 
-```jldoctest; setup=(using MathOptInterface; const MOI = MathOptInterface)
+```jldoctest; setup=(import MathOptInterface as MOI)
 julia> MOI.Bridges.added_constraint_types(
            MOI.Bridges.Constraint.ZeroOneBridge{Float64},
        )
@@ -245,7 +245,7 @@ set.
 
 ## Example
 
-```jldoctest; setup=(using MathOptInterface; const MOI = MathOptInterface)
+```jldoctest; setup=(import MathOptInterface as MOI)
 julia> MOI.Bridges.set_objective_function_type(
            MOI.Bridges.Objective.FunctionizeBridge{Float64},
        )

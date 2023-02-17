@@ -7,8 +7,7 @@
 module TestFunctions
 
 using Test
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 """
     test_isbits()

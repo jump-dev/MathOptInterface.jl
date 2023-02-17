@@ -7,11 +7,9 @@
 module ReverseAD
 
 import ForwardDiff
-import MathOptInterface
+import MathOptInterface as MOI
 import ..Nonlinear
 import SparseArrays
-
-const MOI = MathOptInterface
 
 # Override basic math functions to return NaN instead of throwing errors.
 # This is what NLP solvers expect, and sometimes the results aren't needed

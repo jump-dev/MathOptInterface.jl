@@ -6,11 +6,10 @@
 
 module TestMPS
 
-import MathOptInterface
 using Test
 
-const MOI = MathOptInterface
-const MOIU = MOI.Utilities
+import MathOptInterface as MOI
+import MathOptInterface.Utilities as MOIU
 const MPS = MOI.FileFormats.MPS
 const MPS_TEST_FILE = "test.mps"
 

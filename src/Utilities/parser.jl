@@ -282,7 +282,7 @@ instead.
 
 ## Example
 
-```jldoctest; setup=:(using MathOptInterface; const MOI = MathOptInterface)
+```jldoctest; setup=:(import MathOptInterface as MOI)
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> MOI.Utilities.loadfromstring!(model, \"\"\"

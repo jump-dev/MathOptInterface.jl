@@ -6980,8 +6980,8 @@ end
         config::Config,
     )
 
-Test adding [`MathOptInterface.VariableIndex`](@ref)-in-[`MathOptInterface.EqualTo](@ref)`
-on [`MathOptInterface.HermitianPositiveSemidefiniteConeTriangle`](@ref)
+Test adding [`MOI.VariableIndex`](@ref)-in-[`MOI.EqualTo](@ref)`
+on [`MOI.HermitianPositiveSemidefiniteConeTriangle`](@ref)
 variables.
 ```
 """
