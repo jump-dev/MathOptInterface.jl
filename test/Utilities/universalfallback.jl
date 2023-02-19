@@ -83,6 +83,7 @@ function test_MOI_Test()
             # Bugs in UniversalFallback
             "test_model_LowerBoundAlreadySet",
             "test_model_UpperBoundAlreadySet",
+            "test_add_parameter",
         ],
     )
     return

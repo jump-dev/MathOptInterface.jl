@@ -770,6 +770,7 @@ const LessThanIndicatorZero{T} =
         MOI.Interval,
         MOI.Semicontinuous,
         MOI.Semiinteger,
+        MOI.Parameter,
     ),
     (
         MOI.Reals,

@@ -236,10 +236,47 @@ struct EqualTo{T<:Number} <: AbstractScalarSet
     value::T
 end
 
+"""
+    Parameter{T<:Number}(value::T)
+
+The set containing the single point ``x \\in \\mathbb{R}`` where ``x`` is given
+by `value`.
+
+The `Parameter` set is conceptually similar to the [`EqualTo`](@ref) set, except
+that a variable constrained to the `Parameter` set cannot have other constraints
+added to it, and the `Parameter` set can never be deleted. Thus, solvers are
+free to treat the variable as a constant, and they need not add it as a decision
+variable to the model.
+
+Because of this behavior, you must add parameters using [`add_constrained_variable`](@ref),
+and solvers should declare [`supports_add_constrained_variable`](@ref) and not
+[`supports_constraint`](@ref) for the `Parameter` set.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> p, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.5))
+(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Parameter{Float64}}(1))
+
+julia> MOI.set(model, MOI.ConstraintSet(), ci, MOI.Parameter(3.0))
+
+julia> MOI.get(model, MOI.ConstraintSet(), ci)
+MathOptInterface.Parameter{Float64}(3.0)
+```
+"""
+struct Parameter{T<:Number} <: AbstractScalarSet
+    value::T
+end
+
 function Base.:(==)(
     set1::S,
     set2::S,
-) where {S<:Union{GreaterThan,LessThan,EqualTo}}
+) where {S<:Union{GreaterThan,LessThan,EqualTo,Parameter}}
     return constant(set1) == constant(set2)
 end
 
@@ -278,6 +315,7 @@ Returns the constant of the set.
 constant(s::EqualTo) = s.value
 constant(s::GreaterThan) = s.lower
 constant(s::LessThan) = s.upper
+constant(s::Parameter) = s.value
 
 """
     NormInfinityCone(dimension)
@@ -1875,6 +1913,7 @@ function Base.copy(
         GreaterThan,
         LessThan,
         EqualTo,
+        Parameter,
         Interval,
         NormInfinityCone,
         NormOneCone,

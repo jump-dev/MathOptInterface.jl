@@ -571,3 +571,29 @@ function test_add_constrained_variables_vector(
     @test MOI.get(model, MOI.ConstraintSet(), cv[2]) == sets[2]
     return
 end
+
+"""
+    test_add_parameter(model::MOI.ModelLike, config::Config)
+
+Test adding a variable in [`MOI.Parameter`](@ref).
+"""
+function test_add_parameter(model::MOI.ModelLike, ::Config{T}) where {T}
+    @requires MOI.supports_add_constrained_variable(model, MOI.Parameter{T})
+    @test MOI.get(model, MOI.NumberOfVariables()) == 0
+    x, ci = MOI.add_constrained_variable(model, MOI.Parameter(one(T)))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+    @test MOI.get(model, MOI.ConstraintSet(), ci) == MOI.Parameter(one(T))
+    @test MOI.get(model, MOI.ConstraintFunction(), ci) == x
+    F, S = MOI.VariableIndex, MOI.Parameter{T}
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+    @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [ci]
+    @test_throws(
+        MOI.LowerBoundAlreadySet,
+        MOI.add_constraint(model, x, MOI.GreaterThan(one(T))),
+    )
+    @test_throws(
+        MOI.UpperBoundAlreadySet,
+        MOI.add_constraint(model, x, MOI.LessThan(one(T))),
+    )
+    return
+end

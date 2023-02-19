@@ -21,6 +21,7 @@ include("bridges/soc_rsoc.jl")
 include("bridges/vectorize.jl")
 include("bridges/zeros.jl")
 include("bridges/hermitian.jl")
+include("bridges/parameter.jl")
 
 """
     add_all_bridges(model, ::Type{T}) where {T}
@@ -38,6 +39,7 @@ function add_all_bridges(model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(model, RSOCtoSOCBridge{T})
     MOI.Bridges.add_bridge(model, RSOCtoPSDBridge{T})
     MOI.Bridges.add_bridge(model, HermitianToSymmetricPSDBridge{T})
+    MOI.Bridges.add_bridge(model, ParameterToEqualToBridge{T})
     return
 end
 
