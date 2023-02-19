@@ -16,8 +16,8 @@
   * ``f(x) \\in S`` into ``g(x) \\in S``, where ``f(x)`` is a
     [`MOI.ScalarQuadraticFunction{T}`](@ref) and ``g(x)`` is a
     [`MOI.ScalarAffineFunction{T}`](@ref), where all variables that are fixed
-    using a [`MOI.VariableIndex`](@ref)-in-[`MOI.EqualTo`](@ref) constraint and
-    that appear in a quadratic term are replaced by their corresponding
+    using a [`MOI.VariableIndex`](@ref)-in-[`MOI.Parameter`](@ref) constraint
+    and that appear in a quadratic term are replaced by their corresponding
     constant.
 
 For example, if `p == 3`, this bridge converts the quadratic term `0.3 * p * x`
@@ -163,7 +163,7 @@ function MOI.Bridges.final_touch(
     for x in keys(bridge.values)
         bridge.values[x] = nothing
         bridge.new_coefs[x] = zero(T)
-        ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{T}}(x.value)
+        ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Parameter{T}}(x.value)
         if MOI.is_valid(model, ci)
             bridge.values[x] = MOI.get(model, MOI.ConstraintSet(), ci).value
         end

@@ -28,12 +28,12 @@ function test_runtests_x_fixed()
         """
         variables: x, y
         c: 1.0 * x * y + x + y >= 1.0
-        x == 2.0
+        x in Parameter(2.0)
         """,
         """
         variables: x, y
         c: 3.0 * y + x >= 1.0
-        x == 2.0
+        x in Parameter(2.0)
         """,
     )
     return
@@ -45,12 +45,12 @@ function test_runtests_y_fixed()
         """
         variables: x, y
         c: 1.0 * x * y + x + y >= 1.0
-        y == 2.0
+        y in Parameter(2.0)
         """,
         """
         variables: x, y
         c: 3.0 * x + y >= 1.0
-        y == 2.0
+        y in Parameter(2.0)
         """,
     )
     return
@@ -62,14 +62,14 @@ function test_runtests_both_fixed()
         """
         variables: x, y
         c: 1.0 * x * y + x + y >= 1.0
-        x == 3.0
-        y == 2.0
+        x in Parameter(3.0)
+        y in Parameter(2.0)
         """,
         """
         variables: x, y
         c: 4.0 * y + x >= 1.0
-        x == 3.0
-        y == 2.0
+        x in Parameter(3.0)
+        y in Parameter(2.0)
         """,
     )
     return
@@ -81,12 +81,12 @@ function test_runtests_duplicates()
         """
         variables: x, y
         c: 1.0 * x * y + 2.0 * x * y + x + y + x >= 1.0
-        x == 3.0
+        x in Parameter(3.0)
         """,
         """
         variables: x, y
         c: 10.0 * y + 2.0 * x >= 1.0
-        x == 3.0
+        x in Parameter(3.0)
         """,
     )
     return
@@ -98,12 +98,12 @@ function test_runtests_squared()
         """
         variables: x, y
         c: 2.0 * x * x + y >= 1.0
-        x == 3.0
+        x in Parameter(3.0)
         """,
         """
         variables: x, y
         c: 6.0 * x + y >= 1.0
-        x == 3.0
+        x in Parameter(3.0)
         """,
     )
     return
@@ -114,7 +114,7 @@ function test_at_least_one_variable_is_not_fixed()
     model = MOI.Bridges.Constraint.FixParametricVariables{Int}(inner)
     x, y = MOI.add_variables(model, 2)
     f = 1 * x * y + 2 * x + 3 * y
-    MOI.add_constraint(model, f, MOI.EqualTo(0))
+    MOI.add_constraint(model, f, MOI.Parameter(0))
     @test_throws(
         ErrorException(
             "unable to use `_FixParametricVariablesBridge: at least one " *
@@ -130,19 +130,19 @@ function test_resolve_with_modified()
     model = MOI.Bridges.Constraint.FixParametricVariables{Int}(inner)
     x, y = MOI.add_variables(model, 2)
     f = 1 * x * y + 2 * x + 3 * y
-    c = MOI.add_constraint(model, f, MOI.EqualTo(0))
-    MOI.add_constraint(model, x, MOI.EqualTo(2))
+    c = MOI.add_constraint(model, f, MOI.Parameter(0))
+    MOI.add_constraint(model, x, MOI.Parameter(2))
     MOI.Bridges.final_touch(model)
     z = MOI.get(inner, MOI.ListOfVariableIndices())
     F = MOI.ScalarAffineFunction{Int}
-    cis = MOI.get(inner, MOI.ListOfConstraintIndices{F,MOI.EqualTo{Int}}())
+    cis = MOI.get(inner, MOI.ListOfConstraintIndices{F,MOI.Parameter{Int}}())
     @test length(cis) == 1
     f = MOI.get(inner, MOI.ConstraintFunction(), cis[1])
     @test f ≈ 2 * z[1] + 5 * z[2]
     MOI.modify(model, c, MOI.ScalarCoefficientChange(y, 4))
     MOI.Bridges.final_touch(model)
     z = MOI.get(inner, MOI.ListOfVariableIndices())
-    cis = MOI.get(inner, MOI.ListOfConstraintIndices{F,MOI.EqualTo{Int}}())
+    cis = MOI.get(inner, MOI.ListOfConstraintIndices{F,MOI.Parameter{Int}}())
     @test length(cis) == 1
     f = MOI.get(inner, MOI.ConstraintFunction(), cis[1])
     @test f ≈ 2 * z[1] + 6 * z[2]
