@@ -37,7 +37,6 @@ VectorAffineTerm
 VectorAffineFunction
 VectorQuadraticTerm
 VectorQuadraticFunction
-VectorNonlinearFunction
 ```
 
 ## Sets

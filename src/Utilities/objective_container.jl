@@ -21,7 +21,6 @@ mutable struct ObjectiveContainer{T} <: MOI.ModelLike
     vector_variables::Union{Nothing,MOI.VectorOfVariables}
     vector_affine::Union{Nothing,MOI.VectorAffineFunction{T}}
     vector_quadratic::Union{Nothing,MOI.VectorQuadraticFunction{T}}
-    vector_nonlinear::Union{Nothing,MOI.VectorNonlinearFunction{T}}
     function ObjectiveContainer{T}() where {T}
         o = new{T}()
         MOI.empty!(o)
@@ -40,7 +39,6 @@ function MOI.empty!(o::ObjectiveContainer{T}) where {T}
     o.vector_variables = nothing
     o.vector_affine = nothing
     o.vector_quadratic = nothing
-    o.vector_nonlinear = nothing
     return
 end
 
@@ -87,8 +85,6 @@ function MOI.get(
         return MOI.VectorAffineFunction{T}
     elseif o.vector_quadratic !== nothing
         return MOI.VectorQuadraticFunction{T}
-    elseif o.vector_nonlinear !== nothing
-        return MOI.VectorNonlinearFunction{T}
     end
     # The default if no objective is set.
     return MOI.ScalarAffineFunction{T}
@@ -109,7 +105,6 @@ function MOI.supports(
             MOI.VectorOfVariables,
             MOI.VectorAffineFunction{T},
             MOI.VectorQuadraticFunction{T},
-            MOI.VectorNonlinearFunction{T},
         },
     },
 ) where {T}
@@ -134,8 +129,6 @@ function MOI.get(
         return convert(F, o.vector_affine)
     elseif o.vector_quadratic !== nothing
         return convert(F, o.vector_quadratic)
-    elseif o.vector_nonlinear !== nothing
-        return convert(F, o.vector_nonlinear)
     end
     # The default if no objective is set.
     return convert(F, zero(MOI.ScalarAffineFunction{T}))
@@ -224,17 +217,6 @@ function MOI.set(
     return
 end
 
-function MOI.set(
-    o::ObjectiveContainer{T},
-    ::MOI.ObjectiveFunction{MOI.VectorNonlinearFunction{T}},
-    f::MOI.VectorNonlinearFunction{T},
-) where {T}
-    _empty_keeping_sense(o)
-    o.is_function_set = true
-    o.vector_nonlinear = copy(f)
-    return
-end
-
 ###
 ### MOI.ListOfModelAttributesSet
 ###
@@ -280,14 +262,6 @@ function MOI.modify(
         o.vector_quadratic = modify_function!(o.vector_quadratic, change)
     elseif o.vector_affine !== nothing
         o.vector_affine = modify_function!(o.vector_affine, change)
-    elseif o.vector_nonlinear !== nothing
-        throw(
-            MOI.ModifyObjectiveNotAllowed(
-                change,
-                "Cannot modify objective when there is a " *
-                "`VectorNonlinearFunction` objective",
-            ),
-        )
     else
         # If no objective is set, modify a ScalarAffineFunction by default.
         f = zero(MOI.ScalarAffineFunction{T})
@@ -327,14 +301,6 @@ function MOI.delete(o::ObjectiveContainer, x::MOI.VariableIndex)
         o.vector_affine = remove_variable(o.vector_affine, x)
     elseif o.vector_quadratic !== nothing
         o.vector_quadratic = remove_variable(o.vector_quadratic, x)
-    elseif o.vector_nonlinear !== nothing
-        throw(
-            MOI.DeleteNotAllowed(
-                x,
-                "Cannot delete variable when there is a " *
-                "`VectorNonlinearFunction` objective",
-            ),
-        )
     end
     return
 end
@@ -366,14 +332,6 @@ function MOI.delete(o::ObjectiveContainer, x::Vector{MOI.VariableIndex})
         o.vector_affine = filter_variables(keep, o.vector_affine)
     elseif o.vector_quadratic !== nothing
         o.vector_quadratic = filter_variables(keep, o.vector_quadratic)
-    elseif o.vector_nonlinear !== nothing
-        throw(
-            MOI.DeleteNotAllowed(
-                first(x),
-                "Cannot delete variable when there is a " *
-                "`VectorNonlinearFunction` objective",
-            ),
-        )
     end
     return
 end

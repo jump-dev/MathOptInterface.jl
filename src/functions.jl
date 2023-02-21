@@ -606,50 +606,6 @@ function Base.copy(f::ScalarNonlinearFunction{T}) where {T}
     return ScalarNonlinearFunction{T}(f.head, copy(f.args))
 end
 
-"""
-    VectorNonlinearFunction{T<:Number}(args::Vector{Any})
-
-The vector-valued nonlinear function composed of a vector of scalar functions.
-
-## `args`
-
-The vector `args` contains the scalar elements of the nonlinear function. Each
-element must be one of the following:
-
- * A number of type `T`
- * A variable of type [`VariableIndex`](@ref)
- * A [`ScalarAffineFunction`](@ref)
- * A [`ScalarQuadraticFunction`](@ref)
- * A [`ScalarNonlinearFunction`](@ref)
-
-## Example
-
-To represent the function ``f(x) = [sin(x)^2, x]``, do:
-
-```jldoctest
-julia> using MathOptInterface; const MOI = MathOptInterface;
-
-julia> x = MOI.VariableIndex(1)
-MathOptInterface.VariableIndex(1)
-
-julia> g = MOI.ScalarNonlinearFunction{Float64}(
-           :^,
-           Any[MOI.ScalarNonlinearFunction{Float64}(:sin, Any[x]), 2],
-       )
-MathOptInterface.ScalarNonlinearFunction{Float64}(:^, Any[MathOptInterface.ScalarNonlinearFunction{Float64}(:sin, Any[MathOptInterface.VariableIndex(1)]), 2])
-
-julia> MOI.VectorNonlinearFunction{Float64}(Any[g, x])
-MathOptInterface.VectorNonlinearFunction{Float64}(Any[MathOptInterface.ScalarNonlinearFunction{Float64}(:^, Any[MathOptInterface.ScalarNonlinearFunction{Float64}(:sin, Any[MathOptInterface.VariableIndex(1)]), 2]), MathOptInterface.VariableIndex(1)])
-```
-"""
-struct VectorNonlinearFunction{T} <: AbstractVectorFunction
-    args::Vector{Any}
-end
-
-function Base.copy(f::VectorNonlinearFunction{T}) where {T}
-    return VectorNonlinearFunction{T}(copy(f.args))
-end
-
 # Function modifications
 
 """
@@ -800,22 +756,6 @@ function Base.isapprox(
     kwargs...,
 ) where {T}
     if f.head != g.head || length(f.args) != length(g.args)
-        return false
-    end
-    for (fi, gi) in zip(f.args, g.args)
-        if !isapprox(fi, gi; kwargs...)
-            return false
-        end
-    end
-    return true
-end
-
-function Base.isapprox(
-    f::VectorNonlinearFunction{T},
-    g::VectorNonlinearFunction{T};
-    kwargs...,
-) where {T}
-    if length(f.args) != length(g.args)
         return false
     end
     for (fi, gi) in zip(f.args, g.args)
