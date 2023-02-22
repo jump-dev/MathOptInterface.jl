@@ -125,36 +125,68 @@ end
 """
     instantiate(
         optimizer_constructor,
-        with_bridge_type::Union{Nothing, Type} = nothing,
+        with_cache_type::Union{Nothing,Type} = nothing,
+        with_bridge_type::Union{Nothing,Type} = nothing,
     )
 
-Creates an instance of optimizer by either:
+Create an instance of an optimizer by either:
+
  * calling `optimizer_constructor.optimizer_constructor()` and setting the
    parameters in `optimizer_constructor.params` if `optimizer_constructor` is a
    [`OptimizerWithAttributes`](@ref)
 *  calling `optimizer_constructor()` if `optimizer_constructor` is callable.
 
-If `with_bridge_type` is not `nothing`, it enables all the bridges defined in
-the MathOptInterface.Bridges submodule with coefficient type `with_bridge_type`.
+## with_cache_type
 
-If the optimizer created by `optimizer_constructor` does not support loading the
-problem incrementally (see [`supports_incremental_interface`](@ref)), then a
-[`Utilities.CachingOptimizer`](@ref) is added to store a cache of the bridged
-model.
+If `with_cache_type` is not `nothing`, then the optimizer is wrapped in a
+[`Utilities.CachingOptimizer`](@ref) to store a cache of the model. This is most
+useful if the optimizer you are constructing does not support the incremental
+interface (see [`supports_incremental_interface`](@ref)).
+
+## with_bridge_type
+
+If `with_bridge_type` is not `nothing`, the optimizer is wrapped in a
+[`Bridges.full_bridge_optimizer`](@ref), enabling all the bridges defined in
+the MOI.Bridges submodule with coefficient type `with_bridge_type`.
+
+In addition, if the optimizer created by `optimizer_constructor` does not
+support the incremental interface (see [`supports_incremental_interface`](@ref)),
+then, irrespective of `with_cache_type`, the optimizer is wrapped in a
+[`Utilities.CachingOptimizer`](@ref) to store a cache of the bridged model.
+
+If `with_cache_type` and `with_bridge_type` are both not `nothing`, then they
+must be the same type.
 """
 function instantiate(
     (@nospecialize optimizer_constructor);
     with_bridge_type::Union{Nothing,Type} = nothing,
+    with_cache_type::Union{Nothing,Type} = nothing,
 )
+    if with_bridge_type !== nothing && with_cache_type !== nothing
+        if with_bridge_type != with_cache_type
+            error(
+                "If both provided, `with_bridge_type` and `with_cache_type` " *
+                "must be the same type. Got " *
+                "`with_bridge_type = $with_bridge_type` and " *
+                "`with_cache_type = $with_cache_type`",
+            )
+        end
+    end
     optimizer = _instantiate_and_check(optimizer_constructor)
     if with_bridge_type === nothing
-        return optimizer
+        if with_cache_type === nothing
+            return optimizer
+        end
+        cache = default_cache(optimizer, with_cache_type)
+        return Utilities.CachingOptimizer(cache, optimizer)
+    else
+        if with_cache_type !== nothing ||
+           !supports_incremental_interface(optimizer)
+            cache = default_cache(optimizer, with_bridge_type)
+            optimizer = Utilities.CachingOptimizer(cache, optimizer)
+        end
+        return Bridges.full_bridge_optimizer(optimizer, with_bridge_type)
     end
-    if !supports_incremental_interface(optimizer)
-        cache = default_cache(optimizer, with_bridge_type)
-        optimizer = Utilities.CachingOptimizer(cache, optimizer)
-    end
-    return Bridges.full_bridge_optimizer(optimizer, with_bridge_type)
 end
 
 """

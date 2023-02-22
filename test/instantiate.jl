@@ -9,8 +9,20 @@ module TestInstantiate
 using Test
 import MathOptInterface as MOI
 
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$name", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+end
+
 struct DummyOptimizer <: MOI.AbstractOptimizer end
+
 MOI.is_empty(::DummyOptimizer) = true
+
 function MOI.default_cache(::DummyOptimizer, ::Type{T}) where {T}
     return MOI.Utilities.Model{T}()
 end
@@ -110,14 +122,48 @@ function test_get_set_Optimizer_with_attributes()
     return
 end
 
-function runtests()
-    for name in names(@__MODULE__; all = true)
-        if startswith("$name", "test_")
-            @testset "$(name)" begin
-                getfield(@__MODULE__, name)()
-            end
-        end
+function test_instantiate_with_cache_type()
+    function f(::Type{T}) where {T}
+        return MOI.Utilities.MockOptimizer(
+            MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}()),
+        )
     end
+    function inner_type(::Type{T}) where {T}
+        return MOI.Utilities.UniversalFallback{MOI.Utilities.Model{T}}
+    end
+    function mock_type(::Type{T}) where {T}
+        return MOI.Utilities.MockOptimizer{inner_type(T),Float64}
+    end
+    for T in (Int, Float64)
+        mock, inner = mock_type(T), inner_type(T)
+        # Check with no arguments provided
+        model = MOI.instantiate(() -> f(T))
+        @test typeof(model) == mock
+        # Check with only with_bridge_type
+        model = MOI.instantiate(() -> f(T); with_bridge_type = T)
+        @test typeof(model) == MOI.Bridges.LazyBridgeOptimizer{mock}
+        # Check with only with_cache_type
+        model = MOI.instantiate(() -> f(T); with_cache_type = T)
+        @test typeof(model) == MOI.Utilities.CachingOptimizer{mock,inner}
+        # Check with both with_cache_type and with_bridge_type
+        model = MOI.instantiate(; with_cache_type = T, with_bridge_type = T) do
+            return f(T)
+        end
+        @test typeof(model) == MOI.Bridges.LazyBridgeOptimizer{
+            MOI.Utilities.CachingOptimizer{mock,inner},
+        }
+    end
+    @test_throws(
+        ErrorException(
+            "If both provided, `with_bridge_type` and `with_cache_type` must " *
+            "be the same type. Got `with_bridge_type = $Float64` and " *
+            "`with_cache_type = $Int`",
+        ),
+        MOI.instantiate(; with_cache_type = Int, with_bridge_type = Float64) do
+            return f(Int)
+        end
+    )
+    return
 end
 
 end
