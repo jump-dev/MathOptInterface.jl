@@ -21,7 +21,7 @@ abstract type AbstractSet end
 Return the [`output_dimension`](@ref) that an [`AbstractFunction`](@ref) should
 have to be used with the set `set`.
 
-### Examples
+## Example
 
 ```jldoctest
 julia> import MathOptInterface as MOI
@@ -49,7 +49,7 @@ information.
 
 If the dual cone is not defined it returns an error.
 
-### Examples
+## Example
 
 ```jldoctest
 julia> import MathOptInterface as MOI
@@ -72,7 +72,7 @@ dual_set(set::AbstractSet) = error("Dual of $set is not implemented.")
 Return the type of dual set of sets of type `S`, as returned by
 [`dual_set`](@ref). If the dual cone is not defined it returns an error.
 
-### Examples
+## Example
 
 ```jldoctest
 julia> import MathOptInterface as MOI
@@ -108,6 +108,294 @@ abstract type AbstractScalarSet <: AbstractSet end
 Base.broadcastable(set::AbstractScalarSet) = Ref(set)
 
 dimension(s::AbstractScalarSet) = 1
+
+"""
+    GreaterThan{T<:Real}(lower::T)
+
+The set ``[lower, \\infty) \\subseteq \\mathbb{R}``.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.GreaterThan{Float64}}(1)
+```
+"""
+struct GreaterThan{T<:Real} <: AbstractScalarSet
+    lower::T
+end
+
+Base.:(==)(a::GreaterThan{T}, b::GreaterThan{T}) where {T} = a.lower == b.lower
+
+"""
+    LessThan{T<:Real}(upper::T)
+
+The set ``(-\\infty, upper] \\subseteq \\mathbb{R}``.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.add_constraint(model, x, MOI.LessThan(2.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.LessThan{Float64}}(1)
+```
+"""
+struct LessThan{T<:Real} <: AbstractScalarSet
+    upper::T
+end
+
+Base.:(==)(a::LessThan{T}, b::LessThan{T}) where {T} = a.upper == b.upper
+
+"""
+    EqualTo{T<:Number}(value::T)
+
+The set containing the single point ``\\{value\\} \\subseteq \\mathbb{R}``.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.add_constraint(model, x, MOI.EqualTo(2.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.EqualTo{Float64}}(1)
+```
+"""
+struct EqualTo{T<:Number} <: AbstractScalarSet
+    value::T
+end
+
+Base.:(==)(a::EqualTo{T}, b::EqualTo{T}) where {T} = a.value == b.value
+
+"""
+    Parameter{T<:Number}(value::T)
+
+The set containing the single point ``\\{value\\} \\subseteq \\mathbb{R}``.
+
+The `Parameter` set is conceptually similar to the [`EqualTo`](@ref) set, except
+that a variable constrained to the `Parameter` set cannot have other constraints
+added to it, and the `Parameter` set can never be deleted. Thus, solvers are
+free to treat the variable as a constant, and they need not add it as a decision
+variable to the model.
+
+Because of this behavior, you must add parameters using [`add_constrained_variable`](@ref),
+and solvers should declare [`supports_add_constrained_variable`](@ref) and not
+[`supports_constraint`](@ref) for the `Parameter` set.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> p, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.5))
+(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Parameter{Float64}}(1))
+
+julia> MOI.set(model, MOI.ConstraintSet(), ci, MOI.Parameter(3.0))
+
+julia> MOI.get(model, MOI.ConstraintSet(), ci)
+MathOptInterface.Parameter{Float64}(3.0)
+```
+"""
+struct Parameter{T<:Number} <: AbstractScalarSet
+    value::T
+end
+
+Base.:(==)(a::Parameter{T}, b::Parameter{T}) where {T} = a.value == b.value
+
+"""
+    Interval{T<:Real}(lower::T, upper::T)
+
+The interval ``[lower, upper] \\subseteq \\mathbb{R} \\cup \{-\\infty, +\\infty\}``.
+
+If `lower` or `upper` is `-Inf` or `Inf`, respectively, the set is interpreted
+as a one-sided interval.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.add_constraint(model, x, MOI.Interval(1.0, 2.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64}}(1)
+```
+"""
+struct Interval{T<:Real} <: AbstractScalarSet
+    lower::T
+    upper::T
+end
+
+function Base.:(==)(a::Interval{T}, b::Interval{T}) where {T}
+    return a.lower == b.lower && a.upper == b.upper
+end
+
+"""
+    Interval(set::GreaterThan{<:AbstractFloat})
+    Interval(set::LessThan{<:AbstractFloat})
+    Interval(set::EqualTo{<:Real})
+    Interval(set::Interval{<:Real})
+
+Construct an interval set from the set `set`, assuming any missing bounds are
+`typemin(T)` or `typemax(T)`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> MOI.Interval(MOI.GreaterThan(1.0))
+MathOptInterface.Interval{Float64}(1.0, Inf)
+
+julia> MOI.Interval(MOI.LessThan(2.5))
+MathOptInterface.Interval{Float64}(-Inf, 2.5)
+
+julia> MOI.Interval(MOI.EqualTo(3))
+MathOptInterface.Interval{Int64}(3, 3)
+
+julia> MOI.Interval(MOI.Interval(5, 6))
+MathOptInterface.Interval{Int64}(5, 6)
+```
+"""
+Interval(s::GreaterThan{<:AbstractFloat}) = Interval(s.lower, typemax(s.lower))
+Interval(s::LessThan{<:AbstractFloat}) = Interval(typemin(s.upper), s.upper)
+Interval(s::EqualTo{<:Real}) = Interval(s.value, s.value)
+Interval(s::Interval) = s
+
+"""
+    Integer()
+
+The set of integers, ``\\mathbb{Z}``.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.add_constraint(model, x, MOI.Integer())
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1)
+```
+"""
+struct Integer <: AbstractScalarSet end
+
+"""
+    ZeroOne()
+
+The set ``\\{0, 1\\}``.
+
+Variables belonging to the `ZeroOne` set are also known as "binary" variables.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.add_constraint(model, x, MOI.ZeroOne())
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(1)
+```
+"""
+struct ZeroOne <: AbstractScalarSet end
+
+"""
+    Semicontinuous{T<:Real}(lower::T, upper::T)
+
+The set ``\\{0\\} \\cup [lower, upper]``.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.add_constraint(model, x, MOI.Semicontinuous(2.0, 3.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Semicontinuous{Float64}}(1)
+```
+"""
+struct Semicontinuous{T<:Real} <: AbstractScalarSet
+    lower::T
+    upper::T
+end
+
+function Base.:(==)(a::Semicontinuous{T}, b::Semicontinuous{T}) where {T}
+    return a.lower == b.lower && a.upper == b.upper
+end
+
+"""
+    Semiinteger{T<:Real}(lower::T, upper::T)
+
+The set ``\\{0\\} \\cup \\{lower, lower+1, \\ldots, upper-1, upper\\}``.
+
+Note that if `lower` and `upper` are not equivalent to an integer, then the
+solver may throw an error, or it may round up `lower` and round down `upper` to
+the nearest integers.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.add_constraint(model, x, MOI.Semiinteger(2.0, 3.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Semiinteger{Float64}}(1)
+```
+"""
+struct Semiinteger{T<:Real} <: AbstractScalarSet
+    lower::T
+    upper::T
+end
+
+function Base.:(==)(a::Semiinteger{T}, b::Semiinteger{T}) where {T}
+    return a.lower == b.lower && a.upper == b.upper
+end
 
 """
     AbstractVectorSet
@@ -266,214 +554,6 @@ end
 
 dual_set(s::Nonpositives) = copy(s)
 dual_set_type(::Type{Nonpositives}) = Nonpositives
-
-"""
-    GreaterThan{T<:Real}(lower::T)
-
-The set ``[lower, \\infty) \\subseteq \\mathbb{R}``.
-
-## Example
-
-```jldoctest
-julia> import MathOptInterface as MOI
-
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
-
-julia> x = MOI.add_variable(model)
-MathOptInterface.VariableIndex(1)
-
-julia> MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
-MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.GreaterThan{Float64}}(1)
-```
-"""
-struct GreaterThan{T<:Real} <: AbstractScalarSet
-    lower::T
-end
-
-Base.:(==)(a::GreaterThan{T}, b::GreaterThan{T}) where {T} = a.lower == b.lower
-
-"""
-    LessThan{T<:Real}(upper::T)
-
-The set ``(-\\infty, upper] \\subseteq \\mathbb{R}``.
-
-## Example
-
-```jldoctest
-julia> import MathOptInterface as MOI
-
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
-
-julia> x = MOI.add_variable(model)
-MathOptInterface.VariableIndex(1)
-
-julia> MOI.add_constraint(model, x, MOI.LessThan(2.0))
-MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.LessThan{Float64}}(1)
-```
-"""
-struct LessThan{T<:Real} <: AbstractScalarSet
-    upper::T
-end
-
-Base.:(==)(a::LessThan{T}, b::LessThan{T}) where {T} = a.upper == b.upper
-
-"""
-    EqualTo{T<:Number}(value::T)
-
-The set containing the single point ``\\{value\\} \\subseteq \\mathbb{R}``.
-
-## Example
-
-```jldoctest
-julia> import MathOptInterface as MOI
-
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
-
-julia> x = MOI.add_variable(model)
-MathOptInterface.VariableIndex(1)
-
-julia> MOI.add_constraint(model, x, MOI.EqualTo(2.0))
-MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.EqualTo{Float64}}(1)
-```
-"""
-struct EqualTo{T<:Number} <: AbstractScalarSet
-    value::T
-end
-
-Base.:(==)(a::EqualTo{T}, b::EqualTo{T}) where {T} = a.value == b.value
-
-"""
-    Parameter{T<:Number}(value::T)
-
-The set containing the single point ``\\{value\\} \\subseteq \\mathbb{R}``.
-
-The `Parameter` set is conceptually similar to the [`EqualTo`](@ref) set, except
-that a variable constrained to the `Parameter` set cannot have other constraints
-added to it, and the `Parameter` set can never be deleted. Thus, solvers are
-free to treat the variable as a constant, and they need not add it as a decision
-variable to the model.
-
-Because of this behavior, you must add parameters using [`add_constrained_variable`](@ref),
-and solvers should declare [`supports_add_constrained_variable`](@ref) and not
-[`supports_constraint`](@ref) for the `Parameter` set.
-
-## Example
-
-```jldoctest
-julia> import MathOptInterface as MOI
-
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
-
-julia> p, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.5))
-(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Parameter{Float64}}(1))
-
-julia> MOI.set(model, MOI.ConstraintSet(), ci, MOI.Parameter(3.0))
-
-julia> MOI.get(model, MOI.ConstraintSet(), ci)
-MathOptInterface.Parameter{Float64}(3.0)
-```
-"""
-struct Parameter{T<:Number} <: AbstractScalarSet
-    value::T
-end
-
-Base.:(==)(a::Parameter{T}, b::Parameter{T}) where {T} = a.value == b.value
-
-"""
-    Interval{T<:Real}(lower::T, upper::T)
-
-The interval ``[lower, upper] \\subseteq \\mathbb{R}``.
-
-If `lower` or `upper` is `-Inf` or `Inf`, respectively, the set is interpreted
-as a one-sided interval.
-
-## Example
-
-```jldoctest
-julia> import MathOptInterface as MOI
-
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
-
-julia> x = MOI.add_variable(model)
-MathOptInterface.VariableIndex(1)
-
-julia> MOI.add_constraint(model, x, MOI.Interval(1.0, 2.0))
-MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64}}(1)
-```
-"""
-struct Interval{T<:Real} <: AbstractScalarSet
-    lower::T
-    upper::T
-end
-
-function Base.:(==)(a::Interval{T}, b::Interval{T}) where {T}
-    return a.lower == b.lower && a.upper == b.upper
-end
-
-"""
-    Interval(set::GreaterThan{<:AbstractFloat})
-    Interval(set::LessThan{<:AbstractFloat})
-    Interval(set::EqualTo{<:Real})
-    Interval(set::Interval{<:Real})
-
-Construct an interval set from the set `set`, assuming any missing bounds are
-`typemin(T)` or `typemax(T)`.
-
-## Example
-
-```jldoctest
-julia> import MathOptInterface as MOI
-
-julia> MOI.Interval(MOI.GreaterThan(1.0))
-MathOptInterface.Interval{Float64}(1.0, Inf)
-
-julia> MOI.Interval(MOI.LessThan(2.5))
-MathOptInterface.Interval{Float64}(-Inf, 2.5)
-
-julia> MOI.Interval(MOI.EqualTo(3))
-MathOptInterface.Interval{Int64}(3, 3)
-
-julia> MOI.Interval(MOI.Interval(5, 6))
-MathOptInterface.Interval{Int64}(5, 6)
-```
-"""
-Interval(s::GreaterThan{<:AbstractFloat}) = Interval(s.lower, typemax(s.lower))
-Interval(s::LessThan{<:AbstractFloat}) = Interval(typemin(s.upper), s.upper)
-Interval(s::EqualTo{<:Real}) = Interval(s.value, s.value)
-Interval(s::Interval) = s
-
-"""
-    constant(set::Union{EqualTo,GreaterThan,LessThan,Parameter})
-
-Returns the constant term of the set `set`.
-
-## Example
-
-```jldoctest
-julia> import MathOptInterface as MOI
-
-julia> MOI.constant(MOI.GreaterThan(1.0))
-1.0
-
-julia> MOI.constant(MOI.LessThan(2.5))
-2.5
-
-julia> MOI.constant(MOI.EqualTo(3))
-3
-
-julia> MOI.constant(MOI.Parameter(4.5))
-4.5
-```
-"""
-constant(s::EqualTo) = s.value
-constant(s::GreaterThan) = s.lower
-constant(s::LessThan) = s.upper
-constant(s::Parameter) = s.value
 
 """
     NormInfinityCone(dimension::Int)
@@ -828,7 +908,7 @@ The relative entropy cone
 ``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : u \\ge \\sum_{i=1}^n w_i \\log(\\frac{w_i}{v_i}), v_i \\ge 0, w_i \\ge 0 \\}``,
 where `dimension = 2n + 1 >= 1`.
 
-### Duality note
+## Duality note
 
 The dual of the relative entropy cone is
 ``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : \\forall i, w_i \\ge u (\\log (\\frac{u}{v_i}) - 1), v_i \\ge 0, u > 0 \\}``
@@ -994,7 +1074,7 @@ cone of [`dimension`](@ref) ``n`` corresponds to a square matrix with side
 dimension ``\\sqrt{1/4 + 2 n} - 1/2``. (Because a ``d \\times d`` matrix has
 ``d(d + 1) / 2`` elements in the upper or lower triangle.)
 
-### Examples
+## Example
 
 The matrix
 ```math
@@ -1006,7 +1086,7 @@ The matrix
 ```
 has [`side_dimension`](@ref) 3 and vectorization ``(1, 2, 3, 4, 5, 6)``.
 
-### Note
+## Note
 
 Two packed storage formats exist for symmetric matrices, the respective orders
 of the entries are:
@@ -1024,7 +1104,7 @@ Indeed,
   `i = div(1 + isqrt(8k - 7), 2)` and `j = k - div((i - 1) * i, 2)` or
   `j = div(1 + isqrt(8k - 7), 2)` and `i = k - div((j - 1) * j, 2)`.
 
-### Duality note
+## Duality note
 
 The scalar product for the symmetric matrix in its vectorized form is the sum of
 the pairwise product of the diagonal entries plus twice the sum of the pairwise
@@ -1073,7 +1153,7 @@ products we have
 = 2y_2.
 ```
 
-### References
+## References
 
 [1] Boyd, S. and Vandenberghe, L.. *Convex optimization*. Cambridge university
     press, 2004.
@@ -1096,7 +1176,7 @@ to the corresponding set. That is, if the functions in entries ``(i, j)`` and
 ``(j, i)`` are different, then a constraint will be added to make sure that the
 entries are equal.
 
-### Examples
+## Example
 
 [`PositiveSemidefiniteConeSquare`](@ref) is a subtype of
 [`AbstractSymmetricMatrixSetSquare`](@ref) and constraining the matrix
@@ -1202,7 +1282,7 @@ The matrix is both constrained to be symmetric and to be positive semidefinite.
 That is, if the functions in entries ``(i, j)`` and ``(j, i)`` are different,
 then a constraint will be added to make sure that the entries are equal.
 
-### Examples
+## Example
 
 Constraining the matrix
 ```math
@@ -1262,7 +1342,7 @@ Becaue the matrix is Hermitian, the diagonal elements are real, and the
 complex-valued lower triangular entries are obtained as the conjugate of
 corresponding upper triangular entries.
 
-### Vectorization format
+## Vectorization format
 
 The vectorized form starts with real part of the entries of the upper triangular
 part of the matrix, given column by column as explained in
@@ -1519,108 +1599,6 @@ function triangular_form(set::RootDetConeSquare)
 end
 
 """
-    Integer()
-
-The set of integers ``\\mathbb{Z}``.
-
-## Example
-
-```jldoctest
-julia> import MathOptInterface as MOI
-
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
-
-julia> x = MOI.add_variable(model)
-MathOptInterface.VariableIndex(1)
-
-julia> MOI.add_constraint(model, x, MOI.Integer())
-MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1)
-```
-"""
-struct Integer <: AbstractScalarSet end
-
-"""
-    ZeroOne()
-
-The set ``\\{0, 1\\}``.
-
-## Example
-
-```jldoctest
-julia> import MathOptInterface as MOI
-
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
-
-julia> x = MOI.add_variable(model)
-MathOptInterface.VariableIndex(1)
-
-julia> MOI.add_constraint(model, x, MOI.ZeroOne())
-MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(1)
-```
-"""
-struct ZeroOne <: AbstractScalarSet end
-
-"""
-    Semicontinuous{T<:Real}(lower::T, upper::T)
-
-The set ``\\{0\\} \\cup [lower, upper]``.
-
-## Example
-
-```jldoctest
-julia> import MathOptInterface as MOI
-
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
-
-julia> x = MOI.add_variable(model)
-MathOptInterface.VariableIndex(1)
-
-julia> MOI.add_constraint(model, x, MOI.Semicontinuous(2.0, 3.0))
-MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Semicontinuous{Float64}}(1)
-```
-"""
-struct Semicontinuous{T<:Real} <: AbstractScalarSet
-    lower::T
-    upper::T
-end
-
-function Base.:(==)(a::Semicontinuous{T}, b::Semicontinuous{T}) where {T}
-    return a.lower == b.lower && a.upper == b.upper
-end
-
-"""
-    Semiinteger{T<:Real}(lower::T, upper::T)
-
-The set ``\\{0\\} \\cup \\{lower, lower+1, \\ldots, upper-1, upper\\}``.
-
-## Example
-
-```jldoctest
-julia> import MathOptInterface as MOI
-
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
-
-julia> x = MOI.add_variable(model)
-MathOptInterface.VariableIndex(1)
-
-julia> MOI.add_constraint(model, x, MOI.Semiinteger(2.0, 3.0))
-MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Semiinteger{Float64}}(1)
-```
-"""
-struct Semiinteger{T<:Real} <: AbstractScalarSet
-    lower::T
-    upper::T
-end
-
-function Base.:(==)(a::Semiinteger{T}, b::Semiinteger{T}) where {T}
-    return a.lower == b.lower && a.upper == b.upper
-end
-
-"""
     SOS1{T<:Real}(weights::Vector{T})
 
 The set corresponding to the Special Ordered Set (SOS) constraint of Type I.
@@ -1800,7 +1778,7 @@ The mixed complementarity problem consists of finding `x_i` in the interval
 Classically, the bounding set for `x_i` is `Interval(0, Inf)`, which recovers:
 `0 <= F_i(x) ⟂ x_i >= 0`, where the `⟂` operator implies `F_i(x) * x_i = 0`.
 
-### Examples
+## Example
 
 The problem:
 
@@ -2597,3 +2575,31 @@ update_dimension(::Reals, new_dim::Int) = Reals(new_dim)
 update_dimension(::Zeros, new_dim::Int) = Zeros(new_dim)
 update_dimension(::Nonnegatives, new_dim::Int) = Nonnegatives(new_dim)
 update_dimension(::Nonpositives, new_dim::Int) = Nonpositives(new_dim)
+
+"""
+    constant(set::Union{EqualTo,GreaterThan,LessThan,Parameter})
+
+Returns the constant term of the set `set`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> MOI.constant(MOI.GreaterThan(1.0))
+1.0
+
+julia> MOI.constant(MOI.LessThan(2.5))
+2.5
+
+julia> MOI.constant(MOI.EqualTo(3))
+3
+
+julia> MOI.constant(MOI.Parameter(4.5))
+4.5
+```
+"""
+constant(s::EqualTo) = s.value
+constant(s::GreaterThan) = s.lower
+constant(s::LessThan) = s.upper
+constant(s::Parameter) = s.value
