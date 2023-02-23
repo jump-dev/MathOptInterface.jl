@@ -2548,6 +2548,24 @@ function Base.:(==)(x::Reified{S}, y::Reified{S}) where {S}
     return x.set == y.set
 end
 
+# TODO(odow): these are not necessarily isbits! They may not be safe to return
+# without copying if the number is BigFloat, for example.
+function Base.copy(
+    set::Union{
+        GreaterThan,
+        LessThan,
+        EqualTo,
+        Parameter,
+        Interval,
+        Semicontinuous,
+        Semiinteger,
+        PowerCone,
+        DualPowerCone,
+    },
+)
+    return set
+end
+
 """
     supports_dimension_update(S::Type{<:MOI.AbstractVectorSet})
 
