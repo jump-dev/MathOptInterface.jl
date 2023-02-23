@@ -30,8 +30,8 @@ Subtypes of `AbstractSet` such as [`AbstractScalarSet`](@ref) and
 
 You may optionally implement:
 
- * [`dual_set(::S)`](@ref)
- * [`dual_set_type(::Type{S})`](@ref)
+ * [`dual_set`](@ref)
+ * [`dual_set_type`](@ref)
 """
 abstract type AbstractSet end
 
@@ -138,13 +138,12 @@ Abstract supertype for subsets of ``\\mathbb{R}^n`` for some ``n``.
 
 All `AbstractVectorSet`s of type `S` must implement:
 
- * [`dimension(::S)`](@ref), although by convention, you do not need to
-   implement this method if the dimension is stored in the `set.dimension` field.
+ * [`dimension`](@ref), although by convention, you do not need to implement
+   this method if the dimension is stored in the `set.dimension` field.
 """
 abstract type AbstractVectorSet <: AbstractSet end
 
 dimension(s::AbstractVectorSet) = s.dimension
-
 
 """
     GreaterThan{T<:Real}(lower::T)
@@ -1342,15 +1341,17 @@ end
 
 function dual_set(::PositiveSemidefiniteConeSquare)
     return error(
-        "Dual of `PositiveSemidefiniteConeSquare` is not defined. For more " *
-        "details see the comments in `src/Bridges/Constraint/square.jl`.",
+        "Dual of `PositiveSemidefiniteConeSquare` is not defined in " *
+        "MathOptInterface\n. For more details see the comments in " *
+        "`src/Bridges/Constraint/square.jl`.",
     )
 end
 
 function dual_set_type(::Type{PositiveSemidefiniteConeSquare})
     return error(
-        "Dual of `PositiveSemidefiniteConeSquare` is not defined. For more " *
-        "details see the comments in `src/Bridges/Constraint/square.jl`.",
+        "Dual of `PositiveSemidefiniteConeSquare` is not defined in " *
+        "MathOptInterface\n. For more details see the comments in " *
+        "`src/Bridges/Constraint/square.jl`.",
     )
 end
 
