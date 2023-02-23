@@ -9,11 +9,38 @@
 """
     AbstractSet
 
-Abstract supertype for set objects used to encode constraints. A set object
-should not contain any [`VariableIndex`](@ref) or [`ConstraintIndex`](@ref)
-as the set is passed unmodifed during [`copy_to`](@ref).
+Abstract supertype for set objects used to encode constraints.
+
+!!! note
+    When developing new sets, the set struct must not contain any
+    [`VariableIndex`](@ref) or [`ConstraintIndex`](@ref) objects, because the
+    set is passed unmodifed during [`copy_to`](@ref).
+
+## Required methods
+
+For sets of type `S` with `isbitstype(S) == false`, you must implement:
+
+ * `Base.copy(set::S)`
+ * `Base.:(==)(x::S, y::S)`
+
+Subtypes of `AbstractSet` such as [`AbstractScalarSet`](@ref) and
+[`AbstractVectorSet`](@ref) may prescribe additional required methods.
+
+## Optional methods
+
+You may optionally implement:
+
+ * [`dual_set(::S)`](@ref)
+ * [`dual_set_type(::Type{S})`](@ref)
 """
 abstract type AbstractSet end
+
+function Base.copy(set::S) where {S<:AbstractSet}
+    if isbitstype(S)
+        return set
+    end
+    return error("Base.copy(::$S) is not implemented for this set.")
+end
 
 """
     dimension(set::AbstractSet)
@@ -91,13 +118,6 @@ function dual_set_type(S::Type{<:AbstractSet})
     return error("Dual type of $S is not implemented.")
 end
 
-function Base.copy(set::S) where {S<:AbstractSet}
-    if isbitstype(S)
-        return set
-    end
-    return error("Base.copy(::$S) is not implemented for this set.")
-end
-
 """
     AbstractScalarSet
 
@@ -108,6 +128,23 @@ abstract type AbstractScalarSet <: AbstractSet end
 Base.broadcastable(set::AbstractScalarSet) = Ref(set)
 
 dimension(s::AbstractScalarSet) = 1
+
+"""
+    AbstractVectorSet
+
+Abstract supertype for subsets of ``\\mathbb{R}^n`` for some ``n``.
+
+## Required methods
+
+All `AbstractVectorSet`s of type `S` must implement:
+
+ * [`dimension(::S)`](@ref), although by convention, you do not need to
+   implement this method if the dimension is stored in the `set.dimension` field.
+"""
+abstract type AbstractVectorSet <: AbstractSet end
+
+dimension(s::AbstractVectorSet) = s.dimension
+
 
 """
     GreaterThan{T<:Real}(lower::T)
@@ -396,16 +433,6 @@ end
 function Base.:(==)(a::Semiinteger{T}, b::Semiinteger{T}) where {T}
     return a.lower == b.lower && a.upper == b.upper
 end
-
-"""
-    AbstractVectorSet
-
-Abstract supertype for subsets of ``\\mathbb{R}^n`` for some ``n``.
-"""
-abstract type AbstractVectorSet <: AbstractSet end
-
-# .dimension field is conventional, overwrite this method if not applicable
-dimension(s::AbstractVectorSet) = s.dimension
 
 """
     Reals(dimension::Int)
@@ -1313,19 +1340,18 @@ struct PositiveSemidefiniteConeSquare <: AbstractSymmetricMatrixSetSquare
     end
 end
 
-function _dual_set_square_error()
+function dual_set(::PositiveSemidefiniteConeSquare)
     return error(
-        """Dual of `PositiveSemidefiniteConeSquare` is not defined in MathOptInterface.
-           For more details see the comments in `src/Bridges/Constraint/square.jl`.""",
+        "Dual of `PositiveSemidefiniteConeSquare` is not defined. For more " *
+        "details see the comments in `src/Bridges/Constraint/square.jl`.",
     )
 end
 
-function dual_set(::PositiveSemidefiniteConeSquare)
-    return _dual_set_square_error()
-end
-
 function dual_set_type(::Type{PositiveSemidefiniteConeSquare})
-    return _dual_set_square_error()
+    return error(
+        "Dual of `PositiveSemidefiniteConeSquare` is not defined. For more " *
+        "details see the comments in `src/Bridges/Constraint/square.jl`.",
+    )
 end
 
 function triangular_form(::Type{PositiveSemidefiniteConeSquare})
