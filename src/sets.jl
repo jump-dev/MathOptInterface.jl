@@ -1063,7 +1063,7 @@ The set corresponding to the special ordered set (SOS) constraint of type 1.
 Of the variables in the set, at most one can be nonzero.
 The `weights` induce an ordering of the variables; as such, they should be unique values.
 The *k*th element in the set corresponds to the *k*th weight in `weights`.
-See [here](http://lpsolve.sourceforge.net/5.5/SOS.htm) for a description of SOS constraints and their potential uses.
+See [here](https://lpsolve.sourceforge.net/5.5/SOS.htm) for a description of SOS constraints and their potential uses.
 """
 struct SOS1{T<:Real} <: AbstractVectorSet
     weights::Vector{T}
@@ -1076,7 +1076,7 @@ The set corresponding to the special ordered set (SOS) constraint of type 2.
 Of the variables in the set, at most two can be nonzero, and if two are nonzero, they must be adjacent in the ordering of the set.
 The `weights` induce an ordering of the variables; as such, they should be unique values.
 The *k*th element in the set corresponds to the *k*th weight in `weights`.
-See [here](http://lpsolve.sourceforge.net/5.5/SOS.htm) for a description of SOS constraints and their potential uses.
+See [here](https://lpsolve.sourceforge.net/5.5/SOS.htm) for a description of SOS constraints and their potential uses.
 """
 struct SOS2{T<:Real} <: AbstractVectorSet
     weights::Vector{T}

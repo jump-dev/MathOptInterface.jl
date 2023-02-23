@@ -206,8 +206,7 @@ give the wrong answer.
 
 **Step 1**
 
-Install the `MathOptInterface` julia package in `dev` mode
-([ref](https://julialang.github.io/Pkg.jl/v1/managing-packages/#developing-1)):
+Install the `MathOptInterface` julia package in [`dev` mode](https://pkgdocs.julialang.org/v1/managing-packages/#developing-1):
 ```julia
 julia> ]
 (@v1.6) pkg> dev MathOptInterface
@@ -222,7 +221,7 @@ machine).
 **Step 3**
 
 Since the double-optimize error involves solving an optimization problem,
-add a new test to [src/Test/UnitTests/solve.jl](https://github.com/jump-dev/MathOptInterface.jl/blob/master/src/Test/UnitTests/solve.jl):
+add a new test to [src/Test/test_solve.jl](https://github.com/jump-dev/MathOptInterface.jl/blob/master/src/Test/test_solve.jl):
 ```julia
 """
     test_unit_optimize!_twice(model::MOI.ModelLike, config::Config)
@@ -309,4 +308,4 @@ submit the PR for review.
 
 !!! tip
     If you need help writing a test, [open an issue on GitHub](https://github.com/jump-dev/MathOptInterface.jl/issues/new),
-    or ask the [Developer Chatroom](https://gitter.im/JuliaOpt/JuMP.jl)
+    or ask the [Developer Chatroom](https://app.gitter.im/#/room/#JuliaOpt_JuMP-dev:gitter.im)

@@ -110,7 +110,7 @@ Mixed-integer programming solvers fall into this category.
 | `CPXMIP_OPTIMAL_INFEAS`                          | `ALMOST_OPTIMAL`          | 1             | `INFEASIBLE_POINT` | `NO_SOLUTION` |
 
 !!! info
-    [`CPXMIP_OPTIMAL_INFEAS`](https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.6.1/ilog.odms.cplex.help/refcallablelibrary/macros/CPXMIP_OPTIMAL_INFEAS.html)
+    [`CPXMIP_OPTIMAL_INFEAS`](https://www.ibm.com/docs/en/SSSA5P_12.6.1/ilog.odms.cplex.help/refcallablelibrary/macros/CPXMIP_OPTIMAL_INFEAS.html)
     is a CPLEX status that indicates that a preprocessed problem was solved to
     optimality, but the solver was unable to recover a feasible solution to the
     original problem. Handling this status was one of the motivating drivers

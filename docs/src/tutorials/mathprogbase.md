@@ -20,7 +20,7 @@ as a modeling interface instead.
 
 !!! tip
     If you haven't used JuMP before, start with the tutorial
-    [Getting started with JuMP](https://jump.dev/JuMP.jl/stable/tutorials/Getting%20started/getting_started_with_JuMP/)
+    [Getting started with JuMP](https://jump.dev/JuMP.jl/stable/tutorials/getting_started/getting_started_with_JuMP/)
 
 ### linprog
 
