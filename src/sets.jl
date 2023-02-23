@@ -416,7 +416,10 @@ function Base.:(==)(a::Interval{T}, b::Interval{T}) where {T}
 end
 
 """
-    Interval(set::Union{GreaterThan{T},LessThan{T},EqualTo{T}}) where {T<:Real}
+    Interval(set::GreaterThan{<:AbstractFloat})
+    Interval(set::LessThan{<:AbstractFloat})
+    Interval(set::EqualTo{<:Real})
+    Interval(set::Interval{<:Real})
 
 Construct an interval set from the set `set`, assuming any missing bounds are
 `typemin(T)` or `typemax(T)`.
@@ -434,10 +437,13 @@ MathOptInterface.Interval{Float64}(-Inf, 2.5)
 
 julia> MOI.Interval(MOI.EqualTo(3))
 MathOptInterface.Interval{Int64}(3, 3)
+
+julia> MOI.Interval(MOI.Interval(5, 6))
+MathOptInterface.Interval{Int64}(5, 6)
 ```
 """
-Interval(s::GreaterThan{<:Real}) = Interval(s.lower, typemax(s.lower))
-Interval(s::LessThan{<:Real}) = Interval(typemin(s.upper), s.upper)
+Interval(s::GreaterThan{<:AbstractFloat}) = Interval(s.lower, typemax(s.lower))
+Interval(s::LessThan{<:AbstractFloat}) = Interval(typemin(s.upper), s.upper)
 Interval(s::EqualTo{<:Real}) = Interval(s.value, s.value)
 Interval(s::Interval) = s
 
@@ -1427,7 +1433,7 @@ julia> MOI.add_constraint(
            MOI.VectorOfVariables([t; X]),
            MOI.RootDetConeTriangle(2),
        )
-MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.RootDetConeSquare}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.RootDetConeTriangle}(1)
 ```
 """
 struct RootDetConeTriangle <: AbstractVectorSet
