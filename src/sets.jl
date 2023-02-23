@@ -11,11 +11,6 @@
 
 Abstract supertype for set objects used to encode constraints.
 
-!!! note
-    When developing new sets, the set struct must not contain any
-    [`VariableIndex`](@ref) or [`ConstraintIndex`](@ref) objects, because the
-    set is passed unmodifed during [`copy_to`](@ref).
-
 ## Required methods
 
 For sets of type `S` with `isbitstype(S) == false`, you must implement:
@@ -32,6 +27,11 @@ You may optionally implement:
 
  * [`dual_set`](@ref)
  * [`dual_set_type`](@ref)
+
+## Note for developers
+
+When creating a new set, the set struct must not contain any
+[`VariableIndex`](@ref) or [`ConstraintIndex`](@ref) objects.
 """
 abstract type AbstractSet end
 
@@ -138,8 +138,10 @@ Abstract supertype for subsets of ``\\mathbb{R}^n`` for some ``n``.
 
 All `AbstractVectorSet`s of type `S` must implement:
 
- * [`dimension`](@ref), although by convention, you do not need to implement
-   this method if the dimension is stored in the `set.dimension` field.
+ * [`dimension`](@ref), unless the dimension is stored in the `set.dimension`
+   field
+ * [`Utilities.set_dot`](@ref), unless the dot product between two vectors in
+   the set is equivalent to `LinearAlgebra.dot`.
 """
 abstract type AbstractVectorSet <: AbstractSet end
 
