@@ -228,7 +228,7 @@ Base.:(==)(a::Parameter{T}, b::Parameter{T}) where {T} = a.value == b.value
 """
     Interval{T<:Real}(lower::T, upper::T)
 
-The interval ``[lower, upper] \\subseteq \\mathbb{R} \\cup \{-\\infty, +\\infty\}``.
+The interval ``[lower, upper] \\subseteq \\mathbb{R} \\cup \\{-\\infty, +\\infty\\}``.
 
 If `lower` or `upper` is `-Inf` or `Inf`, respectively, the set is interpreted
 as a one-sided interval.
@@ -2513,6 +2513,27 @@ end
 
 The constraint ``[z; f(x)] \\in Reified(S)`` ensures that ``f(x) \\in S`` if and
 only if ``z == 1``, where ``z \\in \\{0, 1\\}``.
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+MOIU.UniversalFallback{MOIU.Model{Float64}}
+fallback for MOIU.Model{Float64}
+
+julia> z, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
+(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(1))
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(2)
+
+julia> MOI.add_constraint(
+           model,
+           MOI.Utilities.vectorize([z, 2.0 * x]),
+           MOI.Reified(MOI.GreaterThan(1.0)),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorAffineFunction{Float64}, MathOptInterface.Reified{MathOptInterface.GreaterThan{Float64}}}(1)
+```
 """
 struct Reified{S<:AbstractSet} <: AbstractVectorSet
     set::S
