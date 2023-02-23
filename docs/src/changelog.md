@@ -1156,7 +1156,7 @@ This release contains backports from the ongoing development of the v0.10 releas
 - The `MOIU.@model` and `MOIB.@bridge` macros now support functions and sets
   defined in external modules. As a consequence, function and set names in the
   macro arguments need to be prefixed by module name.
-- Rename functions according to the [JuMP style guide](http://www.juliaopt.org/JuMP.jl/latest/style.html):
+- Rename functions according to the [JuMP style guide](https://jump.dev/JuMP.jl/stable/developers/style/):
   * `copy!` with keyword arguments `copynames` and `warnattributes` ->
     `copy_to` with keyword arguments `copy_names` and `warn_attributes`;
   * `set!` -> `set`;
