@@ -4,8 +4,6 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-# Sets
-
 # Note: When adding a new set, also add it to Utilities.Model.
 
 """
@@ -18,9 +16,10 @@ as the set is passed unmodifed during [`copy_to`](@ref).
 abstract type AbstractSet end
 
 """
-    dimension(s::AbstractSet)
+    dimension(set::AbstractSet)
 
-Return the [`output_dimension`](@ref) that an [`AbstractFunction`](@ref) should have to be used with the set `s`.
+Return the [`output_dimension`](@ref) that an [`AbstractFunction`](@ref) should
+have to be used with the set `set`.
 
 ### Examples
 
@@ -36,14 +35,13 @@ julia> MOI.dimension(MOI.LessThan(3.0))
 julia> MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(2))
 3
 ```
-
 """
 function dimension end
 
 """
-    dual_set(s::AbstractSet)
+    dual_set(set::AbstractSet)
 
-Return the dual set of `s`, that is the dual cone of the set. This follows the
+Return the dual set of `set`, that is the dual cone of the set. This follows the
 definition of duality discussed in [Duality](@ref).
 
 See [Dual cone](https://en.wikipedia.org/wiki/Dual_cone_and_polar_cone) for more
@@ -66,9 +64,7 @@ julia> MOI.dual_set(MOI.ExponentialCone())
 MathOptInterface.DualExponentialCone()
 ```
 """
-function dual_set end
-
-dual_set(s::AbstractSet) = error("Dual of $s is not implemented.")
+dual_set(set::AbstractSet) = error("Dual of $set is not implemented.")
 
 """
     dual_set_type(S::Type{<:AbstractSet})
@@ -91,10 +87,15 @@ julia> MOI.dual_set_type(MOI.ExponentialCone)
 MathOptInterface.DualExponentialCone
 ```
 """
-function dual_set_type end
-
 function dual_set_type(S::Type{<:AbstractSet})
     return error("Dual type of $S is not implemented.")
+end
+
+function Base.copy(set::S) where {S<:AbstractSet}
+    if isbitstype(S)
+        return set
+    end
+    return error("Base.copy(::$S) is not implemented for this set.")
 end
 
 """
@@ -115,13 +116,28 @@ Abstract supertype for subsets of ``\\mathbb{R}^n`` for some ``n``.
 """
 abstract type AbstractVectorSet <: AbstractSet end
 
-dimension(s::AbstractVectorSet) = s.dimension # .dimension field is conventional, overwrite this method if not applicable
+# .dimension field is conventional, overwrite this method if not applicable
+dimension(s::AbstractVectorSet) = s.dimension
 
 """
-    Reals(dimension)
+    Reals(dimension::Int)
 
-The set ``\\mathbb{R}^{dimension}`` (containing all points) of dimension
-`dimension`.
+The set ``\\mathbb{R}^{dimension}`` (containing all points) of non-negative
+dimension `dimension`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Reals(3))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.Reals}(1)
+```
 """
 struct Reals <: AbstractVectorSet
     dimension::Int
@@ -141,10 +157,24 @@ dual_set(s::Reals) = Zeros(dimension(s))
 dual_set_type(::Type{Reals}) = Zeros
 
 """
-    Zeros(dimension)
+    Zeros(dimension::Int)
 
-The set ``\\{ 0 \\}^{dimension}`` (containing only the origin) of dimension
-`dimension`.
+The set ``\\{ 0 \\}^{dimension}`` (containing only the origin) of non-negative
+dimension `dimension`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Zeros(3))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.Zeros}(1)
+```
 """
 struct Zeros <: AbstractVectorSet
     dimension::Int
@@ -164,10 +194,24 @@ dual_set(s::Zeros) = Reals(dimension(s))
 dual_set_type(::Type{Zeros}) = Reals
 
 """
-    Nonnegatives(dimension)
+    Nonnegatives(dimension::Int)
 
 The nonnegative orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\ge 0 \\}`` of
-dimension `dimension`.
+non-negative dimension `dimension`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Nonnegatives(3))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.Nonnegatives}(1)
+```
 """
 struct Nonnegatives <: AbstractVectorSet
     dimension::Int
@@ -187,10 +231,24 @@ dual_set(s::Nonnegatives) = copy(s)
 dual_set_type(::Type{Nonnegatives}) = Nonnegatives
 
 """
-    Nonpositives(dimension)
+    Nonpositives(dimension::Int)
 
 The nonpositive orthant ``\\{ x \\in \\mathbb{R}^{dimension} : x \\le 0 \\}`` of
-dimension `dimension`.
+non-negative dimension `dimension`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Nonpositives(3))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.Nonpositives}(1)
+```
 """
 struct Nonpositives <: AbstractVectorSet
     dimension::Int
@@ -210,37 +268,87 @@ dual_set(s::Nonpositives) = copy(s)
 dual_set_type(::Type{Nonpositives}) = Nonpositives
 
 """
-    GreaterThan{T <: Real}(lower::T)
+    GreaterThan{T<:Real}(lower::T)
 
-The set ``[lower,\\infty) \\subseteq \\mathbb{R}``.
+The set ``[lower, \\infty) \\subseteq \\mathbb{R}``.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.GreaterThan{Float64}}(1)
+```
 """
 struct GreaterThan{T<:Real} <: AbstractScalarSet
     lower::T
 end
 
-"""
-    LessThan{T <: Real}(upper::T)
+Base.:(==)(a::GreaterThan{T}, b::GreaterThan{T}) where {T} = a.lower == b.lower
 
-The set ``(-\\infty,upper] \\subseteq \\mathbb{R}``.
+"""
+    LessThan{T<:Real}(upper::T)
+
+The set ``(-\\infty, upper] \\subseteq \\mathbb{R}``.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.add_constraint(model, x, MOI.LessThan(2.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.LessThan{Float64}}(1)
+```
 """
 struct LessThan{T<:Real} <: AbstractScalarSet
     upper::T
 end
 
-"""
-    EqualTo{T <: Number}(value::T)
+Base.:(==)(a::LessThan{T}, b::LessThan{T}) where {T} = a.upper == b.upper
 
-The set containing the single point ``x \\in \\mathbb{R}`` where ``x`` is given by `value`.
+"""
+    EqualTo{T<:Number}(value::T)
+
+The set containing the single point ``\\{value\\} \\subseteq \\mathbb{R}``.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.add_constraint(model, x, MOI.EqualTo(2.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.EqualTo{Float64}}(1)
+```
 """
 struct EqualTo{T<:Number} <: AbstractScalarSet
     value::T
 end
 
+Base.:(==)(a::EqualTo{T}, b::EqualTo{T}) where {T} = a.value == b.value
+
 """
     Parameter{T<:Number}(value::T)
 
-The set containing the single point ``x \\in \\mathbb{R}`` where ``x`` is given
-by `value`.
+The set containing the single point ``\\{value\\} \\subseteq \\mathbb{R}``.
 
 The `Parameter` set is conceptually similar to the [`EqualTo`](@ref) set, except
 that a variable constrained to the `Parameter` set cannot have other constraints
@@ -273,44 +381,88 @@ struct Parameter{T<:Number} <: AbstractScalarSet
     value::T
 end
 
-function Base.:(==)(
-    set1::S,
-    set2::S,
-) where {S<:Union{GreaterThan,LessThan,EqualTo,Parameter}}
-    return constant(set1) == constant(set2)
-end
+Base.:(==)(a::Parameter{T}, b::Parameter{T}) where {T} = a.value == b.value
 
 """
-    Interval{T <: Real}(lower::T,upper::T)
+    Interval{T<:Real}(lower::T, upper::T)
 
 The interval ``[lower, upper] \\subseteq \\mathbb{R}``.
-If `lower` or `upper` is `-Inf` or `Inf`, respectively, the set is interpreted as a one-sided interval.
 
-    Interval(s::GreaterThan{<:AbstractFloat})
+If `lower` or `upper` is `-Inf` or `Inf`, respectively, the set is interpreted
+as a one-sided interval.
 
-Construct a (right-unbounded) `Interval` equivalent to the given [`GreaterThan`](@ref) set.
+## Example
 
-    Interval(s::LessThan{<:AbstractFloat})
+```jldoctest
+julia> import MathOptInterface as MOI
 
-Construct a (left-unbounded) `Interval` equivalent to the given [`LessThan`](@ref) set.
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
 
-    Interval(s::EqualTo{<:Real})
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
 
-Construct a (degenerate) `Interval` equivalent to the given [`EqualTo`](@ref) set.
+julia> MOI.add_constraint(model, x, MOI.Interval(1.0, 2.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Interval{Float64}}(1)
+```
 """
 struct Interval{T<:Real} <: AbstractScalarSet
     lower::T
     upper::T
 end
-Interval(s::GreaterThan{<:AbstractFloat}) = Interval(s.lower, typemax(s.lower))
-Interval(s::LessThan{<:AbstractFloat}) = Interval(typemin(s.upper), s.upper)
+
+function Base.:(==)(a::Interval{T}, b::Interval{T}) where {T}
+    return a.lower == b.lower && a.upper == b.upper
+end
+
+"""
+    Interval(set::Union{GreaterThan{T},LessThan{T},EqualTo{T}}) where {T<:Real}
+
+Construct an interval set from the set `set`, assuming any missing bounds are
+`typemin(T)` or `typemax(T)`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> MOI.Interval(MOI.GreaterThan(1.0))
+MathOptInterface.Interval{Float64}(1.0, Inf)
+
+julia> MOI.Interval(MOI.LessThan(2.5))
+MathOptInterface.Interval{Float64}(-Inf, 2.5)
+
+julia> MOI.Interval(MOI.EqualTo(3))
+MathOptInterface.Interval{Int64}(3, 3)
+```
+"""
+Interval(s::GreaterThan{<:Real}) = Interval(s.lower, typemax(s.lower))
+Interval(s::LessThan{<:Real}) = Interval(typemin(s.upper), s.upper)
 Interval(s::EqualTo{<:Real}) = Interval(s.value, s.value)
 Interval(s::Interval) = s
 
 """
-    constant(s::Union{EqualTo, GreaterThan, LessThan})
+    constant(set::Union{EqualTo,GreaterThan,LessThan,Parameter})
 
-Returns the constant of the set.
+Returns the constant term of the set `set`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> MOI.constant(MOI.GreaterThan(1.0))
+1.0
+
+julia> MOI.constant(MOI.LessThan(2.5))
+2.5
+
+julia> MOI.constant(MOI.EqualTo(3))
+3
+
+julia> MOI.constant(MOI.Parameter(4.5))
+4.5
+```
 """
 constant(s::EqualTo) = s.value
 constant(s::GreaterThan) = s.lower
@@ -318,9 +470,29 @@ constant(s::LessThan) = s.upper
 constant(s::Parameter) = s.value
 
 """
-    NormInfinityCone(dimension)
+    NormInfinityCone(dimension::Int)
 
-The ``\\ell_\\infty``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_\\infty = \\max_i \\lvert x_i \\rvert \\}`` of dimension `dimension`.
+The ``\\ell_\\infty``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_\\infty = \\max_i \\lvert x_i \\rvert \\}``
+of dimension `dimension`.
+
+The `dimension` must be at least `1`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> t = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables([t; x]), MOI.NormInfinityCone(4))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.NormInfinityCone}(1)
+```
 """
 struct NormInfinityCone <: AbstractVectorSet
     dimension::Int
@@ -341,9 +513,29 @@ dual_set(s::NormInfinityCone) = NormOneCone(dimension(s))
 dual_set_type(::Type{NormInfinityCone}) = NormOneCone
 
 """
-    NormOneCone(dimension)
+    NormOneCone(dimension::Int)
 
-The ``\\ell_1``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_1 = \\sum_i \\lvert x_i \\rvert \\}`` of dimension `dimension`.
+The ``\\ell_1``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_1 = \\sum_i \\lvert x_i \\rvert \\}``
+of dimension `dimension`.
+
+The `dimension` must be at least `1`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> t = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables([t; x]), MOI.NormOneCone(4))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.NormOneCone}(1)
+```
 """
 struct NormOneCone <: AbstractVectorSet
     dimension::Int
@@ -363,9 +555,30 @@ dual_set(s::NormOneCone) = NormInfinityCone(dimension(s))
 dual_set_type(::Type{NormOneCone}) = NormInfinityCone
 
 """
-    SecondOrderCone(dimension)
+    SecondOrderCone(dimension::Int)
 
-The second-order cone (or Lorenz cone or ``\\ell_2``-norm cone) ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_2 \\}`` of dimension `dimension`.
+The second-order cone (or Lorenz cone or ``\\ell_2``-norm cone)
+``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\lVert x \\rVert_2 \\}`` of
+dimension `dimension`.
+
+The `dimension` must be at least `1`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> t = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables([t; x]), MOI.SecondOrderCone(4))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.SecondOrderCone}(1)
+```
 """
 struct SecondOrderCone <: AbstractVectorSet
     dimension::Int
@@ -386,9 +599,36 @@ dual_set(s::SecondOrderCone) = copy(s)
 dual_set_type(::Type{SecondOrderCone}) = SecondOrderCone
 
 """
-    RotatedSecondOrderCone(dimension)
+    RotatedSecondOrderCone(dimension::Int)
 
-The rotated second-order cone ``\\{ (t,u,x) \\in \\mathbb{R}^{dimension} : 2tu \\ge \\lVert x \\rVert_2^2, t,u \\ge 0 \\}`` of dimension `dimension`.
+The rotated second-order cone ``\\{ (t,u,x) \\in \\mathbb{R}^{dimension} : 2tu \\ge \\lVert x \\rVert_2^2, t,u \\ge 0 \\}``
+of dimension `dimension`.
+
+The `dimension` must be at least `2`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> t = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> u = MOI.add_variable(model)
+MathOptInterface.VariableIndex(2)
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(
+           model,
+           MOI.VectorOfVariables([t; u; x]),
+           MOI.RotatedSecondOrderCone(5),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.RotatedSecondOrderCone}(1)
+```
 """
 struct RotatedSecondOrderCone <: AbstractVectorSet
     dimension::Int
@@ -409,7 +649,7 @@ dual_set(s::RotatedSecondOrderCone) = copy(s)
 dual_set_type(::Type{RotatedSecondOrderCone}) = RotatedSecondOrderCone
 
 """
-    GeometricMeanCone(dimension)
+    GeometricMeanCone(dimension::Int)
 
 The geometric mean cone
 ``\\{ (t,x) \\in \\mathbb{R}^{n+1} : x \\ge 0, t \\le \\sqrt[n]{x_1 x_2 \\cdots x_n} \\}``,
@@ -420,6 +660,27 @@ where `dimension = n + 1 >= 2`.
 The dual of the geometric mean cone is
 ``\\{ (u, v) \\in \\mathbb{R}^{n+1} : u \\le 0, v \\ge 0, -u \\le n \\sqrt[n]{\\prod_i v_i} \\}``,
 where `dimension = n + 1 >= 2`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> t = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(
+           model,
+           MOI.VectorOfVariables([t; x]),
+           MOI.GeometricMeanCone(4),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.GeometricMeanCone}(1)
+```
 """
 struct GeometricMeanCone <: AbstractVectorSet
     dimension::Int
@@ -440,26 +701,73 @@ end
     ExponentialCone()
 
 The 3-dimensional exponential cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : y \\exp (x/y) \\le z, y > 0 \\}``.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.ExponentialCone())
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.ExponentialCone}(1)
+```
 """
 struct ExponentialCone <: AbstractVectorSet end
 
 dual_set(s::ExponentialCone) = DualExponentialCone()
 dual_set_type(::Type{ExponentialCone}) = DualExponentialCone
 
+dimension(::ExponentialCone) = 3
+
 """
     DualExponentialCone()
 
 The 3-dimensional dual exponential cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : -u \\exp (v/u) \\le \\exp(1) w, u < 0 \\}``.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.DualExponentialCone())
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.DualExponentialCone}(1)
+```
 """
 struct DualExponentialCone <: AbstractVectorSet end
 
 dual_set(s::DualExponentialCone) = ExponentialCone()
 dual_set_type(::Type{DualExponentialCone}) = ExponentialCone
 
-"""
-    PowerCone{T <: Real}(exponent::T)
+dimension(::DualExponentialCone) = 3
 
-The 3-dimensional power cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : x^{exponent} y^{1-exponent} \\ge |z|, x \\ge 0, y \\ge 0 \\}`` with parameter `exponent`.
+"""
+    PowerCone{T<:Real}(exponent::T)
+
+The 3-dimensional power cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : x^{exponent} y^{1-exponent} \\ge |z|, x \\ge 0, y \\ge 0 \\}``
+with parameter `exponent`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.PowerCone(0.5))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.PowerCone{Float64}}(1)
+```
 """
 struct PowerCone{T<:Real} <: AbstractVectorSet
     exponent::T
@@ -468,10 +776,31 @@ end
 dual_set(s::PowerCone{T}) where {T<:Real} = DualPowerCone{T}(s.exponent)
 dual_set_type(::Type{PowerCone{T}}) where {T<:Real} = DualPowerCone{T}
 
-"""
-    DualPowerCone{T <: Real}(exponent::T)
+dimension(::PowerCone) = 3
 
-The 3-dimensional power cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : (\\frac{u}{exponent})^{exponent} (\\frac{v}{1-exponent})^{1-exponent} \\ge |w|, u \\ge 0, v \\ge 0 \\}`` with parameter `exponent`.
+function Base.:(==)(x::PowerCone{T}, y::PowerCone{T}) where {T}
+    return x.exponent == y.exponent
+end
+
+"""
+    DualPowerCone{T<:Real}(exponent::T)
+
+The 3-dimensional power cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : (\\frac{u}{exponent})^{exponent} (\\frac{v}{1-exponent})^{1-exponent} \\ge |w|, u \\ge 0, v \\ge 0 \\}``
+with parameter `exponent`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.DualPowerCone(0.5))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.DualPowerCone{Float64}}(1)
+```
 """
 struct DualPowerCone{T<:Real} <: AbstractVectorSet
     exponent::T
@@ -480,18 +809,14 @@ end
 dual_set(s::DualPowerCone{T}) where {T<:Real} = PowerCone{T}(s.exponent)
 dual_set_type(::Type{DualPowerCone{T}}) where {T<:Real} = PowerCone{T}
 
-function dimension(
-    s::Union{ExponentialCone,DualExponentialCone,PowerCone,DualPowerCone},
-)
-    return 3
-end
+dimension(::DualPowerCone) = 3
 
-function Base.:(==)(set1::S, set2::S) where {S<:Union{PowerCone,DualPowerCone}}
-    return set1.exponent == set2.exponent
+function Base.:(==)(x::DualPowerCone{T}, y::DualPowerCone{T}) where {T}
+    return x.exponent == y.exponent
 end
 
 """
-    RelativeEntropyCone(dimension)
+    RelativeEntropyCone(dimension::Int)
 
 The relative entropy cone
 ``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : u \\ge \\sum_{i=1}^n w_i \\log(\\frac{w_i}{v_i}), v_i \\ge 0, w_i \\ge 0 \\}``,
@@ -500,7 +825,30 @@ where `dimension = 2n + 1 >= 1`.
 ### Duality note
 
 The dual of the relative entropy cone is
-``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : \\forall i, w_i \\ge u (\\log (\\frac{u}{v_i}) - 1), v_i \\ge 0, u > 0 \\}`` of dimension `dimension```{}=2n+1``.
+``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : \\forall i, w_i \\ge u (\\log (\\frac{u}{v_i}) - 1), v_i \\ge 0, u > 0 \\}``
+of dimension `dimension```{}=2n+1``.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> u = MOI.add_variable(model);
+
+julia> v = MOI.add_variables(model, 3);
+
+julia> w = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(
+           model,
+           MOI.VectorOfVariables([u; v; w]),
+           MOI.RelativeEntropyCone(7),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.RelativeEntropyCone}(1)
+```
 """
 struct RelativeEntropyCone <: AbstractVectorSet
     dimension::Int
@@ -518,15 +866,39 @@ struct RelativeEntropyCone <: AbstractVectorSet
 end
 
 """
-    NormSpectralCone(row_dim, column_dim)
+    NormSpectralCone(row_dim::Int, column_dim::Int)
 
 The epigraph of the matrix spectral norm (maximum singular value function)
 ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sigma_1(X) \\}``,
-where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row
-dimension `row_dim` and column dimension `column_dim`.
+where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of
+non-negative row dimension `row_dim` and column dimension `column_dim`.
 
 The matrix X is vectorized by stacking the columns, matching the behavior of
 Julia's `vec` function.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> t = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> X = reshape(MOI.add_variables(model, 6), 2, 3)
+2×3 Matrix{MathOptInterface.VariableIndex}:
+ VariableIndex(2)  VariableIndex(4)  VariableIndex(6)
+ VariableIndex(3)  VariableIndex(5)  VariableIndex(7)
+
+julia> MOI.add_constraint(
+           model,
+           MOI.VectorOfVariables([t; vec(X)]),
+           MOI.NormSpectralCone(2, 3),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.NormSpectralCone}(1)
+```
 """
 struct NormSpectralCone <: AbstractVectorSet
     row_dim::Int
@@ -547,16 +919,42 @@ end
 dual_set(s::NormSpectralCone) = NormNuclearCone(s.row_dim, s.column_dim)
 dual_set_type(::Type{NormSpectralCone}) = NormNuclearCone
 
+dimension(s::NormSpectralCone) = 1 + s.row_dim * s.column_dim
+
 """
-    NormNuclearCone(row_dim, column_dim)
+    NormNuclearCone(row_dim::Int, column_dim::Int)
 
 The epigraph of the matrix nuclear norm (sum of singular values function)
 ``\\{ (t, X) \\in \\mathbb{R}^{1 + row_dim \\times column_dim} : t \\ge \\sum_i \\sigma_i(X) \\}``,
-where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of row
-dimension `row_dim` and column dimension `column_dim`.
+where ``\\sigma_i`` is the ``i``th singular value of the matrix ``X`` of
+non-negative row dimension `row_dim` and column dimension `column_dim`.
 
 The matrix X is vectorized by stacking the columns, matching the behavior of
 Julia's `vec` function.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> t = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> X = reshape(MOI.add_variables(model, 6), 2, 3)
+2×3 Matrix{MathOptInterface.VariableIndex}:
+ VariableIndex(2)  VariableIndex(4)  VariableIndex(6)
+ VariableIndex(3)  VariableIndex(5)  VariableIndex(7)
+
+julia> MOI.add_constraint(
+           model,
+           MOI.VectorOfVariables([t; vec(X)]),
+           MOI.NormNuclearCone(2, 3),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.NormNuclearCone}(1)
+```
 """
 struct NormNuclearCone <: AbstractVectorSet
     row_dim::Int
@@ -577,9 +975,7 @@ end
 dual_set(s::NormNuclearCone) = NormSpectralCone(s.row_dim, s.column_dim)
 dual_set_type(::Type{NormNuclearCone}) = NormSpectralCone
 
-function dimension(s::Union{NormSpectralCone,NormNuclearCone})
-    return 1 + s.row_dim * s.column_dim
-end
+dimension(s::NormNuclearCone) = 1 + s.row_dim * s.column_dim
 
 """
     abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
@@ -673,7 +1069,8 @@ products we have
 
 ### References
 
-[1] Boyd, S. and Vandenberghe, L.. *Convex optimization*. Cambridge university press, 2004.
+[1] Boyd, S. and Vandenberghe, L.. *Convex optimization*. Cambridge university
+    press, 2004.
 """
 abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
 
@@ -716,13 +1113,20 @@ abstract type AbstractSymmetricMatrixSetSquare <: AbstractVectorSet end
 dimension(set::AbstractSymmetricMatrixSetSquare) = side_dimension(set)^2
 
 """
-    side_dimension(set::Union{AbstractSymmetricMatrixSetTriangle,
-                              AbstractSymmetricMatrixSetSquare})
+    side_dimension(
+        set::Union{
+            AbstractSymmetricMatrixSetTriangle,
+            AbstractSymmetricMatrixSetSquare,
+        },
+    )
 
-Side dimension of the matrices in `set`. By convention, it should be stored in
-the `side_dimension` field but if it is not the case for a subtype of
-[`AbstractSymmetricMatrixSetTriangle`](@ref), the method should be implemented
-for this subtype.
+Side dimension of the matrices in `set`.
+
+## Convention
+
+By convention, the side dimension should be stored in the `side_dimension`
+field. If this is not the case for a subtype of [`AbstractSymmetricMatrixSetTriangle`](@ref),
+you must implement this method.
 """
 function side_dimension(
     set::Union{
@@ -742,15 +1146,16 @@ vectorization of the upper triangular part of matrices in the
 [`AbstractSymmetricMatrixSetSquare`](@ref) set.
 """
 function triangular_form end
+
 function triangular_form(set::AbstractSymmetricMatrixSetSquare)
     return triangular_form(typeof(set))(side_dimension(set))
 end
 
 """
-    PositiveSemidefiniteConeTriangle(side_dimension) <: AbstractSymmetricMatrixSetTriangle
+    PositiveSemidefiniteConeTriangle(side_dimension::Int) <: AbstractSymmetricMatrixSetTriangle
 
 The (vectorized) cone of symmetric positive semidefinite matrices, with
-`side_dimension` rows and columns.
+non-negative `side_dimension` rows and columns.
 
 See [`AbstractSymmetricMatrixSetTriangle`](@ref) for more details on the
 vectorized form.
@@ -776,10 +1181,10 @@ function dual_set_type(::Type{PositiveSemidefiniteConeTriangle})
 end
 
 """
-    PositiveSemidefiniteConeSquare(side_dimension) <: AbstractSymmetricMatrixSetSquare
+    PositiveSemidefiniteConeSquare(side_dimension::Int) <: AbstractSymmetricMatrixSetSquare
 
-The cone of symmetric positive semidefinite matrices, with side length
-`side_dimension`.
+The cone of symmetric positive semidefinite matrices, with non-negative side
+length `side_dimension`.
 
 See [`AbstractSymmetricMatrixSetSquare`](@ref) for more details on the
 vectorized form.
@@ -828,9 +1233,11 @@ function _dual_set_square_error()
            For more details see the comments in `src/Bridges/Constraint/square.jl`.""",
     )
 end
+
 function dual_set(::PositiveSemidefiniteConeSquare)
     return _dual_set_square_error()
 end
+
 function dual_set_type(::Type{PositiveSemidefiniteConeSquare})
     return _dual_set_square_error()
 end
@@ -840,10 +1247,10 @@ function triangular_form(::Type{PositiveSemidefiniteConeSquare})
 end
 
 """
-    HermitianPositiveSemidefiniteConeTriangle(side_dimension) <: AbstractVectorSet
+    HermitianPositiveSemidefiniteConeTriangle(side_dimension::Int) <: AbstractVectorSet
 
 The (vectorized) cone of Hermitian positive semidefinite matrices, with
-`side_dimension` rows and columns.
+non-negative `side_dimension` rows and columns.
 
 Becaue the matrix is Hermitian, the diagonal elements are real, and the
 complex-valued lower triangular entries are obtained as the conjugate of
@@ -880,15 +1287,36 @@ function dimension(set::HermitianPositiveSemidefiniteConeTriangle)
 end
 
 """
-    LogDetConeTriangle(side_dimension)
+    LogDetConeTriangle(side_dimension::Int)
 
 The log-determinant cone
 ``\\{ (t, u, X) \\in \\mathbb{R}^{2 + d(d+1)/2} : t \\le u \\log(\\det(X/u)), u > 0 \\}``,
 where the matrix `X` is represented in the same symmetric packed format as in
 the `PositiveSemidefiniteConeTriangle`.
 
-The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
-number of rows or columns.
+The non-negative argument `side_dimension` is the side dimension of the matrix
+`X`, i.e., its number of rows or columns.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> t = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> X = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(
+           model,
+           MOI.VectorOfVariables([t; X]),
+           MOI.LogDetConeTriangle(2),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.LogDetConeTriangle}(1)
+```
 """
 struct LogDetConeTriangle <: AbstractVectorSet
     side_dimension::Int
@@ -910,7 +1338,7 @@ function dimension(s::LogDetConeTriangle)
 end
 
 """
-    LogDetConeSquare(side_dimension)
+    LogDetConeSquare(side_dimension::Int)
 
 The log-determinant cone
 ``\\{ (t, u, X) \\in \\mathbb{R}^{2 + d^2} : t \\le u \\log(\\det(X/u)), X \\text{ symmetric}, u > 0 \\}``,
@@ -920,8 +1348,32 @@ where the matrix `X` is represented in the same format as in the
 Similarly to [`PositiveSemidefiniteConeSquare`](@ref), constraints are added to
 ensure that `X` is symmetric.
 
-The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
-number of rows or columns.
+The non-negative argument `side_dimension` is the side dimension of the matrix
+`X`, i.e., its number of rows or columns.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> t = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> X = reshape(MOI.add_variables(model, 4), 2, 2)
+2×2 Matrix{MathOptInterface.VariableIndex}:
+ VariableIndex(2)  VariableIndex(4)
+ VariableIndex(3)  VariableIndex(5)
+
+julia> MOI.add_constraint(
+           model,
+           MOI.VectorOfVariables([t; vec(X)]),
+           MOI.LogDetConeSquare(2),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.LogDetConeSquare}(1)
+```
 """
 struct LogDetConeSquare <: AbstractVectorSet
     side_dimension::Int
@@ -947,15 +1399,36 @@ triangular_form(::Type{LogDetConeSquare}) = LogDetConeTriangle
 triangular_form(set::LogDetConeSquare) = LogDetConeTriangle(set.side_dimension)
 
 """
-    RootDetConeTriangle(side_dimension)
+    RootDetConeTriangle(side_dimension::Int)
 
 The root-determinant cone
 ``\\{ (t, X) \\in \\mathbb{R}^{1 + d(d+1)/2} : t \\le \\det(X)^{1/d} \\}``,
 where the matrix `X` is represented in the same symmetric packed format as in
 the [`PositiveSemidefiniteConeTriangle`](@ref).
 
-The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
-number of rows or columns.
+The non-negative argument `side_dimension` is the side dimension of the matrix
+`X`, i.e., its number of rows or columns.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> t = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> X = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(
+           model,
+           MOI.VectorOfVariables([t; X]),
+           MOI.RootDetConeTriangle(2),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.RootDetConeSquare}(1)
+```
 """
 struct RootDetConeTriangle <: AbstractVectorSet
     side_dimension::Int
@@ -977,7 +1450,7 @@ function dimension(s::RootDetConeTriangle)
 end
 
 """
-    RootDetConeSquare(side_dimension)
+    RootDetConeSquare(side_dimension::Int)
 
 The root-determinant cone
 ``\\{ (t, X) \\in \\mathbb{R}^{1 + d^2} : t \\le \\det(X)^{1/d}, X \\text{ symmetric} \\}``,
@@ -987,8 +1460,32 @@ where the matrix `X` is represented in the same format as
 Similarly to [`PositiveSemidefiniteConeSquare`](@ref), constraints are added to
 ensure that `X` is symmetric.
 
-The argument `side_dimension` is the side dimension of the matrix `X`, i.e., its
-number of rows or columns.
+The non-negative argument `side_dimension` is the side dimension of the matrix
+`X`, i.e., its number of rows or columns.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> t = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> X = reshape(MOI.add_variables(model, 4), 2, 2)
+2×2 Matrix{MathOptInterface.VariableIndex}:
+ VariableIndex(2)  VariableIndex(4)
+ VariableIndex(3)  VariableIndex(5)
+
+julia> MOI.add_constraint(
+           model,
+           MOI.VectorOfVariables([t; vec(X)]),
+           MOI.RootDetConeSquare(2),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.RootDetConeSquare}(1)
+```
 """
 struct RootDetConeSquare <: AbstractVectorSet
     side_dimension::Int
@@ -1019,72 +1516,183 @@ end
     Integer()
 
 The set of integers ``\\mathbb{Z}``.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.add_constraint(model, x, MOI.Integer())
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1)
+```
 """
 struct Integer <: AbstractScalarSet end
 
 """
     ZeroOne()
 
-The set ``\\{ 0, 1 \\}``.
+The set ``\\{0, 1\\}``.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.add_constraint(model, x, MOI.ZeroOne())
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(1)
+```
 """
 struct ZeroOne <: AbstractScalarSet end
 
 """
-    Semicontinuous{T <: Real}(lower::T,upper::T)
+    Semicontinuous{T<:Real}(lower::T, upper::T)
 
-The set ``\\{0\\} \\cup [lower,upper]``.
+The set ``\\{0\\} \\cup [lower, upper]``.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.add_constraint(model, x, MOI.Semicontinuous(2.0, 3.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Semicontinuous{Float64}}(1)
+```
 """
 struct Semicontinuous{T<:Real} <: AbstractScalarSet
     lower::T
     upper::T
 end
 
-"""
-    Semiinteger{T <: Real}(lower::T,upper::T)
+function Base.:(==)(a::Semicontinuous{T}, b::Semicontinuous{T}) where {T}
+    return a.lower == b.lower && a.upper == b.upper
+end
 
-The set ``\\{0\\} \\cup \\{lower,lower+1,\\ldots,upper-1,upper\\}``.
+"""
+    Semiinteger{T<:Real}(lower::T, upper::T)
+
+The set ``\\{0\\} \\cup \\{lower, lower+1, \\ldots, upper-1, upper\\}``.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia> MOI.add_constraint(model, x, MOI.Semiinteger(2.0, 3.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Semiinteger{Float64}}(1)
+```
 """
 struct Semiinteger{T<:Real} <: AbstractScalarSet
     lower::T
     upper::T
 end
 
-function Base.:(==)(
-    set1::S,
-    set2::S,
-) where {S<:Union{Interval,Semicontinuous,Semiinteger}}
-    return set1.lower == set2.lower && set1.upper == set2.upper
+function Base.:(==)(a::Semiinteger{T}, b::Semiinteger{T}) where {T}
+    return a.lower == b.lower && a.upper == b.upper
 end
 
 """
-    SOS1{T <: Real}(weights::Vector{T})
+    SOS1{T<:Real}(weights::Vector{T})
 
-The set corresponding to the special ordered set (SOS) constraint of type 1.
+The set corresponding to the Special Ordered Set (SOS) constraint of Type I.
+
 Of the variables in the set, at most one can be nonzero.
-The `weights` induce an ordering of the variables; as such, they should be unique values.
-The *k*th element in the set corresponds to the *k*th weight in `weights`.
-See [here](https://lpsolve.sourceforge.net/5.5/SOS.htm) for a description of SOS constraints and their potential uses.
+
+The `weights` induce an ordering of the variables such that the *k*th element in
+the set corresponds to the *k*th weight in `weights`. Solvers may use these
+weights to improve the efficiency of the solution process, but the ordering does
+not change the set of feasible solutions.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(
+           model,
+           MOI.VectorOfVariables(x),
+           MOI.SOS1([1.0, 3.0, 2.5]),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.SOS1{Float64}}(1)
+```
 """
 struct SOS1{T<:Real} <: AbstractVectorSet
     weights::Vector{T}
 end
 
-"""
-    SOS2{T <: Real}(weights::Vector{T})
+dimension(set::SOS1) = length(set.weights)
 
-The set corresponding to the special ordered set (SOS) constraint of type 2.
-Of the variables in the set, at most two can be nonzero, and if two are nonzero, they must be adjacent in the ordering of the set.
-The `weights` induce an ordering of the variables; as such, they should be unique values.
-The *k*th element in the set corresponds to the *k*th weight in `weights`.
-See [here](https://lpsolve.sourceforge.net/5.5/SOS.htm) for a description of SOS constraints and their potential uses.
+Base.copy(set::SOS1{T}) where {T} = SOS1{T}(copy(set.weights))
+
+Base.:(==)(a::SOS1{T}, b::SOS1{T}) where {T} = a.weights == b.weights
+
+"""
+    SOS2{T<:Real}(weights::Vector{T})
+
+The set corresponding to the Special Ordered Set (SOS) constraint of Type II.
+
+The `weights` induce an ordering of the variables such that the *k*th element in
+the set corresponds to the *k*th weight in `weights`. Therefore, the weights
+must be unique.
+
+Of the variables in the set, at most two can be nonzero, and if two are nonzero,
+they must be adjacent in the ordering of the set.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(
+           model,
+           MOI.VectorOfVariables(x),
+           MOI.SOS2([1.0, 3.0, 2.5]),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.SOS2{Float64}}(1)
+```
 """
 struct SOS2{T<:Real} <: AbstractVectorSet
     weights::Vector{T}
 end
 
-Base.:(==)(a::T, b::T) where {T<:Union{SOS1,SOS2}} = a.weights == b.weights
+dimension(set::SOS2) = length(set.weights)
 
-dimension(s::Union{SOS1,SOS2}) = length(s.weights)
+Base.copy(set::SOS2{T}) where {T} = SOS2{T}(copy(set.weights))
+
+Base.:(==)(a::SOS2{T}, b::SOS2{T}) where {T} = a.weights == b.weights
 
 """
 	ActivationCondition
@@ -1158,13 +1766,9 @@ end
 
 dimension(::Indicator) = 2
 
-function Base.copy(set::Indicator{A,S}) where {A,S}
-    return Indicator{A}(copy(set.set))
-end
+Base.copy(set::Indicator{A}) where {A} = Indicator{A}(copy(set.set))
 
-function Base.:(==)(set1::Indicator{A,S}, set2::Indicator{A,S}) where {A,S}
-    return set1.set == set2.set
-end
+Base.:(==)(a::Indicator{A,S}, b::Indicator{A,S}) where {A,S} = a.set == b.set
 
 """
     Complements(dimension::Base.Integer)
@@ -1209,6 +1813,22 @@ There are three solutions:
   2. `x = -1` with `F(x) = 1`
   3. `x = 1` with `F(x) = -7`
 
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x, _ = MOI.add_constrained_variable(model, MOI.Interval(-1.0, 1.0));
+
+julia> MOI.add_constraint(
+            model,
+            MOI.Utilities.vectorize([-4.0 * x - 3.0, x]),
+            MOI.Complements(2),
+        )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorAffineFunction{Float64}, MathOptInterface.Complements}(1)
+```
+
 The function `F` can also be defined in terms of single variables. For example,
 the problem:
 
@@ -1217,6 +1837,25 @@ the problem:
 
 defines the complementarity problem where `0 <= x_1 ⟂ x_3 >= 0` and
 `0 <= x_2 ⟂ x_4 >= 0`.
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 4);
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables(x[3:4]), MOI.Nonnegatives(2))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.Nonnegatives}(1)
+
+julia> MOI.add_constraint(
+            model,
+            MOI.VectorOfVariables(x),
+            MOI.Complements(4),
+        )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.Complements}(1)
+```
 """
 struct Complements <: AbstractVectorSet
     dimension::Int
@@ -1903,55 +2542,6 @@ function Base.:(==)(x::Reified{S}, y::Reified{S}) where {S}
     return x.set == y.set
 end
 
-# isbits types, nothing to copy
-function Base.copy(
-    set::Union{
-        Reals,
-        Zeros,
-        Nonnegatives,
-        Nonpositives,
-        GreaterThan,
-        LessThan,
-        EqualTo,
-        Parameter,
-        Interval,
-        NormInfinityCone,
-        NormOneCone,
-        SecondOrderCone,
-        RotatedSecondOrderCone,
-        GeometricMeanCone,
-        ExponentialCone,
-        DualExponentialCone,
-        PowerCone,
-        DualPowerCone,
-        RelativeEntropyCone,
-        NormSpectralCone,
-        NormNuclearCone,
-        PositiveSemidefiniteConeTriangle,
-        PositiveSemidefiniteConeSquare,
-        HermitianPositiveSemidefiniteConeTriangle,
-        LogDetConeTriangle,
-        LogDetConeSquare,
-        RootDetConeTriangle,
-        RootDetConeSquare,
-        Complements,
-        Integer,
-        ZeroOne,
-        Semicontinuous,
-        Semiinteger,
-        AllDifferent,
-        CountDistinct,
-        CountBelongs,
-        CountAtLeast,
-        CountGreaterThan,
-        Circuit,
-        Cumulative,
-    },
-)
-    return set
-end
-Base.copy(set::S) where {S<:Union{SOS1,SOS2}} = S(copy(set.weights))
-
 """
     supports_dimension_update(S::Type{<:MOI.AbstractVectorSet})
 
@@ -1960,29 +2550,26 @@ Return a `Bool` indicating whether the elimination of any dimension of
 By default, this function returns `false` so it should only be implemented
 for sets that supports dimension update.
 
-For instance, `supports_dimension_update(MOI.Nonnegatives}` is `true` because
+For instance, `supports_dimension_update(MOI.Nonnegatives)` is `true` because
 the elimination of any dimension of the `n`-dimensional nonnegative orthant
 gives the `n-1`-dimensional nonnegative orthant. However
-`supports_dimension_update(MOI.ExponentialCone}` is `false`.
+`supports_dimension_update(MOI.ExponentialCone)` is `false`.
 """
-function supports_dimension_update(::Type{<:AbstractVectorSet})
-    return false
-end
-function supports_dimension_update(
-    ::Type{<:Union{Reals,Zeros,Nonnegatives,Nonpositives}},
-)
-    return true
-end
+supports_dimension_update(::Type{<:AbstractVectorSet}) = false
+
+supports_dimension_update(::Type{Reals}) = true
+supports_dimension_update(::Type{Zeros}) = true
+supports_dimension_update(::Type{Nonnegatives}) = true
+supports_dimension_update(::Type{Nonpositives}) = true
 
 """
-    update_dimension(s::AbstractVectorSet, new_dim)
+    update_dimension(s::AbstractVectorSet, new_dim::Int)
 
 Returns a set with the dimension modified to `new_dim`.
 """
 function update_dimension end
-function update_dimension(
-    set::Union{Reals,Zeros,Nonnegatives,Nonpositives},
-    new_dim,
-)
-    return typeof(set)(new_dim)
-end
+
+update_dimension(::Reals, new_dim::Int) = Reals(new_dim)
+update_dimension(::Zeros, new_dim::Int) = Zeros(new_dim)
+update_dimension(::Nonnegatives, new_dim::Int) = Nonnegatives(new_dim)
+update_dimension(::Nonpositives, new_dim::Int) = Nonpositives(new_dim)
