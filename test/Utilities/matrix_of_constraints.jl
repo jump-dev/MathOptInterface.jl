@@ -55,7 +55,7 @@ MOI.Utilities.@product_of_sets(
     MOI.SecondOrderCone,
 )
 
-function _new_VectorSets()
+function _new_VectorSets(V = VectorSets)
     return MOI.Utilities.GenericOptimizer{
         Int,
         MOI.Utilities.ObjectiveContainer{Int},
@@ -68,7 +68,7 @@ function _new_VectorSets()
                 MOI.Utilities.OneBasedIndexing,
             },
             Vector{Int},
-            VectorSets{Int},
+            V{Int},
         },
     }()
 end
@@ -607,6 +607,20 @@ function test_set_with_dimension()
         @test_throws AssertionError MOI.Utilities.set_with_dimension(S, 2)
         @test_throws AssertionError MOI.Utilities.set_with_dimension(S, 4)
     end
+    return
+end
+
+MOI.Utilities.@product_of_sets(EmptyProductOfSets)
+
+function test_empty_product_of_sets(T = Int)
+    model = _new_VectorSets(EmptyProductOfSets)
+    x = MOI.add_variable(model)
+    MOI.Utilities.final_touch(model, nothing)
+    A = convert(
+        SparseArrays.SparseMatrixCSC{T,Int},
+        model.constraints.coefficients,
+    )
+    @test size(A) == (0, 1)
     return
 end
 
