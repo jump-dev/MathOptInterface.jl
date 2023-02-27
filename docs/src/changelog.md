@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Used and documented preference for `import MathOptInterface as MOI` (#2096)
  - Fix and test links in the documentation with `linkcheck = true` (#2098)
  - Improved docstrings of sets in `src/sets.jl` (#2099)
+ - Skip checking flakey links in documentation with `linkcheck_ignore`  (#2103)
 
 ## v1.12.0 (February 10, 2022)
 
