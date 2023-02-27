@@ -207,7 +207,7 @@ end
 function MOI.dimension(sets::OrderedProductOfSets)
     @assert sets.final_touch
     if isempty(sets.num_rows)
-        # There is not set type
+        # There is no set type
         return 0
     else
         return sets.num_rows[end]

@@ -621,6 +621,7 @@ function test_empty_product_of_sets(T = Int)
         model.constraints.coefficients,
     )
     @test size(A) == (0, 1)
+    return
 end
 
 end
