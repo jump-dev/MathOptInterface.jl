@@ -55,7 +55,7 @@ MOI.Utilities.@product_of_sets(
     MOI.SecondOrderCone,
 )
 
-function _new_VectorSets(V=VectorSets)
+function _new_VectorSets(V = VectorSets)
     return MOI.Utilities.GenericOptimizer{
         Int,
         MOI.Utilities.ObjectiveContainer{Int},
@@ -612,7 +612,7 @@ end
 
 MOI.Utilities.@product_of_sets(EmptyProductOfSets)
 
-function test_empty_product_of_sets(T=Int)
+function test_empty_product_of_sets(T = Int)
     model = _new_VectorSets(EmptyProductOfSets)
     x = MOI.add_variable(model)
     MOI.Utilities.final_touch(model, nothing)
