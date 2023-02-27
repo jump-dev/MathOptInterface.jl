@@ -131,7 +131,16 @@ end
     clean = true,
     strict = true,
     linkcheck = true,
-    linkcheck_ignore = ["MathOptInterface.pdf"],
+    linkcheck_ignore = [
+        # Ignore the PDF link, because it hasn't been built yet.
+        "MathOptInterface.pdf",
+        # Ignore tags, because preping for a new release will otherwise cause it
+        # to fail.
+        r"https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v([0-9]).([0-9]+).([0-9]+)",
+        # Ignore issue and pull request links, because there are many of them,
+        # and they sometimes time-out the linkcheck.
+        r"https://github.com/jump-dev/MathOptInterface.jl/issues/([0-9]+)",
+    ],
     modules = [MathOptInterface],
     checkdocs = :exports,
     doctest = _FIX ? :fix : true,
