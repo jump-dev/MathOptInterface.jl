@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
  - Added [`Bridges.Constraint.NumberConversionBridge`](@ref) (#2091)
- - Added [`Parameter`](@ref) set (#2095)
+ - Added [`Parameter`](@ref) set (#2095) (#2105) (#2106)
  - Added `with_cache_type` argument to [`instantiate`](@ref) (#2097)
  - Added support for [`HermitianPositiveSemidefiniteConeTriangle`](@ref) in
    `Utilities.Model` (#2100)
@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
  - Fixed bug when `Utilities.@product_of_sets` is empty (#2101)
+ - Fixed [`Bridges.print_active_bridges`](@ref) when variable bridge is an
+   [`AbstractScalarSet`](@ref) (#2107)
 
 ### Other
 
