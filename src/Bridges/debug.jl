@@ -659,3 +659,21 @@ function _print_variable_tree(io, b, S::Type{<:MOI.AbstractVectorSet}, offset)
     end
     return
 end
+
+function _print_variable_tree(io, b, S::Type{<:MOI.AbstractScalarSet}, offset)
+    if !MOI.Bridges.is_bridged(b, S)
+        print(io, offset, " * ")
+        _print_supported(io, "Supported variable: $S\n")
+        return
+    end
+    indices = MOI.get(b, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
+    if length(indices) > 0
+        @assert MOI.Bridges.is_bridged(b, MOI.VariableIndex, S)
+        ci = first(indices)
+        x = MOI.get(b, MOI.ConstraintFunction(), ci)
+        if haskey(b.variable_map, x)
+            _print_variable(io, b, S, x, offset)
+        end
+    end
+    return
+end

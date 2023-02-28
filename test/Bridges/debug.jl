@@ -133,6 +133,41 @@ function test_print_active_bridges()
     return
 end
 
+MOI.Utilities.@model(
+    ParameterModel,
+    (),
+    (MOI.EqualTo,),
+    (),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (),
+    ()
+)
+
+function MOI.supports_constraint(
+    ::ParameterModel,
+    ::Type{MOI.VariableIndex},
+    ::Type{<:MOI.Parameter},
+)
+    return false
+end
+
+function test_print_active_bridges_parameter()
+    inner = ParameterModel{Float64}()
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
+    p, _ = MOI.add_constrained_variable(model, MOI.Parameter(2.5))
+    @test sprint(MOI.Bridges.print_active_bridges, model) === """
+ * Supported objective: MOI.ScalarAffineFunction{Float64}
+ * Unsupported variable: MOI.Parameter{Float64}
+ |  bridged by:
+ |    MOIB.Variable.ParameterToEqualToBridge{Float64}
+ |  introduces:
+ |   * Supported variable: MOI.EqualTo{Float64}
+"""
+    return
+end
+
 end
 
 TestBridgesDebug.runtests()
