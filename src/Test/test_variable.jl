@@ -587,13 +587,7 @@ function test_add_parameter(model::MOI.ModelLike, ::Config{T}) where {T}
     F, S = MOI.VariableIndex, MOI.Parameter{T}
     @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
     @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [ci]
-    @test_throws(
-        MOI.LowerBoundAlreadySet,
-        MOI.add_constraint(model, x, MOI.GreaterThan(one(T))),
-    )
-    @test_throws(
-        MOI.UpperBoundAlreadySet,
-        MOI.add_constraint(model, x, MOI.LessThan(one(T))),
-    )
+    MOI.set(model, MOI.ConstraintSet(), ci, MOI.Parameter(zero(T)))
+    @test MOI.get(model, MOI.ConstraintSet(), ci) == MOI.Parameter(zero(T))
     return
 end
