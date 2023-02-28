@@ -61,6 +61,11 @@ function shift_constant(set::MOI.Interval, offset)
 end
 supports_shift_constant(::Type{<:MOI.Interval}) = true
 
+function shift_constant(set::MOI.Parameter, offset)
+    return MOI.Parameter(MOI.constant(set) + offset)
+end
+supports_shift_constant(::Type{<:MOI.Parameter}) = true
+
 """
     ScalarLinearSet{T}
 

@@ -61,6 +61,8 @@ function test_shifts()
     @test MOIU.shift_constant(MOI.Interval(-2, 3), 1) == MOI.Interval(-1, 4)
     @test MOIU.supports_shift_constant(MOI.ZeroOne) == false
     @test_throws MethodError MOIU.shift_constant(MOI.ZeroOne(), 1.0)
+    @test MOIU.supports_shift_constant(MOI.Parameter{Int})
+    @test MOIU.shift_constant(MOI.Parameter(3), 1) == MOI.Parameter(4)
     return
 end
 
