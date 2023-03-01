@@ -112,9 +112,9 @@ nonpositive) real numbers.
 | ``Ax + b = 0``                | `VectorAffineFunction`       | `Zeros`        |
 
 By convention, solvers are not expected to support nonzero constant terms in the
-[`ScalarAffineFunction`](@ref)s the first four rows above, because they are
-redundant with the parameters of the sets. For example, encode ``2x + 1 \le 2``
-as ``2x \le 1``.
+[`ScalarAffineFunction`](@ref)s the first four rows of the preceding table
+because they are redundant with the parameters of the sets. For example, encode
+``2x + 1 \le 2`` as ``2x \le 1``.
 
 Constraints with [`VariableIndex`](@ref) in [`LessThan`](@ref), [`GreaterThan`](@ref),
 [`EqualTo`](@ref), or [`Interval`](@ref) sets have a natural interpretation as
@@ -195,7 +195,7 @@ Variable bounds are handled in a similar fashion:
  - `@variable(m, x >= 1)` becomes `VariableIndex`-in-`GreaterThan`
 
 One notable difference is that a variable with an upper and lower bound is
-translated into two constraints, rather than an interval. i.e.:
+translated into two constraints, rather than an interval, that is:
 
  - `@variable(m, 0 <= x <= 1)` becomes `VariableIndex`-in-`LessThan` *and*
     `VariableIndex`-in-`GreaterThan`.

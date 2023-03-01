@@ -472,7 +472,7 @@ julia> @enum(
 ```
 In practice, there are node types other than the ones listed here.
 
-Third, we create two concretely-typed structs as follows:
+Third, we create two concretely typed structs as follows:
 ```jldoctest expr_graph
 julia> struct Node
            type::NodeType
@@ -563,8 +563,8 @@ notable differences from similar packages.
 ### Design goals
 
 The JuliaDiff organization maintains a [list of packages](https://juliadiff.org)
-for doing AD in Julia. At last count, there were at least ten packages–-not
-including `ReverseAD`-–for reverse-mode AD in Julia. `ReverseAD` exists because
+for doing AD in Julia. At last count, there were at least ten packages——not
+including `ReverseAD`——for reverse-mode AD in Julia. `ReverseAD` exists because
 it has a different set of design goals.
 
  * **Goal: handle scale and sparsity.**
@@ -596,7 +596,7 @@ development of which began in early 2014(!). This was well before the other
 AD packages started development. Because we had a well-tested, working AD in JuMP,
 there was less motivation to contribute to and explore other AD packages. The
 lack of historical interaction also meant that other packages were not optimized
-for the types of problems that JuMP is built for (i.e., large-scale sparse
+for the types of problems that JuMP is built for (that is, large-scale sparse
 problems). When we first created MathOptInterface, we kept the AD in JuMP to
 simplify the transition, and post-poned the development of a first-class
 nonlinear interface in MathOptInterface.

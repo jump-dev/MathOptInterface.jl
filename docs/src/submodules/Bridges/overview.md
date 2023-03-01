@@ -113,9 +113,9 @@ with 0 objective bridges
 with inner model MOIU.Model{Float64}
 ```
 
-That's all you have to do! Use `optimizer` as normal, and bridging will happen
-lazily behind the scenes. By lazily, we mean that bridging will only happen if
-the constraint is not supported by the `inner_optimizer`.
+Now, use `optimizer` as normal, and bridging will happen lazily behind the
+scenes. By lazily, we mean that bridging will happen if and only if the
+constraint is not supported by the `inner_optimizer`.
 
 !!! info
     Most bridges are added by default in [`Bridges.full_bridge_optimizer`](@ref).

@@ -12,17 +12,17 @@ To address a number of limitations of MathProgBase, MOI is designed to:
 - Be simple and extensible
   * unifying linear, quadratic, and conic optimization,
   * seamlessly facilitating extensions to essentially arbitrary constraints and
-    functions (e.g., indicator constraints, complementarity constraints, and
-    piecewise-linear functions)
+    functions (for example, indicator constraints, complementarity constraints,
+    and piecewise-linear functions)
 - Be fast
    * by allowing access to a solver's in-memory representation of a problem
      without writing intermediate files (when possible)
-   * by using multiple dispatch and avoiding requiring containers of non-concrete
-     types
-- Allow a solver to return multiple results (e.g., a pool of solutions)
-- Allow a solver to return extra arbitrary information via attributes (e.g.,
-  variable- and constraint-wise membership in an irreducible inconsistent subset
-  for infeasibility analysis)
+   * by using multiple dispatch and avoiding requiring containers of
+     non-concrete types
+- Allow a solver to return multiple results (for example, a pool of solutions)
+- Allow a solver to return extra arbitrary information via attributes (for
+  example, variable- and constraint-wise membership in an irreducible
+  inconsistent subset for infeasibility analysis)
 - Provide a greatly expanded set of status codes explaining what happened during
   the optimization procedure
 - Enable a solver to more precisely specify which problem classes it supports

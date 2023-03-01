@@ -9,10 +9,10 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 # The `Benchmarks` submodule
 
 To aid the development of efficient solver wrappers, MathOptInterface provides
-benchmarking functionality. Benchmarking a wrapper follows a two-step process.
+benchmarking capability. Benchmarking a wrapper follows a two-step process.
 
-First, prior to making changes, run and save the benchmark results on a given
-benchmark suite as follows:
+First, prior to making changes, create a baseline for the benchmark results on a
+given benchmark suite as follows:
 
 ```julia
 using SolverPackage  # Replace with your choice of solver.

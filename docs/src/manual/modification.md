@@ -57,7 +57,7 @@ constraint (for example, from [`LessThan`](@ref) to [`GreaterThan`](@ref)). For
 these cases, MathOptInterface provides the [`transform`](@ref) method.
 
 The [`transform`](@ref) function returns a new constraint index, and the old
-constraint index (i.e., `c`) is no longer valid.
+constraint index (that is, `c`) is no longer valid.
 
 ```jldoctest transform_set; setup=:(model = MOI.Utilities.Model{Float64}(); x = MOI.add_variable(model))
 julia> c = MOI.add_constraint(
@@ -129,10 +129,8 @@ julia> MOI.get(model, MOI.ConstraintFunction(), c) ≈ new_f
 true
 ```
 
-!!! tip
-    [`ScalarConstantChange`](@ref) can also be used to modify the objective
-    function by passing an instance of [`ObjectiveFunction`](@ref) instead of
-    the constraint index `c` as we saw above.
+[`ScalarConstantChange`](@ref) can also be used to modify the objective
+function by passing an instance of [`ObjectiveFunction`](@ref):
 
 ```jldoctest scalar_constant_change
 julia> MOI.set(
@@ -207,10 +205,8 @@ julia> MOI.get(model, MOI.ConstraintFunction(), c) ≈ new_f
 true
 ```
 
-!!! tip
-    [`ScalarCoefficientChange`](@ref) can also be used to modify the objective
-    function by passing an instance of [`ObjectiveFunction`](@ref) instead of
-    the constraint index `c` as we saw above.
+[`ScalarCoefficientChange`](@ref) can also be used to modify the objective
+function by passing an instance of [`ObjectiveFunction`](@ref).
 
 ## Modify affine coefficients in a vector function
 

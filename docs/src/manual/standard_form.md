@@ -34,8 +34,8 @@ The function types implemented in MathOptInterface.jl are:
 
 | Function         | Description |
 | :--------------- | :---------- |
-| [`VariableIndex`](@ref) | ``x_j``, i.e., projection onto a single coordinate defined by a variable index ``j``. |
-| [`VectorOfVariables`](@ref) | The projection onto multiple coordinates (i.e., extracting a sub-vector). |
+| [`VariableIndex`](@ref) | ``x_j``, the projection onto a single coordinate defined by a variable index ``j``. |
+| [`VectorOfVariables`](@ref) | The projection onto multiple coordinates (that is, extracting a sub-vector). |
 | [`ScalarAffineFunction`](@ref) | ``a^T x + b``, where ``a`` is a vector and ``b`` scalar. |
 | [`VectorAffineFunction`](@ref) | ``A x + b``, where ``A`` is a matrix and ``b`` is a vector. |
 | [`ScalarQuadraticFunction`](@ref) | ``\frac{1}{2} x^T Q x + a^T x + b``, where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant. |
