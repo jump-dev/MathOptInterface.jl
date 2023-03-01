@@ -7,6 +7,30 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.13.0 (February 28, 2022)
+
+### Added
+
+ - Added [`Bridges.Constraint.NumberConversionBridge`](@ref) (#2091)
+ - Added [`Parameter`](@ref) set (#2095) (#2105) (#2106) (#2109)
+ - Added `with_cache_type` argument to [`instantiate`](@ref) (#2097)
+ - Added support for [`HermitianPositiveSemidefiniteConeTriangle`](@ref) in
+   `Utilities.Model` (#2100)
+
+### Fixed
+
+ - Fixed bug when `Utilities.@product_of_sets` is empty (#2101)
+ - Fixed [`Bridges.print_active_bridges`](@ref) when variable bridge is an
+   [`AbstractScalarSet`](@ref) (#2107)
+
+### Other
+
+ - Added tests for vector-valued objective functions in `FileFormats.MOF` (#2093)
+ - Used and documented preference for `import MathOptInterface as MOI` (#2096)
+ - Fix and test links in the documentation with `linkcheck = true` (#2098)
+ - Improved docstrings of sets in `src/sets.jl` (#2099)
+ - Skip checking flakey links in documentation with `linkcheck_ignore`  (#2103)
+
 ## v1.12.0 (February 10, 2022)
 
 ### Added
