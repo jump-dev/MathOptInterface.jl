@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
  - Added [`Bridges.Constraint.NumberConversionBridge`](@ref) (#2091)
- - Added [`Parameter`](@ref) set (#2095) (#2105) (#2106)
+ - Added [`Parameter`](@ref) set (#2095) (#2105) (#2106) (#2109)
  - Added `with_cache_type` argument to [`instantiate`](@ref) (#2097)
  - Added support for [`HermitianPositiveSemidefiniteConeTriangle`](@ref) in
    `Utilities.Model` (#2100)
