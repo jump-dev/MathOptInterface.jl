@@ -8,13 +8,24 @@
     AbstractFunction
 
 Abstract supertype for function objects.
+
+## Required methods
+
+All functions must implement:
+
+ * `Base.copy`
+ * `Base.isapprox`
+ * [`constant`](@ref)
+
+Abstract subtypes of `AbstractFunction` may require additional methods to be
+implemented.
 """
 abstract type AbstractFunction <: MA.AbstractMutable end
 
 """
-    AbstractScalarFunction
+    abstract type AbstractScalarFunction <: AbstractFunction
 
-Abstract supertype for scalar-valued function objects.
+Abstract supertype for scalar-valued [`AbstractFunction`](@ref)s.
 """
 abstract type AbstractScalarFunction <: AbstractFunction end
 
@@ -23,13 +34,6 @@ Base.broadcastable(f::AbstractScalarFunction) = Ref(f)
 Base.ndims(::Type{<:AbstractScalarFunction}) = 0
 
 Base.ndims(::AbstractScalarFunction) = 0
-
-"""
-    AbstractVectorFunction
-
-Abstract supertype for vector-valued function objects.
-"""
-abstract type AbstractVectorFunction <: AbstractFunction end
 
 """
     VariableIndex

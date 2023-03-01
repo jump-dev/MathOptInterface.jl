@@ -279,6 +279,19 @@ function Base.copy(f::ScalarQuadraticFunction)
 end
 
 """
+    abstract type AbstractVectorFunction <: AbstractFunction
+
+Abstract supertype for vector-valued [`AbstractFunction`](@ref)s.
+
+## Required methods
+
+All subtypes of `AbstractVectorFunction` must implement:
+
+ * [`output_dimension`](@ref)
+"""
+abstract type AbstractVectorFunction <: AbstractFunction end
+
+"""
     VectorOfVariables(variables::Vector{VariableIndex}) <: AbstractVectorFunction
 
 The vector-valued function `f(x) = variables`, where `variables` is a subset of
