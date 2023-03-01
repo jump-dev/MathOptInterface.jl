@@ -49,7 +49,7 @@ OptimizeInProgress
 ```
 
 Trying to submit the wrong type of [`AbstractSubmittable`](@ref) inside an
-[`AbstractCallback`](@ref) (e.g., a [`UserCut`](@ref) inside a
+[`AbstractCallback`](@ref) (for example, a [`UserCut`](@ref) inside a
 [`LazyConstraintCallback`](@ref)) will throw:
 ```@docs
 InvalidCallbackUsage

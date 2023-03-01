@@ -19,7 +19,7 @@ MOI.optimize!(optimizer)
 
 ## Why did the solver stop?
 
-The optimization procedure may terminate for a number of reasons. The
+The optimization procedure may stop for a number of reasons. The
 [`TerminationStatus`](@ref) attribute of the optimizer returns a
 [`TerminationStatusCode`](@ref) object which explains why the solver stopped.
 

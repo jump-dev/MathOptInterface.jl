@@ -8,8 +8,8 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 # The Utilities submodule
 
-The Utilities submodule provides a variety of functionality for managing
-`MOI.ModelLike` objects.
+The Utilities submodule provides a variety of functions and datastructures for
+managing `MOI.ModelLike` objects.
 
 ## Utilities.Model
 
@@ -41,7 +41,7 @@ fallback for MOIU.Model{Float64}
 
 !!! warning
     Adding a UniversalFallback means that your `model` will now support all
-    constraints, even if the inner-model does not! This can lead to unexpected
+    constraints, even if the inner-model does not. This can lead to unexpected
     behavior.
 
 ## Utilities.@model
@@ -56,17 +56,18 @@ eight tuples specifying the types of constraints that are supported, and then a
 `true`) or `MOI.ModelLike` (if `false`).
 
 The eight tuples are in the following order:
- 1. Un-typed scalar sets, e.g., [`Integer`](@ref)
- 2. Typed scalar sets, e.g., [`LessThan`](@ref)
- 3. Un-typed vector sets, e.g., [`Nonnegatives`](@ref)
- 4. Typed vector sets, e.g., [`PowerCone`](@ref)
- 5. Un-typed scalar functions, e.g., [`VariableIndex`](@ref)
- 6. Typed scalar functions, e.g., [`ScalarAffineFunction`](@ref)
- 7. Un-typed vector functions, e.g., [`VectorOfVariables`](@ref)
- 8. Typed vector functions, e.g., [`VectorAffineFunction`](@ref)
+ 1. Un-typed scalar sets, for example, [`Integer`](@ref)
+ 2. Typed scalar sets, for example, [`LessThan`](@ref)
+ 3. Un-typed vector sets, for example, [`Nonnegatives`](@ref)
+ 4. Typed vector sets, for example, [`PowerCone`](@ref)
+ 5. Un-typed scalar functions, for example, [`VariableIndex`](@ref)
+ 6. Typed scalar functions, for example, [`ScalarAffineFunction`](@ref)
+ 7. Un-typed vector functions, for example, [`VectorOfVariables`](@ref)
+ 8. Typed vector functions, for example, [`VectorAffineFunction`](@ref)
 
 The tuples can contain more than one element. Typed-sets must be specified
-without their type parameter, i.e., `MOI.LessThan`, not `MOI.LessThan{Float64}`.
+without their type parameter, for example, `MOI.LessThan`, not
+`MOI.LessThan{Float64}`.
 
 Here is an example:
 ```jldoctest
@@ -132,15 +133,15 @@ julia> MOI.supports(::PathOptimizer, ::MOI.ObjectiveFunction) = false
 
 !!! warning
     This macro creates a new type, so it must be called from the top-level of a
-    module, e.g., it cannot be called from inside a function.
+    module, for example, it cannot be called from inside a function.
 
 ## Utilities.CachingOptimizer
 
 A [`Utilities.CachingOptimizer`] is an MOI layer that abstracts the difference
-between solvers that support incremental modification (e.g., they support adding
-variables one-by-one), and solvers that require the entire problem in a single
-API call (e.g., they only accept the `A`, `b` and `c` matrices of a linear
-program).
+between solvers that support incremental modification (for example, they support
+adding variables one-by-one), and solvers that require the entire problem in a
+single API call (for example, they only accept the `A`, `b` and `c` matrices of
+a linear program).
 
 It has two parts:
  1. A cache, where the model can be built and modified incrementally
@@ -389,7 +390,7 @@ interest, in which case [`copy_to`](@ref) can be implemented for the solver by
 calling [`copy_to`](@ref) to this custom model.
 
 For instance, [Clp](https://github.com/jump-dev/Clp.jl) defines the following
-model
+model:
 ```julia
 MOI.Utilities.@product_of_scalar_sets(LP, MOI.EqualTo{T}, MOI.LessThan{T}, MOI.GreaterThan{T})
 const Model = MOI.Utilities.GenericModel{
@@ -403,9 +404,7 @@ const Model = MOI.Utilities.GenericModel{
 }
 ```
 
-The [`copy_to`](@ref) operation can now be implemented as follows (assuming that
-the `Model` definition above is in the `Clp` module so that it can be referred
-to as `Model`, to be distinguished with [`Utilities.Model`](@ref)):
+The [`copy_to`](@ref) operation can now be implemented as follows:
 ```julia
 function _copy_to(dest::Optimizer, src::Model)
     @assert MOI.is_empty(dest)

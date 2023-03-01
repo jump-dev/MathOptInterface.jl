@@ -17,16 +17,16 @@ Sets encode the structure of constraints. Their names should follow the
 following conventions:
 
 * Abstract types in the set hierarchy should begin with `Abstract` and end in
-  `Set`, e.g., [`AbstractScalarSet`](@ref), [`AbstractVectorSet`](@ref).
-* Vector-valued conic sets should end with `Cone`, e.g.,
+  `Set`, for example, [`AbstractScalarSet`](@ref), [`AbstractVectorSet`](@ref).
+* Vector-valued conic sets should end with `Cone`, for example,
   [`NormInfinityCone`](@ref), [`SecondOrderCone`](@ref).
 * Vector-valued Cartesian products should be plural and not end in `Cone`,
-  e.g., [`Nonnegatives`](@ref), not `NonnegativeCone`.
+  for example, [`Nonnegatives`](@ref), not `NonnegativeCone`.
 * Matrix-valued conic sets should provide two representations: `ConeSquare` and
-  `ConeTriangle`, e.g., [`RootDetConeTriangle`](@ref) and
+  `ConeTriangle`, for example, [`RootDetConeTriangle`](@ref) and
   [`RootDetConeSquare`](@ref). See [Matrix cones](@ref) for more details.
-* Scalar sets should be singular, not plural, e.g., [`Integer`](@ref), not
-  `Integers`.
+* Scalar sets should be singular, not plural, for example, [`Integer`](@ref),
+  not `Integers`.
 * As much as possible, the names should follow established conventions in the
   domain where this set is used: for instance, convex sets should have names
   close to those of [CVX](http://web.cvxr.com/cvx/doc/), and

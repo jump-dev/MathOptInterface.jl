@@ -336,7 +336,7 @@ provides [`modify`](@ref). Bridges can also implement this API to allow
 certain changes, such as coefficient changes.
 
 In our case, a modification of a coefficient in the original constraint
-(i.e. replacing the value of the coefficient of a variable in the affine
+(for example, replacing the value of the coefficient of a variable in the affine
 function) must be transmitted to the constraint created by the bridge,
 but with a sign change.
 

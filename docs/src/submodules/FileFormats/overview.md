@@ -8,7 +8,7 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 # The FileFormats submodule
 
-The `FileFormats` module provides functionality for reading and writing MOI
+The `FileFormats` module provides functions for reading and writing MOI
 models using [`write_to_file`](@ref) and [`read_from_file`](@ref).
 
 ## Supported file types
@@ -169,8 +169,8 @@ filename.
 ## Unsupported constraints
 
 In some cases `src` may contain constraints that are not supported by the file
-format (e.g., the CBF format supports integer variables but not binary). If so,
-copy `src` to a bridged model using [`Bridges.full_bridge_optimizer`](@ref):
+format (for example, the CBF format supports integer variables but not binary).
+If so, copy `src` to a bridged model using [`Bridges.full_bridge_optimizer`](@ref):
 ```julia
 src = MOI.Utilities.Model{Float64}()
 x = MOI.add_variable(model)
@@ -182,8 +182,8 @@ MOI.write_to_file(dest, "my_model.cbf")
 ```
 !!! note
     Even after bridging, it may still not be possible to write the model to file
-    because of unsupported constraints (e.g., PSD variables in the LP file
-    format).
+    because of unsupported constraints (for example, PSD variables in the LP
+    file format).
 
 ## Read and write to `io`
 

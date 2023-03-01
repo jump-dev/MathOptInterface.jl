@@ -9,16 +9,16 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 # Models
 
 The most significant part of MOI is the definition of the **model API** that is
-used to specify an instance of an optimization problem (e.g., by adding
+used to specify an instance of an optimization problem (for example, by adding
 variables and constraints). Objects that implement the model API must inherit
 from the [`ModelLike`](@ref) abstract type.
 
 Notably missing from the model API is the method to solve an optimization
-problem. `ModelLike` objects may store an instance (e.g., in memory or backed by
-a file format) without being linked to a particular solver. In addition to the
-model API, MOI defines [`AbstractOptimizer`](@ref) and provides methods to solve
-the model and interact with solutions. See the [Solutions](@ref manual_solutions)
-section for more details.
+problem. `ModelLike` objects may store an instance (for example, in memory or
+backed by a file format) without being linked to a particular solver. In
+addition to the model API, MOI defines [`AbstractOptimizer`](@ref) and provides
+methods to solve the model and interact with solutions. See the
+[Solutions](@ref manual_solutions) section for more details.
 
 !!! info
     Throughout the rest of the manual, `model` is used as a generic `ModelLike`,

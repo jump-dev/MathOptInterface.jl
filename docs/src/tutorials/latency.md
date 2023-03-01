@@ -12,7 +12,7 @@ MathOptInterface suffers the "time-to-first-solve" problem of start-up latency.
 
 This hurts both the user- and developer-experience of MathOptInterface. In the
 first case, because simple models have a multi-second delay before solving, and
-in the latter, because our tests take so long to run!
+in the latter, because our tests take so long to run.
 
 This page contains some advice on profiling and fixing latency-related problems
 in the MathOptInterface.jl repository.
@@ -55,7 +55,7 @@ it. However, if we can precompile MathOptInterface, much of the cost can be
 shifted from start-up latency to the time it takes to precompile a package on
 installation.
 
-However, there are two things which make MathOptInterface hard to precompile...
+However, there are two things which make MathOptInterface hard to precompile.
 
 ### Lack of method ownership
 
@@ -67,10 +67,10 @@ method that is being dispatched, and so it cannot be precompiled.
     This is a slightly simplified explanation. Read the [precompilation tutorial](https://julialang.org/blog/2021/01/precompile_tutorial/)
     for a more in-depth discussion on back-edges.
 
-Unfortunately, the design of MOI means that this is a frequent occurrence! We
+Unfortunately, the design of MOI means that this is a frequent occurrence: we
 have a bunch of types in `MOI.Utilities` that wrap types defined in external
-packages (i.e., the `Optimizer`s), which implement methods of functions defined
-in `MOI` (e.g., `add_variable`, `add_constraint`).
+packages (for example, the `Optimizer`s), which implement methods of functions
+defined in `MOI` (for example, `add_variable`, `add_constraint`).
 
 Here's a simple example of method-ownership in practice:
 ```julia
@@ -102,8 +102,8 @@ ProfileView.view(flamegraph(tinf))
 we see a flamegraph with a large red-bar indicating that the method
 `MyMOI.optimize(MyMOI.Wrapper{MyOptimizer.Optimizer})` cannot be precompiled.
 
-To fix this, we need to designate a module to "own" that method (i.e., create a
-back-edge). The easiest way to do this is for `MyOptimizer` to call
+To fix this, we need to designate a module to "own" that method (that is, create
+a back-edge). The easiest way to do this is for `MyOptimizer` to call
 `MyMOI.optimize(MyMOI.Wrapper{MyOptimizer.Optimizer})` during
 `using MyOptimizer`. Let's see that in practice:
 ```julia
@@ -144,7 +144,7 @@ method was already stored in `MyOptimizer`!
 Unfortunately, this trick only works if the call-chain is fully inferrable. If
 there are breaks (due to type instability), then the benefit of doing this is
 reduced. And unfortunately for us, the design of MathOptInterface has a lot of
-type instabilities...
+type instabilities.
 
 ### Type instability in the bridge layer
 
@@ -166,8 +166,8 @@ bridges that they defined in external packages.
 
 So to recap, MathOptInterface suffers package latency because:
 
- 1. there are a large number of types and functions...
- 2. and these are split between multiple modules, including external packages...
+ 1. there are a large number of types and functions
+ 2. and these are split between multiple modules, including external packages
  3. and there are type-instabilities like those in the bridging layer.
 
 ## Resolutions

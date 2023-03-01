@@ -115,8 +115,7 @@ Table
 
 ## Matrix sets
 
-Matrix sets are vectorized in order to be subtypes of
-[`AbstractVectorSet`](@ref).
+Matrix sets are vectorized to be subtypes of [`AbstractVectorSet`](@ref).
 
 For sets of symmetric matrices, storing both the
 `(i, j)` and `(j, i)` elements is redundant. Use the

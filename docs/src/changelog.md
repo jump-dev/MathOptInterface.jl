@@ -392,7 +392,7 @@ removed, similar to how Julia 1.0 was Julia 0.7 with deprecations removed.
 ### Troubleshooting problems when updating
 
 If you experience problems when updating, you are likely using previously
-deprecated functionality. (By default, Julia does not warn when you use
+deprecated features. (By default, Julia does not warn when you use
 deprecated features.)
 
 To find the deprecated features you are using, start Julia with `--depwarn=yes`:
@@ -1091,7 +1091,7 @@ This release contains backports from the ongoing development of the v0.10 releas
 ## v0.8.0 (December 18, 2018)
 
 - Rename all enum values to follow the JuMP naming guidelines for constants,
-  e.g., `Optimal` becomes `OPTIMAL`, and `DualInfeasible` becomes
+  for example, `Optimal` becomes `OPTIMAL`, and `DualInfeasible` becomes
   `DUAL_INFEASIBLE`.
 - Rename CachingOptimizer methods for style compliance.
 - Add an `MOI.TerminationStatusCode` called `ALMOST_DUAL_INFEASIBLE`.
@@ -1180,10 +1180,10 @@ This release contains backports from the ongoing development of the v0.10 releas
 - Add test for empty rows in vector linear constraint.
 - Rework errors: `CannotError` has been renamed `NotAllowedError` and
   the distinction between `UnsupportedError` and `NotAllowedError` is now
-  about whether the element is not supported (i.e. it cannot be copied a
+  about whether the element is not supported (that is, it cannot be copied a
   model containing this element) or the operation is not allowed (either
   because it is not implemented, because it cannot be performed in the current
-  state of the model, because it cannot be performed for a specific index, ...)
+  state of the model, or because it cannot be performed for a specific index)
 - `canget` is removed. `NoSolution` is added as a result status to indicate
   that the solver does not have either a primal or dual solution available
   (See #479).

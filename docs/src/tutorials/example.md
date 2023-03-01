@@ -100,14 +100,14 @@ julia> MOI.optimize!(optimizer)
 
 ## Understand why the solver stopped
 
-The first thing to check after optimization is why the solver stopped, e.g.,
-did it stop because of a time limit or did it stop because it found the optimal
-solution?
+The first thing to check after optimization is why the solver stopped, for
+example, did it stop because of a time limit or did it stop because it found the
+optimal solution?
 ```jldoctest knapsack
 julia> MOI.get(optimizer, MOI.TerminationStatus())
 OPTIMAL::TerminationStatusCode = 1
 ```
-Looks like we found an optimal solution!
+Looks like we found an optimal solution.
 
 ## Understand what solution was returned
 

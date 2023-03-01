@@ -84,8 +84,8 @@ function test_runtests()
         ],
         # This argument is useful to prevent tests from failing on future
         # releases of MOI that add new tests. Don't let this number get too far
-        # behind the current MOI release though! You should periodically check
-        # for new tests in order to fix bugs and implement new features.
+        # behind the current MOI release though. You should periodically check
+        # for new tests to fix bugs and implement new features.
         exclude_tests_after = v"0.10.5",
     )
     return
@@ -130,7 +130,7 @@ end
 
 ## How to debug a failing test
 
-When writing a solver, it's likely that you will initially fail many tests!
+When writing a solver, it's likely that you will initially fail many tests.
 Some failures will be bugs, but other failures you may choose to exclude.
 
 There are two ways to exclude tests:
@@ -196,8 +196,8 @@ As an example, ECOS errored calling [`optimize!`](@ref) twice in a row. (See
 [ECOS.jl PR #72](https://github.com/jump-dev/ECOS.jl/pull/72).) We could add a
 test to ECOS.jl, but that would only stop us from re-introducing the bug to
 ECOS.jl in the future, but it would not catch other solvers in the ecosystem
-with the same bug! Instead, if we add a test to `MOI.Test`, then all solvers
-will also check that they handle a double optimize call!
+with the same bug. Instead, if we add a test to `MOI.Test`, then all solvers
+will also check that they handle a double optimize call.
 
 For this test, we care about correctness, rather than performance. therefore, we
 don't expect solvers to efficiently decide that they have already solved the
@@ -236,8 +236,8 @@ function test_unit_optimize!_twice(
     config::Config{T},
 ) where {T}
     # Use the `@requires` macro to check conditions that the test function
-    # requires in order to run. Models failing this `@requires` check will
-    # silently skip the test.
+    # requires to run. Models failing this `@requires` check will silently skip
+    # the test.
     @requires MOI.supports_constraint(
         model,
         MOI.VariableIndex,
@@ -272,8 +272,8 @@ end
 ```
 
 !!! info
-    Make sure the function is agnostic to the number type `T`! Don't assume it
-    is a `Float64` capable solver!
+    Make sure the function is agnostic to the number type `T`; don't assume it
+    is a `Float64` capable solver.
 
 We also need to write a test for the test. Place this function immediately below
 the test you just wrote in the same file:

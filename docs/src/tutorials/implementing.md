@@ -17,7 +17,7 @@ MathOptInterface for a new solver.
     [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev) and explain a
     little bit about the solver you are wrapping. If you have questions that are
     not answered by this guide, please ask them in the [Developer chatroom](https://gitter.im/JuliaOpt/JuMP-dev)
-    so we can improve this guide!
+    so we can improve this guide.
 
 ## A note on the API
 
@@ -26,7 +26,7 @@ diversity of solvers and use-cases, we make heavy use of
 [duck-typing](https://en.wikipedia.org/wiki/Duck_typing). That is, solvers are
 not expected to implement the full API, nor is there a well-defined minimal
 subset of what must be implemented. Instead, you should implement the API as
-necessary in order to make the solver function as you require.
+necessary to make the solver function as you require.
 
 The main reason for using duck-typing is that solvers work in different ways and
 target different use-cases.
@@ -40,7 +40,7 @@ For example:
    support modification or things like variable names.
  * Other "solvers" are not solvers at all, but things like file readers. These
    may only support functions like [`read_from_file`](@ref), and may not even
-   support the ability to add variables or constraints directly!
+   support the ability to add variables or constraints directly.
  * Finally, some "solvers" are layers which take a problem as input, transform
    it according to some rules, and pass the transformed problem to an inner
    solver.
@@ -56,8 +56,8 @@ The first step in writing a wrapper is to decide whether implementing an
 interface is the right thing to do.
 
 MathOptInterface is an abstraction layer for unifying _constrained_ mathematical
-optimization solvers. If your solver doesn't fit in the category, i.e., it
-implements a derivative-free algorithm for unconstrained objective functions,
+optimization solvers. If your solver doesn't fit in the category, for example,
+it implements a derivative-free algorithm for unconstrained objective functions,
 MathOptInterface may not be the right tool for the job.
 
 !!! tip
@@ -84,7 +84,7 @@ solver from Julia.
 
 #### Wrapping solvers written in Julia
 
-If your solver is written in Julia, there's nothing to do here! Go to the next
+If your solver is written in Julia, there's nothing to do here. Go to the next
 section.
 
 #### Wrapping solvers written in C
@@ -99,7 +99,7 @@ Before writing a MathOptInterface wrapper, there are a few extra steps.
 
 ##### Create a JLL
 
-If the C code is publicly available under an open-source license, create a
+If the C code is publicly available under an open source license, create a
 JLL package via [Yggdrasil](https://github.com/JuliaPackaging/Yggdrasil). The
 easiest way to do this is to copy an existing solver. Good examples to follow
 are the [COIN-OR solvers](https://github.com/JuliaPackaging/Yggdrasil/tree/master/C/Coin-OR).
@@ -217,9 +217,9 @@ package.
 
 !!! tip
     Run the tests frequently when developing. However, at the start there is
-    going to be a lot of errors! Start by excluding large classes of tests
-    (e.g., `exclude = ["test_basic_", "test_model_"]`, implement any missing
-    methods until the tests pass, then remove an exclusion and repeat.
+    going to be a lot of errors. Start by excluding large classes of tests
+    (for example, `exclude = ["test_basic_", "test_model_"]`, implement any
+    missing methods until the tests pass, then remove an exclusion and repeat.
 
 ## Initial code
 
@@ -295,7 +295,7 @@ interface.
 !!! tip
     For this and all future methods, read the docstrings to understand what each
     method does, what it expects as input, and what it produces as output. If it
-    isn't clear, let us know and we will improve the docstrings!
+    isn't clear, let us know and we will improve the docstrings.
     It is also very helpful to look at an existing wrapper for a similar solver.
 
 You should also implement `Base.show(::IO, ::Optimizer)` to print a nice string
@@ -444,7 +444,7 @@ steps, implement the [`copy_to`](@ref) interface.
 
 !!! warning
     Writing this interface is a lot of work. The easiest way is to consult the
-    source code of a similar solver!
+    source code of a similar solver.
 
 To implement the incremental interface, implement the following functions:
 
@@ -523,9 +523,9 @@ MOI.supports_add_constrained_variables(::Optimizer, ::Type{Reals}) = false
 If you implement the incremental interface, you have the option of also
 implementing [`copy_to`](@ref).
 
-If you don't want to implement [`copy_to`](@ref), e.g., because the solver has
-no API for building the problem in a single function call, define the following
-fallback:
+If you don't want to implement [`copy_to`](@ref), for example, because the
+solver has no API for building the problem in a single function call, define the
+following fallback:
 ```julia
 MOI.supports_incremental_interface(::Optimizer) = true
 
@@ -661,9 +661,9 @@ Here are some other points to be aware of when writing your wrapper.
 
 ### Unsupported constraints at runtime
 
-In some cases, your solver may support a particular type of constraint (e.g.,
-quadratic constraints), but only if the data meets some condition (e.g., it is
-convex).
+In some cases, your solver may support a particular type of constraint (for
+example, quadratic constraints), but only if the data meets some condition (for
+example, it is convex).
 
 In this case, declare that you `support` the constraint, and throw
 [`AddConstraintNotAllowed`](@ref).
@@ -700,7 +700,7 @@ structures. Solvers may not modify any input vectors and must assume that
 input vectors will not be modified by users in the future.
 
 This applies, for example, to the `terms` vector in
-[`ScalarAffineFunction`](@ref). Vectors returned to the user, e.g., via
+[`ScalarAffineFunction`](@ref). Vectors returned to the user, for example, via
 [`ObjectiveFunction`](@ref) or
 [`ConstraintFunction`](@ref) attributes, must not be modified by the solver
 afterwards. The in-place version of [`get!`](@ref) can be used by users to avoid

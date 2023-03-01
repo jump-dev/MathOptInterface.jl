@@ -87,7 +87,7 @@ MathOptInterface.VectorAffineFunction{Int64}(MathOptInterface.VectorAffineTerm{I
 ## Canonicalizing functions
 
 In more advanced use cases, you might need to ensure that a function is
-"canonical". Functions are stored as an array of terms, but there is no check
+"canonical." Functions are stored as an array of terms, but there is no check
 that these terms are redundant: a [`ScalarAffineFunction`](@ref) object might
 have two terms with the same variable, like `x + x + 1`. These terms could be
 merged without changing the semantics of the function: `2x + 1`.
