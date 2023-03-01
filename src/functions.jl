@@ -282,7 +282,7 @@ end
     VectorOfVariables(variables::Vector{VariableIndex}) <: AbstractVectorFunction
 
 The vector-valued function `f(x) = variables`, where `variables` is a subset of
-[`MOI.VariableIndex`](@ref)es in the model.
+[`VariableIndex`](@ref)es in the model.
 
 The list of `variables` may contain duplicates.
 
