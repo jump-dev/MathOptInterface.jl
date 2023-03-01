@@ -383,7 +383,7 @@ term_pair(t::VectorAffineTerm) = term_indices(t) => coefficient(t)
 
 The vector-valued affine function ``A x + b``, where:
 
- * ``A c`` is the sparse matrix given by the vector of [`VectorAffineTerm`](@ref)s
+ * ``A x`` is the sparse matrix given by the vector of [`VectorAffineTerm`](@ref)s
  * ``b`` is the vector `constants`
 
 ## Duplicates
