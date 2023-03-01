@@ -18,6 +18,12 @@ Abstract supertype for scalar-valued function objects.
 """
 abstract type AbstractScalarFunction <: AbstractFunction end
 
+Base.broadcastable(f::AbstractScalarFunction) = Ref(f)
+
+Base.ndims(::Type{<:AbstractScalarFunction}) = 0
+
+Base.ndims(::AbstractScalarFunction) = 0
+
 """
     AbstractVectorFunction
 
