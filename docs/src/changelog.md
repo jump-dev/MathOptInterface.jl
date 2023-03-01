@@ -1180,7 +1180,7 @@ This release contains backports from the ongoing development of the v0.10 releas
 - Add test for empty rows in vector linear constraint.
 - Rework errors: `CannotError` has been renamed `NotAllowedError` and
   the distinction between `UnsupportedError` and `NotAllowedError` is now
-  about whether the element is not supported (that is, it cannot be copied a
+  about whether the element is not supported (for example, it cannot be copied a
   model containing this element) or the operation is not allowed (either
   because it is not implemented, because it cannot be performed in the current
   state of the model, or because it cannot be performed for a specific index)
