@@ -642,7 +642,7 @@ struct _NoVariableNameModel <: MOI.ModelLike end
 function MOI.get(
     ::_NoVariableNameModel,
     ::MOI.VariableName,
-    x::MOI.VariableIndex
+    x::MOI.VariableIndex,
 )
     return "MOI.VariableIndex($(x.value))"
 end
