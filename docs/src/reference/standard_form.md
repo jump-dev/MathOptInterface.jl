@@ -12,28 +12,30 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 ```@docs
 AbstractFunction
-AbstractScalarFunction
-AbstractVectorFunction
-VariableIndex
-VectorOfVariables
-ScalarAffineTerm
-ScalarAffineFunction
-VectorAffineTerm
-VectorAffineFunction
-ScalarQuadraticTerm
-ScalarQuadraticFunction
-VectorQuadraticTerm
-VectorQuadraticFunction
+output_dimension
+constant
 ```
 
-### Utilities
+## Scalar functions
 
 ```@docs
-output_dimension
-constant(f::Union{ScalarAffineFunction, ScalarQuadraticFunction})
-constant(f::Union{VectorAffineFunction, VectorQuadraticFunction})
-constant(f::VariableIndex, ::Type)
-constant(f::VectorOfVariables, T::Type)
+AbstractScalarFunction
+VariableIndex
+ScalarAffineTerm
+ScalarAffineFunction
+ScalarQuadraticTerm
+ScalarQuadraticFunction
+```
+
+## Vector functions
+
+```@docs
+AbstractVectorFunction
+VectorOfVariables
+VectorAffineTerm
+VectorAffineFunction
+VectorQuadraticTerm
+VectorQuadraticFunction
 ```
 
 ## Sets
