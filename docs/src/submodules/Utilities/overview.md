@@ -279,7 +279,7 @@ Use `print` to print the formulation of the model.
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
-MathOptInterface.VariableIndex(1)
+MOI.VariableIndex(1)
 
 julia> MOI.set(model, MOI.VariableName(), x, "x_var")
 
@@ -345,7 +345,7 @@ VariableIndex-in-GreaterThan{Float64}
  v[2] >= 0.0
 
 julia> map[c]
-MathOptInterface.ScalarAffineFunction{Float64}(MathOptInterface.ScalarAffineTerm{Float64}[MathOptInterface.ScalarAffineTerm{Float64}(1.0, MathOptInterface.VariableIndex(2))], 0.0)
+0.0 + 1.0 MOI.VariableIndex(2)
 ```
 
 You can also modify a single constraint using [`Utilities.ScalarPenaltyRelaxation`](@ref):
@@ -373,7 +373,7 @@ VariableIndex-in-GreaterThan{Float64}
  v[2] >= 0.0
 
 julia> f
-MathOptInterface.ScalarAffineFunction{Float64}(MathOptInterface.ScalarAffineTerm{Float64}[MathOptInterface.ScalarAffineTerm{Float64}(1.0, MathOptInterface.VariableIndex(2))], 0.0)
+0.0 + 1.0 MOI.VariableIndex(2)
 ```
 
 ## Utilities.MatrixOfConstraints

@@ -636,3 +636,23 @@ end
 function Base.print(io::IO, model::MOI.ModelLike; kwargs...)
     return _print_model(io, _PrintOptions(MIME("text/plain"); kwargs...), model)
 end
+
+struct _NoVariableNameModel <: MOI.ModelLike end
+
+function MOI.get(
+    ::_NoVariableNameModel,
+    ::MOI.VariableName,
+    x::MOI.VariableIndex
+)
+    return "MOI.VariableIndex($(x.value))"
+end
+
+function Base.show(io::IO, mime::MIME"text/plain", f::MOI.AbstractFunction)
+    print(io, _to_string(_PrintOptions(mime), _NoVariableNameModel(), f))
+    return
+end
+
+function Base.show(io::IO, mime::MIME"text/latex", f::MOI.AbstractFunction)
+    print(io, _to_string(_PrintOptions(mime), _NoVariableNameModel(), f))
+    return
+end

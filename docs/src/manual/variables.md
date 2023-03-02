@@ -14,7 +14,7 @@ Use [`add_variable`](@ref) to add a single variable.
 
 ```jldoctest variables; setup=:(model = MOI.Utilities.Model{Float64}(); )
 julia> x = MOI.add_variable(model)
-MathOptInterface.VariableIndex(1)
+MOI.VariableIndex(1)
 ```
 [`add_variable`](@ref) returns a [`VariableIndex`](@ref) type, which is used to
 refer to the added variable in other calls.
@@ -29,8 +29,8 @@ Use [`add_variables`](@ref) to add a number of variables.
 ```jldoctest variables
 julia> y = MOI.add_variables(model, 2)
 2-element Vector{MathOptInterface.VariableIndex}:
- MathOptInterface.VariableIndex(2)
- MathOptInterface.VariableIndex(3)
+ MOI.VariableIndex(2)
+ MOI.VariableIndex(3)
 ```
 
 !!! warning

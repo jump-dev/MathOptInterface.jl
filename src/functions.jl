@@ -81,7 +81,7 @@ Represents the scalar-valued term `coefficient * variable`.
 julia> import MathOptInterface as MOI
 
 julia> x = MOI.VariableIndex(1)
-MathOptInterface.VariableIndex(1)
+MOI.VariableIndex(1)
 
 julia> MOI.ScalarAffineTerm(2.0, x)
 MathOptInterface.ScalarAffineTerm{Float64}(2.0, MathOptInterface.VariableIndex(1))
@@ -126,7 +126,7 @@ coefficients are summed together.
 julia> import MathOptInterface as MOI
 
 julia> x = MOI.VariableIndex(1)
-MathOptInterface.VariableIndex(1)
+MOI.VariableIndex(1)
 
 julia> terms = [MOI.ScalarAffineTerm(2.0, x), MOI.ScalarAffineTerm(3.0, x)]
 2-element Vector{MathOptInterface.ScalarAffineTerm{Float64}}:
@@ -134,7 +134,7 @@ julia> terms = [MOI.ScalarAffineTerm(2.0, x), MOI.ScalarAffineTerm(3.0, x)]
  MathOptInterface.ScalarAffineTerm{Float64}(3.0, MathOptInterface.VariableIndex(1))
 
 julia> f = MOI.ScalarAffineFunction(terms, 4.0)
-MathOptInterface.ScalarAffineFunction{Float64}(MathOptInterface.ScalarAffineTerm{Float64}[MathOptInterface.ScalarAffineTerm{Float64}(2.0, MathOptInterface.VariableIndex(1)), MathOptInterface.ScalarAffineTerm{Float64}(3.0, MathOptInterface.VariableIndex(1))], 4.0)
+4.0 + 2.0 MOI.VariableIndex(1) + 3.0 MOI.VariableIndex(1)
 ```
 """
 mutable struct ScalarAffineFunction{T} <: AbstractScalarFunction
@@ -168,7 +168,7 @@ Represents the scalar-valued term ``c x_i x_j`` where ``c`` is `coefficient`,
 julia> import MathOptInterface as MOI
 
 julia> x = MOI.VariableIndex(1)
-MathOptInterface.VariableIndex(1)
+MOI.VariableIndex(1)
 
 julia> MOI.ScalarQuadraticTerm(2.0, x, x)
 MathOptInterface.ScalarQuadraticTerm{Float64}(2.0, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(1))
@@ -258,7 +258,7 @@ julia> quadratic_terms = [
  MathOptInterface.ScalarQuadraticTerm{Float64}(3.0, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2))
 
 julia> f = MOI.ScalarQuadraticFunction(quadratic_terms, affine_terms, constant)
-MathOptInterface.ScalarQuadraticFunction{Float64}(MathOptInterface.ScalarQuadraticTerm{Float64}[MathOptInterface.ScalarQuadraticTerm{Float64}(4.0, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(1)), MathOptInterface.ScalarQuadraticTerm{Float64}(3.0, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2))], MathOptInterface.ScalarAffineTerm{Float64}[MathOptInterface.ScalarAffineTerm{Float64}(4.0, MathOptInterface.VariableIndex(1))], 5.0)
+5.0 + 4.0 MOI.VariableIndex(1) + 2.0 MOI.VariableIndex(1)² + 3.0 MOI.VariableIndex(1)*MOI.VariableIndex(2)
 ```
 
 """
@@ -306,11 +306,15 @@ julia> import MathOptInterface as MOI
 
 julia> x = MOI.VariableIndex.(1:2)
 2-element Vector{MathOptInterface.VariableIndex}:
- MathOptInterface.VariableIndex(1)
- MathOptInterface.VariableIndex(2)
+ MOI.VariableIndex(1)
+ MOI.VariableIndex(2)
 
 julia> f = MOI.VectorOfVariables([x[1], x[2], x[1]])
-MathOptInterface.VectorOfVariables(MathOptInterface.VariableIndex[MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2), MathOptInterface.VariableIndex(1)])
+┌                    ┐
+│MOI.VariableIndex(1)│
+│MOI.VariableIndex(2)│
+│MOI.VariableIndex(1)│
+└                    ┘
 
 julia> MOI.output_dimension(f)
 3
@@ -404,7 +408,10 @@ julia> terms = [
        ];
 
 julia> f = MOI.VectorAffineFunction(terms, [4.0, 5.0])
-MathOptInterface.VectorAffineFunction{Float64}(MathOptInterface.VectorAffineTerm{Float64}[MathOptInterface.VectorAffineTerm{Float64}(1, MathOptInterface.ScalarAffineTerm{Float64}(2.0, MathOptInterface.VariableIndex(1))), MathOptInterface.VectorAffineTerm{Float64}(2, MathOptInterface.ScalarAffineTerm{Float64}(3.0, MathOptInterface.VariableIndex(1)))], [4.0, 5.0])
+┌                              ┐
+│4.0 + 2.0 MOI.VariableIndex(1)│
+│5.0 + 3.0 MOI.VariableIndex(1)│
+└                              ┘
 
 julia> MOI.output_dimension(f)
 2
@@ -516,7 +523,10 @@ julia> quad_terms = [
            ];
 
 julia> f = MOI.VectorQuadraticFunction(quad_terms, affine_terms, constants)
-MathOptInterface.VectorQuadraticFunction{Float64}(MathOptInterface.VectorQuadraticTerm{Float64}[MathOptInterface.VectorQuadraticTerm{Float64}(1, MathOptInterface.ScalarQuadraticTerm{Float64}(2.0, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(1))), MathOptInterface.VectorQuadraticTerm{Float64}(2, MathOptInterface.ScalarQuadraticTerm{Float64}(3.0, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2)))], MathOptInterface.VectorAffineTerm{Float64}[MathOptInterface.VectorAffineTerm{Float64}(1, MathOptInterface.ScalarAffineTerm{Float64}(2.0, MathOptInterface.VariableIndex(1))), MathOptInterface.VectorAffineTerm{Float64}(2, MathOptInterface.ScalarAffineTerm{Float64}(3.0, MathOptInterface.VariableIndex(1)))], [4.0, 5.0])
+┌                                                                              ┐
+│4.0 + 2.0 MOI.VariableIndex(1) + 1.0 MOI.VariableIndex(1)²                    │
+│5.0 + 3.0 MOI.VariableIndex(1) + 3.0 MOI.VariableIndex(1)*MOI.VariableIndex(2)│
+└                                                                              ┘
 
 julia> MOI.output_dimension(f)
 2
