@@ -296,7 +296,7 @@ and the list of supported multi-variate operators is given by the list:
 
  * [`Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS`](@ref)
 
-Additional operators can be registered by setting a [`MOI.UserDefinedFunction`](@ref)
+Additional operators can be registered by setting a [`UserDefinedFunction`](@ref)
 attribute.
 
 ## `args`
