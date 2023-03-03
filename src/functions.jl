@@ -296,14 +296,17 @@ and the list of supported multi-variate operators is given by the list:
 
  * [`Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS`](@ref)
 
+Additional operators can be registered by setting a [`MOI.UserDefinedFunction`](@ref)
+attribute.
+
 ## `args`
 
 The vector `args` contains the arguments to the nonlinear function. If the
 operator is univariate, it must contain one element. Otherwise, it may contain
 multiple elements. Each element must be one of the folowing:
 
- * A number of type `T`
- * A variable of type [`VariableIndex`](@ref)
+ * A constant value of type `T`
+ * A [`VariableIndex`](@ref)
  * A [`ScalarAffineFunction`](@ref)
  * A [`ScalarQuadraticFunction`](@ref)
  * A [`ScalarNonlinearFunction`](@ref)

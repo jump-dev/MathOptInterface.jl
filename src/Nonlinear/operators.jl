@@ -92,41 +92,7 @@ julia> MOI.Nonlinear.DEFAULT_UNIVARIATE_OPERATORS
  :log
  :log10
  :log2
- :log1p
- :exp
- :exp2
- :expm1
- :sin
- :cos
- :tan
- :sec
- :csc
- :cot
- :sind
- :cosd
- :tand
- :secd
- :cscd
- :cotd
- :asin
  ⋮
- :atanh
- :asech
- :acsch
- :acoth
- :deg2rad
- :rad2deg
- :erf
- :erfinv
- :erfc
- :erfcinv
- :erfi
- :gamma
- :lgamma
- :digamma
- :invdigamma
- :trigamma
- :airyai
  :airybi
  :airyaiprime
  :airybiprime
