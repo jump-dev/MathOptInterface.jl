@@ -214,7 +214,7 @@ However, the dual of [`PositiveSemidefiniteConeSquare`](@ref) is not so straight
 forward. This section explains the duality convention we use, and how it is
 derived.
 
-!!! info "tl;dr"
+!!! info
     If you have a [`PositiveSemidefiniteConeSquare`](@ref) constraint, the
     result matrix ``A`` from [`ConstraintDual`](@ref) is not positive
     semidefinite. However, ``A + A^\top`` is positive semidefinite.

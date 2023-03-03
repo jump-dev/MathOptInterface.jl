@@ -4,8 +4,6 @@ arXiv
 backports
 blogposts
 bugfixe(?s)
-const
-expr
 datastructure
 docstring(?s)
 doctest
@@ -15,24 +13,16 @@ flamegraph
 getters
 [Jj]ulia
 [Pp]recompil(ation|(e(?d)))
-src
 subexpression(?s)
 
 % JuMP-related vocab
 [Cc]anonicaliz(e|ation|ing)
-[Dd]et
-functionize
-geomean
-(lin|mixint|quad)prog
-(log|root)det
 (L|Q)Ps
 multiobjective
 nonconvex
-[Nn]on(posi|nega)tive(?s)
 parameterizing
-[Pp]resolve
-[Ss]emi(continuous|integer|definite)
-tl
+Presolve
+[Ss]emidefinite
 unboundedness
 [Un]nivariate
 

@@ -563,7 +563,7 @@ for advice on updating a specific deprecated feature.
 - Added `Utilities.set_with_dimension`
 - Added two-argument `optimize!(::AbstractOptimizer, ::ModelLike)`
 - The experimental feature `copy_to_and_optimize!` has been removed
-- Det bridges now support getting `ConstraintFunction` and `ConstraintSet`
+- `Det` bridges now support getting `ConstraintFunction` and `ConstraintSet`
 - Various minor bug fixes identified by improved testing
 
 ## v0.10.1 (September 8, 2021)
@@ -757,7 +757,8 @@ This release contains backports from the ongoing development of the v0.10 releas
 ## v0.9.18 (November 3, 2020)
 
 - Various improvements for working with complex numbers
-- Added `GeoMeantoRelEntrBridge` to bridge a geomean constraint to a relative entropy constraint
+- Added `GeoMeantoRelEntrBridge` to bridge a `GeometricMeanCone` constraint to a
+  relative entropy constraint
 
 ## v0.9.17 (September 21, 2020)
 
@@ -891,7 +892,7 @@ This release contains backports from the ongoing development of the v0.10 releas
   * Added support for starting values for `Variable.VectorizeBridge` (#944).
   * Fixed `MOI.add_constraints` with non-bridged variable constraint on bridged
     variable (#951).
-  * Fixed corner cases and docstring of geomean bridge (#961, #962, #966).
+  * Fixed corner cases and docstring of `GeoMeanBridge` (#961, #962, #966).
   * Fixed choice between variable or constraint bridges for constrained
     variables (#973).
   * Improve performance of bridge shortest path (#945, #946, #956).
@@ -920,7 +921,7 @@ This release contains backports from the ongoing development of the v0.10 releas
   * Added `InvalidIndex` tests in `basic_constraint_tests` (#921).
   * Added tests for the constant term in indicator constraint (#929).
 - Bridges improvements:
-  * Added support for starting values for functionize bridges (#923).
+  * Added support for starting values for `Functionize` bridges (#923).
   * Added variable indices context to variable bridges (#920).
   * Fixed a typo in printing o `debug_supports` (#927).
 
@@ -1067,7 +1068,7 @@ This release contains backports from the ongoing development of the v0.10 releas
 - Performance improvement in `default_copy_to` and bridge optimizer (#696).
 - Add `Silent` and implement setting optimizer attributes in caching and mock
   optimizers (#695).
-- Add functionize bridges (SingleVariable and VectorOfVariables) (#659).
+- Add `Functionize` bridges (SingleVariable and VectorOfVariables) (#659).
 - Minor typo fixes (#694).
 
 ## v0.8.3 (March 6, 2019)

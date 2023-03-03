@@ -22,7 +22,7 @@ as a modeling interface instead.
     If you haven't used JuMP before, start with the tutorial
     [Getting started with JuMP](https://jump.dev/JuMP.jl/stable/tutorials/getting_started/getting_started_with_JuMP/)
 
-### linprog
+### `linprog`
 
 Here is one way of transitioning from `linprog`:
 
@@ -47,7 +47,7 @@ function linprog(c, A, sense, b, l, u, solver)
 end
 ```
 
-### mixintprog
+### `mixintprog`
 
 Here is one way of transitioning from `mixintprog`:
 
@@ -76,7 +76,7 @@ function mixintprog(c, A, rowlb, rowub, vartypes, lb, ub, solver)
 end
 ```
 
-### quadprog
+### `quadprog`
 
 Here is one way of transitioning from `quadprog`:
 
