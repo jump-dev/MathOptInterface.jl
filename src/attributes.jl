@@ -1859,26 +1859,59 @@ end
 """
     UserDefinedFunction(name::Symbol, arity::Int)
 
-Set a user-defined function by the name of `Name` with `arity` arguments.
+Set a user-defined function by the name of `name` with `arity` arguments.
 
 The value to be set is a tuple containg one to three functions, representing the
 zero, first, and second-order derivatives of the function.
 
 ## Examples
 
-```julia
-f(x, y) = x^2 + y^2
-function ∇f(g, x, y)
-    g .= 2 * x, 2 * y
-    return
-end
-function ∇²f(H, x...)
-    H[1, 1] = H[2, 2] = 2.0
-    return
-end
-MOI.set(model, MOI.UserDefinedFunction(:f, 2), (f,))
-MOI.set(model, MOI.UserDefinedFunction(:f, 2), (f, ∇f))
-MOI.set(model, MOI.UserDefinedFunction(:f, 2), (f, ∇f, ∇²f))
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> f(x, y) = x^2 + y^2
+f (generic function with 1 method)
+
+julia> function ∇f(g, x, y)
+           g .= 2 * x, 2 * y
+           return
+       end
+∇f (generic function with 1 method)
+
+julia> function ∇²f(H, x...)
+           H[1, 1] = H[2, 2] = 2.0
+           return
+       end
+∇²f (generic function with 1 method)
+
+julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+MOIU.UniversalFallback{MOIU.Model{Float64}}
+fallback for MOIU.Model{Float64}
+
+julia> MOI.set(model, MOI.UserDefinedFunction(:f, 2), (f,))
+
+julia> MOI.set(model, MOI.UserDefinedFunction(:g, 2), (f, ∇f))
+
+julia> MOI.set(model, MOI.UserDefinedFunction(:h, 2), (f, ∇f, ∇²f))
+
+julia> x = MOI.add_variables(model, 2)
+2-element Vector{MathOptInterface.VariableIndex}:
+ MathOptInterface.VariableIndex(1)
+ MathOptInterface.VariableIndex(2)
+
+julia> MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+julia> obj_f = MOI.ScalarNonlinearFunction{Float64}(:f, Any[x[1], x[2]])
+MathOptInterface.ScalarNonlinearFunction{Float64}(:f, Any[MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2)])
+
+julia> MOI.set(model, MOI.ObjectiveFunction{typeof(obj_f)}(), obj_f)
+
+julia> print(model)
+Minimize ScalarNonlinearFunction{Float64}:
+ f(v[1], v[2])
+
+Subject to:
+
 ```
 """
 struct UserDefinedFunction <: AbstractModelAttribute

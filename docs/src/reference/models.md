@@ -50,6 +50,7 @@ ListOfOptimizerAttributesSet
 ListOfModelAttributesSet
 ListOfVariableAttributesSet
 ListOfConstraintAttributesSet
+UserDefinedFunction
 ```
 
 ## Optimizer interface
