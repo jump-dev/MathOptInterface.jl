@@ -675,6 +675,27 @@ function test_print_with_acronym()
     return
 end
 
+function test_default_printing()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    aff = 2.0 * x + 1.0
+    model = MOI.Utilities._NoVariableNameModel()
+    for mime in (MIME("text/plain"), MIME("text/latex"))
+        options = MOI.Utilities._PrintOptions(mime)
+        for f in (
+            x,
+            2.0 * x + 1.0,
+            2.0 * x + 1.0 + 1.0 * x * y + 2.0 * x * x,
+            MOI.Utilities.vectorize([x, y]),
+            MOI.Utilities.vectorize([x, 2 // 3 * y + 1 // 4]),
+        )
+            result = MOI.Utilities._to_string(options, model, f)
+            @test sprint(show, mime, f) == result
+        end
+    end
+    return
+end
+
 end
 
 TestPrint.runtests()
