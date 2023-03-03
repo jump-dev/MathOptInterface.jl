@@ -336,7 +336,6 @@ function Base.copy(f::ScalarNonlinearFunction{T}) where {T}
     return ScalarNonlinearFunction{T}(f.head, copy(f.args))
 end
 
-
 """
     abstract type AbstractVectorFunction <: AbstractFunction
 
