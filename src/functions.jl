@@ -286,7 +286,7 @@ expression tree, with the call operator `head` and ordered arguments in `args`.
 
 ## `head`
 
-The `head::Symbol` must be a scalar operator recognized by the model.
+The `head::Symbol` must be an operator supported by the model.
 
 The default list of supported univariate operators is given by:
 
