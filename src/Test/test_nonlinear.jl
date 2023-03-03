@@ -1537,3 +1537,140 @@ function setup_test(
     )
     return
 end
+
+"""
+    test_nonlinear_duals(model::MOI.ModelLike, config::MOI.Test.Config)
+
+Tests dual solutions with `ScalarNonlinearFunction`. We use a linear program
+so that the duals are easy to compute.
+"""
+function test_nonlinear_duals(
+    model::MOI.ModelLike,
+    config::MOI.Test.Config{T},
+) where {T}
+    @requires T == Float64
+    @requires _supports(config, MOI.optimize!)
+    F = MOI.ScalarNonlinearFunction{Float64}
+    @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
+    MOI.Utilities.loadfromstring!(
+        model,
+        """
+variables: x, y, z, r3, r4, r5, r6
+minobjective: ScalarNonlinearFunction(-((x + y) / 2.0 + 3.0) / 3.0 - z - r3)
+x >= 0.0
+y <= 5.0
+z in Interval(2.0, 4.0)
+r3 in Interval(0.0, 3.0)
+r4 in Interval(0.0, 4.0)
+r5 in Interval(0.0, 5.0)
+r6 in Interval(0.0, 6.0)
+cons1: ScalarNonlinearFunction(x + y) >= 2.0
+cons2: ScalarNonlinearFunction(r3 + r4 + r5 + x / 2) <= 1.0
+cons3: ScalarNonlinearFunction(7.0 * y + - (z + r6 / 1.9)) <= 0.0
+""",
+    )
+    x = MOI.get(model, MOI.ListOfVariableIndices())
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+    @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+    @test ≈(
+        MOI.get(model, MOI.VariablePrimal(), x),
+        [0.9774436, 1.0225564, 4.0, 0.5112782, 0.0, 0.0, 6.0],
+        config,
+    )
+    cons1 = MOI.get(model, MOI.ConstraintIndex, "cons1")
+    cons2 = MOI.get(model, MOI.ConstraintIndex, "cons2")
+    cons3 = MOI.get(model, MOI.ConstraintIndex, "cons3")
+    LB = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}
+    UB = MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}}
+    IV = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Interval{Float64}}
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), cons1), 1 / 3, config)
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), cons2), -1, config)
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), cons3), -0.0714286, config)
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), LB(x[1].value)), 0.0, config)
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), UB(x[2].value)), 0.0, config)
+    @test ≈(
+        MOI.get(model, MOI.ConstraintDual(), [IV(xi.value) for xi in x[3:end]]),
+        [-1.0714286, 0.0, 1.0, 1.0, -0.03759398],
+        config,
+    )
+    @test ≈(MOI.get(model, MOI.ObjectiveValue()), -5.8446115, config)
+    f = MOI.get(model, MOI.ObjectiveFunction{F}())
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{F}(),
+        MOI.ScalarNonlinearFunction{Float64}(:-, Any[f]),
+    )
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+    @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+    @test ≈(
+        MOI.get(model, MOI.VariablePrimal(), x),
+        [0.9774436, 1.0225564, 4.0, 0.5112782, 0.0, 0.0, 6.0],
+        config,
+    )
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), cons1), 1 / 3, config)
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), cons2), -1, config)
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), cons3), -0.0714286, config)
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), LB(x[1].value)), 0.0, config)
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), UB(x[2].value)), 0.0, config)
+    @test ≈(
+        MOI.get(model, MOI.ConstraintDual(), [IV(xi.value) for xi in x[3:end]]),
+        [-1.0714286, 0.0, 1.0, 1.0, -0.03759398],
+        config,
+    )
+    @test ≈(MOI.get(model, MOI.ObjectiveValue()), 5.8446115, config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_duals),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> begin
+            MOI.Utilities.mock_optimize!(
+                mock,
+                [0.9774436, 1.0225564, 4.0, 0.5112782, 0.0, 0.0, 6.0],
+                (MOI.ScalarNonlinearFunction{T}, MOI.GreaterThan{T}) =>
+                    T[1/3],
+                (MOI.ScalarNonlinearFunction{T}, MOI.LessThan{T}) =>
+                    T[-1, -0.0714286],
+                (MOI.VariableIndex, MOI.GreaterThan{T}) => [0.0],
+                (MOI.VariableIndex, MOI.LessThan{T}) => [0.0],
+                (MOI.VariableIndex, MOI.Interval{T}) =>
+                    [-1.0714286, 0.0, 1.0, 1.0, -0.03759398],
+            )
+            MOI.set(mock, MOI.ObjectiveValue(), -5.8446115)
+        end,
+        mock -> begin
+            MOI.Utilities.mock_optimize!(
+                mock,
+                [0.9774436, 1.0225564, 4.0, 0.5112782, 0.0, 0.0, 6.0],
+                (MOI.ScalarNonlinearFunction{T}, MOI.GreaterThan{T}) =>
+                    T[1/3],
+                (MOI.ScalarNonlinearFunction{T}, MOI.LessThan{T}) =>
+                    T[-1, -0.0714286],
+                (MOI.VariableIndex, MOI.GreaterThan{T}) => [0.0],
+                (MOI.VariableIndex, MOI.LessThan{T}) => [0.0],
+                (MOI.VariableIndex, MOI.Interval{T}) =>
+                    [-1.0714286, 0.0, 1.0, 1.0, -0.03759398],
+            )
+            MOI.set(mock, MOI.ObjectiveValue(), 5.8446115)
+        end,
+    )
+    flag = model.eval_variable_constraint_dual
+    obj_flag = model.eval_objective_value
+    model.eval_variable_constraint_dual = false
+    model.eval_objective_value = false
+    return () -> begin
+        model.eval_variable_constraint_dual = flag
+        model.eval_objective_value = obj_flag
+    end
+end
