@@ -1861,18 +1861,18 @@ end
 
 Set a user-defined function by the name of `name` with `arity` arguments.
 
-The value to be set is a tuple containg one to three functions, representing the
+The value to be set is a tuple containing one to three functions, representing the
 zero, first, and second-order derivatives of the function.
 
-For uni-variate functions with `arity == 1`, the functions must have the form:
+For uni-variate functions with `arity == 1`, the functions in the tuple must have the form:
 
- * `f(x::T)::T`: returns the evaluation of the function at `x`
- * `∇f(x::T)::T`: return the first-order deriative of `f` with respect to `x`
- * `∇²f(x::T)::T`: returns the second-order derviative of `f` with respect to `x`.
+ * `f(x::T)::T`: returns the value of the function at `x`
+ * `∇f(x::T)::T`: returns the first-order derivative of `f` with respect to `x`
+ * `∇²f(x::T)::T`: returns the second-order derivative of `f` with respect to `x`.
 
-For multi-variate functions, the functions must have the form:
+For multi-variate functions, the functions in the tuple must have the form:
 
- * `f(x::T...)::T`: returns the evaluation of the function at `x`
+ * `f(x::T...)::T`: returns the value of the function at `x`
  * `∇f(g::AbstractVector{T}, x::T...)::Nothing`: fills the components of `g`,
    with `g[i]` being the first-order partial derivative of `f` with respect to
    `x[i]`

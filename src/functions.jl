@@ -288,11 +288,11 @@ expression tree, with the call operator `head` and ordered arguments in `args`.
 
 The `head::Symbol` must be a scalar operator recognized by the model.
 
-By default, the list of supported uni-variate operators is given by the list:
+The default list of supported univariate operators is given by:
 
  * [`Nonlinear.DEFAULT_UNIVARIATE_OPERATORS`](@ref)
 
-and the list of supported multi-variate operators is given by the list:
+and the default list of supported multivariate operators is given by:
 
  * [`Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS`](@ref)
 
@@ -303,7 +303,7 @@ attribute.
 
 The vector `args` contains the arguments to the nonlinear function. If the
 operator is univariate, it must contain one element. Otherwise, it may contain
-multiple elements. Each element must be one of the folowing:
+multiple elements. Each element must be one of the following:
 
  * A constant value of type `T`
  * A [`VariableIndex`](@ref)
