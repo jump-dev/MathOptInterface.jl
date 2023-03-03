@@ -92,8 +92,8 @@ Below is a list of common constraint types and how they are represented
 as function-set pairs in MOI. In the notation below, ``x`` is a vector of
 decision variables, ``x_i`` is a scalar decision variable, ``\alpha, \beta`` are
 scalar constants, ``a, b`` are constant vectors, `A` is a constant matrix and
-``\mathbb{R}_+`` (resp. ``\mathbb{R}_-``) is the set of nonnegative (resp.
-nonpositive) real numbers.
+``\mathbb{R}_+`` (resp. ``\mathbb{R}_-``) is the set of non-negative (resp.
+non-positive) real numbers.
 
 ### Linear constraints
 
