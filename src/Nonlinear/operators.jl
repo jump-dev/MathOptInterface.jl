@@ -74,6 +74,69 @@ end
     DEFAULT_UNIVARIATE_OPERATORS
 
 The list of univariate operators that are supported by default.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> MOI.Nonlinear.DEFAULT_UNIVARIATE_OPERATORS
+72-element Vector{Symbol}:
+ :+
+ :-
+ :abs
+ :sqrt
+ :cbrt
+ :abs2
+ :inv
+ :log
+ :log10
+ :log2
+ :log1p
+ :exp
+ :exp2
+ :expm1
+ :sin
+ :cos
+ :tan
+ :sec
+ :csc
+ :cot
+ :sind
+ :cosd
+ :tand
+ :secd
+ :cscd
+ :cotd
+ :asin
+ ⋮
+ :atanh
+ :asech
+ :acsch
+ :acoth
+ :deg2rad
+ :rad2deg
+ :erf
+ :erfinv
+ :erfc
+ :erfcinv
+ :erfi
+ :gamma
+ :lgamma
+ :digamma
+ :invdigamma
+ :trigamma
+ :airyai
+ :airybi
+ :airyaiprime
+ :airybiprime
+ :besselj0
+ :besselj1
+ :bessely0
+ :bessely1
+ :erfcx
+ :dawson
+```
 """
 const DEFAULT_UNIVARIATE_OPERATORS = first.(SYMBOLIC_UNIVARIATE_EXPRESSIONS)
 
@@ -81,6 +144,24 @@ const DEFAULT_UNIVARIATE_OPERATORS = first.(SYMBOLIC_UNIVARIATE_EXPRESSIONS)
     DEFAULT_MULTIVARIATE_OPERATORS
 
 The list of multivariate operators that are supported by default.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> MOI.Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS
+9-element Vector{Symbol}:
+ :+
+ :-
+ :*
+ :^
+ :/
+ :ifelse
+ :atan
+ :min
+ :max
+```
 """
 const DEFAULT_MULTIVARIATE_OPERATORS =
     [:+, :-, :*, :^, :/, :ifelse, :atan, :min, :max]
