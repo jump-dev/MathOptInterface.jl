@@ -147,7 +147,7 @@ function _parse_univariate_expression(
             _parse_multivariate_expression(stack, data, expr, x, parent_index)
             return
         end
-        error("Unable to parse: $x")
+        throw(MOI.UnsupportedNonlinearOperator(x.args[1]))
     end
     push!(expr.nodes, Node(NODE_CALL_UNIVARIATE, id, parent_index))
     push!(stack, (length(expr.nodes), x.args[2]))

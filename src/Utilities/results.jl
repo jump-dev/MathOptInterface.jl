@@ -46,7 +46,7 @@ function constraint_constant(
     },
     T::Type,
 )
-    return MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci))
+    return MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T)
 end
 function constraint_constant(
     model::MOI.ModelLike,

@@ -40,7 +40,7 @@ function test_parse_unable()
     x = MOI.VariableIndex(1)
     input = :(f($x))
     @test_throws(
-        ErrorException("Unable to parse: $input"),
+        MOI.UnsupportedNonlinearOperator(:f),
         Nonlinear.set_objective(model, input),
     )
     return

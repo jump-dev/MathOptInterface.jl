@@ -349,7 +349,7 @@ function Base.copy(f::ScalarNonlinearFunction)
     return ScalarNonlinearFunction(f.head, copy(f.args))
 end
 
-constant(f::ScalarNonlinearFunction, ::Type{T}) where {T} = zero(T)
+constant(f::ScalarNonlinearFunction, ::Type{T} = Float64) where {T} = zero(T)
 
 """
     UnsupportedNonlinearOperator(head::Symbol[, message::String]) <: UnsupportedError

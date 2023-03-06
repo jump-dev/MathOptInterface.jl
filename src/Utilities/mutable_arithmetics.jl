@@ -52,8 +52,8 @@ function MA.isequal_canonical(
     )
 end
 
-function MA.iszero!!(f::TypedScalarLike)
-    return iszero(MOI.constant(f)) && _is_constant(canonicalize!(f))
+function MA.iszero!!(f::TypedScalarLike{T}) where {T}
+    return iszero(MOI.constant(f, T)) && _is_constant(canonicalize!(f))
 end
 
 function MA.scaling(f::TypedScalarLike{T}) where {T}
@@ -61,7 +61,7 @@ function MA.scaling(f::TypedScalarLike{T}) where {T}
     if !_is_constant(g)
         throw(InexactError(:convert, T, f))
     end
-    return MA.scaling(MOI.constant(g))
+    return MA.scaling(MOI.constant(g, T))
 end
 
 function MA.promote_operation(
@@ -245,7 +245,7 @@ end
 
 _constant(::Type{T}, α::T) where {T} = α
 _constant(::Type{T}, ::MOI.VariableIndex) where {T} = zero(T)
-_constant(::Type{T}, func::TypedScalarLike{T}) where {T} = MOI.constant(func)
+_constant(::Type{T}, func::TypedScalarLike{T}) where {T} = MOI.constant(func, T)
 
 _affine_terms(f::MOI.ScalarAffineFunction) = f.terms
 _affine_terms(f::MOI.ScalarQuadraticFunction) = f.affine_terms
