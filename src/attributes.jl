@@ -1939,6 +1939,17 @@ struct UserDefinedFunction <: AbstractModelAttribute
 end
 
 """
+    ListOfSupportedNonlinearOperators() <: AbstractModelAttribute
+
+When queried with [`get`](@ref), return a `Vector{Symbol}` listing the operators
+supported by the model.
+
+```julia
+```
+"""
+struct ListOfSupportedNonlinearOperators <: AbstractModelAttribute end
+
+"""
     TerminationStatusCode
 
 An Enum of possible values for the `TerminationStatus` attribute. This attribute

@@ -328,6 +328,18 @@ function test_runtests()
         MOI.Bridges.Constraint.ScalarSlackBridge,
         """
         variables: x
+        ScalarNonlinearFunction(log(x)) <= 2.0
+        """,
+        """
+        variables: x, y
+        ScalarNonlinearFunction(log(x) - y) == 0.0
+        y <= 2.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.ScalarSlackBridge,
+        """
+        variables: x
         1.0 * x in ZeroOne()
         """,
         """

@@ -456,6 +456,18 @@ function test_runtests()
         """,
         eltype = Rational{Int},
     )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitIntervalBridge,
+        """
+        variables: x
+        ScalarNonlinearFunction(log(x)) in Interval(1.0, 2.0)
+        """,
+        """
+        variables: x
+        ScalarNonlinearFunction(log(x)) >= 1.0
+        ScalarNonlinearFunction(log(x)) <= 2.0
+        """,
+    )
     return
 end
 

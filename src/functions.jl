@@ -299,6 +299,9 @@ and the default list of supported multivariate operators is given by:
 Additional operators can be registered by setting a [`UserDefinedFunction`](@ref)
 attribute.
 
+See the full list of operators supported by a [`ModelLike`](@ref) by querying
+[`ListOfSupportedNonlinearOperators`](@ref).
+
 ## `args`
 
 The vector `args` contains the arguments to the nonlinear function. If the
@@ -311,12 +314,21 @@ multiple elements. Each element must be one of the following:
  * A [`ScalarQuadraticFunction`](@ref)
  * A [`ScalarNonlinearFunction`](@ref)
 
+## Unsupported operators
+
+If the optimizer does not support `head`, an [`UnsupportedNonlinearOperator`](@ref)
+error will be thrown.
+
+There is no guarantee about when this error will be thrown; it may be thrown
+when the function is first added to the model, or it may be thrown when
+[`optimize!`](@ref) is called.
+
 ## Example
 
 To represent the function ``f(x) = sin(x)^2``, do:
 
 ```jldoctest
-julia> using MathOptInterface; const MOI = MathOptInterface;
+julia> import MathOptInterface as MOI
 
 julia> x = MOI.VariableIndex(1)
 MathOptInterface.VariableIndex(1)
@@ -337,6 +349,36 @@ constant(f::ScalarNonlinearFunction{T}) where {T} = zero(T)
 
 function Base.copy(f::ScalarNonlinearFunction{T}) where {T}
     return ScalarNonlinearFunction{T}(f.head, copy(f.args))
+end
+
+"""
+    UnsupportedNonlinearOperator(head::Symbol[, message::String]) <: UnsupportedError
+
+An error thrown by optimizers if they do not support the operator `head` in a
+[`ScalarNonlinearFunction`](@ref).
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> throw(MOI.UnsupportedNonlinearOperator(:black_box))
+ERROR: MathOptInterface.UnsupportedNonlinearOperator: The nonlinear operator `:black_box` is not supported by the model.
+Stacktrace:
+[...]
+```
+"""
+struct UnsupportedNonlinearOperator <: UnsupportedError
+    head::Symbol
+    message::String
+
+    function UnsupportedNonlinearOperator(head::Symbol, message::String = "")
+        return new(head, message)
+    end
+end
+
+function element_name(err::UnsupportedNonlinearOperator)
+    return "The nonlinear operator `:$(err.head)`"
 end
 
 """
@@ -912,9 +954,13 @@ function Base.convert(
     ::Type{ScalarNonlinearFunction{T}},
     term::ScalarQuadraticTerm{T},
 ) where {T}
+    coef = term.coefficient
+    if term.variable_1 == term.variable_2
+        coef /= 2
+    end
     return ScalarNonlinearFunction{T}(
         :*,
-        Any[term.coefficient, term.variable_1, term.variable_2],
+        Any[coef, term.variable_1, term.variable_2],
     )
 end
 

@@ -128,6 +128,43 @@ function test_delete_ScalarQuadraticFunction_plural()
     return
 end
 
+
+function test_modify_ScalarNonlinearFunction()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction{Float64}(:log, Any[x])
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    attr = MOI.ObjectiveFunction{typeof(f)}()
+    MOI.set(model, attr, f)
+    @test_throws(
+        MOI.ModifyObjectiveNotAllowed,
+        MOI.modify(model, attr, MOI.ScalarConstantChange(3.0)),
+    )
+    return
+end
+
+function test_delete_variable_ScalarNonlinearFunction()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction{Float64}(:log, Any[x])
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    attr = MOI.ObjectiveFunction{typeof(f)}()
+    MOI.set(model, attr, f)
+    @test_throws MOI.DeleteNotAllowed MOI.delete(model, x)
+    return
+end
+
+function test_delete_variables_ScalarNonlinearFunction()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction{Float64}(:log, Any[x])
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    attr = MOI.ObjectiveFunction{typeof(f)}()
+    MOI.set(model, attr, f)
+    @test_throws MOI.DeleteNotAllowed MOI.delete(model, [x])
+    return
+end
+
 end  # module
 
 TestObjectiveContainer.runtests()

@@ -1016,10 +1016,6 @@ end
     filter_variables(keep::Function, f::AbstractFunction)
 
 Return a new function `f` with the variable `vi` such that `!keep(vi)` removed.
-
-WARNING: Don't define `filter_variables(::Function, ...)` because Julia will
-not specialize on this. Define instead
-`filter_variables(::F, ...) where {F<:Function}`.
 """
 function filter_variables end
 
@@ -1053,6 +1049,38 @@ function filter_variables(
         _filter_variables(keep, f.affine_terms),
         MOI.constant(f),
     )
+end
+
+function filter_variables(
+    keep::Function,
+    f::MOI.ScalarNonlinearFunction{T},
+) where {T}
+    args = Any[]
+    for arg in f.args
+        if arg isa MOI.VariableIndex
+            if keep(arg)
+                push!(args, arg)
+            else
+                if !(f.head in (:+, :-, :*))
+                    error("Unable to delete variable in `$(f.head) operation.")
+                end
+            end
+        elseif arg isa T
+            push!(args, arg)
+        else
+            push!(args, filter_variables(keep, arg))
+        end
+    end
+    if f.head == :-
+        if length(f.args) > 1 && length(args) == 1
+            # -(x, y...) has become -(x), but it should be +(x)
+            return f.args[1]
+        elseif f.args[1] != args[1]
+            # -(x, y...) has become -(y...), but it should be -(0, y...)
+            pushfirst!(args, zero(T))
+        end
+    end
+    return MOI.ScalarNonlinearFunction{T}(f.head, args)
 end
 
 """
@@ -1793,6 +1821,15 @@ function promote_operation(
     ::Type{MOI.VariableIndex},
 ) where {T}
     return MOI.ScalarNonlinearFunction{T}
+end
+
+function operate(
+    op::Union{typeof(+),typeof(-)},
+    ::Type{T},
+    f::MOI.ScalarNonlinearFunction{T},
+    g::ScalarQuadraticLike{T},
+) where {T}
+    return MOI.ScalarNonlinearFunction{T}(Symbol(op), Any[f, g])
 end
 
 ### Base methods

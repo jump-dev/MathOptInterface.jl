@@ -471,6 +471,18 @@ function test_runtests()
         1.1 * x + -1.0 * y >= -2.2
         """,
     )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Objective.SlackBridge,
+        """
+        variables: x
+        maxobjective: ScalarNonlinearFunction(log(x))
+        """,
+        """
+        variables: x, y
+        maxobjective: y
+        ScalarNonlinearFunction(log(x) - y) >= 0.0
+        """,
+    )
     return
 end
 
