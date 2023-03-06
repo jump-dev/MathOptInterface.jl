@@ -266,9 +266,9 @@ end
 
 function map_indices(
     index_map::F,
-    f::MOI.ScalarNonlinearFunction{T},
-) where {F<:Function,T}
-    return MOI.ScalarNonlinearFunction{T}(
+    f::MOI.ScalarNonlinearFunction,
+) where {F<:Function}
+    return MOI.ScalarNonlinearFunction(
         f.head,
         Any[map_indices(index_map, arg) for arg in f.args],
     )
@@ -1051,10 +1051,7 @@ function filter_variables(
     )
 end
 
-function filter_variables(
-    keep::Function,
-    f::MOI.ScalarNonlinearFunction{T},
-) where {T}
+function filter_variables(keep::Function, f::MOI.ScalarNonlinearFunction)
     args = Any[]
     for arg in f.args
         if arg isa MOI.VariableIndex
@@ -1065,7 +1062,7 @@ function filter_variables(
                     error("Unable to delete variable in `$(f.head) operation.")
                 end
             end
-        elseif arg isa T
+        elseif arg isa Number
             push!(args, arg)
         else
             push!(args, filter_variables(keep, arg))
@@ -1080,7 +1077,7 @@ function filter_variables(
             pushfirst!(args, zero(T))
         end
     end
-    return MOI.ScalarNonlinearFunction{T}(f.head, args)
+    return MOI.ScalarNonlinearFunction(f.head, args)
 end
 
 """
@@ -1817,19 +1814,19 @@ end
 function promote_operation(
     ::typeof(-),
     ::Type{T},
-    ::Type{MOI.ScalarNonlinearFunction{T}},
+    ::Type{MOI.ScalarNonlinearFunction},
     ::Type{MOI.VariableIndex},
 ) where {T}
-    return MOI.ScalarNonlinearFunction{T}
+    return MOI.ScalarNonlinearFunction
 end
 
 function operate(
     op::Union{typeof(+),typeof(-)},
     ::Type{T},
-    f::MOI.ScalarNonlinearFunction{T},
+    f::MOI.ScalarNonlinearFunction,
     g::ScalarQuadraticLike{T},
 ) where {T}
-    return MOI.ScalarNonlinearFunction{T}(Symbol(op), Any[f, g])
+    return MOI.ScalarNonlinearFunction(Symbol(op), Any[f, g])
 end
 
 ### Base methods
@@ -3409,14 +3406,7 @@ is_coefficient_type(::Type{<:TypedLike{T}}, ::Type{T}) where {T} = true
 
 is_coefficient_type(::Type{<:TypedLike}, ::Type) = false
 
-function is_coefficient_type(
-    ::Type{MOI.ScalarNonlinearFunction{T}},
-    ::Type{T},
-) where {T}
-    return true
-end
-
-is_coefficient_type(::Type{<:MOI.ScalarNonlinearFunction}, ::Type) = false
+is_coefficient_type(::Type{<:MOI.ScalarNonlinearFunction}, ::Type) = true
 
 similar_type(::Type{F}, ::Type{T}) where {F,T} = F
 

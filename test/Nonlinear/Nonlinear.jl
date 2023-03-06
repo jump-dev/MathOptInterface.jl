@@ -992,9 +992,9 @@ end
 function test_scalar_nonlinear_function_parse_expression()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
-    f = MOI.ScalarNonlinearFunction{Float64}(
+    f = MOI.ScalarNonlinearFunction(
         :+,
-        Any[x, MOI.ScalarNonlinearFunction{Float64}(:sin, Any[x])],
+        Any[x, MOI.ScalarNonlinearFunction(:sin, Any[x])],
     )
     nlp_model = MOI.Nonlinear.Model()
     e1 = MOI.Nonlinear.add_expression(nlp_model, f)
@@ -1006,7 +1006,7 @@ end
 function test_scalar_nonlinear_function_parse_scalaraffinefunction()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
-    f = MOI.ScalarNonlinearFunction{Float64}(:log, Any[1.0*x+2.0])
+    f = MOI.ScalarNonlinearFunction(:log, Any[1.0*x+2.0])
     nlp_model = MOI.Nonlinear.Model()
     e1 = MOI.Nonlinear.add_expression(nlp_model, f)
     e2 = MOI.Nonlinear.add_expression(nlp_model, :(log(1.0 * $x + 2.0)))
@@ -1017,7 +1017,7 @@ end
 function test_scalar_nonlinear_function_parse_scalaraffinefunction()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
-    f = MOI.ScalarNonlinearFunction{Float64}(:log, Any[1.5*x*x+2.0])
+    f = MOI.ScalarNonlinearFunction(:log, Any[1.5*x*x+2.0])
     nlp_model = MOI.Nonlinear.Model()
     e1 = MOI.Nonlinear.add_expression(nlp_model, f)
     e2 = MOI.Nonlinear.add_expression(nlp_model, :(log(1.5 * $x * $x + 2.0)))

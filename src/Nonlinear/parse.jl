@@ -242,10 +242,10 @@ end
 function parse_expression(
     data::Model,
     expr::Expression,
-    x::MOI.ScalarAffineFunction{T},
+    x::MOI.ScalarAffineFunction,
     parent::Int,
-) where {T}
-    f = convert(MOI.ScalarNonlinearFunction{T}, x)
+)
+    f = convert(MOI.ScalarNonlinearFunction, x)
     parse_expression(data, expr, f, parent)
     return
 end
@@ -253,10 +253,10 @@ end
 function parse_expression(
     data::Model,
     expr::Expression,
-    x::MOI.ScalarQuadraticFunction{T},
+    x::MOI.ScalarQuadraticFunction,
     parent::Int,
-) where {T}
-    f = convert(MOI.ScalarNonlinearFunction{T}, x)
+)
+    f = convert(MOI.ScalarNonlinearFunction, x)
     parse_expression(data, expr, f, parent)
     return
 end

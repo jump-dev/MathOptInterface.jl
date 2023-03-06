@@ -243,12 +243,12 @@ function _parsed_to_moi(model, s::Expr)
         return _parsed_scalar_to_moi(model, s.args[2])
     end
     args = Any[_parsed_to_moi(model, arg) for arg in s.args[2:end]]
-    return MOI.ScalarNonlinearFunction{Float64}(s.args[1], args)
+    return MOI.ScalarNonlinearFunction(s.args[1], args)
 end
 
 function _parsed_scalar_to_moi(model, s::Expr)
     args = Any[_parsed_to_moi(model, arg) for arg in s.args[2:end]]
-    return MOI.ScalarNonlinearFunction{Float64}(s.args[1], args)
+    return MOI.ScalarNonlinearFunction(s.args[1], args)
 end
 
 for typename in [

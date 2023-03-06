@@ -71,9 +71,9 @@ function _function(
     ::Type{MOI.ScalarNonlinearFunction},
     x::Vector{MOI.VariableIndex},
 ) where {T}
-    return MOI.ScalarNonlinearFunction{T}(
+    return MOI.ScalarNonlinearFunction(
         :+,
-        Any[MOI.ScalarNonlinearFunction{T}(:^, Any[xi, 2]) for xi in x],
+        Any[MOI.ScalarNonlinearFunction(:^, Any[xi, 2]) for xi in x],
     )
 end
 

@@ -1122,7 +1122,7 @@ function test_nonlinear_expression_hs071(
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
-    F = MOI.ScalarNonlinearFunction{Float64}
+    F = MOI.ScalarNonlinearFunction
     @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
     @requires MOI.supports_constraint(model, F, MOI.GreaterThan{Float64})
     MOI.Utilities.loadfromstring!(
@@ -1177,7 +1177,7 @@ function test_nonlinear_expression_hs071_epigraph(
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
-    F = MOI.ScalarNonlinearFunction{Float64}
+    F = MOI.ScalarNonlinearFunction
     @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
     @requires MOI.supports_constraint(model, F, MOI.GreaterThan{Float64})
     MOI.Utilities.loadfromstring!(
@@ -1233,7 +1233,7 @@ function test_nonlinear_expression_hs109(
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
-    F = MOI.ScalarNonlinearFunction{Float64}
+    F = MOI.ScalarNonlinearFunction
     @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
     @requires MOI.supports_constraint(model, F, MOI.GreaterThan{Float64})
     MOI.Utilities.loadfromstring!(
@@ -1300,7 +1300,7 @@ function test_nonlinear_expression_hs110(
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
-    F = MOI.ScalarNonlinearFunction{Float64}
+    F = MOI.ScalarNonlinearFunction
     @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
     f = "log(x1 - 2)^2 + log(10 - x1)^2"
     for i in 2:10
@@ -1362,7 +1362,7 @@ function test_nonlinear_expression_quartic(
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
-    F = MOI.ScalarNonlinearFunction{Float64}
+    F = MOI.ScalarNonlinearFunction
     @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
     MOI.Utilities.loadfromstring!(
         model,
@@ -1410,13 +1410,13 @@ function test_nonlinear_expression_overrides_objective(
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
-    F = MOI.ScalarNonlinearFunction{Float64}
+    F = MOI.ScalarNonlinearFunction
     @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
     x = MOI.add_variables(model, 2)
     MOI.add_constraint.(model, x, MOI.GreaterThan(0.0))
     MOI.add_constraint(model, 1.0 * x[1] + 2.0 * x[2], MOI.LessThan(1.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    f = MOI.ScalarNonlinearFunction{Float64}(:+, Any[x[1], x[2]])
+    f = MOI.ScalarNonlinearFunction(:+, Any[x[1], x[2]])
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
@@ -1461,13 +1461,13 @@ function test_nonlinear_expression_univariate_function(
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
-    F = MOI.ScalarNonlinearFunction{Float64}
+    F = MOI.ScalarNonlinearFunction
     @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
     @requires MOI.supports(model, MOI.UserDefinedFunction(:my_square, 1))
     my_square(x) = (x - 1)^2
     MOI.set(model, MOI.UserDefinedFunction(:my_square, 1), (my_square,))
     x = MOI.add_variable(model)
-    obj = MOI.ScalarNonlinearFunction{Float64}(:my_square, Any[x])
+    obj = MOI.ScalarNonlinearFunction(:my_square, Any[x])
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
     MOI.optimize!(model)
@@ -1497,7 +1497,7 @@ function test_nonlinear_expression_multivariate_function(
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
-    F = MOI.ScalarNonlinearFunction{Float64}
+    F = MOI.ScalarNonlinearFunction
     @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
     @requires MOI.supports(model, MOI.UserDefinedFunction(:my_square, 2))
     f(x, y) = (x - 1)^2 + (y - 2)^2
@@ -1509,7 +1509,7 @@ function test_nonlinear_expression_multivariate_function(
     MOI.set(model, MOI.UserDefinedFunction(:my_square, 2), (f, ∇f))
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
-    obj = MOI.ScalarNonlinearFunction{Float64}(:my_square, Any[x, y])
+    obj = MOI.ScalarNonlinearFunction(:my_square, Any[x, y])
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
     MOI.optimize!(model)
@@ -1550,7 +1550,7 @@ function test_nonlinear_duals(
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
-    F = MOI.ScalarNonlinearFunction{Float64}
+    F = MOI.ScalarNonlinearFunction
     @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
     MOI.Utilities.loadfromstring!(
         model,
@@ -1599,7 +1599,7 @@ cons3: ScalarNonlinearFunction(7.0 * y + - (z + r6 / 1.9)) <= 0.0
     MOI.set(
         model,
         MOI.ObjectiveFunction{F}(),
-        MOI.ScalarNonlinearFunction{Float64}(:-, Any[f]),
+        MOI.ScalarNonlinearFunction(:-, Any[f]),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.optimize!(model)
@@ -1638,9 +1638,8 @@ function setup_test(
             MOI.Utilities.mock_optimize!(
                 mock,
                 [0.9774436, 1.0225564, 4.0, 0.5112782, 0.0, 0.0, 6.0],
-                (MOI.ScalarNonlinearFunction{T}, MOI.GreaterThan{T}) =>
-                    T[1/3],
-                (MOI.ScalarNonlinearFunction{T}, MOI.LessThan{T}) =>
+                (MOI.ScalarNonlinearFunction, MOI.GreaterThan{T}) => T[1/3],
+                (MOI.ScalarNonlinearFunction, MOI.LessThan{T}) =>
                     T[-1, -0.0714286],
                 (MOI.VariableIndex, MOI.GreaterThan{T}) => [0.0],
                 (MOI.VariableIndex, MOI.LessThan{T}) => [0.0],
@@ -1653,9 +1652,8 @@ function setup_test(
             MOI.Utilities.mock_optimize!(
                 mock,
                 [0.9774436, 1.0225564, 4.0, 0.5112782, 0.0, 0.0, 6.0],
-                (MOI.ScalarNonlinearFunction{T}, MOI.GreaterThan{T}) =>
-                    T[1/3],
-                (MOI.ScalarNonlinearFunction{T}, MOI.LessThan{T}) =>
+                (MOI.ScalarNonlinearFunction, MOI.GreaterThan{T}) => T[1/3],
+                (MOI.ScalarNonlinearFunction, MOI.LessThan{T}) =>
                     T[-1, -0.0714286],
                 (MOI.VariableIndex, MOI.GreaterThan{T}) => [0.0],
                 (MOI.VariableIndex, MOI.LessThan{T}) => [0.0],

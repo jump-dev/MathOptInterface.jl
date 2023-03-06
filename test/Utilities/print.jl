@@ -705,7 +705,7 @@ function test_scalar_nonlinear_function_print()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), x, "x")
-    f = MOI.ScalarNonlinearFunction{Float64}(:+, Any[x, 2.0])
+    f = MOI.ScalarNonlinearFunction(:+, Any[x, 2.0])
     options = MOI.Utilities._PrintOptions(MIME("text/plain"))
     @test MOI.Utilities._to_string(options, model, f) == "+(x, 2.0)"
     return

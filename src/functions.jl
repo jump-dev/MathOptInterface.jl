@@ -279,7 +279,7 @@ function Base.copy(f::ScalarQuadraticFunction)
 end
 
 """
-    ScalarNonlinearFunction{T<:Number}(head::Symbol, args::Vector{Any})
+    ScalarNonlinearFunction(head::Symbol, args::Vector{Any})
 
 The scalar-valued nonlinear function `head(args...)`, represented as a symbolic
 expression tree, with the call operator `head` and ordered arguments in `args`.
@@ -308,7 +308,7 @@ The vector `args` contains the arguments to the nonlinear function. If the
 operator is univariate, it must contain one element. Otherwise, it may contain
 multiple elements. Each element must be one of the following:
 
- * A constant value of type `T`
+ * A constant value of type `T<:Number`
  * A [`VariableIndex`](@ref)
  * A [`ScalarAffineFunction`](@ref)
  * A [`ScalarQuadraticFunction`](@ref)
@@ -333,23 +333,23 @@ julia> import MathOptInterface as MOI
 julia> x = MOI.VariableIndex(1)
 MathOptInterface.VariableIndex(1)
 
-julia> MOI.ScalarNonlinearFunction{Float64}(
+julia> MOI.ScalarNonlinearFunction(
            :^,
-           Any[MOI.ScalarNonlinearFunction{Float64}(:sin, Any[x]), 2],
+           Any[MOI.ScalarNonlinearFunction(:sin, Any[x]), 2],
        )
-MathOptInterface.ScalarNonlinearFunction{Float64}(:^, Any[MathOptInterface.ScalarNonlinearFunction{Float64}(:sin, Any[MathOptInterface.VariableIndex(1)]), 2])
+MathOptInterface.ScalarNonlinearFunction(:^, Any[MathOptInterface.ScalarNonlinearFunction(:sin, Any[MathOptInterface.VariableIndex(1)]), 2])
 ```
 """
-struct ScalarNonlinearFunction{T} <: AbstractScalarFunction
+struct ScalarNonlinearFunction <: AbstractScalarFunction
     head::Symbol
     args::Vector{Any}
 end
 
-constant(f::ScalarNonlinearFunction{T}) where {T} = zero(T)
-
-function Base.copy(f::ScalarNonlinearFunction{T}) where {T}
-    return ScalarNonlinearFunction{T}(f.head, copy(f.args))
+function Base.copy(f::ScalarNonlinearFunction)
+    return ScalarNonlinearFunction(f.head, copy(f.args))
 end
+
+constant(f::ScalarNonlinearFunction, ::Type{T}) where {T} = zero(T)
 
 """
     UnsupportedNonlinearOperator(head::Symbol[, message::String]) <: UnsupportedError
@@ -798,10 +798,10 @@ function Base.isapprox(
 end
 
 function Base.isapprox(
-    f::ScalarNonlinearFunction{T},
-    g::ScalarNonlinearFunction{T};
+    f::ScalarNonlinearFunction,
+    g::ScalarNonlinearFunction;
     kwargs...,
-) where {T}
+)
     if f.head != g.head || length(f.args) != length(g.args)
         return false
     end
@@ -932,42 +932,36 @@ end
 
 # ScalarNonlinearFunction
 
-function Base.convert(
-    ::Type{ScalarNonlinearFunction{T}},
-    term::ScalarAffineTerm{T},
-) where {T}
-    return ScalarNonlinearFunction{T}(:*, Any[term.coefficient, term.variable])
+function Base.convert(::Type{ScalarNonlinearFunction}, term::ScalarAffineTerm)
+    return ScalarNonlinearFunction(:*, Any[term.coefficient, term.variable])
 end
 
-function Base.convert(
-    F::Type{ScalarNonlinearFunction{T}},
-    f::ScalarAffineFunction{T},
-) where {T}
-    args = Any[convert(ScalarNonlinearFunction{T}, term) for term in f.terms]
+function Base.convert(F::Type{ScalarNonlinearFunction}, f::ScalarAffineFunction)
+    args = Any[convert(ScalarNonlinearFunction, term) for term in f.terms]
     if !iszero(f.constant)
         push!(args, f.constant)
     end
-    return ScalarNonlinearFunction{T}(:+, args)
+    return ScalarNonlinearFunction(:+, args)
 end
 
 function Base.convert(
-    ::Type{ScalarNonlinearFunction{T}},
-    term::ScalarQuadraticTerm{T},
-) where {T}
+    ::Type{ScalarNonlinearFunction},
+    term::ScalarQuadraticTerm,
+)
     coef = term.coefficient
     if term.variable_1 == term.variable_2
         coef /= 2
     end
-    return ScalarNonlinearFunction{T}(
+    return ScalarNonlinearFunction(
         :*,
         Any[coef, term.variable_1, term.variable_2],
     )
 end
 
 function Base.convert(
-    F::Type{ScalarNonlinearFunction{T}},
-    f::ScalarQuadraticFunction{T},
-) where {T}
+    F::Type{ScalarNonlinearFunction},
+    f::ScalarQuadraticFunction,
+)
     args = Any[convert(F, term) for term in f.quadratic_terms]
     for term in f.affine_terms
         push!(args, convert(F, term))
@@ -975,7 +969,7 @@ function Base.convert(
     if !iszero(f.constant)
         push!(args, f.constant)
     end
-    return ScalarNonlinearFunction{T}(:+, args)
+    return ScalarNonlinearFunction(:+, args)
 end
 
 # VectorOfVariables
@@ -1113,7 +1107,6 @@ for f in (
     :ScalarAffineFunction,
     :ScalarQuadraticTerm,
     :ScalarQuadraticFunction,
-    :ScalarNonlinearFunction,
     :VectorAffineTerm,
     :VectorAffineFunction,
     :VectorQuadraticTerm,

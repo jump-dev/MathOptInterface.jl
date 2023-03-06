@@ -81,9 +81,9 @@ end
 function test_scalar_nonlinear_function_add_constraint()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
-    f = MOI.ScalarNonlinearFunction{Float64}(
+    f = MOI.ScalarNonlinearFunction(
         :+,
-        Any[x, MOI.ScalarNonlinearFunction{Float64}(:sin, Any[x])],
+        Any[x, MOI.ScalarNonlinearFunction(:sin, Any[x])],
     )
     c = MOI.add_constraint(model, f, MOI.EqualTo(0.0))
     @test isapprox(MOI.get(model, MOI.ConstraintFunction(), c), f)

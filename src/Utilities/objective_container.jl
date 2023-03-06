@@ -17,7 +17,7 @@ mutable struct ObjectiveContainer{T} <: MOI.ModelLike
     single_variable::Union{Nothing,MOI.VariableIndex}
     scalar_affine::Union{Nothing,MOI.ScalarAffineFunction{T}}
     scalar_quadratic::Union{Nothing,MOI.ScalarQuadraticFunction{T}}
-    scalar_nonlinear::Union{Nothing,MOI.ScalarNonlinearFunction{T}}
+    scalar_nonlinear::Union{Nothing,MOI.ScalarNonlinearFunction}
     vector_variables::Union{Nothing,MOI.VectorOfVariables}
     vector_affine::Union{Nothing,MOI.VectorAffineFunction{T}}
     vector_quadratic::Union{Nothing,MOI.VectorQuadraticFunction{T}}
@@ -78,7 +78,7 @@ function MOI.get(
     elseif o.scalar_quadratic !== nothing
         return MOI.ScalarQuadraticFunction{T}
     elseif o.scalar_nonlinear !== nothing
-        return MOI.ScalarNonlinearFunction{T}
+        return MOI.ScalarNonlinearFunction
     elseif o.vector_variables !== nothing
         return MOI.VectorOfVariables
     elseif o.vector_affine !== nothing
@@ -101,7 +101,7 @@ function MOI.supports(
             MOI.VariableIndex,
             MOI.ScalarAffineFunction{T},
             MOI.ScalarQuadraticFunction{T},
-            MOI.ScalarNonlinearFunction{T},
+            MOI.ScalarNonlinearFunction,
             MOI.VectorOfVariables,
             MOI.VectorAffineFunction{T},
             MOI.VectorQuadraticFunction{T},
@@ -175,10 +175,10 @@ function MOI.set(
 end
 
 function MOI.set(
-    o::ObjectiveContainer{T},
-    ::MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction{T}},
-    f::MOI.ScalarNonlinearFunction{T},
-) where {T}
+    o::ObjectiveContainer,
+    ::MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction},
+    f::MOI.ScalarNonlinearFunction,
+)
     o.is_function_set = true
     o.scalar_nonlinear = copy(f)
     return

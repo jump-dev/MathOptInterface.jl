@@ -287,16 +287,17 @@ end
 
 function test_ScalarNonlinearFunction_constant()
     x = MOI.VariableIndex(1)
-    f = MOI.ScalarNonlinearFunction{Float64}(:log, Any[x])
-    MOI.constant(f) == 0.0
+    f = MOI.ScalarNonlinearFunction(:log, Any[x])
+    @test MOI.constant(f, Float64) === Float64(0)
+    @test MOI.constant(f, Int32) === Int32(0)
     return
 end
 
 function test_ScalarNonlinearFunction_isapprox()
     x = MOI.VariableIndex(1)
-    f = MOI.ScalarNonlinearFunction{Float64}(:log, Any[x])
-    g = MOI.ScalarNonlinearFunction{Float64}(:+, Any[f, 0.0])
-    h = MOI.ScalarNonlinearFunction{Float64}(:+, Any[f, 1.0])
+    f = MOI.ScalarNonlinearFunction(:log, Any[x])
+    g = MOI.ScalarNonlinearFunction(:+, Any[f, 0.0])
+    h = MOI.ScalarNonlinearFunction(:+, Any[f, 1.0])
     @test f ≈ f
     @test !(f ≈ g)
     @test !(g ≈ h)
