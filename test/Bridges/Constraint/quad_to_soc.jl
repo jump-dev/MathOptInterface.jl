@@ -106,7 +106,8 @@ function test_quadratic_constraints_with_2_variables()
 end
 
 function test_qcp()
-    mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    mock = MOI.Utilities.MockOptimizer(model)
     config = MOI.Test.Config()
     bridged_mock = MOI.Bridges.Constraint.QuadtoSOC{Float64}(mock)
     MOI.Utilities.set_mock_optimize!(
@@ -159,6 +160,13 @@ function test_qcp()
     MOI.Test.test_quadratic_constraint_LessThan(bridged_mock, config)
     MOI.empty!(bridged_mock)
     MOI.Test.test_quadratic_constraint_GreaterThan(bridged_mock, config)
+    F = MOI.ScalarQuadraticFunction{Float64}
+    S = MOI.GreaterThan{Float64}
+    ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{F,S}()))
+    for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+        err = ErrorException("In order to set the `$attr`, the`MOI.Bridges.Constraint.QuadtoSOCBridge` needs to get the `MathOptInterface.VariablePrimalStart()` but it is not set. Set the `MathOptInterface.VariablePrimalStart()` first before setting the `$attr` in order to fix this.")
+        @test_throws err MOI.set(bridged_mock, attr, ci, 0.0)
+    end
     return
 end
 
@@ -207,6 +215,7 @@ function test_runtests()
         variables: x, y
         [1.0, 0.0, 2.0 * x, 2.0 * y] in RotatedSecondOrderCone(4)
         """,
+        variable_start = 0.0,
     )
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.QuadtoSOCBridge,
@@ -218,6 +227,7 @@ function test_runtests()
         variables: x, y
         [1.0, 0.0, 2.0 * x, 2.0 * y] in RotatedSecondOrderCone(4)
         """,
+        variable_start = 0.0,
     )
     return
 end

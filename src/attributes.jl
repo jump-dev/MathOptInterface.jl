@@ -1583,6 +1583,12 @@ A constraint attribute for the initial assignment to some constraint's
 
 May be `nothing` (unset), a number for [`AbstractScalarFunction`](@ref), or a
 vector for [`AbstractVectorFunction`](@ref).
+
+!!! note
+    In order to set the `ConstraintDualStart` for a constraints that is
+    transformed by the [`Bridges.Constraint.QuadtoSOCBridge`](@ref), the
+    [`VariablePrimalStart`](@ref) of all variables involved in the constraints
+    should be set first. Otherwise, an error will be thrown by the bridge.
 """
 struct ConstraintPrimalStart <: AbstractConstraintAttribute end
 
@@ -1594,6 +1600,12 @@ A constraint attribute for the initial assignment to some constraint's
 
 May be `nothing` (unset), a number for [`AbstractScalarFunction`](@ref), or a
 vector for [`AbstractVectorFunction`](@ref).
+
+!!! note
+    In order to set the `ConstraintDualStart` for a constraints that is
+    transformed by the [`Bridges.Constraint.QuadtoSOCBridge`](@ref), the
+    [`VariablePrimalStart`](@ref) of all variables involved in the constraints
+    should be set first. Otherwise, an error will be thrown by the bridge.
 """
 struct ConstraintDualStart <: AbstractConstraintAttribute end
 

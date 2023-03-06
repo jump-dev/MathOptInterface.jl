@@ -50,6 +50,7 @@ struct QuadtoSOCBridge{T} <: AbstractBridge
     dimension::Int  # dimension of the SOC constraint
     less_than::Bool # whether the constraint was ≤ or ≥
     set_constant::T # the constant that was on the set
+    index_to_variable_map::Vector{MOI.VariableIndex}
 end
 
 const QuadtoSOC{T,OT<:MOI.ModelLike} =
@@ -118,21 +119,25 @@ function bridge_constraint(
     f = MOI.VectorAffineFunction(vector_terms, vector_constant)
     dimension = MOI.output_dimension(f)
     soc = MOI.add_constraint(model, f, MOI.RotatedSecondOrderCone(dimension))
-    return QuadtoSOCBridge(soc, dimension, less_than, set_constant)
+    return QuadtoSOCBridge(
+        soc,
+        dimension,
+        less_than,
+        set_constant,
+        index_to_variable_map,
+    )
 end
 
 function _matrix_from_quadratic_terms(
     terms::Vector{MOI.ScalarQuadraticTerm{T}},
 ) where {T}
     variable_to_index_map = Dict{MOI.VariableIndex,Int}()
-    index_to_variable_map = Dict{Int,MOI.VariableIndex}()
-    n = 0
+    index_to_variable_map = MOI.VariableIndex[]
     for term in terms
         for variable in (term.variable_1, term.variable_2)
             if !(variable in keys(variable_to_index_map))
-                n += 1
-                variable_to_index_map[variable] = n
-                index_to_variable_map[n] = variable
+                push!(index_to_variable_map, variable)
+                variable_to_index_map[variable] = length(index_to_variable_map)
             end
         end
     end
@@ -150,6 +155,7 @@ function _matrix_from_quadratic_terms(
         end
     end
     # Duplicate terms are summed together in `sparse`
+    n = length(index_to_variable_map)
     return SparseArrays.sparse(I, J, V, n, n), index_to_variable_map
 end
 
@@ -209,13 +215,25 @@ function MOI.delete(model::MOI.ModelLike, bridge::QuadtoSOCBridge)
     return
 end
 
-# Attributes, Bridge acting as a constraint
+function MOI.supports(
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    ::Type{QuadtoSOCBridge{T}},
+) where {T}
+    F, S = MOI.VectorAffineFunction{T}, MOI.RotatedSecondOrderCone
+    return MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex) &&
+           MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
+end
+
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintPrimal,
+    attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
     bridge::QuadtoSOCBridge,
 )
     soc = MOI.get(model, attr, bridge.soc)
+    if soc == nothing
+        return nothing
+    end
     output = sum(soc[i]^2 for i in 3:bridge.dimension)
     output /= 2
     output -= soc[1] * soc[2]
@@ -224,6 +242,48 @@ function MOI.get(
     end
     output += bridge.set_constant
     return output
+end
+
+function _primal_start_or_error(model, attr, v)
+    var_attr = MOI.VariablePrimalStart()
+    value = MOI.get(model, MOI.VariablePrimalStart(), v)
+    if isnothing(value)
+        error(
+            "In order to set the `$attr`, the",
+            "`MOI.Bridges.Constraint.QuadtoSOCBridge` needs to get the ",
+            "`$var_attr` but it is not set. Set the `$var_attr` first before ",
+            "setting the `$attr` in order to fix this.",
+        )
+    end
+    return value
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::QuadtoSOCBridge{T},
+    value,
+) where {T}
+    soc = MOI.get(model, MOI.ConstraintFunction(), bridge.soc)
+    s = MOI.Utilities.eval_variables(soc) do v
+        return _primal_start_or_error(model, attr, v)
+    end
+    if !bridge.less_than
+        value = -value
+    end
+    s[2] -= value
+    MOI.set(model, attr, bridge.soc, s)
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::QuadtoSOCBridge,
+    ::Nothing,
+)
+    MOI.set(model, attr, bridge.soc, nothing)
+    return
 end
 
 # Lemma: If (1, s, x), (v, u, y) in RotatedSecondOrderCone and
@@ -261,11 +321,46 @@ end
 # is exactly the same. Q.E.D.
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDual,
+    attr::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
     bridge::QuadtoSOCBridge,
 )
-    λ = MOI.get(model, attr, bridge.soc)[2]
+    dual = MOI.get(model, attr, bridge.soc)
+    if dual == nothing
+        return nothing
+    end
+    λ = dual[2]
     return bridge.less_than ? -λ : λ
+end
+
+# Let `(v, u, y)` be the dual of the RSOC and `λ` be the dual of the quadratic.
+# From same reasoning as above, we know that `u` is `-λ`.
+# From the Lemma above, we have ``
+# `y = -u * x`, `v = u*||x||_2^2/2`
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDualStart,
+    bridge::QuadtoSOCBridge{T},
+    λ,
+) where {T}
+    u = bridge.less_than ? -λ : λ
+    x = T[
+        _primal_start_or_error(model, attr, xi)
+        for xi in bridge.index_to_variable_map
+    ]
+    v = u * sum(x .^ 2) / 2
+    y = -u * x
+    MOI.set(model, attr, bridge.soc, [v; u; y])
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDualStart,
+    bridge::QuadtoSOCBridge,
+    ::Nothing,
+)
+    MOI.set(model, attr, bridge.soc, nothing)
+    return
 end
 
 function MOI.get(
