@@ -679,8 +679,8 @@ function test_default_printing()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     aff = 2.0 * x + 1.0
-    model = MOI.Utilities._NoVariableNameModel()
     for mime in (MIME("text/plain"), MIME("text/latex"))
+        model = MOI.Utilities._NoVariableNameModel{typeof(mime)}()
         options = MOI.Utilities._PrintOptions(mime)
         for f in (
             x,
@@ -693,6 +693,8 @@ function test_default_printing()
             @test sprint(show, mime, f) == result
         end
     end
+    @test sprint(show, MIME("text/plain"), x) == "MOI.VariableIndex(1)"
+    @test sprint(show, MIME("text/latex"), x) == "v_{1}"
     return
 end
 
