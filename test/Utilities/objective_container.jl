@@ -128,7 +128,6 @@ function test_delete_ScalarQuadraticFunction_plural()
     return
 end
 
-
 function test_modify_ScalarNonlinearFunction()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
