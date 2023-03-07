@@ -22,7 +22,7 @@ The simplest scalar function is simply a variable:
 
 ```jldoctest expr; setup=:(model = MOI.Utilities.CachingOptimizer(MOI.Utilities.Model{Float64}(), MOI.Utilities.AUTOMATIC); )
 julia> x = MOI.add_variable(model) # Create the variable x
-MathOptInterface.VariableIndex(1)
+MOI.VariableIndex(1)
 ```
 
 This type of function is extremely simple; to express more complex functions,
@@ -32,14 +32,14 @@ can be built using the standard constructor:
 
 ```jldoctest expr
 julia> f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1, x)], 2) # x + 2
-MathOptInterface.ScalarAffineFunction{Int64}(MathOptInterface.ScalarAffineTerm{Int64}[MathOptInterface.ScalarAffineTerm{Int64}(1, MathOptInterface.VariableIndex(1))], 2)
+(2) + (1) MOI.VariableIndex(1)
 ```
 
 However, you can also use operators to build the same scalar function:
 
 ```jldoctest expr
 julia> f = x + 2
-MathOptInterface.ScalarAffineFunction{Int64}(MathOptInterface.ScalarAffineTerm{Int64}[MathOptInterface.ScalarAffineTerm{Int64}(1, MathOptInterface.VariableIndex(1))], 2)
+(2) + (1) MOI.VariableIndex(1)
 ```
 
 ### Creating scalar quadratic functions
@@ -50,13 +50,13 @@ obtain a quadratic function as a product of affine functions:
 
 ```jldoctest expr
 julia> 1 * x * x
-MathOptInterface.ScalarQuadraticFunction{Int64}(MathOptInterface.ScalarQuadraticTerm{Int64}[MathOptInterface.ScalarQuadraticTerm{Int64}(2, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(1))], MathOptInterface.ScalarAffineTerm{Int64}[], 0)
+(0) + 1.0 MOI.VariableIndex(1)²
 
 julia> f * f  # (x + 2)²
-MathOptInterface.ScalarQuadraticFunction{Int64}(MathOptInterface.ScalarQuadraticTerm{Int64}[MathOptInterface.ScalarQuadraticTerm{Int64}(2, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(1))], MathOptInterface.ScalarAffineTerm{Int64}[MathOptInterface.ScalarAffineTerm{Int64}(2, MathOptInterface.VariableIndex(1)), MathOptInterface.ScalarAffineTerm{Int64}(2, MathOptInterface.VariableIndex(1))], 4)
+(4) + (2) MOI.VariableIndex(1) + (2) MOI.VariableIndex(1) + 1.0 MOI.VariableIndex(1)²
 
 julia> f^2  # (x + 2)² too
-MathOptInterface.ScalarQuadraticFunction{Int64}(MathOptInterface.ScalarQuadraticTerm{Int64}[MathOptInterface.ScalarQuadraticTerm{Int64}(2, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(1))], MathOptInterface.ScalarAffineTerm{Int64}[MathOptInterface.ScalarAffineTerm{Int64}(2, MathOptInterface.VariableIndex(1)), MathOptInterface.ScalarAffineTerm{Int64}(2, MathOptInterface.VariableIndex(1))], 4)
+(4) + (2) MOI.VariableIndex(1) + (2) MOI.VariableIndex(1) + 1.0 MOI.VariableIndex(1)²
 ```
 
 ### Creating vector functions
@@ -73,7 +73,10 @@ dimension corresponding to a dimension of the vector.
 
 ```jldoctest expr
 julia> g = MOI.Utilities.vectorize([f, 2 * f])
-MathOptInterface.VectorAffineFunction{Int64}(MathOptInterface.VectorAffineTerm{Int64}[MathOptInterface.VectorAffineTerm{Int64}(1, MathOptInterface.ScalarAffineTerm{Int64}(1, MathOptInterface.VariableIndex(1))), MathOptInterface.VectorAffineTerm{Int64}(2, MathOptInterface.ScalarAffineTerm{Int64}(2, MathOptInterface.VariableIndex(1)))], [2, 4])
+┌                              ┐
+│(2) + (1) MOI.VariableIndex(1)│
+│(4) + (2) MOI.VariableIndex(1)│
+└                              ┘
 ```
 
 !!! warning
@@ -108,7 +111,7 @@ function:
 
 ```jldoctest expr
 julia> MOI.Utilities.canonical(f + f) # Returns 2x + 4
-MathOptInterface.ScalarAffineFunction{Int64}(MathOptInterface.ScalarAffineTerm{Int64}[MathOptInterface.ScalarAffineTerm{Int64}(2, MathOptInterface.VariableIndex(1))], 4)
+(4) + (2) MOI.VariableIndex(1)
 ```
 
 ## Exploring functions
@@ -124,8 +127,8 @@ vector function:
 ```jldoctest expr
 julia> MOI.Utilities.scalarize(g) # Returns a vector [f, 2 * f].
 2-element Vector{MathOptInterface.ScalarAffineFunction{Int64}}:
- MathOptInterface.ScalarAffineFunction{Int64}(MathOptInterface.ScalarAffineTerm{Int64}[MathOptInterface.ScalarAffineTerm{Int64}(1, MathOptInterface.VariableIndex(1))], 2)
- MathOptInterface.ScalarAffineFunction{Int64}(MathOptInterface.ScalarAffineTerm{Int64}[MathOptInterface.ScalarAffineTerm{Int64}(2, MathOptInterface.VariableIndex(1))], 4)
+ (2) + (1) MOI.VariableIndex(1)
+ (4) + (2) MOI.VariableIndex(1)
 ```
 
 !!! note

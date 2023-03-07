@@ -78,7 +78,7 @@ julia> src = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
 
 julia> MOI.add_variable(src)
-MathOptInterface.VariableIndex(1)
+MOI.VariableIndex(1)
 
 julia> dest = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MOF)
 A MathOptFormat Model
@@ -119,7 +119,7 @@ julia> MOI.read_from_file(dest, "file.mof.json")
 
 julia> MOI.get(dest, MOI.ListOfVariableIndices())
 1-element Vector{MathOptInterface.VariableIndex}:
- MathOptInterface.VariableIndex(1)
+ MOI.VariableIndex(1)
 
 julia> rm("file.mof.json")  # Clean up after ourselves.
 ```

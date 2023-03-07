@@ -62,7 +62,7 @@ incorporate [`VariableIndex`](@ref)es, but these must be interpolated into
 the expression with `$`:
 ```jldoctest nonlinear_developer
 julia> x = MOI.VariableIndex(1)
-MathOptInterface.VariableIndex(1)
+MOI.VariableIndex(1)
 
 julia> input = :(1 + sin($x)^2)
 :(1 + sin(MathOptInterface.VariableIndex(1)) ^ 2)
@@ -429,9 +429,9 @@ julia> expr = Any[:+, 2, :^, 2, :sin, 1, x, 2.0, x]
  2
   :sin
  1
-  MathOptInterface.VariableIndex(1)
+  MOI.VariableIndex(1)
  2.0
-  MathOptInterface.VariableIndex(1)
+  MOI.VariableIndex(1)
 ```
 The `Int` after each operator `Symbol` specifies the number of arguments.
 
