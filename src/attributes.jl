@@ -1869,10 +1869,10 @@ Once registered, `name` will appear in
 
 The value to be set is a tuple containing one, two, or three functions to
 evaluate the function, the first-order derivative, and the second-order
-derivative respectively. Both dervatives are optional, and if you pass the
+derivative respectively. Both derivatives are optional, and if you pass the
 second-order derivative you must also pass the first-order derivative.
 
-For uni-variate functions with `arity == 1`, the functions in the tuple must
+For univariate functions with `arity == 1`, the functions in the tuple must
 have the form:
 
  * `f(x::T)::T`: returns the value of the function at `x`
