@@ -187,6 +187,19 @@ struct OperatorRegistry
     end
 end
 
+function MOI.get(
+    registry::OperatorRegistry,
+    ::MOI.ListOfSupportedNonlinearOperators,
+)
+    ops = vcat(
+        registry.univariate_operators,
+        registry.multivariate_operators,
+        registry.logic_operators,
+        registry.comparison_operators,
+    )
+    return unique(ops)
+end
+
 const _FORWARD_DIFF_METHOD_ERROR_HELPER = raw"""
 Common reasons for this include:
 

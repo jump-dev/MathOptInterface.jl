@@ -1027,6 +1027,18 @@ function test_scalar_nonlinear_function_parse_scalarquadraticfunction()
     return
 end
 
+function test_ListOfSupportedNonlinearOperators()
+    model = MOI.Nonlinear.Model()
+    ops = MOI.get(model, MOI.ListOfSupportedNonlinearOperators())
+    @test ops isa Vector{Symbol}
+    @test length(ops) > 70
+    @test :|| in ops
+    @test :sin in ops
+    @test :> in ops
+    @test :ifelse in ops
+    return
+end
+
 end
 
 TestNonlinear.runtests()
