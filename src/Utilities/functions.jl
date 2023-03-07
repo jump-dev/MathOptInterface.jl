@@ -1053,11 +1053,15 @@ end
 
 function filter_variables(keep::Function, f::MOI.ScalarNonlinearFunction)
     args = Any[]
-    for arg in f.args
+    first_arg_deleted = false
+    for (i, arg) in enumerate(f.args)
         if arg isa MOI.VariableIndex
             if keep(arg)
                 push!(args, arg)
             else
+                if i == 1
+                    first_arg_deleted = true
+                end
                 if !(f.head in (:+, :-, :*))
                     error("Unable to delete variable in `$(f.head) operation.")
                 end
@@ -1069,7 +1073,7 @@ function filter_variables(keep::Function, f::MOI.ScalarNonlinearFunction)
         end
     end
     if f.head == :-
-        if f.args[1] != args[1]
+        if first_arg_deleted
             # -(x, y...) has become -(y...), but it should be -(0, y...)
             pushfirst!(args, 0)
         elseif length(f.args) > 1 && length(args) == 1

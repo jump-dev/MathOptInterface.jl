@@ -1849,6 +1849,11 @@ function test_filter_variables_scalarnonlinearfunction()
     f = MOI.ScalarNonlinearFunction(:-, Any[2, x])
     new_f = MOI.Utilities.filter_variables(xi -> xi != x, f)
     @test new_f ≈ 2
+    f = MOI.ScalarNonlinearFunction(:+, Any[x, 2, y])
+    f2 = MOI.ScalarNonlinearFunction(:+, Any[2, y])
+    g = MOI.ScalarNonlinearFunction(:-, Any[f, x, 2])
+    new_g = MOI.Utilities.filter_variables(xi -> xi != x, g)
+    @test new_g ≈ MOI.ScalarNonlinearFunction(:-, Any[f2, 2])
     return
 end
 
