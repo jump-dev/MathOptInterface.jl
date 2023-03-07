@@ -331,13 +331,13 @@ To represent the function ``f(x) = sin(x)^2``, do:
 julia> import MathOptInterface as MOI
 
 julia> x = MOI.VariableIndex(1)
-MathOptInterface.VariableIndex(1)
+MOI.VariableIndex(1)
 
 julia> MOI.ScalarNonlinearFunction(
            :^,
            Any[MOI.ScalarNonlinearFunction(:sin, Any[x]), 2],
        )
-MathOptInterface.ScalarNonlinearFunction(:^, Any[MathOptInterface.ScalarNonlinearFunction(:sin, Any[MathOptInterface.VariableIndex(1)]), 2])
+^(sin(MOI.VariableIndex(1)), (2))
 ```
 """
 struct ScalarNonlinearFunction <: AbstractScalarFunction

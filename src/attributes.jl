@@ -1924,13 +1924,13 @@ julia> MOI.set(model, MOI.UserDefinedFunction(:h, 2), (f, ∇f, ∇²f))
 
 julia> x = MOI.add_variables(model, 2)
 2-element Vector{MathOptInterface.VariableIndex}:
- MathOptInterface.VariableIndex(1)
- MathOptInterface.VariableIndex(2)
+ MOI.VariableIndex(1)
+ MOI.VariableIndex(2)
 
 julia> MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
 
 julia> obj_f = MOI.ScalarNonlinearFunction(:f, Any[x[1], x[2]])
-MathOptInterface.ScalarNonlinearFunction(:f, Any[MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2)])
+f(MOI.VariableIndex(1), MOI.VariableIndex(2))
 
 julia> MOI.set(model, MOI.ObjectiveFunction{typeof(obj_f)}(), obj_f)
 
