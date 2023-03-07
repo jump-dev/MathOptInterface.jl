@@ -1834,6 +1834,24 @@ function test_value_type()
     return
 end
 
+function test_filter_variables_scalarnonlinearfunction()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    f = MOI.ScalarNonlinearFunction(:+, Any[x, 2, y])
+    new_f = MOI.Utilities.filter_variables(xi -> xi != x, f)
+    @test new_f ≈ MOI.ScalarNonlinearFunction(:+, Any[2, y])
+    f = MOI.ScalarNonlinearFunction(:-, Any[x, 2, y])
+    new_f = MOI.Utilities.filter_variables(xi -> xi != x, f)
+    @test new_f ≈ MOI.ScalarNonlinearFunction(:-, Any[0, 2, y])
+    f = MOI.ScalarNonlinearFunction(:-, Any[2, x, y])
+    new_f = MOI.Utilities.filter_variables(xi -> xi != x, f)
+    @test new_f ≈ MOI.ScalarNonlinearFunction(:-, Any[2, y])
+    f = MOI.ScalarNonlinearFunction(:-, Any[2, x])
+    new_f = MOI.Utilities.filter_variables(xi -> xi != x, f)
+    @test new_f ≈ 2
+    return
+end
+
 end  # module
 
 TestFunctions.runtests()

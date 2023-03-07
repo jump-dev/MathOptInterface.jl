@@ -1069,12 +1069,12 @@ function filter_variables(keep::Function, f::MOI.ScalarNonlinearFunction)
         end
     end
     if f.head == :-
-        if length(f.args) > 1 && length(args) == 1
+        if f.args[1] != args[1]
+            # -(x, y...) has become -(y...), but it should be -(0, y...)
+            pushfirst!(args, 0)
+        elseif length(f.args) > 1 && length(args) == 1
             # -(x, y...) has become -(x), but it should be +(x)
             return f.args[1]
-        elseif f.args[1] != args[1]
-            # -(x, y...) has become -(y...), but it should be -(0, y...)
-            pushfirst!(args, zero(T))
         end
     end
     return MOI.ScalarNonlinearFunction(f.head, args)
