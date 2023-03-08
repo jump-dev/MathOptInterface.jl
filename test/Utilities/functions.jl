@@ -1869,7 +1869,7 @@ function test_ScalarNonlinearFunction_count_map_indices_and_print()
     @test sprint(io -> show(io, MIME("text/plain"), g)) ==
           "count([MOI.VariableIndex(1), !(MOI.VariableIndex(1))])"
     c = MOI.add_constraint(model, g, MOI.EqualTo(true))
-    @test MOI.get(src, MOI.ConstraintFunction(), c) ≈ g
+    @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ g
     return
 end
 
