@@ -75,6 +75,11 @@ _to_string(::_PrintOptions, ::typeof(in)) = @static Sys.iswindows() ? "in" : "âˆ
 # Functions
 #------------------------------------------------------------------------
 
+function _to_string(options::_PrintOptions, model::MOI.ModelLike, x::Vector)
+    args = [_to_string(options, model, xi) for xi in x]
+    return string("[", join(args, ", "), "]")
+end
+
 function _to_string(options::_PrintOptions, ::MOI.ModelLike, c::Real)
     return _shorten(options, c)
 end

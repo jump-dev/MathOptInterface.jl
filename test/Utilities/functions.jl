@@ -1857,6 +1857,22 @@ function test_filter_variables_scalarnonlinearfunction()
     return
 end
 
+function test_ScalarNonlinearFunction_count_map_indices_and_print()
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.Model{Bool}(),
+        MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Bool}()),
+    )
+    MOI.Utilities.attach_optimizer(model)
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:!, Any[x])
+    g = MOI.ScalarNonlinearFunction(:count, Any[Any[x, f]])
+    @test sprint(io -> show(io, MIME("text/plain"), g)) ==
+          "count([MOI.VariableIndex(1), !(MOI.VariableIndex(1))])"
+    c = MOI.add_constraint(model, g, MOI.EqualTo(true))
+    @test MOI.get(src, MOI.ConstraintFunction(), c) ≈ g
+    return
+end
+
 end  # module
 
 TestFunctions.runtests()

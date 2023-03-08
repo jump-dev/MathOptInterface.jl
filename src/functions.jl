@@ -797,6 +797,13 @@ function Base.isapprox(
     )
 end
 
+_is_approx(x, y; kwargs...) = isapprox(x, y; kwargs...)
+
+function _is_approx(x::AbstractArray, y::AbstractArray; kwargs...)
+    return size(x) == size(y) &&
+        all(z -> _is_approx(z[1], z[2]; kwargs...), zip(x, y))
+end
+
 function Base.isapprox(
     f::ScalarNonlinearFunction,
     g::ScalarNonlinearFunction;
@@ -806,7 +813,7 @@ function Base.isapprox(
         return false
     end
     for (fi, gi) in zip(f.args, g.args)
-        if !isapprox(fi, gi; kwargs...)
+        if !_is_approx(fi, gi; kwargs...)
             return false
         end
     end

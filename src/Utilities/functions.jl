@@ -196,11 +196,8 @@ function map_indices(index_map::F, ci::MOI.ConstraintIndex) where {F<:Function}
     return index_map(ci)
 end
 
-function map_indices(
-    index_map::F,
-    array::AbstractArray{<:MOI.Index},
-) where {F<:Function}
-    return map(index_map, array)
+function map_indices(index_map::F, x::AbstractArray) where {F<:Function}
+    return [map_indices(index_map, xi) for xi in x]
 end
 
 map_indices(::F, block::MOI.NLPBlockData) where {F<:Function} = block
