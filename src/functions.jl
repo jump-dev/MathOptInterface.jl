@@ -801,7 +801,7 @@ _is_approx(x, y; kwargs...) = isapprox(x, y; kwargs...)
 
 function _is_approx(x::AbstractArray, y::AbstractArray; kwargs...)
     return size(x) == size(y) &&
-        all(z -> _is_approx(z[1], z[2]; kwargs...), zip(x, y))
+           all(z -> _is_approx(z[1], z[2]; kwargs...), zip(x, y))
 end
 
 function Base.isapprox(
