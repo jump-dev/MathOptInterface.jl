@@ -168,6 +168,9 @@ function MOI.get(
     i::MOI.Bridges.IndexInVector,
 )
     value = MOI.get(model, attr, bridge.variables)
+    if any(isnothing, value)
+        return nothing
+    end
     return MOI.Bridges.map_function(typeof(bridge), value, i)
 end
 
@@ -186,8 +189,12 @@ function MOI.set(
     value,
     i::MOI.Bridges.IndexInVector,
 )
-    bridged_value = MOI.Bridges.inverse_map_function(typeof(bridge), value)
-    MOI.set(model, attr, bridge.variables[i.value], bridged_value)
+    if value === nothing
+        MOI.set(model, attr, bridge.variables[i.value], nothing)
+    else
+        bridged_value = MOI.Bridges.inverse_map_function(typeof(bridge), value)
+        MOI.set(model, attr, bridge.variables[i.value], bridged_value)
+    end
     return
 end
 
