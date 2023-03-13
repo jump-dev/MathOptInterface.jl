@@ -1138,7 +1138,8 @@ function MOI.get(
     indices::Vector{MOI.VariableIndex},
 )
     # `Variable.has_bridges` is used as a shortcut to speedup in case no variable bridge is used
-    if Variable.has_bridges(Variable.bridges(b)) && any(index -> is_bridged(b, index), indices)
+    if Variable.has_bridges(Variable.bridges(b)) &&
+       any(index -> is_bridged(b, index), indices)
         return MOI.get.(b, attr, indices)
     else
         return unbridged_function.(b, MOI.get(b.model, attr, indices))
