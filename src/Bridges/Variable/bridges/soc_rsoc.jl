@@ -112,5 +112,6 @@ function MOI.supports(
     ::MOI.VariablePrimalStart,
     ::Type{<:SOCtoRSOCBridge},
 )
+    # https://github.com/jump-dev/MathOptInterface.jl/issues/2117
     return false
 end

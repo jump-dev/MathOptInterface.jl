@@ -272,7 +272,10 @@ function runtests(
     _test_structural_identical(target, inner)
     # Test VariablePrimalStart
     attr = MOI.VariablePrimalStart()
-    if MOI.supports(model, attr, MOI.VariableIndex)
+    bridge_supported = all(values(Variable.bridges(model))) do bridge
+        return MOI.supports(model, attr, typeof(bridge))
+    end
+    if MOI.supports(model, attr, MOI.VariableIndex) && bridge_supported
         x = MOI.get(model, MOI.ListOfVariableIndices())
         MOI.set(model, attr, x, fill(nothing, length(x)))
         Test.@test all(isnothing, MOI.get(model, attr, x))
