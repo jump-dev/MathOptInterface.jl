@@ -93,11 +93,3 @@ function MOI.Bridges.inverse_adjoint_map_function(
 )
     return MOI.Bridges.map_function(BT, func)
 end
-
-function MOI.supports(
-    ::MOI.ModelLike,
-    ::MOI.VariablePrimalStart,
-    ::Type{<:RSOCtoSOCBridge},
-)
-    return false
-end
