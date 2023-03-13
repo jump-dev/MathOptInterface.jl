@@ -88,6 +88,7 @@ _set(::Type{MOI.Nonpositives}) = MOI.Nonpositives(2)
 _set(::Type{MOI.Nonnegatives}) = MOI.Nonnegatives(2)
 _set(::Type{MOI.NormInfinityCone}) = MOI.NormInfinityCone(3)
 _set(::Type{MOI.NormOneCone}) = MOI.NormOneCone(3)
+_set(::Type{MOI.NormCone}) = MOI.NormCone(4.0, 3)
 _set(::Type{MOI.SecondOrderCone}) = MOI.SecondOrderCone(3)
 _set(::Type{MOI.RotatedSecondOrderCone}) = MOI.RotatedSecondOrderCone(3)
 _set(::Type{MOI.GeometricMeanCone}) = MOI.GeometricMeanCone(3)
@@ -275,6 +276,7 @@ for s in [
     :Nonnegatives,
     :NormInfinityCone,
     :NormOneCone,
+    :NormCone,
     :SecondOrderCone,
     :RotatedSecondOrderCone,
     :GeometricMeanCone,

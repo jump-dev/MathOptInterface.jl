@@ -82,6 +82,7 @@ Nonnegatives
 Nonpositives
 NormInfinityCone
 NormOneCone
+NormCone
 SecondOrderCone
 RotatedSecondOrderCone
 GeometricMeanCone

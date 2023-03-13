@@ -7023,3 +7023,45 @@ function version_added(
 )
     return v"1.7.0"
 end
+
+"""
+    test_conic_NormCone(model::MOI.ModelLike, config::Config)
+
+Test [`MOI.NormCone`](@ref).
+"""
+function test_conic_NormCone(model::MOI.ModelLike, config::Config{T}) where {T}
+    @requires _supports(config, MOI.optimize!)
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.NormCone,
+    )
+    t = MOI.add_variable(model)
+    x = MOI.add_variables(model, 4)
+    x0 = T[1, 2, 3, 4]
+    MOI.add_constraint.(model, x, MOI.EqualTo.(x0))
+    f = MOI.VectorOfVariables([t; x])
+    MOI.add_constraint(model, f, MOI.NormCone(4, 5))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(t)}(), t)
+    MOI.optimize!(model)
+    target = LinearAlgebra.norm(x0, 4)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), t), target, config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_conic_NormCone),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    x0 = T[1, 2, 3, 4]
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, T[LinearAlgebra.norm(x0, 4); x0]),
+    )
+    return
+end
+
+version_added(::typeof(test_conic_NormCone)) = v"1.14.0"
