@@ -105,23 +105,6 @@ end
 """
     MOI.supports(
         model::MOI.ModelLike,
-        attr::MOI.AbstractVariableAttribute,
-        BT::Type{<:AbstractBridge},
-    )
-
-Return a `Bool` indicating whether `BT` supports setting `attr` to `model`.
-"""
-function MOI.supports(
-    ::MOI.ModelLike,
-    ::MOI.AbstractVariableAttribute,
-    ::Type{<:AbstractBridge},
-)
-    return false
-end
-
-"""
-    MOI.supports(
-        model::MOI.ModelLike,
         attr::MOI.AbstractConstraintAttribute,
         BT::Type{<:AbstractBridge},
     )
