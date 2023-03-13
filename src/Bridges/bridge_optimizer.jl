@@ -1149,12 +1149,7 @@ function MOI.supports(
     attr::MOI.AbstractVariableAttribute,
     ::Type{MOI.VariableIndex},
 )
-    if !MOI.supports(b.model, attr, MOI.VariableIndex)
-        return false
-    end
-    return all(values(Variable.bridges(b))) do bridge
-        return MOI.supports(b.model, attr, typeof(bridge))
-    end
+    return MOI.supports(b.model, attr, MOI.VariableIndex)
 end
 
 function MOI.set(
