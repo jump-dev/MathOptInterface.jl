@@ -669,48 +669,6 @@ dual_set(s::NormOneCone) = NormInfinityCone(dimension(s))
 dual_set_type(::Type{NormOneCone}) = NormInfinityCone
 
 """
-    NormCone(p::Float64, dimension::Int)
-
-The ``\\ell_p``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\left(\\sum\\limits_i |x_i|^p\\right)^{\\frac{1}{p}} \\}``
-of dimension `dimension`.
-
-The `dimension` must be at least `1`.
-
-## Example
-
-```jldoctest
-julia> import MathOptInterface as MOI
-
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
-
-julia> t = MOI.add_variable(model)
-MOI.VariableIndex(1)
-
-julia> x = MOI.add_variables(model, 3);
-
-julia> MOI.add_constraint(model, MOI.VectorOfVariables([t; x]), MOI.NormCone(3, 4))
-MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.NormCone}(1)
-```
-"""
-struct NormCone <: AbstractVectorSet
-    p::Float64
-    dimension::Int
-
-    function NormCone(p::Real, dimension::Base.Integer)
-        if !(dimension >= 1)
-            throw(
-                DimensionMismatch(
-                    "Dimension of NormCone must be >= 1, not " *
-                    "$(dimension).",
-                ),
-            )
-        end
-        return new(convert(Float64, p), dimension)
-    end
-end
-
-"""
     SecondOrderCone(dimension::Int)
 
 The second-order cone (or Lorenz cone or ``\\ell_2``-norm cone)
@@ -803,6 +761,54 @@ end
 
 dual_set(s::RotatedSecondOrderCone) = copy(s)
 dual_set_type(::Type{RotatedSecondOrderCone}) = RotatedSecondOrderCone
+
+"""
+    NormCone(p::Float64, dimension::Int)
+
+The ``\\ell_p``-norm cone ``\\{ (t,x) \\in \\mathbb{R}^{dimension} : t \\ge \\left(\\sum\\limits_i |x_i|^p\\right)^{\\frac{1}{p}} \\}``
+of dimension `dimension`.
+
+The `dimension` must be at least `1`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> t = MOI.add_variable(model)
+MOI.VariableIndex(1)
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(model, MOI.VectorOfVariables([t; x]), MOI.NormCone(3, 4))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.NormCone}(1)
+```
+"""
+struct NormCone <: AbstractVectorSet
+    p::Float64
+    dimension::Int
+
+    function NormCone(p::Real, dimension::Base.Integer)
+        if !(dimension >= 1)
+            throw(
+                DimensionMismatch(
+                    "Dimension of NormCone must be >= 1, not " *
+                    "$(dimension).",
+                ),
+            )
+        elseif !(p >= 1)
+            throw(ArgumentError("The p- argument to `NormCone` must be `>= 1`"))
+        end
+        return new(convert(Float64, p), dimension)
+    end
+end
+
+NormCone(set::NormOneCone) = NormCone(1, set.dimension)
+NormCone(set::SecondOrderCone) = NormCone(2, set.dimension)
+NormCone(set::NormInfinityCone) = NormCone(Inf, set.dimension)
 
 """
     GeometricMeanCone(dimension::Int)

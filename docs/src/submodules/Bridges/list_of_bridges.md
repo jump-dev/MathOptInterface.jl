@@ -42,6 +42,7 @@ Bridges.Constraint.RSOCtoPSDBridge
 Bridges.Constraint.NormInfinityBridge
 Bridges.Constraint.NormOneBridge
 Bridges.Constraint.NormToPowerBridge
+Bridges.Constraint.NormSpecialCaseBridge
 Bridges.Constraint.GeoMeantoRelEntrBridge
 Bridges.Constraint.GeoMeanToPowerBridge
 Bridges.Constraint.GeoMeanBridge
