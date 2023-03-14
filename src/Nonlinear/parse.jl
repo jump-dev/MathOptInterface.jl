@@ -87,8 +87,11 @@ function _parse_splat_expression(stack, data, expr, x, parent_index)
             "`(x + 1)...`, `[x; y]...` and `g(f(y)...)` are not.",
         )
     end
-    for xi in reverse(x.args[1])
-        push!(stack, (parent_index, xi))
+    # It isn't sufficient to call `reverse` here, because the collection might
+    # not support it. Iterate over the reverse of the collected indices instead,
+    # which _does_ work in all(?) cases.
+    for i in reverse(collect(eachindex(x.args[1])))
+        push!(stack, (parent_index, x.args[1][i]))
     end
     return
 end

@@ -973,6 +973,22 @@ function test_pow_complex_result()
     return
 end
 
+struct _NoReverse{T} <: AbstractArray{T,1}
+    data::Vector{T}
+end
+
+Base.eachindex(x::_NoReverse) = eachindex(x.data)
+Base.getindex(x::_NoReverse, args...) = getindex(x.data, args...)
+
+function test_parse_splat_no_reverse()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex.(1:2)
+    y = _NoReverse(x)
+    expr = Nonlinear.parse_expression(model, :(+($y...)))
+    @test expr == Nonlinear.parse_expression(model, :(+($(x[1]), $(x[2]))))
+    return
+end
+
 end
 
 TestNonlinear.runtests()
