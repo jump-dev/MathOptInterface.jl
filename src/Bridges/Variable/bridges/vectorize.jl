@@ -174,14 +174,6 @@ function MOI.get(
     return value + bridge.set_constant
 end
 
-function MOI.get(
-    model::MOI.ModelLike,
-    attr::MOI.VariablePrimalStart,
-    bridge::VectorizeBridge,
-)
-    return MOI.get(model, attr, bridge.variable) + bridge.set_constant
-end
-
 function MOI.supports(
     model::MOI.ModelLike,
     attr::MOI.VariablePrimalStart,
@@ -190,13 +182,29 @@ function MOI.supports(
     return MOI.supports(model, attr, MOI.VariableIndex)
 end
 
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.VariablePrimalStart,
+    bridge::VectorizeBridge,
+)
+    start = MOI.get(model, attr, bridge.variable)
+    if start === nothing
+        return nothing
+    end
+    return start + bridge.set_constant
+end
+
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.VariablePrimalStart,
     bridge::VectorizeBridge,
     value,
 )
-    MOI.set(model, attr, bridge.variable, value - bridge.set_constant)
+    if value === nothing
+        MOI.set(model, attr, bridge.variable, value)
+    else
+        MOI.set(model, attr, bridge.variable, value - bridge.set_constant)
+    end
     return
 end
 

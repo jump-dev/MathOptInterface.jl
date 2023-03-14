@@ -1137,7 +1137,9 @@ function MOI.get(
     attr::MOI.AbstractVariableAttribute,
     indices::Vector{MOI.VariableIndex},
 )
-    if any(index -> is_bridged(b, index), indices)
+    # `Variable.has_bridges` is used as a shortcut to speedup in case no variable bridge is used
+    if Variable.has_bridges(Variable.bridges(b)) &&
+       any(index -> is_bridged(b, index), indices)
         return MOI.get.(b, attr, indices)
     else
         return unbridged_function.(b, MOI.get(b.model, attr, indices))
@@ -1149,6 +1151,9 @@ function MOI.supports(
     attr::MOI.AbstractVariableAttribute,
     ::Type{MOI.VariableIndex},
 )
+    # `supports` should only return `false` in case `MOI.set` always errors.
+    # If some variables are bridged by bridges that do not support `attr`, we
+    # should therefore still return `true`.
     return MOI.supports(b.model, attr, MOI.VariableIndex)
 end
 

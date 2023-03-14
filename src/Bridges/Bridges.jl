@@ -218,7 +218,13 @@ function _test_structural_identical(a::MOI.ModelLike, b::MOI.ModelLike)
 end
 
 """
-    runtests(Bridge::Type{<:AbstractBridge}, input::String, output::String)
+    runtests(
+        Bridge::Type{<:AbstractBridge},
+        input::String,
+        output::String;
+        variable_start = 1.2,
+        constraint_start = 1.2,
+    )
 
 Run a series of tests that check the correctness of `Bridge`.
 
@@ -246,6 +252,7 @@ function runtests(
     Bridge::Type{<:AbstractBridge},
     input::String,
     output::String;
+    variable_start = 1.2,
     constraint_start = 1.2,
 )
     # Load model and bridge it
@@ -263,6 +270,19 @@ function runtests(
     target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     MOI.Utilities.loadfromstring!(target, output)
     _test_structural_identical(target, inner)
+    # Test VariablePrimalStart
+    attr = MOI.VariablePrimalStart()
+    bridge_supported = all(values(Variable.bridges(model))) do bridge
+        return MOI.supports(model, attr, typeof(bridge))
+    end
+    if MOI.supports(model, attr, MOI.VariableIndex) && bridge_supported
+        x = MOI.get(model, MOI.ListOfVariableIndices())
+        MOI.set(model, attr, x, fill(nothing, length(x)))
+        Test.@test all(isnothing, MOI.get(model, attr, x))
+        primal_start = fill(constraint_start, length(x))
+        MOI.set(model, attr, x, primal_start)
+        Test.@test MOI.get(model, attr, x) ≈ primal_start
+    end
     # Test ConstraintPrimalStart and ConstraintDualStart
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())

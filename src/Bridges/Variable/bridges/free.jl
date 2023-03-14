@@ -130,8 +130,12 @@ function MOI.get(
     i::MOI.Bridges.IndexInVector,
 ) where {T}
     n = div(length(bridge.variables), 2)
-    return MOI.get(model, attr, bridge.variables[i.value]) -
-           MOI.get(model, attr, bridge.variables[n+i.value])
+    primal_pos = MOI.get(model, attr, bridge.variables[i.value])
+    primal_neg = MOI.get(model, attr, bridge.variables[n+i.value])
+    if primal_pos === nothing || primal_neg === nothing
+        return nothing
+    end
+    return primal_pos - primal_neg
 end
 
 function MOI.Bridges.bridged_function(
@@ -175,5 +179,18 @@ function MOI.set(
     n = div(length(bridge.variables), 2)
     MOI.set(model, attr, bridge.variables[i.value], max(zero(value), value))
     MOI.set(model, attr, bridge.variables[n+i.value], -min(zero(value), value))
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.VariablePrimalStart,
+    bridge::FreeBridge,
+    ::Nothing,
+    i::MOI.Bridges.IndexInVector,
+)
+    n = div(length(bridge.variables), 2)
+    MOI.set(model, attr, bridge.variables[i.value], nothing)
+    MOI.set(model, attr, bridge.variables[n+i.value], nothing)
     return
 end
