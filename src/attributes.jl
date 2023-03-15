@@ -1956,7 +1956,7 @@ supported by the model.
 ```julia
 ```
 """
-struct ListOfSupportedNonlinearOperators <: AbstractModelAttribute end
+struct ListOfSupportedNonlinearOperators <: AbstractOptimizerAttribute end
 
 """
     TerminationStatusCode
