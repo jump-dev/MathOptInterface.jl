@@ -116,11 +116,7 @@ function bridge_constraint(
     # This is the [1, ub, 0] vector...
     set_constant = MOI.constant(set)
     MOI.throw_if_scalar_and_constant_not_zero(func, typeof(set))
-    vector_constant = vcat(
-        one(T),
-        -scale * set_constant,
-        zeros(T, size(L, 1)),
-    )
+    vector_constant = vcat(one(T), -scale * set_constant, zeros(T, size(L, 1)))
     f = MOI.VectorAffineFunction(vector_terms, vector_constant)
     dimension = MOI.output_dimension(f)
     soc = MOI.add_constraint(model, f, MOI.RotatedSecondOrderCone(dimension))
@@ -378,8 +374,8 @@ function MOI.set(
 ) where {T}
     u = bridge.less_than ? -λ : λ
     x = T[
-        _primal_start_or_error(model, attr, xi)
-        for xi in bridge.index_to_variable_map
+        _primal_start_or_error(model, attr, xi) for
+        xi in bridge.index_to_variable_map
     ]
     v = u * sum(x .^ 2) / 2
     y = -u * x

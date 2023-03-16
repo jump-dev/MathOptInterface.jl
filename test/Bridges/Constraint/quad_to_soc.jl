@@ -164,7 +164,9 @@ function test_qcp()
     S = MOI.GreaterThan{Float64}
     ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{F,S}()))
     for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
-        err = ErrorException("In order to set the `$attr`, the`MOI.Bridges.Constraint.QuadtoSOCBridge` needs to get the `MathOptInterface.VariablePrimalStart()` but it is not set. Set the `MathOptInterface.VariablePrimalStart()` first before setting the `$attr` in order to fix this.")
+        err = ErrorException(
+            "In order to set the `$attr`, the`MOI.Bridges.Constraint.QuadtoSOCBridge` needs to get the `MathOptInterface.VariablePrimalStart()` but it is not set. Set the `MathOptInterface.VariablePrimalStart()` first before setting the `$attr` in order to fix this.",
+        )
         @test_throws err MOI.set(bridged_mock, attr, ci, 0.0)
     end
     return
@@ -228,7 +230,7 @@ function test_runtests()
         [1.0, 0.0, 2.0 * x, 2.0 * y] in RotatedSecondOrderCone(4)
         """,
     )
-  MOI.Bridges.runtests(
+    MOI.Bridges.runtests(
         MOI.Bridges.Constraint.QuadtoSOCBridge,
         """
         variables: x, y
