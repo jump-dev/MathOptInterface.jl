@@ -7,6 +7,19 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.13.2 (March 16, 2022)
+
+### Fixed
+
+ - Fixed a bug reading LP files with default bounds (#2121)
+
+### Other
+
+ - Fixed typos in the documentation (#2114)
+ - Functions now print to the REPL in algebraic form. This is potentially
+   breaking if you have tests which rely on a specific `String` form of MOI
+   functions. (#2112)
+
 ## v1.13.1 (March 3, 2022)
 
 ### Other
