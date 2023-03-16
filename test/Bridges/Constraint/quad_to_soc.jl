@@ -227,7 +227,28 @@ function test_runtests()
         variables: x, y
         [1.0, 0.0, 2.0 * x, 2.0 * y] in RotatedSecondOrderCone(4)
         """,
-        variable_start = 0.0,
+    )
+  MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.QuadtoSOCBridge,
+        """
+        variables: x, y
+        2.0 * x * x + 0.5 * y * y + 2.0 * x <= 3.0
+        """,
+        """
+        variables: x, y
+        [1.0, -2.0 * x + 3.0, 2.0 * x, 1.0 * y] in RotatedSecondOrderCone(4)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.QuadtoSOCBridge,
+        """
+        variables: x, y, z
+        -2.0 * x * x + -1.0 * y * y + -2.0 * x * y + 3.0 * z >= 4.0
+        """,
+        """
+        variables: x, y, z
+        [1.0, 3.0 * z + -4.0, 2.0 * x + 1.0 * y, 1.0 * y] in RotatedSecondOrderCone(4)
+        """,
     )
     return
 end

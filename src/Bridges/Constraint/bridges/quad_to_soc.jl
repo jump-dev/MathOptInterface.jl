@@ -9,7 +9,7 @@
 
 `QuadtoSOCBridge` converts quadratic inequalities
 ```math
-\\frac{1}{2}x^T Q x + a^T x + b \\le 0
+\\frac{1}{2}x^T Q x + a^T x \\le ub
 ```
 into [`MOI.RotatedSecondOrderCone`](@ref) constraints, but it only applies when
 ``Q`` is positive definite.
@@ -17,13 +17,17 @@ into [`MOI.RotatedSecondOrderCone`](@ref) constraints, but it only applies when
 This is because, if `Q` is positive definite, there exists `U` such that
 ``Q = U^T U``, and so the inequality can then be rewritten as;
 ```math
-\\|U x\\|_2^2 \\le 2 (-a^T x - b)
+\\|U x\\|_2^2 \\le 2 (-a^T x + ub)
 ```
 
-Therefore, `QuadtoSOCBridge` implements the following reformulation:
+Therefore, `QuadtoSOCBridge` implements the following reformulations:
 
-  * ``\\frac{1}{2}x^T Q x + a^T x + b \\le 0`` into
-    ``(1, -a^T x - b, Ux) \\in RotatedSecondOrderCone``
+  * ``\\frac{1}{2}x^T Q x + a^T x \\le ub`` into
+    ``(1, -a^T x + ub, Ux) \\in RotatedSecondOrderCone``
+    where ``Q = U^T U``
+  * ``\\frac{1}{2}x^T Q x + a^T x \\ge lb`` into
+    ``(1, a^T x - lb, Ux) \\in RotatedSecondOrderCone``
+    where ``-Q = U^T U``
 
 ## Source node
 
@@ -85,9 +89,9 @@ function bridge_constraint(
         )
     end
     # Construct the VectorAffineFunction. We're aiming for:
-    #  |          1 |
-    #  | -a^T x - b | ∈ RotatedSecondOrderCone()
-    #  |     Lx + 0 |
+    #  |          1  |
+    #  | -a^T x + ub | ∈ RotatedSecondOrderCone()
+    #  |     Ux + 0  |
     # Start with the -a^T x terms...
     vector_terms = MOI.VectorAffineTerm{T}[
         MOI.VectorAffineTerm(
@@ -95,7 +99,7 @@ function bridge_constraint(
             MOI.ScalarAffineTerm(scale * term.coefficient, term.variable),
         ) for term in func.affine_terms
     ]
-    # Add the Lx terms...
+    # Note that `L = U'` so we add the terms of L'x
     L, p = SparseArrays.sparse(F.L), F.p
     I, J, V = SparseArrays.findnz(L)
     for i in 1:length(V)
@@ -109,11 +113,12 @@ function bridge_constraint(
             MOI.VectorAffineTerm(J[i] + 2, MOI.ScalarAffineTerm(V[i], xi)),
         )
     end
-    # This is the [1, b, 0] vector...
+    # This is the [1, ub, 0] vector...
     set_constant = MOI.constant(set)
+    MOI.throw_if_scalar_and_constant_not_zero(func, typeof(set))
     vector_constant = vcat(
         one(T),
-        scale * (func.constant - set_constant),
+        -scale * set_constant,
         zeros(T, size(L, 1)),
     )
     f = MOI.VectorAffineFunction(vector_terms, vector_constant)
@@ -230,12 +235,20 @@ function MOI.get(
     attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
     bridge::QuadtoSOCBridge,
 )
+    # The constraint primal is x'Qx/2 + a'x
+    # If `less_than` then `Q = U'U` and we have the value of
+    # `Ux` and `-a'x + ub`, so we get it with
+    # `(Ux)'Ux / 2 - (-a'x + ub) + ub`
+    # Otherwise, `Q = -U'U` and we have the value of
+    # `Ux` and `a'x - ub`, so we get it with
+    # `-(Ux)'Ux / 2 + (a'x - lb) + ub`
     soc = MOI.get(model, attr, bridge.soc)
-    if soc == nothing
+    if soc === nothing
         return nothing
     end
     output = sum(soc[i]^2 for i in 3:bridge.dimension)
     output /= 2
+    @show output
     output -= soc[1] * soc[2]
     if !bridge.less_than
         output = -output
@@ -264,15 +277,36 @@ function MOI.set(
     bridge::QuadtoSOCBridge{T},
     value,
 ) where {T}
+    # `value` represent `x'Qx/2 + a'x + ε` where `ε` is
+    # the difference between the value of the slack variable and the value of the function.
+    # That is, if `less_than`, we set
+    # |       1       |
+    # | -a'x - ε + ub |
+    # |     U * x     |
+    # which is obtained as
+    # |          1          |
+    # | x'Qx/2 - value + ub |
+    # |        U * x        |
+    # Otherwise, we set
+    # |       1       |
+    # |  a'x + ε - lb |
+    # |     U * x     |
+    # which is obtained as
+    # |          1          |
+    # | value - x'Qx/2 - lb |
+    # |        U * x        |
+    # where we compute `x'Qx/2` and `U * x` using the starting values of the variable.
     soc = MOI.get(model, MOI.ConstraintFunction(), bridge.soc)
-    s = MOI.Utilities.eval_variables(soc) do v
+    Ux = MOI.Utilities.eval_variables(MOI.Utilities.eachscalar(soc)[3:end]) do v
         return _primal_start_or_error(model, attr, v)
     end
-    if !bridge.less_than
-        value = -value
+    @show bridge.set_constant
+    if bridge.less_than
+        s2 = Ux'Ux / 2 - value + bridge.set_constant
+    else
+        s2 = Ux'Ux / 2 + value - bridge.set_constant
     end
-    s[2] -= value
-    MOI.set(model, attr, bridge.soc, s)
+    MOI.set(model, attr, bridge.soc, [1; s2; Ux])
     return
 end
 
@@ -325,7 +359,7 @@ function MOI.get(
     bridge::QuadtoSOCBridge,
 )
     dual = MOI.get(model, attr, bridge.soc)
-    if dual == nothing
+    if dual === nothing
         return nothing
     end
     λ = dual[2]
