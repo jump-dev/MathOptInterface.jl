@@ -469,7 +469,8 @@ function test_read_model1_tricky()
     @test occursin("Var4 >= 5.5", file)
     @test occursin("V3 >= -3", file)
     @test occursin("V5 = 1", file)
-    @test occursin("0 <= V2 <= 3", file)
+    @test occursin("V2 <= 3", file)
+    @test occursin("V2 >= 0", file)
     @test occursin("0 <= V7 <= 1", file)
     @test occursin("0 <= V8 <= 1", file)
     @test occursin("V6 free", file)
@@ -717,15 +718,15 @@ end
 function test_wrong_way_bounds()
     for (case, result) in [
         "x >= 2" => "x >= 2",
-        "x <= 2" => "0 <= x <= 2",
+        "x <= 2" => "x <= 2\nx >= 0",
         "x == 2" => "x = 2",
         "x > 2" => "x >= 2",
-        "x < 2" => "0 <= x <= 2",
+        "x < 2" => "x <= 2\nx >= 0",
         "x = 2" => "x = 2",
-        "2 >= x" => "0 <= x <= 2",
+        "2 >= x" => "x <= 2\nx >= 0",
         "2 <= x" => "x >= 2",
         "2 == x" => "x = 2",
-        "2 > x" => "0 <= x <= 2",
+        "2 > x" => "x <= 2\nx >= 0",
         "2 < x" => "x >= 2",
         "2 = x" => "x = 2",
     ]
