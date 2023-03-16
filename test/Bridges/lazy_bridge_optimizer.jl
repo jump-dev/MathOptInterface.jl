@@ -312,7 +312,7 @@ end
 # Model similar to SDPA format, it gives a good example because it does not
 # support a lot hence need a lot of bridges
 MOI.Utilities.@model(
-    SDPAModel,
+    StandardSDPAModel,
     (),
     (MOI.EqualTo,),
     (MOI.Nonnegatives, MOI.PositiveSemidefiniteConeTriangle),
@@ -324,7 +324,7 @@ MOI.Utilities.@model(
 )
 
 function MOI.supports_constraint(
-    ::SDPAModel{T},
+    ::StandardSDPAModel{T},
     ::Type{MOI.VariableIndex},
     ::Type{
         <:Union{
@@ -341,7 +341,7 @@ function MOI.supports_constraint(
 end
 
 function MOI.supports_constraint(
-    ::SDPAModel{T},
+    ::StandardSDPAModel{T},
     ::Type{MOI.VectorOfVariables},
     ::Type{MOI.Reals},
 ) where {T}
@@ -349,16 +349,21 @@ function MOI.supports_constraint(
 end
 
 function MOI.supports_add_constrained_variables(
-    ::SDPAModel,
+    ::StandardSDPAModel,
     ::Type{<:Union{MOI.Nonnegatives,MOI.PositiveSemidefiniteConeTriangle}},
 )
     return true
 end
 
-MOI.supports_add_constrained_variables(::SDPAModel, ::Type{MOI.Reals}) = false
+function MOI.supports_add_constrained_variables(
+    ::StandardSDPAModel,
+    ::Type{MOI.Reals},
+)
+    return false
+end
 
 function MOI.supports(
-    ::SDPAModel{T},
+    ::StandardSDPAModel{T},
     ::MOI.ObjectiveFunction{
         <:Union{MOI.VariableIndex,MOI.ScalarQuadraticFunction{T}},
     },
@@ -366,8 +371,57 @@ function MOI.supports(
     return false
 end
 
-function test_MOI_runtests_SDPAModel()
-    model = SDPAModel{Float64}()
+MOI.Utilities.@model(
+    GeometricSDPAModel,
+    (),
+    (),
+    (MOI.Zeros, MOI.Nonnegatives, MOI.PositiveSemidefiniteConeTriangle),
+    (),
+    (),
+    (),
+    (),
+    (MOI.VectorAffineFunction,)
+)
+
+function MOI.supports_constraint(
+    ::GeometricSDPAModel{T},
+    ::Type{MOI.VariableIndex},
+    ::Type{
+        <:Union{
+            MOI.GreaterThan{T},
+            MOI.LessThan{T},
+            MOI.EqualTo{T},
+            MOI.Interval{T},
+            MOI.ZeroOne,
+            MOI.Integer,
+        },
+    },
+) where {T}
+    return false
+end
+
+function MOI.supports(
+    ::StandardSDPAModel{T},
+    ::MOI.ObjectiveFunction{
+        <:Union{MOI.VariableIndex,MOI.ScalarQuadraticFunction{T}},
+    },
+) where {T}
+    return false
+end
+
+function test_MOI_runtests_StandardSDPAModel()
+    model = StandardSDPAModel{Float64}()
+    bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
+    MOI.Test.runtests(
+        bridged,
+        MOI.Test.Config(exclude = Any[MOI.optimize!]),
+        include = ["ConstraintName", "VariableName"],
+    )
+    return
+end
+
+function test_MOI_runtests_GeometricSDPAModel()
+    model = GeometricSDPAModel{Float64}()
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     MOI.Test.runtests(
         bridged,
@@ -378,7 +432,7 @@ function test_MOI_runtests_SDPAModel()
 end
 
 function test_show_SPDA()
-    model = SDPAModel{Float64}()
+    model = StandardSDPAModel{Float64}()
     model_str = sprint(MOI.Utilities.print_with_acronym, string(typeof(model)))
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     # no bridges
@@ -401,7 +455,7 @@ function test_show_SPDA()
 end
 
 function _test_SDPA_format(T)
-    model = SDPAModel{T}()
+    model = StandardSDPAModel{T}()
     bridged = MOI.Bridges.LazyBridgeOptimizer(model)
     @test !MOI.supports_constraint(
         model,
@@ -712,7 +766,7 @@ function test_SDPA_debug()
 end
 
 function _test_SDPA_debug(T)
-    model = SDPAModel{T}()
+    model = StandardSDPAModel{T}()
     bridged = MOI.Bridges.LazyBridgeOptimizer(model)
     function debug_string(f, args...)
         s = IOBuffer()
@@ -1071,8 +1125,8 @@ Bridge graph with 1 variable nodes, 5 constraint nodes and 2 objective nodes.
     end
 end
 
-function _test_continuous_SDPAModel(T)
-    model = SDPAModel{T}()
+function _test_continuous_StandardSDPAModel(T)
+    model = StandardSDPAModel{T}()
     bridged = MOI.Bridges.full_bridge_optimizer(model, T)
     # For `ScalarAffineFunction`-in-`GreaterThan`,
     # `Constraint.ScalarSlackBridge` -> `Variable.VectorizeBridge`
@@ -1098,13 +1152,13 @@ function _test_continuous_SDPAModel(T)
     return
 end
 
-function test_continuous_SDPAModel()
-    _test_continuous_SDPAModel(Float64)
-    _test_continuous_SDPAModel(Rational{Int})
+function test_continuous_StandardSDPAModel()
+    _test_continuous_StandardSDPAModel(Float64)
+    _test_continuous_StandardSDPAModel(Rational{Int})
     return
 end
 
-function test_SDPAModel_with_bridges_and_caching()
+function test_StandardSDPAModel_with_bridges_and_caching()
     # This tests that the computation of the reverse dict in the
     # caching optimizer works with negative indices
     cached = MOI.Utilities.CachingOptimizer(
@@ -1114,7 +1168,7 @@ function test_SDPAModel_with_bridges_and_caching()
     vi_cache = MOI.add_variable(cached)
     f(vi) = 1.0 * vi
     ci_cache = MOI.add_constraint(cached, f(vi_cache), MOI.EqualTo(1.0))
-    model = SDPAModel{Float64}()
+    model = StandardSDPAModel{Float64}()
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     MOI.Utilities.reset_optimizer(cached, bridged)
     MOI.Utilities.attach_optimizer(cached)
@@ -1136,8 +1190,8 @@ function test_SDPAModel_with_bridges_and_caching()
     return
 end
 
-function test_conic_SDPAModel()
-    model = SDPAModel{Float64}()
+function test_conic_StandardSDPAModel()
+    model = StandardSDPAModel{Float64}()
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     MOI.Test.test_conic_PositiveSemidefiniteConeSquare_VectorOfVariables(
         bridged,
@@ -1970,6 +2024,27 @@ function test_toadd()
     )
     @test MOI.Bridges.has_bridge(b, BridgeListOfNonstandardBridges{Int})
     @test !MOI.Bridges.has_bridge(b, BridgeListOfNonstandardBridges{Float64})
+end
+
+function test_hermitian(T = Float64)
+    model = StandardSDPAModel{T}()
+    bridged = MOI.Bridges.full_bridge_optimizer(model, T)
+    S = MOI.HermitianPositiveSemidefiniteConeTriangle
+    MOI.Bridges.bridge_type(bridged, S) ==
+    MOI.Bridges.Variable.HermitianToSymmetricPSDBridge{T}
+    # FIXME This would actually better to functionize, slack and do the variable bridge here
+    #       but since it is 3 bridges, it does not choose it
+    @test MOI.Bridges.bridge_type(bridged, MOI.VectorOfVariables, S) <:
+          MOI.Bridges.Constraint.HermitianToSymmetricPSDBridge{T}
+    @test MOI.Bridges.bridge_type(bridged, MOI.VectorAffineFunction{T}, S) <:
+          MOI.Bridges.Constraint.VectorSlackBridge{T}
+    model = GeometricSDPAModel{T}()
+    bridged = MOI.Bridges.full_bridge_optimizer(model, T)
+    @test !MOI.Bridges.is_variable_bridged(bridged, S)
+    for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{T}]
+        @test MOI.Bridges.bridge_type(bridged, F, S) <:
+              MOI.Bridges.Constraint.HermitianToSymmetricPSDBridge{T}
+    end
 end
 
 end  # module
