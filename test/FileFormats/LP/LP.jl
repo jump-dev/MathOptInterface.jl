@@ -469,7 +469,8 @@ function test_read_model1_tricky()
     @test occursin("Var4 >= 5.5", file)
     @test occursin("V3 >= -3", file)
     @test occursin("V5 = 1", file)
-    @test occursin("0 <= V2 <= 3", file)
+    @test occursin("V2 <= 3", file)
+    @test occursin("V2 >= 0", file)
     @test occursin("0 <= V7 <= 1", file)
     @test occursin("0 <= V8 <= 1", file)
     @test occursin("V6 free", file)
@@ -717,15 +718,15 @@ end
 function test_wrong_way_bounds()
     for (case, result) in [
         "x >= 2" => "x >= 2",
-        "x <= 2" => "0 <= x <= 2",
+        "x <= 2" => "x <= 2\nx >= 0",
         "x == 2" => "x = 2",
         "x > 2" => "x >= 2",
-        "x < 2" => "0 <= x <= 2",
+        "x < 2" => "x <= 2\nx >= 0",
         "x = 2" => "x = 2",
-        "2 >= x" => "0 <= x <= 2",
+        "2 >= x" => "x <= 2\nx >= 0",
         "2 <= x" => "x >= 2",
         "2 == x" => "x = 2",
-        "2 > x" => "0 <= x <= 2",
+        "2 > x" => "x <= 2\nx >= 0",
         "2 < x" => "x >= 2",
         "2 = x" => "x = 2",
     ]
@@ -755,6 +756,79 @@ function test_variable_coefficient_variable()
     file = read(out, String)
     @test file ==
           "minimize\nobj: 1 x - 1 y\nsubject to\nBounds\nx >= 0\ny >= 0\nEnd\n"
+    return
+end
+
+function _test_round_trip(bound, needle)
+    model = MOI.FileFormats.LP.Model()
+    io = IOBuffer()
+    write(io, "Minimize\nobj: x\nBounds\n$bound\nEnd")
+    seekstart(io)
+    read!(io, model)
+    seekstart(io)
+    write(io, model)
+    seekstart(io)
+    file = read(io, String)
+    @test occursin(needle, file)
+    return
+end
+
+function test_reading_bounds()
+    # Test lower bound
+    _test_round_trip("x >= 1", "Bounds\nx >= 1\nEnd")
+    _test_round_trip("x >= 0", "Bounds\nx >= 0\nEnd")
+    _test_round_trip("x >= -1", "Bounds\nx >= -1\nEnd")
+    _test_round_trip("x > 1", "Bounds\nx >= 1\nEnd")
+    _test_round_trip("x > 0", "Bounds\nx >= 0\nEnd")
+    _test_round_trip("x > -1", "Bounds\nx >= -1\nEnd")
+    # Test reversed lower bound
+    _test_round_trip("1 <= x", "Bounds\nx >= 1\nEnd")
+    _test_round_trip("0 <= x", "Bounds\nx >= 0\nEnd")
+    _test_round_trip("-1 <= x", "Bounds\nx >= -1\nEnd")
+    _test_round_trip("1 < x", "Bounds\nx >= 1\nEnd")
+    _test_round_trip("0 < x", "Bounds\nx >= 0\nEnd")
+    _test_round_trip("-1 < x", "Bounds\nx >= -1\nEnd")
+    # Test upper bound
+    _test_round_trip("x <= 1", "Bounds\nx <= 1\nx >= 0\nEnd")
+    _test_round_trip("x <= 0", "Bounds\nx <= 0\nx >= 0\nEnd")
+    _test_round_trip("x <= -1", "Bounds\nx <= -1\nEnd")
+    _test_round_trip("x < 1", "Bounds\nx <= 1\nx >= 0\nEnd")
+    _test_round_trip("x < 0", "Bounds\nx <= 0\nx >= 0\nEnd")
+    _test_round_trip("x < -1", "Bounds\nx <= -1\nEnd")
+    # Test reversed upper bound
+    _test_round_trip("1 >= x", "Bounds\nx <= 1\nx >= 0\nEnd")
+    _test_round_trip("0 >= x", "Bounds\nx <= 0\nx >= 0\nEnd")
+    _test_round_trip("-1 >= x", "Bounds\nx <= -1\nEnd")
+    _test_round_trip("1 > x", "Bounds\nx <= 1\nx >= 0\nEnd")
+    _test_round_trip("0 > x", "Bounds\nx <= 0\nx >= 0\nEnd")
+    _test_round_trip("-1 > x", "Bounds\nx <= -1\nEnd")
+    # Test equality
+    _test_round_trip("x == 1", "Bounds\nx = 1\nEnd")
+    _test_round_trip("x == 0", "Bounds\nx = 0\nEnd")
+    _test_round_trip("x == -1", "Bounds\nx = -1\nEnd")
+    _test_round_trip("1 = x", "Bounds\nx = 1\nEnd")
+    _test_round_trip("0 = x", "Bounds\nx = 0\nEnd")
+    _test_round_trip("-1 = x", "Bounds\nx = -1\nEnd")
+    # Test interval
+    _test_round_trip("0 <= x <= 1", "Bounds\n0 <= x <= 1\nEnd")
+    _test_round_trip("-1 <= x <= 1", "Bounds\n-1 <= x <= 1\nEnd")
+    _test_round_trip("-2 <= x <= -1", "Bounds\n-2 <= x <= -1\nEnd")
+    # Test reversed interval
+    _test_round_trip("1 >= x >= 0", "Bounds\n0 <= x <= 1\nEnd")
+    _test_round_trip("1 >= x >= -1", "Bounds\n-1 <= x <= 1\nEnd")
+    _test_round_trip("-1 >= x >= -2", "Bounds\n-2 <= x <= -1\nEnd")
+    # Test double-sided equality
+    _test_round_trip("1 <= x <= 1", "Bounds\nx = 1\nEnd")
+    _test_round_trip("0 <= x <= 0", "Bounds\nx = 0\nEnd")
+    _test_round_trip("-2 <= x <= -2", "Bounds\nx = -2\nEnd")
+    # Test upper then lower
+    _test_round_trip("x <= 1\nx >= 0", "Bounds\nx <= 1\nx >= 0\nEnd")
+    _test_round_trip("x <= 2\nx >= 1", "Bounds\nx <= 2\nx >= 1\nEnd")
+    _test_round_trip("x <= 2\nx >= -1", "Bounds\nx <= 2\nx >= -1\nEnd")
+    # Test lower then upper
+    _test_round_trip("x >= 0\nx <= 1", "Bounds\nx <= 1\nx >= 0\nEnd")
+    _test_round_trip("x >= 1\nx <= 2", "Bounds\nx <= 2\nx >= 1\nEnd")
+    _test_round_trip("x >= -1\nx <= 2", "Bounds\nx <= 2\nx >= -1\nEnd")
     return
 end
 

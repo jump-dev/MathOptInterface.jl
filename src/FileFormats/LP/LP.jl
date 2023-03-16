@@ -778,9 +778,6 @@ function _parse_section(
             if _is_less_than(tokens[2])
                 # name <= bound
                 ub = rhs
-                # LP files have default lower bounds of 0, unless the upper
-                # bound is less than 0.
-                lb = ub > 0.0 ? 0.0 : -Inf
             elseif _is_greater_than(tokens[2])
                 # name >= bound
                 lb = rhs
@@ -800,9 +797,6 @@ function _parse_section(
             elseif _is_greater_than(tokens[2])
                 # bound >= name
                 ub = lhs
-                # LP files have default lower bounds of 0, unless the upper
-                # bound is less than 0.
-                lb = ub > 0.0 ? 0.0 : -Inf
             elseif _is_equal_to(tokens[2])
                 lb = ub = lhs
             else
