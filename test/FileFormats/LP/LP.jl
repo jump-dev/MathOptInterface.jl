@@ -758,6 +758,79 @@ function test_variable_coefficient_variable()
     return
 end
 
+function _test_round_trip(bound, needle)
+    model = MOI.FileFormats.LP.Model()
+    io = IOBuffer()
+    write(io, "Minimize\nobj: x\nBounds\n$bound\nEnd")
+    seekstart(io)
+    read!(io, model)
+    seekstart(io)
+    write(io, model)
+    seekstart(io)
+    file = read(io, String)
+    @test occursin(needle, file)
+    return
+end
+
+function test_reading_bounds()
+    # Test lower bound
+    _test_round_trip("x >= 1", "Bounds\nx >= 1\nEnd")
+    _test_round_trip("x >= 0", "Bounds\nx >= 0\nEnd")
+    _test_round_trip("x >= -1", "Bounds\nx >= -1\nEnd")
+    _test_round_trip("x > 1", "Bounds\nx >= 1\nEnd")
+    _test_round_trip("x > 0", "Bounds\nx >= 0\nEnd")
+    _test_round_trip("x > -1", "Bounds\nx >= -1\nEnd")
+    # Test reversed lower bound
+    _test_round_trip("1 <= x", "Bounds\nx >= 1\nEnd")
+    _test_round_trip("0 <= x", "Bounds\nx >= 0\nEnd")
+    _test_round_trip("-1 <= x", "Bounds\nx >= -1\nEnd")
+    _test_round_trip("1 < x", "Bounds\nx >= 1\nEnd")
+    _test_round_trip("0 < x", "Bounds\nx >= 0\nEnd")
+    _test_round_trip("-1 < x", "Bounds\nx >= -1\nEnd")
+    # Test upper bound
+    _test_round_trip("x <= 1", "Bounds\nx <= 1\nx >= 0\nEnd")
+    _test_round_trip("x <= 0", "Bounds\nx <= 0\nx >= 0\nEnd")
+    _test_round_trip("x <= -1", "Bounds\nx <= -1\nEnd")
+    _test_round_trip("x < 1", "Bounds\nx <= 1\nx >= 0\nEnd")
+    _test_round_trip("x < 0", "Bounds\nx <= 0\nx >= 0\nEnd")
+    _test_round_trip("x < -1", "Bounds\nx <= -1\nEnd")
+    # Test reversed upper bound
+    _test_round_trip("1 >= x", "Bounds\nx <= 1\nx >= 0\nEnd")
+    _test_round_trip("0 >= x", "Bounds\nx <= 0\nx >= 0\nEnd")
+    _test_round_trip("-1 >= x", "Bounds\nx <= -1\nEnd")
+    _test_round_trip("1 > x", "Bounds\nx <= 1\nx >= 0\nEnd")
+    _test_round_trip("0 > x", "Bounds\nx <= 0\nx >= 0\nEnd")
+    _test_round_trip("-1 > x", "Bounds\nx <= -1\nEnd")
+    # Test equality
+    _test_round_trip("x == 1", "Bounds\nx = 1\nEnd")
+    _test_round_trip("x == 0", "Bounds\nx = 0\nEnd")
+    _test_round_trip("x == -1", "Bounds\nx = -1\nEnd")
+    _test_round_trip("1 = x", "Bounds\nx = 1\nEnd")
+    _test_round_trip("0 = x", "Bounds\nx = 0\nEnd")
+    _test_round_trip("-1 = x", "Bounds\nx = -1\nEnd")
+    # Test interval
+    _test_round_trip("0 <= x <= 1", "Bounds\n0 <= x <= 1\nEnd")
+    _test_round_trip("-1 <= x <= 1", "Bounds\n-1 <= x <= 1\nEnd")
+    _test_round_trip("-2 <= x <= -1", "Bounds\n-2 <= x <= -1\nEnd")
+    # Test reversed interval
+    _test_round_trip("1 >= x >= 0", "Bounds\n0 <= x <= 1\nEnd")
+    _test_round_trip("1 >= x >= -1", "Bounds\n-1 <= x <= 1\nEnd")
+    _test_round_trip("-1 >= x >= -2", "Bounds\n-2 <= x <= -1\nEnd")
+    # Test double-sided equality
+    _test_round_trip("1 <= x <= 1", "Bounds\nx = 1\nEnd")
+    _test_round_trip("0 <= x <= 0", "Bounds\nx = 0\nEnd")
+    _test_round_trip("-2 <= x <= -2", "Bounds\nx = -2\nEnd")
+    # Test upper then lower
+    _test_round_trip("x <= 1\nx >= 0", "Bounds\nx <= 1\nx >= 0\nEnd")
+    _test_round_trip("x <= 2\nx >= 1", "Bounds\nx <= 2\nx >= 1\nEnd")
+    _test_round_trip("x <= 2\nx >= -1", "Bounds\nx <= 2\nx >= -1\nEnd")
+    # Test lower then upper
+    _test_round_trip("x >= 0\nx <= 1", "Bounds\nx <= 1\nx >= 0\nEnd")
+    _test_round_trip("x >= 1\nx <= 2", "Bounds\nx <= 2\nx >= 1\nEnd")
+    _test_round_trip("x >= -1\nx <= 2", "Bounds\nx <= 2\nx >= -1\nEnd")
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")
