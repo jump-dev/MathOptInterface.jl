@@ -355,7 +355,12 @@ function MOI.supports_add_constrained_variables(
     return true
 end
 
-MOI.supports_add_constrained_variables(::StandardSDPAModel, ::Type{MOI.Reals}) = false
+function MOI.supports_add_constrained_variables(
+    ::StandardSDPAModel,
+    ::Type{MOI.Reals},
+)
+    return false
+end
 
 function MOI.supports(
     ::StandardSDPAModel{T},
@@ -2021,20 +2026,24 @@ function test_toadd()
     @test !MOI.Bridges.has_bridge(b, BridgeListOfNonstandardBridges{Float64})
 end
 
-function test_hermitian(T=Float64)
+function test_hermitian(T = Float64)
     model = StandardSDPAModel{T}()
     bridged = MOI.Bridges.full_bridge_optimizer(model, T)
     S = MOI.HermitianPositiveSemidefiniteConeTriangle
-    MOI.Bridges.bridge_type(bridged, S) == MOI.Bridges.Variable.HermitianToSymmetricPSDBridge{T}
+    MOI.Bridges.bridge_type(bridged, S) ==
+    MOI.Bridges.Variable.HermitianToSymmetricPSDBridge{T}
     # FIXME This would actually better to functionize, slack and do the variable bridge here
     #       but since it is 3 bridges, it does not choose it
-    @test MOI.Bridges.bridge_type(bridged, MOI.VectorOfVariables, S) <: MOI.Bridges.Constraint.HermitianToSymmetricPSDBridge{T}
-    @test MOI.Bridges.bridge_type(bridged, MOI.VectorAffineFunction{T}, S) <: MOI.Bridges.Constraint.VectorSlackBridge{T}
+    @test MOI.Bridges.bridge_type(bridged, MOI.VectorOfVariables, S) <:
+          MOI.Bridges.Constraint.HermitianToSymmetricPSDBridge{T}
+    @test MOI.Bridges.bridge_type(bridged, MOI.VectorAffineFunction{T}, S) <:
+          MOI.Bridges.Constraint.VectorSlackBridge{T}
     model = GeometricSDPAModel{T}()
     bridged = MOI.Bridges.full_bridge_optimizer(model, T)
     @test !MOI.Bridges.is_variable_bridged(bridged, S)
     for F in [MOI.VectorOfVariables, MOI.VectorAffineFunction{T}]
-        @test MOI.Bridges.bridge_type(bridged, F, S) <: MOI.Bridges.Constraint.HermitianToSymmetricPSDBridge{T}
+        @test MOI.Bridges.bridge_type(bridged, F, S) <:
+              MOI.Bridges.Constraint.HermitianToSymmetricPSDBridge{T}
     end
 end
 
