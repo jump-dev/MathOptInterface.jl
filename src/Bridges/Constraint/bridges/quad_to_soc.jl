@@ -244,7 +244,6 @@ function MOI.get(
     end
     output = sum(soc[i]^2 for i in 3:bridge.dimension)
     output /= 2
-    @show output
     output -= soc[1] * soc[2]
     if !bridge.less_than
         output = -output
@@ -296,7 +295,6 @@ function MOI.set(
     Ux = MOI.Utilities.eval_variables(MOI.Utilities.eachscalar(soc)[3:end]) do v
         return _primal_start_or_error(model, attr, v)
     end
-    @show bridge.set_constant
     if bridge.less_than
         s2 = Ux'Ux / 2 - value + bridge.set_constant
     else
