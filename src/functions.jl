@@ -84,7 +84,7 @@ julia> x = MOI.VariableIndex(1)
 MOI.VariableIndex(1)
 
 julia> MOI.ScalarAffineTerm(2.0, x)
-MathOptInterface.ScalarAffineTerm{Float64}(2.0, MathOptInterface.VariableIndex(1))
+MathOptInterface.ScalarAffineTerm{Float64}(2.0, MOI.VariableIndex(1))
 ```
 """
 struct ScalarAffineTerm{T}
@@ -130,8 +130,8 @@ MOI.VariableIndex(1)
 
 julia> terms = [MOI.ScalarAffineTerm(2.0, x), MOI.ScalarAffineTerm(3.0, x)]
 2-element Vector{MathOptInterface.ScalarAffineTerm{Float64}}:
- MathOptInterface.ScalarAffineTerm{Float64}(2.0, MathOptInterface.VariableIndex(1))
- MathOptInterface.ScalarAffineTerm{Float64}(3.0, MathOptInterface.VariableIndex(1))
+ MathOptInterface.ScalarAffineTerm{Float64}(2.0, MOI.VariableIndex(1))
+ MathOptInterface.ScalarAffineTerm{Float64}(3.0, MOI.VariableIndex(1))
 
 julia> f = MOI.ScalarAffineFunction(terms, 4.0)
 4.0 + 2.0 MOI.VariableIndex(1) + 3.0 MOI.VariableIndex(1)
@@ -171,7 +171,7 @@ julia> x = MOI.VariableIndex(1)
 MOI.VariableIndex(1)
 
 julia> MOI.ScalarQuadraticTerm(2.0, x, x)
-MathOptInterface.ScalarQuadraticTerm{Float64}(2.0, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(1))
+MathOptInterface.ScalarQuadraticTerm{Float64}(2.0, MOI.VariableIndex(1), MOI.VariableIndex(1))
 ```
 """
 struct ScalarQuadraticTerm{T}
@@ -254,8 +254,8 @@ julia> quadratic_terms = [
            MOI.ScalarQuadraticTerm(3.0, x, y),
        ]
 2-element Vector{MathOptInterface.ScalarQuadraticTerm{Float64}}:
- MathOptInterface.ScalarQuadraticTerm{Float64}(4.0, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(1))
- MathOptInterface.ScalarQuadraticTerm{Float64}(3.0, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2))
+ MathOptInterface.ScalarQuadraticTerm{Float64}(4.0, MOI.VariableIndex(1), MOI.VariableIndex(1))
+ MathOptInterface.ScalarQuadraticTerm{Float64}(3.0, MOI.VariableIndex(1), MOI.VariableIndex(2))
 
 julia> f = MOI.ScalarQuadraticFunction(quadratic_terms, affine_terms, constant)
 5.0 + 4.0 MOI.VariableIndex(1) + 2.0 MOI.VariableIndex(1)² + 3.0 MOI.VariableIndex(1)*MOI.VariableIndex(2)
@@ -356,7 +356,7 @@ julia> import MathOptInterface as MOI
 julia> x = MOI.VariableIndex(1);
 
 julia> MOI.VectorAffineTerm(Int64(2), MOI.ScalarAffineTerm(3.0, x))
-MathOptInterface.VectorAffineTerm{Float64}(2, MathOptInterface.ScalarAffineTerm{Float64}(3.0, MathOptInterface.VariableIndex(1)))
+MathOptInterface.VectorAffineTerm{Float64}(2, MathOptInterface.ScalarAffineTerm{Float64}(3.0, MOI.VariableIndex(1)))
 ```
 """
 struct VectorAffineTerm{T}
@@ -455,7 +455,7 @@ julia> import MathOptInterface as MOI
 julia> x = MOI.VariableIndex(1);
 
 julia> MOI.VectorQuadraticTerm(Int64(2), MOI.ScalarQuadraticTerm(3.0, x, x))
-MathOptInterface.VectorQuadraticTerm{Float64}(2, MathOptInterface.ScalarQuadraticTerm{Float64}(3.0, MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(1)))
+MathOptInterface.VectorQuadraticTerm{Float64}(2, MathOptInterface.ScalarQuadraticTerm{Float64}(3.0, MOI.VariableIndex(1), MOI.VariableIndex(1)))
 ```
 """
 struct VectorQuadraticTerm{T}

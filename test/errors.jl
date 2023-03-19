@@ -126,24 +126,22 @@ function test_errors_DeleteNotAllowed()
         MOI.delete(model, vi)
     catch err
         @test sprint(showerror, err) ==
-              "MathOptInterface.DeleteNotAllowed{MathOptInterface.VariableIndex}:" *
-              " Deleting the index MathOptInterface.VariableIndex(1) cannot be" *
-              " performed. You may want to use a `CachingOptimizer` in" *
-              " `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
-              " before doing this operation if the `CachingOptimizer` is in" *
-              " `MANUAL` mode."
+              "$(MOI.DeleteNotAllowed{typeof(vi)}): Deleting the index $vi " *
+              "cannot be performed. You may want to use a `CachingOptimizer` " *
+              "in `AUTOMATIC` mode or you may need to call `reset_optimizer` " *
+              "before doing this operation if the `CachingOptimizer` is in " *
+              "`MANUAL` mode."
     end
     @test_throws MOI.DeleteNotAllowed{typeof(ci)} MOI.delete(model, ci)
     try
         MOI.delete(model, ci)
     catch err
         @test sprint(showerror, err) ==
-              "$(MOI.DeleteNotAllowed{MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}}):" *
-              " Deleting the index $(MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}(1))" *
-              " cannot be performed. You may want to use a `CachingOptimizer`" *
-              " in `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
-              " before doing this operation if the `CachingOptimizer` is in" *
-              " `MANUAL` mode."
+              "$(MOI.DeleteNotAllowed{typeof(ci)}): Deleting the index $ci " *
+              "cannot be performed. You may want to use a `CachingOptimizer` " *
+              "in `AUTOMATIC` mode or you may need to call `reset_optimizer` " *
+              "before doing this operation if the `CachingOptimizer` is in " *
+              "`MANUAL` mode."
     end
     return
 end
