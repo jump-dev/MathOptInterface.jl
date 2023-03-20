@@ -87,8 +87,8 @@ function _parse_splat_expression(stack, data, expr, x, parent_index)
             "`(x + 1)...`, `[x; y]...` and `g(f(y)...)` are not.",
         )
     end
-    for xi in reverse(x.args[1])
-        push!(stack, (parent_index, xi))
+    for arg in Iterators.Reverse(x.args[1])
+        push!(stack, (parent_index, arg))
     end
     return
 end
