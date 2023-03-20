@@ -695,6 +695,9 @@ function test_default_printing()
     end
     @test sprint(show, MIME("text/plain"), x) == "MOI.VariableIndex(1)"
     @test sprint(show, MIME("text/latex"), x) == "v_{1}"
+    for f in (x, aff)
+        @test sprint(show, f) == sprint(show, MIME("text/plain"), f)
+    end
     return
 end
 

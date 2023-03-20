@@ -249,7 +249,7 @@ julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
 
 julia> p, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.5))
-(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Parameter{Float64}}(1))
+(MOI.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Parameter{Float64}}(1))
 
 julia> MOI.set(model, MOI.ConstraintSet(), ci, MOI.Parameter(3.0))
 
@@ -1753,7 +1753,7 @@ julia> x = MOI.add_variables(model, 2)
  MOI.VariableIndex(2)
 
 julia> y, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
-(MathOptInterface.VariableIndex(3), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(3))
+(MOI.VariableIndex(3), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(3))
 
 julia> f = MOI.VectorAffineFunction(
            [
@@ -2080,16 +2080,16 @@ julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
 
 julia> a, _ = MOI.add_constrained_variable(model, MOI.Integer())
-(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
+(MOI.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
 
 julia> b, _ = MOI.add_constrained_variable(model, MOI.Integer())
-(MathOptInterface.VariableIndex(2), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(2))
+(MOI.VariableIndex(2), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(2))
 
 julia> c, _ = MOI.add_constrained_variable(model, MOI.Integer())
-(MathOptInterface.VariableIndex(3), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(3))
+(MOI.VariableIndex(3), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(3))
 
 julia> x, d, set = [a, b, b, c], [2, 2], [3]
-(MathOptInterface.VariableIndex[MathOptInterface.VariableIndex(1), MathOptInterface.VariableIndex(2), MathOptInterface.VariableIndex(2), MathOptInterface.VariableIndex(3)], [2, 2], [3])
+(MathOptInterface.VariableIndex[MOI.VariableIndex(1), MOI.VariableIndex(2), MOI.VariableIndex(2), MOI.VariableIndex(3)], [2, 2], [3])
 
 julia> MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.CountAtLeast(1, d, Set(set)))
 MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.CountAtLeast}(1)
@@ -2140,7 +2140,7 @@ julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
 
 julia> n, _ = MOI.add_constrained_variable(model, MOI.Integer())
-(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
+(MOI.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
 
 julia> x = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
 3-element Vector{MathOptInterface.VariableIndex}:
@@ -2203,7 +2203,7 @@ julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
 
 julia> n, _ = MOI.add_constrained_variable(model, MOI.Integer())
-(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
+(MOI.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
 
 julia> x = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
 3-element Vector{MathOptInterface.VariableIndex}:
@@ -2249,10 +2249,10 @@ julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
 
 julia> c, _ = MOI.add_constrained_variable(model, MOI.Integer())
-(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
+(MOI.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
 
 julia> y, _ = MOI.add_constrained_variable(model, MOI.Integer())
-(MathOptInterface.VariableIndex(2), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(2))
+(MOI.VariableIndex(2), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(2))
 
 julia> x = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
 3-element Vector{MathOptInterface.VariableIndex}:
@@ -2320,7 +2320,7 @@ julia> r = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
  MOI.VariableIndex(9)
 
 julia> b, _ = MOI.add_constrained_variable(model, MOI.Integer())
-(MathOptInterface.VariableIndex(10), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(10))
+(MOI.VariableIndex(10), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(10))
 
 julia> MOI.add_constraint(model, MOI.VectorOfVariables([s; d; r; b]), MOI.Cumulative(10))
 MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.Cumulative}(1)
@@ -2381,10 +2381,10 @@ julia> to = [2, 3, 3, 4, 4]
  4
 
 julia> s, _ = MOI.add_constrained_variable(model, MOI.Integer())
-(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
+(MOI.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
 
 julia> t, _ = MOI.add_constrained_variable(model, MOI.Integer())
-(MathOptInterface.VariableIndex(2), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(2))
+(MOI.VariableIndex(2), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(2))
 
 julia> ns = MOI.add_variables(model, N)
 4-element Vector{MathOptInterface.VariableIndex}:
@@ -2554,7 +2554,7 @@ MOIU.UniversalFallback{MOIU.Model{Float64}}
 fallback for MOIU.Model{Float64}
 
 julia> z, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
-(MathOptInterface.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(1))
+(MOI.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(1))
 
 julia> x = MOI.add_variable(model)
 MOI.VariableIndex(2)

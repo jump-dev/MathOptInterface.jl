@@ -85,7 +85,7 @@ A MathOptFormat Model
 
 julia> MOI.copy_to(dest, src)
 MathOptInterface.Utilities.IndexMap with 1 entry:
-  VariableIndex(1) => VariableIndex(1)
+  MOI.VariableIndex(1) => MOI.VariableIndex(1)
 
 julia> MOI.write_to_file(dest, "file.mof.json")
 

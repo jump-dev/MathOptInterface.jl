@@ -655,6 +655,10 @@ function MOI.get(
     return ""  # Leave as default
 end
 
+function Base.show(io::IO, f::MOI.AbstractFunction)
+    return show(io, MIME("text/plain"), f)
+end
+
 function Base.show(io::IO, mime::MIME"text/plain", f::MOI.AbstractFunction)
     model = _NoVariableNameModel{MIME"text/plain"}()
     print(io, _to_string(_PrintOptions(mime), model, f))

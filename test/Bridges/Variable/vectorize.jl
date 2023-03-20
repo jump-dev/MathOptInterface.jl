@@ -130,7 +130,7 @@ function test_exp3_with_add_constrained_variable_y()
 
     err = ErrorException(
         "Cannot add two `VariableIndex`-in-`MathOptInterface.LessThan{Float64}`" *
-        " on the same variable MathOptInterface.VariableIndex(-1).",
+        " on the same variable MOI.VariableIndex(-1).",
     )
     @test_throws err MOI.add_constraint(bridged_mock, y, MOI.LessThan(4.0))
 
@@ -156,7 +156,7 @@ function test_exp3_with_add_constrained_variable_y()
     attr = MOI.ConstraintSet()
     err = MOI.SetAttributeNotAllowed(
         attr,
-        "The variable `MathOptInterface.VariableIndex(12345676)` is bridged by the `VectorizeBridge`.",
+        "The variable `MOI.VariableIndex(12345676)` is bridged by the `VectorizeBridge`.",
     )
     @test_throws err MOI.set(bridged_mock, attr, ci, MOI.LessThan(4.0))
 
@@ -170,7 +170,7 @@ function test_exp3_with_add_constrained_variable_y()
     change = MOI.ScalarCoefficientChange(y, 0.0)
     attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
     message =
-        "The change MathOptInterface.ScalarCoefficientChange{Float64}(MathOptInterface.VariableIndex(-1), 0.0)" *
+        "The change MathOptInterface.ScalarCoefficientChange{Float64}(MOI.VariableIndex(-1), 0.0)" *
         " contains variables bridged into a function with nonzero constant."
     err = MOI.ModifyObjectiveNotAllowed(change, message)
     @test_throws err MOI.modify(bridged_mock, attr, change)
