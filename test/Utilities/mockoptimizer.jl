@@ -115,6 +115,7 @@ function test_optimizer_solve_with_result()
         ErrorException(
             "No mock primal is set for variable `$(v[1])` at result index `2`.",
         ),
+        @show MOI.get(optimizer, MOI.ConstraintPrimal(2), c1)
     )
     @test_throws(
         ErrorException(
