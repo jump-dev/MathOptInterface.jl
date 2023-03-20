@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+ - Fixed splatting of containers in `MOI.Nonlinear` (#2120)
  - Fixed a bug reading LP files with default bounds (#2121)
  - Fixed a bug in which [`Bridges.Constraint.HermitianToSymmetricPSDBridge`](@ref)
    was not enabled by default (#2123)
