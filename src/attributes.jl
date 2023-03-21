@@ -1585,7 +1585,7 @@ May be `nothing` (unset), a number for [`AbstractScalarFunction`](@ref), or a
 vector for [`AbstractVectorFunction`](@ref).
 
 !!! note
-    In order to set the `ConstraintDualStart` for a constraints that is
+    In order to set the `ConstraintDualStart` for a constraint that is
     transformed by the [`Bridges.Constraint.QuadtoSOCBridge`](@ref), the
     [`VariablePrimalStart`](@ref) of all variables involved in the constraints
     should be set first. Otherwise, an error will be thrown by the bridge.
