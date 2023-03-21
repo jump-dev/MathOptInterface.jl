@@ -1604,7 +1604,7 @@ vector for [`AbstractVectorFunction`](@ref).
 !!! note
     In order to set the `ConstraintDualStart` for a constraint that is
     transformed by the [`Bridges.Constraint.QuadtoSOCBridge`](@ref), the
-    [`VariablePrimalStart`](@ref) of all variables involved in the constraints
+    [`VariablePrimalStart`](@ref) of all variables involved in the constraint
     should be set first. Otherwise, an error will be thrown by the bridge.
 """
 struct ConstraintDualStart <: AbstractConstraintAttribute end
