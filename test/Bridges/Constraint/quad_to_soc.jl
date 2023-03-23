@@ -106,7 +106,8 @@ function test_quadratic_constraints_with_2_variables()
 end
 
 function test_qcp()
-    mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    mock = MOI.Utilities.MockOptimizer(model)
     config = MOI.Test.Config()
     bridged_mock = MOI.Bridges.Constraint.QuadtoSOC{Float64}(mock)
     MOI.Utilities.set_mock_optimize!(
@@ -159,6 +160,15 @@ function test_qcp()
     MOI.Test.test_quadratic_constraint_LessThan(bridged_mock, config)
     MOI.empty!(bridged_mock)
     MOI.Test.test_quadratic_constraint_GreaterThan(bridged_mock, config)
+    F = MOI.ScalarQuadraticFunction{Float64}
+    S = MOI.GreaterThan{Float64}
+    ci = first(MOI.get(bridged_mock, MOI.ListOfConstraintIndices{F,S}()))
+    for attr in [MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart()]
+        err = ErrorException(
+            "In order to set the `$attr`, the`MOI.Bridges.Constraint.QuadtoSOCBridge` needs to get the `MathOptInterface.VariablePrimalStart()` but it is not set. Set the `MathOptInterface.VariablePrimalStart()` first before setting the `$attr` in order to fix this.",
+        )
+        @test_throws err MOI.set(bridged_mock, attr, ci, 0.0)
+    end
     return
 end
 
@@ -207,6 +217,7 @@ function test_runtests()
         variables: x, y
         [1.0, 0.0, 2.0 * x, 2.0 * y] in RotatedSecondOrderCone(4)
         """,
+        variable_start = 0.0,
     )
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.QuadtoSOCBridge,
@@ -219,7 +230,52 @@ function test_runtests()
         [1.0, 0.0, 2.0 * x, 2.0 * y] in RotatedSecondOrderCone(4)
         """,
     )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.QuadtoSOCBridge,
+        """
+        variables: x, y
+        2.0 * x * x + 0.5 * y * y + 2.0 * x <= 3.0
+        """,
+        """
+        variables: x, y
+        [1.0, -2.0 * x + 3.0, 2.0 * x, 1.0 * y] in RotatedSecondOrderCone(4)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.QuadtoSOCBridge,
+        """
+        variables: x, y, z
+        -2.0 * x * x + -1.0 * y * y + -2.0 * x * y + 3.0 * z >= 4.0
+        """,
+        """
+        variables: x, y, z
+        [1.0, 3.0 * z + -4.0, 2.0 * x + 1.0 * y, 1.0 * y] in RotatedSecondOrderCone(4)
+        """,
+    )
     return
+end
+
+"""
+    test_copy_to_start()
+
+Tests that `copy_to` copies the variable starting values first and the
+constraint primal and dual starting values second as is needed by the
+[`MOI.Bridges.Constraint.QuadtoSOCBridge`](@ref).
+"""
+function test_copy_to_start()
+    src = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(src)
+    c = MOI.add_constraint(src, 1.0x * x + 2.0x, MOI.LessThan(-1.0))
+    MOI.set(src, MOI.ConstraintPrimalStart(), c, 1.0)
+    MOI.set(src, MOI.ConstraintDualStart(), c, -1.0)
+    MOI.set(src, MOI.VariablePrimalStart(), x, -1.0)
+
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    dest = MOI.Bridges.Constraint.QuadtoSOC{Float64}(model)
+    index_map = MOI.copy_to(dest, src)
+    @test MOI.get(dest, MOI.ConstraintPrimalStart(), index_map[c]) == 1.0
+    @test MOI.get(dest, MOI.ConstraintDualStart(), index_map[c]) == -1.0
+    @test MOI.get(dest, MOI.VariablePrimalStart(), index_map[x]) == -1.0
 end
 
 end  # module
