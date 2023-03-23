@@ -255,6 +255,29 @@ function test_runtests()
     return
 end
 
+"""
+    test_copy_to_start()
+
+Tests that `copy_to` copies the variable starting values first and the
+constraint primal and dual starting values second as is needed by the
+[`MOI.Bridges.Constraint.QuadtoSOCBridge`](@ref).
+"""
+function test_copy_to_start()
+    src = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(src)
+    c = MOI.add_constraint(src, 1.0x * x + 2.0x, MOI.LessThan(-1.0))
+    MOI.set(src, MOI.ConstraintPrimalStart(), c, 1.0)
+    MOI.set(src, MOI.ConstraintDualStart(), c, -1.0)
+    MOI.set(src, MOI.VariablePrimalStart(), x, -1.0)
+
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    dest = MOI.Bridges.Constraint.QuadtoSOC{Float64}(model)
+    index_map = MOI.copy_to(dest, src)
+    @test MOI.get(dest, MOI.ConstraintPrimalStart(), index_map[c]) == 1.0
+    @test MOI.get(dest, MOI.ConstraintDualStart(), index_map[c]) == -1.0
+    @test MOI.get(dest, MOI.VariablePrimalStart(), index_map[x]) == -1.0
+end
+
 end  # module
 
 TestConstraintQuadToSOC.runtests()
