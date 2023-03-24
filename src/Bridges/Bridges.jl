@@ -360,6 +360,9 @@ function _general_bridge_tests(bridge::B) where {B<:AbstractBridge}
         length(MOI.get(bridge, MOI.ListOfVariableIndices())) ==
         MOI.get(bridge, MOI.NumberOfVariables())
     )
+    # If zero variables, must have no constrained variable types, and vice versa
+    @test (MOI.get(bridge, MOI.NumberOfVariables()) == 0) ==
+          isempty(added_constrained_variable_types(B))
     if B <: Objective.AbstractBridge
         Test.@test set_objective_function_type(B) <: MOI.AbstractFunction
     end
