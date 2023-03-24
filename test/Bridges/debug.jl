@@ -270,6 +270,10 @@ function test_print_active_bridges_variable_unsupported()
         MOI.UnsupportedConstraint{MOI.VariableIndex,MOI.ZeroOne},
         MOI.Bridges.print_active_bridges(model, MOI.ZeroOne),
     )
+    @test_throws(
+        MOI.UnsupportedConstraint{MOI.VectorOfVariables,MOI.ExponentialCone},
+        MOI.Bridges.print_active_bridges(model, MOI.ExponentialCone),
+    )
     return
 end
 

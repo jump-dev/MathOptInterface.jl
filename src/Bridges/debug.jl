@@ -648,8 +648,12 @@ function print_active_bridges(
     is_constraint_bridged = true
     c_node = b.constraint_node[(F, S)]
     if F == MOI.VariableIndex || F == MOI.VectorOfVariables
-        if !haskey(b.variable_node, (S,))
-            debug(b, S; io = devnull)
+        # Call `MOI.supports_` here to build the necessary nodes in the bridging
+        # graph.
+        if F == MOI.VariableIndex
+            MOI.supports_add_constrained_variable(b, S)
+        else
+            MOI.supports_add_constrained_variables(b, S)
         end
         v_node = b.variable_node[(S,)]
         if bridging_cost(b.graph, v_node) <= bridging_cost(b.graph, c_node)
