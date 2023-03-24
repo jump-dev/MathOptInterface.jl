@@ -88,7 +88,7 @@ function supports_objective_function(
 end
 
 function MOI.Bridges.added_constrained_variable_types(::Type{<:SlackBridge})
-    return Tuple{Type}[]
+    return Tuple{Type}[(MOI.Reals,)]
 end
 
 function MOI.Bridges.added_constraint_types(

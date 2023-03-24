@@ -70,54 +70,59 @@ function test_print_active_bridges()
  * Unsupported objective: MOI.ScalarQuadraticFunction{Float64}
  |  bridged by:
  |   MOIB.Objective.SlackBridge{Float64, MOI.ScalarQuadraticFunction{Float64}, MOI.ScalarQuadraticFunction{Float64}}
- |  introduces:
+ |  may introduce:
  |   * Unsupported objective: MOI.VariableIndex
  |   |  bridged by:
  |   |   MOIB.Objective.FunctionizeBridge{Float64}
- |   |  introduces:
+ |   |  may introduce:
  |   |   * Supported objective: MOI.ScalarAffineFunction{Float64}
+ |   * Unsupported constraint: MOI.ScalarQuadraticFunction{Float64}-in-MOI.GreaterThan{Float64}
+ |   |  bridged by:
+ |   |   MOIB.Constraint.QuadtoSOCBridge{Float64}
+ |   |  may introduce:
+ |   |   * Supported constraint: MOI.VectorAffineFunction{Float64}-in-MOI.RotatedSecondOrderCone
  |   * Unsupported constraint: MOI.ScalarQuadraticFunction{Float64}-in-MOI.LessThan{Float64}
  |   |  bridged by:
  |   |   MOIB.Constraint.QuadtoSOCBridge{Float64}
- |   |  introduces:
+ |   |  may introduce:
  |   |   * Supported constraint: MOI.VectorAffineFunction{Float64}-in-MOI.RotatedSecondOrderCone
  |   * Unsupported variable: MOI.Reals
  |   |  bridged by:
  |   |    MOIB.Variable.FreeBridge{Float64}
- |   |  introduces:
+ |   |  may introduce:
  |   |   * Supported variable: MOI.Nonnegatives
  * Unsupported constraint: MOI.ScalarAffineFunction{Float64}-in-MOI.EqualTo{Float64}
  |  bridged by:
  |   MOIB.Constraint.VectorizeBridge{Float64, MOI.VectorAffineFunction{Float64}, MOI.Zeros, MOI.ScalarAffineFunction{Float64}}
- |  introduces:
+ |  may introduce:
  |   * Supported constraint: MOI.VectorAffineFunction{Float64}-in-MOI.Zeros
  * Unsupported constraint: MOI.ScalarAffineFunction{Float64}-in-MOI.Interval{Float64}
  |  bridged by:
  |   MOIB.Constraint.SplitIntervalBridge{Float64, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}, MOI.GreaterThan{Float64}, MOI.LessThan{Float64}}
- |  introduces:
+ |  may introduce:
  |   * Unsupported constraint: MOI.ScalarAffineFunction{Float64}-in-MOI.GreaterThan{Float64}
  |   |  bridged by:
  |   |   MOIB.Constraint.VectorizeBridge{Float64, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, MOI.ScalarAffineFunction{Float64}}
- |   |  introduces:
+ |   |  may introduce:
  |   |   * Supported constraint: MOI.VectorAffineFunction{Float64}-in-MOI.Nonnegatives
  |   * Unsupported constraint: MOI.ScalarAffineFunction{Float64}-in-MOI.LessThan{Float64}
  |   |  bridged by:
  |   |   MOIB.Constraint.VectorizeBridge{Float64, MOI.VectorAffineFunction{Float64}, MOI.Nonpositives, MOI.ScalarAffineFunction{Float64}}
- |   |  introduces:
+ |   |  may introduce:
  |   |   * Unsupported constraint: MOI.VectorAffineFunction{Float64}-in-MOI.Nonpositives
  |   |   |  bridged by:
  |   |   |   MOIB.Constraint.NonposToNonnegBridge{Float64, MOI.VectorAffineFunction{Float64}, MOI.VectorAffineFunction{Float64}}
- |   |   |  introduces:
+ |   |   |  may introduce:
  |   |   |   * Supported constraint: MOI.VectorAffineFunction{Float64}-in-MOI.Nonnegatives
  * Unsupported constraint: MOI.ScalarQuadraticFunction{Float64}-in-MOI.LessThan{Float64}
  |  bridged by:
  |   MOIB.Constraint.QuadtoSOCBridge{Float64}
- |  introduces:
+ |  may introduce:
  |   * Supported constraint: MOI.VectorAffineFunction{Float64}-in-MOI.RotatedSecondOrderCone
  * Unsupported variable: MOI.Nonpositives
  |  bridged by:
  |    MOIB.Variable.NonposToNonnegBridge{Float64}
- |  introduces:
+ |  may introduce:
  |   * Supported variable: MOI.Nonnegatives
 """
     # Prints to stdout, but just check it doesn't error.
@@ -162,7 +167,7 @@ function test_print_active_bridges_parameter()
  * Unsupported variable: MOI.Parameter{Float64}
  |  bridged by:
  |    MOIB.Variable.ParameterToEqualToBridge{Float64}
- |  introduces:
+ |  may introduce:
  |   * Supported variable: MOI.EqualTo{Float64}
 """
     return

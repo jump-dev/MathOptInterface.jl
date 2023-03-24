@@ -129,7 +129,7 @@ end
 function MOI.Bridges.added_constrained_variable_types(
     ::Type{<:ReifiedCountDistinctToMILPBridge},
 )
-    return Tuple{Type}[(MOI.ZeroOne,)]
+    return Tuple{Type}[(MOI.Reals,), (MOI.ZeroOne,)]
 end
 
 function MOI.Bridges.added_constraint_types(
