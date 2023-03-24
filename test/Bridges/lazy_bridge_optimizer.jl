@@ -1074,10 +1074,7 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
             bridged,
             MOI.Bridges.Constraint.ScalarizeBridge{T},
         )
-        MOI.Bridges.add_bridge(
-            bridged,
-            MOI.Bridges.Variable.FreeBridge{T},
-        )
+        MOI.Bridges.add_bridge(bridged, MOI.Bridges.Variable.FreeBridge{T})
         @test debug_string(MOI.Bridges.debug_supports, attr) ==
               "Objective function of type `MOI.ScalarQuadraticFunction{$T}` is supported.\n"
         @test sprint(MOI.Bridges.print_graph, bridged) ==
