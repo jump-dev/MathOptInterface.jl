@@ -173,6 +173,106 @@ function test_print_active_bridges_parameter()
     return
 end
 
+function test_print_active_bridges_objective_supported()
+    model = MOI.Bridges.full_bridge_optimizer(Model{Float64}(), Float64)
+    F = MOI.ScalarAffineFunction{Float64}
+    @test sprint(MOI.Bridges.print_active_bridges, model, F) === """
+           * Supported objective: MOI.ScalarAffineFunction{Float64}
+          """
+    return
+end
+
+function test_print_active_bridges_objective_bridged()
+    model = MOI.Bridges.full_bridge_optimizer(Model{Float64}(), Float64)
+    @test sprint(MOI.Bridges.print_active_bridges, model, MOI.VariableIndex) ===
+          """
+           * Unsupported objective: MOI.VariableIndex
+           |  bridged by:
+           |   MOIB.Objective.FunctionizeBridge{Float64}
+           |  may introduce:
+           |   * Supported objective: MOI.ScalarAffineFunction{Float64}
+          """
+    return
+end
+
+function test_print_active_bridges_objective_unsupported()
+    model = MOI.Bridges.full_bridge_optimizer(Model{Float64}(), Float64)
+    F = MOI.ScalarAffineFunction{Int}
+    @test_throws(
+        MOI.UnsupportedAttribute{MOI.ObjectiveFunction{F}},
+        MOI.Bridges.print_active_bridges(model, F),
+    )
+    return
+end
+
+function test_print_active_bridges_constraint_supported()
+    model = MOI.Bridges.full_bridge_optimizer(Model{Float64}(), Float64)
+    F = MOI.VectorAffineFunction{Float64}
+    S = MOI.Nonnegatives
+    @test sprint(MOI.Bridges.print_active_bridges, model, F, S) === """
+           * Supported constraint: MOI.VectorAffineFunction{Float64}-in-MOI.Nonnegatives
+          """
+    return
+end
+
+function test_print_active_bridges_constraint_bridged()
+    model = MOI.Bridges.full_bridge_optimizer(Model{Float64}(), Float64)
+    F = MOI.VectorAffineFunction{Float64}
+    S = MOI.Nonpositives
+    content = """
+     * Unsupported constraint: MOI.VectorAffineFunction{Float64}-in-MOI.Nonpositives
+     |  bridged by:
+     |   MOIB.Constraint.NonposToNonnegBridge{Float64, MOI.VectorAffineFunction{Float64}, MOI.VectorAffineFunction{Float64}}
+     |  may introduce:
+     |   * Supported constraint: MOI.VectorAffineFunction{Float64}-in-MOI.Nonnegatives
+    """
+    @test sprint(MOI.Bridges.print_active_bridges, model, F, S) === content
+    return
+end
+
+function test_print_active_bridges_constraint_unsupported()
+    model = MOI.Bridges.full_bridge_optimizer(Model{Float64}(), Float64)
+    F = MOI.ScalarAffineFunction{Int}
+    S = MOI.ZeroOne
+    @test_throws(
+        MOI.UnsupportedConstraint{F,S},
+        MOI.Bridges.print_active_bridges(model, F, S),
+    )
+    return
+end
+
+function test_print_active_bridges_variable_supported()
+    model = MOI.Bridges.full_bridge_optimizer(Model{Float64}(), Float64)
+    S = MOI.Nonnegatives
+    @test sprint(MOI.Bridges.print_active_bridges, model, S) === """
+           * Supported variable: MOI.Nonnegatives
+          """
+    return
+end
+
+function test_print_active_bridges_variable_bridged()
+    model = MOI.Bridges.full_bridge_optimizer(Model{Float64}(), Float64)
+    S = MOI.Reals
+    content = """
+     * Unsupported variable: MOI.Reals
+     |  bridged by:
+     |    MOIB.Variable.FreeBridge{Float64}
+     |  may introduce:
+     |   * Supported variable: MOI.Nonnegatives
+    """
+    @test sprint(MOI.Bridges.print_active_bridges, model, S) === content
+    return
+end
+
+function test_print_active_bridges_variable_unsupported()
+    model = MOI.Bridges.full_bridge_optimizer(Model{Float64}(), Float64)
+    @test_throws(
+        MOI.UnsupportedConstraint{MOI.VariableIndex,MOI.ZeroOne},
+        MOI.Bridges.print_active_bridges(model, MOI.ZeroOne),
+    )
+    return
+end
+
 end
 
 TestBridgesDebug.runtests()

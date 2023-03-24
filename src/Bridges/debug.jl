@@ -592,8 +592,8 @@ function print_active_bridges(
             MOI.UnsupportedAttribute(
                 MOI.ObjectiveFunction{F}(),
                 "The objective function cannot be bridged using the set of " *
-                "avaialble bridges.",
-            )
+                "available bridges.",
+            ),
         )
     end
     if !MOI.Bridges.is_bridged(b, F)
