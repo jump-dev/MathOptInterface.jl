@@ -17,7 +17,7 @@ MOI.Test.runtests(
     ),
     MOI.Test.Config(),
     exclude = [
-        "test_model_ScalarFunctionConstantNotZero",
+        r"^test_model_ScalarFunctionConstantNotZero$",
         "test_model_copy_to_UnsupportedAttribute",
         "test_model_copy_to_UnsupportedConstraint",
         "test_model_supports_constraint_ScalarAffineFunction_EqualTo",
@@ -36,7 +36,7 @@ MOI.Test.runtests(
     ),
     MOI.Test.Config(),
     include = [
-        "test_model_ScalarFunctionConstantNotZero",
+        r"^test_model_ScalarFunctionConstantNotZero$",
         "test_model_copy_to_UnsupportedAttribute",
         "test_model_copy_to_UnsupportedConstraint",
         "test_model_supports_constraint_ScalarAffineFunction_EqualTo",
