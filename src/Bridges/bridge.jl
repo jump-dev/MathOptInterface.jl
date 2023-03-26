@@ -192,7 +192,11 @@ type `BT` add.
 
 ## Implementation notes
 
- * This method depends only on the type of the bridge, not the runtime value.
+ * This method depends only on the type of the bridge, not the runtime value. If
+   the bridge _may_ add a constrained variable, the type _must_ be included in
+   the return vector.
+ * If the bridge adds a free variable via [`MOI.add_variable`](@ref) or
+   [`MOI.add_variables`](@ref), the return vector _must_ include `(MOI.Reals,)`.
 
 ## Example
 
@@ -216,7 +220,9 @@ add.
 
 ## Implementation notes
 
- * This method depends only on the type of the bridge, not the runtime value.
+ * This method depends only on the type of the bridge, not the runtime value. If
+   the bridge _may_ add a constraint, the type _must_ be included in the
+   return vector.
 
 ## Example
 
