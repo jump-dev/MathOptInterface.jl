@@ -972,7 +972,6 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
             """
 Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
  [1] constrained variables in `MOI.Reals` are not supported because no added bridge supports bridging it.
-   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because no added bridge supports bridging it.
  (2) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported because no added bridge supports bridging it.
  |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported because:
@@ -997,7 +996,6 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
             """
 Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
  [1] constrained variables in `MOI.Reals` are not supported because no added bridge supports bridging it.
-   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
    Cannot use `$(MOI.Bridges.Constraint.QuadtoSOCBridge{T})` because:
    (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported
@@ -1021,7 +1019,6 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
             """
 Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
  [1] constrained variables in `MOI.Reals` are not supported because no added bridge supports bridging it.
-   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
  [2] constrained variables in `MOI.RotatedSecondOrderCone` are not supported because no added bridge supports bridging it.
    Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
@@ -1052,7 +1049,6 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
             """
 Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported and cannot be bridged into a supported objective function by adding only supported constrained variables and constraints. See details below:
  [1] constrained variables in `MOI.Reals` are not supported because no added bridge supports bridging it.
-   Cannot add free variables and then constrain them because free variables are bridged but no functionize bridge was added.
  (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are not supported because:
    Cannot use `$(MOI.Bridges.Constraint.QuadtoSOCBridge{T})` because:
    (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are not supported

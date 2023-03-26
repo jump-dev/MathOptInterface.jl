@@ -233,6 +233,9 @@ function print_unsupported(io::IO, b::LazyBridgeOptimizer, node::VariableNode)
         b.graph.variable_edges[node.index],
         bridge_index -> _bridge_type(b, node, bridge_index),
     )
+    if b.variable_types[node.index] == (MOI.Reals,)
+        return
+    end
     print(io, "   Cannot add free variables and then constrain them because")
     constraint_node = b.graph.variable_constraint_node[node.index]
     if constraint_node.index == -1
