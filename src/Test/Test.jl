@@ -146,8 +146,8 @@ version_added(::F) where {F} = v"0.10.5"  # The default for any unlabeled tests.
     runtests(
         model::MOI.ModelLike,
         config::Config;
-        include::Vector{String} = String[],
-        exclude::Vector{String} = String[],
+        include::Vector{Union{String,Regex}} = String[],
+        exclude::Vector{Union{String,Regex}} = String[],
         warn_unsupported::Bool = false,
         exclude_tests_after::VersionNumber = v"999.0.0",
     )
@@ -158,10 +158,10 @@ Run all tests in `MathOptInterface.Test` on `model`.
 
  * `config` is a [`Test.Config`](@ref) object that can be used to modify the
    behavior of tests.
- * If `include` is not empty, only run tests that contain an element from
-   `include` in their name.
- * If `exclude` is not empty, skip tests that contain an element from `exclude`
-   in their name.
+ * If `include` is not empty, only run tests if an element from `include`
+   `occursin` the name of the test.
+ * If `exclude` is not empty, skip tests if an element from `exclude` `occursin`
+   the name of the test.
  * `exclude` takes priority over `include`.
  * If `warn_unsupported` is `false`, `runtests` will silently skip tests that
    fail with a `MOI.NotAllowedError`, `MOI.UnsupportedError`, or
@@ -186,7 +186,7 @@ config = MathOptInterface.Test.Config()
 MathOptInterface.Test.runtests(
     model,
     config;
-    include = ["test_linear_"],
+    include = ["test_linear_", r"^test_model_Name\$"],
     exclude = ["VariablePrimalStart"],
     warn_unsupported = true,
     exclude_tests_after = v"0.10.5",
@@ -196,8 +196,8 @@ MathOptInterface.Test.runtests(
 function runtests(
     model::MOI.ModelLike,
     config::Config;
-    include::Vector{String} = String[],
-    exclude::Vector{String} = String[],
+    include::Vector = String[],
+    exclude::Vector = String[],
     warn_unsupported::Bool = false,
     exclude_tests_after::VersionNumber = v"999.0.0",
 )
