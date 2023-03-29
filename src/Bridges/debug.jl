@@ -233,6 +233,9 @@ function print_unsupported(io::IO, b::LazyBridgeOptimizer, node::VariableNode)
         b.graph.variable_edges[node.index],
         bridge_index -> _bridge_type(b, node, bridge_index),
     )
+    if b.variable_types[node.index] == (MOI.Reals,)
+        return
+    end
     print(io, "   Cannot add free variables and then constrain them because")
     constraint_node = b.graph.variable_constraint_node[node.index]
     if constraint_node.index == -1
@@ -537,18 +540,18 @@ Print the set of bridges that are active in the model `b`.
 """
 function print_active_bridges(io::IO, b::MOI.Bridges.LazyBridgeOptimizer)
     F = MOI.get(b, MOI.ObjectiveFunctionType())
-    _print_objective_tree(io, b, F, "")
+    print_active_bridges(io, b, F)
     types = MOI.get(b, MOI.ListOfConstraintTypesPresent())
     # We add a sort here to make the order reproducible, and to group similar
     # constraints together.
     for (F, S) in sort(types; by = string)
-        _print_constraint_tree(io, b, F, S, "")
+        print_active_bridges(io, b, F, S)
     end
     return
 end
 
-function print_active_bridges(b::MOI.Bridges.LazyBridgeOptimizer)
-    return print_active_bridges(stdout, b)
+function print_active_bridges(b::MOI.Bridges.LazyBridgeOptimizer, args...)
+    return print_active_bridges(stdout, b, args...)
 end
 
 function _print_supported(io, arg...)
@@ -561,23 +564,41 @@ function _print_unsupported(io, arg...)
     return Printf.printstyled(io, s; bold = false, color = :red)
 end
 
-function _print_bridge(io, b, bridge::BT, offset) where {BT}
+function _print_bridge(io, b, ::Type{BT}, offset) where {BT}
     new_offset = offset * " |  "
     for (F, S) in MOI.Bridges.added_constraint_types(BT)
-        _print_constraint_tree(io, b, F, S, new_offset)
+        print_active_bridges(io, b, F, S, new_offset)
     end
     for (S,) in MOI.Bridges.added_constrained_variable_types(BT)
-        _print_variable_tree(io, b, S, new_offset)
-    end
-    for x in MOI.get(bridge, MOI.ListOfVariableIndices())
-        if MOI.Bridges.is_bridged(b, x)
-            _print_variable(io, b, MOI.Reals, x, new_offset)
-        end
+        print_active_bridges(io, b, S, new_offset)
     end
     return
 end
 
-function _print_objective_tree(io, b, F, offset)
+"""
+    print_active_bridges(
+        [io::IO=stdout,]
+        b::MOI.Bridges.LazyBridgeOptimizer,
+        F::Type{<:MOI.AbstractFunction}
+    )
+
+Print the set of bridges required for an objective function of type `F`.
+"""
+function print_active_bridges(
+    io::IO,
+    b::MOI.Bridges.LazyBridgeOptimizer,
+    ::Type{F},
+    offset::String = "",
+) where {F<:MOI.AbstractFunction}
+    if !MOI.supports(b, MOI.ObjectiveFunction{F}())
+        throw(
+            MOI.UnsupportedAttribute(
+                MOI.ObjectiveFunction{F}(),
+                "The objective function cannot be bridged using the set of " *
+                "available bridges.",
+            ),
+        )
+    end
     if !MOI.Bridges.is_bridged(b, F)
         print(io, offset, " * ")
         _print_supported(io, "Supported objective: $F\n")
@@ -585,95 +606,130 @@ function _print_objective_tree(io, b, F, offset)
     end
     print(io, offset, " * ")
     _print_unsupported(io, "Unsupported objective: $F\n")
-    bridge = b.objective_map[MOI.ObjectiveFunction{F}()]
+    index = MOI.Bridges.bridge_index(b.graph, b.objective_node[(F,)])
+    B = b.objective_bridge_types[index]
+    BT = MOI.Bridges.Objective.concrete_bridge_type(B, F)
     println(io, offset, " |  bridged by:")
     print(io, offset, " |   ")
-    BT = typeof(bridge)
-    MOI.Utilities.print_with_acronym(io, "$(BT)\n")
-    println(io, offset, " |  introduces:")
-    # Only objective bridges can create new objective trees.
-    new_f = MOI.Bridges.set_objective_function_type(BT)
-    _print_objective_tree(io, b, new_f, offset * " |  ")
-    _print_bridge(io, b, bridge, offset)
+    MOI.Utilities.print_with_acronym(io, "$BT\n")
+    println(io, offset, " |  may introduce:")
+    G = MOI.Bridges.set_objective_function_type(BT)
+    print_active_bridges(io, b, G, offset * " |  ")
+    _print_bridge(io, b, BT, offset)
     return
 end
 
-function _print_constraint_tree(io, b, F, S, offset)
+"""
+    print_active_bridges(
+        [io::IO=stdout,]
+        b::MOI.Bridges.LazyBridgeOptimizer,
+        F::Type{<:MOI.AbstractFunction},
+        S::Type{<:MOI.AbstractSet},
+    )
+
+Print the set of bridges required for a constraint of type `F`-in-`S`.
+"""
+function print_active_bridges(
+    io::IO,
+    b::MOI.Bridges.LazyBridgeOptimizer,
+    ::Type{F},
+    ::Type{S},
+    offset::String = "",
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    if !MOI.supports_constraint(b, F, S)
+        throw(
+            MOI.UnsupportedConstraint{F,S}(
+                "The constraint cannot be bridged using the set of available " *
+                "bridges.",
+            ),
+        )
+    end
     if !MOI.Bridges.is_bridged(b, F, S)
-        # This constraint is natively supported.
         print(io, offset, " * ")
         _print_supported(io, "Supported constraint: $F-in-$S\n")
         return
     end
-    for (ci, bridge) in b.constraint_map
-        # Loop through bridged constraints to see if any F,S are bridged
-        if ci isa MOI.ConstraintIndex{F,S}
-            # The exact `ci` doesn't matter, only the type.
-            print(io, offset, " * ")
-            _print_unsupported(io, "Unsupported constraint: $F-in-$S\n")
-            BT = typeof(bridge)
-            println(io, offset, " |  bridged by:")
-            print(io, offset, " |   ")
-            MOI.Utilities.print_with_acronym(io, "$(BT)\n")
-            println(io, offset, " |  introduces:")
-            _print_bridge(io, b, bridge, offset)
-            return
+    is_constraint_bridged = true
+    c_node = b.constraint_node[(F, S)]
+    if F == MOI.VariableIndex || F == MOI.VectorOfVariables
+        # Call `MOI.supports_` here to build the necessary nodes in the bridging
+        # graph.
+        if F == MOI.VariableIndex
+            MOI.supports_add_constrained_variable(b, S)
+        else
+            MOI.supports_add_constrained_variables(b, S)
+        end
+        v_node = b.variable_node[(S,)]
+        if bridging_cost(b.graph, v_node) <= bridging_cost(b.graph, c_node)
+            is_constraint_bridged = false
         end
     end
-    # If we get here, (F, S) isn't bridged by a constraint bridge.
-    if MOI.get(b, MOI.NumberOfConstraints{F,S}()) > 0
-        _print_variable_tree(io, b, S, offset)
+    if is_constraint_bridged
+        index = MOI.Bridges.bridge_index(b.graph, c_node)
+        B = b.constraint_bridge_types[index]
+        BT = MOI.Bridges.Constraint.concrete_bridge_type(B, F, S)
+        print(io, offset, " * ")
+        _print_unsupported(io, "Unsupported constraint: $F-in-$S\n")
+        println(io, offset, " |  bridged by:")
+        print(io, offset, " |   ")
+        MOI.Utilities.print_with_acronym(io, "$BT\n")
+        println(io, offset, " |  may introduce:")
+        _print_bridge(io, b, BT, offset)
+    else
+        print_active_bridges(io, b, S, offset)
     end
     return
 end
 
-function _print_variable(io, b, S, x, offset)
+"""
+    print_active_bridges(
+        [io::IO=stdout,]
+        b::MOI.Bridges.LazyBridgeOptimizer,
+        S::Type{<:MOI.AbstractSet}
+    )
+
+Print the set of bridges required for a variable constrained to set `S`.
+"""
+function print_active_bridges(
+    io::IO,
+    b::MOI.Bridges.LazyBridgeOptimizer,
+    ::Type{S},
+    offset::String = "",
+) where {S<:MOI.AbstractSet}
+    if S <: MOI.AbstractScalarSet
+        if !MOI.supports_add_constrained_variable(b, S)
+            throw(
+                MOI.UnsupportedConstraint{MOI.VariableIndex,S}(
+                    "The variable cannot be bridged using the set of " *
+                    "available bridges.",
+                ),
+            )
+        end
+    else
+        @assert S <: MOI.AbstractVectorSet
+        if !MOI.supports_add_constrained_variables(b, S)
+            throw(
+                MOI.UnsupportedConstraint{MOI.VectorOfVariables,S}(
+                    "The variables cannot be bridged using the set of " *
+                    "available bridges.",
+                ),
+            )
+        end
+    end
+    if !MOI.Bridges.is_bridged(b, S)
+        print(io, offset, " * ")
+        _print_supported(io, "Supported variable: $S\n")
+        return
+    end
+    index = MOI.Bridges.bridge_index(b.graph, b.variable_node[(S,)])
+    B = b.variable_bridge_types[index]
+    BT = MOI.Bridges.Variable.concrete_bridge_type(B, S)
     print(io, offset, " * ")
     _print_unsupported(io, "Unsupported variable: $S\n")
-    bridge = b.variable_map[x]
     println(io, offset, " |  bridged by:")
     print(io, offset, " |    ")
-    MOI.Utilities.print_with_acronym(io, "$(typeof(bridge))\n")
-    println(io, offset, " |  introduces:")
-    _print_bridge(io, b, bridge, offset)
-    return
-end
-
-function _print_variable_tree(io, b, S::Type{<:MOI.AbstractVectorSet}, offset)
-    if !MOI.Bridges.is_bridged(b, S)
-        print(io, offset, " * ")
-        _print_supported(io, "Supported variable: $S\n")
-        return
-    end
-    indices = MOI.get(b, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S}())
-    if length(indices) > 0
-        @assert MOI.Bridges.is_bridged(b, MOI.VectorOfVariables, S)
-        ci = first(indices)
-        f = MOI.get(b, MOI.ConstraintFunction(), ci)
-        for x in f.variables
-            if haskey(b.variable_map, x)
-                _print_variable(io, b, S, x, offset)
-                break
-            end
-        end
-    end
-    return
-end
-
-function _print_variable_tree(io, b, S::Type{<:MOI.AbstractScalarSet}, offset)
-    if !MOI.Bridges.is_bridged(b, S)
-        print(io, offset, " * ")
-        _print_supported(io, "Supported variable: $S\n")
-        return
-    end
-    indices = MOI.get(b, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
-    if length(indices) > 0
-        @assert MOI.Bridges.is_bridged(b, MOI.VariableIndex, S)
-        ci = first(indices)
-        x = MOI.get(b, MOI.ConstraintFunction(), ci)
-        if haskey(b.variable_map, x)
-            _print_variable(io, b, S, x, offset)
-        end
-    end
+    MOI.Utilities.print_with_acronym(io, "$BT\n")
+    println(io, offset, " |  may introduce:")
+    _print_bridge(io, b, BT, offset)
     return
 end
