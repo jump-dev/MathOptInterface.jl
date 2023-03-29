@@ -623,7 +623,8 @@ end
     print_active_bridges(
         [io::IO=stdout,]
         b::MOI.Bridges.LazyBridgeOptimizer,
-        F::Type{<:MOI.AbstractFunction}
+        F::Type{<:MOI.AbstractFunction},
+        S::Type{<:MOI.AbstractSet},
     )
 
 Print the set of bridges required for a constraint of type `F`-in-`S`.
