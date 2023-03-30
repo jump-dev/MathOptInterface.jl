@@ -63,7 +63,7 @@ function SolFileResults(
 end
 
 function MOI.get(sol::SolFileResults, ::MOI.ResultCount)
-    return MOI.get(sol, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT ? 1 : 0
+    return isempty(sol.variable_primal) ? 0 : 1
 end
 
 function MOI.get(sol::SolFileResults, ::MOI.RawStatusString)
@@ -206,6 +206,15 @@ For the primal status, assume a solution is present. Other code is responsible
 for returning `MOI.NO_SOLUTION` if no primal solution is present.
 """
 function _interpret_status(solve_result_num::Int, raw_status_string::String)
+    message = lowercase(raw_status_string)
+    # Handle some status strings that are, in most cases, solver-specific.
+    if occursin("time limit, feasible solution", message)
+        return MOI.TIME_LIMIT, MOI.FEASIBLE_POINT
+    end
+    # No handle the solve status codes. These are solver-specific, although they
+    # should be grouped into XYZ codes, where the first digit is a generic
+    # group (optimal, infeasible, limit, etc), and the YZ are solver-specific
+    # codes with more meaning.
     if 0 <= solve_result_num < 100
         # Solved, and nothing went wrong. Even though we say `LOCALLY_SOLVED`,
         # some solvers like SHOT use this status to represent problems that are
@@ -224,10 +233,7 @@ function _interpret_status(solve_result_num::Int, raw_status_string::String)
     elseif 500 <= solve_result_num < 600
         return MOI.OTHER_ERROR, MOI.UNKNOWN_RESULT_STATUS
     end
-    # If we didn't get a valid solve_result_num, try to get the status from the
-    # solve_message string. Some solvers (e.g. SCIP) don't ever print the
-    # suffixes so we need this.
-    message = lowercase(raw_status_string)
+    # If all else fails, attempt to infer the status from `raw_status_string`.
     if occursin("optimal", message)
         return MOI.LOCALLY_SOLVED, MOI.FEASIBLE_POINT
     elseif occursin("infeasible", message)

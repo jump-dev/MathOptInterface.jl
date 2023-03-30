@@ -279,6 +279,8 @@ function test_statuses()
             (MOI.DUAL_INFEASIBLE, MOI.UNKNOWN_RESULT_STATUS),
         (400, "norm limit exceeded") =>
             (MOI.OTHER_LIMIT, MOI.UNKNOWN_RESULT_STATUS),
+        (403, "Solver 10.0.1: time limit, feasible solution\n") =>
+            (MOI.TIME_LIMIT, MOI.FEASIBLE_POINT),
         (500, "Solver error.") =>
             (MOI.OTHER_ERROR, MOI.UNKNOWN_RESULT_STATUS),
         (-1, "Optimal Solution Found") =>
@@ -307,6 +309,12 @@ function test_sol_empty()
     return
 end
 
+function test_result_count()
+    results = SolFileResults("raw", MOI.OTHER_LIMIT)
+    @test MOI.get(results, MOI.ResultCount()) == 0
+    results.variable_primal[MOI.VariableIndex(1)] = 0.0
+    @test MOI.get(results, MOI.ResultCount()) == 1
+    return
 end
 
 TestNonlinearSolFiles.runtests()
