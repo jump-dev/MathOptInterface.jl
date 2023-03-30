@@ -310,11 +310,13 @@ function test_sol_empty()
 end
 
 function test_result_count()
-    results = SolFileResults("raw", MOI.OTHER_LIMIT)
+    results = NL.SolFileResults("raw", MOI.OTHER_LIMIT)
     @test MOI.get(results, MOI.ResultCount()) == 0
     results.variable_primal[MOI.VariableIndex(1)] = 0.0
     @test MOI.get(results, MOI.ResultCount()) == 1
     return
+end
+
 end
 
 TestNonlinearSolFiles.runtests()
