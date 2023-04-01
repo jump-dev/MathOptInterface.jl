@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Fixed [`ResultCount`](@ref) when parsing `.sol` files in `FileFormats.NL`
    (#2130)
 
-## v1.13.2 (March 21, 2022)
+## v1.13.2 (March 21, 2023)
 
 ### Fixed
 
@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    breaking if you have tests which rely on a specific `String` form of MOI
    functions. (#2112) (#2126)
 
-## v1.13.1 (March 3, 2022)
+## v1.13.1 (March 3, 2023)
 
 ### Other
 
@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    resulting warnings (#2110)
  - Improved the docstrings in `src/functions.jl` (#2108)
 
-## v1.13.0 (February 28, 2022)
+## v1.13.0 (February 28, 2023)
 
 ### Added
 
@@ -71,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Improved docstrings of sets in `src/sets.jl` (#2099)
  - Skip checking flakey links in documentation with `linkcheck_ignore`  (#2103)
 
-## v1.12.0 (February 10, 2022)
+## v1.12.0 (February 10, 2023)
 
 ### Added
 
@@ -91,7 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Improved the docstrings of a number of constraint-programming related sets
    (#2087)
 
-## v1.11.5 (January 24, 2022)
+## v1.11.5 (January 24, 2023)
 
 ### Fixed
 
@@ -103,13 +103,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Added `SnoopPrecompile` directives for reduced time-to-first-X in Julia v1.9
    (#2080)
 
-## v1.11.4 (January 12, 2022)
+## v1.11.4 (January 12, 2023)
 
 ### Fixed
 
  - Fixed a bug reading `.lp` files with an `Integer` section (#2078)
 
-## v1.11.3 (January 12, 2022)
+## v1.11.3 (January 12, 2023)
 
 ### Fixed
 
@@ -120,7 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Documented the two-argument method of [`optimize!`](@ref) (#2074)
 
-## v1.11.2 (January 2, 2022)
+## v1.11.2 (January 2, 2023)
 
 ### Fixed
 
