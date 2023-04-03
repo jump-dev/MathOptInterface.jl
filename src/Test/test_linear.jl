@@ -4078,11 +4078,7 @@ function test_linear_variable_open_intervals(
     config::Config{T},
 ) where {T}
     @requires _supports(config, MOI.optimize!)
-    @requires MOI.supports_constraint(
-        model,
-        MOI.VariableIndex,
-        MOI.Interval{T},
-    )
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.Interval{T})
     x = MOI.add_variables(model, 3)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = T(1) * x[1] + T(-1) * x[2] + T(1) * x[3]
