@@ -7,6 +7,22 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.14.0 (April 4, 2023)
+
+### Added
+
+ - Added support for starting values in [`Bridges.Constraint.QuadtoSOCBridge`](@ref)
+   (#2115)
+ - Added support for `Regex` in the `include` and `exclude` arguments to
+   [`Test.runtests`](@ref) (#2129)
+ - Added [`Bridges.print_active_bridges`](@ref) methods for individual
+   objectives and constraints (#2128)
+
+### Fixed
+
+ - Fixed [`ResultCount`](@ref) when parsing `.sol` files in `FileFormats.NL`
+   (#2130)
+
 ## v1.13.2 (March 21, 2023)
 
 ### Fixed
