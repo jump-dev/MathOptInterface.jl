@@ -721,15 +721,25 @@ function print_active_bridges(
         _print_supported(io, "Supported variable: $S\n")
         return
     end
-    index = MOI.Bridges.bridge_index(b.graph, b.variable_node[(S,)])
-    B = b.variable_bridge_types[index]
-    BT = MOI.Bridges.Variable.concrete_bridge_type(B, S)
-    print(io, offset, " * ")
-    _print_unsupported(io, "Unsupported variable: $S\n")
-    println(io, offset, " |  bridged by:")
-    print(io, offset, " |    ")
-    MOI.Utilities.print_with_acronym(io, "$BT\n")
-    println(io, offset, " |  may introduce:")
-    _print_bridge(io, b, BT, offset)
+    if MOI.Bridges.is_variable_edge_best(b.graph, b.variable_node[(S,)])
+        index = MOI.Bridges.bridge_index(b.graph, b.variable_node[(S,)])
+        B = b.variable_bridge_types[index]
+        BT = MOI.Bridges.Variable.concrete_bridge_type(B, S)
+        print(io, offset, " * ")
+        _print_unsupported(io, "Unsupported variable: $S\n")
+        println(io, offset, " |  bridged by:")
+        print(io, offset, " |    ")
+        MOI.Utilities.print_with_acronym(io, "$BT\n")
+        println(io, offset, " |  may introduce:")
+        _print_bridge(io, b, BT, offset)
+    else
+        print(io, offset, " * ")
+        _print_unsupported(io, "Unsupported variable: $S\n")
+        println(io, offset, " |  adding as constraint:")
+        offset = offset * " |  "
+        MOI.Bridges.print_active_bridges(io, b, MOI.Reals, offset)
+        F = MOI.Utilities.variable_function_type(S)
+        MOI.Bridges.print_active_bridges(io, b, F, S, offset)
+    end
     return
 end

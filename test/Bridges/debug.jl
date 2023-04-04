@@ -277,6 +277,42 @@ function test_print_active_bridges_variable_unsupported()
     return
 end
 
+MOI.Utilities.@model(
+    ConstraintModel,
+    (MOI.ZeroOne, MOI.Integer),
+    (MOI.GreaterThan, MOI.LessThan, MOI.EqualTo),
+    (),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (),
+    ()
+)
+
+function test_print_active_bridges_variable_bridged_with_constraint()
+    model = MOI.Bridges.full_bridge_optimizer(ConstraintModel{Float64}(), Float64)
+    content = """
+     * Unsupported variable: MOI.AllDifferent
+     |  adding as constraint:
+     |   * Supported variable: MOI.Reals
+     |   * Unsupported constraint: MOI.VectorOfVariables-in-MOI.AllDifferent
+     |   |  bridged by:
+     |   |   MOIB.Constraint.AllDifferentToCountDistinctBridge{Float64, MOI.VectorOfVariables}
+     |   |  may introduce:
+     |   |   * Unsupported constraint: MOI.VectorOfVariables-in-MOI.CountDistinct
+     |   |   |  bridged by:
+     |   |   |   MOIB.Constraint.CountDistinctToMILPBridge{Float64, MOI.VectorOfVariables}
+     |   |   |  may introduce:
+     |   |   |   * Supported constraint: MOI.ScalarAffineFunction{Float64}-in-MOI.EqualTo{Float64}
+     |   |   |   * Supported constraint: MOI.ScalarAffineFunction{Float64}-in-MOI.LessThan{Float64}
+     |   |   |   * Supported variable: MOI.ZeroOne
+     |   |   * Supported variable: MOI.EqualTo{Float64}
+    """
+    S = MOI.AllDifferent
+    @test sprint(MOI.Bridges.print_active_bridges, model, S) === content
+    return
+end
+
 end
 
 TestBridgesDebug.runtests()
