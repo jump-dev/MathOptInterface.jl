@@ -209,7 +209,7 @@ function runtests(
                 "The exclude string \"$ex\" is ambiguous because it exactly " *
                 "matches a test, but it also partially matches another. Use " *
                 "`r\"^$ex\$\"` to exclude the exactly matching test, or " *
-                "`r\"$ex.*\"` to exclude all matching partially matching tests.",
+                "`r\"$ex.*\"` to exclude all partially matching tests.",
             )
         end
     end
