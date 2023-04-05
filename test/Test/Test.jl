@@ -110,3 +110,16 @@ MOI.Test.test_attribute_unsupported_constraint(
     attr = MOI.NumberOfConstraints{F,S}()
     @test_throws MOI.GetAttributeNotAllowed(attr) MOI.get(model, attr)
 end
+
+@testset "test_warning_on_ambiguous" begin
+    model = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    config = MOI.Test.Config()
+    # `test_model_Name`` is our target of interest, `test_` is just to avoid
+    # running any tests.
+    exclude = ["test_model_Name", r"test_.+"]
+    @test_logs (:warn,) MOI.Test.runtests(model, config; exclude = exclude)
+    exclude = [r"^test_model_Name$", r"test_.+"]
+    @test_logs MOI.Test.runtests(model, config; exclude = exclude)
+end
