@@ -290,7 +290,8 @@ MOI.Utilities.@model(
 )
 
 function test_print_active_bridges_variable_bridged_with_constraint()
-    model = MOI.Bridges.full_bridge_optimizer(ConstraintModel{Float64}(), Float64)
+    model =
+        MOI.Bridges.full_bridge_optimizer(ConstraintModel{Float64}(), Float64)
     content = """
      * Unsupported variable: MOI.AllDifferent
      |  adding as constraint:
