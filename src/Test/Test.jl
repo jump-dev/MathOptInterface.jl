@@ -201,6 +201,18 @@ function runtests(
     warn_unsupported::Bool = false,
     exclude_tests_after::VersionNumber = v"999.0.0",
 )
+    tests = filter(n -> startswith("$n", "test_"), names(MOI.Test; all = true))
+    tests = string.(tests)
+    for ex in exclude
+        if ex in tests && any(t -> ex != t && occursin(ex, t), tests)
+            @warn(
+                "The exclude string \"$ex\" is ambiguous because it exactly " *
+                "matches a test, but it also partially matches another. Use " *
+                "`r\"^$ex\$\"` to exclude the exactly matching test, or " *
+                "`r\"$ex.*\"` to exclude all partially matching tests.",
+            )
+        end
+    end
     for name_sym in names(@__MODULE__; all = true)
         name = string(name_sym)
         if !startswith(name, "test_")
