@@ -397,6 +397,65 @@ function test_runtests()
         3.0 * x <= 2.0
         """,
     )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitIntervalBridge,
+        """
+        variables: x
+        x in Interval(1.0, Inf)
+        """,
+        """
+        variables: x
+        x >= 1.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitIntervalBridge,
+        """
+        variables: x
+        x in Interval(-Inf, 2.0)
+        """,
+        """
+        variables: x
+        x <= 2.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitIntervalBridge,
+        """
+        variables: x
+        x in Interval(1 // 2, 3 // 2)
+        """,
+        """
+        variables: x
+        x in GreaterThan(1 // 2)
+        x in LessThan(3 // 2)
+        """,
+        eltype = Rational{Int},
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitIntervalBridge,
+        """
+        variables: x
+        x in Interval(1 // 2, 1 // 0)
+        """,
+        """
+        variables: x
+        x in GreaterThan(1 // 2)
+        """,
+        eltype = Rational{Int},
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitIntervalBridge,
+        """
+        variables: x
+        x in Interval(-1 // 0, 1 // 2)
+        """,
+        """
+        variables: x
+        x in LessThan(1 // 2)
+        """,
+        eltype = Rational{Int},
+    )
     return
 end
 
