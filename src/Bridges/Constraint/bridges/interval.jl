@@ -67,20 +67,22 @@ const SplitInterval{T,OT<:MOI.ModelLike} =
 _lower_set(set::MOI.Interval) = MOI.GreaterThan(set.lower)
 _upper_set(set::MOI.Interval) = MOI.LessThan(set.upper)
 
-function _lower_set(set::MOI.Interval{T}) where {T<:AbstractFloat}
+function _lower_set(
+    set::MOI.Interval{T},
+) where {T<:Union{AbstractFloat,Rational}}
     if set.lower == typemin(T)
         return nothing
-    else
-        return MOI.GreaterThan(set.lower)
     end
+    return MOI.GreaterThan(set.lower)
 end
 
-function _upper_set(set::MOI.Interval{T}) where {T<:AbstractFloat}
+function _upper_set(
+    set::MOI.Interval{T},
+) where {T<:Union{AbstractFloat,Rational}}
     if set.upper == typemax(T)
         return nothing
-    else
-        return MOI.LessThan(set.upper)
     end
+    return MOI.LessThan(set.upper)
 end
 
 _lower_set(set::MOI.EqualTo) = MOI.GreaterThan(set.value)

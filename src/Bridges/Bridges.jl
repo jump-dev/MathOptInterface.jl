@@ -224,6 +224,7 @@ end
         output::String;
         variable_start = 1.2,
         constraint_start = 1.2,
+        eltype = Float64,
     )
 
 Run a series of tests that check the correctness of `Bridge`.
@@ -254,20 +255,21 @@ function runtests(
     output::String;
     variable_start = 1.2,
     constraint_start = 1.2,
+    eltype = Float64,
 )
     # Load model and bridge it
-    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
-    model = _bridged_model(Bridge, inner)
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
+    model = _bridged_model(Bridge{eltype}, inner)
     MOI.Utilities.loadfromstring!(model, input)
     final_touch(model)
     # Should be able to call final_touch multiple times.
     final_touch(model)
     # Load a non-bridged input model, and check that getters are the same.
-    test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
     MOI.Utilities.loadfromstring!(test, input)
     _test_structural_identical(test, model)
     # Load a bridged target model, and check that getters are the same.
-    target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
     MOI.Utilities.loadfromstring!(target, output)
     _test_structural_identical(target, inner)
     # Test VariablePrimalStart
@@ -337,15 +339,15 @@ _fake_start(value, ::MOI.AbstractScalarSet) = value
 _fake_start(value, set::MOI.AbstractVectorSet) = fill(value, MOI.dimension(set))
 
 function _bridged_model(Bridge::Type{<:Constraint.AbstractBridge}, inner)
-    return Constraint.SingleBridgeOptimizer{Bridge{Float64}}(inner)
+    return Constraint.SingleBridgeOptimizer{Bridge}(inner)
 end
 
 function _bridged_model(Bridge::Type{<:Objective.AbstractBridge}, inner)
-    return Objective.SingleBridgeOptimizer{Bridge{Float64}}(inner)
+    return Objective.SingleBridgeOptimizer{Bridge}(inner)
 end
 
 function _bridged_model(Bridge::Type{<:Variable.AbstractBridge}, inner)
-    return Variable.SingleBridgeOptimizer{Bridge{Float64}}(inner)
+    return Variable.SingleBridgeOptimizer{Bridge}(inner)
 end
 
 function _general_bridge_tests(bridge::B) where {B<:AbstractBridge}
