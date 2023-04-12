@@ -846,6 +846,17 @@ function Base.convert(
     return VectorAffineFunction{T}(f.terms, f.constants)
 end
 
+function Base.convert(
+    ::Type{VectorAffineFunction{T}},
+    f::VectorOfVariables,
+) where {T}
+    terms = VectorAffineTerm{T}[
+        VectorAffineTerm{T}(i, ScalarAffineTerm{T}(one(T), x)) for
+        (i, x) in enumerate(f.variables)
+    ]
+    return VectorAffineFunction{T}(terms, zeros(T, length(terms)))
+end
+
 # VectorQuadraticFunction
 
 function Base.convert(
