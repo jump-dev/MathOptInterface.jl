@@ -56,15 +56,28 @@ function parse_expression(
     return
 end
 
-function _parse_without_recursion_inner(stack, data, expr, x, parent)
+function _get_node_type(data, x)
     id = get(data.operators.univariate_operator_to_id, x.head, nothing)
-    node_type = if length(x.args) == 1 && id !== nothing
-        NODE_CALL_UNIVARIATE
-    else
-        id = get(data.operators.multivariate_operator_to_id, x.head, nothing)
-        @assert id !== nothing
-        NODE_CALL_MULTIVARIATE
+    if length(x.args) == 1 && id !== nothing
+        return id, MOI.Nonlinear.NODE_CALL_UNIVARIATE
     end
+    id = get(data.operators.multivariate_operator_to_id, x.head, nothing)
+    if id !== nothing
+        return id, MOI.Nonlinear.NODE_CALL_MULTIVARIATE
+    end
+    id = get(data.operators.comparison_operator_to_id, x.head, nothing)
+    if id !== nothing
+        return id, MOI.Nonlinear.NODE_COMPARISON
+    end
+    id = get(data.operators.logic_operator_to_id, x.head, nothing)
+    if id !== nothing
+        return id, MOI.Nonlinear.NODE_LOGIC
+    end
+    return throw(MOI.UnsupportedNonlinearOperator(x.head))
+end
+
+function _parse_without_recursion_inner(stack, data, expr, x, parent)
+    id, node_type = _get_node_type(data, x)
     push!(expr.nodes, Node(node_type, id, parent))
     parent = length(expr.nodes)
     # Args need to be pushed onto the stack in reverse because the stack is a

@@ -1027,6 +1027,51 @@ function test_scalar_nonlinear_function_parse_scalarquadraticfunction()
     return
 end
 
+function test_scalar_nonlinear_function_parse_logic_or()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:||, Any[x, x])
+    nlp_model = MOI.Nonlinear.Model()
+    e1 = MOI.Nonlinear.add_expression(nlp_model, f)
+    e2 = MOI.Nonlinear.add_expression(nlp_model, :($x || $x))
+    @test nlp_model[e1] == nlp_model[e2]
+    return
+end
+
+function test_scalar_nonlinear_function_parse_logic_or()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:&&, Any[x, x])
+    nlp_model = MOI.Nonlinear.Model()
+    e1 = MOI.Nonlinear.add_expression(nlp_model, f)
+    e2 = MOI.Nonlinear.add_expression(nlp_model, :($x && $x))
+    @test nlp_model[e1] == nlp_model[e2]
+    return
+end
+
+function test_scalar_nonlinear_function_parse_comparison()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:<, Any[x, 1])
+    nlp_model = MOI.Nonlinear.Model()
+    e1 = MOI.Nonlinear.add_expression(nlp_model, f)
+    e2 = MOI.Nonlinear.add_expression(nlp_model, :($x < 1))
+    @test nlp_model[e1] == nlp_model[e2]
+    return
+end
+
+function test_scalar_nonlinear_function_parse_unknown()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:foo, Any[x, 1])
+    nlp_model = MOI.Nonlinear.Model()
+    @test_throws(
+        MOI.UnsupportedNonlinearOperator(:foo),
+        MOI.Nonlinear.add_expression(nlp_model, f),
+    )
+    return
+end
+
 function test_ListOfSupportedNonlinearOperators()
     model = MOI.Nonlinear.Model()
     ops = MOI.get(model, MOI.ListOfSupportedNonlinearOperators())
