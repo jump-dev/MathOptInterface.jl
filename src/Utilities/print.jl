@@ -8,6 +8,8 @@ using Printf
 
 _drop_moi(s) = replace(string(s), "MathOptInterface." => "")
 
+_escape_braces(s) = replace(replace(s, "{" => "\\{"), "}" => "\\}")
+
 struct _PrintOptions{T<:MIME}
     simplify_coefficients::Bool
     default_name::String
@@ -330,8 +332,7 @@ function _to_string(options::_PrintOptions, set::MOI.AbstractSet)
 end
 
 function _to_string(::_PrintOptions{MIME"text/latex"}, set::MOI.AbstractSet)
-    set_str = replace(replace(_drop_moi(set), "{" => "\\{"), "}" => "\\}")
-    return string("\\in \\text{", set_str, "}")
+    return string("\\in \\text{", _escape_braces(_drop_moi(set)), "}")
 end
 
 #------------------------------------------------------------------------
@@ -575,7 +576,9 @@ function _print_model(
     println(io, "\\text{Subject to}\\\\")
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         if options.print_types
-            println(io, " & \\text{$(_drop_moi(F))-in-$(_drop_moi(S))} \\\\")
+            f_str = _escape_braces(_drop_moi(F))
+            s_str = _escape_braces(_drop_moi(S))
+            println(io, " & \\text{$f_str-in-$s_str} \\\\")
         end
         for cref in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             println(io, " & ", _to_string(options, model, cref), " \\\\")
