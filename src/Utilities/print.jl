@@ -577,7 +577,7 @@ function _print_model(
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         if options.print_types
             f_str = _escape_braces(_drop_moi(F))
-            s_tr = _escape_braces(_drop_moi(S))
+            s_str = _escape_braces(_drop_moi(S))
             println(io, " & \\text{$f_str-in-$s_str} \\\\")
         end
         for cref in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
