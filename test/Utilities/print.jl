@@ -384,24 +384,24 @@ function test_latex()
         $$ \begin{aligned}
         \min\quad & 2.0 + 1.0 x + 3.1 y - 1.2 z \\
         \text{Subject to}\\
-         & \text{ScalarAffineFunction{Float64}-in-EqualTo{Float64}} \\
+         & \text{ScalarAffineFunction\{Float64\}-in-EqualTo\{Float64\}} \\
          & 0.0 + 1.0 x - 1.0 y = 0.0 \\
-         & \text{ScalarAffineFunction{Float64}-in-GreaterThan{Float64}} \\
+         & \text{ScalarAffineFunction\{Float64\}-in-GreaterThan\{Float64\}} \\
          & 0.0 + 2.0 x \ge 1.0 \\
-         & \text{ScalarAffineFunction{Float64}-in-Interval{Float64}} \\
+         & \text{ScalarAffineFunction\{Float64\}-in-Interval\{Float64\}} \\
          & 0.0 + 2.0 x \in [1.0, 2.0] \\
-         & \text{ScalarQuadraticFunction{Float64}-in-LessThan{Float64}} \\
+         & \text{ScalarQuadraticFunction\{Float64\}-in-LessThan\{Float64\}} \\
          & 0.0 + 1.0 y - 1.0 z + 2.0 x^2 \le 1.0 \\
          & \text{VectorOfVariables-in-SecondOrderCone} \\
          & \begin{bmatrix}
         x\\
         y\end{bmatrix} \in \text{SecondOrderCone(2)} \\
-         & \text{VectorAffineFunction{Float64}-in-SecondOrderCone} \\
+         & \text{VectorAffineFunction\{Float64\}-in-SecondOrderCone} \\
          & \begin{bmatrix}
         1.0\\
         0.0 + 1.0 x\\
         0.0 + 1.0 y\end{bmatrix} \in \text{SecondOrderCone(2)} \\
-         & \text{VectorQuadraticFunction{Float64}-in-ExponentialCone} \\
+         & \text{VectorQuadraticFunction\{Float64\}-in-ExponentialCone} \\
          & \begin{bmatrix}
         0.0 + 1.0 x^2\\
         0.0 + 1.0 y\\
@@ -410,7 +410,7 @@ function test_latex()
         1.0\\
         0.0 + 1.0 x^2\\
         0.0 + 1.0 y\end{bmatrix} \in \text{ExponentialCone()} \\
-         & \text{VariableIndex-in-GreaterThan{Float64}} \\
+         & \text{VariableIndex-in-GreaterThan\{Float64\}} \\
          & x \ge 0.1 \\
          & \text{VariableIndex-in-Integer} \\
          & z \in \mathbb{Z} \\
@@ -597,12 +597,12 @@ function test_nlp()
         $$ \begin{aligned}
         \min\quad & x_{1} \times x_{4} \times (x_{1} + x_{2} + x_{3}) + x_{3} \\
         \text{Subject to}\\
-         & \text{VariableIndex-in-GreaterThan{Float64}} \\
+         & \text{VariableIndex-in-GreaterThan\{Float64\}} \\
          & x_{1} \ge 1.1 \\
          & x_{2} \ge 1.2 \\
          & x_{3} \ge 1.3 \\
          & x_{4} \ge 1.4 \\
-         & \text{VariableIndex-in-LessThan{Float64}} \\
+         & \text{VariableIndex-in-LessThan\{Float64\}} \\
          & x_{1} \le 5.1 \\
          & x_{2} \le 5.2 \\
          & x_{3} \le 5.3 \\
