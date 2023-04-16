@@ -148,6 +148,24 @@ function test_objective_function_value()
     return
 end
 
+function test_modify_vector_constant_change()
+    inner = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    model = MOI.Bridges.Objective.VectorSlack{Float64}(inner)
+    x = MOI.add_variable(model)
+    f = MOI.Utilities.operate(vcat, Float64, -1.1 * x, 1.0 * x)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    attr = MOI.ObjectiveFunction{typeof(f)}()
+    MOI.set(model, attr, f)
+    @test MOI.get(model, attr) ≈ f
+    @test_throws(
+        MOI.ModifyObjectiveNotAllowed,
+        MOI.modify(model, attr, MOI.VectorConstantChange([1.0, 2.0])),
+    )
+    return
+end
+
 end  # module
 
 TestObjectiveVectorSlack.runtests()

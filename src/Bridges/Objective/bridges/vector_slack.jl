@@ -197,3 +197,11 @@ function MOI.get(
     g = MOI.Utilities.remove_variable(g, slacks)
     return MOI.Utilities.convert_approx(G, g)
 end
+
+function MOI.modify(
+    ::MOI.ModelLike,
+    ::VectorSlackBridge{T},
+    change::MOI.VectorConstantChange{T},
+) where {T}
+    return throw(MOI.ModifyObjectiveNotAllowed(change))
+end
