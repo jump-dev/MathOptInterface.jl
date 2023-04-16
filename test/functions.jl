@@ -243,6 +243,25 @@ function test_isapprox_issue_1483()
     return
 end
 
+function test_convert_vectorofvariables()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    f = MOI.VectorOfVariables([x, y])
+    g = MOI.Utilities.operate(vcat, Float64, 1.0 * x, 1.0 * y)
+    @test convert(MOI.VectorOfVariables, g) == f
+    for g in (
+        MOI.Utilities.operate(vcat, Float64, 1.2 * x, 1.0 * y),
+        MOI.Utilities.operate(vcat, Float64, 1.0 * y, 1.2 * x),
+        MOI.Utilities.operate(vcat, Float64, 1.0 * x, 0.0),
+        MOI.Utilities.operate(vcat, Float64, 0.0, 1.0 * x),
+        MOI.Utilities.operate(vcat, Float64, 1.0 * x, 1.0 * y + 1.0),
+        MOI.Utilities.operate(vcat, Float64, 1.0 * x + 1.0, 1.0 * y),
+    )
+        @test_throws InexactError convert(MOI.VectorOfVariables, g)
+    end
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

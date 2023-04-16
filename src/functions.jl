@@ -810,6 +810,26 @@ function Base.convert(::Type{VectorOfVariables}, g::VariableIndex)
     return VectorOfVariables([g])
 end
 
+function Base.convert(::Type{VectorOfVariables}, f::VectorAffineFunction)
+    variables = Vector{VariableIndex}(undef, length(f.constants))
+    assigned = fill(false, length(variables))
+    if any(!iszero, f.constants)
+        throw(InexactError(:convert, VectorOfVariables, f))
+    end
+    for term in f.terms
+        if assigned[term.output_index] || !isone(term.scalar_term.coefficient)
+            throw(InexactError(:convert, VectorOfVariables, f))
+        end
+        x = convert(VariableIndex, term.scalar_term.variable)
+        variables[term.output_index] = x
+        assigned[term.output_index] = true
+    end
+    if !all(assigned)
+        throw(InexactError(:convert, VectorOfVariables, f))
+    end
+    return VectorOfVariables(variables)
+end
+
 # VectorAffineFunction
 
 function Base.convert(
@@ -844,6 +864,17 @@ function Base.convert(
     f::VectorAffineFunction,
 ) where {T}
     return VectorAffineFunction{T}(f.terms, f.constants)
+end
+
+function Base.convert(
+    ::Type{VectorAffineFunction{T}},
+    f::VectorOfVariables,
+) where {T}
+    terms = VectorAffineTerm{T}[
+        VectorAffineTerm{T}(i, ScalarAffineTerm{T}(one(T), x)) for
+        (i, x) in enumerate(f.variables)
+    ]
+    return VectorAffineFunction{T}(terms, zeros(T, length(terms)))
 end
 
 # VectorQuadraticFunction
