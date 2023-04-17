@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Fixed support for `Rational` in [`Bridges.Constraint.SplitIntervalBridge`](@ref)
    (#2137)
  - Fixed printing of LaTeX models (#2141)
+ - Fixed [`modify`](@ref) in [`Bridges.Objective.VectorSlackBridge`](@ref) (#2144)
+ - Fixed NAME record with spaces in `FileFormats.MPS` (#2146)
 
 ### Other
 
