@@ -546,14 +546,14 @@ function _delete_variables_in_variables_constraints(
 end
 
 function MOI.delete(b::AbstractBridgeOptimizer, vis::Vector{MOI.VariableIndex})
-    if Constraint.has_bridges(Constraint.bridges(b))
-        _delete_variables_in_variables_constraints(b, vis)
-    end
     if is_objective_bridged(b)
         F = MOI.get(b, MOI.ObjectiveFunctionType())
         f = MOI.get(b, MOI.ObjectiveFunction{F}())
-        g = MOI.Utilities. filter_variables(v -> !Base.Fix2(in, vis), f)
+        g = MOI.Utilities.filter_variables(v -> !Base.Fix2(in, vis), f)
         MOI.set(b, MOI.ObjectiveFunction{typeof(g)}(), g)
+    end
+    if Constraint.has_bridges(Constraint.bridges(b))
+        _delete_variables_in_variables_constraints(b, vis)
     end
     if any(vi -> is_bridged(b, vi), vis)
         for vi in vis
@@ -581,14 +581,14 @@ function MOI.delete(b::AbstractBridgeOptimizer, vis::Vector{MOI.VariableIndex})
 end
 
 function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
-    if Constraint.has_bridges(Constraint.bridges(b))
-        _delete_variables_in_variables_constraints(b, [vi])
-    end
     if is_objective_bridged(b)
         F = MOI.get(b, MOI.ObjectiveFunctionType())
         f = MOI.get(b, MOI.ObjectiveFunction{F}())
         g = MOI.Utilities.remove_variable(f, vi)
         MOI.set(b, MOI.ObjectiveFunction{typeof(g)}(), g)
+    end
+    if Constraint.has_bridges(Constraint.bridges(b))
+        _delete_variables_in_variables_constraints(b, [vi])
     end
     if is_bridged(b, vi)
         MOI.throw_if_not_valid(b, vi)
