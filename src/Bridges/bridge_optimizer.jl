@@ -546,11 +546,14 @@ function _delete_variables_in_variables_constraints(
 end
 
 function MOI.delete(b::AbstractBridgeOptimizer, vis::Vector{MOI.VariableIndex})
-    if is_objective_bridged(b)
-        F = MOI.get(b, MOI.ObjectiveFunctionType())
-        f = MOI.get(b, MOI.ObjectiveFunction{F}())
-        g = MOI.Utilities.filter_variables(v -> !Base.Fix2(in, vis), f)
-        MOI.set(b, MOI.ObjectiveFunction{typeof(g)}(), g)
+    F = MOI.get(b, MOI.ObjectiveFunctionType())
+    if is_objective_bridged(b) && F == MOI.VectorOfVariables
+        f = MOI.get(b, MOI.ObjectiveFunction{MOI.VectorOfVariables}())
+        discard = Base.Fix2(in, vis)
+        if any(discard, f.variables)
+            g = MOI.VectorOfVariables([x for x in f.variables if !discard(x)])
+            MOI.set(b, MOI.ObjectiveFunction{MOI.VectorOfVariables}(), g)
+        end
     end
     if Constraint.has_bridges(Constraint.bridges(b))
         _delete_variables_in_variables_constraints(b, vis)
@@ -581,11 +584,13 @@ function MOI.delete(b::AbstractBridgeOptimizer, vis::Vector{MOI.VariableIndex})
 end
 
 function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
-    if is_objective_bridged(b)
-        F = MOI.get(b, MOI.ObjectiveFunctionType())
-        f = MOI.get(b, MOI.ObjectiveFunction{F}())
-        g = MOI.Utilities.remove_variable(f, vi)
-        MOI.set(b, MOI.ObjectiveFunction{typeof(g)}(), g)
+    F = MOI.get(b, MOI.ObjectiveFunctionType())
+    if is_objective_bridged(b) && F == MOI.VectorOfVariables
+        f = MOI.get(b, MOI.ObjectiveFunction{MOI.VectorOfVariables}())
+        if any(Base.Fix1(==, vi), f.variables)
+            g = MOI.VectorOfVariables([x for x in f.variables if x != vi])
+            MOI.set(b, MOI.ObjectiveFunction{MOI.VectorOfVariables}(), g)
+        end
     end
     if Constraint.has_bridges(Constraint.bridges(b))
         _delete_variables_in_variables_constraints(b, [vi])
@@ -612,6 +617,7 @@ function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
     else
         MOI.delete(b.model, vi)
     end
+    return
 end
 
 function MOI.delete(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
