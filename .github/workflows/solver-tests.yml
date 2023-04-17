@@ -1,0 +1,106 @@
+name: solver-tests
+on:
+  workflow_dispatch:
+jobs:
+  test-ubuntu:
+    name: ${{ matrix.package }}
+    runs-on: ubuntu-latest
+    env:
+      PACKAGE: ${{ matrix.package }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: 'JuMP'
+          - package: 'Convex'
+          - package: 'SumOfSquares'
+          - package: 'PolyJuMP'
+          - package: 'Alpine'
+          - package: 'Cbc'
+          - package: 'Clp'
+          - package: 'CDDLib'
+          - package: 'COSMO'
+          # - package: 'CPLEX'
+          - package: 'CSDP'
+          - package: 'DSDP'
+          - package: 'EAGO'
+          - package: 'ECOS'
+          - package: 'GLPK'
+          - package: 'HiGHS'
+          - package: 'Hypatia'
+          - package: 'Ipopt'
+          - package: 'Juniper'
+          - package: 'MosekTools'
+          - package: 'NLopt'
+          - package: 'OSQP'
+          - package: 'PATHSolver'
+          - package: 'Pavito'
+          - package: 'ProxSDP'
+          - package: 'SCIP'
+          - package: 'SCS'
+          - package: 'SDPA'
+          - package: 'SDPAFamily'
+          - package: 'Tulip'
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: '1'
+      - uses: actions/cache@v1
+        env:
+          cache-name: cache-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-test-${{ env.cache-name }}-
+            ${{ runner.os }}-test-
+            ${{ runner.os }}-
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Test
+        shell: julia --color=yes {0}
+        # env:
+        #   CPLEX_VERSION: '2010'
+        #   SECRET_CPLEX_URL_2010: ${{ secrets.SECRET_CPLEX_URL_2010 }}
+        run: |
+          import Pkg
+          Pkg.develop(ENV["PACKAGE"])
+          Pkg.test(ENV["PACKAGE"])
+  # TODO(odow): enable testing Xpress
+  # test-windows:
+  #   name: ${{ matrix.package }}
+  #   runs-on: windows-latest
+  #   env:
+  #     PACKAGE: ${{ matrix.package }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       include:
+  #         - package: 'Xpress'
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: julia-actions/setup-julia@v1
+  #       with:
+  #         version: '1'
+  #     - uses: actions/cache@v1
+  #       env:
+  #         cache-name: cache-artifacts
+  #       with:
+  #         path: ~/.julia/artifacts
+  #         key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-test-${{ env.cache-name }}-
+  #           ${{ runner.os }}-test-
+  #           ${{ runner.os }}-
+  #     - uses: julia-actions/julia-buildpkg@v1
+  #     - name: Test
+  #       shell: julia --color=yes {0}
+  #       env:
+  #         SECRET_XPRS_WIN_8110: ${{ secrets.XPRS_WIN_8110 }}
+  #         SECRET_XPRL_WIN_8110: ${{ secrets.XPRL_WIN_8110 }}
+  #         SECRET_XPRA_WIN_8130: ${{ secrets.XPRA_WIN_8130 }}
+  #       run: |
+  #         import Pkg
+  #         Pkg.add(Pkg.PackageSpec(; name="MathOptInterface", rev=ENV["BRANCH"]))
+  #         Pkg.develop("Xpress")
+  #         Pkg.test("Xpress")
