@@ -617,11 +617,11 @@ function eval_multivariate_gradient(
         else
             total = prod(x)
             if iszero(total)
-                for i in 1:length(x)
-                    g[i] = prod(x[j] for j in 1:length(x) if i != j)
+                for i in eachindex(x)
+                    g[i] = prod(x[j] for j in eachindex(x) if i != j)
                 end
             else
-                for i in 1:length(x)
+                for i in eachindex(x)
                     g[i] = total / x[i]
                 end
             end

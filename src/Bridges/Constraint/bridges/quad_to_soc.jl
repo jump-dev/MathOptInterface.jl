@@ -237,7 +237,7 @@ function MOI.get(
     # `(Ux)'Ux / 2 - (-a'x + ub) + ub`
     # Otherwise, `Q = -U'U` and we have the value of
     # `Ux` and `a'x - ub`, so we get it with
-    # `-(Ux)'Ux / 2 + (a'x - lb) + ub`
+    # `-(Ux)'Ux / 2 + (a'x - lb) + lb`
     soc = MOI.get(model, attr, bridge.soc)
     if soc === nothing
         return nothing

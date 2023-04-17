@@ -274,5 +274,5 @@ function MOI.Bridges.inverse_adjoint_map_function(
     t, u, x = func[1], func[2], func[3:end]
     Q = (u / (2 * (x' * x))) * (x * x')
     M = [t x'/2; x/2 Q]
-    return [M[i, j] for j in 1:size(M, 2) for i in 1:j]
+    return [M[i, j] for j in axes(M, 2) for i in 1:j]
 end

@@ -186,7 +186,7 @@ function MOI.get(
     bridge::NormOneBridge,
 )
     nn_primal = MOI.get(model, attr, bridge.nn_index)
-    if nn_primal == nothing
+    if nn_primal === nothing
         return nothing
     end
     t = (nn_primal[1] + sum(nn_primal)) / 2
