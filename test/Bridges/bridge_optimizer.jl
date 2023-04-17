@@ -955,6 +955,18 @@ function test_delete_constraint_vector()
     return
 end
 
+function test_deleting_variable_in_bridged_objective()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Objective.VectorFunctionize{Float64}(inner)
+    x = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    attr = MOI.ObjectiveFunction{MOI.VectorOfVariables}()
+    MOI.set(model, attr, MOI.VectorOfVariables(x))
+    MOI.delete(model, x[1])
+    @test MOI.get(model, attr) == MOI.VectorOfVariables([x[2]])
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
