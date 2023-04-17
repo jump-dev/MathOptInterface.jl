@@ -1046,8 +1046,7 @@ function test_parse_name_line()
         "NaME   " => "",
         "name   \n" => "",
         "name abc" => "abc",
-        "NAME PILOTNOV (PILOTS) INTEGRATED MODEL -- NOVEMBER 1979" =>
-            "PILOTNOV (PILOTS) INTEGRATED MODEL -- NOVEMBER 1979",
+        "NAME PILOTNOV (PILOTS) INTEGRATED MODEL -- NOVEMBER 1979" => "PILOTNOV (PILOTS) INTEGRATED MODEL -- NOVEMBER 1979",
         "Na d" => nothing,
         "the name" => nothing,
         " NAME" => "",
@@ -1056,12 +1055,8 @@ function test_parse_name_line()
     )
         data.name = "_"
         if name === nothing
-            @test_throws(
-                ErrorException(
-                    "Malformed NAME line: $line"
-                ),
-                MPS.parse_name_line(data, line),
-            )
+            err = ErrorException("Malformed NAME line: $line")
+            @test_throws err MPS.parse_name_line(data, line)
         else
             MPS.parse_name_line(data, line)
             @test data.name == name
