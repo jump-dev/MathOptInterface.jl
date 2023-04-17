@@ -1134,7 +1134,7 @@ function Base.read!(io::IO, model::Model)
         # TODO: split into hard fields based on column indices.
         items = line_to_items(line)
         if header == HEADER_NAME
-            parse_name_line(data, items)
+            parse_name_line(data, line)
         elseif header == HEADER_OBJSENSE
             @assert length(items) == 1
             sense = uppercase(items[1])
@@ -1314,15 +1314,12 @@ end
 #   NAME
 # ==============================================================================
 
-function parse_name_line(data::TempMPSModel, items::Vector{String})
-    if !(1 <= length(items) <= 2) || uppercase(items[1]) != "NAME"
-        error("Malformed NAME line: $(join(items, " "))")
+function parse_name_line(data::TempMPSModel, line::String)
+    m = match(r"^\s*NAME(.*)"i, line)
+    if m === nothing
+        error("Malformed NAME line: ", line)
     end
-    if length(items) == 2
-        data.name = items[2]
-    elseif length(items) == 1
-        data.name = ""
-    end
+    data.name = strip(m[1])
     return
 end
 

@@ -1036,6 +1036,35 @@ function test_objsense_next_line()
     return
 end
 
+function test_parse_name_line()
+    data = MPS.TempMPSModel()
+    for (line, name) in (
+        "NAME" => "",
+        "NAME   " => "",
+        "NAME   \n" => "",
+        "NAmE" => "",
+        "NaME   " => "",
+        "name   \n" => "",
+        "name abc" => "abc",
+        "NAME PILOTNOV (PILOTS) INTEGRATED MODEL -- NOVEMBER 1979" => "PILOTNOV (PILOTS) INTEGRATED MODEL -- NOVEMBER 1979",
+        "Na d" => nothing,
+        "the name" => nothing,
+        " NAME" => "",
+        " NAME foo" => "foo",
+        "" => nothing,
+    )
+        data.name = "_"
+        if name === nothing
+            err = ErrorException("Malformed NAME line: $line")
+            @test_throws err MPS.parse_name_line(data, line)
+        else
+            MPS.parse_name_line(data, line)
+            @test data.name == name
+        end
+    end
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")
