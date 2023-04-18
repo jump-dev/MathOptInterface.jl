@@ -587,7 +587,7 @@ function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
     F = MOI.get(b, MOI.ObjectiveFunctionType())
     if is_objective_bridged(b) && F == MOI.VectorOfVariables
         f = MOI.get(b, MOI.ObjectiveFunction{MOI.VectorOfVariables}())
-        if any(isequal(v1), f.variables)
+        if any(isequal(vi), f.variables)
             g = MOI.VectorOfVariables(filter(!isequal(vi), f.variables))
             MOI.set(b, MOI.ObjectiveFunction{MOI.VectorOfVariables}(), g)
         end
