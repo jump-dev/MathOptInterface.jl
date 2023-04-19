@@ -7,6 +7,26 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.15.0 (April 19, 2023)
+
+### Added
+
+ - Added [`Bridges.Objective.VectorFunctionizeBridge`](@ref) (#2139)
+
+### Fixed
+
+ - Fixed support for `Rational` in [`Bridges.Constraint.SplitIntervalBridge`](@ref)
+   (#2137)
+ - Fixed printing of LaTeX models (#2141)
+ - Fixed [`modify`](@ref) in [`Bridges.Objective.VectorSlackBridge`](@ref) (#2144)
+ - Fixed NAME record with spaces in `FileFormats.MPS` (#2146)
+ - Fixed deleting a variable in a bridged objective (#2147)
+ 
+### Other
+
+ - Add a test for variables in one-sided open [`Interval`](@ref) sets (#2133)
+ - Minor style fixes in the source code (#2148)
+
 ## v1.14.1 (April 6, 2023)
 
 ### Fixed
