@@ -552,7 +552,19 @@ function MOI.delete(b::AbstractBridgeOptimizer, vis::Vector{MOI.VariableIndex})
             discard = Base.Fix2(in, vis)
             if any(discard, f.variables)
                 g = MOI.VectorOfVariables(filter(!discard, f.variables))
-                MOI.set(b, MOI.ObjectiveFunction{MOI.VectorOfVariables}(), g)
+                if MOI.output_dimension(g) == 0
+                    # Deleted all variables in the objective. Zero the objective
+                    # by setting FEASIBILITY_SENSE.
+                    sense = MOI.get(b, MOI.ObjectiveSense())
+                    MOI.set(b, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+                    MOI.set(b, MOI.ObjectiveSense(), sense)
+                else
+                    MOI.set(
+                        b,
+                        MOI.ObjectiveFunction{MOI.VectorOfVariables}(),
+                        g,
+                    )
+                end
             end
         end
     end
@@ -590,7 +602,19 @@ function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
             f = MOI.get(b, MOI.ObjectiveFunction{MOI.VectorOfVariables}())
             if any(isequal(vi), f.variables)
                 g = MOI.VectorOfVariables(filter(!isequal(vi), f.variables))
-                MOI.set(b, MOI.ObjectiveFunction{MOI.VectorOfVariables}(), g)
+                if MOI.output_dimension(g) == 0
+                    # Deleted all variables in the objective. Zero the objective
+                    # by setting FEASIBILITY_SENSE.
+                    sense = MOI.get(b, MOI.ObjectiveSense())
+                    MOI.set(b, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+                    MOI.set(b, MOI.ObjectiveSense(), sense)
+                else
+                    MOI.set(
+                        b,
+                        MOI.ObjectiveFunction{MOI.VectorOfVariables}(),
+                        g,
+                    )
+                end
             end
         end
     end
