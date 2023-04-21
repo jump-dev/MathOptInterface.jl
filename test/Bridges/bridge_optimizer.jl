@@ -1019,7 +1019,7 @@ function test_deleting_all_vector_variables_in_bridged_objective()
     return
 end
 
-function test_deleting_all_variables_in_bridged_slack_objective()
+function test_deleting_all_variables_in_bridged_functionize_objective()
     # We need to make sure that the bridges have the same functionality as the
     # base Utilities.Model.
     model_1 = MOI.Utilities.Model{Float64}()
