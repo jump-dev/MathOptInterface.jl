@@ -278,6 +278,50 @@ function test_copy_to_start()
     @test MOI.get(dest, MOI.VariablePrimalStart(), index_map[x]) == -1.0
 end
 
+function test_deletion_of_variable_in_bridged_constraint()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.QuadtoSOC{Float64}(inner)
+    x = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.VariableName(), x, ["x", "y"])
+    f = 1.0 * x[1] * x[1] + 1.0 * x[2] * x[2]
+    c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    MOI.delete(model, x[1])
+    @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ 1.0 * x[2] * x[2]
+    return
+end
+
+MOI.Utilities.@model(
+    Model2153,
+    (),
+    (MOI.EqualTo,),
+    (MOI.RotatedSecondOrderCone,),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (MOI.VectorOfVariables,),
+    (),
+)
+
+function MOI.supports(
+    ::Model2153{T},
+    ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}},
+) where {T}
+    return false
+end
+
+function test_deletion_of_variable_in_bridged_slacked_objective()
+    model = MOI.Bridges.full_bridge_optimizer(Model2153{Float64}(), Float64)
+    MOI.Bridges.add_bridge(model, MOI.Bridges.Constraint.QuadtoSOCBridge{Float64})
+    x = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.VariableName(), x, ["x", "y"])
+    f = 1.0 * x[1] * x[1] + 1.0 * x[2] * x[2]
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.delete(model, x[1])
+    @test MOI.get(model, MOI.ObjectiveFunction{typeof(f)}()) ≈ 1.0 * x[2] * x[2]
+    return
+end
+
 end  # module
 
 TestConstraintQuadToSOC.runtests()

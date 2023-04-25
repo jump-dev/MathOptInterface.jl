@@ -489,6 +489,19 @@ function test_complex_objective()
     return
 end
 
+function test_deletion_of_variable_in_slacked_objective()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Objective.Slack{Float64}(inner)
+    x = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.VariableName(), x, ["x", "y"])
+    f = 1.0 * x[1] * x[1] + 1.0 * x[2] * x[2]
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.delete(model, x[1])
+    @test MOI.get(model, MOI.ObjectiveFunction{typeof(f)}()) ≈ 1.0 * x[2] * x[2]
+    return
+end
+
 end  # module
 
 TestObjectiveSlack.runtests()
