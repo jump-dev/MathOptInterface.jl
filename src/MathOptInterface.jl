@@ -271,10 +271,10 @@ we provide this `MOI.IndexMap` as an alias.
 """
 const IndexMap = Utilities.IndexMap
 
-import SnoopPrecompile
+import PrecompileTools
 
-SnoopPrecompile.@precompile_setup begin
-    SnoopPrecompile.@precompile_all_calls begin
+PrecompileTools.@setup_workload begin
+    PrecompileTools.@compile_workload begin
         let
             optimizer =
                 () -> Utilities.MockOptimizer(
