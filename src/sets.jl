@@ -1140,6 +1140,39 @@ dual_set_type(::Type{NormNuclearCone}) = NormSpectralCone
 dimension(s::NormNuclearCone) = 1 + s.row_dim * s.column_dim
 
 """
+    ScaledPositiveSemidefiniteConeTriangle(side_dimension::Int) <: AbstractVectorSet
+
+The *scaled* (vectorized) cone of symmetric positive semidefinite matrices, with
+non-negative `side_dimension` rows and columns.
+
+Compared to the [`PositiveSemidefiniteConeTriangle`](@ref), the off-diagonal entries
+are scaled by `√2`. Thanks to this scaling, [`MOI.Utilities.set_dot`](@ref) is the
+simply the sum of the pairwise product while for
+[`PositiveSemidefiniteConeTriangle`](@ref), the pairwise product additionally have
+to be multiplied by 2.
+"""
+struct ScaledPositiveSemidefiniteConeTriangle <: AbstractVectorSet
+    side_dimension::Int
+    function PositiveSemidefiniteConeTriangle(side_dimension::Base.Integer)
+        if !(side_dimension >= 0)
+            throw(
+                DimensionMismatch(
+                    "Side dimension of PositiveSemidefiniteConeTriangle must " *
+                    "be >= 0, not $(side_dimension).",
+                ),
+            )
+        end
+        return new(side_dimension)
+    end
+end
+
+dual_set(s::ScaledPositiveSemidefiniteConeTriangle) = copy(s)
+function dual_set_type(::Type{ScaledPositiveSemidefiniteConeTriangle})
+    return ScaledPositiveSemidefiniteConeTriangle
+end
+
+
+"""
     abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
 
 Abstract supertype for subsets of the (vectorized) cone of symmetric matrices,
@@ -1236,7 +1269,7 @@ products we have
 """
 abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
 
-function dimension(set::AbstractSymmetricMatrixSetTriangle)
+function dimension(set::Union{AbstractSymmetricMatrixSetTriangle,ScaledPositiveSemidefiniteConeTriangle})
     d = side_dimension(set)
     return div(d * (d + 1), 2)
 end
@@ -1277,6 +1310,7 @@ dimension(set::AbstractSymmetricMatrixSetSquare) = side_dimension(set)^2
 """
     side_dimension(
         set::Union{
+            ScaledPositiveSemidefiniteConeTriangle,
             AbstractSymmetricMatrixSetTriangle,
             AbstractSymmetricMatrixSetSquare,
         },
@@ -1292,6 +1326,7 @@ you must implement this method.
 """
 function side_dimension(
     set::Union{
+        ScaledPositiveSemidefiniteConeTriangle,
         AbstractSymmetricMatrixSetTriangle,
         AbstractSymmetricMatrixSetSquare,
     },
