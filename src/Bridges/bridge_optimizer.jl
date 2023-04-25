@@ -545,15 +545,67 @@ function _delete_variables_in_variables_constraints(
     end
 end
 
-function MOI.delete(b::AbstractBridgeOptimizer, vis::Vector{MOI.VariableIndex})
+function _delete_variables_in_bridged_objective(
+    b::AbstractBridgeOptimizer,
+    vis::Vector{MOI.VariableIndex},
+)
     F = MOI.get(b, MOI.ObjectiveFunctionType())
-    if is_objective_bridged(b) && F == MOI.VectorOfVariables
-        f = MOI.get(b, MOI.ObjectiveFunction{MOI.VectorOfVariables}())
-        discard = Base.Fix2(in, vis)
-        if any(discard, f.variables)
-            g = MOI.VectorOfVariables(filter(!discard, f.variables))
-            MOI.set(b, MOI.ObjectiveFunction{MOI.VectorOfVariables}(), g)
-        end
+    _delete_variables_in_bridged_objective(b, vis, F)
+    return
+end
+
+function _delete_variables_in_bridged_objective(
+    b::AbstractBridgeOptimizer,
+    vis::Vector{MOI.VariableIndex},
+    ::Type{MOI.VectorOfVariables},
+)
+    obj_f = MOI.get(b, MOI.ObjectiveFunction{MOI.VectorOfVariables}())
+    discard = Base.Fix2(in, vis)
+    if !any(discard, obj_f.variables)
+        # There are no variables in the objective function to delete, so we
+        # don't need to do anything.
+        return
+    end
+    new_obj_f = MOI.VectorOfVariables(filter(!discard, obj_f.variables))
+    if MOI.output_dimension(new_obj_f) == 0
+        # We've deleted all variables in the objective. Zero the objective by
+        # setting FEASIBILITY_SENSE, but restore the sense afterwards.
+        sense = MOI.get(b, MOI.ObjectiveSense())
+        MOI.set(b, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+        MOI.set(b, MOI.ObjectiveSense(), sense)
+    else
+        MOI.set(b, MOI.ObjectiveFunction{MOI.VectorOfVariables}(), new_obj_f)
+    end
+    return
+end
+
+function _delete_variables_in_bridged_objective(
+    b::AbstractBridgeOptimizer,
+    vis::Vector{MOI.VariableIndex},
+    ::Type{MOI.VariableIndex},
+)
+    obj_f = MOI.get(b, MOI.ObjectiveFunction{MOI.VariableIndex}())
+    if obj_f in vis
+        sense = MOI.get(b, MOI.ObjectiveSense())
+        MOI.set(b, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+        MOI.set(b, MOI.ObjectiveSense(), sense)
+    end
+    return
+end
+
+function _delete_variables_in_bridged_objective(
+    ::AbstractBridgeOptimizer,
+    ::Vector{MOI.VariableIndex},
+    ::Type{F},
+) where {F}
+    # Nothing to do here. The variables can be deleted without changing the type
+    # of the objective, or whether one exists.
+    return
+end
+
+function MOI.delete(b::AbstractBridgeOptimizer, vis::Vector{MOI.VariableIndex})
+    if is_objective_bridged(b)
+        _delete_variables_in_bridged_objective(b, vis)
     end
     if Constraint.has_bridges(Constraint.bridges(b))
         _delete_variables_in_variables_constraints(b, vis)
@@ -584,13 +636,8 @@ function MOI.delete(b::AbstractBridgeOptimizer, vis::Vector{MOI.VariableIndex})
 end
 
 function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
-    F = MOI.get(b, MOI.ObjectiveFunctionType())
-    if is_objective_bridged(b) && F == MOI.VectorOfVariables
-        f = MOI.get(b, MOI.ObjectiveFunction{MOI.VectorOfVariables}())
-        if any(isequal(vi), f.variables)
-            g = MOI.VectorOfVariables(filter(!isequal(vi), f.variables))
-            MOI.set(b, MOI.ObjectiveFunction{MOI.VectorOfVariables}(), g)
-        end
+    if is_objective_bridged(b)
+        _delete_variables_in_bridged_objective(b, [vi])
     end
     if Constraint.has_bridges(Constraint.bridges(b))
         _delete_variables_in_variables_constraints(b, [vi])

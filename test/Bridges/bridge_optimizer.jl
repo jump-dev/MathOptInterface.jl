@@ -979,6 +979,65 @@ function test_deleting_variables_in_bridged_objective()
     return
 end
 
+function test_deleting_all_variables_in_bridged_objective()
+    # We need to make sure that the bridges have the same functionality as the
+    # base Utilities.Model.
+    model_1 = MOI.Utilities.Model{Float64}()
+    model_2 = MOI.Bridges.Objective.VectorFunctionize{Float64}(
+        MOI.Utilities.Model{Float64}(),
+    )
+    for model in (model_1, model_2)
+        x = MOI.add_variable(model)
+        f = MOI.VectorOfVariables([x])
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+        MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+        MOI.delete(model, x)
+        attrs = MOI.get(model, MOI.ListOfModelAttributesSet())
+        @test length(attrs) == 1
+        @test attrs[1] == MOI.ObjectiveSense()
+    end
+    return
+end
+
+function test_deleting_all_vector_variables_in_bridged_objective()
+    # We need to make sure that the bridges have the same functionality as the
+    # base Utilities.Model.
+    model_1 = MOI.Utilities.Model{Float64}()
+    model_2 = MOI.Bridges.Objective.VectorFunctionize{Float64}(
+        MOI.Utilities.Model{Float64}(),
+    )
+    for model in (model_1, model_2)
+        x = MOI.add_variable(model)
+        f = MOI.VectorOfVariables([x])
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+        MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+        MOI.delete(model, [x])
+        attrs = MOI.get(model, MOI.ListOfModelAttributesSet())
+        @test length(attrs) == 1
+        @test attrs[1] == MOI.ObjectiveSense()
+    end
+    return
+end
+
+function test_deleting_all_variables_in_bridged_functionize_objective()
+    # We need to make sure that the bridges have the same functionality as the
+    # base Utilities.Model.
+    model_1 = MOI.Utilities.Model{Float64}()
+    model_2 = MOI.Bridges.Objective.Functionize{Float64}(
+        MOI.Utilities.Model{Float64}(),
+    )
+    for model in (model_1, model_2)
+        x = MOI.add_variable(model)
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+        MOI.set(model, MOI.ObjectiveFunction{typeof(x)}(), x)
+        MOI.delete(model, x)
+        attrs = MOI.get(model, MOI.ListOfModelAttributesSet())
+        @test length(attrs) == 1
+        @test MOI.ObjectiveSense() in attrs
+    end
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
