@@ -1153,7 +1153,7 @@ to be multiplied by 2.
 """
 struct ScaledPositiveSemidefiniteConeTriangle <: AbstractVectorSet
     side_dimension::Int
-    function PositiveSemidefiniteConeTriangle(side_dimension::Base.Integer)
+    function ScaledPositiveSemidefiniteConeTriangle(side_dimension::Base.Integer)
         if !(side_dimension >= 0)
             throw(
                 DimensionMismatch(
