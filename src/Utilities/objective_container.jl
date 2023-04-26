@@ -179,6 +179,7 @@ function MOI.set(
     ::MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction},
     f::MOI.ScalarNonlinearFunction,
 )
+    _empty_keeping_sense(o)
     o.is_function_set = true
     o.scalar_nonlinear = copy(f)
     return
