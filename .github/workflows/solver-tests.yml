@@ -95,9 +95,8 @@ jobs:
           SECRET_CPLEX_URL_2210: ${{ secrets.SECRET_CPLEX_URL_2210 }}
         run: |
           import Pkg
-          Pkg.add(Pkg.PackageSpec(; name="MathOptInterface", rev=ENV["BRANCH"]))
-          Pkg.develop("CPLEX")
-          Pkg.test("CPLEX")
+          Pkg.develop(ENV["PACKAGE"])
+          Pkg.test(ENV["PACKAGE"])
   # TODO(odow): enable testing Xpress
   # test-windows:
   #   name: ${{ matrix.package }}
@@ -110,7 +109,7 @@ jobs:
   #       include:
   #         - package: 'Xpress'
   #   steps:
-  #     - uses: actions/checkout@v2
+  #     - uses: actions/checkout@v3
   #     - uses: julia-actions/setup-julia@v1
   #       with:
   #         version: '1'
@@ -133,6 +132,5 @@ jobs:
   #         SECRET_XPRA_WIN_8130: ${{ secrets.XPRA_WIN_8130 }}
   #       run: |
   #         import Pkg
-  #         Pkg.add(Pkg.PackageSpec(; name="MathOptInterface", rev=ENV["BRANCH"]))
-  #         Pkg.develop("Xpress")
-  #         Pkg.test("Xpress")
+  #         Pkg.develop(ENV["PACKAGE"])
+  #         Pkg.test(ENV["PACKAGE"])
