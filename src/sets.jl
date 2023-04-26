@@ -1171,7 +1171,6 @@ function dual_set_type(::Type{ScaledPositiveSemidefiniteConeTriangle})
     return ScaledPositiveSemidefiniteConeTriangle
 end
 
-
 """
     abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
 
@@ -1269,7 +1268,12 @@ products we have
 """
 abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
 
-function dimension(set::Union{AbstractSymmetricMatrixSetTriangle,ScaledPositiveSemidefiniteConeTriangle})
+function dimension(
+    set::Union{
+        AbstractSymmetricMatrixSetTriangle,
+        ScaledPositiveSemidefiniteConeTriangle,
+    },
+)
     d = side_dimension(set)
     return div(d * (d + 1), 2)
 end

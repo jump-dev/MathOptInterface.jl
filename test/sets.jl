@@ -263,6 +263,7 @@ function _test_sets_dual_psdtriangle(psd2, psd3)
     _self_dual_set_test(psd2)
     @test MOI.dual_set(psd2) != psd3
     _self_dual_set_test(psd3)
+    return
 end
 
 function test_sets_dual_psdtriangle()
