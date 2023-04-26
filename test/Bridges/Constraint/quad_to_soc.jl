@@ -311,7 +311,10 @@ end
 
 function test_deletion_of_variable_in_bridged_slacked_objective()
     model = MOI.Bridges.full_bridge_optimizer(Model2153{Float64}(), Float64)
-    MOI.Bridges.add_bridge(model, MOI.Bridges.Constraint.QuadtoSOCBridge{Float64})
+    MOI.Bridges.add_bridge(
+        model,
+        MOI.Bridges.Constraint.QuadtoSOCBridge{Float64},
+    )
     x = MOI.add_variables(model, 2)
     MOI.set(model, MOI.VariableName(), x, ["x", "y"])
     f = 1.0 * x[1] * x[1] + 1.0 * x[2] * x[2]
