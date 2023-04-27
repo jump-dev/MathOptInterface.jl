@@ -362,10 +362,12 @@ end
     Interval,
     Semiinteger,
     Semicontinuous,
+    Parameter,
     Zeros,
     Reals,
     Nonnegatives,
     Nonpositives,
+    HyperRectangle,
     SecondOrderCone,
     RotatedSecondOrderCone,
     GeometricMeanCone,
@@ -380,6 +382,7 @@ end
     LogDetConeSquare,
     PositiveSemidefiniteConeTriangle,
     PositiveSemidefiniteConeSquare,
+    HermitianPositiveSemidefiniteConeTriangle,
     ExponentialCone,
     DualExponentialCone,
     PowerCone,
@@ -388,6 +391,7 @@ end
     SOS2,
     IndicatorSet,   # Required for v0.6
     Indicator,      # Required for v1.0
+    Reified,
     Complements,
     AllDifferent,
     Circuit,
@@ -449,6 +453,10 @@ end
 
 function set_to_moi(::Val{:Semicontinuous}, object::Object)
     return MOI.Semicontinuous{Float64}(object["lower"], object["upper"])
+end
+
+function set_to_moi(::Val{:Parameter}, object::Object)
+    return MOI.Parameter{Float64}(object["value"])
 end
 
 # ========== Non-typed vector sets ==========
@@ -525,6 +533,14 @@ function set_to_moi(::Val{:PositiveSemidefiniteConeSquare}, object::Object)
     return MOI.PositiveSemidefiniteConeSquare(object["side_dimension"])
 end
 
+function set_to_moi(
+    ::Val{:HermitianPositiveSemidefiniteConeTriangle},
+    object::Object,
+)
+    side_dimension = object["side_dimension"]
+    return MOI.HermitianPositiveSemidefiniteConeTriangle(side_dimension)
+end
+
 function set_to_moi(::Val{:ExponentialCone}, ::Object)
     return MOI.ExponentialCone()
 end
@@ -591,6 +607,13 @@ function set_to_moi(::Val{:SOS2}, object::Object)
     return MOI.SOS2(convert(Vector{Float64}, object["weights"]))
 end
 
+function set_to_moi(::Val{:HyperRectangle}, object::Object)
+    return MOI.HyperRectangle(
+        convert(Vector{Float64}, object["lower"]),
+        convert(Vector{Float64}, object["upper"]),
+    )
+end
+
 # :IndicatorSet is required for v0.6
 # :Indicator is required for v1.0
 function set_to_moi(::Union{Val{:Indicator},Val{:IndicatorSet}}, object::Object)
@@ -601,6 +624,10 @@ function set_to_moi(::Union{Val{:Indicator},Val{:IndicatorSet}}, object::Object)
         @assert object["activate_on"]::String == "zero"
         return MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(set)
     end
+end
+
+function set_to_moi(::Val{:Reified}, object::Object)
+    return MOI.Reified(set_to_moi(object["set"]::typeof(object)))
 end
 
 function set_to_moi(::Val{:BinPacking}, object::Object)

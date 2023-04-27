@@ -94,7 +94,7 @@ julia> print(read("file.mof.json", String))
   "name": "MathOptFormat Model",
   "version": {
     "major": 1,
-    "minor": 2
+    "minor": 3
   },
   "variables": [
     {
@@ -230,7 +230,7 @@ julia> good_model = JSON.parse("""
        {
          "version": {
            "major": 1,
-           "minor": 2
+           "minor": 3
          },
          "variables": [{"name": "x"}],
          "objective": {"sense": "feasibility"},
@@ -249,7 +249,7 @@ julia> bad_model = JSON.parse("""
        {
          "version": {
            "major": 1,
-           "minor": 2
+           "minor": 3
          },
          "variables": [{"NaMe": "x"}],
          "objective": {"sense": "feasibility"},
