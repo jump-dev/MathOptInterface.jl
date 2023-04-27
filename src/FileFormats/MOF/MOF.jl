@@ -11,9 +11,10 @@ import OrderedCollections
 import JSON
 import MathOptInterface as MOI
 
-const SCHEMA_PATH = joinpath(@__DIR__, "mof.1.2.schema.json")
-const VERSION = v"1.2"
-const SUPPORTED_VERSIONS = (v"1.2", v"1.1", v"1.0", v"0.6", v"0.5", v"0.4")
+const SCHEMA_PATH = joinpath(@__DIR__, "mof.1.3.schema.json")
+const VERSION = v"1.3"
+const SUPPORTED_VERSIONS =
+    (v"1.3", v"1.2", v"1.1", v"1.0", v"0.6", v"0.5", v"0.4")
 
 const OrderedObject = OrderedCollections.OrderedDict{String,Any}
 const UnorderedObject = Dict{String,Any}
@@ -39,12 +40,14 @@ MOI.Utilities.@model(
         MOI.Interval,
         MOI.Semicontinuous,
         MOI.Semiinteger,
+        MOI.Parameter,
     ),
     (
         MOI.Reals,
         MOI.Zeros,
         MOI.Nonnegatives,
         MOI.Nonpositives,
+        MOI.HyperRectangle,
         MOI.SecondOrderCone,
         MOI.RotatedSecondOrderCone,
         MOI.GeometricMeanCone,
@@ -61,6 +64,7 @@ MOI.Utilities.@model(
         MOI.LogDetConeSquare,
         MOI.PositiveSemidefiniteConeTriangle,
         MOI.PositiveSemidefiniteConeSquare,
+        MOI.HermitianPositiveSemidefiniteConeTriangle,
         MOI.AllDifferent,
         MOI.Circuit,
         MOI.CountAtLeast,
@@ -85,6 +89,7 @@ MOI.Utilities.@model(
 )
 
 # Indicator is handled by UniversalFallback.
+# Reified is handled by UniversalFallback.
 
 const Model = MOI.Utilities.UniversalFallback{InnerModel{Float64}}
 

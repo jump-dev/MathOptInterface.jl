@@ -6,18 +6,32 @@
 
 module TestMOF
 
-import JSON
-import JSONSchema
 using Test
 
+import JSON
+import JSONSchema
 import MathOptInterface as MOI
-import MathOptInterface.Utilities as MOIU
+
 const MOF = MOI.FileFormats.MOF
 
 const TEST_MOF_FILE = "test.mof.json"
 
 const SCHEMA =
     JSONSchema.Schema(JSON.parsefile(MOI.FileFormats.MOF.SCHEMA_PATH))
+
+function runtests()
+    for name in names(@__MODULE__, all = true)
+        if startswith("$(name)", "test_")
+            @testset "$name" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    sleep(1.0)  # allow time for unlink to happen
+    rm(TEST_MOF_FILE, force = true)
+    rm(TEST_MOF_FILE * ".gz", force = true)
+    return
+end
 
 function _validate(filename::String)
     MOI.FileFormats.compressed_open(
@@ -42,7 +56,7 @@ struct UnsupportedFunction <: MOI.AbstractFunction end
 
 function _test_model_equality(model_string, variables, constraints; suffix = "")
     model = MOF.Model()
-    MOIU.loadfromstring!(model, model_string)
+    MOI.Utilities.loadfromstring!(model, model_string)
     MOI.write_to_file(model, TEST_MOF_FILE * suffix)
     model_2 = MOF.Model()
     MOI.read_from_file(model_2, TEST_MOF_FILE * suffix)
@@ -768,6 +782,17 @@ c1: [x1, x2, x3, x4] in PositiveSemidefiniteConeSquare(2)
     )
 end
 
+function test_HermitianPositiveSemidefiniteConeTriangle()
+    return _test_model_equality(
+        """
+variables: x1, x2, x3, x4
+c1: [x1, x2, x3, x4] in HermitianPositiveSemidefiniteConeTriangle(2)
+""",
+        ["x1", "x2", "x3", "x4"],
+        ["c1"],
+    )
+end
+
 function test_LogDetConeTriangle()
     return _test_model_equality(
         """
@@ -1026,6 +1051,39 @@ c1: [x, y, z] in Table([1.0 1.0 0.0; 0.0 0.0 0.0])
     )
 end
 
+function test_Parameter()
+    return _test_model_equality(
+        """
+constrainedvariable: x in Parameter(2.0)
+""",
+        ["x"],
+        String[],
+    )
+end
+
+function test_HyperRectangle()
+    return _test_model_equality(
+        """
+variables: x, y, z
+c1: [x, y, z] in HyperRectangle([1.0, 2.0, 3.0], [1.1, 2.2, 3.3])
+""",
+        ["x", "y", "z"],
+        ["c1"],
+    )
+end
+
+function test_Reified()
+    _test_model_equality(
+        """
+variables: x, y
+minobjective: x
+c1: [x, y] in Reified(GreaterThan(1.0))
+""",
+        ["x", "y"],
+        ["c1"],
+    )
+end
+
 function test_VariablePrimalStart()
     model_w = MOF.Model()
     x = MOI.add_variable(model_w)
@@ -1259,20 +1317,6 @@ function test_parse_nonlinear_objective_only()
     @test block.has_objective
     MOI.initialize(block.evaluator, Symbol[])
     @test MOI.eval_objective(block.evaluator, [2.0]) ≈ sin(2.0)
-    return
-end
-
-function runtests()
-    for name in names(@__MODULE__, all = true)
-        if startswith("$(name)", "test_")
-            @testset "$name" begin
-                getfield(@__MODULE__, name)()
-            end
-        end
-    end
-    sleep(1.0)  # allow time for unlink to happen
-    rm(TEST_MOF_FILE, force = true)
-    rm(TEST_MOF_FILE * ".gz", force = true)
     return
 end
 

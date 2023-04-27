@@ -275,6 +275,7 @@ head_name(::Type{<:MOI.EqualTo}) = "EqualTo"
 head_name(::Type{<:MOI.Interval}) = "Interval"
 head_name(::Type{<:MOI.Semiinteger}) = "Semiinteger"
 head_name(::Type{<:MOI.Semicontinuous}) = "Semicontinuous"
+head_name(::Type{<:MOI.Parameter}) = "Parameter"
 
 # ========== Non-typed vector sets ==========
 head_name(::Type{MOI.Zeros}) = "Zeros"
@@ -302,6 +303,9 @@ function head_name(::Type{MOI.PositiveSemidefiniteConeSquare})
     return "PositiveSemidefiniteConeSquare"
 end
 head_name(::Type{MOI.Complements}) = "Complements"
+function head_name(::Type{MOI.HermitianPositiveSemidefiniteConeTriangle})
+    return "HermitianPositiveSemidefiniteConeTriangle"
+end
 
 head_name(::Type{MOI.AllDifferent}) = "AllDifferent"
 head_name(::Type{MOI.Circuit}) = "Circuit"
@@ -318,6 +322,7 @@ head_name(::Type{<:MOI.DualPowerCone}) = "DualPowerCone"
 head_name(::Type{<:MOI.SOS1}) = "SOS1"
 head_name(::Type{<:MOI.SOS2}) = "SOS2"
 head_name(::Type{<:MOI.BinPacking}) = "BinPacking"
+head_name(::Type{<:MOI.HyperRectangle}) = "HyperRectangle"
 
 function moi_to_object(
     set::MOI.Indicator{I,S},
@@ -328,6 +333,16 @@ function moi_to_object(
         "type" => "Indicator",
         "set" => moi_to_object(set.set, name_map),
         "activate_on" => (I == MOI.ACTIVATE_ON_ONE) ? "one" : "zero",
+    )
+end
+
+function moi_to_object(
+    set::MOI.Reified,
+    name_map::Dict{MOI.VariableIndex,String},
+)
+    return OrderedObject(
+        "type" => "Reified",
+        "set" => moi_to_object(set.set, name_map),
     )
 end
 
