@@ -1169,6 +1169,7 @@ struct ScaledPositiveSemidefiniteConeTriangle <: AbstractVectorSet
 end
 
 dual_set(s::ScaledPositiveSemidefiniteConeTriangle) = copy(s)
+
 function dual_set_type(::Type{ScaledPositiveSemidefiniteConeTriangle})
     return ScaledPositiveSemidefiniteConeTriangle
 end
