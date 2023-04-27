@@ -1073,7 +1073,7 @@ c1: [x, y, z] in HyperRectangle([1.0, 2.0, 3.0], [1.1, 2.2, 3.3])
 end
 
 function test_Reified()
-    _test_model_equality(
+    return _test_model_equality(
         """
 variables: x, y
 minobjective: x
