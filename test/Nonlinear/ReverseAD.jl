@@ -36,6 +36,10 @@ function test_objective_quadratic_univariate()
     g = [NaN]
     MOI.eval_objective_gradient(evaluator, g, [1.2])
     @test g == [2.4]
+    @test MOI.hessian_objective_structure(evaluator) == [(1, 1)]
+    H = [NaN]
+    MOI.eval_hessian_objective(evaluator, H, [1.2])
+    @test H == [2.0]
     @test MOI.hessian_lagrangian_structure(evaluator) == [(1, 1)]
     H = [NaN]
     MOI.eval_hessian_lagrangian(evaluator, H, [1.2], 1.5, Float64[])
@@ -63,6 +67,14 @@ function test_objective_and_constraints_quadratic_univariate()
     g = [NaN]
     MOI.eval_objective_gradient(evaluator, g, [1.2])
     @test g == [2.4]
+    @test MOI.hessian_objective_structure(evaluator) == [(1, 1)]
+    H = [NaN]
+    MOI.eval_hessian_objective(evaluator, H, [1.2])
+    @test H == [2.0]
+    @test MOI.hessian_constraint_structure(evaluator, 1) == [(1, 1)]
+    H = [NaN]
+    MOI.eval_hessian_constraint(evaluator, H, [1.3], 1)
+    @test H == [2.0]
     @test MOI.hessian_lagrangian_structure(evaluator) == [(1, 1), (1, 1)]
     H = [NaN, NaN]
     MOI.eval_hessian_lagrangian(evaluator, H, [1.2], 1.5, Float64[1.3])
@@ -92,6 +104,10 @@ function test_objective_quadratic_multivariate()
     g = [NaN, NaN]
     MOI.eval_objective_gradient(evaluator, g, [1.2, 2.3])
     @test g == [2 * 1.2 + 2.3, 1.2 + 2 * 2.3]
+    @test MOI.hessian_objective_structure(evaluator) == [(1, 1), (2, 2), (2, 1)]
+    H = [NaN, NaN, NaN]
+    MOI.eval_hessian_objective(evaluator, H, [1.2, 2.3])
+    @test H == [2.0, 2.0, 1.0]
     @test MOI.hessian_lagrangian_structure(evaluator) ==
           [(1, 1), (2, 2), (2, 1)]
     H = [NaN, NaN, NaN]
@@ -126,6 +142,10 @@ function test_objective_quadratic_multivariate_subexpressions()
     g = [NaN, NaN]
     MOI.eval_objective_gradient(evaluator, g, [1.2, 2.3])
     @test g == [2 * 1.2 + 2.3, 1.2 + 2 * 2.3]
+    @test MOI.hessian_objective_structure(evaluator) == [(1, 1), (2, 2), (2, 1)]
+    H = [NaN, NaN, NaN]
+    MOI.eval_hessian_objective(evaluator, H, [1.2, 2.3])
+    @test H == [2.0, 2.0, 1.0]
     @test MOI.hessian_lagrangian_structure(evaluator) ==
           [(1, 1), (2, 2), (2, 1)]
     H = [NaN, NaN, NaN]
@@ -225,6 +245,10 @@ function test_constraint_quadratic_univariate()
     J = [NaN]
     MOI.eval_constraint_jacobian(evaluator, J, x_val)
     @test J == 2 .* x_val
+    @test MOI.hessian_constraint_structure(evaluator, 1) == [(1, 1)]
+    H = [NaN]
+    MOI.eval_hessian_constraint(evaluator, H, x_val, 1)
+    @test H == [2.0]
     @test MOI.hessian_lagrangian_structure(evaluator) == [(1, 1)]
     H = [NaN]
     MOI.eval_hessian_lagrangian(evaluator, H, x_val, 0.0, [1.5])
