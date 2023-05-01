@@ -636,42 +636,24 @@ end
 check_type_and_multiple_names(::Type, ::Nothing, ::Nothing, name) = nothing
 
 function check_type_and_multiple_names(
-    ::Type{T},
+    # >: Needed for MathOptInterface.jl#2159.
+    ::Type{>:T},
     value::T,
     ::Nothing,
     name,
 ) where {T}
-    return value
-end
-
-# Needed for https://github.com/jump-dev/MathOptInterface.jl/issues/2159.
-function check_type_and_multiple_names(
-    ::Type{MOI.ConstraintIndex},
-    value::MOI.ConstraintIndex{F,S},
-    ::Nothing,
-    name,
-) where {F,S}
     return value
 end
 
 check_type_and_multiple_names(::Type, ::Any, ::Nothing, name) = nothing
 
 function check_type_and_multiple_names(
-    ::Type{T},
+    # >: Needed for MathOptInterface.jl#2159.
+    ::Type{>:T},
     ::Nothing,
     value::T,
     name,
 ) where {T}
-    return value
-end
-
-# Needed for https://github.com/jump-dev/MathOptInterface.jl/issues/2159.
-function check_type_and_multiple_names(
-    ::Type{MOI.ConstraintIndex},
-    ::Nothing,
-    value::MOI.ConstraintIndex,
-    name,
-)
     return value
 end
 
