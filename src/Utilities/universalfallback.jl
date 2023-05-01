@@ -644,6 +644,16 @@ function check_type_and_multiple_names(
     return value
 end
 
+# Needed for https://github.com/jump-dev/MathOptInterface.jl/issues/2159.
+function check_type_and_multiple_names(
+    ::Type{MOI.ConstraintIndex},
+    value::MOI.ConstraintIndex,
+    ::Nothing,
+    name,
+)
+    return value
+end
+
 check_type_and_multiple_names(::Type, ::Any, ::Nothing, name) = nothing
 
 function check_type_and_multiple_names(
