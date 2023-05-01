@@ -23,7 +23,7 @@ end
 
 function test_runtests_norm_1()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.NormSpecialCaseBridge,
+        MOI.Bridges.Constraint.NormOneConeToNormConeBridge,
         """
         variables: t, x1, x2, x3, x4
         [t, x1, x2, x3, x4] in NormOneCone(5)
@@ -38,7 +38,7 @@ end
 
 function test_runtests_norm_2()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.NormSpecialCaseBridge,
+        MOI.Bridges.Constraint.SecondOrderConeToNormConeBridge,
         """
         variables: t, x1, x2, x3, x4
         [t, x1, x2, x3, x4] in SecondOrderCone(5)
@@ -53,7 +53,7 @@ end
 
 function test_runtests_norm_inf()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.NormSpecialCaseBridge,
+        MOI.Bridges.Constraint.NormInfinityConeToNormConeBridge,
         """
         variables: t, x1, x2, x3, x4
         [t, x1, x2, x3, x4] in NormInfinityCone(5)

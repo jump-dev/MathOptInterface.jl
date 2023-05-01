@@ -9,7 +9,7 @@
 
 `NormToPowerBridge` implements the following reformulation:
 
-  * ``(t, x...) \\in NormCone(p, 1+d)`` into ``(r_i, t, x_i) \\in PowerCone(1 / p)``
+  * ``(t, x) \\in NormCone(p, 1+d)`` into ``(r_i, t, x_i) \\in PowerCone(1 / p)``
     for all ``i``, and ``\\sum\\limits_i r_i == t``.
 
 ## Source node
@@ -71,7 +71,7 @@ end
 function MOI.Bridges.added_constrained_variable_types(
     ::Type{<:NormToPowerBridge},
 )
-    return Tuple{Type}[]
+    return Tuple{Type}[(MOI.Reals,)]
 end
 
 function MOI.Bridges.added_constraint_types(
