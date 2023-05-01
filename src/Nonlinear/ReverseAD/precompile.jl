@@ -60,8 +60,12 @@ function _precompile_()
         },
     )
     Base.precompile(Tuple{typeof(MOI.hessian_objective_structure),NLPEvaluator})
-    Base.precompile(Tuple{typeof(MOI.hessian_constraint_structure),NLPEvaluator, Int64})
-    Base.precompile(Tuple{typeof(MOI.hessian_lagrangian_structure),NLPEvaluator})
+    Base.precompile(
+        Tuple{typeof(MOI.hessian_constraint_structure),NLPEvaluator, Int64},
+    )
+    Base.precompile(
+        Tuple{typeof(MOI.hessian_lagrangian_structure),NLPEvaluator},
+    )
     Base.precompile(Tuple{typeof(MOI.jacobian_structure),NLPEvaluator})
     Base.precompile(
         Tuple{typeof(MOI.eval_objective),NLPEvaluator,Vector{Float64}},
