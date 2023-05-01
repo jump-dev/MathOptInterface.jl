@@ -262,7 +262,7 @@ function MOI.hessian_objective_structure(d::NLPEvaluator)
     return H
 end
 
-function MOI.hessian_constraint_structure(d::NLPEvaluator, i::Int64)
+function MOI.hessian_constraint_structure(d::NLPEvaluator, i::Integer)
     @assert d.want_hess
     H = Tuple{Int64,Int64}[(row, col) for (row, col) in zip(d.constraints[i].hess_I, d.constraints[i].hess_J)]
     return H
