@@ -158,7 +158,10 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
         if d.want_hess
             d.hessian_sparsity = Tuple{Int64,Int64}[]
             if d.objective !== nothing
-                append!(d.hessian_sparsity, zip(d.objective.hess_I, d.objective.hess_J))
+                append!(
+                    d.hessian_sparsity,
+                    zip(d.objective.hess_I, d.objective.hess_J),
+                )
             end
             for c in d.constraints
                 append!(d.hessian_sparsity, zip(c.hess_I, c.hess_J))
@@ -258,14 +261,14 @@ end
 
 function MOI.hessian_objective_structure(d::NLPEvaluator)
     @assert d.want_hess
-    H = Tuple{Int64,Int64}[(row, col) for (row, col) in zip(d.objective.hess_I, d.objective.hess_J)]
-    return H
+    obj = d.objective
+    return Tuple{Int64,Int64}[(i, j) for (i, j) in zip(obj.hess_I, obj.hess_J)]
 end
 
-function MOI.hessian_constraint_structure(d::NLPEvaluator, i::Integer)
+function MOI.hessian_constraint_structure(d::NLPEvaluator, c::Integer)
     @assert d.want_hess
-    H = Tuple{Int64,Int64}[(row, col) for (row, col) in zip(d.constraints[i].hess_I, d.constraints[i].hess_J)]
-    return H
+    con = d.constraints[c]
+    return Tuple{Int64,Int64}[(i, j) for (i, j) in zip(con.hess_I, con.hess_J)]
 end
 
 function MOI.hessian_lagrangian_structure(d::NLPEvaluator)
