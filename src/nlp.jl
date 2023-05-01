@@ -204,6 +204,47 @@ The sparsity structure is assumed to be independent of the point ``x``.
 function jacobian_structure end
 
 """
+    hessian_objective_structure(
+        d::AbstractNLPEvaluator,
+    )::Vector{Tuple{Int64,Int64}}
+
+Returns a vector of tuples, `(row, column)`, where each indicates the position
+of a structurally nonzero element in the Hessian matrix:
+``\\nabla^2 f(x)``.
+
+The indices are not required to be sorted and can contain duplicates, in which
+case the solver should combine the corresponding elements by adding them
+together.
+
+Any mix of lower and upper-triangular indices is valid. Elements `(i,j)` and
+`(j,i)`, if both present, should be treated as duplicates.
+
+The sparsity structure is assumed to be independent of the point ``x``.
+"""
+function hessian_objective_structure end
+
+"""
+    hessian_constraint_structure(
+        d::AbstractNLPEvaluator,
+        i::Int64,
+    )::Vector{Tuple{Int64,Int64}}
+
+Returns a vector of tuples, `(row, column)`, where each indicates the position
+of a structurally nonzero element in the Hessian matrix:
+``nabla^2 g_i(x)``.
+
+The indices are not required to be sorted and can contain duplicates, in which
+case the solver should combine the corresponding elements by adding them
+together.
+
+Any mix of lower and upper-triangular indices is valid. Elements `(i,j)` and
+`(j,i)`, if both present, should be treated as duplicates.
+
+The sparsity structure is assumed to be independent of the point ``x``.
+"""
+function hessian_constraint_structure end
+
+"""
     hessian_lagrangian_structure(
         d::AbstractNLPEvaluator,
     )::Vector{Tuple{Int64,Int64}}
@@ -311,6 +352,47 @@ When implementing this method, you must not assume that `h` is
 For example, it may be the `view` of a vector.
 """
 function eval_hessian_lagrangian_product end
+
+"""
+    eval_hessian_objective(
+        d::AbstractNLPEvaluator,
+        H::AbstractVector{T},
+        x::AbstractVector{T},
+    )::Nothing where {T}
+
+This function computes the sparse Hessian matrix:
+``\\nabla^2 f(x)``,
+storing the result in the vector `H` in the same order as the indices
+returned by [`hessian_objective_structure`](@ref).
+
+## Implementation notes
+
+When implementing this method, you must not assume that `H` is
+`Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
+For example, it may be the `view` of a vector.
+"""
+function eval_hessian_objective end
+
+"""
+    eval_hessian_constraint(
+        d::AbstractNLPEvaluator,
+        H::AbstractVector{T},
+        x::AbstractVector{T},
+        i::Int64,
+    )::Nothing where {T}
+
+This function computes the sparse Hessian matrix:
+``\\nabla^2 g_i(x)``,
+storing the result in the vector `H` in the same order as the indices
+returned by [`hessian_constraint_structure`](@ref).
+
+## Implementation notes
+
+When implementing this method, you must not assume that `H` is
+`Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
+For example, it may be the `view` of a vector.
+"""
+function eval_hessian_constraint end
 
 """
     eval_hessian_lagrangian(

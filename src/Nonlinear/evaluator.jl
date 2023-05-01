@@ -69,6 +69,8 @@ function MOI.initialize(evaluator::Evaluator, features::Vector{Symbol})
     evaluator.eval_objective_gradient_timer = 0.0
     evaluator.eval_constraint_timer = 0.0
     evaluator.eval_constraint_jacobian_timer = 0.0
+    evaluator.eval_hessian_objective_timer = 0.0
+    evaluator.eval_hessian_constraint_timer = 0.0
     evaluator.eval_hessian_lagrangian_timer = 0.0
     append!(evaluator.ordered_constraints, keys(evaluator.model.constraints))
     filter!(f -> f != :ExprGraph, features)
@@ -143,8 +145,30 @@ function MOI.eval_constraint_jacobian(evaluator::Evaluator, J, x)
     return
 end
 
+function MOI.hessian_objective_structure(evaluator::Evaluator)
+    return MOI.hessian_objective_structure(evaluator.backend)
+end
+
+function MOI.hessian_constraint_structure(evaluator::Evaluator, i)
+    return MOI.hessian_constraint_structure(evaluator.backend)
+end
+
 function MOI.hessian_lagrangian_structure(evaluator::Evaluator)
     return MOI.hessian_lagrangian_structure(evaluator.backend)
+end
+
+function MOI.eval_hessian_objective(evaluator::Evaluator, H, x)
+    start = time()
+    MOI.eval_hessian_objective(evaluator.backend, H, x)
+    evaluator.eval_hessian_objective_timer += time() - start
+    return
+end
+
+function MOI.eval_hessian_constraint(evaluator::Evaluator, H, x, i)
+    start = time()
+    MOI.eval_hessian_constraint(evaluator.backend, H, x, i)
+    evaluator.eval_hessian_constraint_timer += time() - start
+    return
 end
 
 function MOI.eval_hessian_lagrangian(evaluator::Evaluator, H, x, σ, μ)

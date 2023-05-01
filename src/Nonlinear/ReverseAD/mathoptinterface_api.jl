@@ -156,7 +156,13 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
         end
         d.max_chunk = max_chunk
         if d.want_hess
-            _compute_hessian_lagrangian_structure(d)
+            d.hessian_sparsity = Tuple{Int64,Int64}[]
+            if d.objective !== nothing
+                append!(d.hessian_sparsity, zip(d.objective.hess_I, d.objective.hess_J))
+            end
+            for c in d.constraints
+                append!(d.hessian_sparsity, zip(c.hess_I, c.hess_J))
+            end
         end
     end
     return
@@ -250,19 +256,38 @@ function MOI.eval_constraint_jacobian_transpose_product(
     return
 end
 
+function MOI.hessian_objective_structure(d::NLPEvaluator)
+    @assert d.want_hess
+    H = Tuple{Int64,Int64}[(row, col) for (row, col) in zip(d.objective.hess_I, d.objective.hess_J)]
+    return H
+end
+
+function MOI.hessian_constraint_structure(d::NLPEvaluator, i::Int64)
+    @assert d.want_hess
+    H = Tuple{Int64,Int64}[(row, col) for (row, col) in zip(d.constraints[i].hess_I, d.constraints[i].hess_J)]
+    return H
+end
+
 function MOI.hessian_lagrangian_structure(d::NLPEvaluator)
     @assert d.want_hess
     return d.hessian_sparsity
 end
 
-function _compute_hessian_lagrangian_structure(d::NLPEvaluator)
-    d.hessian_sparsity = Tuple{Int64,Int64}[]
+function MOI.eval_hessian_objective(d::NLPEvaluator, H, x)
+    @assert d.want_hess
+    _reverse_mode(d, x)
+    fill!(d.input_ϵ, 0.0)
     if d.objective !== nothing
-        append!(d.hessian_sparsity, zip(d.objective.hess_I, d.objective.hess_J))
+        _eval_hessian(d, d.objective, H, 1.0, 0)
     end
-    for c in d.constraints
-        append!(d.hessian_sparsity, zip(c.hess_I, c.hess_J))
-    end
+    return
+end
+
+function MOI.eval_hessian_constraint(d::NLPEvaluator, H, x, i)
+    @assert d.want_hess
+    _reverse_mode(d, x)
+    fill!(d.input_ϵ, 0.0)
+    _eval_hessian(d, d.constraints[i], H, 1.0, 0)
     return
 end
 
