@@ -150,7 +150,7 @@ function MOI.hessian_objective_structure(evaluator::Evaluator)
 end
 
 function MOI.hessian_constraint_structure(evaluator::Evaluator, i)
-    return MOI.hessian_constraint_structure(evaluator.backend)
+    return MOI.hessian_constraint_structure(evaluator.backend, i)
 end
 
 function MOI.hessian_lagrangian_structure(evaluator::Evaluator)
