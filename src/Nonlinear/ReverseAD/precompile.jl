@@ -8,6 +8,23 @@ function _precompile_()
     ccall(:jl_generating_output, Cint, ()) == 1 || return nothing
     Base.precompile(
         Tuple{
+            typeof(MOI.eval_hessian_objective),
+            NLPEvaluator,
+            SubArray{Float64,1,Vector{Float64},Tuple{UnitRange{Int64}},true},
+            Vector{Float64},
+        },
+    )
+    Base.precompile(
+        Tuple{
+            typeof(MOI.eval_hessian_constraint),
+            NLPEvaluator,
+            SubArray{Float64,1,Vector{Float64},Tuple{UnitRange{Int64}},true},
+            Vector{Float64},
+            Int64,
+        },
+    )
+    Base.precompile(
+        Tuple{
             typeof(MOI.eval_hessian_lagrangian),
             NLPEvaluator,
             SubArray{Float64,1,Vector{Float64},Tuple{UnitRange{Int64}},true},
@@ -41,6 +58,13 @@ function _precompile_()
             SubArray{Float64,1,Vector{Float64},Tuple{UnitRange{Int64}},true},
             Vector{Float64},
         },
+    )
+    Base.precompile(Tuple{typeof(MOI.hessian_objective_structure),NLPEvaluator})
+    Base.precompile(
+        Tuple{typeof(MOI.hessian_constraint_structure),NLPEvaluator,Int64},
+    )
+    Base.precompile(
+        Tuple{typeof(MOI.hessian_lagrangian_structure),NLPEvaluator},
     )
     Base.precompile(Tuple{typeof(MOI.jacobian_structure),NLPEvaluator})
     Base.precompile(
