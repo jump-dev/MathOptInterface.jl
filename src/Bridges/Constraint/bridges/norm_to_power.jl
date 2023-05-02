@@ -12,6 +12,9 @@
   * ``(t, x) \\in NormCone(p, 1+d)`` into ``(r_i, t, x_i) \\in PowerCone(1 / p)``
     for all ``i``, and ``\\sum\\limits_i r_i == t``.
 
+For details, see Alizadeh, F., and Goldfarb, D. (2001). "Second-order cone
+programming." Mathematical Programming, Series B, 95:3-51.
+
 ## Source node
 
 `NormToPowerBridge` supports:
