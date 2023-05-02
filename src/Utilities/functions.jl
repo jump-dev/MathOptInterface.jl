@@ -1013,6 +1013,10 @@ end
     filter_variables(keep::Function, f::AbstractFunction)
 
 Return a new function `f` with the variable `vi` such that `!keep(vi)` removed.
+
+WARNING: Don't define `filter_variables(::Function, ...)` because Julia will
+not specialize on this. Define instead
+`filter_variables(::F, ...) where {F<:Function}`.
 """
 function filter_variables end
 

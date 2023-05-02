@@ -40,7 +40,7 @@ function parse_expression(
     data::Model,
     expr::Expression,
     x::MOI.ScalarNonlinearFunction,
-    parent::Int,
+    parent_index::Int,
 )
     stack = Tuple{Int,Any}[(parent, x)]
     while !isempty(stack)
@@ -256,10 +256,10 @@ function parse_expression(
     data::Model,
     expr::Expression,
     x::MOI.ScalarAffineFunction,
-    parent::Int,
+    parent_index::Int,
 )
     f = convert(MOI.ScalarNonlinearFunction, x)
-    parse_expression(data, expr, f, parent)
+    parse_expression(data, expr, f, parent_index)
     return
 end
 
@@ -267,10 +267,10 @@ function parse_expression(
     data::Model,
     expr::Expression,
     x::MOI.ScalarQuadraticFunction,
-    parent::Int,
+    parent_index::Int,
 )
     f = convert(MOI.ScalarNonlinearFunction, x)
-    parse_expression(data, expr, f, parent)
+    parse_expression(data, expr, f, parent_index)
     return
 end
 
