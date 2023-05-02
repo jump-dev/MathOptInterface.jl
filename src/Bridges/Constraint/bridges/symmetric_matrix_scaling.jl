@@ -23,19 +23,33 @@ in the `MOI.ScaledPositiveSemidefiniteConeTriangle`.
 
   * `F` in [`MOI.ScaledPositiveSemidefiniteConeTriangle`](@ref)
 """
-struct SymmetricMatrixScalingBridge{T,F,G} <:
-       SetMapBridge{T,MOI.ScaledPositiveSemidefiniteConeTriangle,MOI.PositiveSemidefiniteConeTriangle,F,G}
-    constraint::MOI.ConstraintIndex{F,MOI.ScaledPositiveSemidefiniteConeTriangle}
+struct SymmetricMatrixScalingBridge{T,F,G} <: SetMapBridge{
+    T,
+    MOI.ScaledPositiveSemidefiniteConeTriangle,
+    MOI.PositiveSemidefiniteConeTriangle,
+    F,
+    G,
+}
+    constraint::MOI.ConstraintIndex{
+        F,
+        MOI.ScaledPositiveSemidefiniteConeTriangle,
+    }
 end
 
-const SymmetricMatrixScaling{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SymmetricMatrixScalingBridge{T},OT}
+const SymmetricMatrixScaling{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{SymmetricMatrixScalingBridge{T},OT}
 
 function concrete_bridge_type(
     ::Type{<:SymmetricMatrixScalingBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.PositiveSemidefiniteConeTriangle},
 ) where {T}
-    F = MOI.Utilities.promote_operation(*, T, Diagonal{T,Vector{T}}, G)
+    F = MOI.Utilities.promote_operation(
+        *,
+        T,
+        LinearAlgebra.Diagonal{T,Vector{T}},
+        G,
+    )
     return SymmetricMatrixScalingBridge{T,F,G}
 end
 
@@ -53,25 +67,52 @@ function MOI.Bridges.inverse_map_set(
     return MOI.PositiveSemidefiniteConeTriangle(set.side_dimension)
 end
 
-function MOI.Bridges.map_function(::Type{<:SymmetricMatrixScalingBridge{T}}, func) where {T}
-    return MOI.Utilities.operate(*, T, Diagonal(MOI.Utilities.symmetric_matrix_scaling_vector(T)), func)
+function MOI.Bridges.map_function(
+    ::Type{<:SymmetricMatrixScalingBridge{T}},
+    func,
+) where {T}
+    return MOI.Utilities.operate(
+        *,
+        T,
+        LinearAlgebra.Diagonal(
+            MOI.Utilities.symmetric_matrix_scaling_vector(T),
+        ),
+        func,
+    )
 end
 
-function MOI.Bridges.inverse_map_function(::Type{<:SymmetricMatrixScalingBridge}, func)
-    return MOI.Utilities.operate(*, T, Diagonal(MOI.Utilities.symmetric_matrix_inverse_scaling_vector(T)), func)
+function MOI.Bridges.inverse_map_function(
+    ::Type{<:SymmetricMatrixScalingBridge{T}},
+    func,
+) where {T}
+    return MOI.Utilities.operate(
+        *,
+        T,
+        LinearAlgebra.Diagonal(
+            MOI.Utilities.symmetric_matrix_inverse_scaling_vector(T),
+        ),
+        func,
+    )
 end
 
-# The map is symmetric
-function MOI.Bridges.adjoint_map_function(BT::Type{<:SymmetricMatrixScalingBridge}, func)
-    return MOI.Bridges.map_function(BT, func)
-end
-
-# The map is a symmetric
-function MOI.Bridges.inverse_adjoint_map_function(
+# Since the map is a diagonal matrix `D`, it is symmetric so one would initially
+# expect `adjoint_map_function` to be the same as `map_function`. However, the
+# scalar product for the scaled PSD cone is `<x, y>_2 = x'y` but the scalar
+# product for the PSD cone additionally scales the offdiagonal entries by `2`
+# hence by `D^2` so `<x, y>_1 = x'D^2y`.
+# So `<Dx, y>_2 = <x, D^(-1)y>_1` hence the adjoint of `D` is its inverse!
+function MOI.Bridges.adjoint_map_function(
     BT::Type{<:SymmetricMatrixScalingBridge},
     func,
 )
     return MOI.Bridges.inverse_map_function(BT, func)
+end
+
+function MOI.Bridges.inverse_adjoint_map_function(
+    BT::Type{<:SymmetricMatrixScalingBridge},
+    func,
+)
+    return MOI.Bridges.map_function(BT, func)
 end
 
 """
@@ -85,27 +126,38 @@ in the `MOI.PositiveSemidefiniteConeTriangle`.
 
 `SymmetricMatrixInverseScalingBridge` supports:
 
-  * `G` in [`MOI.PositiveSemidefiniteConeTriangle`](@ref)
+  * `G` in [`MOI.ScaledPositiveSemidefiniteConeTriangle`](@ref)
 
 ## Target node
 
 `SymmetricMatrixInverseScalingBridge` creates:
 
-  * `F` in [`MOI.ScaledPositiveSemidefiniteConeTriangle`](@ref)
+  * `F` in [`MOI.PositiveSemidefiniteConeTriangle`](@ref)
 """
-struct SymmetricMatrixInverseScalingBridge{T,F,G} <:
-       SetMapBridge{T,MOI.ScaledPositiveSemidefiniteConeTriangle,MOI.PositiveSemidefiniteConeTriangle,F,G}
-    constraint::MOI.ConstraintIndex{F,MOI.ScaledPositiveSemidefiniteConeTriangle}
+struct SymmetricMatrixInverseScalingBridge{T,F,G} <: SetMapBridge{
+    T,
+    MOI.PositiveSemidefiniteConeTriangle,
+    MOI.ScaledPositiveSemidefiniteConeTriangle,
+    F,
+    G,
+}
+    constraint::MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle}
 end
 
-const SymmetricMatrixInverseScaling{T,OT<:MOI.ModelLike} = SingleBridgeOptimizer{SymmetricMatrixInverseScalingBridge{T},OT}
+const SymmetricMatrixInverseScaling{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{SymmetricMatrixInverseScalingBridge{T},OT}
 
 function concrete_bridge_type(
     ::Type{<:SymmetricMatrixInverseScalingBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
     ::Type{MOI.PositiveSemidefiniteConeTriangle},
 ) where {T}
-    F = MOI.Utilities.promote_operation(*, T, Diagonal{T,Vector{T}}, G)
+    F = MOI.Utilities.promote_operation(
+        *,
+        T,
+        LinearAlgebra.Diagonal{T,Vector{T}},
+        G,
+    )
     return SymmetricMatrixInverseScalingBridge{T,F,G}
 end
 
@@ -123,23 +175,44 @@ function MOI.Bridges.inverse_map_set(
     return MOI.ScaledPositiveSemidefiniteConeTriangle(set.side_dimension)
 end
 
-function MOI.Bridges.map_function(::Type{<:SymmetricMatrixInverseScalingBridge{T}}, func) where {T}
-    return MOI.Utilities.operate(*, T, Diagonal(MOI.Utilities.symmetric_matrix_inverse_scaling_vector{T}()), func)
+function MOI.Bridges.map_function(
+    ::Type{<:SymmetricMatrixInverseScalingBridge{T}},
+    func,
+) where {T}
+    return MOI.Utilities.operate(
+        *,
+        T,
+        LinearAlgebra.Diagonal(
+            MOI.Utilities.symmetric_matrix_inverse_scaling_vector(T),
+        ),
+        func,
+    )
 end
 
-function MOI.Bridges.inverse_map_function(::Type{<:SymmetricMatrixInverseScalingBridge}, func)
-    return MOI.Utilities.operate(*, T, Diagonal(MOI.Utilities.symmetric_matrix_scaling_vector{T}()), func)
+function MOI.Bridges.inverse_map_function(
+    ::Type{<:SymmetricMatrixInverseScalingBridge{T}},
+    func,
+) where {T}
+    return MOI.Utilities.operate(
+        *,
+        T,
+        LinearAlgebra.Diagonal(
+            MOI.Utilities.symmetric_matrix_scaling_vector(T),
+        ),
+        func,
+    )
 end
 
-# The map is symmetric
-function MOI.Bridges.adjoint_map_function(BT::Type{<:SymmetricMatrixInverseScalingBridge}, func)
-    return MOI.Bridges.map_function(BT, func)
-end
-
-# The map is a symmetric
-function MOI.Bridges.inverse_adjoint_map_function(
+function MOI.Bridges.adjoint_map_function(
     BT::Type{<:SymmetricMatrixInverseScalingBridge},
     func,
 )
     return MOI.Bridges.inverse_map_function(BT, func)
+end
+
+function MOI.Bridges.inverse_adjoint_map_function(
+    BT::Type{<:SymmetricMatrixInverseScalingBridge},
+    func,
+)
+    return MOI.Bridges.map_function(BT, func)
 end

@@ -564,7 +564,12 @@ end
 function set_with_dimension(
     ::Type{S},
     dim,
-) where {S<:MOI.AbstractSymmetricMatrixSetTriangle}
+) where {
+    S<:Union{
+        MOI.AbstractSymmetricMatrixSetTriangle,
+        MOI.ScaledPositiveSemidefiniteConeTriangle,
+    },
+}
     side_dimension = side_dimension_for_vectorized_dimension(dim)
     return S(side_dimension)
 end

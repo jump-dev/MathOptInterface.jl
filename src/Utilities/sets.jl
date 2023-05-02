@@ -192,6 +192,11 @@ function Base.getindex(s::SymmetricMatrixScalingVector, i::Base.Integer)
         return s.scaling
     end
 end
+
+# `LinearAlgebra.Diagonal` checks that the first index is 1 so we need
+# to implement this
+Base.firstindex(::SymmetricMatrixScalingVector) = 1
+
 Base.IteratorSize(::SymmetricMatrixScalingVector) = Base.IsInfinite()
 
 similar_type(::Type{<:MOI.LessThan}, ::Type{T}) where {T} = MOI.LessThan{T}
