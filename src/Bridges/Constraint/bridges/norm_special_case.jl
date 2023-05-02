@@ -34,7 +34,7 @@ function concrete_bridge_type(
     ::Type{<:NormSpecialCaseBridge{S,T}},
     F::Type{<:MOI.AbstractVectorFunction},
     ::Type{S},
-) where {T,S}
+) where {T,S<:Union{MOI.NormOneCone,MOI.SecondOrderCone,MOI.NormInfinityCone}}
     return NormSpecialCaseBridge{S,T,F}
 end
 
