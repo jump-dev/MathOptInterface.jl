@@ -158,6 +158,42 @@ function trimap(row::Integer, column::Integer)
     return div((row - 1) * row, 2) + column
 end
 
+"""
+    struct SymmetricMatrixScalingVector{T} <: AbstractVector{T}
+        no_scaling::T
+        scaling::T
+    end
+
+Vector of scaling for the entries of the vectorized form of
+a symmetric matrix. The values `no_scaling` and `scaling`
+are stored in the `struct` to avoid creating a new one for each entry.
+"""
+struct SymmetricMatrixScalingVector{T} <: AbstractVector{T}
+    scaling::T
+    no_scaling::T
+end
+
+function SymmetricMatrixScalingVector{T}(scaling::T) where {T}
+    return SymmetricMatrixScalingVector{T}(scaling, one(T))
+end
+
+function symmetric_matrix_scaling_vector(::Type{T}) where {T}
+    return SymmetricMatrixScalingVector{T}(sqrt(convert(T, 2)))
+end
+
+function symmetric_matrix_inverse_scaling_vector(::Type{T}) where {T}
+    return SymmetricMatrixScalingVector{T}(inv(sqrt(convert(T, 2))))
+end
+
+function Base.getindex(s::SymmetricMatrixScalingVector, i::Base.Integer)
+    if is_diagonal_vectorized_index(i)
+        return s.no_scaling
+    else
+        return s.scaling
+    end
+end
+Base.IteratorSize(::SymmetricMatrixScalingVector) = Base.IsInfinite()
+
 similar_type(::Type{<:MOI.LessThan}, ::Type{T}) where {T} = MOI.LessThan{T}
 
 function similar_type(::Type{<:MOI.GreaterThan}, ::Type{T}) where {T}

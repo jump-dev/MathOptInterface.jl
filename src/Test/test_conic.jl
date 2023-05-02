@@ -4753,6 +4753,7 @@ function _test_conic_PositiveSemidefiniteCone_helper(
     atol = config.atol
     rtol = config.rtol
     square = psdcone == MOI.PositiveSemidefiniteConeSquare
+    scaled = psdcone == MOI.ScaledPositiveSemidefiniteConeTriangle
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
@@ -4778,11 +4779,16 @@ function _test_conic_PositiveSemidefiniteCone_helper(
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 4 : 3)
     vov = MOI.VectorOfVariables(X)
     if use_VectorOfVariables
+        @assert !scaled
         cX = MOI.add_constraint(model, vov, psdcone(2))
     else
+        func = MOI.VectorAffineFunction{T}(vov)
+        if scaled
+            func = MOI.Utilities.operate(*, T, LinearAlgebra.Diagonal(MOI.Utilities.symmetric_matrix_scaling_vector(T)), func)
+        end
         cX = MOI.add_constraint(
             model,
-            MOI.VectorAffineFunction{T}(vov),
+            func,
             psdcone(2),
         )
     end
@@ -4961,6 +4967,39 @@ function setup_test(
             mock,
             ones(T, 4),
             (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeSquare) => [T[1, -2, 0, 1]],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => T[2],
+        ),
+    )
+    return
+end
+
+function test_conic_ScaledPositiveSemidefiniteConeTriangle_VectorAffineFunction(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    _test_conic_PositiveSemidefiniteCone_helper(
+        model,
+        false,
+        MOI.PositiveSemidefiniteConeTriangle,
+        config,
+    )
+    return
+end
+
+function setup_test(
+    ::typeof(test_conic_ScaledPositiveSemidefiniteConeTriangle_VectorAffineFunction),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            ones(T, 3),
+            (
+                MOI.VectorAffineFunction{T},
+                MOI.PositiveSemidefiniteConeTriangle,
+            ) => [T[1, -√2, 1]],
             (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => T[2],
         ),
     )

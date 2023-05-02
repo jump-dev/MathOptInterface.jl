@@ -146,6 +146,7 @@ List of recognized matrix sets.
 PositiveSemidefiniteConeTriangle
 PositiveSemidefiniteConeSquare
 HermitianPositiveSemidefiniteConeTriangle
+ScaledPositiveSemidefiniteConeTriangle
 LogDetConeTriangle
 LogDetConeSquare
 RootDetConeTriangle
