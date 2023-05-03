@@ -165,6 +165,11 @@ function test_sets_DimensionMismatch()
     @test_throws DimensionMismatch MOI.Complements(3)
     @test_throws DimensionMismatch MOI.CountBelongs(0, Set([1, 2]))
     @test_throws DimensionMismatch MOI.CountAtLeast(1, [-1, 2], Set([1, 2]))
+    @test_throws DimensionMismatch MOI.NormCone(4, 0)
+    @test MOI.NormCone(4, 1) isa MOI.NormCone
+    @test_throws ArgumentError MOI.NormCone(0.99, 5)
+    @test_throws ArgumentError MOI.NormCone(0.5, 5)
+    @test_throws ArgumentError MOI.NormCone(-2, 5)
     return
 end
 

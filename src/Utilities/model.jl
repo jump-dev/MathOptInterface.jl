@@ -780,6 +780,7 @@ const LessThanIndicatorZero{T} =
         MOI.Complements,
         MOI.NormInfinityCone,
         MOI.NormOneCone,
+        MOI.NormCone,
         MOI.SecondOrderCone,
         MOI.RotatedSecondOrderCone,
         MOI.GeometricMeanCone,
