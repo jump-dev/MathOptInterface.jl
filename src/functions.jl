@@ -306,9 +306,11 @@ See the full list of operators supported by a [`ModelLike`](@ref) by querying
 
 The vector `args` contains the arguments to the nonlinear function. If the
 operator is univariate, it must contain one element. Otherwise, it may contain
-multiple elements. Each element must be one of the following:
+multiple elements.
 
- * A constant value of type `T<:Number`
+Each element must be one of the following:
+
+ * A constant value of type `T<:Real`
  * A [`VariableIndex`](@ref)
  * A [`ScalarAffineFunction`](@ref)
  * A [`ScalarQuadraticFunction`](@ref)
@@ -343,6 +345,16 @@ julia> MOI.ScalarNonlinearFunction(
 struct ScalarNonlinearFunction <: AbstractScalarFunction
     head::Symbol
     args::Vector{Any}
+
+    function ScalarNonlinearFunction(head::Symbol, args::AbstractVector)
+        # TODO(odow): should we do this?
+        # for arg in args
+        #     if !(arg isa Real || arg isa AbstractScalarFunction)
+        #         error("Unsupported object in nonlinear expression: $arg")
+        #     end
+        # end
+        return new(head, convert(Vector{Any}, args))
+    end
 end
 
 function Base.copy(f::ScalarNonlinearFunction)

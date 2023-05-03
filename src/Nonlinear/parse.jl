@@ -42,7 +42,7 @@ function parse_expression(
     x::MOI.ScalarNonlinearFunction,
     parent_index::Int,
 )
-    stack = Tuple{Int,Any}[(parent, x)]
+    stack = Tuple{Int,Any}[(parent_index, x)]
     while !isempty(stack)
         parent_node, arg = pop!(stack)
         if arg isa MOI.ScalarNonlinearFunction
