@@ -1146,7 +1146,7 @@ The *scaled* (vectorized) cone of symmetric positive semidefinite matrices, with
 non-negative `side_dimension` rows and columns.
 
 Compared to the [`PositiveSemidefiniteConeTriangle`](@ref), the off-diagonal entries
-are scaled by `√2`. Thanks to this scaling, [`MOI.Utilities.set_dot`](@ref) is the
+are scaled by `√2`. Thanks to this scaling, [`Utilities.set_dot`](@ref) is the
 simply the sum of the pairwise product while for
 [`PositiveSemidefiniteConeTriangle`](@ref), the pairwise product additionally have
 to be multiplied by 2.
