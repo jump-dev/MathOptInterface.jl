@@ -104,6 +104,9 @@ end
 function _set(::Type{MOI.PositiveSemidefiniteConeSquare})
     return MOI.PositiveSemidefiniteConeSquare(3)
 end
+function _set(::Type{MOI.HermitianPositiveSemidefiniteConeTriangle})
+    return MOI.HermitianPositiveSemidefiniteConeTriangle(3)
+end
 _set(::Type{MOI.LogDetConeTriangle}) = MOI.LogDetConeTriangle(3)
 _set(::Type{MOI.LogDetConeSquare}) = MOI.LogDetConeSquare(3)
 _set(::Type{MOI.RootDetConeTriangle}) = MOI.RootDetConeTriangle(3)
@@ -287,6 +290,7 @@ for s in [
     :NormNuclearCone,
     :PositiveSemidefiniteConeSquare,
     :PositiveSemidefiniteConeTriangle,
+    :HermitianPositiveSemidefiniteConeTriangle,
     :LogDetConeTriangle,
     :LogDetConeSquare,
     :RootDetConeTriangle,
