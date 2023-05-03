@@ -437,7 +437,7 @@ function test_show_SPDA()
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     # no bridges
     @test sprint(show, bridged) === """
-    MOIB.LazyBridgeOptimizer{$model_str}
+    MOI.Bridges.LazyBridgeOptimizer{$model_str}
     with 0 variable bridges
     with 0 constraint bridges
     with 0 objective bridges
@@ -446,7 +446,7 @@ function test_show_SPDA()
     MOI.add_constrained_variable(bridged, MOI.LessThan(1.0))
     # add variable bridges
     @test sprint(show, bridged) == """
-    MOIB.LazyBridgeOptimizer{$model_str}
+    MOI.Bridges.LazyBridgeOptimizer{$model_str}
     with 2 variable bridges
     with 0 constraint bridges
     with 0 objective bridges
@@ -1324,9 +1324,10 @@ Bridge graph with 7 variable nodes, 15 constraint nodes and 0 objective nodes.
  [2] constrained variables in `MOI.PowerCone{$T}` are not supported
  [3] constrained variables in `MOI.RotatedSecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (7).
  [4] constrained variables in `MOI.PositiveSemidefiniteConeTriangle` are not supported
- [5] constrained variables in `MOI.SecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (1).
- [6] constrained variables in `MOI.Nonnegatives` are supported (distance 2) by adding free variables and then constrain them, see (10).
- [7] constrained variables in `MOI.Interval{$T}` are supported (distance 3) by adding free variables and then constrain them, see (12).
+ [5] constrained variables in `MOI.ScaledPositiveSemidefiniteConeTriangle` are not supported
+ [6] constrained variables in `MOI.SecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (1).
+ [7] constrained variables in `MOI.Nonnegatives` are supported (distance 2) by adding free variables and then constrain them, see (10).
+ [8] constrained variables in `MOI.Interval{$T}` are supported (distance 3) by adding free variables and then constrain them, see (12).
  (1) `MOI.VectorOfVariables`-in-`MOI.SecondOrderCone` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.VectorFunctionizeBridge{T,MOI.SecondOrderCone}).
  (2) `MOI.VectorOfVariables`-in-`MOI.NormCone` constraints are not supported
  (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.NormCone` constraints are not supported
@@ -1336,12 +1337,14 @@ Bridge graph with 7 variable nodes, 15 constraint nodes and 0 objective nodes.
  (7) `MOI.VectorOfVariables`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.RSOCtoSOCBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
  (8) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
  (9) `MOI.VectorOfVariables`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
- (10) `MOI.VectorOfVariables`-in-`MOI.Nonnegatives` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.NonnegToNonposBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
- (11) `MOI.VariableIndex`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.GreaterToLessBridge{T,MOI.ScalarAffineFunction{T},MOI.VariableIndex}).
- (12) `MOI.VariableIndex`-in-`MOI.Interval{$T}` constraints are bridged (distance 2) by $(MOI.Bridges.Constraint.ScalarFunctionizeBridge{T,MOI.Interval{T}}).
- (13) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.SplitIntervalBridge{T,MOI.ScalarAffineFunction{T},MOI.Interval{T},MOI.GreaterThan{T},MOI.LessThan{T}}).
- (14) `MOI.VariableIndex`-in-`MOI.LessThan{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.LessToGreaterBridge{T,MOI.ScalarAffineFunction{T},MOI.VariableIndex}).
- (15) `MOI.VariableIndex`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.VectorizeBridge{T,MOI.VectorAffineFunction{T},MOI.Zeros,MOI.VariableIndex}).
+ (10) `MOI.VectorAffineFunction{$T}`-in-`MOI.ScaledPositiveSemidefiniteConeTriangle` constraints are not supported
+ (11) `MOI.VectorOfVariables`-in-`MOI.ScaledPositiveSemidefiniteConeTriangle` constraints are not supported
+ (12) `MOI.VectorOfVariables`-in-`MOI.Nonnegatives` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.NonnegToNonposBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
+ (13) `MOI.VariableIndex`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.GreaterToLessBridge{T,MOI.ScalarAffineFunction{T},MOI.VariableIndex}).
+ (14) `MOI.VariableIndex`-in-`MOI.Interval{$T}` constraints are bridged (distance 2) by $(MOI.Bridges.Constraint.ScalarFunctionizeBridge{T,MOI.Interval{T}}).
+ (15) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.SplitIntervalBridge{T,MOI.ScalarAffineFunction{T},MOI.Interval{T},MOI.GreaterThan{T},MOI.LessThan{T}}).
+ (16) `MOI.VariableIndex`-in-`MOI.LessThan{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.LessToGreaterBridge{T,MOI.ScalarAffineFunction{T},MOI.VariableIndex}).
+ (17) `MOI.VariableIndex`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.VectorizeBridge{T,MOI.VectorAffineFunction{T},MOI.Zeros,MOI.VariableIndex}).
 """,
     )
     return
