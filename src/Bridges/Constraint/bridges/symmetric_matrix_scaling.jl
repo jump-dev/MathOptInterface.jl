@@ -150,7 +150,7 @@ const SymmetricMatrixInverseScaling{T,OT<:MOI.ModelLike} =
 function concrete_bridge_type(
     ::Type{<:SymmetricMatrixInverseScalingBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
-    ::Type{MOI.PositiveSemidefiniteConeTriangle},
+    ::Type{MOI.ScaledPositiveSemidefiniteConeTriangle},
 ) where {T}
     F = MOI.Utilities.promote_operation(
         *,

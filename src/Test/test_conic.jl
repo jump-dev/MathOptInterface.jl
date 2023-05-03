@@ -4750,7 +4750,6 @@ function _test_conic_PositiveSemidefiniteCone_helper(
     psdcone,
     config::Config{T},
 ) where {T}
-    @show psdcone
     atol = config.atol
     rtol = config.rtol
     square = psdcone == MOI.PositiveSemidefiniteConeSquare
@@ -4775,7 +4774,6 @@ function _test_conic_PositiveSemidefiniteCone_helper(
         MOI.ScalarAffineFunction{T},
         MOI.EqualTo{T},
     )
-    println("GO")
 
     X = MOI.add_variables(model, square ? 4 : 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 4 : 3)

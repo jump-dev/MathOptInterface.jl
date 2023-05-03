@@ -21,26 +21,30 @@ function runtests()
     return
 end
 
-include("../utilities.jl")
-
-function test_runtests()
-    scaled = """
+const SCALED = """
 variables: x, y, z
 [x, √2 * y, z] in ScaledPositiveSemidefiniteConeTriangle(2)
- """
-    not_scaled = """
+"""
+
+const NOT_SCALED = """
 variables: x, y, z
 [x, 1.0 * y, z] in PositiveSemidefiniteConeTriangle(2)
- """
+"""
+
+function test_scaling()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.SymmetricMatrixScalingBridge,
-        not_scaled,
-        scaled,
+        NOT_SCALED,
+        SCALED,
     )
+    return
+end
+
+function test_inverse_scaling()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.SymmetricMatrixInverseScalingBridge,
-        scaled,
-        not_scaled,
+        SCALED,
+        NOT_SCALED,
     )
     return
 end
