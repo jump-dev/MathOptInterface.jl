@@ -231,7 +231,7 @@ function hessian_objective_structure end
 
 Returns a vector of tuples, `(row, column)`, where each indicates the position
 of a structurally nonzero element in the Hessian matrix:
-``nabla^2 g_i(x)``.
+``\\nabla^2 g_i(x)``.
 
 The indices are not required to be sorted and can contain duplicates, in which
 case the solver should combine the corresponding elements by adding them
