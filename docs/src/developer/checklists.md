@@ -19,7 +19,7 @@ Use this checklist when adding a new set to the MathOptInterface repository.
  - [ ] If an `AbstractVectorSet`, implement `dimension(set::S)`
  - [ ] If an `AbstractVectorSet`, implement `Utilities.set_dot`,
        unless the dot product between two vectors in the set is equivalent to
-       `LinearAlgebra.dot`.
+       `LinearAlgebra.dot`
  - [ ] If an `AbstractVectorSet`, implement `set_with_dimension` in
        `src/Utilities/matrix_of_constraints.jl`
  - [ ] Add the docstring to `docs/src/reference/standard_form.md`
@@ -28,6 +28,8 @@ Use this checklist when adding a new set to the MathOptInterface repository.
        and add the name of the set to the list at the bottom of that files
  - [ ] Add the set to the `@model` macro at the bottom of `src/Utilities.model.jl`
  - [ ] If the set has any checks in its constructor, add tests to `test/sets.jl`
+ - [ ] Open an issue at `https://github.com/jump-dev/MathOptFormat` to add
+       support for the new set
  - [ ] [Optional] Implement `dual_set(::S)` and `dual_set_type(::Type{S})`
  - [ ] [Optional] Add new tests to the `Test` submodule exercising your new set
  - [ ] [Optional] Add new bridges to convert your set into more commonly used
