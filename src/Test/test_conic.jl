@@ -5010,7 +5010,7 @@ function setup_test(
             (
                 MOI.VectorAffineFunction{T},
                 MOI.ScaledPositiveSemidefiniteConeTriangle,
-            ) => [T[1, -√2, 1]],
+            ) => [T[1, -sqrt(T(2)), 1]],
             (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => T[2],
         ),
     )
