@@ -204,11 +204,13 @@ function test_symmetric_matrix_scaling()
     s = MOI.Utilities.symmetric_matrix_scaling_vector(Float64)
     @test sprint(show, s) == "SymmetricMatrixScalingVector{Float64}(√2)"
     s32 = MOI.Utilities.symmetric_matrix_scaling_vector(Float32)
-    @test sprint(show, s32) == "SymmetricMatrixScalingVector{Float32}(√Float32(2))"
+    @test sprint(show, s32) ==
+          "SymmetricMatrixScalingVector{Float32}(√Float32(2))"
     is = MOI.Utilities.symmetric_matrix_inverse_scaling_vector(Float64)
     @test sprint(show, is) == "SymmetricMatrixScalingVector{Float64}(inv(√2))"
     is32 = MOI.Utilities.symmetric_matrix_inverse_scaling_vector(Float32)
-    @test sprint(show, is32) == "SymmetricMatrixScalingVector{Float32}(inv(√Float32(2)))"
+    @test sprint(show, is32) ==
+          "SymmetricMatrixScalingVector{Float32}(inv(√Float32(2)))"
     k = 0
     for j in 1:n
         for i in 1:(j-1)
