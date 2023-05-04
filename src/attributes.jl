@@ -1887,10 +1887,10 @@ have the form:
  * `∇f(g::AbstractVector{T}, x::T...)::Nothing`: fills the components of `g`,
    with `g[i]` being the first-order partial derivative of `f` with respect to
    `x[i]`
- * `∇²f(H::AbstractMatrix{T}, x::T...)::Nothing`: fills the components of `H`,
-    with `H[i, j]` being the second-order partial derivative of `f` with respect
-    to `x[i]` and then `x[j]`. It does not need to fill in the structural
-    zeros.
+ * `∇²f(H::AbstractMatrix{T}, x::T...)::Nothing`: fills the non-zero components
+    of `H`, with `H[i, j]` being the second-order partial derivative of `f` with
+    respect to `x[i]` and then `x[j]`. `H` is initialized to the zero matrix,
+    so you do not need to set any zero elements.
 
 ## Examples
 
