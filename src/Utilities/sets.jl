@@ -178,11 +178,31 @@ function SymmetricMatrixScalingVector{T}(scaling::T) where {T}
 end
 
 function symmetric_matrix_scaling_vector(::Type{T}) where {T}
-    return SymmetricMatrixScalingVector{T}(sqrt(convert(T, 2)))
+    return SymmetricMatrixScalingVector{T}(sqrt(T(2)))
 end
 
 function symmetric_matrix_inverse_scaling_vector(::Type{T}) where {T}
-    return SymmetricMatrixScalingVector{T}(inv(sqrt(convert(T, 2))))
+    return SymmetricMatrixScalingVector{T}(inv(sqrt(T(2))))
+end
+
+# The default `Base.show` for `AbstractVector` fails because this vector has infinite length
+function Base.show(io::IO, s::SymmetricMatrixScalingVector{T}) where {T}
+    no_scaling = isone(s.no_scaling) ? "" : string(", ", s.no_scaling)
+    sq2 = sqrt(T(2))
+    isq2 = inv(sq2)
+    if T == Float64
+        two = "2"
+    else
+        two = "$T(2)"
+    end
+    if s.scaling == sq2
+        scaling = "√" * two
+    elseif s.scaling == isq2
+        scaling = "inv(√" * two * ")"
+    else
+        scaling = string(s.scaling)
+    end
+    print(io, "SymmetricMatrixScalingVector{$T}($scaling$no_scaling)")
 end
 
 function Base.getindex(s::SymmetricMatrixScalingVector, i::Base.Integer)
