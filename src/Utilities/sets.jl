@@ -162,6 +162,7 @@ end
     struct SymmetricMatrixScalingVector{T} <: AbstractVector{T}
         no_scaling::T
         scaling::T
+        len::Int
     end
 
 Vector of scaling for the entries of the vectorized form of
@@ -171,39 +172,19 @@ are stored in the `struct` to avoid creating a new one for each entry.
 struct SymmetricMatrixScalingVector{T} <: AbstractVector{T}
     scaling::T
     no_scaling::T
+    len::Int
 end
 
-function SymmetricMatrixScalingVector{T}(scaling::T) where {T}
-    return SymmetricMatrixScalingVector{T}(scaling, one(T))
+function SymmetricMatrixScalingVector{T}(scaling::T, len::Int) where {T}
+    return SymmetricMatrixScalingVector{T}(scaling, one(T), len)
 end
 
-function symmetric_matrix_scaling_vector(::Type{T}) where {T}
-    return SymmetricMatrixScalingVector{T}(sqrt(T(2)))
+function symmetric_matrix_scaling_vector(::Type{T}, len::Int) where {T}
+    return SymmetricMatrixScalingVector{T}(sqrt(T(2)), len)
 end
 
-function symmetric_matrix_inverse_scaling_vector(::Type{T}) where {T}
-    return SymmetricMatrixScalingVector{T}(inv(sqrt(T(2))))
-end
-
-# The default `Base.show` for `AbstractVector` fails because this vector has infinite length
-function Base.show(io::IO, s::SymmetricMatrixScalingVector{T}) where {T}
-    no_scaling = isone(s.no_scaling) ? "" : string(", ", s.no_scaling)
-    sq2 = sqrt(T(2))
-    isq2 = inv(sq2)
-    if T == Float64
-        two = "2"
-    else
-        two = "$T(2)"
-    end
-    if s.scaling == sq2
-        scaling = "√" * two
-    elseif s.scaling == isq2
-        scaling = "inv(√" * two * ")"
-    else
-        scaling = string(s.scaling)
-    end
-    print(io, "SymmetricMatrixScalingVector{$T}($scaling$no_scaling)")
-    return
+function symmetric_matrix_inverse_scaling_vector(::Type{T}, len::Int) where {T}
+    return SymmetricMatrixScalingVector{T}(inv(sqrt(T(2))), len)
 end
 
 function Base.getindex(s::SymmetricMatrixScalingVector, i::Base.Integer)
@@ -214,11 +195,7 @@ function Base.getindex(s::SymmetricMatrixScalingVector, i::Base.Integer)
     end
 end
 
-# `LinearAlgebra.Diagonal` checks that the first index is 1 so we need
-# to implement this
-Base.firstindex(::SymmetricMatrixScalingVector) = 1
-
-Base.IteratorSize(::SymmetricMatrixScalingVector) = Base.IsInfinite()
+Base.size(x::SymmetricMatrixScalingVector) = (x.len,)
 
 similar_type(::Type{<:MOI.LessThan}, ::Type{T}) where {T} = MOI.LessThan{T}
 

@@ -199,18 +199,12 @@ end
 
 function test_symmetric_matrix_scaling()
     n = 10
-    v = MOI.Utilities.SymmetricMatrixScalingVector{Float64}(1.5, 0.5)
-    @test sprint(show, v) == "SymmetricMatrixScalingVector{Float64}(1.5, 0.5)"
-    s = MOI.Utilities.symmetric_matrix_scaling_vector(Float64)
-    @test sprint(show, s) == "SymmetricMatrixScalingVector{Float64}(√2)"
-    s32 = MOI.Utilities.symmetric_matrix_scaling_vector(Float32)
-    @test sprint(show, s32) ==
-          "SymmetricMatrixScalingVector{Float32}(√Float32(2))"
-    is = MOI.Utilities.symmetric_matrix_inverse_scaling_vector(Float64)
-    @test sprint(show, is) == "SymmetricMatrixScalingVector{Float64}(inv(√2))"
-    is32 = MOI.Utilities.symmetric_matrix_inverse_scaling_vector(Float32)
-    @test sprint(show, is32) ==
-          "SymmetricMatrixScalingVector{Float32}(inv(√Float32(2)))"
+    N = div(n * (n + 1), 2)
+    v = MOI.Utilities.SymmetricMatrixScalingVector{Float64}(1.5, 0.5, N)
+    s = MOI.Utilities.symmetric_matrix_scaling_vector(Float64, N)
+    s32 = MOI.Utilities.symmetric_matrix_scaling_vector(Float32, N)
+    is = MOI.Utilities.symmetric_matrix_inverse_scaling_vector(Float64, N)
+    is32 = MOI.Utilities.symmetric_matrix_inverse_scaling_vector(Float32, N)
     k = 0
     for j in 1:n
         for i in 1:(j-1)
@@ -228,6 +222,7 @@ function test_symmetric_matrix_scaling()
         @test isone(is[k])
         @test isone(is32[k])
     end
+    return
 end
 
 end  # module

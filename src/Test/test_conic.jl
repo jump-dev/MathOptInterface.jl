@@ -4788,7 +4788,7 @@ function _test_conic_PositiveSemidefiniteCone_helper(
                 *,
                 T,
                 LinearAlgebra.Diagonal(
-                    MOI.Utilities.symmetric_matrix_scaling_vector(T),
+                    MOI.Utilities.symmetric_matrix_scaling_vector(T, 2),
                 ),
                 func,
             )

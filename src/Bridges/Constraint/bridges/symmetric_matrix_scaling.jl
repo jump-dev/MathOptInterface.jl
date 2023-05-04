@@ -67,32 +67,24 @@ function MOI.Bridges.inverse_map_set(
     return MOI.PositiveSemidefiniteConeTriangle(set.side_dimension)
 end
 
+_length(f::MOI.AbstractVectorFunction) = MOI.output_dimension(f)
+_length(f::AbstractVector) = length(f)
+
 function MOI.Bridges.map_function(
     ::Type{<:SymmetricMatrixScalingBridge{T}},
     func,
 ) where {T}
-    return MOI.Utilities.operate(
-        *,
-        T,
-        LinearAlgebra.Diagonal(
-            MOI.Utilities.symmetric_matrix_scaling_vector(T),
-        ),
-        func,
-    )
+    scale = MOI.Utilities.symmetric_matrix_scaling_vector(T, _length(func))
+    return MOI.Utilities.operate(*, T, LinearAlgebra.Diagonal(scale), func)
 end
 
 function MOI.Bridges.inverse_map_function(
     ::Type{<:SymmetricMatrixScalingBridge{T}},
     func,
 ) where {T}
-    return MOI.Utilities.operate(
-        *,
-        T,
-        LinearAlgebra.Diagonal(
-            MOI.Utilities.symmetric_matrix_inverse_scaling_vector(T),
-        ),
-        func,
-    )
+    N = _length(func)
+    scale = MOI.Utilities.symmetric_matrix_inverse_scaling_vector(T, N)
+    return MOI.Utilities.operate(*, T, LinearAlgebra.Diagonal(scale), func)
 end
 
 # Since the map is a diagonal matrix `D`, it is symmetric so one would initially
@@ -179,28 +171,18 @@ function MOI.Bridges.map_function(
     ::Type{<:SymmetricMatrixInverseScalingBridge{T}},
     func,
 ) where {T}
-    return MOI.Utilities.operate(
-        *,
-        T,
-        LinearAlgebra.Diagonal(
-            MOI.Utilities.symmetric_matrix_inverse_scaling_vector(T),
-        ),
-        func,
-    )
+    N = _length(func)
+    scale = MOI.Utilities.symmetric_matrix_inverse_scaling_vector(T, N)
+    return MOI.Utilities.operate(*, T, LinearAlgebra.Diagonal(scale), func)
 end
 
 function MOI.Bridges.inverse_map_function(
     ::Type{<:SymmetricMatrixInverseScalingBridge{T}},
     func,
 ) where {T}
-    return MOI.Utilities.operate(
-        *,
-        T,
-        LinearAlgebra.Diagonal(
-            MOI.Utilities.symmetric_matrix_scaling_vector(T),
-        ),
-        func,
-    )
+    N = _length(func)
+    scale = MOI.Utilities.symmetric_matrix_scaling_vector(T, N)
+    return MOI.Utilities.operate(*, T, LinearAlgebra.Diagonal(scale), func)
 end
 
 function MOI.Bridges.adjoint_map_function(
