@@ -91,6 +91,7 @@ The matrix-valued set types implemented in MathOptInterface.jl are:
 | [`RootDetConeSquare(d)`](@ref MathOptInterface.RootDetConeSquare)     | ``\{ (t,X) \in \mathbb{R}^{1+d^2} : t \le \det(X)^{1/d}, X \mbox{ is a PSD matrix} \}`` |
 | [`PositiveSemidefiniteConeTriangle(d)`](@ref MathOptInterface.PositiveSemidefiniteConeTriangle) | ``\{ X \in \mathbb{R}^{d(d+1)/2} : X \mbox{ is the upper triangle of a PSD matrix} \}`` |
 | [`PositiveSemidefiniteConeSquare(d)`](@ref MathOptInterface.PositiveSemidefiniteConeSquare) | ``\{ X \in \mathbb{R}^{d^2} : X \mbox{ is a PSD matrix} \}`` |
+| [`ScaledPositiveSemidefiniteConeTriangle(d)`](@ref MathOptInterface.ScaledPositiveSemidefiniteConeTriangle) | ``\{ X \in \mathbb{R}^{d(d+1)/2} : X \mbox{ is a PSD matrix} \}`` |
 | [`LogDetConeTriangle(d)`](@ref MathOptInterface.LogDetConeTriangle)   | ``\{ (t,u,X) \in \mathbb{R}^{2+d(1+d)/2} : t \le u\log(\det(X/u)), X \mbox{ is the upper triangle of a PSD matrix}, u > 0  \}`` |
 | [`LogDetConeSquare(d)`](@ref MathOptInterface.LogDetConeSquare)       | ``\{ (t,u,X) \in \mathbb{R}^{2+d^2} : t \le u \log(\det(X/u)), X \mbox{ is a PSD matrix}, u > 0 \}`` |
 | [`NormSpectralCone(r, c)`](@ref MathOptInterface.NormSpectralCone)    | ``\{ (t, X) \in \mathbb{R}^{1 + r \times c} : t \ge \sigma_1(X), X \mbox{ is a } r\times c\mbox{ matrix} \}``
