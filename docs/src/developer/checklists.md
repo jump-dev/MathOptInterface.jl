@@ -15,7 +15,8 @@ Use this checklist when adding a new set to the MathOptInterface repository.
  - [ ] Add a new `AbstractScalarSet` or `AbstractVectorSet` to `src/sets.jl`
  - [ ] If `isbitstype(S) == false`, implement `Base.copy(set::S)`
  - [ ] If `isbitstype(S) == false`, implement `Base.:(==)(x::S, y::S)`
- - [ ] If an `AbstractVectorSet`, implement `dimension(set::S)`
+ - [ ] If an `AbstractVectorSet`, implement `dimension(set::S)`, unless the
+       dimension is given by `set.dimension`.
 
 ## Utilities
 
@@ -42,7 +43,7 @@ Use this checklist when adding a new set to the MathOptInterface repository.
 ## MathOptFormat
 
  - [ ] Open an issue at `https://github.com/jump-dev/MathOptFormat` to add
-       support for the new set
+       support for the new set {{ replace with link to the PR }}
 
 ## Optional
 
