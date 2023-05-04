@@ -1145,11 +1145,29 @@ dimension(s::NormNuclearCone) = 1 + s.row_dim * s.column_dim
 The *scaled* (vectorized) cone of symmetric positive semidefinite matrices, with
 non-negative `side_dimension` rows and columns.
 
-Compared to the [`PositiveSemidefiniteConeTriangle`](@ref), the off-diagonal entries
-are scaled by `√2`. Thanks to this scaling, [`Utilities.set_dot`](@ref) is the
-simply the sum of the pairwise product while for
-[`PositiveSemidefiniteConeTriangle`](@ref), the pairwise product additionally have
-to be multiplied by 2.
+Compared to the [`PositiveSemidefiniteConeTriangle`](@ref), the off-diagonal
+entries are scaled by `√2`. Thanks to this scaling, [`Utilities.set_dot`](@ref)
+is the simply the sum of the pairwise product, while for
+[`PositiveSemidefiniteConeTriangle`](@ref), the pairwise product additionally
+have to be multiplied by `2`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(
+           model,
+           MOI.VectorOfVariables(x),
+           MOI.ScaledPositiveSemidefiniteConeTriangle(2),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.ScaledPositiveSemidefiniteConeTriangle}(1)
+```
 """
 struct ScaledPositiveSemidefiniteConeTriangle <: AbstractVectorSet
     side_dimension::Int
