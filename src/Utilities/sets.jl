@@ -202,7 +202,8 @@ function Base.show(io::IO, s::SymmetricMatrixScalingVector{T}) where {T}
     else
         scaling = string(s.scaling)
     end
-    return print(io, "SymmetricMatrixScalingVector{$T}($scaling$no_scaling)")
+    print(io, "SymmetricMatrixScalingVector{$T}($scaling$no_scaling)")
+    return
 end
 
 function Base.getindex(s::SymmetricMatrixScalingVector, i::Base.Integer)
