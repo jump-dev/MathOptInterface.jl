@@ -1,0 +1,35 @@
+# Checklists
+
+The purpose of this page is to collate a series of checklists for commonly
+performed changes to the source code of MathOptInterface.
+
+In each case, copy and paste the checklist into the description of the pull
+request.
+
+## Adding a new set
+
+Use this checklist when adding a new set to the MathOptInterface repository.
+
+```markdown
+ - [ ] Add a new `AbstractScalarSet` or `AbstractVectorSet` to `src/sets.jl`
+ - [ ] Add a docstring, which gives the mathematical definition of the set,
+       along with an `## Example` block containing a ` ```jldoctest`
+ - [ ] Implement `Base.copy(set::S)`
+ - [ ] Implement `Base.:(==)(x::S, y::S)`
+ - [ ] If an `AbstractVectorSet`, implement `dimension(set::S)`
+ - [ ] If an `AbstractVectorSet`, implement `Utilities.set_dot`,
+       unless the dot product between two vectors in the set is equivalent to
+       `LinearAlgebra.dot`.
+ - [ ] If an `AbstractVectorSet`, implement `set_with_dimension` in
+       `src/Utilities/matrix_of_constraints.jl`
+ - [ ] Add the docstring to `docs/src/reference/standard_form.md`
+ - [ ] Add the set to the relevant table in `docs/src/manual/standard_form.md`
+ - [ ] Define a new `_set(::Type{S})` method in `src/Test/test_basic_constraint.jl`
+       and add the name of the set to the list at the bottom of that files
+ - [ ] Add the set to the `@model` macro at the bottom of `src/Utilities.model.jl`
+ - [ ] If the set has any checks in its constructor, add tests to `test/sets.jl`
+ - [ ] [Optional] Implement `dual_set(::S)` and `dual_set_type(::Type{S})`
+ - [ ] [Optional] Add new tests to the `Test` submodule exercising your new set
+ - [ ] [Optional] Add new bridges to convert your set into more commonly used
+       sets.
+```
