@@ -43,7 +43,7 @@ Use this checklist when adding a new set to the MathOptInterface repository.
 ## MathOptFormat
 
  - [ ] Open an issue at `https://github.com/jump-dev/MathOptFormat` to add
-       support for the new set {{ replace with link to the PR }}
+       support for the new set {{ replace with link to the issue }}
 
 ## Optional
 
