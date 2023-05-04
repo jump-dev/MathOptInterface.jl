@@ -13,8 +13,8 @@ Use this checklist when adding a new set to the MathOptInterface repository.
 ## Basic
 
  - [ ] Add a new `AbstractScalarSet` or `AbstractVectorSet` to `src/sets.jl`
- - [ ] Implement `Base.copy(set::S)`
- - [ ] Implement `Base.:(==)(x::S, y::S)`
+ - [ ] If `isbitstype(S) == false`, implement `Base.copy(set::S)`
+ - [ ] If `isbitstype(S) == false`, implement `Base.:(==)(x::S, y::S)`
  - [ ] If an `AbstractVectorSet`, implement `dimension(set::S)`
 
 ## Utilities
