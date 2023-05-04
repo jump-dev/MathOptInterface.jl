@@ -21,21 +21,17 @@ function runtests()
     return
 end
 
-const SCALED = """
-variables: x, y, z
-[x, √2 * y, z] in ScaledPositiveSemidefiniteConeTriangle(2)
-"""
-
-const NOT_SCALED = """
-variables: x, y, z
-[x, 1.0 * y, z] in PositiveSemidefiniteConeTriangle(2)
-"""
-
 function test_scaling()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.SymmetricMatrixScalingBridge,
-        NOT_SCALED,
-        SCALED,
+        """
+        variables: x, y, z
+        [x, 1.0 * y, z] in PositiveSemidefiniteConeTriangle(2)
+        """,
+        """
+        variables: x, y, z
+        [x, √2 * y, z] in ScaledPositiveSemidefiniteConeTriangle(2)
+        """,
     )
     return
 end
@@ -43,8 +39,14 @@ end
 function test_inverse_scaling()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.SymmetricMatrixInverseScalingBridge,
-        SCALED,
-        NOT_SCALED,
+        """
+        variables: x, y, z
+        [x, √2 * y, z] in ScaledPositiveSemidefiniteConeTriangle(2)
+        """,
+        """
+        variables: x, y, z
+        [x, 1.0 * y, z] in PositiveSemidefiniteConeTriangle(2)
+        """,
     )
     return
 end
