@@ -437,7 +437,7 @@ function test_show_SPDA()
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     # no bridges
     @test sprint(show, bridged) === """
-    MOI.Bridges.LazyBridgeOptimizer{$model_str}
+    MOIB.LazyBridgeOptimizer{$model_str}
     with 0 variable bridges
     with 0 constraint bridges
     with 0 objective bridges
@@ -446,7 +446,7 @@ function test_show_SPDA()
     MOI.add_constrained_variable(bridged, MOI.LessThan(1.0))
     # add variable bridges
     @test sprint(show, bridged) == """
-    MOI.Bridges.LazyBridgeOptimizer{$model_str}
+    MOIB.LazyBridgeOptimizer{$model_str}
     with 2 variable bridges
     with 0 constraint bridges
     with 0 objective bridges
@@ -1319,15 +1319,15 @@ function _test_continuous_conic_with_NoVariableModel(T)
     @test sprint(MOI.Bridges.print_graph, bridged) ==
           MOI.Utilities.replace_acronym(
         """
-Bridge graph with 7 variable nodes, 15 constraint nodes and 0 objective nodes.
+Bridge graph with 8 variable nodes, 17 constraint nodes and 0 objective nodes.
  [1] constrained variables in `MOI.NormCone` are not supported
  [2] constrained variables in `MOI.PowerCone{$T}` are not supported
  [3] constrained variables in `MOI.RotatedSecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (7).
  [4] constrained variables in `MOI.PositiveSemidefiniteConeTriangle` are not supported
  [5] constrained variables in `MOI.ScaledPositiveSemidefiniteConeTriangle` are not supported
  [6] constrained variables in `MOI.SecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (1).
- [7] constrained variables in `MOI.Nonnegatives` are supported (distance 2) by adding free variables and then constrain them, see (10).
- [8] constrained variables in `MOI.Interval{$T}` are supported (distance 3) by adding free variables and then constrain them, see (12).
+ [7] constrained variables in `MOI.Nonnegatives` are supported (distance 2) by adding free variables and then constrain them, see (12).
+ [8] constrained variables in `MOI.Interval{$T}` are supported (distance 3) by adding free variables and then constrain them, see (14).
  (1) `MOI.VectorOfVariables`-in-`MOI.SecondOrderCone` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.VectorFunctionizeBridge{T,MOI.SecondOrderCone}).
  (2) `MOI.VectorOfVariables`-in-`MOI.NormCone` constraints are not supported
  (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.NormCone` constraints are not supported
