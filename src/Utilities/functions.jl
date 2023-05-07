@@ -3432,8 +3432,8 @@ end
 
 function operate_term(::typeof(*), D::Diagonal, term::MOI.VectorQuadraticTerm)
     return MOI.VectorQuadraticTerm(
-        i,
-        operate_term(*, D.diag[i], term.scalar_term),
+        term.output_index,
+        operate_term(*, D.diag[term.output_index], term.scalar_term),
     )
 end
 
