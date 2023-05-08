@@ -90,10 +90,11 @@ The steps are mostly the same, but locations depend on whether the bridge is a
  - [ ] Create a new file in `src/Bridges/XXX/bridges`
  - [ ] Define the bridge, following existing examples. The name of the bridge
        struct must end in `Bridge`
+ - [ ] Check if your bridge can be a subtype of [`MOI.Bridges.Constraint.SetMapBridge`](@ref)
  - [ ] Define a new `const` that is a `SingleBridgeOptimizer` wrapping the
        new bridge. The name of the const must be the name of the bridge, less
        the `Bridge` suffix
- - [ ] `include` the file in `src/Bridges/XXX/XXX.jl`
+ - [ ] `include` the file in `src/Bridges/XXX/bridges/XXX.jl`
  - [ ] If the bridge should be enabled by default, add the bridge to
        `add_all_bridges` at the bottom of `src/Bridges/XXX/XXX.jl`
 
