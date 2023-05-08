@@ -33,7 +33,7 @@ Use this checklist when adding a new set to the MathOptInterface repository.
        along with an `## Example` block containing a `jldoctest`
  - [ ] Add the docstring to `docs/src/reference/standard_form.md`
  - [ ] Add the set to the relevant table in `docs/src/manual/standard_form.md`
- 
+
 ## Tests
 
  - [ ] Define a new `_set(::Type{S})` method in `src/Test/test_basic_constraint.jl`
@@ -50,4 +50,33 @@ Use this checklist when adding a new set to the MathOptInterface repository.
  - [ ] Implement `dual_set(::S)` and `dual_set_type(::Type{S})`
  - [ ] Add new tests to the `Test` submodule exercising your new set
  - [ ] Add new bridges to convert your set into more commonly used sets
+```
+
+## Updating MathOptFormat
+
+Use this checklist when updating the version of MathOptFormat.
+
+```
+## Basic
+
+ - [ ] The file at `src/FileFormats/MOF/mof.X.Y.schema.json` is updated
+ - [ ] The constants `SCHEMA_PATH`, `VERSION`, and `SUPPORTED_VERSIONS` are
+       updated in `src/FileFormats/MOF/MOF.jl`
+
+## New sets
+
+ - [ ] New sets are added to the `@model` in `src/FileFormats/MOF/MOF.jl`
+ - [ ] New sets are added to the `@enum` in `src/FileFormats/MOF/read.jl`
+ - [ ] `set_to_moi` is defined for each set in `src/FileFormats/MOF/read.jl`
+ - [ ] `head_name` is defined for each set in `src/FileFormats/MOF/write.jl`
+ - [ ] A new unit test calling `_test_model_equality` is aded to
+       `test/FileFormats/MOF/MOF.jl`
+
+## Tests
+
+ - [ ] The version field in `test/FileFormats/MOF/nlp.mof.json` is updated
+
+## Documentation
+
+ - [ ] The version fields are updated in `docs/src/submodules/FileFormats/overview.md`
 ```
