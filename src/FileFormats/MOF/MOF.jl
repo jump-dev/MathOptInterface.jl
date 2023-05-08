@@ -11,10 +11,10 @@ import OrderedCollections
 import JSON
 import MathOptInterface as MOI
 
-const SCHEMA_PATH = joinpath(@__DIR__, "mof.1.3.schema.json")
-const VERSION = v"1.3"
+const SCHEMA_PATH = joinpath(@__DIR__, "mof.1.4.schema.json")
+const VERSION = v"1.4"
 const SUPPORTED_VERSIONS =
-    (v"1.3", v"1.2", v"1.1", v"1.0", v"0.6", v"0.5", v"0.4")
+    (v"1.4", v"1.3", v"1.2", v"1.1", v"1.0", v"0.6", v"0.5", v"0.4")
 
 const OrderedObject = OrderedCollections.OrderedDict{String,Any}
 const UnorderedObject = Dict{String,Any}
@@ -55,6 +55,7 @@ MOI.Utilities.@model(
         MOI.DualExponentialCone,
         MOI.NormOneCone,
         MOI.NormInfinityCone,
+        MOI.NormCone,
         MOI.NormSpectralCone,
         MOI.NormNuclearCone,
         MOI.RelativeEntropyCone,
@@ -63,6 +64,7 @@ MOI.Utilities.@model(
         MOI.LogDetConeTriangle,
         MOI.LogDetConeSquare,
         MOI.PositiveSemidefiniteConeTriangle,
+        MOI.ScaledPositiveSemidefiniteConeTriangle,
         MOI.PositiveSemidefiniteConeSquare,
         MOI.HermitianPositiveSemidefiniteConeTriangle,
         MOI.AllDifferent,

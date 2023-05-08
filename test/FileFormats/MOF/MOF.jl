@@ -770,6 +770,18 @@ c1: [x1, x2, x3] in PositiveSemidefiniteConeTriangle(2)
     )
 end
 
+function test_ScaledPositiveSemidefiniteConeTriangle()
+    return _test_model_equality(
+        """
+variables: x1, x2, x3
+minobjective: x1
+c1: [x1, x2, x3] in ScaledPositiveSemidefiniteConeTriangle(2)
+""",
+        ["x1", "x2", "x3"],
+        ["c1"],
+    )
+end
+
 function test_PositiveSemidefiniteConeSquare()
     return _test_model_equality(
         """
@@ -881,6 +893,18 @@ function test_NormInfinityCone()
 variables: x, y
 minobjective: x
 c1: [x, y] in NormInfinityCone(2)
+""",
+        ["x", "y"],
+        ["c1"],
+    )
+end
+
+function test_NormCone()
+    return _test_model_equality(
+        """
+variables: x, y
+minobjective: x
+c1: [x, y] in NormCone(1.5, 2)
 """,
         ["x", "y"],
         ["c1"],

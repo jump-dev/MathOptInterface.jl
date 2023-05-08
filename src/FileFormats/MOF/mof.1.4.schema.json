@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/schema#",
-    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.3.schema.json",
+    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.4.schema.json",
     "title": "The schema for MathOptFormat",
     "type": "object",
     "required": ["version", "variables", "objective", "constraints"],
@@ -11,7 +11,7 @@
             "required": ["minor", "major"],
             "properties": {
                 "minor": {
-                    "enum": [0, 1, 2, 3]
+                    "enum": [0, 1, 2, 3, 4]
                 },
                 "major": {
                     "const": 1
@@ -765,6 +765,19 @@
                     }
                 }
             }, {
+                "description": "The (vectorized) cone of symmetric positive semidefinite matrices, with `side_dimension` rows and columns, such that the off-diagonal entries are scaled by √2. The entries of the upper-right triangular part of the matrix are given column by column (or equivalently, the entries of the lower-left triangular part are given row by row).",
+                "examples": ["{\"type\": \"ScaledPositiveSemidefiniteConeTriangle\", \"side_dimension\": 2}"],
+                "required": ["side_dimension"],
+                "properties": {
+                    "type": {
+                        "const": "ScaledPositiveSemidefiniteConeTriangle"
+                    },
+                    "side_dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                }
+            }, {
                 "description": "The cone of symmetric positive semidefinite matrices, with side length `side_dimension`. The entries of the matrix are given column by column (or equivalently, row by row). The matrix is both constrained to be symmetric and to be positive semidefinite. That is, if the functions in entries `(i, j)` and `(j, i)` are different, then a constraint will be added to make sure that the entries are equal.",
                 "examples": ["{\"type\": \"PositiveSemidefiniteConeSquare\", \"side_dimension\": 2}"],
                 "required": ["side_dimension"],
@@ -1120,6 +1133,22 @@
                     "side_dimension": {
                         "type": "integer",
                         "minimum": 1
+                    }
+                }
+            }, {
+                "description": "The p-norm cone (t, x) ∈ {R^d : t ≥ (Σᵢ|xᵢ|^p)^(1/p)}.",
+                "examples": ["{\"type\": \"NormCone\", \"dimension\": 3, \"p\": 1.5}"],
+                "required": ["dimension", "p"],
+                "properties": {
+                    "type": {
+                        "const": "NormCone"
+                    },
+                    "dimension": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "p": {
+                        "type": "number"
                     }
                 }
             }]

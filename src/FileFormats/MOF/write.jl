@@ -289,6 +289,7 @@ head_name(::Type{MOI.ExponentialCone}) = "ExponentialCone"
 head_name(::Type{MOI.DualExponentialCone}) = "DualExponentialCone"
 head_name(::Type{MOI.NormOneCone}) = "NormOneCone"
 head_name(::Type{MOI.NormInfinityCone}) = "NormInfinityCone"
+head_name(::Type{MOI.NormCone}) = "NormCone"
 head_name(::Type{MOI.RelativeEntropyCone}) = "RelativeEntropyCone"
 head_name(::Type{MOI.NormSpectralCone}) = "NormSpectralCone"
 head_name(::Type{MOI.NormNuclearCone}) = "NormNuclearCone"
@@ -298,6 +299,9 @@ head_name(::Type{MOI.LogDetConeTriangle}) = "LogDetConeTriangle"
 head_name(::Type{MOI.LogDetConeSquare}) = "LogDetConeSquare"
 function head_name(::Type{MOI.PositiveSemidefiniteConeTriangle})
     return "PositiveSemidefiniteConeTriangle"
+end
+function head_name(::Type{MOI.ScaledPositiveSemidefiniteConeTriangle})
+    return "ScaledPositiveSemidefiniteConeTriangle"
 end
 function head_name(::Type{MOI.PositiveSemidefiniteConeSquare})
     return "PositiveSemidefiniteConeSquare"
