@@ -105,6 +105,7 @@ function test_sets_dimension()
     @test MOI.dimension(MOI.DualExponentialCone()) == 3
     @test MOI.dimension(MOI.PowerCone(1 / 2)) == 3
     @test MOI.dimension(MOI.DualPowerCone(1 / 2)) == 3
+    @test MOI.dimension(MOI.ScaledPositiveSemidefiniteConeTriangle(5)) == 15
     @test MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(5)) == 15
     @test MOI.dimension(MOI.PositiveSemidefiniteConeSquare(5)) == 25
     @test MOI.dimension(MOI.LogDetConeTriangle(5)) == 17
@@ -138,6 +139,7 @@ function test_sets_DimensionMismatch()
         (MOI.GeometricMeanCone, 2),
         (MOI.Complements, 0),
         (MOI.RelativeEntropyCone, 1),
+        (MOI.ScaledPositiveSemidefiniteConeTriangle, 0),
         (MOI.PositiveSemidefiniteConeTriangle, 0),
         (MOI.PositiveSemidefiniteConeSquare, 0),
         (MOI.LogDetConeTriangle, 0),
@@ -257,12 +259,22 @@ function test_sets_dual_normspectral()
     return
 end
 
-function test_sets_dual_psdtriangle()
-    psd2 = MOI.PositiveSemidefiniteConeTriangle(2)
-    psd3 = MOI.PositiveSemidefiniteConeTriangle(3)
+function _test_sets_dual_psdtriangle(psd2, psd3)
     _self_dual_set_test(psd2)
     @test MOI.dual_set(psd2) != psd3
     _self_dual_set_test(psd3)
+    return
+end
+
+function test_sets_dual_psdtriangle()
+    _test_sets_dual_psdtriangle(
+        MOI.PositiveSemidefiniteConeTriangle(2),
+        MOI.PositiveSemidefiniteConeTriangle(3),
+    )
+    _test_sets_dual_psdtriangle(
+        MOI.ScaledPositiveSemidefiniteConeTriangle(2),
+        MOI.ScaledPositiveSemidefiniteConeTriangle(3),
+    )
     return
 end
 

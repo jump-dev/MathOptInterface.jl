@@ -3409,3 +3409,87 @@ function MA.promote_operation(
 end
 
 Base.conj(f::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = f
+
+## Matrix operations
+
+function promote_operation(
+    ::typeof(*),
+    ::Type{T},
+    ::Type{<:Diagonal{T}},
+    ::Type{F},
+) where {T,F}
+    S = scalar_type(F)
+    U = promote_operation(*, T, T, S)
+    return promote_operation(vcat, T, U)
+end
+
+function operate_term(::typeof(*), D::Diagonal, term::MOI.VectorAffineTerm)
+    return MOI.VectorAffineTerm(
+        term.output_index,
+        operate_term(*, D.diag[term.output_index], term.scalar_term),
+    )
+end
+
+function operate_term(::typeof(*), D::Diagonal, term::MOI.VectorQuadraticTerm)
+    return MOI.VectorQuadraticTerm(
+        term.output_index,
+        operate_term(*, D.diag[term.output_index], term.scalar_term),
+    )
+end
+
+function operate_terms(::typeof(*), D::Diagonal, terms)
+    return map(terms) do term
+        return operate_term(*, D, term)
+    end
+end
+
+function operate(
+    ::typeof(*),
+    ::Type{T},
+    D::Diagonal{T},
+    func::MOI.VectorQuadraticFunction{T},
+) where {T}
+    return MOI.VectorQuadraticFunction{T}(
+        operate_terms(*, D, func.quadratic_terms),
+        operate_terms(*, D, func.affine_terms),
+        operate(*, T, D, func.constants),
+    )
+end
+
+function operate(
+    ::typeof(*),
+    ::Type{T},
+    D::Diagonal{T},
+    func::MOI.VectorAffineFunction{T},
+) where {T}
+    return MOI.VectorAffineFunction{T}(
+        operate_terms(*, D, func.terms),
+        operate(*, T, D, func.constants),
+    )
+end
+
+function operate(
+    ::typeof(*),
+    ::Type{T},
+    D::Diagonal{T},
+    func::MOI.VectorOfVariables,
+) where {T}
+    return MOI.VectorAffineFunction{T}(
+        MOI.VectorAffineTerm{T}[
+            MOI.VectorAffineTerm(
+                i,
+                MOI.ScalarAffineTerm(D.diag[i], func.variables[i]),
+            ) for i in eachindex(func.variables)
+        ],
+        zeros(T, length(func.variables)),
+    )
+end
+
+function operate(
+    ::typeof(*),
+    ::Type{T},
+    D::Diagonal{T},
+    v::AbstractVector{T},
+) where {T}
+    return T[D.diag[i] * v[i] for i in eachindex(v)]
+end

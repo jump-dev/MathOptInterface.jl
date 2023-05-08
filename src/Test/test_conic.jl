@@ -4753,6 +4753,7 @@ function _test_conic_PositiveSemidefiniteCone_helper(
     atol = config.atol
     rtol = config.rtol
     square = psdcone == MOI.PositiveSemidefiniteConeSquare
+    scaled = psdcone == MOI.ScaledPositiveSemidefiniteConeTriangle
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
@@ -4778,13 +4779,21 @@ function _test_conic_PositiveSemidefiniteCone_helper(
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 4 : 3)
     vov = MOI.VectorOfVariables(X)
     if use_VectorOfVariables
+        @assert !scaled
         cX = MOI.add_constraint(model, vov, psdcone(2))
     else
-        cX = MOI.add_constraint(
-            model,
-            MOI.VectorAffineFunction{T}(vov),
-            psdcone(2),
-        )
+        func = MOI.VectorAffineFunction{T}(vov)
+        if scaled
+            func = MOI.Utilities.operate(
+                *,
+                T,
+                LinearAlgebra.Diagonal(
+                    MOI.Utilities.symmetric_matrix_scaling_vector(T, 2),
+                ),
+                func,
+            )
+        end
+        cX = MOI.add_constraint(model, func, psdcone(2))
     end
     c = MOI.add_constraint(
         model,
@@ -4833,12 +4842,18 @@ function _test_conic_PositiveSemidefiniteCone_helper(
         Xv = square ? ones(T, 4) : ones(T, 3)
         @test MOI.get(model, MOI.VariablePrimal(), X) ≈ Xv atol = atol rtol =
             rtol
+        if scaled
+            Xv[2] *= sqrt(T(2))
+        end
         @test MOI.get(model, MOI.ConstraintPrimal(), cX) ≈ Xv atol = atol rtol =
             rtol
         if _supports(config, MOI.ConstraintDual)
             @test MOI.get(model, MOI.ConstraintDual(), c) ≈ 2 atol = atol rtol =
                 rtol
-            cXv = square ? [1, -2, 0, 1] : [1, -1, 1]
+            cXv = square ? T[1, -2, 0, 1] : T[1, -1, 1]
+            if scaled
+                cXv[2] *= sqrt(T(2))
+            end
             @test MOI.get(model, MOI.ConstraintDual(), cX) ≈ cXv atol = atol rtol =
                 rtol
         end
@@ -4961,6 +4976,41 @@ function setup_test(
             mock,
             ones(T, 4),
             (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeSquare) => [T[1, -2, 0, 1]],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => T[2],
+        ),
+    )
+    return
+end
+
+function test_conic_ScaledPositiveSemidefiniteConeTriangle_VectorAffineFunction(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    _test_conic_PositiveSemidefiniteCone_helper(
+        model,
+        false,
+        MOI.ScaledPositiveSemidefiniteConeTriangle,
+        config,
+    )
+    return
+end
+
+function setup_test(
+    ::typeof(
+        test_conic_ScaledPositiveSemidefiniteConeTriangle_VectorAffineFunction,
+    ),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            ones(T, 3),
+            (
+                MOI.VectorAffineFunction{T},
+                MOI.ScaledPositiveSemidefiniteConeTriangle,
+            ) => [T[1, -sqrt(T(2)), 1]],
             (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => T[2],
         ),
     )

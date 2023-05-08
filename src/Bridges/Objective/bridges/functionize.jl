@@ -103,5 +103,5 @@ function MOI.get(
 ) where {T}
     F = MOI.ScalarAffineFunction{T}
     func = MOI.get(model, MOI.ObjectiveFunction{F}())
-    return convert(MOI.VariableIndex, func)
+    return MOI.Utilities.convert_approx(MOI.VariableIndex, func)
 end

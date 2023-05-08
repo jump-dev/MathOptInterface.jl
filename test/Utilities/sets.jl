@@ -197,6 +197,34 @@ function test_trimap()
     return
 end
 
+function test_symmetric_matrix_scaling()
+    n = 10
+    N = div(n * (n + 1), 2)
+    v = MOI.Utilities.SymmetricMatrixScalingVector{Float64}(1.5, 0.5, N)
+    s = MOI.Utilities.symmetric_matrix_scaling_vector(Float64, N)
+    s32 = MOI.Utilities.symmetric_matrix_scaling_vector(Float32, N)
+    is = MOI.Utilities.symmetric_matrix_inverse_scaling_vector(Float64, N)
+    is32 = MOI.Utilities.symmetric_matrix_inverse_scaling_vector(Float32, N)
+    k = 0
+    for j in 1:n
+        for i in 1:(j-1)
+            k += 1
+            @test v[k] == 1.5
+            @test s[k] == √2
+            @test s32[k] == √Float32(2)
+            @test is[k] == inv(√2)
+            @test is32[k] == inv(√Float32(2))
+        end
+        k += 1
+        @test v[k] == 0.5
+        @test isone(s[k])
+        @test isone(s32[k])
+        @test isone(is[k])
+        @test isone(is32[k])
+    end
+    return
+end
+
 end  # module
 
 TestSets.runtests()
