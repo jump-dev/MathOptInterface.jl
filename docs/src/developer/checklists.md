@@ -121,3 +121,32 @@ the model:
  - [ ] Implement `MOI.Utilities.final_touch(::Bridge, ::MOI.ModelLike)`
  - [ ] Ensure that `final_touch` can be called multiple times in a row
 ```
+
+## Updating MathOptFormat
+
+Use this checklist when updating the version of MathOptFormat.
+
+```
+## Basic
+
+ - [ ] The file at `src/FileFormats/MOF/mof.X.Y.schema.json` is updated
+ - [ ] The constants `SCHEMA_PATH`, `VERSION`, and `SUPPORTED_VERSIONS` are
+       updated in `src/FileFormats/MOF/MOF.jl`
+
+## New sets
+
+ - [ ] New sets are added to the `@model` in `src/FileFormats/MOF/MOF.jl`
+ - [ ] New sets are added to the `@enum` in `src/FileFormats/MOF/read.jl`
+ - [ ] `set_to_moi` is defined for each set in `src/FileFormats/MOF/read.jl`
+ - [ ] `head_name` is defined for each set in `src/FileFormats/MOF/write.jl`
+ - [ ] A new unit test calling `_test_model_equality` is aded to
+       `test/FileFormats/MOF/MOF.jl`
+
+## Tests
+
+ - [ ] The version field in `test/FileFormats/MOF/nlp.mof.json` is updated
+
+## Documentation
+
+ - [ ] The version fields are updated in `docs/src/submodules/FileFormats/overview.md`
+```

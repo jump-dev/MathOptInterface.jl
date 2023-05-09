@@ -373,6 +373,7 @@ end
     GeometricMeanCone,
     NormOneCone,
     NormInfinityCone,
+    NormCone,
     RelativeEntropyCone,
     NormSpectralCone,
     NormNuclearCone,
@@ -381,6 +382,7 @@ end
     LogDetConeTriangle,
     LogDetConeSquare,
     PositiveSemidefiniteConeTriangle,
+    ScaledPositiveSemidefiniteConeTriangle,
     PositiveSemidefiniteConeSquare,
     HermitianPositiveSemidefiniteConeTriangle,
     ExponentialCone,
@@ -497,6 +499,10 @@ function set_to_moi(::Val{:NormInfinityCone}, object::Object)
     return MOI.NormInfinityCone(object["dimension"])
 end
 
+function set_to_moi(::Val{:NormCone}, object::Object)
+    return MOI.NormCone(object["p"], object["dimension"])
+end
+
 function set_to_moi(::Val{:RelativeEntropyCone}, object::Object)
     return MOI.RelativeEntropyCone(object["dimension"])
 end
@@ -527,6 +533,13 @@ end
 
 function set_to_moi(::Val{:PositiveSemidefiniteConeTriangle}, object::Object)
     return MOI.PositiveSemidefiniteConeTriangle(object["side_dimension"])
+end
+
+function set_to_moi(
+    ::Val{:ScaledPositiveSemidefiniteConeTriangle},
+    object::Object,
+)
+    return MOI.ScaledPositiveSemidefiniteConeTriangle(object["side_dimension"])
 end
 
 function set_to_moi(::Val{:PositiveSemidefiniteConeSquare}, object::Object)
