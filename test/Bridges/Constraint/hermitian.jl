@@ -51,6 +51,21 @@ function test_dimension_3()
     return
 end
 
+function test_dimension_4()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.HermitianToSymmetricPSDBridge,
+        """
+        variables: x11, x12, x22, x13, x23, x33, x14, x24, x34, x44, y12, y13, y23, y14, y24, y34
+        [x11, x12, x22, x13, x23, x33, x14, x24, x34, x44, y12, y13, y23, y14, y24, y34] in HermitianPositiveSemidefiniteConeTriangle(4)
+        """,
+        """
+        variables: x11, x12, x22, x13, x23, x33, x14, x24, x34, x44, y12, y13, y23, y14, y24, y34
+        [x11, x12, x22, x13, x23, x33, x14, x24, x34, x44, 0, -1 * y12, -1 * y13, -1 * y14, x11, y12, 0, -1 * y23, -1 * y24, x12, x22, y13, y23, 0, -1 * y34, x13, x23, x33, y14, y24, y34, 0, x14, x24, x34, x44] in PositiveSemidefiniteConeTriangle(8)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintHermitianToSymmetricPSD.runtests()
