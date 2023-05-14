@@ -118,6 +118,7 @@ function MOI.Bridges.map_function(
     half_real_set = MOI.PositiveSemidefiniteConeTriangle(n)
     half_real_dim = MOI.dimension(half_real_set)
     real_index_1 = 0
+    # `+ n` is for jumping over the indices corresponding to the imaginary part
     real_index_2 = half_real_dim + n
     for j in 1:n
         for i in 1:j
@@ -127,24 +128,25 @@ function MOI.Bridges.map_function(
             real_index_2 += 1
             real_scalars[real_index_2] = complex_scalars[complex_index]
             if i == j
+                # We are at the end of a column so we do `+ n` for jumping over
+                # the indices corresponding to the imaginary part
                 real_index_2 += n
             end
         end
     end
+    # Index corresponding to the upper triangular part
     real_index_1 = half_real_dim
-    real_index_2 = real_dim - n + 1
     for j in 1:n
         for i in 1:(j-1)
             complex_index += 1
             real_index_1 += 1
             real_scalars[real_index_1] = complex_scalars[complex_index]
-            real_index_2 -= 1
-            real_scalars[real_index_2] =
+            real_scalars[MOI.Utilities.trimap(j, n + i)] =
                 MOI.Utilities.operate(-, T, complex_scalars[complex_index])
         end
         real_scalars[real_index_1+1] = zero(S)
+        # jump over the lower triangular part and the (2, 2) block
         real_index_1 += n + 1
-        real_index_2 -= 2 * (n - j) + 1
     end
     @assert length(complex_scalars) == complex_index
     return MOI.Utilities.vectorize(real_scalars)
@@ -218,17 +220,15 @@ function MOI.Bridges.adjoint_map_function(
         end
     end
     real_index_1 = half_real_dim
-    real_index_2 = real_dim - n + 1
     for j in 1:n
         for i in 1:(j-1)
             complex_index += 1
             real_index_1 += 1
-            real_index_2 -= 1
             complex_scalars[complex_index] =
-                real_scalars[real_index_1] - real_scalars[real_index_2]
+                real_scalars[real_index_1] -
+                real_scalars[MOI.Utilities.trimap(j, i + n)]
         end
         real_index_1 += n + 1
-        real_index_2 -= 2 * (n - j) + 1
     end
     @assert length(complex_scalars) == complex_index
     return MOI.Utilities.vectorize(complex_scalars)
@@ -271,18 +271,15 @@ function MOI.Bridges.inverse_adjoint_map_function(
         end
     end
     real_index_1 = half_real_dim
-    real_index_2 = real_dim - n + 1
     for j in 1:n
         for i in 1:(j-1)
             complex_index += 1
             real_index_1 += 1
             real_scalars[real_index_1] = complex_scalars[complex_index]
-            real_index_2 -= 1
-            real_scalars[real_index_2] = zero(S)
+            real_scalars[MOI.Utilities.trimap(j, i + n)] = zero(S)
         end
         real_scalars[real_index_1+1] = zero(S)
         real_index_1 += n + 1
-        real_index_2 -= 2 * (n - j) + 1
     end
     @assert length(complex_scalars) == complex_index
     return MOI.Utilities.vectorize(real_scalars)
