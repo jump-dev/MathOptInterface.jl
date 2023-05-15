@@ -60,6 +60,7 @@ jobs:
         shell: julia --color=yes {0}
         run: |
           import Pkg
+          Pkg.develop(Pkg.PackageSpec(; path = pwd()))
           Pkg.develop(ENV["PACKAGE"])
           Pkg.test(ENV["PACKAGE"])
   test-cplex:
@@ -95,6 +96,7 @@ jobs:
           SECRET_CPLEX_URL_2210: ${{ secrets.SECRET_CPLEX_URL_2210 }}
         run: |
           import Pkg
+          Pkg.develop(Pkg.PackageSpec(; path = pwd()))
           Pkg.develop(ENV["PACKAGE"])
           Pkg.test(ENV["PACKAGE"])
   # TODO(odow): enable testing Xpress

@@ -701,14 +701,21 @@ end
 # VariableIndex
 
 function Base.convert(::Type{VariableIndex}, f::ScalarAffineFunction)
-    if (
-        !iszero(f.constant) ||
-        !isone(length(f.terms)) ||
-        !isone(f.terms[1].coefficient)
-    )
+    if !iszero(f.constant)
         throw(InexactError(:convert, VariableIndex, f))
     end
-    return f.terms[1].variable
+    scalar_term = nothing
+    for term in f.terms
+        if isone(term.coefficient) && scalar_term === nothing
+            scalar_term = term
+        elseif !iszero(term.coefficient)
+            throw(InexactError(:convert, VariableIndex, f))
+        end
+    end
+    if scalar_term === nothing
+        throw(InexactError(:convert, VariableIndex, f))
+    end
+    return scalar_term.variable::VariableIndex
 end
 
 function Base.convert(

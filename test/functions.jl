@@ -49,6 +49,29 @@ function test_functions_copy_VectorOfVariables()
     @test f.variables[2] == y
 end
 
+function test_functions_convert_to_variable_index()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    for f in (
+        1.0 * x,
+        1.0 * x + 0.0,
+        1.0 * x + 0.0 * y + 0.0,
+        0.0 * y + 1.0 * x + 0.0,
+    )
+        @test convert(MOI.VariableIndex, f) === x
+    end
+    for f in (
+        1.0 * x + 0.5,
+        0.5 * x + 0.0,
+        1.0 * x + 1.0 * y + 0.0,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
+    )
+        @test_throws InexactError convert(MOI.VariableIndex, f)
+    end
+    return
+end
+
 function test_functions_convert_VariableIndex()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
