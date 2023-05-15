@@ -7,7 +7,7 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.16.0 (May 15, 2023)
+## v1.16.0 (May 16, 2023)
 
 ### Added
 
@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    compiler (#2161) (#2163)
  - Fixed a correctness bug in [`Bridges.Constraint.HermitianToSymmetricPSDBridge`](@ref)
    (#2171)
+ - Fixed `convert(::VariableIndex, ::ScalarAffineFunction)` when the function
+   has terms with `0`coefficients (#2173)
 
 ### Other
 
