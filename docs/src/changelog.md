@@ -7,6 +7,36 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.16.0 (May 16, 2023)
+
+### Added
+
+ - Added support for MathOptFormat v1.3 and v1.4 (#2158) (#2169)
+ - Added new method to the nonlinear API (#2162) (#2164)
+    - [`eval_hessian_constraint`](@ref)
+    - [`eval_hessian_objective`](@ref)
+    - [`hessian_constraint_structure`](@ref)
+    - [`hessian_objective_structure`](@ref)
+ - Added new sets
+    - [`NormCone`](@ref) (#2119)
+    - [`ScaledPositiveSemidefiniteConeTriangle`](@ref) (#2154)
+
+### Fixed
+
+ - Fixed support for Julia v1.9 to work around a bug in the upstream Julia
+   compiler (#2161) (#2163)
+ - Fixed a correctness bug in [`Bridges.Constraint.HermitianToSymmetricPSDBridge`](@ref)
+   (#2171)
+ - Fixed `convert(::VariableIndex, ::ScalarAffineFunction)` when the function
+   has terms with `0`coefficients (#2173)
+
+### Other
+
+ - Fixed `solver-tests.yml` (#2157)
+ - Updated documentation links to developer chatroom (#2160)
+ - Added various tests for bridges (#2156)
+ - Added checklists to the developer documentation (#2167) (#2168)
+
 ## v1.15.1 (April 25, 2023)
 
 ### Fixed
