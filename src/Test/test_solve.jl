@@ -1574,8 +1574,8 @@ function _test_matrix_norm_cone(
     @requires _supports(config, MOI.optimize!)
     F = b == nothing ? MOI.VectorOfVariables : MOI.VectorAffineFunction{T}
     @requires MOI.supports_constraint(model, F, typeof(set))
-    X = MOI.add_variables(model, 6)
     t = MOI.add_variable(model)
+    X = MOI.add_variables(model, 6)
     f = if b === nothing
         MOI.VectorOfVariables([t; X])
     else
