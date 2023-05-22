@@ -1812,7 +1812,7 @@ function test_HermitianPSDCone_basic(
     S = MOI.HermitianPositiveSemidefiniteConeTriangle
     @requires MOI.supports_constraint(model, MOI.VectorAffineFunction{T}, S)
     x = MOI.add_variables(model, 9)
-    for i in 1:length(x)
+    for i in eachindex(x)
         MOI.add_constraint(model, x[i], MOI.EqualTo{T}(i))
     end
     b = T[12, 0, 12, 0, 0, 12, 0, 0, 0]
