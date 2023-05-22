@@ -1592,6 +1592,8 @@ function _test_matrix_norm_cone(
     x_result = MOI.get(model, MOI.VariablePrimal(), X)
     @test ≈(x_result, 1:6, config)
     Y = reshape(x_result .+ something(b, T(0)), set.row_dim, set.column_dim)
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the singular values.
     σ = LinearAlgebra.svdvals(convert(Matrix{Float64}, Y))
     result = set isa MOI.NormSpectralCone ? maximum(σ) : sum(σ)
     @test ≈(MOI.get(model, MOI.VariablePrimal(), t), result, config)
@@ -1611,14 +1613,14 @@ function setup_test(
     model::MOIU.MockOptimizer,
     ::Config{T},
 ) where {T}
-    result = T[1, 2, 3, 4, 5, 6]
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
+    t = LinearAlgebra.opnorm(reshape(result, 3, 2))
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            T[LinearAlgebra.opnorm(reshape(result, 3, 2)); result],
-        ),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
     )
     return
 end
@@ -1636,14 +1638,14 @@ function setup_test(
     model::MOIU.MockOptimizer,
     ::Config{T},
 ) where {T}
-    result = T[1, 2, 3, 4, 5, 6]
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
+    t = LinearAlgebra.opnorm(reshape(result, 2, 3))
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            T[LinearAlgebra.opnorm(reshape(result, 2, 3)); result],
-        ),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
     )
     return
 end
@@ -1662,15 +1664,14 @@ function setup_test(
     model::MOIU.MockOptimizer,
     ::Config{T},
 ) where {T}
-    result = T[1, 2, 3, 4, 5, 6]
-    b = convert(Vector{T}, 7:12)
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
+    t = LinearAlgebra.opnorm(reshape(result + collect(7:12), 3, 2))
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            T[LinearAlgebra.opnorm(reshape(result + b, 3, 2)); result],
-        ),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
     )
     return
 end
@@ -1689,15 +1690,14 @@ function setup_test(
     model::MOIU.MockOptimizer,
     ::Config{T},
 ) where {T}
-    result = T[1, 2, 3, 4, 5, 6]
-    b = convert(Vector{T}, 7:12)
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
+    t = LinearAlgebra.opnorm(reshape(result + collect(7:12), 2, 3))
     MOIU.set_mock_optimize!(
         model,
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
-            mock,
-            MOI.OPTIMAL,
-            T[LinearAlgebra.opnorm(reshape(result + b, 2, 3)); result],
-        ),
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
     )
     return
 end
@@ -1715,7 +1715,9 @@ function setup_test(
     model::MOIU.MockOptimizer,
     ::Config{T},
 ) where {T}
-    result = T[1, 2, 3, 4, 5, 6]
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
     t = sum(LinearAlgebra.svdvals(reshape(result, 3, 2)))
     MOIU.set_mock_optimize!(
         model,
@@ -1738,7 +1740,9 @@ function setup_test(
     model::MOIU.MockOptimizer,
     ::Config{T},
 ) where {T}
-    result = T[1, 2, 3, 4, 5, 6]
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
     t = sum(LinearAlgebra.svdvals(reshape(result, 2, 3)))
     MOIU.set_mock_optimize!(
         model,
@@ -1762,9 +1766,10 @@ function setup_test(
     model::MOIU.MockOptimizer,
     ::Config{T},
 ) where {T}
-    result = T[1, 2, 3, 4, 5, 6]
-    b = convert(Vector{T}, 7:12)
-    t = sum(LinearAlgebra.svdvals(reshape(result + b, 3, 2)))
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
+    t = sum(LinearAlgebra.svdvals(reshape(result + collect(7:12), 3, 2)))
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) ->
@@ -1787,9 +1792,10 @@ function setup_test(
     model::MOIU.MockOptimizer,
     ::Config{T},
 ) where {T}
-    result = T[1, 2, 3, 4, 5, 6]
-    b = convert(Vector{T}, 7:12)
-    t = sum(LinearAlgebra.svdvals(reshape(result + b, 2, 3)))
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
+    t = sum(LinearAlgebra.svdvals(reshape(result + collect(7:12), 2, 3)))
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) ->
