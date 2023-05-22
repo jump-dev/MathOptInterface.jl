@@ -1564,3 +1564,318 @@ function setup_test(
     )
     return
 end
+
+function _test_matrix_norm_cone(
+    model::MOI.ModelLike,
+    config::Config{T},
+    set::Union{MOI.NormSpectralCone,MOI.NormNuclearCone},
+    b::Union{Nothing,Vector{T}},
+) where {T}
+    @requires _supports(config, MOI.optimize!)
+    F = b == nothing ? MOI.VectorOfVariables : MOI.VectorAffineFunction{T}
+    @requires MOI.supports_constraint(model, F, typeof(set))
+    t = MOI.add_variable(model)
+    X = MOI.add_variables(model, 6)
+    f = if b === nothing
+        MOI.VectorOfVariables([t; X])
+    else
+        fx = MOI.Utilities.operate.(+, T, X, b)
+        MOI.Utilities.operate(vcat, T, t, fx...)
+    end
+    MOI.add_constraint(model, f, set)
+    for i in 1:6
+        MOI.add_constraint(model, X[i], MOI.EqualTo{T}(i))
+    end
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
+    MOI.optimize!(model)
+    x_result = MOI.get(model, MOI.VariablePrimal(), X)
+    @test ≈(x_result, 1:6, config)
+    Y = reshape(x_result .+ something(b, T(0)), set.row_dim, set.column_dim)
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the singular values.
+    σ = LinearAlgebra.svdvals(convert(Matrix{Float64}, Y))
+    result = set isa MOI.NormSpectralCone ? maximum(σ) : sum(σ)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), t), result, config)
+    return
+end
+
+function test_NormSpectralCone_VectorOfVariables_without_transform(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    _test_matrix_norm_cone(model, config, MOI.NormSpectralCone(3, 2), nothing)
+    return
+end
+
+function setup_test(
+    ::typeof(test_NormSpectralCone_VectorOfVariables_without_transform),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
+    t = LinearAlgebra.opnorm(reshape(result, 3, 2))
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
+    )
+    return
+end
+
+function test_NormSpectralCone_VectorOfVariables_with_transform(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    _test_matrix_norm_cone(model, config, MOI.NormSpectralCone(2, 3), nothing)
+    return
+end
+
+function setup_test(
+    ::typeof(test_NormSpectralCone_VectorOfVariables_with_transform),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
+    t = LinearAlgebra.opnorm(reshape(result, 2, 3))
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
+    )
+    return
+end
+
+function test_NormSpectralCone_VectorAffineFunction_without_transform(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    b = convert(Vector{T}, 7:12)
+    _test_matrix_norm_cone(model, config, MOI.NormSpectralCone(3, 2), b)
+    return
+end
+
+function setup_test(
+    ::typeof(test_NormSpectralCone_VectorAffineFunction_without_transform),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
+    t = LinearAlgebra.opnorm(reshape(result + collect(7:12), 3, 2))
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
+    )
+    return
+end
+
+function test_NormSpectralCone_VectorAffineFunction_with_transform(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    b = convert(Vector{T}, 7:12)
+    _test_matrix_norm_cone(model, config, MOI.NormSpectralCone(2, 3), b)
+    return
+end
+
+function setup_test(
+    ::typeof(test_NormSpectralCone_VectorAffineFunction_with_transform),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
+    t = LinearAlgebra.opnorm(reshape(result + collect(7:12), 2, 3))
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
+    )
+    return
+end
+
+function test_NormNuclearCone_VectorOfVariables_without_transform(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    _test_matrix_norm_cone(model, config, MOI.NormNuclearCone(3, 2), nothing)
+    return
+end
+
+function setup_test(
+    ::typeof(test_NormNuclearCone_VectorOfVariables_without_transform),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
+    t = sum(LinearAlgebra.svdvals(reshape(result, 3, 2)))
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
+    )
+    return
+end
+
+function test_NormNuclearCone_VectorOfVariables_with_transform(
+    model::MOI.ModelLike,
+    config::Config,
+)
+    _test_matrix_norm_cone(model, config, MOI.NormNuclearCone(2, 3), nothing)
+    return
+end
+
+function setup_test(
+    ::typeof(test_NormNuclearCone_VectorOfVariables_with_transform),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
+    t = sum(LinearAlgebra.svdvals(reshape(result, 2, 3)))
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
+    )
+    return
+end
+
+function test_NormNuclearCone_VectorAffineFunction_without_transform(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    b = convert(Vector{T}, 7:12)
+    _test_matrix_norm_cone(model, config, MOI.NormNuclearCone(3, 2), b)
+    return
+end
+
+function setup_test(
+    ::typeof(test_NormNuclearCone_VectorAffineFunction_without_transform),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
+    t = sum(LinearAlgebra.svdvals(reshape(result + collect(7:12), 3, 2)))
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
+    )
+    return
+end
+
+function test_NormNuclearCone_VectorAffineFunction_with_transform(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    b = convert(Vector{T}, 7:12)
+    _test_matrix_norm_cone(model, config, MOI.NormNuclearCone(2, 3), b)
+    return
+end
+
+function setup_test(
+    ::typeof(test_NormNuclearCone_VectorAffineFunction_with_transform),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    # svdvals doesn't work for BigFloat etc. So don't use `T` as the element
+    # type when computing the result.
+    result = [1, 2, 3, 4, 5, 6]
+    t = sum(LinearAlgebra.svdvals(reshape(result + collect(7:12), 2, 3)))
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) ->
+            MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
+    )
+    return
+end
+
+function test_HermitianPSDCone_basic(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.optimize!)
+    S = MOI.HermitianPositiveSemidefiniteConeTriangle
+    @requires MOI.supports_constraint(model, MOI.VectorAffineFunction{T}, S)
+    x = MOI.add_variables(model, 9)
+    for i in eachindex(x)
+        MOI.add_constraint(model, x[i], MOI.EqualTo{T}(i))
+    end
+    b = T[12, 0, 12, 0, 0, 12, 0, 0, 0]
+    f = MOI.Utilities.operate(vcat, T, MOI.Utilities.operate.(+, T, x, b)...)
+    set = MOI.HermitianPositiveSemidefiniteConeTriangle(3)
+    MOI.add_constraint(model, f, set)
+    MOI.optimize!(model)
+    MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), x), 1:9, config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_HermitianPSDCone_basic),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            T[1, 2, 3, 4, 5, 6, 7, 8, 9],
+        ),
+    )
+    return
+end
+
+function test_HermitianPSDCone_min_t(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.optimize!)
+    S = MOI.HermitianPositiveSemidefiniteConeTriangle
+    @requires MOI.supports_constraint(model, MOI.VectorAffineFunction{T}, S)
+    t = MOI.add_variable(model)
+    x = MOI.add_variables(model, 9)
+    for (i, xi) in enumerate(x)
+        MOI.add_constraint(model, xi, MOI.EqualTo{T}(i))
+    end
+    bt = Union{MOI.VariableIndex,T}[t, T(0), t, T(0), T(0), t, T(0), T(0), T(0)]
+    f = MOI.Utilities.operate(vcat, T, MOI.Utilities.operate.(+, T, x, bt)...)
+    set = MOI.HermitianPositiveSemidefiniteConeTriangle(3)
+    MOI.add_constraint(model, f, set)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), t)
+    MOI.optimize!(model)
+    MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    x_result = MOI.get(model, MOI.VariablePrimal(), x)
+    @test ≈(x_result, 1:9, config)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), t), 11.034899152582094, config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_HermitianPSDCone_min_t),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    x = T[11.034899152582094, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, MOI.OPTIMAL, x),
+    )
+    return
+end
