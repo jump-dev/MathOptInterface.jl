@@ -1592,7 +1592,7 @@ function _test_matrix_norm_cone(
     x_result = MOI.get(model, MOI.VariablePrimal(), X)
     @test ≈(x_result, 1:6, config)
     Y = reshape(x_result .+ something(b, T(0)), set.row_dim, set.column_dim)
-    σ = LinearAlgebra.svdvals(Y)
+    σ = LinearAlgebra.svdvals(convert(Matrix{Float64}, Y))
     result = set isa MOI.NormSpectralCone ? maximum(σ) : sum(σ)
     @test ≈(MOI.get(model, MOI.VariablePrimal(), t), result, config)
     return
