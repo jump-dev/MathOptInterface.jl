@@ -42,11 +42,14 @@ variable_function_type(::Type{<:MOI.AbstractScalarSet}) = MOI.VariableIndex
 variable_function_type(::Type{<:MOI.AbstractVectorSet}) = MOI.VectorOfVariables
 
 """
-    value_type(::Type{F}, ::Type{T}) where {F<:AbstractFunction,T}
+    value_type(::Type{T}, ::Type{F}) where {T,F<:AbstractFunction}
 
-Returns the type of an evaluation of `f` with variable values of type `T`. In
-other words, this is the return type for `eval_variables(variable_values, f)`
-for a function `variable_values` of return type `T`.
+Returns the output type that results if a function of type `F` is evaluated
+using variables with numeric type `T`.
+
+In other words, this is the return type for
+`MOI.Utilities.eval_variables(variable_values::Function, f::F)`
+for a function `variable_values(::MOI.VariableIndex)::T`.
 """
 function value_type end
 
