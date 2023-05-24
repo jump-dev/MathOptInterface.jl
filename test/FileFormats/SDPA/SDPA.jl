@@ -10,6 +10,7 @@ using Test
 
 import MathOptInterface as MOI
 import MathOptInterface.Utilities as MOIU
+
 const SDPA = MOI.FileFormats.SDPA
 const SDPA_TEST_FILE = "test.sdpa"
 const SDPA_MODELS_DIR = joinpath(@__DIR__, "models")
@@ -105,7 +106,7 @@ function test_support()
         model_string = """
         variables: x
         minobjective: 1x
-        x in $set
+        x in $(replace(set, "MathOptInterface." => ""))
         """
         model = SDPA.Model()
         @test !MOI.supports_constraint(model, MOI.VariableIndex, typeof(set))
