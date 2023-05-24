@@ -399,6 +399,30 @@ function test_eltypes_complex_float64()
     return
 end
 
+struct Set2175 <: MOI.AbstractScalarSet end
+
+function test_parse_external_set_constraint()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    MOI.Utilities.loadfromstring!(
+        model,
+        "variables: x\nx in $(@__MODULE__).Set2175()",
+    )
+    constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test (MOI.VariableIndex, Set2175) in constraints
+    return
+end
+
+function test_parse_external_set_constrained_variable()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    MOI.Utilities.loadfromstring!(
+        model,
+        "constrainedvariable: x in $(@__MODULE__).Set2175()",
+    )
+    constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test (MOI.VariableIndex, Set2175) in constraints
+    return
+end
+
 end  # module
 
 TestParser.runtests()

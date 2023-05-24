@@ -267,6 +267,18 @@ function _parsed_to_moi(model, f::_ParsedVariableIndex)
     return _parsed_to_moi(model, f.variable)
 end
 
+function _parse_set(expr::Expr)
+    @assert Meta.isexpr(expr, :call)
+    if expr.args[1] isa Symbol
+        # If the set is a Symbol, it must be one of the MOI sets. We need to
+        # eval this in the MOI module.
+        return Core.eval(MOI, expr)
+    end
+    # If the set is an expression, it must be something like
+    # `SCS.ScaledPSDCone()`. We need to eval this in `Main`.
+    return Core.eval(Main, expr)
+end
+
 # Ideally, this should be load_from_string
 """
     loadfromstring!(model, s)
@@ -333,7 +345,7 @@ function loadfromstring!(model, s)
         elseif label == :constrainedvariable
             @assert length(ex.args) == 3
             @assert ex.args[1] == :in
-            set = Core.eval(MOI, ex.args[3])
+            set = _parse_set(ex.args[3])
             if isa(ex.args[2], Symbol)
                 # constrainedvariable: x in LessThan(1.0)
                 x, _ = MOI.add_constrained_variable(model, set)
@@ -362,7 +374,7 @@ function loadfromstring!(model, s)
             f = _parsed_to_moi(model, _parse_function(ex.args[2], T))
             if ex.args[1] == :in
                 # Could be safer here
-                set = Core.eval(MOI, ex.args[3])
+                set = _parse_set(ex.args[3])
             elseif ex.args[1] == :<=
                 set = MOI.LessThan(Core.eval(Base, ex.args[3]))
             elseif ex.args[1] == :>=
