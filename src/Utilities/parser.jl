@@ -273,6 +273,9 @@ function _parse_set(expr::Expr)
         # If the set is a Symbol, it must be one of the MOI sets. We need to
         # eval this in the MOI module.
         return Core.eval(MOI, expr)
+    elseif Meta.isexpr(expr.args[1], :curly) && expr.args[1].args[1] isa Symbol
+        # Something like Indicator{}()
+        return Core.eval(MOI, expr)
     end
     # If the set is an expression, it must be something like
     # `SCS.ScaledPSDCone()`. We need to eval this in `Main`.
