@@ -4,8 +4,63 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
+# Functions convertible to a ScalarAffineFunction
+const ScalarAffineLike{T} =
+    Union{T,MOI.VariableIndex,MOI.ScalarAffineFunction{T}}
+# Functions convertible to a ScalarQuadraticFunction
+const ScalarQuadraticLike{T} =
+    Union{ScalarAffineLike{T},MOI.ScalarQuadraticFunction{T}}
+
+# `ScalarLike` for which `T` is defined to avoid defining, e.g.,
+# `+(::VariableIndex, ::Any)` which should rather be
+# `+(::VariableIndex, ::Number)`.
+const TypedScalarLike{T} =
+    Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}
+# Used for overloading Base operator functions so `T` is not in the union to
+# avoid overloading e.g. `+(::Float64, ::Float64)`
+const ScalarLike{T} = Union{MOI.VariableIndex,TypedScalarLike{T}}
+
+# Functions convertible to a VectorAffineFunction
+const VectorAffineLike{T} =
+    Union{Vector{T},MOI.VectorOfVariables,MOI.VectorAffineFunction{T}}
+# Functions convertible to a VectorQuadraticFunction
+const VectorQuadraticLike{T} =
+    Union{VectorAffineLike{T},MOI.VectorQuadraticFunction{T}}
+
+# `VectorLike` for which `T` is defined to avoid defining, e.g.,
+# `+(::VectorOfVariables, ::Any)` which should rather be
+# `+(::VectorOfVariables, ::Number)`.
+const TypedVectorLike{T} =
+    Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}}
+# Used for overloading Base operator functions so `T` is not in the union to
+# avoid overloading e.g. `+(::Float64, ::Float64)`
+const VectorLike{T} = Union{MOI.VectorOfVariables,TypedVectorLike{T}}
+
+const TypedLike{T} = Union{TypedScalarLike{T},TypedVectorLike{T}}
+
 variable_function_type(::Type{<:MOI.AbstractScalarSet}) = MOI.VariableIndex
 variable_function_type(::Type{<:MOI.AbstractVectorSet}) = MOI.VectorOfVariables
+
+"""
+    value_type(::Type{F}, ::Type{T}) where {F<:AbstractFunction,T}
+
+Returns the type of an evaluation of `f` with variable values of type `T`. In
+other words, this is the return type for `eval_variables(variable_values, f)`
+for a function `variable_values` of return type `T`.
+"""
+function value_type end
+
+value_type(::Type{T}, ::Type{MOI.VariableIndex}) where {T} = T
+
+value_type(::Type{T}, ::Type{MOI.VectorOfVariables}) where {T} = Vector{T}
+
+function value_type(::Type{T}, ::Type{<:TypedScalarLike{C}}) where {C,T}
+    return MA.promote_operation(*, C, T)
+end
+
+function value_type(::Type{T}, ::Type{<:TypedVectorLike{C}}) where {C,T}
+    return Vector{MA.promote_operation(*, C, T)}
+end
 
 """
     eval_variables(varval::Function, f::AbstractFunction)
@@ -1493,40 +1548,6 @@ function map_terms!(
     map!(op, func.affine_terms, func.affine_terms)
     return map!(op, func.quadratic_terms, func.quadratic_terms)
 end
-
-# Functions convertible to a ScalarAffineFunction
-const ScalarAffineLike{T} =
-    Union{T,MOI.VariableIndex,MOI.ScalarAffineFunction{T}}
-# Functions convertible to a ScalarQuadraticFunction
-const ScalarQuadraticLike{T} =
-    Union{ScalarAffineLike{T},MOI.ScalarQuadraticFunction{T}}
-
-# `ScalarLike` for which `T` is defined to avoid defining, e.g.,
-# `+(::VariableIndex, ::Any)` which should rather be
-# `+(::VariableIndex, ::Number)`.
-const TypedScalarLike{T} =
-    Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}
-# Used for overloading Base operator functions so `T` is not in the union to
-# avoid overloading e.g. `+(::Float64, ::Float64)`
-const ScalarLike{T} = Union{MOI.VariableIndex,TypedScalarLike{T}}
-
-# Functions convertible to a VectorAffineFunction
-const VectorAffineLike{T} =
-    Union{Vector{T},MOI.VectorOfVariables,MOI.VectorAffineFunction{T}}
-# Functions convertible to a VectorQuadraticFunction
-const VectorQuadraticLike{T} =
-    Union{VectorAffineLike{T},MOI.VectorQuadraticFunction{T}}
-
-# `VectorLike` for which `T` is defined to avoid defining, e.g.,
-# `+(::VectorOfVariables, ::Any)` which should rather be
-# `+(::VectorOfVariables, ::Number)`.
-const TypedVectorLike{T} =
-    Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}}
-# Used for overloading Base operator functions so `T` is not in the union to
-# avoid overloading e.g. `+(::Float64, ::Float64)`
-const VectorLike{T} = Union{MOI.VectorOfVariables,TypedVectorLike{T}}
-
-const TypedLike{T} = Union{TypedScalarLike{T},TypedVectorLike{T}}
 
 ###################################### +/- #####################################
 ## promote_operation

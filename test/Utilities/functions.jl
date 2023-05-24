@@ -1792,6 +1792,29 @@ function test_SingleVariable_operators()
     return
 end
 
+function test_value_type()
+    T = Float64
+    @test MOI.Utilities.value_type(T, MOI.VariableIndex) == T
+    @test MOI.Utilities.value_type(T, MOI.VectorOfVariables) == Vector{T}
+    @test MOI.Utilities.value_type(T, MOI.ScalarAffineFunction{Int}) == T
+    @test MOI.Utilities.value_type(T, MOI.ScalarAffineFunction{T}) == T
+    @test MOI.Utilities.value_type(T, MOI.ScalarAffineFunction{Complex{Int}}) == Complex{T}
+    @test MOI.Utilities.value_type(T, MOI.ScalarAffineFunction{Complex{T}}) == Complex{T}
+    @test MOI.Utilities.value_type(T, MOI.ScalarQuadraticFunction{Int}) == T
+    @test MOI.Utilities.value_type(T, MOI.ScalarQuadraticFunction{T}) == T
+    @test MOI.Utilities.value_type(T, MOI.ScalarQuadraticFunction{Complex{Int}}) == Complex{T}
+    @test MOI.Utilities.value_type(T, MOI.ScalarQuadraticFunction{Complex{T}}) == Complex{T}
+    @test MOI.Utilities.value_type(T, MOI.VectorAffineFunction{Int}) == Vector{T}
+    @test MOI.Utilities.value_type(T, MOI.VectorAffineFunction{T}) == Vector{T}
+    @test MOI.Utilities.value_type(T, MOI.VectorAffineFunction{Complex{Int}}) == Vector{Complex{T}}
+    @test MOI.Utilities.value_type(T, MOI.VectorAffineFunction{Complex{T}}) == Vector{Complex{T}}
+    @test MOI.Utilities.value_type(T, MOI.VectorQuadraticFunction{Int}) == Vector{T}
+    @test MOI.Utilities.value_type(T, MOI.VectorQuadraticFunction{T}) == Vector{T}
+    @test MOI.Utilities.value_type(T, MOI.VectorQuadraticFunction{Complex{Int}}) == Vector{Complex{T}}
+    @test MOI.Utilities.value_type(T, MOI.VectorQuadraticFunction{Complex{T}}) == Vector{Complex{T}}
+    return
+end
+
 end  # module
 
 TestFunctions.runtests()
