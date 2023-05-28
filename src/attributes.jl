@@ -1862,14 +1862,16 @@ end
 Set this attribute to register a user-defined function by the name of `name`
 with `arity` arguments.
 
-Once registered, `name` will appear in
-[`ListOfSupportedNonlinearOperators`](@ref).
+Once registered, `name` will appear in [`ListOfSupportedNonlinearOperators`](@ref).
+
+You cannot register multiple `UserDefinedFunction`s with the same `name` but
+different `arity`.
 
 ## Value type
 
 The value to be set is a tuple containing one, two, or three functions to
 evaluate the function, the first-order derivative, and the second-order
-derivative respectively. Both derivatives are optional, and if you pass the
+derivative respectively. Both derivatives are optional, but if you pass the
 second-order derivative you must also pass the first-order derivative.
 
 For univariate functions with `arity == 1`, the functions in the tuple must
