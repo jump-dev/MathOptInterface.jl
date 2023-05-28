@@ -267,7 +267,22 @@ function _parsed_to_moi(model, f::_ParsedVariableIndex)
     return _parsed_to_moi(model, f.variable)
 end
 
+_walk_expr(f::F, expr) where {F<:Function} = f(expr)
+
+function _walk_expr(f::F, expr::Expr) where {F<:Function}
+    for (i, arg) in enumerate(expr.args)
+        expr.args[i] = _walk_expr(f, arg)
+    end
+    return expr
+end
+
 function _parse_set(expr::Expr)
+    expr = _walk_expr(expr) do arg
+        if arg isa Symbol && arg in (:MOI, :MathOptInterface)
+            return MOI
+        end
+        return arg
+    end
     @assert Meta.isexpr(expr, :call)
     if expr.args[1] isa Symbol
         # If the set is a Symbol, it must be one of the MOI sets. We need to

@@ -423,6 +423,18 @@ function test_parse_external_set_constrained_variable()
     return
 end
 
+function test_parse_scope()
+    @test !isdefined(@__MODULE__, :MathOptInterface)
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    MOI.Utilities.loadfromstring!(
+        model,
+        "variables: x\nx in MathOptInterface.ZeroOne()",
+    )
+    attr = MOI.NumberOfConstraints{MOI.VariableIndex,MOI.ZeroOne}()
+    @test MOI.get(model, attr) == 1
+    return
+end
+
 end  # module
 
 TestParser.runtests()
