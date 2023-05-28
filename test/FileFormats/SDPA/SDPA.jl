@@ -102,11 +102,10 @@ function test_support()
         MOI.Semicontinuous(1.0, 2.0),
         MOI.ZeroOne(),
     ]
-        set_string = replace("$(set)", "MathOptInterface." => "")
         model_string = """
         variables: x
         minobjective: 1x
-        x in $set_string
+        x in $set
         """
         model = SDPA.Model()
         @test !MOI.supports_constraint(model, MOI.VariableIndex, typeof(set))

@@ -106,11 +106,10 @@ function test_support_errors()
         MOI.Semicontinuous(1.0, 2.0),
         MOI.ZeroOne(),
     ]
-        set_string = replace("$set", "MathOptInterface." => "")
         model_string = """
         variables: x
         minobjective: x
-        x in $set_string
+        x in $set
         """
         model = CBF.Model()
         err = MOI.UnsupportedConstraint{MOI.VariableIndex,typeof(set)}
