@@ -238,6 +238,27 @@ function test_runtests()
     return
 end
 
+MOI.Utilities.@model(
+    Model2179,
+    (),
+    (MOI.GreaterThan, MOI.LessThan),
+    (),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (),
+    ()
+)
+
+function test_unsupported_ScalarNonnlinearFunction()
+    model = MOI.instantiate(Model2179{Float64}; with_bridge_type = Float64)
+    MOI.supports_constraint(
+        model,
+        MOI.ScalarNonlinearFunction,
+        MOI.GreaterThan{Float64},
+    )
+end
+
 end  # module
 
 TestConstraintVectorize.runtests()
