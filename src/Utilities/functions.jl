@@ -1820,6 +1820,14 @@ function promote_operation(
     ::typeof(-),
     ::Type{T},
     ::Type{MOI.ScalarNonlinearFunction},
+) where {T}
+    return MOI.ScalarNonlinearFunction
+end
+
+function promote_operation(
+    ::typeof(-),
+    ::Type{T},
+    ::Type{MOI.ScalarNonlinearFunction},
     ::Type{T},
 ) where {T}
     return MOI.ScalarNonlinearFunction

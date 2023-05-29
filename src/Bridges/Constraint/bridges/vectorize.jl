@@ -58,9 +58,16 @@ end
 
 function MOI.supports_constraint(
     ::Type{VectorizeBridge{T}},
-    ::Type{<:MOI.AbstractScalarFunction},
+    ::Type{F},
     ::Type{<:MOI.Utilities.ScalarLinearSet{T}},
-) where {T}
+) where {
+    T,
+    F<:Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+    },
+}
     return true
 end
 
