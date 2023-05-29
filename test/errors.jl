@@ -346,6 +346,12 @@ function test_get_fallback_error()
     return
 end
 
+function test_unsupported_nonlinear_operator()
+    @test MOI.element_name(MOI.UnsupportedNonlinearOperator(:f)) ==
+          "The nonlinear operator `:f`"
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

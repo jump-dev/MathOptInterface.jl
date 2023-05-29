@@ -50,6 +50,8 @@ ListOfOptimizerAttributesSet
 ListOfModelAttributesSet
 ListOfVariableAttributesSet
 ListOfConstraintAttributesSet
+UserDefinedFunction
+ListOfSupportedNonlinearOperators
 ```
 
 ## Optimizer interface

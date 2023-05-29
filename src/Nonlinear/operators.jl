@@ -74,6 +74,35 @@ end
     DEFAULT_UNIVARIATE_OPERATORS
 
 The list of univariate operators that are supported by default.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> MOI.Nonlinear.DEFAULT_UNIVARIATE_OPERATORS
+72-element Vector{Symbol}:
+ :+
+ :-
+ :abs
+ :sqrt
+ :cbrt
+ :abs2
+ :inv
+ :log
+ :log10
+ :log2
+ ⋮
+ :airybi
+ :airyaiprime
+ :airybiprime
+ :besselj0
+ :besselj1
+ :bessely0
+ :bessely1
+ :erfcx
+ :dawson
+```
 """
 const DEFAULT_UNIVARIATE_OPERATORS = first.(SYMBOLIC_UNIVARIATE_EXPRESSIONS)
 
@@ -81,6 +110,24 @@ const DEFAULT_UNIVARIATE_OPERATORS = first.(SYMBOLIC_UNIVARIATE_EXPRESSIONS)
     DEFAULT_MULTIVARIATE_OPERATORS
 
 The list of multivariate operators that are supported by default.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> MOI.Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS
+9-element Vector{Symbol}:
+ :+
+ :-
+ :*
+ :^
+ :/
+ :ifelse
+ :atan
+ :min
+ :max
+```
 """
 const DEFAULT_MULTIVARIATE_OPERATORS =
     [:+, :-, :*, :^, :/, :ifelse, :atan, :min, :max]
@@ -138,6 +185,19 @@ struct OperatorRegistry
             ),
         )
     end
+end
+
+function MOI.get(
+    registry::OperatorRegistry,
+    ::MOI.ListOfSupportedNonlinearOperators,
+)
+    ops = vcat(
+        registry.univariate_operators,
+        registry.multivariate_operators,
+        registry.logic_operators,
+        registry.comparison_operators,
+    )
+    return unique(ops)
 end
 
 const _FORWARD_DIFF_METHOD_ERROR_HELPER = raw"""

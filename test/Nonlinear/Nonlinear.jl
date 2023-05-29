@@ -40,7 +40,7 @@ function test_parse_unable()
     x = MOI.VariableIndex(1)
     input = :(f($x))
     @test_throws(
-        ErrorException("Unable to parse: $input"),
+        MOI.UnsupportedNonlinearOperator(:f),
         Nonlinear.set_objective(model, input),
     )
     return
@@ -986,6 +986,101 @@ function test_parse_splat_no_reverse()
     y = _NoReverse(x)
     expr = Nonlinear.parse_expression(model, :(+($y...)))
     @test expr == Nonlinear.parse_expression(model, :(+($(x[1]), $(x[2]))))
+    return
+end
+
+function test_scalar_nonlinear_function_parse_expression()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(
+        :+,
+        Any[x, MOI.ScalarNonlinearFunction(:sin, Any[x])],
+    )
+    nlp_model = MOI.Nonlinear.Model()
+    e1 = MOI.Nonlinear.add_expression(nlp_model, f)
+    e2 = MOI.Nonlinear.add_expression(nlp_model, :($x + sin($x)))
+    @test nlp_model[e1] == nlp_model[e2]
+    return
+end
+
+function test_scalar_nonlinear_function_parse_scalaraffinefunction()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = 1.0 * x + 2.0
+    nlp_model = MOI.Nonlinear.Model()
+    e1 = MOI.Nonlinear.add_expression(nlp_model, f)
+    e2 = MOI.Nonlinear.add_expression(nlp_model, :(1.0 * $x + 2.0))
+    @test nlp_model[e1] == nlp_model[e2]
+    return
+end
+
+function test_scalar_nonlinear_function_parse_scalarquadraticfunction()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    f = 1.5 * x * x + 2.5 * x * y + 3.5 * x + 2.0
+    nlp_model = MOI.Nonlinear.Model()
+    e1 = MOI.Nonlinear.add_expression(nlp_model, f)
+    f_expr = :(1.5 * $x * $x + 2.5 * $x * $y + 3.5 * $x + 2.0)
+    e2 = MOI.Nonlinear.add_expression(nlp_model, f_expr)
+    @test nlp_model[e1] == nlp_model[e2]
+    return
+end
+
+function test_scalar_nonlinear_function_parse_logic_or()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:||, Any[x, x])
+    nlp_model = MOI.Nonlinear.Model()
+    e1 = MOI.Nonlinear.add_expression(nlp_model, f)
+    e2 = MOI.Nonlinear.add_expression(nlp_model, :($x || $x))
+    @test nlp_model[e1] == nlp_model[e2]
+    return
+end
+
+function test_scalar_nonlinear_function_parse_logic_or()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:&&, Any[x, x])
+    nlp_model = MOI.Nonlinear.Model()
+    e1 = MOI.Nonlinear.add_expression(nlp_model, f)
+    e2 = MOI.Nonlinear.add_expression(nlp_model, :($x && $x))
+    @test nlp_model[e1] == nlp_model[e2]
+    return
+end
+
+function test_scalar_nonlinear_function_parse_comparison()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:<, Any[x, 1])
+    nlp_model = MOI.Nonlinear.Model()
+    e1 = MOI.Nonlinear.add_expression(nlp_model, f)
+    e2 = MOI.Nonlinear.add_expression(nlp_model, :($x < 1))
+    @test nlp_model[e1] == nlp_model[e2]
+    return
+end
+
+function test_scalar_nonlinear_function_parse_unknown()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:foo, Any[x, 1])
+    nlp_model = MOI.Nonlinear.Model()
+    @test_throws(
+        MOI.UnsupportedNonlinearOperator(:foo),
+        MOI.Nonlinear.add_expression(nlp_model, f),
+    )
+    return
+end
+
+function test_ListOfSupportedNonlinearOperators()
+    model = MOI.Nonlinear.Model()
+    ops = MOI.get(model, MOI.ListOfSupportedNonlinearOperators())
+    @test ops isa Vector{Symbol}
+    @test length(ops) > 70
+    @test :|| in ops
+    @test :sin in ops
+    @test :> in ops
+    @test :ifelse in ops
     return
 end
 

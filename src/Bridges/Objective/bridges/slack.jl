@@ -70,7 +70,7 @@ function bridge_objective(
     end
     constraint = MOI.Utilities.normalize_and_add_constraint(model, f, set)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), slack)
-    return SlackBridge{T,F,G}(slack, constraint, MOI.constant(f))
+    return SlackBridge{T,F,G}(slack, constraint, MOI.constant(f, T))
 end
 
 function supports_objective_function(
@@ -166,7 +166,11 @@ function MOI.get(
     bridge::SlackBridge{T,F,G},
 ) where {T,F,G<:MOI.AbstractScalarFunction}
     func = MOI.get(model, MOI.ConstraintFunction(), bridge.constraint)
-    f = MOI.Utilities.operate(+, T, func, bridge.constant)
+    f = if !iszero(bridge.constant)
+        MOI.Utilities.operate(+, T, func, bridge.constant)
+    else
+        func
+    end
     g = MOI.Utilities.remove_variable(f, bridge.slack)
     return MOI.Utilities.convert_approx(G, g)
 end

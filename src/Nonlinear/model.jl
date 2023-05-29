@@ -327,3 +327,7 @@ function evaluate(
     end
     return storage[1]
 end
+
+function MOI.get(model::Model, attr::MOI.ListOfSupportedNonlinearOperators)
+    return MOI.get(model.operators, attr)
+end

@@ -817,7 +817,7 @@ const LessThanIndicatorZero{T} =
         MOI.BinPacking,
         MOI.HyperRectangle,
     ),
-    (),
+    (MOI.ScalarNonlinearFunction,),
     (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
     (MOI.VectorOfVariables,),
     (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)

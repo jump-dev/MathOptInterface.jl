@@ -1857,6 +1857,110 @@ function attribute_value_type(::ConstraintConflictStatus)
 end
 
 """
+    UserDefinedFunction(name::Symbol, arity::Int) <: AbstractModelAttribute
+
+Set this attribute to register a user-defined function by the name of `name`
+with `arity` arguments.
+
+Once registered, `name` will appear in [`ListOfSupportedNonlinearOperators`](@ref).
+
+You cannot register multiple `UserDefinedFunction`s with the same `name` but
+different `arity`.
+
+## Value type
+
+The value to be set is a tuple containing one, two, or three functions to
+evaluate the function, the first-order derivative, and the second-order
+derivative respectively. Both derivatives are optional, but if you pass the
+second-order derivative you must also pass the first-order derivative.
+
+For univariate functions with `arity == 1`, the functions in the tuple must
+have the form:
+
+ * `f(x::T)::T`: returns the value of the function at `x`
+ * `∇f(x::T)::T`: returns the first-order derivative of `f` with respect to `x`
+ * `∇²f(x::T)::T`: returns the second-order derivative of `f` with respect to
+   `x`.
+
+For multivariate functions with `arity > 1`, the functions in the tuple must
+have the form:
+
+ * `f(x::T...)::T`: returns the value of the function at `x`
+ * `∇f(g::AbstractVector{T}, x::T...)::Nothing`: fills the components of `g`,
+   with `g[i]` being the first-order partial derivative of `f` with respect to
+   `x[i]`
+ * `∇²f(H::AbstractMatrix{T}, x::T...)::Nothing`: fills the non-zero components
+    of `H`, with `H[i, j]` being the second-order partial derivative of `f` with
+    respect to `x[i]` and then `x[j]`. `H` is initialized to the zero matrix,
+    so you do not need to set any zero elements.
+
+## Examples
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> f(x, y) = x^2 + y^2
+f (generic function with 1 method)
+
+julia> function ∇f(g, x, y)
+           g .= 2 * x, 2 * y
+           return
+       end
+∇f (generic function with 1 method)
+
+julia> function ∇²f(H, x...)
+           H[1, 1] = H[2, 2] = 2.0
+           return
+       end
+∇²f (generic function with 1 method)
+
+julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+MOIU.UniversalFallback{MOIU.Model{Float64}}
+fallback for MOIU.Model{Float64}
+
+julia> MOI.set(model, MOI.UserDefinedFunction(:f, 2), (f,))
+
+julia> MOI.set(model, MOI.UserDefinedFunction(:g, 2), (f, ∇f))
+
+julia> MOI.set(model, MOI.UserDefinedFunction(:h, 2), (f, ∇f, ∇²f))
+
+julia> x = MOI.add_variables(model, 2)
+2-element Vector{MathOptInterface.VariableIndex}:
+ MOI.VariableIndex(1)
+ MOI.VariableIndex(2)
+
+julia> MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+julia> obj_f = MOI.ScalarNonlinearFunction(:f, Any[x[1], x[2]])
+f(MOI.VariableIndex(1), MOI.VariableIndex(2))
+
+julia> MOI.set(model, MOI.ObjectiveFunction{typeof(obj_f)}(), obj_f)
+
+julia> print(model)
+Minimize ScalarNonlinearFunction:
+ f(v[1], v[2])
+
+Subject to:
+
+```
+"""
+struct UserDefinedFunction <: AbstractModelAttribute
+    name::Symbol
+    arity::Int
+end
+
+"""
+    ListOfSupportedNonlinearOperators() <: AbstractModelAttribute
+
+When queried with [`get`](@ref), return a `Vector{Symbol}` listing the operators
+supported by the model.
+
+```julia
+```
+"""
+struct ListOfSupportedNonlinearOperators <: AbstractOptimizerAttribute end
+
+"""
     TerminationStatusCode
 
 An Enum of possible values for the `TerminationStatus` attribute. This attribute

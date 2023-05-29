@@ -39,6 +39,58 @@ end
 function parse_expression(
     data::Model,
     expr::Expression,
+    x::MOI.ScalarNonlinearFunction,
+    parent_index::Int,
+)
+    stack = Tuple{Int,Any}[(parent_index, x)]
+    while !isempty(stack)
+        parent_node, arg = pop!(stack)
+        if arg isa MOI.ScalarNonlinearFunction
+            _parse_without_recursion_inner(stack, data, expr, arg, parent_node)
+        else
+            # We can use recursion here, because ScalarNonlinearFunction only
+            # occur in other ScalarNonlinearFunction.
+            parse_expression(data, expr, arg, parent_node)
+        end
+    end
+    return
+end
+
+function _get_node_type(data, x)
+    id = get(data.operators.univariate_operator_to_id, x.head, nothing)
+    if length(x.args) == 1 && id !== nothing
+        return id, MOI.Nonlinear.NODE_CALL_UNIVARIATE
+    end
+    id = get(data.operators.multivariate_operator_to_id, x.head, nothing)
+    if id !== nothing
+        return id, MOI.Nonlinear.NODE_CALL_MULTIVARIATE
+    end
+    id = get(data.operators.comparison_operator_to_id, x.head, nothing)
+    if id !== nothing
+        return id, MOI.Nonlinear.NODE_COMPARISON
+    end
+    id = get(data.operators.logic_operator_to_id, x.head, nothing)
+    if id !== nothing
+        return id, MOI.Nonlinear.NODE_LOGIC
+    end
+    return throw(MOI.UnsupportedNonlinearOperator(x.head))
+end
+
+function _parse_without_recursion_inner(stack, data, expr, x, parent)
+    id, node_type = _get_node_type(data, x)
+    push!(expr.nodes, Node(node_type, id, parent))
+    parent = length(expr.nodes)
+    # Args need to be pushed onto the stack in reverse because the stack is a
+    # first-in last-out datastructure.
+    for arg in reverse(x.args)
+        push!(stack, (parent, arg))
+    end
+    return
+end
+
+function parse_expression(
+    data::Model,
+    expr::Expression,
     x::Expr,
     parent_index::Int,
 )
@@ -108,7 +160,7 @@ function _parse_univariate_expression(
             _parse_multivariate_expression(stack, data, expr, x, parent_index)
             return
         end
-        error("Unable to parse: $x")
+        throw(MOI.UnsupportedNonlinearOperator(x.args[1]))
     end
     push!(expr.nodes, Node(NODE_CALL_UNIVARIATE, id, parent_index))
     push!(stack, (length(expr.nodes), x.args[2]))
@@ -197,6 +249,28 @@ function parse_expression(
     parent_index::Int,
 )
     push!(expr.nodes, Node(NODE_MOI_VARIABLE, x.value, parent_index))
+    return
+end
+
+function parse_expression(
+    data::Model,
+    expr::Expression,
+    x::MOI.ScalarAffineFunction,
+    parent_index::Int,
+)
+    f = convert(MOI.ScalarNonlinearFunction, x)
+    parse_expression(data, expr, f, parent_index)
+    return
+end
+
+function parse_expression(
+    data::Model,
+    expr::Expression,
+    x::MOI.ScalarQuadraticFunction,
+    parent_index::Int,
+)
+    f = convert(MOI.ScalarNonlinearFunction, x)
+    parse_expression(data, expr, f, parent_index)
     return
 end
 

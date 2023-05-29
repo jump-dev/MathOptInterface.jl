@@ -9,6 +9,10 @@
 
 include("copy/index_map.jl")
 
+_sort_priority(::Any) = 2
+_sort_priority(::MOI.UserDefinedFunction) = 0
+_sort_priority(::MOI.ObjectiveSense) = 1
+
 """
     pass_attributes(
         dest::MOI.ModelLike,
@@ -23,7 +27,12 @@ function pass_attributes(
     src::MOI.ModelLike,
     index_map::IndexMap,
 )
-    for attr in MOI.get(src, MOI.ListOfModelAttributesSet())
+    attrs = MOI.get(src, MOI.ListOfModelAttributesSet())
+    # We need to deal with the UserDefinedFunctions first, so that they are in
+    # the model before we deal with the objective function or the constraints.
+    # We also need `ObjectiveSense` to be set before `ObjectiveFunction`.
+    sort!(attrs; by = _sort_priority)
+    for attr in attrs
         if !MOI.supports(dest, attr)
             if attr == MOI.Name()
                 continue  # Skipping names is okay.

@@ -66,6 +66,17 @@ function _function(
     )
 end
 
+function _function(
+    ::Type{T},
+    ::Type{MOI.ScalarNonlinearFunction},
+    x::Vector{MOI.VariableIndex},
+) where {T}
+    return MOI.ScalarNonlinearFunction(
+        :+,
+        Any[MOI.ScalarNonlinearFunction(:^, Any[xi, 2]) for xi in x],
+    )
+end
+
 # Default fallback.
 _set(::Any, ::Type{S}) where {S} = _set(S)
 
@@ -316,7 +327,12 @@ for s in [
 ]
     S = getfield(MOI, s)
     functions = if S <: MOI.AbstractScalarSet
-        (:VariableIndex, :ScalarAffineFunction, :ScalarQuadraticFunction)
+        (
+            :VariableIndex,
+            :ScalarAffineFunction,
+            :ScalarQuadraticFunction,
+            :ScalarNonlinearFunction,
+        )
     else
         (:VectorOfVariables, :VectorAffineFunction, :VectorQuadraticFunction)
     end

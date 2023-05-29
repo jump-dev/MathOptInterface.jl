@@ -196,11 +196,8 @@ function map_indices(index_map::F, ci::MOI.ConstraintIndex) where {F<:Function}
     return index_map(ci)
 end
 
-function map_indices(
-    index_map::F,
-    array::AbstractArray{<:MOI.Index},
-) where {F<:Function}
-    return map(index_map, array)
+function map_indices(index_map::F, x::AbstractArray) where {F<:Function}
+    return [map_indices(index_map, xi) for xi in x]
 end
 
 map_indices(::F, block::MOI.NLPBlockData) where {F<:Function} = block
@@ -262,6 +259,16 @@ function map_indices(
     affine_terms = [map_indices(index_map, t) for t in f.affine_terms]
     quadratic_terms = [map_indices(index_map, t) for t in f.quadratic_terms]
     return typeof(f)(quadratic_terms, affine_terms, MOI.constant(f))
+end
+
+function map_indices(
+    index_map::F,
+    f::MOI.ScalarNonlinearFunction,
+) where {F<:Function}
+    return MOI.ScalarNonlinearFunction(
+        f.head,
+        Any[map_indices(index_map, arg) for arg in f.args],
+    )
 end
 
 # Function changes
@@ -865,6 +872,8 @@ function canonicalize!(
     return f
 end
 
+canonicalize!(f::MOI.ScalarNonlinearFunction) = f
+
 """
     canonicalize!(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
 
@@ -1041,6 +1050,39 @@ function filter_variables(
         _filter_variables(keep, f.affine_terms),
         MOI.constant(f),
     )
+end
+
+function filter_variables(keep::Function, f::MOI.ScalarNonlinearFunction)
+    args = Any[]
+    first_arg_deleted = false
+    for (i, arg) in enumerate(f.args)
+        if arg isa MOI.VariableIndex
+            if keep(arg)
+                push!(args, arg)
+            else
+                if i == 1
+                    first_arg_deleted = true
+                end
+                if !(f.head in (:+, :-, :*))
+                    error("Unable to delete variable in `$(f.head) operation.")
+                end
+            end
+        elseif arg isa Number
+            push!(args, arg)
+        else
+            push!(args, filter_variables(keep, arg))
+        end
+    end
+    if f.head == :-
+        if first_arg_deleted
+            # -(x, y...) has become -(y...), but it should be -(0, y...)
+            pushfirst!(args, 0)
+        elseif length(f.args) > 1 && length(args) == 1
+            # -(x, y...) has become -(x), but it should be +(x)
+            return f.args[1]
+        end
+    end
+    return MOI.ScalarNonlinearFunction(f.head, args)
 end
 
 """
@@ -1771,6 +1813,37 @@ function operate(
 ) where {T}
     return operate!(op, T, copy(f), g)
 end
+
+### ScalarNonlinearFunction
+
+function promote_operation(
+    ::typeof(-),
+    ::Type{T},
+    ::Type{MOI.ScalarNonlinearFunction},
+    ::Type{T},
+) where {T}
+    return MOI.ScalarNonlinearFunction
+end
+
+function promote_operation(
+    ::typeof(-),
+    ::Type{T},
+    ::Type{MOI.ScalarNonlinearFunction},
+    ::Type{MOI.VariableIndex},
+) where {T}
+    return MOI.ScalarNonlinearFunction
+end
+
+function operate(
+    op::Union{typeof(+),typeof(-)},
+    ::Type{T},
+    f::MOI.ScalarNonlinearFunction,
+    g::ScalarQuadraticLike{T},
+) where {T}
+    return MOI.ScalarNonlinearFunction(Symbol(op), Any[f, g])
+end
+
+### Base methods
 
 _eltype(args::Tuple) = _eltype(first(args), Base.tail(args))
 _eltype(::Tuple{}) = nothing
@@ -3346,6 +3419,8 @@ end
 is_coefficient_type(::Type{<:TypedLike{T}}, ::Type{T}) where {T} = true
 
 is_coefficient_type(::Type{<:TypedLike}, ::Type) = false
+
+is_coefficient_type(::Type{<:MOI.ScalarNonlinearFunction}, ::Type) = true
 
 similar_type(::Type{F}, ::Type{T}) where {F,T} = F
 

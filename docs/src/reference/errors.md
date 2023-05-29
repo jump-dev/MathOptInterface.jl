@@ -75,6 +75,7 @@ ModifyObjectiveNotAllowed
 DeleteNotAllowed
 UnsupportedSubmittable
 SubmitNotAllowed
+UnsupportedNonlinearOperator
 ```
 
 Note that setting the [`ConstraintFunction`](@ref) of a [`VariableIndex`](@ref)

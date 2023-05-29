@@ -279,6 +279,121 @@ function Base.copy(f::ScalarQuadraticFunction)
 end
 
 """
+    ScalarNonlinearFunction(head::Symbol, args::Vector{Any})
+
+The scalar-valued nonlinear function `head(args...)`, represented as a symbolic
+expression tree, with the call operator `head` and ordered arguments in `args`.
+
+## `head`
+
+The `head::Symbol` must be an operator supported by the model.
+
+The default list of supported univariate operators is given by:
+
+ * [`Nonlinear.DEFAULT_UNIVARIATE_OPERATORS`](@ref)
+
+and the default list of supported multivariate operators is given by:
+
+ * [`Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS`](@ref)
+
+Additional operators can be registered by setting a [`UserDefinedFunction`](@ref)
+attribute.
+
+See the full list of operators supported by a [`ModelLike`](@ref) by querying
+[`ListOfSupportedNonlinearOperators`](@ref).
+
+## `args`
+
+The vector `args` contains the arguments to the nonlinear function. If the
+operator is univariate, it must contain one element. Otherwise, it may contain
+multiple elements.
+
+Each element must be one of the following:
+
+ * A constant value of type `T<:Real`
+ * A [`VariableIndex`](@ref)
+ * A [`ScalarAffineFunction`](@ref)
+ * A [`ScalarQuadraticFunction`](@ref)
+ * A [`ScalarNonlinearFunction`](@ref)
+
+## Unsupported operators
+
+If the optimizer does not support `head`, an [`UnsupportedNonlinearOperator`](@ref)
+error will be thrown.
+
+There is no guarantee about when this error will be thrown; it may be thrown
+when the function is first added to the model, or it may be thrown when
+[`optimize!`](@ref) is called.
+
+## Example
+
+To represent the function ``f(x) = sin(x)^2``, do:
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> x = MOI.VariableIndex(1)
+MOI.VariableIndex(1)
+
+julia> MOI.ScalarNonlinearFunction(
+           :^,
+           Any[MOI.ScalarNonlinearFunction(:sin, Any[x]), 2],
+       )
+^(sin(MOI.VariableIndex(1)), (2))
+```
+"""
+struct ScalarNonlinearFunction <: AbstractScalarFunction
+    head::Symbol
+    args::Vector{Any}
+
+    function ScalarNonlinearFunction(head::Symbol, args::AbstractVector)
+        # TODO(odow): should we do this?
+        # for arg in args
+        #     if !(arg isa Real || arg isa AbstractScalarFunction)
+        #         error("Unsupported object in nonlinear expression: $arg")
+        #     end
+        # end
+        return new(head, convert(Vector{Any}, args))
+    end
+end
+
+function Base.copy(f::ScalarNonlinearFunction)
+    return ScalarNonlinearFunction(f.head, copy(f.args))
+end
+
+constant(f::ScalarNonlinearFunction, ::Type{T} = Float64) where {T} = zero(T)
+
+"""
+    UnsupportedNonlinearOperator(head::Symbol[, message::String]) <: UnsupportedError
+
+An error thrown by optimizers if they do not support the operator `head` in a
+[`ScalarNonlinearFunction`](@ref).
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> throw(MOI.UnsupportedNonlinearOperator(:black_box))
+ERROR: MathOptInterface.UnsupportedNonlinearOperator: The nonlinear operator `:black_box` is not supported by the model.
+Stacktrace:
+[...]
+```
+"""
+struct UnsupportedNonlinearOperator <: UnsupportedError
+    head::Symbol
+    message::String
+
+    function UnsupportedNonlinearOperator(head::Symbol, message::String = "")
+        return new(head, message)
+    end
+end
+
+function element_name(err::UnsupportedNonlinearOperator)
+    return "The nonlinear operator `:$(err.head)`"
+end
+
+"""
     abstract type AbstractVectorFunction <: AbstractFunction
 
 Abstract supertype for vector-valued [`AbstractFunction`](@ref)s.
@@ -694,6 +809,29 @@ function Base.isapprox(
     )
 end
 
+_is_approx(x, y; kwargs...) = isapprox(x, y; kwargs...)
+
+function _is_approx(x::AbstractArray, y::AbstractArray; kwargs...)
+    return size(x) == size(y) &&
+           all(z -> _is_approx(z[1], z[2]; kwargs...), zip(x, y))
+end
+
+function Base.isapprox(
+    f::ScalarNonlinearFunction,
+    g::ScalarNonlinearFunction;
+    kwargs...,
+)
+    if f.head != g.head || length(f.args) != length(g.args)
+        return false
+    end
+    for (fi, gi) in zip(f.args, g.args)
+        if !_is_approx(fi, gi; kwargs...)
+            return false
+        end
+    end
+    return true
+end
+
 ###
 ### Base.convert
 ###
@@ -809,6 +947,48 @@ function Base.convert(
         f.affine_terms,
         f.constant,
     )
+end
+
+# ScalarNonlinearFunction
+
+function Base.convert(::Type{ScalarNonlinearFunction}, term::ScalarAffineTerm)
+    return ScalarNonlinearFunction(:*, Any[term.coefficient, term.variable])
+end
+
+function Base.convert(F::Type{ScalarNonlinearFunction}, f::ScalarAffineFunction)
+    args = Any[convert(ScalarNonlinearFunction, term) for term in f.terms]
+    if !iszero(f.constant)
+        push!(args, f.constant)
+    end
+    return ScalarNonlinearFunction(:+, args)
+end
+
+function Base.convert(
+    ::Type{ScalarNonlinearFunction},
+    term::ScalarQuadraticTerm,
+)
+    coef = term.coefficient
+    if term.variable_1 == term.variable_2
+        coef /= 2
+    end
+    return ScalarNonlinearFunction(
+        :*,
+        Any[coef, term.variable_1, term.variable_2],
+    )
+end
+
+function Base.convert(
+    F::Type{ScalarNonlinearFunction},
+    f::ScalarQuadraticFunction,
+)
+    args = Any[convert(F, term) for term in f.quadratic_terms]
+    for term in f.affine_terms
+        push!(args, convert(F, term))
+    end
+    if !iszero(f.constant)
+        push!(args, f.constant)
+    end
+    return ScalarNonlinearFunction(:+, args)
 end
 
 # VectorOfVariables
