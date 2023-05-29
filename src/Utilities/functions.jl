@@ -1816,11 +1816,12 @@ end
 
 ### ScalarNonlinearFunction
 
+# Needed for LessToGreaterBridge
 function promote_operation(
-    ::typeof(-),
-    ::Type{T},
+    ::Union{typeof(+),typeof(-)},
+    ::Type{<:Real},
     ::Type{MOI.ScalarNonlinearFunction},
-) where {T}
+)
     return MOI.ScalarNonlinearFunction
 end
 
@@ -1849,6 +1850,17 @@ function operate(
     g::ScalarQuadraticLike{T},
 ) where {T}
     return MOI.ScalarNonlinearFunction(Symbol(op), Any[f, g])
+end
+
+function operate(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.ScalarNonlinearFunction,
+) where {T}
+    if f.head == :- && length(f.args) == 1 && f.args[1] isa MOI.ScalarNonlinearFunction
+        return f.args[1]
+    end
+    return MOI.ScalarNonlinearFunction(:-, Any[f])
 end
 
 ### Base methods

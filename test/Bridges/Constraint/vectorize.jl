@@ -250,13 +250,14 @@ MOI.Utilities.@model(
     ()
 )
 
-function test_unsupported_ScalarNonnlinearFunction()
+function test_unsupported_ScalarNonlinearFunction()
     model = MOI.instantiate(Model2179{Float64}; with_bridge_type = Float64)
     MOI.supports_constraint(
         model,
         MOI.ScalarNonlinearFunction,
         MOI.GreaterThan{Float64},
     )
+    return
 end
 
 end  # module
