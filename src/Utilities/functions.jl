@@ -1824,33 +1824,6 @@ function promote_operation(
     return MOI.ScalarNonlinearFunction
 end
 
-function promote_operation(
-    ::typeof(-),
-    ::Type{T},
-    ::Type{MOI.ScalarNonlinearFunction},
-    ::Type{T},
-) where {T<:Number}
-    return MOI.ScalarNonlinearFunction
-end
-
-function promote_operation(
-    ::typeof(-),
-    ::Type{<:Number},
-    ::Type{MOI.ScalarNonlinearFunction},
-    ::Type{MOI.VariableIndex},
-)
-    return MOI.ScalarNonlinearFunction
-end
-
-function operate(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    f::MOI.ScalarNonlinearFunction,
-    g::ScalarQuadraticLike{T},
-) where {T}
-    return MOI.ScalarNonlinearFunction(Symbol(op), Any[f, g])
-end
-
 function operate(
     ::typeof(-),
     ::Type{T},
@@ -1863,6 +1836,39 @@ function operate(
         end
     end
     return MOI.ScalarNonlinearFunction(:-, Any[f])
+end
+
+function promote_operation(
+    ::Union{typeof(+),typeof(-),typeof(*),typeof(/)},
+    ::Type{T},
+    ::Type{MOI.ScalarNonlinearFunction},
+    ::Type{S},
+) where {
+    T<:Number,
+    S<:Union{
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
+    }
+}
+    return MOI.ScalarNonlinearFunction
+end
+
+function operate(
+    op::Union{typeof(+),typeof(-),typeof(*),typeof(/)},
+    ::Type{T},
+    f::MOI.ScalarNonlinearFunction,
+    g::Union{
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
+    }
+) where {T}
+    return MOI.ScalarNonlinearFunction(Symbol(op), Any[f, g])
 end
 
 ### Base methods
