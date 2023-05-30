@@ -459,7 +459,7 @@ function test_read_model1_tricky()
     seekstart(io)
     file = read(io, String)
     @test occursin("maximize", file)
-    @test occursin("obj: -1 Var4 + 1 V5 + [ 1 Var4 ^ 2 - 2.4 V5 * V1 ]/2", file)
+    @test occursin("obj: -1 Var4 + 1 V5 + [ 1 Var4 ^ 2 - 1.2 V5 * V1 ]/2", file)
     @test occursin("CON3: 1 V3 <= 2.5", file)
     @test occursin("CON4: 1 V5 + 1 V6 + 1 V7 <= 1", file)
     @test occursin("CON1: 1 V1 >= 0", file)
@@ -632,8 +632,8 @@ function test_read_tricky_quadratic()
     @test occursin("minimize", file)
     @test occursin("obj: [ 2 x ^ 2 + 2 x * y ]/2", file)
     @test occursin("c1: [ 1 x ^ 2 - 1 x * y ] <= 0", file)
-    @test occursin("c2: [ 0.5 x ^ 2 - 1 x * y ] <= 0", file)
-    @test occursin("c3: [ 0.5 x ^ 2 - 1 x * y ] <= 0", file)
+    @test occursin("c2: [ 0.5 x ^ 2 - 0.5 x * y ] <= 0", file)
+    @test occursin("c3: [ 0.5 x ^ 2 - 0.5 x * y ] <= 0", file)
     @test occursin("x free", file)
     @test occursin("y free", file)
     return
@@ -829,6 +829,61 @@ function test_reading_bounds()
     _test_round_trip("x >= 0\nx <= 1", "Bounds\nx <= 1\nx >= 0\nEnd")
     _test_round_trip("x >= 1\nx <= 2", "Bounds\nx <= 2\nx >= 1\nEnd")
     _test_round_trip("x >= -1\nx <= 2", "Bounds\nx <= 2\nx >= -1\nEnd")
+    return
+end
+
+function _test_read_quadratic(input::String, output::String = input)
+    io = IOBuffer()
+    input_text = """
+    minimize
+    obj: $input
+    subject to
+    Bounds
+    x >= 0
+    y >= 0
+    End
+    """
+    write(io, input_text)
+    model = MOI.FileFormats.LP.Model()
+    seekstart(io)
+    read!(io, model)
+    out = IOBuffer()
+    write(out, model)
+    seekstart(out)
+    output_text = """
+    minimize
+    obj: $output
+    subject to
+    Bounds
+    x >= 0
+    y >= 0
+    End
+    """
+    @test read(out, String) == output_text
+    return
+end
+
+function test_read_quadratic()
+    _test_read_quadratic("1 x + 1 y + [ 1 x * y + 1 y ^ 2 ]/2")
+    _test_read_quadratic("1 x + 1 y + [ 2 x * y + 1 y ^ 2 ]/2")
+    _test_read_quadratic("1 x + 1 y + [ 1 x * y + 2 y ^ 2 ]/2")
+    _test_read_quadratic("1 x + 1 y + [ 2 x * y + 2 y ^ 2 ]/2")
+    _test_read_quadratic(
+        "1 x + 1 y + [ 1 x * y + 1 y ^ 2 ]",
+        "1 x + 1 y + [ 2 x * y + 2 y ^ 2 ]/2",
+    )
+    _test_read_quadratic(
+        "1 x + 1 y + [ 2 x * y + 1 y ^ 2 ]",
+        "1 x + 1 y + [ 4 x * y + 2 y ^ 2 ]/2",
+    )
+    _test_read_quadratic(
+        "1 x + 1 y + [ 1 x * y + 2 y ^ 2 ]",
+        "1 x + 1 y + [ 2 x * y + 4 y ^ 2 ]/2",
+    )
+    _test_read_quadratic(
+        "1 x + 1 y + [ 2 x * y + 2 y ^ 2 ]",
+        "1 x + 1 y + [ 4 x * y + 4 y ^ 2 ]/2",
+    )
     return
 end
 
