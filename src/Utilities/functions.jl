@@ -1816,22 +1816,11 @@ end
 
 ### ScalarNonlinearFunction
 
-@static if Sys.WORD_SIZE == 64
-    function promote_operation(
-        ::Union{typeof(+),typeof(-)},
-        ::Type{<:Real},
-        ::Type{MOI.ScalarNonlinearFunction},
-    )
-        return MOI.ScalarNonlinearFunction
-    end
-end
-
 function promote_operation(
-    ::typeof(-),
-    ::Type{T},
+    ::Union{typeof(+),typeof(-)},
+    ::Type{<:Number},
     ::Type{MOI.ScalarNonlinearFunction},
-    ::Type{T},
-) where {T}
+)
     return MOI.ScalarNonlinearFunction
 end
 
@@ -1839,8 +1828,17 @@ function promote_operation(
     ::typeof(-),
     ::Type{T},
     ::Type{MOI.ScalarNonlinearFunction},
+    ::Type{T},
+) where {T<:Number}
+    return MOI.ScalarNonlinearFunction
+end
+
+function promote_operation(
+    ::typeof(-),
+    ::Type{<:Number},
+    ::Type{MOI.ScalarNonlinearFunction},
     ::Type{MOI.VariableIndex},
-) where {T}
+)
     return MOI.ScalarNonlinearFunction
 end
 

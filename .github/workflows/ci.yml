@@ -28,7 +28,7 @@ jobs:
           - version: '1.6'
             os: ubuntu-latest
             arch: x64
-          - version: '1'
+          - version: '1.6'
             os: ubuntu-latest
             arch: x86
     steps:
