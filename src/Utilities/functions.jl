@@ -1851,7 +1851,7 @@ function promote_operation(
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
         MOI.ScalarNonlinearFunction,
-    }
+    },
 }
     return MOI.ScalarNonlinearFunction
 end
@@ -1866,7 +1866,7 @@ function operate(
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
         MOI.ScalarNonlinearFunction,
-    }
+    },
 ) where {T}
     return MOI.ScalarNonlinearFunction(Symbol(op), Any[f, g])
 end
