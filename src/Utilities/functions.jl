@@ -1816,13 +1816,14 @@ end
 
 ### ScalarNonlinearFunction
 
-# Needed for LessToGreaterBridge
-function promote_operation(
-    ::Union{typeof(+),typeof(-)},
-    ::Type{<:Real},
-    ::Type{MOI.ScalarNonlinearFunction},
-)
-    return MOI.ScalarNonlinearFunction
+@static if Sys.WORD_SIZE == 64
+    function promote_operation(
+        ::Union{typeof(+),typeof(-)},
+        ::Type{<:Real},
+        ::Type{MOI.ScalarNonlinearFunction},
+    )
+        return MOI.ScalarNonlinearFunction
+    end
 end
 
 function promote_operation(
