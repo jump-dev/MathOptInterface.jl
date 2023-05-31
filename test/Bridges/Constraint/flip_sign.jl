@@ -338,6 +338,17 @@ function test_runtests()
         """,
     )
     MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GreaterToLessBridge,
+        """
+        variables: x
+        ScalarNonlinearFunction(1.5 * x) >= 1.0
+        """,
+        """
+        variables: x
+        ScalarNonlinearFunction(-(1.5 * x)) <= -1.0
+        """,
+    )
+    MOI.Bridges.runtests(
         MOI.Bridges.Constraint.LessToGreaterBridge,
         """
         variables: x
@@ -357,6 +368,17 @@ function test_runtests()
         """
         variables: x
         -1.5 * x >= -1.0
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.LessToGreaterBridge,
+        """
+        variables: x
+        ScalarNonlinearFunction(1.5 * x) <= 1.0
+        """,
+        """
+        variables: x
+        ScalarNonlinearFunction(-(1.5 * x)) >= -1.0
         """,
     )
     MOI.Bridges.runtests(
