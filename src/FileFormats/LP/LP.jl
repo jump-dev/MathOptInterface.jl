@@ -596,11 +596,12 @@ function _parse_function(
             push!(f.terms, term::MOI.ScalarAffineTerm{Float64})
         elseif term isa MOI.ScalarQuadraticTerm{Float64}
             push!(cache.quad_terms, term::MOI.ScalarQuadraticTerm{Float64})
-            if tokens[offset-1] == "]"
+            if tokens[offset-1] in ("]", "]/2")
+                scale = tokens[offset-1] == "]/2" ? 0.5 : 1
                 for (i, term) in enumerate(cache.quad_terms)
                     x, y = term.variable_1, term.variable_2
-                    scale = (x == y ? 2 : 1) * term.coefficient
-                    cache.quad_terms[i] = MOI.ScalarQuadraticTerm(scale, x, y)
+                    coef = scale * (x == y ? 2 : 1) * term.coefficient
+                    cache.quad_terms[i] = MOI.ScalarQuadraticTerm(coef, x, y)
                 end
             end
         else
