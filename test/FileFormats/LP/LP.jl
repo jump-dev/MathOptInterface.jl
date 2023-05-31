@@ -884,6 +884,22 @@ function test_read_quadratic()
         "1 x + 1 y + [ 2 x * y + 2 y ^ 2 ]",
         "1 x + 1 y + [ 4 x * y + 4 y ^ 2 ]/2",
     )
+    _test_read_quadratic(
+        "[ 1.0 x^2 \n+ 1.0 x * y\n+ 1.0 y * y ]/2",
+        "[ 1 x ^ 2 + 1 x * y + 1 y ^ 2 ]/2",
+    )
+    _test_read_quadratic(
+        "[ 1.0 x^2 \n- 1.0 x * y\n+ 1.0 y * y ]/2",
+        "[ 1 x ^ 2 - 1 x * y + 1 y ^ 2 ]/2",
+    )
+    _test_read_quadratic(
+        "[ 1.0 x^2 -\n 1.0 x * y +\n1.0 y * y ]/2",
+        "[ 1 x ^ 2 - 1 x * y + 1 y ^ 2 ]/2",
+    )
+    _test_read_quadratic(
+        "[ 1.0 x^2 + 1.0 x * y\n+ 1.0 y * y ]/2",
+        "[ 1 x ^ 2 + 1 x * y + 1 y ^ 2 ]/2",
+    )
     return
 end
 

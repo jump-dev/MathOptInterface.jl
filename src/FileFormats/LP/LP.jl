@@ -980,9 +980,9 @@ function _readline(io::IO, line::AbstractString)
         return _readline(io, peeked_line)
     elseif isempty(peeked_line)
         return _readline(io, line)
-    elseif any(c -> endswith(line, c), ('+', '-', '[', '='))
+    elseif any(Base.Fix1(endswith, line), ('+', '-', '[', '='))
         return _readline(io, string(line, ' ', peeked_line))
-    elseif startswith(peeked_line, ']') || startswith(peeked_line, '/')
+    elseif any(Base.Fix1(startswith, peeked_line), ('+', '-', ']', '/'))
         return _readline(io, string(line, ' ', peeked_line))
     end
     return line, peeked_line
