@@ -903,6 +903,45 @@ function test_read_quadratic()
     return
 end
 
+function test_read_newline_breaks()
+    io = IOBuffer()
+    input_text = """
+    minimize
+    obj: 1 x + 2 y
+        + 3 z
+    subject to
+    c: x -
+    y
+    + z ==
+    0
+    Bounds
+    x >= 0
+    -1 <= y
+    +1 <= z <= +2
+    End
+    """
+    write(io, input_text)
+    model = MOI.FileFormats.LP.Model()
+    seekstart(io)
+    read!(io, model)
+    out = IOBuffer()
+    write(out, model)
+    seekstart(out)
+    output_text = """
+    minimize
+    obj: 1 x + 2 y + 3 z
+    subject to
+    c: 1 x - 1 y + 1 z = 0
+    Bounds
+    x >= 0
+    y >= -1
+    1 <= z <= 2
+    End
+    """
+    @test read(out, String) == output_text
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")

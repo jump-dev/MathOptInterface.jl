@@ -949,7 +949,7 @@ function Base.read!(io::IO, model::Model)
     section = Val{:header}()
     peeked_line = ""
     while peeked_line !== nothing
-        line, peeked_line = _readline(io, peeked_line)
+        line, peeked_line = _readline(io, peeked_line, section)
         lower_line = lowercase(line)
         if haskey(_KEYWORDS, lower_line)
             section = _KEYWORDS[lower_line]
@@ -971,19 +971,34 @@ function Base.read!(io::IO, model::Model)
     return
 end
 
-function _readline(io::IO, line::AbstractString)
+_line_may_break(::typeof(_KW_OBJECTIVE)) = true
+_line_may_break(::typeof(_KW_CONSTRAINTS)) = true
+_line_may_break(::Any) = false
+
+function _readline(io::IO, line::AbstractString, section)
     if eof(io)
         return line, nothing
     end
     peeked_line = _strip_comment(string(readline(io)))
     if isempty(line)
-        return _readline(io, peeked_line)
+        # If the line is empty, go to the next
+        return _readline(io, peeked_line, section)
     elseif isempty(peeked_line)
-        return _readline(io, line)
+        # If the peeked line is empty, get another
+        return _readline(io, line, section)
     elseif any(Base.Fix1(endswith, line), ('+', '-', '[', '='))
-        return _readline(io, string(line, ' ', peeked_line))
-    elseif any(Base.Fix1(startswith, peeked_line), ('+', '-', ']', '/'))
-        return _readline(io, string(line, ' ', peeked_line))
+        # If the line ends with a continuation character, read in the next line.
+        return _readline(io, string(line, ' ', peeked_line), section)
+    end
+    peek_starts_with = Base.Fix1(startswith, peeked_line)
+    if any(peek_starts_with, (']', '/'))
+        # Always read in the next line if it starts with ] or /, which are used
+        # in quadratic functions.
+        return _readline(io, string(line, ' ', peeked_line), section)
+    elseif _line_may_break(section) && any(peek_starts_with, ('+', '-'))
+        # Only read in the next line if we're in the objective or constraints
+        # and the function keeps going...
+        return _readline(io, string(line, ' ', peeked_line), section)
     end
     return line, peeked_line
 end
