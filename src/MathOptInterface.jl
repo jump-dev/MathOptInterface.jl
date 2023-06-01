@@ -233,6 +233,90 @@ function copy_to(dest, src)
     )
 end
 
+"""
+    @_documented_enum(args...)
+
+A utility macro for writing `@enum`s with inline documentation strings.
+
+The even arguments are forwarded to the `@enum` macro, and the odd arguments are
+used as the docstring for the corresponding even argument.
+
+## Example
+
+```julia
+julia> MOI.@_documented_enum(
+           \"\"\"
+               MyDocumentedEnum
+
+           This is an example for the documentation.
+           \"\"\",
+           MyDocumentedEnum,
+           \"A country down-under\",
+           AUSTRALIA,
+           \"Another country down-under\",
+           NEW_ZEALAND,
+       )
+MyDocumentedEnum
+
+help?> MyDocumentedEnum
+search: MyDocumentedEnum
+
+  MyDocumentedEnum
+
+  This is an example for the documentation.
+
+  Values
+  ========
+
+  Possible values are:
+
+    •  AUSTRALIA: A country down-under
+
+    •  NEW_ZEALAND: Another country down-under
+
+help?> AUSTRALIA
+search: AUSTRALIA
+
+  AUSTRALIA::MyDocumentedEnum
+
+  An instance of the MyDocumentedEnum enum.
+
+  AUSTRALIA: A country down-under
+```
+"""
+macro _documented_enum(args...)
+    @assert iseven(length(args))
+    code = quote
+        $(Expr(:macrocall, Symbol("@enum"), __source__, args[2:2:end]...))
+    end
+    main_doc, enum = args[1], args[2]
+    main_doc *= "\n## Values\n\nPossible values are:\n\n"
+    for i in 3:2:length(args)
+        docstr, value = args[i], args[i+1]
+        doc = """
+            $value::$enum
+
+        An instance of the [`$enum`](@ref) enum.\n\n`$value`: $docstr
+        """
+        push!(
+            code.args,
+            Expr(:macrocall, Symbol("@doc"), __source__, doc, Meta.quot(value)),
+        )
+        main_doc *= " * [`$value`](@ref): $docstr\n"
+    end
+    push!(
+        code.args,
+        Expr(
+            :macrocall,
+            Symbol("@doc"),
+            __source__,
+            main_doc,
+            Meta.quot(args[2]),
+        ),
+    )
+    return esc(code)
+end
+
 include("error.jl")
 include("indextypes.jl")
 include("functions.jl")

@@ -665,24 +665,21 @@ struct LazyConstraint{CallbackDataType} <: AbstractSubmittable
     callback_data::CallbackDataType
 end
 
-"""
-    HeuristicSolutionStatus
+@_documented_enum(
+    """
+        HeuristicSolutionStatus
 
-An Enum of possible return values for [`submit`](@ref) with
-[`HeuristicSolution`](@ref). This informs whether the heuristic solution was
-accepted or rejected.
-
-Possible values are:
-
- * `HEURISTIC_SOLUTION_ACCEPTED`: The heuristic solution was accepted
- * `HEURISTIC_SOLUTION_REJECTED`: The heuristic solution was rejected
- * `HEURISTIC_SOLUTION_UNKNOWN`: No information available on the acceptance
-"""
-@enum(
+    An Enum of possible return values for [`submit`](@ref) with
+    [`HeuristicSolution`](@ref). This informs whether the heuristic solution was
+    accepted or rejected.
+    """,
     HeuristicSolutionStatus,
+    "The heuristic solution was accepted",
     HEURISTIC_SOLUTION_ACCEPTED,
+    "The heuristic solution was rejected",
     HEURISTIC_SOLUTION_REJECTED,
-    HEURISTIC_SOLUTION_UNKNOWN
+    "No information available on the acceptance",
+    HEURISTIC_SOLUTION_UNKNOWN,
 )
 
 """
@@ -750,25 +747,19 @@ function Base.showerror(io::IO, err::InvalidCallbackUsage)
     )
 end
 
-"""
-    CallbackNodeStatusCode
+@_documented_enum(
+    """
+        CallbackNodeStatusCode
 
-An Enum of possible return values from calling [`get`](@ref) with
-[`CallbackNodeStatus`](@ref).
-
-Possible values are:
-
- * `CALLBACK_NODE_STATUS_INTEGER`: the primal solution available from
-   [`CallbackVariablePrimal`](@ref) is integer feasible.
- * `CALLBACK_NODE_STATUS_FRACTIONAL`: the primal solution available from
-   [`CallbackVariablePrimal`](@ref) is integer infeasible.
- * `CALLBACK_NODE_STATUS_UNKNOWN`: the primal solution available from
-   [`CallbackVariablePrimal`](@ref) might be integer feasible or infeasible.
-"""
-@enum(
+    An Enum of possible return values from calling [`get`](@ref) with
+    [`CallbackNodeStatus`](@ref).
+    """,
     CallbackNodeStatusCode,
+    "the primal solution available from [`CallbackVariablePrimal`](@ref) is integer feasible.",
     CALLBACK_NODE_STATUS_INTEGER,
+    "the primal solution available from [`CallbackVariablePrimal`](@ref) is integer infeasible.",
     CALLBACK_NODE_STATUS_FRACTIONAL,
+    "the primal solution available from [`CallbackVariablePrimal`](@ref) might be integer feasible or infeasible.",
     CALLBACK_NODE_STATUS_UNKNOWN,
 )
 
@@ -1087,13 +1078,26 @@ struct Name <: AbstractModelAttribute end
 
 attribute_value_type(::Name) = String
 
-@enum(OptimizationSense, MIN_SENSE, MAX_SENSE, FEASIBILITY_SENSE)
+@_documented_enum(
+    """
+        OptimizationSense
+
+    An enum for the value of the [`ObjectiveSense`](@ref) attribute.
+    """,
+    OptimizationSense,
+    "the goal is to minimize the objective function",
+    MIN_SENSE,
+    "the goal is to maximize the objective function",
+    MAX_SENSE,
+    "the model does not have an objective function",
+    FEASIBILITY_SENSE,
+)
 
 """
     ObjectiveSense()
 
 A model attribute for the objective sense of the objective function, which
-must be an `OptimizationSense`: `MIN_SENSE`, `MAX_SENSE`, or
+must be an [`OptimizationSense`](@ref): `MIN_SENSE`, `MAX_SENSE`, or
 `FEASIBILITY_SENSE`. The default is `FEASIBILITY_SENSE`.
 
 ## Interaction with `ObjectiveFunction`
@@ -1458,42 +1462,38 @@ struct CallbackVariablePrimal{CallbackDataType} <: AbstractVariableAttribute
 end
 is_set_by_optimize(::CallbackVariablePrimal) = true
 
-"""
-    BasisStatusCode
+@_documented_enum(
+    """
+        BasisStatusCode
 
-An Enum of possible values for the [`ConstraintBasisStatus`](@ref) and
-[`VariableBasisStatus`](@ref) attributes, explaining the status of a given
-element with respect to an optimal solution basis.
+    An Enum of possible values for the [`ConstraintBasisStatus`](@ref) and
+    [`VariableBasisStatus`](@ref) attributes, explaining the status of a given
+    element with respect to an optimal solution basis.
 
-Possible values are:
+    ## Notes
 
-* `BASIC`: element is in the basis
-* `NONBASIC`: element is not in the basis
-* `NONBASIC_AT_LOWER`: element is not in the basis and is at its lower bound
-* `NONBASIC_AT_UPPER`: element is not in the basis and is at its upper bound
-* `SUPER_BASIC`: element is not in the basis but is also not at one of its
-  bounds
+    * `NONBASIC_AT_LOWER` and `NONBASIC_AT_UPPER` should be used only for
+    constraints with the `Interval` set. In this case, they are necessary to
+    distinguish which side of the constraint is active. One-sided constraints
+    (e.g., `LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
+    `NONBASIC_AT_*` values. This restriction does not apply to [`VariableBasisStatus`](@ref),
+    which should return `NONBASIC_AT_*` regardless of whether the alternative
+    bound exists.
 
-## Notes
-
-* `NONBASIC_AT_LOWER` and `NONBASIC_AT_UPPER` should be used only for
-  constraints with the `Interval` set. In this case, they are necessary to
-  distinguish which side of the constraint is active. One-sided constraints
-  (e.g., `LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
-  `NONBASIC_AT_*` values. This restriction does not apply to [`VariableBasisStatus`](@ref),
-  which should return `NONBASIC_AT_*` regardless of whether the alternative
-  bound exists.
-
-* In linear programs, `SUPER_BASIC` occurs when a variable with no bounds is not
-  in the basis.
-"""
-@enum(
+    * In linear programs, `SUPER_BASIC` occurs when a variable with no bounds is not
+    in the basis.
+    """,
     BasisStatusCode,
+    "element is in the basis",
     BASIC,
+    "element is not in the basis",
     NONBASIC,
+    "element is not in the basis and is at its lower bound",
     NONBASIC_AT_LOWER,
+    "element is not in the basis and is at its upper bound",
     NONBASIC_AT_UPPER,
-    SUPER_BASIC
+    "element is not in the basis but is also not at one of its bounds",
+    SUPER_BASIC,
 )
 
 """
@@ -1823,24 +1823,20 @@ function throw_set_error_fallback(
     return throw(SetTypeMismatch{set_type(constraint_index),typeof(set)}())
 end
 
-"""
-    ConflictParticipationStatusCode
+@_documented_enum(
+    """
+        ConflictParticipationStatusCode
 
-An Enum of possible values for the [`ConstraintConflictStatus`](@ref) attribute.
-This attribute is meant to indicate whether a given constraint participates
-or not in the last computed conflict.
-
-Possible values are:
-* `NOT_IN_CONFLICT`: the constraint does not participate in the conflict
-* `IN_CONFLICT`: the constraint participates in the conflict
-* `MAYBE_IN_CONFLICT`: the constraint may participate in the conflict,
-  the solver was not able to prove that the constraint can be excluded from
-  the conflict
-"""
-@enum(
+    An Enum of possible values for the [`ConstraintConflictStatus`](@ref) attribute.
+    This attribute is meant to indicate whether a given constraint participates
+    or not in the last computed conflict.
+    """,
     ConflictParticipationStatusCode,
+    "the constraint does not participate in the conflict",
     NOT_IN_CONFLICT,
+    "the constraint participates in the conflict",
     IN_CONFLICT,
+    "the constraint may participate in the conflict, the solver was not able to prove that the constraint can be excluded from the conflict",
     MAYBE_IN_CONFLICT
 )
 
@@ -1960,116 +1956,69 @@ supported by the model.
 """
 struct ListOfSupportedNonlinearOperators <: AbstractOptimizerAttribute end
 
-"""
-    TerminationStatusCode
+@_documented_enum(
+    """
+        TerminationStatusCode
 
-An Enum of possible values for the `TerminationStatus` attribute. This attribute
-is meant to explain the reason why the optimizer stopped executing in the most
-recent call to [`optimize!`](@ref).
-
-If no call has been made to [`optimize!`](@ref), then the `TerminationStatus`
-is:
-
-* `OPTIMIZE_NOT_CALLED`: The algorithm has not started.
-
-## OK
-
-These are generally OK statuses, i.e., the algorithm ran to completion normally.
-
-* `OPTIMAL`: The algorithm found a globally optimal solution.
-* `INFEASIBLE`: The algorithm concluded that no feasible solution exists.
-* `DUAL_INFEASIBLE`: The algorithm concluded that no dual bound exists for the
-  problem. If, additionally, a feasible (primal) solution is known to
-  exist, this status typically implies that the problem is unbounded, with some
-  technical exceptions.
-* `LOCALLY_SOLVED`: The algorithm converged to a stationary point, local
-  optimal solution, could not find directions for improvement, or otherwise
-  completed its search without global guarantees.
-* `LOCALLY_INFEASIBLE`: The algorithm converged to an infeasible point or
-  otherwise completed its search without finding a feasible solution, without
-  guarantees that no feasible solution exists.
-* `INFEASIBLE_OR_UNBOUNDED`: The algorithm stopped because it decided that the
-  problem is infeasible or unbounded; this occasionally happens during MIP
-  presolve.
-
-## Solved to relaxed tolerances
-
-* `ALMOST_OPTIMAL`: The algorithm found a globally optimal solution to relaxed
-  tolerances.
-* `ALMOST_INFEASIBLE`: The algorithm concluded that no feasible solution exists
-  within relaxed tolerances.
-* `ALMOST_DUAL_INFEASIBLE`: The algorithm concluded that no dual bound exists for
-  the problem within relaxed tolerances.
-* `ALMOST_LOCALLY_SOLVED`: The algorithm converged to a stationary point, local
-  optimal solution, or could not find directions for improvement within relaxed
-  tolerances.
-
-## Limits
-
-The optimizer stopped because of some user-defined limit.
-
-* `ITERATION_LIMIT`: An iterative algorithm stopped after conducting the maximum
-  number of iterations.
-* `TIME_LIMIT`: The algorithm stopped after a user-specified computation time.
-* `NODE_LIMIT`: A branch-and-bound algorithm stopped because it explored a
-  maximum number of nodes in the branch-and-bound tree.
-* `SOLUTION_LIMIT`: The algorithm stopped because it found the required number of
-  solutions. This is often used in MIPs to get the solver to return the first
-  feasible solution it encounters.
-* `MEMORY_LIMIT`: The algorithm stopped because it ran out of memory.
-* `OBJECTIVE_LIMIT`: The algorithm stopped because it found a solution better
-  than a minimum limit set by the user.
-* `NORM_LIMIT`: The algorithm stopped because the norm of an iterate became too
-  large.
-* `OTHER_LIMIT`: The algorithm stopped due to a limit not covered by one of the
-  above.
-
-## Problematic
-
-This group of statuses means that something unexpected or problematic happened.
-
-* `SLOW_PROGRESS`: The algorithm stopped because it was unable to continue making
-  progress towards the solution.
-* `NUMERICAL_ERROR`: The algorithm stopped because it encountered unrecoverable
-  numerical error.
-* `INVALID_MODEL`: The algorithm stopped because the model is invalid.
-* `INVALID_OPTION`: The algorithm stopped because it was provided an invalid
-  option.
-* `INTERRUPTED`: The algorithm stopped because of an interrupt signal.
-* `OTHER_ERROR`: The algorithm stopped because of an error not covered by one of
-  the statuses defined above.
-"""
-@enum(
+    An Enum of possible values for the `TerminationStatus` attribute. This attribute
+    is meant to explain the reason why the optimizer stopped executing in the most
+    recent call to [`optimize!`](@ref).
+    """,
     TerminationStatusCode,
+    "The algorithm has not started.",
     OPTIMIZE_NOT_CALLED,
     # OK
+    "The algorithm found a globally optimal solution.",
     OPTIMAL,
+    "The algorithm concluded that no feasible solution exists.",
     INFEASIBLE,
+    "The algorithm concluded that no dual bound exists for the problem. If, additionally, a feasible (primal) solution is known to exist, this status typically implies that the problem is unbounded, with some technical exceptions.",
     DUAL_INFEASIBLE,
+    "The algorithm converged to a stationary point, local optimal solution, could not find directions for improvement, or otherwise completed its search without global guarantees.",
     LOCALLY_SOLVED,
+    "The algorithm converged to an infeasible point or otherwise completed its search without finding a feasible solution, without guarantees that no feasible solution exists.",
     LOCALLY_INFEASIBLE,
+    "The algorithm stopped because it decided that the problem is infeasible or unbounded; this occasionally happens during MIP presolve.",
     INFEASIBLE_OR_UNBOUNDED,
     # Solved to relaxed tolerances
+    "The algorithm found a globally optimal solution to relaxed tolerances.",
     ALMOST_OPTIMAL,
+    "The algorithm concluded that no feasible solution exists within relaxed tolerances.",
     ALMOST_INFEASIBLE,
+    "The algorithm concluded that no dual bound exists for the problem within relaxed tolerances.",
     ALMOST_DUAL_INFEASIBLE,
+    "The algorithm converged to a stationary point, local optimal solution, or could not find directions for improvement within relaxed tolerances.",
     ALMOST_LOCALLY_SOLVED,
     # Limits
+    "An iterative algorithm stopped after conducting the maximum number of iterations.",
     ITERATION_LIMIT,
+    "The algorithm stopped after a user-specified computation time.",
     TIME_LIMIT,
+    "A branch-and-bound algorithm stopped because it explored a maximum number of nodes in the branch-and-bound tree.",
     NODE_LIMIT,
+    "The algorithm stopped because it found the required number of solutions. This is often used in MIPs to get the solver to return the first feasible solution it encounters.",
     SOLUTION_LIMIT,
+    "The algorithm stopped because it ran out of memory.",
     MEMORY_LIMIT,
+    "The algorithm stopped because it found a solution better than a minimum limit set by the user.",
     OBJECTIVE_LIMIT,
+    "The algorithm stopped because the norm of an iterate became too large.",
     NORM_LIMIT,
+    "The algorithm stopped due to a limit not covered by one of the `_LIMIT_` statuses above.",
     OTHER_LIMIT,
     # Problematic
+    "The algorithm stopped because it was unable to continue making progress towards the solution.",
     SLOW_PROGRESS,
+    "The algorithm stopped because it encountered unrecoverable numerical error.",
     NUMERICAL_ERROR,
+    "The algorithm stopped because the model is invalid.",
     INVALID_MODEL,
+    "The algorithm stopped because it was provided an invalid option.",
     INVALID_OPTION,
+    "The algorithm stopped because of an interrupt signal.",
     INTERRUPTED,
-    OTHER_ERROR
+    "The algorithm stopped because of an error not covered by one of the statuses defined above.",
+    OTHER_ERROR,
 )
 
 """
@@ -2092,49 +2041,36 @@ struct RawStatusString <: AbstractModelAttribute end
 
 attribute_value_type(::RawStatusString) = String
 
-"""
-    ResultStatusCode
+@_documented_enum(
+    """
+        ResultStatusCode
 
-An Enum of possible values for the `PrimalStatus` and `DualStatus` attributes.
-The values indicate how to interpret the result vector.
+    An Enum of possible values for the [`PrimalStatus`](@ref) and [`DualStatus`](@ref)
+    attributes.
 
-* `NO_SOLUTION`: the result vector is empty.
-* `FEASIBLE_POINT`: the result vector is a feasible point.
-* `NEARLY_FEASIBLE_POINT`: the result vector is feasible if some constraint
-  tolerances are relaxed.
-* `INFEASIBLE_POINT`: the result vector is an infeasible point.
-* `INFEASIBILITY_CERTIFICATE`: the result vector is an infeasibility certificate.
-  If the `PrimalStatus` is `INFEASIBILITY_CERTIFICATE`, then the primal result
-  vector is a certificate of dual infeasibility. If the `DualStatus` is
-  `INFEASIBILITY_CERTIFICATE`, then the dual result vector is a proof of primal
-  infeasibility.
-* `NEARLY_INFEASIBILITY_CERTIFICATE`: the result satisfies a relaxed criterion for
-  a certificate of infeasibility.
-* `REDUCTION_CERTIFICATE`: the result vector is an ill-posed certificate; see
-  [this article](https://arxiv.org/abs/1408.4685) for details. If the
-  `PrimalStatus` is `REDUCTION_CERTIFICATE`, then the primal result vector is a
-  proof that the dual problem is ill-posed. If the `DualStatus` is
-  `REDUCTION_CERTIFICATE`, then the dual result vector is a proof that the primal
-  is ill-posed.
-* `NEARLY_REDUCTION_CERTIFICATE`: the result satisfies a relaxed criterion for
-  an ill-posed certificate.
-* `UNKNOWN_RESULT_STATUS`: the result vector contains a solution with an unknown
-  interpretation.
-* `OTHER_RESULT_STATUS`: the result vector contains a solution with an
-  interpretation not covered by one of the statuses defined above.
-"""
-@enum(
+    The values indicate how to interpret the result vector.
+    """,
     ResultStatusCode,
+    "the result vector is empty.",
     NO_SOLUTION,
+    "the result vector is a feasible point.",
     FEASIBLE_POINT,
+    "the result vector is feasible if some constraint tolerances are relaxed.",
     NEARLY_FEASIBLE_POINT,
+    "the result vector is an infeasible point.",
     INFEASIBLE_POINT,
+    "the result vector is an infeasibility certificate. If the `PrimalStatus` is `INFEASIBILITY_CERTIFICATE`, then the primal result vector is a certificate of dual infeasibility. If the `DualStatus` is `INFEASIBILITY_CERTIFICATE`, then the dual result vector is a proof of primal infeasibility.",
     INFEASIBILITY_CERTIFICATE,
+    "the result satisfies a relaxed criterion for a certificate of infeasibility.",
     NEARLY_INFEASIBILITY_CERTIFICATE,
+    "the result vector is an ill-posed certificate; see [this article](https://arxiv.org/abs/1408.4685) for details. If the `PrimalStatus` is `REDUCTION_CERTIFICATE`, then the primal result vector is a proof that the dual problem is ill-posed. If the `DualStatus` is `REDUCTION_CERTIFICATE`, then the dual result vector is a proof that the primal is ill-posed.",
     REDUCTION_CERTIFICATE,
+    "the result satisfies a relaxed criterion for an ill-posed certificate.",
     NEARLY_REDUCTION_CERTIFICATE,
+    "the result vector contains a solution with an unknown interpretation.",
     UNKNOWN_RESULT_STATUS,
-    OTHER_RESULT_STATUS
+    "the result vector contains a solution with an interpretation not covered by one of the statuses defined above",
+    OTHER_RESULT_STATUS,
 )
 
 """
