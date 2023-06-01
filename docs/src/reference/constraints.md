@@ -34,8 +34,13 @@ ConstraintDualStart
 ConstraintPrimal
 ConstraintDual
 ConstraintBasisStatus
-BasisStatusCode
 ConstraintFunction
 CanonicalConstraintFunction
 ConstraintSet
+BasisStatusCode
+BASIC
+NONBASIC
+NONBASIC_AT_LOWER
+NONBASIC_AT_UPPER
+SUPER_BASIC
 ```

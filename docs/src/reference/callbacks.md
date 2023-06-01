@@ -18,8 +18,11 @@ submit
 
 ```@docs
 CallbackNodeStatus
-CallbackNodeStatusCode
 CallbackVariablePrimal
+CallbackNodeStatusCode
+CALLBACK_NODE_STATUS_INTEGER
+CALLBACK_NODE_STATUS_FRACTIONAL
+CALLBACK_NODE_STATUS_UNKNOWN
 ```
 
 ## Lazy constraints
@@ -40,6 +43,9 @@ UserCut
 
 ```@docs
 HeuristicCallback
-HeuristicSolutionStatus
 HeuristicSolution
+HeuristicSolutionStatus
+HEURISTIC_SOLUTION_ACCEPTED
+HEURISTIC_SOLUTION_REJECTED
+HEURISTIC_SOLUTION_UNKNOWN
 ```
