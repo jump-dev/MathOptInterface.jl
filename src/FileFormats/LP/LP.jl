@@ -956,6 +956,9 @@ function Base.read!(io::IO, model::Model)
             _set_objective_sense(section, model, lower_line)
             continue
         end
+        while _line_continues(section, peeked_line)
+            line, peeked_line = _readline(io, string(line, ' ', peeked_line))
+        end
         _parse_section(section, model, cache, line)
     end
     obj = if isempty(cache.quad_obj_terms)
@@ -971,18 +974,32 @@ function Base.read!(io::IO, model::Model)
     return
 end
 
+function _line_continues(
+    ::Union{typeof(_KW_OBJECTIVE),typeof(_KW_CONSTRAINTS)},
+    peeked_line::AbstractString,
+)
+    return any(Base.Fix1(startswith, peeked_line), ('+', '-'))
+end
+
+_line_continues(::Any, ::Any) = false
+
 function _readline(io::IO, line::AbstractString)
     if eof(io)
         return line, nothing
     end
     peeked_line = _strip_comment(string(readline(io)))
     if isempty(line)
+        # If the line is empty, go to the next
         return _readline(io, peeked_line)
     elseif isempty(peeked_line)
+        # If the peeked line is empty, get another
         return _readline(io, line)
-    elseif any(c -> endswith(line, c), ('+', '-', '[', '='))
+    elseif any(Base.Fix1(endswith, line), ('+', '-', '[', '='))
+        # If the line ends with a continuation character, read in the next line.
         return _readline(io, string(line, ' ', peeked_line))
-    elseif startswith(peeked_line, ']') || startswith(peeked_line, '/')
+    elseif any(Base.Fix1(startswith, peeked_line), (']', '/'))
+        # Always read in the next line if it starts with ] or /, which are used
+        # in quadratic functions.
         return _readline(io, string(line, ' ', peeked_line))
     end
     return line, peeked_line
