@@ -7,6 +7,23 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.17.0 (June 1, 2023)
+
+### Added
+
+ - Added [`MOI.ScalarNonlinearFunction`](@ref) (#2059)
+ - Added a variety of tests for `NormSpectralCone`, `NormNuclearCone`, and
+   `HermitianPositiveSemidefiniteConeTriangle` (#2174)
+ - Added `Utilities.value_type` for computing the value type of a function
+   (#2176)
+
+### Fixed
+
+ - Fixed support for external sets in `Utilities.loadfromstring!` (#2177)
+ - Fixed `promote_operation` for `ScalarNonlinearFunction` (#2179)
+ - Fixed two issues in `FileFormats.LP` when reading files with quadratic
+   functions (#2182) (#2184)
+
 ## v1.16.0 (May 16, 2023)
 
 ### Added
