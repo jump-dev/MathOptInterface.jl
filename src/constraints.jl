@@ -7,9 +7,9 @@
 """
     supports_constraint(
         model::ModelLike,
-        ::Type{F},
-        ::Type{S},
-    )::Bool where {F<:AbstractFunction,S<:AbstractSet}
+        F::Type{<:AbstractFunction},
+        F::Type{<:AbstractSet},
+    )::Bool
 
 Return a `Bool` indicating whether `model` supports `F`-in-`S` constraints, that
 is, `copy_to(model, src)` does not throw [`UnsupportedConstraint`](@ref) when
@@ -26,17 +26,23 @@ function supports_constraint(
 end
 
 """
-    struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: UnsupportedError
-        message::String # Human-friendly explanation why the attribute cannot be set
-    end
+    UnsupportedConstraint{F<:AbstractFunction,S<:AbstractSet}(
+        message::String = "",
+    )
 
 An error indicating that constraints of type `F`-in-`S` are not supported by
-the model, i.e. that [`supports_constraint`](@ref) returns `false`.
+the model.
+
+This error should be thrown only if [`supports_constraint`](@ref) returns `false`.
+
+See [`AddConstraintNotAllowed`](@ref) for the error if the solver supports the
+constraint type in general, but cannot add it to the current model.
 """
 struct UnsupportedConstraint{F<:AbstractFunction,S<:AbstractSet} <:
        UnsupportedError
-    message::String # Human-friendly explanation why the attribute cannot be set
+    message::String
 end
+
 UnsupportedConstraint{F,S}() where {F,S} = UnsupportedConstraint{F,S}("")
 
 function element_name(::UnsupportedConstraint{F,S}) where {F,S}
@@ -44,17 +50,23 @@ function element_name(::UnsupportedConstraint{F,S}) where {F,S}
 end
 
 """
-    struct AddConstraintNotAllowed{F<:AbstractFunction, S<:AbstractSet} <: NotAllowedError
-        message::String # Human-friendly explanation why the attribute cannot be set
-    end
+    AddConstraintNotAllowed{F<:AbstractFunction,S<:AbstractSet}(
+        message::String = "",
+    )
 
-An error indicating that constraints of type `F`-in-`S` are supported (see
-[`supports_constraint`](@ref)) but cannot be added.
+An error indicating that constraints of type `F`-in-`S` are supported by the
+optimizer but cannot be added to the current model.
+
+This error should be thrown only if [`supports_constraint`](@ref) returns `true`.
+
+See [`UnsupportedConstraint`](@ref) for the error if the solver does not support
+the constraint type.
 """
 struct AddConstraintNotAllowed{F<:AbstractFunction,S<:AbstractSet} <:
        NotAllowedError
-    message::String # Human-friendly explanation why the attribute cannot be set
+    message::String
 end
+
 AddConstraintNotAllowed{F,S}() where {F,S} = AddConstraintNotAllowed{F,S}("")
 
 function operation_name(::AddConstraintNotAllowed{F,S}) where {F,S}
@@ -62,9 +74,7 @@ function operation_name(::AddConstraintNotAllowed{F,S}) where {F,S}
 end
 
 """
-    struct ScalarFunctionConstantNotZero{T, F, S} <: Exception
-        constant::T
-    end
+    ScalarFunctionConstantNotZero{T,F,S}(constant::T)
 
 An error indicating that the constant part of the function in the constraint
 `F`-in-`S` is nonzero.
@@ -79,137 +89,80 @@ function Base.showerror(
 ) where {T,F,S}
     return print(
         io,
-        "In `$F`-in-`$S` constraint: Constant $(err.constant) of the ",
-        "function is not zero. The function constant should be moved to the ",
-        "set. You can use `MOI.Utilities.normalize_and_add_constraint` which does ",
-        "this automatically.",
+        "In `$F`-in-`$S` constraint: Constant $(err.constant) of the function ",
+        "is not zero. The function constant should be moved to the set. You ",
+        "can use `MOI.Utilities.normalize_and_add_constraint` which does this ",
+        "automatically.",
     )
 end
 
 """
-    throw_if_scalar_and_constant_not_zero(func, S::Type)
+    throw_if_scalar_and_constant_not_zero(
+        f::AbstractFunction,
+        ::Type{S<:AbstractSet},
+    )
 
-Throw a `ScalarFunctionConstantNotZero(index)` error `func` is a scalar function
-whose constant is not zero.
+Throw a [`ScalarFunctionConstantNotZero`](@ref) error if `f` is a scalar
+function whose constant is not zero.
 """
 function throw_if_scalar_and_constant_not_zero(
-    func::AbstractScalarFunction,
+    f::F,
     ::Type{S},
-) where {S<:AbstractScalarSet}
-    cst = constant(func)
-    if !iszero(cst)
-        throw(ScalarFunctionConstantNotZero{typeof(cst),typeof(func),S}(cst))
+) where {F<:AbstractScalarFunction,S<:AbstractScalarSet}
+    c = constant(f)
+    if !iszero(c)
+        throw(ScalarFunctionConstantNotZero{typeof(c),F,S}(c))
     end
     return
 end
+
 function throw_if_scalar_and_constant_not_zero(
     ::VariableIndex,
-    ::Type{S},
-) where {S<:AbstractScalarSet}
+    ::Type{<:AbstractScalarSet},
+)
     return
 end
+
 function throw_if_scalar_and_constant_not_zero(
     ::AbstractVectorFunction,
-    ::Type{S},
-) where {S<:AbstractVectorSet}
+    ::Type{<:AbstractVectorSet},
+)
     return
 end
 
 """
-    add_constraint(model::ModelLike, func::F, set::S)::ConstraintIndex{F,S} where {F,S}
+    add_constraint(
+        model::ModelLike,
+        func::F,
+        set::S,
+    )::ConstraintIndex{F,S} where {F,S}
 
-Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`, and ``\\mathcal{S}`` is defined by `set`.
+Add the constraint ``f(x) \\in \\mathcal{S}`` where ``f`` is defined by `func`,
+and ``\\mathcal{S}`` is defined by `set`.
 
-    add_constraint(model::ModelLike, v::VariableIndex, set::S)::ConstraintIndex{VariableIndex,S} where {S}
-    add_constraint(model::ModelLike, vec::Vector{VariableIndex}, set::S)::ConstraintIndex{VectorOfVariables,S} where {S}
+## Errors
 
-Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vector of variables) referenced by `v` and ``\\mathcal{S}`` is defined by `set`.
-
-* An [`UnsupportedConstraint`](@ref) error is thrown if `model` does not support
-  `F`-in-`S` constraints,
-* a [`AddConstraintNotAllowed`](@ref) error is thrown if it supports `F`-in-`S`
-  constraints but it cannot add the constraint(s) in its current state and
-* a [`ScalarFunctionConstantNotZero`](@ref) error may be thrown if
-  `func` is an `AbstractScalarFunction` with nonzero constant and `set`
-  is [`EqualTo`](@ref), [`GreaterThan`](@ref), [`LessThan`](@ref) or
-  [`Interval`](@ref).
-* a [`LowerBoundAlreadySet`](@ref) error is thrown if `F` is a
-  [`VariableIndex`](@ref) and a constraint was already added to this variable
-  that sets a lower bound.
-* a [`UpperBoundAlreadySet`](@ref) error is thrown if `F` is a
-  [`VariableIndex`](@ref) and a constraint was already added to this variable
-  that sets an upper bound.
+ * An [`UnsupportedConstraint`](@ref) error is thrown if `model` does not
+   support `F`-in-`S` constraints
+ * An [`AddConstraintNotAllowed`](@ref) error is thrown if `model` supports
+   `F`-in-`S` constraints but it cannot add the constraint in the current state
+ * A [`ScalarFunctionConstantNotZero`](@ref) error may be thrown if `func` is an
+   `AbstractScalarFunction` with nonzero constant and `set` is [`EqualTo`](@ref),
+   [`GreaterThan`](@ref), [`LessThan`](@ref), or [`Interval`](@ref)
+ * A [`LowerBoundAlreadySet`](@ref) error is thrown if `F` is a [`VariableIndex`](@ref)
+   and a constraint was already added to this variable that sets a lower bound
+ * An [`UpperBoundAlreadySet`](@ref) error is thrown if `F` is a [`VariableIndex`](@ref)
+   and a constraint was already added to this variable that sets an upper bound.
 """
 function add_constraint(
     model::ModelLike,
-    func::AbstractFunction,
-    set::AbstractSet,
-)
-    return throw_add_constraint_error_fallback(model, func, set)
-end
-
-# throw_add_constraint_error_fallback checks whether func and set are both
-# scalar or both vector. If it is the case, it calls
-# `correct_throw_add_constraint_error_fallback`
-function throw_add_constraint_error_fallback(
-    model::ModelLike,
-    func::AbstractScalarFunction,
-    set::AbstractScalarSet;
-    kwargs...,
-)
-    return correct_throw_add_constraint_error_fallback(
-        model,
-        func,
-        set;
-        kwargs...,
-    )
-end
-function throw_add_constraint_error_fallback(
-    model::ModelLike,
-    func::AbstractVectorFunction,
-    set::AbstractVectorSet;
-    kwargs...,
-)
-    return correct_throw_add_constraint_error_fallback(
-        model,
-        func,
-        set;
-        kwargs...,
-    )
-end
-function throw_add_constraint_error_fallback(
-    model::ModelLike,
-    func::AbstractScalarFunction,
-    set::AbstractVectorSet;
-    kwargs...,
-)
-    return error(
-        "Cannot add a constraint of the form `ScalarFunction`-in-`VectorSet`",
-    )
-end
-function throw_add_constraint_error_fallback(
-    model::ModelLike,
-    func::AbstractVectorFunction,
-    set::AbstractScalarSet;
-    kwargs...,
-)
-    return error(
-        "Cannot add a constraint of the form `VectorFunction`-in-`ScalarSet`",
-    )
-end
-
-# func and set are both scalar or both vector
-function correct_throw_add_constraint_error_fallback(
-    model::ModelLike,
-    func::AbstractFunction,
-    set::AbstractSet;
-    error_if_supported = AddConstraintNotAllowed{typeof(func),typeof(set)}(),
-)
-    if supports_constraint(model, typeof(func), typeof(set))
-        throw(error_if_supported)
-    else
-        throw(UnsupportedConstraint{typeof(func),typeof(set)}())
+    ::F,
+    ::S,
+) where {F<:AbstractFunction,S<:AbstractSet}
+    if supports_constraint(model, F, S)
+        throw(AddConstraintNotAllowed{F,S}())
     end
+    return throw(UnsupportedConstraint{F,S}())
 end
 
 # TODO(odow): remove this?
@@ -222,14 +175,18 @@ function add_constraint(
 end
 
 """
-    add_constraints(model::ModelLike, funcs::Vector{F}, sets::Vector{S})::Vector{ConstraintIndex{F,S}} where {F,S}
+    add_constraints(
+        model::ModelLike,
+        funcs::Vector{F},
+        sets::Vector{S},
+    )::Vector{ConstraintIndex{F,S}} where {F,S}
 
-Add the set of constraints specified by each function-set pair in `funcs` and `sets`. `F` and `S` should be concrete types.
-This call is equivalent to `add_constraint.(model, funcs, sets)` but may be more efficient.
+Add the set of constraints specified by each function-set pair in `funcs` and
+`sets`. `F` and `S` should be concrete types.
+
+This call is equivalent to `add_constraint.(model, funcs, sets)`, but it may be
+more efficient.
 """
-function add_constraints end
-
-# default fallback
 function add_constraints(model::ModelLike, funcs, sets)
     return add_constraint.(model, funcs, sets)
 end
@@ -239,8 +196,8 @@ end
 
 Error thrown when setting a `VariableIndex`-in-`S2` when a
 `VariableIndex`-in-`S1` has already been added and the sets `S1`, `S2` both
-set a lower bound, i.e. they are [`EqualTo`](@ref), [`GreaterThan`](@ref),
-[`Interval`](@ref), [`Semicontinuous`](@ref) or [`Semiinteger`](@ref).
+set a lower bound, that is, they are [`EqualTo`](@ref), [`GreaterThan`](@ref),
+[`Interval`](@ref), [`Semicontinuous`](@ref), or [`Semiinteger`](@ref).
 """
 struct LowerBoundAlreadySet{S1,S2}
     vi::VariableIndex
@@ -257,12 +214,12 @@ function Base.showerror(io::IO, err::LowerBoundAlreadySet{S1,S2}) where {S1,S2}
 end
 
 """
-    UpperBoundAlreadySet{S1, S2}
+    UpperBoundAlreadySet{S1,S2}
 
 Error thrown when setting a `VariableIndex`-in-`S2` when a
 `VariableIndex`-in-`S1` has already been added and the sets `S1`, `S2` both
-set an upper bound, i.e. they are [`EqualTo`](@ref), [`LessThan`](@ref),
-[`Interval`](@ref), [`Semicontinuous`](@ref) or [`Semiinteger`](@ref).
+set an upper bound, that is, they are [`EqualTo`](@ref), [`LessThan`](@ref),
+[`Interval`](@ref), [`Semicontinuous`](@ref), or [`Semiinteger`](@ref).
 """
 struct UpperBoundAlreadySet{S1,S2}
     vi::VariableIndex
@@ -279,34 +236,41 @@ function Base.showerror(io::IO, err::UpperBoundAlreadySet{S1,S2}) where {S1,S2}
 end
 
 """
-## Transform Constraint Set
+    transform(
+        model::ModelLike,
+        c::ConstraintIndex{F,S1},
+        set::S2,
+    )::ConstraintIndex{F,S2}
 
-    transform(model::ModelLike, c::ConstraintIndex{F,S1}, newset::S2)::ConstraintIndex{F,S2}
-
-Replace the set in constraint `c` with `newset`. The constraint index `c`
+Replace the set in constraint `c` with `set`. The constraint index `c`
 will no longer be valid, and the function returns a new constraint index with
 the correct type.
 
-Solvers may only support a subset of constraint transforms that they perform
-efficiently (for example, changing from a `LessThan` to `GreaterThan` set). In
-addition, set modification (where `S1 = S2`) should be performed via the
-`modify` function.
+Solvers may support only a subset of constraint transforms that they perform
+efficiently (for example, changing from a [`LessThan`](@ref) to [`GreaterThan`](@ref)
+set).
 
+Set modification (where `S1 == S2`) must be performed via the [`modify`](@ref)
+function.
 
-Typically, the user should delete the constraint and add a new one.
+## Example
 
-### Examples
+```jldoctest
+julia> import MathOptInterface as MOI
 
-If `c` is a `ConstraintIndex{ScalarAffineFunction{Float64},LessThan{Float64}}`,
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
 
-```julia
-c2 = transform(model, c, GreaterThan(0.0))
-transform(model, c, LessThan(0.0)) # errors
+julia> x = MOI.add_variable(model)
+MOI.VariableIndex(1)
+
+julia> c = MOI.add_constraint(model, x, MOI.LessThan(0.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.LessThan{Float64}}(1)
+
+julia> c2 = MOI.transform(model, c, MOI.GreaterThan(0.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.GreaterThan{Float64}}(1)
 ```
 """
-function transform end
-
-# default fallback
 function transform(model::ModelLike, c::ConstraintIndex, newset)
     f = get(model, ConstraintFunction(), c)
     delete(model, c)
