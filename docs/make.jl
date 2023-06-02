@@ -4,6 +4,9 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
+import Pkg
+Pkg.pkg"add Documenter#740ba6304c940801eafdc18b069e4609bf3923a6"
+
 import Documenter
 import MathOptInterface as MOI
 using MathOptInterface
