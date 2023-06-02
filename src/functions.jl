@@ -753,6 +753,12 @@ end
 
 # For affine and quadratic functions, terms are compressed in a dictionary using
 # `_dicts` and then the dictionaries are compared with `dict_compare`
+"""
+    dict_compare(d1::Dict, d2::Dict{<:Any,T}, compare::Function) where {T}
+
+Check whether two dictionaries `d1` and `d2` have the same set of keys, and that
+the values of matching keys are equal under the comparison functon `compare`.
+"""
 function dict_compare(d1::Dict, d2::Dict{<:Any,T}, compare::Function) where {T}
     for key in union(keys(d1), keys(d2))
         if !compare(Base.get(d1, key, zero(T)), Base.get(d2, key, zero(T)))

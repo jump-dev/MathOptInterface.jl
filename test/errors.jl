@@ -32,7 +32,7 @@ function test_errors_inconsistent_vectorscalar()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
     @test_throws(
-        MOI.ErrorException,
+        MOI.UnsupportedConstraint,
         MOI.add_constraint(
             model,
             MOI.VectorOfVariables([vi, vi]),
@@ -40,7 +40,7 @@ function test_errors_inconsistent_vectorscalar()
         )
     )
     @test_throws(
-        MOI.ErrorException,
+        MOI.UnsupportedConstraint,
         MOI.add_constraint(model, vi, MOI.Nonnegatives(2))
     )
     return

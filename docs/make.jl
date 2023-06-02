@@ -5,7 +5,8 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 import Documenter
-import MathOptInterface
+import MathOptInterface as MOI
+using MathOptInterface
 
 # Pass --fix` to rebuild the doctests.
 const _FIX = findfirst(isequal("--fix"), ARGS) !== nothing
@@ -15,6 +16,37 @@ const _IS_GITHUB_ACTIONS = get(ENV, "GITHUB_ACTIONS", "false") == "true"
 
 # Pass --pdf to build the PDF. On GitHub actions, we always build the PDF.
 const _PDF = findfirst(isequal("--pdf"), ARGS) !== nothing || _IS_GITHUB_ACTIONS
+
+# ==============================================================================
+#  API
+# ==============================================================================
+
+include(joinpath(@__DIR__, "DocumenterReference.jl"))
+
+api_reference = DocumenterReference.automatic_reference_documentation(;
+    root = joinpath(@__DIR__, "src"),
+    subdirectory = "api",
+    exclude = Any[
+        MOI.func_type,
+        MOI.get_fallback,
+        MOI.precompile_constraint,
+        MOI.precompile_model,
+        MOI.precompile_variables,
+        MOI.set_type,
+        MOI.sum_dict,
+        MOI.supports_fallback,
+        MOI.throw_modify_not_allowed,
+        MOI.throw_set_error_fallback,
+        MOI.AnyAttribute,
+        MOI.ConstraintBridgingCost,
+        MOI.FunctionTypeMismatch,
+        MOI.Index,
+        MOI.OptimizationSense,
+        MOI.SetTypeMismatch,
+        MOI.VariableBridgingCost,
+    ],
+    modules = [MathOptInterface],
+)
 
 # ==============================================================================
 #  Documentation structure
@@ -46,16 +78,7 @@ const _PAGES = [
         "background/infeasibility_certificates.md",
         "background/naming_conventions.md",
     ],
-    "API Reference" => [
-        "reference/standard_form.md",
-        "reference/models.md",
-        "reference/variables.md",
-        "reference/constraints.md",
-        "reference/modification.md",
-        "reference/nonlinear.md",
-        "reference/callbacks.md",
-        "reference/errors.md",
-    ],
+    api_reference,
     "Submodules" => [
         "Benchmarks" => [
             "Overview" => "submodules/Benchmarks/overview.md",
