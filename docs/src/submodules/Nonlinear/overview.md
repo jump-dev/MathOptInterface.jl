@@ -291,7 +291,7 @@ julia> evaluator = Nonlinear.Evaluator(model, Nonlinear.ExprGraphOnly(), [x])
 Nonlinear.Evaluator with available features:
   * :ExprGraph
 ```
-The functions of the [Nonlinear programming](@ref) API implemented by
+The functions of the [Nonlinear programming](@ref initialize) API implemented by
 [`Nonlinear.Evaluator`](@ref) depends upon the chosen
 [`Nonlinear.AbstractAutomaticDifferentiation`](@ref) backend.
 
