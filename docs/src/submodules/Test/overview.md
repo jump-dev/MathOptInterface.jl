@@ -308,4 +308,4 @@ submit the PR for review.
 
 !!! tip
     If you need help writing a test, [open an issue on GitHub](https://github.com/jump-dev/MathOptInterface.jl/issues/new),
-    or ask the [Developer Chatroom](https://jump.dev/chatroom).
+    or ask the [Developer Chatroom](https://jump.dev/chatroom/).

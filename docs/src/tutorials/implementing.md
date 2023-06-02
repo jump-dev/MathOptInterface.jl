@@ -14,9 +14,9 @@ MathOptInterface for a new solver.
 !!! danger
     Implementing an interface to MathOptInterface for a new solver is a lot of
     work. Before starting, we recommend that you join the
-    [Developer chatroom](https://jump.dev/chatroom) and explain a
+    [Developer chatroom](https://jump.dev/chatroom/) and explain a
     little bit about the solver you are wrapping. If you have questions that are
-    not answered by this guide, please ask them in the [Developer chatroom](https://jump.dev/chatroom)
+    not answered by this guide, please ask them in the [Developer chatroom](https://jump.dev/chatroom/)
     so we can improve this guide.
 
 ## A note on the API
@@ -62,7 +62,7 @@ MathOptInterface may not be the right tool for the job.
 
 !!! tip
     If you're not sure whether you should write an interface, ask in the
-    [Developer chatroom](https://jump.dev/chatroom).
+    [Developer chatroom](https://jump.dev/chatroom/).
 
 ### Find a similar solver already wrapped
 
@@ -75,7 +75,7 @@ has a good list of solvers, along with the problem classes they support.
 
 !!! tip
     If you're not sure which solver is most similar, ask in the
-    [Developer chatroom](https://jump.dev/chatroom).
+    [Developer chatroom](https://jump.dev/chatroom/).
 
 ### Create a low-level interface
 
@@ -106,7 +106,7 @@ are the [COIN-OR solvers](https://github.com/JuliaPackaging/Yggdrasil/tree/maste
 
 !!! warning
     Building the solver via Yggdrasil is non-trivial. Please ask the
-    [Developer chatroom](https://jump.dev/chatroom) for help.
+    [Developer chatroom](https://jump.dev/chatroom/) for help.
 
 If the code is commercial or not publicly available, the user will need to
 manually install the solver. See [Gurobi.jl](https://github.com/jump-dev/Gurobi.jl)
@@ -125,7 +125,7 @@ Sometimes, you will need to make manual modifications to the resulting files.
 
 #### Solvers written in other languages
 
-Ask the [Developer chatroom](https://jump.dev/chatroom) for advice.
+Ask the [Developer chatroom](https://jump.dev/chatroom/) for advice.
 You may be able to use one of the [JuliaInterop](https://github.com/JuliaInterop)
 packages to call out to the solver.
 
