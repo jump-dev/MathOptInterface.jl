@@ -352,6 +352,20 @@ function test_unsupported_nonlinear_operator()
     return
 end
 
+function test_ScalarFunctionConstantNotZero_equality()
+    for T in (Int, Float64, BigFloat)
+        F, S = MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}
+        w = MOI.ScalarFunctionConstantNotZero{T,F,MOI.LessThan{T}}(zero(T))
+        x = MOI.ScalarFunctionConstantNotZero{T,F,S}(zero(T))
+        y = MOI.ScalarFunctionConstantNotZero{T,F,S}(zero(T))
+        z = MOI.ScalarFunctionConstantNotZero{T,F,S}(one(T))
+        @test x == y
+        @test x != z
+        @test w != x
+    end
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

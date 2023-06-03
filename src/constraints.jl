@@ -73,6 +73,13 @@ struct ScalarFunctionConstantNotZero{T,F,S} <: Exception
     constant::T
 end
 
+function Base.:(==)(
+    x::ScalarFunctionConstantNotZero{T,F,S},
+    y::ScalarFunctionConstantNotZero{T,F,S},
+) where {T,F,S}
+    return x.constant == y.constant
+end
+
 function Base.showerror(
     io::IO,
     err::ScalarFunctionConstantNotZero{T,F,S},
