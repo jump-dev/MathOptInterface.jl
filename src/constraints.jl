@@ -77,7 +77,7 @@ function Base.:(==)(
     x::ScalarFunctionConstantNotZero{T,F,S},
     y::ScalarFunctionConstantNotZero{T,F,S},
 ) where {T,F,S}
-    return x.constant == b.constant
+    return x.constant == y.constant
 end
 
 function Base.showerror(
