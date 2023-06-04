@@ -138,7 +138,7 @@ julia> inner_optimizer = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
 
 julia> optimizer = MOI.Bridges.Constraint.SplitInterval{Float64}(inner_optimizer)
-MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64, F, S, LS, US} where {F<:MOI.AbstractFunction, S<:MOI.AbstractSet, LS<:MOI.AbstractSet, US<:MOI.AbstractSet}, MOIU.Model{Float64}}
+MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64}, MOIU.Model{Float64}}
 with 0 constraint bridges
 with inner model MOIU.Model{Float64}
 
