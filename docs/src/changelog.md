@@ -7,6 +7,18 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.17.1 (June 6, 2023)
+
+### Fixed
+
+ - Fixed comparison of [`ScalarFunctionConstantNotZero`](@ref) (#2190)
+
+### Other
+
+ - Added documentation for enum instances (#2186)
+ - Updated chatroom links in documentation (#2188)
+ - Changed the documentation to build on Julia v1.9 (#2191)
+
 ## v1.17.0 (June 1, 2023)
 
 ### Added
