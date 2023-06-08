@@ -580,6 +580,7 @@ function test_model_copy_to_UnsupportedConstraint(
     model::MOI.ModelLike,
     ::Config{T},
 ) where {T}
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.EqualTo{T})
     @test !MOI.supports_constraint(
         model,
         MOI.VariableIndex,
@@ -608,6 +609,7 @@ function test_model_copy_to_UnsupportedAttribute(
     model::MOI.ModelLike,
     ::Config{T},
 ) where {T}
+    @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.EqualTo{T})
     # ModelAttribute
     @test !MOI.supports(model, UnknownModelAttribute())
     @test_throws(
@@ -747,6 +749,11 @@ function test_model_ScalarFunctionConstantNotZero(
     config::Config{T},
 ) where {T}
     @requires _supports(config, MOI.ScalarFunctionConstantNotZero)
+    @requires MOI.supports_constraint(
+        model,
+        MOI.ScalarAffineFunction{T},
+        MOI.EqualTo{T},
+    )
     function _error(S, value)
         F = MOI.ScalarAffineFunction{T}
         return MOI.ScalarFunctionConstantNotZero{T,F,S}(value)
