@@ -100,6 +100,8 @@ The matrix-valued set types implemented in MathOptInterface.jl are:
 | [`HermitianPositiveSemidefiniteConeTriangle(d)`](@ref MathOptInterface.HermitianPositiveSemidefiniteConeTriangle) | The cone of Hermitian positive semidefinite matrices, with
 `side_dimension` rows and columns. |
 | [`Scaled(S)`](@ref MathOptInterface.Scaled) | The set `S` scaled so that [`Utilities.set_dot`](@ref MathOptInterface.Utilities.set_dot) corresponds to `LinearAlgebra.dot` |
+| [`FrobeniusProductPostiviveSemidefiniteConeTriangle(d, A)`](@ref MathOptInterface.FrobeniusProductPostiviveSemidefiniteConeTriangle) | The cone of positive semidefinite matrices, with `side_dimension` rows and columns and their Frobenius inner product with the matrices in `A`. |
+| [`LinearMatrixInequalityConeTriangle(d, A)`](@ref MathOptInterface.LinearMatrixInequalityConeTriangle) | The cone of vector `y` and symmetric `C`, with `side_dimension` rows and columns such that ``\sum_i y_i A_i + C`` is positive semidefinite. |
 
 Some of these cones can take two forms: `XXXConeTriangle` and `XXXConeSquare`.
 

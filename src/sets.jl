@@ -1804,6 +1804,61 @@ function Base.getproperty(
 end
 
 """
+    FrobeniusProductPostiviveSemidefiniteConeTriangle{M}(side_dimension::Int, matrices::Vector{M})
+
+Given `m` symmetric matrices `A_1`, ..., `A_m` given in `matrices`, the frobenius inner
+product of positive semidefinite matrices is the convex cone:
+``\\{ ((\\langle A_1, X \\rangle, ..., \\langle A_m, X \\rangle, X) \\in \\mathbb{R}^{m + d(d+1)/2} : X \\text{ postive semidefinite} \\}``,
+where the matrix `X` is represented in the same symmetric packed format as in
+the [`PositiveSemidefiniteConeTriangle`](@ref).
+"""
+struct FrobeniusProductPostiviveSemidefiniteConeTriangle{M} <: AbstractVectorSet
+    side_dimension::Int
+    matrices::Vector{M}
+end
+
+function dimension(s::FrobeniusProductPostiviveSemidefiniteConeTriangle)
+    return length(s.matrices) + s.side_dimension^2
+end
+
+function dual_set(s::FrobeniusProductPostiviveSemidefiniteConeTriangle)
+    return LinearMatrixInequalityConeTriangle(s.side_dimension, s.matrices)
+end
+
+function dual_set_type(
+    ::Type{FrobeniusProductPostiviveSemidefiniteConeTriangle{M}},
+) where {M}
+    return LinearMatrixInequalityConeTriangle
+end
+
+"""
+    LinearMatrixInequalityConeTriangle{M}(side_dimension::Int, matrices::Vector{M})
+
+Given `m` symmetric matrices `A_1`, ..., `A_m` given in `matrices`, the linear
+matrix inequality cone is the convex cone:
+``\\{ ((y, C) \\in \\mathbb{R}^{m + d(d+1)/2} : \\sum_{i=1}^m y_i A_i + C \\text{ postive semidefinite} \\}``,
+where the matrix `C` is represented in the same symmetric packed format as in
+the [`PositiveSemidefiniteConeTriangle`](@ref).
+"""
+struct LinearMatrixInequalityConeTriangle{M} <: AbstractVectorSet
+    side_dimension::Int
+    matrices::Vector{M}
+end
+
+dimension(s::LinearMatrixInequalityConeTriangle) = length(s.matrices) + s.side_dimension^2
+
+function dual_set(s::LinearMatrixInequalityConeTriangle)
+    return FrobeniusProductPostiviveSemidefiniteConeTriangle(
+        s.side_dimension,
+        s.matrices,
+    )
+end
+
+function dual_set_type(::Type{LinearMatrixInequalityConeTriangle{M}}) where {M}
+    return FrobeniusProductPostiviveSemidefiniteConeTriangle
+end
+
+"""
     SOS1{T<:Real}(weights::Vector{T})
 
 The set corresponding to the Special Ordered Set (SOS) constraint of Type I.
