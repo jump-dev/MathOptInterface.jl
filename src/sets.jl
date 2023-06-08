@@ -880,7 +880,7 @@ MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInte
 """
 struct ExponentialCone <: AbstractVectorSet end
 
-dual_set(s::ExponentialCone) = DualExponentialCone()
+dual_set(::ExponentialCone) = DualExponentialCone()
 dual_set_type(::Type{ExponentialCone}) = DualExponentialCone
 
 dimension(::ExponentialCone) = 3
@@ -906,7 +906,7 @@ MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInte
 """
 struct DualExponentialCone <: AbstractVectorSet end
 
-dual_set(s::DualExponentialCone) = ExponentialCone()
+dual_set(::DualExponentialCone) = ExponentialCone()
 dual_set_type(::Type{DualExponentialCone}) = ExponentialCone
 
 dimension(::DualExponentialCone) = 3
