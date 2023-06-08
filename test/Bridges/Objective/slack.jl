@@ -525,7 +525,7 @@ function test_SlackBridgePrimalDualStart()
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.VariablePrimalStart(), x, 2.0)
-    MOI.set(model, MOI.Bridges.Objective.SlackBridgePrimalDualStart(), true)
+    MOI.set(model, MOI.Bridges.Objective.SlackBridgePrimalDualStart(), nothing)
     vars = MOI.get(inner, MOI.ListOfVariableIndices())
     primal_start = MOI.get.(inner, MOI.VariablePrimalStart(), vars)
     @test primal_start[1] ≈ 2.0
@@ -541,16 +541,14 @@ end
 function test_SlackBridgePrimalDualStart_unsupported()
     inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     # Check that setting on blank model doesn't error.
-    MOI.set(model, MOI.Bridges.Objective.SlackBridgePrimalDualStart(), true)
+    MOI.set(inner, MOI.Bridges.Objective.SlackBridgePrimalDualStart(), nothing)
     model = MOI.Bridges.Objective.Slack{Float64}(inner)
     x = MOI.add_variable(model)
-    MOI.add_constraint(model, x, MOI.GreaterThan(2.0))
-    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.1, x)], -1.2)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.1, x)], -1.2)
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
-    MOI.set(model, MOI.VariablePrimalStart(), x, 2.0)
     # Unsupported. Should silently skip without error.
-    MOI.set(model, MOI.Bridges.Objective.SlackBridgePrimalDualStart(), true)
+    MOI.set(model, MOI.Bridges.Objective.SlackBridgePrimalDualStart(), nothing)
     return
 end
 

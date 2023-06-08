@@ -182,7 +182,7 @@ end
 problem. However, because it is not a constraint bridge, it cannot intercept
 calls to set [`ConstraintDualStart`](@ref) or [`ConstraintPrimalStart`](@ref).
 
-As a work-around, set this attribute to `true` to set the primal and dual
+As a work-around, set this attribute to `nothing` to set the primal and dual
 start for the new constraint. This attribute must be set after
 [`VariablePrimalStart`](@ref).
 """
@@ -191,7 +191,7 @@ struct SlackBridgePrimalDualStart <: MOI.AbstractModelAttribute end
 function MOI.throw_set_error_fallback(
     ::MOI.ModelLike,
     ::SlackBridgePrimalDualStart,
-    ::Bool,
+    ::Nothing,
 )
     return # Silently ignore if the model does not support.
 end
@@ -201,6 +201,7 @@ function MOI.supports(
     ::SlackBridgePrimalDualStart,
     ::Type{<:SlackBridge},
 )
+    # Pretend that every model supports, and silently skip in set if unsupported
     return true
 end
 
@@ -208,9 +209,8 @@ function MOI.set(
     model::MOI.ModelLike,
     ::SlackBridgePrimalDualStart,
     b::SlackBridge{T},
-    value::Bool,
+    ::Nothing,
 ) where {T}
-    @assert value
     # ConstraintDual: if the objective function had a dual, it would be `-1` for
     # the Lagrangian function to be the same.
     if MOI.supports(model, MOI.ConstraintDualStart(), typeof(b.constraint))
@@ -236,13 +236,16 @@ end
 function MOI.set(
     b::MOI.Bridges.AbstractBridgeOptimizer,
     attr::SlackBridgePrimalDualStart,
-    value,
+    ::Nothing,
 )
+    # TODO(odow): this might fail if the SlackBridge is not the first bridge in
+    # the chain, but it should be for our current setup of bridges, so we
+    # choose to simplify this implementation.
     if MOI.Bridges.is_objective_bridged(b)
         obj_attr = MOI.ObjectiveFunction{function_type(bridges(b))}()
         if MOI.Bridges.is_bridged(b, obj_attr)
             bridge = MOI.Bridges.bridge(b, obj_attr)
-            MOI.set(MOI.Bridges.recursive_model(b), attr, bridge, value)
+            MOI.set(MOI.Bridges.recursive_model(b), attr, bridge, nothing)
         end
     end
     return
