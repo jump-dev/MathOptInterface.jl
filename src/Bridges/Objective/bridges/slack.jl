@@ -205,6 +205,12 @@ function MOI.set(
     b::SlackBridge{T},
     ::Nothing,
 ) where {T}
+    # !!! note
+    #     This attribute should silently skip if the `model` does not support it.
+    #     For other attributes, we set `supports(...) = false`, but this would
+    #     cause `copy_to` to throw an `UnsupportedAttributeError`, which we don't
+    #     want. The solution is to check `supports(model, ...)` in this method,
+    #     and bail if not supported.
     # ConstraintDual: if the objective function had a dual, it would be `-1` for
     # the Lagrangian function to be the same.
     if MOI.supports(model, MOI.ConstraintDualStart(), typeof(b.constraint))
