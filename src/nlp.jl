@@ -265,6 +265,40 @@ The sparsity structure is assumed to be independent of the point ``x``.
 function hessian_lagrangian_structure end
 
 """
+    constraint_gradient_structure(d::AbstractNLPEvaluator, i::Int)::Vector{Int64}
+
+Returns a vector of indices, where each element indicates the position of a
+structurally nonzero element in the gradient of constraint ``\\nabla g_i(x)``.
+
+The indices are not required to be sorted and can contain duplicates, in which
+case the solver should combine the corresponding elements by adding them
+together.
+
+The sparsity structure is assumed to be independent of the point ``x``.
+"""
+function constraint_gradient_structure end
+
+"""
+    eval_constraint_gradient(
+        d::AbstractNLPEvaluator,
+        ∇g::AbstractVector{T},
+        x::AbstractVector{T},
+        i::Int,
+    )::Nothing where {T}
+
+Evaluate the gradient of constraint `i`, ``\\nabla g_i(x)``, and store the
+non-zero values in `∇g`, corresponding to the structure returned by
+[`constraint_gradient_structure`](@ref).
+
+## Implementation notes
+
+When implementing this method, you must not assume that `∇g` is
+`Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
+For example, it may be the `view` of a vector.
+"""
+function eval_constraint_gradient end
+
+"""
     eval_constraint_jacobian(d::AbstractNLPEvaluator,
         J::AbstractVector{T},
         x::AbstractVector{T},
