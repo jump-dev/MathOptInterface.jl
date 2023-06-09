@@ -223,6 +223,21 @@ function test_runtests()
         4.0 * x == 5.0
         """,
     )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.ScalarizeBridge,
+        """
+        variables: x
+        VectorNonlinearFunction([2.0 * x - 1.0]) in Nonnegatives(1)
+        VectorNonlinearFunction([3.0 * x + 1.0]) in Nonpositives(1)
+        VectorNonlinearFunction([4.0 * x - 5.0]) in Zeros(1)
+        """,
+        """
+        variables: x
+        ScalarNonlinearFunction(2.0 * x - 1.0) >= 0.0
+        ScalarNonlinearFunction(3.0 * x + 1.0) <= 0.0
+        ScalarNonlinearFunction(4.0 * x - 5.0) == 0.0
+        """,
+    )
     return
 end
 

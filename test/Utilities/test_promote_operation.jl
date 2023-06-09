@@ -33,6 +33,7 @@ function test_promote_operation_1a()
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
+        MOI.VectorNonlinearFunction,
     )
     special_cases = Dict(
         (1, 2) => 3,
@@ -46,7 +47,7 @@ function test_promote_operation_1a()
         k = get(special_cases, (i, j), max(i, j))
         @test MOI.Utilities.promote_operation(+, T, F[i], F[j]) == F[k]
     end
-    for i in 6:9, j in 6:9
+    for i in 6:10, j in 6:10
         k = get(special_cases, (i, j), max(i, j))
         @test MOI.Utilities.promote_operation(+, T, F[i], F[j]) == F[k]
     end
@@ -65,9 +66,10 @@ function test_promote_operation_2a()
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
+        MOI.VectorNonlinearFunction,
     )
     special_cases = Dict(2 => 3, 7 => 8)
-    for i in 1:8
+    for i in 1:10
         j = get(special_cases, i, i)
         @test MOI.Utilities.promote_operation(-, T, F[i]) == F[j]
     end
@@ -86,6 +88,7 @@ function test_promote_operation_2b()
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
+        MOI.VectorNonlinearFunction,
     )
     special_cases = Dict(
         (1, 2) => 3,
@@ -99,7 +102,7 @@ function test_promote_operation_2b()
         k = get(special_cases, (i, j), max(i, j))
         @test MOI.Utilities.promote_operation(-, T, F[i], F[j]) == F[k]
     end
-    for i in 6:9, j in 6:9
+    for i in 6:10, j in 6:10
         k = get(special_cases, (i, j), max(i, j))
         @test MOI.Utilities.promote_operation(-, T, F[i], F[j]) == F[k]
     end
@@ -118,9 +121,10 @@ function test_promote_operation_3a()
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
+        MOI.VectorNonlinearFunction,
     )
     special_cases = Dict(2 => 3, 7 => 8)
-    for i in 1:9
+    for i in 1:10
         j = get(special_cases, i, i)
         @test MOI.Utilities.promote_operation(*, T, T, F[i]) == F[j]
     end
@@ -139,9 +143,10 @@ function test_promote_operation_3b()
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
+        MOI.VectorNonlinearFunction,
     )
     special_cases = Dict(2 => 3, 7 => 8)
-    for i in 1:9
+    for i in 1:10
         j = get(special_cases, i, i)
         @test MOI.Utilities.promote_operation(*, T, F[i], T) == F[j]
     end
@@ -160,9 +165,10 @@ function test_promote_operation_4a()
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
+        MOI.VectorNonlinearFunction,
     )
     special_cases = Dict(2 => 3, 7 => 8)
-    for i in 1:9
+    for i in 1:10
         j = get(special_cases, i, i)
         @test MOI.Utilities.promote_operation(/, T, F[i], T) == F[j]
     end
@@ -176,23 +182,25 @@ function test_promote_operation_5a()
         MOI.VariableIndex,
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
         Vector{T},
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
+        MOI.VectorNonlinearFunction,
     )
     special_cases = Dict(
-        (1, 2) => 7,
-        (2, 1) => 7,
-        (1, 6) => 7,
-        (6, 1) => 7,
-        (2, 5) => 7,
-        (5, 2) => 7,
-        (5, 6) => 7,
-        (6, 5) => 7,
+        (1, 2) => 8,
+        (2, 1) => 8,
+        (1, 7) => 8,
+        (7, 1) => 8,
+        (2, 6) => 8,
+        (6, 2) => 8,
+        (6, 7) => 8,
+        (7, 6) => 8,
     )
-    for i in 1:8, j in 1:8
-        k = max(i <= 4 ? i + 4 : i, j <= 4 ? j + 4 : j)
+    for i in 1:10, j in 1:10
+        k = max(i <= 5 ? i + 5 : i, j <= 5 ? j + 5 : j)
         k = get(special_cases, (i, j), k)
         @test MOI.Utilities.promote_operation(vcat, T, F[i], F[j]) == F[k]
     end

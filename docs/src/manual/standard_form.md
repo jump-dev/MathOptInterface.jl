@@ -41,6 +41,7 @@ The function types implemented in MathOptInterface.jl are:
 | [`VectorAffineFunction`](@ref) | ``A x + b``, where ``A`` is a matrix and ``b`` is a vector. |
 | [`ScalarQuadraticFunction`](@ref) | ``\frac{1}{2} x^T Q x + a^T x + b``, where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant. |
 | [`VectorQuadraticFunction`](@ref) | A vector of scalar-valued quadratic functions. |
+| [`VectorNonlinearFunction`](@ref) | ``f(x)``, where ``f`` is a vector-valued nonlinear function. |
 
 Extensions for nonlinear programming are present but not yet well documented.
 

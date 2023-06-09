@@ -819,7 +819,7 @@ const LessThanIndicatorZero{T} =
     ),
     (MOI.ScalarNonlinearFunction,),
     (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
-    (MOI.VectorOfVariables,),
+    (MOI.VectorOfVariables, MOI.VectorNonlinearFunction),
     (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
 )
 

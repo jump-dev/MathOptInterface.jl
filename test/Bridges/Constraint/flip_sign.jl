@@ -425,6 +425,17 @@ function test_runtests()
         [-2.1 * x + 1.0] in Nonnegatives(1)
         """,
     )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.NonposToNonnegBridge,
+        """
+        variables: x
+        VectorNonlinearFunction([2.1 * x - 1.0]) in Nonpositives(1)
+        """,
+        """
+        variables: x
+        VectorNonlinearFunction([-(2.1 * x - 1.0)]) in Nonnegatives(1)
+        """,
+    )
     return
 end
 

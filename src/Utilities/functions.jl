@@ -334,6 +334,15 @@ function map_indices(
     )
 end
 
+function map_indices(
+    index_map::F,
+    f::MOI.GenericVectorFunction{T},
+) where {F<:Function,T}
+    return MOI.GenericVectorFunction{T}(
+        convert(Vector{T}, map_indices(index_map, f.rows))
+    )
+end
+
 map_indices(::F, change::MOI.ScalarConstantChange) where {F<:Function} = change
 
 map_indices(::F, change::MOI.VectorConstantChange) where {F<:Function} = change
@@ -535,6 +544,8 @@ function scalar_type(::Type{MOI.VectorQuadraticFunction{T}}) where {T}
     return MOI.ScalarQuadraticFunction{T}
 end
 
+scalar_type(::Type{MOI.VectorNonlinearFunction}) = MOI.ScalarNonlinearFunction
+
 """
     vector_type(::Type{<:MOI.AbstractScalarFunction})
 
@@ -553,6 +564,10 @@ end
 
 function vector_type(::Type{MOI.ScalarQuadraticFunction{T}}) where {T}
     return MOI.VectorQuadraticFunction{T}
+end
+
+function vector_type(::Type{MOI.ScalarNonlinearFunction})
+    return MOI.VectorNonlinearFunction
 end
 
 """
@@ -680,6 +695,12 @@ function Base.eltype(
     return MOI.ScalarQuadraticFunction{T}
 end
 
+function Base.eltype(
+    ::ScalarFunctionIterator{F},
+) where {F<:MOI.AbstractVectorFunction}
+    return scalar_type(F)
+end
+
 Base.lastindex(it::ScalarFunctionIterator) = length(it)
 
 function Base.getindex(
@@ -760,6 +781,20 @@ function Base.getindex(
         end
     end
     return MOI.VectorQuadraticFunction(vqt, vat, it.f.constants[output_indices])
+end
+
+function Base.getindex(
+    it::ScalarFunctionIterator{<:MOI.GenericVectorFunction},
+    output_index::Integer,
+)
+    return it.f.rows[output_index]
+end
+
+function Base.getindex(
+    it::ScalarFunctionIterator{MOI.GenericVectorFunction{F}},
+    output_index::AbstractVector{<:Integer},
+) where {F}
+    return MOI.GenericVectorFunction{F}(it.f.rows[output_index])
 end
 
 """
@@ -960,6 +995,13 @@ function canonicalize!(f::MOI.ScalarNonlinearFunction)
         if !is_canonical(arg)
             f.args[i] = canonicalize!(arg)
         end
+    end
+    return f
+end
+
+function canonicalize!(f::MOI.GenericVectorFunction)
+    for (i, fi) in enumerate(f.rows)
+        f.rows[i] = canonicalize!(fi)
     end
     return f
 end
@@ -2079,6 +2121,12 @@ function vectorize(
     return MOI.VectorQuadraticFunction(quadratic_terms, affine_terms, constant)
 end
 
+function vectorize(x::AbstractVector)
+    return MOI.VectorNonlinearFunction(collect(x))
+end
+
+scalarize(f::AbstractVector, ::Bool = false) = f
+
 """
     scalarize(func::MOI.VectorOfVariables, ignore_constants::Bool = false)
 
@@ -2153,6 +2201,8 @@ function scalarize(
     end
     return functions
 end
+
+scalarize(f::MOI.GenericVectorFunction, ignore_constants::Bool = false) = f.rows
 
 function count_terms(counting::Vector{<:Integer}, terms::Vector{T}) where {T}
     for term in terms
@@ -2251,6 +2301,8 @@ is_coefficient_type(::Type{<:TypedLike{T}}, ::Type{T}) where {T} = true
 is_coefficient_type(::Type{<:TypedLike}, ::Type) = false
 
 is_coefficient_type(::Type{<:MOI.ScalarNonlinearFunction}, ::Type) = true
+
+is_coefficient_type(::Type{MOI.VectorNonlinearFunction}, ::Type) = true
 
 similar_type(::Type{F}, ::Type{T}) where {F,T} = F
 

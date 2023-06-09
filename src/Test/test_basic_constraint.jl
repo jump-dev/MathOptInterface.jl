@@ -77,6 +77,18 @@ function _function(
     )
 end
 
+function _function(
+    ::Type{T},
+    ::Type{MOI.VectorNonlinearFunction},
+    x::Vector{MOI.VariableIndex},
+) where {T}
+    f = MOI.ScalarNonlinearFunction(
+        :+,
+        Any[MOI.ScalarNonlinearFunction(:^, Any[xi, 2]) for xi in x],
+    )
+    return MOI.VectorNonlinearFunction(Any[f; x])
+end
+
 # Default fallback.
 _set(::Any, ::Type{S}) where {S} = _set(S)
 
@@ -334,7 +346,13 @@ for s in [
             :ScalarNonlinearFunction,
         )
     else
-        (:VectorOfVariables, :VectorAffineFunction, :VectorQuadraticFunction)
+        (
+            :VectorOfVariables,
+            :VectorAffineFunction,
+            :VectorQuadraticFunction,
+            # TODO(odow): re-add this at a later date
+            # :VectorNonlinearFunction,
+        )
     end
     for f in functions
         func = Symbol("test_basic_$(f)_$(s)")

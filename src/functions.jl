@@ -13,6 +13,7 @@ components if `f` is an [`AbstractVectorFunction`](@ref).
 function output_dimension end
 
 output_dimension(::AbstractScalarFunction) = 1
+output_dimension(x::AbstractVector) = length(x)
 
 """
     constant(f::AbstractFunction[, ::Type{T}]) where {T}
@@ -406,6 +407,40 @@ All subtypes of `AbstractVectorFunction` must implement:
 """
 abstract type AbstractVectorFunction <: AbstractFunction end
 
+struct GenericVectorFunction{T} <: AbstractVectorFunction
+    rows::Vector{T}
+end
+
+output_dimension(f::GenericVectorFunction) = length(f.rows)
+
+function constant(f::GenericVectorFunction, ::Type{T}) where {T}
+    return zeros(T, output_dimension(f))
+end
+
+Base.copy(f::GenericVectorFunction) = GenericVectorFunction(copy(f.rows))
+
+function Base.:(==)(
+    f::GenericVectorFunction{T},
+    g::GenericVectorFunction{T},
+) where {T}
+    return f.rows == g.rows
+end
+
+function Base.isapprox(
+    x::GenericVectorFunction{T},
+    y::GenericVectorFunction{T};
+    kwargs...,
+) where {T}
+    return all(isapprox(xi, yi; kwargs...) for (xi, yi) in zip(x.rows, y.rows))
+end
+
+function Base.convert(
+    ::Type{GenericVectorFunction{T}},
+    rows::Vector{T},
+) where {T}
+    return GenericVectorFunction(rows)
+end
+
 """
     VectorOfVariables(variables::Vector{VariableIndex}) <: AbstractVectorFunction
 
@@ -664,6 +699,47 @@ function Base.copy(f::VectorQuadraticFunction)
         copy(f.constants),
     )
 end
+
+"""
+    VectorNonlinearFunction(args::Vector{Any})
+
+The vector-valued nonlinear function composed of a vector of scalar functions.
+
+## `args`
+
+The vector `args` contains the scalar elements of the nonlinear function. Each
+element must be one of the following:
+
+ * A constant value of type `T<:Real`
+ * A [`VariableIndex`](@ref)
+ * A [`ScalarAffineFunction`](@ref)
+ * A [`ScalarQuadraticFunction`](@ref)
+ * A [`ScalarNonlinearFunction`](@ref)
+
+## Example
+
+To represent the function ``f(x) = [sin(x)^2, x]``, do:
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> x = MOI.VariableIndex(1)
+MOI.VariableIndex(1)
+
+julia> g = MOI.ScalarNonlinearFunction(
+           :^,
+           Any[MOI.ScalarNonlinearFunction(:sin, Any[x]), 2.0],
+       )
+^(sin(MOI.VariableIndex(1)), 2.0)
+
+julia> MOI.VectorNonlinearFunction(Any[g, x])
+┌                                 ┐
+│^(sin(MOI.VariableIndex(1)), 2.0)│
+│MOI.VariableIndex(1)             │
+└                                 ┘
+```
+"""
+const VectorNonlinearFunction = GenericVectorFunction{Any}
 
 # Function modifications
 
