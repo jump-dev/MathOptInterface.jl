@@ -146,6 +146,10 @@ function MOI.constraint_gradient_structure(evaluator::Evaluator)
     return MOI.constraint_gradient_structure(evaluator.backend)
 end
 
+function MOI.jacobian_structure(evaluator::Evaluator)
+    return MOI.jacobian_structure(evaluator.backend)
+end
+
 function MOI.eval_constraint_jacobian(evaluator::Evaluator, J, x)
     start = time()
     MOI.eval_constraint_jacobian(evaluator.backend, J, x)
