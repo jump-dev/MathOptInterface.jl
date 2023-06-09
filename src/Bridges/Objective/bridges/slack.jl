@@ -196,14 +196,8 @@ function MOI.throw_set_error_fallback(
     return # Silently ignore if the model does not support.
 end
 
-function MOI.supports(
-    ::MOI.ModelLike,
-    ::SlackBridgePrimalDualStart,
-    ::Type{<:SlackBridge},
-)
-    # Pretend that every model supports, and silently skip in set if unsupported
-    return true
-end
+# Pretend that every model supports, and silently skip in set if unsupported
+MOI.supports(::MOI.ModelLike, ::SlackBridgePrimalDualStart) = true
 
 function MOI.set(
     model::MOI.ModelLike,
