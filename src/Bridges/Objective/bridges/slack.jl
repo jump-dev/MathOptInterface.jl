@@ -199,6 +199,13 @@ end
 # Pretend that every model supports, and silently skip in set if unsupported
 MOI.supports(::MOI.ModelLike, ::SlackBridgePrimalDualStart) = true
 
+function MOI.supports(
+    ::MOI.Bridges.AbstractBridgeOptimizer,
+    ::SlackBridgePrimalDualStart,
+)
+    return true
+end
+
 function MOI.set(
     model::MOI.ModelLike,
     ::SlackBridgePrimalDualStart,
