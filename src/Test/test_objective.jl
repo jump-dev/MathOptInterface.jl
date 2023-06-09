@@ -527,6 +527,7 @@ function test_objective_set_via_modify(
     @requires MOI.supports(model, attr)
     @requires _supports(config, MOI.modify)
     @requires _supports(config, MOI.ScalarCoefficientChange)
+    @requires _supports(config, MOI.ListOfModelAttributesSet)
     @test MOI.get(model, MOI.ListOfModelAttributesSet()) == []
     x = MOI.add_variable(model)
     MOI.modify(model, attr, MOI.ScalarCoefficientChange(x, T(1)))
@@ -536,10 +537,11 @@ end
 
 function test_objective_ObjectiveSense_in_ListOfModelAttributesSet(
     model::MOI.ModelLike,
-    ::Config{T},
+    config::Config{T},
 ) where {T}
     attr = MOI.ObjectiveSense()
     @requires MOI.supports(model, attr)
+    @requires _supports(config, MOI.ListOfModelAttributesSet)
     @test (attr in MOI.get(model, MOI.ListOfModelAttributesSet())) == false
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     @test (attr in MOI.get(model, MOI.ListOfModelAttributesSet())) == true
@@ -548,10 +550,11 @@ end
 
 function test_objective_VariableIndex_in_ListOfModelAttributesSet(
     model::MOI.ModelLike,
-    ::Config{T},
+    config::Config{T},
 ) where {T}
     attr = MOI.ObjectiveFunction{MOI.VariableIndex}()
     @requires MOI.supports(model, attr)
+    @requires _supports(config, MOI.ListOfModelAttributesSet)
     @test (attr in MOI.get(model, MOI.ListOfModelAttributesSet())) == false
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     x = MOI.add_variable(model)
@@ -562,10 +565,11 @@ end
 
 function test_objective_ScalarAffineFunction_in_ListOfModelAttributesSet(
     model::MOI.ModelLike,
-    ::Config{T},
+    config::Config{T},
 ) where {T}
     attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}()
     @requires MOI.supports(model, attr)
+    @requires _supports(config, MOI.ListOfModelAttributesSet)
     @test (attr in MOI.get(model, MOI.ListOfModelAttributesSet())) == false
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     x = MOI.add_variable(model)
@@ -576,10 +580,11 @@ end
 
 function test_objective_ScalarQuadraticFunction_in_ListOfModelAttributesSet(
     model::MOI.ModelLike,
-    ::Config{T},
+    config::Config{T},
 ) where {T}
     attr = MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}()
     @requires MOI.supports(model, attr)
+    @requires _supports(config, MOI.ListOfModelAttributesSet)
     @test (attr in MOI.get(model, MOI.ListOfModelAttributesSet())) == false
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     x = MOI.add_variable(model)
