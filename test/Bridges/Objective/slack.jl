@@ -514,6 +514,49 @@ function test_deletion_of_variable_in_slacked_objective()
     return
 end
 
+function test_SlackBridgePrimalDualStart()
+    inner = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    model = MOI.Bridges.Objective.Slack{Float64}(inner)
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, x, MOI.GreaterThan(2.0))
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.1, x)], -1.2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.set(model, MOI.VariablePrimalStart(), x, 2.0)
+    attr = MOI.Bridges.Objective.SlackBridgePrimalDualStart()
+    @test MOI.supports(model, attr)
+    MOI.set(model, attr, nothing)
+    vars = MOI.get(inner, MOI.ListOfVariableIndices())
+    primal_start = MOI.get.(inner, MOI.VariablePrimalStart(), vars)
+    @test primal_start[1] ≈ 2.0
+    @test primal_start[2] ≈ 1.1 * 2.0 - 1.2
+    F = MOI.ScalarAffineFunction{Float64}
+    cis = MOI.get(inner, MOI.ListOfConstraintIndices{F,MOI.LessThan{Float64}}())
+    @test length(cis) == 1
+    @test MOI.get(inner, MOI.ConstraintPrimalStart(), cis[1]) ≈ 0.0
+    @test MOI.get(inner, MOI.ConstraintDualStart(), cis[1]) ≈ -1.0
+    return
+end
+
+function test_SlackBridgePrimalDualStart_unsupported()
+    attr = MOI.Bridges.Objective.SlackBridgePrimalDualStart()
+    inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    # Check that setting on blank model doesn't error.
+    @test MOI.supports(inner, attr)
+    MOI.set(inner, attr, nothing)
+    model = MOI.Bridges.Objective.Slack{Float64}(inner)
+    @test MOI.supports(model, attr)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.1, x)], -1.2)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    # Unsupported. Should silently skip without error.
+    MOI.set(model, attr, nothing)
+    return
+end
+
 end  # module
 
 TestObjectiveSlack.runtests()

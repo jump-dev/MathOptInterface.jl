@@ -174,3 +174,79 @@ function MOI.get(
     g = MOI.Utilities.remove_variable(f, bridge.slack)
     return MOI.Utilities.convert_approx(G, g)
 end
+
+"""
+    struct SlackBridgePrimalDualStart <: MOI.AbstractModelAttribute end
+
+[`Bridges.Objective.SlackBridge`](@ref) introduces a new constraint into the
+problem. However, because it is not a constraint bridge, it cannot intercept
+calls to set [`ConstraintDualStart`](@ref) or [`ConstraintPrimalStart`](@ref).
+
+As a work-around, set this attribute to `nothing` to set the primal and dual
+start for the new constraint. This attribute must be set after
+[`VariablePrimalStart`](@ref).
+"""
+struct SlackBridgePrimalDualStart <: MOI.AbstractModelAttribute end
+
+function MOI.throw_set_error_fallback(
+    ::MOI.ModelLike,
+    ::SlackBridgePrimalDualStart,
+    ::Nothing,
+)
+    return # Silently ignore if the model does not support.
+end
+
+# Pretend that every model supports, and silently skip in set if unsupported
+MOI.supports_fallback(::MOI.ModelLike, ::SlackBridgePrimalDualStart) = true
+
+function MOI.set(
+    model::MOI.ModelLike,
+    ::SlackBridgePrimalDualStart,
+    b::SlackBridge{T},
+    ::Nothing,
+) where {T}
+    # !!! note
+    #     This attribute should silently skip if the `model` does not support it.
+    #     For other attributes, we set `supports(...) = false`, but this would
+    #     cause `copy_to` to throw an `UnsupportedAttributeError`, which we don't
+    #     want. The solution is to check `supports(model, ...)` in this method,
+    #     and bail if not supported.
+    # ConstraintDual: if the objective function had a dual, it would be `-1` for
+    # the Lagrangian function to be the same.
+    if MOI.supports(model, MOI.ConstraintDualStart(), typeof(b.constraint))
+        MOI.set(model, MOI.ConstraintDualStart(), b.constraint, -one(T))
+    end
+    # ConstraintPrimal: we should set the slack of f(x) - y to be 0, and the
+    # start of y to be f(x).
+    if !MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex) ||
+       !MOI.supports(model, MOI.ConstraintPrimalStart(), typeof(b.constraint))
+        return
+    end
+    MOI.set(model, MOI.VariablePrimalStart(), b.slack, zero(T))
+    f = MOI.get(model, MOI.ConstraintFunction(), b.constraint)
+    f_val = MOI.Utilities.eval_variables(f) do v
+        return MOI.get(model, MOI.VariablePrimalStart(), v)
+    end
+    f_val -= MOI.constant(MOI.get(model, MOI.ConstraintSet(), b.constraint))
+    MOI.set(model, MOI.VariablePrimalStart(), b.slack, f_val)
+    MOI.set(model, MOI.ConstraintPrimalStart(), b.constraint, zero(T))
+    return
+end
+
+function MOI.set(
+    b::MOI.Bridges.AbstractBridgeOptimizer,
+    attr::SlackBridgePrimalDualStart,
+    ::Nothing,
+)
+    # TODO(odow): this might fail if the SlackBridge is not the first bridge in
+    # the chain, but it should be for our current setup of bridges, so we
+    # choose to simplify this implementation.
+    if MOI.Bridges.is_objective_bridged(b)
+        obj_attr = MOI.ObjectiveFunction{function_type(bridges(b))}()
+        if MOI.Bridges.is_bridged(b, obj_attr)
+            bridge = MOI.Bridges.bridge(b, obj_attr)
+            MOI.set(MOI.Bridges.recursive_model(b), attr, bridge, nothing)
+        end
+    end
+    return
+end
