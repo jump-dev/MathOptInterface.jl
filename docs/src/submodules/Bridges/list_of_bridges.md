@@ -63,6 +63,7 @@ Bridges.Constraint.IndicatorLessToGreaterThanBridge
 Bridges.Constraint.IndicatorSOS1Bridge
 Bridges.Constraint.SemiToBinaryBridge
 Bridges.Constraint.ZeroOneBridge
+Bridges.Constraint.IntegerToZeroOneBridge
 Bridges.Constraint.NumberConversionBridge
 Bridges.Constraint.AllDifferentToCountDistinctBridge
 Bridges.Constraint.ReifiedAllDifferentToCountDistinctBridge
