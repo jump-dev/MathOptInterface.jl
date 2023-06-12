@@ -20,7 +20,7 @@ for file in readdir(@__DIR__)
     end
 end
 
-@testset "MOI.$(submodule)" for submodule in [
+for submodule in [
     "Nonlinear",
     "Bridges",
     "FileFormats",
