@@ -4,50 +4,50 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-# There are five methods for which we implement `Utilities.promote_operation`
-# and `Utilities.operate`:
-#
-#  1. `+`
-#     a. `promote_operation(::typeof(+), ::Type{T}, ::Type{F1}, ::Type{F2})`
-#  2. `-`
-#     a. `promote_operation(::typeof(-), ::Type{T}, ::Type{F})`
-#     b. `promote_operation(::typeof(-), ::Type{T}, ::Type{F1}, ::Type{F2})`
-#     c. `promote_operation(::typeof(-), ::Type{T}, ::Type{F1}, ::Type{Vector{T}})`
-#  3. `*`
-#     a. `promote_operation(::typeof(*), ::Type{T}, ::Type{T}, ::Type{F})`
-#     b. `promote_operation(::typeof(*), ::Type{T}, ::Type{F1}, ::Type{F2})`
-#        where `F1` and `F2` are `VariableIndex` or `ScalarAffineFunction`
-#     c. `promote_operation(::typeof(*), ::Type{T}, ::Type{<:Diagonal{T}}, ::Type{F}`
-#  4. `/`
-#     a. `promote_operation(::typeof(/), ::Type{T}, ::Type{F}, ::Type{T})`
-#  5. `vcat`
-#     a. `promote_operation(::typeof(vcat), ::Type{T}, ::Type{F}...)`
-#  6. `imag`
-#     a. `promote_operation(::typeof(imag), ::Type{T}, ::Type{F}`
-#        where `F` is `VariableIndex` or `VectorOfVariables`
-#
-# There are eight types:
-#
-#  1. ::T
-#  2. ::VariableIndex
-#  3. ::ScalarAffineFunction{T}
-#  4. ::ScalarQuadraticFunction{T}
-#  5. ::AbstractVector{T}
-#  6. ::VectorOfVariables
-#  7. ::VectorAffineFunction{T}
-#  8. ::VectorQuadraticFunction{T}
+"""
+    promote_operation(
+        op::Function,
+        ::Type{T},
+        ArgsTypes::Type{<:Union{T,AbstractVector{T},MOI.AbstractFunction}}...,
+    ) where {T}
 
-vector_type(::Type{T}) where {T} = Vector{T}
+Compute the return type of the call `operate(op, T, args...)`, where the types
+of the arguments `args` are `ArgsTypes`.
 
-vector_type(::Type{MOI.VariableIndex}) = MOI.VectorOfVariables
+There are five methods for which we implement `Utilities.promote_operation`:
 
-function vector_type(::Type{MOI.ScalarAffineFunction{T}}) where {T}
-    return MOI.VectorAffineFunction{T}
-end
+ 1. `+`
+    a. `promote_operation(::typeof(+), ::Type{T}, ::Type{F1}, ::Type{F2})`
+ 2. `-`
+    a. `promote_operation(::typeof(-), ::Type{T}, ::Type{F})`
+    b. `promote_operation(::typeof(-), ::Type{T}, ::Type{F1}, ::Type{F2})`
+    c. `promote_operation(::typeof(-), ::Type{T}, ::Type{F1}, ::Type{Vector{T}})`
+ 3. `*`
+    a. `promote_operation(::typeof(*), ::Type{T}, ::Type{T}, ::Type{F})`
+    b. `promote_operation(::typeof(*), ::Type{T}, ::Type{F1}, ::Type{F2})`
+       where `F1` and `F2` are `VariableIndex` or `ScalarAffineFunction`
+    c. `promote_operation(::typeof(*), ::Type{T}, ::Type{<:Diagonal{T}}, ::Type{F}`
+ 4. `/`
+    a. `promote_operation(::typeof(/), ::Type{T}, ::Type{F}, ::Type{T})`
+ 5. `vcat`
+    a. `promote_operation(::typeof(vcat), ::Type{T}, ::Type{F}...)`
+ 6. `imag`
+    a. `promote_operation(::typeof(imag), ::Type{T}, ::Type{F}`
+       where `F` is `VariableIndex` or `VectorOfVariables`
 
-function vector_type(::Type{MOI.ScalarQuadraticFunction{T}}) where {T}
-    return MOI.VectorQuadraticFunction{T}
-end
+There are nine types:
+
+ 1. ::T
+ 2. ::VariableIndex
+ 3. ::ScalarAffineFunction{T}
+ 4. ::ScalarQuadraticFunction{T}
+ 5. ::ScalarNonlinearFunction
+ 6. ::AbstractVector{T}
+ 7. ::VectorOfVariables
+ 8. ::VectorAffineFunction{T}
+ 9. ::VectorQuadraticFunction{T}
+"""
+function promote_operation end
 
 ### Method 1a and 2b
 
