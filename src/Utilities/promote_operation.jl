@@ -19,35 +19,35 @@
 #     a. `promote_operation(::typeof(/), ::Type{T}, ::Type{F}, ::Type{T})`
 #  5. `vcat`
 #     a. `promote_operation(::typeof(vcat), ::Type{T}, ::Type{F}...)`
-
-# Scalar types
+#  6. `imag`
+#     a. `promote_operation(::typeof(imag), ::Type{T}, ::Type{F}`
+#        where `F` is `VariableIndex` or `VectorOfVariables`
+#
+# There are eight types:
 #
 #  1. ::T
 #  2. ::VariableIndex
 #  3. ::ScalarAffineFunction{T}
 #  4. ::ScalarQuadraticFunction{T}
-#
-# Vector functions
-#
-#  1. ::Vector{T}
-#  2. ::VectorOfVariables
-#  3. ::VectorAffineFunction{T}
-#  4. ::VectorQuadraticFunction{T}
+#  5. ::AbstractVector{T}
+#  6. ::VectorOfVariables
+#  7. ::VectorAffineFunction{T}
+#  8. ::VectorQuadraticFunction{T}
 
 vector_type(::Type{T}) where {T} = Vector{T}
 
 vector_type(::Type{MOI.VariableIndex}) = MOI.VectorOfVariables
 
 function vector_type(::Type{MOI.ScalarAffineFunction{T}}) where {T}
-    return VectorAffineFunction{T}
+    return MOI.VectorAffineFunction{T}
 end
 
 function vector_type(::Type{MOI.ScalarQuadraticFunction{T}}) where {T}
-    return VectorQuadraticFunction{T}
+    return MOI.VectorQuadraticFunction{T}
 end
 
 function vector_type(::Type{MOI.ScalarNonlinearFunction})
-    return VectorNonlinearFunction
+    return MOI.VectorNonlinearFunction
 end
 
 ### Method 1a and 2b
@@ -120,9 +120,23 @@ function promote_operation(
     ::Type{T},
     ::Type{F1},
     ::Type{F2},
-) where {T,F1<:MOI.AbstractVectorFunction,F2<:MOI.AbstractVectorFunction}
-    S = promote_operation(io, T, scalar_type(F1), scalar_type(F2))
-    return vector_type(S, T)
+) where {
+    T,
+    F1<:Union{
+        AbstractVector{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+    F2<:Union{
+        AbstractVector{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+}
+    S = promote_operation(op, T, scalar_type(F1), scalar_type(F2))
+    return vector_type(S)
 end
 
 ### Method 2a
@@ -134,8 +148,10 @@ function promote_operation(
 ) where {
     T,
     F<:Union{
+        T,
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
+        AbstractVector{T},
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     },
@@ -159,7 +175,7 @@ function promote_operation(
     return MOI.VectorAffineFunction{T}
 end
 
-### Method 2b
+### Method 2c
 
 function promote_operation(
     ::typeof(-),
@@ -168,7 +184,11 @@ function promote_operation(
     ::Type{<:AbstractVector{T}},
 ) where {
     T,
-    F<:Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
+    F<:Union{
+        AbstractVector{T},
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
 }
     return F
 end
@@ -192,13 +212,24 @@ function promote_operation(
 ) where {
     T,
     F<:Union{
+        # T,  # Stackoverflow if included
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
+        AbstractVector{T},
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     },
 }
     return F
+end
+
+function promote_operation(
+    ::typeof(*),
+    ::Type{T},
+    ::Type{T},
+    ::Type{T},
+) where {T}
+    return T
 end
 
 function promote_operation(
@@ -231,11 +262,21 @@ function promote_operation(
     F<:Union{
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
+        AbstractVector{T},
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     },
 }
     return F
+end
+
+function promote_operation(
+    ::typeof(/),
+    ::Type{T},
+    ::Type{T},
+    ::Type{T},
+) where {T}
+    return T
 end
 
 function promote_operation(
@@ -259,3 +300,21 @@ end
 ### Method 5a
 
 # TODO
+
+### Method 6a
+
+function promote_operation(
+    ::typeof(imag),
+    ::Type{T},
+    ::Type{MOI.VariableIndex},
+) where {T}
+    return MOI.ScalarAffineFunction{T}
+end
+
+function promote_operation(
+    ::typeof(imag),
+    ::Type{T},
+    ::Type{MOI.VectorOfVariables},
+) where {T}
+    return MOI.VectorAffineFunction{T}
+end
