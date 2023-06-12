@@ -49,73 +49,59 @@ function vector_type(::Type{MOI.ScalarQuadraticFunction{T}}) where {T}
     return MOI.VectorQuadraticFunction{T}
 end
 
-function vector_type(::Type{MOI.ScalarNonlinearFunction})
-    return MOI.VectorNonlinearFunction
-end
-
 ### Method 1a and 2b
 
 function promote_operation(
     ::Union{typeof(+),typeof(-)},
     ::Type{T},
     ::Type{T},
-    ::Type{F},
-) where {T,F}
-    return F
-end
-
-function promote_operation(
-    ::Union{typeof(+),typeof(-)},
     ::Type{T},
-    ::Type{T},
-    ::Type{MOI.VariableIndex},
 ) where {T}
+    return T
+end
+
+function promote_operation(
+    ::Union{typeof(+),typeof(-)},
+    ::Type{T},
+    ::Type{<:F},
+    ::Type{<:F},
+) where {T,F<:Union{T,MOI.VariableIndex,MOI.ScalarAffineFunction{T}}}
     return MOI.ScalarAffineFunction{T}
 end
 
 function promote_operation(
     ::Union{typeof(+),typeof(-)},
     ::Type{T},
-    ::Type{MOI.VariableIndex},
-    ::Type{F},
-) where {T,F}
-    return MOI.ScalarAffineFunction{T}
-end
-
-function promote_operation(
-    ::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    ::Type{MOI.VariableIndex},
-    ::Type{MOI.ScalarQuadraticFunction{T}},
-) where {T}
+    ::Type{<:F},
+    ::Type{<:F},
+) where {
+    T,
+    F<:Union{
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+    },
+}
     return MOI.ScalarQuadraticFunction{T}
 end
 
 function promote_operation(
     ::Union{typeof(+),typeof(-)},
     ::Type{T},
-    ::Type{MOI.ScalarAffineFunction{T}},
-    ::Type{F},
-) where {T,F}
-    return MOI.ScalarAffineFunction{T}
-end
-
-function promote_operation(
-    ::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    ::Type{MOI.ScalarAffineFunction{T}},
-    ::Type{MOI.ScalarQuadraticFunction{T}},
-) where {T,F}
-    return MOI.ScalarQuadraticFunction{T}
-end
-
-function promote_operation(
-    ::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    ::Type{MOI.ScalarQuadraticFunction{T}},
-    ::Type{F},
-) where {T,F}
-    return MOI.ScalarQuadraticFunction{T}
+    ::Type{<:F},
+    ::Type{<:F},
+) where {
+    T,
+    F<:Union{
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
+    },
+}
+    return MOI.ScalarNonlinearFunction
 end
 
 function promote_operation(
@@ -154,6 +140,7 @@ function promote_operation(
         T,
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
         AbstractVector{T},
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
@@ -218,6 +205,7 @@ function promote_operation(
         # T,  # Stackoverflow if included
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
         AbstractVector{T},
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
@@ -288,6 +276,7 @@ function promote_operation(
     F<:Union{
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
         AbstractVector{T},
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
