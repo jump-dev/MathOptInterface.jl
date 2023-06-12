@@ -159,6 +159,36 @@ function test_promote_operation_4a()
     return
 end
 
+function test_promote_operation_5a()
+    T = Int
+    F = (
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        Vector{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    )
+    special_cases = Dict(
+        (1, 2) => 7,
+        (2, 1) => 7,
+        (1, 6) => 7,
+        (6, 1) => 7,
+        (2, 5) => 7,
+        (5, 2) => 7,
+        (5, 6) => 7,
+        (6, 5) => 7,
+    )
+    for i in 1:8, j in 1:8
+        k = max(i <= 4 ? i + 4 : i, j <= 4 ? j + 4 : j)
+        k = get(special_cases, (i, j), k)
+        @test MOI.Utilities.promote_operation(vcat, T, F[i], F[j]) == F[k]
+    end
+    return
+end
+
 function test_promote_operation_6a()
     T = Int
     @test MOI.Utilities.promote_operation(imag, T, MOI.VariableIndex) ==

@@ -15,6 +15,9 @@
 #     c. `promote_operation(::typeof(-), ::Type{T}, ::Type{F1}, ::Type{Vector{T}})`
 #  3. `*`
 #     a. `promote_operation(::typeof(*), ::Type{T}, ::Type{T}, ::Type{F})`
+#     b. `promote_operation(::typeof(*), ::Type{T}, ::Type{F1}, ::Type{F2})`
+#        where `F1` and `F2` are `VariableIndex` or `ScalarAffineFunction`
+#     c. `promote_operation(::typeof(*), ::Type{T}, ::Type{<:Diagonal{T}}, ::Type{F}`
 #  4. `/`
 #     a. `promote_operation(::typeof(/), ::Type{T}, ::Type{F}, ::Type{T})`
 #  5. `vcat`
@@ -250,6 +253,29 @@ function promote_operation(
     return MOI.VectorAffineFunction{T}
 end
 
+### Method 3b
+
+function promote_operation(
+    ::typeof(*),
+    ::Type{T},
+    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
+    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
+) where {T}
+    return MOI.ScalarQuadraticFunction{T}
+end
+
+### Method 3c
+
+function promote_operation(
+    ::typeof(*),
+    ::Type{T},
+    ::Type{<:Diagonal{T}},
+    ::Type{F},
+) where {T,F}
+    U = promote_operation(*, T, T, scalar_type(F))
+    return promote_operation(vcat, T, U)
+end
+
 ### Method 4a
 
 function promote_operation(
@@ -299,7 +325,57 @@ end
 
 ### Method 5a
 
-# TODO
+function promote_operation(
+    ::typeof(vcat),
+    ::Type{T},
+    ::Type{<:Union{T,AbstractVector{T}}}...,
+) where {T}
+    return Vector{T}
+end
+
+function promote_operation(
+    ::typeof(vcat),
+    ::Type{T},
+    ::Type{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}}...,
+) where {T}
+    return MOI.VectorOfVariables
+end
+
+function promote_operation(
+    ::typeof(vcat),
+    ::Type{T},
+    ::Type{
+        <:Union{
+            T,
+            MOI.VariableIndex,
+            MOI.ScalarAffineFunction{T},
+            AbstractVector{T},
+            MOI.VectorOfVariables,
+            MOI.VectorAffineFunction{T},
+        },
+    }...,
+) where {T}
+    return MOI.VectorAffineFunction{T}
+end
+
+function promote_operation(
+    ::typeof(vcat),
+    ::Type{T},
+    ::Type{
+        <:Union{
+            T,
+            MOI.VariableIndex,
+            MOI.ScalarAffineFunction{T},
+            MOI.ScalarQuadraticFunction{T},
+            AbstractVector{T},
+            MOI.VectorOfVariables,
+            MOI.VectorAffineFunction{T},
+            MOI.VectorQuadraticFunction{T},
+        },
+    }...,
+) where {T}
+    return MOI.VectorQuadraticFunction{T}
+end
 
 ### Method 6a
 

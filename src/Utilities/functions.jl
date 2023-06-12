@@ -2278,15 +2278,6 @@ end
 
 ####################################### * ######################################
 
-function promote_operation(
-    ::typeof(*),
-    ::Type{T},
-    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
-    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
-) where {T}
-    return MOI.ScalarQuadraticFunction{T}
-end
-
 function operate!(::typeof(*), ::Type{T}, f::MOI.VariableIndex, α::T) where {T}
     return operate(*, T, α, f)
 end
@@ -2674,14 +2665,6 @@ function fill_variables(
     return
 end
 
-function promote_operation(
-    ::typeof(vcat),
-    ::Type{T},
-    ::Type{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}}...,
-) where {T}
-    return MOI.VectorOfVariables
-end
-
 function operate(
     ::typeof(vcat),
     ::Type{T},
@@ -2942,19 +2925,6 @@ function vectorize(
     return MOI.VectorQuadraticFunction(quadratic_terms, affine_terms, constant)
 end
 
-function promote_operation(::typeof(vcat), ::Type{T}, ::Type{T}...) where {T}
-    return Vector{T}
-end
-
-# TODO Remove `<:Number` when we drop Julia v1.1.1, otherwise it gives a `StackOverflowError`
-function promote_operation(
-    ::typeof(vcat),
-    ::Type{T},
-    ::Union{Type{T},Type{<:AbstractVector{T}}}...,
-) where {T<:Number}
-    return Vector{T}
-end
-
 # TODO Remove `<:Number` when we drop Julia v1.1.1, it's needed for disambiguation
 function operate(
     ::typeof(vcat),
@@ -2962,35 +2932,6 @@ function operate(
     funcs::Union{T,AbstractVector{T}}...,
 ) where {T<:Number}
     return vcat(funcs...)
-end
-
-function promote_operation(
-    ::typeof(vcat),
-    ::Type{T},
-    ::Type{
-        <:Union{
-            ScalarAffineLike{T},
-            MOI.VectorOfVariables,
-            MOI.VectorAffineFunction{T},
-        },
-    }...,
-) where {T}
-    return MOI.VectorAffineFunction{T}
-end
-
-function promote_operation(
-    ::typeof(vcat),
-    ::Type{T},
-    ::Type{
-        <:Union{
-            ScalarQuadraticLike{T},
-            MOI.VectorOfVariables,
-            MOI.VectorAffineFunction{T},
-            MOI.VectorQuadraticFunction{T},
-        },
-    }...,
-) where {T}
-    return MOI.VectorQuadraticFunction{T}
 end
 
 function operate(
@@ -3370,17 +3311,6 @@ end
 Base.conj(f::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = f
 
 ## Matrix operations
-
-function promote_operation(
-    ::typeof(*),
-    ::Type{T},
-    ::Type{<:Diagonal{T}},
-    ::Type{F},
-) where {T,F}
-    S = scalar_type(F)
-    U = promote_operation(*, T, T, S)
-    return promote_operation(vcat, T, U)
-end
 
 function operate_term(::typeof(*), D::Diagonal, term::MOI.VectorAffineTerm)
     return MOI.VectorAffineTerm(
