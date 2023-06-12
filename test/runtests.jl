@@ -20,14 +20,8 @@ for file in readdir(@__DIR__)
     end
 end
 
-@testset "MOI.$(submodule)" for submodule in [
-    "Nonlinear",
-    "Bridges",
-    "FileFormats",
-    "Test",
-    "Utilities",
-    "Benchmarks",
-]
+for submodule in
+    ["Nonlinear", "Bridges", "FileFormats", "Test", "Utilities", "Benchmarks"]
     include("$(submodule)/$(submodule).jl")
 end
 
