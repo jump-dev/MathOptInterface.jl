@@ -91,11 +91,7 @@ function MOI.get(
     return bridge.x
 end
 
-function MOI.get(
-    ::MOI.ModelLike,
-    ::MOI.ConstraintSet,
-    ::IntegerToZeroOneBridge,
-)
+function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, ::IntegerToZeroOneBridge)
     return MOI.Integer()
 end
 
@@ -105,10 +101,7 @@ function MOI.delete(model::MOI.ModelLike, bridge::IntegerToZeroOneBridge)
     return
 end
 
-function MOI.get(
-    bridge::IntegerToZeroOneBridge,
-    ::MOI.NumberOfVariables,
-)::Int64
+function MOI.get(bridge::IntegerToZeroOneBridge, ::MOI.NumberOfVariables)::Int64
     return length(bridge.y)
 end
 
@@ -163,10 +156,11 @@ function MOI.Bridges.final_touch(
     end
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), bridge.x)], T(0))
     lb, ub = ceil(Int, ret[1]), floor(Int, ret[2])
-    for i in 1:(floor(Int, log2(ub - lb)) + 1)
+    N = floor(Int, log2(ub - lb)) + 1
+    for i in 1:N
         y, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
         push!(bridge.y, y)
-        push!(f.terms, MOI.ScalarAffineTerm(-(T(2)^(i-1)), y))
+        push!(f.terms, MOI.ScalarAffineTerm(-(T(2)^(i - 1)), y))
     end
     bridge.ci = MOI.add_constraint(model, f, MOI.EqualTo{T}(lb))
     bridge.last_bounds = ret
