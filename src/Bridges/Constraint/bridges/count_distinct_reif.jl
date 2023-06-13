@@ -377,9 +377,9 @@ function MOI.Bridges.final_touch(
     MOI.add_constraint(model, z[2], MOI.ZeroOne())
     # ∑y - n - δ⁺ + δ⁻ = 0
     f_0 = MOI.ScalarAffineFunction(count_terms, zero(T))
-    MOI.Utilities.operate!(-, T, f_0, scalars[2])
-    MOI.Utilities.operate!(-, T, f_0, z[3])
-    MOI.Utilities.operate!(+, T, f_0, z[4])
+    f_0 = MOI.Utilities.operate!(-, T, f_0, scalars[2])
+    f_0 = MOI.Utilities.operate!(-, T, f_0, z[3])
+    f_0 = MOI.Utilities.operate!(+, T, f_0, z[4])
     push!(
         bridge.equal_to,
         MOI.Utilities.normalize_and_add_constraint(

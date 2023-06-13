@@ -312,7 +312,7 @@ function MOI.Bridges.final_touch(
             end
         end
     end
-    MOI.Utilities.operate!(-, T, f, scalars[1])
+    f = MOI.Utilities.operate!(-, T, f, scalars[1])
     push!(
         bridge.equal_to,
         MOI.Utilities.normalize_and_add_constraint(
