@@ -58,7 +58,7 @@ function bridge_constraint(
     for ri in r
         f = MOI.Utilities.operate!(+, T, f, ri)
     end
-    MOI.Utilities.operate!(-, T, f, fi_s[1])
+    f = MOI.Utilities.operate!(-, T, f, fi_s[1])
     equal_ci = MOI.add_constraint(model, f, MOI.EqualTo(zero(T)))
     return NormToPowerBridge{T,F}(power_ci, r, equal_ci, s)
 end

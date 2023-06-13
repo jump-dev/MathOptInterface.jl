@@ -354,7 +354,7 @@ function MOI.Bridges.final_touch(
         )
     end
     count_f = MOI.ScalarAffineFunction(count_terms, zero(T))
-    MOI.Utilities.operate!(-, T, count_f, scalars[1])
+    count_f = MOI.Utilities.operate!(-, T, count_f, scalars[1])
     push!(
         bridge.equal_to,
         MOI.Utilities.normalize_and_add_constraint(

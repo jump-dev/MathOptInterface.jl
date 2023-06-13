@@ -414,11 +414,11 @@ function MOI.get(
     for i in 3:MOI.output_dimension(f)
         term = MOI.Utilities.operate(*, T, fs[i], fs[i])
         term = MOI.Utilities.operate!(/, T, term, 2 * one(T))
-        MOI.Utilities.operate!(+, T, q, term)
+        q = MOI.Utilities.operate!(+, T, q, term)
     end
-    MOI.Utilities.operate!(-, T, q, fs[2])
+    q = MOI.Utilities.operate!(-, T, q, fs[2])
     if !b.less_than
-        MOI.Utilities.operate!(-, T, q)
+        q = MOI.Utilities.operate!(-, T, q)
     end
     q.constant += b.set_constant
     return q
