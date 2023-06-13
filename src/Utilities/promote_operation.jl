@@ -24,9 +24,10 @@ There are five methods for which we implement `Utilities.promote_operation`:
     c. `promote_operation(::typeof(-), ::Type{T}, ::Type{F1}, ::Type{Vector{T}})`
  3. `*`
     a. `promote_operation(::typeof(*), ::Type{T}, ::Type{T}, ::Type{F})`
-    b. `promote_operation(::typeof(*), ::Type{T}, ::Type{F1}, ::Type{F2})`
+    b. `promote_operation(::typeof(*), ::Type{T}, ::Type{T}, ::Type{F})`
+    c. `promote_operation(::typeof(*), ::Type{T}, ::Type{F1}, ::Type{F2})`
        where `F1` and `F2` are `VariableIndex` or `ScalarAffineFunction`
-    c. `promote_operation(::typeof(*), ::Type{T}, ::Type{<:Diagonal{T}}, ::Type{F}`
+    d. `promote_operation(::typeof(*), ::Type{T}, ::Type{<:Diagonal{T}}, ::Type{F}`
  4. `/`
     a. `promote_operation(::typeof(/), ::Type{T}, ::Type{F}, ::Type{T})`
  5. `vcat`
@@ -246,13 +247,53 @@ end
 function promote_operation(
     ::typeof(*),
     ::Type{T},
+    ::Type{F},
+    ::Type{T},
+) where {
+    T,
+    F<:Union{
+        # T,  # Stackoverflow if included
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
+        AbstractVector{T},
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+}
+    return F
+end
+
+function promote_operation(
+    ::typeof(*),
+    ::Type{T},
+    ::Type{MOI.VariableIndex},
+    ::Type{T},
+) where {T}
+    return MOI.ScalarAffineFunction{T}
+end
+
+function promote_operation(
+    ::typeof(*),
+    ::Type{T},
+    ::Type{MOI.VectorOfVariables},
+    ::Type{T},
+) where {T}
+    return MOI.VectorAffineFunction{T}
+end
+
+### Method 3c
+
+function promote_operation(
+    ::typeof(*),
+    ::Type{T},
     ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
     ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
 ) where {T}
     return MOI.ScalarQuadraticFunction{T}
 end
 
-### Method 3c
+### Method 3d
 
 function promote_operation(
     ::typeof(*),

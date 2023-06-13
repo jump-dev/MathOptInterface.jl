@@ -143,6 +143,27 @@ function test_promote_operation_3a()
     return
 end
 
+function test_promote_operation_3b()
+    T = Int
+    F = (
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
+        Vector{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    )
+    special_cases = Dict(2 => 3, 7 => 8)
+    for i in 1:9
+        j = get(special_cases, i, i)
+        @test MOI.Utilities.promote_operation(*, T, F[i], T) == F[j]
+    end
+    return
+end
+
 function test_promote_operation_4a()
     T = Int
     F = (
