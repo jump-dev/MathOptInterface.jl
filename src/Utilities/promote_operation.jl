@@ -14,6 +14,9 @@
 Compute the return type of the call `operate(op, T, args...)`, where the types
 of the arguments `args` are `ArgsTypes`.
 
+One assumption is that the element type `T` is invariant under each operation.
+That is, `op(::T, ::T)::T` where `op` is a `+`, `-`, `*`, and `/`.
+
 There are five methods for which we implement `Utilities.promote_operation`:
 
  1. `+`
@@ -21,7 +24,6 @@ There are five methods for which we implement `Utilities.promote_operation`:
  2. `-`
     a. `promote_operation(::typeof(-), ::Type{T}, ::Type{F})`
     b. `promote_operation(::typeof(-), ::Type{T}, ::Type{F1}, ::Type{F2})`
-    c. `promote_operation(::typeof(-), ::Type{T}, ::Type{F1}, ::Type{Vector{T}})`
  3. `*`
     a. `promote_operation(::typeof(*), ::Type{T}, ::Type{T}, ::Type{F})`
     b. `promote_operation(::typeof(*), ::Type{T}, ::Type{F}, ::Type{T})`
@@ -33,10 +35,13 @@ There are five methods for which we implement `Utilities.promote_operation`:
  5. `vcat`
     a. `promote_operation(::typeof(vcat), ::Type{T}, ::Type{F}...)`
  6. `imag`
-    a. `promote_operation(::typeof(imag), ::Type{T}, ::Type{F}`
+    a. `promote_operation(::typeof(imag), ::Type{T}, ::Type{F})`
        where `F` is `VariableIndex` or `VectorOfVariables`
 
-There are nine types:
+In each case, `F` (or `F1` and `F2`) is one of the nine supported types, with
+a restriction that the mathematical operation makes sense, for example, we don't
+define `promote_operation(-, T, F1, F2)` where `F1` is a scalar-valued function
+and  `F2` is a vector-valued function. The nine supported types are:
 
  1. ::T
  2. ::VariableIndex
@@ -162,33 +167,6 @@ function promote_operation(
     ::typeof(-),
     ::Type{T},
     ::Type{MOI.VectorOfVariables},
-) where {T}
-    return MOI.VectorAffineFunction{T}
-end
-
-### Method 2c
-
-function promote_operation(
-    ::typeof(-),
-    ::Type{T},
-    ::Type{F},
-    ::Type{<:AbstractVector{T}},
-) where {
-    T,
-    F<:Union{
-        AbstractVector{T},
-        MOI.VectorAffineFunction{T},
-        MOI.VectorQuadraticFunction{T},
-    },
-}
-    return F
-end
-
-function promote_operation(
-    ::typeof(-),
-    ::Type{T},
-    ::Type{MOI.VectorOfVariables},
-    ::Type{<:AbstractVector{T}},
 ) where {T}
     return MOI.VectorAffineFunction{T}
 end

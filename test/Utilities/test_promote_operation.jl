@@ -106,22 +106,6 @@ function test_promote_operation_2b()
     return
 end
 
-function test_promote_operation_2c()
-    T = Int
-    F = (
-        Vector{T},
-        MOI.VectorOfVariables,
-        MOI.VectorAffineFunction{T},
-        MOI.VectorQuadraticFunction{T},
-    )
-    special_cases = Dict(2 => 3)
-    for i in 1:4
-        j = get(special_cases, i, i)
-        @test MOI.Utilities.promote_operation(-, T, F[i], F[1]) == F[j]
-    end
-    return
-end
-
 function test_promote_operation_3a()
     T = Int
     F = (
