@@ -85,7 +85,7 @@ function test_finite_domain_error()
     return
 end
 
-function test_finite_domain_error()
+function test_final_touch_twice()
     inner = MOI.Utilities.Model{Int}()
     model = MOI.Bridges.Constraint.IntegerToZeroOne{Int}(inner)
     x, _ = MOI.add_constrained_variable(model, MOI.Integer())
