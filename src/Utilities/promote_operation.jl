@@ -24,7 +24,7 @@ There are five methods for which we implement `Utilities.promote_operation`:
     c. `promote_operation(::typeof(-), ::Type{T}, ::Type{F1}, ::Type{Vector{T}})`
  3. `*`
     a. `promote_operation(::typeof(*), ::Type{T}, ::Type{T}, ::Type{F})`
-    b. `promote_operation(::typeof(*), ::Type{T}, ::Type{T}, ::Type{F})`
+    b. `promote_operation(::typeof(*), ::Type{T}, ::Type{F}, ::Type{T})`
     c. `promote_operation(::typeof(*), ::Type{T}, ::Type{F1}, ::Type{F2})`
        where `F1` and `F2` are `VariableIndex` or `ScalarAffineFunction`
     d. `promote_operation(::typeof(*), ::Type{T}, ::Type{<:Diagonal{T}}, ::Type{F}`
