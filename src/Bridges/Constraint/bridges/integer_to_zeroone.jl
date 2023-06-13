@@ -24,6 +24,13 @@
 
   * [`MOI.VariableIndex`](@ref) in [`MOI.ZeroOne`](@ref)
   * [`MOI.ScalarAffineFunction{T}`](@ref) in [`MOI.EqualTo{T}`](@ref)
+
+## Developer note
+
+This bridge is implemented as a constraint bridge instead of a variable bridge
+because we don't want to substitute the linear combination of `y` for every
+instance of `x`. Doing so would be expensive and greatly reduce the sparsity of
+the constraints.
 """
 mutable struct IntegerToZeroOneBridge{T} <: AbstractBridge
     x::MOI.VariableIndex
