@@ -60,6 +60,8 @@ include("copy.jl")
 include("results.jl")
 include("variables.jl")
 
+include("promote_operation.jl")
+
 include("objective_container.jl")
 include("variables_container.jl")
 include("free_variables.jl")

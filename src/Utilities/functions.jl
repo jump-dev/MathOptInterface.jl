@@ -483,6 +483,26 @@ function scalar_type(::Type{MOI.VectorQuadraticFunction{T}}) where {T}
 end
 
 """
+    vector_type(::Type{<:MOI.AbstractScalarFunction})
+
+Return the [`MOI.AbstractVectorFunction`](@ref) associated with the scalar type
+`F`.
+"""
+function vector_type end
+
+vector_type(::Type{T}) where {T} = Vector{T}
+
+vector_type(::Type{MOI.VariableIndex}) = MOI.VectorOfVariables
+
+function vector_type(::Type{MOI.ScalarAffineFunction{T}}) where {T}
+    return MOI.VectorAffineFunction{T}
+end
+
+function vector_type(::Type{MOI.ScalarQuadraticFunction{T}}) where {T}
+    return MOI.VectorQuadraticFunction{T}
+end
+
+"""
     ScalarFunctionIterator{F<:MOI.AbstractVectorFunction}
 
 A type that allows iterating over the scalar-functions that comprise an
@@ -1330,19 +1350,6 @@ function operate_output_index!(
     return x[i] = operate!(op, T, x[i], args...)
 end
 
-"""
-    promote_operation(
-        op::Function,
-        ::Type{T},
-        ArgsTypes::Type{<:Union{T, MOI.AbstractFunction}}...,
-    ) where {T}
-
-Returns the type of the `MOI.AbstractFunction` returned to the call
-`operate(op, T, args...)` where the types of the arguments `args` are
-`ArgsTypes`.
-"""
-function promote_operation end
-
 # Helpers
 
 function operate_term(
@@ -1597,44 +1604,6 @@ end
 ###################################### +/- #####################################
 ## promote_operation
 
-function promote_operation(::typeof(-), ::Type{T}, ::Type{T}) where {T}
-    return T
-end
-
-function promote_operation(
-    ::typeof(-),
-    ::Type{T},
-    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
-) where {T}
-    return MOI.ScalarAffineFunction{T}
-end
-
-function promote_operation(
-    ::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    ::Type{<:ScalarAffineLike{T}},
-    ::Type{<:ScalarAffineLike{T}},
-) where {T}
-    return MOI.ScalarAffineFunction{T}
-end
-
-function promote_operation(
-    ::typeof(-),
-    ::Type{T},
-    ::Type{<:ScalarQuadraticLike{T}},
-) where {T}
-    return MOI.ScalarQuadraticFunction{T}
-end
-
-function promote_operation(
-    ::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    ::Type{<:ScalarQuadraticLike{T}},
-    ::Type{<:ScalarQuadraticLike{T}},
-) where {T}
-    return MOI.ScalarQuadraticFunction{T}
-end
-
 ## operate!
 # + with at least 3 arguments
 function operate!(op::typeof(+), ::Type{T}, f, g, h, args...) where {T}
@@ -1816,14 +1785,6 @@ end
 
 ### ScalarNonlinearFunction
 
-function promote_operation(
-    ::Union{typeof(+),typeof(-)},
-    ::Type{<:Number},
-    ::Type{MOI.ScalarNonlinearFunction},
-)
-    return MOI.ScalarNonlinearFunction
-end
-
 function operate(
     ::typeof(-),
     ::Type{T},
@@ -1836,24 +1797,6 @@ function operate(
         end
     end
     return MOI.ScalarNonlinearFunction(:-, Any[f])
-end
-
-function promote_operation(
-    ::Union{typeof(+),typeof(-),typeof(*),typeof(/)},
-    ::Type{T},
-    ::Type{MOI.ScalarNonlinearFunction},
-    ::Type{S},
-) where {
-    T<:Number,
-    S<:Union{
-        T,
-        MOI.VariableIndex,
-        MOI.ScalarAffineFunction{T},
-        MOI.ScalarQuadraticFunction{T},
-        MOI.ScalarNonlinearFunction,
-    },
-}
-    return MOI.ScalarNonlinearFunction
 end
 
 function operate(
@@ -1944,40 +1887,6 @@ end
 
 # Vector +/-
 ###############################################################################
-
-function promote_operation(
-    ::typeof(-),
-    ::Type{T},
-    ::Type{<:VectorAffineLike{T}},
-) where {T}
-    return MOI.VectorAffineFunction{T}
-end
-
-function promote_operation(
-    ::typeof(-),
-    ::Type{T},
-    ::Type{<:VectorQuadraticLike{T}},
-) where {T}
-    return MOI.VectorQuadraticFunction{T}
-end
-
-function promote_operation(
-    ::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    ::Type{<:VectorAffineLike{T}},
-    ::Type{<:VectorAffineLike{T}},
-) where {T}
-    return MOI.VectorAffineFunction{T}
-end
-
-function promote_operation(
-    ::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    ::Type{<:VectorQuadraticLike{T}},
-    ::Type{<:VectorQuadraticLike{T}},
-) where {T}
-    return MOI.VectorQuadraticFunction{T}
-end
 
 # Vector Variable +/- ...
 function operate!(
@@ -2376,51 +2285,6 @@ end
 
 ####################################### * ######################################
 
-function promote_operation(
-    ::typeof(*),
-    ::Type{T},
-    ::Type{T},
-    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
-) where {T}
-    return MOI.ScalarAffineFunction{T}
-end
-
-function promote_operation(
-    ::typeof(*),
-    ::Type{T},
-    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
-    ::Type{T},
-) where {T}
-    return MOI.ScalarAffineFunction{T}
-end
-
-function promote_operation(
-    ::typeof(*),
-    ::Type{T},
-    ::Type{T},
-    ::Type{MOI.ScalarQuadraticFunction{T}},
-) where {T}
-    return MOI.ScalarQuadraticFunction{T}
-end
-
-function promote_operation(
-    ::typeof(*),
-    ::Type{T},
-    ::Type{MOI.ScalarQuadraticFunction{T}},
-    ::Type{T},
-) where {T}
-    return MOI.ScalarQuadraticFunction{T}
-end
-
-function promote_operation(
-    ::typeof(*),
-    ::Type{T},
-    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
-    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
-) where {T}
-    return MOI.ScalarQuadraticFunction{T}
-end
-
 function operate!(::typeof(*), ::Type{T}, f::MOI.VariableIndex, α::T) where {T}
     return operate(*, T, α, f)
 end
@@ -2639,24 +2503,6 @@ LinearAlgebra.symmetric(f::ScalarLike, ::Symbol) = f
 
 ####################################### / ######################################
 
-function promote_operation(
-    ::typeof(/),
-    ::Type{T},
-    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
-    ::Type{T},
-) where {T}
-    return MOI.ScalarAffineFunction{T}
-end
-
-function promote_operation(
-    ::typeof(/),
-    ::Type{T},
-    ::Type{MOI.ScalarQuadraticFunction{T}},
-    ::Type{T},
-) where {T}
-    return MOI.ScalarQuadraticFunction{T}
-end
-
 function operate!(::typeof(/), ::Type{T}, f::MOI.VariableIndex, α::T) where {T}
     return operate(/, T, f, α)
 end
@@ -2824,14 +2670,6 @@ function fill_variables(
 )
     variables[offset.+(1:length(func.variables))] .= func.variables
     return
-end
-
-function promote_operation(
-    ::typeof(vcat),
-    ::Type{T},
-    ::Type{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}}...,
-) where {T}
-    return MOI.VectorOfVariables
 end
 
 function operate(
@@ -3094,19 +2932,6 @@ function vectorize(
     return MOI.VectorQuadraticFunction(quadratic_terms, affine_terms, constant)
 end
 
-function promote_operation(::typeof(vcat), ::Type{T}, ::Type{T}...) where {T}
-    return Vector{T}
-end
-
-# TODO Remove `<:Number` when we drop Julia v1.1.1, otherwise it gives a `StackOverflowError`
-function promote_operation(
-    ::typeof(vcat),
-    ::Type{T},
-    ::Union{Type{T},Type{<:AbstractVector{T}}}...,
-) where {T<:Number}
-    return Vector{T}
-end
-
 # TODO Remove `<:Number` when we drop Julia v1.1.1, it's needed for disambiguation
 function operate(
     ::typeof(vcat),
@@ -3114,35 +2939,6 @@ function operate(
     funcs::Union{T,AbstractVector{T}}...,
 ) where {T<:Number}
     return vcat(funcs...)
-end
-
-function promote_operation(
-    ::typeof(vcat),
-    ::Type{T},
-    ::Type{
-        <:Union{
-            ScalarAffineLike{T},
-            MOI.VectorOfVariables,
-            MOI.VectorAffineFunction{T},
-        },
-    }...,
-) where {T}
-    return MOI.VectorAffineFunction{T}
-end
-
-function promote_operation(
-    ::typeof(vcat),
-    ::Type{T},
-    ::Type{
-        <:Union{
-            ScalarQuadraticLike{T},
-            MOI.VectorOfVariables,
-            MOI.VectorAffineFunction{T},
-            MOI.VectorQuadraticFunction{T},
-        },
-    }...,
-) where {T}
-    return MOI.VectorQuadraticFunction{T}
 end
 
 function operate(
@@ -3495,22 +3291,6 @@ end
 
 Base.real(f::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = f
 
-function promote_operation(
-    ::typeof(imag),
-    ::Type{T},
-    ::Type{MOI.VariableIndex},
-) where {T}
-    return MOI.ScalarAffineFunction{T}
-end
-
-function promote_operation(
-    ::typeof(imag),
-    ::Type{T},
-    ::Type{MOI.VectorOfVariables},
-) where {T}
-    return MOI.VectorAffineFunction{T}
-end
-
 function operate(::typeof(imag), ::Type{T}, f::MOI.VectorOfVariables) where {T}
     return zero_with_output_dimension(
         MOI.VectorAffineFunction{T},
@@ -3538,17 +3318,6 @@ end
 Base.conj(f::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = f
 
 ## Matrix operations
-
-function promote_operation(
-    ::typeof(*),
-    ::Type{T},
-    ::Type{<:Diagonal{T}},
-    ::Type{F},
-) where {T,F}
-    S = scalar_type(F)
-    U = promote_operation(*, T, T, S)
-    return promote_operation(vcat, T, U)
-end
 
 function operate_term(::typeof(*), D::Diagonal, term::MOI.VectorAffineTerm)
     return MOI.VectorAffineTerm(
