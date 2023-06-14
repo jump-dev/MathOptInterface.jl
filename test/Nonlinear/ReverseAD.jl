@@ -1029,6 +1029,28 @@ function test_pow_complex_result()
     return
 end
 
+function test_constraint_gradient()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    model = Nonlinear.Model()
+    Nonlinear.add_constraint(model, :($x^2 + $x * $y + $y^2), MOI.LessThan(2.0))
+    Nonlinear.add_constraint(model, :(cos($y)), MOI.LessThan(2.0))
+    evaluator =
+        Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x, y])
+    MOI.initialize(evaluator, [:Grad, :Jac])
+    @test MOI.constraint_gradient_structure(evaluator, 1) == [1, 2]
+    @test MOI.constraint_gradient_structure(evaluator, 2) == [2]
+    x_val = [1.2, 2.3]
+    ∇g = [NaN, NaN]
+    MOI.eval_constraint_gradient(evaluator, ∇g, x_val, 1)
+    @test ∇g ≈ [2 * x_val[1] + x_val[2], x_val[1] + 2 * x_val[2]]
+    x_val = [1.2, 2.3]
+    ∇g = [NaN]
+    MOI.eval_constraint_gradient(evaluator, ∇g, x_val, 2)
+    @test ∇g ≈ [-sin(x_val[2])]
+    return
+end
+
 end  # module
 
 TestReverseAD.runtests()

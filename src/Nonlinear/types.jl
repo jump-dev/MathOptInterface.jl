@@ -208,6 +208,7 @@ mutable struct Evaluator{B} <: MOI.AbstractNLPEvaluator
     eval_objective_timer::Float64
     eval_constraint_timer::Float64
     eval_objective_gradient_timer::Float64
+    eval_constraint_gradient_timer::Float64
     eval_constraint_jacobian_timer::Float64
     eval_hessian_objective_timer::Float64
     eval_hessian_constraint_timer::Float64
@@ -222,6 +223,7 @@ mutable struct Evaluator{B} <: MOI.AbstractNLPEvaluator
             backend,
             ConstraintIndex[],
             Float64[],
+            0.0,
             0.0,
             0.0,
             0.0,

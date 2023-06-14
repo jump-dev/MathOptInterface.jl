@@ -207,6 +207,22 @@ function MOI.jacobian_structure(d::NLPEvaluator)
     return J
 end
 
+function MOI.constraint_gradient_structure(d::NLPEvaluator, i)
+    return copy(d.constraints[i].grad_sparsity)
+end
+
+function MOI.eval_constraint_gradient(d::NLPEvaluator, ∇g, x, i)
+    _reverse_mode(d, x)
+    for k in d.constraints[i].grad_sparsity
+        d.jac_storage[k] = 0.0
+    end
+    _extract_reverse_pass(d.jac_storage, d, d.constraints[i])
+    for (j, k) in enumerate(d.constraints[i].grad_sparsity)
+        ∇g[j] = d.jac_storage[k]
+    end
+    return
+end
+
 function MOI.eval_constraint_jacobian(d::NLPEvaluator, J, x)
     _reverse_mode(d, x)
     fill!(J, 0.0)

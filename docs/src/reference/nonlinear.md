@@ -32,6 +32,8 @@ eval_objective
 eval_constraint
 eval_objective_gradient
 jacobian_structure
+eval_constraint_gradient
+constraint_gradient_structure
 eval_constraint_jacobian
 eval_constraint_jacobian_product
 eval_constraint_jacobian_transpose_product
