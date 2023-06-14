@@ -1873,6 +1873,19 @@ function test_ScalarNonlinearFunction_count_map_indices_and_print()
     return
 end
 
+function test_vector_type()
+    for T in (Int, Float64)
+        @test MOI.Utilies.vector_type(T) == Vector{T}
+        @test MOI.Utilies.vector_type(MOI.VariableIndex) ==
+              MOI.VectorOfVariables
+        @test MOI.Utilies.vector_type(MOI.ScalarAffineFunction{T}) ==
+              MOI.VectorAffineFunction{T}
+        @test MOI.Utilies.vector_type(MOI.ScalarQuadraticFunction{T}) ==
+              MOI.VectorQuadraticFunction{T}
+    end
+    return
+end
+
 end  # module
 
 TestFunctions.runtests()
