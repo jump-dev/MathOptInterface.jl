@@ -61,6 +61,7 @@ include("results.jl")
 include("variables.jl")
 
 include("promote_operation.jl")
+include("operate.jl")
 
 include("objective_container.jl")
 include("variables_container.jl")
