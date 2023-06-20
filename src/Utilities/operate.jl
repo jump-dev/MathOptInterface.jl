@@ -1056,7 +1056,7 @@ Compute `op(args...)`, where at least one element of `args` is one of
     e. `operate_term(::typeof(*), ::Diagonal, ::VectorTerm)`
  4. `/`
     a. `operate_term(::typeof(/), ::Term, ::T)`
- 5. User-provided function
+ 5. User-defined function
     a. `operate_term(::Function, ::Term)`
 """
 function operate_term end
@@ -1212,7 +1212,7 @@ Compute `op(args...)`, where at least one element of `args` is a vector of
     a. `operate_term(::typeof(-), ::Vector{<:Term})`
  3. `*`
     a. `operate_term(::typeof(*), ::Diagonal, ::Vector{<:VectorTerm})`
- 4. User-defiend function
+ 4. User-defined function
     a. `operate_term(::Function, ::Vector{<:Term})`
 """
 function operate_terms end
