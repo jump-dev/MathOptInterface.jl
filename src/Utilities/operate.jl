@@ -255,26 +255,6 @@ function operate(::typeof(-), ::Type{T}, f::MOI.VariableIndex) where {T}
     )
 end
 
-function operate(
-    ::typeof(-),
-    ::Type{T},
-    f::MOI.ScalarAffineFunction{T},
-) where {T}
-    return MOI.ScalarAffineFunction(operate_terms(-, f.terms), -f.constant)
-end
-
-function operate(
-    ::typeof(-),
-    ::Type{T},
-    f::MOI.ScalarQuadraticFunction{T},
-) where {T}
-    return MOI.ScalarQuadraticFunction(
-        operate_terms(-, f.quadratic_terms),
-        operate_terms(-, f.affine_terms),
-        -f.constant,
-    )
-end
-
 function operate(::typeof(-), ::Type{T}, f::MOI.VectorOfVariables) where {T}
     d = MOI.output_dimension(f)
     return MOI.VectorAffineFunction{T}(
@@ -286,21 +266,14 @@ end
 function operate(
     ::typeof(-),
     ::Type{T},
-    f::MOI.VectorAffineFunction{T},
+    f::Union{
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    }
 ) where {T}
-    return MOI.VectorAffineFunction(operate_terms(-, f.terms), -f.constants)
-end
-
-function operate(
-    ::typeof(-),
-    ::Type{T},
-    f::MOI.VectorQuadraticFunction{T},
-) where {T}
-    return MOI.VectorQuadraticFunction(
-        operate_terms(-, f.quadratic_terms),
-        operate_terms(-, f.affine_terms),
-        -f.constants,
-    )
+    return operate_coefficients(-, f)
 end
 
 ### 2b: operate(::typeof(-), ::Type{T}, ::F1, ::F2)
@@ -1048,7 +1021,7 @@ function operate!(
     g::T,
 ) where {T}
     map_terms!(term -> operate_term(*, term, g), f)
-    LinearAlgebra.rmul!(f.constants, g)
+    f.constants .*= g
     return f
 end
 
@@ -1061,22 +1034,10 @@ end
 function operate!(
     ::typeof(/),
     ::Type{T},
-    f::MOI.ScalarAffineFunction{T},
+    f::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
     g::T,
 ) where {T}
     map_terms!(term -> operate_term(/, term, g), f)
-    f.constant /= g
-    return f
-end
-
-function operate!(
-    ::typeof(/),
-    ::Type{T},
-    f::MOI.ScalarQuadraticFunction{T},
-    g::T,
-) where {T}
-    f.affine_terms .= operate_term.(/, f.affine_terms, g)
-    f.quadratic_terms .= operate_term.(/, f.quadratic_terms, g)
     f.constant /= g
     return f
 end
@@ -1088,7 +1049,7 @@ function operate!(
     g::T,
 ) where {T}
     map_terms!(term -> operate_term(/, term, g), f)
-    LinearAlgebra.rmul!(f.constants, inv(g))
+    f.constants ./= g
     return f
 end
 
@@ -1248,10 +1209,7 @@ function operate_term(op::F, f::MOI.ScalarQuadraticTerm) where {F<:Function}
 end
 
 function operate_term(op::F, f::MOI.VectorAffineTerm) where {F<:Function}
-    return MOI.VectorAffineTerm(
-        f.output_index,
-        operate_term(op, f.scalar_term),
-    )
+    return MOI.VectorAffineTerm(f.output_index, operate_term(op, f.scalar_term))
 end
 
 function operate_term(op::F, f::MOI.VectorQuadraticTerm) where {F<:Function}
@@ -1342,9 +1300,7 @@ function operate_terms!(
     ::typeof(-),
     terms::Vector{<:Union{MOI.ScalarAffineTerm,MOI.ScalarQuadraticTerm}},
 )
-    for (i, term) in enumerate(terms)
-        terms[i] = operate_term(-, term)
-    end
+    map!(Base.Fix1(operate_term, -), terms, terms)
     return terms
 end
 

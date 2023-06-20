@@ -1283,7 +1283,8 @@ function map_terms!(
     op,
     func::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
 )
-    return map!(op, func.terms, func.terms)
+    map!(op, func.terms, func.terms)
+    return
 end
 
 function map_terms!(
@@ -1291,7 +1292,8 @@ function map_terms!(
     func::Union{MOI.ScalarQuadraticFunction,MOI.VectorQuadraticFunction},
 )
     map!(op, func.affine_terms, func.affine_terms)
-    return map!(op, func.quadratic_terms, func.quadratic_terms)
+    map!(op, func.quadratic_terms, func.quadratic_terms)
+    return
 end
 
 ###################################### +/- #####################################
