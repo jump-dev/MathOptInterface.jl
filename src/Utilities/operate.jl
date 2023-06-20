@@ -789,7 +789,7 @@ end
 function operate!(
     ::typeof(+),
     ::Type{T},
-    f::MOI.VectorAffineFunction{T},
+    f::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
     g::AbstractVector{T},
 ) where {T}
     @assert MOI.output_dimension(f) == length(g)
@@ -820,17 +820,6 @@ function operate!(
 ) where {T}
     append!(f.terms, g.terms)
     f.constants .+= g.constants
-    return f
-end
-
-function operate!(
-    ::typeof(+),
-    ::Type{T},
-    f::MOI.VectorQuadraticFunction{T},
-    g::AbstractVector{T},
-) where {T}
-    @assert MOI.output_dimension(f) == length(g)
-    f.constants .+= g
     return f
 end
 
@@ -916,7 +905,7 @@ end
 function operate!(
     ::typeof(-),
     ::Type{T},
-    f::MOI.VectorAffineFunction{T},
+    f::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
     g::AbstractVector{T},
 ) where {T}
     @assert MOI.output_dimension(f) == length(g)
@@ -947,17 +936,6 @@ function operate!(
 ) where {T}
     append!(f.terms, operate_terms(-, g.terms))
     f.constants .-= g.constants
-    return f
-end
-
-function operate!(
-    ::typeof(-),
-    ::Type{T},
-    f::MOI.VectorQuadraticFunction{T},
-    g::AbstractVector{T},
-) where {T}
-    @assert MOI.output_dimension(f) == length(g)
-    f.constants .-= g
     return f
 end
 
