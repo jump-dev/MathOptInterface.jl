@@ -150,14 +150,20 @@ function MA.operate!(
 end
 
 function MA.operate!(::typeof(-), f::MOI.ScalarQuadraticFunction)
-    operate_terms!(-, f.quadratic_terms)
-    operate_terms!(-, f.affine_terms)
+    for (i, term) in enumerate(f.quadratic_terms)
+        f.quadratic_terms[i] = operate_term(-, term)
+    end
+    for (i, term) in enumerate(f.affine_terms)
+        f.affine_terms[i] = operate_term(-, term)
+    end
     f.constant = -f.constant
     return f
 end
 
 function MA.operate!(::typeof(-), f::MOI.ScalarAffineFunction)
-    operate_terms!(-, f.terms)
+    for (i, term) in enumerate(f.terms)
+        f.terms[i] = operate_term(-, term)
+    end
     f.constant = -f.constant
     return f
 end

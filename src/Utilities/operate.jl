@@ -1061,22 +1061,11 @@ end
 function operate!(
     ::typeof(/),
     ::Type{T},
-    f::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
+    f::MOI.ScalarAffineFunction{T},
     g::T,
 ) where {T}
     map_terms!(term -> operate_term(/, term, g), f)
     f.constant /= g
-    return f
-end
-
-function operate!(
-    ::typeof(/),
-    ::Type{T},
-    f::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
-    g::T,
-) where {T}
-    map_terms!(term -> operate_term(/, term, g), f)
-    LinearAlgebra.rmul!(f.constants, inv(g))
     return f
 end
 
@@ -1089,6 +1078,17 @@ function operate!(
     f.affine_terms .= operate_term.(/, f.affine_terms, g)
     f.quadratic_terms .= operate_term.(/, f.quadratic_terms, g)
     f.constant /= g
+    return f
+end
+
+function operate!(
+    ::typeof(/),
+    ::Type{T},
+    f::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
+    g::T,
+) where {T}
+    map_terms!(term -> operate_term(/, term, g), f)
+    LinearAlgebra.rmul!(f.constants, inv(g))
     return f
 end
 
@@ -1117,82 +1117,32 @@ Compute `op(args...)`, where at least one element of `args` is one of
     e. `operate_term(::typeof(*), ::Diagonal, ::VectorTerm)`
  4. `/`
     a. `operate_term(::typeof(/), ::Term, ::T)`
+ 5. User-provided function
+    a. `operate_term(::Function, ::Term)`
 """
 function operate_term end
 
 ### 1a: operate_term(::typeof(+), ::Term)
 
-function operate_term(
-    ::typeof(+),
-    term::Union{
-        MOI.ScalarAffineTerm,
-        MOI.ScalarQuadraticTerm,
-        MOI.VectorAffineTerm,
-        MOI.VectorQuadraticTerm,
-    },
-)
-    return term
-end
+# Works automatically via 5a fallback.
 
 ### 2a: operate_term(::typeof(-), ::Term)
 
-function operate_term(::typeof(-), term::MOI.ScalarAffineTerm)
-    return MOI.ScalarAffineTerm(-term.coefficient, term.variable)
-end
-
-function operate_term(::typeof(-), term::MOI.ScalarQuadraticTerm)
-    return MOI.ScalarQuadraticTerm(
-        -term.coefficient,
-        term.variable_1,
-        term.variable_2,
-    )
-end
-
-function operate_term(::typeof(-), term::MOI.VectorAffineTerm)
-    return MOI.VectorAffineTerm(
-        term.output_index,
-        operate_term(-, term.scalar_term),
-    )
-end
-
-function operate_term(::typeof(-), term::MOI.VectorQuadraticTerm)
-    return MOI.VectorQuadraticTerm(
-        term.output_index,
-        operate_term(-, term.scalar_term),
-    )
-end
+# Works automatically via 5a fallback.
 
 ### 3a: operate_term(::typeof(*), ::T, ::Term)
 
-function operate_term(::typeof(*), f::T, g::MOI.ScalarAffineTerm{T}) where {T}
-    return MOI.ScalarAffineTerm(f * g.coefficient, g.variable)
-end
-
 function operate_term(
     ::typeof(*),
     f::T,
-    g::MOI.ScalarQuadraticTerm{T},
+    g::Union{
+        MOI.ScalarAffineTerm{T},
+        MOI.ScalarQuadraticTerm{T},
+        MOI.VectorAffineTerm{T},
+        MOI.VectorQuadraticTerm{T},
+    },
 ) where {T}
-    coef = f * g.coefficient
-    return MOI.ScalarQuadraticTerm(coef, g.variable_1, g.variable_2)
-end
-
-function operate_term(::typeof(*), f::T, g::MOI.VectorAffineTerm{T}) where {T}
-    return MOI.VectorAffineTerm(
-        g.output_index,
-        operate_term(*, f, g.scalar_term),
-    )
-end
-
-function operate_term(
-    ::typeof(*),
-    f::T,
-    g::MOI.VectorQuadraticTerm{T},
-) where {T}
-    return MOI.VectorQuadraticTerm(
-        g.output_index,
-        operate_term(*, f, g.scalar_term),
-    )
+    return operate_term(Base.Fix1(*, f), g)
 end
 
 ### 3b: operate_term(::typeof(*), ::Term, ::T)
@@ -1240,24 +1190,11 @@ end
 
 function operate_term(
     ::typeof(*),
-    α::T,
-    t::MOI.ScalarAffineTerm{T},
-    β::T,
+    f::T,
+    g::Union{MOI.ScalarAffineTerm{T},MOI.ScalarQuadraticTerm{T}},
+    h::T,
 ) where {T}
-    return MOI.ScalarAffineTerm(α * t.coefficient * β, t.variable)
-end
-
-function operate_term(
-    ::typeof(*),
-    α::T,
-    t::MOI.ScalarQuadraticTerm{T},
-    β::T,
-) where {T}
-    return MOI.ScalarQuadraticTerm(
-        α * t.coefficient * β,
-        t.variable_1,
-        t.variable_2,
-    )
+    return operate_term(Base.Fix1(*, f * h), g)
 end
 
 ### 3e: operate_term(::typeof(*), ::Diagonal, ::Vector)
@@ -1296,7 +1233,32 @@ function operate_term(
     },
     g::T,
 ) where {T}
-    return operate_term(*, f, inv(g))
+    return operate_term(Base.Fix2(/, g), f)
+end
+
+### 5a: operate_term(::Function, ::Term)
+
+function operate_term(op::F, f::MOI.ScalarAffineTerm) where {F<:Function}
+    return MOI.ScalarAffineTerm(op(f.coefficient), f.variable)
+end
+
+function operate_term(op::F, f::MOI.ScalarQuadraticTerm) where {F<:Function}
+    coef = op(f.coefficient)
+    return MOI.ScalarQuadraticTerm(coef, f.variable_1, f.variable_2)
+end
+
+function operate_term(op::F, f::MOI.VectorAffineTerm) where {F<:Function}
+    return MOI.VectorAffineTerm(
+        f.output_index,
+        operate_term(op, f.scalar_term),
+    )
+end
+
+function operate_term(op::F, f::MOI.VectorQuadraticTerm) where {F<:Function}
+    return MOI.VectorQuadraticTerm(
+        f.output_index,
+        operate_term(op, f.scalar_term),
+    )
 end
 
 """
@@ -1314,8 +1276,12 @@ Compute `op(args...)`, where at least one element of `args` is a vector of
     a. `operate_term(::typeof(-), ::Vector{<:Term})`
  3. `*`
     a. `operate_term(::typeof(*), ::Diagonal, ::Vector{<:VectorTerm})`
+ 4. User-defiend function
+    a. `operate_term(::Function, ::Vector{<:Term})`
 """
 function operate_terms end
+
+### 1a: operate_term(::typeof(+), ::Vector{<:Term})
 
 function operate_terms(
     ::typeof(+),
@@ -1331,9 +1297,21 @@ function operate_terms(
     return terms
 end
 
+### 2a: operate_term(::typeof(-), ::Vector{<:Term})
+
+# Works automatically by 4a fallback.
+
+### 3a: operate_term(::typeof(*), ::Diagonal, ::Vector{<:VectorTerm})
+
+function operate_terms(::typeof(*), D::Diagonal, terms)
+    return map(term -> operate_term(*, D, term), terms)
+end
+
+### 4a: operate_term(::Function, ::Vector{<:Term})
+
 function operate_terms(
-    ::typeof(-),
-    terms::Vector{
+    op::F,
+    f::Vector{
         <:Union{
             MOI.ScalarAffineTerm,
             MOI.ScalarQuadraticTerm,
@@ -1341,12 +1319,8 @@ function operate_terms(
             MOI.VectorQuadraticTerm,
         },
     },
-)
-    return map(term -> operate_term(-, term), terms)
-end
-
-function operate_terms(::typeof(*), D::Diagonal, terms)
-    return map(term -> operate_term(*, D, term), terms)
+) where {F}
+    return map(Base.Fix1(operate_term, op), f)
 end
 
 """
@@ -1356,18 +1330,22 @@ Compute `op(args...)`, where at least one element of `args` is a vector of
 [`MOI.ScalarAffineTerm`](@ref), [`MOI.ScalarQuadraticTerm`](@ref),
 [`MOI.VectorAffineTerm`](@ref), or [`MOI.VectorQuadraticTerm`](@ref).
 
+!!! warning
+    This method is deprecated and may be removed in MathOptInterface v2.0.
+
 ## Methods
 
  1. `-`
     a. `operate_term(::typeof(-), ::Vector{<:ScalarTerm})`
 """
-function operate_terms! end
-
 function operate_terms!(
     ::typeof(-),
     terms::Vector{<:Union{MOI.ScalarAffineTerm,MOI.ScalarQuadraticTerm}},
 )
-    return map!(term -> operate_term(-, term), terms, terms)
+    for (i, term) in enumerate(terms)
+        terms[i] = operate_term(-, term)
+    end
+    return terms
 end
 
 """
@@ -1521,30 +1499,12 @@ end
 
 Return a new term, which is the result of calling `op(coefficient)` for on the
 coefficient of the term `f`.
+
+!!! warning
+    This method is deprecated and may be removed in MathOptInterface v2.0. Use
+    `operate_term(op, f)` instead.
 """
-
-function operate_coefficient(op::F, f::MOI.ScalarAffineTerm) where {F}
-    return MOI.ScalarAffineTerm(op(f.coefficient), f.variable)
-end
-
-function operate_coefficient(op::F, f::MOI.ScalarQuadraticTerm) where {F}
-    coef = op(f.coefficient)
-    return MOI.ScalarQuadraticTerm(coef, f.variable_1, f.variable_2)
-end
-
-function operate_coefficient(op::F, f::MOI.VectorAffineTerm) where {F}
-    return MOI.VectorAffineTerm(
-        f.output_index,
-        operate_coefficient(op, f.scalar_term),
-    )
-end
-
-function operate_coefficient(op::F, f::MOI.VectorQuadraticTerm) where {F}
-    return MOI.VectorQuadraticTerm(
-        f.output_index,
-        operate_coefficient(op, f.scalar_term),
-    )
-end
+operate_coefficient(op::F, f) where {F} = operate_term(op, f)
 
 """
     operate_coefficients(
@@ -1559,46 +1519,31 @@ end
 """
 function operate_coefficients end
 
-function operate_coefficients(
-    op::F,
-    f::Vector{
-        <:Union{
-            MOI.ScalarAffineTerm,
-            MOI.ScalarQuadraticTerm,
-            MOI.VectorAffineTerm,
-            MOI.VectorQuadraticTerm,
-        },
-    },
-) where {F}
-    return map(Base.Fix1(operate_coefficient, op), f)
-end
+operate_coefficients(op::F, f) where {F} = operate_terms(op, f)
 
 function operate_coefficients(op::F, f::MOI.ScalarAffineFunction) where {F}
-    return MOI.ScalarAffineFunction(
-        operate_coefficients(op, f.terms),
-        op(f.constant),
-    )
+    return MOI.ScalarAffineFunction(operate_terms(op, f.terms), op(f.constant))
 end
 
 function operate_coefficients(op::F, f::MOI.ScalarQuadraticFunction) where {F}
     return MOI.ScalarQuadraticFunction(
-        operate_coefficients(op, f.quadratic_terms),
-        operate_coefficients(op, f.affine_terms),
+        operate_terms(op, f.quadratic_terms),
+        operate_terms(op, f.affine_terms),
         op(f.constant),
     )
 end
 
 function operate_coefficients(op::F, f::MOI.VectorAffineFunction) where {F}
     return MOI.VectorAffineFunction(
-        operate_coefficients(op, f.terms),
-        map(op, f.constants),
+        operate_terms(op, f.terms),
+        op.(f.constants),
     )
 end
 
 function operate_coefficients(op::F, f::MOI.VectorQuadraticFunction) where {F}
     return MOI.VectorQuadraticFunction(
-        operate_coefficients(op, f.quadratic_terms),
-        operate_coefficients(op, f.affine_terms),
+        operate_terms(op, f.quadratic_terms),
+        operate_terms(op, f.affine_terms),
         map(op, f.constants),
     )
 end
