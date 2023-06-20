@@ -17,6 +17,7 @@ function MA.mutable_copy(func::MOI.ScalarAffineFunction)
     ]
     return MOI.ScalarAffineFunction(terms, MA.copy_if_mutable(func.constant))
 end
+
 function MA.mutable_copy(func::MOI.ScalarQuadraticFunction)
     affine_terms = [
         MOI.ScalarAffineTerm(MA.copy_if_mutable(t.coefficient), t.variable)
@@ -104,6 +105,7 @@ function MA.promote_operation(
 ) where {T}
     return promote_operation(op, T, F, G)
 end
+
 function MA.promote_operation(
     op::PROMOTE_IMPLEMENTED_OP,
     F::Type{<:TypedLike{T}},
@@ -111,6 +113,7 @@ function MA.promote_operation(
 ) where {T}
     return promote_operation(op, T, F, G)
 end
+
 function MA.promote_operation(
     op::PROMOTE_IMPLEMENTED_OP,
     F::Type{<:Number},
@@ -118,6 +121,7 @@ function MA.promote_operation(
 )
     return promote_operation(op, F, F, G)
 end
+
 function MA.promote_operation(
     op::PROMOTE_IMPLEMENTED_OP,
     F::Type{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
@@ -134,6 +138,7 @@ function MA.operate!(
     f.constant = op(f.constant)
     return f
 end
+
 function MA.operate!(
     op::Union{typeof(zero),typeof(one)},
     f::MOI.ScalarQuadraticFunction,
@@ -150,11 +155,13 @@ function MA.operate!(::typeof(-), f::MOI.ScalarQuadraticFunction)
     f.constant = -f.constant
     return f
 end
+
 function MA.operate!(::typeof(-), f::MOI.ScalarAffineFunction)
     operate_terms!(-, f.terms)
     f.constant = -f.constant
     return f
 end
+
 function MA.operate!(
     op::Union{typeof(+),typeof(-)},
     f::MOI.ScalarAffineFunction{T},
@@ -163,6 +170,7 @@ function MA.operate!(
     f.constant = op(f.constant, g)
     return f
 end
+
 function MA.operate!(
     op::Union{typeof(+),typeof(-)},
     f::MOI.ScalarAffineFunction{T},
@@ -171,6 +179,7 @@ function MA.operate!(
     push!(f.terms, MOI.ScalarAffineTerm(op(one(T)), g))
     return f
 end
+
 function MA.operate_to!(
     output::MOI.ScalarAffineFunction{T},
     op::Union{typeof(+),typeof(-)},
@@ -183,6 +192,7 @@ function MA.operate_to!(
     output.constant = op(f.constant, g.constant)
     return output
 end
+
 function MA.operate_to!(
     output::MOI.ScalarQuadraticFunction{T},
     op::Union{typeof(+),typeof(-)},
@@ -198,6 +208,7 @@ function MA.operate_to!(
     output.constant = op(f.constant, g.constant)
     return output
 end
+
 function MA.operate!(
     op::Union{typeof(+),typeof(-)},
     f::MOI.ScalarAffineFunction{T},
@@ -207,6 +218,7 @@ function MA.operate!(
     f.constant = op(f.constant, g.constant)
     return f
 end
+
 function MA.operate!(
     op::Union{typeof(+),typeof(-)},
     f::MOI.ScalarQuadraticFunction{T},
@@ -215,6 +227,7 @@ function MA.operate!(
     f.constant = op(f.constant, g)
     return f
 end
+
 function MA.operate!(
     op::Union{typeof(+),typeof(-)},
     f::MOI.ScalarQuadraticFunction{T},
@@ -223,6 +236,7 @@ function MA.operate!(
     push!(f.affine_terms, MOI.ScalarAffineTerm(op(one(T)), g))
     return f
 end
+
 function MA.operate!(
     op::Union{typeof(+),typeof(-)},
     f::MOI.ScalarQuadraticFunction{T},
@@ -232,6 +246,7 @@ function MA.operate!(
     f.constant = op(f.constant, g.constant)
     return f
 end
+
 function MA.operate!(
     op::Union{typeof(+),typeof(-)},
     f::MOI.ScalarQuadraticFunction{T},
@@ -244,10 +259,13 @@ function MA.operate!(
 end
 
 _constant(::Type{T}, α::T) where {T} = α
+
 _constant(::Type{T}, ::MOI.VariableIndex) where {T} = zero(T)
+
 _constant(::Type{T}, func::TypedScalarLike{T}) where {T} = MOI.constant(func, T)
 
 _affine_terms(f::MOI.ScalarAffineFunction) = f.terms
+
 _affine_terms(f::MOI.ScalarQuadraticFunction) = f.affine_terms
 
 function _add_sub_affine_terms(
@@ -260,6 +278,7 @@ function _add_sub_affine_terms(
     push!(terms, MOI.ScalarAffineTerm(op(α * β), f))
     return
 end
+
 function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
@@ -269,6 +288,7 @@ function _add_sub_affine_terms(
     push!(terms, MOI.ScalarAffineTerm(op(β), f))
     return
 end
+
 function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
@@ -278,6 +298,7 @@ function _add_sub_affine_terms(
     push!(terms, MOI.ScalarAffineTerm(op(α), f))
     return
 end
+
 function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
@@ -297,7 +318,9 @@ function _add_sub_affine_terms(
     for t in _affine_terms(f)
         push!(terms, operate_term(op, operate_term(*, α, t, β)))
     end
+    return
 end
+
 function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
@@ -307,7 +330,9 @@ function _add_sub_affine_terms(
     for t in _affine_terms(f)
         push!(terms, operate_term(op, operate_term(*, t, β)))
     end
+    return
 end
+
 function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
@@ -317,7 +342,9 @@ function _add_sub_affine_terms(
     for t in _affine_terms(f)
         push!(terms, operate_term(op, operate_term(*, α, t)))
     end
+    return
 end
+
 function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
@@ -326,6 +353,7 @@ function _add_sub_affine_terms(
     append!(terms, operate_terms(op, _affine_terms(f)))
     return
 end
+
 function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
@@ -333,6 +361,7 @@ function _add_sub_affine_terms(
 ) where {T,N}
     return
 end
+
 function _add_sub_affine_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarAffineTerm{T}},
@@ -340,7 +369,8 @@ function _add_sub_affine_terms(
     β::T,
     args::Vararg{ScalarQuadraticLike,N},
 ) where {T,N}
-    return _add_sub_affine_terms(op, terms, α * β, args...)
+    _add_sub_affine_terms(op, terms, α * β, args...)
+    return
 end
 
 function MA.operate!(
@@ -369,7 +399,9 @@ function _add_quadratic_terms(
             ),
         )
     end
+    return
 end
+
 function _add_quadratic_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarQuadraticTerm{T}},
@@ -379,7 +411,9 @@ function _add_quadratic_terms(
     for t in f.quadratic_terms
         push!(terms, operate_term(op, operate_term(*, t, _constant(T, β))))
     end
+    return
 end
+
 function _add_quadratic_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarQuadraticTerm{T}},
@@ -389,7 +423,9 @@ function _add_quadratic_terms(
     for t in f.quadratic_terms
         push!(terms, operate_term(op, operate_term(*, _constant(T, α), t)))
     end
+    return
 end
+
 function _add_quadratic_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarQuadraticTerm{T}},
@@ -398,6 +434,7 @@ function _add_quadratic_terms(
     append!(terms, operate_terms(op, f.quadratic_terms))
     return
 end
+
 function _add_quadratic_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarQuadraticTerm{T}},
@@ -407,6 +444,7 @@ function _add_quadratic_terms(
 ) where {T}
     return
 end
+
 function _merge_constants(
     ::Type{T},
     α::ScalarAffineLike{T},
@@ -415,16 +453,20 @@ function _merge_constants(
 ) where {T,N}
     return (_constant(T, α) * _constant(T, β), args...)
 end
+
 function _add_quadratic_terms(
     op::Union{typeof(+),typeof(-)},
     terms::Vector{MOI.ScalarQuadraticTerm{T}},
     args::Vararg{Any,N},
 ) where {T,N}
-    return _add_quadratic_terms(op, terms, _merge_constants(T, args...)...)
+    _add_quadratic_terms(op, terms, _merge_constants(T, args...)...)
+    return
 end
 
 _num_function_with_terms(::Type{T}, ::T) where {T} = 0
+
 _num_function_with_terms(::Type{T}, ::ScalarLike{T}) where {T} = 1
+
 function _num_function_with_terms(
     ::Type{T},
     f::ScalarQuadraticLike{T},
@@ -432,6 +474,7 @@ function _num_function_with_terms(
 ) where {T,N}
     return _num_function_with_terms(T, f) + _num_function_with_terms(T, args...)
 end
+
 function MA.operate!(
     op::MA.AddSubMul,
     f::MOI.ScalarQuadraticFunction{T},
@@ -446,6 +489,7 @@ function MA.operate!(
         return MA.operate!(MA.add_sub_op(op), f, *(args...))
     end
 end
+
 # `args` could be `(x', a)` where `a` is a vector of constants and `x` a vector
 # of affine functions for instance.
 function MA.operate!(
