@@ -471,6 +471,30 @@ function test_operate_terms!_1a()
     return
 end
 
+function test_operate_output_index_1a()
+    T = Float64
+    F = (
+        (0.0, 0.0, 0.0),
+        (1.0, 0.0, 0.0),
+        (0.0, 1.0, 0.0),
+        (0.0, 0.0, 1.0),
+        (1.0, 1.0, 1.0),
+    )
+    for i in 2:5
+        for j in 1:i
+            if (i, j) == (2, 1)
+                continue
+            end
+            f = _test_function(vcat(F[i], F[i]))
+            fi, fj = _test_function(F[i]), _test_function(F[j])
+            fij = MOI.Utilities.operate(+, T, fi, fj)
+            g = MOI.Utilities.operate(vcat, T, fi, fij)
+            @test MOI.Utilities.operate_output_index!(+, T, 2, f, fj) ≈ g
+        end
+    end
+    return
+end
+
 end  # module
 
 TestOperate.runtests()

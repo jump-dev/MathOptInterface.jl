@@ -1279,33 +1279,6 @@ end
 
 # Arithmetic
 
-"""
-    operate_output_index!(
-        op::Function,
-        ::Type{T},
-        output_index::Integer,
-        func::MOI.AbstractVectorFunction
-        args::Union{T, MOI.AbstractScalarFunction}...
-    )::MOI.AbstractFunction where {T}
-
-Returns an `MOI.AbstractVectorFunction` where the function at `output_index`
-is the result of the operation `op` applied to the function at `output_index`
-of `func` and `args`. The functions at output index different to `output_index`
-are the same as the functions at the same output index in `func`. The first
-argument can be modified.
-"""
-function operate_output_index! end
-
-function operate_output_index!(
-    op::Function,
-    ::Type{T},
-    i::Integer,
-    x::Vector{T},
-    args...,
-) where {T}
-    return x[i] = operate!(op, T, x[i], args...)
-end
-
 function map_terms!(
     op,
     func::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
@@ -1427,93 +1400,6 @@ end
 
 # Vector +/-
 ###############################################################################
-
-# Vector Affine +/-! ...
-function operate_output_index!(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    output_index::Integer,
-    f::MOI.VectorAffineFunction{T},
-    α::T,
-) where {T}
-    f.constants[output_index] = op(f.constants[output_index], α)
-    return f
-end
-
-function operate_output_index!(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    output_index::Integer,
-    f::MOI.VectorAffineFunction{T},
-    g::MOI.VariableIndex,
-) where {T}
-    push!(
-        f.terms,
-        MOI.VectorAffineTerm(output_index, MOI.ScalarAffineTerm(op(one(T)), g)),
-    )
-    return f
-end
-
-function operate_output_index!(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    output_index::Integer,
-    f::MOI.VectorAffineFunction{T},
-    g::MOI.ScalarAffineFunction{T},
-) where {T}
-    append!(
-        f.terms,
-        MOI.VectorAffineTerm.(output_index, operate_terms(op, g.terms)),
-    )
-    return operate_output_index!(op, T, output_index, f, MOI.constant(g))
-end
-
-# Vector Quadratic +/-! ...
-function operate_output_index!(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    output_index::Integer,
-    f::MOI.VectorQuadraticFunction{T},
-    α::T,
-) where {T}
-    f.constants[output_index] = op(f.constants[output_index], α)
-    return f
-end
-
-function operate_output_index!(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    output_index::Integer,
-    f::MOI.VectorQuadraticFunction{T},
-    g::MOI.ScalarAffineFunction{T},
-) where {T}
-    append!(
-        f.affine_terms,
-        MOI.VectorAffineTerm.(output_index, operate_terms(op, g.terms)),
-    )
-    return operate_output_index!(op, T, output_index, f, MOI.constant(g))
-end
-
-function operate_output_index!(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    output_index::Integer,
-    f::MOI.VectorQuadraticFunction{T},
-    g::MOI.ScalarQuadraticFunction{T},
-) where {T}
-    append!(
-        f.affine_terms,
-        MOI.VectorAffineTerm.(output_index, operate_terms(op, g.affine_terms)),
-    )
-    append!(
-        f.quadratic_terms,
-        MOI.VectorQuadraticTerm.(
-            output_index,
-            operate_terms(op, g.quadratic_terms),
-        ),
-    )
-    return operate_output_index!(op, T, output_index, f, MOI.constant(g))
-end
 
 function Base.:+(arg::VectorLike, args::VectorLike...)
     T = _eltype(arg, args)
