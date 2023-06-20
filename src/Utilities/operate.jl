@@ -1105,7 +1105,7 @@ end
 """
     operate_term(op::Function, args...)
 
-Compute `op(args...)`, where at least one elemnt of `args` is one of
+Compute `op(args...)`, where at least one element of `args` is one of
 [`MOI.ScalarAffineTerm`](@ref), [`MOI.ScalarQuadraticTerm`](@ref),
 [`MOI.VectorAffineTerm`](@ref), or [`MOI.VectorQuadraticTerm`](@ref).
 
@@ -1303,4 +1303,75 @@ function operate_term(
     g::T,
 ) where {T}
     return operate_term(*, f, inv(g))
+end
+
+"""
+    operate_terms(op::Function, args...)
+
+Compute `op(args...)`, where at least one element of `args` is a vector of
+[`MOI.ScalarAffineTerm`](@ref), [`MOI.ScalarQuadraticTerm`](@ref),
+[`MOI.VectorAffineTerm`](@ref), or [`MOI.VectorQuadraticTerm`](@ref).
+
+## Methods
+
+ 1. `+`
+    a. `operate_term(::typeof(+), ::Vector{<:Term})`
+ 2. `-`
+    a. `operate_term(::typeof(-), ::Vector{<:Term})`
+ 3. `*`
+    a. `operate_term(::typeof(*), ::Diagonal, ::Vector{<:VectorTerm})`
+"""
+function operate_terms end
+
+function operate_terms(
+    ::typeof(+),
+    terms::Vector{
+        <:Union{
+            MOI.ScalarAffineTerm,
+            MOI.ScalarQuadraticTerm,
+            MOI.VectorAffineTerm,
+            MOI.VectorQuadraticTerm,
+        },
+    },
+)
+    return terms
+end
+
+function operate_terms(
+    ::typeof(-),
+    terms::Vector{
+        <:Union{
+            MOI.ScalarAffineTerm,
+            MOI.ScalarQuadraticTerm,
+            MOI.VectorAffineTerm,
+            MOI.VectorQuadraticTerm,
+        },
+    },
+)
+    return map(term -> operate_term(-, term), terms)
+end
+
+function operate_terms(::typeof(*), D::Diagonal, terms)
+    return map(term -> operate_term(*, D, term), terms)
+end
+
+"""
+    operate_terms!(op::Function, args...)
+
+Compute `op(args...)`, where at least one element of `args` is a vector of
+[`MOI.ScalarAffineTerm`](@ref), [`MOI.ScalarQuadraticTerm`](@ref),
+[`MOI.VectorAffineTerm`](@ref), or [`MOI.VectorQuadraticTerm`](@ref).
+
+## Methods
+
+ 1. `-`
+    a. `operate_term(::typeof(-), ::Vector{<:ScalarTerm})`
+"""
+function operate_terms! end
+
+function operate_terms!(
+    ::typeof(-),
+    terms::Vector{<:Union{MOI.ScalarAffineTerm,MOI.ScalarQuadraticTerm}},
+)
+    return map!(term -> operate_term(-, term), terms, terms)
 end

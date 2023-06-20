@@ -1306,51 +1306,6 @@ function operate_output_index!(
     return x[i] = operate!(op, T, x[i], args...)
 end
 
-# Helpers
-
-# Avoid a copy in the case of +
-function operate_terms(
-    ::typeof(+),
-    terms::Vector{
-        <:Union{
-            MOI.ScalarAffineTerm,
-            MOI.ScalarQuadraticTerm,
-            MOI.VectorAffineTerm,
-            MOI.VectorQuadraticTerm,
-        },
-    },
-)
-    return terms
-end
-
-function operate_terms!(
-    ::typeof(-),
-    terms::Vector{<:Union{MOI.ScalarAffineTerm,MOI.ScalarQuadraticTerm}},
-)
-    return map!(term -> operate_term(-, term), terms, terms)
-end
-
-function operate_terms(
-    ::typeof(-),
-    terms::Vector{
-        <:Union{
-            MOI.ScalarAffineTerm,
-            MOI.ScalarQuadraticTerm,
-            MOI.VectorAffineTerm,
-            MOI.VectorQuadraticTerm,
-        },
-    },
-)
-    return map(term -> operate_term(-, term), terms)
-end
-
-function operate_terms(
-    ::typeof(-),
-    terms::Vector{<:Union{MOI.VectorAffineTerm,MOI.VectorQuadraticTerm}},
-)
-    return map(term -> operate_term(-, term), terms)
-end
-
 function map_terms!(
     op,
     func::Union{MOI.ScalarAffineFunction,MOI.VectorAffineFunction},
@@ -2359,11 +2314,3 @@ function MA.promote_operation(
 end
 
 Base.conj(f::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = f
-
-## Matrix operations
-
-function operate_terms(::typeof(*), D::Diagonal, terms)
-    return map(terms) do term
-        return operate_term(*, D, term)
-    end
-end

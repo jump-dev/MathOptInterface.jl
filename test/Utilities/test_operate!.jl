@@ -409,6 +409,68 @@ function test_operate_term_4a()
     return
 end
 
+function test_operate_terms_1a()
+    x = MOI.VariableIndex(1)
+    for term in (
+        MOI.ScalarAffineTerm(2.0, x),
+        MOI.ScalarQuadraticTerm(2.0, x, x),
+        MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(2.0, x)),
+        MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(2.0, x, x)),
+    )
+        @test MOI.Utilities.operate_terms(+, [term]) == [term]
+    end
+    return
+end
+
+function test_operate_terms_2a()
+    x = MOI.VariableIndex(1)
+    for term in (
+        MOI.ScalarAffineTerm(2.0, x),
+        MOI.ScalarQuadraticTerm(2.0, x, x),
+        MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(2.0, x)),
+        MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(2.0, x, x)),
+    )
+        @test MOI.Utilities.operate_terms(-, [term]) ==
+              [MOI.Utilities.operate_term(-, term)]
+    end
+    return
+end
+
+function test_operate_terms_3a()
+    D = LinearAlgebra.Diagonal([0.5, 0.6])
+    x = MOI.VariableIndex(1)
+    terms = [
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2.0, x)),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(2.0, x)),
+    ]
+    @test MOI.Utilities.operate_terms(*, D, terms) == [
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(0.5 * 2.0, x)),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.6 * 2.0, x)),
+    ]
+    terms = [
+        MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(2.0, x, x)),
+        MOI.VectorQuadraticTerm(2, MOI.ScalarQuadraticTerm(2.0, x, x)),
+    ]
+    @test MOI.Utilities.operate_terms(*, D, terms) == [
+        MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(0.5 * 2.0, x, x)),
+        MOI.VectorQuadraticTerm(2, MOI.ScalarQuadraticTerm(0.6 * 2.0, x, x)),
+    ]
+    return
+end
+
+function test_operate_terms!_1a()
+    x = MOI.VariableIndex(1)
+    terms = [MOI.ScalarAffineTerm(2.0, x)]
+    ret = MOI.Utilities.operate_terms!(-, terms)
+    @test ret === terms
+    @test ret == [MOI.ScalarAffineTerm(-2.0, x)]
+    terms = [MOI.ScalarQuadraticTerm(2.0, x, x)]
+    ret = MOI.Utilities.operate_terms!(-, terms)
+    @test ret === terms
+    @test ret == [MOI.ScalarQuadraticTerm(-2.0, x, x)]
+    return
+end
+
 end  # module
 
 TestOperate.runtests()
