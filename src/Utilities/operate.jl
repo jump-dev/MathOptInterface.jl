@@ -636,24 +636,27 @@ end
 
 ### 4a: `operate(::typeof(/), ::Type{T}, ::F, ::T)
 
-function operate(::typeof(/), ::Type{T}, f::MOI.VariableIndex, α::T) where {T}
-    return MOI.ScalarAffineFunction{T}(
-        [MOI.ScalarAffineTerm(inv(α), f)],
-        zero(T),
-    )
-end
-
-function operate(::typeof(/), ::Type{T}, f::TypedLike{T}, α::T) where {T}
-    return operate!(/, T, copy(f), α)
+function operate(
+    ::typeof(/),
+    ::Type{T},
+    f::Union{MOI.VariableIndex,MOI.VectorOfVariables},
+    g::T,
+) where {T}
+    return operate(*, T, inv(g), f)
 end
 
 function operate(
     ::typeof(/),
     ::Type{T},
-    f::Union{MOI.VariableIndex,MOI.VectorOfVariables},
-    α::T,
+    f::Union{
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+    g::T,
 ) where {T}
-    return operate(*, T, inv(α), f)
+    return operate!(/, T, copy(f), g)
 end
 
 ### 6a: operate(::typeof(imag), ::Type{T}, ::F)
@@ -669,7 +672,18 @@ function operate(::typeof(imag), ::Type{T}, f::MOI.VectorOfVariables) where {T}
     )
 end
 
-operate(::typeof(imag), ::Type, f::TypedLike) = imag(f)
+function operate(
+    ::typeof(imag),
+    ::Type{T},
+    f::Union{
+        MOI.ScalarAffineFunction{S},
+        MOI.ScalarQuadraticFunction{S},
+        MOI.VectorAffineFunction{S},
+        MOI.VectorQuadraticFunction{S},
+    },
+) where {T,S<:Union{T,Complex{T}}}
+    return imag(f)
+end
 
 """
     operate!(
@@ -687,27 +701,21 @@ function returns a new object.
 """
 operate!(op, ::Type{T}, args...) where {T} = operate(op, T, args...)
 
-operate!(::typeof(+), ::Type{T}, f::MOI.AbstractFunction) where {T} = f
+### 1a: operate!(::typeof(+), ::Type{T}, ::F1)
+
+### 1b: operate!(::typeof(+), ::Type{T}, ::F1, ::F2)
 
 function operate!(
-    op::typeof(-),
-    ::Type{T},
-    f::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
-) where {T}
-    return MA.operate!(-, f)
-end
-
-function operate!(
-    op::Union{typeof(+),typeof(-)},
+    ::typeof(+),
     ::Type{T},
     f::MOI.ScalarAffineFunction{T},
     g::Union{T,MOI.VariableIndex,MOI.ScalarAffineFunction{T}},
 ) where {T}
-    return MA.operate!(op, f, g)
+    return MA.operate!(+, f, g)
 end
 
 function operate!(
-    op::Union{typeof(+),typeof(-)},
+    ::typeof(+),
     ::Type{T},
     f::MOI.ScalarQuadraticFunction{T},
     g::Union{
@@ -717,5 +725,282 @@ function operate!(
         MOI.ScalarQuadraticFunction{T},
     },
 ) where {T}
-    return MA.operate!(op, f, g)
+    return MA.operate!(+, f, g)
 end
+
+function operate!(
+    ::typeof(+),
+    ::Type{T},
+    f::MOI.VectorAffineFunction{T},
+    g::AbstractVector{T},
+) where {T}
+    @assert MOI.output_dimension(f) == length(g)
+    f.constants .+= g
+    return f
+end
+
+function operate!(
+    ::typeof(+),
+    ::Type{T},
+    f::MOI.VectorAffineFunction{T},
+    g::MOI.VectorOfVariables,
+) where {T}
+    d = MOI.output_dimension(g)
+    @assert MOI.output_dimension(f) == d
+    append!(
+        f.terms,
+        MOI.VectorAffineTerm.(1:d, MOI.ScalarAffineTerm.(one(T), g.variables)),
+    )
+    return f
+end
+
+function operate!(
+    ::typeof(+),
+    ::Type{T},
+    f::MOI.VectorAffineFunction{T},
+    g::MOI.VectorAffineFunction{T},
+) where {T}
+    append!(f.terms, g.terms)
+    f.constants .+= g.constants
+    return f
+end
+
+function operate!(
+    ::typeof(+),
+    ::Type{T},
+    f::MOI.VectorQuadraticFunction{T},
+    g::AbstractVector{T},
+) where {T}
+    @assert MOI.output_dimension(f) == length(g)
+    f.constants .+= g
+    return f
+end
+
+function operate!(
+    ::typeof(+),
+    ::Type{T},
+    f::MOI.VectorQuadraticFunction{T},
+    g::MOI.VectorOfVariables,
+) where {T}
+    d = MOI.output_dimension(g)
+    @assert MOI.output_dimension(f) == d
+    append!(
+        f.affine_terms,
+        MOI.VectorAffineTerm.(1:d, MOI.ScalarAffineTerm.(one(T), g.variables)),
+    )
+    return f
+end
+
+function operate!(
+    ::typeof(+),
+    ::Type{T},
+    f::MOI.VectorQuadraticFunction{T},
+    g::MOI.VectorAffineFunction{T},
+) where {T}
+    append!(f.affine_terms, g.terms)
+    f.constants .+= g.constants
+    return f
+end
+
+function operate!(
+    ::typeof(+),
+    ::Type{T},
+    f::MOI.VectorQuadraticFunction{T},
+    g::MOI.VectorQuadraticFunction{T},
+) where {T}
+    append!(f.affine_terms, g.affine_terms)
+    append!(f.quadratic_terms, g.quadratic_terms)
+    f.constants .+= g.constants
+    return f
+end
+
+### 2a: operate!(::typeof(-), ::Type{T}, ::F)
+
+function operate!(
+    op::typeof(-),
+    ::Type{T},
+    f::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
+) where {T}
+    return MA.operate!(-, f)
+end
+
+### 2b: operate!(::typeof(-), ::Type{T}, ::F1, ::F2)
+
+function operate!(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.ScalarAffineFunction{T},
+    g::Union{T,MOI.VariableIndex,MOI.ScalarAffineFunction{T}},
+) where {T}
+    return MA.operate!(-, f, g)
+end
+
+function operate!(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.ScalarQuadraticFunction{T},
+    g::Union{
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+    },
+) where {T}
+    return MA.operate!(-, f, g)
+end
+
+function operate!(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.VectorAffineFunction{T},
+    g::AbstractVector{T},
+) where {T}
+    @assert MOI.output_dimension(f) == length(g)
+    f.constants .-= g
+    return f
+end
+
+function operate!(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.VectorAffineFunction{T},
+    g::MOI.VectorOfVariables,
+) where {T}
+    d = MOI.output_dimension(g)
+    @assert MOI.output_dimension(f) == d
+    append!(
+        f.terms,
+        MOI.VectorAffineTerm.(1:d, MOI.ScalarAffineTerm.(-one(T), g.variables)),
+    )
+    return f
+end
+
+function operate!(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.VectorAffineFunction{T},
+    g::MOI.VectorAffineFunction{T},
+) where {T}
+    append!(f.terms, operate_terms(-, g.terms))
+    f.constants .-= g.constants
+    return f
+end
+
+function operate!(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.VectorQuadraticFunction{T},
+    g::AbstractVector{T},
+) where {T}
+    @assert MOI.output_dimension(f) == length(g)
+    f.constants .-= g
+    return f
+end
+
+function operate!(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.VectorQuadraticFunction{T},
+    g::MOI.VectorOfVariables,
+) where {T}
+    d = MOI.output_dimension(g)
+    @assert MOI.output_dimension(f) == d
+    append!(
+        f.affine_terms,
+        MOI.VectorAffineTerm.(1:d, MOI.ScalarAffineTerm.(-one(T), g.variables)),
+    )
+    return f
+end
+
+function operate!(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.VectorQuadraticFunction{T},
+    g::MOI.VectorAffineFunction{T},
+) where {T}
+    append!(f.affine_terms, operate_terms(-, g.terms))
+    f.constants .-= g.constants
+    return f
+end
+
+function operate!(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.VectorQuadraticFunction{T},
+    g::MOI.VectorQuadraticFunction{T},
+) where {T}
+    append!(f.affine_terms, operate_terms(-, g.affine_terms))
+    append!(f.quadratic_terms, operate_terms(-, g.quadratic_terms))
+    f.constants .-= g.constants
+    return f
+end
+
+### 3a: operate!(::typeof(*), ::Type{T}, ::T, ::F)
+
+### 3b: operate!(::typeof(*), ::Type{T}, ::F, ::T)
+
+function operate!(
+    ::typeof(*),
+    ::Type{T},
+    f::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
+    g::T,
+) where {T<:Number}
+    map_terms!(term -> operate_term(*, term, g), f)
+    f.constant *= g
+    return f
+end
+
+function operate!(
+    ::typeof(*),
+    ::Type{T},
+    f::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
+    g::T,
+) where {T}
+    map_terms!(term -> operate_term(*, term, g), f)
+    LinearAlgebra.rmul!(f.constants, g)
+    return f
+end
+
+### 3c: operate!(::typeof(*), ::Type{T}, ::F1, ::F2)
+
+### 3d: operate!(::typeof(*), ::Type{T}, ::Diagonal{T}, ::F)
+
+### 4a: operate!(::typeof(/), ::Type{T}, ::F, ::T)
+
+function operate!(
+    ::typeof(/),
+    ::Type{T},
+    f::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
+    g::T,
+) where {T}
+    map_terms!(term -> operate_term(/, term, g), f)
+    f.constant /= g
+    return f
+end
+
+function operate!(
+    ::typeof(/),
+    ::Type{T},
+    f::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
+    g::T,
+) where {T}
+    map_terms!(term -> operate_term(/, term, g), f)
+    LinearAlgebra.rmul!(f.constants, inv(g))
+    return f
+end
+
+function operate!(
+    ::typeof(/),
+    ::Type{T},
+    f::MOI.ScalarQuadraticFunction{T},
+    g::T,
+) where {T}
+    f.affine_terms .= operate_term.(/, f.affine_terms, g)
+    f.quadratic_terms .= operate_term.(/, f.quadratic_terms, g)
+    f.constant /= g
+    return f
+end
+
+### 5a: operate!(::typeof(vcat), ::Type{T}, ::F...)
+
+### 6a: operate!(::typeof(imag), ::Type{T}, ::F)

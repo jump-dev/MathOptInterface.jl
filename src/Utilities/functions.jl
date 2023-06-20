@@ -1678,15 +1678,6 @@ end
 # Vector +/-
 ###############################################################################
 
-# Vector Variable +/- ...
-function operate!(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    f::MOI.VectorOfVariables,
-    g::VectorQuadraticLike,
-) where {T}
-    return operate(op, T, f, g)
-end
 
 # Vector Affine +/-! ...
 function operate_output_index!(
@@ -1697,17 +1688,6 @@ function operate_output_index!(
     α::T,
 ) where {T}
     f.constants[output_index] = op(f.constants[output_index], α)
-    return f
-end
-
-function operate!(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    f::MOI.VectorAffineFunction{T},
-    g::Vector{T},
-) where {T}
-    @assert MOI.output_dimension(f) == length(g)
-    f.constants .= op.(f.constants, g)
     return f
 end
 
@@ -1725,24 +1705,6 @@ function operate_output_index!(
     return f
 end
 
-function operate!(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    f::MOI.VectorAffineFunction{T},
-    g::MOI.VectorOfVariables,
-) where {T}
-    d = MOI.output_dimension(g)
-    @assert MOI.output_dimension(f) == d
-    append!(
-        f.terms,
-        MOI.VectorAffineTerm.(
-            1:d,
-            MOI.ScalarAffineTerm.(op(one(T)), g.variables),
-        ),
-    )
-    return f
-end
-
 function operate_output_index!(
     op::Union{typeof(+),typeof(-)},
     ::Type{T},
@@ -1755,26 +1717,6 @@ function operate_output_index!(
         MOI.VectorAffineTerm.(output_index, operate_terms(op, g.terms)),
     )
     return operate_output_index!(op, T, output_index, f, MOI.constant(g))
-end
-
-function operate!(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    f::MOI.VectorAffineFunction{T},
-    g::MOI.VectorAffineFunction{T},
-) where {T}
-    append!(f.terms, operate_terms(op, g.terms))
-    f.constants .= op.(f.constants, g.constants)
-    return f
-end
-
-function operate!(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    f::MOI.VectorAffineFunction{T},
-    g::MOI.VectorQuadraticFunction{T},
-) where {T}
-    return operate(op, T, f, g)
 end
 
 # Vector Quadratic +/-! ...
@@ -1789,35 +1731,6 @@ function operate_output_index!(
     return f
 end
 
-function operate!(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    f::MOI.VectorQuadraticFunction{T},
-    g::Vector{T},
-) where {T}
-    @assert MOI.output_dimension(f) == length(g)
-    f.constants .= op.(f.constants, g)
-    return f
-end
-
-function operate!(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    f::MOI.VectorQuadraticFunction{T},
-    g::MOI.VectorOfVariables,
-) where {T}
-    d = MOI.output_dimension(g)
-    @assert MOI.output_dimension(f) == d
-    append!(
-        f.affine_terms,
-        MOI.VectorAffineTerm.(
-            collect(1:d),
-            MOI.ScalarAffineTerm.(op(one(T)), g.variables),
-        ),
-    )
-    return f
-end
-
 function operate_output_index!(
     op::Union{typeof(+),typeof(-)},
     ::Type{T},
@@ -1830,17 +1743,6 @@ function operate_output_index!(
         MOI.VectorAffineTerm.(output_index, operate_terms(op, g.terms)),
     )
     return operate_output_index!(op, T, output_index, f, MOI.constant(g))
-end
-
-function operate!(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    f::MOI.VectorQuadraticFunction{T},
-    g::MOI.VectorAffineFunction{T},
-) where {T}
-    append!(f.affine_terms, operate_terms(op, g.terms))
-    f.constants .= op.(f.constants, g.constants)
-    return f
 end
 
 function operate_output_index!(
@@ -1862,18 +1764,6 @@ function operate_output_index!(
         ),
     )
     return operate_output_index!(op, T, output_index, f, MOI.constant(g))
-end
-
-function operate!(
-    op::Union{typeof(+),typeof(-)},
-    ::Type{T},
-    f::MOI.VectorQuadraticFunction{T},
-    g::MOI.VectorQuadraticFunction{T},
-) where {T}
-    append!(f.affine_terms, operate_terms(op, g.affine_terms))
-    append!(f.quadratic_terms, operate_terms(op, g.quadratic_terms))
-    f.constants .= op.(f.constants, g.constants)
-    return f
 end
 
 function Base.:+(arg::VectorLike, args::VectorLike...)
@@ -1917,33 +1807,6 @@ function Base.:-(α::Vector{T}, f::VectorLike{T}) where {T}
 end
 
 ####################################### * ######################################
-
-function operate!(::typeof(*), ::Type{T}, f::MOI.VariableIndex, α::T) where {T}
-    return operate(*, T, α, f)
-end
-
-# `<:Number` is a workaround for https://github.com/jump-dev/MathOptInterface.jl/issues/980
-function operate!(
-    ::typeof(*),
-    ::Type{T},
-    f::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
-    α::T,
-) where {T<:Number}
-    map_terms!(term -> operate_term(*, term, α), f)
-    f.constant *= α
-    return f
-end
-
-function operate!(
-    ::typeof(*),
-    ::Type{T},
-    f::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
-    α::T,
-) where {T}
-    map_terms!(term -> operate_term(*, term, α), f)
-    LinearAlgebra.rmul!(f.constants, α)
-    return f
-end
 
 Base.:*(f::MOI.AbstractFunction) = f
 
@@ -2020,44 +1883,6 @@ LinearAlgebra.symmetric_type(::Type{F}) where {F<:ScalarLike} = F
 LinearAlgebra.symmetric(f::ScalarLike, ::Symbol) = f
 
 ####################################### / ######################################
-
-function operate!(::typeof(/), ::Type{T}, f::MOI.VariableIndex, α::T) where {T}
-    return operate(/, T, f, α)
-end
-
-function operate!(
-    ::typeof(/),
-    ::Type{T},
-    f::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
-    α::T,
-) where {T}
-    map_terms!(term -> operate_term(/, term, α), f)
-    f.constant /= α
-    return f
-end
-
-function operate!(
-    ::typeof(/),
-    ::Type{T},
-    f::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
-    α::T,
-) where {T}
-    map_terms!(term -> operate_term(/, term, α), f)
-    rmul!(f.constants, inv(α))
-    return f
-end
-
-function operate!(
-    ::typeof(/),
-    ::Type{T},
-    f::MOI.ScalarQuadraticFunction{T},
-    α::T,
-) where {T}
-    f.affine_terms .= operate_term.(/, f.affine_terms, α)
-    f.quadratic_terms .= operate_term.(/, f.quadratic_terms, α)
-    f.constant /= α
-    return f
-end
 
 function Base.:/(f::TypedLike{T}, g::T) where {T}
     return operate(/, T, f, g)

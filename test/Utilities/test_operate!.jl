@@ -60,6 +60,7 @@ function test_operate_1a()
     )
         f = _test_function(coef)
         @test MOI.Utilities.operate(+, Int, f) == f
+        @test MOI.Utilities.operate!(+, Int, f) == f
     end
     return
 end
@@ -84,6 +85,7 @@ function test_operate_1b()
         Fj = get(special_cases, F[j], F[j])
         fk = _test_function(Fi .+ Fj)
         @test MOI.Utilities.operate(+, Int, fi, fj) ≈ fk
+        @test MOI.Utilities.operate!(+, Int, fi, fj) ≈ fk
     end
     for i in 6:10, j in 6:10
         fi, fj = _test_function(F[i]), _test_function(F[j])
@@ -91,6 +93,7 @@ function test_operate_1b()
             return get(special_cases, x, x) .+ get(special_cases, y, y)
         end
         @test MOI.Utilities.operate(+, Int, fi, fj) ≈ _test_function(k)
+        @test MOI.Utilities.operate!(+, Int, fi, fj) ≈ _test_function(k)
     end
     return
 end
@@ -110,6 +113,8 @@ function test_operate_2a()
         [(1, 1, 1)] => [(-1, -1, -1)],
     )
         @test MOI.Utilities.operate(-, T, _test_function(f)) ≈ _test_function(g)
+        @test MOI.Utilities.operate!(-, T, _test_function(f)) ≈
+              _test_function(g)
     end
     return
 end
@@ -138,6 +143,7 @@ function test_operate_2b()
             fk = zero(MOI.ScalarAffineFunction{Int})
         end
         @test MOI.Utilities.operate(-, Int, fi, fj) ≈ fk
+        @test MOI.Utilities.operate!(-, Int, fi, fj) ≈ fk
     end
     for i in 6:10, j in 6:10
         F2 = [2 .* fi for fi in F[i]]
@@ -150,6 +156,7 @@ function test_operate_2b()
             fk = MOI.VectorAffineFunction(MOI.VectorAffineTerm{Int}[], [0])
         end
         @test MOI.Utilities.operate(-, Int, fi, fj) ≈ fk
+        @test MOI.Utilities.operate!(-, Int, fi, fj) ≈ fk
     end
     return
 end
@@ -170,6 +177,7 @@ function test_operate_3a()
     )
         f = _test_function(f)
         @test MOI.Utilities.operate(*, T, 3, f) ≈ _test_function(g)
+        @test MOI.Utilities.operate!(*, T, 3, f) ≈ _test_function(g)
     end
     return
 end
@@ -190,6 +198,7 @@ function test_operate_3b()
     )
         f = _test_function(f)
         @test MOI.Utilities.operate(*, T, f, 3) ≈ _test_function(g)
+        @test MOI.Utilities.operate!(*, T, f, 3) ≈ _test_function(g)
     end
     return
 end
@@ -210,6 +219,7 @@ function test_operate_4a()
     )
         f = _test_function(f)
         @test MOI.Utilities.operate(/, T, f, 2.0) ≈ _test_function(g)
+        @test MOI.Utilities.operate!(/, T, f, 2.0) ≈ _test_function(g)
     end
     return
 end
@@ -219,6 +229,10 @@ function test_operate_6a()
     @test MOI.Utilities.operate(imag, T, _test_function((0.0, 0.0, 0.0))) ≈
           zero(MOI.ScalarAffineFunction{T})
     @test MOI.Utilities.operate(imag, T, _test_function([(0.0, 0.0, 0.0)])) ≈
+          MOI.VectorAffineFunction(MOI.VectorAffineTerm{T}[], [0.0])
+    @test MOI.Utilities.operate!(imag, T, _test_function((0.0, 0.0, 0.0))) ≈
+          zero(MOI.ScalarAffineFunction{T})
+    @test MOI.Utilities.operate!(imag, T, _test_function([(0.0, 0.0, 0.0)])) ≈
           MOI.VectorAffineFunction(MOI.VectorAffineTerm{T}[], [0.0])
     return
 end
