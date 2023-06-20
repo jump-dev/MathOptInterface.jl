@@ -323,3 +323,26 @@ julia> MOI.Bridges.bridging_cost(
 ```
 """
 bridging_cost(::Type{<:AbstractBridge}) = 1.0
+
+"""
+    struct FirstBridge <: MOI.AbstractConstraintAttribute end
+
+Returns the first bridge used to bridge the constraint.
+
+!!! warning
+    The indices of the bridge correspond to internal indices and may not
+    correspond to indices of the model this attribute is got from.
+"""
+struct FirstBridge <: MOI.AbstractConstraintAttribute end
+
+MOI.is_set_by_optimize(::FirstBridge) = true
+
+MOI.get(::MOI.ModelLike, ::FirstBridge, b::MOI.Bridges.AbstractBridge) = b
+
+function MOI.Utilities.map_indices(
+    ::Function,
+    ::FirstBridge,
+    b::MOI.Bridges.AbstractBridge,
+)
+    return b
+end
