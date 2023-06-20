@@ -1513,3 +1513,98 @@ function operate_output_index!(
     operate_output_index!(op, T, output_index, f, MOI.constant(g))
     return f
 end
+
+"""
+    operate_coefficient(
+        op::Function,
+        f::Union{
+            MOI.ScalarAffineTerm,
+            MOI.ScalarQuadraticTerm,
+            MOI.VectorAffineTerm,
+            MOI.VectorQuadraticTerm,
+        },
+    )
+
+Return a new term, which is the result of calling `op(coefficient)` for on the
+coefficient of the term `f`.
+"""
+
+function operate_coefficient(op::F, f::MOI.ScalarAffineTerm) where {F}
+    return MOI.ScalarAffineTerm(op(f.coefficient), f.variable)
+end
+
+function operate_coefficient(op::F, f::MOI.ScalarQuadraticTerm) where {F}
+    coef = op(f.coefficient)
+    return MOI.ScalarQuadraticTerm(coef, f.variable_1, f.variable_2)
+end
+
+function operate_coefficient(op::F, f::MOI.VectorAffineTerm) where {F}
+    return MOI.VectorAffineTerm(
+        f.output_index,
+        operate_coefficient(op, f.scalar_term),
+    )
+end
+
+function operate_coefficient(op::F, f::MOI.VectorQuadraticTerm) where {F}
+    return MOI.VectorQuadraticTerm(
+        f.output_index,
+        operate_coefficient(op, f.scalar_term),
+    )
+end
+
+"""
+    operate_coefficients(
+        op::F,
+        f::Union{
+            MOI.ScalarAffineFunction,
+            MOI.ScalarQuadraticFunction,
+            MOI.VectorAffineFunction,
+            MOI.VectorQuadraticFunction,
+        },
+    ) where {F}
+"""
+function operate_coefficients end
+
+function operate_coefficients(
+    op::F,
+    f::Vector{
+        <:Union{
+            MOI.ScalarAffineTerm,
+            MOI.ScalarQuadraticTerm,
+            MOI.VectorAffineTerm,
+            MOI.VectorQuadraticTerm,
+        },
+    },
+) where {F}
+    return map(Base.Fix1(operate_coefficient, op), f)
+end
+
+function operate_coefficients(op::F, f::MOI.ScalarAffineFunction) where {F}
+    return MOI.ScalarAffineFunction(
+        operate_coefficients(op, f.terms),
+        op(f.constant),
+    )
+end
+
+function operate_coefficients(op::F, f::MOI.ScalarQuadraticFunction) where {F}
+    return MOI.ScalarQuadraticFunction(
+        operate_coefficients(op, f.quadratic_terms),
+        operate_coefficients(op, f.affine_terms),
+        op(f.constant),
+    )
+end
+
+function operate_coefficients(op::F, f::MOI.VectorAffineFunction) where {F}
+    return MOI.VectorAffineFunction(
+        operate_coefficients(op, f.terms),
+        map(op, f.constants),
+    )
+end
+
+function operate_coefficients(op::F, f::MOI.VectorQuadraticFunction) where {F}
+    return MOI.VectorQuadraticFunction(
+        operate_coefficients(op, f.quadratic_terms),
+        operate_coefficients(op, f.affine_terms),
+        map(op, f.constants),
+    )
+end

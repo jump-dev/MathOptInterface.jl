@@ -2048,62 +2048,6 @@ function Base.promote_rule(
     return F
 end
 
-function operate_coefficient(f, term::MOI.ScalarAffineTerm)
-    return MOI.ScalarAffineTerm(f(term.coefficient), term.variable)
-end
-
-function operate_coefficient(f, term::MOI.ScalarQuadraticTerm)
-    return MOI.ScalarQuadraticTerm(
-        f(term.coefficient),
-        term.variable_1,
-        term.variable_2,
-    )
-end
-
-function operate_coefficient(f, term::MOI.VectorAffineTerm)
-    return MOI.VectorAffineTerm(
-        term.output_index,
-        operate_coefficient(f, term.scalar_term),
-    )
-end
-
-function operate_coefficient(f, term::MOI.VectorQuadraticTerm)
-    return MOI.VectorQuadraticTerm(
-        term.output_index,
-        operate_coefficient(f, term.scalar_term),
-    )
-end
-
-function operate_coefficients(f, func::MOI.ScalarAffineFunction)
-    return MOI.ScalarAffineFunction(
-        [operate_coefficient(f, term) for term in func.terms],
-        f(func.constant),
-    )
-end
-
-function operate_coefficients(f, func::MOI.ScalarQuadraticFunction)
-    return MOI.ScalarQuadraticFunction(
-        [operate_coefficient(f, term) for term in func.quadratic_terms],
-        [operate_coefficient(f, term) for term in func.affine_terms],
-        f(func.constant),
-    )
-end
-
-function operate_coefficients(f, func::MOI.VectorAffineFunction)
-    return MOI.VectorAffineFunction(
-        [operate_coefficient(f, term) for term in func.terms],
-        map(f, func.constants),
-    )
-end
-
-function operate_coefficients(f, func::MOI.VectorQuadraticFunction)
-    return MOI.VectorQuadraticFunction(
-        [operate_coefficient(f, term) for term in func.quadratic_terms],
-        [operate_coefficient(f, term) for term in func.affine_terms],
-        map(f, func.constants),
-    )
-end
-
 function Base.:*(α::T, g::TypedLike{T}) where {T}
     return operate_coefficients(β -> α * β, g)
 end

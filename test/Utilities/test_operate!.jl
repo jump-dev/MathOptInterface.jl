@@ -495,6 +495,47 @@ function test_operate_output_index_1a()
     return
 end
 
+function test_operate_coefficient()
+    x = MOI.VariableIndex(1)
+    for f in (
+        MOI.ScalarAffineTerm(1.0, x),
+        MOI.ScalarQuadraticTerm(1.0, x, x),
+        MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(1.0, x)),
+        MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(1.0, x, x)),
+    )
+        @test MOI.Utilities.operate_coefficient(t -> -(t), f) ==
+              MOI.Utilities.operate_term(-, f)
+    end
+    return
+end
+
+function test_operate_coefficients_term()
+    x = MOI.VariableIndex(1)
+    for f in (
+        MOI.ScalarAffineTerm(1.0, x),
+        MOI.ScalarQuadraticTerm(1.0, x, x),
+        MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(1.0, x)),
+        MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(1.0, x, x)),
+    )
+        @test MOI.Utilities.operate_coefficients(t -> -(t), [f]) ==
+              MOI.Utilities.operate_terms(-, [f])
+    end
+    return
+end
+
+function test_operate_coefficients_functions()
+    T = Float64
+    F = ((0.0, 1.0, 0.0), (0.0, 0.0, 1.0), (1.0, 1.0, 1.0))
+    op(x) = -x
+    for coef in F
+        f, g = _test_function(coef), _test_function(op.(coef))
+        @test MOI.Utilities.operate_coefficients(op, f) ≈ g
+        f, g = _test_function([coef]), _test_function([op.(coef)])
+        @test MOI.Utilities.operate_coefficients(op, f) ≈ g
+    end
+    return
+end
+
 end  # module
 
 TestOperate.runtests()
