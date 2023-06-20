@@ -1503,11 +1503,13 @@ function operate_output_index!(
         f.affine_terms,
         MOI.VectorAffineTerm.(output_index, operate_terms(op, g.affine_terms)),
     )
-    quad_terms = MOI.VectorQuadraticTerm.(
-        output_index,
-        operate_terms(op, g.quadratic_terms),
+    append!(
+        f.quadratic_terms,
+        MOI.VectorQuadraticTerm.(
+            output_index,
+            operate_terms(op, g.quadratic_terms),
+        ),
     )
-    append!(f.quadratic_terms, quad_terms)
     operate_output_index!(op, T, output_index, f, MOI.constant(g))
     return f
 end
