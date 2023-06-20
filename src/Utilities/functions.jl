@@ -1980,18 +1980,7 @@ function fill_variables(
     return
 end
 
-function operate(
-    ::typeof(vcat),
-    ::Type{T},
-    funcs::Union{MOI.VariableIndex,MOI.VectorOfVariables}...,
-) where {T}
-    out_dim = sum(func -> output_dim(T, func), funcs)
-    variables = Vector{MOI.VariableIndex}(undef, out_dim)
-    fill_vector(variables, T, 0, 0, fill_variables, output_dim, funcs...)
-    return MOI.VectorOfVariables(variables)
-end
-
-number_of_affine_terms(::Type{T}, ::T) where {T} = 0
+number_of_affine_terms(::Type{T}, ::Union{T,AbstractVector{T}}) where {T} = 0
 
 number_of_affine_terms(::Type, ::MOI.VariableIndex) = 1
 
@@ -2018,6 +2007,7 @@ function number_of_quadratic_terms(
         MOI.VariableIndex,
         MOI.VectorOfVariables,
         MOI.ScalarAffineFunction{T},
+        AbstractVector{T},
         MOI.VectorAffineFunction{T},
     },
 ) where {T}
@@ -2051,7 +2041,7 @@ function fill_terms(
     ::Vector{MOI.VectorAffineTerm{T}},
     ::Int,
     ::Int,
-    ::T,
+    ::Union{T,AbstractVector{T}},
 ) where {T}
     return
 end
@@ -2111,6 +2101,7 @@ function fill_terms(
     ::Union{
         T,
         MOI.VariableIndex,
+        AbstractVector{T},
         MOI.VectorOfVariables,
         MOI.ScalarAffineFunction{T},
         MOI.VectorAffineFunction{T},
@@ -2132,6 +2123,8 @@ end
 
 output_dim(::Type{T}, ::T) where {T} = 1
 
+output_dim(::Type{T}, x::AbstractVector{T}) where {T} = length(x)
+
 output_dim(::Type, func::MOI.AbstractFunction) = MOI.output_dimension(func)
 
 function fill_constant(
@@ -2141,6 +2134,18 @@ function fill_constant(
     func::T,
 ) where {T}
     constant[offset+1] = func
+    return
+end
+
+function fill_constant(
+    constant::Vector{T},
+    offset::Int,
+    ::Int,
+    func::AbstractVector{T},
+) where {T}
+    for (i, fi) in enumerate(func)
+        constant[offset+i] = fi
+    end
     return
 end
 
@@ -2237,72 +2242,6 @@ function vectorize(
         funcs,
     )
     fill_vector(constant, T, fill_constant, output_dim, funcs)
-    return MOI.VectorQuadraticFunction(quadratic_terms, affine_terms, constant)
-end
-
-# TODO Remove `<:Number` when we drop Julia v1.1.1, it's needed for disambiguation
-function operate(
-    ::typeof(vcat),
-    ::Type{T},
-    funcs::Union{T,AbstractVector{T}}...,
-) where {T<:Number}
-    return vcat(funcs...)
-end
-
-function operate(
-    ::typeof(vcat),
-    ::Type{T},
-    funcs::Union{
-        ScalarAffineLike{T},
-        MOI.VectorOfVariables,
-        MOI.VectorAffineFunction{T},
-    }...,
-) where {T}
-    nterms = sum(func -> number_of_affine_terms(T, func), funcs)
-    out_dim = sum(func -> output_dim(T, func), funcs)
-    terms = Vector{MOI.VectorAffineTerm{T}}(undef, nterms)
-    constant = zeros(T, out_dim)
-    fill_vector(terms, T, 0, 0, fill_terms, number_of_affine_terms, funcs...)
-    fill_vector(constant, T, 0, 0, fill_constant, output_dim, funcs...)
-    return MOI.VectorAffineFunction(terms, constant)
-end
-
-function operate(
-    ::typeof(vcat),
-    ::Type{T},
-    funcs::Union{
-        ScalarQuadraticLike{T},
-        MOI.VectorOfVariables,
-        MOI.VectorAffineFunction{T},
-        MOI.VectorQuadraticFunction{T},
-    }...,
-) where {T}
-    num_affine_terms = sum(func -> number_of_affine_terms(T, func), funcs)
-    num_quadratic_terms = sum(func -> number_of_quadratic_terms(T, func), funcs)
-    out_dim = sum(func -> output_dim(T, func), funcs)
-    affine_terms = Vector{MOI.VectorAffineTerm{T}}(undef, num_affine_terms)
-    quadratic_terms =
-        Vector{MOI.VectorQuadraticTerm{T}}(undef, num_quadratic_terms)
-    constant = zeros(T, out_dim)
-    fill_vector(
-        affine_terms,
-        T,
-        0,
-        0,
-        fill_terms,
-        number_of_affine_terms,
-        funcs...,
-    )
-    fill_vector(
-        quadratic_terms,
-        T,
-        0,
-        0,
-        fill_terms,
-        number_of_quadratic_terms,
-        funcs...,
-    )
-    fill_vector(constant, T, 0, 0, fill_constant, output_dim, funcs...)
     return MOI.VectorQuadraticFunction(quadratic_terms, affine_terms, constant)
 end
 

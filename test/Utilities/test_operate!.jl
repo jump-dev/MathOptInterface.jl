@@ -247,6 +247,30 @@ function test_operate_4a()
     return
 end
 
+function test_operate_5a()
+    T = Float64
+    F = (
+        (0.0, 0.0, 0.0),
+        (1.0, 0.0, 0.0),
+        (0.0, 1.0, 0.0),
+        (0.0, 0.0, 1.0),
+        (1.0, 1.0, 1.0),
+        [(0.0, 0.0, 0.0)],
+        [(1.0, 0.0, 0.0)],
+        [(0.0, 1.0, 0.0)],
+        [(0.0, 0.0, 1.0)],
+        [(1.0, 1.0, 1.0)],
+    )
+    for f in F, g in F
+        h = vcat(f, g)
+        args = (_test_function(f), _test_function(g))
+        @test MOI.Utilities.operate(vcat, T, args...) ≈ _test_function(h)
+        args = (_test_function(f), _test_function(g))
+        @test MOI.Utilities.operate!(vcat, T, args...) ≈ _test_function(h)
+    end
+    return
+end
+
 function test_operate_6a()
     T = Float64
     @test MOI.Utilities.operate(imag, T, _test_function((0.0, 0.0, 0.0))) ≈

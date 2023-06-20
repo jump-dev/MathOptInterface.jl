@@ -676,6 +676,71 @@ function operate(
     return operate!(/, T, copy(f), g)
 end
 
+### 5a: operate(::typeof(vcat), ::Type{T}, ::F...)
+
+function operate(
+    ::typeof(vcat),
+    ::Type{T},
+    f::Union{T,AbstractVector{T}}...,
+) where {T<:Number}
+    return vcat(f...)
+end
+
+function operate(
+    ::typeof(vcat),
+    ::Type{T},
+    f::Union{MOI.VariableIndex,MOI.VectorOfVariables}...,
+) where {T}
+    x = Vector{MOI.VariableIndex}(undef, sum(f -> output_dim(T, f), f))
+    fill_vector(x, T, 0, 0, fill_variables, output_dim, f...)
+    return MOI.VectorOfVariables(x)
+end
+
+function operate(
+    ::typeof(vcat),
+    ::Type{T},
+    f::Union{
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        AbstractVector{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+    }...,
+) where {T}
+    num_aterms = sum(f -> number_of_affine_terms(T, f), f)
+    aterms = Vector{MOI.VectorAffineTerm{T}}(undef, num_aterms)
+    fill_vector(aterms, T, 0, 0, fill_terms, number_of_affine_terms, f...)
+    constants = zeros(T, sum(f -> output_dim(T, f), f))
+    fill_vector(constants, T, 0, 0, fill_constant, output_dim, f...)
+    return MOI.VectorAffineFunction(aterms, constants)
+end
+
+function operate(
+    ::typeof(vcat),
+    ::Type{T},
+    f::Union{
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        AbstractVector{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    }...,
+) where {T}
+    num_aterms = sum(func -> number_of_affine_terms(T, func), f)
+    aterms = Vector{MOI.VectorAffineTerm{T}}(undef, num_aterms)
+    fill_vector(aterms, T, 0, 0, fill_terms, number_of_affine_terms, f...)
+    num_qterms = sum(func -> number_of_quadratic_terms(T, func), f)
+    qterms = Vector{MOI.VectorQuadraticTerm{T}}(undef, num_qterms)
+    fill_vector(qterms, T, 0, 0, fill_terms, number_of_quadratic_terms, f...)
+    constants = zeros(T, sum(f -> output_dim(T, f), f))
+    fill_vector(constants, T, 0, 0, fill_constant, output_dim, f...)
+    return MOI.VectorQuadraticFunction(qterms, aterms, constants)
+end
+
 ### 6a: operate(::typeof(imag), ::Type{T}, ::F)
 
 function operate(::typeof(imag), ::Type{T}, ::MOI.VariableIndex) where {T}
