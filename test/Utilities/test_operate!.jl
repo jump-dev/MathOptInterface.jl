@@ -67,25 +67,25 @@ end
 function test_operate_1b()
     F = (
         (0, 0, 0),
-        (0, 0, 0),      # (1, 0, 0),
+        (1, 0, 0),
         (0, 1, 0),
         (0, 0, 1),
         (1, 1, 1),
         [(0, 0, 0)],
-        [(0, 0, 0)],    # [(1, 0, 0)],
+        [(1, 0, 0)],
         [(0, 1, 0)],
         [(0, 0, 1)],
         [(1, 1, 1)],
     )
     special_cases = Dict((0, 0, 0) => (0, 1, 0))
-    @testset for i in 1:5, j in 1:5
+    for i in 1:5, j in 1:5
         fi, fj = _test_function(F[i]), _test_function(F[j])
         Fi = get(special_cases, F[i], F[i])
         Fj = get(special_cases, F[j], F[j])
         fk = _test_function(Fi .+ Fj)
         @test MOI.Utilities.operate(+, Int, fi, fj) ≈ fk
     end
-    @testset for i in 6:10, j in 6:10
+    for i in 6:10, j in 6:10
         fi, fj = _test_function(F[i]), _test_function(F[j])
         k = map(zip(F[i], F[j])) do (x, y)
             return get(special_cases, x, x) .+ get(special_cases, y, y)
@@ -117,18 +117,18 @@ end
 function test_operate_2b()
     F = (
         (0, 0, 0),
-        (2, 3, 0),      # (1, 0, 0),
+        (1, 0, 0),
         (0, 1, 0),
         (0, 0, 1),
         (1, 1, 1),
         [(0, 0, 0)],
-        [(1, 3, 0)],    # [(1, 0, 0)],
+        [(1, 0, 0)],
         [(0, 1, 0)],
         [(0, 0, 1)],
         [(1, 1, 1)],
     )
     special_cases = Dict((0, 0, 0) => (0, 1, 0))
-    @testset for i in 1:5, j in 1:5
+    for i in 1:5, j in 1:5
         fi, fj = _test_function(2 .* F[i]), _test_function(F[j])
         Fi = get(special_cases, 2 .* F[i], 2 .* F[i])
         Fj = get(special_cases, F[j], F[j])
@@ -139,7 +139,7 @@ function test_operate_2b()
         end
         @test MOI.Utilities.operate(-, Int, fi, fj) ≈ fk
     end
-    @testset for i in 6:10, j in 6:10
+    for i in 6:10, j in 6:10
         F2 = [2 .* fi for fi in F[i]]
         fi, fj = _test_function(F2), _test_function(F[j])
         k = map(zip(F2, F[j])) do (x, y)
@@ -189,8 +189,7 @@ function test_operate_3b()
         [(1, 1, 1)] => [(3, 3, 3)],
     )
         f = _test_function(f)
-        # TODO
-        # @test MOI.Utilities.operate(*, T, f, 3) ≈ _test_function(g)
+        @test MOI.Utilities.operate(*, T, f, 3) ≈ _test_function(g)
     end
     return
 end

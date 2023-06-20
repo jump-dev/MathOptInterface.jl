@@ -80,7 +80,6 @@ function operate(
     ::Type{T},
     f::T,
     g::Union{
-        T,
         MOI.VariableIndex,
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
@@ -89,12 +88,7 @@ function operate(
     return operate(+, T, g, f)
 end
 
-function operate(
-    ::typeof(+),
-    ::Type{T},
-    f::MOI.VariableIndex,
-    g::T,
-) where {T}
+function operate(::typeof(+), ::Type{T}, f::MOI.VariableIndex, g::T) where {T}
     return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(one(T), f)], g)
 end
 
@@ -313,12 +307,7 @@ function operate(
     return operate!(+, T, operate(-, T, g), f)
 end
 
-function operate(
-    ::typeof(-),
-    ::Type{T},
-    f::MOI.VariableIndex,
-    g::T,
-) where {T}
+function operate(::typeof(-), ::Type{T}, f::MOI.VariableIndex, g::T) where {T}
     return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(one(T), f)], -g)
 end
 
@@ -387,10 +376,10 @@ function operate(
     ::typeof(-),
     ::Type{T},
     f::MOI.VectorOfVariables,
-    α::AbstractVector{T},
+    g::AbstractVector{T},
 ) where {T}
     d = MOI.output_dimension(f)
-    @assert length(α) == d
+    @assert length(g) == d
     scalar_terms = MOI.ScalarAffineTerm.(one(T), f.variables)
     vector_terms = MOI.VectorAffineTerm.(1:d, scalar_terms)
     return MOI.VectorAffineFunction{T}(vector_terms, -g)
@@ -423,6 +412,7 @@ function operate(
     ::Type{T},
     f::MOI.VectorAffineFunction{T},
     g::Union{
+        AbstractVector{T},
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
     },
@@ -448,37 +438,44 @@ function operate(
     ::Type{T},
     f::MOI.VectorQuadraticFunction{T},
     g::Union{
+        AbstractVector{T},
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
-    }
+    },
 ) where {T}
     return operate!(op, T, copy(f), g)
 end
 
 ### 3a: operate(::typeof(*), ::Type{T}, ::T, ::F)
 
-function operate(::typeof(*), ::Type{T}, α::T, f::MOI.VariableIndex) where {T}
-    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(α, f)], zero(T))
+function operate(::typeof(*), ::Type{T}, f::T, g::MOI.VariableIndex) where {T}
+    return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(f, g)], zero(T))
 end
 
 function operate(
     ::typeof(*),
     ::Type{T},
-    α::T,
-    f::MOI.VectorOfVariables,
+    f::T,
+    g::MOI.VectorOfVariables,
 ) where {T}
-    return MOI.VectorAffineFunction{T}(
-        [
-            MOI.VectorAffineTerm(i, MOI.ScalarAffineTerm(α, f.variables[i])) for
-            i in eachindex(f.variables)
-        ],
-        zeros(T, MOI.output_dimension(f)),
-    )
+    d = MOI.output_dimension(g)
+    terms = MOI.VectorAffineTerm.(1:d, MOI.ScalarAffineTerm.(f, g.variables))
+    return MOI.VectorAffineFunction{T}(terms, zeros(T, d))
 end
 
-function operate(::typeof(*), ::Type{T}, α::T, f::TypedLike{T}) where {T}
-    return operate!(*, T, copy(f), α)
+function operate(
+    ::typeof(*),
+    ::Type{T},
+    f::T,
+    g::Union{
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+) where {T}
+    return operate!(*, T, copy(g), f)
 end
 
 ### 3b: operate(::typeof(*), ::Type{T}, ::F,  ::T)
@@ -486,10 +483,17 @@ end
 function operate(
     ::typeof(*),
     ::Type{T},
-    f::Union{MOI.VariableIndex,MOI.VectorOfVariables},
-    α::T,
+    f::Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+    g::T,
 ) where {T}
-    return operate(*, T, α, f)
+    return operate(*, T, g, f)
 end
 
 ### 3c: operate(::typeof(*), ::Type{T}, ::F1, ::F2)
@@ -681,7 +685,7 @@ The first argument may be modified, in which case the return value is identical
 to the first argument. For operations which cannot be implemented in-place, this
 function returns a new object.
 """
-operate!(op, ::Type{T}, args...) where {T} = operate(io, T, args...)
+operate!(op, ::Type{T}, args...) where {T} = operate(op, T, args...)
 
 operate!(::typeof(+), ::Type{T}, f::MOI.AbstractFunction) where {T} = f
 
@@ -692,7 +696,6 @@ function operate!(
 ) where {T}
     return MA.operate!(-, f)
 end
-
 
 function operate!(
     op::Union{typeof(+),typeof(-)},
