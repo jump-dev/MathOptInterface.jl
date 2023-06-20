@@ -21,6 +21,7 @@ No argument can be modified.
  1. `+`
     a. `operate(::typeof(+), ::Type{T}, ::F1)`
     b. `operate(::typeof(+), ::Type{T}, ::F1, ::F2)`
+    c. `operate(::typeof(+), ::Type{T}, ::F1...)`
  2. `-`
     a. `operate(::typeof(-), ::Type{T}, ::F)`
     b. `operate(::typeof(-), ::Type{T}, ::F1, ::F2)`
@@ -63,14 +64,24 @@ function operate end
 function operate(
     op::F,
     ::Type{T},
-    args::Union{T,AbstractVector{T}}...,
+    f::Union{T,AbstractVector{T}},
 ) where {T<:Number,F<:Function}
-    return op(args...)
+    return op(f)
+end
+
+function operate(
+    op::F,
+    ::Type{T},
+    f::Union{T,AbstractVector{T}},
+    g::Union{T,AbstractVector{T}},
+) where {T<:Number,F<:Function}
+    return op(f, g)
 end
 
 ### 1a: operate(::typeof(+), ::Type{T}, ::F1)
 
 operate(::typeof(+), ::Type{T}, f::MOI.AbstractFunction) where {T} = f
+
 operate(::typeof(+), ::Type{T}, f::T) where {T<:Number} = f
 
 ### 1b: operate(::typeof(+), ::Type{T}, ::F1, ::F2)
@@ -227,6 +238,12 @@ function operate(
     },
 ) where {T}
     return operate!(+, T, copy(f), g)
+end
+
+### 1c: operate(+, T, args...)
+
+function operate(::typeof(+), ::Type{T}, f, g, h, args...) where {T}
+    return operate!(+, T, operate(+, T, f, g), h, args...)
 end
 
 ### 2a: operate(::typeof(-), ::Type{T}, ::F)
@@ -812,6 +829,12 @@ function operate!(
     append!(f.quadratic_terms, g.quadratic_terms)
     f.constants .+= g.constants
     return f
+end
+
+### 1c: operate!(+, T, args...)
+
+function operate!(op::typeof(+), ::Type{T}, f, g, h, args...) where {T}
+    return operate!(+, T, operate!(op, T, f, g), h, args...)
 end
 
 ### 2a: operate!(::typeof(-), ::Type{T}, ::F)

@@ -1558,20 +1558,6 @@ function map_terms!(
 end
 
 ###################################### +/- #####################################
-## promote_operation
-
-## operate!
-# + with at least 3 arguments
-function operate!(op::typeof(+), ::Type{T}, f, g, h, args...) where {T}
-    return operate!(+, T, operate!(op, T, f, g), h, args...)
-end
-
-## operate
-# + with at least 3 arguments, can use in-place as the user cannot use
-# intermediate results
-function operate(::typeof(+), ::Type{T}, f, g, h, args...) where {T}
-    return operate!(+, T, operate(+, T, f, g), h, args...)
-end
 
 ### ScalarNonlinearFunction
 
@@ -1677,7 +1663,6 @@ end
 
 # Vector +/-
 ###############################################################################
-
 
 # Vector Affine +/-! ...
 function operate_output_index!(

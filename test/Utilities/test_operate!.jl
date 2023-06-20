@@ -98,6 +98,29 @@ function test_operate_1b()
     return
 end
 
+function test_operate_1c()
+    for coef in (
+        (0, 0, 0),
+        (1, 0, 0),
+        (0, 1, 0),
+        (0, 0, 1),
+        (1, 1, 1),
+        [(0, 0, 0)],
+        [(1, 0, 0)],
+        [(0, 1, 0)],
+        [(0, 0, 1)],
+        [(1, 1, 1)],
+    )
+        f = _test_function(coef)
+        @test MOI.Utilities.operate(+, Int, f, f, f) ≈
+              MOI.Utilities.operate(*, Int, f, 3)
+        g = _test_function(coef)
+        @test MOI.Utilities.operate!(+, Int, g, f, f) ≈
+              MOI.Utilities.operate(*, Int, f, 3)
+    end
+    return
+end
+
 function test_operate_2a()
     T = Int
     for (f, g) in (
