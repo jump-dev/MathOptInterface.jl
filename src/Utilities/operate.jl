@@ -256,56 +256,50 @@ function operate(::typeof(-), ::Type{T}, f::MOI.VariableIndex) where {T}
 end
 
 function operate(
-    op::Union{typeof(-)},
+    ::typeof(-),
     ::Type{T},
     f::MOI.ScalarAffineFunction{T},
 ) where {T}
-    return MOI.ScalarAffineFunction(operate_terms(op, f.terms), op(f.constant))
+    return MOI.ScalarAffineFunction(operate_terms(-, f.terms), -f.constant)
 end
 
 function operate(
-    op::Union{typeof(-)},
+    ::typeof(-),
     ::Type{T},
     f::MOI.ScalarQuadraticFunction{T},
 ) where {T}
     return MOI.ScalarQuadraticFunction(
-        operate_terms(op, f.quadratic_terms),
-        operate_terms(op, f.affine_terms),
-        op(f.constant),
+        operate_terms(-, f.quadratic_terms),
+        operate_terms(-, f.affine_terms),
+        -f.constant,
     )
 end
 
-function operate(op::typeof(-), ::Type{T}, f::MOI.VectorOfVariables) where {T}
+function operate(::typeof(-), ::Type{T}, f::MOI.VectorOfVariables) where {T}
     d = MOI.output_dimension(f)
     return MOI.VectorAffineFunction{T}(
-        MOI.VectorAffineTerm.(
-            collect(1:d),
-            MOI.ScalarAffineTerm.(-one(T), f.variables),
-        ),
-        fill(zero(T), d),
+        MOI.VectorAffineTerm.(1:d, MOI.ScalarAffineTerm.(-one(T), f.variables)),
+        zeros(T, d),
     )
 end
 
 function operate(
-    op::Union{typeof(-)},
+    ::typeof(-),
     ::Type{T},
     f::MOI.VectorAffineFunction{T},
 ) where {T}
-    return MOI.VectorAffineFunction(
-        operate_terms(op, f.terms),
-        op.(f.constants),
-    )
+    return MOI.VectorAffineFunction(operate_terms(-, f.terms), -f.constants)
 end
 
 function operate(
-    op::Union{typeof(-)},
+    ::typeof(-),
     ::Type{T},
     f::MOI.VectorQuadraticFunction{T},
 ) where {T}
     return MOI.VectorQuadraticFunction(
-        operate_terms(op, f.quadratic_terms),
-        operate_terms(op, f.affine_terms),
-        op.(f.constants),
+        operate_terms(-, f.quadratic_terms),
+        operate_terms(-, f.affine_terms),
+        -f.constants,
     )
 end
 
