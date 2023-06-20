@@ -8,6 +8,7 @@ module TestOperate
 
 using Test
 
+import LinearAlgebra
 import MathOptInterface as MOI
 
 function runtests()
@@ -281,6 +282,130 @@ function test_operate_6a()
           zero(MOI.ScalarAffineFunction{T})
     @test MOI.Utilities.operate!(imag, T, _test_function([(0.0, 0.0, 0.0)])) ≈
           MOI.VectorAffineFunction(MOI.VectorAffineTerm{T}[], [0.0])
+    return
+end
+
+function test_operate_term_1a()
+    x = MOI.VariableIndex(1)
+    for f in (
+        MOI.ScalarAffineTerm(1.0, x),
+        MOI.ScalarQuadraticTerm(1.0, x, x),
+        MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(1.0, x)),
+        MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(1.0, x, x)),
+    )
+        @test MOI.Utilities.operate_term(+, f) == f
+    end
+    return
+end
+
+function test_operate_term_2a()
+    x = MOI.VariableIndex(1)
+    for (f, g) in (
+        MOI.ScalarAffineTerm(1.0, x) => MOI.ScalarAffineTerm(-1.0, x),
+        MOI.ScalarQuadraticTerm(1.0, x, x) =>
+            MOI.ScalarQuadraticTerm(-1.0, x, x),
+        MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(1.0, x)) =>
+            MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(-1.0, x)),
+        MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(1.0, x, x)) =>
+            MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(-1.0, x, x)),
+    )
+        @test MOI.Utilities.operate_term(-, f) == g
+    end
+    return
+end
+
+function test_operate_term_3a()
+    x = MOI.VariableIndex(1)
+    for (f, g) in (
+        MOI.ScalarAffineTerm(2.0, x) => MOI.ScalarAffineTerm(-4.0, x),
+        MOI.ScalarQuadraticTerm(2.0, x, x) =>
+            MOI.ScalarQuadraticTerm(-4.0, x, x),
+        MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(2.0, x)) =>
+            MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(-4.0, x)),
+        MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(2.0, x, x)) =>
+            MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(-4.0, x, x)),
+    )
+        @test MOI.Utilities.operate_term(*, -2.0, f) == g
+    end
+    return
+end
+
+function test_operate_term_3b()
+    x = MOI.VariableIndex(1)
+    for (f, g) in (
+        MOI.ScalarAffineTerm(2.0, x) => MOI.ScalarAffineTerm(-4.0, x),
+        MOI.ScalarQuadraticTerm(2.0, x, x) =>
+            MOI.ScalarQuadraticTerm(-4.0, x, x),
+        MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(2.0, x)) =>
+            MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(-4.0, x)),
+        MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(2.0, x, x)) =>
+            MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(-4.0, x, x)),
+    )
+        @test MOI.Utilities.operate_term(*, f, -2.0) == g
+    end
+    return
+end
+
+function test_operate_term_3c()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    f = MOI.ScalarAffineTerm(2.0, x)
+    g = MOI.ScalarAffineTerm(2.0, y)
+    @test MOI.Utilities.operate_term(*, f, f) ==
+          MOI.ScalarQuadraticTerm(8.0, x, x)
+    @test MOI.Utilities.operate_term(*, f, g) ==
+          MOI.ScalarQuadraticTerm(4.0, x, y)
+    h = MOI.VectorAffineTerm(1, f)
+    i = MOI.VectorAffineTerm(1, g)
+    @test MOI.Utilities.operate_term(*, h, h) ==
+          MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(8.0, x, x))
+    @test MOI.Utilities.operate_term(*, h, i) ==
+          MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(4.0, x, y))
+    return
+end
+
+function test_operate_term_3d()
+    x = MOI.VariableIndex(1)
+    f = MOI.ScalarAffineTerm(2.0, x)
+    @test MOI.Utilities.operate_term(*, 0.5, f, 0.4) ==
+          MOI.ScalarAffineTerm(0.5 * 2.0 * 0.4, x)
+    g = MOI.ScalarQuadraticTerm(8.0, x, x)
+    @test MOI.Utilities.operate_term(*, 0.5, g, 0.4) ==
+          MOI.ScalarQuadraticTerm(0.5 * 8.0 * 0.4, x, x)
+    return
+end
+
+function test_operate_term_3e()
+    D = LinearAlgebra.Diagonal([0.5, 0.6])
+    x = MOI.VariableIndex(1)
+    f = MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2.0, x))
+    @test MOI.Utilities.operate_term(*, D, f) ==
+          MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(0.5 * 2.0, x))
+    g = MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(2.0, x))
+    @test MOI.Utilities.operate_term(*, D, g) ==
+          MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(0.6 * 2.0, x))
+    f = MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(2.0, x, x))
+    @test MOI.Utilities.operate_term(*, D, f) ==
+          MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(0.5 * 2.0, x, x))
+    g = MOI.VectorQuadraticTerm(2, MOI.ScalarQuadraticTerm(2.0, x, x))
+    @test MOI.Utilities.operate_term(*, D, g) ==
+          MOI.VectorQuadraticTerm(2, MOI.ScalarQuadraticTerm(0.6 * 2.0, x, x))
+    return
+end
+
+function test_operate_term_4a()
+    x = MOI.VariableIndex(1)
+    for (f, g) in (
+        MOI.ScalarAffineTerm(2.0, x) => MOI.ScalarAffineTerm(-4.0, x),
+        MOI.ScalarQuadraticTerm(2.0, x, x) =>
+            MOI.ScalarQuadraticTerm(-4.0, x, x),
+        MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(2.0, x)) =>
+            MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(-4.0, x)),
+        MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(2.0, x, x)) =>
+            MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(-4.0, x, x)),
+    )
+        @test MOI.Utilities.operate_term(/, f, -0.5) == g
+    end
     return
 end
 

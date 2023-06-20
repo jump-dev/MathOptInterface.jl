@@ -375,7 +375,12 @@ function operate(
     ::typeof(-),
     ::Type{T},
     f::MOI.ScalarQuadraticFunction{T},
-    g::ScalarQuadraticLike{T},
+    g::Union{
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+    },
 ) where {T}
     return operate!(-, T, copy(f), g)
 end
@@ -384,7 +389,11 @@ function operate(
     ::typeof(-),
     ::Type{T},
     f::AbstractVector{T},
-    g::VectorLike{T},
+    g::Union{
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
 ) where {T}
     return operate!(+, T, operate(-, T, g), f)
 end
@@ -1092,3 +1101,206 @@ end
 ### 5a: operate!(::typeof(vcat), ::Type{T}, ::F...)
 
 ### 6a: operate!(::typeof(imag), ::Type{T}, ::F)
+
+"""
+    operate_term(op::Function, args...)
+
+Compute `op(args...)`, where at least one elemnt of `args` is one of
+[`MOI.ScalarAffineTerm`](@ref), [`MOI.ScalarQuadraticTerm`](@ref),
+[`MOI.VectorAffineTerm`](@ref), or [`MOI.VectorQuadraticTerm`](@ref).
+
+## Methods
+
+ 1. `+`
+    a. `operate_term(::typeof(+), ::Term)`
+ 2. `-`
+    a. `operate_term(::typeof(-), ::Term)`
+ 3. `*`
+    a. `operate_term(::typeof(*), ::T, ::Term)`
+    b. `operate_term(::typeof(*), ::Term, ::T)`
+    c. `operate_term(::typeof(*), ::AffineTerm, ::AffineTerm)`
+    d. `operate_term(::typeof(*), ::T, ::ScalarTerm, ::T)`
+    e. `operate_term(::typeof(*), ::Diagonal, ::VectorTerm)`
+ 4. `/`
+    a. `operate_term(::typeof(/), ::Term, ::T)`
+"""
+function operate_term end
+
+### 1a: operate_term(::typeof(+), ::Term)
+
+function operate_term(
+    ::typeof(+),
+    term::Union{
+        MOI.ScalarAffineTerm,
+        MOI.ScalarQuadraticTerm,
+        MOI.VectorAffineTerm,
+        MOI.VectorQuadraticTerm,
+    },
+)
+    return term
+end
+
+### 2a: operate_term(::typeof(-), ::Term)
+
+function operate_term(::typeof(-), term::MOI.ScalarAffineTerm)
+    return MOI.ScalarAffineTerm(-term.coefficient, term.variable)
+end
+
+function operate_term(::typeof(-), term::MOI.ScalarQuadraticTerm)
+    return MOI.ScalarQuadraticTerm(
+        -term.coefficient,
+        term.variable_1,
+        term.variable_2,
+    )
+end
+
+function operate_term(::typeof(-), term::MOI.VectorAffineTerm)
+    return MOI.VectorAffineTerm(
+        term.output_index,
+        operate_term(-, term.scalar_term),
+    )
+end
+
+function operate_term(::typeof(-), term::MOI.VectorQuadraticTerm)
+    return MOI.VectorQuadraticTerm(
+        term.output_index,
+        operate_term(-, term.scalar_term),
+    )
+end
+
+### 3a: operate_term(::typeof(*), ::T, ::Term)
+
+function operate_term(::typeof(*), f::T, g::MOI.ScalarAffineTerm{T}) where {T}
+    return MOI.ScalarAffineTerm(f * g.coefficient, g.variable)
+end
+
+function operate_term(
+    ::typeof(*),
+    f::T,
+    g::MOI.ScalarQuadraticTerm{T},
+) where {T}
+    coef = f * g.coefficient
+    return MOI.ScalarQuadraticTerm(coef, g.variable_1, g.variable_2)
+end
+
+function operate_term(::typeof(*), f::T, g::MOI.VectorAffineTerm{T}) where {T}
+    return MOI.VectorAffineTerm(
+        g.output_index,
+        operate_term(*, f, g.scalar_term),
+    )
+end
+
+function operate_term(
+    ::typeof(*),
+    f::T,
+    g::MOI.VectorQuadraticTerm{T},
+) where {T}
+    return MOI.VectorQuadraticTerm(
+        g.output_index,
+        operate_term(*, f, g.scalar_term),
+    )
+end
+
+### 3b: operate_term(::typeof(*), ::Term, ::T)
+
+function operate_term(
+    ::typeof(*),
+    f::Union{
+        MOI.ScalarAffineTerm{T},
+        MOI.ScalarQuadraticTerm{T},
+        MOI.VectorAffineTerm{T},
+        MOI.VectorQuadraticTerm{T},
+    },
+    g::T,
+) where {T}
+    return operate_term(*, g, f)
+end
+
+### 3c: operate_term(::typeof(*), ::Term, ::Term)
+
+function operate_term(
+    ::typeof(*),
+    t1::MOI.ScalarAffineTerm,
+    t2::MOI.ScalarAffineTerm,
+)
+    coef = t1.coefficient * t2.coefficient
+    if t1.variable == t2.variable
+        return MOI.ScalarQuadraticTerm(2 * coef, t1.variable, t2.variable)
+    end
+    return MOI.ScalarQuadraticTerm(coef, t1.variable, t2.variable)
+end
+
+function operate_term(
+    ::typeof(*),
+    t1::MOI.VectorAffineTerm,
+    t2::MOI.VectorAffineTerm,
+)
+    @assert t1.output_index == t2.output_index
+    return MOI.VectorQuadraticTerm(
+        t1.output_index,
+        operate_term(*, t1.scalar_term, t2.scalar_term),
+    )
+end
+
+### 3d: operate_term(::typeof(*), ::T, ::ScalarTerm, ::T)
+
+function operate_term(
+    ::typeof(*),
+    α::T,
+    t::MOI.ScalarAffineTerm{T},
+    β::T,
+) where {T}
+    return MOI.ScalarAffineTerm(α * t.coefficient * β, t.variable)
+end
+
+function operate_term(
+    ::typeof(*),
+    α::T,
+    t::MOI.ScalarQuadraticTerm{T},
+    β::T,
+) where {T}
+    return MOI.ScalarQuadraticTerm(
+        α * t.coefficient * β,
+        t.variable_1,
+        t.variable_2,
+    )
+end
+
+### 3e: operate_term(::typeof(*), ::Diagonal, ::Vector)
+
+function operate_term(
+    ::typeof(*),
+    f::LinearAlgebra.Diagonal,
+    g::MOI.VectorAffineTerm,
+)
+    return MOI.VectorAffineTerm(
+        g.output_index,
+        operate_term(*, f.diag[g.output_index], g.scalar_term),
+    )
+end
+
+function operate_term(
+    ::typeof(*),
+    f::LinearAlgebra.Diagonal,
+    g::MOI.VectorQuadraticTerm,
+)
+    return MOI.VectorQuadraticTerm(
+        g.output_index,
+        operate_term(*, f.diag[g.output_index], g.scalar_term),
+    )
+end
+
+### 4a: operate_term(::typeof(/), ::Term, ::T)
+
+function operate_term(
+    ::typeof(/),
+    f::Union{
+        MOI.ScalarAffineTerm{T},
+        MOI.ScalarQuadraticTerm{T},
+        MOI.VectorAffineTerm{T},
+        MOI.VectorQuadraticTerm{T},
+    },
+    g::T,
+) where {T}
+    return operate_term(*, f, inv(g))
+end
