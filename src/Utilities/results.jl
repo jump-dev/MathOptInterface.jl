@@ -500,11 +500,7 @@ end
 Return the scalar product between a vector `x` of the set `set` and a vector
 `y` of the dual of the set `s`.
 """
-function set_dot(
-    x::AbstractVector,
-    y::AbstractVector,
-    set::MOI.AbstractVectorSet,
-)
+function set_dot(x::AbstractVector, y::AbstractVector, ::MOI.AbstractVectorSet)
     return dot(x, y)
 end
 
@@ -514,7 +510,7 @@ end
 Return the scalar product between a number `x` of the set `set` and a number
 `y` of the dual of the set `s`.
 """
-set_dot(x, y, set::MOI.AbstractScalarSet) = dot(x, y)
+set_dot(x, y, ::MOI.AbstractScalarSet) = dot(x, y)
 
 function triangle_dot(
     x::AbstractVector{S},
