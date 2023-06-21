@@ -175,7 +175,7 @@ function test_operate_2a_scalarnonlinearfunction_specialcase()
     g = MOI.ScalarNonlinearFunction(:-, Any[f])
     h = MOI.Utilities.operate!(-, Float64, g)
     @test h === f
-    @test h ≈MOI.ScalarNonlinearFunction(:log, Any[x])
+    @test h ≈ MOI.ScalarNonlinearFunction(:log, Any[x])
     return
 end
 
