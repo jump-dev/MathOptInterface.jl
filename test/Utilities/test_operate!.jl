@@ -46,6 +46,16 @@ function _test_function(coefficients::Vector{NTuple{3,T}}) where {T}
     return MOI.Utilities.operate(vcat, T, _test_function.(coefficients)...)
 end
 
+function _test_function(pair::Pair{Symbol,<:Any}) where {T}
+    head, arg = pair
+    if arg isa Vector
+        args = Any[_test_function(a) for a in arg]
+        return MOI.ScalarNonlinearFunction(head, args)
+    else
+        return MOI.ScalarNonlinearFunction(head, Any[_test_function(arg)])
+    end
+end
+
 function test_operate_1a()
     for coef in (
         (0, 0, 0),
@@ -53,6 +63,7 @@ function test_operate_1a()
         (0, 1, 0),
         (0, 0, 1),
         (1, 1, 1),
+        :log => (0, 0, 0),
         [(0, 0, 0)],
         [(1, 0, 0)],
         [(0, 1, 0)],
@@ -73,6 +84,7 @@ function test_operate_1b()
         (0, 1, 0),
         (0, 0, 1),
         (1, 1, 1),
+        :log => (0, 0, 0),
         [(0, 0, 0)],
         [(1, 0, 0)],
         [(0, 1, 0)],
@@ -80,15 +92,19 @@ function test_operate_1b()
         [(1, 1, 1)],
     )
     special_cases = Dict((0, 0, 0) => (0, 1, 0))
-    for i in 1:5, j in 1:5
+    for i in 1:6, j in 1:6
         fi, fj = _test_function(F[i]), _test_function(F[j])
         Fi = get(special_cases, F[i], F[i])
         Fj = get(special_cases, F[j], F[j])
-        fk = _test_function(Fi .+ Fj)
+        if i == 6 || j == 6
+            fk = MOI.ScalarNonlinearFunction(:+, Any[fi, fj])
+        else
+            fk = _test_function(Fi .+ Fj)
+        end
         @test MOI.Utilities.operate(+, Int, fi, fj) ≈ fk
         @test MOI.Utilities.operate!(+, Int, fi, fj) ≈ fk
     end
-    for i in 6:10, j in 6:10
+    for i in 7:11, j in 7:11
         fi, fj = _test_function(F[i]), _test_function(F[j])
         k = map(zip(F[i], F[j])) do (x, y)
             return get(special_cases, x, x) .+ get(special_cases, y, y)
@@ -96,6 +112,15 @@ function test_operate_1b()
         @test MOI.Utilities.operate(+, Int, fi, fj) ≈ _test_function(k)
         @test MOI.Utilities.operate!(+, Int, fi, fj) ≈ _test_function(k)
     end
+    return
+end
+
+function test_operate_1b_scalarnonlinearfunction_specialcase()
+    x = MOI.VariableIndex(1)
+    f = MOI.ScalarNonlinearFunction(:+, Any[x])
+    g = MOI.Utilities.operate!(+, Float64, f, x)
+    @test g === f
+    @test g ≈ MOI.ScalarNonlinearFunction(:+, Any[x, x])
     return
 end
 
@@ -130,6 +155,7 @@ function test_operate_2a()
         (0, 1, 0) => (0, -1, 0),
         (0, 0, 1) => (0, 0, -1),
         (1, 1, 1) => (-1, -1, -1),
+        (:log => (0, 0, 0)) => (:- => (:log => (0, 0, 0))),
         [(0, 0, 0)] => [(0, -1, 0)],
         [(1, 0, 0)] => [(-1, 0, 0)],
         [(0, 1, 0)] => [(0, -1, 0)],
@@ -143,6 +169,16 @@ function test_operate_2a()
     return
 end
 
+function test_operate_2a_scalarnonlinearfunction_specialcase()
+    x = MOI.VariableIndex(1)
+    f = MOI.ScalarNonlinearFunction(:log, Any[x])
+    g = MOI.ScalarNonlinearFunction(:-, Any[f])
+    h = MOI.Utilities.operate!(-, Float64, g)
+    @test h === f
+    @test h ≈MOI.ScalarNonlinearFunction(:log, Any[x])
+    return
+end
+
 function test_operate_2b()
     F = (
         (0, 0, 0),
@@ -150,6 +186,7 @@ function test_operate_2b()
         (0, 1, 0),
         (0, 0, 1),
         (1, 1, 1),
+        :log => (0, 0, 0),
         [(0, 0, 0)],
         [(1, 0, 0)],
         [(0, 1, 0)],
@@ -157,26 +194,33 @@ function test_operate_2b()
         [(1, 1, 1)],
     )
     special_cases = Dict((0, 0, 0) => (0, 1, 0))
-    for i in 1:5, j in 1:5
-        fi, fj = _test_function(2 .* F[i]), _test_function(F[j])
-        Fi = get(special_cases, 2 .* F[i], 2 .* F[i])
-        Fj = get(special_cases, F[j], F[j])
-        Fk = Fi .- Fj
-        fk = _test_function(get(special_cases, Fk, Fk))
-        if (i, j) in ((1, 1), (1, 3))
-            fk = zero(MOI.ScalarAffineFunction{Int})
+    for i in 1:6, j in 1:6
+        if i == 6 || j == 6
+            fi = _test_function(F[i])
+            fj = _test_function(F[j])
+            fk = MOI.ScalarNonlinearFunction(:-, Any[fi, fj])
+        else
+            fi = _test_function(2 .* F[i])
+            fj = _test_function(F[j])
+            Fi = get(special_cases, 2 .* F[i], 2 .* F[i])
+            Fj = get(special_cases, F[j], F[j])
+            Fk = Fi .- Fj
+            fk = _test_function(get(special_cases, Fk, Fk))
+            if (i, j) in ((1, 1), (1, 3))
+                fk = zero(MOI.ScalarAffineFunction{Int})
+            end
         end
         @test MOI.Utilities.operate(-, Int, fi, fj) ≈ fk
         @test MOI.Utilities.operate!(-, Int, fi, fj) ≈ fk
     end
-    for i in 6:10, j in 6:10
+    for i in 7:11, j in 7:11
         F2 = [2 .* fi for fi in F[i]]
         fi, fj = _test_function(F2), _test_function(F[j])
         k = map(zip(F2, F[j])) do (x, y)
             return get(special_cases, x, x) .- get(special_cases, y, y)
         end
         fk = _test_function(k)
-        if (i, j) in ((6, 6), (6, 8))
+        if (i, j) in ((7, 7), (7, 9))
             fk = MOI.VectorAffineFunction(MOI.VectorAffineTerm{Int}[], [0])
         end
         @test MOI.Utilities.operate(-, Int, fi, fj) ≈ fk
@@ -193,6 +237,7 @@ function test_operate_3a()
         (0, 1, 0) => (0, 3, 0),
         (0, 0, 1) => (0, 0, 3),
         (1, 1, 1) => (3, 3, 3),
+        (:log => (0, 0, 0)) => (:* => [(3, 0, 0), (:log => (0, 0, 0))]),
         [(0, 0, 0)] => [(0, 3, 0)],
         [(1, 0, 0)] => [(3, 0, 0)],
         [(0, 1, 0)] => [(0, 3, 0)],
@@ -214,6 +259,7 @@ function test_operate_3b()
         (0, 1, 0) => (0, 3, 0),
         (0, 0, 1) => (0, 0, 3),
         (1, 1, 1) => (3, 3, 3),
+        (:log => (0, 0, 0)) => (:* => [(:log => (0, 0, 0)), (3, 0, 0)]),
         [(0, 0, 0)] => [(0, 3, 0)],
         [(1, 0, 0)] => [(3, 0, 0)],
         [(0, 1, 0)] => [(0, 3, 0)],
@@ -227,6 +273,15 @@ function test_operate_3b()
     return
 end
 
+function test_operate_3b_scalarnonlinearfunction_specialcase()
+    x = MOI.VariableIndex(1)
+    f = MOI.ScalarNonlinearFunction(:*, Any[x])
+    g = MOI.Utilities.operate!(*, Float64, f, 3.0)
+    @test g === f
+    @test g ≈ MOI.ScalarNonlinearFunction(:*, Any[x, 3.0])
+    return
+end
+
 function test_operate_4a()
     T = Float64
     for (f, g) in (
@@ -235,6 +290,7 @@ function test_operate_4a()
         (0.0, 1.0, 0.0) => (0.0, 0.5, 0.0),
         (0.0, 0.0, 1.0) => (0.0, 0.0, 0.5),
         (1.0, 1.0, 1.0) => (0.5, 0.5, 0.5),
+        (:log => (0, 0, 0)) => (:/ => [(:log => (0, 0, 0)), (2.0, 0.0, 0.0)]),
         [(0.0, 0.0, 0.0)] => [(0.0, 0.5, 0.0)],
         [(1.0, 0.0, 0.0)] => [(0.5, 0.0, 0.0)],
         [(0.0, 1.0, 0.0)] => [(0.0, 0.5, 0.0)],

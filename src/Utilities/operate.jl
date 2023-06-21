@@ -159,6 +159,45 @@ end
 function operate(
     ::typeof(+),
     ::Type{T},
+    f::MOI.ScalarNonlinearFunction,
+    g::Union{
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
+    },
+) where {T}
+    return MOI.ScalarNonlinearFunction(:+, Any[f, g])
+end
+
+function operate(
+    ::typeof(+),
+    ::Type{T},
+    f::Union{
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
+    },
+    g::MOI.ScalarNonlinearFunction,
+) where {T}
+    return MOI.ScalarNonlinearFunction(:+, Any[f, g])
+end
+
+function operate(
+    ::typeof(+),
+    ::Type{T},
+    f::MOI.ScalarNonlinearFunction,
+    g::MOI.ScalarNonlinearFunction,
+) where {T}
+    return MOI.ScalarNonlinearFunction(:+, Any[f, g])
+end
+
+function operate(
+    ::typeof(+),
+    ::Type{T},
     f::AbstractVector{T},
     g::Union{
         MOI.VectorOfVariables,
@@ -276,6 +315,20 @@ function operate(
     return operate_coefficients(-, f)
 end
 
+function operate(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.ScalarNonlinearFunction,
+) where {T}
+    if f.head == :- && length(f.args) == 1
+        # A simplification for -(-(f)) into f, but only if f is an SNF.
+        if f.args[1] isa MOI.ScalarNonlinearFunction
+            return f.args[1]
+        end
+    end
+    return MOI.ScalarNonlinearFunction(:-, Any[f])
+end
+
 ### 2b: operate(::typeof(-), ::Type{T}, ::F1, ::F2)
 
 function operate(
@@ -350,6 +403,45 @@ function operate(
     },
 ) where {T}
     return operate!(-, T, copy(f), g)
+end
+
+function operate(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.ScalarNonlinearFunction,
+    g::Union{
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
+    },
+) where {T}
+    return MOI.ScalarNonlinearFunction(:-, Any[f, g])
+end
+
+function operate(
+    ::typeof(-),
+    ::Type{T},
+    f::Union{
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
+    },
+    g::MOI.ScalarNonlinearFunction,
+) where {T}
+    return MOI.ScalarNonlinearFunction(:-, Any[f, g])
+end
+
+function operate(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.ScalarNonlinearFunction,
+    g::MOI.ScalarNonlinearFunction,
+) where {T}
+    return MOI.ScalarNonlinearFunction(:-, Any[f, g])
 end
 
 function operate(
@@ -471,6 +563,15 @@ function operate(
     return operate!(*, T, copy(g), f)
 end
 
+function operate(
+    ::typeof(*),
+    ::Type{T},
+    f::T,
+    g::MOI.ScalarNonlinearFunction,
+) where {T}
+    return MOI.ScalarNonlinearFunction(:*, Any[f, g])
+end
+
 ### 3b: operate(::typeof(*), ::Type{T}, ::F,  ::T)
 
 function operate(
@@ -487,6 +588,15 @@ function operate(
     g::T,
 ) where {T}
     return operate(*, T, g, f)
+end
+
+function operate(
+    ::typeof(*),
+    ::Type{T},
+    f::MOI.ScalarNonlinearFunction,
+    g::T,
+) where {T}
+    return MOI.ScalarNonlinearFunction(:*, Any[f, g])
 end
 
 ### 3c: operate(::typeof(*), ::Type{T}, ::F1, ::F2)
@@ -652,6 +762,15 @@ function operate(
     return operate!(/, T, copy(f), g)
 end
 
+function operate(
+    ::typeof(/),
+    ::Type{T},
+    f::MOI.ScalarNonlinearFunction,
+    g::T,
+) where {T}
+    return MOI.ScalarNonlinearFunction(:/, Any[f, g])
+end
+
 ### 5a: operate(::typeof(vcat), ::Type{T}, ::F...)
 
 function operate(
@@ -784,6 +903,25 @@ function operate!(
     },
 ) where {T}
     return MA.operate!(+, f, g)
+end
+
+function operate!(
+    ::typeof(+),
+    ::Type{T},
+    f::MOI.ScalarNonlinearFunction,
+    g::Union{
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
+    },
+) where {T}
+    if f.head == :+
+        push!(f.args, g)
+        return f
+    end
+    return operate(+, T, f, g)
 end
 
 function operate!(
@@ -990,6 +1128,19 @@ function operate!(
     map_terms!(term -> operate_term(*, term, g), f)
     f.constant *= g
     return f
+end
+
+function operate!(
+    ::typeof(*),
+    ::Type{T},
+    f::MOI.ScalarNonlinearFunction,
+    g::T,
+) where {T}
+    if f.head == :*
+        push!(f.args, g)
+        return f
+    end
+    return operate(*, T, f, g)
 end
 
 function operate!(
