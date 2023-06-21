@@ -1886,6 +1886,23 @@ function test_vector_type()
     return
 end
 
+function test_deprecated_constant_vector()
+    x = MOI.VariableIndex(1)
+    f, g = 1.0 * x + 2.0, 1.0 * x * x + 2.0
+    @test MOI.Utilities.constant_vector(f) == [2.0]
+    @test MOI.Utilities.constant_vector(g) == [2.0]
+    @test MOI.Utilities.constant_vector(MOI.Utilities.vectorize([f])) == [2.0]
+    @test MOI.Utilities.constant_vector(MOI.Utilities.vectorize([g])) == [2.0]
+    return
+end
+
+function test_deprecated_eval_term()
+    x = MOI.VariableIndex(1)
+    term = MOI.ScalarAffineTerm(2.0, x)
+    @test MOI.Utilities.eval_term(x -> 1.4, term) ≈ 2.0 * 1.4
+    return
+end
+
 end  # module
 
 TestFunctions.runtests()
