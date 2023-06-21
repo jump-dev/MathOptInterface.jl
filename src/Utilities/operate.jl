@@ -271,7 +271,7 @@ function operate(
         MOI.ScalarQuadraticFunction{T},
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
-    }
+    },
 ) where {T}
     return operate_coefficients(-, f)
 end
