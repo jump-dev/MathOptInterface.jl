@@ -1541,25 +1541,47 @@ function Base.:*(f::ScalarLike, g::ScalarLike, args::ScalarLike...)
     return operate(*, T, f, g, args...)
 end
 
-function Base.:*(f::Number, g::Union{MOI.VariableIndex,MOI.VectorOfVariables})
-    return operate(*, typeof(f), f, g)
-end
-
 function Base.:*(f::Union{MOI.VariableIndex,MOI.VectorOfVariables}, g::Number)
     return operate(*, typeof(g), f, g)
 end
 
-function Base.:*(f::Number, g::TypedLike)
-    return operate_coefficients(Base.Fix1(*, f), g)
+function Base.:*(
+    f::Union{
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+    g::T,
+) where {T<:Number}
+    return operate_coefficients(Base.Fix2(*, g), f)
 end
 
-function Base.:*(g::TypedLike, f::Number)
-    return operate_coefficients(Base.Fix1(*, f), g)
+function Base.:*(
+    f::T,
+    g::Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+) where {T<:Number}
+    return g * f
 end
 
 # Used by sparse matrix multiplication after
 # https://github.com/JuliaLang/julia/pull/33205
-function Base.:*(f::TypedLike, g::Bool)
+function Base.:*(
+    f::Union{
+        MOI.ScalarAffineFunction,
+        MOI.ScalarQuadraticFunction,
+        MOI.VectorAffineFunction,
+        MOI.VectorQuadraticFunction,
+    },
+    g::Bool,
+)
     if g
         return MA.copy_if_mutable(f)
     else
@@ -1567,7 +1589,62 @@ function Base.:*(f::TypedLike, g::Bool)
     end
 end
 
-Base.:*(f::Bool, g::TypedLike) = g * f
+# These method are needed for multiplication between different number types. The
+# most common case is when the number is a `Complex{T}`.
+
+function Base.:*(
+    f::Union{
+        MOI.ScalarAffineFunction,
+        MOI.ScalarQuadraticFunction,
+        MOI.VectorAffineFunction,
+        MOI.VectorQuadraticFunction,
+    },
+    g::Number,
+)
+    return operate_coefficients(Base.Fix2(*, g), f)
+end
+
+function Base.:*(
+    f::Number,
+    g::Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction,
+        MOI.ScalarQuadraticFunction,
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction,
+        MOI.VectorQuadraticFunction,
+    },
+) where {T}
+    return g * f
+end
+
+# !!! warning
+#     MathOptInterface includes these methods to support coefficient types which
+#     are not subtypes of `Number`. We shoud consider removing them in MOI v2.0.
+
+function Base.:*(
+    f::Union{
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+    g::T,
+) where {T}
+    return operate_coefficients(Base.Fix2(*, g), f)
+end
+
+function Base.:*(
+    f::T,
+    g::Union{
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+) where {T}
+    return g * f
+end
 
 ### Base.:/
 
