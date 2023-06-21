@@ -409,6 +409,20 @@ function test_operate_term_4a()
     return
 end
 
+function test_operate_term_5a()
+    x = MOI.VariableIndex(1)
+    for f in (
+        MOI.ScalarAffineTerm(1.0, x),
+        MOI.ScalarQuadraticTerm(1.0, x, x),
+        MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(1.0, x)),
+        MOI.VectorQuadraticTerm(3, MOI.ScalarQuadraticTerm(1.0, x, x)),
+    )
+        @test MOI.Utilities.operate_term(t -> -(t), f) ==
+              MOI.Utilities.operate_term(-, f)
+    end
+    return
+end
+
 function test_operate_terms_1a()
     x = MOI.VariableIndex(1)
     for term in (

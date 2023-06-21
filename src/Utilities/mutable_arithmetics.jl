@@ -149,15 +149,11 @@ function MA.operate!(
     return f
 end
 
-function MA.operate!(::typeof(-), f::MOI.ScalarQuadraticFunction)
-    operate_terms!(-, f.quadratic_terms)
-    operate_terms!(-, f.affine_terms)
-    f.constant = -f.constant
-    return f
-end
-
-function MA.operate!(::typeof(-), f::MOI.ScalarAffineFunction)
-    operate_terms!(-, f.terms)
+function MA.operate!(
+    ::typeof(-),
+    f::Union{MOI.ScalarAffineFunction,MOI.ScalarQuadraticFunction},
+)
+    map_terms!(Base.Fix1(operate_term, -), f)
     f.constant = -f.constant
     return f
 end
