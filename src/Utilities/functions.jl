@@ -1391,7 +1391,7 @@ function Base.:+(
     args::Union{
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction,
-        MOI.VectorQuadraticFunction
+        MOI.VectorQuadraticFunction,
     }...,
 )
     T = _eltype(arg, args)
@@ -1489,7 +1489,7 @@ function Base.:-(
     args::Union{
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction,
-        MOI.VectorQuadraticFunction
+        MOI.VectorQuadraticFunction,
     }...,
 )
     T = _eltype(arg, args)

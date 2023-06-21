@@ -1896,7 +1896,7 @@ function _test_base_op_scalar(op)
             [MOI.ScalarQuadraticTerm(2, x, x)],
             [MOI.ScalarAffineTerm(2, x)],
             3,
-        )
+        ),
     )
     for f in F, g in F
         if f == g == x
@@ -1926,7 +1926,7 @@ function _test_base_op_vector(op)
             [MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(2, x, x))],
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2, x))],
             [3],
-        )
+        ),
     )
     for f in F, g in F
         if f == g == MOI.VectorOfVariables([x])
@@ -1970,7 +1970,7 @@ function test_base_divide()
             [MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(2.0, x, x))],
             [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2.0, x))],
             [3.0],
-        )
+        ),
     )
     for f in F
         @test f / 2.0 ≈ MOI.Utilities.operate(/, Float64, f, 2.0)
