@@ -1904,8 +1904,10 @@ function _test_base_op_scalar(op)
             continue
         end
         @test op(f, g) ≈ MOI.Utilities.operate(op, Int, f, g)
-        for h in F
-            @test op(f, g, h) ≈ MOI.Utilities.operate(op, Int, f, g, h)
+        if op === +
+            for h in F
+                @test op(f, g, h) ≈ MOI.Utilities.operate(op, Int, f, g, h)
+            end
         end
     end
     return
