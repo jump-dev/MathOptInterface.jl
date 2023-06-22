@@ -1084,6 +1084,25 @@ function test_ListOfSupportedNonlinearOperators()
     return
 end
 
+function test_parse_univariate_splatting()
+    model = MOI.Nonlinear.Model()
+    MOI.Nonlinear.register_operator(model, :f, 1, x -> 2x)
+    x = [MOI.VariableIndex(1)]
+    @test MOI.Nonlinear.parse_expression(model, :(f($x...))) ==
+          MOI.Nonlinear.parse_expression(model, :(f($(x[1]))))
+    return
+end
+
+function test_parse_unsupported_operator()
+    model = MOI.Nonlinear.Model()
+    x = [MOI.VariableIndex(1)]
+    @test_throws(
+        MOI.UnsupportedNonlinearOperator(:f),
+        MOI.Nonlinear.parse_expression(model, :(f($x...))),
+    )
+    return
+end
+
 end
 
 TestNonlinear.runtests()
