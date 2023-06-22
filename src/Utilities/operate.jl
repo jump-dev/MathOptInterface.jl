@@ -42,10 +42,10 @@ No argument can be modified.
 One assumption is that the element type `T` is invariant under each operation.
 That is, `op(::T, ::T)::T` where `op` is a `+`, `-`, `*`, and `/`.
 
-In each case, `F` (or `F1` and `F2`) is one of the nine supported types, with
+In each case, `F` (or `F1` and `F2`) is one of the ten supported types, with
 a restriction that the mathematical operation makes sense, for example, we don't
 define `promote_operation(-, T, F1, F2)` where `F1` is a scalar-valued function
-and  `F2` is a vector-valued function. The nine supported types are:
+and  `F2` is a vector-valued function. The ten supported types are:
 
  1. ::T
  2. ::VariableIndex
@@ -56,6 +56,7 @@ and  `F2` is a vector-valued function. The nine supported types are:
  7. ::VectorOfVariables
  8. ::VectorAffineFunction{T}
  9. ::VectorQuadraticFunction{T}
+10. ::VectorNonlinearFunction
 """
 function operate end
 
@@ -284,6 +285,41 @@ function operate(
     return operate!(+, T, copy(f), g)
 end
 
+function operate(
+    ::typeof(+),
+    ::Type{T},
+    f::MOI.VectorNonlinearFunction,
+    g::Union{
+        AbstractVector{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+        MOI.VectorNonlinearFunction,
+    },
+) where {T}
+    args = Any[
+        operate(+, T, fi, gi) for (fi, gi) in zip(scalarize(f), scalarize(g))
+    ]
+    return MOI.VectorNonlinearFunction(args)
+end
+
+function operate(
+    ::typeof(+),
+    ::Type{T},
+    f::Union{
+        AbstractVector{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+    g::MOI.VectorNonlinearFunction,
+) where {T}
+    args = Any[
+        operate(+, T, fi, gi) for (fi, gi) in zip(scalarize(f), scalarize(g))
+    ]
+    return MOI.VectorNonlinearFunction(args)
+end
+
 ### 1c: operate(+, T, args...)
 
 function operate(::typeof(+), ::Type{T}, f, g, h, args...) where {T<:Number}
@@ -336,6 +372,14 @@ function operate(
         end
     end
     return MOI.ScalarNonlinearFunction(:-, Any[f])
+end
+
+function operate(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.VectorNonlinearFunction,
+) where {T}
+    return MOI.VectorNonlinearFunction(Any[operate(-, T, fi) for fi in f.rows])
 end
 
 ### 2b: operate(::typeof(-), ::Type{T}, ::F1, ::F2)
@@ -546,6 +590,41 @@ function operate(
     return operate!(op, T, copy(f), g)
 end
 
+function operate(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.VectorNonlinearFunction,
+    g::Union{
+        AbstractVector{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+        MOI.VectorNonlinearFunction,
+    },
+) where {T}
+    args = Any[
+        operate(-, T, fi, gi) for (fi, gi) in zip(scalarize(f), scalarize(g))
+    ]
+    return MOI.VectorNonlinearFunction(args)
+end
+
+function operate(
+    ::typeof(-),
+    ::Type{T},
+    f::Union{
+        AbstractVector{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+    g::MOI.VectorNonlinearFunction,
+) where {T}
+    args = Any[
+        operate(-, T, fi, gi) for (fi, gi) in zip(scalarize(f), scalarize(g))
+    ]
+    return MOI.VectorNonlinearFunction(args)
+end
+
 ### 3a: operate(::typeof(*), ::Type{T}, ::T, ::F)
 
 function operate(
@@ -591,6 +670,15 @@ function operate(
     return MOI.ScalarNonlinearFunction(:*, Any[f, g])
 end
 
+function operate(
+    ::typeof(*),
+    ::Type{T},
+    f::T,
+    g::MOI.VectorNonlinearFunction,
+) where {T}
+    return MOI.VectorNonlinearFunction(Any[operate(*, T, f, h) for h in g.rows])
+end
+
 ### 3b: operate(::typeof(*), ::Type{T}, ::F,  ::T)
 
 function operate(
@@ -616,6 +704,15 @@ function operate(
     g::T,
 ) where {T<:Number}
     return MOI.ScalarNonlinearFunction(:*, Any[f, g])
+end
+
+function operate(
+    ::typeof(*),
+    ::Type{T},
+    f::MOI.VectorNonlinearFunction,
+    g::T,
+) where {T}
+    return MOI.VectorNonlinearFunction(Any[operate(*, T, h, g) for h in f.rows])
 end
 
 ### 3c: operate(::typeof(*), ::Type{T}, ::F1, ::F2)
@@ -790,6 +887,15 @@ function operate(
     return MOI.ScalarNonlinearFunction(:/, Any[f, g])
 end
 
+function operate(
+    ::typeof(/),
+    ::Type{T},
+    f::MOI.VectorNonlinearFunction,
+    g::T,
+) where {T}
+    return MOI.VectorNonlinearFunction(Any[operate(/, T, h, g) for h in f.rows])
+end
+
 ### 5a: operate(::typeof(vcat), ::Type{T}, ::F...)
 
 operate(::typeof(vcat), ::Type{T}) where {T<:Number} = T[]
@@ -855,6 +961,37 @@ function operate(
     constants = zeros(T, sum(f -> output_dim(T, f), f))
     fill_vector(constants, T, 0, 0, fill_constant, output_dim, f...)
     return MOI.VectorQuadraticFunction(qterms, aterms, constants)
+end
+
+function operate(
+    ::typeof(vcat),
+    ::Type{T},
+    args::Union{
+        T,
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
+        AbstractVector{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+        MOI.VectorNonlinearFunction,
+    }...,
+) where {T}
+    out = Any[]
+    for a in args
+        if a isa T
+            push!(out, a)
+        elseif a isa AbstractVector{T}
+            append!(out, a)
+        elseif a isa MOI.AbstractScalarFunction
+            push!(out, a)
+        else
+            append!(out, scalarize(a))
+        end
+    end
+    return MOI.VectorNonlinearFunction(out)
 end
 
 ### 6a: operate(::typeof(imag), ::Type{T}, ::F)
