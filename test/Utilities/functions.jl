@@ -1886,6 +1886,98 @@ function test_vector_type()
     return
 end
 
+function _test_base_op_scalar(op)
+    x = MOI.VariableIndex(1)
+    F = (
+        1,
+        x,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2, x)], 3),
+        MOI.ScalarQuadraticFunction(
+            [MOI.ScalarQuadraticTerm(2, x, x)],
+            [MOI.ScalarAffineTerm(2, x)],
+            3,
+        ),
+    )
+    for f in F, g in F
+        if f == g == x
+            @test_throws ErrorException op(f, g)
+            continue
+        end
+        @test op(f, g) ≈ MOI.Utilities.operate(op, Int, f, g)
+        if op === +
+            for h in F
+                @test op(f, g, h) ≈ MOI.Utilities.operate(op, Int, f, g, h)
+            end
+        end
+    end
+    return
+end
+
+function _test_base_op_vector(op)
+    x = MOI.VariableIndex(1)
+    F = (
+        [1],
+        MOI.VectorOfVariables([x]),
+        MOI.VectorAffineFunction(
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2, x))],
+            [3],
+        ),
+        MOI.VectorQuadraticFunction(
+            [MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(2, x, x))],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2, x))],
+            [3],
+        ),
+    )
+    for f in F, g in F
+        if f == g == MOI.VectorOfVariables([x])
+            @test_throws ErrorException op(f, g)
+            continue
+        end
+        @test op(f, g) ≈ MOI.Utilities.operate(op, Int, f, g)
+        if op === +
+            for h in F
+                @test op(f, g, h) ≈ MOI.Utilities.operate(op, Int, f, g, h)
+            end
+        end
+    end
+    return
+end
+
+test_base_plus_scalar() = _test_base_op_scalar(+)
+
+test_base_minus_scalar() = _test_base_op_scalar(-)
+
+test_base_plus_vector() = _test_base_op_vector(+)
+
+test_base_minus_vector() = _test_base_op_vector(-)
+
+function test_base_divide()
+    x = MOI.VariableIndex(1)
+    F = (
+        x,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 3.0),
+        MOI.ScalarQuadraticFunction(
+            [MOI.ScalarQuadraticTerm(2.0, x, x)],
+            [MOI.ScalarAffineTerm(2.0, x)],
+            3.0,
+        ),
+        MOI.VectorOfVariables([x]),
+        MOI.VectorAffineFunction(
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2.0, x))],
+            [3.0],
+        ),
+        MOI.VectorQuadraticFunction(
+            [MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(2.0, x, x))],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2.0, x))],
+            [3.0],
+        ),
+    )
+    for f in F
+        @test f / 2.0 ≈ MOI.Utilities.operate(/, Float64, f, 2.0)
+    end
+    return
+end
+
 function test_deprecated_constant_vector()
     x = MOI.VariableIndex(1)
     f, g = 1.0 * x + 2.0, 1.0 * x * x + 2.0

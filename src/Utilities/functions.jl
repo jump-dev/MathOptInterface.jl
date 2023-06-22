@@ -1301,7 +1301,20 @@ _eltype(::MOI.VariableIndex, tail) = _eltype(tail)
 _eltype(::MOI.Utilities.TypedVectorLike{T}, tail) where {T} = T
 _eltype(::MOI.VectorOfVariables, tail) = _eltype(tail)
 
-function Base.:+(arg::ScalarLike, args::ScalarLike...)
+### Base.:+
+
+function Base.:+(
+    arg::Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction,
+        MOI.ScalarQuadraticFunction,
+    },
+    args::Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction,
+        MOI.ScalarQuadraticFunction,
+    }...,
+)
     T = _eltype(arg, args)
     if T === nothing
         error(
@@ -1315,58 +1328,39 @@ function Base.:+(arg::ScalarLike, args::ScalarLike...)
 end
 
 function Base.:+(
-    α::T,
-    arg::TypedScalarLike{T},
-    args::ScalarLike{T}...,
+    f::Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+    },
+    g::T,
 ) where {T}
-    return operate(+, T, α, arg, args...)
+    return operate(+, T, f, g)
 end
 
-function Base.:+(α::Number, f::MOI.VariableIndex)
-    return operate(+, typeof(α), α, f)
+function Base.:+(
+    f::T,
+    g::Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+    },
+) where {T}
+    return operate(+, T, f, g)
 end
 
-function Base.:+(f::TypedScalarLike{T}, α::T) where {T}
-    return operate(+, T, f, α)
-end
-
-function Base.:+(f::MOI.VariableIndex, α::Number)
-    return operate(+, typeof(α), f, α)
-end
-
-function Base.:-(arg::ScalarLike, args::ScalarLike...)
-    T = _eltype(arg, args)
-    if T === nothing
-        error(
-            "Unable to subtract VariableIndex together because no coefficient " *
-            "type is specified. Instead of `x - y`, convert one of the terms to a " *
-            "`ScalarAffineFunction` first by left-multiplying by `one(T)` where " *
-            "`T` is the coefficient type For example: `1.0 * x - y`.",
-        )
-    end
-    return operate(-, T, arg, args...)
-end
-
-function Base.:-(f::TypedScalarLike{T}, α::T) where {T}
-    return operate(-, T, f, α)
-end
-
-function Base.:-(f::MOI.VariableIndex, α::Number)
-    return operate(-, typeof(α), f, α)
-end
-
-function Base.:-(α::T, f::TypedScalarLike{T}) where {T}
-    return operate(-, T, α, f)
-end
-
-function Base.:-(α::Number, f::MOI.VariableIndex)
-    return operate(-, typeof(α), α, f)
-end
-
-# Vector +/-
-###############################################################################
-
-function Base.:+(arg::VectorLike, args::VectorLike...)
+function Base.:+(
+    arg::Union{
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction,
+        MOI.VectorQuadraticFunction,
+    },
+    args::Union{
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction,
+        MOI.VectorQuadraticFunction,
+    }...,
+)
     T = _eltype(arg, args)
     if T === nothing
         error(
@@ -1377,36 +1371,127 @@ function Base.:+(arg::VectorLike, args::VectorLike...)
     return operate(+, T, arg, args...)
 end
 
-# Base.:+(α::Vector{T}, f::VectorLike{T}...) is too general as it also covers
-# Base.:+(α::Vector) which is type piracy
-function Base.:+(α::Vector{T}, f::VectorLike{T}, g::VectorLike{T}...) where {T}
-    return operate(+, T, α, f, g...)
+function Base.:+(
+    f::Union{
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+    g::AbstractVector{T},
+) where {T}
+    return operate(+, T, f, g)
 end
 
-function Base.:+(f::VectorLike{T}, α::Vector{T}) where {T}
-    return operate(+, T, f, α)
+function Base.:+(
+    f::AbstractVector{T},
+    g::Union{
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+) where {T}
+    return operate(+, T, f, g)
 end
 
-function Base.:-(arg::VectorLike, args::VectorLike...)
+### Base.:-
+
+function Base.:-(
+    arg::Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction,
+        MOI.ScalarQuadraticFunction,
+    },
+    args::Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction,
+        MOI.ScalarQuadraticFunction,
+    }...,
+)
     T = _eltype(arg, args)
     if T === nothing
         error(
-            "Cannot subtract VectorOfVariables without a coefficient " *
+            "Unable to subtract VariableIndex together because no coefficient type " *
+            "is specified. Instead of `x - y`, convert one of the terms to a " *
+            "`ScalarAffineFunction` first by left-multiplying by `one(T)` where " *
+            "`T` is the coefficient type For example: `1.0 * x - y`.",
+        )
+    end
+    return operate(-, T, arg, args...)
+end
+
+function Base.:-(
+    f::Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+    g::T,
+) where {T}
+    return operate(-, T, f, g)
+end
+
+function Base.:-(
+    f::T,
+    g::Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+) where {T}
+    return operate(-, T, f, g)
+end
+
+function Base.:-(
+    arg::Union{
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction,
+        MOI.VectorQuadraticFunction,
+    },
+    args::Union{
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction,
+        MOI.VectorQuadraticFunction,
+    }...,
+)
+    T = _eltype(arg, args)
+    if T === nothing
+        error(
+            "Cannot subtract VectorOfVariables together without a coefficient " *
             "type. Convert one argument to a VectorAffineFunction first.",
         )
     end
     return operate(-, T, arg, args...)
 end
 
-function Base.:-(f::VectorLike{T}, α::Vector{T}) where {T}
-    return operate(-, T, f, α)
+function Base.:-(
+    f::Union{
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+    g::AbstractVector{T},
+) where {T}
+    return operate(-, T, f, g)
 end
 
-function Base.:-(α::Vector{T}, f::VectorLike{T}) where {T}
-    return operate(-, T, α, f)
+function Base.:-(
+    f::AbstractVector{T},
+    g::Union{
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+) where {T}
+    return operate(-, T, f, g)
 end
 
-####################################### * ######################################
+### Base.:*
 
 Base.:*(f::MOI.AbstractFunction) = f
 
@@ -1423,17 +1508,47 @@ function Base.:*(f::ScalarLike, g::ScalarLike, args::ScalarLike...)
     return operate(*, T, f, g, args...)
 end
 
-function Base.:*(f::Number, g::Union{MOI.VariableIndex,MOI.VectorOfVariables})
-    return operate(*, typeof(f), f, g)
-end
-
 function Base.:*(f::Union{MOI.VariableIndex,MOI.VectorOfVariables}, g::Number)
     return operate(*, typeof(g), f, g)
 end
 
+function Base.:*(
+    f::Union{
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+    g::T,
+) where {T<:Number}
+    return operate_coefficients(Base.Fix2(*, g), f)
+end
+
+function Base.:*(
+    f::T,
+    g::Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+) where {T<:Number}
+    return g * f
+end
+
 # Used by sparse matrix multiplication after
 # https://github.com/JuliaLang/julia/pull/33205
-function Base.:*(f::TypedLike, g::Bool)
+function Base.:*(
+    f::Union{
+        MOI.ScalarAffineFunction,
+        MOI.ScalarQuadraticFunction,
+        MOI.VectorAffineFunction,
+        MOI.VectorQuadraticFunction,
+    },
+    g::Bool,
+)
     if g
         return MA.copy_if_mutable(f)
     else
@@ -1441,7 +1556,82 @@ function Base.:*(f::TypedLike, g::Bool)
     end
 end
 
-Base.:*(f::Bool, g::TypedLike) = g * f
+# These method are needed for multiplication between different number types. The
+# most common case is when the number is a `Complex{T}`.
+
+function Base.:*(
+    f::Union{
+        MOI.ScalarAffineFunction,
+        MOI.ScalarQuadraticFunction,
+        MOI.VectorAffineFunction,
+        MOI.VectorQuadraticFunction,
+    },
+    g::Number,
+)
+    return operate_coefficients(Base.Fix2(*, g), f)
+end
+
+function Base.:*(
+    f::Number,
+    g::Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction,
+        MOI.ScalarQuadraticFunction,
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction,
+        MOI.VectorQuadraticFunction,
+    },
+)
+    return g * f
+end
+
+# !!! warning
+#     MathOptInterface includes these methods to support coefficient types which
+#     are not subtypes of `Number`. We shoud consider removing them in MOI v2.0.
+
+function Base.:*(
+    f::Union{
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+    g::T,
+) where {T}
+    return operate_coefficients(Base.Fix2(*, g), f)
+end
+
+function Base.:*(
+    f::T,
+    g::Union{
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+) where {T}
+    return g * f
+end
+
+### Base.:/
+
+function Base.:/(
+    f::Union{
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+    },
+    g::T,
+) where {T}
+    return operate(/, T, f, g)
+end
+
+function Base.:/(f::Union{MOI.VariableIndex,MOI.VectorOfVariables}, g::Number)
+    return operate(/, typeof(g), f, g)
+end
+
+### Base.:^
 
 function Base.:^(func::MOI.ScalarAffineFunction{T}, p::Integer) where {T}
     if iszero(p)
@@ -1465,32 +1655,15 @@ function Base.:^(func::MOI.ScalarQuadraticFunction{T}, p::Integer) where {T}
     end
 end
 
-function LinearAlgebra.dot(f::ScalarLike, g::ScalarLike)
-    return f * g
-end
+### LinearAlgebra
 
-function LinearAlgebra.dot(α::T, func::TypedLike{T}) where {T}
-    return α * func
-end
-
-function LinearAlgebra.dot(func::TypedLike{T}, α::T) where {T}
-    return func * α
-end
-
+LinearAlgebra.dot(f::ScalarLike, g::ScalarLike) = f * g
+LinearAlgebra.dot(α::T, func::TypedLike{T}) where {T} = α * func
+LinearAlgebra.dot(func::TypedLike{T}, α::T) where {T} = func * α
 LinearAlgebra.adjoint(f::ScalarLike) = f
 LinearAlgebra.transpose(f::ScalarLike) = f
 LinearAlgebra.symmetric_type(::Type{F}) where {F<:ScalarLike} = F
 LinearAlgebra.symmetric(f::ScalarLike, ::Symbol) = f
-
-####################################### / ######################################
-
-function Base.:/(f::TypedLike{T}, g::T) where {T}
-    return operate(/, T, f, g)
-end
-
-function Base.:/(f::Union{MOI.VariableIndex,MOI.VectorOfVariables}, g::Number)
-    return operate(/, typeof(g), f, g)
-end
 
 #################### Concatenation of MOI functions: `vcat` ####################
 
@@ -2011,32 +2184,6 @@ function Base.promote_rule(
     ::Type{MOI.VariableIndex},
 )
     return F
-end
-
-function Base.:*(α::T, g::TypedLike{T}) where {T}
-    return operate_coefficients(β -> α * β, g)
-end
-
-function Base.:*(α::Number, g::TypedLike)
-    return operate_coefficients(β -> α * β, g)
-end
-
-# Breaks ambiguity
-function Base.:*(α::T, g::TypedLike{T}) where {T<:Number}
-    return operate_coefficients(β -> α * β, g)
-end
-
-function Base.:*(g::TypedLike{T}, β::T) where {T}
-    return operate_coefficients(α -> α * β, g)
-end
-
-function Base.:*(g::TypedLike, β::Number)
-    return operate_coefficients(α -> α * β, g)
-end
-
-# Breaks ambiguity
-function Base.:*(g::TypedLike{T}, β::T) where {T<:Number}
-    return operate_coefficients(α -> α * β, g)
 end
 
 function is_coefficient_type(
