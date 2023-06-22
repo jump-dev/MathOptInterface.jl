@@ -26,7 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Reduced memory requirement for tests (#2204)
  - Refactored `Utilities.promote_operation` (#2206)
  - Improved code style in `Utilities/mutable_arithmetics.jl` (#2209)
- - Refactored `operate_` methods in `Utilities` (#2208) (#2212) (#2214) (#2215)
+ - Refactored various methods in `Utilities/functions.jl` (#2208) (#2212)
+   (#2213) (#2214) (#2215)
 
 ## v1.17.1 (June 6, 2023)
 
