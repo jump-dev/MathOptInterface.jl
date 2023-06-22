@@ -806,7 +806,8 @@ function unsafe_add(
     return T(t1.output_index, scalar_term)
 end
 
-is_canonical(::Number) = true
+# Generic fallback for items inside NonlinearFunctions like numbers.
+is_canonical(::Any) = true
 
 is_canonical(::MOI.AbstractFunction) = false
 
