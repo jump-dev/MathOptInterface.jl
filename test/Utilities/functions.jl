@@ -1888,17 +1888,17 @@ end
 
 function test_ScalarNonlinearFunction_substitute_variables()
     x = MOI.VariableIndex(1)
-    f = MOI.ScalarNonlinearFunction(:log, Any[1.0 * x])
+    f = MOI.ScalarNonlinearFunction(:log, Any[1.0*x])
     new_f = MOI.Utilities.substitute_variables(x -> -2.0 * x, f)
-    @test new_f ≈ MOI.ScalarNonlinearFunction(:log, Any[-2.0 * x])
+    @test new_f ≈ MOI.ScalarNonlinearFunction(:log, Any[-2.0*x])
     return
 end
 
 function test_ScalarNonlinearFunction_is_canonical()
     x = MOI.VariableIndex(1)
-    f = MOI.ScalarNonlinearFunction(:log, Any[1.0 * x])
+    f = MOI.ScalarNonlinearFunction(:log, Any[1.0*x])
     @test MOI.Utilities.is_canonical(f)
-    g = MOI.ScalarNonlinearFunction(:log, Any[1.0 * x + 1.0 * x])
+    g = MOI.ScalarNonlinearFunction(:log, Any[1.0*x+1.0*x])
     @test !MOI.Utilities.is_canonical(g)
     MOI.Utilities.canonicalize!(g)
     @test MOI.Utilities.is_canonical(g)
