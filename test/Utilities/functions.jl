@@ -1903,6 +1903,13 @@ function test_ScalarNonlinearFunction_is_canonical()
     MOI.Utilities.canonicalize!(g)
     @test MOI.Utilities.is_canonical(g)
     @test g.args[1] ≈ 2.0 * x
+    f = MOI.ScalarNonlinearFunction(:^, Any[x, 2])
+    @test MOI.Utilities.is_canonical(f)
+    # Test deep recursion
+    for _ in 1:100_000
+        f = MOI.ScalarNonlinearFunction(:sin, Any[f])
+    end
+    @test MOI.Utilities.is_canonical(f)
     return
 end
 

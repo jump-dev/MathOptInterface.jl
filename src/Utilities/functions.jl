@@ -806,12 +806,29 @@ function unsafe_add(
     return T(t1.output_index, scalar_term)
 end
 
+is_canonical(::Number) = true
+
 is_canonical(::MOI.AbstractFunction) = false
 
 is_canonical(::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = true
 
 function is_canonical(f::MOI.ScalarNonlinearFunction)
-    return all(is_canonical(arg) for arg in f.args)
+    # Don't use recursion here! This gets called for all scalar nonlinear
+    # constraints.
+    stack = Any[arg for arg in f.args]
+    while !isempty(stack)
+        arg = pop!(stack)
+        if arg isa MOI.ScalarNonlinearFunction
+            for a in arg.args
+                push!(stack, a)
+            end
+        else
+            if !is_canonical(arg)
+                return false
+            end
+        end
+    end
+    return true
 end
 
 """
