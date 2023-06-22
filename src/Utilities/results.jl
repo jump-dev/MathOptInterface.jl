@@ -27,7 +27,7 @@ function get_fallback(model::MOI.ModelLike, attr::MOI.ObjectiveValue)
     F = MOI.get(model, MOI.ObjectiveFunctionType())
     f = MOI.get(model, MOI.ObjectiveFunction{F}())
     obj = eval_variables(model, f) do vi
-        return vi -> MOI.get(model, MOI.VariablePrimal(attr.result_index), vi)
+        return MOI.get(model, MOI.VariablePrimal(attr.result_index), vi)
     end
     if is_ray(MOI.get(model, MOI.PrimalStatus()))
         # Dual infeasibiltiy certificates do not include the primal objective
