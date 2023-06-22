@@ -25,16 +25,18 @@ function test_runtests()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.IntegerToZeroOneBridge,
         """
-        variables: x
+        variables: x, z
         x in Integer()
         x in Interval(1.0, 3.0)
+        z in ZeroOne()
         """,
         """
-        variables: x, y1, y2
+        variables: x, z, y1, y2
         y1 in ZeroOne()
         y2 in ZeroOne()
         x + -1.0 * y1 + -2.0 * y2 == 1.0
         x in Interval(1.0, 3.0)
+        z in ZeroOne()
         """,
     )
     MOI.Bridges.runtests(
