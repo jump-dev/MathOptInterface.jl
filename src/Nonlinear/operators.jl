@@ -936,10 +936,7 @@ function _evaluate_expr(
     if !_is_registered(registry, op, length(expr.args))
         udf = MOI.get(model, MOI.UserDefinedFunction(op, length(expr.args)))
         if udf === nothing
-            return error(
-                "Unable to evaluate nonlinear operator $op because it is not " *
-                "registered",
-            )
+            throw(MOI.UnsupportedNonlinearOperator(op))
         end
         args = map(expr.args) do arg
             return _evaluate_expr(registry, value_fn, model, arg)

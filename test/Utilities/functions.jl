@@ -261,10 +261,25 @@ function test_eval_variables_scalar_nonlinear_function()
     )
     @test MOI.Utilities.eval_variables(xi -> 0.5, model, f) ≈ 0.0
     @test MOI.Utilities.eval_variables(xi -> 1.5, model, f) ≈ 1.5
+    f = MOI.ScalarNonlinearFunction(
+        :||,
+        Any[
+            MOI.ScalarNonlinearFunction(:<, Any[x, 0.0]),
+            MOI.ScalarNonlinearFunction(:>, Any[x, 1.0]),
+        ],
+    )
+    @test MOI.Utilities.eval_variables(xi -> 0.5, model, f) ≈ 0.0
+    @test MOI.Utilities.eval_variables(xi -> 1.5, model, f) ≈ 1.0
+    @test MOI.Utilities.eval_variables(xi -> -0.5, model, f) ≈ 1.0
     my_square(x, y) = (x - y)^2
     MOI.set(model, MOI.UserDefinedFunction(:my_square, 2), (my_square,))
     f = MOI.ScalarNonlinearFunction(:my_square, Any[x, 1.0])
     @test MOI.Utilities.eval_variables(xi -> 0.5, model, f) ≈ (0.5 - 1.0)^2
+    f = MOI.ScalarNonlinearFunction(:bad_f, Any[x, 1.0])
+    @test_throws(
+        MOI.UnsupportedNonlinearOperator(:bad_f),
+        MOI.Utilities.eval_variables(xi -> 0.5, model, f)
+    )
     return
 end
 
