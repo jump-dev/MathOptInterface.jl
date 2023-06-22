@@ -92,6 +92,8 @@ function value_type(
     return MA.promote_operation(*, C, T)
 end
 
+value_type(::Type{T}, ::Type{MOI.ScalarNonlinearFunction}) where {T} = T
+
 function value_type(
     ::Type{T},
     ::Type{F},
@@ -107,7 +109,7 @@ Returns the value of function `f` if each variable index `vi` is evaluated as
 
 Note that `value_fn` must return a Number. See [`substitute_variables`](@ref)
 for a similar function where `value_fn` returns an
-    [`MOI.AbstractScalarFunction`](@ref).
+[`MOI.AbstractScalarFunction`](@ref).
 """
 function eval_variables end
 
@@ -294,6 +296,7 @@ function map_indices(
     index_map::F,
     f::MOI.ScalarNonlinearFunction,
 ) where {F<:Function}
+    # TODO(odow): this uses recursion. We should remove at some point.
     return MOI.ScalarNonlinearFunction(
         f.head,
         convert(Vector{Any}, map_indices(index_map, f.args)),
@@ -433,6 +436,17 @@ function substitute_variables(
         g = operate!(+, T, g, substitute_variables(variable_map, q_term))
     end
     return g
+end
+
+function substitute_variables(
+    variable_map::F,
+    f::MOI.ScalarNonlinearFunction,
+) where {F<:Function}
+    # TODO(odow): this uses recursion. We should remove at some point.
+    return MOI.ScalarNonlinearFunction(
+        f.head,
+        Any[substitute_variables(variable_map, a) for a in f.args],
+    )
 end
 
 function substitute_variables(
@@ -796,6 +810,10 @@ is_canonical(::MOI.AbstractFunction) = false
 
 is_canonical(::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = true
 
+function is_canonical(f::MOI.ScalarNonlinearFunction)
+    return all(is_canonical(arg) for arg in f.args)
+end
+
 """
     is_canonical(f::Union{ScalarAffineFunction, VectorAffineFunction})
 
@@ -888,7 +906,14 @@ function canonicalize!(
     return f
 end
 
-canonicalize!(f::MOI.ScalarNonlinearFunction) = f
+function canonicalize!(f::MOI.ScalarNonlinearFunction)
+    for (i, arg) in enumerate(f.args)
+        if !is_canonical(arg)
+            f.args[i] = canonicalize!(arg)
+        end
+    end
+    return f
+end
 
 """
     canonicalize!(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction})

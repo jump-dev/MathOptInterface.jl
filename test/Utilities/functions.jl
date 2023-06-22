@@ -1808,6 +1808,7 @@ function test_value_type()
         T,
         MOI.ScalarQuadraticFunction{Complex{Int}},
     ) == Complex{T}
+    @test MOI.Utilities.value_type(T, MOI.ScalarNonlinearFunction) == T
     @test MOI.Utilities.value_type(
         T,
         MOI.ScalarQuadraticFunction{Complex{T}},
@@ -1870,6 +1871,38 @@ function test_ScalarNonlinearFunction_count_map_indices_and_print()
           "count([MOI.VariableIndex(1), !(MOI.VariableIndex(1))])"
     c = MOI.add_constraint(model, g, MOI.EqualTo(true))
     @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ g
+    return
+end
+
+function test_ScalarNonlinearFunction_map_indices()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(src)
+    f = MOI.ScalarNonlinearFunction(:log, Any[x])
+    c = MOI.add_constraint(src, f, MOI.LessThan(1.0))
+    dest = MOI.Utilities.Model{Float64}()
+    index_map = MOI.copy_to(dest, src)
+    new_f = MOI.Utilities.map_indices(index_map, f)
+    @test new_f ≈ MOI.ScalarNonlinearFunction(:log, Any[index_map[x]])
+    return
+end
+
+function test_ScalarNonlinearFunction_substitute_variables()
+    x = MOI.VariableIndex(1)
+    f = MOI.ScalarNonlinearFunction(:log, Any[1.0 * x])
+    new_f = MOI.Utilities.substitute_variables(x -> -2.0 * x, f)
+    @test new_f ≈ MOI.ScalarNonlinearFunction(:log, Any[-2.0 * x])
+    return
+end
+
+function test_ScalarNonlinearFunction_is_canonical()
+    x = MOI.VariableIndex(1)
+    f = MOI.ScalarNonlinearFunction(:log, Any[1.0 * x])
+    @test MOI.Utilities.is_canonical(f)
+    g = MOI.ScalarNonlinearFunction(:log, Any[1.0 * x + 1.0 * x])
+    @test !MOI.Utilities.is_canonical(g)
+    MOI.Utilities.canonicalize!(g)
+    @test MOI.Utilities.is_canonical(g)
+    @test g.args[1] ≈ 2.0 * x
     return
 end
 
