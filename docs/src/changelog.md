@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
  - Added `Bridges.Objective.SlackBridgePrimalDualStart` (#2194)
- - Added [`MOI.constraint_gradient_structure`](@ref) and
-   [`MOI.eval_constraint_gradient`](@ref) (#2200)
+ - Added [`constraint_gradient_structure`](@ref) and
+   [`eval_constraint_gradient`](@ref) (#2200)
 
 ### Fixed
 
