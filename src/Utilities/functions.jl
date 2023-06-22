@@ -78,7 +78,7 @@ Returns the output type that results if a function of type `F` is evaluated
 using variables with numeric type `T`.
 
 In other words, this is the return type for
-`MOI.Utilities.eval_variables(value_fn::Function, f::F)` for a function
+`MOI.Utilities.eval_variables(value_fn::Function, model, f::F)` for a function
 `value_fn(::MOI.VariableIndex)::T`.
 """
 function value_type end
@@ -107,7 +107,13 @@ Returns the value of function `f` if each variable index `vi` is evaluated as
 
 Note that `value_fn` must return a Number. See [`substitute_variables`](@ref)
 for a similar function where `value_fn` returns an
-    [`MOI.AbstractScalarFunction`](@ref).
+[`MOI.AbstractScalarFunction`](@ref).
+
+!!! warning
+    The two-argument version of `eval_variables` is deprecated and may be
+    removed in MOI v2.0.0. Use the three-argument method
+    `eval_variables(::Function, ::MOI.ModelLike, ::MOI.AbstractFunction)`
+    instead.
 """
 function eval_variables end
 
@@ -162,6 +168,97 @@ function eval_variables(value_fn::Function, f::MOI.VectorQuadraticFunction)
         out[t.output_index] += eval_variables(value_fn, t.scalar_term)
     end
     return out
+end
+
+"""
+    eval_variables(
+        value_fn::Function,
+        model::MOI.ModelLike,
+        f::MOI.AbstractFunction,
+    )
+
+Returns the value of function `f` if each variable index `vi` is evaluated as
+`value_fn(vi)`.
+
+Note that `value_fn` must return a Number. See [`substitute_variables`](@ref)
+for a similar function where `value_fn` returns an
+[`MOI.AbstractScalarFunction`](@ref).
+"""
+function eval_variables(
+    value_fn::F,
+    model::MOI.ModelLike,
+    f::MOI.AbstractFunction,
+) where {F}
+    return eval_variables(value_fn, f)
+end
+
+function eval_variables(
+    value_fn::F,
+    model::MOI.ModelLike,
+    f::MOI.ScalarNonlinearFunction,
+) where {F}
+    registry = MOI.Nonlinear.OperatorRegistry()
+    return _evaluate_expr(registry, value_fn, model, f)
+end
+
+function _evaluate_expr(
+    ::MOI.Nonlinear.OperatorRegistry,
+    value_fn::Function,
+    model::MOI.ModelLike,
+    f::MOI.AbstractFunction,
+)
+    return eval_variables(value_fn, model, f)
+end
+
+function _evaluate_expr(
+    ::MOI.Nonlinear.OperatorRegistry,
+    ::Function,
+    ::MOI.ModelLike,
+    f::Number,
+)
+    return f
+end
+
+function _evaluate_expr(
+    registry::MOI.Nonlinear.OperatorRegistry,
+    value_fn::Function,
+    model::MOI.ModelLike,
+    expr::MOI.ScalarNonlinearFunction,
+)
+    op = expr.head
+    if !MOI.Nonlinear._is_registered(registry, op, length(expr.args))
+        udf = MOI.get(model, MOI.UserDefinedFunction(op, length(expr.args)))
+        if udf === nothing
+            return error(
+                "Unable to evaluate nonlinear operator $op because it is not " *
+                "registered",
+            )
+        end
+        args = map(expr.args) do arg
+            return _evaluate_expr(registry, value_fn, model, arg)
+        end
+        return first(udf)(args...)
+    end
+    if length(expr.args) == 1 && haskey(registry.univariate_operator_to_id, op)
+        arg = _evaluate_expr(registry, value_fn, model, expr.args[1])
+        return MOI.Nonlinear.eval_univariate_function(registry, op, arg)
+    elseif haskey(registry.multivariate_operator_to_id, op)
+        args = map(expr.args) do arg
+            return _evaluate_expr(registry, value_fn, model, arg)
+        end
+        return MOI.Nonlinear.eval_multivariate_function(registry, op, args)
+    elseif haskey(registry.logic_operator_to_id, op)
+        @assert length(expr.args) == 2
+        x = _evaluate_expr(registry, value_fn, model, expr.args[1])
+        y = _evaluate_expr(registry, value_fn, model, expr.args[2])
+        return MOI.Nonlinear.eval_logic_function(registry, op, x, y)
+    else
+        @assert haskey(registry.comparison_operator_to_id, op)
+        @assert length(expr.args) == 2
+        x = _evaluate_expr(registry, value_fn, model, expr.args[1])
+        y = _evaluate_expr(registry, value_fn, model, expr.args[2])
+        return MOI.Nonlinear.eval_comparison_function(registry, op, x, y)
+    end
 end
 
 """

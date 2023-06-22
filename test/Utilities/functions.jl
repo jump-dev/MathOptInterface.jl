@@ -247,6 +247,27 @@ function test_eval_variables()
     return
 end
 
+function test_eval_variables_scalar_nonlinear_function()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:log, Any[x])
+    @test MOI.Utilities.eval_variables(xi -> 0.5, model, f) ≈ log(0.5)
+    f = MOI.ScalarNonlinearFunction(:*, Any[x, 2.0 * x, 1.0 * x + 2.0])
+    @test MOI.Utilities.eval_variables(xi -> 0.5, model, f) ≈
+          0.5 * (2.0 * 0.5) * (1.0 * 0.5 + 2.0)
+    f = MOI.ScalarNonlinearFunction(
+        :ifelse,
+        Any[MOI.ScalarNonlinearFunction(:<, Any[x, 1.0]), 0.0, x],
+    )
+    @test MOI.Utilities.eval_variables(xi -> 0.5, model, f) ≈ 0.0
+    @test MOI.Utilities.eval_variables(xi -> 1.5, model, f) ≈ 1.5
+    my_square(x, y) = (x - y)^2
+    MOI.set(model, MOI.UserDefinedFunction(:my_square, 2), (my_square,))
+    f = MOI.ScalarNonlinearFunction(:my_square, Any[x, 1.0])
+    @test MOI.Utilities.eval_variables(xi -> 0.5, model, f) ≈ (0.5 - 1.0)^2
+    return
+end
+
 function test_substitute_variables()
     # We do tests twice to make sure the function is not modified
     subs = Dict(w => 1.0y + 1.0z, x => 2.0y + 1.0, y => 1.0y, z => -1.0w)
