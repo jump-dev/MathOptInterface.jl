@@ -112,6 +112,9 @@ function _parse_expression(stack, data, expr, x, parent_index)
         if length(x.args) == 2 && !isexpr(x.args[2], :...)
             _parse_univariate_expression(stack, data, expr, x, parent_index)
         else
+            # The call is either n-ary, or it is a splat, in which case we
+            # cannot tell just yet whether the expression is unary or nary.
+            # Punt to multivariate and try to recover later.
             _parse_multivariate_expression(stack, data, expr, x, parent_index)
         end
     elseif isexpr(x, :comparison)
@@ -177,8 +180,15 @@ function _parse_multivariate_expression(
     @assert isexpr(x, :call)
     id = get(data.operators.multivariate_operator_to_id, x.args[1], nothing)
     if id === nothing
-        @assert x.args[1] in data.operators.comparison_operators
-        _parse_inequality_expression(stack, data, expr, x, parent_index)
+        if haskey(data.operators.univariate_operator_to_id, x.args[1])
+            # It may also be a unary variate operator with splatting.
+            _parse_univariate_expression(stack, data, expr, x, parent_index)
+        elseif x.args[1] in data.operators.comparison_operators
+            # Or it may be a binary (in)equality operator.
+            _parse_inequality_expression(stack, data, expr, x, parent_index)
+        else
+            throw(MOI.UnsupportedNonlinearOperator(x.args[1]))
+        end
         return
     end
     push!(expr.nodes, Node(NODE_CALL_MULTIVARIATE, id, parent_index))
