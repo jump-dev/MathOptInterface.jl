@@ -350,8 +350,7 @@ for s in [
             :VectorOfVariables,
             :VectorAffineFunction,
             :VectorQuadraticFunction,
-            # TODO(odow): re-add this at a later date
-            # :VectorNonlinearFunction,
+            :VectorNonlinearFunction,
         )
     end
     for f in functions
