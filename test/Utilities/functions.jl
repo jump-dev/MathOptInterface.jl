@@ -252,7 +252,7 @@ function test_eval_variables_scalar_nonlinear_function()
     x = MOI.add_variable(model)
     f = MOI.ScalarNonlinearFunction(:log, Any[x])
     @test MOI.Utilities.eval_variables(xi -> 0.5, model, f) ≈ log(0.5)
-    f = MOI.ScalarNonlinearFunction(:*, Any[x, 2.0 * x, 1.0 * x + 2.0])
+    f = MOI.ScalarNonlinearFunction(:*, Any[x, 2.0*x, 1.0*x+2.0])
     @test MOI.Utilities.eval_variables(xi -> 0.5, model, f) ≈
           0.5 * (2.0 * 0.5) * (1.0 * 0.5 + 2.0)
     f = MOI.ScalarNonlinearFunction(
