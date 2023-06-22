@@ -1292,39 +1292,6 @@ function map_terms!(
     return
 end
 
-###################################### +/- #####################################
-
-### ScalarNonlinearFunction
-
-function operate(
-    ::typeof(-),
-    ::Type{T},
-    f::MOI.ScalarNonlinearFunction,
-) where {T}
-    if f.head == :- && length(f.args) == 1
-        # A simplification for -(-(f)) into f, but only if f is an SNF.
-        if f.args[1] isa MOI.ScalarNonlinearFunction
-            return f.args[1]
-        end
-    end
-    return MOI.ScalarNonlinearFunction(:-, Any[f])
-end
-
-function operate(
-    op::Union{typeof(+),typeof(-),typeof(*),typeof(/)},
-    ::Type{T},
-    f::MOI.ScalarNonlinearFunction,
-    g::Union{
-        T,
-        MOI.VariableIndex,
-        MOI.ScalarAffineFunction{T},
-        MOI.ScalarQuadraticFunction{T},
-        MOI.ScalarNonlinearFunction,
-    },
-) where {T}
-    return MOI.ScalarNonlinearFunction(Symbol(op), Any[f, g])
-end
-
 ### Base methods
 
 _eltype(args::Tuple) = _eltype(first(args), Base.tail(args))
