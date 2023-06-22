@@ -1089,7 +1089,7 @@ function test_parse_univariate_splatting()
     MOI.Nonlinear.register_operator(model, :f, 1, x -> 2x)
     x = [MOI.VariableIndex(1)]
     @test MOI.Nonlinear.parse_expression(model, :(f($x...))) ==
-        MOI.Nonlinear.parse_expression(model, :(f($(x[1]))))
+          MOI.Nonlinear.parse_expression(model, :(f($(x[1]))))
     return
 end
 
