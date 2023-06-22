@@ -1614,7 +1614,7 @@ function Base.:*(
         MOI.VectorAffineFunction,
         MOI.VectorQuadraticFunction,
     },
-) where {T}
+)
     return g * f
 end
 
