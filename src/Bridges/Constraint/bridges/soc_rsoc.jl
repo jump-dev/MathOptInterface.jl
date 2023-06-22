@@ -72,7 +72,13 @@ function MOI.Bridges.map_function(::Type{<:SOCtoRSOCBridge{T}}, func) where {T}
     t, u, x = scalars[1], scalars[2], scalars[3:end]
     ts = MOI.Utilities.operate!(/, T, t, sqrt(T(2)))
     us = MOI.Utilities.operate!(/, T, u, sqrt(T(2)))
-    return MOI.Utilities.operate(vcat, T, ts + us, ts - us, x)
+    return MOI.Utilities.operate(
+        vcat,
+        T,
+        MOI.Utilities.operate(+, T, ts, us),
+        MOI.Utilities.operate(-, T, ts, us),
+        x,
+    )
 end
 
 # The map is an involution
