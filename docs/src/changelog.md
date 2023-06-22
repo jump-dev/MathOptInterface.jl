@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Fixed a missing `@require` in `MOI.Test` (#2195) (#2196)
  - Fixed incorrect usage of `Utilities.operate!` in bridges (#2207) (#2216)
+ - Fixed splatting nonlinear expression with univariate operator (#2221)
 
 ### Other
 
