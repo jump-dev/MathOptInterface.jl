@@ -197,6 +197,16 @@ end
 # The `eval_variables(::F, ::MOI.ModelLike, ::MOI.ScalarNonlinearFunction)`
 # method is defined in the MOI.Nonlinear submodule.
 
+function eval_variables(
+    value_fn::F,
+    model::MOI.ModelLike,
+    f::MOI.GenericVectorFunction,
+) where {F}
+    return map(f.rows) do row
+        return eval_variables(value_fn, model, row)
+    end
+end
+
 """
     map_indices(index_map::Function, attr::MOI.AnyAttribute, x::X)::X where {X}
 
@@ -339,7 +349,7 @@ function map_indices(
     f::MOI.GenericVectorFunction{T},
 ) where {F<:Function,T}
     return MOI.GenericVectorFunction{T}(
-        convert(Vector{T}, map_indices(index_map, f.rows))
+        convert(Vector{T}, map_indices(index_map, f.rows)),
     )
 end
 
@@ -522,6 +532,14 @@ function substitute_variables(
         operate_output_index!(+, T, term.output_index, g, sub)
     end
     return g
+end
+
+function substitute_variables(
+    variable_map::F,
+    f::MOI.GenericVectorFunction{T},
+) where {T,F<:Function}
+    new_rows = map(Base.Fix1(substitute_variables, variable_map), f.rows)
+    return MOI.GenericVectorFunction{T}(convert(Vector{T}, new_rows))
 end
 
 """
@@ -922,6 +940,8 @@ function is_canonical(
     return _is_strictly_sorted(f.affine_terms) &&
            _is_strictly_sorted(f.quadratic_terms)
 end
+
+is_canonical(f::MOI.GenericVectorFunction) = all(is_canonical, f.rows)
 
 function _is_strictly_sorted(x::Vector)
     if isempty(x)
