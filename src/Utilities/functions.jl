@@ -92,6 +92,8 @@ function value_type(
     return MA.promote_operation(*, C, T)
 end
 
+value_type(::Type{T}, ::Type{MOI.ScalarNonlinearFunction}) where {T} = T
+
 function value_type(
     ::Type{T},
     ::Type{F},
@@ -325,6 +327,7 @@ function map_indices(
     index_map::F,
     f::MOI.ScalarNonlinearFunction,
 ) where {F<:Function}
+    # TODO(odow): this uses recursion. We should remove at some point.
     return MOI.ScalarNonlinearFunction(
         f.head,
         convert(Vector{Any}, map_indices(index_map, f.args)),
@@ -464,6 +467,17 @@ function substitute_variables(
         g = operate!(+, T, g, substitute_variables(variable_map, q_term))
     end
     return g
+end
+
+function substitute_variables(
+    variable_map::F,
+    f::MOI.ScalarNonlinearFunction,
+) where {F<:Function}
+    # TODO(odow): this uses recursion. We should remove at some point.
+    return MOI.ScalarNonlinearFunction(
+        f.head,
+        Any[substitute_variables(variable_map, a) for a in f.args],
+    )
 end
 
 function substitute_variables(
@@ -823,9 +837,31 @@ function unsafe_add(
     return T(t1.output_index, scalar_term)
 end
 
+# Generic fallback for items inside NonlinearFunctions like numbers.
+is_canonical(::Any) = true
+
 is_canonical(::MOI.AbstractFunction) = false
 
 is_canonical(::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = true
+
+function is_canonical(f::MOI.ScalarNonlinearFunction)
+    # Don't use recursion here! This gets called for all scalar nonlinear
+    # constraints.
+    stack = Any[arg for arg in f.args]
+    while !isempty(stack)
+        arg = pop!(stack)
+        if arg isa MOI.ScalarNonlinearFunction
+            for a in arg.args
+                push!(stack, a)
+            end
+        else
+            if !is_canonical(arg)
+                return false
+            end
+        end
+    end
+    return true
+end
 
 """
     is_canonical(f::Union{ScalarAffineFunction, VectorAffineFunction})
@@ -919,7 +955,14 @@ function canonicalize!(
     return f
 end
 
-canonicalize!(f::MOI.ScalarNonlinearFunction) = f
+function canonicalize!(f::MOI.ScalarNonlinearFunction)
+    for (i, arg) in enumerate(f.args)
+        if !is_canonical(arg)
+            f.args[i] = canonicalize!(arg)
+        end
+    end
+    return f
+end
 
 """
     canonicalize!(f::Union{ScalarQuadraticFunction, VectorQuadraticFunction})
