@@ -7,6 +7,29 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.18.0 (June 23, 2023)
+
+### Added
+
+ - Added `Bridges.Objective.SlackBridgePrimalDualStart` (#2194)
+ - Added [`constraint_gradient_structure`](@ref) and
+   [`eval_constraint_gradient`](@ref) (#2200)
+
+### Fixed
+
+ - Fixed a missing `@require` in `MOI.Test` (#2195) (#2196)
+ - Fixed incorrect usage of `Utilities.operate!` in bridges (#2207) (#2216)
+ - Fixed splatting nonlinear expression with univariate operator (#2221)
+
+### Other
+
+ - Removed unused argument names (#2199)
+ - Reduced memory requirement for tests (#2204)
+ - Refactored `Utilities.promote_operation` (#2206)
+ - Improved code style in `Utilities/mutable_arithmetics.jl` (#2209)
+ - Refactored various methods in `Utilities/functions.jl` (#2208) (#2212)
+   (#2213) (#2214) (#2215)
+
 ## v1.17.1 (June 6, 2023)
 
 ### Fixed

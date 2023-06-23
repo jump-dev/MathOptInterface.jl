@@ -78,7 +78,7 @@ Returns the output type that results if a function of type `F` is evaluated
 using variables with numeric type `T`.
 
 In other words, this is the return type for
-`MOI.Utilities.eval_variables(value_fn::Function, f::F)` for a function
+`MOI.Utilities.eval_variables(value_fn::Function, model, f::F)` for a function
 `value_fn(::MOI.VariableIndex)::T`.
 """
 function value_type end
@@ -110,6 +110,12 @@ Returns the value of function `f` if each variable index `vi` is evaluated as
 Note that `value_fn` must return a Number. See [`substitute_variables`](@ref)
 for a similar function where `value_fn` returns an
 [`MOI.AbstractScalarFunction`](@ref).
+
+!!! warning
+    The two-argument version of `eval_variables` is deprecated and may be
+    removed in MOI v2.0.0. Use the three-argument method
+    `eval_variables(::Function, ::MOI.ModelLike, ::MOI.AbstractFunction)`
+    instead.
 """
 function eval_variables end
 
@@ -165,6 +171,31 @@ function eval_variables(value_fn::Function, f::MOI.VectorQuadraticFunction)
     end
     return out
 end
+
+"""
+    eval_variables(
+        value_fn::Function,
+        model::MOI.ModelLike,
+        f::MOI.AbstractFunction,
+    )
+
+Returns the value of function `f` if each variable index `vi` is evaluated as
+`value_fn(vi)`.
+
+Note that `value_fn` must return a Number. See [`substitute_variables`](@ref)
+for a similar function where `value_fn` returns an
+[`MOI.AbstractScalarFunction`](@ref).
+"""
+function eval_variables(
+    value_fn::F,
+    model::MOI.ModelLike,
+    f::MOI.AbstractFunction,
+) where {F}
+    return eval_variables(value_fn, f)
+end
+
+# The `eval_variables(::F, ::MOI.ModelLike, ::MOI.ScalarNonlinearFunction)`
+# method is defined in the MOI.Nonlinear submodule.
 
 """
     map_indices(index_map::Function, attr::MOI.AnyAttribute, x::X)::X where {X}
