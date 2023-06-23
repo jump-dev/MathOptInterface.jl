@@ -224,7 +224,7 @@ function MOI.set(
     end
     MOI.set(model, MOI.VariablePrimalStart(), b.slack, zero(T))
     f = MOI.get(model, MOI.ConstraintFunction(), b.constraint)
-    f_val = MOI.Utilities.eval_variables(f) do v
+    f_val = MOI.Utilities.eval_variables(model, f) do v
         return MOI.get(model, MOI.VariablePrimalStart(), v)
     end
     f_val -= MOI.constant(MOI.get(model, MOI.ConstraintSet(), b.constraint))

@@ -292,7 +292,8 @@ function MOI.set(
     # |        U * x        |
     # where we compute `x'Qx/2` and `U * x` using the starting values of the variable.
     soc = MOI.get(model, MOI.ConstraintFunction(), bridge.soc)
-    Ux = MOI.Utilities.eval_variables(MOI.Utilities.eachscalar(soc)[3:end]) do v
+    f = MOI.Utilities.eachscalar(soc)[3:end]
+    Ux = MOI.Utilities.eval_variables(model, f) do v
         return _primal_start_or_error(model, attr, v)
     end
     if bridge.less_than

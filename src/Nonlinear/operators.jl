@@ -895,3 +895,72 @@ function eval_comparison_function(
         return lhs > rhs
     end
 end
+
+# This method is implmented here because it needs the OperatorRegistry type from
+# the Nonlinear, which doesn't exist when the Utilities submodule is defined.
+
+function MOI.Utilities.eval_variables(
+    value_fn::F,
+    model::MOI.ModelLike,
+    f::MOI.ScalarNonlinearFunction,
+) where {F}
+    registry = OperatorRegistry()
+    return _evaluate_expr(registry, value_fn, model, f)
+end
+
+function _evaluate_expr(
+    ::OperatorRegistry,
+    value_fn::Function,
+    model::MOI.ModelLike,
+    f::MOI.AbstractFunction,
+)
+    return MOI.Utilities.eval_variables(value_fn, model, f)
+end
+
+function _evaluate_expr(
+    ::OperatorRegistry,
+    ::Function,
+    ::MOI.ModelLike,
+    f::Number,
+)
+    return f
+end
+
+function _evaluate_expr(
+    registry::OperatorRegistry,
+    value_fn::Function,
+    model::MOI.ModelLike,
+    expr::MOI.ScalarNonlinearFunction,
+)
+    op = expr.head
+    if !_is_registered(registry, op, length(expr.args))
+        udf = MOI.get(model, MOI.UserDefinedFunction(op, length(expr.args)))
+        if udf === nothing
+            throw(MOI.UnsupportedNonlinearOperator(op))
+        end
+        args = map(expr.args) do arg
+            return _evaluate_expr(registry, value_fn, model, arg)
+        end
+        return first(udf)(args...)
+    end
+    if length(expr.args) == 1 && haskey(registry.univariate_operator_to_id, op)
+        arg = _evaluate_expr(registry, value_fn, model, expr.args[1])
+        return eval_univariate_function(registry, op, arg)
+    elseif haskey(registry.multivariate_operator_to_id, op)
+        args = map(expr.args) do arg
+            return _evaluate_expr(registry, value_fn, model, arg)
+        end
+        return eval_multivariate_function(registry, op, args)
+    elseif haskey(registry.logic_operator_to_id, op)
+        @assert length(expr.args) == 2
+        x = _evaluate_expr(registry, value_fn, model, expr.args[1])
+        y = _evaluate_expr(registry, value_fn, model, expr.args[2])
+        return eval_logic_function(registry, op, x, y)
+    else
+        @assert haskey(registry.comparison_operator_to_id, op)
+        @assert length(expr.args) == 2
+        x = _evaluate_expr(registry, value_fn, model, expr.args[1])
+        y = _evaluate_expr(registry, value_fn, model, expr.args[2])
+        return eval_comparison_function(registry, op, x, y)
+    end
+end
