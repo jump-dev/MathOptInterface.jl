@@ -1408,7 +1408,7 @@ function Base.:+(
         MOI.ScalarQuadraticFunction{T},
     },
     g::T,
-) where {T}
+) where {T<:Number}
     return operate(+, T, f, g)
 end
 
@@ -1419,7 +1419,7 @@ function Base.:+(
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate(+, T, f, g)
 end
 
@@ -1452,7 +1452,7 @@ function Base.:+(
         MOI.VectorQuadraticFunction{T},
     },
     g::AbstractVector{T},
-) where {T}
+) where {T<:Number}
     return operate(+, T, f, g)
 end
 
@@ -1463,7 +1463,7 @@ function Base.:+(
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate(+, T, f, g)
 end
 
@@ -1503,7 +1503,7 @@ function Base.:-(
         MOI.VectorQuadraticFunction{T},
     },
     g::T,
-) where {T}
+) where {T<:Number}
     return operate(-, T, f, g)
 end
 
@@ -1517,7 +1517,7 @@ function Base.:-(
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate(-, T, f, g)
 end
 
@@ -1550,7 +1550,7 @@ function Base.:-(
         MOI.VectorQuadraticFunction{T},
     },
     g::AbstractVector{T},
-) where {T}
+) where {T<:Number}
     return operate(-, T, f, g)
 end
 
@@ -1561,7 +1561,7 @@ function Base.:-(
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate(-, T, f, g)
 end
 
