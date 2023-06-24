@@ -954,7 +954,7 @@ function test_read_variable_bounds()
     -1 <= x6 <= 1
     1 <= x7 <= 1
     end
-    """);
+    """)
     model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_LP)
     read!(io, model)
     io = IOBuffer()

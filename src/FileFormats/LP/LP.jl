@@ -375,9 +375,9 @@ function Base.write(io::IO, model::Model)
                 # the bounds section.
                 continue
             end
-            print(io , variable_names[x], " free")
+            print(io, variable_names[x], " free")
         elseif lb == ub
-            print(io , variable_names[x], " = ")
+            print(io, variable_names[x], " = ")
             _print_shortest(io, lb)
         elseif lb == -Inf
             print(io, "-infinity <= ", variable_names[x], " <= ")
