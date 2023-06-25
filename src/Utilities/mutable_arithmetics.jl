@@ -270,7 +270,7 @@ function _add_sub_affine_terms(
     α::T,
     f::MOI.VariableIndex,
     β::T,
-) where {T}
+) where {T<:Number}
     push!(terms, MOI.ScalarAffineTerm(op(α * β), f))
     return
 end
@@ -280,7 +280,7 @@ function _add_sub_affine_terms(
     terms::Vector{MOI.ScalarAffineTerm{T}},
     f::MOI.VariableIndex,
     β::T,
-) where {T}
+) where {T<:Number}
     push!(terms, MOI.ScalarAffineTerm(op(β), f))
     return
 end

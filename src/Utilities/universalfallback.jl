@@ -641,7 +641,7 @@ function check_type_and_multiple_names(
     value::T,
     ::Nothing,
     name,
-) where {T}
+) where {T<:MOI.Index}
     return value
 end
 
@@ -653,13 +653,13 @@ function check_type_and_multiple_names(
     ::Nothing,
     value::T,
     name,
-) where {T}
+) where {T<:MOI.Index}
     return value
 end
 
 check_type_and_multiple_names(::Type, ::Nothing, ::Any, name) = nothing
 
-function check_type_and_multiple_names(T::Type, ::Any, ::Any, name)
+function check_type_and_multiple_names(::Type{T}, ::Any, ::Any, name) where {T}
     return throw_multiple_name_error(T, name)
 end
 

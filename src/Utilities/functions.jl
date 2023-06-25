@@ -1687,6 +1687,47 @@ function Base.:*(
     return g * f
 end
 
+# Methods needed to avoid ambiguities.
+
+for S in (
+    MA.Zero,
+    MOI.AbstractFunction,
+    ChainRulesCore.NoTangent,
+    ChainRulesCore.ZeroTangent,
+    ChainRulesCore.NotImplemented,
+)
+    @eval begin
+        function Base.:*(
+            ::Union{
+                MOI.ScalarAffineFunction{T},
+                MOI.ScalarQuadraticFunction{T},
+                MOI.VectorAffineFunction{T},
+                MOI.VectorQuadraticFunction{T},
+            },
+            ::T,
+        ) where {T<:$S}
+            return error(
+                "Internal error: this method should never be called because it " *
+                "represents and invalid state. Please open an issue to report.",
+            )
+        end
+        function Base.:*(
+            ::T,
+            ::Union{
+                MOI.ScalarAffineFunction{T},
+                MOI.ScalarQuadraticFunction{T},
+                MOI.VectorAffineFunction{T},
+                MOI.VectorQuadraticFunction{T},
+            },
+        ) where {T<:$S}
+            return error(
+                "Internal error: this method should never be called because it " *
+                "represents and invalid state. Please open an issue to report.",
+            )
+        end
+    end
+end
+
 ### Base.:/
 
 function Base.:/(
@@ -1697,7 +1738,7 @@ function Base.:/(
         MOI.VectorQuadraticFunction{T},
     },
     g::T,
-) where {T}
+) where {T<:Number}
     return operate(/, T, f, g)
 end
 
@@ -1732,8 +1773,8 @@ end
 ### LinearAlgebra
 
 LinearAlgebra.dot(f::ScalarLike, g::ScalarLike) = f * g
-LinearAlgebra.dot(α::T, func::TypedLike{T}) where {T} = α * func
-LinearAlgebra.dot(func::TypedLike{T}, α::T) where {T} = func * α
+LinearAlgebra.dot(α::T, func::TypedLike{T}) where {T<:Number} = α * func
+LinearAlgebra.dot(func::TypedLike{T}, α::T) where {T<:Number} = func * α
 LinearAlgebra.adjoint(f::ScalarLike) = f
 LinearAlgebra.transpose(f::ScalarLike) = f
 LinearAlgebra.symmetric_type(::Type{F}) where {F<:ScalarLike} = F
@@ -2254,9 +2295,16 @@ function Base.promote_rule(
 end
 
 function Base.promote_rule(
-    F::Type{<:Union{MOI.ScalarAffineFunction,MOI.ScalarQuadraticFunction}},
+    F::Type{MOI.ScalarAffineFunction{T}},
     ::Type{MOI.VariableIndex},
-)
+) where {T}
+    return F
+end
+
+function Base.promote_rule(
+    F::Type{MOI.ScalarQuadraticFunction{T}},
+    ::Type{MOI.VariableIndex},
+) where {T}
     return F
 end
 

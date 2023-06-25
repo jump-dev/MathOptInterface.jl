@@ -33,6 +33,23 @@ function MOI.get(
     return MOI.get(model, attr, bridge.constraint)
 end
 
+# Needed to avoid ambiguity
+function MOI.get(
+    ::MOI.ModelLike,
+    attr::MOI.CanonicalConstraintFunction,
+    bridge::AbstractFunctionConversionBridge,
+)
+    return throw(
+        MOI.UnsupportedAttribute(
+            attr,
+            "Bridge of type `$(typeof(bridge))` does not support getting " *
+            "the attribute `$attr` because " *
+            "`MOIB.Constraint.invariant_under_function_conversion($attr)` " *
+            "returns `false`.",
+        ),
+    )
+end
+
 function MOI.supports(
     model::MOI.ModelLike,
     attr::MOI.AbstractConstraintAttribute,

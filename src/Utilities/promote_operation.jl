@@ -9,7 +9,7 @@
         op::Function,
         ::Type{T},
         ArgsTypes::Type{<:Union{T,AbstractVector{T},MOI.AbstractFunction}}...,
-    ) where {T}
+    ) where {T<:Number}
 
 Compute the return type of the call `operate(op, T, args...)`, where the types
 of the arguments `args` are `ArgsTypes`.
@@ -62,7 +62,7 @@ function promote_operation(
     ::Type{T},
     ::Type{T},
     ::Type{T},
-) where {T}
+) where {T<:Number}
     return T
 end
 
@@ -159,7 +159,7 @@ function promote_operation(
     ::typeof(-),
     ::Type{T},
     ::Type{MOI.VariableIndex},
-) where {T}
+) where {T<:Number}
     return MOI.ScalarAffineFunction{T}
 end
 
@@ -167,7 +167,7 @@ function promote_operation(
     ::typeof(-),
     ::Type{T},
     ::Type{MOI.VectorOfVariables},
-) where {T}
+) where {T<:Number}
     return MOI.VectorAffineFunction{T}
 end
 
@@ -198,7 +198,7 @@ function promote_operation(
     ::Type{T},
     ::Type{T},
     ::Type{T},
-) where {T}
+) where {T<:Number}
     return T
 end
 
@@ -207,7 +207,7 @@ function promote_operation(
     ::Type{T},
     ::Type{T},
     ::Type{MOI.VariableIndex},
-) where {T}
+) where {T<:Number}
     return MOI.ScalarAffineFunction{T}
 end
 
@@ -216,7 +216,7 @@ function promote_operation(
     ::Type{T},
     ::Type{T},
     ::Type{MOI.VectorOfVariables},
-) where {T}
+) where {T<:Number}
     return MOI.VectorAffineFunction{T}
 end
 
@@ -247,7 +247,7 @@ function promote_operation(
     ::Type{T},
     ::Type{MOI.VariableIndex},
     ::Type{T},
-) where {T}
+) where {T<:Number}
     return MOI.ScalarAffineFunction{T}
 end
 
@@ -256,7 +256,7 @@ function promote_operation(
     ::Type{T},
     ::Type{MOI.VectorOfVariables},
     ::Type{T},
-) where {T}
+) where {T<:Number}
     return MOI.VectorAffineFunction{T}
 end
 
@@ -267,7 +267,7 @@ function promote_operation(
     ::Type{T},
     ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
     ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
-) where {T}
+) where {T<:Number}
     return MOI.ScalarQuadraticFunction{T}
 end
 
@@ -309,7 +309,7 @@ function promote_operation(
     ::Type{T},
     ::Type{T},
     ::Type{T},
-) where {T}
+) where {T<:Number}
     return T
 end
 
@@ -318,7 +318,7 @@ function promote_operation(
     ::Type{T},
     ::Type{MOI.VariableIndex},
     ::Type{T},
-) where {T}
+) where {T<:Number}
     return MOI.ScalarAffineFunction{T}
 end
 
@@ -327,7 +327,7 @@ function promote_operation(
     ::Type{T},
     ::Type{MOI.VectorOfVariables},
     ::Type{T},
-) where {T}
+) where {T<:Number}
     return MOI.VectorAffineFunction{T}
 end
 
@@ -337,7 +337,7 @@ function promote_operation(
     ::typeof(vcat),
     ::Type{T},
     ::Type{<:Union{T,AbstractVector{T}}}...,
-) where {T}
+) where {T<:Number}
     return Vector{T}
 end
 
@@ -345,7 +345,7 @@ function promote_operation(
     ::typeof(vcat),
     ::Type{T},
     ::Type{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}}...,
-) where {T}
+) where {T<:Number}
     return MOI.VectorOfVariables
 end
 
@@ -362,7 +362,7 @@ function promote_operation(
             MOI.VectorAffineFunction{T},
         },
     }...,
-) where {T}
+) where {T<:Number}
     return MOI.VectorAffineFunction{T}
 end
 
@@ -381,7 +381,7 @@ function promote_operation(
             MOI.VectorQuadraticFunction{T},
         },
     }...,
-) where {T}
+) where {T<:Number}
     return MOI.VectorQuadraticFunction{T}
 end
 
@@ -391,7 +391,7 @@ function promote_operation(
     ::typeof(imag),
     ::Type{T},
     ::Type{MOI.VariableIndex},
-) where {T}
+) where {T<:Number}
     return MOI.ScalarAffineFunction{T}
 end
 
@@ -399,6 +399,6 @@ function promote_operation(
     ::typeof(imag),
     ::Type{T},
     ::Type{MOI.VectorOfVariables},
-) where {T}
+) where {T<:Number}
     return MOI.VectorAffineFunction{T}
 end

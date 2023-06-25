@@ -9,6 +9,7 @@ module Utilities
 using LinearAlgebra # For dot
 using OrderedCollections # for OrderedDict in UniversalFallback
 
+import ChainRulesCore
 import MathOptInterface as MOI
 import MutableArithmetics as MA
 

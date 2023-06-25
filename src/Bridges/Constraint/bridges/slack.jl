@@ -46,6 +46,26 @@ function MOI.get(
     return [bridge.slack_in_set]
 end
 
+function MOI.get(
+    ::_AbstractSlackBridge{T,VF,S,F,S},
+    ::MOI.NumberOfConstraints{VF,S},
+)::Int64 where {T,VF,F,S}
+    return error(
+        "Internal error: this method should never be called because it " *
+        "represents and invalid state. Please open an issue to report.",
+    )
+end
+
+function MOI.get(
+    bridge::_AbstractSlackBridge{T,VF,S,F,S},
+    ::MOI.ListOfConstraintIndices{F,S},
+) where {T,VF,S,F}
+    return error(
+        "Internal error: this method should never be called because it " *
+        "represents and invalid state. Please open an issue to report.",
+    )
+end
+
 function MOI.delete(model::MOI.ModelLike, bridge::_AbstractSlackBridge)
     MOI.delete(model, bridge.equality)
     MOI.delete(model, bridge.slack)
