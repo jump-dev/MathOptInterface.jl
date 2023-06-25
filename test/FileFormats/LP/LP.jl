@@ -48,11 +48,10 @@ c12: [x, y, z] in SOS2{Float64}([3.3, 1.1, 2.2])
           "c7: 1.6 + 1.5 a = 0.2\n" *
           "c8: 0.3 <= 1.8 + 1.7 a <= 0.4\n" *
           "Bounds\n" *
-          "x <= 2\n" *
-          "x >= -1\n" *
+          "a free\n" *
+          "-1 <= x <= 2\n" *
           "y = 3\n" *
           "4 <= z <= 5\n" *
-          "a free\n" *
           "General\n" *
           "y\n" *
           "Binary\n" *
@@ -465,15 +464,14 @@ function test_read_model1_tricky()
     @test occursin("CON1: 1 V1 >= 0", file)
     @test occursin("CON5: [ 1 Var4 ^ 2 - 1.2 V5 * V1 ] <= 0", file)
     @test occursin("R1: 1 V2 >= 2", file)
-    @test occursin("V1 <= 3", file)
+    @test occursin("-infinity <= V1 <= 3", file)
     @test occursin("Var4 >= 5.5", file)
     @test occursin("V3 >= -3", file)
     @test occursin("V5 = 1", file)
-    @test occursin("V2 <= 3", file)
-    @test occursin("V2 >= 0", file)
+    @test occursin("0 <= V2 <= 3", file)
+    @test occursin("V6 free", file)
     @test occursin("0 <= V7 <= 1", file)
     @test occursin("0 <= V8 <= 1", file)
-    @test occursin("V6 free", file)
     @test occursin("\nVar4\n", file)
     @test occursin("\nV5\n", file)
     @test occursin("\nV6\n", file)
@@ -718,15 +716,15 @@ end
 function test_wrong_way_bounds()
     for (case, result) in [
         "x >= 2" => "x >= 2",
-        "x <= 2" => "x <= 2\nx >= 0",
+        "x <= 2" => "0 <= x <= 2",
         "x == 2" => "x = 2",
         "x > 2" => "x >= 2",
-        "x < 2" => "x <= 2\nx >= 0",
+        "x < 2" => "0 <= x <= 2",
         "x = 2" => "x = 2",
-        "2 >= x" => "x <= 2\nx >= 0",
+        "2 >= x" => "0 <= x <= 2",
         "2 <= x" => "x >= 2",
         "2 == x" => "x = 2",
-        "2 > x" => "x <= 2\nx >= 0",
+        "2 > x" => "0 <= x <= 2",
         "2 < x" => "x >= 2",
         "2 = x" => "x = 2",
     ]
@@ -789,19 +787,19 @@ function test_reading_bounds()
     _test_round_trip("0 < x", "Bounds\nx >= 0\nEnd")
     _test_round_trip("-1 < x", "Bounds\nx >= -1\nEnd")
     # Test upper bound
-    _test_round_trip("x <= 1", "Bounds\nx <= 1\nx >= 0\nEnd")
-    _test_round_trip("x <= 0", "Bounds\nx <= 0\nx >= 0\nEnd")
-    _test_round_trip("x <= -1", "Bounds\nx <= -1\nEnd")
-    _test_round_trip("x < 1", "Bounds\nx <= 1\nx >= 0\nEnd")
-    _test_round_trip("x < 0", "Bounds\nx <= 0\nx >= 0\nEnd")
-    _test_round_trip("x < -1", "Bounds\nx <= -1\nEnd")
+    _test_round_trip("x <= 1", "Bounds\n0 <= x <= 1\nEnd")
+    _test_round_trip("x <= 0", "Bounds\nx = 0\nEnd")
+    _test_round_trip("x <= -1", "Bounds\n-infinity <= x <= -1\nEnd")
+    _test_round_trip("x < 1", "Bounds\n0 <= x <= 1\nEnd")
+    _test_round_trip("x < 0", "Bounds\nx = 0\nEnd")
+    _test_round_trip("x < -1", "Bounds\n-infinity <= x <= -1\nEnd")
     # Test reversed upper bound
-    _test_round_trip("1 >= x", "Bounds\nx <= 1\nx >= 0\nEnd")
-    _test_round_trip("0 >= x", "Bounds\nx <= 0\nx >= 0\nEnd")
-    _test_round_trip("-1 >= x", "Bounds\nx <= -1\nEnd")
-    _test_round_trip("1 > x", "Bounds\nx <= 1\nx >= 0\nEnd")
-    _test_round_trip("0 > x", "Bounds\nx <= 0\nx >= 0\nEnd")
-    _test_round_trip("-1 > x", "Bounds\nx <= -1\nEnd")
+    _test_round_trip("1 >= x", "Bounds\n0 <= x <= 1\nEnd")
+    _test_round_trip("0 >= x", "Bounds\nx = 0\nEnd")
+    _test_round_trip("-1 >= x", "Bounds\n-infinity <= x <= -1\nEnd")
+    _test_round_trip("1 > x", "Bounds\n0 <= x <= 1\nEnd")
+    _test_round_trip("0 > x", "Bounds\nx = 0\nEnd")
+    _test_round_trip("-1 > x", "Bounds\n-infinity <= x <= -1\nEnd")
     # Test equality
     _test_round_trip("x == 1", "Bounds\nx = 1\nEnd")
     _test_round_trip("x == 0", "Bounds\nx = 0\nEnd")
@@ -822,13 +820,13 @@ function test_reading_bounds()
     _test_round_trip("0 <= x <= 0", "Bounds\nx = 0\nEnd")
     _test_round_trip("-2 <= x <= -2", "Bounds\nx = -2\nEnd")
     # Test upper then lower
-    _test_round_trip("x <= 1\nx >= 0", "Bounds\nx <= 1\nx >= 0\nEnd")
-    _test_round_trip("x <= 2\nx >= 1", "Bounds\nx <= 2\nx >= 1\nEnd")
-    _test_round_trip("x <= 2\nx >= -1", "Bounds\nx <= 2\nx >= -1\nEnd")
+    _test_round_trip("x <= 1\nx >= 0", "Bounds\n0 <= x <= 1\nEnd")
+    _test_round_trip("x <= 2\nx >= 1", "Bounds\n1 <= x <= 2\nEnd")
+    _test_round_trip("x <= 2\nx >= -1", "Bounds\n-1 <= x <= 2\nEnd")
     # Test lower then upper
-    _test_round_trip("x >= 0\nx <= 1", "Bounds\nx <= 1\nx >= 0\nEnd")
-    _test_round_trip("x >= 1\nx <= 2", "Bounds\nx <= 2\nx >= 1\nEnd")
-    _test_round_trip("x >= -1\nx <= 2", "Bounds\nx <= 2\nx >= -1\nEnd")
+    _test_round_trip("x >= 0\nx <= 1", "Bounds\n0 <= x <= 1\nEnd")
+    _test_round_trip("x >= 1\nx <= 2", "Bounds\n1 <= x <= 2\nEnd")
+    _test_round_trip("x >= -1\nx <= 2", "Bounds\n-1 <= x <= 2\nEnd")
     return
 end
 
@@ -939,6 +937,43 @@ function test_read_newline_breaks()
     End
     """
     @test read(out, String) == output_text
+    return
+end
+
+function test_read_variable_bounds()
+    io = IOBuffer("""
+    maximize
+    obj: 1 x1
+    subject to
+    bounds
+    -infinity <= x1 <= +infinity
+    -infinity <= x2 <= 1
+    -infinity <= x3 <= -1
+    -1 <= x4 <= +infinity
+    1 <= x5 <= +infinity
+    -1 <= x6 <= 1
+    1 <= x7 <= 1
+    end
+    """)
+    model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_LP)
+    read!(io, model)
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    @test read(io, String) == """
+    maximize
+    obj: 1 x1
+    subject to
+    Bounds
+    x1 free
+    -infinity <= x2 <= 1
+    -infinity <= x3 <= -1
+    x4 >= -1
+    x5 >= 1
+    -1 <= x6 <= 1
+    x7 = 1
+    End
+    """
     return
 end
 

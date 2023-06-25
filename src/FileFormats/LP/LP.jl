@@ -298,15 +298,6 @@ function _write_constraints(io, model, S, variable_names)
     return
 end
 
-function _write_bounds(io, model, S, variable_names, free_variables)
-    F = MOI.VariableIndex
-    for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-        delete!(free_variables, MOI.VariableIndex(index.value))
-        _write_constraint(io, model, index, variable_names; write_name = false)
-    end
-    return
-end
-
 function _write_sos_constraints(io, model, variable_names)
     T, F = Float64, MOI.VectorOfVariables
     sos1_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,MOI.SOS1{T}}())
@@ -375,19 +366,31 @@ function Base.write(io::IO, model::Model)
         _write_constraints(io, model, S, variable_names)
     end
     println(io, "Bounds")
-    for S in _SCALAR_SETS
-        _write_bounds(io, model, S, variable_names, free_variables)
-    end
-    # If a variable is binary, it should not be listed as `free` in the bounds
-    # section.
-    attr = MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.ZeroOne}()
-    for index in MOI.get(model, attr)
-        delete!(free_variables, MOI.VariableIndex(index.value))
-    end
-    # By default, variables have bounds of [0, ∞), so we need to explicitly
-    # declare variables as free.
-    for variable in sort(collect(free_variables), by = x -> x.value)
-        println(io, variable_names[variable], " free")
+    CI = MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}
+    for x in MOI.get(model, MOI.ListOfVariableIndices())
+        lb, ub = MOI.Utilities.get_bounds(model, Float64, x)
+        if lb == -Inf && ub == Inf
+            if MOI.is_valid(model, CI(x.value))
+                # If a variable is binary, it should not be listed as `free` in
+                # the bounds section.
+                continue
+            end
+            print(io, variable_names[x], " free")
+        elseif lb == ub
+            print(io, variable_names[x], " = ")
+            _print_shortest(io, lb)
+        elseif lb == -Inf
+            print(io, "-infinity <= ", variable_names[x], " <= ")
+            _print_shortest(io, ub)
+        elseif ub == Inf
+            print(io, variable_names[x], " >= ")
+            _print_shortest(io, lb)
+        else
+            _print_shortest(io, lb)
+            print(io, " <= ", variable_names[x], " <= ")
+            _print_shortest(io, ub)
+        end
+        println(io)
     end
     _write_integrality(io, model, "General", MOI.Integer, variable_names)
     _write_integrality(io, model, "Binary", MOI.ZeroOne, variable_names)
@@ -759,7 +762,7 @@ function _parse_section(
         _delete_default_lower_bound_if_present(model, cache, x)
         return
     end
-    lb, ub, name = -Inf, Inf, ""
+    lb, ub, name = nothing, nothing, ""
     if length(tokens) == 5
         name = tokens[3]
         if _is_less_than(tokens[2]) && _is_less_than(tokens[4])
@@ -810,16 +813,27 @@ function _parse_section(
         error("Unable to parse bound: $(line)")
     end
     x = _get_variable_from_name(model, cache, name)
-    if lb == ub
-        _delete_default_lower_bound_if_present(model, cache, x)
-        MOI.add_constraint(model, x, MOI.EqualTo(lb))
-    elseif -Inf < lb < ub < Inf
-        _delete_default_lower_bound_if_present(model, cache, x)
-        MOI.add_constraint(model, x, MOI.Interval(lb, ub))
-    elseif -Inf < lb
+    if lb !== nothing && ub !== nothing
+        if lb == ub
+            _delete_default_lower_bound_if_present(model, cache, x)
+            MOI.add_constraint(model, x, MOI.EqualTo(lb))
+            return
+        elseif -Inf < lb < ub < Inf
+            _delete_default_lower_bound_if_present(model, cache, x)
+            MOI.add_constraint(model, x, MOI.Interval(lb, ub))
+            return
+        elseif lb == -Inf
+            _delete_default_lower_bound_if_present(model, cache, x)
+            if ub == Inf
+                return  # Explicitly free variable
+            end
+        end
+    end
+    if lb !== nothing && -Inf < lb
         _delete_default_lower_bound_if_present(model, cache, x)
         MOI.add_constraint(model, x, MOI.GreaterThan(lb))
-    else
+    end
+    if ub !== nothing && ub < Inf
         if ub < 0
             # We only need to delete the default lower bound if the upper bound
             # is less than 0.
