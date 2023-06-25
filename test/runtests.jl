@@ -10,7 +10,7 @@ using Test
 include("issue980.jl")
 
 import MathOptInterface as MOI
-m = Test.detect_ambiguities(MOI; recursive = true)
+@test isempty(Test.detect_ambiguities(MOI; recursive = true))
 
 for file in readdir(@__DIR__)
     if file in ["issue980.jl", "dummy.jl", "hygiene.jl", "runtests.jl"]
@@ -31,3 +31,10 @@ end
 
 # Test hygiene of @model macro
 include("hygiene.jl")
+
+m = Test.detect_ambiguities(MOI; recursive = true)
+for (a, b) in m
+    @show a
+    @show b
+    println()
+end
