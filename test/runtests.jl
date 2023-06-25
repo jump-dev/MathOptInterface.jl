@@ -31,10 +31,3 @@ end
 
 # Test hygiene of @model macro
 include("hygiene.jl")
-
-m = Test.detect_ambiguities(MOI; recursive = true)
-for (a, b) in m
-    @show a
-    @show b
-    println()
-end

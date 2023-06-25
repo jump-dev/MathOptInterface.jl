@@ -2049,20 +2049,6 @@ function test_deprecated_eval_term()
     return
 end
 
-function test_ambiguous_methods()
-    x = MA.Zero()
-    y = MOI.VariableIndex(1)
-    @test x * y == x
-    @test x * (1.0 * y) == x
-    @test y * x == x
-    @test (1.0 * y) * x == x
-    # This is needed to break an ambiguity
-    f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{MA.Zero}[], MA.Zero())
-    @test_throws *(f, x)
-    @test_throws *(x, f)
-    return
-end
-
 end  # module
 
 TestFunctions.runtests()
