@@ -1616,13 +1616,13 @@ end
 # https://github.com/JuliaLang/julia/pull/33205
 function Base.:*(
     f::Union{
-        MOI.ScalarAffineFunction,
-        MOI.ScalarQuadraticFunction,
-        MOI.VectorAffineFunction,
-        MOI.VectorQuadraticFunction,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
     },
     g::Bool,
-)
+) where {T<:Number}
     if g
         return MA.copy_if_mutable(f)
     else

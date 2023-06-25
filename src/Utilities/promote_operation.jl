@@ -179,7 +179,7 @@ function promote_operation(
     ::Type{T},
     ::Type{F},
 ) where {
-    T,
+    T<:Number,
     F<:Union{
         # T,  # Stackoverflow if included
         MOI.ScalarAffineFunction{T},
@@ -228,7 +228,7 @@ function promote_operation(
     ::Type{F},
     ::Type{T},
 ) where {
-    T,
+    T<:Number,
     F<:Union{
         # T,  # Stackoverflow if included
         MOI.ScalarAffineFunction{T},
@@ -336,6 +336,7 @@ end
 function promote_operation(
     ::typeof(vcat),
     ::Type{T},
+    ::Type{<:Union{T,AbstractVector{T}}},
     ::Type{<:Union{T,AbstractVector{T}}}...,
 ) where {T<:Number}
     return Vector{T}
@@ -344,6 +345,7 @@ end
 function promote_operation(
     ::typeof(vcat),
     ::Type{T},
+    ::Type{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
     ::Type{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}}...,
 ) where {T<:Number}
     return MOI.VectorOfVariables
