@@ -76,6 +76,58 @@ _square_offset(::MOI.AbstractSymmetricMatrixSetSquare) = Int[]
 _square_offset(::MOI.RootDetConeSquare) = Int[1]
 _square_offset(::MOI.LogDetConeSquare) = Int[1, 2]
 
+function _constrain_off_diagonals(
+    model::MOI.ModelLike,
+    ::Type{T},
+    ::Tuple{Int,Int},
+    f_ij::F,
+    f_ji::F,
+) where {T,F<:MOI.ScalarNonlinearFunction}
+    if isapprox(f_ij, f_ji)
+        return nothing
+    end
+    return MOI.Utilities.normalize_and_add_constraint(
+        model,
+        MOI.ScalarNonlinearFunction(:-, Any[f_ij, f_ji]),
+        MOI.EqualTo(zero(T));
+        allow_modify_function = true,
+    )
+end
+
+function _constrain_off_diagonals(
+    model::MOI.ModelLike,
+    ::Type{T},
+    ij::Tuple{Int,Int},
+    f_ij::F,
+    f_ji::F,
+) where {T,F}
+    diff = MOI.Utilities.operate!(-, T, f_ij, f_ji)
+    MOI.Utilities.canonicalize!(diff)
+    # The value 1e-10 was decided in https://github.com/jump-dev/JuMP.jl/pull/976
+    # This avoid generating symmetrization constraints when the
+    # functions at entries (i, j) and (j, i) are almost identical
+    if MOI.Utilities.isapprox_zero(diff, 1e-10)
+        return nothing
+    end
+    if MOI.Utilities.isapprox_zero(diff, 1e-8)
+        i, j = ij
+        @warn(
+            "The entries ($i, $j) and ($j, $i) of the matrix are " *
+            "almost identical, but a constraint has been added " *
+            "to ensure their equality because the largest " *
+            "difference between the coefficients is smaller than " *
+            "1e-8 but larger than 1e-10. This usually means that " *
+            "there is a modeling error in your formulation.",
+        )
+    end
+    return MOI.Utilities.normalize_and_add_constraint(
+        model,
+        diff,
+        MOI.EqualTo(zero(T));
+        allow_modify_function = true,
+    )
+end
+
 function bridge_constraint(
     ::Type{SquareBridge{T,F,G,TT,ST}},
     model::MOI.ModelLike,
@@ -93,32 +145,14 @@ function bridge_constraint(
         for i in 1:j
             k += 1
             push!(upper_triangle_indices, k)
-            # We constrain the entries (i, j) and (j, i) to be equal
-            f_ij = f_scalars[offset+i+(j-1)*dim]
-            f_ji = f_scalars[offset+j+(i-1)*dim]
-            diff = MOI.Utilities.operate!(-, T, f_ij, f_ji)
-            MOI.Utilities.canonicalize!(diff)
-            # The value 1e-10 was decided in https://github.com/jump-dev/JuMP.jl/pull/976
-            # This avoid generating symmetrization constraints when the
-            # functions at entries (i, j) and (j, i) are almost identical
-            if !MOI.Utilities.isapprox_zero(diff, 1e-10)
-                if MOI.Utilities.isapprox_zero(diff, 1e-8)
-                    @warn(
-                        "The entries ($i, $j) and ($j, $i) of the matrix are " *
-                        "almost identical, but a constraint has been added " *
-                        "to ensure their equality because the largest " *
-                        "difference between the coefficients is smaller than " *
-                        "1e-8 but larger than 1e-10. This usually means that " *
-                        "there is a modeling error in your formulation.",
-                    )
+            if i !== j
+                # We constrain the entries (i, j) and (j, i) to be equal
+                f_ij = f_scalars[offset+i+(j-1)*dim]
+                f_ji = f_scalars[offset+j+(i-1)*dim]
+                ci = _constrain_off_diagonals(model, T, (i, j), f_ij, f_ji)
+                if ci !== nothing
+                    push!(sym, (i, j) => ci)
                 end
-                ci = MOI.Utilities.normalize_and_add_constraint(
-                    model,
-                    diff,
-                    MOI.EqualTo(zero(T));
-                    allow_modify_function = true,
-                )
-                push!(sym, (i, j) => ci)
             end
         end
         k += dim - j

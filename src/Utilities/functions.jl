@@ -802,10 +802,10 @@ function Base.getindex(
 end
 
 function Base.getindex(
-    it::ScalarFunctionIterator{<:MOI.GenericVectorFunction},
+    it::ScalarFunctionIterator{F},
     output_index::Integer,
-)
-    return it.f.rows[output_index]
+) where {F<:MOI.GenericVectorFunction}
+    return convert(scalar_type(F), it.f.rows[output_index])
 end
 
 function Base.getindex(
