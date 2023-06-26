@@ -33,13 +33,13 @@ function MOI.get(
     return MOI.get(model, attr, bridge.constraint)
 end
 
-# Needed to avoid ambiguity
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.CanonicalConstraintFunction,
     bridge::AbstractFunctionConversionBridge,
 )
-    return MOI.get(model, MOI.ConstraintFunction(), bridge)
+    f = MOI.get(model, MOI.ConstraintFunction(), bridge)
+    return MOI.Utilities.canonical(f)
 end
 
 function MOI.supports(
@@ -186,14 +186,6 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.CanonicalConstraintFunction,
-    b::ScalarFunctionizeBridge,
-)
-    return convert(MOI.VariableIndex, MOI.get(model, attr, b.constraint))
-end
-
-function MOI.get(
-    model::MOI.ModelLike,
     attr::MOI.ConstraintFunction,
     b::ScalarFunctionizeBridge,
 )
@@ -312,15 +304,6 @@ function MOI.set(
         MOI.VectorAffineFunction{T}(func),
     )
     return
-end
-
-function MOI.get(
-    model::MOI.ModelLike,
-    attr::MOI.CanonicalConstraintFunction,
-    b::VectorFunctionizeBridge,
-)
-    f = MOI.get(model, attr, b.constraint)
-    return MOI.Utilities.convert_approx(MOI.VectorOfVariables, f)
 end
 
 function MOI.get(
