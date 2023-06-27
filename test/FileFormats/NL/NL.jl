@@ -835,6 +835,36 @@ function test_nlmodel_scalar_nonlinear_function_model()
     return
 end
 
+function test_read_nlmodel_nlpblock_model()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    nlp = MOI.Nonlinear.Model()
+    MOI.Nonlinear.add_constraint(nlp, :(log($x)), MOI.LessThan(1.0))
+    MOI.Nonlinear.add_constraint(nlp, :(log($x)), MOI.GreaterThan(2.0))
+    MOI.Nonlinear.add_constraint(nlp, :(log($x)), MOI.EqualTo(3.0))
+    MOI.Nonlinear.add_constraint(nlp, :(log($x)), MOI.Interval(4.0, 5.0))
+    evaluator =
+        MOI.Nonlinear.Evaluator(nlp, MOI.Nonlinear.SparseReverseMode(), [x])
+    block = MOI.NLPBlockData(evaluator)
+    MOI.set(model, MOI.NLPBlock(), block)
+    src = NL.Model()
+    MOI.copy_to(src, model)
+    text = sprint(write, src)
+    # Now test reading back in
+    dest = NL.Model(; use_nlp_block = true)
+    io = IOBuffer(text)
+    MOI.read!(io, dest)
+    nlp_block = MOI.get(dest, MOI.NLPBlock())
+    @test length(nlp_block.constraint_bounds) == 4
+    @test nlp_block.constraint_bounds == [
+        MOI.NLPBoundsPair(-Inf, 1.0),
+        MOI.NLPBoundsPair(2.0, Inf),
+        MOI.NLPBoundsPair(3.0, 3.0),
+        MOI.NLPBoundsPair(4.0, 5.0),
+    ]
+    return
+end
+
 function test_read_nlmodel_scalar_nonlinear_function_model()
     function build_model(x)
         objective = MOI.ScalarNonlinearFunction(:log, Any[x])
@@ -882,6 +912,31 @@ function test_read_nlmodel_scalar_nonlinear_function_model()
         @test isapprox(MOI.get(model, MOI.ConstraintFunction(), indices[1]), f)
         @test MOI.get(model, MOI.ConstraintSet(), indices[1]) == s
     end
+    return
+end
+
+function test_read_nlmodel_scalar_nonlinear_function_model_no_objective()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    MOI.add_constraint(
+        model,
+        MOI.ScalarNonlinearFunction(:log, Any[x]),
+        MOI.LessThan(1.0),
+    )
+    src = NL.Model()
+    MOI.copy_to(src, model)
+    text = sprint(write, src)
+    # Now test reading back in
+    dest = NL.Model(; use_nlp_block = false)
+    io = IOBuffer(text)
+    MOI.read!(io, dest)
+    v = MOI.get(dest, MOI.ListOfVariableIndices())
+    @test length(v) == 1
+    x = v[1]
+    @test !in(
+        MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(),
+        MOI.get(model, MOI.ListOfModelAttributesSet())
+    )
     return
 end
 
