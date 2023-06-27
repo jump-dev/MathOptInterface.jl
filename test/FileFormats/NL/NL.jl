@@ -850,7 +850,8 @@ function test_read_nlmodel_scalar_nonlinear_function_model()
             g => MOI.Interval(1.0, 10.0),
             MOI.ScalarNonlinearFunction(:*, Any[x, x]) => MOI.EqualTo(0.0),
             MOI.ScalarNonlinearFunction(:/, Any[1, x]) => MOI.LessThan(1.0),
-            MOI.ScalarNonlinearFunction(:sin, Any[x]) => MOI.GreaterThan(0.0),
+            MOI.ScalarNonlinearFunction(:sin, Any[x]) =>
+                MOI.GreaterThan(0.0),
         ]
         return objective, constraints
     end
