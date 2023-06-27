@@ -205,9 +205,7 @@ function _to_model(data::_CacheModel; use_nlp_block::Bool)
         MOI.set(model, MOI.NLPBlock(), block)
     else
         obj = _to_scalar_nonlinear_function(data.objective)
-        if obj !== nothing
-            MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
-        end
+        MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
         for (i, expr) in enumerate(data.constraints)
             lb, ub = data.constraint_lower[i], data.constraint_upper[i]
             f = _to_scalar_nonlinear_function(expr)::MOI.ScalarNonlinearFunction
@@ -229,16 +227,11 @@ end
 _to_scalar_nonlinear_function(expr) = expr
 
 function _to_scalar_nonlinear_function(expr::Expr)
-    if Meta.isexpr(expr, :call)
-        return MOI.ScalarNonlinearFunction(
-            expr.args[1],
-            Any[_to_scalar_nonlinear_function(arg) for arg in expr.args[2:end]],
-        )
-    elseif Meta.isexpr(expr, :ref)
-        return expr.args[2]
-    end
-    @assert expr == :()
-    return nothing
+    @assert Meta.isexpr(expr, :call)
+    return MOI.ScalarNonlinearFunction(
+        expr.args[1],
+        Any[_to_scalar_nonlinear_function(arg) for arg in expr.args[2:end]],
+    )
 end
 
 function _parse_header(io::IO, model::_CacheModel)
