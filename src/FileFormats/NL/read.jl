@@ -22,7 +22,7 @@ mutable struct _CacheModel
             Float64[],
             Float64[],
             Float64[],
-            Union{Expr,MOI.ScalarNonlinearFunction}[],
+            Expr[],
             Float64[],
             Float64[],
             :(),
