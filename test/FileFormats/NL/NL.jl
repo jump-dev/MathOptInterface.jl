@@ -935,7 +935,7 @@ function test_read_nlmodel_scalar_nonlinear_function_model_no_objective()
     x = v[1]
     @test !in(
         MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(),
-        MOI.get(model, MOI.ListOfModelAttributesSet())
+        MOI.get(model, MOI.ListOfModelAttributesSet()),
     )
     return
 end
