@@ -123,8 +123,8 @@ end
 function MOI.get(
     sol::SolFileResults,
     attr::MOI.ConstraintPrimal,
-    ci::MOI.ConstraintIndex{<:MOI.ScalarQuadraticFunction},
-)
+    ci::MOI.ConstraintIndex{F},
+) where {F<:Union{MOI.ScalarQuadraticFunction,MOI.ScalarNonlinearFunction}}
     MOI.check_result_index_bounds(sol, attr)
     return _evaluate(sol.model.g[ci.value].expr, sol.variable_primal)
 end
@@ -184,8 +184,8 @@ end
 function MOI.get(
     sol::SolFileResults,
     attr::MOI.ConstraintDual,
-    ci::MOI.ConstraintIndex{<:MOI.ScalarQuadraticFunction},
-)
+    ci::MOI.ConstraintIndex{F},
+) where {F<:Union{MOI.ScalarQuadraticFunction,MOI.ScalarNonlinearFunction}}
     MOI.check_result_index_bounds(sol, attr)
     dual = sol.constraint_dual[ci.value]
     return sol.model.sense == MOI.MIN_SENSE ? dual : -dual
