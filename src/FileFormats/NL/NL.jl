@@ -119,7 +119,7 @@ mutable struct _VariableInfo
 end
 
 """
-    Model()
+    Model(; use_nlp_block::Bool = true)
 
 Create a new Optimizer object.
 """
@@ -145,8 +145,9 @@ mutable struct Model <: MOI.ModelLike
         Nothing,
         MOI.Utilities.UniversalFallback{MOI.Utilities.Model{Float64}},
     }
+    use_nlp_block::Bool
 
-    function Model()
+    function Model(; use_nlp_block::Bool = true)
         return new(
             "",
             _NLExpr(false, _NLTerm[], Dict{MOI.VariableIndex,Float64}(), 0.0),
@@ -158,6 +159,7 @@ mutable struct Model <: MOI.ModelLike
             [MOI.VariableIndex[] for _ in 1:9],
             MOI.VariableIndex[],
             nothing,
+            use_nlp_block,
         )
     end
 end
@@ -194,6 +196,7 @@ const _SCALAR_FUNCTIONS = Union{
     MOI.VariableIndex,
     MOI.ScalarAffineFunction{Float64},
     MOI.ScalarQuadraticFunction{Float64},
+    MOI.ScalarNonlinearFunction,
 }
 
 const _SCALAR_SETS = Union{
@@ -244,17 +247,12 @@ end
 
 # ==============================================================================
 
-struct _LinearNLPEvaluator <: MOI.AbstractNLPEvaluator end
-
-MOI.initialize(::_LinearNLPEvaluator, ::Vector{Symbol}) = nothing
-
 function MOI.copy_to(dest::Model, model::MOI.ModelLike)
     if !MOI.is_empty(dest)
         MOI.empty!(dest)
     end
     mapping = MOI.Utilities.IndexMap()
-    nlp_block =
-        MOI.NLPBlockData(MOI.NLPBoundsPair[], _LinearNLPEvaluator(), false)
+    has_nlp_objective = false
     for attr in MOI.get(model, MOI.ListOfModelAttributesSet())
         if attr == MOI.NLPBlock()
             nlp_block = MOI.get(model, MOI.NLPBlock())
@@ -264,25 +262,24 @@ function MOI.copy_to(dest::Model, model::MOI.ModelLike)
                     "evaluator does not supply expression graphs.",
                 )
             end
+            MOI.initialize(nlp_block.evaluator, [:ExprGraph])
+            if nlp_block.has_objective
+                dest.f = _NLExpr(MOI.objective_expr(nlp_block.evaluator))
+            end
+            has_nlp_objective = nlp_block.has_objective
+            for (i, bound) in enumerate(nlp_block.constraint_bounds)
+                expr = MOI.constraint_expr(nlp_block.evaluator, i)
+                push!(dest.g, _NLConstraint(expr, bound))
+            end
+            dest.nlpblock_dim = length(dest.g)
         elseif attr == MOI.ObjectiveSense()
             dest.sense = MOI.get(model, MOI.ObjectiveSense())
-        elseif attr isa MOI.ObjectiveFunction
+        elseif !has_nlp_objective && attr isa MOI.ObjectiveFunction
             dest.f = _NLExpr(MOI.get(model, attr))
         else
             throw(MOI.UnsupportedAttribute(attr))
         end
     end
-    MOI.initialize(nlp_block.evaluator, [:ExprGraph])
-    if nlp_block.has_objective  # Nonlinear objective takes precedence.
-        dest.f = _NLExpr(MOI.objective_expr(nlp_block.evaluator))
-    end
-    for (i, bound) in enumerate(nlp_block.constraint_bounds)
-        push!(
-            dest.g,
-            _NLConstraint(MOI.constraint_expr(nlp_block.evaluator, i), bound),
-        )
-    end
-    dest.nlpblock_dim = length(dest.g)
     x_src = MOI.get(model, MOI.ListOfVariableIndices())
     for x in x_src
         dest.x[x] = _VariableInfo()

@@ -22,7 +22,7 @@ mutable struct _CacheModel
             Float64[],
             Float64[],
             Float64[],
-            Expr[],
+            Union{Expr,MOI.ScalarNonlinearFunction}[],
             Float64[],
             Float64[],
             :(),
@@ -37,7 +37,7 @@ function Base.read!(io::IO, model::Model)
     while !eof(io)
         _parse_section(io, cache)
     end
-    model.model = _to_model(cache)
+    model.model = _to_model(cache; use_nlp_block = model.use_nlp_block)
     return
 end
 
@@ -163,7 +163,7 @@ function _parse_expr(io::IO, model::_CacheModel)
     end
 end
 
-function _to_model(data::_CacheModel)
+function _to_model(data::_CacheModel; use_nlp_block::Bool)
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     x = MOI.add_variables(model, length(data.variable_primal))
     for (xi, lb, ub) in zip(x, data.variable_lower, data.variable_upper)
@@ -183,26 +183,64 @@ function _to_model(data::_CacheModel)
     end
     MOI.set.(model, MOI.VariablePrimalStart(), x, data.variable_primal)
     MOI.set(model, MOI.ObjectiveSense(), data.sense)
-    nlp = MOI.Nonlinear.Model()
-    MOI.Nonlinear.set_objective(nlp, data.objective)
-    for (i, expr) in enumerate(data.constraints)
-        lb, ub = data.constraint_lower[i], data.constraint_upper[i]
-        if lb == ub
-            MOI.Nonlinear.add_constraint(nlp, expr, MOI.EqualTo(lb))
-        elseif -Inf < lb < ub < Inf
-            MOI.Nonlinear.add_constraint(nlp, expr, MOI.Interval(lb, ub))
-        elseif -Inf == lb && ub < Inf
-            MOI.Nonlinear.add_constraint(nlp, expr, MOI.LessThan(ub))
-        else
-            @assert -Inf < lb && ub == Inf
-            MOI.Nonlinear.add_constraint(nlp, expr, MOI.GreaterThan(lb))
+    if use_nlp_block
+        nlp = MOI.Nonlinear.Model()
+        MOI.Nonlinear.set_objective(nlp, data.objective)
+        for (i, expr) in enumerate(data.constraints)
+            lb, ub = data.constraint_lower[i], data.constraint_upper[i]
+            if lb == ub
+                MOI.Nonlinear.add_constraint(nlp, expr, MOI.EqualTo(lb))
+            elseif -Inf < lb < ub < Inf
+                MOI.Nonlinear.add_constraint(nlp, expr, MOI.Interval(lb, ub))
+            elseif -Inf == lb && ub < Inf
+                MOI.Nonlinear.add_constraint(nlp, expr, MOI.LessThan(ub))
+            else
+                @assert -Inf < lb && ub == Inf
+                MOI.Nonlinear.add_constraint(nlp, expr, MOI.GreaterThan(lb))
+            end
+        end
+        evaluator =
+            MOI.Nonlinear.Evaluator(nlp, MOI.Nonlinear.SparseReverseMode(), x)
+        block = MOI.NLPBlockData(evaluator)
+        MOI.set(model, MOI.NLPBlock(), block)
+    else
+        MOI.set(
+            model,
+            MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(),
+            _to_scalar_nonlinear_function(data.objective),
+        )
+        for (i, expr) in enumerate(data.constraints)
+            lb, ub = data.constraint_lower[i], data.constraint_upper[i]
+            f = _to_scalar_nonlinear_function(expr)
+            if lb == ub
+                MOI.add_constraint(model, f, MOI.EqualTo(lb))
+            elseif -Inf < lb < ub < Inf
+                MOI.add_constraint(model, f, MOI.Interval(lb, ub))
+            elseif -Inf == lb && ub < Inf
+                MOI.add_constraint(model, f, MOI.LessThan(ub))
+            else
+                @assert -Inf < lb && ub == Inf
+                MOI.add_constraint(model, f, MOI.GreaterThan(lb))
+            end
         end
     end
-    evaluator =
-        MOI.Nonlinear.Evaluator(nlp, MOI.Nonlinear.SparseReverseMode(), x)
-    block = MOI.NLPBlockData(evaluator)
-    MOI.set(model, MOI.NLPBlock(), block)
     return model
+end
+
+_to_scalar_nonlinear_function(expr) = expr
+
+function _to_scalar_nonlinear_function(expr::Expr)
+    if Meta.isexpr(expr, :call)
+        return MOI.ScalarNonlinearFunction(
+            expr.args[1],
+            Any[_to_scalar_nonlinear_function(arg) for arg in expr.args[2:end]],
+        )
+    elseif Meta.isexpr(expr, :ref)
+        return expr.args[2]
+    elseif expr == :()
+        return 0.0
+    end
+    return
 end
 
 function _parse_header(io::IO, model::_CacheModel)

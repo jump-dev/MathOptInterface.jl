@@ -360,6 +360,12 @@ function _NLExpr(x::MOI.ScalarQuadraticFunction)
     return _NLExpr(false, terms, linear, x.constant)
 end
 
+function _NLExpr(expr::MOI.ScalarNonlinearFunction)
+    nlexpr = _NLExpr(false, _NLTerm[], Dict{MOI.VariableIndex,Float64}(), 0.0)
+    _process_expr!(nlexpr, expr)
+    return nlexpr
+end
+
 function _NLExpr(expr::Expr)
     nlexpr = _NLExpr(false, _NLTerm[], Dict{MOI.VariableIndex,Float64}(), 0.0)
     _process_expr!(nlexpr, expr)
@@ -403,6 +409,21 @@ function _process_expr!(expr::_NLExpr, arg::Expr)
     return error("Unsupported expression: $(arg)")
 end
 
+function _process_expr!(expr::_NLExpr, arg::MOI.ScalarNonlinearFunction)
+    if length(arg.args) == 1
+        f = get(_UNARY_SPECIAL_CASES, arg.head, nothing)
+        if f !== nothing
+            return _process_expr!(expr, f(arg.args[1]))
+        end
+    elseif length(arg.args) == 2
+        f = get(_BINARY_SPECIAL_CASES, arg.head, nothing)
+        if f !== nothing
+            return _process_expr!(expr, f(arg.args[1], arg.args[2]))
+        end
+    end
+    return _process_expr!(expr, vcat(arg.head, arg.args))
+end
+
 function _process_expr!(expr::_NLExpr, args::Vector{Any})
     op = first(args)
     N = length(args) - 1
@@ -431,7 +452,7 @@ function _process_expr!(expr::_NLExpr, args::Vector{Any})
     # Now convert the Julia expression into an _NLExpr.
     opcode = get(_JULIA_TO_AMPL, op, nothing)
     if opcode === nothing
-        error("Unsupported operation $(op)")
+        throw(MOI.UnsupportedNonlinearOperator(op))
     end
     if op == :atan && N == 2
         # Special case binary use of atan, because Julia uses method overloading

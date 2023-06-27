@@ -143,6 +143,30 @@ function test_nlexpr_scalarquadratic_3()
     return _test_nlexpr(f, terms, Dict(x => 1.1, y => 0.0, z => 0.0), 3.0)
 end
 
+function test_nlexpr_scalarnonlinearfunction_unary_special_case()
+    x = MOI.VariableIndex(1)
+    f = MOI.ScalarNonlinearFunction(:cbrt, Any[x])
+    expr = NL._NLExpr(:(cbrt($x)))
+    _test_nlexpr(f, expr.nonlinear_terms, Dict(x => 0), 0.0)
+    return
+end
+
+function test_nlexpr_scalarnonlinearfunction_binary_special_case()
+    x = MOI.VariableIndex(1)
+    f = MOI.ScalarNonlinearFunction(:\, Any[x, 1])
+    expr = NL._NLExpr(:(\($x, 1)))
+    _test_nlexpr(f, expr.nonlinear_terms, Dict(x => 0), 0.0)
+    return
+end
+
+function test_nlexpr_scalarnonlinearfunction_ternary_multiplication()
+    x = MOI.VariableIndex(1)
+    f = MOI.ScalarNonlinearFunction(:*, Any[x, x, x])
+    expr = NL._NLExpr(:(*($x, $x, $x)))
+    _test_nlexpr(f, expr.nonlinear_terms, Dict(x => 0), 0.0)
+    return
+end
+
 function test_nlexpr_unary_addition()
     x = MOI.VariableIndex(1)
     return _test_nlexpr(:(+$x), [x], Dict(x => 0), 0.0)
@@ -226,8 +250,7 @@ end
 
 function test_nlexpr_unsupportedoperation()
     x = MOI.VariableIndex(1)
-    err = ErrorException("Unsupported operation foo")
-    @test_throws err NL._NLExpr(:(foo($x)))
+    @test_throws MOI.UnsupportedNonlinearOperator(:foo) NL._NLExpr(:(foo($x)))
     return
 end
 
@@ -750,6 +773,114 @@ function test_nlmodel_quadratic_interval()
     J0 1
     0 1
     """
+    return
+end
+
+function test_nlmodel_scalar_nonlinear_function_model()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    g = MOI.ScalarNonlinearFunction(
+        :+,
+        Any[
+            MOI.ScalarNonlinearFunction(:*, Any[x, x]),
+            MOI.ScalarNonlinearFunction(:*, Any[1.0, x]),
+            3.0,
+        ],
+    )
+    MOI.add_constraint(model, g, MOI.Interval(1.0, 10.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(),
+        MOI.ScalarNonlinearFunction(:log, Any[x]),
+    )
+    n = NL.Model()
+    MOI.copy_to(n, model)
+    @test sprint(write, n) == """
+    g3 1 1 0
+     1 1 1 1 0 0
+     1 1
+     0 0
+     1 1 1
+     0 0 0 1
+     0 0 0 0 0
+     1 1
+     0 0
+     0 0 0 0 0
+    C0
+    o54
+    3
+    o2
+    v0
+    v0
+    o2
+    n1
+    v0
+    n3
+    O0 1
+    o43
+    v0
+    x1
+    0 0
+    r
+    0 1 10
+    b
+    3
+    k0
+    J0 1
+    0 0
+    G0 1
+    0 0
+    """
+    return
+end
+
+function test_read_nlmodel_scalar_nonlinear_function_model()
+    function build_model(x)
+        objective = MOI.ScalarNonlinearFunction(:log, Any[x])
+        g = MOI.ScalarNonlinearFunction(
+            :+,
+            Any[
+                MOI.ScalarNonlinearFunction(:*, Any[x, x]),
+                MOI.ScalarNonlinearFunction(:*, Any[1.0, x]),
+                3.0,
+            ],
+        )
+        constraints = [
+            g => MOI.Interval(1.0, 10.0),
+            MOI.ScalarNonlinearFunction(:*, Any[x, x]) => MOI.EqualTo(0.0),
+            MOI.ScalarNonlinearFunction(:/, Any[1, x]) => MOI.LessThan(1.0),
+            MOI.ScalarNonlinearFunction(:sin, Any[x]) => MOI.GreaterThan(0.0),
+        ]
+        return objective, constraints
+    end
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    obj, cons = build_model(x)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
+    for (f, s) in cons
+        MOI.add_constraint(model, f, s)
+    end
+    src = NL.Model()
+    MOI.copy_to(src, model)
+    text = sprint(write, src)
+    # Now test reading back in
+    dest = NL.Model(; use_nlp_block = false)
+    io = IOBuffer(text)
+    MOI.read!(io, dest)
+    v = MOI.get(dest, MOI.ListOfVariableIndices())
+    @test length(v) == 1
+    x = v[1]
+    obj, cons = build_model(x)
+    @test isapprox(MOI.get(dest, MOI.ObjectiveFunction{typeof(obj)}()), obj)
+    for (f, s) in cons
+        F, S = typeof(f), typeof(s)
+        indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        @test length(indices) == 1
+        @test isapprox(MOI.get(model, MOI.ConstraintFunction(), indices[1]), f)
+        @test MOI.get(model, MOI.ConstraintSet(), indices[1]) == s
+    end
     return
 end
 
