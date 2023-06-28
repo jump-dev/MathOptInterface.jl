@@ -409,6 +409,18 @@ function _process_expr!(expr::_NLExpr, arg::Expr)
     return error("Unsupported expression: $(arg)")
 end
 
+function _process_expr!(
+    expr::_NLExpr,
+    arg::Union{MOI.ScalarAffineFunction,MOI.ScalarQuadraticFunction},
+)
+    # This method gets called recursively from the arguments to
+    # ScalarNonlinearFunction, so we cannot add the linear parts to
+    # `expr.linear_terms`.
+    f = convert(MOI.ScalarNonlinearFunction, arg)
+    _process_expr!(expr, f)
+    return
+end
+
 function _process_expr!(expr::_NLExpr, arg::MOI.ScalarNonlinearFunction)
     if length(arg.args) == 1
         f = get(_UNARY_SPECIAL_CASES, arg.head, nothing)
