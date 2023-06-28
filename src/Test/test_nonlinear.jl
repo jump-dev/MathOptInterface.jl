@@ -1550,6 +1550,7 @@ function test_nonlinear_duals(
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
+    @requires _supports(config, MOI.ConstraintDual)
     F = MOI.ScalarNonlinearFunction
     @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
     MOI.Utilities.loadfromstring!(
