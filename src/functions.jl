@@ -1172,6 +1172,10 @@ end
 
 # ScalarNonlinearFunction
 
+function Base.convert(::Type{ScalarNonlinearFunction}, x::Real)
+    return ScalarNonlinearFunction(:+, Any[x])
+end
+
 function Base.convert(::Type{ScalarNonlinearFunction}, x::VariableIndex)
     return ScalarNonlinearFunction(:+, Any[x])
 end

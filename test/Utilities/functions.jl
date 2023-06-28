@@ -261,6 +261,18 @@ function test_eval_variables_scalar_nonlinear_function()
     return
 end
 
+function test_eval_variables_vector_nonlinear_function()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:log, Any[x])
+    g = MOI.VectorNonlinearFunction(Any[1.0, x, 2.0 * x, f])
+    @test ≈(
+        MOI.Utilities.eval_variables(xi -> 0.5, model, g),
+        [1.0, 0.5, 1.0, log(0.5)],
+    )
+    return
+end
+
 function test_substitute_variables()
     # We do tests twice to make sure the function is not modified
     subs = Dict(w => 1.0y + 1.0z, x => 2.0y + 1.0, y => 1.0y, z => -1.0w)
@@ -318,6 +330,48 @@ function test_substitute_variables()
     int_quad = 3 * y * x
     @test MOI.Utilities.substitute_variables(vi -> true * y, int_quad) ≈
           3 * y * y
+    return
+end
+
+function test_substitute_variables_vector_nonlinear_function()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:log, Any[x])
+    g = MOI.VectorNonlinearFunction(Any[1.0, x, 2.0 * x, f])
+    h = MOI.ScalarNonlinearFunction(:log, Any[1.5 * x])
+    @test ≈(
+        MOI.Utilities.substitute_variables(x -> 1.5 * x, g),
+        MOI.VectorNonlinearFunction(Any[1.0, 1.5 * x, 3.0 * x, h]),
+    )
+    return
+end
+
+function test_canonicalize_vector_nonlinear_function()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:log, Any[1.0 * x + 2.0 * x])
+    fi = 1.0 * x + 1.0 * x
+    @test length(fi.terms) == 2
+    g = MOI.VectorNonlinearFunction(Any[1.0, x, fi, f])
+    @test g.rows[3] === fi
+    MOI.Utilities.canonicalize!(g)
+    @test g.rows[3] === fi
+    @test length(fi.terms) == 1
+    return
+end
+
+function test_eachscalar_vector_nonlinear_function()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:log, Any[1.0 * x + 2.0 * x])
+    g = MOI.VectorNonlinearFunction(Any[1.0, x, 2.0 * x, f])
+    scalars = MOI.Utilities.eachscalar(g)
+    @test eltype(scalars) == MOI.ScalarNonlinearFunction
+    @test ≈(scalars[1], MOI.ScalarNonlinearFunction(:+, Any[1.0]))
+    @test ≈(scalars[2], MOI.ScalarNonlinearFunction(:+, Any[x]))
+    @test ≈(scalars[3], convert(MOI.ScalarNonlinearFunction, 2.0 * x))
+    @test ≈(scalars[4], f)
+    @test ≈(scalars[2:3], MOI.VectorNonlinearFunction(Any[x, 2.0 * x]))
     return
 end
 

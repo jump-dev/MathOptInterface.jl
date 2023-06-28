@@ -488,15 +488,30 @@ function substitute_variables(
     return g
 end
 
+function _unstable_substitute_variables(
+    variable_map::F,
+    x::MOI.VariableIndex,
+) where {F<:Function}
+    return variable_map(x)
+end
+
+function _unstable_substitute_variables(
+    variable_map::F,
+    x::Any,
+) where {F<:Function}
+    return substitute_variables(variable_map, x)
+end
+
 function substitute_variables(
     variable_map::F,
     f::MOI.ScalarNonlinearFunction,
 ) where {F<:Function}
     # TODO(odow): this uses recursion. We should remove at some point.
-    return MOI.ScalarNonlinearFunction(
-        f.head,
-        Any[substitute_variables(variable_map, a) for a in f.args],
+    new_args = map(
+        Base.Fix1(_unstable_substitute_variables, variable_map),
+        f.args,
     )
+    return MOI.ScalarNonlinearFunction(f.head, convert(Vector{Any}, new_args))
 end
 
 function substitute_variables(
@@ -538,7 +553,10 @@ function substitute_variables(
     variable_map::F,
     f::MOI.GenericVectorFunction{T},
 ) where {T,F<:Function}
-    new_rows = map(Base.Fix1(substitute_variables, variable_map), f.rows)
+    new_rows = map(
+        Base.Fix1(_unstable_substitute_variables, variable_map),
+        f.rows,
+    )
     return MOI.GenericVectorFunction{T}(convert(Vector{T}, new_rows))
 end
 
@@ -996,6 +1014,7 @@ function canonical(f::MOI.AbstractFunction)
 end
 
 canonicalize!(f::Union{MOI.VectorOfVariables,MOI.VariableIndex}) = f
+canonicalize!(f::Union{Real,AbstractVector{<:Real}}) = f
 
 """
     canonicalize!(f::Union{ScalarAffineFunction, VectorAffineFunction})
