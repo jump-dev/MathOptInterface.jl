@@ -167,6 +167,24 @@ function test_nlexpr_scalarnonlinearfunction_ternary_multiplication()
     return
 end
 
+function test_nlexpr_scalarnonlinearfunction_inner_functions()
+    x = MOI.VariableIndex(1)
+    f = 1.0 * x + 1.0
+    g = 2.0 * x * x + 3.0 * x + 4.0
+    f = MOI.ScalarNonlinearFunction(:*, Any[2.0, x, f, g])
+    ex = Expr(
+        :call,
+        :*,
+        2.0,
+        x,
+        :(1.0 * $x + 1.0),
+        :(2.0 * $x * $x + 3.0 * $x + 4.0),
+    )
+    expr = NL._NLExpr(ex)
+    _test_nlexpr(f, expr.nonlinear_terms, Dict(x => 0), 0.0)
+    return
+end
+
 function test_nlexpr_unary_addition()
     x = MOI.VariableIndex(1)
     return _test_nlexpr(:(+$x), [x], Dict(x => 0), 0.0)
