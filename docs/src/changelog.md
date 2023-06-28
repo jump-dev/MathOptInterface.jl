@@ -7,6 +7,24 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.19.0 (June 29, 2023)
+
+### Added
+
+ - Added [`Utilities.eval_variables`](@ref) support for
+   [`ScalarNonlinearFunction`](@ref) (#2218) (#2219)
+ - Added support for [`ScalarNonlinearFunction`](@ref) in `FileFormats.NL`
+   (#2228) (#2231)
+
+### Fixed
+
+ - Fixed reading LP file with a `-infinity <= x <= +infinity` variable (#2225)
+ - Fixed missing `require` in `Test.test_nonlinear_duals` (#2230)
+
+### Other
+
+ - Added extensions to `solver-tests.yml` (#2229)
+
 ## v1.18.0 (June 23, 2023)
 
 ### Added
