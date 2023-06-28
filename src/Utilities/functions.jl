@@ -507,10 +507,8 @@ function substitute_variables(
     f::MOI.ScalarNonlinearFunction,
 ) where {F<:Function}
     # TODO(odow): this uses recursion. We should remove at some point.
-    new_args = map(
-        Base.Fix1(_unstable_substitute_variables, variable_map),
-        f.args,
-    )
+    new_args =
+        map(Base.Fix1(_unstable_substitute_variables, variable_map), f.args)
     return MOI.ScalarNonlinearFunction(f.head, convert(Vector{Any}, new_args))
 end
 
@@ -553,10 +551,8 @@ function substitute_variables(
     variable_map::F,
     f::MOI.GenericVectorFunction{T},
 ) where {T,F<:Function}
-    new_rows = map(
-        Base.Fix1(_unstable_substitute_variables, variable_map),
-        f.rows,
-    )
+    new_rows =
+        map(Base.Fix1(_unstable_substitute_variables, variable_map), f.rows)
     return MOI.GenericVectorFunction{T}(convert(Vector{T}, new_rows))
 end
 
