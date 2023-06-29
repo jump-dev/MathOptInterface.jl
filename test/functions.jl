@@ -343,9 +343,17 @@ function test_convert_ScalarNonlinearFunction_ScalarAffineFunction()
         g = convert(MOI.ScalarNonlinearFunction, f)
         @test convert(MOI.ScalarAffineFunction{Float64}, g) ≈ f
     end
+    f_add = MOI.ScalarNonlinearFunction(:+, Any[1.0, x])
+    for (f, g) in (
+        MOI.ScalarNonlinearFunction(:*, Any[1.0, x]) => 1.0 * x,
+        MOI.ScalarNonlinearFunction(:+, Any[1.0, x]) => 1.0 + x,
+        MOI.ScalarNonlinearFunction(:+, Any[f_add, f_add]) => 2.0 + 2.0 * x,
+    )
+        @test convert(MOI.ScalarAffineFunction{Float64}, f) ≈ g
+    end
     for f_error in (
-        MOI.ScalarNonlinearFunction(:*, Any[1.0, x]),
-        MOI.ScalarNonlinearFunction(:+, Any[1.0, x]),
+        MOI.ScalarNonlinearFunction(:/, Any[1.0, x]),
+        MOI.ScalarNonlinearFunction(:+, Any[1.0, 1.0*x*x]),
     )
         @test_throws(
             InexactError,
@@ -400,10 +408,18 @@ function test_convert_ScalarNonlinearFunction_ScalarQuadraticFunction()
         g = convert(MOI.ScalarNonlinearFunction, f)
         @test convert(MOI.ScalarQuadraticFunction{Float64}, g) ≈ f
     end
-    for f_error in (
-        MOI.ScalarNonlinearFunction(:*, Any[1.0, x]),
-        MOI.ScalarNonlinearFunction(:+, Any[1.0, x]),
+    f_add = MOI.ScalarNonlinearFunction(:+, Any[1.0, x])
+    for (f, g) in (
+        MOI.ScalarNonlinearFunction(:*, Any[1.0, x]) => 0.0 * x * x + 1.0 * x,
+        MOI.ScalarNonlinearFunction(:*, Any[x, 1.0, x]) => 1.0 * x * x,
+        MOI.ScalarNonlinearFunction(:+, Any[1.0, x]) => 0.0 * x * x + 1.0 + x,
+        MOI.ScalarNonlinearFunction(:+, Any[f_add, f_add]) =>
+            0.0 * x * x + 2.0 + 2.0 * x,
+        MOI.ScalarNonlinearFunction(:^, Any[x, 2]) => 1.0 * x * x,
     )
+        @test convert(MOI.ScalarQuadraticFunction{Float64}, f) ≈ g
+    end
+    for f_error in (MOI.ScalarNonlinearFunction(:/, Any[1.0, x]),)
         @test_throws(
             InexactError,
             convert(MOI.ScalarQuadraticFunction{Float64}, f_error),

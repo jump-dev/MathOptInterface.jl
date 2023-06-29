@@ -918,6 +918,27 @@ function Base.convert(
     return ScalarAffineTerm(convert(T, ret[1]), ret[2])
 end
 
+function _add_to_function(
+    f::ScalarAffineFunction{T},
+    arg::Union{Real,VariableIndex,ScalarAffineFunction},
+) where {T}
+    return Utilities.operate!(+, T, f, arg)
+end
+
+function _add_to_function(
+    f::ScalarAffineFunction{T},
+    arg::ScalarNonlinearFunction,
+) where {T}
+    if arg.head == :* && length(arg.args) == 2
+        push!(f.terms, convert(ScalarAffineTerm{T}, arg))
+    else
+        _add_to_function(f, convert(ScalarAffineFunction{T}, arg))
+    end
+    return f
+end
+
+_add_to_function(::ScalarAffineFunction, ::Any) = nothing
+
 # This is a very rough-and-ready conversion function that only works for very
 # basic expressions, such as those created by
 # `convert(ScalarNonlinearFunction, f)`.
@@ -925,20 +946,21 @@ function Base.convert(
     ::Type{ScalarAffineFunction{T}},
     f::ScalarNonlinearFunction,
 ) where {T}
+    if f.head == :* && length(f.args) == 2
+        term = convert(ScalarAffineTerm{T}, f)
+        return ScalarAffineFunction{T}([term], zero(T))
+    end
     if f.head != :+
         throw(InexactError(:convert, ScalarAffineFunction{T}, f))
     end
-    aff_terms, constant = ScalarAffineTerm{T}[], zero(T)
+    output = ScalarAffineFunction{T}(ScalarAffineTerm{T}[], zero(T))
     for arg in f.args
-        if arg isa Real
-            constant += convert(T, arg)
-        elseif arg isa ScalarNonlinearFunction && length(arg.args) == 2
-            push!(aff_terms, convert(ScalarAffineTerm{T}, arg))
-        else
+        output = _add_to_function(output, arg)
+        if output === nothing
             throw(InexactError(:convert, ScalarAffineFunction{T}, f))
         end
     end
-    return ScalarAffineFunction(aff_terms, constant)
+    return output
 end
 
 # ScalarQuadraticFunction
@@ -1013,6 +1035,27 @@ function Base.convert(
     return ScalarQuadraticTerm(coef, ret[2], ret[3])
 end
 
+function _add_to_function(
+    f::ScalarQuadraticFunction{T},
+    arg::Union{Real,VariableIndex,ScalarAffineFunction,ScalarQuadraticFunction},
+) where {T}
+    return Utilities.operate!(+, T, f, arg)
+end
+
+function _add_to_function(
+    f::ScalarQuadraticFunction{T},
+    arg::ScalarNonlinearFunction,
+) where {T}
+    if arg.head == :* && length(arg.args) == 2
+        push!(f.affine_terms, convert(ScalarAffineTerm{T}, arg))
+    elseif arg.head == :* && length(arg.args) == 3
+        push!(f.quadratic_terms, convert(ScalarQuadraticTerm{T}, arg))
+    else
+        _add_to_function(f, convert(ScalarQuadraticFunction{T}, arg))
+    end
+    return f
+end
+
 # This is a very rough-and-ready conversion function that only works for very
 # basic expressions, such as those created by
 # `convert(ScalarNonlinearFunction, f)`.
@@ -1020,25 +1063,35 @@ function Base.convert(
     ::Type{ScalarQuadraticFunction{T}},
     f::ScalarNonlinearFunction,
 ) where {T}
+    if f.head == :*
+        if length(f.args) == 2
+            quad_terms = ScalarQuadraticTerm{T}[]
+            affine_terms = [convert(ScalarAffineTerm{T}, f)]
+            return ScalarQuadraticFunction{T}(quad_terms, affine_terms, zero(T))
+        elseif length(f.args) == 3
+            quad_terms = [convert(ScalarQuadraticTerm{T}, f)]
+            affine_terms = ScalarAffineTerm{T}[]
+            return ScalarQuadraticFunction{T}(quad_terms, affine_terms, zero(T))
+        end
+    elseif f.head == :^ && length(f.args) == 2 && f.args[2] == 2
+        return convert(
+            ScalarQuadraticFunction{T},
+            ScalarNonlinearFunction(:*, Any[one(T), f.args[1], f.args[1]]),
+        )
+    end
     if f.head != :+
         throw(InexactError(:convert, ScalarQuadraticFunction{T}, f))
     end
-    quad_terms, aff_terms = ScalarQuadraticTerm{T}[], ScalarAffineTerm{T}[]
-    constant = zero(T)
+    output = ScalarQuadraticFunction(
+        ScalarQuadraticTerm{T}[],
+        ScalarAffineTerm{T}[],
+        zero(T),
+    )
     for arg in f.args
-        if arg isa Real
-            constant += convert(T, arg)
-        elseif arg isa ScalarNonlinearFunction && (2 <= length(arg.args) <= 3)
-            if length(arg.args) == 2
-                push!(aff_terms, convert(ScalarAffineTerm{T}, arg))
-            else
-                push!(quad_terms, convert(ScalarQuadraticTerm{T}, arg))
-            end
-        else
-            throw(InexactError(:convert, ScalarQuadraticFunction{T}, f))
-        end
+        # Unlike ScalarAffineFunction, _add_to_function cannot return ::Nothing
+        output = _add_to_function(output, arg)::ScalarQuadraticFunction{T}
     end
-    return ScalarQuadraticFunction(quad_terms, aff_terms, constant)
+    return output
 end
 
 # ScalarNonlinearFunction
