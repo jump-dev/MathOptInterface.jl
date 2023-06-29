@@ -293,9 +293,31 @@ function test_runtests()
     return
 end
 
-function test_scalar_quadratic_to_nonlinear()
+function test_canonical_constraint_function()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.ScalarFunctionize{Float64}(inner)
+    x = MOI.add_variable(model)
+    ci = MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+    @test MOI.get(model, MOI.CanonicalConstraintFunction(), ci) ≈ x
+    return
+end
+
+function test_FunctionConversionBridge()
+    # ScalarAffineFunction -> ScalarQuadraticFunction
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.ScalarQuadraticToScalarNonlinearBridge,
+        MOI.Bridges.Constraint.FunctionConversionBridge,
+        """
+        variables: x
+        1.0 * x in ZeroOne()
+        """,
+        """
+        variables: x
+        0.0 * x * x + 1.0 * x in ZeroOne()
+        """,
+    )
+    # ScalarQuadraticFunction -> ScalarNonlinearFunction
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.FunctionConversionBridge,
         """
         variables: x, y
         1.0 * x * x + 2.0 * x * y + 3.0 * y + 4.0 >= 1.0
@@ -303,6 +325,18 @@ function test_scalar_quadratic_to_nonlinear()
         """
         variables: x, y
         ScalarNonlinearFunction(1.0 * x * x + 2.0 * x * y + 3.0 * y + 4.0) >= 1.0
+        """,
+    )
+    # VectorAffineFunction -> VectorQuadraticFunction
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.FunctionConversionBridge,
+        """
+        variables: t, x
+        [1.0 * t, 1.0 * x] in SecondOrderCone(2)
+        """,
+        """
+        variables: t, x
+        [0.0 * t * t + 1.0 * t, 0.0 * t * t + 1.0 * x] in SecondOrderCone(2)
         """,
     )
     return

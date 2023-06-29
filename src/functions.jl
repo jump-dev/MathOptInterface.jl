@@ -1285,6 +1285,16 @@ function Base.convert(
     return VectorAffineFunction{T}(terms, zeros(T, length(terms)))
 end
 
+function Base.convert(
+    ::Type{VectorAffineFunction{T}},
+    f::VectorQuadraticFunction{T},
+) where {T}
+    if any(!iszero(t.scalar_term.coefficient) for t in f.quadratic_terms)
+        throw(InexactError(:convert, VectorAffineFunction{T}, f))
+    end
+    return VectorAffineFunction{T}(f.affine_terms, f.constants)
+end
+
 # VectorQuadraticFunction
 
 function Base.convert(
@@ -1321,6 +1331,17 @@ function Base.convert(
             VectorAffineTerm(1, term) for term in g.affine_terms
         ],
         [g.constant],
+    )
+end
+
+function Base.convert(
+    ::Type{VectorQuadraticFunction{T}},
+    f::VectorAffineFunction{T},
+) where {T}
+    return VectorQuadraticFunction{T}(
+        VectorQuadraticTerm{T}[],
+        f.terms,
+        f.constants,
     )
 end
 

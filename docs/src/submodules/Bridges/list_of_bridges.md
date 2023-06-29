@@ -28,7 +28,7 @@ Bridges.Constraint.ScalarSlackBridge
 Bridges.Constraint.VectorSlackBridge
 Bridges.Constraint.ScalarFunctionizeBridge
 Bridges.Constraint.VectorFunctionizeBridge
-Bridges.Constraint.ScalarQuadraticToScalarNonlinearBridge
+Bridges.Constraint.FunctionConversionBridge
 Bridges.Constraint.SplitComplexEqualToBridge
 Bridges.Constraint.SplitComplexZerosBridge
 Bridges.Constraint.SplitHyperRectangleBridge

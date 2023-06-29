@@ -1316,37 +1316,18 @@ function _test_continuous_conic_with_NoVariableModel(T)
     @test !MOI.Bridges.is_variable_bridged(bridged, cy)
     @test MOI.Bridges.bridge(bridged, cy) isa
           MOI.Bridges.Constraint.RSOCtoSOCBridge{T}
-    @test sprint(MOI.Bridges.print_graph, bridged) ==
-          MOI.Utilities.replace_acronym(
-        """
-Bridge graph with 8 variable nodes, 17 constraint nodes and 0 objective nodes.
- [1] constrained variables in `MOI.NormCone` are not supported
- [2] constrained variables in `MOI.PowerCone{$T}` are not supported
- [3] constrained variables in `MOI.RotatedSecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (7).
- [4] constrained variables in `MOI.PositiveSemidefiniteConeTriangle` are not supported
- [5] constrained variables in `MOI.ScaledPositiveSemidefiniteConeTriangle` are not supported
- [6] constrained variables in `MOI.SecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (1).
- [7] constrained variables in `MOI.Nonnegatives` are supported (distance 2) by adding free variables and then constrain them, see (12).
- [8] constrained variables in `MOI.Interval{$T}` are supported (distance 3) by adding free variables and then constrain them, see (14).
- (1) `MOI.VectorOfVariables`-in-`MOI.SecondOrderCone` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.VectorFunctionizeBridge{T,MOI.SecondOrderCone}).
- (2) `MOI.VectorOfVariables`-in-`MOI.NormCone` constraints are not supported
- (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.NormCone` constraints are not supported
- (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.PowerCone{$T}` constraints are not supported
- (5) `MOI.VectorOfVariables`-in-`MOI.PowerCone{$T}` constraints are not supported
- (6) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.RSOCtoSOCBridge{T,MOI.VectorAffineFunction{T},MOI.VectorAffineFunction{T}}).
- (7) `MOI.VectorOfVariables`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.RSOCtoSOCBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
- (8) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
- (9) `MOI.VectorOfVariables`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
- (10) `MOI.VectorAffineFunction{$T}`-in-`MOI.ScaledPositiveSemidefiniteConeTriangle` constraints are not supported
- (11) `MOI.VectorOfVariables`-in-`MOI.ScaledPositiveSemidefiniteConeTriangle` constraints are not supported
- (12) `MOI.VectorOfVariables`-in-`MOI.Nonnegatives` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.NonnegToNonposBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
- (13) `MOI.VariableIndex`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.GreaterToLessBridge{T,MOI.ScalarAffineFunction{T},MOI.VariableIndex}).
- (14) `MOI.VariableIndex`-in-`MOI.Interval{$T}` constraints are bridged (distance 2) by $(MOI.Bridges.Constraint.ScalarFunctionizeBridge{T,MOI.Interval{T}}).
- (15) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.SplitIntervalBridge{T,MOI.ScalarAffineFunction{T},MOI.Interval{T},MOI.GreaterThan{T},MOI.LessThan{T}}).
- (16) `MOI.VariableIndex`-in-`MOI.LessThan{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.LessToGreaterBridge{T,MOI.ScalarAffineFunction{T},MOI.VariableIndex}).
- (17) `MOI.VariableIndex`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.VectorizeBridge{T,MOI.VectorAffineFunction{T},MOI.Zeros,MOI.VariableIndex}).
-""",
+    graph = sprint(MOI.Bridges.print_graph, bridged)
+    # The contents of `graph` can very as new bridges are added. Test that it
+    # prints something, and that key features are present.
+    # If this test fails in future, run `print(graph)` and update as necessary.
+    for needle in (
+        "Bridge graph with ",
+        "constrained variables in `MOI.NormCone` are not supported",
+        "`MOI.VectorOfVariables`-in-`MOI.SecondOrderCone` constraints are bridged",
+        "`MOI.VectorOfVariables`-in-`MOI.ScaledPositiveSemidefiniteConeTriangle` constraints are not supported",
     )
+        @test occursin(needle, graph)
+    end
     return
 end
 

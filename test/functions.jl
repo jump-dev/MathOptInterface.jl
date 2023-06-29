@@ -428,6 +428,33 @@ function test_convert_ScalarNonlinearFunction_ScalarQuadraticFunction()
     return
 end
 
+function test_convert_VectorQuadraticFunction_VectorAffineFunction()
+    x = MOI.VariableIndex(1)
+    quadratic = MOI.VectorQuadraticTerm{Float64}[]
+    affine = [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))]
+    constants = [2.0]
+    f = MOI.VectorQuadraticFunction(quadratic, affine, constants)
+    g = MOI.VectorAffineFunction(affine, constants)
+    @test convert(MOI.VectorAffineFunction{Float64}, f) ≈ g
+    push!(
+        quadratic,
+        MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(1.0, x, x)),
+    )
+    @test_throws InexactError convert(MOI.VectorAffineFunction{Float64}, f)
+    return
+end
+
+function test_convert_VectorAffineFunction_VectorQuadraticFunction()
+    x = MOI.VariableIndex(1)
+    quadratic = MOI.VectorQuadraticTerm{Float64}[]
+    affine = [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))]
+    constants = [2.0]
+    f = MOI.VectorAffineFunction(affine, constants)
+    g = MOI.VectorQuadraticFunction(quadratic, affine, constants)
+    @test convert(MOI.VectorQuadraticFunction{Float64}, f) ≈ g
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")
