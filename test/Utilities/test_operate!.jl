@@ -597,6 +597,7 @@ function test_operate_output_index_1a()
         (0.0, 1.0, 0.0),
         (0.0, 0.0, 1.0),
         (1.0, 1.0, 1.0),
+        :log => (0, 0, 0),
     )
     for i in 2:5
         for j in 1:i
