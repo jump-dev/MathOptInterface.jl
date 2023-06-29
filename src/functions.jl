@@ -900,6 +900,69 @@ function Base.convert(
     return ScalarAffineFunction{T}(f.affine_terms, f.constant)
 end
 
+_order(x::Real, y::VariableIndex) = (x, y)
+_order(x::VariableIndex, y::Real) = (y, x)
+_order(x, y) = nothing
+
+function Base.convert(
+    ::Type{ScalarAffineTerm{T}},
+    f::ScalarNonlinearFunction,
+) where {T}
+    if f.head != :* || length(f.args) != 2
+        throw(InexactError(:convert, ScalarAffineTerm, f))
+    end
+    ret = _order(f.args[1], f.args[2])
+    if ret === nothing
+        throw(InexactError(:convert, ScalarAffineTerm, f))
+    end
+    return ScalarAffineTerm(convert(T, ret[1]), ret[2])
+end
+
+function _add_to_function(
+    f::ScalarAffineFunction{T},
+    arg::Union{Real,VariableIndex,ScalarAffineFunction},
+) where {T}
+    return Utilities.operate!(+, T, f, arg)
+end
+
+function _add_to_function(
+    f::ScalarAffineFunction{T},
+    arg::ScalarNonlinearFunction,
+) where {T}
+    if arg.head == :* && length(arg.args) == 2
+        push!(f.terms, convert(ScalarAffineTerm{T}, arg))
+    else
+        _add_to_function(f, convert(ScalarAffineFunction{T}, arg))
+    end
+    return f
+end
+
+_add_to_function(::ScalarAffineFunction, ::Any) = nothing
+
+# This is a very rough-and-ready conversion function that only works for very
+# basic expressions, such as those created by
+# `convert(ScalarNonlinearFunction, f)`.
+function Base.convert(
+    ::Type{ScalarAffineFunction{T}},
+    f::ScalarNonlinearFunction,
+) where {T}
+    if f.head == :* && length(f.args) == 2
+        term = convert(ScalarAffineTerm{T}, f)
+        return ScalarAffineFunction{T}([term], zero(T))
+    end
+    if f.head != :+
+        throw(InexactError(:convert, ScalarAffineFunction{T}, f))
+    end
+    output = ScalarAffineFunction{T}(ScalarAffineTerm{T}[], zero(T))
+    for arg in f.args
+        output = _add_to_function(output, arg)
+        if output === nothing
+            throw(InexactError(:convert, ScalarAffineFunction{T}, f))
+        end
+    end
+    return output
+end
+
 # ScalarQuadraticFunction
 
 function Base.convert(::Type{ScalarQuadraticFunction{T}}, α::T) where {T}
@@ -947,6 +1010,88 @@ function Base.convert(
         f.affine_terms,
         f.constant,
     )
+end
+
+_order(x::Real, y::VariableIndex, z::VariableIndex) = (x, y, z)
+_order(x::VariableIndex, y::Real, z::VariableIndex) = (y, x, z)
+_order(x::VariableIndex, y::VariableIndex, z::Real) = (z, x, y)
+_order(x, y, z) = nothing
+
+function Base.convert(
+    ::Type{ScalarQuadraticTerm{T}},
+    f::ScalarNonlinearFunction,
+) where {T}
+    if f.head != :* || length(f.args) != 3
+        throw(InexactError(:convert, ScalarQuadraticTerm, f))
+    end
+    ret = _order(f.args[1], f.args[2], f.args[3])
+    if ret === nothing
+        throw(InexactError(:convert, ScalarQuadraticTerm, f))
+    end
+    coef = convert(T, ret[1])
+    if ret[2] == ret[3]
+        coef *= 2
+    end
+    return ScalarQuadraticTerm(coef, ret[2], ret[3])
+end
+
+function _add_to_function(
+    f::ScalarQuadraticFunction{T},
+    arg::Union{Real,VariableIndex,ScalarAffineFunction,ScalarQuadraticFunction},
+) where {T}
+    return Utilities.operate!(+, T, f, arg)
+end
+
+function _add_to_function(
+    f::ScalarQuadraticFunction{T},
+    arg::ScalarNonlinearFunction,
+) where {T}
+    if arg.head == :* && length(arg.args) == 2
+        push!(f.affine_terms, convert(ScalarAffineTerm{T}, arg))
+    elseif arg.head == :* && length(arg.args) == 3
+        push!(f.quadratic_terms, convert(ScalarQuadraticTerm{T}, arg))
+    else
+        _add_to_function(f, convert(ScalarQuadraticFunction{T}, arg))
+    end
+    return f
+end
+
+# This is a very rough-and-ready conversion function that only works for very
+# basic expressions, such as those created by
+# `convert(ScalarNonlinearFunction, f)`.
+function Base.convert(
+    ::Type{ScalarQuadraticFunction{T}},
+    f::ScalarNonlinearFunction,
+) where {T}
+    if f.head == :*
+        if length(f.args) == 2
+            quad_terms = ScalarQuadraticTerm{T}[]
+            affine_terms = [convert(ScalarAffineTerm{T}, f)]
+            return ScalarQuadraticFunction{T}(quad_terms, affine_terms, zero(T))
+        elseif length(f.args) == 3
+            quad_terms = [convert(ScalarQuadraticTerm{T}, f)]
+            affine_terms = ScalarAffineTerm{T}[]
+            return ScalarQuadraticFunction{T}(quad_terms, affine_terms, zero(T))
+        end
+    elseif f.head == :^ && length(f.args) == 2 && f.args[2] == 2
+        return convert(
+            ScalarQuadraticFunction{T},
+            ScalarNonlinearFunction(:*, Any[one(T), f.args[1], f.args[1]]),
+        )
+    end
+    if f.head != :+
+        throw(InexactError(:convert, ScalarQuadraticFunction{T}, f))
+    end
+    output = ScalarQuadraticFunction(
+        ScalarQuadraticTerm{T}[],
+        ScalarAffineTerm{T}[],
+        zero(T),
+    )
+    for arg in f.args
+        # Unlike ScalarAffineFunction, _add_to_function cannot return ::Nothing
+        output = _add_to_function(output, arg)::ScalarQuadraticFunction{T}
+    end
+    return output
 end
 
 # ScalarNonlinearFunction

@@ -293,6 +293,21 @@ function test_runtests()
     return
 end
 
+function test_scalar_quadratic_to_nonlinear()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.ScalarQuadraticToScalarNonlinearBridge,
+        """
+        variables: x, y
+        1.0 * x * x + 2.0 * x * y + 3.0 * y + 4.0 >= 1.0
+        """,
+        """
+        variables: x, y
+        ScalarNonlinearFunction(1.0 * x * x + 2.0 * x * y + 3.0 * y + 4.0) >= 1.0
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintFunctionize.runtests()

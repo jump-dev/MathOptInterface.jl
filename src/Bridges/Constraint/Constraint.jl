@@ -83,6 +83,10 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, VectorSlackBridge{T})
     MOI.Bridges.add_bridge(bridged_model, ScalarFunctionizeBridge{T})
     MOI.Bridges.add_bridge(bridged_model, VectorFunctionizeBridge{T})
+    MOI.Bridges.add_bridge(
+        bridged_model,
+        ScalarQuadraticToScalarNonlinearBridge{T},
+    )
     MOI.Bridges.add_bridge(bridged_model, SplitHyperRectangleBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SplitIntervalBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SplitComplexEqualToBridge{T})
