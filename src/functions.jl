@@ -900,6 +900,47 @@ function Base.convert(
     return ScalarAffineFunction{T}(f.affine_terms, f.constant)
 end
 
+_order(x::Real, y::VariableIndex) = (x, y)
+_order(x::VariableIndex, y::Real) = (y, x)
+_order(x, y) = nothing
+
+function Base.convert(
+    ::Type{ScalarAffineTerm{T}},
+    f::ScalarNonlinearFunction,
+) where {T}
+    if f.head != :* || length(f.args) != 2
+        throw(InexactError(:convert, ScalarAffineTerm, f))
+    end
+    ret = _order(f.args[1], f.args[2])
+    if ret === nothing
+        throw(InexactError(:convert, ScalarAffineTerm, f))
+    end
+    return ScalarAffineTerm(convert(T, ret[1]), ret[2])
+end
+
+# This is a very rough-and-ready conversion function that only works for very
+# basic expressions, such as those created by
+# `convert(ScalarNonlinearFunction, f)`.
+function Base.convert(
+    ::Type{ScalarAffineFunction{T}},
+    f::ScalarNonlinearFunction,
+) where {T}
+    if f.head != :+
+        throw(InexactError(:convert, ScalarAffineFunction{T}, f))
+    end
+    aff_terms, constant = ScalarAffineTerm{T}[], zero(T)
+    for arg in f.args
+        if arg isa Real
+            constant += convert(T, arg)
+        elseif arg isa ScalarNonlinearFunction && length(arg.args) == 2
+            push!(aff_terms, convert(ScalarAffineTerm{T}, arg))
+        else
+            throw(InexactError(:convert, ScalarAffineFunction{T}, f))
+        end
+    end
+    return ScalarAffineFunction(aff_terms, constant)
+end
+
 # ScalarQuadraticFunction
 
 function Base.convert(::Type{ScalarQuadraticFunction{T}}, α::T) where {T}
@@ -947,6 +988,57 @@ function Base.convert(
         f.affine_terms,
         f.constant,
     )
+end
+
+_order(x::Real, y::VariableIndex, z::VariableIndex) = (x, y, z)
+_order(x::VariableIndex, y::Real, z::VariableIndex) = (y, x, z)
+_order(x::VariableIndex, y::VariableIndex, z::Real) = (z, x, y)
+_order(x, y, z) = nothing
+
+function Base.convert(
+    ::Type{ScalarQuadraticTerm{T}},
+    f::ScalarNonlinearFunction,
+) where {T}
+    if f.head != :* || length(f.args) != 3
+        throw(InexactError(:convert, ScalarQuadraticTerm, f))
+    end
+    ret = _order(f.args[1], f.args[2], f.args[3])
+    if ret === nothing
+        throw(InexactError(:convert, ScalarQuadraticTerm, f))
+    end
+    coef = convert(T, ret[1])
+    if ret[2] == ret[3]
+        coef *= 2
+    end
+    return ScalarQuadraticTerm(coef, ret[2], ret[3])
+end
+
+# This is a very rough-and-ready conversion function that only works for very
+# basic expressions, such as those created by
+# `convert(ScalarNonlinearFunction, f)`.
+function Base.convert(
+    ::Type{ScalarQuadraticFunction{T}},
+    f::ScalarNonlinearFunction,
+) where {T}
+    if f.head != :+
+        throw(InexactError(:convert, ScalarQuadraticFunction{T}, f))
+    end
+    quad_terms, aff_terms = ScalarQuadraticTerm{T}[], ScalarAffineTerm{T}[]
+    constant = zero(T)
+    for arg in f.args
+        if arg isa Real
+            constant += convert(T, arg)
+        elseif arg isa ScalarNonlinearFunction && (2 <= length(arg.args) <= 3)
+            if length(arg.args) == 2
+                push!(aff_terms, convert(ScalarAffineTerm{T}, arg))
+            else
+                push!(quad_terms, convert(ScalarQuadraticTerm{T}, arg))
+            end
+        else
+            throw(InexactError(:convert, ScalarQuadraticFunction{T}, f))
+        end
+    end
+    return ScalarQuadraticFunction(quad_terms, aff_terms, constant)
 end
 
 # ScalarNonlinearFunction

@@ -322,3 +322,111 @@ function MOI.get(
     f = MOI.get(model, attr, b.constraint)
     return MOI.Utilities.convert_approx(MOI.VectorOfVariables, f)
 end
+
+"""
+    ScalarQuadraticToScalarNonlinearBridge{T,S} <: Bridges.Constraint.AbstractBridge
+
+`ScalarQuadraticToScalarNonlinearBridge` implements the following reformulations:
+
+  * ``f(x) \\in S`` into ``g(x) \\in S``
+
+where `f` is a [`MOI.ScalarQuadraticFunction`](@ref) and `g` is a
+[`MOI.ScalarNonlinearFunction{T}`](@ref).
+
+## Source node
+
+`ScalarQuadraticToScalarNonlinearBridge` supports:
+
+  * [`MOI.ScalarQuadraticFunction`](@ref) in `S`
+
+## Target nodes
+
+`ScalarQuadraticToScalarNonlinearBridge` creates:
+
+  * [`MOI.ScalarNonlinearFunction{T}`](@ref) in `S`
+"""
+struct ScalarQuadraticToScalarNonlinearBridge{T,S} <:
+       AbstractFunctionConversionBridge{MOI.ScalarNonlinearFunction,S}
+    constraint::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,S}
+end
+
+const ScalarQuadraticToScalarNonlinear{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{ScalarQuadraticToScalarNonlinearBridge{T},OT}
+
+function bridge_constraint(
+    ::Type{ScalarQuadraticToScalarNonlinearBridge{T,S}},
+    model::MOI.ModelLike,
+    f::MOI.ScalarQuadraticFunction{T},
+    s::S,
+) where {T,S}
+    ci = MOI.add_constraint(model, convert(MOI.ScalarNonlinearFunction, f), s)
+    return ScalarQuadraticToScalarNonlinearBridge{T,S}(ci)
+end
+
+function MOI.supports_constraint(
+    ::Type{ScalarQuadraticToScalarNonlinearBridge{T}},
+    ::Type{MOI.ScalarQuadraticFunction{T}},
+    ::Type{<:MOI.AbstractScalarSet},
+) where {T}
+    return true
+end
+
+function MOI.Bridges.added_constrained_variable_types(
+    ::Type{<:ScalarQuadraticToScalarNonlinearBridge},
+)
+    return Tuple{Type}[]
+end
+
+function MOI.Bridges.added_constraint_types(
+    ::Type{ScalarQuadraticToScalarNonlinearBridge{T,S}},
+) where {T,S}
+    return Tuple{Type,Type}[(MOI.ScalarNonlinearFunction, S)]
+end
+
+function concrete_bridge_type(
+    ::Type{<:ScalarQuadraticToScalarNonlinearBridge{T}},
+    ::Type{MOI.ScalarQuadraticFunction{T}},
+    S::Type{<:MOI.AbstractScalarSet},
+) where {T}
+    return ScalarQuadraticToScalarNonlinearBridge{T,S}
+end
+
+function MOI.get(
+    ::ScalarQuadraticToScalarNonlinearBridge{T,S},
+    ::MOI.NumberOfConstraints{MOI.ScalarNonlinearFunction,S},
+)::Int64 where {T,S}
+    return 1
+end
+
+function MOI.get(
+    b::ScalarQuadraticToScalarNonlinearBridge{T,S},
+    ::MOI.ListOfConstraintIndices{MOI.ScalarNonlinearFunction,S},
+) where {T,S}
+    return [b.constraint]
+end
+
+function MOI.delete(
+    model::MOI.ModelLike,
+    c::ScalarQuadraticToScalarNonlinearBridge,
+)
+    MOI.delete(model, c.constraint)
+    return
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    ::MOI.CanonicalConstraintFunction,
+    b::ScalarQuadraticToScalarNonlinearBridge,
+)
+    f = MOI.get(model, MOI.ConstraintFunction(), b.constraint)
+    return MOI.Utilities.canonical(f)
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    ::MOI.ConstraintFunction,
+    b::ScalarQuadraticToScalarNonlinearBridge{T},
+) where {T}
+    f = MOI.get(model, MOI.ConstraintFunction(), b.constraint)
+    return convert(MOI.ScalarQuadraticFunction{T}, f)
+end

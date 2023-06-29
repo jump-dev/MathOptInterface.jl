@@ -304,6 +304,114 @@ function test_ScalarNonlinearFunction_isapprox()
     return
 end
 
+function test_convert_ScalarNonlinearFunction_ScalarAffineTerm()
+    x = MOI.VariableIndex(1)
+    f = MOI.ScalarAffineTerm(1.0, x)
+    g = MOI.ScalarNonlinearFunction(:*, Any[1.0, x])
+    h = MOI.ScalarNonlinearFunction(:*, Any[x, 1.0])
+    @test convert(MOI.ScalarNonlinearFunction, f) ≈ g
+    @test convert(MOI.ScalarAffineTerm{Float64}, g) == f
+    @test convert(MOI.ScalarAffineTerm{Float64}, h) == f
+    f = MOI.ScalarAffineTerm(1, x)
+    g = MOI.ScalarNonlinearFunction(:*, Any[1, x])
+    h = MOI.ScalarNonlinearFunction(:*, Any[x, 1])
+    @test convert(MOI.ScalarNonlinearFunction, f) ≈ g
+    @test convert(MOI.ScalarAffineTerm{Int}, h) == f
+    for f_error in (
+        MOI.ScalarNonlinearFunction(:*, Any[1.0, x, 2.0]),
+        MOI.ScalarNonlinearFunction(:+, Any[1.0, x]),
+        MOI.ScalarNonlinearFunction(:*, Any[x, x]),
+    )
+        @test_throws(
+            InexactError,
+            convert(MOI.ScalarAffineTerm{Float64}, f_error),
+        )
+    end
+    return
+end
+
+function test_convert_ScalarNonlinearFunction_ScalarAffineFunction()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    for f in (
+        1.0 * x,
+        1.0 * x + 2.0,
+        1.0 * x + 1.0 * x + 2.0,
+        1.0 * x + 2.0 * y + 2.0,
+        2.0 * y + 2.0 + 2.0 * x,
+    )
+        g = convert(MOI.ScalarNonlinearFunction, f)
+        @test convert(MOI.ScalarAffineFunction{Float64}, g) ≈ f
+    end
+    for f_error in (
+        MOI.ScalarNonlinearFunction(:*, Any[1.0, x]),
+        MOI.ScalarNonlinearFunction(:+, Any[1.0, x]),
+    )
+        @test_throws(
+            InexactError,
+            convert(MOI.ScalarAffineFunction{Float64}, f_error),
+        )
+    end
+    return
+end
+
+function test_convert_ScalarNonlinearFunction_ScalarQuadraticTerm()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    f = MOI.ScalarQuadraticTerm(1, x, y)
+    g = MOI.ScalarNonlinearFunction(:*, Any[1, x, y])
+    h = MOI.ScalarNonlinearFunction(:*, Any[x, 1, y])
+    i = MOI.ScalarNonlinearFunction(:*, Any[x, y, 1])
+    @test convert(MOI.ScalarNonlinearFunction, f) ≈ g
+    @test convert(MOI.ScalarQuadraticTerm{Int}, g) == f
+    @test convert(MOI.ScalarQuadraticTerm{Int}, h) == f
+    @test convert(MOI.ScalarQuadraticTerm{Int}, i) == f
+    f = MOI.ScalarQuadraticTerm(2.0, x, x)
+    g = MOI.ScalarNonlinearFunction(:*, Any[1.0, x, x])
+    h = MOI.ScalarNonlinearFunction(:*, Any[x, 1.0, x])
+    i = MOI.ScalarNonlinearFunction(:*, Any[x, x, 1.0])
+    @test convert(MOI.ScalarNonlinearFunction, f) ≈ g
+    @test convert(MOI.ScalarQuadraticTerm{Float64}, g) == f
+    @test convert(MOI.ScalarQuadraticTerm{Float64}, h) == f
+    @test convert(MOI.ScalarQuadraticTerm{Float64}, i) == f
+    for f_error in (
+        MOI.ScalarNonlinearFunction(:*, Any[1.0, x, 2.0]),
+        MOI.ScalarNonlinearFunction(:+, Any[1.0, x, x]),
+        MOI.ScalarNonlinearFunction(:*, Any[x, x]),
+    )
+        @test_throws(
+            InexactError,
+            convert(MOI.ScalarQuadraticTerm{Float64}, f_error),
+        )
+    end
+    return
+end
+
+function test_convert_ScalarNonlinearFunction_ScalarQuadraticFunction()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    for f in (
+        1.0 * x * x,
+        1.0 * x * x + 2.0,
+        1.0 * x * x + 1.0 * x * y + 2.0,
+        1.0 * x + 2.0 * y * y + 2.0,
+        2.0 * y + 2.0 + 2.0 * x * x,
+    )
+        g = convert(MOI.ScalarNonlinearFunction, f)
+        @test convert(MOI.ScalarQuadraticFunction{Float64}, g) ≈ f
+    end
+    for f_error in (
+        MOI.ScalarNonlinearFunction(:*, Any[1.0, x]),
+        MOI.ScalarNonlinearFunction(:+, Any[1.0, x]),
+    )
+        @test_throws(
+            InexactError,
+            convert(MOI.ScalarQuadraticFunction{Float64}, f_error),
+        )
+    end
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")
