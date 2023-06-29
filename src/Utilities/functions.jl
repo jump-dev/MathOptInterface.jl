@@ -191,7 +191,7 @@ for a similar function where `value_fn` returns an
 function eval_variables(
     value_fn::F,
     model::MOI.ModelLike,
-    f::MOI.AbstractFunction,
+    f::Union{MOI.AbstractFunction,Real,AbstractVector{<:Real}},
 ) where {F}
     return eval_variables(value_fn, f)
 end
