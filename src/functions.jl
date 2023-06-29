@@ -13,7 +13,6 @@ components if `f` is an [`AbstractVectorFunction`](@ref).
 function output_dimension end
 
 output_dimension(::AbstractScalarFunction) = 1
-output_dimension(x::AbstractVector) = length(x)
 
 """
     constant(f::AbstractFunction[, ::Type{T}]) where {T}
@@ -432,13 +431,6 @@ function Base.isapprox(
     kwargs...,
 ) where {T}
     return all(isapprox(xi, yi; kwargs...) for (xi, yi) in zip(x.rows, y.rows))
-end
-
-function Base.convert(
-    ::Type{GenericVectorFunction{T}},
-    rows::Vector{T},
-) where {T}
-    return GenericVectorFunction(rows)
 end
 
 """

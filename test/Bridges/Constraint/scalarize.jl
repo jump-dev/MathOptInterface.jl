@@ -241,6 +241,29 @@ function test_runtests()
     return
 end
 
+function test_VectorNonlinearFunction_mixed_type()
+    # We can't use the standard runtests because ScalarNonlinearFunction does
+    # not preserve f(x) ≈ (f(x) - g(x)) + g(x)
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.Scalarize{Float64}(inner)
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:log, Any[x])
+    g = MOI.VectorNonlinearFunction(Any[1.0, x, 2.0 * x - 1.0, f])
+    c = MOI.add_constraint(model, g, MOI.Nonnegatives(4))
+    F, S = MOI.ScalarNonlinearFunction, MOI.GreaterThan{Float64}
+    indices = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())
+    @test length(indices) == 4
+    inner_variables = MOI.get(inner, MOI.ListOfVariableIndices())
+    @test length(inner_variables) == 1
+    y = inner_variables[1]
+    out = convert.(MOI.ScalarNonlinearFunction, Any[1.0, y, 2.0 * y - 1.0])
+    push!(out, MOI.ScalarNonlinearFunction(:log, Any[y]))
+    for (input, output) in zip(indices, out)
+        @test ≈(MOI.get(inner, MOI.ConstraintFunction(), input), output)
+    end
+    return
+end
+
 end  # module
 
 TestConstraintScalarize.runtests()
