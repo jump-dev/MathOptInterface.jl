@@ -67,14 +67,6 @@ function MOI.supports_constraint(
     return true
 end
 
-function MOI.supports_constraint(
-    ::Type{VectorizeBridge{T}},
-    ::Type{MOI.ScalarNonlinearFunction},
-    ::Type{<:MOI.Utilities.ScalarLinearSet{T}},
-) where {T}
-    return false
-end
-
 function MOI.Bridges.added_constrained_variable_types(::Type{<:VectorizeBridge})
     return Tuple{Type}[]
 end

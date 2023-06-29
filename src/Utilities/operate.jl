@@ -1737,6 +1737,17 @@ function operate_output_index!(
     return f
 end
 
+function operate_output_index!(
+    op::Union{typeof(+),typeof(-)},
+    ::Type{T},
+    output_index::Integer,
+    f::MOI.GenericVectorFunction,
+    g::Union{T,MOI.AbstractScalarFunction},
+) where {T}
+    f.rows[output_index] = operate!(op, T, f.rows[output_index], g)
+    return f
+end
+
 """
     operate_coefficient(
         op::Function,
