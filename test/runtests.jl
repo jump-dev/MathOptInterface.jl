@@ -23,6 +23,7 @@ end
 for submodule in
     ["Nonlinear", "Bridges", "FileFormats", "Test", "Utilities", "Benchmarks"]
     include("$(submodule)/$(submodule).jl")
+    GC.gc()  # Force GC run here to reduce memory pressure
 end
 
 # Test hygiene of @model macro
