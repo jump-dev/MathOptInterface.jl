@@ -415,15 +415,6 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    ::MOI.CanonicalConstraintFunction,
-    b::ScalarQuadraticToScalarNonlinearBridge,
-)
-    f = MOI.get(model, MOI.ConstraintFunction(), b.constraint)
-    return MOI.Utilities.canonical(f)
-end
-
-function MOI.get(
-    model::MOI.ModelLike,
     ::MOI.ConstraintFunction,
     b::ScalarQuadraticToScalarNonlinearBridge{T},
 ) where {T}
