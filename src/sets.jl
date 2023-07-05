@@ -1622,6 +1622,20 @@ triangular_form(::Type{LogDetConeSquare}) = LogDetConeTriangle
 triangular_form(set::LogDetConeSquare) = LogDetConeTriangle(set.side_dimension)
 
 """
+    abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
+
+Abstract supertype for subsets of the cartesian product been `R^m` and the
+(vectorized) cone of symmetric matrices, with [`side_dimension`](@ref) rows and
+columns. The entries of `R^m` are given first followed by the entries of the
+matrix given :
+column by column (or equivalently, the
+entries of the lower-left triangular part are given row by row). A vectorized
+cone of [`dimension`](@ref) ``n`` corresponds to a square matrix with side
+dimension ``\\sqrt{1/4 + 2 n} - 1/2``. (Because a ``d \\times d`` matrix has
+"""
+abstract type AbstractProductWithSymmetricMatrixSetTriangle <: AbstractVectorSet end
+
+"""
     RootDetConeTriangle(side_dimension::Int)
 
 The root-determinant cone

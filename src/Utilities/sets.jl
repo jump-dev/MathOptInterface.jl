@@ -158,44 +158,85 @@ function trimap(row::Integer, column::Integer)
     return div((row - 1) * row, 2) + column
 end
 
+struct CanonicalVector{T} <: AbstractVector{T}
+    index::Int
+    n::Int
+end
+
+Base.eltype(::Type{CanonicalVector{T}}) where {T} = T
+
+Base.length(v::CanonicalVector) = v.n
+
+Base.size(v::CanonicalVector) = (v.n,)
+
+function Base.getindex(v::CanonicalVector{T}, i::Integer) where {T}
+    return convert(T, i == v.index)
+end
+
+# This is much faster than the default implementation that goes
+# through all entries even if only one is nonzero.
+function LinearAlgebra.dot(
+    x::CanonicalVector{T},
+    y::CanonicalVector{T},
+) where {T}
+    return convert(T, x.index == y.index)
+end
+
+function triangle_dot(
+    x::CanonicalVector{T},
+    y::CanonicalVector{T},
+    ::Int,
+    offset::Int,
+) where {T}
+    if x.index != y.index || x.index <= offset
+        return zero(T)
+    elseif is_diagonal_vectorized_index(x.index - offset)
+        return one(T)
+    else
+        return 2one(T)
+    end
+end
+
+function _set_dot(i::Integer, s::MOI.AbstractVectorSet, T::Type)
+    vec = CanonicalVector{T}(i, MOI.dimension(s))
+    return set_dot(vec, vec, s)
+end
+
+function _set_dot(::Integer, ::MOI.AbstractScalarSet, T::Type)
+    return one(T)
+end
+
 """
-    struct SymmetricMatrixScalingVector{T} <: AbstractVector{T}
-        no_scaling::T
-        scaling::T
+    struct SetDotScalingVector{T,S<:MOI.AbstractSet} <: AbstractVector{T}
+        set::S
         len::Int
     end
 
-Vector of scaling for the entries of the vectorized form of
-a symmetric matrix. The values `no_scaling` and `scaling`
-are stored in the `struct` to avoid creating a new one for each entry.
+Vector `s` of scaling for the entries of the vectorized form of
+a vector `x` in `set` and `y` in `MOI.dual_set(set)` such that
+`MOI.Utilities.set_dot(x, y) = LinearAlgebra.dot(s .* x, s .* y)`.
 """
-struct SymmetricMatrixScalingVector{T} <: AbstractVector{T}
-    scaling::T
-    no_scaling::T
+struct SetDotScalingVector{T,S<:MOI.AbstractSet} <: AbstractVector{T}
+    set::S
     len::Int
 end
 
-function SymmetricMatrixScalingVector{T}(scaling::T, len::Int) where {T}
-    return SymmetricMatrixScalingVector{T}(scaling, one(T), len)
+function Base.getindex(s::SetDotScalingVector{T}, i::Base.Integer) where {T}
+    return sqrt(_set_dot(i, s.set, T))
 end
 
-function symmetric_matrix_scaling_vector(::Type{T}, len::Int) where {T}
-    return SymmetricMatrixScalingVector{T}(sqrt(T(2)), len)
+Base.size(x::SetDotScalingVector) = (x.len,)
+
+function symmetric_matrix_scaling_vector(::Type{T}, n) where {T}
+    d = MOI.side_dimension_for_vectorized_dimension(n)
+    set = MOI.ScaledPositiveSemidefiniteConeTriangle(d)
+    return SetDotScalingVector(set, n)
 end
 
-function symmetric_matrix_inverse_scaling_vector(::Type{T}, len::Int) where {T}
-    return SymmetricMatrixScalingVector{T}(inv(sqrt(T(2))), len)
+function symmetric_matrix_inverse_scaling_vector(::Type{T}, n) where {T}
+    return LazyMap{T}(inv, symmetric_matrix_scaling_vector(T, n))
 end
 
-function Base.getindex(s::SymmetricMatrixScalingVector, i::Base.Integer)
-    if is_diagonal_vectorized_index(i)
-        return s.no_scaling
-    else
-        return s.scaling
-    end
-end
-
-Base.size(x::SymmetricMatrixScalingVector) = (x.len,)
 
 similar_type(::Type{<:MOI.LessThan}, ::Type{T}) where {T} = MOI.LessThan{T}
 
