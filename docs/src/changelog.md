@@ -109,7 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [`hessian_objective_structure`](@ref)
  - Added new sets
     - [`NormCone`](@ref) (#2119)
-    - [`ScaledPositiveSemidefiniteConeTriangle`](@ref) (#2154)
+    - `ScaledPositiveSemidefiniteConeTriangle` (#2154)
 
 ### Fixed
 

@@ -382,7 +382,7 @@ end
     LogDetConeTriangle,
     LogDetConeSquare,
     PositiveSemidefiniteConeTriangle,
-    ScaledPositiveSemidefiniteConeTriangle,
+    ScaledPositiveSemidefiniteConeTriangle, # Required for v1.4
     PositiveSemidefiniteConeSquare,
     HermitianPositiveSemidefiniteConeTriangle,
     ExponentialCone,
@@ -539,7 +539,8 @@ function set_to_moi(
     ::Val{:ScaledPositiveSemidefiniteConeTriangle},
     object::Object,
 )
-    return MOI.ScaledPositiveSemidefiniteConeTriangle(object["side_dimension"])
+    d = object["side_dimension"]
+    return MOI.Scaled(MOI.PositiveSemidefiniteConeTriangle(d))
 end
 
 function set_to_moi(::Val{:PositiveSemidefiniteConeSquare}, object::Object)

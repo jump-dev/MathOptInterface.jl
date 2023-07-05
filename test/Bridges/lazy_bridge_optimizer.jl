@@ -1324,7 +1324,7 @@ function _test_continuous_conic_with_NoVariableModel(T)
         "Bridge graph with ",
         "constrained variables in `MOI.NormCone` are not supported",
         "`MOI.VectorOfVariables`-in-`MOI.SecondOrderCone` constraints are bridged",
-        "`MOI.VectorOfVariables`-in-`MOI.ScaledPositiveSemidefiniteConeTriangle` constraints are not supported",
+        "`MOI.VectorOfVariables`-in-`MOI.Scaled{MOI.PositiveSemidefiniteConeTriangle}` constraints are not supported",
     )
         @test occursin(needle, graph)
     end

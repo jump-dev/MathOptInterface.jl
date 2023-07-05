@@ -607,6 +607,12 @@ function test_set_with_dimension()
         @test_throws AssertionError MOI.Utilities.set_with_dimension(S, 2)
         @test_throws AssertionError MOI.Utilities.set_with_dimension(S, 4)
     end
+    S = MOI.PositiveSemidefiniteConeTriangle
+    set = MOI.Utilities.set_with_dimension(MOI.Scaled{S}, 3)
+    @test MOI.side_dimension(set) == 2
+    S = MOI.HermitianPositiveSemidefiniteConeTriangle
+    set = MOI.Utilities.set_with_dimension(MOI.Scaled{S}, 4)
+    @test MOI.side_dimension(set) == 2
     return
 end
 

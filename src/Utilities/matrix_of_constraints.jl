@@ -561,15 +561,14 @@ function set_with_dimension(::Type{S}, dim) where {S<:MOI.AbstractVectorSet}
     return S(dim)
 end
 
+function set_with_dimension(::Type{MOI.Scaled{S}}, dim) where {S}
+    return MOI.Scaled(set_with_dimension(S, dim))
+end
+
 function set_with_dimension(
     ::Type{S},
     dim,
-) where {
-    S<:Union{
-        MOI.AbstractSymmetricMatrixSetTriangle,
-        MOI.ScaledPositiveSemidefiniteConeTriangle,
-    },
-}
+) where {S<:MOI.AbstractSymmetricMatrixSetTriangle}
     side_dimension = side_dimension_for_vectorized_dimension(dim)
     return S(side_dimension)
 end

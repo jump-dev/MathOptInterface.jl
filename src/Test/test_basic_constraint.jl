@@ -131,8 +131,8 @@ end
 function _set(::Type{MOI.HermitianPositiveSemidefiniteConeTriangle})
     return MOI.HermitianPositiveSemidefiniteConeTriangle(3)
 end
-function _set(::Type{MOI.ScaledPositiveSemidefiniteConeTriangle})
-    return MOI.ScaledPositiveSemidefiniteConeTriangle(3)
+function _set(::Type{MOI.Scaled{MOI.PositiveSemidefiniteConeTriangle}})
+    return MOI.Scaled{MOI.PositiveSemidefiniteConeTriangle}(3)
 end
 _set(::Type{MOI.LogDetConeTriangle}) = MOI.LogDetConeTriangle(3)
 _set(::Type{MOI.LogDetConeSquare}) = MOI.LogDetConeSquare(3)
