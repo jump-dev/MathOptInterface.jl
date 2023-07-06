@@ -197,23 +197,29 @@ function test_trimap()
     return
 end
 
-function test_symmetric_matrix_scaling()
-    n = 10
+function test_set_dot_scaling(n = 10)
     N = div(n * (n + 1), 2)
+    M = N + div(n * (n - 1), 2)
     v = MOI.Utilities.SymmetricMatrixScalingVector{Float64}(1.5, 0.5, N)
     s = MOI.Utilities.symmetric_matrix_scaling_vector(Float64, N)
     s32 = MOI.Utilities.symmetric_matrix_scaling_vector(Float32, N)
     is = MOI.Utilities.symmetric_matrix_inverse_scaling_vector(Float64, N)
     is32 = MOI.Utilities.symmetric_matrix_inverse_scaling_vector(Float32, N)
+    hpsd = MOI.HermitianPositiveSemidefiniteConeTriangle(n)
+    hermitian = MOI.Utilities.SetDotScalingVector{Float64}(hpsd, N)
     k = 0
+    imag_k = 0
     for j in 1:n
         for i in 1:(j-1)
             k += 1
+            imag_k += 1
             @test v[k] == 1.5
             @test s[k] == √2
             @test s32[k] == √Float32(2)
             @test is[k] == inv(√2)
             @test is32[k] == inv(√Float32(2))
+            @test hermitian[k] == √2
+            @test hermitian[N+imag_k] == √2
         end
         k += 1
         @test v[k] == 0.5
@@ -221,6 +227,7 @@ function test_symmetric_matrix_scaling()
         @test isone(s32[k])
         @test isone(is[k])
         @test isone(is32[k])
+        @test isone(hermitian[k])
     end
     return
 end

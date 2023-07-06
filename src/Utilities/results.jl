@@ -547,7 +547,8 @@ function MOI.Utilities.set_dot(
     set::MOI.HermitianPositiveSemidefiniteConeTriangle,
 )
     sym = MOI.PositiveSemidefiniteConeTriangle(set.side_dimension)
-    result = set_dot(x, y, sym)
+    I = Base.OneTo(MOI.dimension(sym))
+    result = set_dot(view(x, I), view(y, I), sym)
     for k in (MOI.dimension(sym)+1):MOI.dimension(set)
         result = MA.add_mul!!(result, 2, x[k], y[k])
     end
