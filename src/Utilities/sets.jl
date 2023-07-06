@@ -237,7 +237,6 @@ function symmetric_matrix_inverse_scaling_vector(::Type{T}, n) where {T}
     return LazyMap{T}(inv, symmetric_matrix_scaling_vector(T, n))
 end
 
-
 similar_type(::Type{<:MOI.LessThan}, ::Type{T}) where {T} = MOI.LessThan{T}
 
 function similar_type(::Type{<:MOI.GreaterThan}, ::Type{T}) where {T}
