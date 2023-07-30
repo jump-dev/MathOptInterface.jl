@@ -237,25 +237,121 @@ end
 Vector `s` of scaling for the entries of the vectorized form of
 a vector `x` in `set` and `y` in `MOI.dual_set(set)` such that
 `MOI.Utilities.set_dot(x, y) = LinearAlgebra.dot(s .* x, s .* y)`.
+
+```
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> func = MOI.VectorOfVariables(x)
+┌                    ┐
+│MOI.VariableIndex(1)│
+│MOI.VariableIndex(2)│
+│MOI.VariableIndex(3)│
+└                    ┘
+
+julia> set = MOI.PositiveSemidefiniteConeTriangle(2)
+MathOptInterface.PositiveSemidefiniteConeTriangle(2)
+
+julia> MOI.add_constraint(model, func, MOI.Scaled(set))
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.Scaled{MathOptInterface.PositiveSemidefiniteConeTriangle}}(1)
+
+julia> a = MOI.Utilities.SetDotScalingVector{Float64}(set)
+3-element MathOptInterface.Utilities.SetDotScalingVector{Float64, MathOptInterface.PositiveSemidefiniteConeTriangle}:
+ ⋮
+
+julia> a = MOI.Utilities.SetDotScalingVector{Float64}(set)
+3-element MathOptInterface.Utilities.SetDotScalingVector{Float64, MathOptInterface.PositiveSemidefiniteConeTriangle}:
+ 1.0
+ 1.4142135623730951
+ 1.0
+
+julia> using LinearAlgebra
+
+julia> Diagonal(a) * func
+ERROR: MethodError: no method matching length(::MathOptInterface.VectorOfVariables)
+
+Closest candidates are:
+  length(::Union{Base.KeySet, Base.ValueIterator})
+   @ Base abstractdict.jl:58
+  length(::Union{Adjoint{T, S}, Transpose{T, S}} where {T, S})
+   @ LinearAlgebra ~/.julia/juliaup/julia-1.9.2+0.x64.linux.gnu/share/julia/stdlib/v1.9/LinearAlgebra/src/adjtrans.jl:295
+  length(::Union{SparseArrays.FixedSparseVector{Tv, Ti}, SparseArrays.SparseVector{Tv, Ti}} where {Tv, Ti})
+   @ SparseArrays ~/.julia/juliaup/julia-1.9.2+0.x64.linux.gnu/share/julia/stdlib/v1.9/SparseArrays/src/sparsevector.jl:95
+  ...
+
+Stacktrace:
+ [1] _similar_shape(itr::MathOptInterface.VectorOfVariables, #unused#::Base.HasLength)
+   @ Base ./array.jl:658
+ [2] _collect(cont::UnitRange{Int64}, itr::MathOptInterface.VectorOfVariables, #unused#::Base.HasEltype, isz::Base.HasLength)
+   @ Base ./array.jl:713
+ [3] collect(itr::MathOptInterface.VectorOfVariables)
+   @ Base ./array.jl:707
+ [4] broadcastable(x::MathOptInterface.VectorOfVariables)
+   @ Base.Broadcast ./broadcast.jl:717
+ [5] broadcasted
+   @ ./broadcast.jl:1315 [inlined]
+ [6] *(A::Diagonal{Float64, MathOptInterface.Utilities.SetDotScalingVector{Float64, MathOptInterface.PositiveSemidefiniteConeTriangle}}, α::MathOptInterface.VectorOfVariables)
+   @ MutableArithmetics ~/.julia/packages/MutableArithmetics/h0wjj/src/dispatch.jl:649
+ [7] top-level scope
+   @ REPL[11]:1
+
+julia> MOI.Utilities(Float64, *, Diagonal(a), func)
+ERROR: MethodError: objects of type Module are not callable
+Stacktrace:
+ [1] top-level scope
+   @ REPL[12]:1
+
+julia> MOI.Utilities.operate(Float64, *, Diagonal(a), func)
+ERROR: MethodError: no method matching operate(::Type{Float64}, ::typeof(*), ::Diagonal{Float64, MathOptInterface.Utilities.SetDotScalingVector{Float64, MathOptInterface.PositiveSemidefiniteConeTriangle}}, ::MathOptInterface.VectorOfVariables)
+
+Closest candidates are:
+  operate(::typeof(vcat), ::Type{T}, ::Union{MathOptInterface.VariableIndex, AbstractVector{T}, MathOptInterface.ScalarAffineFunction{T}, MathOptInterface.VectorAffineFunction{T}, MathOptInterface.VectorOfVariables, T}...) where T
+   @ MathOptInterface ~/.julia/dev/MathOptInterface/src/Utilities/operate.jl:794
+  operate(::typeof(vcat), ::Type{T}, ::Union{MathOptInterface.VariableIndex, AbstractVector{T}, MathOptInterface.ScalarAffineFunction{T}, MathOptInterface.ScalarQuadraticFunction{T}, MathOptInterface.VectorAffineFunction{T}, MathOptInterface.VectorOfVariables, MathOptInterface.VectorQuadraticFunction{T}, T}...) where T
+   @ MathOptInterface ~/.julia/dev/MathOptInterface/src/Utilities/operate.jl:814
+  operate(::typeof(+), ::Type{T}, ::Any, ::Any, ::Any, ::Any...) where T
+   @ MathOptInterface ~/.julia/dev/MathOptInterface/src/Utilities/operate.jl:284
+  ...
+
+Stacktrace:
+ [1] top-level scope
+   @ REPL[13]:1
+
+julia> MOI.Utilities.operate(*, Float64, Diagonal(a), func)
+┌                                             ┐
+│0.0 + 1.0 MOI.VariableIndex(1)               │
+│0.0 + 1.4142135623730951 MOI.VariableIndex(2)│
+│0.0 + 1.0 MOI.VariableIndex(3)               │
+└                                             ┘
+
+julia> MOI.Utilities.operate(*, Float64, Diagonal(a), ones(3))
+3-element Vector{Float64}:
+ 1.0
+ 1.4142135623730951
+ 1.0
+```
 """
 struct SetDotScalingVector{T,S<:MOI.AbstractSet} <: AbstractVector{T}
     set::S
-    len::Int
 end
-function SetDotScalingVector{T}(s::MOI.AbstractSet, len) where {T}
-    return SetDotScalingVector{T,typeof(s)}(s, len)
+function SetDotScalingVector{T}(s::MOI.AbstractSet) where {T}
+    return SetDotScalingVector{T,typeof(s)}(s)
 end
 
 function Base.getindex(s::SetDotScalingVector{T}, i::Base.Integer) where {T}
     return sqrt(_set_dot(i, s.set, T))
 end
 
-Base.size(x::SetDotScalingVector) = (x.len,)
+Base.size(x::SetDotScalingVector) = (MOI.dimension(x.set),)
 
 function symmetric_matrix_scaling_vector(::Type{T}, n) where {T}
     d = side_dimension_for_vectorized_dimension(n)
     set = MOI.PositiveSemidefiniteConeTriangle(d)
-    return SetDotScalingVector{T}(set, n)
+    return SetDotScalingVector{T}(set)
 end
 
 function symmetric_matrix_inverse_scaling_vector(::Type{T}, n) where {T}
