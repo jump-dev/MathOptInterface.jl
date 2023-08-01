@@ -46,7 +46,7 @@ function _test_function(coefficients::Vector{NTuple{3,T}}) where {T}
     return MOI.Utilities.operate(vcat, T, _test_function.(coefficients)...)
 end
 
-function _test_function(pair::Pair{Symbol,<:Any}) where {T}
+function _test_function(pair::Pair{Symbol,<:Any})
     head, arg = pair
     if arg isa Vector
         args = Any[_test_function(a) for a in arg]
