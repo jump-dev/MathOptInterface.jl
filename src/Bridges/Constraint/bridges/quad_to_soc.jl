@@ -229,8 +229,8 @@ end
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
-    bridge::QuadtoSOCBridge,
-)
+    bridge::QuadtoSOCBridge{T},
+) where {T}
     # The constraint primal is x'Qx/2 + a'x
     # If `less_than` then `Q = U'U` and we have the value of
     # `Ux` and `-a'x + ub`, so we get it with
@@ -242,7 +242,7 @@ function MOI.get(
     if soc === nothing
         return nothing
     end
-    output = sum(soc[i]^2 for i in 3:bridge.dimension)
+    output = sum(soc[i]^2 for i in 3:bridge.dimension; init = zero(T))
     output /= 2
     output -= soc[1] * soc[2]
     if !bridge.less_than

@@ -325,6 +325,21 @@ function test_deletion_of_variable_in_bridged_slacked_objective()
     return
 end
 
+function test_constraint_primal_no_quad_terms()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.QuadtoSOC{Float64}(inner)
+    x = MOI.add_variable(model)
+    f = MOI.ScalarQuadraticFunction(
+        MOI.ScalarQuadraticTerm{Float64}[],
+        [MOI.ScalarAffineTerm(1.0, x)],
+        0.0,
+    )
+    c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    MOI.set(model, MOI.ConstraintPrimalStart(), c, 1.0)
+    @test MOI.get(model, MOI.ConstraintPrimalStart(), c) == 1.0
+    return
+end
+
 end  # module
 
 TestConstraintQuadToSOC.runtests()
