@@ -1408,7 +1408,7 @@ function Base.:+(
         MOI.ScalarQuadraticFunction{T},
     },
     g::T,
-) where {T}
+) where {T<:Number}
     return operate(+, T, f, g)
 end
 
@@ -1419,7 +1419,7 @@ function Base.:+(
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate(+, T, f, g)
 end
 
@@ -1452,7 +1452,7 @@ function Base.:+(
         MOI.VectorQuadraticFunction{T},
     },
     g::AbstractVector{T},
-) where {T}
+) where {T<:Number}
     return operate(+, T, f, g)
 end
 
@@ -1463,7 +1463,7 @@ function Base.:+(
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate(+, T, f, g)
 end
 
@@ -1503,7 +1503,7 @@ function Base.:-(
         MOI.VectorQuadraticFunction{T},
     },
     g::T,
-) where {T}
+) where {T<:Number}
     return operate(-, T, f, g)
 end
 
@@ -1517,7 +1517,7 @@ function Base.:-(
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate(-, T, f, g)
 end
 
@@ -1550,7 +1550,7 @@ function Base.:-(
         MOI.VectorQuadraticFunction{T},
     },
     g::AbstractVector{T},
-) where {T}
+) where {T<:Number}
     return operate(-, T, f, g)
 end
 
@@ -1561,7 +1561,7 @@ function Base.:-(
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate(-, T, f, g)
 end
 
@@ -1616,13 +1616,13 @@ end
 # https://github.com/JuliaLang/julia/pull/33205
 function Base.:*(
     f::Union{
-        MOI.ScalarAffineFunction,
-        MOI.ScalarQuadraticFunction,
-        MOI.VectorAffineFunction,
-        MOI.VectorQuadraticFunction,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
     },
     g::Bool,
-)
+) where {T<:Number}
     if g
         return MA.copy_if_mutable(f)
     else
@@ -1659,34 +1659,6 @@ function Base.:*(
     return g * f
 end
 
-# !!! warning
-#     MathOptInterface includes these methods to support coefficient types which
-#     are not subtypes of `Number`. We shoud consider removing them in MOI v2.0.
-
-function Base.:*(
-    f::Union{
-        MOI.ScalarAffineFunction{T},
-        MOI.ScalarQuadraticFunction{T},
-        MOI.VectorAffineFunction{T},
-        MOI.VectorQuadraticFunction{T},
-    },
-    g::T,
-) where {T}
-    return operate_coefficients(Base.Fix2(*, g), f)
-end
-
-function Base.:*(
-    f::T,
-    g::Union{
-        MOI.ScalarAffineFunction{T},
-        MOI.ScalarQuadraticFunction{T},
-        MOI.VectorAffineFunction{T},
-        MOI.VectorQuadraticFunction{T},
-    },
-) where {T}
-    return g * f
-end
-
 ### Base.:/
 
 function Base.:/(
@@ -1697,7 +1669,7 @@ function Base.:/(
         MOI.VectorQuadraticFunction{T},
     },
     g::T,
-) where {T}
+) where {T<:Number}
     return operate(/, T, f, g)
 end
 
@@ -1732,8 +1704,8 @@ end
 ### LinearAlgebra
 
 LinearAlgebra.dot(f::ScalarLike, g::ScalarLike) = f * g
-LinearAlgebra.dot(α::T, func::TypedLike{T}) where {T} = α * func
-LinearAlgebra.dot(func::TypedLike{T}, α::T) where {T} = func * α
+LinearAlgebra.dot(α::T, func::TypedLike{T}) where {T<:Number} = α * func
+LinearAlgebra.dot(func::TypedLike{T}, α::T) where {T<:Number} = func * α
 LinearAlgebra.adjoint(f::ScalarLike) = f
 LinearAlgebra.transpose(f::ScalarLike) = f
 LinearAlgebra.symmetric_type(::Type{F}) where {F<:ScalarLike} = F
@@ -2254,9 +2226,16 @@ function Base.promote_rule(
 end
 
 function Base.promote_rule(
-    F::Type{<:Union{MOI.ScalarAffineFunction,MOI.ScalarQuadraticFunction}},
+    F::Type{MOI.ScalarAffineFunction{T}},
     ::Type{MOI.VariableIndex},
-)
+) where {T}
+    return F
+end
+
+function Base.promote_rule(
+    F::Type{MOI.ScalarQuadraticFunction{T}},
+    ::Type{MOI.VariableIndex},
+) where {T}
     return F
 end
 

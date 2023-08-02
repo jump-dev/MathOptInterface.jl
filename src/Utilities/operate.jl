@@ -9,7 +9,7 @@
         op::Function,
         ::Type{T},
         args::Union{T,MOI.AbstractFunction}...,
-    )::MOI.AbstractFunction where {T}
+    )::MOI.AbstractFunction where {T<:Number}
 
 Returns an `MOI.AbstractFunction` representing the function resulting from the
 operation `op(args...)` on functions of coefficient type `T`.
@@ -80,7 +80,7 @@ end
 
 ### 1a: operate(::typeof(+), ::Type{T}, ::F1)
 
-operate(::typeof(+), ::Type{T}, f::MOI.AbstractFunction) where {T} = f
+operate(::typeof(+), ::Type{T}, f::MOI.AbstractFunction) where {T<:Number} = f
 
 operate(::typeof(+), ::Type{T}, f::T) where {T<:Number} = f
 
@@ -95,11 +95,16 @@ function operate(
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate(+, T, g, f)
 end
 
-function operate(::typeof(+), ::Type{T}, f::MOI.VariableIndex, g::T) where {T}
+function operate(
+    ::typeof(+),
+    ::Type{T},
+    f::MOI.VariableIndex,
+    g::T,
+) where {T<:Number}
     return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(one(T), f)], g)
 end
 
@@ -108,7 +113,7 @@ function operate(
     ::Type{T},
     f::MOI.VariableIndex,
     g::MOI.VariableIndex,
-) where {T}
+) where {T<:Number}
     return MOI.ScalarAffineFunction{T}(
         [MOI.ScalarAffineTerm(one(T), f), MOI.ScalarAffineTerm(one(T), g)],
         zero(T),
@@ -120,7 +125,7 @@ function operate(
     ::Type{T},
     f::MOI.VariableIndex,
     g::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
-) where {T}
+) where {T<:Number}
     return operate(+, T, g, f)
 end
 
@@ -129,7 +134,7 @@ function operate(
     ::Type{T},
     f::MOI.ScalarAffineFunction{T},
     g::Union{T,MOI.VariableIndex,MOI.ScalarAffineFunction{T}},
-) where {T}
+) where {T<:Number}
     return operate!(+, T, copy(f), g)
 end
 
@@ -138,7 +143,7 @@ function operate(
     ::Type{T},
     f::MOI.ScalarAffineFunction{T},
     g::MOI.ScalarQuadraticFunction{T},
-) where {T}
+) where {T<:Number}
     return operate(+, T, g, f)
 end
 
@@ -152,7 +157,7 @@ function operate(
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate!(+, T, copy(f), g)
 end
 
@@ -167,7 +172,7 @@ function operate(
         MOI.ScalarQuadraticFunction{T},
         MOI.ScalarNonlinearFunction,
     },
-) where {T}
+) where {T<:Number}
     return MOI.ScalarNonlinearFunction(:+, Any[f, g])
 end
 
@@ -182,7 +187,7 @@ function operate(
         MOI.ScalarNonlinearFunction,
     },
     g::MOI.ScalarNonlinearFunction,
-) where {T}
+) where {T<:Number}
     return MOI.ScalarNonlinearFunction(:+, Any[f, g])
 end
 
@@ -191,7 +196,7 @@ function operate(
     ::Type{T},
     f::MOI.ScalarNonlinearFunction,
     g::MOI.ScalarNonlinearFunction,
-) where {T}
+) where {T<:Number}
     return MOI.ScalarNonlinearFunction(:+, Any[f, g])
 end
 
@@ -204,7 +209,7 @@ function operate(
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate(+, T, g, f)
 end
 
@@ -213,7 +218,7 @@ function operate(
     ::Type{T},
     f::MOI.VectorOfVariables,
     g::Vector{T},
-) where {T}
+) where {T<:Number}
     d = MOI.output_dimension(f)
     @assert length(g) == d
     scalar_terms = MOI.ScalarAffineTerm.(one(T), f.variables)
@@ -226,7 +231,7 @@ function operate(
     ::Type{T},
     f::MOI.VectorOfVariables,
     g::MOI.VectorOfVariables,
-) where {T}
+) where {T<:Number}
     d = MOI.output_dimension(f)
     @assert MOI.output_dimension(g) == d
     fs = MOI.VectorAffineTerm.(1:d, MOI.ScalarAffineTerm.(one(T), f.variables))
@@ -239,7 +244,7 @@ function operate(
     ::Type{T},
     f::MOI.VectorOfVariables,
     g::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
-) where {T}
+) where {T<:Number}
     return operate(+, T, g, f)
 end
 
@@ -252,7 +257,7 @@ function operate(
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate!(+, T, copy(f), g)
 end
 
@@ -261,7 +266,7 @@ function operate(
     ::Type{T},
     f::MOI.VectorAffineFunction{T},
     g::MOI.VectorQuadraticFunction{T},
-) where {T}
+) where {T<:Number}
     return operate(+, T, g, f)
 end
 
@@ -275,26 +280,30 @@ function operate(
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate!(+, T, copy(f), g)
 end
 
 ### 1c: operate(+, T, args...)
 
-function operate(::typeof(+), ::Type{T}, f, g, h, args...) where {T}
+function operate(::typeof(+), ::Type{T}, f, g, h, args...) where {T<:Number}
     return operate!(+, T, operate(+, T, f, g), h, args...)
 end
 
 ### 2a: operate(::typeof(-), ::Type{T}, ::F)
 
-function operate(::typeof(-), ::Type{T}, f::MOI.VariableIndex) where {T}
+function operate(::typeof(-), ::Type{T}, f::MOI.VariableIndex) where {T<:Number}
     return MOI.ScalarAffineFunction{T}(
         [MOI.ScalarAffineTerm(-one(T), f)],
         zero(T),
     )
 end
 
-function operate(::typeof(-), ::Type{T}, f::MOI.VectorOfVariables) where {T}
+function operate(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.VectorOfVariables,
+) where {T<:Number}
     d = MOI.output_dimension(f)
     return MOI.VectorAffineFunction{T}(
         MOI.VectorAffineTerm.(1:d, MOI.ScalarAffineTerm.(-one(T), f.variables)),
@@ -311,7 +320,7 @@ function operate(
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate_coefficients(-, f)
 end
 
@@ -319,7 +328,7 @@ function operate(
     ::typeof(-),
     ::Type{T},
     f::MOI.ScalarNonlinearFunction,
-) where {T}
+) where {T<:Number}
     if f.head == :- && length(f.args) == 1
         # A simplification for -(-(f)) into f, but only if f is an SNF.
         if f.args[1] isa MOI.ScalarNonlinearFunction
@@ -340,11 +349,16 @@ function operate(
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate!(+, T, operate(-, T, g), f)
 end
 
-function operate(::typeof(-), ::Type{T}, f::MOI.VariableIndex, g::T) where {T}
+function operate(
+    ::typeof(-),
+    ::Type{T},
+    f::MOI.VariableIndex,
+    g::T,
+) where {T<:Number}
     return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(one(T), f)], -g)
 end
 
@@ -353,7 +367,7 @@ function operate(
     ::Type{T},
     f::MOI.VariableIndex,
     g::MOI.VariableIndex,
-) where {T}
+) where {T<:Number}
     return MOI.ScalarAffineFunction{T}(
         [MOI.ScalarAffineTerm(one(T), f), MOI.ScalarAffineTerm(-one(T), g)],
         zero(T),
@@ -365,7 +379,7 @@ function operate(
     ::Type{T},
     f::MOI.VariableIndex,
     g::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
-) where {T}
+) where {T<:Number}
     return operate!(+, T, operate(-, T, g), f)
 end
 
@@ -374,7 +388,7 @@ function operate(
     ::Type{T},
     f::MOI.ScalarAffineFunction{T},
     g::Union{T,MOI.VariableIndex,MOI.ScalarAffineFunction{T}},
-) where {T}
+) where {T<:Number}
     return operate!(-, T, copy(f), g)
 end
 
@@ -383,7 +397,7 @@ function operate(
     ::Type{T},
     f::MOI.ScalarAffineFunction{T},
     g::MOI.ScalarQuadraticFunction{T},
-) where {T}
+) where {T<:Number}
     return MOI.ScalarQuadraticFunction(
         operate_terms(-, g.quadratic_terms),
         vcat(f.terms, operate_terms(-, g.affine_terms)),
@@ -401,7 +415,7 @@ function operate(
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate!(-, T, copy(f), g)
 end
 
@@ -416,7 +430,7 @@ function operate(
         MOI.ScalarQuadraticFunction{T},
         MOI.ScalarNonlinearFunction,
     },
-) where {T}
+) where {T<:Number}
     return MOI.ScalarNonlinearFunction(:-, Any[f, g])
 end
 
@@ -431,7 +445,7 @@ function operate(
         MOI.ScalarNonlinearFunction,
     },
     g::MOI.ScalarNonlinearFunction,
-) where {T}
+) where {T<:Number}
     return MOI.ScalarNonlinearFunction(:-, Any[f, g])
 end
 
@@ -440,7 +454,7 @@ function operate(
     ::Type{T},
     f::MOI.ScalarNonlinearFunction,
     g::MOI.ScalarNonlinearFunction,
-) where {T}
+) where {T<:Number}
     return MOI.ScalarNonlinearFunction(:-, Any[f, g])
 end
 
@@ -453,7 +467,7 @@ function operate(
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate!(+, T, operate(-, T, g), f)
 end
 
@@ -462,7 +476,7 @@ function operate(
     ::Type{T},
     f::MOI.VectorOfVariables,
     g::AbstractVector{T},
-) where {T}
+) where {T<:Number}
     d = MOI.output_dimension(f)
     @assert length(g) == d
     scalar_terms = MOI.ScalarAffineTerm.(one(T), f.variables)
@@ -475,7 +489,7 @@ function operate(
     ::Type{T},
     f::MOI.VectorOfVariables,
     g::MOI.VectorOfVariables,
-) where {T}
+) where {T<:Number}
     d = MOI.output_dimension(f)
     @assert MOI.output_dimension(g) == d
     fs = MOI.VectorAffineTerm.(1:d, MOI.ScalarAffineTerm.(one(T), f.variables))
@@ -488,7 +502,7 @@ function operate(
     ::Type{T},
     f::MOI.VectorOfVariables,
     g::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
-) where {T}
+) where {T<:Number}
     return operate!(+, T, operate(-, T, g), f)
 end
 
@@ -501,7 +515,7 @@ function operate(
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate!(-, T, copy(f), g)
 end
 
@@ -510,7 +524,7 @@ function operate(
     ::Type{T},
     f::MOI.VectorAffineFunction{T},
     g::MOI.VectorQuadraticFunction{T},
-) where {T}
+) where {T<:Number}
     return MOI.VectorQuadraticFunction(
         operate_terms(-, g.quadratic_terms),
         [f.terms; operate_terms(-, g.affine_terms)],
@@ -528,13 +542,18 @@ function operate(
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate!(op, T, copy(f), g)
 end
 
 ### 3a: operate(::typeof(*), ::Type{T}, ::T, ::F)
 
-function operate(::typeof(*), ::Type{T}, f::T, g::MOI.VariableIndex) where {T}
+function operate(
+    ::typeof(*),
+    ::Type{T},
+    f::T,
+    g::MOI.VariableIndex,
+) where {T<:Number}
     return MOI.ScalarAffineFunction{T}([MOI.ScalarAffineTerm(f, g)], zero(T))
 end
 
@@ -543,7 +562,7 @@ function operate(
     ::Type{T},
     f::T,
     g::MOI.VectorOfVariables,
-) where {T}
+) where {T<:Number}
     d = MOI.output_dimension(g)
     terms = MOI.VectorAffineTerm.(1:d, MOI.ScalarAffineTerm.(f, g.variables))
     return MOI.VectorAffineFunction{T}(terms, zeros(T, d))
@@ -559,7 +578,7 @@ function operate(
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return operate!(*, T, copy(g), f)
 end
 
@@ -568,7 +587,7 @@ function operate(
     ::Type{T},
     f::T,
     g::MOI.ScalarNonlinearFunction,
-) where {T}
+) where {T<:Number}
     return MOI.ScalarNonlinearFunction(:*, Any[f, g])
 end
 
@@ -586,7 +605,7 @@ function operate(
         MOI.VectorQuadraticFunction{T},
     },
     g::T,
-) where {T}
+) where {T<:Number}
     return operate(*, T, g, f)
 end
 
@@ -595,7 +614,7 @@ function operate(
     ::Type{T},
     f::MOI.ScalarNonlinearFunction,
     g::T,
-) where {T}
+) where {T<:Number}
     return MOI.ScalarNonlinearFunction(:*, Any[f, g])
 end
 
@@ -606,7 +625,7 @@ function operate(
     ::Type{T},
     f::MOI.VariableIndex,
     g::MOI.ScalarAffineFunction{T},
-) where {T}
+) where {T<:Number}
     return operate(*, T, g, f)
 end
 
@@ -615,7 +634,7 @@ function operate(
     ::Type{T},
     f::MOI.ScalarAffineFunction{T},
     g::MOI.ScalarAffineFunction{T},
-) where {T}
+) where {T<:Number}
     nfterms = length(f.terms)
     ngterms = length(g.terms)
     quad_terms = Vector{MOI.ScalarQuadraticTerm{T}}(undef, nfterms * ngterms)
@@ -654,7 +673,7 @@ function operate(
     ::Type{T},
     f::MOI.VariableIndex,
     g::MOI.VariableIndex,
-) where {T}
+) where {T<:Number}
     return MOI.ScalarQuadraticFunction(
         [MOI.ScalarQuadraticTerm(f == g ? 2one(T) : one(T), f, g)],
         MOI.ScalarAffineTerm{T}[],
@@ -667,7 +686,7 @@ function operate(
     ::Type{T},
     f::MOI.ScalarAffineFunction{T},
     g::MOI.VariableIndex,
-) where {T}
+) where {T<:Number}
     if iszero(f.constant)
         aff_terms = MOI.ScalarAffineTerm{T}[]
     else
@@ -691,7 +710,7 @@ function operate(
     ::Type{T},
     D::Diagonal{T},
     func::MOI.VectorQuadraticFunction{T},
-) where {T}
+) where {T<:Number}
     return MOI.VectorQuadraticFunction{T}(
         operate_terms(*, D, func.quadratic_terms),
         operate_terms(*, D, func.affine_terms),
@@ -704,7 +723,7 @@ function operate(
     ::Type{T},
     D::Diagonal{T},
     func::MOI.VectorAffineFunction{T},
-) where {T}
+) where {T<:Number}
     return MOI.VectorAffineFunction{T}(
         operate_terms(*, D, func.terms),
         operate(*, T, D, func.constants),
@@ -716,7 +735,7 @@ function operate(
     ::Type{T},
     D::Diagonal{T},
     func::MOI.VectorOfVariables,
-) where {T}
+) where {T<:Number}
     return MOI.VectorAffineFunction{T}(
         MOI.VectorAffineTerm{T}[
             MOI.VectorAffineTerm(
@@ -733,7 +752,7 @@ function operate(
     ::Type{T},
     D::Diagonal{T},
     v::AbstractVector{T},
-) where {T}
+) where {T<:Number}
     return T[D.diag[i] * v[i] for i in eachindex(v)]
 end
 
@@ -744,7 +763,7 @@ function operate(
     ::Type{T},
     f::Union{MOI.VariableIndex,MOI.VectorOfVariables},
     g::T,
-) where {T}
+) where {T<:Number}
     return operate(*, T, inv(g), f)
 end
 
@@ -758,7 +777,7 @@ function operate(
         MOI.VectorQuadraticFunction{T},
     },
     g::T,
-) where {T}
+) where {T<:Number}
     return operate!(/, T, copy(f), g)
 end
 
@@ -767,11 +786,13 @@ function operate(
     ::Type{T},
     f::MOI.ScalarNonlinearFunction,
     g::T,
-) where {T}
+) where {T<:Number}
     return MOI.ScalarNonlinearFunction(:/, Any[f, g])
 end
 
 ### 5a: operate(::typeof(vcat), ::Type{T}, ::F...)
+
+operate(::typeof(vcat), ::Type{T}) where {T<:Number} = T[]
 
 function operate(
     ::typeof(vcat),
@@ -785,7 +806,7 @@ function operate(
     ::typeof(vcat),
     ::Type{T},
     f::Union{MOI.VariableIndex,MOI.VectorOfVariables}...,
-) where {T}
+) where {T<:Number}
     x = Vector{MOI.VariableIndex}(undef, sum(f -> output_dim(T, f), f))
     fill_vector(x, T, 0, 0, fill_variables, output_dim, f...)
     return MOI.VectorOfVariables(x)
@@ -802,7 +823,7 @@ function operate(
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
     }...,
-) where {T}
+) where {T<:Number}
     num_aterms = sum(f -> number_of_affine_terms(T, f), f)
     aterms = Vector{MOI.VectorAffineTerm{T}}(undef, num_aterms)
     fill_vector(aterms, T, 0, 0, fill_terms, number_of_affine_terms, f...)
@@ -824,7 +845,7 @@ function operate(
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
     }...,
-) where {T}
+) where {T<:Number}
     num_aterms = sum(func -> number_of_affine_terms(T, func), f)
     aterms = Vector{MOI.VectorAffineTerm{T}}(undef, num_aterms)
     fill_vector(aterms, T, 0, 0, fill_terms, number_of_affine_terms, f...)
@@ -838,11 +859,19 @@ end
 
 ### 6a: operate(::typeof(imag), ::Type{T}, ::F)
 
-function operate(::typeof(imag), ::Type{T}, ::MOI.VariableIndex) where {T}
+function operate(
+    ::typeof(imag),
+    ::Type{T},
+    ::MOI.VariableIndex,
+) where {T<:Number}
     return zero(MOI.ScalarAffineFunction{T})
 end
 
-function operate(::typeof(imag), ::Type{T}, f::MOI.VectorOfVariables) where {T}
+function operate(
+    ::typeof(imag),
+    ::Type{T},
+    f::MOI.VectorOfVariables,
+) where {T<:Number}
     return zero_with_output_dimension(
         MOI.VectorAffineFunction{T},
         MOI.output_dimension(f),
@@ -867,7 +896,7 @@ end
         op::Function,
         ::Type{T},
         args::Union{T,MOI.AbstractFunction}...,
-    )::MOI.AbstractFunction where {T}
+    )::MOI.AbstractFunction where {T<:Number}
 
 Returns an `MOI.AbstractFunction` representing the function resulting from the
 operation `op(args...)` on functions of coefficient type `T`.
@@ -876,7 +905,7 @@ The first argument may be modified, in which case the return value is identical
 to the first argument. For operations which cannot be implemented in-place, this
 function returns a new object.
 """
-operate!(op, ::Type{T}, args...) where {T} = operate(op, T, args...)
+operate!(op, ::Type{T}, args...) where {T<:Number} = operate(op, T, args...)
 
 ### 1a: operate!(::typeof(+), ::Type{T}, ::F1)
 
@@ -887,7 +916,7 @@ function operate!(
     ::Type{T},
     f::MOI.ScalarAffineFunction{T},
     g::Union{T,MOI.VariableIndex,MOI.ScalarAffineFunction{T}},
-) where {T}
+) where {T<:Number}
     return MA.operate!(+, f, g)
 end
 
@@ -901,7 +930,7 @@ function operate!(
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return MA.operate!(+, f, g)
 end
 
@@ -916,7 +945,7 @@ function operate!(
         MOI.ScalarQuadraticFunction{T},
         MOI.ScalarNonlinearFunction,
     },
-) where {T}
+) where {T<:Number}
     if f.head == :+
         push!(f.args, g)
         return f
@@ -929,7 +958,7 @@ function operate!(
     ::Type{T},
     f::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
     g::AbstractVector{T},
-) where {T}
+) where {T<:Number}
     @assert MOI.output_dimension(f) == length(g)
     f.constants .+= g
     return f
@@ -940,7 +969,7 @@ function operate!(
     ::Type{T},
     f::MOI.VectorAffineFunction{T},
     g::MOI.VectorOfVariables,
-) where {T}
+) where {T<:Number}
     d = MOI.output_dimension(g)
     @assert MOI.output_dimension(f) == d
     append!(
@@ -955,7 +984,7 @@ function operate!(
     ::Type{T},
     f::MOI.VectorAffineFunction{T},
     g::MOI.VectorAffineFunction{T},
-) where {T}
+) where {T<:Number}
     append!(f.terms, g.terms)
     f.constants .+= g.constants
     return f
@@ -966,7 +995,7 @@ function operate!(
     ::Type{T},
     f::MOI.VectorQuadraticFunction{T},
     g::MOI.VectorOfVariables,
-) where {T}
+) where {T<:Number}
     d = MOI.output_dimension(g)
     @assert MOI.output_dimension(f) == d
     append!(
@@ -981,7 +1010,7 @@ function operate!(
     ::Type{T},
     f::MOI.VectorQuadraticFunction{T},
     g::MOI.VectorAffineFunction{T},
-) where {T}
+) where {T<:Number}
     append!(f.affine_terms, g.terms)
     f.constants .+= g.constants
     return f
@@ -992,7 +1021,7 @@ function operate!(
     ::Type{T},
     f::MOI.VectorQuadraticFunction{T},
     g::MOI.VectorQuadraticFunction{T},
-) where {T}
+) where {T<:Number}
     append!(f.affine_terms, g.affine_terms)
     append!(f.quadratic_terms, g.quadratic_terms)
     f.constants .+= g.constants
@@ -1001,7 +1030,7 @@ end
 
 ### 1c: operate!(+, T, args...)
 
-function operate!(op::typeof(+), ::Type{T}, f, g, h, args...) where {T}
+function operate!(op::typeof(+), ::Type{T}, f, g, h, args...) where {T<:Number}
     return operate!(+, T, operate!(op, T, f, g), h, args...)
 end
 
@@ -1011,7 +1040,7 @@ function operate!(
     op::typeof(-),
     ::Type{T},
     f::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
-) where {T}
+) where {T<:Number}
     return MA.operate!(-, f)
 end
 
@@ -1022,7 +1051,7 @@ function operate!(
     ::Type{T},
     f::MOI.ScalarAffineFunction{T},
     g::Union{T,MOI.VariableIndex,MOI.ScalarAffineFunction{T}},
-) where {T}
+) where {T<:Number}
     return MA.operate!(-, f, g)
 end
 
@@ -1036,7 +1065,7 @@ function operate!(
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
     },
-) where {T}
+) where {T<:Number}
     return MA.operate!(-, f, g)
 end
 
@@ -1045,7 +1074,7 @@ function operate!(
     ::Type{T},
     f::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
     g::AbstractVector{T},
-) where {T}
+) where {T<:Number}
     @assert MOI.output_dimension(f) == length(g)
     f.constants .-= g
     return f
@@ -1056,7 +1085,7 @@ function operate!(
     ::Type{T},
     f::MOI.VectorAffineFunction{T},
     g::MOI.VectorOfVariables,
-) where {T}
+) where {T<:Number}
     d = MOI.output_dimension(g)
     @assert MOI.output_dimension(f) == d
     append!(
@@ -1071,7 +1100,7 @@ function operate!(
     ::Type{T},
     f::MOI.VectorAffineFunction{T},
     g::MOI.VectorAffineFunction{T},
-) where {T}
+) where {T<:Number}
     append!(f.terms, operate_terms(-, g.terms))
     f.constants .-= g.constants
     return f
@@ -1082,7 +1111,7 @@ function operate!(
     ::Type{T},
     f::MOI.VectorQuadraticFunction{T},
     g::MOI.VectorOfVariables,
-) where {T}
+) where {T<:Number}
     d = MOI.output_dimension(g)
     @assert MOI.output_dimension(f) == d
     append!(
@@ -1097,7 +1126,7 @@ function operate!(
     ::Type{T},
     f::MOI.VectorQuadraticFunction{T},
     g::MOI.VectorAffineFunction{T},
-) where {T}
+) where {T<:Number}
     append!(f.affine_terms, operate_terms(-, g.terms))
     f.constants .-= g.constants
     return f
@@ -1108,7 +1137,7 @@ function operate!(
     ::Type{T},
     f::MOI.VectorQuadraticFunction{T},
     g::MOI.VectorQuadraticFunction{T},
-) where {T}
+) where {T<:Number}
     append!(f.affine_terms, operate_terms(-, g.affine_terms))
     append!(f.quadratic_terms, operate_terms(-, g.quadratic_terms))
     f.constants .-= g.constants
@@ -1135,7 +1164,7 @@ function operate!(
     ::Type{T},
     f::MOI.ScalarNonlinearFunction,
     g::T,
-) where {T}
+) where {T<:Number}
     if f.head == :*
         push!(f.args, g)
         return f
@@ -1148,7 +1177,7 @@ function operate!(
     ::Type{T},
     f::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
     g::T,
-) where {T}
+) where {T<:Number}
     map_terms!(term -> operate_term(*, term, g), f)
     f.constants .*= g
     return f
@@ -1165,7 +1194,7 @@ function operate!(
     ::Type{T},
     f::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
     g::T,
-) where {T}
+) where {T<:Number}
     map_terms!(term -> operate_term(/, term, g), f)
     f.constant /= g
     return f
@@ -1176,7 +1205,7 @@ function operate!(
     ::Type{T},
     f::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
     g::T,
-) where {T}
+) where {T<:Number}
     map_terms!(term -> operate_term(/, term, g), f)
     f.constants ./= g
     return f
@@ -1231,7 +1260,7 @@ function operate_term(
         MOI.VectorAffineTerm{T},
         MOI.VectorQuadraticTerm{T},
     },
-) where {T}
+) where {T<:Number}
     return operate_term(Base.Fix1(*, f), g)
 end
 
@@ -1246,7 +1275,7 @@ function operate_term(
         MOI.VectorQuadraticTerm{T},
     },
     g::T,
-) where {T}
+) where {T<:Number}
     return operate_term(*, g, f)
 end
 
@@ -1283,7 +1312,7 @@ function operate_term(
     f::T,
     g::Union{MOI.ScalarAffineTerm{T},MOI.ScalarQuadraticTerm{T}},
     h::T,
-) where {T}
+) where {T<:Number}
     return operate_term(Base.Fix1(*, f * h), g)
 end
 
@@ -1322,7 +1351,7 @@ function operate_term(
         MOI.VectorQuadraticTerm{T},
     },
     g::T,
-) where {T}
+) where {T<:Number}
     return operate_term(Base.Fix2(/, g), f)
 end
 
@@ -1440,7 +1469,7 @@ end
         output_index::Integer,
         f::Union{AbstractVector{T},MOI.AbstractVectorFunction}
         g::Union{T,MOI.AbstractScalarFunction}...
-    ) where {T}
+    ) where {T<:Number}
 
 Return an `MOI.AbstractVectorFunction` in which the scalar function in row
 `output_index` is the result of `op(f[output_index], g)`.
@@ -1464,7 +1493,7 @@ function operate_output_index!(
     output_index::Integer,
     f::AbstractVector{T},
     g::T,
-) where {T}
+) where {T<:Number}
     f[output_index] = op(f[output_index], g)
     return f
 end
@@ -1475,7 +1504,7 @@ function operate_output_index!(
     output_index::Integer,
     f::MOI.VectorAffineFunction{T},
     g::T,
-) where {T}
+) where {T<:Number}
     f.constants[output_index] = op(f.constants[output_index], g)
     return f
 end
@@ -1486,7 +1515,7 @@ function operate_output_index!(
     output_index::Integer,
     f::MOI.VectorAffineFunction{T},
     g::MOI.VariableIndex,
-) where {T}
+) where {T<:Number}
     push!(
         f.terms,
         MOI.VectorAffineTerm(output_index, MOI.ScalarAffineTerm(op(one(T)), g)),
@@ -1500,7 +1529,7 @@ function operate_output_index!(
     output_index::Integer,
     f::MOI.VectorAffineFunction{T},
     g::MOI.ScalarAffineFunction{T},
-) where {T}
+) where {T<:Number}
     append!(
         f.terms,
         MOI.VectorAffineTerm.(output_index, operate_terms(op, g.terms)),
@@ -1515,7 +1544,7 @@ function operate_output_index!(
     output_index::Integer,
     f::MOI.VectorQuadraticFunction{T},
     g::T,
-) where {T}
+) where {T<:Number}
     f.constants[output_index] = op(f.constants[output_index], g)
     return f
 end
@@ -1526,7 +1555,7 @@ function operate_output_index!(
     output_index::Integer,
     f::MOI.VectorQuadraticFunction{T},
     g::MOI.VariableIndex,
-) where {T}
+) where {T<:Number}
     push!(
         f.affine_terms,
         MOI.VectorAffineTerm(output_index, MOI.ScalarAffineTerm(op(one(T)), g)),
@@ -1540,7 +1569,7 @@ function operate_output_index!(
     output_index::Integer,
     f::MOI.VectorQuadraticFunction{T},
     g::MOI.ScalarAffineFunction{T},
-) where {T}
+) where {T<:Number}
     append!(
         f.affine_terms,
         MOI.VectorAffineTerm.(output_index, operate_terms(op, g.terms)),
@@ -1555,7 +1584,7 @@ function operate_output_index!(
     output_index::Integer,
     f::MOI.VectorQuadraticFunction{T},
     g::MOI.ScalarQuadraticFunction{T},
-) where {T}
+) where {T<:Number}
     append!(
         f.affine_terms,
         MOI.VectorAffineTerm.(output_index, operate_terms(op, g.affine_terms)),

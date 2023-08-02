@@ -27,28 +27,6 @@ const x = MOI.VariableIndex(1)
 const y = MOI.VariableIndex(2)
 const z = MOI.VariableIndex(3)
 
-# Number-like but not subtype of `Number`
-struct NonNumber
-    value::Int
-end
-Base.:*(a::NonNumber, b::NonNumber) = NonNumber(a.value * b.value)
-Base.:+(a::NonNumber, b::NonNumber) = NonNumber(a.value + b.value)
-Base.zero(::Type{NonNumber}) = NonNumber(0)
-function Base.isapprox(a::NonNumber, b::NonNumber; kws...)
-    return isapprox(a.value, b.value; kws...)
-end
-
-function test_NonNumber()
-    two = NonNumber(2)
-    three = NonNumber(3)
-    six = NonNumber(6)
-    three_x = MOI.Utilities.operate(*, NonNumber, three, x)
-    six_x = MOI.Utilities.operate(*, NonNumber, six, x)
-    @test six_x ≈ two * three_x
-    @test six_x ≈ three_x * two
-    return
-end
-
 function test_Vectorization_vectorize()
     g = MOI.VectorAffineFunction(
         MOI.VectorAffineTerm.([3, 1], MOI.ScalarAffineTerm.([5, 2], [y, x])),
