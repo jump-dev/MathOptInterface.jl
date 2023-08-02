@@ -16,14 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Added support for [`ScalarNonlinearFunction`](@ref) in `FileFormats.NL`
    (#2228) (#2231)
  - Added [`Bridges.Constraint.ScalarQuadraticToScalarNonlinearBridge`](@ref) (#2233)
- - Added [`Bridges.Constraint.IntegerToZeroOne`](@ref) (#2205)
+ - Added [`Bridges.Constraint.IntegerToZeroOneBridge`](@ref) (#2205)
 
 ### Fixed
 
  - Fixed method ambiguities in `operate` (#2224)
  - Fixed reading LP file with a `-infinity <= x <= +infinity` variable (#2225)
  - Fixed missing `require` in `Test.test_nonlinear_duals` (#2230)
- - Fixed bug in [`ConstraintPrimal`](@ref) of [`Bridges.Constraint.QuadToSOCBridge`](@ref)
+ - Fixed bug in [`ConstraintPrimal`](@ref) of [`Bridges.Constraint.QuadtoSOCBridge`](@ref)
    (#2240)
 
 ### Other
