@@ -1038,7 +1038,7 @@ function test_scalar_nonlinear_function_parse_logic_or()
     return
 end
 
-function test_scalar_nonlinear_function_parse_logic_or()
+function test_scalar_nonlinear_function_parse_logic_and()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
     f = MOI.ScalarNonlinearFunction(:&&, Any[x, x])

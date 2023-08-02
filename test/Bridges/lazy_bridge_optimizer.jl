@@ -401,7 +401,7 @@ function MOI.supports_constraint(
 end
 
 function MOI.supports(
-    ::StandardSDPAModel{T},
+    ::GeometricSDPAModel{T},
     ::MOI.ObjectiveFunction{
         <:Union{MOI.VariableIndex,MOI.ScalarQuadraticFunction{T}},
     },
