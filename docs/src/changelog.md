@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Added extensions to `solver-tests.yml` (#2229)
  - Refactored `test/Benchmarks` (#2234)
- - Fixed warngs in tests (#2241)
+ - Fixed warnings in tests (#2241)
 
 ## v1.18.0 (June 23, 2023)
 
