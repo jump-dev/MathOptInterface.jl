@@ -287,16 +287,16 @@ function MOI.empty!(model::AbstractConstrainedVariablesModel)
     return
 end
 
+function MOI.supports_add_constrained_variables(
+    ::OrderConstrainedVariablesModel,
+    ::Type{MOI.Nonnegatives},
+)
+    return true
+end
+
 function MOI.supports_constraint(
     ::OrderConstrainedVariablesModel,
     ::Type{MOI.VectorOfVariables},
-    ::Type{MOI.Nonnegatives},
-)
-    return false
-end
-
-function MOI.supports_add_constrained_variables(
-    ::OrderConstrainedVariablesModel,
     ::Type{MOI.Nonnegatives},
 )
     return true
