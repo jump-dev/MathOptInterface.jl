@@ -161,7 +161,7 @@ function test_parse_header_assertion_errors()
     return
 end
 
-function test_parse_header_assertion_errors()
+function test_parse_header_common_expressions()
     model = NL._CacheModel()
     err = ErrorException(
         "Unable to parse NL file : we don't support common exprs",
