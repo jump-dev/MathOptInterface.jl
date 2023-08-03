@@ -123,14 +123,14 @@ function promote_operation(
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
-        MOI.GenericVectorFunction,
+        MOI.VectorNonlinearFunction,
     },
     F2<:Union{
         AbstractVector{T},
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
-        MOI.GenericVectorFunction,
+        MOI.VectorNonlinearFunction,
     },
 }
     S = promote_operation(op, T, scalar_type(F1), scalar_type(F2))
@@ -177,9 +177,9 @@ end
 function promote_operation(
     ::typeof(-),
     ::Type{T},
-    ::Type{F},
-) where {T,F<:MOI.GenericVectorFunction}
-    return vector_type(promote_operation(-, T, scalar_type(F)))
+    ::Type{MOI.VectorNonlinearFunction},
+) where {T<:Number}
+    return vector_type(promote_operation(-, T, MOI.ScalarNonlinearFunction))
 end
 
 ### Method 3a
@@ -235,9 +235,9 @@ function promote_operation(
     ::typeof(*),
     ::Type{T},
     ::Type{T},
-    ::Type{F},
-) where {T<:Number,F<:MOI.GenericVectorFunction}
-    return vector_type(promote_operation(*, T, T, scalar_type(F)))
+    ::Type{MOI.VectorNonlinearFunction},
+) where {T<:Number}
+    return vector_type(promote_operation(*, T, T, MOI.ScalarNonlinearFunction))
 end
 
 ### Method 3b
@@ -283,10 +283,10 @@ end
 function promote_operation(
     ::typeof(*),
     ::Type{T},
-    ::Type{F},
+    ::Type{MOI.VectorNonlinearFunction},
     ::Type{T},
-) where {T,F<:MOI.GenericVectorFunction}
-    return vector_type(promote_operation(*, T, scalar_type(F), T))
+) where {T<:Number}
+    return vector_type(promote_operation(*, T, MOI.ScalarNonlinearFunction, T))
 end
 
 ### Method 3c
@@ -363,10 +363,10 @@ end
 function promote_operation(
     ::typeof(/),
     ::Type{T},
-    ::Type{F},
+    ::Type{MOI.VectorNonlinearFunction},
     ::Type{T},
-) where {T,F<:MOI.GenericVectorFunction}
-    return vector_type(promote_operation(/, T, scalar_type(F), T))
+) where {T}
+    return vector_type(promote_operation(/, T, MOI.ScalarNonlinearFunction, T))
 end
 
 ### Method 5a

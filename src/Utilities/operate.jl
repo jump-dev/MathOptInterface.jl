@@ -1741,7 +1741,7 @@ function operate_output_index!(
     op::Union{typeof(+),typeof(-)},
     ::Type{T},
     output_index::Integer,
-    f::MOI.GenericVectorFunction,
+    f::MOI.VectorNonlinearFunction,
     g::Union{T,MOI.AbstractScalarFunction},
 ) where {T<:Number}
     f.rows[output_index] = operate!(op, T, f.rows[output_index], g)

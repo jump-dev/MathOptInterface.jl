@@ -406,33 +406,6 @@ All subtypes of `AbstractVectorFunction` must implement:
 """
 abstract type AbstractVectorFunction <: AbstractFunction end
 
-struct GenericVectorFunction{T} <: AbstractVectorFunction
-    rows::Vector{T}
-end
-
-output_dimension(f::GenericVectorFunction) = length(f.rows)
-
-function constant(f::GenericVectorFunction, ::Type{T}) where {T}
-    return zeros(T, output_dimension(f))
-end
-
-Base.copy(f::GenericVectorFunction) = GenericVectorFunction(copy(f.rows))
-
-function Base.:(==)(
-    f::GenericVectorFunction{T},
-    g::GenericVectorFunction{T},
-) where {T}
-    return f.rows == g.rows
-end
-
-function Base.isapprox(
-    x::GenericVectorFunction{T},
-    y::GenericVectorFunction{T};
-    kwargs...,
-) where {T}
-    return all(isapprox(xi, yi; kwargs...) for (xi, yi) in zip(x.rows, y.rows))
-end
-
 """
     VectorOfVariables(variables::Vector{VariableIndex}) <: AbstractVectorFunction
 
@@ -731,7 +704,32 @@ julia> MOI.VectorNonlinearFunction(Any[g, x])
 └                                 ┘
 ```
 """
-const VectorNonlinearFunction = GenericVectorFunction{Any}
+struct VectorNonlinearFunction <: AbstractVectorFunction
+    rows::Vector{Any}
+end
+
+output_dimension(f::VectorNonlinearFunction) = length(f.rows)
+
+function constant(f::VectorNonlinearFunction, ::Type{T}) where {T}
+    return zeros(T, output_dimension(f))
+end
+
+Base.copy(f::VectorNonlinearFunction) = VectorNonlinearFunction(copy(f.rows))
+
+function Base.:(==)(
+    f::VectorNonlinearFunction,
+    g::VectorNonlinearFunction,
+)
+    return f.rows == g.rows
+end
+
+function Base.isapprox(
+    x::VectorNonlinearFunction,
+    y::VectorNonlinearFunction;
+    kwargs...,
+)
+    return all(isapprox(xi, yi; kwargs...) for (xi, yi) in zip(x.rows, y.rows))
+end
 
 # Function modifications
 

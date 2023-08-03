@@ -202,7 +202,7 @@ end
 function eval_variables(
     value_fn::F,
     model::MOI.ModelLike,
-    f::MOI.GenericVectorFunction,
+    f::MOI.VectorNonlinearFunction,
 ) where {F}
     return map(f.rows) do row
         return eval_variables(value_fn, model, row)
@@ -348,10 +348,10 @@ end
 
 function map_indices(
     index_map::F,
-    f::MOI.GenericVectorFunction{T},
-) where {F<:Function,T}
-    return MOI.GenericVectorFunction{T}(
-        convert(Vector{T}, map_indices(index_map, f.rows)),
+    f::MOI.VectorNonlinearFunction,
+) where {F<:Function}
+    return VectorNonlinearFunction(
+        convert(Vector{Any}, map_indices(index_map, f.rows)),
     )
 end
 
@@ -551,11 +551,11 @@ end
 
 function substitute_variables(
     variable_map::F,
-    f::MOI.GenericVectorFunction{T},
-) where {T,F<:Function}
+    f::VectorNonlinearFunction,
+) where {F<:Function}
     new_rows =
         map(Base.Fix1(_unstable_substitute_variables, variable_map), f.rows)
-    return MOI.GenericVectorFunction{T}(convert(Vector{T}, new_rows))
+    return VectorNonlinearFunction(convert(Vector{Any}, new_rows))
 end
 
 """
@@ -818,17 +818,17 @@ function Base.getindex(
 end
 
 function Base.getindex(
-    it::ScalarFunctionIterator{F},
+    it::ScalarFunctionIterator{MOI.VectorNonlinearFunction},
     output_index::Integer,
-) where {F<:MOI.GenericVectorFunction}
-    return convert(scalar_type(F), it.f.rows[output_index])
+)
+    return convert(MOI.ScalarNonlinearFunction, it.f.rows[output_index])
 end
 
 function Base.getindex(
-    it::ScalarFunctionIterator{MOI.GenericVectorFunction{F}},
+    it::ScalarFunctionIterator{MOI.VectorNonlinearFunction},
     output_index::AbstractVector{<:Integer},
-) where {F}
-    return MOI.GenericVectorFunction{F}(it.f.rows[output_index])
+)
+    return MOI.VectorNonlinearFunction(it.f.rows[output_index])
 end
 
 """
@@ -957,7 +957,7 @@ function is_canonical(
            _is_strictly_sorted(f.quadratic_terms)
 end
 
-is_canonical(f::MOI.GenericVectorFunction) = all(is_canonical, f.rows)
+is_canonical(f::MOI.VectorNonlinearFunction) = all(is_canonical, f.rows)
 
 function _is_strictly_sorted(x::Vector)
     if isempty(x)
@@ -1036,7 +1036,7 @@ function canonicalize!(f::MOI.ScalarNonlinearFunction)
     return f
 end
 
-function canonicalize!(f::MOI.GenericVectorFunction)
+function canonicalize!(f::MOI.VectorNonlinearFunction)
     for (i, fi) in enumerate(f.rows)
         f.rows[i] = canonicalize!(fi)
     end
@@ -2239,7 +2239,12 @@ function scalarize(
     return functions
 end
 
-scalarize(f::MOI.GenericVectorFunction, ignore_constants::Bool = false) = f.rows
+function scalarize(
+    f::MOI.VectorNonlinearFunction,
+    ignore_constants::Bool = false,
+)
+    return f.rows
+end
 
 function count_terms(counting::Vector{<:Integer}, terms::Vector{T}) where {T}
     for term in terms
