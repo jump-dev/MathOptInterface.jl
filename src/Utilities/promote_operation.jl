@@ -236,7 +236,7 @@ function promote_operation(
     ::Type{T},
     ::Type{T},
     ::Type{F},
-) where {T,F<:MOI.GenericVectorFunction}
+) where {T<:Number,F<:MOI.GenericVectorFunction}
     return vector_type(promote_operation(*, T, T, scalar_type(F)))
 end
 
