@@ -296,7 +296,7 @@ function operate(
         MOI.VectorQuadraticFunction{T},
         MOI.VectorNonlinearFunction,
     },
-) where {T}
+) where {T<:Number}
     args = Any[
         operate(+, T, fi, gi) for (fi, gi) in zip(scalarize(f), scalarize(g))
     ]
@@ -313,7 +313,7 @@ function operate(
         MOI.VectorQuadraticFunction{T},
     },
     g::MOI.VectorNonlinearFunction,
-) where {T}
+) where {T<:Number}
     args = Any[
         operate(+, T, fi, gi) for (fi, gi) in zip(scalarize(f), scalarize(g))
     ]
@@ -378,7 +378,7 @@ function operate(
     ::typeof(-),
     ::Type{T},
     f::MOI.VectorNonlinearFunction,
-) where {T}
+) where {T<:Number}
     return MOI.VectorNonlinearFunction(Any[operate(-, T, fi) for fi in f.rows])
 end
 
@@ -601,7 +601,7 @@ function operate(
         MOI.VectorQuadraticFunction{T},
         MOI.VectorNonlinearFunction,
     },
-) where {T}
+) where {T<:Number}
     args = Any[
         operate(-, T, fi, gi) for (fi, gi) in zip(scalarize(f), scalarize(g))
     ]
@@ -618,7 +618,7 @@ function operate(
         MOI.VectorQuadraticFunction{T},
     },
     g::MOI.VectorNonlinearFunction,
-) where {T}
+) where {T<:Number}
     args = Any[
         operate(-, T, fi, gi) for (fi, gi) in zip(scalarize(f), scalarize(g))
     ]
@@ -675,7 +675,7 @@ function operate(
     ::Type{T},
     f::T,
     g::MOI.VectorNonlinearFunction,
-) where {T}
+) where {T<:Number}
     return MOI.VectorNonlinearFunction(Any[operate(*, T, f, h) for h in g.rows])
 end
 
@@ -711,7 +711,7 @@ function operate(
     ::Type{T},
     f::MOI.VectorNonlinearFunction,
     g::T,
-) where {T}
+) where {T<:Number}
     return MOI.VectorNonlinearFunction(Any[operate(*, T, h, g) for h in f.rows])
 end
 
@@ -892,7 +892,7 @@ function operate(
     ::Type{T},
     f::MOI.VectorNonlinearFunction,
     g::T,
-) where {T}
+) where {T<:Number}
     return MOI.VectorNonlinearFunction(Any[operate(/, T, h, g) for h in f.rows])
 end
 
@@ -978,7 +978,7 @@ function operate(
         MOI.VectorQuadraticFunction{T},
         MOI.VectorNonlinearFunction,
     }...,
-) where {T}
+) where {T<:Number}
     out = Any[]
     for a in args
         if a isa T
@@ -1743,7 +1743,7 @@ function operate_output_index!(
     output_index::Integer,
     f::MOI.GenericVectorFunction,
     g::Union{T,MOI.AbstractScalarFunction},
-) where {T}
+) where {T<:Number}
     f.rows[output_index] = operate!(op, T, f.rows[output_index], g)
     return f
 end

@@ -442,7 +442,7 @@ function promote_operation(
             MOI.VectorNonlinearFunction,
         },
     }...,
-) where {T}
+) where {T<:Number}
     return MOI.VectorNonlinearFunction
 end
 
