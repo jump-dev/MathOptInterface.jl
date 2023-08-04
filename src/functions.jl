@@ -716,10 +716,7 @@ end
 
 Base.copy(f::VectorNonlinearFunction) = VectorNonlinearFunction(copy(f.rows))
 
-function Base.:(==)(
-    f::VectorNonlinearFunction,
-    g::VectorNonlinearFunction,
-)
+function Base.:(==)(f::VectorNonlinearFunction, g::VectorNonlinearFunction)
     return f.rows == g.rows
 end
 
