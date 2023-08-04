@@ -350,7 +350,7 @@ function map_indices(
     index_map::F,
     f::MOI.VectorNonlinearFunction,
 ) where {F<:Function}
-    return VectorNonlinearFunction(
+    return MOI.VectorNonlinearFunction(
         convert(Vector{Any}, map_indices(index_map, f.rows)),
     )
 end
