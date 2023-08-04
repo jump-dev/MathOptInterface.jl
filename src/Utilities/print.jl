@@ -269,7 +269,7 @@ function _to_string(
     model::MOI.ModelLike,
     f::MOI.AbstractVectorFunction,
 )
-    rows = map(fi -> _to_string(options, model, fi), eachscalar(f))
+    rows = map(fi -> _to_string(options, model, fi), scalarize(f))
     max_length = maximum(length.(rows))
     s = join(map(r -> string("│", rpad(r, max_length), "│"), rows), '\n')
     return string(
@@ -290,10 +290,7 @@ function _to_string(
 )
     return string(
         "\\begin{bmatrix}\n",
-        join(
-            map(fi -> _to_string(options, model, fi), eachscalar(f)),
-            "\\\\\n",
-        ),
+        join(map(fi -> _to_string(options, model, fi), scalarize(f)), "\\\\\n"),
         "\\end{bmatrix}",
     )
 end
