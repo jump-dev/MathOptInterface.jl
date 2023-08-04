@@ -551,11 +551,11 @@ end
 
 function substitute_variables(
     variable_map::F,
-    f::VectorNonlinearFunction,
+    f::MOI.VectorNonlinearFunction,
 ) where {F<:Function}
     new_rows =
         map(Base.Fix1(_unstable_substitute_variables, variable_map), f.rows)
-    return VectorNonlinearFunction(convert(Vector{Any}, new_rows))
+    return MOI.VectorNonlinearFunction(convert(Vector{Any}, new_rows))
 end
 
 """
