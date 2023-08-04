@@ -49,9 +49,12 @@ function bridge_constraint(
     if !iszero(scalar_const)
         throw(MOI.ScalarFunctionConstantNotZero{T,G,typeof(set)}(scalar_const))
     end
-    vector_f = convert(F, scalar_f)
     set_const = MOI.constant(set)
-    MOI.Utilities.operate_output_index!(-, T, 1, vector_f, set_const)
+    vector_f = MOI.Utilities.operate(
+        vcat,
+        T,
+        MOI.Utilities.operate(-, T, scalar_f, set_const),
+    )
     vector_constraint = MOI.add_constraint(model, vector_f, S(1))
     return VectorizeBridge{T,F,S,G}(vector_constraint, set_const)
 end
