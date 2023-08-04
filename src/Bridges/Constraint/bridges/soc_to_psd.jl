@@ -19,7 +19,7 @@ of the matrix:
 """
 function _soc_to_psd_matrix(
     ::Type{T},
-    f::Union{MOI.AbstractVectorFunction,AbstractVector{T}},
+    f::Union{MOI.AbstractVectorFunction,AbstractVector},
     g::Union{MOI.AbstractScalarFunction,T},
 ) where {T}
     F = MOI.Utilities.promote_operation(vcat, T, typeof(g), T)

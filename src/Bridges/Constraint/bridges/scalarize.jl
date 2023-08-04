@@ -43,14 +43,11 @@ function bridge_constraint(
     f::MOI.AbstractVectorFunction,
     set::MOI.Utilities.VectorLinearSet,
 ) where {T,F,S}
-    dimension = MOI.output_dimension(f)
-    constants = MOI.constant(f, T)
-    new_f = MOI.Utilities.scalarize(f, true)
-    constraints = Vector{MOI.ConstraintIndex{F,S}}(undef, dimension)
-    for i in 1:dimension
-        constraints[i] = MOI.add_constraint(model, new_f[i], S(-constants[i]))
-    end
-    return ScalarizeBridge{T,F,S}(constraints, constants)
+    constraints = MOI.ConstraintIndex{F,S}[
+        MOI.Utilities.normalize_and_add_constraint(model, fi, S(zero(T)))
+        for fi in MOI.Utilities.eachscalar(f)
+    ]
+    return ScalarizeBridge{T,F,S}(constraints, MOI.constant(f, T))
 end
 
 function MOI.supports_constraint(
@@ -270,24 +267,14 @@ function MOI.set(
     bridge::ScalarizeBridge{T,F,S},
     func,
 ) where {T,F,S}
-    old_constants = bridge.constants
     bridge.constants = MOI.constant(func, T)
-    new_func = MOI.Utilities.scalarize(func, true)
-    MOI.set.(
-        model,
-        MOI.ConstraintFunction(),
-        bridge.scalar_constraints,
-        new_func,
-    )
-    for i in eachindex(bridge.constants)
-        if bridge.constants[i] != old_constants[i]
-            MOI.set(
-                model,
-                MOI.ConstraintSet(),
-                bridge.scalar_constraints[i],
-                S(-bridge.constants[i]),
-            )
+    for (i, fi) in enumerate(MOI.Utilities.eachscalar(func))
+        ci = bridge.scalar_constraints[i]
+        if !iszero(bridge.constants[i])
+            fi = MOI.Utilities.operate!(-, T, fi, bridge.constants[i])
         end
+        MOI.set(model, MOI.ConstraintFunction(), ci, fi)
+        MOI.set(model, MOI.ConstraintSet(), ci, S(-bridge.constants[i]))
     end
     return
 end
