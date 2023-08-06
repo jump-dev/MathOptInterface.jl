@@ -263,7 +263,7 @@ end
 
 function MOI.set(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintFunction,
+   ::MOI.ConstraintFunction,
     bridge::ScalarizeBridge{T,F,S},
     func,
 ) where {T,F,S}
