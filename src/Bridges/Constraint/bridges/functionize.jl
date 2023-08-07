@@ -182,7 +182,7 @@ for these pairs of functions:
   * `F` in `S`
 """
 mutable struct FunctionConversionBridge{T,F,G,S} <:
-       AbstractFunctionConversionBridge{F,S}
+               AbstractFunctionConversionBridge{F,S}
     constraint::MOI.ConstraintIndex{F,S}
 end
 # The `struct` needs to be mutable if `F <: AbstractVectorFunction`
