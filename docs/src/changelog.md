@@ -7,7 +7,7 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.19.0 (August 3, 2023)
+## v1.19.0 (August 7, 2023)
 
 ### Added
 
@@ -30,7 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Added extensions to `solver-tests.yml` (#2229)
  - Refactored `test/Benchmarks` (#2234)
- - Fixed warnings in tests (#2241)
+ - Fixed warnings in tests (#2241) (#2243)
+ - Small refactoring of bridges for upcoming `VectorNonlinearFunction` (#2244)
+   (#2245)
 
 ## v1.18.0 (June 23, 2023)
 
