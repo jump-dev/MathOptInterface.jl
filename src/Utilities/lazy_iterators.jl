@@ -72,7 +72,7 @@ function lazy_map(::Type{T}, f, data::AbstractVector) where {T}
     return VectorLazyMap{T}(f, data)
 end
 
-const AnyLazyMap{T} = Union{LazyMap{T}, VectorLazyMap{T}}
+const AnyLazyMap{T} = Union{LazyMap{T},VectorLazyMap{T}}
 
 Base.size(it::AnyLazyMap) = size(it.data)
 

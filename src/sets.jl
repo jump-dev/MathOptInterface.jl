@@ -1777,14 +1777,16 @@ function Scaled{PositiveSemidefiniteConeTriangle}(side_dimension::Int)
 end
 
 # TODO remove in MOI v2
-function Base.getproperty(set::Scaled{PositiveSemidefiniteConeTriangle}, f::Symbol)
+function Base.getproperty(
+    set::Scaled{PositiveSemidefiniteConeTriangle},
+    f::Symbol,
+)
     if f == :side_dimension
         return getproperty(set.set, f)
     else
         return getfield(set, f)
     end
 end
-
 
 """
     SOS1{T<:Real}(weights::Vector{T})
