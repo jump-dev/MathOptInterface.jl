@@ -199,6 +199,15 @@ function MOI.supports_constraint(
     return true
 end
 
+# Without this, it is going to try creating `MOI.Scaled{MOI.Scaled{...}}`
+function MOI.supports_constraint(
+    ::Type{<:SetDotScalingBridge},
+    ::Type{<:MOI.AbstractVectorFunction},
+    ::Type{<:MOI.Scaled},
+)
+    return false
+end
+
 function MOI.supports_constraint(
     ::Type{<:SetDotInverseScalingBridge},
     ::Type{<:MOI.AbstractVectorFunction},
