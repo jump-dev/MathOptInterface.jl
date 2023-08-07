@@ -245,6 +245,7 @@ end
 """
 const ScalarFunctionizeBridge{T,S} =
     FunctionConversionBridge{T,MOI.ScalarAffineFunction{T},MOI.VariableIndex,S}
+
 const ScalarFunctionize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{ScalarFunctionizeBridge{T},OT}
 
