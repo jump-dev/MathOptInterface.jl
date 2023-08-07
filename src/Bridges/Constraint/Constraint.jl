@@ -110,11 +110,8 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, NormNuclearBridge{T})
     MOI.Bridges.add_bridge(bridged_model, HermitianToSymmetricPSDBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SquareBridge{T})
-    MOI.Bridges.add_bridge(bridged_model, SymmetricMatrixScalingBridge{T})
-    MOI.Bridges.add_bridge(
-        bridged_model,
-        SymmetricMatrixInverseScalingBridge{T},
-    )
+    MOI.Bridges.add_bridge(bridged_model, SetDotScalingBridge{T})
+    MOI.Bridges.add_bridge(bridged_model, SetDotInverseScalingBridge{T})
     MOI.Bridges.add_bridge(bridged_model, LogDetBridge{T})
     MOI.Bridges.add_bridge(bridged_model, RootDetBridge{T})
     MOI.Bridges.add_bridge(bridged_model, RSOCtoSOCBridge{T})

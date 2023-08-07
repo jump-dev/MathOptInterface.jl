@@ -22,14 +22,8 @@ in `S` to constraints in [`MOI.Scaled{S}`](@ref MathOptInterface.Scaled).
 
   * `F` in [`MOI.Scaled{S}`](@ref MathOptInterface.Scaled)
 """
-struct SetDotScalingBridge{T,S,F,G} <: SetMapBridge{
-    T,
-    MOI.Scaled{S},
-    S,
-    F,
-    G,
-}
-    constraint::MOI.ConstraintIndex{F, MOI.Scaled{S}}
+struct SetDotScalingBridge{T,S,F,G} <: SetMapBridge{T,MOI.Scaled{S},S,F,G}
+    constraint::MOI.ConstraintIndex{F,MOI.Scaled{S}}
 end
 
 const SetDotScaling{T,OT<:MOI.ModelLike} =
@@ -66,13 +60,13 @@ end
 _length(f::MOI.AbstractVectorFunction) = MOI.output_dimension(f)
 _length(f::AbstractVector) = length(f)
 
-function _scale(::Type{T}, ::Type{S}, func) where {T, S}
+function _scale(::Type{T}, ::Type{S}, func) where {T,S}
     set = MOI.Utilities.set_with_dimension(S, _length(func))
     scale = MOI.Utilities.SetDotScalingVector{T}(set)
     return MOI.Utilities.operate(*, T, LinearAlgebra.Diagonal(scale), func)
 end
 
-function _inverse_scale(::Type{T}, ::Type{S}, func) where {T, S}
+function _inverse_scale(::Type{T}, ::Type{S}, func) where {T,S}
     set = MOI.Utilities.set_with_dimension(S, _length(func))
     scale = MOI.Utilities.SetDotScalingVector{T}(set)
     inv_scale = MOI.Utilities.lazy_map(T, inv, scale)
@@ -132,13 +126,8 @@ in the `MOI.PositiveSemidefiniteConeTriangle`.
 
   * `F` in [`MOI.PositiveSemidefiniteConeTriangle`](@ref)
 """
-struct SetDotInverseScalingBridge{T,S,F,G} <: SetMapBridge{
-    T,
-    S,
-    MOI.Scaled{S},
-    F,
-    G,
-}
+struct SetDotInverseScalingBridge{T,S,F,G} <:
+       SetMapBridge{T,S,MOI.Scaled{S},F,G}
     constraint::MOI.ConstraintIndex{F,S}
 end
 
@@ -219,7 +208,6 @@ function MOI.supports_constraint(
     return true
 end
 
-
 # TODO remove in MOI v2
 const SymmetricMatrixScalingBridge = SetDotScalingBridge
-const SymmetricMatrixInverseScalingBridge = SetDotScalingBridge
+const SymmetricMatrixInverseScalingBridge = SetDotInverseScalingBridge

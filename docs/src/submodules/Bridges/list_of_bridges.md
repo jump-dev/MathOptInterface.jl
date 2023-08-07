@@ -54,8 +54,8 @@ Bridges.Constraint.NormSpectralBridge
 Bridges.Constraint.NormNuclearBridge
 Bridges.Constraint.SquareBridge
 Bridges.Constraint.HermitianToSymmetricPSDBridge
-Bridges.Constraint.SymmetricMatrixScalingBridge
-Bridges.Constraint.SymmetricMatrixInverseScalingBridge
+Bridges.Constraint.SetDotScalingBridge
+Bridges.Constraint.SetDotInverseScalingBridge
 Bridges.Constraint.RootDetBridge
 Bridges.Constraint.LogDetBridge
 Bridges.Constraint.IndicatorActiveOnFalseBridge
