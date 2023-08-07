@@ -4,7 +4,7 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-module TestConstraintSymmetricMatrixScaling
+module TestConstraintSetDotScaling
 
 using Test
 
@@ -23,7 +23,7 @@ end
 
 function test_scaling()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.SymmetricMatrixScalingBridge,
+        MOI.Bridges.Constraint.SetDotScalingBridge,
         """
         variables: x, y, z
         [x, 1.0 * y, z] in PositiveSemidefiniteConeTriangle(2)
@@ -38,7 +38,7 @@ end
 
 function test_scaling_vector_of_variables()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.SymmetricMatrixScalingBridge,
+        MOI.Bridges.Constraint.SetDotScalingBridge,
         """
         variables: x, y, z
         [x, y, z] in PositiveSemidefiniteConeTriangle(2)
@@ -53,7 +53,7 @@ end
 
 function test_scaling_quadratic()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.SymmetricMatrixScalingBridge,
+        MOI.Bridges.Constraint.SetDotScalingBridge,
         """
         variables: x, y, z
         [x, 1.0 * y * y + 1.0 * y + 3.0, z] in PositiveSemidefiniteConeTriangle(2)
@@ -68,7 +68,7 @@ end
 
 function test_inverse_scaling()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.SymmetricMatrixInverseScalingBridge,
+        MOI.Bridges.Constraint.SetDotInverseScalingBridge,
         """
         variables: x, y, z
         [x, √2 * y, z] in ScaledPositiveSemidefiniteConeTriangle(2)
@@ -83,7 +83,7 @@ end
 
 function test_inverse_scaling_vector_of_variables()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.SymmetricMatrixInverseScalingBridge,
+        MOI.Bridges.Constraint.SetDotInverseScalingBridge,
         """
         variables: x, y, z
         [x, y, z] in ScaledPositiveSemidefiniteConeTriangle(2)
@@ -98,7 +98,7 @@ end
 
 function test_inverse_scaling_quadratic()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.SymmetricMatrixInverseScalingBridge,
+        MOI.Bridges.Constraint.SetDotInverseScalingBridge,
         """
         variables: x, y, z
         [x, √2 * y * y, z] in ScaledPositiveSemidefiniteConeTriangle(2)
@@ -113,4 +113,4 @@ end
 
 end  # module
 
-TestConstraintSymmetricMatrixScaling.runtests()
+TestConstraintSetDotScaling.runtests()

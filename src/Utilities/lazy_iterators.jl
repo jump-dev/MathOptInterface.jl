@@ -92,7 +92,7 @@ Base.IteratorSize(it::AnyLazyMap) = Base.IteratorSize(it.data)
 Base.eltype(::AnyLazyMap{T}) where {T} = T
 
 function Iterators.reverse(it::AnyLazyMap{T}) where {T}
-    return AnyLazyMap{T}(it.f, Iterators.reverse(it.data))
+    return lazy_map(T, it.f, Iterators.reverse(it.data))
 end
 
 function Base.getindex(it::AnyLazyMap, i)

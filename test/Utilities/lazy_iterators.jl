@@ -47,14 +47,15 @@ function _test_lazy_map(T)
         @test length(v) == 2
         @test !isempty(v)
         @test eltype(v) == T
+        c = collect(v)
+        @test c isa Vector{T}
+        @test c == [4, 9]
         if a isa AbstractVector
             @test size(v) == (2,)
             @test v[1] == 4
             @test v[2] == 9
+            @test collect(Iterators.reverse(v)) == [9, 4]
         end
-        c = collect(v)
-        @test c isa Vector{T}
-        @test c == [4, 9]
     end
     return
 end
