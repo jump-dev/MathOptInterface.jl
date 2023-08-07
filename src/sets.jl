@@ -1768,7 +1768,8 @@ have to be multiplied by `2`.
     Using `MOI.ScaledPositiveSemidefiniteConeTriangle(d)` is deprecated, use
     `MOI.Scaled(MOI.PositiveSemidefiniteConeTriangle(d))`.
 """
-const ScaledPositiveSemidefiniteConeTriangle = Scaled{PositiveSemidefiniteConeTriangle}
+const ScaledPositiveSemidefiniteConeTriangle =
+    Scaled{PositiveSemidefiniteConeTriangle}
 
 """
     SOS1{T<:Real}(weights::Vector{T})
