@@ -8,7 +8,7 @@
     SetDotScalingBridge{T,S,F,G} <: Bridges.Constraint.AbstractBridge
 
 `SetDotScalingBridge` implements the reformulation from constraints
-in `S` to constraints in [`MOI.Scaled{S}`](@ref MathOptInterface.Scaled).
+in `S` to constraints in [`MOI.Scaled{S}`](@ref MOI.Scaled).
 
 ## Source node
 
@@ -20,7 +20,7 @@ in `S` to constraints in [`MOI.Scaled{S}`](@ref MathOptInterface.Scaled).
 
 `SetDotScalingBridge` creates:
 
-  * `F` in [`MOI.Scaled{S}`](@ref MathOptInterface.Scaled)
+  * `F` in [`MOI.Scaled{S}`](@ref MOI.Scaled)
 """
 struct SetDotScalingBridge{T,S,F,G} <: SetMapBridge{T,MOI.Scaled{S},S,F,G}
     constraint::MOI.ConstraintIndex{F,MOI.Scaled{S}}
@@ -108,23 +108,22 @@ function MOI.Bridges.inverse_adjoint_map_function(
 end
 
 """
-    SetDotInverseScalingBridge{T,F,G} <: Bridges.Constraint.AbstractBridge
+    SetDotInverseScalingBridge{T,S,F,G} <: Bridges.Constraint.AbstractBridge
 
 `SetDotInverseScalingBridge` implements the reformulation from constraints
-in the `MOI.ScaledPositiveSemidefiniteConeTriangle` to constraints
-in the `MOI.PositiveSemidefiniteConeTriangle`.
+in the `MOI.Scaled{S}` to constraints in the `S`.
 
 ## Source node
 
 `SetDotInverseScalingBridge` supports:
 
-  * `G` in [`MOI.ScaledPositiveSemidefiniteConeTriangle`](@ref)
+  * `G` in [`MOI.Scaled{S}`](@ref MOI.Scaled)
 
 ## Target node
 
 `SetDotInverseScalingBridge` creates:
 
-  * `F` in [`MOI.PositiveSemidefiniteConeTriangle`](@ref)
+  * `F` in `S`
 """
 struct SetDotInverseScalingBridge{T,S,F,G} <:
        SetMapBridge{T,S,MOI.Scaled{S},F,G}
