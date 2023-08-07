@@ -1344,6 +1344,27 @@ function test_parse_nonlinear_objective_only()
     return
 end
 
+function test_integer_coefficients()
+    x = MOI.VariableIndex(1)
+    names = Dict(x => "x")
+    f = 2 * x * x + 3 * x + 4
+    @test MOF.moi_to_object(f, names) == MOF.OrderedObject(
+        "type" => "ScalarQuadraticFunction",
+        "affine_terms" => [
+            MOF.OrderedObject("coefficient" => 3, "variable" => "x"),
+        ],
+        "quadratic_terms" => [
+            MOF.OrderedObject(
+                "coefficient" => 4,
+                "variable_1" => "x",
+                "variable_2" => "x",
+            ),
+        ],
+        "constant" => 4,
+    )
+    return
+end
+
 end
 
 TestMOF.runtests()
