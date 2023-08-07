@@ -206,7 +206,7 @@ function test_set_dot_scaling(n = 10)
     is = MOI.Utilities.symmetric_matrix_inverse_scaling_vector(Float64, N)
     is32 = MOI.Utilities.symmetric_matrix_inverse_scaling_vector(Float32, N)
     hpsd = MOI.HermitianPositiveSemidefiniteConeTriangle(n)
-    hermitian = MOI.Utilities.SetDotScalingVector{Float64}(hpsd, N)
+    hermitian = MOI.Utilities.SetDotScalingVector{Float64}(hpsd)
     k = 0
     imag_k = 0
     for j in 1:n

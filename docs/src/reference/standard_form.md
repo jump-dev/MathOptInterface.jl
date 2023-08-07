@@ -99,6 +99,7 @@ SOS2
 Indicator
 Complements
 HyperRectangle
+Scaled
 ```
 
 ## Constraint programming sets
@@ -147,7 +148,6 @@ List of recognized matrix sets.
 PositiveSemidefiniteConeTriangle
 PositiveSemidefiniteConeSquare
 HermitianPositiveSemidefiniteConeTriangle
-ScaledPositiveSemidefiniteConeTriangle
 LogDetConeTriangle
 LogDetConeSquare
 RootDetConeTriangle

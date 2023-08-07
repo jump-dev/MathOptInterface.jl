@@ -338,6 +338,7 @@ julia> MOI.Utilities.operate(*, Float64, Diagonal(a), ones(3))
 struct SetDotScalingVector{T,S<:MOI.AbstractSet} <: AbstractVector{T}
     set::S
 end
+
 function SetDotScalingVector{T}(s::MOI.AbstractSet) where {T}
     return SetDotScalingVector{T,typeof(s)}(s)
 end
@@ -355,7 +356,7 @@ function symmetric_matrix_scaling_vector(::Type{T}, n) where {T}
 end
 
 function symmetric_matrix_inverse_scaling_vector(::Type{T}, n) where {T}
-    return LazyMap{T}(inv, symmetric_matrix_scaling_vector(T, n))
+    return lazy_map(T, inv, symmetric_matrix_scaling_vector(T, n))
 end
 
 """
