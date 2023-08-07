@@ -1350,9 +1350,8 @@ function test_integer_coefficients()
     f = 2 * x * x + 3 * x + 4
     @test MOF.moi_to_object(f, names) == MOF.OrderedObject(
         "type" => "ScalarQuadraticFunction",
-        "affine_terms" => [
-            MOF.OrderedObject("coefficient" => 3, "variable" => "x"),
-        ],
+        "affine_terms" =>
+            [MOF.OrderedObject("coefficient" => 3, "variable" => "x")],
         "quadratic_terms" => [
             MOF.OrderedObject(
                 "coefficient" => 4,
