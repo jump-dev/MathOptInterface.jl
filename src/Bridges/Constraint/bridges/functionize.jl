@@ -282,6 +282,28 @@ const VectorFunctionize{T,OT<:MOI.ModelLike} =
 
 # AbstractScalarFunction -> ScalarQuadraticFunction
 
+"""
+    ToScalarQuadraticBridge{T,G,S} <: AbstractFunctionConversionBridge{G,S}
+
+`ToScalarQuadraticBridge` implements the following reformulation:
+
+  * ``g(x) \\in S`` into ``f(x) \\in S``
+
+where `g` is an abstract scalar function and `f` is a
+[`MOI.ScalarQuadraticFunction`](@ref).
+
+## Source node
+
+`ToScalarQuadraticBridge` supports:
+
+  * `G<:AbstractScalarFunction` in `S`
+
+## Target nodes
+
+`ToScalarQuadraticBridge` creates:
+
+  * [`MOI.ScalarQuadraticFunction`](@ref) in `S`
+"""
 const ToScalarQuadraticBridge{T,G,S} =
     FunctionConversionBridge{T,MOI.ScalarQuadraticFunction{T},G,S}
 
@@ -290,6 +312,28 @@ const ToScalarQuadratic{T,OT<:MOI.ModelLike} =
 
 # AbstractVectorFunction -> VectorQuadraticFunction
 
+"""
+    ToVectorQuadraticBridge{T,G,S} <: AbstractFunctionConversionBridge{G,S}
+
+`ToVectorQuadraticBridge` implements the following reformulation:
+
+  * ``g(x) \\in S`` into ``f(x) \\in S``
+
+where `g` is an abstract vector function and `f` is a
+[`MOI.VectorQuadraticFunction`](@ref).
+
+## Source node
+
+`ToVectorQuadraticBridge` supports:
+
+  * `G<:AbstractVectorFunction` in `S`
+
+## Target nodes
+
+`ToVectorQuadraticBridge` creates:
+
+  * [`MOI.VectorQuadraticFunction`](@ref) in `S`
+"""
 const ToVectorQuadraticBridge{T,G,S} =
     FunctionConversionBridge{T,MOI.VectorQuadraticFunction{T},G,S}
 
@@ -298,6 +342,28 @@ const ToVectorQuadratic{T,OT<:MOI.ModelLike} =
 
 # AbstractScalarFunction -> ScalarNonlinearFunction
 
+"""
+    ToScalarNonlinearBridge{T,G,S} <: AbstractFunctionConversionBridge{G,S}
+
+`ToScalarNonlinearBridge` implements the following reformulation:
+
+  * ``g(x) \\in S`` into ``f(x) \\in S``
+
+where `g` is an abstract scalar function and `f` is a
+[`MOI.ScalarNonlinearFunction`](@ref).
+
+## Source node
+
+`ToScalarNonlinearBridge` supports:
+
+  * `G<:AbstractScalarFunction` in `S`
+
+## Target nodes
+
+`ToScalarNonlinearBridge` creates:
+
+  * [`MOI.ScalarNonlinearFunction`](@ref) in `S`
+"""
 const ToScalarNonlinearBridge{T,G,S} =
     FunctionConversionBridge{T,MOI.ScalarNonlinearFunction,G,S}
 
