@@ -103,15 +103,6 @@ function MOI.delete(model::MOI.ModelLike, c::AbstractFunctionConversionBridge)
     return
 end
 
-function MOI.get(
-    model::MOI.ModelLike,
-    attr::MOI.CanonicalConstraintFunction,
-    b::AbstractFunctionConversionBridge,
-)
-    f = MOI.get(model, MOI.ConstraintFunction(), b)
-    return MOI.Utilities.canonical(f)
-end
-
 function MOI.set(
     model::MOI.ModelLike,
     ::MOI.ConstraintFunction,
@@ -166,7 +157,75 @@ function invariant_under_function_conversion(
 end
 
 """
-    ScalarFunctionizeBridge{T,S} <: Bridges.Constraint.AbstractBridge
+    FunctionConversionBridge{T,F,G,S} <: AbstractFunctionConversionBridge{G,S}
+
+`FunctionConversionBridge` implements the following reformulations:
+
+  * ``g(x) \\in S`` into ``f(x) \\in S``
+
+for these pairs of functions:
+
+ * [`MOI.ScalarAffineFunction`](@ref)` to [`MOI.ScalarQuadraticFunction`](@ref)
+ * [`MOI.ScalarQuadraticFunction`](@ref)  to [`MOI.ScalarNonlinearFunction`](@ref)
+ * [`MOI.VectorAffineFunction`](@ref) to [`MOI.VectorQuadraticFunction`](@ref)
+
+## Source node
+
+`FunctionConversionBridge` supports:
+
+  * `G` in `S`
+
+## Target nodes
+
+`FunctionConversionBridge` creates:
+
+  * `F` in `S`
+"""
+mutable struct FunctionConversionBridge{T,F,G,S} <:
+       AbstractFunctionConversionBridge{F,S}
+    constraint::MOI.ConstraintIndex{F,S}
+end
+# The `struct` needs to be mutable if `F <: AbstractVectorFunction`
+# in case one row is deleted. See `MOI.delete` above.
+
+function bridge_constraint(
+    ::Type{FunctionConversionBridge{T,F,G,S}},
+    model::MOI.ModelLike,
+    f::G,
+    s::S,
+) where {T,F,G,S}
+    ci = MOI.add_constraint(model, convert(F, f), s)
+    return FunctionConversionBridge{T,F,G,S}(ci)
+end
+
+function MOI.supports_constraint(
+    ::Type{<:FunctionConversionBridge{T,F}},
+    ::Type{G},
+    ::Type{<:MOI.AbstractSet},
+) where {T,F,G<:MOI.AbstractFunction}
+    return MOI.supports_convert(F, G)
+end
+
+function concrete_bridge_type(
+    ::Type{<:FunctionConversionBridge{T,F}},
+    G::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet},
+) where {T,F}
+    return FunctionConversionBridge{T,F,G,S}
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    ::MOI.ConstraintFunction,
+    b::FunctionConversionBridge{T,F,G},
+) where {T,F,G}
+    f = MOI.get(model, MOI.ConstraintFunction(), b.constraint)
+    return convert(G, f)
+end
+
+"""
+
+    ScalarFunctionizeBridge{T,S} = FunctionConversionBridge{T,MOI.ScalarAffineFunction{T},MOI.VariableIndex,S}
 
 `ScalarFunctionizeBridge` implements the following reformulations:
 
@@ -184,51 +243,15 @@ end
 
   * [`MOI.ScalarAffineFunction{T}`](@ref) in `S`
 """
-struct ScalarFunctionizeBridge{T,S} <:
-       AbstractFunctionConversionBridge{MOI.ScalarAffineFunction{T},S}
-    constraint::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},S}
-end
-
+const ScalarFunctionizeBridge{T,S} =
+    FunctionConversionBridge{T,MOI.ScalarAffineFunction{T},MOI.VariableIndex,S}
 const ScalarFunctionize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{ScalarFunctionizeBridge{T},OT}
 
-function bridge_constraint(
-    ::Type{ScalarFunctionizeBridge{T,S}},
-    model,
-    f::MOI.VariableIndex,
-    s::S,
-) where {T,S}
-    ci = MOI.add_constraint(model, convert(MOI.ScalarAffineFunction{T}, f), s)
-    return ScalarFunctionizeBridge{T,S}(ci)
-end
-
-function MOI.supports_constraint(
-    ::Type{ScalarFunctionizeBridge{T}},
-    ::Type{<:MOI.VariableIndex},
-    ::Type{<:MOI.AbstractScalarSet},
-) where {T}
-    return true
-end
-
-function concrete_bridge_type(
-    ::Type{<:ScalarFunctionizeBridge{T}},
-    ::Type{MOI.VariableIndex},
-    S::Type{<:MOI.AbstractScalarSet},
-) where {T}
-    return ScalarFunctionizeBridge{T,S}
-end
-
-function MOI.get(
-    model::MOI.ModelLike,
-    ::MOI.ConstraintFunction,
-    b::ScalarFunctionizeBridge,
-)
-    f = MOI.get(model, MOI.ConstraintFunction(), b.constraint)
-    return convert(MOI.VariableIndex, f)
-end
+# VectorOfVariables -> VectorAffineFunction  # Handled by VectorFunctionizeBridge
 
 """
-    VectorFunctionizeBridge{T,S} <: Bridges.Constraint.AbstractBridge
+    VectorFunctionizeBridge{T,S} = FunctionConversionBridge{T,MOI.VectorAffineFunction{T},S}
 
 `VectorFunctionizeBridge` implements the following reformulations:
 
@@ -246,170 +269,36 @@ end
 
   * [`MOI.VectorAffineFunction{T}`](@ref) in `S`
 """
-mutable struct VectorFunctionizeBridge{T,S} <:
-               AbstractFunctionConversionBridge{MOI.VectorAffineFunction{T},S}
-    constraint::MOI.ConstraintIndex{MOI.VectorAffineFunction{T},S}
-end
+const VectorFunctionizeBridge{T,S} = FunctionConversionBridge{
+    T,
+    MOI.VectorAffineFunction{T},
+    MOI.VectorOfVariables,
+    S,
+}
 
 const VectorFunctionize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{VectorFunctionizeBridge{T},OT}
 
-function bridge_constraint(
-    ::Type{VectorFunctionizeBridge{T,S}},
-    model,
-    f::MOI.VectorOfVariables,
-    s::S,
-) where {T,S}
-    ci = MOI.add_constraint(model, convert(MOI.VectorAffineFunction{T}, f), s)
-    return VectorFunctionizeBridge{T,S}(ci)
-end
+# AbstractScalarFunction -> ScalarQuadraticFunction
 
-function MOI.supports_constraint(
-    ::Type{VectorFunctionizeBridge{T}},
-    ::Type{MOI.VectorOfVariables},
-    ::Type{<:MOI.AbstractVectorSet},
-) where {T}
-    return true
-end
+const ToScalarQuadraticBridge{T,G,S} =
+    FunctionConversionBridge{T,MOI.ScalarQuadraticFunction{T},G,S}
 
-function concrete_bridge_type(
-    ::Type{<:VectorFunctionizeBridge{T}},
-    ::Type{MOI.VectorOfVariables},
-    S::Type{<:MOI.AbstractVectorSet},
-) where {T}
-    return VectorFunctionizeBridge{T,S}
-end
+const ToScalarQuadratic{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{ToScalarQuadraticBridge{T},OT}
 
-function MOI.get(
-    model::MOI.ModelLike,
-    ::MOI.ConstraintFunction,
-    b::VectorFunctionizeBridge,
-)
-    f = MOI.get(model, MOI.ConstraintFunction(), b.constraint)
-    return MOI.Utilities.convert_approx(MOI.VectorOfVariables, f)
-end
+# AbstractVectorFunction -> VectorQuadraticFunction
 
-"""
-    FunctionConversionBridge{T,F,G,S} <: AbstractFunctionConversionBridge{G,S}
+const ToVectorQuadraticBridge{T,G,S} =
+    FunctionConversionBridge{T,MOI.VectorQuadraticFunction{T},G,S}
 
-`FunctionConversionBridge` implements the following reformulations:
+const ToVectorQuadratic{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{ToVectorQuadraticBridge{T},OT}
 
-  * ``f(x) \\in S`` into ``g(x) \\in S``
+# AbstractScalarFunction -> ScalarNonlinearFunction
 
-for these pairs of functions:
+const ToScalarNonlinearBridge{T,G,S} =
+    FunctionConversionBridge{T,MOI.ScalarNonlinearFunction,G,S}
 
- * [`MOI.ScalarAffineFunction`](@ref)` to [`MOI.ScalarQuadraticFunction`](@ref)
- * [`MOI.ScalarQuadraticFunction`](@ref)  to [`MOI.ScalarNonlinearFunction`](@ref)
- * [`MOI.VectorAffineFunction`](@ref) to [`MOI.VectorQuadraticFunction`](@ref)
-
-## Source node
-
-`FunctionConversionBridge` supports:
-
-  * `F` in `S`
-
-## Target nodes
-
-`FunctionConversionBridge` creates:
-
-  * `G` in `S`
-"""
-struct FunctionConversionBridge{T,F,G,S} <:
-       AbstractFunctionConversionBridge{G,S}
-    constraint::MOI.ConstraintIndex{G,S}
-end
-
-const FunctionConversion{T,OT<:MOI.ModelLike} =
-    SingleBridgeOptimizer{FunctionConversionBridge{T},OT}
-
-function bridge_constraint(
-    ::Type{FunctionConversionBridge{T,F,G,S}},
-    model::MOI.ModelLike,
-    f::F,
-    s::S,
-) where {T,F,G,S}
-    ci = MOI.add_constraint(model, convert(G, f), s)
-    return FunctionConversionBridge{T,F,G,S}(ci)
-end
-
-function MOI.get(
-    model::MOI.ModelLike,
-    ::MOI.ConstraintFunction,
-    b::FunctionConversionBridge{T,F},
-) where {T,F}
-    g = MOI.get(model, MOI.ConstraintFunction(), b.constraint)
-    return convert(F, g)
-end
-
-# VariableIndex -> ScalarAffineFunction  # Handled by ScalarFunctionizeBridge
-
-# ScalarAffineFunction -> ScalarQuadraticFunction
-
-function MOI.supports_constraint(
-    ::Type{<:FunctionConversionBridge{T}},
-    ::Type{MOI.ScalarAffineFunction{T}},
-    ::Type{<:MOI.AbstractScalarSet},
-) where {T}
-    return true
-end
-
-function concrete_bridge_type(
-    ::Type{<:FunctionConversionBridge{T}},
-    ::Type{MOI.ScalarAffineFunction{T}},
-    S::Type{<:MOI.AbstractScalarSet},
-) where {T}
-    return FunctionConversionBridge{
-        T,
-        MOI.ScalarAffineFunction{T},
-        MOI.ScalarQuadraticFunction{T},
-        S,
-    }
-end
-
-# ScalarQuadraticFunction -> ScalarNonlinearFunction
-
-function MOI.supports_constraint(
-    ::Type{<:FunctionConversionBridge{T}},
-    ::Type{MOI.ScalarQuadraticFunction{T}},
-    ::Type{<:MOI.AbstractScalarSet},
-) where {T}
-    return true
-end
-
-function concrete_bridge_type(
-    ::Type{<:FunctionConversionBridge{T}},
-    ::Type{MOI.ScalarQuadraticFunction{T}},
-    S::Type{<:MOI.AbstractScalarSet},
-) where {T}
-    return FunctionConversionBridge{
-        T,
-        MOI.ScalarQuadraticFunction{T},
-        MOI.ScalarNonlinearFunction,
-        S,
-    }
-end
-
-# VectorOfVariables -> VectorAffineFunction  # Handled by VectorFunctionizeBridge
-
-# VectorAffineFunction -> VectorQuadraticFunction
-
-function MOI.supports_constraint(
-    ::Type{<:FunctionConversionBridge{T}},
-    ::Type{MOI.VectorAffineFunction{T}},
-    ::Type{<:MOI.AbstractVectorSet},
-) where {T}
-    return true
-end
-
-function concrete_bridge_type(
-    ::Type{<:FunctionConversionBridge{T}},
-    ::Type{MOI.VectorAffineFunction{T}},
-    S::Type{<:MOI.AbstractVectorSet},
-) where {T}
-    return FunctionConversionBridge{
-        T,
-        MOI.VectorAffineFunction{T},
-        MOI.VectorQuadraticFunction{T},
-        S,
-    }
-end
+const ToScalarNonlinear{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{ToScalarNonlinearBridge{T},OT}

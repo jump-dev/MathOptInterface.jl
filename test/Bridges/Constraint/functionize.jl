@@ -305,7 +305,7 @@ end
 function test_FunctionConversionBridge()
     # ScalarAffineFunction -> ScalarQuadraticFunction
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.FunctionConversionBridge,
+        MOI.Bridges.Constraint.ToScalarQuadraticBridge,
         """
         variables: x
         1.0 * x in ZeroOne()
@@ -317,7 +317,7 @@ function test_FunctionConversionBridge()
     )
     # ScalarQuadraticFunction -> ScalarNonlinearFunction
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.FunctionConversionBridge,
+        MOI.Bridges.Constraint.ToScalarNonlinearBridge,
         """
         variables: x, y
         1.0 * x * x + 2.0 * x * y + 3.0 * y + 4.0 >= 1.0
@@ -329,7 +329,7 @@ function test_FunctionConversionBridge()
     )
     # VectorAffineFunction -> VectorQuadraticFunction
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.FunctionConversionBridge,
+        MOI.Bridges.Constraint.ToVectorQuadraticBridge,
         """
         variables: t, x
         [1.0 * t, 1.0 * x] in SecondOrderCone(2)

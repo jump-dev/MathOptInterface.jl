@@ -904,6 +904,26 @@ end
 ### Base.convert
 ###
 
+"""
+    supports_convert(F::Type{<:MOI.AbstractFunction}, G::Type{<:MOI.AbstractFunction})
+
+Return a `Bool` indicating whether any function of type `G` can be converted
+to a function of type `F` with `convert`.
+"""
+function supports_convert(
+    ::Type{<:AbstractFunction},
+    ::Type{<:AbstractFunction},
+)
+    return false
+end
+
+function supports_convert(
+    F::Type{<:AbstractVectorFunction},
+    G::Type{<:AbstractVectorFunction},
+)
+    return supports_convert(Utilities.scalar_type(F), Utilities.scalar_type(G))
+end
+
 # VariableIndex
 
 function Base.convert(::Type{VariableIndex}, f::ScalarAffineFunction)
@@ -932,6 +952,13 @@ function Base.convert(
 end
 
 # ScalarAffineFunction
+
+function supports_convert(
+    ::Type{ScalarAffineFunction{T}},
+    ::Type{VariableIndex},
+) where {T}
+    return true
+end
 
 function Base.convert(::Type{ScalarAffineFunction{T}}, α::T) where {T}
     return ScalarAffineFunction{T}(ScalarAffineTerm{T}[], α)
@@ -1032,6 +1059,13 @@ function Base.convert(
 end
 
 # ScalarQuadraticFunction
+
+function supports_convert(
+    ::Type{ScalarQuadraticFunction{T}},
+    ::Type{<:Union{VariableIndex,ScalarAffineFunction{T}}},
+) where {T}
+    return true
+end
 
 function Base.convert(::Type{ScalarQuadraticFunction{T}}, α::T) where {T}
     return ScalarQuadraticFunction{T}(
