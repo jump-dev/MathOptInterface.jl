@@ -194,18 +194,9 @@ end
 function MOI.supports_constraint(
     ::Type{<:SetDotScalingBridge},
     ::Type{<:MOI.AbstractVectorFunction},
-    ::Type{<:MOI.AbstractVectorSet},
+    S::Type{<:MOI.AbstractVectorSet},
 )
-    return true
-end
-
-# Without this, it is going to try creating `MOI.Scaled{MOI.Scaled{...}}`
-function MOI.supports_constraint(
-    ::Type{<:SetDotScalingBridge},
-    ::Type{<:MOI.AbstractVectorFunction},
-    ::Type{<:MOI.Scaled},
-)
-    return false
+    return MOI.is_set_dot_scaled(S)
 end
 
 function MOI.supports_constraint(

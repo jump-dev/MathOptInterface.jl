@@ -98,7 +98,7 @@ The matrix-valued set types implemented in MathOptInterface.jl are:
 | [`NormNuclearCone(r, c)`](@ref MathOptInterface.NormNuclearCone)      | ``\{ (t, X) \in \mathbb{R}^{1 + r \times c} : t \ge \sum_i \sigma_i(X), X \mbox{ is a } r\times c\mbox{ matrix} \}`` |
 | [`HermitianPositiveSemidefiniteConeTriangle(d)`](@ref MathOptInterface.HermitianPositiveSemidefiniteConeTriangle) | The cone of Hermitian positive semidefinite matrices, with
 `side_dimension` rows and columns. |
-| [`Scaled(S)`](@ref MathOptInterface.Scaled) | The set `S` scaled so that [`MOI.Utilities.set_dot`](@ref) corresponds to `LinearAlgebra.dot` |
+| [`Scaled(S)`](@ref MathOptInterface.Scaled) | The set `S` scaled so that [`Utilities.set_dot`](@ref MathOptInterface.Utilities.set_dot) corresponds to `LinearAlgebra.dot` |
 
 Some of these cones can take two forms: `XXXConeTriangle` and `XXXConeSquare`.
 

@@ -1236,6 +1236,8 @@ products we have
 """
 abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
 
+is_set_dot_scaled(::Type{<:AbstractSymmetricMatrixSetTriangle}) = true
+
 function dimension(set::AbstractSymmetricMatrixSetTriangle)
     d = side_dimension(set)
     return div(d * (d + 1), 2)
@@ -1673,6 +1675,23 @@ triangular_form(::Type{RootDetConeSquare}) = RootDetConeTriangle
 
 function triangular_form(set::RootDetConeSquare)
     return RootDetConeTriangle(set.side_dimension)
+end
+
+"""
+    is_set_dot_scaled(::Type{<:AbstractVectorFunction})
+
+Return whether [`Utilities.set_dot(x, y)`](@ref Utilities.set_dot) is equivalent
+to `x' * Diagonal(s) * y` for some scaling vector `s`.
+"""
+is_set_dot_scaled(::Type{<:AbstractVectorSet}) = false
+
+function is_set_dot_scaled(::Type{<:Union{
+    AbstractSymmetricMatrixSetTriangle,
+    HermitianPositiveSemidefiniteConeTriangle,
+    LogDetConeTriangle,
+    RootDetConeTriangle,
+}})
+    return true
 end
 
 """
