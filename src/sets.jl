@@ -1681,7 +1681,15 @@ end
     is_set_dot_scaled(::Type{<:AbstractVectorFunction})
 
 Return whether [`Utilities.set_dot(x, y)`](@ref Utilities.set_dot) is equivalent
-to `x' * Diagonal(s) * y` for some scaling vector `s`.
+to `x' * Diagonal(s) * y` for some scaling vector `s`. This scaling vector `s`
+can be obtained with [`Utilities.SetDotScalingVector`](@ref).
+
+!!! note
+    For such sets `S`, we `Diagonal(s) * S` is [`MOI.Scaled(S)`](@ref Scaled).
+    This linear relationship between the two sets allows briding between them
+    with [`Bridges.Constraint.SetDotScalingBridge`](@ref) and
+    [`Bridges.Constraint.SetDotInverseScalingBridge`](@ref). This scaling vector
+    `s` is also used by Dualization.jl to compute the dual.
 """
 is_set_dot_scaled(::Type{<:AbstractVectorSet}) = false
 
