@@ -219,7 +219,7 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     b::FunctionConversionBridge{T,F,G},
 ) where {T,F,G}
-    f = MOI.get(model, MOI.ConstraintFunction(), b.constraint)
+    f = MOI.get(model, MOI.CanonicalConstraintFunction(), b.constraint)
     return convert(G, f)
 end
 
