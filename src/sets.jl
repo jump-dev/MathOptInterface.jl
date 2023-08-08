@@ -1693,12 +1693,16 @@ can be obtained with [`Utilities.SetDotScalingVector`](@ref).
 """
 is_set_dot_scaled(::Type{<:AbstractVectorSet}) = false
 
-function is_set_dot_scaled(::Type{<:Union{
-    AbstractSymmetricMatrixSetTriangle,
-    HermitianPositiveSemidefiniteConeTriangle,
-    LogDetConeTriangle,
-    RootDetConeTriangle,
-}})
+function is_set_dot_scaled(
+    ::Type{
+        <:Union{
+            AbstractSymmetricMatrixSetTriangle,
+            HermitianPositiveSemidefiniteConeTriangle,
+            LogDetConeTriangle,
+            RootDetConeTriangle,
+        },
+    },
+)
     return true
 end
 
