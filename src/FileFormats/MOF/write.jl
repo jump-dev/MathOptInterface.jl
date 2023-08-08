@@ -141,7 +141,7 @@ end
 # ========== Typed scalar functions ==========
 
 function moi_to_object(
-    foo::MOI.ScalarAffineTerm{Float64},
+    foo::MOI.ScalarAffineTerm,
     name_map::Dict{MOI.VariableIndex,String},
 )
     return OrderedObject(
@@ -151,7 +151,7 @@ function moi_to_object(
 end
 
 function moi_to_object(
-    foo::MOI.ScalarAffineFunction{Float64},
+    foo::MOI.ScalarAffineFunction,
     name_map::Dict{MOI.VariableIndex,String},
 )
     return OrderedObject(
@@ -162,7 +162,7 @@ function moi_to_object(
 end
 
 function moi_to_object(
-    foo::MOI.ScalarQuadraticTerm{Float64},
+    foo::MOI.ScalarQuadraticTerm,
     name_map::Dict{MOI.VariableIndex,String},
 )
     return OrderedObject(
@@ -173,7 +173,7 @@ function moi_to_object(
 end
 
 function moi_to_object(
-    foo::MOI.ScalarQuadraticFunction{Float64},
+    foo::MOI.ScalarQuadraticFunction,
     name_map::Dict{MOI.VariableIndex,String},
 )
     return OrderedObject(
