@@ -911,7 +911,7 @@ Return a `Float64` returning the *cost* of converting any function of type `G`
 to a function of type `F` with `convert`. This cost is used to compute
 [`Bridges.bridging_cost`](@ref).
 This cost is `Inf` should be used to avoid the
-[`FunctionConversionBridge`](@ref) to attempt the conversion.
+[`Bridges.Constraint.FunctionConversionBridge`](@ref) to attempt the conversion.
 """
 function conversion_cost(::Type{<:AbstractFunction}, ::Type{<:AbstractFunction})
     return Inf
