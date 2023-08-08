@@ -1795,7 +1795,7 @@ function test_bridge_selection()
     }
     @test MOI.Bridges.bridge(bridged_mock, c) isa
           MOI.Bridges.Constraint.RSOCtoPSDBridge
-    @test bridged_mock.graph.constraint_dist[MOI.Bridges.node(
+    @test bridged_mock.graph.constraint_cost[MOI.Bridges.node(
         bridged_mock,
         MOI.VectorOfVariables,
         MOI.RotatedSecondOrderCone,

@@ -33,7 +33,7 @@ end
 
 function _printed_cost(cost)
     if isinteger(cost)
-        s = string(round(cost))
+        s = string(round(Int, cost))
     else
         s = string(cost)
     end
