@@ -318,6 +318,10 @@ end
 """
     ScalarQuadraticToScalarNonlinearBridge{T,S} <: Bridges.Constraint.AbstractBridge
 
+!!! warning
+    This bridge is not enabled by default, and it may be removed in a future
+    release of MathOptInterface.
+
 `ScalarQuadraticToScalarNonlinearBridge` implements the following reformulations:
 
   * ``f(x) \\in S`` into ``g(x) \\in S``
