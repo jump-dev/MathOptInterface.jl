@@ -154,7 +154,6 @@ Utilities.get_fallback
 The following utilities are available for functions:
 
 ```@docs
-supports_convert
 Utilities.eval_variables
 Utilities.map_indices
 Utilities.substitute_variables
