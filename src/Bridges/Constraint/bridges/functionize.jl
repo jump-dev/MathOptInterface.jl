@@ -219,8 +219,13 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     b::FunctionConversionBridge{T,F,G},
 ) where {T,F,G}
-    f = MOI.get(model, MOI.CanonicalConstraintFunction(), b.constraint)
-    return convert(G, f)
+    # TODO(odow): there's a bug _somewhere_ in call_in_context, which means that
+    # using CanonicalConstraintFunction here doesn't work. I got too confused
+    # trying to track it down, so I explicitly called canonical here instead.
+    # We need canonical, because the downstream bridges may have added
+    # additional terms that mean it can't be directly converted to G.
+    f = MOI.get(model, MOI.ConstraintFunction(), b.constraint)
+    return convert(G, MOI.Utilities.canonical(f))
 end
 
 """
