@@ -214,7 +214,9 @@ function concrete_bridge_type(
     return FunctionConversionBridge{T,F,G,S}
 end
 
-function MOI.Bridges.cost(::Type{<:FunctionConversionBridge{T,F,G}}) where {T,F,G}
+function MOI.Bridges.cost(
+    ::Type{<:FunctionConversionBridge{T,F,G}},
+) where {T,F,G}
     return MOI.conversion_cost(F, G)
 end
 

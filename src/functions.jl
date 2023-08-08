@@ -913,10 +913,7 @@ to a function of type `F` with `convert`. This cost is used to compute
 This cost is `Inf` should be used to avoid the
 [`FunctionConversionBridge`](@ref) to attempt the conversion.
 """
-function conversion_cost(
-    ::Type{<:AbstractFunction},
-    ::Type{<:AbstractFunction},
-)
+function conversion_cost(::Type{<:AbstractFunction}, ::Type{<:AbstractFunction})
     return Inf
 end
 

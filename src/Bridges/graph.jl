@@ -61,14 +61,8 @@ struct Edge <: AbstractEdge
         added_constraints::Vector{ConstraintNode},
         cost::Float64 = 1.0,
     )
-        return new(
-            bridge_index,
-            added_variables,
-            added_constraints,
-            cost,
-        )
-end
-
+        return new(bridge_index, added_variables, added_constraints, cost)
+    end
 end
 
 """

@@ -53,10 +53,12 @@ function test_functions_convert_to_variable_index()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
-    @test !isfinite(MOI.conversion_cost(
-        MOI.VariableIndex,
-        MOI.ScalarAffineFunction{Float64},
-    ))
+    @test !isfinite(
+        MOI.conversion_cost(
+            MOI.VariableIndex,
+            MOI.ScalarAffineFunction{Float64},
+        ),
+    )
     for f in (
         1.0 * x,
         1.0 * x + 0.0,
@@ -349,10 +351,12 @@ function test_convert_ScalarNonlinearFunction_ScalarAffineFunction()
         @test convert(MOI.ScalarAffineFunction{Float64}, g) ≈ f
     end
     f_add = MOI.ScalarNonlinearFunction(:+, Any[1.0, x])
-    @test !isfinite(MOI.conversion_cost(
-        MOI.ScalarQuadraticFunction{Float64},
-        typeof(f_add),
-    ))
+    @test !isfinite(
+        MOI.conversion_cost(
+            MOI.ScalarQuadraticFunction{Float64},
+            typeof(f_add),
+        ),
+    )
     for (f, g) in (
         MOI.ScalarNonlinearFunction(:*, Any[1.0, x]) => 1.0 * x,
         MOI.ScalarNonlinearFunction(:+, Any[1.0, x]) => 1.0 + x,
@@ -418,10 +422,12 @@ function test_convert_ScalarNonlinearFunction_ScalarQuadraticFunction()
         @test convert(MOI.ScalarQuadraticFunction{Float64}, g) ≈ f
     end
     f_add = MOI.ScalarNonlinearFunction(:+, Any[1.0, x])
-    @test !isfinite(MOI.conversion_cost(
-        MOI.ScalarQuadraticFunction{Float64},
-        typeof(f_add),
-    ))
+    @test !isfinite(
+        MOI.conversion_cost(
+            MOI.ScalarQuadraticFunction{Float64},
+            typeof(f_add),
+        ),
+    )
     for (f, g) in (
         MOI.ScalarNonlinearFunction(:*, Any[1.0, x]) => 0.0 * x * x + 1.0 * x,
         MOI.ScalarNonlinearFunction(:*, Any[x, 1.0, x]) => 1.0 * x * x,

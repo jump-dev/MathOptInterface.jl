@@ -305,8 +305,6 @@ over bridging it to a
 For this reason, the [`Bridges.Constraint.FunctionConversionBridge`](@ref) is
 given a cost of `10.0`.
 ```jldoctest; setup=(import MathOptInterface as MOI)
-julia> MOI.Bridges.cost(MOI.FunctionConversionBridge{T})
-1.0
 julia> T = Float64;
 
 julia> F = MOI.ScalarQuadraticFunction{T};
