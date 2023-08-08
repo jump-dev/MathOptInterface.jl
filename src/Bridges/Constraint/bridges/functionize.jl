@@ -203,7 +203,7 @@ function MOI.supports_constraint(
     ::Type{G},
     ::Type{<:MOI.AbstractSet},
 ) where {T,F,G<:MOI.AbstractFunction}
-    return MOI.supports_convert(F, G)
+    return isfinite(MOI.conversion_cost(F, G))
 end
 
 function concrete_bridge_type(
@@ -212,6 +212,10 @@ function concrete_bridge_type(
     S::Type{<:MOI.AbstractSet},
 ) where {T,F}
     return FunctionConversionBridge{T,F,G,S}
+end
+
+function MOI.Bridges.cost(::Type{<:FunctionConversionBridge{T,F,G}}) where {T,F,G}
+    return MOI.conversion_cost(F, G)
 end
 
 function MOI.get(

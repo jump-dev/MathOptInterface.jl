@@ -639,7 +639,7 @@ function _test_SDPA_format(T)
         MOI.VectorOfVariables,
         MOI.PositiveSemidefiniteConeSquare,
     } MOI.Bridges.bridge_type(bridged, MOI.PositiveSemidefiniteConeSquare)
-    @test MOI.Bridges._dist(
+    @test MOI.Bridges._cost(
         bridged.graph,
         MOI.Bridges.node(bridged, MOI.PositiveSemidefiniteConeSquare),
     ) == MOI.Bridges.INFINITY
@@ -657,7 +657,7 @@ Bridge graph with 1 variable nodes, 0 constraint nodes and 0 objective nodes.
         """
 Bridge graph with 1 variable nodes, 1 constraint nodes and 0 objective nodes.
  [1] constrained variables in `MOI.PositiveSemidefiniteConeSquare` are not supported
- (1) `MOI.VectorOfVariables`-in-`MOI.PositiveSemidefiniteConeSquare` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.SquareBridge{T,MOI.VectorOfVariables,MOI.ScalarAffineFunction{T},MOI.PositiveSemidefiniteConeTriangle,MOI.PositiveSemidefiniteConeSquare}).
+ (1) `MOI.VectorOfVariables`-in-`MOI.PositiveSemidefiniteConeSquare` constraints are bridged (cost 1) by $(MOI.Bridges.Constraint.SquareBridge{T,MOI.VectorOfVariables,MOI.ScalarAffineFunction{T},MOI.PositiveSemidefiniteConeTriangle,MOI.PositiveSemidefiniteConeSquare}).
 """,
     )
     MOI.Bridges.add_bridge(
@@ -668,7 +668,7 @@ Bridge graph with 1 variable nodes, 1 constraint nodes and 0 objective nodes.
         MOI.VectorOfVariables,
         MOI.PositiveSemidefiniteConeSquare,
     } MOI.Bridges.bridge_type(bridged, MOI.PositiveSemidefiniteConeSquare)
-    @test MOI.Bridges._dist(
+    @test MOI.Bridges._cost(
         bridged.graph,
         MOI.Bridges.node(bridged, MOI.PositiveSemidefiniteConeSquare),
     ) == 6
@@ -676,10 +676,10 @@ Bridge graph with 1 variable nodes, 1 constraint nodes and 0 objective nodes.
           MOI.Utilities.replace_acronym(
         """
 Bridge graph with 1 variable nodes, 3 constraint nodes and 0 objective nodes.
- [1] constrained variables in `MOI.PositiveSemidefiniteConeSquare` are supported (distance 6) by adding free variables and then constrain them, see (1).
- (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeSquare` constraints are bridged (distance 3) by $(MOI.Bridges.Constraint.SquareBridge{T,MOI.VectorAffineFunction{T},MOI.ScalarAffineFunction{T},MOI.PositiveSemidefiniteConeTriangle,MOI.PositiveSemidefiniteConeSquare}).
- (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.ScalarizeBridge{T,MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}).
- (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are bridged (distance 2) by $(MOI.Bridges.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.PositiveSemidefiniteConeTriangle}).
+ [1] constrained variables in `MOI.PositiveSemidefiniteConeSquare` are supported (cost 6) by adding free variables and then constrain them, see (1).
+ (1) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeSquare` constraints are bridged (cost 3) by $(MOI.Bridges.Constraint.SquareBridge{T,MOI.VectorAffineFunction{T},MOI.ScalarAffineFunction{T},MOI.PositiveSemidefiniteConeTriangle,MOI.PositiveSemidefiniteConeSquare}).
+ (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are bridged (cost 1) by $(MOI.Bridges.Constraint.ScalarizeBridge{T,MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}).
+ (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are bridged (cost 2) by $(MOI.Bridges.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.PositiveSemidefiniteConeTriangle}).
 """,
     )
     @test !MOI.supports_constraint(
@@ -814,8 +814,8 @@ Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be brid
               MOI.Utilities.replace_acronym(
             """
 Bridge graph with 2 variable nodes, 0 constraint nodes and 0 objective nodes.
- [1] constrained variables in `MOI.LessThan{$T}` are bridged (distance 2) by $(MOI.Bridges.Variable.VectorizeBridge{T,MOI.Nonpositives}).
- [2] constrained variables in `MOI.Nonpositives` are bridged (distance 1) by $(MOI.Bridges.Variable.NonposToNonnegBridge{T}).
+ [1] constrained variables in `MOI.LessThan{$T}` are bridged (cost 2) by $(MOI.Bridges.Variable.VectorizeBridge{T,MOI.Nonpositives}).
+ [2] constrained variables in `MOI.Nonpositives` are bridged (cost 1) by $(MOI.Bridges.Variable.NonposToNonnegBridge{T}).
 """,
         )
     end
@@ -870,8 +870,8 @@ Constrained variables in `MOI.LessThan{$T}` are not supported and cannot be brid
               MOI.Utilities.replace_acronym(
             """
 Bridge graph with 2 variable nodes, 1 constraint nodes and 0 objective nodes.
- [1] constrained variables in `MOI.LessThan{$T}` are bridged (distance 2) by $(MOI.Bridges.Variable.VectorizeBridge{T,MOI.Nonpositives}).
- [2] constrained variables in `MOI.Nonpositives` are bridged (distance 1) by $(MOI.Bridges.Variable.NonposToNonnegBridge{T}).
+ [1] constrained variables in `MOI.LessThan{$T}` are bridged (cost 2) by $(MOI.Bridges.Variable.VectorizeBridge{T,MOI.Nonpositives}).
+ [2] constrained variables in `MOI.Nonpositives` are bridged (cost 1) by $(MOI.Bridges.Variable.NonposToNonnegBridge{T}).
  (1) `MOI.ScalarAffineFunction{$T}`-in-`MOI.LessThan{$T}` constraints are not supported
 """,
         )
@@ -1077,15 +1077,15 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
               MOI.Utilities.replace_acronym(
             """
 Bridge graph with 2 variable nodes, 5 constraint nodes and 2 objective nodes.
- [1] constrained variables in `MOI.Reals` are bridged (distance 1) by $(MOI.Bridges.Variable.FreeBridge{T}).
- [2] constrained variables in `MOI.RotatedSecondOrderCone` are bridged (distance 2) by $(MOI.Bridges.Variable.RSOCtoPSDBridge{T}).
- (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 5) by $(MOI.Bridges.Constraint.QuadtoSOCBridge{T}).
- (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 4) by $(MOI.Bridges.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.RotatedSecondOrderCone}).
- (3) `MOI.VariableIndex`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.ScalarFunctionizeBridge{T,MOI.EqualTo{T}}).
- (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.ScalarizeBridge{T,MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}).
- (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are bridged (distance 5) by $(MOI.Bridges.Constraint.QuadtoSOCBridge{T}).
- |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is bridged (distance 13) by $(MOI.Bridges.Objective.SlackBridge{T,MOI.ScalarQuadraticFunction{T},MOI.ScalarQuadraticFunction{T}}).
- |2| objective function of type `MOI.VariableIndex` is bridged (distance 1) by $(MOI.Bridges.Objective.FunctionizeBridge{T}).
+ [1] constrained variables in `MOI.Reals` are bridged (cost 1) by $(MOI.Bridges.Variable.FreeBridge{T}).
+ [2] constrained variables in `MOI.RotatedSecondOrderCone` are bridged (cost 2) by $(MOI.Bridges.Variable.RSOCtoPSDBridge{T}).
+ (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are bridged (cost 5) by $(MOI.Bridges.Constraint.QuadtoSOCBridge{T}).
+ (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (cost 4) by $(MOI.Bridges.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.RotatedSecondOrderCone}).
+ (3) `MOI.VariableIndex`-in-`MOI.EqualTo{$T}` constraints are bridged (cost 1) by $(MOI.Bridges.Constraint.ScalarFunctionizeBridge{T,MOI.EqualTo{T}}).
+ (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are bridged (cost 1) by $(MOI.Bridges.Constraint.ScalarizeBridge{T,MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}).
+ (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are bridged (cost 5) by $(MOI.Bridges.Constraint.QuadtoSOCBridge{T}).
+ |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is bridged (cost 13) by $(MOI.Bridges.Objective.SlackBridge{T,MOI.ScalarQuadraticFunction{T},MOI.ScalarQuadraticFunction{T}}).
+ |2| objective function of type `MOI.VariableIndex` is bridged (cost 1) by $(MOI.Bridges.Objective.FunctionizeBridge{T}).
 """,
         )
     end
@@ -2045,6 +2045,49 @@ function test_hermitian(T = Float64)
         @test MOI.Bridges.bridge_type(bridged, F, S) <:
               MOI.Bridges.Constraint.HermitianToSymmetricPSDBridge{T}
     end
+end
+
+MOI.Utilities.@model(
+    ModelVAFSQF,
+    (),
+    (MOI.LessThan,),
+    (MOI.Nonnegatives,),
+    (),
+    (),
+    (MOI.ScalarQuadraticFunction,),
+    (),
+    (MOI.VectorAffineFunction,),
+)
+
+function test_bridging_cost(T = Float64)
+    model = ModelVAFSQF{T}()
+    F = MOI.ScalarAffineFunction{T}
+    S = MOI.LessThan{T}
+    # `FunctionConversionBridge{T,MOI.ScalarQuadraticFunction{T}}` bridge
+    # to a supported constraint in 1 bridge but it has a higher bridging cost
+    # This tests that the bridging cost is taken into account.
+    bridged = MOI.Bridges.full_bridge_optimizer(model, T)
+    @test MOI.Bridges.bridging_cost(bridged, F, S) == 2
+    L = MOI.Bridges.Constraint.LessToGreaterBridge{T}
+    @test MOI.Bridges.bridge_type(bridged, F, S) <: L
+    MOI.Bridges.remove_bridge(bridged, L)
+    @test MOI.Bridges.bridging_cost(bridged, F, S) == 2
+    V = MOI.Bridges.Constraint.VectorizeBridge{T}
+    @test MOI.Bridges.bridge_type(bridged, F, S) <: V
+    MOI.Bridges.remove_bridge(bridged, V)
+    Q = MOI.Bridges.Constraint.ToScalarQuadraticBridge{T}
+    @test MOI.Bridges.bridging_cost(bridged, F, S) == 10
+    @test MOI.Bridges.bridge_type(bridged, F, S) <: Q
+
+    bridged = MOI.Bridges.LazyBridgeOptimizer(model)
+    @test MOI.Bridges.bridging_cost(bridged, F, S) == Inf
+    MOI.Bridges.add_bridge(bridged, Q)
+    @test MOI.Bridges.bridging_cost(bridged, F, S) == 10
+    @test MOI.Bridges.bridge_type(bridged, F, S) <: Q
+    MOI.Bridges.add_bridge(bridged, L)
+    MOI.Bridges.add_bridge(bridged, V)
+    @test MOI.Bridges.bridging_cost(bridged, F, S) == 2
+    @test MOI.Bridges.bridge_type(bridged, F, S) <: L
 end
 
 end  # module

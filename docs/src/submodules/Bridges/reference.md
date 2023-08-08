@@ -20,6 +20,7 @@ get(::Bridges.AbstractBridge, ::NumberOfConstraints)
 get(::Bridges.AbstractBridge, ::ListOfConstraintIndices)
 Bridges.needs_final_touch
 Bridges.final_touch
+Bridges.cost
 ```
 
 ## Constraint bridge API
