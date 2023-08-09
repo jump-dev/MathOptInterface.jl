@@ -248,7 +248,7 @@ MOI.Utilities.@model(
     (MOI.ScalarAffineFunction,),
     (),
     ()
- )
+)
 
 function test_unsupported_ScalarNonlinearFunction()
     model = MOI.instantiate(Model2179{Float64}; with_bridge_type = Float64)
