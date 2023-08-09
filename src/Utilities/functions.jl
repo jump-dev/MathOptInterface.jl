@@ -362,7 +362,7 @@ end
 # change in `substitute_variables`.
 
 """
-    substitute_variables(variable_map::Function, x)
+    substitute(variable_map::Function, x)
 
 Substitute any [`MOI.VariableIndex`](@ref) in `x` by `variable_map(x)`. The
 `variable_map` function returns either [`MOI.VariableIndex`](@ref) or
@@ -379,16 +379,16 @@ or submittable value.
     because Julia will not specialize on it. Use instead
     `substitute_variables(::F, ...) where {F<:Function}`.
 """
-function substitute_variables end
+function substitute end
 
-function substitute_variables(
+function substitute(
     ::F,
     x::ObjectOrTupleOrArrayWithoutIndex,
 ) where {F<:Function}
     return x
 end
 
-function substitute_variables(
+function substitute(
     variable_map::F,
     x::MOI.VariableIndex,
 ) where {F<:Function}
@@ -399,15 +399,7 @@ function substitute_variables(
     return x
 end
 
-# This method is used when submitting `HeuristicSolution`.
-function substitute_variables(
-    variable_map::F,
-    x::Vector{MOI.VariableIndex},
-) where {F<:Function}
-    return substitute_variables.(variable_map, x)
-end
-
-function substitute_variables(
+function substitute(
     variable_map::F,
     term::MOI.ScalarAffineTerm{T},
 ) where {T,F<:Function}
@@ -418,7 +410,7 @@ function substitute_variables(
     return operate(*, T, term.coefficient, f)::MOI.ScalarAffineFunction{T}
 end
 
-function substitute_variables(
+function substitute(
     variable_map::F,
     term::MOI.ScalarQuadraticTerm{T},
 ) where {T,F<:Function}
@@ -438,20 +430,20 @@ function substitute_variables(
     return operate!(*, T, f12, coef)
 end
 
-function substitute_variables(
+function substitute(
     variable_map::F,
     f::MOI.ScalarAffineFunction{T},
 ) where {T,F<:Function}
     g = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], MOI.constant(f))
     for term in f.terms
-        # This works because substitute_variables actually returns a function,
+        # This works because substitute actually returns a function,
         # not a term.
-        g = operate!(+, T, g, substitute_variables(variable_map, term))
+        g = operate!(+, T, g, substitute(variable_map, term))
     end
     return g
 end
 
-function substitute_variables(
+function substitute(
     variable_map::F,
     f::MOI.ScalarQuadraticFunction{T},
 ) where {T,F<:Function}
@@ -461,26 +453,26 @@ function substitute_variables(
         MOI.constant(f),
     )
     for a_term in f.affine_terms
-        g = operate!(+, T, g, substitute_variables(variable_map, a_term))
+        g = operate!(+, T, g, substitute(variable_map, a_term))
     end
     for q_term in f.quadratic_terms
-        g = operate!(+, T, g, substitute_variables(variable_map, q_term))
+        g = operate!(+, T, g, substitute(variable_map, q_term))
     end
     return g
 end
 
-function substitute_variables(
+function substitute(
     variable_map::F,
     f::MOI.ScalarNonlinearFunction,
 ) where {F<:Function}
     # TODO(odow): this uses recursion. We should remove at some point.
     return MOI.ScalarNonlinearFunction(
         f.head,
-        Any[substitute_variables(variable_map, a) for a in f.args],
+        Any[substitute(variable_map, a) for a in f.args],
     )
 end
 
-function substitute_variables(
+function substitute(
     variable_map::F,
     f::MOI.VectorAffineFunction{T},
 ) where {T,F<:Function}
@@ -489,13 +481,13 @@ function substitute_variables(
         copy(MOI.constant(f)),
     )
     for term in f.terms
-        term_f = substitute_variables(variable_map, term.scalar_term)
+        term_f = substitute(variable_map, term.scalar_term)
         operate_output_index!(+, T, term.output_index, g, term_f)
     end
     return g
 end
 
-function substitute_variables(
+function substitute(
     variable_map::F,
     f::MOI.VectorQuadraticFunction{T},
 ) where {T,F<:Function}
@@ -505,14 +497,49 @@ function substitute_variables(
         copy(MOI.constant(f)),
     )
     for term in f.affine_terms
-        sub = substitute_variables(variable_map, term.scalar_term)
+        sub = substitute(variable_map, term.scalar_term)
         operate_output_index!(+, T, term.output_index, g, sub)
     end
     for term in f.quadratic_terms
-        sub = substitute_variables(variable_map, term.scalar_term)
+        sub = substitute(variable_map, term.scalar_term)
         operate_output_index!(+, T, term.output_index, g, sub)
     end
     return g
+end
+
+"""
+    substitute_variables(variable_map::Function, x)
+
+Same as [`substitute`](@ref) but errors if `x` is [`MOI.VariableIndex`](@ref) or
+[`MOI.VectorOfVariables`](@ref) and one of the variable is mapped to something
+different from `x`.
+"""
+function substitute_variables end
+
+function substitute_variables(
+    variable_map::F,
+    x,
+) where {F<:Function}
+    return substitute(variable_map, x)
+end
+
+function substitute_variables(
+    variable_map::F,
+    x::MOI.VariableIndex,
+) where {F<:Function}
+    f = variable_map(x)
+    if f != x
+        error("Cannot substitute `$x` as it is bridged into `$f`.")
+    end
+    return x
+end
+
+# This method is used when submitting `HeuristicSolution`.
+function substitute_variables(
+    variable_map::F,
+    x::Vector{MOI.VariableIndex},
+) where {F<:Function}
+    return substitute_variables.(variable_map, x)
 end
 
 """
