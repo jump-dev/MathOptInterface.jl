@@ -338,10 +338,17 @@ function test_substitute_variables_vector_nonlinear_function()
     x = MOI.add_variable(model)
     f = MOI.ScalarNonlinearFunction(:log, Any[x])
     g = MOI.VectorNonlinearFunction(Any[1.0, x, 2.0*x, f])
-    h = MOI.ScalarNonlinearFunction(:log, Any[1.5*x])
     @test ≈(
         MOI.Utilities.substitute_variables(x -> 1.5 * x, g),
-        MOI.VectorNonlinearFunction(Any[1.0, 1.5*x, 3.0*x, h]),
+        MOI.VectorNonlinearFunction([
+            MOI.ScalarNonlinearFunction(:+, Any[1.0]),
+            MOI.ScalarNonlinearFunction(:+, Any[1.5*x]),
+            MOI.ScalarNonlinearFunction(
+                :+,
+                Any[MOI.ScalarNonlinearFunction(:*, Any[2.0, 1.5 * x])],
+            ),
+            MOI.ScalarNonlinearFunction(:log, Any[1.5*x]),
+        ]),
     )
     return
 end
@@ -353,10 +360,10 @@ function test_canonicalize_vector_nonlinear_function()
     fi = 1.0 * x + 1.0 * x
     @test length(fi.terms) == 2
     g = MOI.VectorNonlinearFunction(Any[1.0, x, fi, f])
-    @test g.rows[3] === fi
+    @test g.rows[4] === f
     MOI.Utilities.canonicalize!(g)
-    @test g.rows[3] === fi
-    @test length(fi.terms) == 1
+    @test g.rows[4] === f
+    @test length(f.args[1].terms) == 1
     return
 end
 

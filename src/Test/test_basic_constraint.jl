@@ -86,7 +86,7 @@ function _function(
         :+,
         Any[MOI.ScalarNonlinearFunction(:^, Any[xi, 2]) for xi in x],
     )
-    return MOI.VectorNonlinearFunction(Any[f; x])
+    return MOI.VectorNonlinearFunction([f; x])
 end
 
 # Default fallback.

@@ -697,15 +697,15 @@ julia> g = MOI.ScalarNonlinearFunction(
        )
 ^(sin(MOI.VariableIndex(1)), 2.0)
 
-julia> MOI.VectorNonlinearFunction(Any[g, x])
+julia> MOI.VectorNonlinearFunction([g, x])
 ┌                                 ┐
 │^(sin(MOI.VariableIndex(1)), 2.0)│
-│MOI.VariableIndex(1)             │
+│+(MOI.VariableIndex(1))          │
 └                                 ┘
 ```
 """
 struct VectorNonlinearFunction <: AbstractVectorFunction
-    rows::Vector{Any}
+    rows::Vector{ScalarNonlinearFunction}
 end
 
 output_dimension(f::VectorNonlinearFunction) = length(f.rows)
