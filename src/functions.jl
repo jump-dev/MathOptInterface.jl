@@ -666,14 +666,17 @@ function Base.copy(f::VectorQuadraticFunction)
 end
 
 """
-    VectorNonlinearFunction(args::Vector{Any})
+    VectorNonlinearFunction(args::Vector{ScalarNonlinearFunction})
 
-The vector-valued nonlinear function composed of a vector of scalar functions.
+The vector-valued nonlinear function composed of a vector of
+[`ScalarNonlinearFunction`](@ref).
 
 ## `args`
 
 The vector `args` contains the scalar elements of the nonlinear function. Each
-element must be one of the following:
+element must be a [`ScalarNonlinearFunction`](@ref), but if you pass a
+`Vector{Any}`, the elements can be automatically converted from one of the
+following:
 
  * A constant value of type `T<:Real`
  * A [`VariableIndex`](@ref)
@@ -703,6 +706,8 @@ julia> MOI.VectorNonlinearFunction([g, x])
 │+(MOI.VariableIndex(1))          │
 └                                 ┘
 ```
+
+Note the automatic conversion from `x` to `+(x)`.
 """
 struct VectorNonlinearFunction <: AbstractVectorFunction
     rows::Vector{ScalarNonlinearFunction}
