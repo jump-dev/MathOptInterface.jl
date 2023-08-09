@@ -599,7 +599,7 @@ function test_operate_output_index_1a()
         (1.0, 1.0, 1.0),
         :log => (0, 0, 0),
     )
-    for i in 2:5
+    for i in 2:6
         for j in 1:i
             if (i, j) == (2, 1)
                 continue

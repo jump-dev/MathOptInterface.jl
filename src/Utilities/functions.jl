@@ -119,8 +119,6 @@ for a similar function where `value_fn` returns an
 """
 function eval_variables end
 
-eval_variables(::Function, x::Union{Real,AbstractVector{<:Real}}) = x
-
 function eval_variables(value_fn::Function, t::MOI.ScalarAffineTerm)
     return t.coefficient * value_fn(t.variable)
 end
@@ -1010,7 +1008,6 @@ function canonical(f::MOI.AbstractFunction)
 end
 
 canonicalize!(f::Union{MOI.VectorOfVariables,MOI.VariableIndex}) = f
-canonicalize!(f::Union{Real,AbstractVector{<:Real}}) = f
 
 """
     canonicalize!(f::Union{ScalarAffineFunction, VectorAffineFunction})
