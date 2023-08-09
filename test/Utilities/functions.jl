@@ -345,7 +345,7 @@ function test_substitute_variables_vector_nonlinear_function()
             MOI.ScalarNonlinearFunction(:+, Any[1.5*x]),
             MOI.ScalarNonlinearFunction(
                 :+,
-                Any[MOI.ScalarNonlinearFunction(:*, Any[2.0, 1.5 * x])],
+                Any[MOI.ScalarNonlinearFunction(:*, Any[2.0, 1.5*x])],
             ),
             MOI.ScalarNonlinearFunction(:log, Any[1.5*x]),
         ]),

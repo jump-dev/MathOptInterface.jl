@@ -819,7 +819,7 @@ function Base.getindex(
     it::ScalarFunctionIterator{MOI.VectorNonlinearFunction},
     output_index::Integer,
 )
-    return convert(MOI.ScalarNonlinearFunction, it.f.rows[output_index])
+    return it.f.rows[output_index]
 end
 
 function Base.getindex(
@@ -2156,8 +2156,8 @@ function vectorize(
     return MOI.VectorQuadraticFunction(quadratic_terms, affine_terms, constant)
 end
 
-function vectorize(x::AbstractVector)
-    return MOI.VectorNonlinearFunction(collect(x))
+function vectorize(x::AbstractVector{MOI.ScalarNonlinearFunction})
+    return MOI.VectorNonlinearFunction(x)
 end
 
 scalarize(f::AbstractVector, ::Bool = false) = f
