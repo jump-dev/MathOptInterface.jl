@@ -486,28 +486,19 @@ function substitute_variables(
     return g
 end
 
-function _unstable_substitute_variables(
-    variable_map::F,
-    x::MOI.VariableIndex,
-) where {F<:Function}
-    return variable_map(x)
-end
-
-function _unstable_substitute_variables(
-    variable_map::F,
-    x::Any,
-) where {F<:Function}
-    return substitute_variables(variable_map, x)
-end
-
 function substitute_variables(
     variable_map::F,
     f::MOI.ScalarNonlinearFunction,
 ) where {F<:Function}
-    # TODO(odow): this uses recursion. We should remove at some point.
-    new_args =
-        map(Base.Fix1(_unstable_substitute_variables, variable_map), f.args)
-    return MOI.ScalarNonlinearFunction(f.head, convert(Vector{Any}, new_args))
+    new_args = Any[]
+    for arg in f.args
+        if arg isa MOI.VariableIndex
+            push!(new_args, variable_map(arg))
+        else
+            push!(new_args, substitute_variables(variable_map, arg))
+        end
+    end
+    return MOI.ScalarNonlinearFunction(f.head, new_args)
 end
 
 function substitute_variables(
@@ -549,9 +540,8 @@ function substitute_variables(
     variable_map::F,
     f::MOI.VectorNonlinearFunction,
 ) where {F<:Function}
-    return MOI.VectorNonlinearFunction(
-        map(Base.Fix1(_unstable_substitute_variables, variable_map), f.rows),
-    )
+    rows = [substitute_variables(variable_map, row) for row in f.rows]
+    return MOI.VectorNonlinearFunction(rows)
 end
 
 """
