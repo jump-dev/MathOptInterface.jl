@@ -18,7 +18,7 @@ These modifications can be grouped into two categories:
  * modifications which change, in-place, a component of a function
 
 !!! warning
-    Solve `ModelLike` objects do not support problem modification.
+    Some `ModelLike` objects do not support problem modification.
 
 ## Modify the set of a constraint
 
