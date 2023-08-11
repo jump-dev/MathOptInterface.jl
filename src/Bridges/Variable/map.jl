@@ -142,7 +142,8 @@ end
 function Base.keys(map::Map)
     return Base.Iterators.Filter(
         vi -> haskey(map, vi),
-        MOI.Utilities.LazyMap{MOI.VariableIndex}(
+        MOI.Utilities.lazy_map(
+            MOI.VariableIndex,
             i -> MOI.VariableIndex(-i),
             eachindex(map.bridges),
         ),
