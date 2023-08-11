@@ -10,8 +10,8 @@
 Consider two type of sets, `S1` and `S2`, and a linear mapping `A` such that
 the image of a set of type `S1` under `A` is a set of type `S2`.
 
-A `SetMapBridge{T,S2,S1,F,G}` is a bridge that maps `G`-in-`S2` constraints
-into `F`-in-`S1` by mapping the function through `A`.
+A `SetMapBridge{T,S2,S1,F,G}` is a bridge that maps `G`-in-`S1` constraints
+into `F`-in-`S2` by mapping the function through `A`.
 
 The linear map `A` is described by;
 
