@@ -4,7 +4,7 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-const INFINITY = typemax(Float64)
+const INFINITY = typemax(Int)
 const INVALID_NODE_INDEX = -1
 
 abstract type AbstractNode end
@@ -43,7 +43,7 @@ abstract type AbstractEdge end
         bridge_index::Int,
         added_variables::Vector{VariableNode},
         added_constraints::Vector{ConstraintNode},
-        cost::Float64 = 1.0,
+        cost::Int = 1,
     )
 
 Return a new datastructure representing an edge in [`Graph`](@ref) that starts
@@ -53,13 +53,13 @@ struct Edge <: AbstractEdge
     bridge_index::Int
     added_variables::Vector{VariableNode}
     added_constraints::Vector{ConstraintNode}
-    cost::Float64
+    cost::Int
     # TODO remove in MOI v2
     function Edge(
         bridge_index::Int,
         added_variables::Vector{VariableNode},
         added_constraints::Vector{ConstraintNode},
-        cost::Float64 = 1.0,
+        cost::Int = 1,
     )
         return new(bridge_index, added_variables, added_constraints, cost)
     end
@@ -80,14 +80,14 @@ struct ObjectiveEdge <: AbstractEdge
     added_variables::Vector{VariableNode}
     added_constraints::Vector{ConstraintNode}
     added_objective::ObjectiveNode
-    cost::Float64
+    cost::Int
     # TODO remove in MOI v2
     function ObjectiveEdge(
         bridge_index::Int,
         added_variables::Vector{VariableNode},
         added_constraints::Vector{ConstraintNode},
         added_objective::ObjectiveNode,
-        cost::Float64 = 1.0,
+        cost::Int = 1,
     )
         return new(
             bridge_index,
@@ -123,7 +123,7 @@ There are two types of edges in the graph:
 
 Add edges to the graph using [`add_edge`](@ref).
 
-For the ability to add a variable constrained on creation as a free variable
+For the ability to add a variable constrained  on creation as a free variable
 followed by a constraint, use [`set_variable_constraint_node`](@ref).
 
 ## Optimal hyper-edges
@@ -139,19 +139,19 @@ mutable struct Graph
     variable_constraint_node::Vector{ConstraintNode}
     variable_constraint_cost::Vector{Int}
     # variable node index -> Sum of costs of bridges that need to be used
-    variable_dist::Vector{Float64}
+    variable_dist::Vector{Int}
     # variable node index -> Index of bridge to be used
     variable_best::Vector{Int}
     variable_last_correct::Int
     constraint_edges::Vector{Vector{Edge}}
     # constraint node index -> Sum of costs of bridges that need to be used
-    constraint_dist::Vector{Float64}
+    constraint_dist::Vector{Int}
     # constraint node index -> Index of bridge to be used
     constraint_best::Vector{Int}
     constraint_last_correct::Int
     objective_edges::Vector{Vector{ObjectiveEdge}}
     # objective node index -> Sum of costs of bridges that need to be used
-    objective_dist::Vector{Float64}
+    objective_dist::Vector{Int}
     # objective node index -> Index of bridge to be used
     objective_best::Vector{Int}
     objective_last_correct::Int
@@ -336,7 +336,7 @@ end
 
 function _updated_dist(
     graph::Graph,
-    current::Float64,
+    current::Int,
     edges::Vector{<:AbstractEdge},
 )
     bridge_index = 0

@@ -14,7 +14,6 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 AbstractFunction
 output_dimension
 constant
-conversion_cost
 ```
 
 ## Scalar functions

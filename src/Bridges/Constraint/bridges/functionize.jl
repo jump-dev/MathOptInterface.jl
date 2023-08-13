@@ -198,12 +198,66 @@ function bridge_constraint(
     return FunctionConversionBridge{T,F,G,S}(ci)
 end
 
+"""
+    conversion_cost(F::Type{<:MOI.AbstractFunction}, G::Type{<:MOI.AbstractFunction})
+
+Return an `Int` returning the *cost* of converting any function of type `G`
+to a function of type `F` with `convert`. This cost is used to compute
+[`Bridges.bridging_cost`](@ref).
+
+The default cost is `nothing`, which means that [`Bridges.Constraint.FunctionConversionBridge`](@ref)
+should not attempt the conversion.
+"""
+function conversion_cost(
+    ::Type{<:MOI.AbstractFunction},
+    ::Type{<:MOI.AbstractFunction},
+)
+    return nothing
+end
+
+function conversion_cost(
+    F::Type{<:MOI.AbstractVectorFunction},
+    G::Type{<:MOI.AbstractVectorFunction},
+)
+    return conversion_cost(
+        MOI.Utilities.scalar_type(F),
+        MOI.Utilities.scalar_type(G),
+    )
+end
+
+function conversion_cost(
+    ::Type{<:MOI.ScalarAffineFunction},
+    ::Type{MOI.VariableIndex},
+)
+    return 1
+end
+
+function conversion_cost(
+    ::Type{MOI.ScalarQuadraticFunction{T}},
+    ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
+) where {T}
+    return 10
+end
+
+function conversion_cost(
+    ::Type{MOI.ScalarNonlinearFunction},
+    ::Type{
+        <:Union{
+            MOI.VariableIndex,
+            MOI.ScalarAffineFunction,
+            MOI.ScalarQuadraticFunction,
+        },
+    },
+)
+    return 100
+end
+
 function MOI.supports_constraint(
     ::Type{<:FunctionConversionBridge{T,F}},
     ::Type{G},
     ::Type{<:MOI.AbstractSet},
 ) where {T,F,G<:MOI.AbstractFunction}
-    return isfinite(MOI.conversion_cost(F, G))
+    return conversion_cost(F, G) !== nothing
 end
 
 function concrete_bridge_type(
@@ -217,7 +271,7 @@ end
 function MOI.Bridges.cost(
     ::Type{<:FunctionConversionBridge{T,F,G}},
 ) where {T,F,G}
-    return MOI.conversion_cost(F, G)
+    return conversion_cost(F, G)
 end
 
 function MOI.get(

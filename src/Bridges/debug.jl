@@ -31,8 +31,6 @@ function print_node(io::IO, b::LazyBridgeOptimizer, node::ObjectiveNode)
     return
 end
 
-_printed_cost(cost) = isinteger(cost) ? round(Int, cost) : cost
-
 function print_node_info(
     io::IO,
     b::LazyBridgeOptimizer,
@@ -55,14 +53,12 @@ function print_node_info(
         if iszero(index) ||
            (node isa VariableNode && !is_variable_edge_best(b.graph, node))
             @assert node isa VariableNode
-            distance = _printed_cost(d)
             println(
                 io,
-                " supported (distance $distance) by adding free variables and then constrain them, see ($(b.graph.variable_constraint_node[node.index].index)).",
+                " supported (distance $d) by adding free variables and then constrain them, see ($(b.graph.variable_constraint_node[node.index].index)).",
             )
         else
-            distance = _printed_cost(d)
-            print(io, " bridged (distance $distance) by ")
+            print(io, " bridged (distance $d) by ")
             MOI.Utilities.print_with_acronym(
                 io,
                 string(_bridge_type(b, node, index)),

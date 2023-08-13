@@ -36,6 +36,7 @@ Bridges.Constraint.add_all_bridges
 Bridges.Constraint.FlipSignBridge
 Bridges.Constraint.AbstractToIntervalBridge
 Bridges.Constraint.SetMapBridge
+Bridges.Constraint.conversion_cost
 ```
 
 ## Objective bridge API

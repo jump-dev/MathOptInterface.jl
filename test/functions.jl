@@ -53,12 +53,6 @@ function test_functions_convert_to_variable_index()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
-    @test !isfinite(
-        MOI.conversion_cost(
-            MOI.VariableIndex,
-            MOI.ScalarAffineFunction{Float64},
-        ),
-    )
     for f in (
         1.0 * x,
         1.0 * x + 0.0,
@@ -277,7 +271,6 @@ function test_convert_vectorofvariables()
     y = MOI.VariableIndex(2)
     f = MOI.VectorOfVariables([x, y])
     g = MOI.Utilities.operate(vcat, Float64, 1.0 * x, 1.0 * y)
-    @test !isfinite(MOI.conversion_cost(typeof(f), typeof(g)))
     @test convert(MOI.VectorOfVariables, g) == f
     for g in (
         MOI.Utilities.operate(vcat, Float64, 1.2 * x, 1.0 * y),
@@ -351,12 +344,6 @@ function test_convert_ScalarNonlinearFunction_ScalarAffineFunction()
         @test convert(MOI.ScalarAffineFunction{Float64}, g) ≈ f
     end
     f_add = MOI.ScalarNonlinearFunction(:+, Any[1.0, x])
-    @test !isfinite(
-        MOI.conversion_cost(
-            MOI.ScalarQuadraticFunction{Float64},
-            typeof(f_add),
-        ),
-    )
     for (f, g) in (
         MOI.ScalarNonlinearFunction(:*, Any[1.0, x]) => 1.0 * x,
         MOI.ScalarNonlinearFunction(:+, Any[1.0, x]) => 1.0 + x,
@@ -422,12 +409,6 @@ function test_convert_ScalarNonlinearFunction_ScalarQuadraticFunction()
         @test convert(MOI.ScalarQuadraticFunction{Float64}, g) ≈ f
     end
     f_add = MOI.ScalarNonlinearFunction(:+, Any[1.0, x])
-    @test !isfinite(
-        MOI.conversion_cost(
-            MOI.ScalarQuadraticFunction{Float64},
-            typeof(f_add),
-        ),
-    )
     for (f, g) in (
         MOI.ScalarNonlinearFunction(:*, Any[1.0, x]) => 0.0 * x * x + 1.0 * x,
         MOI.ScalarNonlinearFunction(:*, Any[x, 1.0, x]) => 1.0 * x * x,
@@ -454,7 +435,6 @@ function test_convert_VectorQuadraticFunction_VectorAffineFunction()
     constants = [2.0]
     f = MOI.VectorQuadraticFunction(quadratic, affine, constants)
     g = MOI.VectorAffineFunction(affine, constants)
-    @test !isfinite(MOI.conversion_cost(typeof(g), typeof(f)))
     @test convert(MOI.VectorAffineFunction{Float64}, f) ≈ g
     push!(
         quadratic,
@@ -471,7 +451,6 @@ function test_convert_VectorAffineFunction_VectorQuadraticFunction()
     constants = [2.0]
     f = MOI.VectorAffineFunction(affine, constants)
     g = MOI.VectorQuadraticFunction(quadratic, affine, constants)
-    @test MOI.conversion_cost(typeof(g), typeof(f)) == 10
     @test convert(MOI.VectorQuadraticFunction{Float64}, f) ≈ g
     return
 end

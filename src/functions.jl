@@ -904,26 +904,6 @@ end
 ### Base.convert
 ###
 
-"""
-    conversion_cost(F::Type{<:MOI.AbstractFunction}, G::Type{<:MOI.AbstractFunction})
-
-Return a `Float64` returning the *cost* of converting any function of type `G`
-to a function of type `F` with `convert`. This cost is used to compute
-[`Bridges.bridging_cost`](@ref).
-This cost is `Inf` should be used to avoid the
-[`Bridges.Constraint.FunctionConversionBridge`](@ref) to attempt the conversion.
-"""
-function conversion_cost(::Type{<:AbstractFunction}, ::Type{<:AbstractFunction})
-    return Inf
-end
-
-function conversion_cost(
-    F::Type{<:AbstractVectorFunction},
-    G::Type{<:AbstractVectorFunction},
-)
-    return conversion_cost(Utilities.scalar_type(F), Utilities.scalar_type(G))
-end
-
 # VariableIndex
 
 function Base.convert(::Type{VariableIndex}, f::ScalarAffineFunction)
@@ -952,13 +932,6 @@ function Base.convert(
 end
 
 # ScalarAffineFunction
-
-function conversion_cost(
-    ::Type{ScalarAffineFunction{T}},
-    ::Type{VariableIndex},
-) where {T}
-    return 1.0
-end
 
 function Base.convert(::Type{ScalarAffineFunction{T}}, α::T) where {T}
     return ScalarAffineFunction{T}(ScalarAffineTerm{T}[], α)
@@ -1059,13 +1032,6 @@ function Base.convert(
 end
 
 # ScalarQuadraticFunction
-
-function conversion_cost(
-    ::Type{ScalarQuadraticFunction{T}},
-    ::Type{<:Union{VariableIndex,ScalarAffineFunction{T}}},
-) where {T}
-    return 10.0
-end
 
 function Base.convert(::Type{ScalarQuadraticFunction{T}}, α::T) where {T}
     return ScalarQuadraticFunction{T}(
