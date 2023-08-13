@@ -64,7 +64,7 @@ function term_pair end
 
 # VariableIndex is defined in indextypes.jl
 
-constant(f::VariableIndex, ::Type{T}) where {T} = zero(T)
+constant(::VariableIndex, ::Type{T}) where {T} = zero(T)
 
 Base.copy(x::VariableIndex) = x
 
