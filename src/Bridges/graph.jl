@@ -139,19 +139,19 @@ mutable struct Graph
     variable_constraint_node::Vector{ConstraintNode}
     variable_constraint_cost::Vector{Int}
     # variable node index -> Sum of costs of bridges that need to be used
-    variable_cost::Vector{Float64}
+    variable_dist::Vector{Float64}
     # variable node index -> Index of bridge to be used
     variable_best::Vector{Int}
     variable_last_correct::Int
     constraint_edges::Vector{Vector{Edge}}
     # constraint node index -> Sum of costs of bridges that need to be used
-    constraint_cost::Vector{Float64}
+    constraint_dist::Vector{Float64}
     # constraint node index -> Index of bridge to be used
     constraint_best::Vector{Int}
     constraint_last_correct::Int
     objective_edges::Vector{Vector{ObjectiveEdge}}
     # objective node index -> Sum of costs of bridges that need to be used
-    objective_cost::Vector{Float64}
+    objective_dist::Vector{Float64}
     # objective node index -> Index of bridge to be used
     objective_best::Vector{Int}
     objective_last_correct::Int
@@ -187,26 +187,26 @@ end
 # After `add_bridge(b, BT)`, some constrained variables `(S,)` in
 # `keys(b.variable_best)` or constraints `(F, S)` in `keys(b.constraint_best)`
 # or `(F,)` in `keys(b.objective_best)` may be bridged
-# with less bridges than `b.variable_cost[(S,)]`,
-# `b.constraint_cost[(F, S)]` or `b.objective_cost[(F,)]` using `BT`.
-# We could either recompute the cost from every node or clear the
-# dictionary so that the cost is computed lazily at the next `supports_constraint`
+# with less bridges than `b.variable_dist[(S,)]`,
+# `b.constraint_dist[(F, S)]` or `b.objective_dist[(F,)]` using `BT`.
+# We could either recompute the distance from every node or clear the
+# dictionary so that the distance is computed lazily at the next `supports_constraint`
 # call. We prefer clearing the dictionaries so as this is called for each
-# bridge added and recomputing the cost for each bridge would be a wase
+# bridge added and recomputing the distance for each bridge would be a wase
 # if several bridges are added consecutively.
 function Base.empty!(graph::Graph)
     empty!(graph.variable_edges)
     empty!(graph.variable_constraint_node)
     empty!(graph.variable_constraint_cost)
-    empty!(graph.variable_cost)
+    empty!(graph.variable_dist)
     empty!(graph.variable_best)
     graph.variable_last_correct = 0
     empty!(graph.constraint_edges)
-    empty!(graph.constraint_cost)
+    empty!(graph.constraint_dist)
     empty!(graph.constraint_best)
     graph.constraint_last_correct = 0
     empty!(graph.objective_edges)
-    empty!(graph.objective_cost)
+    empty!(graph.objective_dist)
     empty!(graph.objective_best)
     graph.objective_last_correct = 0
     return
@@ -248,21 +248,21 @@ function add_node(graph::Graph, ::Type{VariableNode})
     # incorrect in case `set_variable_constraint_node` is not called.
     push!(graph.variable_constraint_node, ConstraintNode(INVALID_NODE_INDEX))
     push!(graph.variable_constraint_cost, 0)
-    push!(graph.variable_cost, INFINITY)
+    push!(graph.variable_dist, INFINITY)
     push!(graph.variable_best, 0)
     return VariableNode(length(graph.variable_best))
 end
 
 function add_node(graph::Graph, ::Type{ConstraintNode})
     push!(graph.constraint_edges, Edge[])
-    push!(graph.constraint_cost, INFINITY)
+    push!(graph.constraint_dist, INFINITY)
     push!(graph.constraint_best, 0)
     return ConstraintNode(length(graph.constraint_best))
 end
 
 function add_node(graph::Graph, ::Type{ObjectiveNode})
     push!(graph.objective_edges, ObjectiveEdge[])
-    push!(graph.objective_cost, INFINITY)
+    push!(graph.objective_dist, INFINITY)
     push!(graph.objective_best, 0)
     return ObjectiveNode(length(graph.objective_best))
 end
@@ -297,8 +297,8 @@ end
 
 function bridging_cost(graph::Graph, node::AbstractNode)
     _compute_bellman_ford(graph)
-    cost = _cost(graph, node)
-    return cost == INFINITY ? Inf : float(cost)
+    dist = _dist(graph, node)
+    return dist == INFINITY ? Inf : float(dist)
 end
 
 """
@@ -331,23 +331,23 @@ constrained on creation, or as a free variable followed by a constraint.
 """
 function is_variable_edge_best(graph::Graph, node::VariableNode)
     _compute_bellman_ford(graph)
-    return graph.variable_cost[node.index] == _cost(graph, node)
+    return graph.variable_dist[node.index] == _dist(graph, node)
 end
 
-function _updated_cost(
+function _updated_dist(
     graph::Graph,
     current::Float64,
     edges::Vector{<:AbstractEdge},
 )
     bridge_index = 0
     for edge in edges
-        cost = _cost(graph, edge)
-        if cost == INFINITY
+        dist = _dist(graph, edge)
+        if dist == INFINITY
             continue
         end
-        cost += edge.cost
-        if cost < current
-            current = cost
+        dist += edge.cost
+        if dist < current
+            current = dist
             bridge_index = edge.bridge_index
         end
     end
@@ -355,42 +355,42 @@ function _updated_cost(
 end
 
 function _compute_bellman_ford(graph::Graph)
-    # Has a cost changed in the last iteration?
+    # Has a distance changed in the last iteration?
     changed = true
     while changed
         changed = false
         for i in (graph.variable_last_correct+1):length(graph.variable_best)
-            cost, best = _updated_cost(
+            dist, best = _updated_dist(
                 graph,
-                graph.variable_cost[i],
+                graph.variable_dist[i],
                 graph.variable_edges[i],
             )
             if !iszero(best)
-                graph.variable_cost[i] = cost
+                graph.variable_dist[i] = dist
                 graph.variable_best[i] = best
                 changed = true
             end
         end
         for i in (graph.constraint_last_correct+1):length(graph.constraint_best)
-            cost, best = _updated_cost(
+            dist, best = _updated_dist(
                 graph,
-                graph.constraint_cost[i],
+                graph.constraint_dist[i],
                 graph.constraint_edges[i],
             )
             if !iszero(best)
-                graph.constraint_cost[i] = cost
+                graph.constraint_dist[i] = dist
                 graph.constraint_best[i] = best
                 changed = true
             end
         end
         for i in (graph.objective_last_correct+1):length(graph.objective_best)
-            cost, best = _updated_cost(
+            dist, best = _updated_dist(
                 graph,
-                graph.objective_cost[i],
+                graph.objective_dist[i],
                 graph.objective_edges[i],
             )
             if !iszero(best)
-                graph.objective_cost[i] = cost
+                graph.objective_dist[i] = dist
                 graph.objective_best[i] = best
                 changed = true
             end
@@ -402,75 +402,75 @@ function _compute_bellman_ford(graph::Graph)
     return
 end
 
-function _cost(graph::Graph, node::VariableNode)
+function _dist(graph::Graph, node::VariableNode)
     if iszero(node.index)
         return 0
     end
     # This is the cost of adding a constrained variable
-    cost_as_variable = graph.variable_cost[node.index]
+    dist_as_variable = graph.variable_dist[node.index]
     # This is the cost of adding the constraint, if we were to add it.
-    cost_as_constraint = INFINITY
+    dist_as_constraint = INFINITY
     # If free variables are bridged but the functionize bridge was not
     # added, constraint_node is `ConstraintNode(INVALID_NODE_INDEX)`.
     constraint_node = graph.variable_constraint_node[node.index]
     if constraint_node.index != INVALID_NODE_INDEX
-        cost_as_constraint = _cost(graph, constraint_node)
-        if cost_as_constraint != INFINITY
-            cost_as_constraint += graph.variable_constraint_cost[node.index]
+        dist_as_constraint = _dist(graph, constraint_node)
+        if dist_as_constraint != INFINITY
+            dist_as_constraint += graph.variable_constraint_cost[node.index]
         end
     end
-    if cost_as_constraint == INFINITY
-        return cost_as_variable
-    elseif cost_as_variable == INFINITY
-        return cost_as_constraint
+    if dist_as_constraint == INFINITY
+        return dist_as_variable
+    elseif dist_as_variable == INFINITY
+        return dist_as_constraint
     end
-    return min(cost_as_variable, cost_as_constraint)
+    return min(dist_as_variable, dist_as_constraint)
 end
 
-function _cost(graph::Graph, node::ConstraintNode)
-    return iszero(node.index) ? 0 : graph.constraint_cost[node.index]
+function _dist(graph::Graph, node::ConstraintNode)
+    return iszero(node.index) ? 0 : graph.constraint_dist[node.index]
 end
 
-function _cost(graph::Graph, node::ObjectiveNode)
-    return iszero(node.index) ? 0 : graph.objective_cost[node.index]
+function _dist(graph::Graph, node::ObjectiveNode)
+    return iszero(node.index) ? 0 : graph.objective_dist[node.index]
 end
 
-function _cost(graph::Graph, nodes::Vector{<:AbstractNode})
-    cost = 0
+function _dist(graph::Graph, nodes::Vector{<:AbstractNode})
+    dist = 0
     for node in nodes
-        d = _cost(graph, node)
+        d = _dist(graph, node)
         if d == INFINITY
             return INFINITY
         end
-        cost += d
+        dist += d
     end
-    return cost
+    return dist
 end
 
-function _cost(graph::Graph, edge::Edge)
-    cost_var = _cost(graph, edge.added_variables)
-    if cost_var == INFINITY
+function _dist(graph::Graph, edge::Edge)
+    dist_var = _dist(graph, edge.added_variables)
+    if dist_var == INFINITY
         return INFINITY
     end
-    cost_con = _cost(graph, edge.added_constraints)
-    if cost_con == INFINITY
+    dist_con = _dist(graph, edge.added_constraints)
+    if dist_con == INFINITY
         return INFINITY
     end
-    return cost_var + cost_con
+    return dist_var + dist_con
 end
 
-function _cost(graph::Graph, edge::ObjectiveEdge)
-    cost_obj = _cost(graph, edge.added_objective)
-    if cost_obj == INFINITY
+function _dist(graph::Graph, edge::ObjectiveEdge)
+    dist_obj = _dist(graph, edge.added_objective)
+    if dist_obj == INFINITY
         return INFINITY
     end
-    cost_var = _cost(graph, edge.added_variables)
-    if cost_var == INFINITY
+    dist_var = _dist(graph, edge.added_variables)
+    if dist_var == INFINITY
         return INFINITY
     end
-    cost_con = _cost(graph, edge.added_constraints)
-    if cost_con == INFINITY
+    dist_con = _dist(graph, edge.added_constraints)
+    if dist_con == INFINITY
         return INFINITY
     end
-    return cost_obj + cost_var + cost_con
+    return dist_obj + dist_var + dist_con
 end

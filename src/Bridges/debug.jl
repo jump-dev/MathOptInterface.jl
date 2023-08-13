@@ -31,14 +31,7 @@ function print_node(io::IO, b::LazyBridgeOptimizer, node::ObjectiveNode)
     return
 end
 
-function _printed_cost(cost)
-    if isinteger(cost)
-        s = string(round(Int, cost))
-    else
-        s = string(cost)
-    end
-    return "(cost $s)"
-end
+_printed_cost(cost) = isinteger(cost) ? round(Int, cost) : cost
 
 function print_node_info(
     io::IO,
@@ -48,7 +41,7 @@ function print_node_info(
 )
     print(io, " ")
     print_node(io, b, node)
-    d = _cost(b.graph, node)
+    d = _dist(b.graph, node)
     if d == INFINITY
         print(io, " not supported")
         if debug_unsupported
@@ -62,12 +55,14 @@ function print_node_info(
         if iszero(index) ||
            (node isa VariableNode && !is_variable_edge_best(b.graph, node))
             @assert node isa VariableNode
+            distance = _printed_cost(d)
             println(
                 io,
-                " supported $(_printed_cost(d)) by adding free variables and then constrain them, see ($(b.graph.variable_constraint_node[node.index].index)).",
+                " supported (distance $distance) by adding free variables and then constrain them, see ($(b.graph.variable_constraint_node[node.index].index)).",
             )
         else
-            print(io, " bridged $(_printed_cost(d)) by ")
+            distance = _printed_cost(d)
+            print(io, " bridged (distance $distance) by ")
             MOI.Utilities.print_with_acronym(
                 io,
                 string(_bridge_type(b, node, index)),
@@ -148,7 +143,7 @@ function print_if_unsupported(
     b::LazyBridgeOptimizer,
     node::AbstractNode,
 )
-    if _cost(b.graph, node) != INFINITY
+    if _dist(b.graph, node) != INFINITY
         return
     end
     print(io, "   ")
@@ -329,7 +324,7 @@ function add_unsupported(
     constraints,
     objectives,
 )
-    if _cost(graph, node) != INFINITY || node in variables
+    if _dist(graph, node) != INFINITY || node in variables
         return
     end
     push!(variables, node)
@@ -360,7 +355,7 @@ function add_unsupported(
     constraints,
     objectives,
 )
-    if _cost(graph, node) != INFINITY || node in constraints
+    if _dist(graph, node) != INFINITY || node in constraints
         return
     end
     push!(constraints, node)
@@ -381,7 +376,7 @@ function add_unsupported(
     constraints,
     objectives,
 )
-    if _cost(graph, node) != INFINITY || node in objectives
+    if _dist(graph, node) != INFINITY || node in objectives
         return
     end
     push!(objectives, node)
