@@ -239,7 +239,7 @@ function test_multiobjective_vector_nonlinear(
     MOI.add_constraint.(model, x, MOI.GreaterThan(T(0)))
     f = MOI.VectorNonlinearFunction(
         Any[MOI.ScalarNonlinearFunction(:^, Any[x[1], 2]), x[2]],
-    )  # [x[1]^2, x[2]
+    )  # [x[1]^2, x[2]]
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{F}(), f)
     @test MOI.get(model, MOI.ObjectiveFunctionType()) == F
@@ -257,7 +257,7 @@ function test_multiobjective_vector_nonlinear_delete(
     MOI.add_constraint.(model, x, MOI.GreaterThan(T(0)))
     f = MOI.VectorNonlinearFunction(
         Any[MOI.ScalarNonlinearFunction(:^, Any[x[1], 2]), x[2]],
-    )  # [x[1]^2, x[2]
+    )  # [x[1]^2, x[2]]
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{F}(), f)
     @test MOI.get(model, MOI.ObjectiveFunctionType()) == F
@@ -276,7 +276,7 @@ function test_multiobjective_vector_nonlinear_delete_vector(
     MOI.add_constraint.(model, x, MOI.GreaterThan(T(0)))
     f = MOI.VectorNonlinearFunction(
         Any[MOI.ScalarNonlinearFunction(:^, Any[x[1], 2]), x[2]],
-    )  # [x[1]^2, x[2]
+    )  # [x[1]^2, x[2]]
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{F}(), f)
     @test MOI.get(model, MOI.ObjectiveFunctionType()) == F
@@ -296,7 +296,7 @@ function test_multiobjective_vector_nonlinear_modify(
     MOI.add_constraint.(model, x, MOI.GreaterThan(T(0)))
     f = MOI.VectorNonlinearFunction(
         Any[MOI.ScalarNonlinearFunction(:^, Any[x[1], 2]), x[2]],
-    )  # [x[1]^2, x[2]
+    )  # [x[1]^2, x[2]]
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, attr, f)
     @test MOI.get(model, MOI.ObjectiveFunctionType()) == F
