@@ -189,13 +189,23 @@ for a similar function where `value_fn` returns an
 function eval_variables(
     value_fn::F,
     model::MOI.ModelLike,
-    f::MOI.AbstractFunction,
+    f::Union{MOI.AbstractFunction,Real,AbstractVector{<:Real}},
 ) where {F}
     return eval_variables(value_fn, f)
 end
 
 # The `eval_variables(::F, ::MOI.ModelLike, ::MOI.ScalarNonlinearFunction)`
 # method is defined in the MOI.Nonlinear submodule.
+
+function eval_variables(
+    value_fn::F,
+    model::MOI.ModelLike,
+    f::MOI.VectorNonlinearFunction,
+) where {F}
+    return map(f.rows) do row
+        return eval_variables(value_fn, model, row)
+    end
+end
 
 """
     map_indices(index_map::Function, attr::MOI.AnyAttribute, x::X)::X where {X}
@@ -332,6 +342,13 @@ function map_indices(
         f.head,
         convert(Vector{Any}, map_indices(index_map, f.args)),
     )
+end
+
+function map_indices(
+    index_map::F,
+    f::MOI.VectorNonlinearFunction,
+) where {F<:Function}
+    return MOI.VectorNonlinearFunction(map_indices(index_map, f.rows))
 end
 
 map_indices(::F, change::MOI.ScalarConstantChange) where {F<:Function} = change
@@ -473,11 +490,15 @@ function substitute_variables(
     variable_map::F,
     f::MOI.ScalarNonlinearFunction,
 ) where {F<:Function}
-    # TODO(odow): this uses recursion. We should remove at some point.
-    return MOI.ScalarNonlinearFunction(
-        f.head,
-        Any[substitute_variables(variable_map, a) for a in f.args],
-    )
+    new_args = Any[]
+    for arg in f.args
+        if arg isa MOI.VariableIndex
+            push!(new_args, variable_map(arg))
+        else
+            push!(new_args, substitute_variables(variable_map, arg))
+        end
+    end
+    return MOI.ScalarNonlinearFunction(f.head, new_args)
 end
 
 function substitute_variables(
@@ -515,6 +536,14 @@ function substitute_variables(
     return g
 end
 
+function substitute_variables(
+    variable_map::F,
+    f::MOI.VectorNonlinearFunction,
+) where {F<:Function}
+    rows = [substitute_variables(variable_map, row) for row in f.rows]
+    return MOI.VectorNonlinearFunction(rows)
+end
+
 """
     scalar_type(F::Type{<:MOI.AbstractVectorFunction})
 
@@ -535,6 +564,8 @@ function scalar_type(::Type{MOI.VectorQuadraticFunction{T}}) where {T}
     return MOI.ScalarQuadraticFunction{T}
 end
 
+scalar_type(::Type{MOI.VectorNonlinearFunction}) = MOI.ScalarNonlinearFunction
+
 """
     vector_type(::Type{<:MOI.AbstractScalarFunction})
 
@@ -553,6 +584,10 @@ end
 
 function vector_type(::Type{MOI.ScalarQuadraticFunction{T}}) where {T}
     return MOI.VectorQuadraticFunction{T}
+end
+
+function vector_type(::Type{MOI.ScalarNonlinearFunction})
+    return MOI.VectorNonlinearFunction
 end
 
 """
@@ -680,6 +715,12 @@ function Base.eltype(
     return MOI.ScalarQuadraticFunction{T}
 end
 
+function Base.eltype(
+    ::ScalarFunctionIterator{F},
+) where {F<:MOI.AbstractVectorFunction}
+    return scalar_type(F)
+end
+
 Base.lastindex(it::ScalarFunctionIterator) = length(it)
 
 function Base.getindex(
@@ -760,6 +801,20 @@ function Base.getindex(
         end
     end
     return MOI.VectorQuadraticFunction(vqt, vat, it.f.constants[output_indices])
+end
+
+function Base.getindex(
+    it::ScalarFunctionIterator{MOI.VectorNonlinearFunction},
+    output_index::Integer,
+)
+    return it.f.rows[output_index]
+end
+
+function Base.getindex(
+    it::ScalarFunctionIterator{MOI.VectorNonlinearFunction},
+    output_index::AbstractVector{<:Integer},
+)
+    return MOI.VectorNonlinearFunction(it.f.rows[output_index])
 end
 
 """
@@ -888,6 +943,8 @@ function is_canonical(
            _is_strictly_sorted(f.quadratic_terms)
 end
 
+is_canonical(f::MOI.VectorNonlinearFunction) = all(is_canonical, f.rows)
+
 function _is_strictly_sorted(x::Vector)
     if isempty(x)
         return true
@@ -960,6 +1017,13 @@ function canonicalize!(f::MOI.ScalarNonlinearFunction)
         if !is_canonical(arg)
             f.args[i] = canonicalize!(arg)
         end
+    end
+    return f
+end
+
+function canonicalize!(f::MOI.VectorNonlinearFunction)
+    for (i, fi) in enumerate(f.rows)
+        f.rows[i] = canonicalize!(fi)
     end
     return f
 end
@@ -2079,6 +2143,12 @@ function vectorize(
     return MOI.VectorQuadraticFunction(quadratic_terms, affine_terms, constant)
 end
 
+function vectorize(x::AbstractVector{MOI.ScalarNonlinearFunction})
+    return MOI.VectorNonlinearFunction(x)
+end
+
+scalarize(f::AbstractVector, ::Bool = false) = f
+
 """
     scalarize(func::MOI.VectorOfVariables, ignore_constants::Bool = false)
 
@@ -2152,6 +2222,13 @@ function scalarize(
         push!(functions[term.output_index].quadratic_terms, term.scalar_term)
     end
     return functions
+end
+
+function scalarize(
+    f::MOI.VectorNonlinearFunction,
+    ignore_constants::Bool = false,
+)
+    return f.rows
 end
 
 function count_terms(counting::Vector{<:Integer}, terms::Vector{T}) where {T}
@@ -2251,6 +2328,8 @@ is_coefficient_type(::Type{<:TypedLike{T}}, ::Type{T}) where {T} = true
 is_coefficient_type(::Type{<:TypedLike}, ::Type) = false
 
 is_coefficient_type(::Type{<:MOI.ScalarNonlinearFunction}, ::Type) = true
+
+is_coefficient_type(::Type{MOI.VectorNonlinearFunction}, ::Type) = true
 
 similar_type(::Type{F}, ::Type{T}) where {F,T} = F
 

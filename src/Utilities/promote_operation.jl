@@ -17,7 +17,7 @@ of the arguments `args` are `ArgsTypes`.
 One assumption is that the element type `T` is invariant under each operation.
 That is, `op(::T, ::T)::T` where `op` is a `+`, `-`, `*`, and `/`.
 
-There are five methods for which we implement `Utilities.promote_operation`:
+There are six methods for which we implement `Utilities.promote_operation`:
 
  1. `+`
     a. `promote_operation(::typeof(+), ::Type{T}, ::Type{F1}, ::Type{F2})`
@@ -38,10 +38,10 @@ There are five methods for which we implement `Utilities.promote_operation`:
     a. `promote_operation(::typeof(imag), ::Type{T}, ::Type{F})`
        where `F` is `VariableIndex` or `VectorOfVariables`
 
-In each case, `F` (or `F1` and `F2`) is one of the nine supported types, with
+In each case, `F` (or `F1` and `F2`) is one of the ten supported types, with
 a restriction that the mathematical operation makes sense, for example, we don't
 define `promote_operation(-, T, F1, F2)` where `F1` is a scalar-valued function
-and  `F2` is a vector-valued function. The nine supported types are:
+and  `F2` is a vector-valued function. The ten supported types are:
 
  1. ::T
  2. ::VariableIndex
@@ -52,6 +52,7 @@ and  `F2` is a vector-valued function. The nine supported types are:
  7. ::VectorOfVariables
  8. ::VectorAffineFunction{T}
  9. ::VectorQuadraticFunction{T}
+ 10. ::VectorNonlinearFunction
 """
 function promote_operation end
 
@@ -122,12 +123,14 @@ function promote_operation(
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
+        MOI.VectorNonlinearFunction,
     },
     F2<:Union{
         AbstractVector{T},
         MOI.VectorOfVariables,
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
+        MOI.VectorNonlinearFunction,
     },
 }
     S = promote_operation(op, T, scalar_type(F1), scalar_type(F2))
@@ -169,6 +172,14 @@ function promote_operation(
     ::Type{MOI.VectorOfVariables},
 ) where {T<:Number}
     return MOI.VectorAffineFunction{T}
+end
+
+function promote_operation(
+    ::typeof(-),
+    ::Type{T},
+    ::Type{MOI.VectorNonlinearFunction},
+) where {T<:Number}
+    return vector_type(promote_operation(-, T, MOI.ScalarNonlinearFunction))
 end
 
 ### Method 3a
@@ -220,6 +231,15 @@ function promote_operation(
     return MOI.VectorAffineFunction{T}
 end
 
+function promote_operation(
+    ::typeof(*),
+    ::Type{T},
+    ::Type{T},
+    ::Type{MOI.VectorNonlinearFunction},
+) where {T<:Number}
+    return vector_type(promote_operation(*, T, T, MOI.ScalarNonlinearFunction))
+end
+
 ### Method 3b
 
 function promote_operation(
@@ -258,6 +278,15 @@ function promote_operation(
     ::Type{T},
 ) where {T<:Number}
     return MOI.VectorAffineFunction{T}
+end
+
+function promote_operation(
+    ::typeof(*),
+    ::Type{T},
+    ::Type{MOI.VectorNonlinearFunction},
+    ::Type{T},
+) where {T<:Number}
+    return vector_type(promote_operation(*, T, MOI.ScalarNonlinearFunction, T))
 end
 
 ### Method 3c
@@ -331,6 +360,15 @@ function promote_operation(
     return MOI.VectorAffineFunction{T}
 end
 
+function promote_operation(
+    ::typeof(/),
+    ::Type{T},
+    ::Type{MOI.VectorNonlinearFunction},
+    ::Type{T},
+) where {T}
+    return vector_type(promote_operation(/, T, MOI.ScalarNonlinearFunction, T))
+end
+
 ### Method 5a
 
 function promote_operation(
@@ -385,6 +423,27 @@ function promote_operation(
     }...,
 ) where {T<:Number}
     return MOI.VectorQuadraticFunction{T}
+end
+
+function promote_operation(
+    ::typeof(vcat),
+    ::Type{T},
+    ::Type{
+        <:Union{
+            T,
+            MOI.VariableIndex,
+            MOI.ScalarAffineFunction{T},
+            MOI.ScalarQuadraticFunction{T},
+            MOI.ScalarNonlinearFunction,
+            AbstractVector{T},
+            MOI.VectorOfVariables,
+            MOI.VectorAffineFunction{T},
+            MOI.VectorQuadraticFunction{T},
+            MOI.VectorNonlinearFunction,
+        },
+    }...,
+) where {T<:Number}
+    return MOI.VectorNonlinearFunction
 end
 
 ### Method 6a

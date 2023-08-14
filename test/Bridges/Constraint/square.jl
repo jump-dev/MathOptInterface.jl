@@ -240,6 +240,80 @@ function test_square_warning()
     return
 end
 
+function test_VectorNonlinearFunction_symmetric()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.Square{Float64}(inner)
+    x = MOI.add_variables(model, 3)
+    fis = Any[MOI.ScalarNonlinearFunction(:log, Any[x[i]]) for i in 1:3]
+    f = MOI.VectorNonlinearFunction(Any[fis[1], fis[2], fis[2], fis[3]])
+    c = MOI.add_constraint(model, f, MOI.PositiveSemidefiniteConeSquare(2))
+    F, S = MOI.VectorNonlinearFunction, MOI.PositiveSemidefiniteConeTriangle
+    indices = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())
+    @test length(indices) == 1
+    g = MOI.get(inner, MOI.ConstraintFunction(), indices[1])
+    y = MOI.get(inner, MOI.ListOfVariableIndices())
+    gis = Any[MOI.ScalarNonlinearFunction(:log, Any[y[i]]) for i in 1:3]
+    @test g ≈ MOI.VectorNonlinearFunction(gis)
+    return
+end
+
+function test_VectorNonlinearFunction_nonsymmetric()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.Square{Float64}(inner)
+    x = MOI.add_variables(model, 4)
+    fis = Any[MOI.ScalarNonlinearFunction(:log, Any[x[i]]) for i in 1:4]
+    f = MOI.VectorNonlinearFunction(fis)
+    c = MOI.add_constraint(model, f, MOI.PositiveSemidefiniteConeSquare(2))
+    F, S = MOI.VectorNonlinearFunction, MOI.PositiveSemidefiniteConeTriangle
+    indices = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())
+    @test length(indices) == 1
+    g = MOI.get(inner, MOI.ConstraintFunction(), indices[1])
+    y = MOI.get(inner, MOI.ListOfVariableIndices())
+    gis = Any[MOI.ScalarNonlinearFunction(:log, Any[y[i]]) for i in 1:4]
+    @test g ≈ MOI.VectorNonlinearFunction(gis[[1, 3, 4]])
+    F, S = MOI.ScalarNonlinearFunction, MOI.EqualTo{Float64}
+    indices = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())
+    @test length(indices) == 1
+    g = MOI.get(inner, MOI.ConstraintFunction(), indices[1])
+    @test g ≈ MOI.ScalarNonlinearFunction(:-, Any[gis[3], gis[2]])
+    return
+end
+
+function test_VectorNonlinearFunction_mixed_type()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.Square{Float64}(inner)
+    x = MOI.add_variables(model, 4)
+    fis = vcat(
+        Any[MOI.ScalarNonlinearFunction(:log, Any[x[i]]) for i in 1:2],
+        1.0 * x[3] + 2.0,
+        x[4],
+    )
+    f = MOI.VectorNonlinearFunction(fis)
+    c = MOI.add_constraint(model, f, MOI.PositiveSemidefiniteConeSquare(2))
+    F, S = MOI.VectorNonlinearFunction, MOI.PositiveSemidefiniteConeTriangle
+    indices = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())
+    @test length(indices) == 1
+    g = MOI.get(inner, MOI.ConstraintFunction(), indices[1])
+    y = MOI.get(inner, MOI.ListOfVariableIndices())
+    gis = vcat(
+        Any[MOI.ScalarNonlinearFunction(:log, Any[y[i]]) for i in 1:2],
+        1.0 * y[3] + 2.0,
+        y[4],
+    )
+    @test g ≈ MOI.VectorNonlinearFunction(gis[[1, 3, 4]])
+    F, S = MOI.ScalarNonlinearFunction, MOI.EqualTo{Float64}
+    indices = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())
+    @test length(indices) == 1
+    @test ≈(
+        MOI.get(inner, MOI.ConstraintFunction(), indices[1]),
+        MOI.ScalarNonlinearFunction(
+            :-,
+            Any[convert(MOI.ScalarNonlinearFunction, gis[3]), gis[2]],
+        ),
+    )
+    return
+end
+
 end  # module
 
 TestConstraintSquare.runtests()

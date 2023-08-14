@@ -260,6 +260,31 @@ function test_unsupported_ScalarNonlinearFunction()
     return
 end
 
+function test_VectorNonlinearFunction()
+    # We can't use the standard runtests because ScalarNonlinearFunction does
+    # not preserve f(x) ≈ (f(x) - g(x)) + g(x)
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.Vectorize{Float64}(inner)
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:log, Any[x])
+    c = MOI.add_constraint(model, f, MOI.EqualTo(1.0))
+    F, S = MOI.VectorNonlinearFunction, MOI.Zeros
+    indices = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())
+    @test length(indices) == 1
+    inner_variables = MOI.get(inner, MOI.ListOfVariableIndices())
+    @test length(inner_variables) == 1
+    y = inner_variables[1]
+    g = MOI.ScalarNonlinearFunction(
+        :-,
+        Any[MOI.ScalarNonlinearFunction(:log, Any[x]), 1.0],
+    )
+    @test ≈(
+        MOI.get(inner, MOI.ConstraintFunction(), indices[1]),
+        MOI.VectorNonlinearFunction(Any[g]),
+    )
+    return
+end
+
 end  # module
 
 TestConstraintVectorize.runtests()

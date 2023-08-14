@@ -665,6 +665,74 @@ function Base.copy(f::VectorQuadraticFunction)
     )
 end
 
+"""
+    VectorNonlinearFunction(args::Vector{ScalarNonlinearFunction})
+
+The vector-valued nonlinear function composed of a vector of
+[`ScalarNonlinearFunction`](@ref).
+
+## `args`
+
+The vector `args` contains the scalar elements of the nonlinear function. Each
+element must be a [`ScalarNonlinearFunction`](@ref), but if you pass a
+`Vector{Any}`, the elements can be automatically converted from one of the
+following:
+
+ * A constant value of type `T<:Real`
+ * A [`VariableIndex`](@ref)
+ * A [`ScalarAffineFunction`](@ref)
+ * A [`ScalarQuadraticFunction`](@ref)
+ * A [`ScalarNonlinearFunction`](@ref)
+
+## Example
+
+To represent the function ``f(x) = [sin(x)^2, x]``, do:
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> x = MOI.VariableIndex(1)
+MOI.VariableIndex(1)
+
+julia> g = MOI.ScalarNonlinearFunction(
+           :^,
+           Any[MOI.ScalarNonlinearFunction(:sin, Any[x]), 2.0],
+       )
+^(sin(MOI.VariableIndex(1)), 2.0)
+
+julia> MOI.VectorNonlinearFunction([g, x])
+┌                                 ┐
+│^(sin(MOI.VariableIndex(1)), 2.0)│
+│+(MOI.VariableIndex(1))          │
+└                                 ┘
+```
+
+Note the automatic conversion from `x` to `+(x)`.
+"""
+struct VectorNonlinearFunction <: AbstractVectorFunction
+    rows::Vector{ScalarNonlinearFunction}
+end
+
+output_dimension(f::VectorNonlinearFunction) = length(f.rows)
+
+function constant(f::VectorNonlinearFunction, ::Type{T}) where {T}
+    return zeros(T, output_dimension(f))
+end
+
+Base.copy(f::VectorNonlinearFunction) = VectorNonlinearFunction(copy(f.rows))
+
+function Base.:(==)(f::VectorNonlinearFunction, g::VectorNonlinearFunction)
+    return f.rows == g.rows
+end
+
+function Base.isapprox(
+    x::VectorNonlinearFunction,
+    y::VectorNonlinearFunction;
+    kwargs...,
+)
+    return all(isapprox(xi, yi; kwargs...) for (xi, yi) in zip(x.rows, y.rows))
+end
+
 # Function modifications
 
 """
@@ -1095,6 +1163,14 @@ function Base.convert(
 end
 
 # ScalarNonlinearFunction
+
+function Base.convert(::Type{ScalarNonlinearFunction}, x::Real)
+    return ScalarNonlinearFunction(:+, Any[x])
+end
+
+function Base.convert(::Type{ScalarNonlinearFunction}, x::VariableIndex)
+    return ScalarNonlinearFunction(:+, Any[x])
+end
 
 function Base.convert(::Type{ScalarNonlinearFunction}, term::ScalarAffineTerm)
     return ScalarNonlinearFunction(:*, Any[term.coefficient, term.variable])

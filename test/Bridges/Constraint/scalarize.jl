@@ -223,6 +223,53 @@ function test_runtests()
         4.0 * x == 5.0
         """,
     )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.ScalarizeBridge,
+        """
+        variables: x
+        VectorNonlinearFunction([2.0 * x - 1.0]) in Nonnegatives(1)
+        VectorNonlinearFunction([3.0 * x + 1.0]) in Nonpositives(1)
+        VectorNonlinearFunction([4.0 * x - 5.0]) in Zeros(1)
+        """,
+        """
+        variables: x
+        ScalarNonlinearFunction(2.0 * x - 1.0) >= 0.0
+        ScalarNonlinearFunction(3.0 * x + 1.0) <= 0.0
+        ScalarNonlinearFunction(4.0 * x - 5.0) == 0.0
+        """,
+    )
+    return
+end
+
+function test_VectorNonlinearFunction_mixed_type()
+    # We can't use the standard runtests because ScalarNonlinearFunction does
+    # not preserve f(x) ≈ (f(x) - g(x)) + g(x)
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.Scalarize{Float64}(inner)
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:log, Any[x])
+    g = MOI.VectorNonlinearFunction(Any[1.0, x, 2.0*x-1.0, f])
+    c = MOI.add_constraint(model, g, MOI.Nonnegatives(4))
+    F, S = MOI.ScalarNonlinearFunction, MOI.GreaterThan{Float64}
+    indices = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())
+    @test length(indices) == 4
+    inner_variables = MOI.get(inner, MOI.ListOfVariableIndices())
+    @test length(inner_variables) == 1
+    y = inner_variables[1]
+    out = convert.(MOI.ScalarNonlinearFunction, Any[1.0, y, 2.0*y-1.0])
+    push!(out, MOI.ScalarNonlinearFunction(:log, Any[y]))
+    for (input, output) in zip(indices, out)
+        @test ≈(MOI.get(inner, MOI.ConstraintFunction(), input), output)
+    end
+    new_g = MOI.VectorNonlinearFunction(Any[f, 2.0*x-1.0, 1.0, x])
+    MOI.set(model, MOI.ConstraintFunction(), c, new_g)
+    out = vcat(
+        MOI.ScalarNonlinearFunction(:log, Any[y]),
+        convert.(MOI.ScalarNonlinearFunction, Any[2.0*y-1.0, 1.0, y]),
+    )
+    for (input, output) in zip(indices, out)
+        @test ≈(MOI.get(inner, MOI.ConstraintFunction(), input), output)
+    end
     return
 end
 

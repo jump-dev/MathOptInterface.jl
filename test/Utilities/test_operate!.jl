@@ -56,6 +56,10 @@ function _test_function(pair::Pair{Symbol,<:Any})
     end
 end
 
+function _test_function(pairs::Vector{<:Any})
+    return MOI.VectorNonlinearFunction(Any[_test_function(f) for f in pairs])
+end
+
 function test_operate_1a()
     for coef in (
         (0, 0, 0),
@@ -69,6 +73,7 @@ function test_operate_1a()
         [(0, 1, 0)],
         [(0, 0, 1)],
         [(1, 1, 1)],
+        [:log => (0, 0, 0)],
     )
         f = _test_function(coef)
         @test MOI.Utilities.operate(+, Int, f) == f
@@ -90,6 +95,7 @@ function test_operate_1b()
         [(0, 1, 0)],
         [(0, 0, 1)],
         [(1, 1, 1)],
+        [:log => (0, 0, 0)],
     )
     special_cases = Dict((0, 0, 0) => (0, 1, 0))
     for i in 1:6, j in 1:6
@@ -104,13 +110,30 @@ function test_operate_1b()
         @test MOI.Utilities.operate(+, Int, fi, fj) ≈ fk
         @test MOI.Utilities.operate!(+, Int, fi, fj) ≈ fk
     end
-    for i in 7:11, j in 7:11
+    for i in 7:12, j in 7:12
         fi, fj = _test_function(F[i]), _test_function(F[j])
-        k = map(zip(F[i], F[j])) do (x, y)
-            return get(special_cases, x, x) .+ get(special_cases, y, y)
+        if i == 12 || j == 12
+            args = Any[]
+            for (fi_, fj_) in zip(F[i], F[j])
+                push!(
+                    args,
+                    MOI.Utilities.operate(
+                        +,
+                        Int,
+                        _test_function(fi_),
+                        _test_function(fj_),
+                    ),
+                )
+            end
+            fk = MOI.VectorNonlinearFunction(args)
+        else
+            k = map(zip(F[i], F[j])) do (x, y)
+                return get(special_cases, x, x) .+ get(special_cases, y, y)
+            end
+            fk = _test_function(k)
         end
-        @test MOI.Utilities.operate(+, Int, fi, fj) ≈ _test_function(k)
-        @test MOI.Utilities.operate!(+, Int, fi, fj) ≈ _test_function(k)
+        @test MOI.Utilities.operate(+, Int, fi, fj) ≈ fk
+        @test MOI.Utilities.operate!(+, Int, fi, fj) ≈ fk
     end
     return
 end
@@ -161,6 +184,7 @@ function test_operate_2a()
         [(0, 1, 0)] => [(0, -1, 0)],
         [(0, 0, 1)] => [(0, 0, -1)],
         [(1, 1, 1)] => [(-1, -1, -1)],
+        [(:log => (0, 0, 0))] => [(:- => (:log => (0, 0, 0)))],
     )
         @test MOI.Utilities.operate(-, T, _test_function(f)) ≈ _test_function(g)
         @test MOI.Utilities.operate!(-, T, _test_function(f)) ≈
@@ -192,6 +216,7 @@ function test_operate_2b()
         [(0, 1, 0)],
         [(0, 0, 1)],
         [(1, 1, 1)],
+        [:log => (0, 0, 0)],
     )
     special_cases = Dict((0, 0, 0) => (0, 1, 0))
     for i in 1:6, j in 1:6
@@ -213,15 +238,32 @@ function test_operate_2b()
         @test MOI.Utilities.operate(-, Int, fi, fj) ≈ fk
         @test MOI.Utilities.operate!(-, Int, fi, fj) ≈ fk
     end
-    for i in 7:11, j in 7:11
-        F2 = [2 .* fi for fi in F[i]]
-        fi, fj = _test_function(F2), _test_function(F[j])
-        k = map(zip(F2, F[j])) do (x, y)
-            return get(special_cases, x, x) .- get(special_cases, y, y)
-        end
-        fk = _test_function(k)
-        if (i, j) in ((7, 7), (7, 9))
-            fk = MOI.VectorAffineFunction(MOI.VectorAffineTerm{Int}[], [0])
+    for i in 7:12, j in 7:12
+        fi, fj = _test_function(F[i]), _test_function(F[j])
+        if i == 12 || j == 12
+            args = Any[]
+            for (fi_, fj_) in zip(F[i], F[j])
+                push!(
+                    args,
+                    MOI.Utilities.operate(
+                        -,
+                        Int,
+                        _test_function(fi_),
+                        _test_function(fj_),
+                    ),
+                )
+            end
+            fk = MOI.VectorNonlinearFunction(args)
+        else
+            F2 = [2 .* fi for fi in F[i]]
+            fi, fj = _test_function(F2), _test_function(F[j])
+            k = map(zip(F2, F[j])) do (x, y)
+                return get(special_cases, x, x) .- get(special_cases, y, y)
+            end
+            fk = _test_function(k)
+            if (i, j) in ((7, 7), (7, 9))
+                fk = MOI.VectorAffineFunction(MOI.VectorAffineTerm{Int}[], [0])
+            end
         end
         @test MOI.Utilities.operate(-, Int, fi, fj) ≈ fk
         @test MOI.Utilities.operate!(-, Int, fi, fj) ≈ fk
@@ -243,6 +285,7 @@ function test_operate_3a()
         [(0, 1, 0)] => [(0, 3, 0)],
         [(0, 0, 1)] => [(0, 0, 3)],
         [(1, 1, 1)] => [(3, 3, 3)],
+        [(:log => (0, 0, 0))] => [(:* => [(3, 0, 0), (:log => (0, 0, 0))])],
     )
         f = _test_function(f)
         @test MOI.Utilities.operate(*, T, 3, f) ≈ _test_function(g)
@@ -265,6 +308,7 @@ function test_operate_3b()
         [(0, 1, 0)] => [(0, 3, 0)],
         [(0, 0, 1)] => [(0, 0, 3)],
         [(1, 1, 1)] => [(3, 3, 3)],
+        [(:log => (0, 0, 0))] => [(:* => [(:log => (0, 0, 0)), (3, 0, 0)])],
     )
         f = _test_function(f)
         @test MOI.Utilities.operate(*, T, f, 3) ≈ _test_function(g)
@@ -296,6 +340,8 @@ function test_operate_4a()
         [(0.0, 1.0, 0.0)] => [(0.0, 0.5, 0.0)],
         [(0.0, 0.0, 1.0)] => [(0.0, 0.0, 0.5)],
         [(1.0, 1.0, 1.0)] => [(0.5, 0.5, 0.5)],
+        [(:log => (0, 0, 0))] =>
+            [(:/ => [(:log => (0, 0, 0)), (2.0, 0.0, 0.0)])],
     )
         f = _test_function(f)
         @test MOI.Utilities.operate(/, T, f, 2.0) ≈ _test_function(g)
@@ -312,11 +358,13 @@ function test_operate_5a()
         (0.0, 1.0, 0.0),
         (0.0, 0.0, 1.0),
         (1.0, 1.0, 1.0),
+        (:log => (0, 0, 0)),
         [(0.0, 0.0, 0.0)],
         [(1.0, 0.0, 0.0)],
         [(0.0, 1.0, 0.0)],
         [(0.0, 0.0, 1.0)],
         [(1.0, 1.0, 1.0)],
+        [:log => (0, 0, 0)],
     )
     for f in F, g in F
         h = vcat(f, g)
@@ -549,8 +597,9 @@ function test_operate_output_index_1a()
         (0.0, 1.0, 0.0),
         (0.0, 0.0, 1.0),
         (1.0, 1.0, 1.0),
+        :log => (0, 0, 0),
     )
-    for i in 2:5
+    for i in 2:6
         for j in 1:i
             if (i, j) == (2, 1)
                 continue
