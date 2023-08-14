@@ -181,7 +181,7 @@ were created with `add_key_for_bridge`.
 function keys_of_type(map::Map, C::Type{MOI.ConstraintIndex{F,S}}) where {F,S}
     return Base.Iterators.Filter(
         ci -> haskey(map, ci),
-        MOI.Utilities.LazyMap{C}(i -> _index(i, F, S), eachindex(map.bridges)),
+        MOI.Utilities.lazy_map(C, i -> _index(i, F, S), eachindex(map.bridges)),
     )
 end
 
@@ -189,7 +189,8 @@ function keys_of_type(
     map::Map,
     C::Type{MOI.ConstraintIndex{MOI.VariableIndex,S}},
 ) where {S}
-    return MOI.Utilities.LazyMap{C}(
+    return MOI.Utilities.lazy_map(
+        C,
         key -> C(key[1]),
         Base.Iterators.Filter(
             key -> key[2] == S,
@@ -239,7 +240,8 @@ Return the list of all keys that correspond to
 [`MOI.VectorOfVariables`](@ref) constraints.
 """
 function vector_of_variables_constraints(map::Map)
-    return MOI.Utilities.LazyMap{MOI.ConstraintIndex{MOI.VectorOfVariables}}(
+    return MOI.Utilities.lazy_map(
+        MOI.ConstraintIndex{MOI.VectorOfVariables},
         i -> MOI.ConstraintIndex{map.constraint_types[i]...}(-i),
         Base.Iterators.Filter(
             i ->

@@ -37,20 +37,31 @@ end
 test_EmptyVector_Int() = _test_EmptyVector(Int)
 test_EmptyVector_Float64() = _test_EmptyVector(Float64)
 
-function _test_LazyMap(T)
-    v = MOI.Utilities.LazyMap{T}(x -> x^2, [2, 3])
-    @test size(v) == (2,)
-    @test length(v) == 2
-    @test !isempty(v)
-    @test eltype(v) == T
-    c = collect(v)
-    @test c isa Vector{T}
-    @test c == [4, 9]
+function _test_lazy_map(T)
+    for (M{T}, a) in [
+        (MOI.Utilities.LazyMap, Iterators.drop(1:3, 1)),
+        (MOI.Utilities.VectorLazyMap, [2, 3]),
+    ]
+        v = MOI.Utilities.lazy_map(T, x -> x^2, a)
+        @test v isa M
+        @test length(v) == 2
+        @test !isempty(v)
+        @test eltype(v) == T
+        c = collect(v)
+        @test c isa Vector{T}
+        @test c == [4, 9]
+        if a isa AbstractVector
+            @test size(v) == (2,)
+            @test v[1] == 4
+            @test v[2] == 9
+            @test collect(Iterators.reverse(v)) == [9, 4]
+        end
+    end
     return
 end
 
-test_LazyMap_Int() = _test_LazyMap(Int)
-test_LazyMap_Float64() = _test_LazyMap(Float64)
+test_lazy_map_Int() = _test_lazy_map(Int)
+test_lazy_map_Float64() = _test_lazy_map(Float64)
 
 end  # module
 
