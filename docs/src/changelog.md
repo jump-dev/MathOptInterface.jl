@@ -7,7 +7,7 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.19.0 (August 7, 2023)
+## v1.19.0 (August 15, 2023)
 
 ### Added
 
@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    (#2228) (#2231)
  - Added [`Bridges.Constraint.ScalarQuadraticToScalarNonlinearBridge`](@ref) (#2233)
  - Added [`Bridges.Constraint.IntegerToZeroOneBridge`](@ref) (#2205)
+ - Added support for writing non-`Float64` functions in `FileFormats.MOF`
+ - Added [`VectorNonlinearFunction`](@ref) (#2201)
 
 ### Fixed
 
@@ -33,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Fixed warnings in tests (#2241) (#2243)
  - Small refactoring of bridges for upcoming `VectorNonlinearFunction` (#2244)
    (#2245)
+ - Fixed various typos (#2251) (#2255)
+ - Partitioned how we run the tests on GitHub actions (#2252) (#2253)
 
 ## v1.18.0 (June 23, 2023)
 
