@@ -202,7 +202,7 @@ end
     conversion_cost(
         F::Type{<:MOI.AbstractFunction},
         G::Type{<:MOI.AbstractFunction},
-    )::Int
+    )::Union{Int,Nothing}
 
 Return an `Int` returning the cost of converting any function of type `G`
 to a function of type `F` with `convert`.
@@ -273,7 +273,7 @@ function concrete_bridge_type(
     return FunctionConversionBridge{T,F,G,S}
 end
 
-function MOI.Bridges.cost(
+function MOI.Bridges.bridging_cost(
     ::Type{<:FunctionConversionBridge{T,F,G}},
 ) where {T,F,G}
     return conversion_cost(F, G)

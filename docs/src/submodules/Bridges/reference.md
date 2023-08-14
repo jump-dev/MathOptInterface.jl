@@ -20,7 +20,7 @@ get(::Bridges.AbstractBridge, ::NumberOfConstraints)
 get(::Bridges.AbstractBridge, ::ListOfConstraintIndices)
 Bridges.needs_final_touch
 Bridges.final_touch
-Bridges.cost
+Bridges.bridging_cost
 ```
 
 ## Constraint bridge API
@@ -74,7 +74,6 @@ Bridges.unbridged_variable_function
 Bridges.bridged_function
 Bridges.supports_constraint_bridges
 Bridges.recursive_model
-Bridges.bridging_cost
 ```
 
 ## LazyBridgeOptimizer API

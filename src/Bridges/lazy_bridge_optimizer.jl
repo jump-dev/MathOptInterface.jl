@@ -156,7 +156,7 @@ function _edge(b::LazyBridgeOptimizer, index::Int, BT::Type{<:AbstractBridge})
         index,
         _variable_nodes(b, BT),
         _constraint_nodes(b, BT),
-        cost(BT),
+        bridging_cost(BT),
     )
 end
 
@@ -171,7 +171,7 @@ function _edge(
         _variable_nodes(b, BT),
         _constraint_nodes(b, BT),
         node(b, set_objective_function_type(BT)),
-        cost(BT),
+        bridging_cost(BT),
     )
 end
 
