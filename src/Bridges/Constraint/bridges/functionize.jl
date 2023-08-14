@@ -199,14 +199,19 @@ function bridge_constraint(
 end
 
 """
-    conversion_cost(F::Type{<:MOI.AbstractFunction}, G::Type{<:MOI.AbstractFunction})
+    conversion_cost(
+        F::Type{<:MOI.AbstractFunction},
+        G::Type{<:MOI.AbstractFunction},
+    )::Int
 
-Return an `Int` returning the *cost* of converting any function of type `G`
-to a function of type `F` with `convert`. This cost is used to compute
-[`Bridges.bridging_cost`](@ref).
+Return an `Int` returning the cost of converting any function of type `G`
+to a function of type `F` with `convert`.
 
-The default cost is `nothing`, which means that [`Bridges.Constraint.FunctionConversionBridge`](@ref)
-should not attempt the conversion.
+This cost is used to compute [`MOI.Bridges.bridging_cost`](@ref).
+
+The default cost is `nothing`, which means that
+[`MOI.Bridges.Constraint.FunctionConversionBridge`](@ref) should not attempt the
+conversion.
 """
 function conversion_cost(
     ::Type{<:MOI.AbstractFunction},
