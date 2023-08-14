@@ -53,12 +53,14 @@ function print_node_info(
         if iszero(index) ||
            (node isa VariableNode && !is_variable_edge_best(b.graph, node))
             @assert node isa VariableNode
+            dist = isinteger(d) ? round(Int, d) : d
             println(
                 io,
-                " supported (distance $d) by adding free variables and then constrain them, see ($(b.graph.variable_constraint_node[node.index].index)).",
+                " supported (distance $dist) by adding free variables and then constrain them, see ($(b.graph.variable_constraint_node[node.index].index)).",
             )
         else
-            print(io, " bridged (distance $d) by ")
+            dist = isinteger(d) ? round(Int, d) : d
+            print(io, " bridged (distance $dist) by ")
             MOI.Utilities.print_with_acronym(
                 io,
                 string(_bridge_type(b, node, index)),

@@ -285,13 +285,13 @@ If you implement this method, you must also implement
 function final_touch end
 
 """
-    bridging_cost(BT::Type{<:AbstractBridge})::Int
+    bridging_cost(BT::Type{<:AbstractBridge})::Float64
 
 Return the cost of adding a bridge of type `BT`.
 
-The default implementation for any [`AbstractBridge`](@ref) returns `1`, so this
-method should only be implemented for bridges returning a cost different from
-`1`.
+The default implementation for any [`AbstractBridge`](@ref) returns `1.0`, so
+this method should only be implemented for bridges returning a cost different
+from `1.0`.
 
 ## Example
 
@@ -316,7 +316,7 @@ julia> G = MOI.ScalarAffineFunction{Float64};
 julia> MOI.Bridges.bridging_cost(
            MOI.Bridges.Constraint.FunctionConversionBridge{Float64,F,G},
        )
-10
+10.0
 ```
 """
-bridging_cost(::Type{<:AbstractBridge}) = 1
+bridging_cost(::Type{<:AbstractBridge}) = 1.0

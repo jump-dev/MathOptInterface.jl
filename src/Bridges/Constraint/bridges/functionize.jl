@@ -202,14 +202,14 @@ end
     conversion_cost(
         F::Type{<:MOI.AbstractFunction},
         G::Type{<:MOI.AbstractFunction},
-    )::Union{Int,Nothing}
+    )::Float64
 
-Return an `Int` returning the cost of converting any function of type `G`
+Return a `Float64` returning the cost of converting any function of type `G`
 to a function of type `F` with `convert`.
 
 This cost is used to compute [`MOI.Bridges.bridging_cost`](@ref).
 
-The default cost is `nothing`, which means that
+The default cost is `Inf`, which means that
 [`MOI.Bridges.Constraint.FunctionConversionBridge`](@ref) should not attempt the
 conversion.
 """
@@ -217,7 +217,7 @@ function conversion_cost(
     ::Type{<:MOI.AbstractFunction},
     ::Type{<:MOI.AbstractFunction},
 )
-    return nothing
+    return Inf
 end
 
 function conversion_cost(
@@ -234,14 +234,14 @@ function conversion_cost(
     ::Type{<:MOI.ScalarAffineFunction},
     ::Type{MOI.VariableIndex},
 )
-    return 1
+    return 1.0
 end
 
 function conversion_cost(
     ::Type{MOI.ScalarQuadraticFunction{T}},
     ::Type{<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}}},
 ) where {T}
-    return 10
+    return 10.0
 end
 
 function conversion_cost(
@@ -254,7 +254,7 @@ function conversion_cost(
         },
     },
 )
-    return 100
+    return 100.0
 end
 
 function MOI.supports_constraint(
@@ -262,7 +262,7 @@ function MOI.supports_constraint(
     ::Type{G},
     ::Type{<:MOI.AbstractSet},
 ) where {T,F,G<:MOI.AbstractFunction}
-    return conversion_cost(F, G) !== nothing
+    return isfinite(conversion_cost(F, G))
 end
 
 function concrete_bridge_type(

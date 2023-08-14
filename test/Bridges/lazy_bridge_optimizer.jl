@@ -2067,26 +2067,26 @@ function test_bridging_cost(T = Float64)
     # to a supported constraint in 1 bridge but it has a higher bridging cost
     # This tests that the bridging cost is taken into account.
     bridged = MOI.Bridges.full_bridge_optimizer(model, T)
-    @test MOI.Bridges.bridging_cost(bridged, F, S) == 2
+    @test MOI.Bridges.bridging_cost(bridged, F, S) == 2.0
     L = MOI.Bridges.Constraint.LessToGreaterBridge{T}
     @test MOI.Bridges.bridge_type(bridged, F, S) <: L
     MOI.Bridges.remove_bridge(bridged, L)
-    @test MOI.Bridges.bridging_cost(bridged, F, S) == 2
+    @test MOI.Bridges.bridging_cost(bridged, F, S) == 2.0
     V = MOI.Bridges.Constraint.VectorizeBridge{T}
     @test MOI.Bridges.bridge_type(bridged, F, S) <: V
     MOI.Bridges.remove_bridge(bridged, V)
     Q = MOI.Bridges.Constraint.ToScalarQuadraticBridge{T}
-    @test MOI.Bridges.bridging_cost(bridged, F, S) == 10
+    @test MOI.Bridges.bridging_cost(bridged, F, S) == 10.0
     @test MOI.Bridges.bridge_type(bridged, F, S) <: Q
 
     bridged = MOI.Bridges.LazyBridgeOptimizer(model)
     @test MOI.Bridges.bridging_cost(bridged, F, S) == Inf
     MOI.Bridges.add_bridge(bridged, Q)
-    @test MOI.Bridges.bridging_cost(bridged, F, S) == 10
+    @test MOI.Bridges.bridging_cost(bridged, F, S) == 10.0
     @test MOI.Bridges.bridge_type(bridged, F, S) <: Q
     MOI.Bridges.add_bridge(bridged, L)
     MOI.Bridges.add_bridge(bridged, V)
-    @test MOI.Bridges.bridging_cost(bridged, F, S) == 2
+    @test MOI.Bridges.bridging_cost(bridged, F, S) == 2.0
     @test MOI.Bridges.bridge_type(bridged, F, S) <: L
 end
 
