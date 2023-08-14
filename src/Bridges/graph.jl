@@ -43,7 +43,7 @@ abstract type AbstractEdge end
         bridge_index::Int,
         added_variables::Vector{VariableNode},
         added_constraints::Vector{ConstraintNode},
-        cost::Int = 1,
+        cost::Float64 = 1.0,
     )
 
 Return a new datastructure representing an edge in [`Graph`](@ref) that starts
