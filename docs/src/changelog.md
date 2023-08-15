@@ -11,14 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+ - Added [`VectorNonlinearFunction`](@ref) (#2201)
+ - Added new bridges
+    * [`Bridges.Constraint.IntegerToZeroOneBridge`](@ref) (#2205)
+    * [`Bridges.Constraint.ToScalarQuadraticBridge`](@ref) (#2235)
+    * [`Bridges.Constraint.ToVectorQuadraticBridge`](@ref) (#2235)
+    * [`Bridges.Constraint.ToScalarNonlinearBridge`](@ref) (#2233) (#2235)
+    * [`Bridges.Constraint.FunctionConversionBridge`](@ref) (#2235)
+ - Added [`Bridges.bridging_cost`](@ref) for setting a bridge-specific cost in
+   the bridging graph (#2235)
  - Added [`Utilities.eval_variables`](@ref) support for
    [`ScalarNonlinearFunction`](@ref) (#2218) (#2219)
  - Added support for [`ScalarNonlinearFunction`](@ref) in `FileFormats.NL`
    (#2228) (#2231)
- - Added [`Bridges.Constraint.ScalarQuadraticToScalarNonlinearBridge`](@ref) (#2233)
- - Added [`Bridges.Constraint.IntegerToZeroOneBridge`](@ref) (#2205)
  - Added support for writing non-`Float64` functions in `FileFormats.MOF`
- - Added [`VectorNonlinearFunction`](@ref) (#2201)
+ - Added `Utilities.lazy_map` (#2254)
 
 ### Fixed
 
