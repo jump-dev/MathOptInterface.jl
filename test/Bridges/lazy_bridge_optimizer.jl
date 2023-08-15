@@ -2090,6 +2090,38 @@ function test_bridging_cost(T = Float64)
     @test MOI.Bridges.bridge_type(bridged, F, S) <: L
 end
 
+MOI.Utilities.@model(
+    Model2235,
+    (),
+    (),
+    (MOI.Nonnegatives,MOI.RotatedSecondOrderCone),
+    (),
+    (),
+    (),
+    (),
+    (MOI.VectorAffineFunction,),
+)
+
+function MOI.supports_constraint(
+    ::Model2235,
+    ::Type{MOI.VariableIndex},
+    ::Type{<:Union{MOI.LessThan,MOI.GreaterThan,MOI.Interval,MOI.EqualTo}}
+)
+    return false
+end
+
+function test_conic_bridge_variable_bounds_via_vectorize()
+    inner = Model2235{Float64}()
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, x, MOI.LessThan(1.0))
+    @test MOI.get(inner, MOI.ListOfConstraintTypesPresent()) ==
+          [(MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)]
+    F, S = MOI.VariableIndex, MOI.LessThan{Float64}
+    @test MOI.Bridges.bridging_cost(model, F, S) == 2.0
+    return
+end
+
 end  # module
 
 TestBridgesLazyBridgeOptimizer.runtests()
