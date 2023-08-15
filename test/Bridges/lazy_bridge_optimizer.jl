@@ -2048,10 +2048,10 @@ function test_hermitian(T = Float64)
 end
 
 MOI.Utilities.@model(
-    ModelVAFSQF,
+    Model2235,
     (),
     (MOI.LessThan,),
-    (MOI.Nonnegatives,),
+    (MOI.Nonnegatives, MOI.RotatedSecondOrderCone),
     (),
     (),
     (MOI.ScalarQuadraticFunction,),
@@ -2059,58 +2059,72 @@ MOI.Utilities.@model(
     (MOI.VectorAffineFunction,),
 )
 
-function test_bridging_cost(T = Float64)
-    model = ModelVAFSQF{T}()
-    F = MOI.ScalarAffineFunction{T}
-    S = MOI.LessThan{T}
-    # `FunctionConversionBridge{T,MOI.ScalarQuadraticFunction{T}}` bridge
-    # to a supported constraint in 1 bridge but it has a higher bridging cost
-    # This tests that the bridging cost is taken into account.
-    bridged = MOI.Bridges.full_bridge_optimizer(model, T)
-    @test MOI.Bridges.bridging_cost(bridged, F, S) == 2.0
-    L = MOI.Bridges.Constraint.LessToGreaterBridge{T}
-    @test MOI.Bridges.bridge_type(bridged, F, S) <: L
-    MOI.Bridges.remove_bridge(bridged, L)
-    @test MOI.Bridges.bridging_cost(bridged, F, S) == 2.0
-    V = MOI.Bridges.Constraint.VectorizeBridge{T}
-    @test MOI.Bridges.bridge_type(bridged, F, S) <: V
-    MOI.Bridges.remove_bridge(bridged, V)
-    Q = MOI.Bridges.Constraint.ToScalarQuadraticBridge{T}
-    @test MOI.Bridges.bridging_cost(bridged, F, S) == 10.0
-    @test MOI.Bridges.bridge_type(bridged, F, S) <: Q
-
-    bridged = MOI.Bridges.LazyBridgeOptimizer(model)
-    @test MOI.Bridges.bridging_cost(bridged, F, S) == Inf
-    MOI.Bridges.add_bridge(bridged, Q)
-    @test MOI.Bridges.bridging_cost(bridged, F, S) == 10.0
-    @test MOI.Bridges.bridge_type(bridged, F, S) <: Q
-    MOI.Bridges.add_bridge(bridged, L)
-    MOI.Bridges.add_bridge(bridged, V)
-    @test MOI.Bridges.bridging_cost(bridged, F, S) == 2.0
-    @test MOI.Bridges.bridge_type(bridged, F, S) <: L
-end
-
-MOI.Utilities.@model(
-    Model2235,
-    (),
-    (),
-    (MOI.Nonnegatives,MOI.RotatedSecondOrderCone),
-    (),
-    (),
-    (),
-    (),
-    (MOI.VectorAffineFunction,),
-)
-
 function MOI.supports_constraint(
     ::Model2235,
     ::Type{MOI.VariableIndex},
-    ::Type{<:Union{MOI.LessThan,MOI.GreaterThan,MOI.Interval,MOI.EqualTo}}
+    ::Type{<:Union{MOI.LessThan,MOI.GreaterThan,MOI.Interval,MOI.EqualTo}},
 )
     return false
 end
 
-function test_conic_bridge_variable_bounds_via_vectorize()
+function test_ToScalarQuadraticBridge_used()
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}
+    inner = Model2235{Float64}()
+    # `FunctionConversionBridge{T,MOI.ScalarQuadraticFunction{T}}` bridge
+    # to a supported constraint in 1 bridge but it has a higher bridging cost
+    # This tests that the bridging cost is taken into account.
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
+    @test MOI.Bridges.bridging_cost(model, F, S) == 2.0
+    @test MOI.Bridges.bridge_type(model, F, S) <:
+          MOI.Bridges.Constraint.LessToGreaterBridge{Float64}
+    MOI.Bridges.remove_bridge(
+        model,
+        MOI.Bridges.Constraint.LessToGreaterBridge{Float64},
+    )
+    @test MOI.Bridges.bridging_cost(model, F, S) == 2.0
+    @test MOI.Bridges.bridge_type(model, F, S) <:
+          MOI.Bridges.Constraint.VectorizeBridge{Float64}
+    MOI.Bridges.remove_bridge(
+        model,
+        MOI.Bridges.Constraint.VectorizeBridge{Float64},
+    )
+    @test MOI.Bridges.bridging_cost(model, F, S) == 10.0
+    @test MOI.Bridges.bridge_type(model, F, S) <:
+          MOI.Bridges.Constraint.ToScalarQuadraticBridge{Float64}
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0))
+    @test MOI.get(inner, MOI.ListOfConstraintTypesPresent()) ==
+          [(MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})]
+    return
+end
+
+function test_ToScalarQuadraticBridge_not_used()
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}
+    inner = Model2235{Float64}()
+    model = MOI.Bridges.LazyBridgeOptimizer(inner)
+    @test MOI.Bridges.bridging_cost(model, F, S) == Inf
+    MOI.Bridges.add_bridge(
+        model,
+        MOI.Bridges.Constraint.ToScalarQuadraticBridge{Float64},
+    )
+    @test MOI.Bridges.bridging_cost(model, F, S) == 10.0
+    MOI.Bridges.add_bridge(
+        model,
+        MOI.Bridges.Constraint.LessToGreaterBridge{Float64},
+    )
+    MOI.Bridges.add_bridge(
+        model,
+        MOI.Bridges.Constraint.VectorizeBridge{Float64},
+    )
+    @test MOI.Bridges.bridging_cost(model, F, S) == 2.0
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0))
+    @test MOI.get(inner, MOI.ListOfConstraintTypesPresent()) ==
+          [(MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)]
+    return
+end
+
+function test_ToScalarQuadraticBridge_variable_bounds()
     inner = Model2235{Float64}()
     model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
     x = MOI.add_variable(model)
