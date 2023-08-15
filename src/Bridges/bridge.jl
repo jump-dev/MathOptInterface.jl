@@ -283,3 +283,40 @@ If you implement this method, you must also implement
 [`needs_final_touch`](@ref).
 """
 function final_touch end
+
+"""
+    bridging_cost(BT::Type{<:AbstractBridge})::Float64
+
+Return the cost of adding a bridge of type `BT`.
+
+The default implementation for any [`AbstractBridge`](@ref) returns `1.0`, so
+this method should only be implemented for bridges returning a cost different
+from `1.0`.
+
+## Example
+
+Since the [`Bridges.Constraint.FunctionConversionBridge`](@ref) converts
+constraints from a given function type to a function type to a wider one,
+we want it to have lower priority.
+
+For example, we want to prioritize bridging a
+[`MOI.ScalarAffineFunction`](@ref)-in-[`MOI.LessThan`](@ref) constraint into a
+[`MOI.VectorAffineFunction`](@ref)-in-[`MOI.Nonnegatives`](@ref) constraint
+over bridging it to a [`MOI.ScalarQuadraticFunction`](@ref)-in-[`MOI.LessThan`](@ref)
+constraint.
+
+For this reason, the [`Bridges.Constraint.FunctionConversionBridge`](@ref) is
+given a cost of `10`:
+
+```jldoctest; setup=(import MathOptInterface as MOI)
+julia> F = MOI.ScalarQuadraticFunction{Float64};
+
+julia> G = MOI.ScalarAffineFunction{Float64};
+
+julia> MOI.Bridges.bridging_cost(
+           MOI.Bridges.Constraint.FunctionConversionBridge{Float64,F,G},
+       )
+10.0
+```
+"""
+bridging_cost(::Type{<:AbstractBridge}) = 1.0

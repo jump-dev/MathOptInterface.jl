@@ -152,7 +152,12 @@ Return the `Edge` or `ObjectiveEdge` in the hyper-graph associated with the
 bridge `BT`, where `index` is the index of `BT` in the list of bridges.
 """
 function _edge(b::LazyBridgeOptimizer, index::Int, BT::Type{<:AbstractBridge})
-    return Edge(index, _variable_nodes(b, BT), _constraint_nodes(b, BT))
+    return Edge(
+        index,
+        _variable_nodes(b, BT),
+        _constraint_nodes(b, BT),
+        bridging_cost(BT),
+    )
 end
 
 # Method for objective bridges because they produce ObjectiveEdge.
@@ -166,6 +171,7 @@ function _edge(
         _variable_nodes(b, BT),
         _constraint_nodes(b, BT),
         node(b, set_objective_function_type(BT)),
+        bridging_cost(BT),
     )
 end
 

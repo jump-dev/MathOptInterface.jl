@@ -1316,37 +1316,18 @@ function _test_continuous_conic_with_NoVariableModel(T)
     @test !MOI.Bridges.is_variable_bridged(bridged, cy)
     @test MOI.Bridges.bridge(bridged, cy) isa
           MOI.Bridges.Constraint.RSOCtoSOCBridge{T}
-    @test sprint(MOI.Bridges.print_graph, bridged) ==
-          MOI.Utilities.replace_acronym(
-        """
-Bridge graph with 8 variable nodes, 17 constraint nodes and 0 objective nodes.
- [1] constrained variables in `MOI.NormCone` are not supported
- [2] constrained variables in `MOI.PowerCone{$T}` are not supported
- [3] constrained variables in `MOI.RotatedSecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (7).
- [4] constrained variables in `MOI.PositiveSemidefiniteConeTriangle` are not supported
- [5] constrained variables in `MOI.ScaledPositiveSemidefiniteConeTriangle` are not supported
- [6] constrained variables in `MOI.SecondOrderCone` are supported (distance 2) by adding free variables and then constrain them, see (1).
- [7] constrained variables in `MOI.Nonnegatives` are supported (distance 2) by adding free variables and then constrain them, see (12).
- [8] constrained variables in `MOI.Interval{$T}` are supported (distance 3) by adding free variables and then constrain them, see (14).
- (1) `MOI.VectorOfVariables`-in-`MOI.SecondOrderCone` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.VectorFunctionizeBridge{T,MOI.SecondOrderCone}).
- (2) `MOI.VectorOfVariables`-in-`MOI.NormCone` constraints are not supported
- (3) `MOI.VectorAffineFunction{$T}`-in-`MOI.NormCone` constraints are not supported
- (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.PowerCone{$T}` constraints are not supported
- (5) `MOI.VectorOfVariables`-in-`MOI.PowerCone{$T}` constraints are not supported
- (6) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.RSOCtoSOCBridge{T,MOI.VectorAffineFunction{T},MOI.VectorAffineFunction{T}}).
- (7) `MOI.VectorOfVariables`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.RSOCtoSOCBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
- (8) `MOI.VectorAffineFunction{$T}`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
- (9) `MOI.VectorOfVariables`-in-`MOI.PositiveSemidefiniteConeTriangle` constraints are not supported
- (10) `MOI.VectorAffineFunction{$T}`-in-`MOI.ScaledPositiveSemidefiniteConeTriangle` constraints are not supported
- (11) `MOI.VectorOfVariables`-in-`MOI.ScaledPositiveSemidefiniteConeTriangle` constraints are not supported
- (12) `MOI.VectorOfVariables`-in-`MOI.Nonnegatives` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.NonnegToNonposBridge{T,MOI.VectorAffineFunction{T},MOI.VectorOfVariables}).
- (13) `MOI.VariableIndex`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.GreaterToLessBridge{T,MOI.ScalarAffineFunction{T},MOI.VariableIndex}).
- (14) `MOI.VariableIndex`-in-`MOI.Interval{$T}` constraints are bridged (distance 2) by $(MOI.Bridges.Constraint.ScalarFunctionizeBridge{T,MOI.Interval{T}}).
- (15) `MOI.ScalarAffineFunction{$T}`-in-`MOI.Interval{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.SplitIntervalBridge{T,MOI.ScalarAffineFunction{T},MOI.Interval{T},MOI.GreaterThan{T},MOI.LessThan{T}}).
- (16) `MOI.VariableIndex`-in-`MOI.LessThan{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.LessToGreaterBridge{T,MOI.ScalarAffineFunction{T},MOI.VariableIndex}).
- (17) `MOI.VariableIndex`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.VectorizeBridge{T,MOI.VectorAffineFunction{T},MOI.Zeros,MOI.VariableIndex}).
-""",
+    graph = sprint(MOI.Bridges.print_graph, bridged)
+    # The contents of `graph` can very as new bridges are added. Test that it
+    # prints something, and that key features are present.
+    # If this test fails in future, run `print(graph)` and update as necessary.
+    for needle in (
+        "Bridge graph with ",
+        "constrained variables in `MOI.NormCone` are not supported",
+        "`MOI.VectorOfVariables`-in-`MOI.SecondOrderCone` constraints are bridged",
+        "`MOI.VectorOfVariables`-in-`MOI.ScaledPositiveSemidefiniteConeTriangle` constraints are not supported",
     )
+        @test occursin(needle, graph)
+    end
     return
 end
 
@@ -2064,6 +2045,95 @@ function test_hermitian(T = Float64)
         @test MOI.Bridges.bridge_type(bridged, F, S) <:
               MOI.Bridges.Constraint.HermitianToSymmetricPSDBridge{T}
     end
+end
+
+MOI.Utilities.@model(
+    Model2235,
+    (),
+    (MOI.LessThan,),
+    (MOI.Nonnegatives, MOI.RotatedSecondOrderCone),
+    (),
+    (),
+    (MOI.ScalarQuadraticFunction,),
+    (),
+    (MOI.VectorAffineFunction,),
+)
+
+function MOI.supports_constraint(
+    ::Model2235,
+    ::Type{MOI.VariableIndex},
+    ::Type{<:Union{MOI.LessThan,MOI.GreaterThan,MOI.Interval,MOI.EqualTo}},
+)
+    return false
+end
+
+function test_ToScalarQuadraticBridge_used()
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}
+    inner = Model2235{Float64}()
+    # `FunctionConversionBridge{T,MOI.ScalarQuadraticFunction{T}}` bridge
+    # to a supported constraint in 1 bridge but it has a higher bridging cost
+    # This tests that the bridging cost is taken into account.
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
+    @test MOI.Bridges.bridging_cost(model, F, S) == 2.0
+    @test MOI.Bridges.bridge_type(model, F, S) <:
+          MOI.Bridges.Constraint.LessToGreaterBridge{Float64}
+    MOI.Bridges.remove_bridge(
+        model,
+        MOI.Bridges.Constraint.LessToGreaterBridge{Float64},
+    )
+    @test MOI.Bridges.bridging_cost(model, F, S) == 2.0
+    @test MOI.Bridges.bridge_type(model, F, S) <:
+          MOI.Bridges.Constraint.VectorizeBridge{Float64}
+    MOI.Bridges.remove_bridge(
+        model,
+        MOI.Bridges.Constraint.VectorizeBridge{Float64},
+    )
+    @test MOI.Bridges.bridging_cost(model, F, S) == 10.0
+    @test MOI.Bridges.bridge_type(model, F, S) <:
+          MOI.Bridges.Constraint.ToScalarQuadraticBridge{Float64}
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0))
+    @test MOI.get(inner, MOI.ListOfConstraintTypesPresent()) ==
+          [(MOI.ScalarQuadraticFunction{Float64}, MOI.LessThan{Float64})]
+    return
+end
+
+function test_ToScalarQuadraticBridge_not_used()
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}
+    inner = Model2235{Float64}()
+    model = MOI.Bridges.LazyBridgeOptimizer(inner)
+    @test MOI.Bridges.bridging_cost(model, F, S) == Inf
+    MOI.Bridges.add_bridge(
+        model,
+        MOI.Bridges.Constraint.ToScalarQuadraticBridge{Float64},
+    )
+    @test MOI.Bridges.bridging_cost(model, F, S) == 10.0
+    MOI.Bridges.add_bridge(
+        model,
+        MOI.Bridges.Constraint.LessToGreaterBridge{Float64},
+    )
+    MOI.Bridges.add_bridge(
+        model,
+        MOI.Bridges.Constraint.VectorizeBridge{Float64},
+    )
+    @test MOI.Bridges.bridging_cost(model, F, S) == 2.0
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0))
+    @test MOI.get(inner, MOI.ListOfConstraintTypesPresent()) ==
+          [(MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)]
+    return
+end
+
+function test_ToScalarQuadraticBridge_variable_bounds()
+    inner = Model2235{Float64}()
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, x, MOI.LessThan(1.0))
+    @test MOI.get(inner, MOI.ListOfConstraintTypesPresent()) ==
+          [(MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives)]
+    F, S = MOI.VariableIndex, MOI.LessThan{Float64}
+    @test MOI.Bridges.bridging_cost(model, F, S) == 2.0
+    return
 end
 
 end  # module

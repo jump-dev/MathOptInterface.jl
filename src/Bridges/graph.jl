@@ -4,7 +4,7 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-const INFINITY = typemax(Int)
+const INFINITY = Inf
 const INVALID_NODE_INDEX = -1
 
 abstract type AbstractNode end
@@ -43,6 +43,7 @@ abstract type AbstractEdge end
         bridge_index::Int,
         added_variables::Vector{VariableNode},
         added_constraints::Vector{ConstraintNode},
+        cost::Float64 = 1.0,
     )
 
 Return a new datastructure representing an edge in [`Graph`](@ref) that starts
@@ -52,6 +53,16 @@ struct Edge <: AbstractEdge
     bridge_index::Int
     added_variables::Vector{VariableNode}
     added_constraints::Vector{ConstraintNode}
+    cost::Float64
+    # TODO remove in MOI v2
+    function Edge(
+        bridge_index::Int,
+        added_variables::Vector{VariableNode},
+        added_constraints::Vector{ConstraintNode},
+        cost::Float64 = 1.0,
+    )
+        return new(bridge_index, added_variables, added_constraints, cost)
+    end
 end
 
 """
@@ -69,6 +80,23 @@ struct ObjectiveEdge <: AbstractEdge
     added_variables::Vector{VariableNode}
     added_constraints::Vector{ConstraintNode}
     added_objective::ObjectiveNode
+    cost::Float64
+    # TODO remove in MOI v2
+    function ObjectiveEdge(
+        bridge_index::Int,
+        added_variables::Vector{VariableNode},
+        added_constraints::Vector{ConstraintNode},
+        added_objective::ObjectiveNode,
+        cost::Float64 = 1.0,
+    )
+        return new(
+            bridge_index,
+            added_variables,
+            added_constraints,
+            added_objective,
+            cost,
+        )
+    end
 end
 
 """
@@ -110,20 +138,20 @@ mutable struct Graph
     variable_edges::Vector{Vector{Edge}}
     variable_constraint_node::Vector{ConstraintNode}
     variable_constraint_cost::Vector{Int}
-    # variable node index -> Number of bridges that need to be used
-    variable_dist::Vector{Int}
+    # variable node index -> Sum of costs of bridges that need to be used
+    variable_dist::Vector{Float64}
     # variable node index -> Index of bridge to be used
     variable_best::Vector{Int}
     variable_last_correct::Int
     constraint_edges::Vector{Vector{Edge}}
-    # constraint node index -> Number of bridges that need to be used
-    constraint_dist::Vector{Int}
+    # constraint node index -> Sum of costs of bridges that need to be used
+    constraint_dist::Vector{Float64}
     # constraint node index -> Index of bridge to be used
     constraint_best::Vector{Int}
     constraint_last_correct::Int
     objective_edges::Vector{Vector{ObjectiveEdge}}
-    # objective node index -> Number of bridges that need to be used
-    objective_dist::Vector{Int}
+    # objective node index -> Sum of costs of bridges that need to be used
+    objective_dist::Vector{Float64}
     # objective node index -> Index of bridge to be used
     objective_best::Vector{Int}
     objective_last_correct::Int
@@ -133,15 +161,15 @@ mutable struct Graph
             Vector{Edge}[],
             ConstraintNode[],
             Int[],
-            Int[],
+            Float64[],
             Int[],
             0,
             Vector{Edge}[],
-            Int[],
+            Float64[],
             Int[],
             0,
             Vector{ObjectiveEdge}[],
-            Int[],
+            Float64[],
             Int[],
             0,
         )
@@ -269,8 +297,7 @@ end
 
 function bridging_cost(graph::Graph, node::AbstractNode)
     _compute_bellman_ford(graph)
-    dist = _dist(graph, node)
-    return dist == INFINITY ? Inf : float(dist)
+    return _dist(graph, node)
 end
 
 """
@@ -308,16 +335,16 @@ end
 
 function _updated_dist(
     graph::Graph,
-    current::Int,
+    current::Float64,
     edges::Vector{<:AbstractEdge},
 )
     bridge_index = 0
     for edge in edges
-        cost = _dist(graph, edge)
-        if cost == INFINITY
+        dist = _dist(graph, edge)
+        if dist == INFINITY
             continue
         end
-        dist = 1 + cost
+        dist += edge.cost
         if dist < current
             current = dist
             bridge_index = edge.bridge_index
