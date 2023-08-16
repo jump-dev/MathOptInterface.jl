@@ -7,6 +7,44 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.19.0 (August 15, 2023)
+
+### Added
+
+ - Added [`VectorNonlinearFunction`](@ref) (#2201)
+ - Added new bridges
+    * [`Bridges.Constraint.IntegerToZeroOneBridge`](@ref) (#2205)
+    * [`Bridges.Constraint.ToScalarQuadraticBridge`](@ref) (#2235)
+    * [`Bridges.Constraint.ToVectorQuadraticBridge`](@ref) (#2235)
+    * [`Bridges.Constraint.ToScalarNonlinearBridge`](@ref) (#2233) (#2235)
+    * [`Bridges.Constraint.FunctionConversionBridge`](@ref) (#2235)
+ - Added [`Bridges.bridging_cost`](@ref) for setting a bridge-specific cost in
+   the bridging graph (#2235)
+ - Added [`Utilities.eval_variables`](@ref) support for
+   [`ScalarNonlinearFunction`](@ref) (#2218) (#2219)
+ - Added support for [`ScalarNonlinearFunction`](@ref) in `FileFormats.NL`
+   (#2228) (#2231)
+ - Added support for writing non-`Float64` functions in `FileFormats.MOF`
+ - Added `Utilities.lazy_map` (#2254)
+
+### Fixed
+
+ - Fixed method ambiguities in `operate` (#2224)
+ - Fixed reading LP file with a `-infinity <= x <= +infinity` variable (#2225)
+ - Fixed missing `require` in `Test.test_nonlinear_duals` (#2230)
+ - Fixed bug in [`ConstraintPrimal`](@ref) of [`Bridges.Constraint.QuadtoSOCBridge`](@ref)
+   (#2240)
+
+### Other
+
+ - Added extensions to `solver-tests.yml` (#2229)
+ - Refactored `test/Benchmarks` (#2234)
+ - Fixed warnings in tests (#2241) (#2243)
+ - Small refactoring of bridges for upcoming `VectorNonlinearFunction` (#2244)
+   (#2245)
+ - Fixed various typos (#2251) (#2255)
+ - Partitioned how we run the tests on GitHub actions (#2252) (#2253)
+
 ## v1.18.0 (June 23, 2023)
 
 ### Added
