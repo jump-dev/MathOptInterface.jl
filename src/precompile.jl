@@ -79,6 +79,7 @@ function precompile_model(model, constraints)
         ObjectiveValue,
         Silent,
         TimeLimitSec,
+        ObjectiveBound,
         NumberOfVariables,
     )
         Base.precompile(get, (model, attr))

@@ -382,6 +382,7 @@ function test_missing_attribute()
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     @test MOI.get(model, MOI.Test.UnknownModelAttribute()) === nothing
     @test MOI.get(model, MOI.TimeLimitSec()) === nothing
+    @test MOI.get(model, MOI.ObjectiveLimit()) === nothing
     return
 end
 
