@@ -853,10 +853,17 @@ attribute_value_type(::TimeLimitSec) = Union{Nothing,Float64}
 """
     ObjectiveLimit()
 
-
 An optimizer attribute for setting a limit on the objective value.
-The solver may stop when the `ObjectiveValue` is better (lower for minimization, higher for maximization) than the `ObjectiveLimit`.
-When `set` to `nothing`, it removes the solver limit. The default value is `nothing`.
+
+The provided limit must be a `Union{Float64,Nothing}`.
+
+When `set` to `nothing`, the limit reverts to the solver's default.
+
+The default value is `nothing`.
+The solver may stop when the [`ObjectiveValue`](@ref) is better (lower for
+minimization, higher for maximization) than the `ObjectiveLimit`. If stopped,
+the [`TerminationStatus`](@ref) should be `OBJECTIVE_LIMIT`.
+
 """
 struct ObjectiveLimit <: AbstractOptimizerAttribute end
 

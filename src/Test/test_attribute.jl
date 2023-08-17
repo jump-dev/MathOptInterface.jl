@@ -196,6 +196,8 @@ function test_attribute_ObjectiveLimit(model::MOI.AbstractOptimizer, ::Config)
     value = MOI.get(model, MOI.ObjectiveLimit())
     MOI.set(model, MOI.ObjectiveLimit(), 0.0)
     @test MOI.get(model, MOI.ObjectiveLimit()) == 0.0
+    MOI.set(model, MOI.ObjectiveLimit(), nothing)
+    @test MOI.get(model, MOI.ObjectiveLimit()) === nothing
     MOI.set(model, MOI.ObjectiveLimit(), 1.0)
     @test MOI.get(model, MOI.ObjectiveLimit()) == 1.0
     MOI.set(model, MOI.ObjectiveLimit(), value)
