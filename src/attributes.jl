@@ -867,7 +867,6 @@ the [`TerminationStatus`](@ref) should be `OBJECTIVE_LIMIT`.
 """
 struct ObjectiveLimit <: AbstractOptimizerAttribute end
 
-
 """
     RawOptimizerAttribute(name::String)
 
