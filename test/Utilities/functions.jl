@@ -1980,7 +1980,7 @@ function test_ScalarNonlinearFunction_map_indices_nested()
     index_map = MOI.copy_to(dest, src)
     new_f = MOI.Utilities.map_indices(index_map, f)
     y = [index_map[xi] for xi in x]
-    @test new_f ≈  MOI.ScalarNonlinearFunction(
+    @test new_f ≈ MOI.ScalarNonlinearFunction(
         :+,
         Any[
             y[1],
