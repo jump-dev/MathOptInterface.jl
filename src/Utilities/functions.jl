@@ -348,15 +348,24 @@ function map_indices(
     f::MOI.ScalarNonlinearFunction,
 ) where {F<:Function}
     root = MOI.ScalarNonlinearFunction(f.head, similar(f.args))
-    stack = Tuple{MOI.ScalarNonlinearFunction,Int,Any}[
-        (root, i, f.args[i]) for i in length(f.args):-1:1
-    ]
+    stack = Tuple{MOI.ScalarNonlinearFunction,Int,MOI.ScalarNonlinearFunction}[]
+    for (i, fi) in enumerate(f.args)
+        if fi isa MOI.ScalarNonlinearFunction
+            push!(stack, (root, i, fi))
+        else
+            root.args[i] = MOI.Utilities.map_indices(index_map, fi)
+        end
+    end
     while !isempty(stack)
         parent, i, arg = pop!(stack)
         if arg isa MOI.ScalarNonlinearFunction
             child = MOI.ScalarNonlinearFunction(arg.head, similar(arg.args))
-            for i in length(arg.args):-1:1
-                push!(stack, (child, i, arg.args[i]))
+            for (j, argj) in enumerate(arg.args)
+                if argj isa MOI.ScalarNonlinearFunction
+                    push!(stack, (child, j, argj))
+                else
+                    child.args[j] = MOI.Utilities.map_indices(index_map, argj)
+                end
             end
             parent.args[i] = child
         else
