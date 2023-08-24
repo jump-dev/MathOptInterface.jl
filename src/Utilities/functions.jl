@@ -252,7 +252,17 @@ function map_indices(index_map::F, ci::MOI.ConstraintIndex) where {F<:Function}
 end
 
 function map_indices(index_map::F, x::AbstractArray) where {F<:Function}
-    return [map_indices(index_map, xi) for xi in x]
+    # @odow tried other alternatives here, like
+    #     [map_indices(index_map, xi) for xi in x]
+    # and
+    #     map(Base.Fix1(map_indices, index_map), x)
+    # but this was the fastest. The insight is that we know that map_indices
+    # does not modify the element type of `x`.
+    y = similar(x)
+    for i in eachindex(x)
+        y[i] = map_indices(index_map, x[i])
+    end
+    return y
 end
 
 function map_indices(index_map::F, t::MOI.ScalarAffineTerm) where {F<:Function}
@@ -337,11 +347,32 @@ function map_indices(
     index_map::F,
     f::MOI.ScalarNonlinearFunction,
 ) where {F<:Function}
-    # TODO(odow): this uses recursion. We should remove at some point.
-    return MOI.ScalarNonlinearFunction(
-        f.head,
-        convert(Vector{Any}, map_indices(index_map, f.args)),
-    )
+    root = MOI.ScalarNonlinearFunction(f.head, similar(f.args))
+    stack = Tuple{MOI.ScalarNonlinearFunction,Int,MOI.ScalarNonlinearFunction}[]
+    for (i, fi) in enumerate(f.args)
+        if fi isa MOI.ScalarNonlinearFunction
+            push!(stack, (root, i, fi))
+        else
+            root.args[i] = MOI.Utilities.map_indices(index_map, fi)
+        end
+    end
+    while !isempty(stack)
+        parent, i, arg = pop!(stack)
+        if arg isa MOI.ScalarNonlinearFunction
+            child = MOI.ScalarNonlinearFunction(arg.head, similar(arg.args))
+            for (j, argj) in enumerate(arg.args)
+                if argj isa MOI.ScalarNonlinearFunction
+                    push!(stack, (child, j, argj))
+                else
+                    child.args[j] = MOI.Utilities.map_indices(index_map, argj)
+                end
+            end
+            parent.args[i] = child
+        else
+            parent.args[i] = MOI.Utilities.map_indices(index_map, arg)
+        end
+    end
+    return root
 end
 
 function map_indices(

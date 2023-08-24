@@ -1954,10 +1954,62 @@ function test_ScalarNonlinearFunction_map_indices()
     x = MOI.add_variable(src)
     f = MOI.ScalarNonlinearFunction(:log, Any[x])
     c = MOI.add_constraint(src, f, MOI.LessThan(1.0))
-    dest = MOI.Utilities.Model{Float64}()
+    dest = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     index_map = MOI.copy_to(dest, src)
     new_f = MOI.Utilities.map_indices(index_map, f)
     @test new_f ≈ MOI.ScalarNonlinearFunction(:log, Any[index_map[x]])
+    return
+end
+
+function test_ScalarNonlinearFunction_map_indices_nested()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(src, 5)
+    f = MOI.ScalarNonlinearFunction(
+        :+,
+        Any[
+            x[1],
+            MOI.ScalarNonlinearFunction(
+                :+,
+                Any[MOI.ScalarNonlinearFunction(:+, Any[x[2], x[3]]), x[4]],
+            ),
+            x[5],
+        ],
+    )
+    c = MOI.add_constraint(src, f, MOI.LessThan(1.0))
+    dest = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    index_map = MOI.copy_to(dest, src)
+    new_f = MOI.Utilities.map_indices(index_map, f)
+    y = [index_map[xi] for xi in x]
+    @test new_f ≈ MOI.ScalarNonlinearFunction(
+        :+,
+        Any[
+            y[1],
+            MOI.ScalarNonlinearFunction(
+                :+,
+                Any[MOI.ScalarNonlinearFunction(:+, Any[y[2], y[3]]), y[4]],
+            ),
+            y[5],
+        ],
+    )
+    return
+end
+
+function test_ScalarNonlinearFunction_map_indices_deep_recursion()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(src)
+    f = MOI.ScalarNonlinearFunction(:log, Any[x])
+    for _ in 1:50_000
+        f = MOI.ScalarNonlinearFunction(:log, Any[f])
+    end
+    c = MOI.add_constraint(src, f, MOI.LessThan(1.0))
+    dest = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    index_map = MOI.copy_to(dest, src)
+    new_f = MOI.Utilities.map_indices(index_map, f)
+    g = new_f
+    for _ in 1:50_000
+        g = g.args[1]
+    end
+    @test g ≈ MOI.ScalarNonlinearFunction(:log, Any[index_map[x]])
     return
 end
 
