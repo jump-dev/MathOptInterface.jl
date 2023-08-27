@@ -1950,9 +1950,6 @@ end
 
 When queried with [`get`](@ref), return a `Vector{Symbol}` listing the operators
 supported by the model.
-
-```julia
-```
 """
 struct ListOfSupportedNonlinearOperators <: AbstractOptimizerAttribute end
 
