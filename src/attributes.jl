@@ -855,7 +855,7 @@ attribute_value_type(::TimeLimitSec) = Union{Nothing,Float64}
 
 An optimizer attribute for setting a limit on the objective value.
 
-The provided limit must be a `Union{Float64,Nothing}`.
+The provided limit must be a `Union{Real,Nothing}`.
 
 When `set` to `nothing`, the limit reverts to the solver's default.
 
