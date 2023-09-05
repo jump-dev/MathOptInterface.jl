@@ -190,6 +190,7 @@ function test_default_attributes()
         MOI.SolverName(),
         MOI.Silent(),
         MOI.TimeLimitSec(),
+        MOI.ObjectiveLimit(),
         MOI.NumberOfThreads(),
         MOI.ResultCount(),
     )
@@ -209,6 +210,7 @@ function test_copyable_solver_attributes()
     cached = MOIU.CachingOptimizer(cache, MOIU.MANUAL)
     MOI.set(cached, MOI.Silent(), true)
     MOI.set(cached, MOI.TimeLimitSec(), 0.0)
+    MOI.set(cached, MOI.ObjectiveLimit(), 42.0)
     MOI.set(cached, MOI.NumberOfThreads(), 1)
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
     MOIU.reset_optimizer(cached, mock)
@@ -216,15 +218,20 @@ function test_copyable_solver_attributes()
     @test MOI.get(cached, MOI.Silent())
     @test MOI.get(mock, MOI.TimeLimitSec()) == 0.0
     @test MOI.get(cached, MOI.TimeLimitSec()) == 0.0
+    @test MOI.get(mock, MOI.ObjectiveLimit()) == 42.0
+    @test MOI.get(cached, MOI.ObjectiveLimit()) == 42.0
     @test MOI.get(mock, MOI.NumberOfThreads()) == 1
     @test MOI.get(cached, MOI.NumberOfThreads()) == 1
     MOI.set(cached, MOI.Silent(), false)
     MOI.set(cached, MOI.TimeLimitSec(), 1.0)
+    MOI.set(cached, MOI.ObjectiveLimit(), 1.0)
     MOI.set(cached, MOI.NumberOfThreads(), 2)
     @test !MOI.get(mock, MOI.Silent())
     @test !MOI.get(cached, MOI.Silent())
     @test MOI.get(mock, MOI.TimeLimitSec()) ≈ 1.0
+    @test MOI.get(mock, MOI.ObjectiveLimit()) ≈ 1.0
     @test MOI.get(cached, MOI.TimeLimitSec()) ≈ 1.0
+    @test MOI.get(cached, MOI.ObjectiveLimit()) ≈ 1.0
     @test MOI.get(mock, MOI.NumberOfThreads()) == 2
     @test MOI.get(cached, MOI.NumberOfThreads()) == 2
     mock = MOIU.MockOptimizer(MOIU.UniversalFallback(MOIU.Model{Float64}()))
@@ -233,6 +240,8 @@ function test_copyable_solver_attributes()
     @test !MOI.get(cached, MOI.Silent())
     @test MOI.get(mock, MOI.TimeLimitSec()) ≈ 1.0
     @test MOI.get(cached, MOI.TimeLimitSec()) ≈ 1.0
+    @test MOI.get(mock, MOI.ObjectiveLimit()) ≈ 1.0
+    @test MOI.get(cached, MOI.ObjectiveLimit()) ≈ 1.0
     @test MOI.get(mock, MOI.NumberOfThreads()) == 2
     @test MOI.get(cached, MOI.NumberOfThreads()) == 2
     MOI.set(cached, MOI.Silent(), true)

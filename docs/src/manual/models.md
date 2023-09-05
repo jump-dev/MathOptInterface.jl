@@ -100,3 +100,4 @@ The following attributes are available:
  * [`SolverVersion`](@ref)
  * [`SolveTimeSec`](@ref)
  * [`TimeLimitSec`](@ref)
+ * [`ObjectiveLimit`](@ref)

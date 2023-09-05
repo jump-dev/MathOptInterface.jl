@@ -77,6 +77,7 @@ SolverName
 SolverVersion
 Silent
 TimeLimitSec
+ObjectiveLimit
 RawOptimizerAttribute
 NumberOfThreads
 RawSolver

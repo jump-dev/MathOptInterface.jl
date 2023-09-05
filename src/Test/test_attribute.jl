@@ -190,6 +190,32 @@ function setup_test(
     return
 end
 
+function test_attribute_ObjectiveLimit(model::MOI.AbstractOptimizer, ::Config)
+    @requires MOI.supports(model, MOI.ObjectiveLimit())
+    # Get the current value to restore it at the end of the test
+    value = MOI.get(model, MOI.ObjectiveLimit())
+    MOI.set(model, MOI.ObjectiveLimit(), 0.0)
+    @test MOI.get(model, MOI.ObjectiveLimit()) == 0.0
+    MOI.set(model, MOI.ObjectiveLimit(), nothing)
+    @test MOI.get(model, MOI.ObjectiveLimit()) === nothing
+    MOI.set(model, MOI.ObjectiveLimit(), 1.0)
+    @test MOI.get(model, MOI.ObjectiveLimit()) == 1.0
+    MOI.set(model, MOI.ObjectiveLimit(), value)
+    @test value == MOI.get(model, MOI.ObjectiveLimit()) # Equality should hold
+    _test_attribute_value_type(model, MOI.ObjectiveLimit())
+    return
+end
+test_attribute_ObjectiveLimit(::MOI.ModelLike, ::Config) = nothing
+
+function setup_test(
+    ::typeof(test_attribute_ObjectiveLimit),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOI.set(model, MOI.ObjectiveLimit(), nothing)
+    return
+end
+
 """
     test_attribute_AbsoluteGapTolerance(model::MOI.AbstractOptimizer, config::Config)
 
