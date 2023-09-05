@@ -15,7 +15,7 @@ Return the scalar product between a vector `x` of the set `set` and a vector
 `y` of the dual of the set `s`.
 """
 function set_dot(x::AbstractVector, y::AbstractVector, ::MOI.AbstractVectorSet)
-    return dot(x, y)
+    return LinearAlgebra.dot(x, y)
 end
 
 """
@@ -24,7 +24,7 @@ end
 Return the scalar product between a number `x` of the set `set` and a number
 `y` of the dual of the set `s`.
 """
-set_dot(x, y, ::MOI.AbstractScalarSet) = dot(x, y)
+set_dot(x, y, ::MOI.AbstractScalarSet) = LinearAlgebra.dot(x, y)
 
 function triangle_dot(
     x::AbstractVector{S},
@@ -250,7 +250,7 @@ a vector `x` in `set` and `y` in `MOI.dual_set(set)` such that
 Combined with `LinearAlgebra`, this vector can be used to scale
 a [`MOI.AbstractVectorFunction`](@ref).
 
-```
+```jldoctest
 julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}()
