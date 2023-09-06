@@ -201,6 +201,7 @@ function test_set_dot_scaling(n = 10)
     N = div(n * (n + 1), 2)
     M = N + div(n * (n - 1), 2)
     v = MOI.Utilities.SymmetricMatrixScalingVector{Float64}(1.5, 0.5, N)
+    w = MOI.Utilities.SymmetricMatrixScalingVector{Float64}(1.5, N)
     s = MOI.Utilities.symmetric_matrix_scaling_vector(Float64, N)
     s32 = MOI.Utilities.symmetric_matrix_scaling_vector(Float32, N)
     is = MOI.Utilities.symmetric_matrix_inverse_scaling_vector(Float64, N)
@@ -214,6 +215,7 @@ function test_set_dot_scaling(n = 10)
             k += 1
             imag_k += 1
             @test v[k] == 1.5
+            @test w[k] == 1.5
             @test s[k] == √2
             @test s32[k] == √Float32(2)
             @test is[k] == inv(√2)
@@ -223,6 +225,7 @@ function test_set_dot_scaling(n = 10)
         end
         k += 1
         @test v[k] == 0.5
+        @test w[k] == 1
         @test isone(s[k])
         @test isone(s32[k])
         @test isone(is[k])

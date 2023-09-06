@@ -23,8 +23,9 @@ end
 
 function test_set_dot(T = Int)
     @test MOI.Utilities._set_dot(1, MOI.ZeroOne(), T) == 1
-    set = MOI.PositiveSemidefiniteConeTriangle(2)
+    psd = MOI.PositiveSemidefiniteConeTriangle(2)
     n = 3
+    soc = MOI.SecondOrderCone(n)
     a = MOI.Utilities.ZeroVector{T}(n)
     @test eltype(a) == T
     @test length(a) == n
@@ -38,13 +39,17 @@ function test_set_dot(T = Int)
         @test a[i] == 0
         @test b[i] == 1
         @test c[i] == 0
-        @test iszero(MOI.Utilities.set_dot(a, b, set))
-        @test iszero(MOI.Utilities.set_dot(b, a, set))
-        @test iszero(MOI.Utilities.set_dot(b, c, set))
-        @test iszero(MOI.Utilities.set_dot(c, b, set))
+        for set in [psd, soc]
+            @test iszero(MOI.Utilities.set_dot(a, b, set))
+            @test iszero(MOI.Utilities.set_dot(b, a, set))
+            @test iszero(MOI.Utilities.set_dot(b, c, set))
+            @test iszero(MOI.Utilities.set_dot(c, b, set))
+        end
+        @test MOI.Utilities.set_dot(b, b, soc) == 1
+        @test MOI.Utilities._set_dot(i, soc, T) == 1
         expected = i == 2 ? 2 : 1
-        @test MOI.Utilities.set_dot(b, b, set) == expected
-        @test MOI.Utilities._set_dot(i, set, T) == expected
+        @test MOI.Utilities.set_dot(b, b, psd) == expected
+        @test MOI.Utilities._set_dot(i, psd, T) == expected
     end
 end
 
