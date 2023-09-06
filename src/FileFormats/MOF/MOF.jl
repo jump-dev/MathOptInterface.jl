@@ -11,10 +11,10 @@ import OrderedCollections
 import JSON
 import MathOptInterface as MOI
 
-const SCHEMA_PATH = joinpath(@__DIR__, "mof.1.4.schema.json")
-const VERSION = v"1.4"
+const SCHEMA_PATH = joinpath(@__DIR__, "mof.1.5.schema.json")
+const VERSION = v"1.5"
 const SUPPORTED_VERSIONS =
-    (v"1.4", v"1.3", v"1.2", v"1.1", v"1.0", v"0.6", v"0.5", v"0.4")
+    (v"1.5", v"1.4", v"1.3", v"1.2", v"1.1", v"1.0", v"0.6", v"0.5", v"0.4")
 
 const OrderedObject = OrderedCollections.OrderedDict{String,Any}
 const UnorderedObject = Dict{String,Any}
@@ -92,6 +92,7 @@ MOI.Utilities.@model(
 
 # Indicator is handled by UniversalFallback.
 # Reified is handled by UniversalFallback.
+# Scaled is handled bby UniversalFallback.
 
 const Model = MOI.Utilities.UniversalFallback{InnerModel{Float64}}
 
