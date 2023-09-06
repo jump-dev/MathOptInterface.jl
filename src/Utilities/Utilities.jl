@@ -79,6 +79,7 @@ include("universalfallback.jl")
 include("print.jl")
 include("penalty_relaxation.jl")
 include("lazy_iterators.jl")
+include("set_dot.jl")
 
 include("distance_to_set.jl")
 

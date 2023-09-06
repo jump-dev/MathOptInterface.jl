@@ -4753,7 +4753,7 @@ function _test_conic_PositiveSemidefiniteCone_helper(
     atol = config.atol
     rtol = config.rtol
     square = psdcone == MOI.PositiveSemidefiniteConeSquare
-    scaled = psdcone == MOI.ScaledPositiveSemidefiniteConeTriangle
+    scaled = psdcone == MOI.Scaled{MOI.PositiveSemidefiniteConeTriangle}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
@@ -4989,7 +4989,7 @@ function test_conic_ScaledPositiveSemidefiniteConeTriangle_VectorAffineFunction(
     _test_conic_PositiveSemidefiniteCone_helper(
         model,
         false,
-        MOI.ScaledPositiveSemidefiniteConeTriangle,
+        MOI.Scaled{MOI.PositiveSemidefiniteConeTriangle},
         config,
     )
     return
@@ -5009,7 +5009,7 @@ function setup_test(
             ones(T, 3),
             (
                 MOI.VectorAffineFunction{T},
-                MOI.ScaledPositiveSemidefiniteConeTriangle,
+                MOI.Scaled{MOI.PositiveSemidefiniteConeTriangle},
             ) => [T[1, -sqrt(T(2)), 1]],
             (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => T[2],
         ),

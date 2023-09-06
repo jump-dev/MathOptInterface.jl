@@ -1140,59 +1140,6 @@ dual_set_type(::Type{NormNuclearCone}) = NormSpectralCone
 dimension(s::NormNuclearCone) = 1 + s.row_dim * s.column_dim
 
 """
-    ScaledPositiveSemidefiniteConeTriangle(side_dimension::Int) <: AbstractVectorSet
-
-The *scaled* (vectorized) cone of symmetric positive semidefinite matrices, with
-non-negative `side_dimension` rows and columns.
-
-Compared to the [`PositiveSemidefiniteConeTriangle`](@ref), the off-diagonal
-entries are scaled by `√2`. Thanks to this scaling, [`Utilities.set_dot`](@ref)
-is the simply the sum of the pairwise product, while for
-[`PositiveSemidefiniteConeTriangle`](@ref), the pairwise product additionally
-have to be multiplied by `2`.
-
-## Example
-
-```jldoctest
-julia> import MathOptInterface as MOI
-
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
-
-julia> x = MOI.add_variables(model, 3);
-
-julia> MOI.add_constraint(
-           model,
-           MOI.VectorOfVariables(x),
-           MOI.ScaledPositiveSemidefiniteConeTriangle(2),
-       )
-MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.ScaledPositiveSemidefiniteConeTriangle}(1)
-```
-"""
-struct ScaledPositiveSemidefiniteConeTriangle <: AbstractVectorSet
-    side_dimension::Int
-    function ScaledPositiveSemidefiniteConeTriangle(
-        side_dimension::Base.Integer,
-    )
-        if !(side_dimension >= 0)
-            throw(
-                DimensionMismatch(
-                    "Side dimension of PositiveSemidefiniteConeTriangle must " *
-                    "be >= 0, not $(side_dimension).",
-                ),
-            )
-        end
-        return new(side_dimension)
-    end
-end
-
-dual_set(s::ScaledPositiveSemidefiniteConeTriangle) = copy(s)
-
-function dual_set_type(::Type{ScaledPositiveSemidefiniteConeTriangle})
-    return ScaledPositiveSemidefiniteConeTriangle
-end
-
-"""
     abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
 
 Abstract supertype for subsets of the (vectorized) cone of symmetric matrices,
@@ -1289,12 +1236,9 @@ products we have
 """
 abstract type AbstractSymmetricMatrixSetTriangle <: AbstractVectorSet end
 
-function dimension(
-    set::Union{
-        AbstractSymmetricMatrixSetTriangle,
-        ScaledPositiveSemidefiniteConeTriangle,
-    },
-)
+is_set_dot_scaled(::Type{<:AbstractSymmetricMatrixSetTriangle}) = true
+
+function dimension(set::AbstractSymmetricMatrixSetTriangle)
     d = side_dimension(set)
     return div(d * (d + 1), 2)
 end
@@ -1331,33 +1275,6 @@ to be symmetric positive semidefinite can be achieved by constraining the vector
 abstract type AbstractSymmetricMatrixSetSquare <: AbstractVectorSet end
 
 dimension(set::AbstractSymmetricMatrixSetSquare) = side_dimension(set)^2
-
-"""
-    side_dimension(
-        set::Union{
-            ScaledPositiveSemidefiniteConeTriangle,
-            AbstractSymmetricMatrixSetTriangle,
-            AbstractSymmetricMatrixSetSquare,
-        },
-    )
-
-Side dimension of the matrices in `set`.
-
-## Convention
-
-By convention, the side dimension should be stored in the `side_dimension`
-field. If this is not the case for a subtype of [`AbstractSymmetricMatrixSetTriangle`](@ref),
-you must implement this method.
-"""
-function side_dimension(
-    set::Union{
-        ScaledPositiveSemidefiniteConeTriangle,
-        AbstractSymmetricMatrixSetTriangle,
-        AbstractSymmetricMatrixSetSquare,
-    },
-)
-    return set.side_dimension
-end
 
 """
     triangular_form(S::Type{<:AbstractSymmetricMatrixSetSquare})
@@ -1507,6 +1424,33 @@ function dimension(set::HermitianPositiveSemidefiniteConeTriangle)
     real_nnz = div(set.side_dimension * (set.side_dimension + 1), 2)
     imag_nnz = div((set.side_dimension - 1) * set.side_dimension, 2)
     return real_nnz + imag_nnz
+end
+
+"""
+    side_dimension(
+        set::Union{
+            AbstractSymmetricMatrixSetTriangle,
+            AbstractSymmetricMatrixSetSquare,
+            HermitianPositiveSemidefiniteConeTriangle,
+        },
+    )
+
+Side dimension of the matrices in `set`.
+
+## Convention
+
+By convention, the side dimension should be stored in the `side_dimension`
+field. If this is not the case for a subtype of [`AbstractSymmetricMatrixSetTriangle`](@ref),
+or [`AbstractSymmetricMatrixSetSquare`](@ref) you must implement this method.
+"""
+function side_dimension(
+    set::Union{
+        AbstractSymmetricMatrixSetTriangle,
+        AbstractSymmetricMatrixSetSquare,
+        HermitianPositiveSemidefiniteConeTriangle,
+    },
+)
+    return set.side_dimension
 end
 
 """
@@ -1733,6 +1677,148 @@ triangular_form(::Type{RootDetConeSquare}) = RootDetConeTriangle
 
 function triangular_form(set::RootDetConeSquare)
     return RootDetConeTriangle(set.side_dimension)
+end
+
+"""
+    is_set_dot_scaled(::Type{<:AbstractVectorFunction})
+
+Return whether [`Utilities.set_dot(x, y)`](@ref Utilities.set_dot) is equivalent
+to `x' * Diagonal(s) * y` for some scaling vector `s`. This scaling vector `s`
+can be obtained with [`Utilities.SetDotScalingVector`](@ref).
+
+!!! note
+    For such sets `S`, we `Diagonal(s) * S` is [`MOI.Scaled(S)`](@ref Scaled).
+    This linear relationship between the two sets allows briding between them
+    with [`Bridges.Constraint.SetDotScalingBridge`](@ref) and
+    [`Bridges.Constraint.SetDotInverseScalingBridge`](@ref). This scaling vector
+    `s` is also used by Dualization.jl to compute the dual.
+"""
+is_set_dot_scaled(::Type{<:AbstractVectorSet}) = false
+
+function is_set_dot_scaled(
+    ::Type{
+        <:Union{
+            AbstractSymmetricMatrixSetTriangle,
+            HermitianPositiveSemidefiniteConeTriangle,
+            LogDetConeTriangle,
+            RootDetConeTriangle,
+        },
+    },
+)
+    return true
+end
+
+"""
+    struct Scaled{S<:AbstractVectorSet} <: AbstractVectorSet
+        set::S
+    end
+
+Given a vector ``a \\in \\mathbb{R}^d`` and a `set` representing the set
+``\\mathcal{S} \\in \\mathbb{R}^d`` such that [`Utilities.set_dot`](@ref) for
+``x \\in \\mathcal{S}`` and ``y \\in \\mathcal{S}^*`` is
+```math
+\\sum_{i=1}^d a_i x_i y_i
+```
+the set `Scaled(set)` is defined as
+```math
+\\{ (\\sqrt{a_1} x_1, \\sqrt{a_2} x_2, \\ldots, \\sqrt{a_d} x_d) : x \\in S \\}
+```
+
+## Example
+
+This can be used to scale a vector of numbers
+```jldoctest scaling
+julia> import MathOptInterface as MOI
+
+julia> set = MOI.PositiveSemidefiniteConeTriangle(2)
+MathOptInterface.PositiveSemidefiniteConeTriangle(2)
+
+julia> a = MOI.Utilities.SetDotScalingVector{Float64}(set)
+3-element MathOptInterface.Utilities.SetDotScalingVector{Float64, MathOptInterface.PositiveSemidefiniteConeTriangle}:
+ 1.0
+ 1.4142135623730951
+ 1.0
+
+julia> using LinearAlgebra
+
+julia> MOI.Utilities.operate(*, Float64, Diagonal(a), ones(3))
+3-element Vector{Float64}:
+ 1.0
+ 1.4142135623730951
+ 1.0
+```
+
+It can be also used to scale a vector of function
+```jldoctest scaling
+julia> model = MOI.Utilities.Model{Float64}()
+MOIU.Model{Float64}
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> func = MOI.VectorOfVariables(x)
+┌                    ┐
+│MOI.VariableIndex(1)│
+│MOI.VariableIndex(2)│
+│MOI.VariableIndex(3)│
+└                    ┘
+
+julia> set = MOI.PositiveSemidefiniteConeTriangle(2)
+MathOptInterface.PositiveSemidefiniteConeTriangle(2)
+
+julia> MOI.Utilities.operate(*, Float64, Diagonal(a), func)
+┌                                             ┐
+│0.0 + 1.0 MOI.VariableIndex(1)               │
+│0.0 + 1.4142135623730951 MOI.VariableIndex(2)│
+│0.0 + 1.0 MOI.VariableIndex(3)               │
+└                                             ┘
+```
+"""
+struct Scaled{S<:AbstractVectorSet} <: AbstractVectorSet
+    set::S
+end
+
+dimension(s::Scaled) = dimension(s.set)
+
+side_dimension(s::Scaled) = side_dimension(s.set)
+
+dual_set(s::Scaled) = Scaled(dual_set(s.set))
+
+dual_set_type(::Type{Scaled{S}}) where {S} = Scaled{dual_set_type(S)}
+
+"""
+    const ScaledPositiveSemidefiniteConeTriangle = Scaled{PositiveSemidefiniteConeTriangle}
+
+The [`Scaled`](@ref) (vectorized) cone of symmetric positive semidefinite matrices, with
+non-negative `side_dimension` rows and columns.
+
+Compared to the [`PositiveSemidefiniteConeTriangle`](@ref), the off-diagonal
+entries are scaled by `√2`. Thanks to this scaling, [`Utilities.set_dot`](@ref)
+is the simply the sum of the pairwise product, while for
+[`PositiveSemidefiniteConeTriangle`](@ref), the pairwise product additionally
+have to be multiplied by `2`.
+
+!!! note
+    Using `MOI.ScaledPositiveSemidefiniteConeTriangle(d)` is deprecated, use
+    `MOI.Scaled(MOI.PositiveSemidefiniteConeTriangle(d))`.
+"""
+const ScaledPositiveSemidefiniteConeTriangle =
+    Scaled{PositiveSemidefiniteConeTriangle}
+
+# TODO remove in MOI v2
+function Scaled{PositiveSemidefiniteConeTriangle}(side_dimension::Int)
+    return Scaled(PositiveSemidefiniteConeTriangle(side_dimension))
+end
+
+# TODO remove in MOI v2
+function Base.getproperty(
+    set::Scaled{PositiveSemidefiniteConeTriangle},
+    f::Symbol,
+)
+    if f == :side_dimension
+        return getproperty(set.set, f)
+    else
+        return getfield(set, f)
+    end
 end
 
 """

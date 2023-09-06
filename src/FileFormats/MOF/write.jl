@@ -300,9 +300,6 @@ head_name(::Type{MOI.LogDetConeSquare}) = "LogDetConeSquare"
 function head_name(::Type{MOI.PositiveSemidefiniteConeTriangle})
     return "PositiveSemidefiniteConeTriangle"
 end
-function head_name(::Type{MOI.ScaledPositiveSemidefiniteConeTriangle})
-    return "ScaledPositiveSemidefiniteConeTriangle"
-end
 function head_name(::Type{MOI.PositiveSemidefiniteConeSquare})
     return "PositiveSemidefiniteConeSquare"
 end
@@ -357,5 +354,15 @@ function moi_to_object(
     return OrderedObject(
         "type" => "Table",
         "table" => [set.table[i, :] for i in 1:size(set.table, 1)],
+    )
+end
+
+function moi_to_object(
+    set::MOI.Scaled{MOI.PositiveSemidefiniteConeTriangle},
+    name_map::Dict{MOI.VariableIndex,String},
+)
+    return OrderedObject(
+        "type" => "ScaledPositiveSemidefiniteConeTriangle",
+        "side_dimension" => set.set.side_dimension,
     )
 end

@@ -64,7 +64,7 @@ MOI.Utilities.@model(
         MOI.LogDetConeTriangle,
         MOI.LogDetConeSquare,
         MOI.PositiveSemidefiniteConeTriangle,
-        MOI.ScaledPositiveSemidefiniteConeTriangle,
+        MOI.Scaled{MOI.PositiveSemidefiniteConeTriangle},
         MOI.PositiveSemidefiniteConeSquare,
         MOI.HermitianPositiveSemidefiniteConeTriangle,
         MOI.AllDifferent,
