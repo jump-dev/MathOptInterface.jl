@@ -179,14 +179,14 @@ function MOI.Bridges.adjoint_map_function(
     ::Type{<:SetDotInverseScalingBridge{T,S}},
     func,
 ) where {T,S}
-    return _inverse_scale(T, S, func)
+    return _scale(T, S, func)
 end
 
 function MOI.Bridges.inverse_adjoint_map_function(
     ::Type{<:SetDotInverseScalingBridge{T,S}},
     func,
 ) where {T,S}
-    return _scale(T, S, func)
+    return _inverse_scale(T, S, func)
 end
 
 # Since the set type is not defined, the default `MOI.supports_constraint`

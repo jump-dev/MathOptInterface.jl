@@ -111,6 +111,42 @@ function test_inverse_scaling_quadratic()
     return
 end
 
+function test_set_dot_scaling_constraint_dual_start()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.SetDotScaling{Float64}(inner)
+    x = MOI.add_variables(model, 3)
+    c = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables(x),
+        MOI.PositiveSemidefiniteConeTriangle(2),
+    )
+    MOI.set(model, MOI.ConstraintDualStart(), c, [1.0, 1.0, 1.0])
+    @test MOI.get(model, MOI.ConstraintDualStart(), c) ≈ [1.0, 1.0, 1.0]
+    F = MOI.VectorAffineFunction{Float64}
+    S = MOI.Scaled{MOI.PositiveSemidefiniteConeTriangle}
+    d = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())[1]
+    @test MOI.get(inner, MOI.ConstraintDualStart(), d) ≈ [1.0, √2, 1.0]
+    return
+end
+
+function test_set_dot_inverse_scaling_constraint_dual_start()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.SetDotInverseScaling{Float64}(inner)
+    x = MOI.add_variables(model, 3)
+    c = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables(x),
+        MOI.ScaledPositiveSemidefiniteConeTriangle(2),
+    )
+    MOI.set(model, MOI.ConstraintDualStart(), c, [1.0, 1.0, 1.0])
+    @test MOI.get(model, MOI.ConstraintDualStart(), c) ≈ [1.0, 1.0, 1.0]
+    F = MOI.VectorAffineFunction{Float64}
+    S = MOI.PositiveSemidefiniteConeTriangle
+    d = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())[1]
+    @test MOI.get(inner, MOI.ConstraintDualStart(), d) ≈ [1.0, 1 / √2, 1.0]
+    return
+end
+
 end  # module
 
 TestConstraintSetDotScaling.runtests()
