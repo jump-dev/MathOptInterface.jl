@@ -782,6 +782,18 @@ c1: [x1, x2, x3] in ScaledPositiveSemidefiniteConeTriangle(2)
     )
 end
 
+function test_Scaled_PositiveSemidefiniteConeTriangle()
+    return _test_model_equality(
+        """
+variables: x1, x2, x3
+minobjective: x1
+c1: [x1, x2, x3] in Scaled(PositiveSemidefiniteConeTriangle(2))
+""",
+        ["x1", "x2", "x3"],
+        ["c1"],
+    )
+end
+
 function test_PositiveSemidefiniteConeSquare()
     return _test_model_equality(
         """
@@ -1361,6 +1373,16 @@ function test_integer_coefficients()
         ],
         "constant" => 4,
     )
+    return
+end
+
+function test_ScaledPositiveSemidefiniteConeTriangle()
+    object = Dict(
+        "type" => "ScaledPositiveSemidefiniteConeTriangle",
+        "side_dimension" => 2,
+    )
+    @test MOF.set_to_moi(object) ==
+          MOI.Scaled(MOI.PositiveSemidefiniteConeTriangle(2))
     return
 end
 

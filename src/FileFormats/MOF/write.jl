@@ -358,11 +358,11 @@ function moi_to_object(
 end
 
 function moi_to_object(
-    set::MOI.Scaled{MOI.PositiveSemidefiniteConeTriangle},
+    set::MOI.Scaled,
     name_map::Dict{MOI.VariableIndex,String},
 )
     return OrderedObject(
-        "type" => "ScaledPositiveSemidefiniteConeTriangle",
-        "side_dimension" => set.set.side_dimension,
+        "type" => "Scaled",
+        "set" => moi_to_object(set.set, name_map),
     )
 end

@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/schema#",
-    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.4.schema.json",
+    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.5.schema.json",
     "title": "The schema for MathOptFormat",
     "type": "object",
     "required": ["version", "variables", "objective", "constraints"],
@@ -11,7 +11,7 @@
             "required": ["minor", "major"],
             "properties": {
                 "minor": {
-                    "enum": [0, 1, 2, 3, 4]
+                    "enum": [0, 1, 2, 3, 4, 5]
                 },
                 "major": {
                     "const": 1
@@ -765,8 +765,7 @@
                     }
                 }
             }, {
-                "description": "The (vectorized) cone of symmetric positive semidefinite matrices, with `side_dimension` rows and columns, such that the off-diagonal entries are scaled by √2. The entries of the upper-right triangular part of the matrix are given column by column (or equivalently, the entries of the lower-left triangular part are given row by row).",
-                "examples": ["{\"type\": \"ScaledPositiveSemidefiniteConeTriangle\", \"side_dimension\": 2}"],
+                "description": "DEPRECATED: use the Scaled set combinned with PositiveSemidefiniteConeTriangle instead.",
                 "required": ["side_dimension"],
                 "properties": {
                     "type": {
@@ -1149,6 +1148,18 @@
                     },
                     "p": {
                         "type": "number"
+                    }
+                }
+            }, {
+                "description": "The set in the `set` field, scaled such that the inner product of two elements in the set is the same as the dot product of the two vector functions. This is most useful for solvers which require PSD matrices in _scaled_ form.",
+                "examples": ["{\"type\": \"Scaled\", \"set\": {\"type\": \"PositiveSemidefiniteConeTriangle\", \"side_dimension\": 2}}"],
+                "required": ["set"],
+                "properties": {
+                    "type": {
+                        "const": "Scaled"
+                    },
+                    "set": {
+                        "$ref": "#/definitions/vector_sets"
                     }
                 }
             }]
