@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
- - Added [`Scaled`](@ref) set (#2237)
+ - Added [`Scaled`](@ref) set (#2237) (#2263) (#2264)
  - Added [`ObjectiveLimit`](@ref) attribute (#2257)
 
 ### Other
