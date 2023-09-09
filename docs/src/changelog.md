@@ -7,6 +7,19 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.20.0 (September 7, 2023)
+
+### Added
+
+ - Added [`Scaled`](@ref) set (#2237) (#2263) (#2264)
+ - Added [`ObjectiveLimit`](@ref) attribute (#2257)
+
+### Other
+
+ - Updated dependencies (#2258)
+ - Improved performance of [`ScalarNonlinearFunction`](@ref) utilities (#2259)
+ - Fixed docstrings (#2261)
+
 ## v1.19.0 (August 15, 2023)
 
 ### Added
