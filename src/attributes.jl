@@ -1288,6 +1288,15 @@ A model attribute for the best known bound on the optimal objective value.
 """
 struct ObjectiveBound <: AbstractModelAttribute end
 
+
+"""
+    MipDualBound()
+
+A model attribute for the best known dual bound on the objective value.
+"""
+struct MipDualBound <: AbstractModelAttribute end
+
+
 """
     RelativeGap()
 
@@ -2192,6 +2201,7 @@ function is_set_by_optimize(
         ConstraintDual,
         ConstraintBasisStatus,
         VariableBasisStatus,
+        MipDualBound,
     },
 )
     return true
