@@ -120,6 +120,10 @@ end
 #  Build the HTML docs
 # ==============================================================================
 
+# Needed to make Documenter think that there is a PDF in the right place when
+# link checking. Inn production we replace this by running the LaTeX build.
+write(joinpath(@__DIR__, "src", "MathOptInterface.pdf"), "")
+
 @time Documenter.makedocs(
     sitename = "MathOptInterface",
     authors = "The JuMP core developers and contributors",
@@ -128,6 +132,16 @@ end
         prettyurls = get(ENV, "CI", nothing) == "true",
         mathengine = Documenter.MathJax2(),
         collapselevel = 1,
+        # Do no check for large pages.
+        size_threshold_ignore = [
+            "changelog.md",
+            "release_notes.md",
+            "reference/models.md",
+            "reference/standard_form.md",
+            "submodules/Bridges/list_of_bridges.md",
+            "submodules/Bridges/reference.md",
+            "submodules/Utilities/reference.md",
+        ],
     ),
     clean = true,
     linkcheck = true,

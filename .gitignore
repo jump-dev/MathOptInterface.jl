@@ -9,3 +9,4 @@ test/Benchmarks/*.json
 Manifest.toml
 *.swp
 docs/src/release_notes.md
+docs/src/MathOptInterface.pdf
