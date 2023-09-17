@@ -181,7 +181,8 @@ if _PDF
     # includes lots of extraneous LaTeX files.
     cp(
         joinpath(@__DIR__, "latex_build", "MathOptInterface.pdf"),
-        joinpath(@__DIR__, "build", "MathOptInterface.pdf"),
+        joinpath(@__DIR__, "build", "MathOptInterface.pdf");
+        force = true,
     )
 end
 
