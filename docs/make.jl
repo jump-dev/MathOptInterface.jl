@@ -130,7 +130,6 @@ end
         collapselevel = 1,
     ),
     clean = true,
-    strict = true,
     linkcheck = true,
     linkcheck_ignore = [
         # Ignore the PDF link, because it hasn't been built yet.
