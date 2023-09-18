@@ -26,7 +26,7 @@ function _test_conic_linear_helper(
     model::MOI.ModelLike,
     config::Config{T},
     use_VectorOfVariables::Bool,
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
@@ -146,7 +146,7 @@ function setup_test(
     ::typeof(test_conic_linear_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -175,7 +175,7 @@ function setup_test(
     ::typeof(test_conic_linear_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -215,7 +215,7 @@ function _test_conic_linear_helper_2(
     model::MOI.ModelLike,
     config::Config{T},
     use_VectorOfVariables::Bool,
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
@@ -386,7 +386,7 @@ function setup_test(
     ::typeof(test_conic_linear_VectorOfVariables_2),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -418,7 +418,7 @@ function setup_test(
     ::typeof(test_conic_linear_VectorAffineFunction_2),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -436,7 +436,7 @@ end
     test_conic_linear_INFEASIBLE(
         model::MOI.ModelLike,
         config::Config{T},
-    ) where {T}
+    ) where {T<:Real}
 
 Test an infeasible linear program in conic form.
 
@@ -450,7 +450,7 @@ s.t. -1 + x ∈ R₊
 function test_conic_linear_INFEASIBLE(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
@@ -514,7 +514,7 @@ function setup_test(
     ::typeof(test_conic_linear_INFEASIBLE),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -531,7 +531,7 @@ end
     test_conic_linear_INFEASIBLE_2(
         model::MOI.ModelLike,
         config::Config{T},
-    ) where {T}
+    ) where {T<:Real}
 
 Test an infeasible linear program in conic form.
 
@@ -545,7 +545,7 @@ s.t. -1 + x ∈ R₊
 function test_conic_linear_INFEASIBLE_2(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
@@ -595,7 +595,7 @@ function setup_test(
     ::typeof(test_conic_linear_INFEASIBLE_2),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -621,7 +621,7 @@ function _test_conic_NormInfinityCone_helper(
     model::MOI.ModelLike,
     config::Config{T},
     use_VectorOfVariables::Bool,
-) where {T}
+) where {T<:Real}
     F = if use_VectorOfVariables
         MOI.VectorOfVariables
     else
@@ -767,7 +767,7 @@ function setup_test(
     ::typeof(test_conic_NormInfinityCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -800,7 +800,7 @@ function setup_test(
     ::typeof(test_conic_NormInfinityCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -831,7 +831,7 @@ s.t. -2 + y ∈ R₊
 function test_conic_NormInfinityCone_INFEASIBLE(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
@@ -917,7 +917,7 @@ function setup_test(
     ::typeof(test_conic_NormInfinityCone_INFEASIBLE),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -934,7 +934,7 @@ end
     test_conic_NormInfinityCone_3(
         model::MOI.ModelLike,
         config::Config{T},
-    ) where {T}
+    ) where {T<:Real}
 
 Test the problem:
 ```
@@ -947,7 +947,7 @@ let n = 3. optimal solution: y .= -1, x = 2
 function test_conic_NormInfinityCone_3(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
@@ -1032,7 +1032,7 @@ function setup_test(
     ::typeof(test_conic_NormInfinityCone_3),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -1051,7 +1051,7 @@ function _test_conic_NormOneCone_helper(
     model::MOI.ModelLike,
     config::Config{T},
     use_VectorOfVariables::Bool,
-) where {T}
+) where {T<:Real}
     # Problem NormOne1
     # max 0x + 1y + 1z
     #  st  x == 1
@@ -1182,7 +1182,7 @@ Test NormOneCone in standard conic form.
 function test_conic_NormOneCone_VectorOfVariables(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     return _test_conic_NormOneCone_helper(model, config, true)
 end
 
@@ -1190,7 +1190,7 @@ function setup_test(
     ::typeof(test_conic_NormOneCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -1214,7 +1214,7 @@ Test NormOneCone in geometric conic form.
 function test_conic_NormOneCone_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     return _test_conic_NormOneCone_helper(model, config, false)
 end
 
@@ -1222,7 +1222,7 @@ function setup_test(
     ::typeof(test_conic_NormOneCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -1240,7 +1240,7 @@ end
     test_conic_NormOneCone_INFEASIBLE(
         model::MOI.ModelLike,
         config::Config{T},
-    ) where {T}
+    ) where {T<:Real}
 
 Test and infeasible problem with NormOneCone.
 
@@ -1258,7 +1258,7 @@ s.t. -2 + y ∈ R₊
 function test_conic_NormOneCone_INFEASIBLE(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
@@ -1344,7 +1344,7 @@ function setup_test(
     ::typeof(test_conic_NormOneCone_INFEASIBLE),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -1358,7 +1358,7 @@ function setup_test(
 end
 
 """
-    test_conic_NormOneCone(model::MOI.ModelLike, config::Config{T}) where {T}
+    test_conic_NormOneCone(model::MOI.ModelLike, config::Config{T}) where {T<:Real}
 
 Test the following problem:
 ```
@@ -1371,7 +1371,7 @@ let n = 3. optimal solution: y .= -1, x = 4
 function test_conic_NormOneCone(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
@@ -1463,7 +1463,7 @@ function setup_test(
     ::typeof(test_conic_NormOneCone),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -1487,7 +1487,7 @@ function _test_conic_SecondOrderCone_helper(
     model::MOI.ModelLike,
     config::Config{T},
     use_VectorOfVariables::Bool,
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
@@ -1603,7 +1603,7 @@ Test a SecondOrderCone in standard conic form.
 function test_conic_SecondOrderCone_VectorOfVariables(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_SecondOrderCone_helper(model, config, true)
     return
 end
@@ -1612,7 +1612,7 @@ function setup_test(
     ::typeof(test_conic_SecondOrderCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -1635,7 +1635,7 @@ Test a SecondOrderCone in geometric conic form.
 function test_conic_SecondOrderCone_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_SecondOrderCone_helper(model, config, false)
     return
 end
@@ -1644,7 +1644,7 @@ function setup_test(
     ::typeof(test_conic_SecondOrderCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -1662,7 +1662,7 @@ function _test_conic_SecondOrderCone_helper_2(
     model::MOI.ModelLike,
     config::Config{T},
     nonneg::Bool,
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
@@ -1816,7 +1816,7 @@ Test a SecondOrderCone with Nonnegatives constraints.
 function test_conic_SecondOrderCone_Nonnegatives(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_SecondOrderCone_helper_2(model, config, true)
     return
 end
@@ -1825,7 +1825,7 @@ function setup_test(
     ::typeof(test_conic_SecondOrderCone_Nonnegatives),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -1851,7 +1851,7 @@ Test a SecondOrderCone with Nonpositives constraints.
 function test_conic_SecondOrderCone_Nonpositives(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_SecondOrderCone_helper_2(model, config, false)
     return
 end
@@ -1860,7 +1860,7 @@ function setup_test(
     ::typeof(test_conic_SecondOrderCone_Nonpositives),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -1879,7 +1879,7 @@ end
     test_conic_SecondOrderCone_INFEASIBLE(
         model::MOI.ModelLike,
         config::Config{T},
-    ) where {T}
+    ) where {T<:Real}
 
 Problem SOC3 - Infeasible
 min 0
@@ -1895,7 +1895,7 @@ s.t. -2 + y ∈ R₊
 function test_conic_SecondOrderCone_INFEASIBLE(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
@@ -1986,7 +1986,7 @@ function setup_test(
     ::typeof(test_conic_SecondOrderCone_INFEASIBLE),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -2021,7 +2021,7 @@ Tests out-of-order indices in cones
 function test_conic_SecondOrderCone_out_of_order(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
@@ -2122,7 +2122,7 @@ function setup_test(
     ::typeof(test_conic_SecondOrderCone_out_of_order),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -2151,7 +2151,7 @@ function _test_conic_RotatedSecondOrderCone_helper(
     model::MOI.ModelLike,
     config::Config{T},
     abvars::Bool,
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
@@ -2282,7 +2282,7 @@ end
 function test_conic_RotatedSecondOrderCone_VectorOfVariables(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_RotatedSecondOrderCone_helper(model, config, true)
     return
 end
@@ -2291,7 +2291,7 @@ function setup_test(
     ::typeof(test_conic_RotatedSecondOrderCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -2309,7 +2309,7 @@ end
 function test_conic_RotatedSecondOrderCone_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_RotatedSecondOrderCone_helper(model, config, false)
     return
 end
@@ -2318,7 +2318,7 @@ function setup_test(
     ::typeof(test_conic_RotatedSecondOrderCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -2355,7 +2355,7 @@ s.t.
 function test_conic_RotatedSecondOrderCone_INFEASIBLE(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     b = T[-2, -1, 1//2]
     c = T[0, 0, 0]
     @requires MOI.supports_incremental_interface(model)
@@ -2431,7 +2431,7 @@ function setup_test(
     ::typeof(test_conic_RotatedSecondOrderCone_INFEASIBLE),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -2467,7 +2467,7 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE_2(
     config::Config{T};
     n = 2,
     ub = T(3),
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
@@ -2623,7 +2623,7 @@ function setup_test(
     ::typeof(test_conic_RotatedSecondOrderCone_INFEASIBLE_2),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     n = 2
     ub = T(3)
     MOIU.set_mock_optimize!(
@@ -2680,7 +2680,7 @@ with objective value 2.
 function test_conic_RotatedSecondOrderCone_out_of_order(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
@@ -2736,12 +2736,12 @@ function setup_test(
     ::typeof(test_conic_RotatedSecondOrderCone_out_of_order),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(T, 4),
+            ones(T, 4)::Vector{T},
             (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-1],
             (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone) =>
                 [T[1, 1, -1, -1]],
@@ -2755,7 +2755,7 @@ function _test_conic_GeometricMeanCone_helper(
     config::Config{T},
     use_VectorOfVariables,
     n = 3,
-) where {T}
+) where {T<:Real}
     # Problem GeoMean1
     # max (xyz)^(1/3)
     # s.t.
@@ -2862,7 +2862,7 @@ end
 function test_conic_GeometricMeanCone_VectorOfVariables(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_GeometricMeanCone_helper(model, config, true)
     return
 end
@@ -2871,12 +2871,12 @@ function setup_test(
     ::typeof(test_conic_GeometricMeanCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(T, 4),
+            ones(T, 4)::Vector{T},
             (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => [-inv(T(3))],
         ),
     )
@@ -2886,7 +2886,7 @@ end
 function test_conic_GeometricMeanCone_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_GeometricMeanCone_helper(model, config, false)
     return
 end
@@ -2895,12 +2895,12 @@ function setup_test(
     ::typeof(test_conic_GeometricMeanCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(T, 4),
+            ones(T, 4)::Vector{T},
             (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => [-inv(T(3))],
             (MOI.VectorAffineFunction{T}, MOI.GeometricMeanCone) =>
                 [vcat(T(-1), fill(inv(T(3)), 3))],
@@ -2921,7 +2921,7 @@ function _test_conic_GeometricMeanCone_helper_2(
     model::MOI.ModelLike,
     config::Config{T},
     use_VectorOfVariables,
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
@@ -3023,7 +3023,7 @@ end
 function test_conic_GeometricMeanCone_VectorOfVariables_2(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_GeometricMeanCone_helper_2(model, config, true)
     return
 end
@@ -3032,12 +3032,12 @@ function setup_test(
     ::typeof(test_conic_GeometricMeanCone_VectorOfVariables_2),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(T, 10),
+            ones(T, 10)::Vector{T},
             (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) =>
                 fill(-inv(T(9)), 9),
         ),
@@ -3048,7 +3048,7 @@ end
 function test_conic_GeometricMeanCone_VectorAffineFunction_2(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_GeometricMeanCone_helper_2(model, config, false)
     return
 end
@@ -3057,12 +3057,12 @@ function setup_test(
     ::typeof(test_conic_GeometricMeanCone_VectorAffineFunction_2),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(T, 10),
+            ones(T, 10)::Vector{T},
             (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) =>
                 fill(-inv(T(9)), 9),
             (MOI.VectorAffineFunction{T}, MOI.GeometricMeanCone) =>
@@ -3085,7 +3085,7 @@ function _test_conic_GeometricMeanCone_helper_3(
     model::MOI.ModelLike,
     config::Config{T},
     use_VectorOfVariables,
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
@@ -3167,7 +3167,7 @@ end
 function test_conic_GeometricMeanCone_VectorOfVariables_3(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_GeometricMeanCone_helper_3(model, config, true)
     return
 end
@@ -3176,7 +3176,7 @@ function setup_test(
     ::typeof(test_conic_GeometricMeanCone_VectorOfVariables_3),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -3191,7 +3191,7 @@ end
 function test_conic_GeometricMeanCone_VectorAffineFunction_3(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_GeometricMeanCone_helper_3(model, config, false)
     return
 end
@@ -3200,7 +3200,7 @@ function setup_test(
     ::typeof(test_conic_GeometricMeanCone_VectorAffineFunction_3),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -3218,7 +3218,7 @@ function _test_conic_Exponential_helper(
     model::MOI.ModelLike,
     config::Config{T},
     use_VectorOfVariables::Bool,
-) where {T}
+) where {T<:Real}
     F = if use_VectorOfVariables
         MOI.VectorOfVariables
     else
@@ -3327,7 +3327,7 @@ Test an exponential cone in standard conic form.
 function test_conic_Exponential_VectorOfVariables(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_Exponential_helper(model, config, true)
     return
 end
@@ -3336,7 +3336,7 @@ function setup_test(
     ::typeof(test_conic_Exponential_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -3360,7 +3360,7 @@ Test an exponential cone in geometric conic form.
 function test_conic_Exponential_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_Exponential_helper(model, config, false)
     return
 end
@@ -3369,7 +3369,7 @@ function setup_test(
     ::typeof(test_conic_Exponential_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -3388,14 +3388,14 @@ end
     test_conic_Exponential_hard_2(
         model::MOI.ModelLike,
         config::Config{T},
-    ) where {T}
+    ) where {T<:Real}
 
 Test an exponential cone problem that ECOS failed.
 """
 function test_conic_Exponential_hard_2(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
@@ -3582,7 +3582,7 @@ function setup_test(
     ::typeof(test_conic_Exponential_hard_2),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     eT = exp(T(-3 // 10))
     MOIU.set_mock_optimize!(
         model,
@@ -3608,14 +3608,14 @@ end
     test_conic_Exponential_hard(
         model::MOI.ModelLike,
         config::Config{T},
-    ) where {T}
+    ) where {T<:Real}
 
 Test an exponential problem that ECOS failed.
 """
 function test_conic_Exponential_hard(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
@@ -3705,7 +3705,7 @@ function setup_test(
     ::typeof(test_conic_Exponential_hard),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -3723,7 +3723,7 @@ function _test_conic_DualExponentialCone_helper(
     model::MOI.ModelLike,
     config::Config{T},
     use_VectorOfVariables::Bool,
-) where {T}
+) where {T<:Real}
     F = if use_VectorOfVariables
         MOI.VectorOfVariables
     else
@@ -3848,7 +3848,7 @@ end
 function test_conic_DualExponentialCone_VectorOfVariables(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_DualExponentialCone_helper(model, config, true)
     return
 end
@@ -3857,7 +3857,7 @@ function setup_test(
     ::typeof(test_conic_DualExponentialCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     eT = exp(T(1 // 2))
     MOIU.set_mock_optimize!(
         model,
@@ -3874,7 +3874,7 @@ end
 function test_conic_DualExponentialCone_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_DualExponentialCone_helper(model, config, false)
     return
 end
@@ -3883,7 +3883,7 @@ function setup_test(
     ::typeof(test_conic_DualExponentialCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     eT = exp(T(1 // 2))
     MOIU.set_mock_optimize!(
         model,
@@ -3919,7 +3919,7 @@ function _test_conic_PowerCone_helper(
     model::MOI.ModelLike,
     config::Config{T},
     use_VectorOfVariables::Bool,
-) where {T}
+) where {T<:Real}
     @requires T == Float64
     F = if use_VectorOfVariables
         MOI.VectorOfVariables
@@ -4011,7 +4011,7 @@ end
 function test_conic_PowerCone_VectorOfVariables(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_PowerCone_helper(model, config, true)
     return
 end
@@ -4020,7 +4020,7 @@ function setup_test(
     ::typeof(test_conic_PowerCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     if T != Float64
         return  # TODO(odow): compute u_value as an analytical expression.
     end
@@ -4044,7 +4044,7 @@ end
 function test_conic_PowerCone_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_PowerCone_helper(model, config, false)
     return
 end
@@ -4053,7 +4053,7 @@ function setup_test(
     ::typeof(test_conic_PowerCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     if T != Float64
         return  # TODO(odow): compute u_value as an analytical expression.
     end
@@ -4105,7 +4105,7 @@ function _test_conic_DualPowerCone_helper(
     config::Config{T},
     use_VectorOfVariables::Bool;
     exponent::T = T(9 // 10),
-) where {T}
+) where {T<:Real}
     F = if use_VectorOfVariables
         MOI.VectorOfVariables
     else
@@ -4223,7 +4223,7 @@ Test DualPowerCone in the standard conic form.
 function test_conic_DualPowerCone_VectorOfVariables(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_DualPowerCone_helper(model, config, true)
     return
 end
@@ -4232,7 +4232,7 @@ function setup_test(
     ::typeof(test_conic_DualPowerCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -4255,7 +4255,7 @@ Test DualPowerCone in the geometric conic form.
 function test_conic_DualPowerCone_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_DualPowerCone_helper(model, config, false)
     return
 end
@@ -4264,7 +4264,7 @@ function setup_test(
     ::typeof(test_conic_DualPowerCone_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -4282,7 +4282,7 @@ end
     test_conic_RelativeEntropyCone(
         model::MOI.ModelLike,
         config::Config{T},
-    ) where {T}
+    ) where {T<:Real}
 
 Test the problem:
 ```
@@ -4295,7 +4295,7 @@ u = 2*log(2/1) + 3*log(3/5) ≈ -0.1461825
 function test_conic_RelativeEntropyCone(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
@@ -4355,7 +4355,7 @@ function setup_test(
     ::typeof(test_conic_RelativeEntropyCone),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -4369,7 +4369,7 @@ function setup_test(
 end
 
 """
-    test_conic_NormSpectralCone(model::MOI.ModelLike, config::Config{T}) where {T}
+    test_conic_NormSpectralCone(model::MOI.ModelLike, config::Config{T}) where {T<:Real}
 
 Test the problem:
 ```
@@ -4382,7 +4382,7 @@ t = sqrt(T(3))
 function test_conic_NormSpectralCone(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
@@ -4442,7 +4442,7 @@ function setup_test(
     ::typeof(test_conic_NormSpectralCone),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     invrt3 = inv(sqrt(T(3)))
     MOIU.set_mock_optimize!(
         model,
@@ -4457,7 +4457,7 @@ function setup_test(
 end
 
 """
-    test_conic_NormSpectralCone_2(model::MOI.ModelLike, config::Config{T}) where {T}
+    test_conic_NormSpectralCone_2(model::MOI.ModelLike, config::Config{T}) where {T<:Real}
 
 Test the problem:
 ```
@@ -4470,7 +4470,7 @@ t = sqrt(T(3))
 function test_conic_NormSpectralCone_2(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
@@ -4532,7 +4532,7 @@ function setup_test(
     ::typeof(test_conic_NormSpectralCone_2),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     invrt3 = inv(sqrt(T(3)))
     MOIU.set_mock_optimize!(
         model,
@@ -4547,7 +4547,7 @@ function setup_test(
 end
 
 """
-    test_conic_NormNuclearCone(model::MOI.ModelLike, config::Config{T}) where {T}
+    test_conic_NormNuclearCone(model::MOI.ModelLike, config::Config{T}) where {T<:Real}
 
 Test the problem:
 ```
@@ -4560,7 +4560,7 @@ t = sqrt(T(3)) + sqrt(T(2))
 function test_conic_NormNuclearCone(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
@@ -4625,7 +4625,7 @@ function setup_test(
     ::typeof(test_conic_NormNuclearCone),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     invrt2 = inv(sqrt(T(2)))
     invrt3 = inv(sqrt(T(3)))
     MOIU.set_mock_optimize!(
@@ -4641,7 +4641,7 @@ function setup_test(
 end
 
 """
-    test_conic_NormNuclearCone_2(model::MOI.ModelLike, config::Config{T}) where {T}
+    test_conic_NormNuclearCone_2(model::MOI.ModelLike, config::Config{T}) where {T<:Real}
 
 Test the problem:
 ```
@@ -4654,7 +4654,7 @@ t = sqrt(T(3)) + sqrt(T(2))
 function test_conic_NormNuclearCone_2(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
@@ -4719,7 +4719,7 @@ function setup_test(
     ::typeof(test_conic_NormNuclearCone_2),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     invrt2 = inv(sqrt(T(2)))
     invrt3 = inv(sqrt(T(3)))
     MOIU.set_mock_optimize!(
@@ -4749,7 +4749,7 @@ function _test_conic_PositiveSemidefiniteCone_helper(
     use_VectorOfVariables::Bool,
     psdcone,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     atol = config.atol
     rtol = config.rtol
     square = psdcone == MOI.PositiveSemidefiniteConeSquare
@@ -4864,7 +4864,7 @@ end
 function test_conic_PositiveSemidefiniteConeTriangle_VectorOfVariables(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_PositiveSemidefiniteCone_helper(
         model,
         true,
@@ -4878,12 +4878,12 @@ function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeTriangle_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(T, 3),
+            ones(T, 3)::Vector{T},
             (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [2],
         ),
     )
@@ -4893,7 +4893,7 @@ end
 function test_conic_PositiveSemidefiniteConeTriangle_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_PositiveSemidefiniteCone_helper(
         model,
         false,
@@ -4907,12 +4907,12 @@ function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeTriangle_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(T, 3),
+            ones(T, 3)::Vector{T},
             (
                 MOI.VectorAffineFunction{T},
                 MOI.PositiveSemidefiniteConeTriangle,
@@ -4926,7 +4926,7 @@ end
 function test_conic_PositiveSemidefiniteConeSquare_VectorOfVariables(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_PositiveSemidefiniteCone_helper(
         model,
         true,
@@ -4940,12 +4940,12 @@ function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeSquare_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(T, 4),
+            ones(T, 4)::Vector{T},
             (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [2],
         ),
     )
@@ -4955,7 +4955,7 @@ end
 function test_conic_PositiveSemidefiniteConeSquare_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_PositiveSemidefiniteCone_helper(
         model,
         false,
@@ -4969,12 +4969,12 @@ function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeSquare_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(T, 4),
+            ones(T, 4)::Vector{T},
             (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeSquare) => [T[1, -2, 0, 1]],
             (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => T[2],
         ),
@@ -4985,7 +4985,7 @@ end
 function test_conic_ScaledPositiveSemidefiniteConeTriangle_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_PositiveSemidefiniteCone_helper(
         model,
         false,
@@ -5001,12 +5001,12 @@ function setup_test(
     ),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(T, 3),
+            ones(T, 3)::Vector{T},
             (
                 MOI.VectorAffineFunction{T},
                 MOI.Scaled{MOI.PositiveSemidefiniteConeTriangle},
@@ -5061,7 +5061,7 @@ function _test_conic_PositiveSemidefiniteCone_helper_2(
     use_VectorOfVariables::Bool,
     psdcone,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     square = psdcone == MOI.PositiveSemidefiniteConeSquare
     # The dual of the SDP constraint is rank two of the form
     # [γ, 0, -γ] * [γ, 0, γ'] + [δ, ε, δ] * [δ, ε, δ]'
@@ -5240,7 +5240,7 @@ end
 function test_conic_PositiveSemidefiniteConeTriangle_VectorOfVariables_2(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_PositiveSemidefiniteCone_helper_2(
         model,
         true,
@@ -5254,7 +5254,7 @@ function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeTriangle_VectorOfVariables_2),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     δ = √(1 + (3 * √T(2) + 2) * √(-116 * √T(2) + 166) / 14) / 2
     ε = √((1 - 2 * (√T(2) - 1) * δ^2) / (2 - √T(2)))
     y2 = 1 - ε * δ
@@ -5280,7 +5280,7 @@ end
 function test_conic_PositiveSemidefiniteConeTriangle_VectorAffineFunction_2(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_PositiveSemidefiniteCone_helper_2(
         model,
         false,
@@ -5296,7 +5296,7 @@ function setup_test(
     ),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     δ = √(1 + (3 * √T(2) + 2) * √(-116 * √T(2) + 166) / 14) / 2
     ε = √((1 - 2 * (√T(2) - 1) * δ^2) / (2 - √T(2)))
     y2 = 1 - ε * δ
@@ -5330,7 +5330,7 @@ end
 function test_conic_PositiveSemidefiniteConeSquare_VectorOfVariables_2(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_PositiveSemidefiniteCone_helper_2(
         model,
         true,
@@ -5344,7 +5344,7 @@ function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeSquare_VectorOfVariables_2),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     δ = √(1 + (3 * √T(2) + 2) * √(-116 * √T(2) + 166) / 14) / 2
     ε = √((1 - 2 * (√T(2) - 1) * δ^2) / (2 - √T(2)))
     y2 = 1 - ε * δ
@@ -5370,7 +5370,7 @@ end
 function test_conic_PositiveSemidefiniteConeSquare_VectorAffineFunction_2(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_PositiveSemidefiniteCone_helper_2(
         model,
         false,
@@ -5384,7 +5384,7 @@ function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeSquare_VectorAffineFunction_2),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     δ = √(1 + (3 * √T(2) + 2) * √(-116 * √T(2) + 166) / 14) / 2
     ε = √((1 - 2 * (√T(2) - 1) * δ^2) / (2 - √T(2)))
     y2 = 1 - ε * δ
@@ -5421,7 +5421,7 @@ end
 function test_conic_PositiveSemidefiniteConeTriangle(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     # Caused getdual to fail on SCS and Mosek
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
@@ -5603,7 +5603,7 @@ function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeTriangle),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     η = T(10)
     α = T(4 // 5)
     δ = T(9 // 10)
@@ -5644,7 +5644,7 @@ function _test_conic_PositiveSemidefiniteCone_helper_3(
     model::MOI.ModelLike,
     psdcone,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     atol = config.atol
     rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
@@ -5708,7 +5708,7 @@ end
 function test_conic_PositiveSemidefiniteConeTriangle_3(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_PositiveSemidefiniteCone_helper_3(
         model,
         MOI.PositiveSemidefiniteConeTriangle,
@@ -5721,12 +5721,12 @@ function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeTriangle_3),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(T, 1),
+            T[1],
             (
                 MOI.VectorAffineFunction{T},
                 MOI.PositiveSemidefiniteConeTriangle,
@@ -5745,7 +5745,7 @@ end
 function test_conic_PositiveSemidefiniteConeSquare_3(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_conic_PositiveSemidefiniteCone_helper_3(
         model,
         MOI.PositiveSemidefiniteConeSquare,
@@ -5758,12 +5758,12 @@ function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeSquare_3),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            ones(T, 1),
+            T[1],
             (MOI.VectorAffineFunction{T}, MOI.PositiveSemidefiniteConeSquare) => [T[1, -1/2, -1/2, -1/2, 1, -1/2, -1/2, -1/2, 1] / 3],
         ),
     )
@@ -5798,7 +5798,7 @@ function _test_det_cone_helper_ellipsoid(
     config::Config{T},
     use_VectorOfVariables::Bool,
     detcone,
-) where {T}
+) where {T<:Real}
     F =
         use_VectorOfVariables ? MOI.VectorOfVariables :
         MOI.VectorAffineFunction{T}
@@ -5955,7 +5955,7 @@ function _test_det_cone_helper(
     model::MOI.ModelLike,
     config::Config{T},
     detcone,
-) where {T}
+) where {T<:Real}
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
@@ -6041,7 +6041,7 @@ Test a problem with LogDetConeTriangle.
 function test_conic_LogDetConeTriangle_VectorOfVariables(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_det_cone_helper_ellipsoid(model, config, true, MOI.LogDetConeTriangle)
     return
 end
@@ -6050,7 +6050,7 @@ function setup_test(
     ::typeof(test_conic_LogDetConeTriangle_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -6078,7 +6078,7 @@ Test a problem with LogDetConeTriangle.
 function test_conic_LogDetConeTriangle_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_det_cone_helper_ellipsoid(
         model,
         config,
@@ -6092,7 +6092,7 @@ function setup_test(
     ::typeof(test_conic_LogDetConeTriangle_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -6118,7 +6118,7 @@ Test a problem with LogDetConeSquare.
 function test_conic_LogDetConeSquare_VectorOfVariables(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_det_cone_helper_ellipsoid(model, config, true, MOI.LogDetConeSquare)
     return
 end
@@ -6127,7 +6127,7 @@ function setup_test(
     ::typeof(test_conic_LogDetConeSquare_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -6155,7 +6155,7 @@ Test a problem with LogDetConeSquare.
 function test_conic_LogDetConeSquare_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_det_cone_helper_ellipsoid(model, config, false, MOI.LogDetConeSquare)
     return
 end
@@ -6164,7 +6164,7 @@ function setup_test(
     ::typeof(test_conic_LogDetConeSquare_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -6190,7 +6190,7 @@ Test a problem with RootDetConeTriangle.
 function test_conic_RootDetConeTriangle_VectorOfVariables(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_det_cone_helper_ellipsoid(
         model,
         config,
@@ -6204,7 +6204,7 @@ function setup_test(
     ::typeof(test_conic_RootDetConeTriangle_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -6230,7 +6230,7 @@ Test a problem with RootDetConeTriangle.
 function test_conic_RootDetConeTriangle_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_det_cone_helper_ellipsoid(
         model,
         config,
@@ -6244,7 +6244,7 @@ function setup_test(
     ::typeof(test_conic_RootDetConeTriangle_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -6270,7 +6270,7 @@ Test a problem with RootDetConeSquare.
 function test_conic_RootDetConeSquare_VectorOfVariables(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_det_cone_helper_ellipsoid(model, config, true, MOI.RootDetConeSquare)
     return
 end
@@ -6279,7 +6279,7 @@ function setup_test(
     ::typeof(test_conic_RootDetConeSquare_VectorOfVariables),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -6305,7 +6305,7 @@ Test a problem with RootDetConeSquare.
 function test_conic_RootDetConeSquare_VectorAffineFunction(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_det_cone_helper_ellipsoid(model, config, false, MOI.RootDetConeSquare)
     return
 end
@@ -6314,7 +6314,7 @@ function setup_test(
     ::typeof(test_conic_RootDetConeSquare_VectorAffineFunction),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -6330,14 +6330,14 @@ function setup_test(
 end
 
 """
-    test_conic_LogDetConeTriangle(model::MOI.ModelLike, config::Config{T}) where {T}
+    test_conic_LogDetConeTriangle(model::MOI.ModelLike, config::Config{T}) where {T<:Real}
 
 Test a problem with LogDetConeTriangle.
 """
 function test_conic_LogDetConeTriangle(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_det_cone_helper(model, config, MOI.LogDetConeTriangle)
     return
 end
@@ -6346,7 +6346,7 @@ function setup_test(
     ::typeof(test_conic_LogDetConeTriangle),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -6362,14 +6362,14 @@ function setup_test(
 end
 
 """
-    test_conic_LogDetConeSquare(model::MOI.ModelLike, config::Config{T}) where {T}
+    test_conic_LogDetConeSquare(model::MOI.ModelLike, config::Config{T}) where {T<:Real}
 
 Test a problem with LogDetConeSquare.
 """
 function test_conic_LogDetConeSquare(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_det_cone_helper(model, config, MOI.LogDetConeSquare)
     return
 end
@@ -6378,7 +6378,7 @@ function setup_test(
     ::typeof(test_conic_LogDetConeSquare),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -6393,14 +6393,14 @@ function setup_test(
 end
 
 """
-    test_conic_RootDetConeTriangle(model::MOI.ModelLike, config::Config{T}) where {T}
+    test_conic_RootDetConeTriangle(model::MOI.ModelLike, config::Config{T}) where {T<:Real}
 
 Test a problem with RootDetConeTriangle.
 """
 function test_conic_RootDetConeTriangle(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_det_cone_helper(model, config, MOI.RootDetConeTriangle)
     return
 end
@@ -6409,7 +6409,7 @@ function setup_test(
     ::typeof(test_conic_RootDetConeTriangle),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -6426,14 +6426,14 @@ function setup_test(
 end
 
 """
-    test_conic_RootDetConeSquare(model::MOI.ModelLike, config::Config{T}) where {T}
+    test_conic_RootDetConeSquare(model::MOI.ModelLike, config::Config{T}) where {T<:Real}
 
 Test a problem with RootDetConeSquare.
 """
 function test_conic_RootDetConeSquare(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     _test_det_cone_helper(model, config, MOI.RootDetConeSquare)
     return
 end
@@ -6442,7 +6442,7 @@ function setup_test(
     ::typeof(test_conic_RootDetConeSquare),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
@@ -6464,14 +6464,14 @@ end
     test_conic_SecondOrderCone_no_initial_bound(
         model::MOI.ModelLike,
         config::Config{T},
-    ) where {T}
+    ) where {T<:Real}
 
 Test a second order cone with no bound on the epigraph variable.
 """
 function test_conic_SecondOrderCone_no_initial_bound(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires(
         MOI.supports_constraint(
             model,
@@ -6502,7 +6502,7 @@ function setup_test(
     ::typeof(test_conic_SecondOrderCone_no_initial_bound),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[5, 3, 4]),
@@ -6516,14 +6516,14 @@ end
     test_conic_SecondOrderCone_nonnegative_initial_bound(
         model::MOI.ModelLike,
         config::Config{T},
-    ) where {T}
+    ) where {T<:Real}
 
 Test a second order cone with a non-negative epigraph variable.
 """
 function test_conic_SecondOrderCone_nonnegative_initial_bound(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires(
         MOI.supports_constraint(
             model,
@@ -6555,7 +6555,7 @@ function setup_test(
     ::typeof(test_conic_SecondOrderCone_nonnegative_initial_bound),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[5, 3, 4]),
@@ -6568,14 +6568,14 @@ end
     test_conic_SecondOrderCone_negative_initial_bound(
         model::MOI.ModelLike,
         config::Config{T},
-    ) where {T}
+    ) where {T<:Real}
 
 Test a second order cone with an epigraph variable >= -M.
 """
 function test_conic_SecondOrderCone_negative_initial_bound(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires(
         MOI.supports_constraint(
             model,
@@ -6607,7 +6607,7 @@ function setup_test(
     ::typeof(test_conic_SecondOrderCone_negative_initial_bound),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[5, 3, 4]),
@@ -6620,14 +6620,14 @@ end
     test_conic_SecondOrderCone_nonnegative_post_bound(
         model::MOI.ModelLike,
         config::Config{T},
-    ) where {T}
+    ) where {T<:Real}
 
 Test a second order cone with a nonnegative epigraph variable.
 """
 function test_conic_SecondOrderCone_nonnegative_post_bound(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires(
         MOI.supports_constraint(
             model,
@@ -6659,7 +6659,7 @@ function setup_test(
     ::typeof(test_conic_SecondOrderCone_nonnegative_post_bound),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[6, 3, 4]),
@@ -6672,14 +6672,14 @@ end
     test_conic_SecondOrderCone_negative_post_bound(
         model::MOI.ModelLike,
         config::Config{T},
-    ) where {T}
+    ) where {T<:Real}
 
 Test a second order cone with an epigraph variable >= -M.
 """
 function test_conic_SecondOrderCone_negative_post_bound(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires(
         MOI.supports_constraint(
             model,
@@ -6711,7 +6711,7 @@ function setup_test(
     ::typeof(test_conic_SecondOrderCone_negative_post_bound),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[5, 3, 4]),
@@ -6724,7 +6724,7 @@ end
     test_conic_SecondOrderCone_negative_post_bound_2(
         model::MOI.ModelLike,
         config::Config{T},
-    ) where {T}
+    ) where {T<:Real}
 
 Test a second order cosnstraint with an epigraph variable >= -M and the bound
 constraints added via `add_constraint`.
@@ -6732,7 +6732,7 @@ constraints added via `add_constraint`.
 function test_conic_SecondOrderCone_negative_post_bound_2(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires(
         MOI.supports_constraint(
             model,
@@ -6773,7 +6773,7 @@ function setup_test(
     ::typeof(test_conic_SecondOrderCone_negative_post_bound_2),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[5, 3, 4]),
@@ -6788,7 +6788,7 @@ end
     test_conic_SecondOrderCone_negative_post_bound_3(
         model::MOI.ModelLike,
         config::Config{T},
-    ) where {T}
+    ) where {T<:Real}
 
 Test a second order cosnstraint with an epigraph variable >= -M and the bound
 constraints added via `add_constraints`.
@@ -6796,7 +6796,7 @@ constraints added via `add_constraints`.
 function test_conic_SecondOrderCone_negative_post_bound_3(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires(
         MOI.supports_constraint(
             model,
@@ -6837,7 +6837,7 @@ function setup_test(
     ::typeof(test_conic_SecondOrderCone_negative_post_bound_3),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[5, 3, 4]),
@@ -6851,7 +6851,7 @@ end
 function test_conic_empty_matrix(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires _supports(config, MOI.optimize!)
     F = MOI.VectorAffineFunction{T}
     @requires MOI.supports_constraint(model, F, MOI.SecondOrderCone)
@@ -6873,7 +6873,7 @@ function setup_test(
     ::typeof(test_conic_empty_matrix),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) ->
@@ -6914,7 +6914,7 @@ which is
 function test_conic_HermitianPositiveSemidefiniteConeTriangle_1(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports_add_constrained_variables(
         model,
@@ -6983,7 +6983,7 @@ function setup_test(
     ::typeof(test_conic_HermitianPositiveSemidefiniteConeTriangle_1),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     primal = [
         (T(1) + √T(3)) / T(2),
         -T(1) / T(2),
@@ -7038,7 +7038,7 @@ variables.
 function test_conic_HermitianPositiveSemidefiniteConeTriangle_2(
     model::MOI.ModelLike,
     config::Config{T},
-) where {T}
+) where {T<:Real}
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports_add_constrained_variables(
         model,
@@ -7059,7 +7059,7 @@ function setup_test(
     ::typeof(test_conic_HermitianPositiveSemidefiniteConeTriangle_2),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) ->
@@ -7079,7 +7079,7 @@ end
 
 Test [`MOI.NormCone`](@ref).
 """
-function test_conic_NormCone(model::MOI.ModelLike, config::Config{T}) where {T}
+function test_conic_NormCone(model::MOI.ModelLike, config::Config{T}) where {T<:Real}
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports_constraint(
         model,
@@ -7104,7 +7104,7 @@ function setup_test(
     ::typeof(test_conic_NormCone),
     model::MOIU.MockOptimizer,
     ::Config{T},
-) where {T}
+) where {T<:Real}
     x0 = T[1, 2, 3, 4]
     MOIU.set_mock_optimize!(
         model,
