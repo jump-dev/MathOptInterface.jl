@@ -332,6 +332,27 @@ include("precompile.jl")
 # submodules
 include("Utilities/Utilities.jl") # MOI.Utilities
 include("Test/Test.jl")
+
+# We made a bit of a mistake calling the `Test/Test.jl` submodule "Test" because
+# it conflicts with the standard library "Test" which is imported by MOI.Test.
+#
+# In present (and previous) versions of Julia, this has never been a problem,
+# but because every module `Foo` has a self-referential global constant `Foo`:
+# ```julia
+# julia> module Foo end
+# Main.Foo
+#
+# julia> Foo.Foo
+# Main.Foo
+# ```
+# MOI has the problematic feature that MOI.Test.Test is not self-referential,
+# and JET.jl appropriately complains with "invalid redefinition of constant
+# Test."
+#
+# The work-around is to rename the module `_Test` and introduce this constant
+# into the `MOI.` namespace for backwards compatibility.
+const Test = _Test
+
 include("Bridges/Bridges.jl")     # MOI.Bridges
 include("Benchmarks/Benchmarks.jl")
 include("Nonlinear/Nonlinear.jl")

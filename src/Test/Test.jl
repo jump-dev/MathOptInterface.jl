@@ -4,7 +4,10 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-module Test
+# !!! warning
+#     To understand the naming of this module, see comment associated with the
+#     `const Test = _Test` line in MathOptInterface.jl
+module _Test
 
 import LinearAlgebra
 
@@ -201,7 +204,9 @@ function runtests(
     warn_unsupported::Bool = false,
     exclude_tests_after::VersionNumber = v"999.0.0",
 )
-    tests = filter(n -> startswith("$n", "test_"), names(MOI.Test; all = true))
+    tests = filter(names(@__MODULE__; all = true)) do name
+        return startswith("$name", "test_")
+    end
     tests = string.(tests)
     for ex in exclude
         if ex in tests && any(t -> ex != t && occursin(ex, t), tests)

@@ -145,7 +145,7 @@ function test_exp3_with_add_constrained_variable_y()
 
     err = ArgumentError(
         "Variable bridge of type `$(MOI.Bridges.Variable.VectorizeBridge{Float64,MOI.Nonpositives})`" *
-        " does not support accessing the attribute `MathOptInterface.Test.UnknownVariableAttribute()`.",
+        " does not support accessing the attribute `$(MOI.Test.UnknownVariableAttribute())`.",
     )
     @test_throws err MOI.get(
         bridged_mock,
