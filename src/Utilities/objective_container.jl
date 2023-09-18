@@ -332,7 +332,7 @@ function MOI.delete(o::ObjectiveContainer, x::MOI.VariableIndex)
     elseif o.vector_variables !== nothing
         o.vector_variables =
             remove_variable(_not_nothing(o.vector_variables), x)
-        if isempty(o.vector_variables.variables)
+        if isempty(_not_nothing(o.vector_variables).variables)
             _empty_keeping_sense(o)
         end
     elseif o.vector_affine !== nothing
@@ -374,7 +374,7 @@ function MOI.delete(o::ObjectiveContainer, x::Vector{MOI.VariableIndex})
     elseif o.vector_variables !== nothing
         o.vector_variables =
             filter_variables(keep, _not_nothing(o.vector_variables))
-        if isempty(o.vector_variables.variables)
+        if isempty(_not_nothing(o.vector_variables).variables)
             _empty_keeping_sense(o)
         end
     elseif o.vector_affine !== nothing
