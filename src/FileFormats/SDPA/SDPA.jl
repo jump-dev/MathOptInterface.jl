@@ -302,20 +302,17 @@ function _dim_to_set(s::AbstractString)
         return MOI.Nonnegatives(-block_dim)
     end
 end
-function _parse_dimensions(dims)
+function _parse_dimensions(dims::AbstractString)
     isvalid(char) = isdigit(char) || char == '-'
+    is_delimiter(char) = isspace(char) || char == ','
     start = findfirst(isvalid, dims)
-    stop = findlast(isvalid, dims)
-    if isnothing(start)
+    if start === nothing
         return Union{MOI.PositiveSemidefiniteConeTriangle,MOI.Nonnegatives}[]
     end
-    function is_delimiter(char)
-        return isspace(char) || char == ','
-    end
+    stop = findlast(isvalid, dims)::Int
     s = split(dims[start:stop], is_delimiter)
-    s = filter(!isempty, s)
     return Union{MOI.PositiveSemidefiniteConeTriangle,MOI.Nonnegatives}[
-        _dim_to_set(dim) for dim in s
+        _dim_to_set(dim) for dim in filter!(!isempty, s)
     ]
 end
 
@@ -324,19 +321,20 @@ end
 
 Read `io` in the SDPA file format and store the result in `model`.
 """
-function Base.read!(io::IO, model::Model{T}) where {T}
+function Base.read!(io::IO, model::Model{T}) where {T<:Real}
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
     end
     num_variables_read = false
     num_blocks = nothing
-    block_sets = nothing
+    block_sets = Union{MOI.PositiveSemidefiniteConeTriangle,MOI.Nonnegatives}[]
+    block_sets_read = false
     objective_read = false
     integer_read = false
-    scalar_vars = nothing
+    scalar_vars = MOI.VariableIndex[]
     intvar_idx = Int[]
     c = nothing
-    funcs = nothing
+    funcs = MOI.VectorAffineFunction{T}[]
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     while !eof(io)
         line = strip(readline(io))
@@ -375,22 +373,26 @@ function Base.read!(io::IO, model::Model{T}) where {T}
             # According to http://plato.asu.edu/ftp/sdpa_format.txt,
             # additional text after the number of blocks should be ignored.
             num_blocks = parse(Int, split(line)[1])
-        elseif block_sets === nothing
+        elseif !block_sets_read
             if isempty(line) && !iszero(num_blocks)
                 continue
             end
             block_sets = _parse_dimensions(line)
+            block_sets_read = true
             if length(block_sets) != num_blocks
                 error(
                     "The number of blocks ($num_blocks) does not match the length of the list of blocks dimensions ($(length(block_sets))).",
                 )
             end
-            funcs = [
-                MOI.VectorAffineFunction(
-                    MOI.VectorAffineTerm{T}[],
-                    zeros(T, MOI.dimension(block_sets[i])),
-                ) for i in 1:num_blocks
-            ]
+            for i in 1:num_blocks
+                push!(
+                    funcs,
+                    MOI.VectorAffineFunction(
+                        MOI.VectorAffineTerm{T}[],
+                        zeros(T, MOI.dimension(block_sets[i])),
+                    ),
+                )
+            end
         elseif !objective_read
             num_vars = MOI.get(model, MOI.NumberOfVariables())
             if isempty(line) && !iszero(num_vars)
@@ -452,7 +454,7 @@ function Base.read!(io::IO, model::Model{T}) where {T}
             end
         end
     end
-    for block in 1:num_blocks
+    for block in 1:(num_blocks::Int)
         MOI.add_constraint(model, funcs[block], block_sets[block])
     end
     for var_idx in intvar_idx

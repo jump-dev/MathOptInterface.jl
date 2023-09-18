@@ -1319,7 +1319,7 @@ function parse_name_line(data::TempMPSModel, line::String)
     if m === nothing
         error("Malformed NAME line: ", line)
     end
-    data.name = strip(m[1])
+    data.name = strip(m[1]::AbstractString)
     return
 end
 
