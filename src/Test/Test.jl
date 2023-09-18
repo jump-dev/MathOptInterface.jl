@@ -32,7 +32,7 @@ The work-around is to wrap `Test` in a module so that `MOI.Test.Test` is
 `MOI.Test`.
 """
 module _BaseTest
-    using Test
+using Test
 end
 
 using ._BaseTest: @testset, @test, @test_throws, @inferred
