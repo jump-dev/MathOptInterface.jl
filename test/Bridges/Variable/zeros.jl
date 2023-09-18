@@ -97,7 +97,7 @@ function test_zeros()
 
     err = ArgumentError(
         "Variable bridge of type `MathOptInterface.Bridges.Variable.ZerosBridge{Float64}`" *
-        " does not support accessing the attribute `MathOptInterface.Test.UnknownVariableAttribute()`.",
+        " does not support accessing the attribute `$(MOI.Test.UnknownVariableAttribute())`.",
     )
     @test_throws err MOI.get(
         bridged_mock,

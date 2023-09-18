@@ -484,7 +484,7 @@ function test_nonlinear_hs071_NLPBlockDual(
     cu = MOI.add_constraint.(model, v, MOI.LessThan.(u))
     MOI.set.(model, MOI.VariablePrimalStart(), v, start)
     lb, ub = [25.0, 40.0], [Inf, 40.0]
-    evaluator = MOI.Test.HS071(true)
+    evaluator = HS071(true)
     block_data = MOI.NLPBlockData(MOI.NLPBoundsPair.(lb, ub), evaluator, true)
     MOI.set(model, MOI.NLPBlock(), block_data)
 
@@ -931,7 +931,7 @@ This is mainly for the internal purpose of checking their correctness as
 written. External solvers can exclude this test without consequence.
 """
 function test_nonlinear_HS071_internal(::MOI.ModelLike, ::Config)
-    d = MOI.Test.HS071(true, true)
+    d = HS071(true, true)
     @test MOI.objective_expr(d) == :(
         x[$(MOI.VariableIndex(1))] *
         x[$(MOI.VariableIndex(4))] *
@@ -994,7 +994,7 @@ This is mainly for the internal purpose of checking their correctness as
 written. External solvers can exclude this test without consequence.
 """
 function test_nonlinear_Feasibility_internal(::MOI.ModelLike, ::Config)
-    d = MOI.Test.FeasibilitySenseEvaluator(true)
+    d = FeasibilitySenseEvaluator(true)
     @test MOI.objective_expr(d) == :()
     @test MOI.constraint_expr(d, 1) == :(x[$(MOI.VariableIndex(1))]^2 == 1.0)
     @test_throws AssertionError MOI.constraint_expr(d, 2)
@@ -1118,7 +1118,7 @@ end
 
 function test_nonlinear_expression_hs071(
     model::MOI.ModelLike,
-    config::MOI.Test.Config{T},
+    config::Config{T},
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
@@ -1173,7 +1173,7 @@ end
 
 function test_nonlinear_expression_hs071_epigraph(
     model::MOI.ModelLike,
-    config::MOI.Test.Config{T},
+    config::Config{T},
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
@@ -1229,7 +1229,7 @@ end
 
 function test_nonlinear_expression_hs109(
     model::MOI.ModelLike,
-    config::MOI.Test.Config{T},
+    config::Config{T},
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
@@ -1296,7 +1296,7 @@ end
 
 function test_nonlinear_expression_hs110(
     model::MOI.ModelLike,
-    config::MOI.Test.Config{T},
+    config::Config{T},
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
@@ -1358,7 +1358,7 @@ end
 
 function test_nonlinear_expression_quartic(
     model::MOI.ModelLike,
-    config::MOI.Test.Config{T},
+    config::Config{T},
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
@@ -1406,7 +1406,7 @@ end
 
 function test_nonlinear_expression_overrides_objective(
     model::MOI.ModelLike,
-    config::MOI.Test.Config{T},
+    config::Config{T},
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
@@ -1457,7 +1457,7 @@ end
 
 function test_nonlinear_expression_univariate_function(
     model::MOI.ModelLike,
-    config::MOI.Test.Config{T},
+    config::Config{T},
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
@@ -1493,7 +1493,7 @@ end
 
 function test_nonlinear_expression_multivariate_function(
     model::MOI.ModelLike,
-    config::MOI.Test.Config{T},
+    config::Config{T},
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
@@ -1544,10 +1544,7 @@ end
 Tests dual solutions with `ScalarNonlinearFunction`. We use a linear program
 so that the duals are easy to compute.
 """
-function test_nonlinear_duals(
-    model::MOI.ModelLike,
-    config::MOI.Test.Config{T},
-) where {T}
+function test_nonlinear_duals(model::MOI.ModelLike, config::Config{T}) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
@@ -1676,7 +1673,7 @@ end
 
 function test_nonlinear_vector_complements(
     model::MOI.ModelLike,
-    config::MOI.Test.Config{T},
+    config::Config{T},
 ) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)

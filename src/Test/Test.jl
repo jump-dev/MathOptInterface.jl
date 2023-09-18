@@ -11,7 +11,31 @@ import LinearAlgebra
 import MathOptInterface as MOI
 import MathOptInterface.Utilities as MOIU
 
+#=
+We made a bit of a mistake calling the `Test/Test.jl` submodule "Test" because
+it conflicts with the standard library "Test" which is imported by MOI.Test.
+
+In present (and previous) versions of Julia, this has never been a problem.
+But every module `Foo` has a self-referential global constant `Foo`:
+```julia
+julia> module Foo end
+Main.Foo
+
+julia> Foo.Foo
+Main.Foo
+```
+MOI has the problematic feature that MOI.Test.Test is not self-referential,
+and JET.jl appropriately complains with "invalid redefinition of constant
+Test."
+
+The work-around is to wrap `Test` in a module so that `MOI.Test.Test` is
+`MOI.Test`.
+=#
+module _BaseTest
 using Test
+end
+
+using ._BaseTest: @testset, @test, @test_throws, @inferred
 
 # Be wary of adding new fields to this Config struct. Always think: can it be
 # achieved a different way?
@@ -201,7 +225,9 @@ function runtests(
     warn_unsupported::Bool = false,
     exclude_tests_after::VersionNumber = v"999.0.0",
 )
-    tests = filter(n -> startswith("$n", "test_"), names(MOI.Test; all = true))
+    tests = filter(names(@__MODULE__; all = true)) do name
+        return startswith("$name", "test_")
+    end
     tests = string.(tests)
     for ex in exclude
         if ex in tests && any(t -> ex != t && occursin(ex, t), tests)
