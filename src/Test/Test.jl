@@ -11,7 +11,7 @@ import LinearAlgebra
 import MathOptInterface as MOI
 import MathOptInterface.Utilities as MOIU
 
-"""
+#=
 We made a bit of a mistake calling the `Test/Test.jl` submodule "Test" because
 it conflicts with the standard library "Test" which is imported by MOI.Test.
 
@@ -30,7 +30,7 @@ Test."
 
 The work-around is to wrap `Test` in a module so that `MOI.Test.Test` is
 `MOI.Test`.
-"""
+=#
 module _BaseTest
 using Test
 end

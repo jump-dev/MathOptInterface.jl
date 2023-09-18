@@ -1544,10 +1544,7 @@ end
 Tests dual solutions with `ScalarNonlinearFunction`. We use a linear program
 so that the duals are easy to compute.
 """
-function test_nonlinear_duals(
-    model::MOI.ModelLike,
-    config::Config{T},
-) where {T}
+function test_nonlinear_duals(model::MOI.ModelLike, config::Config{T}) where {T}
     @requires T == Float64
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
