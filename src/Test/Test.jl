@@ -4,17 +4,37 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-# !!! warning
-#     To understand the naming of this module, see comment associated with the
-#     `const Test = _Test` line in MathOptInterface.jl
-module _Test
+module Test
 
 import LinearAlgebra
 
 import MathOptInterface as MOI
 import MathOptInterface.Utilities as MOIU
 
-using Test
+
+# We made a bit of a mistake calling the `Test/Test.jl` submodule "Test" because
+# it conflicts with the standard library "Test" which is imported by MOI.Test.
+#
+# In present (and previous) versions of Julia, this has never been a problem,
+# but because every module `Foo` has a self-referential global constant `Foo`:
+# ```julia
+# julia> module Foo end
+# Main.Foo
+#
+# julia> Foo.Foo
+# Main.Foo
+# ```
+# MOI has the problematic feature that MOI.Test.Test is not self-referential,
+# and JET.jl appropriately complains with "invalid redefinition of constant
+# Test."
+#
+# The work-around is to rename the module `_Test` and introduce this constant
+# into the `MOI.` namespace for backwards compatibility.
+module BaseTest
+    using Test
+end
+
+using .BaseTest: @testset, @test, @test_throws, @inferred
 
 # Be wary of adding new fields to this Config struct. Always think: can it be
 # achieved a different way?

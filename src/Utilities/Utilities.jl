@@ -32,7 +32,6 @@ function replace_acronym(s::AbstractString)
     s = replace(s, "MathOptInterface.Utilities" => "MOIU")
     s = replace(s, "MathOptInterface.Bridges" => "MOIB")
     s = replace(s, "MathOptInterface.Test" => "MOIT")
-    s = replace(s, "MathOptInterface._Test" => "MOIT")
     s = replace(s, "MathOptInterface" => "MOI")
     return s
 end
