@@ -7079,7 +7079,10 @@ end
 
 Test [`MOI.NormCone`](@ref).
 """
-function test_conic_NormCone(model::MOI.ModelLike, config::Config{T}) where {T<:Real}
+function test_conic_NormCone(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T<:Real}
     @requires _supports(config, MOI.optimize!)
     @requires MOI.supports_constraint(
         model,
