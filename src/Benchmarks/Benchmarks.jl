@@ -222,7 +222,7 @@ end
     x = MOI.add_variables(model, 10_000)
     MOI.add_constraints(
         model,
-        [
+        MOI.ScalarAffineFunction{Float64}[
             MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, xi)], 0.0) for
             xi in x
         ],

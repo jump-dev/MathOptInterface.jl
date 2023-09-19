@@ -549,7 +549,7 @@ function MOI.get(
     if uf.objective === nothing
         return MOI.get(uf.model, attr)
     end
-    return uf.objective
+    return something(uf.objective)
 end
 
 function MOI.set(

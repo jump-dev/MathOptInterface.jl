@@ -994,8 +994,8 @@ function TempMPSModel()
         Float64[],  # row_lower
         Float64[],  # row_upper
         Sense[],   # sense
-        Vector{Vector{Tuple{Int,Float64}}}[],  # A
-        Bool[],
+        Vector{Tuple{Int,Float64}}[],  # A
+        VType[],
         Dict{String,Int}(),
         String[],
         Dict{String,Int}(),
