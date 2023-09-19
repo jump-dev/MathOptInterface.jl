@@ -270,11 +270,11 @@ end
 function final_touch(m::CachingOptimizer, index_map)
     return final_touch(m.model_cache, index_map)
 end
-function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike; kws...)
+function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike)
     if m.state == ATTACHED_OPTIMIZER
         reset_optimizer(m)
     end
-    return MOI.copy_to(m.model_cache, src; kws...)
+    return MOI.copy_to(m.model_cache, src)
 end
 
 function MOI.supports_incremental_interface(model::CachingOptimizer)
