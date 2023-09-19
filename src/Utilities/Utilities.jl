@@ -6,13 +6,11 @@
 
 module Utilities
 
-using LinearAlgebra # For dot
-using OrderedCollections # for OrderedDict in UniversalFallback
-
+import LinearAlgebra
 import MathOptInterface as MOI
-import MutableArithmetics as MA
-
 import MathOptInterface.Utilities as MOIU # used in macro
+import MutableArithmetics as MA
+import OrderedCollections: OrderedDict
 
 const SVF = MOI.VariableIndex
 const VVF = MOI.VectorOfVariables

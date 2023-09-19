@@ -14,7 +14,6 @@
 """
 module Nonlinear
 
-import Base.Meta: isexpr
 import ForwardDiff
 import ..MathOptInterface as MOI
 import OrderedCollections: OrderedDict

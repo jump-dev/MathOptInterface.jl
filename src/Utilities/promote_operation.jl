@@ -305,7 +305,7 @@ end
 function promote_operation(
     ::typeof(*),
     ::Type{T},
-    ::Type{<:Diagonal{T}},
+    ::Type{<:LinearAlgebra.Diagonal{T}},
     ::Type{F},
 ) where {T,F}
     U = promote_operation(*, T, T, scalar_type(F))

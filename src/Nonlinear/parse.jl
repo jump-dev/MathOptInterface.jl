@@ -108,8 +108,8 @@ function parse_expression(
 end
 
 function _parse_expression(stack, data, expr, x, parent_index)
-    if isexpr(x, :call)
-        if length(x.args) == 2 && !isexpr(x.args[2], :...)
+    if Meta.isexpr(x, :call)
+        if length(x.args) == 2 && !Meta.isexpr(x.args[2], :...)
             _parse_univariate_expression(stack, data, expr, x, parent_index)
         else
             # The call is either n-ary, or it is a splat, in which case we
@@ -117,11 +117,11 @@ function _parse_expression(stack, data, expr, x, parent_index)
             # Punt to multivariate and try to recover later.
             _parse_multivariate_expression(stack, data, expr, x, parent_index)
         end
-    elseif isexpr(x, :comparison)
+    elseif Meta.isexpr(x, :comparison)
         _parse_comparison_expression(stack, data, expr, x, parent_index)
-    elseif isexpr(x, :...)
+    elseif Meta.isexpr(x, :...)
         _parse_splat_expression(stack, data, expr, x, parent_index)
-    elseif isexpr(x, :&&) || isexpr(x, :||)
+    elseif Meta.isexpr(x, :&&) || Meta.isexpr(x, :||)
         _parse_logic_expression(stack, data, expr, x, parent_index)
     else
         error("Unsupported expression: $x")
@@ -129,7 +129,7 @@ function _parse_expression(stack, data, expr, x, parent_index)
 end
 
 function _parse_splat_expression(stack, data, expr, x, parent_index)
-    @assert isexpr(x, :...) && length(x.args) == 1
+    @assert Meta.isexpr(x, :...) && length(x.args) == 1
     if parent_index == -1
         error(
             "Unsupported use of the splatting operator. This is only " *
@@ -155,7 +155,7 @@ function _parse_univariate_expression(
     x::Expr,
     parent_index::Int,
 )
-    @assert isexpr(x, :call, 2)
+    @assert Meta.isexpr(x, :call, 2)
     id = get(data.operators.univariate_operator_to_id, x.args[1], nothing)
     if id === nothing
         # It may also be a multivariate operator like * with one argument.
@@ -177,7 +177,7 @@ function _parse_multivariate_expression(
     x::Expr,
     parent_index::Int,
 )
-    @assert isexpr(x, :call)
+    @assert Meta.isexpr(x, :call)
     id = get(data.operators.multivariate_operator_to_id, x.args[1], nothing)
     if id === nothing
         if haskey(data.operators.univariate_operator_to_id, x.args[1])
@@ -364,7 +364,7 @@ end
 _replace_comparison(expr) = expr
 
 function _replace_comparison(expr::Expr)
-    if isexpr(expr, :call, 4) && expr.args[1] in (:<=, :>=, :(==), :<, :>)
+    if Meta.isexpr(expr, :call, 4) && expr.args[1] in (:<=, :>=, :(==), :<, :>)
         return Expr(
             :comparison,
             expr.args[2],
