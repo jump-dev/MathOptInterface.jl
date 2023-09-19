@@ -805,7 +805,7 @@ end
 function operate(
     ::typeof(*),
     ::Type{T},
-    D::Diagonal{T},
+    D::LinearAlgebra.Diagonal{T},
     func::MOI.VectorQuadraticFunction{T},
 ) where {T<:Number}
     return MOI.VectorQuadraticFunction{T}(
@@ -818,7 +818,7 @@ end
 function operate(
     ::typeof(*),
     ::Type{T},
-    D::Diagonal{T},
+    D::LinearAlgebra.Diagonal{T},
     func::MOI.VectorAffineFunction{T},
 ) where {T<:Number}
     return MOI.VectorAffineFunction{T}(
@@ -830,7 +830,7 @@ end
 function operate(
     ::typeof(*),
     ::Type{T},
-    D::Diagonal{T},
+    D::LinearAlgebra.Diagonal{T},
     func::MOI.VectorOfVariables,
 ) where {T<:Number}
     return MOI.VectorAffineFunction{T}(
@@ -847,7 +847,7 @@ end
 function operate(
     ::typeof(*),
     ::Type{T},
-    D::Diagonal{T},
+    D::LinearAlgebra.Diagonal{T},
     v::AbstractVector{T},
 ) where {T<:Number}
     return T[D.diag[i] * v[i] for i in eachindex(v)]
@@ -1556,7 +1556,7 @@ end
 
 ### 3a: operate_term(::typeof(*), ::Diagonal, ::Vector{<:VectorTerm})
 
-function operate_terms(::typeof(*), D::Diagonal, terms)
+function operate_terms(::typeof(*), D::LinearAlgebra.Diagonal, terms)
     return map(term -> operate_term(*, D, term), terms)
 end
 

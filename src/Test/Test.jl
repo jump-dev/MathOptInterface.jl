@@ -32,10 +32,10 @@ The work-around is to wrap `Test` in a module so that `MOI.Test.Test` is
 `MOI.Test`.
 =#
 module _BaseTest
-using Test
+import Test: @testset, @test, @test_throws, @inferred
 end
 
-using ._BaseTest: @testset, @test, @test_throws, @inferred
+import ._BaseTest: @testset, @test, @test_throws, @inferred
 
 # Be wary of adding new fields to this Config struct. Always think: can it be
 # achieved a different way?

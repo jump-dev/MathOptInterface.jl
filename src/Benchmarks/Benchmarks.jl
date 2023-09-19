@@ -6,8 +6,7 @@
 
 module Benchmarks
 
-using BenchmarkTools
-
+import BenchmarkTools
 import MathOptInterface as MOI
 
 const BENCHMARKS = Dict{String,Function}()
@@ -35,10 +34,10 @@ end
 ```
 """
 function suite(new_model::Function; exclude::Vector{Regex} = Regex[])
-    group = BenchmarkGroup()
+    group = BenchmarkTools.BenchmarkGroup()
     for (name, func) in BENCHMARKS
         any(occursin.(exclude, Ref(name))) && continue
-        group[name] = @benchmarkable $func($new_model)
+        group[name] = BenchmarkTools.@benchmarkable $func($new_model)
     end
     return group
 end
@@ -63,12 +62,12 @@ function create_baseline(
     directory::String = "",
     kwargs...,
 )
-    tune!(suite)
+    BenchmarkTools.tune!(suite)
     BenchmarkTools.save(
         joinpath(directory, name * "_params.json"),
-        params(suite),
+        BenchmarkTools.params(suite),
     )
-    results = run(suite; kwargs...)
+    results = BenchmarkTools.run(suite; kwargs...)
     BenchmarkTools.save(joinpath(directory, name * "_baseline.json"), results)
     return
 end
@@ -108,19 +107,19 @@ function compare_against_baseline(
     if !isfile(params_filename) || !isfile(baseline_filename)
         error("You create a baseline with `create_baseline` first.")
     end
-    loadparams!(
+    BenchmarkTools.loadparams!(
         suite,
         BenchmarkTools.load(params_filename)[1],
         :evals,
         :samples,
     )
-    new_results = run(suite; kwargs...)
+    new_results = BenchmarkTools.run(suite; kwargs...)
     old_results = BenchmarkTools.load(baseline_filename)[1]
     open(joinpath(directory, report_filename), "w") do io
         println(stdout, "\n========== Results ==========")
         println(io, "\n========== Results ==========")
         for key in keys(new_results)
-            judgement = judge(
+            judgement = BenchmarkTools.judge(
                 BenchmarkTools.median(new_results[key]),
                 BenchmarkTools.median(old_results[key]),
             )

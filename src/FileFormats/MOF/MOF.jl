@@ -7,7 +7,7 @@
 module MOF
 
 import ..FileFormats
-import OrderedCollections
+import OrderedCollections: OrderedDict
 import JSON
 import MathOptInterface as MOI
 
@@ -16,7 +16,7 @@ const VERSION = v"1.5"
 const SUPPORTED_VERSIONS =
     (v"1.5", v"1.4", v"1.3", v"1.2", v"1.1", v"1.0", v"0.6", v"0.5", v"0.4")
 
-const OrderedObject = OrderedCollections.OrderedDict{String,Any}
+const OrderedObject = OrderedDict{String,Any}
 const UnorderedObject = Dict{String,Any}
 const Object = Union{OrderedObject,UnorderedObject}
 

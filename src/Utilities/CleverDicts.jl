@@ -11,7 +11,7 @@ module CleverDicts
 # solvers using `CleverDicts` to implement it themselves.
 
 import MathOptInterface as MOI
-import OrderedCollections
+import OrderedCollections: OrderedDict
 
 """
     index_to_key(::Type{K}, index::Int)
@@ -83,7 +83,7 @@ mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
     inverse_hash::I
     is_dense::Bool
     vector::Vector{V}
-    dict::OrderedCollections.OrderedDict{K,V}
+    dict::OrderedDict{K,V}
     function CleverDict{K,V}(
         hash::F = key_to_index,
         inverse_hash::I = index_to_key,
@@ -94,7 +94,7 @@ mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
             inverse_hash,
             true,
             V[],
-            OrderedCollections.OrderedDict{K,V}(),
+            OrderedDict{K,V}(),
         )
     end
 end

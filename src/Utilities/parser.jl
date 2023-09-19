@@ -4,8 +4,6 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-using Base.Meta: isexpr
-
 struct _ParsedScalarAffineTerm{T}
     coefficient::T
     variable::Symbol
@@ -61,7 +59,7 @@ end
 function _parse_function(ex, ::Type{T} = Float64) where {T}
     if isa(ex, Symbol)
         return _ParsedVariableIndex(ex)
-    elseif isexpr(ex, :vect)
+    elseif Meta.isexpr(ex, :vect)
         if all(s -> isa(s, Symbol), ex.args)
             return _ParsedVectorOfVariables(copy(ex.args))
         else
@@ -113,20 +111,21 @@ function _parse_function(ex, ::Type{T} = Float64) where {T}
             end
         end
     else
-        if isexpr(ex, :call, 2) && ex.args[1] == :ScalarNonlinearFunction
+        if Meta.isexpr(ex, :call, 2) && ex.args[1] == :ScalarNonlinearFunction
             return ex
-        elseif isexpr(ex, :call, 2) && ex.args[1] == :VectorNonlinearFunction
+        elseif Meta.isexpr(ex, :call, 2) &&
+               ex.args[1] == :VectorNonlinearFunction
             return ex
         end
         # For simplicity, only accept Expr(:call, :+, ...); no recursive
         # expressions
-        if isexpr(ex, :call) && ex.args[1] == :*
+        if Meta.isexpr(ex, :call) && ex.args[1] == :*
             ex = Expr(:call, :+, ex)  # Handle 2x as (+)(2x)
         end
         if ex isa Number
             ex = Expr(:call, :+, ex)
         end
-        @assert isexpr(ex, :call)
+        @assert Meta.isexpr(ex, :call)
         if ex.args[1] != :+
             error(
                 "Unsupported operator in `loadfromstring!`: `$(ex.args[1])`. " *
@@ -139,7 +138,7 @@ function _parse_function(ex, ::Type{T} = Float64) where {T}
         quadratic_terms = _ParsedScalarQuadraticTerm{T}[]
         constant = zero(T)
         for subex in ex.args[2:end]
-            if isexpr(subex, :call) && subex.args[1] == :*
+            if Meta.isexpr(subex, :call) && subex.args[1] == :*
                 if length(subex.args) == 3
                     # constant * variable
                     coef = if isa(subex.args[2], Number)
@@ -199,19 +198,19 @@ end
 
 # see tests for examples
 function _separate_label(ex)
-    if isexpr(ex, :call) && ex.args[1] == :(:)
+    if Meta.isexpr(ex, :call) && ex.args[1] == :(:)
         # A line like `variables: x`.
         return ex.args[2], ex.args[3]
-    elseif isexpr(ex, :tuple)
+    elseif Meta.isexpr(ex, :tuple)
         # A line like `variables: x, y`. _Parsed as `((variables:x), y)`
         ex = copy(ex)
-        @assert isexpr(ex.args[1], :call) && ex.args[1].args[1] == :(:)
+        @assert Meta.isexpr(ex.args[1], :call) && ex.args[1].args[1] == :(:)
         label = ex.args[1].args[2]
         ex.args[1] = ex.args[1].args[3]
         return label, ex
-    elseif isexpr(ex, :call)
+    elseif Meta.isexpr(ex, :call)
         ex = copy(ex)
-        if isexpr(ex.args[2], :call) && ex.args[2].args[1] == :(:)
+        if Meta.isexpr(ex.args[2], :call) && ex.args[2].args[1] == :(:)
             # A line like `c: x <= 1`
             label = ex.args[2].args[2]
             ex.args[2] = ex.args[2].args[3]
@@ -241,9 +240,9 @@ _parsed_to_moi(model, s::Vector) = _parsed_to_moi.(model, s)
 _parsed_to_moi(model, s::Number) = s
 
 function _parsed_to_moi(model, s::Expr)
-    if isexpr(s, :call, 2) && s.args[1] == :ScalarNonlinearFunction
+    if Meta.isexpr(s, :call, 2) && s.args[1] == :ScalarNonlinearFunction
         return _parsed_scalar_to_moi(model, s.args[2])
-    elseif isexpr(s, :call, 2) && s.args[1] == :VectorNonlinearFunction
+    elseif Meta.isexpr(s, :call, 2) && s.args[1] == :VectorNonlinearFunction
         return _parsed_vector_to_moi(model, s.args[2])
     end
     args = Any[_parsed_to_moi(model, arg) for arg in s.args[2:end]]
@@ -378,7 +377,7 @@ function loadfromstring!(model, s)
         label, ex = _separate_label(line)
         T, label = _split_type(label)
         if label == :variables
-            if isexpr(ex, :tuple)
+            if Meta.isexpr(ex, :tuple)
                 for v in ex.args
                     vindex = MOI.add_variable(model)
                     MOI.set(model, MOI.VariableName(), vindex, String(v))
@@ -416,7 +415,7 @@ function loadfromstring!(model, s)
             MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
         else
             # constraint
-            @assert isexpr(ex, :call)
+            @assert Meta.isexpr(ex, :call)
             f = _parsed_to_moi(model, _parse_function(ex.args[2], T))
             if ex.args[1] == :in
                 # Could be safer here
@@ -446,10 +445,10 @@ end
 _split_type(ex) = Float64, ex
 
 function _split_type(ex::Expr)
-    if isexpr(ex, Symbol("::"), 1)
+    if Meta.isexpr(ex, Symbol("::"), 1)
         return Core.eval(Base, ex.args[1]), Symbol("")
     else
-        @assert isexpr(ex, Symbol("::"), 2)
+        @assert Meta.isexpr(ex, Symbol("::"), 2)
         return Core.eval(Base, ex.args[2]), ex.args[1]
     end
 end
