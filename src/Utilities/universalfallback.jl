@@ -123,8 +123,8 @@ function pass_nonvariable_constraints(
     )
 end
 
-function MOI.copy_to(dest::UniversalFallback, src::MOI.ModelLike; kwargs...)
-    return MOIU.default_copy_to(dest, src; kwargs...)
+function MOI.copy_to(dest::UniversalFallback, src::MOI.ModelLike)
+    return default_copy_to(dest, src)
 end
 
 function MOI.supports_incremental_interface(uf::UniversalFallback)
