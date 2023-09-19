@@ -90,7 +90,7 @@ function MOI.objective_expr(evaluator::Evaluator)
     end
     return convert_to_expr(
         evaluator,
-        evaluator.model.objective;
+        something(evaluator.model.objective);
         moi_output_format = true,
     )
 end

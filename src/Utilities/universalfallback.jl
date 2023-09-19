@@ -280,7 +280,7 @@ function MOI.delete(uf::UniversalFallback, vi::MOI.VariableIndex)
         delete!(d, vi)
     end
     if uf.objective !== nothing
-        uf.objective = remove_variable(uf.objective, vi)
+        uf.objective = remove_variable(something(uf.objective), vi)
     end
     for constraints in values(uf.single_variable_constraints)
         _remove_variable(uf, constraints, vi)
@@ -309,7 +309,7 @@ function MOI.delete(uf::UniversalFallback, vis::Vector{MOI.VariableIndex})
         end
     end
     if uf.objective !== nothing
-        uf.objective = remove_variable(uf.objective, vis)
+        uf.objective = remove_variable(something(uf.objective), vis)
     end
     for constraints in values(uf.single_variable_constraints)
         for vi in vis
@@ -678,7 +678,7 @@ function MOI.get(
         # to check for duplicate names.
         MOI.get(uf.model, MOI.ConstraintIndex, name)
     end
-    ci_uf = get(uf.name_to_con, name, nothing)
+    ci_uf = get(something(uf.name_to_con), name, nothing)
     throw_if_multiple_with_name(ci_uf, name)
     c = check_type_and_multiple_names(MOI.ConstraintIndex{F,S}, ci_uf, ci, name)
     return c
@@ -692,7 +692,7 @@ function MOI.get(
     if uf.name_to_con === nothing
         uf.name_to_con = build_name_to_con_map(uf.con_to_name)
     end
-    ci_uf = get(uf.name_to_con, name, nothing)
+    ci_uf = get(something(uf.name_to_con), name, nothing)
     throw_if_multiple_with_name(ci_uf, name)
     return check_type_and_multiple_names(
         MOI.ConstraintIndex,
