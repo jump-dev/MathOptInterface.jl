@@ -176,7 +176,7 @@ function MOI.eval_objective(d::NLPEvaluator, x)
         error("No nonlinear objective.")
     end
     _reverse_mode(d, x)
-    return d.objective.forward_storage[1]
+    return something(d.objective).forward_storage[1]
 end
 
 function MOI.eval_objective_gradient(d::NLPEvaluator, g, x)
@@ -185,7 +185,7 @@ function MOI.eval_objective_gradient(d::NLPEvaluator, g, x)
     end
     _reverse_mode(d, x)
     fill!(g, 0.0)
-    _extract_reverse_pass(g, d, d.objective)
+    _extract_reverse_pass(g, d, something(d.objective))
     return
 end
 
@@ -297,7 +297,7 @@ function MOI.eval_hessian_objective(d::NLPEvaluator, H, x)
     _reverse_mode(d, x)
     fill!(d.input_ϵ, 0.0)
     if d.objective !== nothing
-        _eval_hessian(d, d.objective, H, 1.0, 0)
+        _eval_hessian(d, something(d.objective), H, 1.0, 0)
     end
     return
 end
@@ -316,7 +316,7 @@ function MOI.eval_hessian_lagrangian(d::NLPEvaluator, H, x, σ, μ)
     fill!(d.input_ϵ, 0.0)
     offset = 0
     if d.objective !== nothing
-        offset += _eval_hessian(d, d.objective, H, σ, offset)::Int
+        offset += _eval_hessian(d, something(d.objective), H, σ, offset)::Int
     end
     for (i, ex) in enumerate(d.constraints)
         offset += _eval_hessian(d, ex, H, μ[i], offset)::Int
@@ -356,7 +356,7 @@ function MOI.eval_hessian_lagrangian_product(d::NLPEvaluator, h, x, v, σ, μ)
     if d.objective !== nothing
         _forward_eval_ϵ(
             d,
-            d.objective,
+            something(d.objective),
             reinterpret(T, d.forward_storage_ϵ),
             reinterpret(T, d.partials_storage_ϵ),
             input_ϵ,
@@ -365,7 +365,7 @@ function MOI.eval_hessian_lagrangian_product(d::NLPEvaluator, h, x, v, σ, μ)
         )
         _reverse_eval_ϵ(
             output_ϵ,
-            d.objective,
+            something(d.objective),
             reinterpret(T, d.reverse_storage_ϵ),
             reinterpret(T, d.partials_storage_ϵ),
             d.subexpression_reverse_values,

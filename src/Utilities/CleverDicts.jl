@@ -93,7 +93,7 @@ mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
             hash,
             inverse_hash,
             true,
-            K[],
+            V[],
             OrderedCollections.OrderedDict{K,V}(),
         )
     end

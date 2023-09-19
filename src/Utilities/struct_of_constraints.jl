@@ -320,7 +320,7 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
                 model::$typed_struct,
                 ::Type{<:$fun},
                 ::Type{<:$set},
-            )::$(field_type) where {$T}
+            ) where {$T}
                 if model.$field === nothing
                     model.$field = $(field_type)()
                     $MOI.Utilities._add_variables(
@@ -328,7 +328,7 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
                         model.num_variables,
                     )
                 end
-                return model.$field
+                return something(model.$field)
             end
         )
         if type_parametrized
