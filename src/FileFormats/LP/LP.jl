@@ -640,7 +640,7 @@ function _parse_section(
 )
     if occursin(":", line)  # Strip name of the objective
         m = match(r"(.*?)\:(.*)", line)::RegexMatch
-        line = String(m[2])
+        line = String(m[2]::AbstractString)
     end
     if occursin("^", line)
         line = replace(line, "^" => " ^ ")
@@ -677,8 +677,8 @@ function _parse_section(
     if isempty(cache.constraint_name)
         if occursin(":", line)
             m = match(r"(.*?)\:(.*)", line)::RegexMatch
-            cache.constraint_name = String(m[1])
-            line = String(m[2])
+            cache.constraint_name = String(m[1]::AbstractString)
+            line = String(m[2]::AbstractString)
         else
             # Give it a temporary name for now
             cache.constraint_name = "R$(cache.num_constraints)"
@@ -932,7 +932,7 @@ end
 function _strip_comment(line::String)
     if occursin("\\", line)
         m = match(r"(.*?)\\(.*)", line)::RegexMatch
-        return strip(String(m[1]))
+        return strip(String(m[1]::AbstractString))
     else
         return strip(line)
     end
@@ -1011,7 +1011,7 @@ function _readline(io::IO, line::AbstractString)
         return _readline(io, line)
     elseif any(Base.Fix1(endswith, line), ('+', '-', '[', '='))
         # If the line ends with a continuation character, read in the next line.
-        return _readline(io, string(line, ' ', peeked_line))
+        return _readline(io, string(line, " ", peeked_line))
     elseif any(Base.Fix1(startswith, peeked_line), (']', '/'))
         # Always read in the next line if it starts with ] or /, which are used
         # in quadratic functions.

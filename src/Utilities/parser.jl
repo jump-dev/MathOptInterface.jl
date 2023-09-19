@@ -370,8 +370,11 @@ Do not name `VariableIndex` constraints.
  * `x^2` does NOT currently parse. Instead, write `x * x`.
 """
 function loadfromstring!(model, s)
-    parsedlines = filter(ex -> ex !== nothing, Meta.parse.(split(s, "\n")))
-    for line in parsedlines
+    for string_line in split(s, "\n")
+        line = Meta.parse(string_line)
+        if line === nothing
+            continue
+        end
         label, ex = _separate_label(line)
         T, label = _split_type(label)
         if label == :variables

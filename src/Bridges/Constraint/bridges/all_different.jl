@@ -165,7 +165,7 @@ function MOI.get(
     if bridge.y === nothing
         return MOI.VariableIndex[]
     end
-    return [bridge.y]
+    return MOI.VariableIndex[something(bridge.y)]
 end
 
 function MOI.get(
@@ -182,11 +182,12 @@ function MOI.get(
     bridge::AllDifferentToCountDistinctBridge{T},
     ::MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.EqualTo{T}},
 ) where {T}
-    if bridge.y === nothing
-        return MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{T}}[]
+    F, S = MOI.VariableIndex, MOI.EqualTo{T}
+    ret = MOI.ConstraintIndex{F,S}[]
+    if bridge.y !== nothing
+        push!(ret, MOI.ConstraintIndex{F,S}(something(bridge.y).value))
     end
-    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{T}}(bridge.y.value)
-    return [ci]
+    return ret
 end
 
 function MOI.get(
