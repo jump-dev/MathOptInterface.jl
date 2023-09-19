@@ -471,6 +471,34 @@ function test_runtests()
     return
 end
 
+function test_runtests_vector()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitIntervalBridge,
+        """
+        variables: x
+        [x] in Zeros(1)
+        """,
+        """
+        variables: x
+        [x] in Nonnegatives(1)
+        [x] in Nonpositives(1)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitIntervalBridge,
+        """
+        variables: x, y
+        [1.0 * x + 2.0, x + y] in Zeros(2)
+        """,
+        """
+        variables: x, y
+        [1.0 * x + 2.0, x + y] in Nonnegatives(2)
+        [1.0 * x + 2.0, x + y] in Nonpositives(2)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintSplitInterval.runtests()
