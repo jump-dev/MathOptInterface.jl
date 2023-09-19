@@ -59,7 +59,7 @@ end
 
 Create an empty instance of `FileFormats.CBF.Model`.
 """
-Model() = Model{Float64}()
+Model(; kwargs...) = Model{Float64}()
 
 Base.show(io::IO, ::Model) = print(io, "A Conic Benchmark Format (CBF) model")
 

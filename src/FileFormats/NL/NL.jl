@@ -781,11 +781,11 @@ function _assert_has_model(::Nothing, attr)
     )
 end
 
-_assert_has_model(::MOI.Utilities.UniversalFallback, ::Any) = nothing
+_assert_has_model(model::MOI.Utilities.UniversalFallback, ::Any) = model
 
 function MOI.get(model::Model, attr::MOI.AbstractModelAttribute)
-    _assert_has_model(model.model, attr)
-    return MOI.get(model.model, attr)
+    inner = _assert_has_model(model.model, attr)
+    return MOI.get(inner, attr)
 end
 
 function MOI.get(
@@ -793,8 +793,8 @@ function MOI.get(
     attr::MOI.AbstractConstraintAttribute,
     ci::MOI.ConstraintIndex,
 )
-    _assert_has_model(model.model, attr)
-    return MOI.get(model.model, attr, ci)
+    inner = _assert_has_model(model.model, attr)
+    return MOI.get(inner, attr, ci)
 end
 
 function MOI.get(
@@ -802,8 +802,8 @@ function MOI.get(
     attr::MOI.AbstractVariableAttribute,
     x::MOI.VariableIndex,
 )
-    _assert_has_model(model.model, attr)
-    return MOI.get(model.model, attr, x)
+    inner = _assert_has_model(model.model, attr)
+    return MOI.get(inner, attr, x)
 end
 
 end

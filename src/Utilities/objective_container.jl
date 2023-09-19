@@ -121,21 +121,21 @@ function MOI.get(
     ::MOI.ObjectiveFunction{F},
 ) where {T,F}
     if o.scalar_affine !== nothing
-        return convert(F, o.scalar_affine)
+        return convert(F, something(o.scalar_affine))
     elseif o.single_variable !== nothing
-        return convert(F, o.single_variable)
+        return convert(F, something(o.single_variable))
     elseif o.scalar_quadratic !== nothing
-        return convert(F, o.scalar_quadratic)
+        return convert(F, something(o.scalar_quadratic))
     elseif o.scalar_nonlinear !== nothing
-        return convert(F, o.scalar_nonlinear)
+        return convert(F, something(o.scalar_nonlinear))
     elseif o.vector_variables !== nothing
-        return convert(F, o.vector_variables)
+        return convert(F, something(o.vector_variables))
     elseif o.vector_affine !== nothing
-        return convert(F, o.vector_affine)
+        return convert(F, something(o.vector_affine))
     elseif o.vector_quadratic !== nothing
-        return convert(F, o.vector_quadratic)
+        return convert(F, something(o.vector_quadratic))
     elseif o.vector_nonlinear !== nothing
-        return convert(F, o.vector_nonlinear)
+        return convert(F, something(o.vector_nonlinear))
     end
     # The default if no objective is set.
     return convert(F, zero(MOI.ScalarAffineFunction{T}))
@@ -262,11 +262,13 @@ function MOI.modify(
     change::MOI.AbstractFunctionModification,
 ) where {T}
     if o.single_variable !== nothing
-        o.single_variable = modify_function!(o.single_variable, change)
+        o.single_variable =
+            modify_function!(something(o.single_variable), change)
     elseif o.scalar_affine !== nothing
-        o.scalar_affine = modify_function!(o.scalar_affine, change)
+        o.scalar_affine = modify_function!(something(o.scalar_affine), change)
     elseif o.scalar_quadratic !== nothing
-        o.scalar_quadratic = modify_function!(o.scalar_quadratic, change)
+        o.scalar_quadratic =
+            modify_function!(something(o.scalar_quadratic), change)
     elseif o.scalar_nonlinear !== nothing
         throw(
             MOI.ModifyObjectiveNotAllowed(
@@ -276,11 +278,13 @@ function MOI.modify(
             ),
         )
     elseif o.vector_variables !== nothing
-        o.vector_variables = modify_function!(o.vector_variables, change)
+        o.vector_variables =
+            modify_function!(something(o.vector_variables), change)
     elseif o.vector_quadratic !== nothing
-        o.vector_quadratic = modify_function!(o.vector_quadratic, change)
+        o.vector_quadratic =
+            modify_function!(something(o.vector_quadratic), change)
     elseif o.vector_affine !== nothing
-        o.vector_affine = modify_function!(o.vector_affine, change)
+        o.vector_affine = modify_function!(something(o.vector_affine), change)
     elseif o.vector_nonlinear !== nothing
         throw(
             MOI.ModifyObjectiveNotAllowed(
@@ -304,13 +308,13 @@ end
 
 function MOI.delete(o::ObjectiveContainer, x::MOI.VariableIndex)
     if o.single_variable !== nothing
-        if x == o.single_variable
+        if x == something(o.single_variable)
             _empty_keeping_sense(o)
         end
     elseif o.scalar_affine !== nothing
-        o.scalar_affine = remove_variable(o.scalar_affine, x)
+        o.scalar_affine = remove_variable(something(o.scalar_affine), x)
     elseif o.scalar_quadratic !== nothing
-        o.scalar_quadratic = remove_variable(o.scalar_quadratic, x)
+        o.scalar_quadratic = remove_variable(something(o.scalar_quadratic), x)
     elseif o.scalar_nonlinear !== nothing
         throw(
             MOI.DeleteNotAllowed(
@@ -320,14 +324,14 @@ function MOI.delete(o::ObjectiveContainer, x::MOI.VariableIndex)
             ),
         )
     elseif o.vector_variables !== nothing
-        o.vector_variables = remove_variable(o.vector_variables, x)
-        if isempty(o.vector_variables.variables)
+        o.vector_variables = remove_variable(something(o.vector_variables), x)
+        if isempty(something(o.vector_variables).variables)
             _empty_keeping_sense(o)
         end
     elseif o.vector_affine !== nothing
-        o.vector_affine = remove_variable(o.vector_affine, x)
+        o.vector_affine = remove_variable(something(o.vector_affine), x)
     elseif o.vector_quadratic !== nothing
-        o.vector_quadratic = remove_variable(o.vector_quadratic, x)
+        o.vector_quadratic = remove_variable(something(o.vector_quadratic), x)
     elseif o.vector_nonlinear !== nothing
         throw(
             MOI.DeleteNotAllowed(
@@ -343,13 +347,14 @@ end
 function MOI.delete(o::ObjectiveContainer, x::Vector{MOI.VariableIndex})
     keep = v -> !(v in x)
     if o.single_variable !== nothing
-        if o.single_variable in x
+        if something(o.single_variable) in x
             _empty_keeping_sense(o)
         end
     elseif o.scalar_affine !== nothing
-        o.scalar_affine = filter_variables(keep, o.scalar_affine)
+        o.scalar_affine = filter_variables(keep, something(o.scalar_affine))
     elseif o.scalar_quadratic !== nothing
-        o.scalar_quadratic = filter_variables(keep, o.scalar_quadratic)
+        o.scalar_quadratic =
+            filter_variables(keep, something(o.scalar_quadratic))
     elseif o.scalar_nonlinear !== nothing
         throw(
             MOI.DeleteNotAllowed(
@@ -359,14 +364,16 @@ function MOI.delete(o::ObjectiveContainer, x::Vector{MOI.VariableIndex})
             ),
         )
     elseif o.vector_variables !== nothing
-        o.vector_variables = filter_variables(keep, o.vector_variables)
-        if isempty(o.vector_variables.variables)
+        o.vector_variables =
+            filter_variables(keep, something(o.vector_variables))
+        if isempty(something(o.vector_variables).variables)
             _empty_keeping_sense(o)
         end
     elseif o.vector_affine !== nothing
-        o.vector_affine = filter_variables(keep, o.vector_affine)
+        o.vector_affine = filter_variables(keep, something(o.vector_affine))
     elseif o.vector_quadratic !== nothing
-        o.vector_quadratic = filter_variables(keep, o.vector_quadratic)
+        o.vector_quadratic =
+            filter_variables(keep, something(o.vector_quadratic))
     elseif o.vector_nonlinear !== nothing
         throw(
             MOI.DeleteNotAllowed(

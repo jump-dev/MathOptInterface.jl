@@ -302,13 +302,13 @@ function runtests(
     end
     # Test other bridge functions
     for b in values(Constraint.bridges(model))
-        _general_bridge_tests(b)
+        _general_bridge_tests(something(b))
     end
     for b in values(Objective.bridges(model))
-        _general_bridge_tests(b)
+        _general_bridge_tests(something(b))
     end
     for b in values(Variable.bridges(model))
-        _general_bridge_tests(b)
+        _general_bridge_tests(something(b))
     end
     _test_delete(Bridge, model, inner)
     return

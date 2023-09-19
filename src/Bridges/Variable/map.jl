@@ -71,7 +71,7 @@ function Base.empty!(map::Map)
         map.unbridged_function =
             Dict{MOI.VariableIndex,Tuple{Int64,MOI.AbstractScalarFunction}}()
     else
-        empty!(map.unbridged_function)
+        empty!(something(map.unbridged_function))
     end
     empty!(map.parent_index)
     map.current_context = 0
@@ -371,13 +371,14 @@ function add_keys_for_bridge(
         MOI.VariableIndex(-(bridge_index - 1 + i)) for i in 1:MOI.dimension(set)
     ]
     if map.unbridged_function !== nothing
-        mappings = unbridged_map(map.bridges[bridge_index], variables)
+        mappings =
+            unbridged_map(something(map.bridges[bridge_index]), variables)
         if mappings === nothing
             map.unbridged_function = nothing
         else
             for mapping in mappings
                 push!(
-                    map.unbridged_function,
+                    something(map.unbridged_function),
                     mapping.first => (bridge_index, mapping.second),
                 )
             end
@@ -441,7 +442,7 @@ Return the expression of `vi` in terms of bridged variables.
 """
 function unbridged_function(map::Map, vi::MOI.VariableIndex)
     throw_if_cannot_unbridge(map)
-    context_func = get(map.unbridged_function, vi, nothing)
+    context_func = get(something(map.unbridged_function), vi, nothing)
     if context_func === nothing
         return nothing
     end

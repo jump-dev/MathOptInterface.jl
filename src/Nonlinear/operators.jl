@@ -575,7 +575,7 @@ function eval_univariate_hessian(
 ) where {T}
     id = registry.univariate_operator_to_id[op]
     if id <= registry.univariate_user_operator_start
-        return _eval_univariate_2nd_deriv(id, x)
+        return _eval_univariate_2nd_deriv(id, x)::T
     end
     offset = id - registry.univariate_user_operator_start
     operator = registry.registered_univariate_operators[offset]
