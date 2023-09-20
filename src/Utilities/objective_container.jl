@@ -274,8 +274,13 @@ function MOI.modify(
     change::MOI.AbstractFunctionModification,
 ) where {T}
     if o.single_variable !== nothing
-        o.single_variable =
-            modify_function!(something(o.single_variable), change)
+        throw(
+            MOI.ModifyObjectiveNotAllowed(
+                change,
+                "Cannot modify objective when there is a " *
+                "`VariableIndex` objective",
+            ),
+        )
     elseif o.scalar_affine !== nothing
         o.scalar_affine = modify_function!(something(o.scalar_affine), change)
     elseif o.scalar_quadratic !== nothing
@@ -290,8 +295,13 @@ function MOI.modify(
             ),
         )
     elseif o.vector_variables !== nothing
-        o.vector_variables =
-            modify_function!(something(o.vector_variables), change)
+        throw(
+            MOI.ModifyObjectiveNotAllowed(
+                change,
+                "Cannot modify objective when there is a " *
+                "`VariableIndex` objective",
+            ),
+        )
     elseif o.vector_quadratic !== nothing
         o.vector_quadratic =
             modify_function!(something(o.vector_quadratic), change)

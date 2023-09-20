@@ -164,6 +164,33 @@ function test_delete_variables_ScalarNonlinearFunction()
     return
 end
 
+function test_modify_VariableIndex()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    attr = MOI.ObjectiveFunction{typeof(x)}()
+    MOI.set(model, attr, x)
+    @test_throws(
+        MOI.ModifyObjectiveNotAllowed,
+        MOI.modify(model, attr, MOI.ScalarConstantChange(3.0)),
+    )
+    return
+end
+
+function test_modify_VectorOfVariables()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = MOI.VectorOfVariables(x)
+    attr = MOI.ObjectiveFunction{typeof(f)}()
+    MOI.set(model, attr, f)
+    @test_throws(
+        MOI.ModifyObjectiveNotAllowed,
+        MOI.modify(model, attr, MOI.VectorConstantChange([3.0, 4.0])),
+    )
+    return
+end
+
 end  # module
 
 TestObjectiveContainer.runtests()
