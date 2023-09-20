@@ -111,13 +111,16 @@ function MOI.get(
     return sol.variable_primal[MOI.VariableIndex(ci.value)]
 end
 
+# Helper function to assert that the model is not nothing
+_model(sol::SolFileResults) = sol.model::Model
+
 function MOI.get(
     sol::SolFileResults,
     attr::MOI.ConstraintPrimal,
     ci::MOI.ConstraintIndex{<:MOI.ScalarAffineFunction},
 )
     MOI.check_result_index_bounds(sol, attr)
-    return _evaluate(sol.model.h[ci.value].expr, sol.variable_primal)
+    return _evaluate(_model(sol).h[ci.value].expr, sol.variable_primal)
 end
 
 function MOI.get(
@@ -126,7 +129,7 @@ function MOI.get(
     ci::MOI.ConstraintIndex{F},
 ) where {F<:Union{MOI.ScalarQuadraticFunction,MOI.ScalarNonlinearFunction}}
     MOI.check_result_index_bounds(sol, attr)
-    return _evaluate(sol.model.g[ci.value].expr, sol.variable_primal)
+    return _evaluate(_model(sol).g[ci.value].expr, sol.variable_primal)
 end
 
 function MOI.get(
@@ -136,7 +139,7 @@ function MOI.get(
 )
     MOI.check_result_index_bounds(sol, attr)
     dual = get(sol.zU_out, MOI.VariableIndex(ci.value), 0.0)
-    return sol.model.sense == MOI.MIN_SENSE ? dual : -dual
+    return _model(sol).sense == MOI.MIN_SENSE ? dual : -dual
 end
 
 function MOI.get(
@@ -146,7 +149,7 @@ function MOI.get(
 )
     MOI.check_result_index_bounds(sol, attr)
     dual = get(sol.zL_out, MOI.VariableIndex(ci.value), 0.0)
-    return sol.model.sense == MOI.MIN_SENSE ? dual : -dual
+    return _model(sol).sense == MOI.MIN_SENSE ? dual : -dual
 end
 
 function MOI.get(
@@ -157,7 +160,7 @@ function MOI.get(
     MOI.check_result_index_bounds(sol, attr)
     x = MOI.VariableIndex(ci.value)
     dual = get(sol.zL_out, x, 0.0) + get(sol.zU_out, x, 0.0)
-    return sol.model.sense == MOI.MIN_SENSE ? dual : -dual
+    return _model(sol).sense == MOI.MIN_SENSE ? dual : -dual
 end
 
 function MOI.get(
@@ -168,7 +171,7 @@ function MOI.get(
     MOI.check_result_index_bounds(sol, attr)
     x = MOI.VariableIndex(ci.value)
     dual = get(sol.zL_out, x, 0.0) + get(sol.zU_out, x, 0.0)
-    return sol.model.sense == MOI.MIN_SENSE ? dual : -dual
+    return _model(sol).sense == MOI.MIN_SENSE ? dual : -dual
 end
 
 function MOI.get(
@@ -177,8 +180,8 @@ function MOI.get(
     ci::MOI.ConstraintIndex{<:MOI.ScalarAffineFunction},
 )
     MOI.check_result_index_bounds(sol, attr)
-    dual = sol.constraint_dual[length(sol.model.g)+ci.value]
-    return sol.model.sense == MOI.MIN_SENSE ? dual : -dual
+    dual = sol.constraint_dual[length(_model(sol).g)+ci.value]
+    return _model(sol).sense == MOI.MIN_SENSE ? dual : -dual
 end
 
 function MOI.get(
@@ -188,13 +191,13 @@ function MOI.get(
 ) where {F<:Union{MOI.ScalarQuadraticFunction,MOI.ScalarNonlinearFunction}}
     MOI.check_result_index_bounds(sol, attr)
     dual = sol.constraint_dual[ci.value]
-    return sol.model.sense == MOI.MIN_SENSE ? dual : -dual
+    return _model(sol).sense == MOI.MIN_SENSE ? dual : -dual
 end
 
 function MOI.get(sol::SolFileResults, attr::MOI.NLPBlockDual)
     MOI.check_result_index_bounds(sol, attr)
-    dual = sol.constraint_dual[1:sol.model.nlpblock_dim]
-    return sol.model.sense == MOI.MIN_SENSE ? dual : -dual
+    dual = sol.constraint_dual[1:_model(sol).nlpblock_dim]
+    return _model(sol).sense == MOI.MIN_SENSE ? dual : -dual
 end
 
 """
