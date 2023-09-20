@@ -287,12 +287,12 @@ function _split_dual_start(value)
     end
 end
 
-function _split_dual_start(value::Vector)
-    lower = similar(value)
-    upper = similar(value)
+function _split_dual_start(value::Vector{T}) where {T}
+    lower, upper = similar(value), similar(value)
     for i in eachindex(value)
         lower[i], upper[i] = _split_dual_start(value[i])
     end
+    return lower, upper
 end
 
 function MOI.set(
