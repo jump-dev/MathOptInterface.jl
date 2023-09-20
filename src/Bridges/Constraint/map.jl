@@ -86,7 +86,7 @@ function Base.getindex(
 end
 
 function Base.delete!(map::Map, ci::MOI.ConstraintIndex)
-    _unregister_for_final_touch(map, map.bridges[_index(ci)])
+    _unregister_for_final_touch(map, map.bridges[_index(ci)]::AbstractBridge)
     map.bridges[_index(ci)] = nothing
     return map
 end

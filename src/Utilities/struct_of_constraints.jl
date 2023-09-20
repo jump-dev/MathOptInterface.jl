@@ -283,7 +283,7 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
     typed_struct = :($(struct_name){$T})
     type_parametrized = field_types === nothing
     if type_parametrized
-        field_types = [Symbol("C$i") for i in eachindex(types)]
+        field_types = Symbol[Symbol("C$i") for i in eachindex(types)]
         append!(typed_struct.args, field_types)
     end
     code = quote

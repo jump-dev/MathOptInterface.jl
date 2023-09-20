@@ -150,7 +150,7 @@ function eval_variables(value_fn::Function, f::MOI.ScalarQuadraticFunction)
 end
 
 function eval_variables(value_fn::Function, f::MOI.VectorOfVariables)
-    return value_fn.(f.variables)
+    return map(value_fn, f.variables)
 end
 
 function eval_variables(value_fn::Function, f::MOI.VectorAffineFunction)

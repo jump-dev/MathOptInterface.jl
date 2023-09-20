@@ -123,12 +123,12 @@ function MOI.get(
     T,
     F<:Union{
         MOI.VariableIndex,
-        MOI.ScalarAffineFunction{T},
-        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarAffineFunction,
+        MOI.ScalarQuadraticFunction,
         MOI.ScalarNonlinearFunction,
         MOI.VectorOfVariables,
-        MOI.VectorAffineFunction{T},
-        MOI.VectorQuadraticFunction{T},
+        MOI.VectorAffineFunction,
+        MOI.VectorQuadraticFunction,
         MOI.VectorNonlinearFunction,
     },
 }
