@@ -102,15 +102,16 @@ function MOI.constraint_expr(evaluator::Evaluator, i::Int)
         constraint.expression;
         moi_output_format = true,
     )
-    if constraint.set isa MOI.LessThan
-        return :($f <= $(constraint.set.upper))
-    elseif constraint.set isa MOI.GreaterThan
-        return :($f >= $(constraint.set.lower))
-    elseif constraint.set isa MOI.EqualTo
-        return :($f == $(constraint.set.value))
+    set = constraint.set
+    if set isa MOI.LessThan
+        return :($f <= $(set.upper))
+    elseif set isa MOI.GreaterThan
+        return :($f >= $(set.lower))
+    elseif set isa MOI.EqualTo
+        return :($f == $(set.value))
     else
-        @assert constraint.set isa MOI.Interval
-        return :($(constraint.set.lower) <= $f <= $(constraint.set.upper))
+        @assert set isa MOI.Interval
+        return :($(set.lower) <= $f <= $(set.upper))
     end
 end
 

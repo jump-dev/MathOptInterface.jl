@@ -297,9 +297,11 @@ function function_to_moi(
     object::Object,
     name_map::Dict{String,MOI.VariableIndex},
 )
-    return MOI.VectorOfVariables(MOI.VariableIndex[
-        name_map[variable] for variable::String in object["variables"]
-    ])
+    return MOI.VectorOfVariables(
+        MOI.VariableIndex[
+            name_map[variable] for variable::String in object["variables"]
+        ],
+    )
 end
 
 # ========== Typed vector functions ==========

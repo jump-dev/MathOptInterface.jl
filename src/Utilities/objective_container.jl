@@ -130,7 +130,7 @@ function MOI.get(
         MOI.VectorAffineFunction{T},
         MOI.VectorQuadraticFunction{T},
         MOI.VectorNonlinearFunction,
-    }
+    },
 }
     if o.scalar_affine !== nothing
         return convert(F, something(o.scalar_affine))

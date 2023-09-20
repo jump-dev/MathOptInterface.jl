@@ -195,7 +195,7 @@ function MOI.get(
     bridge::ReifiedAllDifferentToCountDistinctBridge{T},
     ::MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.EqualTo{T}},
 ) where {T}
-    F, S = MOI.VariableIndex,MOI.EqualTo{T}
+    F, S = MOI.VariableIndex, MOI.EqualTo{T}
     ret = MOI.ConstraintIndex{F,S}[]
     if bridge.y === nothing
         push!(ret, MOI.ConstraintIndex{F,S}(something(bridge.y).value))
