@@ -1235,10 +1235,13 @@ function _add_objective(model, data, variable_map)
     else
         MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     end
-    affine_terms = MOI.ScalarAffineTerm{Float64}[
-        MOI.ScalarAffineTerm(data.c[i], variable_map[v]) for
-        (i, v) in enumerate(data.col_to_name) if !iszero(data.c[i])
-    ]
+    affine_terms = MOI.ScalarAffineTerm{Float64}[]
+    for (i, v) in enumerate(data.col_to_name)
+        if !iszero(data.c[i])
+            term = MOI.ScalarAffineTerm(data.c[i], variable_map[v])
+            push!(affine_terms, term)
+        end
+    end
     q_terms = MOI.ScalarQuadraticTerm{Float64}[]
     for (i, j, q) in data.quad_obj
         x = variable_map[i]
