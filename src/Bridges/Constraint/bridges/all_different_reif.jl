@@ -197,7 +197,7 @@ function MOI.get(
 ) where {T}
     F, S = MOI.VariableIndex, MOI.EqualTo{T}
     ret = MOI.ConstraintIndex{F,S}[]
-    if bridge.y === nothing
+    if bridge.y !== nothing
         push!(ret, MOI.ConstraintIndex{F,S}(something(bridge.y).value))
     end
     return ret

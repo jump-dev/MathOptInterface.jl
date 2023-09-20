@@ -132,9 +132,9 @@ function _variable_nodes(
     b::LazyBridgeOptimizer,
     ::Type{BT},
 ) where {BT<:AbstractBridge}
-    return VariableNode[
-        node(b, S)::VariableNode for (S,) in added_constrained_variable_types(BT)
-    ]
+    return map(added_constrained_variable_types(BT)) do (S,)
+        return node(b, S)::VariableNode
+    end
 end
 
 """
@@ -310,7 +310,7 @@ end
 
 Return the `ObjectiveNode` associated with constraint `F` in `b`.
 """
-function node(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction})
+function node(b::LazyBridgeOptimizer, ::Type{F}) where {F<:MOI.AbstractFunction}
     # If we support the objective function, the node is 0.
     if MOI.supports(b.model, MOI.ObjectiveFunction{F}())
         return ObjectiveNode(0)
@@ -327,7 +327,10 @@ function node(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction})
     push!(b.objective_types, (F,))
     for (i, BT) in enumerate(b.objective_bridge_types)
         if Objective.supports_objective_function(BT, F)
-            bridge_type = Objective.concrete_bridge_type(BT, F)::Type{<:Objective.AbstractBridge}
+            bridge_type = Objective.concrete_bridge_type(
+                BT,
+                F,
+            )::Type{<:Objective.AbstractBridge}
             edge = _edge(b, i, bridge_type)::ObjectiveEdge
             add_edge(b.graph, objective_node, edge)
         end
