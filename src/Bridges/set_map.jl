@@ -21,9 +21,7 @@ Return the preimage of `set` through the linear map `A` defined in
 [`Variable.SetMapBridge`](@ref) and [`Constraint.SetMapBridge`](@ref). This is
 used for getting the [`MOI.ConstraintSet`](@ref).
 """
-function inverse_map_set(BT::Type, set::MOI.AbstractSet)
-    return throw(MethodError(inverse_map_set, (typeof(BT), typeof(set))))
-end
+function inverse_map_set end
 
 """
     map_function(::Type{BT}, func) where {BT}

@@ -151,7 +151,7 @@ end
 function MOI.Bridges.map_set(
     ::Type{<:SetDotInverseScalingBridge{T,S}},
     set::MOI.Scaled{S},
-) where {T,S}
+) where {T,S<:MOI.AbstractVectorSet}
     return set.set
 end
 
