@@ -326,9 +326,9 @@ function _pass_constraints(
         _copy_constraints(dest, src, index_map, cis)
     end
     all_constraint_types = MOI.get(src, MOI.ListOfConstraintTypesPresent())
-    nonvariable_constraint_types = Any[
-        (F, S) for (F, S) in all_constraint_types if !_is_variable_function(F)
-    ]
+    nonvariable_constraint_types = filter(all_constraint_types) do (F, S)
+        return !_is_variable_function(F)
+    end
     pass_nonvariable_constraints(
         dest,
         src,

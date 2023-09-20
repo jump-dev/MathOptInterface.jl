@@ -118,8 +118,20 @@ end
 
 function MOI.get(
     o::ObjectiveContainer{T},
-    ::MOI.ObjectiveFunction{F},
-) where {T,F}
+    attr::MOI.ObjectiveFunction{F},
+) where {
+    T,
+    F<:Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
+        MOI.VectorNonlinearFunction,
+    }
+}
     if o.scalar_affine !== nothing
         return convert(F, something(o.scalar_affine))
     elseif o.single_variable !== nothing

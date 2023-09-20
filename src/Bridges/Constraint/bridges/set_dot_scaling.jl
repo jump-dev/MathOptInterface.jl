@@ -22,7 +22,8 @@ in `S` to constraints in [`MOI.Scaled{S}`](@ref MOI.Scaled).
 
   * `F` in [`MOI.Scaled{S}`](@ref MOI.Scaled)
 """
-struct SetDotScalingBridge{T,S,F,G} <: SetMapBridge{T,MOI.Scaled{S},S,F,G}
+struct SetDotScalingBridge{T,S<:MOI.AbstractVectorSet,F,G} <:
+       SetMapBridge{T,MOI.Scaled{S},S,F,G}
     constraint::MOI.ConstraintIndex{F,MOI.Scaled{S}}
 end
 
@@ -125,7 +126,7 @@ in the `MOI.Scaled{S}` to constraints in the `S`.
 
   * `F` in `S`
 """
-struct SetDotInverseScalingBridge{T,S,F,G} <:
+struct SetDotInverseScalingBridge{T,S<:MOI.AbstractVectorSet,F,G} <:
        SetMapBridge{T,S,MOI.Scaled{S},F,G}
     constraint::MOI.ConstraintIndex{F,S}
 end

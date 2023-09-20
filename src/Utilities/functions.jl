@@ -2121,7 +2121,15 @@ vectorize(x::AbstractVector{<:Number}) = x
 Returns the vector of scalar affine functions in the form of a
 `MOI.VectorAffineFunction{T}`.
 """
-vectorize(x::AbstractVector{MOI.VariableIndex}) = MOI.VectorOfVariables(x)
+function vectorize(x::AbstractVector{MOI.VariableIndex})
+    # Explicitly construct the output vector here because don't know that `x`
+    # has a `convert` method to `Vector`.
+    y = Vector{MOI.VariableIndex}(undef, length(x))
+    for (i, xi) in enumerate(x)
+        y[i] = xi
+    end
+    return MOI.VectorOfVariables(y)
+end
 
 """
     vectorize(funcs::AbstractVector{MOI.ScalarAffineFunction{T}}) where T
@@ -2175,7 +2183,13 @@ function vectorize(
 end
 
 function vectorize(x::AbstractVector{MOI.ScalarNonlinearFunction})
-    return MOI.VectorNonlinearFunction(x)
+    # Explicitly construct the output vector here because don't know that `x`
+    # has a `convert` method to `Vector`.
+    y = Vector{MOI.ScalarNonlinearFunction}(undef, length(x))
+    for (i, xi) in enumerate(x)
+        y[i] = xi
+    end
+    return MOI.VectorNonlinearFunction(y)
 end
 
 scalarize(f::AbstractVector, ::Bool = false) = f

@@ -320,13 +320,13 @@ function add_key_for_bridge(
     index = -bridge_index
     variable = MOI.VariableIndex(index)
     if map.unbridged_function !== nothing
-        mappings = unbridged_map(map.bridges[bridge_index], variable)
+        mappings = unbridged_map(something(map.bridges[bridge_index]), variable)
         if mappings === nothing
             map.unbridged_function = nothing
         else
             for mapping in mappings
                 push!(
-                    map.unbridged_function,
+                    something(map.unbridged_function),
                     mapping.first => (bridge_index, mapping.second),
                 )
             end
