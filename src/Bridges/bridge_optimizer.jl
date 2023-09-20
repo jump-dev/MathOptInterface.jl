@@ -527,9 +527,8 @@ function _delete_variables_in_variables_constraints(
     # We reverse for the same reason as for `VariableIndex` below.
     # As the iterators are lazy, when the inner bridge constraint is deleted,
     # it won't be part of the iteration.
-    for ci in Iterators.reverse(
-        Constraint.vector_of_variables_constraints(c_map),
-    )
+    for ci in
+        Iterators.reverse(Constraint.vector_of_variables_constraints(c_map))
         _delete_variables_in_vector_of_variables_constraint(b, vis, ci)
     end
     # Delete all `MOI.VariableIndex` constraints of these variables.
@@ -539,9 +538,7 @@ function _delete_variables_in_variables_constraints(
         # should not delete it again in this loop.
         # For this, we reverse the order so that we encounter the first one first
         # and we won't delete the second one since `MOI.is_valid(b, ci)` will be `false`.
-        for ci in Iterators.reverse(
-            Constraint.variable_constraints(c_map, vi),
-        )
+        for ci in Iterators.reverse(Constraint.variable_constraints(c_map, vi))
             if MOI.is_valid(b, ci)
                 MOI.delete(b, ci)
             end
@@ -851,9 +848,7 @@ function MOI.get(
     if Constraint.has_bridges(Constraint.bridges(b))
         append!(
             list_of_types,
-            Constraint.list_of_key_types(
-                Constraint.bridges(b)::Constraint.Map,
-            ),
+            Constraint.list_of_key_types(Constraint.bridges(b)::Constraint.Map),
         )
     end
     if Variable.has_bridges(Variable.bridges(b))
