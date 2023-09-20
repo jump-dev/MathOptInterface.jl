@@ -250,7 +250,8 @@ Return the `Variable.AbstractBridge` used to bridge the variable with index
 `vi`.
 """
 function bridge(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
-    return Variable.bridges(b)[vi]
+    map = Variable.bridges(b)::Variable.Map
+    return map[vi]
 end
 
 """
@@ -273,7 +274,8 @@ Return the `Objective.AbstractBridge` used to bridge the objective function
 `attr`.
 """
 function bridge(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveFunction)
-    return Objective.bridges(b)[attr]
+    map = Objective.bridges(b)::Objective.Map
+    return map[attr]
 end
 
 """
@@ -291,7 +293,7 @@ function call_in_context(
     vi::MOI.VariableIndex,
     f::Function,
 )
-    return Variable.call_in_context(Variable.bridges(b), vi, f)
+    return Variable.call_in_context(Variable.bridges(b)::Variable.Map, vi, f)
 end
 
 """
@@ -482,8 +484,9 @@ function MOI.is_valid(
     if is_bridged(b, ci)
         if is_variable_bridged(b, ci)
             vi = MOI.VariableIndex(ci.value)
+            v_map = Variable.bridges(b)::Variable.Map
             return MOI.is_valid(b, vi) &&
-                   Variable.constrained_set(Variable.bridges(b), vi) == S
+                   Variable.constrained_set(v_map, vi) == S
         else
             return haskey(Constraint.bridges(b), ci)
         end
@@ -519,13 +522,13 @@ function _delete_variables_in_variables_constraints(
     b::AbstractBridgeOptimizer,
     vis::Vector{MOI.VariableIndex},
 )
+    c_map = Constraint.bridges(b)::Constraint.Map
     # Delete all `MOI.VectorOfVariables` constraints of these variables.
     # We reverse for the same reason as for `VariableIndex` below.
     # As the iterators are lazy, when the inner bridge constraint is deleted,
     # it won't be part of the iteration.
-    for ci in Iterators.reverse(
-        Constraint.vector_of_variables_constraints(Constraint.bridges(b)),
-    )
+    for ci in
+        Iterators.reverse(Constraint.vector_of_variables_constraints(c_map))
         _delete_variables_in_vector_of_variables_constraint(b, vis, ci)
     end
     # Delete all `MOI.VariableIndex` constraints of these variables.
@@ -535,9 +538,7 @@ function _delete_variables_in_variables_constraints(
         # should not delete it again in this loop.
         # For this, we reverse the order so that we encounter the first one first
         # and we won't delete the second one since `MOI.is_valid(b, ci)` will be `false`.
-        for ci in Iterators.reverse(
-            Constraint.variable_constraints(Constraint.bridges(b), vi),
-        )
+        for ci in Iterators.reverse(Constraint.variable_constraints(c_map, vi))
             if MOI.is_valid(b, ci)
                 MOI.delete(b, ci)
             end
@@ -615,16 +616,19 @@ function MOI.delete(b::AbstractBridgeOptimizer, vis::Vector{MOI.VariableIndex})
             MOI.throw_if_not_valid(b, vi)
         end
         if all(vi -> is_bridged(b, vi), vis) &&
-           Variable.has_keys(Variable.bridges(b), vis)
+           Variable.has_keys(Variable.bridges(b)::Variable.Map, vis)
             call_in_context(MOI.delete, b, first(vis))
             b.name_to_var = nothing
             for vi in vis
                 delete!(b.var_to_name, vi)
             end
-            ci = Variable.constraint(Variable.bridges(b), first(vis))
+            ci = Variable.constraint(
+                Variable.bridges(b)::Variable.Map,
+                first(vis),
+            )
             b.name_to_con = nothing
             delete!(b.con_to_name, ci)
-            delete!(Variable.bridges(b), vis)
+            delete!(Variable.bridges(b)::Variable.Map, vis)
         else
             for vi in vis
                 MOI.delete(b, vi)
@@ -644,21 +648,21 @@ function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
     end
     if is_bridged(b, vi)
         MOI.throw_if_not_valid(b, vi)
-        if Variable.length_of_vector_of_variables(Variable.bridges(b), vi) > 1
-            if MOI.supports_dimension_update(
-                Variable.constrained_set(Variable.bridges(b), vi),
-            )
+        v_map = Variable.bridges(b)::Variable.Map
+        if Variable.length_of_vector_of_variables(v_map, vi) > 1
+            set = Variable.constrained_set(v_map, vi)
+            if MOI.supports_dimension_update(set)
                 call_in_context(MOI.delete, b, vi, _index(b, vi)...)
             else
                 MOI.Utilities.throw_delete_variable_in_vov(vi)
             end
         else
             call_in_context(MOI.delete, b, vi)
-            ci = Variable.constraint(Variable.bridges(b), vi)
+            ci = Variable.constraint(v_map, vi)
             b.name_to_con = nothing
             delete!(b.con_to_name, ci)
         end
-        delete!(Variable.bridges(b), vi)
+        delete!(v_map, vi)
         b.name_to_var = nothing
         delete!(b.var_to_name, vi)
     else
@@ -681,7 +685,7 @@ function MOI.delete(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
                 ),
             )
         else
-            delete!(Constraint.bridges(b), ci)
+            delete!(Constraint.bridges(b)::Constraint.Map, ci)
         end
         Variable.call_in_context(
             Variable.bridges(b),
@@ -745,7 +749,7 @@ function _get_all_including_bridged(
         append!(
             list,
             Constraint.keys_of_type(
-                Constraint.bridges(b),
+                Constraint.bridges(b)::Constraint.Map,
                 MOI.ConstraintIndex{F,S},
             ),
         )
@@ -844,13 +848,15 @@ function MOI.get(
     if Constraint.has_bridges(Constraint.bridges(b))
         append!(
             list_of_types,
-            Constraint.list_of_key_types(Constraint.bridges(b)),
+            Constraint.list_of_key_types(Constraint.bridges(b)::Constraint.Map),
         )
     end
     if Variable.has_bridges(Variable.bridges(b))
         append!(
             list_of_types,
-            Variable.list_of_constraint_types(Variable.bridges(b)),
+            Variable.list_of_constraint_types(
+                Variable.bridges(b)::Variable.Map,
+            ),
         )
     end
     unique!(list_of_types)
@@ -1013,7 +1019,7 @@ said to be bridged if the value of `MOI.ObjectiveFunctionType` is different for
 is_objective_bridged(b) = !isempty(Objective.bridges(b))
 
 function _delete_objective_bridges(b)
-    MOI.delete(b, Objective.root_bridge(Objective.bridges(b)))
+    MOI.delete(b, Objective.root_bridge(Objective.bridges(b)::Objective.Map))
     empty!(Objective.bridges(b))
     return
 end
@@ -1102,9 +1108,9 @@ function MOI.set(
     return
 end
 
-function _bridge_objective(b, BridgeType, func)
-    bridge = Objective.bridge_objective(BridgeType, recursive_model(b), func)
-    Objective.add_key_for_bridge(Objective.bridges(b), bridge, func)
+function _bridge_objective(b, BridgeType, f)
+    bridge = Objective.bridge_objective(BridgeType, recursive_model(b), f)
+    Objective.add_key_for_bridge(Objective.bridges(b)::Objective.Map, bridge, f)
     return
 end
 
@@ -1176,7 +1182,8 @@ end
 
 # Variable attributes
 function _index(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
-    i = Variable.index_in_vector_of_variables(Variable.bridges(b), vi)
+    map = Variable.bridges(b)::Variable.Map
+    i = Variable.index_in_vector_of_variables(map, vi)
     if iszero(i.value)
         return tuple()
     else
@@ -1317,7 +1324,7 @@ function MOI.get(
         if is_variable_bridged(b, ci)
             # If it is a variable bridge, we can get the original variable quite
             # easily.
-            return Variable.function_for(Variable.bridges(b), ci)
+            return Variable.function_for(Variable.bridges(b)::Variable.Map, ci)
         else
             # Otherwise, we need to query ConstraintFunction in the context of
             # the bridge...
@@ -1671,7 +1678,12 @@ end
 
 function add_bridged_constraint(b, BridgeType, f, s)
     bridge = Constraint.bridge_constraint(BridgeType, recursive_model(b), f, s)
-    ci = Constraint.add_key_for_bridge(Constraint.bridges(b), bridge, f, s)
+    ci = Constraint.add_key_for_bridge(
+        Constraint.bridges(b)::Constraint.Map,
+        bridge,
+        f,
+        s,
+    )
     Variable.register_context(Variable.bridges(b), ci)
     return ci
 end
@@ -1928,7 +1940,7 @@ function MOI.add_constrained_variables(
     if set isa MOI.Reals || is_variable_bridged(b, typeof(set))
         BridgeType = Variable.concrete_bridge_type(b, typeof(set))
         return Variable.add_keys_for_bridge(
-            Variable.bridges(b),
+            Variable.bridges(b)::Variable.Map,
             () -> Variable.bridge_constrained_variable(BridgeType, b, set),
             set,
         )
@@ -1961,7 +1973,7 @@ function MOI.add_constrained_variable(
     if is_variable_bridged(b, typeof(set))
         BridgeType = Variable.concrete_bridge_type(b, typeof(set))
         return Variable.add_key_for_bridge(
-            Variable.bridges(b),
+            Variable.bridges(b)::Variable.Map,
             () -> Variable.bridge_constrained_variable(
                 BridgeType,
                 recursive_model(b),
@@ -2070,7 +2082,7 @@ function unbridged_variable_function(
     b::AbstractBridgeOptimizer,
     vi::MOI.VariableIndex,
 )
-    func = Variable.unbridged_function(Variable.bridges(b), vi)
+    func = Variable.unbridged_function(Variable.bridges(b)::Variable.Map, vi)
     if func === nothing
         return vi
     else
@@ -2094,7 +2106,7 @@ function unbridged_function(b::AbstractBridgeOptimizer, value)
     # If `value` does not contain any variable, this will never call
     # `unbridged_variable_function` hence it might silently return an incorrect
     # value so we call `throw_if_cannot_unbridge` here.
-    Variable.throw_if_cannot_unbridge(Variable.bridges(b))
+    Variable.throw_if_cannot_unbridge(Variable.bridges(b)::Variable.Map)
     return MOI.Utilities.substitute_variables(
         vi -> unbridged_variable_function(b, vi),
         value,
