@@ -231,10 +231,13 @@ function MOI.add_variable(b::VariablesContainer{T}) where {T}
 end
 
 function MOI.get(b::VariablesContainer, ::MOI.ListOfVariableIndices)
-    return MOI.VariableIndex[
-        MOI.VariableIndex(i) for
-        i in 1:length(b.set_mask) if b.set_mask[i] != _DELETED_VARIABLE
-    ]
+    ret = MOI.VariableIndex[]
+    for (i, mask) in enumerate(b.set_mask)
+        if mask != _DELETED_VARIABLE
+            push!(ret, MOI.VariableIndex(i))
+        end
+    end
+    return ret
 end
 
 function MOI.is_valid(b::VariablesContainer, x::MOI.VariableIndex)

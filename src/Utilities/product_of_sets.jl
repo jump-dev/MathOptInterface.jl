@@ -118,11 +118,14 @@ function MOI.get(
     sets::MixOfScalarSets,
     ::MOI.ListOfConstraintIndices{F,S},
 ) where {F,S}
-    i = set_index(sets, S)
-    return MOI.ConstraintIndex{F,S}[
-        MOI.ConstraintIndex{F,S}(ci) for
-        (ci, set_type) in enumerate(sets.set_ids) if set_type == i
-    ]
+    index = set_index(sets, S)
+    ret = MOI.ConstraintIndex{F,S}[]
+    for (i, set_type) in enumerate(sets.set_ids)
+        if set_type == index
+            push!(ret, MOI.ConstraintIndex{F,S}(i))
+        end
+    end
+    return ret
 end
 
 function MOI.is_valid(

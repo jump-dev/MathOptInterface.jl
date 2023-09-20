@@ -453,8 +453,12 @@ Unfortunately, we don't have a good way of computing the updated costs for other
 constraints if a variable bridge is chosen.
 """
 function sorted_variable_sets_by_cost(dest::MOI.ModelLike, src::MOI.ModelLike)
-    constraint_types = MOI.get(src, MOI.ListOfConstraintTypesPresent())
-    sets = Type[S for (F, S) in constraint_types if _is_variable_function(F)]
+    sets = Type[]
+    for (F, S) in MOI.get(src, MOI.ListOfConstraintTypesPresent())
+        if _is_variable_function(F)
+            push!(sets, S)
+        end
+    end
     sort!(sets; by = S::Type -> _cost_of_bridging(dest, S))
     return sets
 end
@@ -486,17 +490,15 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
     # Therefore, all VariableIndex and VectorOfVariable constraints are added
     # seprately, and no variables constrained-on-creation are added.
     has_nlp = MOI.NLPBlock() in MOI.get(src, MOI.ListOfModelAttributesSet())
-    constraints_not_added = if has_nlp
-        Any[
-            MOI.get(src, MOI.ListOfConstraintIndices{F,S}()) for
-            (F, S) in MOI.get(src, MOI.ListOfConstraintTypesPresent()) if
-            _is_variable_function(F)
-        ]
-    else
-        Any[
+    constraints_not_added = Any[]
+    for S in sorted_variable_sets_by_cost(dest, src)
+        ret = if has_nlp
+            F = variable_function_type(S)
+            MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
+        else
             _try_constrain_variables_on_creation(dest, src, index_map, S)
-            for S in sorted_variable_sets_by_cost(dest, src)
-        ]
+        end
+        push!(constraints_not_added, ret)
     end
     _copy_free_variables(dest, index_map, vis_src)
     # Copy variable attributes

@@ -167,10 +167,17 @@ function MOI.set(
     bridge::SplitHyperRectangleBridge{T},
     value::AbstractVector{T},
 ) where {T}
-    new_values = vcat(
-        T[v - l for (v, l) in zip(value, bridge.set.lower) if isfinite(l)],
-        T[u - v for (v, u) in zip(value, bridge.set.upper) if isfinite(u)],
-    )
+    new_values = T[]
+    for (v, l) in zip(value, bridge.set.lower)
+        if isfinite(l)
+            push!(new_values, v - l)
+        end
+    end
+    for (v, u) in zip(value, bridge.set.upper)
+        if isfinite(u)
+            push!(new_values, u - v)
+        end
+    end
     MOI.set(model, attr, bridge.ci, new_values)
     return
 end
@@ -207,10 +214,9 @@ function MOI.set(
     bridge::SplitHyperRectangleBridge{T},
     values::AbstractVector{T},
 ) where {T}
-    set = bridge.set
     new_values = vcat(
-        T[max(T(0), v) for (v, l) in zip(values, set.lower) if isfinite(l)],
-        T[min(T(0), v) for (v, u) in zip(values, set.upper) if isfinite(u)],
+        max.(T(0), values[isfinite.(bridge.set.lower)]),
+        min.(T(0), values[isfinite.(bridge.set.upper)]),
     )
     MOI.set(model, attr, bridge.ci, new_values)
     return

@@ -82,9 +82,12 @@ function MOI.get(
     b::IndicatorSOS1Bridge{T},
 ) where {T}
     f = MOI.get(model, attr, b.affine_index)
-    terms = MOI.VectorAffineTerm{T}[
-        MOI.VectorAffineTerm(2, t) for t in f.terms if t.variable != b.slack
-    ]
+    terms = MOI.VectorAffineTerm{T}[]
+    for t in f.terms
+        if t.variable != b.slack
+            push!(terms, MOI.VectorAffineTerm(2, t))
+        end
+    end
     push!(terms, MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(one(T), b.z)))
     return MOI.VectorAffineFunction(terms, [zero(T), f.constant])
 end
