@@ -579,7 +579,7 @@ function MOI.modify(
     if uf.objective === nothing
         MOI.modify(uf.model, obj, change)
     else
-        uf.objective = modify_function(uf.objective, change)
+        uf.objective = modify_function(something(uf.objective), change)
     end
     return
 end

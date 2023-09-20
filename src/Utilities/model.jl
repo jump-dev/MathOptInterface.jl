@@ -34,10 +34,6 @@ function MOI.add_variable(model::AbstractModel)
     return x
 end
 
-function MOI.add_variables(model::AbstractModel, n::Integer)
-    return [MOI.add_variable(model) for i in 1:n]
-end
-
 """
     remove_variable(f::MOI.AbstractFunction, s::MOI.AbstractSet, vi::MOI.VariableIndex)
 

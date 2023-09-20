@@ -1225,7 +1225,7 @@ end
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractVariableAttribute,
-    index::MOI.Index,
+    index::MOI.VariableIndex,
     value,
 )
     value = bridged_function(b, value)
@@ -1240,7 +1240,7 @@ end
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractVariableAttribute,
-    indices::Vector{<:MOI.Index},
+    indices::Vector{MOI.VariableIndex},
     values::Vector,
 )
     if any(index -> is_bridged(b, index), indices)
@@ -2004,7 +2004,10 @@ function bridged_variable_function(
     vi::MOI.VariableIndex,
 )
     if is_bridged(b, vi)
-        func = bridged_function(bridge(b, vi), _index(b, vi)...)
+        func = bridged_function(
+            bridge(b, vi)::Variable.AbstractBridge,
+            _index(b, vi)...,
+        )
         # If two variable bridges are chained, `func` may still contain
         # bridged variables.
         return bridged_function(b, func)

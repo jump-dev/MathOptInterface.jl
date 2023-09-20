@@ -271,7 +271,7 @@ function rows end
 
 MOI.is_empty(v::MatrixOfConstraints) = MOI.is_empty(v.sets)
 
-function MOI.empty!(v::MatrixOfConstraints{T}) where {T}
+function MOI.empty!(v::MatrixOfConstraints{T,AT,BT,ST}) where {T,AT,BT,ST}
     MOI.empty!(v.coefficients)
     empty!(v.constants)
     MOI.empty!(v.sets)

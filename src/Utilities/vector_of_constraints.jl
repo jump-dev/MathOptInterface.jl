@@ -102,7 +102,8 @@ function MOI.get(
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     MOI.throw_if_not_valid(v, ci)
-    return v.constraints[ci][1]
+    f, _ = v.constraints[ci]::Tuple{F,S}
+    return f
 end
 
 function MOI.get(
@@ -111,7 +112,8 @@ function MOI.get(
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     MOI.throw_if_not_valid(v, ci)
-    return v.constraints[ci][2]
+    _, s = v.constraints[ci]::Tuple{F,S}
+    return s
 end
 
 function MOI.set(
@@ -121,7 +123,8 @@ function MOI.set(
     func::F,
 ) where {F,S}
     MOI.throw_if_not_valid(v, ci)
-    v.constraints[ci] = (func, v.constraints[ci][2])
+    _, s = v.constraints[ci]::Tuple{F,S}
+    v.constraints[ci] = (func, s)
     return
 end
 
@@ -132,7 +135,8 @@ function MOI.set(
     set::S,
 ) where {F,S}
     MOI.throw_if_not_valid(v, ci)
-    v.constraints[ci] = (v.constraints[ci][1], set)
+    f, _ = v.constraints[ci]::Tuple{F,S}
+    v.constraints[ci] = (f, set)
     return
 end
 
@@ -162,7 +166,7 @@ function MOI.modify(
     ci::MOI.ConstraintIndex{F,S},
     change::MOI.AbstractFunctionModification,
 ) where {F,S}
-    func, set = v.constraints[ci]
+    func, set = v.constraints[ci]::Tuple{F,S}
     v.constraints[ci] = (modify_function!(func, change), set)
     return
 end

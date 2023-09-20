@@ -208,7 +208,7 @@ function number_with_set(map::Map, S::Type{<:MOI.AbstractSet})
 end
 
 function constraint(map::Map, vi::MOI.VariableIndex)
-    S = constrained_set(map, vi)
+    S = constrained_set(map, vi)::Type{<:MOI.AbstractSet}
     F = MOI.Utilities.variable_function_type(S)
     return MOI.ConstraintIndex{F,S}(-bridge_index(map, vi))
 end
@@ -235,12 +235,14 @@ Return a list of all the different types `(F, S)` of `F`-in-`S` constraints in
 function list_of_constraint_types(map::Map)
     list = Set{Tuple{Type,Type}}()
     for i in eachindex(map.bridges)
-        if map.bridges[i] !== nothing
-            S = map.sets[i]
-            if S != MOI.Reals
-                push!(list, (MOI.Utilities.variable_function_type(S), S))
-            end
+        if map.bridges[i] === nothing
+            continue
         end
+        S = map.sets[i]
+        if S === nothing || S == MOI.Reals
+            continue
+        end
+        push!(list, (MOI.Utilities.variable_function_type(S), S))
     end
     return list
 end
@@ -320,13 +322,13 @@ function add_key_for_bridge(
     index = -bridge_index
     variable = MOI.VariableIndex(index)
     if map.unbridged_function !== nothing
-        mappings = unbridged_map(map.bridges[bridge_index], variable)
+        mappings = unbridged_map(something(map.bridges[bridge_index]), variable)
         if mappings === nothing
             map.unbridged_function = nothing
         else
             for mapping in mappings
                 push!(
-                    map.unbridged_function,
+                    something(map.unbridged_function),
                     mapping.first => (bridge_index, mapping.second),
                 )
             end

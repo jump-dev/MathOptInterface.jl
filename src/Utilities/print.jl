@@ -113,10 +113,10 @@ function _to_string(
     var_name = replace(var_name, "^" => "\\^")
     # Convert any x[args] to x_{args} so that indices on x print as subscripts.
     m = match(r"^(.*)\[(.+)\]$", var_name)
-    if m !== nothing
-        var_name = m[1] * "_{" * m[2] * "}"
+    if m === nothing
+        return var_name
     end
-    return var_name
+    return string(m[1]::AbstractString, "_{", m[2]::AbstractString, "}")
 end
 
 function _shorten(options::_PrintOptions, x::Float64)

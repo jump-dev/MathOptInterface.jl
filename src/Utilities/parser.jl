@@ -60,10 +60,10 @@ function _parse_function(ex, ::Type{T} = Float64) where {T}
     if isa(ex, Symbol)
         return _ParsedVariableIndex(ex)
     elseif Meta.isexpr(ex, :vect)
-        if all(s -> isa(s, Symbol), ex.args)
+        if all(Base.Fix2(isa, Symbol), ex.args)
             return _ParsedVectorOfVariables(copy(ex.args))
         else
-            singlefunctions = _parse_function.(ex.args, T)
+            singlefunctions = map(Base.Fix2(_parse_function, T), ex.args)
             affine_terms = _ParsedVectorAffineTerm{T}[]
             quadratic_terms = _ParsedVectorQuadraticTerm{T}[]
             constant = T[]

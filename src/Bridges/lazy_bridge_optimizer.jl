@@ -128,10 +128,13 @@ end
 
 Return the list of `VariableNode` that would be added if `BT` is used in `b`.
 """
-function _variable_nodes(b::LazyBridgeOptimizer, ::Type{BT}) where {BT}
-    return VariableNode[
-        node(b, S) for (S,) in added_constrained_variable_types(BT)
-    ]
+function _variable_nodes(
+    b::LazyBridgeOptimizer,
+    ::Type{BT},
+) where {BT<:AbstractBridge}
+    return map(added_constrained_variable_types(BT)) do (S,)
+        return node(b, S)::VariableNode
+    end
 end
 
 """
@@ -139,7 +142,10 @@ end
 
 Return the list of `ConstraintNode` that would be added if `BT` is used in `b`.
 """
-function _constraint_nodes(b::LazyBridgeOptimizer, ::Type{BT}) where {BT}
+function _constraint_nodes(
+    b::LazyBridgeOptimizer,
+    ::Type{BT},
+) where {BT<:AbstractBridge}
     return ConstraintNode[
         node(b, F, S) for (F, S) in added_constraint_types(BT)
     ]
@@ -168,10 +174,10 @@ function _edge(
 )
     return ObjectiveEdge(
         index,
-        _variable_nodes(b, BT),
-        _constraint_nodes(b, BT),
-        node(b, set_objective_function_type(BT)),
-        bridging_cost(BT),
+        _variable_nodes(b, BT)::Vector{VariableNode},
+        _constraint_nodes(b, BT)::Vector{ConstraintNode},
+        node(b, set_objective_function_type(BT))::ObjectiveNode,
+        bridging_cost(BT)::Float64,
     )
 end
 
@@ -304,7 +310,7 @@ end
 
 Return the `ObjectiveNode` associated with constraint `F` in `b`.
 """
-function node(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction})
+function node(b::LazyBridgeOptimizer, ::Type{F}) where {F<:MOI.AbstractFunction}
     # If we support the objective function, the node is 0.
     if MOI.supports(b.model, MOI.ObjectiveFunction{F}())
         return ObjectiveNode(0)
@@ -321,7 +327,10 @@ function node(b::LazyBridgeOptimizer, F::Type{<:MOI.AbstractFunction})
     push!(b.objective_types, (F,))
     for (i, BT) in enumerate(b.objective_bridge_types)
         if Objective.supports_objective_function(BT, F)
-            bridge_type = Objective.concrete_bridge_type(BT, F)
+            bridge_type = Objective.concrete_bridge_type(
+                BT,
+                F,
+            )::Type{<:Objective.AbstractBridge}
             edge = _edge(b, i, bridge_type)::ObjectiveEdge
             add_edge(b.graph, objective_node, edge)
         end

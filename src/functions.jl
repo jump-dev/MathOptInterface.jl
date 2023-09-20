@@ -549,7 +549,8 @@ function VectorAffineFunction{T}(f::VectorOfVariables) where {T}
     terms = map(1:output_dimension(f)) do i
         return VectorAffineTerm(i, ScalarAffineTerm(one(T), f.variables[i]))
     end
-    return VectorAffineFunction(terms, zeros(T, output_dimension(f)))
+    constants = zeros(T, output_dimension(f))::Vector{T}
+    return VectorAffineFunction(terms, constants)
 end
 
 """

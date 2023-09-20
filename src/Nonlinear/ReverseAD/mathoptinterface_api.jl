@@ -45,7 +45,7 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     #
     main_expressions = [c.expression.nodes for (_, c) in d.data.constraints]
     if d.data.objective !== nothing
-        pushfirst!(main_expressions, d.data.objective.nodes)
+        pushfirst!(main_expressions, something(d.data.objective).nodes)
     end
     d.subexpression_order, individual_order = _order_subexpressions(
         main_expressions,
@@ -96,9 +96,9 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     end
     max_chunk = 1
     if d.data.objective !== nothing
-        d.objective = _FunctionStorage(
+        objective = _FunctionStorage(
             main_expressions[1],
-            d.data.objective.values,
+            something(d.data.objective).values,
             N,
             coloring_storage,
             d.want_hess,
@@ -109,8 +109,9 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
             subexpression_variables,
             moi_index_to_consecutive_index,
         )
-        max_expr_length = max(max_expr_length, length(d.objective.nodes))
-        max_chunk = max(max_chunk, size(d.objective.seed_matrix, 2))
+        max_expr_length = max(max_expr_length, length(objective.nodes))
+        max_chunk = max(max_chunk, size(objective.seed_matrix, 2))
+        d.objective = objective
     end
     for (k, (_, constraint)) in enumerate(d.data.constraints)
         idx = d.data.objective !== nothing ? k + 1 : k
@@ -157,11 +158,9 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
         d.max_chunk = max_chunk
         if d.want_hess
             d.hessian_sparsity = Tuple{Int64,Int64}[]
-            if d.objective !== nothing
-                append!(
-                    d.hessian_sparsity,
-                    zip(d.objective.hess_I, d.objective.hess_J),
-                )
+            obj = d.objective
+            if obj !== nothing
+                append!(d.hessian_sparsity, zip(obj.hess_I, obj.hess_J))
             end
             for c in d.constraints
                 append!(d.hessian_sparsity, zip(c.hess_I, c.hess_J))
@@ -277,8 +276,14 @@ end
 
 function MOI.hessian_objective_structure(d::NLPEvaluator)
     @assert d.want_hess
+    ret = Tuple{Int64,Int64}[]
     obj = d.objective
-    return Tuple{Int64,Int64}[(i, j) for (i, j) in zip(obj.hess_I, obj.hess_J)]
+    if obj !== nothing
+        for (i, j) in zip(obj.hess_I, obj.hess_J)
+            push!(ret, (i, j))
+        end
+    end
+    return ret
 end
 
 function MOI.hessian_constraint_structure(d::NLPEvaluator, c::Integer)

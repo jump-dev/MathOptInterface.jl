@@ -219,7 +219,7 @@ function rows(
     ci::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},S},
 ) where {T,S}
     @assert sets.final_touch
-    i = set_index(sets, S)
+    i = set_index(sets, S)::Int
     return (i == 1 ? 0 : sets.num_rows[i-1]) + ci.value
 end
 
@@ -228,7 +228,7 @@ function rows(
     ci::MOI.ConstraintIndex{MOI.VectorAffineFunction{T},S},
 ) where {T,S}
     @assert sets.final_touch
-    i = set_index(sets, S)
+    i = set_index(sets, S)::Int
     offset = i == 1 ? 0 : sets.num_rows[i-1]
     return (offset + ci.value - 1) .+ (1:sets.dimension[(i, ci.value)])
 end
@@ -263,7 +263,7 @@ Return the number of rows corresponding to a set of type `S`. That is, it is
 the sum of the dimensions of the sets of type `S`.
 """
 function num_rows(sets::OrderedProductOfSets, ::Type{S}) where {S}
-    i = set_index(sets, S)
+    i = set_index(sets, S)::Int
     if !sets.final_touch || i == 1
         return sets.num_rows[i]
     end
