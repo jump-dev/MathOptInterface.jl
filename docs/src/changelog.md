@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Various style improvements
    - Replaced `using Package` with `import Package` where possible (#2274)
    - Removed `Utilities.EMPTYSTRING` (#2283)
-   - Removed unecessary `const` acronyms in `Utilities` (#2280) (#2281)
+   - Removed unnecessary `const` acronyms in `Utilities` (#2280) (#2281)
    - Removed invalid and unused method (#2286)
 
 ## v1.20.0 (September 7, 2023)
