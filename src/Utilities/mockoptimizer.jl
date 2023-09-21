@@ -138,8 +138,14 @@ This is good at catching bugs in solvers which assume indices are ordered 1, 2,
 """
 const _INTERNAL_XOR_MASK = Int64(12345678)
 
-xor_index(vi::VI) = VI(xor(vi.value, _INTERNAL_XOR_MASK))
-xor_index(ci::CI{F,S}) where {F,S} = CI{F,S}(xor(ci.value, _INTERNAL_XOR_MASK))
+function xor_index(vi::MOI.VariableIndex)
+    return MOI.VariableIndex(xor(vi.value, _INTERNAL_XOR_MASK))
+end
+
+function xor_index(ci::MOI.ConstraintIndex{F,S}) where {F,S}
+    return MOI.ConstraintIndex{F,S}(xor(ci.value, _INTERNAL_XOR_MASK))
+end
+
 xor_indices(x) = map_indices(xor_index, x)
 
 function MOI.add_variable(mock::MockOptimizer)
@@ -854,7 +860,7 @@ end
 
 function MOI.modify(
     mock::MockOptimizer,
-    c::CI,
+    c::MOI.ConstraintIndex,
     change::MOI.AbstractFunctionModification,
 )
     if !mock.modify_allowed
@@ -867,7 +873,7 @@ end
 function MOI.set(
     mock::MockOptimizer,
     ::MOI.ConstraintSet,
-    c::CI{<:MOI.AbstractFunction,S},
+    c::MOI.ConstraintIndex{<:MOI.AbstractFunction,S},
     set::S,
 ) where {S<:MOI.AbstractSet}
     MOI.set(mock.inner_model, MOI.ConstraintSet(), xor_index(c), set)
@@ -877,7 +883,7 @@ end
 function MOI.set(
     mock::MockOptimizer,
     ::MOI.ConstraintFunction,
-    c::CI{F},
+    c::MOI.ConstraintIndex{F},
     func::F,
 ) where {F<:MOI.AbstractFunction}
     MOI.set(

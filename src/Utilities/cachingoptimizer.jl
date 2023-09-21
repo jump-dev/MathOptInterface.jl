@@ -553,7 +553,7 @@ end
 
 function MOI.modify(
     m::CachingOptimizer,
-    cindex::CI,
+    cindex::MOI.ConstraintIndex,
     change::MOI.AbstractFunctionModification,
 )
     if m.state == ATTACHED_OPTIMIZER
@@ -621,7 +621,7 @@ end
 function MOI.set(
     m::CachingOptimizer,
     ::MOI.ConstraintSet,
-    cindex::CI{F,S},
+    cindex::MOI.ConstraintIndex{F,S},
     set::S,
 ) where {F,S}
     _replace_constraint_function_or_set(m, MOI.ConstraintSet(), cindex, set)

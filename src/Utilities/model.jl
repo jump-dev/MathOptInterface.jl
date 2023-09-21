@@ -41,8 +41,9 @@ function `f` are removed and the dimension of the set `s` is updated if
 needed (e.g. when `f` is a `VectorOfVariables` with `vi` being one of the
 variables).
 """
-remove_variable(f, s, vi::VI) = remove_variable(f, vi), s
-function remove_variable(f::MOI.VectorOfVariables, s, vi::VI)
+remove_variable(f, s, vi::MOI.VariableIndex) = remove_variable(f, vi), s
+
+function remove_variable(f::MOI.VectorOfVariables, s, vi::MOI.VariableIndex)
     g = remove_variable(f, vi)
     if length(g.variables) != length(f.variables)
         t = MOI.update_dimension(s, length(g.variables))
@@ -139,14 +140,30 @@ function MOI.set(model::AbstractModel, ::MOI.Name, name::String)
 end
 MOI.get(model::AbstractModel, ::MOI.Name) = model.name
 
-MOI.supports(::AbstractModel, ::MOI.VariableName, vi::Type{VI}) = true
-function MOI.set(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
+function MOI.supports(
+    ::AbstractModel,
+    ::MOI.VariableName,
+    ::Type{MOI.VariableIndex},
+)
+    return true
+end
+
+function MOI.set(
+    model::AbstractModel,
+    ::MOI.VariableName,
+    vi::MOI.VariableIndex,
+    name::String,
+)
     model.var_to_name[vi] = name
     model.name_to_var = nothing # Invalidate the name map.
     return
 end
 
-function MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI)
+function MOI.get(
+    model::AbstractModel,
+    ::MOI.VariableName,
+    vi::MOI.VariableIndex,
+)
     return get(model.var_to_name, vi, "")
 end
 
@@ -157,13 +174,13 @@ Create and return a reverse map from name to variable index, given a map from
 variable index to name. The special value `MOI.VariableIndex(0)` is used to
 indicate that multiple variables have the same name.
 """
-function build_name_to_var_map(var_to_name::Dict{VI,String})
-    name_to_var = Dict{String,VI}()
+function build_name_to_var_map(var_to_name::Dict{MOI.VariableIndex,String})
+    name_to_var = Dict{String,MOI.VariableIndex}()
     for (var, var_name) in var_to_name
         if haskey(name_to_var, var_name)
             # 0 is a special value that means this string does not map to
             # a unique variable name.
-            name_to_var[var_name] = VI(0)
+            name_to_var[var_name] = MOI.VariableIndex(0)
         else
             name_to_var[var_name] = var
         end
@@ -184,7 +201,7 @@ function throw_if_multiple_with_name(index::MOI.Index, name::String)
     end
 end
 
-function MOI.get(model::AbstractModel, ::Type{VI}, name::String)
+function MOI.get(model::AbstractModel, ::Type{MOI.VariableIndex}, name::String)
     if model.name_to_var === nothing
         # Rebuild the map.
         model.name_to_var = build_name_to_var_map(model.var_to_name)
@@ -201,12 +218,18 @@ function MOI.get(
     return isempty(model.var_to_name) ? [] : [MOI.VariableName()]
 end
 
-MOI.supports(model::AbstractModel, ::MOI.ConstraintName, ::Type{<:CI}) = true
+function MOI.supports(
+    ::AbstractModel,
+    ::MOI.ConstraintName,
+    ::Type{<:MOI.ConstraintIndex},
+)
+    return true
+end
 
 function MOI.set(
     model::AbstractModel,
     ::MOI.ConstraintName,
-    ci::CI,
+    ci::MOI.ConstraintIndex,
     name::String,
 )
     model.con_to_name[ci] = name
@@ -231,7 +254,11 @@ function MOI.set(
     return throw(MOI.VariableIndexConstraintNameError())
 end
 
-function MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI)
+function MOI.get(
+    model::AbstractModel,
+    ::MOI.ConstraintName,
+    ci::MOI.ConstraintIndex,
+)
     return get(model.con_to_name, ci, "")
 end
 
@@ -243,11 +270,11 @@ constraint index to name. The special value
 `MOI.ConstraintIndex{Nothing, Nothing}(0)` is used to indicate that multiple
 constraints have the same name.
 """
-function build_name_to_con_map(con_to_name::Dict{CI,String})
-    name_to_con = Dict{String,CI}()
+function build_name_to_con_map(con_to_name::Dict{<:MOI.ConstraintIndex,String})
+    name_to_con = Dict{String,MOI.ConstraintIndex}()
     for (con, con_name) in con_to_name
         if haskey(name_to_con, con_name)
-            name_to_con[con_name] = CI{Nothing,Nothing}(0)
+            name_to_con[con_name] = MOI.ConstraintIndex{Nothing,Nothing}(0)
         else
             name_to_con[con_name] = con
         end
@@ -255,7 +282,11 @@ function build_name_to_con_map(con_to_name::Dict{CI,String})
     return name_to_con
 end
 
-function MOI.get(model::AbstractModel, ConType::Type{<:CI}, name::String)
+function MOI.get(
+    model::AbstractModel,
+    ::Type{ConType},
+    name::String,
+) where {ConType<:MOI.ConstraintIndex}
     if model.name_to_con === nothing
         # Rebuild the map.
         model.name_to_con = build_name_to_con_map(model.con_to_name)
