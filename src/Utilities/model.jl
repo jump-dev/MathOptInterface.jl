@@ -404,14 +404,6 @@ function MOI.add_constraint(
     return MOI.add_constraint(model.constraints, func, set)
 end
 
-function MOI.get(
-    model::AbstractModel,
-    attr::Union{MOI.AbstractFunction,MOI.AbstractSet},
-    ci::MOI.ConstraintIndex,
-)
-    return MOI.get(model.constraints, attr, ci)
-end
-
 function MOI.delete(model::AbstractModel, ci::MOI.ConstraintIndex)
     MOI.delete(constraints(model, ci), ci)
     model.name_to_con = nothing
