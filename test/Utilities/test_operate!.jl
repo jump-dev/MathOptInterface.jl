@@ -170,6 +170,20 @@ function test_operate_1c()
     return
 end
 
+function test_operate_1c_many_arguments()
+    x = [i + i * MOI.VariableIndex(i) for i in 1:1_000]
+    y = MOI.Utilities.operate(+, Int, x...)
+    f = MOI.ScalarAffineFunction(
+        [MOI.ScalarAffineTerm(i, MOI.VariableIndex(i)) for i in 1:1_000],
+        sum(i for i in 1:1_000),
+    )
+    @test ≈(y, f)
+    z = zero(MOI.ScalarAffineFunction{Int})
+    z = MOI.Utilities.operate!(+, Int, z, x...)
+    @test ≈(z, f)
+    return
+end
+
 function test_operate_2a()
     T = Int
     for (f, g) in (
