@@ -626,7 +626,7 @@ function MOI.get(
     if MOI.supports_constraint(uf.model, F, S)
         return MOI.get(uf.model, attr, ci)
     end
-    return get(uf.con_to_name, ci, EMPTYSTRING)
+    return get(uf.con_to_name, ci, "")
 end
 
 function MOI.get(uf::UniversalFallback, ::Type{MOI.VariableIndex}, name::String)
