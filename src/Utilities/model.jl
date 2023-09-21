@@ -4,8 +4,6 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-const EMPTYSTRING = ""
-
 # Implementation of MOI for AbstractModel
 abstract type AbstractModelLike{T} <: MOI.ModelLike end
 abstract type AbstractOptimizer{T} <: MOI.AbstractOptimizer end
@@ -149,7 +147,7 @@ function MOI.set(model::AbstractModel, ::MOI.VariableName, vi::VI, name::String)
 end
 
 function MOI.get(model::AbstractModel, ::MOI.VariableName, vi::VI)
-    return get(model.var_to_name, vi, EMPTYSTRING)
+    return get(model.var_to_name, vi, "")
 end
 
 """
@@ -234,7 +232,7 @@ function MOI.set(
 end
 
 function MOI.get(model::AbstractModel, ::MOI.ConstraintName, ci::CI)
-    return get(model.con_to_name, ci, EMPTYSTRING)
+    return get(model.con_to_name, ci, "")
 end
 
 """
@@ -736,7 +734,7 @@ for (loop_name, loop_super_type) in [
             ext::Dict{Symbol,Any}
             function $name{T,O,V,C}() where {T,O,V,C}
                 return new{T,O,V,C}(
-                    EMPTYSTRING,
+                    "",
                     O(),
                     V(),
                     C(),
