@@ -311,7 +311,7 @@ end
 function MOI.get(
     model::VariablesContainer,
     ::MOI.ConstraintFunction,
-    ci::CI{MOI.VariableIndex},
+    ci::MOI.ConstraintIndex{MOI.VariableIndex},
 )
     MOI.throw_if_not_valid(model, ci)
     return MOI.VariableIndex(ci.value)

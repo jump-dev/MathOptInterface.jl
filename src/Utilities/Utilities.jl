@@ -12,16 +12,6 @@ import MathOptInterface.Utilities as MOIU # used in macro
 import MutableArithmetics as MA
 import OrderedCollections: OrderedDict
 
-const SVF = MOI.VariableIndex
-const VVF = MOI.VectorOfVariables
-const SAF{T} = MOI.ScalarAffineFunction{T}
-const VAF{T} = MOI.VectorAffineFunction{T}
-const SQF{T} = MOI.ScalarQuadraticFunction{T}
-const VQF{T} = MOI.VectorQuadraticFunction{T}
-
-const VI = MOI.VariableIndex
-const CI{F,S} = MOI.ConstraintIndex{F,S}
-
 function print_with_acronym(io::IO, s::AbstractString)
     return print(io, replace_acronym(s))
 end

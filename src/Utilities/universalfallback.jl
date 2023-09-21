@@ -29,7 +29,7 @@ mutable struct UniversalFallback{MT} <: MOI.ModelLike
     name_to_con::Union{Dict{String,MOI.ConstraintIndex},Nothing}
     optattr::Dict{MOI.AbstractOptimizerAttribute,Any}
     modattr::Dict{MOI.AbstractModelAttribute,Any}
-    varattr::Dict{MOI.AbstractVariableAttribute,Dict{VI,Any}}
+    varattr::Dict{MOI.AbstractVariableAttribute,Dict{MOI.VariableIndex,Any}}
     conattr::Dict{MOI.AbstractConstraintAttribute,Dict{MOI.ConstraintIndex,Any}}
     function UniversalFallback{MT}(model::MOI.ModelLike) where {MT}
         return new{typeof(model)}(
@@ -41,7 +41,7 @@ mutable struct UniversalFallback{MT} <: MOI.ModelLike
             nothing,
             Dict{MOI.AbstractOptimizerAttribute,Any}(),
             Dict{MOI.AbstractModelAttribute,Any}(),
-            Dict{MOI.AbstractVariableAttribute,Dict{VI,Any}}(),
+            Dict{MOI.AbstractVariableAttribute,Dict{MOI.VariableIndex,Any}}(),
             Dict{
                 MOI.AbstractConstraintAttribute,
                 Dict{MOI.ConstraintIndex,Any},
@@ -629,8 +629,8 @@ function MOI.get(
     return get(uf.con_to_name, ci, EMPTYSTRING)
 end
 
-function MOI.get(uf::UniversalFallback, ::Type{VI}, name::String)
-    return MOI.get(uf.model, VI, name)
+function MOI.get(uf::UniversalFallback, ::Type{MOI.VariableIndex}, name::String)
+    return MOI.get(uf.model, MOI.VariableIndex, name)
 end
 
 check_type_and_multiple_names(::Type, ::Nothing, ::Nothing, name) = nothing
