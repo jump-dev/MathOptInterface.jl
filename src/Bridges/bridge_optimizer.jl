@@ -1514,7 +1514,7 @@ function MOI.get(
     vi::MOI.VariableIndex,
 )
     if is_bridged(b, vi)
-        return get(b.var_to_name, vi, MOI.Utilities.EMPTYSTRING)
+        return get(b.var_to_name, vi, "")
     else
         return MOI.get(b.model, attr, vi)
     end
@@ -1541,7 +1541,7 @@ function MOI.get(
     constraint_index::MOI.ConstraintIndex,
 )
     if is_bridged(b, constraint_index)
-        return get(b.con_to_name, constraint_index, MOI.Utilities.EMPTYSTRING)
+        return get(b.con_to_name, constraint_index, "")
     else
         return MOI.get(b.model, attr, constraint_index)
     end
