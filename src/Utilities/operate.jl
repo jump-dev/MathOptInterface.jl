@@ -324,7 +324,7 @@ end
 
 function operate(::typeof(+), ::Type{T}, f, g, h, args...) where {T<:Number}
     ret = operate(+, T, f, g)
-    operate!(+, T, ret, h)
+    ret = operate!(+, T, ret, h)
     for a in args
         ret = operate!(+, T, ret, a)
     end
@@ -1174,7 +1174,7 @@ end
 
 function operate!(::typeof(+), ::Type{T}, f, g, h, args...) where {T<:Number}
     ret = operate!(+, T, f, g)
-    operate!(+, T, ret, h)
+    ret = operate!(+, T, ret, h)
     for a in args
         ret = operate!(+, T, ret, a)
     end
