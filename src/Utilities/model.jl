@@ -273,7 +273,7 @@ constraint index to name. The special value
 constraints have the same name.
 """
 function build_name_to_con_map(con_to_name::Dict{<:MOI.ConstraintIndex,String})
-    name_to_con = Dict{String,<:MOI.ConstraintIndex}()
+    name_to_con = Dict{String,MOI.ConstraintIndex}()
     for (con, con_name) in con_to_name
         if haskey(name_to_con, con_name)
             name_to_con[con_name] = MOI.ConstraintIndex{Nothing,Nothing}(0)
