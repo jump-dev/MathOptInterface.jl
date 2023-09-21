@@ -8,7 +8,6 @@ module Utilities
 
 import LinearAlgebra
 import MathOptInterface as MOI
-import MathOptInterface.Utilities as MOIU # used in macro
 import MutableArithmetics as MA
 import OrderedCollections: OrderedDict
 

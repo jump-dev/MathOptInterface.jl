@@ -20,7 +20,7 @@ function _sets_code(esc_name, T, type_def, set_types...)
         push!(
             code.args,
             :(
-                function $MOIU.set_index(
+                function $MOI.Utilities.set_index(
                     ::$esc_name{$(T)},
                     ::Type{$(esc_type)},
                 ) where {$T}
@@ -31,7 +31,11 @@ function _sets_code(esc_name, T, type_def, set_types...)
     end
     push!(
         code.args,
-        :($MOIU.set_types(::$esc_name{$T}) where {$T} = [$(esc_types...)]),
+        :(
+            function $MOI.Utilities.set_types(::$esc_name{$T}) where {$T}
+                return [$(esc_types...)]
+            end
+        ),
     )
     return code
 end
@@ -66,14 +70,15 @@ Generate a new [`MixOfScalarSets`](@ref) subtype.
 macro mix_of_scalar_sets(name, set_types...)
     esc_name = esc(name)
     T = esc(:T)
-    type_def = :(struct $(esc_name){$(T)} <: $(MOIU).MixOfScalarSets{$(T)}
-        """
-        `set_ids[i]` maps the row `i` to the corresponding set type.
-        """
-        set_ids::Vector{Int}
+    type_def =
+        :(struct $(esc_name){$(T)} <: $MOI.Utilities.MixOfScalarSets{$(T)}
+            """
+            `set_ids[i]` maps the row `i` to the corresponding set type.
+            """
+            set_ids::Vector{Int}
 
-        $(esc_name){$(T)}() where {$(T)} = new(Int[])
-    end)
+            $(esc_name){$(T)}() where {$(T)} = new(Int[])
+        end)
     return _sets_code(esc_name, T, type_def, set_types...)
 end
 
@@ -164,7 +169,8 @@ macro product_of_sets(name, set_types...)
     esc_name = esc(name)
     T = esc(:T)
     type_def = :(
-        mutable struct $(esc_name){$(T)} <: $(MOIU).OrderedProductOfSets{$(T)}
+        mutable struct $(esc_name){$(T)} <:
+                       $MOI.Utilities.OrderedProductOfSets{$(T)}
             """
             During the copy, this counts the number of rows corresponding to
             each set. At the end of copy, `final_touch` is called, which

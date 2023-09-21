@@ -115,7 +115,7 @@ end
 
 function Base.show(io::IO, C::CachingOptimizer)
     indent = " "^get(io, :indent, 0)
-    MOIU.print_with_acronym(io, summary(C))
+    print_with_acronym(io, summary(C))
     print(io, "\n$(indent)in state $(C.state)")
     print(io, "\n$(indent)in mode $(C.mode)")
     print(io, "\n$(indent)with model cache ")
@@ -393,8 +393,8 @@ function MOI.add_constrained_variable(
     m::CachingOptimizer,
     set::S,
 ) where {S<:MOI.AbstractScalarSet}
-    if m.state == MOIU.ATTACHED_OPTIMIZER
-        if m.mode == MOIU.AUTOMATIC
+    if m.state == ATTACHED_OPTIMIZER
+        if m.mode == AUTOMATIC
             try
                 vindex_optimizer, cindex_optimizer =
                     MOI.add_constrained_variable(
@@ -422,7 +422,7 @@ function MOI.add_constrained_variable(
         end
     end
     vindex, cindex = MOI.add_constrained_variable(m.model_cache, set)
-    if m.state == MOIU.ATTACHED_OPTIMIZER
+    if m.state == ATTACHED_OPTIMIZER
         m.model_to_optimizer_map[vindex] = vindex_optimizer
         m.optimizer_to_model_map[vindex_optimizer] = vindex
         m.model_to_optimizer_map[cindex] = cindex_optimizer
