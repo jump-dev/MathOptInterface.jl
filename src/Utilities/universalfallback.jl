@@ -57,7 +57,7 @@ end
 function Base.show(io::IO, U::UniversalFallback)
     s(n) = n == 1 ? "" : "s"
     indent = " "^get(io, :indent, 0)
-    MOIU.print_with_acronym(io, summary(U))
+    print_with_acronym(io, summary(U))
     !(U.objective === nothing) && print(io, "\n$(indent)with objective")
     for (attr, name) in (
         (U.single_variable_constraints, "`VariableIndex` constraint"),

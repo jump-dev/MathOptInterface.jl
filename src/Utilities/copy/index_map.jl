@@ -35,7 +35,7 @@ end
 
 function _identity_constraints_map(
     model,
-    map::MOIU.DoubleDicts.IndexDoubleDictInner{F,S},
+    map::DoubleDicts.IndexDoubleDictInner{F,S},
 ) where {F,S}
     for c in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         map[c] = c

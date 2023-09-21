@@ -291,16 +291,16 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
             num_variables::Int64
         end
 
-        function $MOIU.broadcastcall(f::Function, model::$struct_name)
+        function $MOI.Utilities.broadcastcall(f::Function, model::$struct_name)
             $(Expr(:block, _callfield.(Ref(:f), types)...))
             return
         end
 
-        function $MOIU.broadcastvcat(f::Function, model::$struct_name)
+        function $MOI.Utilities.broadcastvcat(f::Function, model::$struct_name)
             return vcat($(_callfield.(Ref(:f), types)...))
         end
 
-        function $MOIU.mapreduce_constraints(
+        function $MOI.Utilities.mapreduce_constraints(
             f::Function,
             op::Function,
             model::$struct_name,
@@ -316,7 +316,7 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
         fun = t isa SymbolFun ? _typed(t) : :(MOI.AbstractFunction)
         set = t isa SymbolFun ? :(MOI.AbstractSet) : _typed(t)
         constraints_code = :(
-            function $MOIU.constraints(
+            function $MOI.Utilities.constraints(
                 model::$typed_struct,
                 ::Type{<:$fun},
                 ::Type{<:$set},
