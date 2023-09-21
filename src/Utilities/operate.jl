@@ -323,7 +323,12 @@ end
 ### 1c: operate(+, T, args...)
 
 function operate(::typeof(+), ::Type{T}, f, g, h, args...) where {T<:Number}
-    return operate!(+, T, operate(+, T, f, g), h, args...)
+    ret = operate(+, T, f, g)
+    ret = operate!(+, T, ret, h)
+    for a in args
+        ret = operate!(+, T, ret, a)
+    end
+    return ret
 end
 
 ### 2a: operate(::typeof(-), ::Type{T}, ::F)
@@ -1167,8 +1172,13 @@ end
 
 ### 1c: operate!(+, T, args...)
 
-function operate!(op::typeof(+), ::Type{T}, f, g, h, args...) where {T<:Number}
-    return operate!(+, T, operate!(op, T, f, g), h, args...)
+function operate!(::typeof(+), ::Type{T}, f, g, h, args...) where {T<:Number}
+    ret = operate!(+, T, f, g)
+    ret = operate!(+, T, ret, h)
+    for a in args
+        ret = operate!(+, T, ret, a)
+    end
+    return ret
 end
 
 ### 2a: operate!(::typeof(-), ::Type{T}, ::F)
