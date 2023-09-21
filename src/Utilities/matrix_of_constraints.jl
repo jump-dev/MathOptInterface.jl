@@ -228,7 +228,12 @@ function set_from_constants end
 
 Return the list of the types of the sets allowed in `sets`.
 """
-function set_types end
+function set_types(f::Any)
+    # Because these methods get defined in rather obtuse macros, it helps JET to
+    # have a default fallback implementation, even if it's identical to what
+    # would happen regardless.
+    return throw(MethodError(set_types, (typeof(f),)))
+end
 
 """
     set_index(sets, ::Type{S})::Union{Int,Nothing} where {S<:MOI.AbstractSet}
@@ -271,7 +276,7 @@ function rows end
 
 MOI.is_empty(v::MatrixOfConstraints) = MOI.is_empty(v.sets)
 
-function MOI.empty!(v::MatrixOfConstraints{T,AT,BT,ST}) where {T,AT,BT,ST}
+function MOI.empty!(v::MatrixOfConstraints{T}) where {T}
     MOI.empty!(v.coefficients)
     empty!(v.constants)
     MOI.empty!(v.sets)

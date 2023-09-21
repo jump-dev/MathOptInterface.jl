@@ -374,8 +374,9 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
     # Here we make an internal constructor for our type. It needs to be an
     # internal constructor to avoid someone trying to provide
     # `typed_struct(args...)` which will throw an error about `T not defined`.
+    nothings = fill(nothing, length(field_types))
     constructor_code = :(function $typed_struct() where {$T}
-        return new{$T}(0, $([:(nothing) for _ in field_types]...))
+        return new{$T}(0, $(nothings...))
     end)
     if type_parametrized
         # A bit confusing: we need to add the extra type parameters to `{T}`.

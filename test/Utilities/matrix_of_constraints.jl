@@ -630,6 +630,11 @@ function test_empty_product_of_sets(T = Int)
     return
 end
 
+function test_set_types_fallback()
+    @test_throws MethodError MOI.Utilities.set_types(1)
+    return
+end
+
 end
 
 TestMatrixOfConstraints.runtests()
