@@ -278,7 +278,7 @@ function MOI.modify(
             MOI.ModifyObjectiveNotAllowed(
                 change,
                 "Cannot modify objective when there is a " *
-                "`VariableIndex` objective",
+                "`VariableIndex` objective.",
             ),
         )
     elseif o.scalar_affine !== nothing
@@ -291,7 +291,7 @@ function MOI.modify(
             MOI.ModifyObjectiveNotAllowed(
                 change,
                 "Cannot modify objective when there is a " *
-                "`ScalarNonlinearFunction` objective",
+                "`ScalarNonlinearFunction` objective.",
             ),
         )
     elseif o.vector_variables !== nothing
@@ -299,7 +299,7 @@ function MOI.modify(
             MOI.ModifyObjectiveNotAllowed(
                 change,
                 "Cannot modify objective when there is a " *
-                "`VariableIndex` objective",
+                "`VectorOfVariables` objective.",
             ),
         )
     elseif o.vector_quadratic !== nothing
@@ -312,7 +312,7 @@ function MOI.modify(
             MOI.ModifyObjectiveNotAllowed(
                 change,
                 "Cannot modify objective when there is a " *
-                "`VectorNonlinearFunction` objective",
+                "`VectorNonlinearFunction` objective.",
             ),
         )
     else
