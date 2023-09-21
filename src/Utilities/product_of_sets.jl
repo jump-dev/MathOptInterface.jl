@@ -31,11 +31,9 @@ function _sets_code(esc_name, T, type_def, set_types...)
     end
     push!(
         code.args,
-        :(
-            function $MOI.Utilities.set_types(::$esc_name{$T}) where {$T}
-                return [$(esc_types...)]
-            end
-        ),
+        :(function $MOI.Utilities.set_types(::$esc_name{$T}) where {$T}
+            return [$(esc_types...)]
+        end),
     )
     return code
 end
