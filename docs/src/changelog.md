@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Added MathOptSetDistances to `solver-tests.yml` (#2265)
  - Updated Documenter (#2266)
- - Fixed various JET errors (#2267) (#2269) (#2270) (#2271) (#2276) (#2277)
+ - Fixed various JET errors (#2267) (#2269) (#2270) (#2271) (#2276) (#2277) (#2289)
  - Various style improvements
    - Replaced `using Package` with `import Package` where possible (#2274)
    - Removed `Utilities.EMPTYSTRING` (#2283)
