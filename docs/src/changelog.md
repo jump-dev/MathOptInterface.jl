@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    - Removed `Utilities.EMPTYSTRING` (#2283)
    - Removed unnecessary `const` acronyms in `Utilities` (#2280) (#2281)
    - Removed invalid and unused method (#2286)
+ - Refactored `src/Utilities/model.jl` (#2287)
 
 ## v1.20.0 (September 7, 2023)
 
