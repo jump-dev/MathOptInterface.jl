@@ -176,11 +176,50 @@ function _add_variables(::VectorOfConstraints, ::Int64) end
 
 # Deletion of variables in vector of variables
 
+"""
+    remove_variable(
+        f::MOI.AbstractFunction,
+        s::MOI.AbstractSet,
+        vi::MOI.VariableIndex,
+    )
+
+Return a tuple `(g, t)` representing the constraint `f`-in-`s` with the
+variable `vi` removed. That is, the terms containing the variable `vi` in the
+function `f` are removed and the dimension of the set `s` is updated if
+needed (e.g. when `f` is a `VectorOfVariables` with `vi` being one of the
+variables).
+"""
+remove_variable(f, s, vi::MOI.VariableIndex) = remove_variable(f, vi), s
+
+function remove_variable(f::MOI.VectorOfVariables, s, vi::MOI.VariableIndex)
+    g = remove_variable(f, vi)
+    if length(g.variables) != length(f.variables)
+        return g, MOI.update_dimension(s, length(g.variables))
+    end
+    return g, s
+end
+
 function _remove_variable(v::VectorOfConstraints, vi::MOI.VariableIndex)
     CleverDicts.map_values!(v.constraints) do (f, s)
         return remove_variable(f, s, vi)
     end
     return
+end
+
+function filter_variables(keep::F, f, s) where {F<:Function}
+    return filter_variables(keep, f), s
+end
+
+function filter_variables(
+    keep::F,
+    f::MOI.VectorOfVariables,
+    s,
+) where {F<:Function}
+    g = filter_variables(keep, f)
+    if length(g.variables) != length(f.variables)
+        return g, MOI.update_dimension(s, length(g.variables))
+    end
+    return g, s
 end
 
 function _filter_variables(keep::Function, v::VectorOfConstraints)
