@@ -1815,8 +1815,9 @@ function Base.getproperty(
     f::Symbol,
 )
     if f == :side_dimension
-        return getproperty(set.set, f)
+        return getproperty(getfield(set, :set), f)
     else
+        @assert f == :set
         return getfield(set, f)
     end
 end
