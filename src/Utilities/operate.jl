@@ -1168,6 +1168,9 @@ end
 ### 1c: operate!(+, T, args...)
 
 function operate!(::typeof(+), ::Type{T}, f, g, h, args...) where {T<:Number}
+    # In order to improve performance and avoid a `StackOverflow` if there are
+    # too many arguments, `afoldl` does not do recursion and fall back to a
+    # `for` loop if there are too many arguments.
     return Base.afoldl(
         (f, g) -> operate!(+, T, f, g),
         args...,
