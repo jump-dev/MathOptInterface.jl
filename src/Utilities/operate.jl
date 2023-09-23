@@ -323,12 +323,7 @@ end
 ### 1c: operate(+, T, args...)
 
 function operate(::typeof(+), ::Type{T}, f, g, h, args...) where {T<:Number}
-    ret = operate(+, T, f, g)
-    ret = operate!(+, T, ret, h)
-    for a in args
-        ret = operate!(+, T, ret, a)
-    end
-    return ret
+    return operate!(+, T, operate(+, T, f, g), h, args...)
 end
 
 ### 2a: operate(::typeof(-), ::Type{T}, ::F)
@@ -1173,12 +1168,10 @@ end
 ### 1c: operate!(+, T, args...)
 
 function operate!(::typeof(+), ::Type{T}, f, g, h, args...) where {T<:Number}
-    ret = operate!(+, T, f, g)
-    ret = operate!(+, T, ret, h)
-    for a in args
-        ret = operate!(+, T, ret, a)
-    end
-    return ret
+    return Base.afoldl(
+        (f, g) -> operate!(+, T, f, g),
+        args...,
+    )
 end
 
 ### 2a: operate!(::typeof(-), ::Type{T}, ::F)
