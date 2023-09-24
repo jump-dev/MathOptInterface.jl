@@ -7,6 +7,28 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.20.1 (September 24, 2023)
+
+### Fixed
+
+ - Removed incorrect `kwargs` in some `copy_to` methods (#2272)
+ - Fixed [`ConstraintDualStart`](@ref) for [`Bridges.Constraint.SplitIntervalBridge`](@ref)
+   (#2275)
+ - Fixed `MethodError` when trying to modify a variable objective (#2278)
+ - Fixed stack-overflow in `Utilities.operate(+,...)` with many arguments (#2285) (#2290)
+
+### Other
+
+ - Added MathOptSetDistances to `solver-tests.yml` (#2265)
+ - Updated Documenter (#2266)
+ - Fixed various JET errors (#2267) (#2269) (#2270) (#2271) (#2276) (#2277) (#2289)
+ - Various style improvements
+   - Replaced `using Package` with `import Package` where possible (#2274)
+   - Removed `Utilities.EMPTYSTRING` (#2283)
+   - Removed unnecessary `const` acronyms in `Utilities` (#2280) (#2281)
+   - Removed invalid and unused method (#2286)
+ - Refactored `src/Utilities/model.jl` (#2287)
+
 ## v1.20.0 (September 7, 2023)
 
 ### Added
