@@ -101,3 +101,4 @@ The following attributes are available:
  * [`SolveTimeSec`](@ref)
  * [`TimeLimitSec`](@ref)
  * [`ObjectiveLimit`](@ref)
+ * [`SolutionLimit`](@ref)

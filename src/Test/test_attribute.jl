@@ -216,6 +216,32 @@ function setup_test(
     return
 end
 
+function test_attribute_SolutionLimit(model::MOI.AbstractOptimizer, ::Config)
+    @requires MOI.supports(model, MOI.SolutionLimit())
+    # Get the current value to restore it at the end of the test
+    value = MOI.get(model, MOI.SolutionLimit())
+    MOI.set(model, MOI.SolutionLimit(), 3)
+    @test MOI.get(model, MOI.SolutionLimit()) == 3
+    MOI.set(model, MOI.SolutionLimit(), nothing)
+    @test MOI.get(model, MOI.SolutionLimit()) === nothing
+    MOI.set(model, MOI.SolutionLimit(), 1)
+    @test MOI.get(model, MOI.SolutionLimit()) == 1
+    MOI.set(model, MOI.SolutionLimit(), value)
+    _test_attribute_value_type(model, MOI.SolutionLimit())
+    return
+end
+
+test_attribute_SolutionLimit(::MOI.ModelLike, ::Config) = nothing
+
+function setup_test(
+    ::typeof(test_attribute_SolutionLimit),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOI.set(model, MOI.SolutionLimit(), nothing)
+    return
+end
+
 """
     test_attribute_AbsoluteGapTolerance(model::MOI.AbstractOptimizer, config::Config)
 

@@ -868,6 +868,35 @@ the [`TerminationStatus`](@ref) should be `OBJECTIVE_LIMIT`.
 struct ObjectiveLimit <: AbstractOptimizerAttribute end
 
 """
+    SolutionLimit()
+
+An optimizer attribute for setting a limit on the number of available feasible
+solutions.
+
+## Default values
+
+The provided limit must be a `Union{Nothing,Int}`.
+
+When `set` to `nothing`, the limit reverts to the solver's default.
+
+The default value is `nothing`.
+
+## Termination criteria
+
+The solver may stop when the [`ResultCount`](@ref) is larger than or equal to
+the `SolutionLimit`. If stopped because of this attribute, the
+[`TerminationStatus`](@ref) must be `SOLUTION_LIMIT`.
+
+## Solution quality
+
+The quality of the available solutions is solver-dependent. The set of resulting
+solutions is not guaranteed to contain an optimal solution.
+"""
+struct SolutionLimit <: AbstractOptimizerAttribute end
+
+attribute_value_type(::SolutionLimit) = Union{Nothing,Int}
+
+"""
     RawOptimizerAttribute(name::String)
 
 An optimizer attribute for the solver-specific parameter identified by `name`.
