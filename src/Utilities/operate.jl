@@ -323,12 +323,7 @@ end
 ### 1c: operate(+, T, args...)
 
 function operate(::typeof(+), ::Type{T}, f, g, h, args...) where {T<:Number}
-    ret = operate(+, T, f, g)
-    ret = operate!(+, T, ret, h)
-    for a in args
-        ret = operate!(+, T, ret, a)
-    end
-    return ret
+    return operate!(+, T, operate(+, T, f, g), h, args...)
 end
 
 ### 2a: operate(::typeof(-), ::Type{T}, ::F)
@@ -1173,12 +1168,10 @@ end
 ### 1c: operate!(+, T, args...)
 
 function operate!(::typeof(+), ::Type{T}, f, g, h, args...) where {T<:Number}
-    ret = operate!(+, T, f, g)
-    ret = operate!(+, T, ret, h)
-    for a in args
-        ret = operate!(+, T, ret, a)
-    end
-    return ret
+    # In order to improve performance and avoid a `StackOverflow` if there are
+    # too many arguments, `foldl` does not do recursion and fall back to a
+    # `for` loop if there are too many arguments.
+    return foldl((x, y) -> operate!(+, T, x, y), (f, g, h, args...))
 end
 
 ### 2a: operate!(::typeof(-), ::Type{T}, ::F)
