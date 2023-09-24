@@ -7,7 +7,7 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.20.1 (September 22, 2023)
+## v1.20.1 (September 24, 2023)
 
 ### Fixed
 
@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Fixed [`ConstraintDualStart`](@ref) for [`Bridges.Constraint.SplitIntervalBridge`](@ref)
    (#2275)
  - Fixed `MethodError` when trying to modify a variable objective (#2278)
- - Fixed stack-overflow in `Utilities.operate(+,...)` with many arguments (#2285)
+ - Fixed stack-overflow in `Utilities.operate(+,...)` with many arguments (#2285) (#2290)
 
 ### Other
 
