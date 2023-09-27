@@ -163,8 +163,6 @@ function Base.show(io::IO, ::Model)
     return
 end
 
-include("nonlinear.jl")
-
 include("read.jl")
 include("write.jl")
 

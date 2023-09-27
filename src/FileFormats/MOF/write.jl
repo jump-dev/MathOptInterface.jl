@@ -41,6 +41,78 @@ function write_variables(object, model::Model)
     return name_map
 end
 
+function _lift_variable_indices(expr::Expr)
+    if expr.head == :ref && length(expr.args) == 2 && expr.args[1] == :x
+        return expr.args[2]
+    else
+        for (index, arg) in enumerate(expr.args)
+            expr.args[index] = _lift_variable_indices(arg)
+        end
+    end
+    return expr
+end
+
+_lift_variable_indices(arg) = arg  # Recursion fallback.
+
+function _extract_function_and_set(expr::Expr)
+    if expr.head == :call  # One-sided constraint or foo-in-set.
+        @assert length(expr.args) == 3
+        if expr.args[1] == :in
+            # return expr.args[2], expr.args[3]
+            error("Constraints of the form foo-in-set aren't supported yet.")
+        elseif expr.args[1] == :(<=)
+            return expr.args[2], MOI.LessThan(expr.args[3])
+        elseif expr.args[1] == :(>=)
+            return expr.args[2], MOI.GreaterThan(expr.args[3])
+        elseif expr.args[1] == :(==)
+            return expr.args[2], MOI.EqualTo(expr.args[3])
+        end
+    elseif expr.head == :comparison  # Two-sided constraint.
+        @assert length(expr.args) == 5
+        if expr.args[2] == expr.args[4] == :(<=)
+            return expr.args[3], MOI.Interval(expr.args[1], expr.args[5])
+        elseif expr.args[2] == expr.args[4] == :(>=)
+            return expr.args[3], MOI.Interval(expr.args[5], expr.args[1])
+        end
+    end
+    return error("Oops. The constraint $(expr) wasn't recognised.")
+end
+
+function write_nlpblock(
+    object::T,
+    model::Model,
+    name_map::Dict{MOI.VariableIndex,String},
+) where {T<:Object}
+    nlp_block = MOI.get(model, MOI.NLPBlock())
+    if nlp_block === nothing
+        return
+    end
+    MOI.initialize(nlp_block.evaluator, [:ExprGraph])
+    variables = MOI.get(model, MOI.ListOfVariableIndices())
+    if nlp_block.has_objective
+        objective = MOI.objective_expr(nlp_block.evaluator)
+        objective = _lift_variable_indices(objective)
+        sense = MOI.get(model, MOI.ObjectiveSense())
+        object["objective"] = T(
+            "sense" => moi_to_object(sense),
+            "function" => moi_to_object(Nonlinear(objective), name_map),
+        )
+    end
+    for (row, bounds) in enumerate(nlp_block.constraint_bounds)
+        constraint = MOI.constraint_expr(nlp_block.evaluator, row)
+        (func, set) = _extract_function_and_set(constraint)
+        func = _lift_variable_indices(func)
+        push!(
+            object["constraints"],
+            T(
+                "function" => moi_to_object(Nonlinear(func), name_map),
+                "set" => moi_to_object(set, name_map),
+            ),
+        )
+    end
+    return
+end
+
 function write_objective(
     object::T,
     model::Model,
@@ -139,12 +211,85 @@ function moi_to_object(
     return OrderedObject("type" => "Variable", "name" => name_map[foo])
 end
 
+
+function _convert_nonlinear_to_mof(
+    expr::Expr,
+    node_list::Vector{T},
+    name_map::Dict{MOI.VariableIndex,String},
+) where {T<:Object}
+    if expr.head != :call
+        error("Expected an expression that was a function. Got $(expr).")
+    end
+    node = T("type" => string(expr.args[1]), "args" => T[])
+    for i in 2:length(expr.args)
+        arg = expr.args[i]
+        push!(node["args"], _convert_nonlinear_to_mof(arg, node_list, name_map))
+    end
+    push!(node_list, node)
+    return T("type" => "node", "index" => length(node_list))
+end
+
+function _convert_nonlinear_to_mof(
+    f::MOI.ScalarNonlinearFunction,
+    node_list::Vector{T},
+    name_map::Dict{MOI.VariableIndex,String},
+) where {T<:Object}
+    node = T("type" => string(f.head), "args" => T[])
+    for arg in f.args
+        push!(node["args"], _convert_nonlinear_to_mof(arg, node_list, name_map))
+    end
+    push!(node_list, node)
+    return T("type" => "node", "index" => length(node_list))
+end
+
+function _convert_nonlinear_to_mof(
+    variable::MOI.VariableIndex,
+    ::Vector{T},
+    name_map::Dict{MOI.VariableIndex,String},
+) where {T<:Object}
+    return T("type" => "variable", "name" => name_map[variable])
+end
+
+function _convert_nonlinear_to_mof(
+    value::Real,
+    ::Vector{T},
+    name_map::Dict{MOI.VariableIndex,String},
+) where {T<:Object}
+    return T("type" => "real", "value" => value)
+end
+
+function _convert_nonlinear_to_mof(
+    value::Complex,
+    ::Vector{T},
+    ::Dict{MOI.VariableIndex,String},
+) where {T<:Object}
+    return T("type" => "complex", "real" => real(value), "imag" => imag(value))
+end
+
+function _convert_nonlinear_to_mof(
+    fallback,
+    ::Vector{<:Object},
+    ::Dict{MOI.VariableIndex,String},
+)
+    return error("Unexpected $(typeof(fallback)) encountered: $(fallback).")
+end
+
+function moi_to_object(foo::Nonlinear, name_map::Dict{MOI.VariableIndex,String})
+    node_list = OrderedObject[]
+    foo_object = _convert_nonlinear_to_mof(foo.expr, node_list, name_map)
+    return OrderedObject(
+        "type" => "ScalarNonlinearFunction",
+        "root" => foo_object,
+        "node_list" => node_list,
+    )
+end
+
 function moi_to_object(
     foo::MOI.ScalarNonlinearFunction,
     name_map::Dict{MOI.VariableIndex,String},
 )
     node_list = OrderedObject[]
-    root = convert_expr_to_mof(foo, node_list, name_map)
+    root = _convert_nonlinear_to_mof(foo, node_list, name_map)
     return OrderedObject(
         "type" => "ScalarNonlinearFunction",
         "root" => root,
@@ -215,7 +360,7 @@ function moi_to_object(
     name_map::Dict{MOI.VariableIndex,String},
 )
     node_list = OrderedObject[]
-    rows = [convert_expr_to_mof(f, node_list, name_map) for f in foo.rows]
+    rows = [_convert_nonlinear_to_mof(f, node_list, name_map) for f in foo.rows]
     return OrderedObject(
         "type" => "VectorNonlinearFunction",
         "rows" => rows,

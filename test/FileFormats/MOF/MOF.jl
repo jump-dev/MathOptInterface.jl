@@ -143,37 +143,37 @@ function test_nonlinear_error_handling()
     string_to_variable = Dict{String,MOI.VariableIndex}()
     variable_to_string = Dict{MOI.VariableIndex,String}()
     # Test unsupported function for Expr -> MOF.
-    @test_throws Exception MOF.convert_expr_to_mof(
+    @test_throws Exception MOF._convert_nonlinear_to_mof(
         :(not_supported_function(x)),
         node_list,
         variable_to_string,
     )
     # Test n-ary function with no arguments.
-    @test_throws Exception MOF.convert_expr_to_mof(
+    @test_throws Exception MOF._convert_nonlinear_to_mof(
         :(min()),
         node_list,
         variable_to_string,
     )
     # Test unary function with two arguments.
-    @test_throws Exception MOF.convert_expr_to_mof(
+    @test_throws Exception MOF._convert_nonlinear_to_mof(
         :(sin(x, y)),
         node_list,
         variable_to_string,
     )
     # Test binary function with one arguments.
-    @test_throws Exception MOF.convert_expr_to_mof(
+    @test_throws Exception MOF._convert_nonlinear_to_mof(
         :(^(x)),
         node_list,
         variable_to_string,
     )
     # An expression with something other than :call as the head.
-    @test_throws Exception MOF.convert_expr_to_mof(
+    @test_throws Exception MOF._convert_nonlinear_to_mof(
         :(a <= b <= c),
         node_list,
         variable_to_string,
     )
     # Hit the default fallback with an un-interpolated complex number.
-    @test_throws Exception MOF.convert_expr_to_mof(
+    @test_throws Exception MOF._convert_nonlinear_to_mof(
         :(1 + 2im),
         node_list,
         variable_to_string,
@@ -184,15 +184,15 @@ function test_nonlinear_error_handling()
         [MOI.VariableIndex(1)],
     )
     # Function-in-Set
-    @test_throws Exception MOF.extract_function_and_set(:(foo in set))
+    @test_throws Exception MOF._extract_function_and_set(:(foo in set))
     # Not a constraint.
-    @test_throws Exception MOF.extract_function_and_set(:(x^2))
+    @test_throws Exception MOF._extract_function_and_set(:(x^2))
     # Two-sided constraints
-    @test MOF.extract_function_and_set(:(1 <= x <= 2)) ==
-          MOF.extract_function_and_set(:(2 >= x >= 1)) ==
+    @test MOF._extract_function_and_set(:(1 <= x <= 2)) ==
+          MOF._extract_function_and_set(:(2 >= x >= 1)) ==
           (:x, MOI.Interval(1, 2))
     # Less-than constraint.
-    @test MOF.extract_function_and_set(:(x <= 2)) == (:x, MOI.LessThan(2))
+    @test MOF._extract_function_and_set(:(x <= 2)) == (:x, MOI.LessThan(2))
 end
 
 function _convert_mof_to_expr(
@@ -264,7 +264,7 @@ function test_Roundtrip_nonlinear_expressions()
         :(ifelse($x > 0, 1, $y)),
     ]
         node_list = MOF.OrderedObject[]
-        object = MOF.convert_expr_to_mof(expr, node_list, var_to_string)
+        object = MOF._convert_nonlinear_to_mof(expr, node_list, var_to_string)
         @test _convert_mof_to_expr(object, node_list, string_to_var) == expr
     end
     return
