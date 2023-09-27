@@ -903,10 +903,7 @@ function test_Issue1992_supports_ConstraintDualStart_VariableIndex()
     model = MOI.Bridges.full_bridge_optimizer(_Issue1992(true), Float64)
     x, _ = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
     c = MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.Nonnegatives(1))
-    # !!! warning
-    #     This test is broken with a false negative. See the discussion in
-    #     PR#1992.
-    @test_broken MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
+    @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
     return
 end
 
@@ -919,11 +916,7 @@ function test_bridge_supports_issue_1992()
         MOI.VectorOfVariables([x]),
         MOI.Nonpositives(1),
     )
-    # !!! warning
-    #     This test is broken with a false negative. (Getting and setting the
-    #     attribute works, even though supports is false) See the discussion in
-    #     PR#1992.
-    @test_broken MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
+    @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
     @test MOI.get(model, MOI.ConstraintDualStart(), c) === nothing
     MOI.set(model, MOI.ConstraintDualStart(), c, [1.0])
     @test MOI.get(model, MOI.ConstraintDualStart(), c) == [1.0]
