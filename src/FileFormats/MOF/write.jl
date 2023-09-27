@@ -265,14 +265,6 @@ function _convert_nonlinear_to_mof(
     return T("type" => "complex", "real" => real(value), "imag" => imag(value))
 end
 
-function _convert_nonlinear_to_mof(
-    fallback,
-    ::Vector{<:Object},
-    ::Dict{MOI.VariableIndex,String},
-)
-    return error("Unexpected $(typeof(fallback)) encountered: $(fallback).")
-end
-
 function moi_to_object(foo::Nonlinear, name_map::Dict{MOI.VariableIndex,String})
     node_list = OrderedObject[]
     foo_object = _convert_nonlinear_to_mof(foo.expr, node_list, name_map)
