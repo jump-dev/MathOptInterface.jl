@@ -148,12 +148,6 @@ function test_nonlinear_error_handling()
         node_list,
         variable_to_string,
     )
-    # Test unsupported function for MOF -> Expr.
-    @test_throws Exception MOF.convert_mof_to_expr(
-        MOF.OrderedObject("type" => "not_supported_function", "value" => 1),
-        node_list,
-        string_to_variable,
-    )
     # Test n-ary function with no arguments.
     @test_throws Exception MOF.convert_expr_to_mof(
         :(min()),
@@ -201,6 +195,33 @@ function test_nonlinear_error_handling()
     @test MOF.extract_function_and_set(:(x <= 2)) == (:x, MOI.LessThan(2))
 end
 
+function _convert_mof_to_expr(
+    node::T,
+    node_list::Vector{T},
+    name_map::Dict{String,MOI.VariableIndex},
+) where {T}
+    head = haskey(node, "type") ? node["type"] : node["head"]
+    if head == "real"
+        return node["value"]
+    elseif head == "complex"
+        return Complex(node["real"], node["imag"])
+    elseif head == "variable"
+        return name_map[node["name"]]
+    elseif head == "node"
+        return _convert_mof_to_expr(
+            node_list[node["index"]],
+            node_list,
+            name_map,
+        )
+    else
+        expr = Expr(:call, Symbol(head))
+        for arg in node["args"]
+            push!(expr.args, _convert_mof_to_expr(arg, node_list, name_map))
+        end
+        return expr
+    end
+end
+
 function test_Roundtrip_nonlinear_expressions()
     x = MOI.VariableIndex(123)
     y = MOI.VariableIndex(456)
@@ -244,8 +265,9 @@ function test_Roundtrip_nonlinear_expressions()
     ]
         node_list = MOF.OrderedObject[]
         object = MOF.convert_expr_to_mof(expr, node_list, var_to_string)
-        @test MOF.convert_mof_to_expr(object, node_list, string_to_var) == expr
+        @test _convert_mof_to_expr(object, node_list, string_to_var) == expr
     end
+    return
 end
 
 function test_nonlinear_readingwriting()

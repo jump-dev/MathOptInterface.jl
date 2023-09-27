@@ -270,12 +270,8 @@ function _parse_scalar_nonlinear_function(
             node_list,
             name_map,
         )
-    elseif !haskey(STRING_TO_FUNCTION, head)
-        throw(MOI.UnsupportedNonlinearOperator(Symbol(head)))
     end
-    julia_symbol, arity = STRING_TO_FUNCTION[head]
-    validate_arguments(head, arity, length(node["args"]))
-    f = MOI.ScalarNonlinearFunction(julia_symbol, Any[])
+    f = MOI.ScalarNonlinearFunction(Symbol(head), Any[])
     for arg in node["args"]
         push!(
             f.args,
