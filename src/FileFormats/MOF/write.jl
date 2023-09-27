@@ -211,7 +211,6 @@ function moi_to_object(
     return OrderedObject("type" => "Variable", "name" => name_map[foo])
 end
 
-
 function _convert_nonlinear_to_mof(
     expr::Expr,
     node_list::Vector{T},
