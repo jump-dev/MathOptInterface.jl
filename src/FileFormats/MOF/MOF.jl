@@ -19,9 +19,7 @@ MathOptInterface.
 """
 const SCHEMA_PATH = joinpath(@__DIR__, "mof.schema.json")
 
-const VERSION = v"1.6"
-
-const SUPPORTED_VERSIONS = (
+const _SUPPORTED_VERSIONS = (
     v"1.6",
     v"1.5",
     v"1.4",

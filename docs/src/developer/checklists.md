@@ -129,9 +129,9 @@ Use this checklist when updating the version of MathOptFormat.
 ```
 ## Basic
 
- - [ ] The file at `src/FileFormats/MOF/mof.X.Y.schema.json` is updated
- - [ ] The constants `SCHEMA_PATH`, `VERSION`, and `SUPPORTED_VERSIONS` are
-       updated in `src/FileFormats/MOF/MOF.jl`
+ - [ ] The file at `src/FileFormats/MOF/mof.schema.json` is updated
+ - [ ] The constant `_SUPPORTED_VERSIONS` is updated in
+       `src/FileFormats/MOF/MOF.jl`
 
 ## New sets
 

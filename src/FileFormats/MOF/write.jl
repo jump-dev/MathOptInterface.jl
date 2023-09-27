@@ -14,8 +14,8 @@ function Base.write(io::IO, model::Model)
     object = OrderedObject(
         "name" => "MathOptFormat Model",
         "version" => OrderedObject(
-            "major" => Int(VERSION.major),
-            "minor" => Int(VERSION.minor),
+            "major" => Int(_SUPPORTED_VERSIONS[1].major),
+            "minor" => Int(_SUPPORTED_VERSIONS[1].minor),
         ),
         "variables" => Object[],
         "objective" => OrderedObject("sense" => "feasibility"),

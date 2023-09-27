@@ -15,10 +15,11 @@ function Base.read!(io::IO, model::Model)
     end
     object = JSON.parse(io; dicttype = UnorderedObject)
     file_version = _parse_mof_version(object["version"]::UnorderedObject)
-    if !(file_version in SUPPORTED_VERSIONS)
+    if !(file_version in _SUPPORTED_VERSIONS)
+        version = _SUPPORTED_VERSIONS[1]
         error(
             "Sorry, the file can't be read because this library supports " *
-            "v$(VERSION) of MathOptFormat, but the file you are trying to " *
+            "v$version of MathOptFormat, but the file you are trying to " *
             "read is v$(file_version).",
         )
     end
@@ -216,9 +217,10 @@ function function_to_moi(
     ::Object,
     ::Dict{String,MOI.VariableIndex},
 ) where {FunctionSymbol}
+
     return error(
-        "Version $(VERSION) of MathOptFormat does not support the function: " *
-        "$(FunctionSymbol).",
+        "Version $(_SUPPORTED_VERSIONS[1]) of MathOptFormat does not support " *
+        "the function: $(FunctionSymbol).",
     )
 end
 
