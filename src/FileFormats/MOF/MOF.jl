@@ -11,8 +11,16 @@ import OrderedCollections: OrderedDict
 import JSON
 import MathOptInterface as MOI
 
-const SCHEMA_PATH = joinpath(@__DIR__, "mof.1.6.schema.json")
+"""
+    SCHEMA_PATH::String
+
+The path to the latest version of the MathOptFormat schema supported by
+MathOptInterface.
+"""
+const SCHEMA_PATH = joinpath(@__DIR__, "mof.schema.json")
+
 const VERSION = v"1.6"
+
 const SUPPORTED_VERSIONS = (
     v"1.6",
     v"1.5",

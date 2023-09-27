@@ -442,7 +442,7 @@
                     }
                 }
             }, {
-                "description": "The vector-valued nonlinear function `f(x)`.",
+                "description": "The vector-valued nonlinear function `f(x)`, comprised of a vector of `ScalarNonlinearFunction`.",
                 "required": ["rows", "node_list"],
                 "properties": {
                     "type": {
