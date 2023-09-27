@@ -217,7 +217,6 @@ function function_to_moi(
     ::Object,
     ::Dict{String,MOI.VariableIndex},
 ) where {FunctionSymbol}
-
     return error(
         "Version $(_SUPPORTED_VERSIONS[1]) of MathOptFormat does not support " *
         "the function: $(FunctionSymbol).",
