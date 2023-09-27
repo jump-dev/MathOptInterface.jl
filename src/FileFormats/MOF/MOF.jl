@@ -123,7 +123,7 @@ function get_options(m::Model)
     return get(
         m.model.ext,
         :MOF_OPTIONS,
-        Options(false, false, MOI.Nonlinear.SparseReverseMode(), true),
+        Options(false, false, MOI.Nonlinear.SparseReverseMode(), false),
     )
 end
 
@@ -140,7 +140,7 @@ Keyword arguments are:
  - `differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation = MOI.Nonlinear.SparseReverseMode()`:
    automatic differentiation backend to use when reading models with nonlinear
    constraints and objectives.
- - `parse_as_nlpblock::Bool=true`: if `true` parse `"ScalarNonlinearFunction"`
+ - `parse_as_nlpblock::Bool=false`: if `true` parse `"ScalarNonlinearFunction"`
    into an `MOI.NLPBlock`. If `false`, `"ScalarNonlinearFunction"` are parsed as
    `MOI.ScalarNonlinearFunction` functions.
 """
@@ -148,7 +148,7 @@ function Model(;
     print_compact::Bool = false,
     warn::Bool = false,
     differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation = MOI.Nonlinear.SparseReverseMode(),
-    parse_as_nlpblock::Bool = true,
+    parse_as_nlpblock::Bool = false,
 )
     model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
     model.model.ext[:MOF_OPTIONS] =

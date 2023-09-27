@@ -119,7 +119,7 @@ function test_HS071()
 end
 
 function test_read_HS071()
-    model = MOF.Model()
+    model = MOF.Model(; parse_as_nlpblock = true)
     MOI.read_from_file(model, joinpath(@__DIR__, "nlp.mof.json"))
     @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) ==
           Tuple{Type,Type}[(MOI.VariableIndex, MOI.Interval{Float64})]
@@ -283,7 +283,7 @@ function test_nonlinear_readingwriting()
     MOI.set(model, MOI.ConstraintName(), con, "con")
     MOI.write_to_file(model, TEST_MOF_FILE)
     # Read the model back in.
-    model2 = MOF.Model()
+    model2 = MOF.Model(; parse_as_nlpblock = true)
     MOI.read_from_file(model2, TEST_MOF_FILE)
     block = MOI.get(model2, MOI.NLPBlock())
     MOI.initialize(block.evaluator, [:ExprGraph])
@@ -748,8 +748,7 @@ variables: x
 minobjective: ScalarNonlinearFunction(exp(x))
 """,
         ["x"],
-        String[];
-        parse_as_nlpblock = false,
+        String[],
     )
 end
 
@@ -760,8 +759,7 @@ variables: x
 c1: ScalarNonlinearFunction(exp(x)^2) <= 1.0
 """,
         ["x"],
-        ["c1"];
-        parse_as_nlpblock = false,
+        ["c1"],
     )
 end
 
@@ -1423,7 +1421,7 @@ function test_parse_nonlinear_objective_only()
 }""",
     )
     seekstart(io)
-    model = MOF.Model()
+    model = MOF.Model(; parse_as_nlpblock = true)
     read!(io, model)
     block = MOI.get(model, MOI.NLPBlock())
     @test block isa MOI.NLPBlockData
