@@ -15,17 +15,6 @@ function moi_to_object(foo::Nonlinear, name_map::Dict{MOI.VariableIndex,String})
     )
 end
 
-# Overload for reading.
-function function_to_moi(
-    ::Val{:ScalarNonlinearFunction},
-    object::T,
-    name_map::Dict{String,MOI.VariableIndex},
-) where {T<:Object}
-    node_list = T.(object["node_list"])
-    expr = convert_mof_to_expr(object["root"], node_list, name_map)
-    return Nonlinear(expr)
-end
-
 function lift_variable_indices(expr::Expr)
     if expr.head == :ref && length(expr.args) == 2 && expr.args[1] == :x
         return expr.args[2]
@@ -340,6 +329,24 @@ function convert_expr_to_mof(
     validate_arguments(function_name, arity, length(expr.args) - 1)
     node = T("type" => mathoptformat_string, "args" => T[])
     for arg in @view(expr.args[2:end])
+        push!(node["args"], convert_expr_to_mof(arg, node_list, name_map))
+    end
+    push!(node_list, node)
+    return T("type" => "node", "index" => length(node_list))
+end
+
+function convert_expr_to_mof(
+    f::MOI.ScalarNonlinearFunction,
+    node_list::Vector{T},
+    name_map::Dict{MOI.VariableIndex,String},
+) where {T<:Object}
+    if !haskey(FUNCTION_TO_STRING, f.head)
+        throw(MOI.UnsupportedNonlinearOperator(f.head))
+    end
+    mathoptformat_string, arity = FUNCTION_TO_STRING[f.head]
+    validate_arguments(f.head, arity, length(f.args))
+    node = T("type" => mathoptformat_string, "args" => T[])
+    for arg in f.args
         push!(node["args"], convert_expr_to_mof(arg, node_list, name_map))
     end
     push!(node_list, node)

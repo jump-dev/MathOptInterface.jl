@@ -48,20 +48,29 @@ function _validate(filename::String)
                 ret,
             )
         end
+        return
     end
+    return
 end
 
 struct UnsupportedSet <: MOI.AbstractSet end
 struct UnsupportedFunction <: MOI.AbstractFunction end
 
-function _test_model_equality(model_string, variables, constraints; suffix = "")
-    model = MOF.Model()
+function _test_model_equality(
+    model_string,
+    variables,
+    constraints;
+    suffix = "",
+    kwargs...,
+)
+    model = MOF.Model(; kwargs...)
     MOI.Utilities.loadfromstring!(model, model_string)
     MOI.write_to_file(model, TEST_MOF_FILE * suffix)
-    model_2 = MOF.Model()
+    model_2 = MOF.Model(; kwargs...)
     MOI.read_from_file(model_2, TEST_MOF_FILE * suffix)
     MOI.Test.util_test_models_equal(model, model_2, variables, constraints)
-    return _validate(TEST_MOF_FILE * suffix)
+    _validate(TEST_MOF_FILE * suffix)
+    return
 end
 
 # hs071
@@ -706,6 +715,52 @@ minobjective: x
 c1: [1.0*x*x + -2.0x + 1.0, 2.0y + -4.0] in Nonnegatives(2)
 """,
         ["x", "y"],
+        ["c1"],
+    )
+end
+
+function test_scalarnonlinearfunction_objective()
+    return _test_model_equality(
+        """
+variables: x
+minobjective: ScalarNonlinearFunction(exp(x))
+""",
+        ["x"],
+        String[];
+        parse_as_nlpblock = false,
+    )
+end
+
+function test_scalarnonlinearfunction_constraint()
+    return _test_model_equality(
+        """
+variables: x
+c1: ScalarNonlinearFunction(exp(x)^2) <= 1.0
+""",
+        ["x"],
+        ["c1"];
+        parse_as_nlpblock = false,
+    )
+end
+
+function test_vectornonlinearfunction_objective()
+    return _test_model_equality(
+        """
+variables: x
+minobjective: VectorNonlinearFunction([exp(x), sin(x)^2])
+""",
+        ["x"],
+        String[],
+    )
+end
+
+function test_vectornonlinearfunction_constraint()
+    return _test_model_equality(
+        """
+variables: x
+c1: VectorNonlinearFunction([exp(x), x]) in Complements(2)
+""",
+        ["x"],
         ["c1"],
     )
 end

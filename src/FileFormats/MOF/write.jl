@@ -70,6 +70,7 @@ function write_constraints(
             push!(object["constraints"], moi_to_object(index, model, name_map))
         end
     end
+    return
 end
 
 """
@@ -138,6 +139,19 @@ function moi_to_object(
     return OrderedObject("type" => "Variable", "name" => name_map[foo])
 end
 
+function moi_to_object(
+    foo::MOI.ScalarNonlinearFunction,
+    name_map::Dict{MOI.VariableIndex,String},
+)
+    node_list = OrderedObject[]
+    root = convert_expr_to_mof(foo, node_list, name_map)
+    return OrderedObject(
+        "type" => "ScalarNonlinearFunction",
+        "root" => root,
+        "node_list" => node_list,
+    )
+end
+
 # ========== Typed scalar functions ==========
 
 function moi_to_object(
@@ -193,6 +207,19 @@ function moi_to_object(
     return OrderedObject(
         "type" => "VectorOfVariables",
         "variables" => [name_map[variable] for variable in foo.variables],
+    )
+end
+
+function moi_to_object(
+    foo::MOI.VectorNonlinearFunction,
+    name_map::Dict{MOI.VariableIndex,String},
+)
+    node_list = OrderedObject[]
+    rows = [convert_expr_to_mof(f, node_list, name_map) for f in foo.rows]
+    return OrderedObject(
+        "type" => "VectorNonlinearFunction",
+        "rows" => rows,
+        "node_list" => node_list,
     )
 end
 

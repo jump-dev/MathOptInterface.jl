@@ -25,38 +25,39 @@ function Base.read!(io::IO, model::Model)
     name_map = read_variables(model, object)
     read_objective(model, object, name_map)
     read_constraints(model, object, name_map)
-    _convert_to_nlpblock(model)
+    options = get_options(model)
+    if options.parse_as_nlpblock
+        _convert_to_nlpblock(model)
+    end
     return
 end
 
 function _convert_to_nlpblock(model::Model)
     needs_nlp_block = false
     nlp_model = MOI.Nonlinear.Model()
+    F = MOI.ScalarNonlinearFunction
     for S in (
         MOI.LessThan{Float64},
         MOI.GreaterThan{Float64},
         MOI.EqualTo{Float64},
         MOI.Interval{Float64},
     )
-        for ci in MOI.get(model, MOI.ListOfConstraintIndices{Nonlinear,S}())
+        for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             f = MOI.get(model, MOI.ConstraintFunction(), ci)
             set = MOI.get(model, MOI.ConstraintSet(), ci)
-            MOI.Nonlinear.add_constraint(nlp_model, f.expr, set)
+            MOI.Nonlinear.add_constraint(nlp_model, f, set)
             # We don't need this in `model` any more.
             MOI.delete(model, ci)
             needs_nlp_block = true
         end
     end
-    if MOI.get(model, MOI.ObjectiveFunctionType()) == Nonlinear
-        obj = MOI.get(model, MOI.ObjectiveFunction{Nonlinear}())
-        MOI.Nonlinear.set_objective(nlp_model, obj.expr)
+    if MOI.get(model, MOI.ObjectiveFunctionType()) == F
+        obj = MOI.get(model, MOI.ObjectiveFunction{F}())
+        MOI.Nonlinear.set_objective(nlp_model, obj)
         MOI.set(
             model,
             MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-            MOI.ScalarAffineFunction{Float64}(
-                MOI.ScalarAffineTerm{Float64}[],
-                0.0,
-            ),
+            zero(MOI.ScalarAffineFunction{Float64})
         )
         needs_nlp_block = true
     end
@@ -193,6 +194,7 @@ end
     VectorAffineFunction,
     VectorQuadraticFunction,
     ScalarNonlinearFunction,
+    VectorNonlinearFunction,
 )
 
 """
@@ -238,6 +240,49 @@ function function_to_moi(
     name_map::Dict{String,MOI.VariableIndex},
 )
     return name_map[object["name"]::String]
+end
+
+function function_to_moi(
+    ::Val{:ScalarNonlinearFunction},
+    object::T,
+    name_map::Dict{String,MOI.VariableIndex},
+) where {T<:Object}
+    node_list = T.(object["node_list"])
+    f = _parse_scalar_nonlinear_function(object["root"], node_list, name_map)
+    return f::MOI.ScalarNonlinearFunction
+end
+
+function _parse_scalar_nonlinear_function(
+    node::T,
+    node_list::Vector{T},
+    name_map::Dict{String,MOI.VariableIndex},
+) where {T<:Object}
+    head = node["type"]
+    if head == "real"
+        return node["value"]
+    elseif head == "complex"
+        return Complex(node["real"], node["imag"])
+    elseif head == "variable"
+        return name_map[node["name"]]
+    elseif head == "node"
+        return _parse_scalar_nonlinear_function(
+            node_list[node["index"]],
+            node_list,
+            name_map,
+        )
+    elseif !haskey(STRING_TO_FUNCTION, head)
+        throw(MOI.UnsupportedNonlinearOperator(Symbol(head)))
+    end
+    julia_symbol, arity = STRING_TO_FUNCTION[head]
+    validate_arguments(head, arity, length(node["args"]))
+    f = MOI.ScalarNonlinearFunction(julia_symbol, Any[])
+    for arg in node["args"]
+        push!(
+            f.args,
+            _parse_scalar_nonlinear_function(arg, node_list, name_map),
+        )
+    end
+    return f
 end
 
 # ========== Typed scalar functions ==========
@@ -302,6 +347,18 @@ function function_to_moi(
             name_map[variable] for variable::String in object["variables"]
         ],
     )
+end
+
+function function_to_moi(
+    ::Val{:VectorNonlinearFunction},
+    object::T,
+    name_map::Dict{String,MOI.VariableIndex},
+) where {T<:Object}
+    node_list = T.(object["node_list"])
+    rows = map(object["rows"]) do r
+        return _parse_scalar_nonlinear_function(r, node_list, name_map)
+    end
+    return MOI.VectorNonlinearFunction(rows)
 end
 
 # ========== Typed vector functions ==========

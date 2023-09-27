@@ -84,15 +84,15 @@ MOI.Utilities.@model(
         MOI.BinPacking,
         MOI.Table,
     ),
-    (Nonlinear,),
+    (Nonlinear, MOI.ScalarNonlinearFunction),
     (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
-    (MOI.VectorOfVariables,),
+    (MOI.VectorOfVariables, MOI.VectorNonlinearFunction),
     (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
 )
 
 # Indicator is handled by UniversalFallback.
 # Reified is handled by UniversalFallback.
-# Scaled is handled bby UniversalFallback.
+# Scaled is handled by UniversalFallback.
 
 const Model = MOI.Utilities.UniversalFallback{InnerModel{Float64}}
 
@@ -100,13 +100,14 @@ struct Options
     print_compact::Bool
     warn::Bool
     differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation
+    parse_as_nlpblock::Bool
 end
 
 function get_options(m::Model)
     return get(
         m.model.ext,
         :MOF_OPTIONS,
-        Options(false, false, MOI.Nonlinear.SparseReverseMode()),
+        Options(false, false, MOI.Nonlinear.SparseReverseMode(), true),
     )
 end
 
@@ -123,15 +124,19 @@ Keyword arguments are:
  - `differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation = MOI.Nonlinear.SparseReverseMode()`:
    automatic differentiation backend to use when reading models with nonlinear
    constraints and objectives.
+ - `parse_as_nlpblock::Bool=true`: if `true` parse `"ScalarNonlinearFunction"`
+   into an `MOI.NLPBlock`. If `false`, `"ScalarNonlinearFunction"` are parsed as
+   `MOI.ScalarNonlinearFunction` functions.
 """
 function Model(;
     print_compact::Bool = false,
     warn::Bool = false,
     differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation = MOI.Nonlinear.SparseReverseMode(),
+    parse_as_nlpblock::Bool = true,
 )
     model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
     model.model.ext[:MOF_OPTIONS] =
-        Options(print_compact, warn, differentiation_backend)
+        Options(print_compact, warn, differentiation_backend, parse_as_nlpblock)
     return model
 end
 

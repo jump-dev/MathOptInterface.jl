@@ -441,6 +441,26 @@
                         }
                     }
                 }
+            }, {
+                "description": "The vector-valued nonlinear function `f(x)`.",
+                "required": ["rows", "node_list"],
+                "properties": {
+                    "type": {
+                        "const": "VectorNonlinearFunction"
+                    },
+                    "rows": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/NonlinearTerm"
+                        }
+                    },
+                    "node_list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/NonlinearTerm"
+                        }
+                    }
+                }
             }]
         },
         "scalar_sets": {
