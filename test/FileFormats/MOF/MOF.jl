@@ -48,20 +48,29 @@ function _validate(filename::String)
                 ret,
             )
         end
+        return
     end
+    return
 end
 
 struct UnsupportedSet <: MOI.AbstractSet end
 struct UnsupportedFunction <: MOI.AbstractFunction end
 
-function _test_model_equality(model_string, variables, constraints; suffix = "")
-    model = MOF.Model()
+function _test_model_equality(
+    model_string,
+    variables,
+    constraints;
+    suffix = "",
+    kwargs...,
+)
+    model = MOF.Model(; kwargs...)
     MOI.Utilities.loadfromstring!(model, model_string)
     MOI.write_to_file(model, TEST_MOF_FILE * suffix)
-    model_2 = MOF.Model()
+    model_2 = MOF.Model(; kwargs...)
     MOI.read_from_file(model_2, TEST_MOF_FILE * suffix)
     MOI.Test.util_test_models_equal(model, model_2, variables, constraints)
-    return _validate(TEST_MOF_FILE * suffix)
+    _validate(TEST_MOF_FILE * suffix)
+    return
 end
 
 # hs071
@@ -134,43 +143,37 @@ function test_nonlinear_error_handling()
     string_to_variable = Dict{String,MOI.VariableIndex}()
     variable_to_string = Dict{MOI.VariableIndex,String}()
     # Test unsupported function for Expr -> MOF.
-    @test_throws Exception MOF.convert_expr_to_mof(
+    @test_throws Exception MOF._convert_nonlinear_to_mof(
         :(not_supported_function(x)),
         node_list,
         variable_to_string,
     )
-    # Test unsupported function for MOF -> Expr.
-    @test_throws Exception MOF.convert_mof_to_expr(
-        MOF.OrderedObject("type" => "not_supported_function", "value" => 1),
-        node_list,
-        string_to_variable,
-    )
     # Test n-ary function with no arguments.
-    @test_throws Exception MOF.convert_expr_to_mof(
+    @test_throws Exception MOF._convert_nonlinear_to_mof(
         :(min()),
         node_list,
         variable_to_string,
     )
     # Test unary function with two arguments.
-    @test_throws Exception MOF.convert_expr_to_mof(
+    @test_throws Exception MOF._convert_nonlinear_to_mof(
         :(sin(x, y)),
         node_list,
         variable_to_string,
     )
     # Test binary function with one arguments.
-    @test_throws Exception MOF.convert_expr_to_mof(
+    @test_throws Exception MOF._convert_nonlinear_to_mof(
         :(^(x)),
         node_list,
         variable_to_string,
     )
     # An expression with something other than :call as the head.
-    @test_throws Exception MOF.convert_expr_to_mof(
+    @test_throws Exception MOF._convert_nonlinear_to_mof(
         :(a <= b <= c),
         node_list,
         variable_to_string,
     )
     # Hit the default fallback with an un-interpolated complex number.
-    @test_throws Exception MOF.convert_expr_to_mof(
+    @test_throws Exception MOF._convert_nonlinear_to_mof(
         :(1 + 2im),
         node_list,
         variable_to_string,
@@ -181,15 +184,42 @@ function test_nonlinear_error_handling()
         [MOI.VariableIndex(1)],
     )
     # Function-in-Set
-    @test_throws Exception MOF.extract_function_and_set(:(foo in set))
+    @test_throws Exception MOF._extract_function_and_set(:(foo in set))
     # Not a constraint.
-    @test_throws Exception MOF.extract_function_and_set(:(x^2))
+    @test_throws Exception MOF._extract_function_and_set(:(x^2))
     # Two-sided constraints
-    @test MOF.extract_function_and_set(:(1 <= x <= 2)) ==
-          MOF.extract_function_and_set(:(2 >= x >= 1)) ==
+    @test MOF._extract_function_and_set(:(1 <= x <= 2)) ==
+          MOF._extract_function_and_set(:(2 >= x >= 1)) ==
           (:x, MOI.Interval(1, 2))
     # Less-than constraint.
-    @test MOF.extract_function_and_set(:(x <= 2)) == (:x, MOI.LessThan(2))
+    @test MOF._extract_function_and_set(:(x <= 2)) == (:x, MOI.LessThan(2))
+end
+
+function _convert_mof_to_expr(
+    node::T,
+    node_list::Vector{T},
+    name_map::Dict{String,MOI.VariableIndex},
+) where {T}
+    head = haskey(node, "type") ? node["type"] : node["head"]
+    if head == "real"
+        return node["value"]
+    elseif head == "complex"
+        return Complex(node["real"], node["imag"])
+    elseif head == "variable"
+        return name_map[node["name"]]
+    elseif head == "node"
+        return _convert_mof_to_expr(
+            node_list[node["index"]],
+            node_list,
+            name_map,
+        )
+    else
+        expr = Expr(:call, Symbol(head))
+        for arg in node["args"]
+            push!(expr.args, _convert_mof_to_expr(arg, node_list, name_map))
+        end
+        return expr
+    end
 end
 
 function test_Roundtrip_nonlinear_expressions()
@@ -234,9 +264,10 @@ function test_Roundtrip_nonlinear_expressions()
         :(ifelse($x > 0, 1, $y)),
     ]
         node_list = MOF.OrderedObject[]
-        object = MOF.convert_expr_to_mof(expr, node_list, var_to_string)
-        @test MOF.convert_mof_to_expr(object, node_list, string_to_var) == expr
+        object = MOF._convert_nonlinear_to_mof(expr, node_list, var_to_string)
+        @test _convert_mof_to_expr(object, node_list, string_to_var) == expr
     end
+    return
 end
 
 function test_nonlinear_readingwriting()
@@ -706,6 +737,52 @@ minobjective: x
 c1: [1.0*x*x + -2.0x + 1.0, 2.0y + -4.0] in Nonnegatives(2)
 """,
         ["x", "y"],
+        ["c1"],
+    )
+end
+
+function test_scalarnonlinearfunction_objective()
+    return _test_model_equality(
+        """
+variables: x
+minobjective: ScalarNonlinearFunction(exp(x))
+""",
+        ["x"],
+        String[];
+        parse_as_nlpblock = false,
+    )
+end
+
+function test_scalarnonlinearfunction_constraint()
+    return _test_model_equality(
+        """
+variables: x
+c1: ScalarNonlinearFunction(exp(x)^2) <= 1.0
+""",
+        ["x"],
+        ["c1"];
+        parse_as_nlpblock = false,
+    )
+end
+
+function test_vectornonlinearfunction_objective()
+    return _test_model_equality(
+        """
+variables: x
+minobjective: VectorNonlinearFunction([exp(x), sin(x)^2])
+""",
+        ["x"],
+        String[],
+    )
+end
+
+function test_vectornonlinearfunction_constraint()
+    return _test_model_equality(
+        """
+variables: x
+c1: VectorNonlinearFunction([exp(x), x]) in Complements(2)
+""",
+        ["x"],
         ["c1"],
     )
 end

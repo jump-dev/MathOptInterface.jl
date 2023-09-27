@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/schema#",
-    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.5.schema.json",
+    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.6.schema.json",
     "title": "The schema for MathOptFormat",
     "type": "object",
     "required": ["version", "variables", "objective", "constraints"],
@@ -11,7 +11,7 @@
             "required": ["minor", "major"],
             "properties": {
                 "minor": {
-                    "enum": [0, 1, 2, 3, 4, 5]
+                    "enum": [0, 1, 2, 3, 4, 5, 6]
                 },
                 "major": {
                     "const": 1
@@ -199,9 +199,78 @@
                 "properties": {
                     "type": {
                         "enum": [
-                            "log", "log10", "exp", "sqrt", "floor", "ceil",
-                            "abs", "cos", "sin", "tan", "acos", "asin", "atan",
-                            "cosh", "sinh", "tanh", "acosh", "asinh", "atanh"
+                            "abs",
+                            "sqrt",
+                            "cbrt",
+                            "abs2",
+                            "inv",
+                            "log",
+                            "log10",
+                            "log2",
+                            "log1p",
+                            "exp",
+                            "exp2",
+                            "expm1",
+                            "sin",
+                            "cos",
+                            "tan",
+                            "sec",
+                            "csc",
+                            "cot",
+                            "sind",
+                            "cosd",
+                            "tand",
+                            "secd",
+                            "cscd",
+                            "cotd",
+                            "asin",
+                            "acos",
+                            "atan",
+                            "asec",
+                            "acsc",
+                            "acot",
+                            "asind",
+                            "acosd",
+                            "atand",
+                            "asecd",
+                            "acscd",
+                            "acotd",
+                            "sinh",
+                            "cosh",
+                            "tanh",
+                            "sech",
+                            "csch",
+                            "coth",
+                            "asinh",
+                            "acosh",
+                            "atanh",
+                            "asech",
+                            "acsch",
+                            "acoth",
+                            "deg2rad",
+                            "rad2deg",
+                            "erf",
+                            "erfinv",
+                            "erfc",
+                            "erfcinv",
+                            "erfi",
+                            "gamma",
+                            "lgamma",
+                            "digamma",
+                            "invdigamma",
+                            "trigamma",
+                            "airyai",
+                            "airybi",
+                            "airyaiprime",
+                            "airybiprime",
+                            "besselj0",
+                            "besselj1",
+                            "bessely0",
+                            "bessely1",
+                            "erfcx",
+                            "dawson",
+                            "floor",
+                            "ceil"
                         ]
                     },
                     "args": {
@@ -218,7 +287,18 @@
                 "required": ["args"],
                 "properties": {
                     "type": {
-                        "enum": ["/", "^"]
+                        "enum": [
+                            "/",
+                            "^",
+                            "atan",
+                            "&&",
+                            "||",
+                            "<=",
+                            "<",
+                            ">=",
+                            ">",
+                            "=="
+                        ]
                     },
                     "args": {
                         "type": "array",
@@ -234,7 +314,7 @@
                 "required": ["args"],
                 "properties": {
                     "type": {
-                        "enum": ["+", "-", "*", "min", "max"]
+                        "enum": ["+", "-", "*", "ifelse", "min", "max"]
                     },
                     "args": {
                         "type": "array",
@@ -438,6 +518,26 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/definitions/VectorQuadraticTerm"
+                        }
+                    }
+                }
+            }, {
+                "description": "The vector-valued nonlinear function `f(x)`, comprised of a vector of `ScalarNonlinearFunction`.",
+                "required": ["rows", "node_list"],
+                "properties": {
+                    "type": {
+                        "const": "VectorNonlinearFunction"
+                    },
+                    "rows": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/NonlinearTerm"
+                        }
+                    },
+                    "node_list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/NonlinearTerm"
                         }
                     }
                 }

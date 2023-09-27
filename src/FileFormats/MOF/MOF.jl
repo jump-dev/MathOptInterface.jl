@@ -11,10 +11,26 @@ import OrderedCollections: OrderedDict
 import JSON
 import MathOptInterface as MOI
 
-const SCHEMA_PATH = joinpath(@__DIR__, "mof.1.5.schema.json")
-const VERSION = v"1.5"
-const SUPPORTED_VERSIONS =
-    (v"1.5", v"1.4", v"1.3", v"1.2", v"1.1", v"1.0", v"0.6", v"0.5", v"0.4")
+"""
+    SCHEMA_PATH::String
+
+The path to the latest version of the MathOptFormat schema supported by
+MathOptInterface.
+"""
+const SCHEMA_PATH = joinpath(@__DIR__, "mof.schema.json")
+
+const _SUPPORTED_VERSIONS = (
+    v"1.6",
+    v"1.5",
+    v"1.4",
+    v"1.3",
+    v"1.2",
+    v"1.1",
+    v"1.0",
+    v"0.6",
+    v"0.5",
+    v"0.4",
+)
 
 const OrderedObject = OrderedDict{String,Any}
 const UnorderedObject = Dict{String,Any}
@@ -84,15 +100,15 @@ MOI.Utilities.@model(
         MOI.BinPacking,
         MOI.Table,
     ),
-    (Nonlinear,),
+    (Nonlinear, MOI.ScalarNonlinearFunction),
     (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),
-    (MOI.VectorOfVariables,),
+    (MOI.VectorOfVariables, MOI.VectorNonlinearFunction),
     (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
 )
 
 # Indicator is handled by UniversalFallback.
 # Reified is handled by UniversalFallback.
-# Scaled is handled bby UniversalFallback.
+# Scaled is handled by UniversalFallback.
 
 const Model = MOI.Utilities.UniversalFallback{InnerModel{Float64}}
 
@@ -100,13 +116,14 @@ struct Options
     print_compact::Bool
     warn::Bool
     differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation
+    parse_as_nlpblock::Bool
 end
 
 function get_options(m::Model)
     return get(
         m.model.ext,
         :MOF_OPTIONS,
-        Options(false, false, MOI.Nonlinear.SparseReverseMode()),
+        Options(false, false, MOI.Nonlinear.SparseReverseMode(), true),
     )
 end
 
@@ -123,15 +140,19 @@ Keyword arguments are:
  - `differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation = MOI.Nonlinear.SparseReverseMode()`:
    automatic differentiation backend to use when reading models with nonlinear
    constraints and objectives.
+ - `parse_as_nlpblock::Bool=true`: if `true` parse `"ScalarNonlinearFunction"`
+   into an `MOI.NLPBlock`. If `false`, `"ScalarNonlinearFunction"` are parsed as
+   `MOI.ScalarNonlinearFunction` functions.
 """
 function Model(;
     print_compact::Bool = false,
     warn::Bool = false,
     differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation = MOI.Nonlinear.SparseReverseMode(),
+    parse_as_nlpblock::Bool = true,
 )
     model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
     model.model.ext[:MOF_OPTIONS] =
-        Options(print_compact, warn, differentiation_backend)
+        Options(print_compact, warn, differentiation_backend, parse_as_nlpblock)
     return model
 end
 
@@ -139,8 +160,6 @@ function Base.show(io::IO, ::Model)
     print(io, "A MathOptFormat Model")
     return
 end
-
-include("nonlinear.jl")
 
 include("read.jl")
 include("write.jl")
