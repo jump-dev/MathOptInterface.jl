@@ -57,7 +57,7 @@ function _convert_to_nlpblock(model::Model)
         MOI.set(
             model,
             MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-            zero(MOI.ScalarAffineFunction{Float64})
+            zero(MOI.ScalarAffineFunction{Float64}),
         )
         needs_nlp_block = true
     end
