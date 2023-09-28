@@ -23,7 +23,7 @@ where:
   [`AbstractSet`](@ref) objects
 
 !!! tip
-    For more information on this standard form, read [our paper](https://arxiv.org/pdf/2002.03447.pdf).
+    For more information on this standard form, read [our paper](https://arxiv.org/abs/2002.03447).
 
 MOI defines some commonly used functions and sets, but the interface is
 extensible to other sets recognized by the solver.
