@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/schema#",
-    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.6.schema.json",
+    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.7.schema.json",
     "title": "The schema for MathOptFormat",
     "type": "object",
     "required": ["version", "variables", "objective", "constraints"],
@@ -11,7 +11,7 @@
             "required": ["minor", "major"],
             "properties": {
                 "minor": {
-                    "enum": [0, 1, 2, 3, 4, 5, 6]
+                    "enum": [0, 1, 2, 3, 4, 5, 6, 7]
                 },
                 "major": {
                     "const": 1
@@ -191,11 +191,10 @@
         },
         "NonlinearTerm": {
             "description": "A node in an expresion graph representing a nonlinear function.",
-            "type": "object",
-            "required": ["type"],
             "oneOf": [{
                 "description": "Unary operators",
-                "required": ["args"],
+                "type": "object",
+                "required": ["type", "args"],
                 "properties": {
                     "type": {
                         "enum": [
@@ -284,7 +283,8 @@
                 }
             }, {
                 "description": "Binary operators",
-                "required": ["args"],
+                "type": "object",
+                "required": ["type", "args"],
                 "properties": {
                     "type": {
                         "enum": [
@@ -311,7 +311,8 @@
                 }
             }, {
                 "description": "N-ary operators",
-                "required": ["args"],
+                "type": "object",
+                "required": ["type", "args"],
                 "properties": {
                     "type": {
                         "enum": ["+", "-", "*", "ifelse", "min", "max"]
@@ -327,7 +328,8 @@
             }, {
                 "description": "A real-valued numeric constant",
                 "examples": ["{\"type\": \"real\", \"value\": 1.0}"],
-                "required": ["value"],
+                "type": "object",
+                "required": ["type", "value"],
                 "properties": {
                     "type": {
                         "const": "real"
@@ -339,7 +341,8 @@
             }, {
                 "description": "A complex-valued numeric constant",
                 "examples": ["{\"type\": \"complex\", \"real\": 1.0, \"imag\": 2.0}"],
-                "required": ["real", "imag"],
+                "type": "object",
+                "required": ["type", "real", "imag"],
                 "properties": {
                     "type": {
                         "const": "complex"
@@ -354,7 +357,8 @@
             }, {
                 "description": "A reference to an optimization variable",
                 "examples": ["{\"type\": \"variable\", \"name\": \"x\"}"],
-                "required": ["name"],
+                "type": "object",
+                "required": ["type", "name"],
                 "properties": {
                     "type": {
                         "const": "variable"
@@ -366,7 +370,8 @@
             }, {
                 "description": "A pointer to a (1-indexed) element in the `node_list` field in a nonlinear function",
                 "examples": ["{\"type\": \"node\", \"index\": 2}"],
-                "required": ["index"],
+                "type": "object",
+                "required": ["type", "index"],
                 "properties": {
                     "type": {
                         "const": "node"
@@ -376,6 +381,14 @@
                         "minimum": 1
                     }
                 }
+            }, {
+                "description": "A reference to an optimization variable",
+                "examples": ["\"x\""],
+                "type": "string"
+            }, {
+                "description": "A real-valued numeric constant",
+                "examples": [1.0],
+                "type": "number"
             }]
         },
         "scalar_functions": {
