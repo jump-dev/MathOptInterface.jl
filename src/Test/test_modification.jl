@@ -1034,6 +1034,5 @@ function test_modification_scalarquadraticcoefficientchange(
     @test MOI.get(model, attr) ≈ T(1) * x * x + T(2) * x * y
     MOI.modify(model, attr, MOI.ScalarQuadraticCoefficientChange(x, y, T(4)))
     @test MOI.get(model, attr) ≈ T(1) * x * x + T(4) * x * y
-
     return
 end

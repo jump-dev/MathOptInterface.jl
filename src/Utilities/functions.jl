@@ -1411,7 +1411,7 @@ function modify_function!(
     term = MOI.ScalarQuadraticTerm(
         change.new_coefficient,
         change.variable_1,
-        change.variable_2
+        change.variable_2,
     )
     push!(f.quadratic_terms, term)
     return f
