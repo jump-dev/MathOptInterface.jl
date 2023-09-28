@@ -782,6 +782,39 @@ struct ScalarCoefficientChange{T} <: AbstractFunctionModification
     new_coefficient::T
 end
 
+"""
+    ScalarQuadraticCoefficientChange{T}(
+        variable_1::VariableIndex,
+        variable_2::VariableIndex,
+        new_coefficient::T,
+    )
+
+A struct used to request a change in the quadratic coefficient of a
+[`ScalarQuadraticFunction`](@ref).
+
+## Scaling factors
+
+A [`ScalarQuadraticFunction`](@ref) has an implicit `0.5` scaling factor in
+front of the `Q` matrix. This modification applies to terms in the `Q` matrix.
+
+If `variable_1 == variable_2`, this modification sets the corresponding diagonal
+element of the `Q` matrix to `new_coefficient`.
+
+If `variable_1 != variable_2`, this modification is equivalent to setting both
+the corresponding upper- and lower-triangular elements of the `Q` matrix to
+`new_coefficient`.
+
+As a consequence:
+
+ * to modify the term `x^2` to become `2x^2`, `new_coefficient` must be `4`
+ * to modify the term `xy` to become `2xy`, `new_coefficient` must be `2`
+"""
+struct ScalarQuadraticCoefficientChange{T} <: AbstractFunctionModification
+    variable_1::VariableIndex
+    variable_2::VariableIndex
+    new_coefficient::T
+end
+
 # !!! developer note
 #     MultiRowChange is mutable because its `variable` field of an immutable
 #     type, while `new_coefficients` is of a mutable type, meaning that creating

@@ -1015,3 +1015,25 @@ function test_modification_incorrect_VariableIndex(
     )
     return
 end
+
+function test_modification_scalarquadraticcoefficientchange(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    attr = MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}()
+    @requires MOI.supports(model, attr)
+    @requires _supports(config, MOI.modify)
+    @requires _supports(config, MOI.ScalarQuadraticCoefficientChange)
+    x = MOI.add_variable(model)
+    MOI.set(model, attr, T(1) * x * x + T(2) * x + T(3))
+    @test MOI.get(model, attr) ≈ T(1) * x * x + T(2) * x + T(3)
+    MOI.modify(model, attr, MOI.ScalarQuadraticCoefficientChange(x, x, T(4)))
+    @test MOI.get(model, attr) ≈ T(2) * x * x + T(2) * x + T(3)
+    y = MOI.add_variable(model)
+    MOI.set(model, attr, T(1) * x * x + T(2) * x * y)
+    @test MOI.get(model, attr) ≈ T(1) * x * x + T(2) * x * y
+    MOI.modify(model, attr, MOI.ScalarQuadraticCoefficientChange(x, y, T(4)))
+    @test MOI.get(model, attr) ≈ T(1) * x * x + T(4) * x * y
+
+    return
+end

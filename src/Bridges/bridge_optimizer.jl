@@ -1801,6 +1801,13 @@ function is_bridged(
     return is_bridged(b, change.variable)
 end
 
+function is_bridged(
+    b::AbstractBridgeOptimizer,
+    change::MOI.ScalarQuadraticCoefficientChange,
+)
+    return is_bridged(b, change.variable_1) || is_bridged(b, change.variable_2)
+end
+
 function modify_bridged_change(
     b::AbstractBridgeOptimizer,
     ci,

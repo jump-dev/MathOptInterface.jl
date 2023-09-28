@@ -208,6 +208,44 @@ true
 [`ScalarCoefficientChange`](@ref) can also be used to modify the objective
 function by passing an instance of [`ObjectiveFunction`](@ref).
 
+## Modify quadratic coefficients in a scalar function
+
+Use [`modify`](@ref) and [`ScalarQuadraticCoefficientChange`](@ref) to modify
+the quadratic coefficient of a [`ScalarQuadraticFunction`](@ref).
+
+```jldoctest
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variables(model, 2);
+
+julia> c = MOI.add_constraint(
+           model,
+           1.0 * x[1] * x[1] + 2.0 * x[1] * x[2],
+           MOI.EqualTo(1.0),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.ScalarQuadraticFunction{Float64}, MathOptInterface.EqualTo{Float64}}(1)
+
+julia> MOI.modify(
+           model,
+           c,
+           MOI.ScalarQuadraticCoefficientChange(x[1], x[1], 3.0),
+       );
+
+julia> MOI.modify(
+           model,
+           c,
+           MOI.ScalarQuadraticCoefficientChange(x[1], x[2], 4.0),
+       );
+
+julia> new_f = 1.5 * x[1] * x[1] + 4.0 * x[1] * x[2];
+
+julia> MOI.get(model, MOI.ConstraintFunction(), c) ≈ new_f
+true
+```
+
+[`ScalarQuadraticCoefficientChange`](@ref) can also be used to modify the
+objective function by passing an instance of [`ObjectiveFunction`](@ref).
+
 ## Modify affine coefficients in a vector function
 
 Use [`modify`](@ref) and [`MultirowChange`](@ref) to modify a vector of affine

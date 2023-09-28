@@ -499,6 +499,7 @@ the following `AbstractModification`s:
 
 * [`ScalarConstantChange`](@ref)
 * [`ScalarCoefficientChange`](@ref)
+* [`ScalarQuadraticCoefficientChange`](@ref)
 * [`VectorConstantChange`](@ref)
 * [`MultirowChange`](@ref)
 
