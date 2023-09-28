@@ -144,36 +144,42 @@ function test_nonlinear_error_handling()
     variable_to_string = Dict{MOI.VariableIndex,String}()
     # Test unsupported function for Expr -> MOF.
     @test_throws Exception MOF._convert_nonlinear_to_mof(
+        MOF.OrderedObject,
         :(not_supported_function(x)),
         node_list,
         variable_to_string,
     )
     # Test n-ary function with no arguments.
     @test_throws Exception MOF._convert_nonlinear_to_mof(
+        MOF.OrderedObject,
         :(min()),
         node_list,
         variable_to_string,
     )
     # Test unary function with two arguments.
     @test_throws Exception MOF._convert_nonlinear_to_mof(
+        MOF.OrderedObject,
         :(sin(x, y)),
         node_list,
         variable_to_string,
     )
     # Test binary function with one arguments.
     @test_throws Exception MOF._convert_nonlinear_to_mof(
+        MOF.OrderedObject,
         :(^(x)),
         node_list,
         variable_to_string,
     )
     # An expression with something other than :call as the head.
     @test_throws Exception MOF._convert_nonlinear_to_mof(
+        MOF.OrderedObject,
         :(a <= b <= c),
         node_list,
         variable_to_string,
     )
     # Hit the default fallback with an un-interpolated complex number.
     @test_throws Exception MOF._convert_nonlinear_to_mof(
+        MOF.OrderedObject,
         :(1 + 2im),
         node_list,
         variable_to_string,
@@ -193,6 +199,22 @@ function test_nonlinear_error_handling()
           (:x, MOI.Interval(1, 2))
     # Less-than constraint.
     @test MOF._extract_function_and_set(:(x <= 2)) == (:x, MOI.LessThan(2))
+end
+
+function _convert_mof_to_expr(
+    node::String,
+    ::Vector,
+    name_map::Dict{String,MOI.VariableIndex},
+)
+    return name_map[node]
+end
+
+function _convert_mof_to_expr(
+    node::Real,
+    ::Vector,
+    ::Dict{String,MOI.VariableIndex},
+)
+    return node
 end
 
 function _convert_mof_to_expr(
@@ -263,8 +285,13 @@ function test_Roundtrip_nonlinear_expressions()
         # :($x && $y), :($x || $y),
         :(ifelse($x > 0, 1, $y)),
     ]
-        node_list = MOF.OrderedObject[]
-        object = MOF._convert_nonlinear_to_mof(expr, node_list, var_to_string)
+        node_list = Any[]
+        object = MOF._convert_nonlinear_to_mof(
+            MOF.OrderedObject,
+            expr,
+            node_list,
+            var_to_string,
+        )
         @test _convert_mof_to_expr(object, node_list, string_to_var) == expr
     end
     return
@@ -1460,6 +1487,27 @@ function test_ScaledPositiveSemidefiniteConeTriangle()
     )
     @test MOF.set_to_moi(object) ==
           MOI.Scaled(MOI.PositiveSemidefiniteConeTriangle(2))
+    return
+end
+
+function test_nonlinear_variable_real_nodes()
+    x = MOI.VariableIndex(1)
+    object = MOF.OrderedObject(
+        "type" => "ScalarNonlinearFunction",
+        "root" => MOF.OrderedObject(
+            "type" => "^",
+            "args" => Any[
+                MOF.OrderedObject("type" => "node", "index" => 1),
+                MOF.OrderedObject("type" => "node", "index" => 2),
+            ],
+        ),
+        "node_list" => Any[
+            MOF.OrderedObject("type" => "variable", "name" => "x"),
+            MOF.OrderedObject("type" => "real", "value" => 2.0),
+        ],
+    )
+    f = MOI.ScalarNonlinearFunction(:^, Any[x, 2.0])
+    @test MOF.function_to_moi(object, Dict("x" => x)) ≈ f
     return
 end
 

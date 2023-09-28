@@ -2,7 +2,7 @@
   "name": "MathOptFormat Model",
   "version": {
     "major": 1,
-    "minor": 6
+    "minor": 7
   },
   "variables": [
     {
@@ -30,31 +30,16 @@
         {
           "type": "+",
           "args": [
-            {
-              "type": "variable",
-              "name": "var_1"
-            },
-            {
-              "type": "variable",
-              "name": "var_2"
-            },
-            {
-              "type": "variable",
-              "name": "var_3"
-            }
+            "var_1",
+            "var_2",
+            "var_3"
           ]
         },
         {
           "type": "*",
           "args": [
-            {
-              "type": "variable",
-              "name": "var_1"
-            },
-            {
-              "type": "variable",
-              "name": "var_4"
-            },
+            "var_1",
+            "var_4",
             {
               "type": "node",
               "index": 1
@@ -68,10 +53,7 @@
               "type": "node",
               "index": 2
             },
-            {
-              "type": "variable",
-              "name": "var_3"
-            }
+            "var_3"
           ]
         }
       ]
@@ -89,22 +71,10 @@
           {
             "type": "*",
             "args": [
-              {
-                "type": "variable",
-                "name": "var_1"
-              },
-              {
-                "type": "variable",
-                "name": "var_2"
-              },
-              {
-                "type": "variable",
-                "name": "var_3"
-              },
-              {
-                "type": "variable",
-                "name": "var_4"
-              }
+              "var_1",
+              "var_2",
+              "var_3",
+              "var_4"
             ]
           }
         ]
@@ -125,53 +95,29 @@
           {
             "type": "^",
             "args": [
-              {
-                "type": "variable",
-                "name": "var_1"
-              },
-              {
-                "type": "real",
-                "value": 2
-              }
+              "var_1",
+              2
             ]
           },
           {
             "type": "^",
             "args": [
-              {
-                "type": "variable",
-                "name": "var_2"
-              },
-              {
-                "type": "real",
-                "value": 2
-              }
+              "var_2",
+              2
             ]
           },
           {
             "type": "^",
             "args": [
-              {
-                "type": "variable",
-                "name": "var_3"
-              },
-              {
-                "type": "real",
-                "value": 2
-              }
+              "var_3",
+              2
             ]
           },
           {
             "type": "^",
             "args": [
-              {
-                "type": "variable",
-                "name": "var_4"
-              },
-              {
-                "type": "real",
-                "value": 2
-              }
+              "var_4",
+              2
             ]
           },
           {

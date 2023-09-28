@@ -248,22 +248,42 @@ function function_to_moi(
     object::T,
     name_map::Dict{String,MOI.VariableIndex},
 ) where {T<:Object}
-    node_list = T.(object["node_list"])
-    f = _parse_scalar_nonlinear_function(object["root"], node_list, name_map)
-    return f::MOI.ScalarNonlinearFunction
+    return _parse_scalar_nonlinear_function(
+        object["root"],
+        object["node_list"],
+        name_map,
+    )::MOI.ScalarNonlinearFunction
+end
+
+function _parse_scalar_nonlinear_function(
+    node::Real,
+    ::Vector,
+    ::Dict{String,MOI.VariableIndex},
+)
+    return node
+end
+
+function _parse_scalar_nonlinear_function(
+    node::String,
+    ::Vector,
+    name_map::Dict{String,MOI.VariableIndex},
+)
+    return name_map[node]
 end
 
 function _parse_scalar_nonlinear_function(
     node::T,
-    node_list::Vector{T},
+    node_list::Vector,
     name_map::Dict{String,MOI.VariableIndex},
 ) where {T<:Object}
     head = node["type"]
     if head == "real"
+        # Required for v1.6 and earlier
         return node["value"]
     elseif head == "complex"
         return Complex(node["real"], node["imag"])
     elseif head == "variable"
+        # Required for v1.6 and earlier
         return name_map[node["name"]]
     elseif head == "node"
         return _parse_scalar_nonlinear_function(
