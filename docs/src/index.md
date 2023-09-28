@@ -43,9 +43,6 @@ you know where to look for certain things.
 
 ## Citing MathOptInterface
 
-A [paper describing the design and features of MathOptInterface](https://arxiv.org/abs/2002.03447)
-is available on [arXiv](https://arxiv.org).
-
 If you find MathOptInterface useful in your work, we kindly request that you
 cite the following paper:
 ```bibtex
@@ -58,3 +55,5 @@ cite the following paper:
     publisher={INFORMS}
 }
 ```
+A preprint of this paper is [freely available](https://arxiv.org/abs/2002.03447).
+

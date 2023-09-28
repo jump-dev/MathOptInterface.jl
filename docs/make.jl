@@ -154,6 +154,7 @@ write(joinpath(@__DIR__, "src", "MathOptInterface.pdf"), "")
         # Ignore issue and pull request links, because there are many of them,
         # and they sometimes time-out the linkcheck.
         r"https://github.com/jump-dev/MathOptInterface.jl/issues/([0-9]+)",
+        "https://arxiv.org/abs/2002.03447",
     ],
     modules = [MathOptInterface],
     checkdocs = :exports,
