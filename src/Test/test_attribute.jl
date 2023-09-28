@@ -168,15 +168,24 @@ Test that the [`MOI.TimeLimitSec`](@ref) attribute is implemented for `model`.
 """
 function test_attribute_TimeLimitSec(model::MOI.AbstractOptimizer, ::Config)
     @requires MOI.supports(model, MOI.TimeLimitSec())
+    function _get_default(model)
+        try
+            return MOI.get(model, MOI.TimeLimitSec())
+        catch err
+            @assert err isa MOI.GetAttributeNotAllowed(MOI.TimeLimitSec())
+        end
+        return
+    end
     # Get the current value to restore it at the end of the test
-    value = MOI.get(model, MOI.TimeLimitSec())
+    value = _get_default(model)
     MOI.set(model, MOI.TimeLimitSec(), 0.0)
     @test MOI.get(model, MOI.TimeLimitSec()) == 0.0
+    _test_attribute_value_type(model, MOI.TimeLimitSec())
     MOI.set(model, MOI.TimeLimitSec(), 1.0)
     @test MOI.get(model, MOI.TimeLimitSec()) == 1.0
+    MOI.set(model, MOI.TimeLimitSec(), nothing)
+    @test _get_default(model) === nothing
     MOI.set(model, MOI.TimeLimitSec(), value)
-    @test value == MOI.get(model, MOI.TimeLimitSec()) # Equality should hold
-    _test_attribute_value_type(model, MOI.TimeLimitSec())
     return
 end
 test_attribute_TimeLimitSec(::MOI.ModelLike, ::Config) = nothing
