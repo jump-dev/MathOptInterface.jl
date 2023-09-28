@@ -749,7 +749,7 @@ minobjective: ScalarNonlinearFunction(exp(x))
 """,
         ["x"],
         String[];
-        parse_as_nlpblock = false,
+        use_nlp_block = false,
     )
 end
 
@@ -761,7 +761,7 @@ c1: ScalarNonlinearFunction(exp(x)^2) <= 1.0
 """,
         ["x"],
         ["c1"];
-        parse_as_nlpblock = false,
+        use_nlp_block = false,
     )
 end
 
