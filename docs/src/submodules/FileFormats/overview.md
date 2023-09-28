@@ -214,9 +214,9 @@ julia> read!(io, src_2);
 ## ScalarNonlinearFunction
 
 By default, reading a `.nl` or `.mof.json` that contains nonlinear expressions
-will create a [`MOI.NLPBlock`](@ref).
+will create an [`NLPBlock`](@ref).
 
-To instead read nonlinear expressions as [`MOI.ScalarNonlinearFunction`](@ref),
+To instead read nonlinear expressions as [`ScalarNonlinearFunction`](@ref),
 pass the `use_nlp_block = false` keyword argument to the `Model` constructor:
 
 ```jldoctest
