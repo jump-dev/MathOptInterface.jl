@@ -220,10 +220,10 @@ This function should be implemented to be usable as storage of constants for
 function set_from_constants end
 
 """
-    modify_constants(constants, row::Int, new_constant::T) where {T}
+    modify_constants(constants, row::Integer, new_constant::T) where {T}
     modify_constants(
         constants,
-        rows::AbstractVector{Int},
+        rows::AbstractVector{<:Integer},
         new_constants::AbstractVector{T},
     ) where {T}
 
@@ -685,7 +685,7 @@ end
 
 function modify_constants(
     b::AbstractVector{T},
-    row::Int,
+    row::Integer,
     new_constant::T,
 ) where {T}
     b[row] = new_constant
@@ -694,7 +694,7 @@ end
 
 function modify_constants(
     b::AbstractVector{T},
-    rows::AbstractVector{Int},
+    rows::AbstractVector{<:Integer},
     new_constants::AbstractVector{T},
 ) where {T}
     for (row, new_constant) in zip(rows, new_constants)
