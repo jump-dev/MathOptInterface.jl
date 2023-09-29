@@ -27,7 +27,7 @@ function Base.read!(io::IO, model::Model)
     read_objective(model, object, name_map)
     read_constraints(model, object, name_map)
     options = get_options(model)
-    if options.parse_as_nlpblock
+    if options.use_nlp_block
         _convert_to_nlpblock(model)
     end
     return

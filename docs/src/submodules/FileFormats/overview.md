@@ -211,6 +211,28 @@ A Mathematical Programming System (MPS) model
 julia> read!(io, src_2);
 ```
 
+## ScalarNonlinearFunction
+
+By default, reading a `.nl` or `.mof.json` that contains nonlinear expressions
+will create an [`NLPBlock`](@ref).
+
+To instead read nonlinear expressions as [`ScalarNonlinearFunction`](@ref),
+pass the `use_nlp_block = false` keyword argument to the `Model` constructor:
+
+```jldoctest
+julia> model = MOI.FileFormats.Model(;
+           format = MOI.FileFormats.FORMAT_MOF,
+           use_nlp_block = false,
+       )
+A MathOptFormat Model
+
+julia> model = MOI.FileFormats.Model(;
+           format = MOI.FileFormats.FORMAT_NL,
+           use_nlp_block = false,
+       )
+An AMPL (.nl) model
+```
+
 ## Validating MOF files
 
 MathOptFormat files are governed by a schema. Use [JSONSchema.jl](https://github.com/fredo-dedup/JSONSchema.jl)
