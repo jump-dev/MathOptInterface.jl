@@ -118,6 +118,7 @@ Utilities.OneBasedIndexing
 Utilities.load_constants
 Utilities.function_constants
 Utilities.set_from_constants
+Utilities.modify_constants
 ```
 
 ```@docs

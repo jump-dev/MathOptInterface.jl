@@ -219,6 +219,23 @@ This function should be implemented to be usable as storage of constants for
 """
 function set_from_constants end
 
+"""
+    modify_constants(constants, row::Int, new_constant::T) where {T}
+    modify_constants(
+        constants,
+        rows::AbstractVector{Int},
+        new_constants::AbstractVector{T},
+    ) where {T}
+
+Modify `constants` in-place to store `new_constant` in the `row` row, or
+This function returns an instance of the set `S` for which the constants where
+loaded with [`load_constants`](@ref) at the rows `rows`.
+
+This function must be implemented to enable [`MOI.ScalarConstantChange`](@ref)
+and [`MOI.VectorConstantChange`](@ref) for [`MatrixOfConstraints`](@ref).
+"""
+function modify_constants end
+
 ###
 ### Interface for the .sets field
 ###
@@ -651,4 +668,37 @@ function MOI.get(
     @assert model.final_touch
     MOI.throw_if_not_valid(model, ci)
     return set_from_constants(model.constants, S, rows(model, ci))
+end
+
+function MOI.modify(
+    model::MatrixOfConstraints,
+    ci::MOI.ConstraintIndex,
+    change::Union{MOI.ScalarConstantChange,MOI.VectorConstantChange},
+)
+    try
+        modify_constants(model.constants, rows(model, ci), change.new_constant)
+    catch
+        throw(MOI.ModifyConstraintNotAllowed(ci, change))
+    end
+    return
+end
+
+function modify_constants(
+    b::AbstractVector{T},
+    row::Int,
+    new_constant::T,
+) where {T}
+    b[row] = new_constant
+    return
+end
+
+function modify_constants(
+    b::AbstractVector{T},
+    rows::AbstractVector{Int},
+    new_constants::AbstractVector{T},
+) where {T}
+    for (row, new_constant) in zip(rows, new_constants)
+        modify_constants(b, row, new_constant)
+    end
+    return
 end
