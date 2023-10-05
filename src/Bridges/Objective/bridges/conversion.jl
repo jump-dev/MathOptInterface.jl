@@ -112,7 +112,7 @@ function MOI.get(
 end
 
 """
-    FunctionizeBridge{T}
+    FunctionizeBridge{T,G}
 
 `FunctionizeBridge` implements the following reformulations:
 
@@ -125,7 +125,7 @@ where `T` is the coefficient type of `1` and `0`.
 
 `FunctionizeBridge` supports:
 
- * [`MOI.ObjectiveFunction{MOI.VariableIndex}`](@ref)
+ * [`MOI.ObjectiveFunction{G}`](@ref)
 
 ## Target nodes
 
@@ -141,3 +141,65 @@ const FunctionizeBridge{T,G} = FunctionConversionBridge{
 
 const Functionize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{FunctionizeBridge{T},OT}
+
+"""
+    QuadratizeBridge{T,G}
+
+`QuadratizeBridge` implements the following reformulations:
+
+ * ``\\min \\{a^\\top x + b\\}`` into ``\\min\\{x^\\top \\mathbf{0} x + a^\\top x + b\\}``
+ * ``\\max \\{a^\\top x + b\\}`` into ``\\max\\{x^\\top \\mathbf{0} x + a^\\top x + b\\}``
+
+where `T` is the coefficient type of `0`.
+
+## Source node
+
+`QuadratizeBridge` supports:
+
+ * [`MOI.ObjectiveFunction{G}`](@ref)
+
+## Target nodes
+
+`QuadratizeBridge` creates:
+
+ * One objective node: [`MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}`](@ref)
+"""
+const QuadratizeBridge{T,G} = FunctionConversionBridge{
+    T,
+    MOI.ScalarQuadraticFunction{T},
+    G,
+}
+
+const Quadratize{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{QuadratizeBridge{T},OT}
+
+"""
+    VectorFunctionizeBridge{T,G}
+
+`VectorFunctionizeBridge` implements the following reformulations:
+
+ * ``\\min \\{x\\}`` into ``\\min\\{1x + 0\\}``
+ * ``\\max \\{x\\}`` into ``\\max\\{1x + 0\\}``
+
+where `T` is the coefficient type of `1` and `0`.
+
+## Source node
+
+`VectorFunctionizeBridge` supports:
+
+ * [`MOI.ObjectiveFunction{G}`](@ref)
+
+## Target nodes
+
+`VectorFunctionizeBridge` creates:
+
+ * One objective node: [`MOI.ObjectiveFunction{MOI.VectorAffineFunction{T}}`](@ref)
+"""
+const VectorFunctionizeBridge{T,G} = FunctionConversionBridge{
+    T,
+    MOI.VectorAffineFunction{T},
+    G,
+}
+
+const VectorFunctionize{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{VectorFunctionizeBridge{T},OT}
