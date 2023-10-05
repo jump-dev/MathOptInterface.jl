@@ -26,7 +26,11 @@ where `T` is the coefficient type of `1` and `0`.
 
  * One objective node: [`MOI.ObjectiveFunction{MOI.VectorAffineFunction{T}}`](@ref)
 """
-struct VectorFunctionizeBridge{T} <: AbstractBridge end
+const VectorFunctionizeBridge{T,G} = FunctionConversionBridge{
+    T,
+    MOI.VectorAffineFunction{T},
+    G,
+}
 
 const VectorFunctionize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{VectorFunctionizeBridge{T},OT}

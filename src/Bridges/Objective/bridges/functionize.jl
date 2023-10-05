@@ -5,6 +5,113 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
+    FunctionConversionBridge{T,F,G} <: AbstractBridge
+
+`FunctionConversionBridge` implements the following reformulations:
+
+ * ``\\min \\{g(x)\\}`` into ``\\min\\{f(x)\\}``
+ * ``\\max \\{g(x)\\}`` into ``\\max\\{f(x)\\}``
+
+for these pairs of functions:
+
+ * [`MOI.ScalarAffineFunction`](@ref)` to [`MOI.ScalarQuadraticFunction`](@ref)
+ * [`MOI.ScalarQuadraticFunction`](@ref)  to [`MOI.ScalarNonlinearFunction`](@ref)
+ * [`MOI.VectorAffineFunction`](@ref) to [`MOI.VectorQuadraticFunction`](@ref)
+
+## Source node
+
+`FunctionConversionBridge` supports:
+
+ * [`MOI.ObjectiveFunction{G}`](@ref)
+
+## Target nodes
+
+`FunctionConversionBridge` creates:
+
+ * One objective node: [`MOI.ObjectiveFunction{F}`](@ref)
+"""
+struct FunctionConversionBridge{T,F,G} <: AbstractBridge end
+
+function bridge_objective(
+    ::Type{FunctionConversionBridge{T,F,G}},
+    model::MOI.ModelLike,
+    func::G,
+) where {T,F,G<:MOI.AbstractFunction}
+    MOI.set(model, MOI.ObjectiveFunction{F}(), convert(F, func))
+    return FunctionConversionBridge{T,F,G}()
+end
+
+function supports_objective_function(
+    ::Type{<:FunctionConversionBridge{T,F}},
+    ::Type{G},
+) where {T,F,G<:MOI.AbstractFunction}
+    return isfinite(MOI.Bridges.Constraint.conversion_cost(F, G))
+end
+
+function MOI.Bridges.added_constrained_variable_types(
+    ::Type{<:FunctionConversionBridge},
+)
+    return Tuple{Type}[]
+end
+
+function MOI.Bridges.added_constraint_types(::Type{<:FunctionConversionBridge})
+    return Tuple{Type,Type}[]
+end
+
+function MOI.Bridges.set_objective_function_type(
+    ::Type{<:FunctionConversionBridge{T,F}},
+) where {T,F}
+    return F
+end
+
+function concrete_bridge_type(
+    ::Type{<:FunctionConversionBridge{T,F}},
+    ::Type{G},
+) where {T,F,G<:MOI.AbstractFunction}
+    return FunctionConversionBridge{T,F,G}
+end
+
+# Attributes, Bridge acting as a model
+MOI.get(::FunctionConversionBridge, ::MOI.NumberOfVariables)::Int64 = 0
+
+function MOI.get(::FunctionConversionBridge, ::MOI.ListOfVariableIndices)
+    return MOI.VariableIndex[]
+end
+
+# No variables or constraints are created in this bridge so there is nothing to
+# delete.
+MOI.delete(::MOI.ModelLike, ::FunctionConversionBridge) = nothing
+
+function MOI.set(
+    ::MOI.ModelLike,
+    ::MOI.ObjectiveSense,
+    ::FunctionConversionBridge,
+    ::MOI.OptimizationSense,
+)
+    # `FunctionConversionBridge` is sense agnostic, therefore, we don't need to
+    # change anything.
+    return
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.Bridges.ObjectiveFunctionValue{G},
+    ::FunctionConversionBridge{T,F,G},
+) where {T,F,G}
+    attr_f = MOI.Bridges.ObjectiveFunctionValue{F}(attr.result_index)
+    return MOI.get(model, attr_f)
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    ::MOI.ObjectiveFunction{G},
+    ::FunctionConversionBridge{T,F,G},
+) where {T,F,G<:MOI.AbstractFunction}
+    func = MOI.get(model, MOI.ObjectiveFunction{F}())
+    return MOI.Utilities.convert_approx(G, func)
+end
+
+"""
     FunctionizeBridge{T}
 
 `FunctionizeBridge` implements the following reformulations:
@@ -26,82 +133,11 @@ where `T` is the coefficient type of `1` and `0`.
 
  * One objective node: [`MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}`](@ref)
 """
-struct FunctionizeBridge{T} <: AbstractBridge end
+const FunctionizeBridge{T,G} = FunctionConversionBridge{
+    T,
+    MOI.ScalarAffineFunction{T},
+    G,
+}
 
 const Functionize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{FunctionizeBridge{T},OT}
-
-function bridge_objective(
-    ::Type{FunctionizeBridge{T}},
-    model::MOI.ModelLike,
-    func::MOI.VariableIndex,
-) where {T}
-    F = MOI.ScalarAffineFunction{T}
-    MOI.set(model, MOI.ObjectiveFunction{F}(), convert(F, func))
-    return FunctionizeBridge{T}()
-end
-
-function supports_objective_function(
-    ::Type{<:FunctionizeBridge},
-    ::Type{MOI.VariableIndex},
-)
-    return true
-end
-
-function MOI.Bridges.added_constrained_variable_types(
-    ::Type{<:FunctionizeBridge},
-)
-    return Tuple{Type}[]
-end
-
-function MOI.Bridges.added_constraint_types(::Type{<:FunctionizeBridge})
-    return Tuple{Type,Type}[]
-end
-
-function MOI.Bridges.set_objective_function_type(
-    ::Type{FunctionizeBridge{T}},
-) where {T}
-    return MOI.ScalarAffineFunction{T}
-end
-
-# Attributes, Bridge acting as a model
-MOI.get(::FunctionizeBridge, ::MOI.NumberOfVariables)::Int64 = 0
-
-function MOI.get(::FunctionizeBridge, ::MOI.ListOfVariableIndices)
-    return MOI.VariableIndex[]
-end
-
-# No variables or constraints are created in this bridge so there is nothing to
-# delete.
-MOI.delete(::MOI.ModelLike, ::FunctionizeBridge) = nothing
-
-function MOI.set(
-    ::MOI.ModelLike,
-    ::MOI.ObjectiveSense,
-    ::FunctionizeBridge,
-    ::MOI.OptimizationSense,
-)
-    # `FunctionizeBridge` is sense agnostic, therefore, we don't need to change
-    # anything.
-    return
-end
-
-function MOI.get(
-    model::MOI.ModelLike,
-    attr::MOI.Bridges.ObjectiveFunctionValue{MOI.VariableIndex},
-    ::FunctionizeBridge{T},
-) where {T}
-    F = MOI.ScalarAffineFunction{T}
-    attr_f = MOI.Bridges.ObjectiveFunctionValue{F}(attr.result_index)
-    return MOI.get(model, attr_f)
-end
-
-function MOI.get(
-    model::MOI.ModelLike,
-    ::MOI.ObjectiveFunction{MOI.VariableIndex},
-    ::FunctionizeBridge{T},
-) where {T}
-    F = MOI.ScalarAffineFunction{T}
-    func = MOI.get(model, MOI.ObjectiveFunction{F}())
-    return MOI.Utilities.convert_approx(MOI.VariableIndex, func)
-end
