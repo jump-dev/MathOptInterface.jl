@@ -133,11 +133,8 @@ where `T` is the coefficient type of `1` and `0`.
 
  * One objective node: [`MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}`](@ref)
 """
-const FunctionizeBridge{T,G} = FunctionConversionBridge{
-    T,
-    MOI.ScalarAffineFunction{T},
-    G,
-}
+const FunctionizeBridge{T,G} =
+    FunctionConversionBridge{T,MOI.ScalarAffineFunction{T},G}
 
 const Functionize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{FunctionizeBridge{T},OT}
@@ -164,11 +161,8 @@ where `T` is the coefficient type of `0`.
 
  * One objective node: [`MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}`](@ref)
 """
-const QuadratizeBridge{T,G} = FunctionConversionBridge{
-    T,
-    MOI.ScalarQuadraticFunction{T},
-    G,
-}
+const QuadratizeBridge{T,G} =
+    FunctionConversionBridge{T,MOI.ScalarQuadraticFunction{T},G}
 
 const Quadratize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{QuadratizeBridge{T},OT}
@@ -195,11 +189,8 @@ where `T` is the coefficient type of `1` and `0`.
 
  * One objective node: [`MOI.ObjectiveFunction{MOI.VectorAffineFunction{T}}`](@ref)
 """
-const VectorFunctionizeBridge{T,G} = FunctionConversionBridge{
-    T,
-    MOI.VectorAffineFunction{T},
-    G,
-}
+const VectorFunctionizeBridge{T,G} =
+    FunctionConversionBridge{T,MOI.VectorAffineFunction{T},G}
 
 const VectorFunctionize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{VectorFunctionizeBridge{T},OT}
