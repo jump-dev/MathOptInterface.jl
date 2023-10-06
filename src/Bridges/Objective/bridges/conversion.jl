@@ -112,7 +112,7 @@ function MOI.get(
 end
 
 """
-    FunctionizeBridge{T,G}
+    FunctionizeBridge{T,G} <: FunctionConversionBridge{T,MOI.ScalarAffineFunction{T},G}
 
 `FunctionizeBridge` implements the following reformulations:
 
@@ -140,7 +140,7 @@ const Functionize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{FunctionizeBridge{T},OT}
 
 """
-    QuadratizeBridge{T,G}
+    QuadratizeBridge{T,G} <: FunctionConversionBridge{T,MOI.ScalarQuadraticFunction{T},G}
 
 `QuadratizeBridge` implements the following reformulations:
 
@@ -168,7 +168,7 @@ const Quadratize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{QuadratizeBridge{T},OT}
 
 """
-    VectorFunctionizeBridge{T,G}
+    VectorFunctionizeBridge{T,G} <: FunctionConversionBridge{T,MOI.VectorAffineFunction{T},G}
 
 `VectorFunctionizeBridge` implements the following reformulations:
 
