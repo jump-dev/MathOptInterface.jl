@@ -1103,6 +1103,34 @@ function test_parse_unsupported_operator()
     return
 end
 
+function test_is_empty()
+    model = MOI.Nonlinear.Model()
+    @test MOI.is_empty(model)
+    x = MOI.VariableIndex(1)
+    Nonlinear.set_objective(model, :(log($x)))
+    @test !MOI.is_empty(model)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    Nonlinear.add_constraint(model, :(log($x)), MOI.GreaterThan(1.0))
+    @test !MOI.is_empty(model)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    Nonlinear.add_expression(model, :(sin($x)^2))
+    @test !MOI.is_empty(model)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    Nonlinear.add_parameter(model, 1.2)
+    @test !MOI.is_empty(model)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    f(x) = log(x + 1)
+    Nonlinear.register_operator(model, :f, 1, f)
+    @test !MOI.is_empty(model)
+    MOI.empty!(model)
+    @test MOI.is_empty(model)
+    return
+end
+
 end
 
 TestNonlinear.runtests()
