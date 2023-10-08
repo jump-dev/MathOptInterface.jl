@@ -16,12 +16,12 @@ end
 
 function MOI.is_empty(model::Model)
     return model.objective === nothing &&
-        isempty(model.expressions) &&
-        isempty(model.constraints) &&
-        isempty(model.parameters) &&
-        isempty(model.operators.registered_univariate_operators) &&
-        isempty(model.operators.registered_multivariate_operators) &&
-        model.last_constraint_index === 0
+           isempty(model.expressions) &&
+           isempty(model.constraints) &&
+           isempty(model.parameters) &&
+           isempty(model.operators.registered_univariate_operators) &&
+           isempty(model.operators.registered_multivariate_operators) &&
+           model.last_constraint_index === 0
     return
 end
 
