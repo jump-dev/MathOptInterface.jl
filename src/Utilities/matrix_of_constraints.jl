@@ -227,9 +227,8 @@ function set_from_constants end
         new_constants::AbstractVector{T},
     ) where {T}
 
-Modify `constants` in-place to store `new_constant` in the `row` row, or
-This function returns an instance of the set `S` for which the constants where
-loaded with [`load_constants`](@ref) at the rows `rows`.
+Modify `constants` in-place to store `new_constant` in the `row` row, or rows
+`rows`.
 
 This function must be implemented to enable [`MOI.ScalarConstantChange`](@ref)
 and [`MOI.VectorConstantChange`](@ref) for [`MatrixOfConstraints`](@ref).
