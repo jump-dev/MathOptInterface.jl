@@ -746,7 +746,7 @@ Bridge graph with 1 variable nodes, 3 constraint nodes and 0 objective nodes.
     MOI.Bridges.add_bridge(bridged, MOI.Bridges.Objective.FunctionizeBridge{T})
     @test MOI.supports(bridged, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @test MOI.Bridges.bridge_type(bridged, MOI.VariableIndex) ==
-          MOI.Bridges.Objective.FunctionizeBridge{T}
+          MOI.Bridges.Objective.FunctionizeBridge{T,MOI.VariableIndex}
     @test MOI.supports(bridged, attr)
     @test MOI.Bridges.bridge_type(bridged, F) ==
           MOI.Bridges.Objective.SlackBridge{T,F,F}
@@ -1085,7 +1085,7 @@ Bridge graph with 2 variable nodes, 5 constraint nodes and 2 objective nodes.
  (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.ScalarizeBridge{T,MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}).
  (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are bridged (distance 5) by $(MOI.Bridges.Constraint.QuadtoSOCBridge{T}).
  |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is bridged (distance 13) by $(MOI.Bridges.Objective.SlackBridge{T,MOI.ScalarQuadraticFunction{T},MOI.ScalarQuadraticFunction{T}}).
- |2| objective function of type `MOI.VariableIndex` is bridged (distance 1) by $(MOI.Bridges.Objective.FunctionizeBridge{T}).
+ |2| objective function of type `MOI.VariableIndex` is bridged (distance 1) by $(MOI.Bridges.Objective.FunctionizeBridge{T,MOI.VariableIndex}).
 """,
         )
     end

@@ -12,10 +12,8 @@ include("bridge.jl")
 include("map.jl")
 include("single_bridge_optimizer.jl")
 
-include("bridges/functionize.jl")
-include("bridges/quadratize.jl")
+include("bridges/conversion.jl")
 include("bridges/slack.jl")
-include("bridges/vector_functionize.jl")
 include("bridges/vector_slack.jl")
 
 """
