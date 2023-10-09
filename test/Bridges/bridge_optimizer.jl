@@ -1081,6 +1081,14 @@ function test_modify_constraint_scalar_quadratic_coefficient_change()
     return
 end
 
+function test_show_modify_bridge_not_allowed()
+    x = MOI.VariableIndex(1)
+    change = MOI.ScalarQuadraticCoefficientChange(x, x, 2.0)
+    err = MOI.Bridges.ModifyBridgeNotAllowed(change)
+    @test occursin("cannot be performed", sprint(showerror, err))
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
