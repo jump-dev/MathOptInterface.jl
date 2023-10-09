@@ -1154,17 +1154,38 @@ function MOI.set(
     return
 end
 
+struct ModifyBridgeNotAllowed{C<:MOI.AbstractFunctionModification} <:
+       MOI.NotAllowedError
+    change::C
+    message::String
+
+    function ModifyBridgeNotAllowed(
+        change::MOI.AbstractFunctionModification,
+        msg::String = "",
+    )
+        return new{typeof(change)}(change, msg)
+    end
+end
+
+function MOI.operation_name(err::ModifyBridgeNotAllowed)
+    return "Modifying the bridge with $(err.change)"
+end
+
+function MOI.modify(
+    ::MOI.ModelLike,
+    ::AbstractBridge,
+    change::MOI.AbstractFunctionModification,
+)
+    return throw(ModifyBridgeNotAllowed(change))
+end
+
 function _modify_bridged_function(
     b::AbstractBridgeOptimizer,
     ci_or_obj,
     change::MOI.AbstractFunctionModification,
 )
     if is_bridged(b, ci_or_obj)
-        try
-            MOI.modify(recursive_model(b), bridge(b, ci_or_obj), change)
-        catch
-            MOI.throw_modify_not_allowed(ci_or_obj, change)
-        end
+        MOI.modify(recursive_model(b), bridge(b, ci_or_obj), change)
     else
         MOI.modify(b.model, ci_or_obj, change)
     end
@@ -1902,11 +1923,7 @@ function MOI.modify(
         modify_bridged_change(b, ci, change)
     else
         if is_bridged(b, ci)
-            try
-                call_in_context(MOI.modify, b, ci, change)
-            catch
-                MOI.throw_modify_not_allowed(ci, change)
-            end
+            call_in_context(MOI.modify, b, ci, change)
         else
             MOI.modify(b.model, ci, change)
         end
