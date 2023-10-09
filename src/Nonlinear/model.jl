@@ -22,7 +22,6 @@ function MOI.is_empty(model::Model)
            isempty(model.operators.registered_univariate_operators) &&
            isempty(model.operators.registered_multivariate_operators) &&
            model.last_constraint_index === Int64(0)
-    return
 end
 
 function Base.copy(::Model)
