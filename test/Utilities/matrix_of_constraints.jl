@@ -635,6 +635,60 @@ function test_set_types_fallback()
     return
 end
 
+function test_modify_vectorsets()
+    model = _new_VectorSets()
+    src = MOI.Utilities.Model{Int}()
+    x = MOI.add_variables(src, 2)
+    c = MOI.add_constraint(
+        src,
+        MOI.VectorAffineFunction{Int}(
+            MOI.VectorAffineTerm.(1, MOI.ScalarAffineTerm.(1, x)),
+            [1, 3],
+        ),
+        MOI.SecondOrderCone(2),
+    )
+    index_map = MOI.copy_to(model, src)
+    f_c = MOI.get(model, MOI.ConstraintFunction(), index_map[c])
+    @test f_c.constants == [1, 3]
+    MOI.modify(model, index_map[c], MOI.VectorConstantChange([4, 5]))
+    f_c = MOI.get(model, MOI.ConstraintFunction(), index_map[c])
+    @test f_c.constants == [4, 5]
+    return
+end
+
+function test_modify_set_constants()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(model, 3)
+    f = MOI.Utilities.operate(vcat, Float64, 1.0 .* x...)
+    p_cone = MOI.PowerCone(0.1)
+    p_ref = MOI.add_constraint(model, f, p_cone)
+    d_cone = MOI.DualPowerCone(0.2)
+    d_ref = MOI.add_constraint(model, f, d_cone)
+    cache = MOI.Utilities.GenericOptimizer{
+        Float64,
+        MOI.Utilities.ObjectiveContainer{Float64},
+        MOI.Utilities.VariablesContainer{Float64},
+        MOI.Utilities.MatrixOfConstraints{
+            Float64,
+            MOI.Utilities.MutableSparseMatrixCSC{
+                Float64,
+                Int,
+                MOI.Utilities.OneBasedIndexing,
+            },
+            _SetConstants{Float64},
+            PowerSets{Float64},
+        },
+    }()
+    index_map = MOI.copy_to(cache, model)
+    ci = index_map[p_ref]
+    change = MOI.VectorConstantChange([4.0, 5.0, 6.0])
+    @test_throws(
+        MOI.ModifyConstraintNotAllowed(ci, change),
+        MOI.modify(cache, ci, change),
+    )
+    return
+end
+
 end
 
 TestMatrixOfConstraints.runtests()
