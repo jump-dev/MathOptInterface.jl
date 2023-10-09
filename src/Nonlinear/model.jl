@@ -4,6 +4,26 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
+function MOI.empty!(model::Model)
+    model.objective = nothing
+    empty!(model.expressions)
+    empty!(model.constraints)
+    empty!(model.parameters)
+    model.operators = OperatorRegistry()
+    model.last_constraint_index = 0
+    return
+end
+
+function MOI.is_empty(model::Model)
+    return model.objective === nothing &&
+           isempty(model.expressions) &&
+           isempty(model.constraints) &&
+           isempty(model.parameters) &&
+           isempty(model.operators.registered_univariate_operators) &&
+           isempty(model.operators.registered_multivariate_operators) &&
+           model.last_constraint_index === Int64(0)
+end
+
 function Base.copy(::Model)
     return error("Copying nonlinear problems not yet implemented")
 end
