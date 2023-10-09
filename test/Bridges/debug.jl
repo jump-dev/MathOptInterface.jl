@@ -73,7 +73,7 @@ function test_print_active_bridges()
  |  may introduce:
  |   * Unsupported objective: MOI.VariableIndex
  |   |  bridged by:
- |   |   MOIB.Objective.FunctionizeBridge{Float64}
+ |   |   MOIB.Objective.FunctionConversionBridge{Float64, MOI.ScalarAffineFunction{Float64}, MOI.VariableIndex}
  |   |  may introduce:
  |   |   * Supported objective: MOI.ScalarAffineFunction{Float64}
  |   * Unsupported constraint: MOI.ScalarQuadraticFunction{Float64}-in-MOI.GreaterThan{Float64}
@@ -188,7 +188,7 @@ function test_print_active_bridges_objective_bridged()
           """
            * Unsupported objective: MOI.VariableIndex
            |  bridged by:
-           |   MOIB.Objective.FunctionizeBridge{Float64}
+           |   MOIB.Objective.FunctionConversionBridge{Float64, MOI.ScalarAffineFunction{Float64}, MOI.VariableIndex}
            |  may introduce:
            |   * Supported objective: MOI.ScalarAffineFunction{Float64}
           """
