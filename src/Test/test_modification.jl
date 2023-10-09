@@ -1015,3 +1015,44 @@ function test_modification_incorrect_VariableIndex(
     )
     return
 end
+
+function test_modification_objective_scalarquadraticcoefficientchange(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    attr = MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}()
+    @requires MOI.supports(model, attr)
+    @requires _supports(config, MOI.modify)
+    @requires _supports(config, MOI.ScalarQuadraticCoefficientChange)
+    x = MOI.add_variable(model)
+    MOI.set(model, attr, T(1) * x * x + T(2) * x + T(3))
+    @test MOI.get(model, attr) ≈ T(1) * x * x + T(2) * x + T(3)
+    MOI.modify(model, attr, MOI.ScalarQuadraticCoefficientChange(x, x, T(4)))
+    @test MOI.get(model, attr) ≈ T(2) * x * x + T(2) * x + T(3)
+    y = MOI.add_variable(model)
+    MOI.set(model, attr, T(1) * x * x + T(2) * x * y)
+    @test MOI.get(model, attr) ≈ T(1) * x * x + T(2) * x * y
+    MOI.modify(model, attr, MOI.ScalarQuadraticCoefficientChange(x, y, T(4)))
+    @test MOI.get(model, attr) ≈ T(1) * x * x + T(4) * x * y
+    return
+end
+
+function test_modification_constraint_scalarquadraticcoefficientchange(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    F, S = MOI.ScalarQuadraticFunction{T}, MOI.LessThan{T}
+    @requires MOI.supports_constraint(model, F, S)
+    @requires _supports(config, MOI.modify)
+    @requires _supports(config, MOI.ScalarQuadraticCoefficientChange)
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    f = T(1) * x * x + T(1) * x * x - T(1) * x * y + T(2) * y * y - T(1) * x * y
+    c = MOI.add_constraint(model, f, MOI.LessThan(T(1)))
+    @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ f
+    g = T(1) * x * x + T(-3) * x * y + T(2) * y * y
+    MOI.modify(model, c, MOI.ScalarQuadraticCoefficientChange(x, x, T(2)))
+    MOI.modify(model, c, MOI.ScalarQuadraticCoefficientChange(x, y, -T(3)))
+    @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ g
+    return
+end

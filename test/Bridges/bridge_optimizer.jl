@@ -1038,6 +1038,43 @@ function test_deleting_all_variables_in_bridged_functionize_objective()
     return
 end
 
+function test_modify_objective_scalar_quadratic_coefficient_change()
+    T = Float64
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
+    model = MOI.Bridges.Objective.Slack{T}(inner)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    attr = MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}()
+    MOI.set(model, attr, T(1) * x * x + T(2) * x + T(3))
+    change = MOI.ScalarQuadraticCoefficientChange(x, x, T(4))
+    @test_throws MOI.ModifyObjectiveNotAllowed MOI.modify(model, attr, change)
+    return
+end
+
+function test_modify_variable_scalar_quadratic_coefficient_change()
+    T = Float64
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
+    model = MOI.Bridges.Variable.Free{T}(inner)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    attr = MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}()
+    MOI.set(model, attr, T(1) * x * x + T(2) * x + T(3))
+    change = MOI.ScalarQuadraticCoefficientChange(x, x, T(4))
+    @test_throws MOI.ModifyObjectiveNotAllowed MOI.modify(model, attr, change)
+    return
+end
+
+function test_modify_constraint_scalar_quadratic_coefficient_change()
+    T = Float64
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
+    model = MOI.Bridges.Constraint.QuadtoSOC{T}(inner)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, T(1) * x * x + T(2) * x, MOI.LessThan(T(1)))
+    change = MOI.ScalarQuadraticCoefficientChange(x, x, T(4))
+    @test_throws MOI.ModifyConstraintNotAllowed MOI.modify(model, c, change)
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()

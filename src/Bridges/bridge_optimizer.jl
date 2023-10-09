@@ -1160,7 +1160,11 @@ function _modify_bridged_function(
     change::MOI.AbstractFunctionModification,
 )
     if is_bridged(b, ci_or_obj)
-        MOI.modify(recursive_model(b), bridge(b, ci_or_obj), change)
+        try
+            MOI.modify(recursive_model(b), bridge(b, ci_or_obj), change)
+        catch
+            MOI.throw_modify_not_allowed(ci_or_obj, change)
+        end
     else
         MOI.modify(b.model, ci_or_obj, change)
     end
@@ -1801,6 +1805,13 @@ function is_bridged(
     return is_bridged(b, change.variable)
 end
 
+function is_bridged(
+    b::AbstractBridgeOptimizer,
+    change::MOI.ScalarQuadraticCoefficientChange,
+)
+    return is_bridged(b, change.variable_1) || is_bridged(b, change.variable_2)
+end
+
 function modify_bridged_change(
     b::AbstractBridgeOptimizer,
     ci,
@@ -1870,6 +1881,18 @@ function modify_bridged_change(
     return
 end
 
+function modify_bridged_change(
+    b::AbstractBridgeOptimizer,
+    ci_or_obj,
+    change::MOI.ScalarQuadraticCoefficientChange,
+)
+    return MOI.throw_modify_not_allowed(
+        ci_or_obj,
+        change,
+        "Cannot bridge `ScalarQuadraticCoefficientChange`.",
+    )
+end
+
 function MOI.modify(
     b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex,
@@ -1879,7 +1902,11 @@ function MOI.modify(
         modify_bridged_change(b, ci, change)
     else
         if is_bridged(b, ci)
-            call_in_context(MOI.modify, b, ci, change)
+            try
+                call_in_context(MOI.modify, b, ci, change)
+            catch
+                MOI.throw_modify_not_allowed(ci, change)
+            end
         else
             MOI.modify(b.model, ci, change)
         end

@@ -14,5 +14,6 @@ AbstractFunctionModification
 ScalarConstantChange
 VectorConstantChange
 ScalarCoefficientChange
+ScalarQuadraticCoefficientChange
 MultirowChange
 ```

@@ -398,6 +398,17 @@ end
 
 function map_indices(
     index_map::F,
+    change::MOI.ScalarQuadraticCoefficientChange,
+) where {F<:Function}
+    return MOI.ScalarQuadraticCoefficientChange(
+        index_map(change.variable_1),
+        index_map(change.variable_2),
+        change.new_coefficient,
+    )
+end
+
+function map_indices(
+    index_map::F,
     change::MOI.MultirowChange,
 ) where {F<:Function}
     return MOI.MultirowChange(
@@ -1383,6 +1394,26 @@ function modify_function!(
     change::MOI.ScalarCoefficientChange{T},
 ) where {T}
     _modify_coefficient(f.affine_terms, change.variable, change.new_coefficient)
+    return f
+end
+
+function modify_function!(
+    f::MOI.ScalarQuadraticFunction{T},
+    change::MOI.ScalarQuadraticCoefficientChange{T},
+) where {T}
+    indices = findall(f.quadratic_terms) do term
+        return term.variable_1 == change.variable_1 &&
+               term.variable_2 == change.variable_2
+    end
+    for j in reverse(indices)
+        deleteat!(f.quadratic_terms, j)
+    end
+    term = MOI.ScalarQuadraticTerm(
+        change.new_coefficient,
+        change.variable_1,
+        change.variable_2,
+    )
+    push!(f.quadratic_terms, term)
     return f
 end
 
