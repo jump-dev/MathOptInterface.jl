@@ -1047,7 +1047,10 @@ function test_modify_objective_scalar_quadratic_coefficient_change()
     attr = MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}()
     MOI.set(model, attr, T(1) * x * x + T(2) * x + T(3))
     change = MOI.ScalarQuadraticCoefficientChange(x, x, T(4))
-    @test_throws MOI.ModifyObjectiveNotAllowed MOI.modify(model, attr, change)
+    @test_throws(
+        MOI.Bridges.ModifyBridgeNotAllowed,
+        MOI.modify(model, attr, change),
+    )
     return
 end
 
@@ -1071,7 +1074,18 @@ function test_modify_constraint_scalar_quadratic_coefficient_change()
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, T(1) * x * x + T(2) * x, MOI.LessThan(T(1)))
     change = MOI.ScalarQuadraticCoefficientChange(x, x, T(4))
-    @test_throws MOI.ModifyConstraintNotAllowed MOI.modify(model, c, change)
+    @test_throws(
+        MOI.Bridges.ModifyBridgeNotAllowed,
+        MOI.modify(model, c, change),
+    )
+    return
+end
+
+function test_show_modify_bridge_not_allowed()
+    x = MOI.VariableIndex(1)
+    change = MOI.ScalarQuadraticCoefficientChange(x, x, 2.0)
+    err = MOI.Bridges.ModifyBridgeNotAllowed(change)
+    @test occursin("cannot be performed", sprint(showerror, err))
     return
 end
 
