@@ -2162,6 +2162,7 @@ function test_objective_conversion_cost(T = Float64)
     MOI.set(bridged, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(bridged, MOI.ObjectiveFunction{typeof(x)}(), one(T) * x)
     @test MOI.get(model, MOI.ObjectiveFunctionType()) == MOI.VariableIndex
+    return
 end
 
 end  # module
