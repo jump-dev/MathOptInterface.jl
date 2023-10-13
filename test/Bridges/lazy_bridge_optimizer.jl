@@ -2140,7 +2140,7 @@ MOI.Utilities.@model(
     ModelQuadObj,
     (),
     (),
-    (MOI.Nonnegatives,MOI.Zeros),
+    (MOI.Nonnegatives, MOI.Zeros),
     (),
     (),
     (),
@@ -2148,7 +2148,10 @@ MOI.Utilities.@model(
     (MOI.VectorAffineFunction,),
 )
 
-function MOI.supports(::ModelQuadObj{T}, ::MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}) where {T}
+function MOI.supports(
+    ::ModelQuadObj{T},
+    ::MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}},
+) where {T}
     return false
 end
 
