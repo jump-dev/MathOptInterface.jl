@@ -48,6 +48,12 @@ function supports_objective_function(
     return isfinite(MOI.Bridges.Constraint.conversion_cost(F, G))
 end
 
+function MOI.Bridges.bridging_cost(
+    ::Type{FunctionConversionBridge{T,F,G}},
+) where {T,F,G}
+    return MOI.Bridges.Constraint.conversion_cost(F, G)
+end
+
 function MOI.Bridges.added_constrained_variable_types(
     ::Type{<:FunctionConversionBridge},
 )
