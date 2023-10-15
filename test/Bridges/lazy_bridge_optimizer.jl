@@ -2136,6 +2136,35 @@ function test_ToScalarQuadraticBridge_variable_bounds()
     return
 end
 
+MOI.Utilities.@model(
+    ModelQuadObj,
+    (),
+    (),
+    (MOI.Nonnegatives, MOI.Zeros),
+    (),
+    (),
+    (),
+    (MOI.VectorOfVariables,),
+    (MOI.VectorAffineFunction,),
+)
+
+function MOI.supports(
+    ::ModelQuadObj{T},
+    ::MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}},
+) where {T}
+    return false
+end
+
+function test_objective_conversion_cost(T = Float64)
+    model = ModelQuadObj{T}()
+    bridged = MOI.Bridges.full_bridge_optimizer(model, T)
+    x = MOI.add_variable(bridged)
+    MOI.set(bridged, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(bridged, MOI.ObjectiveFunction{typeof(x)}(), one(T) * x)
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) == MOI.VariableIndex
+    return
+end
+
 end  # module
 
 TestBridgesLazyBridgeOptimizer.runtests()
