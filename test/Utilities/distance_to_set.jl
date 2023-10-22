@@ -164,13 +164,27 @@ function test_rotatedsecondordercone()
     return
 end
 
-# function test_exponential()
-#     return
-# end
+function test_exponential()
+    _test_set(
+        MOI.ExponentialCone(),
+        [1.0, 1.0, 1.0] => exp(1) - 1,
+        [1.0, 1.0, 3.0] => 0.0,
+        [1.0, -1.0, 1.0] => sqrt(2^2 + (exp(1) - 1)^2);
+        mismatch = [1.0],
+    )
+    return
+end
 
-# function test_dualexponential()
-#     return
-# end
+function test_dualexponential()
+    _test_set(
+        MOI.DualExponentialCone(),
+        [1.0, 1.0, 1.0] => 2.0,
+        [-1.0, 1.0, 3.0] => 0.0,
+        [-2.0, 3.0, 0.1] => 2 * exp(3 / -2) - 0.1 * exp(1);
+        mismatch = [1.0],
+    )
+    return
+end
 
 function test_geometricmeancone()
     _test_set(
@@ -233,9 +247,21 @@ function test_norminfinitycone()
     return
 end
 
-# function test_relativeentropycone()
-#     return
-# end
+function test_relativeentropycone()
+    _test_set(
+        MOI.RelativeEntropyCone(5),
+        [1.0, 1.0, 1.0, 1.0, 1.0] => 0.0,
+        [-2.0, 1.0, 1.0, 1.0, 1.0] => 2.0,
+        [1.0, 1.0, 2.0, 3.0, 1.0] => 3 * log(3 / 1) + 1 * log(1 / 2) - 1,
+        [4.0, 1.0, 2.0, 3.0, 1.0] => 0.0,
+        [4.0, -1.0, 2.0, 3.0, 1.0] => 2.0,
+        [4.0, 1.0, -2.0, 3.0, 1.0] => 3.0,
+        [4.0, 1.0, -2.0, 3.0, -1.0] => sqrt(3^2 + 2^2),
+        [0.0, 1.0, -2.0, 3.0, -1.0] => sqrt(3^2 + 2^2 + (3 * log(3))^2);
+        mismatch = [1.0],
+    )
+    return
+end
 
 function test_hyperrectangle()
     _test_set(

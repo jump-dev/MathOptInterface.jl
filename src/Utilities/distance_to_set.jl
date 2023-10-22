@@ -229,23 +229,37 @@ function distance_to_set(
     return LinearAlgebra.norm(element_distance, 2)
 end
 
-# function distance_to_set(
-#     ::ProjectionUpperBoundDistance,
-#     x::AbstractVector{T},
-#     set::MOI.ExponentialConne,
-# ) where {T<:Real}
-#     _check_dimension(x, set)
-#     return
-# end
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.ExponentialCone,
+) where {T<:Real}
+    _check_dimension(x, set)
+    if x[2] <= 0  # Project to x[2] = 1
+        element_distance = (
+            x[2] - one(T),
+            max(exp(x[1]) - x[3], zero(T))
+        )
+        return LinearAlgebra.norm(element_distance, 2)
+    end
+    return max(x[2] * exp(x[1] / x[2]) - x[3], zero(T))
+end
 
-# function distance_to_set(
-#     ::ProjectionUpperBoundDistance,
-#     x::AbstractVector{T},
-#     set::MOI.DualExponentialConne,
-# ) where {T<:Real}
-#     _check_dimension(x, set)
-#     return
-# end
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.DualExponentialCone,
+) where {T<:Real}
+    _check_dimension(x, set)
+    if x[1] >= 0  # Project to x[1] = -1
+        element_distance = (
+            x[1] - -one(T),
+            max(exp(-x[2]) - exp(1) * x[3], zero(T)),
+        )
+        return LinearAlgebra.norm(element_distance, 2)
+    end
+    return max(-x[1] * exp(x[2] / x[1]) - exp(1) * x[3], zero(T))
+end
 
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
@@ -254,7 +268,7 @@ function distance_to_set(
 ) where {T<:Real}
     _check_dimension(x, set)
     t, xs = x[1], @view(x[2:end])
-    if any(<(zero(T)), xs)  # There exists x[i] < 0
+    if any(<(zero(T)), xs)  # Project to x = 0
         return LinearAlgebra.norm((min.(xs, zero(T)), max(t, zero(T))), 2)
     end
     return max(t - prod(xs)^inv(MOI.dimension(set) - 1), zero(T))
@@ -267,7 +281,7 @@ function distance_to_set(
 ) where {T<:Real}
     _check_dimension(x, set)
     α = set.exponent
-    if x[1] < 0 || x[2] < 0
+    if x[1] < 0 || x[2] < 0  # Project to x = 0
         return LinearAlgebra.norm(
             (min(x[1], zero(T)), min(x[2], zero(T)), x[3]),
             2,
@@ -283,7 +297,7 @@ function distance_to_set(
 ) where {T<:Real}
     _check_dimension(x, set)
     α = set.exponent
-    if x[1] < 0 || x[2] < 0
+    if x[1] < 0 || x[2] < 0  # Project to x = 0
         return LinearAlgebra.norm(
             (min(x[1], zero(T)), min(x[2], zero(T)), x[3]),
             2,
@@ -310,14 +324,29 @@ function distance_to_set(
     return max(maximum(abs, @view(x[2:end])) - x[1], zero(T))
 end
 
-# function distance_to_set(
-#     ::ProjectionUpperBoundDistance,
-#     x::AbstractVector{T},
-#     set::MOI.RelativeEntropyCone,
-# ) where {T<:Real}
-#     _check_dimension(x, set)
-#     return
-# end
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.RelativeEntropyCone,
+) where {T<:Real}
+    _check_dimension(x, set)
+    n = div(MOI.dimension(set) - 1, 2)
+    u, v, w = x[1], @view(x[2:(n+1)]), @view(x[(n+2):end])
+    _to_one(x) = x <= zero(T) ? one(T) : x
+    if any(<=(zero(T)), v) || any(<=(zero(T)), w)  # Project to v = w = 1
+        v_p, w_p = _to_one.(v), _to_one.(w)
+        element_distance = (
+            v_p .- v,
+            w_p .- w,
+            max(
+                sum(w_p[i] * log(w_p[i] / v_p[i]) for i in eachindex(w)) - u,
+                zero(T),
+            ),
+        )
+        return LinearAlgebra.norm(element_distance, 2)
+    end
+    return max(sum(w[i] * log(w[i] / v[i]) for i in eachindex(w)) - u, zero(T))
+end
 
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
@@ -325,10 +354,8 @@ function distance_to_set(
     set::MOI.HyperRectangle,
 ) where {T<:Real}
     _check_dimension(x, set)
-    element_distance = (
-        max.(set.lower .- x, zero(T)),
-        max.(x .- set.upper, zero(T)),
-    )
+    element_distance =
+        (max.(set.lower .- x, zero(T)), max.(x .- set.upper, zero(T)))
     return LinearAlgebra.norm(element_distance, 2)
 end
 
