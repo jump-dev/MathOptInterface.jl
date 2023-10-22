@@ -76,12 +76,12 @@ The vector-valued set types implemented in MathOptInterface.jl are:
 | [`DualExponentialCone()`](@ref MathOptInterface.DualExponentialCone)  | ``\{ (u,v,w) \in \mathbb{R}^3 : -u \exp (v/u) \le \exp(1) w, u < 0 \}`` |
 | [`GeometricMeanCone(d)`](@ref MathOptInterface.GeometricMeanCone)     | ``\{ (t,x) \in \mathbb{R}^{1+n} : x \ge 0, t \le \sqrt[n]{x_1 x_2 \cdots x_n} \}`` where ``n`` is ``d - 1`` |
 | [`PowerCone(α)`](@ref MathOptInterface.PowerCone)                     | ``\{ (x,y,z) \in \mathbb{R}^3 : x^{\alpha} y^{1-\alpha} \ge \|z\|, x \ge 0,y \ge 0 \}`` |
-| [`DualPowerCone(α)`](@ref MathOptInterface.DualPowerCone)             | ``\{ (u,v,w) \in \mathbb{R}^3 : \left(\frac{u}{\alpha}\right(^{\alpha}\left(\frac{v}{1-\alpha}\right)^{1-\alpha} \ge \|w\|, u,v \ge 0 \}`` |
+| [`DualPowerCone(α)`](@ref MathOptInterface.DualPowerCone)             | ``\{ (u,v,w) \in \mathbb{R}^3 : \left(\frac{u}{\alpha}\right)^{\alpha}\left(\frac{v}{1-\alpha}\right)^{1-\alpha} \ge \|w\|, u,v \ge 0 \}`` |
 | [`NormOneCone(d)`](@ref MathOptInterface.NormOneCone)                 | ``\{ (t,x) \in \mathbb{R}^{d} : t \ge \sum_i \lvert x_i \rvert \}`` |
 | [`NormInfinityCone(d)`](@ref MathOptInterface.NormInfinityCone)       | ``\{ (t,x) \in \mathbb{R}^{d} : t \ge \max_i \lvert x_i \rvert \}`` |
 | [`RelativeEntropyCone(d)`](@ref MathOptInterface.RelativeEntropyCone) | ``\{ (u, v, w) \in \mathbb{R}^{d} : u \ge \sum_i w_i \log (\frac{w_i}{v_i}), v_i \ge 0, w_i \ge 0 \}`` |
 | [`HyperRectangle(l, u)`](@ref MathOptInterface.HyperRectangle)        | ``\{x \in \bar{\mathbb{R}}^d: x_i \in [l_i, u_i] \forall i=1,\ldots,d\}`` |
-| [`NormCone(p, d)`](@ref MathOptInterface.NormCone)       | ``\{ (t,x) \in \mathbb{R}^{d} : t \ge \left(\sum\limits_i |x_i|^p\right)^{\frac{1}{p}} \}`` |
+| [`NormCone(p, d)`](@ref MathOptInterface.NormCone)       | ``\{ (t,x) \in \mathbb{R}^{d} : t \ge \left(\sum\limits_i \lvert x_i \rvert^p\right)^{\frac{1}{p}} \}`` |
 
 ## Matrix cones
 
