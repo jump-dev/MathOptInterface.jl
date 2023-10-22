@@ -362,3 +362,25 @@ function distance_to_set(
     _check_dimension(x, set)
     return max(LinearAlgebra.norm(@view(x[2:end]), set.p) - x[1], zero(T))
 end
+
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.SOS1,
+) where {T<:Real}
+    _check_dimension(x, set)
+    _, i = findmax(abs, x)
+    return LinearAlgebra.norm2([x[j] for j in eachindex(x) if j != i])
+end
+
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.SOS2,
+) where {T<:Real}
+    _check_dimension(x, set)
+    p = sortperm(set.weights)
+    pairs = collect(zip(p[1:end-1], p[2:end]))
+    _, k = findmax(abs(x[i]) + abs(x[j]) for (i, j) in pairs)
+    return LinearAlgebra.norm2([x[i] for i in eachindex(x) if !(i in pairs[k])])
+end

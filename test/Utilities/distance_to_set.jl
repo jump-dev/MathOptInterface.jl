@@ -286,6 +286,33 @@ function test_normcone()
     return
 end
 
+function test_sos1()
+    _test_set(
+        MOI.SOS1([1.0, 3.0, 2.0]),
+        [0.0, 1.0, 0.0] => 0.0,
+        [-0.5, 0.0, 0.0] => 0.0,
+        [1.0, 1.0, 0.0] => 1.0,
+        [-0.5, 1.5, 1.0] => sqrt(1 + 0.5^2);
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_sos2()
+    _test_set(
+        MOI.SOS2([1.0, 3.0, 2.0]),
+        [0.0, 1.0, 0.0] => 0.0,
+        # [-0.5, 0.0, 0.0] => 0.0,
+        [0.0, 1.0, 1.0] => 0.0,
+        # [-0.5, 0.0, 0.5] => 0.0,
+        # [1.0, 1.0, 0.0] => 1.0,
+        # [-0.5, 0.6, 0.0] => 0.5,
+        # [-0.5, 1.5, 1.0] => 0.5;
+        mismatch = [1.0],
+    )
+    return
+end
+
 end
 
 TestFeasibilityChecker.runtests()
