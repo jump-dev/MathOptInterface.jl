@@ -236,10 +236,7 @@ function distance_to_set(
 ) where {T<:Real}
     _check_dimension(x, set)
     if x[2] <= 0  # Project to x[2] = 1
-        element_distance = (
-            x[2] - one(T),
-            max(exp(x[1]) - x[3], zero(T))
-        )
+        element_distance = (x[2] - one(T), max(exp(x[1]) - x[3], zero(T)))
         return LinearAlgebra.norm(element_distance, 2)
     end
     return max(x[2] * exp(x[1] / x[2]) - x[3], zero(T))
@@ -252,10 +249,8 @@ function distance_to_set(
 ) where {T<:Real}
     _check_dimension(x, set)
     if x[1] >= 0  # Project to x[1] = -1
-        element_distance = (
-            x[1] - -one(T),
-            max(exp(-x[2]) - exp(1) * x[3], zero(T)),
-        )
+        element_distance =
+            (x[1] - -one(T), max(exp(-x[2]) - exp(1) * x[3], zero(T)))
         return LinearAlgebra.norm(element_distance, 2)
     end
     return max(-x[1] * exp(x[2] / x[1]) - exp(1) * x[3], zero(T))
