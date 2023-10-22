@@ -22,6 +22,19 @@ function runtests()
     return
 end
 
+function _test_set(set, pairs...; mismatch = nothing)
+    if mismatch !== nothing
+        @test_throws(
+            DimensionMismatch,
+            MOI.Utilities.distance_to_set(mismatch, set),
+        )
+    end
+    for (x, d) in pairs
+        @test MOI.Utilities.distance_to_set(x, set) ≈ d
+    end
+    return
+end
+
 function test_unsupported()
     @test_throws(
         ErrorException,
@@ -138,6 +151,112 @@ function test_secondordercone()
     # According to Boyd, (t, x) = (1, [1, 1]), projects to:
     d = ((1 / 2) * (1 + 1 / √2) * [√2, 1, 1]) .- [1, 1, 1]
     @test MOI.Utilities.distance_to_set([1, 1, 1], set) ≈ LinearAlgebra.norm(d)
+    return
+end
+
+function test_rotatedsecondordercone()
+    _test_set(
+        MOI.RotatedSecondOrderCone(4),
+        [1.0, 1.0, 1.0, 1.0] => 0.0,
+        [-1.0, 1.0, 1.0, 1.0] => sqrt(1 + 4^2);
+        mismatch = [1.0],
+    )
+    return
+end
+
+# function test_exponential()
+#     return
+# end
+
+# function test_dualexponential()
+#     return
+# end
+
+function test_geometricmeancone()
+    _test_set(
+        MOI.GeometricMeanCone(3),
+        [1.0, 1.0, 1.0] => 0.0,
+        [1.5, 1.0, 2.0] => 1.5 - sqrt(2),
+        [3.5, 3.0, 2.0] => 3.5 - sqrt(6),
+        [1.5, -1.0, 2.0] => sqrt(1 + 1.5^2);
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_powercone()
+    _test_set(
+        MOI.PowerCone(0.5),
+        [1.0, 1.0, 1.0] => 0.0,
+        [-1.0, 1.0, 1.0] => sqrt(2),
+        [1.0, -1.0, 2.0] => sqrt(5),
+        [1.5, 1.0, -2.0] => 2 - 1.5^0.5 * 1^0.5,
+        [1.5, 1.0, 2.0] => 2 - 1.5^0.5 * 1^0.5;
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_dualpowercone()
+    _test_set(
+        MOI.DualPowerCone(0.5),
+        [1.0, 1.0, 1.0] => 0.0,
+        [-1.5, 1.0, -3.0] => sqrt(1.5^2 + 3^2),
+        [1.5, -1.0, 3.0] => sqrt(1.0^2 + 3^2),
+        [1.5, 1.0, -2.0] => 0.0,
+        [1.5, 1.0, -3.0] => 3 - sqrt(3) * sqrt(2),
+        [1.5, 1.0, 3.0] => 3 - sqrt(3) * sqrt(2);
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_normonecone()
+    _test_set(
+        MOI.NormOneCone(3),
+        [1.0, 1.0, 1.0] => 1.0,
+        [1.5, 1.0, -2.0] => 1.5,
+        [3.5, 1.0, -2.0] => 0.0;
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_norminfinitycone()
+    _test_set(
+        MOI.NormInfinityCone(3),
+        [1.0, 1.0, 1.0] => 0.0,
+        [1.5, 1.0, -2.0] => 0.5,
+        [3.5, 1.0, -2.0] => 0.0;
+        mismatch = [1.0],
+    )
+    return
+end
+
+# function test_relativeentropycone()
+#     return
+# end
+
+function test_hyperrectangle()
+    _test_set(
+        MOI.HyperRectangle([0.0, 1.0], [1.0, 2.0]),
+        [0.0, 1.0] => 0.0,
+        [0.5, 1.2] => 0.0,
+        [-1.0, 1.5] => 1.0,
+        [0.5, 2.5] => 0.5,
+        [2.0, 0.0] => sqrt(2);
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_normcone()
+    _test_set(
+        MOI.NormCone(3, 4),
+        [1.0, 2.0, 3.0, 4.0] => LinearAlgebra.norm([2, 3, 4], 3) - 1,
+        [1.5, -2.0, 3.0, 4.0] => LinearAlgebra.norm([-2, 3, 4], 3) - 1.5;
+        mismatch = [1.0],
+    )
     return
 end
 

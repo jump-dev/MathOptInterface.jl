@@ -213,3 +213,130 @@ function distance_to_set(
     # Projection to the point (t, x) + 0.5 * (|x|_2 - t, (t/|x|_2 - 1) * x)
     return sqrt(2) / 2 * abs(t - rhs)
 end
+
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.RotatedSecondOrderCone,
+) where {T<:Real}
+    _check_dimension(x, set)
+    t, u, xs = x[1], x[2], @view(x[3:end])
+    element_distance = (
+        min(t, zero(T)),  # t >= 0
+        min(u, zero(T)),  # u >= 0
+        max(LinearAlgebra.dot(xs, xs) - 2 * t * u, zero(T)),
+    )
+    return LinearAlgebra.norm(element_distance, 2)
+end
+
+# function distance_to_set(
+#     ::ProjectionUpperBoundDistance,
+#     x::AbstractVector{T},
+#     set::MOI.ExponentialConne,
+# ) where {T<:Real}
+#     _check_dimension(x, set)
+#     return
+# end
+
+# function distance_to_set(
+#     ::ProjectionUpperBoundDistance,
+#     x::AbstractVector{T},
+#     set::MOI.DualExponentialConne,
+# ) where {T<:Real}
+#     _check_dimension(x, set)
+#     return
+# end
+
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.GeometricMeanCone,
+) where {T<:Real}
+    _check_dimension(x, set)
+    t, xs = x[1], @view(x[2:end])
+    if any(<(zero(T)), xs)  # There exists x[i] < 0
+        return LinearAlgebra.norm((min.(xs, zero(T)), max(t, zero(T))), 2)
+    end
+    return max(t - prod(xs)^inv(MOI.dimension(set) - 1), zero(T))
+end
+
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.PowerCone,
+) where {T<:Real}
+    _check_dimension(x, set)
+    α = set.exponent
+    if x[1] < 0 || x[2] < 0
+        return LinearAlgebra.norm(
+            (min(x[1], zero(T)), min(x[2], zero(T)), x[3]),
+            2,
+        )
+    end
+    return max(abs(x[3]) - x[1]^α * x[2]^(1 - α), zero(T))
+end
+
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.DualPowerCone,
+) where {T<:Real}
+    _check_dimension(x, set)
+    α = set.exponent
+    if x[1] < 0 || x[2] < 0
+        return LinearAlgebra.norm(
+            (min(x[1], zero(T)), min(x[2], zero(T)), x[3]),
+            2,
+        )
+    end
+    return max(abs(x[3]) - (x[1] / α)^α * (x[2] / (1 - α))^(1 - α), zero(T))
+end
+
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.NormOneCone,
+) where {T<:Real}
+    _check_dimension(x, set)
+    return max(sum(abs, @view(x[2:end])) - x[1], zero(T))
+end
+
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.NormInfinityCone,
+) where {T<:Real}
+    _check_dimension(x, set)
+    return max(maximum(abs, @view(x[2:end])) - x[1], zero(T))
+end
+
+# function distance_to_set(
+#     ::ProjectionUpperBoundDistance,
+#     x::AbstractVector{T},
+#     set::MOI.RelativeEntropyCone,
+# ) where {T<:Real}
+#     _check_dimension(x, set)
+#     return
+# end
+
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.HyperRectangle,
+) where {T<:Real}
+    _check_dimension(x, set)
+    element_distance = (
+        max.(set.lower .- x, zero(T)),
+        max.(x .- set.upper, zero(T)),
+    )
+    return LinearAlgebra.norm(element_distance, 2)
+end
+
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.NormCone,
+) where {T<:Real}
+    _check_dimension(x, set)
+    return max(LinearAlgebra.norm(@view(x[2:end]), set.p) - x[1], zero(T))
+end
