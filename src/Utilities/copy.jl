@@ -524,6 +524,8 @@ The components that are filtered are:
    * `MOI.ListOfConstraintTypesPresent`
  * Individual constraints via:
    * `MOI.ListOfConstraintIndices{F,S}`
+ * Individual variables via:
+   * `MOI.ListOfVariableIndices`
  * Specific attributes via:
    * `MOI.ListOfModelAttributesSet`
    * `MOI.ListOfConstraintAttributesSet`
@@ -574,6 +576,20 @@ end
 filtered_src = MOI.Utilities.ModelFilter(my_filter, src)
 MOI.copy_to(dest, filtered_src)
 ```
+
+## Example: copy model excluding some variables
+
+!!! warning
+    If exclude a variable, you must also exclude any constraints and attributes
+    which include the variable. It may be simpler in practice to copy the full
+    model and then delete variables from the copied model.
+
+```julia
+my_filter(::Any) = true  # Note the generic fallback!
+my_filter(x::MOI.VariableIndex) = isodd(x.value)
+filtered_src = MOI.Utilities.ModelFilter(my_filter, src)
+MOI.copy_to(dest, filtered_src)
+```
 """
 struct ModelFilter{T,F} <: MOI.ModelLike
     inner::T
@@ -591,6 +607,7 @@ function MOI.get(
         MOI.ListOfConstraintTypesPresent,
         MOI.ListOfModelAttributesSet,
         MOI.ListOfVariableAttributesSet,
+        MOI.ListOfVariableIndices,
     },
 )
     return filter(model.filter, MOI.get(model.inner, attr))
@@ -601,11 +618,15 @@ function MOI.get(model::ModelFilter, attr::MOI.AbstractModelAttribute)
 end
 
 # !!! warning
-#     Slow implementations, but we need to report the number of constraints in
-#     the filtered model, not in the `.inner`.
+#     Slow implementations, but we need to report the number of constraints and
+#     variables in the filtered model, not in the `.inner`.
 
 function MOI.get(model::ModelFilter, ::MOI.NumberOfConstraints{F,S}) where {F,S}
     return length(MOI.get(model, MOI.ListOfConstraintIndices{F,S}()))
+end
+
+function MOI.get(model::ModelFilter, ::MOI.NumberOfVariables)
+    return length(MOI.get(model, MOI.ListOfVariableIndices()))
 end
 
 # These just forward the attributes into the inner model.
