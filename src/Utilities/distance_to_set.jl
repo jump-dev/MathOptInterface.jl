@@ -381,6 +381,6 @@ function distance_to_set(
     _check_dimension(x, set)
     p = sortperm(set.weights)
     pairs = collect(zip(p[1:end-1], p[2:end]))
-    _, k = findmax(abs(x[i]) + abs(x[j]) for (i, j) in pairs)
+    _, k = findmax([abs(x[i]) + abs(x[j]) for (i, j) in pairs])
     return LinearAlgebra.norm2([x[i] for i in eachindex(x) if !(i in pairs[k])])
 end
