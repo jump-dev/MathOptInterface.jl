@@ -1159,7 +1159,7 @@ function test_model_ModelFilter_ListOfConstraintIndices(
 end
 
 """
-    test_model_ModelFilter_ListOfConstraintIndices(
+    test_model_ModelFilter_ListOfVariableIndices(
         src::MOI.ModelLike,
         ::Config{T},
     ) where {T}
@@ -1170,9 +1170,8 @@ function test_model_ModelFilter_ListOfVariableIndices(
     src::MOI.ModelLike,
     ::Config{T},
 ) where {T}
-    @requires(
-        MOI.supports_constraint(src, MOI.VariableIndex, MOI.GreaterThan{T}),
-    )
+    F, S = MOI.VariableIndex, MOI.GreaterThan{T}
+    @requires MOI.supports_constraint(src, F, S)
     src = MOI.Utilities.Model{Float64}()
     x = MOI.add_variables(src, 4)
     MOI.add_constraint.(src, x, MOI.GreaterThan(T(0)))
@@ -1186,18 +1185,11 @@ function test_model_ModelFilter_ListOfVariableIndices(
         return true
     end)
     @test MOI.get(dest, MOI.NumberOfVariables()) == 2
-    @test MOI.get(
-        dest,
-        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{T}}(),
-    ) == 2
+    @test MOI.get(dest, MOI.NumberOfConstraints{F,S}()) == 2
     for xi in x
-        if !isodd(xi.value)
-            @test !haskey(index_map, xi)
-            continue
-        end
-        @test haskey(index_map, xi)
-        ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{T}}(xi.value)
-        @test haskey(index_map, ci) == isodd(xi.value)
+        @test haskey(index_map, xi) == isodd(xi.value)
+        ci = MOI.ConstraintIndex{F,S}(xi.value)
+        @test haskey(index_map, ci) == isodd(ci.value)
     end
     return
 end
