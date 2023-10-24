@@ -54,7 +54,8 @@ end
 
 _lift_variable_indices(arg) = arg  # Recursion fallback.
 
-function _extract_function_and_set(expr::Expr)
+# TODO(odow): Used by PolyJuMP. Make private in future.
+function extract_function_and_set(expr::Expr)
     if expr.head == :call  # One-sided constraint or foo-in-set.
         @assert length(expr.args) == 3
         if expr.args[1] == :in
@@ -100,7 +101,7 @@ function write_nlpblock(
     end
     for (row, bounds) in enumerate(nlp_block.constraint_bounds)
         constraint = MOI.constraint_expr(nlp_block.evaluator, row)
-        (func, set) = _extract_function_and_set(constraint)
+        (func, set) = extract_function_and_set(constraint)
         func = _lift_variable_indices(func)
         push!(
             object["constraints"],

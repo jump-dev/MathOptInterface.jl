@@ -190,15 +190,15 @@ function test_nonlinear_error_handling()
         [MOI.VariableIndex(1)],
     )
     # Function-in-Set
-    @test_throws Exception MOF._extract_function_and_set(:(foo in set))
+    @test_throws Exception MOF.extract_function_and_set(:(foo in set))
     # Not a constraint.
-    @test_throws Exception MOF._extract_function_and_set(:(x^2))
+    @test_throws Exception MOF.extract_function_and_set(:(x^2))
     # Two-sided constraints
-    @test MOF._extract_function_and_set(:(1 <= x <= 2)) ==
-          MOF._extract_function_and_set(:(2 >= x >= 1)) ==
+    @test MOF.extract_function_and_set(:(1 <= x <= 2)) ==
+          MOF.extract_function_and_set(:(2 >= x >= 1)) ==
           (:x, MOI.Interval(1, 2))
     # Less-than constraint.
-    @test MOF._extract_function_and_set(:(x <= 2)) == (:x, MOI.LessThan(2))
+    @test MOF.extract_function_and_set(:(x <= 2)) == (:x, MOI.LessThan(2))
 end
 
 function _convert_mof_to_expr(
