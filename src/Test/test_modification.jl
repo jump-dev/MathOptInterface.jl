@@ -1025,6 +1025,7 @@ function test_modification_objective_scalarquadraticcoefficientchange(
     @requires _supports(config, MOI.modify)
     @requires _supports(config, MOI.ScalarQuadraticCoefficientChange)
     x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, attr, T(1) * x * x + T(2) * x + T(3))
     @test MOI.get(model, attr) ≈ T(1) * x * x + T(2) * x + T(3)
     MOI.modify(model, attr, MOI.ScalarQuadraticCoefficientChange(x, x, T(4)))
