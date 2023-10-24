@@ -72,14 +72,22 @@ function get_bounds(
     bounds_cache::Dict{MOI.VariableIndex,NTuple{2,T}},
     f::MOI.ScalarAffineFunction{T},
 ) where {T}
+    if !is_canonical(f)
+        f = canonical(f)
+    end
     lb = ub = f.constant
     for term in f.terms
         ret = get_bounds(model, bounds_cache, term.variable)
         if ret === nothing
             return nothing
         end
-        lb += term.coefficient * ret[1]
-        ub += term.coefficient * ret[2]
+        if term.coefficient >= 0
+            lb += term.coefficient * ret[1]
+            ub += term.coefficient * ret[2]
+        else
+            lb += term.coefficient * ret[2]
+            ub += term.coefficient * ret[1]
+        end
     end
     return lb, ub
 end
