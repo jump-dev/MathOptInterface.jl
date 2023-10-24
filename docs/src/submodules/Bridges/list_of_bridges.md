@@ -79,6 +79,8 @@ Bridges.Constraint.CountDistinctToMILPBridge
 Bridges.Constraint.ReifiedCountDistinctToMILPBridge
 Bridges.Constraint.CountGreaterThanToMILPBridge
 Bridges.Constraint.TableToMILPBridge
+Bridges.Constraint.SOS1ToMILPBridge
+Bridges.Constraint.SOS2ToMILPBridge
 ```
 
 ## [Objective bridges](@id objective_bridges_ref)
