@@ -78,7 +78,7 @@ function get_bounds(
 ) where {T}
     lb = ub = f.constant
     for term in f.terms
-        ret = get_bounds(bridge, model, bounds_cache, term.variable)
+        ret = get_bounds(model, bounds_cache, term.variable)
         if ret === nothing
             return nothing
         end

@@ -208,7 +208,7 @@ function _unit_expansion(
     bounds = Dict{MOI.VariableIndex,Tuple{T,T}}()
     ci = MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}[]
     for i in 1:length(f)
-        ret = MOI.Utilities.get_bounds(bridge, model, bounds, f[i])
+        ret = MOI.Utilities.get_bounds(model, bounds, f[i])
         if ret === nothing
             BT = typeof(bridge)
             error(

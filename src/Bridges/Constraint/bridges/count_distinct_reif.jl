@@ -255,7 +255,7 @@ function MOI.Bridges.final_touch(
     bounds = Dict{MOI.VariableIndex,NTuple{2,T}}()
     for i in 3:length(scalars)
         x = scalars[i]
-        ret = MOI.Utilities.get_bounds(bridge, model, bounds, x)
+        ret = MOI.Utilities.get_bounds(model, bounds, x)
         if ret === nothing
             error(
                 "Unable to use ReifiedCountDistinctToMILPBridge because " *

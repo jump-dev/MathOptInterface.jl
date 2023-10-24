@@ -192,7 +192,7 @@ function MOI.Bridges.final_touch(
     scalars = collect(MOI.Utilities.eachscalar(bridge.f))
     new_bounds = false
     for (i, x) in enumerate(scalars)
-        ret = MOI.Utilities.get_bounds(bridge, model, bounds, x)
+        ret = MOI.Utilities.get_bounds(model, bounds, x)
         if ret === nothing
             error(
                 "Unable to use SOS1ToMILPBridge because element $i " *

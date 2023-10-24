@@ -190,7 +190,7 @@ function _add_unit_expansion(
     x,
     i,
 ) where {T,F}
-    ret = MOI.Utilities.get_bounds(bridge, model, bounds, x)
+    ret = MOI.Utilities.get_bounds(model, bounds, x)
     if ret === nothing
         error(
             "Unable to use $(typeof(bridge)) because an element in the " *
