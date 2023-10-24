@@ -54,10 +54,6 @@ function get_bounds(
         s_greater_than = MOI.get(model, MOI.ConstraintSet(), c_greater_than)
         l = max(l, s_greater_than.lower)
     end
-    # MOI.ZeroOne
-    if MOI.is_valid(model, MOI.ConstraintIndex{F,MOI.ZeroOne}(x.value))
-        l, u = max(l, zero(T)), min(u, one(T))
-    end
     return l, u
 end
 
@@ -110,10 +106,14 @@ function get_bounds(
     if haskey(bounds_cache, x)
         return bounds_cache[x]
     end
-    ret = get_bounds(model, T, x)
-    if ret == (typemin(T), typemax(T))
+    l, u = get_bounds(model, T, x)
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}(x.value)
+    if MOI.is_valid(model, ci)
+        l, u = max(l, zero(T)), min(u, one(T))
+    end
+    if (l, u) == (typemin(T), typemax(T))
         return nothing
     end
-    bounds_cache[x] = ret
-    return ret
+    bounds_cache[x] = (l, u)
+    return (l, u)
 end
