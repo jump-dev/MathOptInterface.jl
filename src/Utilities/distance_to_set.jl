@@ -82,6 +82,7 @@ end
 ### MOI.AbstractScalarSets
 ###
 
+# This is the minimal L2-norm.
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::T,
@@ -90,6 +91,7 @@ function distance_to_set(
     return max(x - set.upper, zero(T))
 end
 
+# This is the minimal L2-norm.
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::T,
@@ -98,6 +100,7 @@ function distance_to_set(
     return max(set.lower - x, zero(T))
 end
 
+# This is the minimal L2-norm.
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::T,
@@ -106,6 +109,7 @@ function distance_to_set(
     return abs(set.value - x)
 end
 
+# This is the minimal L2-norm.
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::T,
@@ -114,6 +118,7 @@ function distance_to_set(
     return max(x - set.upper, set.lower - x, zero(T))
 end
 
+# This is the minimal L2-norm.
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::T,
@@ -122,6 +127,7 @@ function distance_to_set(
     return min(abs(x - zero(T)), abs(x - one(T)))
 end
 
+# This is the minimal L2-norm.
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::T,
@@ -130,6 +136,7 @@ function distance_to_set(
     return abs(x - round(x))
 end
 
+# This is the minimal L2-norm.
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::T,
@@ -138,6 +145,7 @@ function distance_to_set(
     return min(max(x - set.upper, set.lower - x, zero(T)), abs(x))
 end
 
+# This is the minimal L2-norm.
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::T,
@@ -158,6 +166,7 @@ function _check_dimension(v::AbstractVector, s)
     return
 end
 
+# This is the minimal L2-norm.
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::AbstractVector{T},
@@ -167,6 +176,7 @@ function distance_to_set(
     return LinearAlgebra.norm(max(-xi, zero(T)) for xi in x)
 end
 
+# This is the minimal L2-norm.
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::AbstractVector{T},
@@ -176,6 +186,7 @@ function distance_to_set(
     return LinearAlgebra.norm(max(xi, zero(T)) for xi in x)
 end
 
+# This is the minimal L2-norm.
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::AbstractVector{T},
@@ -185,6 +196,7 @@ function distance_to_set(
     return LinearAlgebra.norm(x)
 end
 
+# This is the minimal L2-norm.
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::AbstractVector{T},
@@ -194,11 +206,13 @@ function distance_to_set(
     return zero(T)
 end
 
+# This is the minimal L2-norm.
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::AbstractVector{T},
     set::MOI.SecondOrderCone,
 ) where {T<:Real}
+    Base.require_one_based_indexing(x)
     _check_dimension(x, set)
     # Projections come from:
     # Parikh, N., & Boyd, S. (2014). Proximal algorithms. Foundations and
@@ -212,4 +226,266 @@ function distance_to_set(
     end
     # Projection to the point (t, x) + 0.5 * (|x|_2 - t, (t/|x|_2 - 1) * x)
     return sqrt(2) / 2 * abs(t - rhs)
+end
+
+"""
+    distance_to_set(::ProjectionUpperBoundDistance, x, ::MOI.RotatedSecondOrderCone)
+
+Let `(t, u, y...) = x`. Return the 2-norm of the vector `d` such that in `x + d`,
+`u` is projected to `1` if `u <= 0`, and `t` is increased such that `x + d`
+belongs to the set.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.RotatedSecondOrderCone,
+) where {T<:Real}
+    Base.require_one_based_indexing(x)
+    _check_dimension(x, set)
+    u, y = (x[2] <= 0 ? 1 : x[2]), @view(x[3:end])
+    element_distance = (
+        u - x[2],  # u -> 1
+        max(LinearAlgebra.dot(y, y) / (2 * u) - x[1], zero(T)),
+    )
+    return LinearAlgebra.norm(element_distance, 2)
+end
+
+"""
+    distance_to_set(::ProjectionUpperBoundDistance, x, ::MOI.ExponentialCone)
+
+Let `(u, v, w) = x`. If `v > 0`, return the epigraph distance `d` such that
+`(u, v, w + d)` belongs to the set.
+
+If `v <= 0` return the 2-norm of the vector `d` such that `x + d = (u, 1, z)`
+where `z` satisfies the constraints.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.ExponentialCone,
+) where {T<:Real}
+    Base.require_one_based_indexing(x)
+    _check_dimension(x, set)
+    if x[2] <= 0  # Project to x[2] = 1
+        element_distance = (x[2] - one(T), max(exp(x[1]) - x[3], zero(T)))
+        return LinearAlgebra.norm(element_distance, 2)
+    end
+    return max(x[2] * exp(x[1] / x[2]) - x[3], zero(T))
+end
+
+"""
+    distance_to_set(::ProjectionUpperBoundDistance, x, ::MOI.DualExponentialCone)
+
+Let `(u, v, w) = x`. If `u < 0`, return the epigraph distance `d` such that
+`(u, v, w + d)` belongs to the set.
+
+If `u >= 0` return the 2-norm of the vector `d` such that `x + d = (u, -1, z)`
+where `z` satisfies the constraints.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.DualExponentialCone,
+) where {T<:Real}
+    Base.require_one_based_indexing(x)
+    _check_dimension(x, set)
+    if x[1] >= 0  # Project to x[1] = -1
+        element_distance = (x[1] - -one(T), max(exp(-x[2] - 1) - x[3], zero(T)))
+        return LinearAlgebra.norm(element_distance, 2)
+    end
+    return max(-x[1] * exp(x[2] / x[1] - 1) - x[3], zero(T))
+end
+
+"""
+    distance_to_set(::ProjectionUpperBoundDistance, x, ::MOI.GeometricMeanCone)
+
+Let `(t, y...) = x`. If all `y` are non-negative, return the epigraph distance
+`d` such that `(t + d, y...)` belongs to the set.
+
+If any `y` are strictly negative, return the 2-norm of the vector `d` that
+projects negative `y` elements to `0` and `t` to `ℝ₋`.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.GeometricMeanCone,
+) where {T<:Real}
+    Base.require_one_based_indexing(x)
+    _check_dimension(x, set)
+    t, xs = x[1], @view(x[2:end])
+    if any(<(zero(T)), xs)  # Project to x = 0
+        return LinearAlgebra.norm((min.(xs, zero(T)), max(t, zero(T))), 2)
+    end
+    return max(t - prod(xs)^inv(MOI.dimension(set) - 1), zero(T))
+end
+
+"""
+    distance_to_set(::ProjectionUpperBoundDistance, x, ::MOI.PowerCone)
+
+Let `(a, b, c) = x`. If `a` and `b` are non-negative, return the epigraph
+distance required to increase `c` such that the constraint is satisfied.
+
+If `a` or `b` is strictly negative, return the 2-norm of the vector `d` such
+that in the vector `x + d`: `c`, and any negative `a` and `b` are projected to
+`0`.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.PowerCone,
+) where {T<:Real}
+    Base.require_one_based_indexing(x)
+    _check_dimension(x, set)
+    α = set.exponent
+    if x[1] >= 0 && x[2] >= 0
+        return max(abs(x[3]) - x[1]^α * x[2]^(1 - α), zero(T))
+    end
+    # Project to x = 0
+    return LinearAlgebra.norm((min(x[1], zero(T)), min(x[2], zero(T)), x[3]), 2)
+end
+
+"""
+    distance_to_set(::ProjectionUpperBoundDistance, x, ::MOI.DualPowerCone)
+
+Let `(a, b, c) = x`. If `a` and `b` are non-negative, return the epigraph
+distance required to increase `c` such that the constraint is satisfied.
+
+If `a` or `b` is strictly negative, return the 2-norm of the vector `d` such
+that in the vector `x + d`: `c`, and any negative `a` and `b` are projected to
+`0`.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.DualPowerCone,
+) where {T<:Real}
+    Base.require_one_based_indexing(x)
+    _check_dimension(x, set)
+    α = set.exponent
+    if x[1] >= 0 && x[2] >= 0
+        return max(abs(x[3]) - (x[1] / α)^α * (x[2] / (1 - α))^(1 - α), zero(T))
+    end
+    # Project to x = 0
+    return LinearAlgebra.norm((min(x[1], zero(T)), min(x[2], zero(T)), x[3]), 2)
+end
+
+"""
+    distance_to_set(::ProjectionUpperBoundDistance, x, ::MOI.NormOneCone)
+
+Let `(t, y...) = x`. Return the epigraph distance `d` such that `(t + d, y...)`
+belongs to the set.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.NormOneCone,
+) where {T<:Real}
+    Base.require_one_based_indexing(x)
+    _check_dimension(x, set)
+    return max(sum(abs, @view(x[2:end])) - x[1], zero(T))
+end
+
+"""
+    distance_to_set(::ProjectionUpperBoundDistance, x, ::MOI.NormInfinityCone)
+
+Let `(t, y...) = x`. Return the epigraph distance `d` such that `(t + d, y...)`
+belongs to the set.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.NormInfinityCone,
+) where {T<:Real}
+    Base.require_one_based_indexing(x)
+    _check_dimension(x, set)
+    return max(maximum(abs, @view(x[2:end])) - x[1], zero(T))
+end
+
+"""
+    distance_to_set(::ProjectionUpperBoundDistance, x, ::MOI.RelativeEntropyCone)
+
+Let `(u, v..., w...) = x`. If `v` and `w` are strictly positive, return the
+epigraph distance required to increase `u` such that the constraint is satisfied.
+
+If any elements in `v` or `w` are non-positive, return the 2-norm of the vector
+`d` such that in the vector `x + d`: any non-positive elements in `v` and `w`
+are projected to `1`, and `u` is projected such that the epigraph constraint
+holds.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.RelativeEntropyCone,
+) where {T<:Real}
+    Base.require_one_based_indexing(x)
+    _check_dimension(x, set)
+    n = div(MOI.dimension(set) - 1, 2)
+    u, v, w = x[1], @view(x[2:(n+1)]), @view(x[(n+2):end])
+    _to_one(x) = x <= zero(T) ? one(T) : x
+    if any(<=(zero(T)), v) || any(<=(zero(T)), w)  # Project to v = w = 1
+        v_p, w_p = _to_one.(v), _to_one.(w)
+        element_distance = (
+            v_p .- v,
+            w_p .- w,
+            max(
+                sum(w_p[i] * log(w_p[i] / v_p[i]) for i in eachindex(w)) - u,
+                zero(T),
+            ),
+        )
+        return LinearAlgebra.norm(element_distance, 2)
+    end
+    return max(sum(w[i] * log(w[i] / v[i]) for i in eachindex(w)) - u, zero(T))
+end
+
+# This is the minimal L2-norm.
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.HyperRectangle,
+) where {T<:Real}
+    _check_dimension(x, set)
+    element_distance =
+        (max.(set.lower .- x, zero(T)), max.(x .- set.upper, zero(T)))
+    return LinearAlgebra.norm(element_distance, 2)
+end
+
+"""
+    distance_to_set(::ProjectionUpperBoundDistance, x, set::MOI.NormCone)
+
+Let `(t, y...) = x`. Return the epigraph distance `d` such that `(t + d, y...)`
+belongs to the set.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.NormCone,
+) where {T<:Real}
+    Base.require_one_based_indexing(x)
+    _check_dimension(x, set)
+    return max(LinearAlgebra.norm(@view(x[2:end]), set.p) - x[1], zero(T))
+end
+
+# This is the minimal L2-norm.
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.SOS1,
+) where {T<:Real}
+    _check_dimension(x, set)
+    _, i = findmax(abs, x)
+    return LinearAlgebra.norm([x[j] for j in eachindex(x) if j != i], 2)
+end
+
+# This is the minimal L2-norm.
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.SOS2,
+) where {T<:Real}
+    _check_dimension(x, set)
+    p = sortperm(set.weights)
+    pairs = collect(zip(p[1:end-1], p[2:end]))
+    _, k = findmax([abs(x[i]) + abs(x[j]) for (i, j) in pairs])
+    elements = [x[i] for i in eachindex(x) if !(i in pairs[k])]
+    return LinearAlgebra.norm(elements, 2)
 end
