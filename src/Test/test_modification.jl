@@ -1027,14 +1027,14 @@ function test_modification_objective_scalarquadraticcoefficientchange(
     x = MOI.add_variable(model)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, attr, T(1) * x * x + T(2) * x + T(3))
-    @test MOI.get(model, attr) ≈ T(1) * x * x + T(2) * x + T(3)
+    @test ≈(MOI.get(model, attr), T(1) * x * x + T(2) * x + T(3), config)
     MOI.modify(model, attr, MOI.ScalarQuadraticCoefficientChange(x, x, T(4)))
-    @test MOI.get(model, attr) ≈ T(2) * x * x + T(2) * x + T(3)
+    @test ≈(MOI.get(model, attr), T(2) * x * x + T(2) * x + T(3), config)
     y = MOI.add_variable(model)
     MOI.set(model, attr, T(1) * x * x + T(2) * x * y)
-    @test MOI.get(model, attr) ≈ T(1) * x * x + T(2) * x * y
+    @test ≈(MOI.get(model, attr), T(1) * x * x + T(2) * x * y, config)
     MOI.modify(model, attr, MOI.ScalarQuadraticCoefficientChange(x, y, T(4)))
-    @test MOI.get(model, attr) ≈ T(1) * x * x + T(4) * x * y
+    @test ≈(MOI.get(model, attr), T(1) * x * x + T(4) * x * y, config)
     return
 end
 
@@ -1050,10 +1050,10 @@ function test_modification_constraint_scalarquadraticcoefficientchange(
     y = MOI.add_variable(model)
     f = T(1) * x * x + T(1) * x * x - T(1) * x * y + T(2) * y * y - T(1) * x * y
     c = MOI.add_constraint(model, f, MOI.LessThan(T(1)))
-    @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ f
+    @test ≈(MOI.get(model, MOI.ConstraintFunction(), c), f, config)
     g = T(1) * x * x + T(-3) * x * y + T(2) * y * y
     MOI.modify(model, c, MOI.ScalarQuadraticCoefficientChange(x, x, T(2)))
     MOI.modify(model, c, MOI.ScalarQuadraticCoefficientChange(x, y, -T(3)))
-    @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ g
+    @test ≈(MOI.get(model, MOI.ConstraintFunction(), c), g, config)
     return
 end
