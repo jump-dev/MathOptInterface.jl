@@ -111,11 +111,7 @@ function MOI.get(
     return bridge.f
 end
 
-function MOI.get(
-    ::MOI.ModelLike,
-    ::MOI.ConstraintSet,
-    bridge::SOS2ToMILPBridge,
-)
+function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::SOS2ToMILPBridge)
     return bridge.s
 end
 
@@ -133,10 +129,7 @@ function MOI.delete(model::MOI.ModelLike, bridge::SOS2ToMILPBridge)
     return
 end
 
-function MOI.get(
-    bridge::SOS2ToMILPBridge,
-    ::MOI.NumberOfVariables,
-)::Int64
+function MOI.get(bridge::SOS2ToMILPBridge, ::MOI.NumberOfVariables)::Int64
     return length(bridge.variables)
 end
 
@@ -278,12 +271,7 @@ function MOI.Bridges.final_touch(
         elseif i == length(bridge.s.weights)
             bridge.variables[i-1]
         else
-            MOI.Utilities.operate(
-                +,
-                T,
-                bridge.variables[i],
-                bridge.variables[i-1],
-            )
+            MOI.Utilities.operate(+, T, bridge.variables[i], bridge.variables[i-1])
         end
         push!(
             bridge.less_than,

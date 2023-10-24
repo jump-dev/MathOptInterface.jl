@@ -111,11 +111,7 @@ function MOI.get(
     return bridge.f
 end
 
-function MOI.get(
-    ::MOI.ModelLike,
-    ::MOI.ConstraintSet,
-    bridge::SOS1ToMILPBridge,
-)
+function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::SOS1ToMILPBridge)
     return bridge.s
 end
 
@@ -133,10 +129,7 @@ function MOI.delete(model::MOI.ModelLike, bridge::SOS1ToMILPBridge)
     return
 end
 
-function MOI.get(
-    bridge::SOS1ToMILPBridge,
-    ::MOI.NumberOfVariables,
-)::Int64
+function MOI.get(bridge::SOS1ToMILPBridge, ::MOI.NumberOfVariables)::Int64
     return length(bridge.variables)
 end
 
