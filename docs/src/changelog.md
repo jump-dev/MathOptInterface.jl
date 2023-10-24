@@ -12,13 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
  - Added [`SolutionLimit`](@ref) attribute (#2291)
- - Added support for MathOptFormat v1.6 and v1.7 (#2293) (#2298) (#2299)
+ - Added support for MathOptFormat v1.6 and v1.7 (#2293) (#2298) (#2299) (#2321)
  - Added [`ScalarQuadraticCoefficientChange`](@ref) (#2296) (#2320)
  - Added [`Utilities.modify_constants`](@ref) (#2300)
  - Added support for [`is_empty`](@ref) and [`empty!`](@ref) of
    [`Nonlinear.Model`](@ref) (#2305)
  - Added [`Bridges.Objective.FunctionConversionBridge`](@ref) (#2303)
  - Added `Bridges.ModifyBridgeNotAllowed` (#2307)
+ - Added more sets for [`Utilities.distance_to_set`](@ref) (#2314)
 
 ### Fixed
 
