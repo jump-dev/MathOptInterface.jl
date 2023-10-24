@@ -182,43 +182,6 @@ end
 
 MOI.Bridges.needs_final_touch(::CountGreaterThanToMILPBridge) = true
 
-# We use the bridge as the first argument to avoid type piracy of other methods.
-function _get_bounds(
-    bridge::CountGreaterThanToMILPBridge{T},
-    model::MOI.ModelLike,
-    bounds::Dict{MOI.VariableIndex,NTuple{2,T}},
-    f::MOI.ScalarAffineFunction{T},
-) where {T}
-    lb = ub = f.constant
-    for term in f.terms
-        ret = _get_bounds(bridge, model, bounds, term.variable)
-        if ret === nothing
-            return nothing
-        end
-        lb += term.coefficient * ret[1]
-        ub += term.coefficient * ret[2]
-    end
-    return lb, ub
-end
-
-# We use the bridge as the first argument to avoid type piracy of other methods.
-function _get_bounds(
-    ::CountGreaterThanToMILPBridge{T},
-    model::MOI.ModelLike,
-    bounds::Dict{MOI.VariableIndex,NTuple{2,T}},
-    x::MOI.VariableIndex,
-) where {T}
-    if haskey(bounds, x)
-        return bounds[x]
-    end
-    ret = MOI.Utilities.get_bounds(model, T, x)
-    if ret == (typemin(T), typemax(T))
-        return nothing
-    end
-    bounds[x] = ret
-    return ret
-end
-
 function _add_unit_expansion(
     bridge::CountGreaterThanToMILPBridge{T,F},
     model::MOI.ModelLike,
@@ -227,7 +190,7 @@ function _add_unit_expansion(
     x,
     i,
 ) where {T,F}
-    ret = _get_bounds(bridge, model, bounds, x)
+    ret = MOI.Utilities.get_bounds(bridge, model, bounds, x)
     if ret === nothing
         error(
             "Unable to use $(typeof(bridge)) because an element in the " *

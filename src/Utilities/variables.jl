@@ -60,3 +60,60 @@ function get_bounds(
     end
     return l, u
 end
+
+"""
+    get_bounds(
+        model::MOI.ModelLike,
+        bounds_cache::Dict{MOI.VariableIndex,NTuple{2,T}},
+        f::MOI.ScalarAffineFunction{T},
+    ) where {T} --> Union{Nothing,NTuple{2,T}}
+
+Return the lower and upper bound of `f` as a tuple. If the domain is not bounded,
+return `nothing`.
+"""
+function get_bounds(
+    model::MOI.ModelLike,
+    bounds_cache::Dict{MOI.VariableIndex,NTuple{2,T}},
+    f::MOI.ScalarAffineFunction{T},
+) where {T}
+    lb = ub = f.constant
+    for term in f.terms
+        ret = get_bounds(bridge, model, bounds_cache, term.variable)
+        if ret === nothing
+            return nothing
+        end
+        lb += term.coefficient * ret[1]
+        ub += term.coefficient * ret[2]
+    end
+    return lb, ub
+end
+
+"""
+    get_bounds(
+        model::MOI.ModelLike,
+        bounds_cache::Dict{MOI.VariableIndex,NTuple{2,T}},
+        x::MOI.VariableIndex,
+    ) where {T} --> Union{Nothing,NTuple{2,T}}
+
+Return the lower and upper bound of `x` as a tuple. If the domain is not bounded,
+return `nothing`.
+
+Similar to `get_bounds(::MOI.ModelLike, ::Type{T}, ::MOI.VariableIndex)`, except
+that the second argument is a cache which maps variables to their bounds and
+avoids repeated lookups.
+"""
+function get_bounds(
+    model::MOI.ModelLike,
+    bounds_cache::Dict{MOI.VariableIndex,NTuple{2,T}},
+    x::MOI.VariableIndex,
+) where {T}
+    if haskey(bounds_cache, x)
+        return bounds_cache[x]
+    end
+    ret = get_bounds(model, T, x)
+    if ret == (typemin(T), typemax(T))
+        return nothing
+    end
+    bounds_cache[x] = ret
+    return ret
+end

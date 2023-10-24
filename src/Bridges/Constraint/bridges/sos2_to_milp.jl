@@ -184,43 +184,6 @@ end
 
 MOI.Bridges.needs_final_touch(::SOS2ToMILPBridge) = true
 
-# We use the bridge as the first argument to avoid type piracy of other methods.
-function _get_bounds(
-    bridge::SOS2ToMILPBridge{T},
-    model::MOI.ModelLike,
-    bounds::Dict{MOI.VariableIndex,NTuple{2,T}},
-    f::MOI.ScalarAffineFunction{T},
-) where {T}
-    lb = ub = f.constant
-    for term in f.terms
-        ret = _get_bounds(bridge, model, bounds, term.variable)
-        if ret === nothing
-            return nothing
-        end
-        lb += term.coefficient * ret[1]
-        ub += term.coefficient * ret[2]
-    end
-    return lb, ub
-end
-
-# We use the bridge as the first argument to avoid type piracy of other methods.
-function _get_bounds(
-    ::SOS2ToMILPBridge{T},
-    model::MOI.ModelLike,
-    bounds::Dict{MOI.VariableIndex,NTuple{2,T}},
-    x::MOI.VariableIndex,
-) where {T}
-    if haskey(bounds, x)
-        return bounds[x]
-    end
-    ret = MOI.Utilities.get_bounds(model, T, x)
-    if ret == (typemin(T), typemax(T))
-        return nothing
-    end
-    bounds[x] = ret
-    return ret
-end
-
 function MOI.Bridges.final_touch(
     bridge::SOS2ToMILPBridge{T,F},
     model::MOI.ModelLike,
@@ -229,7 +192,7 @@ function MOI.Bridges.final_touch(
     scalars = collect(MOI.Utilities.eachscalar(bridge.f))
     new_bounds = false
     for (i, x) in enumerate(scalars)
-        ret = _get_bounds(bridge, model, bounds, x)
+        ret = MOI.Utilities.get_bounds(bridge, model, bounds, x)
         if ret === nothing
             error(
                 "Unable to use SOS2ToMILPBridge because element $i " *
