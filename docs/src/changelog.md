@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Fixed flakey link checking in documentation (#2297)
  - Minor documentation fixes (#2304) (#2313)
- - Fixed compat of `Project.toml` (#2310)
+ - Fixed `[compat]` section of `Project.toml` (#2310)
  - Added MultiObjectiveAlgorithms to `solver-tests.yml` (#2312)
 
 ## v1.20.1 (September 24, 2023)
