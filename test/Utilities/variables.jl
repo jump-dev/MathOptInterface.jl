@@ -115,6 +115,10 @@ function test_get_bounds_scalar_affine()
     @test MOI.Utilities.get_bounds(model, cache, 1.5 * x + z) == (1.5, 4.0)
     @test MOI.Utilities.get_bounds(model, cache, -1.0 * y) == nothing
     @test MOI.Utilities.get_bounds(model, cache, 1.0 * x + y) == nothing
+    MOI.add_constraint(model, y, MOI.GreaterThan(2.0))
+    @test MOI.Utilities.get_bounds(model, cache, y) == nothing
+    MOI.add_constraint(model, y, MOI.LessThan(3.0))
+    @test MOI.Utilities.get_bounds(model, cache, y) == (2.0, 3.0)
     return
 end
 

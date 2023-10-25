@@ -119,7 +119,7 @@ function get_bounds(
     if MOI.is_valid(model, ci)
         l, u = max(l, zero(T)), min(u, one(T))
     end
-    if (l, u) == (typemin(T), typemax(T))
+    if l == typemin(T) || u == typemax(T)
         return nothing
     end
     bounds_cache[x] = (l, u)

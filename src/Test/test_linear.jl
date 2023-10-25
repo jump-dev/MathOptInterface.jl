@@ -2813,6 +2813,7 @@ function test_linear_SOS1_integration(
     @requires MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.SOS1{T})
     @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.LessThan{T})
     v = MOI.add_variables(model, 3)
+    MOI.add_constraint.(model, v, MOI.GreaterThan(zero(T)))
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
     vc1 = MOI.add_constraint(model, v[1], MOI.LessThan(T(1)))
     @test vc1.value == v[1].value
