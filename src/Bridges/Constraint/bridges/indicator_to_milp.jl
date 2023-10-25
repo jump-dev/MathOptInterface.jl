@@ -38,7 +38,7 @@ mutable struct IndicatorToMILPBridge{
     slack::Union{Nothing,MOI.VariableIndex}
     constraint::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},S}
     slack_bounds::Vector{
-        MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.LessThan{T}}
+        MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.LessThan{T}},
     }
     bounds::NTuple{2,T}
     function IndicatorToMILPBridge{T}(
@@ -215,7 +215,7 @@ function MOI.Bridges.final_touch(
         return
     end
     bridge.slack = MOI.add_variable(model)
-    bridge.constraint =  MOI.Utilities.normalize_and_add_constraint(
+    bridge.constraint = MOI.Utilities.normalize_and_add_constraint(
         model,
         MOI.Utilities.operate(+, T, fi, bridge.slack),
         bridge.s.set;
