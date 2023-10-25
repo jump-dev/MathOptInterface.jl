@@ -116,6 +116,9 @@ function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::SOS1ToMILPBridge)
 end
 
 function MOI.delete(model::MOI.ModelLike, bridge::SOS1ToMILPBridge)
+    if isempty(bridge.variables)
+        return
+    end
     MOI.delete(model, bridge.equal_to)
     for ci in bridge.less_than
         MOI.delete(model, ci)
