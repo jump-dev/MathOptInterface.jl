@@ -75,8 +75,9 @@ function MOI.Bridges.inverse_map_function(
 ) where {T}
     # func is [t - x; t + x]
     scalars = MOI.Utilities.eachscalar(func)
+    sum_f = MOI.Utilities.operate(+, T, scalars...)
     # Get t by `(t - x) + (t + x)`, then dividing by the number of rows.
-    t = MOI.Utilities.operate!(/, T, sum(scalars), T(length(scalars)))
+    t = MOI.Utilities.operate!(/, T, sum_f, T(length(scalars)))
     d = div(length(scalars), 2)
     # Get x by (t + x) - (t - x) = 2x
     x = MOI.Utilities.operate!(-, T, scalars[(d+1):end], scalars[1:d])
