@@ -7,6 +7,32 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.21.0 (October 25, 2023)
+
+### Added
+
+ - Added [`SolutionLimit`](@ref) attribute (#2291)
+ - Added support for MathOptFormat v1.6 and v1.7 (#2293) (#2298) (#2299) (#2321)
+ - Added [`ScalarQuadraticCoefficientChange`](@ref) (#2296) (#2320) (#2322)
+ - Added [`Utilities.modify_constants`](@ref) (#2300)
+ - Added support for [`is_empty`](@ref) and [`empty!`](@ref) of
+   [`Nonlinear.Model`](@ref) (#2305)
+ - Added [`Bridges.Objective.FunctionConversionBridge`](@ref) (#2303)
+ - Added `Bridges.ModifyBridgeNotAllowed` (#2307)
+ - Added more sets for [`Utilities.distance_to_set`](@ref) (#2314)
+
+### Fixed
+
+ - Fixed `test_attribute_TimeLimitSec` (#2256)
+ - Fixed conversion cost in objective bridges (#2309)
+
+### Other
+
+ - Fixed flakey link checking in documentation (#2297)
+ - Minor documentation fixes (#2304) (#2313)
+ - Fixed `[compat]` section of `Project.toml` (#2310)
+ - Added MultiObjectiveAlgorithms to `solver-tests.yml` (#2312)
+
 ## v1.20.1 (September 24, 2023)
 
 ### Fixed
