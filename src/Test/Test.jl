@@ -309,7 +309,12 @@ macro requires(x)
 end
 
 function _error_handler(
-    err::Union{MOI.NotAllowedError,MOI.UnsupportedError,RequirementUnmet},
+    err::Union{
+        MOI.NotAllowedError,
+        MOI.ScalarFunctionConstantNotZero,
+        MOI.UnsupportedError,
+        RequirementUnmet,
+    },
     name::String,
     warn_unsupported::Bool,
 )
