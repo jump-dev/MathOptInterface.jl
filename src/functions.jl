@@ -108,7 +108,10 @@ term_pair(t::ScalarAffineTerm) = term_indices(t) => coefficient(t)
 #     See https://github.com/jump-dev/MathOptInterface.jl/pull/343.
 
 """
-    ScalarAffineFunction{T}(terms::ScalarAffineTerm{T}, constant::T) where {T}
+    ScalarAffineFunction{T}(
+        terms::Vector{ScalarAffineTerm{T}},
+        constant::T,
+    ) where {T}
 
 Represents the scalar-valued affine function ``a^\\top x + b``, where:
 
