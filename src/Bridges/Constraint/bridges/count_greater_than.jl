@@ -96,7 +96,7 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     bridge::CountGreaterThanToMILPBridge,
 )
-    return bridge.f
+    return copy(bridge.f)
 end
 
 function MOI.get(

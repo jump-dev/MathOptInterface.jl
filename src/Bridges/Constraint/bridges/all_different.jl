@@ -126,7 +126,7 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     bridge::AllDifferentToCountDistinctBridge,
 )
-    return bridge.f
+    return copy(bridge.f)
 end
 
 function MOI.get(

@@ -112,7 +112,7 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     bridge::CountAtLeastToCountBelongsBridge,
 )
-    return bridge.f
+    return copy(bridge.f)
 end
 
 function MOI.get(

@@ -154,7 +154,7 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     bridge::ReifiedCountDistinctToMILPBridge,
 )
-    return bridge.f
+    return copy(bridge.f)
 end
 
 function MOI.get(
