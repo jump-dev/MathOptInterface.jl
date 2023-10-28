@@ -111,7 +111,7 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     bridge::IndicatorToMILPBridge,
 )
-    return bridge.f
+    return copy(bridge.f)
 end
 
 function MOI.get(

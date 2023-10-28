@@ -108,7 +108,7 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     bridge::SOS1ToMILPBridge,
 )
-    return bridge.f
+    return copy(bridge.f)
 end
 
 function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::SOS1ToMILPBridge)
