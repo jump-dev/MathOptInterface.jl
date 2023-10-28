@@ -175,7 +175,7 @@ end
 function _test_function_modification(
     model::MOI.ModelLike,
     config::Config{T},
-    c::MOI.ConstraintIndex,
+    c,
     f::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
 ) where {T}
     MOI.Utilities.modify_function!(f, MOI.ScalarConstantChange(f.constant + 1))
@@ -187,7 +187,7 @@ end
 function _test_function_modification(
     model::MOI.ModelLike,
     config::Config{T},
-    c::MOI.ConstraintIndex,
+    c,
     f::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
 ) where {T}
     new_constants = f.constants + one(T)
