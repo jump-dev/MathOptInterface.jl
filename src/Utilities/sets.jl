@@ -136,8 +136,8 @@ Return the dimension `d` such that
 """
 function side_dimension_for_vectorized_dimension(n::Base.Integer)
     # We have `d*(d+1)/2 = n` so
-    # `d² + d - 2n = 0` hence `d = (-1 ± √(1 + 8d)) / 2`
-    # The integer `√(1 + 8d)` is odd and `√(1 + 8d) - 1` is even.
+    # `d² + d - 2n = 0` hence `d = (-1 ± √(1 + 8n)) / 2`
+    # The integer `√(1 + 8n)` is odd and `√(1 + 8n) - 1` is even.
     # We can drop the `- 1` as `div` already discards it.
     return div(isqrt(1 + 8n), 2)
 end
@@ -150,12 +150,41 @@ the corresponding element in the triangular representation.
 
 This is most useful when mapping between `ConeSquare` and `ConeTriangle` sets,
 e.g., as part of an [`MOI.AbstractSymmetricMatrixSetTriangle`](@ref) set.
+
+!!! note
+    Use [`inverse_trimap`](@ref) for the reverse mapping.
 """
 function trimap(row::Integer, column::Integer)
     if row < column
         return trimap(column, row)
     end
     return div((row - 1) * row, 2) + column
+end
+
+"""
+    inverse_trimap(row::Integer, column::Integer)
+
+Convert between the the linear index of a
+[`MathOptInterface.AbstractSymmetricMatrixSetTriangle`] to the row and column
+indices of upper triangular part of the corresponding matrix.
+
+!!! note
+    Use [`trimap`](@ref) for the reverse mapping.
+"""
+function inverse_trimap(index::Integer)
+    # Because `isqrt` and `div` are monotone functions
+    # because `index` is between `trimap(j - 1, j - 1)` and
+    # `trimap(j, j)`,`
+    # `side_dimension_for_vectorized_dimension(index)` is between `j - 1`
+    # and `j`.
+    j = side_dimension_for_vectorized_dimension(index)
+    n = trimap(j, j)
+    if index <= n
+        j -= 1
+        n = trimap(j, j)
+    end
+    i = index - n
+    return i, j + 1
 end
 
 similar_type(::Type{<:MOI.LessThan}, ::Type{T}) where {T} = MOI.LessThan{T}

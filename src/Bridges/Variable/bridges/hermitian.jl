@@ -61,7 +61,7 @@ equality constraints to:
  * force the lower triangular of the `y` block to be the negative of the upper
    triangle.
 """
-struct HermitianToSymmetricPSDBridge{T} <: AbstractBridge
+mutable struct HermitianToSymmetricPSDBridge{T} <: AbstractBridge
     variables::Vector{MOI.VariableIndex}
     psd::MOI.ConstraintIndex{
         MOI.VectorOfVariables,
@@ -69,6 +69,7 @@ struct HermitianToSymmetricPSDBridge{T} <: AbstractBridge
     }
     n::Int
     ceq::Vector{MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}}
+    imag_diag_start_set::Bool
 end
 
 const HermitianToSymmetricPSD{T,OT<:MOI.ModelLike} =
@@ -87,11 +88,6 @@ function bridge_constrained_variable(
     ceq = MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}[]
     k11 = 0
     k12 = k22 = MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(n))
-    function X21(i, j)
-        I, J = j, n + i
-        k21 = MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(J - 1)) + I
-        return variables[k21]
-    end
     for j in 1:n
         k22 += n
         for i in 1:j
@@ -104,13 +100,14 @@ function bridge_constrained_variable(
                 f_0 = convert(MOI.ScalarAffineFunction{T}, variables[k12])
                 push!(ceq, MOI.add_constraint(model, f_0, MOI.EqualTo(zero(T))))
             else       # y_{ij} = -y_{ji}
-                f_y = MOI.Utilities.operate(+, T, X21(i, j), variables[k12])
+                k21 = MOI.Utilities.trimap(j, n + i)
+                f_y = MOI.Utilities.operate(+, T, variables[k21], variables[k12])
                 push!(ceq, MOI.add_constraint(model, f_y, MOI.EqualTo(zero(T))))
             end
         end
         k12 += n
     end
-    return HermitianToSymmetricPSDBridge(variables, psd_ci, n, ceq)
+    return HermitianToSymmetricPSDBridge(variables, psd_ci, n, ceq, false)
 end
 
 function supports_constrained_variable(
@@ -311,7 +308,7 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.VariablePrimal,
+    attr::Union{MOI.VariablePrimal,MOI.VariablePrimalStart},
     bridge::HermitianToSymmetricPSDBridge{T},
     i::MOI.Bridges.IndexInVector,
 ) where {T}
@@ -331,4 +328,64 @@ function unbridged_map(
     i::MOI.Bridges.IndexInVector,
 ) where {T}
     return (_variable(bridge, i) => convert(MOI.ScalarAffineFunction{T}, vi),)
+end
+
+function MOI.supports(
+    ::MOI.ModelLike,
+    ::MOI.VariablePrimalStart,
+    ::Type{<:HermitianToSymmetricPSDBridge},
+)
+    return true
+end
+
+# Set the starting value of the diagonal elements of the imaginary part
+function _set_imag_diag_start(
+    model::MOI.ModelLike,
+    attr::MOI.VariablePrimalStart,
+    bridge::HermitianToSymmetricPSDBridge,
+    value,
+)
+    for i in 1:bridge.n
+        k = MOI.Utilities.trimap(i, bridge.n + i)
+        MOI.set(model, attr, bridge.variables[k], value)
+    end
+end
+
+_minus(a) = -a
+_minus(::Nothing) = nothing
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.VariablePrimalStart,
+    bridge::HermitianToSymmetricPSDBridge,
+    value,
+    index::MOI.Bridges.IndexInVector,
+)
+    n = bridge.n
+    d = MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(n))
+    if index.value > d
+        # Imaginary part
+        i, j = MOI.Utilities.inverse_trimap(index.value - d)
+        # Increment `j` by `1` to account for the zero diagonal
+        j += 1
+        k12 = MOI.Utilities.trimap(i, n + j)
+        k21 = MOI.Utilities.trimap(j, n + i)
+        MOI.set(model, attr, bridge.variables[k12], value)
+        MOI.set(model, attr, bridge.variables[k21], _minus(value))
+    else
+        # Real part
+        i, j = MOI.Utilities.inverse_trimap(index.value)
+        k11 = MOI.Utilities.trimap(i, j)
+        k22 = MOI.Utilities.trimap(n + i, n + j)
+        MOI.set(model, attr, bridge.variables[k11], value)
+        MOI.set(model, attr, bridge.variables[k22], value)
+    end
+    if isnothing(value) && bridge.imag_diag_start_set
+        bridge.imag_diag_start_set = false
+        _set_imag_diag_start(model, attr, bridge, nothing)
+    elseif !isnothing(value) && !bridge.imag_diag_start_set
+        bridge.imag_diag_start_set = true
+        _set_imag_diag_start(model, attr, bridge, zero(value))
+    end
+    return
 end

@@ -197,6 +197,17 @@ function test_trimap()
     return
 end
 
+function test_inverse_trimap(n = 10)
+    for j in 1:n
+        for i in 1:j
+            I, J = MOI.Utilities.inverse_trimap(MOIU.trimap(i, j))
+            @test I == i
+            @test J == j
+        end
+    end
+    return
+end
+
 function test_set_dot_scaling(n = 10)
     N = div(n * (n + 1), 2)
     M = N + div(n * (n - 1), 2)
