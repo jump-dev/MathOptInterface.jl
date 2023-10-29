@@ -119,6 +119,18 @@ function MOI.supports(
     return false
 end
 
+function _attribute_error_message(attr, bridge, action)
+    return "Bridge of type `$(nameof(typeof(bridge)))` does not support " *
+        "$action the attribute `$attr`. If you encountered this error " *
+        "unexpectedly, it probably means your model has been " *
+        "reformulated using the bridge, and you are attempting to query " *
+        "an attribute that we haven't implemented yet for this bridge. " *
+        "Please open an issue at https://github.com/jump-dev/MathOptInterface.jl/issues/new " *
+        "and provide a reproducible example explaining what you were " *
+        "trying to do."
+end
+
+
 """
     function MOI.get(
         model::MOI.ModelLike,
@@ -134,18 +146,8 @@ function MOI.get(
     attr::MOI.AbstractConstraintAttribute,
     bridge::AbstractBridge,
 )
-    return throw(
-        ArgumentError(
-            "Bridge of type `$(typeof(bridge))` does not support accessing " *
-            "the attribute `$attr`. If you encountered this error " *
-            "unexpectedly, it probably means your model has been " *
-            "reformulated using the bridge, and you are attempting to query " *
-            "an attribute that we haven't implemented yet for this bridge. " *
-            "Please open an issue at https://github.com/jump-dev/MathOptInterface.jl/issues/new " *
-            "and provide a reproducible example explaining what you were " *
-            "trying to do.",
-        ),
-    )
+    message = _attribute_error_message(attr, bridge, "accessing")
+    return throw(ArgumentError(message))
 end
 
 function MOI.get(
@@ -173,12 +175,13 @@ function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.AbstractConstraintAttribute,
     bridge::AbstractBridge,
-    value,
+    _,
 )
+    message = _attribute_error_message(attr, bridge, "setting a value for")
     if MOI.is_copyable(attr) && !MOI.supports(model, attr, typeof(bridge))
-        throw(MOI.UnsupportedAttribute(attr))
+        throw(MOI.UnsupportedAttribute(attr, message))
     else
-        throw(MOI.SetAttributeNotAllowed(attr))
+        throw(MOI.SetAttributeNotAllowed(attr, message))
     end
 end
 

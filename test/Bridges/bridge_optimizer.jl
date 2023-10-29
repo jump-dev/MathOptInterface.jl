@@ -218,7 +218,13 @@ MOI.Utilities.@model(
     (MOI.VectorAffineFunction, MOI.VectorQuadraticFunction)
 )
 
-function unsupported_constraint_attribute()
+struct AttributeNotAllowed <: MOI.AbstractConstraintAttribute end
+
+function MOI.supports(::MOI.ModelLike, ::AttributeNotAllowed, ::Type{<:MOI.Bridges.Constraint.SplitIntervalBridge})
+    return true
+end
+
+function test_unsupported_constraint_attribute()
     mock = MOI.Utilities.MockOptimizer(NoIntervalModel{Float64}())
     bridged_mock = MOI.Bridges.Constraint.LessToGreater{Float64}(
         MOI.Bridges.Constraint.SplitInterval{Float64}(mock),
@@ -231,22 +237,27 @@ function unsupported_constraint_attribute()
         MOI.LessThan{Float64},
     }
     attr = MOI.Test.UnknownConstraintAttribute()
-    err = ArgumentError(
-        "Bridge of type `$(bridge)` does not support accessing " *
+    message(action) = 
+        "Bridge of type `$(nameof(bridge))` does not support $action " *
         "the attribute `$attr`. If you encountered this error " *
         "unexpectedly, it probably means your model has been " *
         "reformulated using the bridge, and you are attempting to query " *
         "an attribute that we haven't implemented yet for this bridge. " *
         "Please open an issue at https://github.com/jump-dev/MathOptInterface.jl/issues/new " *
         "and provide a reproducible example explaining what you were " *
-        "trying to do.",
-    )
+        "trying to do."
     x = MOI.add_variable(bridged_mock)
     ci = MOI.add_constraint(bridged_mock, x, MOI.Interval(0.0, 1.0))
     @test !MOI.Bridges.is_bridged(bridged_mock, ci)
     @test MOI.Bridges.is_bridged(bridged_mock.model, ci)
     @test !MOI.supports(bridged_mock, attr, typeof(ci))
+    err = ArgumentError(message("accessing"))
     @test_throws err MOI.get(bridged_mock, attr, ci)
+    err = MOI.UnsupportedAttribute(attr, message("setting a value for"))
+    @test_throws err MOI.set(bridged_mock, attr, ci, 1)
+    attr = AttributeNotAllowed()
+    err = MOI.SetAttributeNotAllowed(attr, message("setting a value for"))
+    @test_throws err MOI.set(bridged_mock, attr, ci, 1)
     return
 end
 
