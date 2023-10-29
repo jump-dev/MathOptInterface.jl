@@ -145,7 +145,7 @@ function MOI.get(
     attr::MOI.AbstractConstraintAttribute,
     bridge::AbstractBridge,
 )
-    message = _attribute_error_message(attr, typepof(bridge), "accessing")
+    message = _attribute_error_message(attr, typeof(bridge), "accessing")
     return throw(ArgumentError(message))
 end
 
