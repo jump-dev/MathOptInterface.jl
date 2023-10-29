@@ -241,7 +241,7 @@ function test_unsupported_constraint_attribute()
         MOI.LessThan{Float64},
     }
     attr = MOI.Test.UnknownConstraintAttribute()
-    message(action) = MOI._attribute_error_message(attr, bridge, action)
+    message(action) = MOI.Bridges._attribute_error_message(attr, bridge, action)
     x = MOI.add_variable(bridged_mock)
     ci = MOI.add_constraint(bridged_mock, x, MOI.Interval(0.0, 1.0))
     @test !MOI.Bridges.is_bridged(bridged_mock, ci)
