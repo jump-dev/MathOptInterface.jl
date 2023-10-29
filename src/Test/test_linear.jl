@@ -2813,6 +2813,7 @@ function test_linear_SOS1_integration(
     @requires MOI.supports_constraint(model, MOI.VectorOfVariables, MOI.SOS1{T})
     @requires MOI.supports_constraint(model, MOI.VariableIndex, MOI.LessThan{T})
     v = MOI.add_variables(model, 3)
+    MOI.add_constraint.(model, v, MOI.GreaterThan(zero(T)))
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
     vc1 = MOI.add_constraint(model, v[1], MOI.LessThan(T(1)))
     @test vc1.value == v[1].value
@@ -3236,6 +3237,8 @@ function test_linear_Indicator_integration(
     x2 = MOI.add_variable(model)
     z1 = MOI.add_variable(model)
     z2 = MOI.add_variable(model)
+    MOI.add_constraint(model, x1, MOI.Interval(T(0), T(10)))
+    MOI.add_constraint(model, x2, MOI.Interval(T(0), T(10)))
     MOI.add_constraint(model, z1, MOI.ZeroOne())
     MOI.add_constraint(model, z2, MOI.ZeroOne())
     f1 = MOI.VectorAffineFunction(
@@ -3334,6 +3337,8 @@ function test_linear_Indicator_ON_ONE(
     x2 = MOI.add_variable(model)
     z1 = MOI.add_variable(model)
     z2 = MOI.add_variable(model)
+    MOI.add_constraint(model, x1, MOI.Interval(T(0), T(10)))
+    MOI.add_constraint(model, x2, MOI.Interval(T(0), T(10)))
     MOI.add_constraint(model, z1, MOI.ZeroOne())
     MOI.add_constraint(model, z2, MOI.ZeroOne())
     f1 = MOI.VectorAffineFunction(
@@ -3449,6 +3454,8 @@ function test_linear_Indicator_ON_ZERO(
     x2 = MOI.add_variable(model)
     z1 = MOI.add_variable(model)
     z2 = MOI.add_variable(model)
+    MOI.add_constraint(model, x1, MOI.Interval(T(0), T(10)))
+    MOI.add_constraint(model, x2, MOI.Interval(T(0), T(10)))
     vc1 = MOI.add_constraint(model, z1, MOI.ZeroOne())
     @test vc1.value == z1.value
     vc2 = MOI.add_constraint(model, z2, MOI.ZeroOne())
@@ -3567,6 +3574,8 @@ function test_linear_Indicator_constant_term(
     x2 = MOI.add_variable(model)
     z1 = MOI.add_variable(model)
     z2 = MOI.add_variable(model)
+    MOI.add_constraint(model, x1, MOI.Interval(T(0), T(10)))
+    MOI.add_constraint(model, x2, MOI.Interval(T(0), T(10)))
     MOI.add_constraint(model, z1, MOI.ZeroOne())
     MOI.add_constraint(model, z2, MOI.ZeroOne())
     f1 = MOI.VectorAffineFunction(

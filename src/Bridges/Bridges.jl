@@ -256,6 +256,7 @@ function runtests(
     variable_start = 1.2,
     constraint_start = 1.2,
     eltype = Float64,
+    print_inner_model::Bool = false,
 )
     # Load model and bridge it
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
@@ -264,6 +265,9 @@ function runtests(
     final_touch(model)
     # Should be able to call final_touch multiple times.
     final_touch(model)
+    if print_inner_model
+        print(inner)
+    end
     # Load a non-bridged input model, and check that getters are the same.
     test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
     MOI.Utilities.loadfromstring!(test, input)

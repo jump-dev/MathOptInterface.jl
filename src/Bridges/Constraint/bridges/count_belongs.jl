@@ -189,41 +189,6 @@ end
 
 MOI.Bridges.needs_final_touch(::CountBelongsToMILPBridge) = true
 
-function _get_bounds(
-    bridge::CountBelongsToMILPBridge{T},
-    model::MOI.ModelLike,
-    bounds::Dict{MOI.VariableIndex,Tuple{T,T}},
-    f::MOI.ScalarAffineFunction{T},
-) where {T}
-    lb = ub = f.constant
-    for term in f.terms
-        ret = _get_bounds(bridge, model, bounds, term.variable)
-        if ret === nothing
-            return nothing
-        end
-        lb += term.coefficient * ret[1]
-        ub += term.coefficient * ret[2]
-    end
-    return lb, ub
-end
-
-function _get_bounds(
-    ::CountBelongsToMILPBridge{T},
-    model::MOI.ModelLike,
-    bounds::Dict{MOI.VariableIndex,Tuple{T,T}},
-    x::MOI.VariableIndex,
-) where {T}
-    if haskey(bounds, x)
-        return bounds[x]
-    end
-    ret = MOI.Utilities.get_bounds(model, T, x)
-    if ret == (typemin(T), typemax(T))
-        return nothing
-    end
-    bounds[x] = ret
-    return ret
-end
-
 """
     _unit_expansion(
         ::CountBelongsToMILPBridge{T},
@@ -243,7 +208,7 @@ function _unit_expansion(
     bounds = Dict{MOI.VariableIndex,Tuple{T,T}}()
     ci = MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}[]
     for i in 1:length(f)
-        ret = _get_bounds(bridge, model, bounds, f[i])
+        ret = MOI.Utilities.get_bounds(model, bounds, f[i])
         if ret === nothing
             BT = typeof(bridge)
             error(

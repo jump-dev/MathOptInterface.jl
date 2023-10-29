@@ -246,43 +246,6 @@ end
 
 MOI.Bridges.needs_final_touch(::ReifiedCountDistinctToMILPBridge) = true
 
-# We use the bridge as the first argument to avoid type piracy of other methods.
-function _get_bounds(
-    bridge::ReifiedCountDistinctToMILPBridge{T},
-    model::MOI.ModelLike,
-    bounds::Dict{MOI.VariableIndex,NTuple{2,T}},
-    f::MOI.ScalarAffineFunction{T},
-) where {T}
-    lb = ub = f.constant
-    for term in f.terms
-        ret = _get_bounds(bridge, model, bounds, term.variable)
-        if ret === nothing
-            return nothing
-        end
-        lb += term.coefficient * ret[1]
-        ub += term.coefficient * ret[2]
-    end
-    return lb, ub
-end
-
-# We use the bridge as the first argument to avoid type piracy of other methods.
-function _get_bounds(
-    ::ReifiedCountDistinctToMILPBridge{T},
-    model::MOI.ModelLike,
-    bounds::Dict{MOI.VariableIndex,NTuple{2,T}},
-    x::MOI.VariableIndex,
-) where {T}
-    if haskey(bounds, x)
-        return bounds[x]
-    end
-    ret = MOI.Utilities.get_bounds(model, T, x)
-    if ret == (typemin(T), typemax(T))
-        return nothing
-    end
-    bounds[x] = ret
-    return ret
-end
-
 function MOI.Bridges.final_touch(
     bridge::ReifiedCountDistinctToMILPBridge{T,F},
     model::MOI.ModelLike,
@@ -292,7 +255,7 @@ function MOI.Bridges.final_touch(
     bounds = Dict{MOI.VariableIndex,NTuple{2,T}}()
     for i in 3:length(scalars)
         x = scalars[i]
-        ret = _get_bounds(bridge, model, bounds, x)
+        ret = MOI.Utilities.get_bounds(model, bounds, x)
         if ret === nothing
             error(
                 "Unable to use ReifiedCountDistinctToMILPBridge because " *
