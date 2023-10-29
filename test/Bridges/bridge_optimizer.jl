@@ -220,7 +220,11 @@ MOI.Utilities.@model(
 
 struct AttributeNotAllowed <: MOI.AbstractConstraintAttribute end
 
-function MOI.supports(::MOI.ModelLike, ::AttributeNotAllowed, ::Type{<:MOI.Bridges.Constraint.SplitIntervalBridge})
+function MOI.supports(
+    ::MOI.ModelLike,
+    ::AttributeNotAllowed,
+    ::Type{<:MOI.Bridges.Constraint.SplitIntervalBridge},
+)
     return true
 end
 
@@ -237,15 +241,7 @@ function test_unsupported_constraint_attribute()
         MOI.LessThan{Float64},
     }
     attr = MOI.Test.UnknownConstraintAttribute()
-    message(action) = 
-        "Bridge of type `$(nameof(bridge))` does not support $action " *
-        "the attribute `$attr`. If you encountered this error " *
-        "unexpectedly, it probably means your model has been " *
-        "reformulated using the bridge, and you are attempting to query " *
-        "an attribute that we haven't implemented yet for this bridge. " *
-        "Please open an issue at https://github.com/jump-dev/MathOptInterface.jl/issues/new " *
-        "and provide a reproducible example explaining what you were " *
-        "trying to do."
+    message(action) = MOI._attribute_error_message(attr, bridge, action)
     x = MOI.add_variable(bridged_mock)
     ci = MOI.add_constraint(bridged_mock, x, MOI.Interval(0.0, 1.0))
     @test !MOI.Bridges.is_bridged(bridged_mock, ci)
