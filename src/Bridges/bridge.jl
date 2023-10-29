@@ -119,8 +119,8 @@ function MOI.supports(
     return false
 end
 
-function _attribute_error_message(attr, bridge, action)
-    return "Bridge of type `$(nameof(typeof(bridge)))` does not support " *
+function _attribute_error_message(attr, ::Type{B}, action) where {B}
+    return "Bridge of type `$(nameof(B))` does not support " *
            "$action the attribute `$attr`. If you encountered this error " *
            "unexpectedly, it probably means your model has been " *
            "reformulated using the bridge, and you are attempting to query " *
@@ -145,7 +145,7 @@ function MOI.get(
     attr::MOI.AbstractConstraintAttribute,
     bridge::AbstractBridge,
 )
-    message = _attribute_error_message(attr, bridge, "accessing")
+    message = _attribute_error_message(attr, typepof(bridge), "accessing")
     return throw(ArgumentError(message))
 end
 
@@ -176,7 +176,8 @@ function MOI.set(
     bridge::AbstractBridge,
     ::Any,
 )
-    message = _attribute_error_message(attr, bridge, "setting a value for")
+    message =
+        _attribute_error_message(attr, typeof(bridge), "setting a value for")
     if MOI.is_copyable(attr) && !MOI.supports(model, attr, typeof(bridge))
         return throw(MOI.UnsupportedAttribute(attr, message))
     else
