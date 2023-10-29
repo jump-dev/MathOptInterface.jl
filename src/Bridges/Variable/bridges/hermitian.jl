@@ -101,7 +101,8 @@ function bridge_constrained_variable(
                 push!(ceq, MOI.add_constraint(model, f_0, MOI.EqualTo(zero(T))))
             else       # y_{ij} = -y_{ji}
                 k21 = MOI.Utilities.trimap(j, n + i)
-                f_y = MOI.Utilities.operate(+, T, variables[k21], variables[k12])
+                f_y =
+                    MOI.Utilities.operate(+, T, variables[k21], variables[k12])
                 push!(ceq, MOI.add_constraint(model, f_y, MOI.EqualTo(zero(T))))
             end
         end
