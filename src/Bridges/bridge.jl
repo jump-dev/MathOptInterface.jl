@@ -130,7 +130,6 @@ function _attribute_error_message(attr, bridge, action)
            "trying to do."
 end
 
-
 """
     function MOI.get(
         model::MOI.ModelLike,
