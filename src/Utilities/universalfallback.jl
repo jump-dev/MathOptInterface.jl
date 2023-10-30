@@ -953,15 +953,24 @@ end
 
 function MOI.get(
     uf::UniversalFallback,
-    attr::MOI.ListOfConstraintsWithAttributeSet{F,S,A},
-) where {F,S,A}
-    dict = if A === MOI.ConstraintName
-        uf.con_to_name
-    else
-        get(uf.conattr, attr.attr, nothing)
-    end
+    attr::MOI.ListOfConstraintsWithAttributeSet{F,S},
+) where {F,S}
+    dict = get(uf.conattr, attr.attr, nothing)
     if dict === nothing
         return MOI.get(uf.model, attr)
     end
     return filter(Base.Fix2(isa, MOI.ConstraintIndex{F,S}), keys(dict))
+end
+
+function MOI.get(
+    uf::UniversalFallback,
+    attr::MOI.ListOfConstraintsWithAttributeSet{F,S,MOI.ConstraintName},
+) where {F,S}
+    if MOI.supports_constraint(uf.model, F, S)
+        return MOI.get(uf.model, attr)
+    end
+    return filter(
+        Base.Fix2(isa, MOI.ConstraintIndex{F,S}),
+        keys(uf.con_to_name),
+    )
 end
