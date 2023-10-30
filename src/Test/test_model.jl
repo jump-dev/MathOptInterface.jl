@@ -1203,7 +1203,7 @@ function test_model_ListOfVariablesWithAttributeSet(
     @requires MOI.supports(model, attr, MOI.VariableIndex)
     x = MOI.add_variables(model, 2)
     MOI.set(model, attr, x[2], "y")
-    @test x[2] in MOI.get(model, MOI.ListOfVariableAttributesSet(attr))
+    @test x[2] in MOI.get(model, MOI.ListOfVariablesWithAttributeSet(attr))
     return
 end
 
@@ -1217,6 +1217,7 @@ function test_model_ListOfConstraintsWithAttributeSet(
     x = MOI.add_variables(model, 2)
     c = MOI.add_constraint.(model, one(T) .* x, MOI.GreaterThan(zero(T)))
     MOI.set(model, attr, c[2], "y")
-    @test c[2] in MOI.get(model, MOI.ListOfVariableAttributesSet{F,S}(attr))
+    ret = MOI.get(model, MOI.ListOfConstraintsWithAttributeSet{F,S}(attr))
+    @test c[2] in ret
     return
 end
