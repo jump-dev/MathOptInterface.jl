@@ -953,9 +953,13 @@ end
 
 function MOI.get(
     uf::UniversalFallback,
-    attr::MOI.ListOfConstraintsWithAttributeSet{F,S},
-) where {F,S}
-    dict = get(uf.conattr, attr.attr, nothing)
+    attr::MOI.ListOfConstraintsWithAttributeSet{F,S,A},
+) where {F,S,A}
+    dict = if A === MOI.ConstraintName
+        uf.con_to_name
+    else
+        get(uf.conattr, attr.attr, nothing)
+    end
     if dict === nothing
         return MOI.get(uf.model, attr)
     end
