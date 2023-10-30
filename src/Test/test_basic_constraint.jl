@@ -172,6 +172,40 @@ function _set(::Type{T}, ::Type{MOI.HyperRectangle}) where {T}
     return MOI.HyperRectangle(zeros(T, 3), ones(T, 3))
 end
 
+function _test_function_modification(
+    model::MOI.ModelLike,
+    config::Config{T},
+    c::MOI.ConstraintIndex{F},
+    f::F,
+) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
+    MOI.Utilities.modify_function!(f, MOI.ScalarConstantChange(f.constant + 1))
+    g = MOI.get(model, MOI.ConstraintFunction(), c)
+    @test !≈(f.constant, g.constant, config)
+    return
+end
+
+function _test_function_modification(
+    model::MOI.ModelLike,
+    config::Config{T},
+    c::MOI.ConstraintIndex{F},
+    f::F,
+) where {T,F<:Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}}}
+    new_constants = f.constants .+ one(T)
+    MOI.Utilities.modify_function!(f, MOI.VectorConstantChange(new_constants))
+    g = MOI.get(model, MOI.ConstraintFunction(), c)
+    @test !≈(f.constants, g.constants, config)
+    return
+end
+
+function _test_function_modification(
+    ::MOI.ModelLike,
+    ::Config{T},
+    c::MOI.ConstraintIndex{F},
+    ::F,
+) where {T,F<:MOI.AbstractFunction}
+    return
+end
+
 function _basic_constraint_test_helper(
     model::MOI.ModelLike,
     config::Config{T},
@@ -233,6 +267,7 @@ function _basic_constraint_test_helper(
         )
         _test_attribute_value_type(model, MOI.ConstraintFunction(), c)
         _test_attribute_value_type(model, MOI.CanonicalConstraintFunction(), c)
+        _test_function_modification(model, config, c, f)
     end
     ###
     ### Test MOI.ConstraintSet

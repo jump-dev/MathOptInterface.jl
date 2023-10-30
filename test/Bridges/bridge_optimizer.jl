@@ -739,7 +739,7 @@ function test_recursive_model_constraint(::Type{T} = Int) where {T}
     @test MOI.get(b, MOI.ConstraintFunction(), c) ≈ func
     new_func = T(2) * x
     MOI.set(b, MOI.ConstraintFunction(), c, new_func)
-    @test MOI.get(b, MOI.ConstraintFunction(), c) == new_func
+    @test MOI.get(b, MOI.ConstraintFunction(), c) ≈ new_func
     MOI.modify(b, c, MOI.ScalarCoefficientChange(x, T(3)))
     @test MOI.get(b, MOI.ConstraintFunction(), c) ≈ T(3) * x
     MOI.modify(b, c, MOI.ScalarConstantChange(T(-1)))
@@ -753,6 +753,7 @@ function test_recursive_model_constraint(::Type{T} = Int) where {T}
     @test MOI.is_valid(b, c)
     MOI.delete(b, c)
     @test !MOI.is_valid(b, c)
+    return
 end
 
 function test_recursive_model_objective(::Type{T} = Int) where {T}

@@ -103,7 +103,7 @@ function MOI.get(
 ) where {F,S}
     MOI.throw_if_not_valid(v, ci)
     f, _ = v.constraints[ci]::Tuple{F,S}
-    return f
+    return copy(f)
 end
 
 function MOI.get(

@@ -429,7 +429,7 @@ function MOI.get(
     if bridge.upper !== nothing
         return MOI.get(model, attr, bridge.upper)
     end
-    return bridge.func
+    return copy(bridge.func)
 end
 
 function MOI.get(

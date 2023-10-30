@@ -117,7 +117,7 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     bridge::BinPackingToMILPBridge,
 )
-    return bridge.f
+    return copy(bridge.f)
 end
 
 function MOI.get(

@@ -301,7 +301,7 @@ function test_quadratic_functions()
     @test MOI.Utilities.is_canonical(F1)
     F3 = MOI.get(model, MOI.CanonicalConstraintFunction(), c3)
     @test F3 ≈ f3
-    @test F3 === MOI.get(model, MOI.ConstraintFunction(), c3)
+    @test F3 ≈ MOI.get(model, MOI.ConstraintFunction(), c3)
     @test MOI.Utilities.is_canonical(F3)
     @test MOI.get(model, MOI.CanonicalConstraintFunction(), c1) ≈ f3
     @test MOI.Utilities.is_canonical(
