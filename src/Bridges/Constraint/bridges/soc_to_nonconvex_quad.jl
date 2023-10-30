@@ -11,7 +11,7 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     b::_AbstractSOCtoNonConvexQuadBridge{T},
 ) where {T}
-    return MOI.VectorOfVariables(b.vars)
+    return MOI.VectorOfVariables(copy(b.vars))
 end
 
 function MOI.Bridges.added_constrained_variable_types(
