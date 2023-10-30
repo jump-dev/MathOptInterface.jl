@@ -190,7 +190,7 @@ function _test_function_modification(
     c::MOI.ConstraintIndex{F},
     f::F,
 ) where {T,F<:Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}}}
-    new_constants = f.constants + one(T)
+    new_constants = f.constants .+ one(T)
     MOI.Utilities.modify_function!(f, MOI.VectorConstantChange(new_constants))
     g = MOI.get(model, MOI.ConstraintFunction(), c)
     @test !≈(f.constants, g.constants, config)
