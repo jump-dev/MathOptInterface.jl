@@ -339,22 +339,6 @@ function MOI.supports(
     return true
 end
 
-# Set the starting value of the diagonal elements of the imaginary part
-function _set_imag_diag_start(
-    model::MOI.ModelLike,
-    attr::MOI.VariablePrimalStart,
-    bridge::HermitianToSymmetricPSDBridge,
-    value,
-)
-    for i in 1:bridge.n
-        k = MOI.Utilities.trimap(i, bridge.n + i)
-        MOI.set(model, attr, bridge.variables[k], value)
-    end
-end
-
-_minus(a) = -a
-_minus(::Nothing) = nothing
-
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.VariablePrimalStart,
@@ -362,31 +346,40 @@ function MOI.set(
     value,
     index::MOI.Bridges.IndexInVector,
 )
-    n = bridge.n
-    d = MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(n))
-    if index.value > d
-        # Imaginary part
+    d = MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(bridge.n))
+    if index.value > d  # Imaginary part
         i, j = MOI.Utilities.inverse_trimap(index.value - d)
-        # Increment `j` by `1` to account for the zero diagonal
-        j += 1
-        k12 = MOI.Utilities.trimap(i, n + j)
-        k21 = MOI.Utilities.trimap(j, n + i)
+        j += 1  # Increment `j` by `1` to account for the zero diagonal
+        k12 = MOI.Utilities.trimap(i, bridge.n + j)
         MOI.set(model, attr, bridge.variables[k12], value)
-        MOI.set(model, attr, bridge.variables[k21], _minus(value))
-    else
-        # Real part
+        k21 = MOI.Utilities.trimap(j, bridge.n + i)
+        minus_value = value === nothing ? nothing : -value
+        MOI.set(model, attr, bridge.variables[k21], minus_value)
+    else  # Real part
         i, j = MOI.Utilities.inverse_trimap(index.value)
         k11 = MOI.Utilities.trimap(i, j)
-        k22 = MOI.Utilities.trimap(n + i, n + j)
         MOI.set(model, attr, bridge.variables[k11], value)
+        k22 = MOI.Utilities.trimap(bridge.n + i, bridge.n + j)
         MOI.set(model, attr, bridge.variables[k22], value)
     end
-    if isnothing(value) && bridge.imag_diag_start_set
+    # The variables on the imaginary diagonal have a value 0, and they cannot be
+    # referenced by the user. So if we are setting the VariablePrimalStart for
+    # some components, assume that we also want to set it for the imaginary
+    # diagonal (so that every variable has a primal start). But we should do
+    # this once and only once, so cache whether we have in the
+    # `imag_diag_start_set` field.
+    if value === nothing && bridge.imag_diag_start_set
         bridge.imag_diag_start_set = false
-        _set_imag_diag_start(model, attr, bridge, nothing)
-    elseif !isnothing(value) && !bridge.imag_diag_start_set
+        for i in 1:bridge.n
+            k = MOI.Utilities.trimap(i, bridge.n + i)
+            MOI.set(model, attr, bridge.variables[k], nothing)
+        end
+    elseif value !== nothing && !bridge.imag_diag_start_set
         bridge.imag_diag_start_set = true
-        _set_imag_diag_start(model, attr, bridge, zero(value))
+        for i in 1:bridge.n
+            k = MOI.Utilities.trimap(i, bridge.n + i)
+            MOI.set(model, attr, bridge.variables[k], zero(value))
+        end
     end
     return
 end
