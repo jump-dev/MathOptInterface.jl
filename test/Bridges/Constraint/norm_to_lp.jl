@@ -572,7 +572,7 @@ function test_conic_NormOneCone()
     return
 end
 
-function test_runtests()
+function test_runtests_vector_of_variables()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.NormOneBridge,
         """
@@ -595,6 +595,111 @@ function test_runtests()
         [t + -1.0 * x, t + x] in Nonnegatives(2)
         """,
     )
+    return
+end
+
+function test_runtests_vector_affine_function()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.NormOneBridge,
+        """
+        variables: t, x
+        [t, 2.0 * x + 1.0] in NormOneCone(2)
+        """,
+        """
+        variables: t, x, y
+        [t + -1.0 * y, y + -2.0 * x + -1.0, y + 2.0 * x + 1.0] in Nonnegatives(3)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.NormInfinityBridge,
+        """
+        variables: t, x
+        [t, 2.0 * x + 1.0] in NormInfinityCone(2)
+        """,
+        """
+        variables: t, x
+        [t + -2.0 * x + -1.0, t + 2.0 * x + 1.0] in Nonnegatives(2)
+        """,
+    )
+    return
+end
+
+function test_NormInfinity_VectorNonlinearFunction()
+    # We can't use the standard runtests because ScalarNonlinearFunction does
+    # not preserve f(x) ≈ (f(x) - g(x)) + g(x)
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.NormInfinity{Float64}(inner)
+    t = MOI.add_variable(model)
+    x = MOI.add_variable(model)
+    f = MOI.VectorNonlinearFunction([
+        MOI.ScalarNonlinearFunction(:+, Any[t]),
+        MOI.ScalarNonlinearFunction(:sin, Any[x]),
+    ])
+    c = MOI.add_constraint(model, f, MOI.NormInfinityCone(2))
+    F, S = MOI.VectorNonlinearFunction, MOI.Nonnegatives
+    indices = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())
+    @test length(indices) == 1
+    inner_variables = MOI.get(inner, MOI.ListOfVariableIndices())
+    @test length(inner_variables) == 2
+    u, v = inner_variables
+    u_p = MOI.ScalarNonlinearFunction(:+, Any[u])
+    v_sin = MOI.ScalarNonlinearFunction(:sin, Any[v])
+    g = MOI.VectorNonlinearFunction([
+        MOI.ScalarNonlinearFunction(
+            :+,
+            Any[MOI.ScalarNonlinearFunction(:-, Any[v_sin]), u_p],
+        ),
+        MOI.ScalarNonlinearFunction(:+, Any[v_sin, u_p]),
+    ])
+    @test ≈(MOI.get(inner, MOI.ConstraintFunction(), indices[1]), g)
+    h = MOI.VectorNonlinearFunction([
+        MOI.ScalarNonlinearFunction(:+, Any[t]),
+        MOI.ScalarNonlinearFunction(:cos, Any[x]),
+    ])
+    MOI.set(model, MOI.ConstraintFunction(), c, h)
+    v_cos = MOI.ScalarNonlinearFunction(:cos, Any[v])
+    g_2 = MOI.VectorNonlinearFunction([
+        MOI.ScalarNonlinearFunction(
+            :+,
+            Any[MOI.ScalarNonlinearFunction(:-, Any[v_cos]), u_p],
+        ),
+        MOI.ScalarNonlinearFunction(:+, Any[v_cos, u_p]),
+    ])
+    @test ≈(MOI.get(inner, MOI.ConstraintFunction(), indices[1]), g_2)
+    return
+end
+
+function test_NormOne_VectorNonlinearFunction()
+    # We can't use the standard runtests because ScalarNonlinearFunction does
+    # not preserve f(x) ≈ (f(x) - g(x)) + g(x)
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.NormOne{Float64}(inner)
+    t = MOI.add_variable(model)
+    x = MOI.add_variable(model)
+    f = MOI.VectorNonlinearFunction([
+        MOI.ScalarNonlinearFunction(:+, Any[t]),
+        MOI.ScalarNonlinearFunction(:sin, Any[x]),
+    ])
+    c = MOI.add_constraint(model, f, MOI.NormOneCone(2))
+    F, S = MOI.VectorNonlinearFunction, MOI.Nonnegatives
+    indices = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())
+    @test length(indices) == 1
+    inner_variables = MOI.get(inner, MOI.ListOfVariableIndices())
+    @test length(inner_variables) == 3
+    u, v, w = inner_variables
+    v_sin = MOI.ScalarNonlinearFunction(:sin, Any[v])
+    g = MOI.VectorNonlinearFunction([
+        MOI.ScalarNonlinearFunction(
+            :-,
+            Any[MOI.ScalarNonlinearFunction(:+, Any[u]), 0.0+1.0*w],
+        ),
+        MOI.ScalarNonlinearFunction(
+            :+,
+            Any[MOI.ScalarNonlinearFunction(:-, Any[v_sin]), w],
+        ),
+        MOI.ScalarNonlinearFunction(:+, Any[v_sin, w]),
+    ])
+    @test ≈(MOI.get(inner, MOI.ConstraintFunction(), indices[1]), g)
     return
 end
 

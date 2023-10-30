@@ -113,10 +113,10 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     c::NormOneBridge{T,F,G},
 ) where {T,F,G}
-    nn_func = MOI.Utilities.eachscalar(
-        MOI.get(model, MOI.ConstraintFunction(), c.nn_index),
-    )
-    t = MOI.Utilities.operate!(/, T, nn_func[1] + sum(nn_func), T(2))
+    nn_f = MOI.get(model, MOI.ConstraintFunction(), c.nn_index)
+    nn_func = MOI.Utilities.eachscalar(nn_f)
+    sum_nn_func = MOI.Utilities.operate(+, T, nn_func[1], nn_func...)
+    t = MOI.Utilities.operate!(/, T, sum_nn_func, T(2))
     d = div(length(nn_func) - 1, 2)
     x = MOI.Utilities.operate!(
         /,
