@@ -175,9 +175,9 @@ end
 function _test_function_modification(
     model::MOI.ModelLike,
     config::Config{T},
-    c,
-    f::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
-) where {T}
+    c::MOI.ConstraintIndex{F},
+    f::F,
+) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
     MOI.Utilities.modify_function!(f, MOI.ScalarConstantChange(f.constant + 1))
     g = MOI.get(model, MOI.ConstraintFunction(), c)
     @test !≈(f.constant, g.constant, config)
@@ -187,9 +187,9 @@ end
 function _test_function_modification(
     model::MOI.ModelLike,
     config::Config{T},
-    c,
-    f::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
-) where {T}
+    c::MOI.ConstraintIndex{F},
+    f::F,
+) where {T,F<:Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}}}
     new_constants = f.constants + one(T)
     MOI.Utilities.modify_function!(f, MOI.VectorConstantChange(new_constants))
     g = MOI.get(model, MOI.ConstraintFunction(), c)
@@ -197,7 +197,14 @@ function _test_function_modification(
     return
 end
 
-_test_function_modification(::MOI.ModelLike, ::Config, ::Any, ::Any) = nothing
+function _test_function_modification(
+    ::MOI.ModelLike,
+    ::Config{T},
+    c::MOI.ConstraintIndex{F},
+    ::F,
+) where {T,F<:MOI.AbstractFunction}
+    return
+end
 
 function _basic_constraint_test_helper(
     model::MOI.ModelLike,
