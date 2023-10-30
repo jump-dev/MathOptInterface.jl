@@ -110,6 +110,38 @@ jobs:
           Pkg.develop(Pkg.PackageSpec(; path = pwd()))
           Pkg.develop(ENV["PACKAGE"])
           Pkg.test(ENV["PACKAGE"])
+  test-gurobi:
+    name: Gurobi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: '1'
+      - uses: actions/cache@v1
+        env:
+          cache-name: cache-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-test-${{ env.cache-name }}-
+            ${{ runner.os }}-test-
+            ${{ runner.os }}-
+      - shell: bash
+        env:
+          WLSLICENSE: ${{ secrets.WLSLICENSE }}
+        run: |
+          mkdir -p /opt/gurobi
+          echo "$WLSLICENSE" > /opt/gurobi/gurobi.lic
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Test
+        shell: julia --color=yes {0}
+        run: |
+          import Pkg
+          Pkg.develop(Pkg.PackageSpec(; path = pwd()))
+          Pkg.develop("Gurobi")
+          Pkg.test("Gurobi")
   # TODO(odow): enable testing Xpress
   # test-windows:
   #   name: ${{ matrix.package }}
