@@ -53,7 +53,9 @@ ListOfConstraintIndices
 ListOfOptimizerAttributesSet
 ListOfModelAttributesSet
 ListOfVariableAttributesSet
+ListOfVariablesWithAttributeSet
 ListOfConstraintAttributesSet
+ListOfConstraintsWithAttributeSet
 UserDefinedFunction
 ListOfSupportedNonlinearOperators
 ```

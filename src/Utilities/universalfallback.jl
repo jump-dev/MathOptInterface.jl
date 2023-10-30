@@ -939,3 +939,25 @@ end
 MOI.add_variable(uf::UniversalFallback) = MOI.add_variable(uf.model)
 
 MOI.add_variables(uf::UniversalFallback, n) = MOI.add_variables(uf.model, n)
+
+function MOI.get(
+    uf::UniversalFallback,
+    attr::MOI.ListOfVariablesWithAttributeSet,
+)
+    dict = get(uf.varattr, attr.attr, nothing)
+    if dict === nothing
+        return MOI.get(uf.model, attr)
+    end
+    return collect(keys(dict))
+end
+
+function MOI.get(
+    uf::UniversalFallback,
+    attr::MOI.ListOfConstraintsWithAttributeSet{F,S},
+) where {F,S}
+    dict = get(uf.conattr, attr.attr, nothing)
+    if dict === nothing
+        return MOI.get(uf.model, attr)
+    end
+    return filter(Base.Fix2(isa, MOI.ConstraintIndex{F,S}), keys(dict))
+end

@@ -479,6 +479,7 @@ Variable-related attributes:
 | Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
 | ---------------------- | --------------| ------------- | ------------------ |
 | [`ListOfVariableAttributesSet`](@ref)  | Yes           | No            | No |
+| [`ListOfVariablesWithAttributeSet`](@ref)  | Yes       | No            | No |
 | [`NumberOfVariables`](@ref)            | Yes           | No            | No |
 | [`ListOfVariableIndices`](@ref)        | Yes           | No            | No |
 
@@ -487,6 +488,7 @@ Constraint-related attributes:
 | Attribute              | [`get`](@ref) | [`set`](@ref) | [`supports`](@ref) |
 | ---------------------- | --------------| ------------- | ------------------ |
 | [`ListOfConstraintAttributesSet`](@ref) | Yes          | No            | No |
+| [`ListOfConstraintsWithAttributeSet`](@ref)  | Yes     | No            | No |
 | [`NumberOfConstraints`](@ref)           | Yes          | No            | No |
 | [`ListOfConstraintTypesPresent`](@ref)  | Yes          | No            | No |
 | [`ConstraintFunction`](@ref)            | Yes          | Yes           | No |

@@ -1194,3 +1194,29 @@ function test_model_ModelFilter_ListOfConstraintTypesPresent(
     @test MOI.get(dest, attr) == 4
     return
 end
+
+function test_model_ListOfVariablesWithAttributeSet(
+    model::MOI.ModelLike,
+    ::Config,
+)
+    attr = MOI.VariableName()
+    @requires MOI.supports(model, attr, MOI.VariableIndex)
+    x = MOI.add_variables(model, 2)
+    MOI.set(model, attr, x[2], "y")
+    @test x[2] in MOI.get(model, MOI.ListOfVariableAttributesSet(attr))
+    return
+end
+
+function test_model_ListOfConstraintsWithAttributeSet(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    F, S = MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}
+    attr = MOI.ConstraintName()
+    @requires MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
+    x = MOI.add_variables(model, 2)
+    c = MOI.add_constraint.(model, one(T) .* x, MOI.GreaterThan(zero(T)))
+    MOI.set(model, attr, c[2], "y")
+    @test c[2] in MOI.get(model, MOI.ListOfVariableAttributesSet{F,S}(attr))
+    return
+end
