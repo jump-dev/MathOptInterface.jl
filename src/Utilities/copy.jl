@@ -121,8 +121,8 @@ function _pass_attribute(
     for index in indices
         value = MOI.get(src, attr, index)
         if value !== nothing
-            new_value = map_indices(index_map, attr, value)
-            MOI.set(dest, attr, index_map[index])
+            dest_value = map_indices(index_map, attr, value)
+            MOI.set(dest, attr, index_map[index], dest_value)
         end
     end
     return
