@@ -61,7 +61,7 @@ end
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
         index_map::IndexMap,
-        vis_src::Vector{MOI.VariableIndex},
+        indices::Vector{MOI.VariableIndex},
     )
 
 Pass the variable attributes from the model `src` to the model `dest`.
@@ -70,36 +70,10 @@ function pass_attributes(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     index_map::IndexMap,
-    vis_src::Vector{MOI.VariableIndex},
+    indices::Vector{MOI.VariableIndex},
 )
     for attr in MOI.get(src, MOI.ListOfVariableAttributesSet())
-        if !MOI.supports(dest, attr, MOI.VariableIndex)
-            if attr == MOI.VariableName() || attr == MOI.VariablePrimalStart()
-                continue  # Skipping names and start values is okay.
-            end
-        end
-        _pass_attribute(dest, src, index_map, vis_src, attr)
-    end
-    return
-end
-
-function _pass_attribute(
-    dest::MOI.ModelLike,
-    src::MOI.ModelLike,
-    index_map::IndexMap,
-    vis_src::Vector{MOI.VariableIndex},
-    attr::MOI.AbstractVariableAttribute,
-)
-    for x in vis_src
-        value = MOI.get(src, attr, x)
-        if value !== nothing
-            MOI.set(
-                dest,
-                attr,
-                index_map[x],
-                map_indices(index_map, attr, value),
-            )
-        end
+        _pass_attribute(dest, src, index_map, indices, attr)
     end
     return
 end
@@ -109,7 +83,7 @@ end
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
         index_map::IndexMap,
-        cis_src::Vector{MOI.ConstraintIndex{F,S}},
+        indices::Vector{MOI.ConstraintIndex{F,S}},
     ) where {F,S}
 
 Pass the constraint attributes of `F`-in-`S` constraints from the model `src` to
@@ -119,39 +93,62 @@ function pass_attributes(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     index_map::IndexMap,
-    cis_src::Vector{MOI.ConstraintIndex{F,S}},
+    indices::Vector{MOI.ConstraintIndex{F,S}},
 ) where {F,S}
     for attr in MOI.get(src, MOI.ListOfConstraintAttributesSet{F,S}())
-        if !MOI.supports(dest, attr, MOI.ConstraintIndex{F,S})
-            if (
-                attr == MOI.ConstraintName() ||
-                attr == MOI.ConstraintPrimalStart() ||
-                attr == MOI.ConstraintDualStart()
-            )
-                continue  # Skipping names and start values is okay.
-            end
-        end
-        _pass_attribute(dest, src, index_map, cis_src, attr)
+        _pass_attribute(dest, src, index_map, indices, attr)
     end
     return
 end
+
+_is_skippable(::MOI.ConstraintName) = true
+_is_skippable(::MOI.ConstraintPrimalStart) = true
+_is_skippable(::MOI.ConstraintDualStart) = true
+_is_skippable(::MOI.VariableName) = true
+_is_skippable(::MOI.VariablePrimalStart) = true
+_is_skippable(::Any) = false
 
 function _pass_attribute(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     index_map::IndexMap,
-    cis_src::Vector{MOI.ConstraintIndex{F,S}},
-    attr::MOI.AbstractConstraintAttribute,
-) where {F,S}
-    for ci in cis_src
-        value = MOI.get(src, attr, ci)
+    indices::Vector{<:MOI.Index},
+    attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
+)
+    if _is_skippable(attr)
+        return _pass_attribute_skippable(dest, src, index_map, indices, attr)
+    end
+    for index in indices
+        value = MOI.get(src, attr, index)
         if value !== nothing
-            MOI.set(
-                dest,
-                attr,
-                index_map[ci],
-                map_indices(index_map, attr, value),
-            )
+            new_value = map_indices(index_map, attr, value)
+            MOI.set(dest, attr, index_map[index])
+        end
+    end
+    return
+end
+
+function _pass_attribute_skippable(dest, src, index_map, indices, attr)
+    if !MOI.supports(dest, attr, eltype(indices))
+        return
+    end
+    for index in indices
+        value = MOI.get(src, attr, index)
+        if value !== nothing
+            dest_value = map_indices(index_map, attr, value)
+            try
+                MOI.set(dest, attr, index_map[index], dest_value)
+            catch err
+                if err isa MOI.UnsupportedAttribute
+                    # This can happen because a bridge does not support the
+                    # attribute
+                elseif err isa MOI.SetAttributeNotAllowed{typeof(attr)}
+                    # This can happen if the model doesn't support setting the
+                    # attribute right now
+                else
+                    rethrow(err)
+                end
+            end
         end
     end
     return
