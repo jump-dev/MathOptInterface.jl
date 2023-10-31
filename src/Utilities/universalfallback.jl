@@ -373,11 +373,26 @@ function _get(
     return MOI.get_fallback(uf, attr, ci)
 end
 
+function _model_supports_attribute(model, attr, index...)
+    return !MOI.is_copyable(attr) || MOI.supports(model, attr, index...)
+end
+
+function _model_supports_attribute(
+    model,
+    attr,
+    index::Type{MOI.ConstraintIndex{F,S}},
+) where {F,S}
+    if !MOI.supports_constraint(model, F, S)
+        return false
+    end
+    return !MOI.is_copyable(attr) || MOI.supports(model, attr, index)
+end
+
 function MOI.get(
     uf::UniversalFallback,
     attr::Union{MOI.AbstractOptimizerAttribute,MOI.AbstractModelAttribute},
 )
-    if !MOI.is_copyable(attr) || MOI.supports(uf.model, attr)
+    if _model_supports_attribute(uf.model, attr)
         return MOI.get(uf.model, attr)
     end
     return _get(uf, attr)
@@ -388,8 +403,7 @@ function MOI.get(
     attr::MOI.AbstractConstraintAttribute,
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
-    if MOI.supports_constraint(uf.model, F, S) &&
-       (!MOI.is_copyable(attr) || MOI.supports(uf.model, attr, typeof(ci)))
+    if _model_supports_attribute(uf.model, attr, MOI.ConstraintIndex{F,S})
         return MOI.get(uf.model, attr, ci)
     end
     return _get(uf, attr, ci)
@@ -400,7 +414,7 @@ function MOI.get(
     attr::MOI.AbstractVariableAttribute,
     vi::MOI.VariableIndex,
 )
-    if !MOI.is_copyable(attr) || MOI.supports(uf.model, attr, MOI.VariableIndex)
+    if _model_supports_attribute(uf.model, attr, MOI.VariableIndex)
         return MOI.get(uf.model, attr, vi)
     end
     return _get(uf, attr, vi)
@@ -944,33 +958,30 @@ function MOI.get(
     uf::UniversalFallback,
     attr::MOI.ListOfVariablesWithAttributeSet,
 )
+    if _model_supports_attribute(uf.model, attr.attr, MOI.VariableIndex)
+        return MOI.get(uf.model, attr)
+    end
     dict = get(uf.varattr, attr.attr, nothing)
     if dict === nothing
-        return MOI.get(uf.model, attr)
+        return MOI.VariableIndex[]
     end
     return collect(keys(dict))
 end
+
+_constraint_attribute_dict(uf, ::MOI.ConstraintName) = uf.con_to_name
+_constraint_attribute_dict(uf, attr) = get(uf.conattr, attr, nothing)
 
 function MOI.get(
     uf::UniversalFallback,
     attr::MOI.ListOfConstraintsWithAttributeSet{F,S},
 ) where {F,S}
-    dict = get(uf.conattr, attr.attr, nothing)
+    if _model_supports_attribute(uf.model, attr.attr, MOI.ConstraintIndex{F,S})
+        return MOI.get(uf.model, attr)
+    end
+    dict = _constraint_attribute_dict(uf, attr.attr)
     if dict === nothing
-        return MOI.get(uf.model, attr)
+        return MOI.ConstraintIndex{F,S}[]
     end
-    return filter(Base.Fix2(isa, MOI.ConstraintIndex{F,S}), keys(dict))
-end
-
-function MOI.get(
-    uf::UniversalFallback,
-    attr::MOI.ListOfConstraintsWithAttributeSet{F,S,MOI.ConstraintName},
-) where {F,S}
-    if MOI.supports_constraint(uf.model, F, S)
-        return MOI.get(uf.model, attr)
-    end
-    return filter(
-        Base.Fix2(isa, MOI.ConstraintIndex{F,S}),
-        keys(uf.con_to_name),
-    )
+    indices = collect(keys(dict))
+    return filter(Base.Fix2(isa, MOI.ConstraintIndex{F,S}), indices)
 end
