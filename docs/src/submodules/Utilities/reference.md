@@ -79,6 +79,7 @@ Utilities.default_copy_to
 Utilities.IndexMap
 Utilities.identity_index_map
 Utilities.ModelFilter
+Utilities.loadfromstring!
 ```
 
 ## Penalty relaxation
