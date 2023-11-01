@@ -1456,6 +1456,31 @@ attribute was set to variables.
 struct ListOfVariableAttributesSet <: AbstractModelAttribute end
 
 """
+    ListOfVariablesWithAttributeSet(attr::AbstractVariableAttribute)
+
+A model attribute for the `Vector{VariableIndex}` of all variables with the
+attribute `attr` set.
+
+The returned list may not be minimal, so some elements may have their default
+value set.
+
+## Note
+
+This is an optional attribute to implement. The default fallback is to get
+[`ListOfVariableIndices`](@ref).
+"""
+struct ListOfVariablesWithAttributeSet{A} <: AbstractModelAttribute
+    attr::A
+    function ListOfVariablesWithAttributeSet(attr::AbstractVariableAttribute)
+        return new{typeof(attr)}(attr)
+    end
+end
+
+function get_fallback(model::ModelLike, ::ListOfVariablesWithAttributeSet)
+    return get(model, ListOfVariableIndices())
+end
+
+"""
     VariableName()
 
 A variable attribute for a string identifying the variable. It is *valid* for
@@ -1580,6 +1605,36 @@ The attributes [`ConstraintFunction`](@ref) and [`ConstraintSet`](@ref) should
 not be included in the list even if then have been set with [`set`](@ref).
 """
 struct ListOfConstraintAttributesSet{F,S} <: AbstractModelAttribute end
+
+"""
+    ListOfConstraintsWithAttributeSet{F,S}(attr:AbstractConstraintAttribute)
+
+A model attribute for the `Vector{ConstraintIndex{F,S}}` of all constraints with
+the attribute `attr` set.
+
+The returned list may not be minimal, so some elements may have their default
+value set.
+
+## Note
+
+This is an optional attribute to implement. The default fallback is to get
+[`ListOfConstraintIndices`](@ref).
+"""
+struct ListOfConstraintsWithAttributeSet{F,S,A} <: AbstractModelAttribute
+    attr::A
+    function ListOfConstraintsWithAttributeSet{F,S}(
+        attr::AbstractConstraintAttribute,
+    ) where {F,S}
+        return new{F,S,typeof(attr)}(attr)
+    end
+end
+
+function get_fallback(
+    model::ModelLike,
+    ::ListOfConstraintsWithAttributeSet{F,S},
+) where {F,S}
+    return get(model, ListOfConstraintIndices{F,S}())
+end
 
 """
     ConstraintName()

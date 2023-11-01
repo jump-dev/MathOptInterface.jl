@@ -453,6 +453,43 @@ function test_throw_unsupported_affine_constraint()
     return
 end
 
+function test_ListOfVariablesWithAttributeSet()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.VariableName(), x[1], "x")
+    # Passed through to Model with no special support
+    attr = MOI.ListOfVariablesWithAttributeSet(MOI.VariableName())
+    @test MOI.get(model, attr) == x
+    # Handled by UniversalFallback
+    attr = MOI.ListOfVariablesWithAttributeSet(MOI.VariablePrimalStart())
+    # ... no attributes set
+    @test MOI.get(model, attr) == MOI.VariableIndex[]
+    # ... one attribute set
+    MOI.set(model, MOI.VariablePrimalStart(), x[2], 1.0)
+    @test MOI.get(model, attr) == [x[2]]
+    return
+end
+
+function test_ListOfConstraintsWithAttributeSet()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variables(model, 2)
+    c = MOI.add_constraint.(model, 1.0 * x, MOI.EqualTo(1.0))
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
+    MOI.set(model, MOI.ConstraintName(), c[1], "c")
+    # Passed through to Model with no special support
+    attr = MOI.ListOfConstraintsWithAttributeSet{F,S}(MOI.ConstraintName())
+    @test MOI.get(model, attr) == c
+    # Handled by UniversalFallback
+    attr =
+        MOI.ListOfConstraintsWithAttributeSet{F,S}(MOI.ConstraintPrimalStart())
+    # ... no attributes set
+    @test MOI.get(model, attr) == MOI.ConstraintIndex{F,S}[]
+    # ... one attribute set
+    MOI.set(model, MOI.ConstraintPrimalStart(), c[2], 1.0)
+    @test MOI.get(model, attr) == [c[2]]
+    return
+end
+
 end  # module
 
 TestUniversalFallback.runtests()
