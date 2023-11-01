@@ -92,7 +92,7 @@ There are a number of other useful keyword arguments.
    for common situations like `0.0` and `1.0`. The tests associated with the
    starting values do not necessarily check for correctness, only that they can
    be `set` and `get` to produce the same result.
- * `print_inner_model` can be used to print the reformulated ouput model from
+ * `print_inner_model` can be used to print the reformulated output model from
    the bridge. This is especially helpful during debugging to see what the
    bridge is doing, and to spot mistakes. It defaults to `false`.
 
