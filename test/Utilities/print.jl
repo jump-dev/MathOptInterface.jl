@@ -290,9 +290,9 @@ function test_model()
         c2: y in ZeroOne()
         c2: z in Integer()
         c3: [x, y] in SecondOrderCone(2)
-        c4: [1, x, y] in SecondOrderCone(2)
-        c4: [1.0 * x * x, y, 1] in ExponentialCone()
-        c4: [1, 1.0 * x * x, y] in ExponentialCone()
+        c4a: [1, x, y] in SecondOrderCone(2)
+        c4b: [1.0 * x * x, y, 1] in ExponentialCone()
+        c4c: [1, 1.0 * x * x, y] in ExponentialCone()
         c2: x in ZeroOne()
         c5: 2.0 * x * x + y + -1 * z <= 1.0
         c6: x + x >= 1.0
@@ -319,12 +319,14 @@ function test_model()
      c5: 0.0 + 1.0 y - 1.0 z + 2.0 x² <= 1.0
 
     VectorOfVariables-in-SecondOrderCone
+     c3:
      ┌ ┐
      │x│
      │y│
      └ ┘ $(IN) SecondOrderCone(2)
 
     VectorAffineFunction{Float64}-in-SecondOrderCone
+     c4a:
      ┌           ┐
      │1.0        │
      │0.0 + 1.0 x│
@@ -332,11 +334,13 @@ function test_model()
      └           ┘ $(IN) SecondOrderCone(2)
 
     VectorQuadraticFunction{Float64}-in-ExponentialCone
+     c4b:
      ┌            ┐
      │0.0 + 1.0 x²│
      │0.0 + 1.0 y │
      │1.0         │
      └            ┘ $(IN) ExponentialCone()
+     c4c:
      ┌            ┐
      │1.0         │
      │0.0 + 1.0 x²│
@@ -499,9 +503,9 @@ function test_plain_simplified()
         c2: y in ZeroOne()
         c2: z in Integer()
         c3: [x, y] in SecondOrderCone(2)
-        c4: [1, x, y] in SecondOrderCone(2)
-        c4: [1.0 * x * x, y, 1] in ExponentialCone()
-        c4: [1, 1.0 * x * x, y] in ExponentialCone()
+        c4a: [1, x, y] in SecondOrderCone(2)
+        c4b: [1.0 * x * x, y, 1] in ExponentialCone()
+        [1, 1.0 * x * x, y] in ExponentialCone()
         c2: x in ZeroOne()
         c5: 2.0 * x * x + y + -1 * z <= 1.0
         c6: x + x >= 1.0
@@ -528,15 +532,18 @@ function test_plain_simplified()
      c6: 2 x >= 1
      c7: 2 x $(IN) [1, 2]
      c5: y - z + 2 x² <= 1
+     c3:
      ┌ ┐
      │x│
      │y│
      └ ┘ $(IN) SecondOrderCone(2)
+     c4a:
      ┌ ┐
      │1│
      │x│
      │y│
      └ ┘ $(IN) SecondOrderCone(2)
+     c4b:
      ┌  ┐
      │x²│
      │y │

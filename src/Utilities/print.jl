@@ -374,14 +374,8 @@ end
 function _name_prefix(
     options::_PrintOptions{MIME"text/plain"},
     model::MOI.ModelLike,
-    cref::MOI.ConstraintIndex{
-        <:Union{
-            MOI.ScalarAffineFunction,
-            MOI.ScalarQuadraticFunction,
-            MOI.ScalarNonlinearFunction,
-        },
-    },
-)
+    cref::MOI.ConstraintIndex{F},
+) where {F}
     if !MOI.supports(model, MOI.ConstraintName(), typeof(cref))
         return ""
     end
@@ -389,7 +383,19 @@ function _name_prefix(
     if isempty(name)
         return ""
     end
-    return string(name, ": ")
+    if F <: MOI.AbstractVectorFunction
+        return string(name, ":\n")
+    else
+        return string(name, ": ")
+    end
+end
+
+function _name_prefix(
+    ::_PrintOptions{MIME"text/plain"},
+    ::MOI.ModelLike,
+    ::MOI.ConstraintIndex{MOI.VariableIndex},
+)
+    return ""
 end
 
 _name_prefix(::_PrintOptions, ::MOI.ModelLike, ::MOI.ConstraintIndex) = ""
