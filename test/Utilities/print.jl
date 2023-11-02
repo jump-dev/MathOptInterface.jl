@@ -295,9 +295,9 @@ function test_model()
         c4: [1, 1.0 * x * x, y] in ExponentialCone()
         c2: x in ZeroOne()
         c5: 2.0 * x * x + y + -1 * z <= 1.0
-        c5: x + x >= 1.0
-        c5: x + x in Interval(1.0, 2.0)
-        c5: x + -1 * y == 0.0
+        c6: x + x >= 1.0
+        c7: x + x in Interval(1.0, 2.0)
+        c8: x + -1 * y == 0.0
         """,
     )
     @test sprint(print, model) == """
@@ -307,16 +307,16 @@ function test_model()
     Subject to:
 
     ScalarAffineFunction{Float64}-in-EqualTo{Float64}
-     0.0 + 1.0 x - 1.0 y == 0.0
+     c8: 0.0 + 1.0 x - 1.0 y == 0.0
 
     ScalarAffineFunction{Float64}-in-GreaterThan{Float64}
-     0.0 + 2.0 x >= 1.0
+     c6: 0.0 + 2.0 x >= 1.0
 
     ScalarAffineFunction{Float64}-in-Interval{Float64}
-     0.0 + 2.0 x $(IN) [1.0, 2.0]
+     c7: 0.0 + 2.0 x $(IN) [1.0, 2.0]
 
     ScalarQuadraticFunction{Float64}-in-LessThan{Float64}
-     0.0 + 1.0 y - 1.0 z + 2.0 x² <= 1.0
+     c5: 0.0 + 1.0 y - 1.0 z + 2.0 x² <= 1.0
 
     VectorOfVariables-in-SecondOrderCone
      ┌ ┐
@@ -504,9 +504,9 @@ function test_plain_simplified()
         c4: [1, 1.0 * x * x, y] in ExponentialCone()
         c2: x in ZeroOne()
         c5: 2.0 * x * x + y + -1 * z <= 1.0
-        c5: x + x >= 1.0
-        c5: x + x in Interval(1.0, 2.0)
-        c5: x + -1 * y == 0.0
+        c6: x + x >= 1.0
+        c7: x + x in Interval(1.0, 2.0)
+        c8: x + -1 * y == 0.0
         """,
     )
     model_string = sprint() do io
@@ -524,10 +524,10 @@ function test_plain_simplified()
     Minimize: -2 + x + 3.1 y - 1.2 z
 
     Subject to:
-     x - y == 0
-     2 x >= 1
-     2 x $(IN) [1, 2]
-     y - z + 2 x² <= 1
+     c8: x - y == 0
+     c6: 2 x >= 1
+     c7: 2 x $(IN) [1, 2]
+     c5: y - z + 2 x² <= 1
      ┌ ┐
      │x│
      │y│

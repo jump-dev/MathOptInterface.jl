@@ -371,6 +371,29 @@ end
 # Constraints
 #------------------------------------------------------------------------
 
+function _name_prefix(
+    options::_PrintOptions{MIME"text/plain"},
+    model::MOI.ModelLike,
+    cref::MOI.ConstraintIndex{
+        <:Union{
+            MOI.ScalarAffineFunction,
+            MOI.ScalarQuadraticFunction,
+            MOI.ScalarNonlinearFunction,
+        },
+    },
+)
+    if !MOI.supports(model, MOI.ConstraintName(), typeof(cref))
+        return ""
+    end
+    name = MOI.get(model, MOI.ConstraintName(), cref)
+    if isempty(name)
+        return ""
+    end
+    return string(name, ": ")
+end
+
+_name_prefix(::_PrintOptions, ::MOI.ModelLike, ::MOI.ConstraintIndex) = ""
+
 function _to_string(
     options::_PrintOptions,
     model::MOI.ModelLike,
@@ -378,7 +401,9 @@ function _to_string(
 )
     f = MOI.get(model, MOI.ConstraintFunction(), cref)
     s = MOI.get(model, MOI.ConstraintSet(), cref)
-    return string(_to_string(options, model, f), " ", _to_string(options, s))
+    f_str = _to_string(options, model, f)
+    s_str = _to_string(options, s)
+    return string(_name_prefix(options, model, cref), f_str, " ", s_str)
 end
 
 #------------------------------------------------------------------------
