@@ -279,9 +279,10 @@ end
 function MOI.supports(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{<:SquareBridge},
-)
-    return true
+    ::Type{SquareBridge{T,F,G,TT,ST}},
+) where {T,F,G,TT,ST}
+    return MOI.supports(model, attr, MOI.ConstraintIndex{F,TT}) &
+           MOI.supports(model, attr, MOI.ConstraintIndex{G,MOI.EqualTo{T}})
 end
 
 function MOI.set(

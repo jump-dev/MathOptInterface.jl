@@ -332,11 +332,11 @@ function unbridged_map(
 end
 
 function MOI.supports(
-    ::MOI.ModelLike,
-    ::MOI.VariablePrimalStart,
+    model::MOI.ModelLike,
+    attr::MOI.VariablePrimalStart,
     ::Type{<:HermitianToSymmetricPSDBridge},
 )
-    return true
+    return MOI.set(model, attr, MOI.VariableIndex)
 end
 
 function MOI.set(
