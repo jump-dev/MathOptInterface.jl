@@ -336,7 +336,7 @@ function MOI.supports(
     attr::MOI.VariablePrimalStart,
     ::Type{<:HermitianToSymmetricPSDBridge},
 )
-    return MOI.set(model, attr, MOI.VariableIndex)
+    return MOI.supports(model, attr, MOI.VariableIndex)
 end
 
 function MOI.set(
