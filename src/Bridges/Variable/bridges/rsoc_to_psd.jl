@@ -248,17 +248,51 @@ function MOI.get(
     return dual
 end
 
+function MOI.supports(
+    model::MOI.ModelLike,
+    attr::MOI.VariablePrimalStart,
+    ::Type{<:RSOCtoPSDBridge},
+)
+    return MOI.supports(model, attr, MOI.VariableIndex)
+end
+
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.VariablePrimal,
+    attr::Union{MOI.VariablePrimal,MOI.VariablePrimalStart},
     bridge::RSOCtoPSDBridge,
     i::MOI.Bridges.IndexInVector,
 )
     value = MOI.get(model, attr, _variable(bridge, i))
-    if i.value == 2
+    if value !== nothing && i.value == 2
         return value / 2
     end
     return value
+end
+
+_u_start_values(::Nothing) = nothing, nothing
+_u_start_values(value::T) where {T} = 2 * value, zero(T)
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.VariablePrimalStart,
+    bridge::RSOCtoPSDBridge{T},
+    value,
+    i::MOI.Bridges.IndexInVector,
+) where {T}
+    if i.value != 2
+        MOI.set(model, attr, _variable(bridge, i), value)
+        return
+    end
+    diag_value, offdiag_value = _u_start_values(value)
+    n = length(bridge.variables)
+    for col in 2:MOI.Utilities.side_dimension_for_vectorized_dimension(n)
+        for row in 2:col
+            k = MOI.Utilities.trimap(row, col)
+            v = row == col ? diag_value : offdiag_value
+            MOI.set(model, attr, bridge.variables[k], v)
+        end
+    end
+    return
 end
 
 function MOI.Bridges.bridged_function(

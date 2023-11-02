@@ -115,3 +115,29 @@ function unbridged_map(
 ) where {T}
     return [bridge.x => _to_one(T, x)]
 end
+
+function MOI.supports(
+    model::MOI.ModelLike,
+    attr::MOI.VariablePrimalStart,
+    ::Type{<:ParameterToEqualToBridge},
+)
+    return MOI.supports(model, attr, MOI.VariableIndex)
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::Union{MOI.VariablePrimal,MOI.VariablePrimalStart},
+    bridge::ParameterToEqualToBridge,
+)
+    return MOI.get(model, attr, bridge.x)
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.VariablePrimalStart,
+    bridge::ParameterToEqualToBridge,
+    value,
+)
+    MOI.set(model, attr, bridge.x, value)
+    return
+end
