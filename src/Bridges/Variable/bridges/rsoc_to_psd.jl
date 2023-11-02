@@ -248,17 +248,39 @@ function MOI.get(
     return dual
 end
 
+function MOI.supports(
+    model::MOI.ModelLike,
+    attr::MOI.VariablePrimalStart,
+    ::Type{<:RSOCtoPSDBridge},
+)
+    return MOI.supports(model, attr, MOI.VariableIndex)
+end
+
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.VariablePrimal,
+    attr::Union{MOI.VariablePrimal,MOI.VariablePrimalStart},
     bridge::RSOCtoPSDBridge,
     i::MOI.Bridges.IndexInVector,
 )
     value = MOI.get(model, attr, _variable(bridge, i))
-    if i.value == 2
+    if value !== nothing && i.value == 2
         return value / 2
     end
     return value
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.VariablePrimalStart,
+    bridge::RSOCtoPSDBridge,
+    value,
+    i::MOI.Bridges.IndexInVector,
+)
+    if value !== nothing && i.value == 2
+        value = 2 * value
+    end
+    MOI.set(model, attr, _variable(bridge, i), value)
+    return
 end
 
 function MOI.Bridges.bridged_function(
