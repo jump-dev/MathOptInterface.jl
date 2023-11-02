@@ -276,12 +276,36 @@ function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::SquareBridge)
     return bridge.square_set
 end
 
+function MOI.supports(
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    ::Type{<:SquareBridge},
+)
+    return true
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::SquareBridge,
+    ::Nothing,
+)
+    MOI.set(model, attr, bridge.triangle, nothing)
+    for (_, ci) in bridge.sym
+        MOI.set(model, attr, ci, nothing)
+    end
+    return
+end
+
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintPrimal,
+    attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
     bridge::SquareBridge{T},
 ) where {T}
     value = MOI.get(model, attr, bridge.triangle)
+    if value === nothing
+        return nothing
+    end
     dim = MOI.side_dimension(bridge.square_set)
     offset = length(_square_offset(bridge.square_set))
     primal = Vector{eltype(value)}(undef, offset + dim^2)
@@ -293,16 +317,48 @@ function MOI.get(
         k += 1
         primal[offset+i+(j-1)*dim] = primal[offset+j+(i-1)*dim] = value[k]
     end
+    for ((i, j), ci) in bridge.sym
+        primal[offset+i+(j-1)*dim] += MOI.get(model, attr, ci)
+    end
     return primal
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::SquareBridge,
+    value,
+)
+    dim = MOI.side_dimension(bridge.square_set)
+    offset = length(_square_offset(bridge.square_set))
+    @assert length(value) == offset + dim^2
+    primal = Vector{eltype(value)}(undef, offset + div(dim * (dim + 1), 2))
+    for i in 1:offset
+        primal[i] = value[i]
+    end
+    k = offset
+    for j in 1:dim, i in 1:j
+        k += 1
+        primal[k] = value[offset+j+(i-1)*dim]
+    end
+    MOI.set(model, attr, bridge.triangle, primal)
+    for ((i, j), ci) in bridge.sym
+        f_ij, f_ji = value[offset+i+(j-1)*dim], value[offset+j+(i-1)*dim]
+        MOI.set(model, attr, ci, f_ij - f_ji)
+    end
+    return
 end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDual,
+    attr::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
     bridge::SquareBridge,
 )
     # The constraint dual of the triangular constraint.
     tri = MOI.get(model, attr, bridge.triangle)
+    if tri === nothing
+        return nothing
+    end
     # Our output will be a dense square matrix.
     dim = MOI.side_dimension(bridge.square_set)
     offset = length(_square_offset(bridge.square_set))
@@ -355,4 +411,53 @@ function MOI.get(
         end
     end
     return dual
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDualStart,
+    bridge::SquareBridge,
+    value,
+)
+    dim = MOI.side_dimension(bridge.square_set)
+    offset = length(_square_offset(bridge.square_set))
+    @assert length(value) == offset + dim^2
+    dual = Vector{eltype(value)}(undef, offset + div(dim * (dim + 1), 2))
+    for i in 1:offset
+        dual[i] = value[i]
+    end
+    k = offset
+    sym_index = 1
+    for j in 1:dim, i in 1:j
+        k += 1
+        upper_index = offset + i + (j - 1) * dim
+        lower_index = offset + j + (i - 1) * dim
+        if i == j
+            dual[k] = value[upper_index]
+        elseif sym_index <= length(bridge.sym) &&
+               bridge.sym[sym_index].first == (i, j)
+            λ2, λ3 = value[lower_index], value[upper_index]
+            π = -λ2
+            MOI.set(model, attr, bridge.sym[sym_index].second, π)
+            dual[k] = (λ3 - π) / 2  # η2
+            sym_index += 1
+        else
+            dual[k] = (value[lower_index] + value[upper_index]) / 2
+        end
+    end
+    MOI.set(model, attr, bridge.triangle, dual)
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDualStart,
+    bridge::SquareBridge,
+    ::Nothing,
+)
+    MOI.set(model, attr, bridge.triangle, nothing)
+    for (_, ci) in bridge.sym
+        MOI.set(model, attr, ci, nothing)
+    end
+    return
 end
