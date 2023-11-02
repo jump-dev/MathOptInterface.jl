@@ -159,11 +159,11 @@ function MOI.delete(model::MOI.ModelLike, bridge::SplitComplexEqualToBridge)
 end
 
 function MOI.supports(
-    ::MOI.ModelLike,
-    ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{<:SplitComplexEqualToBridge},
-)
-    return true
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    ::Type{<:SplitComplexEqualToBridge{T,F}},
+) where {T,F}
+    return MOI.supports(model, attr, MOI.ConstraintIndex{F,MOI.EqualTo{T}})
 end
 
 function MOI.get(

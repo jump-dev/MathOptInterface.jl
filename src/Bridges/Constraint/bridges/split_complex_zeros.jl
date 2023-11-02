@@ -157,11 +157,11 @@ function MOI.delete(model::MOI.ModelLike, bridge::SplitComplexZerosBridge)
 end
 
 function MOI.supports(
-    ::MOI.ModelLike,
-    ::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{<:SplitComplexZerosBridge},
-)
-    return true
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    ::Type{<:SplitComplexZerosBridge{T,F}},
+) where {T,F}
+    return MOI.supports(model, attr, MOI.ConstraintIndex{F,MOI.Zeros})
 end
 
 function MOI.get(
