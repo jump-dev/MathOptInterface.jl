@@ -124,9 +124,9 @@ end
 function MOI.supports(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{NumberConversionBridge{T,F1,S1,F2,S2}},
-) where {T,F1,S1,F2,S2}
-    return MOI.supports(model, attr, MOI.ConstraintIndex{F2,S2})
+    ::Type{<:NumberConversionBridge},
+)
+    return true
 end
 
 function MOI.get(
