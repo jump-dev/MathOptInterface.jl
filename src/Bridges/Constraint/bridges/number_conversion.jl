@@ -143,7 +143,7 @@ function MOI.get(
     if ret === nothing
         return nothing
     end
-    return convert(MOI.Utilities.value_type(T,F1), ret)
+    return convert(MOI.Utilities.value_type(T, F1), ret)
 end
 
 function MOI.set(
