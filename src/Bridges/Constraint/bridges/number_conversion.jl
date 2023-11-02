@@ -139,7 +139,11 @@ function MOI.get(
     },
     bridge::NumberConversionBridge{T,F1,S1,F2,S2},
 ) where {T,F1,S1,F2,S2}
-    return MOI.get(model, attr, bridge.constraint)
+    ret = MOI.get(model, attr, bridge.constraint)
+    if ret === nothing
+        return nothing
+    end
+    return convert(MOI.Utilities.value_type(T,F1), ret)
 end
 
 function MOI.set(
