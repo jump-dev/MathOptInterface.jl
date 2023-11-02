@@ -269,17 +269,29 @@ function MOI.get(
     return value
 end
 
+_u_start_values(::Nothing) = nothing, nothing
+_u_start_values(value::T) where {T} = 2 * value, zero(T)
+
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.VariablePrimalStart,
-    bridge::RSOCtoPSDBridge,
+    bridge::RSOCtoPSDBridge{T},
     value,
     i::MOI.Bridges.IndexInVector,
-)
-    if value !== nothing && i.value == 2
-        value = 2 * value
+) where {T}
+    if i.value != 2
+        MOI.set(model, attr, _variable(bridge, i), value)
+        return
     end
-    MOI.set(model, attr, _variable(bridge, i), value)
+    diag_value, offdiag_value = _u_start_values(value)
+    n = length(bridge.variables)
+    for col in 2:MOI.Utilities.side_dimension_for_vectorized_dimension(n)
+        for row in 2:col
+            k = MOI.Utilities.trimap(row, col)
+            v = row == col ? diag_value : offdiag_value
+            MOI.set(model, attr, bridge.variables[k], v)
+        end
+    end
     return
 end
 
