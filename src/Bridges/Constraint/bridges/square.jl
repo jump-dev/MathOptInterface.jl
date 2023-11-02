@@ -279,18 +279,17 @@ end
 function MOI.supports(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    ::Type{SquareBridge{T,F,G,TT,ST}},
-) where {T,F,G,TT,ST}
-    return MOI.supports(model, attr, MOI.ConstraintIndex{F,TT}) &&
-           MOI.supports(model, attr, MOI.ConstraintIndex{G,MOI.EqualTo{T}})
+    ::Type{<:SquareBridge},
+)
+    return true
 end
 
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintPrimalStart,
-    bridge::SquareBridge{T},
+    bridge::SquareBridge,
     ::Nothing,
-) where {T}
+)
     MOI.set(model, attr, bridge.triangle, nothing)
     for (_, ci) in bridge.sym
         MOI.set(model, attr, ci, nothing)
@@ -327,9 +326,9 @@ end
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintPrimalStart,
-    bridge::SquareBridge{T},
+    bridge::SquareBridge,
     value,
-) where {T}
+)
     dim = MOI.side_dimension(bridge.square_set)
     offset = length(_square_offset(bridge.square_set))
     @assert length(value) == offset + dim^2
@@ -420,13 +419,10 @@ function MOI.set(
     bridge::SquareBridge,
     value,
 )
-    # Our output will be a dense square matrix.
     dim = MOI.side_dimension(bridge.square_set)
     offset = length(_square_offset(bridge.square_set))
     @assert length(value) == offset + dim^2
     dual = Vector{eltype(value)}(undef, offset + div(dim * (dim + 1), 2))
-    # Start by converting the triangular dual to the square dual, assuming that
-    # all elements are symmetrical.
     for i in 1:offset
         dual[i] = value[i]
     end
@@ -440,36 +436,12 @@ function MOI.set(
             dual[k] = value[upper_index]
         elseif sym_index <= length(bridge.sym) &&
                bridge.sym[sym_index].first == (i, j)
-            # The PSD constraint uses only the upper triangular part. Therefore,
-            # for KKT to hold for the user model, the dual given by the user
-            # needs to be attributed to the upper triangular entry. For example,
-            # suppose the constraint is
-            #   [0 x; y 0] in PositiveSemidefiniteConeSquare(2).
-            # If the dual is
-            #   [λ1 λ3; λ2 λ4]
-            # then we have `y λ2 + x λ3` in the Lagrangian.
-            #
-            # In the bridged model, the constraint is
-            #   [0, x, 0] in PositiveSemidefiniteConeTriangle(2).
-            #   [x - y] in Zeros(1)
-            # If the dual is
-            #   [η1, η2, η3] in PositiveSemidefiniteConeTriangle(2).
-            #   [π] in Reals(1)
-            # then we have `2x η2 + x * π - y * π` in the Lagrangian.
-            #
-            # To have the same Lagrangian value, we should set `λ3 = 2η2 + π`
-            # and `λ2 = 0 - π`.
             λ2, λ3 = value[lower_index], value[upper_index]
             π = -λ2
-            dual[k] = (λ3 - π) / 2  # η2
             MOI.set(model, attr, bridge.sym[sym_index].second, π)
+            dual[k] = (λ3 - π) / 2  # η2
             sym_index += 1
         else
-            # If there are no symmetry constraint, it means that the entries are
-            # symbolically the same so we can consider we have the average
-            # of the lower and upper triangular entries to the bridged model
-            # in which case we can give the dual to both upper and triangular
-            # entries.
             dual[k] = (value[lower_index] + value[upper_index]) / 2
         end
     end
@@ -480,9 +452,9 @@ end
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDualStart,
-    bridge::SquareBridge{T},
+    bridge::SquareBridge,
     ::Nothing,
-) where {T}
+)
     MOI.set(model, attr, bridge.triangle, nothing)
     for (_, ci) in bridge.sym
         MOI.set(model, attr, ci, nothing)
