@@ -307,45 +307,41 @@ function test_model()
     Subject to:
 
     ScalarAffineFunction{Float64}-in-EqualTo{Float64}
-     c8: 0.0 + 1.0 x - 1.0 y == 0.0
+     0.0 + 1.0 x - 1.0 y == 0.0  (c8)
 
     ScalarAffineFunction{Float64}-in-GreaterThan{Float64}
-     c6: 0.0 + 2.0 x >= 1.0
+     0.0 + 2.0 x >= 1.0  (c6)
 
     ScalarAffineFunction{Float64}-in-Interval{Float64}
-     c7: 0.0 + 2.0 x $(IN) [1.0, 2.0]
+     0.0 + 2.0 x $(IN) [1.0, 2.0]  (c7)
 
     ScalarQuadraticFunction{Float64}-in-LessThan{Float64}
-     c5: 0.0 + 1.0 y - 1.0 z + 2.0 x² <= 1.0
+     0.0 + 1.0 y - 1.0 z + 2.0 x² <= 1.0  (c5)
 
     VectorOfVariables-in-SecondOrderCone
-     c3:
      ┌ ┐
      │x│
      │y│
-     └ ┘ $(IN) SecondOrderCone(2)
+     └ ┘ $(IN) SecondOrderCone(2)  (c3)
 
     VectorAffineFunction{Float64}-in-SecondOrderCone
-     c4a:
      ┌           ┐
      │1.0        │
      │0.0 + 1.0 x│
      │0.0 + 1.0 y│
-     └           ┘ $(IN) SecondOrderCone(2)
+     └           ┘ $(IN) SecondOrderCone(2)  (c4a)
 
     VectorQuadraticFunction{Float64}-in-ExponentialCone
-     c4b:
      ┌            ┐
      │0.0 + 1.0 x²│
      │0.0 + 1.0 y │
      │1.0         │
-     └            ┘ $(IN) ExponentialCone()
-     c4c:
+     └            ┘ $(IN) ExponentialCone()  (c4b)
      ┌            ┐
      │1.0         │
      │0.0 + 1.0 x²│
      │0.0 + 1.0 y │
-     └            ┘ $(IN) ExponentialCone()
+     └            ┘ $(IN) ExponentialCone()  (c4c)
 
     VariableIndex-in-GreaterThan{Float64}
      x >= 0.1
@@ -528,27 +524,24 @@ function test_plain_simplified()
     Minimize: -2 + x + 3.1 y - 1.2 z
 
     Subject to:
-     c8: x - y == 0
-     c6: 2 x >= 1
-     c7: 2 x $(IN) [1, 2]
-     c5: y - z + 2 x² <= 1
-     c3:
+     x - y == 0  (c8)
+     2 x >= 1  (c6)
+     2 x $(IN) [1, 2]  (c7)
+     y - z + 2 x² <= 1  (c5)
      ┌ ┐
      │x│
      │y│
-     └ ┘ $(IN) SecondOrderCone(2)
-     c4a:
+     └ ┘ $(IN) SecondOrderCone(2)  (c3)
      ┌ ┐
      │1│
      │x│
      │y│
-     └ ┘ $(IN) SecondOrderCone(2)
-     c4b:
+     └ ┘ $(IN) SecondOrderCone(2)  (c4a)
      ┌  ┐
      │x²│
      │y │
      │1 │
-     └  ┘ $(IN) ExponentialCone()
+     └  ┘ $(IN) ExponentialCone()  (c4b)
      ┌  ┐
      │1 │
      │x²│

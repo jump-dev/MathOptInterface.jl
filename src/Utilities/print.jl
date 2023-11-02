@@ -371,34 +371,28 @@ end
 # Constraints
 #------------------------------------------------------------------------
 
-function _name_prefix(
-    options::_PrintOptions{MIME"text/plain"},
-    model::MOI.ModelLike,
-    cref::MOI.ConstraintIndex{F},
-) where {F}
+function _get_name_or_empty(model, cref::MOI.ConstraintIndex)
     if !MOI.supports(model, MOI.ConstraintName(), typeof(cref))
         return ""
     end
-    name = MOI.get(model, MOI.ConstraintName(), cref)
+    return MOI.get(model, MOI.ConstraintName(), cref)
+end
+
+_get_name_or_empty(::Any, ::MOI.ConstraintIndex{MOI.VariableIndex}) = ""
+
+function _name_suffix(
+    options::_PrintOptions{MIME"text/plain"},
+    model::MOI.ModelLike,
+    cref::MOI.ConstraintIndex,
+)
+    name = _get_name_or_empty(model, cref)
     if isempty(name)
         return ""
     end
-    if F <: MOI.AbstractVectorFunction
-        return string(name, ":\n")
-    else
-        return string(name, ": ")
-    end
+    return string("  (", name, ")")
 end
 
-function _name_prefix(
-    ::_PrintOptions{MIME"text/plain"},
-    ::MOI.ModelLike,
-    ::MOI.ConstraintIndex{MOI.VariableIndex},
-)
-    return ""
-end
-
-_name_prefix(::_PrintOptions, ::MOI.ModelLike, ::MOI.ConstraintIndex) = ""
+_name_suffix(::_PrintOptions, ::MOI.ModelLike, ::MOI.ConstraintIndex) = ""
 
 function _to_string(
     options::_PrintOptions,
@@ -409,7 +403,7 @@ function _to_string(
     s = MOI.get(model, MOI.ConstraintSet(), cref)
     f_str = _to_string(options, model, f)
     s_str = _to_string(options, s)
-    return string(_name_prefix(options, model, cref), f_str, " ", s_str)
+    return string(f_str, " ", s_str, _name_suffix(options, model, cref))
 end
 
 #------------------------------------------------------------------------
