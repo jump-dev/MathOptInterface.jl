@@ -120,3 +120,43 @@ function MOI.get(
     s = MOI.get(model, MOI.ConstraintSet(), bridge.constraint)
     return MOI.Utilities.convert_approx(S1, s)
 end
+
+function MOI.supports(
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    ::Type{NumberConversionBridge{T,F1,S1,F2,S2}},
+) where {T,F1,S1,F2,S2}
+    return MOI.supports(model, attr, MOI.ConstraintIndex{F2,S2})
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintPrimal,
+        MOI.ConstraintDual,
+    },
+    bridge::NumberConversionBridge{T,F1,S1,F2,S2},
+) where {T,F1,S1,F2,S2}
+    ret = MOI.get(model, attr, bridge.constraint)
+    if ret === nothing
+        return nothing
+    end
+    return convert(MOI.Utilities.value_type(T, F1), ret)
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintPrimal,
+        MOI.ConstraintDual,
+    },
+    bridge::NumberConversionBridge{T,F1,S1,F2,S2},
+    value,
+) where {T,F1,S1,F2,S2}
+    MOI.set(model, attr, bridge.constraint, value)
+    return
+end
