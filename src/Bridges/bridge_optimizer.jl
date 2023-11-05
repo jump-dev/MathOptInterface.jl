@@ -895,6 +895,19 @@ end
 
 function MOI.get(
     b::AbstractBridgeOptimizer,
+    attr::MOI.ListOfConstraintsWithAttributeSet{F,S,MOI.ConstraintName},
+) where {F,S}
+    if !is_bridged(b, F, S) &&
+       MOI.supports(b.model, MOI.ConstraintName(), MOI.ConstraintIndex{F,S})
+        return MOI.get(b.model, attr)
+    end
+    return MOI.ConstraintIndex{F,S}[
+        ci for ci in keys(b.con_to_name) if ci isa MOI.ConstraintIndex{F,S}
+    ]
+end
+
+function MOI.get(
+    b::AbstractBridgeOptimizer,
     attr::MOI.ListOfConstraintAttributesSet{F,S},
 ) where {F,S}
     list = unbridged_function(b, MOI.get(b.model, attr))

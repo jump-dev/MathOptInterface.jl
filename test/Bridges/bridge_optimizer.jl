@@ -1097,6 +1097,17 @@ function test_show_modify_bridge_not_allowed()
     return
 end
 
+function test_list_of_constraints_with_attribute_set()
+    config = MOI.Test.Config()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
+    MOI.Test.test_model_ListOfConstraintsWithAttributeSet(model, config)
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.Vectorize{Float64}(inner)
+    MOI.Test.test_model_ListOfConstraintsWithAttributeSet(model, config)
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
