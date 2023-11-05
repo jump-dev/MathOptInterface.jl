@@ -7,6 +7,43 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.22.0 (November 6, 2023)
+
+### Added
+
+ - Added new bridges (#2318)
+   - [`Bridges.Constraint.SOS1ToMILPBridge`](@ref)
+   - [`Bridges.Constraint.SOS2ToMILPBridge`](@ref)
+   - [`Bridges.Constraint.IndicatorToMILPBridge`](@ref)
+ - Added starting values for bridges (#2330) (#2337) (#2338) (#2339)
+   - [`Bridges.Constraint.NumberConversionBridge`](@ref)
+   - [`Bridges.Constraint.SquareBridge`](@ref)
+   - [`Bridges.Variable.HermitianToSymmetricPSDBridge`](@ref)
+   - [`Bridges.Variable.ParameterToEqualToBridge`](@ref)
+   - [`Bridges.Variable.RSOCtoPSDBridge`](@ref)
+ - Added [`ListOfVariablesWithAttributeSet`](@ref) and
+   [`listOfConstraintsWithAttributeSet`](@ref) (#2331)
+ - Added support for printing [`ConnstraintName`](@ref) when models are printed
+   (#2336)
+
+### Fixed
+
+ - [`ScalarFunctionConstantNotZero`](@ref) errors are now skipped in
+   [`Test.runtests`](@ref) (#2325)
+ - Fixed [`VectorNonlinearFunction`](@ref) support in [`Bridges.Constrainnt.NormOneBridge`](@ref)
+   and [`Bridges.Constraint.NormInfinityBridge`](@ref) (#2324)
+ - Fixed various `get` for [`ConstraintFunction`](@ref) to return a copy, and
+   added tests (#2328)
+ - Fixed `supports` of [`ConstraintPrimalStart`](@ref) and [`VariablePrimalStart`](@ref)
+   for some bridges (#2340)
+
+### Other
+
+ - Fixed typo in docstring of [`ScalarAffineFunction`](@ref) (#2326)
+ - Added Gurobi to `solver-tests.yml` (#2332)
+ - Improved the error message when a bridge does not support an attribute (#2329)
+ - Improved documentation for implementing a bridge (#2334)
+
 ## v1.21.0 (October 25, 2023)
 
 ### Added
