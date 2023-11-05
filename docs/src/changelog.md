@@ -22,15 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    - [`Bridges.Variable.ParameterToEqualToBridge`](@ref)
    - [`Bridges.Variable.RSOCtoPSDBridge`](@ref)
  - Added [`ListOfVariablesWithAttributeSet`](@ref) and
-   [`listOfConstraintsWithAttributeSet`](@ref) (#2331)
- - Added support for printing [`ConnstraintName`](@ref) when models are printed
+   [`ListOfConstraintsWithAttributeSet`](@ref) (#2331)
+ - Added support for printing [`ConstraintName`](@ref) when models are printed
    (#2336)
 
 ### Fixed
 
  - [`ScalarFunctionConstantNotZero`](@ref) errors are now skipped in
    [`Test.runtests`](@ref) (#2325)
- - Fixed [`VectorNonlinearFunction`](@ref) support in [`Bridges.Constrainnt.NormOneBridge`](@ref)
+ - Fixed [`VectorNonlinearFunction`](@ref) support in [`Bridges.Constraint.NormOneBridge`](@ref)
    and [`Bridges.Constraint.NormInfinityBridge`](@ref) (#2324)
  - Fixed various `get` for [`ConstraintFunction`](@ref) to return a copy, and
    added tests (#2328)
@@ -454,7 +454,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Fixed parsing of `OBJSENSE` blocks in `FileFormats.MPS` files (#2016) (#2019)
  - Fixed the parsing of deeply nested nonlinear expressions by removing the use
    of recursion (#2020)
- - Fixed the requirements check in `Test.test_constrainnt_get_ConstraintIndex`
+ - Fixed the requirements check in `Test.test_constraint_get_ConstraintIndex`
    (#2024)
 
 ## v1.8.2 (September 20, 2022)
