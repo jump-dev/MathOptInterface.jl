@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    - [`Bridges.Variable.ParameterToEqualToBridge`](@ref)
    - [`Bridges.Variable.RSOCtoPSDBridge`](@ref)
  - Added [`ListOfVariablesWithAttributeSet`](@ref) and
-   [`ListOfConstraintsWithAttributeSet`](@ref) (#2331)
+   [`ListOfConstraintsWithAttributeSet`](@ref) (#2331) (#2342)
  - Added support for printing [`ConstraintName`](@ref) when models are printed
    (#2336)
 
