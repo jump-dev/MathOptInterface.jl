@@ -232,7 +232,7 @@ function map_indices(
 end
 
 # RawOptimizerAttribute values are passed through un-changed.
-map_indices(::Any, ::MOI.RawOptimizerAttribute, x) = x
+map_indices(::Function, ::MOI.RawOptimizerAttribute, x) = x
 
 """
     map_indices(
