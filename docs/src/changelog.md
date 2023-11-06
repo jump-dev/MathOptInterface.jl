@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Added Gurobi to `solver-tests.yml` (#2332)
  - Improved the error message when a bridge does not support an attribute (#2329)
  - Improved documentation for implementing a bridge (#2334)
+ - Updated `[compat]` bounds in `Project.toml` (#2344)
 
 ## v1.21.0 (October 25, 2023)
 
