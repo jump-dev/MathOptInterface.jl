@@ -110,4 +110,5 @@ Bridges.Variable.SOCtoRSOCBridge
 Bridges.Variable.VectorizeBridge
 Bridges.Variable.ZerosBridge
 Bridges.Variable.HermitianToSymmetricPSDBridge
+Bridges.Variable.ParameterToEqualToBridge
 ```
