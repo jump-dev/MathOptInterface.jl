@@ -42,6 +42,14 @@ function MOI.get(
     return MOI.Utilities.canonical(f)
 end
 
+function MOI.get(
+    ::MOI.ModelLike,
+    ::MOI.Bridges.FirstBridge,
+    bridge::AbstractFunctionConversionBridge,
+)
+    return bridge
+end
+
 function MOI.supports(
     model::MOI.ModelLike,
     attr::MOI.AbstractConstraintAttribute,

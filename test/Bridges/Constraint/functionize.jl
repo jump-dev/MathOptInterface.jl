@@ -351,6 +351,16 @@ function test_canonical_constraint_function()
     return
 end
 
+function test_first_bridge()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.ScalarFunctionize{Float64}(inner)
+    x = MOI.add_variable(model)
+    ci = MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+    b = MOI.get(model, MOI.Bridges.FirstBridge(), ci)
+    @test b isa MOI.Bridges.Constraint.ScalarFunctionizeBridge
+    return
+end
+
 end  # module
 
 TestConstraintFunctionize.runtests()
