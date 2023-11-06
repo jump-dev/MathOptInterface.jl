@@ -75,6 +75,7 @@ Bridges.unbridged_variable_function
 Bridges.bridged_function
 Bridges.supports_constraint_bridges
 Bridges.recursive_model
+Bridges.FirstBridge
 ```
 
 ## LazyBridgeOptimizer API
