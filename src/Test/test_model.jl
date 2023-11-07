@@ -316,7 +316,6 @@ function test_model_Name_VariableName_ConstraintName(
     for yi in y
         @test MOI.get(model, MOI.VariableName(), yi) == ""
     end
-    @test MOI.get(model, MOI.ConstraintName(), cy) == ""
     MOI.set(model, MOI.VariableName(), v[1], "")
     MOI.set(model, MOI.VariableName(), v[2], "") # Shouldn't error with duplicate empty name
     MOI.set(model, MOI.VariableName(), x, "")
@@ -363,14 +362,14 @@ function test_model_Name_VariableName_ConstraintName(
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T[-1, 1], v), T(0)),
         MOI.EqualTo(T(0)),
     )
+    @requires MOI.supports(model, MOI.ConstraintName(), typeof(c))
+    @requires MOI.supports(model, MOI.ConstraintName(), typeof(c2))
+    @requires MOI.supports(model, MOI.ConstraintName(), typeof(cy))
     @test MOI.get(model, MOI.ConstraintName(), c) == ""
     @test MOI.get(model, MOI.ConstraintName(), c2) == ""
     @test MOI.get(model, MOI.ConstraintName(), cy) == ""
-    @requires MOI.supports(model, MOI.ConstraintName(), typeof(c))
     MOI.set(model, MOI.ConstraintName(), c, "")
-    @requires MOI.supports(model, MOI.ConstraintName(), typeof(c2))
     MOI.set(model, MOI.ConstraintName(), c2, "") # Shouldn't error with duplicate empty name
-    @requires MOI.supports(model, MOI.ConstraintName(), typeof(cy))
     MOI.set(model, MOI.ConstraintName(), cy, "")
     MOI.set(model, MOI.ConstraintName(), c, "Con0")
     @test MOI.get(model, MOI.ConstraintName(), c) == "Con0"
