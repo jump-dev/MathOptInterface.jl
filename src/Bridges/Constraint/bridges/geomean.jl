@@ -332,7 +332,11 @@ function _get_attribute(model, attr, bridge::GeoMeanBridge{T}) where {T}
     return output
 end
 
-function MOI.supports(::MOI.ModelLike, ::MOI.ConstraintPrimalStart, ::GeoMeanBridge)
+function MOI.supports(
+    ::MOI.ModelLike,
+    ::MOI.ConstraintPrimalStart,
+    ::Type{<:GeoMeanBridge},
+)
     @show @__LINE__
     return true
 end
@@ -362,7 +366,12 @@ function MOI.set(
 )
     @show @__LINE__
     if d == 2
-        MOI.set(model, attr, bridge.t_upper_bound_constraint, value[1] - value[2])
+        MOI.set(
+            model,
+            attr,
+            bridge.t_upper_bound_constraint,
+            value[1] - value[2],
+        )
         MOI.set(model, attr, bridge.x_nonnegative_constraint, [value[2]])
         return
     end
@@ -372,7 +381,7 @@ function MOI.set(
     N = 1 << l
     sN = one(T) / sqrt(N)
     xij = zeros(N - 1)
-    xl1 = (prod(value[2:end]))^(1/n) / xN
+    xl1 = prod(value[2:end])^(1 / n) / xN
     xij[1] = xl1
     _getx(i) = i > n ? sN * xl1 : value[1+i]
 
@@ -398,8 +407,8 @@ function MOI.set(
         offset -= 1 << (i - 2)
     end
     @assert offset == 0
+    return
 end
-
 
 function MOI.get(
     model::MOI.ModelLike,
