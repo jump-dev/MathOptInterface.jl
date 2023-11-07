@@ -253,12 +253,15 @@ function runtests(
         elseif !isempty(exclude) && any(s -> occursin(s, name), exclude)
             continue
         end
-        test_function = getfield(@__MODULE__, name_sym)
-        if version_added(test_function) > exclude_tests_after
-            continue
-        end
         if verbose
             @info "Running $name"
+        end
+        test_function = getfield(@__MODULE__, name_sym)
+        if version_added(test_function) > exclude_tests_after
+            if verbose
+                println("  Skipping test because of `exclude_tests_after`")
+            end
+            continue
         end
         @testset "$(name)" begin
             c = copy(config)
@@ -268,6 +271,9 @@ function runtests(
             try
                 test_function(model, c)
             catch err
+                if verbose
+                    println("  Test errored with $(typeof(err))")
+                end
                 _error_handler(err, name, warn_unsupported)
             end
             if tear_down !== nothing
