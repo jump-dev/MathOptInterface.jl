@@ -24,7 +24,7 @@ This can be rewritten as ``\\exists y \\ge 0`` such that:
 \\end{align*}
 ```
 Note that we need to create ``y`` and not use ``t^4`` directly because ``t`` is
-allowed to be negative.
+not allowed to be negative.
 
 This is equivalent to:
 ```math
@@ -133,7 +133,7 @@ function bridge_constraint(
         MOI.LessThan(zero(T)),
         allow_modify_function = true,
     )
-    offset = offset_next = 0
+    offset = 0
     for i in 1:l
         num_lvars = 1 << (i - 1)
         offset_next = offset + num_lvars
@@ -332,9 +332,14 @@ function _get_attribute(model, attr, bridge::GeoMeanBridge{T}) where {T}
     return output
 end
 
+function MOI.supports(::MOI.ModelLike, ::MOI.ConstraintPrimalStart, ::GeoMeanBridge)
+    @show @__LINE__
+    return true
+end
+
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintPrimal,
+    attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
     bridge::GeoMeanBridge,
 )
     output = _get_attribute(model, attr, bridge)
@@ -348,6 +353,53 @@ function MOI.get(
     end
     return output
 end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::GeoMeanBridge,
+    value,
+)
+    @show @__LINE__
+    if d == 2
+        MOI.set(model, attr, bridge.t_upper_bound_constraint, value[1] - value[2])
+        MOI.set(model, attr, bridge.x_nonnegative_constraint, [value[2]])
+        return
+    end
+    t = value[1]
+    n = d - 1
+    l = _ilog2(n)
+    N = 1 << l
+    sN = one(T) / sqrt(N)
+    xij = zeros(N - 1)
+    xl1 = (prod(value[2:end]))^(1/n) / xN
+    xij[1] = xl1
+    _getx(i) = i > n ? sN * xl1 : value[1+i]
+
+    # With sqrt(2)^l*t - xl1, we should scale both the ConstraintPrimal and
+    # ConstraintDual
+    MOI.set(model, attr, bridge.t_upper_bound_constraint, t - sN * xl1)
+    offset = length(rsoc_constraints)
+    for i in l:-1:1
+        num_lvars = 1 << (i - 1)
+        offset_next = offset + num_lvars
+        for j in 1:num_lvars
+            if i == l
+                a = _getx(2j - 1)
+                b = _getx(2j)
+            else
+                a = xij[offset_next+2j-1]
+                b = xij[offset_next+2j]
+            end
+            c = sqrt(2a * b)
+            xij[offset+j] = c
+            MOI.set(model, attr, bridge.rsoc_constraints[offset+j], [a, b, c])
+        end
+        offset -= 1 << (i - 2)
+    end
+    @assert offset == 0
+end
+
 
 function MOI.get(
     model::MOI.ModelLike,
