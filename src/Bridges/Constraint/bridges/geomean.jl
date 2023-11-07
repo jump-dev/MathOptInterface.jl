@@ -315,7 +315,11 @@ end
 
 function _get_attribute(model, attr, bridge::GeoMeanBridge{T}) where {T}
     output = Vector{T}(undef, bridge.d)
-    output[1] = MOI.get(model, attr, bridge.t_upper_bound_constraint)
+    ret = MOI.get(model, attr, bridge.t_upper_bound_constraint)
+    if ret === nothing
+        return ret
+    end
+    output[1] = ret
     if bridge.d == 2
         output[2] = MOI.get(model, attr, bridge.x_nonnegative_constraint)[1]
     else
@@ -333,12 +337,14 @@ function _get_attribute(model, attr, bridge::GeoMeanBridge{T}) where {T}
 end
 
 function MOI.supports(
-    ::MOI.ModelLike,
-    ::MOI.ConstraintPrimalStart,
-    ::Type{<:GeoMeanBridge},
-)
-    @show @__LINE__
-    return true
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    ::Type{GeoMeanBridge{T,F,G,H}},
+) where {T,F,G,H}
+    FS, GS = MOI.LessThan{T}, MOI.RotatedSecondOrderCone
+    return MOI.supports(model, attr, MOI.ConstraintIndex{F,FS}) &&
+           MOI.supports(model, attr, MOI.ConstraintIndex{G,GS}) &&
+           MOI.supports(model, attr, MOI.ConstraintIndex{H,MOI.Nonnegatives})
 end
 
 function MOI.get(
@@ -347,6 +353,9 @@ function MOI.get(
     bridge::GeoMeanBridge,
 )
     output = _get_attribute(model, attr, bridge)
+    if output === nothing
+        return nothing
+    end
     N = length(bridge.xij) + 1
     # the constraint is t - x_l1/sqrt(2^l) ≤ 0, we need to add the value of x_l1
     if bridge.d == 2
@@ -361,44 +370,35 @@ end
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintPrimalStart,
-    bridge::GeoMeanBridge,
+    bridge::GeoMeanBridge{T},
     value,
-)
-    @show @__LINE__
-    if d == 2
-        MOI.set(
-            model,
-            attr,
-            bridge.t_upper_bound_constraint,
-            value[1] - value[2],
-        )
+) where {T}
+    if bridge.d == 2
+        new_value = value[1] - value[2]
+        MOI.set(model, attr, bridge.t_upper_bound_constraint, new_value)
         MOI.set(model, attr, bridge.x_nonnegative_constraint, [value[2]])
         return
     end
-    t = value[1]
-    n = d - 1
+    n = bridge.d - 1
     l = _ilog2(n)
     N = 1 << l
     sN = one(T) / sqrt(N)
-    xij = zeros(N - 1)
     xl1 = prod(value[2:end])^(1 / n) / xN
+    xij = zeros(T, N - 1)
     xij[1] = xl1
-    _getx(i) = i > n ? sN * xl1 : value[1+i]
-
+    _get_x(i) = i > n ? sN * xl1 : value[1+i]
     # With sqrt(2)^l*t - xl1, we should scale both the ConstraintPrimal and
     # ConstraintDual
-    MOI.set(model, attr, bridge.t_upper_bound_constraint, t - sN * xl1)
-    offset = length(rsoc_constraints)
+    MOI.set(model, attr, bridge.t_upper_bound_constraint, value[1] - sN * xl1)
+    offset = length(bridge.rsoc_constraints)
     for i in l:-1:1
         num_lvars = 1 << (i - 1)
         offset_next = offset + num_lvars
         for j in 1:num_lvars
-            if i == l
-                a = _getx(2j - 1)
-                b = _getx(2j)
+            a, b = if i == l
+                _get_x(2j - 1), _get_x(2j)
             else
-                a = xij[offset_next+2j-1]
-                b = xij[offset_next+2j]
+                xij[offset_next+2j-1], xij[offset_next+2j]
             end
             c = sqrt(2a * b)
             xij[offset+j] = c
@@ -407,6 +407,22 @@ function MOI.set(
         offset -= 1 << (i - 2)
     end
     @assert offset == 0
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::GeoMeanBridge,
+    ::Nothing,
+)
+    MOI.set(model, attr, bridge.t_upper_bound_constraint, nothing)
+    if bridge.x_nonnegative_constraint !== nothing
+        MOI.set(model, attr, bridge.x_nonnegative_constraint, nothing)
+    end
+    for ci in bridge.rsoc_constraints
+        MOI.set(model, attr, ci, nothing)
+    end
     return
 end
 
