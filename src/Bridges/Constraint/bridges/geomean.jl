@@ -24,7 +24,7 @@ This can be rewritten as ``\\exists y \\ge 0`` such that:
 \\end{align*}
 ```
 Note that we need to create ``y`` and not use ``t^4`` directly because ``t`` is
-allowed to be negative.
+not allowed to be negative.
 
 This is equivalent to:
 ```math
@@ -133,7 +133,7 @@ function bridge_constraint(
         MOI.LessThan(zero(T)),
         allow_modify_function = true,
     )
-    offset = offset_next = 0
+    offset = 0
     for i in 1:l
         num_lvars = 1 << (i - 1)
         offset_next = offset + num_lvars
@@ -315,7 +315,11 @@ end
 
 function _get_attribute(model, attr, bridge::GeoMeanBridge{T}) where {T}
     output = Vector{T}(undef, bridge.d)
-    output[1] = MOI.get(model, attr, bridge.t_upper_bound_constraint)
+    ret = MOI.get(model, attr, bridge.t_upper_bound_constraint)
+    if ret === nothing
+        return ret
+    end
+    output[1] = ret
     if bridge.d == 2
         output[2] = MOI.get(model, attr, bridge.x_nonnegative_constraint)[1]
     else
@@ -332,21 +336,107 @@ function _get_attribute(model, attr, bridge::GeoMeanBridge{T}) where {T}
     return output
 end
 
+function MOI.supports(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    ::Type{GeoMeanBridge{T,F,G,H}},
+) where {T,F,G,H}
+    FS, GS = MOI.LessThan{T}, MOI.RotatedSecondOrderCone
+    return MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex) &&
+           MOI.supports(model, attr, MOI.ConstraintIndex{F,FS}) &&
+           MOI.supports(model, attr, MOI.ConstraintIndex{G,GS}) &&
+           MOI.supports(model, attr, MOI.ConstraintIndex{H,MOI.Nonnegatives})
+end
+
+function _variable_attribute(attr::MOI.ConstraintPrimal)
+    return MOI.VariablePrimal(attr.result_index)
+end
+
+function _variable_attribute(attr::MOI.ConstraintPrimalStart)
+    return MOI.VariablePrimalStart()
+end
+
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintPrimal,
+    attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
     bridge::GeoMeanBridge,
 )
     output = _get_attribute(model, attr, bridge)
+    if output === nothing
+        return nothing
+    end
     N = length(bridge.xij) + 1
     # the constraint is t - x_l1/sqrt(2^l) ≤ 0, we need to add the value of x_l1
     if bridge.d == 2
         output[1] += MOI.get(model, attr, bridge.x_nonnegative_constraint)[1]
     else
         output[1] +=
-            MOI.get(model, MOI.VariablePrimal(), bridge.xij[1]) / sqrt(N)
+            MOI.get(model, _variable_attribute(attr), bridge.xij[1]) / sqrt(N)
     end
     return output
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::GeoMeanBridge{T},
+    value,
+) where {T}
+    if bridge.d == 2
+        new_value = value[1] - value[2]
+        MOI.set(model, attr, bridge.t_upper_bound_constraint, new_value)
+        MOI.set(model, attr, bridge.x_nonnegative_constraint, [value[2]])
+        return
+    end
+    n = bridge.d - 1
+    l = _ilog2(n)
+    N = 1 << l
+    sN = one(T) / sqrt(N)
+    xl1 = prod(value[2:end])^(1 / n) / sN
+    xij = zeros(T, N - 1)
+    xij[1] = xl1
+    _get_x(i) = i > n ? sN * xl1 : value[1+i]
+    # With sqrt(2)^l*t - xl1, we should scale both the ConstraintPrimal and
+    # ConstraintDual
+    MOI.set(model, attr, bridge.t_upper_bound_constraint, value[1] - sN * xl1)
+    offset = length(bridge.rsoc_constraints)
+    for i in l:-1:1
+        offset_next = offset
+        num_lvars = 1 << (i - 1)
+        offset -= num_lvars
+        for j in 1:num_lvars
+            a, b = if i == l
+                _get_x(2j - 1), _get_x(2j)
+            else
+                xij[offset_next+2j-1], xij[offset_next+2j]
+            end
+            c = sqrt(2a * b)
+            xij[offset+j] = c
+            MOI.set(model, attr, bridge.rsoc_constraints[offset+j], [a, b, c])
+        end
+    end
+    @assert offset == 0
+    MOI.set(model, _variable_attribute(attr), bridge.xij, xij)
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
+    bridge::GeoMeanBridge,
+    ::Nothing,
+)
+    MOI.set(model, attr, bridge.t_upper_bound_constraint, nothing)
+    if bridge.x_nonnegative_constraint !== nothing
+        MOI.set(model, attr, bridge.x_nonnegative_constraint, nothing)
+    end
+    for ci in bridge.rsoc_constraints
+        MOI.set(model, attr, ci, nothing)
+    end
+    for vi in bridge.xij
+        MOI.set(model, _variable_attribute(attr), vi, nothing)
+    end
+    return
 end
 
 function MOI.get(
