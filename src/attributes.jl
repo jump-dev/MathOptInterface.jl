@@ -2242,14 +2242,23 @@ end
 """
     is_set_by_optimize(::AnyAttribute)
 
-Return a `Bool` indicating whether the value of the attribute is modified
-during an [`optimize!`](@ref) call, that is, the attribute is used to query
-the result of the optimization.
+Return a `Bool` indicating whether the value of the attribute is set during an
+[`optimize!`](@ref) call, that is, the attribute is used to query the result of
+the optimization.
 
-## Important note when defining new attributes
+If an attibute can be set by the user, define [`is_copyable`](@ref) instead.
+
+An attribute cannot be both [`is_copyable`](@ref) and `is_set_by_optimize`.
+
+## Default fallback
 
 This function returns `false` by default so it should be implemented for
-attributes that are modified by [`optimize!`](@ref).
+attributes that are set by [`optimize!`](@ref).
+
+## Undefined behavior
+
+Querying the value of the attribute that `is_set_by_optimize` before a call to
+[`optimize!`](@ref) is undefined and depends on solver-specific behavior.
 """
 is_set_by_optimize(::AnyAttribute) = false
 
@@ -2287,27 +2296,20 @@ end
 Return a `Bool` indicating whether the value of the attribute may be copied
 during [`copy_to`](@ref) using [`set`](@ref).
 
-## Important note when defining new attributes
+If an attribute `is_copyable`, then it cannot be modified by the optimizer, and
+[`get`](@ref) must always return the value that was [`set`](@ref) by the user.
 
-By default `is_copyable(attr)` returns `!is_set_by_optimize(attr)`. A specific
-method should be defined for attributes which are copied indirectly during
-[`copy_to`](@ref). For instance, both `is_copyable` and
-[`is_set_by_optimize`](@ref) return `false` for the following attributes:
+If an attibute is the result of an optimization, define
+[`is_set_by_optimize`](@ref) instead.
 
-* [`ListOfOptimizerAttributesSet`](@ref), [`ListOfModelAttributesSet`](@ref),
-  [`ListOfConstraintAttributesSet`](@ref) and
-  [`ListOfVariableAttributesSet`](@ref).
-* [`SolverName`](@ref) and [`RawSolver`](@ref): these attributes cannot be set.
-* [`NumberOfVariables`](@ref) and [`ListOfVariableIndices`](@ref): these
-  attributes are set indirectly by [`add_variable`](@ref) and
-  [`add_variables`](@ref).
-* [`ObjectiveFunctionType`](@ref): this attribute is set indirectly when setting
-  the [`ObjectiveFunction`](@ref) attribute.
-* [`NumberOfConstraints`](@ref), [`ListOfConstraintIndices`](@ref),
-  [`ListOfConstraintTypesPresent`](@ref), [`CanonicalConstraintFunction`](@ref),
-  [`ConstraintFunction`](@ref) and [`ConstraintSet`](@ref):
-  these attributes are set indirectly by
-  [`add_constraint`](@ref) and [`add_constraints`](@ref).
+An attribute cannot be both [`is_set_by_optimize`](@ref) and `is_copyable`.
+
+## Default fallback
+
+By default `is_copyable(attr)` returns `!is_set_by_optimize(attr)`, which is
+most probably `true`.
+
+If an attribute should not be copied, define `is_copyable(::MyAttribute) = false`.
 """
 function is_copyable(attr::AnyAttribute)
     return !is_set_by_optimize(attr)
