@@ -342,7 +342,8 @@ function MOI.supports(
     ::Type{GeoMeanBridge{T,F,G,H}},
 ) where {T,F,G,H}
     FS, GS = MOI.LessThan{T}, MOI.RotatedSecondOrderCone
-    return MOI.supports(model, attr, MOI.ConstraintIndex{F,FS}) &&
+    return MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex) &&
+           MOI.supports(model, attr, MOI.ConstraintIndex{F,FS}) &&
            MOI.supports(model, attr, MOI.ConstraintIndex{G,GS}) &&
            MOI.supports(model, attr, MOI.ConstraintIndex{H,MOI.Nonnegatives})
 end
