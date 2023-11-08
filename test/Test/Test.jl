@@ -34,7 +34,7 @@ MOI.Test.runtests(
         MOI.Utilities.Model{Float64}(),
         scalar_function_constant_non_zero = true,
     ),
-    MOI.Test.Config(),
+    MOI.Test.Config();
     include = [
         r"^test_model_ScalarFunctionConstantNotZero$",
         "test_model_copy_to_UnsupportedAttribute",
@@ -43,6 +43,7 @@ MOI.Test.runtests(
         "test_model_supports_constraint_VariableIndex_EqualTo",
         "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
     ],
+    verbose = true,
 )
 
 # Test for Issue #1757

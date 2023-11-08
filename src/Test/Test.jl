@@ -174,6 +174,7 @@ version_added(::F) where {F} = v"0.10.5"  # The default for any unlabeled tests.
         exclude::Vector{Union{String,Regex}} = String[],
         warn_unsupported::Bool = false,
         exclude_tests_after::VersionNumber = v"999.0.0",
+        verbose::Bool = false,
     )
 
 Run all tests in `MathOptInterface.Test` on `model`.
@@ -200,6 +201,8 @@ Run all tests in `MathOptInterface.Test` on `model`.
    added after that version number. This is useful for solvers who can declare a
    fixed set of tests, and not cause their tests to break if a new patch of MOI
    is released with a new test.
+ * `verbose` is a `Bool` that controls whether the name of the test is printed
+   before executing it. This can be helpful when debugging.
 
 See also: [`setup_test`](@ref).
 
@@ -213,6 +216,7 @@ MathOptInterface.Test.runtests(
     include = ["test_linear_", r"^test_model_Name\$"],
     exclude = ["VariablePrimalStart"],
     warn_unsupported = true,
+    verbose = true,
     exclude_tests_after = v"0.10.5",
 )
 ```
@@ -223,6 +227,7 @@ function runtests(
     include::Vector = String[],
     exclude::Vector = String[],
     warn_unsupported::Bool = false,
+    verbose::Bool = false,
     exclude_tests_after::VersionNumber = v"999.0.0",
 )
     tests = filter(names(@__MODULE__; all = true)) do name
@@ -248,8 +253,14 @@ function runtests(
         elseif !isempty(exclude) && any(s -> occursin(s, name), exclude)
             continue
         end
+        if verbose
+            @info "Running $name"
+        end
         test_function = getfield(@__MODULE__, name_sym)
         if version_added(test_function) > exclude_tests_after
+            if verbose
+                println("  Skipping test because of `exclude_tests_after`")
+            end
             continue
         end
         @testset "$(name)" begin
@@ -260,6 +271,9 @@ function runtests(
             try
                 test_function(model, c)
             catch err
+                if verbose
+                    println("  Test errored with $(typeof(err))")
+                end
                 _error_handler(err, name, warn_unsupported)
             end
             if tear_down !== nothing
