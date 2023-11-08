@@ -347,6 +347,14 @@ function MOI.supports(
            MOI.supports(model, attr, MOI.ConstraintIndex{H,MOI.Nonnegatives})
 end
 
+function _variable_attribute(attr::MOI.ConstraintPrimal)
+    return MOI.VariablePrimal(attr.result_index)
+end
+
+function _variable_attribute(attr::MOI.ConstraintPrimalStart)
+    return MOI.VariablePrimalStart()
+end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
@@ -362,7 +370,7 @@ function MOI.get(
         output[1] += MOI.get(model, attr, bridge.x_nonnegative_constraint)[1]
     else
         output[1] +=
-            MOI.get(model, MOI.VariablePrimal(), bridge.xij[1]) / sqrt(N)
+            MOI.get(model, _variable_attribute(attr), bridge.xij[1]) / sqrt(N)
     end
     return output
 end
@@ -383,7 +391,7 @@ function MOI.set(
     l = _ilog2(n)
     N = 1 << l
     sN = one(T) / sqrt(N)
-    xl1 = prod(value[2:end])^(1 / n) / xN
+    xl1 = prod(value[2:end])^(1 / n) / sN
     xij = zeros(T, N - 1)
     xij[1] = xl1
     _get_x(i) = i > n ? sN * xl1 : value[1+i]
@@ -392,8 +400,9 @@ function MOI.set(
     MOI.set(model, attr, bridge.t_upper_bound_constraint, value[1] - sN * xl1)
     offset = length(bridge.rsoc_constraints)
     for i in l:-1:1
+        offset_next = offset
         num_lvars = 1 << (i - 1)
-        offset_next = offset + num_lvars
+        offset -= num_lvars
         for j in 1:num_lvars
             a, b = if i == l
                 _get_x(2j - 1), _get_x(2j)
@@ -404,9 +413,9 @@ function MOI.set(
             xij[offset+j] = c
             MOI.set(model, attr, bridge.rsoc_constraints[offset+j], [a, b, c])
         end
-        offset -= 1 << (i - 2)
     end
     @assert offset == 0
+    MOI.set(model, _variable_attribute(attr), bridge.xij, xij)
     return
 end
 
@@ -422,6 +431,9 @@ function MOI.set(
     end
     for ci in bridge.rsoc_constraints
         MOI.set(model, attr, ci, nothing)
+    end
+    for vi in bridge.xij
+        MOI.set(model, _variable_attribute(attr), vi, nothing)
     end
     return
 end
