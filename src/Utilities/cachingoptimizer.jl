@@ -875,8 +875,9 @@ function _throw_if_get_attribute_not_allowed(
     # did not leave a copy in `dest`.
     missing_map = needs_optimizer_map && isempty(model.model_to_optimizer_map)
     if state(model) == NO_OPTIMIZER || missing_map
-        msg = "Cannot query $(attr) from `Utilities.CachingOptimizer` " *
-              "because optimizer is attached (the state is `$state`)."
+        msg =
+            "Cannot query $(attr) from `Utilities.CachingOptimizer` " *
+            "because no optimizer is attached (the state is `$(state(model))`)."
         throw(MOI.GetAttributeNotAllowed(attr, msg))
     end
     return
