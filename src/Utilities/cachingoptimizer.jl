@@ -867,7 +867,7 @@ end
 function _throw_if_get_attribute_not_allowed(
     model::CachingOptimizer,
     attr;
-    needs_optimizer_map::Bool = false,
+    needs_optimizer_map::Bool,
 )
     # If the state(model) == EMPTY_OPTIMIZER, then
     # `model.model_to_optimizer_map[index]` might be empty (because copy_to
@@ -887,7 +887,11 @@ function MOI.get(model::CachingOptimizer, attr::MOI.AbstractModelAttribute)
     if !MOI.is_set_by_optimize(attr)
         return MOI.get(model.model_cache, attr)
     end
-    _throw_if_get_attribute_not_allowed(model, attr)
+    _throw_if_get_attribute_not_allowed(
+        model,
+        attr;
+        needs_optimizer_map = false,
+    )
     return _get_model_attribute(model, attr)
 end
 
@@ -1046,7 +1050,11 @@ function MOI.get(model::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute)
     # `NumberOfThreads`) should also be stored in the cache so we could
     # return the value stored in the cache instead. However, for
     # non-copyable attributes( e.g. `SolverName`) the error is appropriate.
-    _throw_if_get_attribute_not_allowed(model, attr)
+    _throw_if_get_attribute_not_allowed(
+        model,
+        attr;
+        needs_optimizer_map = false,
+    )
     return map_indices(
         model.optimizer_to_model_map,
         attr,
