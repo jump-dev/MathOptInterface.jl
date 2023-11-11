@@ -864,15 +864,34 @@ function _get_model_attribute(
     )
 end
 
+function _throw_if_get_attribute_not_allowed(
+    model::CachingOptimizer,
+    attr;
+    needs_optimizer_map::Bool,
+)
+    # If the state(model) == EMPTY_OPTIMIZER, then
+    # `model.model_to_optimizer_map[index]` might be empty (because copy_to
+    # has not been called yet), or it might be full, if optimize!(dest, src)
+    # did not leave a copy in `dest`.
+    missing_map = needs_optimizer_map && isempty(model.model_to_optimizer_map)
+    if state(model) == NO_OPTIMIZER || missing_map
+        msg =
+            "Cannot query $(attr) from `Utilities.CachingOptimizer` " *
+            "because no optimizer is attached (the state is `$(state(model))`)."
+        throw(MOI.GetAttributeNotAllowed(attr, msg))
+    end
+    return
+end
+
 function MOI.get(model::CachingOptimizer, attr::MOI.AbstractModelAttribute)
     if !MOI.is_set_by_optimize(attr)
         return MOI.get(model.model_cache, attr)
-    elseif state(model) == NO_OPTIMIZER
-        error(
-            "Cannot query $(attr) from caching optimizer because no " *
-            "optimizer is attached.",
-        )
     end
+    _throw_if_get_attribute_not_allowed(
+        model,
+        attr;
+        needs_optimizer_map = false,
+    )
     return _get_model_attribute(model, attr)
 end
 
@@ -901,25 +920,16 @@ function MOI.get(
     attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
     index::MOI.Index,
 )
-    if MOI.is_set_by_optimize(attr)
-        if state(model) == NO_OPTIMIZER
-            error(
-                "Cannot query $(attr) from caching optimizer because no " *
-                "optimizer is attached.",
-            )
-        end
-        return map_indices(
-            model.optimizer_to_model_map,
-            attr,
-            MOI.get(
-                model.optimizer,
-                attr,
-                model.model_to_optimizer_map[index],
-            )::MOI.attribute_value_type(attr),
-        )
-    else
+    if !MOI.is_set_by_optimize(attr)
         return MOI.get(model.model_cache, attr, index)
     end
+    _throw_if_get_attribute_not_allowed(model, attr; needs_optimizer_map = true)
+    value = MOI.get(
+        model.optimizer,
+        attr,
+        model.model_to_optimizer_map[index],
+    )::MOI.attribute_value_type(attr)
+    return map_indices(model.optimizer_to_model_map, attr, value)
 end
 
 function MOI.get(
@@ -927,25 +937,16 @@ function MOI.get(
     attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
     indices::Vector{<:MOI.Index},
 )
-    if MOI.is_set_by_optimize(attr)
-        if state(model) == NO_OPTIMIZER
-            error(
-                "Cannot query $(attr) from caching optimizer because no " *
-                "optimizer is attached.",
-            )
-        end
-        return map_indices(
-            model.optimizer_to_model_map,
-            attr,
-            MOI.get(
-                model.optimizer,
-                attr,
-                map(index -> model.model_to_optimizer_map[index], indices),
-            )::Vector{<:MOI.attribute_value_type(attr)},
-        )
-    else
+    if !MOI.is_set_by_optimize(attr)
         return MOI.get(model.model_cache, attr, indices)
     end
+    _throw_if_get_attribute_not_allowed(model, attr; needs_optimizer_map = true)
+    value = MOI.get(
+        model.optimizer,
+        attr,
+        map(Base.Fix1(getindex, model.model_to_optimizer_map), indices),
+    )::Vector{<:MOI.attribute_value_type(attr)}
+    return map_indices(model.optimizer_to_model_map, attr, value)
 end
 
 ###
@@ -961,12 +962,7 @@ function MOI.get(
     attr::MOI.ConstraintPrimal,
     index::MOI.ConstraintIndex,
 )
-    if state(model) == NO_OPTIMIZER
-        error(
-            "Cannot query $(attr) from caching optimizer because no " *
-            "optimizer is attached.",
-        )
-    end
+    _throw_if_get_attribute_not_allowed(model, attr; needs_optimizer_map = true)
     try
         return MOI.get(
             model.optimizer,
@@ -987,12 +983,7 @@ function MOI.get(
     attr::MOI.ConstraintPrimal,
     indices::Vector{<:MOI.ConstraintIndex},
 )
-    if state(model) == NO_OPTIMIZER
-        error(
-            "Cannot query $(attr) from caching optimizer because no " *
-            "optimizer is attached.",
-        )
-    end
+    _throw_if_get_attribute_not_allowed(model, attr; needs_optimizer_map = true)
     try
         return MOI.get(
             model.optimizer,
@@ -1055,16 +1046,15 @@ function MOI.set(
 end
 
 function MOI.get(model::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute)
-    if state(model) == NO_OPTIMIZER
-        # TODO: Copyable attributes (e.g., `Silent`, `TimeLimitSec`,
-        # `NumberOfThreads`) should also be stored in the cache so we could
-        # return the value stored in the cache instead. However, for
-        # non-copyable attributes( e.g. `SolverName`) the error is appropriate.
-        error(
-            "Cannot query $(attr) from caching optimizer because no " *
-            "optimizer is attached.",
-        )
-    end
+    # TODO: Copyable attributes (e.g., `Silent`, `TimeLimitSec`,
+    # `NumberOfThreads`) should also be stored in the cache so we could
+    # return the value stored in the cache instead. However, for
+    # non-copyable attributes( e.g. `SolverName`) the error is appropriate.
+    _throw_if_get_attribute_not_allowed(
+        model,
+        attr;
+        needs_optimizer_map = false,
+    )
     return map_indices(
         model.optimizer_to_model_map,
         attr,

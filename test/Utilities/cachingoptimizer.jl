@@ -179,13 +179,14 @@ function test_default_attributes()
     @test MOI.get(model, MOI.PrimalStatus()) == MOI.NO_SOLUTION
     @test MOI.get(model, MOI.DualStatus()) == MOI.NO_SOLUTION
     x = MOI.add_variables(model, 2)
-    attr = MOI.VariablePrimal()
-    exception = ErrorException(
-        "Cannot query $(attr) from caching optimizer because no optimizer" *
-        " is attached.",
+    @test_throws(
+        MOI.GetAttributeNotAllowed{MOI.VariablePrimal},
+        MOI.get(model, MOI.VariablePrimal(), x[1]),
     )
-    @test_throws exception MOI.get(model, MOI.VariablePrimal(), x[1])
-    @test_throws exception MOI.get(model, MOI.VariablePrimal(), x)
+    @test_throws(
+        MOI.GetAttributeNotAllowed{MOI.VariablePrimal},
+        MOI.get(model, MOI.VariablePrimal(), x),
+    )
     for attr in (
         MOI.SolverName(),
         MOI.Silent(),
@@ -195,10 +196,7 @@ function test_default_attributes()
         MOI.ResultCount(),
     )
         @test_throws(
-            ErrorException(
-                "Cannot query $(attr) from caching optimizer because no " *
-                "optimizer is attached.",
-            ),
+            MOI.GetAttributeNotAllowed{typeof(attr)},
             MOI.get(model, attr),
         )
     end
@@ -450,7 +448,7 @@ function test_CachingOptimizer_MANUAL_mode()
         typeof(v),
     )
     MOI.set(m, MOIU.AttributeFromOptimizer(MOI.VariablePrimal()), v, 3.0)
-
+    MOI.set(s, MOI.TerminationStatus(), MOI.OPTIMAL)
     MOI.optimize!(m)
 
     @test MOI.get(m, MOI.VariablePrimal(), v) == 3.0
@@ -828,6 +826,8 @@ MOI.get(::_GetFallbackModel1310, ::MOI.PrimalStatus) = MOI.FEASIBLE_POINT
 
 MOI.get(::_GetFallbackModel1310, ::MOI.DualStatus) = MOI.FEASIBLE_POINT
 
+MOI.get(::_GetFallbackModel1310, ::MOI.TerminationStatus) = MOI.OTHER_ERROR
+
 MOI.get(::_GetFallbackModel1310, ::MOI.ResultCount) = 1
 
 function MOI.optimize!(::_GetFallbackModel1310, model::MOI.ModelLike)
@@ -887,8 +887,14 @@ function test_ConstraintPrimal_fallback_error()
     )
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
-    @test_throws(ErrorException, MOI.get(model, MOI.ConstraintPrimal(), c))
-    @test_throws(ErrorException, MOI.get(model, MOI.ConstraintPrimal(), [c]))
+    @test_throws(
+        MOI.GetAttributeNotAllowed{MOI.ConstraintPrimal},
+        MOI.get(model, MOI.ConstraintPrimal(), c),
+    )
+    @test_throws(
+        MOI.GetAttributeNotAllowed{MOI.ConstraintPrimal},
+        MOI.get(model, MOI.ConstraintPrimal(), [c]),
+    )
     return
 end
 
