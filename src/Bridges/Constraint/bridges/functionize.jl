@@ -42,6 +42,7 @@ function MOI.get(
     return MOI.Utilities.canonical(f)
 end
 
+# Needed to avoid an ambiguity with the getter for MOI.AbstractConstraintAttribute
 function MOI.get(
     ::MOI.ModelLike,
     ::MOI.Bridges.FirstBridge,
