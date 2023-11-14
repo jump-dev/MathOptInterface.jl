@@ -1108,6 +1108,27 @@ function test_list_of_constraints_with_attribute_set()
     return
 end
 
+function test_first_bridge()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    bridge = MOI.Bridges.Constraint.ZeroOne{Float64}(inner)
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+        bridge,
+    )
+    x = MOI.add_variable(model)
+    ci = MOI.add_constraint(model, x, MOI.ZeroOne())
+    MOI.Utilities.attach_optimizer(model)
+    b = MOI.get(model, MOI.Bridges.FirstBridge(), ci)
+    @test b isa MOI.Bridges.Constraint.ZeroOneBridge
+    y = MOI.add_variable(model)
+    ci = MOI.add_constraint(model, y, MOI.Integer())
+    @test_throws(
+        MOI.GetAttributeNotAllowed{MOI.Bridges.FirstBridge},
+        MOI.get(model, MOI.Bridges.FirstBridge(), ci),
+    )
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
