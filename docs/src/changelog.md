@@ -7,6 +7,21 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.13.0 (November 29, 2023)
+
+## Added
+
+ - Added [`ConstraintPrimalStart`](@ref) for [`Bridges.Constraint.GeoMeanBridge`](@ref)
+   (#2348)
+ - Added `verbose` keyword argument to [`Test.runtests`](@ref) (#2347)
+ - Added [`Bridge.FirstBridge`](@ref) attribute (#2211)
+
+## Fixed
+
+ - Fixed `Test.test_model_Name_VariableName_ConstraintName` (#2349)
+ - Fixed errors thrown when querying an attribute is not supported, like when
+   [`Utilities.CachingOptimizer`](@ref) is not attached to an optimizer (#2350)
+
 ## v1.22.0 (November 6, 2023)
 
 ### Added
