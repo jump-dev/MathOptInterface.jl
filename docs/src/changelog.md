@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Added [`ConstraintPrimalStart`](@ref) for [`Bridges.Constraint.GeoMeanBridge`](@ref)
    (#2348)
  - Added `verbose` keyword argument to [`Test.runtests`](@ref) (#2347)
- - Added [`Bridge.FirstBridge`](@ref) attribute (#2211)
+ - Added [`Bridges.FirstBridge`](@ref) attribute (#2211)
 
 ## Fixed
 
