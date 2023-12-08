@@ -256,7 +256,7 @@ end
 
 You can create a flame-graph via
 ```julia
-using SnoopComile
+using SnoopCompile
 tinf = @snoopi_deep example_diet(GLPK.Optimizer, true)
 using ProfileView
 ProfileView.view(flamegraph(tinf))
