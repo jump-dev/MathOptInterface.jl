@@ -43,7 +43,7 @@ function test_diagonal_element()
     # We can drop the `- 1` as `div` already discards it.
     for n in 1:100
         @test div(isqrt(1 + 8n), 2) ==
-              MOIU.side_dimension_for_vectorized_dimension(vec_dim)
+              MOIU.side_dimension_for_vectorized_dimension(n)
     end
     return
 end
