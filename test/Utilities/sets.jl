@@ -42,7 +42,8 @@ function test_diagonal_element()
     # The integer `√(1 + 8n)` is odd and `√(1 + 8n) - 1` is even.
     # We can drop the `- 1` as `div` already discards it.
     for n in 1:100
-        @test div(isqrt(1 + 8n), 2) == MOIU.side_dimension_for_vectorized_dimension(vec_dim)
+        @test div(isqrt(1 + 8n), 2) ==
+              MOIU.side_dimension_for_vectorized_dimension(vec_dim)
     end
     return
 end
