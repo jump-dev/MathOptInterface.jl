@@ -35,6 +35,16 @@ function test_diagonal_element()
         vec_dim = MOI.dimension(set)
         @test MOIU.side_dimension_for_vectorized_dimension(vec_dim) == side_dim
     end
+    # There is an alternative way to compute it so let's check that
+    # they match.
+    # We have `d*(d+1)/2 = n` so
+    # `d² + d - 2n = 0` hence `d = (-1 ± √(1 + 8n)) / 2`
+    # The integer `√(1 + 8n)` is odd and `√(1 + 8n) - 1` is even.
+    # We can drop the `- 1` as `div` already discards it.
+    for n in 1:100
+        @test div(isqrt(1 + 8n), 2) ==
+              MOIU.side_dimension_for_vectorized_dimension(n)
+    end
     return
 end
 
