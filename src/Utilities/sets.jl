@@ -128,19 +128,17 @@ function is_diagonal_vectorized_index(index::Base.Integer)
     return isqrt(perfect_square)^2 == perfect_square
 end
 
+# We have `d*(d+1)/2 = n` so `2n = d^2 + d` hence
+# `d^2 ≤ 2n < d^2 + 2d + 1 = (d + 1)^2`
+# this means that `d` is the largest natural number `d`
+# such that `d^2 ≤ 2n` hence `d = isqrt(2n)`.
 """
     side_dimension_for_vectorized_dimension(n::Integer)
 
 Return the dimension `d` such that
 `MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(d))` is `n`.
 """
-function side_dimension_for_vectorized_dimension(n::Base.Integer)
-    # We have `d*(d+1)/2 = n` so
-    # `d² + d - 2n = 0` hence `d = (-1 ± √(1 + 8n)) / 2`
-    # The integer `√(1 + 8n)` is odd and `√(1 + 8n) - 1` is even.
-    # We can drop the `- 1` as `div` already discards it.
-    return div(isqrt(1 + 8n), 2)
-end
+side_dimension_for_vectorized_dimension(n::Base.Integer) = isqrt(2n)
 
 """
     trimap(row::Integer, column::Integer)
