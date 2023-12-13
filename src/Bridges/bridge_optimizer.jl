@@ -502,12 +502,6 @@ function MOI.is_valid(
     b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
-    @show ci
-    @show is_bridged(b, ci)
-    @show is_variable_bridged(b, ci)
-    if S isa MOI.AbstractVectorSet
-        @show _all_VectorOfVariables_bridged(b, S)
-    end
     if is_bridged(b, ci)
         if is_variable_bridged(b, ci)
             vi = MOI.VariableIndex(ci.value)
@@ -1743,7 +1737,11 @@ end
 
 _register_negated(::AbstractBridgeOptimizer, ::Type, ::Type) = nothing
 
-function _register_negated(b::AbstractBridgeOptimizer, ::Type{MOI.VectorOfVariables}, ::Type{S}) where {S}
+function _register_negated(
+    b::AbstractBridgeOptimizer,
+    ::Type{MOI.VectorOfVariables},
+    ::Type{S},
+) where {S}
     Constraint.register_negated(
         Constraint.bridges(b)::Constraint.Map,
         S,

@@ -196,7 +196,11 @@ were created with `add_key_for_bridge`.
 function keys_of_type(map::Map, C::Type{MOI.ConstraintIndex{F,S}}) where {F,S}
     return Base.Iterators.Filter(
         ci -> haskey(map, ci),
-        MOI.Utilities.lazy_map(C, i -> _index(map, i, F, S), eachindex(map.bridges)),
+        MOI.Utilities.lazy_map(
+            C,
+            i -> _index(map, i, F, S),
+            eachindex(map.bridges),
+        ),
     )
 end
 
