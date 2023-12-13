@@ -62,7 +62,15 @@ end
 function MOI.supports(
     ::StandardSDPAModel{T},
     ::MOI.ObjectiveFunction{
-        <:Union{MOI.VariableIndex,MOI.ScalarQuadraticFunction{T}},
+        <:Union{
+            MOI.VariableIndex,
+            MOI.ScalarQuadraticFunction{T},
+            MOI.ScalarNonlinearFunction,
+            MOI.VectorOfVariables,
+            MOI.VectorAffineFunction{T},
+            MOI.VectorQuadraticFunction{T},
+            MOI.VectorNonlinearFunction,
+        },
     },
 ) where {T}
     return false
