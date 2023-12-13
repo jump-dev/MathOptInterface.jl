@@ -21,6 +21,7 @@ struct Map <: AbstractDict{MOI.ConstraintIndex,AbstractBridge}
     # For `VariableIndex` constraints: (variable, set type) -> bridge
     single_variable_constraints::OrderedDict{Tuple{Int64,Type},AbstractBridge}
     needs_final_touch::OrderedDict{Type,OrderedSet}
+    negated::OrderedDict{Type,Bool}
 
     function Map()
         return new(
@@ -28,6 +29,7 @@ struct Map <: AbstractDict{MOI.ConstraintIndex,AbstractBridge}
             Tuple{Type,Type}[],
             OrderedDict{Tuple{Int64,Type},AbstractBridge}(),
             OrderedDict{Type,OrderedSet}(),
+            OrderedDict{Type,Bool}(),
         )
     end
 end
@@ -51,6 +53,7 @@ function Base.empty!(map::Map)
     empty!(map.constraint_types)
     empty!(map.single_variable_constraints)
     empty!(map.needs_final_touch)
+    empty!(map.negated) # This allows adding bridges that change `negated`
     return map
 end
 
@@ -61,7 +64,7 @@ end
 
 _index(ci::MOI.ConstraintIndex) = ci.value
 
-_index(ci::MOI.ConstraintIndex{MOI.VectorOfVariables}) = -ci.value
+_index(ci::MOI.ConstraintIndex{MOI.VectorOfVariables}) = abs(ci.value)
 
 function Base.haskey(map::Map, ci::MOI.ConstraintIndex{F,S}) where {F,S}
     return 1 <= _index(ci) <= length(map.bridges) &&
@@ -123,10 +126,22 @@ function _iterate_sv(
     return ci => bridge, (2, elem_state[2])
 end
 
-_index(index, F, S) = MOI.ConstraintIndex{F,S}(index)
+function register_negated(map::Map, S::Type, negated)
+    if haskey(map.negated, S)
+        # It should be the case since if `add_bridge` or `remove_bridge`
+        # is called, we check that it does not change negation so an `assert`
+        # is enough here.
+        @assert map.negated[S] == negated
+    else
+        map.negated[S] = negated
+    end
+    return
+end
 
-function _index(index, F::Type{MOI.VectorOfVariables}, S)
-    return MOI.ConstraintIndex{F,S}(-index)
+_index(::Map, index, F, S) = MOI.ConstraintIndex{F,S}(index)
+
+function _index(map::Map, index, F::Type{MOI.VectorOfVariables}, S)
+    return MOI.ConstraintIndex{F,S}(map.negated[S] ? -index : index)
 end
 
 function _iterate(map::Map, state = 1)
@@ -137,7 +152,7 @@ function _iterate(map::Map, state = 1)
         return _iterate_sv(map)
     end
     F, S = map.constraint_types[state]
-    return _index(state, F, S) => map.bridges[state], (1, state + 1)
+    return _index(map, state, F, S) => map.bridges[state], (1, state + 1)
 end
 
 Base.iterate(map::Map) = _iterate(map)
@@ -158,7 +173,7 @@ end
 Return the number of keys of type `C` in `map`.
 """
 function number_of_type(map::Map, ::Type{MOI.ConstraintIndex{F,S}}) where {F,S}
-    return count(i -> haskey(map, _index(i, F, S)), eachindex(map.bridges))
+    return count(i -> haskey(map, _index(map, i, F, S)), eachindex(map.bridges))
 end
 
 function number_of_type(
@@ -181,7 +196,7 @@ were created with `add_key_for_bridge`.
 function keys_of_type(map::Map, C::Type{MOI.ConstraintIndex{F,S}}) where {F,S}
     return Base.Iterators.Filter(
         ci -> haskey(map, ci),
-        MOI.Utilities.lazy_map(C, i -> _index(i, F, S), eachindex(map.bridges)),
+        MOI.Utilities.lazy_map(C, i -> _index(map, i, F, S), eachindex(map.bridges)),
     )
 end
 
@@ -289,7 +304,7 @@ function add_key_for_bridge(
     _register_for_final_touch(map, bridge)
     push!(map.bridges, bridge)
     push!(map.constraint_types, (F, S))
-    return _index(length(map.bridges), F, S)
+    return _index(map, length(map.bridges), F, S)
 end
 
 function add_key_for_bridge(

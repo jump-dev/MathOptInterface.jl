@@ -88,7 +88,7 @@ bridged if it is a constraint of `b` but not a constraint of `b.model`.
 """
 function is_bridged(
     b::AbstractBridgeOptimizer,
-    ci::MOI.ConstraintIndex{F,S},
+    ::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     return is_bridged(b, F, S)
 end
@@ -126,11 +126,19 @@ function is_bridged(
     )
 end
 
+function _all_VectorOfVariables_bridged(
+    b::AbstractBridgeOptimizer,
+    ::Type{S},
+) where {S<:MOI.AbstractVectorSet}
+    F = MOI.VectorOfVariables
+    return is_bridged(b, S) && is_bridged(b, F, S)
+end
+
 function is_bridged(
-    ::AbstractBridgeOptimizer,
+    b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{MOI.VectorOfVariables,S},
 ) where {S}
-    return ci.value < 0
+    return _all_VectorOfVariables_bridged(b, S) || ci.value < 0
 end
 
 """
@@ -190,12 +198,25 @@ is_variable_bridged(::AbstractBridgeOptimizer, ::MOI.ConstraintIndex) = false
 
 function is_variable_bridged(
     b::AbstractBridgeOptimizer,
-    ci::MOI.ConstraintIndex{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
+    ci::MOI.ConstraintIndex{MOI.VariableIndex},
 )
     # It can be a constraint corresponding to bridged constrained variables so
     # we `check` with `haskey(Constraint.bridges(b), ci)` whether this is the
     # case.
     return ci.value < 0 && !haskey(Constraint.bridges(b), ci)
+end
+
+function is_variable_bridged(
+    b::AbstractBridgeOptimizer,
+    ci::MOI.ConstraintIndex{MOI.VectorOfVariables,S},
+) where {S}
+    # If `!is_bridged(b, S)` or `!is_variable_bridged(b, S)` then
+    # `add_constrained_variable[s]` does not use variable bridges so
+    # we return `false`.
+    # Otherwise, we know that if constraint bridges create `VectorOfVariables`
+    # constraints, the indices won't be negated so if the sign of `ci.value`
+    # is negative, we know it was created by a variable bridge.
+    return is_bridged(b, S) && is_variable_bridged(b, S) && ci.value < 0
 end
 
 """
@@ -481,6 +502,12 @@ function MOI.is_valid(
     b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
+    @show ci
+    @show is_bridged(b, ci)
+    @show is_variable_bridged(b, ci)
+    if S isa MOI.AbstractVectorSet
+        @show _all_VectorOfVariables_bridged(b, S)
+    end
     if is_bridged(b, ci)
         if is_variable_bridged(b, ci)
             vi = MOI.VariableIndex(ci.value)
@@ -1714,8 +1741,20 @@ function MOI.supports_constraint(
     end
 end
 
+_register_negated(::AbstractBridgeOptimizer, ::Type, ::Type) = nothing
+
+function _register_negated(b::AbstractBridgeOptimizer, ::Type{MOI.VectorOfVariables}, ::Type{S}) where {S}
+    Constraint.register_negated(
+        Constraint.bridges(b)::Constraint.Map,
+        S,
+        !_all_VectorOfVariables_bridged(b, S),
+    )
+    return
+end
+
 function add_bridged_constraint(b, BridgeType, f, s)
     bridge = Constraint.bridge_constraint(BridgeType, recursive_model(b), f, s)
+    _register_negated(b, typeof(f), typeof(s))
     ci = Constraint.add_key_for_bridge(
         Constraint.bridges(b)::Constraint.Map,
         bridge,
