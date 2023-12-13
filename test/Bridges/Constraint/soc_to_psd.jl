@@ -146,15 +146,13 @@ function test_RSOCtoPSD()
         bridged_mock,
         ci,
         2,
-        ((
-            MOI.VectorAffineFunction{Float64},
-            MOI.PositiveSemidefiniteConeTriangle,
-            0,
-        ), (
-            MOI.VectorAffineFunction{Float64},
-            MOI.Nonnegatives,
-            0,
-        ),
+        (
+            (
+                MOI.VectorAffineFunction{Float64},
+                MOI.PositiveSemidefiniteConeTriangle,
+                0,
+            ),
+            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0),
         ),
     )
     return
@@ -169,7 +167,10 @@ function test_rsoc_to_psd_dimension_2()
         MOI.VectorOfVariables(x),
         MOI.RotatedSecondOrderCone(2),
     )
-    @test MOI.get(inner, MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}()) == 1
+    @test MOI.get(
+        inner,
+        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}(),
+    ) == 1
     return
 end
 

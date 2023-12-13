@@ -200,7 +200,10 @@ end
 function MOI.Bridges.added_constraint_types(
     ::Type{<:RSOCtoPSDBridge{T,F,G}},
 ) where {T,F,G}
-    return Tuple{Type,Type}[(F, MOI.PositiveSemidefiniteConeTriangle), (G, MOI.Nonnegatives)]
+    return Tuple{Type,Type}[
+        (F, MOI.PositiveSemidefiniteConeTriangle),
+        (G, MOI.Nonnegatives),
+    ]
 end
 
 function MOI.supports(
@@ -208,8 +211,11 @@ function MOI.supports(
     attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
     ::Type{<:RSOCtoPSDBridge{T,F,G}},
 ) where {T,F,G}
-    return MOI.supports(model, attr, MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle}) ||
-        MOI.supports(model, attr, MOI.ConstraintIndex{G,MOI.Nonnegatives})
+    return MOI.supports(
+        model,
+        attr,
+        MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle},
+    ) || MOI.supports(model, attr, MOI.ConstraintIndex{G,MOI.Nonnegatives})
 end
 
 function MOI.Bridges.map_set(
@@ -240,7 +246,7 @@ end
 
 function _rsoc_to_psd_too_small_message(n)
     return "Unable to bridge RotatedSecondOrderCone to PSD because the " *
-        "dimension is too small: got $n, expected >= 2."
+           "dimension is too small: got $n, expected >= 2."
 end
 
 function MOI.Bridges.map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where {T}

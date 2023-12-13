@@ -60,7 +60,9 @@ function MOI.supports_constraint(
     return true
 end
 
-function MOI.Bridges.added_constrained_variable_types(::Type{<:MultiSetMapBridge})
+function MOI.Bridges.added_constrained_variable_types(
+    ::Type{<:MultiSetMapBridge},
+)
     return Tuple{Type}[]
 end
 
@@ -68,27 +70,29 @@ end
 
 _get(::MOI.ConstraintIndex, ::MOI.NumberOfConstraints) = 0
 _get(::MOI.ConstraintIndex{F,S}, ::MOI.NumberOfConstraints{F,S}) where {F,S} = 1
-function _get(::MOI.ConstraintIndex, ::MOI.ListOfConstraintIndices{F,S}) where {F,S}
+function _get(
+    ::MOI.ConstraintIndex,
+    ::MOI.ListOfConstraintIndices{F,S},
+) where {F,S}
     return MOI.ConstraintIndex{F,S}[]
 end
-function _get(ci::MOI.ConstraintIndex{F,S}, ::MOI.ListOfConstraintIndices{F,S}) where {F,S}
+function _get(
+    ci::MOI.ConstraintIndex{F,S},
+    ::MOI.ListOfConstraintIndices{F,S},
+) where {F,S}
     return [ci]
 end
 
 function MOI.get(
     bridge::MultiSetMapBridge,
-    attr::MOI.NumberOfConstraints
+    attr::MOI.NumberOfConstraints,
 )::Int64
     return _get(bridge.constraint, attr)
 end
 
-function MOI.get(
-    bridge::MultiSetMapBridge,
-    attr::MOI.ListOfConstraintIndices,
-)
+function MOI.get(bridge::MultiSetMapBridge, attr::MOI.ListOfConstraintIndices)
     return _get(bridge.constraint, attr)
 end
-
 
 # References
 
@@ -241,7 +245,6 @@ function MOI.modify(
     MOI.modify(model, bridge.constraint, new_change)
     return
 end
-
 
 """
     abstract type SetMapBridge{T,S2,S1,F,G} <: MultiSetMapBridge{T,S1,G} end
