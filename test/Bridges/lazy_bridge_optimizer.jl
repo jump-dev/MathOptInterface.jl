@@ -104,7 +104,15 @@ end
 function MOI.supports(
     ::StandardLPModel{T},
     ::MOI.ObjectiveFunction{
-        <:Union{MOI.VariableIndex,MOI.ScalarQuadraticFunction{T}},
+        <:Union{
+            MOI.VariableIndex,
+            MOI.ScalarQuadraticFunction{T},
+            MOI.ScalarNonlinearFunction,
+            MOI.VectorOfVariables,
+            MOI.VectorAffineFunction{T},
+            MOI.VectorQuadraticFunction{T},
+            MOI.VectorNonlinearFunction,
+        },
     },
 ) where {T}
     return false
@@ -315,8 +323,9 @@ function test_MOI_runtests_StandardSDPAModel()
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     MOI.Test.runtests(
         bridged,
-        MOI.Test.Config(exclude = Any[MOI.optimize!]),
-        include = ["ConstraintName", "VariableName"],
+        MOI.Test.Config(
+            exclude = Any[MOI.optimize!, MOI.SolverName, MOI.SolverVersion],
+        ),
     )
     return
 end
@@ -326,8 +335,9 @@ function test_MOI_runtests_GeometricSDPAModel()
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     MOI.Test.runtests(
         bridged,
-        MOI.Test.Config(exclude = Any[MOI.optimize!]),
-        include = ["ConstraintName", "VariableName"],
+        MOI.Test.Config(
+            exclude = Any[MOI.optimize!, MOI.SolverName, MOI.SolverVersion],
+        ),
     )
     return
 end
