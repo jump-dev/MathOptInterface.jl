@@ -280,13 +280,29 @@ Return a new constraint index `ci` and store the mapping `ci => bridge`.
 """
 function add_key_for_bridge end
 
+_ensure_available(::Map, ::Type, ::Type, ::Function) = nothing
+function _ensure_available(
+    map::Map,
+    F::Type{MOI.VectorOfVariables},
+    ::Type{S},
+    is_available::Function,
+) where {S}
+    while !is_available(MOI.ConstraintIndex{F,S}(length(map.bridges) + 1))
+        push!(map.bridges, nothing)
+        push!(map.constraint_types, (F, S))
+    end
+    return
+end
+
 function add_key_for_bridge(
     map::Map,
     bridge::AbstractBridge,
     ::F,
     ::S,
+    is_available::Function,
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
     _register_for_final_touch(map, bridge)
+    _ensure_available(map, F, S, is_available)
     push!(map.bridges, bridge)
     push!(map.constraint_types, (F, S))
     return _index(length(map.bridges), F, S)

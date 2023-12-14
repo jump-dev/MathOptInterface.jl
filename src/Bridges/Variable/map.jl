@@ -36,6 +36,10 @@ mutable struct Map <: AbstractDict{MOI.VariableIndex,AbstractBridge}
     current_context::Int64
     # Context of constraint bridged by constraint bridges
     constraint_context::Dict{MOI.ConstraintIndex,Int64}
+    # `(ci::ConstraintIndex{MOI.VectorOfVariables}).value` ->
+    # the first variable index
+    # and `0` if it is the index of a constraint bridge
+    vector_of_variables_map::Vector{Int64}
 end
 
 function Map()
@@ -48,6 +52,7 @@ function Map()
         Int64[],
         0,
         Dict{MOI.ConstraintIndex,Int64}(),
+        Int64[],
     )
 end
 
@@ -76,6 +81,7 @@ function Base.empty!(map::Map)
     empty!(map.parent_index)
     map.current_context = 0
     empty!(map.constraint_context)
+    empty!(map.vector_of_variables_map)
     return map
 end
 
@@ -350,6 +356,7 @@ function add_keys_for_bridge(
     map::Map,
     bridge_fun::Function,
     set::MOI.AbstractVectorSet,
+    is_available::Function,
 )
     if iszero(MOI.dimension(set))
         return MOI.VariableIndex[],
@@ -386,9 +393,13 @@ function add_keys_for_bridge(
             end
         end
     end
-    index = first(variables).value
-    return variables,
-    MOI.ConstraintIndex{MOI.VectorOfVariables,typeof(set)}(index)
+    F = MOI.VectorOfVariables
+    S = typeof(set)
+    while !is_available(MOI.ConstraintIndex{F,S}(-length(map.vector_of_variables_map) - 1))
+        push!(map.vector_of_variables_map, 0)
+    end
+    push!(map.vector_of_variables_map, first(variables).value)
+    return variables, MOI.ConstraintIndex{F,S}(-length(map.vector_of_variables_map))
 end
 
 """
@@ -408,12 +419,13 @@ Return `MOI.VectorOfVariables(vis)` where `vis` is the vector of bridged
 variables corresponding to `ci`.
 """
 function function_for(map::Map, ci::MOI.ConstraintIndex{MOI.VectorOfVariables})
+    index = map.vector_of_variables_map[ci]
     variables = MOI.VariableIndex[]
-    for i in ci.value:-1:-length(map.bridges)
+    for i in index:-1:-length(map.bridges)
         vi = MOI.VariableIndex(i)
         if map.index_in_vector[-vi.value] == -1
             continue
-        elseif bridge_index(map, vi) == -ci.value
+        elseif bridge_index(map, vi) == -index
             push!(variables, vi)
         else
             break
