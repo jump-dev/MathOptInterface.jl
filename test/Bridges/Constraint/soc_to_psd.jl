@@ -146,28 +146,31 @@ function test_RSOCtoPSD()
         bridged_mock,
         ci,
         2,
-        ((
-            MOI.VectorAffineFunction{Float64},
-            MOI.PositiveSemidefiniteConeTriangle,
-            0,
-        ),),
+        (
+            (
+                MOI.VectorAffineFunction{Float64},
+                MOI.PositiveSemidefiniteConeTriangle,
+                0,
+            ),
+            (MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, 0),
+        ),
     )
     return
 end
 
-# TODO(odow): we should fix this so it does not error.
 function test_rsoc_to_psd_dimension_2()
     inner = MOI.Utilities.Model{Float64}()
     model = MOI.Bridges.Constraint.RSOCtoPSD{Float64}(inner)
     x = MOI.add_variables(model, 2)
-    @test_throws(
-        ErrorException,
-        MOI.add_constraint(
-            model,
-            MOI.VectorOfVariables(x),
-            MOI.RotatedSecondOrderCone(2),
-        ),
+    MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables(x),
+        MOI.RotatedSecondOrderCone(2),
     )
+    @test MOI.get(
+        inner,
+        MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}(),
+    ) == 1
     return
 end
 
@@ -192,6 +195,17 @@ function test_runtests()
         """
         variables: t, u, x
         [t, x, 2u] in PositiveSemidefiniteConeTriangle(2)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.RSOCtoPSDBridge,
+        """
+        variables: t, u
+        [t, u] in RotatedSecondOrderCone(2)
+        """,
+        """
+        variables: t, u
+        [t, u] in Nonnegatives(2)
         """,
     )
     return

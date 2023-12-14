@@ -177,7 +177,10 @@ struct RSOCtoPSDBridge{T,F,G} <: SetMapBridge{
     F,
     G,
 }
-    constraint::MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle}
+    constraint::Union{
+        MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle},
+        MOI.ConstraintIndex{G,MOI.Nonnegatives},
+    }
 end
 
 const RSOCtoPSD{T,OT<:MOI.ModelLike} =
@@ -194,11 +197,37 @@ function concrete_bridge_type(
     return RSOCtoPSDBridge{T,F,G}
 end
 
+function MOI.Bridges.added_constraint_types(
+    ::Type{<:RSOCtoPSDBridge{T,F,G}},
+) where {T,F,G}
+    return Tuple{Type,Type}[
+        (F, MOI.PositiveSemidefiniteConeTriangle),
+        (G, MOI.Nonnegatives),
+    ]
+end
+
+function MOI.supports(
+    model::MOI.ModelLike,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    ::Type{<:RSOCtoPSDBridge{T,F,G}},
+) where {T,F,G}
+    return MOI.supports(
+        model,
+        attr,
+        MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle},
+    ) || MOI.supports(model, attr, MOI.ConstraintIndex{G,MOI.Nonnegatives})
+end
+
 function MOI.Bridges.map_set(
     ::Type{<:RSOCtoPSDBridge},
     set::MOI.RotatedSecondOrderCone,
 )
-    return MOI.PositiveSemidefiniteConeTriangle(MOI.dimension(set) - 1)
+    d = MOI.dimension(set)
+    if d == 2
+        return MOI.Nonnegatives(2)
+    else
+        return MOI.PositiveSemidefiniteConeTriangle(d - 1)
+    end
 end
 
 function MOI.Bridges.inverse_map_set(
@@ -208,13 +237,22 @@ function MOI.Bridges.inverse_map_set(
     return MOI.RotatedSecondOrderCone(MOI.side_dimension(set) + 1)
 end
 
+function MOI.Bridges.inverse_map_set(
+    ::Type{<:RSOCtoPSDBridge},
+    ::MOI.Nonnegatives,
+)
+    return MOI.RotatedSecondOrderCone(2)
+end
+
 function MOI.Bridges.map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where {T}
     scalars = MOI.Utilities.eachscalar(func)
-    if length(scalars) < 3
+    if length(scalars) < 2
         error(
             "Unable to bridge RotatedSecondOrderCone to PSD because the ",
-            "dimension is too small: got $(length(scalars)), expected >= 3.",
+            "dimension is too small: got $(length(scalars)), expected >= 2.",
         )
+    elseif length(scalars) == 2
+        return func
     end
     # Input is (t, u, x), and we need [t x'; x 2uI]
     h = MOI.Utilities.operate!(*, T, scalars[2], convert(T, 2))
@@ -226,6 +264,9 @@ function MOI.Bridges.inverse_map_function(
     func,
 ) where {T}
     scalars = MOI.Utilities.eachscalar(func)
+    if length(scalars) == 2
+        return func
+    end
     dim = MOI.Utilities.side_dimension_for_vectorized_dimension(length(scalars))
     t = scalars[1]
     # scalars[3] is 2u, so it needs to be divided by 2 to get u.
@@ -240,6 +281,9 @@ function MOI.Bridges.adjoint_map_function(
     func,
 ) where {T}
     scalars = MOI.Utilities.eachscalar(func)
+    if length(scalars) == 2
+        return func
+    end
     dim = MOI.Utilities.side_dimension_for_vectorized_dimension(length(scalars))
     return MOI.Utilities.operate(
         vcat,
@@ -271,6 +315,9 @@ function MOI.Bridges.inverse_adjoint_map_function(
     ::Type{<:RSOCtoPSDBridge{T}},
     func,
 ) where {T}
+    if length(func) == 2
+        return func
+    end
     t, u, x = func[1], func[2], func[3:end]
     Q = (u / (2 * (x' * x))) * (x * x')
     M = [t x'/2; x/2 Q]
