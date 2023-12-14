@@ -69,7 +69,8 @@ _index(ci::MOI.ConstraintIndex{MOI.VectorOfVariables}) = abs(ci.value)
 function Base.haskey(map::Map, ci::MOI.ConstraintIndex{F,S}) where {F,S}
     return 1 <= _index(ci) <= length(map.bridges) &&
            map.bridges[_index(ci)] !== nothing &&
-           (F, S) == map.constraint_types[_index(ci)]
+           (F, S) == map.constraint_types[_index(ci)] &&
+           _matching_sign(map, ci)
 end
 
 Base.getindex(map::Map, ci::MOI.ConstraintIndex) = map.bridges[_index(ci)]
@@ -138,6 +139,18 @@ function register_negated(map::Map, S::Type, negated)
     return
 end
 
+function _matching_sign(map::Map, ci::MOI.ConstraintIndex{MOI.VectorOfVariables,S}) where S
+    return map.negated[S] == (ci.value < 0)
+end
+
+_matching_sign(::Map, ::MOI.ConstraintIndex) = true
+
+_missing_registered_negated(::Map, ::Type, ::Type) = false
+
+function _missing_registered_negated(map::Map, ::Type{MOI.VectorOfVariables}, ::Type{S}) where {S}
+    return !haskey(map.negated, S)
+end
+
 _index(::Map, index, F, S) = MOI.ConstraintIndex{F,S}(index)
 
 function _index(map::Map, index, F::Type{MOI.VectorOfVariables}, S)
@@ -173,7 +186,11 @@ end
 Return the number of keys of type `C` in `map`.
 """
 function number_of_type(map::Map, ::Type{MOI.ConstraintIndex{F,S}}) where {F,S}
-    return count(i -> haskey(map, _index(map, i, F, S)), eachindex(map.bridges))
+    if _missing_registered_negated(map, F, S)
+        return 0
+    else
+        return count(i -> haskey(map, _index(map, i, F, S)), eachindex(map.bridges))
+    end
 end
 
 function number_of_type(
@@ -194,14 +211,18 @@ Return a list of all the keys of type `C` in `map` in order order in which they
 were created with `add_key_for_bridge`.
 """
 function keys_of_type(map::Map, C::Type{MOI.ConstraintIndex{F,S}}) where {F,S}
-    return Base.Iterators.Filter(
-        ci -> haskey(map, ci),
-        MOI.Utilities.lazy_map(
-            C,
-            i -> _index(map, i, F, S),
-            eachindex(map.bridges),
-        ),
-    )
+    if _missing_registered_negated(map, F, S)
+        return MOI.ConstraintIndex{F,S}[]
+    else
+        return Base.Iterators.Filter(
+            ci -> haskey(map, ci),
+            MOI.Utilities.lazy_map(
+                C,
+                i -> _index(map, i, F, S),
+                eachindex(map.bridges),
+            ),
+        )
+    end
 end
 
 function keys_of_type(
