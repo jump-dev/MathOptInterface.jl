@@ -299,7 +299,7 @@ function MOI.get(
     # We need canonical, because the downstream bridges may have added
     # additional terms that mean it can't be directly converted to G.
     f = MOI.get(model, MOI.ConstraintFunction(), b.constraint)
-    return convert(G, MOI.Utilities.canonical(f))
+    return MOI.Utilities.convert_approx(G, MOI.Utilities.canonical(f))
 end
 
 """

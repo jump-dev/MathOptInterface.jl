@@ -361,6 +361,18 @@ function test_first_bridge()
     return
 end
 
+function test_approx_convert(T = Float64)
+    inner = MOI.Utilities.Model{T}()
+    # `SOCtoRSOC` will rotate the function so there will be small
+    # rounding errors when getting the `ConstraintFunction`
+    # and we test that it's ignored
+    soc = MOI.Bridges.Constraint.SOCR{T}(inner)
+    model = MOI.Bridges.Constraint.VectorFunctionize{T}(soc)
+    config = MOI.Test.Config(T)
+    MOI.Test.test_basic_VectorOfVariables_SecondOrderCone(model, config)
+    return
+end
+
 end  # module
 
 TestConstraintFunctionize.runtests()
