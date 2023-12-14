@@ -244,11 +244,6 @@ function MOI.Bridges.inverse_map_set(
     return MOI.RotatedSecondOrderCone(2)
 end
 
-function _rsoc_to_psd_too_small_message(n)
-    return "Unable to bridge RotatedSecondOrderCone to PSD because the " *
-           "dimension is too small: got $n, expected >= 2."
-end
-
 function MOI.Bridges.map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where {T}
     scalars = MOI.Utilities.eachscalar(func)
     if length(scalars) < 2

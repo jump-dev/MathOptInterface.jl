@@ -8,11 +8,13 @@
     abstract type MultiSetMapBridge{T,S1,G} <: AbstractBridge end
 
 Same as `SetMapBridge` but the output constraint type does not only depend on
-the input constraint type.  When subtyping `MultiSetMapBridge`,
-`added_constraint_types` and `supports` should additionally be implemented by
-the bridge.  For instance, if a bridge `BridgeType` may create either a
-constraint of type `F2`-in-`S2` or `F3`-in-`S3`, these methods may be
-implemented as follows:
+the input constraint type.
+
+When subtyping `MultiSetMapBridge`, `added_constraint_types` and `supports`
+should additionally be implemented by the bridge.
+
+For example, if a bridge `BridgeType` may create either a constraint of type
+`F2`-in-`S2` or `F3`-in-`S3`, these methods should be implemented as follows:
 ```julia
 function MOI.Bridges.added_constraint_types(
     ::Type{<:BridgeType{T,F2,F3}},
@@ -26,7 +28,7 @@ function MOI.supports(
     ::Type{<:BridgeType{T,F2,F3}},
 ) where {T,F2,F3}
     return MOI.supports(model, attr, MOI.ConstraintIndex{F2,S2}) ||
-        MOI.supports(model, attr, MOI.ConstraintIndex{F3,S3})
+           MOI.supports(model, attr, MOI.ConstraintIndex{F3,S3})
 end
 ```
 """
@@ -68,30 +70,21 @@ end
 
 # Attributes, Bridge acting as a model
 
-_get(::MOI.ConstraintIndex, ::MOI.NumberOfConstraints) = 0
-_get(::MOI.ConstraintIndex{F,S}, ::MOI.NumberOfConstraints{F,S}) where {F,S} = 1
-function _get(
-    ::MOI.ConstraintIndex,
-    ::MOI.ListOfConstraintIndices{F,S},
-) where {F,S}
-    return MOI.ConstraintIndex{F,S}[]
-end
-function _get(
-    ci::MOI.ConstraintIndex{F,S},
-    ::MOI.ListOfConstraintIndices{F,S},
-) where {F,S}
-    return [ci]
+function MOI.get(
+    bridge::MultiSetMapBridge,
+    ::MOI.NumberOfConstraints{F,S},
+)::Int64 where {F,S}
+    return bridge.constraint isa MOI.ConstraintIndex{F,S} ? 1 : 0
 end
 
 function MOI.get(
     bridge::MultiSetMapBridge,
-    attr::MOI.NumberOfConstraints,
-)::Int64
-    return _get(bridge.constraint, attr)
-end
-
-function MOI.get(bridge::MultiSetMapBridge, attr::MOI.ListOfConstraintIndices)
-    return _get(bridge.constraint, attr)
+    ::MOI.ListOfConstraintIndices{F,S},
+) where {F,S}
+    if bridge.constraint isa MOI.ConstraintIndex{F,S}
+        return MOI.ConstraintIndex{F,S}[bridge.constraint]
+    end
+    return MOI.ConstraintIndex{F,S}[]
 end
 
 # References
