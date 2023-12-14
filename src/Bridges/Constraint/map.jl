@@ -21,6 +21,8 @@ struct Map <: AbstractDict{MOI.ConstraintIndex,AbstractBridge}
     # For `VariableIndex` constraints: (variable, set type) -> bridge
     single_variable_constraints::OrderedDict{Tuple{Int64,Type},AbstractBridge}
     needs_final_touch::OrderedDict{Type,OrderedSet}
+    # `S<:AbstractVectorSet` -> `Bool` indicating whether
+    # the value of a `MOI.ConstraintIndex{MOI.VectorOfVariables,S}` is negated
     negated::OrderedDict{Type,Bool}
 
     function Map()

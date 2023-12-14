@@ -126,6 +126,14 @@ function is_bridged(
     )
 end
 
+"""
+    function _all_VectorOfVariables_bridged(
+        b::AbstractBridgeOptimizer,
+        ::Type{S},
+    ) where {S<:MOI.AbstractVectorSet}
+
+Return whether both constrained variables in `S` and constraints
+"""
 function _all_VectorOfVariables_bridged(
     b::AbstractBridgeOptimizer,
     ::Type{S},
@@ -1745,7 +1753,7 @@ function _register_negated(
     Constraint.register_negated(
         Constraint.bridges(b)::Constraint.Map,
         S,
-        !_all_VectorOfVariables_bridged(b, S),
+        !is_bridged(b, S),
     )
     return
 end
