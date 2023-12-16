@@ -274,6 +274,7 @@ end
         bridge::AbstractBridge,
         func::MOI.AbstractFunction,
         set::MOI.AbstractSet,
+        is_available::Function,
     )
 
 Return a new constraint index `ci` and store the mapping `ci => bridge`.
@@ -313,6 +314,7 @@ function add_key_for_bridge(
     bridge::AbstractBridge,
     func::MOI.VariableIndex,
     ::S,
+    ::Function,
 ) where {S<:MOI.AbstractScalarSet}
     _register_for_final_touch(map, bridge)
     map.single_variable_constraints[(func.value, S)] = bridge
