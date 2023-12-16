@@ -40,6 +40,9 @@ mutable struct Map <: AbstractDict{MOI.VariableIndex,AbstractBridge}
     # the first variable index
     # and `0` if it is the index of a constraint bridge
     vector_of_variables_map::Vector{Int64}
+    # `(ci::ConstraintIndex{MOI.VectorOfVariables}).value` ->
+    # the dimension of the set
+    vector_of_variables_length::Vector{Int64}
 end
 
 function Map()
@@ -52,6 +55,7 @@ function Map()
         Int64[],
         0,
         Dict{MOI.ConstraintIndex,Int64}(),
+        Int64[],
         Int64[],
     )
 end
@@ -82,6 +86,7 @@ function Base.empty!(map::Map)
     map.current_context = 0
     empty!(map.constraint_context)
     empty!(map.vector_of_variables_map)
+    empty!(map.vector_of_variables_length)
     return map
 end
 
@@ -114,7 +119,7 @@ function Base.delete!(map::Map, vi::MOI.VariableIndex)
         delete!(map, [vi])
     else
         # Delete variable in vector and resize vector
-        map.info[bridge_index(map, vi)] += 1
+        map.vector_of_variables_length[-map.info[bridge_index(map, vi)]] -= 1
         for i in (-vi.value):length(map.index_in_vector)
             if map.index_in_vector[i] == -1
                 continue
@@ -213,10 +218,17 @@ function number_with_set(map::Map, S::Type{<:MOI.AbstractSet})
     return count(isequal(S), map.sets)
 end
 
+_constraint
+
 function constraint(map::Map, vi::MOI.VariableIndex)
     S = constrained_set(map, vi)::Type{<:MOI.AbstractSet}
     F = MOI.Utilities.variable_function_type(S)
-    return MOI.ConstraintIndex{F,S}(-bridge_index(map, vi))
+    index = bridge_index(map, vi)
+    constraint_index = map.info[index]
+    if iszero(constraint_index)
+        constraint_index = -index
+    end
+    return MOI.ConstraintIndex{F,S}(constraint_index)
 end
 
 """
@@ -226,8 +238,8 @@ Return the list of constraints corresponding to bridged variables in `S`.
 """
 function constraints_with_set(map::Map, S::Type{<:MOI.AbstractSet})
     F = MOI.Utilities.variable_function_type(S)
-    return [
-        MOI.ConstraintIndex{F,S}(-i) for
+    return MOI.ConstraintIndex{F,S}[
+        constraint(map, MOI.VariableIndex(-i)) for
         i in eachindex(map.sets) if map.sets[i] == S
     ]
 end
@@ -278,7 +290,7 @@ If `vi` was bridged in a scalar set, it returns 0. Otherwise, it
 returns the dimension of the set.
 """
 function length_of_vector_of_variables(map::Map, vi::MOI.VariableIndex)
-    return -map.info[bridge_index(map, vi)]
+    return map.vector_of_variables_length[-map.info[bridge_index(map, vi)]]
 end
 
 """
@@ -364,7 +376,17 @@ function add_keys_for_bridge(
     end
     push!(map.parent_index, map.current_context)
     bridge_index = Int64(length(map.parent_index))
-    push!(map.info, -MOI.dimension(set))
+    F = MOI.VectorOfVariables
+    S = typeof(set)
+    while !is_available(
+        MOI.ConstraintIndex{F,S}(-length(map.vector_of_variables_map) - 1),
+    )
+        push!(map.vector_of_variables_map, 0)
+        push!(map.vector_of_variables_length, 0)
+    end
+    push!(map.vector_of_variables_map, -bridge_index)
+    push!(map.vector_of_variables_length, MOI.dimension(set))
+    push!(map.info, -length(map.vector_of_variables_length))
     push!(map.index_in_vector, 1)
     push!(map.bridges, nothing)
     push!(map.sets, typeof(set))
@@ -393,14 +415,6 @@ function add_keys_for_bridge(
             end
         end
     end
-    F = MOI.VectorOfVariables
-    S = typeof(set)
-    while !is_available(
-        MOI.ConstraintIndex{F,S}(-length(map.vector_of_variables_map) - 1),
-    )
-        push!(map.vector_of_variables_map, 0)
-    end
-    push!(map.vector_of_variables_map, first(variables).value)
     return variables,
     MOI.ConstraintIndex{F,S}(-length(map.vector_of_variables_map))
 end
@@ -422,7 +436,7 @@ Return `MOI.VectorOfVariables(vis)` where `vis` is the vector of bridged
 variables corresponding to `ci`.
 """
 function function_for(map::Map, ci::MOI.ConstraintIndex{MOI.VectorOfVariables})
-    index = map.vector_of_variables_map[ci]
+    index = map.vector_of_variables_map[-ci.value]
     variables = MOI.VariableIndex[]
     for i in index:-1:-length(map.bridges)
         vi = MOI.VariableIndex(i)

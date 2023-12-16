@@ -82,8 +82,14 @@ function test_map()
     set2 = MOI.Zeros(4)
     F2 = MOI.VectorOfVariables
     S2 = typeof(set2)
-    v2, c2 = MOI.Bridges.Variable.add_keys_for_bridge(map, () -> b2, set2)
-    @test v2[1].value == c2.value == -2
+    v2, c2 = MOI.Bridges.Variable.add_keys_for_bridge(
+        map,
+        () -> b2,
+        set2,
+        ci -> true,
+    )
+    @test v2[1].value == -2
+    @test c2.value == -1
     @test MOI.Bridges.Variable.has_keys(map, v2)
     @test !MOI.Bridges.Variable.has_keys(map, v2[4:-1:1])
     for i in 1:4
@@ -117,7 +123,12 @@ function test_map()
 
     b3 = VariableDummyBridge(3)
     set3 = MOI.Zeros(0)
-    v3, c3 = MOI.Bridges.Variable.add_keys_for_bridge(map, () -> b3, set3)
+    v3, c3 = MOI.Bridges.Variable.add_keys_for_bridge(
+        map,
+        () -> b3,
+        set3,
+        ci -> true,
+    )
 
     @test isempty(v3)
     @test c3.value == 0
