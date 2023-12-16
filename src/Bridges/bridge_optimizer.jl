@@ -1721,7 +1721,7 @@ function add_bridged_constraint(b, BridgeType, f, s)
         bridge,
         f,
         s,
-        Base.Fix1(haskey, Variable.bridges(b)),
+        !Base.Fix1(haskey, Variable.bridges(b)),
     )
     Variable.register_context(Variable.bridges(b), ci)
     return ci
@@ -2001,7 +2001,7 @@ function MOI.add_constrained_variables(
             Variable.bridges(b)::Variable.Map,
             () -> Variable.bridge_constrained_variable(BridgeType, b, set),
             set,
-            Base.Fix1(haskey, Constraint.bridges(b)),
+            !Base.Fix1(haskey, Constraint.bridges(b)),
         )
     else
         variables = MOI.add_variables(b, MOI.dimension(set))

@@ -395,11 +395,14 @@ function add_keys_for_bridge(
     end
     F = MOI.VectorOfVariables
     S = typeof(set)
-    while !is_available(MOI.ConstraintIndex{F,S}(-length(map.vector_of_variables_map) - 1))
+    while !is_available(
+        MOI.ConstraintIndex{F,S}(-length(map.vector_of_variables_map) - 1),
+    )
         push!(map.vector_of_variables_map, 0)
     end
     push!(map.vector_of_variables_map, first(variables).value)
-    return variables, MOI.ConstraintIndex{F,S}(-length(map.vector_of_variables_map))
+    return variables,
+    MOI.ConstraintIndex{F,S}(-length(map.vector_of_variables_map))
 end
 
 """
