@@ -288,7 +288,12 @@ If `vi` was bridged in a scalar set, it returns 0. Otherwise, it
 returns the dimension of the set.
 """
 function length_of_vector_of_variables(map::Map, vi::MOI.VariableIndex)
-    return map.vector_of_variables_length[-map.info[bridge_index(map, vi)]]
+    info = map.info[bridge_index(map, vi)]
+    if iszero(info)
+        return 0
+    else
+        return map.vector_of_variables_length[-info]
+    end
 end
 
 """

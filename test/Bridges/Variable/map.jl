@@ -59,6 +59,7 @@ function test_map()
     )
     @test v1.value == c1.value == -1
     @test MOI.Bridges.Variable.constraint(map, v1) == c1
+    @test MOI.Bridges.Variable.length_of_vector_of_variables(map, v1) == 0
     @test haskey(map, v1)
     @test map[v1] == b1
     @test MOI.Bridges.Variable.constrained_set(map, v1) == S1
