@@ -53,6 +53,7 @@ function test_map()
     F1 = MOI.VariableIndex
     S1 = typeof(set1)
     v1, c1 = MOI.Bridges.Variable.add_key_for_bridge(map, () -> b1, set1)
+    MOI.is_valid(map, c1)
     cannot_unbridge_err = ErrorException(
         "Cannot unbridge function because some variables are bridged by variable" *
         " bridges that do not support reverse mapping, e.g., `ZerosBridge`.",
@@ -89,6 +90,7 @@ function test_map()
         set2,
         ci -> true,
     )
+    MOI.is_valid(map, c2)
     @test v2[1].value == -2
     @test c2.value == -1
     @test MOI.Bridges.Variable.has_keys(map, v2)

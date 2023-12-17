@@ -1721,7 +1721,7 @@ function add_bridged_constraint(b, BridgeType, f, s)
         bridge,
         f,
         s,
-        !Base.Fix1(haskey, Variable.bridges(b)),
+        !Base.Fix1(MOI.is_valid, Variable.bridges(b)),
     )
     Variable.register_context(Variable.bridges(b), ci)
     return ci

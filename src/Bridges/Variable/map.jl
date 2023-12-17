@@ -229,6 +229,20 @@ function constraint(map::Map, vi::MOI.VariableIndex)
     return MOI.ConstraintIndex{F,S}(constraint_index)
 end
 
+function MOI.is_valid(map::Map, ci::MOI.ConstraintIndex{MOI.VectorOfVariables,S}) where {S}
+    if !(-ci.value in eachindex(map.vector_of_variables_map))
+        return false
+    end
+    index = -map.vector_of_variables_map[-ci.value]
+    return index in eachindex(map.bridges) && !isnothing(map.bridges[index]) && map.sets[index] === S
+end
+
+function MOI.is_valid(map::Map, ci::MOI.ConstraintIndex{MOI.VariableIndex,S}) where {S}
+    index = -ci.value
+    return index in eachindex(map.bridges) && !isnothing(map.bridges[index]) && map.sets[index] === S
+end
+
+
 """
     constraints_with_set(map::Map, S::Type{<:MOI.AbstractSet})
 
