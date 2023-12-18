@@ -288,7 +288,7 @@ function _ensure_available(
     ::Type{S},
     is_available::Function,
 ) where {S}
-    while !is_available(MOI.ConstraintIndex{F,S}(length(map.bridges) + 1))
+    while !is_available(MOI.ConstraintIndex{F,S}(-length(map.bridges) - 1))
         push!(map.bridges, nothing)
         push!(map.constraint_types, (F, S))
     end
