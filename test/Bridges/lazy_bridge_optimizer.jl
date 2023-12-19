@@ -22,7 +22,7 @@ function runtests()
 end
 
 include("utilities.jl")
-include("sdpa_models")
+include("sdpa_models.jl")
 
 function test_add_remove_has_bridges()
     T = Int
