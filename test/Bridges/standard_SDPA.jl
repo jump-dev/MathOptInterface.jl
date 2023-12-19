@@ -4,7 +4,7 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-# This file implements a model similar to the SDPA format. It gives a good
+# This file implements models similar to the SDPA format. It gives a good
 # example because it does not support a lot of functions, hence the need for
 # a lot of bridges.
 
@@ -61,6 +61,44 @@ end
 
 function MOI.supports(
     ::StandardSDPAModel{T},
+    ::MOI.ObjectiveFunction{
+        <:Union{MOI.VariableIndex,MOI.ScalarQuadraticFunction{T}},
+    },
+) where {T}
+    return false
+end
+
+MOI.Utilities.@model(
+    GeometricSDPAModel,
+    (),
+    (),
+    (MOI.Zeros, MOI.Nonnegatives, MOI.PositiveSemidefiniteConeTriangle),
+    (),
+    (),
+    (),
+    (),
+    (MOI.VectorAffineFunction,)
+)
+
+function MOI.supports_constraint(
+    ::GeometricSDPAModel{T},
+    ::Type{MOI.VariableIndex},
+    ::Type{
+        <:Union{
+            MOI.GreaterThan{T},
+            MOI.LessThan{T},
+            MOI.EqualTo{T},
+            MOI.Interval{T},
+            MOI.ZeroOne,
+            MOI.Integer,
+        },
+    },
+) where {T}
+    return false
+end
+
+function MOI.supports(
+    ::GeometricSDPAModel{T},
     ::MOI.ObjectiveFunction{
         <:Union{MOI.VariableIndex,MOI.ScalarQuadraticFunction{T}},
     },
