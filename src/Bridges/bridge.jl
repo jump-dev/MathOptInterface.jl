@@ -340,7 +340,7 @@ MOI.is_set_by_optimize(::FirstBridge) = true
 MOI.get(::MOI.ModelLike, ::FirstBridge, b::MOI.Bridges.AbstractBridge) = b
 
 function MOI.Utilities.map_indices(
-    ::Function,
+    ::Any,
     ::FirstBridge,
     b::MOI.Bridges.AbstractBridge,
 )

@@ -221,18 +221,10 @@ constraint functions, attribute values and submittable values. If you define a
 new attribute whose values `x::X` contain variable or constraint indices, you
 must also implement this function.
 """
-map_indices(f::Function, ::MOI.AnyAttribute, x) = map_indices(f, x)
-
-function map_indices(
-    variable_map::AbstractDict{T,T},
-    attr::MOI.AnyAttribute,
-    x::X,
-)::X where {T<:MOI.Index,X}
-    return map_indices(Base.Fix1(getindex, variable_map), attr, x)
-end
+map_indices(f, ::MOI.AnyAttribute, x) = map_indices(f, x)
 
 # RawOptimizerAttribute values are passed through un-changed.
-map_indices(::Function, ::MOI.RawOptimizerAttribute, x) = x
+map_indices(::Any, ::MOI.RawOptimizerAttribute, x) = x
 
 """
     map_indices(
