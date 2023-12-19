@@ -524,7 +524,11 @@ function test_SlackBridgePrimalDualStart_non_slack()
     x = MOI.add_variable(model)
     MOI.set(model, MOI.ObjectiveFunction{typeof(x)}(), x)
     # Should ignore without erroring
-    MOI.set(model, MOI.Bridges.Objective.SlackBridgePrimalDualStart(), nothing)
+    return MOI.set(
+        model,
+        MOI.Bridges.Objective.SlackBridgePrimalDualStart(),
+        nothing,
+    )
 end
 
 function test_SlackBridgePrimalDualStart()
