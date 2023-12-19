@@ -382,13 +382,18 @@ function add_key_for_bridge(
 end
 
 """
-    add_keys_for_bridge(map::Map, bridge_fun::Function,
-                        set::MOI.AbstractVectorSet)
+    function add_keys_for_bridge(
+        map::Map,
+        bridge_fun::Function,
+        set::MOI.AbstractVectorSet,
+        is_available::Function,
+    )
 
 Create vector of variable indices `variables`, stores the mapping
 `vi => bridge` for each `vi ∈ variables` and associate `variables` to
-`typeof(set)`. It returns a tuple with `variables` and the constraint index
-`MOI.ConstraintIndex{MOI.VectorOfVariables, typeof(set)}(first(variables).value)`.
+`typeof(set)`. It returns a tuple with `variables` and a constraint index
+`ci::MOI.ConstraintIndex{MOI.VectorOfVariables, typeof(set)}` such that
+`is_available(ci)`.
 """
 function add_keys_for_bridge(
     map::Map,

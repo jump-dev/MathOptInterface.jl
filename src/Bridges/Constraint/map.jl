@@ -278,6 +278,9 @@ end
     )
 
 Return a new constraint index `ci` and store the mapping `ci => bridge`.
+If `func isa MOI.VectorOfVariables` then `ci` is such that `is_available(ci)`,
+otherwise, `is_available` is ignored because there can only be a clash of
+indices between variable and constraint bridge mapping for `MOI.VectorOfVariables`.
 """
 function add_key_for_bridge end
 

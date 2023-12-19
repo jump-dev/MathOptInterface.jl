@@ -1716,6 +1716,11 @@ end
 
 function add_bridged_constraint(b, BridgeType, f, s)
     bridge = Constraint.bridge_constraint(BridgeType, recursive_model(b), f, s)
+    # `MOI.VectorOfVariables` constraint indices have negative indices
+    # to distinguish between the indices of the inner model.
+    # However, they can clash between the indices created by the variable
+    # so we use the last argument to inform the constraint bridge mapping about
+    # indices already taken by variable bridges.
     ci = Constraint.add_key_for_bridge(
         Constraint.bridges(b)::Constraint.Map,
         bridge,
@@ -1997,6 +2002,11 @@ function MOI.add_constrained_variables(
     end
     if set isa MOI.Reals || is_variable_bridged(b, typeof(set))
         BridgeType = Variable.concrete_bridge_type(b, typeof(set))
+        # `MOI.VectorOfVariables` constraint indices have negative indices
+        # to distinguish between the indices of the inner model.
+        # However, they can clash between the indices created by the variable
+        # so we use the last argument to inform the variable bridge mapping about
+        # indices already taken by constraint bridges.
         return Variable.add_keys_for_bridge(
             Variable.bridges(b)::Variable.Map,
             () -> Variable.bridge_constrained_variable(BridgeType, b, set),
