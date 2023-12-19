@@ -514,6 +514,19 @@ function test_deletion_of_variable_in_slacked_objective()
     return
 end
 
+function test_SlackBridgePrimalDualStart_non_slack()
+    inner = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    # Should ignore without erroring
+    MOI.set(inner, MOI.Bridges.Objective.SlackBridgePrimalDualStart(), nothing)
+    model = MOI.Bridges.Objective.Functionize{Float64}(inner)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(x)}(), x)
+    # Should ignore without erroring
+    MOI.set(model, MOI.Bridges.Objective.SlackBridgePrimalDualStart(), nothing)
+end
+
 function test_SlackBridgePrimalDualStart()
     inner = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
