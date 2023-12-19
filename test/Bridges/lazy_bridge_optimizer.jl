@@ -22,7 +22,7 @@ function runtests()
 end
 
 include("utilities.jl")
-include("standard_SDPA.jl")
+include("sdpa_models")
 
 function test_add_remove_has_bridges()
     T = Int
