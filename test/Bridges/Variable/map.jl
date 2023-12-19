@@ -271,6 +271,10 @@ function test_EmptyMap()
     @test iszero(MOI.Bridges.Variable.number_with_set(map, S2))
     @test isempty(MOI.Bridges.Variable.constraints_with_set(map, S1))
     @test isempty(MOI.Bridges.Variable.constraints_with_set(map, S2))
+    c1 = MOI.ConstraintIndex{MOI.VariableIndex,S1}(1)
+    @test !MOI.is_valid(map, c1)
+    c2 = MOI.ConstraintIndex{MOI.VectorOfVariables,S2}(1)
+    @test !MOI.is_valid(map, c2)
     @test sprint(show, map) == ""
     return
 end

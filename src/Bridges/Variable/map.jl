@@ -610,3 +610,5 @@ end
 register_context(::EmptyMap, ::MOI.ConstraintIndex) = nothing
 
 call_in_context(::EmptyMap, ::MOI.ConstraintIndex, f::Function) = f()
+
+MOI.is_valid(::EmptyMap, ::MOI.ConstraintIndex) = false
