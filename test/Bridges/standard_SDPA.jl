@@ -1,5 +1,13 @@
-# Model similar to SDPA format, it gives a good example because it does not
-# support a lot hence need a lot of bridges
+# Copyright (c) 2017: Miles Lubin and contributors
+# Copyright (c) 2017: Google Inc.
+#
+# Use of this source code is governed by an MIT-style license that can be found
+# in the LICENSE.md file or at https://opensource.org/licenses/MIT.
+
+# This file implements a model similar to the SDPA format. It gives a good
+# example because it does not support a lot of functions, hence the need for
+# a lot of bridges.
+
 MOI.Utilities.@model(
     StandardSDPAModel,
     (),
