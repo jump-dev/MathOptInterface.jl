@@ -22,6 +22,7 @@ function runtests()
 end
 
 include("utilities.jl")
+include("standard_SDPA.jl")
 
 function test_add_remove_has_bridges()
     T = Int
@@ -307,46 +308,6 @@ function test_MOI_runtests_LPModel()
         ],
     )
     return
-end
-
-include("standard_SDPA.jl")
-
-MOI.Utilities.@model(
-    GeometricSDPAModel,
-    (),
-    (),
-    (MOI.Zeros, MOI.Nonnegatives, MOI.PositiveSemidefiniteConeTriangle),
-    (),
-    (),
-    (),
-    (),
-    (MOI.VectorAffineFunction,)
-)
-
-function MOI.supports_constraint(
-    ::GeometricSDPAModel{T},
-    ::Type{MOI.VariableIndex},
-    ::Type{
-        <:Union{
-            MOI.GreaterThan{T},
-            MOI.LessThan{T},
-            MOI.EqualTo{T},
-            MOI.Interval{T},
-            MOI.ZeroOne,
-            MOI.Integer,
-        },
-    },
-) where {T}
-    return false
-end
-
-function MOI.supports(
-    ::GeometricSDPAModel{T},
-    ::MOI.ObjectiveFunction{
-        <:Union{MOI.VariableIndex,MOI.ScalarQuadraticFunction{T}},
-    },
-) where {T}
-    return false
 end
 
 function test_MOI_runtests_StandardSDPAModel()
