@@ -9,9 +9,22 @@
 
 include("copy/index_map.jl")
 
-_sort_priority(::Any) = 2
-_sort_priority(::MOI.UserDefinedFunction) = 0
-_sort_priority(::MOI.ObjectiveSense) = 1
+function Base.isless(
+    x::MOI.AbstractModelAttribute,
+    y::MOI.AbstractModelAttribute,
+)
+    # We need an arbitrary fallback comparison. Pick their `string`
+    # representations.
+    return isless("$x", "$y")
+end
+
+# Sort priority: ObjectiveSense before ObjectiveFunction
+Base.isless(::MOI.ObjectiveSense, ::MOI.ObjectiveFunction) = true
+Base.isless(::MOI.ObjectiveFunction, ::MOI.ObjectiveSense) = false
+
+# Sort priority: UserDefinedFunction before ObjectiveFunction
+Base.isless(::MOI.UserDefinedFunction, ::MOI.ObjectiveFunction) = true
+Base.isless(::MOI.ObjectiveFunction, ::MOI.UserDefinedFunction) = false
 
 """
     pass_attributes(
@@ -27,12 +40,7 @@ function pass_attributes(
     src::MOI.ModelLike,
     index_map::IndexMap,
 )
-    attrs = MOI.get(src, MOI.ListOfModelAttributesSet())
-    # We need to deal with the UserDefinedFunctions first, so that they are in
-    # the model before we deal with the objective function or the constraints.
-    # We also need `ObjectiveSense` to be set before `ObjectiveFunction`.
-    sort!(attrs; by = _sort_priority)
-    for attr in attrs
+    for attr in sort!(MOI.get(src, MOI.ListOfModelAttributesSet()))
         if !MOI.supports(dest, attr)
             if attr == MOI.Name()
                 continue  # Skipping names is okay.
