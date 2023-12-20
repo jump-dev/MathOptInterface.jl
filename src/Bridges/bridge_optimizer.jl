@@ -261,7 +261,8 @@ Return the `AbstractBridge` used to bridge the constraint with index `ci`.
 """
 function bridge(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
     if is_variable_bridged(b, ci)
-        return bridge(b, MOI.VariableIndex(ci.value))
+        map = Variable.bridges(b)::Variable.Map
+        return bridge(b, Variable.first_variable(map, ci))
     else
         return Constraint.bridges(b)[ci]
     end
@@ -312,7 +313,8 @@ function call_in_context(
     f::Function,
 )
     if is_variable_bridged(b, ci)
-        return call_in_context(b, MOI.VariableIndex(ci.value), f)
+        map = Variable.bridges(b)::Variable.Map
+        return call_in_context(b, Variable.first_variable(map, ci), f)
     else
         return Variable.call_in_context(
             Variable.bridges(b),
@@ -483,10 +485,8 @@ function MOI.is_valid(
 ) where {F,S}
     if is_bridged(b, ci)
         if is_variable_bridged(b, ci)
-            vi = MOI.VariableIndex(ci.value)
             v_map = Variable.bridges(b)::Variable.Map
-            return MOI.is_valid(b, vi) &&
-                   Variable.constrained_set(v_map, vi) == S
+            return MOI.is_valid(v_map, ci)
         else
             return haskey(Constraint.bridges(b), ci)
         end
