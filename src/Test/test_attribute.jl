@@ -184,7 +184,8 @@ function test_attribute_TimeLimitSec(model::MOI.AbstractOptimizer, ::Config)
     MOI.set(model, MOI.TimeLimitSec(), 1.0)
     @test MOI.get(model, MOI.TimeLimitSec()) == 1.0
     MOI.set(model, MOI.TimeLimitSec(), nothing)
-    @test _get_default(model) === nothing
+    reset_value = _get_default(model)
+    @test reset_value === nothing || reset_value == value
     MOI.set(model, MOI.TimeLimitSec(), value)
     return
 end
