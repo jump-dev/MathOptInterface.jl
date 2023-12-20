@@ -13,7 +13,8 @@ mutable struct Map <: AbstractDict{MOI.VariableIndex,AbstractBridge}
     # Bridged constrained variables
     # `i` ->  `0`: `VariableIndex(-i)` was added with `add_constrained_variable`.
     # `i` -> `-j`: `VariableIndex(-i)` was the first variable of
-    #              `add_constrained_variables` with a set of dimension `j`.
+    #              `add_constrained_variables` with a
+    #              `ConstraintIndex{MOI.VectorOfVariables}(-j)`.
     # `i` ->  `j`: `VariableIndex(-i)` was the `j`th  variable of
     #             ` add_constrained_variables`.
     info::Vector{Int64}
