@@ -417,7 +417,8 @@ function add_keys_for_bridge(
     end
     push!(map.vector_of_variables_map, -bridge_index)
     push!(map.vector_of_variables_length, MOI.dimension(set))
-    push!(map.info, -length(map.vector_of_variables_length))
+    constraint_index = -length(map.vector_of_variables_map)
+    push!(map.info, constraint_index)
     push!(map.index_in_vector, 1)
     push!(map.bridges, nothing)
     push!(map.sets, typeof(set))
@@ -446,8 +447,7 @@ function add_keys_for_bridge(
             end
         end
     end
-    return variables,
-    MOI.ConstraintIndex{F,S}(-length(map.vector_of_variables_map))
+    return variables, MOI.ConstraintIndex{F,S}(constraint_index)
 end
 
 """

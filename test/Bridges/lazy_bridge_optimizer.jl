@@ -332,7 +332,7 @@ function test_MOI_runtests_GeometricSDPAModel()
     return
 end
 
-function test_index_conflict()
+function test_index_constraint_conflict()
     optimizer = StandardSDPAModel{Float64}()
     model = MOI.Bridges.full_bridge_optimizer(optimizer, Float64)
     x, cx = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
@@ -347,6 +347,22 @@ function test_index_conflict()
     b2 = MOI.Bridges.bridge(model, b1.constraint)
     @test c != b2.slack_in_set
 end
+
+function test_index_variable_conflict()
+    optimizer = StandardSDPAModel{Float64}()
+    model = MOI.Bridges.full_bridge_optimizer(optimizer, Float64)
+    set = MOI.SecondOrderCone(3)
+    x = MOI.add_variables(model, 3)
+    c = MOI.add_constraint(model, MOI.VectorOfVariables(x), set)
+    @test MOI.is_valid(model, c)
+    y, cy = MOI.add_constrained_variables(model, set)
+    @test MOI.is_valid(model, cy)
+    @test cy != c
+    z, cz = MOI.add_constrained_variables(model, set)
+    @test MOI.is_valid(model, cz)
+    @test cz != c
+end
+
 
 function test_show_SPDA()
     model = StandardSDPAModel{Float64}()
