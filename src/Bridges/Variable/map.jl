@@ -398,7 +398,7 @@ Create vector of variable indices `variables`, stores the mapping
 function add_keys_for_bridge(
     map::Map,
     bridge_fun::Function,
-    set::MOI.AbstractVectorSet,
+    set::S,
     is_available::Function,
 ) where {S<:MOI.AbstractVectorSet}
     if iszero(MOI.dimension(set))
