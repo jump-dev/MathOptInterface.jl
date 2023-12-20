@@ -9,9 +9,44 @@
 
 include("copy/index_map.jl")
 
-_sort_priority(::Any) = 2
-_sort_priority(::MOI.UserDefinedFunction) = 0
-_sort_priority(::MOI.ObjectiveSense) = 1
+"""
+    SortedListOfModelAttributesSet()
+
+Return the vector of [`MOI.ListOfModelAttributesSet`](@ref), except that the
+elements are sorted according to [`sort_by_weight`].
+
+During [`MOI.copy_to`](@ref), we need to copy [`MOI.UserDefinedFunction`](@ref)s
+first, so that they are in the model before we deal with the objective function
+or the constraints. Similarly, we need to [`MOI.ObjectiveSense`](@ref) to be set
+before [`MOI.ObjectiveFunction`](@ref) so that bridges which depend on the sense
+can be used.
+"""
+struct SortedListOfModelAttributesSet <: MOI.AbstractModelAttribute end
+
+function MOI.get_fallback(
+    model::MOI.ModelLike,
+    ::SortedListOfModelAttributesSet,
+)
+    attrs = MOI.get(model, MOI.ListOfModelAttributesSet())
+    return sort(attrs; by = sort_by_weight)
+end
+
+"""
+    sort_by_weight(::MOI.AbstractModelAttribute) --> Float64
+
+The weights used to sort elements in [`SortedListOfModelAttributesSet`](@ref).
+
+The default weights are:
+
+ * `sort_by_weight(::MOI.UserDefinedFunction) = 0.0`
+ * `sort_by_weight(::MOI.ObjectiveSense) = 10.0`
+ * `sort_by_weight(::MOI.ObjectiveFunction) = 20.0`
+ * `sort_by_weight(::MOI.AbstractModelAttribute) = 30.0`
+"""
+sort_by_weight(::MOI.UserDefinedFunction) = 0.0
+sort_by_weight(::MOI.ObjectiveSense) = 10.0
+sort_by_weight(::MOI.ObjectiveFunction) = 20.0
+sort_by_weight(::MOI.AbstractModelAttribute) = 30.0
 
 """
     pass_attributes(
@@ -27,12 +62,7 @@ function pass_attributes(
     src::MOI.ModelLike,
     index_map::IndexMap,
 )
-    attrs = MOI.get(src, MOI.ListOfModelAttributesSet())
-    # We need to deal with the UserDefinedFunctions first, so that they are in
-    # the model before we deal with the objective function or the constraints.
-    # We also need `ObjectiveSense` to be set before `ObjectiveFunction`.
-    sort!(attrs; by = _sort_priority)
-    for attr in attrs
+    for attr in MOI.get(src, SortedListOfModelAttributesSet())
         if !MOI.supports(dest, attr)
             if attr == MOI.Name()
                 continue  # Skipping names is okay.
@@ -591,6 +621,7 @@ function MOI.get(
         MOI.ListOfConstraintTypesPresent,
         MOI.ListOfModelAttributesSet,
         MOI.ListOfVariableAttributesSet,
+        SortedListOfModelAttributesSet,
     },
 )
     return filter(model.filter, MOI.get(model.inner, attr))

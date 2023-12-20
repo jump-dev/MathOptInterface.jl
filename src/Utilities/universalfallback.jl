@@ -503,6 +503,10 @@ function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfModelAttributesSet)
     return list
 end
 
+function MOI.get(uf::UniversalFallback, attr::SortedListOfModelAttributesSet)
+    return MOI.get_fallback(uf, attr)
+end
+
 function MOI.get(
     uf::UniversalFallback,
     listattr::MOI.ListOfVariableAttributesSet,
