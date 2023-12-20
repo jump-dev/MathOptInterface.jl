@@ -408,7 +408,6 @@ function add_keys_for_bridge(
     push!(map.parent_index, map.current_context)
     bridge_index = Int64(length(map.parent_index))
     F = MOI.VectorOfVariables
-    S = typeof(set)
     while !is_available(
         MOI.ConstraintIndex{F,S}(-length(map.vector_of_variables_map) - 1),
     )
