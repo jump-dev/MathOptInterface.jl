@@ -223,7 +223,10 @@ function first_variable(::Map, ci::MOI.ConstraintIndex{MOI.VariableIndex})
     return MOI.VariableIndex(ci.value)
 end
 
-function first_variable(map::Map, ci::MOI.ConstraintIndex{MOI.VectorOfVariables})
+function first_variable(
+    map::Map,
+    ci::MOI.ConstraintIndex{MOI.VectorOfVariables},
+)
     return MOI.VariableIndex(map.vector_of_variables_map[-ci.value])
 end
 
