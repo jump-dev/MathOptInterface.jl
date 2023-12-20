@@ -363,7 +363,6 @@ function test_index_variable_conflict()
     @test cz != c
 end
 
-
 function test_show_SPDA()
     model = StandardSDPAModel{Float64}()
     model_str = sprint(MOI.Utilities.print_with_acronym, string(typeof(model)))
