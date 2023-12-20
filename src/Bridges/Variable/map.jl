@@ -219,10 +219,20 @@ function number_with_set(map::Map, S::Type{<:MOI.AbstractSet})
     return count(isequal(S), map.sets)
 end
 
+"""
+    first_variable(::Map, ci::MOI.ConstraintIndex{MOI.VariableIndex})
+
+Return the `MOI.VariableIndex` of the `MOI.ConstraintFunction` of `ci`.
+"""
 function first_variable(::Map, ci::MOI.ConstraintIndex{MOI.VariableIndex})
     return MOI.VariableIndex(ci.value)
 end
 
+"""
+    first_variable(::Map, ci::MOI.ConstraintIndex{MOI.VariableIndex})
+
+Return the first `MOI.VariableIndex` of the `MOI.ConstraintFunction` of `ci`.
+"""
 function first_variable(
     map::Map,
     ci::MOI.ConstraintIndex{MOI.VectorOfVariables},
