@@ -9,14 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v1.23.0 (November 29, 2023)
 
-## Added
+### Added
 
  - Added [`ConstraintPrimalStart`](@ref) for [`Bridges.Constraint.GeoMeanBridge`](@ref)
    (#2348)
  - Added `verbose` keyword argument to [`Test.runtests`](@ref) (#2347)
  - Added [`Bridges.FirstBridge`](@ref) attribute (#2211)
 
-## Fixed
+### Fixed
 
  - Fixed `Test.test_model_Name_VariableName_ConstraintName` (#2349)
  - Fixed errors thrown when querying an attribute is not supported, like when
