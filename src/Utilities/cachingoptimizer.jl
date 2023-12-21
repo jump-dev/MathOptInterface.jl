@@ -999,6 +999,49 @@ function MOI.get(
     end
 end
 
+function MOI.get(
+    model::CachingOptimizer,
+    attr::MOI.ConstraintDual,
+    index::MOI.ConstraintIndex{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
+)
+    _throw_if_get_attribute_not_allowed(model, attr; needs_optimizer_map = true)
+    try
+        return MOI.get(
+            model.optimizer,
+            attr,
+            model.model_to_optimizer_map[index],
+        )
+    catch err
+        # Thrown if .optimizer doesn't support attr
+        if !(err isa MOI.GetAttributeNotAllowed)
+            rethrow(err)
+        end
+        return get_fallback(model, attr, index)
+    end
+end
+
+function MOI.get(
+    model::CachingOptimizer,
+    attr::MOI.ConstraintDual,
+    indices::Vector{<:MOI.ConstraintIndex{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}}},
+)
+    _throw_if_get_attribute_not_allowed(model, attr; needs_optimizer_map = true)
+    try
+        return MOI.get(
+            model.optimizer,
+            attr,
+            [model.model_to_optimizer_map[i] for i in indices],
+        )
+    catch err
+        # Thrown if .optimizer doesn't support attr
+        if !(err isa MOI.GetAttributeNotAllowed)
+            rethrow(err)
+        end
+        return [get_fallback(model, attr, i) for i in indices]
+    end
+end
+
+
 #####
 ##### Names
 #####
