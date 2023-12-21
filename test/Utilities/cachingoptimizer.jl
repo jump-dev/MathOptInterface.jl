@@ -851,14 +851,6 @@ function MOI.get(
     return 1.2
 end
 
-#function MOI.get(
-#    ::_GetFallbackModel1310,
-#    ::MOI.ConstraintDual,
-#    ::MOI.ConstraintIndex{MOI.ScalarAffineFunction},
-#)
-#    return 1.2
-#end
-
 function test_ConstraintPrimal_fallback()
     model = MOI.Utilities.CachingOptimizer(
         MOI.Utilities.Model{Float64}(),
