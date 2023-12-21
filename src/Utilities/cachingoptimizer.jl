@@ -927,15 +927,14 @@ function MOI.get(
     end
     _throw_if_get_attribute_not_allowed(model, attr; needs_optimizer_map = true)
     if _has_fallback(attr, typeof(index))
-        return _caching_get_fallback(model, attr, index)
-    else
-        value = MOI.get(
-            model.optimizer,
-            attr,
-            model.model_to_optimizer_map[index],
-        )::MOI.attribute_value_type(attr)
-        return map_indices(model.optimizer_to_model_map, attr, value)
+        return _get_fallback(model, attr, index)
     end
+    value = MOI.get(
+        model.optimizer,
+        attr,
+        model.model_to_optimizer_map[index],
+    )::MOI.attribute_value_type(attr)
+    return map_indices(model.optimizer_to_model_map, attr, value)
 end
 
 function MOI.get(
@@ -948,15 +947,14 @@ function MOI.get(
     end
     _throw_if_get_attribute_not_allowed(model, attr; needs_optimizer_map = true)
     if _has_fallback(attr, I)
-        return _caching_get_fallback(model, attr, indices)
-    else
-        value = MOI.get(
-            model.optimizer,
-            attr,
-            map(Base.Fix1(getindex, model.model_to_optimizer_map), indices),
-        )::Vector{<:MOI.attribute_value_type(attr)}
-        return map_indices(model.optimizer_to_model_map, attr, value)
+        return _get_fallback(model, attr, indices)
     end
+    value = MOI.get(
+        model.optimizer,
+        attr,
+        map(Base.Fix1(getindex, model.model_to_optimizer_map), indices),
+    )::Vector{<:MOI.attribute_value_type(attr)}
+    return map_indices(model.optimizer_to_model_map, attr, value)
 end
 
 ###
@@ -970,6 +968,7 @@ end
 # also be computed from the `ConstraintDual` of the other constraints.
 
 _has_fallback(::MOI.ConstraintPrimal, ::Type{<:MOI.ConstraintIndex}) = true
+
 function _has_fallback(
     ::MOI.ConstraintDual,
     ::Type{<:MOI.ConstraintIndex{F}},
@@ -977,7 +976,7 @@ function _has_fallback(
     return true
 end
 
-function _caching_get_fallback(
+function _get_fallback(
     model::CachingOptimizer,
     attr::MOI.AbstractConstraintAttribute,
     index::MOI.ConstraintIndex,
@@ -997,7 +996,7 @@ function _caching_get_fallback(
     end
 end
 
-function _caching_get_fallback(
+function _get_fallback(
     model::CachingOptimizer,
     attr::MOI.AbstractConstraintAttribute,
     indices::Vector{<:MOI.ConstraintIndex},
