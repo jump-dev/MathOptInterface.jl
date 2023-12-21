@@ -372,9 +372,7 @@ function test_index_variable_conflict()
     _test_index_variable_conflict(MOI.SecondOrderCone(3))
     _test_index_variable_conflict(MOI.RotatedSecondOrderCone(3))
     _test_index_variable_conflict(MOI.RotatedSecondOrderCone(2))
-    _test_index_variable_conflict(
-        MOI.ScaledPositiveSemidefiniteConeTriangle(2),
-    )
+    _test_index_variable_conflict(MOI.ScaledPositiveSemidefiniteConeTriangle(2))
     return
 end
 
