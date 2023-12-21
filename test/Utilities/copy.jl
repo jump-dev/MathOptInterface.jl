@@ -947,7 +947,7 @@ function test_sorted_copy_to()
     MOI.set(src, attr_1, (sqrt,))
     MOI.set(src, attr_3, f)
     MOI.set(src, attr_2, MOI.MAX_SENSE)
-    @test MOI.get(src, MOI.Utilities.SortedListOfModelAttributesSet()) ==
+    @test MOI.Utilities.sorted_list_of_model_attributes(src) ==
           [attr_1, attr_2, attr_3, attr_4]
     dest = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     index_map = MOI.copy_to(dest, src)

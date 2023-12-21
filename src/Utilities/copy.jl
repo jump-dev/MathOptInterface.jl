@@ -10,10 +10,10 @@
 include("copy/index_map.jl")
 
 """
-    SortedListOfModelAttributesSet()
+    sorted_list_of_model_attributes(model::MOI.ModelLike)
 
 Return the vector of [`MOI.ListOfModelAttributesSet`](@ref), except that the
-elements are sorted according to [`sort_by_weight`].
+elements are sorted according to [`sorted_list_of_model_attributes`](@ref).
 
 During [`MOI.copy_to`](@ref), we need to copy [`MOI.UserDefinedFunction`](@ref)s
 first, so that they are in the model before we deal with the objective function
@@ -21,32 +21,27 @@ or the constraints. Similarly, we need to [`MOI.ObjectiveSense`](@ref) to be set
 before [`MOI.ObjectiveFunction`](@ref) so that bridges which depend on the sense
 can be used.
 """
-struct SortedListOfModelAttributesSet <: MOI.AbstractModelAttribute end
-
-function MOI.get_fallback(
-    model::MOI.ModelLike,
-    ::SortedListOfModelAttributesSet,
-)
+function sorted_list_of_model_attributes(model::MOI.ModelLike)
     attrs = MOI.get(model, MOI.ListOfModelAttributesSet())
-    return sort(attrs; by = sort_by_weight)
+    return sort(attrs; by = sorted_list_of_model_attributes_weight)
 end
 
 """
-    sort_by_weight(::MOI.AbstractModelAttribute) --> Float64
+    sorted_list_of_model_attributes_weight(::MOI.AbstractModelAttribute) --> Float64
 
-The weights used to sort elements in [`SortedListOfModelAttributesSet`](@ref).
+The weights used to sort elements in [`sorted_list_of_model_attributes`](@ref).
 
 The default weights are:
 
- * `sort_by_weight(::MOI.UserDefinedFunction) = 0.0`
- * `sort_by_weight(::MOI.ObjectiveSense) = 10.0`
- * `sort_by_weight(::MOI.ObjectiveFunction) = 20.0`
- * `sort_by_weight(::MOI.AbstractModelAttribute) = 30.0`
+ * `sorted_list_of_model_attributes_weight(::MOI.UserDefinedFunction) = 0.0`
+ * `sorted_list_of_model_attributes_weight(::MOI.ObjectiveSense) = 10.0`
+ * `sorted_list_of_model_attributes_weight(::MOI.ObjectiveFunction) = 20.0`
+ * `sorted_list_of_model_attributes_weight(::MOI.AbstractModelAttribute) = 30.0`
 """
-sort_by_weight(::MOI.UserDefinedFunction) = 0.0
-sort_by_weight(::MOI.ObjectiveSense) = 10.0
-sort_by_weight(::MOI.ObjectiveFunction) = 20.0
-sort_by_weight(::MOI.AbstractModelAttribute) = 30.0
+sorted_list_of_model_attributes_weight(::MOI.UserDefinedFunction) = 0.0
+sorted_list_of_model_attributes_weight(::MOI.ObjectiveSense) = 10.0
+sorted_list_of_model_attributes_weight(::MOI.ObjectiveFunction) = 20.0
+sorted_list_of_model_attributes_weight(::MOI.AbstractModelAttribute) = 30.0
 
 """
     pass_attributes(
@@ -62,7 +57,7 @@ function pass_attributes(
     src::MOI.ModelLike,
     index_map::IndexMap,
 )
-    for attr in MOI.get(src, SortedListOfModelAttributesSet())
+    for attr in sorted_list_of_model_attributes(src)
         if !MOI.supports(dest, attr)
             if attr == MOI.Name()
                 continue  # Skipping names is okay.
@@ -621,7 +616,6 @@ function MOI.get(
         MOI.ListOfConstraintTypesPresent,
         MOI.ListOfModelAttributesSet,
         MOI.ListOfVariableAttributesSet,
-        SortedListOfModelAttributesSet,
     },
 )
     return filter(model.filter, MOI.get(model.inner, attr))

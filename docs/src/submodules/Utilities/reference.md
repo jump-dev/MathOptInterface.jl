@@ -80,8 +80,8 @@ Utilities.IndexMap
 Utilities.identity_index_map
 Utilities.ModelFilter
 Utilities.loadfromstring!
-Utilities.SortedListOfModelAttributesSet
-Utilities.sort_by_weight
+Utilities.sorted_list_of_model_attributes
+Utilities.sorted_list_of_model_attributes_weight
 ```
 
 ## Penalty relaxation
