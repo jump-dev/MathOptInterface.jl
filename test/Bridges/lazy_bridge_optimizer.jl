@@ -346,6 +346,7 @@ function test_index_constraint_conflict()
     b1 = MOI.Bridges.bridge(model, c)
     b2 = MOI.Bridges.bridge(model, b1.constraint)
     @test c != b2.slack_in_set
+    return
 end
 
 function _test_index_variable_conflict(set)
@@ -363,6 +364,7 @@ function _test_index_variable_conflict(set)
     z, cz = MOI.add_constrained_variables(model, set)
     @test MOI.is_valid(model, cz)
     @test cz != c
+    return
 end
 
 function test_index_variable_conflict()
@@ -370,9 +372,10 @@ function test_index_variable_conflict()
     _test_index_variable_conflict(MOI.SecondOrderCone(3))
     _test_index_variable_conflict(MOI.RotatedSecondOrderCone(3))
     _test_index_variable_conflict(MOI.RotatedSecondOrderCone(2))
-    return _test_index_variable_conflict(
+    _test_index_variable_conflict(
         MOI.ScaledPositiveSemidefiniteConeTriangle(2),
     )
+    return
 end
 
 function test_show_SPDA()
