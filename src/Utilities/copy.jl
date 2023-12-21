@@ -9,9 +9,10 @@
 
 include("copy/index_map.jl")
 
-_sort_priority(::Any) = 2
-_sort_priority(::MOI.UserDefinedFunction) = 0
-_sort_priority(::MOI.ObjectiveSense) = 1
+_sort_priority(::MOI.UserDefinedFunction) = 0.0
+_sort_priority(::MOI.ObjectiveSense) = 10.0
+_sort_priority(::MOI.ObjectiveFunction) = 20.0
+_sort_priority(::MOI.AbstractModelAttribute) = 30.0
 
 """
     pass_attributes(
