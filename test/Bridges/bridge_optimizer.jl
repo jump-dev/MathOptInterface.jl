@@ -1129,6 +1129,35 @@ function test_first_bridge()
     return
 end
 
+function test_variable_bridge_constraint_attribute()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    model = MOI.Bridges.Variable.NonposToNonneg{Float64}(mock)
+    x, cx = MOI.add_constrained_variables(model, MOI.Nonpositives(2))
+    y, cy = MOI.add_constrained_variables(model, MOI.Nonpositives(2))
+    @test MOI.Bridges.bridge(model, x[1]) === MOI.Bridges.bridge(model, cx)
+    @test MOI.Bridges.bridge(model, x[2]) === MOI.Bridges.bridge(model, cx)
+    @test MOI.Bridges.bridge(model, y[1]) === MOI.Bridges.bridge(model, cy)
+    @test MOI.Bridges.bridge(model, y[2]) === MOI.Bridges.bridge(model, cy)
+    var = [x; y]
+    val = float.(collect(1:4))
+    mock_var = MOI.get(mock, MOI.ListOfVariableIndices())
+    MOI.set(mock, MOI.VariablePrimal(), mock_var, -val)
+    @test MOI.get(model, MOI.VariablePrimal(), var) == val
+    @test MOI.get(model, MOI.ConstraintPrimal(), cx) == val[1:2]
+    @test MOI.get(model, MOI.ConstraintPrimal(), cy) == val[3:4]
+    for v in var
+        @test MOI.is_valid(model, v)
+    end
+    @test MOI.is_valid(model, cx)
+    @test MOI.is_valid(model, cy)
+    MOI.delete(model, x)
+    @test !MOI.is_valid(model, cx)
+    @test MOI.is_valid(model, cy)
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()

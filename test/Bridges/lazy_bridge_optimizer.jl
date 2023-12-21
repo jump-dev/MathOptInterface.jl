@@ -332,6 +332,50 @@ function test_MOI_runtests_GeometricSDPAModel()
     return
 end
 
+function test_index_constraint_conflict()
+    optimizer = StandardSDPAModel{Float64}()
+    model = MOI.Bridges.full_bridge_optimizer(optimizer, Float64)
+    x, cx = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+    @test MOI.is_valid(model, x[1])
+    @test MOI.is_valid(model, cx)
+    y, cy = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+    @test MOI.is_valid(model, y[1])
+    @test MOI.is_valid(model, cy)
+    c = MOI.add_constraint(model, MOI.VectorOfVariables(y), MOI.Nonpositives(1))
+    MOI.is_valid(model, c)
+    b1 = MOI.Bridges.bridge(model, c)
+    b2 = MOI.Bridges.bridge(model, b1.constraint)
+    @test c != b2.slack_in_set
+    return
+end
+
+function _test_index_variable_conflict(set)
+    optimizer = StandardSDPAModel{Float64}()
+    model = MOI.Bridges.full_bridge_optimizer(optimizer, Float64)
+    x = MOI.add_variables(model, MOI.dimension(set))
+    c = MOI.add_constraint(model, MOI.VectorOfVariables(x), set)
+    @test MOI.is_valid(model, c)
+    w, cw = MOI.add_constrained_variables(model, set)
+    @test MOI.is_valid(model, cw)
+    @test cw != c
+    y, cy = MOI.add_constrained_variables(model, set)
+    @test MOI.is_valid(model, cy)
+    @test cy != c
+    z, cz = MOI.add_constrained_variables(model, set)
+    @test MOI.is_valid(model, cz)
+    @test cz != c
+    return
+end
+
+function test_index_variable_conflict()
+    _test_index_variable_conflict(MOI.Nonpositives(3))
+    _test_index_variable_conflict(MOI.SecondOrderCone(3))
+    _test_index_variable_conflict(MOI.RotatedSecondOrderCone(3))
+    _test_index_variable_conflict(MOI.RotatedSecondOrderCone(2))
+    _test_index_variable_conflict(MOI.ScaledPositiveSemidefiniteConeTriangle(2))
+    return
+end
+
 function test_show_SPDA()
     model = StandardSDPAModel{Float64}()
     model_str = sprint(MOI.Utilities.print_with_acronym, string(typeof(model)))

@@ -261,7 +261,8 @@ Return the `AbstractBridge` used to bridge the constraint with index `ci`.
 """
 function bridge(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
     if is_variable_bridged(b, ci)
-        return bridge(b, MOI.VariableIndex(ci.value))
+        map = Variable.bridges(b)::Variable.Map
+        return bridge(b, Variable.first_variable(map, ci))
     else
         return Constraint.bridges(b)[ci]
     end
@@ -312,7 +313,8 @@ function call_in_context(
     f::Function,
 )
     if is_variable_bridged(b, ci)
-        return call_in_context(b, MOI.VariableIndex(ci.value), f)
+        map = Variable.bridges(b)::Variable.Map
+        return call_in_context(b, Variable.first_variable(map, ci), f)
     else
         return Variable.call_in_context(
             Variable.bridges(b),
@@ -483,10 +485,8 @@ function MOI.is_valid(
 ) where {F,S}
     if is_bridged(b, ci)
         if is_variable_bridged(b, ci)
-            vi = MOI.VariableIndex(ci.value)
             v_map = Variable.bridges(b)::Variable.Map
-            return MOI.is_valid(b, vi) &&
-                   Variable.constrained_set(v_map, vi) == S
+            return MOI.is_valid(v_map, ci)
         else
             return haskey(Constraint.bridges(b), ci)
         end
@@ -1716,11 +1716,17 @@ end
 
 function add_bridged_constraint(b, BridgeType, f, s)
     bridge = Constraint.bridge_constraint(BridgeType, recursive_model(b), f, s)
+    # `MOI.VectorOfVariables` constraint indices have negative indices
+    # to distinguish between the indices of the inner model.
+    # However, they can clash between the indices created by the variable
+    # so we use the last argument to inform the constraint bridge mapping about
+    # indices already taken by variable bridges.
     ci = Constraint.add_key_for_bridge(
         Constraint.bridges(b)::Constraint.Map,
         bridge,
         f,
         s,
+        !Base.Fix1(MOI.is_valid, Variable.bridges(b)),
     )
     Variable.register_context(Variable.bridges(b), ci)
     return ci
@@ -1996,10 +2002,16 @@ function MOI.add_constrained_variables(
     end
     if set isa MOI.Reals || is_variable_bridged(b, typeof(set))
         BridgeType = Variable.concrete_bridge_type(b, typeof(set))
+        # `MOI.VectorOfVariables` constraint indices have negative indices
+        # to distinguish between the indices of the inner model.
+        # However, they can clash between the indices created by the variable
+        # so we use the last argument to inform the variable bridge mapping about
+        # indices already taken by constraint bridges.
         return Variable.add_keys_for_bridge(
             Variable.bridges(b)::Variable.Map,
             () -> Variable.bridge_constrained_variable(BridgeType, b, set),
             set,
+            !Base.Fix1(haskey, Constraint.bridges(b)),
         )
     else
         variables = MOI.add_variables(b, MOI.dimension(set))

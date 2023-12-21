@@ -53,12 +53,14 @@ function test_map()
     F1 = MOI.VariableIndex
     S1 = typeof(set1)
     v1, c1 = MOI.Bridges.Variable.add_key_for_bridge(map, () -> b1, set1)
+    MOI.is_valid(map, c1)
     cannot_unbridge_err = ErrorException(
         "Cannot unbridge function because some variables are bridged by variable" *
         " bridges that do not support reverse mapping, e.g., `ZerosBridge`.",
     )
     @test v1.value == c1.value == -1
     @test MOI.Bridges.Variable.constraint(map, v1) == c1
+    @test MOI.Bridges.Variable.length_of_vector_of_variables(map, v1) == 0
     @test haskey(map, v1)
     @test map[v1] == b1
     @test MOI.Bridges.Variable.constrained_set(map, v1) == S1
@@ -82,8 +84,15 @@ function test_map()
     set2 = MOI.Zeros(4)
     F2 = MOI.VectorOfVariables
     S2 = typeof(set2)
-    v2, c2 = MOI.Bridges.Variable.add_keys_for_bridge(map, () -> b2, set2)
-    @test v2[1].value == c2.value == -2
+    v2, c2 = MOI.Bridges.Variable.add_keys_for_bridge(
+        map,
+        () -> b2,
+        set2,
+        ci -> true,
+    )
+    MOI.is_valid(map, c2)
+    @test v2[1].value == -2
+    @test c2.value == -1
     @test MOI.Bridges.Variable.has_keys(map, v2)
     @test !MOI.Bridges.Variable.has_keys(map, v2[4:-1:1])
     for i in 1:4
@@ -117,7 +126,12 @@ function test_map()
 
     b3 = VariableDummyBridge(3)
     set3 = MOI.Zeros(0)
-    v3, c3 = MOI.Bridges.Variable.add_keys_for_bridge(map, () -> b3, set3)
+    v3, c3 = MOI.Bridges.Variable.add_keys_for_bridge(
+        map,
+        () -> b3,
+        set3,
+        ci -> true,
+    )
 
     @test isempty(v3)
     @test c3.value == 0
@@ -257,6 +271,10 @@ function test_EmptyMap()
     @test iszero(MOI.Bridges.Variable.number_with_set(map, S2))
     @test isempty(MOI.Bridges.Variable.constraints_with_set(map, S1))
     @test isempty(MOI.Bridges.Variable.constraints_with_set(map, S2))
+    c1 = MOI.ConstraintIndex{MOI.VariableIndex,S1}(1)
+    @test !MOI.is_valid(map, c1)
+    c2 = MOI.ConstraintIndex{MOI.VectorOfVariables,S2}(1)
+    @test !MOI.is_valid(map, c2)
     @test sprint(show, map) == ""
     return
 end
