@@ -348,19 +348,31 @@ function test_index_constraint_conflict()
     @test c != b2.slack_in_set
 end
 
-function test_index_variable_conflict()
+function _test_index_variable_conflict(set)
     optimizer = StandardSDPAModel{Float64}()
     model = MOI.Bridges.full_bridge_optimizer(optimizer, Float64)
-    set = MOI.SecondOrderCone(3)
-    x = MOI.add_variables(model, 3)
+    x = MOI.add_variables(model, MOI.dimension(set))
     c = MOI.add_constraint(model, MOI.VectorOfVariables(x), set)
     @test MOI.is_valid(model, c)
+    w, cw = MOI.add_constrained_variables(model, set)
+    @test MOI.is_valid(model, cw)
+    @test cw != c
     y, cy = MOI.add_constrained_variables(model, set)
     @test MOI.is_valid(model, cy)
     @test cy != c
     z, cz = MOI.add_constrained_variables(model, set)
     @test MOI.is_valid(model, cz)
     @test cz != c
+end
+
+function test_index_variable_conflict()
+    _test_index_variable_conflict(MOI.Nonpositives(3))
+    _test_index_variable_conflict(MOI.SecondOrderCone(3))
+    _test_index_variable_conflict(MOI.RotatedSecondOrderCone(3))
+    _test_index_variable_conflict(MOI.RotatedSecondOrderCone(2))
+    return _test_index_variable_conflict(
+        MOI.ScaledPositiveSemidefiniteConeTriangle(2),
+    )
 end
 
 function test_show_SPDA()
