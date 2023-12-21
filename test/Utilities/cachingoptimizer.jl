@@ -851,14 +851,6 @@ function MOI.get(
     return 1.2
 end
 
-function MOI.get(
-    ::_GetFallbackModel1310,
-    ::MOI.ConstraintDual,
-    ::MOI.ConstraintIndex,
-)
-    return 1.2
-end
-
 function test_ConstraintPrimal_fallback()
     model = MOI.Utilities.CachingOptimizer(
         MOI.Utilities.Model{Float64}(),
@@ -876,6 +868,43 @@ function test_ConstraintPrimal_fallback()
     @test_throws(
         MOI.ResultIndexBoundsError(MOI.ConstraintPrimal(2), 1),
         MOI.get(model, MOI.ConstraintPrimal(2), [c]),
+    )
+    return
+end
+
+function test_ConstraintDual_variable_fallback()
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.Model{Float64}(),
+        _GetFallbackModel1310(),
+    )
+    x = MOI.add_variable(model)
+    cx = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.ConstraintDual(), cx) == 1.0
+    @test_throws(
+        MOI.ResultIndexBoundsError(MOI.ConstraintDual(2), 1),
+        MOI.get(model, MOI.ConstraintDual(2), cx),
+    )
+    @test_throws(
+        MOI.ResultIndexBoundsError(MOI.ConstraintDual(2), 1),
+        MOI.get(model, MOI.ConstraintDual(2), [cx]),
+    )
+    return
+end
+
+function test_ConstraintDual_nonvariable_nofallback()
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.Model{Float64}(),
+        _GetFallbackModel1310(),
+    )
+    x = MOI.add_variable(model)
+    cx = MOI.add_constraint(model, x + 1.0, MOI.GreaterThan(1.0))
+    MOI.optimize!(model)
+    @test_throws(
+        MOI.GetAttributeNotAllowed,
+        MOI.get(model, MOI.ConstraintDual(), cx),
     )
     return
 end
@@ -926,7 +955,7 @@ function test_DualObjectiveValue_fallback()
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{typeof(x)}(), x)
     MOI.optimize!(model)
-    @test MOI.get(model, MOI.DualObjectiveValue()) == 1.2
+    @test MOI.get(model, MOI.DualObjectiveValue()) == 1.0
     @test_throws(
         MOI.ResultIndexBoundsError(MOI.DualObjectiveValue(2), 1),
         MOI.get(model, MOI.DualObjectiveValue(2)),

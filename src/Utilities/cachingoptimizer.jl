@@ -915,6 +915,8 @@ function MOI.get(
     return MOI.get(model.optimizer, attr)
 end
 
+_has_fallback(::MOI.AnyAttribute, ::Type{<:MOI.Index}) = false
+
 function MOI.get(
     model::CachingOptimizer,
     attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
@@ -924,6 +926,9 @@ function MOI.get(
         return MOI.get(model.model_cache, attr, index)
     end
     _throw_if_get_attribute_not_allowed(model, attr; needs_optimizer_map = true)
+    if _has_fallback(attr, typeof(index))
+        return _get_fallback(model, attr, index)
+    end
     value = MOI.get(
         model.optimizer,
         attr,
@@ -935,12 +940,15 @@ end
 function MOI.get(
     model::CachingOptimizer,
     attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
-    indices::Vector{<:MOI.Index},
-)
+    indices::Vector{I},
+) where {I<:MOI.Index}
     if !MOI.is_set_by_optimize(attr)
         return MOI.get(model.model_cache, attr, indices)
     end
     _throw_if_get_attribute_not_allowed(model, attr; needs_optimizer_map = true)
+    if _has_fallback(attr, I)
+        return _get_fallback(model, attr, indices)
+    end
     value = MOI.get(
         model.optimizer,
         attr,
@@ -950,19 +958,29 @@ function MOI.get(
 end
 
 ###
-### MOI.ConstraintPrimal
+### MOI.ConstraintPrimal and MOI.ConstraintDual
 ###
 
-# ConstraintPrimal is slightly unique for CachingOptimizer because if the solver
+# `ConstraintPrimal` is slightly unique for CachingOptimizer because if the solver
 # doesn't support the attribute directly, we can use the fallback to query the
 # function from the cache and the variable value from the optimizer.
+# The `ConstraintDual` of a `VariableIndex` or `VectorOfVariables` can
+# also be computed from the `ConstraintDual` of the other constraints.
 
-function MOI.get(
+_has_fallback(::MOI.ConstraintPrimal, ::Type{<:MOI.ConstraintIndex}) = true
+
+function _has_fallback(
+    ::MOI.ConstraintDual,
+    ::Type{<:MOI.ConstraintIndex{F}},
+) where {F<:Union{MOI.VariableIndex,MOI.VectorOfVariables}}
+    return true
+end
+
+function _get_fallback(
     model::CachingOptimizer,
-    attr::MOI.ConstraintPrimal,
+    attr::MOI.AbstractConstraintAttribute,
     index::MOI.ConstraintIndex,
 )
-    _throw_if_get_attribute_not_allowed(model, attr; needs_optimizer_map = true)
     try
         return MOI.get(
             model.optimizer,
@@ -978,12 +996,11 @@ function MOI.get(
     end
 end
 
-function MOI.get(
+function _get_fallback(
     model::CachingOptimizer,
-    attr::MOI.ConstraintPrimal,
+    attr::MOI.AbstractConstraintAttribute,
     indices::Vector{<:MOI.ConstraintIndex},
 )
-    _throw_if_get_attribute_not_allowed(model, attr; needs_optimizer_map = true)
     try
         return MOI.get(
             model.optimizer,
