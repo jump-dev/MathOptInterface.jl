@@ -935,6 +935,30 @@ function test_sorted_variable_sets_by_cost_2()
     return
 end
 
+function test_sorted_copy_to()
+    src = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(src)
+    f = MOI.ScalarNonlinearFunction(:sqr, Any[x])
+    attr_1 = MOI.UserDefinedFunction(:sqr, 1)
+    attr_2 = MOI.ObjectiveSense()
+    attr_3 = MOI.ObjectiveFunction{typeof(f)}()
+    attr_4 = MOI.Name()
+    MOI.set(src, attr_4, "abc")
+    MOI.set(src, attr_1, (sqrt,))
+    MOI.set(src, attr_3, f)
+    MOI.set(src, attr_2, MOI.MAX_SENSE)
+    @test MOI.get(src, MOI.Utilities.SortedListOfModelAttributesSet()) ==
+          [attr_1, attr_2, attr_3, attr_4]
+    dest = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    index_map = MOI.copy_to(dest, src)
+    @test MOI.get(dest, attr_1) == (sqrt,)
+    @test MOI.get(dest, attr_2) == MOI.MAX_SENSE
+    g = MOI.ScalarNonlinearFunction(:sqr, Any[index_map[x]])
+    @test ≈(g, MOI.get(dest, attr_3))
+    @test MOI.get(dest, attr_4) == "abc"
+    return
+end
+
 end  # module
 
 TestCopy.runtests()
