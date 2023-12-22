@@ -1745,8 +1745,11 @@ function _throw_if_bound_already_set(b, x, ::S2, ::Type{S1}) where {S1,S2}
     return
 end
 
-function _bound_error_type(::Type{S}, ::Type{S}) where {S<:MOI.LessThan}
-    return MOI.UpperBoundAlreadySet{S,S}
+function _bound_error_type(
+    ::Type{S1},
+    ::Type{S2},
+) where {S1<:MOI.LessThan,S2<:MOI.LessThan}
+    return MOI.UpperBoundAlreadySet{S1,S2}
 end
 
 function _bound_error_type(::Type{S1}, ::Type{S2}) where {S1<:MOI.LessThan,S2}
