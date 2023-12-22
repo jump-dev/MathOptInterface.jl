@@ -311,8 +311,6 @@ function test_MOI_runtests_LPModel()
             "test_model_default_DualStatus",
             "test_model_default_PrimalStatus",
             "test_model_default_TerminationStatus",
-            "test_model_LowerBoundAlreadySet",
-            "test_model_UpperBoundAlreadySet",
         ],
     )
     return
@@ -328,8 +326,6 @@ function test_MOI_runtests_StandardSDPAModel()
         );
         exclude = String[
             "test_model_ListOfVariablesWithAttributeSet",
-            "test_model_LowerBoundAlreadySet",
-            "test_model_UpperBoundAlreadySet",
             "test_model_ScalarFunctionConstantNotZero",
             "test_model_delete",
         ],
@@ -344,11 +340,7 @@ function test_MOI_runtests_GeometricSDPAModel()
         model,
         MOI.Test.Config(
             exclude = Any[MOI.optimize!, MOI.SolverName, MOI.SolverVersion],
-        );
-        exclude = String[
-            "test_model_LowerBoundAlreadySet",
-            "test_model_UpperBoundAlreadySet",
-        ],
+        ),
     )
     return
 end

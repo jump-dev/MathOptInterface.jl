@@ -524,8 +524,6 @@ function test_MOI_Test()
         MOI.Test.Config(exclude = Any[MOI.optimize!]),
         include = ["test_linear_", "test_model_"],
         exclude = [
-            "test_model_LowerBoundAlreadySet",
-            "test_model_UpperBoundAlreadySet",
             "test_model_ListOfConstraintAttributesSet",
         ],
     )
