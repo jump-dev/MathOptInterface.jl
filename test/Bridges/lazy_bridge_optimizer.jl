@@ -318,8 +318,6 @@ function test_MOI_runtests_StandardSDPAModel()
             exclude = Any[MOI.optimize!, MOI.SolverName, MOI.SolverVersion],
         );
         exclude = String[
-            # TODO(odow): investigate. This seems like an actual bug.
-            "test_model_delete",
             # Skip these tests because the bridge reformulates bound
             # constraints, so there is no conflict. An error _is_ thrown if two
             # sets of the same type are added.
