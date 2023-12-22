@@ -132,8 +132,17 @@ function MOI.delete(
     new_func = MOI.Utilities.eachscalar(func)[idx]
     set = MOI.get(model, MOI.ConstraintSet(), bridge.constraint)
     new_set = MOI.update_dimension(set, MOI.dimension(set) - 1)
-    MOI.delete(model, bridge.constraint)
+    # If we first do `MOI.delete` and then `MOI.add_constraint`,
+    # there might be an issue of `MOI.delete` ends up deleting a
+    # bridged variables.
+    # Indeed, in that case,
+    # `_delete_variables_in_vector_of_variables_constraint` might
+    # then try to get `get` `ConstrainFunction` for this bridge
+    # which will fail since the `bridge.constraint` is no more valid.
+    # We avoid this issue by calling `add_constraint` first.
+    old_constraint = bridge.constraint
     bridge.constraint = MOI.add_constraint(model, new_func, new_set)
+    MOI.delete(model, old_constraint)
     return
 end
 

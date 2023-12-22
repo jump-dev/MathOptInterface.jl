@@ -2110,6 +2110,20 @@ function test_objective_conversion_cost(T = Float64)
     return
 end
 
+function test_delete_index_in_vector(T::Type = Float64)
+    model = MOI.instantiate(StandardSDPAModel{T}; with_bridge_type = T)
+    x = MOI.add_variables(model, 4)
+    c = MOI.add_constraint(model, x, MOI.Nonpositives(4))
+    @test MOI.is_valid(model, c)
+    MOI.delete(model, x[3])
+    @test MOI.is_valid(model, c)
+    @test MOI.is_valid(model, x[1])
+    @test MOI.is_valid(model, x[2])
+    @test !MOI.is_valid(model, x[3])
+    @test MOI.is_valid(model, x[4])
+    @test MOI.get(model, MOI.ConstraintFunction(), c).variables == x[[1, 2, 4]]
+end
+
 end  # module
 
 TestBridgesLazyBridgeOptimizer.runtests()

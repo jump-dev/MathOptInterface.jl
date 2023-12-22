@@ -550,7 +550,9 @@ That is, the variable indices bridged by this bridge or the bridges that
 created it will not be unbridged in [`unbridged_function`](@ref).
 """
 function call_in_context(map::Map, bridge_index::Int64, f::Function)
-    if iszero(bridge_index)
+    # This is a shortcut that is used in particular in the common case where
+    # no variable bridge is used.
+    if iszero(bridge_index) && iszero(map.current_context)
         return f()
     end
     previous_context = map.current_context
