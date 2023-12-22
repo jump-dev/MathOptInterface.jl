@@ -137,8 +137,8 @@ function MOI.delete(
     # bridged variables.
     # Indeed, in that case,
     # `_delete_variables_in_vector_of_variables_constraint` might
-    # then try to get `get` `ConstrainFunction` for this bridge
-    # which will fail since the `bridge.constraint` is no more valid.
+    # then try to get `get` `ConstraintFunction` for this bridge
+    # which will fail since the `bridge.constraint` is invalid.
     # We avoid this issue by calling `add_constraint` first.
     old_constraint = bridge.constraint
     bridge.constraint = MOI.add_constraint(model, new_func, new_set)

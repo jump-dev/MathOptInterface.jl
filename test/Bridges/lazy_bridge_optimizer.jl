@@ -2122,6 +2122,7 @@ function test_delete_index_in_vector(T::Type = Float64)
     @test !MOI.is_valid(model, x[3])
     @test MOI.is_valid(model, x[4])
     @test MOI.get(model, MOI.ConstraintFunction(), c).variables == x[[1, 2, 4]]
+    return
 end
 
 end  # module
