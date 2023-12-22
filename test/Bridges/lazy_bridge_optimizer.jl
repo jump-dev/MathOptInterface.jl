@@ -335,7 +335,6 @@ function test_MOI_runtests_StandardSDPAModel()
             # This seems okay. We can't get a list of variables if they are
             # bridged.
             "test_model_ListOfVariablesWithAttributeSet",
-
         ],
     )
     return
