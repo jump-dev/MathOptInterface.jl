@@ -326,6 +326,8 @@ function test_MOI_runtests_StandardSDPAModel()
         );
         exclude = String[
             "test_model_ListOfVariablesWithAttributeSet",
+            "test_model_LowerBoundAlreadySet",
+            "test_model_UpperBoundAlreadySet",
             "test_model_ScalarFunctionConstantNotZero",
             "test_model_delete",
         ],

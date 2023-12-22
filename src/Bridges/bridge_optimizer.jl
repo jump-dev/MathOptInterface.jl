@@ -1801,7 +1801,7 @@ function _check_double_single_variable(
     b::AbstractBridgeOptimizer,
     x::MOI.VariableIndex,
     s::S,
-) where {S<:MOI.AbstractScalarSet}
+) where {S}
     ci = MOI.ConstraintIndex{MOI.VariableIndex,S}(x.value)
     if (is_bridged(b, S) && MOI.is_valid(b, ci)) || MOI.is_valid(b.model, ci)
         error(
