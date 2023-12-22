@@ -1749,7 +1749,7 @@ function _bound_error_type(::Type{S}, ::Type{S}) where {S<:MOI.LessThan}
     return MOI.UpperBoundAlreadySet{S,S}
 end
 
-function _bounderror_typet(::Type{S1}, ::Type{S2}) where {S1<:MOI.LessThan,S2}
+function _bound_error_type(::Type{S1}, ::Type{S2}) where {S1<:MOI.LessThan,S2}
     return MOI.UpperBoundAlreadySet{S1,S2}
 end
 
@@ -1757,7 +1757,9 @@ function _bound_error_type(::Type{S1}, ::Type{S2}) where {S1,S2<:MOI.LessThan}
     return MOI.UpperBoundAlreadySet{S1,S2}
 end
 
-_bound_error_type(S1, S2) = MOI.LowerBoundAlreadySet{S1,S2}
+function _bound_error_type(::Type{S1}, ::Type{S2}) where {S1,S2}
+    return MOI.LowerBoundAlreadySet{S1,S2}
+end
 
 _bound_error_type(::Type{<:MOI.LessThan}, ::Type{<:MOI.GreaterThan}) = nothing
 
@@ -1770,20 +1772,25 @@ function _check_double_single_variable(
 ) where {
     T,
     S<:Union{
-        MOI.EqualTo{T},
-        MOI.GreaterThan{T},
-        MOI.LessThan{T},
         MOI.Interval{T},
+        MOI.EqualTo{T},
         MOI.Semicontinuous{T},
         MOI.Semiinteger{T},
+        MOI.LessThan{T},
+        MOI.GreaterThan{T},
     },
 }
-    _throw_if_bound_already_set(b, x, s, MOI.EqualTo{T})
-    _throw_if_bound_already_set(b, x, s, MOI.GreaterThan{T})
-    _throw_if_bound_already_set(b, x, s, MOI.LessThan{T})
+    # !!! warning
+    #     The order here is _very_ important because an Interval constraint
+    #     might get re-written into a LessThan and GreaterThan. To throw the
+    #     appropriate error, we _must_ check sets like `Interval` and `EqualTo`
+    #     _before_ `LessThan` and `GreaterThan`.
     _throw_if_bound_already_set(b, x, s, MOI.Interval{T})
+    _throw_if_bound_already_set(b, x, s, MOI.EqualTo{T})
     _throw_if_bound_already_set(b, x, s, MOI.Semicontinuous{T})
     _throw_if_bound_already_set(b, x, s, MOI.Semiinteger{T})
+    _throw_if_bound_already_set(b, x, s, MOI.LessThan{T})
+    _throw_if_bound_already_set(b, x, s, MOI.GreaterThan{T})
     return
 end
 
