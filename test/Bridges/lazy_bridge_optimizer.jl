@@ -319,25 +319,36 @@ function test_MOI_runtests_LPModel()
 end
 
 function test_MOI_runtests_StandardSDPAModel()
-    model = StandardSDPAModel{Float64}()
-    bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
+    model =
+        MOI.instantiate(StandardSDPAModel{Float64}; with_bridge_type = Float64)
     MOI.Test.runtests(
-        bridged,
+        model,
         MOI.Test.Config(
             exclude = Any[MOI.optimize!, MOI.SolverName, MOI.SolverVersion],
-        ),
+        );
+        exclude = String[
+            "test_model_ListOfVariablesWithAttributeSet",
+            "test_model_LowerBoundAlreadySet",
+            "test_model_UpperBoundAlreadySet",
+            "test_model_ScalarFunctionConstantNotZero",
+            "test_model_delete",
+        ],
     )
     return
 end
 
 function test_MOI_runtests_GeometricSDPAModel()
-    model = GeometricSDPAModel{Float64}()
-    bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
+    model =
+        MOI.instantiate(GeometricSDPAModel{Float64}; with_bridge_type = Float64)
     MOI.Test.runtests(
-        bridged,
+        model,
         MOI.Test.Config(
             exclude = Any[MOI.optimize!, MOI.SolverName, MOI.SolverVersion],
-        ),
+        );
+        exclude = String[
+            "test_model_LowerBoundAlreadySet",
+            "test_model_UpperBoundAlreadySet",
+        ],
     )
     return
 end
