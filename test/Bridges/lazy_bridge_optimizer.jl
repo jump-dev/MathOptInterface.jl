@@ -303,15 +303,8 @@ function test_MOI_runtests_LPModel()
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     MOI.Test.runtests(
         bridged,
-        MOI.Test.Config(exclude = Any[MOI.optimize!]),
+        MOI.Test.Config(exclude = Any[MOI.optimize!]);
         include = ["test_model_", "test_constraint_"],
-        exclude = [
-            "test_constraint_ConstraintDualStart",
-            "test_constraint_ConstraintPrimalStart",
-            "test_model_default_DualStatus",
-            "test_model_default_PrimalStatus",
-            "test_model_default_TerminationStatus",
-        ],
     )
     return
 end
