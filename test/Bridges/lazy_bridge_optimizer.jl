@@ -318,9 +318,12 @@ function test_MOI_runtests_StandardSDPAModel()
             exclude = Any[MOI.optimize!, MOI.SolverName, MOI.SolverVersion],
         );
         exclude = String[
-            "test_model_ListOfVariablesWithAttributeSet",
+            # Okay to exclude: because the bridge reformulates bound
+            # constraints, there is no conflict.
             "test_model_LowerBoundAlreadySet",
             "test_model_UpperBoundAlreadySet",
+            # TODO(odow): innvestigate
+            "test_model_ListOfVariablesWithAttributeSet",
             "test_model_ScalarFunctionConstantNotZero",
             "test_model_delete",
         ],

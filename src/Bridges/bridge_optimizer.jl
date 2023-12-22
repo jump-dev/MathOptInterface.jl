@@ -1797,21 +1797,6 @@ function _check_double_single_variable(
     return
 end
 
-function _check_double_single_variable(
-    b::AbstractBridgeOptimizer,
-    x::MOI.VariableIndex,
-    s::S,
-) where {S}
-    ci = MOI.ConstraintIndex{MOI.VariableIndex,S}(x.value)
-    if (is_bridged(b, S) && MOI.is_valid(b, ci)) || MOI.is_valid(b.model, ci)
-        error(
-            "The variable `$x` was already constrained to a set of type `$S`." *
-            " Use `MOI.set` with `MOI.ConstraintSet()` instead.",
-        )
-    end
-    return
-end
-
 _check_double_single_variable(::AbstractBridgeOptimizer, ::Any, ::Any) = nothing
 
 function MOI.add_constraint(
