@@ -303,17 +303,8 @@ function test_MOI_runtests_LPModel()
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     MOI.Test.runtests(
         bridged,
-        MOI.Test.Config(exclude = Any[MOI.optimize!]),
+        MOI.Test.Config(exclude = Any[MOI.optimize!]);
         include = ["test_model_", "test_constraint_"],
-        exclude = [
-            "test_constraint_ConstraintDualStart",
-            "test_constraint_ConstraintPrimalStart",
-            "test_model_default_DualStatus",
-            "test_model_default_PrimalStatus",
-            "test_model_default_TerminationStatus",
-            "test_model_LowerBoundAlreadySet",
-            "test_model_UpperBoundAlreadySet",
-        ],
     )
     return
 end
@@ -327,11 +318,24 @@ function test_MOI_runtests_StandardSDPAModel()
             exclude = Any[MOI.optimize!, MOI.SolverName, MOI.SolverVersion],
         );
         exclude = String[
-            "test_model_ListOfVariablesWithAttributeSet",
+            # TODO(odow): investigate. This seems like an actual bug.
+            "test_model_delete",
+            # Skip these tests because the bridge reformulates bound
+            # constraints, so there is no conflict. An error _is_ thrown if two
+            # sets of the same type are added.
             "test_model_LowerBoundAlreadySet",
             "test_model_UpperBoundAlreadySet",
+            # MOI.ScalarFunctionConstantNotZero is thrown, not of the original
+            # constraint, but of the bridged constraint. This seems okay. The
+            # fix would require that a bridge optimizer has a try-catch for this
+            # error.
             "test_model_ScalarFunctionConstantNotZero",
-            "test_model_delete",
+            # The error is:
+            # Cannot substitute `MOI.VariableIndex(1)` as it is bridged into `0.0 + 1.0 MOI.VariableIndex(-1)`.
+            # This seems okay. We can't get a list of variables if they are
+            # bridged.
+            "test_model_ListOfVariablesWithAttributeSet",
+
         ],
     )
     return
@@ -344,11 +348,7 @@ function test_MOI_runtests_GeometricSDPAModel()
         model,
         MOI.Test.Config(
             exclude = Any[MOI.optimize!, MOI.SolverName, MOI.SolverVersion],
-        );
-        exclude = String[
-            "test_model_LowerBoundAlreadySet",
-            "test_model_UpperBoundAlreadySet",
-        ],
+        ),
     )
     return
 end

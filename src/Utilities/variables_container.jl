@@ -308,6 +308,8 @@ function MOI.is_valid(
     return !iszero(b.set_mask[ci.value] & _single_variable_flag(S))
 end
 
+MOI.is_valid(::VariablesContainer, ::MOI.ConstraintIndex) = false
+
 function MOI.get(
     model::VariablesContainer,
     ::MOI.ConstraintFunction,

@@ -697,6 +697,7 @@ function MOI.delete(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
     else
         MOI.delete(b.model, ci)
     end
+    return
 end
 
 function MOI.delete(
@@ -1732,28 +1733,71 @@ function add_bridged_constraint(b, BridgeType, f, s)
     return ci
 end
 
-function _check_double_single_variable(
-    b::AbstractBridgeOptimizer,
-    func::MOI.VariableIndex,
-    set,
-)
-    if !is_bridged(b, typeof(set))
-        # The variable might have been constrained in `b.model` to a set of type
-        # `typeof(set)` on creation.
-        ci = MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(func.value)
-        if MOI.is_valid(b.model, ci)
-            error(
-                "The variable `$(func)` was constrained on creation ",
-                "to a set of type `$(typeof(set))`. Therefore, a ",
-                "`VariableIndex`-in-`$(typeof(set))` cannot be added on this ",
-                "variable. Use `MOI.set` with `MOI.ConstraintSet()` instead.",
-            )
-        end
+function _throw_if_bound_already_set(b, x, ::S2, ::Type{S1}) where {S1,S2}
+    ErrorType = _bound_error_type(S1, S2)
+    if ErrorType === nothing
+        return
+    end
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,S1}(x.value)
+    if (is_bridged(b, S1) && MOI.is_valid(b, ci)) || MOI.is_valid(b.model, ci)
+        throw(ErrorType(x))
     end
     return
 end
 
-_check_double_single_variable(b::AbstractBridgeOptimizer, func, set) = nothing
+function _bound_error_type(
+    ::Type{S1},
+    ::Type{S2},
+) where {S1<:MOI.LessThan,S2<:MOI.LessThan}
+    return MOI.UpperBoundAlreadySet{S1,S2}
+end
+
+function _bound_error_type(::Type{S1}, ::Type{S2}) where {S1<:MOI.LessThan,S2}
+    return MOI.UpperBoundAlreadySet{S1,S2}
+end
+
+function _bound_error_type(::Type{S1}, ::Type{S2}) where {S1,S2<:MOI.LessThan}
+    return MOI.UpperBoundAlreadySet{S1,S2}
+end
+
+function _bound_error_type(::Type{S1}, ::Type{S2}) where {S1,S2}
+    return MOI.LowerBoundAlreadySet{S1,S2}
+end
+
+_bound_error_type(::Type{<:MOI.LessThan}, ::Type{<:MOI.GreaterThan}) = nothing
+
+_bound_error_type(::Type{<:MOI.GreaterThan}, ::Type{<:MOI.LessThan}) = nothing
+
+function _check_double_single_variable(
+    b::AbstractBridgeOptimizer,
+    x::MOI.VariableIndex,
+    s::S,
+) where {
+    T,
+    S<:Union{
+        MOI.Interval{T},
+        MOI.EqualTo{T},
+        MOI.Semicontinuous{T},
+        MOI.Semiinteger{T},
+        MOI.LessThan{T},
+        MOI.GreaterThan{T},
+    },
+}
+    # !!! warning
+    #     The order here is _very_ important because an Interval constraint
+    #     might get re-written into a LessThan and GreaterThan. To throw the
+    #     appropriate error, we _must_ check sets like `Interval` and `EqualTo`
+    #     _before_ `LessThan` and `GreaterThan`.
+    _throw_if_bound_already_set(b, x, s, MOI.Interval{T})
+    _throw_if_bound_already_set(b, x, s, MOI.EqualTo{T})
+    _throw_if_bound_already_set(b, x, s, MOI.Semicontinuous{T})
+    _throw_if_bound_already_set(b, x, s, MOI.Semiinteger{T})
+    _throw_if_bound_already_set(b, x, s, MOI.LessThan{T})
+    _throw_if_bound_already_set(b, x, s, MOI.GreaterThan{T})
+    return
+end
+
+_check_double_single_variable(::AbstractBridgeOptimizer, ::Any, ::Any) = nothing
 
 function MOI.add_constraint(
     b::AbstractBridgeOptimizer,
