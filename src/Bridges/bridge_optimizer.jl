@@ -904,7 +904,7 @@ function MOI.get(
         # correspond to any user variables.
         # We choose the easy option of simply returning all variables
         # for now.
-        return MOI.get(model, MOI.ListOfVariableIndices())
+        return MOI.get(b, MOI.ListOfVariableIndices())
     else
         return unbridged_function(b, MOI.get(b.model, attr))
     end
