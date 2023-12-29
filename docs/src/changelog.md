@@ -7,6 +7,33 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.24.0 (December 30, 2023)
+
+### Added
+
+ - Added `get_fallback` for `ConstraintDual` of variable bounds (#2373)
+
+### Fixed
+
+ - Fixed `RSOCtoPSDBridge` for dimension 2 (#2359)
+ - Fixed getting `ConstraintFunction` in conversion bridge (#2360)
+ - Fixed `map_indices` (#2367)
+ - Fixed `SlackBridgePrimalDualStart` for non-slack bridges (#2365)
+ - Fixed `test_attribute_TimeLimitSec` (#2370)
+ - Fixed order of model attributes during `copy_to` (#2372)
+ - Fixed `ConstraintIndex` conflicts between variable and constraint bridges
+   (#2362)
+ - Fixed corner-case deletion in bridges (#2377)
+ - Fixed `ListOfVariablesWithAttributeSet` for variable bridges (#2380)
+
+### Other
+
+ - Minor documentation improvements (#2355), (#2374)
+ - Improved `side_dimension_for_vectorized_dimension` (#2356)
+ - Added DiffOpt and ParametricOptInterface to `solver-tests.yml` (#2368)
+ - Refactored `SDPAModel` into a separate test file and test more widely
+   (#2364), (#2357)
+
 ## v1.23.0 (November 29, 2023)
 
 ### Added
