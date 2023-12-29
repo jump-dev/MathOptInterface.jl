@@ -328,11 +328,6 @@ function test_MOI_runtests_StandardSDPAModel()
             # fix would require that a bridge optimizer has a try-catch for this
             # error.
             "test_model_ScalarFunctionConstantNotZero",
-            # The error is:
-            # Cannot substitute `MOI.VariableIndex(1)` as it is bridged into `0.0 + 1.0 MOI.VariableIndex(-1)`.
-            # This seems okay. We can't get a list of variables if they are
-            # bridged.
-            "test_model_ListOfVariablesWithAttributeSet",
         ],
     )
     return
