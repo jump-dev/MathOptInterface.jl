@@ -910,7 +910,6 @@ function MOI.get(
     end
 end
 
-
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.ListOfConstraintsWithAttributeSet{F,S,MOI.ConstraintName},
