@@ -896,6 +896,23 @@ end
 
 function MOI.get(
     b::AbstractBridgeOptimizer,
+    attr::MOI.ListOfVariablesWithAttributeSet,
+)
+    if Variable.has_bridges(Variable.bridges(b))
+        # If there are variable bridges, `MOI.get(b.model, attr)`
+        # will return a list containing solver variables that do not
+        # correspond to any user variables.
+        # We choose the easy option of simply returning all variables
+        # for now.
+        return MOI.get(model, MOI.ListOfVariableIndices())
+    else
+        return unbridged_function(b, MOI.get(b.model, attr))
+    end
+end
+
+
+function MOI.get(
+    b::AbstractBridgeOptimizer,
     attr::MOI.ListOfConstraintsWithAttributeSet{F,S,MOI.ConstraintName},
 ) where {F,S}
     if !is_bridged(b, F, S) &&

@@ -1158,6 +1158,24 @@ function test_variable_bridge_constraint_attribute()
     return
 end
 
+function test_ListOfVariablesWithAttributeSet(T = Float64)
+    uf = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}())
+    model = MOI.Bridges.full_bridge_optimizer(uf, T)
+    x = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.VariableName(), x[1], "x")
+    # Passed through to Model with no special support
+    attr = MOI.ListOfVariablesWithAttributeSet(MOI.VariableName())
+    @test MOI.get(model, attr) == x
+    # Handled by UniversalFallback
+    attr = MOI.ListOfVariablesWithAttributeSet(MOI.VariablePrimalStart())
+    # ... no attributes set
+    @test MOI.get(model, attr) == MOI.VariableIndex[]
+    # ... one attribute set
+    MOI.set(model, MOI.VariablePrimalStart(), x[2], 1.0)
+    @test MOI.get(model, attr) == [x[2]]
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
