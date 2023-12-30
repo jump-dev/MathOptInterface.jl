@@ -287,11 +287,19 @@ end
 Record that a constraint `vi`-in-`S` is added and throws if a lower or upper bound
 is set by `S` and such bound has already been set for `vi`.
 """
-function add_constraint(::Map, ::MOI.VariableIndex, ::Type{<:MOI.AbstractScalarSet})
+function add_constraint(
+    ::Map,
+    ::MOI.VariableIndex,
+    ::Type{<:MOI.AbstractScalarSet},
+)
     # Nothing to do as this is is not recognized as setting a lower or upper bound
 end
 
-function add_constraint(map::Map, vi::MOI.VariableIndex, ::Type{S}) where {T,S<:MOI.Utilities.SUPPORTED_VARIABLE_SCALAR_SETS{T}}
+function add_constraint(
+    map::Map,
+    vi::MOI.VariableIndex,
+    ::Type{S},
+) where {T,S<:MOI.Utilities.SUPPORTED_VARIABLE_SCALAR_SETS{T}}
     flag = MOI.Utilities._single_variable_flag(S)
     index = -vi.value
     mask = map.set_mask[index]
@@ -306,11 +314,17 @@ end
 
 Record that the constraint `vi`-in-`S` is deleted.
 """
-function MOI.delete(::Map, ci::MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet})
+function MOI.delete(
+    ::Map,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet},
+)
     # Nothing to do as this is is not recognized as setting a lower or upper bound
 end
 
-function MOI.delete(map::Map, ci::MOI.ConstraintIndex{MOI.VariableIndex,S}) where {T,S<:MOI.Utilities.SUPPORTED_VARIABLE_SCALAR_SETS{T}}
+function MOI.delete(
+    map::Map,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
+) where {T,S<:MOI.Utilities.SUPPORTED_VARIABLE_SCALAR_SETS{T}}
     flag = MOI.Utilities._single_variable_flag(S)
     map.set_mask[-ci.value] &= ~flag
     return

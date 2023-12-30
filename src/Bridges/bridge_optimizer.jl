@@ -671,7 +671,10 @@ function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
     return
 end
 
-function MOI.delete(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex{F}) where {F}
+function MOI.delete(
+    b::AbstractBridgeOptimizer,
+    ci::MOI.ConstraintIndex{F},
+) where {F}
     if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
         br = bridge(b, ci)

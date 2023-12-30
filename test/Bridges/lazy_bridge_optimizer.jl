@@ -318,12 +318,11 @@ function test_MOI_runtests_StandardSDPAModel()
             exclude = Any[MOI.optimize!, MOI.SolverName, MOI.SolverVersion],
         );
         exclude = String[
-            # MOI.ScalarFunctionConstantNotZero is thrown, not of the original
-            # constraint, but of the bridged constraint. This seems okay. The
-            # fix would require that a bridge optimizer has a try-catch for this
-            # error.
-            "test_model_ScalarFunctionConstantNotZero",
-        ],
+        # MOI.ScalarFunctionConstantNotZero is thrown, not of the original
+        # constraint, but of the bridged constraint. This seems okay. The
+        # fix would require that a bridge optimizer has a try-catch for this
+        # error.
+            "test_model_ScalarFunctionConstantNotZero",],
     )
     return
 end
