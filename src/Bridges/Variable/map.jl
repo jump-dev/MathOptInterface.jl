@@ -466,6 +466,7 @@ function add_key_for_bridge(
             end
         end
     end
+    MOI.add_constraint(map, variable, set)
     return variable, MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(index)
 end
 
