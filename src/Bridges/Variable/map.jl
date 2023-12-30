@@ -291,11 +291,24 @@ function MOI.add_constraint(::Map, ::MOI.VariableIndex, ::MOI.AbstractScalarSet)
     # Nothing to do as this is is not recognized as setting a lower or upper bound
 end
 
+# We cannot use `SUPPORTED_VARIABLE_SCALAR_SETS` because
+# `Integer` and `ZeroOne` do not define `T` and we need `T`
+# for `_throw_if_lower_bound_set`.
+const _BOUNDED_VARIABLE_SCALAR_SETS{T} = Union{
+    MOI.EqualTo{T},
+    MOI.GreaterThan{T},
+    MOI.LessThan{T},
+    MOI.Interval{T},
+    MOI.Semicontinuous{T},
+    MOI.Semiinteger{T},
+    MOI.Parameter{T},
+}
+
 function MOI.add_constraint(
     map::Map,
     vi::MOI.VariableIndex,
     ::S,
-) where {T,S<:MOI.Utilities.SUPPORTED_VARIABLE_SCALAR_SETS{T}}
+) where {T,S<:_BOUNDED_VARIABLE_SCALAR_SETS{T}}
     flag = MOI.Utilities._single_variable_flag(S)
     index = -vi.value
     mask = map.set_mask[index]
@@ -320,7 +333,7 @@ end
 function MOI.delete(
     map::Map,
     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
-) where {T,S<:MOI.Utilities.SUPPORTED_VARIABLE_SCALAR_SETS{T}}
+) where {T,S<:_BOUNDED_VARIABLE_SCALAR_SETS{T}}
     flag = MOI.Utilities._single_variable_flag(S)
     map.set_mask[-ci.value] &= ~flag
     return
