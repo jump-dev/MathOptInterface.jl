@@ -282,23 +282,19 @@ function MOI.is_valid(
 end
 
 """
-    add_constraint(map::Map, vi::MOI.VariableIndex, S::Type{<:MOI.AbstractScalarSet})
+    MOI.add_constraint(map::Map, vi::MOI.VariableIndex, set::MOI.AbstractScalarSet)
 
-Record that a constraint `vi`-in-`S` is added and throws if a lower or upper bound
-is set by `S` and such bound has already been set for `vi`.
+Record that a constraint `vi`-in-`set` is added and throws if a lower or upper bound
+is set by this constraint and such bound has already been set for `vi`.
 """
-function add_constraint(
-    ::Map,
-    ::MOI.VariableIndex,
-    ::Type{<:MOI.AbstractScalarSet},
-)
+function MOI.add_constraint(::Map, ::MOI.VariableIndex, ::MOI.AbstractScalarSet)
     # Nothing to do as this is is not recognized as setting a lower or upper bound
 end
 
-function add_constraint(
+function MOI.add_constraint(
     map::Map,
     vi::MOI.VariableIndex,
-    ::Type{S},
+    ::S,
 ) where {T,S<:MOI.Utilities.SUPPORTED_VARIABLE_SCALAR_SETS{T}}
     flag = MOI.Utilities._single_variable_flag(S)
     index = -vi.value

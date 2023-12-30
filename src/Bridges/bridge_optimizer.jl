@@ -1846,7 +1846,7 @@ function MOI.add_constraint(
                     typeof(f),
                     typeof(s),
                 )
-                Variable.add_constraint(Variable.bridges(b), f, typeof(s))
+                MOI.add_constraint(Variable.bridges(b), f, s)
                 return add_bridged_constraint(b, BridgeType, f, s)
             end
         elseif f isa MOI.VectorOfVariables
