@@ -318,11 +318,6 @@ function test_MOI_runtests_StandardSDPAModel()
             exclude = Any[MOI.optimize!, MOI.SolverName, MOI.SolverVersion],
         );
         exclude = String[
-            # Skip these tests because the bridge reformulates bound
-            # constraints, so there is no conflict. An error _is_ thrown if two
-            # sets of the same type are added.
-            "test_model_LowerBoundAlreadySet",
-            "test_model_UpperBoundAlreadySet",
             # MOI.ScalarFunctionConstantNotZero is thrown, not of the original
             # constraint, but of the bridged constraint. This seems okay. The
             # fix would require that a bridge optimizer has a try-catch for this

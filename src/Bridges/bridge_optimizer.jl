@@ -671,7 +671,7 @@ function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
     return
 end
 
-function MOI.delete(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
+function MOI.delete(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex{F}) where {F}
     if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
         br = bridge(b, ci)
@@ -686,6 +686,11 @@ function MOI.delete(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
             )
         else
             delete!(Constraint.bridges(b)::Constraint.Map, ci)
+        end
+        if F === MOI.VariableIndex && ci.value < 0
+            # Constraint on a bridged variable so we need to remove the flag
+            # if it is a bound
+            MOI.delete(Variable.bridges(b), ci)
         end
         Variable.call_in_context(
             Variable.bridges(b),
@@ -1838,6 +1843,7 @@ function MOI.add_constraint(
                     typeof(f),
                     typeof(s),
                 )
+                Variable.add_constraint(Variable.bridges(b), f, typeof(s))
                 return add_bridged_constraint(b, BridgeType, f, s)
             end
         elseif f isa MOI.VectorOfVariables
