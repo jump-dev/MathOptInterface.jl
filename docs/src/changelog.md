@@ -7,7 +7,7 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.24.0 (December 30, 2023)
+## v1.24.0 (January 2, 2024)
 
 ### Added
 
@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    (#2362)
  - Fixed corner-case deletion in bridges (#2377)
  - Fixed `ListOfVariablesWithAttributeSet` for variable bridges (#2380)
+ - Fixed `SlackBridge` if scalar constant is not zero (#2382)
+ - Fixed setting multiple bounds on a bridged variable (#2383)
 
 ### Other
 
