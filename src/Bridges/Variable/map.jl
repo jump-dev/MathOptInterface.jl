@@ -44,6 +44,8 @@ mutable struct Map <: AbstractDict{MOI.VariableIndex,AbstractBridge}
     # `(ci::ConstraintIndex{MOI.VectorOfVariables}).value` ->
     # the dimension of the set
     vector_of_variables_length::Vector{Int64}
+    # Same as in `MOI.Utilities.VariablesContainer`
+    set_mask::Vector{UInt16}
 end
 
 function Map()
@@ -58,6 +60,7 @@ function Map()
         Dict{MOI.ConstraintIndex,Int64}(),
         Int64[],
         Int64[],
+        UInt16[],
     )
 end
 
@@ -88,6 +91,7 @@ function Base.empty!(map::Map)
     empty!(map.constraint_context)
     empty!(map.vector_of_variables_map)
     empty!(map.vector_of_variables_length)
+    empty!(map.set_mask)
     return map
 end
 
@@ -113,8 +117,9 @@ end
 function Base.delete!(map::Map, vi::MOI.VariableIndex)
     if iszero(map.info[-vi.value])
         # Delete scalar variable
-        map.bridges[bridge_index(map, vi)] = nothing
-        map.sets[bridge_index(map, vi)] = nothing
+        index = bridge_index(map, vi)
+        map.bridges[index] = nothing
+        map.sets[index] = nothing
     elseif has_keys(map, [vi])
         # Delete whole vector
         delete!(map, [vi])
@@ -131,6 +136,7 @@ function Base.delete!(map::Map, vi::MOI.VariableIndex)
             map.index_in_vector[i] -= 1
         end
     end
+    map.set_mask[-vi.value] = MOI.Utilities._DELETED_VARIABLE
     map.index_in_vector[-vi.value] = -1
     return map
 end
@@ -144,6 +150,7 @@ function Base.delete!(map::Map, vis::Vector{MOI.VariableIndex})
         )
     end
     for vi in vis
+        map.set_mask[-vi.value] = MOI.Utilities._DELETED_VARIABLE
         map.index_in_vector[-vi.value] = -1
     end
     map.bridges[bridge_index(map, first(vis))] = nothing
@@ -275,6 +282,64 @@ function MOI.is_valid(
 end
 
 """
+    MOI.add_constraint(map::Map, vi::MOI.VariableIndex, set::MOI.AbstractScalarSet)
+
+Record that a constraint `vi`-in-`set` is added and throws if a lower or upper bound
+is set by this constraint and such bound has already been set for `vi`.
+"""
+function MOI.add_constraint(::Map, ::MOI.VariableIndex, ::MOI.AbstractScalarSet)
+    # Nothing to do as this is is not recognized as setting a lower or upper bound
+end
+
+# We cannot use `SUPPORTED_VARIABLE_SCALAR_SETS` because
+# `Integer` and `ZeroOne` do not define `T` and we need `T`
+# for `_throw_if_lower_bound_set`.
+const _BOUNDED_VARIABLE_SCALAR_SETS{T} = Union{
+    MOI.EqualTo{T},
+    MOI.GreaterThan{T},
+    MOI.LessThan{T},
+    MOI.Interval{T},
+    MOI.Semicontinuous{T},
+    MOI.Semiinteger{T},
+    MOI.Parameter{T},
+}
+
+function MOI.add_constraint(
+    map::Map,
+    vi::MOI.VariableIndex,
+    ::S,
+) where {T,S<:_BOUNDED_VARIABLE_SCALAR_SETS{T}}
+    flag = MOI.Utilities._single_variable_flag(S)
+    index = -vi.value
+    mask = map.set_mask[index]
+    MOI.Utilities._throw_if_lower_bound_set(vi, S, mask, T)
+    MOI.Utilities._throw_if_upper_bound_set(vi, S, mask, T)
+    map.set_mask[index] = mask | flag
+    return
+end
+
+"""
+    delete(map::Map, ci::MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet})
+
+Record that the constraint `vi`-in-`S` is deleted.
+"""
+function MOI.delete(
+    ::Map,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet},
+)
+    # Nothing to do as this is is not recognized as setting a lower or upper bound
+end
+
+function MOI.delete(
+    map::Map,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
+) where {T,S<:_BOUNDED_VARIABLE_SCALAR_SETS{T}}
+    flag = MOI.Utilities._single_variable_flag(S)
+    map.set_mask[-ci.value] &= ~flag
+    return
+end
+
+"""
     constraints_with_set(map::Map, S::Type{<:MOI.AbstractSet})
 
 Return the list of constraints corresponding to bridged variables in `S`.
@@ -384,6 +449,7 @@ function add_key_for_bridge(
     push!(map.index_in_vector, 0)
     push!(map.bridges, nothing)
     push!(map.sets, typeof(set))
+    push!(map.set_mask, 0x0000)
     map.bridges[bridge_index] = call_in_context(map, bridge_index, bridge_fun)
     index = -bridge_index
     variable = MOI.VariableIndex(index)
@@ -400,6 +466,7 @@ function add_key_for_bridge(
             end
         end
     end
+    MOI.add_constraint(map, variable, set)
     return variable, MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(index)
 end
 
@@ -443,12 +510,14 @@ function add_keys_for_bridge(
     push!(map.index_in_vector, 1)
     push!(map.bridges, nothing)
     push!(map.sets, typeof(set))
+    push!(map.set_mask, 0x0000)
     for i in 2:MOI.dimension(set)
         push!(map.parent_index, 0)
         push!(map.info, i)
         push!(map.index_in_vector, i)
         push!(map.bridges, nothing)
         push!(map.sets, nothing)
+        push!(map.set_mask, 0x0000)
     end
     map.bridges[bridge_index] = call_in_context(map, bridge_index, bridge_fun)
     variables = MOI.VariableIndex[

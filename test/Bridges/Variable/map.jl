@@ -279,6 +279,21 @@ function test_EmptyMap()
     return
 end
 
+function test_double_variable_bound()
+    map = MOI.Bridges.Variable.Map()
+    b1 = VariableDummyBridge(1)
+    set1 = MOI.EqualTo(0.0)
+    v1, c1 = MOI.Bridges.Variable.add_key_for_bridge(map, () -> b1, set1)
+    MOI.is_valid(map, c1)
+    MOI.add_constraint(map, v1, MOI.Integer())
+    cint = MOI.ConstraintIndex{typeof(v1),MOI.Integer}(v1.value)
+    MOI.delete(map, cint)
+    set2 = MOI.LessThan(1.0)
+    err = MOI.UpperBoundAlreadySet{typeof(set1),typeof(set2)}(v1)
+    @test_throws err MOI.add_constraint(map, v1, set2)
+    return
+end
+
 end  # module
 
 TestVariableMap.runtests()

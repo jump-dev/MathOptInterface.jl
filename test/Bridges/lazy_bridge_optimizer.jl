@@ -316,14 +316,7 @@ function test_MOI_runtests_StandardSDPAModel()
         model,
         MOI.Test.Config(
             exclude = Any[MOI.optimize!, MOI.SolverName, MOI.SolverVersion],
-        );
-        exclude = String[
-            # Skip these tests because the bridge reformulates bound
-            # constraints, so there is no conflict. An error _is_ thrown if two
-            # sets of the same type are added.
-            "test_model_LowerBoundAlreadySet",
-            "test_model_UpperBoundAlreadySet",
-        ],
+        ),
     )
     return
 end
