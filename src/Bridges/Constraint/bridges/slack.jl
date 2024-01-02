@@ -222,6 +222,7 @@ function bridge_constraint(
     f::MOI.AbstractScalarFunction,
     s::S,
 ) where {T,F,S}
+    MOI.throw_if_scalar_and_constant_not_zero(f, typeof(s))
     slack, slack_in_set = MOI.add_constrained_variable(model, s)
     new_f = MOI.Utilities.operate(-, T, f, slack)
     equality = MOI.add_constraint(model, new_f, MOI.EqualTo(zero(T)))
