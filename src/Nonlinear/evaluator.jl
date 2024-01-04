@@ -79,7 +79,7 @@ function MOI.initialize(evaluator::Evaluator, features::Vector{Symbol})
     if evaluator.backend !== nothing
         MOI.initialize(evaluator.backend, features)
     elseif !isempty(features)
-        @assert evaluator_backend === nothing  # ==> ExprGraphOnly used
+        @assert evaluator.backend === nothing  # ==> ExprGraphOnly used
         error(
             "Unable to initialize `Nonlinear.Evaluator` because the " *
             "following features are not supported: $features",
