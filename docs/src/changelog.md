@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Fixed [`initialize`](@ref) for [`Nonlinear.ExprGraphOnly`](@ref) (#2387)
  - Fixed converting 0-valued [`ScalarAffineFunction`](@ref) and [`ScalarQuadraticFunction`](@ref)
    to [`ScalarNonlinearFunction`](@ref) (#2388)
+ - Fixed reading `.nl` files with non-empty variable and constraint names (#2390)
 
 ## v1.24.0 (January 2, 2024)
 
