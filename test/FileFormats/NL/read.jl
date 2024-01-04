@@ -662,10 +662,8 @@ function test_hs071_free_constraint()
         return read!(io, model)
     end
     block = MOI.get(model, MOI.NLPBlock())
-    @test block.constraint_bounds == [
-        MOI.NLPBoundsPair(25.0, Inf),
-        MOI.NLPBoundsPair(-Inf, Inf),
-    ]
+    @test block.constraint_bounds ==
+          [MOI.NLPBoundsPair(25.0, Inf), MOI.NLPBoundsPair(-Inf, Inf)]
     return
 end
 
