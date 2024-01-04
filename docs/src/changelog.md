@@ -7,6 +7,18 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.25.0 (January 5, 2024)
+
+### Added
+
+ - Added the `AutomaticDifferentiationBackend` attribute (#2386)
+
+### Fixed
+
+ - Fixed [`initialize`](@ref) for [`Nonlinear.ExprGraphOnly`](@ref) (#2387)
+ - Fixed converting 0-valued [`ScalarAffineFunction`](@ref) and [`ScalarQuadraticFunction`](@ref)
+   to [`ScalarNonlinearFunction`](@ref) (#2388)
+
 ## v1.24.0 (January 2, 2024)
 
 ### Added
