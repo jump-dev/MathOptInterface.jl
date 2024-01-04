@@ -363,6 +363,20 @@ function test_convert_ScalarNonlinearFunction_ScalarAffineFunction()
     return
 end
 
+function test_convert_ScalarNonlinearFunction_zero()
+    affine_terms = MOI.ScalarAffineTerm{Float64}[]
+    quad_terms = MOI.ScalarQuadraticTerm{Float64}[]
+    for f in (
+        MOI.ScalarAffineFunction(affine_terms, 0.0),
+        MOI.ScalarQuadraticFunction(quad_terms, affine_terms, 0.0),
+    )
+        g = convert(MOI.ScalarNonlinearFunction, f)
+        @test g.head == :+
+        @test g.args == Any[0.0]
+    end
+    return
+end
+
 function test_convert_ScalarNonlinearFunction_ScalarQuadraticTerm()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)

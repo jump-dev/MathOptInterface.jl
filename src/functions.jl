@@ -1215,7 +1215,7 @@ end
 
 function Base.convert(F::Type{ScalarNonlinearFunction}, f::ScalarAffineFunction)
     args = Any[convert(ScalarNonlinearFunction, term) for term in f.terms]
-    if !iszero(f.constant)
+    if isempty(args) || !iszero(f.constant)
         push!(args, f.constant)
     end
     return ScalarNonlinearFunction(:+, args)
@@ -1243,7 +1243,7 @@ function Base.convert(
     for term in f.affine_terms
         push!(args, convert(F, term))
     end
-    if !iszero(f.constant)
+    if isempty(args) || !iszero(f.constant)
         push!(args, f.constant)
     end
     return ScalarNonlinearFunction(:+, args)
