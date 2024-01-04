@@ -312,9 +312,8 @@ function _parse_header(io::IO, model::_CacheModel)
     @assert _next(Int, io, model) >= 0
     _read_til_newline(io)
     # Line 9
-    # We don't support reading variable and constraint names
-    @assert _next(Int, io, model) == 0
-    @assert _next(Int, io, model) == 0
+    # We don't support reading variable and constraint names, so just ignore
+    # them
     _read_til_newline(io)
     # Line 10
     # We don't support reading common subexpressions
