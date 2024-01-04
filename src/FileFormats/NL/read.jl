@@ -190,15 +190,12 @@ function _to_model(data::_CacheModel; use_nlp_block::Bool)
             lb, ub = data.constraint_lower[i], data.constraint_upper[i]
             if lb == ub
                 MOI.Nonlinear.add_constraint(nlp, expr, MOI.EqualTo(lb))
-            elseif -Inf < lb < ub < Inf
-                MOI.Nonlinear.add_constraint(nlp, expr, MOI.Interval(lb, ub))
             elseif -Inf == lb && ub < Inf
                 MOI.Nonlinear.add_constraint(nlp, expr, MOI.LessThan(ub))
             elseif -Inf < lb && ub == Inf
                 MOI.Nonlinear.add_constraint(nlp, expr, MOI.GreaterThan(lb))
             else
-                @assert -Inf == lb && ub == Inf
-                # Do nothing. This is a free ranged constraint.
+                MOI.Nonlinear.add_constraint(nlp, expr, MOI.Interval(lb, ub))
             end
         end
         evaluator =
@@ -213,15 +210,12 @@ function _to_model(data::_CacheModel; use_nlp_block::Bool)
             f = _to_scalar_nonlinear_function(expr)::MOI.ScalarNonlinearFunction
             if lb == ub
                 MOI.add_constraint(model, f, MOI.EqualTo(lb))
-            elseif -Inf < lb < ub < Inf
-                MOI.add_constraint(model, f, MOI.Interval(lb, ub))
             elseif -Inf == lb && ub < Inf
                 MOI.add_constraint(model, f, MOI.LessThan(ub))
             elseif -Inf < lb && ub == Inf
                 MOI.add_constraint(model, f, MOI.GreaterThan(lb))
             else
-                @assert -Inf == lb && ub == Inf
-                # Do nothing. This is a free ranged constraint.
+                MOI.add_constraint(model, f, MOI.Interval(lb, ub))
             end
         end
     end
