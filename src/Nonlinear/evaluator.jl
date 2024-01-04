@@ -74,9 +74,16 @@ function MOI.initialize(evaluator::Evaluator, features::Vector{Symbol})
     evaluator.eval_hessian_constraint_timer = 0.0
     evaluator.eval_hessian_lagrangian_timer = 0.0
     append!(evaluator.ordered_constraints, keys(evaluator.model.constraints))
+    # Every backend supports :ExprGraph, so don't forward it.
     filter!(f -> f != :ExprGraph, features)
     if evaluator.backend !== nothing
         MOI.initialize(evaluator.backend, features)
+    elseif !isempty(features)
+        @assert evaluator_backend === nothing  # ==> ExprGraphOnly used
+        error(
+            "Unable to initialize `Nonlinear.Evaluator` because the " *
+            "following features are not supported: $features",
+        )
     end
     return
 end
