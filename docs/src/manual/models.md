@@ -78,6 +78,7 @@ The following attributes are available:
  * [`ObjectiveFunction`](@ref)
  * [`ObjectiveFunctionType`](@ref)
  * [`ObjectiveSense`](@ref)
+
 ## AbstractOptimizer API
 
 The following attributes are available:
@@ -104,3 +105,4 @@ The following attributes are available:
  * [`TimeLimitSec`](@ref)
  * [`ObjectiveLimit`](@ref)
  * [`SolutionLimit`](@ref)
+ * [`AutomaticDifferentiationBackend`](@ref)
