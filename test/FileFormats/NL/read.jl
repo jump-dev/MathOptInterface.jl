@@ -638,6 +638,27 @@ function test_parse_header_integrality_both_int()
     return
 end
 
+function test_hs071_free_constraint_nlexpr()
+    model = NL.Model(; use_nlp_block = false)
+    open(joinpath(@__DIR__, "data", "hs071_free_constraint.nl"), "r") do io
+        return read!(io, model)
+    end
+    F, S = MOI.ScalarNonlinearFunction, MOI.GreaterThan{Float64}
+    @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) == [(F, S)]
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+    return
+end
+
+function test_hs071_free_constraint()
+    model = NL.Model()
+    open(joinpath(@__DIR__, "data", "hs071_free_constraint.nl"), "r") do io
+        return read!(io, model)
+    end
+    block = MOI.get(model, MOI.NLPBlock())
+    @test length(block.constraint_bounds) == 1
+    return
+end
+
 """
     test_mac_minlp()
 

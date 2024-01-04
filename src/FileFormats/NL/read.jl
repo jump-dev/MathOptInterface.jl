@@ -194,9 +194,11 @@ function _to_model(data::_CacheModel; use_nlp_block::Bool)
                 MOI.Nonlinear.add_constraint(nlp, expr, MOI.Interval(lb, ub))
             elseif -Inf == lb && ub < Inf
                 MOI.Nonlinear.add_constraint(nlp, expr, MOI.LessThan(ub))
-            else
-                @assert -Inf < lb && ub == Inf
+            elseif -Inf < lb && ub == Inf
                 MOI.Nonlinear.add_constraint(nlp, expr, MOI.GreaterThan(lb))
+            else
+                @assert -Inf == lb && ub == Inf
+                # Do nothing. This is a free ranged constraint.
             end
         end
         evaluator =
@@ -215,9 +217,11 @@ function _to_model(data::_CacheModel; use_nlp_block::Bool)
                 MOI.add_constraint(model, f, MOI.Interval(lb, ub))
             elseif -Inf == lb && ub < Inf
                 MOI.add_constraint(model, f, MOI.LessThan(ub))
-            else
-                @assert -Inf < lb && ub == Inf
+            elseif -Inf < lb && ub == Inf
                 MOI.add_constraint(model, f, MOI.GreaterThan(lb))
+            else
+                @assert -Inf == lb && ub == Inf
+                # Do nothing. This is a free ranged constraint.
             end
         end
     end
