@@ -548,6 +548,8 @@ function Base.write(io::IO, model::Model)
     # Line 1: Always the same
     # Notes:
     #  * I think these are magic bytes used by AMPL internally for stuff.
+    #  * The first "1" is if the next row includes the number of logical
+    #    constraints.
     println(io, "g3 1 1 0")
 
     # Line 2: vars, constraints, objectives, ranges, eqns, logical constraints
