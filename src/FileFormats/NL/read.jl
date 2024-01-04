@@ -182,10 +182,14 @@ function _to_model(data::_CacheModel; use_nlp_block::Bool)
         end
     end
     MOI.set.(model, MOI.VariablePrimalStart(), x, data.variable_primal)
-    MOI.set(model, MOI.ObjectiveSense(), data.sense)
+    if data.objective != :()
+        MOI.set(model, MOI.ObjectiveSense(), data.sense)
+    end
     if use_nlp_block
         nlp = MOI.Nonlinear.Model()
-        MOI.Nonlinear.set_objective(nlp, data.objective)
+        if data.objective != :()
+            MOI.Nonlinear.set_objective(nlp, data.objective)
+        end
         for (i, expr) in enumerate(data.constraints)
             lb, ub = data.constraint_lower[i], data.constraint_upper[i]
             if lb == ub
@@ -204,8 +208,10 @@ function _to_model(data::_CacheModel; use_nlp_block::Bool)
         block = MOI.NLPBlockData(evaluator)
         MOI.set(model, MOI.NLPBlock(), block)
     else
-        obj = _to_scalar_nonlinear_function(data.objective)
-        MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
+        if data.objective != :()
+            obj = _to_scalar_nonlinear_function(data.objective)
+            MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
+        end
         for (i, expr) in enumerate(data.constraints)
             lb, ub = data.constraint_lower[i], data.constraint_upper[i]
             f = _to_scalar_nonlinear_function(expr)::MOI.ScalarNonlinearFunction
