@@ -310,6 +310,12 @@ function test_scalar_nonlinear_function_set_objective()
     return
 end
 
+function test_attributes_AutomaticDifferentiationBackend()
+    @test MOI.attribute_value_type(MOI.AutomaticDifferentiationBackend()) ==
+          MOI.Nonlinear.AbstractAutomaticDifferentiation
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")

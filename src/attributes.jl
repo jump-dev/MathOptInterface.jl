@@ -2120,6 +2120,20 @@ struct ListOfSupportedNonlinearOperators <: AbstractOptimizerAttribute end
 )
 
 """
+    AutomaticDifferentiationBackend() <: AbstractOptimizerAttribute
+
+An [`AbstractOptimizerAttribute`](@ref) for setting the automatic differentiation
+backend used by the solver.
+
+The value must be a subtype of [`Nonlinear.AbstractAutomaticDifferentiation`](@ref).
+"""
+struct AutomaticDifferentiationBackend <: AbstractOptimizerAttribute end
+
+function attribute_value_type(::AutomaticDifferentiationBackend)
+    return Nonlinear.AbstractAutomaticDifferentiation
+end
+
+"""
     TerminationStatus()
 
 A model attribute for the `TerminationStatusCode` explaining why the optimizer

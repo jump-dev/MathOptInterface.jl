@@ -86,6 +86,7 @@ NumberOfThreads
 RawSolver
 AbsoluteGapTolerance
 RelativeGapTolerance
+AutomaticDifferentiationBackend
 ```
 
 List of attributes useful for optimizers
