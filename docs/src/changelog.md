@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Fixed converting 0-valued [`ScalarAffineFunction`](@ref) and [`ScalarQuadraticFunction`](@ref)
    to [`ScalarNonlinearFunction`](@ref) (#2388)
  - Fixed reading `.nl` files with non-empty variable and constraint names (#2390)
+ - Fixed reading `.nl` files with no objective (#2391)
+ - Fixed reading `.nl` files with free ranged constraints (#2392)
 
 ## v1.24.0 (January 2, 2024)
 
