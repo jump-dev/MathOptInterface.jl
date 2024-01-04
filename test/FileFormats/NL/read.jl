@@ -644,7 +644,7 @@ function test_no_objective()
         return read!(io, model)
     end
     @test MOI.get(model, MOI.NumberOfVariables()) == 4
-    @test MOI.get(model, MOi.ObjectiveSense()) == MOI.FEASIBILITY_SENSE
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.FEASIBILITY_SENSE
     return
 end
 
