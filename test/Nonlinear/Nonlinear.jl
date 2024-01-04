@@ -1131,7 +1131,23 @@ function test_is_empty()
     return
 end
 
+function test_unsupported_features_expr_graph_only()
+    evaluator = Nonlinear.Evaluator(
+        Nonlinear.Model(),
+        Nonlinear.ExprGraphOnly(),
+        MOI.VariableIndex[],
+    )
+    @test_throws(
+        ErrorException(
+            "Unable to initialize `Nonlinear.Evaluator` because the " *
+            "following features are not supported: $([:Grad])",
+        ),
+        MOI.initialize(evaluator, [:ExprGraph, :Grad]),
+    )
+    return
 end
+
+end  # TestNonlinear
 
 TestNonlinear.runtests()
 
