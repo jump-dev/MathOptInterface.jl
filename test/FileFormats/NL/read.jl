@@ -667,6 +667,16 @@ function test_hs071_free_constraint()
     return
 end
 
+function test_no_objective()
+    model = NL.Model()
+    open(joinpath(@__DIR__, "data", "hs071_no_objective.nl"), "r") do io
+        return read!(io, model)
+    end
+    @test MOI.get(model, MOI.NumberOfVariables()) == 4
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.FEASIBILITY_SENSE
+    return
+end
+
 """
     test_mac_minlp()
 
