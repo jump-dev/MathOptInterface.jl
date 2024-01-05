@@ -100,7 +100,7 @@ end
 
 function MOI.delete(model::MOI.ModelLike, bridge::VectorizeBridge)
     # It isn't safe to delete the variable because the constant may appear in
-    # other parts of the model (like the objective, or right-hand side sets).     Therefore, we don't implement
+    # other parts of the model (like the objective, or right-hand side sets).
     err = MOI.DeleteNotAllowed(
         bridge.variable,
         "Cannot delete variable because it is bridged by the `VectorizeBridge`.",
