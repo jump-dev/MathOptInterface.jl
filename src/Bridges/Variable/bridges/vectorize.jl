@@ -98,10 +98,14 @@ function MOI.get(
     return [bridge.vector_constraint]
 end
 
-# References
 function MOI.delete(model::MOI.ModelLike, bridge::VectorizeBridge)
-    MOI.delete(model, bridge.variable)
-    return
+    # It isn't safe to delete the variable because the constant may appear in
+    # other parts of the model (like the objective, or right-hand side sets).     Therefore, we don't implement
+    err = MOI.DeleteNotAllowed(
+        bridge.variable,
+        "Cannot delete variable because it is bridged by the `VectorizeBridge`.",
+    )
+    return throw(err)
 end
 
 # Attributes, Bridge acting as a constraint

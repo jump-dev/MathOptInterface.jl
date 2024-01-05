@@ -233,14 +233,6 @@ function test_exp3_with_add_constrained_variable_y()
     MOI.set(bridged_mock, MOI.VariablePrimalStart(), y, 1.0)
     @test MOI.get(mock, MOI.VariablePrimalStart(), z) == -4
     @test MOI.get(bridged_mock, MOI.VariablePrimalStart(), y) == 1
-
-    _test_delete_bridged_variable(
-        bridged_mock,
-        y,
-        MOI.LessThan{Float64},
-        2,
-        ((MOI.VectorOfVariables, MOI.Nonpositives, 0),),
-    )
     return
 end
 
