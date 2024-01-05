@@ -638,6 +638,35 @@ function test_parse_header_integrality_both_int()
     return
 end
 
+function test_hs071_free_constraint_nlexpr()
+    model = NL.Model(; use_nlp_block = false)
+    open(joinpath(@__DIR__, "data", "hs071_free_constraint.nl"), "r") do io
+        return read!(io, model)
+    end
+    @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) == [
+        (MOI.ScalarNonlinearFunction, MOI.GreaterThan{Float64}),
+        (MOI.ScalarNonlinearFunction, MOI.Interval{Float64}),
+    ]
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+    end
+    F, S = MOI.ScalarNonlinearFunction, MOI.Interval{Float64}
+    ci = first(MOI.get(model, MOI.ListOfConstraintIndices{F,S}()))
+    @test MOI.get(model, MOI.ConstraintSet(), ci) == MOI.Interval(-Inf, Inf)
+    return
+end
+
+function test_hs071_free_constraint()
+    model = NL.Model()
+    open(joinpath(@__DIR__, "data", "hs071_free_constraint.nl"), "r") do io
+        return read!(io, model)
+    end
+    block = MOI.get(model, MOI.NLPBlock())
+    @test block.constraint_bounds ==
+          [MOI.NLPBoundsPair(25.0, Inf), MOI.NLPBoundsPair(-Inf, Inf)]
+    return
+end
+
 function test_no_objective()
     model = NL.Model()
     open(joinpath(@__DIR__, "data", "hs071_no_objective.nl"), "r") do io
