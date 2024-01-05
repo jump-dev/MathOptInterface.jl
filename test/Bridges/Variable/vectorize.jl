@@ -121,8 +121,7 @@ function test_exp3_with_add_constrained_variable_y()
     @test MOI.get(bridged_mock, MOI.VariablePrimal(), x) ≈ log(5)
     @test MOI.get(bridged_mock, MOI.VariablePrimal(), y) ≈ 5.0
     @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), xc) ≈ 2log(5)
-    # TODO(odow): re-enable at some point
-    # @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), yc) ≈ 5
+    @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), yc) ≈ 5
     @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), ec) ≈ [log(5), 1.0, 5.0]
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), xc) ≈ 0.0
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), yc) ≈ -1 / 5
