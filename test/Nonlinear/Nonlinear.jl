@@ -1147,6 +1147,22 @@ function test_unsupported_features_expr_graph_only()
     return
 end
 
+function test_automatic_differentiation_backend()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+        MOI.Utilities.MockOptimizer(inner),
+    )
+    MOI.set(
+        model,
+        MOI.AutomaticDifferentiationBackend(),
+        MOI.Nonlinear.ExprGraphOnly(),
+    )
+    @test MOI.get(inner, MOI.AutomaticDifferentiationBackend()) ==
+          MOI.Nonlinear.ExprGraphOnly()
+    return
+end
+
 end  # TestNonlinear
 
 TestNonlinear.runtests()

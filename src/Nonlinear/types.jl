@@ -184,6 +184,13 @@ An abstract type for extending [`Evaluator`](@ref).
 """
 abstract type AbstractAutomaticDifferentiation end
 
+function MOI.Utilities.map_indices(
+    ::F,
+    backend::MOI.Nonlinear.AbstractAutomaticDifferentiation,
+) where {F<:Function}
+    return backend
+end
+
 """
     Evaluator(
         model::Model,
