@@ -1496,6 +1496,22 @@ function MOI.get(
     return unbridged_function(b, func)
 end
 
+function MOI.get(
+    b::AbstractBridgeOptimizer,
+    attr::MOI.ConstraintPrimal,
+    ci::MOI.ConstraintIndex,
+)
+    if is_bridged(b, ci)
+        MOI.throw_if_not_valid(b, ci)
+        return call_in_context(MOI.get, b, ci, attr)
+    elseif !Variable.has_bridges(Variable.bridges(b))
+        return MOI.get(b.model, attr, ci)
+    else
+        msg = "unable to get $attr because it might contain bridged variables"
+        throw(MOI.GetAttributeNotAllowed(attr, msg))
+    end
+end
+
 function MOI.supports(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractConstraintAttribute,
