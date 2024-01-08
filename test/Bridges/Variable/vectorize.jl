@@ -236,6 +236,14 @@ function test_exp3_with_add_constrained_variable_y()
     return
 end
 
+function test_delete_variable()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Variable.Vectorize{Float64}(inner)
+    x, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(1.0))
+    @test_throws MOI.DeleteNotAllowed{MOI.VariableIndex} MOI.delete(model, x)
+    return
+end
+
 function test_runtests()
     MOI.Bridges.runtests(
         MOI.Bridges.Variable.VectorizeBridge,
