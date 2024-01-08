@@ -519,17 +519,6 @@ function _test_SDPA_format(T)
     @test MOI.Bridges.bridge_type(bridged, MOI.RotatedSecondOrderCone) ==
           MOI.Bridges.Variable.RSOCtoPSDBridge{T}
     x, cx = MOI.add_constrained_variable(bridged, MOI.LessThan(one(T)))
-    _test_delete_bridged_variable(
-        bridged,
-        x,
-        MOI.LessThan{T},
-        1,
-        (
-            (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
-            (MOI.VectorOfVariables, MOI.Nonpositives, 0),
-        ),
-        used_bridges = 2,
-    )
     @test !MOI.supports_constraint(
         bridged,
         MOI.VectorAffineFunction{T},

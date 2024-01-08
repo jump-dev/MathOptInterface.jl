@@ -233,14 +233,14 @@ function test_exp3_with_add_constrained_variable_y()
     MOI.set(bridged_mock, MOI.VariablePrimalStart(), y, 1.0)
     @test MOI.get(mock, MOI.VariablePrimalStart(), z) == -4
     @test MOI.get(bridged_mock, MOI.VariablePrimalStart(), y) == 1
+    return
+end
 
-    _test_delete_bridged_variable(
-        bridged_mock,
-        y,
-        MOI.LessThan{Float64},
-        2,
-        ((MOI.VectorOfVariables, MOI.Nonpositives, 0),),
-    )
+function test_delete_variable()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Variable.Vectorize{Float64}(inner)
+    x, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(1.0))
+    @test_throws MOI.DeleteNotAllowed{MOI.VariableIndex} MOI.delete(model, x)
     return
 end
 
