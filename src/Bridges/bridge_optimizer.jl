@@ -1507,8 +1507,9 @@ function MOI.get(
     elseif !Variable.has_bridges(Variable.bridges(b))
         return MOI.get(b.model, attr, ci)
     else
-        msg = "unable to get $attr because it might contain bridged variables"
-        throw(MOI.GetAttributeNotAllowed(attr, msg))
+        # Get the fallback, because the function might contain bridged
+        # variables.
+        return MOI.Utilities.get_fallback(b, attr, ci)
     end
 end
 
