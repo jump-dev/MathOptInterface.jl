@@ -45,6 +45,7 @@ function test_LowerBoundAlreadySet_error()
     S1 = MOI.LessThan{Int}
     S2 = MOI.Interval{Int}
     err = MOI.LowerBoundAlreadySet{S1,S2}(x)
+    @test err isa Exception
     @test sprint(showerror, err) ==
           "$(typeof(err)): Cannot add `VariableIndex`-in-`$(S2)` constraint " *
           "for variable $(x) as a `VariableIndex`-in-`$(S1)` constraint was " *
@@ -57,6 +58,7 @@ function test_UpperBoundAlreadySet_error()
     S1 = MOI.GreaterThan{Int}
     S2 = MOI.Interval{Int}
     err = MOI.UpperBoundAlreadySet{S1,S2}(x)
+    @test err isa Exception
     @test sprint(showerror, err) ==
           "$(typeof(err)): Cannot add `VariableIndex`-in-`$(S2)` constraint " *
           "for variable $(x) as a `VariableIndex`-in-`$(S1)` constraint was " *

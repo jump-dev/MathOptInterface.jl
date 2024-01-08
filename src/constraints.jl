@@ -249,7 +249,7 @@ Error thrown when setting a `VariableIndex`-in-`S2` when a
 set a lower bound, i.e. they are [`EqualTo`](@ref), [`GreaterThan`](@ref),
 [`Interval`](@ref), [`Semicontinuous`](@ref) or [`Semiinteger`](@ref).
 """
-struct LowerBoundAlreadySet{S1,S2}
+struct LowerBoundAlreadySet{S1,S2} <: Exception
     vi::VariableIndex
 end
 
@@ -271,7 +271,7 @@ Error thrown when setting a `VariableIndex`-in-`S2` when a
 set an upper bound, i.e. they are [`EqualTo`](@ref), [`LessThan`](@ref),
 [`Interval`](@ref), [`Semicontinuous`](@ref) or [`Semiinteger`](@ref).
 """
-struct UpperBoundAlreadySet{S1,S2}
+struct UpperBoundAlreadySet{S1,S2} <: Exception
     vi::VariableIndex
 end
 
