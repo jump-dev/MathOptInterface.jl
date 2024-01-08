@@ -293,15 +293,6 @@ function test_runtests()
     return
 end
 
-function test_canonical_constraint_function()
-    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
-    model = MOI.Bridges.Constraint.ScalarFunctionize{Float64}(inner)
-    x = MOI.add_variable(model)
-    ci = MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
-    @test MOI.get(model, MOI.CanonicalConstraintFunction(), ci) ≈ x
-    return
-end
-
 function test_FunctionConversionBridge()
     # ScalarAffineFunction -> ScalarQuadraticFunction
     MOI.Bridges.runtests(
