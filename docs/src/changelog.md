@@ -7,6 +7,20 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.25.1 (January 11, 2024)
+
+### Fixed
+
+ - Fixed `map_indices` for `AbstractAutomaticDifferentiation` (#2394)
+ - Fixed deleting a variable in [`Bridges.Variable.VectorizeBridge`](@ref)
+   (#2393)
+ - Fixed super type of [`LowerBoundAlreadySet`](@ref) and [`UpperBoundAlreadySet`](@ref)
+   (#2397)
+
+### Other
+
+ - Removed a duplicated test (#2395)
+
 ## v1.25.0 (January 5, 2024)
 
 ### Added
