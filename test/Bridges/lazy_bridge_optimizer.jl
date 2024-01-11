@@ -333,6 +333,24 @@ function test_MOI_runtests_GeometricSDPAModel()
     return
 end
 
+function test_get_primal_variable_bridge()
+    cache = MOI.Utilities.Model{Float64}()
+    x, c1 = MOI.add_constrained_variable(cache, MOI.GreaterThan(1.0))
+    c2 = MOI.add_constraint(cache, 1.0x, MOI.EqualTo(2.0))
+    inner = MOI.Utilities.MockOptimizer(StandardSDPAModel{Float64}())
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
+    index_map = MOI.copy_to(model, cache)
+    MOI.Utilities.set_mock_optimize!(
+        inner,
+        mock -> MOI.Utilities.mock_optimize!(mock, [1.0]),
+    )
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.VariablePrimal(), index_map[x]) == 2.0
+    @test MOI.get(model, MOI.ConstraintPrimal(), index_map[c1]) == 2.0
+    @test MOI.get(model, MOI.ConstraintPrimal(), index_map[c2]) == 2.0
+    return
+end
+
 function test_index_constraint_conflict()
     optimizer = StandardSDPAModel{Float64}()
     model = MOI.Bridges.full_bridge_optimizer(optimizer, Float64)

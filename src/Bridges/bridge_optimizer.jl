@@ -1496,6 +1496,31 @@ function MOI.get(
     return unbridged_function(b, func)
 end
 
+function MOI.get(
+    b::AbstractBridgeOptimizer,
+    attr::MOI.ConstraintPrimal,
+    ci::MOI.ConstraintIndex{F,S},
+) where {F<:MOI.AbstractScalarFunction,S<:MOI.AbstractScalarSet}
+    if is_bridged(b, ci)
+        MOI.throw_if_not_valid(b, ci)
+        return call_in_context(MOI.get, b, ci, attr)
+    end
+    if Variable.has_bridges(Variable.bridges(b))
+        # In this case, the scalar constraint might contain bridged variables
+        # that include constants, like `x >= 1` being mapped to `y >= 0`,
+        # `x := y + 1`. If this is true, then `normalize_and_add_constraint`
+        # may move the constants into the set, and querying `ConstraintPrimal`
+        # from `b.model` will return the value of `y`, not `y + 1`. As a
+        # work-around, we use `get_fallback`, which first queries
+        # `ConstraintFunction` and then evaluates the function at the point
+        # defined by `VariablePrimal`. Querying `ConstraintFunction` accounts
+        # for the case where constants were moved to the set, so we return the
+        # correct value.
+        return MOI.Utilities.get_fallback(b, attr, ci)
+    end
+    return MOI.get(b.model, attr, ci)
+end
+
 function MOI.supports(
     b::AbstractBridgeOptimizer,
     attr::MOI.AbstractConstraintAttribute,
