@@ -487,12 +487,14 @@ julia> struct Expression
 ```
 
 For each node `node` in the `.nodes` field, if `node.type` is:
+
  * `NODE_CALL_MULTIVARIATE`, we look up
    `MULTIVARIATE_OPERATORS[node.index]` to retrieve the operator
  * `NODE_CALL_UNIVARIATE`, we look up
    `UNIVARIATE_OPERATORS[node.index]` to retrieve the operator
  * `NODE_VARIABLE`, we create `MOI.VariableIndex(node.index)`
  * `NODE_VALUE`, we look up `values[node.index]`
+
 The `.parent` field of each node is the integer index of the parent node in
 `.nodes`. For the first node, the parent is `-1` by convention.
 
@@ -511,6 +513,16 @@ julia> expr = Expression(
        );
 ```
 
+The ordering of the nodes in the tape must satisfy two rules:
+
+ * The children of a node must appear after the parent. This means that the tape
+   is ordered topologically, so that a reverse pass of the nodes evaluates all
+   children nodes before their parent
+ * The arguments for a `CALL` node are ordered in the tape based on the order in
+   which they appear in the function call.
+
+#### Design goals
+
 This is less readable than the other options, but does this data structure meet
 our design goals?
 
@@ -523,9 +535,6 @@ For our third goal, it is not easy to identify the children of a node, but it is
 easy to identify the _parent_ of any node. Therefore, we can use
 [`Nonlinear.adjacency_matrix`](@ref) to compute a sparse matrix that maps
 parents to their children.
-
-The tape is also ordered topologically, so that a reverse pass of the nodes
-evaluates all children nodes before their parent.
 
 ### The design in practice
 
