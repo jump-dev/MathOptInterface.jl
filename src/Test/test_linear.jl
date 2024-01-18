@@ -1161,7 +1161,7 @@ function test_linear_VectorAffineFunction(
     # Max  - bx z + by w
     # s.t. -    z        == - 1     (c1)
     #                  w ==   1     (c2)
-    # i.e. z == w == 1
+    # that is, z == w == 1
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,

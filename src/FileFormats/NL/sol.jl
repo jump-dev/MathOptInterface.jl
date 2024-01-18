@@ -224,7 +224,7 @@ function _interpret_status(solve_result_num::Int, raw_status_string::String)
         # provably globally optimal.
         return MOI.LOCALLY_SOLVED, MOI.FEASIBLE_POINT
     elseif 100 <= solve_result_num < 200
-        # Solved, but the solver can't be sure for some reason. e.g., SHOT
+        # Solved, but the solver can't be sure for some reason. for example, SHOT
         # uses this for non-convex problems it isn't sure is the global optima.
         return MOI.LOCALLY_SOLVED, MOI.FEASIBLE_POINT
     elseif 200 <= solve_result_num < 300

@@ -52,7 +52,7 @@ A type-safe wrapper for `Int64` for use in referencing `F`-in-`S` constraints in
 a model.
 The parameter `F` is the type of the function in the constraint, and the
 parameter `S` is the type of set in the constraint. To allow for deletion,
-indices need not be consecutive. Indices within a constraint type (i.e. `F`-in-`S`)
+indices need not be consecutive. Indices within a constraint type (that is, `F`-in-`S`)
 must be unique, but non-unique indices across different constraint types are allowed.
 If `F` is [`VariableIndex`](@ref) then the index is equal to the index of the
 variable. That is for an `index::ConstraintIndex{VariableIndex}`, we always
@@ -137,7 +137,7 @@ if `index` cannot be deleted.
 
 The following modifications also take effect if `Index` is [`VariableIndex`](@ref):
 * If `index` used in the objective function, it is removed from the function,
-  i.e., it is substituted for zero.
+  that is, it is substituted for zero.
 * For each `func`-in-`set` constraint of the model:
   - If `func isa VariableIndex` and `func == index` then the
     constraint is deleted.
@@ -147,7 +147,7 @@ The following modifications also take effect if `Index` is [`VariableIndex`](@re
       then the variable is removed from `func` and `set` is replaced by
       `update_dimension(set, MOI.dimension(set) - 1)`.
     * Otherwise, a [`DeleteNotAllowed`](@ref) error is thrown.
-  - Otherwise, the variable is removed from `func`, i.e., it is substituted for
+  - Otherwise, the variable is removed from `func`, that is, it is substituted for
     zero.
 """
 delete(model::ModelLike, index::Index) = throw(DeleteNotAllowed(index))

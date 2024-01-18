@@ -239,7 +239,7 @@ Compute the sparse adjacency matrix describing the parent-child relationships in
 
 The element `(i, j)` is `true` if there is an edge *from* `node[j]` to
 `node[i]`. Since we get a column-oriented matrix, this gives us a fast way to
-look up the edges leaving any node (i.e., the children).
+look up the edges leaving any node (that is, the children).
 """
 function adjacency_matrix(nodes::Vector{Node})
     N = length(nodes)

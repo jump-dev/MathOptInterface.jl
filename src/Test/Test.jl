@@ -119,7 +119,7 @@ end
     setup_test(::typeof(f), model::MOI.ModelLike, config::Config)
 
 Overload this method to modify `model` before running the test function `f` on
-`model` with `config`. You can also modify the fields in `config` (e.g., to
+`model` with `config`. You can also modify the fields in `config` (for example, to
 loosen the default tolerances).
 
 This function should either return `nothing`, or return a function which, when

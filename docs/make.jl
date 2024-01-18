@@ -149,8 +149,8 @@ write(joinpath(@__DIR__, "src", "MathOptInterface.pdf"), "")
     linkcheck_ignore = [
         # Ignore the PDF link, because it hasn't been built yet.
         "MathOptInterface.pdf",
-        # Ignore tags, because preping for a new release will otherwise cause it
-        # to fail.
+        # Ignore tags, because prepping for a new release will otherwise cause
+        # it to fail.
         r"https://github.com/jump-dev/MathOptInterface.jl/releases/tag/v([0-9]).([0-9]+).([0-9]+)",
         # Ignore issue and pull request links, because there are many of them,
         # and they sometimes time-out the linkcheck.
@@ -178,8 +178,8 @@ if _PDF
         build = "latex_build",
         pages = _PAGES,
     )
-    # Hack for deploying: copy the pdf (and only the PDF) into the HTML build
-    # directory! We don't want to copy everything in `latex_build` because it
+    # Hack for deploying: copy the PDF (and only the PDF) into the HTML build
+    # directory. We don't want to copy everything in `latex_build` because it
     # includes lots of extraneous LaTeX files.
     cp(
         joinpath(@__DIR__, "latex_build", "MathOptInterface.pdf"),

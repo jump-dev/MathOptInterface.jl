@@ -178,7 +178,7 @@ macro product_of_sets(name, set_types...)
 
             """
             A dictionary which maps the `set_index` and `offset` of a set to the
-            dimension, i.e., `dimension[(set_index,offset)] → dim`.
+            dimension, that is, `dimension[(set_index,offset)] → dim`.
             """
             dimension::Dict{Tuple{Int,Int},Int}
 

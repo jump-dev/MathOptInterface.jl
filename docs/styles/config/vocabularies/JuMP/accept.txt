@@ -7,13 +7,17 @@ bugfixe(?s)
 datastructure
 docstring(?s)
 doctest
-enum
+[Ee]num
 errored
 flamegraph
 getters
 [Jj]ulia
+linkcheck
+nonlinearly
 [Pp]recompil(ation|(e(?d)))
 subexpression(?s)
+sublicense
+textualist
 
 % JuMP-related vocab
 [Cc]anonicaliz(e|ation|ing)
@@ -27,6 +31,7 @@ unboundedness
 [Un]nivariate
 
 % Other
+Codecov
 Clp
 Gurobi
 GZip
@@ -35,3 +40,4 @@ JSONSchema
 MOI
 PATHSolver
 preprint
+Lubin

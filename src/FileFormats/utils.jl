@@ -192,7 +192,7 @@ end
 
 Base type to implement a new compression scheme for MathOptFormat.
 
-To do so, create a concrete subtype (e.g., named after the compression scheme)
+To do so, create a concrete subtype (for example, named after the compression scheme)
 and implement:
 
     extension(::Val{:your_scheme_extension}) = YourScheme()

@@ -37,7 +37,7 @@ The constraints can be added in two different ways:
    corresponding index in `caches` is added in `are_indices_mapped`. This avoids
    doing a copy of the function in case the getter of
    `CanonicalConstraintFunction` does not make a copy for the source model,
-   e.g., this is the case of `VectorOfConstraints`.
+   for example, this is the case of `VectorOfConstraints`.
 
 We illustrate this with an example. Suppose a model is copied from a
 `src::MOI.Utilities.Model` to a bridged model with a `MatrixOfConstraints`. For

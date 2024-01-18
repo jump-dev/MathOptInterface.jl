@@ -186,7 +186,7 @@ function _add_variables(::VectorOfConstraints, ::Int64) end
 Return a tuple `(g, t)` representing the constraint `f`-in-`s` with the
 variable `vi` removed. That is, the terms containing the variable `vi` in the
 function `f` are removed and the dimension of the set `s` is updated if
-needed (e.g. when `f` is a `VectorOfVariables` with `vi` being one of the
+needed (for example, when `f` is a `VectorOfVariables` with `vi` being one of the
 variables).
 """
 remove_variable(f, s, vi::MOI.VariableIndex) = remove_variable(f, vi), s

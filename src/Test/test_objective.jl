@@ -277,7 +277,7 @@ end
         config::Config,
     )
 
-Test various edge cases relating to quadratic programs (i.e., with a quadratic
+Test various edge cases relating to quadratic programs (that is, with a quadratic
 objective function).
 
 If `config.solve=true` confirm that it solves correctly.

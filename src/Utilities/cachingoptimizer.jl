@@ -6,7 +6,7 @@
 
 # Tips for writing type stable code in this file.
 #
-# Because the .optimizer field can by an abstract type (e.g., JuMP uses
+# Because the .optimizer field can by an abstract type (for example, JuMP uses
 # AbstractOptimizer), referring to `.optimizer` in a function is not always
 # type-stable. To help the compiler, always annotate the return type of a
 # function that uses `.optimizer`. For example:
@@ -130,7 +130,7 @@ function _copy_optimizer_attributes(m::CachingOptimizer)
         # Skip attributes which don't apply to the new optimizer.
         if attr isa MOI.RawOptimizerAttribute
             # Even if the optimizer claims to `supports` `attr`, the value
-            # might have a different meaning (e.g., two solvers with `logLevel`
+            # might have a different meaning (for example, two solvers with `logLevel`
             # as a RawOptimizerAttribute). To be on the safe side, just skip all
             # raw parameters.
             continue
@@ -528,7 +528,7 @@ function MOI.add_constraint(
             catch err
                 if err isa MOI.NotAllowedError
                     # It could be MOI.AddConstraintNotAllowed{F', S'} with F' != F
-                    # or S' != S if, e.g., the `F`-in-`S` constraint is bridged
+                    # or S' != S if, for example, the `F`-in-`S` constraint is bridged
                     # to other constraints in `m.optimizer`
                     reset_optimizer(m)
                 else
@@ -1063,10 +1063,10 @@ function MOI.set(
 end
 
 function MOI.get(model::CachingOptimizer, attr::MOI.AbstractOptimizerAttribute)
-    # TODO: Copyable attributes (e.g., `Silent`, `TimeLimitSec`,
+    # TODO: Copyable attributes (for example, `Silent`, `TimeLimitSec`,
     # `NumberOfThreads`) should also be stored in the cache so we could
     # return the value stored in the cache instead. However, for
-    # non-copyable attributes( e.g. `SolverName`) the error is appropriate.
+    # non-copyable attributes( for example, `SolverName`) the error is appropriate.
     _throw_if_get_attribute_not_allowed(
         model,
         attr;

@@ -35,8 +35,8 @@ let exprs = map(SYMBOLIC_UNIVARIATE_EXPRESSIONS) do arg
 end
 
 # We use a let block here for `expr` to create a local variable that does not
-# persist in the scope of the module. All we care about is the
-# _eval_univariate_2nd_deriv function that is eval'd as a result.
+# persist in the scope of the module. All we care about is the function that is
+# eval'd as a result.
 let exprs = map(SYMBOLIC_UNIVARIATE_EXPRESSIONS) do arg
         if arg === :(nothing)  # f''(x) isn't defined
             :(error("Invalid operator_id"))

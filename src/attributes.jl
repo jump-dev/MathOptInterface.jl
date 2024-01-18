@@ -76,7 +76,7 @@ attribute_value_type(::AnyAttribute) = Any
     end
 
 An error indicating that the attribute `attr` is not supported by the model,
-i.e. that [`supports`](@ref) returns `false`.
+that is, that [`supports`](@ref) returns `false`.
 """
 struct UnsupportedAttribute{AttrType<:AnyAttribute} <: UnsupportedError
     attr::AttrType
@@ -147,7 +147,7 @@ Base.broadcastable(sub::AbstractSubmittable) = Ref(sub)
     end
 
 An error indicating that the submittable `sub` is not supported by the model,
-i.e. that [`supports`](@ref) returns `false`.
+that is, that [`supports`](@ref) returns `false`.
 """
 struct UnsupportedSubmittable{SubmitType<:AbstractSubmittable} <:
        UnsupportedError
@@ -451,8 +451,8 @@ end
 
 An in-place version of [`get`](@ref).
 
-The signature matches that of [`get`](@ref) except that the the result is placed
-in the vector `output`.
+The signature matches that of [`get`](@ref) except that the result is placed in
+the vector `output`.
 """
 function get!(output, model::ModelLike, attr::AnyAttribute, args...)
     output .= get(model, attr, args...)
@@ -711,7 +711,7 @@ Typically [`CallbackVariablePrimal`](@ref) will violate integrality constraints,
 and a cut would be of the form [`ScalarAffineFunction`](@ref)-in-[`LessThan`](@ref)
 or [`ScalarAffineFunction`](@ref)-in-[`GreaterThan`](@ref). Note that, as
 opposed to [`LazyConstraint`](@ref), the provided constraint cannot modify the
-feasible set, the constraint should be redundant, e.g., it may be a consequence
+feasible set, the constraint should be redundant, for example, it may be a consequence
 of affine and integrality constraints.
 
 This can be submitted only from the [`UserCutCallback`](@ref). The
@@ -806,7 +806,7 @@ An optimizer attribute for the string identifying the version of the solver.
 
     For solvers supporting [semantic versioning](https://semver.org), the
     `SolverVersion` should be a string of the form "vMAJOR.MINOR.PATCH", so that
-    it can be converted to a Julia `VersionNumber` (e.g., `VersionNumber("v1.2.3")).
+    it can be converted to a Julia `VersionNumber` (for example, `VersionNumber("v1.2.3")).
 
     We do not require Semantic Versioning because some solvers use alternate
     versioning systems. For example, CPLEX uses Calendar Versioning, so
@@ -999,7 +999,7 @@ end
 Abstract type for a model attribute representing a callback function. The
 value set to subtypes of `AbstractCallback` is a function that may be called
 during [`optimize!`](@ref). As [`optimize!`](@ref) is in progress, the result
-attributes (i.e, the attributes `attr` such that `is_set_by_optimize(attr)`)
+attributes (that is, the attributes `attr` such that `is_set_by_optimize(attr)`)
 may not be accessible from the callback, hence trying to get result attributes
 might throw a [`OptimizeInProgress`](@ref) error.
 
@@ -1049,7 +1049,7 @@ struct LazyConstraintCallback <: AbstractCallback end
     HeuristicCallback() <: AbstractCallback
 
 The callback can be used to submit [`HeuristicSolution`](@ref) given the
-current primal solution. For example, it may be called at fractional (i.e.,
+current primal solution. For example, it may be called at fractional (that is,
 non-integer) nodes in the branch and bound tree of a mixed-integer problem. Note
 that there is no guarantee that the callback is called *every* time the solver
 has an infeasible solution.
@@ -1078,7 +1078,7 @@ struct HeuristicCallback <: AbstractCallback end
     UserCutCallback() <: AbstractCallback
 
 The callback can be used to submit [`UserCut`](@ref) given the current primal
-solution. For instance, it may be called at fractional (i.e., non-integer) nodes
+solution. For instance, it may be called at fractional (that is, non-integer) nodes
 in the branch and bound tree of a mixed-integer problem. Note that there is not
 guarantee that the callback is called *everytime* the solver has an infeasible
 solution.
@@ -1174,7 +1174,7 @@ attribute_value_type(::NumberOfVariables) = Int64
     ListOfVariableIndices()
 
 A model attribute for the `Vector{VariableIndex}` of all variable indices
-present in the model (i.e., of length equal to the value of
+present in the model (that is, of length equal to the value of
 [`NumberOfVariables`](@ref) in the order in which they were added.
 """
 struct ListOfVariableIndices <: AbstractModelAttribute end
@@ -1183,7 +1183,7 @@ struct ListOfVariableIndices <: AbstractModelAttribute end
     ListOfConstraintIndices{F,S}()
 
 A model attribute for the `Vector{ConstraintIndex{F,S}}` of all constraint
-indices of type `F`-in-`S` in the model (i.e., of length equal to the value of
+indices of type `F`-in-`S` in the model (that is, of length equal to the value of
 [`NumberOfConstraints{F,S}`](@ref)) in the order in which they were added.
 """
 struct ListOfConstraintIndices{F,S} <: AbstractModelAttribute end
@@ -1242,7 +1242,7 @@ A model attribute for the objective function which has a type
 function type provided by the user.
 
 Throws an `InexactError` if the objective function cannot be converted to `F`,
-e.g., the objective function is quadratic and `F` is
+for example, the objective function is quadratic and `F` is
 `ScalarAffineFunction{Float64}` or it has non-integer coefficient and `F` is
 `ScalarAffineFunction{Int}`.
 """
@@ -1395,17 +1395,17 @@ to one of the available results. Thus, `result_index` must be an integer between
 `1` and the number of available results.
 
 As a general rule, the first result (`result_index=1`) is the most important
-result (e.g., an optimal solution or an infeasibility certificate). Other
+result (for example, an optimal solution or an infeasibility certificate). Other
 results will typically be alternate solutions that the solver found during the
 search for the first result.
 
-If a (local) optimal solution is available, i.e., [`TerminationStatus`](@ref) is
+If a (local) optimal solution is available, that is, [`TerminationStatus`](@ref) is
 `OPTIMAL` or `LOCALLY_SOLVED`, the first result must correspond to the (locally)
 optimal solution. Other results may be alternative optimal solutions, or they
 may be other suboptimal solutions; use [`ObjectiveValue`](@ref) to distingiush
 between them.
 
-If a primal or dual infeasibility certificate is available, i.e.,
+If a primal or dual infeasibility certificate is available, that is,
 [`TerminationStatus`](@ref) is `INFEASIBLE` or `DUAL_INFEASIBLE` and the
 corresponding [`PrimalStatus`](@ref) or [`DualStatus`](@ref) is
 `INFEASIBILITY_CERTIFICATE`, then the first result must be a certificate. Other
@@ -1546,7 +1546,7 @@ is_set_by_optimize(::CallbackVariablePrimal) = true
     * `NONBASIC_AT_LOWER` and `NONBASIC_AT_UPPER` should be used only for
     constraints with the `Interval` set. In this case, they are necessary to
     distinguish which side of the constraint is active. One-sided constraints
-    (e.g., `LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
+    (for example, `LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
     `NONBASIC_AT_*` values. This restriction does not apply to [`VariableBasisStatus`](@ref),
     which should return `NONBASIC_AT_*` regardless of whether the alternative
     bound exists.
@@ -1701,8 +1701,8 @@ struct ConstraintDualStart <: AbstractConstraintAttribute end
 """
     ConstraintPrimal(result_index::Int = 1)
 
-A constraint attribute for the assignment to some constraint's primal value(s)
-in result `result_index`.
+A constraint attribute for the assignment to some constraint's primal value in
+result `result_index`.
 
 If the constraint is `f(x) in S`, then in most cases the `ConstraintPrimal` is
 the value of `f`, evaluated at the correspondng [`VariablePrimal`](@ref)
@@ -1732,7 +1732,7 @@ end
 """
     ConstraintDual(result_index::Int = 1)
 
-A constraint attribute for the assignment to some constraint's dual value(s) in
+A constraint attribute for the assignment to some constraint's dual value in
 result `result_index`. If `result_index` is omitted, it is 1 by default.
 
 If the solver does not have a dual value for the variable because the

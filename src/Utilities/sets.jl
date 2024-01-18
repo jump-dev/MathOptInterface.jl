@@ -147,7 +147,7 @@ Convert between the row and column indices of a matrix, to the linear index of
 the corresponding element in the triangular representation.
 
 This is most useful when mapping between `ConeSquare` and `ConeTriangle` sets,
-e.g., as part of an [`MOI.AbstractSymmetricMatrixSetTriangle`](@ref) set.
+for example, as part of an [`MOI.AbstractSymmetricMatrixSetTriangle`](@ref) set.
 
 !!! note
     Use [`inverse_trimap`](@ref) for the reverse mapping.
@@ -162,7 +162,7 @@ end
 """
     inverse_trimap(row::Integer, column::Integer)
 
-Convert between the the linear index of a
+Convert between the linear index of a
 [`MathOptInterface.AbstractSymmetricMatrixSetTriangle`] to the row and column
 indices of upper triangular part of the corresponding matrix.
 

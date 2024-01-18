@@ -86,7 +86,7 @@ function test_zeros()
 
     err = ErrorException(
         "Cannot unbridge function because some variables are bridged by" *
-        " variable bridges that do not support reverse mapping, e.g.," *
+        " variable bridges that do not support reverse mapping, for example," *
         " `ZerosBridge`.",
     )
     @test_throws err MOI.get(bridged_mock, MOI.ObjectiveFunction{typeof(obj)}())

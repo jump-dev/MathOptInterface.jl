@@ -14,7 +14,7 @@
 Return a `Bool` indicating whether `model` supports `F`-in-`S` constraints, that
 is, `copy_to(model, src)` does not throw [`UnsupportedConstraint`](@ref) when
 `src` contains `F`-in-`S` constraints. If `F`-in-`S` constraints are only not
-supported in specific circumstances, e.g. `F`-in-`S` constraints cannot be
+supported in specific circumstances, for example, `F`-in-`S` constraints cannot be
 combined with another type of constraint, it should still return `true`.
 """
 function supports_constraint(
@@ -31,7 +31,7 @@ end
     end
 
 An error indicating that constraints of type `F`-in-`S` are not supported by
-the model, i.e. that [`supports_constraint`](@ref) returns `false`.
+the model, that is, that [`supports_constraint`](@ref) returns `false`.
 """
 struct UnsupportedConstraint{F<:AbstractFunction,S<:AbstractSet} <:
        UnsupportedError
@@ -246,7 +246,7 @@ end
 
 Error thrown when setting a `VariableIndex`-in-`S2` when a
 `VariableIndex`-in-`S1` has already been added and the sets `S1`, `S2` both
-set a lower bound, i.e. they are [`EqualTo`](@ref), [`GreaterThan`](@ref),
+set a lower bound, that is, they are [`EqualTo`](@ref), [`GreaterThan`](@ref),
 [`Interval`](@ref), [`Semicontinuous`](@ref) or [`Semiinteger`](@ref).
 """
 struct LowerBoundAlreadySet{S1,S2} <: Exception
@@ -268,7 +268,7 @@ end
 
 Error thrown when setting a `VariableIndex`-in-`S2` when a
 `VariableIndex`-in-`S1` has already been added and the sets `S1`, `S2` both
-set an upper bound, i.e. they are [`EqualTo`](@ref), [`LessThan`](@ref),
+set an upper bound, that is, they are [`EqualTo`](@ref), [`LessThan`](@ref),
 [`Interval`](@ref), [`Semicontinuous`](@ref) or [`Semiinteger`](@ref).
 """
 struct UpperBoundAlreadySet{S1,S2} <: Exception

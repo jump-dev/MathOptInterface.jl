@@ -288,7 +288,7 @@ Record that a constraint `vi`-in-`set` is added and throws if a lower or upper b
 is set by this constraint and such bound has already been set for `vi`.
 """
 function MOI.add_constraint(::Map, ::MOI.VariableIndex, ::MOI.AbstractScalarSet)
-    # Nothing to do as this is is not recognized as setting a lower or upper bound
+    # Nothing to do as this is not recognized as setting a lower or upper bound
 end
 
 # We cannot use `SUPPORTED_VARIABLE_SCALAR_SETS` because
@@ -327,7 +327,7 @@ function MOI.delete(
     ::Map,
     ci::MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet},
 )
-    # Nothing to do as this is is not recognized as setting a lower or upper bound
+    # Nothing to do as this is not recognized as setting a lower or upper bound
 end
 
 function MOI.delete(
@@ -581,7 +581,7 @@ function throw_if_cannot_unbridge(map::Map)
     if map.unbridged_function === nothing
         error(
             "Cannot unbridge function because some variables are bridged by",
-            " variable bridges that do not support reverse mapping, e.g.,",
+            " variable bridges that do not support reverse mapping, for example,",
             " `ZerosBridge`.",
         )
     end

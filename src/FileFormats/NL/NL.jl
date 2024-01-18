@@ -635,7 +635,7 @@ function Base.write(io::IO, model::Model)
 
     # Line 10: common exprs: b,c,o,c1,o1
     # Notes:
-    #  * We don't add common subexpressions (i.e., V blocks).
+    #  * We don't add common subexpressions (that is, V blocks).
     #  * I assume the notation means
     #     - b = in nonlinear objective and constraint
     #     - c = in nonlinear constraint

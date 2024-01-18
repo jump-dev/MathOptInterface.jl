@@ -1534,7 +1534,7 @@ function MOI.supports(
         if is_bridged(b, S)
             # If S needs to be bridged, it usually means that either there is a
             # variable bridge, or that there is a free variable followed by a
-            # constraint bridge (i.e., the two cases handled below).
+            # constraint bridge (that is, the two cases handled below).
             #
             # However, it might be the case, like the tests in
             # Variable/flip_sign.jl, that the model supports F-in-S constraints,
@@ -2216,7 +2216,7 @@ function bridged_function(b::AbstractBridgeOptimizer, func::MOI.VariableIndex)
     # Should not be called by `add_constraint` as it force-bridges it
     # but could be called by attributes
     if is_bridged(b, func)
-        # It could be solved by force-bridging the attribues (e.g. objective).
+        # It could be solved by force-bridging the attribues (for example, objective).
         error("Using bridged variable in `VariableIndex` function.")
     end
     return func
@@ -2349,7 +2349,7 @@ function unbridged_constraint_function end
 
 # The purpose of unbridged_constraint_function is to convert the result of
 # ConstraintFunction into the un-bridged form. Since variable bridges create
-# substitution rules which are scalar functions, e.g., `x => y_1 - y_2`, if the
+# substitution rules which are scalar functions, for example, `x => y_1 - y_2`, if the
 # result is a VariableIndex or an AbstractVectorFunction we can return the
 # unbridged function:
 
