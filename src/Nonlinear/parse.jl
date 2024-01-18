@@ -329,7 +329,7 @@ Convert the [`Expression`](@ref) `expr` into a Julia `Expr`.
 
  * subexpressions are represented by a [`ExpressionIndex`](@ref) object.
  * parameters are represented by a [`ParameterIndex`](@ref) object.
- * variables are represennted by an [`MOI.VariableIndex`](@ref) object.
+ * variables are represented by an [`MOI.VariableIndex`](@ref) object.
 """
 function convert_to_expr(model::Model, expr::Expression)
     tree = Any[]

@@ -460,7 +460,7 @@ The problem is
 `max x + 2y | x^2 + 0.25y*x + 0.25x*y + 0.5x*y + y^2 <= 1, x >= 0.5, y >= 0.5`.
 
 !!! warn
-    This problem has an irrational solution! Solvers using rational arithmetic
+    This problem has an irrational solution. Solvers using rational arithmetic
     should exclude it.
 """
 function test_constraint_qcp_duplicate_off_diagonal(

@@ -10,7 +10,7 @@
 Returns a new scalar set `new_set` such that `func`-in-`set` is equivalent to
 `func + offset`-in-`new_set`.
 
-Only define this function if it makes sense to!
+Only define this function if it makes sense to.
 
 Use [`supports_shift_constant`](@ref) to check if the set supports shifting:
 ```Julia

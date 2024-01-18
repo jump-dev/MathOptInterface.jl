@@ -26,7 +26,7 @@ const LATEX = MIME("text/latex")
 const PLAIN = MIME("text/plain")
 const IN = Sys.iswindows() ? "in" : "∈"
 
-# Windows fun...
+# Windows fun
 function _string_compare(a, b)
     @test replace(a, "\r\n" => "\n") == replace(b, "\r\n" => "\n")
     return

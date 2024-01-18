@@ -2429,7 +2429,7 @@ end
     CountGreaterThan(dimension::Int)
 
 The set ``\\{(c, y, x) \\in \\mathbb{Z}^{1+1+d}\\}``, such that `c` is strictly
-greater than the number of occurances of `y` in `x` and `dimension = 1 + 1 + d`.
+greater than the number of occurences of `y` in `x` and `dimension = 1 + 1 + d`.
 
 ## Also known as
 
@@ -2774,7 +2774,7 @@ function Base.:(==)(x::Reified{S}, y::Reified{S}) where {S}
     return x.set == y.set
 end
 
-# TODO(odow): these are not necessarily isbits! They may not be safe to return
+# TODO(odow): these are not necessarily isbits. They may not be safe to return
 # without copying if the number is BigFloat, for example.
 function Base.copy(
     set::Union{

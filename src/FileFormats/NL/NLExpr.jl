@@ -384,7 +384,7 @@ function _process_expr!(expr::_NLExpr, arg::MOI.VariableIndex)
     return push!(expr.nonlinear_terms, arg)
 end
 
-# TODO(odow): these process_expr! functions use recursion. For large models,
+# TODO(odow): these functions use recursion. For large models,
 # this may exceed the stack. At some point, we may have to rewrite this to not
 # use recursion.
 function _process_expr!(expr::_NLExpr, arg::Expr)
@@ -443,7 +443,7 @@ function _process_expr!(expr::_NLExpr, args::Vector{Any})
     if op == :+
         if N == 1  # +x, so we can just drop the op and process the args.
             return _process_expr!(expr, args[2])
-        elseif N > 2  # nary-addition!
+        elseif N > 2  # nary-addition
             op = :sum
         end
     elseif op == :- && N == 1
@@ -458,7 +458,7 @@ function _process_expr!(expr::_NLExpr, args::Vector{Any})
             N = length(args) - 1
         end
     elseif op == :* && N == 1
-        # Unary multiplication! We can drop the op and process the args.
+        # unary multiplication: we can drop the op and process the args.
         return _process_expr!(expr, args[2])
     end
     # Now convert the Julia expression into an _NLExpr.

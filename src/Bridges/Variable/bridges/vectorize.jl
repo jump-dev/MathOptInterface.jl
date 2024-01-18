@@ -124,7 +124,7 @@ function MOI.set(
     bridge::VectorizeBridge,
     ::MOI.Utilities.ScalarLinearSet,
 )
-    # This would require modifing any constraint which uses the bridged
+    # This would require modifying any constraint which uses the bridged
     # variable.
     return throw(
         MOI.SetAttributeNotAllowed(

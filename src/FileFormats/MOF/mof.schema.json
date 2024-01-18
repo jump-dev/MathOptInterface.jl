@@ -1133,7 +1133,7 @@
                     }
                 }
             }, {
-                "description": "The set `{(c, y, x) in Z^{1+1+d}}`, such that `c` is strictly greater than the number of occurances of `y` in `x` and `dimension = 1 + 1 + d`.",
+                "description": "The set `{(c, y, x) in Z^{1+1+d}}`, such that `c` is strictly greater than the number of occurences of `y` in `x` and `dimension = 1 + 1 + d`.",
                 "examples": ["{\"type\": \"CountGreaterThan\", \"dimension\": 3}"],
                 "required": ["dimension"],
                 "properties": {

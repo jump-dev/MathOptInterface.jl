@@ -61,7 +61,7 @@ struct GeoMeanBridge{T,F,G,H} <: AbstractBridge
     xij::Vector{MOI.VariableIndex}
     t_upper_bound_constraint::MOI.ConstraintIndex{F,MOI.LessThan{T}}
     rsoc_constraints::Vector{MOI.ConstraintIndex{G,MOI.RotatedSecondOrderCone}}
-    # Ihe case that `d > 2`, this is `Nothing` because the new variables are
+    # In the case that `d > 2`, this is `Nothing` because the new variables are
     # non-negative due to the RotatedSecondOrderCone constraint.
     x_nonnegative_constraint::Union{
         Nothing,

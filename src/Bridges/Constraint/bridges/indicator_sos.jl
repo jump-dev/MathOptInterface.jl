@@ -52,7 +52,7 @@ function bridge_constraint(
     sos_index = MOI.add_constraint(
         model,
         MOI.VectorOfVariables([slack, z]),
-        MOI.SOS1{T}([0.4, 0.6]),  # This weight vector is arbitrary!
+        MOI.SOS1{T}([0.4, 0.6]),  # This weight vector is arbitrary
     )
     new_f = MOI.Utilities.operate(+, T, f_scalars[2], slack)
     affine_index = MOI.add_constraint(model, new_f, s.set)

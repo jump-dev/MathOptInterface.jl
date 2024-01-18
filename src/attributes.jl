@@ -44,7 +44,7 @@ attributes (properties) of constraints in the model.
 abstract type AbstractConstraintAttribute end
 
 # Attributes should not contain any `VariableIndex` or `ConstraintIndex` as the
-# set is passed unmodifed during `copy_to`.
+# set is passed unmodified during `copy_to`.
 const AnyAttribute = Union{
     AbstractOptimizerAttribute,
     AbstractModelAttribute,
@@ -270,7 +270,7 @@ circumstances, it should still return `true`.
 
 Note that `supports` is only defined for attributes for which
 [`is_copyable`](@ref) returns `true` as other attributes do not appear in the
-list of attributes set obtained by `ListOf...AttributesSet`.
+list of attributes set obtained by `ListOfXXXAttributesSet`.
 """
 function supports(model::ModelLike, attr::AnyAttribute, args...)
     return supports_fallback(model, attr, args...)
@@ -842,7 +842,7 @@ attribute_value_type(::Silent) = Bool
 """
     TimeLimitSec()
 
-An optimizer attribute for setting a time limit (in seconnds) for an
+An optimizer attribute for setting a time limit (in seconds) for an
 optimization. When `set` to `nothing`, it deactivates the solver time limit. The
 default value is `nothing`.
 """
@@ -1402,7 +1402,7 @@ search for the first result.
 If a (local) optimal solution is available, that is, [`TerminationStatus`](@ref) is
 `OPTIMAL` or `LOCALLY_SOLVED`, the first result must correspond to the (locally)
 optimal solution. Other results may be alternative optimal solutions, or they
-may be other suboptimal solutions; use [`ObjectiveValue`](@ref) to distingiush
+may be other suboptimal solutions; use [`ObjectiveValue`](@ref) to distinguish
 between them.
 
 If a primal or dual infeasibility certificate is available, that is,
@@ -1705,7 +1705,7 @@ A constraint attribute for the assignment to some constraint's primal value in
 result `result_index`.
 
 If the constraint is `f(x) in S`, then in most cases the `ConstraintPrimal` is
-the value of `f`, evaluated at the correspondng [`VariablePrimal`](@ref)
+the value of `f`, evaluated at the corresponding [`VariablePrimal`](@ref)
 solution.
 
 However, some conic solvers reformulate `b - Ax in S` to `s = b - Ax, s in S`.
@@ -2260,7 +2260,7 @@ Return a `Bool` indicating whether the value of the attribute is set during an
 [`optimize!`](@ref) call, that is, the attribute is used to query the result of
 the optimization.
 
-If an attibute can be set by the user, define [`is_copyable`](@ref) instead.
+If an attribute can be set by the user, define [`is_copyable`](@ref) instead.
 
 An attribute cannot be both [`is_copyable`](@ref) and `is_set_by_optimize`.
 
@@ -2313,7 +2313,7 @@ during [`copy_to`](@ref) using [`set`](@ref).
 If an attribute `is_copyable`, then it cannot be modified by the optimizer, and
 [`get`](@ref) must always return the value that was [`set`](@ref) by the user.
 
-If an attibute is the result of an optimization, define
+If an attribute is the result of an optimization, define
 [`is_set_by_optimize`](@ref) instead.
 
 An attribute cannot be both [`is_set_by_optimize`](@ref) and `is_copyable`.

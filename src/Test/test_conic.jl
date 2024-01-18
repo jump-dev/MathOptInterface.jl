@@ -6726,7 +6726,7 @@ end
         config::Config{T},
     ) where {T<:Real}
 
-Test a second order cosnstraint with an epigraph variable >= -M and the bound
+Test a second order constraint with an epigraph variable >= -M and the bound
 constraints added via `add_constraint`.
 """
 function test_conic_SecondOrderCone_negative_post_bound_2(
@@ -6790,7 +6790,7 @@ end
         config::Config{T},
     ) where {T<:Real}
 
-Test a second order cosnstraint with an epigraph variable >= -M and the bound
+Test a second order constraint with an epigraph variable >= -M and the bound
 constraints added via `add_constraints`.
 """
 function test_conic_SecondOrderCone_negative_post_bound_3(

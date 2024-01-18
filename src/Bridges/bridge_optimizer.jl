@@ -2205,7 +2205,7 @@ function bridged_function(bridge::AbstractBridgeOptimizer, value)
     end
     # We assume that the type of `value` is not altered. This restricts
     # variable bridges to only return `ScalarAffineFunction` but otherwise,
-    # the peformance would be bad.
+    # the performance would be bad.
     return MOI.Utilities.substitute_variables(
         vi -> bridged_variable_function(bridge, vi),
         value,
@@ -2383,9 +2383,9 @@ function unbridged_constraint_function(
     # Otherwise, first unbridge the function:
     f = unbridged_function(b, func)::typeof(func)
     # But now we have to deal with an issue. Something like x in [1, ∞) might
-    # get bridged into y in R₊, with x => y + 1, so if the orginal constraint is
+    # get bridged into y in R₊, with x => y + 1, so if the original constraint is
     # 2x >= 1, the bridged function is 2y >= -1. Unbridging this with y = x - 1
-    # gives 2x - 2, but we only care about 2x! Where did the -2 come from? It
+    # gives 2x - 2, but we only care about 2x. Where did the -2 come from? It
     # was moved into the set. This gets handled separately, so for
     # ConstraintFunction it is sufficient to drop any non-zero constant terms.
     #

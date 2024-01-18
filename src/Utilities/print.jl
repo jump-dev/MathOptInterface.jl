@@ -202,7 +202,7 @@ function _to_string(
     name_1 = _to_string(options, model, term.variable_1)
     name_2 = _to_string(options, model, term.variable_2)
     # Be careful here when printing the coefficient. ScalarQuadraticFunction
-    # assumes an additional 0.5 factor!
+    # assumes an additional 0.5 factor.
     coef = term.coefficient
     name = if term.variable_1 == term.variable_2
         coef /= 2
@@ -415,7 +415,7 @@ end
 
 A type used to work-around the default printing of Julia expressions.
 
-Without this type, if we subsititued the variable names into the expression
+Without this type, if we substituted the variable names into the expression
 and then converted to a string, each variable would be printed with enclosing
 `"`.
 

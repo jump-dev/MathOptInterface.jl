@@ -141,7 +141,7 @@ function MOI.set(
     # As the slack appears `+slack` in `slack_in_set` and `-slack` in equality,
     # giving `value` to both will cancel it out in the Lagrangian.
     # Giving `value` to `bridge.equality` will put the function in the
-    # lagrangian as expected.
+    # Lagrangian as expected.
     MOI.set(model, attr, bridge.slack_in_set, value)
     MOI.set(model, attr, bridge.equality, value)
     return

@@ -76,7 +76,7 @@ function test_MOI_Test()
         MOI.Test.Config(exclude = Any[MOI.optimize!]),
         exclude = String[
             # UniversalFallback fails all these tests because it supports
-            # everything...
+            # everything
             "test_attribute_",
             "test_model_supports_constraint_",
             "test_model_copy_to_Unsupported",
@@ -164,7 +164,7 @@ function test_model_attributes()
         MOI.Test.UnknownModelAttribute(),
         MOI.ListOfModelAttributesSet(),
     )
-    # Test that emptying the uf get's rid of the model attributes!
+    # Test that emptying the uf get's rid of the model attributes
     @test !MOI.is_empty(uf)
     MOI.empty!(uf)
     @test MOI.is_empty(uf)
@@ -462,9 +462,9 @@ function test_ListOfVariablesWithAttributeSet()
     @test MOI.get(model, attr) == x
     # Handled by UniversalFallback
     attr = MOI.ListOfVariablesWithAttributeSet(MOI.VariablePrimalStart())
-    # ... no attributes set
+    # no attributes set
     @test MOI.get(model, attr) == MOI.VariableIndex[]
-    # ... one attribute set
+    # one attribute set
     MOI.set(model, MOI.VariablePrimalStart(), x[2], 1.0)
     @test MOI.get(model, attr) == [x[2]]
     return
@@ -482,9 +482,9 @@ function test_ListOfConstraintsWithAttributeSet()
     # Handled by UniversalFallback
     attr =
         MOI.ListOfConstraintsWithAttributeSet{F,S}(MOI.ConstraintPrimalStart())
-    # ... no attributes set
+    # no attributes set
     @test MOI.get(model, attr) == MOI.ConstraintIndex{F,S}[]
-    # ... one attribute set
+    # one attribute set
     MOI.set(model, MOI.ConstraintPrimalStart(), c[2], 1.0)
     @test MOI.get(model, attr) == [c[2]]
     return

@@ -447,7 +447,7 @@ If the order is `[GreaterThan, Integer]`, then we add a new variable constrained
 to `y ∈ Nonnegatives` and end up with an expression from the variable bridge of
 `x = y + 1`. Then when we add the Integer constraint, we get `y + 1 in Integer`,
 which is not natively supported. Therefore, we need to add `y + 1 - z ∈ Zeros`
-and `z ∈ Integer`. Oops! This cost an extra variable, a variable bridge of
+and `z ∈ Integer`. Oops. This cost an extra variable, a variable bridge of
 `x = y + 1`and a `Zeros` constraint.
 
 Unfortunately, we don't have a good way of computing the updated costs for other
@@ -557,7 +557,7 @@ MOI.copy_to(dest, filtered_src)
 Use type dispatch to simplify the implementation:
 
 ```julia
-my_filter(::Any) = true  # Note the generic fallback!
+my_filter(::Any) = true  # Note the generic fallback
 my_filter(::MOI.VariableName) = false
 my_filter(::MOI.ConstraintName) = false
 filtered_src = MOI.Utilities.ModelFilter(my_filter, src)
@@ -567,7 +567,7 @@ MOI.copy_to(dest, filtered_src)
 ## Example: copy irreducible infeasible subsystem
 
 ```julia
-my_filter(::Any) = true  # Note the generic fallback!
+my_filter(::Any) = true  # Note the generic fallback
 function my_filter(ci::MOI.ConstraintIndex)
     status = MOI.get(dest, MOI.ConstraintConflictStatus(), ci)
     return status != MOI.NOT_IN_CONFLICT

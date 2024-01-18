@@ -332,7 +332,7 @@ function test_attribute_after_empty(model::MOI.AbstractOptimizer, ::Config)
         MOI.empty!(model)
         @test MOI.get(model, MOI.Silent()) == value
     end
-    # Make sure to reset the value before leaving this function!
+    # Make sure to reset the value before leaving this function
     MOI.set(model, MOI.Silent(), current)
     return
 end

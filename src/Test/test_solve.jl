@@ -1199,7 +1199,7 @@ end
 """
     test_solve_conflict_NOT_IN_CONFLICT(model::MOI.ModelLike, config::Config{T}) where {T}
 
-Test the ConflictStatus API when some constraints are not in the conlict.
+Test the ConflictStatus API when some constraints are not in the conflict.
 """
 function test_solve_conflict_NOT_IN_CONFLICT(
     model::MOI.ModelLike,

@@ -230,7 +230,7 @@ function Base.getindex(c::CleverDict{K,V}, index::LinearIndex)::V where {K,V}
     # (that is, there has been a deletion), rebuild `c.vector`. This is a
     # trade-off: We could ensure `c.vector` is always updated, but this requires
     # a `splice!` in `delete!`, making deletions costly. However, it makes this
-    # `getindex` operation trival because we would never have to rebuild the
+    # `getindex` operation trivial because we would never have to rebuild the
     # vector.
     # The current implemented approach offers quick deletions, but an expensive
     # rebuild the first time you query a `LinearIndex` after a deletion or a new

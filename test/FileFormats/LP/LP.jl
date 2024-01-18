@@ -511,7 +511,6 @@ function test_read_model2()
     @test (MOI.VariableIndex, MOI.Interval{Float64}) in constraints
     @test (MOI.VariableIndex, MOI.Integer) in constraints
     @test (MOI.VariableIndex, MOI.ZeroOne) in constraints
-    # Adicionar testes dos bounds de V8
     @test MOI.get(model, MOI.VariableName(), MOI.VariableIndex(8)) == "V8"
     @test model.variables.lower[8] == -Inf
     @test model.variables.upper[8] == -3

@@ -309,7 +309,7 @@ function test_constraint_quadratic_multivariate_subexpressions()
     MOI.eval_constraint_jacobian_transpose_product(evaluator, y, x_val, w)
     wJ = w' * [(2 * x_val[1] + x_val[2]) (x_val[1] + 2 * x_val[2])]
     @test y ≈ wJ[:]
-    # Hessian-lagrangian
+    # Hessian-Lagrangian
     @test MOI.hessian_lagrangian_structure(evaluator) ==
           [(1, 1), (2, 2), (2, 1)]
     H = [NaN, NaN, NaN]
@@ -390,7 +390,7 @@ function test_hessian_registered_error()
     end
     function ∇²f(H, x...)
         H[1, 1] = 1200 * x[1]^2 - 400 * x[2] + 2
-        # Wrong index! Should be [2, 1]
+        # Wrong index. Should be [2, 1]
         H[1, 2] = -400 * x[1]
         H[2, 2] = 200.0
         return

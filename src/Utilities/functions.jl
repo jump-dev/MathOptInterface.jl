@@ -942,7 +942,7 @@ is_canonical(::MOI.AbstractFunction) = false
 is_canonical(::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = true
 
 function is_canonical(f::MOI.ScalarNonlinearFunction)
-    # Don't use recursion here! This gets called for all scalar nonlinear
+    # Don't use recursion here. This gets called for all scalar nonlinear
     # constraints.
     stack = Any[arg for arg in f.args]
     while !isempty(stack)

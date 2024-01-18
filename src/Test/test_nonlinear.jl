@@ -972,12 +972,12 @@ function test_nonlinear_HS071_internal(::MOI.ModelLike, ::Config)
     J = fill(NaN, length(Js))
     MOI.eval_constraint_jacobian(d, J, x)
     @test J == [1, 1, 1, 1, 2, 2, 2, 2]
-    # Hessian-lagrangian
+    # Hessian-Lagrangian
     Hs = MOI.hessian_lagrangian_structure(d)
     H = fill(NaN, length(Hs))
     MOI.eval_hessian_lagrangian(d, H, x, 1.0, [1.0, 1.0])
     @test H == [4, 2, 2, 2, 1, 2, 5, 2, 2, 2]
-    # Hessian-lagrangian-product
+    # Hessian-Lagrangian-product
     Hv = fill(NaN, length(x))
     v = [1.0, 1.1, 1.2, 1.3]
     MOI.eval_hessian_lagrangian_product(d, Hv, x, v, 1.0, [1.0, 1.0])
@@ -1016,7 +1016,7 @@ function test_nonlinear_Feasibility_internal(::MOI.ModelLike, ::Config)
     J = fill(NaN, length(Js))
     MOI.eval_constraint_jacobian(d, J, x)
     @test J == [3.0]
-    # Hessian-lagrangian
+    # Hessian-Lagrangian
     Hs = MOI.hessian_lagrangian_structure(d)
     H = fill(NaN, length(Hs))
     MOI.eval_hessian_lagrangian(d, H, x, 1.0, [1.1])

@@ -346,7 +346,7 @@ end
 # where Q = U^T * U$, we have `x = U * z` and `s = -a^T z - b` hence, we have
 #                       = -u * (z^T Q z/2 + a^T z + b)
 # So the dual of the quadratic constraint is `-u`, so that the contribution
-# to the lagrangian function of both the quadratic and RotatedSOC formulation
+# to the Lagrangian function of both the quadratic and RotatedSOC formulation
 # is exactly the same.
 function MOI.get(
     model::MOI.ModelLike,

@@ -14,7 +14,7 @@
    ``Y = \\left[\\begin{array}{c c}t & x^\\top \\\\ x & 2u \\mathbf{I}\\end{array}\\right].``
 
 Additional bounds are added to ensure the off-diagonals of the ``2uI`` submatrix
-are `0`, and linear constraints are added to ennsure the diagonal of ``2uI``
+are `0`, and linear constraints are added to ensure the diagonal of ``2uI``
 takes the same values.
 
 As a special case, if ``|x|| = 0``, then `RSOCtoPSDBridge` reformulates into
@@ -36,7 +36,7 @@ As a special case, if ``|x|| = 0``, then `RSOCtoPSDBridge` reformulates into
    * [`MOI.VectorOfVariables`](@ref) in
    [`MOI.PositiveSemidefiniteConeTriangle`](@ref) otherwise
  * The constraint node [`MOI.VariableIndex`](@ref) in [`MOI.EqualTo`](@ref)
- * The constrant node [`MOI.ScalarAffineFunction`](@ref) in [`MOI.EqualTo`](@ref)
+ * The constant node [`MOI.ScalarAffineFunction`](@ref) in [`MOI.EqualTo`](@ref)
 """
 struct RSOCtoPSDBridge{T} <: AbstractBridge
     variables::Vector{MOI.VariableIndex}

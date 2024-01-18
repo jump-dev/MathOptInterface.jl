@@ -84,7 +84,7 @@ function _add_function(
     f::MOI.VectorOfVariables,
     ::Type{<:Union{MOI.ExponentialCone,MOI.DualExponentialCone}},
 )
-    # The Exponential cone in MOI and CBF are reversed!
+    # The Exponential cone in MOI and CBF are reversed
     for v in reverse(f.variables)
         data.num_rows += 1
         push!(data.acoord, (data.num_rows, v.value, 1.0))
@@ -97,7 +97,7 @@ function _add_function(
     f::MOI.VectorAffineFunction,
     ::Type{<:Union{MOI.ExponentialCone,MOI.DualExponentialCone}},
 )
-    # The Exponential cone in MOI and CBF are reversed!
+    # The Exponential cone in MOI and CBF are reversed
     for term in f.terms
         t = term.scalar_term
         row = data.num_rows + 4 - term.output_index

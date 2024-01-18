@@ -296,7 +296,7 @@ function MOI.copy_to(dest::Model, model::MOI.ModelLike)
     end
     # Correct bounds of binary variables. Mainly because AMPL doesn't have the
     # concept of binary nonlinear variables, but it does have binary linear
-    # variables! How annoying.
+    # variables. How annoying.
     for (_, v) in dest.x
         if v.type == _BINARY
             v.lower = max(0.0, v.lower)
