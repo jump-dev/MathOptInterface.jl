@@ -175,7 +175,7 @@ end
 """
     keys_of_type(map::Map, C::Type{<:MOI.ConstraintIndex})
 
-Return a list of all the keys of type `C` in `map` in order order in which they
+Return a list of all the keys of type `C` in `map` in order in which they
 were created with `add_key_for_bridge`.
 """
 function keys_of_type(map::Map, C::Type{MOI.ConstraintIndex{F,S}}) where {F,S}

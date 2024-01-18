@@ -81,7 +81,7 @@ function bridge_constraint(
                 "Unable to transform a quadratic constraint into a " *
                 "second-order cone constraint because the quadratic " *
                 "constraint is not strongly convex.\n\nConvex constraints " *
-                "that are not strongly convex (i.e., the matrix is positive " *
+                "that are not strongly convex (that is, the matrix is positive " *
                 "semidefinite but not positive definite) are not supported " *
                 "yet.\n\nNote that a quadratic equality constraint is " *
                 "non-convex.",
@@ -347,7 +347,7 @@ end
 #                       = -u * (z^T Q z/2 + a^T z + b)
 # So the dual of the quadratic constraint is `-u`, so that the contribution
 # to the lagrangian function of both the quadratic and RotatedSOC formulation
-# is exactly the same. Q.E.D.
+# is exactly the same.
 function MOI.get(
     model::MOI.ModelLike,
     attr::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},

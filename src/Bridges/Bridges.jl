@@ -75,8 +75,8 @@ uses a limited set of bridges that are:
   2. generally applicable for all optimizers.
 
 For some optimizers however, it is useful to add additional bridges, such as
-those that are implemented in external packages (e.g., within the solver package
-itself) or only apply in certain circumstances (e.g.,
+those that are implemented in external packages (for example, within the solver package
+itself) or only apply in certain circumstances (for example,
 [`Constraint.SOCtoNonConvexQuadBridge`](@ref)).
 
 Such optimizers should implement the `ListOfNonstandardBridges` attribute to
@@ -108,7 +108,7 @@ end
 
 ### An optimizer defining an internal bridge
 
-Suppose an optimizer can exploit specific structure of a constraint, e.g., it
+Suppose an optimizer can exploit specific structure of a constraint, for example, it
 can exploit the structure of the matrix `A` in the linear system of equations
 `A * x = b`.
 

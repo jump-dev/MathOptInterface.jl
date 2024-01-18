@@ -155,7 +155,7 @@ end
         nodes::Vector{Nonlinear.Node},
     )
 
-Compute the sparsity pattern of the gradient of an expression (i.e., a list of
+Compute the sparsity pattern of the gradient of an expression (that is, a list of
 which variable indices are present).
 """
 function _compute_gradient_sparsity!(
@@ -361,8 +361,8 @@ need to be computed to evaluate `subexpressions[s]` for all `s in starts`.
 
 `starts` should be ordered, and not contain duplicates.
 
-`subexpression_dependency_graph[i]` is a lazily-computed list of "out" edges
-from node `i`, in terms of the integer-valued subexpression index (i.e.,
+`subexpression_dependency_graph[i]` is a lazily computed list of "out" edges
+from node `i`, in terms of the integer-valued subexpression index (that is,
 `node.index`). This list should be unique and ordered.
 
 If calling `_topological_sort` a single time, you may omit the

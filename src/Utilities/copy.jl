@@ -402,7 +402,7 @@ considerations:
    `ConstraintBridgingCost` so they can get added with
    `add_constrained_variable(s)`.
 3. Finally, break any remaining ties in favor of `AbstractVectorSet`s. This
-   ensures we attempt to add large blocks of variables (e.g., such as PSD
+   ensures we attempt to add large blocks of variables (for example, such as PSD
    matrices) before we add things like variable bounds.
 
 ## Why the order is important
@@ -473,7 +473,7 @@ function final_touch(::MOI.ModelLike, index_map) end
     default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
 
 A default implementation of `MOI.copy_to(dest, src)` for models that implement
-the incremental interface, i.e., [`MOI.supports_incremental_interface`](@ref)
+the incremental interface, that is, [`MOI.supports_incremental_interface`](@ref)
 returns `true`.
 """
 function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)

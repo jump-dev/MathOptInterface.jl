@@ -249,7 +249,7 @@ function _parse_expr(::Type{S}, expr::Expr) where {S<:SymbolFS}
             @assert length(expr.args) >= 3
             return _UnionSymbolFS{S}(_parse_expr.(S, expr.args[2:end]))
         else
-            # Typed set, e.g. `MOI.EqualTo{T}` parses as:
+            # Typed set, for example, `MOI.EqualTo{T}` parses as:
             # `Expr(:curly, :(MOI.EqualTo), :T)`
             @assert length(expr.args) == 2
             @assert expr.args[2] == :T
@@ -388,7 +388,7 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
             field_types,
         )
     end
-    # Here's we we put the inner constructor.
+    # Here's where we put the inner constructor.
     push!(code.args[2].args[3].args, constructor_code)
     return code
 end

@@ -18,7 +18,7 @@ abstract type AbstractDoubleDictInner{F,S,V} <:
 
 Convert the `value` stored inside `dict` to the equivalent on the outer
 `DoubleDict`. This is useful when the value type `V` of the inner dict is
-different to the outer dict. (See, e.g., [`IndexDoubleDict`](@ref).)
+different to the outer dict. (See, for example, [`IndexDoubleDict`](@ref).)
 """
 typed_value(::AbstractDoubleDictInner, value) = value
 

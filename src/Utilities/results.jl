@@ -360,7 +360,7 @@ end
                   F::Type{<:MOI.AbstractFunction},
                   S::Type{<:MOI.AbstractSet})
 
-Return sum of the the dual of the `F`-in-`S` constraints except `ci` multiplied
+Return sum of the dual of the `F`-in-`S` constraints except `ci` multiplied
 by the coefficient of `vi` in the `MOI.ConstraintFunction`. It errors if another
 variable-wise constraint different than `ci` uses `vi`.
 """

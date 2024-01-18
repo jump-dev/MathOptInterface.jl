@@ -13,7 +13,7 @@ import MathOptInterface as MOI
 # Julia 1.6 removes Grisu from Base. Previously, we went
 #   print_shortest(io, x) = Base.Grisu.print_shortest(io, x)
 # To avoid adding Grisu as a dependency, use the following printing heuristic.
-# TODO(odow): consider printing 1.0 as 1.0 instead of 1, i.e., without the
+# TODO(odow): consider printing 1.0 as 1.0 instead of 1, that is, without the
 # rounding branch.
 function print_shortest(io::IO, x::Real)
     if isinteger(x) && (typemin(Int) <= x <= typemax(Int))
@@ -918,16 +918,12 @@ end
 #            type     name
 #           COLUMNS
 #                     column      row       value     row      value
-#                     name        name                name
 #           RHS
 #                     rhs         row       value     row      value
-#                     name        name                name
 #           RANGES
 #                     range       row       value     row      value
-#                     name        name                name
 #           BOUNDS
 #            type     bound       column    value
-#                     name        name
 #           SOS
 #            type     CaseName    SOSName   SOSpriority
 #                     CaseName    VarName1  VarWeight1
@@ -1028,7 +1024,7 @@ end
     HEADER_INDICATORS,
 )
 
-# Headers(s) gets called _alot_ (on every line), so we try very hard to be
+# `Headers(s)` gets called _alot_ (on every line), so we try very hard to be
 # efficient.
 function Headers(s::AbstractString)
     N = length(s)
@@ -1618,7 +1614,7 @@ function _parse_single_bound(
     elseif bound_type == "FR"
         # So even though FR bounds should be of the form:
         #  FR BOUND1    VARNAME
-        # there are cases in MIPLIB2017 (e.g., leo1 and leo2) like so:
+        # there are cases in MIPLIB2017 (for example, leo1 and leo2) like so:
         #  FR BOUND1    C0000001       .000000
         # In these situations, just ignore the value.
         data.col_lower[col] = -Inf

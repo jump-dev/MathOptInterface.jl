@@ -7,13 +7,16 @@ bugfixe(?s)
 datastructure
 docstring(?s)
 doctest
-enum
+[Ee]num
 errored
 flamegraph
 getters
 [Jj]ulia
+linkcheck
+nonlinearly
 [Pp]recompil(ation|(e(?d)))
 subexpression(?s)
+textualist
 
 % JuMP-related vocab
 [Cc]anonicaliz(e|ation|ing)
@@ -35,3 +38,4 @@ JSONSchema
 MOI
 PATHSolver
 preprint
+Lubin

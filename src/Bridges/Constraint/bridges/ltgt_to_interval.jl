@@ -11,8 +11,8 @@ An abstract type that simplifies the creation of other bridges.
 
 !!! warning
     `T` must be a `AbstractFloat` type because otherwise `typemin` and `typemax`
-    would either be not implemented (e.g. `BigInt`), or would not give infinite
-    value (e.g. `Int`). For this reason, this bridge is only added to
+    would either be not implemented (for example, `BigInt`), or would not give infinite
+    value (for example, `Int`). For this reason, this bridge is only added to
     [`MOI.Bridges.full_bridge_optimizer`](@ref) when `T` is a subtype of
     `AbstractFloat`.
 """

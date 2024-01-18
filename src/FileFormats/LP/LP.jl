@@ -12,7 +12,7 @@ import MathOptInterface as MOI
 # Julia 1.6 removes Grisu from Base. Previously, we went
 #   _print_shortest(io, x) = Base.Grisu.print_shortest(io, x)
 # To avoid adding Grisu as a dependency, use the following printing heuristic.
-# TODO(odow): consider printing 1.0 as 1.0 instead of 1, i.e., without the
+# TODO(odow): consider printing 1.0 as 1.0 instead of 1, that is, without the
 # rounding branch.
 function _print_shortest(io::IO, x::Float64)
     if x == -Inf

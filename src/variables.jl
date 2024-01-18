@@ -66,7 +66,7 @@ support `VariableIndex`-in-`Binary` and `VariableIndex`-in-`GreaterThan`
 constraints, it only has to implement `add_constrained_variable` for these
 two sets which prevents the user to add both a binary constraint and a
 lower bound on the same variable. Moreover, if the user adds a
-`VariableIndex`-in-`GreaterThan` constraint, implementing this interface (i.e.,
+`VariableIndex`-in-`GreaterThan` constraint, implementing this interface (that is,
 `supports_add_constrained_variables`) enables the constraint to be transparently
 bridged into a supported constraint.
 """

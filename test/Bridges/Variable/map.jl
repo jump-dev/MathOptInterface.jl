@@ -56,7 +56,7 @@ function test_map()
     MOI.is_valid(map, c1)
     cannot_unbridge_err = ErrorException(
         "Cannot unbridge function because some variables are bridged by variable" *
-        " bridges that do not support reverse mapping, e.g., `ZerosBridge`.",
+        " bridges that do not support reverse mapping, for example, `ZerosBridge`.",
     )
     @test v1.value == c1.value == -1
     @test MOI.Bridges.Variable.constraint(map, v1) == c1

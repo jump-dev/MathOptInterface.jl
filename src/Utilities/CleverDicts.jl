@@ -186,7 +186,7 @@ function Base.setindex!(c::CleverDict{K,V}, value::V, key::K)::V where {K,V}
             _rehash(c)
         end
         c.dict[key] = value
-        # If there is a vector (e.g., because it has been rebuilt for
+        # If there is a vector (for example, because it has been rebuilt for
         # `LinearIndex`), clear it.
         if !isempty(c.vector)
             empty!(c.vector)
@@ -227,7 +227,7 @@ function Base.getindex(c::CleverDict{K,V}, index::LinearIndex)::V where {K,V}
         throw(KeyError(index))
     end
     # Get the `index` linear element. If `c.vector` is currently `nothing`
-    # (i.e., there has been a deletion), rebuild `c.vector`. This is a
+    # (that is, there has been a deletion), rebuild `c.vector`. This is a
     # trade-off: We could ensure `c.vector` is always updated, but this requires
     # a `splice!` in `delete!`, making deletions costly. However, it makes this
     # `getindex` operation trival because we would never have to rebuild the
@@ -236,7 +236,7 @@ function Base.getindex(c::CleverDict{K,V}, index::LinearIndex)::V where {K,V}
     # rebuild the first time you query a `LinearIndex` after a deletion or a new
     # key is added. Once the rebuild is done, there are quick queries until the
     # next deletion or addition. Thus, the worst-case is a user repeatedly
-    # deleting a key and then querying a LinearIndex (e.g., getting the MOI
+    # deleting a key and then querying a LinearIndex (for example, getting the MOI
     # objective function).
     if !_is_dense(c) && length(c.dict) != length(c.vector)
         c.vector = Vector{V}(undef, length(c))

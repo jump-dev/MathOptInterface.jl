@@ -33,8 +33,7 @@ jobs:
           path: ${{ github.workspace }}/latex-debug-logs
       - uses: errata-ai/vale-action@reviewdog
         with:
-          # TODO(odow): at some point, update to vale@3
-          version: 2.30.0
+          version: 3.0.5
           files: docs/src
           fail_on_error: true
           filter_mode: nofilter

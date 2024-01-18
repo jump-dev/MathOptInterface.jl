@@ -1018,7 +1018,7 @@ solution.
    provided and `MOI.NO_SOLUTION` otherwise.
 
  * `constraint_duals`: the remaining positional arguments are passed as pairs.
-   Each pair is of the form `(F, S) => result`, where `result` is the the vector
+   Each pair is of the form `(F, S) => result`, where `result` is the vector
    of `MOI.ConstraintDual` values for the constraints `F`-in-`S` in the order
    returned by `MOI.ListOfConstraintIndices{F,S}`.
 

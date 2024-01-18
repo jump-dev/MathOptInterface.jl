@@ -798,7 +798,7 @@ end
         config::Config,
     )
 
-Test deleting many variables in a batch (i.e. using the delete method which
+Test deleting many variables in a batch (that is, using the delete method which
 takes a vector of variable references). If `config.solve=true` confirm that it
 solves correctly.
 """

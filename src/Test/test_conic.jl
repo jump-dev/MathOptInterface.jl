@@ -200,7 +200,7 @@ Another helper for linear conic problems.
 Builds the problem:
 ```
 min  3x + 2y - 4z + 0s
-st    x           -  s  == -4    (i.e. x >= -4)
+st    x           -  s  == -4    (that is, x >= -4)
            y            == -3
       x      +  z       == 12
       x free
@@ -3227,7 +3227,7 @@ function _test_conic_Exponential_helper(
     @requires MOI.supports_constraint(model, F, MOI.ExponentialCone)
     # Problem EXP1 - ExpPrimal
     # min x + y + z
-    #  st  y e^(x/y) <= z, y > 0 (i.e (x, y, z) are in the exponential primal cone)
+    #  st  y e^(x/y) <= z, y > 0 (that is, (x, y, z) are in the exponential primal cone)
     #      x == 1
     #      y == 2
     @requires MOI.supports_incremental_interface(model)
@@ -3902,7 +3902,7 @@ end
 """
 ```
 max z
- st  x^0.9 * y^(0.1) >= |z| (i.e (x, y, z) are in the 3d power cone with a=0.9)
+ st  x^0.9 * y^(0.1) >= |z| (that is, (x, y, z) are in the 3d power cone with a=0.9)
      x == 2
      y == 1
 ```
@@ -4090,7 +4090,7 @@ min -x_1 - x_2
      w == 1
     (u, v, w) ∈ DualPowerCone(exponent)
 ```
-By the Weighted AM–GM inequality, you have
+By the Weighted AM--GM inequality, you have
 0.9a + 0.1b >= a^0.9 b^0.1
 with equality if and only if a == b
 here taking a = u/0.9 and b = v/0.1, we have
@@ -4287,7 +4287,7 @@ end
 Test the problem:
 ```
 min u
- st  u >= 2*log(2/1) + 3*log(3/5)  (i.e. (u, 1, 5, 2, 3) in RelativeEntropyCone(5))
+ st  u >= 2*log(2/1) + 3*log(3/5)  (that is, (u, 1, 5, 2, 3) in RelativeEntropyCone(5))
 Optimal solution is:
 u = 2*log(2/1) + 3*log(3/5) ≈ -0.1461825
 ```
@@ -4374,7 +4374,7 @@ end
 Test the problem:
 ```
 min t
- st  t >= sigma_1([1 1 0; 1 -1 1]) (i.e (t, 1, 1, 1, -1, 0, 1]) is in NormSpectralCone(2, 3))
+ st  t >= sigma_1([1 1 0; 1 -1 1]) (that is, (t, 1, 1, 1, -1, 0, 1]) is in NormSpectralCone(2, 3))
 Singular values are [sqrt(T(3)), sqrt(T(2))], so optimal solution is:
 t = sqrt(T(3))
 ```
@@ -4462,7 +4462,7 @@ end
 Test the problem:
 ```
 min t
- st  t >= sigma_1([1 1; 1 -1; 0 1]) (i.e (t, 1, 1, 0, 1, -1, 1]) is in NormSpectralCone(3, 2))
+ st  t >= sigma_1([1 1; 1 -1; 0 1]) (that is, (t, 1, 1, 0, 1, -1, 1]) is in NormSpectralCone(3, 2))
 Singular values are [sqrt(T(3)), sqrt(T(2))], so optimal solution is:
 t = sqrt(T(3))
 ```
@@ -4552,7 +4552,7 @@ end
 Test the problem:
 ```
 min t
- st  t >= sum_i sigma_i([1 1 0; 1 -1 1]) (i.e (t, 1, 1, 1, -1, 0, 1]) is in NormNuclearCone(2, 3))
+ st  t >= sum_i sigma_i([1 1 0; 1 -1 1]) (that is, (t, 1, 1, 1, -1, 0, 1]) is in NormNuclearCone(2, 3))
 Singular values are [sqrt(T(3)), sqrt(T(2))], so optimal solution is:
 t = sqrt(T(3)) + sqrt(T(2))
 ```
@@ -4646,7 +4646,7 @@ end
 Test the problem:
 ```
 min t
- st  t >= sum_i sigma_i([1 1; 1 -1; 0 1]) (i.e (t, 1, 1, 0, 1, -1, 1]) is in NormNuclearCone(3, 2))
+ st  t >= sum_i sigma_i([1 1; 1 -1; 0 1]) (that is, (t, 1, 1, 0, 1, -1, 1]) is in NormNuclearCone(3, 2))
 Singular values are [sqrt(T(3)), sqrt(T(2))], so optimal solution is:
 t = sqrt(T(3)) + sqrt(T(2))
 ```

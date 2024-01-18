@@ -45,7 +45,7 @@ abstract type NotAllowedError <: Exception end
 """
     operation_name(err::NotAllowedError)
 
-Return the name of the operation throwing the error in a gerund (i.e. -ing
+Return the name of the operation throwing the error in a gerund (that is, -ing
 form).
 """
 function operation_name end

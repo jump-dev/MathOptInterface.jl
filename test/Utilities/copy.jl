@@ -783,7 +783,7 @@ function test_BoundModel_filtering_copy()
     f(::Any) = true
     f(::MOI.ConstraintIndex{F,MOI.Integer}) where {F} = false
 
-    # Perform the unfiltered copy. This should throw an error (i.e. the
+    # Perform the unfiltered copy. This should throw an error (that is, the
     # implementation of BoundModel
     # should be correct).
     dst = BoundModel()

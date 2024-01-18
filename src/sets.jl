@@ -1462,7 +1462,7 @@ where the matrix `X` is represented in the same symmetric packed format as in
 the `PositiveSemidefiniteConeTriangle`.
 
 The non-negative argument `side_dimension` is the side dimension of the matrix
-`X`, i.e., its number of rows or columns.
+`X`, that is, its number of rows or columns.
 
 ## Example
 
@@ -1516,7 +1516,7 @@ Similarly to [`PositiveSemidefiniteConeSquare`](@ref), constraints are added to
 ensure that `X` is symmetric.
 
 The non-negative argument `side_dimension` is the side dimension of the matrix
-`X`, i.e., its number of rows or columns.
+`X`, that is, its number of rows or columns.
 
 ## Example
 
@@ -1574,7 +1574,7 @@ where the matrix `X` is represented in the same symmetric packed format as in
 the [`PositiveSemidefiniteConeTriangle`](@ref).
 
 The non-negative argument `side_dimension` is the side dimension of the matrix
-`X`, i.e., its number of rows or columns.
+`X`, that is, its number of rows or columns.
 
 ## Example
 
@@ -1628,7 +1628,7 @@ Similarly to [`PositiveSemidefiniteConeSquare`](@ref), constraints are added to
 ensure that `X` is symmetric.
 
 The non-negative argument `side_dimension` is the side dimension of the matrix
-`X`, i.e., its number of rows or columns.
+`X`, that is, its number of rows or columns.
 
 ## Example
 
@@ -1928,7 +1928,7 @@ When `A` is `ACTIVATE_ON_ONE`, this means:
 ## Notes
 
 Most solvers expect that the first row of the function is interpretable as a
-variable index `x_i` (e.g., `1.0 * x + 0.0`). An error will be thrown if this is
+variable index `x_i` (for example, `1.0 * x + 0.0`). An error will be thrown if this is
 not the case.
 
 ## Example
@@ -1992,11 +1992,11 @@ Complementarity constraints should be specified with an
 The dimension of the vector-valued function `F` must be `dimension`. This
 defines a complementarity constraint between the scalar function `F[i]` and the
 variable in `F[i + dimension/2]`. Thus, `F[i + dimension/2]` must be
-interpretable as a single variable `x_i` (e.g., `1.0 * x + 0.0`), and
+interpretable as a single variable `x_i` (for example, `1.0 * x + 0.0`), and
 `dimension` must be even.
 
 The mixed complementarity problem consists of finding `x_i` in the interval
-`[lb, ub]` (i.e., in the set `Interval(lb, ub)`), such that the following holds:
+`[lb, ub]` (that is, in the set `Interval(lb, ub)`), such that the following holds:
 
   1. `F_i(x) == 0` if `lb_i < x_i < ub_i`
   2. `F_i(x) >= 0` if `lb_i == x_i`

@@ -11,13 +11,13 @@ const ScalarAffineLike{T} =
 const ScalarQuadraticLike{T} =
     Union{ScalarAffineLike{T},MOI.ScalarQuadraticFunction{T}}
 
-# `ScalarLike` for which `T` is defined to avoid defining, e.g.,
+# `ScalarLike` for which `T` is defined to avoid defining, for example,
 # `+(::VariableIndex, ::Any)` which should rather be
 # `+(::VariableIndex, ::Number)`.
 const TypedScalarLike{T} =
     Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}
 # Used for overloading Base operator functions so `T` is not in the union to
-# avoid overloading e.g. `+(::Float64, ::Float64)`
+# avoid overloading for example, `+(::Float64, ::Float64)`
 const ScalarLike{T} = Union{MOI.VariableIndex,TypedScalarLike{T}}
 
 # Functions convertible to a VectorAffineFunction
@@ -27,13 +27,13 @@ const VectorAffineLike{T} =
 const VectorQuadraticLike{T} =
     Union{VectorAffineLike{T},MOI.VectorQuadraticFunction{T}}
 
-# `VectorLike` for which `T` is defined to avoid defining, e.g.,
+# `VectorLike` for which `T` is defined to avoid defining, for example,
 # `+(::VectorOfVariables, ::Any)` which should rather be
 # `+(::VectorOfVariables, ::Number)`.
 const TypedVectorLike{T} =
     Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}}
 # Used for overloading Base operator functions so `T` is not in the union to
-# avoid overloading e.g. `+(::Float64, ::Float64)`
+# avoid overloading for example, `+(::Float64, ::Float64)`
 const VectorLike{T} = Union{MOI.VectorOfVariables,TypedVectorLike{T}}
 
 const TypedLike{T} = Union{TypedScalarLike{T},TypedVectorLike{T}}
@@ -1013,7 +1013,7 @@ end
 """
     canonical(f::MOI.AbstractFunction)
 
-Returns the function in a canonical form, i.e.
+Returns the function in a canonical form, that is,
 
  * A term appear only once.
  * The coefficients are nonzero.

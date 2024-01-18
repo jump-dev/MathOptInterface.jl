@@ -41,11 +41,11 @@ The three most important are:
    constraint.
 These can all appear with a `i` suffix, which means that they are integer. We'll
 also see `nwv`, `niv`, and `nbv` for linear network variables, linear integer
-variables, and linear binary varaibles.
+variables, and linear binary variables.
 
 Following the citations, Tables 3 and 4 are (Table 5 is unimportant):
 
-Table 3: Ordering of variables
+Table 3: ordering of variables
 
 | Category                    | Count                                       |
 | --------------------------- | ------------------------------------------- |
@@ -55,13 +55,13 @@ Table 3: Ordering of variables
 | linearly used binary        | `nbv`                                       |
 | linearly used other integer | `niv`                                       |
 
-Table 4: Ordering of Nonlinear Variables.
+Table 4: ordering of Nonlinear Variables.
 
 | Smoothness | Appearance           | Count                         |
 | ---------- | -------------------- | ------------------------------|
-| continous  | in an objective and in a constraint | `nlvb - nlbvi` |
+| continuous | in an objective and in a constraint | `nlvb - nlbvi` |
 | integer    | in an objective and in a constraint | `nlvbi`        |
-| continous  | just in constraints  | `nlvc - (nlvb + nlvci)`       |
+| continuous | just in constraints  | `nlvc - (nlvb + nlvci)`       |
 | integer    | just in constraints  | `nlvci`                       |
 | continuous | just in objectives   | `max{0, nlvo - nlvc}`         |
 | integer    | just in objectives   | `nlvoi`                       |
@@ -72,9 +72,9 @@ The two tables are clearly asking that we do something like this.
 
 | Smoothness | Appearance           | Count                         |
 | ---------- | -------------------- | ------------------------------|
-| continous  | in an objective and in a constraint | `nlvb - nlbvi` |
+| continuous | in an objective and in a constraint | `nlvb - nlbvi` |
 | integer    | in an objective and in a constraint | `nlvbi`        |
-| continous  | just in constraints  | `nlvc - (nlvb + nlvci)`       |
+| continuous | just in constraints  | `nlvc - (nlvb + nlvci)`       |
 | integer    | just in constraints  | `nlvci`                       |
 | continuous | just in objectives   | `max{0, nlvo - nlvc}`         |
 | integer    | just in objectives   | `nlvoi`                       |
@@ -88,9 +88,9 @@ network problems, which leaves us with:
 
 | Smoothness | Appearance           | Count                         |
 | ---------- | -------------------- | ------------------------------|
-| continous  | in an objective and in a constraint | `nlvb - nlbvi` |
+| continuous | in an objective and in a constraint | `nlvb - nlbvi` |
 | integer    | in an objective and in a constraint | `nlvbi`        |
-| continous  | just in constraints  | `nlvc - (nlvb + nlvci)`       |
+| continuous | just in constraints  | `nlvc - (nlvb + nlvci)`       |
 | integer    | just in constraints  | `nlvci`                       |
 | continuous | just in objectives   | `max{0, nlvo - nlvc}`         |
 | integer    | just in objectives   | `nlvoi`                       |
@@ -116,9 +116,9 @@ It has `n_var = 4`, `nlvo = 4`, and `nlvoi = 4` (all others are `0`).
 
 | Smoothness | Appearance           | Count                         | `geartrain.nl`  |
 | ---------- | -------------------- | ------------------------------| - |
-| continous  | in an objective and in a constraint | `nlvb - nlbvi` | 0 |
+| continuous | in an objective and in a constraint | `nlvb - nlbvi` | 0 |
 | integer    | in an objective and in a constraint | `nlvbi`        | 0 |
-| continous  | just in constraints  | `nlvc - (nlvb + nlvci)`       | 0 |
+| continuous | just in constraints  | `nlvc - (nlvb + nlvci)`       | 0 |
 | integer    | just in constraints  | `nlcvi`                       | 0 |
 | continuous | just in objectives   | `max{0, nlvo - nlvc}`         | 4 |
 | integer    | just in objectives   | `nlvoi`                       | 4 |
@@ -130,7 +130,7 @@ But the rows would sum to give `8`, not `4`!
 
 I think `max{0, nlvo - nlvc}` should be `max{0, nlvo - nlvc - nlvoi}`.
 
-## The meaning of nlvo
+## The meaning of `nlvo`
 
 Even then, the table we have doesn't make sense. Why is the number of nonlinear
 variables `max{nlvc, nlvo}` in Table 3? Taken literally, this means that the
@@ -181,13 +181,13 @@ g3 0 1 0	# problem test_simple
  0 0	# max name lengths: constraints, variables
  0 0 0 0 0	# common exprs: b,c,o,c1,o1
 ```
-This looks better! There are two nonlinear variables in the constraints, one in
+This looks better. There are two nonlinear variables in the constraints, one in
 the objective, and one that appears in both.
 
 So what is going on with `nlvo`?
 
 The answer is that despite all claims to the contrary, it does not represent the
-number of nonlinear variables that appear in the objective!
+number of nonlinear variables that appear in the objective.
 
 If all variables that appear nonlinearly in the objective also appear in a
 constraint, then `nlvo = nlvb`, and we can interpret the table as usual.
@@ -221,4 +221,4 @@ objective but _not_ in a constraint.
 > objective.
 
 That means `nlvo <= nlvc`, in which case `nlvo = nlvb` and so the first `nlvo`
-varaibles must appear nonlinearly in an objective.
+variables must appear nonlinearly in an objective.

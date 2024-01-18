@@ -165,7 +165,7 @@ function test_compute_conflict()
 end
 
 """
-Without an optimizer attached (i.e., `MOI.state(model) == NO_OPTIMIZER`) we
+Without an optimizer attached (that is, `MOI.state(model) == NO_OPTIMIZER`) we
 need throw nice errors for attributes that are based on the optimizer. For
 `AbstractModelAttribute`s that `is_set_by_optimize` returns `true` for, we
 overload `TerminationStatus`, `PrimalStatus`, or `DualStatus` to return
