@@ -7,7 +7,7 @@
 """
     abstract type AbstractDistance end
 
-An abstract type used to enabble dispatch of
+An abstract type used to enable dispatch of
 [`Utilities.distance_to_set`](@ref).
 """
 abstract type AbstractDistance end
@@ -219,7 +219,7 @@ function distance_to_set(
     # trends in Optimization, page 184, section 6.3.2.
     t, rhs = x[1], LinearAlgebra.norm(@views x[2:end])
     if t >= rhs
-        return zero(T) # The point is feasible!
+        return zero(T) # The point is feasible
     end
     if rhs <= -t  # Projection to the point (0, [0])
         return LinearAlgebra.norm(x)

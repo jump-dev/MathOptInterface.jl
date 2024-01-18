@@ -266,7 +266,7 @@ function runtests(
         @testset "$(name)" begin
             c = copy(config)
             tear_down = setup_test(test_function, model, c)
-            # Make sure to empty the model before every test!
+            # Make sure to empty the model before every test.
             MOI.empty!(model)
             try
                 test_function(model, c)
@@ -623,7 +623,7 @@ function util_test_models_equal(
 end
 
 ###
-### Include all the test files!
+### Include all the test files
 ###
 
 for file in readdir(@__DIR__)

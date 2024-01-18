@@ -92,7 +92,7 @@ function test_quadratic_constraints_with_2_variables()
     # The matrix is
     # 2 1
     # 1 2
-    # for which the cholesky factorization is U' * U with U =
+    # for which the Cholesky factorization is U' * U with U =
     # √2 √2/2
     #  . √3/√2
     expected = MOI.VectorAffineFunction{Float64}(
@@ -187,7 +187,7 @@ function test_fill_reducing_permutation()
         }(),
     )
     F = LinearAlgebra.cholesky(Q)
-    # Test that the sparse cholesky pivot is permuted
+    # Test that the sparse Cholesky pivot is permuted
     SF = LinearAlgebra.cholesky(SparseArrays.sparse(Q))
     @test SF.p == [3, 2, 1]
     U = Matrix(F.U)

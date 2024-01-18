@@ -129,11 +129,11 @@ function test_MOI_Test()
 end
 
 # !!! warning
-#     This is some type piracy! To enable CachingOptimizer to pass some MOI.Test
+#     This is some type piracy. To enable CachingOptimizer to pass some MOI.Test
 #     functions with MockOptimizer, we overload `setup_test` to setup the inner
 #     mock optimizer.
 #
-#     This is pretty fragile! It requires the inner optimizer to be attached,
+#     This is pretty fragile. It requires the inner optimizer to be attached,
 #     amongst other things. It's used by `test_compute_conflict` below, but not
 #     by test_MOI_Test above (test_MOI_Test has `exclude = Any[MOI.optimize!]`).
 function MOI.Test.setup_test(

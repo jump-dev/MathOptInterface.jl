@@ -52,7 +52,7 @@ function test_multiobjective_vector_of_variables_delete_all(
     @test MOI.get(model, MOI.ObjectiveFunction{F}()) ==
           MOI.VectorOfVariables([x[2]])
     MOI.delete(model, x[2])
-    # ObjectiveFunction no longer set because we deleted all the variables!
+    # ObjectiveFunction no longer set because we deleted all the variables
     attributes = MOI.get(model, MOI.ListOfModelAttributesSet())
     @test !(MOI.ObjectiveFunction{F}() in attributes)
     return
@@ -73,7 +73,7 @@ function test_multiobjective_vector_of_variables_delete_vector(
     attributes = MOI.get(model, MOI.ListOfModelAttributesSet())
     @test MOI.ObjectiveFunction{F}() in attributes
     MOI.delete(model, x)
-    # ObjectiveFunction no longer set because we deleted all the variables!
+    # ObjectiveFunction no longer set because we deleted all the variables
     attributes = MOI.get(model, MOI.ListOfModelAttributesSet())
     @test !(MOI.ObjectiveFunction{F}() in attributes)
     return

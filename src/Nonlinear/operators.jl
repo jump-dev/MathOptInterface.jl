@@ -896,7 +896,7 @@ function eval_comparison_function(
     end
 end
 
-# This method is implmented here because it needs the OperatorRegistry type from
+# This method is implemented here because it needs the OperatorRegistry type from
 # the Nonlinear, which doesn't exist when the Utilities submodule is defined.
 
 function MOI.Utilities.eval_variables(

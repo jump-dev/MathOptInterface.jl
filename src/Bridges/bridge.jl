@@ -274,7 +274,7 @@ needs_final_touch(::AbstractBridge) = false
     final_touch(bridge::AbstractBridge, model::MOI.ModelLike)::Nothing
 
 A function that is called immediately prior to [`MOI.optimize!`](@ref) to allow
-bridges to modify their reformulations with repsect to other variables and
+bridges to modify their reformulations with respect to other variables and
 constraints in `model`.
 
 For example, if the correctness of `bridge` depends on the bounds of a variable

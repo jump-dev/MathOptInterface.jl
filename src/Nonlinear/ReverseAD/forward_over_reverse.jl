@@ -232,7 +232,7 @@ function _forward_eval_ϵ(
                 @inbounds partial = ex.partials_storage[ix]
                 @inbounds storage_val = storage_ϵ[ix]
                 # TODO: This "if" statement can take 8% of the hessian
-                # evaluation time! Find a more efficient way.
+                # evaluation time. Find a more efficient way.
                 if !isfinite(partial) && storage_val == zero_ϵ
                     continue
                 end

@@ -964,7 +964,7 @@ end
 """
     set_mock_optimize!(mock::MockOptimizer, opt::Function...)
 
-Sets multiple optimize! function. The first is to be used the first time
+Sets multiple `optimize!` functions. The first is to be used the first time
 `MOI.optimize!(mock)` is called, the second function is to be used the second
 time, ...
 """
@@ -1014,7 +1014,7 @@ solution.
    `MOI.ListOfVariableIndices`.
 
  * `dual_status`: corresponds to the `MOI.DualStatus` attribute. If not
-   provided, it defaults to `MOI.FEASIBLE_POINT` if constriant duals are
+   provided, it defaults to `MOI.FEASIBLE_POINT` if constraint duals are
    provided and `MOI.NO_SOLUTION` otherwise.
 
  * `constraint_duals`: the remaining positional arguments are passed as pairs.

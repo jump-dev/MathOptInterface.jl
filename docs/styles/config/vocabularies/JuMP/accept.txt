@@ -1,5 +1,8 @@
 % Julia-related vocab
 api|API
+[Aa]rgs
+attr
+kwargs
 arXiv
 backports
 blogposts
@@ -14,10 +17,14 @@ getters
 [Jj]ulia
 linkcheck
 nonlinearly
+nonzeros
 [Pp]recompil(ation|(e(?d)))
+Stacktrace
 subexpression(?s)
 sublicense
+supertype
 textualist
+untyped
 
 % JuMP-related vocab
 [Cc]anonicaliz(e|ation|ing)
@@ -29,10 +36,15 @@ Presolve
 [Ss]emidefinite
 unboundedness
 [Un]nivariate
+unary
 
 % Other
+Alizadeh
+Arkadi
+Cholesky
 Codecov
 Clp
+Goldfarb
 Gurobi
 GZip
 Holy
@@ -41,3 +53,4 @@ MOI
 PATHSolver
 preprint
 Lubin
+Nemirovski

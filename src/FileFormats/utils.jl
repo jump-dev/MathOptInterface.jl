@@ -88,7 +88,7 @@ function create_unique_constraint_names(
                 replacements,
             )
             if new_name in added_names
-                # We found a duplicate name! We could just append a string like
+                # We found a duplicate name. We could just append a string like
                 # "_", but we're going to be clever and loop through the
                 # integers to name them appropriately. Thus, if we have three
                 # constraints named c, we'll end up with variables named c, c_1,
@@ -145,7 +145,7 @@ function create_unique_variable_names(
             replacements,
         )
         if new_name in added_names
-            # We found a duplicate name! We could just append a string like "_",
+            # We found a duplicate name. We could just append a string like "_",
             # but we're going to be clever and loop through the integers to name
             # them appropriately. Thus, if we have three variables named x,
             # we'll end up with variables named x, x_1, and x_2.

@@ -276,7 +276,7 @@ If `moi_output_format = true`:
 If `moi_output_format = false`:
  * subexpressions will be represented by a [`ExpressionIndex`](@ref) object.
  * parameters will be represented by a [`ParameterIndex`](@ref) object.
- * variables will be represennted by an [`MOI.VariableIndex`](@ref) object.
+ * variables will be represented by an [`MOI.VariableIndex`](@ref) object.
 
 !!! warning
     To use `moi_output_format = true`, you must have first called

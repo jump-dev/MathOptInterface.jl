@@ -30,7 +30,7 @@ function get_fallback(model::MOI.ModelLike, attr::MOI.ObjectiveValue)
         return MOI.get(model, MOI.VariablePrimal(attr.result_index), vi)
     end
     if is_ray(MOI.get(model, MOI.PrimalStatus()))
-        # Dual infeasibiltiy certificates do not include the primal objective
+        # Dual infeasibility certificates do not include the primal objective
         # constant.
         obj -= MOI.constant(f, typeof(obj))
     end
@@ -423,7 +423,7 @@ function variable_dual(
     if !ray
         sense = MOI.get(model, MOI.ObjectiveSense())
         # Dual definition for maximization problem corresponds to dual
-        # definition for minimization problem with flipped objectived in MOI
+        # definition for minimization problem with flipped objective in MOI
         sign = sense == MOI.MAX_SENSE ? -1.0 : 1.0
         F = MOI.get(model, MOI.ObjectiveFunctionType())
         obj_attr = MOI.ObjectiveFunction{F}()

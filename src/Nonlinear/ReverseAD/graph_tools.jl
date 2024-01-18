@@ -10,7 +10,7 @@
         moi_index_to_consecutive_index::Dict{MOI.VariableIndex,Int},
     )
 
-Return a new `Vector{Nonlinear.Node}` where all occurances of
+Return a new `Vector{Nonlinear.Node}` where all occurences of
 `NODE_MOI_VARIABLE` are replaced by `NODE_VARIABLE` that is 1-indexed and
 ordered.
 """
@@ -356,7 +356,7 @@ end
             Vector{Vector{Int}}(undef, length(subexpressions)),
     )
 
-Return a topologically sorted list of the integer subexpresssion indices that
+Return a topologically sorted list of the integer subexpression indices that
 need to be computed to evaluate `subexpressions[s]` for all `s in starts`.
 
 `starts` should be ordered, and not contain duplicates.
@@ -369,14 +369,14 @@ If calling `_topological_sort` a single time, you may omit the
 `subexpression_dependency_graph` argument.
 
 However, if calling `_topological_sort` multiple times on the _same_ vector of
-subexpresssions, you should create `subexpression_dependency_graph` once (either
+subexpressions, you should create `subexpression_dependency_graph` once (either
 as the uninitialized vector, or by explicitly computing the full
 `subexpression_dependency_graph`), and pass it in.
 
 ## Notes
 
 * It is important to not use recursion here, because expressions may have
-  arbitrary levels of nesting!
+  arbitrary levels of nesting.
 * This function assumes `subexpressions` is acyclic.
 """
 function _topological_sort(
@@ -441,7 +441,7 @@ Returns two things:
    subexpression-indices that need to be evaluated to compute
    `main_expressions[i]`.
 
-**Warning:** This doesn't handle cyclic expressions! But this should be fine
+**Warning:** This doesn't handle cyclic expressions. But this should be fine
 because we can't compute them in JuMP anyway.
 """
 function _order_subexpressions(

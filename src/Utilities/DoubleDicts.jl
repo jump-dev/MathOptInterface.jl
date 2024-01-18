@@ -110,7 +110,7 @@ function typed_value(::IndexDoubleDictInner{F,S}, v::Int64) where {F,S}
     return MOI.ConstraintIndex{F,S}(v)
 end
 
-# Base.sizehint!
+# `Base.sizehint!`
 
 function Base.sizehint!(::AbstractDoubleDict, ::Integer)
     return throw(
@@ -193,7 +193,7 @@ function Base.getindex(
     return typed_value(d, x)
 end
 
-# Base.setindex!
+# `Base.setindex!`
 
 function Base.setindex!(
     d::AbstractDoubleDict{V},
@@ -233,7 +233,7 @@ function Base.setindex!(
     return value
 end
 
-# Base.empty!
+# `Base.empty!`
 
 function Base.empty!(d::AbstractDoubleDict)
     Base.empty!(d.dict)
@@ -245,7 +245,7 @@ function Base.empty!(d::AbstractDoubleDictInner)
     return d
 end
 
-# Base.delete!
+# `Base.delete!`
 
 function Base.delete!(
     d::AbstractDoubleDict,
@@ -312,7 +312,7 @@ end
 ```
 
 For performance, it is recommended that the inner loop lies in a separate
-function to gurantee type-stability.
+function to guarantee type-stability.
 Some outer keys `(F, S)` might lead to an empty `dict[F, S]`.
 If you want only nonempty `dict[F, S]`, use [`nonempty_outer_keys`](@ref).
 """
@@ -334,7 +334,7 @@ for (F, S) in DoubleDicts.nonempty_outer_keys(dict)
     end
 end
 For performance, it is recommended that the inner loop lies in a separate
-function to gurantee type-stability.
+function to guarantee type-stability.
 
 If you want an iterator of all current outer keys, use [`outer_keys`](@ref).
 ```
@@ -357,7 +357,7 @@ function Base.iterate(d::AbstractDoubleDict)
     ((F, S), inner), outer_state = outer_next
     inner_next = iterate(inner)
     while inner_next === nothing
-        # It may be that the inner dictionary is empty! If so, we should go to
+        # It may be that the inner dictionary is empty. If so, we should go to
         # the next element in the outer dictionary.
         outer_next = iterate(d.dict, outer_state)
         if outer_next === nothing

@@ -135,7 +135,7 @@ Add the constraint ``v \\in \\mathcal{S}`` where ``v`` is the variable (or vecto
 * An [`UnsupportedConstraint`](@ref) error is thrown if `model` does not support
   `F`-in-`S` constraints,
 * a [`AddConstraintNotAllowed`](@ref) error is thrown if it supports `F`-in-`S`
-  constraints but it cannot add the constraint(s) in its current state and
+  constraints but it cannot add the constraint in its current state and
 * a [`ScalarFunctionConstantNotZero`](@ref) error may be thrown if
   `func` is an `AbstractScalarFunction` with nonzero constant and `set`
   is [`EqualTo`](@ref), [`GreaterThan`](@ref), [`LessThan`](@ref) or

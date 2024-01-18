@@ -30,7 +30,7 @@ mutable struct GenericModel{T,O,V,C} <: AbstractModelLike{T}
     con_to_name::Dict{MOI.ConstraintIndex,String}
     name_to_con::Union{Dict{String,MOI.ConstraintIndex},Nothing}
     # A useful dictionary for extensions to store things. These are
-    # _not_ copied between models!
+    # _not_ copied between models.
     ext::Dict{Symbol,Any}
     function GenericModel{T,O,V,C}() where {T,O,V,C}
         return new{T,O,V,C}(
@@ -73,7 +73,7 @@ mutable struct GenericOptimizer{T,O,V,C} <: AbstractOptimizer{T}
     con_to_name::Dict{MOI.ConstraintIndex,String}
     name_to_con::Union{Dict{String,MOI.ConstraintIndex},Nothing}
     # A useful dictionary for extensions to store things. These are
-    # _not_ copied between models!
+    # _not_ copied between models.
     ext::Dict{Symbol,Any}
     function GenericOptimizer{T,O,V,C}() where {T,O,V,C}
         return new{T,O,V,C}(

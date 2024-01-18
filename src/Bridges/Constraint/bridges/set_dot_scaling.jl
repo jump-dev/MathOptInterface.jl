@@ -93,7 +93,7 @@ end
 # scalar product for the scaled PSD cone is `<x, y>_2 = x'y` but the scalar
 # product for the PSD cone additionally scales the offdiagonal entries by `2`
 # hence by `D^2` so `<x, y>_1 = x'D^2y`.
-# So `<Dx, y>_2 = <x, D^(-1)y>_1` hence the adjoint of `D` is its inverse!
+# So `<Dx, y>_2 = <x, D^(-1)y>_1` hence the adjoint of `D` is its inverse.
 function MOI.Bridges.adjoint_map_function(
     ::Type{<:SetDotScalingBridge{T,S}},
     func,

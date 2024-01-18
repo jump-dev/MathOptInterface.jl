@@ -489,7 +489,7 @@ function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
             int_open = false
         end
         if length(coefficients[variable]) == 0
-            # Every variable must appear in the COLUMNS section! Add a 0
+            # Every variable must appear in the COLUMNS section. Add a 0
             # objective coefficient instead.
             println(io, Card(f2 = variable, f3 = "OBJ", f4 = "0"))
         end
@@ -906,7 +906,7 @@ end
 
 # ==============================================================================
 #
-#   Base.read!
+#   `Base.read!`
 #
 # Here is a template for an MPS file, reproduced from
 # http://lpsolve.sourceforge.net/5.5/mps-format.htm.
@@ -1024,7 +1024,7 @@ end
     HEADER_INDICATORS,
 )
 
-# `Headers(s)` gets called _alot_ (on every line), so we try very hard to be
+# `Headers` gets called _alot_ (on every line), so we try very hard to be
 # efficient.
 function Headers(s::AbstractString)
     N = length(s)
@@ -1687,7 +1687,7 @@ function parse_qmatrix_line(data, items)
         error("Malformed QMATRIX line: $(join(items, " "))")
     end
     if data.name_to_col[items[1]] <= data.name_to_col[items[2]]
-        # Off-diagonals have duplicate entries! We don't need to store both
+        # Off-diagonals have duplicate entries. We don't need to store both
         # triangles.
         push!(data.quad_obj, (items[1], items[2], parse(Float64, items[3])))
     end
@@ -1703,7 +1703,7 @@ function parse_qcmatrix_line(data, items)
         error("Malformed QCMATRIX line: $(join(items, " "))")
     end
     if data.name_to_col[items[1]] <= data.name_to_col[items[2]]
-        # Off-diagonals have duplicate entries! We don't need to store both
+        # Off-diagonals have duplicate entries. We don't need to store both
         # triangles.
         push!(
             data.qc_matrix[data.current_qc_matrix],

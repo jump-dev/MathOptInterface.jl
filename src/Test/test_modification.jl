@@ -645,8 +645,8 @@ end
         config::Config,
     )
 
-Test the constant of a scalaraffine objective. If `config.solve=true` confirm
-that it solves correctly.
+Test the constant of a ScalarAffineFunction objective. If `config.solve=true`
+confirm that it solves correctly.
 """
 function test_modification_const_scalar_objective(
     model::MOI.ModelLike,

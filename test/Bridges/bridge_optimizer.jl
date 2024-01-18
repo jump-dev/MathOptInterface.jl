@@ -1168,9 +1168,9 @@ function test_ListOfVariablesWithAttributeSet(T = Float64)
     @test MOI.get(model, attr) == x
     # Handled by UniversalFallback
     attr = MOI.ListOfVariablesWithAttributeSet(MOI.VariablePrimalStart())
-    # ... no attributes set
+    # no attributes set
     @test MOI.get(model, attr) == MOI.VariableIndex[]
-    # ... one attribute set
+    # one attribute set
     MOI.set(model, MOI.VariablePrimalStart(), x[2], 1.0)
     @test MOI.get(model, attr) == [x[2]]
     return

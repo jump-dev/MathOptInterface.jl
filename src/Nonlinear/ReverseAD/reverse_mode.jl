@@ -13,7 +13,7 @@ This function updates many of the data-structures inside `d` in-place.
 
 At a high level, reverse-mode AD has two phases:
 
-In Phase I, we evalute the problem in `d` at the primal solution `x`, and
+In Phase I, we evaluate the problem in `d` at the primal solution `x`, and
 stores the primal solution of each expression in the tree and the first-order
 partial derivative information for each node with respect to its arguments.
 

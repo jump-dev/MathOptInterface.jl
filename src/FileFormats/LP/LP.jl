@@ -401,7 +401,7 @@ end
 
 # ==============================================================================
 #
-#   Base.read!
+#   `Base.read!`
 #
 # ==============================================================================
 
@@ -541,7 +541,7 @@ function _get_term(token_types, token_values, offset)
         error("Invalid line")
     end
     if offset > length(token_types) || token_types[offset] == _TOKEN_SIGN
-        return coef, offset  # It's a standalone constant!
+        return coef, offset  # It's a standalone constant
     end
     if token_types[offset] == _TOKEN_QUADRATIC_OPEN
         return _get_term(token_types, token_values, offset + 1)
@@ -588,7 +588,7 @@ function _parse_function(
         else
             @assert token_type == _TOKEN_VARIABLE
             x = _get_variable_from_name(model, cache, token::String)
-            # A cheat for type-stability. Store `Float64` of the variable index!
+            # A cheat for type-stability. Store `Float64` of the variable index
             token_values[i] = Float64(x.value)
         end
     end

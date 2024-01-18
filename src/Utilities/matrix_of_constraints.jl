@@ -544,8 +544,8 @@ end
 ### .constants::Vector
 ###
 
-# Base.empty! is already implemented.
-# Base.resize! is already implemented.
+# `Base.empty!` is already implemented.
+# `Base.resize!` is already implemented.
 
 function load_constants(
     b::Vector{T},

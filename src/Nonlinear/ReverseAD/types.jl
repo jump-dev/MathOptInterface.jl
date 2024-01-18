@@ -164,7 +164,7 @@ mutable struct NLPEvaluator <: MOI.AbstractNLPEvaluator
     # reverse-mode automatic differentiation.
     last_x::Vector{Float64}
 
-    # Temporary storage for computing jacobians. This is also used as temporary
+    # Temporary storage for computing Jacobians. This is also used as temporary
     # storage for the input of multivariate functions.
     jac_storage::Vector{Float64}
     # Temporary storage for the gradient of multivariate functions
