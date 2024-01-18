@@ -34,7 +34,7 @@ jobs:
       - uses: errata-ai/vale-action@reviewdog
         with:
           version: 3.0.5
-          files: docs/src
+          files: all
           fail_on_error: true
           filter_mode: nofilter
           vale_flags: "--config=docs/.vale.ini"
