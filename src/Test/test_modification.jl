@@ -1035,6 +1035,8 @@ function test_modification_objective_scalarquadraticcoefficientchange(
     @test ≈(MOI.get(model, attr), T(1) * x * x + T(2) * x * y, config)
     MOI.modify(model, attr, MOI.ScalarQuadraticCoefficientChange(x, y, T(4)))
     @test ≈(MOI.get(model, attr), T(1) * x * x + T(4) * x * y, config)
+    MOI.modify(model, attr, MOI.ScalarQuadraticCoefficientChange(y, x, T(6)))
+    @test ≈(MOI.get(model, attr), T(1) * x * x + T(6) * x * y, config)
     return
 end
 
@@ -1054,6 +1056,8 @@ function test_modification_constraint_scalarquadraticcoefficientchange(
     g = T(1) * x * x + T(-3) * x * y + T(2) * y * y
     MOI.modify(model, c, MOI.ScalarQuadraticCoefficientChange(x, x, T(2)))
     MOI.modify(model, c, MOI.ScalarQuadraticCoefficientChange(x, y, -T(3)))
+    @test ≈(MOI.get(model, MOI.ConstraintFunction(), c), g, config)
+    MOI.modify(model, c, MOI.ScalarQuadraticCoefficientChange(y, x, -T(3)))
     @test ≈(MOI.get(model, MOI.ConstraintFunction(), c), g, config)
     return
 end
