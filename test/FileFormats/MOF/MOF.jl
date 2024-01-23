@@ -1511,6 +1511,68 @@ function test_nonlinear_variable_real_nodes()
     return
 end
 
+function test_mof_scalaraffinefunction()
+    x = MOI.VariableIndex(1)
+    f = 1.0 * x + 2.0
+    g = MOI.ScalarNonlinearFunction(:log, Any[f])
+    name_map = Dict(x => "x")
+    object = MOF.moi_to_object(g, name_map)
+    object_dest = MOF.OrderedObject(
+        "type" => "ScalarNonlinearFunction",
+        "root" => MOF.OrderedObject("type" => "node", "index" => 3),
+        "node_list" => Any[
+            MOF.OrderedObject("type" => "*", "args" => [1.0, "x"]),
+            MOF.OrderedObject(
+                "type" => "+",
+                "args" => [
+                    MOF.OrderedObject("type" => "node", "index" => 1),
+                    2.0,
+                ],
+            ),
+            MOF.OrderedObject(
+                "type" => "log",
+                "args" => Any[MOF.OrderedObject(
+                    "type" => "node",
+                    "index" => 2,
+                )],
+            ),
+        ],
+    )
+    @test object == object_dest
+    return
+end
+
+function test_mof_scalarquadraticfunction()
+    x = MOI.VariableIndex(1)
+    f = 1.0 * x * x + 2.0
+    g = MOI.ScalarNonlinearFunction(:log, Any[f])
+    name_map = Dict(x => "x")
+    object = MOF.moi_to_object(g, name_map)
+    object_dest = MOF.OrderedObject(
+        "type" => "ScalarNonlinearFunction",
+        "root" => MOF.OrderedObject("type" => "node", "index" => 3),
+        "node_list" => Any[
+            MOF.OrderedObject("type" => "*", "args" => [1.0, "x", "x"]),
+            MOF.OrderedObject(
+                "type" => "+",
+                "args" => [
+                    MOF.OrderedObject("type" => "node", "index" => 1),
+                    2.0,
+                ],
+            ),
+            MOF.OrderedObject(
+                "type" => "log",
+                "args" => Any[MOF.OrderedObject(
+                    "type" => "node",
+                    "index" => 2,
+                )],
+            ),
+        ],
+    )
+    @test object == object_dest
+    return
+end
+
 end
 
 TestMOF.runtests()

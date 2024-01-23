@@ -260,6 +260,20 @@ end
 
 function _convert_nonlinear_to_mof(
     ::Type{T},
+    f::MOI.AbstractScalarFunction,
+    node_list::Vector{Any},
+    name_map::Dict{MOI.VariableIndex,String},
+) where {T<:Object}
+    return _convert_nonlinear_to_mof(
+        T,
+        convert(MOI.ScalarNonlinearFunction, f),
+        node_list,
+        name_map,
+    )
+end
+
+function _convert_nonlinear_to_mof(
+    ::Type{T},
     value::Real,
     ::Vector{Any},
     ::Dict{MOI.VariableIndex,String},
