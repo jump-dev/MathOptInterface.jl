@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
- - Clarified ordering of nonlinear tape in documentationn (#2401)
+ - Clarified ordering of nonlinear tape in documentation (#2401)
  - Updated vale.sh (#2403) (#2404)
 
 ## v1.25.1 (January 11, 2024)
