@@ -37,17 +37,21 @@ the `ObjectiveFunction` value.
 """
 function get_fallback(model::MOI.ModelLike, attr::MOI.ObjectiveValue)
     MOI.check_result_index_bounds(model, attr)
-    F = MOI.get(model, MOI.ObjectiveFunctionType())
-    f = MOI.get(model, MOI.ObjectiveFunction{F}())
-    obj = eval_variables(model, f) do vi
-        return MOI.get(model, MOI.VariablePrimal(attr.result_index), vi)
+    try
+        F = MOI.get(model, MOI.ObjectiveFunctionType())
+        f = MOI.get(model, MOI.ObjectiveFunction{F}())
+        obj = eval_variables(model, f) do vi
+            return MOI.get(model, MOI.VariablePrimal(attr.result_index), vi)
+        end
+        if is_ray(MOI.get(model, MOI.PrimalStatus()))
+            # Dual infeasibility certificates do not include the primal
+            # objective constant.
+            obj -= MOI.constant(f, typeof(obj))
+        end
+        return obj
+    catch
+        throw(MOI.GetAttributeNotAllowed(attr))
     end
-    if is_ray(MOI.get(model, MOI.PrimalStatus()))
-        # Dual infeasibility certificates do not include the primal
-        # objective constant.
-        obj -= MOI.constant(f, typeof(obj))
-    end
-    return obj
 end
 
 # MOI.DualObjectiveValue
@@ -152,20 +156,24 @@ function get_fallback(
     ::Type{T},
 )::T where {T}
     MOI.check_result_index_bounds(model, attr)
-    value = zero(T) # sum will not work if there are zero constraints
-    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        value += _dual_objective_value(model, F, S, T, attr.result_index)::T
+    try
+        value = zero(T) # sum will not work if there are zero constraints
+        for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+            value += _dual_objective_value(model, F, S, T, attr.result_index)::T
+        end
+        if MOI.get(model, MOI.ObjectiveSense()) != MOI.MAX_SENSE
+            value = -value
+        end
+        if !is_ray(MOI.get(model, MOI.DualStatus()))
+            # The objective constant should not be present in rays
+            F = MOI.get(model, MOI.ObjectiveFunctionType())
+            f = MOI.get(model, MOI.ObjectiveFunction{F}())
+            value += MOI.constant(f, T)
+        end
+        return value::T
+    catch
+        throw(MOI.GetAttributeNotAllowed(attr))
     end
-    if MOI.get(model, MOI.ObjectiveSense()) != MOI.MAX_SENSE
-        value = -value
-    end
-    if !is_ray(MOI.get(model, MOI.DualStatus()))
-        # The objective constant should not be present in rays
-        F = MOI.get(model, MOI.ObjectiveFunctionType())
-        f = MOI.get(model, MOI.ObjectiveFunction{F}())
-        value += MOI.constant(f, T)
-    end
-    return value::T
 end
 
 # MOI.ConstraintPrimal
@@ -186,16 +194,18 @@ function get_fallback(
     idx::MOI.ConstraintIndex,
 )
     MOI.check_result_index_bounds(model, attr)
-    # If there is an error getting ConstraintFunction, we instead want to
-    # re-throw the attribute for ConstraintPrimal, not ConstraintFunction.
-    f = MOI.get(model, MOI.ConstraintFunction(), idx)
-    c = eval_variables(model, f) do vi
-        return MOI.get(model, MOI.VariablePrimal(attr.result_index), vi)
+    try
+        f = MOI.get(model, MOI.ConstraintFunction(), idx)
+        c = eval_variables(model, f) do vi
+            return MOI.get(model, MOI.VariablePrimal(attr.result_index), vi)
+        end
+        if is_ray(MOI.get(model, MOI.PrimalStatus()))
+            c -= MOI.constant(f, typeof(c))
+        end
+        return c
+    catch
+        throw(MOI.GetAttributeNotAllowed(attr))
     end
-    if is_ray(MOI.get(model, MOI.PrimalStatus()))
-        c -= MOI.constant(f, typeof(c))
-    end
-    return c
 end
 
 # MOI.ConstraintDual
@@ -485,6 +495,10 @@ function get_fallback(
     ci::MOI.ConstraintIndex{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
 )
     MOI.check_result_index_bounds(model, attr)
-    f = MOI.get(model, MOI.ConstraintFunction(), ci)
-    return _variable_dual(model, attr, ci, f)
+    try
+        f = MOI.get(model, MOI.ConstraintFunction(), ci)
+        return _variable_dual(model, attr, ci, f)
+    catch
+        throw(MOI.GetAttributeNotAllowed(attr))
+    end
 end
