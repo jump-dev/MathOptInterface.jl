@@ -53,7 +53,7 @@ function test_optimizer_solve_with_result()
     MOI.set(optimizer, MOI.ObjectiveFunction{MOI.VariableIndex}(), v[1])
     MOI.set(optimizer, MOI.ResultCount(), 1)
     @test_throws(
-        ErrorException("No mock primal is set for variable `$(v[1])`."),
+        MOI.GetAttributeNotAllowed{MOI.VariablePrimal},
         MOI.get(optimizer, MOI.VariablePrimal(), v[1])
     )
     @test_throws(
@@ -87,15 +87,11 @@ function test_optimizer_solve_with_result()
     optimizer.eval_objective_value = true
     @test MOI.get(optimizer, MOI.ObjectiveValue()) == 3.0
     @test_throws(
-        ErrorException(
-            "No mock primal is set for variable `$(v[1])` at result index `2`.",
-        ),
+        MOI.GetAttributeNotAllowed(MOI.ObjectiveValue(2)),
         MOI.get(optimizer, MOI.ObjectiveValue(2))
     )
     @test_throws(
-        ErrorException(
-            "No mock dual is set for constraint `$c1` at result index `1`.",
-        ),
+        MOI.GetAttributeNotAllowed(MOI.DualObjectiveValue()),
         MOI.get(optimizer, MOI.DualObjectiveValue())
     )
     @test MOI.get(optimizer, MOI.DualObjectiveValue(2)) == 5.9
@@ -104,31 +100,23 @@ function test_optimizer_solve_with_result()
     @test MOI.get(optimizer, MOI.VariablePrimal(), v) == [3.0, 2.0]
     @test MOI.get(optimizer, MOI.VariablePrimal(), v[1]) == 3.0
     @test_throws(
-        ErrorException(
-            "No mock primal is set for variable `$(v[1])` at result index `2`.",
-        ),
+        MOI.GetAttributeNotAllowed{MOI.VariablePrimal},
         MOI.get(optimizer, MOI.VariablePrimal(2), v[1])
     )
     @test MOI.get(optimizer, MOI.ConstraintPrimal(), c1) == 3.0
     @test MOI.get(optimizer, MOI.ConstraintPrimal(), soc) == [3.0, 2.0]
     @test_throws(
-        ErrorException(
-            "No mock primal is set for variable `$(v[1])` at result index `2`.",
-        ),
+        MOI.GetAttributeNotAllowed(MOI.ConstraintPrimal(2)),
         @show MOI.get(optimizer, MOI.ConstraintPrimal(2), c1)
     )
     @test_throws(
-        ErrorException(
-            "No mock primal is set for variable `$(v[1])` at result index `2`.",
-        ),
+        MOI.GetAttributeNotAllowed(MOI.ConstraintPrimal(2)),
         MOI.get(optimizer, MOI.ConstraintPrimal(2), soc)
     )
     @test MOI.get(optimizer, MOI.ConstraintDual(2), c1) == 5.9
     @test MOI.get(optimizer, MOI.ConstraintDual(2), soc) == [1.0, 2.0]
     @test_throws(
-        ErrorException(
-            "No mock dual is set for constraint `$c1` at result index `1`.",
-        ),
+        MOI.GetAttributeNotAllowed{MOI.ConstraintDual},
         MOI.get(optimizer, MOI.ConstraintDual(1), c1)
     )
 end

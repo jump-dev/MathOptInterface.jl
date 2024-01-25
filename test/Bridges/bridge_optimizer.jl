@@ -124,10 +124,9 @@ function test_CallbackVariablePrimal()
     y = MOI.get(mock, MOI.ListOfVariableIndices())[1]
     z = MOI.add_variable(bridged)
     attr = MOI.CallbackVariablePrimal(nothing)
-    @test_throws(
-        ErrorException("No mock callback primal is set for variable `$z`."),
-        MOI.get(bridged, attr, z),
-    )
+    msg = "No mock callback primal is set for variable `$z`."
+    err = MOI.GetAttributeNotAllowed(attr, msg)
+    @test_throws err MOI.get(bridged, attr, z)
     MOI.set(mock, attr, y, 1.0)
     MOI.set(mock, attr, z, 2.0)
     @test MOI.get(bridged, attr, z) == 2.0

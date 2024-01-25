@@ -357,8 +357,8 @@ function test_mapping_of_variables()
 
     @testset "CallbackVariablePrimal" begin
         attr = MOI.CallbackVariablePrimal(nothing)
-        err =
-            ErrorException("No mock callback primal is set for variable `$y`.")
+        msg = "No mock callback primal is set for variable `$y`."
+        err = MOI.GetCallbackNotAllowed(attr, msg)
         @test_throws err MOI.get(model, attr, x)
         MOI.set(mock, attr, y, 1.0)
         @test_throws MOI.InvalidIndex(x) MOI.get(mock, attr, x)

@@ -620,7 +620,8 @@ function MOI.get(
     end
     primal = get(mock.callback_variable_primal, xor_index(idx), nothing)
     if primal === nothing
-        error("No mock callback primal is set for variable `", idx, "`.")
+        msg = "No mock callback primal is set for variable `$idx`."
+        throw(MOI.GetAttributeNotAllowed(attr, msg))
     end
     return primal
 end
@@ -749,14 +750,13 @@ function _safe_get_result(
     index_name = index isa MOI.VariableIndex ? "variable" : "constraint"
     result_to_value = get(dict, xor_index(index), nothing)
     if result_to_value === nothing
-        error("No mock $name is set for ", index_name, " `", index, "`.")
+        msg = "No mock $name is set for $index_name `$index`."
+        throw(MOI.GetAttributeNotAllowed(attr, msg))
     end
     value = get(result_to_value, attr.result_index, nothing)
     if value === nothing
-        error(
-            "No mock $name is set for $(index_name) `$(index)` at result " *
-            "index `$(attr.result_index)`.",
-        )
+        msg = "No mock $name is set for $index_name `$index` at result index `$(attr.result_index)`."
+        throw(MOI.GetAttributeNotAllowed(attr, msg))
     end
     return value
 end
