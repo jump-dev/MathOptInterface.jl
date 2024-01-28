@@ -7,6 +7,24 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.25.2 (January 29, 2024)
+
+### Fixed
+
+ - Fixed getting [`ConstraintPrimal`](@ref) if variable bridges are present
+   (#2396)
+ - Fixed `modify_function!` for [`ScalarQuadraticCoefficientChange`](@ref)
+   (#2408)
+ - Fixed writing `FileFormats.MOF` files if [`ScalarNonlinearFunction`](@ref)
+   contains [`ScalarAffineFunction`](@ref) or [`ScalarQuadraticFunction`](@ref)
+   (#2409)
+
+### Other
+
+ - Clarified ordering of nonlinear tape in documentation (#2401)
+ - Updated vale.sh (#2403) (#2404)
+ - Tidied `src/Utilities/results.jl (#2411)
+
 ## v1.25.1 (January 11, 2024)
 
 ### Fixed
