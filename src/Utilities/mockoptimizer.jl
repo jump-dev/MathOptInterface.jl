@@ -667,14 +667,14 @@ function MOI.get(
 end
 
 function MOI.get(
-    mock::MockOptimizer,
+    mock::MockOptimizer{<:MOI.ModelLike,T},
     attr::MOI.ConstraintDual,
     idx::MOI.ConstraintIndex{F},
-) where {F}
+) where {T,F}
     MOI.throw_if_not_valid(mock, idx)
     if mock.eval_variable_constraint_dual &&
        (F == MOI.VariableIndex || F == MOI.VectorOfVariables)
-        return get_fallback(mock, attr, idx)
+        return get_fallback(mock, attr, idx, T)
     else
         MOI.check_result_index_bounds(mock, attr)
         return _safe_get_result(mock.constraint_dual, attr, idx, "dual")
