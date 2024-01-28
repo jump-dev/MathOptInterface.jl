@@ -492,7 +492,7 @@ function get_fallback(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,
     ci::MOI.ConstraintIndex{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
-    ::Type{T} = Float64
+    ::Type{T} = Float64,
 ) where {T}
     MOI.check_result_index_bounds(model, attr)
     f = MOI.get(model, MOI.ConstraintFunction(), ci)
