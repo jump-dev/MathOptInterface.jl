@@ -2381,7 +2381,15 @@ function unbridged_constraint_function(
         return func
     end
     # Otherwise, first unbridge the function:
-    f = unbridged_function(b, func)::typeof(func)
+    f = try
+        unbridged_function(b, func)::typeof(func)
+    catch err
+        if err isa Variable.CannotUnbridgeVariableFunction
+            attr = MOI.ConstraintFunction()
+            throw(MOI.GetAttributeNotAllowed(attr, err.msg))
+        end
+        rethrow(err)
+    end
     # But now we have to deal with an issue. Something like x in [1, ∞) might
     # get bridged into y in R₊, with x => y + 1, so if the original constraint is
     # 2x >= 1, the bridged function is 2y >= -1. Unbridging this with y = x - 1
