@@ -318,11 +318,12 @@ function _variable_coefficient(
 end
 
 function _variable_dual(
+    ::Type{T},
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,
     vi::MOI.VariableIndex,
     ci::MOI.ConstraintIndex{<:MOI.ScalarAffineFunction},
-)
+) where {T}
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     coef = _variable_coefficient(func, vi)
     dual = MOI.get(model, attr, ci)
@@ -330,11 +331,12 @@ function _variable_dual(
 end
 
 function _variable_dual(
+    ::Type{T},
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,
     vi::MOI.VariableIndex,
     ci::MOI.ConstraintIndex{<:MOI.ScalarQuadraticFunction},
-)
+) where {T}
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     primal = MOI.VariablePrimal(attr.result_index)
     coef = _variable_coefficient(func, vi, vi -> MOI.get(model, primal, vi))
@@ -343,11 +345,12 @@ function _variable_dual(
 end
 
 function _variable_dual(
+    ::Type{T},
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,
     vi::MOI.VariableIndex,
     ci::MOI.ConstraintIndex{<:MOI.VectorAffineFunction},
-)
+) where {T}
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     coef = _variable_coefficient(func, vi)
@@ -356,11 +359,12 @@ function _variable_dual(
 end
 
 function _variable_dual(
+    ::Type{T},
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,
     vi::MOI.VariableIndex,
     ci::MOI.ConstraintIndex{<:MOI.VectorQuadraticFunction},
-)
+) where {T}
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     primal = MOI.VariablePrimal(attr.result_index)
@@ -370,28 +374,30 @@ function _variable_dual(
 end
 
 function _variable_dual(
+    ::Type{T},
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,
     ci::MOI.ConstraintIndex,
     vi::MOI.VariableIndex,
     ::Type{F},
     ::Type{S},
-) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
-    dual = 0.0
+) where {T,F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    dual = zero(T)
     for constraint_index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-        dual += _variable_dual(model, attr, vi, constraint_index)
+        dual += _variable_dual(T, model, attr, vi, constraint_index)
     end
     return dual
 end
 
 function _variable_dual(
+    ::Type{T},
     model::MOI.ModelLike,
     ::MOI.ConstraintDual,
     ci::MOI.ConstraintIndex,
     vi::MOI.VariableIndex,
     ::Type{F},
     ::Type{S},
-) where {F<:Union{MOI.VariableIndex,MOI.VectorOfVariables},S<:MOI.AbstractSet}
+) where {T,F<:Union{MOI.VariableIndex,MOI.VectorOfVariables},S<:MOI.AbstractSet}
     for constraint_index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         if constraint_index == ci
             continue
@@ -406,22 +412,23 @@ function _variable_dual(
             )
         end
     end
-    return 0.0
+    return zero(T)
 end
 
 function _variable_dual(
+    ::Type{T},
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,
     ci::MOI.ConstraintIndex,
     vi::MOI.VariableIndex,
-)
+) where {T}
     ray = is_ray(MOI.get(model, MOI.DualStatus()))
-    dual = 0.0
+    dual = zero(T)
     if !ray
         sense = MOI.get(model, MOI.ObjectiveSense())
         # Dual definition for maximization problem corresponds to dual
         # definition for minimization problem with flipped objective in MOI
-        sign = sense == MOI.MAX_SENSE ? -1.0 : 1.0
+        sign = sense == MOI.MAX_SENSE ? T(-1) : T(1)
         F = MOI.get(model, MOI.ObjectiveFunctionType())
         obj_attr = MOI.ObjectiveFunction{F}()
         if F == MOI.VariableIndex
@@ -449,18 +456,19 @@ function _variable_dual(
         end
     end
     for FS in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        dual -= _variable_dual(model, attr, ci, vi, FS[1], FS[2])
+        dual -= _variable_dual(T, model, attr, ci, vi, FS[1], FS[2])
     end
     return dual
 end
 
 function _variable_dual(
+    ::Type{T},
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,
     ci::MOI.ConstraintIndex{MOI.VectorOfVariables},
     func::MOI.VectorOfVariables,
-)
-    dual = map(vi -> _variable_dual(model, attr, ci, vi), func.variables)
+) where {T}
+    dual = map(vi -> _variable_dual(T, model, attr, ci, vi), func.variables)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     return dot_coefficients(dual, set)
 end
@@ -470,7 +478,8 @@ end
         model::MOI.ModelLike,
         attr::MOI.ConstraintDual,
         ci::MOI.ConstraintIndex{Union{MOI.VariableIndex,MOI.VectorOfVariables}},
-    )
+        ::Type{T} = Float64,
+    ) where {T}
 
 Compute the dual of the constraint of index `ci` using the `ConstraintDual` of
 other constraints and the `ConstraintFunction` values.
@@ -483,8 +492,9 @@ function get_fallback(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,
     ci::MOI.ConstraintIndex{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
-)
+    ::Type{T} = Float64,
+) where {T}
     MOI.check_result_index_bounds(model, attr)
     f = MOI.get(model, MOI.ConstraintFunction(), ci)
-    return _variable_dual(model, attr, ci, f)
+    return _variable_dual(T, model, attr, ci, f)
 end
