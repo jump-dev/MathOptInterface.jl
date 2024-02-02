@@ -53,7 +53,7 @@ to `x != y`.
 which is equivalent to (for suitable `M`):
 ```math
 \\begin{aligned}
-z \\in \\{0, 1\\}
+z \\in \\{0, 1\\} \\\\
 x - y - M * z <= -1 \\\\
 y - x - M * (z - 1) <= -1
 \\end{aligned}
