@@ -41,6 +41,24 @@ non-zero:
 n - \\sum\\limits_{j \\in \\bigcup_{i=1,\\ldots,d} S_i} y_{j} = 0
 ```
 
+## Formulation (special case)
+
+In the special case that the constraint is `[2, x, y] in CountDistinct(3)`, then
+the constraint is equivalent to `[x, y] in AllDifferent(2)`, which is equivalent
+to `x != y`.
+
+```math
+(x - y <= -1) \\vee (y - x <= -1)
+```
+which is equivalent to (for suitable `M`):
+```math
+\\begin{aligned}
+z \\in \\{0, 1\\}
+x - y - M * z <= -1 \\\\
+y - x - M * (z - 1) <= -1
+\\end{aligned}
+```
+
 ## Source node
 
 `CountDistinctToMILPBridge` supports:
@@ -232,8 +250,104 @@ function MOI.Bridges.final_touch(
     bridge::CountDistinctToMILPBridge{T,F},
     model::MOI.ModelLike,
 ) where {T,F}
-    S = Dict{T,Vector{MOI.VariableIndex}}()
     scalars = collect(MOI.Utilities.eachscalar(bridge.f))
+    bounds = Dict{MOI.VariableIndex,NTuple{2,T}}()
+    ret = MOI.Utilities.get_bounds(model, bounds, scalars[1])
+    if MOI.output_dimension(bridge.f) == 3 && ret == (2.0, 2.0)
+        # The special case of
+        #   [x, y] in AllDifferent()
+        # bridged to
+        #   [2, x, y] in CountDistinct()
+        # This is equivalent to the NotEqualTo set.
+        _final_touch_not_equal_case(bridge, model, scalars)
+    else
+        _final_touch_general_case(bridge, model, scalars)
+    end
+    return
+end
+
+function _final_touch_not_equal_case(
+    bridge::CountDistinctToMILPBridge{T,F},
+    model::MOI.ModelLike,
+    scalars,
+) where {T,F}
+    bounds = Dict{MOI.VariableIndex,NTuple{2,T}}()
+    new_bounds = false
+    for i in 2:length(scalars)
+        x = scalars[i]
+        ret = MOI.Utilities.get_bounds(model, bounds, x)
+        if ret === nothing
+            error(
+                "Unable to use CountDistinctToMILPBridge because element $i " *
+                "in the function has a non-finite domain: $x",
+            )
+        end
+        if length(bridge.bounds) < i - 1
+            # This is the first time calling final_touch
+            push!(bridge.bounds, ret)
+            new_bounds = true
+        elseif bridge.bounds[i-1] == ret
+            # We've called final_touch before, and the bounds match. No need to
+            # reformulate a second time.
+            continue
+        elseif bridge.bounds[i-1] != ret
+            # There is a stored bound, and the current bounds do not match. This
+            # means the model has been modified since the previous call to
+            # final_touch. We need to delete the bridge and start again.
+            MOI.delete(model, bridge)
+            MOI.Bridges.final_touch(bridge, model)
+            return
+        end
+    end
+    if !new_bounds
+        return
+    end
+    # [2, x, y] in CountDistinct()
+    # <-->
+    #   x != y
+    # <-->
+    #   {x - y >= 1} \/ {y - x >= 1}
+    # <-->
+    #   {x - y <= -1} \/ {y - x <= -1}
+    # <-->
+    # {x - y - M * z <= -1} /\ {y - x - M * (z - 1) <= -1}, z in {0, 1}
+    z, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
+    push!(bridge.variables, z)
+    x, y = scalars[2], scalars[3]
+    bx, by = bridge.bounds[1], bridge.bounds[2]
+    # {x - y - M * z <= -1}, M = u_x - l_y
+    M = bx[2] - by[1]
+    f = MOI.Utilities.operate(-, T, x, y)
+    push!(
+        bridge.less_than,
+        MOI.Utilities.normalize_and_add_constraint(
+            model,
+            MOI.Utilities.operate!(-, T, f, M * z),
+            MOI.LessThan(T(-1));
+            allow_modify_function = true,
+        ),
+    )
+    # {y - x - M * (z - 1) <= -1}, M = u_x - l_y
+    M = by[2] - bx[1]
+    g = MOI.Utilities.operate(-, T, y, x)
+    push!(
+        bridge.less_than,
+        MOI.Utilities.normalize_and_add_constraint(
+            model,
+            MOI.Utilities.operate!(-, T, g, M * z),
+            MOI.LessThan(T(-1 - M));
+            allow_modify_function = true,
+        ),
+    )
+    return
+end
+
+function _final_touch_general_case(
+    bridge::CountDistinctToMILPBridge{T,F},
+    model::MOI.ModelLike,
+    scalars,
+) where {T,F}
+    S = Dict{T,Vector{MOI.VariableIndex}}()
     bounds = Dict{MOI.VariableIndex,NTuple{2,T}}()
     for i in 2:length(scalars)
         x = scalars[i]
