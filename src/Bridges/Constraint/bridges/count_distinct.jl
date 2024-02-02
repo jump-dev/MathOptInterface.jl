@@ -316,7 +316,7 @@ function _final_touch_not_equal_case(
     x, y = scalars[2], scalars[3]
     bx, by = bridge.bounds[1], bridge.bounds[2]
     # {x - y - M * z <= -1}, M = u_x - l_y
-    M = bx[2] - by[1]
+    M = bx[2] - by[1] + 1
     f = MOI.Utilities.operate(-, T, x, y)
     push!(
         bridge.less_than,
@@ -328,7 +328,7 @@ function _final_touch_not_equal_case(
         ),
     )
     # {y - x - M * (z - 1) <= -1}, M = u_x - l_y
-    M = by[2] - bx[1]
+    M = by[2] - bx[1] + 1
     g = MOI.Utilities.operate(-, T, y, x)
     push!(
         bridge.less_than,
