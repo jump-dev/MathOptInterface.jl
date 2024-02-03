@@ -75,7 +75,7 @@ function test_runtests_VectorOfVariables_NotEqualTo()
         """
         variables: n, x, y, z
         1.0 * x + -1.0 * y + -3.0 * z <= -1.0
-        1.0 * y + -1.0 * x + -5.0 * z <= -6.0
+        1.0 * y + -1.0 * x + 5.0 * z <= 4.0
         x in Interval(1.0, 4.0)
         y >= 2.0
         y <= 5.0

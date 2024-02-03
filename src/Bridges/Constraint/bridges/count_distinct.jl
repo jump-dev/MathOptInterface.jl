@@ -55,7 +55,7 @@ which is equivalent to (for suitable `M`):
 \\begin{aligned}
 z \\in \\{0, 1\\} \\\\
 x - y - M * z <= -1 \\\\
-y - x - M * (z - 1) <= -1
+y - x - M * (1 - z) <= -1
 \\end{aligned}
 ```
 
@@ -310,7 +310,7 @@ function _final_touch_not_equal_case(
     # <-->
     #   {x - y <= -1} \/ {y - x <= -1}
     # <-->
-    # {x - y - M * z <= -1} /\ {y - x - M * (z - 1) <= -1}, z in {0, 1}
+    # {x - y - M * z <= -1} /\ {y - x - M * (1 - z) <= -1}, z in {0, 1}
     z, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
     push!(bridge.variables, z)
     x, y = scalars[2], scalars[3]
@@ -327,15 +327,15 @@ function _final_touch_not_equal_case(
             allow_modify_function = true,
         ),
     )
-    # {y - x - M * (z - 1) <= -1}, M = u_x - l_y + 1
+    # {y - x - M * (1 - z) <= -1}, M = u_x - l_y + 1
     M = by[2] - bx[1] + 1
     g = MOI.Utilities.operate(-, T, y, x)
     push!(
         bridge.less_than,
         MOI.Utilities.normalize_and_add_constraint(
             model,
-            MOI.Utilities.operate!(-, T, g, M * z),
-            MOI.LessThan(T(-1 - M));
+            MOI.Utilities.operate!(+, T, g, M * z),
+            MOI.LessThan(T(-1 + M));
             allow_modify_function = true,
         ),
     )
