@@ -15,13 +15,11 @@ import MathOptInterface as MOI
 # To avoid adding Grisu as a dependency, use the following printing heuristic.
 # TODO(odow): consider printing 1.0 as 1.0 instead of 1, that is, without the
 # rounding branch.
-function print_shortest(io::IO, x::Real)
+function _to_string(x::Real)
     if isinteger(x) && (typemin(Int) <= x <= typemax(Int))
-        print(io, round(Int, x))
-    else
-        print(io, x)
+        return string(round(Int, x))
     end
-    return
+    return string(x)
 end
 
 const IndicatorLessThanTrue{T} =
@@ -151,10 +149,6 @@ end
 # However, since most readers default to loose MPS, make sure each field is
 # separated by at least one space.
 
-function pad_field(field, n)
-    return length(field) < n ? field : field * " "
-end
-
 struct Card
     f1::String
     f2::String
@@ -170,57 +164,43 @@ struct Card
         f3::String = "",
         f4::String = "",
         f5::String = "",
-        f6::String = "",
     )
         num_fields = isempty(f1) ? 0 : 1
         num_fields = isempty(f2) ? num_fields : 2
         num_fields = isempty(f3) ? num_fields : 3
         num_fields = isempty(f4) ? num_fields : 4
         num_fields = isempty(f5) ? num_fields : 5
-        num_fields = isempty(f6) ? num_fields : 6
-        return new(
-            pad_field(f1, 3),
-            pad_field(f2, 10),
-            pad_field(f3, 10),
-            pad_field(f4, 15),
-            pad_field(f5, 10),
-            pad_field(f6, Inf),
-            num_fields,
-        )
+        return new(f1, f2, f3, f4, f5, "", num_fields)
     end
 end
 
+function print_offset(io, offset, field, min_start)
+    n = max(1, min_start - offset - 1)
+    for _ in 1:n
+        print(io, ' ')
+    end
+    print(io, field)
+    return offset + n + length(field)
+end
+
 function Base.show(io::IO, card::Card)
-    # if card.num_fields == 0
-    #     return
-    # elseif card.num_fields == 1
-    #     print(io, " ", card.f1)
-    #     return
-    # end
-    print(io, " ", rpad(card.f1, 3))
+    offset = print_offset(io, 0, card.f1, 2)
+    if card.num_fields == 1
+        return
+    end
+    offset = print_offset(io, offset, card.f2, 5)
     if card.num_fields == 2
-        print(io, card.f2)
         return
     end
-    print(io, rpad(card.f2, 10))
+    offset = print_offset(io, offset, card.f3, 15)
     if card.num_fields == 3
-        print(io, card.f3)
         return
     end
-    print(io, rpad(card.f3, 10))
+    offset = print_offset(io, offset, card.f4, 25)
     if card.num_fields == 4
-        print(io, card.f4)
         return
     end
-    print(io, rpad(card.f4, 15))
-    if card.num_fields == 5
-        print(io, card.f5)
-        return
-    end
-    print(io, rpad(card.f5, 10))
-    # if card.num_fields == 6
-    #     print(io, card.f6)
-    # end
+    offset = print_offset(io, offset, card.f5, 40)
     return
 end
 
@@ -499,7 +479,7 @@ function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
                 Card(
                     f2 = variable,
                     f3 = constraint,
-                    f4 = sprint(print_shortest, coefficient),
+                    f4 = _to_string(coefficient),
                 ),
             )
         end
@@ -522,11 +502,7 @@ function _write_rhs(io, model, F, S)
         set = MOI.get(model, MOI.ConstraintSet(), index)
         println(
             io,
-            Card(
-                f2 = "rhs",
-                f3 = row_name,
-                f4 = sprint(print_shortest, _value(set)),
-            ),
+            Card(f2 = "rhs", f3 = row_name, f4 = _to_string(_value(set))),
         )
     end
     return
@@ -539,13 +515,13 @@ function _write_rhs(io, model, F, S::Type{MOI.Interval{Float64}})
         if set.lower == -Inf && set.upper == Inf
             # No RHS. Free row
         elseif set.upper == Inf
-            value = sprint(print_shortest, set.lower)
+            value = _to_string(set.lower)
             println(io, Card(f2 = "rhs", f3 = row_name, f4 = value))
         elseif set.lower == -Inf
-            value = sprint(print_shortest, set.upper)
+            value = _to_string(set.upper)
             println(io, Card(f2 = "rhs", f3 = row_name, f4 = value))
         else
-            value = sprint(print_shortest, set.upper)
+            value = _to_string(set.upper)
             println(io, Card(f2 = "rhs", f3 = row_name, f4 = value))
         end
     end
@@ -569,14 +545,7 @@ function write_rhs(io::IO, model::Model, obj_const)
     # Objective constants are added to the RHS as a negative offset.
     # https://www.ibm.com/docs/en/icos/20.1.0?topic=standard-records-in-mps-format
     if !iszero(obj_const)
-        println(
-            io,
-            Card(
-                f2 = "rhs",
-                f3 = "OBJ",
-                f4 = sprint(print_shortest, -obj_const),
-            ),
-        )
+        println(io, Card(f2 = "rhs", f3 = "OBJ", f4 = _to_string(-obj_const)))
     end
     return
 end
@@ -605,7 +574,7 @@ function _write_ranges(io::IO, model::Model, ::Type{F}) where {F}
         if isfinite(set.upper - set.lower)
             # We only need to write the range if the bounds are both finite
             row_name = MOI.get(model, MOI.ConstraintName(), index)
-            range = sprint(print_shortest, set.upper - set.lower)
+            range = _to_string(set.upper - set.lower)
             println(io, Card(f2 = "rhs", f3 = row_name, f4 = range))
         end
     end
@@ -646,7 +615,7 @@ function write_single_bound(io::IO, var_name::String, lower, upper)
                 f1 = "FX",
                 f2 = "bounds",
                 f3 = var_name,
-                f4 = sprint(print_shortest, lower),
+                f4 = _to_string(lower),
             ),
         )
     elseif lower == -Inf && upper == Inf
@@ -661,7 +630,7 @@ function write_single_bound(io::IO, var_name::String, lower, upper)
                     f1 = "LO",
                     f2 = "bounds",
                     f3 = var_name,
-                    f4 = sprint(print_shortest, lower),
+                    f4 = _to_string(lower),
                 ),
             )
         end
@@ -674,7 +643,7 @@ function write_single_bound(io::IO, var_name::String, lower, upper)
                     f1 = "UP",
                     f2 = "bounds",
                     f3 = var_name,
-                    f4 = sprint(print_shortest, upper),
+                    f4 = _to_string(upper),
                 ),
             )
         end
@@ -801,7 +770,7 @@ function _write_q_matrix(
             Card(
                 f2 = ordered_names[x],
                 f3 = ordered_names[y],
-                f4 = sprint(print_shortest, terms[(x, y)]),
+                f4 = _to_string(terms[(x, y)]),
             ),
         )
         if x != y && duplicate_off_diagonal
@@ -810,7 +779,7 @@ function _write_q_matrix(
                 Card(
                     f2 = ordered_names[y],
                     f3 = ordered_names[x],
-                    f4 = sprint(print_shortest, terms[(x, y)]),
+                    f4 = _to_string(terms[(x, y)]),
                 ),
             )
         end
@@ -855,10 +824,7 @@ function write_sos_constraint(io::IO, model::Model, index, names)
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
     for (variable, weight) in zip(func.variables, set.weights)
-        println(
-            io,
-            Card(f2 = names[variable], f3 = sprint(print_shortest, weight)),
-        )
+        println(io, Card(f2 = names[variable], f3 = _to_string(weight)))
     end
 end
 

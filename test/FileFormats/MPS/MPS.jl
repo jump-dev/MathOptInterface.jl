@@ -425,7 +425,7 @@ a_really_long_name <= 2.0
           "ROWS\n" *
           " N  OBJ\n" *
           "COLUMNS\n" *
-          "    a_really_long_name OBJ       1\n" *
+          "    a_really_long_name OBJ 1\n" *
           "RHS\n" *
           "RANGES\n" *
           "BOUNDS\n" *
