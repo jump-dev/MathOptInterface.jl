@@ -155,7 +155,6 @@ struct Card
     f3::String
     f4::String
     f5::String
-    f6::String
     num_fields::Int
 
     function Card(;
@@ -170,7 +169,7 @@ struct Card
         num_fields = isempty(f3) ? num_fields : 3
         num_fields = isempty(f4) ? num_fields : 4
         num_fields = isempty(f5) ? num_fields : 5
-        return new(f1, f2, f3, f4, f5, "", num_fields)
+        return new(f1, f2, f3, f4, f5, num_fields)
     end
 end
 
@@ -291,7 +290,7 @@ const SET_TYPES = (
 const FUNC_TYPES =
     (MOI.ScalarAffineFunction{Float64}, MOI.ScalarQuadraticFunction{Float64})
 
-function _write_rows(io, model, F, S, sense_char)
+function _write_rows(io, model, ::Type{F}, ::Type{S}, sense_char) where {F,S}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         if row_name == ""
@@ -302,7 +301,13 @@ function _write_rows(io, model, F, S, sense_char)
     return
 end
 
-function _write_rows(io, model, F, S::Type{MOI.Interval{Float64}}, ::Any)
+function _write_rows(
+    io,
+    model,
+    ::Type{F},
+    ::Type{S},
+    ::Any,
+) where {F,S<:MOI.Interval{Float64}}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         set = MOI.get(model, MOI.ConstraintSet(), index)
@@ -391,11 +396,11 @@ end
 
 function _collect_coefficients(
     model,
-    F,
-    S,
+    ::Type{F},
+    ::Type{S},
     v_names::Dict{MOI.VariableIndex,String},
     coefficients::Dict{String,Vector{Tuple{String,Float64}}},
-)
+) where {F,S}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         func = MOI.get(model, MOI.ConstraintFunction(), index)
