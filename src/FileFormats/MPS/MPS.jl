@@ -287,9 +287,6 @@ const SET_TYPES = (
     (MOI.Interval{Float64}, "L"),  # See the note in the RANGES section.
 )
 
-const FUNC_TYPES =
-    (MOI.ScalarAffineFunction{Float64}, MOI.ScalarQuadraticFunction{Float64})
-
 function _write_rows(io, model, ::Type{F}, ::Type{S}, sense_char) where {F,S}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         row_name = MOI.get(model, MOI.ConstraintName(), index)
@@ -324,12 +321,47 @@ function _write_rows(
     return
 end
 
+_code_replace(x, ::Any) = x
+
+_code_replace(x::Symbol, ret::Pair) = ifelse(first(ret) == x, last(ret), x)
+
+function _code_replace(x::Expr, ret::Pair)
+    for i in 1:length(x.args)
+        x.args[i] = _code_replace(x.args[i], ret)
+    end
+    return x
+end
+
+macro _unroll_loop(input)
+    @assert Meta.isexpr(input, :for)
+    head, body = input.args
+    ret = quote end
+    for arg in head.args[2].args
+        push!(ret.args, _code_replace(copy(body), head.args[1] => arg))
+    end
+    return esc(ret)
+end
+
+_sense(::Type{MOI.LessThan{Float64}}) = "L"
+_sense(::Type{MOI.GreaterThan{Float64}}) = "G"
+_sense(::Type{MOI.EqualTo{Float64}}) = "E"
+_sense(::Type{MOI.Interval{Float64}}) = "L"
+
 function write_rows(io::IO, model::Model)
     println(io, "ROWS")
     println(io, Card(f1 = "N", f2 = "OBJ"))
-    for (set_type, sense_char) in SET_TYPES
-        for F in FUNC_TYPES
-            _write_rows(io, model, F, set_type, sense_char)
+    # Functions and sets are given explicitly so that this function is type stable.
+    @_unroll_loop for S in (
+        MOI.LessThan{Float64},
+        MOI.GreaterThan{Float64},
+        MOI.EqualTo{Float64},
+        MOI.Interval{Float64},
+    )
+        @_unroll_loop for F in (
+            MOI.ScalarAffineFunction{Float64},
+            MOI.ScalarQuadraticFunction{Float64},
+        )
+            _write_rows(io, model, F, S, _sense(S))
         end
     end
     F = MOI.VectorAffineFunction{Float64}
@@ -339,7 +371,6 @@ function write_rows(io::IO, model::Model)
     _write_rows(io, model, F, IndicatorGreaterThanFalse{Float64}, "G")
     _write_rows(io, model, F, IndicatorEqualToTrue{Float64}, "E")
     _write_rows(io, model, F, IndicatorEqualToFalse{Float64}, "E")
-
     return
 end
 
@@ -347,7 +378,12 @@ end
 #   COLUMNS
 # ==============================================================================
 
-function _list_of_integer_variables(model, names, integer_variables, S)
+function _list_of_integer_variables(
+    model,
+    names,
+    integer_variables,
+    ::Type{S},
+) where {S}
     for index in
         MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
         v_index = MOI.get(model, MOI.ConstraintFunction(), index)
@@ -358,9 +394,8 @@ end
 
 function list_of_integer_variables(model::Model, names)
     integer_variables = Set{String}()
-    for S in (MOI.ZeroOne, MOI.Integer)
-        _list_of_integer_variables(model, names, integer_variables, S)
-    end
+    _list_of_integer_variables(model, names, integer_variables, MOI.ZeroOne)
+    _list_of_integer_variables(model, names, integer_variables, MOI.Integer)
     return integer_variables
 end
 
@@ -411,7 +446,13 @@ end
 
 _activation_condition(::Type{<:MOI.Indicator{A}}) where {A} = A
 
-function _collect_indicator(model, S, names, coefficients, indicators)
+function _collect_indicator(
+    model,
+    ::Type{S},
+    names,
+    coefficients,
+    indicators,
+) where {S}
     F = MOI.VectorAffineFunction{Float64}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         row_name = MOI.get(model, MOI.ConstraintName(), index)
@@ -443,12 +484,22 @@ function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
         n => Tuple{String,Float64}[] for n in ordered_names
     )
     # Build constraint coefficients
-    for (S, _) in SET_TYPES
-        for F in FUNC_TYPES
+    # The functions and sets are given explicitly so that this function is
+    # type-stable.
+    @_unroll_loop for S in (
+        MOI.LessThan{Float64},
+        MOI.GreaterThan{Float64},
+        MOI.EqualTo{Float64},
+        MOI.Interval{Float64},
+    )
+        @_unroll_loop for F in (
+            MOI.ScalarAffineFunction{Float64},
+            MOI.ScalarQuadraticFunction{Float64},
+        )
             _collect_coefficients(model, F, S, names, coefficients)
         end
     end
-    for S in (
+    @_unroll_loop for S in (
         IndicatorLessThanTrue{Float64},
         IndicatorLessThanFalse{Float64},
         IndicatorGreaterThanTrue{Float64},
@@ -540,9 +591,17 @@ end
 
 function write_rhs(io::IO, model::Model, obj_const)
     println(io, "RHS")
-    for (set_type, _) in SET_TYPES
-        for F in FUNC_TYPES
-            _write_rhs(io, model, F, set_type)
+    @_unroll_loop for S in (
+        MOI.LessThan{Float64},
+        MOI.GreaterThan{Float64},
+        MOI.EqualTo{Float64},
+        MOI.Interval{Float64},
+    )
+        @_unroll_loop for F in (
+            MOI.ScalarAffineFunction{Float64},
+            MOI.ScalarQuadraticFunction{Float64},
+        )
+            _write_rhs(io, model, F, S)
         end
     end
     F = MOI.VectorAffineFunction{Float64}
@@ -593,9 +652,8 @@ end
 
 function write_ranges(io::IO, model::Model)
     println(io, "RANGES")
-    for F in FUNC_TYPES
-        _write_ranges(io, model, F)
-    end
+    _write_ranges(io, model, MOI.ScalarAffineFunction{Float64})
+    _write_ranges(io, model, MOI.ScalarQuadraticFunction{Float64})
     return
 end
 
@@ -681,7 +739,7 @@ function update_bounds(x::Tuple{Float64,Float64,VType}, set::MOI.ZeroOne)
     return (x[1], x[2], VTYPE_BINARY)
 end
 
-function _collect_bounds(bounds, model, S, names)
+function _collect_bounds(bounds, model, ::Type{S}, names) where {S}
     for index in
         MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
         func = MOI.get(model, MOI.ConstraintFunction(), index)
@@ -697,7 +755,7 @@ function write_bounds(io::IO, model::Model, ordered_names, names)
     bounds = Dict{String,Tuple{Float64,Float64,VType}}(
         n => (-Inf, Inf, VTYPE_CONTINUOUS) for n in ordered_names
     )
-    for S in (
+    @_unroll_loop for S in (
         MOI.LessThan{Float64},
         MOI.GreaterThan{Float64},
         MOI.EqualTo{Float64},
