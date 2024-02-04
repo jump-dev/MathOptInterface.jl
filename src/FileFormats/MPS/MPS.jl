@@ -496,7 +496,7 @@ _value(set::MOI.GreaterThan) = set.lower
 _value(set::MOI.EqualTo) = set.value
 _value(set::MOI.Indicator) = _value(set.set)
 
-function _write_rhs(io, model, F, S)
+function _write_rhs(io, model, ::Type{F}, ::Type{S}) where {F,S}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         set = MOI.get(model, MOI.ConstraintSet(), index)
@@ -508,7 +508,12 @@ function _write_rhs(io, model, F, S)
     return
 end
 
-function _write_rhs(io, model, F, S::Type{MOI.Interval{Float64}})
+function _write_rhs(
+    io,
+    model,
+    ::Type{F},
+    ::Type{S},
+) where {F,S<:MOI.Interval{Float64}}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         set = MOI.get(model, MOI.ConstraintSet(), index)
