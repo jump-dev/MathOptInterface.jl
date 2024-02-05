@@ -1792,4 +1792,33 @@ function parse_indicators_line(data, items)
     return
 end
 
+import PrecompileTools
+
+PrecompileTools.@setup_workload begin
+    PrecompileTools.@compile_workload begin
+        let
+            model = Model()
+            x = MOI.add_variables(model, 4)
+            for i in 1:4
+                MOI.set(model, MOI.VariableName(), x[i], "x[$i]")
+            end
+            MOI.add_constraint(model, x[1], MOI.LessThan(1.0))
+            MOI.add_constraint(model, x[2], MOI.GreaterThan(1.0))
+            MOI.add_constraint(model, x[3], MOI.EqualTo(1.2))
+            MOI.add_constraint(model, x[4], MOI.Interval(-1.0, 100.0))
+            MOI.add_constraint(model, x[1], MOI.ZeroOne())
+            MOI.add_constraint(model, x[2], MOI.Integer())
+            MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+            f = 1.0 * x[1] + 2.0 * x[2] + 3.0
+            MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+            MOI.add_constraint(model, 1.5 * x[1], MOI.LessThan(1.0))
+            MOI.add_constraint(model, 1.5 * x[2], MOI.GreaterThan(1.0))
+            MOI.add_constraint(model, 1.5 * x[3], MOI.EqualTo(1.2))
+            MOI.add_constraint(model, 1.5 * x[4], MOI.Interval(-1.0, 100.0))
+            io = IOBuffer()
+            write(io, model)
+        end
+    end
+end
+
 end
