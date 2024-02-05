@@ -217,13 +217,12 @@ function Base.write(io::IO, model::Model)
             replacements = Function[s->replace(s, ' ' => '_')],
         )
     end
-    ordered_names = String[]
-    names = Dict{MOI.VariableIndex,String}()
+    variables = MOI.get(model, MOI.ListOfVariableIndices())
+    ordered_names = Vector{String}(undef, length(variables))
     var_to_column = Dict{MOI.VariableIndex,Int}()
-    for (i, x) in enumerate(MOI.get(model, MOI.ListOfVariableIndices()))
+    for (i, x) in enumerate(variables)
         n = MOI.get(model, MOI.VariableName(), x)
-        push!(ordered_names, n)
-        names[x] = n
+        ordered_names[i] = n
         var_to_column[x] = i
     end
     write_model_name(io, model)
@@ -239,16 +238,16 @@ function Base.write(io::IO, model::Model)
     end
     write_rows(io, model)
     obj_const, indicators =
-        write_columns(io, model, flip_obj, ordered_names, names)
+        write_columns(io, model, flip_obj, ordered_names, var_to_column)
     write_rhs(io, model, obj_const)
     write_ranges(io, model)
-    write_bounds(io, model, ordered_names, names)
+    write_bounds(io, model, ordered_names, var_to_column)
     write_quadobj(io, model, ordered_names, var_to_column)
     if options.quadratic_format != kQuadraticFormatCPLEX
         # Gurobi needs qcons _after_ quadobj and _before_ SOS.
         write_quadcons(io, model, ordered_names, var_to_column)
     end
-    write_sos(io, model, names)
+    write_sos(io, model, ordered_names, var_to_column)
     if options.quadratic_format == kQuadraticFormatCPLEX
         # CPLEX needs qcons _after_ SOS.
         write_quadcons(io, model, ordered_names, var_to_column)
@@ -365,51 +364,51 @@ end
 
 function _list_of_integer_variables(
     model,
-    names,
+    var_to_column,
     integer_variables,
     ::Type{S},
 ) where {S}
     for index in
         MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
         v_index = MOI.get(model, MOI.ConstraintFunction(), index)
-        push!(integer_variables, names[v_index])
+        push!(integer_variables, var_to_column[v_index])
     end
     return
 end
 
-function list_of_integer_variables(model::Model, names)
-    integer_variables = Set{String}()
-    _list_of_integer_variables(model, names, integer_variables, MOI.ZeroOne)
-    _list_of_integer_variables(model, names, integer_variables, MOI.Integer)
-    return integer_variables
+function list_of_integer_variables(model::Model, var_to_column)
+    set = Set{Int}()
+    _list_of_integer_variables(model, var_to_column, set, MOI.ZeroOne)
+    _list_of_integer_variables(model, var_to_column, set, MOI.Integer)
+    return set
 end
 
 function _extract_terms(
-    v_names::Dict{MOI.VariableIndex,String},
-    coefficients::Dict{String,Vector{Tuple{String,Float64}}},
+    var_to_column::Dict{MOI.VariableIndex,Int},
+    coefficients::Vector{Vector{Tuple{String,Float64}}},
     row_name::String,
     func::MOI.ScalarAffineFunction,
     flip_sign::Bool = false,
 )
     for term in func.terms
-        variable_name = v_names[term.variable]
+        column = var_to_column[term.variable]
         coef = flip_sign ? -term.coefficient : term.coefficient
-        push!(coefficients[variable_name], (row_name, coef))
+        push!(coefficients[column], (row_name, coef))
     end
     return
 end
 
 function _extract_terms(
-    v_names::Dict{MOI.VariableIndex,String},
-    coefficients::Dict{String,Vector{Tuple{String,Float64}}},
+    var_to_column::Dict{MOI.VariableIndex,Int},
+    coefficients::Vector{Vector{Tuple{String,Float64}}},
     row_name::String,
     func::MOI.ScalarQuadraticFunction,
     flip_sign::Bool = false,
 )
     for term in func.affine_terms
-        variable_name = v_names[term.variable]
+        column = var_to_column[term.variable]
         coef = flip_sign ? -term.coefficient : term.coefficient
-        push!(coefficients[variable_name], (row_name, coef))
+        push!(coefficients[column], (row_name, coef))
     end
     return
 end
@@ -418,13 +417,13 @@ function _collect_coefficients(
     model,
     ::Type{F},
     ::Type{S},
-    v_names::Dict{MOI.VariableIndex,String},
-    coefficients::Dict{String,Vector{Tuple{String,Float64}}},
+    var_to_column::Dict{MOI.VariableIndex,Int},
+    coefficients::Vector{Vector{Tuple{String,Float64}}},
 ) where {F,S}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         func = MOI.get(model, MOI.ConstraintFunction(), index)
-        _extract_terms(v_names, coefficients, row_name, func)
+        _extract_terms(var_to_column, coefficients, row_name, func)
     end
     return
 end
@@ -434,7 +433,7 @@ _activation_condition(::Type{<:MOI.Indicator{A}}) where {A} = A
 function _collect_indicator(
     model,
     ::Type{S},
-    names,
+    var_to_column,
     coefficients,
     indicators,
 ) where {S}
@@ -444,7 +443,7 @@ function _collect_indicator(
         func = MOI.get(model, MOI.ConstraintFunction(), index)
         funcs = MOI.Utilities.eachscalar(func)
         z = convert(MOI.VariableIndex, funcs[1])
-        _extract_terms(names, coefficients, row_name, funcs[2])
+        _extract_terms(var_to_column, coefficients, row_name, funcs[2])
         condition = _activation_condition(S)
         push!(
             indicators,
@@ -459,17 +458,23 @@ function _get_objective(model)::MOI.ScalarQuadraticFunction{Float64}
     return MOI.get(model, MOI.ObjectiveFunction{F}())
 end
 
-function _extract_terms_objective(model, names, coefficients, flip_obj)
+function _extract_terms_objective(model, var_to_column, coefficients, flip_obj)
     obj_func = _get_objective(model)
-    _extract_terms(names, coefficients, "OBJ", obj_func, flip_obj)
+    _extract_terms(var_to_column, coefficients, "OBJ", obj_func, flip_obj)
     return obj_func.constant
 end
 
-function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
+function write_columns(
+    io::IO,
+    model::Model,
+    flip_obj,
+    ordered_names,
+    var_to_column,
+)
     indicators = Tuple{String,String,MOI.ActivationCondition}[]
-    coefficients = Dict{String,Vector{Tuple{String,Float64}}}(
-        n => Tuple{String,Float64}[] for n in ordered_names
-    )
+    coefficients = Vector{Tuple{String,Float64}}[
+        Tuple{String,Float64}[] for _ in ordered_names
+    ]
     # Build constraint coefficients
     # The functions and sets are given explicitly so that this function is
     # type-stable.
@@ -483,7 +488,7 @@ function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
             MOI.ScalarAffineFunction{Float64},
             MOI.ScalarQuadraticFunction{Float64},
         )
-            _collect_coefficients(model, F, S, names, coefficients)
+            _collect_coefficients(model, F, S, var_to_column, coefficients)
         end
     end
     @_unroll_loop for S in (
@@ -494,15 +499,16 @@ function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
         IndicatorEqualToTrue{Float64},
         IndicatorEqualToFalse{Float64},
     )
-        _collect_indicator(model, S, names, coefficients, indicators)
+        _collect_indicator(model, S, var_to_column, coefficients, indicators)
     end
     # Build objective
-    constant = _extract_terms_objective(model, names, coefficients, flip_obj)
-    integer_variables = list_of_integer_variables(model, names)
+    constant =
+        _extract_terms_objective(model, var_to_column, coefficients, flip_obj)
+    integer_variables = list_of_integer_variables(model, var_to_column)
     println(io, "COLUMNS")
     int_open = false
-    for variable in ordered_names
-        is_int = variable in integer_variables
+    for (column, variable) in enumerate(ordered_names)
+        is_int = column in integer_variables
         if is_int && !int_open
             println(io, Card(f2 = "MARKER", f3 = "'MARKER'", f5 = "'INTORG'"))
             int_open = true
@@ -510,12 +516,12 @@ function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
             println(io, Card(f2 = "MARKER", f3 = "'MARKER'", f5 = "'INTEND'"))
             int_open = false
         end
-        if length(coefficients[variable]) == 0
+        if length(coefficients[column]) == 0
             # Every variable must appear in the COLUMNS section. Add a 0
             # objective coefficient instead.
             println(io, Card(f2 = variable, f3 = "OBJ", f4 = "0"))
         end
-        for (constraint, coefficient) in coefficients[variable]
+        for (constraint, coefficient) in coefficients[column]
             println(
                 io,
                 Card(
@@ -725,22 +731,20 @@ function update_bounds(x::Tuple{Float64,Float64,VType}, set::MOI.ZeroOne)
     return (x[1], x[2], VTYPE_BINARY)
 end
 
-function _collect_bounds(bounds, model, ::Type{S}, names) where {S}
+function _collect_bounds(bounds, model, ::Type{S}, var_to_column) where {S}
     for index in
         MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
         func = MOI.get(model, MOI.ConstraintFunction(), index)
         set = MOI.get(model, MOI.ConstraintSet(), index)::S
-        name = names[func]
-        bounds[name] = update_bounds(bounds[name], set)
+        column = var_to_column[func]
+        bounds[column] = update_bounds(bounds[column], set)
     end
     return
 end
 
-function write_bounds(io::IO, model::Model, ordered_names, names)
+function write_bounds(io::IO, model::Model, ordered_names, var_to_column)
     println(io, "BOUNDS")
-    bounds = Dict{String,Tuple{Float64,Float64,VType}}(
-        n => (-Inf, Inf, VTYPE_CONTINUOUS) for n in ordered_names
-    )
+    bounds = [(-Inf, Inf, VTYPE_CONTINUOUS) for _ in ordered_names]
     @_unroll_loop for S in (
         MOI.LessThan{Float64},
         MOI.GreaterThan{Float64},
@@ -748,10 +752,10 @@ function write_bounds(io::IO, model::Model, ordered_names, names)
         MOI.Interval{Float64},
         MOI.ZeroOne,
     )
-        _collect_bounds(bounds, model, S, names)
+        _collect_bounds(bounds, model, S, var_to_column)
     end
-    for var_name in ordered_names
-        lower, upper, vtype = bounds[var_name]
+    for (column, var_name) in enumerate(ordered_names)
+        lower, upper, vtype = bounds[column]
         if vtype == VTYPE_BINARY
             println(io, Card(f1 = "BV", f2 = "bounds", f3 = var_name))
             # Only add bounds if they are tighter than the implicit bounds of a
@@ -879,15 +883,22 @@ end
 #   SOS
 # ==============================================================================
 
-function write_sos_constraint(io::IO, model::Model, index, names)
+function write_sos_constraint(
+    io::IO,
+    model::Model,
+    index,
+    ordered_names,
+    var_to_column,
+)
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
     for (variable, weight) in zip(func.variables, set.weights)
-        println(io, Card(f2 = names[variable], f3 = _to_string(weight)))
+        column = var_to_column[variable]
+        println(io, Card(f2 = ordered_names[column], f3 = _to_string(weight)))
     end
 end
 
-function write_sos(io::IO, model::Model, names)
+function write_sos(io::IO, model::Model, ordered_names, var_to_column)
     sos1_indices = MOI.get(
         model,
         MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.SOS1{Float64}}(),
@@ -902,7 +913,13 @@ function write_sos(io::IO, model::Model, names)
         for (sos_type, indices) in enumerate([sos1_indices, sos2_indices])
             for index in indices
                 println(io, Card(f1 = "S$(sos_type)", f2 = "SOS$(idx)"))
-                write_sos_constraint(io, model, index, names)
+                write_sos_constraint(
+                    io,
+                    model,
+                    index,
+                    ordered_names,
+                    var_to_column,
+                )
                 idx += 1
             end
         end
