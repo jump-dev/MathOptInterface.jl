@@ -268,13 +268,6 @@ end
 #   ROWS
 # ==============================================================================
 
-const SET_TYPES = (
-    (MOI.LessThan{Float64}, "L"),
-    (MOI.GreaterThan{Float64}, "G"),
-    (MOI.EqualTo{Float64}, "E"),
-    (MOI.Interval{Float64}, "L"),  # See the note in the RANGES section.
-)
-
 function _write_rows(io, model, ::Type{F}, ::Type{S}, sense_char) where {F,S}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         row_name = MOI.get(model, MOI.ConstraintName(), index)
@@ -852,7 +845,12 @@ end
 function write_quadcons(io::IO, model::Model, ordered_names, var_to_column)
     options = get_options(model)
     F = MOI.ScalarQuadraticFunction{Float64}
-    for (S, _) in SET_TYPES
+    for S in (
+        MOI.LessThan{Float64},
+        MOI.GreaterThan{Float64},
+        MOI.EqualTo{Float64},
+        MOI.Interval{Float64},
+    )
         for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             name = MOI.get(model, MOI.ConstraintName(), ci)
             if options.quadratic_format == kQuadraticFormatMosek
