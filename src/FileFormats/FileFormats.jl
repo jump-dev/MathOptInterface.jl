@@ -20,6 +20,8 @@ include("MPS/MPS.jl")
 include("NL/NL.jl")
 include("SDPA/SDPA.jl")
 
+include("Optimizer.jl")
+
 """
     FileFormat
 
