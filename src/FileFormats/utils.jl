@@ -291,11 +291,11 @@ end
 struct AutomaticCompression <: AbstractCompressionScheme end
 
 function compressed_open(
-    f::Function,
+    f::F,
     filename::String,
     mode::String,
     ::AutomaticCompression,
-)
+) where {F<:Function}
     ext = Symbol(split(filename, ".")[end])
     return compressed_open(f, filename, mode, extension(Val{ext}()))
 end

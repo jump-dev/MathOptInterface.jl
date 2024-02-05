@@ -100,7 +100,7 @@ struct Options
     quadratic_format::QuadraticFormat
 end
 
-function get_options(m::Model)
+function get_options(m::Model)::Options
     return get(
         m.ext,
         :MPS_OPTIONS,
@@ -469,14 +469,17 @@ function _collect_indicator(
     return
 end
 
-function _get_objective(model)
+function _get_objective(model)::MOI.ScalarQuadraticFunction{Float64}
     F = MOI.get(model, MOI.ObjectiveFunctionType())
-    f = MOI.get(model, MOI.ObjectiveFunction{F}())
-    if f isa MOI.VariableIndex
-        return convert(MOI.ScalarAffineFunction{Float64}, f)
-    end
-    return f
+    return MOI.get(model, MOI.ObjectiveFunction{F}())
 end
+
+function _extract_terms_objective(model, names, coefficients, flip_obj)
+    obj_func = _get_objective(model)
+    _extract_terms(names, coefficients, "OBJ", obj_func, flip_obj)
+    return obj_func.constant
+end
+
 
 function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
     indicators = Tuple{String,String,MOI.ActivationCondition}[]
@@ -510,8 +513,7 @@ function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
         _collect_indicator(model, S, names, coefficients, indicators)
     end
     # Build objective
-    obj_func = _get_objective(model)
-    _extract_terms(names, coefficients, "OBJ", obj_func, flip_obj)
+    constant = _extract_terms_objective(model, names, coefficients, flip_obj)
     integer_variables = list_of_integer_variables(model, names)
     println(io, "COLUMNS")
     int_open = false
@@ -540,7 +542,7 @@ function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
             )
         end
     end
-    return obj_func.constant, indicators
+    return constant, indicators
 end
 
 # ==============================================================================
@@ -786,7 +788,7 @@ end
 
 function write_quadobj(io::IO, model::Model, ordered_names, var_to_column)
     f = _get_objective(model)
-    if !(f isa MOI.ScalarQuadraticFunction{Float64})
+    if isempty(f.quadratic_terms)
         return
     end
     options = get_options(model)
