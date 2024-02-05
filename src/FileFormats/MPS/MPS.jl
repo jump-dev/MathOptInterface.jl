@@ -10,14 +10,18 @@ import ..FileFormats
 
 import MathOptInterface as MOI
 
-# Julia 1.6 removes Grisu from Base. Previously, we went
-#   print_shortest(io, x) = Base.Grisu.print_shortest(io, x)
-# To avoid adding Grisu as a dependency, use the following printing heuristic.
-# TODO(odow): consider printing 1.0 as 1.0 instead of 1, that is, without the
-# rounding branch.
+const _NUM_TO_STRING = [string(i) for i in -10:10]
+
 function _to_string(x::Real)
-    if isinteger(x) && (typemin(Int) <= x <= typemax(Int))
-        return string(round(Int, x))
+    if isinteger(x)
+        if -10 <= x <= 10
+            # Optimize some very common cases. It seems annoying to do this, but
+            # the lookup is faster than `string(::Int)`, and many models contain
+            # small integer constants like -1, 0, or 1.
+            return _NUM_TO_STRING[Int(x)+11]
+        elseif typemin(Int) <= x <= typemax(Int)
+            return string(round(Int, x))
+        end
     end
     return string(x)
 end
@@ -177,8 +181,8 @@ function print_offset(io, offset, field, min_start)
 end
 
 function Base.show(io::IO, card::Card)
-     offset = print_offset(io, 0, card.f1, 2)
-     offset = print_offset(io, offset, card.f2, 5)
+    offset = print_offset(io, 0, card.f1, 2)
+    offset = print_offset(io, offset, card.f2, 5)
     if !isempty(card.f3)
         offset = print_offset(io, offset, card.f3, 15)
     end
@@ -460,7 +464,6 @@ function _extract_terms_objective(model, names, coefficients, flip_obj)
     _extract_terms(names, coefficients, "OBJ", obj_func, flip_obj)
     return obj_func.constant
 end
-
 
 function write_columns(io::IO, model::Model, flip_obj, ordered_names, names)
     indicators = Tuple{String,String,MOI.ActivationCondition}[]
