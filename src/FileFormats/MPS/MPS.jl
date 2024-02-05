@@ -155,7 +155,6 @@ struct Card
     f3::String
     f4::String
     f5::String
-    num_fields::Int
 
     function Card(;
         f1::String = "",
@@ -164,12 +163,7 @@ struct Card
         f4::String = "",
         f5::String = "",
     )
-        num_fields = isempty(f1) ? 0 : 1
-        num_fields = isempty(f2) ? num_fields : 2
-        num_fields = isempty(f3) ? num_fields : 3
-        num_fields = isempty(f4) ? num_fields : 4
-        num_fields = isempty(f5) ? num_fields : 5
-        return new(f1, f2, f3, f4, f5, num_fields)
+        return new(f1, f2, f3, f4, f5)
     end
 end
 
@@ -183,23 +177,17 @@ function print_offset(io, offset, field, min_start)
 end
 
 function Base.show(io::IO, card::Card)
-    offset = print_offset(io, 0, card.f1, 2)
-    if card.num_fields == 1
-        return
+     offset = print_offset(io, 0, card.f1, 2)
+     offset = print_offset(io, offset, card.f2, 5)
+    if !isempty(card.f3)
+        offset = print_offset(io, offset, card.f3, 15)
     end
-    offset = print_offset(io, offset, card.f2, 5)
-    if card.num_fields == 2
-        return
+    if !isempty(card.f4)
+        offset = print_offset(io, offset, card.f4, 25)
     end
-    offset = print_offset(io, offset, card.f3, 15)
-    if card.num_fields == 3
-        return
+    if !isempty(card.f5)
+        offset = print_offset(io, offset, card.f5, 40)
     end
-    offset = print_offset(io, offset, card.f4, 25)
-    if card.num_fields == 4
-        return
-    end
-    offset = print_offset(io, offset, card.f5, 40)
     return
 end
 
