@@ -316,7 +316,7 @@ function _code_replace(x::Expr, ret::Pair)
     return x
 end
 
-macro _unroll_loop(input)
+macro _unroll(input)
     @assert Meta.isexpr(input, :for)
     head, body = input.args
     ret = quote end
@@ -330,18 +330,18 @@ _sense(::Type{MOI.LessThan{Float64}}) = "L"
 _sense(::Type{MOI.GreaterThan{Float64}}) = "G"
 _sense(::Type{MOI.EqualTo{Float64}}) = "E"
 _sense(::Type{MOI.Interval{Float64}}) = "L"
+_sense(::Type{MOI.Indicator{A,S}}) where {A,S} = _sense(S)
 
 function write_rows(io::IO, model::Model)
     println(io, "ROWS")
     println(io, Card(f1 = "N", f2 = "OBJ"))
-    # Functions and sets are given explicitly so that this function is type stable.
-    @_unroll_loop for S in (
+    @_unroll for S in (
         MOI.LessThan{Float64},
         MOI.GreaterThan{Float64},
         MOI.EqualTo{Float64},
         MOI.Interval{Float64},
     )
-        @_unroll_loop for F in (
+        @_unroll for F in (
             MOI.ScalarAffineFunction{Float64},
             MOI.ScalarQuadraticFunction{Float64},
         )
@@ -349,12 +349,16 @@ function write_rows(io::IO, model::Model)
         end
     end
     F = MOI.VectorAffineFunction{Float64}
-    _write_rows(io, model, F, IndicatorLessThanTrue{Float64}, "L")
-    _write_rows(io, model, F, IndicatorLessThanFalse{Float64}, "L")
-    _write_rows(io, model, F, IndicatorGreaterThanTrue{Float64}, "G")
-    _write_rows(io, model, F, IndicatorGreaterThanFalse{Float64}, "G")
-    _write_rows(io, model, F, IndicatorEqualToTrue{Float64}, "E")
-    _write_rows(io, model, F, IndicatorEqualToFalse{Float64}, "E")
+    @_unroll for S in (
+        IndicatorLessThanTrue{Float64},
+        IndicatorLessThanFalse{Float64},
+        IndicatorGreaterThanTrue{Float64},
+        IndicatorGreaterThanFalse{Float64},
+        IndicatorEqualToTrue{Float64},
+        IndicatorEqualToFalse{Float64},
+    )
+        _write_rows(io, model, F, S, _sense(S))
+    end
     return
 end
 
@@ -478,20 +482,20 @@ function write_columns(
     # Build constraint coefficients
     # The functions and sets are given explicitly so that this function is
     # type-stable.
-    @_unroll_loop for S in (
+    @_unroll for S in (
         MOI.LessThan{Float64},
         MOI.GreaterThan{Float64},
         MOI.EqualTo{Float64},
         MOI.Interval{Float64},
     )
-        @_unroll_loop for F in (
+        @_unroll for F in (
             MOI.ScalarAffineFunction{Float64},
             MOI.ScalarQuadraticFunction{Float64},
         )
             _collect_coefficients(model, F, S, var_to_column, coefficients)
         end
     end
-    @_unroll_loop for S in (
+    @_unroll for S in (
         IndicatorLessThanTrue{Float64},
         IndicatorLessThanFalse{Float64},
         IndicatorGreaterThanTrue{Float64},
@@ -583,13 +587,13 @@ end
 
 function write_rhs(io::IO, model::Model, obj_const)
     println(io, "RHS")
-    @_unroll_loop for S in (
+    @_unroll for S in (
         MOI.LessThan{Float64},
         MOI.GreaterThan{Float64},
         MOI.EqualTo{Float64},
         MOI.Interval{Float64},
     )
-        @_unroll_loop for F in (
+        @_unroll for F in (
             MOI.ScalarAffineFunction{Float64},
             MOI.ScalarQuadraticFunction{Float64},
         )
@@ -597,12 +601,16 @@ function write_rhs(io::IO, model::Model, obj_const)
         end
     end
     F = MOI.VectorAffineFunction{Float64}
-    _write_rhs(io, model, F, IndicatorLessThanTrue{Float64})
-    _write_rhs(io, model, F, IndicatorLessThanFalse{Float64})
-    _write_rhs(io, model, F, IndicatorGreaterThanTrue{Float64})
-    _write_rhs(io, model, F, IndicatorGreaterThanFalse{Float64})
-    _write_rhs(io, model, F, IndicatorEqualToTrue{Float64})
-    _write_rhs(io, model, F, IndicatorEqualToFalse{Float64})
+    @_unroll for S in (
+        IndicatorLessThanTrue{Float64},
+        IndicatorLessThanFalse{Float64},
+        IndicatorGreaterThanTrue{Float64},
+        IndicatorGreaterThanFalse{Float64},
+        IndicatorEqualToTrue{Float64},
+        IndicatorEqualToFalse{Float64},
+    )
+        _write_rhs(io, model, F, S)
+    end
     # Objective constants are added to the RHS as a negative offset.
     # https://www.ibm.com/docs/en/icos/20.1.0?topic=standard-records-in-mps-format
     if !iszero(obj_const)
@@ -745,7 +753,7 @@ end
 function write_bounds(io::IO, model::Model, ordered_names, var_to_column)
     println(io, "BOUNDS")
     bounds = [(-Inf, Inf, VTYPE_CONTINUOUS) for _ in ordered_names]
-    @_unroll_loop for S in (
+    @_unroll for S in (
         MOI.LessThan{Float64},
         MOI.GreaterThan{Float64},
         MOI.EqualTo{Float64},
