@@ -79,10 +79,10 @@ end
 function test_sos()
     model = MPS.Model()
     x = MOI.add_variables(model, 3)
-    names = Dict{MOI.VariableIndex,String}()
+    names = Dict{MOI.VariableIndex,Int}()
     for i in 1:3
         MOI.set(model, MOI.VariableName(), x[i], "x$(i)")
-        names[x[i]] = "x$(i)"
+        names[x[i]] = i
     end
     MOI.add_constraint(
         model,
@@ -94,7 +94,7 @@ function test_sos()
         MOI.VectorOfVariables(x),
         MOI.SOS2([1.25, 2.25, 3.25]),
     )
-    @test sprint(MPS.write_sos, model, names) ==
+    @test sprint(MPS.write_sos, model, ["x1", "x2", "x3"], names) ==
           "SOS\n" *
           " S1 SOS1\n" *
           "    x1        1.5\n" *
@@ -104,6 +104,7 @@ function test_sos()
           "    x1        1.25\n" *
           "    x2        2.25\n" *
           "    x3        3.25\n"
+    return
 end
 
 function test_maximization()
@@ -112,7 +113,7 @@ function test_maximization()
     MOI.set(model, MOI.VariableName(), x, "x")
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
-    @test sprint(MPS.write_columns, model, true, ["x"], Dict(x => "x")) ==
+    @test sprint(MPS.write_columns, model, true, ["x"], Dict(x => 1)) ==
           "COLUMNS\n    x         OBJ       -1\n"
 end
 
@@ -123,7 +124,7 @@ function test_maximization_objsense_false()
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     sprint(MPS.write, model)
-    @test sprint(MPS.write_columns, model, false, ["x"], Dict(x => "x")) ==
+    @test sprint(MPS.write_columns, model, false, ["x"], Dict(x => 1)) ==
           "COLUMNS\n    x         OBJ       1\n"
 end
 
@@ -425,7 +426,7 @@ a_really_long_name <= 2.0
           "ROWS\n" *
           " N  OBJ\n" *
           "COLUMNS\n" *
-          "    a_really_long_name OBJ       1\n" *
+          "    a_really_long_name OBJ 1\n" *
           "RHS\n" *
           "RANGES\n" *
           "BOUNDS\n" *
