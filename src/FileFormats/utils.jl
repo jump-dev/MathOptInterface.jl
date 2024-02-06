@@ -61,6 +61,92 @@ function _replace(s::String, replacements::Vector{Function})
     return s
 end
 
+function _create_unique_constraint_names_inner(
+    model,
+    warn,
+    replacements,
+    original_names,
+    added_names,
+    ::Type{MOI.VariableIndex},
+    ::Type{S},
+) where {S}
+    return  # VariableIndex constraints do not need a name.
+end
+
+function _create_unique_constraint_names_inner(
+    model,
+    warn,
+    replacements,
+    original_names,
+    added_names,
+    ::Type{F},
+    ::Type{S},
+) where {F,S}
+    for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        original_name = MOI.get(model, MOI.ConstraintName(), index)
+        new_name = _replace(
+            original_name != "" ? original_name : "c$(index.value)",
+            replacements,
+        )
+        if new_name in added_names
+            # We found a duplicate name. We could just append a string like
+            # "_", but we're going to be clever and loop through the
+            # integers to name them appropriately. Thus, if we have three
+            # constraints named c, we'll end up with variables named c, c_1,
+            # and c_2.
+            i = 1
+            tmp_name = string(new_name, "_", i)
+            while tmp_name in added_names || tmp_name in original_names
+                i += 1
+                tmp_name = string(new_name, "_", i)
+            end
+            new_name = tmp_name
+        end
+        push!(added_names, new_name)
+        if new_name != original_name
+            if warn
+                if original_name == ""
+                    @warn(
+                        "Blank name detected for constraint $(index). " *
+                        "Renamed to $(new_name)."
+                    )
+                else
+                    @warn(
+                        "Duplicate name $(original_name) detected for " *
+                        "constraint $(index). Renamed to $(new_name)."
+                    )
+                end
+            end
+            MOI.set(model, MOI.ConstraintName(), index, new_name)
+        end
+    end
+    return
+end
+
+function _get_original_names_inner(
+    model,
+    replacements,
+    original_names,
+    ::Type{F},
+    ::Type{S},
+) where {F,S}
+    for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        name = MOI.get(model, MOI.ConstraintName(), index)
+        push!(original_names, _replace(name, replacements))
+    end
+    return
+end
+
+function _get_original_names_inner(
+    model,
+    replacements,
+    original_names,
+    ::Type{MOI.VariableIndex},
+    ::Type{S},
+) where {S}
+    return  # VariableIndex constraints do not need a name.
+end
+
 function create_unique_constraint_names(
     model::MOI.ModelLike,
     warn::Bool,
@@ -68,58 +154,21 @@ function create_unique_constraint_names(
 )
     original_names = Set{String}()
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        if F == MOI.VariableIndex
-            continue  # VariableIndex constraints do not need a name.
-        end
-        for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            name = MOI.get(model, MOI.ConstraintName(), index)
-            push!(original_names, _replace(name, replacements))
-        end
+        _get_original_names_inner(model, replacements, original_names, F, S)
     end
     added_names = Set{String}()
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        if F == MOI.VariableIndex
-            continue  # VariableIndex constraints do not need a name.
-        end
-        for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            original_name = MOI.get(model, MOI.ConstraintName(), index)
-            new_name = _replace(
-                original_name != "" ? original_name : "c$(index.value)",
-                replacements,
-            )
-            if new_name in added_names
-                # We found a duplicate name. We could just append a string like
-                # "_", but we're going to be clever and loop through the
-                # integers to name them appropriately. Thus, if we have three
-                # constraints named c, we'll end up with variables named c, c_1,
-                # and c_2.
-                i = 1
-                tmp_name = string(new_name, "_", i)
-                while tmp_name in added_names || tmp_name in original_names
-                    i += 1
-                    tmp_name = string(new_name, "_", i)
-                end
-                new_name = tmp_name
-            end
-            push!(added_names, new_name)
-            if new_name != original_name
-                if warn
-                    if original_name == ""
-                        @warn(
-                            "Blank name detected for constraint $(index). " *
-                            "Renamed to $(new_name)."
-                        )
-                    else
-                        @warn(
-                            "Duplicate name $(original_name) detected for " *
-                            "constraint $(index). Renamed to $(new_name)."
-                        )
-                    end
-                end
-                MOI.set(model, MOI.ConstraintName(), index, new_name)
-            end
-        end
+        _create_unique_constraint_names_inner(
+            model,
+            warn,
+            replacements,
+            original_names,
+            added_names,
+            F,
+            S,
+        )
     end
+    return
 end
 
 function create_unique_variable_names(
@@ -242,11 +291,11 @@ end
 struct AutomaticCompression <: AbstractCompressionScheme end
 
 function compressed_open(
-    f::Function,
+    f::F,
     filename::String,
     mode::String,
     ::AutomaticCompression,
-)
+) where {F<:Function}
     ext = Symbol(split(filename, ".")[end])
     return compressed_open(f, filename, mode, extension(Val{ext}()))
 end
