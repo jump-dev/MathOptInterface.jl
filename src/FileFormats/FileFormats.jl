@@ -17,6 +17,7 @@ include("CBF/CBF.jl")
 include("LP/LP.jl")
 include("MOF/MOF.jl")
 include("MPS/MPS.jl")
+include("MPS/MPS2.jl")
 include("NL/NL.jl")
 include("SDPA/SDPA.jl")
 
@@ -107,7 +108,7 @@ function Model(;
 end
 
 const MATH_OPT_FORMATS =
-    Union{CBF.Model,LP.Model,MOF.Model,MPS.Model,NL.Model,SDPA.Model}
+    Union{CBF.Model,LP.Model,MOF.Model,MPS.Model,MPS2.Model,NL.Model,SDPA.Model}
 
 function MOI.write_to_file(model::MATH_OPT_FORMATS, filename::String)
     compressed_open(filename, "w", AutomaticCompression()) do io
