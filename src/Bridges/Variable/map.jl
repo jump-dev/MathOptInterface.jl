@@ -573,28 +573,14 @@ function function_for(map::Map, ci::MOI.ConstraintIndex{MOI.VectorOfVariables})
 end
 
 """
-    struct CannotUnbridgeVariableFunction(msg::String) <: Exception
-
-The error thrown when Variable bridges do not support unmapping the function.
-
-This is usually because the forward mapping is lossy, for example, when the
-`ZerosBridge` converts `x in Zeros()` to `0.0`; given the constant `0.0`, we
-cannot recover the variable `x`.
-"""
-struct CannotUnbridgeVariableFunction <: Exception
-    msg::String
-
-    CannotUnbridgeVariableFunction(msg::String = "") = new(msg)
-end
-
-"""
     throw_if_cannot_unbridge(map::Map)
 
 Throw an error if some bridged variables do not have any reverse mapping.
 """
 function throw_if_cannot_unbridge(map::Map)
     if map.unbridged_function === nothing
-        err = CannotUnbridgeVariableFunction(
+        err = MOI.GetAttributeNotAllowed(
+            MOI.ConstraintFunction(),
             "Cannot unbridge function because some variables are bridged by " *
             "variable bridges that do not support reverse mapping, for " *
             "example, `ZerosBridge`.",

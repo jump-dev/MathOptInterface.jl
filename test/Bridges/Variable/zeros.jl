@@ -84,7 +84,8 @@ function test_zeros()
     )
     @test_throws err MOI.delete(bridged_mock, cyz)
 
-    err = MOI.Bridges.Variable.CannotUnbridgeVariableFunction(
+    err = MOI.GetAttributeNotAllowed(
+        MOI.ConstraintFunction(),
         "Cannot unbridge function because some variables are bridged by" *
         " variable bridges that do not support reverse mapping, for example," *
         " `ZerosBridge`.",
@@ -92,12 +93,6 @@ function test_zeros()
     @test_throws err MOI.get(bridged_mock, MOI.ObjectiveFunction{typeof(obj)}())
     # With `c1`, the function does not contain any variable so it tests that it
     # also throws an error even if it never calls `variable_unbridged_function`
-    err = MOI.GetAttributeNotAllowed(
-        MOI.ConstraintFunction(),
-        "Cannot unbridge function because some variables are bridged by" *
-        " variable bridges that do not support reverse mapping, for example," *
-        " `ZerosBridge`.",
-    )
     @test_throws err MOI.get(bridged_mock, MOI.ConstraintFunction(), c1)
     @test_throws err MOI.get(bridged_mock, MOI.ConstraintFunction(), c2)
 
