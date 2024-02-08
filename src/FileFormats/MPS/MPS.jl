@@ -1837,5 +1837,4 @@ const SET_TYPES = (
     (MOI.EqualTo{Float64}, "E"),
     (MOI.Interval{Float64}, "L"),
 )
-    
 end
