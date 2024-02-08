@@ -1829,4 +1829,13 @@ PrecompileTools.@setup_workload begin
     end
 end
 
+# Originally removed by #2421, but this constant was used by extensions like
+# BilevelJuMP so I'm re-adding to maintain backwards compatibility.
+const SET_TYPES = (
+    (MOI.LessThan{Float64}, "L"),
+    (MOI.GreaterThan{Float64}, "G"),
+    (MOI.EqualTo{Float64}, "E"),
+    (MOI.Interval{Float64}, "L"),
+)
+
 end
