@@ -9,6 +9,7 @@ module MPS
 import ..FileFormats
 
 import MathOptInterface as MOI
+import DataStructures: OrderedDict
 
 const _NUM_TO_STRING = [string(i) for i in -10:10]
 
@@ -209,7 +210,17 @@ Write `model` to `io` in the MPS file format.
 function Base.write(io::IO, model::Model)
     options = get_options(model)
     if options.generic_names
-        FileFormats.create_generic_names(model)
+        # just constraints
+        i = 1
+        for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+            if F == MOI.VariableIndex
+                continue  # VariableIndex constraints do not need a name.
+            end
+            for c in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+                MOI.set(model, MOI.ConstraintName(), c, "R$i")
+                i += 1
+            end
+        end
     else
         FileFormats.create_unique_names(
             model;
@@ -218,11 +229,8 @@ function Base.write(io::IO, model::Model)
         )
     end
     variables = MOI.get(model, MOI.ListOfVariableIndices())
-    ordered_names = Vector{String}(undef, length(variables))
-    var_to_column = Dict{MOI.VariableIndex,Int}()
+    var_to_column = OrderedDict{MOI.VariableIndex,Int}()
     for (i, x) in enumerate(variables)
-        n = MOI.get(model, MOI.VariableName(), x)
-        ordered_names[i] = n
         var_to_column[x] = i
     end
     write_model_name(io, model)
@@ -238,19 +246,19 @@ function Base.write(io::IO, model::Model)
     end
     write_rows(io, model)
     obj_const, indicators =
-        write_columns(io, model, flip_obj, ordered_names, var_to_column)
+        write_columns(io, model, flip_obj, var_to_column)
     write_rhs(io, model, obj_const)
     write_ranges(io, model)
-    write_bounds(io, model, ordered_names, var_to_column)
-    write_quadobj(io, model, ordered_names, var_to_column)
+    write_bounds(io, model, var_to_column)
+    write_quadobj(io, model, var_to_column)
     if options.quadratic_format != kQuadraticFormatCPLEX
         # Gurobi needs qcons _after_ quadobj and _before_ SOS.
-        write_quadcons(io, model, ordered_names, var_to_column)
+        write_quadcons(io, model, var_to_column)
     end
-    write_sos(io, model, ordered_names, var_to_column)
+    write_sos(io, model, var_to_column)
     if options.quadratic_format == kQuadraticFormatCPLEX
         # CPLEX needs qcons _after_ SOS.
-        write_quadcons(io, model, ordered_names, var_to_column)
+        write_quadcons(io, model, var_to_column)
     end
     write_indicators(io, indicators)
     println(io, "ENDATA")
@@ -388,7 +396,7 @@ function list_of_integer_variables(model::Model, var_to_column)
 end
 
 function _extract_terms(
-    var_to_column::Dict{MOI.VariableIndex,Int},
+    var_to_column::OrderedDict{MOI.VariableIndex,Int},
     coefficients::Vector{Vector{Tuple{String,Float64}}},
     row_name::String,
     func::MOI.ScalarAffineFunction,
@@ -403,7 +411,7 @@ function _extract_terms(
 end
 
 function _extract_terms(
-    var_to_column::Dict{MOI.VariableIndex,Int},
+    var_to_column::OrderedDict{MOI.VariableIndex,Int},
     coefficients::Vector{Vector{Tuple{String,Float64}}},
     row_name::String,
     func::MOI.ScalarQuadraticFunction,
@@ -421,7 +429,7 @@ function _collect_coefficients(
     model,
     ::Type{F},
     ::Type{S},
-    var_to_column::Dict{MOI.VariableIndex,Int},
+    var_to_column::OrderedDict{MOI.VariableIndex,Int},
     coefficients::Vector{Vector{Tuple{String,Float64}}},
 ) where {F,S}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
@@ -468,16 +476,24 @@ function _extract_terms_objective(model, var_to_column, coefficients, flip_obj)
     return obj_func.constant
 end
 
+function _var_name(model::Model, variable::MOI.VariableIndex, column::Int, generic_name::Bool)::String
+    if generic_name
+        return "C$column"
+    else
+        return MOI.get(model, MOI.VariableName(), variable)
+    end
+end
+
 function write_columns(
     io::IO,
     model::Model,
     flip_obj,
-    ordered_names,
     var_to_column,
 )
+    options = get_options(model)
     indicators = Tuple{String,String,MOI.ActivationCondition}[]
     coefficients = Vector{Tuple{String,Float64}}[
-        Tuple{String,Float64}[] for _ in ordered_names
+        Tuple{String,Float64}[] for _ in 1:length(var_to_column)
     ]
     # Build constraint coefficients
     # The functions and sets are given explicitly so that this function is
@@ -511,7 +527,8 @@ function write_columns(
     integer_variables = list_of_integer_variables(model, var_to_column)
     println(io, "COLUMNS")
     int_open = false
-    for (column, variable) in enumerate(ordered_names)
+    for (variable, column) in var_to_column
+        var_name = _var_name(model, variable, column, options.generic_names)
         is_int = column in integer_variables
         if is_int && !int_open
             println(io, Card(f2 = "MARKER", f3 = "'MARKER'", f5 = "'INTORG'"))
@@ -523,13 +540,13 @@ function write_columns(
         if length(coefficients[column]) == 0
             # Every variable must appear in the COLUMNS section. Add a 0
             # objective coefficient instead.
-            println(io, Card(f2 = variable, f3 = "OBJ", f4 = "0"))
+            println(io, Card(f2 = var_name, f3 = "OBJ", f4 = "0"))
         end
         for (constraint, coefficient) in coefficients[column]
             println(
                 io,
                 Card(
-                    f2 = variable,
+                    f2 = var_name,
                     f3 = constraint,
                     f4 = _to_string(coefficient),
                 ),
@@ -750,9 +767,10 @@ function _collect_bounds(bounds, model, ::Type{S}, var_to_column) where {S}
     return
 end
 
-function write_bounds(io::IO, model::Model, ordered_names, var_to_column)
+function write_bounds(io::IO, model::Model, var_to_column)
+    options = get_options(model)
     println(io, "BOUNDS")
-    bounds = [(-Inf, Inf, VTYPE_CONTINUOUS) for _ in ordered_names]
+    bounds = [(-Inf, Inf, VTYPE_CONTINUOUS) for _ in 1:length(var_to_column)]
     @_unroll for S in (
         MOI.LessThan{Float64},
         MOI.GreaterThan{Float64},
@@ -762,7 +780,8 @@ function write_bounds(io::IO, model::Model, ordered_names, var_to_column)
     )
         _collect_bounds(bounds, model, S, var_to_column)
     end
-    for (column, var_name) in enumerate(ordered_names)
+    for (variable, column) in var_to_column
+        var_name = _var_name(model, variable, column, options.generic_names)
         lower, upper, vtype = bounds[column]
         if vtype == VTYPE_BINARY
             println(io, Card(f1 = "BV", f2 = "bounds", f3 = var_name))
@@ -782,7 +801,7 @@ end
 #   QUADRATIC OBJECTIVE
 # ==============================================================================
 
-function write_quadobj(io::IO, model::Model, ordered_names, var_to_column)
+function write_quadobj(io::IO, model::Model, var_to_column)
     f = _get_objective(model)
     if isempty(f.quadratic_terms)
         return
@@ -798,8 +817,8 @@ function write_quadobj(io::IO, model::Model, ordered_names, var_to_column)
     end
     _write_q_matrix(
         io,
+        model,
         f,
-        ordered_names,
         var_to_column;
         duplicate_off_diagonal = options.quadratic_format ==
                                  kQuadraticFormatCPLEX,
@@ -809,18 +828,20 @@ end
 
 function _write_q_matrix(
     io::IO,
+    model::Model,
     f,
-    ordered_names,
     var_to_column;
     duplicate_off_diagonal::Bool,
 )
+    options = get_options(model)
     # Convert the quadratic terms into matrix form. We don't need to scale
     # because MOI uses the same Q/2 format as Gurobi, but we do need to ensure
     # we collate off-diagonal terms in the lower-triangular.
-    terms = Dict{Tuple{Int,Int},Float64}()
+    terms = Dict{Tuple{MOI.VariableIndex,MOI.VariableIndex},Float64}()
     for term in f.quadratic_terms
-        x, y = var_to_column[term.variable_1], var_to_column[term.variable_2]
-        if x > y
+        x = term.variable_1
+        y = term.variable_2
+        if var_to_column[x] > var_to_column[y]
             x, y = y, x
         end
         if haskey(terms, (x, y))
@@ -830,12 +851,14 @@ function _write_q_matrix(
         end
     end
     # Use sort for reproducibility, and so the Q matrix is given in order.
-    for (x, y) in sort!(collect(keys(terms)))
+    for (x, y) in sort!(collect(keys(terms)), by = ((x,y),) -> (var_to_column[x], var_to_column[y]))
+        x_name = _var_name(model, x, var_to_column[x], options.generic_names)
+        y_name = _var_name(model, y, var_to_column[y], options.generic_names)
         println(
             io,
             Card(
-                f2 = ordered_names[x],
-                f3 = ordered_names[y],
+                f2 = x_name,
+                f3 = y_name,
                 f4 = _to_string(terms[(x, y)]),
             ),
         )
@@ -843,8 +866,8 @@ function _write_q_matrix(
             println(
                 io,
                 Card(
-                    f2 = ordered_names[y],
-                    f3 = ordered_names[x],
+                    f2 = y_name,
+                    f3 = x_name,
                     f4 = _to_string(terms[(x, y)]),
                 ),
             )
@@ -857,7 +880,7 @@ end
 #   QUADRATIC CONSTRAINTS
 # ==============================================================================
 
-function write_quadcons(io::IO, model::Model, ordered_names, var_to_column)
+function write_quadcons(io::IO, model::Model, var_to_column)
     options = get_options(model)
     F = MOI.ScalarQuadraticFunction{Float64}
     for S in (
@@ -876,8 +899,8 @@ function write_quadcons(io::IO, model::Model, ordered_names, var_to_column)
             f = MOI.get(model, MOI.ConstraintFunction(), ci)
             _write_q_matrix(
                 io,
+                model,
                 f,
-                ordered_names,
                 var_to_column;
                 duplicate_off_diagonal = options.quadratic_format !=
                                          kQuadraticFormatMosek,
@@ -895,18 +918,18 @@ function write_sos_constraint(
     io::IO,
     model::Model,
     index,
-    ordered_names,
     var_to_column,
 )
+    options = get_options(model)
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
     for (variable, weight) in zip(func.variables, set.weights)
-        column = var_to_column[variable]
-        println(io, Card(f2 = ordered_names[column], f3 = _to_string(weight)))
+        var_name = _var_name(model, variable, var_to_column[variable], options.generic_names)
+        println(io, Card(f2 = var_name, f3 = _to_string(weight)))
     end
 end
 
-function write_sos(io::IO, model::Model, ordered_names, var_to_column)
+function write_sos(io::IO, model::Model, var_to_column)
     sos1_indices = MOI.get(
         model,
         MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.SOS1{Float64}}(),
@@ -925,7 +948,6 @@ function write_sos(io::IO, model::Model, ordered_names, var_to_column)
                     io,
                     model,
                     index,
-                    ordered_names,
                     var_to_column,
                 )
                 idx += 1
