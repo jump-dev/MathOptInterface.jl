@@ -448,6 +448,7 @@ function _collect_indicator(
     coefficients,
     indicators,
 ) where {S}
+    options = get_options(model)
     F = MOI.VectorAffineFunction{Float64}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         row_name = MOI.get(model, MOI.ConstraintName(), index)
@@ -456,9 +457,10 @@ function _collect_indicator(
         z = convert(MOI.VariableIndex, funcs[1])
         _extract_terms(var_to_column, coefficients, row_name, funcs[2])
         condition = _activation_condition(S)
+        var_name = _var_name(model, z, var_to_column[z], options.generic_names)
         push!(
             indicators,
-            (row_name, MOI.get(model, MOI.VariableName(), z), condition),
+            (row_name, var_name, condition),
         )
     end
     return
