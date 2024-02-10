@@ -245,8 +245,7 @@ function Base.write(io::IO, model::Model)
         flip_obj = MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
     end
     write_rows(io, model)
-    obj_const, indicators =
-        write_columns(io, model, flip_obj, var_to_column)
+    obj_const, indicators = write_columns(io, model, flip_obj, var_to_column)
     write_rhs(io, model, obj_const)
     write_ranges(io, model)
     write_bounds(io, model, var_to_column)
@@ -476,7 +475,12 @@ function _extract_terms_objective(model, var_to_column, coefficients, flip_obj)
     return obj_func.constant
 end
 
-function _var_name(model::Model, variable::MOI.VariableIndex, column::Int, generic_name::Bool)::String
+function _var_name(
+    model::Model,
+    variable::MOI.VariableIndex,
+    column::Int,
+    generic_name::Bool,
+)::String
     if generic_name
         return "C$column"
     else
@@ -484,12 +488,7 @@ function _var_name(model::Model, variable::MOI.VariableIndex, column::Int, gener
     end
 end
 
-function write_columns(
-    io::IO,
-    model::Model,
-    flip_obj,
-    var_to_column,
-)
+function write_columns(io::IO, model::Model, flip_obj, var_to_column)
     options = get_options(model)
     indicators = Tuple{String,String,MOI.ActivationCondition}[]
     coefficients = Vector{Tuple{String,Float64}}[
@@ -851,25 +850,20 @@ function _write_q_matrix(
         end
     end
     # Use sort for reproducibility, and so the Q matrix is given in order.
-    for (x, y) in sort!(collect(keys(terms)), by = ((x,y),) -> (var_to_column[x], var_to_column[y]))
+    for (x, y) in sort!(
+        collect(keys(terms)),
+        by = ((x, y),) -> (var_to_column[x], var_to_column[y]),
+    )
         x_name = _var_name(model, x, var_to_column[x], options.generic_names)
         y_name = _var_name(model, y, var_to_column[y], options.generic_names)
         println(
             io,
-            Card(
-                f2 = x_name,
-                f3 = y_name,
-                f4 = _to_string(terms[(x, y)]),
-            ),
+            Card(f2 = x_name, f3 = y_name, f4 = _to_string(terms[(x, y)])),
         )
         if x != y && duplicate_off_diagonal
             println(
                 io,
-                Card(
-                    f2 = y_name,
-                    f3 = x_name,
-                    f4 = _to_string(terms[(x, y)]),
-                ),
+                Card(f2 = y_name, f3 = x_name, f4 = _to_string(terms[(x, y)])),
             )
         end
     end
@@ -914,17 +908,17 @@ end
 #   SOS
 # ==============================================================================
 
-function write_sos_constraint(
-    io::IO,
-    model::Model,
-    index,
-    var_to_column,
-)
+function write_sos_constraint(io::IO, model::Model, index, var_to_column)
     options = get_options(model)
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
     for (variable, weight) in zip(func.variables, set.weights)
-        var_name = _var_name(model, variable, var_to_column[variable], options.generic_names)
+        var_name = _var_name(
+            model,
+            variable,
+            var_to_column[variable],
+            options.generic_names,
+        )
         println(io, Card(f2 = var_name, f3 = _to_string(weight)))
     end
 end
@@ -944,12 +938,7 @@ function write_sos(io::IO, model::Model, var_to_column)
         for (sos_type, indices) in enumerate([sos1_indices, sos2_indices])
             for index in indices
                 println(io, Card(f1 = "S$(sos_type)", f2 = "SOS$(idx)"))
-                write_sos_constraint(
-                    io,
-                    model,
-                    index,
-                    var_to_column,
-                )
+                write_sos_constraint(io, model, index, var_to_column)
                 idx += 1
             end
         end
