@@ -458,10 +458,7 @@ function _collect_indicator(
         _extract_terms(var_to_column, coefficients, row_name, funcs[2])
         condition = _activation_condition(S)
         var_name = _var_name(model, z, var_to_column[z], options.generic_names)
-        push!(
-            indicators,
-            (row_name, var_name, condition),
-        )
+        push!(indicators, (row_name, var_name, condition))
     end
     return
 end
