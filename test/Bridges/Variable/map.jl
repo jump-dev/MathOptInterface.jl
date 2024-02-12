@@ -54,7 +54,8 @@ function test_map()
     S1 = typeof(set1)
     v1, c1 = MOI.Bridges.Variable.add_key_for_bridge(map, () -> b1, set1)
     MOI.is_valid(map, c1)
-    cannot_unbridge_err = ErrorException(
+    cannot_unbridge_err = MOI.GetAttributeNotAllowed(
+        MOI.ConstraintFunction(),
         "Cannot unbridge function because some variables are bridged by variable" *
         " bridges that do not support reverse mapping, for example, `ZerosBridge`.",
     )

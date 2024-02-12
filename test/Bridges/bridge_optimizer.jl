@@ -1176,6 +1176,17 @@ function test_ListOfVariablesWithAttributeSet(T = Float64)
     return
 end
 
+function test_cannot_unbridge_variable_function()
+    model = MOI.Bridges.Variable.Zeros{Float64}(MOI.Utilities.Model{Float64}())
+    x, c = MOI.add_constrained_variables(model, MOI.Zeros(1))
+    c2 = MOI.add_constraint(model, 1.0 * x[1], MOI.EqualTo(1.0))
+    @test_throws(
+        MOI.GetAttributeNotAllowed{MOI.ConstraintFunction},
+        MOI.get(model, MOI.ConstraintFunction(), c2),
+    )
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()

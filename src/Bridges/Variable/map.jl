@@ -579,11 +579,13 @@ Throw an error if some bridged variables do not have any reverse mapping.
 """
 function throw_if_cannot_unbridge(map::Map)
     if map.unbridged_function === nothing
-        error(
-            "Cannot unbridge function because some variables are bridged by",
-            " variable bridges that do not support reverse mapping, for example,",
-            " `ZerosBridge`.",
+        err = MOI.GetAttributeNotAllowed(
+            MOI.ConstraintFunction(),
+            "Cannot unbridge function because some variables are bridged by " *
+            "variable bridges that do not support reverse mapping, for " *
+            "example, `ZerosBridge`.",
         )
+        throw(err)
     end
 end
 
