@@ -210,17 +210,8 @@ Write `model` to `io` in the MPS file format.
 function Base.write(io::IO, model::Model)
     options = get_options(model)
     if options.generic_names
-        # just constraints
-        i = 1
-        for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-            if F == MOI.VariableIndex
-                continue  # VariableIndex constraints do not need a name.
-            end
-            for c in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-                MOI.set(model, MOI.ConstraintName(), c, "R$i")
-                i += 1
-            end
-        end
+        # Generic variable names handled in this writer.
+        FileFormats.create_generic_constraint_names(model)
     else
         FileFormats.create_unique_names(
             model;
