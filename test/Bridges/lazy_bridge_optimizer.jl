@@ -722,9 +722,7 @@ function _test_SDPA_debug(T)
     model = StandardSDPAModel{T}()
     bridged = MOI.Bridges.LazyBridgeOptimizer(model)
     function debug_string(f, args...)
-        s = IOBuffer()
-        f(bridged, args...; io = s)
-        return String(resize!(s.data, s.size))
+        return sprint(io -> f(bridged, args...; io = io))
     end
     @testset "LessThan variables" begin
         S = MOI.LessThan{T}
