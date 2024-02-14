@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
  - Fixed number type in `get_fallback` (#2414)
- - Fixed error type thrown when a variable bridge cannot unbridge. It used to
-   throw `ErrorException`. It now throws `MOI.GetAttributeNotAllowed{MOI.ConstraintFunction}`.
+ - Fixed error type thrown when a variable bridge cannot un-bridge the
+   function. It used to throw `ErrorException`. It now throws `MOI.GetAttributeNotAllowed{MOI.ConstraintFunction}`.
    This enables `Utilities.CachingOptimizer` to more uniformly implement
    fallbacks for common bridges like [`Bridges.Variable.ZerosBridge`](@ref).
    (#2415)
