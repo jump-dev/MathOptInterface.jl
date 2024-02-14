@@ -10,6 +10,7 @@ using Test
 
 import MathOptInterface as MOI
 import MathOptInterface.Utilities as MOIU
+import DataStructures: OrderedDict
 const MPS = MOI.FileFormats.MPS
 const MPS_TEST_FILE = "test.mps"
 
@@ -94,7 +95,7 @@ function test_sos()
         MOI.VectorOfVariables(x),
         MOI.SOS2([1.25, 2.25, 3.25]),
     )
-    @test sprint(MPS.write_sos, model, ["x1", "x2", "x3"], names) ==
+    @test sprint(MPS.write_sos, model, names) ==
           "SOS\n" *
           " S1 SOS1\n" *
           "    x1        1.5\n" *
@@ -113,7 +114,7 @@ function test_maximization()
     MOI.set(model, MOI.VariableName(), x, "x")
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
-    @test sprint(MPS.write_columns, model, true, ["x"], Dict(x => 1)) ==
+    @test sprint(MPS.write_columns, model, true, OrderedDict(x => 1)) ==
           "COLUMNS\n    x         OBJ       -1\n"
 end
 
@@ -124,7 +125,7 @@ function test_maximization_objsense_false()
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     sprint(MPS.write, model)
-    @test sprint(MPS.write_columns, model, false, ["x"], Dict(x => 1)) ==
+    @test sprint(MPS.write_columns, model, false, OrderedDict(x => 1)) ==
           "COLUMNS\n    x         OBJ       1\n"
 end
 

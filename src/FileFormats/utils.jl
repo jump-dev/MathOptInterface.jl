@@ -39,19 +39,39 @@ Rename all variables and constraints in `model` to have generic names.
 This is helpful for users with proprietary models to avoid leaking information.
 """
 function create_generic_names(model::MOI.ModelLike)
+    create_generic_variable_names(model)
+    create_generic_constraint_names(model)
+    return
+end
+
+function create_generic_variable_names(model::MOI.ModelLike)
     for (i, x) in enumerate(MOI.get(model, MOI.ListOfVariableIndices()))
         MOI.set(model, MOI.VariableName(), x, "C$i")
     end
+    return
+end
+
+function create_generic_constraint_names(model::MOI.ModelLike)
     i = 1
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        if F == MOI.VariableIndex
-            continue  # VariableIndex constraints do not need a name.
-        end
-        for c in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            MOI.set(model, MOI.ConstraintName(), c, "R$i")
-            i += 1
+        if F != MOI.VariableIndex
+            i = create_generic_constraint_names(model, F, S, i)
         end
     end
+    return
+end
+
+function create_generic_constraint_names(
+    model::MOI.ModelLike,
+    ::Type{F},
+    ::Type{S},
+    i::Int,
+) where {F,S}
+    for c in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        MOI.set(model, MOI.ConstraintName(), c, "R$i")
+        i += 1
+    end
+    return i
 end
 
 function _replace(s::String, replacements::Vector{Function})
