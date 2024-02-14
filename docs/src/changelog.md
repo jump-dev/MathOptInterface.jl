@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
- - Improved performance of [`Bridges.Constraint.CounntDistinctToMILPBridge`](@ref)
+ - Improved performance of [`Bridges.Constraint.CountDistinctToMILPBridge`](@ref)
    (#2416)
  - Improved performance of `FileFormats.MPS` writer (#2421) (#2424) (#2426)
  - Updated `solver-tests.yml` (#2423)
