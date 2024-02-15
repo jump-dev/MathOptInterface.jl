@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    This enables `Utilities.CachingOptimizer` to more uniformly implement
    fallbacks for common bridges like [`Bridges.Variable.ZerosBridge`](@ref).
    (#2415)
+ - Fixed tests on upcoming Julia v1.11 (#2428)
 
 ### Other
 
