@@ -7,6 +7,26 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.25.3 (February 14, 2024)
+
+### Fixed
+
+ - Fixed number type in `get_fallback` (#2414)
+ - Fixed error type thrown when a variable bridge cannot un-bridge the
+   function. It used to throw `ErrorException`. It now throws `MOI.GetAttributeNotAllowed{MOI.ConstraintFunction}`.
+   This enables `Utilities.CachingOptimizer` to more uniformly implement
+   fallbacks for common bridges like [`Bridges.Variable.ZerosBridge`](@ref).
+   (#2415)
+ - Fixed tests on upcoming Julia v1.11 (#2428)
+
+### Other
+
+ - Improved performance of [`Bridges.Constraint.CountDistinctToMILPBridge`](@ref)
+   (#2416)
+ - Improved performance of `FileFormats.MPS` writer (#2421) (#2424) (#2426)
+ - Updated `solver-tests.yml` (#2423)
+ - Fixed typos in `src/attributes.jl` (#2429)
+
 ## v1.25.2 (January 29, 2024)
 
 ### Fixed
