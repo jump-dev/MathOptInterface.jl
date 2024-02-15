@@ -1573,7 +1573,7 @@ is_set_by_optimize(::CallbackVariablePrimal) = true
 A variable attribute for the `BasisStatusCode` of a variable in result
 `result_index`, with respect to an available optimal solution basis.
 
-If the solver does not have a basis statue for the variable because the
+If the solver does not have a basis status for the variable because the
 `result_index` is beyond the available solutions (whose number is indicated by
 the [`ResultCount`](@ref) attribute), getting this attribute must throw a
 [`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
@@ -1757,7 +1757,7 @@ A constraint attribute for the `BasisStatusCode` of some constraint in result
 `result_index`, with respect to an available optimal solution basis. If
 `result_index` is omitted, it is 1 by default.
 
-If the solver does not have a basis statue for the constraint because the
+If the solver does not have a basis status for the constraint because the
 `result_index` is beyond the available solutions (whose number is indicated by
 the [`ResultCount`](@ref) attribute), getting this attribute must throw a
 [`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
