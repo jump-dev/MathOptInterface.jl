@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    (#2416)
  - Improved performance of `FileFormats.MPS` writer (#2421) (#2424) (#2426)
  - Updated `solver-tests.yml` (#2423)
+ - Fixed typos in `src/attributes.jl` (#2429)
 
 ## v1.25.2 (January 29, 2024)
 
