@@ -1544,15 +1544,15 @@ is_set_by_optimize(::CallbackVariablePrimal) = true
     ## Notes
 
     * `NONBASIC_AT_LOWER` and `NONBASIC_AT_UPPER` should be used only for
-    constraints with the `Interval` set. In this case, they are necessary to
-    distinguish which side of the constraint is active. One-sided constraints
-    (for example, `LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
-    `NONBASIC_AT_*` values. This restriction does not apply to [`VariableBasisStatus`](@ref),
-    which should return `NONBASIC_AT_*` regardless of whether the alternative
-    bound exists.
+      constraints with the `Interval` set. In this case, they are necessary to
+      distinguish which side of the constraint is active. One-sided constraints
+      (for example, `LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
+      `NONBASIC_AT_*` values. This restriction does not apply to [`VariableBasisStatus`](@ref),
+      which should return `NONBASIC_AT_*` regardless of whether the alternative
+      bound exists.
 
     * In linear programs, `SUPER_BASIC` occurs when a variable with no bounds is not
-    in the basis.
+      in the basis.
     """,
     BasisStatusCode,
     "element is in the basis",
