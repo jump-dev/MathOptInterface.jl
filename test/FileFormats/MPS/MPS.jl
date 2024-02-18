@@ -11,8 +11,35 @@ using Test
 import MathOptInterface as MOI
 import MathOptInterface.Utilities as MOIU
 import DataStructures: OrderedDict
+
 const MPS = MOI.FileFormats.MPS
+
 const MPS_TEST_FILE = "test.mps"
+
+function runtests()
+    for name in names(@__MODULE__, all = true)
+        if startswith("$(name)", "test_")
+            @testset "$name" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    sleep(1.0)  # Allow time for unlink to happen.
+    rm(MPS_TEST_FILE, force = true)
+    return
+end
+
+
+function _test_write_to_file(input::String, output::String)
+    model = MPS.Model()
+    MOI.Utilities.loadfromstring!(model, input)
+    data = sprint(write, model)
+    if data != output
+        print(data)
+    end
+    @test data == output
+    return
+end
 
 function _test_model_equality(
     model_string,
@@ -423,7 +450,7 @@ a_really_long_name <= 2.0
     )
     MOI.write_to_file(model, MPS_TEST_FILE)
     @test read(MPS_TEST_FILE, String) ==
-          "NAME          \n" *
+          "NAME\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           "COLUMNS\n" *
@@ -468,7 +495,7 @@ function test_names_with_spaces()
     )
     MOI.set(model, MOI.ConstraintName(), c, "c c")
     @test sprint(write, model) ==
-          "NAME          \n" *
+          "NAME\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           " E  c_c\n" *
@@ -489,7 +516,7 @@ function test_objsense_default()
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     @test sprint(write, model) ==
-          "NAME          \n" *
+          "NAME\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           "COLUMNS\n" *
@@ -508,7 +535,7 @@ function test_objsense_true()
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
     @test sprint(write, model) ==
-          "NAME          \n" *
+          "NAME\n" *
           "OBJSENSE\n" *
           "    MAX\n" *
           "ROWS\n" *
@@ -537,7 +564,7 @@ function test_sos_constraints()
         MOI.SOS2([1.2, 2.3, 3.4]),
     )
     @test sprint(write, model) ==
-          "NAME          \n" *
+          "NAME\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           "COLUMNS\n" *
@@ -582,7 +609,7 @@ function test_generic_names()
     )
     MOI.add_constraint(model, y, MOI.GreaterThan(2.0))
     @test sprint(write, model) ==
-          "NAME          \n" *
+          "NAME\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           " E  R1\n" *
@@ -610,7 +637,7 @@ function test_rew_filename()
     )
     MOI.add_constraint(model, y, MOI.GreaterThan(2.0))
     @test sprint(write, model) ==
-          "NAME          \n" *
+          "NAME\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           " E  R1\n" *
@@ -638,7 +665,7 @@ function test_rew_format()
     )
     MOI.add_constraint(model, y, MOI.GreaterThan(2.0))
     @test sprint(write, model) ==
-          "NAME          \n" *
+          "NAME\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           " E  R1\n" *
@@ -663,7 +690,7 @@ function test_infinite_interval()
     MOI.add_constraint(model, 1.0 * x, MOI.Interval(2.0, Inf))
     MOI.add_constraint(model, 1.0 * x, MOI.Interval(3.0, 4.0))
     @test sprint(write, model) ==
-          "NAME          \n" *
+          "NAME\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           " N  c1\n" *
@@ -698,7 +725,7 @@ minobjective: x + y + 5.0 * x * x + 1.0 * x * y + 1.0 * y * x + 1.2 * y * y
     )
     MOI.write_to_file(model, MPS_TEST_FILE)
     @test read(MPS_TEST_FILE, String) ==
-          "NAME          \n" *
+          "NAME\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           "COLUMNS\n" *
@@ -728,7 +755,7 @@ minobjective: x + y + 5.0 * x * x + 1.0 * x * y + 1.0 * y * x + 1.2 * y * y
     )
     MOI.write_to_file(model, MPS_TEST_FILE)
     @test read(MPS_TEST_FILE, String) ==
-          "NAME          \n" *
+          "NAME\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           "COLUMNS\n" *
@@ -759,7 +786,7 @@ c1: x + y + 5.0 * x * x + 1.0 * x * y + 1.0 * y * x + 1.2 * y * y <= 1.0
     )
     MOI.write_to_file(model, MPS_TEST_FILE)
     @test read(MPS_TEST_FILE, String) ==
-          "NAME          \n" *
+          "NAME\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           " L  c1\n" *
@@ -792,7 +819,7 @@ c1: x + y + 5.0 * x * x + 1.0 * x * y + 1.0 * y * x + 1.2 * y * y <= 1.0
     )
     MOI.write_to_file(model, MPS_TEST_FILE)
     @test read(MPS_TEST_FILE, String) ==
-          "NAME          \n" *
+          "NAME\n" *
           "ROWS\n" *
           " N  OBJ\n" *
           " L  c1\n" *
@@ -1067,19 +1094,130 @@ function test_parse_name_line()
     return
 end
 
-function runtests()
-    for name in names(@__MODULE__, all = true)
-        if startswith("$(name)", "test_")
-            @testset "$name" begin
-                getfield(@__MODULE__, name)()
-            end
-        end
+function test_binary_with_unneeded_bounds()
+    target = """
+    NAME
+    ROWS
+     N  OBJ
+    COLUMNS
+        MARKER    'MARKER'                 'INTORG'
+        x         OBJ       1
+        MARKER    'MARKER'                 'INTEND'
+    RHS
+    RANGES
+    BOUNDS
+     BV bounds    x
+    ENDATA
+    """
+    for test in [
+        """
+        variables: x
+        minobjective: 1.0 * x
+        x in ZeroOne()
+        """,
+        """
+        variables: x
+        minobjective: 1.0 * x
+        x in ZeroOne()
+        x >= 0.0
+        x <= 1.0
+        """,
+        """
+        variables: x
+        minobjective: 1.0 * x
+        x in ZeroOne()
+        x in Interval(-0.1, 1.2)
+        """,
+    ]
+        _test_write_to_file(test, target)
     end
-    sleep(1.0)  # Allow time for unlink to happen.
-    rm(MPS_TEST_FILE, force = true)
     return
 end
 
+function test_binary_with_restrictive_bounds()
+    target = """
+    NAME
+    ROWS
+     N  OBJ
+    COLUMNS
+        MARKER    'MARKER'                 'INTORG'
+        x         OBJ       1
+        MARKER    'MARKER'                 'INTEND'
+    RHS
+    RANGES
+    BOUNDS
+     FX bounds    x         1
+    ENDATA
+    """
+    for test in [
+        """
+        variables: x
+        minobjective: 1.0 * x
+        x in ZeroOne()
+        x >= 0.5
+        """,
+        """
+        variables: x
+        minobjective: 1.0 * x
+        x in ZeroOne()
+        x >= 0.1
+        x <= 1.0
+        """,
+        """
+        variables: x
+        minobjective: 1.0 * x
+        x in ZeroOne()
+        x in Interval(0.2, 1.2)
+        """,
+    ]
+        _test_write_to_file(test, target)
+    end
+    return
 end
+
+function test_binary_with_infeasible_bounds()
+    target = """
+    NAME
+    ROWS
+     N  OBJ
+    COLUMNS
+        MARKER    'MARKER'                 'INTORG'
+        x         OBJ       1
+        MARKER    'MARKER'                 'INTEND'
+    RHS
+    RANGES
+    BOUNDS
+     LO bounds    x         1
+     UP bounds    x         0
+    ENDATA
+    """
+    for test in [
+        """
+        variables: x
+        minobjective: 1.0 * x
+        x in ZeroOne()
+        x >= 0.5
+        x <= 0.1
+        """,
+        """
+        variables: x
+        minobjective: 1.0 * x
+        x in ZeroOne()
+        x >= 1.0
+        x <= 0.0
+        """,
+        """
+        variables: x
+        minobjective: 1.0 * x
+        x in ZeroOne()
+        x in Interval(0.9, 0.1)
+        """,
+    ]
+        _test_write_to_file(test, target)
+    end
+    return
+end
+
+end  # TestMPS
 
 TestMPS.runtests()

@@ -261,7 +261,11 @@ end
 
 function write_model_name(io::IO, model::Model)
     model_name = MOI.get(model, MOI.Name())
-    println(io, rpad("NAME", 14), model_name)
+    if isempty(model_name)
+        println(io, "NAME")
+    else
+        println(io, rpad("NAME", 14), model_name)
+    end
     return
 end
 
@@ -542,6 +546,9 @@ function write_columns(io::IO, model::Model, flip_obj, var_to_column)
             )
         end
     end
+    if int_open
+        println(io, Card(f2 = "MARKER", f3 = "'MARKER'", f5 = "'INTEND'"))
+    end
     return constant, indicators
 end
 
@@ -773,11 +780,16 @@ function write_bounds(io::IO, model::Model, var_to_column)
         var_name = _var_name(model, variable, column, options.generic_names)
         lower, upper, vtype = bounds[column]
         if vtype == VTYPE_BINARY
-            println(io, Card(f1 = "BV", f2 = "bounds", f3 = var_name))
-            # Only add bounds if they are tighter than the implicit bounds of a
-            # binary variable.
-            if lower > 0 || upper < 1
-                write_single_bound(io, var_name, lower, upper)
+            if lower <= 0 && upper >= 1
+                println(io, Card(f1 = "BV", f2 = "bounds", f3 = var_name))
+            else
+                if lower > 0
+                    lower = 1
+                end
+                if upper < 1
+                    upper = 0
+                end
+                write_single_bound(io, var_name, max(0, lower), min(1, upper))
             end
         else
             write_single_bound(io, var_name, lower, upper)
