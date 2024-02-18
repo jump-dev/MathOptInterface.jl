@@ -29,7 +29,6 @@ function runtests()
     return
 end
 
-
 function _test_write_to_file(input::String, output::String)
     model = MPS.Model()
     MOI.Utilities.loadfromstring!(model, input)
