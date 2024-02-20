@@ -372,6 +372,44 @@ function _parse_section(::IO, ::Val{T}, ::_CacheModel) where {T}
     return error("Unable to parse NL file: unhandled header $T")
 end
 
+function _parse_section(::IO, ::Val{'F'}, ::_CacheModel)
+    return error(
+        "Unable to parse NL file: imported function descriptions ('F' " *
+        "sections) are not yet supported. To request support, please open an " *
+        "issue at https://github.com/jump-dev/MathOptInterface.jl with a " *
+        "reproducible example.",
+    )
+end
+
+function _parse_section(io::IO, ::Val{'S'}, model::_CacheModel)
+    k = _next(Int, io, model)
+    n = _next(Int, io, model)
+    suffix = readline(io)
+    @warn("Skipping suffix: `S$k $n$suffix`")
+    for _ in 1:n
+        _read_til_newline(io)
+    end
+    return
+end
+
+function _parse_section(::IO, ::Val{'V'}, ::_CacheModel)
+    return error(
+        "Unable to parse NL file: defined variable definitions ('V' sections)" *
+        " are not yet supported. To request support, please open an issue at " *
+        "https://github.com/jump-dev/MathOptInterface.jl with a reproducible " *
+        "example.",
+    )
+end
+
+function _parse_section(::IO, ::Val{'L'}, ::_CacheModel)
+    return error(
+        "Unable to parse NL file: logical constraints ('L' sections) are not " *
+        "yet supported. To request support, please open an issue at " *
+        "https://github.com/jump-dev/MathOptInterface.jl with a reproducible " *
+        "example.",
+    )
+end
+
 function _parse_section(io::IO, ::Val{'C'}, model::_CacheModel)
     index = _next(Int, io, model) + 1
     _read_til_newline(io)
