@@ -1090,6 +1090,17 @@ function test_empty_constraint()
     @test haskey(mapping, ci)
 end
 
+function test_writing_free_constraint()
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:log, Any[x])
+    MOI.add_constraint(model, f, MOI.Interval(-Inf, Inf))
+    n = NL.Model()
+    _ = MOI.copy_to(n, model)
+    @test occursin("r\n3\nb", sprint(write, n))
+    return
+end
+
 function test_malformed_constraint_error()
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     x = MOI.add_variable(model)

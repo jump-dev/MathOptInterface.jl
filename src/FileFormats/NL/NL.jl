@@ -690,9 +690,8 @@ function Base.write(io::IO, model::Model)
                 println(io, " ", _str(g.upper))
             elseif g.opcode == 2
                 println(io, " ", _str(g.lower))
-                # Free constraints aren't supported for nonlinear.
-                # elseif g.opcode == 3
-                #     println(io)
+            elseif g.opcode == 3
+                println(io)
             else
                 @assert g.opcode == 4
                 println(io, " ", _str(g.lower))
