@@ -515,6 +515,83 @@ v1
     return
 end
 
+function test_parse_F()
+    model = NL._CacheModel()
+    io = IOBuffer()
+    write(io, "F")
+    seekstart(io)
+    @test_throws(
+        ErrorException(
+            "Unable to parse NL file: imported function descriptions ('F' " *
+            "sections) are not yet supported. To request support, please open an " *
+            "issue at https://github.com/jump-dev/MathOptInterface.jl with a " *
+            "reproducible example.",
+        ),
+        NL._parse_section(io, model),
+    )
+    return
+end
+
+function test_parse_V()
+    model = NL._CacheModel()
+    io = IOBuffer()
+    write(io, "V")
+    seekstart(io)
+    @test_throws(
+        ErrorException(
+            "Unable to parse NL file: defined variable definitions ('V' sections)" *
+            " are not yet supported. To request support, please open an issue at " *
+            "https://github.com/jump-dev/MathOptInterface.jl with a reproducible " *
+            "example.",
+        ),
+        NL._parse_section(io, model),
+    )
+    return
+end
+
+function test_parse_L()
+    model = NL._CacheModel()
+    io = IOBuffer()
+    write(io, "L")
+    seekstart(io)
+    @test_throws(
+        ErrorException(
+            "Unable to parse NL file: logical constraints ('L' sections) are not " *
+            "yet supported. To request support, please open an issue at " *
+            "https://github.com/jump-dev/MathOptInterface.jl with a reproducible " *
+            "example.",
+        ),
+        NL._parse_section(io, model),
+    )
+    return
+end
+
+function test_parse_S()
+    model = NL._CacheModel()
+    io = IOBuffer()
+    write(
+        io,
+        """
+        S0 8 zork
+        02
+        16
+        27
+        38
+        49
+        53
+        65
+        84
+        """,
+    )
+    seekstart(io)
+    @test_logs(
+        (:warn, "Skipping suffix: `S0 8 zork`"),
+        NL._parse_section(io, model),
+    )
+    @test eof(io)
+    return
+end
+
 function test_hs071()
     model = NL.Model()
     open(joinpath(@__DIR__, "data", "hs071.nl"), "r") do io
