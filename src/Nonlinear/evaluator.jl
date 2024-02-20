@@ -64,6 +64,7 @@ function Base.show(io::IO, evaluator::Evaluator)
 end
 
 function MOI.initialize(evaluator::Evaluator, features::Vector{Symbol})
+    start_time = time()
     empty!(evaluator.ordered_constraints)
     evaluator.eval_objective_timer = 0.0
     evaluator.eval_objective_gradient_timer = 0.0
@@ -85,6 +86,7 @@ function MOI.initialize(evaluator::Evaluator, features::Vector{Symbol})
             "following features are not supported: $features",
         )
     end
+    evaluator.initialize_timer = time() - start_time
     return
 end
 

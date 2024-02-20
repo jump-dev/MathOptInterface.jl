@@ -1051,6 +1051,43 @@ function test_constraint_gradient()
     return
 end
 
+function test_timers()
+    x = MOI.VariableIndex(1)
+    model = Nonlinear.Model()
+    Nonlinear.set_objective(model, :(log($x)))
+    Nonlinear.add_constraint(model, :(sin($x)), MOI.LessThan(0.5))
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    y = [1.2]
+    g = [NaN]
+    MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
+    MOI.eval_objective(evaluator, y)
+    MOI.eval_constraint(evaluator, g, y)
+    MOI.eval_objective_gradient(evaluator, g, y)
+    MOI.eval_constraint_gradient(evaluator, g, y, 1)
+    MOI.eval_constraint_jacobian(evaluator, g, y)
+    MOI.eval_hessian_objective(evaluator, g, y)
+    MOI.eval_hessian_constraint(evaluator, g, y, 1)
+    MOI.eval_hessian_lagrangian(evaluator, g, y, 1.0, [1.0])
+    timers = [
+        evaluator.initialize_timer,
+        evaluator.eval_objective_timer,
+        evaluator.eval_constraint_timer,
+        evaluator.eval_objective_gradient_timer,
+        evaluator.eval_constraint_gradient_timer,
+        evaluator.eval_constraint_jacobian_timer,
+        evaluator.eval_hessian_objective_timer,
+        evaluator.eval_hessian_constraint_timer,
+        evaluator.eval_hessian_lagrangian_timer,
+    ]
+    @test all(>=(0.0), timers)
+    if !Sys.iswindows()
+        # Windows times only in milliseconds, which can be too coarse to
+        # accurately measure and test.
+        @test sum(timers) > 0.0
+    end
+    return
+end
+
 end  # module
 
 TestReverseAD.runtests()
