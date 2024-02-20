@@ -212,6 +212,7 @@ mutable struct Evaluator{B} <: MOI.AbstractNLPEvaluator
     # constraints without needing to query the full vector each time.
     constraint_dual::Vector{Float64}
     # Timers
+    initialize_timer::Float64
     eval_objective_timer::Float64
     eval_constraint_timer::Float64
     eval_objective_gradient_timer::Float64
@@ -230,6 +231,7 @@ mutable struct Evaluator{B} <: MOI.AbstractNLPEvaluator
             backend,
             ConstraintIndex[],
             Float64[],
+            0.0,
             0.0,
             0.0,
             0.0,
