@@ -106,6 +106,13 @@ function _eval_hessian_inner(
             @inbounds input_ϵ[idx] = zero(T)
         end
     end
+    want, got = nzcount + length(ex.hess_I), length(H)
+    if want > got
+        error(
+            "Vector provided for Hessian storage has too few elements. Got " *
+            "$got, want $want.",
+        )
+    end
     # TODO(odow): consider reverting to a view.
     output_slice = _UnsafeVectorView(nzcount, length(ex.hess_I), pointer(H))
     Coloring.recover_from_matmat!(

@@ -1051,6 +1051,35 @@ function test_constraint_gradient()
     return
 end
 
+function test_hessian_length()
+    x = MOI.VariableIndex(1)
+    model = Nonlinear.Model()
+    Nonlinear.set_objective(model, :(log($x)))
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Hess])
+    H = Float64[]
+    got, want = 0, 1
+    @test_throws(
+        ErrorException(
+            "Vector provided for Hessian storage has too few elements. Got " *
+            "$got, want $want.",
+        ),
+        MOI.eval_hessian_lagrangian(evaluator, H, [1.0], 1.0, [1.0]),
+    )
+    return
+end
+
+function test_jacobian_length()
+    x = MOI.VariableIndex(1)
+    model = Nonlinear.Model()
+    Nonlinear.add_constraint(model, :(sin($x)), MOI.LessThan(0.5))
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Jac])
+    J = Float64[]
+    @test_throws BoundsError MOI.eval_constraint_jacobian(evaluator, J, [1.0])
+    return
+end
+
 function test_timers()
     x = MOI.VariableIndex(1)
     model = Nonlinear.Model()
@@ -1064,10 +1093,14 @@ function test_timers()
     MOI.eval_constraint(evaluator, g, y)
     MOI.eval_objective_gradient(evaluator, g, y)
     MOI.eval_constraint_gradient(evaluator, g, y, 1)
-    MOI.eval_constraint_jacobian(evaluator, g, y)
-    MOI.eval_hessian_objective(evaluator, g, y)
-    MOI.eval_hessian_constraint(evaluator, g, y, 1)
-    MOI.eval_hessian_lagrangian(evaluator, g, y, 1.0, [1.0])
+    J = zeros(length(MOI.jacobian_structure(evaluator)))
+    MOI.eval_constraint_jacobian(evaluator, J, y)
+    H = zeros(length(MOI.hessian_objective_structure(evaluator)))
+    MOI.eval_hessian_objective(evaluator, H, y)
+    H = zeros(length(MOI.hessian_constraint_structure(evaluator, 1)))
+    MOI.eval_hessian_constraint(evaluator, H, y, 1)
+    H = zeros(length(MOI.hessian_lagrangian_structure(evaluator)))
+    MOI.eval_hessian_lagrangian(evaluator, H, y, 1.0, [1.0])
     timers = [
         evaluator.initialize_timer,
         evaluator.eval_objective_timer,
