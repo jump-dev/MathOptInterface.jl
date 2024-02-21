@@ -7,6 +7,24 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.26.0 (February 22, 2024)
+
+### Added
+
+ - Added `.initialize_timer` to [`Nonlinear.Evaluator`](@ref) (#2438)
+
+### Fixed
+
+ - Fixed writing binary variables with bounds in `FileFormats.MPS` (#2431)
+ - Fixed parsing suffixes in `FileFormats.NL` (#2436)
+ - Fixed writing free constraints in `FileFormats.NL` (#2437)
+ - Fixed potential for unsafe out-of-bounds write in Hessian evaluation (#2441)
+
+### Other
+
+ - Fixed formatting of [`BasisStatusCode`](@ref) docstring (#2430)
+ - Refactor `test/Fileformats/MPS/MPS.jl` (#2433)
+
 ## v1.25.3 (February 14, 2024)
 
 ### Fixed
