@@ -247,6 +247,7 @@ const _UNARY_SPECIAL_CASES = Dict{Symbol,Function}(
     :asech => (x) -> :(acosh(1 / $x)),
     :acsch => (x) -> :(asinh(1 / $x)),
     :acoth => (x) -> :(atanh(1 / $x)),
+    :sign => (x) -> :(ifelse($x >= 0, 1, -1)),
 )
 
 """

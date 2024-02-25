@@ -1163,6 +1163,32 @@ function test_automatic_differentiation_backend()
     return
 end
 
+function test_univariate_sign()
+    f(y, p) = sign(y) * abs(y)^p
+    ∇f(y, p) = p * abs(y)^(p-1)
+    ∇²f(y, p) = sign(y) * p * (p-1) * abs(y)^(p-2)
+    for p in (-0.5, 0.5, 2.0)
+        x = MOI.VariableIndex(1)
+        model = MOI.Nonlinear.Model()
+        MOI.Nonlinear.set_objective(model, :(sign($x) * abs($x)^$p))
+        evaluator = MOI.Nonlinear.Evaluator(
+            model,
+            MOI.Nonlinear.SparseReverseMode(),
+            [x],
+        )
+        MOI.initialize(evaluator, [:Grad, :Hess])
+        for y in (-10.0, -1.2, 1.2, 10.0)
+            @test MOI.eval_objective(evaluator, [y]) ≈ f(y, p)
+            g = [NaN]
+            MOI.eval_objective_gradient(evaluator, g, [y])
+            @test g[1] ≈ ∇f(y, p)
+            H = zeros(length(MOI.hessian_objective_structure(evaluator)))
+            MOI.eval_hessian_objective(evaluator, H, [y])
+            @test H[1] ≈ ∇²f(y, p)
+        end
+    end
+end
+
 end  # TestNonlinear
 
 TestNonlinear.runtests()

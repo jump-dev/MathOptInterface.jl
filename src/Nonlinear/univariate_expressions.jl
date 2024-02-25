@@ -12,6 +12,7 @@ const SYMBOLIC_UNIVARIATE_EXPRESSIONS = Tuple{Symbol,Expr,Any}[
     (:+, :(one(x)), :(zero(x))),
     (:-, :(-one(x)), :(zero(x))),
     (:abs, :(ifelse(x >= 0, one(x), -one(x))), :(zero(x))),
+    (:sign, :(zero(x)), :(zero(x))),
     (:sqrt, :(0.5 / sqrt(x)), :((0.5 * -(0.5 / sqrt(x))) / sqrt(x) ^ 2)),
     (:cbrt, :(0.3333333333333333 / cbrt(x) ^ 2), :((0.3333333333333333 * -(2 * (0.3333333333333333 / cbrt(x) ^ 2) * cbrt(x))) / (cbrt(x) ^ 2) ^ 2)),
     (:abs2, :(2x), :((typeof(x))(2))),
