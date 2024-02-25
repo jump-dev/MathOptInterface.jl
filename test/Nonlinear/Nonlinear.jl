@@ -1165,8 +1165,8 @@ end
 
 function test_univariate_sign()
     f(y, p) = sign(y) * abs(y)^p
-    ∇f(y, p) = p * abs(y)^(p-1)
-    ∇²f(y, p) = sign(y) * p * (p-1) * abs(y)^(p-2)
+    ∇f(y, p) = p * abs(y)^(p - 1)
+    ∇²f(y, p) = sign(y) * p * (p - 1) * abs(y)^(p - 2)
     for p in (-0.5, 0.5, 2.0)
         x = MOI.VariableIndex(1)
         model = MOI.Nonlinear.Model()
