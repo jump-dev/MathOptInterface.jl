@@ -1335,6 +1335,15 @@ J3 1
     return
 end
 
+function test_copy_name_issue_2445()
+    src = MOI.Utilities.Model{Float64}()
+    MOI.set(src, MOI.Name(), "TestModel")
+    dest = NL.Model()
+    MOI.copy_to(dest, src)
+    @test MOI.get(dest, MOI.Name()) == "TestModel"
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$(name)", "test_")
