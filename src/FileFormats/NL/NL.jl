@@ -276,6 +276,8 @@ function MOI.copy_to(dest::Model, model::MOI.ModelLike)
             dest.sense = MOI.get(model, MOI.ObjectiveSense())
         elseif !has_nlp_objective && attr isa MOI.ObjectiveFunction
             dest.f = _NLExpr(MOI.get(model, attr))
+        elseif attr == MOI.Name()
+            dest.name = MOI.get(model, MOI.Name())
         else
             throw(MOI.UnsupportedAttribute(attr))
         end
