@@ -81,17 +81,17 @@ The list of univariate operators that are supported by default.
 julia> import MathOptInterface as MOI
 
 julia> MOI.Nonlinear.DEFAULT_UNIVARIATE_OPERATORS
-72-element Vector{Symbol}:
+73-element Vector{Symbol}:
  :+
  :-
  :abs
+ :sign
  :sqrt
  :cbrt
  :abs2
  :inv
  :log
  :log10
- :log2
  ⋮
  :airybi
  :airyaiprime

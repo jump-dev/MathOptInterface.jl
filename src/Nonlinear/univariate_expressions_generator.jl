@@ -42,7 +42,8 @@ open("univariate_expressions.jl", "w") do io
 const SYMBOLIC_UNIVARIATE_EXPRESSIONS = Tuple{Symbol,Expr,Any}[
     (:+, :(one(x)), :(zero(x))),
     (:-, :(-one(x)), :(zero(x))),
-    (:abs, :(ifelse(x >= 0, one(x), -one(x))), :(zero(x))),""",
+    (:abs, :(ifelse(x >= 0, one(x), -one(x))), :(zero(x))),
+    (:sign, :(zero(x)), :(zero(x))),""",
     )
     for (op, deriv) in Calculus.symbolic_derivatives_1arg()
         f = Expr(:call, op, :x)

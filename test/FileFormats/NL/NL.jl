@@ -151,6 +151,14 @@ function test_nlexpr_scalarnonlinearfunction_unary_special_case()
     return
 end
 
+function test_nlexpr_scalarnonlinearfunction_unary_special_case_sign()
+    x = MOI.VariableIndex(1)
+    f = MOI.ScalarNonlinearFunction(:sign, Any[x])
+    expr = NL._NLExpr(:(ifelse($x >= 0, 1, -1)))
+    _test_nlexpr(f, expr.nonlinear_terms, Dict(x => 0.0), 0.0)
+    return
+end
+
 function test_nlexpr_scalarnonlinearfunction_binary_special_case()
     x = MOI.VariableIndex(1)
     f = MOI.ScalarNonlinearFunction(:\, Any[x, 1])
