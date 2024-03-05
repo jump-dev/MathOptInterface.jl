@@ -31,6 +31,14 @@ end
 const NormInfinity{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{NormInfinityBridge{T},OT}
 
+function MOI.supports_constraint(
+    ::Type{<:NormInfinityBridge{T}},
+    ::Type{MOI.VectorAffineFunction{Complex{T}}},
+    ::Type{MOI.NormInfinityCone},
+) where {T}
+    return false
+end
+
 function concrete_bridge_type(
     ::Type{<:NormInfinityBridge{T}},
     G::Type{<:MOI.AbstractVectorFunction},
