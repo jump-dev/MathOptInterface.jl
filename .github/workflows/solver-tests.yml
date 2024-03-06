@@ -1,6 +1,10 @@
 name: solver-tests
 on:
   workflow_dispatch:
+# needed to allow julia-actions/cache to delete old caches that it has created
+permissions:
+  actions: write
+  contents: read
 jobs:
   test-ubuntu:
     name: ${{ matrix.package }}
@@ -46,16 +50,23 @@ jobs:
           - package: 'Alpine'
           - package: 'BilevelJuMP'
           - package: 'CDDLib'
+          - package: 'Clarabel'
+          - package: 'COPT'
           - package: 'COSMO'
+          - package: 'DAQP'
+          - package: 'DisjunctiveProgramming'
           - package: 'DSDP'
           - package: 'EAGO'
           - package: 'InfiniteOpt'
           - package: 'Juniper'
           - package: 'LinearFractional'
+          - package: 'Loraine'
           - package: 'MathOptSetDistances'
+          - package: 'NEOSServer'
           - package: 'NLopt'
           - package: 'OSQP'
           - package: 'PATHSolver'
+          - package: 'Percival'
           - package: 'Plasmo'
           - package: 'PowerModels'
           - package: 'ProxSDP'
@@ -67,20 +78,11 @@ jobs:
           - package: 'Tulip'
           - package: 'UnitJuMP'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
-      - uses: actions/cache@v1
-        env:
-          cache-name: cache-artifacts
-        with:
-          path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
+      - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - name: Test
         shell: julia --color=yes {0}
@@ -100,20 +102,11 @@ jobs:
         include:
           - package: 'CPLEX'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
-      - uses: actions/cache@v1
-        env:
-          cache-name: cache-artifacts
-        with:
-          path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
+      - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - name: Test
         shell: julia --color=yes {0}
@@ -129,20 +122,11 @@ jobs:
     name: Gurobi
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
-      - uses: actions/cache@v1
-        env:
-          cache-name: cache-artifacts
-        with:
-          path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
+      - uses: julia-actions/cache@v1
       - shell: bash
         env:
           WLSLICENSE: ${{ secrets.WLSLICENSE }}
