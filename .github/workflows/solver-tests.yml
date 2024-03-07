@@ -45,7 +45,7 @@ jobs:
           # - package: 'SDPT3'
           # - package: 'SeduMi'
           - package: 'SumOfSquares'
-          # - package: 'Xpress'
+          - package: 'Xpress'
           # External packages
           - package: 'Alpine'
           - package: 'BilevelJuMP'
@@ -141,40 +141,4 @@ jobs:
           Pkg.develop(Pkg.PackageSpec(; path = pwd()))
           Pkg.develop("Gurobi")
           Pkg.test("Gurobi")
-  # TODO(odow): enable testing Xpress
-  # test-windows:
-  #   name: ${{ matrix.package }}
-  #   runs-on: windows-latest
-  #   env:
-  #     PACKAGE: ${{ matrix.package }}
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       include:
-  #         - package: 'Xpress'
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: julia-actions/setup-julia@v1
-  #       with:
-  #         version: '1'
-  #     - uses: actions/cache@v1
-  #       env:
-  #         cache-name: cache-artifacts
-  #       with:
-  #         path: ~/.julia/artifacts
-  #         key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
-  #         restore-keys: |
-  #           ${{ runner.os }}-test-${{ env.cache-name }}-
-  #           ${{ runner.os }}-test-
-  #           ${{ runner.os }}-
-  #     - uses: julia-actions/julia-buildpkg@v1
-  #     - name: Test
-  #       shell: julia --color=yes {0}
-  #       env:
-  #         SECRET_XPRS_WIN_8110: ${{ secrets.XPRS_WIN_8110 }}
-  #         SECRET_XPRL_WIN_8110: ${{ secrets.XPRL_WIN_8110 }}
-  #         SECRET_XPRA_WIN_8130: ${{ secrets.XPRA_WIN_8130 }}
-  #       run: |
-  #         import Pkg
-  #         Pkg.develop(ENV["PACKAGE"])
-  #         Pkg.test(ENV["PACKAGE"])
+ 
