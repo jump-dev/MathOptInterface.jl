@@ -18,16 +18,12 @@ _sort_priority(::MOI.AbstractModelAttribute) = 30.0
     pass_attributes(
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
-        index_map::IndexMap,
+        index_map,
     )
 
 Pass the model attributes from the model `src` to the model `dest`.
 """
-function pass_attributes(
-    dest::MOI.ModelLike,
-    src::MOI.ModelLike,
-    index_map::IndexMap,
-)
+function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, index_map)
     attrs = MOI.get(src, MOI.ListOfModelAttributesSet())
     # We need to deal with the UserDefinedFunctions first, so that they are in
     # the model before we deal with the objective function or the constraints.
@@ -47,7 +43,7 @@ end
 function _pass_attribute(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    index_map::IndexMap,
+    index_map,
     attr::MOI.AbstractModelAttribute,
 )
     value = MOI.get(src, attr)
@@ -61,7 +57,7 @@ end
     pass_attributes(
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
-        index_map::IndexMap,
+        index_map,
         vis_src::Vector{MOI.VariableIndex},
     )
 
@@ -70,7 +66,7 @@ Pass the variable attributes from the model `src` to the model `dest`.
 function pass_attributes(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    index_map::IndexMap,
+    index_map,
     vis_src::Vector{MOI.VariableIndex},
 )
     for attr in MOI.get(src, MOI.ListOfVariableAttributesSet())
@@ -87,7 +83,7 @@ end
 function _pass_attribute(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    index_map::IndexMap,
+    index_map,
     vis_src::Vector{MOI.VariableIndex},
     attr::MOI.AbstractVariableAttribute,
 )
@@ -109,7 +105,7 @@ end
     pass_attributes(
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
-        index_map::IndexMap,
+        index_map,
         cis_src::Vector{MOI.ConstraintIndex{F,S}},
     ) where {F,S}
 
@@ -119,7 +115,7 @@ the model `dest`.
 function pass_attributes(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    index_map::IndexMap,
+    index_map,
     cis_src::Vector{MOI.ConstraintIndex{F,S}},
 ) where {F,S}
     for attr in MOI.get(src, MOI.ListOfConstraintAttributesSet{F,S}())
@@ -140,7 +136,7 @@ end
 function _pass_attribute(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
-    index_map::IndexMap,
+    index_map,
     cis_src::Vector{MOI.ConstraintIndex{F,S}},
     attr::MOI.AbstractConstraintAttribute,
 ) where {F,S}
@@ -241,7 +237,8 @@ end
     _copy_constraints(
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
-        index_map::IndexMap,
+        index_map,
+        index_map_FS,
         cis_src::Vector{<:MOI.ConstraintIndex},
     )
 
