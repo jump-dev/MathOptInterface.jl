@@ -304,9 +304,9 @@ function test_sets_dual_psdsquare()
     s = MOI.PositiveSemidefiniteConeSquare(4)
     err = ErrorException(
         """Dual of `PositiveSemidefiniteConeSquare` is not defined in MathOptInterface.
-            For more details see the comments in `src/Bridges/Constraint/square.jl`.""",
+            For more details see the comments in `src/Bridges/Constraint/bridges/square.jl`.""",
     )
-    @test_throws err MOI.dual_set(MOI.PositiveSemidefiniteConeSquare(4))
+    @test_throws err MOI.dual_set(s)
     @test_throws err MOI.dual_set_type(MOI.PositiveSemidefiniteConeSquare)
 end
 

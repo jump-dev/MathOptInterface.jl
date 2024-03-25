@@ -1370,7 +1370,7 @@ function dual_set(::PositiveSemidefiniteConeSquare)
     return error(
         "Dual of `PositiveSemidefiniteConeSquare` is not defined in " *
         "MathOptInterface.\nFor more details see the comments in " *
-        "`src/Bridges/Constraint/square.jl`.",
+        "`src/Bridges/Constraint/bridges/square.jl`.",
     )
 end
 
@@ -1378,7 +1378,7 @@ function dual_set_type(::Type{PositiveSemidefiniteConeSquare})
     return error(
         "Dual of `PositiveSemidefiniteConeSquare` is not defined in " *
         "MathOptInterface.\nFor more details see the comments in " *
-        "`src/Bridges/Constraint/square.jl`.",
+        "`src/Bridges/Constraint/bridges/square.jl`.",
     )
 end
 
