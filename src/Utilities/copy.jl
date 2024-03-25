@@ -23,11 +23,7 @@ _sort_priority(::MOI.AbstractModelAttribute) = 30.0
 
 Pass the model attributes from the model `src` to the model `dest`.
 """
-function pass_attributes(
-    dest::MOI.ModelLike,
-    src::MOI.ModelLike,
-    index_map,
-)
+function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, index_map)
     attrs = MOI.get(src, MOI.ListOfModelAttributesSet())
     # We need to deal with the UserDefinedFunctions first, so that they are in
     # the model before we deal with the objective function or the constraints.
