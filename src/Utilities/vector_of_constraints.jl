@@ -161,6 +161,13 @@ function MOI.get(
     return collect(keys(v.constraints))
 end
 
+function MOI.get(
+    ::VectorOfConstraints{F,S},
+    ::MOI.ListOfConstraintAttributesSet{F,S},
+) where {F,S}
+    return MOI.AbstractConstraintAttribute[]
+end
+
 function MOI.modify(
     v::VectorOfConstraints{F,S},
     ci::MOI.ConstraintIndex{F,S},

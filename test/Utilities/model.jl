@@ -504,6 +504,17 @@ function test_get_unsupported_constraint()
     return
 end
 
+function test_vector_of_constraints_list_of_constraint_attributes_set()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, 1.0 * x, MOI.EqualTo(1.0))
+    inner = model.constraints.moi_scalaraffinefunction.moi_equalto
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
+    @test MOI.get(inner, MOI.ListOfConstraintAttributesSet{F,S}()) ==
+          MOI.AbstractConstraintAttribute[]
+    return
+end
+
 end  # module
 
 TestModel.runtests()
