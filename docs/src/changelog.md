@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
- - Fixed passing non-`IndexMap` in [`Utilities.pass_attributes`](@ref) (#2458)
+ - Fixed passing non-`IndexMap` in `Utilities.pass_attributes` (#2458)
  - Fixed getting `MOI.ListOfConstraintAttributesSet` for `VectorOfConstraints`
    (#2459)
 
