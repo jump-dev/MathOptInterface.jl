@@ -34,7 +34,7 @@ function add_all_bridges(model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(model, ZerosBridge{T})
     MOI.Bridges.add_bridge(model, FreeBridge{T})
     MOI.Bridges.add_bridge(model, NonposToNonnegBridge{T})
-    MOI.Bridges.add_bridge(model, VectorizeBridge{T})
+    # MOI.Bridges.add_bridge(model, VectorizeBridge{T})
     MOI.Bridges.add_bridge(model, SOCtoRSOCBridge{T})
     MOI.Bridges.add_bridge(model, RSOCtoSOCBridge{T})
     MOI.Bridges.add_bridge(model, RSOCtoPSDBridge{T})
