@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PACKAGE: ${{ matrix.package }}
+      XPRESS_JL_SKIP_LIB_CHECK: "true"
     strategy:
       fail-fast: false
       matrix:
