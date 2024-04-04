@@ -1187,6 +1187,60 @@ function test_cannot_unbridge_variable_function()
     return
 end
 
+MOI.Utilities.@model(
+    Model2452,
+    (),
+    (),
+    (MOI.Nonnegatives, MOI.Zeros),
+    (),
+    (),
+    (),
+    (MOI.VectorOfVariables,),
+    (MOI.VectorAffineFunction,)
+)
+
+function MOI.supports_constraint(
+    ::Model2452{T},
+    ::Type{MOI.VariableIndex},
+    ::Type{
+        <:Union{
+            MOI.GreaterThan{T},
+            MOI.LessThan{T},
+            MOI.EqualTo{T},
+            MOI.Interval{T},
+            MOI.ZeroOne,
+            MOI.Integer,
+        },
+    },
+) where {T}
+    return false
+end
+
+function MOI.supports_constraint(
+    ::Model2452{T},
+    ::Type{MOI.VectorOfVariables},
+    ::Type{MOI.Reals},
+) where {T}
+    return false
+end
+
+function test_issue_2452()
+    src = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(src)
+    MOI.add_constraint(src, x, MOI.GreaterThan(1.0))
+    c = MOI.add_constraint(src, 2.0 * x, MOI.EqualTo(3.0))
+    dest = MOI.instantiate(Model2452{Float64}; with_bridge_type = Float64)
+    index_map = MOI.copy_to(dest, src)
+    set = MOI.get(dest, MOI.ConstraintSet(), index_map[c])
+    @test_broken set == MOI.EqualTo(3.0)
+    MOI.set(dest, MOI.ConstraintSet(), index_map[c], set)
+    @test_broken MOI.get(dest, MOI.ConstraintSet(), index_map[c]) == set
+    new_set = MOI.EqualTo(2.0)
+    MOI.set(dest, MOI.ConstraintSet(), index_map[c], new_set)
+    @test_broken MOI.get(dest, MOI.ConstraintSet(), index_map[c]) == new_set
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
