@@ -1232,12 +1232,12 @@ function test_issue_2452()
     dest = MOI.instantiate(Model2452{Float64}; with_bridge_type = Float64)
     index_map = MOI.copy_to(dest, src)
     set = MOI.get(dest, MOI.ConstraintSet(), index_map[c])
-    @test_broken set == MOI.EqualTo(3.0)
+    @test set == MOI.EqualTo(3.0)
     MOI.set(dest, MOI.ConstraintSet(), index_map[c], set)
-    @test_broken MOI.get(dest, MOI.ConstraintSet(), index_map[c]) == set
+    @test MOI.get(dest, MOI.ConstraintSet(), index_map[c]) == set
     new_set = MOI.EqualTo(2.0)
     MOI.set(dest, MOI.ConstraintSet(), index_map[c], new_set)
-    @test_broken MOI.get(dest, MOI.ConstraintSet(), index_map[c]) == new_set
+    @test MOI.get(dest, MOI.ConstraintSet(), index_map[c]) == new_set
     return
 end
 

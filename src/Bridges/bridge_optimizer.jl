@@ -1477,7 +1477,9 @@ function MOI.get(
         MOI.get(b.model, MOI.ConstraintFunction(), ci)
     end
     f = unbridged_function(b, func)
-    return MOI.Utilities.shift_constant(set, -MOI.constant(f))
+    g = bridged_function(b, f)
+    offset = MOI.constant(g) - MOI.constant(f)
+    return MOI.Utilities.shift_constant(set, offset)
 end
 
 ## Other constraint attributes
