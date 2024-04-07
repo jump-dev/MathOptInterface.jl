@@ -2222,14 +2222,6 @@ function bridged_function(b::AbstractBridgeOptimizer, func::MOI.VariableIndex)
     return func
 end
 
-# Shortcut to avoid `Variable.throw_if_cannot_unbridge(Variable.bridges(b))`
-function bridge_function(
-    ::AbstractBridgeOptimizer,
-    value::MOI.Utilities.ObjectOrTupleOrArrayWithoutIndex,
-)
-    return value
-end
-
 """
     unbridged_variable_function(
         b::AbstractBridgeOptimizer,
@@ -2326,14 +2318,6 @@ function bridged_constraint_function(
     MOI.throw_if_scalar_and_constant_not_zero(func, typeof(set))
     f = bridged_function(b, func)::typeof(func)
     return MOI.Utilities.normalize_constant(f, set)
-end
-
-function bridged_constraint_function(
-    b::AbstractBridgeOptimizer,
-    func::MOI.VariableIndex,
-    set::MOI.AbstractScalarSet,
-)
-    return bridged_function(b, func), set
 end
 
 """
