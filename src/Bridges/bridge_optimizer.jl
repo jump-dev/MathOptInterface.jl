@@ -1456,8 +1456,8 @@ end
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.ConstraintSet,
-    ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction},
-)
+    ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,S},
+) where {S}
     set = if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
         call_in_context(MOI.get, b, ci, attr)
@@ -1466,7 +1466,11 @@ function MOI.get(
     end
     # This is a scalar function, so if there are variable bridges, it might
     # contain constants that have been moved into the set.
-    if !Variable.has_bridges(Variable.bridges(b))
+    if !MOI.Utilities.supports_shift_constant(S)
+        # If it doesn't support shift_constant, then return the set
+        return set
+    elseif !Variable.has_bridges(Variable.bridges(b))
+        # and the same if there are no variable bridges
         return set
     end
     # The function constant of the bridged function was moved to the set,
@@ -1478,6 +1482,7 @@ function MOI.get(
     end
     f = unbridged_function(b, func)
     g = bridged_function(b, f)
+    # But it's really the difference of the bridged and unbridged functions.
     offset = MOI.constant(g) - MOI.constant(f)
     return MOI.Utilities.shift_constant(set, offset)
 end

@@ -1209,7 +1209,6 @@ function MOI.supports_constraint(
             MOI.EqualTo{T},
             MOI.Interval{T},
             MOI.ZeroOne,
-            MOI.Integer,
         },
     },
 ) where {T}
@@ -1238,6 +1237,18 @@ function test_issue_2452()
     new_set = MOI.EqualTo(2.0)
     MOI.set(dest, MOI.ConstraintSet(), index_map[c], new_set)
     @test MOI.get(dest, MOI.ConstraintSet(), index_map[c]) == new_set
+    return
+end
+
+function test_issue_2452_integer()
+    src = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(src)
+    MOI.add_constraint(src, x, MOI.GreaterThan(1.0))
+    y = MOI.add_variable(src)
+    c = MOI.add_constraint(src, 1.0 * y, MOI.Integer())
+    dest = MOI.instantiate(Model2452{Float64}; with_bridge_type = Float64)
+    index_map = MOI.copy_to(dest, src)
+    @test MOI.get(dest, MOI.ConstraintSet(), index_map[c]) == MOI.Integer()
     return
 end
 
