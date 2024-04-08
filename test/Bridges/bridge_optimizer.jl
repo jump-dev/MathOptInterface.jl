@@ -1246,10 +1246,7 @@ function test_issue_2452_with_constant()
     MOI.add_constraint(src, x, MOI.GreaterThan(1.0))
     MOI.add_constraint(src, 2.0 * x + 1.0, MOI.EqualTo(3.0))
     dest = MOI.instantiate(Model2452{Float64}; with_bridge_type = Float64)
-    @test_throws(
-        MOI.ScalarFunctionConstantNotZero,
-        MOI.copy_to(dest, src),
-    )
+    @test_throws MOI.ScalarFunctionConstantNotZero MOI.copy_to(dest, src)
     return
 end
 
