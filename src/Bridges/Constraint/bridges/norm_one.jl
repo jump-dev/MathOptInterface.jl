@@ -53,10 +53,10 @@ end
 
 function MOI.supports_constraint(
     ::Type{NormOneBridge{T}},
-    ::Type{<:MOI.AbstractVectorFunction},
+    ::Type{F},
     ::Type{MOI.NormOneCone},
-) where {T}
-    return true
+) where {T,F<:MOI.AbstractVectorFunction}
+    return MOI.Utilities.is_maybe_real(F)
 end
 
 function MOI.Bridges.added_constrained_variable_types(::Type{<:NormOneBridge})

@@ -2131,6 +2131,112 @@ function test_delete_index_in_vector(T::Type = Float64)
     return
 end
 
+function test_bridge_complex_norminfinitycone()
+    model = MOI.instantiate(
+        MOI.Utilities.Model{Float64};
+        with_bridge_type = Float64,
+    )
+    x = MOI.add_variable(model)
+    t = MOI.add_variable(model)
+    f = (1.0 + 0.0im) * x + 2.0 * im
+    g = MOI.Utilities.operate(vcat, Complex{Float64}, t, f)
+    @test_throws(
+        MOI.UnsupportedConstraint,
+        MOI.add_constraint(model, g, MOI.NormInfinityCone(2)),
+    )
+    return
+end
+
+function test_bridge_complex_normonecone()
+    model = MOI.instantiate(
+        MOI.Utilities.Model{Float64};
+        with_bridge_type = Float64,
+    )
+    x = MOI.add_variable(model)
+    t = MOI.add_variable(model)
+    f = (1.0 + 0.0im) * x + 2.0 * im
+    g = MOI.Utilities.operate(vcat, Complex{Float64}, t, f)
+    @test_throws(
+        MOI.UnsupportedConstraint,
+        MOI.add_constraint(model, g, MOI.NormOneCone(2)),
+    )
+    return
+end
+
+function test_bridge_complex_secondorder()
+    model = MOI.instantiate(
+        MOI.Utilities.Model{Float64};
+        with_bridge_type = Float64,
+    )
+    x = MOI.add_variable(model)
+    t = MOI.add_variable(model)
+    f = (1.0 + 0.0im) * x + 2.0 * im
+    g = MOI.Utilities.operate(vcat, Complex{Float64}, t, f)
+    @test_throws(
+        MOI.UnsupportedConstraint,
+        MOI.add_constraint(model, g, MOI.SecondOrderCone(2)),
+    )
+    return
+end
+
+function test_bridge_complex_nonnegtononpos()
+    model = MOI.instantiate(
+        MOI.Utilities.Model{Float64};
+        with_bridge_type = Float64,
+    )
+    x = MOI.add_variable(model)
+    f = (1.0 + 0.0im) * x + 2.0 * im
+    g = MOI.Utilities.operate(vcat, Complex{Float64}, f)
+    @test_throws(
+        MOI.UnsupportedConstraint,
+        MOI.add_constraint(model, g, MOI.Nonnegatives(1)),
+    )
+    return
+end
+
+function test_bridge_complex_nonpostononneg()
+    model = MOI.instantiate(
+        MOI.Utilities.Model{Float64};
+        with_bridge_type = Float64,
+    )
+    x = MOI.add_variable(model)
+    f = (1.0 + 0.0im) * x + 2.0 * im
+    g = MOI.Utilities.operate(vcat, Complex{Float64}, f)
+    @test_throws(
+        MOI.UnsupportedConstraint,
+        MOI.add_constraint(model, g, MOI.Nonpositives(1)),
+    )
+    return
+end
+
+function test_bridge_complex_greatertoless()
+    model = MOI.instantiate(
+        MOI.Utilities.Model{Float64};
+        with_bridge_type = Float64,
+    )
+    x = MOI.add_variable(model)
+    f = (1.0 + 0.0im) * x + 2.0 * im
+    @test_throws(
+        MOI.UnsupportedConstraint,
+        MOI.add_constraint(model, f, MOI.LessThan(1.0)),
+    )
+    return
+end
+
+function test_bridge_complex_greatertoless()
+    model = MOI.instantiate(
+        MOI.Utilities.Model{Float64};
+        with_bridge_type = Float64,
+    )
+    x = MOI.add_variable(model)
+    f = (1.0 + 0.0im) * x + 2.0 * im
+    @test_throws(
+        MOI.UnsupportedConstraint,
+        MOI.add_constraint(model, f, MOI.GreaterThan(1.0))
+    )
+    return
+end
+
 end  # module
 
 TestBridgesLazyBridgeOptimizer.runtests()

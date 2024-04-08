@@ -2492,3 +2492,37 @@ function constant_vector(
 )
     return f.constants
 end
+
+"""
+    is_maybe_real(::Type{<:MOI.AbstractFunction})
+
+Return `true` if the function type may return `<:Real` values. It returns false
+for Complex-valued functions.
+
+This function defaults to returning a false positive (`true`). If your new
+function  explicitly returns complex values, opt-out by defining a new method.
+
+This function is mostly intended for use in the `MOI.Bridges` submodule to
+identify when bridges are not applicable (because the function is
+complex-valued).
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> MOI.Utilities.is_maybe_real(MOI.VariableIndex)
+true
+
+julia> MOI.Utilities.is_maybe_real(MOI.ScalarAffineFunction{Complex{Int}})
+false
+
+julia> MOI.Utilities.is_maybe_real(MOI.ScalarNonlinearFunction)
+true
+```
+"""
+is_maybe_real(::Type{<:MOI.AbstractFunction}) = true
+is_maybe_real(::Type{<:MOI.ScalarAffineFunction{<:Complex}}) = false
+is_maybe_real(::Type{<:MOI.VectorAffineFunction{<:Complex}}) = false
+is_maybe_real(::Type{<:MOI.ScalarQuadraticFunction{<:Complex}}) = false
+is_maybe_real(::Type{<:MOI.VectorQuadraticFunction{<:Complex}}) = false

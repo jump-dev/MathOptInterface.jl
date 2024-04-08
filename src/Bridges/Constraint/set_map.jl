@@ -48,18 +48,18 @@ end
 
 function MOI.supports_constraint(
     ::Type{<:MultiSetMapBridge{T,S1}},
-    ::Type{<:MOI.AbstractScalarFunction},
+    ::Type{F},
     ::Type{S1},
-) where {T,S1<:MOI.AbstractScalarSet}
-    return true
+) where {T,S1<:MOI.AbstractScalarSet,F<:MOI.AbstractScalarFunction}
+    return MOI.Utilities.is_maybe_real(F)
 end
 
 function MOI.supports_constraint(
     ::Type{<:MultiSetMapBridge{T,S1}},
-    ::Type{<:MOI.AbstractVectorFunction},
+    ::Type{F},
     ::Type{S1},
-) where {T,S1<:MOI.AbstractVectorSet}
-    return true
+) where {T,S1<:MOI.AbstractVectorSet,F<:MOI.AbstractVectorFunction}
+    return MOI.Utilities.is_maybe_real(F)
 end
 
 function MOI.Bridges.added_constrained_variable_types(
