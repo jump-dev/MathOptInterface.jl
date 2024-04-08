@@ -1466,25 +1466,22 @@ function MOI.get(
     end
     # This is a scalar function, so if there are variable bridges, it might
     # contain constants that have been moved into the set.
-    if !MOI.Utilities.supports_shift_constant(S)
+    if !Variable.has_bridges(Variable.bridges(b))
+        # If there are no variable bridges, return the set.
+        return set
+    elseif !MOI.Utilities.supports_shift_constant(S)
         # If it doesn't support shift_constant, then return the set
         return set
-    elseif !Variable.has_bridges(Variable.bridges(b))
-        # and the same if there are no variable bridges
-        return set
     end
-    # The function constant of the bridged function was moved to the set,
-    # we need to remove it.
-    func = if is_bridged(b, ci)
-        call_in_context(MOI.get, b, ci, MOI.ConstraintFunction())
-    else
-        MOI.get(b.model, MOI.ConstraintFunction(), ci)
-    end
-    f = unbridged_function(b, func)
+    # The function constant of the bridged function (if it exists) was moved to
+    # the set, we need to remove it.
+    f = MOI.get(b, MOI.ConstraintFunction(), ci)
+    # f is the "un-bridged" function in terms of the user-variables. We need to
+    # substitute the variable bridges:
     g = bridged_function(b, f)
-    # But it's really the difference of the bridged and unbridged functions.
-    offset = MOI.constant(g) - MOI.constant(f)
-    return MOI.Utilities.shift_constant(set, offset)
+    # g is now the "bridged" function. Add its constant to recover the user's
+    # original set (since the constant was shifted by -constant(g) when adding).
+    return MOI.Utilities.shift_constant(set, MOI.constant(g))
 end
 
 ## Other constraint attributes

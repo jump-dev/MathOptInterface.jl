@@ -1240,6 +1240,19 @@ function test_issue_2452()
     return
 end
 
+function test_issue_2452_with_constant()
+    src = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(src)
+    MOI.add_constraint(src, x, MOI.GreaterThan(1.0))
+    MOI.add_constraint(src, 2.0 * x + 1.0, MOI.EqualTo(3.0))
+    dest = MOI.instantiate(Model2452{Float64}; with_bridge_type = Float64)
+    @test_throws(
+        MOI.ScalarFunctionConstantNotZero,
+        MOI.copy_to(dest, src),
+    )
+    return
+end
+
 function test_issue_2452_integer()
     src = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     x = MOI.add_variable(src)
