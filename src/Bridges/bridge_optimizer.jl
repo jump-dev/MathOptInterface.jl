@@ -1479,8 +1479,8 @@ function MOI.get(
     # f is the "un-bridged" function in terms of the user-variables. We need to
     # substitute the variable bridges:
     g = bridged_function(b, f)
-    # g is now the "bridged" function. Add its constant to recover the user's
-    # original set (since the constant was shifted by -constant(g) when adding).
+    # `g` is now the "bridged" function. Add its constant to recover the user's
+    # original set (since the constant was shifted by `-constant(g)` when adding).
     return MOI.Utilities.shift_constant(set, MOI.constant(g))
 end
 
