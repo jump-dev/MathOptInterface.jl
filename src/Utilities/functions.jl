@@ -2511,13 +2511,13 @@ complex-valued).
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> MOI.Utilities._is_maybe_real(MOI.VariableIndex)
+julia> MOI.Utilities.is_maybe_real(MOI.VariableIndex)
 true
 
-julia> MOI.Utilities._is_maybe_real(MOI.ScalarAffineFunction{Complex{Int}})
+julia> MOI.Utilities.is_maybe_real(MOI.ScalarAffineFunction{Complex{Int}})
 false
 
-julia> MOI.Utilities._is_maybe_real(MOI.ScalarNonlinearFunction)
+julia> MOI.Utilities.is_maybe_real(MOI.ScalarNonlinearFunction)
 true
 ```
 """
