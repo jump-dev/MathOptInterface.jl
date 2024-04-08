@@ -10,25 +10,36 @@
 Returns a new scalar set `new_set` such that `func`-in-`set` is equivalent to
 `func + offset`-in-`new_set`.
 
-Only define this function if it makes sense to.
-
 Use [`supports_shift_constant`](@ref) to check if the set supports shifting:
 ```Julia
-if supports_shift_constant(typeof(old_set))
-    new_set = shift_constant(old_set, offset)
-    f.constant = 0
-    add_constraint(model, f, new_set)
+if MOI.Utilities.supports_shift_constant(typeof(set))
+    new_set = MOI.Utilities.shift_constant(set, -func.constant)
+    func.constant = 0
+    MOI.add_constraint(model, func, new_set)
 else
-    add_constraint(model, f, old_set)
+    MOI.add_constraint(model, func, set)
 end
 ```
 
-See also [`supports_shift_constant`](@ref).
+### Note for developers
+
+Only define this function if it makes sense and you have implemented
+[`supports_shift_constant`](@ref) to return `true`.
 
 ## Examples
 
-The call `shift_constant(MOI.Interval(-2, 3), 1)` is equal to
-`MOI.Interval(-1, 4)`.
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> set = MOI.Interval(-2.0, 3.0)
+MathOptInterface.Interval{Float64}(-2.0, 3.0)
+
+julia> MOI.Utilities.supports_shift_constant(typeof(set))
+true
+
+julia> MOI.Utilities.shift_constant(set, 1.0)
+MathOptInterface.Interval{Float64}(-1.0, 4.0)
+```
 """
 function shift_constant end
 
@@ -38,32 +49,49 @@ function shift_constant end
 Return `true` if [`shift_constant`](@ref) is defined for set `S`.
 
 See also [`shift_constant`](@ref).
+
+## Examples
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> MOI.Utilities.supports_shift_constant(MOI.Interval{Float64})
+true
+
+julia> MOI.Utilities.supports_shift_constant(MOI.ZeroOne)
+false
+```
 """
 supports_shift_constant(::Type{S}) where {S<:MOI.AbstractSet} = false
 
 function shift_constant(set::MOI.LessThan, offset)
     return MOI.LessThan(MOI.constant(set) + offset)
 end
+
 supports_shift_constant(::Type{<:MOI.LessThan}) = true
 
 function shift_constant(set::MOI.GreaterThan, offset)
     return MOI.GreaterThan(MOI.constant(set) + offset)
 end
+
 supports_shift_constant(::Type{<:MOI.GreaterThan}) = true
 
 function shift_constant(set::MOI.EqualTo, offset)
     return MOI.EqualTo(MOI.constant(set) + offset)
 end
+
 supports_shift_constant(::Type{<:MOI.EqualTo}) = true
 
 function shift_constant(set::MOI.Interval, offset)
     return MOI.Interval(set.lower + offset, set.upper + offset)
 end
+
 supports_shift_constant(::Type{<:MOI.Interval}) = true
 
 function shift_constant(set::MOI.Parameter, offset)
     return MOI.Parameter(MOI.constant(set) + offset)
 end
+
 supports_shift_constant(::Type{<:MOI.Parameter}) = true
 
 """
