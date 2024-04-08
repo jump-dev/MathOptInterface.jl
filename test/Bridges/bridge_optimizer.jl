@@ -1223,6 +1223,23 @@ function MOI.supports_constraint(
     return false
 end
 
+function test_issue_2452_multiple_variable_bridges()
+    src = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variable(src)
+    MOI.add_constraint(src, x, MOI.LessThan(1.0))
+    c = MOI.add_constraint(src, 2.0 * x, MOI.EqualTo(3.0))
+    dest = MOI.instantiate(Model2452{Float64}; with_bridge_type = Float64)
+    index_map = MOI.copy_to(dest, src)
+    set = MOI.get(dest, MOI.ConstraintSet(), index_map[c])
+    @test set == MOI.EqualTo(3.0)
+    MOI.set(dest, MOI.ConstraintSet(), index_map[c], set)
+    @test MOI.get(dest, MOI.ConstraintSet(), index_map[c]) == set
+    new_set = MOI.EqualTo(2.0)
+    MOI.set(dest, MOI.ConstraintSet(), index_map[c], new_set)
+    @test MOI.get(dest, MOI.ConstraintSet(), index_map[c]) == new_set
+    return
+end
+
 function test_issue_2452()
     src = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     x = MOI.add_variable(src)
