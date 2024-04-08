@@ -1061,3 +1061,18 @@ function test_modification_constraint_scalarquadraticcoefficientchange(
     @test ≈(MOI.get(model, MOI.ConstraintFunction(), c), g, config)
     return
 end
+
+function test_modification_mathoptinterface_issue_2452(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    F, S = MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}
+    @requires MOI.supports_constraint(model, F, S)
+    x, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(T(1)))
+    c = MOI.add_constraint(model, T(2) * x, MOI.EqualTo(T(3)))
+    @test ≈(MOI.get(model, MOI.ConstraintFunction(), c), T(2) * x, config)
+    @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.EqualTo(T(3))
+    MOI.set(model, MOI.ConstraintSet(), c, MOI.EqualTo(T(2)))
+    @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.EqualTo(T(2))
+    return
+end

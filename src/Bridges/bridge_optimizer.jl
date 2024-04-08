@@ -1456,8 +1456,8 @@ end
 function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::MOI.ConstraintSet,
-    ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction},
-)
+    ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,S},
+) where {S}
     set = if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
         call_in_context(MOI.get, b, ci, attr)
@@ -1467,17 +1467,31 @@ function MOI.get(
     # This is a scalar function, so if there are variable bridges, it might
     # contain constants that have been moved into the set.
     if !Variable.has_bridges(Variable.bridges(b))
+        # If there are no variable bridges, return the set.
+        return set
+    elseif !MOI.Utilities.supports_shift_constant(S)
+        # If it doesn't support shift_constant, then return the set
         return set
     end
-    # The function constant of the bridged function was moved to the set,
-    # we need to remove it.
-    func = if is_bridged(b, ci)
-        call_in_context(MOI.get, b, ci, MOI.ConstraintFunction())
-    else
-        MOI.get(b.model, MOI.ConstraintFunction(), ci)
-    end
-    f = unbridged_function(b, func)
-    return MOI.Utilities.shift_constant(set, -MOI.constant(f))
+    # When the constraint is added with function `f` and set `set_f`,
+    # the function is bridged into `g` with set `set` by
+    # `g, set = bridged_constraint_function(b, f, set_f)`.
+    # By doing so, the function constant of the bridged function (if it exists)
+    # was moved to `set`, we need to remove it to recover `set_f`.
+    # The function `f` contains the variables in the context of `ci`
+    # (which should match `Variable.bridges(b).current_context` since no code
+    # outside of that context has references to `ci`) and
+    # the constraint `g` contains the variables of `b.model`.
+    # The following line recovers `f` in the context of
+    # `Variables.map(b).current_context`.
+    f = MOI.get(b, MOI.ConstraintFunction(), ci)
+    # We need to substitute the variable bridges to recover the function `g`
+    # that was given at the creation of the bridge.
+    g = bridged_function(b, f)
+    # Since `bridged_constraint_function(b, f, set_f)` used
+    # `set = shift_constant(set_f, -MOI.constant(g))`, we need
+    # to do the opposite to recover `set_f`.
+    return MOI.Utilities.shift_constant(set, MOI.constant(g))
 end
 
 ## Other constraint attributes
