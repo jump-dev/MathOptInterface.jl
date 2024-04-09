@@ -108,7 +108,10 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, NormOneConeToNormConeBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SecondOrderConeToNormConeBridge{T})
     MOI.Bridges.add_bridge(bridged_model, NormInfinityConeToNormConeBridge{T})
-    MOI.Bridges.add_bridge(bridged_model, ComplexNormInfinityToSecondOrderConeBridge{T})
+    MOI.Bridges.add_bridge(
+        bridged_model,
+        ComplexNormInfinityToSecondOrderConeBridge{T},
+    )
     MOI.Bridges.add_bridge(bridged_model, RelativeEntropyBridge{T})
     MOI.Bridges.add_bridge(bridged_model, NormSpectralBridge{T})
     MOI.Bridges.add_bridge(bridged_model, NormNuclearBridge{T})

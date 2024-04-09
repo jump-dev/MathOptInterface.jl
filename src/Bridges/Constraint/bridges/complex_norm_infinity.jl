@@ -27,7 +27,7 @@ reformulation:
 """
 struct ComplexNormInfinityToSecondOrderConeBridge{T} <: AbstractBridge
     ci::Vector{
-        MOI.ConstraintIndex{MOI.VectorAffineFunction{T},MOI.SecondOrderCone}
+        MOI.ConstraintIndex{MOI.VectorAffineFunction{T},MOI.SecondOrderCone},
     }
 end
 
@@ -129,8 +129,8 @@ function MOI.get(
         fi = MOI.Utilities.operate(
             +,
             Complex{T},
-            (one(T) + zero(T)*im) * fi_s[2],
-            (zero(T) + one(T)*im) * fi_s[3],
+            (one(T) + zero(T) * im) * fi_s[2],
+            (zero(T) + one(T) * im) * fi_s[3],
         )
         push!(elements, fi)
     end
