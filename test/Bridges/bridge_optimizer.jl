@@ -1257,10 +1257,10 @@ function test_2452()
     )
     @test MOI.get(dest.model, MOI.ConstraintSet(), ci) == MOI.Zeros(1)
     @test_throws(
-      MOI.SetAttributeNotAllowed,
-      MOI.set(dest, MOI.ConstraintSet(), index_map[c], set),
+        MOI.SetAttributeNotAllowed,
+        MOI.set(dest, MOI.ConstraintSet(), index_map[c], set),
     )
-  return
+    return
 end
 
 function test_issue_2452_with_constant()
