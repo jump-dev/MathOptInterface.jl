@@ -44,6 +44,7 @@ Bridges.Constraint.QuadtoSOCBridge
 Bridges.Constraint.SOCtoPSDBridge
 Bridges.Constraint.RSOCtoPSDBridge
 Bridges.Constraint.NormInfinityBridge
+Bridges.Constraint.ComplexNormInfinityToSecondOrderConeBridge
 Bridges.Constraint.NormOneBridge
 Bridges.Constraint.NormToPowerBridge
 Bridges.Constraint.NormOneConeToNormConeBridge
