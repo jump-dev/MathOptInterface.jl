@@ -41,6 +41,12 @@ function bridge_constraint(
     s::MOI.NormInfinityCone,
 ) where {T}
     fi_s = MOI.Utilities.scalarize(f)
+    if !iszero(imag(fi_s[1]))
+        error(
+            "The epigraph variable `t` in `[t; x] in NormInfinityCone()` " *
+            "must be real. It is: $(fi_s[1])",
+        )
+    end
     t = real(fi_s[1])
     cis = MOI.ConstraintIndex{MOI.VectorAffineFunction{T},MOI.SecondOrderCone}[]
     for fi in fi_s[2:end]

@@ -47,6 +47,23 @@ function test_runtests()
     return
 end
 
+function test_imag_t()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.ComplexNormInfinityToSecondOrderCone{Float64}(inner)
+    x = MOI.add_variables(model, 2)
+    f_t = (1.0 + 2.0im) * x[1]
+    f_x = (1.0 + 2.0im) * x[2] + (3.0 + 4.0im)
+    f = MOI.Utilities.operate(vcat, Complex{Float64}, f_t, f_x)
+    @test_throws(
+        ErrorException(
+            "The epigraph variable `t` in `[t; x] in NormInfinityCone()` " *
+            "must be real. It is: $f_t",
+        ),
+        MOI.add_constraint(model, f, MOI.NormInfinityCone(2))
+    )
+    return
+end
+
 end  # module
 
 TestConstraintComplexNormInfinityToSecondOrderCone.runtests()
