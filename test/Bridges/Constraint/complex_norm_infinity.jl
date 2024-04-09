@@ -49,7 +49,10 @@ end
 
 function test_imag_t()
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
-    model = MOI.Bridges.Constraint.ComplexNormInfinityToSecondOrderCone{Float64}(inner)
+    model =
+        MOI.Bridges.Constraint.ComplexNormInfinityToSecondOrderCone{Float64}(
+            inner,
+        )
     x = MOI.add_variables(model, 2)
     f_t = (1.0 + 2.0im) * x[1]
     f_x = (1.0 + 2.0im) * x[2] + (3.0 + 4.0im)
