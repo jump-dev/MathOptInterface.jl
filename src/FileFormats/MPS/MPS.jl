@@ -1162,9 +1162,13 @@ function Base.read!(io::IO, model::Model)
     header = HEADER_NAME
     multi_objectives = String[]
     while !eof(io)
-        line = string(strip(readline(io)))
-        if isempty(line) || first(line) == '*'
-            continue  # Skip blank lines and comments.
+        raw_line = readline(io)
+        if startswith(raw_line, '*')
+            continue  # Lines starting with `*` are comments
+        end
+        line = string(strip(raw_line))
+        if isempty(line)
+            continue  # Skip blank lines
         end
         h = Headers(line)
         if h == HEADER_OBJSENSE
