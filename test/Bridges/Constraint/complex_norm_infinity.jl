@@ -44,30 +44,6 @@ function test_runtests()
         ::Float64: [2.0 * t + 3.0, 1.0 * x, 1.0 * y] in SecondOrderCone(3)
         """,
     )
-    # MOI.Bridges.runtests(
-    #     MOI.Bridges.Constraint.ComplexNormInfinityToSecondOrderConeBridge,
-    #     """
-    #     variables: x
-    #     ::Complex{Float64}: [(0 + 2im) * x + (0 + 4im)] in Zeros(1)
-    #     """,
-    #     """
-    #     variables: x
-    #     ::Float64: [2 * x + 4] in Zeros(1)
-    #     """;
-    #     constraint_start = 0.0 + 1.2im,
-    # )
-    # MOI.Bridges.runtests(
-    #     MOI.Bridges.Constraint.ComplexNormInfinityToSecondOrderConeBridge,
-    #     """
-    #     variables: x
-    #     ::Complex{Float64}: [(2 + 0im) * x + (4 + 0im)] in Zeros(1)
-    #     """,
-    #     """
-    #     variables: x
-    #     ::Float64: [2 * x + 4] in Zeros(1)
-    #     """;
-    #     constraint_start = 1.2 + 0.0im,
-    # )
     return
 end
 
