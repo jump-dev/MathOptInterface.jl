@@ -1232,29 +1232,35 @@ function test_issue_2452_multiple_variable_bridges()
     index_map = MOI.copy_to(dest, src)
     set = MOI.get(dest, MOI.ConstraintSet(), index_map[c])
     @test set == MOI.EqualTo(3.0)
-    MOI.set(dest, MOI.ConstraintSet(), index_map[c], set)
-    @test MOI.get(dest, MOI.ConstraintSet(), index_map[c]) == set
-    new_set = MOI.EqualTo(2.0)
-    MOI.set(dest, MOI.ConstraintSet(), index_map[c], new_set)
-    @test MOI.get(dest, MOI.ConstraintSet(), index_map[c]) == new_set
+    @test_throws(
+        MOI.SetAttributeNotAllowed,
+        MOI.set(dest, MOI.ConstraintSet(), index_map[c], set),
+    )
     return
 end
 
-function test_issue_2452()
+function test_2452()
+    F, S = MOI.VectorAffineFunction{Float64}, MOI.Zeros
     src = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     x = MOI.add_variable(src)
     MOI.add_constraint(src, x, MOI.GreaterThan(1.0))
-    c = MOI.add_constraint(src, 2.0 * x, MOI.EqualTo(3.0))
+    set = MOI.EqualTo(3.0)
+    c = MOI.add_constraint(src, 2.0 * x, set)
     dest = MOI.instantiate(Model2452{Float64}; with_bridge_type = Float64)
     index_map = MOI.copy_to(dest, src)
-    set = MOI.get(dest, MOI.ConstraintSet(), index_map[c])
-    @test set == MOI.EqualTo(3.0)
-    MOI.set(dest, MOI.ConstraintSet(), index_map[c], set)
+    y = only(MOI.get(dest.model, MOI.ListOfVariableIndices()))
+    ci = only(MOI.get(dest.model, MOI.ListOfConstraintIndices{F,S}()))
     @test MOI.get(dest, MOI.ConstraintSet(), index_map[c]) == set
-    new_set = MOI.EqualTo(2.0)
-    MOI.set(dest, MOI.ConstraintSet(), index_map[c], new_set)
-    @test MOI.get(dest, MOI.ConstraintSet(), index_map[c]) == new_set
-    return
+    @test ≈(
+        MOI.get(dest.model, MOI.ConstraintFunction(), ci),
+        MOI.Utilities.operate(vcat, Float64, -1.0 + 2.0 * y),
+    )
+    @test MOI.get(dest.model, MOI.ConstraintSet(), ci) == MOI.Zeros(1)
+    @test_throws(
+      MOI.SetAttributeNotAllowed,
+      MOI.set(dest, MOI.ConstraintSet(), index_map[c], set),
+    )
+  return
 end
 
 function test_issue_2452_with_constant()
