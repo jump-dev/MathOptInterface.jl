@@ -1444,6 +1444,10 @@ function MOI.set(
     # mapped through the bridge substitution. This includes moving constants
     # into the set.
     if Variable.has_bridges(Variable.bridges(b))
+        if is_bridged(b, ci)
+            # If `ci` is also ConstraintBridged, then we give up as the current code path is known to contain unresolved issues, see https://github.com/jump-dev/MathOptInterface.jl/issues/2452
+            throw(MOI.SetAttributeNotAllowed(attr))
+        end
         func = MOI.get(b, MOI.ConstraintFunction(), ci)
         # Updating the set will not modify the function, so we don't care about
         # the first argument. We only care about the new set.
