@@ -379,34 +379,157 @@ julia> f
 ## Utilities.MatrixOfConstraints
 
 The constraints of [`Utilities.Model`](@ref) are stored as a vector of tuples
-of function and set in a `Utilities.VectorOfConstraints`. Other representations
-can be used by parameterizing the type [`Utilities.GenericModel`](@ref)
-(resp. [`Utilities.GenericOptimizer`](@ref)). For instance, if all
-non-`VariableIndex` constraints are affine, the coefficients of all the
-constraints can be stored in a single sparse matrix using
-[`Utilities.MatrixOfConstraints`](@ref). The constraints storage can even be
-customized up to a point where it exactly matches the storage of the solver of
-interest, in which case [`copy_to`](@ref) can be implemented for the solver by
-calling [`copy_to`](@ref) to this custom model.
+of function and set in a [`Utilities.VectorOfConstraints`](@ref).
 
-For instance, [Clp](https://github.com/jump-dev/Clp.jl) defines the following
+Other representations can be used by parameterizing the type
+[`Utilities.GenericModel`](@ref) (resp. [`Utilities.GenericOptimizer`](@ref)).
+
+For example, if all non-`VariableIndex` constraints are affine, the coefficients
+of all the constraints can be stored in a single sparse matrix using
+[`Utilities.MatrixOfConstraints`](@ref).
+
+The constraints storage can even be customized up to a point where it exactly
+matches the storage of the solver of interest, in which case [`copy_to`](@ref)
+can be implemented for the solver by calling [`copy_to`](@ref) to this custom
+model.
+
+For example, [Clp.jl](https://github.com/jump-dev/Clp.jl) defines the following
 model:
-```julia
-MOI.Utilities.@product_of_scalar_sets(LP, MOI.EqualTo{T}, MOI.LessThan{T}, MOI.GreaterThan{T})
-const Model = MOI.Utilities.GenericModel{
-    Float64,
-    MOI.Utilities.MatrixOfConstraints{
-        Float64,
-        MOI.Utilities.MutableSparseMatrixCSC{Float64,Cint,MOI.Utilities.ZeroBasedIndexing},
-        MOI.Utilities.Hyperrectangle{Float64},
-        LP{Float64},
-    },
-}
+```jldoctest matrixofconstraints
+julia> MOI.Utilities.@product_of_sets(
+           SupportedSets,
+           MOI.EqualTo{T},
+           MOI.LessThan{T},
+           MOI.GreaterThan{T},
+           MOI.Interval{T},
+       );
+
+julia> const OptimizerCache = MOI.Utilities.GenericModel{
+           Float64,
+           MOI.Utilities.ObjectiveContainer{Float64},
+           MOI.Utilities.VariablesContainer{Float64},
+           MOI.Utilities.MatrixOfConstraints{
+               Float64,
+               MOI.Utilities.MutableSparseMatrixCSC{
+                   # The data type of the coefficients
+                   Float64,
+                   # The data type of the variable indices
+                   Cint,
+                   # Can also be MOI.Utilities.OneBasedIndexing
+                   MOI.Utilities.ZeroBasedIndexing,
+               },
+               MOI.Utilities.Hyperrectangle{Float64},
+               SupportedSets{Float64},
+           },
+       };
+```
+Given the input model:
+```jldoctest matrixofconstraints
+julia> src = MOI.Utilities.Model{Float64}();
+
+julia> MOI.Utilities.loadfromstring!(
+           src,
+           """
+           variables: x, y, z
+           maxobjective: x + 2.0 * y + -3.1 * z
+           x + y <= 1.0
+           2.0 * y >= 3.0
+           -4.0 * x + z == 5.0
+           x in Interval(0.0, 1.0)
+           y <= 10.0
+           z == 5.0
+           """,
+       )
 ```
 
-The [`copy_to`](@ref) operation can now be implemented as follows:
+We can construct a new cached model and copy `src` to it:
+```jldoctest matrixofconstraints
+julia> dest = OptimizerCache();
+
+julia> index_map = MOI.copy_to(dest, src);
+```
+
+From `dest`, we can access the `A` matrix in sparse matrix form:
+```jldoctest matrixofconstraints
+julia> A = dest.constraints.coefficients;
+
+julia> A.n
+3
+
+julia> A.m
+3
+
+julia> A.colptr
+4-element Vector{Int32}:
+ 0
+ 1
+ 3
+ 5
+
+julia> A.rowval
+5-element Vector{Int32}:
+ 0
+ 1
+ 2
+ 0
+ 1
+
+julia> A.nzval
+5-element Vector{Float64}:
+  1.0
+  1.0
+  2.0
+ -4.0
+  1.0
+```
+The lower and upper row bounds:
+```jldoctest matrixofconstraints
+julia> row_bounds = dest.constraints.constants;
+
+julia> row_bounds.lower
+3-element Vector{Float64}:
+   5.0
+ -Inf
+   3.0
+
+julia> row_bounds.upper
+3-element Vector{Float64}:
+  5.0
+  1.0
+ Inf
+```
+The lower and upper variable bounds:
+```jldoctest matrixofconstraints
+julia> dest.variables.lower
+3-element Vector{Float64}:
+   5.0
+ -Inf
+   0.0
+
+julia> dest.variables.upper
+3-element Vector{Float64}:
+  5.0
+ 10.0
+  1.0
+```
+Because of larger variations between solvers, the objective can be queried using
+the standard MOI methods:
+```jldoctest matrixofconstraints
+julia> MOI.get(dest, MOI.ObjectiveSense())
+MAX_SENSE::OptimizationSense = 1
+
+julia> F = MOI.get(dest, MOI.ObjectiveFunctionType())
+MathOptInterface.ScalarAffineFunction{Float64}
+
+julia> F = MOI.get(dest, MOI.ObjectiveFunction{F}())
+0.0 + 1.0 MOI.VariableIndex(3) + 2.0 MOI.VariableIndex(2) - 3.1 MOI.VariableIndex(1)
+```
+
+Thus, Clp.jl implements a [`copy_to`](@ref) method similar to the following:
 ```julia
-function _copy_to(dest::Optimizer, src::Model)
+function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike)
+    model = Model()
+    index_map = MOI.copy_to(model, src)
     @assert MOI.is_empty(dest)
     A = src.constraints.coefficients
     row_bounds = src.constraints.constants
@@ -424,33 +547,15 @@ function _copy_to(dest::Optimizer, src::Model)
         row_bounds.upper,
     )
     # Set objective sense and constant (omitted)
-    return
-end
-
-function MOI.copy_to(dest::Optimizer, src::Model)
-    _copy_to(dest, src)
-    return MOI.Utilities.identity_index_map(src)
-end
-
-function MOI.copy_to(
-    dest::Optimizer,
-    src::MOI.Utilities.UniversalFallback{Model},
-)
-    # Copy attributes from `src` to `dest` and error in case any unsupported
-    # constraints or attributes are set in `UniversalFallback`.
-    return MOI.copy_to(dest, src.model)
-end
-
-function MOI.copy_to(
-    dest::Optimizer,
-    src::MOI.ModelLike,
-)
-    model = Model()
-    index_map = MOI.copy_to(model, src)
-    _copy_to(dest, model)
     return index_map
 end
 ```
+
+For other examples of [`Utilities.MatrixOfConstraints`](@ref), see:
+
+ * [Cbc.jl](https://github.com/jump-dev/Cbc.jl)
+ * [ECOS.jl](https://github.com/jump-dev/ECOS.jl)
+ * [SCS.jl](https://github.com/jump-dev/SCS.jl)
 
 ## ModelFilter
 
