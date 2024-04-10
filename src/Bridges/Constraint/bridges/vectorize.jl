@@ -64,7 +64,7 @@ function MOI.supports_constraint(
     ::Type{F},
     ::Type{<:MOI.Utilities.ScalarLinearSet{T}},
 ) where {T,F<:MOI.AbstractScalarFunction}
-    return MOI.Utilities.is_maybe_real(F)
+    return !MOI.Utilities.is_complex(F)
 end
 
 function MOI.Bridges.added_constrained_variable_types(::Type{<:VectorizeBridge})
