@@ -110,7 +110,6 @@ The steps are mostly the same, but locations depend on whether the bridge is a
 ## Documentation
 
  - [ ] Add a docstring which uses the same template as existing bridges.
- - [ ] Add the docstring to `docs/src/submodules/Bridges/list_of_bridges.md`
 
 ## Final touch
 
