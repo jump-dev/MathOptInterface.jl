@@ -525,11 +525,10 @@ julia> F = MOI.get(dest, MOI.ObjectiveFunction{F}())
 0.0 + 1.0 MOI.VariableIndex(3) + 2.0 MOI.VariableIndex(2) - 3.1 MOI.VariableIndex(1)
 ```
 
-Thus, Clp.jl implements a [`copy_to`](@ref) method similar to the following:
+Thus, Clp.jl implements [`copy_to`](@ref) methods similar to the following:
 ```julia
-function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike)
-    model = Model()
-    index_map = MOI.copy_to(model, src)
+# This method copies from the cache to the `Clp.Optimizer` object.
+function MOI.copy_to(dest::Optimizer, src::OptimizerCache)
     @assert MOI.is_empty(dest)
     A = src.constraints.coefficients
     row_bounds = src.constraints.constants
@@ -546,16 +545,35 @@ function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike)
         row_bounds.lower,
         row_bounds.upper,
     )
-    # Set objective sense and constant (omitted)
+    return MOI.Utilities.identity_index_map(src)
+end
+
+# This method copies from an arbitrary model to the optimizer, by the
+# intermediate `OptimizerCache` representation.
+function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike)
+    cache = OptimizerCache()
+    index_map = MOI.copy_to(cache, src)
+    MOI.copy_to(dest, cache)
     return index_map
+end
+
+# This is a special method that gets called in some cases when `OptimizerCache`
+# is used as the backing data structure in a `MOI.Utilities.CachingOptimizer`.
+# It is needed for performance, but not correctness.
+function MOI.copy_to(
+    dest::Optimizer,
+    src::MOI.Utilities.UniversalFallback{OptimizerCache},
+)
+    MOI.Utilities.throw_unsupported(src)
+    return MOI.copy_to(dest, src.model)
 end
 ```
 
-For other examples of [`Utilities.MatrixOfConstraints`](@ref), see:
-
- * [Cbc.jl](https://github.com/jump-dev/Cbc.jl)
- * [ECOS.jl](https://github.com/jump-dev/ECOS.jl)
- * [SCS.jl](https://github.com/jump-dev/SCS.jl)
+!!! tip
+    For other examples of [`Utilities.MatrixOfConstraints`](@ref), see:
+     * [Cbc.jl](https://github.com/jump-dev/Cbc.jl)
+     * [ECOS.jl](https://github.com/jump-dev/ECOS.jl)
+     * [SCS.jl](https://github.com/jump-dev/SCS.jl)
 
 ## ModelFilter
 
