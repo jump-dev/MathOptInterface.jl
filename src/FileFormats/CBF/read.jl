@@ -303,6 +303,27 @@ function _read_DCOORD(io::IO, data::_CBFReadData)
 end
 
 """
+    _simplify_f_if_possible(f::MOI.VectorAffineFunction)
+
+This function returns a `MOI.VectorOfVariables` if `f` is trivially equivalent
+to `I * x + 0`. This may often happen when reading constraints that could have
+been written as `x in K`, but were instead written as `I * x + 0 in K`.
+"""
+function _simplify_f_if_possible(f::MOI.VectorAffineFunction)
+    if length(f.terms) != length(f.constants)
+        return f
+    end
+    for (i, term) in enumerate(f.terms)
+        if term.output_index != i ||
+           !isone(term.scalar_term.coefficient) ||
+           !iszero(f.constants[i])
+            return f
+        end
+    end
+    return MOI.VectorOfVariables([t.scalar_term.variable for t in f.terms])
+end
+
+"""
     Base.read!(io::IO, model::FileFormats.CBF.Model)
 
 Read `io` in the Conic Benchmark Format and store the result in `model`.
@@ -382,7 +403,11 @@ function Base.read!(io::IO, model::Model)
             )
         end
         con_set = _cbf_to_moi_cone(data, cone_str, cone_dim)
-        MOI.add_constraint(model, con_func, con_set)
+        MOI.add_constraint(
+            model,
+            _simplify_f_if_possible(con_func),
+            con_set,
+        )
         row_idx += cone_dim
     end
 
@@ -400,10 +425,9 @@ function Base.read!(io::IO, model::Model)
         )
         MOI.add_constraint(
             model,
-            con_func,
+            _simplify_f_if_possible(con_func),
             MOI.PositiveSemidefiniteConeTriangle(side_dim),
         )
     end
-
     return
 end
