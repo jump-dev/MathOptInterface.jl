@@ -133,40 +133,32 @@ end
 function _read_PSDVAR(io::IO, model::Model, data::_CBFReadData)
     for _ in 1:_read(io, Int)
         side_dim = _read(io, Int)
-        cone_dim = div(side_dim * (side_dim + 1), 2)
-        psd_vars_k = MOI.add_variables(model, cone_dim)
-        push!(data.psd_vars, psd_vars_k)
-        MOI.add_constraint(
-            model,
-            MOI.VectorOfVariables(psd_vars_k),
-            MOI.PositiveSemidefiniteConeTriangle(side_dim),
-        )
+        set = MOI.PositiveSemidefiniteConeTriangle(side_dim)
+        x, _ = MOI.add_constrained_variables(model, set)
+        push!(data.psd_vars, x)
     end
     return
 end
 
 function _read_VAR(io::IO, model::Model, data::_CBFReadData)
-    num_var, num_lines = _read(io, Int, Int)
-    append!(data.scalar_vars, MOI.add_variables(model, num_var))
-    var_idx = 0
+    _, num_lines = _read(io, Int, Int)
     for _ in 1:num_lines
         cone_str, cone_dim = _read(io, String, Int)
+        set = _cbf_to_moi_cone(data, cone_str, cone_dim)
         if cone_str == "F"
-            var_idx += cone_dim
-            continue # Free cones (no constraint).
+            # Free cones (no constraint).
+            append!(data.scalar_vars, MOI.add_variables(model, cone_dim))
+        elseif cone_str == "EXP" || cone_str == "EXP*"
+            # The convention in CBF is the reverse of MOI, so we cannot use
+            # add_constrained_variables.
+            x = MOI.add_variables(model, 3)
+            append!(data.scalar_vars, x)
+            MOI.add_constraint(model, MOI.VectorOfVariables(reverse(x)), set)
+        else
+            x, _ = MOI.add_constrained_variables(model, set)
+            append!(data.scalar_vars, x)
         end
-        indices = 1:cone_dim
-        if cone_str == "EXP" || cone_str == "EXP*"
-            indices = (3:-1:1)
-        end
-        MOI.add_constraint(
-            model,
-            MOI.VectorOfVariables(data.scalar_vars[var_idx.+indices]),
-            _cbf_to_moi_cone(data, cone_str, cone_dim),
-        )
-        var_idx += cone_dim
     end
-    @assert var_idx == num_var
     return
 end
 
