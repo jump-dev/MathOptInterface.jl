@@ -21,6 +21,7 @@ include("bridges/all_different.jl")
 include("bridges/all_different_reif.jl")
 include("bridges/bin_packing.jl")
 include("bridges/circuit.jl")
+include("bridges/complex_norm_infinity.jl")
 include("bridges/count_at_least.jl")
 include("bridges/count_belongs.jl")
 include("bridges/count_distinct.jl")
@@ -107,6 +108,10 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, NormOneConeToNormConeBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SecondOrderConeToNormConeBridge{T})
     MOI.Bridges.add_bridge(bridged_model, NormInfinityConeToNormConeBridge{T})
+    MOI.Bridges.add_bridge(
+        bridged_model,
+        ComplexNormInfinityToSecondOrderConeBridge{T},
+    )
     MOI.Bridges.add_bridge(bridged_model, RelativeEntropyBridge{T})
     MOI.Bridges.add_bridge(bridged_model, NormSpectralBridge{T})
     MOI.Bridges.add_bridge(bridged_model, NormNuclearBridge{T})
