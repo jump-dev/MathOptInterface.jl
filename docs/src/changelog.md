@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Fixed a correctness bug getting the set of a constraint that used both
    variable and constraint bridges (#2464) (#2472)
  - Fixed `MethodError` in some bridges when called with `Complex`-valued
-   functions (#2468)
+   functions (#2468) (#2475)
  - Fixed reading MPS files that use `*` as the start of a name and not as a
    comment (#2470)
 
