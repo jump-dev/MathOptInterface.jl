@@ -403,11 +403,7 @@ function Base.read!(io::IO, model::Model)
             )
         end
         con_set = _cbf_to_moi_cone(data, cone_str, cone_dim)
-        MOI.add_constraint(
-            model,
-            _simplify_f_if_possible(con_func),
-            con_set,
-        )
+        MOI.add_constraint(model, _simplify_f_if_possible(con_func), con_set)
         row_idx += cone_dim
     end
 
