@@ -51,7 +51,7 @@ function MOI.supports_constraint(
     ::Type{F},
     ::Type{S1},
 ) where {T,S1<:MOI.AbstractScalarSet,F<:MOI.AbstractScalarFunction}
-    return MOI.Utilities.is_maybe_real(F)
+    return !MOI.Utilities.is_complex(F)
 end
 
 function MOI.supports_constraint(
@@ -59,7 +59,7 @@ function MOI.supports_constraint(
     ::Type{F},
     ::Type{S1},
 ) where {T,S1<:MOI.AbstractVectorSet,F<:MOI.AbstractVectorFunction}
-    return MOI.Utilities.is_maybe_real(F)
+    return !MOI.Utilities.is_complex(F)
 end
 
 function MOI.Bridges.added_constrained_variable_types(

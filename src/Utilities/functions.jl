@@ -2494,13 +2494,13 @@ function constant_vector(
 end
 
 """
-    is_maybe_real(::Type{<:MOI.AbstractFunction})
+    is_complex(::Type{<:MOI.AbstractFunction})
 
-Return `true` if the function type may return `<:Real` values. It returns false
-for Complex-valued functions.
+Return `true` if the function type may return `<:Complex` values. It returns
+`false` for real-valued functions.
 
-This function defaults to returning a false positive (`true`). If your new
-function  explicitly returns complex values, opt-out by defining a new method.
+This function defaults to returning a false negatives (`false`). If your new
+function explicitly returns complex values, opt-in by defining a new method.
 
 This function is mostly intended for use in the `MOI.Bridges` submodule to
 identify when bridges are not applicable (because the function is
@@ -2511,18 +2511,18 @@ complex-valued).
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> MOI.Utilities.is_maybe_real(MOI.VariableIndex)
-true
-
-julia> MOI.Utilities.is_maybe_real(MOI.ScalarAffineFunction{Complex{Int}})
+julia> MOI.Utilities.is_complex(MOI.VariableIndex)
 false
 
-julia> MOI.Utilities.is_maybe_real(MOI.ScalarNonlinearFunction)
+julia> MOI.Utilities.is_complex(MOI.ScalarAffineFunction{Complex{Int}})
 true
+
+julia> MOI.Utilities.is_complex(MOI.ScalarNonlinearFunction)
+false
 ```
 """
-is_maybe_real(::Type{<:MOI.AbstractFunction}) = true
-is_maybe_real(::Type{<:MOI.ScalarAffineFunction{<:Complex}}) = false
-is_maybe_real(::Type{<:MOI.VectorAffineFunction{<:Complex}}) = false
-is_maybe_real(::Type{<:MOI.ScalarQuadraticFunction{<:Complex}}) = false
-is_maybe_real(::Type{<:MOI.VectorQuadraticFunction{<:Complex}}) = false
+is_complex(::Type{<:MOI.AbstractFunction}) = false
+is_complex(::Type{<:MOI.ScalarAffineFunction{<:Complex}}) = true
+is_complex(::Type{<:MOI.VectorAffineFunction{<:Complex}}) = true
+is_complex(::Type{<:MOI.ScalarQuadraticFunction{<:Complex}}) = true
+is_complex(::Type{<:MOI.VectorQuadraticFunction{<:Complex}}) = true
