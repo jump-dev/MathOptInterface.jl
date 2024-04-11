@@ -7,12 +7,16 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.27.2 (April 11, 2024)
+## v1.28.0 (April 11, 2024)
+
+### Added
+
+ - Added [`Bridges.Constraint.ComplexNormInfinityToSecondOrderConeBridge`](@ref) (#2451)
 
 ### Fixed
 
  - Fixed a correctness bug getting the set of a constraint that used both
-   variable and constraint bridges (#2464), (#2472)
+   variable and constraint bridges (#2464) (#2472)
  - Fixed `MethodError` in some bridges when called with `Complex`-valued
    functions (#2468)
  - Fixed reading MPS files that use `*` as the start of a name and not as a
@@ -23,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Updated `solver-tests.yml` (#2465)
  - Removed two unused methods from `MOI.Bridges` (#2466)
  - Documentation updates (#2467), (#2473), (#2474)
+ - Simplify reading CBF files (#2476)
 
 ## v1.27.1 (March 27, 2024)
 
