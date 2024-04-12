@@ -191,6 +191,15 @@ function test_stacked_data()
     return
 end
 
+function test_integer_default_bounds()
+    model = MPS.Model()
+    MOI.read_from_file(model, joinpath(@__DIR__, "integer_default_bounds.mps"))
+    x = only(MOI.get(model, MOI.ListOfVariableIndices()))
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Interval{Float64}}(x.value)
+    @test MOI.get(model, MOI.ConstraintSet(), ci) == MOI.Interval(0.0, 1.0)
+    return
+end
+
 function test_free_integer()
     model = MPS.Model()
     MOI.read_from_file(model, joinpath(@__DIR__, "free_integer.mps"))

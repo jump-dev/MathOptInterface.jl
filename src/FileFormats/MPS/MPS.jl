@@ -1472,6 +1472,8 @@ end
 function _set_intorg(data, column, column_name)
     if data.intorg_flag
         data.vtype[column] = VTYPE_INTEGER
+        # The default upper bound for variables in INTORG is `1`, not `Inf`...
+        data.col_upper[column] = 1.0
     elseif data.vtype[column] != VTYPE_CONTINUOUS
         error(
             "Variable $(column_name) appeared in COLUMNS outside an " *
