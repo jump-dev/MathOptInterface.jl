@@ -19,6 +19,9 @@ mutable struct _CBFDataStructure
     bcoord::Vector{Tuple{Int,Float64}}
     hcoord::Vector{Tuple{Int,Int,Int,Int,Float64}}
     dcoord::Vector{Tuple{Int,Int,Int,Float64}}
+    variables_with_domain::Set{MOI.VariableIndex}
+    variable_cones::Vector{Tuple{Vector{MOI.VariableIndex},String}}
+
     function _CBFDataStructure()
         return new(
             0,
@@ -30,6 +33,8 @@ mutable struct _CBFDataStructure
             Tuple{Int,Float64}[],
             Tuple{Int,Int,Int,Int,Float64}[],
             Tuple{Int,Int,Int,Float64}[],
+            Set{MOI.VariableIndex}(),
+            Tuple{Vector{MOI.VariableIndex},String}[],
         )
     end
 end
@@ -121,6 +126,56 @@ function _add_cones(
         _add_function(data, f, S)
         set = MOI.get(model, MOI.ConstraintSet(), ci)
         push!(data.cones, (_cone_string(data, S), MOI.dimension(set)))
+    end
+    return
+end
+
+function _add_cones(
+    data::_CBFDataStructure,
+    model::Model,
+    ::Type{F},
+    ::Type{S},
+) where {F<:MOI.VectorOfVariables,S}
+    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        f = MOI.get(model, MOI.ConstraintFunction(), ci)
+        is_variable_cone = true
+        for (i, xi) in enumerate(f.variables)
+            if xi in data.variables_with_domain
+                is_variable_cone = false
+                break
+            elseif xi.value != f.variables[1].value + i - 1
+                is_variable_cone = false
+                break
+            end
+            push!(data.variables_with_domain, xi)
+        end
+        str = _cone_string(data, S)
+        if !is_variable_cone
+            _add_function(data, f, S)
+            set = MOI.get(model, MOI.ConstraintSet(), ci)
+            push!(data.cones, (str, MOI.dimension(set)))
+        else
+            push!(data.variable_cones, (f.variables, str))
+        end
+    end
+    return
+end
+
+function _add_cones(
+    data::_CBFDataStructure,
+    model::Model,
+    ::Type{F},
+    ::Type{S},
+) where {
+    F<:MOI.VectorOfVariables,
+    S<:Union{MOI.ExponentialCone,MOI.DualExponentialCone},
+}
+    # The Exponential cone in MOI and CBF are reversed. Instead of dealing with
+    # this complexity, just write them out as `Ax + b in K` constraints.
+    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        f = MOI.get(model, MOI.ConstraintFunction(), ci)
+        _add_function(data, f, S)
+        push!(data.cones, (_cone_string(data, S), 3))
     end
     return
 end
@@ -252,11 +307,26 @@ function _write_POWCONES(io::IO, model::Model, S, keyword)
     return
 end
 
-function _write_VAR(io::IO, model::Model)
+function _write_VAR(io::IO, model::Model, data)
     num_var = MOI.get(model, MOI.NumberOfVariables())
+    cones = Tuple{String,Int}[]
+    current_variable = 0
+    for (f, str) in sort!(data.variable_cones; by = x -> first(x[1]).value)
+        offset = first(f).value - current_variable - 1
+        if offset > 0
+            push!(cones, ("F", offset))
+        end
+        push!(cones, (str, length(f)))
+        current_variable = last(f).value
+    end
+    if current_variable < num_var
+        push!(cones, ("F", num_var - current_variable))
+    end
     println(io, "VAR")
-    println(io, num_var, " 1")
-    println(io, "F ", num_var)
+    println(io, num_var, " ", length(cones))
+    for (K, n) in cones
+        println(io, K, " ", n)
+    end
     println(io)
     return
 end
@@ -417,7 +487,7 @@ function Base.write(io::IO, model::Model)
     ###
     _write_OBJSENSE(io, model)
     # _write_PSDVAR
-    _write_VAR(io, model)
+    _write_VAR(io, model, data)
     _write_INT(io, model)
     _write_PSDCON(io, data)
     _write_CON(io, data)

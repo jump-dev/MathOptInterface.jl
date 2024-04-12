@@ -221,14 +221,6 @@ const _WRITE_READ_MODELS = [
 """,
     ),
     (
-        "VectorOfVariables in Reals",
-        """
-    variables: x, y
-    minobjective: x
-    c1: [x, y] in Reals(2)
-""",
-    ),
-    (
         "VectorOfVariables in Nonnegatives",
         """
     variables: x, y
@@ -452,6 +444,60 @@ function test_example_models()
         _test_read(joinpath(MODELS_DIR, model_name), model_string)
         _test_write_then_read(model_string)
     end
+end
+
+function test_write_variable_cones()
+    model = CBF.Model()
+    for set in (
+        MOI.Zeros(2),
+        MOI.Nonnegatives(3),
+        MOI.PowerCone(0.74),
+        MOI.Nonpositives(1),
+        MOI.DualPowerCone(0.25),
+        MOI.Nonnegatives(3),
+        MOI.PowerCone(0.5),
+        MOI.SecondOrderCone(3),
+    )
+        _ = MOI.add_constrained_variables(model, set)
+    end
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    @test read(io, String) == """
+    VER
+    3
+
+    POWCONES
+    2 4
+    2
+    0.74
+    0.26
+    2
+    0.5
+    0.5
+
+    POW*CONES
+    1 2
+    2
+    0.25
+    0.75
+
+    OBJSENSE
+    MIN
+
+    VAR
+    21 8
+    L= 2
+    L+ 3
+    @0:POW 3
+    L- 1
+    @0:POW* 3
+    L+ 3
+    @1:POW 3
+    Q 3
+
+    """
+    return
 end
 
 function runtests()
