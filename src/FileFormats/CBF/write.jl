@@ -172,6 +172,7 @@ function _add_cones(
 }
     # The Exponential cone in MOI and CBF are reversed. Instead of dealing with
     # this complexity, just write them out as `Ax + b in K` constraints.
+    # TODO(odow): we should support this at some point. See #2478
     for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
         _add_function(data, f, S)
