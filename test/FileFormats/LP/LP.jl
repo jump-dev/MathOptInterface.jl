@@ -388,6 +388,41 @@ c: 1.1 * x + 1.2 * y + -1.1 * x * x + 1.5*x*y + 1.3 in Interval(-1.1, 1.4)
     return
 end
 
+function test_write_indicator()
+    model = LP.Model()
+    MOI.Utilities.loadfromstring!(
+        model,
+        """
+        variables: x, z
+        c1: [z, x] in Indicator{ACTIVATE_ON_ONE}(LessThan(0.0))
+        c2: [z, x] in Indicator{ACTIVATE_ON_ZERO}(GreaterThan(2.0))
+        c3: [z, x] in Indicator{ACTIVATE_ON_ONE}(EqualTo(1.2))
+
+        c4: [z, 2.0 * x] in Indicator{ACTIVATE_ON_ONE}(LessThan(0.0))
+        c5: [z, 3.0 * x] in Indicator{ACTIVATE_ON_ZERO}(GreaterThan(2.0))
+        c6: [1.0 * z, x] in Indicator{ACTIVATE_ON_ONE}(EqualTo(1.2))
+        z in ZeroOne()
+        """,
+    )
+    MOI.write_to_file(model, LP_TEST_FILE)
+    @test read(LP_TEST_FILE, String) ==
+          "minimize\n" *
+          "obj: \n" *
+          "subject to\n" *
+          "c4:  z = 1 -> 2 x <= 0\n" *
+          "c1: z = 1 -> x <= 0\n" *
+          "c5:  z = 0 -> 3 x >= 2\n" *
+          "c2: z = 0 -> x >= 2\n" *
+          "c6:  z = 1 -> 1 x = 1.2\n" *
+          "c3: z = 1 -> x = 1.2\n" *
+          "Bounds\n" *
+          "x free\n" *
+          "Binary\n" *
+          "z\n" *
+          "End\n"
+    return
+end
+
 ###
 ### Read tests
 ###
