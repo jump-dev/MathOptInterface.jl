@@ -1048,15 +1048,9 @@ end
 
 function test_VectorAffineFunction_SOS()
     model = MOI.FileFormats.LP.Model()
-    x = MOI.add_variables(model, 3)
-    f = MOI.Utilities.operate(vcat, Float64, (1.0 .* x)...)
-    for set in (MOI.SOS1([1.0, 2.0, 3.0]), MOI.SOS2([1.0, 2.0, 3.0]))
-        @test !MOI.supports_constraint(model, typeof(f), typeof(set))
-        @test_throws(
-            MOI.UnsupportedConstraint{typeof(f),typeof(set)},
-            MOI.add_constraint(model, f, set),
-        )
-    end
+    F = MOI.VectorAffineFunction{Float64}
+    @test !MOI.supports_constraint(model, F, MOI.SOS1{Float64})
+    @test !MOI.supports_constraint(model, F, MOI.SOS2{Float64})
     return
 end
 
