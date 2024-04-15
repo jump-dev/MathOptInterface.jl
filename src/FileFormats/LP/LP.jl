@@ -540,6 +540,7 @@ mutable struct _ReadCache
     num_constraints::Int
     name_to_variable::Dict{String,MOI.VariableIndex}
     has_default_bound::Set{MOI.VariableIndex}
+    indicator::Union{Nothing,Pair{MOI.VariableIndex,MOI.ActivationCondition}}
     function _ReadCache()
         return new(
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
@@ -550,6 +551,7 @@ mutable struct _ReadCache
             0,
             Dict{String,MOI.VariableIndex}(),
             Set{MOI.VariableIndex}(),
+            nothing,
         )
     end
 end
@@ -768,6 +770,14 @@ function _parse_section(
             cache.constraint_name = "R$(cache.num_constraints)"
         end
     end
+    if cache.indicator === nothing
+        if (m = match(r"\s*(.+?)\s*=\s*(0|1)\s*->(.+)", line)) !== nothing
+            z = _get_variable_from_name(model, cache, String(m[1]))
+            cond = m[2] == "0" ? MOI.ACTIVATE_ON_ZERO : MOI.ACTIVATE_ON_ONE
+            cache.indicator = z => cond
+            line = String(m[3])
+        end
+    end
     if occursin("^", line)
         # Simplify parsing of constraints with ^2 terms by turning them into
         # explicit " ^ 2" terms. This avoids ambiguity when parsing names.
@@ -807,6 +817,10 @@ function _parse_section(
                 cache.constraint_function.constant,
             )
         end
+        if cache.indicator !== nothing
+            f = MOI.Utilities.operate(vcat, Float64, cache.indicator[1], f)
+            constraint_set = MOI.Indicator{cache.indicator[2]}(constraint_set)
+        end
         c = MOI.add_constraint(model, f, constraint_set)
         MOI.set(model, MOI.ConstraintName(), c, cache.constraint_name)
         cache.num_constraints += 1
@@ -814,6 +828,7 @@ function _parse_section(
         empty!(cache.quad_terms)
         cache.constraint_function.constant = 0.0
         cache.constraint_name = ""
+        cache.indicator = nothing
     end
     return
 end

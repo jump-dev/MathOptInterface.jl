@@ -1011,6 +1011,41 @@ function test_read_variable_bounds()
     return
 end
 
+function test_read_indicator()
+    io = IOBuffer("""
+    minimize
+    obj: 1 x
+    subject to
+    c: z = 1 -> x >= 0
+    d: z = 0 -> x - y <= 1.2
+    bounds
+    x free
+    z free
+    binary
+    z
+    end
+    """)
+    model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_LP)
+    read!(io, model)
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    @test read(io, String) == """
+    minimize
+    obj: 1 x
+    subject to
+    d:  z = 0 -> 1 x - 1 y <= 1.2
+    c:  z = 1 -> 1 x >= 0
+    Bounds
+    x free
+    y >= 0
+    Binary
+    z
+    End
+    """
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")
