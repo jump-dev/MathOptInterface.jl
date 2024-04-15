@@ -27,17 +27,40 @@ function _print_shortest(io::IO, x::Float64)
     return
 end
 
+const _ILT1{T} = MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}
+const _IGT1{T} = MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{T}}
+const _IET1{T} = MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.EqualTo{T}}
+const _ILT0{T} = MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{T}}
+const _IGT0{T} = MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.GreaterThan{T}}
+const _IET0{T} = MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.EqualTo{T}}
+
 MOI.Utilities.@model(
     Model,
     (MOI.ZeroOne, MOI.Integer),
     (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan, MOI.Interval),
     (),
-    (MOI.SOS1, MOI.SOS2),
+    (MOI.SOS1, MOI.SOS2, _ILT1, _IET1, _IGT1, _ILT0, _IGT0, _IET0),
     (),
     (MOI.ScalarQuadraticFunction, MOI.ScalarAffineFunction),
     (MOI.VectorOfVariables,),
-    ()
+    (MOI.VectorAffineFunction,)
 )
+
+function MOI.supports_constraint(
+    ::Model{T},
+    ::Type{MOI.VectorAffineFunction{T}},
+    ::Type{MOI.SOS1{T}},
+) where {T}
+    return false
+end
+
+function MOI.supports_constraint(
+    ::Model{T},
+    ::Type{MOI.VectorAffineFunction{T}},
+    ::Type{MOI.SOS2{T}},
+) where {T}
+    return false
+end
 
 struct Options
     maximum_length::Int
@@ -98,6 +121,7 @@ function _write_function(
     ::Model,
     func::MOI.ScalarAffineFunction{Float64},
     variable_names::Dict{MOI.VariableIndex,String};
+    print_one::Bool = true,
     kwargs...,
 )
     is_first_item = true
@@ -108,7 +132,9 @@ function _write_function(
     for term in func.terms
         if !(term.coefficient ≈ 0.0)
             if is_first_item
-                _print_shortest(io, term.coefficient)
+                if print_one || !isone(term.coefficient)
+                    _print_shortest(io, term.coefficient)
+                end
                 is_first_item = false
             else
                 print(io, term.coefficient < 0 ? " - " : " + ")
@@ -338,6 +364,62 @@ function _write_constraint(
     return
 end
 
+function _write_indicator_constraints(
+    io,
+    model,
+    ::Type{S},
+    variable_names,
+) where {S}
+    F = MOI.VectorAffineFunction{Float64}
+    for A in (MOI.ACTIVATE_ON_ONE, MOI.ACTIVATE_ON_ZERO)
+        Set = MOI.Indicator{A,S}
+        for index in MOI.get(model, MOI.ListOfConstraintIndices{F,Set}())
+            _write_constraint(
+                io,
+                model,
+                index,
+                variable_names;
+                write_name = true,
+            )
+        end
+    end
+    F = MOI.VectorOfVariables
+    for A in (MOI.ACTIVATE_ON_ONE, MOI.ACTIVATE_ON_ZERO)
+        Set = MOI.Indicator{A,S}
+        for index in MOI.get(model, MOI.ListOfConstraintIndices{F,Set}())
+            _write_constraint(
+                io,
+                model,
+                index,
+                variable_names;
+                write_name = true,
+            )
+        end
+    end
+    return
+end
+
+function _write_constraint(
+    io::IO,
+    model::Model{T},
+    index::MOI.ConstraintIndex{F,MOI.Indicator{A,S}},
+    variable_names::Dict{MOI.VariableIndex,String};
+    write_name::Bool = true,
+) where {T,F<:Union{MOI.VectorOfVariables,MOI.VectorAffineFunction{T}},A,S}
+    func = MOI.get(model, MOI.ConstraintFunction(), index)
+    set = MOI.get(model, MOI.ConstraintSet(), index)
+    if write_name
+        print(io, MOI.get(model, MOI.ConstraintName(), index), ": ")
+    end
+    z, f = MOI.Utilities.scalarize(func)
+    flag = A == MOI.ACTIVATE_ON_ONE ? 1 : 0
+    _write_function(io, model, z, variable_names; print_one = false)
+    print(io, " = ", flag, " -> ")
+    _write_function(io, model, f, variable_names)
+    _write_constraint_suffix(io, set.set)
+    return
+end
+
 """
     Base.write(io::IO, model::FileFormats.LP.Model)
 
@@ -364,6 +446,7 @@ function Base.write(io::IO, model::Model)
     println(io, "subject to")
     for S in _SCALAR_SETS
         _write_constraints(io, model, S, variable_names)
+        _write_indicator_constraints(io, model, S, variable_names)
     end
     println(io, "Bounds")
     CI = MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}
@@ -456,6 +539,7 @@ mutable struct _ReadCache
     num_constraints::Int
     name_to_variable::Dict{String,MOI.VariableIndex}
     has_default_bound::Set{MOI.VariableIndex}
+    indicator::Union{Nothing,Pair{MOI.VariableIndex,MOI.ActivationCondition}}
     function _ReadCache()
         return new(
             MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
@@ -466,6 +550,7 @@ mutable struct _ReadCache
             0,
             Dict{String,MOI.VariableIndex}(),
             Set{MOI.VariableIndex}(),
+            nothing,
         )
     end
 end
@@ -684,6 +769,14 @@ function _parse_section(
             cache.constraint_name = "R$(cache.num_constraints)"
         end
     end
+    if cache.indicator === nothing
+        if (m = match(r"\s*(.+?)\s*=\s*(0|1)\s*->(.+)", line)) !== nothing
+            z = _get_variable_from_name(model, cache, String(m[1]))
+            cond = m[2] == "0" ? MOI.ACTIVATE_ON_ZERO : MOI.ACTIVATE_ON_ONE
+            cache.indicator = z => cond
+            line = String(m[3])
+        end
+    end
     if occursin("^", line)
         # Simplify parsing of constraints with ^2 terms by turning them into
         # explicit " ^ 2" terms. This avoids ambiguity when parsing names.
@@ -723,6 +816,10 @@ function _parse_section(
                 cache.constraint_function.constant,
             )
         end
+        if cache.indicator !== nothing
+            f = MOI.Utilities.operate(vcat, Float64, cache.indicator[1], f)
+            constraint_set = MOI.Indicator{cache.indicator[2]}(constraint_set)
+        end
         c = MOI.add_constraint(model, f, constraint_set)
         MOI.set(model, MOI.ConstraintName(), c, cache.constraint_name)
         cache.num_constraints += 1
@@ -730,6 +827,7 @@ function _parse_section(
         empty!(cache.quad_terms)
         cache.constraint_function.constant = 0.0
         cache.constraint_name = ""
+        cache.indicator = nothing
     end
     return
 end
