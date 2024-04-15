@@ -52,7 +52,7 @@ function test_runtests_VectorOfVariables()
     return
 end
 
-function test_runtests_VectorOfVariables()
+function test_runtests_VectorAffineFunction()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.SOS2ToMILPBridge,
         """

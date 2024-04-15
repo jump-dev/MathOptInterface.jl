@@ -2193,7 +2193,7 @@ function test_bridge_complex_nonpostononneg()
     return
 end
 
-function test_bridge_complex_greatertoless()
+function test_bridge_complex_lesstogreater()
     model = MOI.instantiate(
         MOI.Utilities.Model{Float64};
         with_bridge_type = Float64,

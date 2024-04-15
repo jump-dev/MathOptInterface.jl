@@ -1480,7 +1480,7 @@ function test_integer_coefficients()
     return
 end
 
-function test_ScaledPositiveSemidefiniteConeTriangle()
+function test_ScaledPositiveSemidefiniteConeTriangle_set_to_moi()
     object = Dict(
         "type" => "ScaledPositiveSemidefiniteConeTriangle",
         "side_dimension" => 2,
