@@ -412,15 +412,13 @@ const _EXAMPLE_MODELS = [
     (
         "example_C.cbf",
         """
-    variables: a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p
-    maxobjective: a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + -1
+    variables: a, b, c, d, e, f, g, h, i, j
+    maxobjective: a + b + c + d + e + f + g + h + i + j + -1
     c1: [b] in Zeros(1)
     c2: [c] in Nonnegatives(1)
     c3: [d] in Nonpositives(1)
     c4: [e, f, g] in SecondOrderCone(3)
     c5: [h, i, j] in RotatedSecondOrderCone(3)
-    c6: [m, l, k] in ExponentialCone()
-    c7: [p, o, n] in DualExponentialCone()
 """,
     ),
     (
@@ -497,6 +495,132 @@ function test_write_variable_cones()
     Q 3
 
     """
+    return
+end
+
+function test_roundtrip_ExponentialCone()
+    model = CBF.Model()
+    x, _ = MOI.add_constrained_variables(model, MOI.ExponentialCone())
+    f = 1.0 * x[1] + 2.0 * x[2] + 3.0 * x[3]
+    MOI.add_constraint(model, x[1], MOI.Integer())
+    MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([x[1], x[2], x[1]]),
+        MOI.PositiveSemidefiniteConeTriangle(2),
+    )
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    g = MOI.Utilities.operate(vcat, Float64, f)
+    MOI.add_constraint(model, g, MOI.Zeros(1))
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    @test read(io, String) == """
+    VER
+    3
+
+    OBJSENSE
+    MIN
+
+    VAR
+    3 1
+    EXP 3
+
+    INT
+    1
+    2
+
+    PSDCON
+    1
+    2
+
+    CON
+    1 1
+    L= 1
+
+    OBJACOORD
+    3
+    2 1.0
+    1 2.0
+    0 3.0
+
+    ACOORD
+    3
+    0 2 1.0
+    0 1 2.0
+    0 0 3.0
+
+    BCOORD
+    1
+    0 0.0
+
+    HCOORD
+    3
+    0 2 0 0 1.0
+    0 1 1 0 1.0
+    0 2 1 1 1.0
+
+    """
+    seekstart(io)
+    model2 = CBF.Model()
+    read!(io, model2)
+    y = MOI.get(model2, MOI.ListOfVariableIndices())
+    obj_y = MOI.get(model2, MOI.ObjectiveFunction{typeof(f)}())
+    @test ≈(obj_y, 1.0 * y[1] + 2.0 * y[2] + 3.0 * y[3])
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}.(1:3)
+    @test MOI.is_valid.(model2, ci) == [true, false, false]
+    return
+end
+
+function test_roundtrip_DualExponentialCone()
+    model = CBF.Model()
+    x, _ = MOI.add_constrained_variables(model, MOI.DualExponentialCone())
+    f = 1.0 * x[1] + 2.0 * x[2] + 3.0 * x[3]
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    g = MOI.Utilities.operate(vcat, Float64, f)
+    MOI.add_constraint(model, g, MOI.Zeros(1))
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    @test read(io, String) == """
+    VER
+    3
+
+    OBJSENSE
+    MIN
+
+    VAR
+    3 1
+    EXP* 3
+
+    CON
+    1 1
+    L= 1
+
+    OBJACOORD
+    3
+    2 1.0
+    1 2.0
+    0 3.0
+
+    ACOORD
+    3
+    0 2 1.0
+    0 1 2.0
+    0 0 3.0
+
+    BCOORD
+    1
+    0 0.0
+
+    """
+    seekstart(io)
+    model2 = CBF.Model()
+    read!(io, model2)
+    y = MOI.get(model2, MOI.ListOfVariableIndices())
+    obj_y = MOI.get(model2, MOI.ObjectiveFunction{typeof(f)}())
+    @test ≈(obj_y, 1.0 * y[1] + 2.0 * y[2] + 3.0 * y[3])
     return
 end
 

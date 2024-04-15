@@ -149,11 +149,9 @@ function _read_VAR(io::IO, model::Model, data::_CBFReadData)
             # Free cones (no constraint).
             append!(data.scalar_vars, MOI.add_variables(model, cone_dim))
         elseif cone_str == "EXP" || cone_str == "EXP*"
-            # The convention in CBF is the reverse of MOI, so we cannot use
-            # add_constrained_variables.
-            x = MOI.add_variables(model, 3)
-            append!(data.scalar_vars, x)
-            MOI.add_constraint(model, MOI.VectorOfVariables(reverse(x)), set)
+            # The convention in CBF is the reverse of MOI
+            x, _ = MOI.add_constrained_variables(model, set)
+            append!(data.scalar_vars, reverse(x))
         else
             x, _ = MOI.add_constrained_variables(model, set)
             append!(data.scalar_vars, x)
