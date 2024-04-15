@@ -21,6 +21,8 @@ mutable struct _CBFDataStructure
     dcoord::Vector{Tuple{Int,Int,Int,Float64}}
     variables_with_domain::Set{MOI.VariableIndex}
     variable_cones::Vector{Tuple{Vector{MOI.VariableIndex},String}}
+    # This is the identity mapping, except for EXP and EXP* cones,
+    # in which (u, v, w) in MOI are swapped to (w, v, u) in CBF.
     scalar_variables::Vector{Int}
 
     function _CBFDataStructure()
