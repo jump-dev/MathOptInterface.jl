@@ -414,7 +414,6 @@ function _write_constraint(
     z, f = MOI.Utilities.scalarize(func)
     flag = A == MOI.ACTIVATE_ON_ONE ? 1 : 0
     _write_function(io, model, z, variable_names; print_one = false)
-    # print(io, variable_names[z],
     print(io, " = ", flag, " -> ")
     _write_function(io, model, f, variable_names)
     _write_constraint_suffix(io, set.set)
