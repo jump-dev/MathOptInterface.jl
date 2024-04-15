@@ -1046,6 +1046,20 @@ function test_read_indicator()
     return
 end
 
+function test_VectorAffineFunction_SOS()
+    model = MOI.FileFormats.LP.Model()
+    x = MOI.add_variables(3)
+    f = MOI.Utilities.operate(vcat, Float64, (1.0 .* x)...)
+    for set in (MOI.SOS1([1.0, 2.0, 3.0]), MOI.SOS2([1.0, 2.0, 3.0]))
+        @test !MOI.supports_constraint(model, f, set)
+        @test_throws(
+            MOI.UnsupportedConstraint{typeof(f),type(set)},
+            MOI.add_constraint(model, f, set),
+        )
+    end
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__, all = true)
         if startswith("$(name)", "test_")
