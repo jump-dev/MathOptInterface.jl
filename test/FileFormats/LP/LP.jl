@@ -1053,7 +1053,7 @@ function test_VectorAffineFunction_SOS()
     for set in (MOI.SOS1([1.0, 2.0, 3.0]), MOI.SOS2([1.0, 2.0, 3.0]))
         @test !MOI.supports_constraint(model, typeof(f), typeof(set))
         @test_throws(
-            MOI.UnsupportedConstraint{typeof(f),type(set)},
+            MOI.UnsupportedConstraint{typeof(f),typeof(set)},
             MOI.add_constraint(model, f, set),
         )
     end
