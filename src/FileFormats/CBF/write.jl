@@ -21,6 +21,9 @@ mutable struct _CBFDataStructure
     dcoord::Vector{Tuple{Int,Int,Int,Float64}}
     variables_with_domain::Set{MOI.VariableIndex}
     variable_cones::Vector{Tuple{Vector{MOI.VariableIndex},String}}
+    # This is the identity mapping, except for EXP and EXP* cones,
+    # in which (u, v, w) in MOI are swapped to (w, v, u) in CBF.
+    scalar_variables::Vector{Int}
 
     function _CBFDataStructure()
         return new(
@@ -35,6 +38,7 @@ mutable struct _CBFDataStructure
             Tuple{Int,Int,Int,Float64}[],
             Set{MOI.VariableIndex}(),
             Tuple{Vector{MOI.VariableIndex},String}[],
+            Int[],
         )
     end
 end
@@ -157,26 +161,6 @@ function _add_cones(
         else
             push!(data.variable_cones, (f.variables, str))
         end
-    end
-    return
-end
-
-function _add_cones(
-    data::_CBFDataStructure,
-    model::Model,
-    ::Type{F},
-    ::Type{S},
-) where {
-    F<:MOI.VectorOfVariables,
-    S<:Union{MOI.ExponentialCone,MOI.DualExponentialCone},
-}
-    # The Exponential cone in MOI and CBF are reversed. Instead of dealing with
-    # this complexity, just write them out as `Ax + b in K` constraints.
-    # TODO(odow): we should support this at some point. See #2478
-    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-        f = MOI.get(model, MOI.ConstraintFunction(), ci)
-        _add_function(data, f, S)
-        push!(data.cones, (_cone_string(data, S), 3))
     end
     return
 end
@@ -310,6 +294,7 @@ end
 
 function _write_VAR(io::IO, model::Model, data)
     num_var = MOI.get(model, MOI.NumberOfVariables())
+    append!(data.scalar_variables, collect(1:num_var))
     cones = Tuple{String,Int}[]
     current_variable = 0
     for (f, str) in sort!(data.variable_cones; by = x -> first(x[1]).value)
@@ -325,14 +310,22 @@ function _write_VAR(io::IO, model::Model, data)
     end
     println(io, "VAR")
     println(io, num_var, " ", length(cones))
+    offset = 1
     for (K, n) in cones
         println(io, K, " ", n)
+        if K == "EXP" || K == "EXP*"
+            # The ordering for EXP and EXP* is reversed between MOI and CBF
+            tmp = data.scalar_variables[offset]
+            data.scalar_variables[offset] = data.scalar_variables[offset+2]
+            data.scalar_variables[offset+2] = tmp
+        end
+        offset += n
     end
     println(io)
     return
 end
 
-function _write_INT(io::IO, model::Model)
+function _write_INT(io::IO, model::Model, data)
     cons = MOI.get(
         model,
         MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.Integer}(),
@@ -344,7 +337,7 @@ function _write_INT(io::IO, model::Model)
     println(io, length(cons))
     for ci in cons
         f = MOI.get(model, MOI.ConstraintFunction(), ci)
-        println(io, f.value - 1)
+        println(io, data.scalar_variables[f.value] - 1)
     end
     println(io)
     return
@@ -362,7 +355,7 @@ function _write_PSDCON(io::IO, data::_CBFDataStructure)
     return
 end
 
-function _write_OBJACOORD(io::IO, model::Model)
+function _write_OBJACOORD(io::IO, model::Model, data)
     f = MOI.get(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -370,7 +363,8 @@ function _write_OBJACOORD(io::IO, model::Model)
     if !isempty(f.terms)
         println(io, "OBJACOORD\n", length(f.terms))
         for t in f.terms
-            println(io, t.variable.value - 1, " ", t.coefficient)
+            column = data.scalar_variables[t.variable.value] - 1
+            println(io, column, " ", t.coefficient)
         end
         println(io)
     end
@@ -402,7 +396,8 @@ function _write_ACOORD(io::IO, data::_CBFDataStructure)
     end
     println(io, "ACOORD\n", length(data.acoord))
     for (row, var, coef) in data.acoord
-        println(io, row - 1, " ", var - 1, " ", coef)
+        column = data.scalar_variables[var] - 1
+        println(io, row - 1, " ", column, " ", coef)
     end
     println(io)
     return
@@ -430,7 +425,7 @@ function _write_HCOORD(io::IO, data::_CBFDataStructure)
             io,
             psd_idx - 1,
             " ",
-            var - 1,
+            data.scalar_variables[var] - 1,
             " ",
             i - 1,
             " ",
@@ -489,7 +484,7 @@ function Base.write(io::IO, model::Model)
     _write_OBJSENSE(io, model)
     # _write_PSDVAR
     _write_VAR(io, model, data)
-    _write_INT(io, model)
+    _write_INT(io, model, data)
     _write_PSDCON(io, data)
     _write_CON(io, data)
 
@@ -497,7 +492,7 @@ function Base.write(io::IO, model::Model)
     ### Problem data
     ###
     # _write_OBJFCOORD
-    constant = _write_OBJACOORD(io, model)
+    constant = _write_OBJACOORD(io, model, data)
     _write_OBJBCOORD(io, constant)
     # _write_FCOORD
     _write_ACOORD(io, data)
