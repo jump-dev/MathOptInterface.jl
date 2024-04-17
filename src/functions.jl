@@ -914,6 +914,15 @@ function Base.isapprox(
     )
 end
 
+# This method is used by CBF in testing.
+function Base.isapprox(
+    f::MOI.VectorOfVariables,
+    g::MOI.VectorAffineFunction;
+    kwargs...,
+)
+    return isapprox(convert(typeof(g), f), g; kwargs...)
+end
+
 _is_approx(x, y; kwargs...) = isapprox(x, y; kwargs...)
 
 function _is_approx(x::AbstractArray, y::AbstractArray; kwargs...)
