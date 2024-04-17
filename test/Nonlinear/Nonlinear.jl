@@ -1006,11 +1006,22 @@ end
 function test_scalar_nonlinear_function_parse_scalaraffinefunction()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
-    f = 1.0 * x + 2.0
-    nlp_model = MOI.Nonlinear.Model()
-    e1 = MOI.Nonlinear.add_expression(nlp_model, f)
-    e2 = MOI.Nonlinear.add_expression(nlp_model, :(1.0 * $x + 2.0))
-    @test nlp_model[e1] == nlp_model[e2]
+    y = MOI.add_variable(model)
+    terms = MOI.ScalarAffineTerm{Float64}[]
+    for (f, expr) in (
+        MOI.ScalarAffineFunction(terms, 0.0) => :(0.0),
+        MOI.ScalarAffineFunction(terms, 1.0) => :(1.0),
+        (1.0 * x + 2.0) => :($x + 2.0),
+        (2.0 * x + 2.0) => :(2.0 * $x + 2.0),
+        (2.0 * x + -3.0 * y) => :(2.0 * $x + -3.0 * $y),
+        (2.0 * x) => :(2.0 * $x),
+        (1.0 * x) => :($x),
+    )
+        nlp_model = MOI.Nonlinear.Model()
+        f1 = MOI.Nonlinear.add_expression(nlp_model, f)
+        f2 = MOI.Nonlinear.add_expression(nlp_model, expr)
+        @test nlp_model[f1] == nlp_model[f2]
+    end
     return
 end
 
@@ -1018,12 +1029,26 @@ function test_scalar_nonlinear_function_parse_scalarquadraticfunction()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
-    f = 1.5 * x * x + 2.5 * x * y + 3.5 * x + 2.0
-    nlp_model = MOI.Nonlinear.Model()
-    e1 = MOI.Nonlinear.add_expression(nlp_model, f)
-    f_expr = :(1.5 * $x * $x + 2.5 * $x * $y + 3.5 * $x + 2.0)
-    e2 = MOI.Nonlinear.add_expression(nlp_model, f_expr)
-    @test nlp_model[e1] == nlp_model[e2]
+    terms = MOI.ScalarAffineTerm{Float64}[]
+    qterms = MOI.ScalarQuadraticTerm{Float64}[]
+    aterm = MOI.ScalarAffineTerm(2.0, x)
+    for (f, expr) in (
+        MOI.ScalarQuadraticFunction(qterms, terms, 0.0) => :(0.0),
+        MOI.ScalarQuadraticFunction(qterms, terms, 1.0) => :(1.0),
+        MOI.ScalarQuadraticFunction(qterms, [aterm], 0.0) => :(2.0 * $x),
+        (1.0 * x * x + 1.0 * x + 1.0) => :($x * $x + $x + 1),
+        (1.0 * x * x + 1.0 * x) => :($x * $x + $x),
+        (1.0 * x * x + 2.0 * x) => :($x * $x + 2.0 * $x),
+        (2.0 * x * x + 2.0 * x) => :(2.0 * $x * $x + 2.0 * $x),
+        (1.0 * x * x) => :($x * $x),
+        (1.5 * x * x + 2.5 * x * y + 3.5 * x + 2.0) =>
+            :(1.5 * $x * $x + 2.5 * $x * $y + 3.5 * $x + 2.0),
+    )
+        nlp_model = MOI.Nonlinear.Model()
+        f1 = MOI.Nonlinear.add_expression(nlp_model, f)
+        f2 = MOI.Nonlinear.add_expression(nlp_model, expr)
+        @test nlp_model[f1] == nlp_model[f2]
+    end
     return
 end
 
