@@ -265,22 +265,98 @@ end
 function parse_expression(
     data::Model,
     expr::Expression,
-    x::MOI.ScalarAffineFunction,
+    f::MOI.ScalarAffineFunction,
     parent_index::Int,
 )
-    f = convert(MOI.ScalarNonlinearFunction, x)
-    parse_expression(data, expr, f, parent_index)
+    if isempty(f.terms)
+        parse_expression(data, expr, f.constant, parent_index)
+        return
+    elseif iszero(f.constant) && length(f.terms) == 1
+        # Expression of for `a * x`
+        parse_expression(data, expr, only(f.terms), parent_index)
+        return
+    end
+    id_plus = data.operators.multivariate_operator_to_id[:+]
+    push!(expr.nodes, Node(NODE_CALL_MULTIVARIATE, id_plus, parent_index))
+    new_parent = length(expr.nodes)
+    for term in f.terms
+        parse_expression(data, expr, term, new_parent)
+    end
+    if !iszero(f.constant)
+        parse_expression(data, expr, f.constant, new_parent)
+    end
     return
 end
 
 function parse_expression(
     data::Model,
     expr::Expression,
-    x::MOI.ScalarQuadraticFunction,
+    f::MOI.ScalarQuadraticFunction,
     parent_index::Int,
 )
-    f = convert(MOI.ScalarNonlinearFunction, x)
-    parse_expression(data, expr, f, parent_index)
+    if isempty(f.quadratic_terms) && isempty(f.affine_terms)
+        parse_expression(data, expr, f.constant, parent_index)
+        return
+    elseif iszero(f.constant)
+        if length(f.quadratic_terms) == 1 && isempty(f.affine_terms)
+            parse_expression(data, expr, only(f.quadratic_terms), parent_index)
+            return
+        elseif isempty(f.quadratic_terms) && length(f.affine_terms) == 1
+            parse_expression(data, expr, only(f.affine_terms), parent_index)
+            return
+        end
+    end
+    id_plus = data.operators.multivariate_operator_to_id[:+]
+    push!(expr.nodes, Node(NODE_CALL_MULTIVARIATE, id_plus, parent_index))
+    new_parent = length(expr.nodes)
+    for term in f.quadratic_terms
+        parse_expression(data, expr, term, new_parent)
+    end
+    for term in f.affine_terms
+        parse_expression(data, expr, term, new_parent)
+    end
+    if !iszero(f.constant)
+        parse_expression(data, expr, f.constant, new_parent)
+    end
+    return
+end
+
+function parse_expression(
+    data::Model,
+    expr::Expression,
+    x::MOI.ScalarAffineTerm,
+    parent_index::Int,
+)
+    if isone(x.coefficient)
+        parse_expression(data, expr, x.variable, parent_index)
+    else
+        id_mul = data.operators.multivariate_operator_to_id[:*]
+        push!(expr.nodes, Node(NODE_CALL_MULTIVARIATE, id_mul, parent_index))
+        mul_parent = length(expr.nodes)
+        parse_expression(data, expr, x.coefficient, mul_parent)
+        parse_expression(data, expr, x.variable, mul_parent)
+    end
+    return
+end
+
+function parse_expression(
+    data::Model,
+    expr::Expression,
+    x::MOI.ScalarQuadraticTerm,
+    parent_index::Int,
+)
+    id_mul = data.operators.multivariate_operator_to_id[:*]
+    push!(expr.nodes, Node(NODE_CALL_MULTIVARIATE, id_mul, parent_index))
+    mul_parent = length(expr.nodes)
+    coef = x.coefficient
+    if x.variable_1 == x.variable_2
+        coef /= 2
+    end
+    if !isone(coef)
+        parse_expression(data, expr, coef, mul_parent)
+    end
+    parse_expression(data, expr, x.variable_1, mul_parent)
+    parse_expression(data, expr, x.variable_2, mul_parent)
     return
 end
 
