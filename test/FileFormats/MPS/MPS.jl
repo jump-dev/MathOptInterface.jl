@@ -200,6 +200,45 @@ function test_integer_default_bounds()
     return
 end
 
+function test_integer_default_bounds_LI()
+    model = MPS.Model()
+    filename = joinpath(@__DIR__, "integer_default_bounds_LI.mps")
+    MOI.read_from_file(model, filename)
+    x = only(MOI.get(model, MOI.ListOfVariableIndices()))
+    c_types = MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test length(c_types) == 2
+    @test (MOI.VariableIndex, MOI.Integer) in c_types
+    F, S = MOI.VariableIndex, MOI.GreaterThan{Float64}
+    @test (F, S) in c_types
+    ci = MOI.ConstraintIndex{F,S}(x.value)
+    @test MOI.get(model, MOI.ConstraintSet(), ci) == MOI.GreaterThan(1.0)
+    return
+end
+
+function test_integer_default_bounds_MI()
+    model = MPS.Model()
+    filename = joinpath(@__DIR__, "integer_default_bounds_MI.mps")
+    MOI.read_from_file(model, filename)
+    @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) ==
+          [(MOI.VariableIndex, MOI.Integer)]
+    return
+end
+
+function test_integer_default_bounds_PL()
+    model = MPS.Model()
+    filename = joinpath(@__DIR__, "integer_default_bounds_PL.mps")
+    MOI.read_from_file(model, filename)
+    x = only(MOI.get(model, MOI.ListOfVariableIndices()))
+    c_types = MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test length(c_types) == 2
+    @test (MOI.VariableIndex, MOI.Integer) in c_types
+    F, S = MOI.VariableIndex, MOI.GreaterThan{Float64}
+    @test (F, S) in c_types
+    ci = MOI.ConstraintIndex{F,S}(x.value)
+    @test MOI.get(model, MOI.ConstraintSet(), ci) == MOI.GreaterThan(0.0)
+    return
+end
+
 function test_free_integer()
     model = MPS.Model()
     MOI.read_from_file(model, joinpath(@__DIR__, "free_integer.mps"))
