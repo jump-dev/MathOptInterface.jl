@@ -1219,8 +1219,8 @@ function test_binary_with_infeasible_bounds()
     RHS
     RANGES
     BOUNDS
-     LO bounds    x         1
-     UP bounds    x         0
+     LI bounds    x         1
+     UI bounds    x         0
     ENDATA
     """
     for test in [
