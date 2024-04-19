@@ -672,23 +672,27 @@ end
 
 # ==============================================================================
 #   BOUNDS
-# Variables default to [0, ∞).
-#     FR    free variable      -∞ < x < ∞
+#
+# Variables default to [0, ∞), or [0, 1] if the variable appears in INTORG and
+# does not appear in BOUNDS.
+#
 #     FX    fixed variable     x == b
+#     FR    free variable      -∞ < x < ∞
 #     MI    lower bound -inf   -∞ < x
-#     UP    upper bound             x <= b
-#     PL    upper bound +inf        x < ∞
 #     LO    lower bound        b <= x
+#     LI    integer variable   b <= x
+#     PL    upper bound +inf        x < ∞
+#     UP    upper bound             x <= b
+#     UI    integer variable        x <= b
 #     BV    binary variable    x = 0 or 1
 #
 #  Not yet implemented:
-#     LI    integer variable   b <= x
-#     UI    integer variable        x <= b
+#
 #     SC    semi-cont variable x = 0 or l <= x <= b
 #           l is the lower bound on the variable. If none set then defaults to 1
 # ==============================================================================
 
-function write_single_bound(io::IO, var_name::String, lower, upper)
+function write_single_bound(io::IO, var_name::String, lower, upper, vtype)
     if lower == upper
         println(
             io,
@@ -708,7 +712,7 @@ function write_single_bound(io::IO, var_name::String, lower, upper)
             println(
                 io,
                 Card(
-                    f1 = "LO",
+                    f1 = vtype == VTYPE_CONTINUOUS ? "LO" : "LI",
                     f2 = "bounds",
                     f3 = var_name,
                     f4 = _to_string(lower),
@@ -721,7 +725,7 @@ function write_single_bound(io::IO, var_name::String, lower, upper)
             println(
                 io,
                 Card(
-                    f1 = "UP",
+                    f1 = vtype == VTYPE_CONTINUOUS ? "UP" : "UI",
                     f2 = "bounds",
                     f3 = var_name,
                     f4 = _to_string(upper),
@@ -783,16 +787,18 @@ function write_bounds(io::IO, model::Model, var_to_column)
             if lower <= 0 && upper >= 1
                 println(io, Card(f1 = "BV", f2 = "bounds", f3 = var_name))
             else
+                lower = max(0, lower)
                 if lower > 0
                     lower = 1
                 end
+                upper = min(1, upper)
                 if upper < 1
                     upper = 0
                 end
-                write_single_bound(io, var_name, max(0, lower), min(1, upper))
+                write_single_bound(io, var_name, lower, upper, vtype)
             end
         else
-            write_single_bound(io, var_name, lower, upper)
+            write_single_bound(io, var_name, lower, upper, vtype)
         end
     end
     return
