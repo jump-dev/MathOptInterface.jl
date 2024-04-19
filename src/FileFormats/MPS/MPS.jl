@@ -1024,6 +1024,7 @@ mutable struct TempMPSModel
     obj_constant::Float64
     col_lower::Vector{Float64}
     col_upper::Vector{Float64}
+    col_bounds_default::Vector{Bool}
     row_lower::Vector{Float64}
     row_upper::Vector{Float64}
     sense::Vector{Sense}
@@ -1050,6 +1051,7 @@ function TempMPSModel()
         0.0,        # obj_constant
         Float64[],  # col_lower
         Float64[],  # col_upper
+        Bool[],     # col_bounds_default
         Float64[],  # row_lower
         Float64[],  # row_upper
         Sense[],   # sense
@@ -1465,6 +1467,7 @@ function _add_new_column(data, column_name)
     push!(data.c, 0.0)
     push!(data.col_lower, 0.0)
     push!(data.col_upper, Inf)
+    push!(data.col_bounds_default, true)
     push!(data.vtype, VTYPE_CONTINUOUS)
     return
 end
@@ -1641,6 +1644,13 @@ function _parse_single_bound(data, column_name::String, bound_type::String)
     if col === nothing
         error("Column name $(column_name) not found.")
     end
+    if data.col_bounds_default[col] && data.vtype[col] == VTYPE_INTEGER
+        # This column was part of an INTORG...INTEND block, so it gets a default
+        # bound of [0, 1]. However, since it now has a bound, it reverts to a
+        # default of [0, inf).
+        data.col_upper[col] = Inf
+    end
+    data.col_bounds_default[col] = false
     if bound_type == "PL"
         data.col_upper[col] = Inf
     elseif bound_type == "MI"
@@ -1667,6 +1677,13 @@ function _parse_single_bound(
     if col === nothing
         error("Column name $(column_name) not found.")
     end
+    if data.col_bounds_default[col] && data.vtype[col] == VTYPE_INTEGER
+        # This column was part of an INTORG...INTEND block, so it gets a default
+        # bound of [0, 1]. However, since it now has a bound, it reverts to a
+        # default of [0, inf).
+        data.col_upper[col] = Inf
+    end
+    data.col_bounds_default[col] = false
     if bound_type == "FX"
         data.col_lower[col] = value
         data.col_upper[col] = value
