@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - The CBF writer now attempts to write [`VectorOfVariables`](@ref) constraints
    in the `VAR` section, instead of automatically promoting them to
    [`VectorAffineFunction`](@ref). (#2478) (#2482) (#2486)
- - Fixed a bug reading MPS files with integer variables and a entry in the
+ - Fixed a bug reading MPS files with integer variables and an entry in the
    `BOUNDS` section (#2490)
  - Fixed a performance issue adding [`ScalarAffineFunction`](@ref) and
    [`ScalarQuadraticFunction`](@ref)s to [`Nonlinear.Model`](@ref) (@2487)
