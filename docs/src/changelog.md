@@ -7,6 +7,27 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.29.0 (April 19, 2024)
+
+### Added
+
+ - Added support for [`Indicator`](@ref) constraints in `FileFormats.LP` (#2483)
+
+### Fixed
+
+ - The CBF writer now attempts to write [`VectorOfVariables`](@ref) constraints
+   in the `VAR` section, instead of automatically promoting them to
+   [`VectorAffineFunction`](@ref). (#2478) (#2482) (#2486)
+ - Fixed a bug reading MPS files with integer variables and a entry in the
+   `BOUNDS` section (#2490)
+ - Fixed a performance issue adding [`ScalarAffineFunction`](@ref) and
+   [`ScalarQuadraticFunction`](@ref)s to [`Nonlinear.Model`](@ref) (@2487)
+
+### Other
+
+ - Updated versions in CI (#2484) (#2489)
+ - Fixed duplicate names in tests (#2485)
+
 ## v1.28.1 (April 13, 2024)
 
 ### Fixed
