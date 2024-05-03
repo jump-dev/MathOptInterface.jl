@@ -500,7 +500,7 @@ struct _CopyVariablesWithSetCache
             Dict{MOI.VariableIndex,Int}(),
             Any[],
             Set{MOI.VariableIndex}(),
-            Tuple{Vector{MOI.VariableIndex},Any}[]
+            Tuple{Vector{MOI.VariableIndex},Any}[],
         )
     end
 end
@@ -521,7 +521,9 @@ function _build_copy_variables_with_set_cache(
             push!(cache.variable_cones, ([f], ci))
         end
     end
-    push!(cache.constraints_not_added, indices)
+    if !isempty(indices)
+        push!(cache.constraints_not_added, indices)
+    end
     return
 end
 
@@ -558,7 +560,9 @@ function _build_copy_variables_with_set_cache(
             push!(indices, ci)
         end
     end
-    push!(cache.constraints_not_added, indices)
+    if !isempty(indices)
+        push!(cache.constraints_not_added, indices)
+    end
     return
 end
 
@@ -580,7 +584,7 @@ function _copy_variables_with_set(dest, src)
         if offset > 0
             dest_x = MOI.add_variables(dest, offset)
             for i in 1:offset
-                index_map[vis_src[current_column + i]] = dest_x[i]
+                index_map[vis_src[current_column+i]] = dest_x[i]
             end
         end
         set = MOI.get(src, MOI.ConstraintSet(), ci)
@@ -601,7 +605,7 @@ function _copy_variables_with_set(dest, src)
     if offset > 0
         dest_x = MOI.add_variables(dest, offset)
         for i in 1:offset
-            index_map[vis_src[current_column + i]] = dest_x[i]
+            index_map[vis_src[current_column+i]] = dest_x[i]
         end
     end
     return index_map, vis_src, cache.constraints_not_added
