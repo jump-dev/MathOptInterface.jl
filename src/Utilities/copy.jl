@@ -478,25 +478,8 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
         error("Model $(typeof(dest)) does not support copy_to.")
     end
     MOI.empty!(dest)
-    vis_src = MOI.get(src, MOI.ListOfVariableIndices())
-    index_map = IndexMap()
-    # The `NLPBlock` assumes that the order of variables does not change (#849)
-    # Therefore, all VariableIndex and VectorOfVariable constraints are added
-    # seprately, and no variables constrained-on-creation are added.
-    has_nlp = MOI.NLPBlock() in MOI.get(src, MOI.ListOfModelAttributesSet())
-    constraints_not_added = if has_nlp
-        Any[
-            MOI.get(src, MOI.ListOfConstraintIndices{F,S}()) for
-            (F, S) in MOI.get(src, MOI.ListOfConstraintTypesPresent()) if
-            _is_variable_function(F)
-        ]
-    else
-        Any[
-            _try_constrain_variables_on_creation(dest, src, index_map, S)
-            for S in sorted_variable_sets_by_cost(dest, src)
-        ]
-    end
-    _copy_free_variables(dest, index_map, vis_src)
+    index_map, vis_src, constraints_not_added =
+        _copy_variables_with_set(dest, src)
     # Copy variable attributes
     pass_attributes(dest, src, index_map, vis_src)
     # Copy model attributes
@@ -505,6 +488,119 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
     _pass_constraints(dest, src, index_map, constraints_not_added)
     final_touch(dest, index_map)
     return index_map
+end
+
+struct _CopyVariablesWithSetCache
+    variable_to_column::Dict{MOI.VariableIndex,Int}
+    constraints_not_added::Vector{Any}
+    variables_with_domain::Set{MOI.VariableIndex}
+    variable_cones::Vector{Tuple{Vector{MOI.VariableIndex},Any}}
+    function _CopyVariablesWithSetCache()
+        return new(
+            Dict{MOI.VariableIndex,Int}(),
+            Any[],
+            Set{MOI.VariableIndex}(),
+            Tuple{Vector{MOI.VariableIndex},Any}[]
+        )
+    end
+end
+
+function _build_copy_variables_with_set_cache(
+    src::MOI.ModelLike,
+    cache::_CopyVariablesWithSetCache,
+    ::Type{S},
+) where {S<:MOI.AbstractScalarSet}
+    F = MOI.VariableIndex
+    for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
+        f = MOI.get(src, MOI.ConstraintFunction(), ci)
+        if f in cache.variables_with_domain
+            push!(cache.constraints_not_added, ci)
+        else
+            push!(cache.variables_with_domain, f)
+            push!(cache.variable_cones, ([f], ci))
+        end
+    end
+    return
+end
+
+function _is_variable_cone(cache, f::MOI.VectorOfVariables)
+    if isempty(f.variables)
+        return false
+    end
+    offset = cache.variable_to_column[f.variables[1]] - 1
+    for (i, xi) in enumerate(f.variables)
+        if xi in cache.variables_with_domain
+            return false
+        elseif cache.variable_to_column[xi] != offset + i
+            return false
+        end
+    end
+    return true
+end
+
+function _build_copy_variables_with_set_cache(
+    src::MOI.ModelLike,
+    cache::_CopyVariablesWithSetCache,
+    ::Type{S},
+) where {S<:MOI.AbstractVectorSet}
+    F = MOI.VectorOfVariables
+    for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
+        f = MOI.get(src, MOI.ConstraintFunction())
+        if _is_variable_cone(cache, f)
+            for fi in f.variables
+                push!(cache.variables_with_domain, fi)
+            end
+            push!(cache.variable_cones, (f.variables, ci))
+        else
+            push!(cache.constraints_not_added, ci)
+        end
+    end
+    return
+end
+
+function _copy_variables_with_set(dest, src)
+    vis_src = MOI.get(src, MOI.ListOfVariableIndices())
+    index_map = IndexMap()
+    cache = _CopyVariablesWithSetCache()
+    for (i, v) in enumerate(vis_src)
+        cache.variable_to_column[v] = i
+    end
+    for S in sorted_variable_sets_by_cost(dest, src)
+        _build_copy_variables_with_set_cache(src, cache, S)
+    end
+    column(x::MOI.VariableIndex) = cache.variable_to_column[x]
+    start_column(x) = column(first(x[1]))
+    current_column = 0
+    for (f, ci) in sort!(cache.variable_cones; by = start_column)
+        offset = column(first(f)) - current_column - 1
+        if offset > 0
+            dest_x = MOI.add_variables(dest, offset)
+            for i in 1:offset
+                index_map[vis_src[current_column + i]] = dest_x[i]
+            end
+        end
+        set = MOI.get(src, MOI.ConstraintSet(), ci)
+        if set isa MOI.AbstractScalarSet
+            dest_x, dest_ci = MOI.add_constrained_variable(dest, set)
+            index_map[only(f)] = dest_x
+            index_map[ci] = dest_ci
+        else
+            dest_x, dest_ci = MOI.add_constrained_variables(dest, set)
+            for (fi, xi) in zip(f, dest_x)
+                index_map[fi] = xi
+            end
+            index_map[ci] = dest_ci
+        end
+        current_column = column(last(f))
+    end
+    offset = length(cache.variable_to_column) - current_column
+    if offset > 0
+        dest_x = MOI.add_variables(dest, offset)
+        for i in 1:offset
+            index_map[vis_src[current_column + i]] = dest_x[i]
+        end
+    end
+    return index_map, vis_src, cache.constraints_not_added
 end
 
 """
