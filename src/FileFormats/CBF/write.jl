@@ -151,7 +151,6 @@ function _add_cones(
                 is_variable_cone = false
                 break
             end
-            push!(data.variables_with_domain, xi)
         end
         str = _cone_string(data, S)
         if !is_variable_cone
@@ -159,6 +158,9 @@ function _add_cones(
             set = MOI.get(model, MOI.ConstraintSet(), ci)
             push!(data.cones, (str, MOI.dimension(set)))
         else
+            for xi in f.variables
+                push!(data.variables_with_domain, xi)
+            end
             push!(data.variable_cones, (f.variables, str))
         end
     end
