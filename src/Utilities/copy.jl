@@ -511,15 +511,17 @@ function _build_copy_variables_with_set_cache(
     ::Type{S},
 ) where {S<:MOI.AbstractScalarSet}
     F = MOI.VariableIndex
+    indices = MOI.ConstraintIndex{F,S}[]
     for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
         f = MOI.get(src, MOI.ConstraintFunction(), ci)
         if f in cache.variables_with_domain
-            push!(cache.constraints_not_added, ci)
+            push!(indices, ci)
         else
             push!(cache.variables_with_domain, f)
             push!(cache.variable_cones, ([f], ci))
         end
     end
+    push!(cache.constraints_not_added, indices)
     return
 end
 
@@ -544,6 +546,7 @@ function _build_copy_variables_with_set_cache(
     ::Type{S},
 ) where {S<:MOI.AbstractVectorSet}
     F = MOI.VectorOfVariables
+    indices = MOI.ConstraintIndex{F,S}[]
     for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
         f = MOI.get(src, MOI.ConstraintFunction(), ci)
         if _is_variable_cone(cache, f)
@@ -552,15 +555,16 @@ function _build_copy_variables_with_set_cache(
             end
             push!(cache.variable_cones, (f.variables, ci))
         else
-            push!(cache.constraints_not_added, ci)
+            push!(indices, ci)
         end
     end
+    push!(cache.constraints_not_added, indices)
     return
 end
 
 function _copy_variables_with_set(dest, src)
-    vis_src = MOI.get(src, MOI.ListOfVariableIndices())
     index_map = IndexMap()
+    vis_src = MOI.get(src, MOI.ListOfVariableIndices())
     cache = _CopyVariablesWithSetCache()
     for (i, v) in enumerate(vis_src)
         cache.variable_to_column[v] = i
