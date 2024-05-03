@@ -517,7 +517,7 @@ julia> A.rowval
 
 julia> A.nzval
 5-element Vector{Float64}:
-  -4.0
+ -4.0
   1.0
   1.0
   2.0
