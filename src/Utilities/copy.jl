@@ -545,7 +545,7 @@ function _build_copy_variables_with_set_cache(
 ) where {S<:MOI.AbstractVectorSet}
     F = MOI.VectorOfVariables
     for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
-        f = MOI.get(src, MOI.ConstraintFunction())
+        f = MOI.get(src, MOI.ConstraintFunction(), ci)
         if _is_variable_cone(cache, f)
             for fi in f.variables
                 push!(cache.variables_with_domain, fi)
