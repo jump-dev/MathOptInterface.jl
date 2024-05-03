@@ -501,6 +501,53 @@ function test_write_variable_cones()
     return
 end
 
+function test_write_variable_cones_with_conflicting_sets()
+    model = CBF.Model()
+    x, _ = MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
+    y = MOI.add_variable(model)
+    f = MOI.VectorOfVariables([y, x[2]])
+    # The choice of Nonnegatives and Nonpositives is explicitly chosen because
+    # Nonnegatives are parsed before Nonpositives, and it tests that we can skip
+    # over a function containing `y`, and then constrain it in a later set.
+    MOI.add_constraint(model, f, MOI.Nonnegatives(2))
+    MOI.add_constraint(model, MOI.VectorOfVariables([y]), MOI.Nonpositives(1))
+    g = 1.0 * x[1] + 2.0 * x[2] + 3.0 * y
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(g)}(), g)
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    @test read(io, String) == """
+    VER
+    3
+
+    OBJSENSE
+    MIN
+
+    VAR
+    3 2
+    L+ 2
+    L- 1
+
+    CON
+    2 1
+    L+ 2
+
+    OBJACOORD
+    3
+    0 1.0
+    1 2.0
+    2 3.0
+
+    ACOORD
+    2
+    0 2 1.0
+    1 1 1.0
+
+    """
+    return
+end
+
 function test_roundtrip_ExponentialCone()
     model = CBF.Model()
     x, _ = MOI.add_constrained_variables(model, MOI.ExponentialCone())
