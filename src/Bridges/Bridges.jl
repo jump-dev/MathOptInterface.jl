@@ -220,8 +220,8 @@ end
 """
     runtests(
         Bridge::Type{<:AbstractBridge},
-        input::Function,
-        output::Function;
+        input_fn::Function,
+        output_fn::Function;
         variable_start = 1.2,
         constraint_start = 1.2,
         eltype = Float64,
@@ -229,8 +229,8 @@ end
 
 Run a series of tests that check the correctness of `Bridge`.
 
-`input` and `output` are functions such that `input(model)` and `output(model)`
-loads the corresponding model into `model`.
+`input_fn` and `output_fn` are functions such that `input_fn(model)`
+and `output_fn(model)` load the corresponding model into `model`.
 
 ## Example
 
@@ -247,8 +247,8 @@ julia> MOI.Bridges.runtests(
 """
 function runtests(
     Bridge::Type{<:AbstractBridge},
-    input::Function,
-    output::Function;
+    input_fn::Function,
+    output_fn::Function;
     variable_start = 1.2,
     constraint_start = 1.2,
     eltype = Float64,
@@ -257,7 +257,7 @@ function runtests(
     # Load model and bridge it
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
     model = _bridged_model(Bridge{eltype}, inner)
-    input(model)
+    input_fn(model)
     final_touch(model)
     # Should be able to call final_touch multiple times.
     final_touch(model)
@@ -266,11 +266,11 @@ function runtests(
     end
     # Load a non-bridged input model, and check that getters are the same.
     test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
-    input(test)
+    input_fn(test)
     _test_structural_identical(test, model)
     # Load a bridged target model, and check that getters are the same.
     target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
-    output(target)
+    output_fn(target)
     _test_structural_identical(target, inner)
     # Test VariablePrimalStart
     attr = MOI.VariablePrimalStart()
@@ -350,13 +350,13 @@ function runtests(
     Bridge::Type{<:AbstractBridge},
     input::String,
     output::String;
-    kws...,
+    kwargs...,
 )
     runtests(
         Bridge,
         model -> MOI.Utilities.loadfromstring!(model, input),
         model -> MOI.Utilities.loadfromstring!(model, output);
-        kws...,
+        kwargs...,
     )
     return
 end
