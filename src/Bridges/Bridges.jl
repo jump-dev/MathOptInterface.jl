@@ -314,7 +314,6 @@ function runtests(
     return
 end
 
-
 """
     runtests(
         Bridge::Type{<:AbstractBridge},
