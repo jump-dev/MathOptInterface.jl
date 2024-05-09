@@ -220,8 +220,8 @@ end
 """
     runtests(
         Bridge::Type{<:AbstractBridge},
-        input::String,
-        output::String;
+        input::Function,
+        output::Function;
         variable_start = 1.2,
         constraint_start = 1.2,
         eltype = Float64,
@@ -229,30 +229,26 @@ end
 
 Run a series of tests that check the correctness of `Bridge`.
 
-`input` and `output` are models in the style of
-[`MOI.Utilities.loadfromstring!`](@ref).
+`input` and `output` are functions such that `input(model)` and `output(model)`
+loads the corresponding model into `model`.
 
 ## Example
 
 ```jldoctest; setup=:(import MathOptInterface as MOI)
 julia> MOI.Bridges.runtests(
            MOI.Bridges.Constraint.ZeroOneBridge,
-           \"\"\"
-           variables: x
-           x in ZeroOne()
-           \"\"\",
-           \"\"\"
-           variables: x
-           x in Integer()
-           1.0 * x in Interval(0.0, 1.0)
-           \"\"\",
+           model -> MOI.add_constrained_variable(model, MOI.ZeroOne()),
+           model -> begin
+               x, _ = MOI.add_constrained_variable(model, MOI.Integer())
+               MOI.add_constraint(model, 1.0 * x in MOI.Interval(0.0, 1.0))
+           end,
        )
 ```
 """
 function runtests(
     Bridge::Type{<:AbstractBridge},
-    input::String,
-    output::String;
+    input::Function,
+    output::Function;
     variable_start = 1.2,
     constraint_start = 1.2,
     eltype = Float64,
@@ -261,7 +257,7 @@ function runtests(
     # Load model and bridge it
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
     model = _bridged_model(Bridge{eltype}, inner)
-    MOI.Utilities.loadfromstring!(model, input)
+    input(model)
     final_touch(model)
     # Should be able to call final_touch multiple times.
     final_touch(model)
@@ -270,11 +266,11 @@ function runtests(
     end
     # Load a non-bridged input model, and check that getters are the same.
     test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
-    MOI.Utilities.loadfromstring!(test, input)
+    input(test)
     _test_structural_identical(test, model)
     # Load a bridged target model, and check that getters are the same.
     target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
-    MOI.Utilities.loadfromstring!(target, output)
+    output(target)
     _test_structural_identical(target, inner)
     # Test VariablePrimalStart
     attr = MOI.VariablePrimalStart()
@@ -315,6 +311,54 @@ function runtests(
         _general_bridge_tests(something(b))
     end
     _test_delete(Bridge, model, inner)
+    return
+end
+
+
+"""
+    runtests(
+        Bridge::Type{<:AbstractBridge},
+        input::String,
+        output::String;
+        variable_start = 1.2,
+        constraint_start = 1.2,
+        eltype = Float64,
+    )
+
+Run a series of tests that check the correctness of `Bridge`.
+
+`input` and `output` are models in the style of
+[`MOI.Utilities.loadfromstring!`](@ref).
+
+## Example
+
+```jldoctest; setup=:(import MathOptInterface as MOI)
+julia> MOI.Bridges.runtests(
+           MOI.Bridges.Constraint.ZeroOneBridge,
+           \"\"\"
+           variables: x
+           x in ZeroOne()
+           \"\"\",
+           \"\"\"
+           variables: x
+           x in Integer()
+           1.0 * x in Interval(0.0, 1.0)
+           \"\"\",
+       )
+```
+"""
+function runtests(
+    Bridge::Type{<:AbstractBridge},
+    input::String,
+    output::String;
+    kws...,
+)
+    runtests(
+        Bridge,
+        model -> MOI.Utilities.loadfromstring!(model, input),
+        model -> MOI.Utilities.loadfromstring!(model, output);
+        kws...,
+    )
     return
 end
 
