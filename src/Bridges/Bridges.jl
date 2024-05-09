@@ -240,7 +240,7 @@ julia> MOI.Bridges.runtests(
            model -> MOI.add_constrained_variable(model, MOI.ZeroOne()),
            model -> begin
                x, _ = MOI.add_constrained_variable(model, MOI.Integer())
-               MOI.add_constraint(model, 1.0 * x in MOI.Interval(0.0, 1.0))
+               MOI.add_constraint(model, 1.0 * x, MOI.Interval(0.0, 1.0))
            end,
        )
 ```
