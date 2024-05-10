@@ -144,7 +144,11 @@ MOI.get_fallback(model::MOI.ModelLike, ::ListOfNonstandardBridges) = Type[]
 
 include("precompile.jl")
 
-function _test_structural_identical(a::MOI.ModelLike, b::MOI.ModelLike; allow_constraint_function_error::Bool = false)
+function _test_structural_identical(
+    a::MOI.ModelLike,
+    b::MOI.ModelLike;
+    allow_constraint_function_error::Bool = false,
+)
     # Test that the variables are the same. We make the strong assumption that
     # the variables are added in the same order to both models.
     a_x = MOI.get(a, MOI.ListOfVariableIndices())
@@ -193,7 +197,8 @@ function _test_structural_identical(a::MOI.ModelLike, b::MOI.ModelLike; allow_co
             try
                 f_b = MOI.get(b, MOI.ConstraintFunction(), ci)
             catch err
-                if allow_constraint_function_error && err isa MOI.GetAttributeNotAllowed{MOI.ConstraintFunction}
+                if allow_constraint_function_error &&
+                   err isa MOI.GetAttributeNotAllowed{MOI.ConstraintFunction}
                     continue
                 else
                     rethrow(err)
@@ -276,7 +281,11 @@ function runtests(
     # Load a non-bridged input model, and check that getters are the same.
     test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
     input_fn(test)
-    _test_structural_identical(test, model; allow_constraint_function_error = allow_outer_constraint_function_error)
+    _test_structural_identical(
+        test,
+        model;
+        allow_constraint_function_error = allow_outer_constraint_function_error,
+    )
     # Load a bridged target model, and check that getters are the same.
     target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
     output_fn(target)
