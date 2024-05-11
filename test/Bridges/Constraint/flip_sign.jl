@@ -436,6 +436,11 @@ function test_runtests()
         VectorNonlinearFunction([-(2.1 * x - 1.0)]) in Nonnegatives(1)
         """,
     )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GreaterToLessBridge,
+        model -> MOI.add_constraint(model, zero(MOI.ScalarAffineFunction{Float64}), MOI.GreaterThan(1.0)),
+        model -> MOI.add_constraint(model, zero(MOI.ScalarAffineFunction{Float64}), MOI.LessThan(-1.0)),
+    )
     return
 end
 
