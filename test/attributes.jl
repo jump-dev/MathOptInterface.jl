@@ -316,6 +316,23 @@ function test_attributes_AutomaticDifferentiationBackend()
     return
 end
 
+function test_empty_vector_attribute()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.get(model, MOI.ListOfVariableIndices())
+    @test typeof(x) == Vector{MOI.VariableIndex}
+    ret = MOI.get(model, MOI.VariablePrimalStart(), x)
+    @test typeof(ret) == Vector{Any}
+    ret = MOI.get(model, MOI.VariableName(), x)
+    @test typeof(ret) == Vector{String}
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
+    c = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+    ret = MOI.get(model, MOI.ConstraintPrimalStart(), c)
+    @test typeof(ret) == Vector{Any}
+    ret = MOI.get(model, MOI.ConstraintName(), c)
+    @test typeof(ret) == Vector{String}
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")
