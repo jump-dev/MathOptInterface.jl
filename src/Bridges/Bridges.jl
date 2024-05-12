@@ -283,7 +283,10 @@ function runtests(
         Test.@test all(isnothing, MOI.get(model, attr, x))
         primal_start = fill(constraint_start, length(x))
         MOI.set(model, attr, x, primal_start)
-        Test.@test MOI.get(model, attr, x) ≈ primal_start
+        if !isempty(x)
+            # ≈ does not work if x is empty because the return of get is Any[]
+            Test.@test MOI.get(model, attr, x) ≈ primal_start
+        end
     end
     # Test ConstraintPrimalStart and ConstraintDualStart
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
@@ -295,7 +298,11 @@ function runtests(
                     Test.@test MOI.get(model, attr, ci) === nothing
                     start = _fake_start(constraint_start, set)
                     MOI.set(model, attr, ci, start)
-                    Test.@test MOI.get(model, attr, ci) ≈ start
+                    if !isempty(ci)
+                        # ≈ does not work if ci is empty because the return of
+                        # get is Any[]
+                        Test.@test MOI.get(model, attr, ci) ≈ start
+                    end
                 end
             end
         end
