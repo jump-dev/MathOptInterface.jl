@@ -58,7 +58,7 @@ julia> model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_REW)
 A Mathematical Programming System (MPS) model
 ```
 
-Note that the [REW format](https://www.gurobi.com/documentation/9.5/refman/rew_format.html)
+Note that the [REW format](https://www.gurobi.com/documentation/current/refman/rew_format.html)
 is identical to the MPS file format, except that all names are replaced with
 generic identifiers.
 
