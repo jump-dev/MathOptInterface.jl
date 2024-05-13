@@ -396,6 +396,9 @@ end
 #         get(::ModelLike, ::AbstractVariableAttribute, ::Vector{VariableIndex})
 #     would not allow us to define get(::SomeModel, ::AnyAttribute, ::Vector).
 function get(model::ModelLike, attr::AnyAttribute, idxs::Vector)
+    if isempty(idxs)
+        return Vector{attribute_value_type(attr)}()
+    end
     return get.(model, attr, idxs)
 end
 
