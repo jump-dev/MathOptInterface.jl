@@ -7,6 +7,23 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.30.0 (May 23, 2024)
+
+### Added
+
+ - Added input and output functions to `Bridges.runtests` (#2497)
+
+### Fixed
+
+ - Improved the heuristic of when to write variable cones in `FileFormats.CBF`
+   (#2494)
+ - Fixed `Bridges.runtests` when model has no variable (#2499)
+ - Fixed getting an attribute of an empty vector (#2501)
+
+### Other
+
+ - Fixed links in the documentation (#2502)
+
 ## v1.29.0 (April 19, 2024)
 
 ### Added
