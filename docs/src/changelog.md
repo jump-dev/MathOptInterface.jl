@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Improved the heuristic of when to write variable cones in `FileFormats.CBF`
    (#2494)
- - Fixed `Bridges.runtests` whenn model has no variable (#2499)
+ - Fixed `Bridges.runtests` when model has no variable (#2499)
  - Fixed getting an attribute of an empty vector (#2501)
 
 ### Other
