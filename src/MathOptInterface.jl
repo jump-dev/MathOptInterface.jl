@@ -36,25 +36,26 @@ end
 
 function Base.show(io::IO, model::ModelLike)
     offset = " "^Base.get(io, :indent, 0)
-    println(io, offset, "An instance of")
-    _println(io, "  Type{$(typeof(model))}")
-    _println(io, "ModelAttributes")
-    for attr in _try_get(model, ListOfModelAttributesSet(), Any[])
-        ret = _try_get(model, attr, missing)
-        if attr isa ObjectiveFunction
-            F = get(model, ObjectiveFunctionType())
-            _println(io, "  MOI.ObjectiveFunctionType() : $F")
-        else
-            _println(io, "  $attr : $ret")
-        end
+    if is_empty(model)
+        Utilities.print_with_acronym(io, "$(offset)An empty $(typeof(model))")
+        return
     end
-    _println(io, "Variables")
+    Utilities.print_with_acronym(io, "$(offset)A $(typeof(model))\n")
+    println(io, offset, "├ ObjectiveSense")
+    sense = _try_get(model, ObjectiveSense(), "FEASIBILITY_SENSE")
+    println(io, offset, "│ └ $sense")
+    println(io, offset, "├ ObjectiveFunctionType")
+    F = _try_get(model, ObjectiveFunctionType(), "")
+    Utilities.print_with_acronym(io, "$(offset)│ └ $F\n")
+    println(io, offset, "├ NumberOfVariables")
     n = _try_get(model, NumberOfVariables(), "?")
-    _println(io, "  MOI.NumberOfVariables() = $n")
-    _println(io, "Constraints")
-    for (F, S) in _try_get(model, ListOfConstraintTypesPresent(), [])
-        m = get(model, NumberOfConstraints{F,S}())
-        _println(io, "  NumerOfConstraints{$F,$S}() = $m")
+    println(io, offset, "│ └ $n")
+    print(io, offset, "└ NumberOfConstraints")
+    constraint_types = _try_get(model, ListOfConstraintTypesPresent(), [])
+    for (i, (F, S)) in enumerate(constraint_types)
+        m = _try_get(model, NumberOfConstraints{F,S}(), "?")
+        tree = ifelse(i == length(constraint_types), '└', '├')
+        Utilities.print_with_acronym(io, "\n$offset  $tree $F in $S: $m")
     end
     return
 end

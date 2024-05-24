@@ -30,7 +30,8 @@ MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
 with 0 variable bridges
 with 0 constraint bridges
 with 0 objective bridges
-with inner model MOIU.Model{Float64}
+with inner model
+  An empty MOIU.Model{Float64}
 
 julia> MOI.Bridges.add_bridge(model, MOI.Bridges.Variable.FreeBridge{Float64})
 

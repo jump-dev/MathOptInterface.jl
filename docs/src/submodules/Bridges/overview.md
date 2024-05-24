@@ -103,14 +103,15 @@ in a [`Bridges.full_bridge_optimizer`](@ref).
 
 ```jldoctest
 julia> inner_optimizer = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+An empty MOIU.Model{Float64}
 
 julia> optimizer = MOI.Bridges.full_bridge_optimizer(inner_optimizer, Float64)
 MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
 with 0 variable bridges
 with 0 constraint bridges
 with 0 objective bridges
-with inner model MOIU.Model{Float64}
+with inner model
+  An empty MOIU.Model{Float64}
 ```
 
 Now, use `optimizer` as normal, and bridging will happen lazily behind the
@@ -135,12 +136,13 @@ However, this will force the constraint to be bridged, even if the
 
 ```jldoctest
 julia> inner_optimizer = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+An empty MOIU.Model{Float64}
 
 julia> optimizer = MOI.Bridges.Constraint.SplitInterval{Float64}(inner_optimizer)
 MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64}, MOIU.Model{Float64}}
 with 0 constraint bridges
-with inner model MOIU.Model{Float64}
+with inner model
+  An empty MOIU.Model{Float64}
 
 julia> x = MOI.add_variable(optimizer)
 MOI.VariableIndex(1)
@@ -167,14 +169,15 @@ manually construct a [`Bridges.LazyBridgeOptimizer`](@ref).
 First, wrap an inner optimizer:
 ```jldoctest lazy_bridge_optimizer
 julia> inner_optimizer = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+An empty MOIU.Model{Float64}
 
 julia> optimizer = MOI.Bridges.LazyBridgeOptimizer(inner_optimizer)
 MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
 with 0 variable bridges
 with 0 constraint bridges
 with 0 objective bridges
-with inner model MOIU.Model{Float64}
+with inner model
+  An empty MOIU.Model{Float64}
 ```
 
 Then use [`Bridges.add_bridge`](@ref) to add individual bridges:

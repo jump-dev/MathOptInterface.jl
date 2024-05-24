@@ -400,21 +400,22 @@ function test_show_SPDA()
     model_str = sprint(MOI.Utilities.print_with_acronym, string(typeof(model)))
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     # no bridges
-    @test sprint(show, bridged) === """
+    ret = """
     MOIB.LazyBridgeOptimizer{$model_str}
     with 0 variable bridges
     with 0 constraint bridges
     with 0 objective bridges
-    with inner model $model_str"""
-
+    with inner model"""
+    @test occursin(ret, sprint(show, bridged))
     MOI.add_constrained_variable(bridged, MOI.LessThan(1.0))
     # add variable bridges
-    @test sprint(show, bridged) == """
+    ret = """
     MOIB.LazyBridgeOptimizer{$model_str}
     with 2 variable bridges
     with 0 constraint bridges
     with 0 objective bridges
-    with inner model $model_str"""
+    with inner model"""
+    @test occursin(ret, sprint(show, bridged))
     return
 end
 

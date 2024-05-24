@@ -113,16 +113,24 @@ mutable struct CachingOptimizer{O,M<:MOI.ModelLike} <: MOI.AbstractOptimizer
     end
 end
 
-function Base.show(io::IO, C::CachingOptimizer)
+function Base.show(io::IO, model::CachingOptimizer)
     indent = " "^get(io, :indent, 0)
-    print_with_acronym(io, summary(C))
-    println(io)
-    println(io, "$(indent)in state $(C.state)")
-    println(io, "$(indent)in mode $(C.mode)")
-    println(io, "$(indent)with model cache")
-    show(IOContext(io, :indent => get(io, :indent, 0) + 2), C.model_cache)
-    println(io, "\n$(indent)with optimizer")
-    return show(IOContext(io, :indent => get(io, :indent, 0) + 2), C.optimizer)
+    println(io, indent, "A MOI.Utilities.CachingOptimizer:")
+    println(io, indent, "├ state")
+    println(io, indent, "│ └ $(model.state)")
+    println(io, indent, "├ mode\n│ └ $(model.mode)")
+    print_with_acronym(
+        io,
+        "$(indent)├ model_cache :: $(typeof(model.model_cache))\n",
+    )
+    io_indent = IOContext(io, :indent => get(io, :indent, 0) + 2)
+    show(io_indent, model.model_cache)
+    print_with_acronym(io, "\n$(indent)└ optimizer :: $(typeof(model.optimizer))")
+    if model.optimizer !== nothing
+        println(io)
+        show(io_indent, model.optimizer)
+    end
+    return
 end
 
 function _copy_optimizer_attributes(m::CachingOptimizer)

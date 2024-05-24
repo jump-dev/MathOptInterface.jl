@@ -152,11 +152,15 @@ julia> model = MOI.Utilities.CachingOptimizer(
            MOI.Utilities.Model{Float64}(),
            PathOptimizer{Float64}(),
        )
-MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}, MOIU.Model{Float64}}
-in state EMPTY_OPTIMIZER
-in mode AUTOMATIC
-with model cache MOIU.Model{Float64}
-with optimizer MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+A MOI.Utilities.CachingOptimizer:
+├ state
+│ └ EMPTY_OPTIMIZER
+├ mode
+│ └ AUTOMATIC
+├ model_cache :: MOIU.Model{Float64}
+  An empty MOIU.Model{Float64}
+└ optimizer :: MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+  An empty MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
 ```
 
 A [`Utilities.CachingOptimizer`](@ref) may be in one of three possible states:
@@ -175,12 +179,8 @@ Use [`Utilities.attach_optimizer`](@ref) to go from `EMPTY_OPTIMIZER` to
 ```jldoctest pathoptimizer
 julia> MOI.Utilities.attach_optimizer(model)
 
-julia> model
-MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}, MOIU.Model{Float64}}
-in state ATTACHED_OPTIMIZER
-in mode AUTOMATIC
-with model cache MOIU.Model{Float64}
-with optimizer MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+julia> MOI.Utilities.state(model)
+ATTACHED_OPTIMIZER::CachingOptimizerState = 2
 ```
 
 !!! info
@@ -191,12 +191,8 @@ Use [`Utilities.reset_optimizer`](@ref) to go from `ATTACHED_OPTIMIZER` to
 ```jldoctest pathoptimizer
 julia> MOI.Utilities.reset_optimizer(model)
 
-julia> model
-MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}, MOIU.Model{Float64}}
-in state EMPTY_OPTIMIZER
-in mode AUTOMATIC
-with model cache MOIU.Model{Float64}
-with optimizer MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+julia> MOI.Utilities.state(model)
+EMPTY_OPTIMIZER::CachingOptimizerState = 1
 ```
 
 !!! info
@@ -208,12 +204,18 @@ Use [`Utilities.drop_optimizer`](@ref) to go from any state to `NO_OPTIMIZER`:
 ```jldoctest pathoptimizer
 julia> MOI.Utilities.drop_optimizer(model)
 
+julia> MOI.Utilities.state(model)
+NO_OPTIMIZER::CachingOptimizerState = 0
+
 julia> model
-MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}, MOIU.Model{Float64}}
-in state NO_OPTIMIZER
-in mode AUTOMATIC
-with model cache MOIU.Model{Float64}
-with optimizer nothing
+A MOI.Utilities.CachingOptimizer:
+├ state
+│ └ NO_OPTIMIZER
+├ mode
+│ └ AUTOMATIC
+├ model_cache :: MOIU.Model{Float64}
+  An empty MOIU.Model{Float64}
+└ optimizer :: Nothing
 ```
 
 Pass an empty optimizer to [`Utilities.reset_optimizer`](@ref) to go from
@@ -221,12 +223,19 @@ Pass an empty optimizer to [`Utilities.reset_optimizer`](@ref) to go from
 ```jldoctest pathoptimizer
 julia> MOI.Utilities.reset_optimizer(model, PathOptimizer{Float64}())
 
+julia> MOI.Utilities.state(model)
+EMPTY_OPTIMIZER::CachingOptimizerState = 1
+
 julia> model
-MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}, MOIU.Model{Float64}}
-in state EMPTY_OPTIMIZER
-in mode AUTOMATIC
-with model cache MOIU.Model{Float64}
-with optimizer MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+A MOI.Utilities.CachingOptimizer:
+├ state
+│ └ EMPTY_OPTIMIZER
+├ mode
+│ └ AUTOMATIC
+├ model_cache :: MOIU.Model{Float64}
+  An empty MOIU.Model{Float64}
+└ optimizer :: MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+  An empty MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
 ```
 
 Deciding when to attach and reset the optimizer is tedious, and you will often
@@ -256,20 +265,27 @@ julia> model = MOI.Utilities.CachingOptimizer(
            MOI.Utilities.Model{Float64}(),
            MOI.Utilities.MANUAL,
        )
-MOIU.CachingOptimizer{MOI.AbstractOptimizer, MOIU.Model{Float64}}
-in state NO_OPTIMIZER
-in mode MANUAL
-with model cache MOIU.Model{Float64}
-with optimizer nothing
+A MOI.Utilities.CachingOptimizer:
+├ state
+│ └ NO_OPTIMIZER
+├ mode
+│ └ MANUAL
+├ model_cache :: MOIU.Model{Float64}
+  An empty MOIU.Model{Float64}
+└ optimizer :: Nothing
 
 julia> MOI.Utilities.reset_optimizer(model, PathOptimizer{Float64}())
 
 julia> model
-MOIU.CachingOptimizer{MOI.AbstractOptimizer, MOIU.Model{Float64}}
-in state EMPTY_OPTIMIZER
-in mode MANUAL
-with model cache MOIU.Model{Float64}
-with optimizer MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+A MOI.Utilities.CachingOptimizer:
+├ state
+│ └ EMPTY_OPTIMIZER
+├ mode
+│ └ MANUAL
+├ model_cache :: MOIU.Model{Float64}
+  An empty MOIU.Model{Float64}
+└ optimizer :: MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+  An empty MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
 ```
 
 ## Printing
