@@ -1220,3 +1220,9 @@ function test_model_ListOfConstraintsWithAttributeSet(
     @test c[2] in ret
     return
 end
+
+function test_model_show(model::MOI.ModelLike, ::Config{T}) where {T}
+    # We don't enforce any particular output.
+    @test sprint(show, model) isa String
+    return
+end

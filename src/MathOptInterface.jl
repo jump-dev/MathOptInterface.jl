@@ -20,8 +20,43 @@ abstract type ModelLike end
 # embed it in a `Ref`
 Base.broadcastable(model::ModelLike) = Ref(model)
 
+function _try_get(model::ModelLike, attr, default)
+    try
+        return get(model, attr)
+    catch
+        return default
+    end
+end
+
+function _println(io, args...)
+    print(io, " "^Base.get(io, :indent, 0))
+    Utilities.print_with_acronym.(io, args)
+    return println(io)
+end
+
 function Base.show(io::IO, model::ModelLike)
-    return Utilities.print_with_acronym(io, summary(model))
+    offset = " "^Base.get(io, :indent, 0)
+    println(io, offset, "An instance of")
+    _println(io, "  Type{$(typeof(model))}")
+    _println(io, "ModelAttributes")
+    for attr in _try_get(model, ListOfModelAttributesSet(), Any[])
+        ret = _try_get(model, attr, missing)
+        if attr isa ObjectiveFunction
+            F = get(model, ObjectiveFunctionType())
+            _println(io, "  MOI.ObjectiveFunctionType() : $F")
+        else
+            _println(io, "  $attr : $ret")
+        end
+    end
+    _println(io, "Variables")
+    n = _try_get(model, NumberOfVariables(), "?")
+    _println(io, "  MOI.NumberOfVariables() = $n")
+    _println(io, "Constraints")
+    for (F, S) in _try_get(model, ListOfConstraintTypesPresent(), [])
+        m = get(model, NumberOfConstraints{F,S}())
+        _println(io, "  NumerOfConstraints{$F,$S}() = $m")
+    end
+    return
 end
 
 """

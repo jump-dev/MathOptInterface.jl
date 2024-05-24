@@ -23,7 +23,7 @@ function Base.show(io::IO, B::AbstractBridgeOptimizer)
     show(io, Objective.bridges(B))
     if :model in propertynames(B)
         indent = " "^get(io, :indent, 0)
-        print(io, "\n$(indent)with inner model ")
+        println(io, "\n$(indent)with inner model")
         show(IOContext(io, :indent => get(io, :indent, 0) + 2), B.model)
     end
     return

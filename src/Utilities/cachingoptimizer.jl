@@ -116,11 +116,12 @@ end
 function Base.show(io::IO, C::CachingOptimizer)
     indent = " "^get(io, :indent, 0)
     print_with_acronym(io, summary(C))
-    print(io, "\n$(indent)in state $(C.state)")
-    print(io, "\n$(indent)in mode $(C.mode)")
-    print(io, "\n$(indent)with model cache ")
+    println(io)
+    println(io, "$(indent)in state $(C.state)")
+    println(io, "$(indent)in mode $(C.mode)")
+    println(io, "$(indent)with model cache")
     show(IOContext(io, :indent => get(io, :indent, 0) + 2), C.model_cache)
-    print(io, "\n$(indent)with optimizer ")
+    println(io, "\n$(indent)with optimizer")
     return show(IOContext(io, :indent => get(io, :indent, 0) + 2), C.optimizer)
 end
 

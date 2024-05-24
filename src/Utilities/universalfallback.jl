@@ -72,7 +72,7 @@ function Base.show(io::IO, U::UniversalFallback)
             print(io, "\n$(indent)with $n $name$(s(n))")
         end
     end
-    print(io, "\n$(indent)fallback for ")
+    println(io, "\n$(indent)fallback for")
     return show(IOContext(io, :indent => get(io, :indent, 0) + 2), U.model)
 end
 
