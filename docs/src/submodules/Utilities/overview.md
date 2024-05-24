@@ -85,7 +85,7 @@ julia> MOI.Utilities.@model(
 MathOptInterface.Utilities.GenericOptimizer{T, MathOptInterface.Utilities.ObjectiveContainer{T}, MathOptInterface.Utilities.VariablesContainer{T}, MyNewModelFunctionConstraints{T}} where T
 
 julia> model = MyNewModel{Float64}()
-MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MyNewModelFunctionConstraints{Float64}}
+An empty MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MyNewModelFunctionConstraints{Float64}}
 ```
 
 !!! warning
