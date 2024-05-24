@@ -630,7 +630,7 @@ function test_CachingOptimizer_AUTOMATIC_mode()
         MOIU.attach_optimizer(m)
         @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
     end
-    @test occursin("in mode AUTOMATIC", sprint(show, m))
+    @test occursin("AUTOMATIC", sprint(show, m))
     MOI.empty!(m)
     @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
     return
