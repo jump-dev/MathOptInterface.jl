@@ -156,9 +156,9 @@ A MOI.Utilities.CachingOptimizer:
 │ └ EMPTY_OPTIMIZER
 ├ mode
 │ └ AUTOMATIC
-├ model_cache :: MOIU.Model{Float64}
-  An empty MOIU.Model{Float64}
-└ optimizer :: MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+├ model_cache
+│ An empty MOIU.Model{Float64}
+└ optimizer
   An empty MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
 ```
 
@@ -212,9 +212,9 @@ A MOI.Utilities.CachingOptimizer:
 │ └ NO_OPTIMIZER
 ├ mode
 │ └ AUTOMATIC
-├ model_cache :: MOIU.Model{Float64}
-  An empty MOIU.Model{Float64}
-└ optimizer :: Nothing
+├ model_cache
+│ An empty MOIU.Model{Float64}
+└ optimizer
 ```
 
 Pass an empty optimizer to [`Utilities.reset_optimizer`](@ref) to go from
@@ -231,9 +231,9 @@ A MOI.Utilities.CachingOptimizer:
 │ └ EMPTY_OPTIMIZER
 ├ mode
 │ └ AUTOMATIC
-├ model_cache :: MOIU.Model{Float64}
-  An empty MOIU.Model{Float64}
-└ optimizer :: MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+├ model_cache
+│ An empty MOIU.Model{Float64}
+└ optimizer
   An empty MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
 ```
 
@@ -269,9 +269,9 @@ A MOI.Utilities.CachingOptimizer:
 │ └ NO_OPTIMIZER
 ├ mode
 │ └ MANUAL
-├ model_cache :: MOIU.Model{Float64}
-  An empty MOIU.Model{Float64}
-└ optimizer :: Nothing
+├ model_cache
+│ An empty MOIU.Model{Float64}
+└ optimizer
 
 julia> MOI.Utilities.reset_optimizer(model, PathOptimizer{Float64}())
 
@@ -281,9 +281,9 @@ A MOI.Utilities.CachingOptimizer:
 │ └ EMPTY_OPTIMIZER
 ├ mode
 │ └ MANUAL
-├ model_cache :: MOIU.Model{Float64}
-  An empty MOIU.Model{Float64}
-└ optimizer :: MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+├ model_cache
+│ An empty MOIU.Model{Float64}
+└ optimizer
   An empty MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
 ```
 

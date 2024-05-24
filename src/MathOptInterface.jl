@@ -28,21 +28,15 @@ function _try_get(model::ModelLike, attr, default)
     end
 end
 
-function _println(io, args...)
-    print(io, " "^Base.get(io, :indent, 0))
-    Utilities.print_with_acronym.(io, args)
-    return println(io)
-end
-
 function Base.show(io::IO, model::ModelLike)
-    offset = " "^Base.get(io, :indent, 0)
+    offset = Base.get(io, :offset, "")
     if is_empty(model)
         Utilities.print_with_acronym(io, "$(offset)An empty $(typeof(model))")
         return
     end
     Utilities.print_with_acronym(io, "$(offset)A $(typeof(model))\n")
-    println(io, offset, "├ ObjectiveSense")
     sense = _try_get(model, ObjectiveSense(), "FEASIBILITY_SENSE")
+    println(io, offset, "├ ObjectiveSense")
     println(io, offset, "│ └ $sense")
     println(io, offset, "├ ObjectiveFunctionType")
     F = _try_get(model, ObjectiveFunctionType(), "")

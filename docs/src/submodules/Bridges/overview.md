@@ -141,12 +141,7 @@ However, this will force the constraint to be bridged, even if the
 julia> inner_optimizer = MOI.Utilities.Model{Float64}()
 An empty MOIU.Model{Float64}
 
-julia> optimizer = MOI.Bridges.Constraint.SplitInterval{Float64}(inner_optimizer)
-MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64}, MOIU.Model{Float64}}
-├ constraint bridges
-│  └ 0
-└ model
-  An empty MOIU.Model{Float64}
+julia> optimizer = MOI.Bridges.Constraint.SplitInterval{Float64}(inner_optimizer);
 
 julia> x = MOI.add_variable(optimizer)
 MOI.VariableIndex(1)

@@ -1096,18 +1096,18 @@ function test_show()
     │ └ NO_OPTIMIZER
     ├ mode
     │ └ MANUAL
-    ├ model_cache :: MOIU.Model{Float64}
-      A MOIU.Model{Float64}
-      ├ ObjectiveSense
-      │ └ MIN_SENSE
-      ├ ObjectiveFunctionType
-      │ └ MOI.ScalarAffineFunction{Float64}
-      ├ NumberOfVariables
-      │ └ 2
-      └ NumberOfConstraints
-        ├ MOI.ScalarAffineFunction{Float64} in MOI.LessThan{Float64}: 2
-        └ MOI.VariableIndex in MOI.GreaterThan{Float64}: 1
-    └ optimizer :: Nothing"""
+    ├ model_cache
+    │ A MOIU.Model{Float64}
+    │ ├ ObjectiveSense
+    │ │ └ MIN_SENSE
+    │ ├ ObjectiveFunctionType
+    │ │ └ MOI.ScalarAffineFunction{Float64}
+    │ ├ NumberOfVariables
+    │ │ └ 2
+    │ └ NumberOfConstraints
+    │   ├ MOI.ScalarAffineFunction{Float64} in MOI.LessThan{Float64}: 2
+    │   └ MOI.VariableIndex in MOI.GreaterThan{Float64}: 1
+    └ optimizer"""
     @test sprint(show, cache) == output
     return
 end

@@ -114,24 +114,18 @@ mutable struct CachingOptimizer{O,M<:MOI.ModelLike} <: MOI.AbstractOptimizer
 end
 
 function Base.show(io::IO, model::CachingOptimizer)
-    indent = " "^get(io, :indent, 0)
-    println(io, indent, "A MOI.Utilities.CachingOptimizer:")
-    println(io, indent, "├ state")
-    println(io, indent, "│ └ $(model.state)")
-    println(io, indent, "├ mode\n│ └ $(model.mode)")
-    print_with_acronym(
-        io,
-        "$(indent)├ model_cache :: $(typeof(model.model_cache))\n",
-    )
-    io_indent = IOContext(io, :indent => get(io, :indent, 0) + 2)
-    show(io_indent, model.model_cache)
-    print_with_acronym(
-        io,
-        "\n$(indent)└ optimizer :: $(typeof(model.optimizer))",
-    )
-    if model.optimizer !== nothing
-        println(io)
-        show(io_indent, model.optimizer)
+    offset = Base.get(io, :offset, "")
+    println(io, offset, "A MOI.Utilities.CachingOptimizer:")
+    println(io, offset, "├ state")
+    println(io, offset, "│ └ $(model.state)")
+    println(io, offset, "├ mode\n│ └ $(model.mode)")
+    print_with_acronym(io, "$(offset)├ model_cache\n")
+    show(IOContext(io, :offset => offset * "│ "), model.model_cache)
+    print_with_acronym(io, "\n$(offset)└ optimizer\n")
+    if model.optimizer === nothing
+        print(io, "$offset  └ nothing")
+    else
+        show(IOContext(io, :offset => offset * "  "), model.optimizer)
     end
     return
 end
