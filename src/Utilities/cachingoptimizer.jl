@@ -125,7 +125,10 @@ function Base.show(io::IO, model::CachingOptimizer)
     )
     io_indent = IOContext(io, :indent => get(io, :indent, 0) + 2)
     show(io_indent, model.model_cache)
-    print_with_acronym(io, "\n$(indent)└ optimizer :: $(typeof(model.optimizer))")
+    print_with_acronym(
+        io,
+        "\n$(indent)└ optimizer :: $(typeof(model.optimizer))",
+    )
     if model.optimizer !== nothing
         println(io)
         show(io_indent, model.optimizer)

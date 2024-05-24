@@ -253,8 +253,7 @@ a [`MOI.AbstractVectorFunction`](@ref).
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
 

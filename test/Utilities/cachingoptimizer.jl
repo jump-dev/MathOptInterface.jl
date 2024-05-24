@@ -1089,7 +1089,7 @@ function test_show()
         c2: 1.0 * x + 3.0 * y <= 2.0
         """,
     )
-    cache = MOI.Utilities.CachingOptimizer(model,  MOI.Utilities.MANUAL)
+    cache = MOI.Utilities.CachingOptimizer(model, MOI.Utilities.MANUAL)
     output = """
     A MOI.Utilities.CachingOptimizer:
     ├ state

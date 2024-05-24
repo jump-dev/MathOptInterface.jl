@@ -157,8 +157,7 @@ The set ``[lower, \\infty) \\subseteq \\mathbb{R}``.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -183,8 +182,7 @@ The set ``(-\\infty, upper] \\subseteq \\mathbb{R}``.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -209,8 +207,7 @@ The set containing the single point ``\\{value\\} \\subseteq \\mathbb{R}``.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -245,8 +242,7 @@ and solvers should declare [`supports_add_constrained_variable`](@ref) and not
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> p, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.5))
 (MOI.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Parameter{Float64}}(1))
@@ -276,8 +272,7 @@ as a one-sided interval.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -337,8 +332,7 @@ The set of integers, ``\\mathbb{Z}``.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -361,8 +355,7 @@ Variables belonging to the `ZeroOne` set are also known as "binary" variables.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -383,8 +376,7 @@ The set ``\\{0\\} \\cup [lower, upper]``.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -416,8 +408,7 @@ the nearest integers.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -446,8 +437,7 @@ dimension `dimension`.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
 
@@ -483,8 +473,7 @@ dimension `dimension`.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
 
@@ -520,8 +509,7 @@ non-negative dimension `dimension`.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
 
@@ -557,8 +545,7 @@ non-negative dimension `dimension`.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
 
@@ -596,8 +583,7 @@ The `dimension` must be at least `1`.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -639,8 +625,7 @@ The `dimension` must be at least `1`.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -682,8 +667,7 @@ The `dimension` must be at least `1`.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -725,8 +709,7 @@ The `dimension` must be at least `2`.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -775,8 +758,7 @@ The `dimension` must be at least `1`.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -828,8 +810,7 @@ where `dimension = n + 1 >= 2`.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -869,8 +850,7 @@ The 3-dimensional exponential cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : y \\exp (x
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
 
@@ -895,8 +875,7 @@ The 3-dimensional dual exponential cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : -u \\
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
 
@@ -922,8 +901,7 @@ with parameter `exponent`.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
 
@@ -955,8 +933,7 @@ with parameter `exponent`.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
 
@@ -995,8 +972,7 @@ of dimension `dimension```{}=2n+1``.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> u = MOI.add_variable(model);
 
@@ -1043,8 +1019,7 @@ Julia's `vec` function.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -1099,8 +1074,7 @@ Julia's `vec` function.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -1469,8 +1443,7 @@ The non-negative argument `side_dimension` is the side dimension of the matrix
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -1523,8 +1496,7 @@ The non-negative argument `side_dimension` is the side dimension of the matrix
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -1581,8 +1553,7 @@ The non-negative argument `side_dimension` is the side dimension of the matrix
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -1635,8 +1606,7 @@ The non-negative argument `side_dimension` is the side dimension of the matrix
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
 MOI.VariableIndex(1)
@@ -1750,8 +1720,7 @@ julia> MOI.Utilities.operate(*, Float64, Diagonal(a), ones(3))
 
 It can be also used to scale a vector of function
 ```jldoctest scaling
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
 
@@ -1839,8 +1808,7 @@ not change the set of feasible solutions.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
 
@@ -1879,8 +1847,7 @@ they must be adjacent in the ordering of the set.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
 
@@ -1939,8 +1906,7 @@ is defined as
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 2)
 2-element Vector{MathOptInterface.VariableIndex}:
@@ -2027,8 +1993,7 @@ There are three solutions:
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x, _ = MOI.add_constrained_variable(model, MOI.Interval(-1.0, 1.0));
 
@@ -2052,8 +2017,7 @@ defines the complementarity problem where `0 <= x_1 ⟂ x_3 >= 0` and
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 4);
 
@@ -2100,8 +2064,7 @@ To enforce `x[1] != x[2]` AND `x[1] != x[3]` AND `x[2] != x[3]`:
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
 3-element Vector{MathOptInterface.VariableIndex}:
@@ -2145,8 +2108,7 @@ This constraint is called `bin_packing` in MiniZinc.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> bins = MOI.add_variables(model, 5)
 5-element Vector{MathOptInterface.VariableIndex}:
@@ -2228,8 +2190,7 @@ a (potentially sub-optimal) tour in the travelling salesperson problem.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
 3-element Vector{MathOptInterface.VariableIndex}:
@@ -2271,8 +2232,7 @@ To ensure that `3` appears at least once in each of the subsets `{a, b}` and
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> a, _ = MOI.add_constrained_variable(model, MOI.Integer())
 (MOI.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
@@ -2331,8 +2291,7 @@ This constraint is called `among` by MiniZinc.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> n, _ = MOI.add_constrained_variable(model, MOI.Integer())
 (MOI.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
@@ -2394,8 +2353,7 @@ To model:
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> n, _ = MOI.add_constrained_variable(model, MOI.Integer())
 (MOI.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
@@ -2440,8 +2398,7 @@ This constraint is called `count_gt` in MiniZinc.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> c, _ = MOI.add_constrained_variable(model, MOI.Integer())
 (MOI.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.Integer}(1))
@@ -2493,8 +2450,7 @@ This constraint is called `cumulative` in MiniZinc.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> s = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
 3-element Vector{MathOptInterface.VariableIndex}:
@@ -2553,8 +2509,7 @@ This constraint is called `path` in MiniZinc.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> N, E = 4, 5
 (4, 5)
@@ -2652,8 +2607,7 @@ This constraint is called `table` in MiniZinc.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3)
 3-element Vector{MathOptInterface.VariableIndex}:
@@ -2692,8 +2646,7 @@ The set ``\\{x \\in \\bar{\\mathbb{R}}^d: x_i \\in [lower_i, upper_i] \\forall i
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3)
 3-element Vector{MathOptInterface.VariableIndex}:
