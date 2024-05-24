@@ -397,10 +397,11 @@ end
 
 function test_show_SPDA()
     model = StandardSDPAModel{Float64}()
+    model_str = sprint(MOI.Utilities.print_with_acronym, string(typeof(model)))
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     # no bridges
     ret = """
-    A MOIB.LazyBridgeOptimizer{$(typeof(model))}
+    A MOIB.LazyBridgeOptimizer{$model_str}
     ├ Variable bridges
     │ └ none
     ├ Constraint bridges
@@ -408,12 +409,12 @@ function test_show_SPDA()
     ├ Objective bridges
     │ └ none
     └ model
-      An empty $(typeof(model))"""
+      An empty $model_str"""
     @test sprint(show, bridged) == ret
     MOI.add_constrained_variable(bridged, MOI.LessThan(1.0))
     # add variable bridges
     ret = """
-    A MOIB.LazyBridgeOptimizer{$(typeof(model))}
+    A MOIB.LazyBridgeOptimizer{$model_str}
     ├ Variable bridges
     │ ├ MOIB.Variable.NonposToNonnegBridge{Float64}
     │ └ MOIB.Variable.VectorizeBridge{Float64, MOI.Nonpositives}
@@ -422,7 +423,7 @@ function test_show_SPDA()
     ├ Objective bridges
     │ └ none
     └ model
-      A $(typeof(model))
+      A $model_str
       ├ ObjectiveSense
       │ └ FEASIBILITY_SENSE
       ├ ObjectiveFunctionType
