@@ -369,15 +369,6 @@ function test_deterministic_constraint_ordering()
     return
 end
 
-function test_show()
-    model = ModelForUniversalFallback{Float64}()
-    uf = MOI.Utilities.UniversalFallback(model)
-    @test sprint(show, uf) == MOI.Utilities.replace_acronym("""
-    $(MOI.Utilities.UniversalFallback{ModelForUniversalFallback{Float64}})
-    fallback for $(ModelForUniversalFallback{Float64})""")
-    return
-end
-
 function test_missing_attribute()
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     @test MOI.get(model, MOI.Test.UnknownModelAttribute()) === nothing

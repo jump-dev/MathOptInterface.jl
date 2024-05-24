@@ -106,11 +106,14 @@ julia> inner_optimizer = MOI.Utilities.Model{Float64}()
 An empty MOIU.Model{Float64}
 
 julia> optimizer = MOI.Bridges.full_bridge_optimizer(inner_optimizer, Float64)
-MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
-with 0 variable bridges
-with 0 constraint bridges
-with 0 objective bridges
-with inner model
+A MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
+├ Variable bridges
+│ └ none
+├ Constraint bridges
+│ └ none
+├ Objective bridges
+│ └ none
+└ model
   An empty MOIU.Model{Float64}
 ```
 
@@ -140,8 +143,9 @@ An empty MOIU.Model{Float64}
 
 julia> optimizer = MOI.Bridges.Constraint.SplitInterval{Float64}(inner_optimizer)
 MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64}, MOIU.Model{Float64}}
-with 0 constraint bridges
-with inner model
+├ constraint bridges
+│  └ 0
+└ model
   An empty MOIU.Model{Float64}
 
 julia> x = MOI.add_variable(optimizer)
@@ -172,11 +176,14 @@ julia> inner_optimizer = MOI.Utilities.Model{Float64}()
 An empty MOIU.Model{Float64}
 
 julia> optimizer = MOI.Bridges.LazyBridgeOptimizer(inner_optimizer)
-MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
-with 0 variable bridges
-with 0 constraint bridges
-with 0 objective bridges
-with inner model
+A MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
+├ Variable bridges
+│ └ none
+├ Constraint bridges
+│ └ none
+├ Objective bridges
+│ └ none
+└ model
   An empty MOIU.Model{Float64}
 ```
 

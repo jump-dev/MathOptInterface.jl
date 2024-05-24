@@ -397,25 +397,41 @@ end
 
 function test_show_SPDA()
     model = StandardSDPAModel{Float64}()
-    model_str = sprint(MOI.Utilities.print_with_acronym, string(typeof(model)))
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     # no bridges
     ret = """
-    MOIB.LazyBridgeOptimizer{$model_str}
-    with 0 variable bridges
-    with 0 constraint bridges
-    with 0 objective bridges
-    with inner model"""
-    @test occursin(ret, sprint(show, bridged))
+    A MOIB.LazyBridgeOptimizer{MOIU.GenericModel{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, StandardSDPAModelFunctionConstraints{Float64}}}
+    ├ Variable bridges
+    │ └ none
+    ├ Constraint bridges
+    │ └ none
+    ├ Objective bridges
+    │ └ none
+    └ model
+      An empty MOIU.GenericModel{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, StandardSDPAModelFunctionConstraints{Float64}}"""
+    @test sprint(show, bridged) == ret
     MOI.add_constrained_variable(bridged, MOI.LessThan(1.0))
     # add variable bridges
     ret = """
-    MOIB.LazyBridgeOptimizer{$model_str}
-    with 2 variable bridges
-    with 0 constraint bridges
-    with 0 objective bridges
-    with inner model"""
-    @test occursin(ret, sprint(show, bridged))
+    A MOIB.LazyBridgeOptimizer{MOIU.GenericModel{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, StandardSDPAModelFunctionConstraints{Float64}}}
+    ├ Variable bridges
+    │ ├ MOIB.Variable.NonposToNonnegBridge{Float64}
+    │ └ MOIB.Variable.VectorizeBridge{Float64, MOI.Nonpositives}
+    ├ Constraint bridges
+    │ └ none
+    ├ Objective bridges
+    │ └ none
+    └ model
+      A MOIU.GenericModel{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, StandardSDPAModelFunctionConstraints{Float64}}
+      ├ ObjectiveSense
+      │ └ FEASIBILITY_SENSE
+      ├ ObjectiveFunctionType
+      │ └ MOI.ScalarAffineFunction{Float64}
+      ├ NumberOfVariables
+      │ └ 1
+      └ NumberOfConstraints
+        └ MOI.VectorOfVariables in MOI.Nonnegatives: 1"""
+    @test sprint(show, bridged) == ret
     return
 end
 

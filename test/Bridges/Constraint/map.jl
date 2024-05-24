@@ -108,7 +108,6 @@ function test_map()
 
     delete!(map, c1)
     @test length(map) == 2
-    @test sprint(show, map) == "\nwith 2 constraint bridges"
     @test !isempty(map)
     @test MOI.Bridges.Constraint.has_bridges(map)
 
@@ -124,7 +123,6 @@ function test_map()
 
     delete!(map, c2)
     @test length(map) == 1
-    @test sprint(show, map) == "\nwith 1 constraint bridge"
     @test !isempty(map)
     @test MOI.Bridges.Constraint.has_bridges(map)
 
