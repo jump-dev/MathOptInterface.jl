@@ -2697,9 +2697,7 @@ only if ``z == 1``, where ``z \\in \\{0, 1\\}``.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
-MOIU.UniversalFallback{MOIU.Model{Float64}}
-fallback for MOIU.Model{Float64}
+julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}());
 
 julia> z, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
 (MOI.VariableIndex(1), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(1))

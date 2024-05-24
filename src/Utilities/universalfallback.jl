@@ -54,28 +54,6 @@ function UniversalFallback(model::MOI.ModelLike)
     return UniversalFallback{typeof(model)}(model)
 end
 
-function Base.show(io::IO, U::UniversalFallback)
-    s(n) = n == 1 ? "" : "s"
-    indent = " "^get(io, :indent, 0)
-    print_with_acronym(io, summary(U))
-    !(U.objective === nothing) && print(io, "\n$(indent)with objective")
-    for (attr, name) in (
-        (U.single_variable_constraints, "`VariableIndex` constraint"),
-        (U.constraints, "constraint"),
-        (U.optattr, "optimizer attribute"),
-        (U.modattr, "model attribute"),
-        (U.varattr, "variable attribute"),
-        (U.conattr, "constraint attribute"),
-    )
-        n = length(attr)
-        if n > 0
-            print(io, "\n$(indent)with $n $name$(s(n))")
-        end
-    end
-    println(io, "\n$(indent)fallback for")
-    return show(IOContext(io, :indent => get(io, :indent, 0) + 2), U.model)
-end
-
 function MOI.is_empty(uf::UniversalFallback)
     return MOI.is_empty(uf.model) &&
            uf.objective === nothing &&

@@ -35,8 +35,7 @@ like [`VariablePrimalStart`](@ref), so JuMP uses a combination of Universal
 fallback and [`Utilities.Model`](@ref) as a generic problem cache:
 ```jldoctest
 julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
-MOIU.UniversalFallback{MOIU.Model{Float64}}
-fallback for MOIU.Model{Float64}
+An empty MOIU.UniversalFallback{MOIU.Model{Float64}}
 ```
 
 !!! warning

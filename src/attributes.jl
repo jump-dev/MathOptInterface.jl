@@ -2014,9 +2014,7 @@ julia> function ∇²f(H, x...)
        end
 ∇²f (generic function with 1 method)
 
-julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
-MOIU.UniversalFallback{MOIU.Model{Float64}}
-fallback for MOIU.Model{Float64}
+julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}());
 
 julia> MOI.set(model, MOI.UserDefinedFunction(:f, 2), (f,))
 
