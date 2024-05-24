@@ -1107,7 +1107,8 @@ function test_show()
     │ └ NumberOfConstraints
     │   ├ MOI.ScalarAffineFunction{Float64} in MOI.LessThan{Float64}: 2
     │   └ MOI.VariableIndex in MOI.GreaterThan{Float64}: 1
-    └ optimizer"""
+    └ optimizer
+      └ nothing"""
     @test sprint(show, cache) == output
     return
 end

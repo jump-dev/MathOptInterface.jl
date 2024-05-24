@@ -215,6 +215,7 @@ A MOI.Utilities.CachingOptimizer:
 ├ model_cache
 │ An empty MOIU.Model{Float64}
 └ optimizer
+  └ nothing
 ```
 
 Pass an empty optimizer to [`Utilities.reset_optimizer`](@ref) to go from
@@ -272,6 +273,7 @@ A MOI.Utilities.CachingOptimizer:
 ├ model_cache
 │ An empty MOIU.Model{Float64}
 └ optimizer
+  └ nothing
 
 julia> MOI.Utilities.reset_optimizer(model, PathOptimizer{Float64}())
 

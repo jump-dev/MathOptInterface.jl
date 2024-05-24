@@ -400,7 +400,7 @@ function test_show_SPDA()
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     # no bridges
     ret = """
-    A MOIB.LazyBridgeOptimizer{MOIU.GenericModel{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, StandardSDPAModelFunctionConstraints{Float64}}}
+    A MOIB.LazyBridgeOptimizer{$(typeof(model))}
     ├ Variable bridges
     │ └ none
     ├ Constraint bridges
@@ -408,12 +408,12 @@ function test_show_SPDA()
     ├ Objective bridges
     │ └ none
     └ model
-      An empty MOIU.GenericModel{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, StandardSDPAModelFunctionConstraints{Float64}}"""
+      An empty $(typeof(model))"""
     @test sprint(show, bridged) == ret
     MOI.add_constrained_variable(bridged, MOI.LessThan(1.0))
     # add variable bridges
     ret = """
-    A MOIB.LazyBridgeOptimizer{MOIU.GenericModel{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, StandardSDPAModelFunctionConstraints{Float64}}}
+    A MOIB.LazyBridgeOptimizer{$(typeof(model))}
     ├ Variable bridges
     │ ├ MOIB.Variable.NonposToNonnegBridge{Float64}
     │ └ MOIB.Variable.VectorizeBridge{Float64, MOI.Nonpositives}
@@ -422,7 +422,7 @@ function test_show_SPDA()
     ├ Objective bridges
     │ └ none
     └ model
-      A MOIU.GenericModel{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, StandardSDPAModelFunctionConstraints{Float64}}
+      A $(typeof(model))
       ├ ObjectiveSense
       │ └ FEASIBILITY_SENSE
       ├ ObjectiveFunctionType
