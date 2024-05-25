@@ -152,10 +152,8 @@ julia> model = MOI.Utilities.CachingOptimizer(
            PathOptimizer{Float64}(),
        )
 A MOI.Utilities.CachingOptimizer:
-├ state
-│ └ EMPTY_OPTIMIZER
-├ mode
-│ └ AUTOMATIC
+├ state: EMPTY_OPTIMIZER
+├ mode: AUTOMATIC
 ├ model_cache
 │ An empty MOIU.Model{Float64}
 └ optimizer
@@ -208,14 +206,11 @@ NO_OPTIMIZER::CachingOptimizerState = 0
 
 julia> model
 A MOI.Utilities.CachingOptimizer:
-├ state
-│ └ NO_OPTIMIZER
-├ mode
-│ └ AUTOMATIC
+├ state: NO_OPTIMIZER
+├ mode: AUTOMATIC
 ├ model_cache
 │ An empty MOIU.Model{Float64}
-└ optimizer
-  └ nothing
+└ optimizer: nothing
 ```
 
 Pass an empty optimizer to [`Utilities.reset_optimizer`](@ref) to go from
@@ -228,10 +223,8 @@ EMPTY_OPTIMIZER::CachingOptimizerState = 1
 
 julia> model
 A MOI.Utilities.CachingOptimizer:
-├ state
-│ └ EMPTY_OPTIMIZER
-├ mode
-│ └ AUTOMATIC
+├ state: EMPTY_OPTIMIZER
+├ mode: AUTOMATIC
 ├ model_cache
 │ An empty MOIU.Model{Float64}
 └ optimizer
@@ -266,23 +259,18 @@ julia> model = MOI.Utilities.CachingOptimizer(
            MOI.Utilities.MANUAL,
        )
 A MOI.Utilities.CachingOptimizer:
-├ state
-│ └ NO_OPTIMIZER
-├ mode
-│ └ MANUAL
+├ state: NO_OPTIMIZER
+├ mode: MANUAL
 ├ model_cache
 │ An empty MOIU.Model{Float64}
-└ optimizer
-  └ nothing
+└ optimizer: nothing
 
 julia> MOI.Utilities.reset_optimizer(model, PathOptimizer{Float64}())
 
 julia> model
 A MOI.Utilities.CachingOptimizer:
-├ state
-│ └ EMPTY_OPTIMIZER
-├ mode
-│ └ MANUAL
+├ state: EMPTY_OPTIMIZER
+├ mode: MANUAL
 ├ model_cache
 │ An empty MOIU.Model{Float64}
 └ optimizer

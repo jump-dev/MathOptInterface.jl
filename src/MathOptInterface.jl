@@ -35,21 +35,29 @@ function Base.show(io::IO, model::ModelLike)
         return
     end
     Utilities.print_with_acronym(io, "$(offset)A $(typeof(model))\n")
+    # ObjectiveSense
     sense = _try_get(model, ObjectiveSense(), "FEASIBILITY_SENSE")
-    println(io, offset, "├ ObjectiveSense")
-    println(io, offset, "│ └ $sense")
-    println(io, offset, "├ ObjectiveFunctionType")
+    println(io, offset, "├ ObjectiveSense: $sense")
+    # ObjectiveFunctionType
     F = _try_get(model, ObjectiveFunctionType(), "")
-    Utilities.print_with_acronym(io, "$(offset)│ └ $F\n")
-    println(io, offset, "├ NumberOfVariables")
+    Utilities.print_with_acronym(io, "$(offset)├ ObjectiveFunctionType: $F\n")
+    # NumberOfVariables
     n = _try_get(model, NumberOfVariables(), "?")
-    println(io, offset, "│ └ $n")
-    print(io, offset, "└ NumberOfConstraints")
+    println(io, offset, "├ NumberOfVariables: $n")
+    # NumberOfConstraints
+    constraint_lines, n_total = String[], 0
     constraint_types = _try_get(model, ListOfConstraintTypesPresent(), [])
     for (i, (F, S)) in enumerate(constraint_types)
         m = _try_get(model, NumberOfConstraints{F,S}(), "?")
+        if m != "?"
+            n_total += m
+        end
         tree = ifelse(i == length(constraint_types), '└', '├')
-        Utilities.print_with_acronym(io, "\n$offset  $tree $F in $S: $m")
+        push!(constraint_lines, "\n$offset  $tree $F in $S: $m")
+    end
+    print(io, offset, "└ NumberOfConstraints: $n_total")
+    for line in constraint_lines
+        Utilities.print_with_acronym(io, line)
     end
     return
 end

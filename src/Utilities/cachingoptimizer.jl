@@ -116,15 +116,14 @@ end
 function Base.show(io::IO, model::CachingOptimizer)
     offset = Base.get(io, :offset, "")
     println(io, offset, "A MOI.Utilities.CachingOptimizer:")
-    println(io, offset, "├ state")
-    println(io, offset, "│ └ $(model.state)")
-    println(io, offset, "├ mode\n│ └ $(model.mode)")
+    println(io, offset, "├ state: $(model.state)")
+    println(io, offset, "├ mode: $(model.mode)")
     print_with_acronym(io, "$(offset)├ model_cache\n")
     show(IOContext(io, :offset => offset * "│ "), model.model_cache)
-    print_with_acronym(io, "\n$(offset)└ optimizer\n")
     if model.optimizer === nothing
-        print(io, "$offset  └ nothing")
+        print_with_acronym(io, "\n$(offset)└ optimizer: nothing")
     else
+        print_with_acronym(io, "\n$(offset)└ optimizer\n")
         show(IOContext(io, :offset => offset * "  "), model.optimizer)
     end
     return

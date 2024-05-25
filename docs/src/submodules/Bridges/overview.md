@@ -107,12 +107,9 @@ An empty MOIU.Model{Float64}
 
 julia> optimizer = MOI.Bridges.full_bridge_optimizer(inner_optimizer, Float64)
 A MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
-├ Variable bridges
-│ └ none
-├ Constraint bridges
-│ └ none
-├ Objective bridges
-│ └ none
+├ Variable bridges: none
+├ Constraint bridges: none
+├ Objective bridges: none
 └ model
   An empty MOIU.Model{Float64}
 ```
@@ -172,12 +169,9 @@ An empty MOIU.Model{Float64}
 
 julia> optimizer = MOI.Bridges.LazyBridgeOptimizer(inner_optimizer)
 A MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
-├ Variable bridges
-│ └ none
-├ Constraint bridges
-│ └ none
-├ Objective bridges
-│ └ none
+├ Variable bridges: none
+├ Constraint bridges: none
+├ Objective bridges: none
 └ model
   An empty MOIU.Model{Float64}
 ```

@@ -402,12 +402,9 @@ function test_show_SPDA()
     # no bridges
     ret = """
     A MOIB.LazyBridgeOptimizer{$model_str}
-    ├ Variable bridges
-    │ └ none
-    ├ Constraint bridges
-    │ └ none
-    ├ Objective bridges
-    │ └ none
+    ├ Variable bridges: none
+    ├ Constraint bridges: none
+    ├ Objective bridges: none
     └ model
       An empty $model_str"""
     @test sprint(show, bridged) == ret
@@ -418,19 +415,14 @@ function test_show_SPDA()
     ├ Variable bridges
     │ ├ MOIB.Variable.NonposToNonnegBridge{Float64}
     │ └ MOIB.Variable.VectorizeBridge{Float64, MOI.Nonpositives}
-    ├ Constraint bridges
-    │ └ none
-    ├ Objective bridges
-    │ └ none
+    ├ Constraint bridges: none
+    ├ Objective bridges: none
     └ model
       A $model_str
-      ├ ObjectiveSense
-      │ └ FEASIBILITY_SENSE
-      ├ ObjectiveFunctionType
-      │ └ MOI.ScalarAffineFunction{Float64}
-      ├ NumberOfVariables
-      │ └ 1
-      └ NumberOfConstraints
+      ├ ObjectiveSense: FEASIBILITY_SENSE
+      ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+      ├ NumberOfVariables: 1
+      └ NumberOfConstraints: 1
         └ MOI.VectorOfVariables in MOI.Nonnegatives: 1"""
     @test sprint(show, bridged) == ret
     return

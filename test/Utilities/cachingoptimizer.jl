@@ -1092,23 +1092,17 @@ function test_show()
     cache = MOI.Utilities.CachingOptimizer(model, MOI.Utilities.MANUAL)
     output = """
     A MOI.Utilities.CachingOptimizer:
-    ├ state
-    │ └ NO_OPTIMIZER
-    ├ mode
-    │ └ MANUAL
+    ├ state: NO_OPTIMIZER
+    ├ mode: MANUAL
     ├ model_cache
     │ A MOIU.Model{Float64}
-    │ ├ ObjectiveSense
-    │ │ └ MIN_SENSE
-    │ ├ ObjectiveFunctionType
-    │ │ └ MOI.ScalarAffineFunction{Float64}
-    │ ├ NumberOfVariables
-    │ │ └ 2
-    │ └ NumberOfConstraints
+    │ ├ ObjectiveSense: MIN_SENSE
+    │ ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+    │ ├ NumberOfVariables: 2
+    │ └ NumberOfConstraints: 3
     │   ├ MOI.ScalarAffineFunction{Float64} in MOI.LessThan{Float64}: 2
     │   └ MOI.VariableIndex in MOI.GreaterThan{Float64}: 1
-    └ optimizer
-      └ nothing"""
+    └ optimizer: nothing"""
     @test sprint(show, cache) == output
     return
 end
