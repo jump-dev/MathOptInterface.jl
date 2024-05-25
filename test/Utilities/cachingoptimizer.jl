@@ -1091,11 +1091,11 @@ function test_show()
     )
     cache = MOI.Utilities.CachingOptimizer(model, MOI.Utilities.MANUAL)
     output = """
-    MOIU.CachingOptimizer:
+    MOIU.CachingOptimizer
     ├ state: NO_OPTIMIZER
     ├ mode: MANUAL
-    ├ model_cache
-    │ A MOIU.Model{Float64}
+    ├ model_cache:
+    │ MOIU.Model{Float64}
     │ ├ ObjectiveSense: MIN_SENSE
     │ ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
     │ ├ NumberOfVariables: 2
