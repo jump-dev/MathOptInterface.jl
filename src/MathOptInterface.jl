@@ -53,7 +53,9 @@ function Base.show(io::IO, model::ModelLike)
             push!(constraint_lines, "\n$offset  $tree $F in $S: $m")
         end
         print(io, offset, "└ NumberOfConstraints: $n_total")
-        Utilities.print_with_acronym.(io, constraint_lines)
+        for line in constraint_lines
+            Utilities.print_with_acronym.(io, line)
+        end
     end
     return
 end
