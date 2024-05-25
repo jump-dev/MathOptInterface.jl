@@ -332,6 +332,20 @@ function test_runtests()
         [y, z] in SOS1([0.4, 0.6])
         """,
     )
+    # Test that the bridge does nothing for VectorQuadraticFunctions
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.IndicatorSOS1Bridge,
+        """
+        variables: x, z
+        [z, 2.0 * x * x] in Indicator{ACTIVATE_ON_ONE}(LessThan(2.0))
+        z in ZeroOne()
+        """,
+        """
+        variables: x, z
+        [z, 2.0 * x * x] in Indicator{ACTIVATE_ON_ONE}(LessThan(2.0))
+        z in ZeroOne()
+        """,
+    )
     return
 end
 
