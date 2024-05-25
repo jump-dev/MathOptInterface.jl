@@ -714,8 +714,9 @@ end
 struct TestShow2505 <: MOI.ModelLike end
 
 function test_show_2505()
-    @test sprint(show, Foo()) == """
-    Foo
+    model = TestShow2505()
+    @test sprint(show, model) == """
+    $(typeof(model))
     ├ ObjectiveSense: unknown
     ├ ObjectiveFunctionType: unknown
     ├ NumberOfVariables: unknown
