@@ -1094,8 +1094,7 @@ function test_show()
     MOIU.CachingOptimizer
     ├ state: NO_OPTIMIZER
     ├ mode: MANUAL
-    ├ model_cache:
-    │ MOIU.Model{Float64}
+    ├ model_cache: MOIU.Model{Float64}
     │ ├ ObjectiveSense: MIN_SENSE
     │ ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
     │ ├ NumberOfVariables: 2

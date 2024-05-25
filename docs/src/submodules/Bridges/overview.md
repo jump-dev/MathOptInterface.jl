@@ -114,8 +114,7 @@ MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
 ├ Variable bridges: none
 ├ Constraint bridges: none
 ├ Objective bridges: none
-└ model
-  MOIU.Model{Float64}
+└ model: MOIU.Model{Float64}
   ├ ObjectiveSense: FEASIBILITY_SENSE
   ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
   ├ NumberOfVariables: 0
@@ -183,8 +182,7 @@ MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
 ├ Variable bridges: none
 ├ Constraint bridges: none
 ├ Objective bridges: none
-└ model
-  MOIU.Model{Float64}
+└ model: MOIU.Model{Float64}
   ├ ObjectiveSense: FEASIBILITY_SENSE
   ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
   ├ NumberOfVariables: 0

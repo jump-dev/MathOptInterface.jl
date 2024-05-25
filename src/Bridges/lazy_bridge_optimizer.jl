@@ -96,14 +96,13 @@ Constraint.bridges(bridge::LazyBridgeOptimizer) = bridge.constraint_map
 Objective.bridges(b::LazyBridgeOptimizer) = b.objective_map
 
 function _print_bridges_from_map(io, map)
-    offset = get(io, :offset, "")
     bridges = values(map)
     if isempty(bridges)
-        println(io, ": none")
+        println(io, " none")
         return
-    else
-        println(io)
     end
+    println(io)
+    offset = get(io, :offset, "")
     bridge_strings = sort(string.(unique(typeof.(bridges))))
     for (i, bridge) in enumerate(bridge_strings)
         tree = ifelse(i == length(bridge_strings), '└', '├')
@@ -117,13 +116,13 @@ function Base.show(io::IO, model::LazyBridgeOptimizer)
     print(io, offset)
     MOI.Utilities.print_with_acronym(io, summary(model))
     println(io)
-    print(io, offset, "├ Variable bridges")
+    print(io, offset, "├ Variable bridges:")
     _print_bridges_from_map(io, model.variable_map)
-    print(io, offset, "├ Constraint bridges")
+    print(io, offset, "├ Constraint bridges:")
     _print_bridges_from_map(io, model.constraint_map)
-    print(io, offset, "├ Objective bridges")
+    print(io, offset, "├ Objective bridges:")
     _print_bridges_from_map(io, model.objective_map)
-    println(io, offset, "└ model")
+    print(io, offset, "└ model: ")
     show(IOContext(io, :offset => offset * "  "), model.model)
     return
 end

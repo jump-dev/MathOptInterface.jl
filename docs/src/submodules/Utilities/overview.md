@@ -166,14 +166,12 @@ julia> model = MOI.Utilities.CachingOptimizer(
 MOIU.CachingOptimizer
 ├ state: EMPTY_OPTIMIZER
 ├ mode: AUTOMATIC
-├ model_cache:
-│ MOIU.Model{Float64}
+├ model_cache: MOIU.Model{Float64}
 │ ├ ObjectiveSense: FEASIBILITY_SENSE
 │ ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
 │ ├ NumberOfVariables: 0
 │ └ NumberOfConstraints: 0
-└ optimizer:
-  MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+└ optimizer: MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
   ├ ObjectiveSense: FEASIBILITY_SENSE
   ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
   ├ NumberOfVariables: 0
@@ -228,8 +226,7 @@ julia> model
 MOIU.CachingOptimizer
 ├ state: NO_OPTIMIZER
 ├ mode: AUTOMATIC
-├ model_cache:
-│ MOIU.Model{Float64}
+├ model_cache: MOIU.Model{Float64}
 │ ├ ObjectiveSense: FEASIBILITY_SENSE
 │ ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
 │ ├ NumberOfVariables: 0
@@ -249,14 +246,12 @@ julia> model
 MOIU.CachingOptimizer
 ├ state: EMPTY_OPTIMIZER
 ├ mode: AUTOMATIC
-├ model_cache:
-│ MOIU.Model{Float64}
+├ model_cache: MOIU.Model{Float64}
 │ ├ ObjectiveSense: FEASIBILITY_SENSE
 │ ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
 │ ├ NumberOfVariables: 0
 │ └ NumberOfConstraints: 0
-└ optimizer:
-  MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+└ optimizer: MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
   ├ ObjectiveSense: FEASIBILITY_SENSE
   ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
   ├ NumberOfVariables: 0
@@ -293,8 +288,7 @@ julia> model = MOI.Utilities.CachingOptimizer(
 MOIU.CachingOptimizer
 ├ state: NO_OPTIMIZER
 ├ mode: MANUAL
-├ model_cache:
-│ MOIU.Model{Float64}
+├ model_cache: MOIU.Model{Float64}
 │ ├ ObjectiveSense: FEASIBILITY_SENSE
 │ ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
 │ ├ NumberOfVariables: 0
@@ -307,14 +301,12 @@ julia> model
 MOIU.CachingOptimizer
 ├ state: EMPTY_OPTIMIZER
 ├ mode: MANUAL
-├ model_cache:
-│ MOIU.Model{Float64}
+├ model_cache: MOIU.Model{Float64}
 │ ├ ObjectiveSense: FEASIBILITY_SENSE
 │ ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
 │ ├ NumberOfVariables: 0
 │ └ NumberOfConstraints: 0
-└ optimizer:
-  MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+└ optimizer: MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
   ├ ObjectiveSense: FEASIBILITY_SENSE
   ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
   ├ NumberOfVariables: 0

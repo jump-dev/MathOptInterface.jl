@@ -405,8 +405,7 @@ function test_show_SPDA()
     ├ Variable bridges: none
     ├ Constraint bridges: none
     ├ Objective bridges: none
-    └ model
-      $model_str
+    └ model: $model_str
       ├ ObjectiveSense: FEASIBILITY_SENSE
       ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
       ├ NumberOfVariables: 0
@@ -416,13 +415,12 @@ function test_show_SPDA()
     # add variable bridges
     ret = """
     MOIB.LazyBridgeOptimizer{$model_str}
-    ├ Variable bridges
+    ├ Variable bridges:
     │ ├ MOIB.Variable.NonposToNonnegBridge{Float64}
     │ └ MOIB.Variable.VectorizeBridge{Float64, MOI.Nonpositives}
     ├ Constraint bridges: none
     ├ Objective bridges: none
-    └ model
-      $model_str
+    └ model: $model_str
       ├ ObjectiveSense: FEASIBILITY_SENSE
       ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
       ├ NumberOfVariables: 1
