@@ -54,7 +54,7 @@ function Base.show(io::IO, model::ModelLike)
         end
         print(io, offset, "└ NumberOfConstraints: $n_total")
         for line in constraint_lines
-            Utilities.print_with_acronym.(io, line)
+            Utilities.print_with_acronym(io, line)
         end
     end
     return
