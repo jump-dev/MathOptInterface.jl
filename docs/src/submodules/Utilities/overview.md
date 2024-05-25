@@ -19,6 +19,7 @@ given the extensibility of MOI, this might not cover all use cases.
 
 Create a model as follows:
 ```jldoctest
+julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
 ├ ObjectiveSense: FEASIBILITY_SENSE
 ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
