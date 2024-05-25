@@ -832,7 +832,11 @@ in MOI. It is parameterized by the coefficient type.
 julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}()
-An empty MOIU.Model{Float64}
+MOIU.Model{Float64}
+├ ObjectiveSense: FEASIBILITY_SENSE
+├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+├ NumberOfVariables: 0
+└ NumberOfConstraints: 0
 ```
 """
 Model

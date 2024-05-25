@@ -114,7 +114,7 @@ end
 
 function Base.show(io::IO, model::LazyBridgeOptimizer)
     offset = get(io, :offset, "")
-    print(io, offset, "A ")
+    print(io, offset)
     MOI.Utilities.print_with_acronym(io, summary(model))
     println(io)
     print(io, offset, "├ Variable bridges")

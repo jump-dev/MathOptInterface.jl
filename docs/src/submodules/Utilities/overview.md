@@ -19,8 +19,11 @@ given the extensibility of MOI, this might not cover all use cases.
 
 Create a model as follows:
 ```jldoctest
-julia> model = MOI.Utilities.Model{Float64}()
-An empty MOIU.Model{Float64}
+MOIU.Model{Float64}
+├ ObjectiveSense: FEASIBILITY_SENSE
+├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+├ NumberOfVariables: 0
+└ NumberOfConstraints: 0
 ```
 
 ## Utilities.UniversalFallback
@@ -35,7 +38,11 @@ like [`VariablePrimalStart`](@ref), so JuMP uses a combination of Universal
 fallback and [`Utilities.Model`](@ref) as a generic problem cache:
 ```jldoctest
 julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
-An empty MOIU.UniversalFallback{MOIU.Model{Float64}}
+MOIU.UniversalFallback{MOIU.Model{Float64}}
+├ ObjectiveSense: FEASIBILITY_SENSE
+├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+├ NumberOfVariables: 0
+└ NumberOfConstraints: 0
 ```
 
 !!! warning
@@ -85,7 +92,11 @@ julia> MOI.Utilities.@model(
 MathOptInterface.Utilities.GenericOptimizer{T, MathOptInterface.Utilities.ObjectiveContainer{T}, MathOptInterface.Utilities.VariablesContainer{T}, MyNewModelFunctionConstraints{T}} where T
 
 julia> model = MyNewModel{Float64}()
-An empty MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MyNewModelFunctionConstraints{Float64}}
+MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MyNewModelFunctionConstraints{Float64}}
+├ ObjectiveSense: FEASIBILITY_SENSE
+├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+├ NumberOfVariables: 0
+└ NumberOfConstraints: 0
 ```
 
 !!! warning
@@ -151,13 +162,21 @@ julia> model = MOI.Utilities.CachingOptimizer(
            MOI.Utilities.Model{Float64}(),
            PathOptimizer{Float64}(),
        )
-A MOI.Utilities.CachingOptimizer:
+MOIU.CachingOptimizer:
 ├ state: EMPTY_OPTIMIZER
 ├ mode: AUTOMATIC
 ├ model_cache
-│ An empty MOIU.Model{Float64}
+│ MOIU.Model{Float64}
+│ ├ ObjectiveSense: FEASIBILITY_SENSE
+│ ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+│ ├ NumberOfVariables: 0
+│ └ NumberOfConstraints: 0
 └ optimizer
-  An empty MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+  MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+  ├ ObjectiveSense: FEASIBILITY_SENSE
+  ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+  ├ NumberOfVariables: 0
+  └ NumberOfConstraints: 0
 ```
 
 A [`Utilities.CachingOptimizer`](@ref) may be in one of three possible states:
@@ -205,11 +224,15 @@ julia> MOI.Utilities.state(model)
 NO_OPTIMIZER::CachingOptimizerState = 0
 
 julia> model
-A MOI.Utilities.CachingOptimizer:
+MOIU.CachingOptimizer:
 ├ state: NO_OPTIMIZER
 ├ mode: AUTOMATIC
 ├ model_cache
-│ An empty MOIU.Model{Float64}
+│ MOIU.Model{Float64}
+│ ├ ObjectiveSense: FEASIBILITY_SENSE
+│ ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+│ ├ NumberOfVariables: 0
+│ └ NumberOfConstraints: 0
 └ optimizer: nothing
 ```
 
@@ -222,13 +245,21 @@ julia> MOI.Utilities.state(model)
 EMPTY_OPTIMIZER::CachingOptimizerState = 1
 
 julia> model
-A MOI.Utilities.CachingOptimizer:
+MOIU.CachingOptimizer:
 ├ state: EMPTY_OPTIMIZER
 ├ mode: AUTOMATIC
 ├ model_cache
-│ An empty MOIU.Model{Float64}
+│ MOIU.Model{Float64}
+│ ├ ObjectiveSense: FEASIBILITY_SENSE
+│ ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+│ ├ NumberOfVariables: 0
+│ └ NumberOfConstraints: 0
 └ optimizer
-  An empty MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+  MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+  ├ ObjectiveSense: FEASIBILITY_SENSE
+  ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+  ├ NumberOfVariables: 0
+  └ NumberOfConstraints: 0
 ```
 
 Deciding when to attach and reset the optimizer is tedious, and you will often
@@ -258,23 +289,35 @@ julia> model = MOI.Utilities.CachingOptimizer(
            MOI.Utilities.Model{Float64}(),
            MOI.Utilities.MANUAL,
        )
-A MOI.Utilities.CachingOptimizer:
+MOIU.CachingOptimizer:
 ├ state: NO_OPTIMIZER
 ├ mode: MANUAL
 ├ model_cache
-│ An empty MOIU.Model{Float64}
+│ MOIU.Model{Float64}
+│ ├ ObjectiveSense: FEASIBILITY_SENSE
+│ ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+│ ├ NumberOfVariables: 0
+│ └ NumberOfConstraints: 0
 └ optimizer: nothing
 
 julia> MOI.Utilities.reset_optimizer(model, PathOptimizer{Float64}())
 
 julia> model
-A MOI.Utilities.CachingOptimizer:
+MOIU.CachingOptimizer:
 ├ state: EMPTY_OPTIMIZER
 ├ mode: MANUAL
 ├ model_cache
-│ An empty MOIU.Model{Float64}
+│ MOIU.Model{Float64}
+│ ├ ObjectiveSense: FEASIBILITY_SENSE
+│ ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+│ ├ NumberOfVariables: 0
+│ └ NumberOfConstraints: 0
 └ optimizer
-  An empty MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+  MOIU.GenericOptimizer{Float64, MOIU.ObjectiveContainer{Float64}, MOIU.VariablesContainer{Float64}, MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64}, MOI.Complements}}
+  ├ ObjectiveSense: FEASIBILITY_SENSE
+  ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+  ├ NumberOfVariables: 0
+  └ NumberOfConstraints: 0
 ```
 
 ## Printing

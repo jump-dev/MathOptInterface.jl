@@ -401,24 +401,28 @@ function test_show_SPDA()
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     # no bridges
     ret = """
-    A MOIB.LazyBridgeOptimizer{$model_str}
+    MOIB.LazyBridgeOptimizer{$model_str}
     ├ Variable bridges: none
     ├ Constraint bridges: none
     ├ Objective bridges: none
     └ model
-      An empty $model_str"""
+      $model_str
+      ├ ObjectiveSense: FEASIBILITY_SENSE
+      ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+      ├ NumberOfVariables: 0
+      └ NumberOfConstraints: 0"""
     @test sprint(show, bridged) == ret
     MOI.add_constrained_variable(bridged, MOI.LessThan(1.0))
     # add variable bridges
     ret = """
-    A MOIB.LazyBridgeOptimizer{$model_str}
+    MOIB.LazyBridgeOptimizer{$model_str}
     ├ Variable bridges
     │ ├ MOIB.Variable.NonposToNonnegBridge{Float64}
     │ └ MOIB.Variable.VectorizeBridge{Float64, MOI.Nonpositives}
     ├ Constraint bridges: none
     ├ Objective bridges: none
     └ model
-      A $model_str
+      $model_str
       ├ ObjectiveSense: FEASIBILITY_SENSE
       ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
       ├ NumberOfVariables: 1

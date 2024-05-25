@@ -1091,7 +1091,7 @@ function test_show()
     )
     cache = MOI.Utilities.CachingOptimizer(model, MOI.Utilities.MANUAL)
     output = """
-    A MOI.Utilities.CachingOptimizer:
+    MOIU.CachingOptimizer:
     ├ state: NO_OPTIMIZER
     ├ mode: MANUAL
     ├ model_cache

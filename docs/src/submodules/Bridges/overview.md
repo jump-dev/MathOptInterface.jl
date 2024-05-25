@@ -103,15 +103,23 @@ in a [`Bridges.full_bridge_optimizer`](@ref).
 
 ```jldoctest
 julia> inner_optimizer = MOI.Utilities.Model{Float64}()
-An empty MOIU.Model{Float64}
+MOIU.Model{Float64}
+├ ObjectiveSense: FEASIBILITY_SENSE
+├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+├ NumberOfVariables: 0
+└ NumberOfConstraints: 0
 
 julia> optimizer = MOI.Bridges.full_bridge_optimizer(inner_optimizer, Float64)
-A MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
+MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
 ├ Variable bridges: none
 ├ Constraint bridges: none
 ├ Objective bridges: none
 └ model
-  An empty MOIU.Model{Float64}
+  MOIU.Model{Float64}
+  ├ ObjectiveSense: FEASIBILITY_SENSE
+  ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+  ├ NumberOfVariables: 0
+  └ NumberOfConstraints: 0
 ```
 
 Now, use `optimizer` as normal, and bridging will happen lazily behind the
@@ -135,8 +143,7 @@ However, this will force the constraint to be bridged, even if the
 `inner_optimizer` supports it.
 
 ```jldoctest
-julia> inner_optimizer = MOI.Utilities.Model{Float64}()
-An empty MOIU.Model{Float64}
+julia> inner_optimizer = MOI.Utilities.Model{Float64}();
 
 julia> optimizer = MOI.Bridges.Constraint.SplitInterval{Float64}(inner_optimizer);
 
@@ -165,15 +172,23 @@ manually construct a [`Bridges.LazyBridgeOptimizer`](@ref).
 First, wrap an inner optimizer:
 ```jldoctest lazy_bridge_optimizer
 julia> inner_optimizer = MOI.Utilities.Model{Float64}()
-An empty MOIU.Model{Float64}
+MOIU.Model{Float64}
+├ ObjectiveSense: FEASIBILITY_SENSE
+├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+├ NumberOfVariables: 0
+└ NumberOfConstraints: 0
 
 julia> optimizer = MOI.Bridges.LazyBridgeOptimizer(inner_optimizer)
-A MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
+MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
 ├ Variable bridges: none
 ├ Constraint bridges: none
 ├ Objective bridges: none
 └ model
-  An empty MOIU.Model{Float64}
+  MOIU.Model{Float64}
+  ├ ObjectiveSense: FEASIBILITY_SENSE
+  ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+  ├ NumberOfVariables: 0
+  └ NumberOfConstraints: 0
 ```
 
 Then use [`Bridges.add_bridge`](@ref) to add individual bridges:

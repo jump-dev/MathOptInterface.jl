@@ -22,7 +22,11 @@ julia> struct MyNewBridge{T} <: MOI.Bridges.Constraint.AbstractBridge end
 julia> bridge = MOI.Bridges.Constraint.SingleBridgeOptimizer{MyNewBridge{Float64}}(
            MOI.Utilities.Model{Float64}(),
        )
-An empty MOIB.Constraint.SingleBridgeOptimizer{MyNewBridge{Float64}, MOIU.Model{Float64}}
+MOIB.Constraint.SingleBridgeOptimizer{MyNewBridge{Float64}, MOIU.Model{Float64}}
+├ ObjectiveSense: FEASIBILITY_SENSE
+├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+├ NumberOfVariables: 0
+└ NumberOfConstraints: 0
 ```
 
 ## Implementation notes

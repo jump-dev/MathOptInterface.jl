@@ -30,16 +30,12 @@ end
 
 function Base.show(io::IO, model::ModelLike)
     offset = Base.get(io, :offset, "")
-    if is_empty(model)
-        Utilities.print_with_acronym(io, "$(offset)An empty $(typeof(model))")
-        return
-    end
-    Utilities.print_with_acronym(io, "$(offset)A $(typeof(model))\n")
+    Utilities.print_with_acronym(io, "$(offset)$(typeof(model))\n")
     # ObjectiveSense
     sense = _try_get(model, ObjectiveSense(), "FEASIBILITY_SENSE")
     println(io, offset, "├ ObjectiveSense: $sense")
     # ObjectiveFunctionType
-    F = _try_get(model, ObjectiveFunctionType(), "")
+    F = _try_get(model, ObjectiveFunctionType(), "?")
     Utilities.print_with_acronym(io, "$(offset)├ ObjectiveFunctionType: $F\n")
     # NumberOfVariables
     n = _try_get(model, NumberOfVariables(), "?")
