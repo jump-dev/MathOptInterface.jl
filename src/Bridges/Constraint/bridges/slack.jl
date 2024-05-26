@@ -127,9 +127,15 @@ function MOI.get(
     bridge::_AbstractSlackBridge,
 )
     # The dual constraint on slack (since it is free) is
-    # -dual_slack_in_set + dual_equality = 0 so the two duals are
+    # `-dual_slack_in_set + dual_equality = 0` so the two duals are
     # equal and we can return either one of them.
-    return MOI.get(model, a, bridge.slack_in_set)
+    # We decide to use the dual of the equality constraints because
+    # the `slack_in_set` constraint might be bridge by a variable bridge that
+    # does not # support `ConstraintDual`. This is the case if the adjoint of
+    # the linear map on which the bridge is based is not invertible, as for
+    # instance with `Variable.ZerosBridge` or
+    # `SumOfSquares.Bridges.Variable.KernelBridge`.
+    return MOI.get(model, a, bridge.equality)
 end
 
 function MOI.set(
