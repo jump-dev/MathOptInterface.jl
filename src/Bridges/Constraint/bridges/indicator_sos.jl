@@ -60,10 +60,10 @@ function bridge_constraint(
 end
 
 function MOI.supports_constraint(
-    ::Type{<:IndicatorSOS1Bridge},
-    ::Type{<:MOI.AbstractVectorFunction},
+    ::Type{<:IndicatorSOS1Bridge{T}},
+    ::Type{MOI.VectorAffineFunction{T}},
     ::Type{<:MOI.Indicator{MOI.ACTIVATE_ON_ONE,<:MOI.AbstractScalarSet}},
-)
+) where {T}
     return true
 end
 
@@ -113,7 +113,7 @@ end
 
 function concrete_bridge_type(
     ::Type{<:IndicatorSOS1Bridge{T}},
-    ::Type{<:MOI.AbstractVectorFunction},
+    ::Type{MOI.VectorAffineFunction{T}},
     ::Type{MOI.Indicator{MOI.ACTIVATE_ON_ONE,S}},
 ) where {T,S}
     return IndicatorSOS1Bridge{T,S}
