@@ -489,12 +489,9 @@ function test_CachingOptimizer_MANUAL_mode()
 
     # TODO: test more constraint modifications
 
-    @test sprint(show, m) == MOI.Utilities.replace_acronym("""
-    $(MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.Model{Float64}})
-    in state NO_OPTIMIZER
-    in mode MANUAL
-    with model cache $(MOIU.Model{Float64})
-    with optimizer nothing""")
+    show_str = sprint(show, m)
+    @test occursin("NO_OPTIMIZER", show_str)
+    @test occursin("MANUAL", show_str)
 
     MOI.empty!(s)
     MOIU.reset_optimizer(m, s)
@@ -633,14 +630,7 @@ function test_CachingOptimizer_AUTOMATIC_mode()
         MOIU.attach_optimizer(m)
         @test MOIU.state(m) == MOIU.ATTACHED_OPTIMIZER
     end
-
-    @test sprint(show, m) == MOI.Utilities.replace_acronym("""
-    $(MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.Model{Float64}})
-    in state ATTACHED_OPTIMIZER
-    in mode AUTOMATIC
-    with model cache $(MOIU.Model{Float64})
-    with optimizer $(MOIU.MockOptimizer{MOIU.Model{Float64},Float64})""")
-
+    @test occursin("AUTOMATIC", sprint(show, m))
     MOI.empty!(m)
     @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
     return
@@ -655,12 +645,8 @@ function test_empty_model_and_optimizer()
     @test MOIU.state(m) == MOIU.EMPTY_OPTIMIZER
     @test MOIU.mode(m) == MOIU.AUTOMATIC
     @test MOI.get(m, MOI.SolverName()) == "Mock"
-    @test sprint(show, m) == MOI.Utilities.replace_acronym("""
-    $(MOIU.CachingOptimizer{MOIU.MockOptimizer{MOIU.Model{Float64},Float64},MOIU.Model{Float64}})
-    in state EMPTY_OPTIMIZER
-    in mode AUTOMATIC
-    with model cache $(MOIU.Model{Float64})
-    with optimizer $(MOIU.MockOptimizer{MOIU.Model{Float64},Float64})""")
+    @test occursin("EMPTY_OPTIMIZER", sprint(show, m))
+    return
 end
 
 function test_empty_model_nonempty_optimizer()
@@ -1089,6 +1075,35 @@ function test_multiple_modifications()
 
     obj = MOI.get(m, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}())
     @test MOI.coefficient.(obj.terms) == [4.0, 10.0, 2.0]
+end
+
+function test_show()
+    model = MOI.Utilities.Model{Float64}()
+    MOI.Utilities.loadfromstring!(
+        model,
+        """
+        variables: x, y
+        minobjective: 2.0 * x
+        c1: x >= 0.0
+        c2: 1.0 * x + 2.0 * y <= 3.0
+        c2: 1.0 * x + 3.0 * y <= 2.0
+        """,
+    )
+    cache = MOI.Utilities.CachingOptimizer(model, MOI.Utilities.MANUAL)
+    output = """
+    MOIU.CachingOptimizer
+    ├ state: NO_OPTIMIZER
+    ├ mode: MANUAL
+    ├ model_cache: MOIU.Model{Float64}
+    │ ├ ObjectiveSense: MIN_SENSE
+    │ ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+    │ ├ NumberOfVariables: 2
+    │ └ NumberOfConstraints: 3
+    │   ├ MOI.ScalarAffineFunction{Float64} in MOI.LessThan{Float64}: 2
+    │   └ MOI.VariableIndex in MOI.GreaterThan{Float64}: 1
+    └ optimizer: nothing"""
+    @test sprint(show, cache) == output
+    return
 end
 
 end  # module

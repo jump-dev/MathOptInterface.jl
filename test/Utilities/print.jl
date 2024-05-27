@@ -711,6 +711,19 @@ function test_scalar_nonlinear_function_print()
     return
 end
 
+struct TestShow2505 <: MOI.ModelLike end
+
+function test_show_2505()
+    model = TestShow2505()
+    @test sprint(show, model) == """
+    $(typeof(model))
+    ├ ObjectiveSense: unknown
+    ├ ObjectiveFunctionType: unknown
+    ├ NumberOfVariables: unknown
+    └ NumberOfConstraints: unknown"""
+    return
+end
+
 end
 
 TestPrint.runtests()

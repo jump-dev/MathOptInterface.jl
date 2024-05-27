@@ -26,10 +26,7 @@ julia> struct MyNewBridge{T} <: MOI.Bridges.Variable.AbstractBridge end
 
 julia> bridge = MOI.Bridges.Variable.SingleBridgeOptimizer{MyNewBridge{Float64}}(
            MOI.Utilities.Model{Float64}(),
-       )
-MOIB.Variable.SingleBridgeOptimizer{MyNewBridge{Float64}, MOIU.Model{Float64}}
-with 0 variable bridges
-with inner model MOIU.Model{Float64}
+       );
 ```
 
 ## Implementation notes
@@ -42,10 +39,7 @@ julia> const MyNewBridgeModel{T,OT<:MOI.ModelLike} =
 ```
 This enables users to create bridged models as follows:
 ```jldoctest var_singlebridgeoptimizer
-julia> MyNewBridgeModel{Float64}(MOI.Utilities.Model{Float64}())
-MOIB.Variable.SingleBridgeOptimizer{MyNewBridge{Float64}, MOIU.Model{Float64}}
-with 0 variable bridges
-with inner model MOIU.Model{Float64}
+julia> MyNewBridgeModel{Float64}(MOI.Utilities.Model{Float64}());
 ```
 """
 mutable struct SingleBridgeOptimizer{BT<:AbstractBridge,OT<:MOI.ModelLike} <:

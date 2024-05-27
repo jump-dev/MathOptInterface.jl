@@ -25,12 +25,7 @@ and [`full_bridge_optimizer`](@ref).
 ## Example
 
 ```jldoctest; setup=:(import MathOptInterface as MOI)
-julia> model = MOI.Bridges.LazyBridgeOptimizer(MOI.Utilities.Model{Float64}())
-MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
-with 0 variable bridges
-with 0 constraint bridges
-with 0 objective bridges
-with inner model MOIU.Model{Float64}
+julia> model = MOI.Bridges.LazyBridgeOptimizer(MOI.Utilities.Model{Float64}());
 
 julia> MOI.Bridges.add_bridge(model, MOI.Bridges.Variable.FreeBridge{Float64})
 
@@ -99,6 +94,37 @@ Variable.bridges(bridge::LazyBridgeOptimizer) = bridge.variable_map
 Constraint.bridges(bridge::LazyBridgeOptimizer) = bridge.constraint_map
 
 Objective.bridges(b::LazyBridgeOptimizer) = b.objective_map
+
+function _print_bridges_from_map(io, map)
+    bridges = values(map)
+    if isempty(bridges)
+        println(io, " none")
+        return
+    end
+    println(io)
+    offset = get(io, :offset, "")
+    bridge_strings = sort(string.(unique(typeof.(bridges))))
+    for (i, bridge) in enumerate(bridge_strings)
+        tree = ifelse(i == length(bridge_strings), '└', '├')
+        MOI.Utilities.print_with_acronym(io, "$(offset)│ $tree $bridge\n")
+    end
+    return
+end
+
+function Base.show(io::IO, model::LazyBridgeOptimizer)
+    offset = get(io, :offset, "")
+    MOI.Utilities.print_with_acronym(io, summary(model))
+    println(io)
+    print(io, offset, "├ Variable bridges:")
+    _print_bridges_from_map(io, model.variable_map)
+    print(io, offset, "├ Constraint bridges:")
+    _print_bridges_from_map(io, model.constraint_map)
+    print(io, offset, "├ Objective bridges:")
+    _print_bridges_from_map(io, model.objective_map)
+    print(io, offset, "└ model: ")
+    show(IOContext(io, :offset => offset * "  "), model.model)
+    return
+end
 
 """
     _reset_bridge_graph(b::LazyBridgeOptimizer)

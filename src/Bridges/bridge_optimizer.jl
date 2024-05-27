@@ -16,19 +16,6 @@ the optimizer must implement [`MOI.optimize!`](@ref).
 """
 abstract type AbstractBridgeOptimizer <: MOI.AbstractOptimizer end
 
-function Base.show(io::IO, B::AbstractBridgeOptimizer)
-    MOI.Utilities.print_with_acronym(io, summary(B))
-    show(io, Variable.bridges(B))
-    show(io, Constraint.bridges(B))
-    show(io, Objective.bridges(B))
-    if :model in propertynames(B)
-        indent = " "^get(io, :indent, 0)
-        print(io, "\n$(indent)with inner model ")
-        show(IOContext(io, :indent => get(io, :indent, 0) + 2), B.model)
-    end
-    return
-end
-
 # AbstractBridgeOptimizer interface
 
 """

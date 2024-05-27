@@ -73,8 +73,7 @@ A SemiDefinite Programming Algorithm Format (SDPA) model
 To write a model `src` to a [MathOptFormat file](https://jump.dev/MathOptFormat/),
 use:
 ```jldoctest fileformats
-julia> src = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> src = MOI.Utilities.Model{Float64}();
 
 julia> MOI.add_variable(src)
 MOI.VariableIndex(1)
@@ -130,8 +129,7 @@ argument to [`FileFormats.Model`](@ref). This will attempt to automatically
 guess the format from the file extension. For example:
 
 ```jldoctest fileformats
-julia> src = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> src = MOI.Utilities.Model{Float64}();
 
 julia> dest = MOI.FileFormats.Model(filename = "file.cbf.gz")
 A Conic Benchmark Format (CBF) model
@@ -144,8 +142,7 @@ julia> MOI.write_to_file(dest, "file.cbf.gz")
 julia> src_2 = MOI.FileFormats.Model(filename = "file.cbf.gz")
 A Conic Benchmark Format (CBF) model
 
-julia> src = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> src = MOI.Utilities.Model{Float64}();
 
 julia> dest = MOI.FileFormats.Model(filename = "file.cbf.gz")
 A Conic Benchmark Format (CBF) model
@@ -189,8 +186,7 @@ MOI.write_to_file(dest, "my_model.cbf")
 In addition to [`write_to_file`](@ref) and [`read_from_file`](@ref), you can
 read and write directly from `IO` streams using `Base.write` and `Base.read!`:
 ```jldoctest
-julia> src = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> src = MOI.Utilities.Model{Float64}();
 
 julia> dest = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MPS)
 A Mathematical Programming System (MPS) model

@@ -119,7 +119,6 @@ function test_map()
     @test MOI.Bridges.Variable.list_of_constraint_types(map) ==
           Set([(F1, S1), (F2, S2)])
     @test length(map) == 2
-    @test sprint(show, map) == "\nwith 2 variable bridges"
     @test !isempty(map)
     @test MOI.Bridges.Variable.has_bridges(map)
     @test collect(keys(map)) == [v1; v2]
@@ -147,7 +146,6 @@ function test_map()
     delete!(map, v1)
     @test MOI.Bridges.Variable.number_of_variables(map) == 4
     @test length(map) == 1
-    @test sprint(show, map) == "\nwith 1 variable bridge"
     @test !isempty(map)
     @test MOI.Bridges.Variable.has_bridges(map)
     elements = collect(map)

@@ -104,13 +104,21 @@ in a [`Bridges.full_bridge_optimizer`](@ref).
 ```jldoctest
 julia> inner_optimizer = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
+├ ObjectiveSense: FEASIBILITY_SENSE
+├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+├ NumberOfVariables: 0
+└ NumberOfConstraints: 0
 
 julia> optimizer = MOI.Bridges.full_bridge_optimizer(inner_optimizer, Float64)
 MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
-with 0 variable bridges
-with 0 constraint bridges
-with 0 objective bridges
-with inner model MOIU.Model{Float64}
+├ Variable bridges: none
+├ Constraint bridges: none
+├ Objective bridges: none
+└ model: MOIU.Model{Float64}
+  ├ ObjectiveSense: FEASIBILITY_SENSE
+  ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+  ├ NumberOfVariables: 0
+  └ NumberOfConstraints: 0
 ```
 
 Now, use `optimizer` as normal, and bridging will happen lazily behind the
@@ -134,13 +142,9 @@ However, this will force the constraint to be bridged, even if the
 `inner_optimizer` supports it.
 
 ```jldoctest
-julia> inner_optimizer = MOI.Utilities.Model{Float64}()
-MOIU.Model{Float64}
+julia> inner_optimizer = MOI.Utilities.Model{Float64}();
 
-julia> optimizer = MOI.Bridges.Constraint.SplitInterval{Float64}(inner_optimizer)
-MOIB.Constraint.SingleBridgeOptimizer{MOIB.Constraint.SplitIntervalBridge{Float64}, MOIU.Model{Float64}}
-with 0 constraint bridges
-with inner model MOIU.Model{Float64}
+julia> optimizer = MOI.Bridges.Constraint.SplitInterval{Float64}(inner_optimizer);
 
 julia> x = MOI.add_variable(optimizer)
 MOI.VariableIndex(1)
@@ -168,13 +172,21 @@ First, wrap an inner optimizer:
 ```jldoctest lazy_bridge_optimizer
 julia> inner_optimizer = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
+├ ObjectiveSense: FEASIBILITY_SENSE
+├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+├ NumberOfVariables: 0
+└ NumberOfConstraints: 0
 
 julia> optimizer = MOI.Bridges.LazyBridgeOptimizer(inner_optimizer)
 MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
-with 0 variable bridges
-with 0 constraint bridges
-with 0 objective bridges
-with inner model MOIU.Model{Float64}
+├ Variable bridges: none
+├ Constraint bridges: none
+├ Objective bridges: none
+└ model: MOIU.Model{Float64}
+  ├ ObjectiveSense: FEASIBILITY_SENSE
+  ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+  ├ NumberOfVariables: 0
+  └ NumberOfConstraints: 0
 ```
 
 Then use [`Bridges.add_bridge`](@ref) to add individual bridges:

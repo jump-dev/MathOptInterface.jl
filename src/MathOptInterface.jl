@@ -20,8 +20,44 @@ abstract type ModelLike end
 # embed it in a `Ref`
 Base.broadcastable(model::ModelLike) = Ref(model)
 
+function _try_get(model::ModelLike, attr, default)
+    try
+        return get(model, attr)
+    catch
+        return default
+    end
+end
+
 function Base.show(io::IO, model::ModelLike)
-    return Utilities.print_with_acronym(io, summary(model))
+    offset = Base.get(io, :offset, "")
+    Utilities.print_with_acronym(io, "$(typeof(model))\n")
+    # ObjectiveSense
+    sense = _try_get(model, ObjectiveSense(), "unknown")
+    println(io, offset, "├ ObjectiveSense: $sense")
+    # ObjectiveFunctionType
+    F = _try_get(model, ObjectiveFunctionType(), "unknown")
+    Utilities.print_with_acronym(io, "$(offset)├ ObjectiveFunctionType: $F\n")
+    # NumberOfVariables
+    n = _try_get(model, NumberOfVariables(), "unknown")
+    println(io, offset, "├ NumberOfVariables: $n")
+    # NumberOfConstraints
+    constraint_types = _try_get(model, ListOfConstraintTypesPresent(), nothing)
+    if constraint_types === nothing
+        print(io, offset, "└ NumberOfConstraints: unknown")
+    else
+        constraint_lines, n_total = String[], 0
+        for (i, (F, S)) in enumerate(constraint_types)
+            m = _try_get(model, NumberOfConstraints{F,S}(), 0)
+            n_total += m
+            tree = ifelse(i == length(constraint_types), '└', '├')
+            push!(constraint_lines, "\n$offset  $tree $F in $S: $m")
+        end
+        print(io, offset, "└ NumberOfConstraints: $n_total")
+        for line in constraint_lines
+            Utilities.print_with_acronym(io, line)
+        end
+    end
+    return
 end
 
 """

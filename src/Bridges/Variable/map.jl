@@ -64,13 +64,6 @@ function Map()
     )
 end
 
-function Base.show(io::IO, B::Map)
-    indent = " "^get(io, :indent, 0)
-    n = length(B)
-    s = n == 1 ? "" : "s"
-    return print(io, "\n$(indent)with $(n) variable bridge$s")
-end
-
 # Implementation of `AbstractDict` interface.
 
 Base.isempty(map::Map) = all(bridge -> bridge === nothing, map.bridges)

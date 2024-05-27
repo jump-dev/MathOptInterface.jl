@@ -400,21 +400,33 @@ function test_show_SPDA()
     model_str = sprint(MOI.Utilities.print_with_acronym, string(typeof(model)))
     bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
     # no bridges
-    @test sprint(show, bridged) === """
+    ret = """
     MOIB.LazyBridgeOptimizer{$model_str}
-    with 0 variable bridges
-    with 0 constraint bridges
-    with 0 objective bridges
-    with inner model $model_str"""
-
+    ├ Variable bridges: none
+    ├ Constraint bridges: none
+    ├ Objective bridges: none
+    └ model: $model_str
+      ├ ObjectiveSense: FEASIBILITY_SENSE
+      ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+      ├ NumberOfVariables: 0
+      └ NumberOfConstraints: 0"""
+    @test sprint(show, bridged) == ret
     MOI.add_constrained_variable(bridged, MOI.LessThan(1.0))
     # add variable bridges
-    @test sprint(show, bridged) == """
+    ret = """
     MOIB.LazyBridgeOptimizer{$model_str}
-    with 2 variable bridges
-    with 0 constraint bridges
-    with 0 objective bridges
-    with inner model $model_str"""
+    ├ Variable bridges:
+    │ ├ MOIB.Variable.NonposToNonnegBridge{Float64}
+    │ └ MOIB.Variable.VectorizeBridge{Float64, MOI.Nonpositives}
+    ├ Constraint bridges: none
+    ├ Objective bridges: none
+    └ model: $model_str
+      ├ ObjectiveSense: FEASIBILITY_SENSE
+      ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+      ├ NumberOfVariables: 1
+      └ NumberOfConstraints: 1
+        └ MOI.VectorOfVariables in MOI.Nonnegatives: 1"""
+    @test sprint(show, bridged) == ret
     return
 end
 
