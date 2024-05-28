@@ -102,7 +102,7 @@ function MOI.get(
     bridge::MultiSetMapBridge{T,S1,G},
 ) where {T,S1,G}
     mapped_func = MOI.get(model, attr, bridge.constraint)
-    func = MOI.Bridges.inverse_map_function(typeof(bridge), mapped_func)
+    func = MOI.Bridges.inverse_map_function(bridge, mapped_func)
     return MOI.Utilities.convert_approx(G, func)
 end
 
@@ -146,7 +146,7 @@ function MOI.get(
     if value === nothing
         return nothing
     end
-    return MOI.Bridges.inverse_map_function(typeof(bridge), value)
+    return MOI.Bridges.inverse_map_function(bridge, value)
 end
 
 function MOI.set(
@@ -173,7 +173,7 @@ function MOI.get(
     if value === nothing
         return nothing
     end
-    return MOI.Bridges.adjoint_map_function(typeof(bridge), value)
+    return MOI.Bridges.adjoint_map_function(bridge, value)
 end
 
 function MOI.set(
@@ -185,7 +185,7 @@ function MOI.set(
     if value === nothing
         MOI.set(model, attr, bridge.constraint, nothing)
     else
-        mapped_value = MOI.Bridges.inverse_adjoint_map_function(BT, value)
+        mapped_value = MOI.Bridges.inverse_adjoint_map_function(bridge, value)
         MOI.set(model, attr, bridge.constraint, mapped_value)
     end
     return

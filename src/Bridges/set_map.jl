@@ -61,6 +61,10 @@ the [`MOI.ConstraintPrimal`](@ref) and the
 """
 function inverse_map_function end
 
+function inverse_map_function(bridge::AbstractBridge, func)
+    return inverse_map_function(typeof(bridge), func)
+end
+
 """
     adjoint_map_function(::Type{BT}, func) where {BT}
 
@@ -70,6 +74,10 @@ used for getting the [`MOI.ConstraintDual`](@ref) and
 [`MOI.ConstraintDualStart`](@ref) of constraint bridges.
 """
 function adjoint_map_function end
+
+function adjoint_map_function(bridge::AbstractBridge, func)
+    return adjoint_map_function(typeof(bridge), func)
+end
 
 """
     inverse_adjoint_map_function(::Type{BT}, func) where {BT}
@@ -81,3 +89,7 @@ Return the image of `func` through the inverse of the adjoint of the linear map
 [`MOI.ConstraintDualStart`](@ref) of constraint bridges.
 """
 function inverse_adjoint_map_function end
+
+function inverse_adjoint_map_function(bridge::AbstractBridge, func)
+    return inverse_adjoint_map_function(typeof(bridge), func)
+end
