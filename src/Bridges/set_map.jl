@@ -4,6 +4,8 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
+struct MapNotInvertible <: Exception end
+
 """
     map_set(::Type{BT}, set) where {BT}
 
@@ -43,6 +45,10 @@ the [`MOI.VariablePrimal`](@ref) and
 [`MOI.VariablePrimalStart`](@ref) of variable bridges.
 """
 function map_function end
+
+function map_function(bridge::AbstractBridge, func)
+    return map_function(typeof(bridge), func)
+end
 
 function map_function(::Type{BT}, func, i::IndexInVector) where {BT}
     return MOI.Utilities.eachscalar(map_function(BT, func))[i.value]
