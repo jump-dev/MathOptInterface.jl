@@ -188,8 +188,7 @@ julia> dest = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_CBF);
 
 julia> bridged = MOI.Bridges.full_bridge_optimizer(dest, Float64);
 
-julia> MOI.copy_to(bridged, src)
-MathOptInterface.Utilities.IndexMap()
+julia> MOI.copy_to(bridged, src);
 
 julia> MOI.write_to_file(dest, "my_model.cbf")
 
