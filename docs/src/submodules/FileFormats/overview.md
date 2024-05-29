@@ -88,6 +88,7 @@ names are replaced with generic identifiers.
 ### The SDPA file format
 
 ```jldoctest
+julia> model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_SDPA)
 MOI.FileFormats.SDPA.Model
 ├ ObjectiveSense: FEASIBILITY_SENSE
 ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
@@ -179,9 +180,9 @@ If so, copy `src` to a bridged model using [`Bridges.full_bridge_optimizer`](@re
 ```jldoctest
 julia> src = MOI.Utilities.Model{Float64}();
 
-julia> x = MOI.add_variable(model);
+julia> x = MOI.add_variable(src);
 
-julia> MOI.add_constraint(model, x, MOI.ZeroOne());
+julia> MOI.add_constraint(src, x, MOI.ZeroOne());
 
 julia> dest = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_CBF);
 
