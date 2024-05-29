@@ -30,7 +30,8 @@ end
 
 function Base.show(io::IO, model::ModelLike)
     offset = Base.get(io, :offset, "")
-    Utilities.print_with_acronym(io, "$(typeof(model))\n")
+    Utilities.print_with_acronym(io, summary(model))
+    println(io)
     # ObjectiveSense
     sense = _try_get(model, ObjectiveSense(), "unknown")
     println(io, offset, "├ ObjectiveSense: $sense")

@@ -321,7 +321,7 @@ function test_nonlinear_readingwriting()
 end
 
 function test_show()
-    @test sprint(show, MOF.Model()) == "A MathOptFormat Model"
+    @test sprint(summary, MOF.Model()) == "MOI.FileFormats.MOF.Model"
 end
 
 function test_nonempty_model()

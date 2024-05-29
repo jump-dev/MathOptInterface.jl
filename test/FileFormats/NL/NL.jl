@@ -1145,8 +1145,8 @@ function test_SolverName()
 end
 
 function test_show()
-    model = NL.Model()
-    @test sprint(show, model) == "An AMPL (.nl) model"
+    @test sprint(summary, NL.Model()) == "MOI.FileFormats.NL.Model"
+    return
 end
 
 function test_linear_constraint_types()

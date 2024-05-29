@@ -61,7 +61,7 @@ Create an empty instance of `FileFormats.CBF.Model`.
 """
 Model(; kwargs...) = Model{Float64}()
 
-Base.show(io::IO, ::Model) = print(io, "A Conic Benchmark Format (CBF) model")
+Base.summary(io::IO, ::Model) = print(io, "MOI.FileFormats.CBF.Model")
 
 include("read.jl")
 include("write.jl")
