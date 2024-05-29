@@ -60,8 +60,7 @@ function _test_model_equality(
 end
 
 function test_show()
-    @test sprint(show, MPS.Model()) ==
-          "A Mathematical Programming System (MPS) model"
+    @test sprint(summary, MPS.Model()) == "MOI.FileFormats.MPS.Model"
     return
 end
 

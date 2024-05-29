@@ -88,8 +88,8 @@ function _test_read(filename::String, model_string::String)
 end
 
 function test_show()
-    @test sprint(show, SDPA.Model()) ==
-          "A SemiDefinite Programming Algorithm Format (SDPA) model"
+    @test sprint(summary, SDPA.Model()) == "MOI.FileFormats.SDPA.Model"
+    return
 end
 
 function test_support()

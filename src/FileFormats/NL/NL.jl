@@ -164,7 +164,7 @@ mutable struct Model <: MOI.ModelLike
     end
 end
 
-Base.show(io::IO, ::Model) = print(io, "An AMPL (.nl) model")
+Base.summary(io::IO, ::Model) = print(io, "MOI.FileFormats.NL.Model")
 
 MOI.get(model::Model, ::MOI.SolverName) = "AmplNLWriter"
 

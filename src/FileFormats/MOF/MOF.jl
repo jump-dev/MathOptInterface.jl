@@ -157,10 +157,7 @@ function Model(;
     return model
 end
 
-function Base.show(io::IO, ::Model)
-    print(io, "A MathOptFormat Model")
-    return
-end
+Base.summary(io::IO, ::Model) = print(io, "MOI.FileFormats.MOF.Model")
 
 include("read.jl")
 include("write.jl")

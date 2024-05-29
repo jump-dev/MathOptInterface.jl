@@ -142,10 +142,7 @@ function Model(;
     return model
 end
 
-function Base.show(io::IO, ::Model)
-    print(io, "A Mathematical Programming System (MPS) model")
-    return
-end
+Base.summary(io::IO, ::Model) = print(io, "MOI.FileFormats.MPS.Model")
 
 @enum(VType, VTYPE_CONTINUOUS, VTYPE_INTEGER, VTYPE_BINARY)
 

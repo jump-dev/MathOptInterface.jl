@@ -16,56 +16,84 @@ models using [`write_to_file`](@ref) and [`read_from_file`](@ref).
 You must read and write files to a [`FileFormats.Model`](@ref) object. Specific
 the file-type by passing a [`FileFormats.FileFormat`](@ref) enum. For example:
 
-**The Conic Benchmark Format**
+### The Conic Benchmark Format
 
 ```jldoctest
 julia> model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_CBF)
-A Conic Benchmark Format (CBF) model
+MOI.FileFormats.CBF.Model
+├ ObjectiveSense: FEASIBILITY_SENSE
+├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+├ NumberOfVariables: 0
+└ NumberOfConstraints: 0
 ```
 
-**The LP file format**
+### The LP file format
 
 ```jldoctest
 julia> model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_LP)
-A .LP-file model
+MOI.FileFormats.LP.Model
+├ ObjectiveSense: FEASIBILITY_SENSE
+├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+├ NumberOfVariables: 0
+└ NumberOfConstraints: 0
 ```
 
-**The MathOptFormat file format**
+### The MathOptFormat file format
 
 ```jldoctest
 julia> model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MOF)
-A MathOptFormat Model
+MOI.FileFormats.MOF.Model
+├ ObjectiveSense: FEASIBILITY_SENSE
+├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+├ NumberOfVariables: 0
+└ NumberOfConstraints: 0
 ```
 
-**The MPS file format**
+### The MPS file format
 
 ```jldoctest
 julia> model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MPS)
-A Mathematical Programming System (MPS) model
+MOI.FileFormats.MPS.Model
+├ ObjectiveSense: FEASIBILITY_SENSE
+├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+├ NumberOfVariables: 0
+└ NumberOfConstraints: 0
 ```
 
-**The NL file format**
+### The NL file format
 
 ```jldoctest
 julia> model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_NL)
-An AMPL (.nl) model
+MOI.FileFormats.NL.Model
+├ ObjectiveSense: unknown
+├ ObjectiveFunctionType: unknown
+├ NumberOfVariables: unknown
+└ NumberOfConstraints: unknown
 ```
 
-**The REW file format**
+### The REW file format
 
 ```jldoctest
 julia> model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_REW)
-A Mathematical Programming System (MPS) model
+MOI.FileFormats.MPS.Model
+├ ObjectiveSense: FEASIBILITY_SENSE
+├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+├ NumberOfVariables: 0
+└ NumberOfConstraints: 0
 ```
 
 Note that the REW format is identical to the MPS file format, except that all
 names are replaced with generic identifiers.
 
-**The SDPA file format**
+### The SDPA file format
 
 ```jldoctest
 julia> model = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_SDPA)
-A SemiDefinite Programming Algorithm Format (SDPA) model
+MOI.FileFormats.SDPA.Model
+├ ObjectiveSense: FEASIBILITY_SENSE
+├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+├ NumberOfVariables: 0
+└ NumberOfConstraints: 0
 ```
 
 ## Write to file
@@ -75,11 +103,9 @@ use:
 ```jldoctest fileformats
 julia> src = MOI.Utilities.Model{Float64}();
 
-julia> MOI.add_variable(src)
-MOI.VariableIndex(1)
+julia> MOI.add_variable(src);
 
-julia> dest = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MOF)
-A MathOptFormat Model
+julia> dest = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MOF);
 
 julia> MOI.copy_to(dest, src)
 MathOptInterface.Utilities.IndexMap with 1 entry:
@@ -110,8 +136,7 @@ julia> print(read("file.mof.json", String))
 
 To read a MathOptFormat file, use:
 ```jldoctest fileformats
-julia> dest = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MOF)
-A MathOptFormat Model
+julia> dest = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MOF);
 
 julia> MOI.read_from_file(dest, "file.mof.json")
 
@@ -131,29 +156,14 @@ guess the format from the file extension. For example:
 ```jldoctest fileformats
 julia> src = MOI.Utilities.Model{Float64}();
 
-julia> dest = MOI.FileFormats.Model(filename = "file.cbf.gz")
-A Conic Benchmark Format (CBF) model
+julia> dest = MOI.FileFormats.Model(filename = "file.cbf.gz");
 
 julia> MOI.copy_to(dest, src)
 MathOptInterface.Utilities.IndexMap()
 
 julia> MOI.write_to_file(dest, "file.cbf.gz")
 
-julia> src_2 = MOI.FileFormats.Model(filename = "file.cbf.gz")
-A Conic Benchmark Format (CBF) model
-
-julia> src = MOI.Utilities.Model{Float64}();
-
-julia> dest = MOI.FileFormats.Model(filename = "file.cbf.gz")
-A Conic Benchmark Format (CBF) model
-
-julia> MOI.copy_to(dest, src)
-MathOptInterface.Utilities.IndexMap()
-
-julia> MOI.write_to_file(dest, "file.cbf.gz")
-
-julia> src_2 = MOI.FileFormats.Model(filename = "file.cbf.gz")
-A Conic Benchmark Format (CBF) model
+julia> src_2 = MOI.FileFormats.Model(filename = "file.cbf.gz");
 
 julia> MOI.read_from_file(src_2, "file.cbf.gz")
 
@@ -167,14 +177,22 @@ filename.
 In some cases `src` may contain constraints that are not supported by the file
 format (for example, the CBF format supports integer variables but not binary).
 If so, copy `src` to a bridged model using [`Bridges.full_bridge_optimizer`](@ref):
-```julia
-src = MOI.Utilities.Model{Float64}()
-x = MOI.add_variable(model)
-MOI.add_constraint(model, x, MOI.ZeroOne())
-dest = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_CBF)
-bridged = MOI.Bridges.full_bridge_optimizer(dest, Float64)
-MOI.copy_to(bridged, src)
-MOI.write_to_file(dest, "my_model.cbf")
+```jldoctest
+julia> src = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(src);
+
+julia> MOI.add_constraint(src, x, MOI.ZeroOne());
+
+julia> dest = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_CBF);
+
+julia> bridged = MOI.Bridges.full_bridge_optimizer(dest, Float64);
+
+julia> MOI.copy_to(bridged, src);
+
+julia> MOI.write_to_file(dest, "my_model.cbf")
+
+julia> rm("my_model.cbf")  # Clean up after ourselves.
 ```
 !!! note
     Even after bridging, it may still not be possible to write the model to file
@@ -188,8 +206,7 @@ read and write directly from `IO` streams using `Base.write` and `Base.read!`:
 ```jldoctest
 julia> src = MOI.Utilities.Model{Float64}();
 
-julia> dest = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MPS)
-A Mathematical Programming System (MPS) model
+julia> dest = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MPS);
 
 julia> MOI.copy_to(dest, src)
 MathOptInterface.Utilities.IndexMap()
@@ -200,8 +217,7 @@ julia> write(io, dest)
 
 julia> seekstart(io);
 
-julia> src_2 = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MPS)
-A Mathematical Programming System (MPS) model
+julia> src_2 = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MPS);
 
 julia> read!(io, src_2);
 ```
@@ -218,14 +234,12 @@ pass the `use_nlp_block = false` keyword argument to the `Model` constructor:
 julia> model = MOI.FileFormats.Model(;
            format = MOI.FileFormats.FORMAT_MOF,
            use_nlp_block = false,
-       )
-A MathOptFormat Model
+       );
 
 julia> model = MOI.FileFormats.Model(;
            format = MOI.FileFormats.FORMAT_NL,
            use_nlp_block = false,
-       )
-An AMPL (.nl) model
+       );
 ```
 
 ## Validating MOF files

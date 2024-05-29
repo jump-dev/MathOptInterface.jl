@@ -87,7 +87,7 @@ function _test_read(filename::String, model_string::String)
 end
 
 function test_show()
-    @test sprint(show, CBF.Model()) == "A Conic Benchmark Format (CBF) model"
+    @test sprint(summary, CBF.Model()) == "MOI.FileFormats.CBF.Model"
     return
 end
 

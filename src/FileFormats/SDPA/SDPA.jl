@@ -127,9 +127,7 @@ function Model(; number_type::Type = Float64)
     return model
 end
 
-function Base.show(io::IO, ::Model)
-    return print(io, "A SemiDefinite Programming Algorithm Format (SDPA) model")
-end
+Base.summary(io::IO, ::Model) = print(io, "MOI.FileFormats.SDPA.Model")
 
 # ==============================================================================
 #

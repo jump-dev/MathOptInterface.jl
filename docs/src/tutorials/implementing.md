@@ -298,10 +298,10 @@ interface.
     isn't clear, let us know and we will improve the docstrings.
     It is also very helpful to look at an existing wrapper for a similar solver.
 
-You should also implement `Base.show(::IO, ::Optimizer)` to print a nice string
-when someone prints your model. For example
+You should also implement `Base.summary(::IO, ::Optimizer)` to print a nice
+string when someone shows your model. For example
 ```julia
-function Base.show(io::IO, model::Optimizer)
+function Base.summary(io::IO, model::Optimizer)
     return print(io, "NewSolver with the pointer $(model.ptr)")
 end
 ```

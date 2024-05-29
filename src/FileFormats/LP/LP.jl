@@ -91,10 +91,7 @@ function Model(; maximum_length::Int = 255, warn::Bool = false)
     return model
 end
 
-function Base.show(io::IO, ::Model)
-    print(io, "A .LP-file model")
-    return
-end
+Base.summary(io::IO, ::Model) = print(io, "MOI.FileFormats.LP.Model")
 
 # ==============================================================================
 #

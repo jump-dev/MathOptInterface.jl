@@ -13,7 +13,7 @@ const LP = MOI.FileFormats.LP
 const LP_TEST_FILE = "test.lp"
 
 function test_show()
-    @test sprint(show, LP.Model()) == "A .LP-file model"
+    @test sprint(summary, LP.Model()) == "MOI.FileFormats.LP.Model"
     return
 end
 
