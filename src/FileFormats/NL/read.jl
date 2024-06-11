@@ -213,7 +213,7 @@ function _to_model(data::_CacheModel; use_nlp_block::Bool)
         end
         for (i, expr) in enumerate(data.constraints)
             lb, ub = data.constraint_lower[i], data.constraint_upper[i]
-            f = _to_scalar_nonlinear_function(expr)::MOI.ScalarNonlinearFunction
+            f = _to_scalar_nonlinear_function(expr)
             if lb == ub
                 MOI.add_constraint(model, f, MOI.EqualTo(lb))
             elseif -Inf == lb && ub < Inf
@@ -232,10 +232,33 @@ _to_scalar_nonlinear_function(expr) = expr
 
 function _to_scalar_nonlinear_function(expr::Expr)
     @assert Meta.isexpr(expr, :call)
+    f = _try_scalar_affine_function(expr)
+    if f !== nothing
+        return f
+    end
     return MOI.ScalarNonlinearFunction(
         expr.args[1],
         Any[_to_scalar_nonlinear_function(arg) for arg in expr.args[2:end]],
     )
+end
+
+_try_scalar_affine_function(x::Float64) = x
+
+_try_scalar_affine_function(x::MOI.VariableIndex) = x
+
+function _try_scalar_affine_function(expr::Expr)
+    if expr.args[1] == :+
+        args = _try_scalar_affine_function.(expr.args[2:end])
+        if !any(isnothing, args)
+            return +(args...)
+        end
+    elseif expr.args[1] == :*
+        args = _try_scalar_affine_function.(expr.args[2:end])
+        if count(arg isa MOI.VariableIndex for arg in args) <= 1
+            return *(expr.args[2:end]...)
+        end
+    end
+    return nothing
 end
 
 function _parse_header(io::IO, model::_CacheModel)
