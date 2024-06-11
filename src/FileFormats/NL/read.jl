@@ -250,10 +250,7 @@ function _try_scalar_affine_function(expr::Expr)
     if expr.args[1] == :+
         args = _try_scalar_affine_function.(expr.args[2:end])
         if !any(isnothing, args)
-            if length(args) == 1
-                return only(args)
-            end
-            return +(0.0, args...)
+            return MOI.Utilities.operate(+, Float64, args...)
         end
     elseif expr.args[1] == :*
         args = _try_scalar_affine_function.(expr.args[2:end])
@@ -263,10 +260,7 @@ function _try_scalar_affine_function(expr::Expr)
             n_affine_terms += arg isa MOI.ScalarAffineFunction{Float64}
         end
         if n_affine_terms <= 1
-            if length(args) == 1
-                return only(args)
-            end
-            return *(args...)
+            return MOI.Utilities.operate(*, Float64, args...)
         end
     end
     return nothing
