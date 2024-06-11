@@ -208,12 +208,12 @@ function _to_model(data::_CacheModel; use_nlp_block::Bool)
         MOI.set(model, MOI.NLPBlock(), block)
     else
         if data.objective != :()
-            obj = _to_scalar_nonlinear_function(data.objective)
+            obj = _expr_to_function(data.objective)
             MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
         end
         for (i, expr) in enumerate(data.constraints)
             lb, ub = data.constraint_lower[i], data.constraint_upper[i]
-            f = _to_scalar_nonlinear_function(expr)
+            f = _expr_to_function(expr)
             if lb == ub
                 MOI.add_constraint(model, f, MOI.EqualTo(lb))
             elseif -Inf == lb && ub < Inf
@@ -228,9 +228,9 @@ function _to_model(data::_CacheModel; use_nlp_block::Bool)
     return model
 end
 
-_to_scalar_nonlinear_function(expr) = expr
+_expr_to_function(expr) = expr
 
-function _to_scalar_nonlinear_function(expr::Expr)
+function _expr_to_function(expr::Expr)
     @assert Meta.isexpr(expr, :call)
     f = _try_scalar_affine_function(expr)
     if f !== nothing
@@ -238,7 +238,7 @@ function _to_scalar_nonlinear_function(expr::Expr)
     end
     return MOI.ScalarNonlinearFunction(
         expr.args[1],
-        Any[_to_scalar_nonlinear_function(arg) for arg in expr.args[2:end]],
+        Any[_expr_to_function(arg) for arg in expr.args[2:end]],
     )
 end
 
@@ -254,7 +254,12 @@ function _try_scalar_affine_function(expr::Expr)
         end
     elseif expr.args[1] == :*
         args = _try_scalar_affine_function.(expr.args[2:end])
-        if count(arg isa MOI.VariableIndex for arg in args) <= 1
+        n_affine_terms = 0
+        for arg in args
+            n_affine_terms += arg isa MOI.VariableIndex
+            n_affine_terms += arg isa MOI.ScalarAffineFunction{Float64}
+        end
+        if n_affine_terms <= 1
             return *(expr.args[2:end]...)
         end
     end
