@@ -720,10 +720,10 @@ function test_hs071_free_constraint_nlexpr()
     open(joinpath(@__DIR__, "data", "hs071_free_constraint.nl"), "r") do io
         return read!(io, model)
     end
-    @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) == [
-        (MOI.ScalarNonlinearFunction, MOI.GreaterThan{Float64}),
-        (MOI.ScalarNonlinearFunction, MOI.Interval{Float64}),
-    ]
+    types = MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test length(types) == 2
+    @test (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) in types
+    @test (MOI.ScalarNonlinearFunction, MOI.Interval{Float64}) in types
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
     end

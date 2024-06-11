@@ -234,7 +234,7 @@ function _expr_to_function(expr::Expr)
     @assert Meta.isexpr(expr, :call)
     f = _try_scalar_affine_function(expr)
     if f !== nothing
-        return f
+        return convert(MOI.ScalarAffineFunction{Float64}, f)
     end
     return MOI.ScalarNonlinearFunction(
         expr.args[1],
