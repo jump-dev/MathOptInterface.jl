@@ -4,6 +4,14 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
+"""
+    struct MapNotInvertible <: Exception end
+
+An error thrown by [`inverse_map_function`](@ref) or
+[`inverse_adjoint_map_function`](@ref) indicating that the linear map `A`
+defined in [`Variable.SetMapBridge`](@ref) and [`Constraint.SetMapBridge`](@ref)
+is not invertible.
+"""
 struct MapNotInvertible <: Exception end
 
 """
@@ -55,7 +63,7 @@ function map_function(::Type{BT}, func, i::IndexInVector) where {BT}
 end
 
 """
-    inverse_map_function(::Type{BT}, func) where {BT}
+    inverse_map_function(bridge::MOI.Bridges.AbstractBridge, func)
 
 Return the image of `func` through the inverse of the linear map `A` defined in
 [`Variable.SetMapBridge`](@ref) and [`Constraint.SetMapBridge`](@ref). This is
@@ -64,6 +72,13 @@ used by [`Variable.unbridged_map`](@ref) and for setting the
 and for getting the [`MOI.ConstraintFunction`](@ref),
 the [`MOI.ConstraintPrimal`](@ref) and the
 [`MOI.ConstraintPrimalStart`](@ref) of constraint bridges.
+If the linear map `A` is not invertible, the error [`MapNotInvertible`](@ref) is
+thrown.
+
+    inverse_map_function(::Type{BT}, func) where {BT}
+
+The method can alternatively be defined on the bridge type. This legacy
+interface is kept for backward compatibility.
 """
 function inverse_map_function end
 
@@ -72,12 +87,17 @@ function inverse_map_function(bridge::AbstractBridge, func)
 end
 
 """
-    adjoint_map_function(::Type{BT}, func) where {BT}
+    adjoint_map_function(bridge::MOI.Bridges.AbstractBridge, func)
 
 Return the image of `func` through the adjoint of the linear map `A` defined in
 [`Variable.SetMapBridge`](@ref) and [`Constraint.SetMapBridge`](@ref). This is
 used for getting the [`MOI.ConstraintDual`](@ref) and
 [`MOI.ConstraintDualStart`](@ref) of constraint bridges.
+
+    adjoint_map_function(::Type{BT}, func) where {BT}
+
+The method can alternatively be defined on the bridge type. This legacy
+interface is kept for backward compatibility.
 """
 function adjoint_map_function end
 
@@ -86,13 +106,20 @@ function adjoint_map_function(bridge::AbstractBridge, func)
 end
 
 """
-    inverse_adjoint_map_function(::Type{BT}, func) where {BT}
+    inverse_adjoint_map_function(bridge::MOI.Bridges.AbstractBridge, func)
 
 Return the image of `func` through the inverse of the adjoint of the linear map
 `A` defined in [`Variable.SetMapBridge`](@ref) and
 [`Constraint.SetMapBridge`](@ref). This is used for getting the
 [`MOI.ConstraintDual`](@ref) of variable bridges and setting the
 [`MOI.ConstraintDualStart`](@ref) of constraint bridges.
+If the linear map `A` is not invertible, the error [`MapNotInvertible`](@ref) is
+thrown.
+
+    inverse_adjoint_map_function(::Type{BT}, func) where {BT}
+
+The method can alternatively be defined on the bridge type. This legacy
+interface is kept for backward compatibility.
 """
 function inverse_adjoint_map_function end
 
