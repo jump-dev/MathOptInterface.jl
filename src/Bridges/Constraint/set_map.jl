@@ -163,7 +163,6 @@ function MOI.get(
             rethrow(err)
         end
     end
-
 end
 
 function MOI.set(
