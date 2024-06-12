@@ -105,11 +105,13 @@ function MOI.get(
     func = try
         MOI.Bridges.inverse_map_function(bridge, mapped_func)
     catch err
+        # MapNotInvertible is thrown if the bridge does not support inverting
+        # the function. The user doesn't need to know this, only that they
+        # cannot get the attribute.
         if err isa MOI.Bridges.MapNotInvertible
             throw(MOI.GetAttributeNotAllowed(attr))
-        else
-            rethrow(err)
         end
+        rethrow(err)
     end
     return MOI.Utilities.convert_approx(G, func)
 end
@@ -154,14 +156,16 @@ function MOI.get(
     if value === nothing
         return nothing
     end
-    return try
-        MOI.Bridges.inverse_map_function(bridge, value)
+    try
+        return MOI.Bridges.inverse_map_function(bridge, value)
     catch err
+        # MapNotInvertible is thrown if the bridge does not support inverting
+        # the function. The user doesn't need to know this, only that they
+        # cannot get the attribute.
         if err isa MOI.Bridges.MapNotInvertible
             throw(MOI.GetAttributeNotAllowed(attr))
-        else
-            rethrow(err)
         end
+        rethrow(err)
     end
 end
 
