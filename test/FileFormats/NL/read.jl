@@ -8,7 +8,7 @@ module TestNonlinearRead
 
 using Test
 import MathOptInterface as MOI
-const NL = MOI.FileFormats.NL
+import MathOptInterface.FileFormats: NL
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -720,10 +720,10 @@ function test_hs071_free_constraint_nlexpr()
     open(joinpath(@__DIR__, "data", "hs071_free_constraint.nl"), "r") do io
         return read!(io, model)
     end
-    @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) == [
-        (MOI.ScalarNonlinearFunction, MOI.GreaterThan{Float64}),
-        (MOI.ScalarNonlinearFunction, MOI.Interval{Float64}),
-    ]
+    types = MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test length(types) == 2
+    @test (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) in types
+    @test (MOI.ScalarNonlinearFunction, MOI.Interval{Float64}) in types
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
     end
@@ -779,6 +779,36 @@ function test_mac_minlp()
         open(joinpath(dir, file), "r") do io
             return read!(io, model)
         end
+    end
+    return
+end
+
+function test_nl_read_scalar_affine_function()
+    for obj_fn in (x -> x, x -> 1.0 * x, x -> 2.0 * x + 3.0)
+        src = MOI.Utilities.Model{Float64}()
+        x = MOI.add_variable(src)
+        MOI.set(src, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+        f = obj_fn(x)
+        MOI.set(src, MOI.ObjectiveFunction{typeof(f)}(), f)
+        MOI.add_constraint(src, f, MOI.LessThan(1.0))
+        dest = MOI.FileFormats.NL.Model()
+        MOI.copy_to(dest, src)
+        io = IOBuffer()
+        write(io, dest)
+        input = MOI.FileFormats.NL.Model(; use_nlp_block = false)
+        seekstart(io)
+        read!(io, input)
+        model = MOI.Utilities.Model{Float64}()
+        MOI.copy_to(model, input)
+        y = only(MOI.get(model, MOI.ListOfVariableIndices()))
+        g = MOI.Utilities.substitute_variables(
+            _ -> y,
+            convert(MOI.ScalarAffineFunction{Float64}, f),
+        )
+        obj = MOI.get(model, MOI.ObjectiveFunction{typeof(g)}())
+        @test ≈(obj, g)
+        @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) ==
+              [(typeof(f), MOI.LessThan{Float64})]
     end
     return
 end
