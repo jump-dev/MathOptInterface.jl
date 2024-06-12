@@ -513,29 +513,47 @@ function _build_copy_variables_with_set_cache(
     F = MOI.VariableIndex
     indices = MOI.ConstraintIndex{F,S}[]
     for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
-        f = MOI.get(src, MOI.ConstraintFunction(), ci)
-        if f in cache.variables_with_domain
+        x = MOI.get(src, MOI.ConstraintFunction(), ci)
+        if x in cache.variables_with_domain
+            # `x` is already assigned to a domain. Add this constraint via
+            # `add_constraint`.
             push!(indices, ci)
         else
-            push!(cache.variables_with_domain, f)
-            push!(cache.variable_cones, ([f], ci))
+            # `x` is not assigned to a domain. Choose to add this constraint via
+            # `x, ci = add_constraint_variable(model, set)`
+            push!(cache.variables_with_domain, x)
+            push!(cache.variable_cones, ([x], ci))
         end
     end
     if !isempty(indices)
+        # If indices is not empty, then we have some constraints to add.
         push!(cache.constraints_not_added, indices)
     end
     return
 end
 
-function _is_variable_cone(cache, f::MOI.VectorOfVariables)
+# This function is a heuristic that checks whether `f` should be added via
+# `MOI.add_constrained_variables`.
+function _is_variable_cone(
+    cache::_CopyVariablesWithSetCache,
+    f::MOI.VectorOfVariables,
+)
     if isempty(f.variables)
+        # If the dimension is `0`, `f` cannot be added via
+        # `add_constrained_variables`
         return false
     end
     offset = cache.variable_to_column[f.variables[1]] - 1
     for (i, xi) in enumerate(f.variables)
         if xi in cache.variables_with_domain
+            # The function contains at least one element that is already
+            # assigned to a domain. We can't add `f` via
+            # `add_constrained_variables`
             return false
         elseif cache.variable_to_column[xi] != offset + i
+            # The variables in the function are not contiguous in their column
+            # ordering. In theory, we could add `f` via `add_constrained_variables`,
+            # but this would introduce a permutation so we choose not to.
             return false
         end
     end
@@ -553,16 +571,50 @@ function _build_copy_variables_with_set_cache(
         f = MOI.get(src, MOI.ConstraintFunction(), ci)
         if _is_variable_cone(cache, f)
             for fi in f.variables
+                # We need to assign each variable in `f` to a domain
                 push!(cache.variables_with_domain, fi)
             end
+            # And we need to add the variables via `add_constrained_variables`.
             push!(cache.variable_cones, (f.variables, ci))
         else
+            # Not a variable cone, so add via `add_constraint`.
             push!(indices, ci)
         end
     end
     if !isempty(indices)
+        # If indices is not empty, then we have some constraints to add.
         push!(cache.constraints_not_added, indices)
     end
+    return
+end
+
+function _add_variable_with_domain(
+    dest,
+    src,
+    index_map,
+    f,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet},
+)
+    set = MOI.get(src, MOI.ConstraintSet(), ci)
+    dest_x, dest_ci = MOI.add_constrained_variable(dest, set)
+    index_map[only(f)] = dest_x
+    index_map[ci] = dest_ci
+    return
+end
+
+function _add_variable_with_domain(
+    dest,
+    src,
+    index_map,
+    f,
+    ci::MOI.ConstraintIndex{MOI.VectorOfVariables,<:MOI.AbstractVectorSet},
+)
+    set = MOI.get(src, MOI.ConstraintSet(), ci)
+    dest_x, dest_ci = MOI.add_constrained_variables(dest, set)
+    for (fi, xi) in zip(f, dest_x)
+        index_map[fi] = xi
+    end
+    index_map[ci] = dest_ci
     return
 end
 
@@ -579,7 +631,8 @@ function _copy_variables_with_set(dest, src)
     column(x::MOI.VariableIndex) = cache.variable_to_column[x]
     start_column(x) = column(first(x[1]))
     current_column = 0
-    for (f, ci) in sort!(cache.variable_cones; by = start_column)
+    sort!(cache.variable_cones; by = start_column)
+    for (f, ci) in cache.variable_cones
         offset = column(first(f)) - current_column - 1
         if offset > 0
             dest_x = MOI.add_variables(dest, offset)
@@ -587,18 +640,7 @@ function _copy_variables_with_set(dest, src)
                 index_map[vis_src[current_column+i]] = dest_x[i]
             end
         end
-        set = MOI.get(src, MOI.ConstraintSet(), ci)
-        if set isa MOI.AbstractScalarSet
-            dest_x, dest_ci = MOI.add_constrained_variable(dest, set)
-            index_map[only(f)] = dest_x
-            index_map[ci] = dest_ci
-        else
-            dest_x, dest_ci = MOI.add_constrained_variables(dest, set)
-            for (fi, xi) in zip(f, dest_x)
-                index_map[fi] = xi
-            end
-            index_map[ci] = dest_ci
-        end
+        _add_variable_with_domain(dest, src, index_map, f, ci)
         current_column = column(last(f))
     end
     offset = length(cache.variable_to_column) - current_column
