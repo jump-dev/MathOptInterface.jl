@@ -135,7 +135,9 @@ function MOI.get(
     # the linear map on which the bridge is based is not invertible, as for
     # instance with `Variable.ZerosBridge` or
     # `SumOfSquares.Bridges.Variable.KernelBridge`.
-    return MOI.get(model, a, bridge.equality)
+    dual = MOI.get(model, a, bridge.equality)
+    scale = MOI.Utilities.SetDotScalingVector{T}(bridge.set)
+    return MOI.Utilities.operate(*, T, LinearAlgebra.Diagonal(scale), dual)
 end
 
 function MOI.set(
@@ -215,6 +217,7 @@ end
 struct ScalarSlackBridge{T,F,S} <:
        _AbstractSlackBridge{T,MOI.VariableIndex,MOI.EqualTo{T},F,S}
     slack::MOI.VariableIndex
+    set::S
     slack_in_set::MOI.ConstraintIndex{MOI.VariableIndex,S}
     equality::MOI.ConstraintIndex{F,MOI.EqualTo{T}}
 end
@@ -232,7 +235,7 @@ function bridge_constraint(
     slack, slack_in_set = MOI.add_constrained_variable(model, s)
     new_f = MOI.Utilities.operate(-, T, f, slack)
     equality = MOI.add_constraint(model, new_f, MOI.EqualTo(zero(T)))
-    return ScalarSlackBridge{T,F,S}(slack, slack_in_set, equality)
+    return ScalarSlackBridge{T,F,S}(slack, s, slack_in_set, equality)
 end
 
 # Start by allowing all scalar constraints:
@@ -347,6 +350,7 @@ end
 struct VectorSlackBridge{T,F,S} <:
        _AbstractSlackBridge{T,MOI.VectorOfVariables,MOI.Zeros,F,S}
     slack::Vector{MOI.VariableIndex}
+    set::S
     slack_in_set::MOI.ConstraintIndex{MOI.VectorOfVariables,S}
     equality::MOI.ConstraintIndex{F,MOI.Zeros}
 end
@@ -364,7 +368,7 @@ function bridge_constraint(
     slack, slack_in_set = MOI.add_constrained_variables(model, s)
     new_f = MOI.Utilities.operate(-, T, f, MOI.VectorOfVariables(slack))
     equality = MOI.add_constraint(model, new_f, MOI.Zeros(d))
-    return VectorSlackBridge{T,F,S}(slack, slack_in_set, equality)
+    return VectorSlackBridge{T,F,S}(slack, s, slack_in_set, equality)
 end
 
 function MOI.supports_constraint(
