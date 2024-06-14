@@ -125,7 +125,7 @@ function MOI.get(
     model::MOI.ModelLike,
     a::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
     bridge::_AbstractSlackBridge{T},
-) whhere {T}
+) where {T}
     # The dual constraint on slack (since it is free) is
     # `-dual_slack_in_set + dual_equality = 0` so the two duals are
     # equal and we can return either one of them.
