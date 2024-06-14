@@ -971,6 +971,38 @@ function test_copy_to_empty_VectorOfVariables_constraint()
     return
 end
 
+function test_copy_to_sorted_sets()
+    src = MOI.Utilities.Model{Float64}()
+    # Free variable to start
+    x1 = MOI.add_variable(src)
+    x2, _ = MOI.add_constrained_variables(src, MOI.SecondOrderCone(3))
+    x3 = MOI.add_variables(src, 2)
+    MOI.add_constraint(src, MOI.VectorOfVariables(x3), MOI.Nonnegatives(2))
+    # A variable with multiple domain sets
+    x4, _ = MOI.add_constrained_variable(src, MOI.GreaterThan(0.0))
+    _ = MOI.add_constraint(src, x4, MOI.LessThan(0.0))
+    # A split function. Not added as a variable
+    MOI.add_constraint(
+        src,
+        MOI.VectorOfVariables([x1, x3[2]]),
+        MOI.Nonpositives(2),
+    )
+    # Repeated set
+    _, _ = MOI.add_constrained_variables(src, MOI.Nonnegatives(3))
+    # An empty constraint
+    MOI.add_constraint(src, MOI.VectorOfVariables([]), MOI.Zeros(0))
+    # Two free variable to end
+    _ = MOI.add_variables(src, 2)
+    dest = MOI.Utilities.Model{Float64}()
+    index_map = MOI.copy_to(dest, src)
+    x_src = MOI.get(src, MOI.ListOfVariableIndices())
+    x_dest = MOI.get(dest, MOI.ListOfVariableIndices())
+    for (x, y) in zip(x_src, x_dest)
+        @test index_map[x] == y
+    end
+    return
+end
+
 end  # module
 
 TestCopy.runtests()
