@@ -957,6 +957,20 @@ function test_sorted_copy_to()
     return
 end
 
+function test_copy_to_empty_VectorOfVariables_constraint()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(src)
+    F, S = MOI.VectorOfVariables, MOI.Zeros
+    MOI.add_constraint(src, F([]), S(0))
+    dest = MOI.Utilities.Model{Float64}()
+    MOI.copy_to(dest, src)
+    @test (F, S) in MOI.get(dest, MOI.ListOfConstraintTypesPresent())
+    @test MOI.get(dest, MOI.NumberOfConstraints{F,S}()) == 1
+    ci = only(MOI.get(dest, MOI.ListOfConstraintIndices{F,S}()))
+    @test MOI.get(dest, MOI.ConstraintFunction(), ci) == F([])
+    return
+end
+
 end  # module
 
 TestCopy.runtests()
