@@ -136,6 +136,9 @@ function MOI.get(
     # instance with `Variable.ZerosBridge` or
     # `SumOfSquares.Bridges.Variable.KernelBridge`.
     dual = MOI.get(model, a, bridge.equality)
+    if dual === nothing
+        return nothing
+    end
     scale = MOI.Utilities.SetDotScalingVector{T}(bridge.set)
     if dual isa AbstractVector
         return MOI.Utilities.operate(*, T, LinearAlgebra.Diagonal(scale), dual)
