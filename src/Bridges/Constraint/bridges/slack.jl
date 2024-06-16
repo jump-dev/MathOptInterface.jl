@@ -140,7 +140,7 @@ function MOI.get(
         return nothing
     elseif dual isa AbstractVector
         scale = MOI.Utilities.SetDotScalingVector{T}(bridge.set)
-        return dual ./ scale.^2
+        return dual ./ scale .^ 2
     end
     return dual
 end
