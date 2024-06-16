@@ -138,12 +138,11 @@ function MOI.get(
     dual = MOI.get(model, a, bridge.equality)
     if dual === nothing
         return nothing
+    elseif dual isa AbstractVector
+        scale = MOI.Utilities.SetDotScalingVector{T}(bridge.set)
+        return dual ./ scale.^2
     end
-    scale = MOI.Utilities.SetDotScalingVector{T}(bridge.set)
-    if dual isa AbstractVector
-        return MOI.Utilities.operate(*, T, LinearAlgebra.Diagonal(scale), dual)
-    end
-    return scale[1] * dual
+    return dual
 end
 
 function MOI.set(
