@@ -384,6 +384,18 @@ function test_runtests()
         [y, z] in SecondOrderCone(2)
         """,
     )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.VectorSlackBridge,
+        """
+        variables: x11, x12, x22
+        [1.0 * x11, x12, 2.0 * x22] in PositiveSemidefiniteConeTriangle(2)
+        """,
+        """
+        variables: x11, x12, x22, y11, y12, y22
+        [1.0 * x11 + -1.0 * y11, x12 + -1.0 * y12, 2.0 * x22 + -1.0 * y22] in Zeros(3)
+        [y11, y12, y22] in PositiveSemidefiniteConeTriangle(2)
+        """,
+    )
     return
 end
 

@@ -128,17 +128,22 @@ function MOI.get(
 ) where {T}
     # The dual constraint on slack (since it is free) is
     # `-dual_slack_in_set + dual_equality = 0` so the two duals are
-    # equal and we can return either one of them.
-    # We decide to use the dual of the equality constraints because
-    # the `slack_in_set` constraint might be bridge by a variable bridge that
-    # does not # support `ConstraintDual`. This is the case if the adjoint of
-    # the linear map on which the bridge is based is not invertible, as for
-    # instance with `Variable.ZerosBridge` or
-    # `SumOfSquares.Bridges.Variable.KernelBridge`.
+    # equal (modulo a rescaling for things like symmetric matrices) and we can
+    # return either one of them.
+    #
+    # We decide to use the dual of the equality constraints because the
+    # `slack_in_set` constraint might be bridged by a variable bridge that does
+    # not support `ConstraintDual`. This is the case if the adjoint of the
+    # linear map on which the bridge is based is not invertible, for example,
+    # `Variable.ZerosBridge` or `SumOfSquares.Bridges.Variable.KernelBridge`.
     dual = MOI.get(model, a, bridge.equality)
     if dual === nothing
         return nothing
     elseif dual isa AbstractVector
+        # The equality constraints gives the term <dual, primal> with the
+        # standard inner product but <dual, primal>_PSD is like scaling each
+        # entry of dual and primal by the entry of SetDotScalingVector. To undo,
+        # we need to divide by the square.
         scale = MOI.Utilities.SetDotScalingVector{T}(bridge.set)
         return dual ./ scale .^ 2
     end
@@ -148,15 +153,17 @@ end
 function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDualStart,
-    bridge::_AbstractSlackBridge,
+    bridge::_AbstractSlackBridge{T},
     value,
-)
-    # As the slack appears `+slack` in `slack_in_set` and `-slack` in equality,
-    # giving `value` to both will cancel it out in the Lagrangian.
-    # Giving `value` to `bridge.equality` will put the function in the
-    # Lagrangian as expected.
+) where {T}
+    # See comments in MOI.get for why we need to rescale, etc.
     MOI.set(model, attr, bridge.slack_in_set, value)
-    MOI.set(model, attr, bridge.equality, value)
+    if value isa AbstractVector
+        scale = MOI.Utilities.SetDotScalingVector{T}(bridge.set)
+        MOI.set(model, attr, bridge.equality, value .* scale .^ 2)
+    else
+        MOI.set(model, attr, bridge.equality, value)
+    end
     return
 end
 
