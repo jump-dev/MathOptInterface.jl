@@ -41,9 +41,8 @@ The method can alternatively be defined on the bridge type. This legacy
 interface is kept for backward compatibility.
 """
 function inverse_map_set(bridge::AbstractBridge, set)
-    return map_function(typeof(bridge), set)
+    return inverse_map_set(typeof(bridge), set)
 end
-
 
 """
     map_function(bridge::MOI.Bridges.AbstractBridge, func)
