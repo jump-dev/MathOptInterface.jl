@@ -96,17 +96,16 @@ end
 
 # Attributes, Bridge acting as a constraint
 
-# MapNotInvertible is thrown if the bridge does not support inverting
-# the function. The user doesn't need to know this, only that they
-# cannot get the attribute. Throwing `GetAttributeNotAllowed` allows
-# `CachingOptimizer` to fall back to using the cache
+# MapNotInvertible is thrown if the bridge does not support inverting the
+# function. The user doesn't need to know this, only that they cannot get the
+# attribute. Throwing `GetAttributeNotAllowed` allows `CachingOptimizer` to fall
+# back to using the cache.
 function _not_invertible_error(attr, message)
-    s = "Cannot get $attr as the constraint is reformulated through" *
-        " a linear transformation that is not invertible." * message
+    s = "Cannot get $attr as the constraint is reformulated through a linear transformation that is not invertible."
     if !isempty(message)
         s *= " " * message
     end
-    throw(MOI.GetAttributeNotAllowed(attr, s))
+    return MOI.GetAttributeNotAllowed(attr, s)
 end
 
 function MOI.get(
@@ -119,7 +118,7 @@ function MOI.get(
         MOI.Bridges.inverse_map_function(bridge, mapped_func)
     catch err
         if err isa MOI.Bridges.MapNotInvertible
-            _not_invertible_error(attr, err.message)
+            throw(_not_invertible_error(attr, err.message))
         end
         rethrow(err)
     end
