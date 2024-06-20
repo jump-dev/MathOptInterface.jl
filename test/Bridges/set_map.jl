@@ -4,15 +4,15 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-# Test with a bridge for which the map is defined on the bridge
-# value and not the bridge type
+# Test with a bridge for which the map is defined on the bridge value and not
+# the bridge type
 module TestSetMapBridge
+
+using Test
 
 import MathOptInterface as MOI
 
-
-# Constraints `[f[2], f[1]]` if `swap` and otherwise
-# `f` to `Nonnegatives`
+# Constraints `[f[2], f[1]]` if `swap` and otherwise `f` to `Nonnegatives`
 struct SwapSet <: MOI.AbstractVectorSet
     swap::Bool
     invertible::Bool
@@ -27,10 +27,7 @@ struct SwapBridge{T} <: MOI.Bridges.Constraint.SetMapBridge{
     MOI.VectorOfVariables,
     MOI.VectorOfVariables,
 }
-    constraint::MOI.ConstraintIndex{
-        MOI.VectorOfVariables,
-        MOI.Nonnegatives,
-    }
+    constraint::MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
     set::SwapSet
 end
 
@@ -51,14 +48,11 @@ end
 function MOI.Bridges.map_set(bridge::SwapBridge, set::SwapSet)
     if set.swap != bridge.set.swap
         error("Cannot change swap set")
-    else
-        return MOI.Nonnegatives(2)
     end
+    return MOI.Nonnegatives(2)
 end
 
-function MOI.Bridges.inverse_map_set(bridge::SwapBridge, ::MOI.Nonnegatives)
-    return bridge.set
-end
+MOI.Bridges.inverse_map_set(bridge::SwapBridge, ::MOI.Nonnegatives) = bridge.set
 
 function MOI.Bridges.map_function(bridge::SwapBridge, func)
     return swap(func, bridge.set.swap)
@@ -79,7 +73,11 @@ function MOI.Bridges.inverse_adjoint_map_function(bridge::SwapBridge, func)
     return swap(func, bridge.set.swap)
 end
 
-using Test
+swap(x, swap::Bool) = swap ? [x[2], x[1]] : x
+
+function swap(f::MOI.VectorOfVariables, do_swap::Bool)
+    return MOI.VectorOfVariables(swap(f.variables, do_swap))
+end
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -92,34 +90,25 @@ function runtests()
     return
 end
 
-function swap(x, swap::Bool)
-    if swap
-        return [x[2], x[1]]
-    else
-        return x
-    end
-end
-
-function swap(f::MOI.VectorOfVariables, do_swap::Bool)
-    return MOI.VectorOfVariables(swap(f.variables, do_swap))
-end
-
 function test_set_set()
     model = MOI.Bridges.Constraint.SingleBridgeOptimizer{SwapBridge{Float64}}(
-        MOI.Utilities.Model{Float64}()
+        MOI.Utilities.Model{Float64}(),
     )
     x = MOI.add_variables(model, 2)
     func = MOI.VectorOfVariables(x)
-    set = SwapSet(true, false)
-    ci = MOI.add_constraint(model, func, set)
-    err = ErrorException("Cannot change swap set")
-    @test_throws err MOI.set(model, MOI.ConstraintSet(), ci, SwapSet(false, false))
-    attr = MOI.ConstraintFunction()
-    err = MOI.GetAttributeNotAllowed(
-        attr,
-        "Cannot get MathOptInterface.ConstraintFunction() as the constraint is reformulated through a linear transformation that is not invertible.no luck no luck",
+    ci = MOI.add_constraint(model, func, SwapSet(true, false))
+    @test_throws(
+        ErrorException("Cannot change swap set"),
+        MOI.set(model, MOI.ConstraintSet(), ci, SwapSet(false, false)),
     )
-    @test_throws err MOI.get(model, attr, ci)
+    @test_throws(
+        MOI.GetAttributeNotAllowed(
+            MOI.ConstraintFunction(),
+            "Cannot get MathOptInterface.ConstraintFunction() as the constraint is reformulated through a linear transformation that is not invertible.no luck no luck",
+        ),
+        MOI.get(model, MOI.ConstraintFunction(), ci),
+    )
+    return
 end
 
 function test_runtests()
