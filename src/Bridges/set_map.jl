@@ -29,13 +29,21 @@ the [`MOI.ConstraintSet`](@ref).
 function map_set end
 
 """
+    inverse_map_set(bridge::MOI.Bridges.AbstractBridge, set)
     inverse_map_set(::Type{BT}, set) where {BT}
 
 Return the preimage of `set` through the linear map `A` defined in
-[`Variable.SetMapBridge`](@ref) and [`Constraint.SetMapBridge`](@ref). This is
-used for getting the [`MOI.ConstraintSet`](@ref).
+[`Variable.SetMapBridge`](@ref) and [`Constraint.SetMapBridge`](@ref).
+
+This function is used for getting the [`MOI.ConstraintSet`](@ref).
+
+The method can alternatively be defined on the bridge type. This legacy
+interface is kept for backward compatibility.
 """
-function inverse_map_set end
+function inverse_map_set(bridge::AbstractBridge, set)
+    return map_function(typeof(bridge), set)
+end
+
 
 """
     map_function(bridge::MOI.Bridges.AbstractBridge, func)
