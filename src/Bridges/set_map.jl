@@ -5,14 +5,18 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    struct MapNotInvertible <: Exception end
+    struct MapNotInvertible <: Exception
+        message::String
+    end
 
 An error thrown by [`inverse_map_function`](@ref) or
 [`inverse_adjoint_map_function`](@ref) indicating that the linear map `A`
 defined in [`Variable.SetMapBridge`](@ref) and [`Constraint.SetMapBridge`](@ref)
 is not invertible.
 """
-struct MapNotInvertible <: Exception end
+struct MapNotInvertible <: Exception
+    message::String
+end
 
 """
     map_set(::Type{BT}, set) where {BT}

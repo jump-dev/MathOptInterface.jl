@@ -96,6 +96,19 @@ end
 
 # Attributes, Bridge acting as a constraint
 
+# MapNotInvertible is thrown if the bridge does not support inverting
+# the function. The user doesn't need to know this, only that they
+# cannot get the attribute. Throwing `GetAttributeNotAllowed` allows
+# `CachingOptimizer` to fall back to using the cache
+function _not_invertible_error(attr, message)
+    s = "Cannot get $attr as the constraint is reformulated through" *
+        " a linear transformation that is not invertible." * message
+    if !isempty(message)
+        s *= " " * message
+    end
+    throw(MOI.GetAttributeNotAllowed(attr, s))
+end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintFunction,
@@ -105,11 +118,8 @@ function MOI.get(
     func = try
         MOI.Bridges.inverse_map_function(bridge, mapped_func)
     catch err
-        # MapNotInvertible is thrown if the bridge does not support inverting
-        # the function. The user doesn't need to know this, only that they
-        # cannot get the attribute.
         if err isa MOI.Bridges.MapNotInvertible
-            throw(MOI.GetAttributeNotAllowed(attr))
+            _not_invertible_error(attr, err.message)
         end
         rethrow(err)
     end
@@ -133,7 +143,7 @@ function MOI.get(
     bridge::MultiSetMapBridge,
 )
     set = MOI.get(model, attr, bridge.constraint)
-    return MOI.Bridges.inverse_map_set(typeof(bridge), set)
+    return MOI.Bridges.inverse_map_set(bridge, set)
 end
 
 function MOI.set(
@@ -142,7 +152,7 @@ function MOI.set(
     bridge::MultiSetMapBridge{T,S1},
     set::S1,
 ) where {T,S1}
-    new_set = MOI.Bridges.map_set(typeof(bridge), set)
+    new_set = MOI.Bridges.map_set(bridge, set)
     MOI.set(model, attr, bridge.constraint, new_set)
     return
 end
@@ -178,7 +188,7 @@ function MOI.set(
     if value === nothing
         MOI.set(model, attr, bridge.constraint, nothing)
     else
-        mapped_value = MOI.Bridges.map_function(typeof(bridge), value)
+        mapped_value = MOI.Bridges.map_function(bridge, value)
         MOI.set(model, attr, bridge.constraint, mapped_value)
     end
     return
