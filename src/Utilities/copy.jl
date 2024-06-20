@@ -265,22 +265,6 @@ function _pass_constraints(
     return
 end
 
-function _copy_free_variables(dest::MOI.ModelLike, index_map::IndexMap, vis_src)
-    if length(vis_src) == length(index_map.var_map)
-        return  # All variables already added
-    end
-    x = MOI.add_variables(dest, length(vis_src) - length(index_map.var_map))
-    i = 1
-    for vi in vis_src
-        if !haskey(index_map, vi)
-            index_map[vi] = x[i]
-            i += 1
-        end
-    end
-    @assert i == length(x) + 1
-    return
-end
-
 _is_variable_function(::Type{MOI.VariableIndex}) = true
 _is_variable_function(::Type{MOI.VectorOfVariables}) = true
 _is_variable_function(::Any) = false
