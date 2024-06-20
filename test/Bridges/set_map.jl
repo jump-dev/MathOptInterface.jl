@@ -104,7 +104,7 @@ function test_set_set()
     @test_throws(
         MOI.GetAttributeNotAllowed(
             MOI.ConstraintFunction(),
-            "Cannot get MathOptInterface.ConstraintFunction() as the constraint is reformulated through a linear transformation that is not invertible.no luck no luck",
+            "Cannot get MathOptInterface.ConstraintFunction() as the constraint is reformulated through a linear transformation that is not invertible. no luck",
         ),
         MOI.get(model, MOI.ConstraintFunction(), ci),
     )

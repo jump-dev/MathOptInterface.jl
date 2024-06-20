@@ -19,14 +19,19 @@ struct MapNotInvertible <: Exception
 end
 
 """
+    map_set(bridge::MOI.Bridges.AbstractBridge, set)
     map_set(::Type{BT}, set) where {BT}
 
 Return the image of `set` through the linear map `A` defined in
-[`Variable.SetMapBridge`](@ref) and [`Constraint.SetMapBridge`](@ref). This is
-used for bridging the constraint and setting
-the [`MOI.ConstraintSet`](@ref).
+[`Variable.SetMapBridge`](@ref) and [`Constraint.SetMapBridge`](@ref).
+
+This function is used for bridging the constraint and setting the
+[`MOI.ConstraintSet`](@ref).
+
+The method can alternatively be defined on the bridge type. This legacy
+interface is kept for backward compatibility.
 """
-function map_set end
+map_set(bridge::AbstractBridge, set) = map_set(typeof(bridge), set)
 
 """
     inverse_map_set(bridge::MOI.Bridges.AbstractBridge, set)
