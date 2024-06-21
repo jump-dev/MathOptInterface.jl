@@ -101,11 +101,7 @@ end
 # attribute. Throwing `GetAttributeNotAllowed` allows `CachingOptimizer` to fall
 # back to using the cache.
 function _not_invertible_error_message(attr, message)
-    s = "Cannot get `$attr` as the constraint is reformulated through a linear transformation that is not invertible."
-    if isempty(message)
-        return s
-    end
-    return s * " " * message
+    return "Cannot get `$attr` as the constraint is reformulated through a linear transformation that is not invertible. $message"
 end
 
 function MOI.get(
