@@ -102,10 +102,10 @@ end
 # back to using the cache.
 function _not_invertible_error_message(attr, message)
     s = "Cannot get `$attr` as the constraint is reformulated through a linear transformation that is not invertible."
-    if !isempty(message)
-        s *= " " * message
+    if isempty(message)
+        return s
     end
-    return s
+    return s * " " * message
 end
 
 function MOI.get(
@@ -118,7 +118,8 @@ function MOI.get(
         MOI.Bridges.inverse_map_function(bridge, mapped_func)
     catch err
         if err isa MOI.Bridges.MapNotInvertible
-            throw(MOI.GetAttributeNotAllowed(attr, _not_invertible_error_message(attr, err.message)))
+            msg = _not_invertible_error_message(attr, err.message)
+            throw(MOI.GetAttributeNotAllowed(attr, msg))
         end
         rethrow(err)
     end
@@ -172,7 +173,8 @@ function MOI.get(
         # the function. The user doesn't need to know this, only that they
         # cannot get the attribute.
         if err isa MOI.Bridges.MapNotInvertible
-            throw(MOI.GetAttributeNotAllowed(attr, _not_invertible_error_message(attr, err.message)))
+            msg = _not_invertible_error_message(attr, err.message)
+            throw(MOI.GetAttributeNotAllowed(attr, msg))
         end
         rethrow(err)
     end
@@ -218,7 +220,8 @@ function MOI.set(
             MOI.Bridges.inverse_adjoint_map_function(bridge, value)
         catch err
             if err isa MOI.Bridges.MapNotInvertible
-                throw(MOI.SetAttributeNotAllowed(attr, _not_invertible_error_message(attr, err.message)))
+                msg = _not_invertible_error_message(attr, err.message)
+                throw(MOI.SetAttributeNotAllowed(attr, msg))
             end
             rethrow(err)
         end
