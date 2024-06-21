@@ -27,11 +27,6 @@ Return the image of `set` through the linear map `A` defined in
 
 This function is used for bridging the constraint and setting the
 [`MOI.ConstraintSet`](@ref).
-
-The default implementation of [`Variable.bridge_constraint`](@ref) uses
-[`map_set`](@ref) with the bridge type so if this function is defined
-on the bridge type, [`Variable.bridge_constraint`](@ref) does not need
-to be implemented.
 """
 map_set(bridge::AbstractBridge, set) = map_set(typeof(bridge), set)
 
