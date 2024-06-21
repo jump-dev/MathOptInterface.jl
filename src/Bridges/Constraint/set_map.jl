@@ -100,12 +100,12 @@ end
 # function. The user doesn't need to know this, only that they cannot get the
 # attribute. Throwing `GetAttributeNotAllowed` allows `CachingOptimizer` to fall
 # back to using the cache.
-function _not_invertible_error(attr, message)
-    s = "Cannot get $attr as the constraint is reformulated through a linear transformation that is not invertible."
+function _not_invertible_error_message(attr, message)
+    s = "Cannot get `$attr` as the constraint is reformulated through a linear transformation that is not invertible."
     if !isempty(message)
         s *= " " * message
     end
-    return MOI.GetAttributeNotAllowed(attr, s)
+    return s
 end
 
 function MOI.get(
@@ -118,7 +118,7 @@ function MOI.get(
         MOI.Bridges.inverse_map_function(bridge, mapped_func)
     catch err
         if err isa MOI.Bridges.MapNotInvertible
-            throw(_not_invertible_error(attr, err.message))
+            throw(MOI.GetAttributeNotAllowed(attr, _not_invertible_error_message(attr, err.message)))
         end
         rethrow(err)
     end
@@ -172,7 +172,7 @@ function MOI.get(
         # the function. The user doesn't need to know this, only that they
         # cannot get the attribute.
         if err isa MOI.Bridges.MapNotInvertible
-            throw(MOI.GetAttributeNotAllowed(attr))
+            throw(MOI.GetAttributeNotAllowed(attr, _not_invertible_error_message(attr, err.message)))
         end
         rethrow(err)
     end
@@ -214,7 +214,14 @@ function MOI.set(
     if value === nothing
         MOI.set(model, attr, bridge.constraint, nothing)
     else
-        mapped_value = MOI.Bridges.inverse_adjoint_map_function(bridge, value)
+        mapped_value = try
+            MOI.Bridges.inverse_adjoint_map_function(bridge, value)
+        catch err
+            if err isa MOI.Bridges.MapNotInvertible
+                throw(MOI.SetAttributeNotAllowed(attr, _not_invertible_error_message(attr, err.message)))
+            end
+            rethrow(err)
+        end
         MOI.set(model, attr, bridge.constraint, mapped_value)
     end
     return
