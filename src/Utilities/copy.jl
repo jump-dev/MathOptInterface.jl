@@ -155,85 +155,6 @@ function _pass_attribute(
 end
 
 """
-    _try_constrain_variables_on_creation(
-        dest::MOI.ModelLike,
-        src::MOI.ModelLike,
-        index_map::IndexMap,
-        ::Type{S},
-    ) where {S<:MOI.AbstractVectorSet}
-
-Copy the constraints of type `MOI.VectorOfVariables`-in-`S` from the model `src`
-to the model `dest` and fill `index_map` accordingly. The copy is only done when
-the variables to be copied are not already keys of `index_map`.
-
-It returns a list of the constraints that were not added.
-"""
-function _try_constrain_variables_on_creation(
-    dest::MOI.ModelLike,
-    src::MOI.ModelLike,
-    index_map::IndexMap,
-    ::Type{S},
-) where {S<:MOI.AbstractVectorSet}
-    not_added = MOI.ConstraintIndex{MOI.VectorOfVariables,S}[]
-    for ci_src in
-        MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S}())
-        f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
-        if !allunique(f_src.variables)
-            # Can't add it because there are duplicate variables
-            push!(not_added, ci_src)
-        elseif any(vi -> haskey(index_map, vi), f_src.variables)
-            # Can't add it because it contains a variable previously added
-            push!(not_added, ci_src)
-        else
-            set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
-            vis_dest, ci_dest = MOI.add_constrained_variables(dest, set)
-            index_map[ci_src] = ci_dest
-            for (vi_src, vi_dest) in zip(f_src.variables, vis_dest)
-                index_map[vi_src] = vi_dest
-            end
-        end
-    end
-    return not_added
-end
-
-"""
-    _try_constrain_variables_on_creation(
-        dest::MOI.ModelLike,
-        src::MOI.ModelLike,
-        index_map::IndexMap,
-        ::Type{S},
-    ) where {S<:MOI.AbstractScalarSet}
-
-Copy the constraints of type `MOI.VariableIndex`-in-`S` from the model `src` to
-the model `dest` and fill `index_map` accordingly. The copy is only done when the
-variables to be copied are not already keys of `index_map`.
-
-It returns a list of the constraints that were not added.
-"""
-function _try_constrain_variables_on_creation(
-    dest::MOI.ModelLike,
-    src::MOI.ModelLike,
-    index_map::IndexMap,
-    ::Type{S},
-) where {S<:MOI.AbstractScalarSet}
-    not_added = MOI.ConstraintIndex{MOI.VariableIndex,S}[]
-    for ci_src in
-        MOI.get(src, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
-        f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
-        if haskey(index_map, f_src)
-            # Can't add it because it contains a variable previously added
-            push!(not_added, ci_src)
-        else
-            set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
-            vi_dest, ci_dest = MOI.add_constrained_variable(dest, set)
-            index_map[ci_src] = ci_dest
-            index_map[f_src] = vi_dest
-        end
-    end
-    return not_added
-end
-
-"""
     _copy_constraints(
         dest::MOI.ModelLike,
         src::MOI.ModelLike,
@@ -341,22 +262,6 @@ function _pass_constraints(
             MOI.get(src, MOI.ListOfConstraintIndices{F,S}()),
         )
     end
-    return
-end
-
-function _copy_free_variables(dest::MOI.ModelLike, index_map::IndexMap, vis_src)
-    if length(vis_src) == length(index_map.var_map)
-        return  # All variables already added
-    end
-    x = MOI.add_variables(dest, length(vis_src) - length(index_map.var_map))
-    i = 1
-    for vi in vis_src
-        if !haskey(index_map, vi)
-            index_map[vi] = x[i]
-            i += 1
-        end
-    end
-    @assert i == length(x) + 1
     return
 end
 
@@ -478,25 +383,8 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
         error("Model $(typeof(dest)) does not support copy_to.")
     end
     MOI.empty!(dest)
-    vis_src = MOI.get(src, MOI.ListOfVariableIndices())
-    index_map = IndexMap()
-    # The `NLPBlock` assumes that the order of variables does not change (#849)
-    # Therefore, all VariableIndex and VectorOfVariable constraints are added
-    # seprately, and no variables constrained-on-creation are added.
-    has_nlp = MOI.NLPBlock() in MOI.get(src, MOI.ListOfModelAttributesSet())
-    constraints_not_added = if has_nlp
-        Any[
-            MOI.get(src, MOI.ListOfConstraintIndices{F,S}()) for
-            (F, S) in MOI.get(src, MOI.ListOfConstraintTypesPresent()) if
-            _is_variable_function(F)
-        ]
-    else
-        Any[
-            _try_constrain_variables_on_creation(dest, src, index_map, S)
-            for S in sorted_variable_sets_by_cost(dest, src)
-        ]
-    end
-    _copy_free_variables(dest, index_map, vis_src)
+    index_map, vis_src, constraints_not_added =
+        _copy_variables_with_set(dest, src)
     # Copy variable attributes
     pass_attributes(dest, src, index_map, vis_src)
     # Copy model attributes
@@ -505,6 +393,169 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
     _pass_constraints(dest, src, index_map, constraints_not_added)
     final_touch(dest, index_map)
     return index_map
+end
+
+struct _CopyVariablesWithSetCache
+    variable_to_column::Dict{MOI.VariableIndex,Int}
+    constraints_not_added::Vector{Any}
+    variables_with_domain::Set{MOI.VariableIndex}
+    variable_cones::Vector{Tuple{Vector{MOI.VariableIndex},Any}}
+    function _CopyVariablesWithSetCache()
+        return new(
+            Dict{MOI.VariableIndex,Int}(),
+            Any[],
+            Set{MOI.VariableIndex}(),
+            Tuple{Vector{MOI.VariableIndex},Any}[],
+        )
+    end
+end
+
+function _build_copy_variables_with_set_cache(
+    src::MOI.ModelLike,
+    cache::_CopyVariablesWithSetCache,
+    ::Type{S},
+) where {S<:MOI.AbstractScalarSet}
+    F = MOI.VariableIndex
+    indices = MOI.ConstraintIndex{F,S}[]
+    for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
+        x = MOI.get(src, MOI.ConstraintFunction(), ci)
+        if x in cache.variables_with_domain
+            # `x` is already assigned to a domain. Add this constraint via
+            # `add_constraint`.
+            push!(indices, ci)
+        else
+            # `x` is not assigned to a domain. Choose to add this constraint via
+            # `x, ci = add_constraint_variable(model, set)`
+            push!(cache.variables_with_domain, x)
+            push!(cache.variable_cones, ([x], ci))
+        end
+    end
+    if !isempty(indices)
+        # If indices is not empty, then we have some constraints to add.
+        push!(cache.constraints_not_added, indices)
+    end
+    return
+end
+
+# This function is a heuristic that checks whether `f` should be added via
+# `MOI.add_constrained_variables`.
+function _is_variable_cone(
+    cache::_CopyVariablesWithSetCache,
+    f::MOI.VectorOfVariables,
+)
+    if isempty(f.variables)
+        # If the dimension is `0`, `f` cannot be added via
+        # `add_constrained_variables`
+        return false
+    end
+    offset = cache.variable_to_column[f.variables[1]] - 1
+    for (i, xi) in enumerate(f.variables)
+        if xi in cache.variables_with_domain
+            # The function contains at least one element that is already
+            # assigned to a domain. We can't add `f` via
+            # `add_constrained_variables`
+            return false
+        elseif cache.variable_to_column[xi] != offset + i
+            # The variables in the function are not contiguous in their column
+            # ordering. In theory, we could add `f` via `add_constrained_variables`,
+            # but this would introduce a permutation so we choose not to.
+            return false
+        end
+    end
+    return true
+end
+
+function _build_copy_variables_with_set_cache(
+    src::MOI.ModelLike,
+    cache::_CopyVariablesWithSetCache,
+    ::Type{S},
+) where {S<:MOI.AbstractVectorSet}
+    F = MOI.VectorOfVariables
+    indices = MOI.ConstraintIndex{F,S}[]
+    for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
+        f = MOI.get(src, MOI.ConstraintFunction(), ci)
+        if _is_variable_cone(cache, f)
+            for fi in f.variables
+                # We need to assign each variable in `f` to a domain
+                push!(cache.variables_with_domain, fi)
+            end
+            # And we need to add the variables via `add_constrained_variables`.
+            push!(cache.variable_cones, (f.variables, ci))
+        else
+            # Not a variable cone, so add via `add_constraint`.
+            push!(indices, ci)
+        end
+    end
+    if !isempty(indices)
+        # If indices is not empty, then we have some constraints to add.
+        push!(cache.constraints_not_added, indices)
+    end
+    return
+end
+
+function _add_variable_with_domain(
+    dest,
+    src,
+    index_map,
+    f,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet},
+)
+    set = MOI.get(src, MOI.ConstraintSet(), ci)
+    dest_x, dest_ci = MOI.add_constrained_variable(dest, set)
+    index_map[only(f)] = dest_x
+    index_map[ci] = dest_ci
+    return
+end
+
+function _add_variable_with_domain(
+    dest,
+    src,
+    index_map,
+    f,
+    ci::MOI.ConstraintIndex{MOI.VectorOfVariables,<:MOI.AbstractVectorSet},
+)
+    set = MOI.get(src, MOI.ConstraintSet(), ci)
+    dest_x, dest_ci = MOI.add_constrained_variables(dest, set)
+    for (fi, xi) in zip(f, dest_x)
+        index_map[fi] = xi
+    end
+    index_map[ci] = dest_ci
+    return
+end
+
+function _copy_variables_with_set(dest, src)
+    index_map = IndexMap()
+    vis_src = MOI.get(src, MOI.ListOfVariableIndices())
+    cache = _CopyVariablesWithSetCache()
+    for (i, v) in enumerate(vis_src)
+        cache.variable_to_column[v] = i
+    end
+    for S in sorted_variable_sets_by_cost(dest, src)
+        _build_copy_variables_with_set_cache(src, cache, S)
+    end
+    column(x::MOI.VariableIndex) = cache.variable_to_column[x]
+    start_column(x) = column(first(x[1]))
+    current_column = 0
+    sort!(cache.variable_cones; by = start_column)
+    for (f, ci) in cache.variable_cones
+        offset = column(first(f)) - current_column - 1
+        if offset > 0
+            dest_x = MOI.add_variables(dest, offset)
+            for i in 1:offset
+                index_map[vis_src[current_column+i]] = dest_x[i]
+            end
+        end
+        _add_variable_with_domain(dest, src, index_map, f, ci)
+        current_column = column(last(f))
+    end
+    offset = length(cache.variable_to_column) - current_column
+    if offset > 0
+        dest_x = MOI.add_variables(dest, offset)
+        for i in 1:offset
+            index_map[vis_src[current_column+i]] = dest_x[i]
+        end
+    end
+    return index_map, vis_src, cache.constraints_not_added
 end
 
 """

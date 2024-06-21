@@ -503,24 +503,24 @@ julia> A.m
 julia> A.colptr
 4-element Vector{Int32}:
  0
- 1
- 3
+ 2
+ 4
  5
 
 julia> A.rowval
 5-element Vector{Int32}:
  0
  1
+ 1
  2
  0
- 1
 
 julia> A.nzval
 5-element Vector{Float64}:
+ -4.0
   1.0
   1.0
   2.0
- -4.0
   1.0
 ```
 The lower and upper row bounds:
@@ -543,15 +543,15 @@ The lower and upper variable bounds:
 ```jldoctest matrixofconstraints
 julia> dest.variables.lower
 3-element Vector{Float64}:
-   5.0
- -Inf
    0.0
+ -Inf
+   5.0
 
 julia> dest.variables.upper
 3-element Vector{Float64}:
-  5.0
- 10.0
   1.0
+ 10.0
+  5.0
 ```
 Because of larger variations between solvers, the objective can be queried using
 the standard MOI methods:
@@ -563,7 +563,7 @@ julia> F = MOI.get(dest, MOI.ObjectiveFunctionType())
 MathOptInterface.ScalarAffineFunction{Float64}
 
 julia> F = MOI.get(dest, MOI.ObjectiveFunction{F}())
-0.0 + 1.0 MOI.VariableIndex(3) + 2.0 MOI.VariableIndex(2) - 3.1 MOI.VariableIndex(1)
+0.0 + 1.0 MOI.VariableIndex(1) + 2.0 MOI.VariableIndex(2) - 3.1 MOI.VariableIndex(3)
 ```
 
 Thus, Clp.jl implements [`copy_to`](@ref) methods similar to the following:
