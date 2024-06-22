@@ -90,6 +90,7 @@ Bridges.debug_supports
 ## [SetMap API](@id constraint_set_map)
 
 ```@docs
+Bridges.MapNotInvertible
 Bridges.map_set
 Bridges.inverse_map_set
 Bridges.map_function

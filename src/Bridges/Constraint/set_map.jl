@@ -96,13 +96,29 @@ end
 
 # Attributes, Bridge acting as a constraint
 
+# MapNotInvertible is thrown if the bridge does not support inverting the
+# function. The user doesn't need to know this, only that they cannot get the
+# attribute. Throwing `GetAttributeNotAllowed` allows `CachingOptimizer` to fall
+# back to using the cache.
+function _not_invertible_error_message(attr, message)
+    return "Cannot get `$attr` as the constraint is reformulated through a linear transformation that is not invertible. $message"
+end
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintFunction,
     bridge::MultiSetMapBridge{T,S1,G},
 ) where {T,S1,G}
     mapped_func = MOI.get(model, attr, bridge.constraint)
-    func = MOI.Bridges.inverse_map_function(typeof(bridge), mapped_func)
+    func = try
+        MOI.Bridges.inverse_map_function(bridge, mapped_func)
+    catch err
+        if err isa MOI.Bridges.MapNotInvertible
+            msg = _not_invertible_error_message(attr, err.message)
+            throw(MOI.GetAttributeNotAllowed(attr, msg))
+        end
+        rethrow(err)
+    end
     return MOI.Utilities.convert_approx(G, func)
 end
 
@@ -123,7 +139,7 @@ function MOI.get(
     bridge::MultiSetMapBridge,
 )
     set = MOI.get(model, attr, bridge.constraint)
-    return MOI.Bridges.inverse_map_set(typeof(bridge), set)
+    return MOI.Bridges.inverse_map_set(bridge, set)
 end
 
 function MOI.set(
@@ -132,7 +148,7 @@ function MOI.set(
     bridge::MultiSetMapBridge{T,S1},
     set::S1,
 ) where {T,S1}
-    new_set = MOI.Bridges.map_set(typeof(bridge), set)
+    new_set = MOI.Bridges.map_set(bridge, set)
     MOI.set(model, attr, bridge.constraint, new_set)
     return
 end
@@ -146,7 +162,18 @@ function MOI.get(
     if value === nothing
         return nothing
     end
-    return MOI.Bridges.inverse_map_function(typeof(bridge), value)
+    try
+        return MOI.Bridges.inverse_map_function(bridge, value)
+    catch err
+        # MapNotInvertible is thrown if the bridge does not support inverting
+        # the function. The user doesn't need to know this, only that they
+        # cannot get the attribute.
+        if err isa MOI.Bridges.MapNotInvertible
+            msg = _not_invertible_error_message(attr, err.message)
+            throw(MOI.GetAttributeNotAllowed(attr, msg))
+        end
+        rethrow(err)
+    end
 end
 
 function MOI.set(
@@ -158,7 +185,7 @@ function MOI.set(
     if value === nothing
         MOI.set(model, attr, bridge.constraint, nothing)
     else
-        mapped_value = MOI.Bridges.map_function(typeof(bridge), value)
+        mapped_value = MOI.Bridges.map_function(bridge, value)
         MOI.set(model, attr, bridge.constraint, mapped_value)
     end
     return
@@ -173,7 +200,7 @@ function MOI.get(
     if value === nothing
         return nothing
     end
-    return MOI.Bridges.adjoint_map_function(typeof(bridge), value)
+    return MOI.Bridges.adjoint_map_function(bridge, value)
 end
 
 function MOI.set(
@@ -185,7 +212,15 @@ function MOI.set(
     if value === nothing
         MOI.set(model, attr, bridge.constraint, nothing)
     else
-        mapped_value = MOI.Bridges.inverse_adjoint_map_function(BT, value)
+        mapped_value = try
+            MOI.Bridges.inverse_adjoint_map_function(bridge, value)
+        catch err
+            if err isa MOI.Bridges.MapNotInvertible
+                msg = _not_invertible_error_message(attr, err.message)
+                throw(MOI.SetAttributeNotAllowed(attr, msg))
+            end
+            rethrow(err)
+        end
         MOI.set(model, attr, bridge.constraint, mapped_value)
     end
     return
