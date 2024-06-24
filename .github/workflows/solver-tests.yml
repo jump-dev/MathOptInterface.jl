@@ -12,6 +12,9 @@ jobs:
     env:
       PACKAGE: ${{ matrix.package }}
       XPRESS_JL_SKIP_LIB_CHECK: "true"
+      # It's okay to share this secret with other packages because it is the public
+      # community-xpauth.xpr and not something confidential to JuMP-dev.
+      XPAUTH_XPR: ${{ secrets.XPAUTH_XPR }}
     strategy:
       fail-fast: false
       matrix:
@@ -90,7 +93,13 @@ jobs:
         run: |
           import Pkg
           Pkg.develop(Pkg.PackageSpec(; path = pwd()))
+          if ENV["PACKAGE"] == "Xpress"
+            write("/opt/xpauth.xpr", ENV["XPAUTH_XPR"])
+            ENV["XPAUTH_PATH"] = "/opt/xpauth.xpr"
+            ENV["XPRESS_JL_SKIP_LIB_CHECK"] = true
+          end      
           Pkg.develop(ENV["PACKAGE"])
+          Pkg.build(ENV["PACKAGE"])
           Pkg.test(ENV["PACKAGE"])
   test-cplex:
     name: ${{ matrix.package }}
