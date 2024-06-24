@@ -91,13 +91,15 @@ jobs:
       - name: Test
         shell: julia --color=yes {0}
         run: |
-          if ENV["PACKAGE"] == "Xpress"
-            write("xpauth.xpr", ENV["XPAUTH_XPR"])
-            ENV["XPAUTH_PATH"] = joinpath(pwd(), "xpauth.xpr")
-          end
           import Pkg
           Pkg.develop(Pkg.PackageSpec(; path = pwd()))
+          if ENV["PACKAGE"] == "Xpress"
+            write("/opt/xpauth.xpr", ENV["XPAUTH_XPR"])
+            ENV["XPAUTH_PATH"] = "/opt/xpauth.xpr"
+            ENV["XPRESS_JL_SKIP_LIB_CHECK"] = true
+          end      
           Pkg.develop(ENV["PACKAGE"])
+          Pkg.build(ENV["PACKAGE"])
           Pkg.test(ENV["PACKAGE"])
   test-cplex:
     name: ${{ matrix.package }}
