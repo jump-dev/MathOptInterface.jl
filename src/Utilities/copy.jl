@@ -690,3 +690,75 @@ function MOI.is_empty(model::ModelFilter)
 end
 
 MOI.empty!(model::ModelFilter) = MOI.empty!(model.inner)
+
+###
+### These methods are deprecated, but unfortunately, they are used by a number
+### of downstream packages and JuMP extensions.
+###
+
+function _try_constrain_variables_on_creation(
+    dest::MOI.ModelLike,
+    src::MOI.ModelLike,
+    index_map::IndexMap,
+    ::Type{S},
+) where {S<:MOI.AbstractVectorSet}
+    not_added = MOI.ConstraintIndex{MOI.VectorOfVariables,S}[]
+    for ci_src in
+        MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S}())
+        f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
+        if !allunique(f_src.variables)
+            # Can't add it because there are duplicate variables
+            push!(not_added, ci_src)
+        elseif any(vi -> haskey(index_map, vi), f_src.variables)
+            # Can't add it because it contains a variable previously added
+            push!(not_added, ci_src)
+        else
+            set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
+            vis_dest, ci_dest = MOI.add_constrained_variables(dest, set)
+            index_map[ci_src] = ci_dest
+            for (vi_src, vi_dest) in zip(f_src.variables, vis_dest)
+                index_map[vi_src] = vi_dest
+            end
+        end
+    end
+    return not_added
+end
+
+function _try_constrain_variables_on_creation(
+    dest::MOI.ModelLike,
+    src::MOI.ModelLike,
+    index_map::IndexMap,
+    ::Type{S},
+) where {S<:MOI.AbstractScalarSet}
+    not_added = MOI.ConstraintIndex{MOI.VariableIndex,S}[]
+    for ci_src in
+        MOI.get(src, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
+        f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
+        if haskey(index_map, f_src)
+            # Can't add it because it contains a variable previously added
+            push!(not_added, ci_src)
+        else
+            set = MOI.get(src, MOI.ConstraintSet(), ci_src)::S
+            vi_dest, ci_dest = MOI.add_constrained_variable(dest, set)
+            index_map[ci_src] = ci_dest
+            index_map[f_src] = vi_dest
+        end
+    end
+    return not_added
+end
+
+function _copy_free_variables(dest::MOI.ModelLike, index_map::IndexMap, vis_src)
+    if length(vis_src) == length(index_map.var_map)
+        return  # All variables already added
+    end
+    x = MOI.add_variables(dest, length(vis_src) - length(index_map.var_map))
+    i = 1
+    for vi in vis_src
+        if !haskey(index_map, vi)
+            index_map[vi] = x[i]
+            i += 1
+        end
+    end
+    @assert i == length(x) + 1
+    return
+end
