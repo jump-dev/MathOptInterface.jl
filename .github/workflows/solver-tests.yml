@@ -93,6 +93,7 @@ jobs:
         run: |
           if ENV["PACKAGE"] == "Xpress"
             write("xpauth.xpr", ENV["XPAUTH_XPR"])
+            ENV["XPAUTH_PATH"] = joinpath(pwd(), "xpauth.xpr")
           end
           import Pkg
           Pkg.develop(Pkg.PackageSpec(; path = pwd()))
