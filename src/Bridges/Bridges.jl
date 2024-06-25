@@ -144,7 +144,11 @@ MOI.get_fallback(model::MOI.ModelLike, ::ListOfNonstandardBridges) = Type[]
 
 include("precompile.jl")
 
-function _test_structural_identical(a::MOI.ModelLike, b::MOI.ModelLike)
+function _test_structural_identical(
+    a::MOI.ModelLike,
+    b::MOI.ModelLike;
+    cannot_unbridge::Bool = false,
+)
     # Test that the variables are the same. We make the strong assumption that
     # the variables are added in the same order to both models.
     a_x = MOI.get(a, MOI.ListOfVariableIndices())
@@ -190,7 +194,16 @@ function _test_structural_identical(a::MOI.ModelLike, b::MOI.ModelLike)
         Test.@test MOI.supports_constraint(b, F, S)
         # Check that each function in `b` matches a function in `a`
         for ci in MOI.get(b, MOI.ListOfConstraintIndices{F,S}())
-            f_b = MOI.get(b, MOI.ConstraintFunction(), ci)
+            f_b = try
+                MOI.get(b, MOI.ConstraintFunction(), ci)
+            catch err
+                if cannot_unbridge &&
+                   err isa MOI.GetAttributeNotAllowed{MOI.ConstraintFunction}
+                    continue
+                else
+                    rethrow(err)
+                end
+            end
             f_b = MOI.Utilities.map_indices(x_map, f_b)
             s_b = MOI.get(b, MOI.ConstraintSet(), ci)
             # We don't care about the order that constraints are added, only
@@ -225,12 +238,17 @@ end
         variable_start = 1.2,
         constraint_start = 1.2,
         eltype = Float64,
+        cannot_unbridge::Bool = false,
     )
 
 Run a series of tests that check the correctness of `Bridge`.
 
 `input_fn` and `output_fn` are functions such that `input_fn(model)`
 and `output_fn(model)` load the corresponding model into `model`.
+
+Set `cannot_unbridge` to `true` if the bridge is a variable bridge
+for which [`Variable.unbridged_map`](@ref) returns `nothing` so that
+the tests allow errors that can be raised due to this.
 
 ## Example
 
@@ -253,6 +271,7 @@ function runtests(
     constraint_start = 1.2,
     eltype = Float64,
     print_inner_model::Bool = false,
+    cannot_unbridge::Bool = false,
 )
     # Load model and bridge it
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
@@ -267,7 +286,7 @@ function runtests(
     # Load a non-bridged input model, and check that getters are the same.
     test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
     input_fn(test)
-    _test_structural_identical(test, model)
+    _test_structural_identical(test, model; cannot_unbridge = cannot_unbridge)
     # Load a bridged target model, and check that getters are the same.
     target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
     output_fn(target)
@@ -291,7 +310,17 @@ function runtests(
     # Test ConstraintPrimalStart and ConstraintDualStart
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            set = MOI.get(model, MOI.ConstraintSet(), ci)
+            set = try
+                MOI.get(model, MOI.ConstraintSet(), ci)
+            catch err
+                # Could be thrown by `unbridged_function`
+                if cannot_unbridge &&
+                   err isa MOI.GetAttributeNotAllowed{MOI.ConstraintFunction}
+                    continue
+                else
+                    rethrow(err)
+                end
+            end
             for attr in (MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart())
                 if MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
                     MOI.set(model, attr, ci, nothing)

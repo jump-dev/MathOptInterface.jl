@@ -23,6 +23,29 @@ end
 
 include("../utilities.jl")
 
+function test_runtests()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Variable.ZerosBridge,
+        model -> begin
+            x, _ = MOI.add_constrained_variables(model, MOI.Zeros(2))
+            MOI.add_constraint(
+                model,
+                1.0 * x[1] + 2.0 * x[2],
+                MOI.EqualTo(3.0),
+            )
+        end,
+        model -> begin
+            MOI.add_constraint(
+                model,
+                zero(MOI.ScalarAffineFunction{Float64}),
+                MOI.EqualTo(3.0),
+            )
+        end;
+        cannot_unbridge = true,
+    )
+    return
+end
+
 function test_zeros()
     mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     bridged_mock = MOI.Bridges.Variable.Zeros{Float64}(mock)
