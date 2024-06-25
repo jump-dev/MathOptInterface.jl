@@ -247,7 +247,7 @@ Run a series of tests that check the correctness of `Bridge`.
 and `output_fn(model)` load the corresponding model into `model`.
 
 Set `cannot_unbridge` to `true` if the bridge is a variable bridge
-that does not supports [`Variable.unbridged_function`](@ref) so that
+for which [`Variable.unbridged_map`](@ref) returns `nothing` so that
 the tests allow errors that can be raised due to this.
 
 ## Example
