@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
- - Updated `solver-tests.yml` (#2518)
+ - Updated `solver-tests.yml` (#2516) (#2518)
 
 ## v1.30.0 (May 23, 2024)
 
