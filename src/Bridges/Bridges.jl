@@ -147,7 +147,7 @@ include("precompile.jl")
 function _test_structural_identical(
     a::MOI.ModelLike,
     b::MOI.ModelLike;
-    allow_constraint_function_error::Bool = false,
+    cannot_unbridge::Bool = false,
 )
     # Test that the variables are the same. We make the strong assumption that
     # the variables are added in the same order to both models.
@@ -194,10 +194,10 @@ function _test_structural_identical(
         Test.@test MOI.supports_constraint(b, F, S)
         # Check that each function in `b` matches a function in `a`
         for ci in MOI.get(b, MOI.ListOfConstraintIndices{F,S}())
-            try
-                f_b = MOI.get(b, MOI.ConstraintFunction(), ci)
+            f_b = try
+                MOI.get(b, MOI.ConstraintFunction(), ci)
             catch err
-                if allow_constraint_function_error &&
+                if cannot_unbridge &&
                    err isa MOI.GetAttributeNotAllowed{MOI.ConstraintFunction}
                     continue
                 else
@@ -238,12 +238,17 @@ end
         variable_start = 1.2,
         constraint_start = 1.2,
         eltype = Float64,
+        cannot_unbridge::Bool = false,
     )
 
 Run a series of tests that check the correctness of `Bridge`.
 
 `input_fn` and `output_fn` are functions such that `input_fn(model)`
 and `output_fn(model)` load the corresponding model into `model`.
+
+Set `cannot_unbridge` to `true` if the bridge is a variable bridge
+that does not supports [`Variables.unbridged_func`](@ref) so that
+the tests allow errors that can be raised due to this.
 
 ## Example
 
@@ -266,7 +271,7 @@ function runtests(
     constraint_start = 1.2,
     eltype = Float64,
     print_inner_model::Bool = false,
-    allow_outer_constraint_function_error::Bool = false,
+    cannot_unbridge::Bool = false,
 )
     # Load model and bridge it
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
@@ -284,7 +289,7 @@ function runtests(
     _test_structural_identical(
         test,
         model;
-        allow_constraint_function_error = allow_outer_constraint_function_error,
+        cannot_unbridge = cannot_unbridge,
     )
     # Load a bridged target model, and check that getters are the same.
     target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
@@ -309,7 +314,17 @@ function runtests(
     # Test ConstraintPrimalStart and ConstraintDualStart
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            set = MOI.get(model, MOI.ConstraintSet(), ci)
+            set = try
+                MOI.get(model, MOI.ConstraintSet(), ci)
+            catch err
+                # Could be thrown by `unbridged_function`
+                if cannot_unbridge &&
+                   err isa MOI.GetAttributeNotAllowed{MOI.ConstraintFunction}
+                    continue
+                else
+                    rethrow(err)
+                end
+            end
             for attr in (MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart())
                 if MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
                     MOI.set(model, attr, ci, nothing)
