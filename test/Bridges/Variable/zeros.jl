@@ -28,10 +28,18 @@ function test_runtests()
         MOI.Bridges.Variable.ZerosBridge,
         model -> begin
             x, _ = MOI.add_constrained_variables(model, MOI.Zeros(2))
-            MOI.add_constraint(model, 1.0 * x[1] + 2.0 * x[2], MOI.EqualTo(3.0))
+            MOI.add_constraint(
+                model,
+                1.0 * x[1] + 2.0 * x[2],
+                MOI.EqualTo(3.0),
+            )
         end,
         model -> begin
-            MOI.add_constraint(model, zero(MOI.ScalarAffineFunction{Float64}), MOI.EqualTo(3.0))
+            MOI.add_constraint(
+                model,
+                zero(MOI.ScalarAffineFunction{Float64}),
+                MOI.EqualTo(3.0),
+            )
         end;
         cannot_unbridge = true,
     )

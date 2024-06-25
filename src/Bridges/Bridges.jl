@@ -247,7 +247,7 @@ Run a series of tests that check the correctness of `Bridge`.
 and `output_fn(model)` load the corresponding model into `model`.
 
 Set `cannot_unbridge` to `true` if the bridge is a variable bridge
-that does not supports [`Variables.unbridged_func`](@ref) so that
+that does not supports [`Variable.unbridged_func`](@ref) so that
 the tests allow errors that can be raised due to this.
 
 ## Example
@@ -286,11 +286,7 @@ function runtests(
     # Load a non-bridged input model, and check that getters are the same.
     test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
     input_fn(test)
-    _test_structural_identical(
-        test,
-        model;
-        cannot_unbridge = cannot_unbridge,
-    )
+    _test_structural_identical(test, model; cannot_unbridge = cannot_unbridge)
     # Load a bridged target model, and check that getters are the same.
     target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
     output_fn(target)
