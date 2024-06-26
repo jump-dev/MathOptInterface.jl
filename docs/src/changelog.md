@@ -7,6 +7,32 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.31.0 (June 26, 2024)
+
+### Added
+
+ - Added default `show(::IO, ::ModelLike)` method (#2505) (#2510)
+ - Set map bridges can now implement the various `map_function` methods to use
+   the value of the bridge as the first argument, instead of passing the type of
+   the bridge. (#2509)
+ - Added `cannot_unbridge` argument to [`Bridges.runtests`](@ref)
+
+### Fixed
+
+ - Fixed [`supports_constraint`](@ref) for `IndicatorSOS1Bridge` (#2507)
+ - Fixed getting [`ConstraintDual`](@ref) in slack bridges (#2508) (#2514)
+   (#2515)
+ - Fixed `FileFormats.NL` to read linear constraints as
+   [`ScalarAffineFunction`](@ref) (#2512)
+ - Changed `default_copy_to` to maintain the order of variables during `copy_to`.
+   This change is marked as non-breaking, but it may cause different (but
+   mathematically equivalent) models to be formulated, particularly conic models
+   with bridges. (#2495) (#2520)
+
+### Other
+
+ - Updated `solver-tests.yml` (#2516) (#2518)
+
 ## v1.30.0 (May 23, 2024)
 
 ### Added
