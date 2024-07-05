@@ -189,30 +189,12 @@ function MOI.get(
     return MOI.HermitianPositiveSemidefiniteConeTriangle(bridge.n)
 end
 
-function _matrix_indices(k)
-    # If `k` is a diagonal index, `s(k)` is odd and 1 + 8k is a perfect square.
-    n = 1 + 8k
-    s = isqrt(n)
-    j = if s^2 == n
-        div(s, 2)
-    else
-        # Otherwise, if it is after the diagonal index `k` but before the
-        # diagonal index `k'` with `s(k') = s(k) + 2`, we have
-        # `s(k) <= s < s(k) + 2`.
-        # By shifting by `+1` before `div`, we make sure to have the right
-        # column.
-        div(s + 1, 2)
-    end
-    i = k - MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(j - 1))
-    return i, j
-end
-
 function _variable_map(idx::MOI.Bridges.IndexInVector, n)
     N = MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(n))
     if idx.value <= N
         return idx.value
     end
-    i, j = _matrix_indices(idx.value - N)
+    i, j = MOI.Utilities.inverse_trimap(idx.value - N)
     d = MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(j))
     return N + j * n + d + i
 end
