@@ -1804,58 +1804,52 @@ function Base.getproperty(
 end
 
 """
-    FrobeniusProductPostiviveSemidefiniteConeTriangle{M}(side_dimension::Int, matrices::Vector{M})
+    SetWithDotProducts(set, vectors::Vector{V})
 
-Given `m` symmetric matrices `A_1`, ..., `A_m` given in `matrices`, the frobenius inner
-product of positive semidefinite matrices is the convex cone:
-``\\{ ((\\langle A_1, X \\rangle, ..., \\langle A_m, X \\rangle, X) \\in \\mathbb{R}^{m + d(d+1)/2} : X \\text{ postive semidefinite} \\}``,
-where the matrix `X` is represented in the same symmetric packed format as in
-the [`PositiveSemidefiniteConeTriangle`](@ref).
+Given a set `set` of dimension `d` and `m` vectors `v_1`, ..., `v_m` given in `vectors`, this is the set:
+``\\{ ((\\langle v_1, x \\rangle, ..., \\langle v_m, x \\rangle, x) \\in \\mathbb{R}^{m + d} : x \\in \\text{set} \\}.``
 """
-struct FrobeniusProductPostiviveSemidefiniteConeTriangle{M} <: AbstractVectorSet
-    side_dimension::Int
-    matrices::Vector{M}
+struct SetWithDotProducts{S,V} <: AbstractVectorSet
+    set::S
+    vectors::Vector{V}
 end
 
-function dimension(s::FrobeniusProductPostiviveSemidefiniteConeTriangle)
-    return length(s.matrices) + s.side_dimension^2
+function dimension(s::SetWithDotProducts)
+    return length(s.vectors) + dimension(s.set)
 end
 
-function dual_set(s::FrobeniusProductPostiviveSemidefiniteConeTriangle)
-    return LinearMatrixInequalityConeTriangle(s.side_dimension, s.matrices)
+function dual_set(s::SetWithDotProducts)
+    return LinearCombinationInSet(s.set, s.vectors)
 end
 
 function dual_set_type(
-    ::Type{FrobeniusProductPostiviveSemidefiniteConeTriangle{M}},
-) where {M}
-    return LinearMatrixInequalityConeTriangle
+    ::Type{SetWithDotProducts{S,V}},
+) where {S,V}
+    return LinearCombinationInSet{S,V}
 end
 
 """
-    LinearMatrixInequalityConeTriangle{M}(side_dimension::Int, matrices::Vector{M})
+    LinearCombinationInSet{S,V}(set::S, matrices::Vector{V})
 
-Given `m` symmetric matrices `A_1`, ..., `A_m` given in `matrices`, the linear
-matrix inequality cone is the convex cone:
-``\\{ ((y, C) \\in \\mathbb{R}^{m + d(d+1)/2} : \\sum_{i=1}^m y_i A_i + C \\text{ postive semidefinite} \\}``,
-where the matrix `C` is represented in the same symmetric packed format as in
-the [`PositiveSemidefiniteConeTriangle`](@ref).
+Given a set `set` of dimension `d` and `m` vectors `v_1`, ..., `v_m` given in `vectors`, this is the set:
+``\\{ ((y, x) \\in \\mathbb{R}^{m + d} : \\sum_{i=1}^m y_i v_i + x \\in \\text{set} \\}.``
 """
-struct LinearMatrixInequalityConeTriangle{M} <: AbstractVectorSet
-    side_dimension::Int
-    matrices::Vector{M}
+struct LinearCombinationInSet{S,V} <: AbstractVectorSet
+    set::S
+    vectors::Vector{V}
 end
 
-dimension(s::LinearMatrixInequalityConeTriangle) = length(s.matrices) + s.side_dimension^2
+dimension(s::LinearCombinationInSet) = length(s.vectors) + simension(s.set)
 
-function dual_set(s::LinearMatrixInequalityConeTriangle)
-    return FrobeniusProductPostiviveSemidefiniteConeTriangle(
+function dual_set(s::LinearCombinationInSet)
+    return SetWithDotProducts(
         s.side_dimension,
         s.matrices,
     )
 end
 
-function dual_set_type(::Type{LinearMatrixInequalityConeTriangle{M}}) where {M}
-    return FrobeniusProductPostiviveSemidefiniteConeTriangle
+function dual_set_type(::Type{LinearCombinationInSet{S,V}}) where {S,V}
+    return SetWithDotProducts{S,V}
 end
 
 """

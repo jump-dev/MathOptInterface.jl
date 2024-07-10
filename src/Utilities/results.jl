@@ -498,29 +498,3 @@ function get_fallback(
     f = MOI.get(model, MOI.ConstraintFunction(), ci)
     return _variable_dual(T, model, attr, ci, f)
 end
-
-function set_dot(
-    x::AbstractVector,
-    y::AbstractVector,
-    set::Union{
-        MOI.FrobeniusProductPostiviveSemidefiniteConeTriangle,
-        MOI.LinearMatrixInequalityConeTriangle,
-    },
-)
-    m = length(set.matrices)
-    return LinearAlgebra.dot(view(x, 1:m), view(y, 1:m)) +
-           triangle_dot(x, y, set.side_dimension, m)
-end
-
-
-function set_dot(
-    a::AbstractVector,
-    set::Union{
-        MOI.FrobeniusProductPostiviveSemidefiniteConeTriangle,
-        MOI.LinearMatrixInequalityConeTriangle,
-    },
-)
-    b = copy(a)
-    triangle_coefficients!(b, set.side_dimension, length(set.matrices))
-    return b
-end
