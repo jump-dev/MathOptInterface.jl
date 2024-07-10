@@ -82,6 +82,8 @@ The vector-valued set types implemented in MathOptInterface.jl are:
 | [`RelativeEntropyCone(d)`](@ref MathOptInterface.RelativeEntropyCone) | ``\{ (u, v, w) \in \mathbb{R}^{d} : u \ge \sum_i w_i \log (\frac{w_i}{v_i}), v_i \ge 0, w_i \ge 0 \}`` |
 | [`HyperRectangle(l, u)`](@ref MathOptInterface.HyperRectangle)        | ``\{x \in \bar{\mathbb{R}}^d: x_i \in [l_i, u_i] \forall i=1,\ldots,d\}`` |
 | [`NormCone(p, d)`](@ref MathOptInterface.NormCone)       | ``\{ (t,x) \in \mathbb{R}^{d} : t \ge \left(\sum\limits_i \lvert x_i \rvert^p\right)^{\frac{1}{p}} \}`` |
+| [`SetWithDotProcuts(s, v)`](@ref MathOptInterface.SetWithDotProducts) | The cone `s` with dot products with the fixed vectors `v`. |
+| [`LinearCombinationInSet(s, v)`](@ref MathOptInterface.LinearCombinationInSet) | The cone of vector `(y, x)` such that ``\sum_i y_i v_i + x`` belongs to `s`. |
 
 ## Matrix cones
 
@@ -100,8 +102,6 @@ The matrix-valued set types implemented in MathOptInterface.jl are:
 | [`HermitianPositiveSemidefiniteConeTriangle(d)`](@ref MathOptInterface.HermitianPositiveSemidefiniteConeTriangle) | The cone of Hermitian positive semidefinite matrices, with
 `side_dimension` rows and columns. |
 | [`Scaled(S)`](@ref MathOptInterface.Scaled) | The set `S` scaled so that [`Utilities.set_dot`](@ref MathOptInterface.Utilities.set_dot) corresponds to `LinearAlgebra.dot` |
-| [`FrobeniusProductPostiviveSemidefiniteConeTriangle(d, A)`](@ref MathOptInterface.FrobeniusProductPostiviveSemidefiniteConeTriangle) | The cone of positive semidefinite matrices, with `side_dimension` rows and columns and their Frobenius inner product with the matrices in `A`. |
-| [`LinearMatrixInequalityConeTriangle(d, A)`](@ref MathOptInterface.LinearMatrixInequalityConeTriangle) | The cone of vector `y` and symmetric `C`, with `side_dimension` rows and columns such that ``\sum_i y_i A_i + C`` is positive semidefinite. |
 
 Some of these cones can take two forms: `XXXConeTriangle` and `XXXConeSquare`.
 

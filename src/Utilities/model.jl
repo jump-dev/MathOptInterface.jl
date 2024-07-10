@@ -792,8 +792,6 @@ const LessThanIndicatorZero{T} =
         MOI.Scaled{MOI.PositiveSemidefiniteConeTriangle},
         MOI.RootDetConeTriangle,
         MOI.RootDetConeSquare,
-        MOI.FrobeniusProductPostiviveSemidefiniteConeTriangle,
-        MOI.LinearMatrixInequalityConeTriangle,
         MOI.LogDetConeTriangle,
         MOI.LogDetConeSquare,
         MOI.AllDifferent,
