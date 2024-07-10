@@ -1848,6 +1848,23 @@ function dual_set_type(::Type{LinearCombinationInSet{S,V}}) where {S,V}
 end
 
 """
+    struct LowRankMatrix{T}
+        diagonal::Vector{T}
+        factor::Matrix{T}
+    end
+
+`factor * Diagonal(diagonal) * factor'`.
+"""
+struct LowRankMatrix{T}
+    diagonal::Vector{T}
+    factor::Matrix{T}
+end
+
+struct TriangleVectorization{M}
+    matrix::M
+end
+
+"""
     SOS1{T<:Real}(weights::Vector{T})
 
 The set corresponding to the Special Ordered Set (SOS) constraint of Type I.
