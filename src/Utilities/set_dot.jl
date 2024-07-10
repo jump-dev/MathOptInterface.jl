@@ -89,10 +89,7 @@ end
 function set_dot(
     x::AbstractVector,
     y::AbstractVector,
-    set::Union{
-        MOI.SetWithDotProducts,
-        MOI.LinearCombinationInSet,
-    },
+    set::Union{MOI.SetWithDotProducts,MOI.LinearCombinationInSet},
 )
     m = length(set.matrices)
     return LinearAlgebra.dot(view(x, 1:m), view(y, 1:m)) +
@@ -160,10 +157,7 @@ end
 
 function dot_coefficients(
     a::AbstractVector,
-    set::Union{
-        MOI.SetWithDotProducts,
-        MOI.LinearCombinationInSet,
-    },
+    set::Union{MOI.SetWithDotProducts,MOI.LinearCombinationInSet},
 )
     b = copy(a)
     m = length(set.vectors)

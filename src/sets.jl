@@ -1822,9 +1822,7 @@ function dual_set(s::SetWithDotProducts)
     return LinearCombinationInSet(s.set, s.vectors)
 end
 
-function dual_set_type(
-    ::Type{SetWithDotProducts{S,V}},
-) where {S,V}
+function dual_set_type(::Type{SetWithDotProducts{S,V}}) where {S,V}
     return LinearCombinationInSet{S,V}
 end
 
@@ -1842,10 +1840,7 @@ end
 dimension(s::LinearCombinationInSet) = length(s.vectors) + simension(s.set)
 
 function dual_set(s::LinearCombinationInSet)
-    return SetWithDotProducts(
-        s.side_dimension,
-        s.matrices,
-    )
+    return SetWithDotProducts(s.side_dimension, s.matrices)
 end
 
 function dual_set_type(::Type{LinearCombinationInSet{S,V}}) where {S,V}
