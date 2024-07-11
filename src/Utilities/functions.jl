@@ -638,18 +638,23 @@ end
 A type that allows iterating over the scalar-functions that comprise an
 `AbstractVectorFunction`.
 """
-struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction,C}
+struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction,C,S} <: AbstractVector{S}
     f::F
     # Cache that can be used to store a precomputed datastructure that allows
     # an efficient implementation of `getindex`.
     cache::C
+    function ScalarFunctionIterator(f::MOI.AbstractVectorFunction, cache)
+        return new{typeof(f),typeof(cache),scalar_type(typeof(f))}(f, cache)
+    end
 end
 
 function ScalarFunctionIterator(func::MOI.AbstractVectorFunction)
     return ScalarFunctionIterator(func, scalar_iterator_cache(func))
 end
 
-scalar_iterator_cache(func::MOI.AbstractVectorFunction) = nothing
+Base.size(s::ScalarFunctionIterator) = (MOI.output_dimension(s.f),)
+
+scalar_iterator_cache(::MOI.AbstractVectorFunction) = nothing
 
 function output_index_iterator(terms::AbstractVector, output_dimension)
     start = zeros(Int, output_dimension)
