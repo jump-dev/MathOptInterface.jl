@@ -1855,13 +1855,31 @@ end
 
 `factor * Diagonal(diagonal) * factor'`.
 """
-struct LowRankMatrix{T}
+struct LowRankMatrix{T} <: AbstractMatrix{T}
     diagonal::Vector{T}
     factor::Matrix{T}
 end
 
-struct TriangleVectorization{M}
+function Base.size(m::LowRankMatrix)
+    n = size(m.factor, 1)
+    return (n, n)
+end
+
+function Base.getindex(m::LowRankMatrix, i::Int, j::Int)
+    return sum(m.factor[i, k] * m.diagonal[k] * m.factor[j, k]' for k in eachindex(m.diagonal))
+end
+
+struct TriangleVectorization{T,M<:AbstractMatrix{T}} <: AbstractVector{T}
     matrix::M
+end
+
+function Base.size(v::TriangleVectorization)
+    n = size(v.matrix, 1)
+    return (Utilities.trimap(n, n),)
+end
+
+function Base.getindex(v::TriangleVectorization, k::Int)
+    return getindex(v.matrix, Utilities.inverse_trimap(k)...)
 end
 
 """

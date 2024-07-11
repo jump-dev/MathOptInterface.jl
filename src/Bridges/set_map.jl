@@ -80,6 +80,10 @@ function map_function(::Type{BT}, func, i::IndexInVector) where {BT}
     return MOI.Utilities.eachscalar(map_function(BT, func))[i.value]
 end
 
+function map_function(bridge::AbstractBridge, func, i::IndexInVector)
+    return map_function(typeof(bridge), func, i)
+end
+
 """
     inverse_map_function(bridge::MOI.Bridges.AbstractBridge, func)
     inverse_map_function(::Type{BT}, func) where {BT}
