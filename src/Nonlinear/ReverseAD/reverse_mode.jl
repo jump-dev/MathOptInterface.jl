@@ -68,7 +68,7 @@ function _reverse_mode(d::NLPEvaluator, x)
     # It is safe to resize `last_x` because only the variables in
     # `ordered_variables` can appear in the NLPBlock.
     #
-    # I don't think we need any other fixes becasue callers to things like
+    # I don't think we need any other fixes because callers to things like
     # `eval_objective` can pass in a longer input `x` vector without fear
     # because the excess elements won't be used.
     if length(d.last_x) < length(x)
