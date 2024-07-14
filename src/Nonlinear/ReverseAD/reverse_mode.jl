@@ -59,11 +59,12 @@ function _reverse_mode(d::NLPEvaluator, x)
     # the list of variables in the JuMP model to `.ordered_variables`.
     #
     # During `MOI.initialize`, `.last_x` gets filled with `NaN` to match the
-    # length of `ordered_variables`.
+    # length of `ordered_variables`, that is, the number of variables in the
+    # JuMP model.
     #
     # However, if the model includes a bridge that adds new decision variables
-    # in `Utilities.final_touch`, then the total number of variables (in `x`)
-    # might be larger than the cache in `last_x`.
+    # then the total number of variables in the optimizer (in `x`) will be
+    # larger than the cache in `last_x`.
     #
     # It is safe to resize `last_x` because only the variables in
     # `ordered_variables` can appear in the NLPBlock.
