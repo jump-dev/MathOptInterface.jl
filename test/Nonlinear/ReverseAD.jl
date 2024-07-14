@@ -1121,6 +1121,20 @@ function test_timers()
     return
 end
 
+function test_varying_length_x()
+    model = MOI.Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    MOI.Nonlinear.set_objective(model, :(sin($x)))
+    evaluator =
+        MOI.Nonlinear.Evaluator(model, MOI.Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, Symbol[:Jac])
+    ∇f = [NaN]
+    MOI.eval_objective_gradient(evaluator, ∇f, [1.0, 2.0])
+    @test length(∇f) == 1
+    @test ∇f[1] ≈ cos(1.0)
+    return
+end
+
 end  # module
 
 TestReverseAD.runtests()
