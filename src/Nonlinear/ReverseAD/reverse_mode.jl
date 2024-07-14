@@ -54,6 +54,26 @@ function _reverse_mode(d::NLPEvaluator, x)
     for con in d.constraints
         _reverse_eval(con)
     end
+    # If a JuMP model uses the legacy nonlinear interface, then JuMP constructs
+    # a NLPEvaluator at the start of a call to `JuMP.optimize!` and it passes in
+    # the list of variables in the JuMP model to `.ordered_variables`.
+    #
+    # During `MOI.initialize`, `.last_x` gets filled with `NaN` to match the
+    # length of `ordered_variables`.
+    #
+    # However, if the model includes a bridge that adds new decision variables
+    # in `Utilities.final_touch`, then the total number of variables (in `x`)
+    # might be larger than the cache in `last_x`.
+    #
+    # It is safe to resize `last_x` because only the variables in
+    # `ordered_variables` can appear in the NLPBlock.
+    #
+    # I don't think we need any other fixes becasue callers to things like
+    # `eval_objective` can pass in a longer input `x` vector without fear
+    # because the excess elements won't be used.
+    if length(d.last_x) < length(x)
+        resize!(d.last_x, length(x))
+    end
     copyto!(d.last_x, x)
     return
 end
