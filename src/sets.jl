@@ -1814,6 +1814,10 @@ struct SetWithDotProducts{S,V} <: AbstractVectorSet
     vectors::Vector{V}
 end
 
+function Base.copy(s::SetWithDotProducts)
+    return SetWithDotProducts(copy(s.set), copy(s.vectors))
+end
+
 function dimension(s::SetWithDotProducts)
     return length(s.vectors) + dimension(s.set)
 end
