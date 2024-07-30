@@ -1804,73 +1804,129 @@ function Base.getproperty(
 end
 
 """
-    SetWithDotProducts(set, vectors::Vector{V})
+    SetWithDotProducts(set::MOI.AbstractSet, vectors::AbstractVector)
 
-Given a set `set` of dimension `d` and `m` vectors `v_1`, ..., `v_m` given in `vectors`, this is the set:
-``\\{ ((\\langle v_1, x \\rangle, ..., \\langle v_m, x \\rangle, x) \\in \\mathbb{R}^{m + d} : x \\in \\text{set} \\}.``
+Given a set `set` of dimension `d` and `m` vectors `a_1`, ..., `a_m` given in `vectors`, this is the set:
+``\\{ ((\\langle a_1, x \\rangle, ..., \\langle a_m, x \\rangle) \\in \\mathbb{R}^{m} : x \\in \\text{set} \\}.``
 """
-struct SetWithDotProducts{S,V} <: AbstractVectorSet
+struct SetWithDotProducts{S,A,V<:AbstractVector{A}} <: AbstractVectorSet
     set::S
-    vectors::Vector{V}
+    vectors::V
 end
 
 function Base.copy(s::SetWithDotProducts)
     return SetWithDotProducts(copy(s.set), copy(s.vectors))
 end
 
-function dimension(s::SetWithDotProducts)
-    return length(s.vectors) + dimension(s.set)
-end
+dimension(s::SetWithDotProducts) = length(s.vectors)
 
 function dual_set(s::SetWithDotProducts)
     return LinearCombinationInSet(s.set, s.vectors)
 end
 
-function dual_set_type(::Type{SetWithDotProducts{S,V}}) where {S,V}
-    return LinearCombinationInSet{S,V}
+function dual_set_type(::Type{SetWithDotProducts{S,A,V}}) where {S,A,V}
+    return LinearCombinationInSet{S,A,V}
 end
 
 """
-    LinearCombinationInSet{S,V}(set::S, matrices::Vector{V})
+    LinearCombinationInSet(set::MOI.AbstractSet, matrices::AbstractVector)
 
-Given a set `set` of dimension `d` and `m` vectors `v_1`, ..., `v_m` given in `vectors`, this is the set:
-``\\{ ((y, x) \\in \\mathbb{R}^{m + d} : \\sum_{i=1}^m y_i v_i + x \\in \\text{set} \\}.``
+Given a set `set` of dimension `d` and `m` vectors `a_1`, ..., `a_m` given in `vectors`, this is the set:
+``\\{ (y \\in \\mathbb{R}^{m} : \\sum_{i=1}^m y_i a_i \\in \\text{set} \\}.``
 """
-struct LinearCombinationInSet{S,V} <: AbstractVectorSet
+struct LinearCombinationInSet{S,A,V<:AbstractVector{A}} <: AbstractVectorSet
     set::S
-    vectors::Vector{V}
+    vectors::V
 end
 
-dimension(s::LinearCombinationInSet) = length(s.vectors) + simension(s.set)
+dimension(s::LinearCombinationInSet) = length(s.vectors)
 
 function dual_set(s::LinearCombinationInSet)
-    return SetWithDotProducts(s.side_dimension, s.matrices)
+    return SetWithDotProducts(s.side_dimension, s.vectors)
 end
 
-function dual_set_type(::Type{LinearCombinationInSet{S,V}}) where {S,V}
-    return SetWithDotProducts{S,V}
+function dual_set_type(::Type{LinearCombinationInSet{S,A,V}}) where {S,A,V}
+    return SetWithDotProducts{S,A,V}
 end
 
-"""
-    struct LowRankMatrix{T}
-        diagonal::Vector{T}
-        factor::Matrix{T}
-    end
+abstract type AbstractFactorization{T,F} <: AbstractMatrix{T} end
 
-`factor * Diagonal(diagonal) * factor'`.
-"""
-struct LowRankMatrix{T} <: AbstractMatrix{T}
-    diagonal::Vector{T}
-    factor::Matrix{T}
-end
-
-function Base.size(m::LowRankMatrix)
+function Base.size(m::AbstractFactorization)
     n = size(m.factor, 1)
     return (n, n)
 end
 
-function Base.getindex(m::LowRankMatrix, i::Int, j::Int)
-    return sum(m.factor[i, k] * m.diagonal[k] * m.factor[j, k]' for k in eachindex(m.diagonal))
+"""
+    struct Factorization{
+        T,
+        F<:Union{AbstractVector{T},AbstractMatrix{T}},
+        D<:Union{T,AbstractVector{T}},
+    } <: AbstractMatrix{T}
+        factor::F
+        scaling::D
+    end
+
+Matrix corresponding to `factor * Diagonal(diagonal) * factor'`.
+If `factor` is a vector and `diagonal` is a scalar, this corresponds to
+the matrix `diagonal * factor * factor'`.
+If `factor` is a matrix and `diagonal` is a vector, this corresponds to
+the matrix `factor * Diagonal(scaling) * factor'`.
+"""
+struct Factorization{
+    T,
+    F<:Union{AbstractVector{T},AbstractMatrix{T}},
+    D<:Union{T,AbstractVector{T}},
+} <: AbstractFactorization{T,F}
+    factor::F
+    scaling::D
+    function Factorization(
+        factor::AbstractMatrix{T},
+        scaling::AbstractVector{T},
+    ) where {T}
+        if length(scaling) != size(factor, 2)
+            error(
+                "Length `$(length(scaling))` of diagonal does not match number of columns `$(size(factor, 2))` of factor",
+            )
+        end
+        return new{T,typeof(factor),typeof(scaling)}(factor, scaling)
+    end
+    function Factorization(factor::AbstractVector{T}, scaling::T) where {T}
+        return new{T,typeof(factor),typeof(scaling)}(factor, scaling)
+    end
+end
+
+function Base.getindex(m::Factorization, i::Int, j::Int)
+    return sum(
+        m.factor[i, k] * m.scaling[k] * m.factor[j, k]' for
+        k in eachindex(m.scaling)
+    )
+end
+
+"""
+    struct Factorization{
+        T,
+        F<:Union{AbstractVector{T},AbstractMatrix{T}},
+        D<:Union{T,AbstractVector{T}},
+    } <: AbstractMatrix{T}
+        factor::F
+        scaling::D
+    end
+
+Matrix corresponding to `factor * Diagonal(diagonal) * factor'`.
+If `factor` is a vector and `diagonal` is a scalar, this corresponds to
+the matrix `diagonal * factor * factor'`.
+If `factor` is a matrix and `diagonal` is a vector, this corresponds to
+the matrix `factor * Diagonal(scaling) * factor'`.
+"""
+struct PositiveSemidefiniteFactorization{
+    T,
+    F<:Union{AbstractVector{T},AbstractMatrix{T}},
+} <: AbstractFactorization{T,F}
+    factor::F
+end
+
+function Base.getindex(m::PositiveSemidefiniteFactorization, i::Int, j::Int)
+    return sum(m.factor[i, k] * m.factor[j, k]' for k in axes(m.factor, 2))
 end
 
 struct TriangleVectorization{T,M<:AbstractMatrix{T}} <: AbstractVector{T}

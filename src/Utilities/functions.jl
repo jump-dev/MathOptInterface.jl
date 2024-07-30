@@ -638,7 +638,8 @@ end
 A type that allows iterating over the scalar-functions that comprise an
 `AbstractVectorFunction`.
 """
-struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction,C,S} <: AbstractVector{S}
+struct ScalarFunctionIterator{F<:MOI.AbstractVectorFunction,C,S} <:
+       AbstractVector{S}
     f::F
     # Cache that can be used to store a precomputed datastructure that allows
     # an efficient implementation of `getindex`.
