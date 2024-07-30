@@ -1814,6 +1814,10 @@ struct SetWithDotProducts{S,A,V<:AbstractVector{A}} <: AbstractVectorSet
     vectors::V
 end
 
+function Base.:(==)(s1::SetWithDotProducts, s2::SetWithDotProducts)
+    return s1.set == s2.set && s1.vectors == s2.vectors
+end
+
 function Base.copy(s::SetWithDotProducts)
     return SetWithDotProducts(copy(s.set), copy(s.vectors))
 end

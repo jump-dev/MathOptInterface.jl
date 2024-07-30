@@ -129,7 +129,7 @@ function MOI.get(
     bridge::SetMapBridge,
 )
     set = MOI.get(model, attr, bridge.constraint)
-    return MOI.Bridges.map_set(typeof(bridge), set)
+    return MOI.Bridges.map_set(bridge, set)
 end
 
 function MOI.set(
