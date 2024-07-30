@@ -1,4 +1,5 @@
-struct DotProductsBridge{T,S,A,V} <: SetMapBridge{T,S,MOI.SetWithDotProducts{S,A,V}}
+struct DotProductsBridge{T,S,A,V} <:
+       SetMapBridge{T,S,MOI.SetWithDotProducts{S,A,V}}
     variables::Vector{MOI.VariableIndex}
     constraint::MOI.ConstraintIndex{MOI.VectorOfVariables,S}
     set::MOI.SetWithDotProducts{S,A,V}
@@ -55,13 +56,14 @@ end
 # This returns `true` by default for `SetMapBridge`
 # but is is not supported for this bridge because `inverse_map_function`
 # is not implemented
-function MOI.supports(::MOI.ModelLike, ::MOI.VariablePrimalStart, ::Type{<:DotProductsBridge})
+function MOI.supports(
+    ::MOI.ModelLike,
+    ::MOI.VariablePrimalStart,
+    ::Type{<:DotProductsBridge},
+)
     return false
 end
 
-function unbridged_map(
-    ::DotProductsBridge,
-    ::Vector{MOI.VariableIndex},
-)
+function unbridged_map(::DotProductsBridge, ::Vector{MOI.VariableIndex})
     return nothing
 end

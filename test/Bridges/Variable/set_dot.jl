@@ -27,30 +27,30 @@ function test_psd()
     MOI.Bridges.runtests(
         MOI.Bridges.Variable.DotProductsBridge,
         model -> begin
-            x, _ = MOI.add_constrained_variables(model,
+            x, _ = MOI.add_constrained_variables(
+                model,
                 MOI.SetWithDotProducts(
                     MOI.PositiveSemidefiniteConeTriangle(2),
                     MOI.TriangleVectorization.([
-                        [1 2.0
-                         2 3],
-                        [4 5.0
-                         5 6],
+                        [
+                            1 2.0
+                            2 3
+                        ],
+                        [
+                            4 5.0
+                            5 6
+                        ],
                     ]),
-                )
+                ),
             )
-            MOI.add_constraint(
-                model,
-                1.0x[1],
-                MOI.EqualTo(0.0),
-            )
-            MOI.add_constraint(
-                model,
-                1.0x[2],
-                MOI.LessThan(0.0),
-            )
+            MOI.add_constraint(model, 1.0x[1], MOI.EqualTo(0.0))
+            MOI.add_constraint(model, 1.0x[2], MOI.LessThan(0.0))
         end,
         model -> begin
-            Q, _ = MOI.add_constrained_variables(model, MOI.PositiveSemidefiniteConeTriangle(2))
+            Q, _ = MOI.add_constrained_variables(
+                model,
+                MOI.PositiveSemidefiniteConeTriangle(2),
+            )
             MOI.add_constraint(
                 model,
                 1.0 * Q[1] + 4.0 * Q[2] + 3.0 * Q[3],
