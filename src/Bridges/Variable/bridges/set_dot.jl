@@ -67,7 +67,7 @@ function MOI.Bridges.map_function(bridge::DotProductsBridge{T}, func) where {T}
 end
 
 # This returns `true` by default for `SetMapBridge`
-# but is is not supported for this bridge because `inverse_map_function`
+# but it is not supported for this bridge because `inverse_map_function`
 # is not implemented
 function MOI.supports(
     ::MOI.ModelLike,
