@@ -5801,7 +5801,11 @@ function test_conic_PositiveSemidefinite_RankOne_polynomial(
             MOI.PositiveSemidefiniteFactorization(T[1, 1]),
         ]),
     )
-    @requires MOI.supports_constraint(model, MOI.VectorAffineFunction{T}, typeof(set))
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorAffineFunction{T},
+        typeof(set),
+    )
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveSense())
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
@@ -5839,17 +5843,23 @@ function setup_test(
     model::MOIU.MockOptimizer,
     ::Config{T},
 ) where {T<:Real}
-    A = MOI.TriangleVectorization{T,MOI.PositiveSemidefiniteFactorization{T,Vector{T}}}
+    A = MOI.TriangleVectorization{
+        T,
+        MOI.PositiveSemidefiniteFactorization{T,Vector{T}},
+    }
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             T[-1],
-            (MOI.VectorAffineFunction{T}, MOI.SetDotProducts{
-                MOI.PositiveSemidefiniteConeTriangle,
-                A,
-                Vector{A},
-            }) => [T[0, 1]],
+            (
+                MOI.VectorAffineFunction{T},
+                MOI.SetDotProducts{
+                    MOI.PositiveSemidefiniteConeTriangle,
+                    A,
+                    Vector{A},
+                },
+            ) => [T[0, 1]],
         ),
     )
     return
@@ -5877,14 +5887,18 @@ function test_conic_PositiveSemidefinite_RankOne_moment(
     @requires MOI.supports_add_constrained_variables(model, typeof(set))
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveSense())
-    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}())
-    y, cy = MOI.add_constrained_variables(
+    @requires MOI.supports(
         model,
-        set,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
+    y, cy = MOI.add_constrained_variables(model, set)
     c = MOI.add_constraint(model, T(1) * y[1] + T(1) * y[2], MOI.EqualTo(T(1)))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(), T(3) * y[1] - T(1) * y[2])
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        T(3) * y[1] - T(1) * y[2],
+    )
     if _supports(config, MOI.optimize!)
         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
         MOI.optimize!(model)
@@ -5912,18 +5926,24 @@ function setup_test(
     model::MOIU.MockOptimizer,
     ::Config{T},
 ) where {T<:Real}
-    A = MOI.TriangleVectorization{T,MOI.PositiveSemidefiniteFactorization{T,Vector{T}}}
+    A = MOI.TriangleVectorization{
+        T,
+        MOI.PositiveSemidefiniteFactorization{T,Vector{T}},
+    }
     MOIU.set_mock_optimize!(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
             T[0, 1],
             (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [T(-1)],
-            (MOI.VectorOfVariables, MOI.LinearCombinationInSet{
-                MOI.PositiveSemidefiniteConeTriangle,
-                A,
-                Vector{A},
-            }) => [T[4, 0]],
+            (
+                MOI.VectorOfVariables,
+                MOI.LinearCombinationInSet{
+                    MOI.PositiveSemidefiniteConeTriangle,
+                    A,
+                    Vector{A},
+                },
+            ) => [T[4, 0]],
         ),
     )
     return
