@@ -4,8 +4,7 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-struct DotProductsBridge{T,S,A,V} <:
-       SetMapBridge{T,S,MOI.SetDotProducts{S,A,V}}
+struct DotProductsBridge{T,S,A,V} <: SetMapBridge{T,S,MOI.SetDotProducts{S,A,V}}
     variables::Vector{MOI.VariableIndex}
     constraint::MOI.ConstraintIndex{MOI.VectorOfVariables,S}
     set::MOI.SetDotProducts{S,A,V}
@@ -59,18 +58,11 @@ function MOI.Bridges.map_function(
     )
 end
 
-function MOI.Bridges.map_function(
-    bridge::DotProductsBridge{T},
-    func,
-) where {T}
+function MOI.Bridges.map_function(bridge::DotProductsBridge{T}, func) where {T}
     scalars = MOI.Utilities.eachscalar(func)
     return MOI.Utilities.vectorize([
-        MOI.Utilities.set_dot(
-            vector,
-            scalars,
-            bridge.set.set,
-        )
-        for vector in bridge.set.vectors
+        MOI.Utilities.set_dot(vector, scalars, bridge.set.set) for
+        vector in bridge.set.vectors
     ])
 end
 

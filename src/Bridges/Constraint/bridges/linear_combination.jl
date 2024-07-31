@@ -31,8 +31,8 @@ end
 function _map_function(set::MOI.LinearCombinationInSet, func)
     scalars = MOI.Utilities.eachscalar(func)
     return MOI.Utilities.vectorize([
-        sum(scalars[j] * set.vectors[j][i] for j in eachindex(scalars))
-        for i in 1:MOI.dimension(set.set)
+        sum(scalars[j] * set.vectors[j][i] for j in eachindex(scalars)) for
+        i in 1:MOI.dimension(set.set)
     ])
 end
 
@@ -61,13 +61,10 @@ function MOI.Bridges.inverse_map_set(
     return bridge.set
 end
 
-function MOI.Bridges.adjoint_map_function(
-    bridge::LinearCombinationBridge,
-    func,
-)
+function MOI.Bridges.adjoint_map_function(bridge::LinearCombinationBridge, func)
     scalars = MOI.Utilities.eachscalar(func)
     return MOI.Utilities.vectorize([
-        MOI.Utilities.set_dot(vector, scalars, bridge.set.set)
-        for vector in bridge.set.vectors
+        MOI.Utilities.set_dot(vector, scalars, bridge.set.set) for
+        vector in bridge.set.vectors
     ])
 end
