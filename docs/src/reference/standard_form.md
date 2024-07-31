@@ -153,6 +153,6 @@ LogDetConeTriangle
 LogDetConeSquare
 RootDetConeTriangle
 RootDetConeSquare
-SetWithDotProducts
+SetDotProducts
 LinearCombinationInSet
 ```

@@ -149,7 +149,7 @@ function MOI.get(
     bridge::SetMapBridge,
 )
     value = MOI.get(model, attr, bridge.constraint)
-    return MOI.Bridges.map_function(typeof(bridge), value)
+    return MOI.Bridges.map_function(bridge, value)
 end
 
 function MOI.get(
@@ -224,7 +224,7 @@ function unbridged_map(
     func = MOI.VectorOfVariables(vis)
     funcs = MOI.Bridges.inverse_map_function(bridge, func)
     scalars = MOI.Utilities.eachscalar(funcs)
-    # FIXME not correct for SetWithDotProducts, it won't recover the dot product variables
+    # FIXME not correct for SetDotProducts, it won't recover the dot product variables
     return Pair{MOI.VariableIndex,F}[
         bridge.variables[i] => scalars[i] for i in eachindex(bridge.variables)
     ]

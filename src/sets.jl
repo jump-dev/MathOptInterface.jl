@@ -1804,31 +1804,31 @@ function Base.getproperty(
 end
 
 """
-    SetWithDotProducts(set::MOI.AbstractSet, vectors::AbstractVector)
+    SetDotProducts(set::MOI.AbstractSet, vectors::AbstractVector)
 
 Given a set `set` of dimension `d` and `m` vectors `a_1`, ..., `a_m` given in `vectors`, this is the set:
 ``\\{ ((\\langle a_1, x \\rangle, ..., \\langle a_m, x \\rangle) \\in \\mathbb{R}^{m} : x \\in \\text{set} \\}.``
 """
-struct SetWithDotProducts{S,A,V<:AbstractVector{A}} <: AbstractVectorSet
+struct SetDotProducts{S,A,V<:AbstractVector{A}} <: AbstractVectorSet
     set::S
     vectors::V
 end
 
-function Base.:(==)(s1::SetWithDotProducts, s2::SetWithDotProducts)
+function Base.:(==)(s1::SetDotProducts, s2::SetDotProducts)
     return s1.set == s2.set && s1.vectors == s2.vectors
 end
 
-function Base.copy(s::SetWithDotProducts)
-    return SetWithDotProducts(copy(s.set), copy(s.vectors))
+function Base.copy(s::SetDotProducts)
+    return SetDotProducts(copy(s.set), copy(s.vectors))
 end
 
-dimension(s::SetWithDotProducts) = length(s.vectors)
+dimension(s::SetDotProducts) = length(s.vectors)
 
-function dual_set(s::SetWithDotProducts)
+function dual_set(s::SetDotProducts)
     return LinearCombinationInSet(s.set, s.vectors)
 end
 
-function dual_set_type(::Type{SetWithDotProducts{S,A,V}}) where {S,A,V}
+function dual_set_type(::Type{SetDotProducts{S,A,V}}) where {S,A,V}
     return LinearCombinationInSet{S,A,V}
 end
 
@@ -1843,14 +1843,22 @@ struct LinearCombinationInSet{S,A,V<:AbstractVector{A}} <: AbstractVectorSet
     vectors::V
 end
 
+function Base.:(==)(s1::LinearCombinationInSet, s2::LinearCombinationInSet)
+    return s1.set == s2.set && s1.vectors == s2.vectors
+end
+
+function Base.copy(s::LinearCombinationInSet)
+    return LinearCombinationInSet(copy(s.set), copy(s.vectors))
+end
+
 dimension(s::LinearCombinationInSet) = length(s.vectors)
 
 function dual_set(s::LinearCombinationInSet)
-    return SetWithDotProducts(s.side_dimension, s.vectors)
+    return SetDotProducts(s.side_dimension, s.vectors)
 end
 
 function dual_set_type(::Type{LinearCombinationInSet{S,A,V}}) where {S,A,V}
-    return SetWithDotProducts{S,A,V}
+    return SetDotProducts{S,A,V}
 end
 
 abstract type AbstractFactorization{T,F} <: AbstractMatrix{T} end
