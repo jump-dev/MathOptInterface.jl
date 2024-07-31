@@ -86,16 +86,6 @@ function set_dot(
     return x[1] * y[1] + x[2] * y[2] + triangle_dot(x, y, set.side_dimension, 2)
 end
 
-function set_dot(
-    x::AbstractVector,
-    y::AbstractVector,
-    set::Union{MOI.SetWithDotProducts,MOI.LinearCombinationInSet},
-)
-    m = length(set.matrices)
-    return LinearAlgebra.dot(view(x, 1:m), view(y, 1:m)) +
-           set_dot(view(x, (m+1):length(x)), view(y, (m+1):length(y)), set.set)
-end
-
 """
     dot_coefficients(a::AbstractVector, set::AbstractVectorSet)
 
@@ -152,16 +142,6 @@ end
 function dot_coefficients(a::AbstractVector, set::MOI.LogDetConeTriangle)
     b = copy(a)
     triangle_coefficients!(b, set.side_dimension, 2)
-    return b
-end
-
-function dot_coefficients(
-    a::AbstractVector,
-    set::Union{MOI.SetWithDotProducts,MOI.LinearCombinationInSet},
-)
-    b = copy(a)
-    m = length(set.vectors)
-    b[(m+1):end] = dot_coefficients(b[(m+1):end], set.set)
     return b
 end
 

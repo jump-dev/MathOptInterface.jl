@@ -114,7 +114,7 @@ and similarly, the dual is:
 The scalar product is different from the canonical one for the sets
 [`PositiveSemidefiniteConeTriangle`](@ref), [`LogDetConeTriangle`](@ref),
 [`RootDetConeTriangle`](@ref),
-[`SetWithDotProducts`](@ref) and
+[`SetDotProducts`](@ref) and
 [`LinearCombinationInSet`](@ref).
 
 If the set ``C_i`` of the section [Duality](@ref) is one of these three cones,
