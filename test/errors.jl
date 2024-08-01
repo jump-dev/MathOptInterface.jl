@@ -46,23 +46,25 @@ function test_errors_inconsistent_vectorscalar()
     return
 end
 
-function _test_errors_UnsupportedConstraint(f)
+function test_errors_UnsupportedConstraint()
     model = DummyModel()
     vi = MOI.VariableIndex(1)
-    @test_throws(MOI.UnsupportedConstraint, f(model, vi, MOI.EqualTo(0)),)
-    try
-        f(model, vi, MOI.EqualTo(0))
-    catch err
-        @test sprint(showerror, err) ==
-              "$(MOI.UnsupportedConstraint{MOI.VariableIndex,MOI.EqualTo{Int}}):" *
-              " `$MOI.VariableIndex`-in-`$MOI.EqualTo{$Int}` constraint is" *
-              " not supported by the model."
-    end
-    return
-end
+    @test_throws(
+        MOI.UnsupportedConstraint,
+        MOI.add_constraint(model, vi, MOI.EqualTo(0)),
+    )
+    msg = """
+    UnsupportedConstraint: `$(MOI.VariableIndex)`-in-`$(MOI.EqualTo{Int})` constraints are not supported by the
+    solver you have chosen, and we could not reformulate your model into a
+    form that is supported.
 
-function test_errors_UnsupportedConstraint()
-    _test_errors_UnsupportedConstraint(MOI.add_constraint)
+    To fix this error you must choose a different solver.
+    """
+    try
+        MOI.add_constraint(model, vi, MOI.EqualTo(0))
+    catch err
+        @test sprint(showerror, err) == msg
+    end
     return
 end
 
