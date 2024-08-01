@@ -36,7 +36,12 @@ the model, that is, that [`supports_constraint`](@ref) returns `false`.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> showerror(MOI.UnsupportedConstraint{MOI.VariableIndex,MOI.ZeroOne}())
+julia> showerror(stdout, MOI.UnsupportedConstraint{MOI.VariableIndex,MOI.ZeroOne}())
+UnsupportedConstraint: `MathOptInterface.VariableIndex`-in-`MathOptInterface.ZeroOne` constraints are not supported by the
+solver you have chosen, and we could not reformulate your model into a
+form that is supported.
+
+To fix this error you must choose a different solver.
 ```
 """
 struct UnsupportedConstraint{F<:AbstractFunction,S<:AbstractSet} <:
