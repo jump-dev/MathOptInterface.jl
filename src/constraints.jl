@@ -26,21 +26,42 @@ function supports_constraint(
 end
 
 """
-    struct UnsupportedConstraint{F<:AbstractFunction, S<:AbstractSet} <: UnsupportedError
-        message::String # Human-friendly explanation why the attribute cannot be set
+    struct UnsupportedConstraint{F<:AbstractFunction,S<:AbstractSet} <: UnsupportedError
+        message::String
     end
 
 An error indicating that constraints of type `F`-in-`S` are not supported by
 the model, that is, that [`supports_constraint`](@ref) returns `false`.
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> showerror(MOI.UnsupportedConstraint{MOI.VariableIndex,MOI.ZeroOne}())
+```
 """
 struct UnsupportedConstraint{F<:AbstractFunction,S<:AbstractSet} <:
        UnsupportedError
-    message::String # Human-friendly explanation why the attribute cannot be set
+    # Human-friendly explanation why the attribute cannot be set
+    message::String
 end
+
 UnsupportedConstraint{F,S}() where {F,S} = UnsupportedConstraint{F,S}("")
 
-function element_name(::UnsupportedConstraint{F,S}) where {F,S}
-    return "`$F`-in-`$S` constraint"
+function Base.showerror(io::IO, err::UnsupportedConstraint{F,S}) where {F,S}
+    print(
+        io,
+        """
+        UnsupportedConstraint: `$F`-in-`$S` constraints are not supported by the
+        solver you have chosen, and we could not reformulate your model into a
+        form that is supported.
+
+        To fix this error you must choose a different solver.
+        """,
+    )
+    if !isempty(err.message)
+        print(io, "\n", err.message)
+    end
+    return
 end
 
 """
