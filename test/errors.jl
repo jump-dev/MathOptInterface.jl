@@ -59,6 +59,7 @@ function test_errors_UnsupportedConstraint()
     form that is supported.
 
     To fix this error you must choose a different solver.
+
     """
     try
         MOI.add_constraint(model, vi, MOI.EqualTo(0))

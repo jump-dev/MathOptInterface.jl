@@ -42,6 +42,7 @@ solver you have chosen, and we could not reformulate your model into a
 form that is supported.
 
 To fix this error you must choose a different solver.
+
 ```
 """
 struct UnsupportedConstraint{F<:AbstractFunction,S<:AbstractSet} <:
@@ -61,11 +62,10 @@ function Base.showerror(io::IO, err::UnsupportedConstraint{F,S}) where {F,S}
         form that is supported.
 
         To fix this error you must choose a different solver.
+
+        $(err.message)
         """,
     )
-    if !isempty(err.message)
-        print(io, "\n", err.message)
-    end
     return
 end
 
