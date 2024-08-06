@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
- - Fixed `NLPBlock` when used with bridgegs (#2524)
+ - Fixed `NLPBlock` when used with bridges (#2524)
 
 ### Other
 
