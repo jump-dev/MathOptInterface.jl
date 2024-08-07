@@ -7,6 +7,17 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.31.1 (August 7, 2024)
+
+### Fixed
+
+ - Fixed `NLPBlock` when used with bridges (#2524)
+
+### Other
+
+ - Use `inverse_trimap` instead of redefining it (#2522)
+ - Improved `UnsupportedConstraint` error (#2530)
+
 ## v1.31.0 (June 26, 2024)
 
 ### Added
