@@ -64,39 +64,40 @@ The `filename` argument is only needed if `format == FORMAT_AUTOMATIC`.
 function Model(;
     format::FileFormat = FORMAT_AUTOMATIC,
     filename::Union{Nothing,String} = nothing,
+    coefficient_type::Type = Float64,
     kwargs...,
 )
     if format == FORMAT_CBF
-        return CBF.Model(; kwargs...)
+        return CBF.Model{coefficient_type}(; kwargs...)
     elseif format == FORMAT_LP
-        return LP.Model(; kwargs...)
+        return LP.Model{coefficient_type}(; kwargs...)
     elseif format == FORMAT_MOF
-        return MOF.Model(; kwargs...)
+        return MOF.Model{coefficient_type}(; kwargs...)
     elseif format == FORMAT_MPS
-        return MPS.Model(; kwargs...)
+        return MPS.Model{coefficient_type}(; kwargs...)
     elseif format == FORMAT_NL
-        return NL.Model(; kwargs...)
+        return NL.Model{coefficient_type}(; kwargs...)
     elseif format == FORMAT_REW
-        return MPS.Model(; generic_names = true, kwargs...)
+        return MPS.Model{coefficient_type}(; generic_names = true, kwargs...)
     elseif format == FORMAT_SDPA
-        return SDPA.Model(; kwargs...)
+        return SDPA.Model{coefficient_type}(; kwargs...)
     else
         @assert format == FORMAT_AUTOMATIC
         if filename === nothing
             error("When `format==FORMAT_AUTOMATIC` you must pass a `filename`.")
         end
         for (ext, model) in [
-            (".cbf", CBF.Model),
-            (".lp", LP.Model),
-            (".mof.json", MOF.Model),
-            (".mps", MPS.Model),
+            (".cbf", CBF.Model{coefficient_type}),
+            (".lp", LP.Model{coefficient_type}),
+            (".mof.json", MOF.Model{coefficient_type}),
+            (".mps", MPS.Model{coefficient_type}),
             (
                 ".rew",
-                (; kwargs...) -> MPS.Model(; generic_names = true, kwargs...),
+                (; kwargs...) -> MPS.Model{coefficient_type}(; generic_names = true, kwargs...),
             ),
-            (".nl", NL.Model),
-            (".dat-s", SDPA.Model),
-            (".sdpa", SDPA.Model),
+            (".nl", NL.Model{coefficient_type}),
+            (".dat-s", SDPA.Model{coefficient_type}),
+            (".sdpa", SDPA.Model{coefficient_type}),
         ]
             if endswith(filename, ext) || occursin("$(ext).", filename)
                 return model(; kwargs...)
