@@ -66,6 +66,7 @@ include("bridges/zero_one.jl")
 include("bridges/sos1_to_milp.jl")
 include("bridges/sos2_to_milp.jl")
 include("bridges/indicator_to_milp.jl")
+include("bridges/linear_combination.jl")
 
 """
     add_all_bridges(bridged_model, ::Type{T}) where {T}
@@ -153,6 +154,7 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, SOS1ToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SOS2ToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, IndicatorToMILPBridge{T})
+    MOI.Bridges.add_bridge(bridged_model, LinearCombinationBridge{T})
     return
 end
 
