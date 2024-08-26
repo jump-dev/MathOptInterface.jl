@@ -10,15 +10,18 @@
         enable_hessian_vector_product::Bool = false,
     )
 
-An AbstractNLPEvaluator for the problem:
+An [`MOI.AbstractNLPEvaluator`](@ref) for the problem:
+
+```math
+\\begin{aligned}
+\\text{min}       \\ & x_1 * x_4 * (x_1 + x_2 + x_3) + x_3 \\\\
+\\text{subject to}\\ & x_1 * x_2 * x_3 * x_4 \\ge 25 \\\\
+                     & x_1^2 + x_2^2 + x_3^2 + x_4^2 = 40 \\\\
+                     & 1 \\le x_1, x_2, x_3, x_4 \\le 5
+\\end{aligned}
 ```
-min x1 * x4 * (x1 + x2 + x3) + x3
-st  x1 * x2 * x3 * x4 >= 25
-    x1^2 + x2^2 + x3^2 + x4^2 = 40
-    1 <= x1, x2, x3, x4 <= 5
-```
-Start at (1,5,5,1)
-End at (1.000..., 4.743..., 3.821..., 1.379...)
+
+The optimal solution is `[1.000, 4.743, 3.821, 1.379]`.
 """
 struct HS071 <: MOI.AbstractNLPEvaluator
     enable_hessian::Bool
@@ -35,13 +38,13 @@ function MOI.initialize(d::HS071, requested_features::Vector{Symbol})
     for feat in requested_features
         if !(feat in MOI.features_available(d))
             error("Unsupported feature $feat")
-            # TODO: implement Jac-vec products for solvers that need them
         end
     end
+    return
 end
 
 function MOI.features_available(d::HS071)
-    features = [:Grad, :Jac, :ExprGraph]
+    features = [:Grad, :Jac, :JacVec, :ExprGraph]
     if d.enable_hessian
         push!(features, :Hess)
     end
@@ -99,6 +102,26 @@ function MOI.eval_objective_gradient(::HS071, grad_f, x)
     return
 end
 
+function MOI.constraint_gradient_structure(::HS071, ::Int)
+    return [1, 2, 3, 4]
+end
+
+function MOI.eval_constraint_gradient(::HS071, ∇g, x, i)
+    @assert 1 <= i <= 2
+    if i == 1
+        ∇g[1] = x[2] * x[3] * x[4]  # 1,1
+        ∇g[2] = x[1] * x[3] * x[4]  # 1,2
+        ∇g[3] = x[1] * x[2] * x[4]  # 1,3
+        ∇g[4] = x[1] * x[2] * x[3]  # 1,4
+    else
+        ∇g[1] = 2 * x[1]  # 2,1
+        ∇g[2] = 2 * x[2]  # 2,2
+        ∇g[3] = 2 * x[3]  # 2,3
+        ∇g[4] = 2 * x[4]  # 2,4
+    end
+    return
+end
+
 function MOI.jacobian_structure(::HS071)
     return Tuple{Int64,Int64}[
         (1, 1),
@@ -109,22 +132,6 @@ function MOI.jacobian_structure(::HS071)
         (2, 2),
         (2, 3),
         (2, 4),
-    ]
-end
-
-function MOI.hessian_lagrangian_structure(d::HS071)
-    @assert d.enable_hessian
-    return Tuple{Int64,Int64}[
-        (1, 1),
-        (2, 1),
-        (2, 2),
-        (3, 1),
-        (3, 2),
-        (3, 3),
-        (4, 1),
-        (4, 2),
-        (4, 3),
-        (4, 4),
     ]
 end
 
@@ -142,12 +149,81 @@ function MOI.eval_constraint_jacobian(::HS071, J, x)
     return
 end
 
+function MOI.eval_constraint_jacobian_product(d::HS071, y, x, w)
+    y .= zero(eltype(y))
+    indices = MOI.jacobian_structure(d)
+    J = zeros(length(indices))
+    MOI.eval_constraint_jacobian(d, J, x)
+    for ((i, j), val) in zip(indices, J)
+        y[i] += val * w[j]
+    end
+    return
+end
+
 function MOI.eval_constraint_jacobian_transpose_product(::HS071, y, x, w)
     y[1] = (x[2] * x[3] * x[4]) * w[1] + (2 * x[1]) * w[2]
     y[2] = (x[1] * x[3] * x[4]) * w[1] + (2 * x[2]) * w[2]
     y[3] = (x[1] * x[2] * x[4]) * w[1] + (2 * x[3]) * w[2]
     y[4] = (x[1] * x[2] * x[3]) * w[1] + (2 * x[4]) * w[2]
     return
+end
+
+function MOI.hessian_objective_structure(d::HS071)
+    return [(1, 1), (2, 1), (3, 1), (4, 1), (4, 2), (4, 3)]
+end
+
+function MOI.eval_hessian_objective(d::HS071, H, x)
+    @assert d.enable_hessian
+    H[1] = 2 * x[4]                 # 1,1
+    H[2] = x[4]                     # 2,1
+    H[3] = x[4]                     # 3,1
+    H[4] = 2 * x[1] + x[2] + x[3]   # 4,1
+    H[5] = x[1]                     # 4,2
+    H[6] = x[1]                     # 4,3
+    return
+end
+
+function MOI.hessian_constraint_structure(d::HS071, i::Int)
+    @assert 1 <= i <= 2
+    if i == 1
+        return [(2, 1), (3, 1), (3, 2), (4, 1), (4, 2), (4, 3)]
+    else
+        return [(1, 1), (2, 2), (3, 3), (4, 4)]
+    end
+end
+
+function MOI.eval_hessian_constraint(d::HS071, H, x, i)
+    @assert d.enable_hessian
+    if i == 1
+        H[1] = x[3] * x[4]  # 2,1
+        H[2] = x[2] * x[4]  # 3,1
+        H[3] = x[1] * x[4]  # 3,2
+        H[4] = x[2] * x[3]  # 4,1
+        H[5] = x[1] * x[3]  # 4,2
+        H[6] = x[1] * x[2]  # 4,3
+    else
+        H[1] = 2.0  # 1,1
+        H[2] = 2.0  # 2,2
+        H[3] = 2.0  # 3,3
+        H[4] = 2.0  # 4,4
+    end
+    return
+end
+
+function MOI.hessian_lagrangian_structure(d::HS071)
+    @assert d.enable_hessian
+    return Tuple{Int64,Int64}[
+        (1, 1),
+        (2, 1),
+        (2, 2),
+        (3, 1),
+        (3, 2),
+        (3, 3),
+        (4, 1),
+        (4, 2),
+        (4, 3),
+        (4, 4),
+    ]
 end
 
 function MOI.eval_hessian_lagrangian(d::HS071, H, x, σ, μ)
@@ -175,7 +251,7 @@ function MOI.eval_hessian_lagrangian(d::HS071, H, x, σ, μ)
     H[1] += μ[2] * 2  # 1,1
     H[3] += μ[2] * 2  # 2,2
     H[6] += μ[2] * 2  # 3,3
-    H[10] += μ[2] * 2
+    H[10] += μ[2] * 2 # 4,4
     return
 end
 

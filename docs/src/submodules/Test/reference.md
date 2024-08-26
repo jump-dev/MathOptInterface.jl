@@ -18,4 +18,5 @@ Test.setup_test
 Test.version_added
 Test.@requires
 Test.RequirementUnmet
+Test.HS071
 ```
