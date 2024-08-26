@@ -1063,6 +1063,11 @@ expressions:
    etc., but modeling interfaces may choose to extend these basic functions, or
    error if they encounter unsupported functions.
 
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with
+`:ExprGraph`.
+
 ## Example
 
 This example uses the [`MOI.Test.HS071`](@ref) evaluator.
@@ -1094,12 +1099,17 @@ comparison operator indicating the sense of and bounds on the constraint.
 For single-sided comparisons, the body of the constraint must be on the
 left-hand side, and the right-hand side must be a constant.
 
-For double-sided comparisons (that is, ``l \\le f(x) \\le u``), the body of the
+For double-sided comparisons (that is, ``l \\le g(x) \\le u``), the body of the
 constraint must be in the middle, and the left- and right-hand sides must be
 constants.
 
 The bounds on the constraints must match the [`NLPBoundsPair`](@ref)s passed to
 [`NLPBlockData`](@ref).
+
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with
+`:ExprGraph`.
 
 ## Example
 
