@@ -125,12 +125,12 @@ The following features are defined:
 In all cases, including when `requested_features` is empty,
 [`eval_objective`](@ref) and [`eval_constraint`](@ref) are supported.
 
-## Examples
+## Example
 
-```julia
-MOI.initialize(d, Symbol[])
-MOI.initialize(d, [:ExprGraph])
-MOI.initialize(d, MOI.features_available(d))
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, [:Grad, :Jac])
 ```
 """
 function initialize end
@@ -141,6 +141,20 @@ function initialize end
 Returns the subset of features available for this problem instance.
 
 See [`initialize`](@ref) for the list of defined features.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.features_available(evaluator)
+4-element Vector{Symbol}:
+ :Grad
+ :Jac
+ :JacVec
+ :ExprGraph
+ :Hess
+```
 """
 function features_available end
 
@@ -148,11 +162,28 @@ function features_available end
     eval_objective(d::AbstractNLPEvaluator, x::AbstractVector{T})::T where {T}
 
 Evaluate the objective ``f(x)``, returning a scalar value.
+
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref), but you do not
+need to pass a value.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, Symbol[])
+
+julia> MOI.eval_objective(evaluator, [1.0, 2.0, 3.0, 4.0])
+27.0
+```
 """
 function eval_objective end
 
 """
-    eval_constraint(d::AbstractNLPEvaluator,
+    eval_constraint(
+        d::AbstractNLPEvaluator,
         g::AbstractVector{T},
         x::AbstractVector{T},
     )::Nothing where {T}
@@ -160,11 +191,33 @@ function eval_objective end
 Given a set of vector-valued constraints ``l \\le g(x) \\le u``, evaluate the
 constraint function ``g(x)``, storing the result in the vector `g`.
 
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref), but you do not
+need to pass a value.
+
 ## Implementation notes
 
 When implementing this method, you must not assume that `g` is
 `Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
 For example, it may be the `view` of a vector.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, Symbol[])
+
+julia> g = fill(NaN, 2);
+
+julia> MOI.eval_constraint(evaluator, g, [1.0, 2.0, 3.0, 4.0])
+
+julia> g
+2-element Vector{Float64}:
+ 24.0
+ 30.0
+```
 """
 function eval_constraint end
 
@@ -178,11 +231,34 @@ function eval_constraint end
 Evaluate the gradient of the objective function ``grad = \\nabla f(x)`` as a
 dense vector, storing the result in the vector `grad`.
 
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with `:Grad`.
+
 ## Implementation notes
 
 When implementing this method, you must not assume that `grad` is
 `Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
 For example, it may be the `view` of a vector.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, Symbol[:Grad])
+
+julia> grad = fill(NaN, 4);
+
+julia> MOI.eval_objective_gradient(evaluator, grad, [1.0, 2.0, 3.0, 4.0])
+
+julia> grad
+4-element Vector{Float64}:
+ 28.0
+  4.0
+  5.0
+  6.0
+```
 """
 function eval_objective_gradient end
 
@@ -200,6 +276,29 @@ case the solver should combine the corresponding elements by adding them
 together.
 
 The sparsity structure is assumed to be independent of the point ``x``.
+
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with `:Jac`.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, Symbol[:Jac])
+
+julia> MOI.jacobian_structure(evaluator)
+8-element Vector{Tuple{Int64, Int64}}:
+ (1, 1)
+ (1, 2)
+ (1, 3)
+ (1, 4)
+ (2, 1)
+ (2, 2)
+ (2, 3)
+ (2, 4)
+```
 """
 function jacobian_structure end
 
@@ -216,10 +315,31 @@ The indices are not required to be sorted and can contain duplicates, in which
 case the solver should combine the corresponding elements by adding them
 together.
 
-Any mix of lower and upper-triangular indices is valid. Elements `(i,j)` and
-`(j,i)`, if both present, should be treated as duplicates.
+Any mix of lower and upper-triangular indices is valid. Elements `(i, j)` and
+`(j, i)`, if both present, should be treated as duplicates.
 
 The sparsity structure is assumed to be independent of the point ``x``.
+
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, Symbol[:Hess])
+
+julia> MOI.hessian_objective_structure(evaluator)
+6-element Vector{Tuple{Int64, Int64}}:
+ (1, 1)
+ (2, 1)
+ (3, 1)
+ (4, 1)
+ (4, 2)
+ (4, 3)
+```
 """
 function hessian_objective_structure end
 
@@ -237,10 +357,38 @@ The indices are not required to be sorted and can contain duplicates, in which
 case the solver should combine the corresponding elements by adding them
 together.
 
-Any mix of lower and upper-triangular indices is valid. Elements `(i,j)` and
-`(j,i)`, if both present, should be treated as duplicates.
+Any mix of lower and upper-triangular indices is valid. Elements `(i, j)` and
+`(j, i)`, if both present, should be treated as duplicates.
 
 The sparsity structure is assumed to be independent of the point ``x``.
+
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, Symbol[:Hess])
+
+julia> MOI.hessian_constraint_structure(evaluator, 1)
+6-element Vector{Tuple{Int64, Int64}}:
+ (2, 1)
+ (3, 1)
+ (3, 2)
+ (4, 1)
+ (4, 2)
+ (4, 3)
+
+julia> MOI.hessian_constraint_structure(evaluator, 2)
+4-element Vector{Tuple{Int64, Int64}}:
+ (1, 1)
+ (2, 2)
+ (3, 3)
+ (4, 4)
+```
 """
 function hessian_constraint_structure end
 
@@ -257,10 +405,35 @@ The indices are not required to be sorted and can contain duplicates, in which
 case the solver should combine the corresponding elements by adding them
 together.
 
-Any mix of lower and upper-triangular indices is valid. Elements `(i,j)` and
-`(j,i)`, if both present, should be treated as duplicates.
+Any mix of lower and upper-triangular indices is valid. Elements `(i, j)` and
+`(j, i)`, if both present, should be treated as duplicates.
 
 The sparsity structure is assumed to be independent of the point ``x``.
+
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, Symbol[:Hess])
+
+julia> MOI.hessian_lagrangian_structure(evaluator)
+10-element Vector{Tuple{Int64, Int64}}:
+ (1, 1)
+ (2, 1)
+ (2, 2)
+ (3, 1)
+ (3, 2)
+ (3, 3)
+ (4, 1)
+ (4, 2)
+ (4, 3)
+ (4, 4)
+```
 """
 function hessian_lagrangian_structure end
 
@@ -275,6 +448,25 @@ case the solver should combine the corresponding elements by adding them
 together.
 
 The sparsity structure is assumed to be independent of the point ``x``.
+
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with `:Jac`.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, Symbol[:Jac])
+
+julia> indices = MOI.constraint_gradient_structure(evaluator, 1)
+4-element Vector{Tuple{Int64, Int64}}:
+ (1, 1)
+ (1, 2)
+ (1, 3)
+ (1, 4)
+```
 """
 function constraint_gradient_structure end
 
@@ -295,11 +487,37 @@ non-zero values in `∇g`, corresponding to the structure returned by
 When implementing this method, you must not assume that `∇g` is
 `Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
 For example, it may be the `view` of a vector.
+
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with `:Jac`.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, Symbol[:Jac])
+
+julia> indices = MOI.constraint_gradient_structure(evaluator, 1);
+
+julia> ∇g = zeros(length(indices));
+
+julia> MOI.eval_constraint_gradient(evaluator, ∇g, [1.0, 2.0, 3.0, 4.0], 1)
+
+julia> ∇g
+4-element Vector{Float64}:
+ 24.0
+ 12.0
+  8.0
+  6.0
+```
 """
 function eval_constraint_gradient end
 
 """
-    eval_constraint_jacobian(d::AbstractNLPEvaluator,
+    eval_constraint_jacobian(
+        d::AbstractNLPEvaluator,
         J::AbstractVector{T},
         x::AbstractVector{T},
     )::Nothing where {T}
@@ -315,6 +533,35 @@ by [`jacobian_structure`](@ref).
 When implementing this method, you must not assume that `J` is
 `Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
 For example, it may be the `view` of a vector.
+
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, Symbol[:Jac])
+
+julia> J_indices = MOI.jacobian_structure(evaluator);
+
+julia> J = zeros(length(J_indices));
+
+julia> MOI.eval_constraint_jacobian(evaluator, J, [1.0, 2.0, 3.0, 4.0])
+
+julia> J
+8-element Vector{Float64}:
+ 24.0
+ 12.0
+  8.0
+  6.0
+  2.0
+  4.0
+  6.0
+  8.0
+```
 """
 function eval_constraint_jacobian end
 
@@ -337,6 +584,31 @@ is the number of nonlinear constraints.
 When implementing this method, you must not assume that `y` is
 `Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
 For example, it may be the `view` of a vector.
+
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with `:JacVec`.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, Symbol[:Jac, :JacVec])
+
+julia> y = zeros(2);
+
+julia> x = [1.0, 2.0, 3.0, 4.0];
+
+julia> w = [1.5, 2.5, 3.5, 4.5];
+
+julia> MOI.eval_constraint_jacobian_product(evaluator, y, x, w)
+
+julia> y
+2-element Vector{Float64}:
+ 121.0
+  70.0
+```
 """
 function eval_constraint_jacobian_product end
 
@@ -359,6 +631,33 @@ is the number of nonlinear constraints.
 When implementing this method, you must not assume that `y` is
 `Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
 For example, it may be the `view` of a vector.
+
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with `:JacVec`.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, Symbol[:Jac, :JacVec])
+
+julia> y = zeros(4);
+
+julia> x = [1.0, 2.0, 3.0, 4.0];
+
+julia> w = [1.5, 2.5];
+
+julia> MOI.eval_constraint_jacobian_transpose_product(evaluator, y, x, w)
+
+julia> y
+4-element Vector{Float64}:
+ 41.0
+ 28.0
+ 27.0
+ 29.0
+```
 """
 function eval_constraint_jacobian_transpose_product end
 
@@ -384,6 +683,37 @@ The vectors have dimensions such that `length(h) == length(x) == length(v)`.
 When implementing this method, you must not assume that `h` is
 `Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
 For example, it may be the `view` of a vector.
+
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with `:HessVec`.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true, true);
+
+julia> MOI.initialize(evaluator, Symbol[:HessVec])
+
+julia> H = fill(NaN, 4);
+
+julia> x = [1.0, 2.0, 3.0, 4.0];
+
+julia> v = [1.5, 2.5, 3.5, 4.5];
+
+julia> σ = 1.0;
+
+julia> μ = [1.0, 1.0];
+
+julia> MOI.eval_hessian_lagrangian_product(evaluator, H, x, v, σ, μ)
+
+julia> H
+4-element Vector{Float64}:
+ 155.5
+  61.0
+  48.5
+  49.0
+```
 """
 function eval_hessian_lagrangian_product end
 
@@ -404,6 +734,35 @@ returned by [`hessian_objective_structure`](@ref).
 When implementing this method, you must not assume that `H` is
 `Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
 For example, it may be the `view` of a vector.
+
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true, true);
+
+julia> MOI.initialize(evaluator, Symbol[:Hess])
+
+julia> indices = MOI.hessian_objective_structure(evaluator);
+
+julia> H = zeros(length(indices));
+
+julia> x = [1.0, 2.0, 3.0, 4.0];
+
+julia> MOI.eval_hessian_objective(evaluator, H, x)
+
+julia> H
+6-element Vector{Float64}:
+ 8.0
+ 4.0
+ 4.0
+ 7.0
+ 1.0
+ 1.0
+```
 """
 function eval_hessian_objective end
 
@@ -425,6 +784,35 @@ returned by [`hessian_constraint_structure`](@ref).
 When implementing this method, you must not assume that `H` is
 `Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
 For example, it may be the `view` of a vector.
+
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true, true);
+
+julia> MOI.initialize(evaluator, Symbol[:Hess])
+
+julia> indices = MOI.hessian_constraint_structure(evaluator, 1);
+
+julia> H = zeros(length(indices));
+
+julia> x = [1.0, 2.0, 3.0, 4.0];
+
+julia> MOI.eval_hessian_constraint(evaluator, H, x, 1)
+
+julia> H
+6-element Vector{Float64}:
+ 12.0
+  8.0
+  4.0
+  6.0
+  3.0
+  2.0
+```
 """
 function eval_hessian_constraint end
 
@@ -448,6 +836,43 @@ returned by [`hessian_lagrangian_structure`](@ref).
 When implementing this method, you must not assume that `H` is
 `Vector{Float64}`, but you may assume that it supports `setindex!` and `length`.
 For example, it may be the `view` of a vector.
+
+## Initialize
+
+Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
+
+## Example
+
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, Symbol[:Hess])
+
+julia> indices = MOI.hessian_lagrangian_structure(evaluator);
+
+julia> H = zeros(length(indices));
+
+julia> x = [1.0, 2.0, 3.0, 4.0];
+
+julia> σ = 1.0;
+
+julia> μ = [1.0, 1.0];
+
+julia> MOI.eval_hessian_lagrangian(evaluator, H, x, σ, μ)
+
+julia> H
+10-element Vector{Float64}:
+ 10.0
+ 16.0
+  2.0
+ 12.0
+  4.0
+  2.0
+ 13.0
+  4.0
+  3.0
+  2.0
+```
 """
 function eval_hessian_lagrangian end
 
@@ -472,25 +897,15 @@ expressions:
    etc., but modeling interfaces may choose to extend these basic functions, or
    error if they encounter unsupported functions.
 
-## Examples
+## Example
 
-The expression ``x_1+\\sin(x_2/\\exp(x_3))`` is represented as
-```julia
-:(x[MOI.VariableIndex(1)] + sin(x[MOI.VariableIndex(2)] / exp(x[MOI.VariableIndex[3]])))
-```
-or equivalently
-```julia
-Expr(
-    :call,
-    :+,
-    Expr(:ref, :x, MOI.VariableIndex(1)),
-    Expr(
-        :call,
-        :/,
-        Expr(:call, :sin, Expr(:ref, :x, MOI.VariableIndex(2))),
-        Expr(:call, :exp, Expr(:ref, :x, MOI.VariableIndex(3))),
-    ),
-)
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, [:ExprGraph])
+
+julia> MOI.objective_expr(evaluator)
+:(x[MOI.VariableIndex(1)] * x[MOI.VariableIndex(4)] * (x[MOI.VariableIndex(1)] + x[MOI.VariableIndex(2)] + x[MOI.VariableIndex(3)]) + x[MOI.VariableIndex(3)])
 ```
 """
 function objective_expr end
@@ -516,13 +931,18 @@ constants.
 The bounds on the constraints must match the [`NLPBoundsPair`](@ref)s passed to
 [`NLPBlockData`](@ref).
 
-## Examples
+## Example
 
-```julia
-:(x[MOI.VariableIndex(1)]^2 <= 1.0)
-:(x[MOI.VariableIndex(1)]^2 >= 2.0)
-:(x[MOI.VariableIndex(1)]^2 == 3.0)
-:(4.0 <= x[MOI.VariableIndex(1)]^2 <= 5.0)
+```jldoctest
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> MOI.initialize(evaluator, [:ExprGraph])
+
+julia> MOI.constraint_expr(evaluator, 1)
+:(x[MOI.VariableIndex(1)] * x[MOI.VariableIndex(2)] * x[MOI.VariableIndex(3)] * x[MOI.VariableIndex(4)] >= 25.0)
+
+julia> MOI.constraint_expr(evaluator, 2)
+:(x[MOI.VariableIndex(1)] ^ 2 + x[MOI.VariableIndex(2)] ^ 2 + x[MOI.VariableIndex(3)] ^ 2 + x[MOI.VariableIndex(4)] ^ 2 == 40.0)
 ```
 """
 function constraint_expr end
