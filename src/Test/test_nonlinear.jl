@@ -99,8 +99,8 @@ function MOI.eval_objective_gradient(::HS071, grad_f, x)
     return
 end
 
-function MOI.constraint_gradient_structure(::HS071, i::Int)
-    return [(i, 1), (i, 2), (i, 3), (i, 4)]
+function MOI.constraint_gradient_structure(::HS071, ::Int)
+    return [1, 2, 3, 4]
 end
 
 function MOI.eval_constraint_gradient(::HS071, ∇g, x, i)
@@ -118,7 +118,6 @@ function MOI.eval_constraint_gradient(::HS071, ∇g, x, i)
     end
     return
 end
-
 
 function MOI.jacobian_structure(::HS071)
     return Tuple{Int64,Int64}[

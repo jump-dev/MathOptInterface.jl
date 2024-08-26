@@ -461,11 +461,11 @@ julia> evaluator = MOI.Test.HS071(true);
 julia> MOI.initialize(evaluator, Symbol[:Jac])
 
 julia> indices = MOI.constraint_gradient_structure(evaluator, 1)
-4-element Vector{Tuple{Int64, Int64}}:
- (1, 1)
- (1, 2)
- (1, 3)
- (1, 4)
+4-element Vector{Int64}:
+ 1
+ 2
+ 3
+ 4
 ```
 """
 function constraint_gradient_structure end
