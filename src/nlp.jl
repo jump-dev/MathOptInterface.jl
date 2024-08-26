@@ -149,15 +149,16 @@ See [`initialize`](@ref) for the list of defined features.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> evaluator = MOI.Test.HS071(true);
+julia> evaluator = MOI.Test.HS071(true, true);
 
 julia> MOI.features_available(evaluator)
-4-element Vector{Symbol}:
+6-element Vector{Symbol}:
  :Grad
  :Jac
  :JacVec
  :ExprGraph
  :Hess
+ :HessVec
 ```
 """
 function features_available end
