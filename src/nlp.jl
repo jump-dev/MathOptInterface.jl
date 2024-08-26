@@ -19,6 +19,19 @@ Abstract supertype for the callback object that is used to query function
 values, derivatives, and expression graphs.
 
 It is used in [`NLPBlockData`](@ref).
+
+## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> evaluator = MOI.Test.HS071(true);
+
+julia> supertype(typeof(evaluator))
+MathOptInterface.AbstractNLPEvaluator
+```
 """
 abstract type AbstractNLPEvaluator end
 
@@ -28,6 +41,24 @@ abstract type AbstractNLPEvaluator end
 An [`AbstractModelAttribute`](@ref) that stores an [`NLPBlockData`](@ref),
 representing a set of nonlinear constraints, and optionally a nonlinear
 objective.
+
+## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}());
+
+julia> block = MOI.NLPBlockData(
+           MOI.NLPBoundsPair.([25.0, 40.0], [Inf, 40.0]),
+           MOI.Test.HS071(true),
+           true,
+       );
+
+julia> MOI.set(model, MOI.NLPBlock(), block)
+```
 """
 struct NLPBlock <: AbstractModelAttribute end
 
@@ -38,6 +69,18 @@ An [`AbstractModelAttribute`](@ref) for the Lagrange multipliers on the
 constraints from the [`NLPBlock`](@ref) in result `result_index`.
 
 If `result_index` is omitted, it is `1` by default.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> MOI.NLPBlockDual()
+MathOptInterface.NLPBlockDual(1)
+
+julia> MOI.NLPBlockDual(2)
+MathOptInterface.NLPBlockDual(2)
+```
 """
 struct NLPBlockDual <: AbstractModelAttribute
     result_index::Int
@@ -52,6 +95,26 @@ is_set_by_optimize(::NLPBlockDual) = true
 An [`AbstractModelAttribute`](@ref) for the initial assignment of the Lagrange
 multipliers on the constraints from the [`NLPBlock`](@ref) that the solver may
 use to warm-start the solve.
+
+## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}());
+
+julia> block = MOI.NLPBlockData(
+           MOI.NLPBoundsPair.([25.0, 40.0], [Inf, 40.0]),
+           MOI.Test.HS071(true),
+           true,
+       );
+
+julia> MOI.set(model, MOI.NLPBlock(), block)
+
+julia> MOI.set(model, MOI.NLPBlockDualStart(), [1.0, 2.0])
+```
 """
 struct NLPBlockDualStart <: AbstractModelAttribute end
 
@@ -61,6 +124,17 @@ struct NLPBlockDualStart <: AbstractModelAttribute end
 A struct holding a pair of lower and upper bounds.
 
 `-Inf` and `Inf` can be used to indicate no lower or upper bound, respectively.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> bounds = MOI.NLPBoundsPair.([25.0, 40.0], [Inf, 40.0])
+2-element Vector{MathOptInterface.NLPBoundsPair}:
+ MathOptInterface.NLPBoundsPair(25.0, Inf)
+ MathOptInterface.NLPBoundsPair(40.0, 40.0)
+```
 """
 struct NLPBoundsPair
     lower::Float64
@@ -90,6 +164,24 @@ Hessian-of-the-Lagrangian queries, `σ` must be set to zero.
     Throughout the evaluator, all variables are ordered according to
     [`ListOfVariableIndices`](@ref). Hence, MOI copies of nonlinear problems
     must not re-order variables.
+
+## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}());
+
+julia> block = MOI.NLPBlockData(
+           MOI.NLPBoundsPair.([25.0, 40.0], [Inf, 40.0]),
+           MOI.Test.HS071(true),
+           true,
+       );
+
+julia> MOI.set(model, MOI.NLPBlock(), block)
+```
 """
 struct NLPBlockData
     constraint_bounds::Vector{NLPBoundsPair}
@@ -115,7 +207,8 @@ are supported by `d`.
 The following features are defined:
 
  * `:Grad`: enables [`eval_objective_gradient`](@ref)
- * `:Jac`: enables [`eval_constraint_jacobian`](@ref)
+ * `:Jac`: enables [`eval_constraint_jacobian`](@ref) and
+   [`eval_constraint_gradient`](@ref)
  * `:JacVec`: enables [`eval_constraint_jacobian_product`](@ref) and
    [`eval_constraint_jacobian_transpose_product`](@ref)
  * `:Hess`: enables [`eval_hessian_lagrangian`](@ref)
@@ -126,6 +219,8 @@ In all cases, including when `requested_features` is empty,
 [`eval_objective`](@ref) and [`eval_constraint`](@ref) are supported.
 
 ## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
 
 ```jldoctest
 julia> import MathOptInterface as MOI
@@ -145,6 +240,8 @@ Returns the subset of features available for this problem instance.
 See [`initialize`](@ref) for the list of defined features.
 
 ## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
 
 ```jldoctest
 julia> import MathOptInterface as MOI
@@ -174,6 +271,8 @@ Before calling this function, you must call [`initialize`](@ref), but you do not
 need to pass a value.
 
 ## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
 
 ```jldoctest
 julia> import MathOptInterface as MOI
@@ -210,6 +309,8 @@ When implementing this method, you must not assume that `g` is
 For example, it may be the `view` of a vector.
 
 ## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
 
 ```jldoctest
 julia> import MathOptInterface as MOI
@@ -252,6 +353,8 @@ For example, it may be the `view` of a vector.
 
 ## Example
 
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
+
 ```jldoctest
 julia> import MathOptInterface as MOI
 
@@ -293,6 +396,8 @@ The sparsity structure is assumed to be independent of the point ``x``.
 Before calling this function, you must call [`initialize`](@ref) with `:Jac`.
 
 ## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
 
 ```jldoctest
 julia> import MathOptInterface as MOI
@@ -339,6 +444,8 @@ Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
 
 ## Example
 
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
+
 ```jldoctest
 julia> import MathOptInterface as MOI
 
@@ -382,6 +489,8 @@ The sparsity structure is assumed to be independent of the point ``x``.
 Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
 
 ## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
 
 ```jldoctest
 julia> import MathOptInterface as MOI
@@ -433,6 +542,8 @@ Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
 
 ## Example
 
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
+
 ```jldoctest
 julia> import MathOptInterface as MOI
 
@@ -474,6 +585,8 @@ Before calling this function, you must call [`initialize`](@ref) with `:Jac`.
 
 ## Example
 
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
+
 ```jldoctest
 julia> import MathOptInterface as MOI
 
@@ -514,6 +627,8 @@ For example, it may be the `view` of a vector.
 Before calling this function, you must call [`initialize`](@ref) with `:Jac`.
 
 ## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
 
 ```jldoctest
 julia> import MathOptInterface as MOI
@@ -562,6 +677,8 @@ For example, it may be the `view` of a vector.
 Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
 
 ## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
 
 ```jldoctest
 julia> import MathOptInterface as MOI
@@ -616,6 +733,8 @@ Before calling this function, you must call [`initialize`](@ref) with `:JacVec`.
 
 ## Example
 
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
+
 ```jldoctest
 julia> import MathOptInterface as MOI
 
@@ -664,6 +783,8 @@ For example, it may be the `view` of a vector.
 Before calling this function, you must call [`initialize`](@ref) with `:JacVec`.
 
 ## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
 
 ```jldoctest
 julia> import MathOptInterface as MOI
@@ -719,6 +840,8 @@ Before calling this function, you must call [`initialize`](@ref) with `:HessVec`
 
 ## Example
 
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
+
 ```jldoctest
 julia> import MathOptInterface as MOI
 
@@ -772,6 +895,8 @@ Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
 
 ## Example
 
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
+
 ```jldoctest
 julia> import MathOptInterface as MOI
 
@@ -823,6 +948,8 @@ For example, it may be the `view` of a vector.
 Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
 
 ## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
 
 ```jldoctest
 julia> import MathOptInterface as MOI
@@ -877,6 +1004,8 @@ For example, it may be the `view` of a vector.
 Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
 
 ## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
 
 ```jldoctest
 julia> import MathOptInterface as MOI
@@ -936,6 +1065,8 @@ expressions:
 
 ## Example
 
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
+
 ```jldoctest
 julia> import MathOptInterface as MOI
 
@@ -971,6 +1102,8 @@ The bounds on the constraints must match the [`NLPBoundsPair`](@ref)s passed to
 [`NLPBlockData`](@ref).
 
 ## Example
+
+This example uses the [`MOI.Test.HS071`](@ref) evaluator.
 
 ```jldoctest
 julia> import MathOptInterface as MOI

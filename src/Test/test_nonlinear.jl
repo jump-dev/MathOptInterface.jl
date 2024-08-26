@@ -10,15 +10,18 @@
         enable_hessian_vector_product::Bool = false,
     )
 
-An AbstractNLPEvaluator for the problem:
+An [`MOI.AbstractNLPEvaluator`](@ref) for the problem:
+
+```math
+\\begin{aligned}
+\\text{min}       \\ & x_1 * x_4 * (x_1 + x_2 + x_3) + x_3 \\\\
+\\text{subject to}\\ & x_1 * x_2 * x_3 * x_4 \\ge 25 \\\\
+                     & x_1^2 + x_2^2 + x_3^2 + x_4^2 = 40 \\\\
+                     & 1 \\le x_1, x_2, x_3, x_4 \\le 5
+\\end{aligned}
 ```
-min x1 * x4 * (x1 + x2 + x3) + x3
-st  x1 * x2 * x3 * x4 >= 25
-    x1^2 + x2^2 + x3^2 + x4^2 = 40
-    1 <= x1, x2, x3, x4 <= 5
-```
-Start at (1,5,5,1)
-End at (1.000..., 4.743..., 3.821..., 1.379...)
+
+The optimal solution is `[1.000, 4.743, 3.821, 1.379]`.
 """
 struct HS071 <: MOI.AbstractNLPEvaluator
     enable_hessian::Bool
@@ -35,9 +38,9 @@ function MOI.initialize(d::HS071, requested_features::Vector{Symbol})
     for feat in requested_features
         if !(feat in MOI.features_available(d))
             error("Unsupported feature $feat")
-            # TODO: implement Jac-vec products for solvers that need them
         end
     end
+    return
 end
 
 function MOI.features_available(d::HS071)
