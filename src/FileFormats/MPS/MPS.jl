@@ -237,7 +237,7 @@ function Base.write(io::IO, model::Model)
     write_rhs(io, model, obj_const)
     write_ranges(io, model)
     write_bounds(io, model, var_to_column)
-    write_quadobj(io, model, var_to_column)
+    write_quadobj(io, model, flip_obj, var_to_column)
     if options.quadratic_format != kQuadraticFormatCPLEX
         # Gurobi needs qcons _after_ quadobj and _before_ SOS.
         write_quadcons(io, model, var_to_column)
@@ -805,7 +805,7 @@ end
 #   QUADRATIC OBJECTIVE
 # ==============================================================================
 
-function write_quadobj(io::IO, model::Model, var_to_column)
+function write_quadobj(io::IO, model::Model, flip_obj::Bool, var_to_column)
     f = _get_objective(model)
     if isempty(f.quadratic_terms)
         return
@@ -822,6 +822,7 @@ function write_quadobj(io::IO, model::Model, var_to_column)
     _write_q_matrix(
         io,
         model,
+        flip_obj,
         f,
         var_to_column;
         duplicate_off_diagonal = options.quadratic_format ==
@@ -833,6 +834,7 @@ end
 function _write_q_matrix(
     io::IO,
     model::Model,
+    flip_obj::Bool,
     f,
     var_to_column;
     duplicate_off_diagonal::Bool,
@@ -861,15 +863,13 @@ function _write_q_matrix(
     )
         x_name = _var_name(model, x, var_to_column[x], options.generic_names)
         y_name = _var_name(model, y, var_to_column[y], options.generic_names)
-        println(
-            io,
-            Card(f2 = x_name, f3 = y_name, f4 = _to_string(terms[(x, y)])),
-        )
+        coef = terms[(x, y)]
+        if flip_obj
+            coef *= -1
+        end
+        println(io, Card(f2 = x_name, f3 = y_name, f4 = _to_string(coef)))
         if x != y && duplicate_off_diagonal
-            println(
-                io,
-                Card(f2 = y_name, f3 = x_name, f4 = _to_string(terms[(x, y)])),
-            )
+            println(io, Card(f2 = y_name, f3 = x_name, f4 = _to_string(coef)))
         end
     end
     return
@@ -899,6 +899,7 @@ function write_quadcons(io::IO, model::Model, var_to_column)
             _write_q_matrix(
                 io,
                 model,
+                false,  # flip_obj
                 f,
                 var_to_column;
                 duplicate_off_diagonal = options.quadratic_format !=
