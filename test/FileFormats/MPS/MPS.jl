@@ -9,9 +9,8 @@ module TestMPS
 using Test
 
 import MathOptInterface as MOI
+import MathOptInterface.FileFormats: MPS
 import DataStructures: OrderedDict
-
-const MPS = MOI.FileFormats.MPS
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -1246,6 +1245,27 @@ function test_binary_with_infeasible_bounds()
     ]
         _test_write_to_file(test, target)
     end
+    return
+end
+
+function test_issue_2538()
+    model = MPS.Model()
+    x = MOI.add_variables(model, 2)
+    f = 1.0 * x[1] + 2.0 * x[2] + 3.0 * x[1] * x[2] + 4.0 * x[2] * x[2]
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    io = IOBuffer()
+    write(io, model)
+    model_2 = MPS.Model()
+    seekstart(io)
+    read!(io, model_2)
+    MOI.get(model_2, MOI.ObjectiveSense()) == MOI.MIN_SENSE
+    y = MOI.get(model_2, MOI.ListOfVariableIndices())
+    g = MOI.get(model_2, MOI.ObjectiveFunction{typeof(f)}())
+    @test isapprox(
+        g,
+        -1.0 * y[1] - 2.0 * y[2] - 3.0 * y[1] * y[2] - 4.0 * y[2] * y[2],
+    )
     return
 end
 
