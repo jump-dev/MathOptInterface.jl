@@ -899,6 +899,7 @@ function write_quadcons(io::IO, model::Model, var_to_column)
             _write_q_matrix(
                 io,
                 model,
+                false,  # flip_obj
                 f,
                 var_to_column;
                 duplicate_off_diagonal = options.quadratic_format !=
