@@ -35,7 +35,7 @@ you know where to look for certain things.
   behind MathOptInterface. Look here if you want to understand _why_, rather
   than _how_.
 * The **API Reference** contains a complete list of functions and types that
-  comprise the MOI API. Look here is you want to know how to use (or implement)
+  comprise the MOI API. Look here if you want to know how to use (or implement)
   a particular function.
 * The **Submodules** section contains stand-alone documentation for each of the
   submodules within MOI. These submodules are not required to interface a solver
