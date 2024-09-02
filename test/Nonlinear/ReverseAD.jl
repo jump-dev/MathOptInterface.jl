@@ -1142,11 +1142,8 @@ function test_univariate_operator_with_no_second_order()
     MOI.Nonlinear.register_operator(model, :op_f, 1, f, df)
     x = MOI.VariableIndex(1)
     MOI.Nonlinear.add_constraint(model, :(op_f($x)), MOI.LessThan(2.0))
-    evaluator = MOI.Nonlinear.Evaluator(
-        model,
-        MOI.Nonlinear.SparseReverseMode(),
-        [x],
-    )
+    evaluator =
+        MOI.Nonlinear.Evaluator(model, MOI.Nonlinear.SparseReverseMode(), [x])
     @test !(:Hess in MOI.features_available(evaluator))
     MOI.initialize(evaluator, [:Grad, :Jac])
     J = zeros(length(MOI.jacobian_structure(evaluator)))
