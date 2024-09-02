@@ -54,6 +54,13 @@ struct _UnivariateOperator{F,F′,F′′}
     f::F
     f′::F′
     f′′::F′′
+    function _UnivariateOperator(
+        f::Function,
+        f′::Function,
+        f′′::Union{Nothing,Function} = nothing,
+    )
+        return new{typeof(f),typeof(f′),typeof(f′′)}(f, f′, f′′)
+    end
 end
 
 struct _MultivariateOperator{F,F′,F′′}
@@ -339,14 +346,17 @@ end
 function _UnivariateOperator(op::Symbol, f::Function)
     _validate_register_assumptions(f, op, 1)
     f′ = _checked_derivative(f, op)
-    f′′ = _checked_derivative(f′, op)
-    return _UnivariateOperator(f, f′, f′′)
+    return _UnivariateOperator(op, f, f′)
 end
 
 function _UnivariateOperator(op::Symbol, f::Function, f′::Function)
-    _validate_register_assumptions(f′, op, 1)
-    f′′ = _checked_derivative(f′, op)
-    return _UnivariateOperator(f, f′, f′′)
+    try
+        _validate_register_assumptions(f′, op, 1)
+        f′′ = _checked_derivative(f′, op)
+        return _UnivariateOperator(f, f′, f′′)
+    catch
+        return _UnivariateOperator(f, f′, nothing)
+    end
 end
 
 function _UnivariateOperator(::Symbol, f::Function, f′::Function, f′′::Function)

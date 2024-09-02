@@ -4,13 +4,15 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
+_no_hessian(op::MOI.Nonlinear._UnivariateOperator) = op.f′′ === nothing
+_no_hessian(op::MOI.Nonlinear._MultivariateOperator) = op.∇²f === nothing
+
 function MOI.features_available(d::NLPEvaluator)
-    # Check if we are missing any hessians for user-defined multivariate
-    # operators, in which case we need to disable :Hess and :HessVec.
-    d.disable_2ndorder = any(
-        op -> op.∇²f === nothing,
-        d.data.operators.registered_multivariate_operators,
-    )
+    # Check if we are missing any hessians for user-defined operators, in which
+    # case we need to disable :Hess and :HessVec.
+    d.disable_2ndorder =
+        any(_no_hessian, d.data.operators.registered_univariate_operators) ||
+        any(_no_hessian, d.data.operators.registered_multivariate_operators)
     if d.disable_2ndorder
         return [:Grad, :Jac, :JacVec]
     end
