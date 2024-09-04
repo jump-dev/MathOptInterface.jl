@@ -72,7 +72,7 @@ function bridge_constraint(
         end
         assign_f = MOI.ScalarAffineFunction(terms, zero(T))
         assign_f = MOI.Utilities.operate!(-, T, assign_f, fi)
-        ci = MOI.add_constraint(model, assign_f, MOI.EqualTo(zero(T)))
+        ci = MOI.Utilities.normalize_and_add_constraint(model, assign_f, MOI.EqualTo(zero(T)))
         push!(assignment, ci)
     end
     return TableToMILPBridge{T,F}(z, unity, assignment, f, s)
