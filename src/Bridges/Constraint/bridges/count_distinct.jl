@@ -48,14 +48,14 @@ the constraint is equivalent to `[x, y] in AllDifferent(2)`, which is equivalent
 to `x != y`.
 
 ```math
-(x - y <= -1) \\vee (y - x <= -1)
+(x - y \\le -1) \\vee (y - x \\le -1)
 ```
 which is equivalent to (for suitable `M`):
 ```math
 \\begin{aligned}
 z \\in \\{0, 1\\} \\\\
-x - y - M * z <= -1 \\\\
-y - x - M * (1 - z) <= -1
+x - y - M z \\le -1 \\\\
+y - x - M (1 - z) \\le -1
 \\end{aligned}
 ```
 
