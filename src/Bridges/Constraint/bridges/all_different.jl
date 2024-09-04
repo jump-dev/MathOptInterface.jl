@@ -12,6 +12,7 @@
   * ``x \\in \\textsf{AllDifferent}(d)`` to ``(n, x) \\in \\textsf{CountDistinct}(1+d)``
     and ``n = d``
   * ``f(x) \\in \\textsf{AllDifferent}(d)`` to ``(d, f(x)) \\in \\textsf{CountDistinct}(1+d)``
+    and ``n = d``
 
 ## Source node
 
