@@ -8,9 +8,6 @@ function MOI.supports_constraint(
     ::Type{F},
     ::Type{S1},
 ) where {T,F<:MOI.AbstractFunction,S1<:MOI.AbstractSet,S2}
-    if S1 == MOI.AllDifferent
-        @show isfinite(MOI.Bridges.Constraint.conversion_cost(S2, S1))
-    end
     return isfinite(MOI.Bridges.Constraint.conversion_cost(S2, S1))
 end
 
