@@ -1287,7 +1287,12 @@ function _add_variable(model, data, variable_map, i, name)
     variable_map[name] = x
     MOI.set(model, MOI.VariableName(), x, name)
     set = bounds_to_set(data.col_lower[i], data.col_upper[i])
-    if set !== nothing
+    if set isa MOI.Interval
+        # Do not add MOI.Interval constraints because we want to follow JuMP's
+        # convention of adding separate lower and upper bounds.
+        MOI.add_constraint(model, x, MOI.GreaterThan(set.lower::Float64))
+        MOI.add_constraint(model, x, MOI.LessThan(set.upper::Float64))
+    elseif set !== nothing
         MOI.add_constraint(model, x, set)
     end
     if data.vtype[i] == VTYPE_INTEGER

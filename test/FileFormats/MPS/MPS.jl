@@ -170,7 +170,8 @@ function test_stacked_data()
         con3: 1.0 * x in Interval(3.0, 7.0)
         con4: 2.0 * x in Interval(4.0, 8.0)
         y in Integer()
-        y in Interval(1.0, 4.0)
+        y >= 1.0
+        y <= 4.0
         z in ZeroOne()
         """,
     )
@@ -182,7 +183,8 @@ function test_stacked_data()
         ["blank_obj", "con1", "con2", "con3", "con4"],
         [
             ("y", MOI.Integer()),
-            ("y", MOI.Interval{Float64}(1.0, 4.0)),
+            ("y", MOI.GreaterThan{Float64}(1.0)),
+            ("y", MOI.LessThan{Float64}(4.0)),
             ("z", MOI.ZeroOne()),
         ],
     )
@@ -193,8 +195,13 @@ function test_integer_default_bounds()
     model = MPS.Model()
     MOI.read_from_file(model, joinpath(@__DIR__, "integer_default_bounds.mps"))
     x = only(MOI.get(model, MOI.ListOfVariableIndices()))
+    ci =
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(x.value)
+    @test MOI.get(model, MOI.ConstraintSet(), ci) == MOI.GreaterThan(0.0)
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}}(x.value)
+    @test MOI.get(model, MOI.ConstraintSet(), ci) == MOI.LessThan(1.0)
     ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Interval{Float64}}(x.value)
-    @test MOI.get(model, MOI.ConstraintSet(), ci) == MOI.Interval(0.0, 1.0)
+    @test !MOI.is_valid(model, ci)
     return
 end
 
@@ -482,7 +489,8 @@ function test_nonzero_variable_bounds()
         x == 1.0
         y >= 2.0
         z <= 3.0
-        w in Interval(4.0, 5.0)
+        w >= 4.0
+        w <= 5.0
         """,
     )
     io = IOBuffer()
@@ -499,7 +507,8 @@ function test_nonzero_variable_bounds()
             ("x", MOI.EqualTo{Float64}(1.0)),
             ("y", MOI.GreaterThan{Float64}(2.0)),
             ("z", MOI.LessThan{Float64}(3.0)),
-            ("w", MOI.Interval{Float64}(4.0, 5.0)),
+            ("w", MOI.GreaterThan{Float64}(4.0)),
+            ("w", MOI.LessThan{Float64}(5.0)),
         ],
     )
     return
