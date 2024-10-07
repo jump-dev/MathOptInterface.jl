@@ -9,7 +9,8 @@ module TestLP
 using Test
 
 import MathOptInterface as MOI
-const LP = MOI.FileFormats.LP
+import MathOptInterface.FileFormats: LP
+
 const LP_TEST_FILE = "test.lp"
 
 function test_show()
@@ -464,7 +465,8 @@ function test_read_example_lo1()
     @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in
           constraints
     @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in constraints
-    @test (MOI.VariableIndex, MOI.Interval{Float64}) in constraints
+    @test (MOI.VariableIndex, MOI.LessThan{Float64}) in constraints
+    @test !((MOI.VariableIndex, MOI.Interval{Float64}) in constraints)
     io = IOBuffer()
     write(io, model)
     seekstart(io)
@@ -525,7 +527,8 @@ function test_read_model1()
     @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in
           constraints
     @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in constraints
-    @test (MOI.VariableIndex, MOI.Interval{Float64}) in constraints
+    @test (MOI.VariableIndex, MOI.LessThan{Float64}) in constraints
+    @test !((MOI.VariableIndex, MOI.Interval{Float64}) in constraints)
     @test (MOI.VariableIndex, MOI.Integer) in constraints
     @test (MOI.VariableIndex, MOI.ZeroOne) in constraints
     @test (MOI.VectorOfVariables, MOI.SOS1{Float64}) in constraints
@@ -543,9 +546,17 @@ function test_read_model2()
     @test (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) in
           constraints
     @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in constraints
-    @test (MOI.VariableIndex, MOI.Interval{Float64}) in constraints
+    @test (MOI.VariableIndex, MOI.LessThan{Float64}) in constraints
+    @test !((MOI.VariableIndex, MOI.Interval{Float64}) in constraints)
     @test (MOI.VariableIndex, MOI.Integer) in constraints
     @test (MOI.VariableIndex, MOI.ZeroOne) in constraints
+    @test MOI.get(model, MOI.VariableName(), MOI.VariableIndex(2)) == "V5"
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}}(2)
+    @test MOI.get(model, MOI.ConstraintSet(), ci) == MOI.LessThan(1.0)
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(2)
+    @test MOI.get(model, MOI.ConstraintSet(), ci) == MOI.GreaterThan(0.0)
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Interval{Float64}}(2)
+    @test !MOI.is_valid(model, ci)
     @test MOI.get(model, MOI.VariableName(), MOI.VariableIndex(8)) == "V8"
     @test model.variables.lower[8] == -Inf
     @test model.variables.upper[8] == -3

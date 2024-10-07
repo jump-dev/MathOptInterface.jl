@@ -916,7 +916,10 @@ function _parse_section(
             return
         elseif -Inf < lb < ub < Inf
             _delete_default_lower_bound_if_present(model, cache, x)
-            MOI.add_constraint(model, x, MOI.Interval(lb, ub))
+            # Do not add MOI.Interval constraints because we want to follow
+            # JuMP's convention of adding separate lower and upper bounds.
+            MOI.add_constraint(model, x, MOI.GreaterThan(lb))
+            MOI.add_constraint(model, x, MOI.LessThan(ub))
             return
         elseif lb == -Inf
             _delete_default_lower_bound_if_present(model, cache, x)
