@@ -335,7 +335,7 @@ method for each attribute.
 | [`TimeLimitSec`](@ref) | Yes           | Yes           | Yes                |
 | [`ObjectiveLimit`](@ref) | Yes         | Yes           | Yes                |
 | [`SolutionLimit`](@ref) | Yes          | Yes           | Yes                |
-| [`NodeLimit`](@ref) | Yes          | Yes           | Yes                |
+| [`NodeLimit`](@ref)     | Yes          | Yes           | Yes                |
 | [`RawOptimizerAttribute`](@ref) | Yes  | Yes           | Yes                |
 | [`NumberOfThreads`](@ref) | Yes        | Yes           | Yes                |
 | [`AbsoluteGapTolerance`](@ref) | Yes   | Yes           | Yes                |

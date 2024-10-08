@@ -902,7 +902,8 @@ attribute_value_type(::SolutionLimit) = Union{Nothing,Int}
 """
     NodeLimit()
 
-An optimizer attribute for setting a limit on the number of branch-and-bound nodes explored by a mixed-integer program (MIP) solver.
+An optimizer attribute for setting a limit on the number of branch-and-bound
+nodes explored by a mixed-integer program (MIP) solver.
 
 ## Default values
 
