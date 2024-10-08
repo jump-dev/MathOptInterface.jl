@@ -105,4 +105,5 @@ The following attributes are available:
  * [`TimeLimitSec`](@ref)
  * [`ObjectiveLimit`](@ref)
  * [`SolutionLimit`](@ref)
+ * [`NodeLimit`](@ref)
  * [`AutomaticDifferentiationBackend`](@ref)

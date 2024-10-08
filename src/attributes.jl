@@ -900,6 +900,29 @@ struct SolutionLimit <: AbstractOptimizerAttribute end
 attribute_value_type(::SolutionLimit) = Union{Nothing,Int}
 
 """
+    NodeLimit()
+
+An optimizer attribute for setting a limit on the number of branch-and-bound nodes explored by a MIP solver.
+
+## Default values
+
+The provided limit must be a `Union{Nothing,Int}`.
+
+When `set` to `nothing`, the limit reverts to the solver's default.
+
+The default value is `nothing`.
+
+## Termination criteria
+
+The solver may stop when the [`NodeCount`](@ref) is larger than or equal to
+the `NodeLimit`. If stopped because of this attribute, the
+[`TerminationStatus`](@ref) must be `NODE_LIMIT`.
+"""
+struct NodeLimit <: AbstractOptimizerAttribute end
+
+attribute_value_type(::NodeLimit) = Union{Nothing,Int}
+
+"""
     RawOptimizerAttribute(name::String)
 
 An optimizer attribute for the solver-specific parameter identified by `name`.

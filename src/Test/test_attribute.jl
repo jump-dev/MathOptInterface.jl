@@ -252,6 +252,32 @@ function setup_test(
     return
 end
 
+function test_attribute_NodeLimit(model::MOI.AbstractOptimizer, ::Config)
+    @requires MOI.supports(model, MOI.NodeLimit())
+    # Get the current value to restore it at the end of the test
+    value = MOI.get(model, MOI.NodeLimit())
+    MOI.set(model, MOI.NodeLimit(), 3)
+    @test MOI.get(model, MOI.NodeLimit()) == 3
+    MOI.set(model, MOI.NodeLimit(), nothing)
+    @test MOI.get(model, MOI.NodeLimit()) === nothing
+    MOI.set(model, MOI.NodeLimit(), 1)
+    @test MOI.get(model, MOI.NodeLimit()) == 1
+    MOI.set(model, MOI.NodeLimit(), value)
+    _test_attribute_value_type(model, MOI.NodeLimit())
+    return
+end
+
+test_attribute_NodeLimit(::MOI.ModelLike, ::Config) = nothing
+
+function setup_test(
+    ::typeof(test_attribute_NodeLimit),
+    model::MOIU.MockOptimizer,
+    ::Config,
+)
+    MOI.set(model, MOI.NodeLimit(), nothing)
+    return
+end
+
 """
     test_attribute_AbsoluteGapTolerance(model::MOI.AbstractOptimizer, config::Config)
 

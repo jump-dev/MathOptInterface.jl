@@ -81,6 +81,7 @@ Silent
 TimeLimitSec
 ObjectiveLimit
 SolutionLimit
+NodeLimit
 RawOptimizerAttribute
 NumberOfThreads
 RawSolver
