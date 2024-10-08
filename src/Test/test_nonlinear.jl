@@ -1386,19 +1386,19 @@ function test_nonlinear_expression_hs110(
     MOI.Utilities.loadfromstring!(
         model,
         """
-variables: x1, x2, x3, x4, x5, x6, x7, x8, x9, x10
-minobjective: ScalarNonlinearFunction($f)
-x1 in Interval(-2.001, 9.999)
-x2 in Interval(-2.001, 9.999)
-x3 in Interval(-2.001, 9.999)
-x4 in Interval(-2.001, 9.999)
-x5 in Interval(-2.001, 9.999)
-x6 in Interval(-2.001, 9.999)
-x7 in Interval(-2.001, 9.999)
-x8 in Interval(-2.001, 9.999)
-x9 in Interval(-2.001, 9.999)
-x10 in Interval(-2.001, 9.999)
-""",
+        variables: x1, x2, x3, x4, x5, x6, x7, x8, x9, x10
+        minobjective: ScalarNonlinearFunction($f)
+        x1 in Interval(2.001, 9.999)
+        x2 in Interval(2.001, 9.999)
+        x3 in Interval(2.001, 9.999)
+        x4 in Interval(2.001, 9.999)
+        x5 in Interval(2.001, 9.999)
+        x6 in Interval(2.001, 9.999)
+        x7 in Interval(2.001, 9.999)
+        x8 in Interval(2.001, 9.999)
+        x9 in Interval(2.001, 9.999)
+        x10 in Interval(2.001, 9.999)
+        """,
     )
     x = MOI.get(model, MOI.ListOfVariableIndices())
     MOI.set.(model, MOI.VariablePrimalStart(), x, 9.0)
