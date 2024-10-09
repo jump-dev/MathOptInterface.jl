@@ -1933,6 +1933,19 @@ function test_filter_variables_scalarnonlinearfunction()
     return
 end
 
+function test_filter_variables_vectornonlinearfunction()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    f = MOI.ScalarNonlinearFunction(:+, Any[x, 2, y])
+    g = MOI.ScalarNonlinearFunction(:-, Any[x, 2, y])
+    fg = MOI.VectorNonlinearFunction([f, g])
+    new_f = MOI.ScalarNonlinearFunction(:+, Any[2, y])
+    new_g = MOI.ScalarNonlinearFunction(:-, Any[0, 2, y])
+    new_fg = MOI.VectorNonlinearFunction([new_f, new_g])
+    @test new_fg ≈ MOI.Utilities.filter_variables(xi -> xi != x, fg)
+    return
+end
+
 function test_ScalarNonlinearFunction_count_map_indices_and_print()
     model = MOI.Utilities.CachingOptimizer(
         MOI.Utilities.Model{Bool}(),
