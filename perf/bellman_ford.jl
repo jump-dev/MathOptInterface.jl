@@ -10,15 +10,58 @@ import MathOptInterface.Utilities as MOIU
 
 # Model similar to SDPA format, it gives a good example because it does not
 # support a lot hence need a lot of bridges
-MOIU.@model(SDPAModel,
-            (), (MOI.EqualTo,), (MOI.Nonnegatives, MOI.PositiveSemidefiniteConeTriangle), (),
-            (), (MOI.ScalarAffineFunction,), (MOI.VectorOfVariables,), ())
-MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.VariableIndex}, ::Type{MOI.GreaterThan{T}}) where {T} = false
-MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.VariableIndex}, ::Type{MOI.LessThan{T}}) where {T} = false
-MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.VariableIndex}, ::Type{MOI.EqualTo{T}}) where {T} = false
-MOI.supports_constraint(::SDPAModel{T}, ::Type{MOI.VariableIndex}, ::Type{MOI.Interval{T}}) where {T} = false
-MOI.supports_constraint(::SDPAModel, ::Type{MOI.VectorOfVariables}, ::Type{MOI.Reals}) = false
-MOI.supports(::SDPAModel{T}, ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}) where {T} = false
+MOIU.@model(
+    SDPAModel,
+    (),
+    (MOI.EqualTo,),
+    (MOI.Nonnegatives, MOI.PositiveSemidefiniteConeTriangle),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (MOI.VectorOfVariables,),
+    ()
+)
+function MOI.supports_constraint(
+    ::SDPAModel{T},
+    ::Type{MOI.VariableIndex},
+    ::Type{MOI.GreaterThan{T}},
+) where {T}
+    return false
+end
+function MOI.supports_constraint(
+    ::SDPAModel{T},
+    ::Type{MOI.VariableIndex},
+    ::Type{MOI.LessThan{T}},
+) where {T}
+    return false
+end
+function MOI.supports_constraint(
+    ::SDPAModel{T},
+    ::Type{MOI.VariableIndex},
+    ::Type{MOI.EqualTo{T}},
+) where {T}
+    return false
+end
+function MOI.supports_constraint(
+    ::SDPAModel{T},
+    ::Type{MOI.VariableIndex},
+    ::Type{MOI.Interval{T}},
+) where {T}
+    return false
+end
+function MOI.supports_constraint(
+    ::SDPAModel,
+    ::Type{MOI.VectorOfVariables},
+    ::Type{MOI.Reals},
+)
+    return false
+end
+function MOI.supports(
+    ::SDPAModel{T},
+    ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}},
+) where {T}
+    return false
+end
 MOI.supports(::SDPAModel, ::MOI.ObjectiveFunction{MOI.VariableIndex}) = false
 
 function interval_constraint()
@@ -31,7 +74,7 @@ function interval_constraint()
         MOI.Bridges._reset_bridge_graph($bridged)
         MOI.Bridges.node($bridged, $F, $S)
     end)
-    display(@benchmark begin
+    return display(@benchmark begin
         MOI.Bridges._reset_bridge_graph($bridged)
         MOI.Bridges.bridge_index($bridged, $F, $S)
     end)
@@ -48,7 +91,7 @@ function quadratic_objective()
         MOI.Bridges._reset_bridge_graph($bridged)
         MOI.Bridges.node($bridged, $F)
     end)
-    display(@benchmark begin
+    return display(@benchmark begin
         MOI.Bridges._reset_bridge_graph($bridged)
         MOI.Bridges.bridge_index($bridged, $F)
     end)
