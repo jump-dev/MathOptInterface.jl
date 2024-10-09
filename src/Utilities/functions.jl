@@ -1281,6 +1281,12 @@ function filter_variables(keep::Function, f::MOI.ScalarNonlinearFunction)
     return MOI.ScalarNonlinearFunction(f.head, args)
 end
 
+function filter_variables(keep::Function, f::MOI.VectorNonlinearFunction)
+    return MOI.VectorNonlinearFunction(
+        MOI.ScalarNonlinearFunction[filter_variables(keep, row) for row in f.rows]
+    )
+end
+
 """
     remove_variable(f::AbstractFunction, vi::VariableIndex)
 

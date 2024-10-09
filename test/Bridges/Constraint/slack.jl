@@ -299,6 +299,18 @@ function test_vector_slack()
     return
 end
 
+function test_basic_VectorNonlinearFunction()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    bridged_mock = MOI.Bridges.Constraint.VectorSlack{Float64}(mock)
+    MOI.Test.test_basic_VectorNonlinearFunction_Nonnegatives(
+        bridged_mock,
+        MOI.Test.Config(),
+    )
+    return
+end
+
 function test_runtests()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.ScalarSlackBridge,
