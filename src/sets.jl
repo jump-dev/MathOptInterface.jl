@@ -2343,7 +2343,7 @@ This constraint is called `nvalues` in MiniZinc.
 
 To model:
 
- * if `n == 1```, then `x[1] == x[2] == x[3]`
+ * if `n == 1`, then `x[1] == x[2] == x[3]`
  * if `n == 2`, then
     * `x[1] == x[2] != x[3]` or
     * `x[1] != x[2] == x[3]` or
