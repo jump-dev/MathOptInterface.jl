@@ -187,6 +187,8 @@ for these pairs of functions:
  * [`MOI.ScalarQuadraticFunction`](@ref)  to [`MOI.ScalarNonlinearFunction`](@ref)
  * [`MOI.VectorAffineFunction`](@ref) to [`MOI.VectorQuadraticFunction`](@ref)
 
+See also [`SetConversionBridge`](@ref).
+
 ## Source node
 
 `FunctionConversionBridge` supports:

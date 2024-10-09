@@ -1,3 +1,26 @@
+"""
+    SetConversionBridge{T,S2,S1,F} <:
+        MOI.Bridges.Constraint.SetMapBridge{T,S2,S1,F,F}
+
+`SetConversionBridge` implements the following reformulations:
+
+  * ``f(x) \\in S1`` into ``f(x) \\in S2``
+
+See also [`FunctionConversionBridge`](@ref).
+
+## Source node
+
+`SetConversionBridge` supports:
+
+  * `F` in `S1`
+
+## Target nodes
+
+`SetConversionBridge` creates:
+
+  * `F` in `S2`
+"""
+
 struct SetConversionBridge{T,S2,S1,F} <:
        MOI.Bridges.Constraint.SetMapBridge{T,S2,S1,F,F}
     constraint::MOI.ConstraintIndex{F,S2}
