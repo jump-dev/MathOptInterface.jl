@@ -82,11 +82,10 @@ function _function(
     ::Type{MOI.VectorNonlinearFunction},
     x::Vector{MOI.VariableIndex},
 ) where {T}
-    f = MOI.ScalarNonlinearFunction(
-        :+,
-        Any[MOI.ScalarNonlinearFunction(:^, Any[xi, 2]) for xi in x],
-    )
-    return MOI.VectorNonlinearFunction([f; x])
+    f = _function(T, MOI.ScalarNonlinearFunction, x)
+    # The length of the function should be equal to the length of `x`
+    # so we drop `x[1]`
+    return MOI.VectorNonlinearFunction([f; x[2:end]])
 end
 
 # Default fallback.
@@ -216,6 +215,7 @@ function _basic_constraint_test_helper(
     N = MOI.dimension(set)
     x = MOI.add_variables(model, N)
     constraint_function = _function(T, UntypedF, x)
+    @assert MOI.output_dimension(constraint_function) == N
     F, S = typeof(constraint_function), typeof(set)
     ###
     ### Test MOI.supports_constraint
