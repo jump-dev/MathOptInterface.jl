@@ -21,10 +21,14 @@ function runtests()
     return
 end
 
-struct Zero <: MOI.AbstractScalarSet
-end
+struct Zero <: MOI.AbstractScalarSet end
 
-MOI.Bridges.Constraint.conversion_cost(::Type{MOI.EqualTo{Float64}}, ::Type{Zero}) = 1.0
+function MOI.Bridges.Constraint.conversion_cost(
+    ::Type{MOI.EqualTo{Float64}},
+    ::Type{Zero},
+)
+    return 1.0
+end
 
 Base.convert(::Type{MOI.EqualTo{Float64}}, ::Zero) = MOI.EqualTo(0.0)
 
