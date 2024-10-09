@@ -1283,7 +1283,9 @@ end
 
 function filter_variables(keep::Function, f::MOI.VectorNonlinearFunction)
     return MOI.VectorNonlinearFunction(
-        MOI.ScalarNonlinearFunction[filter_variables(keep, row) for row in f.rows]
+        MOI.ScalarNonlinearFunction[
+            filter_variables(keep, row) for row in f.rows
+        ],
     )
 end
 

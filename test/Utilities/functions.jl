@@ -1946,7 +1946,6 @@ function test_filter_variables_vectornonlinearfunction()
     return
 end
 
-
 function test_ScalarNonlinearFunction_count_map_indices_and_print()
     model = MOI.Utilities.CachingOptimizer(
         MOI.Utilities.Model{Bool}(),
