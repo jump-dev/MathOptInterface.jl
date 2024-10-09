@@ -34,14 +34,14 @@ Base.convert(::Type{MOI.EqualTo{Float64}}, ::Zero) = MOI.EqualTo(0.0)
 
 function test_runtests()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.ScalarFunctionizeBridge,
+        MOI.Bridges.Constraint.SetConversionBridge{Float64,MOI.EqualTo{Float64},Zero},
         model -> begin
             x = MOI.add_variable(model)
-            MOI.add_constraint(model, Zero())
+            MOI.add_constraint(model, x, Zero())
         end,
         model -> begin
             x = MOI.add_variable(model)
-            MOI.add_constraint(model, MOI.EqualTo(0.0))
+            MOI.add_constraint(model, x, MOI.EqualTo(0.0))
         end,
     )
     return
