@@ -31,7 +31,6 @@ See also [`FunctionConversionBridge`](@ref).
 
   * `F` in `S2`
 """
-
 struct SetConversionBridge{T,S2,S1,F} <:
        MOI.Bridges.Constraint.SetMapBridge{T,S2,S1,F,F}
     constraint::MOI.ConstraintIndex{F,S2}
