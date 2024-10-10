@@ -39,7 +39,8 @@ function Base.convert(::Type{Zero}, s::MOI.EqualTo)
     return Zero()
 end
 
-const EqualToBridge{T,S1,F} = MOI.Bridges.Constraint.SetConversionBridge{T,MOI.EqualTo{T},S1,F}
+const EqualToBridge{T,S1,F} =
+    MOI.Bridges.Constraint.SetConversionBridge{T,MOI.EqualTo{T},S1,F}
 
 function test_runtests()
     MOI.Bridges.runtests(
