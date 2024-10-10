@@ -32,9 +32,18 @@ end
 
 Base.convert(::Type{MOI.EqualTo{Float64}}, ::Zero) = MOI.EqualTo(0.0)
 
+function Base.convert(::Type{Zero}, s::MOI.EqualTo)
+    if !iszero(s.value)
+        throw(InexactError(convert, (Zero, s)))
+    end
+    return Zero()
+end
+
+const EqualToBridge{T,S1,F} = MOI.Bridges.Constraint.SetConversionBridge{T,MOI.EqualTo{T},S1,F}
+
 function test_runtests()
     MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.SetConversionBridge{Float64,MOI.EqualTo{Float64},Zero},
+        EqualToBridge,
         model -> begin
             x = MOI.add_variable(model)
             MOI.add_constraint(model, x, Zero())

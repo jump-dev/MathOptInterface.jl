@@ -6,6 +6,17 @@
 
   * ``f(x) \\in S1`` into ``f(x) \\in S2``
 
+In order to add this bridge, you need to create a bridge specific
+for a given type `T` and set `S2`:
+```julia
+MOI.Bridges.add_bridge(model, MOI.Bridges.Constraint.SetConversionBridge{T,S2})
+```
+In order to define a bridge with `S2` specified but `T` unspecified, e.g.,
+for `JuMP.add_bridge`, you can use
+```julia
+const MyBridge{T,S1,F} = MOI.Bridges.Constraint.SetConversionBridge{T,S2,S1,F}
+```
+
 See also [`FunctionConversionBridge`](@ref).
 
 ## Source node
