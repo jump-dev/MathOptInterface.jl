@@ -11,7 +11,7 @@ for a given type `T` and set `S2`:
 ```julia
 MOI.Bridges.add_bridge(model, MOI.Bridges.Constraint.SetConversionBridge{T,S2})
 ```
-In order to define a bridge with `S2` specified but `T` unspecified, e.g.,
+In order to define a bridge with `S2` specified but `T` unspecified, for example
 for `JuMP.add_bridge`, you can use
 ```julia
 const MyBridge{T,S1,F} = MOI.Bridges.Constraint.SetConversionBridge{T,S2,S1,F}
