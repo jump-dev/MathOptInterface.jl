@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Overview · MathOptInterface</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">MathOptInterface</span></div><form class="docs-search" action="../../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../../">Introduction</a></li><li><input class="collapse-toggle" id="menuitem-2" type="checkbox"/><label class="tocitem" for="menuitem-2"><span class="docs-label">Background</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../background/motivation/">Motivation</a></li><li><a class="tocitem" href="../../../background/duality/">Duality</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox"/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../tutorials/example/">Solving a problem using MathOptInterface</a></li><li><a class="tocitem" href="../../../tutorials/implementing/">Implementing a solver interface</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Manual</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../manual/standard_form/">Standard form problem</a></li><li><a class="tocitem" href="../../../manual/models/">Models</a></li><li><a class="tocitem" href="../../../manual/variables/">Variables</a></li><li><a class="tocitem" href="../../../manual/constraints/">Constraints</a></li><li><a class="tocitem" href="../../../manual/solutions/">Solutions</a></li><li><a class="tocitem" href="../../../manual/modification/">Problem modification</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">API Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../reference/standard_form/">Standard form</a></li><li><a class="tocitem" href="../../../reference/models/">Models</a></li><li><a class="tocitem" href="../../../reference/variables/">Variables</a></li><li><a class="tocitem" href="../../../reference/constraints/">Constraints</a></li><li><a class="tocitem" href="../../../reference/modification/">Modifications</a></li><li><a class="tocitem" href="../../../reference/nonlinear/">Nonlinear programming</a></li><li><a class="tocitem" href="../../../reference/callbacks/">Callbacks</a></li><li><a class="tocitem" href="../../../reference/errors/">Errors</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox" checked/><label class="tocitem" for="menuitem-6"><span class="docs-label">Submodules</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-6-1" type="checkbox"/><label class="tocitem" for="menuitem-6-1"><span class="docs-label">Benchmarks</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Benchmarks/overview/">Overview</a></li><li><a class="tocitem" href="../../Benchmarks/reference/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox"/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Bridges</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Bridges/overview/">Overview</a></li><li><a class="tocitem" href="../../Bridges/implementation/">Implementation</a></li><li><a class="tocitem" href="../../Bridges/reference/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-3" type="checkbox"/><label class="tocitem" for="menuitem-6-3"><span class="docs-label">FileFormats</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../FileFormats/overview/">Overview</a></li><li><a class="tocitem" href="../../FileFormats/reference/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-4" type="checkbox" checked/><label class="tocitem" for="menuitem-6-4"><span class="docs-label">Utilities</span><i class="docs-chevron"></i></label><ul class="collapsed"><li class="is-active"><a class="tocitem" href>Overview</a><ul class="internal"><li><a class="tocitem" href="#Utilities.Model"><span>Utilities.Model</span></a></li><li><a class="tocitem" href="#Utilities.UniversalFallback"><span>Utilities.UniversalFallback</span></a></li><li><a class="tocitem" href="#Utilities.@model"><span>Utilities.@model</span></a></li><li><a class="tocitem" href="#Utilities.CachingOptimizer"><span>Utilities.CachingOptimizer</span></a></li><li><a class="tocitem" href="#Printing"><span>Printing</span></a></li><li><a class="tocitem" href="#Allocate-Load"><span>Allocate-Load</span></a></li><li><a class="tocitem" href="#Utilities.MatrixOfConstraints"><span>Utilities.MatrixOfConstraints</span></a></li><li><a class="tocitem" href="#Fallbacks"><span>Fallbacks</span></a></li><li><a class="tocitem" href="#DoubleDicts"><span>DoubleDicts</span></a></li></ul></li><li><a class="tocitem" href="../reference/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-5" type="checkbox"/><label class="tocitem" for="menuitem-6-5"><span class="docs-label">Test</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Test/overview/">Overview</a></li><li><a class="tocitem" href="../../Test/reference/">API Reference</a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Submodules</a></li><li><a class="is-disabled">Utilities</a></li><li class="is-active"><a href>Overview</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Overview</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/jump-dev/MathOptInterface.jl/blob/master/docs/src/submodules/Utilities/overview.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="The-Utilities-submodule"><a class="docs-heading-anchor" href="#The-Utilities-submodule">The Utilities submodule</a><a id="The-Utilities-submodule-1"></a><a class="docs-heading-anchor-permalink" href="#The-Utilities-submodule" title="Permalink"></a></h1><p>The Utilities submodule provides a variety of functionality for managing <code>MOI.ModelLike</code> objects.</p><h2 id="Utilities.Model"><a class="docs-heading-anchor" href="#Utilities.Model">Utilities.Model</a><a id="Utilities.Model-1"></a><a class="docs-heading-anchor-permalink" href="#Utilities.Model" title="Permalink"></a></h2><p><a href="../reference/#MathOptInterface.Utilities.Model"><code>Utilities.Model</code></a> provides an implementation of a <a href="../../../reference/models/#MathOptInterface.ModelLike"><code>ModelLike</code></a> that efficiently supports all functions and sets defined within MOI. However, given the extensibility of MOI, this might not cover all use cases.</p><p>Create a model as follows:</p><pre><code class="language-julia-repl">julia&gt; model = MOI.Utilities.Model{Float64}()
+MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}</code></pre><h2 id="Utilities.UniversalFallback"><a class="docs-heading-anchor" href="#Utilities.UniversalFallback">Utilities.UniversalFallback</a><a id="Utilities.UniversalFallback-1"></a><a class="docs-heading-anchor-permalink" href="#Utilities.UniversalFallback" title="Permalink"></a></h2><p><a href="../reference/#MathOptInterface.Utilities.UniversalFallback"><code>Utilities.UniversalFallback</code></a> is a layer that sits on top of any <a href="../../../reference/models/#MathOptInterface.ModelLike"><code>ModelLike</code></a> and provides non-specialized (slower) fallbacks for constraints and attributes that the underlying <a href="../../../reference/models/#MathOptInterface.ModelLike"><code>ModelLike</code></a> does not support.</p><p>For example, <a href="../reference/#MathOptInterface.Utilities.Model"><code>Utilities.Model</code></a> doesn&#39;t support some variable attributes like <a href="../../../reference/variables/#MathOptInterface.VariablePrimalStart"><code>VariablePrimalStart</code></a>, so JuMP uses a combination of Universal fallback and <a href="../reference/#MathOptInterface.Utilities.Model"><code>Utilities.Model</code></a> as a generic problem cache:</p><pre><code class="language-julia-repl">julia&gt; model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+MOIU.UniversalFallback{MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+fallback for MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}</code></pre><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p>Adding a UniversalFallback means that your <code>model</code> will now support all constraints, even if the inner-model does not! This can lead to unexpected behavior.</p></div></div><h2 id="Utilities.@model"><a class="docs-heading-anchor" href="#Utilities.@model">Utilities.@model</a><a id="Utilities.@model-1"></a><a class="docs-heading-anchor-permalink" href="#Utilities.@model" title="Permalink"></a></h2><p>For advanced use cases that need efficient support for functions and sets defined outside of MOI (but still known at compile time), we provide the <a href="../reference/#MathOptInterface.Utilities.@model"><code>Utilities.@model</code></a> macro.</p><p>The <code>@model</code> macro takes a name (for a new type, which must not exist yet), eight tuples specifying the types of constraints that are supported, and then a <code>Bool</code> indicating the type should be a subtype of <code>MOI.AbstractOptimizer</code> (if <code>true</code>) or <code>MOI.ModelLike</code> (if <code>false</code>).</p><p>The eight tuples are in the following order:</p><ol><li>Un-typed scalar sets, e.g., <a href="../../../reference/standard_form/#MathOptInterface.Integer"><code>Integer</code></a></li><li>Typed scalar sets, e.g., <a href="../../../reference/standard_form/#MathOptInterface.LessThan"><code>LessThan</code></a></li><li>Un-typed vector sets, e.g., <a href="../../../reference/standard_form/#MathOptInterface.Nonnegatives"><code>Nonnegatives</code></a></li><li>Typed vector sets, e.g., <a href="../../../reference/standard_form/#MathOptInterface.PowerCone"><code>PowerCone</code></a></li><li>Un-typed scalar functions, e.g., <a href="../../../reference/standard_form/#MathOptInterface.SingleVariable"><code>SingleVariable</code></a></li><li>Typed scalar functions, e.g., <a href="../../../reference/standard_form/#MathOptInterface.ScalarAffineFunction"><code>ScalarAffineFunction</code></a></li><li>Un-typed vector functions, e.g., <a href="../../../reference/standard_form/#MathOptInterface.VectorOfVariables"><code>VectorOfVariables</code></a></li><li>Typed vector functions, e.g., <a href="../../../reference/standard_form/#MathOptInterface.VectorAffineFunction"><code>VectorAffineFunction</code></a></li></ol><p>The tuples can contain more than one element. Typed-sets should be speficied without their type parameter, i.e., <code>MOI.LessThan</code>, not <code>MOI.LessThan{Float64}</code>.</p><p>Here is an example:</p><pre><code class="language-julia-repl">julia&gt; MOI.Utilities.@model(
+           MyNewModel,
+           (MOI.Integer,),                  # Un-typed scalar sets
+           (MOI.GreaterThan,),              # Typed scalar sets
+           (MOI.Nonnegatives,),             # Un-typed vector sets
+           (MOI.PowerCone,),                # Typed vector sets
+           (MOI.SingleVariable,),           # Un-typed scalar functions
+           (MOI.ScalarAffineFunction,),     # Typed scalar functions
+           (MOI.VectorOfVariables,),        # Un-typed vector functions
+           (MOI.VectorAffineFunction,),     # Typed vector functions
+           true,                            # &lt;:MOI.AbstractOptimizer?
+       )
+MathOptInterface.Utilities.GenericOptimizer{T,MyNewModelFunctionConstraints{T}} where T
+
+julia&gt; model = MyNewModel{Float64}()
+MOIU.GenericOptimizer{Float64,MyNewModelFunctionConstraints{Float64}}</code></pre><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p><code>MyNewModel</code> supports every <code>SingleVariable</code>-in-Set constraint, as well as <a href="../../../reference/standard_form/#MathOptInterface.SingleVariable"><code>SingleVariable</code></a>, <a href="../../../reference/standard_form/#MathOptInterface.ScalarAffineFunction"><code>ScalarAffineFunction</code></a>, and <a href="../../../reference/standard_form/#MathOptInterface.ScalarQuadraticFunction"><code>ScalarQuadraticFunction</code></a> objective functions. Implement <code>MOI.supports</code> as needed to forbid constraint and objective function combinations.</p></div></div><p>As another example, <a href="https://github.com/chkwon/PATHSolver.jl">PATHSolver</a>, which only supports <a href="../../../reference/standard_form/#MathOptInterface.VectorAffineFunction"><code>VectorAffineFunction</code></a>-in-<a href="../../../reference/standard_form/#MathOptInterface.Complements"><code>Complements</code></a> defines its optimizer as:</p><pre><code class="language-julia-repl">julia&gt; MOI.Utilities.@model(
+           PathOptimizer,
+           (),  # Scalar sets
+           (),  # Typed scalar sets
+           (MOI.Complements,),  # Vector sets
+           (),  # Typed vector sets
+           (),  # Scalar functions
+           (),  # Typed scalar functions
+           (),  # Vector functions
+           (MOI.VectorAffineFunction,),  # Typed vector functions
+           true,  # is_optimizer
+       )
+MathOptInterface.Utilities.GenericOptimizer{T,MathOptInterface.Utilities.VectorOfConstraints{MathOptInterface.VectorAffineFunction{T},MathOptInterface.Complements}} where T</code></pre><p>However, <code>PathOptimizer</code> does not support some <code>SingleVariable</code>-in-Set constraints, so we must explicitly define:</p><pre><code class="language-julia-repl">julia&gt; function MOI.supports_constraint(
+           ::PathOptimizer,
+           ::Type{MOI.SingleVariable},
+           ::Type{Union{&lt;:MOI.Semiinteger,MOI.Semicontinuous,MOI.ZeroOne,MOI.Integer}}
+       )
+           return false
+       end</code></pre><p>Finally, PATH doesn&#39;t support an objective function, so we need to add:</p><pre><code class="language-julia-repl">julia&gt; MOI.supports(::PathOptimizer, ::MOI.ObjectiveFunction) = false</code></pre><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p>This macro creates a new type, so it must be called from the top-level of a module, e.g., it cannot be called from inside a function.</p></div></div><h2 id="Utilities.CachingOptimizer"><a class="docs-heading-anchor" href="#Utilities.CachingOptimizer">Utilities.CachingOptimizer</a><a id="Utilities.CachingOptimizer-1"></a><a class="docs-heading-anchor-permalink" href="#Utilities.CachingOptimizer" title="Permalink"></a></h2><p>A [<code>Utilities.CachingOptimizer</code>] is an MOI layer that abstracts the difference between solvers that support incremental modification (e.g., they support adding variables one-by-one), and solvers that require the entire problem in a single API call (e.g., they only accept the <code>A</code>, <code>b</code> and <code>c</code> matrices of a linear program).</p><p>It has two parts:</p><ol><li>A cache, where the model can be built and modified incrementally</li><li>An optimizer, which is used to solve the problem</li></ol><pre><code class="language-julia-repl">julia&gt; model = MOI.Utilities.CachingOptimizer(
+           MOI.Utilities.Model{Float64}(),
+           PathOptimizer{Float64}(),
+       )
+MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+in state EMPTY_OPTIMIZER
+in mode AUTOMATIC
+with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
+with optimizer MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}</code></pre><p>A <a href="../reference/#MathOptInterface.Utilities.CachingOptimizer"><code>Utilities.CachingOptimizer</code></a> may be in one of three possible states:</p><ul><li><code>NO_OPTIMIZER</code>: The CachingOptimizer does not have any optimizer.</li><li><code>EMPTY_OPTIMIZER</code>: The CachingOptimizer has an empty optimizer, and it is not synchronized with the cached model. Modifications are forwarded to the cache, but <em>not</em> to the optimizer.</li><li><code>ATTACHED_OPTIMIZER</code>: The CachingOptimizer has an optimizer, and it is synchronized with the cached model. Modifications are forwarded to the optimizer. If the optimizer does not support modifications, and error will be thrown.</li></ul><p>Use <a href="../reference/#MathOptInterface.Utilities.attach_optimizer"><code>Utilities.attach_optimizer</code></a> to go from <code>EMPTY_OPTIMIZER</code> to <code>ATTACHED_OPTIMIZER</code>:</p><pre><code class="language-julia-repl">julia&gt; MOI.Utilities.attach_optimizer(model)
+
+julia&gt; model
+MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+in state ATTACHED_OPTIMIZER
+in mode AUTOMATIC
+with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
+with optimizer MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}</code></pre><div class="admonition is-info"><header class="admonition-header">Info</header><div class="admonition-body"><p>You must be in <code>ATTACHED_OPTIMIZER</code> to use <a href="../../../reference/models/#MathOptInterface.optimize!"><code>optimize!</code></a>.</p></div></div><p>Use <a href="../reference/#MathOptInterface.Utilities.reset_optimizer"><code>Utilities.reset_optimizer</code></a> to go from <code>ATTACHED_OPTIMIZER</code> to <code>EMPTY_OPTIMIZER</code>:</p><pre><code class="language-julia-repl">julia&gt; MOI.Utilities.reset_optimizer(model)
+
+julia&gt; model
+MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+in state EMPTY_OPTIMIZER
+in mode AUTOMATIC
+with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
+with optimizer MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}</code></pre><div class="admonition is-info"><header class="admonition-header">Info</header><div class="admonition-body"><p>Calling <code>MOI.empty!(model)</code> also resets the state to <code>EMPTY_OPTIMIZER</code>. So after emptying a model, the modification will only be applied to the cache.</p></div></div><p>Use <a href="../reference/#MathOptInterface.Utilities.drop_optimizer"><code>Utilities.drop_optimizer</code></a> to go from any state to <code>NO_OPTIMIZER</code>:</p><pre><code class="language-julia-repl">julia&gt; MOI.Utilities.drop_optimizer(model)
+
+julia&gt; model
+MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+in state NO_OPTIMIZER
+in mode AUTOMATIC
+with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
+with optimizer nothing</code></pre><p>Pass an empty optimizer to <a href="../reference/#MathOptInterface.Utilities.reset_optimizer"><code>Utilities.reset_optimizer</code></a> to go from <code>NO_OPTIMIZER</code> to <code>EMPTY_OPTIMIZER</code>:</p><pre><code class="language-julia-repl">julia&gt; MOI.Utilities.reset_optimizer(model, PathOptimizer{Float64}())
+
+julia&gt; model
+MOIU.CachingOptimizer{MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}},MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+in state EMPTY_OPTIMIZER
+in mode AUTOMATIC
+with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
+with optimizer MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}</code></pre><p>Deciding when to attach and reset the optimizer is tedious, and you will often write code like this:</p><pre><code class="language-julia">try
+    # modification
+catch
+    MOI.Utilities.reset_optimizer(model)
+    # Re-try modification
+end</code></pre><p>To make this easier, <a href="../reference/#MathOptInterface.Utilities.CachingOptimizer"><code>Utilities.CachingOptimizer</code></a> has two modes of operation:</p><ul><li><code>AUTOMATIC</code>: The <code>CachingOptimizer</code> changes its state when necessary. Attempting to add a constraint or perform a modification not supported by the optimizer results in a drop to <code>EMPTY_OPTIMIZER</code> mode.</li><li><code>MANUAL</code>: The user must change the state of the <code>CachingOptimizer</code>. Attempting to perform an operation in the incorrect state results in an error.</li></ul><p>By default, <code>AUTOMATIC</code> mode is chosen. However, you can create a <code>CachingOptimizer</code> in <code>MANUAL</code> mode as follows:</p><pre><code class="language-julia-repl">julia&gt; model = MOI.Utilities.CachingOptimizer(
+           MOI.Utilities.Model{Float64}(),
+           MOI.Utilities.MANUAL,
+       )
+MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+in state NO_OPTIMIZER
+in mode MANUAL
+with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
+with optimizer nothing
+
+julia&gt; MOI.Utilities.reset_optimizer(model, PathOptimizer{Float64}())
+
+julia&gt; model
+MOIU.CachingOptimizer{MOI.AbstractOptimizer,MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}}
+in state EMPTY_OPTIMIZER
+in mode MANUAL
+with model cache MOIU.GenericModel{Float64,MOIU.ModelFunctionConstraints{Float64}}
+with optimizer MOIU.GenericOptimizer{Float64,MOIU.VectorOfConstraints{MOI.VectorAffineFunction{Float64},MOI.Complements}}</code></pre><h2 id="Printing"><a class="docs-heading-anchor" href="#Printing">Printing</a><a id="Printing-1"></a><a class="docs-heading-anchor-permalink" href="#Printing" title="Permalink"></a></h2><p>Use <code>print</code> to print the formulation of the model.</p><pre><code class="language-julia-repl">julia&gt; model = MOI.Utilities.Model{Float64}();
+
+julia&gt; x = MOI.add_variable(model)
+MathOptInterface.VariableIndex(1)
+
+julia&gt; MOI.set(model, MOI.VariableName(), x, &quot;x_var&quot;)
+
+julia&gt; f = MOI.SingleVariable(x)
+MathOptInterface.SingleVariable(MathOptInterface.VariableIndex(1))
+
+julia&gt; MOI.add_constraint(model, f, MOI.ZeroOne())
+MathOptInterface.ConstraintIndex{MathOptInterface.SingleVariable,MathOptInterface.ZeroOne}(1)
+
+julia&gt; MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+
+julia&gt; MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+
+julia&gt; print(model)
+Maximize SingleVariable:
+ x_var
+
+Subject to:
+
+SingleVariable-in-ZeroOne
+ x_var ∈ {0, 1}</code></pre><p>Use <a href="submodules/Utilities/@Ref"><code>Utilities.latex_formulation</code></a> to display the model in LaTeX form:</p><pre><code class="language-julia-repl">julia&gt; MOI.Utilities.latex_formulation(model)
+$$ \begin{aligned}
+\max\quad &amp; x\_var \\
+\text{Subject to}\\
+ &amp; \text{SingleVariable-in-ZeroOne} \\
+ &amp; x\_var \in \{0, 1\} \\
+\end{aligned} $$</code></pre><div class="admonition is-success"><header class="admonition-header">Tip</header><div class="admonition-body"><p>In IJulia, calling <code>print</code> or ending a cell with <a href="../reference/#MathOptInterface.Utilities.latex_formulation"><code>Utilities.latex_formulation</code></a> will render the model in LaTeX.</p></div></div><h2 id="Allocate-Load"><a class="docs-heading-anchor" href="#Allocate-Load">Allocate-Load</a><a id="Allocate-Load-1"></a><a class="docs-heading-anchor-permalink" href="#Allocate-Load" title="Permalink"></a></h2><p>The Allocate-Load API allows solvers that do not support loading the problem incrementally to implement <a href="../../../reference/models/#MathOptInterface.copy_to"><code>copy_to</code></a> in a way that still allows transformations to be applied in the copy between the cache and the model if the transformations are implemented as MOI layers implementing the Allocate-Load API.</p><p>Loading a model using the Allocate-Load interface consists of two passes through the model data:</p><ol><li>the <em>allocate</em> pass where the model typically records the necessary information about the constraints and attributes such as their number and size. This information may be used by the solver to allocate datastructures of appropriate size.</li><li>the <em>load</em> pass where the model typically loads the constraint and attribute data to the model.</li></ol><p>The description above only gives a suggestion of what to achieve in each pass. In fact the exact same constraint and attribute data is provided to each pass, so an implementation of the Allocate-Load API is free to do whatever is more convenient in each pass.</p><p>The main difference between each pass, apart from the fact that one is executed before the other during a copy, is that the allocate pass needs to create and return new variable and constraint indices, while during the load pass the appropriate constraint indices are provided.</p><p>If you choose to implement the Allocate-Load API, implement the following functions, which will be called in order:</p><p><strong>Allocate</strong></p><ul><li><a href="../reference/#MathOptInterface.Utilities.allocate_variables"><code>Utilities.allocate_variables</code></a></li><li><a href="../reference/#MathOptInterface.Utilities.allocate_constrained_variable"><code>Utilities.allocate_constrained_variable</code></a></li><li><a href="../reference/#MathOptInterface.Utilities.allocate_constrained_variables"><code>Utilities.allocate_constrained_variables</code></a></li><li><a href="../reference/#MathOptInterface.Utilities.allocate"><code>Utilities.allocate</code></a></li><li><a href="../reference/#MathOptInterface.Utilities.allocate_constraint"><code>Utilities.allocate_constraint</code></a></li></ul><p><strong>Load</strong></p><ul><li><a href="../reference/#MathOptInterface.Utilities.load_variables"><code>Utilities.load_variables</code></a></li><li><a href="../reference/#MathOptInterface.Utilities.load_constrained_variable"><code>Utilities.load_constrained_variable</code></a></li><li><a href="../reference/#MathOptInterface.Utilities.load_constrained_variables"><code>Utilities.load_constrained_variables</code></a></li><li><a href="../reference/#MathOptInterface.Utilities.load"><code>Utilities.load</code></a></li><li><a href="../reference/#MathOptInterface.Utilities.load_constraint"><code>Utilities.load_constraint</code></a></li></ul><p>Note that the <code>_constrained_variable</code> functions are optional, and are only needed if the solver requires variables be constrained on creation.</p><p>You must also implement:</p><pre><code class="language-julia">function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kwargs...)
+    return MOI.Utilities.automatic_copy_to(dest, src; kwargs...)
+end
+
+function MOI.Utilities.supports_allocate_load(
+    model::Optimizer,
+    copy_names::Bool,
+)
+    # If you support names...
+    return true
+    # Otherwise...
+    return !copy_names
+end</code></pre><p>See <a href="../reference/#MathOptInterface.Utilities.supports_allocate_load"><code>Utilities.supports_allocate_load</code></a> for more details.</p><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p>The Allocate-Load API should <strong>not</strong> be used outside <a href="../../../reference/models/#MathOptInterface.copy_to"><code>copy_to</code></a>.</p></div></div><h2 id="Utilities.MatrixOfConstraints"><a class="docs-heading-anchor" href="#Utilities.MatrixOfConstraints">Utilities.MatrixOfConstraints</a><a id="Utilities.MatrixOfConstraints-1"></a><a class="docs-heading-anchor-permalink" href="#Utilities.MatrixOfConstraints" title="Permalink"></a></h2><p>The constraints of <a href="../reference/#MathOptInterface.Utilities.Model"><code>Utilities.Model</code></a> are stored as a vector of tuples of function and set in a <code>Utilities.VectorOfConstraints</code>. Other representations can be used by parametrizing the type <a href="../reference/#MathOptInterface.Utilities.GenericModel"><code>Utilities.GenericModel</code></a> (resp. <a href="../reference/#MathOptInterface.Utilities.GenericOptimizer"><code>Utilities.GenericOptimizer</code></a>). For instance, if all non-<code>SingleVariable</code> constraints are affine, the coefficients of all the constraints can be stored in a single sparse matrix using <a href="../reference/#MathOptInterface.Utilities.MatrixOfConstraints"><code>Utilities.MatrixOfConstraints</code></a>. The constraints storage can even be customized up to a point where it exactly matches the storage of the solver of interest, in which case <a href="../../../reference/models/#MathOptInterface.copy_to"><code>copy_to</code></a> can be implemented for the solver by calling <a href="../../../reference/models/#MathOptInterface.copy_to"><code>copy_to</code></a> to this custom model.</p><p>For instance, <a href="https://github.com/jump-dev/Clp.jl">Clp</a> defines the following model</p><pre><code class="language-julia">MOI.Utilities.@product_of_scalar_sets(LP, MOI.EqualTo{T}, MOI.LessThan{T}, MOI.GreaterThan{T})
+const Model = MOI.Utilities.GenericModel{
+    Float64,
+    MOI.Utilities.MatrixOfConstraints{
+        Float64,
+        MOI.Utilities.MutableSparseMatrixCSC{Float64,Cint,MOI.Utilities.ZeroBasedIndexing},
+        MOI.Utilities.Hyperrectangle{Float64},
+        LP{Float64},
+    },
+}</code></pre><p>The <a href="../../../reference/models/#MathOptInterface.copy_to"><code>copy_to</code></a> operation can now be implemented as follows (assuming that the <code>Model</code> definition above is in the <code>Clp</code> module so that it can be referred to as <code>Model</code>, to be distinguished with <a href="../reference/#MathOptInterface.Utilities.Model"><code>Utilities.Model</code></a>):</p><pre><code class="language-julia">function _copy_to(
+    dest::Optimizer,
+    src::Model
+)
+    @assert MOI.is_empty(dest)
+    A = src.constraints.coefficients
+    row_bounds = src.constraints.constants
+    Clp_loadProblem(
+        dest,
+        A.n,
+        A.m,
+        A.colptr,
+        A.rowval,
+        A.nzval,
+        src.lower_bound,
+        src.upper_bound,
+        # (...) objective vector (omitted),
+        row_bounds.lower,
+        row_bounds.upper,
+    )
+    # Set objective sense and constant (omitted)
+    return
+end
+
+function MOI.copy_to(
+    dest::Optimizer,
+    src::Model;
+    copy_names::Bool = false
+)
+    _copy_to(dest, src)
+    return MOI.Utilities.identity_index_map(src)
+end
+
+function MOI.copy_to(
+    dest::Optimizer,
+    src::MOI.Utilities.UniversalFallback{Model};
+    copy_names::Bool = false
+)
+    # Copy attributes from `src` to `dest` and error in case any unsupported
+    # constraints or attributes are set in `UniversalFallback`.
+    return MOI.copy_to(dest, src.model)
+end
+
+function MOI.copy_to(
+    dest::Optimizer,
+    src::MOI.ModelLike;
+    copy_names::Bool = false
+)
+    model = Model()
+    index_map = MOI.copy_to(model, src)
+    _copy_to(dest, model)
+    return index_map
+end</code></pre><h2 id="Fallbacks"><a class="docs-heading-anchor" href="#Fallbacks">Fallbacks</a><a id="Fallbacks-1"></a><a class="docs-heading-anchor-permalink" href="#Fallbacks" title="Permalink"></a></h2><p>The value of some attributes can be inferred from the value of other attributes.</p><p>For example, the value of <a href="../../../reference/models/#MathOptInterface.ObjectiveValue"><code>ObjectiveValue</code></a> can be computed using <a href="../../../reference/models/#MathOptInterface.ObjectiveFunction"><code>ObjectiveFunction</code></a> and <a href="../../../reference/variables/#MathOptInterface.VariablePrimal"><code>VariablePrimal</code></a>.</p><p>When a solver gives direct access to an attribute, it is better to return this value. However, if this is not the case, <a href="../reference/#MathOptInterface.Utilities.get_fallback"><code>Utilities.get_fallback</code></a> can be used instead. For example:</p><pre><code class="language-julia">function MOI.get(model::Optimizer, attr::MOI.ObjectiveFunction)
+    return MOI.Utilities.get_fallback(model, attr)
+end</code></pre><h2 id="DoubleDicts"><a class="docs-heading-anchor" href="#DoubleDicts">DoubleDicts</a><a id="DoubleDicts-1"></a><a class="docs-heading-anchor-permalink" href="#DoubleDicts" title="Permalink"></a></h2><p>When writing MOI interfaces, we often need to handle situations in which we map <a href="../../../reference/constraints/#MathOptInterface.ConstraintIndex"><code>ConstraintIndex</code></a>s to different values. For example, to a string for <a href="../../../reference/constraints/#MathOptInterface.ConstraintName"><code>ConstraintName</code></a>.</p><p>One option is to use a dictionary like <code>Dict{MOI.ConstraintIndex,String}</code>. However, this incurs a performance cost because the key is not a concrete type.</p><p>The DoubleDicts submodule helps this situation by providing two types main types <a href="../reference/#MathOptInterface.Utilities.DoubleDicts.DoubleDict"><code>Utilities.DoubleDicts.DoubleDict</code></a> and <a href="../reference/#MathOptInterface.Utilities.DoubleDicts.IndexDoubleDict"><code>Utilities.DoubleDicts.IndexDoubleDict</code></a>. These types act like normal dictionaries, but internally they use more efficient dictionaries specialized to the type of the function-set pair.</p><p>The most common usage of a <code>DoubleDict</code> is in the <code>index_map</code> returned by <a href="../../../reference/models/#MathOptInterface.copy_to"><code>copy_to</code></a>. Performance can be improved, by using a function barrier. That is, instead of code like:</p><pre><code class="language-julia">index_map = MOI.copy_to(dest, src)
+for (F, S) in MOI.get(src, MOI.ListOfConstraintTypesPresent())
+    for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
+        dest_ci = index_map[ci]
+        # ...
+    end
+end</code></pre><p>use instead:</p><pre><code class="language-julia">function function_barrier(
+    dest,
+    src,
+    index_map::MOI.Utilities.DoubleDicts.IndexDoubleDictInner{F,S},
+) where {F,S}
+    for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
+        dest_ci = index_map[ci]
+        # ...
+    end
+    return
+end
+
+index_map = MOI.copy_to(dest, src)
+for (F, S) in MOI.get(src, MOI.ListOfConstraintTypesPresent())
+    function_barrier(dest, src, index_map[F, S])
+end</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../FileFormats/reference/">« API Reference</a><a class="docs-footer-nextpage" href="../reference/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 28 July 2021 10:29">Wednesday 28 July 2021</span>. Using Julia version 1.0.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
