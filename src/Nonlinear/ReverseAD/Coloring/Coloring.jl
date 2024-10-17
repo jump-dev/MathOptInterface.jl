@@ -76,7 +76,7 @@ _start_neighbors(i::Int, g::UndirectedGraph) = g.offsets[i]
 function UndirectedGraph(I, J, nel)
     adjcount = zeros(Int, nel)
     n_edges = 0
-    for k in 1:length(I)
+    for k in eachindex(I)
         i = I[k]
         j = J[k]
         if i == j
@@ -96,7 +96,7 @@ function UndirectedGraph(I, J, nel)
     adjlist = Vector{Int}(undef, offsets[nel+1] - 1)
     edgeindex = Vector{Int}(undef, length(adjlist))
     edge_count = 0
-    for k in 1:length(I)
+    for k in eachindex(I)
         i = I[k]
         j = J[k]
         if i == j
@@ -306,7 +306,7 @@ function recovery_preprocess(
     seen_twocolors = 0
     # count of edges in each subgraph
     edge_count = Int[]
-    for k in 1:length(g.edges)
+    for k in eachindex(g.edges)
         u, v = g.edges[k]
         i = min(color[u], color[v])
         j = max(color[u], color[v])
@@ -324,7 +324,7 @@ function recovery_preprocess(
         sorted_edges[idx] = Tuple{Int,Int}[]
         sizehint!(sorted_edges[idx], edge_count[idx])
     end
-    for i in 1:length(g.edges)
+    for i in eachindex(g.edges)
         u, v = g.edges[i]
         i = min(color[u], color[v])
         j = max(color[u], color[v])
@@ -343,7 +343,7 @@ function recovery_preprocess(
         my_edges = sorted_edges[idx]
         vlist = Int[]
         # build up the vertex list and adjacency count
-        for k in 1:length(my_edges)
+        for k in eachindex(my_edges)
             u, v = my_edges[k]
             # seen these vertices yet?
             if revmap[u] == 0
@@ -362,7 +362,7 @@ function recovery_preprocess(
         # set up offsets for adjlist
         offset = Vector{Int}(undef, length(vlist) + 1)
         offset[1] = 1
-        for k in 1:length(vlist)
+        for k in eachindex(vlist)
             offset[k+1] = offset[k] + adjcount[vlist[k]]
             adjcount[vlist[k]] = 0
         end
@@ -371,7 +371,7 @@ function recovery_preprocess(
         # u has global index vlist[u]
         vec = Vector{Int}(undef, offset[length(vlist)+1] - 1)
         # now fill in
-        for k in 1:length(my_edges)
+        for k in eachindex(my_edges)
             u, v = my_edges[k]
             u_rev = revmap[u] # indices in the subgraph
             v_rev = revmap[v]
@@ -383,7 +383,7 @@ function recovery_preprocess(
         resize!(cmap, length(vlist))
         order, parent =
             reverse_topological_sort_by_dfs(vec, offset, length(vlist), cmap)
-        for k in 1:length(vlist)
+        for k in eachindex(vlist)
             revmap[vlist[k]] = 0  # clear for reuse
         end
         postorder[idx] = order
@@ -412,11 +412,11 @@ function _indirect_recover_structure(rinfo::RecoveryInfo)
         k += 1
         I[k] = J[k] = i
     end
-    for t in 1:length(rinfo.postorder)
+    for t in eachindex(rinfo.postorder)
         vmap = rinfo.vertexmap[t]
         order = rinfo.postorder[t]
         parent = rinfo.parents[t]
-        for z in 1:length(order)
+        for z in eachindex(order)
             v = order[z]
             p = parent[v]
             if p == 0
@@ -456,11 +456,11 @@ function hessian_color_preprocess(
     local_indices = sort!(seen_idx.nzidx[1:seen_idx.nnz])
     empty!(seen_idx)
     global_to_local_idx = seen_idx.nzidx # steal for storage
-    for k in 1:length(local_indices)
+    for k in eachindex(local_indices)
         global_to_local_idx[local_indices[k]] = k
     end
     # only do the coloring on the local indices
-    for k in 1:length(I)
+    for k in eachindex(I)
         I[k] = global_to_local_idx[I[k]]
         J[k] = global_to_local_idx[J[k]]
     end
@@ -470,7 +470,7 @@ function hessian_color_preprocess(
     rinfo = recovery_preprocess(g, color, num_colors, local_indices)
     I, J = _indirect_recover_structure(rinfo)
     # convert back to global indices
-    for k in 1:length(I)
+    for k in eachindex(I)
         I[k] = local_indices[I[k]]
         J[k] = local_indices[J[k]]
     end
@@ -525,14 +525,14 @@ function recover_from_matmat!(
         k += 1
         V[k] = R[i, rinfo.color[i]]
     end
-    for t in 1:length(rinfo.vertexmap)
+    for t in eachindex(rinfo.vertexmap)
         vmap = rinfo.vertexmap[t]
         order = rinfo.postorder[t]
         parent = rinfo.parents[t]
-        for z in 1:length(order)
+        for z in eachindex(order)
             @inbounds stored_values[z] = 0.0
         end
-        @inbounds for z in 1:length(order)
+        @inbounds for z in eachindex(order)
             v = order[z]
             p = parent[v]
             if p == 0
