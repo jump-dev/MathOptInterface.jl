@@ -10,7 +10,16 @@ import DataStructures
 
 include("topological_sort.jl")
 
-# indexed sparse set of integers
+"""
+    mutable struct IndexedSet
+        nzidx::Vector{Int}
+        empty::BitVector
+        nnz::Int
+    end
+
+Represent the set `nzidx[1:nnz]` by additionally setting `empty[i]` to `true`
+for each element of the set for fast membership check.
+"""
 mutable struct IndexedSet
     nzidx::Vector{Int}
     empty::BitVector
@@ -56,8 +65,19 @@ function Base.union!(v::IndexedSet, s)
     return
 end
 
-# compact storage for an undirected graph
-# neighbors of vertex i start at adjlist[offsets[i]]
+"""
+    struct UndirectedGraph
+        adjlist::Vector{Int}
+        edgeindex::Vector{Int}
+        offsets::Vector{Int}
+        edges::Vector{Tuple{Int,Int}}
+    end
+
+Compact storage for an undirected graph. The number of nodes is given by
+`length(offsets) - 1`. The edges of node `u` are given by `edges[e]` for
+`e in edgeindex[offsets[u]:(offsets[u] - 1)]`. The neighbors are also
+stored at `adjlist[offsets[u]:(offsets[u] - 1)]`.
+"""
 struct UndirectedGraph
     adjlist::Vector{Int}
     edgeindex::Vector{Int} # corresponding edge number, indexed as adjlist
