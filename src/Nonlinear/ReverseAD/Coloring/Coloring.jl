@@ -344,8 +344,8 @@ function recovery_preprocess(
         sorted_edges[idx] = Tuple{Int,Int}[]
         sizehint!(sorted_edges[idx], edge_count[idx])
     end
-    for i in eachindex(g.edges)
-        u, v = g.edges[i]
+    for k in eachindex(g.edges)
+        u, v = g.edges[k]
         i = min(color[u], color[v])
         j = max(color[u], color[v])
         idx = twocolorindex[i, j]
