@@ -39,6 +39,15 @@ function Base.convert(::Type{Zero}, s::MOI.EqualTo)
     return Zero()
 end
 
+# Does not make sense that this is convertible but it's
+# just to test `conversion_cost`
+function MOI.Bridges.Constraint.conversion_cost(
+    ::Type{MOI.LessThan{Float64}},
+    ::Type{Zero},
+)
+    return 10.0
+end
+
 const EqualToBridge{T,S1,F} =
     MOI.Bridges.Constraint.SetConversionBridge{T,MOI.EqualTo{T},S1,F}
 
@@ -55,6 +64,33 @@ function test_runtests()
         end,
     )
     return
+end
+
+function test_conversion_cost(T = Float64)
+    model = MOI.Utilities.Model{T}()
+    bridged = MOI.Bridges.LazyBridgeOptimizer(model)
+    MOI.Bridges.add_bridge(
+        bridged,
+        MOI.Bridges.Constraint.SetConversionBridge{T,MOI.LessThan{T}},
+    )
+    @test MOI.Bridges.bridge_type(bridged, MOI.VariableIndex, Zero) ==
+          MOI.Bridges.Constraint.SetConversionBridge{
+        T,
+        MOI.LessThan{T},
+        Zero,
+        MOI.VariableIndex,
+    }
+    MOI.Bridges.add_bridge(
+        bridged,
+        MOI.Bridges.Constraint.SetConversionBridge{T,MOI.EqualTo{T}},
+    )
+    @test MOI.Bridges.bridge_type(bridged, MOI.VariableIndex, Zero) ==
+          MOI.Bridges.Constraint.SetConversionBridge{
+        T,
+        MOI.EqualTo{T},
+        Zero,
+        MOI.VariableIndex,
+    }
 end
 
 end  # module
