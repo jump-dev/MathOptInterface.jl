@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    instead of an [`Interval`](@ref) set (#2548)
  - Fixed the variable domains in `Test.test_nonlinear_expression_hs110` (#2551)
  - Fixed the dimension of `VectorNonlinearFunction` in tests (#2555)
- - Fixed the use of `1:length(x)` in `Nonlinear.Colorinng` (#2559)
+ - Fixed the use of `1:length(x)` in `Nonlinear.Coloring` (#2559)
  - Fixed an index conflict in `Nonlinear.Coloring` (#2561)
 
 ### Other
