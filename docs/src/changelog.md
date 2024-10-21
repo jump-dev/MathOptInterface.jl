@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Added support for user-defined univariate operators which do not support
    second derivatives (#2542)
- - Added the [`NodeLimit`](@rerf) attribute (#2552)
+ - Added the [`NodeLimit`](@ref) attribute (#2552)
  - Added support for `Utilities.filter_variables` with
    [`VectorNonlinearFunction`](@ref) (#2556)
 
