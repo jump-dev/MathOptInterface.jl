@@ -7,6 +7,32 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.32.0 (October 21, 2024)
+
+### Added
+
+ - Added support for user-defined univariate operators which do not support
+   second derivatives (#2542)
+ - Added the [`NodeLimit`](@ref) attribute (#2552)
+ - Added support for `Utilities.filter_variables` with
+   [`VectorNonlinearFunction`](@ref) (#2556)
+
+### Fixed
+
+ - Fixed [`Bridges.Constraint.TableToMILPBridge`](@ref) if there is a constant
+   in the function (#2544)
+ - Fixed `FileFormats.MPS` and `FileFormats.LP` to read separate variable bounds
+   instead of an [`Interval`](@ref) set (#2548)
+ - Fixed the variable domains in `Test.test_nonlinear_expression_hs110` (#2551)
+ - Fixed the dimension of `VectorNonlinearFunction` in tests (#2555)
+ - Fixed the use of `1:length(x)` in `Nonlinear.Coloring` (#2559)
+ - Fixed an index conflict in `Nonlinear.Coloring` (#2561)
+
+### Other
+
+ - Documentation fixes (#2541) (#2543) (#2545) (#2557) (#2560)
+ - Formatting improvements (#2554)
+
 ## v1.31.2 (August 30, 2024)
 
 ### Fixed
