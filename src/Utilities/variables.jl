@@ -125,3 +125,19 @@ function get_bounds(
     bounds_cache[x] = (l, u)
     return (l, u)
 end
+
+# fallback
+function add_variable_and_bounds(
+    model::MOI.ModelLike,
+    lower_bound,
+    upper_bound,
+)
+    v = MOI.add_variable(model)
+    if lower_bound !== nothing
+        MOI.add_constraint(model, v, MOI.GreaterThan(lower_bound))
+    end
+    if upper_bound !== nothing
+        MOI.add_constraint(model, v, MOI.LessThan(upper_bound))
+    end
+    return v
+end
