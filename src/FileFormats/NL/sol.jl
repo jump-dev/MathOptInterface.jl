@@ -272,10 +272,14 @@ _readline(io::IO, T) = parse(T, _readline(io))
 function SolFileResults(
     io::IO,
     model::Model;
-    suffix_lower_bound_duals::Vector{String} =
-        ["ipopt_zL_out", "lower_bound_duals"],
-    suffix_upper_bound_duals::Vector{String} =
-        ["ipopt_zU_out", "upper_bound_duals"],
+    suffix_lower_bound_duals::Vector{String} = [
+        "ipopt_zL_out",
+        "lower_bound_duals",
+    ],
+    suffix_upper_bound_duals::Vector{String} = [
+        "ipopt_zU_out",
+        "upper_bound_duals",
+    ],
 )
     # This function is based on a Julia translation of readsol.c, available at
     # https://github.com/ampl/asl/blob/64919f75fa7a438f4b41bce892dcbe2ae38343ee/src/solvers/readsol.c
