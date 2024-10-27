@@ -117,6 +117,47 @@ function test_sol_hs071_variable_dual()
     return
 end
 
+function test_sol_uno_hs071_variable_dual()
+    model, v = _hs071()
+    for (sign, sense) in [(1, MOI.MIN_SENSE), (-1, MOI.MAX_SENSE)]
+        MOI.set(model, MOI.ObjectiveSense(), sense)
+        nl_model = NL.Model()
+        index_map = MOI.copy_to(nl_model, model)
+        sol = NL.SolFileResults(
+            joinpath(@__DIR__, "data", "hs071_uno.sol"),
+            nl_model,
+        )
+        x1 = index_map[v[1]]
+        F = MOI.VariableIndex
+        dual = sign * 28.590703805487557
+        ci = MOI.ConstraintIndex{F,MOI.GreaterThan{Float64}}(x1.value)
+        @test ≈(MOI.get(sol, MOI.ConstraintDual(), ci), dual, atol = 1e-8)
+        ci = MOI.ConstraintIndex{F,MOI.LessThan{Float64}}(x1.value)
+        @test ≈(MOI.get(sol, MOI.ConstraintDual(), ci), 0.0, atol = 1e-8)
+        ci = MOI.ConstraintIndex{F,MOI.EqualTo{Float64}}(x1.value)
+        @test ≈(MOI.get(sol, MOI.ConstraintDual(), ci), dual, atol = 1e-8)
+        ci = MOI.ConstraintIndex{F,MOI.Interval{Float64}}(x1.value)
+        @test ≈(MOI.get(sol, MOI.ConstraintDual(), ci), dual, atol = 1e-8)
+    end
+    return
+end
+
+function test_sol_lower_bound_dual_args()
+    model, v = _hs071()
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    nl_model = NL.Model()
+    index_map = MOI.copy_to(nl_model, model)
+    sol = NL.SolFileResults(
+        joinpath(@__DIR__, "data", "hs071_uno.sol"),
+        nl_model;
+        lower_bound_duals = String[],
+        upper_bound_duals = String[],
+    )
+    @test isempty(sol.zL_out)
+    @test isempty(sol.zU_out)
+    return
+end
+
 """
     test_sol_hs071_max_sense()
 

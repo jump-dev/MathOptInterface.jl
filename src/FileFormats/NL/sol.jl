@@ -19,7 +19,14 @@ struct SolFileResults <: MOI.ModelLike
 end
 
 """
-    SolFileResults(filename::String, model::Model)
+    SolFileResults(
+        filename::String,
+        model::Model;
+        suffix_lower_bound_dual::Vector{String} =
+            ["ipopt_zL_out", "lower_bound_dual"],
+        suffix_uuper_bound_dual::Vector{String} =
+            ["ipopt_zU_out", "upper_bound_dual"],
+    )
 
 Parse the `.sol` file `filename` created by solving `model` and return a
 `SolFileResults` struct.
@@ -28,8 +35,8 @@ The returned struct supports the `MOI.get` API for querying result attributes
 such as [`MOI.TerminationStatus`](@ref), [`MOI.VariablePrimal`](@ref), and
 [`MOI.ConstraintDual`](@ref).
 """
-function SolFileResults(filename::String, model::Model)
-    return open(io -> SolFileResults(io, model), filename, "r")
+function SolFileResults(filename::String, model::Model; kwargs...)
+    return open(io -> SolFileResults(io, model; kwargs...), filename, "r")
 end
 
 """
@@ -46,7 +53,8 @@ All other attributes are un-set.
 """
 function SolFileResults(
     raw_status::String,
-    termination_status::MOI.TerminationStatusCode,
+    termination_status::MOI.TerminationStatusCode;
+    kwargs...,
 )
     return SolFileResults(
         nothing,
@@ -261,7 +269,14 @@ end
 
 _readline(io::IO, T) = parse(T, _readline(io))
 
-function SolFileResults(io::IO, model::Model)
+function SolFileResults(
+    io::IO,
+    model::Model;
+    suffix_lower_bound_duals::Vector{String} =
+        ["ipopt_zL_out", "lower_bound_duals"],
+    suffix_upper_bound_duals::Vector{String} =
+        ["ipopt_zU_out", "upper_bound_duals"],
+)
     # This function is based on a Julia translation of readsol.c, available at
     # https://github.com/ampl/asl/blob/64919f75fa7a438f4b41bce892dcbe2ae38343ee/src/solvers/readsol.c
     # and under the following license:
@@ -345,21 +360,17 @@ function SolFileResults(io::IO, model::Model)
             items = split(line, " ")
             n_suffix = parse(Int, items[3])
             suffix = _readline(io)
-            if !(suffix == "ipopt_zU_out" || suffix == "ipopt_zL_out")
-                for _ in 1:n_suffix
-                    _ = readline(io)
-                end
-                continue
-            end
             for i in 1:n_suffix
-                items = split(_readline(io), " ")
-                x = model.order[parse(Int, items[1])+1]
-                dual = parse(Float64, items[2])
-                if suffix == "ipopt_zU_out"
-                    zU_out[x] = dual
+                if suffix in suffix_upper_bound_duals
+                    items = split(_readline(io), " ")
+                    x = model.order[parse(Int, items[1])+1]
+                    zU_out[x] = parse(Float64, items[2])
+                elseif suffix in suffix_lower_bound_duals
+                    items = split(_readline(io), " ")
+                    x = model.order[parse(Int, items[1])+1]
+                    zL_out[x] = parse(Float64, items[2])
                 else
-                    @assert suffix == "ipopt_zL_out"
-                    zL_out[x] = dual
+                    _ = _readline(io)
                 end
             end
         end
