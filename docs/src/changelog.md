@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
- - Added support for specifing the lower and upper bound suffixes for variable
+ - Added support for specifying the lower and upper bound suffixes for variable
    duals in [`FileFormats.NL.SolFileResults`](@ref) (#2567)
 
 ## v1.32.0 (October 21, 2024)
