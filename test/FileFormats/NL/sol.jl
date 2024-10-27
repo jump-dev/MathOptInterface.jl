@@ -150,8 +150,8 @@ function test_sol_lower_bound_dual_args()
     sol = NL.SolFileResults(
         joinpath(@__DIR__, "data", "hs071_uno.sol"),
         nl_model;
-        lower_bound_duals = String[],
-        upper_bound_duals = String[],
+        suffix_lower_bound_duals = String[],
+        suffix_upper_bound_duals = String[],
     )
     @test isempty(sol.zL_out)
     @test isempty(sol.zU_out)
