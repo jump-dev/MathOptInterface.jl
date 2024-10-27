@@ -22,10 +22,10 @@ end
     SolFileResults(
         filename::String,
         model::Model;
-        suffix_lower_bound_dual::Vector{String} =
-            ["ipopt_zL_out", "lower_bound_dual"],
-        suffix_uuper_bound_dual::Vector{String} =
-            ["ipopt_zU_out", "upper_bound_dual"],
+        suffix_lower_bound_duals::Vector{String} =
+            ["ipopt_zL_out", "lower_bound_duals"],
+        suffix_uuper_bound_duals::Vector{String} =
+            ["ipopt_zU_out", "upper_bound_duals"],
     )
 
 Parse the `.sol` file `filename` created by solving `model` and return a
