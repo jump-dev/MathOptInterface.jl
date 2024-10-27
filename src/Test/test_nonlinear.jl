@@ -1121,7 +1121,7 @@ function MOI.features_available(::InvalidEvaluator)
     return [:Grad, :ExprGraph]
 end
 
-MOI.objective_expr(::InvalidEvaluator) = :(NaN)
+MOI.objective_expr(::InvalidEvaluator) = :(+($NaN))
 
 MOI.eval_objective(::InvalidEvaluator, x) = NaN
 
@@ -1140,7 +1140,7 @@ written. External solvers can exclude this test without consequence.
 """
 function test_nonlinear_InvalidEvaluator_internal(::MOI.ModelLike, ::Config)
     d = InvalidEvaluator()
-    @test MOI.objective_expr(d) == :(NaN)
+    @test MOI.objective_expr(d) == :(+($NaN))
     MOI.initialize(d, [:Grad, :ExprGraph])
     x = [1.5]
     # f(x)
