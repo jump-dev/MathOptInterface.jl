@@ -7,6 +7,17 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.33.0 (October 28, 2024)
+
+### Added
+
+ - Added support for specifying the lower and upper bound suffixes for variable
+   duals in [`FileFormats.NL.SolFileResults`](@ref) (#2567)
+
+### Fixed
+
+ - Fixed `MOI.objective_expr(::InvalidEvaluator)` (#2569)
+
 ## v1.32.0 (October 21, 2024)
 
 ### Added
