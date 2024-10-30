@@ -386,16 +386,14 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
     for (F, S) in MOI.get(src, MOI.ListOfConstraintTypesPresent())
         if F == MOI.VariableIndex
             if !MOI.supports_add_constrained_variable(dest, S)
-                throw(MOI.AddConstraintNotAllowed{F,S}())
+                throw(MOI.UnsupportedConstraint{F,S}())
             end
         elseif F == MOI.VectorOfVariables
             if !MOI.supports_add_constrained_variables(dest, S)
-                throw(MOI.AddConstraintNotAllowed{F,S}())
+                throw(MOI.UnsupportedConstraint{F,S}())
             end
-        else
-            if !MOI.supports_constraint(dest, F, S)
-                throw(MOI.AddConstraintNotAllowed{F,S}())
-            end
+        elseif !MOI.supports_constraint(dest, F, S)
+            throw(MOI.UnsupportedConstraint{F,S}())
         end
     end
     index_map, vis_src, constraints_not_added =
