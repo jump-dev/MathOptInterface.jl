@@ -515,6 +515,35 @@ function test_vector_of_constraints_list_of_constraint_attributes_set()
     return
 end
 
+function test_copy_to_unsupported_scalar_variable()
+    F, S = MOI.VariableIndex, MOI.GreaterThan{Float64}
+    model = MOI.Utilities.Model{Float64}()
+    x, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(1.0))
+    dest = MOI.FileFormats.CBF.Model()
+    @test_throws(MOI.UnsupportedConstraint{F,S}, MOI.copy_to(dest, model))
+    return
+end
+
+function test_copy_to_unsupported_vector_variables()
+    F, S = MOI.VectorOfVariables, MOI.AllDifferent
+    model = MOI.Utilities.Model{Float64}()
+    x, _ = MOI.add_constrained_variables(model, MOI.AllDifferent(3))
+    dest = MOI.FileFormats.CBF.Model()
+    @test_throws(MOI.UnsupportedConstraint{F,S}, MOI.copy_to(dest, model))
+    return
+end
+
+function test_copy_to_unsupported_scalar_function()
+    F, S = MOI.ScalarNonlinearFunction, MOI.EqualTo{Float64}
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = MOI.ScalarNonlinearFunction(:log, Any[x])
+    MOI.add_constraint(model, f, MOI.EqualTo(0.0))
+    dest = MOI.FileFormats.CBF.Model()
+    @test_throws(MOI.UnsupportedConstraint{F,S}, MOI.copy_to(dest, model))
+    return
+end
+
 end  # module
 
 TestModel.runtests()
