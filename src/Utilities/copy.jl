@@ -393,7 +393,7 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
                 throw(MOI.AddConstraintNotAllowed{F,S}())
             end
         else
-            if !MOI.supports_add_constraint(dest, F, S)
+            if !MOI.supports_constraint(dest, F, S)
                 throw(MOI.AddConstraintNotAllowed{F,S}())
             end
         end
