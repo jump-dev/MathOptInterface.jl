@@ -312,9 +312,16 @@ end
 
 function MOI.add_constraint(
     model::AbstractModel,
-    func::MOI.AbstractFunction,
-    set::MOI.AbstractSet,
-)
+    func::F,
+    set::S,
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    # We check supports_constraint here because it is a common practice for
+    # AbstractModels to declare that they do not support particular constraints,
+    # evenn though the underlying `.constraints` object does. See, e.g., the
+    # various models in MOI.FileFormats.
+    if !MOI.supports_constraint(model, F, S)
+        throw(MOI.UnsupportedConstraint{F,S}())
+    end
     return MOI.add_constraint(model.constraints, func, set)
 end
 
@@ -328,10 +335,17 @@ end
 
 function MOI.add_constraint(
     model::AbstractModel,
-    f::MOI.VariableIndex,
-    s::MOI.AbstractScalarSet,
-)
-    return MOI.add_constraint(model.variables, f, s)
+    func::MOI.VariableIndex,
+    set::S,
+) where {S<:MOI.AbstractScalarSet}
+    # We check supports_constraint here because it is a common practice for
+    # AbstractModels to declare that they do not support particular constraints,
+    # evenn though the underlying `.constraints` object does. See, e.g., the
+    # various models in MOI.FileFormats.
+    if !MOI.supports_constraint(model, MOI.VariableIndex, S)
+        throw(MOI.UnsupportedConstraint{MOI.VariableIndex,S}())
+    end
+    return MOI.add_constraint(model.variables, func, set)
 end
 
 # MOI.NumberOfConstraints
