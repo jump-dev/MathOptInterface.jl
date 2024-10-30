@@ -176,12 +176,8 @@ MOI.empty!(model::ConstrainedVariablesModel) = empty!(model.added_constrained)
 
 MOI.supports_incremental_interface(::ConstrainedVariablesModel) = true
 
-function MOI.copy_to(
-    dest::ConstrainedVariablesModel,
-    src::MOI.ModelLike;
-    kwargs...,
-)
-    return MOIU.default_copy_to(dest, src; kwargs...)
+function MOI.copy_to(dest::ConstrainedVariablesModel, src::MOI.ModelLike)
+    return MOIU.default_copy_to(dest, src)
 end
 
 function MOI.add_variables(model::ConstrainedVariablesModel, n)
@@ -190,6 +186,13 @@ function MOI.add_variables(model::ConstrainedVariablesModel, n)
         push!(model.added_constrained, false)
     end
     return MOI.VariableIndex.(m .+ (1:n))
+end
+
+function MOI.supports_add_constrained_variables(
+    ::ConstrainedVariablesModel,
+    ::Type{<:MOI.AbstractVectorSet},
+)
+    return true
 end
 
 function MOI.add_constrained_variables(
@@ -202,6 +205,14 @@ function MOI.add_constrained_variables(
     end
     ci = MOI.ConstraintIndex{MOI.VectorOfVariables,typeof(set)}(m + 1)
     return MOI.VariableIndex.(m .+ (1:MOI.dimension(set))), ci
+end
+
+function MOI.supports_constraint(
+    ::ConstrainedVariablesModel,
+    ::Type{MOI.VectorOfVariables},
+    ::Type{<:MOI.AbstractVectorSet},
+)
+    return true
 end
 
 function MOI.add_constraint(
@@ -261,6 +272,14 @@ function MOI.add_variable(model::AbstractConstrainedVariablesModel)
     return MOI.add_variable(model.inner)
 end
 
+function MOI.supports_constraint(
+    ::AbstractConstrainedVariablesModel,
+    ::Type{<:MOI.AbstractFunction},
+    ::Type{<:MOI.AbstractSet},
+)
+    return true
+end
+
 function MOI.add_constraint(
     model::AbstractConstrainedVariablesModel,
     f::MOI.AbstractFunction,
@@ -273,10 +292,9 @@ end
 
 function MOI.copy_to(
     dest::AbstractConstrainedVariablesModel,
-    src::MOI.ModelLike;
-    kwargs...,
+    src::MOI.ModelLike,
 )
-    return MOIU.default_copy_to(dest, src; kwargs...)
+    return MOIU.default_copy_to(dest, src)
 end
 
 MOI.supports_incremental_interface(::AbstractConstrainedVariablesModel) = true
@@ -321,7 +339,7 @@ function MOI.supports_constraint(
     ::Type{MOI.VectorOfVariables},
     ::Type{MOI.Nonnegatives},
 )
-    return false
+    return true
 end
 
 function MOI.supports_add_constrained_variables(
@@ -1003,32 +1021,32 @@ function test_copy_to_sorted_sets()
     return
 end
 
-function test_add_constraint_not_allowed_scalar_variable()
+function test_default_copy_to_unsupported_scalar_variable()
     F, S = MOI.VariableIndex, MOI.GreaterThan{Float64}
     model = MOI.Utilities.Model{Float64}()
     x, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(1.0))
     dest = MOI.FileFormats.CBF.Model()
-    @test_throws(MOI.AddConstraintNotAllowed{F,S}, MOI.copy_to(dest, model))
+    @test_throws(MOI.UnsupportedConstraint{F,S}, MOI.copy_to(dest, model))
     return
 end
 
-function test_add_constraint_not_allowed_vector_variables()
+function test_default_copy_to_unsupported_vector_variables()
     F, S = MOI.VectorOfVariables, MOI.AllDifferent
     model = MOI.Utilities.Model{Float64}()
     x, _ = MOI.add_constrained_variables(model, MOI.AllDifferent(3))
     dest = MOI.FileFormats.CBF.Model()
-    @test_throws(MOI.AddConstraintNotAllowed{F,S}, MOI.copy_to(dest, model))
+    @test_throws(MOI.UnsupportedConstraint{F,S}, MOI.copy_to(dest, model))
     return
 end
 
-function test_add_constraint_not_allowed_scalar_function()
+function test_default_copy_to_unsupported_scalar_function()
     F, S = MOI.ScalarNonlinearFunction, MOI.EqualTo{Float64}
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
     f = MOI.ScalarNonlinearFunction(:log, Any[x])
     MOI.add_constraint(model, f, MOI.EqualTo(0.0))
     dest = MOI.FileFormats.CBF.Model()
-    @test_throws(MOI.AddConstraintNotAllowed{F,S}, MOI.copy_to(dest, model))
+    @test_throws(MOI.UnsupportedConstraint{F,S}, MOI.copy_to(dest, model))
     return
 end
 

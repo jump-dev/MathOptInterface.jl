@@ -189,6 +189,9 @@ function _copy_constraints(
     index_map,
     cis_src::Vector{MOI.ConstraintIndex{F,S}},
 ) where {F,S}
+    if !MOI.supports_constraint(dest, F, S)
+        throw(MOI.UnsupportedConstraint{F,S}())
+    end
     return _copy_constraints(dest, src, index_map, index_map[F, S], cis_src)
 end
 
@@ -383,19 +386,6 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
         error("Model $(typeof(dest)) does not support copy_to.")
     end
     MOI.empty!(dest)
-    for (F, S) in MOI.get(src, MOI.ListOfConstraintTypesPresent())
-        if F == MOI.VariableIndex
-            if !MOI.supports_add_constrained_variable(dest, S)
-                throw(MOI.UnsupportedConstraint{F,S}())
-            end
-        elseif F == MOI.VectorOfVariables
-            if !MOI.supports_add_constrained_variables(dest, S)
-                throw(MOI.UnsupportedConstraint{F,S}())
-            end
-        elseif !MOI.supports_constraint(dest, F, S)
-            throw(MOI.UnsupportedConstraint{F,S}())
-        end
-    end
     index_map, vis_src, constraints_not_added =
         _copy_variables_with_set(dest, src)
     # Copy variable attributes
@@ -424,13 +414,21 @@ struct _CopyVariablesWithSetCache
 end
 
 function _build_copy_variables_with_set_cache(
+    dest::MOI.ModelLike,
     src::MOI.ModelLike,
     cache::_CopyVariablesWithSetCache,
     ::Type{S},
 ) where {S<:MOI.AbstractScalarSet}
     F = MOI.VariableIndex
+    supports =
+        MOI.supports_add_constrained_variable(dest, S) ||
+        MOI.supports_constraint(dest, F, S)
     indices = MOI.ConstraintIndex{F,S}[]
     for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
+        # Check this inside the loop so there exists at least one constraint
+        if !supports
+            throw(MOI.UnsupportedConstraint{F,S}())
+        end
         x = MOI.get(src, MOI.ConstraintFunction(), ci)
         if x in cache.variables_with_domain
             # `x` is already assigned to a domain. Add this constraint via
@@ -479,13 +477,21 @@ function _is_variable_cone(
 end
 
 function _build_copy_variables_with_set_cache(
+    dest::MOI.ModelLike,
     src::MOI.ModelLike,
     cache::_CopyVariablesWithSetCache,
     ::Type{S},
 ) where {S<:MOI.AbstractVectorSet}
     F = MOI.VectorOfVariables
+    supports =
+        MOI.supports_add_constrained_variables(dest, S) ||
+        MOI.supports_constraint(dest, F, S)
     indices = MOI.ConstraintIndex{F,S}[]
     for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
+        # Check this inside the loop so there exists at least one constraint
+        if !supports
+            throw(MOI.UnsupportedConstraint{F,S}())
+        end
         f = MOI.get(src, MOI.ConstraintFunction(), ci)
         if _is_variable_cone(cache, f)
             for fi in f.variables
@@ -544,7 +550,7 @@ function _copy_variables_with_set(dest, src)
         cache.variable_to_column[v] = i
     end
     for S in sorted_variable_sets_by_cost(dest, src)
-        _build_copy_variables_with_set_cache(src, cache, S)
+        _build_copy_variables_with_set_cache(dest, src, cache, S)
     end
     column(x::MOI.VariableIndex) = cache.variable_to_column[x]
     start_column(x) = column(first(x[1]))
@@ -715,9 +721,14 @@ function _try_constrain_variables_on_creation(
     index_map::IndexMap,
     ::Type{S},
 ) where {S<:MOI.AbstractVectorSet}
+    supports = MOI.supports_add_constrained_variables(dest, S)
     not_added = MOI.ConstraintIndex{MOI.VectorOfVariables,S}[]
     for ci_src in
         MOI.get(src, MOI.ListOfConstraintIndices{MOI.VectorOfVariables,S}())
+        # Check this inside the loop so there exists at least one constraint
+        if !supports
+            throw(MOI.UnsupportedConstraint{MOI.VectorOfVariables,S}())
+        end
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
         if !allunique(f_src.variables)
             # Can't add it because there are duplicate variables
@@ -743,9 +754,14 @@ function _try_constrain_variables_on_creation(
     index_map::IndexMap,
     ::Type{S},
 ) where {S<:MOI.AbstractScalarSet}
+    supports = MOI.supports_add_constrained_variable(dest, S)
     not_added = MOI.ConstraintIndex{MOI.VariableIndex,S}[]
     for ci_src in
         MOI.get(src, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
+        # Check this inside the loop so there exists at least one constraint
+        if !supports
+            throw(MOI.UnsupportedConstraint{MOI.VariableIndex,S}())
+        end
         f_src = MOI.get(src, MOI.ConstraintFunction(), ci_src)
         if haskey(index_map, f_src)
             # Can't add it because it contains a variable previously added
