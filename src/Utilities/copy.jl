@@ -383,6 +383,21 @@ function default_copy_to(dest::MOI.ModelLike, src::MOI.ModelLike)
         error("Model $(typeof(dest)) does not support copy_to.")
     end
     MOI.empty!(dest)
+    for (F, S) in MOI.get(src, MOI.ListOfConstraintTypesPresent())
+        if F == MOI.VariableIndex
+            if !MOI.supports_add_constrained_variable(dest, S)
+                throw(MOI.AddConstraintNotAllowed{F,S}())
+            end
+        elseif F == MOI.VectorOfVariables
+            if !MOI.supports_add_constrained_variables(dest, S)
+                throw(MOI.AddConstraintNotAllowed{F,S}())
+            end
+        else
+            if !MOI.supports_add_constrainet(dest, F, S)
+                throw(MOI.AddConstraintNotAllowed{F,S}())
+            end
+        end
+    end
     index_map, vis_src, constraints_not_added =
         _copy_variables_with_set(dest, src)
     # Copy variable attributes
@@ -498,8 +513,8 @@ function _add_variable_with_domain(
     src,
     index_map,
     f,
-    ci::MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet},
-)
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
+) where {S<:MOI.AbstractScalarSet}
     set = MOI.get(src, MOI.ConstraintSet(), ci)
     dest_x, dest_ci = MOI.add_constrained_variable(dest, set)
     index_map[only(f)] = dest_x
@@ -512,8 +527,8 @@ function _add_variable_with_domain(
     src,
     index_map,
     f,
-    ci::MOI.ConstraintIndex{MOI.VectorOfVariables,<:MOI.AbstractVectorSet},
-)
+    ci::MOI.ConstraintIndex{MOI.VectorOfVariables,S},
+) where {S<:MOI.AbstractVectorSet}
     set = MOI.get(src, MOI.ConstraintSet(), ci)
     dest_x, dest_ci = MOI.add_constrained_variables(dest, set)
     for (fi, xi) in zip(f, dest_x)
