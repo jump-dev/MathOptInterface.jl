@@ -753,7 +753,7 @@ end
 function MOI.supports_constraint(
     ::BoundModel,
     ::Type{MOI.VariableIndex},
-    ::MOI.LessThan{Float64},
+    ::Type{MOI.LessThan{Float64}},
 )
     return true
 end
