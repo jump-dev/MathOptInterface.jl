@@ -513,8 +513,8 @@ function _add_variable_with_domain(
     src,
     index_map,
     f,
-    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
-) where {S<:MOI.AbstractScalarSet}
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet},
+)
     set = MOI.get(src, MOI.ConstraintSet(), ci)
     dest_x, dest_ci = MOI.add_constrained_variable(dest, set)
     index_map[only(f)] = dest_x
@@ -527,8 +527,8 @@ function _add_variable_with_domain(
     src,
     index_map,
     f,
-    ci::MOI.ConstraintIndex{MOI.VectorOfVariables,S},
-) where {S<:MOI.AbstractVectorSet}
+    ci::MOI.ConstraintIndex{MOI.VectorOfVariables,<:MOI.AbstractVectorSet},
+)
     set = MOI.get(src, MOI.ConstraintSet(), ci)
     dest_x, dest_ci = MOI.add_constrained_variables(dest, set)
     for (fi, xi) in zip(f, dest_x)
