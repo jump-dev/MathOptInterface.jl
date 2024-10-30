@@ -340,7 +340,7 @@ function MOI.add_constraint(
 ) where {S<:MOI.AbstractScalarSet}
     # We check supports_constraint here because it is a common practice for
     # AbstractModels to declare that they do not support particular constraints,
-    # evenn though the underlying `.constraints` object does. See, for example,
+    # even though the underlying `.constraints` object does. See, for example,
     # the various models in MOI.FileFormats.
     if !MOI.supports_constraint(model, MOI.VariableIndex, S)
         throw(MOI.UnsupportedConstraint{MOI.VariableIndex,S}())
