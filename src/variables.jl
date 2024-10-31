@@ -124,6 +124,12 @@ function add_constrained_variable(model::ModelLike, set::AbstractScalarSet)
     return variable, constraint
 end
 
+function add_constrained_variable(model::ModelLike, set1::AbstractScalarSet, set2::AbstractScalarSet)
+    variable, constraint1 = add_constrained_variable(model, set1)
+    constraint2 = add_constraint(model, variable, set2)
+    return variable, constraint1, constraint2
+end
+
 """
     supports_add_constrained_variables(
         model::ModelLike,
