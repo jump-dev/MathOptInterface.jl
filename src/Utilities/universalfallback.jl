@@ -491,7 +491,7 @@ function MOI.get(
 )
     list = MOI.get(uf.model, listattr)
     for (attr, value) in uf.varattr
-        if value !== nothing
+        if any(!isnothing, values(value))
             push!(list, attr)
         end
     end
