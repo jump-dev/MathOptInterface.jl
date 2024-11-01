@@ -464,8 +464,10 @@ function MOI.get(
     listattr::MOI.ListOfOptimizerAttributesSet,
 )
     list = MOI.get(uf.model, listattr)
-    for attr in keys(uf.optattr)
-        push!(list, attr)
+    for (attr, value) in uf.optattr
+        if value !== nothing
+            push!(list, attr)
+        end
     end
     return list
 end
@@ -475,8 +477,10 @@ function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfModelAttributesSet)
     if uf.objective !== nothing
         push!(list, MOI.ObjectiveFunction{typeof(uf.objective)}())
     end
-    for attr in keys(uf.modattr)
-        push!(list, attr)
+    for (attr, value) in uf.modattr
+        if value !== nothing
+            push!(list, attr)
+        end
     end
     return list
 end
@@ -486,8 +490,10 @@ function MOI.get(
     listattr::MOI.ListOfVariableAttributesSet,
 )
     list = MOI.get(uf.model, listattr)
-    for attr in keys(uf.varattr)
-        push!(list, attr)
+    for (attr, value) in uf.varattr
+        if value !== nothing
+            push!(list, attr)
+        end
     end
     return list
 end
@@ -498,8 +504,11 @@ function MOI.get(
 ) where {F,S}
     list = MOI.get(uf.model, listattr)
     for (attr, dict) in uf.conattr
-        if any(k -> k isa MOI.ConstraintIndex{F,S}, keys(dict))
-            push!(list, attr)
+        for (k, v) in dict
+            if v !== nothing && k isa MOI.ConstraintIndex{F,S}
+                push!(list, attr)
+                break
+            end
         end
     end
     # ConstraintName isn't stored in conattr, but in the .con_to_name dictionary
