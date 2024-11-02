@@ -286,7 +286,7 @@ struct Interval{T<:Real} <: AbstractScalarSet
     upper::T
 end
 
-function Interval(lower, upper)
+function Interval(lower::Real, upper::Real)
     return Interval(promote(lower, upper)...)
 end
 
