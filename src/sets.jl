@@ -286,6 +286,10 @@ struct Interval{T<:Real} <: AbstractScalarSet
     upper::T
 end
 
+function Interval(lower, upper)
+    return Interval(promote(lower, upper)...)
+end
+
 function Base.:(==)(a::Interval{T}, b::Interval{T}) where {T}
     return a.lower == b.lower && a.upper == b.upper
 end
