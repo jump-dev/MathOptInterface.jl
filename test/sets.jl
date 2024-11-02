@@ -364,7 +364,7 @@ function runtests()
 end
 
 function test_interval_promote()
-    for S in [MOI.Interval, MOI.Semiinteger, MOI.Semicontinuous]
+    for S in (MOI.Interval, MOI.Semiinteger, MOI.Semicontinuous)
         set = S(1.0, π)
         @test set isa S{Float64}
         @test set.lower == 1.0
@@ -374,6 +374,7 @@ function test_interval_promote()
         @test set.lower == 1
         @test set.upper == 2
     end
+    return
 end
 
 end
