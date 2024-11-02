@@ -368,7 +368,7 @@ function test_interval_promote()
         set = S(1.0, π)
         @test set isa S{Float64}
         @test set.lower == 1.0
-        @test set.upper == π
+        @test set.upper ≈ π
         set = S(big(1), 2)
         @test set isa S{BigInt}
         @test set.lower == 1
