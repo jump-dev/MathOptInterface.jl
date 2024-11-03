@@ -286,6 +286,10 @@ struct Interval{T<:Real} <: AbstractScalarSet
     upper::T
 end
 
+function Interval(lower::Real, upper::Real)
+    return Interval(promote(lower, upper)...)
+end
+
 function Base.:(==)(a::Interval{T}, b::Interval{T}) where {T}
     return a.lower == b.lower && a.upper == b.upper
 end
@@ -390,6 +394,10 @@ struct Semicontinuous{T<:Real} <: AbstractScalarSet
     upper::T
 end
 
+function Semicontinuous(lower::Real, upper::Real)
+    return Semicontinuous(promote(lower, upper)...)
+end
+
 function Base.:(==)(a::Semicontinuous{T}, b::Semicontinuous{T}) where {T}
     return a.lower == b.lower && a.upper == b.upper
 end
@@ -420,6 +428,10 @@ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterfac
 struct Semiinteger{T<:Real} <: AbstractScalarSet
     lower::T
     upper::T
+end
+
+function Semiinteger(lower::Real, upper::Real)
+    return Semiinteger(promote(lower, upper)...)
 end
 
 function Base.:(==)(a::Semiinteger{T}, b::Semiinteger{T}) where {T}
