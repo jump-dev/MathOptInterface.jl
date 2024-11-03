@@ -505,7 +505,7 @@ function MOI.get(
     list = MOI.get(uf.model, listattr)
     for (attr, dict) in uf.conattr
         for (k, v) in dict
-            if v !== nothing && k isa MOI.ConstraintIndex{F,S}
+            if k isa MOI.ConstraintIndex{F,S} && !isnothing(v)
                 push!(list, attr)
                 break
             end
