@@ -335,9 +335,9 @@ Typically, the user should delete the constraint and add a new one.
 ```jldoctest
 julia> import MathOptInterface as MOI
 
-julia> model = MOI.Utilities.Model{Float64}()
+julia> model = MOI.Utilities.Model{Float64}();
 
-julia> x = MOI.add_variable(model)
+julia> x = MOI.add_variable(model);
 
 julia> c = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0));
 

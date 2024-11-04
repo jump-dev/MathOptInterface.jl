@@ -37,6 +37,9 @@ julia> import MathOptInterface as MOI
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> MOI.add_variables(model, 2)
+2-element Vector{MathOptInterface.VariableIndex}:
+ MOI.VariableIndex(1)
+ MOI.VariableIndex(2)
 ```
 """
 function add_variables(model::ModelLike, n)
@@ -58,7 +61,8 @@ julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}();
 
-julia> MOI.add_variables(model, 2)
+julia> x = MOI.add_variable(model)
+MOI.VariableIndex(1)
 ```
 """
 add_variable(model::ModelLike) = throw(AddVariableNotAllowed())
