@@ -350,6 +350,7 @@ ScalarAffineFunction{Float64}-in-LessThan{Float64}
  0.0 + 1.0 v[1] <= 2.0
 
 julia> c2 = MOI.transform(model, c, MOI.GreaterThan(0.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.GreaterThan{Float64}}(1)
 
 julia> print(model)
 Feasibility
