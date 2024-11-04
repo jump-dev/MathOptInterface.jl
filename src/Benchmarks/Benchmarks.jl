@@ -22,15 +22,16 @@ arguments, and returns a new instance of the optimizer you wish to benchmark.
 
 Use `exclude` to exclude a subset of benchmarks.
 
-### Examples
+## Example
 
 ```julia
-suite() do
-    GLPK.Optimizer()
-end
-suite(exclude = [r"delete"]) do
-    Gurobi.Optimizer(OutputFlag=0)
-end
+julia> MOI.Benchmarks.suite() do
+           return GLPK.Optimizer()
+       end
+
+julia> MOI.Benchmarks.suite(; exclude = [r"delete"]) do
+           return Gurobi.Optimizer()
+       end
 ```
 """
 function suite(new_model::Function; exclude::Vector{Regex} = Regex[])
@@ -49,11 +50,21 @@ Run all benchmarks in `suite` and save to files called `name` in `directory`.
 
 Extra `kwargs` are based to `BenchmarkTools.run`.
 
-### Examples
+## Example
 
 ```julia
-my_suite = suite(() -> GLPK.Optimizer())
-create_baseline(my_suite, "glpk_master"; directory = "/tmp", verbose = true)
+julia> import MathOptInterface as MOI
+
+julia> import GLPK
+
+julia> my_suite = MOI.Benchmarks.suite(() -> GLPK.Optimizer());
+
+julia> MOI.Benchmarks.create_baseline(
+           my_suite,
+           "glpk_master";
+           directory = "/tmp",
+           verbose = true,
+       )
 ```
 """
 function create_baseline(
@@ -86,13 +97,21 @@ A report summarizing the comparison is written to `report_filename` in
 
 Extra `kwargs` are based to `BenchmarkTools.run`.
 
-### Examples
+## Example
 
 ```julia
-my_suite = suite(() -> GLPK.Optimizer())
-compare_against_baseline(
-    my_suite, "glpk_master"; directory = "/tmp", verbose = true
-)
+julia> import MathOptInterface as MOI
+
+julia> import GLPK
+
+julia> my_suite = MOI.Benchmarks.suite(() -> GLPK.Optimizer());
+
+julia> MOI.Benchmarks.compare_against_baseline(
+           my_suite,
+           "glpk_master";
+           directory = "/tmp",
+           verbose = true,
+       )
 ```
 """
 function compare_against_baseline(

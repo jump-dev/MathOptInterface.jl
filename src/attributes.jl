@@ -653,7 +653,7 @@ This can be submitted only from the [`LazyConstraintCallback`](@ref). The
 field `callback_data` is a solver-specific callback type that is passed as the
 argument to the feasible solution callback.
 
-## Examples
+## Example
 
 Suppose `x` and `y` are [`VariableIndex`](@ref)s of `optimizer`. To add a
 `LazyConstraint` for `2x + 3y <= 1`, write
@@ -1056,7 +1056,7 @@ The current primal solution is accessed through
 attributes will throw [`OptimizeInProgress`](@ref) as discussed in
 [`AbstractCallback`](@ref).
 
-## Examples
+## Example
 
 ```julia
 x = MOI.add_variables(optimizer, 8)
@@ -1085,7 +1085,7 @@ The current primal solution is accessed through [`CallbackVariablePrimal`](@ref)
 Trying to access other result attributes will throw [`OptimizeInProgress`](@ref)
 as discussed in [`AbstractCallback`](@ref).
 
-## Examples
+## Example
 
 ```julia
 x = MOI.add_variables(optimizer, 8)
@@ -1114,7 +1114,7 @@ The infeasible solution is accessed through [`CallbackVariablePrimal`](@ref).
 Trying to access other result attributes will throw [`OptimizeInProgress`](@ref)
 as discussed in [`AbstractCallback`](@ref).
 
-## Examples
+## Example
 
 ```julia
 x = MOI.add_variables(optimizer, 8)
@@ -1283,13 +1283,20 @@ attribute_value_type(::ObjectiveFunction{F}) where {F} = F
 A model attribute for the type `F` of the objective function set using the
 [`ObjectiveFunction{F}`](@ref) attribute.
 
-## Examples
+## Example
 
-In the following code, `attr` should be equal to `MOI.VariableIndex`:
-```julia
-x = MOI.add_variable(model)
-MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
-attr = MOI.get(model, MOI.ObjectiveFunctionType())
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(model)
+MOI.VariableIndex(1)
+
+julia> MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
+
+julia> MOI.get(model, MOI.ObjectiveFunctionType())
+MathOptInterface.VariableIndex
 ```
 """
 struct ObjectiveFunctionType <: AbstractModelAttribute end
@@ -2018,7 +2025,7 @@ have the form:
     respect to `x[i]` and then `x[j]`. `H` is initialized to the zero matrix,
     so you do not need to set any zero elements.
 
-## Examples
+## Example
 
 ```jldoctest
 julia> import MathOptInterface as MOI

@@ -46,14 +46,19 @@ struct VariableIndex <: AbstractScalarFunction
 end
 
 """
-    ConstraintIndex{F, S}
+    ConstraintIndex{F,S}
 
 A type-safe wrapper for `Int64` for use in referencing `F`-in-`S` constraints in
 a model.
+
 The parameter `F` is the type of the function in the constraint, and the
-parameter `S` is the type of set in the constraint. To allow for deletion,
-indices need not be consecutive. Indices within a constraint type (that is, `F`-in-`S`)
-must be unique, but non-unique indices across different constraint types are allowed.
+parameter `S` is the type of set in the constraint.
+
+To allow for deletion, indices need not be consecutive.
+
+Indices within a constraint type (that is, `F`-in-`S`) must be unique, but
+non-unique indices across different constraint types are allowed.
+
 If `F` is [`VariableIndex`](@ref) then the index is equal to the index of the
 variable. That is for an `index::ConstraintIndex{VariableIndex}`, we always
 have

@@ -71,13 +71,15 @@ Return the concrete type of the bridge supporting variables in `S` constraints.
 This function can only be called if `MOI.supports_constrained_variable(BT, S)`
 is `true`.
 
-## Examples
+## Example
 
 As a variable in [`MOI.GreaterThan`](@ref) is bridged into
 variables in [`MOI.Nonnegatives`](@ref) by the
 [`VectorizeBridge`](@ref):
 
-```jldoctest; setup=:(import MathOptInterface as MOI)
+```jldoctest
+julia> import MathOptInterface as MOI
+
 julia> MOI.Bridges.Variable.concrete_bridge_type(
            MOI.Bridges.Variable.VectorizeBridge{Float64},
            MOI.GreaterThan{Float64},

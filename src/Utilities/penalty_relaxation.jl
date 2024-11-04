@@ -32,7 +32,7 @@ When `S` is [`MOI.LessThan`](@ref) or [`MOI.GreaterThan`](@ref), we omit `y` or
 [`MOI.ScalarAffineFunction`](@ref). In an optimal solution, query the value of
 this function to compute the violation of the constraint.
 
-## Examples
+## Example
 
 ```jldoctest; setup=:(import MathOptInterface as MOI)
 julia> model = MOI.Utilities.Model{Float64}();
@@ -187,7 +187,7 @@ cannot be modified in-place.
 
 To modify variable bounds, rewrite them as linear constraints.
 
-## Examples
+## Example
 
 ```jldoctest; setup=:(import MathOptInterface as MOI)
 julia> model = MOI.Utilities.Model{Float64}();

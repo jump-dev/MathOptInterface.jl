@@ -13,20 +13,46 @@ end
 
 Return the 1-indexed value of the constraint index `c` in `evaluator`.
 
-## Examples
+## Example
 
-```julia
-model = Model()
-x = MOI.VariableIndex(1)
-c1 = add_constraint(model, :(\$x^2), MOI.LessThan(1.0))
-c2 = add_constraint(model, :(\$x^2), MOI.LessThan(1.0))
-evaluator = Evaluator(model)
-MOI.initialize(evaluator, Symbol[])
-ordinal_index(evaluator, c2)  # Returns 2
-delete(model, c1)
-evaluator = Evaluator(model)
-MOI.initialize(evaluator, Symbol[])
-ordinal_index(model, c2)  # Returns 1
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Nonlinear.Model()
+A Nonlinear.Model with:
+ 0 objectives
+ 0 parameters
+ 0 expressions
+ 0 constraints
+
+julia> x = MOI.VariableIndex(1)
+MOI.VariableIndex(1)
+
+julia> c1 = MOI.Nonlinear.add_constraint(model, :(\$x^2), MOI.LessThan(1.0))
+MathOptInterface.Nonlinear.ConstraintIndex(1)
+
+julia> c2 = MOI.Nonlinear.add_constraint(model, :(\$x^2), MOI.LessThan(1.0))
+MathOptInterface.Nonlinear.ConstraintIndex(2)
+
+julia> evaluator = MOI.Nonlinear.Evaluator(model)
+Nonlinear.Evaluator with available features:
+  * :ExprGraph
+
+julia> MOI.initialize(evaluator, Symbol[])
+
+julia> MOI.Nonlinear.ordinal_index(evaluator, c2)  # Returns 2
+2
+
+julia> MOI.Nonlinear.delete(model, c1)
+
+julia> evaluator = MOI.Nonlinear.Evaluator(model)
+Nonlinear.Evaluator with available features:
+  * :ExprGraph
+
+julia> MOI.initialize(evaluator, Symbol[])
+
+julia> MOI.Nonlinear.ordinal_index(evaluator, c2)  # Returns 1
+1
 ```
 """
 function ordinal_index(evaluator::Evaluator, c::ConstraintIndex)

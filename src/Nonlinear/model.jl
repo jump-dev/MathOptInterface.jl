@@ -49,14 +49,26 @@ function of `model`.
 
 To remove the objective, pass `nothing`.
 
-## Examples
+## Example
 
-```julia
-model = Model()
-x = MOI.VariableIndex(1)
-set_objective(model, :(\$x^2 + 1))
-set_objective(model, x)
-set_objective(model, nothing)
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Nonlinear.Model()
+A Nonlinear.Model with:
+ 0 objectives
+ 0 parameters
+ 0 expressions
+ 0 constraints
+
+julia> x = MOI.VariableIndex(1)
+MOI.VariableIndex(1)
+
+julia> MOI.Nonlinear.set_objective(model, :(\$x^2 + 1))
+
+julia> MOI.Nonlinear.set_objective(model, x)
+
+julia> MOI.Nonlinear.set_objective(model, nothing)
 ```
 """
 function set_objective(model::Model, obj)
@@ -77,13 +89,19 @@ Parse `expr` into a [`Expression`](@ref) and add to `model`. Returns an
 
 `expr` must be a type that is supported by [`parse_expression`](@ref).
 
-## Examples
+## Example
 
-```julia
-model = Model()
-x = MOI.VariableIndex(1)
-ex = add_expression(model, :(\$x^2 + 1))
-set_objective(model, :(sqrt(\$ex)))
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Nonlinear.Model();
+
+julia> x = MOI.VariableIndex(1);
+
+julia> ex = MOI.Nonlinear.add_expression(model, :(\$x^2 + 1))
+MathOptInterface.Nonlinear.ExpressionIndex(1)
+
+julia> MOI.Nonlinear.set_objective(model, :(sqrt(\$ex)))
 ```
 """
 function add_expression(model::Model, expr)
@@ -111,12 +129,17 @@ Parse `func` and `set` into a [`Constraint`](@ref) and add to `model`. Returns a
 [`ConstraintIndex`](@ref) that can be used to delete the constraint or query
 solution information.
 
-## Examples
+## Example
 
-```julia
-model = Model()
-x = MOI.VariableIndex(1)
-c = add_constraint(model, :(\$x^2), MOI.LessThan(1.0))
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Nonlinear.Model();
+
+julia> x = MOI.VariableIndex(1);
+
+julia> c = MOI.Nonlinear.add_constraint(model, :(\$x^2), MOI.LessThan(1.0))
+MathOptInterface.Nonlinear.ConstraintIndex(1)
 ```
 """
 function add_constraint(
@@ -141,13 +164,39 @@ end
 
 Delete the constraint index `c` from `model`.
 
-## Examples
+## Example
 
-```julia
-model = Model()
-x = MOI.VariableIndex(1)
-c = add_constraint(model, :(\$x^2), MOI.LessThan(1.0))
-delete(model, c)
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Nonlinear.Model()
+A Nonlinear.Model with:
+ 0 objectives
+ 0 parameters
+ 0 expressions
+ 0 constraints
+
+julia> x = MOI.VariableIndex(1)
+MOI.VariableIndex(1)
+
+julia> c = MOI.Nonlinear.add_constraint(model, :(\$x^2), MOI.LessThan(1.0))
+MathOptInterface.Nonlinear.ConstraintIndex(1)
+
+julia> model
+A Nonlinear.Model with:
+ 0 objectives
+ 0 parameters
+ 0 expressions
+ 1 constraint
+
+julia> MOI.Nonlinear.delete(model, c)
+
+julia> model
+A Nonlinear.Model with:
+ 0 objectives
+ 0 parameters
+ 0 expressions
+ 0 constraints
 ```
 """
 function delete(model::Model, c::ConstraintIndex)
@@ -170,13 +219,26 @@ Add a new parameter to `model` with the default value `value`. Returns a
 [`ParameterIndex`](@ref) that can be interpolated into other input expressions
 and used to modify the value of the parameter.
 
-## Examples
+## Example
 
-```julia
-model = Model()
-x = MOI.VariableIndex(1)
-p = add_parameter(model, 1.2)
-c = add_constraint(model, :(\$x^2 - \$p), MOI.LessThan(0.0))
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Nonlinear.Model()
+A Nonlinear.Model with:
+ 0 objectives
+ 0 parameters
+ 0 expressions
+ 0 constraints
+
+julia> x = MOI.VariableIndex(1)
+MOI.VariableIndex(1)
+
+julia> p = MOI.Nonlinear.add_parameter(model, 1.2)
+MathOptInterface.Nonlinear.ParameterIndex(1)
+
+julia> c = MOI.Nonlinear.add_constraint(model, :(\$x^2 - \$p), MOI.LessThan(0.0))
+MathOptInterface.Nonlinear.ConstraintIndex(1)
 ```
 """
 function add_parameter(model::Model, value::Float64)

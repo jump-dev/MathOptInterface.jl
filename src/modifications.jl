@@ -53,9 +53,11 @@ struct ModifyObjectiveNotAllowed{C<:AbstractFunctionModification} <:
     change::C
     message::String
 end
+
 function ModifyObjectiveNotAllowed(change::AbstractFunctionModification)
     return ModifyObjectiveNotAllowed(change, "")
 end
+
 function throw_modify_not_allowed(::ObjectiveFunction, args...)
     return throw(ModifyObjectiveNotAllowed(args...))
 end
@@ -65,39 +67,48 @@ function operation_name(err::ModifyObjectiveNotAllowed)
 end
 
 """
-## Constraint Function
-
-    modify(model::ModelLike, ci::ConstraintIndex, change::AbstractFunctionModification)
+    modify(
+        model::ModelLike,
+        ci::ConstraintIndex,
+        change::AbstractFunctionModification,
+    )
 
 Apply the modification specified by `change` to the function of constraint `ci`.
 
 An [`ModifyConstraintNotAllowed`](@ref) error is thrown if modifying
 constraints is not supported by the model `model`.
 
-### Examples
+## Example
 
-```julia
-modify(model, ci, ScalarConstantChange(10.0))
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(model);
+
+julia> ci = MOI.add_constraint(model, 1.0 * x, MOI.EqualTo(1.0));
+
+julia> MOI.modify(model, ci, MOI.ScalarConstantChange(10.0))
+
+julia> print(model)
+Feasibility
+
+Subject to:
+
+ScalarAffineFunction{Float64}-in-EqualTo{Float64}
+ 10.0 + 1.0 v[1] == 1.0
 ```
+"""
+function modify(
+    model::ModelLike,
+    ci::ConstraintIndex,
+    change::AbstractFunctionModification,
+)
+    return throw_modify_not_allowed(ci, change)
+end
 
-## Objective Function
-
-    modify(model::ModelLike, ::ObjectiveFunction, change::AbstractFunctionModification)
-
-Apply the modification specified by `change` to the objective function of
-`model`. To change the function completely, call `set` instead.
-
-An [`ModifyObjectiveNotAllowed`](@ref) error is thrown if modifying
-objectives is not supported by the model `model`.
-
-### Examples
-
-```julia
-modify(model, ObjectiveFunction{ScalarAffineFunction{Float64}}(), ScalarConstantChange(10.0))
-```
-
-## Multiple modifications in Constraint Functions
-
+"""
     modify(
         model::ModelLike,
         cis::AbstractVector{<:ConstraintIndex},
@@ -109,55 +120,29 @@ Apply multiple modifications specified by `changes` to the functions of constrai
 A [`ModifyConstraintNotAllowed`](@ref) error is thrown if modifying
 constraints is not supported by `model`.
 
-### Examples
+## Example
 
-```julia
-modify(
-    model,
-    [ci, ci],
-    [
-        ScalarCoefficientChange{Float64}(VariableIndex(1), 1.0),
-        ScalarCoefficientChange{Float64}(VariableIndex(2), 0.5),
-    ],
-)
-```
+```jldoctest
+julia> import MathOptInterface as MOI
 
-## Multiple modifications in the Objective Function
+julia> model = MOI.Utilities.Model{Float64}();
 
-    modify(
-        model::ModelLike,
-        attr::ObjectiveFunction,
-        changes::AbstractVector{<:AbstractFunctionModification},
-    )
+julia> x = MOI.add_variables(model, 2);
 
-Apply multiple modifications specified by `changes` to the functions of constraints `cis`.
+julia> ci = MOI.add_constraint.(model, 1.0 .* x, MOI.EqualTo(1.0));
 
-A [`ModifyObjectiveNotAllowed`](@ref) error is thrown if modifying
-objective coefficients is not supported by `model`.
+julia> MOI.modify(model, ci, MOI.ScalarCoefficientChange.(x, [2.0, 0.5]))
 
-### Examples
+julia> print(model)
+Feasibility
 
-```julia
-modify(
-    model,
-    ObjectiveFunction{ScalarAffineFunction{Float64}}(),
-    [
-        ScalarCoefficientChange{Float64}(VariableIndex(1), 1.0),
-        ScalarCoefficientChange{Float64}(VariableIndex(2), 0.5),
-    ],
-)
+Subject to:
+
+ScalarAffineFunction{Float64}-in-EqualTo{Float64}
+ 0.0 + 2.0 v[1] == 1.0
+ 0.0 + 0.5 v[2] == 1.0
 ```
 """
-function modify end
-
-function modify(
-    model::ModelLike,
-    ci::ConstraintIndex,
-    change::AbstractFunctionModification,
-)
-    return throw_modify_not_allowed(ci, change)
-end
-
 function modify(
     model::ModelLike,
     cis::AbstractVector{<:ConstraintIndex},
@@ -170,6 +155,42 @@ function modify(
     return
 end
 
+"""
+    modify(model::ModelLike, ::ObjectiveFunction, change::AbstractFunctionModification)
+
+Apply the modification specified by `change` to the objective function of
+`model`. To change the function completely, call `set` instead.
+
+An [`ModifyObjectiveNotAllowed`](@ref) error is thrown if modifying
+objectives is not supported by the model `model`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(model);
+
+julia> MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+julia> f = 1.0 * x;
+
+julia> attr = MOI.ObjectiveFunction{typeof(f)}()
+MathOptInterface.ObjectiveFunction{MathOptInterface.ScalarAffineFunction{Float64}}()
+
+julia> MOI.set(model, attr, f)
+
+julia> MOI.modify(model, attr, MOI.ScalarConstantChange(10.0))
+
+julia> print(model)
+Minimize ScalarAffineFunction{Float64}:
+ 10.0 + 1.0 v[1]
+
+Subject to:
+```
+"""
 function modify(
     model::ModelLike,
     attr::ObjectiveFunction,
@@ -178,6 +199,47 @@ function modify(
     return throw_modify_not_allowed(attr, change)
 end
 
+"""
+    modify(
+        model::ModelLike,
+        attr::ObjectiveFunction,
+        changes::AbstractVector{<:AbstractFunctionModification},
+    )
+
+Apply multiple modifications specified by `changes` to the functions of constraints `cis`.
+
+A [`ModifyObjectiveNotAllowed`](@ref) error is thrown if modifying
+objective coefficients is not supported by `model`.
+
+## Example
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variables(model, 2);
+
+julia> MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+julia> f = 1.0 * x[1] + 1.0 * x[2];
+
+julia> attr = MOI.ObjectiveFunction{typeof(f)}()
+MathOptInterface.ObjectiveFunction{MathOptInterface.ScalarAffineFunction{Float64}}()
+
+julia> MOI.set(model, attr, f)
+
+julia> MOI.modify(model, attr, MOI.ScalarCoefficientChange.(x, [2.0, 0.5]))
+
+julia> print(model)
+Minimize ScalarAffineFunction{Float64}:
+ 0.0 + 2.0 v[1] + 0.5 v[2]
+
+Subject to:
+```
+"""
 function modify(
     model::ModelLike,
     attr::ObjectiveFunction,

@@ -674,7 +674,7 @@ which is a subtype of [`MOI.AbstractOptimizer`](@ref), otherwise, it is a
  * The sets supported with [`MOI.VariableIndex`](@ref) cannot be controlled from
    the macro; use [`UniversalFallback`](@ref) to support more sets.
 
-## Examples
+## Example
 
 The model describing a linear program would be:
 ```julia
@@ -840,7 +840,7 @@ const LessThanIndicatorZero{T} =
 An implementation of `ModelLike` that supports all functions and sets defined
 in MOI. It is parameterized by the coefficient type.
 
-## Examples
+## Example
 
 ```jldoctest
 julia> import MathOptInterface as MOI

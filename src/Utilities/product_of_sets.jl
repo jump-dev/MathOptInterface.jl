@@ -55,14 +55,16 @@ Generate a new [`MixOfScalarSets`](@ref) subtype.
 
 ## Example
 
-```julia
-@mix_of_scalar_sets(
-    MixedIntegerLinearProgramSets,
-    MOI.GreaterThan{T},
-    MOI.LessThan{T},
-    MOI.EqualTo{T},
-    MOI.Integer,
-)
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> MOI.Utilities.@mix_of_scalar_sets(
+           MixedIntegerLinearProgramSets,
+           MOI.GreaterThan{T},
+           MOI.LessThan{T},
+           MOI.EqualTo{T},
+           MOI.Integer,
+       )
 ```
 """
 macro mix_of_scalar_sets(name, set_types...)
@@ -153,14 +155,16 @@ Generate a new [`OrderedProductOfSets`](@ref) subtype.
 
 ## Example
 
-```julia
-@product_of_sets(
-    LinearOrthants,
-    MOI.Zeros,
-    MOI.Nonnegatives,
-    MOI.Nonpositives,
-    MOI.ZeroOne,
-)
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> MOI.Utilities.@product_of_sets(
+           LinearOrthants,
+           MOI.Zeros,
+           MOI.Nonnegatives,
+           MOI.Nonpositives,
+           MOI.ZeroOne,
+       )
 ```
 """
 macro product_of_sets(name, set_types...)

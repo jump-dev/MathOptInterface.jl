@@ -77,21 +77,24 @@ Return an object that is used to configure various tests.
      - `MOI.VariableName` to skip setting variable names
      - `MOI.ConstraintName` to skip setting constraint names
 
-## Examples
+## Example
 
 For a nonlinear solver that finds local optima and does not support finding
 dual variables or constraint names:
-```julia
-Config(
-    Float64;
-    optimal_status = MOI.LOCALLY_SOLVED,
-    exclude = Any[
-        MOI.ConstraintDual,
-        MOI.VariableName,
-        MOI.ConstraintName,
-        MOI.delete,
-    ],
-)
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> config = MOI.Test.Config(
+           Float64;
+           optimal_status = MOI.LOCALLY_SOLVED,
+           exclude = Any[
+               MOI.ConstraintDual,
+               MOI.VariableName,
+               MOI.ConstraintName,
+               MOI.delete,
+           ],
+       );
 ```
 """
 function Config(
@@ -306,7 +309,7 @@ Check that the condition `x` is `true`. Otherwise, throw an [`RequirementUnmet`]
 error to indicate that the model does not support something required by the test
 function.
 
-## Examples
+## Example
 
 ```julia
 @requires MOI.supports(model, MOI.Silent())
