@@ -21,12 +21,12 @@ else
 end
 ```
 
-### Note for developers
+## Note for developers
 
 Only define this function if it makes sense and you have implemented
 [`supports_shift_constant`](@ref) to return `true`.
 
-## Examples
+## Example
 
 ```jldoctest
 julia> import MathOptInterface as MOI
@@ -50,7 +50,7 @@ Return `true` if [`shift_constant`](@ref) is defined for set `S`.
 
 See also [`shift_constant`](@ref).
 
-## Examples
+## Example
 
 ```jldoctest
 julia> import MathOptInterface as MOI

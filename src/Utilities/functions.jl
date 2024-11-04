@@ -1025,11 +1025,22 @@ Returns the function in a canonical form, that is,
 The output of `canonical` can be assumed to be a copy of `f`, even for
 `VectorOfVariables`.
 
-## Examples
+## Example
 
-If `x` (resp. `y`, `z`) is `VariableIndex(1)` (resp. 2, 3). The canonical
-representation of `ScalarAffineFunction([y, x, z, x, z], [2, 1, 3, -2, -3], 5)`
-is `ScalarAffineFunction([x, y], [-1, 2], 5)`.
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> x, y, z = MOI.VariableIndex.(1:3);
+
+julia> f = MOI.ScalarAffineFunction(
+           MOI.ScalarAffineTerm.(Float64[2, 1, 3, -2, -3], [y, x, z, x, z]),
+           5.0,
+       )
+5.0 + 2.0 MOI.VariableIndex(2) + 1.0 MOI.VariableIndex(1) + 3.0 MOI.VariableIndex(3) - 2.0 MOI.VariableIndex(1) - 3.0 MOI.VariableIndex(3)
+
+julia> MOI.Utilities.canonical(f)
+5.0 - 1.0 MOI.VariableIndex(1) + 2.0 MOI.VariableIndex(2)
+```
 """
 function canonical(f::MOI.AbstractFunction)
     g = copy(f)
@@ -1144,12 +1155,24 @@ Return a `Bool` indicating whether the function `f` is approximately zero using
 
 This function assumes that `f` does not contain any duplicate terms, you might
 want to first call [`canonical`](@ref) if that is not guaranteed.
-For instance, given
-```julia
-f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, -1], [x, x]), 0)
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> x = MOI.VariableIndex(1)
+MOI.VariableIndex(1)
+
+julia> f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, -1], [x, x]), 0)
+(0) + (1) MOI.VariableIndex(1) - (1) MOI.VariableIndex(1)
+
+julia> MOI.Utilities.isapprox_zero(f, 1e-8)
+false
+
+julia> MOI.Utilities.isapprox_zero(MOI.Utilities.canonical(f), 1e-8)
+true
 ```
-then `isapprox_zero(f)` is `false` but `isapprox_zero(MOIU.canonical(f))` is
-`true`.
 """
 function isapprox_zero end
 

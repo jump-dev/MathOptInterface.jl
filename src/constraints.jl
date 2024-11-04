@@ -312,29 +312,56 @@ function Base.showerror(io::IO, err::UpperBoundAlreadySet{S1,S2}) where {S1,S2}
 end
 
 """
-## Transform Constraint Set
+    transform(
+        model::ModelLike,
+        c::ConstraintIndex{F,S1},
+        newset::S2,
+    )::ConstraintIndex{F,S2}
 
-    transform(model::ModelLike, c::ConstraintIndex{F,S1}, newset::S2)::ConstraintIndex{F,S2}
+Replace the set in constraint `c` with `newset`.
 
-Replace the set in constraint `c` with `newset`. The constraint index `c`
-will no longer be valid, and the function returns a new constraint index with
-the correct type.
+The constraint index `c` will no longer be valid, and the function returns a new
+constraint index with the correct type.
 
 Solvers may only support a subset of constraint transforms that they perform
 efficiently (for example, changing from a `LessThan` to `GreaterThan` set). In
 addition, set modification (where `S1 = S2`) should be performed via the
 `modify` function.
 
-
 Typically, the user should delete the constraint and add a new one.
 
-### Examples
+## Example
 
-If `c` is a `ConstraintIndex{ScalarAffineFunction{Float64},LessThan{Float64}}`,
+```jldoctest
+julia> import MathOptInterface as MOI
 
-```julia
-c2 = transform(model, c, GreaterThan(0.0))
-transform(model, c, LessThan(0.0)) # errors
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(model);
+
+julia> c = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0));
+
+julia> print(model)
+Feasibility
+
+Subject to:
+
+ScalarAffineFunction{Float64}-in-LessThan{Float64}
+ 0.0 + 1.0 v[1] <= 2.0
+
+julia> c2 = MOI.transform(model, c, MOI.GreaterThan(0.0))
+MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.GreaterThan{Float64}}(1)
+
+julia> print(model)
+Feasibility
+
+Subject to:
+
+ScalarAffineFunction{Float64}-in-GreaterThan{Float64}
+ 0.0 + 1.0 v[1] >= 0.0
+
+julia> MOI.is_valid(model, c)
+false
 ```
 """
 function transform end

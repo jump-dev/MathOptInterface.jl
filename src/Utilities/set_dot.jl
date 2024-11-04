@@ -245,7 +245,7 @@ Vector `s` of scaling for the entries of the vectorized form of
 a vector `x` in `set` and `y` in `MOI.dual_set(set)` such that
 `MOI.Utilities.set_dot(x, y) = LinearAlgebra.dot(s .* x, s .* y)`.
 
-## Examples
+## Example
 
 Combined with `LinearAlgebra`, this vector can be used to scale
 a [`MOI.AbstractVectorFunction`](@ref).

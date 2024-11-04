@@ -16,6 +16,7 @@ An error indicating that variables cannot be added to the model.
 struct AddVariableNotAllowed <: NotAllowedError
     message::String # Human-friendly explanation why the attribute cannot be set
 end
+
 AddVariableNotAllowed() = AddVariableNotAllowed("")
 
 operation_name(::AddVariableNotAllowed) = "Adding variables"
@@ -25,8 +26,21 @@ operation_name(::AddVariableNotAllowed) = "Adding variables"
 
 Add `n` scalar variables to the model, returning a vector of variable indices.
 
-A [`AddVariableNotAllowed`](@ref) error is thrown if adding variables cannot be
+An [`AddVariableNotAllowed`](@ref) error is thrown if adding variables cannot be
 done in the current state of the model `model`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> MOI.add_variables(model, 2)
+2-element Vector{MathOptInterface.VariableIndex}:
+ MOI.VariableIndex(1)
+ MOI.VariableIndex(2)
+```
 """
 function add_variables(model::ModelLike, n)
     return VariableIndex[add_variable(model) for _ in 1:n]
@@ -39,6 +53,17 @@ Add a scalar variable to the model, returning a variable index.
 
 A [`AddVariableNotAllowed`](@ref) error is thrown if adding variables cannot be
 done in the current state of the model `model`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(model)
+MOI.VariableIndex(1)
+```
 """
 add_variable(model::ModelLike) = throw(AddVariableNotAllowed())
 

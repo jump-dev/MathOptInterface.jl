@@ -90,7 +90,7 @@ are not added. Therefore, you are recommended to use
 `model = MOI.instantiate(Package.Optimizer)`. See
 [`MOI.instantiate`](@ref).
 
-## Examples
+## Example
 
 ### An optimizer using a non-default bridge in `MOI.Bridges`
 
