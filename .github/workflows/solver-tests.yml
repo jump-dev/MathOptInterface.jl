@@ -22,10 +22,10 @@ jobs:
           - package: 'JuMP'
           - package: 'Convex'
           - package: 'AmplNLWriter'
-          # - package: 'BARON'
+          # - package: 'BARON'  # Requires license
           - package: 'Cbc'
           - package: 'Clp'
-          # - package: 'CPLEX'
+          # - package: 'CPLEX'  # Requires license
           - package: 'CSDP'  
           - package: 'DiffOpt'
           - package: 'Dualization'
@@ -34,20 +34,22 @@ jobs:
           - package: 'HiGHS'
           - package: 'Hypatia'
           - package: 'Ipopt'
-          # - package: 'KNITRO'
+          # - package: 'KNITRO'  # Requires license
           - package: 'MiniZinc'
           - package: 'MosekTools'
           - package: 'MultiObjectiveAlgorithms'
+          - package: 'NEOSServer'
+          - package: 'NLopt'
           - package: 'Pajarito'
           - package: 'ParametricOptInterface'
           - package: 'Pavito'
           - package: 'PolyJuMP'
           - package: 'SCS'
           - package: 'SDPA'
-          # - package: 'SDPLR'
-          # - package: 'SDPNAL'
-          # - package: 'SDPT3'
-          # - package: 'SeduMi'
+          # - package: 'SDPLR'   # Requires MATLAB
+          # - package: 'SDPNAL'  # Requires MATLAB
+          # - package: 'SDPT3'   # Requires MATLAB
+          # - package: 'SeduMi'  # Requires MATLAB
           - package: 'SumOfSquares'
           - package: 'Xpress'
           # External packages
@@ -66,8 +68,6 @@ jobs:
           - package: 'LinearFractional'
           - package: 'Loraine'
           - package: 'MathOptSetDistances'
-          - package: 'NEOSServer'
-          - package: 'NLopt'
           - package: 'OSQP'
           - package: 'PATHSolver'
           - package: 'Percival'
@@ -78,7 +78,7 @@ jobs:
           - package: 'SDDP'
           - package: 'SetProg'
           - package: 'SparseVariables'
-          - package: 'SDPAFamily'
+          # - package: 'SDPAFamily'  # Does not work on latest Julia
           - package: 'Tulip'
           - package: 'UnitJuMP'
     steps:
