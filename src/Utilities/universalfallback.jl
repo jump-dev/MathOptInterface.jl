@@ -486,8 +486,10 @@ function MOI.get(
     listattr::MOI.ListOfVariableAttributesSet,
 )
     list = MOI.get(uf.model, listattr)
-    for attr in keys(uf.varattr)
-        push!(list, attr)
+    for (attr, dict) in uf.varattr
+        if !isempty(dict)
+            push!(list, attr)
+        end
     end
     return list
 end

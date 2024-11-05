@@ -103,6 +103,7 @@ function _test_Optimizer_Model_attributes(
     @test MOI.get(uf, list) == [attr]
     MOI.set(uf, attr, nothing)
     @test isempty(MOI.get(uf, list))
+    MOI.set(uf, attr, 0)
     return
 end
 
