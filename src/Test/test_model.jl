@@ -1227,7 +1227,7 @@ function test_model_show(model::MOI.ModelLike, ::Config{T}) where {T}
     return
 end
 
-function test_model_add_constrained_variale_tuple(
+function test_model_add_constrained_variable_tuple(
     model::MOI.ModelLike,
     ::Config{T},
 ) where {T}
