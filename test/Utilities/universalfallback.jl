@@ -68,26 +68,26 @@ end
 ### The tests
 ###
 
-# function test_MOI_Test()
-#     inner = ModelForUniversalFallback{Float64}()
-#     model = MOI.Utilities.UniversalFallback(inner)
-#     MOI.Test.runtests(
-#         model,
-#         MOI.Test.Config(exclude = Any[MOI.optimize!]),
-#         exclude = String[
-#             # UniversalFallback fails all these tests because it supports
-#             # everything
-#             "test_attribute_",
-#             "test_model_supports_constraint_",
-#             "test_model_copy_to_Unsupported",
-#             # Bugs in UniversalFallback
-#             "test_model_LowerBoundAlreadySet",
-#             "test_model_UpperBoundAlreadySet",
-#             "test_add_parameter",
-#         ],
-#     )
-#     return
-# end
+function test_MOI_Test()
+    inner = ModelForUniversalFallback{Float64}()
+    model = MOI.Utilities.UniversalFallback(inner)
+    MOI.Test.runtests(
+        model,
+        MOI.Test.Config(exclude = Any[MOI.optimize!]),
+        exclude = String[
+            # UniversalFallback fails all these tests because it supports
+            # everything
+            "test_attribute_",
+            "test_model_supports_constraint_",
+            "test_model_copy_to_Unsupported",
+            # Bugs in UniversalFallback
+            "test_model_LowerBoundAlreadySet",
+            "test_model_UpperBoundAlreadySet",
+            "test_add_parameter",
+        ],
+    )
+    return
+end
 
 function _test_Optimizer_Model_attributes(
     uf::MOI.Utilities.UniversalFallback,

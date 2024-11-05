@@ -464,10 +464,8 @@ function MOI.get(
     listattr::MOI.ListOfOptimizerAttributesSet,
 )
     list = MOI.get(uf.model, listattr)
-    for (attr, value) in uf.optattr
-        if value !== nothing
-            push!(list, attr)
-        end
+    for attr in keys(uf.optattr)
+        push!(list, attr)
     end
     return list
 end
@@ -477,10 +475,8 @@ function MOI.get(uf::UniversalFallback, listattr::MOI.ListOfModelAttributesSet)
     if uf.objective !== nothing
         push!(list, MOI.ObjectiveFunction{typeof(uf.objective)}())
     end
-    for (attr, value) in uf.modattr
-        if value !== nothing
-            push!(list, attr)
-        end
+    for attr in keys(uf.modattr)
+        push!(list, attr)
     end
     return list
 end
@@ -490,10 +486,8 @@ function MOI.get(
     listattr::MOI.ListOfVariableAttributesSet,
 )
     list = MOI.get(uf.model, listattr)
-    for (attr, value) in uf.varattr
-        if any(!isnothing, values(value))
-            push!(list, attr)
-        end
+    for attr in keys(uf.varattr)
+        push!(list, attr)
     end
     return list
 end
@@ -504,11 +498,8 @@ function MOI.get(
 ) where {F,S}
     list = MOI.get(uf.model, listattr)
     for (attr, dict) in uf.conattr
-        for (k, v) in dict
-            if k isa MOI.ConstraintIndex{F,S} && !isnothing(v)
-                push!(list, attr)
-                break
-            end
+        if any(Base.Fix2(isa, MOI.ConstraintIndex{F,S}), keys(dict))
+            push!(list, attr)
         end
     end
     # ConstraintName isn't stored in conattr, but in the .con_to_name dictionary
@@ -703,17 +694,20 @@ function MOI.get(
     )
 end
 
+_set_or_delete(dict, key, value) = (dict[key] = value)
+_set_or_delete(dict, key, ::Nothing) = delete!(dict, key)
+
 function _set(
     uf::UniversalFallback,
     attr::MOI.AbstractOptimizerAttribute,
     value,
 )
-    uf.optattr[attr] = value
+    _set_or_delete(uf.optattr, attr, value)
     return
 end
 
 function _set(uf::UniversalFallback, attr::MOI.AbstractModelAttribute, value)
-    uf.modattr[attr] = value
+    _set_or_delete(uf.modattr, attr, value)
     return
 end
 
@@ -726,7 +720,7 @@ function _set(
     if !haskey(uf.varattr, attr)
         uf.varattr[attr] = Dict{MOI.VariableIndex,Any}()
     end
-    uf.varattr[attr][vi] = value
+    _set_or_delete(uf.varattr[attr], vi, value)
     return
 end
 
@@ -739,7 +733,7 @@ function _set(
     if !haskey(uf.conattr, attr)
         uf.conattr[attr] = Dict{MOI.ConstraintIndex,Any}()
     end
-    uf.conattr[attr][ci] = value
+    _set_or_delete(uf.conattr[attr], ci, value)
     return
 end
 
