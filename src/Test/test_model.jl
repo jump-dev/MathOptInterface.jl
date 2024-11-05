@@ -1226,3 +1226,20 @@ function test_model_show(model::MOI.ModelLike, ::Config{T}) where {T}
     @test sprint(show, model) isa String
     return
 end
+
+function test_model_add_constrained_variale_tuple(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    F = MOI.VariableIndex
+    set = (MOI.GreaterThan(zero(T)), MOI.LessThan(one(T)))
+    @requires MOI.supports_add_constrained_variable(model, typeof(set))
+    x, (c_l, c_u) = MOI.add_constrained_variable(model, set)
+    @test c_l == MOI.ConstraintIndex{F,MOI.GreaterThan{T}}(x.value)
+    @test c_u == MOI.ConstraintIndex{F,MOI.LessThan{T}}(x.value)
+    @test MOI.get(model, MOI.ConstraintFunction(), c_l) == x
+    @test MOI.get(model, MOI.ConstraintSet(), c_l) == set[1]
+    @test MOI.get(model, MOI.ConstraintFunction(), c_u) == x
+    @test MOI.get(model, MOI.ConstraintSet(), c_u) == set[2]
+    return
+end
