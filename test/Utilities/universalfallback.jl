@@ -89,21 +89,32 @@ function test_MOI_Test()
     return
 end
 
-function _test_Optimizer_Model_attributes(uf, model, attr, listattr)
+function _test_Optimizer_Model_attributes(
+    uf::MOI.Utilities.UniversalFallback,
+    model::MOI.ModelLike,
+    attr::Union{MOI.AbstractOptimizerAttribute,MOI.AbstractModelAttribute},
+    list::Union{MOI.ListOfOptimizerAttributesSet,MOI.ListOfModelAttributesSet},
+)
     @test !MOI.supports(model, attr)
     @test MOI.supports(uf, attr)
-    @test isempty(MOI.get(uf, listattr))
+    @test isempty(MOI.get(uf, list))
     MOI.set(uf, attr, 0)
     @test MOI.get(uf, attr) == 0
-    @test MOI.get(uf, listattr) == [attr]
+    @test MOI.get(uf, list) == [attr]
+    MOI.set(uf, attr, nothing)
+    @test isempty(MOI.get(uf, list))
+    MOI.set(uf, attr, 0)
     return
 end
 
 function _test_Variable_Constraint_attributes(
-    uf,
-    model,
-    attr,
-    listattr,
+    uf::MOI.Utilities.UniversalFallback,
+    model::MOI.ModelLike,
+    attr::Union{MOI.AbstractVariableAttribute,MOI.AbstractConstraintAttribute},
+    listattr::Union{
+        MOI.ListOfVariableAttributesSet,
+        MOI.ListOfConstraintAttributesSet,
+    },
     I::Type{<:MOI.Index},
     addfun,
     x,
@@ -112,6 +123,11 @@ function _test_Variable_Constraint_attributes(
 )
     @test !MOI.supports(model, attr, I)
     @test MOI.supports(uf, attr, I)
+    @test isempty(MOI.get(uf, listattr))
+    MOI.set(uf, attr, [x, y], [2, 0])
+    @test MOI.get(uf, listattr) == [attr]
+    MOI.set(uf, attr, x, nothing)
+    MOI.set(uf, attr, y, nothing)
     @test isempty(MOI.get(uf, listattr))
     MOI.set(uf, attr, [x, y], [2, 0])
     @test MOI.get(uf, attr, z) === nothing
@@ -235,18 +251,13 @@ function test_supported_constraint_attributes()
     cx = _add_constraint(uf, x, 0.0)
     cy = _add_constraint(uf, y, 1.0)
     cz = _add_constraint(uf, z, 2.0)
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}
     _test_Variable_Constraint_attributes(
         uf,
         model,
         MOI.Test.UnknownConstraintAttribute(),
-        MOI.ListOfConstraintAttributesSet{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.LessThan{Float64},
-        }(),
-        MOI.ConstraintIndex{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.LessThan{Float64},
-        },
+        MOI.ListOfConstraintAttributesSet{F,S}(),
+        MOI.ConstraintIndex{F,S},
         uf -> _add_constraint(uf, x, 0.0),
         cx,
         cy,
@@ -282,18 +293,13 @@ function test_unsupported_constraint_attributes()
     cx = _add_constraint(uf, x, 0.0)
     cy = _add_constraint(uf, y, 1.0)
     cz = _add_constraint(uf, z, 2.0)
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
     _test_Variable_Constraint_attributes(
         uf,
         model,
         MOI.Test.UnknownConstraintAttribute(),
-        MOI.ListOfConstraintAttributesSet{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.EqualTo{Float64},
-        }(),
-        MOI.ConstraintIndex{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.EqualTo{Float64},
-        },
+        MOI.ListOfConstraintAttributesSet{F,S}(),
+        MOI.ConstraintIndex{F,S},
         uf -> _add_constraint(uf, x, 0.0),
         cx,
         cy,
