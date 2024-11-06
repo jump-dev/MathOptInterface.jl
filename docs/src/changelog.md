@@ -7,6 +7,29 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.34.0 (November 7, 2024)
+
+### Added
+
+ - Added [`Bridges.Constraint.SetConversionBridge`](@ref) (#2536)
+ - Added a new method to [`add_constrained_variable`](@ref) to support passing a
+   tuple of [`GreaterThan`](@ref) and [`LessThan`](@ref). This is intended to be
+   a fast way of adding scalar variables with both lower and upper bounds (#2574)
+
+### Fixed
+
+ - Fixed error when adding unsupported constraints to `Utilities.AbstractModel`
+   (#2572)
+ - Fixed creating [`Interval`](@ref), [`Semicontinuous`](@ref) and [`Semiinteger`](@ref)
+   if the bound values are different types (#2577)
+ - Attributes are now ignored in `ListOfXXXAttributesSet` in
+   [`Utilities.UniversalFallback`](@ref) if they are set to `nothing` (#2575)
+
+### Other
+
+ - Updated `solver-tests.yml` (#2578)
+ - Improved various docstrings (#2579)
+
 ## v1.33.0 (October 28, 2024)
 
 ### Added
