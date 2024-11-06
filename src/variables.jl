@@ -125,6 +125,65 @@ function add_constrained_variable(model::ModelLike, set::AbstractScalarSet)
 end
 
 """
+    add_constrained_variable(
+        model::ModelLike,
+        set::Tuple{<:GreaterThan,<:LessThan},
+    )
+
+A special-case method to add a scalar variable with a lower and upper bound.
+
+This method should be implemented by optimizers which have native support for
+adding a variable with bounds and which cannot performantly modify the variable
+bounds after creation.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> set = (MOI.GreaterThan(1.0), MOI.LessThan(2.0));
+
+julia> x, (c_l, c_u) = MOI.add_constrained_variable(model, set);
+
+julia> c_l
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.GreaterThan{Float64}}(1)
+
+julia> c_u
+MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.LessThan{Float64}}(1)
+
+julia> print(model)
+Feasibility
+
+Subject to:
+
+VariableIndex-in-GreaterThan{Float64}
+ v[1] >= 1.0
+
+VariableIndex-in-LessThan{Float64}
+ v[1] <= 2.0
+```
+"""
+function add_constrained_variable(
+    model::ModelLike,
+    set::Tuple{<:GreaterThan,<:LessThan},
+)
+    set_1, set_2 = set
+    x, c_1 = add_constrained_variable(model, set_1)
+    c_2 = add_constraint(model, x, set_2)
+    return x, (c_1, c_2)
+end
+
+function supports_add_constrained_variable(
+    model::ModelLike,
+    ::Type{Tuple{L,U}},
+) where {L<:GreaterThan,U<:LessThan}
+    return supports_add_constrained_variable(model, L) &&
+           supports_constraint(model, VariableIndex, U)
+end
+
+"""
     supports_add_constrained_variables(
         model::ModelLike,
         S::Type{<:AbstractVectorSet}
