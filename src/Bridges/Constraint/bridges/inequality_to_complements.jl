@@ -27,7 +27,7 @@
 
   * [`MOI.VariableIndex`](@ref) in [`MOI.LessThan{T}`](@ref)
   * [`MOI.VariableIndex`](@ref) in [`MOI.GreaterThan{T}`](@ref)
-  * `F` in [`MOI.Complements`](@ref)
+  * `G` in [`MOI.Complements`](@ref)
 """
 mutable struct InequalityToComplementsBridge{
     T,
