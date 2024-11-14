@@ -9,7 +9,7 @@
 
 `InequalityToComplementsBridge` implements the following reformulations:
 
-  * ``f(x) \\ge b`` into ``f(x) - b \\perp y \\ge 0``
+  * ``f(x) \\ge b`` into ``\\exists y`` such that ``f(x) - b \\perp y \\ge 0``
   * ``f(x) \\le b`` into ``f(x) - b \\perp y \\le 0``
   * ``f(x) = b`` into ``f(x) - b \\perp y``
 
