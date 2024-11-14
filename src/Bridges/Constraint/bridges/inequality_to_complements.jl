@@ -70,7 +70,7 @@ function MOI.supports_constraint(
     ::Type{<:InequalityToComplementsBridge{T}},
     ::Type{F},
     ::Type{<:Union{MOI.GreaterThan{T},MOI.LessThan{T},MOI.EqualTo{T}}},
-) where {F<:MOI.AbstractScalarFunction}
+) where {T,F<:MOI.AbstractScalarFunction}
     return !MOI.Utilities.is_complex(F)
 end
 
