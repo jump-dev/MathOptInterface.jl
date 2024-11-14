@@ -68,10 +68,10 @@ end
 
 function MOI.supports_constraint(
     ::Type{<:InequalityToComplementsBridge{T}},
-    ::Type{<:MOI.AbstractScalarFunction},
+    ::Type{F},
     ::Type{<:Union{MOI.GreaterThan{T},MOI.LessThan{T},MOI.EqualTo{T}}},
-) where {T}
-    return true
+) where {F<:MOI.AbstractScalarFunction}
+    return !MOI.Utilities.is_complex(F)
 end
 
 function MOI.Bridges.added_constrained_variable_types(
