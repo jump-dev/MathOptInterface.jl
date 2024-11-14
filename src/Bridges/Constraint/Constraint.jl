@@ -36,6 +36,7 @@ include("bridges/geomean.jl")
 include("bridges/indicator_activate_on_zero.jl")
 include("bridges/indicator_flipsign.jl")
 include("bridges/indicator_sos.jl")
+include("bridges/inequality_to_complements.jl")
 include("bridges/integer_to_zeroone.jl")
 include("bridges/interval.jl")
 include("bridges/ltgt_to_interval.jl")
@@ -135,6 +136,7 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, SemiToBinaryBridge{T})
     MOI.Bridges.add_bridge(bridged_model, ZeroOneBridge{T})
     MOI.Bridges.add_bridge(bridged_model, IntegerToZeroOneBridge{T})
+    MOI.Bridges.add_bridge(bridged_model, InequalityToComplementsBridge{T})
     # Do not add by default
     # MOI.Bridges.add_bridge(bridged_model, NumberConversionBridge{T})
     # Constraint programming bridges
