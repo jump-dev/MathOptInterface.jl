@@ -89,7 +89,7 @@ end
 function MOI.Bridges.added_constraint_types(
     ::Type{InequalityToComplementsBridge{T,F,S,G}},
 ) where {T,F,S,G}
-    return Tuple{Type,Type}[(G,MOI.Complements)]
+    return Tuple{Type,Type}[(G, MOI.Complements)]
 end
 
 function concrete_bridge_type(
