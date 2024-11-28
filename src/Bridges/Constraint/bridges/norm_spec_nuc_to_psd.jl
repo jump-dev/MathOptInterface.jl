@@ -200,10 +200,10 @@ end
 # constraint is (tr(U) + tr(V), 2X) in NormNuclearCone.
 function MOI.get(
     model::MOI.ModelLike,
-    ::MOI.ConstraintDual,
+    attr::MOI.ConstraintDual,
     bridge::NormSpectralBridge,
 )
-    dual = MOI.get(model, MOI.ConstraintDual(), bridge.psd_index)
+    dual = MOI.get(model, attr, bridge.psd_index)
     column_dim = bridge.column_dim
     side_dim = bridge.row_dim + column_dim
     t = sum(dual[MOI.Utilities.trimap(i, i)] for i in 1:side_dim)
@@ -450,11 +450,11 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    ::MOI.ConstraintPrimal,
+    attr::MOI.ConstraintPrimal,
     bridge::NormNuclearBridge,
 )
-    ge_primal = MOI.get(model, MOI.ConstraintPrimal(), bridge.ge_index)
-    psd_primal = MOI.get(model, MOI.ConstraintPrimal(), bridge.psd_index)
+    ge_primal = MOI.get(model, attr, bridge.ge_index)
+    psd_primal = MOI.get(model, attr, bridge.psd_index)
     side_dim = bridge.row_dim + bridge.column_dim
     t =
         ge_primal +

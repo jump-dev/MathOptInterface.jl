@@ -232,7 +232,7 @@ function MOI.get(
     bridge::LogDetBridge,
 )
     d = length(bridge.lcindex)
-    Δ = MOI.get(model, MOI.VariablePrimal(), bridge.Δ)
+    Δ = MOI.get(model, MOI.VariablePrimal(attr.result_index), bridge.Δ)
     t =
         MOI.get(model, attr, bridge.tlindex) +
         sum(MOI.get(model, attr, ci)[1] for ci in bridge.lcindex)
