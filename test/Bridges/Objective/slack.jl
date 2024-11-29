@@ -208,6 +208,34 @@ function test_SlackBridge_ObjectiveFunctionValue()
     return
 end
 
+function test_SlackBridge_ObjectiveFunctionValue_2()
+    inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Objective.Slack{Float64}(inner)
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
+    f = 1.1 * x - 1.2
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.Utilities.set_mock_optimize!(
+        inner,
+        mock -> begin
+            MOI.set(mock, MOI.ResultCount(), 2)
+            MOI.set(mock, MOI.TerminationStatus(), MOI.OPTIMAL)
+            MOI.set(mock, MOI.PrimalStatus(1), MOI.FEASIBLE_POINT)
+            MOI.set(mock, MOI.PrimalStatus(2), MOI.FEASIBLE_POINT)
+            y = MOI.get(mock, MOI.ListOfVariableIndices())
+            MOI.set.(mock, MOI.VariablePrimal(1), y, [1.0, -0.1])
+            MOI.set.(mock, MOI.VariablePrimal(2), y, [2.0, 1.0])
+        end,
+    )
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.ObjectiveValue(1)) ≈ -0.1
+    @test MOI.get(model, MOI.VariablePrimal(1), x) ≈ 1.0
+    @test MOI.get(model, MOI.ObjectiveValue(2)) ≈ 1.0
+    @test MOI.get(model, MOI.VariablePrimal(2), x) ≈ 2.0
+    return
+end
+
 function test_original()
     mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     bridged_mock = MOI.Bridges.Objective.Slack{Float64}(mock)

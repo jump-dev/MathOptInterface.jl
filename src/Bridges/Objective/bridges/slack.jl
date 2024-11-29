@@ -155,8 +155,11 @@ function MOI.get(
     # value of `bridge.slack`. Since `bridge.constraint` is `g - slack`, we can
     # get the value of the original objective by summing the value of `slack`
     # with the `ConstraintPrimal` of the constraint.
-    obj_slack_constant =
-        MOI.get(model, MOI.ConstraintPrimal(), bridge.constraint)
+    obj_slack_constant = MOI.get(
+        model,
+        MOI.ConstraintPrimal(attr.result_index),
+        bridge.constraint,
+    )
     return obj_slack_constant + slack + bridge.constant
 end
 

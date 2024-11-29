@@ -159,7 +159,11 @@ function MOI.get(
     N = attr_g.result_index
     attr_f = MOI.Bridges.ObjectiveFunctionValue{MOI.VectorOfVariables}(N)
     objective_value = MOI.get(model, attr_f)
-    con_primal = MOI.get(model, MOI.ConstraintPrimal(), bridge.constraint)
+    con_primal = MOI.get(
+        model,
+        MOI.ConstraintPrimal(attr_g.result_index),
+        bridge.constraint,
+    )
     sense = MOI.get(model, MOI.ObjectiveSense())
     if sense == MOI.MIN_SENSE
         # con_primal = objective_value - f(x)
