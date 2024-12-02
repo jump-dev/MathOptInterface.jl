@@ -1836,3 +1836,350 @@ function setup_test(
     )
     return
 end
+
+function test_nonlinear_with_scalar_quadratic_function_with_off_diag(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires T == Float64
+    @requires _supports(config, MOI.optimize!)
+    F = MOI.ScalarNonlinearFunction
+    @requires MOI.supports_constraint(model, F, MOI.EqualTo{T})
+    for (a, b, status) in [
+        (1, 2, config.optimal_status),
+        (1, 3, config.infeasible_status),
+        (2, 3, config.optimal_status),
+        (2, 4, config.infeasible_status),
+    ]
+        MOI.empty!(model)
+        x, _ = MOI.add_constrained_variable(model, MOI.EqualTo(T(2)))
+        y, _ = MOI.add_constrained_variable(model, MOI.EqualTo(T(3)))
+        g = T(a) * x * y
+        @test g isa MOI.ScalarQuadraticFunction{T}
+        f = MOI.ScalarNonlinearFunction(:sqrt, Any[g])
+        MOI.add_constraint(model, f, MOI.GreaterThan(T(b)))
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == status
+    end
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_with_scalar_quadratic_function_with_off_diag),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock ->
+            MOI.Utilities.mock_optimize!(mock, config.optimal_status, T[2, 3]),
+        mock -> MOI.Utilities.mock_optimize!(mock, config.infeasible_status),
+        mock ->
+            MOI.Utilities.mock_optimize!(mock, config.optimal_status, T[2, 3]),
+        mock -> MOI.Utilities.mock_optimize!(mock, config.infeasible_status),
+    )
+    return
+end
+
+function test_nonlinear_constraint_log(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    F, S = MOI.ScalarNonlinearFunction, MOI.GreaterThan{T}
+    @requires MOI.supports_constraint(model, F, S)
+    x = MOI.add_variable(model)
+    t = MOI.add_variable(model)
+    MOI.add_constraint(model, x, MOI.LessThan(T(2)))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = 1.0 * t
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    g = MOI.ScalarNonlinearFunction(
+        :-,
+        Any[MOI.ScalarNonlinearFunction(:log, Any[x]), t],
+    )
+    c = MOI.add_constraint(model, g, MOI.GreaterThan(T(0)))
+    MOI.optimize!(model)
+    x_val = MOI.get(model, MOI.VariablePrimal(), x)
+    t_val = MOI.get(model, MOI.VariablePrimal(), t)
+    @test ≈(x_val, T(2), config)
+    @test ≈(t_val, log(x_val), config)
+    @test ≈(MOI.get(model, MOI.ObjectiveValue()), t_val, config)
+    @test (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test c in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_constraint_log),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> MOI.Utilities.mock_optimize!(
+            mock,
+            config.optimal_status,
+            T[2, log(2)],
+        ),
+    )
+    return
+end
+
+function test_nonlinear_constraint_uminus(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    F, S = MOI.ScalarNonlinearFunction, MOI.GreaterThan{Float64}
+    @requires MOI.supports_constraint(model, F, S)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(1) * x
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    g = MOI.ScalarNonlinearFunction(:-, Any[x])
+    MOI.add_constraint(model, g, MOI.GreaterThan(T(-2)))
+    MOI.optimize!(model)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), x), T(2), config)
+    @test ≈(MOI.get(model, MOI.ObjectiveValue()), T(2), config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_constraint_uminus),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> MOI.Utilities.mock_optimize!(mock, config.optimal_status, T[2]),
+    )
+    return
+end
+
+function test_nonlinear_constraint_scalar_affine_function(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    x1, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(zero(T)))
+    x2, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(zero(T)))
+    x3, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(zero(T)))
+    x4, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(zero(T)))
+    f = T(1) * x1 + T(2) * x2 + T(3) * x3
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    h = T(1) * x1 + T(2) * x2 + T(3) * x3 + T(4) * x4
+    g = MOI.ScalarNonlinearFunction(:+, Any[h])
+    MOI.add_constraint(model, g, MOI.LessThan(T(6)))
+    MOI.optimize!(model)
+    @test ≈(MOI.get(model, MOI.ObjectiveValue()), T(6), config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_constraint_scalar_affine_function),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> MOI.Utilities.mock_optimize!(
+            mock,
+            config.optimal_status,
+            T[1, 1, 1, 0],
+        ),
+    )
+    return
+end
+
+function test_nonlinear_quadratic_1(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    # max x + y
+    # s.t sqrt(*(x, x) + *(y, y)) <= 1
+    # x, y >= 0
+    #
+    # -> x = y = 1/sqrt(2)
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(1) * x + T(1) * y
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    f1 = MOI.ScalarNonlinearFunction(:*, Any[x, x])
+    f2 = MOI.ScalarNonlinearFunction(:*, Any[y, y])
+    f3 = MOI.ScalarNonlinearFunction(:+, Any[f1, f2])
+    g = MOI.ScalarNonlinearFunction(:sqrt, Any[f3])
+    c = MOI.add_constraint(model, g, MOI.LessThan(T(1)))
+    MOI.optimize!(model)
+    @test ≈(MOI.get(model, MOI.ObjectiveValue()), 2 / sqrt(2), config)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), x), 1 / sqrt(2), config)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), y), 1 / sqrt(2), config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_quadratic_1),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> MOI.Utilities.mock_optimize!(
+            mock,
+            config.optimal_status,
+            T[1 / sqrt(2), 1 / sqrt(2)],
+        ),
+    )
+    return
+end
+
+function test_nonlinear_quadratic_2(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    # Present products as ScalarAffineTerms nested in ScalarNonlinearFunctions
+    # max x + y
+    # s.t sqrt(*(x, x) + *(y, y)) <= 1
+    # x, y >= 0
+    #
+    # -> x = y = 1/sqrt(2)
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(1) * x + T(1) * y
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    f1 = MOI.ScalarNonlinearFunction(:*, Any[T(1)*x, x])
+    f2 = MOI.ScalarNonlinearFunction(:*, Any[T(1)*y, y])
+    f3 = MOI.ScalarNonlinearFunction(:+, Any[f1, f2])
+    g = MOI.ScalarNonlinearFunction(:sqrt, Any[f3])
+    c = MOI.add_constraint(model, g, MOI.LessThan(T(1)))
+    MOI.optimize!(model)
+    @test ≈(MOI.get(model, MOI.ObjectiveValue()), 2 / sqrt(2), config)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), x), 1 / sqrt(2), config)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), y), 1 / sqrt(2), config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_quadratic_2),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> MOI.Utilities.mock_optimize!(
+            mock,
+            config.optimal_status,
+            T[1 / sqrt(2), 1 / sqrt(2)],
+        ),
+    )
+    return
+end
+
+function test_nonlinear_quadratic_3(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    # Present products as ScalarQuadraticFunctions (complete with 2x factor ...)
+    # max x + y
+    # s.t sqrt(*(x, x) + *(y, y)) <= 1
+    # x, y >= 0
+    #
+    # -> x = y = 1/sqrt(2)
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(1) * x + T(1) * y
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    f1 = T(1) * x * x
+    f2 = T(1) * y * y
+    f3 = MOI.ScalarNonlinearFunction(:+, Any[f1, f2])
+    g = MOI.ScalarNonlinearFunction(:sqrt, Any[f3])
+    c = MOI.add_constraint(model, g, MOI.LessThan(T(1)))
+    MOI.optimize!(model)
+    @test ≈(MOI.get(model, MOI.ObjectiveValue()), 2 / sqrt(2), config)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), x), 1 / sqrt(2), config)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), y), 1 / sqrt(2), config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_quadratic_3),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> MOI.Utilities.mock_optimize!(
+            mock,
+            config.optimal_status,
+            T[1 / sqrt(2), 1 / sqrt(2)],
+        ),
+    )
+    return
+end
+
+function test_nonlinear_quadratic_4(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    # max x + y
+    # s.t sqrt(^(x, 2) + ^(y, 2)) <= 1  # Use NL POW(2) operator
+    # x, y >= 0
+    #
+    # -> x = y = 1/sqrt(2)
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(1) * x + T(1) * y
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    f1 = MOI.ScalarNonlinearFunction(:^, Any[x, 2])
+    f2 = MOI.ScalarNonlinearFunction(:^, Any[y, 2])
+    f3 = MOI.ScalarNonlinearFunction(:+, Any[f1, f2])
+    g = MOI.ScalarNonlinearFunction(:sqrt, Any[f3])
+    c = MOI.add_constraint(model, g, MOI.LessThan(T(1)))
+    MOI.optimize!(model)
+    @test ≈(MOI.get(model, MOI.ObjectiveValue()), 2 / sqrt(2), config)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), x), 1 / sqrt(2), config)
+    @test ≈(MOI.get(model, MOI.VariablePrimal(), y), 1 / sqrt(2), config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_nonlinear_quadratic_4),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    if T != Float64
+        return  # Skip for non-Float64 solvers
+    end
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> MOI.Utilities.mock_optimize!(
+            mock,
+            config.optimal_status,
+            T[1 / sqrt(2), 1 / sqrt(2)],
+        ),
+    )
+    return
+end
