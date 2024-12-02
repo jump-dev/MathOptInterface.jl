@@ -1231,7 +1231,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-
     MOI.Utilities.set_mock_optimize!(
         model,
         (mock) -> begin
@@ -1285,7 +1284,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-
     MOI.Utilities.set_mock_optimize!(
         model,
         (mock) -> begin
@@ -1347,7 +1345,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-
     flag = model.eval_objective_value
     model.eval_objective_value = false
     MOI.Utilities.set_mock_optimize!(
@@ -1407,7 +1404,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-
     flag = model.eval_objective_value
     model.eval_objective_value = false
     MOI.Utilities.set_mock_optimize!(
@@ -1453,7 +1449,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-
     flag = model.eval_objective_value
     model.eval_objective_value = false
     MOI.Utilities.set_mock_optimize!(
@@ -1502,7 +1497,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-
     flag = model.eval_objective_value
     model.eval_objective_value = false
     MOI.Utilities.set_mock_optimize!(
@@ -1545,7 +1539,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(mock, config.optimal_status, [1]),
@@ -1586,7 +1579,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(
@@ -1853,7 +1845,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-
     MOI.Utilities.set_mock_optimize!(
         model,
         mock ->
@@ -1899,7 +1890,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(
@@ -1934,7 +1924,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(mock, config.optimal_status, T[2]),
@@ -1966,7 +1955,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(
@@ -2009,7 +1997,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(
@@ -2053,7 +2040,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(
