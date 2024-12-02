@@ -2041,7 +2041,7 @@ function setup_test(
         mock -> MOI.Utilities.mock_optimize!(
             mock,
             config.optimal_status,
-            T[1 / sqrt(2), 1 / sqrt(2)],
+            T[1/sqrt(2), 1/sqrt(2)],
         ),
     )
     return
@@ -2087,7 +2087,7 @@ function setup_test(
         mock -> MOI.Utilities.mock_optimize!(
             mock,
             config.optimal_status,
-            T[1 / sqrt(2), 1 / sqrt(2)],
+            T[1/sqrt(2), 1/sqrt(2)],
         ),
     )
     return
@@ -2133,7 +2133,7 @@ function setup_test(
         mock -> MOI.Utilities.mock_optimize!(
             mock,
             config.optimal_status,
-            T[1 / sqrt(2), 1 / sqrt(2)],
+            T[1/sqrt(2), 1/sqrt(2)],
         ),
     )
     return
@@ -2178,7 +2178,7 @@ function setup_test(
         mock -> MOI.Utilities.mock_optimize!(
             mock,
             config.optimal_status,
-            T[1 / sqrt(2), 1 / sqrt(2)],
+            T[1/sqrt(2), 1/sqrt(2)],
         ),
     )
     return
