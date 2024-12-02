@@ -1231,9 +1231,7 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
+
     MOI.Utilities.set_mock_optimize!(
         model,
         (mock) -> begin
@@ -1287,9 +1285,7 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
+
     MOI.Utilities.set_mock_optimize!(
         model,
         (mock) -> begin
@@ -1351,9 +1347,7 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
+
     flag = model.eval_objective_value
     model.eval_objective_value = false
     MOI.Utilities.set_mock_optimize!(
@@ -1413,9 +1407,7 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
+
     flag = model.eval_objective_value
     model.eval_objective_value = false
     MOI.Utilities.set_mock_optimize!(
@@ -1461,9 +1453,7 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
+
     flag = model.eval_objective_value
     model.eval_objective_value = false
     MOI.Utilities.set_mock_optimize!(
@@ -1512,9 +1502,7 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
+
     flag = model.eval_objective_value
     model.eval_objective_value = false
     MOI.Utilities.set_mock_optimize!(
@@ -1557,9 +1545,7 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
+
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(mock, config.optimal_status, [1]),
@@ -1600,9 +1586,7 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
+
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(
@@ -1869,9 +1853,7 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
+
     MOI.Utilities.set_mock_optimize!(
         model,
         mock ->
@@ -1917,15 +1899,13 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
+
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(
             mock,
             config.optimal_status,
-            T[2, log(2)],
+            T[2, log(T(2))],
         ),
     )
     return
@@ -1935,7 +1915,7 @@ function test_nonlinear_constraint_uminus(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    F, S = MOI.ScalarNonlinearFunction, MOI.GreaterThan{Float64}
+    F, S = MOI.ScalarNonlinearFunction, MOI.GreaterThan{T}
     @requires MOI.supports_constraint(model, F, S)
     x = MOI.add_variable(model)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
@@ -1954,9 +1934,7 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
+
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(mock, config.optimal_status, T[2]),
@@ -1988,9 +1966,7 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
+
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(
@@ -2033,9 +2009,7 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
+
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(
@@ -2079,9 +2053,7 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
+
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(
@@ -2125,9 +2097,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(
@@ -2170,9 +2139,6 @@ function setup_test(
     model::MOIU.MockOptimizer,
     config::Config{T},
 ) where {T}
-    if T != Float64
-        return  # Skip for non-Float64 solvers
-    end
     MOI.Utilities.set_mock_optimize!(
         model,
         mock -> MOI.Utilities.mock_optimize!(
