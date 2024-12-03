@@ -1824,7 +1824,9 @@ function test_nonlinear_with_scalar_quadratic_function_with_off_diag(
     for (a, b, status) in test_cases
         MOI.empty!(model)
         x, _ = MOI.add_constrained_variable(model, MOI.EqualTo(T(2)))
+        MOI.set(model, MOI.VariablePrimalStart(), x, T(2))
         y, _ = MOI.add_constrained_variable(model, MOI.EqualTo(T(3)))
+        MOI.set(model, MOI.VariablePrimalStart(), y, T(3))
         g = T(a) * x * y
         @test g isa MOI.ScalarQuadraticFunction{T}
         f = MOI.ScalarNonlinearFunction(:sqrt, Any[g])
