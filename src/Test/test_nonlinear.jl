@@ -1866,8 +1866,12 @@ function test_nonlinear_constraint_log(
     x = MOI.add_variable(model)
     t = MOI.add_variable(model)
     MOI.add_constraint(model, x, MOI.LessThan(T(2)))
+    MOI.set(model, MOI.VariablePrimalStart(), x, T(1))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = 1.0 * t
+    # max t
+    #  x <= 2
+    #  log(x) >= t
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     g = MOI.ScalarNonlinearFunction(
         :-,
@@ -1875,6 +1879,7 @@ function test_nonlinear_constraint_log(
     )
     c = MOI.add_constraint(model, g, MOI.GreaterThan(T(0)))
     MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
     x_val = MOI.get(model, MOI.VariablePrimal(), x)
     t_val = MOI.get(model, MOI.VariablePrimal(), t)
     @test ≈(x_val, T(2), config)
@@ -1983,7 +1988,9 @@ function test_nonlinear_quadratic_1(
     #
     # -> x = y = 1/sqrt(2)
     x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariablePrimalStart(), x, T(1))
     y = MOI.add_variable(model)
+    MOI.set(model, MOI.VariablePrimalStart(), y, T(1))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = T(1) * x + T(1) * y
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
@@ -1993,6 +2000,7 @@ function test_nonlinear_quadratic_1(
     g = MOI.ScalarNonlinearFunction(:sqrt, Any[f3])
     c = MOI.add_constraint(model, g, MOI.LessThan(T(1)))
     MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
     @test ≈(MOI.get(model, MOI.ObjectiveValue()), 2 / sqrt(2), config)
     @test ≈(MOI.get(model, MOI.VariablePrimal(), x), 1 / sqrt(2), config)
     @test ≈(MOI.get(model, MOI.VariablePrimal(), y), 1 / sqrt(2), config)
@@ -2029,7 +2037,9 @@ function test_nonlinear_quadratic_2(
     #
     # -> x = y = 1/sqrt(2)
     x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariablePrimalStart(), x, T(1))
     y = MOI.add_variable(model)
+    MOI.set(model, MOI.VariablePrimalStart(), y, T(1))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = T(1) * x + T(1) * y
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
@@ -2039,6 +2049,7 @@ function test_nonlinear_quadratic_2(
     g = MOI.ScalarNonlinearFunction(:sqrt, Any[f3])
     c = MOI.add_constraint(model, g, MOI.LessThan(T(1)))
     MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
     @test ≈(MOI.get(model, MOI.ObjectiveValue()), 2 / sqrt(2), config)
     @test ≈(MOI.get(model, MOI.VariablePrimal(), x), 1 / sqrt(2), config)
     @test ≈(MOI.get(model, MOI.VariablePrimal(), y), 1 / sqrt(2), config)
@@ -2075,7 +2086,9 @@ function test_nonlinear_quadratic_3(
     #
     # -> x = y = 1/sqrt(2)
     x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariablePrimalStart(), x, T(1))
     y = MOI.add_variable(model)
+    MOI.set(model, MOI.VariablePrimalStart(), y, T(1))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = T(1) * x + T(1) * y
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
@@ -2085,6 +2098,7 @@ function test_nonlinear_quadratic_3(
     g = MOI.ScalarNonlinearFunction(:sqrt, Any[f3])
     c = MOI.add_constraint(model, g, MOI.LessThan(T(1)))
     MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
     @test ≈(MOI.get(model, MOI.ObjectiveValue()), 2 / sqrt(2), config)
     @test ≈(MOI.get(model, MOI.VariablePrimal(), x), 1 / sqrt(2), config)
     @test ≈(MOI.get(model, MOI.VariablePrimal(), y), 1 / sqrt(2), config)
@@ -2120,7 +2134,9 @@ function test_nonlinear_quadratic_4(
     #
     # -> x = y = 1/sqrt(2)
     x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariablePrimalStart(), x, T(1))
     y = MOI.add_variable(model)
+    MOI.set(model, MOI.VariablePrimalStart(), y, T(1))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = T(1) * x + T(1) * y
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
@@ -2130,6 +2146,7 @@ function test_nonlinear_quadratic_4(
     g = MOI.ScalarNonlinearFunction(:sqrt, Any[f3])
     c = MOI.add_constraint(model, g, MOI.LessThan(T(1)))
     MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
     @test ≈(MOI.get(model, MOI.ObjectiveValue()), 2 / sqrt(2), config)
     @test ≈(MOI.get(model, MOI.VariablePrimal(), x), 1 / sqrt(2), config)
     @test ≈(MOI.get(model, MOI.VariablePrimal(), y), 1 / sqrt(2), config)
