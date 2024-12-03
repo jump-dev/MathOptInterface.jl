@@ -1817,7 +1817,6 @@ function test_nonlinear_with_scalar_quadratic_function_with_off_diag(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
-    @requires T == Float64
     @requires _supports(config, MOI.optimize!)
     F = MOI.ScalarNonlinearFunction
     @requires MOI.supports_constraint(model, F, MOI.EqualTo{T})
@@ -1861,6 +1860,7 @@ function test_nonlinear_constraint_log(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
+    @requires _supports(config, MOI.optimize!)
     F, S = MOI.ScalarNonlinearFunction, MOI.GreaterThan{T}
     @requires MOI.supports_constraint(model, F, S)
     x = MOI.add_variable(model)
@@ -1905,6 +1905,7 @@ function test_nonlinear_constraint_uminus(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
+    @requires _supports(config, MOI.optimize!)
     F, S = MOI.ScalarNonlinearFunction, MOI.GreaterThan{T}
     @requires MOI.supports_constraint(model, F, S)
     x = MOI.add_variable(model)
@@ -1935,6 +1936,9 @@ function test_nonlinear_constraint_scalar_affine_function(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
+    @requires _supports(config, MOI.optimize!)
+    F, S = MOI.ScalarNonlinearFunction, MOI.LessThan{T}
+    @requires MOI.supports_constraint(model, F, S)
     x1, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(zero(T)))
     x2, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(zero(T)))
     x3, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(zero(T)))
@@ -1970,6 +1974,9 @@ function test_nonlinear_quadratic_1(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
+    @requires _supports(config, MOI.optimize!)
+    F, S = MOI.ScalarNonlinearFunction, MOI.LessThan{T}
+    @requires MOI.supports_constraint(model, F, S)
     # max x + y
     # s.t sqrt(*(x, x) + *(y, y)) <= 1
     # x, y >= 0
@@ -2012,6 +2019,9 @@ function test_nonlinear_quadratic_2(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
+    @requires _supports(config, MOI.optimize!)
+    F, S = MOI.ScalarNonlinearFunction, MOI.LessThan{T}
+    @requires MOI.supports_constraint(model, F, S)
     # Present products as ScalarAffineTerms nested in ScalarNonlinearFunctions
     # max x + y
     # s.t sqrt(*(x, x) + *(y, y)) <= 1
@@ -2055,6 +2065,9 @@ function test_nonlinear_quadratic_3(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
+    @requires _supports(config, MOI.optimize!)
+    F, S = MOI.ScalarNonlinearFunction, MOI.LessThan{T}
+    @requires MOI.supports_constraint(model, F, S)
     # Present products as ScalarQuadraticFunctions (complete with 2x factor ...)
     # max x + y
     # s.t sqrt(*(x, x) + *(y, y)) <= 1
@@ -2098,6 +2111,9 @@ function test_nonlinear_quadratic_4(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
+    @requires _supports(config, MOI.optimize!)
+    F, S = MOI.ScalarNonlinearFunction, MOI.LessThan{T}
+    @requires MOI.supports_constraint(model, F, S)
     # max x + y
     # s.t sqrt(^(x, 2) + ^(y, 2)) <= 1  # Use NL POW(2) operator
     # x, y >= 0
