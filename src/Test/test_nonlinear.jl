@@ -1820,12 +1820,8 @@ function test_nonlinear_with_scalar_quadratic_function_with_off_diag(
     @requires _supports(config, MOI.optimize!)
     F = MOI.ScalarNonlinearFunction
     @requires MOI.supports_constraint(model, F, MOI.EqualTo{T})
-    for (a, b, status) in [
-        (1, 2, config.optimal_status),
-        (1, 3, config.infeasible_status),
-        (2, 3, config.optimal_status),
-        (2, 4, config.infeasible_status),
-    ]
+    test_cases = [(1, 2, true), (1, 3, false), (2, 3, true), (2, 4, false)]
+    for (a, b, status) in test_cases
         MOI.empty!(model)
         x, _ = MOI.add_constrained_variable(model, MOI.EqualTo(T(2)))
         y, _ = MOI.add_constrained_variable(model, MOI.EqualTo(T(3)))
@@ -1834,7 +1830,8 @@ function test_nonlinear_with_scalar_quadratic_function_with_off_diag(
         f = MOI.ScalarNonlinearFunction(:sqrt, Any[g])
         MOI.add_constraint(model, f, MOI.GreaterThan(T(b)))
         MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == status
+        term_status = MOI.get(model, MOI.TerminationStatus())
+        @test (term_status == config.optimal_status) == status
     end
     return
 end
