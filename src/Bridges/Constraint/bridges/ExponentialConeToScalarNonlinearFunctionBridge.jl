@@ -128,7 +128,7 @@ function MOI.get(
 end
 
 function MOI.get(
-    bridge::ExponentialConeToScalarNonlinearFunctionBridge{T},
+    ::ExponentialConeToScalarNonlinearFunctionBridge{T},
     ::MOI.NumberOfConstraints{MOI.ScalarNonlinearFunction,MOI.LessThan{T}},
 )::Int64 where {T}
     return 1
@@ -142,11 +142,8 @@ function MOI.get(
 end
 
 function MOI.get(
-    bridge::ExponentialConeToScalarNonlinearFunctionBridge{T},
-    ::MOI.NumberOfConstraints{
-        MOI.ScalarAffineFunction{T},
-        MOI.GreaterThan{T},
-    },
+    ::ExponentialConeToScalarNonlinearFunctionBridge{T},
+    ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}},
 )::Int64 where {T}
     return 1
 end
