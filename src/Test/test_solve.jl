@@ -1944,7 +1944,7 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, T[2]),
             MOI.FEASIBLE_POINT,
-            (MOI.VariableIndex, MOI.GreaterThan{T}) => T[3],
+            (MOI.VariableIndex, MOI.LessThan{T}) => T[3],
         ),
     )
     return
@@ -2016,7 +2016,7 @@ function setup_test(
             MOI.OPTIMAL,
             (MOI.FEASIBLE_POINT, T[2]),
             MOI.FEASIBLE_POINT,
-            (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}) => T[3],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[3],
         ),
     )
     return
