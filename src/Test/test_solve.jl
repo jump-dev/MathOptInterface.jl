@@ -1879,3 +1879,145 @@ function setup_test(
     )
     return
 end
+
+function test_DualObjectiveValue_Min_VariableIndex_GreaterThan(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.optimize!)
+    @requires _supports(config, MOI.DualObjectiveValue)
+    x, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(T(2)))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = T(3) * x
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.optimize!(model)
+    MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+    @test ≈(MOI.get(model, MOI.DualObjectiveValue()), T(6), config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_DualObjectiveValue_Min_VariableIndex_GreaterThan),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        mock -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, T[2]),
+            MOI.FEASIBLE_POINT,
+            (MOI.VariableIndex, MOI.GreaterThan{T}) => T[3],
+        ),
+    )
+    return
+end
+
+function test_DualObjectiveValue_Max_VariableIndex_LessThan(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.optimize!)
+    @requires _supports(config, MOI.DualObjectiveValue)
+    x, _ = MOI.add_constrained_variable(model, MOI.LessThan(T(2)))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(3) * x
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.optimize!(model)
+    MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+    @test ≈(MOI.get(model, MOI.DualObjectiveValue()), T(6), config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_DualObjectiveValue_Max_VariableIndex_LessThan),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        mock -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, T[2]),
+            MOI.FEASIBLE_POINT,
+            (MOI.VariableIndex, MOI.GreaterThan{T}) => T[3],
+        ),
+    )
+    return
+end
+
+function test_DualObjectiveValue_Min_ScalarAffine_GreaterThan(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.optimize!)
+    @requires _supports(config, MOI.DualObjectiveValue)
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, one(T) * x, MOI.GreaterThan(T(2)))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = T(3) * x
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.optimize!(model)
+    MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+    @test ≈(MOI.get(model, MOI.DualObjectiveValue()), T(6), config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_DualObjectiveValue_Min_ScalarAffine_GreaterThan),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        mock -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, T[2]),
+            MOI.FEASIBLE_POINT,
+            (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}) => T[3],
+        ),
+    )
+    return
+end
+
+function test_DualObjectiveValue_Max_ScalarAffine_LessThan(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.optimize!)
+    @requires _supports(config, MOI.DualObjectiveValue)
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, one(T) * x, MOI.LessThan(T(2)))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = T(3) * x
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.optimize!(model)
+    MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+    @test ≈(MOI.get(model, MOI.DualObjectiveValue()), T(6), config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_DualObjectiveValue_Max_ScalarAffine_LessThan),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        mock -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, T[2]),
+            MOI.FEASIBLE_POINT,
+            (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}) => T[3],
+        ),
+    )
+    return
+end
