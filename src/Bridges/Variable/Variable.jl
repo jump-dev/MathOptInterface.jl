@@ -13,15 +13,9 @@ include("map.jl")
 include("set_map.jl")
 include("single_bridge_optimizer.jl")
 
-include("bridges/flip_sign.jl")
-include("bridges/free.jl")
-include("bridges/rsoc_to_psd.jl")
-include("bridges/rsoc_soc.jl")
-include("bridges/soc_rsoc.jl")
-include("bridges/vectorize.jl")
-include("bridges/zeros.jl")
-include("bridges/hermitian.jl")
-include("bridges/parameter.jl")
+for filename in readdir(joinpath(@__DIR__, "bridges"); join = true)
+    include(filename)
+end
 
 """
     add_all_bridges(model, ::Type{T}) where {T}

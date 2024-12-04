@@ -12,9 +12,9 @@ include("bridge.jl")
 include("map.jl")
 include("single_bridge_optimizer.jl")
 
-include("bridges/conversion.jl")
-include("bridges/slack.jl")
-include("bridges/vector_slack.jl")
+for filename in readdir(joinpath(@__DIR__, "bridges"); join = true)
+    include(filename)
+end
 
 """
     add_all_bridges(model, ::Type{T}) where {T}
