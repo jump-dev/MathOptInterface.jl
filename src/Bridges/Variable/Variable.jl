@@ -34,6 +34,7 @@ function add_all_bridges(model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(model, RSOCtoPSDBridge{T})
     MOI.Bridges.add_bridge(model, HermitianToSymmetricPSDBridge{T})
     MOI.Bridges.add_bridge(model, ParameterToEqualToBridge{T})
+    MOI.Bridges.add_bridge(model, DotProductsBridge{T})
     return
 end
 
