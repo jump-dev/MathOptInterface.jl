@@ -36,7 +36,7 @@ mutable struct ExponentialConeToScalarNonlinearFunctionBridge{
     ci_y::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.GreaterThan{T}}
 end
 
-const ExponentialToScalarNonlinearFunction{T,OT<:MOI.ModelLike} =
+const ExponentialConeToScalarNonlinearFunction{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{ExponentialConeToScalarNonlinearFunctionBridge{T},OT}
 
 function bridge_constraint(
