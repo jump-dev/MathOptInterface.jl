@@ -53,6 +53,8 @@ function bridge_constraint(
         Any[MOI.ScalarNonlinearFunction(:*, Any[y, g_exp_x_div_y]), z],
     )
     ci = MOI.add_constraint(model, g, MOI.LessThan(zero(T)))
+    # We add this as a constraint to avoid conflicting with existing variable
+    # bounds, of which there can be at most one of.
     ci_y = MOI.add_constraint(model, one(T) * y, MOI.GreaterThan(zero(T)))
     return ExponentialConeToScalarNonlinearFunctionBridge{T,F}(f, ci, ci_y)
 end
