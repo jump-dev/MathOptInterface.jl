@@ -50,9 +50,8 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, SplitComplexEqualToBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SplitComplexZerosBridge{T})
     MOI.Bridges.add_bridge(bridged_model, QuadtoSOCBridge{T})
-    # We do not add `(R)SOCtoNonConvexQuad` because it starts with a convex
-    # conic constraint and generate a non-convex constraint (in the QCP
-    # interpretation).
+    MOI.Bridges.add_bridge(bridged_model, SOCtoNonConvexQuadBridge{T})
+    MOI.Bridges.add_bridge(bridged_model, RSOCtoNonConvexQuadBridge{T})
     MOI.Bridges.add_bridge(bridged_model, NormInfinityBridge{T})
     MOI.Bridges.add_bridge(bridged_model, NormOneBridge{T})
     MOI.Bridges.add_bridge(bridged_model, GeoMeantoRelEntrBridge{T})
