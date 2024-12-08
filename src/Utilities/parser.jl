@@ -244,6 +244,8 @@ function _parsed_to_moi(model, s::Expr)
         return _parsed_scalar_to_moi(model, s.args[2])
     elseif Meta.isexpr(s, :call, 2) && s.args[1] == :VectorNonlinearFunction
         return _parsed_vector_to_moi(model, s.args[2])
+    elseif Meta.isexpr(s, :call, 2) && s.args[1] == :esc
+        return _parsed_to_moi(model, _parse_function(s.args[2], Float64))
     end
     args = Any[_parsed_to_moi(model, arg) for arg in s.args[2:end]]
     return MOI.ScalarNonlinearFunction(s.args[1], args)
