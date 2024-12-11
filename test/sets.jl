@@ -8,7 +8,6 @@ module TestSets
 
 using Test
 import MathOptInterface as MOI
-import LinearAlgebra
 
 include("dummy.jl")
 

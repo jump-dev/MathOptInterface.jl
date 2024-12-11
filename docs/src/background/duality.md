@@ -113,9 +113,7 @@ and similarly, the dual is:
 
 The scalar product is different from the canonical one for the sets
 [`PositiveSemidefiniteConeTriangle`](@ref), [`LogDetConeTriangle`](@ref),
-[`RootDetConeTriangle`](@ref),
-[`SetDotProducts`](@ref) and
-[`LinearCombinationInSet`](@ref).
+[`RootDetConeTriangle`](@ref).
 
 If the set ``C_i`` of the section [Duality](@ref) is one of these three cones,
 then the rows of the matrix ``A_i`` corresponding to off-diagonal entries are
