@@ -1824,12 +1824,18 @@ end
 
 dimension(s::SetDotProducts) = length(s.vectors)
 
-function dual_set(s::SetDotProducts)
-    return LinearCombinationInSet(s.set, s.vectors)
+function MOI.Bridges.Constraint.conversion_cost(
+    ::Type{SetDotProducts{S,A1,Vector{A1}}},
+    ::Type{SetDotProducts{S,A2,Vector{A2}}},
+) where {S,A1,A2}
+    return MOI.Bridges.Constraint.conversion_cost(A1, A2)
 end
 
-function dual_set_type(::Type{SetDotProducts{S,A,V}}) where {S,A,V}
-    return LinearCombinationInSet{S,A,V}
+function convert(
+    ::Type{SetDotProducts{S,A,Vector{A}}},
+    set::SetDotProducts,
+)
+    return SetDotProducts(set.set, convert(A, set.vectors))
 end
 
 """
@@ -1852,6 +1858,28 @@ function Base.copy(s::LinearCombinationInSet)
 end
 
 dimension(s::LinearCombinationInSet) = length(s.vectors)
+
+function MOI.Bridges.Constraint.conversion_cost(
+    ::Type{LinearCombinationInSet{S,A1,Vector{A1}}},
+    ::Type{LinearCombinationInSet{S,A2,Vector{A2}}},
+) where {S,A1,A2}
+    return MOI.Bridges.Constraint.conversion_cost(A1, A2)
+end
+
+function convert(
+    ::Type{LinearCombinationInSet{S,A,Vector{A}}},
+    set::LinearCombinationInSet,
+)
+    return LinearCombinationInSet(set.set, convert(A, set.vectors))
+end
+
+function dual_set(s::SetDotProducts)
+    return LinearCombinationInSet(s.set, s.vectors)
+end
+
+function dual_set_type(::Type{SetDotProducts{S,A,V}}) where {S,A,V}
+    return LinearCombinationInSet{S,A,V}
+end
 
 function dual_set(s::LinearCombinationInSet)
     return SetDotProducts(s.side_dimension, s.vectors)
@@ -1915,13 +1943,11 @@ function Base.getindex(m::Factorization, i::Int, j::Int)
 end
 
 """
-    struct Factorization{
+    struct PositiveSemidefiniteFactorization{
         T,
         F<:Union{AbstractVector{T},AbstractMatrix{T}},
-        D<:Union{T,AbstractVector{T}},
-    } <: AbstractMatrix{T}
+    } <: AbstractFactorization{T,F}
         factor::F
-        scaling::D
     end
 
 Matrix corresponding to `factor * Diagonal(diagonal) * factor'`.
@@ -1941,8 +1967,43 @@ function Base.getindex(m::PositiveSemidefiniteFactorization, i::Int, j::Int)
     return sum(m.factor[i, k] * m.factor[j, k]' for k in axes(m.factor, 2))
 end
 
+function MOI.Bridges.Constraint.conversion_cost(
+    ::Type{<:AbstractMatrix},
+    ::Type{<:AbstractMatrix},
+)
+    return Inf
+end
+
+function MOI.Bridges.Constraint.conversion_cost(
+    ::Type{<:Factorization{T,F}},
+    ::Type{PositiveSemidefiniteFactorization{T,F}},
+) where {T,F}
+    return 1.0
+end
+
+function Base.convert(
+    ::Type{Factorization{T,F,D}},
+    f::PositiveSemidefiniteFactorization{T,F},
+) where {F<:AbstractVector}
+    return Factorization{T,F,D}(f.factor, one(T))
+end
+
+function Base.convert(
+    ::Type{Factorization{T,F,D}},
+    f::PositiveSemidefiniteFactorization{T,F},
+) where {F<:AbstractVector}
+    return Factorization{T,F,D}(f.factor, one(T))
+end
+
 struct TriangleVectorization{T,M<:AbstractMatrix{T}} <: AbstractVector{T}
     matrix::M
+end
+
+function MOI.Bridges.Constraint.conversion_cost(
+    ::Type{TriangleVectorization{T,M1}},
+    ::Type{TriangleVectorization{T,M2}},
+) where {T,M1,M2}
+    return MOI.Bridges.Constraint.conversion_cost(M1, M2)
 end
 
 function Base.size(v::TriangleVectorization)
