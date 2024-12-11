@@ -108,7 +108,6 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, SOS1ToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SOS2ToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, IndicatorToMILPBridge{T})
-    MOI.Bridges.add_bridge(bridged_model, LinearCombinationBridge{T})
     return
 end
 
