@@ -192,7 +192,7 @@ function MOI.set(
     if value === nothing
         MOI.set(model, attr, bridge.variables[i.value], nothing)
     else
-        bridged_value = MOI.Bridges.inverse_map_function(typeof(bridge), value)
+        bridged_value = MOI.Bridges.inverse_map_function(bridge, value)
         MOI.set(model, attr, bridge.variables[i.value], bridged_value)
     end
     return

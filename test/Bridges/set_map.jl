@@ -22,7 +22,45 @@ end
 
 MOI.dimension(::SwapSet) = 2
 
-struct SwapBridge{T} <: MOI.Bridges.Constraint.SetMapBridge{
+struct VariableSwapBridge{T} <: MOI.Bridges.Variable.SetMapBridge{
+    T,
+    MOI.Nonnegatives,
+    SwapSet,
+}
+    variables::MOI.Vector{MOI.VariableIndex}
+    constraint::MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
+    set::SwapSet
+end
+
+function MOI.Bridges.Variable.bridge_constrained_variable(
+    ::Type{VariableSwapBridge{T}},
+    model::MOI.ModelLike,
+    set::SwapSet,
+) where {T}
+    variables, constraint = MOI.add_constrained_variables(
+        model,
+        MOI.Nonnegatives(2),
+    )
+    return VariableSwapBridge{T}(variables, constraint, set)
+end
+
+MOI.Bridges.map_set(bridge::VariableSwapBridge, ::MOI.Nonnegatives) = bridge.set
+
+function MOI.Bridges.inverse_map_set(bridge::VariableSwapBridge, set::SwapSet)
+    if set.swap != bridge.set.swap
+        error("Cannot change swap set")
+    end
+    return MOI.Nonnegatives(2)
+end
+
+function MOI.Bridges.map_function(bridge::VariableSwapBridge, func, i::MOI.Bridges.IndexInVector)
+    return MOI.Bridges.map_function(bridge, func)[i.value]
+end
+
+# Workaround until https://github.com/jump-dev/MathOptInterface.jl/issues/2117 is fixed
+MOI.Bridges.inverse_map_function(::VariableSwapBridge, a::Float64) = a
+
+struct ConstraintSwapBridge{T} <: MOI.Bridges.Constraint.SetMapBridge{
     T,
     MOI.Nonnegatives,
     SwapSet,
@@ -34,7 +72,7 @@ struct SwapBridge{T} <: MOI.Bridges.Constraint.SetMapBridge{
 end
 
 function MOI.Bridges.Constraint.bridge_constraint(
-    ::Type{SwapBridge{T}},
+    ::Type{ConstraintSwapBridge{T}},
     model::MOI.ModelLike,
     func::MOI.VectorOfVariables,
     set::SwapSet,
@@ -44,17 +82,19 @@ function MOI.Bridges.Constraint.bridge_constraint(
         MOI.VectorOfVariables(swap(func.variables, set.swap)),
         MOI.Nonnegatives(2),
     )
-    return SwapBridge{T}(ci, set)
+    return ConstraintSwapBridge{T}(ci, set)
 end
 
-function MOI.Bridges.map_set(bridge::SwapBridge, set::SwapSet)
+function MOI.Bridges.map_set(bridge::ConstraintSwapBridge, set::SwapSet)
     if set.swap != bridge.set.swap
         error("Cannot change swap set")
     end
     return MOI.Nonnegatives(2)
 end
 
-MOI.Bridges.inverse_map_set(bridge::SwapBridge, ::MOI.Nonnegatives) = bridge.set
+MOI.Bridges.inverse_map_set(bridge::ConstraintSwapBridge, ::MOI.Nonnegatives) = bridge.set
+
+const SwapBridge{T} = Union{VariableSwapBridge{T},ConstraintSwapBridge{T}}
 
 function MOI.Bridges.map_function(bridge::SwapBridge, func)
     return swap(func, bridge.set.swap)
@@ -90,19 +130,8 @@ function swap(f::MOI.VectorOfVariables, do_swap::Bool)
     return MOI.VectorOfVariables(swap(f.variables, do_swap))
 end
 
-function runtests()
-    for name in names(@__MODULE__; all = true)
-        if startswith("$(name)", "test_")
-            @testset "$(name)" begin
-                getfield(@__MODULE__, name)()
-            end
-        end
-    end
-    return
-end
-
 function test_other_error()
-    model = MOI.Bridges.Constraint.SingleBridgeOptimizer{SwapBridge{Float64}}(
+    model = MOI.Bridges.Constraint.SingleBridgeOptimizer{ConstraintSwapBridge{Float64}}(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
     )
     x = MOI.add_variables(model, 2)
@@ -123,8 +152,9 @@ function test_other_error()
     )
     return
 end
-function test_not_invertible()
-    model = MOI.Bridges.Constraint.SingleBridgeOptimizer{SwapBridge{Float64}}(
+
+function test_constraint_not_invertible()
+    model = MOI.Bridges.Constraint.SingleBridgeOptimizer{ConstraintSwapBridge{Float64}}(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
     )
     x = MOI.add_variables(model, 2)
@@ -162,7 +192,7 @@ end
 function test_runtests()
     for do_swap in [false, true]
         MOI.Bridges.runtests(
-            SwapBridge,
+            ConstraintSwapBridge,
             model -> begin
                 x = MOI.add_variables(model, 2)
                 func = MOI.VectorOfVariables(x)
@@ -176,6 +206,28 @@ function test_runtests()
                 MOI.add_constraint(model, func, set)
             end,
         )
+        MOI.Bridges.runtests(
+            VariableSwapBridge,
+            model -> begin
+                set = SwapSet(do_swap, NONE)
+                x = MOI.add_constrained_variables(model, set)
+            end,
+            model -> begin
+                set = MOI.Nonnegatives(2)
+                x = MOI.add_constrained_variables(model, set)
+            end,
+        )
+    end
+    return
+end
+
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
     end
     return
 end
