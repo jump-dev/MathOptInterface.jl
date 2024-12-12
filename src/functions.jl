@@ -976,10 +976,7 @@ function Base.convert(
     return convert(VariableIndex, convert(ScalarAffineFunction{T}, f))
 end
 
-function Base.convert(
-    ::Type{VariableIndex},
-    f::ScalarNonlinearFunction,
-) where {T}
+function Base.convert(::Type{VariableIndex}, f::ScalarNonlinearFunction)
     if f.head != :+ && length(f.args) != 1
         throw(InexactError(:convert, VariableIndex, f))
     end

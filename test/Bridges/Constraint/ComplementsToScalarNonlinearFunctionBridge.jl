@@ -30,11 +30,12 @@ function test_runtests_VectorOfVariables()
         x >= 0.0
         """,
         """
-        variables: f, x
-        ScalarNonlinearFunction(x * f) <= 0.0
-        ScalarNonlinearFunction(*(-1.0, f)) <= 0.0
+        variables: f, x, y
+        1.0 * f + -1.0 * y == 0.0
+        1.0 * x * y <= 0.0
+        y in Interval(0.0, Inf)
         x >= 0.0
-        """,
+        """
     )
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.ComplementsToScalarNonlinearFunctionBridge,
@@ -44,9 +45,10 @@ function test_runtests_VectorOfVariables()
         x >= 1.0
         """,
         """
-        variables: f, x
-        ScalarNonlinearFunction((x - 1.0) * f) <= 0.0
-        ScalarNonlinearFunction(-1.0 * f) <= 0.0
+        variables: f, x, y
+        1.0 * f + -1.0 * y == 0.0
+        1.0 * x * y + -1.0 * y <= 0.0
+        y in Interval(0.0, Inf)
         x >= 1.0
         """,
     )
@@ -58,9 +60,10 @@ function test_runtests_VectorOfVariables()
         x <= 1.0
         """,
         """
-        variables: f, x
-        ScalarNonlinearFunction((x - 1.0) * f) <= 0.0
-        ScalarNonlinearFunction(+(f)) <= 0.0
+        variables: f, x, y
+        1.0 * f + -1.0 * y == 0.0
+        1.0 * x * y + -1.0 * y <= 0.0
+        y in Interval(-Inf, 0.0)
         x <= 1.0
         """,
     )
@@ -73,9 +76,11 @@ function test_runtests_VectorOfVariables()
         x <= 2.0
         """,
         """
-        variables: f, x
-        ScalarNonlinearFunction((x - 2.0) * f) <= 0.0
-        ScalarNonlinearFunction((x - 1.0) * f) <= 0.0
+        variables: f, x, y
+        1.0 * f + -1.0 * y == 0.0
+        1.0 * x * y + -2.0 * y <= 0.0
+        1.0 * x * y + -1.0 * y <= 0.0
+        y in Interval(-Inf, Inf)
         x >= 1.0
         x <= 2.0
         """,
@@ -87,9 +92,9 @@ function test_runtests_VectorOfVariables()
         [f, x] in Complements(2)
         """,
         """
-        variables: f, x
-        ScalarNonlinearFunction(+(f)) <= 0.0
-        ScalarNonlinearFunction(-1.0 * f) <= 0.0
+        variables: f, x, y
+        1.0 * f + -1.0 * y == 0.0
+        y in Interval(0.0, 0.0)
         """,
     )
     MOI.Bridges.runtests(
@@ -103,15 +108,17 @@ function test_runtests_VectorOfVariables()
         x2 >= 4.0
         """,
         """
-        variables: f1, f2, x1, x2
+        variables: f1, f2, x1, x2, y1, y2
         f1 >= 1.0
         f2 >= 2.0
         x1 >= 3.0
         x2 >= 4.0
-        ScalarNonlinearFunction((x1 - 3.0) * f1) <= 0.0
-        ScalarNonlinearFunction(-1.0 * f1) <= 0.0
-        ScalarNonlinearFunction((x2 - 4.0) * f2) <= 0.0
-        ScalarNonlinearFunction(-1.0 * f2) <= 0.0
+        1.0 * f1 + -1.0 * y1 == 0.0
+        1.0 * f2 + -1.0 * y2 == 0.0
+        1.0 * x1 * y1 + -3.0 * y1 <= 0.0
+        y1 in Interval(0.0, Inf)
+        1.0 * x2 * y2 + -4.0 * y2 <= 0.0
+        y2 in Interval(0.0, Inf)
         """,
     )
     return
@@ -126,9 +133,10 @@ function test_runtests_ScalarAffineFunction()
         x >= 0.0
         """,
         """
-        variables: f, x
-        ScalarNonlinearFunction(x * esc(2.0 * f + 1.0)) <= 0.0
-        ScalarNonlinearFunction(*(-1.0, esc(2.0 * f + 1.0))) <= 0.0
+        variables: f, x, y
+        2.0 * f + 1.0 + -1.0 * y == 0.0
+        1.0 * x * y <= 0.0
+        y in Interval(0.0, Inf)
         x >= 0.0
         """,
     )
@@ -139,9 +147,9 @@ function test_runtests_ScalarAffineFunction()
         [2.0 * f + 1.0, x] in Complements(2)
         """,
         """
-        variables: f, x
-        ScalarNonlinearFunction(+(esc(2.0 * f + 1.0))) <= 0.0
-        ScalarNonlinearFunction(-1.0 * esc(2.0 * f + 1.0)) <= 0.0
+        variables: f, x, y
+        2.0 * f + 1.0 + -1.0 * y == 0.0
+        y in Interval(0.0, 0.0)
         """,
     )
     return
@@ -156,9 +164,10 @@ function test_runtests_ScalarQuadraticFunction()
         x >= 0.0
         """,
         """
-        variables: f, x
-        ScalarNonlinearFunction(x * esc(2.0 * f * f + 1.0)) <= 0.0
-        ScalarNonlinearFunction(*(-1.0, esc(2.0 * f * f + 1.0))) <= 0.0
+        variables: f, x, y
+        2.0 * f * f + 1.0 + -1.0 * y == 0.0
+        1.0 * x * y <= 0.0
+        y in Interval(0.0, Inf)
         x >= 0.0
         """,
     )
@@ -169,9 +178,9 @@ function test_runtests_ScalarQuadraticFunction()
         [2.0 * f * f + 1.0, x] in Complements(2)
         """,
         """
-        variables: f, x
-        ScalarNonlinearFunction(+(esc(2.0 * f * f + 1.0))) <= 0.0
-        ScalarNonlinearFunction(-1.0 * esc(2.0 * f * f + 1.0)) <= 0.0
+        variables: f, x, y
+        2.0 * f * f + 1.0 + -1.0 * y == 0.0
+        y in Interval(0.0, 0.0)
         """,
     )
     return
@@ -186,9 +195,10 @@ function test_runtests_ScalarNonlinearFunction()
         x >= 0.0
         """,
         """
-        variables: f, x
-        ScalarNonlinearFunction(x * sin(f)) <= 0.0
-        ScalarNonlinearFunction(*(-1.0, sin(f))) <= 0.0
+        variables: f, x, y
+        ScalarNonlinearFunction(sin(f) - y) == 0.0
+        1.0 * x * y <= 0.0
+        y in Interval(0.0, Inf)
         x >= 0.0
         """,
     )
@@ -199,9 +209,9 @@ function test_runtests_ScalarNonlinearFunction()
         VectorNonlinearFunction([sin(f), x]) in Complements(2)
         """,
         """
-        variables: f, x
-        ScalarNonlinearFunction(sin(f)) <= 0.0
-        ScalarNonlinearFunction(-1.0 * sin(f)) <= 0.0
+        variables: f, x, y
+        ScalarNonlinearFunction(sin(f) - y) == 0.0
+        y in Interval(0.0, 0.0)
         """,
     )
     return
