@@ -434,6 +434,8 @@ end
 function test_iteration_and_indexing_on_VectorOfVariables()
     f = MOI.VectorOfVariables([z, w, x, y])
     it = MOI.Utilities.eachscalar(f)
+    @test it isa AbstractVector{MOI.VariableIndex}
+    @test size(it) == (4,)
     @test length(it) == 4
     @test eltype(it) == MOI.VariableIndex
     @test collect(it) == [z, w, x, y]
@@ -454,6 +456,8 @@ function test_indexing_on_VectorAffineFunction()
         [2, 7, 5],
     )
     it = MOI.Utilities.eachscalar(f)
+    @test it isa AbstractVector{MOI.ScalarAffineFunction{Int}}
+    @test size(it) == (3,)
     @test length(it) == 3
     @test eltype(it) == MOI.ScalarAffineFunction{Int}
     g = it[2]

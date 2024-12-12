@@ -129,7 +129,7 @@ function MOI.get(
     bridge::SetMapBridge,
 )
     set = MOI.get(model, attr, bridge.constraint)
-    return MOI.Bridges.map_set(typeof(bridge), set)
+    return MOI.Bridges.map_set(bridge, set)
 end
 
 function MOI.set(
@@ -149,7 +149,7 @@ function MOI.get(
     bridge::SetMapBridge,
 )
     value = MOI.get(model, attr, bridge.constraint)
-    return MOI.Bridges.map_function(typeof(bridge), value)
+    return MOI.Bridges.map_function(bridge, value)
 end
 
 function MOI.get(
@@ -171,7 +171,7 @@ function MOI.get(
     if any(isnothing, value)
         return nothing
     end
-    return MOI.Bridges.map_function(typeof(bridge), value, i)
+    return MOI.Bridges.map_function(bridge, value, i)
 end
 
 function MOI.supports(
@@ -192,7 +192,7 @@ function MOI.set(
     if value === nothing
         MOI.set(model, attr, bridge.variables[i.value], nothing)
     else
-        bridged_value = MOI.Bridges.inverse_map_function(typeof(bridge), value)
+        bridged_value = MOI.Bridges.inverse_map_function(bridge, value)
         MOI.set(model, attr, bridge.variables[i.value], bridged_value)
     end
     return
@@ -203,7 +203,7 @@ function MOI.Bridges.bridged_function(
     i::MOI.Bridges.IndexInVector,
 ) where {T}
     func = MOI.Bridges.map_function(
-        typeof(bridge),
+        bridge,
         MOI.VectorOfVariables(bridge.variables),
         i,
     )
@@ -212,7 +212,7 @@ end
 
 function unbridged_map(bridge::SetMapBridge{T}, vi::MOI.VariableIndex) where {T}
     F = MOI.ScalarAffineFunction{T}
-    mapped = MOI.Bridges.inverse_map_function(typeof(bridge), vi)
+    mapped = MOI.Bridges.inverse_map_function(bridge, vi)
     return Pair{MOI.VariableIndex,F}[bridge.variable=>mapped]
 end
 
@@ -222,9 +222,10 @@ function unbridged_map(
 ) where {T}
     F = MOI.ScalarAffineFunction{T}
     func = MOI.VectorOfVariables(vis)
-    funcs = MOI.Bridges.inverse_map_function(typeof(bridge), func)
+    funcs = MOI.Bridges.inverse_map_function(bridge, func)
     scalars = MOI.Utilities.eachscalar(funcs)
+    # FIXME not correct for SetDotProducts, it won't recover the dot product variables
     return Pair{MOI.VariableIndex,F}[
-        bridge.variables[i] => scalars[i] for i in eachindex(vis)
+        bridge.variables[i] => scalars[i] for i in eachindex(bridge.variables)
     ]
 end
