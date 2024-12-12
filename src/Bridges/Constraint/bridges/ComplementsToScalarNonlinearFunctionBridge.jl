@@ -54,7 +54,7 @@ mutable struct ComplementsToScalarNonlinearFunctionBridge{
     y::Vector{MOI.VariableIndex}
     ci_eq::Vector{MOI.ConstraintIndex{G,MOI.EqualTo{T}}}
     ci_lt::Vector{
-        MOI.ConstraintIndex{MOI.ScalarQuadraticFunction{T},MOI.LessThan{T}}
+        MOI.ConstraintIndex{MOI.ScalarQuadraticFunction{T},MOI.LessThan{T}},
     }
     bounds::Vector{NTuple{2,T}}
 

@@ -35,7 +35,7 @@ function test_runtests_VectorOfVariables()
         1.0 * x * y <= 0.0
         y in Interval(0.0, Inf)
         x >= 0.0
-        """
+        """,
     )
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.ComplementsToScalarNonlinearFunctionBridge,
