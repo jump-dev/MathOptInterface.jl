@@ -22,11 +22,8 @@ end
 
 MOI.dimension(::SwapSet) = 2
 
-struct VariableSwapBridge{T} <: MOI.Bridges.Variable.SetMapBridge{
-    T,
-    MOI.Nonnegatives,
-    SwapSet,
-}
+struct VariableSwapBridge{T} <:
+       MOI.Bridges.Variable.SetMapBridge{T,MOI.Nonnegatives,SwapSet}
     variables::MOI.Vector{MOI.VariableIndex}
     constraint::MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Nonnegatives}
     set::SwapSet
@@ -37,10 +34,8 @@ function MOI.Bridges.Variable.bridge_constrained_variable(
     model::MOI.ModelLike,
     set::SwapSet,
 ) where {T}
-    variables, constraint = MOI.add_constrained_variables(
-        model,
-        MOI.Nonnegatives(2),
-    )
+    variables, constraint =
+        MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
     return VariableSwapBridge{T}(variables, constraint, set)
 end
 
@@ -53,7 +48,11 @@ function MOI.Bridges.inverse_map_set(bridge::VariableSwapBridge, set::SwapSet)
     return MOI.Nonnegatives(2)
 end
 
-function MOI.Bridges.map_function(bridge::VariableSwapBridge, func, i::MOI.Bridges.IndexInVector)
+function MOI.Bridges.map_function(
+    bridge::VariableSwapBridge,
+    func,
+    i::MOI.Bridges.IndexInVector,
+)
     return MOI.Bridges.map_function(bridge, func)[i.value]
 end
 
@@ -92,7 +91,12 @@ function MOI.Bridges.map_set(bridge::ConstraintSwapBridge, set::SwapSet)
     return MOI.Nonnegatives(2)
 end
 
-MOI.Bridges.inverse_map_set(bridge::ConstraintSwapBridge, ::MOI.Nonnegatives) = bridge.set
+function MOI.Bridges.inverse_map_set(
+    bridge::ConstraintSwapBridge,
+    ::MOI.Nonnegatives,
+)
+    return bridge.set
+end
 
 const SwapBridge{T} = Union{VariableSwapBridge{T},ConstraintSwapBridge{T}}
 
@@ -131,7 +135,9 @@ function swap(f::MOI.VectorOfVariables, do_swap::Bool)
 end
 
 function test_other_error()
-    model = MOI.Bridges.Constraint.SingleBridgeOptimizer{ConstraintSwapBridge{Float64}}(
+    model = MOI.Bridges.Constraint.SingleBridgeOptimizer{
+        ConstraintSwapBridge{Float64},
+    }(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
     )
     x = MOI.add_variables(model, 2)
@@ -154,7 +160,9 @@ function test_other_error()
 end
 
 function test_constraint_not_invertible()
-    model = MOI.Bridges.Constraint.SingleBridgeOptimizer{ConstraintSwapBridge{Float64}}(
+    model = MOI.Bridges.Constraint.SingleBridgeOptimizer{
+        ConstraintSwapBridge{Float64},
+    }(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
     )
     x = MOI.add_variables(model, 2)
