@@ -113,6 +113,10 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
         bridged_model,
         ExponentialConeToScalarNonlinearFunctionBridge{T},
     )
+    MOI.Bridges.add_bridge(
+        bridged_model,
+        ComplementsToScalarNonlinearFunctionBridge{T},
+    )
     return
 end
 

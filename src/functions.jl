@@ -68,6 +68,9 @@ constant(::VariableIndex, ::Type{T}) where {T} = zero(T)
 
 Base.copy(x::VariableIndex) = x
 
+Base.isapprox(::Number, ::AbstractScalarFunction; kwargs...) = false
+Base.isapprox(::AbstractScalarFunction, ::Number; kwargs...) = false
+
 Base.isapprox(x::VariableIndex, y::VariableIndex; kwargs...) = x == y
 
 """
@@ -971,6 +974,16 @@ function Base.convert(
     f::ScalarQuadraticFunction{T},
 ) where {T}
     return convert(VariableIndex, convert(ScalarAffineFunction{T}, f))
+end
+
+function Base.convert(
+    ::Type{VariableIndex},
+    f::ScalarNonlinearFunction,
+) where {T}
+    if f.head != :+ && length(f.args) != 1
+        throw(InexactError(:convert, VariableIndex, f))
+    end
+    return convert(VariableIndex, only(f.args))
 end
 
 # ScalarAffineFunction
