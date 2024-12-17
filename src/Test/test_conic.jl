@@ -5770,6 +5770,78 @@ function setup_test(
     return
 end
 
+function test_conic_PositiveSemidefiniteConeTriangle_4(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T<:Real}
+    atol = config.atol
+    rtol = config.rtol
+    @requires MOI.supports_incremental_interface(model)
+    @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}())
+    @requires MOI.supports(model, MOI.ObjectiveSense())
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.PositiveSemidefiniteConeTriangle,
+    )
+    @requires MOI.supports_constraint(
+        model,
+        MOI.ScalarAffineFunction{T},
+        MOI.EqualTo{T},
+    )
+    @requires MOI.supports_constraint(
+        model,
+        MOI.ScalarAffineFunction{T},
+        MOI.GreaterThan{T},
+    )
+
+    x, cx = MOI.add_constrained_variables(model, MOI.PositiveSemidefiniteConeTriangle(2))
+    y, cy = MOI.add_constrained_variables(model, MOI.PositiveSemidefiniteConeTriangle(2))
+    c1 = MOI.add_constraint(model, sum(1.0 .* x) - sum(1.0 .* y), MOI.EqualTo(0.0))
+    c2 = MOI.add_constraint(model, 1.0 * y[1] + 1.0 * y[3], MOI.GreaterThan(1.0))
+    obj = 1.0 * x[1] + 1.0 * x[3]
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
+    if _supports(config, MOI.optimize!)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if _supports(config, MOI.ConstraintDual)
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+        @test MOI.get.(model, MOI.VariablePrimal(), x) ≈ ones(3) ./ T(6) atol = atol rtol = rtol
+        @test MOI.get.(model, MOI.VariablePrimal(), y) ≈ [1, -1, 1] ./ T(2) atol = atol rtol = rtol
+        if _supports(config, MOI.ConstraintDual)
+            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ [1, -1, 1] ./ T(3) atol = atol rtol = rtol
+            @test MOI.get(model, MOI.ConstraintDual(), cy) ≈ ones(3) ./ T(3) atol = atol rtol = rtol
+            @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ T(2)/T(3) atol = atol rtol = rtol
+            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ T(1)/T(3) atol = atol rtol = rtol
+        end
+    end
+    return
+end
+
+# Test with multiple PSD variable on the same constraint in order to catch
+# https://github.com/jump-dev/MosekTools.jl/issues/139
+function setup_test(
+    ::typeof(test_conic_PositiveSemidefiniteConeTriangle_4),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T<:Real}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            [[1, 1, 1] / T(6); [1, -1, 1] / T(2)],
+            (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle) => [[1, -1, 1] ./ T(3), ones(3) ./ T(3)],
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [T(2)/T(3)],
+            (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}) => [T(1)/T(3)],
+        ),
+    )
+    return
+end
+
 """
     _test_det_cone_helper_ellipsoid(
         model::MOI.ModelLike,
