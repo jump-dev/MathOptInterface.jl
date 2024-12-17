@@ -5,15 +5,9 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    _test_conic_linear_helper(
-        model::MOI.ModelLike,
-        config::Config,
-        use_VectorOfVariables::Bool,
-    )
+    test_conic_linear_VectorOfVariables(model::MOI.ModelLike, config::Config)
 
-A helper function for writing other conic tests.
-
-Constructs the problem:
+Test a conic formulation of a linear program using standard conic form of the problem:
 ```
 min -3x - 2y - 4z
 st    x +  y +  z == 3
@@ -21,31 +15,23 @@ st    x +  y +  z == 3
       x>=0 y>=0 z>=0
 Opt obj = -11, soln x = 1, y = 0, z = 2
 ```
+
 """
-function _test_conic_linear_helper(
+function test_conic_linear_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config{T},
-    use_VectorOfVariables::Bool,
-) where {T<:Real}
+    config::Config,
+)
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
     )
     @requires MOI.supports(model, MOI.ObjectiveSense())
-    if use_VectorOfVariables
-        @requires MOI.supports_constraint(
-            model,
-            MOI.VectorOfVariables,
-            MOI.Nonnegatives,
-        )
-    else
-        @requires MOI.supports_constraint(
-            model,
-            MOI.VectorAffineFunction{T},
-            MOI.Nonnegatives,
-        )
-    end
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.Nonnegatives,
+    )
     @requires MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{T},
@@ -54,15 +40,7 @@ function _test_conic_linear_helper(
     v = MOI.add_variables(model, 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == 3
     vov = MOI.VectorOfVariables(v)
-    if use_VectorOfVariables
-        vc = MOI.add_constraint(model, vov, MOI.Nonnegatives(3))
-    else
-        vc = MOI.add_constraint(
-            model,
-            MOI.VectorAffineFunction{T}(vov),
-            MOI.Nonnegatives(3),
-        )
-    end
+    vc = MOI.add_constraint(model, vov, MOI.Nonnegatives(3))
     c = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
@@ -78,8 +56,7 @@ function _test_conic_linear_helper(
         @test MOI.get(
             model,
             MOI.NumberOfConstraints{
-                use_VectorOfVariables ? MOI.VectorOfVariables :
-                MOI.VectorAffineFunction{T},
+                MOI.VectorOfVariables,
                 MOI.Nonnegatives,
             }(),
         ) == 1
@@ -91,8 +68,7 @@ function _test_conic_linear_helper(
     loc = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     @test length(loc) == 2
     @test (
-        use_VectorOfVariables ? MOI.VectorOfVariables :
-        MOI.VectorAffineFunction{T},
+        MOI.VectorOfVariables,
         MOI.Nonnegatives,
     ) in loc
     @test (MOI.VectorAffineFunction{T}, MOI.Zeros) in loc
@@ -129,19 +105,6 @@ function _test_conic_linear_helper(
     return
 end
 
-"""
-    test_conic_linear_VectorOfVariables(model::MOI.ModelLike, config::Config)
-
-Test a conic formulation of a linear program using standard conic form.
-"""
-function test_conic_linear_VectorOfVariables(
-    model::MOI.ModelLike,
-    config::Config,
-)
-    _test_conic_linear_helper(model, config, true)
-    return
-end
-
 function setup_test(
     ::typeof(test_conic_linear_VectorOfVariables),
     model::MOIU.MockOptimizer,
@@ -161,13 +124,14 @@ end
 """
     test_conic_linear_VectorAffineFunction(model::MOI.ModelLike, config::Config)
 
-Test a conic formulation of a linear program using geometric conic form.
+Test a conic formulation of a linear program using geometric conic form of
+the same problem as [`test_conic_linear_VectorOfVariables`](@ref).
 """
 function test_conic_linear_VectorAffineFunction(
     model::MOI.ModelLike,
-    config::Config,
-)
-    _test_conic_linear_helper(model, config, false)
+    config::Config{T},
+) where {T}
+    test_conic_linear_VectorOfVariables(MOI.Bridges.Constraint.VectorFunctionize{T}(model), config)
     return
 end
 
