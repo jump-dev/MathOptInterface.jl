@@ -5770,13 +5770,14 @@ function setup_test(
     return
 end
 
+# Test with multiple PSD variable on the same constraint in order to catch
+# https://github.com/jump-dev/MosekTools.jl/issues/139
 function test_conic_PositiveSemidefiniteConeTriangle_4(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T<:Real}
-    atol = config.atol
-    rtol = config.rtol
     @requires MOI.supports_incremental_interface(model)
+    @requires _supports(config, MOI.optimize!)
     @requires MOI.supports(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -5797,7 +5798,6 @@ function test_conic_PositiveSemidefiniteConeTriangle_4(
         MOI.ScalarAffineFunction{T},
         MOI.GreaterThan{T},
     )
-
     x, cx = MOI.add_constrained_variables(
         model,
         MOI.PositiveSemidefiniteConeTriangle(2),
@@ -5808,42 +5808,37 @@ function test_conic_PositiveSemidefiniteConeTriangle_4(
     )
     c1 = MOI.add_constraint(
         model,
-        sum(1.0 .* x) - sum(1.0 .* y),
-        MOI.EqualTo(0.0),
+        sum(one(T) .* x) - sum(one(T) .* y),
+        MOI.EqualTo(zero(T)),
     )
-    c2 =
-        MOI.add_constraint(model, 1.0 * y[1] + 1.0 * y[3], MOI.GreaterThan(1.0))
-    obj = 1.0 * x[1] + 1.0 * x[3]
+    c2 = MOI.add_constraint(
+        model,
+        one(T) * y[1] + one(T) * y[3],
+        MOI.GreaterThan(one(T)),
+    )
+    obj = one(T) * x[1] + one(T) * x[3]
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
-    if _supports(config, MOI.optimize!)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
-        MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-        if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-        end
-        @test MOI.get.(model, MOI.VariablePrimal(), x) ≈ ones(3) ./ T(6) atol =
-            atol rtol = rtol
-        @test MOI.get.(model, MOI.VariablePrimal(), y) ≈ [1, -1, 1] ./ T(2) atol =
-            atol rtol = rtol
-        if _supports(config, MOI.ConstraintDual)
-            @test MOI.get(model, MOI.ConstraintDual(), cx) ≈ [1, -1, 1] ./ T(3) atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), cy) ≈ ones(3) ./ T(3) atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c1) ≈ T(2) / T(3) atol =
-                atol rtol = rtol
-            @test MOI.get(model, MOI.ConstraintDual(), c2) ≈ T(1) / T(3) atol =
-                atol rtol = rtol
-        end
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+    x_primal = MOI.get.(model, MOI.VariablePrimal(), x)
+    @test ≈(x_primal, ones(T, 3) ./ T(6), config)
+    y_primal = MOI.get.(model, MOI.VariablePrimal(), y)
+    @test ≈(y_primal, T[1, -1, 1] ./ T(2) config)
+    if _supports(config, MOI.ConstraintDual)
+        @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        x_dual = MOI.get(model, MOI.ConstraintDual(), cx)
+        @test ≈(x_dual, [1, -1, 1] ./ T(3) config)
+        y_dual = MOI.get(model, MOI.ConstraintDual(), cy)
+        @test ≈(y_dual, ones(T, 3) ./ T(3) config)
+        @test ≈(MOI.get(model, MOI.ConstraintDual(), c1), T(2) / T(3) config)
+        @test ≈(MOI.get(model, MOI.ConstraintDual(), c2), T(1) / T(3), config)
     end
     return
 end
 
-# Test with multiple PSD variable on the same constraint in order to catch
-# https://github.com/jump-dev/MosekTools.jl/issues/139
 function setup_test(
     ::typeof(test_conic_PositiveSemidefiniteConeTriangle_4),
     model::MOIU.MockOptimizer,
@@ -5853,9 +5848,9 @@ function setup_test(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            [[1, 1, 1] / T(6); [1, -1, 1] / T(2)],
+            T[[1, 1, 1] / T(6); [1, -1, 1] / T(2)],
             (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle) =>
-                [[1, -1, 1] ./ T(3), ones(3) ./ T(3)],
+                T[[1, -1, 1] ./ T(3), ones(T, 3) ./ T(3)],
             (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [T(2) / T(3)],
             (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}) =>
                 [T(1) / T(3)],
