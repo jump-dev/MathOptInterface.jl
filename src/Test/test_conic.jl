@@ -5826,14 +5826,14 @@ function test_conic_PositiveSemidefiniteConeTriangle_4(
     x_primal = MOI.get.(model, MOI.VariablePrimal(), x)
     @test ≈(x_primal, ones(T, 3) ./ T(6), config)
     y_primal = MOI.get.(model, MOI.VariablePrimal(), y)
-    @test ≈(y_primal, T[1, -1, 1] ./ T(2) config)
+    @test ≈(y_primal, T[1, -1, 1] ./ T(2), config)
     if _supports(config, MOI.ConstraintDual)
         @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
         x_dual = MOI.get(model, MOI.ConstraintDual(), cx)
-        @test ≈(x_dual, [1, -1, 1] ./ T(3) config)
+        @test ≈(x_dual, [1, -1, 1] ./ T(3), config)
         y_dual = MOI.get(model, MOI.ConstraintDual(), cy)
-        @test ≈(y_dual, ones(T, 3) ./ T(3) config)
-        @test ≈(MOI.get(model, MOI.ConstraintDual(), c1), T(2) / T(3) config)
+        @test ≈(y_dual, ones(T, 3) ./ T(3), config)
+        @test ≈(MOI.get(model, MOI.ConstraintDual(), c1), T(2) / T(3), config)
         @test ≈(MOI.get(model, MOI.ConstraintDual(), c2), T(1) / T(3), config)
     end
     return
