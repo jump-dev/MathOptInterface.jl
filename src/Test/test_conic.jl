@@ -5850,7 +5850,7 @@ function setup_test(
             mock,
             T[[1, 1, 1] / T(6); [1, -1, 1] / T(2)],
             (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle) =>
-                [[1, -1, 1]./T(3), ones(T, 3)./T(3)],
+                [[1, -1, 1] ./ T(3), ones(T, 3) ./ T(3)],
             (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}) => [T(2) / T(3)],
             (MOI.ScalarAffineFunction{T}, MOI.GreaterThan{T}) =>
                 [T(1) / T(3)],
