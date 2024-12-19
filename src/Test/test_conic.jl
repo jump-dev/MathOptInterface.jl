@@ -19,8 +19,8 @@ Opt obj = -11, soln x = 1, y = 0, z = 2
 """
 function test_conic_linear_VectorOfVariables(
     model::MOI.ModelLike,
-    config::Config,
-)
+    config::Config{T},
+) where {T}
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(
         model,
