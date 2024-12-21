@@ -56,6 +56,8 @@ end
 const RSOCtoPSD{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{RSOCtoPSDBridge{T},OT}
 
+MOI.Bridges.bridging_cost(::Type{<:RSOCtoPSDBridge}) = 1.5
+
 function bridge_constrained_variable(
     ::Type{RSOCtoPSDBridge{T}},
     model::MOI.ModelLike,
