@@ -25,7 +25,9 @@ end
     add_all_bridges(bridged_model, ::Type{T}) where {T}
 
 Add all bridges defined in the `Bridges.Constraint` submodule to
-`bridged_model`. The coefficient type used is `T`.
+`bridged_model`.
+
+The coefficient type used is `T`.
 """
 function add_all_bridges(bridged_model, ::Type{T}) where {T}
     if T <: AbstractFloat
@@ -50,9 +52,6 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, SplitComplexEqualToBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SplitComplexZerosBridge{T})
     MOI.Bridges.add_bridge(bridged_model, QuadtoSOCBridge{T})
-    # We do not add `(R)SOCtoNonConvexQuad` because it starts with a convex
-    # conic constraint and generate a non-convex constraint (in the QCP
-    # interpretation).
     MOI.Bridges.add_bridge(bridged_model, NormInfinityBridge{T})
     MOI.Bridges.add_bridge(bridged_model, NormOneBridge{T})
     MOI.Bridges.add_bridge(bridged_model, GeoMeantoRelEntrBridge{T})
@@ -77,9 +76,6 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, RootDetBridge{T})
     MOI.Bridges.add_bridge(bridged_model, RSOCtoSOCBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SOCtoRSOCBridge{T})
-    # We do not add `SOCtoPSDBridge` as transforming the `SOC` to `RSOC` and
-    # then to `PSD` produces a smaller SDP constraint.
-    # MOI.Bridges.add_bridge(bridged_model, SOCtoPSDBridge{T})
     MOI.Bridges.add_bridge(bridged_model, RSOCtoPSDBridge{T})
     MOI.Bridges.add_bridge(bridged_model, IndicatorActiveOnFalseBridge{T})
     MOI.Bridges.add_bridge(bridged_model, IndicatorSOS1Bridge{T})
@@ -89,9 +85,6 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, ZeroOneBridge{T})
     MOI.Bridges.add_bridge(bridged_model, IntegerToZeroOneBridge{T})
     MOI.Bridges.add_bridge(bridged_model, InequalityToComplementsBridge{T})
-    # Do not add by default
-    # MOI.Bridges.add_bridge(bridged_model, NumberConversionBridge{T})
-    # Constraint programming bridges
     MOI.Bridges.add_bridge(bridged_model, AllDifferentToCountDistinctBridge{T})
     MOI.Bridges.add_bridge(
         bridged_model,
@@ -108,11 +101,43 @@ function add_all_bridges(bridged_model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(bridged_model, SOS1ToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, SOS2ToMILPBridge{T})
     MOI.Bridges.add_bridge(bridged_model, IndicatorToMILPBridge{T})
-
     MOI.Bridges.add_bridge(
         bridged_model,
         ExponentialConeToScalarNonlinearFunctionBridge{T},
     )
+    # Bridges not added by default:
+    #
+    #  * FunctionConversionBridge
+    #      This bridge is not added because, even though it is not abstract, it
+    #      is highly parameterized, and parameterized versions such as
+    #      ScalarFunctionizeBridge are added.
+    #  * IndicatorSetMapBridge
+    #      This bridge is not added because, even though it is not abstract, it
+    #      is highly parameterized, and parameterized versions such as
+    #      IndicatorGreaterToLessThanBridge are added.
+    #  * NormSpecialCaseBridge
+    #      This bridge is not added because, even though it is not abstract, it
+    #      is highly parameterized, and parameterized versions such as
+    #      NormOneConeToNormConeBridge are added.
+    #  * NumberConversionBridge
+    #      This bridge is not added by default because it would silently enable
+    #      models with mixed precision. In most cases, this is a bug in the
+    #      user's code, so we leave this bridge as opt-in.
+    #  * RSOCtoNonConvexQuadBridge
+    #      This bridge is not added by default because it starts with a convex
+    #      conic constraint and generate a non-convex constraint (in the QCP
+    #      interpretation).
+    #  * SOCtoNonConvexQuadBridge
+    #      This bridge is not added by default because it starts with a convex
+    #      conic constraint and generate a non-convex constraint (in the QCP
+    #      interpretation).
+    #  * SOCtoPSDBridge
+    #      This bridge is not added because transforming the `SOC` to `RSOC` and
+    #      then to `PSD` produces a smaller SDP constraint. `RSOCtoPSDBridge` is
+    #      added by default.
+    #  * SetConversionBridge
+    #      This bridge is not added because, even though it is not abstract, it
+    #      is highly parameterized, and it intended for use by MOI extensions.
     return
 end
 
