@@ -29,12 +29,6 @@ Add all bridges defined in the `Bridges.Constraint` submodule to `model`.
 The coefficient type used is `T`.
 """
 function add_all_bridges(model, ::Type{T}) where {T}
-    if T <: AbstractFloat
-        # Out of order: put these bridges at the start for backwards
-        # compatibility.
-        MOI.Bridges.add_bridge(model, GreaterToIntervalBridge{T})
-        MOI.Bridges.add_bridge(model, LessToIntervalBridge{T})
-    end
     MOI.Bridges.add_bridge(model, AllDifferentToCountDistinctBridge{T})
     MOI.Bridges.add_bridge(model, BinPackingToMILPBridge{T})
     MOI.Bridges.add_bridge(model, CircuitToMILPBridge{T})
@@ -43,10 +37,11 @@ function add_all_bridges(model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(model, CountBelongsToMILPBridge{T})
     MOI.Bridges.add_bridge(model, CountDistinctToMILPBridge{T})
     MOI.Bridges.add_bridge(model, CountGreaterThanToMILPBridge{T})
-    MOI.Bridges.add_bridge(
-        model,
-        ExponentialConeToScalarNonlinearFunctionBridge{T},
-    )
+    # * ExponentialConeToScalarNonlinearFunctionBridge{T}
+    #      This bridge is not added by default because it starts with a convex
+    #      conic constraint and adds a nonlinear constraint that local NLP
+    #      solvers like Ipopt can struggle with because of log(x) when x is 0.
+    #      In addition, the bridge does not support ConstraintDual.
     #  * FunctionConversionBridge{T}
     #      This bridge is not added because, even though it is not abstract, it
     #      is highly parameterized, and parameterized versions such as
@@ -54,6 +49,7 @@ function add_all_bridges(model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(model, GeoMeanBridge{T})
     MOI.Bridges.add_bridge(model, GeoMeanToPowerBridge{T})
     MOI.Bridges.add_bridge(model, GeoMeantoRelEntrBridge{T})
+    MOI.Bridges.add_bridge(model, GreaterToIntervalBridge{T})
     MOI.Bridges.add_bridge(model, GreaterToLessBridge{T})
     MOI.Bridges.add_bridge(model, HermitianToSymmetricPSDBridge{T})
     MOI.Bridges.add_bridge(model, IndicatorActiveOnFalseBridge{T})
@@ -68,6 +64,7 @@ function add_all_bridges(model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(model, InequalityToComplementsBridge{T})
     MOI.Bridges.add_bridge(model, IntegerToZeroOneBridge{T})
     MOI.Bridges.add_bridge(model, LessToGreaterBridge{T})
+    MOI.Bridges.add_bridge(model, LessToIntervalBridge{T})
     MOI.Bridges.add_bridge(model, LogDetBridge{T})
     MOI.Bridges.add_bridge(model, NonnegToNonposBridge{T})
     MOI.Bridges.add_bridge(model, NonposToNonnegBridge{T})
