@@ -49,7 +49,9 @@ function add_all_bridges(model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(model, GeoMeanBridge{T})
     MOI.Bridges.add_bridge(model, GeoMeanToPowerBridge{T})
     MOI.Bridges.add_bridge(model, GeoMeantoRelEntrBridge{T})
-    MOI.Bridges.add_bridge(model, GreaterToIntervalBridge{T})
+    if T <: AbstractFloat  # See note in docstring of AbstractToIntervalBridge
+        MOI.Bridges.add_bridge(model, GreaterToIntervalBridge{T})
+    end
     MOI.Bridges.add_bridge(model, GreaterToLessBridge{T})
     MOI.Bridges.add_bridge(model, HermitianToSymmetricPSDBridge{T})
     MOI.Bridges.add_bridge(model, IndicatorActiveOnFalseBridge{T})
@@ -64,7 +66,9 @@ function add_all_bridges(model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(model, InequalityToComplementsBridge{T})
     MOI.Bridges.add_bridge(model, IntegerToZeroOneBridge{T})
     MOI.Bridges.add_bridge(model, LessToGreaterBridge{T})
-    MOI.Bridges.add_bridge(model, LessToIntervalBridge{T})
+    if T <: AbstractFloat  # See note in docstring of AbstractToIntervalBridge
+        MOI.Bridges.add_bridge(model, LessToIntervalBridge{T})
+    end
     MOI.Bridges.add_bridge(model, LogDetBridge{T})
     MOI.Bridges.add_bridge(model, NonnegToNonposBridge{T})
     MOI.Bridges.add_bridge(model, NonposToNonnegBridge{T})
