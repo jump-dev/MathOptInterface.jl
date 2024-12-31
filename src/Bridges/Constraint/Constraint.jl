@@ -63,7 +63,11 @@ function add_all_bridges(model, ::Type{T}) where {T}
     #      IndicatorGreaterToLessThanBridge are added.
     MOI.Bridges.add_bridge(model, IndicatorSOS1Bridge{T})
     MOI.Bridges.add_bridge(model, IndicatorToMILPBridge{T})
-    MOI.Bridges.add_bridge(model, InequalityToComplementsBridge{T})
+    #   * InequalityToComplementsBridge{T}
+    #       This bridge is not added because of a bug in Convex.jl:
+    #       https://github.com/jump-dev/Convex.jl/blob/ca5324217575af263bfeee20b3e0526bed051887/src/MOI_wrapper.jl#L119-L133
+    #       It is also really useful only to PATHSolver.jl, which could add this
+    #       to MOI.ListOfRequiredBridges.
     MOI.Bridges.add_bridge(model, IntegerToZeroOneBridge{T})
     MOI.Bridges.add_bridge(model, LessToGreaterBridge{T})
     if T <: AbstractFloat  # See note in docstring of AbstractToIntervalBridge
