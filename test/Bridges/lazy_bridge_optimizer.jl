@@ -1041,13 +1041,13 @@ Objective function of type `MOI.ScalarQuadraticFunction{$T}` is not supported an
             """
 Bridge graph with 2 variable nodes, 5 constraint nodes and 2 objective nodes.
  [1] constrained variables in `MOI.Reals` are bridged (distance 1) by $(MOI.Bridges.Variable.FreeBridge{T}).
- [2] constrained variables in `MOI.RotatedSecondOrderCone` are bridged (distance 2.5) by $(MOI.Bridges.Variable.RSOCtoPSDBridge{T}).
- (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 5.5) by $(MOI.Bridges.Constraint.QuadtoSOCBridge{T}).
- (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 4.5) by $(MOI.Bridges.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.RotatedSecondOrderCone}).
+ [2] constrained variables in `MOI.RotatedSecondOrderCone` are bridged (distance 11) by $(MOI.Bridges.Variable.RSOCtoPSDBridge{T}).
+ (1) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.GreaterThan{$T}` constraints are bridged (distance 14) by $(MOI.Bridges.Constraint.QuadtoSOCBridge{T}).
+ (2) `MOI.VectorAffineFunction{$T}`-in-`MOI.RotatedSecondOrderCone` constraints are bridged (distance 13) by $(MOI.Bridges.Constraint.VectorSlackBridge{T,MOI.VectorAffineFunction{T},MOI.RotatedSecondOrderCone}).
  (3) `MOI.VariableIndex`-in-`MOI.EqualTo{$T}` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.ScalarFunctionizeBridge{T,MOI.EqualTo{T}}).
  (4) `MOI.VectorAffineFunction{$T}`-in-`MOI.Zeros` constraints are bridged (distance 1) by $(MOI.Bridges.Constraint.ScalarizeBridge{T,MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}).
- (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are bridged (distance 5.5) by $(MOI.Bridges.Constraint.QuadtoSOCBridge{T}).
- |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is bridged (distance 14) by $(MOI.Bridges.Objective.SlackBridge{T,MOI.ScalarQuadraticFunction{T},MOI.ScalarQuadraticFunction{T}}).
+ (5) `MOI.ScalarQuadraticFunction{$T}`-in-`MOI.LessThan{$T}` constraints are bridged (distance 14) by $(MOI.Bridges.Constraint.QuadtoSOCBridge{T}).
+ |1| objective function of type `MOI.ScalarQuadraticFunction{$T}` is bridged (distance 31) by $(MOI.Bridges.Objective.SlackBridge{T,MOI.ScalarQuadraticFunction{T},MOI.ScalarQuadraticFunction{T}}).
  |2| objective function of type `MOI.VariableIndex` is bridged (distance 1) by $(MOI.Bridges.Objective.FunctionizeBridge{T,MOI.VariableIndex}).
 """,
         )
