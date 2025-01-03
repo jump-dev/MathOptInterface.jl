@@ -80,7 +80,7 @@ const SOCtoPSD{T,OT<:MOI.ModelLike} =
 # This bridge destorys a lot of structure and adding PSD variables is almost
 # always undesirable. We give this bridge an arbitrarily hight cost so that it
 # is used only if necessary.
-bridging_cost(::Type{<:SOCtoPSDBridge}) = 10.0
+MOI.Bridges.bridging_cost(::Type{<:SOCtoPSDBridge}) = 10.0
 
 function concrete_bridge_type(
     ::Type{<:SOCtoPSDBridge{T}},
@@ -194,7 +194,7 @@ const RSOCtoPSD{T,OT<:MOI.ModelLike} =
 # This bridge destorys a lot of structure and adding PSD variables is almost
 # always undesirable. We give this bridge an arbitrarily hight cost so that it
 # is used only if necessary.
-bridging_cost(::Type{<:RSOCtoPSDBridge}) = 10.0
+MOI.Bridges.bridging_cost(::Type{<:RSOCtoPSDBridge}) = 10.0
 
 function concrete_bridge_type(
     ::Type{<:RSOCtoPSDBridge{T}},
