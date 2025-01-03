@@ -210,10 +210,12 @@ function _basic_constraint_test_helper(
     config::Config{T},
     ::Type{UntypedF},
     ::Type{UntypedS},
+    add_variables_fn::Function = MOI.add_variables,
 ) where {T,UntypedF,UntypedS}
     set = _set(T, UntypedS)
     N = MOI.dimension(set)
-    x = MOI.add_variables(model, N)
+    x = add_variables_fn(model, N)
+
     constraint_function = _function(T, UntypedF, x)
     @assert MOI.output_dimension(constraint_function) == N
     F, S = typeof(constraint_function), typeof(set)
@@ -404,11 +406,17 @@ function test_basic_VectorAffineFunction_Indicator_LessThan(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
+    function add_variables_fn(model, N)
+        x = MOI.add_variables(model, N)
+        MOI.add_constraint(model, x[1], MOI.ZeroOne())
+        return x
+    end
     _basic_constraint_test_helper(
         model,
         config,
         MOI.VectorAffineFunction,
         MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}},
+        add_variables_fn,
     )
     return
 end
@@ -417,11 +425,17 @@ function test_basic_VectorAffineFunction_Indicator_GreaterThan(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T}
+    function add_variables_fn(model, N)
+        x = MOI.add_variables(model, N)
+        MOI.add_constraint(model, x[1], MOI.ZeroOne())
+        return x
+    end
     _basic_constraint_test_helper(
         model,
         config,
         MOI.VectorAffineFunction,
         MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{T}},
+        add_variables_fn,
     )
     return
 end
