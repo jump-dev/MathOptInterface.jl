@@ -211,6 +211,26 @@ function test_runtests()
     return
 end
 
+function test_bridging_cost_SOCtoPSD()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.SOCtoPSD{Float64}(inner)
+    x = MOI.add_variables(model, 3)
+    c = MOI.add_constraint(model, x, MOI.SecondOrderCone(3))
+    bridge = model.map[c]
+    MOI.Bridges.bridging_cost(typeof(bridge)) == 10.0
+    return
+end
+
+function test_bridging_cost_RSOCtoPSD()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.RSOCtoPSD{Float64}(inner)
+    x = MOI.add_variables(model, 3)
+    c = MOI.add_constraint(model, x, MOI.RotatedSecondOrderCone(3))
+    bridge = model.map[c]
+    MOI.Bridges.bridging_cost(typeof(bridge)) == 10.0
+    return
+end
+
 end  # module
 
 TestConstraintSOCtoPSD.runtests()
