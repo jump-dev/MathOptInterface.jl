@@ -78,8 +78,8 @@ const SOCtoPSD{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{SOCtoPSDBridge{T},OT}
 
 # This bridge destorys a lot of structure and adding PSD variables is almost
-# always undesirable. We give this bridge an arbitrarily hight cost so that it
-# is used only if necessary.
+# always undesirable. We give this bridge a high cost so that it is used only if
+# necessary.
 MOI.Bridges.bridging_cost(::Type{<:SOCtoPSDBridge}) = 10.0
 
 function concrete_bridge_type(
@@ -192,8 +192,8 @@ const RSOCtoPSD{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{RSOCtoPSDBridge{T},OT}
 
 # This bridge destorys a lot of structure and adding PSD variables is almost
-# always undesirable. We give this bridge an arbitrarily hight cost so that it
-# is used only if necessary.
+# always undesirable. We give this bridge a high cost so that it is used only if
+# necessary.
 MOI.Bridges.bridging_cost(::Type{<:RSOCtoPSDBridge}) = 10.0
 
 function concrete_bridge_type(
