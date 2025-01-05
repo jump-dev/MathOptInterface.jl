@@ -567,6 +567,20 @@ function test_double_deletion_scalar()
     # careful not to delete the second one twice, see https://github.com/jump-dev/MathOptInterface.jl/issues/1231
     model =
         MOI.instantiate(AffineOnlyModel{Float64}, with_bridge_type = Float64)
+    # If LessToGreaterBridge exists, this goes from:
+    #   VariableIndex(x) in LessThan(1.0)
+    #   ScalarAffineFunction(-1.0x) in GreaterThan(-1.0)     (LessToGreater)
+    #   ScalarAffineFunction(-1.0x) in Interval(-1.0, Inf)   (GreaterToInterval)
+    # we want instead
+    #   VariableIndex(x) in LessThan(1.0)
+    #   VariableIndex(x) in Interval(-Inf, 1.0)             (LessToInterval)
+    #   ScalarAffineFunction(1.0x) in Interval(-Inf, 1.0)   (FunctionConversion)
+    # To check that we handle the LessThan and Interval sets on the same
+    # VariableIndex correctly.
+    MOI.Bridges.remove_bridge(
+        model,
+        MOI.Bridges.Constraint.LessToGreaterBridge{Float64},
+    )
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, x, MOI.LessThan(1.0))
     # Need to test the bridging to make sure it's not functionized first as otherwise,

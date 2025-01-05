@@ -1704,7 +1704,6 @@ function test_MOI_runtests_No_RSOCModel()
     return
 end
 
-# Test that RSOCtoPSD is used instead of RSOC+SOCtoPSD as it is a shortest path.
 function test_bridge_selection()
     mock = MOI.Utilities.MockOptimizer(NoRSOCModel{Float64}())
     bridged_mock = MOI.Bridges.LazyBridgeOptimizer(mock)
@@ -1751,13 +1750,13 @@ function test_bridge_selection()
         bridged_mock,
         MOI.VectorOfVariables,
         MOI.RotatedSecondOrderCone,
-    ) == MOI.Bridges.Constraint.RSOCtoPSDBridge{
+    ) == MOI.Bridges.Constraint.RSOCtoSOCBridge{
         Float64,
         MOI.VectorAffineFunction{Float64},
         MOI.VectorOfVariables,
     }
     @test MOI.Bridges.bridge(bridged_mock, c) isa
-          MOI.Bridges.Constraint.RSOCtoPSDBridge
+          MOI.Bridges.Constraint.RSOCtoSOCBridge
     @test bridged_mock.graph.constraint_dist[MOI.Bridges.node(
         bridged_mock,
         MOI.VectorOfVariables,
