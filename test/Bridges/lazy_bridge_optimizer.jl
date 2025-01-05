@@ -1704,6 +1704,67 @@ function test_MOI_runtests_No_RSOCModel()
     return
 end
 
+function test_bridge_selection()
+    mock = MOI.Utilities.MockOptimizer(NoRSOCModel{Float64}())
+    bridged_mock = MOI.Bridges.LazyBridgeOptimizer(mock)
+
+    MOI.Bridges.add_bridge(
+        bridged_mock,
+        MOI.Bridges.Constraint.SplitIntervalBridge{Float64},
+    )
+    MOI.Bridges.add_bridge(
+        bridged_mock,
+        MOI.Bridges.Constraint.RSOCtoPSDBridge{Float64},
+    )
+    MOI.Bridges.add_bridge(
+        bridged_mock,
+        MOI.Bridges.Constraint.SOCtoPSDBridge{Float64},
+    )
+    MOI.Bridges.add_bridge(
+        bridged_mock,
+        MOI.Bridges.Constraint.RSOCtoSOCBridge{Float64},
+    )
+    @test !(MOI.supports_constraint(
+        bridged_mock,
+        MOI.VectorAffineFunction{Float64},
+        MOI.LogDetConeTriangle,
+    ))
+    x = MOI.add_variables(bridged_mock, 3)
+    err = MOI.UnsupportedConstraint{
+        MOI.VectorAffineFunction{Float64},
+        MOI.LogDetConeTriangle,
+    }()
+    @test_throws err begin
+        MOI.Bridges.bridge_type(
+            bridged_mock,
+            MOI.VectorAffineFunction{Float64},
+            MOI.LogDetConeTriangle,
+        )
+    end
+    c = MOI.add_constraint(
+        bridged_mock,
+        MOI.VectorOfVariables(x),
+        MOI.RotatedSecondOrderCone(3),
+    )
+    @test MOI.Bridges.bridge_type(
+        bridged_mock,
+        MOI.VectorOfVariables,
+        MOI.RotatedSecondOrderCone,
+    ) == MOI.Bridges.Constraint.RSOCtoSOCBridge{
+        Float64,
+        MOI.VectorAffineFunction{Float64},
+        MOI.VectorOfVariables,
+    }
+    @test MOI.Bridges.bridge(bridged_mock, c) isa
+          MOI.Bridges.Constraint.RSOCtoSOCBridge
+    @test bridged_mock.graph.constraint_dist[MOI.Bridges.node(
+        bridged_mock,
+        MOI.VectorOfVariables,
+        MOI.RotatedSecondOrderCone,
+    ).index] == 1
+    return
+end
+
 function test_supports()
     mock = MOI.Utilities.MockOptimizer(NoRSOCModel{Float64}())
     full_bridged_mock = MOI.Bridges.full_bridge_optimizer(mock, Float64)
