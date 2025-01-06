@@ -592,7 +592,7 @@ end
 Type of functions obtained by indexing objects obtained by calling `eachscalar`
 on functions of type `F`.
 """
-function scalar_type end
+scalar_type(::Type{F}) where {F} = Any  # A default fallback
 
 scalar_type(::Type{<:AbstractVector{T}}) where {T} = T
 
@@ -614,7 +614,7 @@ scalar_type(::Type{MOI.VectorNonlinearFunction}) = MOI.ScalarNonlinearFunction
 Return the [`MOI.AbstractVectorFunction`](@ref) associated with the scalar type
 `F`.
 """
-function vector_type end
+vector_type(::Type{F}) where {F} = Any  # A default fallback
 
 vector_type(::Type{T}) where {T} = Vector{T}
 
