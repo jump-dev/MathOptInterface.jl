@@ -48,5 +48,6 @@ include("model.jl")
 include("evaluator.jl")
 
 include("ReverseAD/ReverseAD.jl")
+include("SymbolicAD/SymbolicAD.jl")
 
 end  # module
