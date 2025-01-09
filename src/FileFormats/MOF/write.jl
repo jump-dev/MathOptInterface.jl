@@ -95,10 +95,10 @@ function write_nlpblock(
         objective = MOI.objective_expr(nlp_block.evaluator)
         objective = _lift_variable_indices(objective)
         sense = MOI.get(model, MOI.ObjectiveSense())
-        object["objective"] = NamedTuple{(:sense, :function)}(
-            (moi_to_object(sense),
-            moi_to_object(Nonlinear(objective), name_map))
-        )
+        object["objective"] = NamedTuple{(:sense, :function)}((
+            moi_to_object(sense),
+            moi_to_object(Nonlinear(objective), name_map),
+        ))
     end
     for (row, bounds) in enumerate(nlp_block.constraint_bounds)
         constraint = MOI.constraint_expr(nlp_block.evaluator, row)
@@ -106,10 +106,10 @@ function write_nlpblock(
         func = _lift_variable_indices(func)
         push!(
             object["constraints"],
-            NamedTuple{(:function, :set)}(
-            (moi_to_object(Nonlinear(func), name_map),
-            moi_to_object(set, name_map),)
-            )
+            NamedTuple{(:function, :set)}((
+                moi_to_object(Nonlinear(func), name_map),
+                moi_to_object(set, name_map),
+            )),
         )
     end
     return
@@ -247,10 +247,7 @@ function _convert_nonlinear_to_mof(
 )
     node = (type = string(f.head), args = Any[])
     for arg in f.args
-        push!(
-            node[:args],
-            _convert_nonlinear_to_mof(arg, node_list, name_map),
-        )
+        push!(node[:args], _convert_nonlinear_to_mof(arg, node_list, name_map))
     end
     push!(node_list, node)
     return (type = "node", index = length(node_list))
@@ -294,8 +291,7 @@ end
 
 function moi_to_object(foo::Nonlinear, name_map::Dict{MOI.VariableIndex,String})
     node_list = Any[]
-    root =
-        _convert_nonlinear_to_mof(foo.expr, node_list, name_map)
+    root = _convert_nonlinear_to_mof(foo.expr, node_list, name_map)
     return (
         type = "ScalarNonlinearFunction",
         root = root,
@@ -322,10 +318,7 @@ function moi_to_object(
     foo::MOI.ScalarAffineTerm,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return (
-        coefficient = foo.coefficient,
-        variable = name_map[foo.variable],
-    )
+    return (coefficient = foo.coefficient, variable = name_map[foo.variable])
 end
 
 function moi_to_object(
@@ -536,10 +529,7 @@ function moi_to_object(
     set::MOI.Reified,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return (
-        type = "Reified",
-        set = moi_to_object(set.set, name_map),
-    )
+    return (type = "Reified", set = moi_to_object(set.set, name_map))
 end
 
 function moi_to_object(
@@ -556,8 +546,5 @@ function moi_to_object(
     set::MOI.Scaled,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return (
-        type = "Scaled",
-        set = moi_to_object(set.set, name_map),
-    )
+    return (type = "Scaled", set = moi_to_object(set.set, name_map))
 end

@@ -307,11 +307,7 @@ function test_Roundtrip_nonlinear_expressions()
         :(ifelse($x > 0, 1, $y)),
     ]
         node_list = Any[]
-        object = MOF._convert_nonlinear_to_mof(
-            expr,
-            node_list,
-            var_to_string,
-        )
+        object = MOF._convert_nonlinear_to_mof(expr, node_list, var_to_string)
         @test _convert_mof_to_expr(object, node_list, string_to_var) == expr
     end
     return
@@ -381,8 +377,7 @@ function test_Blank_variable_name()
     variable = MOI.add_variable(model)
     @test_throws Exception MOF.moi_to_object(variable, model)
     MOI.FileFormats.create_unique_names(model, warn = true)
-    @test MOF.moi_to_object(variable, model) ==
-        (name = "x1",)
+    @test MOF.moi_to_object(variable, model) == (name = "x1",)
 end
 
 function test_Duplicate_variable_name()
@@ -1486,14 +1481,9 @@ function test_integer_coefficients()
     f = 2 * x * x + 3 * x + 4
     @test MOF.moi_to_object(f, names) == (
         type = "ScalarQuadraticFunction",
-        affine_terms =
-            [(coefficient = 3, variable = "x")],
+        affine_terms = [(coefficient = 3, variable = "x")],
         quadratic_terms = [
-            (
-                coefficient = 4,
-                variable_1 = "x",
-                variable_2 = "x",
-            ),
+            (coefficient = 4, variable_1 = "x", variable_2 = "x"),
         ],
         constant = 4,
     )
@@ -1542,20 +1532,8 @@ function test_mof_scalaraffinefunction()
         root = (type = "node", index = 3),
         node_list = Any[
             (type = "*", args = [1.0, "x"]),
-            (
-                type = "+",
-                args = [
-                    (type = "node", index = 1),
-                    2.0,
-                ],
-            ),
-            (
-                type = "log",
-                args = Any[(
-                    type = "node",
-                    index = 2,
-                )],
-            ),
+            (type = "+", args = [(type = "node", index = 1), 2.0]),
+            (type = "log", args = Any[(type = "node", index = 2)]),
         ],
     )
     @test object == object_dest
@@ -1573,20 +1551,8 @@ function test_mof_scalarquadraticfunction()
         root = (type = "node", index = 3),
         node_list = Any[
             (type = "*", args = [1.0, "x", "x"]),
-            (
-                type = "+",
-                args = [
-                    (type = "node", index = 1),
-                    2.0,
-                ],
-            ),
-            (
-                type = "log",
-                args = Any[(
-                    type = "node",
-                    index = 2,
-                )],
-            ),
+            (type = "+", args = [(type = "node", index = 1), 2.0]),
+            (type = "log", args = Any[(type = "node", index = 2)]),
         ],
     )
     @test object == object_dest
