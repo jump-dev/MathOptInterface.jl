@@ -32,7 +32,7 @@ function Base.write(io::IO, model::Model)
     return
 end
 
-function write_variables(object, model::Model)
+function write_variables(object::Object, model::Model)
     name_map = Dict{MOI.VariableIndex,String}()
     for index in MOI.get(model, MOI.ListOfVariableIndices())
         variable = moi_to_object(index, model)
@@ -81,10 +81,10 @@ function extract_function_and_set(expr::Expr)
 end
 
 function write_nlpblock(
-    object::T,
+    object::Object,
     model::Model,
     name_map::Dict{MOI.VariableIndex,String},
-) where {T<:Object}
+)
     nlp_block = MOI.get(model, MOI.NLPBlock())
     if nlp_block === nothing
         return
@@ -116,10 +116,10 @@ function write_nlpblock(
 end
 
 function write_objective(
-    object::T,
+    object::Object,
     model::Model,
     name_map::Dict{MOI.VariableIndex,String},
-) where {T<:Object}
+)
     if object["objective"][:sense] != "feasibility"
         return  # Objective must have been written from NLPBlock.
     end
@@ -136,7 +136,7 @@ function write_objective(
 end
 
 function write_constraints(
-    object,
+    object::Object,
     model::Model,
     name_map::Dict{MOI.VariableIndex,String},
 )
