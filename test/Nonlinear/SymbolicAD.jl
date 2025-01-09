@@ -226,9 +226,7 @@ function test_simplify_VectorQuadraticFunction()
     x = MOI.VariableIndex(1)
     f = MOI.VectorQuadraticFunction{Float64}(
         MOI.VectorQuadraticTerm{Float64}[],
-        MOI.VectorAffineTerm{Float64}[
-            MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(3.0, x))
-        ],
+        [MOI.VectorAffineTerm{Float64}(2, MOI.ScalarAffineTerm(3.0, x))],
         [1.0, 0.0],
     )
     g = MOI.Utilities.operate(vcat, Float64, 1.0, 3.0 * x)
