@@ -95,10 +95,10 @@ function write_nlpblock(
         objective = MOI.objective_expr(nlp_block.evaluator)
         objective = _lift_variable_indices(objective)
         sense = MOI.get(model, MOI.ObjectiveSense())
-        object["objective"] = NamedTuple{(:sense, :function)}((
-            moi_to_object(sense),
-            moi_to_object(Nonlinear(objective), name_map),
-        ))
+        object["objective"] = (;
+            :sense => moi_to_object(sense),
+            :function => moi_to_object(Nonlinear(objective), name_map),
+        )
     end
     for (row, bounds) in enumerate(nlp_block.constraint_bounds)
         constraint = MOI.constraint_expr(nlp_block.evaluator, row)
@@ -106,10 +106,10 @@ function write_nlpblock(
         func = _lift_variable_indices(func)
         push!(
             object["constraints"],
-            NamedTuple{(:function, :set)}((
-                moi_to_object(Nonlinear(func), name_map),
-                moi_to_object(set, name_map),
-            )),
+            (;
+                :function => moi_to_object(Nonlinear(func), name_map),
+                :set => moi_to_object(set, name_map),
+            ),
         )
     end
     return
@@ -124,15 +124,14 @@ function write_objective(
         return  # Objective must have been written from NLPBlock.
     end
     sense = MOI.get(model, MOI.ObjectiveSense())
-    keys = Symbol[:sense]
-    values = Any[moi_to_object(sense)]
     if sense != MOI.FEASIBILITY_SENSE
         F = MOI.get(model, MOI.ObjectiveFunctionType())
         objective_function = MOI.get(model, MOI.ObjectiveFunction{F}())
-        push!(keys, :function)
-        push!(values, moi_to_object(objective_function, name_map))
+        object["objective"] = (;
+            :sense => moi_to_object(sense),
+            :function => moi_to_object(objective_function, name_map),
+        )
     end
-    object["objective"] = NamedTuple{Tuple(keys)}(values)
     return
 end
 
@@ -177,28 +176,22 @@ function moi_to_object(
     set = MOI.get(model, MOI.ConstraintSet(), index)
     dual_start = MOI.get(model, MOI.ConstraintDualStart(), index)
     primal_start = MOI.get(model, MOI.ConstraintPrimalStart(), index)
-    keys = Symbol[]
-    values = Any[]
+    pairs = Pair{Symbol,Any}[]
     if F != MOI.VariableIndex
         name = MOI.get(model, MOI.ConstraintName(), index)
         if name != ""
-            push!(keys, :name)
-            push!(values, name)
+            push!(pairs, :name => name)
         end
     end
-    push!(keys, :function)
-    push!(values, moi_to_object(func, name_map))
-    push!(keys, :set)
-    push!(values, moi_to_object(set, name_map))
+    push!(pairs, :function => moi_to_object(func, name_map))
+    push!(pairs, :set => moi_to_object(set, name_map))
     if !isnothing(dual_start)
-        push!(keys, :dual_start)
-        push!(values, dual_start)
+        push!(pairs, :dual_start => dual_start)
     end
     if !isnothing(primal_start)
-        push!(keys, :primal_start)
-        push!(values, primal_start)
+        push!(pairs, :primal_start => primal_start)
     end
-    return NamedTuple{Tuple(keys)}(values)
+    return NamedTuple(pairs)
 end
 
 function moi_to_object(sense::MOI.OptimizationSense)
@@ -443,13 +436,11 @@ function moi_to_object(
     set::SetType,
     ::Dict{MOI.VariableIndex,String},
 ) where {SetType}
-    keys = Symbol[:type]
-    values = Any[head_name(SetType)]
+    pairs = Pair{Symbol,Any}[:type=>head_name(SetType)]
     for key in fieldnames(SetType)
-        push!(keys, Symbol(string(key)))
-        push!(values, getfield(set, key))
+        push!(pairs, Symbol(string(key)) => getfield(set, key))
     end
-    return NamedTuple{Tuple(keys)}(values)
+    return NamedTuple(pairs)
 end
 
 # ========== Non-typed scalar sets ==========
