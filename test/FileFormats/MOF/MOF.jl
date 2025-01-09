@@ -144,42 +144,36 @@ function test_nonlinear_error_handling()
     variable_to_string = Dict{MOI.VariableIndex,String}()
     # Test unsupported function for Expr -> MOF.
     @test_throws Exception MOF._convert_nonlinear_to_mof(
-        MOF.OrderedObject,
         :(not_supported_function(x)),
         node_list,
         variable_to_string,
     )
     # Test n-ary function with no arguments.
     @test_throws Exception MOF._convert_nonlinear_to_mof(
-        MOF.OrderedObject,
         :(min()),
         node_list,
         variable_to_string,
     )
     # Test unary function with two arguments.
     @test_throws Exception MOF._convert_nonlinear_to_mof(
-        MOF.OrderedObject,
         :(sin(x, y)),
         node_list,
         variable_to_string,
     )
     # Test binary function with one arguments.
     @test_throws Exception MOF._convert_nonlinear_to_mof(
-        MOF.OrderedObject,
         :(^(x)),
         node_list,
         variable_to_string,
     )
     # An expression with something other than :call as the head.
     @test_throws Exception MOF._convert_nonlinear_to_mof(
-        MOF.OrderedObject,
         :(a <= b <= c),
         node_list,
         variable_to_string,
     )
     # Hit the default fallback with an un-interpolated complex number.
     @test_throws Exception MOF._convert_nonlinear_to_mof(
-        MOF.OrderedObject,
         :(1 + 2im),
         node_list,
         variable_to_string,
@@ -222,27 +216,54 @@ function _convert_mof_to_expr(
     node_list::Vector{T},
     name_map::Dict{String,MOI.VariableIndex},
 ) where {T}
-    head = haskey(node, "type") ? node["type"] : node["head"]
+    head = haskey(node, :type) ? node[:type] : node[:head]
     if head == "real"
-        return node["value"]
+        return node[:value]
     elseif head == "complex"
-        return Complex(node["real"], node["imag"])
+        return Complex(node[:real], node[:imag])
     elseif head == "variable"
-        return name_map[node["name"]]
+        return name_map[node[:name]]
     elseif head == "node"
         return _convert_mof_to_expr(
-            node_list[node["index"]],
+            node_list[node[:index]],
             node_list,
             name_map,
         )
     else
         expr = Expr(:call, Symbol(head))
-        for arg in node["args"]
+        for arg in node[:args]
             push!(expr.args, _convert_mof_to_expr(arg, node_list, name_map))
         end
         return expr
     end
 end
+
+# function _convert_mof_to_expr(
+#     node::T,
+#     node_list::Vector{T},
+#     name_map::Dict{String,MOI.VariableIndex},
+# ) where {T}
+#     head = haskey(node, "type") ? node["type"] : node["head"]
+#     if head == "real"
+#         return node["value"]
+#     elseif head == "complex"
+#         return Complex(node["real"], node["imag"])
+#     elseif head == "variable"
+#         return name_map[node["name"]]
+#     elseif head == "node"
+#         return _convert_mof_to_expr(
+#             node_list[node["index"]],
+#             node_list,
+#             name_map,
+#         )
+#     else
+#         expr = Expr(:call, Symbol(head))
+#         for arg in node["args"]
+#             push!(expr.args, _convert_mof_to_expr(arg, node_list, name_map))
+#         end
+#         return expr
+#     end
+# end
 
 function test_Roundtrip_nonlinear_expressions()
     x = MOI.VariableIndex(123)
@@ -287,7 +308,6 @@ function test_Roundtrip_nonlinear_expressions()
     ]
         node_list = Any[]
         object = MOF._convert_nonlinear_to_mof(
-            MOF.OrderedObject,
             expr,
             node_list,
             var_to_string,
@@ -362,7 +382,7 @@ function test_Blank_variable_name()
     @test_throws Exception MOF.moi_to_object(variable, model)
     MOI.FileFormats.create_unique_names(model, warn = true)
     @test MOF.moi_to_object(variable, model) ==
-          MOF.OrderedObject("name" => "x1")
+        (name = "x1",)
 end
 
 function test_Duplicate_variable_name()
@@ -371,11 +391,11 @@ function test_Duplicate_variable_name()
     MOI.set(model, MOI.VariableName(), x, "x")
     y = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), y, "x")
-    @test MOF.moi_to_object(x, model) == MOF.OrderedObject("name" => "x")
-    @test MOF.moi_to_object(y, model) == MOF.OrderedObject("name" => "x")
+    @test MOF.moi_to_object(x, model) == (name = "x",)
+    @test MOF.moi_to_object(y, model) == (name = "x",)
     MOI.FileFormats.create_unique_names(model, warn = true)
-    @test MOF.moi_to_object(x, model) == MOF.OrderedObject("name" => "x")
-    @test MOF.moi_to_object(y, model) == MOF.OrderedObject("name" => "x_1")
+    @test MOF.moi_to_object(x, model) == (name = "x",)
+    @test MOF.moi_to_object(y, model) == (name = "x_1",)
 end
 
 function test_Blank_constraint_name()
@@ -386,7 +406,7 @@ function test_Blank_constraint_name()
     c = MOI.add_constraint(model, f, MOI.ZeroOne())
     name_map = Dict(x => "x")
     MOI.FileFormats.create_unique_names(model, warn = true)
-    @test MOF.moi_to_object(c, model, name_map)["name"] == "c1"
+    @test MOF.moi_to_object(c, model, name_map)[:name] == "c1"
 end
 
 function test_Duplicate_constraint_name()
@@ -399,11 +419,11 @@ function test_Duplicate_constraint_name()
     MOI.set(model, MOI.ConstraintName(), c1, "c")
     MOI.set(model, MOI.ConstraintName(), c2, "c")
     name_map = Dict(x => "x")
-    @test MOF.moi_to_object(c1, model, name_map)["name"] == "c"
-    @test MOF.moi_to_object(c2, model, name_map)["name"] == "c"
+    @test MOF.moi_to_object(c1, model, name_map)[:name] == "c"
+    @test MOF.moi_to_object(c2, model, name_map)[:name] == "c"
     MOI.FileFormats.create_unique_names(model, warn = true)
-    @test MOF.moi_to_object(c1, model, name_map)["name"] == "c_1"
-    @test MOF.moi_to_object(c2, model, name_map)["name"] == "c"
+    @test MOF.moi_to_object(c1, model, name_map)[:name] == "c_1"
+    @test MOF.moi_to_object(c2, model, name_map)[:name] == "c"
 end
 
 function test_empty_model()
@@ -1464,18 +1484,18 @@ function test_integer_coefficients()
     x = MOI.VariableIndex(1)
     names = Dict(x => "x")
     f = 2 * x * x + 3 * x + 4
-    @test MOF.moi_to_object(f, names) == MOF.OrderedObject(
-        "type" => "ScalarQuadraticFunction",
-        "affine_terms" =>
-            [MOF.OrderedObject("coefficient" => 3, "variable" => "x")],
-        "quadratic_terms" => [
-            MOF.OrderedObject(
-                "coefficient" => 4,
-                "variable_1" => "x",
-                "variable_2" => "x",
+    @test MOF.moi_to_object(f, names) == (
+        type = "ScalarQuadraticFunction",
+        affine_terms =
+            [(coefficient = 3, variable = "x")],
+        quadratic_terms = [
+            (
+                coefficient = 4,
+                variable_1 = "x",
+                variable_2 = "x",
             ),
         ],
-        "constant" => 4,
+        constant = 4,
     )
     return
 end
@@ -1517,23 +1537,23 @@ function test_mof_scalaraffinefunction()
     g = MOI.ScalarNonlinearFunction(:log, Any[f])
     name_map = Dict(x => "x")
     object = MOF.moi_to_object(g, name_map)
-    object_dest = MOF.OrderedObject(
-        "type" => "ScalarNonlinearFunction",
-        "root" => MOF.OrderedObject("type" => "node", "index" => 3),
-        "node_list" => Any[
-            MOF.OrderedObject("type" => "*", "args" => [1.0, "x"]),
-            MOF.OrderedObject(
-                "type" => "+",
-                "args" => [
-                    MOF.OrderedObject("type" => "node", "index" => 1),
+    object_dest = (
+        type = "ScalarNonlinearFunction",
+        root = (type = "node", index = 3),
+        node_list = Any[
+            (type = "*", args = [1.0, "x"]),
+            (
+                type = "+",
+                args = [
+                    (type = "node", index = 1),
                     2.0,
                 ],
             ),
-            MOF.OrderedObject(
-                "type" => "log",
-                "args" => Any[MOF.OrderedObject(
-                    "type" => "node",
-                    "index" => 2,
+            (
+                type = "log",
+                args = Any[(
+                    type = "node",
+                    index = 2,
                 )],
             ),
         ],
@@ -1548,23 +1568,23 @@ function test_mof_scalarquadraticfunction()
     g = MOI.ScalarNonlinearFunction(:log, Any[f])
     name_map = Dict(x => "x")
     object = MOF.moi_to_object(g, name_map)
-    object_dest = MOF.OrderedObject(
-        "type" => "ScalarNonlinearFunction",
-        "root" => MOF.OrderedObject("type" => "node", "index" => 3),
-        "node_list" => Any[
-            MOF.OrderedObject("type" => "*", "args" => [1.0, "x", "x"]),
-            MOF.OrderedObject(
-                "type" => "+",
-                "args" => [
-                    MOF.OrderedObject("type" => "node", "index" => 1),
+    object_dest = (
+        type = "ScalarNonlinearFunction",
+        root = (type = "node", index = 3),
+        node_list = Any[
+            (type = "*", args = [1.0, "x", "x"]),
+            (
+                type = "+",
+                args = [
+                    (type = "node", index = 1),
                     2.0,
                 ],
             ),
-            MOF.OrderedObject(
-                "type" => "log",
-                "args" => Any[MOF.OrderedObject(
-                    "type" => "node",
-                    "index" => 2,
+            (
+                type = "log",
+                args = Any[(
+                    type = "node",
+                    index = 2,
                 )],
             ),
         ],

@@ -11,15 +11,16 @@ Write `model` to `io` in the MathOptFormat file format.
 """
 function Base.write(io::IO, model::Model)
     options = get_options(model)
+    # remains a OrderedObject as the "objective" field is modified
     object = OrderedObject(
         "name" => "MathOptFormat Model",
-        "version" => OrderedObject(
-            "major" => Int(_SUPPORTED_VERSIONS[1].major),
-            "minor" => Int(_SUPPORTED_VERSIONS[1].minor),
+        "version" => (
+            major = Int(_SUPPORTED_VERSIONS[1].major),
+            minor = Int(_SUPPORTED_VERSIONS[1].minor),
         ),
-        "variables" => Object[],
-        "objective" => OrderedObject("sense" => "feasibility"),
-        "constraints" => Object[],
+        "variables" => NamedTuple[],
+        "objective" => (sense = "feasibility",),
+        "constraints" => NamedTuple[],
     )
     FileFormats.create_unique_names(model, warn = options.warn)
     name_map = write_variables(object, model)
@@ -35,7 +36,7 @@ function write_variables(object, model::Model)
     name_map = Dict{MOI.VariableIndex,String}()
     for index in MOI.get(model, MOI.ListOfVariableIndices())
         variable = moi_to_object(index, model)
-        name_map[index] = variable["name"]
+        name_map[index] = variable[:name]
         push!(object["variables"], variable)
     end
     return name_map
@@ -94,9 +95,9 @@ function write_nlpblock(
         objective = MOI.objective_expr(nlp_block.evaluator)
         objective = _lift_variable_indices(objective)
         sense = MOI.get(model, MOI.ObjectiveSense())
-        object["objective"] = T(
-            "sense" => moi_to_object(sense),
-            "function" => moi_to_object(Nonlinear(objective), name_map),
+        object["objective"] = NamedTuple{(:sense, :function)}(
+            (moi_to_object(sense),
+            moi_to_object(Nonlinear(objective), name_map))
         )
     end
     for (row, bounds) in enumerate(nlp_block.constraint_bounds)
@@ -105,10 +106,10 @@ function write_nlpblock(
         func = _lift_variable_indices(func)
         push!(
             object["constraints"],
-            T(
-                "function" => moi_to_object(Nonlinear(func), name_map),
-                "set" => moi_to_object(set, name_map),
-            ),
+            NamedTuple{(:function, :set)}(
+            (moi_to_object(Nonlinear(func), name_map),
+            moi_to_object(set, name_map),)
+            )
         )
     end
     return
@@ -119,17 +120,19 @@ function write_objective(
     model::Model,
     name_map::Dict{MOI.VariableIndex,String},
 ) where {T<:Object}
-    if object["objective"]["sense"] != "feasibility"
+    if object["objective"][:sense] != "feasibility"
         return  # Objective must have been written from NLPBlock.
     end
     sense = MOI.get(model, MOI.ObjectiveSense())
-    object["objective"] = T("sense" => moi_to_object(sense))
+    keys = Symbol[:sense]
+    values = Any[moi_to_object(sense)]
     if sense != MOI.FEASIBILITY_SENSE
         F = MOI.get(model, MOI.ObjectiveFunctionType())
         objective_function = MOI.get(model, MOI.ObjectiveFunction{F}())
-        object["objective"]["function"] =
-            moi_to_object(objective_function, name_map)
+        push!(keys, :function)
+        push!(values, moi_to_object(objective_function, name_map))
     end
+    object["objective"] = NamedTuple{Tuple(keys)}(values)
     return
 end
 
@@ -159,9 +162,9 @@ function moi_to_object(index::MOI.VariableIndex, model::Model)
     if name == ""
         error("Variable name for $(index) cannot be blank in an MOF file.")
     elseif isnothing(primal_start)
-        return OrderedObject("name" => name)
+        return (name = name,)
     else
-        return OrderedObject("name" => name, "primal_start" => primal_start)
+        return (name = name, primal_start = primal_start)
     end
 end
 
@@ -174,22 +177,28 @@ function moi_to_object(
     set = MOI.get(model, MOI.ConstraintSet(), index)
     dual_start = MOI.get(model, MOI.ConstraintDualStart(), index)
     primal_start = MOI.get(model, MOI.ConstraintPrimalStart(), index)
-    object = OrderedObject()
+    keys = Symbol[]
+    values = Any[]
     if F != MOI.VariableIndex
         name = MOI.get(model, MOI.ConstraintName(), index)
         if name != ""
-            object["name"] = name
+            push!(keys, :name)
+            push!(values, name)
         end
     end
-    object["function"] = moi_to_object(func, name_map)
-    object["set"] = moi_to_object(set, name_map)
+    push!(keys, :function)
+    push!(values, moi_to_object(func, name_map))
+    push!(keys, :set)
+    push!(values, moi_to_object(set, name_map))
     if !isnothing(dual_start)
-        object["dual_start"] = dual_start
+        push!(keys, :dual_start)
+        push!(values, dual_start)
     end
     if !isnothing(primal_start)
-        object["primal_start"] = primal_start
+        push!(keys, :primal_start)
+        push!(values, primal_start)
     end
-    return object
+    return NamedTuple{Tuple(keys)}(values)
 end
 
 function moi_to_object(sense::MOI.OptimizationSense)
@@ -209,63 +218,58 @@ function moi_to_object(
     foo::MOI.VariableIndex,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return OrderedObject("type" => "Variable", "name" => name_map[foo])
+    return (type = "Variable", name = name_map[foo])
 end
 
 function _convert_nonlinear_to_mof(
-    ::Type{T},
     expr::Expr,
     node_list::Vector{Any},
     name_map::Dict{MOI.VariableIndex,String},
-) where {T<:Object}
+)
     if expr.head != :call
         error("Expected an expression that was a function. Got $(expr).")
     end
-    node = T("type" => string(expr.args[1]), "args" => Any[])
+    node = (type = string(expr.args[1]), args = Any[])
     for i in 2:length(expr.args)
         push!(
-            node["args"],
-            _convert_nonlinear_to_mof(T, expr.args[i], node_list, name_map),
+            node[:args],
+            _convert_nonlinear_to_mof(expr.args[i], node_list, name_map),
         )
     end
     push!(node_list, node)
-    return T("type" => "node", "index" => length(node_list))
+    return (type = "node", index = length(node_list))
 end
 
 function _convert_nonlinear_to_mof(
-    ::Type{T},
     f::MOI.ScalarNonlinearFunction,
     node_list::Vector{Any},
     name_map::Dict{MOI.VariableIndex,String},
-) where {T<:Object}
-    node = T("type" => string(f.head), "args" => Any[])
+)
+    node = (type = string(f.head), args = Any[])
     for arg in f.args
         push!(
-            node["args"],
-            _convert_nonlinear_to_mof(T, arg, node_list, name_map),
+            node[:args],
+            _convert_nonlinear_to_mof(arg, node_list, name_map),
         )
     end
     push!(node_list, node)
-    return T("type" => "node", "index" => length(node_list))
+    return (type = "node", index = length(node_list))
 end
 
 function _convert_nonlinear_to_mof(
-    ::Type{T},
     variable::MOI.VariableIndex,
     ::Vector{Any},
     name_map::Dict{MOI.VariableIndex,String},
-) where {T<:Object}
+)
     return name_map[variable]
 end
 
 function _convert_nonlinear_to_mof(
-    ::Type{T},
     f::MOI.AbstractScalarFunction,
     node_list::Vector{Any},
     name_map::Dict{MOI.VariableIndex,String},
-) where {T<:Object}
+)
     return _convert_nonlinear_to_mof(
-        T,
         convert(MOI.ScalarNonlinearFunction, f),
         node_list,
         name_map,
@@ -273,31 +277,29 @@ function _convert_nonlinear_to_mof(
 end
 
 function _convert_nonlinear_to_mof(
-    ::Type{T},
     value::Real,
     ::Vector{Any},
     ::Dict{MOI.VariableIndex,String},
-) where {T<:Object}
+)
     return value
 end
 
 function _convert_nonlinear_to_mof(
-    ::Type{T},
     value::Complex,
     ::Vector{Any},
     ::Dict{MOI.VariableIndex,String},
-) where {T<:Object}
-    return T("type" => "complex", "real" => real(value), "imag" => imag(value))
+)
+    return (type = "complex", real = real(value), imag = imag(value))
 end
 
 function moi_to_object(foo::Nonlinear, name_map::Dict{MOI.VariableIndex,String})
     node_list = Any[]
     root =
-        _convert_nonlinear_to_mof(OrderedObject, foo.expr, node_list, name_map)
-    return OrderedObject(
-        "type" => "ScalarNonlinearFunction",
-        "root" => root,
-        "node_list" => node_list,
+        _convert_nonlinear_to_mof(foo.expr, node_list, name_map)
+    return (
+        type = "ScalarNonlinearFunction",
+        root = root,
+        node_list = node_list,
     )
 end
 
@@ -306,11 +308,11 @@ function moi_to_object(
     name_map::Dict{MOI.VariableIndex,String},
 )
     node_list = Any[]
-    root = _convert_nonlinear_to_mof(OrderedObject, foo, node_list, name_map)
-    return OrderedObject(
-        "type" => "ScalarNonlinearFunction",
-        "root" => root,
-        "node_list" => node_list,
+    root = _convert_nonlinear_to_mof(foo, node_list, name_map)
+    return (
+        type = "ScalarNonlinearFunction",
+        root = root,
+        node_list = node_list,
     )
 end
 
@@ -320,9 +322,9 @@ function moi_to_object(
     foo::MOI.ScalarAffineTerm,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return OrderedObject(
-        "coefficient" => foo.coefficient,
-        "variable" => name_map[foo.variable],
+    return (
+        coefficient = foo.coefficient,
+        variable = name_map[foo.variable],
     )
 end
 
@@ -330,10 +332,10 @@ function moi_to_object(
     foo::MOI.ScalarAffineFunction,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return OrderedObject(
-        "type" => "ScalarAffineFunction",
-        "terms" => moi_to_object.(foo.terms, Ref(name_map)),
-        "constant" => foo.constant,
+    return (
+        type = "ScalarAffineFunction",
+        terms = moi_to_object.(foo.terms, Ref(name_map)),
+        constant = foo.constant,
     )
 end
 
@@ -341,10 +343,10 @@ function moi_to_object(
     foo::MOI.ScalarQuadraticTerm,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return OrderedObject(
-        "coefficient" => foo.coefficient,
-        "variable_1" => name_map[foo.variable_1],
-        "variable_2" => name_map[foo.variable_2],
+    return (
+        coefficient = foo.coefficient,
+        variable_1 = name_map[foo.variable_1],
+        variable_2 = name_map[foo.variable_2],
     )
 end
 
@@ -352,11 +354,11 @@ function moi_to_object(
     foo::MOI.ScalarQuadraticFunction,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return OrderedObject(
-        "type" => "ScalarQuadraticFunction",
-        "affine_terms" => moi_to_object.(foo.affine_terms, Ref(name_map)),
-        "quadratic_terms" => moi_to_object.(foo.quadratic_terms, Ref(name_map)),
-        "constant" => foo.constant,
+    return (
+        type = "ScalarQuadraticFunction",
+        affine_terms = moi_to_object.(foo.affine_terms, Ref(name_map)),
+        quadratic_terms = moi_to_object.(foo.quadratic_terms, Ref(name_map)),
+        constant = foo.constant,
     )
 end
 
@@ -366,9 +368,9 @@ function moi_to_object(
     foo::MOI.VectorOfVariables,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return OrderedObject(
-        "type" => "VectorOfVariables",
-        "variables" => [name_map[variable] for variable in foo.variables],
+    return (
+        type = "VectorOfVariables",
+        variables = [name_map[variable] for variable in foo.variables],
     )
 end
 
@@ -378,12 +380,12 @@ function moi_to_object(
 )
     node_list = Any[]
     rows = map(foo.rows) do f
-        return _convert_nonlinear_to_mof(OrderedObject, f, node_list, name_map)
+        return _convert_nonlinear_to_mof(f, node_list, name_map)
     end
-    return OrderedObject(
-        "type" => "VectorNonlinearFunction",
-        "rows" => rows,
-        "node_list" => node_list,
+    return (
+        type = "VectorNonlinearFunction",
+        rows = rows,
+        node_list = node_list,
     )
 end
 
@@ -393,9 +395,9 @@ function moi_to_object(
     foo::MOI.VectorAffineTerm,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return OrderedObject(
-        "output_index" => foo.output_index,
-        "scalar_term" => moi_to_object(foo.scalar_term, name_map),
+    return (
+        output_index = foo.output_index,
+        scalar_term = moi_to_object(foo.scalar_term, name_map),
     )
 end
 
@@ -403,10 +405,10 @@ function moi_to_object(
     foo::MOI.VectorAffineFunction,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return OrderedObject(
-        "type" => "VectorAffineFunction",
-        "terms" => moi_to_object.(foo.terms, Ref(name_map)),
-        "constants" => foo.constants,
+    return (
+        type = "VectorAffineFunction",
+        terms = moi_to_object.(foo.terms, Ref(name_map)),
+        constants = foo.constants,
     )
 end
 
@@ -414,9 +416,9 @@ function moi_to_object(
     foo::MOI.VectorQuadraticTerm,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return OrderedObject(
-        "output_index" => foo.output_index,
-        "scalar_term" => moi_to_object(foo.scalar_term, name_map),
+    return (
+        output_index = foo.output_index,
+        scalar_term = moi_to_object(foo.scalar_term, name_map),
     )
 end
 
@@ -424,11 +426,11 @@ function moi_to_object(
     foo::MOI.VectorQuadraticFunction,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return OrderedObject(
-        "type" => "VectorQuadraticFunction",
-        "affine_terms" => moi_to_object.(foo.affine_terms, Ref(name_map)),
-        "quadratic_terms" => moi_to_object.(foo.quadratic_terms, Ref(name_map)),
-        "constants" => foo.constants,
+    return (
+        type = "VectorQuadraticFunction",
+        affine_terms = moi_to_object.(foo.affine_terms, Ref(name_map)),
+        quadratic_terms = moi_to_object.(foo.quadratic_terms, Ref(name_map)),
+        constants = foo.constants,
     )
 end
 
@@ -448,11 +450,13 @@ function moi_to_object(
     set::SetType,
     ::Dict{MOI.VariableIndex,String},
 ) where {SetType}
-    object = OrderedObject("type" => head_name(SetType))
+    keys = Symbol[:type]
+    values = Any[head_name(SetType)]
     for key in fieldnames(SetType)
-        object[string(key)] = getfield(set, key)
+        push!(keys, Symbol(string(key)))
+        push!(values, getfield(set, key))
     end
-    return object
+    return NamedTuple{Tuple(keys)}(values)
 end
 
 # ========== Non-typed scalar sets ==========
@@ -521,10 +525,10 @@ function moi_to_object(
     name_map::Dict{MOI.VariableIndex,String},
 ) where {I,S}
     @assert I == MOI.ACTIVATE_ON_ONE || I == MOI.ACTIVATE_ON_ZERO
-    return OrderedObject(
-        "type" => "Indicator",
-        "set" => moi_to_object(set.set, name_map),
-        "activate_on" => (I == MOI.ACTIVATE_ON_ONE) ? "one" : "zero",
+    return (
+        type = "Indicator",
+        set = moi_to_object(set.set, name_map),
+        activate_on = (I == MOI.ACTIVATE_ON_ONE) ? "one" : "zero",
     )
 end
 
@@ -532,9 +536,9 @@ function moi_to_object(
     set::MOI.Reified,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return OrderedObject(
-        "type" => "Reified",
-        "set" => moi_to_object(set.set, name_map),
+    return (
+        type = "Reified",
+        set = moi_to_object(set.set, name_map),
     )
 end
 
@@ -542,9 +546,9 @@ function moi_to_object(
     set::MOI.Table{T},
     ::Dict{MOI.VariableIndex,String},
 ) where {T}
-    return OrderedObject(
-        "type" => "Table",
-        "table" => [set.table[i, :] for i in 1:size(set.table, 1)],
+    return (
+        type = "Table",
+        table = [set.table[i, :] for i in 1:size(set.table, 1)],
     )
 end
 
@@ -552,8 +556,8 @@ function moi_to_object(
     set::MOI.Scaled,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return OrderedObject(
-        "type" => "Scaled",
-        "set" => moi_to_object(set.set, name_map),
+    return (
+        type = "Scaled",
+        set = moi_to_object(set.set, name_map),
     )
 end
