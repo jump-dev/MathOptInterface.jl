@@ -7,6 +7,36 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.35.0 (January 9, 2025)
+
+### Added
+
+ - Added [`Bridges.Constraint.InequalityToComplementsBridge`](@ref). This
+   bridge is not added by default (#2582)
+ - Added [`Bridges.Constraint.ExponentialConeToScalarNonlinearFunctionBridge`](@ref).
+   This bridge is not added by default (#2587)
+ - Added support for `SetMap` bridges to use the value of a bridge in
+   `map_function` instead of the type (#2198)
+
+### Fixed
+
+ - Fixed a bug querying result attributes in a bridge with `result_index != 1`
+   (#2583)
+ - Fixed various nonlinear tests to add a starting point (#2585)
+ - Fixed a bug with `variable_start` in [`Bridges.runtests`](@ref) (#2592)
+ - Fixed `test_basic_` tests for [`Indicator`](@ref) sets to make the first
+   variable [`ZeroOne`](@ref) (#2600)
+ - Changed the weights of the `SOCtoPSD` and `RSOCtoPSD` bridges so that they
+   are used only if necessary. Previously, these depended on the order in which
+   they were added to a `LazyBridgeOptimizer` (#2596) (#2598) (#2599)
+
+### Other
+
+ - Added more tests for nonlinear programs (#2584)
+ - Renamed files in `Bridges` to reflect the type of the bridge (#2586)
+ - Added more tests for [`DualObjectiveValue`](@ref) (#2588)
+ - Added a test for multiple PSD variables in the same constraint (#2594)
+
 ## v1.34.0 (November 7, 2024)
 
 ### Added
