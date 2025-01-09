@@ -238,33 +238,6 @@ function _convert_mof_to_expr(
     end
 end
 
-# function _convert_mof_to_expr(
-#     node::T,
-#     node_list::Vector{T},
-#     name_map::Dict{String,MOI.VariableIndex},
-# ) where {T}
-#     head = haskey(node, "type") ? node["type"] : node["head"]
-#     if head == "real"
-#         return node["value"]
-#     elseif head == "complex"
-#         return Complex(node["real"], node["imag"])
-#     elseif head == "variable"
-#         return name_map[node["name"]]
-#     elseif head == "node"
-#         return _convert_mof_to_expr(
-#             node_list[node["index"]],
-#             node_list,
-#             name_map,
-#         )
-#     else
-#         expr = Expr(:call, Symbol(head))
-#         for arg in node["args"]
-#             push!(expr.args, _convert_mof_to_expr(arg, node_list, name_map))
-#         end
-#         return expr
-#     end
-# end
-
 function test_Roundtrip_nonlinear_expressions()
     x = MOI.VariableIndex(123)
     y = MOI.VariableIndex(456)
