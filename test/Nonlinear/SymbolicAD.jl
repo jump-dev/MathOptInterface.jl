@@ -108,6 +108,8 @@ function test_simplify_ScalarNonlinearFunction_multiplication()
     # *(-(x, x), 1) -> 0
     f = MOI.ScalarNonlinearFunction(:-, Any[x, x])
     @test ≈(SymbolicAD.simplify(MOI.ScalarNonlinearFunction(:*, Any[f, 1])), 0)
+    # *() -> true
+    @test ≈(SymbolicAD.simplify(MOI.ScalarNonlinearFunction(:*, Any[])), 1)
     return
 end
 
@@ -198,6 +200,40 @@ function test_simplify_ScalarNonlinearFunction_power()
     @test SymbolicAD.simplify(MOI.ScalarNonlinearFunction(:^, Any[1, x])) == 1
     # x^y -> x^y
     f = MOI.ScalarNonlinearFunction(:^, Any[x, y])
+    @test SymbolicAD.simplify(f) ≈ f
+    return
+end
+
+function test_simplify_VectorAffineFunction()
+    f = MOI.VectorAffineFunction{Float64}(
+        MOI.VectorAffineTerm{Float64}[],
+        [0.0, 1.0, 2.0],
+    )
+    @test SymbolicAD.simplify(f) == [0.0, 1.0, 2.0]
+    x = MOI.VariableIndex(1)
+    f = MOI.Utilities.operate(vcat, Float64, 1.0, x, 2.0 * x + 1.0 * x)
+    @test SymbolicAD.simplify(f) ≈ f
+    return
+end
+
+function test_simplify_VectorQuadraticFunction()
+    f = MOI.VectorQuadraticFunction{Float64}(
+        MOI.VectorQuadraticTerm{Float64}[],
+        MOI.VectorAffineTerm{Float64}[],
+        [0.0, 1.0, 2.0],
+    )
+    @test SymbolicAD.simplify(f) == [0.0, 1.0, 2.0]
+    x = MOI.VariableIndex(1)
+    f = MOI.VectorQuadraticFunction{Float64}(
+        MOI.VectorQuadraticTerm{Float64}[],
+        MOI.VectorAffineTerm{Float64}[
+            MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(3.0, x))
+        ],
+        [1.0, 0.0],
+    )
+    g = MOI.Utilities.operate(vcat, Float64, 1.0, 3.0 * x)
+    @test SymbolicAD.simplify(f) ≈ g
+    f = MOI.Utilities.operate(vcat, Float64, 1.0, 2.0 * x * x)
     @test SymbolicAD.simplify(f) ≈ f
     return
 end

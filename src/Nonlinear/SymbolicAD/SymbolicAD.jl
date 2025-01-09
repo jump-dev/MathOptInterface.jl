@@ -44,7 +44,7 @@ end
 function simplify(f::MOI.VectorAffineFunction{T}) where {T}
     f = MOI.Utilities.canonical(f)
     if isempty(f.terms)
-        return f.constant
+        return f.constants
     end
     return f
 end
