@@ -7,7 +7,6 @@
 module MOF
 
 import ..FileFormats
-import OrderedCollections: OrderedDict
 import JSON
 import MathOptInterface as MOI
 
@@ -32,10 +31,6 @@ const _SUPPORTED_VERSIONS = (
     v"0.5",
     v"0.4",
 )
-
-const OrderedObject = OrderedDict{String,Any}
-const UnorderedObject = Dict{String,Any}
-const Object = Union{OrderedObject,UnorderedObject}
 
 function _parse_mof_version(version)
     return VersionNumber(version["major"], version["minor"])

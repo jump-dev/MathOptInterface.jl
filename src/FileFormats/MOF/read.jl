@@ -13,8 +13,8 @@ function Base.read!(io::IO, model::Model)
     if !MOI.is_empty(model)
         error("Cannot read model from file as destination model is not empty.")
     end
-    object = JSON.parse(io; dicttype = UnorderedObject)
-    file_version = _parse_mof_version(object["version"]::UnorderedObject)
+    object = JSON.parse(io; dicttype = Dict{String,Any})
+    file_version = _parse_mof_version(object["version"]::Dict{String,Any})
     if !(file_version in _SUPPORTED_VERSIONS)
         version = _SUPPORTED_VERSIONS[1]
         error(
@@ -74,7 +74,7 @@ function _convert_to_nlpblock(model::Model)
     return
 end
 
-function read_variables(model::Model, object::Object)
+function read_variables(model::Model, object::Dict)
     name_map = Dict{String,MOI.VariableIndex}()
     for variable::typeof(object) in object["variables"]
         name = get(variable, "name", "")::String
@@ -100,7 +100,7 @@ end
 
 function read_objective(
     model::Model,
-    object::Object,
+    object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
 )
     obj = object["objective"]::typeof(object)
@@ -116,7 +116,7 @@ end
 
 function _add_constraint(
     model::Model,
-    object::Object,
+    object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
 )
     f = function_to_moi(object["function"]::typeof(object), name_map)
@@ -141,7 +141,7 @@ end
 
 function read_constraints(
     model::Model,
-    object::Object,
+    object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
 )
     for constraint::typeof(object) in object["constraints"]::Vector
@@ -199,11 +199,11 @@ end
 )
 
 """
-    function_to_moi(x::Object, name_map::Dict{String,MOI.VariableIndex})
+    function_to_moi(x::Dict, name_map::Dict{String,MOI.VariableIndex})
 
 Convert `x` from an MOF representation into a MOI representation.
 """
-function function_to_moi(x::Object, name_map::Dict{String,MOI.VariableIndex})
+function function_to_moi(x::Dict, name_map::Dict{String,MOI.VariableIndex})
     if haskey(x, "type")
         return function_to_moi(head_to_function(x["type"]::String), x, name_map)
     else
@@ -214,7 +214,7 @@ end
 
 function function_to_moi(
     ::Val{FunctionSymbol},
-    ::Object,
+    ::Dict,
     ::Dict{String,MOI.VariableIndex},
 ) where {FunctionSymbol}
     return error(
@@ -228,7 +228,7 @@ end
 # Required for v0.6
 function function_to_moi(
     ::Val{:SingleVariable},
-    object::Object,
+    object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
 )
     return name_map[object["variable"]::String]
@@ -237,7 +237,7 @@ end
 # Required for v1.0
 function function_to_moi(
     ::Val{:Variable},
-    object::Object,
+    object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
 )
     return name_map[object["name"]::String]
@@ -245,9 +245,9 @@ end
 
 function function_to_moi(
     ::Val{:ScalarNonlinearFunction},
-    object::T,
+    object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
-) where {T<:Object}
+)
     return _parse_scalar_nonlinear_function(
         object["root"],
         object["node_list"],
@@ -272,10 +272,10 @@ function _parse_scalar_nonlinear_function(
 end
 
 function _parse_scalar_nonlinear_function(
-    node::T,
+    node::Dict,
     node_list::Vector,
     name_map::Dict{String,MOI.VariableIndex},
-) where {T<:Object}
+)
     head = node["type"]
     if head == "real"
         # Required for v1.6 and earlier
@@ -309,7 +309,7 @@ end
 # (because it is unnecessary at the JSON level).
 
 function parse_scalar_affine_term(
-    object::Object,
+    object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
 )
     return MOI.ScalarAffineTerm(
@@ -320,7 +320,7 @@ end
 
 function function_to_moi(
     ::Val{:ScalarAffineFunction},
-    object::Object,
+    object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
 )
     return MOI.ScalarAffineFunction{Float64}(
@@ -330,7 +330,7 @@ function function_to_moi(
 end
 
 function parse_scalar_quadratic_term(
-    object::Object,
+    object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
 )
     return MOI.ScalarQuadraticTerm(
@@ -342,7 +342,7 @@ end
 
 function function_to_moi(
     ::Val{:ScalarQuadraticFunction},
-    object::Object,
+    object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
 )
     return MOI.ScalarQuadraticFunction{Float64}(
@@ -356,7 +356,7 @@ end
 
 function function_to_moi(
     ::Val{:VectorOfVariables},
-    object::Object,
+    object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
 )
     return MOI.VectorOfVariables(
@@ -368,10 +368,10 @@ end
 
 function function_to_moi(
     ::Val{:VectorNonlinearFunction},
-    object::T,
+    object::Dict{String,Any},
     name_map::Dict{String,MOI.VariableIndex},
-) where {T<:Object}
-    node_list = T.(object["node_list"])
+)
+    node_list = Dict{String,Any}.(object["node_list"])
     rows = map(object["rows"]) do r
         return _parse_scalar_nonlinear_function(r, node_list, name_map)
     end
@@ -381,7 +381,7 @@ end
 # ========== Typed vector functions ==========
 
 function parse_vector_affine_term(
-    object::Object,
+    object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
 )
     return MOI.VectorAffineTerm(
@@ -395,7 +395,7 @@ end
 
 function function_to_moi(
     ::Val{:VectorAffineFunction},
-    object::Object,
+    object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
 )
     return MOI.VectorAffineFunction{Float64}(
@@ -405,7 +405,7 @@ function function_to_moi(
 end
 
 function parse_vector_quadratic_term(
-    object::Object,
+    object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
 )
     return MOI.VectorQuadraticTerm(
@@ -416,7 +416,7 @@ end
 
 function function_to_moi(
     ::Val{:VectorQuadraticFunction},
-    object::Object,
+    object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
 )
     return MOI.VectorQuadraticFunction{Float64}(
@@ -485,11 +485,11 @@ end
 )
 
 """
-    set_to_moi(x::Object)
+    set_to_moi(x::Dict)
 
-Convert `x` from an OrderedDict representation into a MOI representation.
+Convert `x` from a Dict representation into a MOI representation.
 """
-function set_to_moi(x::Object)
+function set_to_moi(x::Dict)
     if haskey(x, "type")
         return set_to_moi(head_to_set(x["type"]::String), x)
     else
@@ -500,163 +500,163 @@ end
 
 # ========== Non-typed scalar sets ==========
 
-function set_to_moi(::Val{:ZeroOne}, ::Object)
+function set_to_moi(::Val{:ZeroOne}, ::Dict)
     return MOI.ZeroOne()
 end
 
-function set_to_moi(::Val{:Integer}, ::Object)
+function set_to_moi(::Val{:Integer}, ::Dict)
     return MOI.Integer()
 end
 
 # ========== Typed scalar sets ==========
 
-function set_to_moi(::Val{:LessThan}, object::Object)
+function set_to_moi(::Val{:LessThan}, object::Dict)
     return MOI.LessThan{Float64}(object["upper"])
 end
 
-function set_to_moi(::Val{:GreaterThan}, object::Object)
+function set_to_moi(::Val{:GreaterThan}, object::Dict)
     return MOI.GreaterThan{Float64}(object["lower"])
 end
 
-function set_to_moi(::Val{:EqualTo}, object::Object)
+function set_to_moi(::Val{:EqualTo}, object::Dict)
     return MOI.EqualTo{Float64}(object["value"])
 end
 
-function set_to_moi(::Val{:Interval}, object::Object)
+function set_to_moi(::Val{:Interval}, object::Dict)
     return MOI.Interval{Float64}(object["lower"], object["upper"])
 end
 
-function set_to_moi(::Val{:Semiinteger}, object::Object)
+function set_to_moi(::Val{:Semiinteger}, object::Dict)
     return MOI.Semiinteger{Float64}(object["lower"], object["upper"])
 end
 
-function set_to_moi(::Val{:Semicontinuous}, object::Object)
+function set_to_moi(::Val{:Semicontinuous}, object::Dict)
     return MOI.Semicontinuous{Float64}(object["lower"], object["upper"])
 end
 
-function set_to_moi(::Val{:Parameter}, object::Object)
+function set_to_moi(::Val{:Parameter}, object::Dict)
     return MOI.Parameter{Float64}(object["value"])
 end
 
 # ========== Non-typed vector sets ==========
 
-function set_to_moi(::Val{:Zeros}, object::Object)
+function set_to_moi(::Val{:Zeros}, object::Dict)
     return MOI.Zeros(object["dimension"])
 end
 
-function set_to_moi(::Val{:Reals}, object::Object)
+function set_to_moi(::Val{:Reals}, object::Dict)
     return MOI.Reals(object["dimension"])
 end
 
-function set_to_moi(::Val{:Nonnegatives}, object::Object)
+function set_to_moi(::Val{:Nonnegatives}, object::Dict)
     return MOI.Nonnegatives(object["dimension"])
 end
 
-function set_to_moi(::Val{:Nonpositives}, object::Object)
+function set_to_moi(::Val{:Nonpositives}, object::Dict)
     return MOI.Nonpositives(object["dimension"])
 end
 
-function set_to_moi(::Val{:SecondOrderCone}, object::Object)
+function set_to_moi(::Val{:SecondOrderCone}, object::Dict)
     return MOI.SecondOrderCone(object["dimension"])
 end
 
-function set_to_moi(::Val{:RotatedSecondOrderCone}, object::Object)
+function set_to_moi(::Val{:RotatedSecondOrderCone}, object::Dict)
     return MOI.RotatedSecondOrderCone(object["dimension"])
 end
 
-function set_to_moi(::Val{:GeometricMeanCone}, object::Object)
+function set_to_moi(::Val{:GeometricMeanCone}, object::Dict)
     return MOI.GeometricMeanCone(object["dimension"])
 end
 
-function set_to_moi(::Val{:NormOneCone}, object::Object)
+function set_to_moi(::Val{:NormOneCone}, object::Dict)
     return MOI.NormOneCone(object["dimension"])
 end
 
-function set_to_moi(::Val{:NormInfinityCone}, object::Object)
+function set_to_moi(::Val{:NormInfinityCone}, object::Dict)
     return MOI.NormInfinityCone(object["dimension"])
 end
 
-function set_to_moi(::Val{:NormCone}, object::Object)
+function set_to_moi(::Val{:NormCone}, object::Dict)
     return MOI.NormCone(object["p"], object["dimension"])
 end
 
-function set_to_moi(::Val{:RelativeEntropyCone}, object::Object)
+function set_to_moi(::Val{:RelativeEntropyCone}, object::Dict)
     return MOI.RelativeEntropyCone(object["dimension"])
 end
 
-function set_to_moi(::Val{:NormSpectralCone}, object::Object)
+function set_to_moi(::Val{:NormSpectralCone}, object::Dict)
     return MOI.NormSpectralCone(object["row_dim"], object["column_dim"])
 end
 
-function set_to_moi(::Val{:NormNuclearCone}, object::Object)
+function set_to_moi(::Val{:NormNuclearCone}, object::Dict)
     return MOI.NormNuclearCone(object["row_dim"], object["column_dim"])
 end
 
-function set_to_moi(::Val{:RootDetConeTriangle}, object::Object)
+function set_to_moi(::Val{:RootDetConeTriangle}, object::Dict)
     return MOI.RootDetConeTriangle(object["side_dimension"])
 end
 
-function set_to_moi(::Val{:RootDetConeSquare}, object::Object)
+function set_to_moi(::Val{:RootDetConeSquare}, object::Dict)
     return MOI.RootDetConeSquare(object["side_dimension"])
 end
 
-function set_to_moi(::Val{:LogDetConeTriangle}, object::Object)
+function set_to_moi(::Val{:LogDetConeTriangle}, object::Dict)
     return MOI.LogDetConeTriangle(object["side_dimension"])
 end
 
-function set_to_moi(::Val{:LogDetConeSquare}, object::Object)
+function set_to_moi(::Val{:LogDetConeSquare}, object::Dict)
     return MOI.LogDetConeSquare(object["side_dimension"])
 end
 
-function set_to_moi(::Val{:PositiveSemidefiniteConeTriangle}, object::Object)
+function set_to_moi(::Val{:PositiveSemidefiniteConeTriangle}, object::Dict)
     return MOI.PositiveSemidefiniteConeTriangle(object["side_dimension"])
 end
 
 function set_to_moi(
     ::Val{:ScaledPositiveSemidefiniteConeTriangle},
-    object::Object,
+    object::Dict,
 )
     d = object["side_dimension"]
     return MOI.Scaled(MOI.PositiveSemidefiniteConeTriangle(d))
 end
 
-function set_to_moi(::Val{:Scaled}, object::Object)
+function set_to_moi(::Val{:Scaled}, object::Dict)
     return MOI.Scaled(set_to_moi(object["set"]))
 end
 
-function set_to_moi(::Val{:PositiveSemidefiniteConeSquare}, object::Object)
+function set_to_moi(::Val{:PositiveSemidefiniteConeSquare}, object::Dict)
     return MOI.PositiveSemidefiniteConeSquare(object["side_dimension"])
 end
 
 function set_to_moi(
     ::Val{:HermitianPositiveSemidefiniteConeTriangle},
-    object::Object,
+    object::Dict,
 )
     side_dimension = object["side_dimension"]
     return MOI.HermitianPositiveSemidefiniteConeTriangle(side_dimension)
 end
 
-function set_to_moi(::Val{:ExponentialCone}, ::Object)
+function set_to_moi(::Val{:ExponentialCone}, ::Dict)
     return MOI.ExponentialCone()
 end
 
-function set_to_moi(::Val{:DualExponentialCone}, ::Object)
+function set_to_moi(::Val{:DualExponentialCone}, ::Dict)
     return MOI.DualExponentialCone()
 end
 
-function set_to_moi(::Val{:Complements}, object::Object)
+function set_to_moi(::Val{:Complements}, object::Dict)
     return MOI.Complements(object["dimension"])
 end
 
-function set_to_moi(::Val{:AllDifferent}, object::Object)
+function set_to_moi(::Val{:AllDifferent}, object::Dict)
     return MOI.AllDifferent(object["dimension"])
 end
 
-function set_to_moi(::Val{:Circuit}, object::Object)
+function set_to_moi(::Val{:Circuit}, object::Dict)
     return MOI.Circuit(object["dimension"])
 end
 
-function set_to_moi(::Val{:CountAtLeast}, object::Object)
+function set_to_moi(::Val{:CountAtLeast}, object::Dict)
     return MOI.CountAtLeast(
         object["n"],
         convert(Vector{Int}, object["partitions"]),
@@ -664,45 +664,45 @@ function set_to_moi(::Val{:CountAtLeast}, object::Object)
     )
 end
 
-function set_to_moi(::Val{:CountBelongs}, object::Object)
+function set_to_moi(::Val{:CountBelongs}, object::Dict)
     return MOI.CountBelongs(object["dimension"], Set{Int}(object["set"]))
 end
 
-function set_to_moi(::Val{:CountDistinct}, object::Object)
+function set_to_moi(::Val{:CountDistinct}, object::Dict)
     return MOI.CountDistinct(object["dimension"])
 end
 
-function set_to_moi(::Val{:CountGreaterThan}, object::Object)
+function set_to_moi(::Val{:CountGreaterThan}, object::Dict)
     return MOI.CountGreaterThan(object["dimension"])
 end
 
-function set_to_moi(::Val{:Cumulative}, object::Object)
+function set_to_moi(::Val{:Cumulative}, object::Dict)
     return MOI.Cumulative(object["dimension"])
 end
 
-function set_to_moi(::Val{:Path}, object::Object)
+function set_to_moi(::Val{:Path}, object::Dict)
     return MOI.Path(Int.(object["from"]), Int.(object["to"]))
 end
 
 # ========== Typed vector sets ==========
 
-function set_to_moi(::Val{:PowerCone}, object::Object)
+function set_to_moi(::Val{:PowerCone}, object::Dict)
     return MOI.PowerCone{Float64}(object["exponent"])
 end
 
-function set_to_moi(::Val{:DualPowerCone}, object::Object)
+function set_to_moi(::Val{:DualPowerCone}, object::Dict)
     return MOI.DualPowerCone{Float64}(object["exponent"])
 end
 
-function set_to_moi(::Val{:SOS1}, object::Object)
+function set_to_moi(::Val{:SOS1}, object::Dict)
     return MOI.SOS1(convert(Vector{Float64}, object["weights"]))
 end
 
-function set_to_moi(::Val{:SOS2}, object::Object)
+function set_to_moi(::Val{:SOS2}, object::Dict)
     return MOI.SOS2(convert(Vector{Float64}, object["weights"]))
 end
 
-function set_to_moi(::Val{:HyperRectangle}, object::Object)
+function set_to_moi(::Val{:HyperRectangle}, object::Dict)
     return MOI.HyperRectangle(
         convert(Vector{Float64}, object["lower"]),
         convert(Vector{Float64}, object["upper"]),
@@ -711,7 +711,7 @@ end
 
 # :IndicatorSet is required for v0.6
 # :Indicator is required for v1.0
-function set_to_moi(::Union{Val{:Indicator},Val{:IndicatorSet}}, object::Object)
+function set_to_moi(::Union{Val{:Indicator},Val{:IndicatorSet}}, object::Dict)
     set = set_to_moi(object["set"]::typeof(object))
     if object["activate_on"]::String == "one"
         return MOI.Indicator{MOI.ACTIVATE_ON_ONE}(set)
@@ -721,18 +721,18 @@ function set_to_moi(::Union{Val{:Indicator},Val{:IndicatorSet}}, object::Object)
     end
 end
 
-function set_to_moi(::Val{:Reified}, object::Object)
+function set_to_moi(::Val{:Reified}, object::Dict)
     return MOI.Reified(set_to_moi(object["set"]::typeof(object)))
 end
 
-function set_to_moi(::Val{:BinPacking}, object::Object)
+function set_to_moi(::Val{:BinPacking}, object::Dict)
     return MOI.BinPacking(
         convert(Float64, object["capacity"]),
         convert(Vector{Float64}, object["weights"]),
     )
 end
 
-function set_to_moi(::Val{:Table}, object::Object)
+function set_to_moi(::Val{:Table}, object::Dict)
     table = convert(Matrix{Float64}, vcat([t' for t in object["table"]]...))
     return MOI.Table(table)
 end

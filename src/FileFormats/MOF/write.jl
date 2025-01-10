@@ -11,33 +11,35 @@ Write `model` to `io` in the MathOptFormat file format.
 """
 function Base.write(io::IO, model::Model)
     options = get_options(model)
-    # remains a OrderedObject as the "objective" field is modified
-    object = OrderedObject(
-        "name" => "MathOptFormat Model",
-        "version" => (
+    FileFormats.create_unique_names(model, warn = options.warn)
+    variables, constraints = NamedTuple[], NamedTuple[]
+    name_map = _write_variables(variables, model)
+    objective = _write_nlpblock(constraints, model, name_map)
+    if objective === nothing
+        objective = _write_objective(model, name_map)
+    end
+    _write_constraints(constraints, model, name_map)
+    object = (;
+        name = "MathOptFormat Model",
+        version = (
             major = Int(_SUPPORTED_VERSIONS[1].major),
             minor = Int(_SUPPORTED_VERSIONS[1].minor),
         ),
-        "variables" => NamedTuple[],
-        "objective" => (sense = "feasibility",),
-        "constraints" => NamedTuple[],
+        variables = variables,
+        objective = objective,
+        constraints = constraints,
     )
-    FileFormats.create_unique_names(model, warn = options.warn)
-    name_map = write_variables(object, model)
-    write_nlpblock(object, model, name_map)
-    write_objective(object, model, name_map)
-    write_constraints(object, model, name_map)
     indent = options.print_compact ? nothing : 2
     Base.write(io, JSON.json(object, indent))
     return
 end
 
-function write_variables(object::Object, model::Model)
+function _write_variables(variables::Vector{NamedTuple}, model::Model)
     name_map = Dict{MOI.VariableIndex,String}()
     for index in MOI.get(model, MOI.ListOfVariableIndices())
         variable = moi_to_object(index, model)
         name_map[index] = variable[:name]
-        push!(object["variables"], variable)
+        push!(variables, variable)
     end
     return name_map
 end
@@ -80,8 +82,8 @@ function extract_function_and_set(expr::Expr)
     return error("Oops. The constraint $(expr) wasn't recognised.")
 end
 
-function write_nlpblock(
-    object::Object,
+function _write_nlpblock(
+    constraints::Vector{NamedTuple},
     model::Model,
     name_map::Dict{MOI.VariableIndex,String},
 )
@@ -91,58 +93,54 @@ function write_nlpblock(
     end
     MOI.initialize(nlp_block.evaluator, [:ExprGraph])
     variables = MOI.get(model, MOI.ListOfVariableIndices())
-    if nlp_block.has_objective
-        objective = MOI.objective_expr(nlp_block.evaluator)
-        objective = _lift_variable_indices(objective)
-        sense = MOI.get(model, MOI.ObjectiveSense())
-        object["objective"] = (;
-            :sense => moi_to_object(sense),
-            :function => moi_to_object(Nonlinear(objective), name_map),
-        )
-    end
     for (row, bounds) in enumerate(nlp_block.constraint_bounds)
         constraint = MOI.constraint_expr(nlp_block.evaluator, row)
         (func, set) = extract_function_and_set(constraint)
         func = _lift_variable_indices(func)
         push!(
-            object["constraints"],
+            constraints,
             (;
                 :function => moi_to_object(Nonlinear(func), name_map),
                 :set => moi_to_object(set, name_map),
             ),
         )
     end
-    return
-end
-
-function write_objective(
-    object::Object,
-    model::Model,
-    name_map::Dict{MOI.VariableIndex,String},
-)
-    if object["objective"][:sense] != "feasibility"
-        return  # Objective must have been written from NLPBlock.
-    end
-    sense = MOI.get(model, MOI.ObjectiveSense())
-    if sense != MOI.FEASIBILITY_SENSE
-        F = MOI.get(model, MOI.ObjectiveFunctionType())
-        objective_function = MOI.get(model, MOI.ObjectiveFunction{F}())
-        object["objective"] = (;
+    if nlp_block.has_objective
+        objective = MOI.objective_expr(nlp_block.evaluator)
+        objective = _lift_variable_indices(objective)
+        sense = MOI.get(model, MOI.ObjectiveSense())
+        return (;
             :sense => moi_to_object(sense),
-            :function => moi_to_object(objective_function, name_map),
+            :function => moi_to_object(Nonlinear(objective), name_map),
         )
     end
     return
 end
 
-function write_constraints(
-    object::Object,
+function _write_objective(
+    model::Model,
+    name_map::Dict{MOI.VariableIndex,String},
+)
+    sense = MOI.get(model, MOI.ObjectiveSense())
+    if sense == MOI.FEASIBILITY_SENSE
+        return (; :sense => moi_to_object(sense))
+    end
+    F = MOI.get(model, MOI.ObjectiveFunctionType())
+    objective_function = MOI.get(model, MOI.ObjectiveFunction{F}())
+    return (;
+        :sense => moi_to_object(sense),
+        :function => moi_to_object(objective_function, name_map),
+    )
+end
+
+function _write_constraints(
+    constraints::Vector{NamedTuple},
     model::Model,
     name_map::Dict{MOI.VariableIndex,String},
 )
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            push!(object["constraints"], moi_to_object(index, model, name_map))
+            push!(constraints, moi_to_object(index, model, name_map))
         end
     end
     return
@@ -151,7 +149,7 @@ end
 """
     moi_to_object(x, model::Model)
 
-Convert `x` into an OrderedDict representation.
+Convert `x` into a NamedTuple representation.
 """
 function moi_to_object end
 
