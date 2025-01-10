@@ -35,7 +35,6 @@ function Base.write(io::IO, model::Model)
 end
 
 function _write_variables(variables::Vector{NamedTuple}, model::Model)
-    variables = NamedTuple[]
     name_map = Dict{MOI.VariableIndex,String}()
     for index in MOI.get(model, MOI.ListOfVariableIndices())
         variable = moi_to_object(index, model)
