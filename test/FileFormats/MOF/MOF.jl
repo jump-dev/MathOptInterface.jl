@@ -139,7 +139,7 @@ function test_read_HS071()
 end
 
 function test_nonlinear_error_handling()
-    node_list = MOF.Object[]
+    node_list = Dict{String,Any}[]
     string_to_variable = Dict{String,MOI.VariableIndex}()
     variable_to_string = Dict{MOI.VariableIndex,String}()
     # Test unsupported function for Expr -> MOF.
@@ -1475,18 +1475,18 @@ end
 
 function test_nonlinear_variable_real_nodes()
     x = MOI.VariableIndex(1)
-    object = MOF.OrderedObject(
+    object = Dict{String,Any}(
         "type" => "ScalarNonlinearFunction",
-        "root" => MOF.OrderedObject(
+        "root" => MOF.Dict{String,Any}(
             "type" => "^",
             "args" => Any[
-                MOF.OrderedObject("type" => "node", "index" => 1),
-                MOF.OrderedObject("type" => "node", "index" => 2),
+                Dict{String,Any}("type" => "node", "index" => 1),
+                Dict{String,Any}("type" => "node", "index" => 2),
             ],
         ),
         "node_list" => Any[
-            MOF.OrderedObject("type" => "variable", "name" => "x"),
-            MOF.OrderedObject("type" => "real", "value" => 2.0),
+            Dict{String,Any}("type" => "variable", "name" => "x"),
+            Dict{String,Any}("type" => "real", "value" => 2.0),
         ],
     )
     f = MOI.ScalarNonlinearFunction(:^, Any[x, 2.0])
