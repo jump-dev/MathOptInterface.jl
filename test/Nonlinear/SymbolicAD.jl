@@ -64,6 +64,7 @@ function test_simplify_ScalarNonlinearFunction()
     f = MOI.ScalarNonlinearFunction(:log, Any[x])
     g = MOI.ScalarNonlinearFunction(:sin, Any[f])
     @test SymbolicAD.simplify(g) ≈ g
+    @test MOI.Utilities.canonical(g) ≈ g
     return
 end
 
@@ -252,6 +253,7 @@ function test_simplify_VectorNonlinearFunction()
     f = MOI.VectorNonlinearFunction(wrap.([y; x_plus]))
     g = MOI.VectorNonlinearFunction([y; x_plus])
     @test SymbolicAD.simplify(f) ≈ g
+    @test isapprox(MOI.Utilities.canonical(f), g)
     return
 end
 

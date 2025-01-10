@@ -1071,6 +1071,10 @@ function canonicalize!(
     return f
 end
 
+function canonical(f::MOI.ScalarNonlinearFunction)::MOI.ScalarNonlinearFunction
+    return MOI.Nonlinear.SymbolicAD.simplify(f)
+end
+
 function canonicalize!(f::MOI.ScalarNonlinearFunction)
     for (i, arg) in enumerate(f.args)
         if !is_canonical(arg)
@@ -1078,6 +1082,11 @@ function canonicalize!(f::MOI.ScalarNonlinearFunction)
         end
     end
     return f
+end
+
+function canonical(f::MOI.VectorNonlinearFunction)
+    rows = MOI.Nonlinear.SymbolicAD.simplify.(f.rows)
+    return MOI.VectorNonlinearFunction(rows)
 end
 
 function canonicalize!(f::MOI.VectorNonlinearFunction)
