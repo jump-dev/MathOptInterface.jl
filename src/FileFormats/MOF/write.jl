@@ -83,7 +83,7 @@ function extract_function_and_set(expr::Expr)
     return error("Oops. The constraint $(expr) wasn't recognised.")
 end
 
-function write_nlpblock(
+function _write_nlpblock(
     constraints::Vector{NamedTuple},
     model::Model,
     name_map::Dict{MOI.VariableIndex,String},
