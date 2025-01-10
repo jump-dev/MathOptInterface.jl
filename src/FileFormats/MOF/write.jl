@@ -21,7 +21,7 @@ function Base.write(io::IO, model::Model)
     _write_constraints(constraints, model, name_map)
     object = (;
         name = "MathOptFormat Model",
-        version => (
+        version = (
             major = Int(_SUPPORTED_VERSIONS[1].major),
             minor = Int(_SUPPORTED_VERSIONS[1].minor),
         ),
