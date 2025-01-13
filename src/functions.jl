@@ -931,6 +931,12 @@ function Base.isapprox(
     g::ScalarNonlinearFunction;
     kwargs...,
 )
+    if f.head == :+ && length(f.args) == 1
+        f = only(f.args)
+    end
+    if g.head == :+ && length(g.args) == 1
+        g = only(g.args)
+    end
     if f.head != g.head || length(f.args) != length(g.args)
         return false
     end
@@ -1197,10 +1203,10 @@ function Base.convert(
 ) where {T}
     if f.head == :*
         g = ScalarQuadraticFunction{T}(
-                ScalarQuadraticTerm{T}[],
-                ScalarAffineTerm{T}[],
-                zero(T),
-            )
+            ScalarQuadraticTerm{T}[],
+            ScalarAffineTerm{T}[],
+            zero(T),
+        )
         return _add_to_function(g, f)
     elseif f.head == :^ && length(f.args) == 2 && f.args[2] == 2
         return convert(
