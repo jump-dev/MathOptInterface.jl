@@ -295,21 +295,20 @@ function test_VectorNonlinearFunction_mixed_type()
     @test length(indices) == 1
     g = MOI.get(inner, MOI.ConstraintFunction(), indices[1])
     y = MOI.get(inner, MOI.ListOfVariableIndices())
-    gis = vcat(
-        Any[MOI.ScalarNonlinearFunction(:log, Any[y[i]]) for i in 1:2],
-        1.0 * y[3] + 2.0,
-        y[4],
-    )
+    gis = [
+        MOI.ScalarNonlinearFunction(:log, Any[y[1]]),
+        MOI.ScalarNonlinearFunction(:log, Any[y[2]]),
+        MOI.ScalarNonlinearFunction(:+, Any[y[3], 2.0]),
+        MOI.ScalarNonlinearFunction(:+, Any[y[4]]),
+    ]
     @test g ≈ MOI.VectorNonlinearFunction(gis[[1, 3, 4]])
     F, S = MOI.ScalarNonlinearFunction, MOI.EqualTo{Float64}
     indices = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())
     @test length(indices) == 1
+    @show MOI.get(inner, MOI.ConstraintFunction(), indices[1])
     @test ≈(
         MOI.get(inner, MOI.ConstraintFunction(), indices[1]),
-        MOI.ScalarNonlinearFunction(
-            :-,
-            Any[convert(MOI.ScalarNonlinearFunction, gis[3]), gis[2]],
-        ),
+        MOI.ScalarNonlinearFunction(:-, Any[gis[3], gis[2]]),
     )
     return
 end

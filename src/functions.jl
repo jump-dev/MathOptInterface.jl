@@ -1127,22 +1127,40 @@ _order(x::VariableIndex, y::Real, z::VariableIndex) = (y, x, z)
 _order(x::VariableIndex, y::VariableIndex, z::Real) = (z, x, y)
 _order(x, y, z) = nothing
 
+_order_quad(x, y) = nothing
+_order_quad(x::VariableIndex, y::VariableIndex) = (x, y)
+
 function Base.convert(
     ::Type{ScalarQuadraticTerm{T}},
     f::ScalarNonlinearFunction,
 ) where {T}
-    if f.head != :* || length(f.args) != 3
+    if f.head != :*
         throw(InexactError(:convert, ScalarQuadraticTerm, f))
+    elseif length(f.args) == 2
+        # Deal with *(x, y)
+        ret_2 = _order_quad(f.args[1], f.args[2])
+        if ret_2 === nothing
+            throw(InexactError(:convert, ScalarQuadraticTerm, f))
+        end
+        coef = one(T)
+        if ret_2[1] == ret_2[2]
+            coef *= 2
+        end
+        return ScalarQuadraticTerm(coef, ret_2[1], ret_2[2])
+    elseif length(f.args) == 3
+        # *(constant, x, y)
+        ret = _order(f.args[1], f.args[2], f.args[3])
+        if ret === nothing
+            throw(InexactError(:convert, ScalarQuadraticTerm, f))
+        end
+        coef = convert(T, ret[1])
+        if ret[2] == ret[3]
+            coef *= 2
+        end
+        return ScalarQuadraticTerm(coef, ret[2], ret[3])
+    else
+        return throw(InexactError(:convert, ScalarQuadraticTerm, f))
     end
-    ret = _order(f.args[1], f.args[2], f.args[3])
-    if ret === nothing
-        throw(InexactError(:convert, ScalarQuadraticTerm, f))
-    end
-    coef = convert(T, ret[1])
-    if ret[2] == ret[3]
-        coef *= 2
-    end
-    return ScalarQuadraticTerm(coef, ret[2], ret[3])
 end
 
 function _add_to_function(
@@ -1157,7 +1175,11 @@ function _add_to_function(
     arg::ScalarNonlinearFunction,
 ) where {T}
     if arg.head == :* && length(arg.args) == 2
-        push!(f.affine_terms, convert(ScalarAffineTerm{T}, arg))
+        if _order_quad(arg.args[1], arg.args[2]) === nothing
+            push!(f.affine_terms, convert(ScalarAffineTerm{T}, arg))
+        else
+            push!(f.quadratic_terms, convert(ScalarQuadraticTerm{T}, arg))
+        end
     elseif arg.head == :* && length(arg.args) == 3
         push!(f.quadratic_terms, convert(ScalarQuadraticTerm{T}, arg))
     else
@@ -1176,7 +1198,12 @@ function Base.convert(
     if f.head == :*
         if length(f.args) == 2
             quad_terms = ScalarQuadraticTerm{T}[]
-            affine_terms = [convert(ScalarAffineTerm{T}, f)]
+            affine_terms = ScalarAffineTerm{T}[]
+            if _order_quad(f.args[1], f.args[2]) === nothing
+                push!(affine_terms, convert(ScalarAffineTerm{T}, f))
+            else
+                push!(quadratic_terms, convert(ScalarQuadraticTerm{T}, f))
+            end
             return ScalarQuadraticFunction{T}(quad_terms, affine_terms, zero(T))
         elseif length(f.args) == 3
             quad_terms = [convert(ScalarQuadraticTerm{T}, f)]
