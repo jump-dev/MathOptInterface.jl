@@ -1196,20 +1196,12 @@ function Base.convert(
     f::ScalarNonlinearFunction,
 ) where {T}
     if f.head == :*
-        if length(f.args) == 2
-            quad_terms = ScalarQuadraticTerm{T}[]
-            affine_terms = ScalarAffineTerm{T}[]
-            if _order_quad(f.args[1], f.args[2]) === nothing
-                push!(affine_terms, convert(ScalarAffineTerm{T}, f))
-            else
-                push!(quadratic_terms, convert(ScalarQuadraticTerm{T}, f))
-            end
-            return ScalarQuadraticFunction{T}(quad_terms, affine_terms, zero(T))
-        elseif length(f.args) == 3
-            quad_terms = [convert(ScalarQuadraticTerm{T}, f)]
-            affine_terms = ScalarAffineTerm{T}[]
-            return ScalarQuadraticFunction{T}(quad_terms, affine_terms, zero(T))
-        end
+        g = ScalarQuadraticFunction{T}(
+                ScalarQuadraticTerm{T}[],
+                ScalarAffineTerm{T}[],
+                zero(T),
+            )
+        return _add_to_function(g, f)
     elseif f.head == :^ && length(f.args) == 2 && f.args[2] == 2
         return convert(
             ScalarQuadraticFunction{T},
