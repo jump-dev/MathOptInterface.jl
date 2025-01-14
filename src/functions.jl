@@ -926,14 +926,21 @@ function _is_approx(x::AbstractArray, y::AbstractArray; kwargs...)
            all(z -> _is_approx(z[1], z[2]; kwargs...), zip(x, y))
 end
 
+function _is_univariate_plus(f)
+    if f.head == :+ && length(f.args) == 1
+        return only(f.args) isa ScalarNonlinearFunction
+    end
+    return false
+end
+
 function Base.isapprox(
     f::ScalarNonlinearFunction,
     g::ScalarNonlinearFunction;
     kwargs...,
 )
-    if f.head == :+ && length(f.args) == 1
-        return isapprox(only(f.args), g; kwargs...)
-    elseif g.head == :+ && length(g.args) == 1
+    if _is_univariate_plus(f)
+        return isapprox(only(f.args), g.args; kwargs...)
+    elseif _is_univariate_plus(g)
         return isapprox(f, only(g.args); kwargs...)
     end
     if f.head != g.head || length(f.args) != length(g.args)
