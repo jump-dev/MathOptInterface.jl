@@ -932,10 +932,9 @@ function Base.isapprox(
     kwargs...,
 )
     if f.head == :+ && length(f.args) == 1
-        f = only(f.args)
-    end
-    if g.head == :+ && length(g.args) == 1
-        g = only(g.args)
+        return isapprox(only(f.args), g; kwargs...)
+    elseif g.head == :+ && length(g.args) == 1
+        return isapprox(f, only(g.args); kwargs...)
     end
     if f.head != g.head || length(f.args) != length(g.args)
         return false
