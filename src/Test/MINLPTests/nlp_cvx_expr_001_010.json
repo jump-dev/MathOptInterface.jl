@@ -1,0 +1,35 @@
+{
+    "primal":{"x":-2.0430107680954848,"y":-0.4301075068564087},
+    "model":{
+        "name":"MathOptFormat Model",
+        "variables":[{"name":"x"},{"name":"y"}],
+        "constraints":[{
+            "name":"c1",
+            "function":{"constant":0.0,"terms":[{"coefficient":3.0,"variable":"x"},{"coefficient":9.0,"variable":"y"}],"type":"ScalarAffineFunction"},
+            "set":{"lower":-10.0,"type":"GreaterThan"}
+        }, {
+            "name":"c2",
+            "function":{"constant":0.0,"terms":[{"coefficient":10.0,"variable":"x"},{"coefficient":-1.0,"variable":"y"}],"type":"ScalarAffineFunction"},
+            "set":{"lower":-20.0,"type":"GreaterThan"}
+        }, {
+            "name":"c1_1",
+            "function":{"constant":0.0,"terms":[{"coefficient":1.0,"variable":"x"},{"coefficient":1.0,"variable":"y"}],"type":"ScalarAffineFunction"},
+            "set":{"type":"LessThan","upper":5.0}
+        }, {
+            "name":"c2_1",
+            "function":{"constant":0.0,"terms":[{"coefficient":2.0,"variable":"x"},{"coefficient":-1.0,"variable":"y"}],"type":"ScalarAffineFunction"},
+            "set":{"type":"LessThan","upper":3.0}
+        }, {
+            "name":"c3",
+            "function":{"constant":0.0,"terms":[{"coefficient":-1.0,"variable":"x"},{"coefficient":2.0,"variable":"y"}],"type":"ScalarAffineFunction"},
+            "set":{"type":"LessThan","upper":8.0}
+        }],
+        "objective":{
+            "function":{"name":"x","type":"Variable"},
+            "sense":"min"
+        },
+        "version":{"major":1,"minor":7}
+    },
+    "objective":-2.0430107680954848,
+    "is_feasible":true
+}

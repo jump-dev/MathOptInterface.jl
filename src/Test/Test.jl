@@ -6,6 +6,7 @@
 
 module Test
 
+import JSON
 import LinearAlgebra
 
 import MathOptInterface as MOI
