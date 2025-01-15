@@ -305,7 +305,6 @@ function test_VectorNonlinearFunction_mixed_type()
     F, S = MOI.ScalarNonlinearFunction, MOI.EqualTo{Float64}
     indices = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())
     @test length(indices) == 1
-    @show MOI.get(inner, MOI.ConstraintFunction(), indices[1])
     @test ≈(
         MOI.get(inner, MOI.ConstraintFunction(), indices[1]),
         MOI.ScalarNonlinearFunction(:-, Any[gis[3], gis[2]]),
