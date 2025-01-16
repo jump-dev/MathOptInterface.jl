@@ -70,6 +70,9 @@ end
 for filename in readdir(joinpath(@__DIR__, "MINLPTests"))
     full_filename = joinpath(@__DIR__, "MINLPTests", filename)
     fn_name = Symbol("test_mi" * replace(filename, ".json" => ""))
+    if occursin("_mi_", filename)
+        fn_name = Symbol("$(fn_name)_Integer_")
+    end
     @eval begin
         function $fn_name(model::MOI.ModelLike, config::Config)
             _test_minlptests($full_filename, model, config)
