@@ -22,13 +22,15 @@ function _test_minlptests(
     if data["is_feasible"]
         @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
         @test ≈(MOI.get(model, MOI.ObjectiveValue()), data["objective"], config)
-        for (name, value) in data["primal"]
-            mof_x = MOI.get(mof_model, MOI.VariableIndex, name)
-            @test ≈(
-                MOI.get(model, MOI.VariablePrimal(), index_map[mof_x]),
-                value,
-                config,
-            )
+        if get(data, "is_primal_unique", true)
+            for (name, value) in data["primal"]
+                mof_x = MOI.get(mof_model, MOI.VariableIndex, name)
+                @test ≈(
+                    MOI.get(model, MOI.VariablePrimal(), index_map[mof_x]),
+                    value,
+                    config,
+                )
+            end
         end
     else
         status = MOI.get(model, MOI.TerminationStatus())
