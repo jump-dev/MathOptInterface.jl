@@ -3,6 +3,7 @@
 #
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
+using JSON3
 
 """
     Base.write(io::IO, model::FileFormats.MOF.Model)
@@ -29,8 +30,7 @@ function Base.write(io::IO, model::Model)
         objective = objective,
         constraints = constraints,
     )
-    indent = options.print_compact ? nothing : 2
-    Base.write(io, JSON.json(object, indent))
+    Base.write(io, JSON3.write(object))
     return
 end
 
