@@ -469,6 +469,48 @@ function test_convert_VectorAffineFunction_VectorQuadraticFunction()
     return
 end
 
+function test_copy_ScalarNonlinearFunction()
+    N = 10_000
+    x = MOI.VariableIndex.(1:N)
+    f1 = MOI.ScalarNonlinearFunction(:^, Any[x[1], 1])
+    for i in 2:N
+        g = MOI.ScalarNonlinearFunction(:^, Any[x[i], 1])
+        f1 = MOI.ScalarNonlinearFunction(:+, Any[f1, g])
+    end
+    f2 = MOI.ScalarNonlinearFunction(:^, Any[x[1], 1])
+    for i in 2:N
+        g = MOI.ScalarNonlinearFunction(:^, Any[x[i], 1])
+        f2 = MOI.ScalarNonlinearFunction(:+, Any[f2, g])
+    end
+    f_copy = copy(f1)
+    @test ≈(f_copy, f2)
+    f1.args[2].args[2] = 2.0  # x[1]^1 --> x[1]^2
+    @test !isapprox(f_copy, f1)
+    @test isapprox(f_copy, f2)
+    return
+end
+
+function test_copy_ScalarNonlinearFunction_with_arg()
+    N = 10_000
+    x = MOI.VariableIndex.(1:N)
+    f1 = 1.0 * x[1] + 1.0
+    for i in 2:N
+        g = f1 = Float64(i) * x[i] + Float64(i)
+        f1 = MOI.ScalarNonlinearFunction(:+, Any[f1, g])
+    end
+    f2 = 1.0 * x[1] + 1.0
+    for i in 2:N
+        g = f2 = Float64(i) * x[i] + Float64(i)
+        f2 = MOI.ScalarNonlinearFunction(:+, Any[f2, g])
+    end
+    f_copy = copy(f1)
+    @test ≈(f_copy, f2)
+    f1.args[2].constant += 1
+    @test !isapprox(f_copy, f1)
+    @test isapprox(f_copy, f2)
+    return
+end
+
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$name", "test_")
