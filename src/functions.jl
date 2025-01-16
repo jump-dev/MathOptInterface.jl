@@ -360,8 +360,30 @@ struct ScalarNonlinearFunction <: AbstractScalarFunction
     end
 end
 
+# copy() doesn't recursively copy the children, and deepcopy seems to have a
+# performance problem for deeply nested structs.
 function Base.copy(f::ScalarNonlinearFunction)
-    return ScalarNonlinearFunction(f.head, copy(f.args))
+    stack, result_stack = Any[f], Any[]
+    while !isempty(stack)
+        arg = pop!(stack)
+        if arg isa ScalarNonlinearFunction
+            # We need some sort of hint so that the next time we see this on the
+            # stack we evaluate it using the args in `result_stack`. One option
+            # would be a custom type. Or we can just wrap in (,) and then check
+            # for a Tuple, which isn't (curretly) a valid argument.
+            push!(stack, (arg,))
+            for child in arg.args
+                push!(stack, child)
+            end
+        elseif arg isa Tuple{<:ScalarNonlinearFunction}
+            result = only(arg)
+            args = Any[pop!(result_stack) for i in 1:length(result.args)]
+            push!(result_stack, ScalarNonlinearFunction(result.head, args))
+        else
+            push!(result_stack, copy(arg))
+        end
+    end
+    return only(result_stack)
 end
 
 constant(f::ScalarNonlinearFunction, ::Type{T} = Float64) where {T} = zero(T)
