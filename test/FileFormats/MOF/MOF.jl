@@ -115,6 +115,7 @@ function test_HS071()
     MOI.write_to_file(model, TEST_MOF_FILE)
     target = read(joinpath(@__DIR__, "nlp.mof.json"), String)
     target = replace(target, r"\s" => "")
+    target = replace(target, "MathOptFormatModel" => "MathOptFormat Model")
     @test read(TEST_MOF_FILE, String) == target
     _validate(TEST_MOF_FILE)
     return
