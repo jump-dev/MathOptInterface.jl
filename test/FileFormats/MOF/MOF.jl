@@ -8,7 +8,7 @@ module TestMOF
 
 using Test
 
-import JSON
+import JSON3
 import JSONSchema
 import MathOptInterface as MOI
 
@@ -16,8 +16,11 @@ const MOF = MOI.FileFormats.MOF
 
 const TEST_MOF_FILE = "test.mof.json"
 
-const SCHEMA =
-    JSONSchema.Schema(JSON.parsefile(MOI.FileFormats.MOF.SCHEMA_PATH))
+const SCHEMA = JSONSchema.Schema(
+    open(MOI.FileFormats.MOF.SCHEMA_PATH, "r") do io
+        return JSON3.read(io, Dict{String,Any})
+    end,
+)
 
 function runtests()
     for name in names(@__MODULE__, all = true)
@@ -39,7 +42,7 @@ function _validate(filename::String)
         "r",
         MOI.FileFormats.AutomaticCompression(),
     ) do io
-        object = JSON.parse(io)
+        object = JSON3.read(io, Dict{String,Any})
         ret = JSONSchema.validate(SCHEMA, object)
         if ret !== nothing
             error(
