@@ -17,9 +17,7 @@ const MOF = MOI.FileFormats.MOF
 const TEST_MOF_FILE = "test.mof.json"
 
 const SCHEMA = JSONSchema.Schema(
-    open(MOI.FileFormats.MOF.SCHEMA_PATH, "r") do io
-        return JSON3.read(io, Dict{String,Any})
-    end,
+    JSON3.read(read(MOI.FileFormats.MOF.SCHEMA_PATH, String), Dict{String,Any}),
 )
 
 function runtests()
