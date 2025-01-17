@@ -7,6 +7,18 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.35.1 (January 17, 2025)
+
+### Fixed
+
+ - Fixed `Base.copy(::MOI.ScalarNonlinearFunction)` (#2612)
+
+### Other
+
+ - Performance improvements to `FileFormats.MOF` reading and writing:
+   - Use `NamedTuple` instead of `OrderedDict` (#2606) (#2607)
+   - Use `JSON3` instead of `JSON` (#2613)
+
 ## v1.35.0 (January 9, 2025)
 
 ### Added
