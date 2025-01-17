@@ -114,22 +114,7 @@ MathOptInterface.Utilities.IndexMap with 1 entry:
 julia> MOI.write_to_file(dest, "file.mof.json")
 
 julia> print(read("file.mof.json", String))
-{
-  "name": "MathOptFormat Model",
-  "version": {
-    "major": 1,
-    "minor": 7
-  },
-  "variables": [
-    {
-      "name": "x1"
-    }
-  ],
-  "objective": {
-    "sense": "feasibility"
-  },
-  "constraints": []
-}
+{"name":"MathOptFormat Model","version":{"major":1,"minor":7},"variables":[{"name":"x1"}],"objective":{"sense":"feasibility"},"constraints":[]}
 ```
 
 ## Read from file

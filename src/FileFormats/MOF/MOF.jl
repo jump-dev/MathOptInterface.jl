@@ -7,7 +7,7 @@
 module MOF
 
 import ..FileFormats
-import JSON
+import JSON3
 import MathOptInterface as MOI
 
 """

@@ -29,8 +29,7 @@ function Base.write(io::IO, model::Model)
         objective = objective,
         constraints = constraints,
     )
-    indent = options.print_compact ? nothing : 2
-    Base.write(io, JSON.json(object, indent))
+    JSON3.write(io, object)
     return
 end
 

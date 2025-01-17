@@ -8,7 +8,7 @@ module TestMOF
 
 using Test
 
-import JSON
+import JSON3
 import JSONSchema
 import MathOptInterface as MOI
 
@@ -16,8 +16,9 @@ const MOF = MOI.FileFormats.MOF
 
 const TEST_MOF_FILE = "test.mof.json"
 
-const SCHEMA =
-    JSONSchema.Schema(JSON.parsefile(MOI.FileFormats.MOF.SCHEMA_PATH))
+const SCHEMA = JSONSchema.Schema(
+    JSON3.read(read(MOI.FileFormats.MOF.SCHEMA_PATH, String), Dict{String,Any}),
+)
 
 function runtests()
     for name in names(@__MODULE__, all = true)
@@ -39,7 +40,7 @@ function _validate(filename::String)
         "r",
         MOI.FileFormats.AutomaticCompression(),
     ) do io
-        object = JSON.parse(io)
+        object = JSON3.read(io, Dict{String,Any})
         ret = JSONSchema.validate(SCHEMA, object)
         if ret !== nothing
             error(
@@ -112,8 +113,10 @@ function test_HS071()
     MOI.set(model, MOI.NLPBlock(), HS071(x))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.write_to_file(model, TEST_MOF_FILE)
-    @test replace(read(TEST_MOF_FILE, String), '\r' => "") ==
-          replace(read(joinpath(@__DIR__, "nlp.mof.json"), String), '\r' => "")
+    target = read(joinpath(@__DIR__, "nlp.mof.json"), String)
+    target = replace(target, r"\s" => "")
+    target = replace(target, "MathOptFormatModel" => "MathOptFormat Model")
+    @test read(TEST_MOF_FILE, String) == target
     _validate(TEST_MOF_FILE)
     return
 end

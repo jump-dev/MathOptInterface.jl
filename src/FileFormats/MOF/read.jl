@@ -13,7 +13,7 @@ function Base.read!(io::IO, model::Model)
     if !MOI.is_empty(model)
         error("Cannot read model from file as destination model is not empty.")
     end
-    object = JSON.parse(io; dicttype = Dict{String,Any})
+    object = JSON3.read(io, Dict{String,Any})
     file_version = _parse_mof_version(object["version"]::Dict{String,Any})
     if !(file_version in _SUPPORTED_VERSIONS)
         version = _SUPPORTED_VERSIONS[1]
