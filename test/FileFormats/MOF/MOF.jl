@@ -113,8 +113,9 @@ function test_HS071()
     MOI.set(model, MOI.NLPBlock(), HS071(x))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.write_to_file(model, TEST_MOF_FILE)
-    @test replace(read(TEST_MOF_FILE, String), '\r' => "") ==
-          replace(read(joinpath(@__DIR__, "nlp.mof.json"), String), '\r' => "")
+    target = read(joinpath(@__DIR__, "nlp.mof.json"), String)
+    target = replace(, '\r' => "", ' ' => "", '\n' => "")
+    @test read(TEST_MOF_FILE, String) == target
     _validate(TEST_MOF_FILE)
     return
 end
