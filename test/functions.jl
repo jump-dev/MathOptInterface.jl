@@ -396,10 +396,13 @@ function test_convert_ScalarNonlinearFunction_ScalarQuadraticTerm()
     @test convert(MOI.ScalarQuadraticTerm{Float64}, g) == f
     @test convert(MOI.ScalarQuadraticTerm{Float64}, h) == f
     @test convert(MOI.ScalarQuadraticTerm{Float64}, i) == f
+    j = MOI.ScalarNonlinearFunction(:*, Any[x, x])
+    @test convert(MOI.ScalarQuadraticTerm{Float64}, j) == f
     for f_error in (
         MOI.ScalarNonlinearFunction(:*, Any[1.0, x, 2.0]),
         MOI.ScalarNonlinearFunction(:+, Any[1.0, x, x]),
-        MOI.ScalarNonlinearFunction(:*, Any[x, x]),
+        MOI.ScalarNonlinearFunction(:*, Any[1.0, x]),
+        MOI.ScalarNonlinearFunction(:*, Any[x]),
     )
         @test_throws(
             InexactError,

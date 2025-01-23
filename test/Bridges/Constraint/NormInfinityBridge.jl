@@ -647,9 +647,9 @@ function test_NormInfinity_VectorNonlinearFunction()
     g = MOI.VectorNonlinearFunction([
         MOI.ScalarNonlinearFunction(
             :+,
-            Any[MOI.ScalarNonlinearFunction(:-, Any[v_sin]), u_p],
+            Any[MOI.ScalarNonlinearFunction(:-, Any[v_sin]), u],
         ),
-        MOI.ScalarNonlinearFunction(:+, Any[v_sin, u_p]),
+        MOI.ScalarNonlinearFunction(:+, Any[v_sin, u]),
     ])
     @test ≈(MOI.get(inner, MOI.ConstraintFunction(), indices[1]), g)
     h = MOI.VectorNonlinearFunction([
@@ -689,10 +689,7 @@ function test_NormOne_VectorNonlinearFunction()
     u, v, w = inner_variables
     v_sin = MOI.ScalarNonlinearFunction(:sin, Any[v])
     g = MOI.VectorNonlinearFunction([
-        MOI.ScalarNonlinearFunction(
-            :-,
-            Any[MOI.ScalarNonlinearFunction(:+, Any[u]), 0.0+1.0*w],
-        ),
+        MOI.ScalarNonlinearFunction(:-, Any[u, 0.0+1.0*w]),
         MOI.ScalarNonlinearFunction(
             :+,
             Any[MOI.ScalarNonlinearFunction(:-, Any[v_sin]), w],
