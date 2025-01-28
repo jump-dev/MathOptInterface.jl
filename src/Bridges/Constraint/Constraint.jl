@@ -18,7 +18,9 @@ include("set_map.jl")
 include("single_bridge_optimizer.jl")
 
 for filename in readdir(joinpath(@__DIR__, "bridges"); join = true)
-    include(filename)
+    if endswith(filename, ".jl")
+        include(filename)
+    end
 end
 
 """
