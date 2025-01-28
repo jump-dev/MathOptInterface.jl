@@ -7,6 +7,12 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.35.2 (January 29, 2025)
+
+### Fixed
+
+ - Fixed including non-`.jl` files in `Bridges` (#2615)
+
 ## v1.35.1 (January 17, 2025)
 
 ### Fixed
