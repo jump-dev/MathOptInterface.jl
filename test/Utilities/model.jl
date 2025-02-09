@@ -544,6 +544,24 @@ function test_copy_to_unsupported_scalar_function()
     return
 end
 
+function test_indicator_constraints()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    z, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
+    f = MOI.Utilities.operate(vcat, Float64, 1.0 * x, z)
+    for si in (MOI.LessThan(1.0), MOI.GreaterThan(1.0), MOI.EqualTo(1.0))
+        for a in (MOI.ACTIVATE_ON_ONE, MOI.ACTIVATE_ON_ZERO)
+            s = MOI.Indicator{a}(si)
+            MOI.supports_constraint(model, typeof(f), typeof(s))
+            ci = MOI.add_constraint(model, f, s)
+            @test MOI.is_valid(model, ci)
+            @test MOI.get(model, MOI.ConstraintFunction(), ci) ≈ f
+            @test MOI.get(model, MOI.ConstraintSet(), ci) == s
+        end
+    end
+    return
+end
+
 end  # module
 
 TestModel.runtests()
