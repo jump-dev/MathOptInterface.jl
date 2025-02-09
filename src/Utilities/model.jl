@@ -771,6 +771,17 @@ const LessThanIndicatorOne{T} =
 const LessThanIndicatorZero{T} =
     MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.LessThan{T}}
 
+const GreaterThanIndicatorOne{T} =
+    MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{T}}
+
+const GreaterThanIndicatorZero{T} =
+    MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.GreaterThan{T}}
+
+const EqualToIndicatorOne{T} = MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.EqualTo{T}}
+
+const EqualToIndicatorZero{T} =
+    MOI.Indicator{MOI.ACTIVATE_ON_ZERO,MOI.EqualTo{T}}
+
 @model(
     Model,
     (MOI.ZeroOne, MOI.Integer),
@@ -824,6 +835,10 @@ const LessThanIndicatorZero{T} =
         MOI.SOS2,
         LessThanIndicatorOne,
         LessThanIndicatorZero,
+        GreaterThanIndicatorOne,
+        GreaterThanIndicatorZero,
+        EqualToIndicatorOne,
+        EqualToIndicatorZero,
         MOI.Table,
         MOI.BinPacking,
         MOI.HyperRectangle,
