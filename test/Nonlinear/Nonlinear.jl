@@ -360,28 +360,65 @@ end
 
 function test_eval_univariate_function()
     r = Nonlinear.OperatorRegistry()
-    @test Nonlinear.eval_univariate_function(r, :+, 1.0) == 1.0
-    @test Nonlinear.eval_univariate_function(r, :-, 1.0) == -1.0
-    @test Nonlinear.eval_univariate_function(r, :abs, -1.1) == 1.1
-    @test Nonlinear.eval_univariate_function(r, :abs, 1.1) == 1.1
+    for (op, x, y) in [
+        (:+, 1.0, 1.0),
+        (:-, 1.0, -1.0),
+        (:abs, -1.1, 1.1),
+        (:abs, 1.1, 1.1),
+        (:sin, 1.1, sin(1.1)),
+    ]
+        id = r.univariate_operator_to_id[op]
+        @test Nonlinear.eval_univariate_function(r, op, x) == y
+        @test Nonlinear.eval_univariate_function(r, id, x) == y
+    end
     return
 end
 
 function test_eval_univariate_gradient()
     r = Nonlinear.OperatorRegistry()
-    @test Nonlinear.eval_univariate_gradient(r, :+, 1.2) == 1.0
-    @test Nonlinear.eval_univariate_gradient(r, :-, 1.2) == -1.0
-    @test Nonlinear.eval_univariate_gradient(r, :abs, -1.1) == -1.0
-    @test Nonlinear.eval_univariate_gradient(r, :abs, 1.1) == 1.0
+    for (op, x, y) in [
+        (:+, 1.2, 1.0),
+        (:-, 1.2, -1.0),
+        (:abs, -1.1, -1.0),
+        (:abs, 1.1, 1.0),
+        (:sin, 1.1, cos(1.1)),
+    ]
+        id = r.univariate_operator_to_id[op]
+        @test Nonlinear.eval_univariate_gradient(r, op, x) == y
+        @test Nonlinear.eval_univariate_gradient(r, id, x) == y
+    end
+    return
+end
+
+function test_eval_univariate_function_and_gradient()
+    r = Nonlinear.OperatorRegistry()
+    for (op, x, y) in [
+        (:+, 1.2, (1.2, 1.0)),
+        (:-, 1.2, (-1.2, -1.0)),
+        (:abs, -1.1, (1.1, -1.0)),
+        (:abs, 1.1, (1.1, 1.0)),
+        (:sin, 1.1, (sin(1.1), cos(1.1))),
+    ]
+        id = r.univariate_operator_to_id[op]
+        @test Nonlinear.eval_univariate_function_and_gradient(r, op, x) == y
+        @test Nonlinear.eval_univariate_function_and_gradient(r, id, x) == y
+    end
     return
 end
 
 function test_eval_univariate_hessian()
     r = Nonlinear.OperatorRegistry()
-    @test Nonlinear.eval_univariate_hessian(r, :+, 1.2) == 0.0
-    @test Nonlinear.eval_univariate_hessian(r, :-, 1.2) == 0.0
-    @test Nonlinear.eval_univariate_hessian(r, :abs, -1.1) == 0.0
-    @test Nonlinear.eval_univariate_hessian(r, :abs, 1.1) == 0.0
+    for (op, x, y) in [
+        (:+, 1.2, 0.0),
+        (:-, 1.2, 0.0),
+        (:abs, -1.1, 0.0),
+        (:abs, 1.1, 0.0),
+        (:sin, 1.0, -sin(1.0)),
+    ]
+        id = r.univariate_operator_to_id[op]
+        @test Nonlinear.eval_univariate_hessian(r, op, x) == y
+        @test Nonlinear.eval_univariate_hessian(r, id, x) == y
+    end
     return
 end
 

@@ -248,16 +248,13 @@ function _forward_eval(
             end
         elseif node.type == Nonlinear.NODE_CALL_UNIVARIATE
             child_idx = children_arr[f.adj.colptr[k]]
-            f.forward_storage[k] = Nonlinear.eval_univariate_function(
+            ret_f, ret_f′ = Nonlinear.eval_univariate_function_and_gradient(
                 operators,
-                operators.univariate_operators[node.index],
+                node.index,
                 f.forward_storage[child_idx],
             )
-            f.partials_storage[child_idx] = Nonlinear.eval_univariate_gradient(
-                operators,
-                operators.univariate_operators[node.index],
-                f.forward_storage[child_idx],
-            )
+            f.forward_storage[k] = ret_f
+            f.partials_storage[child_idx] = ret_f′
         elseif node.type == Nonlinear.NODE_COMPARISON
             children_idx = SparseArrays.nzrange(f.adj, k)
             result = true

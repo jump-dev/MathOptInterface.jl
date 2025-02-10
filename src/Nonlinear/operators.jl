@@ -63,6 +63,33 @@ struct _UnivariateOperator{F,F′,F′′}
     end
 end
 
+function eval_univariate_function(operator::_UnivariateOperator, x::T) where {T}
+    ret = operator.f(x)
+    check_return_type(T, ret)
+    return ret::T
+end
+
+function eval_univariate_gradient(operator::_UnivariateOperator, x::T) where {T}
+    ret = operator.f′(x)
+    check_return_type(T, ret)
+    return ret::T
+end
+
+function eval_univariate_hessian(operator::_UnivariateOperator, x::T) where {T}
+    ret = operator.f′′(x)
+    check_return_type(T, ret)
+    return ret::T
+end
+
+function eval_univariate_function_and_gradient(
+    operator::_UnivariateOperator,
+    x::T,
+) where {T}
+    ret_f = eval_univariate_function(operator, x)
+    ret_f′ = eval_univariate_gradient(operator, x)
+    return ret_f, ret_f′
+end
+
 struct _MultivariateOperator{F,F′,F′′}
     N::Int
     f::F
@@ -517,12 +544,32 @@ end
 """
     eval_univariate_function(
         registry::OperatorRegistry,
-        op::Symbol,
+        op::Union{Symbol,Integer},
         x::T,
     ) where {T}
 
 Evaluate the operator `op(x)::T`, where `op` is a univariate function in
 `registry`.
+
+If `op isa Integer`, then `op` is the index in
+`registry.univariate_operators[op]`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> r = MOI.Nonlinear.OperatorRegistry();
+
+julia> MOI.Nonlinear.eval_univariate_function(r, :abs, -1.2)
+1.2
+
+julia> r.univariate_operators[3]
+:abs
+
+julia> MOI.Nonlinear.eval_univariate_function(r, 3, -1.2)
+1.2
+```
 """
 function eval_univariate_function(
     registry::OperatorRegistry,
@@ -530,26 +577,52 @@ function eval_univariate_function(
     x::T,
 ) where {T}
     id = registry.univariate_operator_to_id[op]
+    return eval_univariate_function(registry, id, x)
+end
+
+function eval_univariate_function(
+    registry::OperatorRegistry,
+    id::Integer,
+    x::T,
+) where {T}
     if id <= registry.univariate_user_operator_start
         f, _ = _eval_univariate(id, x)
         return f::T
     end
     offset = id - registry.univariate_user_operator_start
     operator = registry.registered_univariate_operators[offset]
-    ret = operator.f(x)
-    check_return_type(T, ret)
-    return ret::T
+    return eval_univariate_function(operator, x)
 end
 
 """
     eval_univariate_gradient(
         registry::OperatorRegistry,
-        op::Symbol,
+        op::Union{Symbol,Integer},
         x::T,
     ) where {T}
 
 Evaluate the first-derivative of the operator `op(x)::T`, where `op` is a
 univariate function in `registry`.
+
+If `op isa Integer`, then `op` is the index in
+`registry.univariate_operators[op]`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> r = MOI.Nonlinear.OperatorRegistry();
+
+julia> MOI.Nonlinear.eval_univariate_gradient(r, :abs, -1.2)
+-1.0
+
+julia> r.univariate_operators[3]
+:abs
+
+julia> MOI.Nonlinear.eval_univariate_gradient(r, 3, -1.2)
+-1.0
+```
 """
 function eval_univariate_gradient(
     registry::OperatorRegistry,
@@ -557,26 +630,107 @@ function eval_univariate_gradient(
     x::T,
 ) where {T}
     id = registry.univariate_operator_to_id[op]
+    return eval_univariate_gradient(registry, id, x)
+end
+
+function eval_univariate_gradient(
+    registry::OperatorRegistry,
+    id::Integer,
+    x::T,
+) where {T}
     if id <= registry.univariate_user_operator_start
         _, f′ = _eval_univariate(id, x)
         return f′::T
     end
     offset = id - registry.univariate_user_operator_start
     operator = registry.registered_univariate_operators[offset]
-    ret = operator.f′(x)
-    check_return_type(T, ret)
-    return ret::T
+    return eval_univariate_gradient(operator, x)
+end
+
+"""
+    eval_univariate_function_and_gradient(
+        registry::OperatorRegistry,
+        op::Union{Symbol,Integer},
+        x::T,
+    )::Tuple{T,T} where {T}
+
+Evaluate the function and first-derivative of the operator `op(x)::T`, where
+`op` is a univariate function in `registry`.
+
+If `op isa Integer`, then `op` is the index in
+`registry.univariate_operators[op]`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> r = MOI.Nonlinear.OperatorRegistry();
+
+julia> MOI.Nonlinear.eval_univariate_function_and_gradient(r, :abs, -1.2)
+(1.2, -1.0)
+
+julia> r.univariate_operators[3]
+:abs
+
+julia> MOI.Nonlinear.eval_univariate_function_and_gradient(r, 3, -1.2)
+(1.2, -1.0)
+```
+"""
+function eval_univariate_function_and_gradient(
+    registry::OperatorRegistry,
+    op::Symbol,
+    x::T,
+) where {T}
+    id = registry.univariate_operator_to_id[op]
+    return eval_univariate_function_and_gradient(registry, id, x)
+end
+
+function eval_univariate_function_and_gradient(
+    registry::OperatorRegistry,
+    id::Integer,
+    x::T,
+) where {T}
+    if id <= registry.univariate_user_operator_start
+        return _eval_univariate(id, x)::Tuple{T,T}
+    end
+    offset = id - registry.univariate_user_operator_start
+    operator = registry.registered_univariate_operators[offset]
+    return eval_univariate_function_and_gradient(operator, x)
 end
 
 """
     eval_univariate_hessian(
         registry::OperatorRegistry,
-        op::Symbol,
+        op::Union{Symbol,Integer},
         x::T,
     ) where {T}
 
 Evaluate the second-derivative of the operator `op(x)::T`, where `op` is a
 univariate function in `registry`.
+
+If `op isa Integer`, then `op` is the index in
+`registry.univariate_operators[op]`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> r = MOI.Nonlinear.OperatorRegistry();
+
+julia> MOI.Nonlinear.eval_univariate_hessian(r, :sin, 1.0)
+-0.8414709848078965
+
+julia> r.univariate_operators[16]
+:sin
+
+julia> MOI.Nonlinear.eval_univariate_hessian(r, 16, 1.0)
+-0.8414709848078965
+
+julia> -sin(1.0)
+-0.8414709848078965
+```
 """
 function eval_univariate_hessian(
     registry::OperatorRegistry,
@@ -584,14 +738,20 @@ function eval_univariate_hessian(
     x::T,
 ) where {T}
     id = registry.univariate_operator_to_id[op]
+    return eval_univariate_hessian(registry, id, x)
+end
+
+function eval_univariate_hessian(
+    registry::OperatorRegistry,
+    id::Integer,
+    x::T,
+) where {T}
     if id <= registry.univariate_user_operator_start
         return _eval_univariate_2nd_deriv(id, x)::T
     end
     offset = id - registry.univariate_user_operator_start
     operator = registry.registered_univariate_operators[offset]
-    ret = operator.f′′(x)
-    check_return_type(T, ret)
-    return ret::T
+    return eval_univariate_hessian(operator, x)
 end
 
 """

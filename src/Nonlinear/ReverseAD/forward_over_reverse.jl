@@ -376,7 +376,7 @@ function _forward_eval_ϵ(
                 @inbounds child_idx = children_arr[ex.adj.colptr[k]]
                 f′′ = Nonlinear.eval_univariate_hessian(
                     user_operators,
-                    user_operators.univariate_operators[node.index],
+                    node.index,
                     ex.forward_storage[child_idx],
                 )
                 partials_storage_ϵ[child_idx] = f′′ * storage_ϵ[child_idx]
