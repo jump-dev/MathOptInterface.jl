@@ -63,6 +63,33 @@ struct _UnivariateOperator{F,F′,F′′}
     end
 end
 
+function eval_univariate_function(operator::_UnivariateOperator, x::T) where {T}
+    ret = operator.f(x)
+    check_return_type(T, ret)
+    return ret::T
+end
+
+function eval_univariate_gradient(operator::_UnivariateOperator, x::T) where {T}
+    ret = operator.f′(x)
+    check_return_type(T, ret)
+    return ret::T
+end
+
+function eval_univariate_hessian(operator::_UnivariateOperator, x::T) where {T}
+    ret = operator.f′′(x)
+    check_return_type(T, ret)
+    return ret::T
+end
+
+function eval_univariate_function_and_gradient(
+    operator::_UnivariateOperator,
+    x::T,
+) where {T}
+    ret_f = eval_univariate_function(operator, x)
+    ret_f′ = eval_univariate_gradient(operator, x)
+    return ret_f, ret_f′
+end
+
 struct _MultivariateOperator{F,F′,F′′}
     N::Int
     f::F
@@ -564,9 +591,7 @@ function eval_univariate_function(
     end
     offset = id - registry.univariate_user_operator_start
     operator = registry.registered_univariate_operators[offset]
-    ret = operator.f(x)
-    check_return_type(T, ret)
-    return ret::T
+    return eval_univariate_function(operator, x)
 end
 
 """
@@ -619,9 +644,7 @@ function eval_univariate_gradient(
     end
     offset = id - registry.univariate_user_operator_start
     operator = registry.registered_univariate_operators[offset]
-    ret = operator.f′(x)
-    check_return_type(T, ret)
-    return ret::T
+    return eval_univariate_gradient(operator, x)
 end
 
 """
@@ -673,11 +696,7 @@ function eval_univariate_function_and_gradient(
     end
     offset = id - registry.univariate_user_operator_start
     operator = registry.registered_univariate_operators[offset]
-    ret_f = operator.f(x)
-    check_return_type(T, ret_f)
-    ret_f′ = operator.f′(x)
-    check_return_type(T, ret_f′)
-    return ret_f::T, ret_f′::T
+    return eval_univariate_function_and_gradient(operator, x)
 end
 
 """
@@ -732,9 +751,7 @@ function eval_univariate_hessian(
     end
     offset = id - registry.univariate_user_operator_start
     operator = registry.registered_univariate_operators[offset]
-    ret = operator.f′′(x)
-    check_return_type(T, ret)
-    return ret::T
+    return eval_univariate_hessian(operator, x)
 end
 
 """
