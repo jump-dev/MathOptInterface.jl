@@ -153,9 +153,12 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
         #
         for k in d.subexpression_order
             len = max_chunk * length(d.subexpressions[k].nodes)
-            d.subexpressions[k].forward_storage_ϵ = zeros(len)
-            d.subexpressions[k].partials_storage_ϵ = zeros(len)
-            d.subexpressions[k].reverse_storage_ϵ = zeros(len)
+            resize!(d.subexpressions[k].forward_storage_ϵ, len)
+            fill!(d.subexpressions[k].forward_storage_ϵ, 0.0)
+            resize!(d.subexpressions[k].partials_storage_ϵ, len)
+            fill!(d.subexpressions[k].partials_storage_ϵ, 0.0)
+            resize!(d.subexpressions[k].reverse_storage_ϵ, len)
+            fill!(d.subexpressions[k].reverse_storage_ϵ, 0.0)
         end
         d.max_chunk = max_chunk
         if d.want_hess
