@@ -377,7 +377,7 @@ function evaluate(
             child_idx = children_arr[adj.colptr[k]]
             storage[k] = eval_univariate_function(
                 model.operators,
-                model.operators.univariate_operators[node.index],
+                node.index,
                 storage[child_idx],
             )
         elseif node.type == NODE_COMPARISON
