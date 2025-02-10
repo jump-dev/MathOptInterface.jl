@@ -4,7 +4,7 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-mutable struct _SubexpressionStorage
+struct _SubexpressionStorage
     nodes::Vector{Nonlinear.Node}
     adj::SparseArrays.SparseMatrixCSC{Bool,Int}
     const_values::Vector{Float64}
@@ -41,7 +41,7 @@ mutable struct _SubexpressionStorage
     end
 end
 
-mutable struct _FunctionStorage
+struct _FunctionStorage
     nodes::Vector{Nonlinear.Node}
     adj::SparseArrays.SparseMatrixCSC{Bool,Int}
     const_values::Vector{Float64}
