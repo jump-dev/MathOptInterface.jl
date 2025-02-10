@@ -248,7 +248,7 @@ function _forward_eval(
             end
         elseif node.type == Nonlinear.NODE_CALL_UNIVARIATE
             child_idx = children_arr[f.adj.colptr[k]]
-            ret_f, ret_f′ =  Nonlinear.eval_univariate_function_and_gradient(
+            ret_f, ret_f′ = Nonlinear.eval_univariate_function_and_gradient(
                 operators,
                 node.index,
                 f.forward_storage[child_idx],
