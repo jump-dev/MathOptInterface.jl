@@ -56,6 +56,7 @@ Nonlinear.assert_registered
 Nonlinear.check_return_type
 Nonlinear.eval_univariate_function
 Nonlinear.eval_univariate_gradient
+Nonlinear.eval_univariate_function_and_gradient
 Nonlinear.eval_univariate_hessian
 Nonlinear.eval_multivariate_function
 Nonlinear.eval_multivariate_gradient

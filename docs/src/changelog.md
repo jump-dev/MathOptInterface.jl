@@ -7,6 +7,25 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.36.0 (February 12, 2025)
+
+### Added
+
+ - Added support for [`Indicator`](@ref) constraints in [`Utilities.Model`](@ref)
+   (#2618) (#2619)
+ - Added features to improve performance of evaluating univariate operators in
+   `Nonlinear` (#2620):
+   * Added [`Nonlinear.eval_univariate_function_and_gradient`](@ref)
+   * [`Nonlinear.eval_univariate_function`](@ref), [`Nonlinear.eval_univariate_gradient`](@ref),
+     and [`Nonlinear.eval_univariate_hessian`](@ref) now support calls with
+     the `Integer` index of the operator instead of requiring a `Symbol`
+
+### Other
+
+ * Removed `mutable` from the struct definition of
+   `Nonlinear.ReverseAD._FunctionStorage` and
+   `Nonlinear.ReverseAD._SubexpressionStorage` (#2621)
+
 ## v1.35.2 (January 29, 2025)
 
 ### Fixed
