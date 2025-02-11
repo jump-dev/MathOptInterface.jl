@@ -17,8 +17,8 @@ include("topological_sort.jl")
         nnz::Int
     end
 
-Represent the set `nzidx[1:nnz]` by additionally setting `empty[i]` to `true`
-for each element of the set for fast membership check.
+Represent the set `nzidx[1:nnz]` by additionally setting `empty[i]` to `false`
+for each element `i` of the set for fast membership check.
 """
 mutable struct IndexedSet
     nzidx::Vector{Int}
@@ -44,6 +44,8 @@ function Base.empty!(v::IndexedSet)
     return v
 end
 
+# Returns the maximum index that the set can contain,
+# not the cardinality of the set like `length(::Base.Set)`
 Base.length(v::IndexedSet) = length(v.nzidx)
 
 function Base.resize!(v::IndexedSet, n::Integer)
@@ -75,8 +77,8 @@ end
 
 Compact storage for an undirected graph. The number of nodes is given by
 `length(offsets) - 1`. The edges of node `u` are given by `edges[e]` for
-`e in edgeindex[offsets[u]:(offsets[u] - 1)]`. The neighbors are also
-stored at `adjlist[offsets[u]:(offsets[u] - 1)]`.
+`e in edgeindex[offsets[u]:(offsets[u+1] - 1)]`. The neighbors are also
+stored at `adjlist[offsets[u]:(offsets[u+1] - 1)]`.
 """
 struct UndirectedGraph
     adjlist::Vector{Int}
@@ -473,7 +475,7 @@ function hessian_color_preprocess(
         push!(I, i)
         push!(J, j)
     end
-    local_indices = sort!(seen_idx.nzidx[1:seen_idx.nnz])
+    local_indices = sort!(collect(seen_idx))
     empty!(seen_idx)
     global_to_local_idx = seen_idx.nzidx # steal for storage
     for k in eachindex(local_indices)
