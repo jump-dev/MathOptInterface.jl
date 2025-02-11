@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * Removed `mutable` from the struct definition of
    `Nonlinear.ReverseAD._FunctionStorage` and
    `Nonlinear.ReverseAD._SubexpressionStorage` (#2621)
+ * Fixed docstrings in the `Coloring` submodule (#2622)
 
 ## v1.35.2 (January 29, 2025)
 
