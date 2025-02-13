@@ -8,7 +8,9 @@ module TestMathOptSymbolicAD
 using Test
 
 import MathOptInterface as MOI
-import MathOptInterface.Nonlinear: SymbolicAD
+import MathOptInterface: Nonlinear
+
+const SymbolicAD = Nonlinear.SymbolicAD
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -503,7 +505,7 @@ function test_SymbolicAD_Evaluator()
     end
     MOI.Nonlinear.add_constraint(model, :($(x[1]) * $(x[2])), MOI.LessThan(2.0))
     MOI.Nonlinear.set_objective(model, :($(x[1]) * $(x[2])))
-    evaluator = MOI.Nonlinear.Evaluator(model, SymbolicAD.SymbolicMode(), x)
+    evaluator = MOI.Nonlinear.Evaluator(model, Nonlinear.SymbolicMode(), x)
     @test MOI.features_available(evaluator) == [:Grad, :Jac, :Hess, :ExprGraph]
     @test_throws AssertionError MOI.initialize(evaluator, [:Foo])
     MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
@@ -542,7 +544,7 @@ function test_SymbolicAD_Evaluator_squared()
     x = MOI.VariableIndex(1)
     model = MOI.Nonlinear.Model()
     MOI.Nonlinear.set_objective(model, :($x^2))
-    evaluator = MOI.Nonlinear.Evaluator(model, SymbolicAD.SymbolicMode(), [x])
+    evaluator = MOI.Nonlinear.Evaluator(model, Nonlinear.SymbolicMode(), [x])
     @test MOI.features_available(evaluator) == [:Grad, :Jac, :Hess, :ExprGraph]
     MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
     x = [3.0]
@@ -563,7 +565,7 @@ function test_SymbolicAD_Evaluator_ifelse()
     x = MOI.VariableIndex(1)
     model = MOI.Nonlinear.Model()
     MOI.Nonlinear.set_objective(model, :(ifelse($x > 0, $x, -$x)))
-    evaluator = MOI.Nonlinear.Evaluator(model, SymbolicAD.SymbolicMode(), [x])
+    evaluator = MOI.Nonlinear.Evaluator(model, Nonlinear.SymbolicMode(), [x])
     @test MOI.features_available(evaluator) == [:Grad, :Jac, :Hess, :ExprGraph]
     MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
     x = [3.0]
@@ -584,7 +586,7 @@ function test_SymbolicAD_Evaluator_comparison()
     x = MOI.VariableIndex(1)
     model = MOI.Nonlinear.Model()
     MOI.Nonlinear.set_objective(model, :(ifelse(($x < -1) || ($x > 1), $x, 0)))
-    evaluator = MOI.Nonlinear.Evaluator(model, SymbolicAD.SymbolicMode(), [x])
+    evaluator = MOI.Nonlinear.Evaluator(model, Nonlinear.SymbolicMode(), [x])
     @test MOI.features_available(evaluator) == [:Grad, :Jac, :Hess, :ExprGraph]
     MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
     x = zeros(1)
@@ -663,7 +665,7 @@ function test_SymbolicAD_show()
             MOI.LessThan(2.0),
         )
     end
-    evaluator = MOI.Nonlinear.Evaluator(model, SymbolicAD.SymbolicMode(), x)
+    evaluator = MOI.Nonlinear.Evaluator(model, Nonlinear.SymbolicMode(), x)
     _, dag = only(evaluator.backend.dag)
     contents = sprint(show, dag)
     @test occursin("# x[1]", contents)
@@ -680,7 +682,7 @@ function test_SymbolicAD_subexpressions()
     MOI.Nonlinear.add_constraint(model, expr, MOI.LessThan(2.0))
     @test_throws(
         ErrorException("Subexpressions not supported"),
-        MOI.Nonlinear.Evaluator(model, SymbolicAD.SymbolicMode(), x),
+        MOI.Nonlinear.Evaluator(model, Nonlinear.SymbolicMode(), x),
     )
     return
 end
@@ -692,7 +694,7 @@ function test_SymbolicAD_parameters()
     MOI.Nonlinear.add_constraint(model, :($x * $p), MOI.LessThan(2.0))
     @test_throws(
         ErrorException("Parameters not supported"),
-        MOI.Nonlinear.Evaluator(model, SymbolicAD.SymbolicMode(), [x]),
+        MOI.Nonlinear.Evaluator(model, Nonlinear.SymbolicMode(), [x]),
     )
     return
 end
@@ -745,7 +747,7 @@ function test_SymbolicAD_univariate_registered()
     model = MOI.Nonlinear.Model()
     MOI.Nonlinear.register_operator(model, :op_foo, 1, x -> x^2)
     MOI.Nonlinear.set_objective(model, :(op_foo($x - 0.5)))
-    evaluator = MOI.Nonlinear.Evaluator(model, SymbolicAD.SymbolicMode(), [x])
+    evaluator = MOI.Nonlinear.Evaluator(model, Nonlinear.SymbolicMode(), [x])
     MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
     x = [1.0]
     @test MOI.eval_objective(evaluator, x) == 0.25

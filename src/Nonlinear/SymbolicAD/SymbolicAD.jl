@@ -22,7 +22,7 @@ Return a simplified copy of the function `f`.
 simplify(f) = simplify!(copy(f))
 
 ###
-### simplify!
+### `simplify!`
 ###
 
 """
@@ -468,7 +468,7 @@ end
 """
     __DERIVATIVE__ = "__DERIVATIVE__"
 
-This constant is is prefixed to the name of univariate operators to indicate
+This constant is prefixed to the name of univariate operators to indicate
 that we should compute their derivative.
 
 If `f.head` is itself a __DERIVATIVE__, then this will create a second
@@ -1129,14 +1129,6 @@ end
 ### MOI.AbstractNLPEvaluator
 ###
 
-"""
-    SymbolicMode() <: MOI.Nonlinear.AbstractAutomaticDifferentiation
-
-A type for setting as the value of the `MOI.AutomaticDifferentiationBackend()`
-attribute to enable symbolic automatic differentiation.
-"""
-struct SymbolicMode <: MOI.Nonlinear.AbstractAutomaticDifferentiation end
-
 struct Evaluator <: MOI.AbstractNLPEvaluator
     dag::Dict{UInt64,_DAG}
     H::Dict{UInt64,Vector{Tuple{Int64,Int64}}}
@@ -1252,9 +1244,8 @@ function _to_symbolic_form(
     )
 end
 
-function MOI.Nonlinear.Evaluator(
+function Evaluator(
     model::MOI.Nonlinear.Model,
-    ::SymbolicMode,
     ordered_variables::Vector{MOI.VariableIndex},
 )
     variable_to_column =
@@ -1308,7 +1299,7 @@ function MOI.Nonlinear.Evaluator(
             push!(constraint_index_by_hash[c_sym.hash], length(constraints))
         end
     end
-    backend = Evaluator(
+    return Evaluator(
         hash_to_dag,
         hash_to_H,
         objective,
@@ -1316,7 +1307,6 @@ function MOI.Nonlinear.Evaluator(
         constraint_index_by_hash,
         Float64[],
     )
-    return MOI.Nonlinear.Evaluator(model, backend)
 end
 
 function _evaluate!(model::Evaluator, x)
@@ -1428,7 +1418,7 @@ function MOI.eval_hessian_lagrangian(model::Evaluator, H, x, σ, μ)
     Threads.@threads for i in eachindex(model.constraints)
         c = model.constraints[i]
         # It is important that `offset_c` does not shadow `offset` from the
-        # objective block! If we use the same name, Julia creates a Core.Box
+        # objective block. If we use the same name, Julia creates a Core.Box
         offset_c = c.hess_offset - length(c.x) - 1
         for j in (2+length(c.x)):length(c.result)
             H[offset_c+j] = μ[i] * c.result[j]
