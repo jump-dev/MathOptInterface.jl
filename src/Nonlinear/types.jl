@@ -291,3 +291,19 @@ function Evaluator(
 )
     return Evaluator(model, ReverseAD.NLPEvaluator(model, ordered_variables))
 end
+
+"""
+    SymbolicMode() <: AbstractAutomaticDifferentiation
+
+A type for setting as the value of the `MOI.AutomaticDifferentiationBackend()`
+attribute to enable symbolic automatic differentiation.
+"""
+struct SymbolicMode <: AbstractAutomaticDifferentiation end
+
+function Evaluator(
+    model::Model,
+    ::SymbolicMode,
+    ordered_variables::Vector{MOI.VariableIndex},
+)
+    return Evaluator(model, SymbolicAD.Evaluator(model, ordered_variables))
+end

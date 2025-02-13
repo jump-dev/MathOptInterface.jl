@@ -6,3 +6,4 @@
 
 include("Nonlinear.jl")
 include("ReverseAD.jl")
+include("SymbolicAD.jl")

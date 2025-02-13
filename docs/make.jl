@@ -70,6 +70,7 @@ const _PAGES = [
         ],
         "Nonlinear" => [
             "Overview" => "submodules/Nonlinear/overview.md",
+            "SymbolicAD" => "submodules/Nonlinear/SymbolicAD.md",
             "API Reference" => "submodules/Nonlinear/reference.md",
         ],
         "Utilities" => [
