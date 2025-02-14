@@ -18,6 +18,21 @@ Return a simplified copy of the function `f`.
 
 !!! warning
     This function is not type stable by design.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> x = MOI.VariableIndex(1)
+MOI.VariableIndex(1)
+
+julia> f = MOI.ScalarNonlinearFunction(:^, Any[x, 1])
+^(MOI.VariableIndex(1), (1))
+
+julia> MOI.Nonlinear.SymbolicAD.simplify(f)
+MOI.VariableIndex(1)
+```
 """
 simplify(f) = simplify!(copy(f))
 
@@ -33,6 +48,27 @@ new object if `f` can be represented in a simpler type.
 
 !!! warning
     This function is not type stable by design.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> x = MOI.VariableIndex(1)
+MOI.VariableIndex(1)
+
+julia> f = MOI.ScalarNonlinearFunction(
+           :+,
+           Any[MOI.ScalarNonlinearFunction(:+, Any[1.0, x]), 2.0 * x + 3.0],
+       )
++(+(1.0, MOI.VariableIndex(1)), 3.0 + 2.0 MOI.VariableIndex(1))
+
+julia> MOI.Nonlinear.SymbolicAD.simplify!(f)
++(1.0, MOI.VariableIndex(1), 3.0 + 2.0 MOI.VariableIndex(1))
+
+julia> f
++(1.0, MOI.VariableIndex(1), 3.0 + 2.0 MOI.VariableIndex(1))
+```
 """
 simplify!(f) = f
 
@@ -311,6 +347,26 @@ end
     variables(f::Union{Real,MOI.AbstractScalarFunction})
 
 Return a sorted list of the `MOI.VariableIndex` present in the function `f`.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> x = MOI.VariableIndex.(1:3)
+3-element Vector{MathOptInterface.VariableIndex}:
+ MOI.VariableIndex(1)
+ MOI.VariableIndex(2)
+ MOI.VariableIndex(3)
+
+julia> f = MOI.ScalarNonlinearFunction(:atan, Any[x[3], 2.0 * x[1]])
+atan(MOI.VariableIndex(3), 0.0 + 2.0 MOI.VariableIndex(1))
+
+julia> MOI.Nonlinear.SymbolicAD.variables(f)
+2-element Vector{MathOptInterface.VariableIndex}:
+ MOI.VariableIndex(1)
+ MOI.VariableIndex(3)
+```
 """
 function variables(f::MOI.AbstractScalarFunction)
     ret = MOI.VariableIndex[]
@@ -398,6 +454,24 @@ like `*(false, g)` that can be trivially simplified to `false`.
 
 In most cases, you should call `simplify!(derivative(f, x))` to return a
 simplified expression of the derivative.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> x = MOI.VariableIndex(1)
+MOI.VariableIndex(1)
+
+julia> f = MOI.ScalarNonlinearFunction(:sin, Any[x])
+sin(MOI.VariableIndex(1))
+
+julia> df_dx = MOI.Nonlinear.SymbolicAD.derivative(f, x)
+*(cos(MOI.VariableIndex(1)), (true))
+
+julia> MOI.Nonlinear.SymbolicAD.simplify!(df_dx)
+cos(MOI.VariableIndex(1))
+```
 """
 derivative(::Real, ::MOI.VariableIndex) = false
 
