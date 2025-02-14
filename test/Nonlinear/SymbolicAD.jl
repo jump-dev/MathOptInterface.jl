@@ -134,6 +134,12 @@ function test_derivative()
     return
 end
 
+function test_derivative_univariate_simplification()
+    x = MOI.VariableIndex(1)
+    @test SymbolicAD.derivative(op(:sin, x), x) ≈ op(:cos, x)
+    return
+end
+
 function test_derivative_error()
     x = MOI.VariableIndex(1)
     f = MOI.ScalarNonlinearFunction(:foo, Any[x, x])

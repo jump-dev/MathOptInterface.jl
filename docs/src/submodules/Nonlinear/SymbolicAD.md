@@ -185,7 +185,7 @@ julia> f = MOI.ScalarNonlinearFunction(:sin, Any[x])
 sin(MOI.VariableIndex(1))
 
 julia> MOI.Nonlinear.SymbolicAD.derivative(f, x)
-*(cos(MOI.VariableIndex(1)), (true))
+cos(MOI.VariableIndex(1)
 ```
 
 Note that the resultant expression can often be simplified. Thus, in most cases
@@ -196,14 +196,14 @@ using it in other places:
 julia> x = MOI.VariableIndex(1)
 MOI.VariableIndex(1)
 
-julia> f = MOI.ScalarNonlinearFunction(:sin, Any[x])
-sin(MOI.VariableIndex(1))
+julia> f = MOI.ScalarNonlinearFunction(:sin, Any[x + 1.0])
+sin(1.0 + 1.0 MOI.VariableIndex(1))
 
 julia> df_dx = MOI.Nonlinear.SymbolicAD.derivative(f, x)
-*(cos(MOI.VariableIndex(1)), (true))
+*(cos(1.0 + 1.0 MOI.VariableIndex(1)), 1.0)
 
 julia> MOI.Nonlinear.SymbolicAD.simplify!(df_dx)
-cos(MOI.VariableIndex(1))
+cos(1.0 + 1.0 MOI.VariableIndex(1))
 ```
 
 ## `gradient_and_hessian`

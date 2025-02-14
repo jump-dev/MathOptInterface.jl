@@ -558,6 +558,14 @@ that the user would never write themselves.
 """
 const __DERIVATIVE__ = "__DERIVATIVE__"
 
+# This function helps simplify df_du * du_dx in the commonn case that `du_dx`
+# is `true` (when u = x), or `false` (when x ∉ u).
+function _univariate_chain_rule(df_du, du_dx)
+    return MOI.ScalarNonlinearFunction(:*, Any[df_du, du_dx])
+end
+
+_univariate_chain_rule(df_du, du_dx::Bool) = ifelse(du_dx, df_du, du_dx)
+
 function derivative(f::MOI.ScalarNonlinearFunction, x::MOI.VariableIndex)
     if length(f.args) == 1
         u = only(f.args)
@@ -571,28 +579,28 @@ function derivative(f::MOI.ScalarNonlinearFunction, x::MOI.VariableIndex)
                 :ifelse,
                 Any[MOI.ScalarNonlinearFunction(:>=, Any[u, 0]), 1, -1],
             )
-            return MOI.ScalarNonlinearFunction(:*, Any[df_du, du_dx])
+            return _univariate_chain_rule(df_du, du_dx)
         elseif f.head == :sign
             return false
         elseif f.head == :deg2rad
             df_du = deg2rad(1)
-            return MOI.ScalarNonlinearFunction(:*, Any[df_du, du_dx])
+            return _univariate_chain_rule(df_du, du_dx)
         elseif f.head == :rad2deg
             df_du = rad2deg(1)
-            return MOI.ScalarNonlinearFunction(:*, Any[df_du, du_dx])
+            return _univariate_chain_rule(df_du, du_dx)
         end
         for (key, df, _) in MOI.Nonlinear.SYMBOLIC_UNIVARIATE_EXPRESSIONS
             if key == f.head
                 # The chain rule: d(f(g(x))) / dx = f'(g(x)) * g'(x)
                 df_du = _replace_expression(copy(df), u)
-                return MOI.ScalarNonlinearFunction(:*, Any[df_du, du_dx])
+                return _univariate_chain_rule(df_du, du_dx)
             end
         end
         # Delay derivative until evaluation. This may result in a later
         # UnsupportedNonlinearOperator error, but we can't tell just yet.
         d_op = Symbol(__DERIVATIVE__ * "$(f.head)")
         df_du = MOI.ScalarNonlinearFunction(d_op, Any[u])
-        return MOI.ScalarNonlinearFunction(:*, Any[df_du, du_dx])
+        return _univariate_chain_rule(df_du, du_dx)
     end
     if f.head == :+
         # d/dx(+(args...)) = +(d/dx args)
