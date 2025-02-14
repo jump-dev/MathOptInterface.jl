@@ -504,9 +504,6 @@ julia> f = MOI.ScalarNonlinearFunction(:sin, Any[x])
 sin(MOI.VariableIndex(1))
 
 julia> df_dx = MOI.Nonlinear.SymbolicAD.derivative(f, x)
-*(cos(MOI.VariableIndex(1)), (true))
-
-julia> MOI.Nonlinear.SymbolicAD.simplify!(df_dx)
 cos(MOI.VariableIndex(1))
 ```
 """

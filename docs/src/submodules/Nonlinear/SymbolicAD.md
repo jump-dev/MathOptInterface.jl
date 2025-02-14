@@ -185,7 +185,7 @@ julia> f = MOI.ScalarNonlinearFunction(:sin, Any[x])
 sin(MOI.VariableIndex(1))
 
 julia> MOI.Nonlinear.SymbolicAD.derivative(f, x)
-cos(MOI.VariableIndex(1)
+cos(MOI.VariableIndex(1))
 ```
 
 Note that the resultant expression can often be simplified. Thus, in most cases
