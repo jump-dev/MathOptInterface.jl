@@ -8,11 +8,6 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 
 # [Nonlinear](@id nonlinear_developers)
 
-!!! warning
-    The Nonlinear submodule is experimental. Until this message is removed,
-    breaking changes may be introduced in any minor or patch release of
-    MathOptInterface.
-
 The `Nonlinear` submodule contains data structures and functions for
 working with a nonlinear optimization problem in the form of an expression
 graph. This page explains the API and describes the rationale behind its design.
