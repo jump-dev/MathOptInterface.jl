@@ -1190,7 +1190,7 @@ See `f` for details.
 function _to_symbolic_form(
     nlp::MOI.Nonlinear.Model,
     expr::MOI.Nonlinear.Expression,
-    variable_to_column::Dict{Int,Int},
+    variable_to_column::Dict{Int64,Int},
 )
     list_of_variables = Int[]
     tree = Any[]
