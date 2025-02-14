@@ -153,8 +153,8 @@ existing function.
 
 ## `variables`
 
-Use [`Nonlinear.SymbolicAD.variables`](@ref) to return a list of the variables
-that appear in the function:
+Use [`Nonlinear.SymbolicAD.variables`](@ref) to return a sorted list of the
+variables that appear in the function:
 
 ```jldoctest
 julia> x = MOI.VariableIndex.(1:3)
@@ -168,12 +168,9 @@ atan(MOI.VariableIndex(3), 0.0 + 2.0 MOI.VariableIndex(1))
 
 julia> MOI.Nonlinear.SymbolicAD.variables(f)
 2-element Vector{MathOptInterface.VariableIndex}:
- MOI.VariableIndex(3)
  MOI.VariableIndex(1)
+ MOI.VariableIndex(3)
 ```
-
-Note that this list is not sorted, but it is guaranteed to contain only unique
-items.
 
 ## `derivative`
 

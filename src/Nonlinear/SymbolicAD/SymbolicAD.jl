@@ -310,12 +310,12 @@ end
 """
     variables(f::Union{Real,MOI.AbstractScalarFunction})
 
-Return a list of the `MOI.VariableIndex` present in the function `f`.
+Return a sorted list of the `MOI.VariableIndex` present in the function `f`.
 """
 function variables(f::MOI.AbstractScalarFunction)
     ret = MOI.VariableIndex[]
     _variables(ret, f)
-    return ret
+    return sort!(ret; by = x -> x.value)
 end
 
 variables(::Real) = MOI.VariableIndex[]

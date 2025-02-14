@@ -163,9 +163,9 @@ function test_variable()
         )=>[x, y],
         1.0*x*x=>[x],
         1.0*x*x+x=>[x],
-        1.0*x*x+y=>[y, x],
+        1.0*x*x+y=>[x, y],
         1.0*x*y=>[x, y],
-        1.0*y*x=>[y, x],
+        1.0*y*x=>[x, y],
         # ::NonlinearExpr
         MOI.ScalarNonlinearFunction(:sin, Any[x])=>[x],
         MOI.ScalarNonlinearFunction(:sin, Any[1.0*x+y])=>[x, y],
@@ -704,6 +704,7 @@ function test_gradient_and_hessian()
     sin_x = op(:sin, x[1])
     for (f, ret) in Any[
         (2.0*x[1]*x[2])=>(x, Any[2.0*x[2], 2.0*x[1]], [(1, 2)], [2.0]),
+        (2.0*x[2]*x[1])=>(x, Any[2.0*x[2], 2.0*x[1]], [(1, 2)], [2.0]),
         op(:*, x[1], x[2])=>(x, Any[x[2], x[1]], [(1, 2)], [true]),
         sin_x=>([x[1]], Any[op(:cos, x[1])], [(1, 1)], Any[op(:-, sin_x)]),
     ]
