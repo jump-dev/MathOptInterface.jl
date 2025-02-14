@@ -88,7 +88,7 @@ To revert back to the default sparse reverse mode algorithm, set the
 
 ## `simplilfy`
 
-Use [`Nonlinear.SymbolicAD.simplify`](@ref) to simpify nonlinear expressions.
+Use [`Nonlinear.SymbolicAD.simplify`](@ref) to simplify nonlinear expressions.
 The simplification algorithm performs simple rewrites such as lifting nested
 summations:
 
@@ -121,7 +121,7 @@ MOI.VariableIndex(1)
 
 The list of rewrites that will be made is intentionally limited to keep the
 codebase simple. `Nonlinear.SymbolicAD` is not a substitute for a Computer
-Agebraic System (CAS). For example, we do not detect the relationship
+Algebraic System (CAS). For example, we do not detect the relationship
 ``sin(x)^2+cos(x)^2=1``:
 
 ```jldoctest
@@ -252,7 +252,7 @@ where:
    `y`
  * `H` and `∇²f` form a sparse Hessian matrix, were `H` is the `(row, column)`
    index of each element, and the corresponding element in `∇²f` is the second
-   partial derivative of `f` with respenct to `y[row]` and `y[column]`.
+   partial derivative of `f` with respect to `y[row]` and `y[column]`.
 
 Unlike [`Nonlinear.SymbolicAD.derivative`](@ref), the gradient and Hessian
 expressions have already been simplified; you do not need to call
