@@ -348,6 +348,32 @@ function test_simplify_ScalarNonlinearFunction_addition()
     return
 end
 
+function test_simplify_ScalarNonlinearFunction_addition_terms()
+    x = MOI.VariableIndex(1)
+    for (args, ret) in Any[
+        # add_to!(::Real, ::Real)
+        Any[2.0, 3.0]=>5.0,
+        Any[2.5, 3]=>5.5,
+        Any[3, 2.5]=>5.5,
+        # add_to!(::ScalarAffineFunction{T}, ::ScalarAffineFunction{T})
+        Any[2.0*x, 3.0*x+4.0]=>5.0*x+4.0,
+        # add_to!(::ScalarAffineFunction{T}, ::T)
+        Any[2.0*x, 1.0]=>2.0*x+1.0,
+        # add_to!(::ScalarAffineFunction{S}, ::T)
+        Any[2.0*x, 3]=>2.0*x+3.0,
+        Any[2*x, 3.0]=>2.0*x+3.0,
+        # add_to!(::ScalarAffineFunction{S}, ::ScalarAffineFunction{T})
+        Any[2*x, 3.0*x+4.0]=>5.0*x+4.0,
+        Any[3.0*x+4.0, 2*x]=>5.0*x+4.0,
+        Any[3*x+4, 1.5, 2*x]=>5.0*x+5.5,
+        Any[1.5, 3*x+4, 2*x]=>5.0*x+5.5,
+    ]
+        f = MOI.ScalarNonlinearFunction(:+, args)
+        @test SymbolicAD.simplify(f) ≈ ret
+    end
+    return
+end
+
 # simplify(::Val{:-}, f::MOI.ScalarNonlinearFunction)
 function test_simplify_ScalarNonlinearFunction_subtraction()
     x, y = MOI.VariableIndex(1), MOI.VariableIndex(2)

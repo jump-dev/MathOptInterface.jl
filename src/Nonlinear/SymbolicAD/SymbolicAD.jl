@@ -241,26 +241,63 @@ function simplify!(::Val{:*}, f::MOI.ScalarNonlinearFunction)
     return f
 end
 
+# The MOI.Utilities.operate!(+, T, x, y) methods do not cope with mixed input
+# types. However, ScalarNonlinearFunction can hold various <:Real coefficient
+# types.
+_add_to!(x::Real, y::Real) = x + y
+
+_add_to!(x::Real, y::MOI.ScalarAffineFunction{<:Real}) = _add_to!(y, x)
+
+function _add_to!(x::MOI.ScalarAffineFunction{T}, y::T) where {T<:Real}
+    return MOI.Utilities.operate!(+, T, x, y)
+end
+
+function _add_to!(x::MOI.ScalarAffineFunction{S}, y::T) where {S<:Real,T<:Real}
+    U = promote_type(S, T)
+    F = MOI.ScalarAffineFunction{U}
+    return MOI.Utilities.operate!(+, U, convert(F, x), convert(U, y))
+end
+
+function _add_to!(
+    x::MOI.ScalarAffineFunction{T},
+    y::MOI.ScalarAffineFunction{T},
+) where {T<:Real}
+    return MOI.Utilities.operate!(+, T, x, y)
+end
+
+function _add_to!(
+    x::MOI.ScalarAffineFunction{S},
+    y::MOI.ScalarAffineFunction{T},
+) where {S<:Real,T<:Real}
+    U = promote_type(S, T)
+    F = MOI.ScalarAffineFunction{U}
+    return MOI.Utilities.operate!(+, U, convert(F, x), convert(F, y))
+end
+
 function simplify!(::Val{:+}, f::MOI.ScalarNonlinearFunction)
     new_args = Any[]
-    first_constant = 0
+    first_affine_term = 0
     for arg in f.args
         if _isexpr(arg, :+)
             # If a child is a :+, lift its arguments to the parent
             append!(new_args, arg.args)
         elseif _iszero(arg)
             # Skip any zero arguments
-        elseif arg isa Real
-            # Collect all constant arguments into a single value
-            if first_constant == 0
+        elseif arg isa Real || arg isa MOI.ScalarAffineFunction{<:Real}
+            # Collect all affine arguments into a single value
+            if first_affine_term == 0
                 push!(new_args, arg)
-                first_constant = length(new_args)
+                first_affine_term = length(new_args)
             else
-                new_args[first_constant] += arg
+                new_args[first_affine_term] =
+                    _add_to!(new_args[first_affine_term], arg)
             end
         else
             push!(new_args, arg)
         end
+    end
+    if first_affine_term !== 0 && !(new_args[first_affine_term] isa Real)
+        MOI.Utilities.canonicalize!(new_args[first_affine_term])
     end
     if length(new_args) == 0
         # +() -> false
