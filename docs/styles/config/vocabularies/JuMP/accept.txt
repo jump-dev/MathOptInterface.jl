@@ -47,6 +47,8 @@ Clp
 Goldfarb
 Gurobi
 GZip
+Hassan
+Hijazi
 Holy
 JSONSchema
 MOI
