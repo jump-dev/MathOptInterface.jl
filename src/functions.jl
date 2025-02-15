@@ -578,6 +578,19 @@ function VectorAffineFunction{T}(f::VectorOfVariables) where {T}
     return VectorAffineFunction(terms, constants)
 end
 
+function VectorAffineFunction(
+    rows::AbstractVector{ScalarAffineFunction{T}},
+) where {T}
+    ret = VectorAffineFunction{T}(VectorAffineTerm{T}[], T[])
+    for (row, f) in enumerate(rows)
+        push!(ret.constants, f.constant)
+        for term in f.terms
+            push!(ret.terms, VectorAffineTerm(row, term))
+        end
+    end
+    return ret
+end
+
 """
     VectorQuadraticTerm{T}(
         output_index::Int64,

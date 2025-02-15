@@ -129,6 +129,20 @@ function test_functions_convert_ScalarQuadraticFunction()
     )
 end
 
+function test_vectoraffinefunction_creation()
+    x = MOI.VariableIndex(1)
+    f = MOI.VectorAffineFunction([1.0 * x + 2.0, 3.0 * x + 4.0])
+    g = MOI.VectorAffineFunction(
+        MOI.VectorAffineTerm{Float64}[
+            MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x)),
+            MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(3.0, x)),
+        ],
+        [2.0, 4.0],
+    )
+    @test f ≈ g
+    return
+end
+
 function test_isapprox_VectorOfVariables()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
