@@ -578,18 +578,15 @@ function VectorAffineFunction{T}(f::VectorOfVariables) where {T}
     return VectorAffineFunction(terms, constants)
 end
 
-function VectorAffineFunction(
-    elements::Vector{ScalarAffineFunction{T}},
-) where {T}
-    terms = Vector{VectorAffineTerm{T}}()
-    constants = Vector{T}()
-    for (idx, saf) in enumerate(elements)
-        push!(constants, saf.constant)
-        for term in saf.terms
-            push!(terms, VectorAffineTerm(idx, term))
+function VectorAffineFunction(rows::Vector{ScalarAffineFunction{T}}) where {T}
+    ret = VectorAffineFunction{T}(VectorAffineTerm{T}[], T[])
+    for (row, f) in enumerate(rows)
+        push!(ret.constants, f.constant)
+        for term in f.terms
+            push!(ret.terms, VectorAffineTerm(row, term))
         end
     end
-    return VectorAffineFunction{T}(terms, constants)
+    return ret
 end
 
 """
