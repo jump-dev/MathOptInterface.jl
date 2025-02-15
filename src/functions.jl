@@ -579,7 +579,7 @@ function VectorAffineFunction{T}(f::VectorOfVariables) where {T}
 end
 
 function VectorAffineFunction(
-    elements::Vector{ScalarAffineFunction{T}},
+    elements::AbstractVector{ScalarAffineFunction{T}},
 ) where {T}
     terms = Vector{VectorAffineTerm{T}}()
     constants = Vector{T}()
