@@ -579,7 +579,7 @@ function VectorAffineFunction{T}(f::VectorOfVariables) where {T}
 end
 
 function VectorAffineFunction(
-    rows::AbstractVector{ScalarAffineFunction{T}}
+    rows::AbstractVector{ScalarAffineFunction{T}},
 ) where {T}
     ret = VectorAffineFunction{T}(VectorAffineTerm{T}[], T[])
     for (row, f) in enumerate(rows)
