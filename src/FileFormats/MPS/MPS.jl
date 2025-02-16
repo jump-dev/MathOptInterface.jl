@@ -1375,7 +1375,7 @@ function _add_quad_constraint(model, data, variable_map, j, c_name, set)
     quad_terms = MOI.ScalarQuadraticTerm{Float64}[]
     options = get_options(model)
     scale = if options.quadratic_format == kQuadraticFormatGurobi
-        # Gurobi does NOT have a /2 as part of the quadratic matrix! Why oh why
+        # Gurobi does NOT have a /2 as part of the quadratic matrix. Why oh why
         # would you break precedent with all other formats.
         2.0
     else
