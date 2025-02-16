@@ -45,7 +45,7 @@ function _test_model_equality(
     MOI.Utilities.loadfromstring!(model, model_string)
     io = IOBuffer()
     write(io, model)
-    model_2 = MPS.Model()
+    model_2 = MPS.Model(; kwargs...)
     seekstart(io)
     read!(io, model_2)
     MOI.Test.util_test_models_equal(
@@ -805,10 +805,9 @@ function test_quadobj_cplex()
         BOUNDS
          FR bounds    x
          FR bounds    y
-        QMATRIX
+        QUADOBJ
             x         x         10
             x         y         2
-            y         x         2
             y         y         2.4
         ENDATA
         """;
@@ -838,10 +837,10 @@ function test_quadcon_gurobi()
          FR bounds    x
          FR bounds    y
         QCMATRIX   c1
-            x         x         10
-            x         y         2
-            y         x         2
-            y         y         2.4
+            x         x         5
+            x         y         1
+            y         x         1
+            y         y         1.2
         ENDATA
         """,
     )
@@ -1274,6 +1273,78 @@ function test_issue_2538()
     @test isapprox(
         g,
         -1.0 * y[1] - 2.0 * y[2] - 3.0 * y[1] * y[2] - 4.0 * y[2] * y[2],
+    )
+    return
+end
+
+function test_qcmatrix_read_gurobi()
+    file = """
+    NAME
+    ROWS
+        N  OBJ
+        L  c1
+    COLUMNS
+        x         c1        1
+        y         c1        1
+    RHS
+        rhs       c1        1
+    RANGES
+    BOUNDS
+        FR bounds    x
+        FR bounds    y
+    QCMATRIX   c1
+        x         x         10
+        x         y         2.0
+        y         x         2.0
+        y         y         2.0
+    ENDATA
+    """
+    io = IOBuffer()
+    print(io, file)
+    seekstart(io)
+    model = MPS.Model()
+    read!(io, model)
+    x, y = MOI.get.(model, MOI.VariableIndex, ["x", "y"])
+    c1 = MOI.get(model, MOI.ConstraintIndex, "c1")
+    @test isapprox(
+        MOI.get(model, MOI.ConstraintFunction(), c1),
+        1.0 * x + 1.0 * y + 10.0 * x * x + 4.0 * x * y + 2.0 * y * y,
+    )
+    return
+end
+
+function test_qcmatrix_read_cplex()
+    file = """
+    NAME
+    ROWS
+        N  OBJ
+        L  c1
+    COLUMNS
+        x         c1        1
+        y         c1        1
+    RHS
+        rhs       c1        1
+    RANGES
+    BOUNDS
+        FR bounds    x
+        FR bounds    y
+    QCMATRIX   c1
+        x         x         1.0
+        x         y         2.0
+        y         x         2.0
+        y         y         7.0
+    ENDATA
+    """
+    io = IOBuffer()
+    print(io, file)
+    seekstart(io)
+    model = MPS.Model(; quadratic_format = MPS.kQuadraticFormatCPLEX)
+    read!(io, model)
+    x, y = MOI.get.(model, MOI.VariableIndex, ["x", "y"])
+    c1 = MOI.get(model, MOI.ConstraintIndex, "c1")
+    @test isapprox(
+        MOI.get(model, MOI.ConstraintFunction(), c1),
+        1.0 * x + 1.0 * y + 0.5 * x * x + 2.0 * x * y + 3.5 * y * y,
     )
     return
 end
