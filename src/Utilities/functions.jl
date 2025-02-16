@@ -2207,14 +2207,7 @@ Returns the vector of scalar affine functions in the form of a
 `MOI.VectorAffineFunction{T}`.
 """
 function vectorize(funcs::AbstractVector{MOI.ScalarAffineFunction{T}}) where {T}
-    nterms =
-        mapreduce(func -> number_of_affine_terms(T, func), +, funcs, init = 0)
-    out_dim = mapreduce(func -> output_dim(T, func), +, funcs, init = 0)
-    terms = Vector{MOI.VectorAffineTerm{T}}(undef, nterms)
-    constant = zeros(T, out_dim)
-    fill_vector(terms, T, fill_terms, number_of_affine_terms, funcs)
-    fill_vector(constant, T, fill_constant, output_dim, funcs)
-    return MOI.VectorAffineFunction(terms, constant)
+    return MOI.VectorAffineFunction(funcs)
 end
 
 """
