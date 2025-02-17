@@ -1379,7 +1379,6 @@ function test_qsection_row()
     return
 end
 
-
 function test_qcmatrix_read_gurobi()
     file = """
     NAME
