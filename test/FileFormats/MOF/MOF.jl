@@ -1563,7 +1563,7 @@ function test_nonlinear_expression_not_call()
     con = MOI.add_constraint(model, MOF.Nonlinear(expr), MOI.EqualTo(1.0))
     io = IOBuffer()
     @test_throws(
-        ErrorException("Expected an expression that was a function. Got $expr"),
+        ErrorException("Expected an expression that was a function. Got $expr."),
         write(io, model),
     )
     return
