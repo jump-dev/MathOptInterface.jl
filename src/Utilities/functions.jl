@@ -2217,6 +2217,12 @@ function vectorize(funcs::AbstractVector{MOI.ScalarAffineFunction{T}}) where {T}
     return MOI.VectorAffineFunction(terms, constant)
 end
 
+function MOI.VectorAffineFunction(
+    funcs::AbstractVector{MOI.ScalarAffineFunction{T}},
+) where {T}
+    return vectorize(funcs)
+end
+
 """
     vectorize(funcs::AbstractVector{MOI.ScalarQuadraticFunction{T}}) where T
 
@@ -2249,6 +2255,12 @@ function vectorize(
     )
     fill_vector(constant, T, fill_constant, output_dim, funcs)
     return MOI.VectorQuadraticFunction(quadratic_terms, affine_terms, constant)
+end
+
+function MOI.VectorQuadraticFunction(
+    funcs::AbstractVector{MOI.ScalarQuadraticFunction{T}},
+) where {T}
+    return vectorize(funcs)
 end
 
 function vectorize(x::AbstractVector{MOI.ScalarNonlinearFunction})
