@@ -1451,6 +1451,39 @@ function test_qcmatrix_read_cplex()
     return
 end
 
+function test_model_Name()
+    model = MPS.Model()
+    MOI.set(model, MOI.Name(), "TestFoo")
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    contents = read(io, String)
+    @test occursin("NAME          TestFoo", contents)
+    return
+end
+
+function test_model_large_integer()
+    model = MPS.Model()
+    x = MOI.add_constrained_variable(model, MOI.GreaterThan(123.0))
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    contents = read(io, String)
+    @test occursin("LO bounds    x1        123", contents)
+    return
+end
+
+function test_model_not_empty()
+    model = MPS.Model()
+    x = MOI.add_variable(model)
+    io = IOBuffer()
+    @test_throws(
+        ErrorException("Cannot read in file because model is not empty."),
+        read!(io, model),
+    )
+    return
+end
+
 end  # TestMPS
 
 TestMPS.runtests()
