@@ -304,60 +304,26 @@ function _write_rows(
     return
 end
 
-_code_replace(x, ::Any) = x
-
-_code_replace(x::Symbol, ret::Pair) = ifelse(first(ret) == x, last(ret), x)
-
-function _code_replace(x::Expr, ret::Pair)
-    for i in 1:length(x.args)
-        x.args[i] = _code_replace(x.args[i], ret)
-    end
-    return x
-end
-
-macro _unroll(input)
-    @assert Meta.isexpr(input, :for)
-    head, body = input.args
-    ret = quote end
-    for arg in head.args[2].args
-        push!(ret.args, _code_replace(copy(body), head.args[1] => arg))
-    end
-    return esc(ret)
-end
-
-_sense(::Type{MOI.LessThan{Float64}}) = "L"
-_sense(::Type{MOI.GreaterThan{Float64}}) = "G"
-_sense(::Type{MOI.EqualTo{Float64}}) = "E"
-_sense(::Type{MOI.Interval{Float64}}) = "L"
-_sense(::Type{MOI.Indicator{A,S}}) where {A,S} = _sense(S)
-
 function write_rows(io::IO, model::Model)
     println(io, "ROWS")
     println(io, Card(f1 = "N", f2 = "OBJ"))
-    @_unroll for S in (
-        MOI.LessThan{Float64},
-        MOI.GreaterThan{Float64},
-        MOI.EqualTo{Float64},
-        MOI.Interval{Float64},
-    )
-        @_unroll for F in (
-            MOI.ScalarAffineFunction{Float64},
-            MOI.ScalarQuadraticFunction{Float64},
-        )
-            _write_rows(io, model, F, S, _sense(S))
-        end
-    end
-    F = MOI.VectorAffineFunction{Float64}
-    @_unroll for S in (
-        IndicatorLessThanTrue{Float64},
-        IndicatorLessThanFalse{Float64},
-        IndicatorGreaterThanTrue{Float64},
-        IndicatorGreaterThanFalse{Float64},
-        IndicatorEqualToTrue{Float64},
-        IndicatorEqualToFalse{Float64},
-    )
-        _write_rows(io, model, F, S, _sense(S))
-    end
+    SAF = MOI.ScalarAffineFunction{Float64}
+    SQF = MOI.ScalarQuadraticFunction{Float64}
+    _write_rows(io, model, SAF, MOI.LessThan{Float64}, "L")
+    _write_rows(io, model, SQF, MOI.LessThan{Float64}, "L")
+    _write_rows(io, model, SAF, MOI.GreaterThan{Float64}, "G")
+    _write_rows(io, model, SQF, MOI.GreaterThan{Float64}, "G")
+    _write_rows(io, model, SAF, MOI.EqualTo{Float64}, "E")
+    _write_rows(io, model, SQF, MOI.EqualTo{Float64}, "E")
+    _write_rows(io, model, SAF, MOI.Interval{Float64}, "L")
+    _write_rows(io, model, SQF, MOI.Interval{Float64}, "L")
+    VAF = MOI.VectorAffineFunction{Float64}
+    _write_rows(io, model, VAF, IndicatorLessThanTrue{Float64}, "L")
+    _write_rows(io, model, VAF, IndicatorLessThanFalse{Float64}, "L")
+    _write_rows(io, model, VAF, IndicatorGreaterThanTrue{Float64}, "G")
+    _write_rows(io, model, VAF, IndicatorGreaterThanFalse{Float64}, "G")
+    _write_rows(io, model, VAF, IndicatorEqualToTrue{Float64}, "E")
+    _write_rows(io, model, VAF, IndicatorEqualToFalse{Float64}, "E")
     return
 end
 
@@ -488,29 +454,60 @@ function write_columns(io::IO, model::Model, flip_obj, var_to_column)
     # Build constraint coefficients
     # The functions and sets are given explicitly so that this function is
     # type-stable.
-    @_unroll for S in (
-        MOI.LessThan{Float64},
-        MOI.GreaterThan{Float64},
-        MOI.EqualTo{Float64},
-        MOI.Interval{Float64},
-    )
-        @_unroll for F in (
-            MOI.ScalarAffineFunction{Float64},
-            MOI.ScalarQuadraticFunction{Float64},
-        )
-            _collect_coefficients(model, F, S, var_to_column, coefficients)
-        end
-    end
-    @_unroll for S in (
+    SAF = MOI.ScalarAffineFunction{Float64}
+    SQF = MOI.ScalarQuadraticFunction{Float64}
+    LT, GT = MOI.LessThan{Float64}, MOI.GreaterThan{Float64}
+    ET, IT = MOI.EqualTo{Float64}, MOI.Interval{Float64}
+    _collect_coefficients(model, SAF, LT, var_to_column, coefficients)
+    _collect_coefficients(model, SQF, LT, var_to_column, coefficients)
+    _collect_coefficients(model, SAF, GT, var_to_column, coefficients)
+    _collect_coefficients(model, SQF, GT, var_to_column, coefficients)
+    _collect_coefficients(model, SAF, ET, var_to_column, coefficients)
+    _collect_coefficients(model, SQF, ET, var_to_column, coefficients)
+    _collect_coefficients(model, SAF, IT, var_to_column, coefficients)
+    _collect_coefficients(model, SQF, IT, var_to_column, coefficients)
+    _collect_indicator(
+        model,
         IndicatorLessThanTrue{Float64},
-        IndicatorLessThanFalse{Float64},
-        IndicatorGreaterThanTrue{Float64},
-        IndicatorGreaterThanFalse{Float64},
-        IndicatorEqualToTrue{Float64},
-        IndicatorEqualToFalse{Float64},
+        var_to_column,
+        coefficients,
+        indicators,
     )
-        _collect_indicator(model, S, var_to_column, coefficients, indicators)
-    end
+    _collect_indicator(
+        model,
+        IndicatorLessThanFalse{Float64},
+        var_to_column,
+        coefficients,
+        indicators,
+    )
+    _collect_indicator(
+        model,
+        IndicatorGreaterThanTrue{Float64},
+        var_to_column,
+        coefficients,
+        indicators,
+    )
+    _collect_indicator(
+        model,
+        IndicatorGreaterThanFalse{Float64},
+        var_to_column,
+        coefficients,
+        indicators,
+    )
+    _collect_indicator(
+        model,
+        IndicatorEqualToTrue{Float64},
+        var_to_column,
+        coefficients,
+        indicators,
+    )
+    _collect_indicator(
+        model,
+        IndicatorEqualToFalse{Float64},
+        var_to_column,
+        coefficients,
+        indicators,
+    )
     # Build objective
     constant =
         _extract_terms_objective(model, var_to_column, coefficients, flip_obj)
@@ -597,30 +594,23 @@ end
 
 function write_rhs(io::IO, model::Model, obj_const)
     println(io, "RHS")
-    @_unroll for S in (
-        MOI.LessThan{Float64},
-        MOI.GreaterThan{Float64},
-        MOI.EqualTo{Float64},
-        MOI.Interval{Float64},
-    )
-        @_unroll for F in (
-            MOI.ScalarAffineFunction{Float64},
-            MOI.ScalarQuadraticFunction{Float64},
-        )
-            _write_rhs(io, model, F, S)
-        end
-    end
-    F = MOI.VectorAffineFunction{Float64}
-    @_unroll for S in (
-        IndicatorLessThanTrue{Float64},
-        IndicatorLessThanFalse{Float64},
-        IndicatorGreaterThanTrue{Float64},
-        IndicatorGreaterThanFalse{Float64},
-        IndicatorEqualToTrue{Float64},
-        IndicatorEqualToFalse{Float64},
-    )
-        _write_rhs(io, model, F, S)
-    end
+    SAF = MOI.ScalarAffineFunction{Float64}
+    SQF = MOI.ScalarQuadraticFunction{Float64}
+    _write_rhs(io, model, SAF, MOI.LessThan{Float64})
+    _write_rhs(io, model, SQF, MOI.LessThan{Float64})
+    _write_rhs(io, model, SAF, MOI.GreaterThan{Float64})
+    _write_rhs(io, model, SQF, MOI.GreaterThan{Float64})
+    _write_rhs(io, model, SAF, MOI.EqualTo{Float64})
+    _write_rhs(io, model, SQF, MOI.EqualTo{Float64})
+    _write_rhs(io, model, SAF, MOI.Interval{Float64})
+    _write_rhs(io, model, SQF, MOI.Interval{Float64})
+    VAF = MOI.VectorAffineFunction{Float64}
+    _write_rhs(io, model, VAF, IndicatorLessThanTrue{Float64})
+    _write_rhs(io, model, VAF, IndicatorLessThanFalse{Float64})
+    _write_rhs(io, model, VAF, IndicatorGreaterThanTrue{Float64})
+    _write_rhs(io, model, VAF, IndicatorGreaterThanFalse{Float64})
+    _write_rhs(io, model, VAF, IndicatorEqualToTrue{Float64})
+    _write_rhs(io, model, VAF, IndicatorEqualToFalse{Float64})
     # Objective constants are added to the RHS as a negative offset.
     # https://www.ibm.com/docs/en/icos/20.1.0?topic=standard-records-in-mps-format
     if !iszero(obj_const)
@@ -768,15 +758,11 @@ function write_bounds(io::IO, model::Model, var_to_column)
     options = get_options(model)
     println(io, "BOUNDS")
     bounds = [(-Inf, Inf, VTYPE_CONTINUOUS) for _ in 1:length(var_to_column)]
-    @_unroll for S in (
-        MOI.LessThan{Float64},
-        MOI.GreaterThan{Float64},
-        MOI.EqualTo{Float64},
-        MOI.Interval{Float64},
-        MOI.ZeroOne,
-    )
-        _collect_bounds(bounds, model, S, var_to_column)
-    end
+    _collect_bounds(bounds, model, MOI.LessThan{Float64}, var_to_column)
+    _collect_bounds(bounds, model, MOI.GreaterThan{Float64}, var_to_column)
+    _collect_bounds(bounds, model, MOI.EqualTo{Float64}, var_to_column)
+    _collect_bounds(bounds, model, MOI.Interval{Float64}, var_to_column)
+    _collect_bounds(bounds, model, MOI.ZeroOne, var_to_column)
     for (variable, column) in var_to_column
         var_name = _var_name(model, variable, column, options.generic_names)
         lower, upper, vtype = bounds[column]
