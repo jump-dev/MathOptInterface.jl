@@ -7,7 +7,7 @@
 module TestFunctions
 
 using Test
-using LinearAlgebra
+import LinearAlgebra
 
 import MathOptInterface as MOI
 
