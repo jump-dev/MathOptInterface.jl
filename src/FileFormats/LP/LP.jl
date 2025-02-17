@@ -1001,7 +1001,7 @@ function _parse_section(
     for token in tokens[3:end]
         items = String.(split(token, ":"))
         if length(items) != 2
-            error("Invalid sequence: $(token)")
+            error("Invalid token in SOS constraint: $(token)")
         end
         push!(variables, _get_variable_from_name(model, cache, items[1]))
         push!(weights, parse(Float64, items[2]))

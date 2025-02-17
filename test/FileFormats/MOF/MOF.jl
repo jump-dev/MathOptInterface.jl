@@ -1497,6 +1497,27 @@ function test_nonlinear_variable_real_nodes()
     return
 end
 
+function test_nonlinear_variable_complex_nodes()
+    x = MOI.VariableIndex(1)
+    object = Dict{String,Any}(
+        "type" => "ScalarNonlinearFunction",
+        "root" => MOF.Dict{String,Any}(
+            "type" => "^",
+            "args" => Any[
+                Dict{String,Any}("type" => "node", "index" => 1),
+                Dict{String,Any}("type" => "node", "index" => 2),
+            ],
+        ),
+        "node_list" => Any[
+            Dict{String,Any}("type" => "variable", "name" => "x"),
+            Dict{String,Any}("type" => "complex", "real" => 2.0, "imag" => 3.0),
+        ],
+    )
+    f = MOI.ScalarNonlinearFunction(:^, Any[x, 2.0+3im])
+    @test MOF.function_to_moi(object, Dict("x" => x)) ≈ f
+    return
+end
+
 function test_mof_scalaraffinefunction()
     x = MOI.VariableIndex(1)
     f = 1.0 * x + 2.0
@@ -1532,6 +1553,40 @@ function test_mof_scalarquadraticfunction()
         ],
     )
     @test object == object_dest
+    return
+end
+
+function test_nonlinear_expression_not_call()
+    model = MOF.Model()
+    x = MOI.add_variable(model)
+    expr = :($x[1])
+    con = MOI.add_constraint(model, MOF.Nonlinear(expr), MOI.EqualTo(1.0))
+    io = IOBuffer()
+    @test_throws(
+        ErrorException(
+            "Expected an expression that was a function. Got $expr.",
+        ),
+        write(io, model),
+    )
+    return
+end
+
+function test_write_NLPBlock_no_objective()
+    model = MOF.Model()
+    x = MOI.add_variables(model, 4)
+    for (index, variable) in enumerate(x)
+        MOI.set(model, MOI.VariableName(), variable, "var_$(index)")
+    end
+    MOI.add_constraints(model, x, Ref(MOI.Interval(1.0, 5.0)))
+    block = HS071(x)
+    new_block =
+        MOI.NLPBlockData(block.constraint_bounds, block.evaluator, false)
+    MOI.set(model, MOI.NLPBlock(), new_block)
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    contents = read(io, String)
+    @test occursin(""""objective":{"sense":"feasibility"}""", contents)
     return
 end
 

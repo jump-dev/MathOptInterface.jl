@@ -1,8 +1,12 @@
+* A model with blank lines and comments
 NAME
+
 OBJSENSE MIN
+
 ROWS
  N  obj
  G  con1
+
 COLUMNS
     MARKER    'MARKER'                 'INTORG'
     x         obj       1              con1      1

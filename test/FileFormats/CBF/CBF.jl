@@ -294,10 +294,28 @@ const _WRITE_READ_MODELS = [
         """,
     ),
     (
+        "VectorOfVariables as function in ExponentialCone",
+        """
+        variables: x, y, z
+        minobjective: x
+        c0: [x, y, z] in Nonnegatives(3)
+        c1: [x, y, z] in ExponentialCone()
+        """,
+    ),
+    (
         "VectorOfVariables in DualExponentialCone",
         """
         variables: x, y, z
         minobjective: x
+        c1: [x, y, z] in DualExponentialCone()
+        """,
+    ),
+    (
+        "VectorOfVariables as function in DualExponentialCone",
+        """
+        variables: x, y, z
+        minobjective: x
+        c0: [x, y, z] in Nonnegatives(3)
         c1: [x, y, z] in DualExponentialCone()
         """,
     ),
@@ -674,6 +692,13 @@ function test_roundtrip_DualExponentialCone()
     return
 end
 
+function test_supports_quadratic_objective()
+    model = CBF.Model()
+    F = MOI.ScalarQuadraticFunction{Float64}
+    @test !MOI.supports(model, MOI.ObjectiveFunction{F}())
+    return
 end
+
+end  # module
 
 TestCBF.runtests()
