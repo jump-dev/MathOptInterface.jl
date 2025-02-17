@@ -2179,6 +2179,44 @@ function test_deprecated_eval_term()
     return
 end
 
+function test_VectorAffineFunction_row_constructor()
+    x = MOI.VariableIndex(1)
+    f = MOI.VectorAffineFunction([1.0 * x + 2.0, 3.0 * x + 4.0])
+    g = MOI.VectorAffineFunction(
+        MOI.VectorAffineTerm{Float64}[
+            MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x)),
+            MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(3.0, x)),
+        ],
+        [2.0, 4.0],
+    )
+    @test f ≈ g
+    return
+end
+
+function test_VectorQuadraticFunction_row_constructor()
+    x, y = MOI.VariableIndex.(1:2)
+    row1 = 1.0 * x * x + 1.0 * y * y + 2.0 * x + 3.0 * y + 4.2
+    row2 = 3.0 * x * x + 3.0 * y * y + 1.0 * x + 3.0 * y + 1.2
+    f = MOI.VectorQuadraticFunction([row1, row2])
+    @test f ≈ MOI.Utilities.vectorize([row1, row2])
+    @test f ≈ MOI.VectorQuadraticFunction(
+        [
+            MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(2.0, x, x)),
+            MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(2.0, y, y)),
+            MOI.VectorQuadraticTerm(2, MOI.ScalarQuadraticTerm(6.0, x, x)),
+            MOI.VectorQuadraticTerm(2, MOI.ScalarQuadraticTerm(6.0, y, y)),
+        ],
+        [
+            MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2.0, x)),
+            MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(3.0, y)),
+            MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x)),
+            MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(3.0, y)),
+        ],
+        [4.2, 1.2],
+    )
+    return
+end
+
 end  # module
 
 TestUtilitiesFunctions.runtests()
