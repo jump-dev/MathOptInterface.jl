@@ -117,9 +117,10 @@ function test_compression()
     filename = joinpath(@__DIR__, "free_integer.mps")
     MOI.write_to_file(model, filename * ".garbage")
     for ext in ["", ".bz2", ".gz"]
-        MOI.write_to_file(model, filename * ext)
-        model2 = MOI.FileFormats.Model(filename = filename * ext)
-        MOI.read_from_file(model2, filename)
+        filename_ext = filename * ext
+        MOI.write_to_file(model, filename_ext)
+        model2 = MOI.FileFormats.Model(filename = filename_ext)
+        MOI.read_from_file(model2, filename_ext)
     end
 
     sleep(1.0)  # Allow time for unlink to happen.
@@ -165,6 +166,27 @@ function test_Model()
         ErrorException("Unable to automatically detect format of a.b."),
         MOI.FileFormats.Model(filename = "a.b")
     )
+end
+
+function test_generic_names()
+    # These methods were added to MOI, but then we changed the REW model to not
+    # need them.
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(model, 2)
+    MOI.set.(model, MOI.VariableName(), x, "x")
+    c = MOI.add_constraint.(model, 1.0 .* x, MOI.EqualTo(1.0))
+    MOI.set.(model, MOI.ConstraintName(), c, "c")
+    c2 = MOI.add_constraint(model, 1.0 * x[2], MOI.LessThan(1.0))
+    MOI.set(model, MOI.ConstraintName(), c2, "R2")
+    MOI.FileFormats.create_generic_names(model)
+    @test MOI.get.(model, MOI.VariableName(), x) == ["C1", "C2"]
+    c_name = MOI.get.(model, MOI.ConstraintName(), c)
+    c2_name = MOI.get(model, MOI.ConstraintName(), c2)
+    names = vcat(c_name, c2_name)
+    # The names depend on the order that the constraints are parsed. Either is
+    # okay.
+    @test names == ["R1", "R2", "R3"] || names == ["R1", "R3", "R2"]
+    return
 end
 
 end
