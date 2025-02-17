@@ -133,8 +133,10 @@ end
 
 function test_VectorQuadraticFunction_constructor()
     x = MOI.VariableIndex.(1:2)
-    expr1 = LinearAlgebra.dot(1.0 * x, x) + LinearAlgebra.dot([2.0, 3.0], x) + 4.2
-    expr2 = LinearAlgebra.dot(3.0 * x, x) + LinearAlgebra.dot([1.0, 3.0], x) + 1.2
+    expr1 =
+        LinearAlgebra.dot(1.0 * x, x) + LinearAlgebra.dot([2.0, 3.0], x) + 4.2
+    expr2 =
+        LinearAlgebra.dot(3.0 * x, x) + LinearAlgebra.dot([1.0, 3.0], x) + 1.2
     f = MOI.VectorQuadraticFunction([expr1, expr2])
     f_vec = MOI.Utilities.vectorize([expr1, expr2])
     @test f ≈ f_vec
