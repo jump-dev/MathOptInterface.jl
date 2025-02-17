@@ -679,6 +679,26 @@ struct VectorQuadraticFunction{T} <: AbstractVectorFunction
     constants::Vector{T}
 end
 
+function VectorQuadraticFunction(
+    rows::AbstractVector{ScalarQuadraticFunction{T}},
+) where {T}
+    ret = VectorQuadraticFunction{T}(
+        VectorQuadraticTerm{T}[],
+        VectorAffineTerm{T}[],
+        T[],
+    )
+    for (idx, f) in enumerate(rows)
+        push!(ret.constants, f.constant)
+        for term in f.quadratic_terms
+            push!(ret.quadratic_terms, VectorQuadraticTerm(idx, term))
+        end
+        for term in f.affine_terms
+            push!(ret.affine_terms, VectorAffineTerm(idx, term))
+        end
+    end
+    return ret
+end
+
 output_dimension(f::VectorQuadraticFunction) = length(f.constants)
 
 constant(f::VectorQuadraticFunction) = f.constants

@@ -129,6 +129,29 @@ function test_functions_convert_ScalarQuadraticFunction()
     )
 end
 
+function test_VectorQuadraticFunction_constructor()
+    x = MOI.VariableIndex.(1:2)
+    expr1 = dot(1.0 * x, x) + dot([2.0, 3.0], x) + 4.2
+    expr2 = dot(3.0 * x, x) + dot([1.0, 3.0], x) + 1.2
+    f = MOI.VectorQuadraticFunction([expr1, expr2])
+    f_vec = MOI.Utilities.vectorize([expr1, expr2])
+    @test f ≈ f_vec
+    @test MOI.output_dimension(f) == 2
+    @test f.constants == [4.2, 1.2]
+    @test f.quadratic_terms == [
+        MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(2.0, x[1], x[1])),
+        MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(2.0, x[2], x[2])),
+        MOI.VectorQuadraticTerm(2, MOI.ScalarQuadraticTerm(6.0, x[1], x[1])),
+        MOI.VectorQuadraticTerm(2, MOI.ScalarQuadraticTerm(6.0, x[2], x[2])),
+    ]
+    @test f.affine_terms == [
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2.0, x[1])),
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(3.0, x[2])),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x[1])),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(3.0, x[2])),
+    ]
+end
+
 function test_isapprox_VectorOfVariables()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)

@@ -2226,29 +2226,7 @@ Returns the vector of scalar quadratic functions in the form of a
 function vectorize(
     funcs::AbstractVector{MOI.ScalarQuadraticFunction{T}},
 ) where {T}
-    num_affine_terms =
-        mapreduce(func -> number_of_affine_terms(T, func), +, funcs, init = 0)
-    num_quadratic_terms = mapreduce(
-        func -> number_of_quadratic_terms(T, func),
-        +,
-        funcs,
-        init = 0,
-    )
-    out_dim = mapreduce(func -> output_dim(T, func), +, funcs, init = 0)
-    affine_terms = Vector{MOI.VectorAffineTerm{T}}(undef, num_affine_terms)
-    quadratic_terms =
-        Vector{MOI.VectorQuadraticTerm{T}}(undef, num_quadratic_terms)
-    constant = zeros(T, out_dim)
-    fill_vector(affine_terms, T, fill_terms, number_of_affine_terms, funcs)
-    fill_vector(
-        quadratic_terms,
-        T,
-        fill_terms,
-        number_of_quadratic_terms,
-        funcs,
-    )
-    fill_vector(constant, T, fill_constant, output_dim, funcs)
-    return MOI.VectorQuadraticFunction(quadratic_terms, affine_terms, constant)
+    return MOI.VectorQuadraticFunction(funcs)
 end
 
 function vectorize(x::AbstractVector{MOI.ScalarNonlinearFunction})
