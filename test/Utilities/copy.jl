@@ -1003,6 +1003,96 @@ function test_copy_to_sorted_sets()
     return
 end
 
+function test_deprecated_try_constrain_variables_scalar()
+    src = MOI.Utilities.Model{Float64}()
+    x, c_z = MOI.add_constrained_variable(src, MOI.ZeroOne())
+    c = MOI.add_constraint(src, x, MOI.EqualTo(0.0))
+    dest = MOI.Utilities.Model{Float64}()
+    index_map = MOI.Utilities.IndexMap()
+    not_added = MOI.Utilities._try_constrain_variables_on_creation(
+        dest,
+        src,
+        index_map,
+        MOI.ZeroOne,
+    )
+    @test isempty(not_added)
+    not_added = MOI.Utilities._try_constrain_variables_on_creation(
+        dest,
+        src,
+        index_map,
+        MOI.EqualTo{Float64},
+    )
+    @test not_added == [c]
+    @test MOI.is_valid(dest, index_map[x])
+    @test MOI.is_valid(dest, index_map[c_z])
+    @test_throws KeyError index_map[c]
+    return
+end
+
+function test_deprecated_try_constrain_variables_vector()
+    src = MOI.Utilities.Model{Float64}()
+    x, c_z = MOI.add_constrained_variables(src, MOI.Nonnegatives(2))
+    y = MOI.add_variable(src)
+    c_duplicate = MOI.add_constraint(
+        src,
+        MOI.VectorOfVariables([x[1], x[1]]),
+        MOI.Zeros(2),
+    )
+    c_already_added = MOI.add_constraint(
+        src,
+        MOI.VectorOfVariables([y, x[1]]),
+        MOI.Nonpositives(2),
+    )
+    dest = MOI.Utilities.Model{Float64}()
+    index_map = MOI.Utilities.IndexMap()
+    not_added = MOI.Utilities._try_constrain_variables_on_creation(
+        dest,
+        src,
+        index_map,
+        MOI.Nonnegatives,
+    )
+    @test isempty(not_added)
+    @test MOI.is_valid(dest, index_map[x[1]])
+    @test MOI.is_valid(dest, index_map[x[2]])
+    @test MOI.is_valid(dest, index_map[c_z])
+    not_added = MOI.Utilities._try_constrain_variables_on_creation(
+        dest,
+        src,
+        index_map,
+        MOI.Zeros,
+    )
+    @test not_added == [c_duplicate]
+    not_added = MOI.Utilities._try_constrain_variables_on_creation(
+        dest,
+        src,
+        index_map,
+        MOI.Nonpositives,
+    )
+    @test not_added == [c_already_added]
+    return
+end
+
+function test_deprecated_copy_free_variables()
+    src = MOI.Utilities.Model{Float64}()
+    x, c_z = MOI.add_constrained_variable(src, MOI.ZeroOne())
+    y = MOI.add_variable(src)
+    dest = MOI.Utilities.Model{Float64}()
+    index_map = MOI.Utilities.IndexMap()
+    not_added = MOI.Utilities._try_constrain_variables_on_creation(
+        dest,
+        src,
+        index_map,
+        MOI.ZeroOne,
+    )
+    MOI.Utilities._copy_free_variables(dest, index_map, [x, y])
+    @test MOI.is_valid(dest, index_map[x])
+    @test MOI.is_valid(dest, index_map[y])
+    MOI.Utilities._copy_free_variables(dest, index_map, [x, y])
+    @test MOI.is_valid(dest, index_map[x])
+    @test MOI.is_valid(dest, index_map[y])
+    return
+end
+
 end  # module
 
 TestCopy.runtests()
