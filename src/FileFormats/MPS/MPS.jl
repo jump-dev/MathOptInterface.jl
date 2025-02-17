@@ -1167,7 +1167,6 @@ function Base.read!(io::IO, model::Model)
     end
     data = TempMPSModel()
     header = HEADER_NAME
-    multi_objectives = String[]
     while !eof(io)
         raw_line = readline(io)
         if startswith(raw_line, '*')
@@ -1211,12 +1210,9 @@ function Base.read!(io::IO, model::Model)
             @assert sense == "MAX" || sense == "MIN"
             data.is_minimization = sense == "MIN"
         elseif header == HEADER_ROWS
-            multi_obj = parse_rows_line(data, items)
-            if multi_obj !== nothing
-                push!(multi_objectives, multi_obj)
-            end
+            parse_rows_line(data, items)
         elseif header == HEADER_COLUMNS
-            parse_columns_line(data, items, multi_objectives)
+            parse_columns_line(data, items)
         elseif header == HEADER_RHS
             parse_rhs_line(data, items)
         elseif header == HEADER_RANGES
@@ -1506,11 +1502,7 @@ function _set_intorg(data, column, column_name)
     return
 end
 
-function parse_columns_line(
-    data::TempMPSModel,
-    items::Vector{String},
-    multi_objectives::Vector{String},
-)
+function parse_columns_line(data::TempMPSModel, items::Vector{String})
     if length(items) == 3
         # [column name] [row name] [value]
         column_name, row_name, value = items
@@ -1522,8 +1514,6 @@ function parse_columns_line(
                 data.intorg_flag = false
                 return
             end
-        elseif row_name in multi_objectives
-            return
         end
         _add_new_column(data, column_name)
         column = data.name_to_col[column_name]
@@ -1532,9 +1522,6 @@ function parse_columns_line(
     elseif length(items) == 5
         # [column name] [row name] [value] [row name 2] [value 2]
         column_name, row_name_1, value_1, row_name_2, value_2 = items
-        if row_name_1 in multi_objectives || row_name_2 in multi_objectives
-            return
-        end
         _add_new_column(data, column_name)
         column = data.name_to_col[column_name]
         parse_single_coefficient(
