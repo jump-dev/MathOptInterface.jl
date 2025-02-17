@@ -13,8 +13,8 @@ An abstraction layer for mathematical optimization solvers.
 
 [build-img]: https://github.com/JuMP-dev/MathOptInterface.jl/actions/workflows/ci.yml/badge.svg?branch=master
 [build-url]: https://github.com/JuMP-dev/MathOptInterface.jl/actions?query=workflow%3ACI
-[codecov-img]: http://codecov.io/github/JuMP-dev/MathOptInterface.jl/coverage.svg?branch=master
-[codecov-url]: http://codecov.io/github/JuMP-dev/MathOptInterface.jl?branch=master
+[codecov-img]: https://codecov.io/gh/JuMP-dev/MathOptInterface.jl/branch/master/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/JuMP-dev/MathOptInterface.jl/branch/master
 
 ## Citing MathOptInterface
 
