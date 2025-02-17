@@ -811,22 +811,21 @@ function write_quadobj(io::IO, model::Model, flip_obj::Bool, var_to_column)
         return
     end
     options = get_options(model)
-    if options.quadratic_format == kQuadraticFormatGurobi
-        println(io, "QUADOBJ")
-    elseif options.quadratic_format == kQuadraticFormatCPLEX
-        println(io, "QMATRIX")
-    else
-        @assert options.quadratic_format == kQuadraticFormatMosek
-        println(io, "QSECTION      OBJ")
-    end
+    # Here we always write out QUADOBJ sections for the quadratic objective. All
+    # solvers can read these, even if CPLEX writes QMATRIX by default and Mosek
+    # writes QSECTION OBJ.
+    println(io, "QUADOBJ")
     _write_q_matrix(
         io,
         model,
-        flip_obj,
         f,
         var_to_column;
-        duplicate_off_diagonal = options.quadratic_format ==
-                                 kQuadraticFormatCPLEX,
+        flip_coef = flip_obj,
+        generic_names = options.generic_names,
+        # In QUADOBJ, we need only to specific the ij term:
+        include_ij_and_ji = false,
+        # And all solvers interpret QUADOBJ to include /2:
+        include_div_2 = true,
     )
     return
 end
@@ -834,16 +833,18 @@ end
 function _write_q_matrix(
     io::IO,
     model::Model,
-    flip_obj::Bool,
-    f,
+    f::MOI.ScalarQuadraticFunction,
     var_to_column;
-    duplicate_off_diagonal::Bool,
+    flip_coef::Bool,
+    generic_names::Bool,
+    include_ij_and_ji::Bool,
+    include_div_2::Bool,
 )
-    options = get_options(model)
-    # Convert the quadratic terms into matrix form. We don't need to scale
-    # because MOI uses the same Q/2 format as Gurobi, but we do need to ensure
-    # we collate off-diagonal terms in the lower-triangular.
     terms = Dict{Tuple{MOI.VariableIndex,MOI.VariableIndex},Float64}()
+    scale = flip_coef ? -1.0 : 1.0
+    if !include_div_2
+        scale /= 2
+    end
     for term in f.quadratic_terms
         x = term.variable_1
         y = term.variable_2
@@ -861,14 +862,11 @@ function _write_q_matrix(
         collect(keys(terms)),
         by = ((x, y),) -> (var_to_column[x], var_to_column[y]),
     )
-        x_name = _var_name(model, x, var_to_column[x], options.generic_names)
-        y_name = _var_name(model, y, var_to_column[y], options.generic_names)
-        coef = terms[(x, y)]
-        if flip_obj
-            coef *= -1
-        end
+        x_name = _var_name(model, x, var_to_column[x], generic_names)
+        y_name = _var_name(model, y, var_to_column[y], generic_names)
+        coef = scale * terms[(x, y)]
         println(io, Card(f2 = x_name, f3 = y_name, f4 = _to_string(coef)))
-        if x != y && duplicate_off_diagonal
+        if x != y && include_ij_and_ji
             println(io, Card(f2 = y_name, f3 = x_name, f4 = _to_string(coef)))
         end
     end
@@ -890,20 +888,23 @@ function write_quadcons(io::IO, model::Model, var_to_column)
     )
         for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             name = MOI.get(model, MOI.ConstraintName(), ci)
-            if options.quadratic_format == kQuadraticFormatMosek
-                println(io, "QSECTION      $name")
-            else
-                println(io, "QCMATRIX   $name")
-            end
+            println(io, "QCMATRIX   $name")
             f = MOI.get(model, MOI.ConstraintFunction(), ci)
             _write_q_matrix(
                 io,
                 model,
-                false,  # flip_obj
                 f,
                 var_to_column;
-                duplicate_off_diagonal = options.quadratic_format !=
-                                         kQuadraticFormatMosek,
+                generic_names = options.generic_names,
+                # flip_coef is needed only for maximization objectives
+                flip_coef = false,
+                # All solvers interpret QCMATRIX to require both (i,j) and (j,i)
+                # terms.
+                include_ij_and_ji = true,
+                # In Gurobi's QCMATRIX there is no factor of /2. This is
+                # different to both CPLEX and Mosek.
+                include_div_2 = options.quadratic_format !=
+                                kQuadraticFormatGurobi,
             )
         end
     end
@@ -1372,11 +1373,21 @@ function _add_quad_constraint(model, data, variable_map, j, c_name, set)
         (i, coef) in data.A[j]
     ]
     quad_terms = MOI.ScalarQuadraticTerm{Float64}[]
-    for (x, y, q) in data.qc_matrix[c_name]
-        push!(
-            quad_terms,
-            MOI.ScalarQuadraticTerm(q, variable_map[x], variable_map[y]),
+    options = get_options(model)
+    scale = if options.quadratic_format == kQuadraticFormatGurobi
+        # Gurobi does NOT have a /2 as part of the quadratic matrix. Why oh why
+        # would you break precedent with all other formats.
+        2.0
+    else
+        @assert in(
+            options.quadratic_format,
+            (kQuadraticFormatCPLEX, kQuadraticFormatMosek),
         )
+        1.0
+    end
+    for (x_name, y_name, q) in data.qc_matrix[c_name]
+        x, y = variable_map[x_name], variable_map[y_name]
+        push!(quad_terms, MOI.ScalarQuadraticTerm(scale * q, x, y))
     end
     f = MOI.ScalarQuadraticFunction(quad_terms, aff_terms, 0.0)
     c = MOI.add_constraint(model, f, set)
