@@ -13,6 +13,19 @@ import MathOptInterface.FileFormats: LP
 
 const LP_TEST_FILE = "test.lp"
 
+function runtests()
+    for name in names(@__MODULE__, all = true)
+        if startswith("$(name)", "test_")
+            @testset "$name" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    sleep(1.0)  # Allow time for unlink to happen.
+    rm(LP_TEST_FILE, force = true)
+    return
+end
+
 function test_show()
     @test sprint(summary, LP.Model()) == "MOI.FileFormats.LP.Model"
     return
@@ -1065,19 +1078,27 @@ function test_VectorAffineFunction_SOS()
     return
 end
 
-function runtests()
-    for name in names(@__MODULE__, all = true)
-        if startswith("$(name)", "test_")
-            @testset "$name" begin
-                getfield(@__MODULE__, name)()
-            end
-        end
-    end
-    sleep(1.0)  # Allow time for unlink to happen.
-    rm(LP_TEST_FILE, force = true)
+function test_comprehensive_write()
+    model = LP.Model()
+    io = IOBuffer()
+    print(
+        io,
+        """
+        minimize
+        obj: x + y
+        subject to
+        SOS
+        c11: S1:: x 1.0 y 2.0
+        """,
+    )
+    seekstart(io)
+    @test_throws(
+        ErrorException("Invalid token in SOS constraint: x"),
+        read!(io, model),
+    )
     return
 end
 
-end
+end  # module
 
 TestLP.runtests()

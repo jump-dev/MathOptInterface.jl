@@ -10,9 +10,23 @@ using Test
 
 import MathOptInterface as MOI
 import MathOptInterface.Utilities as MOIU
-const SDPA = MOI.FileFormats.SDPA
+import MathOptInterface.FileFormats: SDPA
+
 const SDPA_TEST_FILE = "test.sdpa"
 const SDPA_MODELS_DIR = joinpath(@__DIR__, "models")
+
+function runtests()
+    for name in names(@__MODULE__, all = true)
+        if startswith("$(name)", "test_")
+            @testset "$name" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    sleep(1.0)  # Allow time for unlink to happen.
+    rm(SDPA_TEST_FILE, force = true)
+    return
+end
 
 function _set_var_and_con_names(model::MOI.ModelLike)
     variable_names = String[]
@@ -330,19 +344,24 @@ function test_dim_reader()
     end
 end
 
-function runtests()
-    for name in names(@__MODULE__, all = true)
-        if startswith("$(name)", "test_")
-            @testset "$name" begin
-                getfield(@__MODULE__, name)()
-            end
-        end
-    end
-    sleep(1.0)  # Allow time for unlink to happen.
-    rm(SDPA_TEST_FILE, force = true)
+function test_integer_before_variables()
+    file = """
+    *INTEGER
+    *1
+    """
+    io = IOBuffer()
+    print(io, file)
+    seekstart(io)
+    model = SDPA.Model()
+    @test_throws(
+        ErrorException(
+            "The number of variables should be given before *INTEGER section.",
+        ),
+        read!(io, model),
+    )
     return
 end
 
-end
+end  # module
 
 TestSDPA.runtests()

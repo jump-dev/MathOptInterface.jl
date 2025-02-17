@@ -358,6 +358,16 @@ function test_result_count()
     return
 end
 
+function test_eol()
+    model = NL.Model()
+    io = IOBuffer()
+    @test_throws(
+        ErrorException("Reached end of sol file unexpectedly."),
+        NL.SolFileResults(io, model),
+    )
+    return
+end
+
 end
 
 TestNonlinearSolFiles.runtests()
