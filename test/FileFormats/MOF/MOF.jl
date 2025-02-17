@@ -1518,7 +1518,6 @@ function test_nonlinear_variable_complex_nodes()
     return
 end
 
-
 function test_mof_scalaraffinefunction()
     x = MOI.VariableIndex(1)
     f = 1.0 * x + 2.0
@@ -1564,9 +1563,7 @@ function test_nonlinear_expression_not_call()
     con = MOI.add_constraint(model, MOF.Nonlinear(expr), MOI.EqualTo(1.0))
     io = IOBuffer()
     @test_throws(
-        ErrorException(
-            "Expected an expression that was a function. Got $expr",
-        ),
+        ErrorException("Expected an expression that was a function. Got $expr"),
         write(io, model),
     )
     return
