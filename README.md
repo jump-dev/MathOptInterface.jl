@@ -4,7 +4,7 @@
 |:-----------------:|:----------------:|
 | [![][docs-stable-img]][docs-stable-url] [![][docs-dev-img]][docs-dev-url] | [![Build Status][build-img]][build-url] [![Codecov branch][codecov-img]][codecov-url] |
 
-An abstraction layer for mathematical optimization solvers. Replaces [MathProgBase](https://github.com/JuliaOpt/MathProgBase.jl).
+An abstraction layer for mathematical optimization solvers.
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
