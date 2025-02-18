@@ -56,9 +56,11 @@ end
 function test_promote_operation_allocation_Int()
     return _test_promote_operation_allocation(Int)
 end
+
 function test_promote_operation_allocation_Float64()
     return _test_promote_operation_allocation(Float64)
 end
+
 function test_promote_operation_allocation_Float32()
     return _test_promote_operation_allocation(Float32)
 end

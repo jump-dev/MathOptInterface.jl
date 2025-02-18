@@ -1970,8 +1970,10 @@ function test_wrong_coefficient()
 end
 
 struct OptimizerWithBridgeListOfNonstandardBridges <: MOI.AbstractOptimizer end
+
 struct BridgeListOfNonstandardBridges{T} <:
        MOI.Bridges.Constraint.AbstractBridge end
+
 function MOI.get(
     ::OptimizerWithBridgeListOfNonstandardBridges,
     ::MOI.Bridges.ListOfNonstandardBridges{T},

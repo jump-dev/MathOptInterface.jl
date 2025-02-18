@@ -106,6 +106,7 @@ function MOI.get(::BadModelAttributeModel, ::MOI.ListOfModelAttributesSet)
 end
 
 struct UnknownVariableAttribute <: MOI.AbstractVariableAttribute end
+
 struct BadVariableAttributeModel{T} <: BadModel{T}
     BadVariableAttributeModel(T = Float64) = new{T}()
 end

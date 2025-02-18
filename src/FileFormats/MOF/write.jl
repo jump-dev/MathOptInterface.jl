@@ -476,6 +476,7 @@ head_name(::Type{MOI.LogDetConeSquare}) = "LogDetConeSquare"
 function head_name(::Type{MOI.PositiveSemidefiniteConeTriangle})
     return "PositiveSemidefiniteConeTriangle"
 end
+
 function head_name(::Type{MOI.PositiveSemidefiniteConeSquare})
     return "PositiveSemidefiniteConeSquare"
 end

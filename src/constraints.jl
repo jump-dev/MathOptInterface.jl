@@ -135,12 +135,14 @@ function throw_if_scalar_and_constant_not_zero(
     end
     return
 end
+
 function throw_if_scalar_and_constant_not_zero(
     ::VariableIndex,
     ::Type{S},
 ) where {S<:AbstractScalarSet}
     return
 end
+
 function throw_if_scalar_and_constant_not_zero(
     ::AbstractVectorFunction,
     ::Type{S},
@@ -197,6 +199,7 @@ function throw_add_constraint_error_fallback(
         kwargs...,
     )
 end
+
 function throw_add_constraint_error_fallback(
     model::ModelLike,
     func::AbstractVectorFunction,
@@ -210,6 +213,7 @@ function throw_add_constraint_error_fallback(
         kwargs...,
     )
 end
+
 function throw_add_constraint_error_fallback(
     model::ModelLike,
     func::AbstractScalarFunction,
@@ -220,6 +224,7 @@ function throw_add_constraint_error_fallback(
         "Cannot add a constraint of the form `ScalarFunction`-in-`VectorSet`",
     )
 end
+
 function throw_add_constraint_error_fallback(
     model::ModelLike,
     func::AbstractVectorFunction,

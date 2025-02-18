@@ -465,6 +465,7 @@ function MOI.get(mock::MockOptimizer, attr::MOI.AbstractOptimizerAttribute)
         return MOI.get(mock.inner_model, attr)
     end
 end
+
 function MOI.get(mock::MockOptimizer, attr::MOI.AbstractModelAttribute)
     if MOI.is_set_by_optimize(attr)
         return mock.model_attributes[attr]
@@ -680,6 +681,7 @@ function MOI.get(
         return _safe_get_result(mock.constraint_dual, attr, idx, "dual")
     end
 end
+
 function MOI.get(
     mock::MockOptimizer,
     ::MockConstraintAttribute,
