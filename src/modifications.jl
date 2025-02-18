@@ -24,6 +24,7 @@ struct ModifyConstraintNotAllowed{
     change::C
     message::String
 end
+
 function ModifyConstraintNotAllowed(
     ci::ConstraintIndex{F,S},
     change::AbstractFunctionModification,
@@ -31,6 +32,7 @@ function ModifyConstraintNotAllowed(
 ) where {F<:AbstractFunction,S<:AbstractSet}
     return ModifyConstraintNotAllowed{F,S,typeof(change)}(ci, change, message)
 end
+
 function throw_modify_not_allowed(ci::ConstraintIndex, args...)
     return throw(ModifyConstraintNotAllowed(ci, args...))
 end

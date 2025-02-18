@@ -55,6 +55,7 @@ function _validate(filename::String)
 end
 
 struct UnsupportedSet <: MOI.AbstractSet end
+
 struct UnsupportedFunction <: MOI.AbstractFunction end
 
 function _test_model_equality(

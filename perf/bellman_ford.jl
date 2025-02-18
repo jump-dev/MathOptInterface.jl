@@ -28,6 +28,7 @@ function MOI.supports_constraint(
 ) where {T}
     return false
 end
+
 function MOI.supports_constraint(
     ::SDPAModel{T},
     ::Type{MOI.VariableIndex},
@@ -35,6 +36,7 @@ function MOI.supports_constraint(
 ) where {T}
     return false
 end
+
 function MOI.supports_constraint(
     ::SDPAModel{T},
     ::Type{MOI.VariableIndex},
@@ -42,6 +44,7 @@ function MOI.supports_constraint(
 ) where {T}
     return false
 end
+
 function MOI.supports_constraint(
     ::SDPAModel{T},
     ::Type{MOI.VariableIndex},
@@ -49,6 +52,7 @@ function MOI.supports_constraint(
 ) where {T}
     return false
 end
+
 function MOI.supports_constraint(
     ::SDPAModel,
     ::Type{MOI.VectorOfVariables},
@@ -56,6 +60,7 @@ function MOI.supports_constraint(
 )
     return false
 end
+
 function MOI.supports(
     ::SDPAModel{T},
     ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}},

@@ -24,8 +24,11 @@ end
 include("utilities.jl")
 
 struct DummyModelAttribute <: MOI.AbstractModelAttribute end
+
 struct DummyEvaluator <: MOI.AbstractNLPEvaluator end
+
 struct DummyVariableAttribute <: MOI.AbstractVariableAttribute end
+
 struct DummyConstraintAttribute <: MOI.AbstractConstraintAttribute end
 
 function test_subsitution_of_variables_constant()

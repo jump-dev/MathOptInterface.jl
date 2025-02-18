@@ -1001,12 +1001,15 @@ function MOI.Utilities.final_touch(model::FinalTouchDetector, index_map)
     model.index_map = index_map
     return
 end
+
 function MOI.copy_to(::MOI.Utilities.MockOptimizer, ::FinalTouchDetector)
     return MOI.Utilities.IndexMap()
 end
+
 function MOI.get(::FinalTouchDetector, ::MOI.ListOfOptimizerAttributesSet)
     return MOI.AbstractOptimizerAttribute[]
 end
+
 function MOI.get(::FinalTouchDetector, ::MOI.ListOfModelAttributesSet)
     return MOI.AbstractModelAttribute[]
 end

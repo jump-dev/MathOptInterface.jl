@@ -272,9 +272,11 @@ function pass_nonvariable_constraints(
         constraint_types,
     )
 end
+
 function final_touch(m::CachingOptimizer, index_map)
     return final_touch(m.model_cache, index_map)
 end
+
 function MOI.copy_to(m::CachingOptimizer, src::MOI.ModelLike)
     if m.state == ATTACHED_OPTIMIZER
         reset_optimizer(m)
@@ -394,6 +396,7 @@ function MOI.supports_add_constrained_variable(
         MOI.supports_add_constrained_variable(m.optimizer, S)::Bool
     )
 end
+
 function MOI.add_constrained_variable(
     m::CachingOptimizer,
     set::S,
@@ -1032,6 +1035,7 @@ function MOI.supports(
 )
     return MOI.supports(model.model_cache, attr, IndexType)
 end
+
 function MOI.set(
     model::CachingOptimizer,
     attr::Union{MOI.VariableName,MOI.ConstraintName},
@@ -1045,6 +1049,7 @@ end
 function MOI.supports(m::CachingOptimizer, attr::MOI.Name)
     return MOI.supports(m.model_cache, attr)
 end
+
 function MOI.set(model::CachingOptimizer, attr::MOI.Name, value)
     MOI.set(model.model_cache, attr, value)
     return
@@ -1205,12 +1210,14 @@ end
 function map_indices_to_optimizer(m::CachingOptimizer, idx::MOI.Index)
     return m.model_to_optimizer_map[idx]
 end
+
 function map_indices_to_optimizer(
     m::CachingOptimizer,
     indices::Vector{<:MOI.Index},
 )
     return getindex.(Ref(m.model_to_optimizer_map), indices)
 end
+
 function MOI.set(
     m::CachingOptimizer,
     attr::AttributeFromOptimizer{T},
@@ -1272,6 +1279,7 @@ function MOI.supports(
     return caching_opt.optimizer !== nothing &&
            MOI.supports(caching_opt.optimizer, sub)::Bool
 end
+
 function MOI.submit(
     caching_opt::CachingOptimizer,
     sub::MOI.AbstractSubmittable,

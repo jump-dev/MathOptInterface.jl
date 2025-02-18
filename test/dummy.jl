@@ -26,6 +26,7 @@ function MOI.supports(
 )
     return true
 end
+
 function MOI.supports_constraint(
     ::AbstractDummyModel,
     ::Type{MOI.VariableIndex},
@@ -33,6 +34,7 @@ function MOI.supports_constraint(
 )
     return true
 end
+
 function MOI.supports_constraint(
     ::AbstractDummyModel,
     ::Type{MOI.VectorOfVariables},

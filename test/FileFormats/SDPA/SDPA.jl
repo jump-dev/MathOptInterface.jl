@@ -326,6 +326,7 @@ end
 function _spacer(char)
     return [" ", "$char", " $char", "$char ", " $char "]
 end
+
 function test_dim_reader()
     for before in _spacer('{')
         for sep in _spacer(',')

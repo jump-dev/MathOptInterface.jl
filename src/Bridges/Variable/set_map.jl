@@ -113,6 +113,7 @@ function MOI.delete(
     MOI.delete(model, bridge.variable)
     return
 end
+
 function MOI.delete(
     model::MOI.ModelLike,
     bridge::SetMapBridge{T,S1,S2},

@@ -100,6 +100,7 @@ _set(::Type{MOI.Integer}) = MOI.Integer()
 function _set(::Type{T}, ::Type{MOI.Semicontinuous}) where {T}
     return MOI.Semicontinuous(zero(T), one(T))
 end
+
 function _set(::Type{T}, ::Type{MOI.Semiinteger}) where {T}
     return MOI.Semiinteger(zero(T), one(T))
 end
@@ -124,12 +125,15 @@ _set(::Type{MOI.NormNuclearCone}) = MOI.NormNuclearCone(2, 3)
 function _set(::Type{MOI.PositiveSemidefiniteConeTriangle})
     return MOI.PositiveSemidefiniteConeTriangle(3)
 end
+
 function _set(::Type{MOI.PositiveSemidefiniteConeSquare})
     return MOI.PositiveSemidefiniteConeSquare(3)
 end
+
 function _set(::Type{MOI.HermitianPositiveSemidefiniteConeTriangle})
     return MOI.HermitianPositiveSemidefiniteConeTriangle(3)
 end
+
 function _set(::Type{MOI.Scaled{MOI.PositiveSemidefiniteConeTriangle}})
     return MOI.Scaled{MOI.PositiveSemidefiniteConeTriangle}(3)
 end

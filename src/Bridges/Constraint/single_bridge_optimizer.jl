@@ -86,6 +86,7 @@ function MOI.Bridges.is_bridged(
     return MOI.Bridges.is_bridged(b, MOI.VariableIndex, S) &&
            haskey(Constraint.bridges(b), ci)
 end
+
 function MOI.Bridges.is_bridged(
     b::SingleBridgeOptimizer,
     ci::MOI.ConstraintIndex{MOI.VectorOfVariables,S},

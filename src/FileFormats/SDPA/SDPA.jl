@@ -30,6 +30,7 @@ function MOI.supports_constraint(
 ) where {T}
     return false
 end
+
 function MOI.supports_constraint(
     ::Model,
     ::Type{MOI.VariableIndex},
@@ -300,6 +301,7 @@ function _dim_to_set(s::AbstractString)
         return MOI.Nonnegatives(-block_dim)
     end
 end
+
 function _parse_dimensions(dims::AbstractString)
     isvalid(char) = isdigit(char) || char == '-'
     is_delimiter(char) = isspace(char) || char == ','

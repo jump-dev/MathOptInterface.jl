@@ -19,12 +19,14 @@ function _add_variable(model::StructOfConstraints)
     model.num_variables += 1
     return broadcastcall(_add_variable, model)
 end
+
 function _add_variables(model::StructOfConstraints, n)
     model.num_variables += n
     return broadcastcall(Base.Fix2(_add_variables, n), model)
 end
 
 function final_touch(::Nothing, index_map) end
+
 function final_touch(model::StructOfConstraints, index_map)
     broadcastcall(Base.Fix2(final_touch, index_map), model)
     return
