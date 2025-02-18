@@ -394,6 +394,7 @@ function MOI.supports_add_constrained_variable(
         MOI.supports_add_constrained_variable(m.optimizer, S)::Bool
     )
 end
+
 function MOI.add_constrained_variable(
     m::CachingOptimizer,
     set::S,
