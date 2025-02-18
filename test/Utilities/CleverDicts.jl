@@ -264,6 +264,29 @@ function test_convert()
     return
 end
 
+function test_inverse_hash()
+    d = CleverDicts.CleverDict{Int64,String}(identity, identity)
+    key = CleverDicts.add_item(d, "a")
+    @test d[key] == "a"
+    return
+end
+
+function test_resize()
+    d = CleverDicts.CleverDict{MOI.VariableIndex,String}()
+    resize!(d, 1)
+    @test length(d.vector) == 1
+    x = CleverDicts.add_item(d, "a")
+    @test_throws(
+        ErrorException(
+            "CleverDict cannot be resized to a size smaller than the current",
+        ),
+        resize!(d, 0),
+    )
+    delete!(d, x)
+    resize!(d, 0)
+    return
+end
+
 end  # module
 
 TestCleverDicts.runtests()
