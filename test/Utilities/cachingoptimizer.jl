@@ -1109,9 +1109,7 @@ end
 function test_add_variable()
     for mode in (MOI.Utilities.AUTOMATIC, MOI.Utilities.MANUAL)
         cache = MOI.Utilities.Model{Float64}()
-        optimizer = MOI.Utilities.MockOptimizer(
-            MOI.Utilities.Model{Float64}(),
-        )
+        optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
         model = MOI.Utilities.CachingOptimizer(cache, mode)
         MOI.Utilities.reset_optimizer(model, optimizer)
         MOI.Utilities.attach_optimizer(model)
@@ -1124,9 +1122,7 @@ end
 function test_add_variables()
     for mode in (MOI.Utilities.AUTOMATIC, MOI.Utilities.MANUAL)
         cache = MOI.Utilities.Model{Float64}()
-        optimizer = MOI.Utilities.MockOptimizer(
-            MOI.Utilities.Model{Float64}(),
-        )
+        optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
         model = MOI.Utilities.CachingOptimizer(cache, mode)
         MOI.Utilities.reset_optimizer(model, optimizer)
         MOI.Utilities.attach_optimizer(model)
@@ -1141,9 +1137,7 @@ end
 function test_add_constrained_variable()
     for mode in (MOI.Utilities.AUTOMATIC, MOI.Utilities.MANUAL)
         cache = MOI.Utilities.Model{Float64}()
-        optimizer = MOI.Utilities.MockOptimizer(
-            MOI.Utilities.Model{Float64}(),
-        )
+        optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
         model = MOI.Utilities.CachingOptimizer(cache, mode)
         MOI.Utilities.reset_optimizer(model, optimizer)
         MOI.Utilities.attach_optimizer(model)
@@ -1157,9 +1151,7 @@ end
 function test_add_constrained_variables()
     for mode in (MOI.Utilities.AUTOMATIC, MOI.Utilities.MANUAL)
         cache = MOI.Utilities.Model{Float64}()
-        optimizer = MOI.Utilities.MockOptimizer(
-            MOI.Utilities.Model{Float64}(),
-        )
+        optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
         model = MOI.Utilities.CachingOptimizer(cache, mode)
         MOI.Utilities.reset_optimizer(model, optimizer)
         MOI.Utilities.attach_optimizer(model)
@@ -1175,9 +1167,7 @@ end
 function test_modify_constraint()
     for mode in (MOI.Utilities.AUTOMATIC, MOI.Utilities.MANUAL)
         cache = MOI.Utilities.Model{Float64}()
-        optimizer = MOI.Utilities.MockOptimizer(
-            MOI.Utilities.Model{Float64}(),
-        )
+        optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
         model = MOI.Utilities.CachingOptimizer(cache, mode)
         MOI.Utilities.reset_optimizer(model, optimizer)
         MOI.Utilities.attach_optimizer(model)
@@ -1186,11 +1176,7 @@ function test_modify_constraint()
         c_opt = model.model_to_optimizer_map[c]
         f = MOI.get(optimizer, MOI.ConstraintFunction(), c_opt)
         @test f ≈ 1.0 * model.model_to_optimizer_map[x]
-        MOI.modify(
-            model,
-            c,
-            MOI.ScalarCoefficientChange(x, 2.0),
-        )
+        MOI.modify(model, c, MOI.ScalarCoefficientChange(x, 2.0))
         c_opt = model.model_to_optimizer_map[c]
         f = MOI.get(optimizer, MOI.ConstraintFunction(), c_opt)
         @test f ≈ 2.0 * model.model_to_optimizer_map[x]
@@ -1201,9 +1187,7 @@ end
 function test_modify_constraint()
     for mode in (MOI.Utilities.AUTOMATIC, MOI.Utilities.MANUAL)
         cache = MOI.Utilities.Model{Float64}()
-        optimizer = MOI.Utilities.MockOptimizer(
-            MOI.Utilities.Model{Float64}(),
-        )
+        optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
         model = MOI.Utilities.CachingOptimizer(cache, mode)
         MOI.Utilities.reset_optimizer(model, optimizer)
         MOI.Utilities.attach_optimizer(model)
@@ -1212,11 +1196,7 @@ function test_modify_constraint()
         attr = MOI.ObjectiveFunction{typeof(f)}()
         MOI.set(model, attr, f)
         @test MOI.get(optimizer, attr) ≈ 1.0 * model.model_to_optimizer_map[x]
-        MOI.modify(
-            model,
-            attr,
-            MOI.ScalarCoefficientChange(x, 2.0),
-        )
+        MOI.modify(model, attr, MOI.ScalarCoefficientChange(x, 2.0))
         @test MOI.get(optimizer, attr) ≈ 2.0 * model.model_to_optimizer_map[x]
     end
     return
@@ -1225,16 +1205,14 @@ end
 function test_delete_invalid_index()
     for mode in (MOI.Utilities.AUTOMATIC, MOI.Utilities.MANUAL)
         cache = MOI.Utilities.Model{Float64}()
-        optimizer = MOI.Utilities.MockOptimizer(
-            MOI.Utilities.Model{Float64}(),
-        )
+        optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
         model = MOI.Utilities.CachingOptimizer(cache, mode)
         MOI.Utilities.reset_optimizer(model, optimizer)
         MOI.Utilities.attach_optimizer(model)
         x = MOI.add_variable(model)
         @test MOI.is_valid(optimizer, model.model_to_optimizer_map[x])
         MOI.delete(model, x)
-        @test !MOI.is_valid(optimizer, model.model_to_optimizer_map[x])
+        @test_throws(KeyError, model.model_to_optimizer_map[x])
         @test_throws(MOI.InvalidIndex, MOI.delete(model, x))
     end
     return
@@ -1243,9 +1221,7 @@ end
 function test_delete_variables()
     for mode in (MOI.Utilities.AUTOMATIC, MOI.Utilities.MANUAL)
         cache = MOI.Utilities.Model{Float64}()
-        optimizer = MOI.Utilities.MockOptimizer(
-            MOI.Utilities.Model{Float64}(),
-        )
+        optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
         model = MOI.Utilities.CachingOptimizer(cache, mode)
         MOI.Utilities.reset_optimizer(model, optimizer)
         MOI.Utilities.attach_optimizer(model)
@@ -1283,9 +1259,7 @@ end
 
 function test_get_AttributeFromOptimizer()
     cache = MOI.Utilities.Model{Float64}()
-    optimizer = MOI.Utilities.MockOptimizer(
-        MOI.Utilities.Model{Float64}(),
-    )
+    optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     model = MOI.Utilities.CachingOptimizer(cache, optimizer)
     x = MOI.add_variable(model)
     MOI.Utilities.attach_optimizer(model)
@@ -1301,9 +1275,7 @@ end
 
 function test_get_AttributeFromModelCache()
     cache = MOI.Utilities.Model{Float64}()
-    optimizer = MOI.Utilities.MockOptimizer(
-        MOI.Utilities.Model{Float64}(),
-    )
+    optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     model = MOI.Utilities.CachingOptimizer(cache, optimizer)
     x = MOI.add_variable(model)
     MOI.Utilities.attach_optimizer(model)
