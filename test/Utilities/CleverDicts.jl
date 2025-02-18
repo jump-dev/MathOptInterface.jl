@@ -265,7 +265,7 @@ function test_convert()
 end
 
 function test_inverse_hash()
-    d = CleverDicts.CleverDict{Int,String}(identity, identity)
+    d = CleverDicts.CleverDict{Int64,String}(identity, identity)
     key = CleverDicts.add_item(d, "a")
     @test d[key] == "a"
     return
