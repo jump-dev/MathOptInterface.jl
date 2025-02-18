@@ -24,6 +24,7 @@ struct OptimizerWithAttributes
 end
 
 _to_param(param::Pair{<:AbstractOptimizerAttribute}) = param
+
 function _to_param(param::Pair{String})
     return RawOptimizerAttribute(param.first) => param.second
 end

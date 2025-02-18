@@ -1099,6 +1099,20 @@ function test_comprehensive_write()
     return
 end
 
+function test_unable_to_parse_bound()
+    io = IOBuffer("""
+    minimize
+    obj: 1 x
+    subject to
+    bounds
+    x
+    end
+    """)
+    model = LP.Model()
+    @test_throws(ErrorException("Unable to parse bound: x"), read!(io, model))
+    return
+end
+
 end  # module
 
 TestLP.runtests()

@@ -724,6 +724,32 @@ function test_show_2505()
     return
 end
 
+function test_print_model_to_stdout()
+    model = MOI.Utilities.Model{Float64}()
+    dir = mktempdir()
+    d = MOI.Utilities._get_ijulia_latex_display()
+    # d is only not nothing if IJulia is running.
+    if d === nothing
+        open(joinpath(dir, "stdout.log"), "w") do io
+            redirect_stdout(io) do
+                print(model)
+                return
+            end
+            return
+        end
+        @test read(joinpath(dir, "stdout.log"), String) ==
+              "Feasibility\n\nSubject to:\n"
+    end
+    io = IOBuffer()
+    d = Base.Multimedia.TextDisplay(io)
+    @test Base.Multimedia.displayable(d, "text/latex")
+    print(model; _latex_display = d)
+    seekstart(io)
+    @test read(io, String) ==
+          "\$\$ \\begin{aligned}\n\\text{feasibility}\\\\\n\\text{Subject to}\\\\\n\\end{aligned} \$\$\n"
+    return
+end
+
 end
 
 TestPrint.runtests()

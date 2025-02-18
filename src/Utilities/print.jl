@@ -683,12 +683,24 @@ end
 
 Base.show(io::IO, ::MIME"text/latex", model::_LatexModel) = show(io, model)
 
-function Base.print(model::MOI.ModelLike; kwargs...)
+function _get_ijulia_latex_display()
     for d in Base.Multimedia.displays
         if Base.Multimedia.displayable(d, "text/latex") &&
            startswith("$(typeof(d))", "IJulia.")
-            return display(d, "text/latex", latex_formulation(model; kwargs...))
+            return d
         end
+    end
+    return
+end
+
+function Base.print(
+    model::MOI.ModelLike;
+    _latex_display = _get_ijulia_latex_display(),
+    kwargs...,
+)
+    if _latex_display !== nothing
+        formulation = latex_formulation(model; kwargs...)
+        return display(_latex_display, "text/latex", formulation)
     end
     return print(stdout, model; kwargs...)
 end

@@ -1484,6 +1484,55 @@ function test_model_not_empty()
     return
 end
 
+function test_rhs_free_row()
+    io = IOBuffer("""
+    NAME
+    ROWS
+        N  OBJ
+        N  c
+    COLUMNS
+        x         OBJ        1
+        x         c          1
+    RHS
+        rhs       c          1
+    RANGES
+    BOUNDS
+        FR bounds x
+    ENDATA
+    """)
+    model = MPS.Model()
+    @test_throws(
+        ErrorException("Cannot have RHS for free row: rhs c 1"),
+        read!(io, model),
+    )
+    return
+end
+
+function test_malformed_indicator()
+    io = IOBuffer("""
+    NAME
+    ROWS
+        N  OBJ
+    COLUMNS
+        x         OBJ        1
+        y         OBJ        1
+    RHS
+    RANGES
+    BOUNDS
+        FR bounds x
+        BV bounds y
+    INDICATORS
+     IF c1        y
+    ENDATA
+    """)
+    model = MPS.Model()
+    @test_throws(
+        ErrorException("Malformed INDICATORS line: IF c1 y"),
+        read!(io, model),
+    )
+    return
+end
+
 end  # TestMPS
 
 TestMPS.runtests()

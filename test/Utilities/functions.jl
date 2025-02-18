@@ -2238,6 +2238,24 @@ function test_filter_variables_variable_index()
     return
 end
 
+function test_mult_bool()
+    f = 1.0 * MOI.VariableIndex(1) + 2.0
+    @test *(f, false) ≈ zero(MOI.ScalarAffineFunction{Float64})
+    return
+end
+
+function test_is_complex()
+    @test !MOI.Utilities.is_complex(MOI.ScalarAffineFunction{Float64})
+    @test !MOI.Utilities.is_complex(MOI.ScalarQuadraticFunction{Float64})
+    @test !MOI.Utilities.is_complex(MOI.VectorAffineFunction{Float64})
+    @test !MOI.Utilities.is_complex(MOI.VectorQuadraticFunction{Float64})
+    @test MOI.Utilities.is_complex(MOI.ScalarAffineFunction{ComplexF64})
+    @test MOI.Utilities.is_complex(MOI.ScalarQuadraticFunction{ComplexF64})
+    @test MOI.Utilities.is_complex(MOI.VectorAffineFunction{ComplexF64})
+    @test MOI.Utilities.is_complex(MOI.VectorQuadraticFunction{ComplexF64})
+    return
+end
+
 end  # module
 
 TestUtilitiesFunctions.runtests()

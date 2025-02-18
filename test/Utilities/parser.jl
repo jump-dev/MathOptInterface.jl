@@ -435,6 +435,15 @@ function test_parse_scope()
     return
 end
 
+function test_parse_unrecognized_expression()
+    model = MOI.Utilities.Model{Float64}()
+    @test_throws(
+        ErrorException("Unrecognized expression []"),
+        MOI.Utilities.loadfromstring!(model, "[]"),
+    )
+    return
+end
+
 end  # module
 
 TestParser.runtests()
