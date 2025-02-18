@@ -2217,6 +2217,27 @@ function test_VectorQuadraticFunction_row_constructor()
     return
 end
 
+function test_cannonicalize_Variable()
+    x = MOI.VariableIndex.(1:2)
+    f = MOI.VectorOfVariables(x)
+    @test MOI.Utilities.canonicalize!(x[1]) === x[1]
+    @test MOI.Utilities.canonicalize!(f) === f
+    return
+end
+
+function test_filter_variables_variable_index()
+    f = MOI.VariableIndex(1)
+    @test MOI.Utilities.filter_variables(x -> x.value == 1, f) === f
+    @test_throws(
+        ErrorException(
+            "Cannot remove variable from a `VariableIndex` function of the " *
+            "same variable.",
+        ),
+        MOI.Utilities.filter_variables(x -> x.value == 0, f),
+    )
+    return
+end
+
 end  # module
 
 TestUtilitiesFunctions.runtests()

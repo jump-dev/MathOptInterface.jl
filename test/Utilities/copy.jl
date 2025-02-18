@@ -1093,6 +1093,19 @@ function test_deprecated_copy_free_variables()
     return
 end
 
+function test_index_map()
+    src = MOI.Utilities.Model{Float64}()
+    x, c_z = MOI.add_constrained_variable(src, MOI.ZeroOne())
+    dest = MOI.Utilities.Model{Float64}()
+    index_map = MOI.copy_to(dest, src)
+    @test collect(keys(index_map)) == Any[x, c_z]
+    delete!(index_map, x)
+    @test collect(keys(index_map)) == Any[c_z]
+    delete!(index_map, c_z)
+    @test collect(keys(index_map)) == Any[]
+    return
+end
+
 end  # module
 
 TestCopy.runtests()
