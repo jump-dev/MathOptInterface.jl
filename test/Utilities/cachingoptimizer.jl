@@ -1265,7 +1265,7 @@ function test_get_AttributeFromOptimizer()
     MOI.Utilities.attach_optimizer(model)
     attr = MOI.VariableName()
     optimizer_attr = MOI.Utilities.AttributeFromOptimizer(attr)
-    @test MOI.supports(model, cache_attr, MOI.VariableIndex)
+    @test MOI.supports(model, optimizer_attr, MOI.VariableIndex)
     MOI.set(model, optimizer_attr, x, "x")
     @test MOI.get(model, attr, x) == ""
     @test MOI.get(model, optimizer_attr, x) == "x"
