@@ -1162,7 +1162,7 @@ function MOI.get(
         MOI.get(
             m.optimizer,
             attr.attr,
-            getindex.(m.model_to_optimizer_map, idx),
+            map_indices_to_optimizer(m, idx),
         )::Vector{<:MOI.attribute_value_type(attr.attr)},
     )
 end

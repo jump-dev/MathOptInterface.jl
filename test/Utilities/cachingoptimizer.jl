@@ -1260,6 +1260,72 @@ function test_delete_variables()
     return
 end
 
+function test_set_attribute()
+    for mode in (MOI.Utilities.AUTOMATIC, MOI.Utilities.MANUAL)
+        cache = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+        optimizer = MOI.Utilities.MockOptimizer(
+            MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+        )
+        model = MOI.Utilities.CachingOptimizer(cache, mode)
+        MOI.Utilities.reset_optimizer(model, optimizer)
+        MOI.Utilities.attach_optimizer(model)
+        x = MOI.add_variable(model)
+        @test MOI.is_valid(optimizer, model.model_to_optimizer_map[x])
+        attr = MOI.VariablePrimalStart()
+        MOI.set(model, attr, x, 1.23)
+        opt_attr = MOI.Utilities.AttributeFromOptimizer(attr)
+        cache_attr = MOI.Utilities.AttributeFromModelCache(attr)
+        @test MOI.get(model, opt_attr, x) == 1.23
+        @test MOI.get(model, cache_attr, x) == 1.23
+    end
+    return
+end
+
+function test_get_AttributeFromOptimizer()
+    cache = MOI.Utilities.Model{Float64}()
+    optimizer = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.Model{Float64}(),
+    )
+    model = MOI.Utilities.CachingOptimizer(cache, optimizer)
+    x = MOI.add_variable(model)
+    MOI.Utilities.attach_optimizer(model)
+    attr = MOI.VariableName()
+    optimizer_attr = MOI.Utilities.AttributeFromOptimizer(attr)
+    @test MOI.supports(model, cache_attr, MOI.VariableIndex)
+    MOI.set(model, optimizer_attr, x, "x")
+    @test MOI.get(model, attr, x) == ""
+    @test MOI.get(model, optimizer_attr, x) == "x"
+    @test MOI.get(model, optimizer_attr, [x]) == ["x"]
+    return
+end
+
+function test_get_AttributeFromModelCache()
+    cache = MOI.Utilities.Model{Float64}()
+    optimizer = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.Model{Float64}(),
+    )
+    model = MOI.Utilities.CachingOptimizer(cache, optimizer)
+    x = MOI.add_variable(model)
+    MOI.Utilities.attach_optimizer(model)
+    # VariableName
+    attr = MOI.VariableName()
+    cache_attr = MOI.Utilities.AttributeFromModelCache(attr)
+    MOI.set(model, cache_attr, x, "x")
+    @test MOI.supports(model, cache_attr, MOI.VariableIndex)
+    @test MOI.get(model, attr, x) == "x"
+    @test MOI.get(model, cache_attr, x) == "x"
+    @test MOI.get(model, MOI.Utilities.AttributeFromOptimizer(attr), x) == ""
+    # Name
+    attr = MOI.Name()
+    cache_attr = MOI.Utilities.AttributeFromModelCache(attr)
+    MOI.set(model, cache_attr, "m")
+    @test MOI.supports(model, cache_attr)
+    @test MOI.get(model, attr) == "m"
+    @test MOI.get(model, cache_attr) == "m"
+    @test MOI.get(model, MOI.Utilities.AttributeFromOptimizer(attr)) == ""
+    return
+end
+
 end  # module
 
 TestCachingOptimizer.runtests()
