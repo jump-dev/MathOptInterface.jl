@@ -746,7 +746,7 @@ function test_print_model_to_stdout()
     print(model; _latex_display = d)
     seekstart(io)
     @test read(io, String) ==
-          "\$\$ \\begin{aligned}\n\\text{feasibility}\\\\\n\\text{Subject to}\\\\\n\\end{aligned} \$\$\n"
+          "\$\$ \\begin{aligned}\n\\text{feasibility}\\\\\n\\text{Subject to}\\\\\n\\end{aligned} \$\$"
     return
 end
 
