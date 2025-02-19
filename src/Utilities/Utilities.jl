@@ -10,6 +10,8 @@ import LinearAlgebra
 import MathOptInterface as MOI
 import MutableArithmetics as MA
 import OrderedCollections: OrderedDict
+import SparseArrays
+import Unicode
 
 function print_with_acronym(io::IO, s::AbstractString)
     return print(io, replace_acronym(s))

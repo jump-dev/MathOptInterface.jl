@@ -117,8 +117,7 @@ end
 # inference.
 function _throw_if_lower_bound_set_inner(variable, S2, mask, T)
     S1 = _flag_to_set_type(mask, T)
-    throw(MOI.LowerBoundAlreadySet{S1,S2}(variable))
-    return
+    return throw(MOI.LowerBoundAlreadySet{S1,S2}(variable))
 end
 
 function _throw_if_lower_bound_set(variable, S2, mask, T)
@@ -135,8 +134,7 @@ end
 # inference.
 function _throw_if_upper_bound_set_inner(variable, S2, mask, T)
     S1 = _flag_to_set_type(mask, T)
-    throw(MOI.UpperBoundAlreadySet{S1,S2}(variable))
-    return
+    return throw(MOI.UpperBoundAlreadySet{S1,S2}(variable))
 end
 
 function _throw_if_upper_bound_set(variable, S2, mask, T)
