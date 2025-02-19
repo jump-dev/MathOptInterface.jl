@@ -125,7 +125,7 @@ function test_extract_function()
     r10 = MOI.Utilities.extract_function(A, 10, 0.5)
     @test r10 ≈ MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.5)
     f1 = 0.6 + 1.0 * x[1] + 1.0 * x[2] + 1.0 * x[3]
-    r10 = MOI.Utilities.extract_function(A, 0:1, c)
+    r10 = MOI.Utilities.extract_function(A, 0:1, [0.5, 0.6])
     @test r10 ≈ MOI.Utilities.vectorize([0.5, f1])
     return
 end
