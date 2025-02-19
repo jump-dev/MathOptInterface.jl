@@ -1152,6 +1152,87 @@ function test_univariate_operator_with_no_second_order()
     return
 end
 
+function test_no_objective()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Grad])
+    @test_throws(
+        ErrorException("No nonlinear objective."),
+        MOI.eval_objective(evaluator, [1.0]),
+    )
+    g = [0.0]
+    @test_throws(
+        ErrorException("No nonlinear objective."),
+        MOI.eval_objective_gradient(evaluator, g, [1.0]),
+    )
+    return
+end
+
+function test_x_power_1()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    MOI.Nonlinear.set_objective(model, :($x^1))
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Grad, :Hess])
+    @test MOI.eval_objective(evaluator, [2.0]) ≈ 2.0
+    H = [NaN]
+    MOI.eval_hessian_lagrangian(evaluator, H, [2.0], 1.5, Float64[])
+    @test H == [0.0]
+    return
+end
+
+function test_variable_first_node_in_tape()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    expr = MOI.Nonlinear.add_expression(model, :($x))
+    MOI.Nonlinear.set_objective(model, :(sin($expr)))
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
+    H = [NaN]
+    MOI.eval_hessian_lagrangian(evaluator, H, [2.0], 1.5, [])
+    @test H ≈ [-1.5 * sin(2.0)]
+    return
+end
+
+function test_subexpression_first_node_in_tape()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    expr = MOI.Nonlinear.add_expression(model, :($x))
+    expr2 = MOI.Nonlinear.add_expression(model, :($expr))
+    MOI.Nonlinear.set_objective(model, :(sin($expr2)))
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
+    H = [NaN]
+    MOI.eval_hessian_lagrangian(evaluator, H, [2.0], 1.5, [])
+    @test H ≈ [-1.5 * sin(2.0)]
+    return
+end
+
+function test_parameter_in_hessian()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    p = MOI.Nonlinear.add_parameter(model, 3.0)
+    MOI.Nonlinear.set_objective(model, :(sin($x + $p)))
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
+    H = [NaN]
+    MOI.eval_hessian_lagrangian(evaluator, H, [2.0], 1.5, [])
+    @test H ≈ [-1.5 * sin(2.0 + 3.0)]
+    return
+end
+
+function test_unsafe_vector_view()
+    x = Float64[]
+    GC.@preserve x begin
+        view = MOI.Nonlinear.ReverseAD._UnsafeVectorView(x, 3)
+        @test length(x) == 3
+        view[2] = 1.0
+        @test x[2] == 1.0
+    end
+    return
+end
+
 end  # module
 
 TestReverseAD.runtests()

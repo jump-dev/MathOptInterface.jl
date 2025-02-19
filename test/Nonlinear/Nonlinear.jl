@@ -880,6 +880,18 @@ function test_evaluate_subexpressions()
     return
 end
 
+function test_evaluate_manny_arguments()
+    model = MOI.Nonlinear.Model()
+    x = MOI.VariableIndex.(1:20)
+    v = Dict(xi => xi.value for xi in x)
+    expr = MOI.Nonlinear.add_expression(
+        model,
+        Expr(:call, :+, [:(sqrt($(x[i]))) for i in 1:20]...),
+    )
+    @test Nonlinear.evaluate(v, model, expr) ≈ sum(sqrt(i) for i in 1:20)
+    return
+end
+
 function test_NLPBlockData()
     model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
@@ -1249,6 +1261,70 @@ function test_univariate_sign()
             @test H[1] ≈ ∇²f(y, p)
         end
     end
+end
+
+function test_show_Model()
+    model = MOI.Nonlinear.Model()
+    @test sprint(show, model) ==
+          "A Nonlinear.Model with:\n 0 objectives\n 0 parameters\n 0 expressions\n 0 constraints"
+    p = MOI.Nonlinear.add_parameter(model, 2.0)
+    @test sprint(show, model) ==
+          "A Nonlinear.Model with:\n 0 objectives\n 1 parameter\n 0 expressions\n 0 constraints"
+    return
+end
+
+function test_set_objective_nothing()
+    model = MOI.Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    MOI.Nonlinear.set_objective(model, :(sin($x)))
+    @test sprint(show, model) ==
+          "A Nonlinear.Model with:\n 1 objective\n 0 parameters\n 0 expressions\n 0 constraints"
+    MOI.Nonlinear.set_objective(model, nothing)
+    @test sprint(show, model) ==
+          "A Nonlinear.Model with:\n 0 objectives\n 0 parameters\n 0 expressions\n 0 constraints"
+    return
+end
+
+function test_copy_evaluator()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.ExprGraphOnly(), [x])
+    @test_throws(
+        ErrorException("Copying nonlinear problems not yet implemented"),
+        copy(evaluator),
+    )
+    return
+end
+
+function test_no_objective()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.ExprGraphOnly(), [x])
+    @test_throws(
+        ErrorException(
+            "Unable to query objective_expr because no nonlinear objective was set",
+        ),
+        MOI.objective_expr(evaluator),
+    )
+    return
+end
+
+function test_convert_to_expr()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    expr = MOI.Nonlinear.add_expression(model, :(sin($x)))
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.ExprGraphOnly(), [x])
+    @test MOI.Nonlinear.convert_to_expr(
+        evaluator,
+        model[expr];
+        moi_output_format = true,
+    ) == :(sin(x[$x]))
+    @test MOI.Nonlinear.convert_to_expr(
+        evaluator,
+        model[expr];
+        moi_output_format = false,
+    ) == :(sin($x))
+    return
 end
 
 end  # TestNonlinear
