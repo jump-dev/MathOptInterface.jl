@@ -2265,6 +2265,13 @@ function test_is_complex()
     return
 end
 
+function test_ndims()
+    x = MOI.VariableIndex(1)
+    @test ndims(1.0 * x) == 0
+    @test ndims(MOI.ScalarAffineFunction{Float64}) == 0
+    return
+end
+
 end  # module
 
 TestUtilitiesFunctions.runtests()

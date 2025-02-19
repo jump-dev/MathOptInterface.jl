@@ -745,8 +745,9 @@ function test_print_model_to_stdout()
     @test Base.Multimedia.displayable(d, "text/latex")
     print(model; _latex_display = d)
     seekstart(io)
+    prefix = VERSION < v"1.7" ? "" : "\n"
     @test read(io, String) ==
-          "\$\$ \\begin{aligned}\n\\text{feasibility}\\\\\n\\text{Subject to}\\\\\n\\end{aligned} \$\$\n"
+          "\$\$ \\begin{aligned}\n\\text{feasibility}\\\\\n\\text{Subject to}\\\\\n\\end{aligned} \$\$$(prefix)"
     return
 end
 

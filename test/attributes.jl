@@ -393,6 +393,16 @@ function test_showerror_SetTypeMismatch()
     return
 end
 
+function test_NLPBlockDual_is_set_by_optimize()
+    @test MOI.is_set_by_optimize(MOI.NLPBlockDual())
+    return
+end
+
+function test_CallbackVariablePrimal_is_set_by_optimize()
+    @test MOI.is_set_by_optimize(MOI.CallbackVariablePrimal(nothing))
+    return
+end
+
 end  # module
 
 TestAttributes.runtests()
