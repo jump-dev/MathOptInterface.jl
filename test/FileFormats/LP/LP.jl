@@ -1078,7 +1078,7 @@ function test_VectorAffineFunction_SOS()
     return
 end
 
-function test_comprehensive_write()
+function test_invalid_token_in_sos()
     model = LP.Model()
     io = IOBuffer()
     print(
