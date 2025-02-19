@@ -246,6 +246,7 @@ end
 function _variable_coefficient(
     func::MOI.ScalarAffineFunction{T},
     vi::MOI.VariableIndex,
+    value_fn::Any,
 ) where {T}
     coef = zero(T)
     for term in func.terms
@@ -259,12 +260,12 @@ end
 function _variable_coefficient(
     func::MOI.VectorAffineFunction{T},
     vi::MOI.VariableIndex,
+    value_fn::Any,
 ) where {T}
     coef = zeros(T, MOI.output_dimension(func))
-    for vector_term in func.terms
-        term = vector_term.scalar_term
-        if term.variable == vi
-            coef[vector_term.output_index] += term.coefficient
+    for term in func.terms
+        if term.scalar_term.variable == vi
+            coef[term.output_index] += term.scalar_term.coefficient
         end
     end
     return coef
@@ -273,7 +274,7 @@ end
 function _variable_coefficient(
     func::MOI.ScalarQuadraticFunction{T},
     vi::MOI.VariableIndex,
-    value::F,
+    value_fn::F,
 ) where {T,F<:Function}
     coef = zero(T)
     # `vi`'th row of `Qx + a` where `func` is `x'Qx/2 + a'x + b`.
@@ -284,9 +285,9 @@ function _variable_coefficient(
     end
     for term in func.quadratic_terms
         if term.variable_1 == vi
-            coef += term.coefficient * value(term.variable_2)
+            coef += term.coefficient * value_fn(term.variable_2)
         elseif term.variable_2 == vi
-            coef += term.coefficient * value(term.variable_1)
+            coef += term.coefficient * value_fn(term.variable_1)
         end
     end
     return coef
@@ -295,23 +296,21 @@ end
 function _variable_coefficient(
     func::MOI.VectorQuadraticFunction{T},
     vi::MOI.VariableIndex,
-    value::F,
+    value_fn::F,
 ) where {T,F<:Function}
     coef = zeros(T, MOI.output_dimension(func))
     # `vi`'th row of `Qx + a` where `func` is `x'Qx/2 + a'x + b`.
-    for vector_term in func.affine_terms
-        term = vector_term.scalar_term
-        if term.variable == vi
-            coef[vector_term.output_index] += term.coefficient
+    for aff_term in func.affine_terms
+        if aff_term.scalar_term.variable == vi
+            coef[aff_term.output_index] += aff_term.scalar_term.coefficient
         end
     end
-    for vector_term in func.quadratic_terms
-        term = vector_term.scalar_term
-        oi = vector_term.output_index
+    for q_term in func.quadratic_terms
+        index, term = q_term.output_index, q_term.scalar_term
         if term.variable_1 == vi
-            coef[oi] += term.coefficient * value(term.variable_2)
-        elseif term.variable_2 == vi
-            coef[oi] += term.coefficient * value(term.variable_1)
+            coef[index] += term.coefficient * value_fn(term.variable_2)
+        elseif q_term.scalar_term.variable_2 == vi
+            coef[index] += term.coefficient * value_fn(term.variable_1)
         end
     end
     return coef
@@ -322,48 +321,14 @@ function _variable_dual(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,
     vi::MOI.VariableIndex,
-    ci::MOI.ConstraintIndex{<:MOI.ScalarAffineFunction},
-) where {T}
-    func = MOI.get(model, MOI.ConstraintFunction(), ci)
-    coef = _variable_coefficient(func, vi)
-    dual = MOI.get(model, attr, ci)
-    return coef * dual
-end
-
-function _variable_dual(
-    ::Type{T},
-    model::MOI.ModelLike,
-    attr::MOI.ConstraintDual,
-    vi::MOI.VariableIndex,
-    ci::MOI.ConstraintIndex{<:MOI.ScalarQuadraticFunction},
-) where {T}
-    func = MOI.get(model, MOI.ConstraintFunction(), ci)
-    primal = MOI.VariablePrimal(attr.result_index)
-    coef = _variable_coefficient(func, vi, vi -> MOI.get(model, primal, vi))
-    dual = MOI.get(model, attr, ci)
-    return coef * dual
-end
-
-function _variable_dual(
-    ::Type{T},
-    model::MOI.ModelLike,
-    attr::MOI.ConstraintDual,
-    vi::MOI.VariableIndex,
-    ci::MOI.ConstraintIndex{<:MOI.VectorAffineFunction},
-) where {T}
-    func = MOI.get(model, MOI.ConstraintFunction(), ci)
-    set = MOI.get(model, MOI.ConstraintSet(), ci)
-    coef = _variable_coefficient(func, vi)
-    dual = MOI.get(model, attr, ci)
-    return set_dot(coef, dual, set)
-end
-
-function _variable_dual(
-    ::Type{T},
-    model::MOI.ModelLike,
-    attr::MOI.ConstraintDual,
-    vi::MOI.VariableIndex,
-    ci::MOI.ConstraintIndex{<:MOI.VectorQuadraticFunction},
+    ci::MOI.ConstraintIndex{
+        <:Union{
+            MOI.ScalarAffineFunction,
+            MOI.ScalarQuadraticFunction,
+            MOI.VectorAffineFunction,
+            MOI.VectorQuadraticFunction,
+        },
+    },
 ) where {T}
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
@@ -437,7 +402,7 @@ function _variable_dual(
             end
         elseif F <: MOI.ScalarAffineFunction
             f = MOI.get(model, obj_attr)
-            dual += sign * _variable_coefficient(f, vi)
+            dual += sign * _variable_coefficient(f, vi, nothing)
         elseif F <: MOI.ScalarQuadraticFunction
             f = MOI.get(model, obj_attr)
             primal_attr = MOI.VariablePrimal(attr.result_index)
@@ -455,8 +420,8 @@ function _variable_dual(
             )
         end
     end
-    for FS in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        dual -= _variable_dual(T, model, attr, ci, vi, FS[1], FS[2])
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        dual -= _variable_dual(T, model, attr, ci, vi, F, S)
     end
     return dual
 end

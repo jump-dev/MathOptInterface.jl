@@ -570,6 +570,20 @@ function test_set_unsupported_objective()
     return
 end
 
+function test_variable_coefficient_VectorQuadraticFunction()
+    x = MOI.VariableIndex.(1:2)
+    fs = [
+        1.0 * x[1] * x[1] + 2.0 * x[1] * x[2] + 3.0 * x[2] + 0.5,
+        1.0 * x[2] * x[2],
+    ]
+    f = MOI.Utilities.vectorize(fs)
+    for xi in x
+        @test MOI.Utilities._variable_coefficient(f, xi, y -> sin(y.value)) ≈
+              MOI.Utilities._variable_coefficient.(fs, xi, y -> sin(y.value))
+    end
+    return
+end
+
 end  # module
 
 TestModel.runtests()
