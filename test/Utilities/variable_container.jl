@@ -320,7 +320,7 @@ function test_LowerBoundAlreadySet()
     for set in (
         MOI.EqualTo(1),
         MOI.GreaterThan(1),
-        MOI.Interval(1),
+        MOI.Interval(1, 3),
         MOI.Parameter(1),
         MOI.Semicontinuous(1, 3),
         MOI.Semiinteger(1, 3),
