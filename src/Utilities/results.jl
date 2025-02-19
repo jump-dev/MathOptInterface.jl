@@ -306,12 +306,11 @@ function _variable_coefficient(
         end
     end
     for q_term in func.quadratic_terms
-        if q_term.scalar_term.variable_1 == vi
-            coef[q_term.output_index] +=
-                term.coefficient * value_fn(q_term.scalar_term.variable_2)
+        index, term = q_term.output_index, q_term.scalar_term
+        if term.variable_1 == vi
+            coef[index] += term.coefficient * value_fn(term.variable_2)
         elseif q_term.scalar_term.variable_2 == vi
-            coef[q_term.output_index] +=
-                term.coefficient * value_fn(q_term.scalar_term.variable_1)
+            coef[index] += term.coefficient * value_fn(term.variable_1)
         end
     end
     return coef
