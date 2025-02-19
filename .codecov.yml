@@ -1,1 +1,3 @@
 comment: false
+ignore:
+  - 'src/Nonlinear/univariate_expressions_generator.jl'
