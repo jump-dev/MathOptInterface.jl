@@ -396,6 +396,15 @@ function test_isvalid_fallback()
     return
 end
 
+function test_logs_precompile()
+    model = MOI.Utilities.Model{Float64}()
+    F, S = MOI.VariableIndex, MOI.ZeroOne
+    @test_logs (:warn,) MOI.precompile_constraint(model, F, S)
+    @test_logs (:warn,) MOI.precompile_variables(model)
+    @test_logs (:warn,) MOI.precompile_model(model, [(F, S)])
+    return
+end
+
 end  # module
 
 TestErrors.runtests()
