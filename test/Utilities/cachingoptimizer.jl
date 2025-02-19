@@ -1187,7 +1187,7 @@ function test_modify_constraint()
     return
 end
 
-function test_modify_constraint()
+function test_modify_objective()
     for mode in (MOI.Utilities.AUTOMATIC, MOI.Utilities.MANUAL)
         cache = MOI.Utilities.Model{Float64}()
         optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
