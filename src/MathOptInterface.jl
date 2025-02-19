@@ -376,8 +376,6 @@ include("FileFormats/FileFormats.jl")
 
 include("instantiate.jl")
 
-_precompile_()
-
 """
     IndexMap()
 

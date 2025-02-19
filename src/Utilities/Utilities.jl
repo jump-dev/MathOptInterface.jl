@@ -72,7 +72,4 @@ include("set_dot.jl")
 
 include("distance_to_set.jl")
 
-include("precompile.jl")
-_precompile_()
-
 end # module

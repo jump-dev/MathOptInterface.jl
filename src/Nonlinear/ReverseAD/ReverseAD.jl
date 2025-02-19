@@ -39,6 +39,4 @@ include("reverse_mode.jl")
 include("forward_over_reverse.jl")
 include("mathoptinterface_api.jl")
 
-include("precompile.jl")
-
 end  # module

@@ -35,10 +35,11 @@ function precompile_constraint(model, F, S)
     Base.precompile(delete, (model, ConstraintIndex{F,S}))
     Base.precompile(is_valid, (model, ConstraintIndex{F,S}))
     Base.precompile(get, (model, ConstraintName, ConstraintIndex{F,S}))
-    return Base.precompile(
+    Base.precompile(
         set,
         (model, ConstraintName, ConstraintIndex{F,S}, String),
     )
+    return
 end
 
 function precompile_variables(model)
@@ -60,7 +61,8 @@ function precompile_variables(model)
     )
     Base.precompile(get, (model, VariablePrimal, VariableIndex))
     Base.precompile(get, (model, VariablePrimal, Vector{VariableIndex}))
-    return Base.precompile(add_constrained_variables, (model, Reals))
+    Base.precompile(add_constrained_variables, (model, Reals))
+    return
 end
 
 function precompile_model(model, constraints)
@@ -88,16 +90,6 @@ function precompile_model(model, constraints)
     for (F, S) in constraints
         precompile_constraint(model, F, S)
     end
-    return Base.precompile(Tuple{typeof(add_constrained_variables),model,Reals})
-end
-
-function _precompile_()
-    return Base.precompile(
-        Tuple{
-            Core.kwftype(typeof(instantiate)),
-            NamedTuple{(:with_bridge_type,),Tuple{DataType}},
-            typeof(instantiate),
-            Type,
-        },
-    )   # time: 0.481656
+    Base.precompile(Tuple{typeof(add_constrained_variables),model,Reals})
+    return
 end
