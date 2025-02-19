@@ -177,6 +177,7 @@ function test_MockConstraintAttribute()
     mock = MOIU.MockOptimizer(MOIU.Model{Int}())
     x = MOI.add_variable(mock)
     c = MOI.add_constraint(mock, x, MOI.LessThan(0))
+    @test MOI.supports(mock, MOI.Utilities.MockConstraintAttribute(), typeof(c))
     MOI.set(mock, MOI.Utilities.MockConstraintAttribute(), c, 1)
     @test MOI.get(mock, MOI.Utilities.MockConstraintAttribute(), c) == 1
     return
@@ -186,6 +187,57 @@ function test_DualObjectiveValue()
     mock =
         MOIU.MockOptimizer(MOIU.Model{Int}(); eval_dual_objective_value = false)
     @test isnan(MOI.get(mock, MOI.DualObjectiveValue()))
+    return
+end
+
+function test_add_con_allowed_false()
+    model = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.Model{Float64}();
+        add_con_allowed = false,
+    )
+    x = MOI.add_variable(model)
+    @test_throws(
+        MOI.AddConstraintNotAllowed,
+        MOI.add_constraint(model, x, MOI.ZeroOne()),
+    )
+    @test_throws(
+        MOI.AddConstraintNotAllowed,
+        MOI.add_constraint(model, 1.0 * x, MOI.EqualTo(1.0)),
+    )
+    return
+end
+
+function test_supports_names_false()
+    model = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.Model{Float64}();
+        supports_names = false,
+    )
+    @test_throws(
+        MOI.UnsupportedAttribute{MOI.Name},
+        MOI.set(model, MOI.Name(), "model"),
+    )
+    x = MOI.add_variable(model)
+    @test_throws(
+        MOI.UnsupportedAttribute{MOI.VariableName},
+        MOI.set(model, MOI.VariableName(), x, "x"),
+    )
+    c = MOI.add_constraint(model, 1.0 * x, MOI.EqualTo(1.0))
+    @test_throws(
+        MOI.UnsupportedAttribute{MOI.ConstraintName},
+        MOI.set(model, MOI.ConstraintName(), c, "c"),
+    )
+    return
+end
+
+function test_delete_allowed_false()
+    model = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    model.delete_allowed = false
+    x = MOI.add_variable(model)
+    @test_throws(MOI.DeleteNotAllowed{MOI.VariableIndex}, MOI.delete(model, x))
+    @test_throws(
+        MOI.DeleteNotAllowed{MOI.VariableIndex},
+        MOI.delete(model, [x]),
+    )
     return
 end
 

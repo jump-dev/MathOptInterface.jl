@@ -2238,6 +2238,15 @@ function test_filter_variables_variable_index()
     return
 end
 
+function test_filter_variables_vector_of_variables()
+    f = MOI.VectorOfVariables(MOI.VariableIndex.(1:2))
+    s = MOI.Zeros(2)
+    g, new_s = MOI.Utilities.filter_variables(x -> x.value != 1, f, s)
+    @test g == MOI.VectorOfVariables([MOI.VariableIndex(2)])
+    @test new_s == MOI.Zeros(1)
+    return
+end
+
 function test_mult_bool()
     f = 1.0 * MOI.VariableIndex(1) + 2.0
     @test *(f, false) ≈ zero(MOI.ScalarAffineFunction{Float64})
