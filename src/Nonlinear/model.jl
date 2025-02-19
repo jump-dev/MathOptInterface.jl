@@ -30,8 +30,6 @@ end
 
 function Base.show(io::IO, model::Model)
     println(io, "A Nonlinear.Model with:")
-    if model.objective !== nothing
-    end
     _plural(s, n) = n == 1 ? " 1 $s" : " $n $(s)s"
     println(io, _plural("objective", model.objective !== nothing ? 1 : 0))
     println(io, _plural("parameter", length(model.parameters)))
