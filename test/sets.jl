@@ -377,6 +377,40 @@ function test_interval_promote()
     return
 end
 
+mutable struct TestSetNoCopy <: MOI.AbstractVectorSet
+    data::BigInt
 end
+
+function test_set_not_isbitstype_copy()
+    @test !isbitstype(TestSetNoCopy)
+    @test_throws(
+        ErrorException(
+            "Base.copy(::$TestSetNoCopy) is not implemented for this set.",
+        ),
+        copy(TestSetNoCopy(BigInt(2))),
+    )
+    return
+end
+
+function test_deprecated_PositiveSemidefiniteConeTriangle()
+    set = MOI.Scaled(MOI.PositiveSemidefiniteConeTriangle(2))
+    @test set.side_dimension == 2
+    @test !hasfield(typeof(set), :side_dimension)
+    return
+end
+
+function test_update_dimension()
+    @test !MOI.supports_dimension_update(MOI.ExponentialCone)
+    for S in (MOI.Reals, MOI.Zeros, MOI.Nonnegatives, MOI.Nonpositives)
+        @test MOI.supports_dimension_update(S)
+        set = S(1)
+        new_set = MOI.update_dimension(set, 2)
+        @test MOI.dimension(set) == 1
+        @test MOI.dimension(new_set) == 2
+    end
+    return
+end
+
+end  # module
 
 TestSets.runtests()

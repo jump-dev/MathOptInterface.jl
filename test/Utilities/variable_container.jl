@@ -98,6 +98,8 @@ function test_delete_constraint_LessThan()
     @test MOI.is_valid(a, c)
     MOI.delete(a, c)
     @test !MOI.is_valid(a, c)
+    ci = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Zeros}(1)
+    @test !MOI.is_valid(a, ci)
     return
 end
 
@@ -311,6 +313,37 @@ function test_ListOfConstraintTypesPresent_2()
         @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) ==
               [(MOI.VariableIndex, typeof(set))]
     end
+    return
+end
+
+function test_LowerBoundAlreadySet()
+    for set in (
+        MOI.EqualTo(1),
+        MOI.GreaterThan(1),
+        MOI.Interval(1, 3),
+        MOI.Parameter(1),
+        MOI.Semicontinuous(1, 3),
+        MOI.Semiinteger(1, 3),
+    )
+        model = MOI.Utilities.VariablesContainer{Int}()
+        x = MOI.add_variable(model)
+        c = MOI.add_constraint(model, x, set)
+        @test_throws(
+            MOI.LowerBoundAlreadySet,
+            MOI.add_constraint(model, x, MOI.EqualTo(2)),
+        )
+    end
+    return
+end
+
+function test_UnsupportedConstraint()
+    model = MOI.Utilities.VariablesContainer{Int}()
+    x = [MOI.add_variable(model) for _ in 1:3]
+    f = MOI.VectorOfVariables(x)
+    @test_throws(
+        MOI.UnsupportedConstraint{MOI.VectorOfVariables,MOI.ExponentialCone},
+        MOI.add_constraint(model, f, MOI.ExponentialCone()),
+    )
     return
 end
 

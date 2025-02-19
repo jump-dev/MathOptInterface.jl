@@ -125,6 +125,15 @@ end
     @test_logs MOI.Test.runtests(model, config; exclude = exclude)
 end
 
+@testset "test_FeasibilitySenseEvaluator" begin
+    evaluator = MOI.Test.FeasibilitySenseEvaluator(true)
+    @test MOI.features_available(evaluator) == [:Grad, :Jac, :Hess, :ExprGraph]
+    @test MOI.hessian_lagrangian_structure(evaluator) == [(1, 1)]
+    evaluator = MOI.Test.FeasibilitySenseEvaluator(false)
+    @test MOI.features_available(evaluator) == [:Grad, :Jac, :ExprGraph]
+    @test_throws AssertionError MOI.hessian_lagrangian_structure(evaluator)
+end
+
 @testset "test_HS071_evaluator" begin
     evaluator = MOI.Test.HS071(true, true)
     features = [:Grad, :Jac, :JacVec, :ExprGraph, :Hess, :HessVec]

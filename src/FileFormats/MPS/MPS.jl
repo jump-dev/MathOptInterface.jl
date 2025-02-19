@@ -1153,7 +1153,7 @@ function Base.read!(io::IO, model::Model)
     end
     data = TempMPSModel()
     header = HEADER_NAME
-    while !eof(io)
+    while !eof(io) && header != HEADER_ENDATA
         raw_line = readline(io)
         if startswith(raw_line, '*')
             continue  # Lines starting with `*` are comments
@@ -1219,7 +1219,6 @@ function Base.read!(io::IO, model::Model)
             parse_indicators_line(data, items)
         else
             @assert header == HEADER_ENDATA
-            break
         end
     end
     copy_to(model, data)
@@ -1556,7 +1555,7 @@ function parse_single_rhs(
         data.row_upper[row] = value
     else
         @assert data.sense[row] == SENSE_N
-        error("Cannot have RHS for objective: $(join(items, " "))")
+        error("Cannot have RHS for free row: $(join(items, " "))")
     end
     return
 end

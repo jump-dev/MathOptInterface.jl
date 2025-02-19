@@ -166,6 +166,16 @@ function test_instantiate_with_cache_type()
     return
 end
 
+function test_to_param_OptimizerWithAttributes()
+    @test_throws(
+        ErrorException(
+            "Expected an optimizer attribute or a string, got `1` which is a `$(Int)`.",
+        ),
+        MOI.OptimizerWithAttributes(MOI.Utilities.Model{Float64}, 1 => 2),
+    )
+    return
+end
+
 end
 
 TestInstantiate.runtests()

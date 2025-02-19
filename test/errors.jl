@@ -11,6 +11,16 @@ import MathOptInterface as MOI
 
 include("dummy.jl")
 
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$name", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+end
+
 function test_errors_fallback_AddVariableNotAllowed()
     model = DummyModel()
     @test_throws MOI.AddVariableNotAllowed MOI.add_variable(model)
@@ -370,16 +380,22 @@ function test_ScalarFunctionConstantNotZero_equality()
     return
 end
 
-function runtests()
-    for name in names(@__MODULE__; all = true)
-        if startswith("$name", "test_")
-            @testset "$(name)" begin
-                getfield(@__MODULE__, name)()
-            end
-        end
-    end
+function test_showerror_InvalidIndex()
+    x = MOI.VariableIndex(1)
+    @test sprint(showerror, MOI.InvalidIndex(x)) ==
+          "The index $x is invalid. Note that an index becomes invalid after it has been deleted."
+    return
 end
 
+struct ModelWithNoIsValid <: MOI.ModelLike end
+
+function test_isvalid_fallback()
+    model = ModelWithNoIsValid()
+    x = MOI.VariableIndex(1)
+    @test !MOI.is_valid(model, x)
+    return
 end
+
+end  # module
 
 TestErrors.runtests()

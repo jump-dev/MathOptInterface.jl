@@ -340,6 +340,14 @@ function test_operate_3b_scalarnonlinearfunction_specialcase()
     return
 end
 
+function test_operate_3c()
+    x = MOI.VariableIndex(1)
+    f = 1.0 * x + 2.0
+    g = MOI.Utilities.operate(*, Float64, f, x)
+    @test g ≈ 1.0 * x * x + 2.0 * x
+    return
+end
+
 function test_operate_4a()
     T = Float64
     for (f, g) in (
@@ -387,6 +395,7 @@ function test_operate_5a()
         args = (_test_function(f), _test_function(g))
         @test MOI.Utilities.operate!(vcat, T, args...) ≈ _test_function(h)
     end
+    @test MOI.Utilities.operate(vcat, T) == T[]
     return
 end
 

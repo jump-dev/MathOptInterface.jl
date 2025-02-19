@@ -341,11 +341,8 @@ function MOI.add_variable(m::CachingOptimizer)
                 vindex_optimizer =
                     MOI.add_variable(m.optimizer)::MOI.VariableIndex
             catch err
-                if err isa MOI.NotAllowedError
-                    reset_optimizer(m)
-                else
-                    rethrow(err)
-                end
+                _rethrow_if_not_NotAllowedError(err)
+                reset_optimizer(m)
             end
         else
             vindex_optimizer = MOI.add_variable(m.optimizer)::MOI.VariableIndex
@@ -366,11 +363,8 @@ function MOI.add_variables(m::CachingOptimizer, n)
                 vindices_optimizer =
                     MOI.add_variables(m.optimizer, n)::Vector{MOI.VariableIndex}
             catch err
-                if err isa MOI.NotAllowedError
-                    reset_optimizer(m)
-                else
-                    rethrow(err)
-                end
+                _rethrow_if_not_NotAllowedError(err)
+                reset_optimizer(m)
             end
         else
             vindices_optimizer =
@@ -413,11 +407,8 @@ function MOI.add_constrained_variable(
                         MOI.ConstraintIndex{MOI.VariableIndex,S},
                     }
             catch err
-                if err isa MOI.NotAllowedError
-                    reset_optimizer(m)
-                else
-                    rethrow(err)
-                end
+                _rethrow_if_not_NotAllowedError(err)
+                reset_optimizer(m)
             end
         else
             vindex_optimizer, cindex_optimizer = MOI.add_constrained_variable(
@@ -480,11 +471,8 @@ function MOI.add_constrained_variables(
                         MOI.ConstraintIndex{MOI.VectorOfVariables,S},
                     }
             catch err
-                if err isa MOI.NotAllowedError
-                    reset_optimizer(m)
-                else
-                    rethrow(err)
-                end
+                _rethrow_if_not_NotAllowedError(err)
+                reset_optimizer(m)
             end
         else
             vindices_optimizer, cindex_optimizer =
@@ -534,14 +522,11 @@ function MOI.add_constraint(
                     set,
                 )::MOI.ConstraintIndex{F,S}
             catch err
-                if err isa MOI.NotAllowedError
-                    # It could be MOI.AddConstraintNotAllowed{F', S'} with F' != F
-                    # or S' != S if, for example, the `F`-in-`S` constraint is bridged
-                    # to other constraints in `m.optimizer`
-                    reset_optimizer(m)
-                else
-                    rethrow(err)
-                end
+                _rethrow_if_not_NotAllowedError(err)
+                # It could be MOI.AddConstraintNotAllowed{F', S'} with F' != F
+                # or S' != S if, for example, the `F`-in-`S` constraint is bridged
+                # to other constraints in `m.optimizer`
+                reset_optimizer(m)
             end
         else
             cindex_optimizer = MOI.add_constraint(
@@ -571,11 +556,8 @@ function MOI.modify(
             try
                 MOI.modify(m.optimizer, cindex_optimizer, change_optimizer)
             catch err
-                if err isa MOI.NotAllowedError
-                    reset_optimizer(m)
-                else
-                    rethrow(err)
-                end
+                _rethrow_if_not_NotAllowedError(err)
+                reset_optimizer(m)
             end
         else
             MOI.modify(m.optimizer, cindex_optimizer, change_optimizer)
@@ -607,11 +589,8 @@ function _replace_constraint_function_or_set(
                     replacement_optimizer,
                 )
             catch err
-                if err isa MOI.NotAllowedError
-                    reset_optimizer(m)
-                else
-                    rethrow(err)
-                end
+                _rethrow_if_not_NotAllowedError(err)
+                reset_optimizer(m)
             end
         else
             MOI.set(
@@ -671,11 +650,8 @@ function MOI.modify(
             try
                 MOI.modify(m.optimizer, obj, change_optimizer)
             catch err
-                if err isa MOI.NotAllowedError
-                    reset_optimizer(m)
-                else
-                    rethrow(err)
-                end
+                _rethrow_if_not_NotAllowedError(err)
+                reset_optimizer(m)
             end
         else
             MOI.modify(m.optimizer, obj, change_optimizer)
@@ -700,11 +676,8 @@ function MOI.delete(m::CachingOptimizer, index::MOI.Index)
             try
                 MOI.delete(m.optimizer, index_optimizer)
             catch err
-                if err isa MOI.NotAllowedError
-                    reset_optimizer(m)
-                else
-                    rethrow(err)
-                end
+                _rethrow_if_not_NotAllowedError(err)
+                reset_optimizer(m)
             end
         else
             MOI.delete(m.optimizer, index_optimizer)
@@ -734,11 +707,8 @@ function MOI.delete(m::CachingOptimizer, indices::Vector{<:MOI.Index})
             try
                 MOI.delete(m.optimizer, indices_optimizer)
             catch err
-                if err isa MOI.NotAllowedError
-                    reset_optimizer(m)
-                else
-                    rethrow(err)
-                end
+                _rethrow_if_not_NotAllowedError(err)
+                reset_optimizer(m)
             end
         else
             MOI.delete(m.optimizer, indices_optimizer)
@@ -771,11 +741,8 @@ function MOI.set(m::CachingOptimizer, attr::MOI.AbstractModelAttribute, value)
             try
                 MOI.set(m.optimizer, attr, optimizer_value)
             catch err
-                if err isa MOI.NotAllowedError
-                    reset_optimizer(m)
-                else
-                    rethrow(err)
-                end
+                _rethrow_if_not_NotAllowedError(err)
+                reset_optimizer(m)
             end
         else
             MOI.set(m.optimizer, attr, optimizer_value)
@@ -798,11 +765,8 @@ function MOI.set(
             try
                 MOI.set(m.optimizer, attr, optimizer_index, optimizer_value)
             catch err
-                if err isa MOI.NotAllowedError
-                    reset_optimizer(m)
-                else
-                    rethrow(err)
-                end
+                _rethrow_if_not_NotAllowedError(err)
+                reset_optimizer(m)
             end
         else
             MOI.set(m.optimizer, attr, optimizer_index, optimizer_value)
@@ -831,13 +795,15 @@ function MOI.supports(
            (m.state == NO_OPTIMIZER || MOI.supports(m.optimizer, attr)::Bool)
 end
 
+_rethrow_if_not_NotAllowedError(err) = rethrow(err)
+
+_rethrow_if_not_NotAllowedError(::MOI.NotAllowedError) = nothing
+
 function _get_model_attribute(model::CachingOptimizer, attr::MOI.ObjectiveValue)
     try
         return MOI.get(model.optimizer, attr)
     catch err
-        if !(err isa MOI.GetAttributeNotAllowed)
-            rethrow(err)
-        end
+        _rethrow_if_not_NotAllowedError(err)
         return get_fallback(model, attr)
     end
 end
@@ -849,9 +815,7 @@ function _get_model_attribute(
     try
         return MOI.get(model.optimizer, attr)
     catch err
-        if !(err isa MOI.GetAttributeNotAllowed)
-            rethrow(err)
-        end
+        _rethrow_if_not_NotAllowedError(err)
         MOI.check_result_index_bounds(model, attr)
         # We don't know what coefficient type to use, so just use whatever the
         # objective value type is. This is slightly inefficient, but it
@@ -996,10 +960,7 @@ function _get_fallback(
             model.model_to_optimizer_map[index],
         )
     catch err
-        # Thrown if .optimizer doesn't support attr
-        if !(err isa MOI.GetAttributeNotAllowed)
-            rethrow(err)
-        end
+        _rethrow_if_not_NotAllowedError(err)
         return get_fallback(model, attr, index)
     end
 end
@@ -1016,10 +977,7 @@ function _get_fallback(
             [model.model_to_optimizer_map[i] for i in indices],
         )
     catch err
-        # Thrown if .optimizer doesn't support attr
-        if !(err isa MOI.GetAttributeNotAllowed)
-            rethrow(err)
-        end
+        _rethrow_if_not_NotAllowedError(err)
         return [get_fallback(model, attr, i) for i in indices]
     end
 end

@@ -189,6 +189,19 @@ function test_generic_names()
     return
 end
 
+function test_unique_names()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(model, 3)
+    MOI.set.(model, MOI.VariableName(), x, "x")
+    c = MOI.add_constraint.(model, 1.0 .* x, MOI.EqualTo(1.0))
+    MOI.set.(model, MOI.ConstraintName(), c, "c")
+    MOI.set(model, MOI.ConstraintName(), c[2], "c_1")
+    MOI.FileFormats.create_unique_names(model)
+    @test MOI.get.(model, MOI.VariableName(), x) == ["x", "x_1", "x_2"]
+    @test MOI.get.(model, MOI.ConstraintName(), c) == ["c", "c_1", "c_2"]
+    return
+end
+
 end
 
 TestFileFormats.runtests()

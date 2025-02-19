@@ -43,6 +43,16 @@ function test_baseline()
     suite = MOI.Benchmarks.suite() do
         return MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     end
+    @test_throws(
+        ErrorException("You create a baseline with `create_baseline` first."),
+        MOI.Benchmarks.compare_against_baseline(
+            suite,
+            "baseline";
+            directory = @__DIR__,
+            samples = 1,
+            verbose = true,
+        ),
+    )
     MOI.Benchmarks.create_baseline(
         suite,
         "baseline";

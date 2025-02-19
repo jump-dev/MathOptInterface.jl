@@ -213,9 +213,6 @@ end
 
 _typed(s::SymbolFS) = s.typed ? Expr(:curly, esc(s.s), esc(:T)) : esc(s.s)
 
-# Base.lowercase is moved to Unicode.lowercase in Julia v0.7
-import Unicode
-
 function _field(s::SymbolFS)
     return Symbol(replace(Unicode.lowercase(string(s.s)), "." => "_"))
 end

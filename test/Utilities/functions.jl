@@ -2238,6 +2238,40 @@ function test_filter_variables_variable_index()
     return
 end
 
+function test_filter_variables_vector_of_variables()
+    f = MOI.VectorOfVariables(MOI.VariableIndex.(1:2))
+    s = MOI.Zeros(2)
+    g, new_s = MOI.Utilities.filter_variables(x -> x.value != 1, f, s)
+    @test g == MOI.VectorOfVariables([MOI.VariableIndex(2)])
+    @test new_s == MOI.Zeros(1)
+    return
+end
+
+function test_mult_bool()
+    f = 1.0 * MOI.VariableIndex(1) + 2.0
+    @test *(f, false) ≈ zero(MOI.ScalarAffineFunction{Float64})
+    return
+end
+
+function test_is_complex()
+    @test !MOI.Utilities.is_complex(MOI.ScalarAffineFunction{Float64})
+    @test !MOI.Utilities.is_complex(MOI.ScalarQuadraticFunction{Float64})
+    @test !MOI.Utilities.is_complex(MOI.VectorAffineFunction{Float64})
+    @test !MOI.Utilities.is_complex(MOI.VectorQuadraticFunction{Float64})
+    @test MOI.Utilities.is_complex(MOI.ScalarAffineFunction{ComplexF64})
+    @test MOI.Utilities.is_complex(MOI.ScalarQuadraticFunction{ComplexF64})
+    @test MOI.Utilities.is_complex(MOI.VectorAffineFunction{ComplexF64})
+    @test MOI.Utilities.is_complex(MOI.VectorQuadraticFunction{ComplexF64})
+    return
+end
+
+function test_ndims()
+    x = MOI.VariableIndex(1)
+    @test ndims(1.0 * x) == 0
+    @test ndims(MOI.ScalarAffineFunction{Float64}) == 0
+    return
+end
+
 end  # module
 
 TestUtilitiesFunctions.runtests()

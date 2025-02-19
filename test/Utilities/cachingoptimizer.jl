@@ -1187,7 +1187,7 @@ function test_modify_constraint()
     return
 end
 
-function test_modify_constraint()
+function test_modify_objective()
     for mode in (MOI.Utilities.AUTOMATIC, MOI.Utilities.MANUAL)
         cache = MOI.Utilities.Model{Float64}()
         optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
@@ -1298,6 +1298,95 @@ function test_get_AttributeFromModelCache()
     @test MOI.get(model, attr) == "m"
     @test MOI.get(model, cache_attr) == "m"
     @test MOI.get(model, MOI.Utilities.AttributeFromOptimizer(attr)) == ""
+    return
+end
+
+function test_copy_to_attached()
+    cache = MOI.Utilities.Model{Float64}()
+    optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    model = MOI.Utilities.CachingOptimizer(cache, optimizer)
+    x = MOI.add_variable(model)
+    MOI.Utilities.attach_optimizer(model)
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(src)
+    index_map = MOI.copy_to(model, src)
+    @test model.state == MOI.Utilities.EMPTY_OPTIMIZER
+    @test MOI.get(model.model_cache, MOI.NumberOfVariables()) == 1
+    return
+end
+
+function test_add_variable_not_allowed()
+    cache = MOI.Utilities.Model{Float64}()
+    optimizer = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.Model{Float64}();
+        add_var_allowed = false,
+    )
+    model = MOI.Utilities.CachingOptimizer(cache, optimizer)
+    MOI.Utilities.attach_optimizer(model)
+    @test model.state == MOI.Utilities.ATTACHED_OPTIMIZER
+    x = MOI.add_variable(model)
+    @test model.state == MOI.Utilities.EMPTY_OPTIMIZER
+    @test MOI.get(model.model_cache, MOI.NumberOfVariables()) == 1
+    return
+end
+
+function test_add_variables_not_allowed()
+    cache = MOI.Utilities.Model{Float64}()
+    optimizer = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.Model{Float64}();
+        add_var_allowed = false,
+    )
+    model = MOI.Utilities.CachingOptimizer(cache, optimizer)
+    MOI.Utilities.attach_optimizer(model)
+    @test model.state == MOI.Utilities.ATTACHED_OPTIMIZER
+    x = MOI.add_variables(model, 2)
+    @test model.state == MOI.Utilities.EMPTY_OPTIMIZER
+    @test MOI.get(model.model_cache, MOI.NumberOfVariables()) == 2
+    return
+end
+
+function test_add_constrained_variable_not_allowed()
+    cache = MOI.Utilities.Model{Float64}()
+    optimizer = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.Model{Float64}();
+        add_var_allowed = false,
+    )
+    model = MOI.Utilities.CachingOptimizer(cache, optimizer)
+    MOI.Utilities.attach_optimizer(model)
+    @test model.state == MOI.Utilities.ATTACHED_OPTIMIZER
+    x, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
+    @test model.state == MOI.Utilities.EMPTY_OPTIMIZER
+    @test MOI.get(model.model_cache, MOI.NumberOfVariables()) == 1
+    return
+end
+
+function test_add_constrained_variables_not_allowed()
+    cache = MOI.Utilities.Model{Float64}()
+    optimizer = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.Model{Float64}();
+        add_var_allowed = false,
+    )
+    model = MOI.Utilities.CachingOptimizer(cache, optimizer)
+    MOI.Utilities.attach_optimizer(model)
+    @test model.state == MOI.Utilities.ATTACHED_OPTIMIZER
+    x, _ = MOI.add_constrained_variables(model, MOI.Zeros(2))
+    @test model.state == MOI.Utilities.EMPTY_OPTIMIZER
+    @test MOI.get(model.model_cache, MOI.NumberOfVariables()) == 2
+    return
+end
+
+function test_delete_not_allowed()
+    cache = MOI.Utilities.Model{Float64}()
+    optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    optimizer.delete_allowed = false
+    model = MOI.Utilities.CachingOptimizer(cache, optimizer)
+    MOI.Utilities.attach_optimizer(model)
+    @test model.state == MOI.Utilities.ATTACHED_OPTIMIZER
+    x, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
+    @test model.state == MOI.Utilities.ATTACHED_OPTIMIZER
+    MOI.delete(model, [x])
+    @test model.state == MOI.Utilities.EMPTY_OPTIMIZER
+    @test MOI.get(model.model_cache, MOI.NumberOfVariables()) == 0
     return
 end
 

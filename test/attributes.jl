@@ -11,6 +11,16 @@ import MathOptInterface as MOI
 
 include("dummy.jl")
 
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$name", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+end
+
 function test_attributes_is_set_by_optimize()
     @test MOI.is_set_by_optimize(MOI.TerminationStatus())
     @test !MOI.is_set_by_optimize(MOI.ConstraintSet())
@@ -333,16 +343,66 @@ function test_empty_vector_attribute()
     return
 end
 
-function runtests()
-    for name in names(@__MODULE__; all = true)
-        if startswith("$name", "test_")
-            @testset "$(name)" begin
-                getfield(@__MODULE__, name)()
-            end
-        end
-    end
+function test_broadcastable_submittable()
+    submit = MOI.LazyConstraint(1)
+    b = Base.broadcastable(submit)
+    @test b isa Base.RefValue
+    @test b[] == submit
+    return
 end
 
+function test_submit_not_allowed()
+    submit = MOI.LazyConstraint(1)
+    @test MOI.SubmitNotAllowed(submit) == MOI.SubmitNotAllowed(submit, "")
+    err = MOI.SubmitNotAllowed(submit, "msg")
+    contents = sprint(showerror, err)
+    @test occursin("Submitting $submit cannot be performed: msg", contents)
+    return
 end
+
+struct ModelWithSupportedSubmittable <: MOI.ModelLike end
+
+MOI.supports(::ModelWithSupportedSubmittable, ::MOI.LazyConstraint) = true
+
+function test_submit_argument_error()
+    model = ModelWithSupportedSubmittable()
+    submit = MOI.LazyConstraint(1)
+    @test MOI.supports(model, submit)
+    @test_throws ArgumentError MOI.submit(model, submit, false)
+    return
+end
+
+function test_showerror_OptimizeInProgress()
+    err = MOI.OptimizeInProgress(MOI.VariablePrimal())
+    @test sprint(showerror, err) ==
+          "$(typeof(err)): Cannot get result as the `MOI.optimize!` has not finished."
+    return
+end
+
+function test_showerror_FunctionTypeMismatch()
+    F, G = MOI.VariableIndex, MOI.VectorOfVariables
+    contents = sprint(showerror, MOI.FunctionTypeMismatch{F,G}())
+    @test occursin("Cannot modify functions of different types", contents)
+    return
+end
+
+function test_showerror_SetTypeMismatch()
+    F, G = MOI.ZeroOne, MOI.Integer
+    contents = sprint(showerror, MOI.SetTypeMismatch{F,G}())
+    @test occursin("Cannot modify sets of different types", contents)
+    return
+end
+
+function test_NLPBlockDual_is_set_by_optimize()
+    @test MOI.is_set_by_optimize(MOI.NLPBlockDual())
+    return
+end
+
+function test_CallbackVariablePrimal_is_set_by_optimize()
+    @test MOI.is_set_by_optimize(MOI.CallbackVariablePrimal(nothing))
+    return
+end
+
+end  # module
 
 TestAttributes.runtests()

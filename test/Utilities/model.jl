@@ -562,6 +562,14 @@ function test_indicator_constraints()
     return
 end
 
+function test_set_unsupported_objective()
+    model = MOI.Utilities.Model{Float64}()
+    f = FunctionNotSupportedBySolvers(MOI.VariableIndex(1))
+    attr = MOI.ObjectiveFunction{typeof(f)}()
+    @test_throws(MOI.UnsupportedAttribute(attr), MOI.set(model, attr, f))
+    return
+end
+
 end  # module
 
 TestModel.runtests()

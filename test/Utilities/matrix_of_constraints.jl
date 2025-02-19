@@ -689,6 +689,31 @@ function test_modify_set_constants()
     return
 end
 
+function test_unsupported_constraint()
+    model = _new_ScalarSets()
+    x = MOI.VariableIndex(1)
+    @test_throws(
+        MOI.UnsupportedConstraint{MOI.VariableIndex,MOI.ZeroOne}(),
+        MOI.add_constraint(model.constraints, x, MOI.ZeroOne()),
+    )
+    src = MOI.Utilities.Model{Float64}()
+    index_map = MOI.Utilities.IndexMap()
+    @test_throws(
+        MOI.UnsupportedConstraint{MOI.VariableIndex,MOI.ZeroOne}(),
+        MOI.Utilities._allocate_constraints(
+            model.constraints,
+            src,
+            index_map,
+            MOI.VariableIndex,
+            MOI.ZeroOne,
+        ),
+    )
+    MOI.Utilities.final_touch(model, index_map)
+    @test_throws AssertionError MOI.Utilities.final_touch(model, index_map)
+    MOI.Utilities.final_touch(model, nothing)
+    return
+end
+
 end
 
 TestMatrixOfConstraints.runtests()
