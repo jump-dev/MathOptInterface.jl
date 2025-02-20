@@ -336,6 +336,7 @@ for s in [
     :LessThan,
     :EqualTo,
     :Interval,
+    :Integer,
     :ZeroOne,
     :Semicontinuous,
     :Semiinteger,
