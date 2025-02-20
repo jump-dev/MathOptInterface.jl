@@ -441,6 +441,10 @@ function test_parse_unrecognized_expression()
         ErrorException("Unrecognized expression []"),
         MOI.Utilities.loadfromstring!(model, "[]"),
     )
+    @test_throws(
+        ErrorException("Unrecognized expression foo(x)"),
+        MOI.Utilities.loadfromstring!(model, "variables: x\nfoo(x)"),
+    )
     return
 end
 

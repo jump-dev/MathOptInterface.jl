@@ -50,23 +50,17 @@ end
 
 function test_scalar_basic()
     sets = _ScalarSets{Float64}()
-    ci = MOI.ConstraintIndex{
-        MOI.ScalarAffineFunction{Float64},
-        MOI.EqualTo{Float64},
-    }(
-        12345,
-    )
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
+    ci = MOI.ConstraintIndex{F,S}(12345)
     @test !MOI.is_valid(sets, ci)
     i = MOI.Utilities.set_index(sets, MOI.EqualTo{Float64})
     ci_value = MOI.Utilities.add_set(sets, i)
-    ci = MOI.ConstraintIndex{
-        MOI.ScalarAffineFunction{Float64},
-        MOI.EqualTo{Float64},
-    }(
-        ci_value,
-    )
+    ci = MOI.ConstraintIndex{F,S}(ci_value)
     @test MOI.is_valid(sets, ci)
     @test MOI.Utilities.rows(sets, ci) == ci.value
+    ci = MOI.ConstraintIndex{F,MOI.ZeroOne}(1)
+    @test !MOI.is_valid(sets, ci)
+    return
 end
 
 function test_scalar_dimension()

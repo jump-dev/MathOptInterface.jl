@@ -751,6 +751,17 @@ function test_print_model_to_stdout()
     return
 end
 
+function test_print_constraint_name_unsupported()
+    model = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.Model{Float64}();
+        supports_names = false,
+    )
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, 1.0 * x, MOI.LessThan(1.0))
+    @test occursin("0.0 + 1.0 v[$(x.value)] <= 1.0", sprint(print, model))
+    return
+end
+
 end
 
 TestPrint.runtests()
