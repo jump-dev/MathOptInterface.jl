@@ -901,16 +901,11 @@ function test_solve_conflict_bound_bound(
 ) where {T}
     @requires _supports(config, MOI.compute_conflict!)
     @requires _supports(config, MOI.optimize!)
-    try
-        MOI.get(model, MOI.ConflictStatus())
-    catch
-        return  # If this fails, skip the test.
-    end
     x = MOI.add_variable(model)
     c1 = MOI.add_constraint(model, x, MOI.GreaterThan(T(2)))
     c2 = MOI.add_constraint(model, x, MOI.LessThan(T(1)))
-    @test MOI.get(model, MOI.ConflictStatus()) ==
-          MOI.COMPUTE_CONFLICT_NOT_CALLED
+    status = MOI.get(model, MOI.ConflictStatus())
+    @test status == MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
@@ -957,11 +952,6 @@ function test_solve_conflict_two_affine(
 ) where {T}
     @requires _supports(config, MOI.compute_conflict!)
     @requires _supports(config, MOI.optimize!)
-    try
-        MOI.get(model, MOI.ConflictStatus())
-    catch
-        return  # If this fails, skip the test.
-    end
     x = MOI.add_variable(model)
     c1 = MOI.add_constraint(
         model,
@@ -973,8 +963,8 @@ function test_solve_conflict_two_affine(
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T(1), [x]), T(0)),
         MOI.LessThan(T(1)),
     )
-    @test MOI.get(model, MOI.ConflictStatus()) ==
-          MOI.COMPUTE_CONFLICT_NOT_CALLED
+    status = MOI.get(model, MOI.ConflictStatus())
+    @test status == MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
@@ -1021,15 +1011,10 @@ function test_solve_conflict_invalid_interval(
 ) where {T}
     @requires _supports(config, MOI.compute_conflict!)
     @requires _supports(config, MOI.optimize!)
-    try
-        MOI.get(model, MOI.ConflictStatus())
-    catch
-        return  # If this fails, skip the test.
-    end
     x = MOI.add_variable(model)
     c1 = MOI.add_constraint(model, x, MOI.Interval(T(1), T(0)))
-    @test MOI.get(model, MOI.ConflictStatus()) ==
-          MOI.COMPUTE_CONFLICT_NOT_CALLED
+    status = MOI.get(model, MOI.ConflictStatus())
+    @test status == MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
@@ -1073,11 +1058,6 @@ function test_solve_conflict_affine_affine(
 ) where {T}
     @requires _supports(config, MOI.compute_conflict!)
     @requires _supports(config, MOI.optimize!)
-    try
-        MOI.get(model, MOI.ConflictStatus())
-    catch
-        return  # If this fails, skip the test.
-    end
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     b1 = MOI.add_constraint(model, x, MOI.GreaterThan(T(0)))
@@ -1087,8 +1067,8 @@ function test_solve_conflict_affine_affine(
     cf2 =
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T[1, -1], [x, y]), T(0))
     c2 = MOI.add_constraint(model, cf2, MOI.GreaterThan(T(1)))
-    @test MOI.get(model, MOI.ConflictStatus()) ==
-          MOI.COMPUTE_CONFLICT_NOT_CALLED
+    status = MOI.get(model, MOI.ConflictStatus())
+    @test status == MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
@@ -1140,11 +1120,6 @@ function test_solve_conflict_EqualTo(
 ) where {T}
     @requires _supports(config, MOI.compute_conflict!)
     @requires _supports(config, MOI.optimize!)
-    try
-        MOI.get(model, MOI.ConflictStatus())
-    catch
-        return  # If this fails, skip the test.
-    end
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     b1 = MOI.add_constraint(model, x, MOI.GreaterThan(T(0)))
@@ -1154,8 +1129,8 @@ function test_solve_conflict_EqualTo(
     cf2 =
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T[1, -1], [x, y]), T(0))
     c2 = MOI.add_constraint(model, cf2, MOI.GreaterThan(T(1)))
-    @test MOI.get(model, MOI.ConflictStatus()) ==
-          MOI.COMPUTE_CONFLICT_NOT_CALLED
+    status = MOI.get(model, MOI.ConflictStatus())
+    @test status == MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
@@ -1207,11 +1182,6 @@ function test_solve_conflict_NOT_IN_CONFLICT(
 ) where {T}
     @requires _supports(config, MOI.compute_conflict!)
     @requires _supports(config, MOI.optimize!)
-    try
-        MOI.get(model, MOI.ConflictStatus())
-    catch
-        return  # If this fails, skip the test.
-    end
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
     z = MOI.add_variable(model)
@@ -1226,8 +1196,8 @@ function test_solve_conflict_NOT_IN_CONFLICT(
         T(0),
     )
     c2 = MOI.add_constraint(model, cf2, MOI.GreaterThan(T(1)))
-    @test MOI.get(model, MOI.ConflictStatus()) ==
-          MOI.COMPUTE_CONFLICT_NOT_CALLED
+    status = MOI.get(model, MOI.ConflictStatus())
+    @test status == MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
@@ -1284,17 +1254,12 @@ function test_solve_conflict_feasible(
 ) where {T}
     @requires _supports(config, MOI.compute_conflict!)
     @requires _supports(config, MOI.optimize!)
-    try
-        MOI.get(model, MOI.ConflictStatus())
-    catch
-        return  # If this fails, skip the test.
-    end
     x = MOI.add_variable(model)
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), x)], T(0))
     _ = MOI.add_constraint(model, f, MOI.GreaterThan(T(1)))
     _ = MOI.add_constraint(model, f, MOI.LessThan(T(2)))
-    @test MOI.get(model, MOI.ConflictStatus()) ==
-          MOI.COMPUTE_CONFLICT_NOT_CALLED
+    status = MOI.get(model, MOI.ConflictStatus())
+    @test status == MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
     MOI.compute_conflict!(model)
@@ -1333,11 +1298,6 @@ function test_solve_conflict_zeroone(
 ) where {T}
     @requires _supports(config, MOI.compute_conflict!)
     @requires _supports(config, MOI.optimize!)
-    try
-        MOI.get(model, MOI.ConflictStatus())
-    catch
-        return  # If this fails, skip the test.
-    end
     x, c1 = MOI.add_constrained_variable(model, MOI.ZeroOne())
     c2 = MOI.add_constraint(
         model,
@@ -1394,11 +1354,6 @@ function test_solve_conflict_zeroone_2(
     @requires (T(1) / T(2)) isa T
     @requires _supports(config, MOI.compute_conflict!)
     @requires _supports(config, MOI.optimize!)
-    try
-        MOI.get(model, MOI.ConflictStatus())
-    catch
-        return  # If this fails, skip the test.
-    end
     x, c1 = MOI.add_constrained_variable(model, MOI.ZeroOne())
     c2 = MOI.add_constraint(
         model,
