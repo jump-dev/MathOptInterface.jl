@@ -437,9 +437,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_EqualTo_upper(
     )
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
-    if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
-        return
-    end
+    @requires MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
     clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
     c_dual = MOI.get(model, MOI.ConstraintDual(), c)
     @test clb_dual[1] > config.atol
@@ -491,9 +489,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_EqualTo_lower(
     )
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
-    if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
-        return
-    end
+    @requires MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
     clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
     c_dual = MOI.get(model, MOI.ConstraintDual(), c)
     @test clb_dual[1] > config.atol
@@ -544,9 +540,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_LessThan(
     )
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
-    if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
-        return
-    end
+    @requires MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
     clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
     c_dual = MOI.get(model, MOI.ConstraintDual(), c)
     @test clb_dual[1] > config.atol
@@ -598,9 +592,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_GreaterThan(
     )
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
-    if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
-        return
-    end
+    @requires MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
     clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
     c_dual = MOI.get(model, MOI.ConstraintDual(), c)
     @test clb_dual[1] > config.atol
@@ -652,9 +644,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_Interval_upper(
     )
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
-    if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
-        return
-    end
+    @requires MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
     clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
     c_dual = MOI.get(model, MOI.ConstraintDual(), c)
     @test clb_dual[1] > config.atol
@@ -706,9 +696,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_Interval_lower(
     )
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
-    if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
-        return
-    end
+    @requires MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
     clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
     c_dual = MOI.get(model, MOI.ConstraintDual(), c)
     @test clb_dual[1] > config.atol
@@ -760,9 +748,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_VariableIndex_LessThan(
     )
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
-    if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
-        return
-    end
+    @requires MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
     clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
     c_dual = MOI.get(model, MOI.ConstraintDual(), c)
     @test clb_dual[1] < -config.atol
@@ -818,9 +804,7 @@ function test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_VariableIndex_LessThan_
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x[1])
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
-    if MOI.get(model, MOI.DualStatus()) != MOI.INFEASIBILITY_CERTIFICATE
-        return
-    end
+    @requires MOI.get(model, MOI.DualStatus()) == MOI.INFEASIBILITY_CERTIFICATE
     clb_dual = MOI.get.(model, MOI.ConstraintDual(), clb)
     c_dual = MOI.get(model, MOI.ConstraintDual(), c)
     @test clb_dual[1] < -config.atol
