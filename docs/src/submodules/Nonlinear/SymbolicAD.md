@@ -86,7 +86,7 @@ To revert back to the default sparse reverse mode algorithm, set the
 [`AutomaticDifferentiationBackend`](@ref) attribute to
 [`Nonlinear.SparseReverseMode`](@ref).
 
-## `simplilfy`
+## `simplify`
 
 Use [`Nonlinear.SymbolicAD.simplify`](@ref) to simplify nonlinear expressions.
 The simplification algorithm performs simple rewrites such as lifting nested
