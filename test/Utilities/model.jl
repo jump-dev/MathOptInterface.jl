@@ -595,15 +595,16 @@ function test_constraints_invalid_index()
     return
 end
 
+MOI.Utilities.@struct_of_constraints_by_set_types(
+    Set4802,
+    Union{MOI.LessThan{T},MOI.GreaterThan{T}},
+    MOI.EqualTo{T},
+    MOI.ZeroOne,
+    Int,
+)
+
 function test_struct_of_constraints_by_set_types()
-    MOI.Utilities.@struct_of_constraints_by_set_types(
-        MySet1,
-        Union{MOI.LessThan{T},MOI.GreaterThan{T}},
-        MOI.EqualTo{T},
-        MOI.ZeroOne,
-        Int,
-    )
-    set = MySet1{Float64,Vector{Float64},Vector{Float64},Vector{Bool},Int}()
+    set = Set4802{Float64,Vector{Float64},Vector{Float64},Vector{Bool},Int}()
     @test set.num_variables == 0
     @test set.int === nothing
     set.int = 1
