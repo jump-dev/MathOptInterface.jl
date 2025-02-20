@@ -488,21 +488,27 @@ function test_ListOfConstraintsWithAttributeSet()
 end
 
 function test_delete_ci_attribute()
-    model = MOI.Utilities.UniversalFallback(
-        ModelForUniversalFallback{Float64}(),
-    )
+    model =
+        MOI.Utilities.UniversalFallback(ModelForUniversalFallback{Float64}())
     x = MOI.add_variable(model)
-    c = MOI.add_constraint(model, MOI.VectorOfVariables([x]), MOI.Nonnegatives(1))
+    c = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([x]),
+        MOI.Nonnegatives(1),
+    )
     MOI.set(model, MOI.ConstraintPrimalStart(), c, [1.0])
     @test model.conattr[MOI.ConstraintPrimalStart()][c] == [1.0]
     MOI.delete(model, x)
     @test !haskey(model.conattr[MOI.ConstraintPrimalStart()], c)
     # Vector
-    model = MOI.Utilities.UniversalFallback(
-        ModelForUniversalFallback{Float64}(),
-    )
+    model =
+        MOI.Utilities.UniversalFallback(ModelForUniversalFallback{Float64}())
     x = MOI.add_variable(model)
-    c = MOI.add_constraint(model, MOI.VectorOfVariables([x]), MOI.Nonnegatives(1))
+    c = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([x]),
+        MOI.Nonnegatives(1),
+    )
     MOI.set(model, MOI.ConstraintPrimalStart(), c, [1.0])
     @test model.conattr[MOI.ConstraintPrimalStart()][c] == [1.0]
     MOI.delete(model, [x])
