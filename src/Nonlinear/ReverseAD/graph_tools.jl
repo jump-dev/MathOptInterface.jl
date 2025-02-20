@@ -228,12 +228,7 @@ function _compute_hessian_sparsity(
     end
     for k in 2:length(nodes)
         nod = nodes[k]
-        if nod.type == Nonlinear.NODE_MOI_VARIABLE
-            error(
-                "Internal error: Invalid to compute sparsity if Nonlinear.NODE_MOI_VARIABLE " *
-                "nodes are present.",
-            )
-        end
+        @assert nod.type != Nonlinear.NODE_MOI_VARIABLE
         if nonlinear_wrt_output[k]
             continue # already seen this node one way or another
         elseif input_linearity[k] == CONSTANT
@@ -472,21 +467,4 @@ function _order_subexpressions(
         subexpression_dependency_graph,
     )
     return full_sort, individual_sorts
-end
-
-"""
-    _order_subexpressions(
-        main_expression::Vector{Nonlinear.Node},
-        subexpressions::Vector{Vector{Nonlinear.Node}},
-    )
-
-Return a `Vector{Int}` containing the topologically ordered list of
-subexpression-indices that need to be evaluated to compute `main_expression`.
-"""
-function _order_subexpressions(
-    main_expression::Vector{Nonlinear.Node},
-    subexpressions::Vector{Vector{Nonlinear.Node}},
-)
-    s = _list_subexpressions(main_expression)
-    return _topological_sort(s, subexpressions)
 end

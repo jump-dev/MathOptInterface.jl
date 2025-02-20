@@ -1233,6 +1233,77 @@ function test_unsafe_vector_view()
     return
 end
 
+function test_classify_linearity_ifelse()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    model = MOI.Nonlinear.Model()
+    MOI.Nonlinear.set_objective(model, :(ifelse($y, $x, 1)))
+    evaluator = MOI.Nonlinear.Evaluator(
+        model,
+        MOI.Nonlinear.SparseReverseMode(),
+        [x, y],
+    )
+    MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
+    @test MOI.eval_objective(evaluator, [1.2, 1.0]) == 1.2
+    @test MOI.eval_objective(evaluator, [1.2, 0.0]) == 1.0
+    @test isempty(MOI.hessian_lagrangian_structure(evaluator))
+    return
+end
+
+function test_classify_linearity_logic()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    model = MOI.Nonlinear.Model()
+    MOI.Nonlinear.set_objective(model, :($x && $y))
+    evaluator = MOI.Nonlinear.Evaluator(
+        model,
+        MOI.Nonlinear.SparseReverseMode(),
+        [x, y],
+    )
+    MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
+    @test MOI.eval_objective(evaluator, [1.0, 1.0]) == 1.0
+    @test MOI.eval_objective(evaluator, [0.0, 1.0]) == 0.0
+    @test MOI.eval_objective(evaluator, [1.0, 0.0]) == 0.0
+    @test MOI.eval_objective(evaluator, [0.0, 0.0]) == 0.0
+    @test isempty(MOI.hessian_lagrangian_structure(evaluator))
+    return
+end
+
+function test_hessian_sparsity_with_subexpressions()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    model = MOI.Nonlinear.Model()
+    expr = MOI.Nonlinear.add_expression(model, :($x * $y))
+    expr2 = MOI.Nonlinear.add_expression(model, :($expr))
+    MOI.Nonlinear.set_objective(model, :(sin($expr2)))
+    evaluator = MOI.Nonlinear.Evaluator(
+        model,
+        MOI.Nonlinear.SparseReverseMode(),
+        [x, y],
+    )
+    MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
+    MOI.hessian_lagrangian_structure(evaluator)
+    return
+end
+
+function test_toposort_subexpressions()
+    x = MOI.VariableIndex(1)
+    model = MOI.Nonlinear.Model()
+    a = MOI.Nonlinear.add_expression(model, :($x))
+    b = MOI.Nonlinear.add_expression(model, :($x))
+    c = MOI.Nonlinear.add_expression(model, :($a + $b))
+    d = MOI.Nonlinear.add_expression(model, :($c + $b))
+    MOI.Nonlinear.add_constraint(model, :($d), MOI.LessThan(1.0))
+    MOI.Nonlinear.add_constraint(model, :($c), MOI.LessThan(1.0))
+    evaluator =
+        MOI.Nonlinear.Evaluator(model, MOI.Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
+    g = [NaN, NaN]
+    MOI.eval_constraint(evaluator, g, [2.0])
+    @test g == [6.0, 4.0]
+    return
+end
+
 end  # module
 
 TestReverseAD.runtests()
