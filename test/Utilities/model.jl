@@ -584,6 +584,38 @@ function test_variable_coefficient_VectorQuadraticFunction()
     return
 end
 
+function test_constraints_invalid_index()
+    model = MOI.Utilities.Model{Float64}()
+    F, S = FunctionNotSupportedBySolvers, MOI.ZeroOne
+    ci = MOI.ConstraintIndex{F,S}(1)
+    @test_throws(
+        MOI.InvalidIndex(ci),
+        MOI.Utilities.constraints(model.constraints, ci),
+    )
+    return
+end
+
+function test_struct_of_constraints_by_set_types()
+    MOI.Utilities.@struct_of_constraints_by_set_types(
+        MySet1,
+        Union{MOI.LessThan{T},MOI.GreaterThan{T}},
+        MOI.EqualTo{T},
+        MOI.ZeroOne,
+        Int,
+    )
+    set = MySet1{Float64,Vector{Float64},Vector{Float64},Vector{Bool},Int}()
+    @test set.num_variables == 0
+    @test set.int === nothing
+    set.int = 1
+    @test set.moi_zeroone === nothing
+    set.moi_zeroone = Bool[]
+    @test set.moi_equalto === nothing
+    set.moi_equalto = Float64[]
+    @test set.moi_lessthan === nothing
+    set.moi_lessthan = Float64[]
+    return
+end
+
 end  # module
 
 TestModel.runtests()
