@@ -253,7 +253,7 @@ function test_modify_not_allowed()
             r"$test_linear_integration^",
             r"$test_linear_integration_modification^",
             r"$test_linear_VectorAffineFunction^",
-        ]
+        ],
     )
     return
 end
