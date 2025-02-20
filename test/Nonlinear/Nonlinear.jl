@@ -374,6 +374,28 @@ function test_eval_univariate_function()
     return
 end
 
+function test_eval_univariate_missing_hessian()
+    r = Nonlinear.OperatorRegistry()
+    x = 2.0
+    @test Nonlinear.eval_univariate_function(r, :asec, x) ≈ asec(x)
+    @test Nonlinear.eval_univariate_gradient(r, :asec, x) ≈
+          1 / (abs(x) * sqrt(x^2 - 1))
+    @test_throws(
+        ErrorException("Hessian is not defined for operator asec"),
+        Nonlinear.eval_univariate_hessian(r, :asec, x),
+    )
+    return
+end
+
+function test_eval_univariate_hessian_bad_id()
+    r = Nonlinear.OperatorRegistry()
+    err = ErrorException("Invalid id for univariate operator: -1")
+    @test_throws err Nonlinear.eval_univariate_function(r, -1, 1.0)
+    @test_throws err Nonlinear.eval_univariate_gradient(r, -1, 1.0)
+    @test_throws err Nonlinear.eval_univariate_hessian(r, -1, 1.0)
+    return
+end
+
 function test_eval_univariate_gradient()
     r = Nonlinear.OperatorRegistry()
     for (op, x, y) in [
@@ -594,7 +616,29 @@ function test_eval_multivariate_gradient_mult()
     x = [1.1, 0.0, 2.2]
     g = zeros(3)
     Nonlinear.eval_multivariate_gradient(r, :*, g, x)
-    @test g == [0.0, 1.1 * 2.2, 0.0]
+    @test g ≈ [0.0, 1.1 * 2.2, 0.0]
+    x = [1.1, 3.3, 2.2]
+    Nonlinear.eval_multivariate_gradient(r, :*, g, x)
+    @test g ≈ [3.3 * 2.2, 1.1 * 2.2, 1.1 * 3.3]
+    return
+end
+
+function test_eval_multivariate_gradient_univariate_mult()
+    r = Nonlinear.OperatorRegistry()
+    x = [1.1]
+    g = zeros(1)
+    Nonlinear.eval_multivariate_gradient(r, :*, g, x)
+    @test g == [1.0]
+    return
+end
+
+function test_eval_multivariate_hessian_shortcut()
+    r = Nonlinear.OperatorRegistry()
+    x = [1.1]
+    H = LinearAlgebra.LowerTriangular(zeros(1, 1))
+    for op in (:+, :-, :ifelse)
+        @test !MOI.Nonlinear.eval_multivariate_hessian(r, op, H, x)
+    end
     return
 end
 
@@ -667,6 +711,18 @@ function test_eval_multivariate_function_registered()
         ErrorException,
         Nonlinear.eval_multivariate_hessian(r, :f, H, x),
     )
+    return
+end
+
+function test_eval_multivariate_function_registered_log()
+    r = Nonlinear.OperatorRegistry()
+    f(x...) = log(x[1] - 1)
+    Nonlinear.register_operator(r, :f, 2, f)
+    x = [1.1, 2.2]
+    @test Nonlinear.eval_multivariate_function(r, :f, x) ≈ f(x...)
+    x = [0.0, 0.0]
+    g = zeros(2)
+    @test_throws DomainError Nonlinear.eval_multivariate_gradient(r, :f, g, x)
     return
 end
 
@@ -1324,6 +1380,27 @@ function test_convert_to_expr()
         model[expr];
         moi_output_format = false,
     ) == :(sin($x))
+    return
+end
+
+function test_create_binary_switch()
+    target = Expr(
+        :if,
+        Expr(:call, :(<=), :id, 2),
+        Expr(
+            :if,
+            Expr(:call, :(==), :id, 1),
+            :a,
+            Expr(:if, Expr(:call, :(==), :id, 2), :b),
+        ),
+        Expr(
+            :if,
+            Expr(:call, :(==), :id, 3),
+            :c,
+            Expr(:if, Expr(:call, :(==), :id, 4), :d),
+        ),
+    )
+    @test MOI.Nonlinear._create_binary_switch(1:4, [:a, :b, :c, :d]) == target
     return
 end
 
