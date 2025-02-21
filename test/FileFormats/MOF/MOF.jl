@@ -1217,117 +1217,79 @@ c1: [x, y] in Reified(GreaterThan(1.0))
 end
 
 function test_VariablePrimalStart()
+    target = ("x" => nothing, "y" => 1.0, "z" => 1.23)
     model_w = MOF.Model()
-    x = MOI.add_variable(model_w)
-    MOI.set(model_w, MOI.VariableName(), x, "x")
-    y = MOI.add_variable(model_w)
-    MOI.set(model_w, MOI.VariableName(), y, "y")
-    MOI.set(model_w, MOI.VariablePrimalStart(), y, 1e+3)
-    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
-    c1 = MOI.add_constraint(model_w, f, MOI.LessThan(1.0))
-    c2 = MOI.add_constraint(model_w, f, MOI.GreaterThan(0.0))
+    for (name, value) in target
+        xi = MOI.add_variable(model_w)
+        MOI.set(model_w, MOI.VariableName(), xi, name)
+        MOI.set(model_w, MOI.VariablePrimalStart(), xi, value)
+    end
     MOI.write_to_file(model_w, TEST_MOF_FILE)
     _validate(TEST_MOF_FILE)
     model_r = MOF.Model()
     MOI.read_from_file(model_r, TEST_MOF_FILE)
-    start_x = MOI.get(
-        model_r,
-        MOI.VariablePrimalStart(),
-        MOI.get(model_r, MOI.VariableIndex, "x"),
-    )
-    start_y = MOI.get(
-        model_r,
-        MOI.VariablePrimalStart(),
-        MOI.get(model_r, MOI.VariableIndex, "y"),
-    )
-    @test isnothing(start_x)
-    @test start_y == 1e+3
+    for (name, value) in target
+        xi = MOI.get(model_r, MOI.VariableIndex, name)
+        @test MOI.get(model_r, MOI.VariablePrimalStart(), xi) === value
+    end
+    return
 end
 
 function test_constraint_start_scalar()
+    target = Dict(
+        "c1" => (nothing, nothing),
+        "c2" => (1.23, 1.0),
+        "c3" => (1.0, 1.23),
+    )
     model_w = MOF.Model()
     x = MOI.add_variable(model_w)
     MOI.set(model_w, MOI.VariableName(), x, "x")
-    y = MOI.add_variable(model_w)
-    MOI.set(model_w, MOI.VariableName(), y, "y")
-    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
-    c1 = MOI.add_constraint(model_w, f, MOI.LessThan(1.0))
-    MOI.set(model_w, MOI.ConstraintName(), c1, "c1")
-    c2 = MOI.add_constraint(model_w, f, MOI.GreaterThan(0.0))
-    MOI.set(model_w, MOI.ConstraintName(), c2, "c2")
-    MOI.set(model_w, MOI.ConstraintDualStart(), c2, 1e+3)
-    MOI.set(model_w, MOI.ConstraintPrimalStart(), c2, 1e+4)
+    for (name, (primal, dual)) in target
+        c = MOI.add_constraint(model_w, 1.0 * x, MOI.LessThan(1.0))
+        MOI.set(model_w, MOI.ConstraintName(), c, name)
+        MOI.set(model_w, MOI.ConstraintPrimalStart(), c, primal)
+        MOI.set(model_w, MOI.ConstraintDualStart(), c, dual)
+    end
     MOI.write_to_file(model_w, TEST_MOF_FILE)
     _validate(TEST_MOF_FILE)
     model_r = MOF.Model()
     MOI.read_from_file(model_r, TEST_MOF_FILE)
-    dual_start_c1 = MOI.get(
-        model_r,
-        MOI.ConstraintDualStart(),
-        MOI.get(model_r, MOI.ConstraintIndex, "c1"),
-    )
-    dual_start_c2 = MOI.get(
-        model_r,
-        MOI.ConstraintDualStart(),
-        MOI.get(model_r, MOI.ConstraintIndex, "c2"),
-    )
-    primal_start_c1 = MOI.get(
-        model_r,
-        MOI.ConstraintPrimalStart(),
-        MOI.get(model_r, MOI.ConstraintIndex, "c1"),
-    )
-    primal_start_c2 = MOI.get(
-        model_r,
-        MOI.ConstraintPrimalStart(),
-        MOI.get(model_r, MOI.ConstraintIndex, "c2"),
-    )
-    @test isnothing(dual_start_c1)
-    @test dual_start_c2 == 1e+3
-    @test isnothing(primal_start_c1)
-    @test primal_start_c2 == 1e+4
+    for (name, (primal, dual)) in target
+        ci = MOI.get(model_r, MOI.ConstraintIndex, name)
+        @test MOI.get(model_r, MOI.ConstraintPrimalStart(), ci) === primal
+        @test MOI.get(model_r, MOI.ConstraintDualStart(), ci) === dual
+    end
+    return
 end
 
-function test_constraint_start_conic()
+function test_constraint_start_vector()
+    target = Dict(
+        "c1" => (nothing, nothing),
+        "c2" => ([1.23, 4.56], [1.0, 2.0]),
+        "c3" => ([3.0, 4.0], [7.89, -1.23]),
+    )
     model_w = MOF.Model()
-    x = MOI.add_variables(model_w, 4)
-    for (index, variable) in enumerate(x)
-        MOI.set(model_w, MOI.VariableName(), variable, "var_$(index)")
+    x = MOI.add_variables(model_w, 2)
+    MOI.set.(model_w, MOI.VariableName(), x, ["x", "y"])
+    f = MOI.VectorOfVariables(x)
+    for (name, (primal, dual)) in target
+        c = MOI.add_constraint(model_w, f, MOI.Nonnegatives(2))
+        MOI.set(model_w, MOI.ConstraintName(), c, name)
+        MOI.set(model_w, MOI.ConstraintPrimalStart(), c, primal)
+        MOI.set(model_w, MOI.ConstraintDualStart(), c, dual)
     end
-    c1 = MOI.add_constraint(model_w, [i for i in x], MOI.SecondOrderCone(4))
-    MOI.set(model_w, MOI.ConstraintName(), c1, "c1")
-    MOI.set(model_w, MOI.ConstraintDualStart(), c1, [1, 0, 0, 0])
-    MOI.set(model_w, MOI.ConstraintPrimalStart(), c1, [1, 1, 1, 1])
-    c2 = MOI.add_constraint(model_w, [i for i in x], MOI.SecondOrderCone(4))
-    MOI.set(model_w, MOI.ConstraintName(), c2, "c2")
     MOI.write_to_file(model_w, TEST_MOF_FILE)
     _validate(TEST_MOF_FILE)
     model_r = MOF.Model()
     MOI.read_from_file(model_r, TEST_MOF_FILE)
-    dual_start_c1 = MOI.get(
-        model_r,
-        MOI.ConstraintDualStart(),
-        MOI.get(model_r, MOI.ConstraintIndex, "c1"),
-    )
-    dual_start_c2 = MOI.get(
-        model_r,
-        MOI.ConstraintDualStart(),
-        MOI.get(model_r, MOI.ConstraintIndex, "c2"),
-    )
-    primal_start_c1 = MOI.get(
-        model_r,
-        MOI.ConstraintPrimalStart(),
-        MOI.get(model_r, MOI.ConstraintIndex, "c1"),
-    )
-    primal_start_c2 = MOI.get(
-        model_r,
-        MOI.ConstraintPrimalStart(),
-        MOI.get(model_r, MOI.ConstraintIndex, "c2"),
-    )
-
-    @test dual_start_c1 == [1, 0, 0, 0]
-    @test isnothing(dual_start_c2)
-    @test primal_start_c1 == [1, 1, 1, 1]
-    @test isnothing(primal_start_c2)
+    _cmp(::Nothing, ::Nothing) = true
+    _cmp(x::Vector{Float64}, y::Vector{Float64}) = x == y
+    for (name, (primal, dual)) in target
+        ci = MOI.get(model_r, MOI.ConstraintIndex, name)
+        @test _cmp(MOI.get(model_r, MOI.ConstraintPrimalStart(), ci), primal)
+        @test _cmp(MOI.get(model_r, MOI.ConstraintDualStart(), ci), dual)
+    end
+    return
 end
 
 function test_parse_int_coefficient_scalaraffineterm()
