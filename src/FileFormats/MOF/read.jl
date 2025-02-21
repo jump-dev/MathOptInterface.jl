@@ -91,7 +91,7 @@ function read_variables(model::Model, object::Dict)
                 model,
                 MOI.VariablePrimalStart(),
                 index,
-                variable["primal_start"],
+                convert(Float64, variable["primal_start"]),
             )
         end
     end
@@ -114,6 +114,9 @@ function read_objective(
     return
 end
 
+_to_float64(x::Number) = convert(Float64, x)
+_to_float64(x::AbstractVector) = convert(Vector{Float64}, x)
+
 function _add_constraint(
     model::Model,
     object::Dict,
@@ -126,14 +129,19 @@ function _add_constraint(
         MOI.set(model, MOI.ConstraintName(), index, object["name"]::String)
     end
     if haskey(object, "dual_start")
-        MOI.set(model, MOI.ConstraintDualStart(), index, object["dual_start"])
+        MOI.set(
+            model,
+            MOI.ConstraintDualStart(),
+            index,
+            _to_float64(object["dual_start"]),
+        )
     end
     if haskey(object, "primal_start")
         MOI.set(
             model,
             MOI.ConstraintPrimalStart(),
             index,
-            object["primal_start"],
+            _to_float64(object["primal_start"]),
         )
     end
     return
