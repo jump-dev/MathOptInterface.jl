@@ -1304,6 +1304,8 @@ function test_solve_conflict_zeroone(
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T(1), [x]), T(0)),
         MOI.GreaterThan(T(2)),
     )
+    status = MOI.get(model, MOI.ConflictStatus())
+    @test status == MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
@@ -1360,6 +1362,8 @@ function test_solve_conflict_zeroone_2(
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T(1), [x]), T(0)),
         MOI.EqualTo(T(1) / T(2)),
     )
+    status = MOI.get(model, MOI.ConflictStatus())
+    @test status == MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == config.infeasible_status
     MOI.compute_conflict!(model)
