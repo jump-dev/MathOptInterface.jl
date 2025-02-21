@@ -11,42 +11,31 @@ function _create_binary_switch(ids, exprs)
             push!(out.args, _create_binary_switch(ids[2:end], exprs[2:end]))
         end
         return out
-    else
-        mid = length(exprs) >>> 1
-        return Expr(
-            :if,
-            Expr(:call, :(<=), :id, ids[mid]),
-            _create_binary_switch(ids[1:mid], exprs[1:mid]),
-            _create_binary_switch(ids[mid+1:end], exprs[mid+1:end]),
-        )
     end
+    mid = length(exprs) >>> 1
+    return Expr(
+        :if,
+        Expr(:call, :(<=), :id, ids[mid]),
+        _create_binary_switch(ids[1:mid], exprs[1:mid]),
+        _create_binary_switch(ids[mid+1:end], exprs[mid+1:end]),
+    )
 end
 
 # We use a let block here for `expr` to create a local variable that does not
 # persist in the scope of the module. All we care about is the _eval_univariate
 # function that is eval'd as a result.
-let exprs = map(SYMBOLIC_UNIVARIATE_EXPRESSIONS) do arg
+let
+    exprs = map(SYMBOLIC_UNIVARIATE_EXPRESSIONS) do arg
         return :(return $(arg[1])(x), $(arg[2]))
     end
     @eval @inline function _eval_univariate(id, x::T) where {T}
         $(_create_binary_switch(1:length(exprs), exprs))
-        return error("Invalid operator_id")
+        return error("Invalid id for univariate operator: $id")
     end
-end
-
-# We use a let block here for `expr` to create a local variable that does not
-# persist in the scope of the module. All we care about is the function that is
-# eval'd as a result.
-let exprs = map(SYMBOLIC_UNIVARIATE_EXPRESSIONS) do arg
-        if arg === :(nothing)  # f''(x) isn't defined
-            :(error("Invalid operator_id"))
-        else
-            :(return $(arg[3]))
-        end
-    end
+    ∇²f_exprs = map(arg -> :(return $(arg[3])), SYMBOLIC_UNIVARIATE_EXPRESSIONS)
     @eval @inline function _eval_univariate_2nd_deriv(id, x::T) where {T}
-        $(_create_binary_switch(1:length(exprs), exprs))
-        return error("Invalid operator_id")
+        $(_create_binary_switch(1:length(∇²f_exprs), ∇²f_exprs))
+        return error("Invalid id for univariate operator: $id")
     end
 end
 
@@ -339,7 +328,7 @@ function _validate_register_assumptions(
             y = f(zeros(dimension)...)
         end
     catch
-        # We hit some other error, perhaps we called a function like log(0).
+        # We hit some other error, perhaps we called a function like log(-1).
         # Ignore for now, and hope that a useful error is shown to the user
         # during the solve.
     end
@@ -363,7 +352,7 @@ function _validate_register_assumptions(
                 _FORWARD_DIFF_METHOD_ERROR_HELPER,
             )
         end
-        # We hit some other error, perhaps we called a function like log(0).
+        # We hit some other error, perhaps we called a function like log(-1).
         # Ignore for now, and hope that a useful error is shown to the user
         # during the solve.
     end
@@ -747,7 +736,12 @@ function eval_univariate_hessian(
     x::T,
 ) where {T}
     if id <= registry.univariate_user_operator_start
-        return _eval_univariate_2nd_deriv(id, x)::T
+        ret = _eval_univariate_2nd_deriv(id, x)
+        if ret === nothing
+            op = registry.univariate_operators[id]
+            error("Hessian is not defined for operator $op")
+        end
+        return ret::T
     end
     offset = id - registry.univariate_user_operator_start
     operator = registry.registered_univariate_operators[offset]
@@ -910,12 +904,14 @@ _nan_to_zero(x) = isnan(x) ? 0.0 : x
         op::Symbol,
         H::AbstractMatrix,
         x::AbstractVector{T},
-    ) where {T}
+    )::Bool where {T}
 
 Evaluate the Hessian of operator `∇²op(x)`, where `op` is a multivariate
 function in `registry`.
 
 The Hessian is stored in the lower-triangular part of the matrix `H`.
+
+Returns a `Bool` indicating whether non-zeros were stored in the matrix.
 
 !!! note
     Implementations of the Hessian operators will not fill structural zeros.
