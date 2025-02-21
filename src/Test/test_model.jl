@@ -802,17 +802,16 @@ function test_model_LowerBoundAlreadySet(
     sets = [MOI.EqualTo(lb), MOI.Interval(lb, lb)]
     set2 = MOI.GreaterThan(lb)
     for set1 in sets
-        if !MOI.supports_constraint(model, MOI.VariableIndex, typeof(set1))
-            continue
+        if MOI.supports_constraint(model, MOI.VariableIndex, typeof(set1))
+            ci = MOI.add_constraint(model, x, set1)
+            err = MOI.LowerBoundAlreadySet{typeof(set1),typeof(set2)}(x)
+            @test_throws err MOI.add_constraint(model, x, set2)
+            MOI.delete(model, ci)
+            ci = MOI.add_constraint(model, x, set2)
+            err = MOI.LowerBoundAlreadySet{typeof(set2),typeof(set1)}(x)
+            @test_throws err MOI.add_constraint(model, x, set1)
+            MOI.delete(model, ci)
         end
-        ci = MOI.add_constraint(model, x, set1)
-        err = MOI.LowerBoundAlreadySet{typeof(set1),typeof(set2)}(x)
-        @test_throws err MOI.add_constraint(model, x, set2)
-        MOI.delete(model, ci)
-        ci = MOI.add_constraint(model, x, set2)
-        err = MOI.LowerBoundAlreadySet{typeof(set2),typeof(set1)}(x)
-        @test_throws err MOI.add_constraint(model, x, set1)
-        MOI.delete(model, ci)
     end
     return
 end
@@ -836,17 +835,16 @@ function test_model_UpperBoundAlreadySet(
     sets = [MOI.EqualTo(ub), MOI.Interval(ub, ub)]
     set2 = MOI.LessThan(ub)
     for set1 in sets
-        if !MOI.supports_constraint(model, MOI.VariableIndex, typeof(set1))
-            continue
+        if MOI.supports_constraint(model, MOI.VariableIndex, typeof(set1))
+            ci = MOI.add_constraint(model, x, set1)
+            err = MOI.UpperBoundAlreadySet{typeof(set1),typeof(set2)}(x)
+            @test_throws err MOI.add_constraint(model, x, set2)
+            MOI.delete(model, ci)
+            ci = MOI.add_constraint(model, x, set2)
+            err = MOI.UpperBoundAlreadySet{typeof(set2),typeof(set1)}(x)
+            @test_throws err MOI.add_constraint(model, x, set1)
+            MOI.delete(model, ci)
         end
-        ci = MOI.add_constraint(model, x, set1)
-        err = MOI.UpperBoundAlreadySet{typeof(set1),typeof(set2)}(x)
-        @test_throws err MOI.add_constraint(model, x, set2)
-        MOI.delete(model, ci)
-        ci = MOI.add_constraint(model, x, set2)
-        err = MOI.UpperBoundAlreadySet{typeof(set2),typeof(set1)}(x)
-        @test_throws err MOI.add_constraint(model, x, set1)
-        MOI.delete(model, ci)
     end
     return
 end

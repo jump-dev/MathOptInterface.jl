@@ -241,6 +241,23 @@ function test_delete_allowed_false()
     return
 end
 
+function test_modify_not_allowed()
+    model = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    config = MOI.Test.Config(
+        exclude = Any[MOI.ScalarCoefficientChange, MOI.VectorConstantChange],
+    )
+    MOI.Test.runtests(
+        model,
+        config,
+        include = [
+            r"$test_linear_integration^",
+            r"$test_linear_integration_modification^",
+            r"$test_linear_VectorAffineFunction^",
+        ],
+    )
+    return
+end
+
 end  # module
 
 TestMockOptimizer.runtests()
