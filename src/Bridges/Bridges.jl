@@ -142,8 +142,6 @@ MOI.is_copyable(::ListOfNonstandardBridges) = false
 
 MOI.get_fallback(model::MOI.ModelLike, ::ListOfNonstandardBridges) = Type[]
 
-include("precompile.jl")
-
 function _test_structural_identical(
     a::MOI.ModelLike,
     b::MOI.ModelLike;
