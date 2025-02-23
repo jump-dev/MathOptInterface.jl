@@ -7,6 +7,33 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.37.0 (February 24, 2025)
+
+### Added
+
+ - Added constructors for [`VectorAffineFunction`](@ref) and [`VectorQuadraticFunction`](@ref)
+   that accept `AbstractVector{MOI.ScalarAffineFunction}` and
+   `AbstractVector{MOI.ScalarQuadraticFunction}` respectively (#2636)
+
+### Fixed
+
+ - Fixed a bug reading `QCMATRIX` in `FileFormats.MPS` (#2628)
+ - Fixed reading [`VariablePrimalStart`](@ref), [`ConstraintPrimalStart`](@ref),
+   and [`ConstraintDualStart`](@ref) from `FileFormats.MOF` (#2652)
+ - Fixed writing unsupported variable types in a number of file formats (#2654)
+
+### Other
+
+ - Removed the "experimental" warning from `Nonlinear` (#2625)
+ - This release contains a large number of pull requests that increase test
+   coverage (#2630), (#2631), (#2632), (#2637), (#2638), (#2639), (#2640),
+   (#2641), (#2642), (#2644), (#2645), (#2646), (#2647), (#2648), (#2649),
+   (#2650)
+ - Fixed link to the codecov bade (#2634)
+ - Removed the mention of MathProgBase from the README (#2635)
+ - Removed `precompile` statements. Packages using MOI should address
+   precompilation using `PrecompileTools.jl` in their own package (#2643)
+
 ## v1.36.0 (February 12, 2025)
 
 ### Added
