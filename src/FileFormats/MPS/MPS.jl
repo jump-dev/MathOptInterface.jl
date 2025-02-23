@@ -75,6 +75,14 @@ function MOI.supports_constraint(
 end
 
 function MOI.supports_constraint(
+    ::Model,
+    ::Type{MOI.VariableIndex},
+    ::Type{<:Union{MOI.Parameter,MOI.Semicontinuous,MOI.Semiinteger}},
+)
+    return false
+end
+
+function MOI.supports_constraint(
     ::Model{T},
     ::Type{MOI.VectorOfVariables},
     ::Type{
