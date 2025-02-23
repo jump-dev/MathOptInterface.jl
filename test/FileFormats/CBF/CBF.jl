@@ -699,6 +699,23 @@ function test_supports_quadratic_objective()
     return
 end
 
+function test_unsupported_variable_types()
+    model = CBF.Model()
+    @test_throws(
+        MOI.UnsupportedConstraint,
+        MOI.add_constrained_variable(model, MOI.Parameter(2.0)),
+    )
+    @test_throws(
+        MOI.UnsupportedConstraint,
+        MOI.add_constrained_variable(model, MOI.Semicontinuous(2.0, 3.0)),
+    )
+    @test_throws(
+        MOI.UnsupportedConstraint,
+        MOI.add_constrained_variable(model, MOI.Semiinteger(2.0, 3.0)),
+    )
+    return
+end
+
 end  # module
 
 TestCBF.runtests()

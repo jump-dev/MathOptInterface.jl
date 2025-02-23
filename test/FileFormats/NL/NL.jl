@@ -6,10 +6,21 @@
 
 module TestNLModel
 
-import MathOptInterface as MOI
-const NL = MOI.FileFormats.NL
-
 using Test
+
+import MathOptInterface as MOI
+import MathOptInterface.FileFormats: NL
+
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$(name)", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
 
 function _test_nlexpr(
     expr::NL._NLExpr,
@@ -1352,14 +1363,18 @@ function test_copy_name_issue_2445()
     return
 end
 
-function runtests()
-    for name in names(@__MODULE__; all = true)
-        if startswith("$(name)", "test_")
-            @testset "$(name)" begin
-                getfield(@__MODULE__, name)()
-            end
-        end
+function test_unsupported_variable_types()
+    for set in (
+        MOI.Parameter(2.0),
+        MOI.Semicontinuous(2.0, 3.0),
+        MOI.Semiinteger(2.0, 3.0),
+    )
+        src = MOI.Utilities.Model{Float64}()
+        MOI.add_constrained_variable(src, set)
+        dest = NL.Model()
+        @test_throws MOI.UnsupportedConstraint MOI.copy_to(dest, src)
     end
+    return
 end
 
 end
