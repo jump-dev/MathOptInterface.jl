@@ -18,7 +18,6 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [compat]
 BenchmarkTools = "1"
@@ -37,7 +36,6 @@ Printf = "<0.0.1, 1.6"
 SparseArrays = "<0.0.1, 1.6"
 SpecialFunctions = "0.8, 1, 2"
 Test = "<0.0.1, 1.6"
-Unicode = "<0.0.1, 1.6"
 julia = "1.6"
 
 [extras]
