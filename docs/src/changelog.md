@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Removed the mention of MathProgBase from the README (#2635)
  - Removed `precompile` statements. Packages using MOI should address
    precompilation using `PrecompileTools.jl` in their own package (#2643)
+ - Removed unneeded `Unicode` dependency (#2656)
 
 ## v1.36.0 (February 12, 2025)
 
