@@ -214,7 +214,7 @@ end
 _typed(s::SymbolFS) = s.typed ? Expr(:curly, esc(s.s), esc(:T)) : esc(s.s)
 
 function _field(s::SymbolFS)
-    return Symbol(replace(Unicode.lowercase(string(s.s)), "." => "_"))
+    return Symbol(replace(lowercase(string(s.s)), "." => "_"))
 end
 
 # Represents a union of function or set types
