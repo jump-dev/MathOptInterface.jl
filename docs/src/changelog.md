@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    coverage (#2630), (#2631), (#2632), (#2637), (#2638), (#2639), (#2640),
    (#2641), (#2642), (#2644), (#2645), (#2646), (#2647), (#2648), (#2649),
    (#2650)
- - Fixed link to the codecov bade (#2634)
+ - Fixed link to the coverage badge (#2634)
  - Removed the mention of MathProgBase from the README (#2635)
  - Removed `precompile` statements. Packages using MOI should address
    precompilation using `PrecompileTools.jl` in their own package (#2643)
