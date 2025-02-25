@@ -258,6 +258,33 @@ function test_modify_not_allowed()
     return
 end
 
+function test_get_fallback_constraint_dual()
+    model = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = MOI.VectorOfVariables(x)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    c = MOI.add_constraint(model, f, MOI.Nonnegatives(2))
+    @test_throws(
+        ErrorException(
+            "Fallback getter for variable constraint dual does not support objective function of type $(MOI.VectorOfVariables). Please report this issue to the solver wrapper package.",
+        ),
+        MOI.Utilities.get_fallback(model, MOI.ConstraintDual(), c),
+    )
+    return
+end
+
+struct SetByOptimizeAttribute <: MOI.AbstractOptimizerAttribute end
+
+MOI.is_set_by_optimize(::SetByOptimizeAttribute) = true
+
+function test_is_set_by_optimize_optimizer_attribute()
+    model = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    MOI.set(model, SetByOptimizeAttribute(), 1.23)
+    @test MOI.get(model, SetByOptimizeAttribute()) == 1.23
+    return
+end
+
 end  # module
 
 TestMockOptimizer.runtests()
