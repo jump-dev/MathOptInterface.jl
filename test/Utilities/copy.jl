@@ -1106,6 +1106,22 @@ function test_index_map()
     return
 end
 
+function test_copy_names_unsupported()
+    src = MOI.Utilities.Model{Float64}()
+    MOI.set(src, MOI.Name(), "Abc")
+    x = MOI.add_variable(src)
+    MOI.set(src, MOI.VariableName(), x, "x")
+    c = MOI.add_constraint(src, 1.0 * x, MOI.LessThan(1.0))
+    MOI.set(src, MOI.ConstraintName(), c, "c")
+    dest = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.Model{Float64}();
+        supports_names = false,
+    )
+    index_map = MOI.copy_to(dest, src)
+    @test MOI.get(dest, MOI.VariableName(), index_map[x]) == ""
+    return
+end
+
 end  # module
 
 TestCopy.runtests()
