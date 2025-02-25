@@ -65,6 +65,25 @@ function test_runtests_norm_inf()
     )
     return
 end
+
+function test_modify_MultirowChange()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.NormOneConeToNormCone{Float64}(inner)
+    x = MOI.add_variables(model, 2)
+    f = MOI.Utilities.vectorize(1.0 .* x)
+    c = MOI.add_constraint(model, f, MOI.NormOneCone(2))
+    @test ≈(
+        MOI.get(model, MOI.ConstraintFunction(), c),
+        MOI.Utilities.vectorize([1.0 * x[1], 1.0 * x[2]]),
+    )
+    MOI.modify(model, c, MOI.MultirowChange(x[2], [(2, 2.0)]))
+    @test ≈(
+        MOI.get(model, MOI.ConstraintFunction(), c),
+        MOI.Utilities.vectorize([1.0 * x[1], 2.0 * x[2]]),
+    )
+    return
+end
+
 end  # module
 
 TestConstraintNormSpecialCase.runtests()
