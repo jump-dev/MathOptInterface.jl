@@ -46,7 +46,7 @@ function test_SlackBridge_ObjectiveSense_modify()
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     @test_throws(
-        ArgumentError,
+        MOI.SetAttributeNotAllowed,
         MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE),
     )
     MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
@@ -328,7 +328,8 @@ function test_original()
             ("y", MOI.GreaterThan{Float64}(2.0)),
         ],
     )
-    err = ArgumentError(
+    err = MOI.SetAttributeNotAllowed(
+        MOI.ObjectiveSense(),
         "Objective bridge of type `$(MOI.Bridges.Objective.SlackBridge{Float64,MOI.ScalarQuadraticFunction{Float64},MOI.ScalarQuadraticFunction{Float64}})`" *
         " does not support modifying the objective sense. As a workaround, set" *
         " the sense to `MOI.FEASIBILITY_SENSE` to clear the objective function" *

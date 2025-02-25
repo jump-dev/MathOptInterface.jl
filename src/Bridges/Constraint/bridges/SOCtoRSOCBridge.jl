@@ -50,13 +50,6 @@ function MOI.Bridges.map_set(
     ::Type{<:SOCtoRSOCBridge},
     set::MOI.SecondOrderCone,
 )
-    if MOI.dimension(set) == 1
-        error(
-            "Unable to reformulate a `SecondOrderCone` into a " *
-            "`RotatedSecondOrderCone` because the dimension of `1` is too " *
-            "small",
-        )
-    end
     return MOI.RotatedSecondOrderCone(MOI.dimension(set))
 end
 
@@ -69,6 +62,14 @@ end
 
 function MOI.Bridges.map_function(::Type{<:SOCtoRSOCBridge{T}}, func) where {T}
     scalars = MOI.Utilities.eachscalar(func)
+    if length(scalars) < 2
+        err = DimensionMismatch(
+            "Unable to reformulate a `SecondOrderCone` into a " *
+            "`RotatedSecondOrderCone` because the output dimension is too " *
+            "small",
+        )
+        throw(err)
+    end
     t, u, x = scalars[1], scalars[2], scalars[3:end]
     ts = MOI.Utilities.operate!(/, T, t, sqrt(T(2)))
     us = MOI.Utilities.operate!(/, T, u, sqrt(T(2)))

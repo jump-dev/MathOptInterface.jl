@@ -95,12 +95,13 @@ end
 
 function MOI.set(
     ::MOI.ModelLike,
-    ::MOI.ObjectiveSense,
+    attr::MOI.ObjectiveSense,
     bridge::AbstractBridge,
     ::MOI.OptimizationSense,
 )
     return throw(
-        ArgumentError(
+        MOI.SetAttributeNotAllowed(
+            attr,
             "Objective bridge of type `$(typeof(bridge))` does not support " *
             "modifying the objective sense. As a workaround, set the sense " *
             "to `MOI.FEASIBILITY_SENSE` to clear the objective function and " *
@@ -111,11 +112,12 @@ end
 
 function MOI.get(
     ::MOI.ModelLike,
-    ::MOI.ObjectiveFunction,
+    attr::MOI.ObjectiveFunction,
     bridge::AbstractBridge,
 )
     return throw(
-        ArgumentError(
+        MOI.GetAttributeNotAllowed(
+            attr,
             "ObjectiveFunction bridge of type `$(typeof(bridge))` does not" *
             " support getting the objective function.",
         ),

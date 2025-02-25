@@ -257,10 +257,11 @@ end
 function MOI.Bridges.map_function(::Type{<:RSOCtoPSDBridge{T}}, func) where {T}
     scalars = MOI.Utilities.eachscalar(func)
     if length(scalars) < 2
-        error(
+        err = DimensionMismatch(
             "Unable to bridge RotatedSecondOrderCone to PSD because the ",
             "dimension is too small: got $(length(scalars)), expected >= 2.",
         )
+        throw(err)
     elseif length(scalars) == 2
         return func
     end

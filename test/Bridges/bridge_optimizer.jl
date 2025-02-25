@@ -1286,6 +1286,134 @@ function test_issue_2452_integer()
     return
 end
 
+struct EmptyBridgeOptimizer <: MOI.Bridges.AbstractBridgeOptimizer end
+
+function test_supports_bridging_constrained_variable_fallback()
+    @test !MOI.Bridges.supports_bridging_constrained_variable(
+        EmptyBridgeOptimizer(),
+        MOI.ZeroOne,
+    )
+    return
+end
+
+function test_supports_bridging_constraint_fallback()
+    @test !MOI.Bridges.supports_bridging_constraint(
+        EmptyBridgeOptimizer(),
+        MOI.ScalarAffineFunction{Float64},
+        MOI.EqualTo{Float64},
+    )
+    return
+end
+
+function test_delete_variable_from_bridged_objective()
+    model = MOI.Utilities.Model{Float64}()
+    b = MOI.Bridges.Objective.VectorFunctionize{Float64}(model)
+    x = MOI.add_variables(b, 2)
+    y = MOI.add_variable(b)
+    f = MOI.VectorOfVariables(x)
+    MOI.set(b, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(b, MOI.ObjectiveFunction{typeof(f)}(), f)
+    G = MOI.VectorAffineFunction{Float64}
+    g = MOI.get(model, MOI.ObjectiveFunction{G}())
+    MOI.delete(b, y)
+    @test g ≈ MOI.get(model, MOI.ObjectiveFunction{G}())
+    MOI.delete(b, x[1])
+    @test ≈(
+        MOI.Utilities.vectorize([MOI.Utilities.scalarize(g)[2]]),
+        MOI.get(model, MOI.ObjectiveFunction{G}()),
+    )
+    MOI.delete(b, x[2])
+    @test ≈(
+        MOI.Utilities.vectorize([zero(MOI.ScalarAffineFunction{Float64})]),
+        MOI.get(model, MOI.ObjectiveFunction{G}()),
+    )
+    return
+end
+
+function test_get_ObjectiveFunctionValue()
+    model = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    b = MOI.Bridges.full_bridge_optimizer(model, Float64)
+    x = MOI.add_variable(b)
+    MOI.set(b, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(b, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
+    y = only(MOI.get(model, MOI.ListOfVariableIndices()))
+    MOI.set(model, MOI.VariablePrimal(1), y, 1.23)
+    @test MOI.get(b, MOI.Bridges.ObjectiveFunctionValue{typeof(x)}(1)) == 1.23
+    return
+end
+
+function test_bridged_function()
+    model = MOI.Utilities.Model{Float64}()
+    b = MOI.Bridges.Variable.Free{Float64}(model)
+    x = MOI.add_variable(b)
+    y, _ = MOI.add_constrained_variable(b, MOI.GreaterThan(1.0))
+    @test_throws(
+        ErrorException("Using bridged variable in `VariableIndex` function."),
+        MOI.Bridges.bridged_function(b, x),
+    )
+    @test MOI.Bridges.bridged_function(b, y) == y
+    return
+end
+
+function test_bridged_constraint_function_no_variable_bridges()
+    model = MOI.Utilities.Model{Float64}()
+    bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
+    x = MOI.add_variable(bridged)
+    set = MOI.ZeroOne()
+    @test MOI.Bridges.bridged_constraint_function(bridged, x, set) == (x, set)
+    return
+end
+
+function test_bridged_constraint_function_with_variable_bridges()
+    model = MOI.Utilities.Model{Float64}()
+    b = MOI.Bridges.Variable.Free{Float64}(model)
+    x = MOI.add_variable(b)
+    set = MOI.ZeroOne()
+    f, set = MOI.Bridges.bridged_constraint_function(b, 1.0 * x, set)
+    @test set == MOI.ZeroOne()
+    y = MOI.get(model, MOI.ListOfVariableIndices())
+    @test f ≈ 1.0 * y[1] - 1.0 * y[2]
+    return
+end
+
+struct EmptyObjectiveBridge <: MOI.Bridges.Objective.AbstractBridge end
+
+function test_fallback_bridge_objective()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    @test_throws(
+        MOI.UnsupportedAttribute(MOI.ObjectiveFunction{MOI.VariableIndex}()),
+        MOI.Bridges.Objective.bridge_objective(EmptyObjectiveBridge, model, x),
+    )
+    return
+end
+
+function test_fallback_set_objective_sense()
+    model = MOI.Utilities.Model{Float64}()
+    bridge = EmptyObjectiveBridge()
+    @test_throws(
+        MOI.SetAttributeNotAllowed{MOI.ObjectiveSense},
+        MOI.set(model, MOI.ObjectiveSense(), bridge, MOI.MIN_SENSE),
+    )
+    return
+end
+
+function test_fallback_get_objective_function()
+    model = MOI.Utilities.Model{Float64}()
+    attr = MOI.ObjectiveFunction{MOI.VariableIndex}()
+    @test_throws(
+        MOI.GetAttributeNotAllowed{typeof(attr)},
+        MOI.get(model, attr, EmptyObjectiveBridge()),
+    )
+    return
+end
+
+function test_fallback_delete_objective_bridge()
+    model = MOI.Utilities.Model{Float64}()
+    @test_throws ArgumentError MOI.delete(model, EmptyObjectiveBridge())
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()

@@ -26,17 +26,17 @@ function MOI.get(
 end
 
 function MOI.get(
-    ::_AbstractSlackBridge{T,VF,ZS,F,S},
-    ::MOI.NumberOfConstraints{VF,S},
-)::Int64 where {T,VF,ZS,F,S}
-    return 1
-end
-
-function MOI.get(
     bridge::_AbstractSlackBridge{T,VF,ZS,F},
     ::MOI.ListOfConstraintIndices{F,ZS},
 ) where {T,VF,ZS,F}
     return [bridge.equality]
+end
+
+function MOI.get(
+    ::_AbstractSlackBridge{T,VF,ZS,F,S},
+    ::MOI.NumberOfConstraints{VF,S},
+)::Int64 where {T,VF,ZS,F,S}
+    return 1
 end
 
 function MOI.get(
@@ -55,20 +55,20 @@ function MOI.get(
     # that the original set was the same as the slacked set.
     return error(
         "Internal error: this method should never be called because it " *
-        "represents and invalid state. Please open an issue to report.",
+        "represents an invalid state. Please open an issue to report.",
     )
 end
 
 function MOI.get(
     bridge::_AbstractSlackBridge{T,VF,S,F,S},
-    ::MOI.ListOfConstraintIndices{F,S},
+    ::MOI.ListOfConstraintIndices{VF,S},
 ) where {T,VF,S,F}
     # This method is needed to resolve a possible ambiguity reported by
     # Test.detect_ambiguities. It can't happen in practice because it would mean
     # that the original set was the same as the slacked set.
     return error(
         "Internal error: this method should never be called because it " *
-        "represents and invalid state. Please open an issue to report.",
+        "represents an invalid state. Please open an issue to report.",
     )
 end
 

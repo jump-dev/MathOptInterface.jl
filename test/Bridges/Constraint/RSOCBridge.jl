@@ -179,6 +179,26 @@ function test_runtests()
     return
 end
 
+function test_dimension_mismatch_SOCR()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.SOCR{Float64}(inner)
+    @test_throws(
+        DimensionMismatch,
+        MOI.add_constrained_variables(model, MOI.SecondOrderCone(1)),
+    )
+    return
+end
+
+function test_dimension_mismatch_RSOC()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.RSOC{Float64}(inner)
+    @test_throws(
+        DimensionMismatch,
+        MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(1)),
+    )
+    return
+end
+
 end  # module
 
 TestConstraintRSOC.runtests()
