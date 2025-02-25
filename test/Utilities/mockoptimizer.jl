@@ -250,9 +250,9 @@ function test_modify_not_allowed()
         model,
         config,
         include = [
-            r"$test_linear_integration^",
-            r"$test_linear_integration_modification^",
-            r"$test_linear_VectorAffineFunction^",
+            r"^test_linear_integration$",
+            r"^test_linear_integration_modification$",
+            r"^test_linear_VectorAffineFunction$",
         ],
     )
     return
