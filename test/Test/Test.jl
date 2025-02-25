@@ -20,7 +20,7 @@ function runtests()
     return
 end
 
-function _test_runtests()
+function test_runtests()
     # Some tests are excluded because UniversalFallback accepts absolutely
     # everything.
     MOI.Test.runtests(
@@ -86,7 +86,7 @@ end
 
 # Non-Float64 tests
 
-function _test_bigfloat_tests()
+function test_bigfloat_tests()
     MOI.Test.runtests(
         MOI.Utilities.MockOptimizer(
             MOI.Utilities.UniversalFallback(MOI.Utilities.Model{BigFloat}()),
