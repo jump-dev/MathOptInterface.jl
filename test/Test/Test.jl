@@ -4,87 +4,107 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-using Test
+module TestTest
 
+using Test
 import MathOptInterface as MOI
 
-# Some tests are excluded because UniversalFallback accepts absolutely
-# everything.
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$name", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
 
-MOI.Test.runtests(
-    MOI.Utilities.MockOptimizer(
-        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
-    ),
-    MOI.Test.Config(),
-    exclude = [
-        r"^test_model_ScalarFunctionConstantNotZero$",
-        "test_model_copy_to_UnsupportedAttribute",
-        "test_model_copy_to_UnsupportedConstraint",
-        "test_model_supports_constraint_ScalarAffineFunction_EqualTo",
-        "test_model_supports_constraint_VariableIndex_EqualTo",
-        "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
-    ],
-    warn_unsupported = true,
-)
+function _test_runtests()
+    # Some tests are excluded because UniversalFallback accepts absolutely
+    # everything.
+    MOI.Test.runtests(
+        MOI.Utilities.MockOptimizer(
+            MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+        ),
+        MOI.Test.Config(),
+        exclude = [
+            r"^test_model_ScalarFunctionConstantNotZero$",
+            "test_model_copy_to_UnsupportedAttribute",
+            "test_model_copy_to_UnsupportedConstraint",
+            "test_model_supports_constraint_ScalarAffineFunction_EqualTo",
+            "test_model_supports_constraint_VariableIndex_EqualTo",
+            "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
+        ],
+        warn_unsupported = true,
+        verbose = true,
+    )
+    # Run the previously excluded tests, this time without UniversalFallback.
+    MOI.Test.runtests(
+        MOI.Utilities.MockOptimizer(
+            MOI.Utilities.Model{Float64}(),
+            scalar_function_constant_non_zero = true,
+        ),
+        MOI.Test.Config();
+        include = [
+            r"^test_model_ScalarFunctionConstantNotZero$",
+            "test_model_copy_to_UnsupportedAttribute",
+            "test_model_copy_to_UnsupportedConstraint",
+            "test_model_supports_constraint_ScalarAffineFunction_EqualTo",
+            "test_model_supports_constraint_VariableIndex_EqualTo",
+            "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
+        ],
+        verbose = true,
+    )
+    return
+end
 
-# Run the previously excluded tests, this time without UniversalFallback.
-
-MOI.Test.runtests(
-    MOI.Utilities.MockOptimizer(
-        MOI.Utilities.Model{Float64}(),
-        scalar_function_constant_non_zero = true,
-    ),
-    MOI.Test.Config();
-    include = [
-        r"^test_model_ScalarFunctionConstantNotZero$",
-        "test_model_copy_to_UnsupportedAttribute",
-        "test_model_copy_to_UnsupportedConstraint",
-        "test_model_supports_constraint_ScalarAffineFunction_EqualTo",
-        "test_model_supports_constraint_VariableIndex_EqualTo",
-        "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
-    ],
-    verbose = true,
-)
-
-# Test for Issue #1757
-
-MOI.Test.test_model_ScalarFunctionConstantNotZero(
-    MOI.Utilities.MockOptimizer(
-        MOI.Utilities.Model{Float64}(),
-        scalar_function_constant_non_zero = false,
-    ),
-    MOI.Test.Config(exclude = Any[MOI.ConstraintFunction]),
-)
-
-# Test exclude_tests_after. This should work despite no methods being added for IncompleteOptimizer
-# because every test should get skipped.
+function test_issue_1757()
+    MOI.Test.test_model_ScalarFunctionConstantNotZero(
+        MOI.Utilities.MockOptimizer(
+            MOI.Utilities.Model{Float64}(),
+            scalar_function_constant_non_zero = false,
+        ),
+        MOI.Test.Config(exclude = Any[MOI.ConstraintFunction]),
+    )
+    return
+end
 
 struct IncompleteOptimizer <: MOI.AbstractOptimizer end
 
-MOI.Test.runtests(
-    IncompleteOptimizer(),
-    MOI.Test.Config();
-    exclude_tests_after = v"0.0.1",
-)
+# Test exclude_tests_after. This should work despite no methods being added for
+# IncompleteOptimizer because every test should get skipped.
+function test_exclude_tests_after()
+    MOI.Test.runtests(
+        IncompleteOptimizer(),
+        MOI.Test.Config();
+        exclude_tests_after = v"0.0.1",
+        verbose = true,
+    )
+    return
+end
 
 # Non-Float64 tests
 
-MOI.Test.runtests(
-    MOI.Utilities.MockOptimizer(
-        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{BigFloat}()),
-        BigFloat,
-    ),
-    MOI.Test.Config(BigFloat),
-    exclude = [
-        # ========================= Expected failures ==========================
-        # UniversalFallback supports these tests.
-        "test_model_copy_to_UnsupportedAttribute",
-        "test_model_copy_to_UnsupportedConstraint",
-        "test_model_supports_constraint_ScalarAffineFunction_EqualTo",
-        "test_model_supports_constraint_VariableIndex_EqualTo",
-        "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
-    ],
-)
+function _test_bigfloat_tests()
+    MOI.Test.runtests(
+        MOI.Utilities.MockOptimizer(
+            MOI.Utilities.UniversalFallback(MOI.Utilities.Model{BigFloat}()),
+            BigFloat,
+        ),
+        MOI.Test.Config(BigFloat),
+        exclude = [
+            # ========================= Expected failures ======================
+            # UniversalFallback supports these tests.
+            "test_model_copy_to_UnsupportedAttribute",
+            "test_model_copy_to_UnsupportedConstraint",
+            "test_model_supports_constraint_ScalarAffineFunction_EqualTo",
+            "test_model_supports_constraint_VariableIndex_EqualTo",
+            "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
+        ],
+    )
+    return
+end
 
 # Special test for issue #2010
 
@@ -98,21 +118,25 @@ function MOI.supports_constraint(
     return true
 end
 
-MOI.Test.test_attribute_unsupported_constraint(
-    _UnsupportedModel(),
-    MOI.Test.Config(),
-)
+function test_issue_2010()
+    MOI.Test.test_attribute_unsupported_constraint(
+        _UnsupportedModel(),
+        MOI.Test.Config(),
+    )
+    return
+end
 
-@testset "test_attribute_unsupported_constraint_fallback" begin
+function test_attribute_unsupported_constraint_fallback()
     model = _UnsupportedModel()
     F, S = MOI.VariableIndex, MOI.ZeroOne
     attr = MOI.ListOfConstraintIndices{F,S}()
     @test_throws MOI.GetAttributeNotAllowed(attr) MOI.get(model, attr)
     attr = MOI.NumberOfConstraints{F,S}()
     @test_throws MOI.GetAttributeNotAllowed(attr) MOI.get(model, attr)
+    return
 end
 
-@testset "test_warning_on_ambiguous" begin
+function test_warning_on_ambiguous()
     model = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
     )
@@ -123,18 +147,20 @@ end
     @test_logs (:warn,) MOI.Test.runtests(model, config; exclude = exclude)
     exclude = [r"^test_model_Name$", r"test_.+"]
     @test_logs MOI.Test.runtests(model, config; exclude = exclude)
+    return
 end
 
-@testset "test_FeasibilitySenseEvaluator" begin
+function test_FeasibilitySenseEvaluator()
     evaluator = MOI.Test.FeasibilitySenseEvaluator(true)
     @test MOI.features_available(evaluator) == [:Grad, :Jac, :Hess, :ExprGraph]
     @test MOI.hessian_lagrangian_structure(evaluator) == [(1, 1)]
     evaluator = MOI.Test.FeasibilitySenseEvaluator(false)
     @test MOI.features_available(evaluator) == [:Grad, :Jac, :ExprGraph]
     @test_throws AssertionError MOI.hessian_lagrangian_structure(evaluator)
+    return
 end
 
-@testset "test_HS071_evaluator" begin
+function test_HS071_evaluator()
     evaluator = MOI.Test.HS071(true, true)
     features = [:Grad, :Jac, :JacVec, :ExprGraph, :Hess, :HessVec]
     @test MOI.features_available(evaluator) == features
@@ -204,4 +230,22 @@ end
           :($(x[1]) * $(x[2]) * $(x[3]) * $(x[4]) >= 25.0)
     @test MOI.constraint_expr(evaluator, 2) ==
           :($(x[1])^2 + $(x[2])^2 + $(x[3])^2 + $(x[4])^2 == 40.0)
+    return
 end
+
+function test_error_handler()
+    err = ErrorException("error")
+    @test_throws err try
+        @assert false
+    catch
+        MOI.Test._error_handler(err, "test_foo", true)
+    end
+    err = MOI.AddVariableNotAllowed()
+    @test_logs (:warn,) MOI.Test._error_handler(err, "test_foo", true)
+    @test_nowarn MOI.Test._error_handler(err, "test_foo", false)
+    return
+end
+
+end  # module
+
+TestTest.runtests()
