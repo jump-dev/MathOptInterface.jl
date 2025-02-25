@@ -403,6 +403,16 @@ function test_CallbackVariablePrimal_is_set_by_optimize()
     return
 end
 
+function test_get_bang()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(model, 2)
+    MOI.set.(model, MOI.VariableName(), x, ["x", "y"])
+    output = ["", ""]
+    @test MOI.get!(output, model, MOI.VariableName(), x) === nothing
+    @test output == ["x", "y"]
+    return
+end
+
 end  # module
 
 TestAttributes.runtests()
