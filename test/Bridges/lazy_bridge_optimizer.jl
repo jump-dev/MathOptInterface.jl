@@ -1978,16 +1978,20 @@ function MOI.get(
     ::OptimizerWithBridgeListOfNonstandardBridges,
     ::MOI.Bridges.ListOfNonstandardBridges{T},
 ) where {T}
-    return [BridgeListOfNonstandardBridges{T}]
+    return Type[BridgeListOfNonstandardBridges{T}]
 end
 
-function test_toadd()
+function test_ListOfNonstandardBridges()
     b = MOI.Bridges.full_bridge_optimizer(
         OptimizerWithBridgeListOfNonstandardBridges(),
         Int,
     )
     @test MOI.Bridges.has_bridge(b, BridgeListOfNonstandardBridges{Int})
     @test !MOI.Bridges.has_bridge(b, BridgeListOfNonstandardBridges{Float64})
+    attr = MOI.Bridges.ListOfNonstandardBridges{Int}()
+    ret = MOI.get(b, attr)
+    @test ret isa MOI.attribute_value_type(attr)
+    return
 end
 
 function test_hermitian(T = Float64)
