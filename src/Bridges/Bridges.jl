@@ -136,7 +136,7 @@ end
 """
 struct ListOfNonstandardBridges{T} <: MOI.AbstractOptimizerAttribute end
 
-attribute_value_type(::ListOfNonstandardBridges) = Vector{Type}
+MOI.attribute_value_type(::ListOfNonstandardBridges) = Vector{Type}
 
 MOI.is_copyable(::ListOfNonstandardBridges) = false
 
