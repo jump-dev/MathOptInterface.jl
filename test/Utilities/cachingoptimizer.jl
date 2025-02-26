@@ -1390,6 +1390,19 @@ function test_delete_not_allowed()
     return
 end
 
+function test_pass_nonvariable_constraints()
+    cache = MOI.Utilities.Model{Float64}()
+    optimizer = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    dest = MOI.Utilities.CachingOptimizer(cache, optimizer)
+    MOI.Utilities.attach_optimizer(dest)
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(src)
+    MOI.add_constraint(src, 1.0 * x, MOI.GreaterThan(1.0))
+    index_map = MOI.Utilities.default_copy_to(dest, src)
+    @test sprint(print, dest) == sprint(print, src)
+    return
+end
+
 end  # module
 
 TestCachingOptimizer.runtests()

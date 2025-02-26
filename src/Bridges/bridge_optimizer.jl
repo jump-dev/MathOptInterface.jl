@@ -407,12 +407,13 @@ function MOI.Utilities.pass_nonvariable_constraints(
     if Variable.has_bridges(Variable.bridges(dest))
         # The functions may contained bridged variables which needs to be
         # substituted so we use the fallback.
-        return MOI.Utilities.pass_nonvariable_constraints_fallback(
+        MOI.Utilities.pass_nonvariable_constraints_fallback(
             dest,
             src,
             idxmap,
             constraint_types,
         )
+        return
     end
     not_bridged_types = eltype(constraint_types)[]
     bridged_types = eltype(constraint_types)[]
