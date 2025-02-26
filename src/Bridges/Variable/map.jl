@@ -282,6 +282,7 @@ is set by this constraint and such bound has already been set for `vi`.
 """
 function MOI.add_constraint(::Map, ::MOI.VariableIndex, ::MOI.AbstractScalarSet)
     # Nothing to do as this is not recognized as setting a lower or upper bound
+    return
 end
 
 # We cannot use `SUPPORTED_VARIABLE_SCALAR_SETS` because
@@ -321,6 +322,7 @@ function MOI.delete(
     ci::MOI.ConstraintIndex{MOI.VariableIndex,<:MOI.AbstractScalarSet},
 )
     # Nothing to do as this is not recognized as setting a lower or upper bound
+    return
 end
 
 function MOI.delete(
