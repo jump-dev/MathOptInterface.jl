@@ -93,12 +93,13 @@ function pass_nonvariable_constraints(
         end
     end
     pass_nonvariable_constraints(dest.model, src, idxmap, supported_types)
-    return pass_nonvariable_constraints_fallback(
+    pass_nonvariable_constraints_fallback(
         dest,
         src,
         idxmap,
         unsupported_types,
     )
+    return
 end
 
 function MOI.copy_to(dest::UniversalFallback, src::MOI.ModelLike)

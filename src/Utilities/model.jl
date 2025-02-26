@@ -608,12 +608,13 @@ function pass_nonvariable_constraints(
     idxmap::IndexMap,
     constraint_types,
 )
-    return pass_nonvariable_constraints(
+    pass_nonvariable_constraints(
         dest.constraints,
         src,
         idxmap,
         constraint_types,
     )
+    return
 end
 
 # Macro to generate Model

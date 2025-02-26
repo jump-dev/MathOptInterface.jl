@@ -264,13 +264,16 @@ function pass_nonvariable_constraints(
     idxmap::IndexMap,
     constraint_types,
 )
-    dest.state == ATTACHED_OPTIMIZER && reset_optimizer(dest)
-    return pass_nonvariable_constraints(
+    # This method gets called during default_copy_to, so the dest cannot be
+    # attached at that point.
+    @assert dest.state != ATTACHED_OPTIMIZER
+    pass_nonvariable_constraints(
         dest.model_cache,
         src,
         idxmap,
         constraint_types,
     )
+    return
 end
 
 function final_touch(m::CachingOptimizer, index_map)
