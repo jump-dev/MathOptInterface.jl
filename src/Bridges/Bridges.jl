@@ -178,16 +178,10 @@ function _test_structural_identical(
         Test.@test (F, S) in b_constraint_types || MOI.get(a, attr) == 0
     end
     for (F, S) in b_constraint_types
+        @test haskey(constraints, (F, S))
         # Check that the same number of constraints are present
         attr = MOI.NumberOfConstraints{F,S}()
-        if !haskey(constraints, (F, S))
-            # Constraint is reported in `b`, but not in `a`. Check that there
-            # are no actual constraints in `b`.
-            Test.@test MOI.get(b, attr) == 0
-            continue
-        else
-            Test.@test MOI.get(a, attr) == MOI.get(b, attr)
-        end
+        Test.@test MOI.get(a, attr) == MOI.get(b, attr)
         # Check that supports_constraint is implemented
         Test.@test MOI.supports_constraint(b, F, S)
         # Check that each function in `b` matches a function in `a`
@@ -402,9 +396,7 @@ function _test_delete(Bridge, model, inner)
         MOI.delete.(model, MOI.get(model, MOI.ListOfConstraintIndices{F,S}()))
     end
     #  * So now there should be no constraints in the problem
-    for (F, S) in MOI.get(inner, MOI.ListOfConstraintTypesPresent())
-        Test.@test MOI.get(inner, MOI.NumberOfConstraints{F,S}()) == 0
-    end
+    @test isempty(MOI.get(inner, MOI.ListOfConstraintTypesPresent()))
     #  * And there should be the same number of variables
     attr = MOI.NumberOfVariables()
     Test.@test MOI.get(inner, attr) == MOI.get(model, attr)
