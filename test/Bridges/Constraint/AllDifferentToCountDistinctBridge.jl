@@ -40,7 +40,8 @@ function test_runtests_VectorOfVariables()
         y <= 3.0
         z == 2.0
         n == 3.0
-        """,
+        """;
+        print_inner_model = true,
     )
     return
 end
