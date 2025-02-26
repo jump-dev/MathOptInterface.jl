@@ -93,12 +93,7 @@ function pass_nonvariable_constraints(
         end
     end
     pass_nonvariable_constraints(dest.model, src, idxmap, supported_types)
-    pass_nonvariable_constraints_fallback(
-        dest,
-        src,
-        idxmap,
-        unsupported_types,
-    )
+    pass_nonvariable_constraints_fallback(dest, src, idxmap, unsupported_types)
     return
 end
 
