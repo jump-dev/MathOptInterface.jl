@@ -411,6 +411,47 @@ function test_runtests()
     return
 end
 
+function test_basis_status()
+    inner = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    model = MOI.Bridges.Constraint.ScalarSlack{Float64}(inner)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0 * x, MOI.GreaterThan(1.0))
+    y = MOI.get(inner, MOI.ListOfVariableIndices())
+    MOI.set.(inner, MOI.VariableBasisStatus(), y, MOI.BASIC)
+    @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.BASIC
+    d = MOI.add_constraint(model, 1.0 * x, MOI.Interval(1.0, 2.0))
+    z = last(MOI.get(inner, MOI.ListOfVariableIndices()))
+    MOI.set(inner, MOI.VariableBasisStatus(), z, MOI.SUPER_BASIC)
+    @test MOI.get(model, MOI.ConstraintBasisStatus(), d) == MOI.SUPER_BASIC
+    return
+end
+
+function test_internal_error()
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
+    BT = MOI.Bridges.Constraint.ScalarSlackBridge{Float64,F,S}
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    set = MOI.EqualTo(1.0)
+    bridge = MOI.Bridges.Constraint.bridge_constraint(BT, model, 1.0 * x, set)
+    @test_throws(
+        ErrorException(
+            "Internal error: this method should never be called because it " *
+            "represents an invalid state. Please open an issue to report.",
+        ),
+        MOI.get(bridge, MOI.NumberOfConstraints{MOI.VariableIndex,S}()),
+    )
+    @test_throws(
+        ErrorException(
+            "Internal error: this method should never be called because it " *
+            "represents an invalid state. Please open an issue to report.",
+        ),
+        MOI.get(bridge, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}()),
+    )
+    return
+end
+
 end  # module
 
 TestConstraintSlack.runtests()

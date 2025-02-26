@@ -287,6 +287,30 @@ function test_runtests()
     return
 end
 
+function test_list_of_constraint_indices()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Variable.Vectorize{Float64}(inner)
+    x, _ = MOI.add_constrained_variable(model, MOI.EqualTo(1.0))
+    attr = MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Zeros}()
+    @test isempty(MOI.get(model, attr))
+    return
+end
+
+function test_variable_primal_ray()
+    inner = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    model = MOI.Bridges.Variable.Vectorize{Float64}(inner)
+    x, _ = MOI.add_constrained_variable(model, MOI.EqualTo(1.0))
+    MOI.set(inner, MOI.PrimalStatus(), MOI.INFEASIBILITY_CERTIFICATE)
+    y = only(MOI.get(inner, MOI.ListOfVariableIndices()))
+    MOI.set(inner, MOI.VariablePrimal(), y, 1.23)
+    @test MOI.get(model, MOI.VariablePrimal(), x) == 1.23
+    MOI.set(inner, MOI.PrimalStatus(), MOI.FEASIBLE_POINT)
+    @test MOI.get(model, MOI.VariablePrimal(), x) == 2.23
+    return
+end
+
 end  # module
 
 TestVariableVectorize.runtests()

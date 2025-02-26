@@ -499,6 +499,33 @@ function test_runtests_vector()
     return
 end
 
+function test_get_function()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.SplitInterval{Float64}(inner)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0 * x, MOI.Interval(-Inf, Inf))
+    @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ 1.0 * x
+    return
+end
+
+function test_modify_set()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.SplitInterval{Float64}(inner)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0 * x, MOI.Interval(-Inf, Inf))
+    for set in [
+        MOI.Interval(-Inf, Inf),
+        MOI.Interval(1.0, 2.0),
+        MOI.Interval(2.0, 3.0),
+        MOI.Interval(-Inf, Inf),
+    ]
+        MOI.set(model, MOI.ConstraintSet(), c, set)
+        @test MOI.get(model, MOI.ConstraintSet(), c) == set
+        @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ 1.0 * x
+    end
+    return
+end
+
 end  # module
 
 TestConstraintSplitInterval.runtests()

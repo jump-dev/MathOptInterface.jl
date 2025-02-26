@@ -285,6 +285,22 @@ function test_VectorNonlinearFunction()
     return
 end
 
+function test_constraint_primal_ray()
+    inner = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    model = MOI.Bridges.Constraint.Vectorize{Float64}(inner)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0 * x, MOI.EqualTo(3.0))
+    MOI.set(inner, MOI.PrimalStatus(), MOI.INFEASIBILITY_CERTIFICATE)
+    y = only(MOI.get(inner, MOI.ListOfVariableIndices()))
+    MOI.set(inner, MOI.VariablePrimal(), y, 1.23)
+    @test MOI.get(model, MOI.ConstraintPrimal(), c) == 1.23
+    MOI.set(inner, MOI.PrimalStatus(), MOI.FEASIBLE_POINT)
+    @test MOI.get(model, MOI.ConstraintPrimal(), c) == 1.23
+    return
+end
+
 end  # module
 
 TestConstraintVectorize.runtests()

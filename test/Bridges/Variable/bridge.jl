@@ -49,6 +49,15 @@ function test_AbstractBridge()
     return
 end
 
+function test_bridging_cost()
+    model = MOI.Bridges.Variable.SingleBridgeOptimizer{DummyVariableBridge}(
+        MOI.Utilities.Model{Float64}(),
+    )
+    @test MOI.Bridges.bridging_cost(model) == 1.0
+    @test MOI.Bridges.bridging_cost(model, MOI.ZeroOne) == 1.0
+    return
+end
+
 end  # module
 
 TestVariableBridge.runtests()

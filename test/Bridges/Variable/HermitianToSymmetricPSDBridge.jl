@@ -113,6 +113,28 @@ function test_runtests()
     return
 end
 
+function test_delete()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Variable.HermitianToSymmetricPSD{Float64}(inner)
+    set = MOI.HermitianPositiveSemidefiniteConeTriangle(2)
+    x, _ = MOI.add_constrained_variables(model, set)
+    MOI.delete(model, x)
+    @test MOI.is_empty(inner)
+    return
+end
+
+function test_set_variable_primal_start()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Variable.HermitianToSymmetricPSD{Float64}(inner)
+    set = MOI.HermitianPositiveSemidefiniteConeTriangle(2)
+    x, _ = MOI.add_constrained_variables(model, set)
+    MOI.set(model, MOI.VariablePrimalStart(), x[1], 1.0)
+    @test MOI.get(model, MOI.VariablePrimalStart(), x[1]) == 1.0
+    MOI.set(model, MOI.VariablePrimalStart(), x[1], nothing)
+    @test MOI.get(model, MOI.VariablePrimalStart(), x[1]) === nothing
+    return
+end
+
 end  # module
 
 TestVariableHermitianToSymmetricPSD.runtests()

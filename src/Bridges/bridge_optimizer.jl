@@ -625,6 +625,7 @@ function MOI.delete(b::AbstractBridgeOptimizer, vis::Vector{MOI.VariableIndex})
     else
         MOI.delete(b.model, vis)
     end
+    return
 end
 
 function MOI.delete(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)

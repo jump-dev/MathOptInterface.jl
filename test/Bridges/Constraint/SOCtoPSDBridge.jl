@@ -231,6 +231,16 @@ function test_bridging_cost_RSOCtoPSD()
     return
 end
 
+function test_dimension_mismatch_RSOC_to_PSD()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.RSOCtoPSD{Float64}(inner)
+    @test_throws(
+        DimensionMismatch,
+        MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(1)),
+    )
+    return
+end
+
 end  # module
 
 TestConstraintSOCtoPSD.runtests()

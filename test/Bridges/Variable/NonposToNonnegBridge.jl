@@ -199,6 +199,14 @@ function test_runtests()
     return
 end
 
+function test_adjoint_map_function()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Variable.NonposToNonneg{Float64}(inner)
+    x, _ = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+    @test MOI.Bridges.adjoint_map_function(model.map[only(x)], 1.23) == -1.23
+    return
+end
+
 end  # module
 
 TestVariableFlipSign.runtests()

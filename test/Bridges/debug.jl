@@ -314,6 +314,23 @@ function test_print_active_bridges_variable_bridged_with_constraint()
     return
 end
 
+function test_print_graph_stdout()
+    model = MOI.Utilities.Model{Float64}()
+    bridged = MOI.Bridges.full_bridge_optimizer(model, Float64)
+    dir = mktempdir()
+    filename = joinpath(dir, "tmp.out")
+    open(filename, "w") do io
+        redirect_stdout(io) do
+            MOI.Bridges.print_graph(bridged)
+            return
+        end
+        return
+    end
+    @test read(filename, String) ==
+          "Bridge graph with 0 variable nodes, 0 constraint nodes and 0 objective nodes.\n"
+    return
+end
+
 end
 
 TestBridgesDebug.runtests()
