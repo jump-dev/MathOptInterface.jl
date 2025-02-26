@@ -59,13 +59,8 @@ end
 
 function MOI.Bridges.map_function(::Type{<:RSOCtoSOCBridge{T}}, func) where {T}
     scalars = MOI.Utilities.eachscalar(func)
-    if length(scalars) < 2
-        err = DimensionMismatch(
-            "Unable to reformulate a `RotatedSecondOrderCone` into a " *
-            "`SecondOrderCone` because the output dimension is too small",
-        )
-        throw(err)
-    end
+    # We cannot construct MOI.RotatedSecondOrderCone(1)
+    @assert length(scalars) >= 2
     t, u, x = scalars[1], scalars[2], scalars[3:end]
     ts = MOI.Utilities.operate!(/, T, t, sqrt(T(2)))
     us = MOI.Utilities.operate!(/, T, u, sqrt(T(2)))

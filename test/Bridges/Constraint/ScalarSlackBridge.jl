@@ -422,7 +422,9 @@ function test_basis_status()
     MOI.set.(inner, MOI.VariableBasisStatus(), y, MOI.BASIC)
     @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.BASIC
     d = MOI.add_constraint(model, 1.0 * x, MOI.Interval(1.0, 2.0))
-    @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.BASIC
+    z = last(MOI.get(inner, MOI.ListOfVariableIndices()))
+    MOI.set(inner, MOI.VariableBasisStatus(), z, MOI.SUPER_BASIC)
+    @test MOI.get(model, MOI.ConstraintBasisStatus(), d) == MOI.SUPER_BASIC
     return
 end
 
