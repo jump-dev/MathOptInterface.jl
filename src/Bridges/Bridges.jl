@@ -178,7 +178,7 @@ function _test_structural_identical(
         Test.@test (F, S) in b_constraint_types || MOI.get(a, attr) == 0
     end
     for (F, S) in b_constraint_types
-        @test haskey(constraints, (F, S))
+        Test.@test haskey(constraints, (F, S))
         # Check that the same number of constraints are present
         attr = MOI.NumberOfConstraints{F,S}()
         Test.@test MOI.get(a, attr) == MOI.get(b, attr)
@@ -396,7 +396,7 @@ function _test_delete(Bridge, model, inner)
         MOI.delete.(model, MOI.get(model, MOI.ListOfConstraintIndices{F,S}()))
     end
     #  * So now there should be no constraints in the problem
-    @test isempty(MOI.get(inner, MOI.ListOfConstraintTypesPresent()))
+    Test.@test isempty(MOI.get(inner, MOI.ListOfConstraintTypesPresent()))
     #  * And there should be the same number of variables
     attr = MOI.NumberOfVariables()
     Test.@test MOI.get(inner, attr) == MOI.get(model, attr)
