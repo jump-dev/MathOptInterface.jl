@@ -262,14 +262,20 @@ end
 function MOI.modify(
     model::MOI.ModelLike,
     bridge::BT,
-    change::MOI.MultirowChange,
-) where {BT<:MultiSetMapBridge}
+    change::MOI.MultirowChange{T},
+) where {T,BT<:MultiSetMapBridge{T}}
     # It is important here that `change.new_coefficients` contains the complete
     # new sparse column associated to the variable. Calling modify twice with
     # part of the column won't work since  the linear map might reset all the
     # column each time.
-    coefficients = MOI.Bridges.map_function(BT, change.new_coefficients)
-    new_change = MOI.MultirowChange(change.variable, coefficients)
+    n = MOI.dimension(MOI.get(model, MOI.ConstraintSet(), bridge.constraint))
+    dense = zeros(T, n)
+    for (row, value) in change.new_coefficients
+        dense[row] += value
+    end
+    map_dense = MOI.Bridges.map_function(BT, dense)
+    sparse = Tuple{Int64,T}[rv for rv in enumerate(map_dense) if !iszero(rv[2])]
+    new_change = MOI.MultirowChange(change.variable, sparse)
     MOI.modify(model, bridge.constraint, new_change)
     return
 end
