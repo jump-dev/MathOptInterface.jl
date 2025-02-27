@@ -172,7 +172,7 @@ function test_attribute_TimeLimitSec(model::MOI.AbstractOptimizer, ::Config)
         try
             return MOI.get(model, MOI.TimeLimitSec())
         catch err
-            @assert err isa MOI.GetAttributeNotAllowed(MOI.TimeLimitSec())
+            @assert err isa MOI.GetAttributeNotAllowed{MOI.TimeLimitSec}
         end
         return
     end
