@@ -268,6 +268,7 @@ end
 function test_attribute_TimeLimitSec()
     model = ModelTimeLimitSecErrorIfNotSet(missing)
     MOI.Test.test_attribute_TimeLimitSec(model, MOI.Test.Config())
+    return
 end
 
 end  # module
