@@ -393,32 +393,30 @@ const IndexMap = Utilities.IndexMap
 import PrecompileTools
 
 PrecompileTools.@setup_workload begin
+    optimizer =
+        () -> Utilities.MockOptimizer(
+            Utilities.UniversalFallback(Utilities.Model{Float64}()),
+        )
     PrecompileTools.@compile_workload begin
-        let
-            optimizer =
-                () -> Utilities.MockOptimizer(
-                    Utilities.UniversalFallback(Utilities.Model{Float64}()),
-                )
-            model = Utilities.CachingOptimizer(
-                Utilities.UniversalFallback(Utilities.Model{Float64}()),
-                instantiate(optimizer; with_bridge_type = Float64),
-            )
-            set(model, Silent(), true)
-            x = add_variables(model, 3)
-            add_constraint(model, x[1], ZeroOne())
-            add_constraint(model, x[2], Integer())
-            add_constraint(model, x[1], GreaterThan(0.0))
-            add_constraint(model, x[2], LessThan(0.0))
-            add_constraint(model, x[3], EqualTo(0.0))
-            f = 1.0 * x[1] + x[2] + x[3]
-            add_constraint(model, f, GreaterThan(0.0))
-            add_constraint(model, f, LessThan(0.0))
-            add_constraint(model, f, EqualTo(0.0))
-            y, _ = add_constrained_variables(model, Nonnegatives(2))
-            set(model, ObjectiveSense(), MAX_SENSE)
-            set(model, ObjectiveFunction{typeof(f)}(), f)
-            optimize!(model)
-        end
+        model = Utilities.CachingOptimizer(
+            Utilities.UniversalFallback(Utilities.Model{Float64}()),
+            instantiate(optimizer; with_bridge_type = Float64),
+        )
+        set(model, Silent(), true)
+        x = add_variables(model, 3)
+        add_constraint(model, x[1], ZeroOne())
+        add_constraint(model, x[2], Integer())
+        add_constraint(model, x[1], GreaterThan(0.0))
+        add_constraint(model, x[2], LessThan(0.0))
+        add_constraint(model, x[3], EqualTo(0.0))
+        f = 1.0 * x[1] + x[2] + x[3]
+        add_constraint(model, f, GreaterThan(0.0))
+        add_constraint(model, f, LessThan(0.0))
+        add_constraint(model, f, EqualTo(0.0))
+        y, _ = add_constrained_variables(model, Nonnegatives(2))
+        set(model, ObjectiveSense(), MAX_SENSE)
+        set(model, ObjectiveFunction{typeof(f)}(), f)
+        optimize!(model)
     end
 end
 

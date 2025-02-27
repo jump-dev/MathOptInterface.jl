@@ -783,8 +783,7 @@ function MOI.set(
     ci::MOI.ConstraintIndex{F,S},
     value,
 ) where {F,S}
-    if MOI.supports_constraint(uf.model, F, S) &&
-       MOI.supports(uf.model, attr, MOI.ConstraintIndex{F,S})
+    if _model_supports_attribute(uf.model, attr, MOI.ConstraintIndex{F,S})
         MOI.set(uf.model, attr, ci, value)
     else
         _set(uf, attr, ci, value)

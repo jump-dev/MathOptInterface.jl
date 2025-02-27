@@ -434,6 +434,8 @@ function test_throw_unsupported_variable_constraint()
         MOI.UnsupportedConstraint{typeof(x),typeof(set)}(),
         MOI.Utilities.throw_unsupported(model),
     )
+    MOI.delete(model, c)
+    @test MOI.Utilities.throw_unsupported(model) === nothing
     return
 end
 
@@ -447,6 +449,8 @@ function test_throw_unsupported_affine_constraint()
         MOI.UnsupportedConstraint{typeof(func),typeof(set)}(),
         MOI.Utilities.throw_unsupported(model),
     )
+    MOI.delete(model, c)
+    @test MOI.Utilities.throw_unsupported(model) === nothing
     return
 end
 
@@ -513,6 +517,16 @@ function test_delete_ci_attribute()
     @test model.conattr[MOI.ConstraintPrimalStart()][c] == [1.0]
     MOI.delete(model, [x])
     @test !haskey(model.conattr[MOI.ConstraintPrimalStart()], c)
+    return
+end
+
+function test_set_inner_constraint_attribute()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Utilities.UniversalFallback(inner)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
+    MOI.set(model, MOI.ConstraintPrimalStart(), c, 1.0)
+    @test MOI.get(model, MOI.ConstraintPrimalStart(), c) == 1.0
     return
 end
 

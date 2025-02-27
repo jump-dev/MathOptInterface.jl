@@ -1403,6 +1403,68 @@ function test_pass_nonvariable_constraints()
     return
 end
 
+function test_optimize_abstract_callback()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    optimizer = MOI.Utilities.MockOptimizer(inner)
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+        optimizer,
+    )
+    x, _ = MOI.add_constrained_variable(model, MOI.Integer())
+    function callback_fn(cb_data)
+        _ = MOI.submit(model, MOI.HeuristicSolution(cb_data), [x], [1.0])
+        return
+    end
+    MOI.set(model, MOI.HeuristicCallback(), callback_fn)
+    MOI.optimize!(model)
+    @test model.state == MOI.ATTACHED_OPTIMIZER
+    @test optimizer.optimize_called
+    return
+end
+
+struct ErrorOnSetAttributeModel <: MOI.ModelLike end
+
+MOI.is_empty(::ErrorOnSetAttributeModel) = true
+
+function MOI.copy_to(::ErrorOnSetAttributeModel, src::MOI.ModelLike)
+    return MOI.Utilities.identity_index_map(src)
+end
+
+function MOI.set(
+    ::ErrorOnSetAttributeModel,
+    ::MOI.ObjectiveSense,
+    ::MOI.OptimizationSense,
+)
+    return error("Something other than unsupported model attribute")
+end
+
+function MOI.set(
+    ::ErrorOnSetAttributeModel,
+    ::MOI.VariablePrimalStart,
+    ::MOI.VariableIndex,
+    ::Float64,
+)
+    return error("Something other than unsupported variable attribute")
+end
+
+function test_rethrow_set_model_attribute()
+    model = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+        ErrorOnSetAttributeModel(),
+    )
+    x = MOI.add_variable(model)
+    MOI.Utilities.attach_optimizer(model)
+    @test_throws(
+        ErrorException("Something other than unsupported model attribute"),
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE),
+    )
+    @test_throws(
+        ErrorException("Something other than unsupported variable attribute"),
+        MOI.set(model, MOI.VariablePrimalStart(), x, 1.0),
+    )
+    return
+end
+
 end  # module
 
 TestCachingOptimizer.runtests()

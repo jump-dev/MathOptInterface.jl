@@ -320,7 +320,8 @@ function MOI.optimize!(m::CachingOptimizer)
         for attr in MOI.get(m, MOI.ListOfModelAttributesSet())
             if attr isa MOI.AbstractCallback
                 attach_optimizer(m)
-                return MOI.optimize!(m)
+                MOI.optimize!(m)
+                return
             end
         end
         indexmap, copied = MOI.optimize!(m.optimizer, m.model_cache)
