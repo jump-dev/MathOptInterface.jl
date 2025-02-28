@@ -1417,7 +1417,7 @@ function test_optimize_abstract_callback()
     end
     MOI.set(model, MOI.HeuristicCallback(), callback_fn)
     MOI.optimize!(model)
-    @test model.state == MOI.ATTACHED_OPTIMIZER
+    @test model.state == MOI.Utilities.ATTACHED_OPTIMIZER
     @test optimizer.optimize_called
     return
 end
