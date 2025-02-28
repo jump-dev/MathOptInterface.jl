@@ -1416,7 +1416,7 @@ function test_intercept_ForwardDiff_MethodError()
     @test Nonlinear.eval_univariate_function(r, :g, 0.0) == 0.0
     @test Nonlinear.eval_univariate_function(r, :g, 2.0) ≈ sin(2.0)^2
     @test Nonlinear.eval_univariate_gradient(r, :g, 0.0) == 0.0
-    @test_throws ErrorException Nonlinear.eval_univariate_function(r, :g, 2.0)
+    @test_throws ErrorException Nonlinear.eval_univariate_gradient(r, :g, 2.0)
     return
 end
 
