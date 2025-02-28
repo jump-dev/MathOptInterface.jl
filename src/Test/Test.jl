@@ -7,7 +7,6 @@
 module Test
 
 import LinearAlgebra
-
 import MathOptInterface as MOI
 import MathOptInterface.Utilities as MOIU
 
@@ -28,14 +27,10 @@ MOI has the problematic feature that MOI.Test.Test is not self-referential,
 and JET.jl appropriately complains with "invalid redefinition of constant
 Test."
 
-The work-around is to wrap `Test` in a module so that `MOI.Test.Test` is
-`MOI.Test`.
+The work-around is to pull in only a subset of symbols from `Test` (and not Test
+ifself) so that `MOI.Test.Test === MOI.Test`.
 =#
-module _BaseTest
-import Test: @testset, @test, @test_throws, @inferred
-end
-
-import ._BaseTest: @testset, @test, @test_throws, @inferred
+using Test: @testset, @test, @test_throws, @inferred
 
 # Be wary of adding new fields to this Config struct. Always think: can it be
 # achieved a different way?
