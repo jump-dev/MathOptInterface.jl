@@ -1425,3 +1425,4 @@ end  # TestNonlinear
 TestNonlinear.runtests()
 
 include("ReverseAD.jl")
+include("SymbolicAD.jl")
