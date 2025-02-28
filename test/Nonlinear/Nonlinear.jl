@@ -1401,6 +1401,22 @@ function test_create_binary_switch()
         ),
     )
     @test MOI.Nonlinear._create_binary_switch(1:4, [:a, :b, :c, :d]) == target
+    # Just test that these functions don't error. We'll test their contents by
+    # evaluating the actual fuctions that are `@eval`ed.
+    MOI.Nonlinear._generate_eval_univariate()
+    MOI.Nonlinear._generate_eval_univariate_2nd_deriv()
+    return
+end
+
+function test_intercept_ForwardDiff_MethodError()
+    r = Nonlinear.OperatorRegistry()
+    f(x::Float64) = sin(x)^2
+    g(x) = x > 1 ? f(x) : zero(x)
+    Nonlinear.register_operator(r, :g, 1, g)
+    @test Nonlinear.eval_univariate_function(r, :g, 0.0) == 0.0
+    @test Nonlinear.eval_univariate_function(r, :g, 2.0) ≈ sin(2.0)^2
+    @test Nonlinear.eval_univariate_gradient(r, :g, 0.0) == 0.0
+    @test_throws ErrorException Nonlinear.eval_univariate_gradient(r, :g, 2.0)
     return
 end
 
