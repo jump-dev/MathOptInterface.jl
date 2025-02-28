@@ -318,6 +318,7 @@ function runtests(
                 MOI.get(model, MOI.ConstraintSet(), ci)
             catch err
                 _runtests_error_handler(err, cannot_unbridge)
+                continue
             end
             for attr in (MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart())
                 if MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
