@@ -160,6 +160,30 @@ function test_adjoint_map_function()
     return
 end
 
+function test_ConstraintPrimalStart()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Variable.SOCtoRSOC{Float64}(inner)
+    x, ci = MOI.add_constrained_variables(model, MOI.SecondOrderCone(3))
+    @test MOI.supports(model, MOI.ConstraintPrimalStart(), typeof(ci))
+    MOI.set(model, MOI.ConstraintPrimalStart(), ci, [2, 0.5, 1])
+    @test MOI.get(model, MOI.ConstraintPrimalStart(), ci) ≈ [2, 0.5, 1]
+    MOI.set(model, MOI.ConstraintPrimalStart(), ci, nothing)
+    @test MOI.get(model, MOI.ConstraintPrimalStart(), ci) === nothing
+    return
+end
+
+function test_ConstraintDualStart()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Variable.SOCtoRSOC{Float64}(inner)
+    x, ci = MOI.add_constrained_variables(model, MOI.SecondOrderCone(3))
+    @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(ci))
+    MOI.set(model, MOI.ConstraintDualStart(), ci, [2, 0.5, 1])
+    @test MOI.get(model, MOI.ConstraintDualStart(), ci) ≈ [2, 0.5, 1]
+    MOI.set(model, MOI.ConstraintDualStart(), ci, nothing)
+    @test MOI.get(model, MOI.ConstraintDualStart(), ci) === nothing
+    return
+end
+
 end  # module
 
 TestVariableSOCtoRSOC.runtests()

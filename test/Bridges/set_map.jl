@@ -57,7 +57,7 @@ function MOI.Bridges.map_function(
 end
 
 # Workaround until https://github.com/jump-dev/MathOptInterface.jl/issues/2117 is fixed
-MOI.Bridges.inverse_map_function(::VariableSwapBridge, a::Float64) = a
+MOI.Bridges.inverse_map_function(::VariableSwapBridge, a) = a
 
 struct ConstraintSwapBridge{T} <: MOI.Bridges.Constraint.SetMapBridge{
     T,

@@ -726,6 +726,18 @@ function test_recursive_model_variable(::Type{T} = Int) where {T}
     @test MOI.is_valid(b, x)
     MOI.delete(b, x)
     @test !MOI.is_valid(b, x)
+    MOI.Bridges.runtests(
+        IdentityBridges.VariableBridge,
+        """
+        constrainedvariable: x in EqualTo(1.0)
+        minobjective: 1.0 * x + 2.0
+        """,
+        """
+        constrainedvariable: x in EqualTo(1.0)
+        minobjective: 1.0 * x + 2.0
+        """,
+    )
+    return
 end
 
 function test_recursive_model_constraint(::Type{T} = Int) where {T}
@@ -928,11 +940,7 @@ function test_bridge_supports_issue_1992()
         MOI.VectorOfVariables([x]),
         MOI.Nonpositives(1),
     )
-    # !!! warning
-    #     This test is broken with a false negative. (Getting and setting the
-    #     attribute works, even though supports is false) See the discussion in
-    #     PR#1992.
-    @test_broken MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
+    @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
     @test MOI.get(model, MOI.ConstraintDualStart(), c) === nothing
     MOI.set(model, MOI.ConstraintDualStart(), c, [1.0])
     @test MOI.get(model, MOI.ConstraintDualStart(), c) == [1.0]

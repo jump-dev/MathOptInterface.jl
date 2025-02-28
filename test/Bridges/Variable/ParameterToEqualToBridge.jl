@@ -8,8 +8,7 @@ module TestVariableParameter
 
 using Test
 
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -78,6 +77,42 @@ function test_list_of_constraint_indices()
     x, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
     F, S = MOI.VariableIndex, MOI.EqualTo{Float64}
     @test isempty(MOI.get(model, MOI.ListOfConstraintIndices{F,S}()))
+    return
+end
+
+function test_VariablePrimalStart()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Variable.ParameterToEqualTo{Float64}(inner)
+    x, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
+    @test MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    MOI.set(model, MOI.VariablePrimalStart(), x, 2.0)
+    @test MOI.get(model, MOI.VariablePrimalStart(), x) == 2.0
+    MOI.set(model, MOI.VariablePrimalStart(), x, nothing)
+    @test MOI.get(model, MOI.VariablePrimalStart(), x) === nothing
+    return
+end
+
+function test_ConstraintPrimalStart()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Variable.ParameterToEqualTo{Float64}(inner)
+    x, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
+    @test MOI.supports(model, MOI.ConstraintPrimalStart(), typeof(ci))
+    MOI.set(model, MOI.ConstraintPrimalStart(), ci, 2.0)
+    @test MOI.get(model, MOI.ConstraintPrimalStart(), ci) == 2.0
+    MOI.set(model, MOI.ConstraintPrimalStart(), ci, nothing)
+    @test MOI.get(model, MOI.ConstraintPrimalStart(), ci) === nothing
+    return
+end
+
+function test_ConstraintDualStart()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Variable.ParameterToEqualTo{Float64}(inner)
+    x, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
+    @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(ci))
+    MOI.set(model, MOI.ConstraintDualStart(), ci, 2.0)
+    @test MOI.get(model, MOI.ConstraintDualStart(), ci) == 2.0
+    MOI.set(model, MOI.ConstraintDualStart(), ci, nothing)
+    @test MOI.get(model, MOI.ConstraintDualStart(), ci) === nothing
     return
 end
 
