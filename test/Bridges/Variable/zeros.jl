@@ -46,6 +46,30 @@ function test_runtests()
     return
 end
 
+function test_bridge_error_handler()
+    for (err, flag) in (
+        ErrorException("abc") => false,
+        MOI.GetAttributeNotAllowed(MOI.ObjectiveSense()) => false,
+        MOI.GetAttributeNotAllowed(MOI.ConstraintFunction()) => true,
+    )
+        @test_throws err try
+            @assert false
+        catch
+            MOI.Bridges._runtests_error_handler(err, false)
+        end
+        if flag
+            @test MOI.Bridges._runtests_error_handler(err, true) === nothing
+        else
+            @test_throws err try
+                @assert false
+            catch
+                MOI.Bridges._runtests_error_handler(err, true)
+            end
+        end
+    end
+    return
+end
+
 function test_zeros()
     mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     bridged_mock = MOI.Bridges.Variable.Zeros{Float64}(mock)

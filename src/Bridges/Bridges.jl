@@ -222,6 +222,18 @@ function _test_structural_identical(
     return
 end
 
+_runtests_error_handler(err, ::Bool) = rethrow(err)
+
+function _runtests_error_handler(
+    err::MOI.GetAttributeNotAllowed{MOI.ConstraintFunction},
+    cannot_unbridge::Bool,
+)
+    if cannot_unbridge
+        return  # This error is expected. Do nothing.
+    end
+    return rethrow(err)
+end
+
 """
     runtests(
         Bridge::Type{<:AbstractBridge},
@@ -305,13 +317,7 @@ function runtests(
             set = try
                 MOI.get(model, MOI.ConstraintSet(), ci)
             catch err
-                # Could be thrown by `unbridged_function`
-                if cannot_unbridge &&
-                   err isa MOI.GetAttributeNotAllowed{MOI.ConstraintFunction}
-                    continue
-                else
-                    rethrow(err)
-                end
+                _runtests_error_handler(err, cannot_unbridge)
             end
             for attr in (MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart())
                 if MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
