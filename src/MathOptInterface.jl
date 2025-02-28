@@ -393,14 +393,10 @@ const IndexMap = Utilities.IndexMap
 import PrecompileTools
 
 PrecompileTools.@setup_workload begin
-    optimizer =
-        () -> Utilities.MockOptimizer(
-            Utilities.UniversalFallback(Utilities.Model{Float64}()),
-        )
     PrecompileTools.@compile_workload begin
         model = Utilities.CachingOptimizer(
             Utilities.UniversalFallback(Utilities.Model{Float64}()),
-            instantiate(optimizer; with_bridge_type = Float64),
+            instantiate(Utilities.MockOptimizer; with_bridge_type = Float64),
         )
         set(model, Silent(), true)
         x = add_variables(model, 3)
