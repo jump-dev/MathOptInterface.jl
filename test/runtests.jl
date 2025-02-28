@@ -58,3 +58,17 @@ if occursin("General", MODULES_TO_TEST)
     # Test hygiene of @model macro
     include("hygiene.jl")
 end
+
+if occursin("Test", MODULES_TO_TEST)
+    # This test is run just so that we can get code coverage on the `@testset`
+    # in `MOI.Test.runtests`. The `@testset` line doesn't get "hit" if we run
+    # via a normal `test_foo()` function because in the happy path, all tests
+    # will pass, and the `@testset "$(file)" begin` will absorb it without
+    # printing anything. Arguably, this is a bug with coverage, but macros are
+    # hard.
+    MOI.Test.runtests(
+        MOI.Utilities.Model{Float64}(),
+        MOI.Test.Config();
+        include = [r"test_model_default_ObjectiveSense"],
+    )
+end
