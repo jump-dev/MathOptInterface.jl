@@ -1408,6 +1408,18 @@ function test_create_binary_switch()
     return
 end
 
+function test_intercept_ForwardDiff_MethodError()
+    r = Nonlinear.OperatorRegistry()
+    f(x::Float64) = sin(x)^2
+    g(x) = x > 1 ? f(x) : zero(x)
+    Nonlinear.register_operator(r, :g, 1, g)
+    @test Nonlinear.eval_univariate_function(r, :g, 0.0) == 0.0
+    @test Nonlinear.eval_univariate_function(r, :g, 2.0) ≈ sin(2.0)^2
+    @test Nonlinear.eval_univariate_gradient(r, :g, 0.0) == 0.0
+    @test_throws ErrorException Nonlinear.eval_univariate_function(r, :g, 2.0)
+    return
+end
+
 end  # TestNonlinear
 
 TestNonlinear.runtests()
