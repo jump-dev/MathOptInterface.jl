@@ -131,6 +131,11 @@ function MockOptimizer(
     )
 end
 
+function MockOptimizer(::Type{T} = Float64; kwargs...) where {T}
+    inner = UniversalFallback(Utilities.Model{T}())
+    return MockOptimizer(inner, T; kwargs...)
+end
+
 """
 All user-facing indices are xor'd with this mask to produce unusual indices.
 This is good at catching bugs in solvers which assume indices are ordered 1, 2,

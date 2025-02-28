@@ -246,6 +246,31 @@ function test_error_handler()
     return
 end
 
+"Test a model that errors getting time limit unless it was previously set"
+mutable struct ModelTimeLimitSecErrorIfNotSet <: MOI.AbstractOptimizer
+    time_limit::Union{Missing,Nothing,Float64}
+end
+
+MOI.supports(::ModelTimeLimitSecErrorIfNotSet, ::MOI.TimeLimitSec) = true
+
+function MOI.get(model::ModelTimeLimitSecErrorIfNotSet, attr::MOI.TimeLimitSec)
+    if model.time_limit === missing
+        throw(MOI.GetAttributeNotAllowed(attr))
+    end
+    return model.time_limit::Union{Nothing,Float64}
+end
+
+function MOI.set(model::ModelTimeLimitSecErrorIfNotSet, ::MOI.TimeLimitSec, v)
+    model.time_limit = v
+    return
+end
+
+function test_attribute_TimeLimitSec()
+    model = ModelTimeLimitSecErrorIfNotSet(missing)
+    MOI.Test.test_attribute_TimeLimitSec(model, MOI.Test.Config())
+    return
+end
+
 end  # module
 
 TestTest.runtests()

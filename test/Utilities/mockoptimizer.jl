@@ -285,6 +285,28 @@ function test_is_set_by_optimize_optimizer_attribute()
     return
 end
 
+function test_empty_constructor()
+    mock = MOI.Utilities.MockOptimizer(Int; supports_names = false)
+    @test mock.supports_names == false
+    @test isa(
+        mock,
+        MOI.Utilities.MockOptimizer{
+            MOI.Utilities.UniversalFallback{MOI.Utilities.Model{Int}},
+            Int,
+        },
+    )
+    mock = MOI.Utilities.MockOptimizer()
+    @test mock.supports_names
+    @test isa(
+        mock,
+        MOI.Utilities.MockOptimizer{
+            MOI.Utilities.UniversalFallback{MOI.Utilities.Model{Float64}},
+            Float64,
+        },
+    )
+    return
+end
+
 end  # module
 
 TestMockOptimizer.runtests()
