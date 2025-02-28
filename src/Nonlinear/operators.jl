@@ -21,22 +21,26 @@ function _create_binary_switch(ids, exprs)
     )
 end
 
-# We use a let block here for `expr` to create a local variable that does not
-# persist in the scope of the module. All we care about is the _eval_univariate
-# function that is eval'd as a result.
-let
+function _generate_eval_univariate()
     exprs = map(SYMBOLIC_UNIVARIATE_EXPRESSIONS) do arg
         return :(return $(arg[1])(x), $(arg[2]))
     end
-    @eval @inline function _eval_univariate(id, x::T) where {T}
-        $(_create_binary_switch(1:length(exprs), exprs))
-        return error("Invalid id for univariate operator: $id")
-    end
-    ∇²f_exprs = map(arg -> :(return $(arg[3])), SYMBOLIC_UNIVARIATE_EXPRESSIONS)
-    @eval @inline function _eval_univariate_2nd_deriv(id, x::T) where {T}
-        $(_create_binary_switch(1:length(∇²f_exprs), ∇²f_exprs))
-        return error("Invalid id for univariate operator: $id")
-    end
+    return _create_binary_switch(1:length(exprs), exprs)
+end
+
+@eval @inline function _eval_univariate(id, x::T) where {T}
+    $(_generate_eval_univariate())
+    return error("Invalid id for univariate operator: $id")
+end
+
+function _generate_eval_univariate_2nd_deriv()
+    exprs = map(arg -> :(return $(arg[3])), SYMBOLIC_UNIVARIATE_EXPRESSIONS)
+    return _create_binary_switch(1:length(exprs), exprs)
+end
+
+@eval @inline function _eval_univariate_2nd_deriv(id, x::T) where {T}
+    $(_generate_eval_univariate_2nd_deriv())
+    return error("Invalid id for univariate operator: $id")
 end
 
 struct _UnivariateOperator{F,F′,F′′}

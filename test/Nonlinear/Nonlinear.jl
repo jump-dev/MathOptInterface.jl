@@ -1401,6 +1401,10 @@ function test_create_binary_switch()
         ),
     )
     @test MOI.Nonlinear._create_binary_switch(1:4, [:a, :b, :c, :d]) == target
+    # Just test that these functions don't error. We'll test their contents by
+    # evaluating the actual fuctions that are `@eval`ed.
+    MOI.Nonlinear._generate_eval_univariate()
+    MOI.Nonlinear._generate_eval_univariate_2nd_deriv()
     return
 end
 
