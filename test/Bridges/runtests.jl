@@ -7,7 +7,8 @@
 using Test
 
 @testset "$(file)" for file in readdir(@__DIR__; join = true)
-    if !endswith(file, ".jl") || endswith(file, "runtests.jl")
+    if !endswith(file, ".jl") ||
+       (endswith(file, "runtests.jl") || endswith(file, "sdpa_models.jl"))
         continue
     end
     include(file)
