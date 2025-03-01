@@ -23,8 +23,14 @@ jobs:
       fail-fast: false
       matrix:
         moi_test_modules:
-          - 'General;Benchmarks;FileFormats;Nonlinear'
+          - 'General'
+          - 'Benchmarks'
           - 'Bridges'
+          - 'Bridges/Constraint'
+          - 'Bridges/Objective'
+          - 'Bridges/Variable'
+          - 'FileFormats'
+          - 'Nonlinear'
           - 'Test'
           - 'Utilities'
         machine:
