@@ -6,9 +6,9 @@
 
 using Test
 
+files_to_exclude = ["runtests.jl", "sdpa_models.jl", "utilities.jl"]
 @testset "$(file)" for file in readdir(@__DIR__; join = true)
-    if !endswith(file, ".jl") ||
-       (endswith(file, "runtests.jl") || endswith(file, "sdpa_models.jl"))
+    if !endswith(file, ".jl") || any(f -> endswith(file, f), files_to_exclude)
         continue
     end
     include(file)
