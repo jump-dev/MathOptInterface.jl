@@ -23,13 +23,10 @@ jobs:
       fail-fast: false
       matrix:
         moi_test_modules:
-          - General
-          - Benchmarks
-          - Bridges
-          - FileFormats
-          - Nonlinear
-          - Test
-          - Utilities
+          - 'General;Benchmarks;FileFormats;Nonlinear'
+          - 'Bridges'
+          - 'Test'
+          - 'Utilities'
         machine:
           - version: 'nightly'
             os: ubuntu-latest
