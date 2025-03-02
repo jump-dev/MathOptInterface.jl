@@ -6,11 +6,9 @@
 
 using Test
 
-for file in readdir(@__DIR__)
-    if file in ["Utilities.jl"]
+@testset "$(file)" for file in readdir(@__DIR__; join = true)
+    if !endswith(file, ".jl") || endswith(file, "runtests.jl")
         continue
     end
-    @testset "$(file)" begin
-        include(file)
-    end
+    include(file)
 end

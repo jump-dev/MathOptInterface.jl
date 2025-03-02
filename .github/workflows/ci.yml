@@ -6,66 +6,50 @@ on:
       - release-*
   pull_request:
     types: [opened, synchronize, reopened]
+concurrency:
+  # Skip intermediate builds: always.
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 # needed to allow julia-actions/cache to delete old caches that it has created
 permissions:
   actions: write
   contents: read
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ matrix.moi_test_modules }} - ${{ github.event_name }}
-    runs-on: ${{ matrix.os }}
+    name: Julia ${{ matrix.machine.version }} - ${{ matrix.machine.os }}-${{ matrix.machine.arch }} - ${{ matrix.moi_test_modules }}
+    runs-on: ${{ matrix.machine.os }}
     strategy:
       fail-fast: false
       matrix:
-        # Since MOI doesn't have binary dependencies, only test on a subset of
-        # possible platforms.
-        include:
+        moi_test_modules:
+          - 'General;Benchmarks;FileFormats;Nonlinear'
+          - 'Bridges'
+          - 'Bridges/Constraint;Bridges/Objective;Bridges/Variable'
+          - 'Test'
+          - 'Utilities'
+        machine:
           - version: 'nightly'
             os: ubuntu-latest
             arch: x64
-            moi_test_modules: 'General;Nonlinear;Bridges;FileFormats'
-          - version: 'nightly'
-            os: ubuntu-latest
-            arch: x64
-            moi_test_modules: 'Test;Utilities;Benchmarks'
           - version: '1'
             os: ubuntu-latest
             arch: x64
-            moi_test_modules: 'General;Nonlinear;Bridges;FileFormats'
-          - version: '1'
-            os: ubuntu-latest
-            arch: x64
-            moi_test_modules: 'Test;Utilities;Benchmarks'
           - version: '1'
             os: windows-latest
             arch: x64
-            moi_test_modules: 'General;Nonlinear;Bridges;FileFormats'
-          - version: '1'
-            os: windows-latest
-            arch: x64
-            moi_test_modules: 'Test;Utilities;Benchmarks'
           - version: '1.6'
             os: ubuntu-latest
             arch: x64
-            moi_test_modules: 'General;Nonlinear;Bridges;FileFormats'
-          - version: '1.6'
-            os: ubuntu-latest
-            arch: x64
-            moi_test_modules: 'Test;Utilities;Benchmarks'
           - version: '1'
             os: ubuntu-latest
             arch: x86
-            moi_test_modules: 'General;Nonlinear;Bridges;FileFormats'
-          - version: '1'
-            os: ubuntu-latest
-            arch: x86
-            moi_test_modules: 'Test;Utilities;Benchmarks'
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
         with:
-          version: ${{ matrix.version }}
-          arch: ${{ matrix.arch }}
+          version: ${{ matrix.machine.version }}
+          arch: ${{ matrix.machine.arch }}
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1

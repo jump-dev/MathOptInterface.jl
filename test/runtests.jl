@@ -11,6 +11,9 @@
 #  * General
 #  * Benchmarks
 #  * Bridges
+#  * Bridges/Constraint
+#  * Bridges/Objective
+#  * Bridges/Variable
 #  * FileFormats
 #  * Nonlinear
 #  * Test
@@ -19,38 +22,17 @@
 # If present, the tests run only those submodules defined above. `General` is
 # not a submodule, but it runs all of the top-level tests in MOI.
 
-using Test
-
 # This file gets called first. If it doesn't crash, all is well.
 include("issue980.jl")
-
-import MathOptInterface as MOI
 
 MODULES_TO_TEST = get(
     ENV,
     "MOI_TEST_MODULES",
-    "General;Benchmarks;Bridges;FileFormats;Nonlinear;Test;Utilities",
+    "General;Benchmarks;Bridges;Bridges/Constraint;Bridges/Objective;Bridges/Variable;FileFormats;Nonlinear;Test;Utilities",
 )
 
-if occursin("General", MODULES_TO_TEST)
-    @test isempty(Test.detect_ambiguities(MOI; recursive = true))
-    for file in readdir(@__DIR__)
-        if file in ["issue980.jl", "dummy.jl", "hygiene.jl", "runtests.jl"]
-            continue
-        elseif !endswith(file, ".jl")
-            continue
-        end
-        @testset "$(file)" begin
-            include(file)
-        end
-    end
-end
-
 for submodule in split(MODULES_TO_TEST, ";")
-    if submodule == "General"
-        continue
-    end
-    include("$(submodule)/$(submodule).jl")
+    include("$(submodule)/runtests.jl")
     GC.gc()  # Force GC run here to reduce memory pressure
 end
 
