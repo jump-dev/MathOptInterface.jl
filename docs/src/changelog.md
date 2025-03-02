@@ -7,6 +7,24 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.37.1 (March 3, 2025)
+
+### Fixed
+
+ - Fixed [`modify`](@ref) with [`MultirowChange`](@ref) in
+   `Bridges.Constraint.SetMapBridge` (#2662)
+ - Fixed [`attribute_value_type`](@ref) for `Bridges.ListOfNonstandardBridges`
+   (#2665)
+
+### Other
+
+ - This release contains a large number of pull requests that increase test
+   coverage (#2657), (#2658), (#2659), (#2660), (#2661), (#2663), (#2670),
+   (#2671), (#2672), (#2675)
+ - Changed [`Bridges.Variable.ParameterToEqualToBridge`](@ref) to be a subtype
+   of [`Variable.SetMapBridge`](@ref) (#2664)
+ - Improved parallelism in the CI tests (#2674)
+
 ## v1.37.0 (February 24, 2025)
 
 ### Added
