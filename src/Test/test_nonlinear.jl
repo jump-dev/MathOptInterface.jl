@@ -1561,6 +1561,9 @@ function test_nonlinear_expression_multivariate_function(
         g[2] = 2 * (y - 2)
         return
     end
+    g = zeros(2)
+    ∇f(g, 2.0, 3.0)
+    @test g == [2.0, 2.0]
     MOI.set(model, MOI.UserDefinedFunction(:my_square, 2), (f, ∇f))
     x = MOI.add_variable(model)
     y = MOI.add_variable(model)
