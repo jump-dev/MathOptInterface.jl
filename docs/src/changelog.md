@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
  - Fixed [`modify`](@ref) with [`MultirowChange`](@ref) in
-   `Bridges.Constraint.SetMapBridge` (#2662)
- - Fixed [`attribute_value_type`](@ref) for `Bridges.ListOfNonstandardBridges`
+   [`Bridges.Constraint.SetMapBridge`](@ref) (#2662)
+ - Fixed [`attribute_value_type`](@ref) for [`Bridges.ListOfNonstandardBridges`](@ref)
    (#2665)
 
 ### Other
@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    coverage (#2657), (#2658), (#2659), (#2660), (#2661), (#2663), (#2670),
    (#2671), (#2672), (#2675)
  - Changed [`Bridges.Variable.ParameterToEqualToBridge`](@ref) to be a subtype
-   of [`Variable.SetMapBridge`](@ref) (#2664)
+   of [`Bridges.Variable.SetMapBridge`](@ref) (#2664)
  - Improved parallelism in the CI tests (#2674)
 
 ## v1.37.0 (February 24, 2025)
