@@ -117,7 +117,6 @@ end
 
 function MOI.delete(model::MOI.ModelLike, bridge::SOS1ToMILPBridge)
     if isempty(bridge.variables)
-        println("HHello")
         return  # We're deleting the bridge before final_touch
     end
     MOI.delete(model, bridge.equal_to)
