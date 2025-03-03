@@ -119,6 +119,21 @@ function test_runtests_error_affine()
     return
 end
 
+function test_delete_before_final_touch()
+    model = MOI.Bridges.Constraint.SOS1ToMILP{Float64}(
+        MOI.Utilities.Model{Float64}(),
+    )
+    x = MOI.add_variables(model, 2)
+    c = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables(x),
+        MOI.SOS1([1.0, 2.0]),
+    )
+    MOI.delete(model, c)
+    @test !MOI.is_valid(model, c)
+    return
+end
+
 end  # module
 
 TestConstraintSOS1ToMILP.runtests()

@@ -126,6 +126,9 @@ function MOI.delete(
     model::MOI.ModelLike,
     bridge::IndicatorToMILPBridge{T},
 ) where {T}
+    if bridge.slack === nothing
+        return  # We're deleting the bridge before final_touch
+    end
     MOI.delete.(model, bridge.slack_bounds)
     MOI.delete(model, bridge.constraint)
     MOI.delete(model, bridge.slack::MOI.VariableIndex)
