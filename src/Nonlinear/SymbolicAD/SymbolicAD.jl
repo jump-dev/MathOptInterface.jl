@@ -262,9 +262,6 @@ function simplify!(::Val{:+}, f::MOI.ScalarNonlinearFunction)
             push!(new_args, arg)
         end
     end
-    if first_affine_term !== 0 && !(new_args[first_affine_term] isa Real)
-        MOI.Utilities.canonicalize!(new_args[first_affine_term])
-    end
     if length(new_args) == 0
         # +() -> false
         return false
