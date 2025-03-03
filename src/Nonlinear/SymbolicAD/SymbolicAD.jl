@@ -1509,7 +1509,7 @@ end
 # A default fallback for all types
 _add_to_affine!(::Any, ::Any, ::T) where {T} = nothing
 
-# The creation of `ret::MOI.ScalarAffineFunction` has been delayed until now!
+# The creation of `ret::MOI.ScalarAffineFunction` has been delayed until now.
 function _add_to_affine!(
     ::Nothing,
     f::Union{Real,MOI.VariableIndex,MOI.ScalarAffineFunction},

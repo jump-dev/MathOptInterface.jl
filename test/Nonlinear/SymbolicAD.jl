@@ -720,9 +720,9 @@ function test_simplify_if_affine()
         op(:+, x, x)=>2.0*x,
         op(:+, x, 2, x)=>2.0*x+2.0,
         op(:+, x, 2, op(:+, x))=>2.0*x+2.0,
-        op(:+, 1.0*x, 1.0*x+2.0)=>2.0*x+2.0,
-        op(:-, 1.0*x+2.0)=>-1.0*x-2.0,
-        op(:*, 2, 1.0*x+2.0, 3)=>6.0*x+12.0,
+        op(:+, 1.0 * x, 1.0 * x + 2.0)=>2.0*x+2.0,
+        op(:-, 1.0 * x + 2.0)=>-1.0*x-2.0,
+        op(:*, 2, 1.0 * x + 2.0, 3)=>6.0*x+12.0,
         # Early termination because not affine
         op(:+, op(:sin, x))=>nothing,
         op(:-, op(:sin, x))=>nothing,
