@@ -103,7 +103,7 @@ julia> f = MOI.ScalarNonlinearFunction(
 +(+(1.0, MOI.VariableIndex(1)), 3.0 + 2.0 MOI.VariableIndex(1))
 
 julia> MOI.Nonlinear.SymbolicAD.simplify(f)
-+(1.0, MOI.VariableIndex(1), 3.0 + 2.0 MOI.VariableIndex(1))
+4.0 + 3.0 MOI.VariableIndex(1)
 ```
 
 and trivial identities such as ``x^1 = x``:

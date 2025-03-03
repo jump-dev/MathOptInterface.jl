@@ -117,7 +117,7 @@ function simplify!(f::MOI.ScalarNonlinearFunction)
             push!(result_stack, arg)
         end
     end
-    return only(result_stack)
+    return _simplify_if_affine!(only(result_stack))
 end
 
 function simplify!(f::MOI.VectorAffineFunction{T}) where {T}
@@ -1508,5 +1508,102 @@ function MOI.eval_hessian_lagrangian(model::Evaluator, H, x, σ, μ)
     end
     return
 end
+
+# A default fallback for all types
+_add_to_affine!(::Any, ::Any, ::T) where {T} = nothing
+
+# The creation of `ret::MOI.ScalarAffineFunction` has been delayed until now!
+function _add_to_affine!(
+    ::Nothing,
+    f::Union{Real,MOI.VariableIndex,MOI.ScalarAffineFunction},
+    scale::T,
+) where {T}
+    return _add_to_affine!(zero(MOI.ScalarAffineFunction{T}), f, scale)
+end
+
+function _add_to_affine!(
+    ret::MOI.ScalarAffineFunction{T},
+    x::S,
+    scale::T,
+) where {T,S<:Real}
+    if promote_type(T, S) != T
+        return  # We can't store `S` in `T`.
+    end
+    ret.constant += scale * convert(T, x)
+    return ret
+end
+
+function _add_to_affine!(
+    ret::MOI.ScalarAffineFunction{T},
+    x::MOI.VariableIndex,
+    scale::T,
+) where {T}
+    push!(ret.terms, MOI.ScalarAffineTerm(scale, x))
+    return ret
+end
+
+function _add_to_affine!(
+    ret::MOI.ScalarAffineFunction{T},
+    f::MOI.ScalarAffineFunction{S},
+    scale::T,
+) where {T,S}
+    if promote_type(T, S) != T
+        return  # We can't store `S` in `T`.
+    end
+    ret = _add_to_affine!(ret, f.constant, scale)
+    for term in f.terms
+        ret = _add_to_affine!(ret, term.variable, scale * term.coefficient)
+    end
+    return ret
+end
+
+function _add_to_affine!(
+    ret::Union{Nothing,MOI.ScalarAffineFunction{T}},
+    f::MOI.ScalarNonlinearFunction,
+    scale::T,
+) where {T}
+    if f.head == :+
+        for arg in f.args
+            ret = _add_to_affine!(ret, arg, scale)
+            if ret === nothing
+                return
+            end
+        end
+        return ret
+    elseif f.head == :-
+        if length(f.args) == 1
+            return _add_to_affine!(ret, only(f.args), -scale)
+        end
+        @assert length(f.args) == 2
+        ret = _add_to_affine!(ret, f.args[1], scale)
+        if ret === nothing
+            return
+        end
+        return _add_to_affine!(ret, f.args[2], -scale)
+    elseif f.head == :*
+        y = nothing
+        for arg in f.args
+            if arg isa Real
+                scale *= arg
+            elseif y === nothing
+                y = arg
+            else
+                return # We already have a `y`. Can't multiple factors.
+            end
+        end
+        return _add_to_affine!(ret, something(y, one(T)), convert(T, scale))
+    end
+    return  # An unsupported f.head
+end
+
+function _simplify_if_affine!(f::MOI.ScalarNonlinearFunction)
+    ret = _add_to_affine!(nothing, f, 1.0)
+    if ret === nothing
+        return f
+    end
+    return simplify!(ret::MOI.ScalarAffineFunction{Float64})
+end
+
+_simplify_if_affine!(f::Any) = f
 
 end  # module

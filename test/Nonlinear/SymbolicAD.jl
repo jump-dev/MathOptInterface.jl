@@ -239,6 +239,7 @@ end
 # simplify(::Val{:*}, f::MOI.ScalarNonlinearFunction)
 function test_simplify_ScalarNonlinearFunction_multiplication()
     x, y, z = MOI.VariableIndex.(1:3)
+    sinx = op(:sin, x)
     # *(x, *(y, z)) -> *(x, y, z)
     @test ≈(SymbolicAD.simplify(op(:*, x, op(:*, y, z))), op(:*, x, y, z))
     # *(x, *(y, z, *(x, 2))) -> *(x, y, z, x, 2)
@@ -248,11 +249,11 @@ function test_simplify_ScalarNonlinearFunction_multiplication()
         op(:*, x, y, z, x, 2),
     )
     # *(x, 3, 2) -> *(x, 6)
-    ret = op(:*, x, 3, 2)
-    @test ≈(SymbolicAD.simplify(ret), op(:*, x, 6))
+    @test ≈(SymbolicAD.simplify(op(:*, x, 3, 2)), 6.0 * x)
+    @test ≈(SymbolicAD.simplify(op(:*, sinx, 3, 2)), op(:*, sinx, 6))
     # *(3, x, 2) -> *(6, x)
-    ret = op(:*, 3, x, 2)
-    @test ≈(SymbolicAD.simplify(ret), op(:*, 6, x))
+    @test ≈(SymbolicAD.simplify(op(:*, 3, x, 2)), 6.0 * x)
+    @test ≈(SymbolicAD.simplify(op(:*, 3, sinx, 2)), op(:*, 6, sinx))
     # *(x, 1) -> x
     ret = op(:*, x, 1)
     @test ≈(SymbolicAD.simplify(ret), x)
@@ -272,36 +273,39 @@ end
 # simplify(::Val{:+}, f::MOI.ScalarNonlinearFunction)
 function test_simplify_ScalarNonlinearFunction_addition()
     x, y, z = MOI.VariableIndex.(1:3)
-    # (+(x, +(y, z)))=>(+(x, y, z)),
-    @test ≈(SymbolicAD.simplify(op(:+, x, op(:+, y, z))), op(:+, x, y, z))
-    # +(sin(x), -cos(x))=>sin(x)-cos(x),
     sinx = op(:sin, x)
     cosx = op(:cos, x)
+    # (+(x, +(y, z)))=>(+(x, y, z)),
+    @test ≈(SymbolicAD.simplify(op(:+, sinx, op(:+, y, z))), op(:+, sinx, y, z))
+    @test ≈(
+        SymbolicAD.simplify(op(:+, x, op(:+, y, z))),
+        1.0 * x + 1.0 * y + 1.0 * z,
+    )
+    # +(sin(x), -cos(x))=>sin(x)-cos(x),
     @test ≈(SymbolicAD.simplify(op(:+, sinx, op(:-, cosx))), op(:-, sinx, cosx))
     # (+(x, 1, 2))=>(+(x, 3)),
-    ret = op(:+, x, 1, 2)
-    @test ≈(SymbolicAD.simplify(ret), op(:+, x, 3))
-    # (+(1, x, 2))=>(+(3, x)),
-    ret = op(:+, 1, x, 2)
-    @test ≈(SymbolicAD.simplify(ret), op(:+, 3, x))
+    @test ≈(SymbolicAD.simplify(op(:+, x, 1, 2)), x + 3.0)
+    @test ≈(SymbolicAD.simplify(op(:+, sinx, 1, 2)), op(:+, sinx, 3))
+    # (+(1, x, 2))=>(+(3, x)),ret =
+    @test ≈(SymbolicAD.simplify(op(:+, 1, x, 2)), x + 3.0)
+    @test ≈(SymbolicAD.simplify(op(:+, 1, sinx, 2)), op(:+, 3, sinx))
     # +(x, 0) -> x
-    ret = op(:+, x, 0)
-    @test SymbolicAD.simplify(ret) ≈ x
+    @test SymbolicAD.simplify(op(:+, x, 0)) ≈ x
     # +(0, x) -> x
-    ret = op(:+, 0, x)
-    @test SymbolicAD.simplify(ret) ≈ x
+    @test SymbolicAD.simplify(op(:+, 0, x)) ≈ x
     # +(-(x, x), 0) -> 0
-    f = op(:+, op(:-, x, x), 0)
-    @test SymbolicAD.simplify(f) === false
+    @test SymbolicAD.simplify(op(:+, op(:-, x, x), 0)) === false
     return
 end
 
 # simplify(::Val{:-}, f::MOI.ScalarNonlinearFunction)
 function test_simplify_ScalarNonlinearFunction_subtraction()
     x, y = MOI.VariableIndex(1), MOI.VariableIndex(2)
+    sinx = op(:sin, x)
     f = op(:-, x)
     # -x -> -x
-    @test SymbolicAD.simplify(f) ≈ f
+    @test SymbolicAD.simplify(op(:-, x)) ≈ -1.0 * x
+    @test SymbolicAD.simplify(op(:-, sinx)) ≈ op(:-, sinx)
     # -(-(x)) -> x
     ret = op(:-, f)
     @test SymbolicAD.simplify(ret) ≈ x
@@ -309,18 +313,16 @@ function test_simplify_ScalarNonlinearFunction_subtraction()
     ret = op(:-, x, 0)
     @test SymbolicAD.simplify(ret) ≈ x
     # -(0, x) -> -x
-    ret = op(:-, 0, x)
-    @test SymbolicAD.simplify(ret) ≈ f
+    @test SymbolicAD.simplify(op(:-, 0, sinx)) ≈ op(:-, sinx)
     # -(x, x) -> 0
     ret = op(:-, x, x)
     @test SymbolicAD.simplify(ret) ≈ 0
     # -(x, -y) -> +(x, y)
-    f = op(:-, x, op(:-, y))
-    target = op(:+, x, y)
-    @test SymbolicAD.simplify(f) ≈ target
+    @test SymbolicAD.simplify(op(:-, x, op(:-, y))) ≈ 1.0 * x + 1.0 * y
+    @test SymbolicAD.simplify(op(:-, sinx, op(:-, y))) ≈ op(:+, sinx, y)
     # -(x, y) -> -(x, y)
-    f = op(:-, x, y)
-    @test SymbolicAD.simplify(f) ≈ f
+    @test SymbolicAD.simplify(op(:-, sinx, y)) ≈ op(:-, sinx, y)
+    @test SymbolicAD.simplify(op(:-, x, y)) ≈ 1.0 * x - 1.0 * y
     return
 end
 
@@ -412,7 +414,8 @@ function test_simplify_deep()
         g = op(:^, x[i], 1)
         f = op(:+, f, g)
     end
-    @test ≈(SymbolicAD.simplify(f), op(:+, convert(Vector{Any}, x)))
+    ret = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.0)
+    @test ≈(SymbolicAD.simplify(f), ret)
     return
 end
 
@@ -697,6 +700,39 @@ function test_SymbolicAD_univariate_registered()
     MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
     x = [1.0]
     @test MOI.eval_objective(evaluator, x) == 0.25
+    return
+end
+
+function test_simplify_if_affine()
+    x = MOI.VariableIndex(1)
+    for (f, ret) in Any[
+        op(:*, 2)=>2,
+        op(:*, 2 // 3)=>2/3,
+        op(:*, 2, 3)=>6,
+        op(:*, 2, x, 3)=>6*x,
+        op(:+, 2, 3)=>5,
+        op(:-, 2)=>-2,
+        op(:-, 2, 3)=>-1,
+        op(:-, x)=>-1*x,
+        op(:-, x, 2)=>1.0*x-2.0,
+        op(:-, 2, x)=>2.0+-1.0*x,
+        op(:+, 2, x)=>2+x,
+        op(:+, x, x)=>2.0*x,
+        op(:+, x, 2, x)=>2.0*x+2.0,
+        op(:+, x, 2, op(:+, x))=>2.0*x+2.0,
+        # Early termination because not affine
+        op(:+, op(:sin, x))=>nothing,
+        op(:-, op(:sin, x))=>nothing,
+        op(:-, op(:sin, x), 1)=>nothing,
+        op(:-, x, op(:sin, x))=>nothing,
+        op(:*, 2, x, 3, x)=>nothing,
+        op(:*, 2, 3, op(:sin, x))=>nothing,
+        op(:log, x)=>nothing,
+        op(:+, big(1) * x, big(2))=>nothing,
+        op(:+, x, big(2))=>nothing,
+    ]
+        @test SymbolicAD._simplify_if_affine!(f) ≈ something(ret, f)
+    end
     return
 end
 
