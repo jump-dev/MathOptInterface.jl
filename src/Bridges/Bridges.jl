@@ -136,7 +136,9 @@ end
 """
 struct ListOfNonstandardBridges{T} <: MOI.AbstractOptimizerAttribute end
 
-MOI.attribute_value_type(::ListOfNonstandardBridges) = Vector{Type}
+# This should be Vector{Type}, but MOI <=v1.37.0 had a bug that meant this was
+# not implemented. To maintain backwards compatibility, we make this `Vector`.
+MOI.attribute_value_type(::ListOfNonstandardBridges) = Vector
 
 MOI.is_copyable(::ListOfNonstandardBridges) = false
 
