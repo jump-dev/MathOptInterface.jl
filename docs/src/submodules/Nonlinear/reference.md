@@ -72,6 +72,7 @@ Nonlinear.Evaluator
 Nonlinear.AbstractAutomaticDifferentiation
 Nonlinear.ExprGraphOnly
 Nonlinear.SparseReverseMode
+Nonlinear.SymbolicMode
 ```
 
 ## Data-structure
@@ -85,4 +86,14 @@ Nonlinear.adjacency_matrix
 Nonlinear.parse_expression
 Nonlinear.convert_to_expr
 Nonlinear.ordinal_index
+```
+
+## SymbolicAD
+
+```@docs
+Nonlinear.SymbolicAD.simplify
+Nonlinear.SymbolicAD.simplify!
+Nonlinear.SymbolicAD.variables
+Nonlinear.SymbolicAD.derivative
+Nonlinear.SymbolicAD.gradient_and_hessian
 ```
