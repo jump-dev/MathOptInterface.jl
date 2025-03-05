@@ -991,7 +991,15 @@ function operate(
             append!(out, scalarize(a))
         end
     end
-    return MOI.VectorNonlinearFunction(out)
+    _to_new_snf(f::MOI.ScalarNonlinearFunction) = copy(f)
+    _to_new_snf(f) = convert(MOI.ScalarNonlinearFunction, f)
+    # We need to `copy` the ScalarNonlinearFunction rows here, everything else
+    # will be `convert(ScalarNonlinearFunction, row)` into a new object, but the
+    # ScalarNonlinearFunction rows won't be, so mutating the return value of
+    # this `operate` method will mutate the inputs. This _is_ what Base.vcat
+    # does, but it doesn't fit with the general assumption that
+    # `Utilities.operate(` returns a new object.
+    return MOI.VectorNonlinearFunction(_to_new_snf.(out))
 end
 
 ### 6a: operate(::typeof(imag), ::Type{T}, ::F)
