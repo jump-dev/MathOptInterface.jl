@@ -416,6 +416,8 @@ _fake_start(value, ::MOI.AbstractScalarSet) = value
 
 _fake_start(value, set::MOI.AbstractVectorSet) = fill(value, MOI.dimension(set))
 
+_fake_start(value::AbstractVector, set::MOI.AbstractVectorSet) = value
+
 function _bridged_model(Bridge::Type{<:Constraint.AbstractBridge}, inner)
     return Constraint.SingleBridgeOptimizer{Bridge}(inner)
 end
