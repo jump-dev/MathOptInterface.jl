@@ -992,7 +992,7 @@ function operate(
         end
     end
     _to_new_snf(f::MOI.ScalarNonlinearFunction) = copy(f)
-    _to_new_snf(f) = convert(MMOI.ScalarNonlinearFunction, f)
+    _to_new_snf(f) = convert(MOI.ScalarNonlinearFunction, f)
     # We need to `copy` the ScalarNonlinearFunction rows here, everything else
     # will be `convert(ScalarNonlinearFunction, row)` into a new object, but the
     # ScalarNonlinearFunction rows won't be, so mutating the return value of
