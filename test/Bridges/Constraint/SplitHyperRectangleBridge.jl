@@ -36,21 +36,6 @@ function test_runtests_VectorOfVariables()
     return
 end
 
-function test_runtests_VectorOfVariables_zeros()
-    MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.SplitHyperRectangleBridge,
-        """
-        variables: x, y
-        [x, y] in HyperRectangle([0.0, -1.0], [1.0, 0.0])
-        """,
-        """
-        variables: x, y
-        [1.0 * x, 1.0 * y + 1.0, 1.0 + -1.0 * x, -1.0 * y] in Nonnegatives(4)
-        """,
-    )
-    return
-end
-
 function test_runtests_infinity_lower()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.SplitHyperRectangleBridge,
@@ -127,6 +112,29 @@ function test_basic_HyperRectangle()
     MOI.Test.test_basic_VectorQuadraticFunction_HyperRectangle(model, config)
     MOI.empty!(model)
     MOI.Test.test_basic_VectorNonlinearFunction_HyperRectangle(model, config)
+    return
+end
+
+function test_runtests_VectorOfVariables_mix_of_signs()
+    #     0 <= a <= 1       |        a >= 0
+    #  -Inf <= b <= Inf     |        c >= 0
+    #     0 <= c <= Inf     |   -1 + d >= 0
+    #     1 <= d <= Inf     |    1 - a >= 0
+    #  -Inf <= e <= 0       |      - e >= 0
+    #  -Inf <= f <= Inf     |    1 - g >= 0
+    #  -Inf <= g <= 1       |
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitHyperRectangleBridge,
+        """
+        variables: a, b, c, d, e, f, g
+        [a, b, c, d, e, f, g] in HyperRectangle([0.0, -Inf, 0.0, 1.0, -Inf, -Inf, -Inf], [1.0, Inf, Inf, Inf, 0.0, Inf, 1.0])
+        """,
+        """
+        variables: a, b, c, d, e, f, g
+        [1.0 * a, 1.0 * c, 1.0 * d + -1.0, 1.0 + -1.0 * a, -1.0 * e, 1.0 + -1.0 * g] in Nonnegatives(6)
+        """;
+        constraint_start = [1.1, 0.0, 1.2, 1.3, -1.1, 0.0, -1.2],
+    )
     return
 end
 

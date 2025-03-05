@@ -128,8 +128,14 @@ function MOI.get(
             push!(upper_bound_rows, row)
         end
     end
-    for row in upper_bound_rows
+    for (row, (l, u)) in enumerate(zip(bridge.set.lower, bridge.set.upper))
+        if !isfinite(u)
+            continue
+        end
         n_f_rows += 1
+        if !(row in upper_bound_rows)
+            continue
+        end
         func[row] = if iszero(bridge.set.upper[row])
             MOI.Utilities.operate(-, T, f_s[n_f_rows])
         else
