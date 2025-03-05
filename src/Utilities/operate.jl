@@ -991,7 +991,11 @@ function operate(
             append!(out, scalarize(a))
         end
     end
-    return MOI.VectorNonlinearFunction(out)
+    # We need to `copy` the rows hre, because if `a` are mutable
+    # AbstractScalarFunction then mutating the return value will mutate the
+    # inputs. This _is_ what Base.vcat does, but it doesn't fit with the general
+    # assumption that `Utilities.operate(` returns a new object.
+    return MOI.VectorNonlinearFunction(copy.(out))
 end
 
 ### 6a: operate(::typeof(imag), ::Type{T}, ::F)
