@@ -1546,9 +1546,7 @@ function _add_to_quadratic!(
     scale::T,
     f::MOI.ScalarAffineTerm{S},
 ) where {T<:Real,S}
-    if promote_type(T, S) != T
-        return  # We can't store `S` in `T`.
-    end
+    @assert promote_type(T, S) == T
     push!(
         ret.affine_terms,
         MOI.ScalarAffineTerm{T}(scale * f.coefficient, f.variable),
@@ -1561,9 +1559,7 @@ function _add_to_quadratic!(
     scale::T,
     f::MOI.ScalarQuadraticTerm{S},
 ) where {T<:Real,S}
-    if promote_type(T, S) != T
-        return  # We can't store `S` in `T`.
-    end
+    @assert promote_type(T, S) == T
     push!(
         ret.quadratic_terms,
         MOI.ScalarQuadraticTerm{T}(

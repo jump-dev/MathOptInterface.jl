@@ -406,6 +406,14 @@ function test_simplify_VectorNonlinearFunction()
     return
 end
 
+function test_simplify_VectorNonlinearFunction_abstract()
+    x = MOI.VariableIndex(1)
+    f = MOI.VectorNonlinearFunction([x, 1.0 * x, op(:sin, x)])
+    g = MOI.VectorNonlinearFunction([x, x, op(:sin, x)])
+    @test SymbolicAD.simplify(f) ≈ g
+    return
+end
+
 function test_simplify_deep()
     N = 10_000
     x = MOI.VariableIndex.(1:N)
@@ -753,6 +761,7 @@ function test_simplify_if_quadratic()
         op(:+, big(1) * x * x, big(2))=>nothing,
         op(:+, big(1) * x, big(2))=>nothing,
         op(:+, x, big(2))=>nothing,
+        op(:+, x, 1+2im)=>nothing,
     ]
         @test SymbolicAD._simplify_if_quadratic!(f) ≈ something(ret, f)
     end
