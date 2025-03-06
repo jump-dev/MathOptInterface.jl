@@ -91,7 +91,7 @@ function test_derivative()
             op(:*, x, op(:^, x, x - 1)),
             op(:*, op(:^, x, x), op(:log, x)),
         ),
-        op(:^, x, 3)=>3.0 * x * x,
+        op(:^, x, 3)=>3.0*x*x,
         # :/
         op(:/, x, 2)=>0.5,
         op(
@@ -401,7 +401,7 @@ function test_simplify_VectorNonlinearFunction()
         return op(:+, op(:-, f, 0.0), 0.0)
     end
     f = MOI.VectorNonlinearFunction(wrap.([y; x_plus]))
-    g = MOI.Utilities.vectorize([sum(1.0.*x.*x); x])
+    g = MOI.Utilities.vectorize([sum(1.0 .* x .* x); x])
     @test SymbolicAD.simplify(f) ≈ g
     return
 end
@@ -742,7 +742,7 @@ function test_simplify_if_quadratic()
         op(:/, x, 2)=>0.5*x,
         op(:/, 1.0 * x, 2)=>0.5*x,
         op(:/, 2.0 * x, 2)=>x,
-        op(:/, 2.0 * x * x, 2)=>1.0 * x * x,
+        op(:/, 2.0 * x * x, 2)=>1.0*x*x,
         # Early termination because not affine
         op(:+, op(:sin, x))=>nothing,
         op(:-, op(:sin, x))=>nothing,
