@@ -36,7 +36,7 @@ function test_NormOne()
             "test_basic_VectorOfVariables_NormOneCone",
             "test_basic_VectorAffineFunction_NormOneCone",
             "test_basic_VectorQuadraticFunction_NormOneCone",
-            # "test_basic_VectorNonlinearFunction_NormOneCone",
+            "test_basic_VectorNonlinearFunction_NormOneCone",
         ],
     )
     return
