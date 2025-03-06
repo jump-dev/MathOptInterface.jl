@@ -761,7 +761,7 @@ function test_simplify_if_quadratic()
         op(:+, big(1) * x * x, big(2))=>nothing,
         op(:+, big(1) * x, big(2))=>nothing,
         op(:+, x, big(2))=>nothing,
-        op(:+, x, 1+2im)=>nothing,
+        op(:+, x, 1 + 2im)=>nothing,
     ]
         @test SymbolicAD._simplify_if_quadratic!(f) ≈ something(ret, f)
     end
