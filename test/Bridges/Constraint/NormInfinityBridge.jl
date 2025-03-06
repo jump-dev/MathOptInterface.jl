@@ -36,6 +36,7 @@ function test_NormInfinity()
             "test_basic_VectorOfVariables_NormInfinityCone",
             "test_basic_VectorAffineFunction_NormInfinityCone",
             "test_basic_VectorQuadraticFunction_NormInfinityCone",
+            "test_basic_VectorNonlinearFunction_NormInfinityCone",
         ],
     )
     return

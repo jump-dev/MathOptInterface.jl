@@ -262,15 +262,19 @@ function _basic_constraint_test_helper(
     ###
     ### Test MOI.ConstraintFunction
     ###
+    function _isapprox_simplified(f, g, config)
+        return isapprox(
+            MOI.Nonlinear.SymbolicAD.simplify(f),
+            MOI.Nonlinear.SymbolicAD.simplify(g),
+            config,
+        )
+    end
     if _supports(config, MOI.ConstraintFunction)
         # Don't compare directly, because `f` might not be canonicalized.
         f = MOI.get(model, MOI.ConstraintFunction(), c)
-        @test isapprox(MOI.Utilities.canonical(f), constraint_function, config)
-        @test isapprox(
-            MOI.get(model, MOI.CanonicalConstraintFunction(), c),
-            constraint_function,
-            config,
-        )
+        @test _isapprox_simplified(f, constraint_function, config)
+        cf = MOI.get(model, MOI.CanonicalConstraintFunction(), c)
+        @test _isapprox_simplified(cf, constraint_function, config)
         _test_attribute_value_type(model, MOI.ConstraintFunction(), c)
         _test_attribute_value_type(model, MOI.CanonicalConstraintFunction(), c)
         _test_function_modification(model, config, c, f)
