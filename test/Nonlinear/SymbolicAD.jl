@@ -46,8 +46,8 @@ function test_derivative()
         # derivative(f::MOI.ScalarQuadraticFunction{T}, x::MOI.VariableIndex)
         convert(MOI.ScalarQuadraticFunction{Float64}, 1.0 * x)=>1.0,
         convert(MOI.ScalarQuadraticFunction{Float64}, 1.0 * x + 0.0 * y)=>1.0,
-        1.0*x*y=>1.0*y,
-        1.0*y*x=>1.0*y,
+        1.0*x*y=>y,
+        1.0*y*x=>y,
         1.0*x*x=>2.0*x,
         1.0*x*x+3.0*x+4.0=>2.0*x+3.0,
         2.0*x*x-2.0*x+1.0=>4.0*x-2.0,
@@ -76,9 +76,9 @@ function test_derivative()
         # f.head == :-
         op(:-, sin_x, cos_x)=>op(:+, cos_x, sin_x),
         # f.head == :*
-        op(:*, x, y, z)=>op(:*, y, z),
-        op(:*, y, x, z)=>op(:*, y, z),
-        op(:*, y, z, x)=>op(:*, y, z),
+        op(:*, x, y, z)=>1.0*y*z,
+        op(:*, y, x, z)=>1.0*y*z,
+        op(:*, y, z, x)=>1.0*y*z,
         # :^
         op(:^, sin_x, 2)=>op(:*, 2.0, sin_x, cos_x),
         op(:^, sin_x, 1)=>cos_x,
@@ -91,6 +91,7 @@ function test_derivative()
             op(:*, x, op(:^, x, x - 1)),
             op(:*, op(:^, x, x), op(:log, x)),
         ),
+        op(:^, x, 3)=>3.0 * x * x,
         # :/
         op(:/, x, 2)=>0.5,
         op(
@@ -199,22 +200,21 @@ function test_simplify_ScalarAffineFunction()
     x = MOI.VariableIndex(1)
     @test SymbolicAD.simplify(1.0 * x + 1.0) ≈ 1.0 * x + 1.0
     @test SymbolicAD.simplify(1.0 * x + 2.0 * x + 1.0) ≈ 3.0 * x + 1.0
+    @test SymbolicAD.simplify(1.0 * x) == x
+    @test SymbolicAD.simplify(2.0 * x) ≈ 2.0 * x
     return
 end
 
 function test_simplify_ScalarQuadraticFunction()
     x = MOI.VariableIndex(1)
-    f = MOI.ScalarQuadraticFunction(
-        MOI.ScalarQuadraticTerm{Float64}[],
-        [MOI.ScalarAffineTerm{Float64}(1.0, x)],
-        1.0,
-    )
+    terms = MOI.ScalarQuadraticTerm{Float64}[]
+    f = MOI.ScalarQuadraticFunction(terms, [MOI.ScalarAffineTerm(1.0, x)], 1.0)
     @test SymbolicAD.simplify(f) ≈ 1.0 * x + 1.0
-    f = MOI.ScalarQuadraticFunction(
-        MOI.ScalarQuadraticTerm{Float64}[],
-        MOI.ScalarAffineTerm{Float64}[],
-        2.0,
-    )
+    f = MOI.ScalarQuadraticFunction(terms, [MOI.ScalarAffineTerm(2.0, x)], 0.0)
+    @test SymbolicAD.simplify(f) ≈ 2.0 * x + 0.0
+    f = MOI.ScalarQuadraticFunction(terms, [MOI.ScalarAffineTerm(1.0, x)], 0.0)
+    @test SymbolicAD.simplify(f) == x
+    f = MOI.ScalarQuadraticFunction(terms, MOI.ScalarAffineTerm{Float64}[], 2.0)
     @test SymbolicAD.simplify(f) === 2.0
     @test SymbolicAD.simplify(1.0 * x * x + 1.0) ≈ 1.0 * x * x + 1.0
     g = 1.0 * x * x + 2.0 * x * x + 1.0
@@ -401,7 +401,7 @@ function test_simplify_VectorNonlinearFunction()
         return op(:+, op(:-, f, 0.0), 0.0)
     end
     f = MOI.VectorNonlinearFunction(wrap.([y; x_plus]))
-    g = MOI.VectorNonlinearFunction([y; x_plus])
+    g = MOI.Utilities.vectorize([sum(1.0.*x.*x); x])
     @test SymbolicAD.simplify(f) ≈ g
     return
 end
@@ -703,16 +703,18 @@ function test_SymbolicAD_univariate_registered()
     return
 end
 
-function test_simplify_if_affine()
+function test_simplify_if_quadratic()
     x = MOI.VariableIndex(1)
     for (f, ret) in Any[
+        # Constants
         op(:*, 2)=>2,
         op(:*, 2 // 3)=>2/3,
         op(:*, 2, 3)=>6,
-        op(:*, 2, x, 3)=>6*x,
         op(:+, 2, 3)=>5,
         op(:-, 2)=>-2,
         op(:-, 2, 3)=>-1,
+        # Affine
+        op(:*, 2, x, 3)=>6*x,
         op(:-, x)=>-1*x,
         op(:-, x, 2)=>1.0*x-2.0,
         op(:-, 2, x)=>2.0+-1.0*x,
@@ -723,19 +725,36 @@ function test_simplify_if_affine()
         op(:+, 1.0 * x, 1.0 * x + 2.0)=>2.0*x+2.0,
         op(:-, 1.0 * x + 2.0)=>-1.0*x-2.0,
         op(:*, 2, 1.0 * x + 2.0, 3)=>6.0*x+12.0,
+        # Quadratic
+        op(:+, 1.0 * x * x)=>1.0*x*x,
+        op(:*, 2, x, 3, x)=>6.0*x*x,
+        op(:*, 2, x, 3, 1.0 * x)=>6.0*x*x,
+        op(:*, 2, x, 3, 1.0 * x + 2.0)=>6.0*x*x+12.0*x,
+        op(:*, 2, 1.0 * x + 2.0, 3, x)=>6.0*x*x+12.0*x,
+        op(:*, 1.0 * x + 2.0, 1.0 * x)=>1.0*x*x+2.0*x,
+        op(:*, 1.0 * x + 2.0, 1.0 * x + 1.0)=>1.0*x*x+3.0*x+2.0,
+        # Power
+        op(:^, x, 2)=>1.0*x*x,
+        op(:^, 1.0 * x, 2)=>1.0*x*x,
+        op(:^, 1.0 * x + 1.0, 2)=>1.0*x*x+2.0*x+1.0,
+        op(:^, -2.0 * x - 2.0, 2)=>4.0*x*x+8.0*x+4.0,
+        # Divide
+        op(:/, x, 2)=>0.5*x,
+        op(:/, 1.0 * x, 2)=>0.5*x,
+        op(:/, 2.0 * x, 2)=>x,
+        op(:/, 2.0 * x * x, 2)=>1.0 * x * x,
         # Early termination because not affine
         op(:+, op(:sin, x))=>nothing,
         op(:-, op(:sin, x))=>nothing,
         op(:-, op(:sin, x), 1)=>nothing,
         op(:-, x, op(:sin, x))=>nothing,
-        op(:*, 2, x, 3, x)=>nothing,
         op(:*, 2, 3, op(:sin, x))=>nothing,
         op(:log, x)=>nothing,
+        op(:+, big(1) * x * x, big(2))=>nothing,
         op(:+, big(1) * x, big(2))=>nothing,
         op(:+, x, big(2))=>nothing,
-        op(:+, 1.0 * x * x)=>nothing,
     ]
-        @test SymbolicAD._simplify_if_affine!(f) ≈ something(ret, f)
+        @test SymbolicAD._simplify_if_quadratic!(f) ≈ something(ret, f)
     end
     return
 end
