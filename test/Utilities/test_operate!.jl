@@ -399,6 +399,24 @@ function test_operate_5a()
     return
 end
 
+function test_operate_5a_VectorNonlinearFunction()
+    x = MOI.ScalarNonlinearFunction(:+, Any[])
+    f = MOI.VectorNonlinearFunction([x])
+    g = MOI.Utilities.operate(vcat, Float64, f, f, x)
+    rows = [MOI.ScalarNonlinearFunction(:+, Any[]) for _ in 1:3]
+    h = MOI.VectorNonlinearFunction(rows)
+    @test g ≈ h
+    push!(x.args, 0.0)
+    @test g ≈ h
+    @test g.rows[1] !== g.rows[2]
+    @test g.rows[1] !== g.rows[3]
+    @test g.rows[2] !== g.rows[3]
+    rows = [MOI.ScalarNonlinearFunction(:+, Any[0.0])]
+    f_new = MOI.VectorNonlinearFunction(rows)
+    @test f ≈ f_new
+    return
+end
+
 function test_operate_6a()
     T = Float64
     @test MOI.Utilities.operate(imag, T, _test_function((0.0, 0.0, 0.0))) ≈
