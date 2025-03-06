@@ -39,26 +39,37 @@ function bridge_constraint(
     f::F,
     s::MOI.HyperRectangle,
 ) where {T,G,F}
-    lower = MOI.Utilities.operate(-, T, f, s.lower)
-    upper = MOI.Utilities.operate(-, T, s.upper, f)
-    if any(!isfinite, s.lower)
-        indices = [i for (i, l) in enumerate(s.lower) if isfinite(l)]
-        lower = MOI.Utilities.eachscalar(lower)[indices]
-    end
-    if any(!isfinite, s.upper)
-        indices = [i for (i, u) in enumerate(s.upper) if isfinite(u)]
-        upper = MOI.Utilities.eachscalar(upper)[indices]
-    end
-    free_indices = Int[]
-    for (i, (l, u)) in enumerate(zip(s.lower, s.upper))
-        if !isfinite(l) && !isfinite(u)
-            push!(free_indices, i)
+    N = MOI.dimension(s)
+    g_vec = Vector{MOI.Utilities.scalar_type(G)}(undef, 2 * MOI.dimension(s))
+    rows_to_keep = fill(true, length(g_vec))
+    free_rows = Int[]
+    scalars = MOI.Utilities.eachscalar(f)
+    for (i, fi) in enumerate(scalars)
+        if !isfinite(s.lower[i])
+            rows_to_keep[i] = false
+            # It doesn't really matter what goes here. We're going to drop it
+            # when we vectorize the function
+            g_vec[i] = fi
+        elseif iszero(s.lower[i])
+            g_vec[i] = fi
+        else
+            g_vec[i] = MOI.Utilities.operate(-, T, fi, s.lower[i])
+        end
+        if !isfinite(s.upper[i])
+            rows_to_keep[N+i] = false
+            g_vec[N+i] = fi
+        elseif iszero(s.upper[i])
+            g_vec[N+i] = MOI.Utilities.operate(-, T, fi)
+        else
+            g_vec[N+i] = MOI.Utilities.operate(-, T, s.upper[i], fi)
+        end
+        if !isfinite(s.lower[i]) && !isfinite(s.upper[i])
+            push!(free_rows, i)
         end
     end
-    free_rows = MOI.Utilities.eachscalar(f)[free_indices]
-    g = MOI.Utilities.operate(vcat, T, lower, upper)
+    g = MOI.Utilities.vectorize(g_vec[rows_to_keep])
     ci = MOI.add_constraint(model, g, MOI.Nonnegatives(MOI.output_dimension(g)))
-    return SplitHyperRectangleBridge{T,G,F}(ci, s, free_rows)
+    return SplitHyperRectangleBridge{T,G,F}(ci, s, scalars[free_rows])
 end
 
 function MOI.supports_constraint(
@@ -97,33 +108,41 @@ function MOI.get(
 ) where {T,G,F}
     f = MOI.get(model, MOI.ConstraintFunction(), bridge.ci)
     f_s = MOI.Utilities.eachscalar(f)
-    s = bridge.set
-    func = Vector{eltype(f_s)}(undef, MOI.dimension(s))
-
-    lower_indices = [i for (i, l) in enumerate(s.lower) if isfinite(l)]
-    for (i, index) in enumerate(lower_indices)
-        func[index] = MOI.Utilities.operate(+, T, f_s[i], s.lower[index])
-    end
-
-    upper_indices = [i for (i, u) in enumerate(s.upper) if isfinite(u)]
-    for (j, index) in enumerate(upper_indices)
-        i = length(lower_indices) + j
-        if !(index in lower_indices)
-            func[index] = MOI.Utilities.operate(-, T, s.upper[index], f_s[i])
-        end
-    end
+    func = Vector{eltype(f_s)}(undef, MOI.dimension(bridge.set))
     free_s = MOI.Utilities.eachscalar(bridge.free_rows)
-    free_indices = Int[]
-    for (i, (l, u)) in enumerate(zip(s.lower, s.upper))
+    n_free_rows, n_f_rows, upper_bound_rows = 0, 0, Int[]
+    for (row, (l, u)) in enumerate(zip(bridge.set.lower, bridge.set.upper))
         if !isfinite(l) && !isfinite(u)
-            push!(free_indices, i)
+            n_free_rows += 1
+            func[row] = free_s[n_free_rows]
+        elseif iszero(l)
+            n_f_rows += 1
+            func[row] = f_s[n_f_rows]
+        elseif isfinite(l)
+            n_f_rows += 1
+            func[row] = MOI.Utilities.operate(+, T, f_s[n_f_rows], l)
+        else
+            @assert isfinite(u)
+            # This row exists only as u - f, but we don't know where it starts
+            # yet because we need to count all the `f - l` rows first.
+            push!(upper_bound_rows, row)
         end
     end
-    for (i, index) in enumerate(free_indices)
-        func[index] = free_s[i]
+    for (row, (l, u)) in enumerate(zip(bridge.set.lower, bridge.set.upper))
+        if !isfinite(u)
+            continue
+        end
+        n_f_rows += 1
+        if !(row in upper_bound_rows)
+            continue
+        end
+        func[row] = if iszero(bridge.set.upper[row])
+            MOI.Utilities.operate(-, T, f_s[n_f_rows])
+        else
+            MOI.Utilities.operate(-, T, bridge.set.upper[row], f_s[n_f_rows])
+        end
     end
-    g = MOI.Utilities.operate(vcat, T, func...)
-    return MOI.Utilities.convert_approx(F, g)
+    return MOI.Utilities.convert_approx(F, MOI.Utilities.vectorize(func))
 end
 
 function MOI.get(
