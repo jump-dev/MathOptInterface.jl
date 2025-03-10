@@ -33,9 +33,9 @@ function Base.read!(io::IO, model::Model)
     # object["has_scalar_nonlinear"] = false |   1       0        1
     #                                = true  |   1       0        0
     if something(
-           options.use_nlp_block,
-           !get(object, "has_scalar_nonlinear", false),
-       )
+        options.use_nlp_block,
+        !get(object, "has_scalar_nonlinear", false),
+    )
         _convert_to_nlpblock(model)
     end
     return
