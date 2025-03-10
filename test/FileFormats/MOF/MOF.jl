@@ -767,8 +767,7 @@ variables: x
 minobjective: ScalarNonlinearFunction(exp(x))
 """,
         ["x"],
-        String[];
-        use_nlp_block = false,
+        String[],
     )
 end
 
@@ -779,8 +778,7 @@ variables: x
 c1: ScalarNonlinearFunction(exp(x)^2) <= 1.0
 """,
         ["x"],
-        ["c1"];
-        use_nlp_block = false,
+        ["c1"],
     )
 end
 
@@ -1550,6 +1548,45 @@ function test_write_NLPBlock_no_objective()
     seekstart(io)
     contents = read(io, String)
     @test occursin(""""objective":{"sense":"feasibility"}""", contents)
+    return
+end
+
+function test_use_nlp_block()
+    model = MOF.Model()
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariableName(), x, "x")
+    f = MOI.ScalarNonlinearFunction(:log, Any[x])
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    object = JSON3.read(io, Dict{String,Any})
+    @test object["has_scalar_nonlinear"] == true
+    @test JSONSchema.validate(SCHEMA, object) === nothing
+    # Test (; use_nlp_block = nothing)
+    seekstart(io)
+    model = MOF.Model()
+    read!(io, model)
+    @test MOI.get(model, MOI.NLPBlock()) === nothing
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) ==
+          MOI.ScalarNonlinearFunction
+    # Test (; use_nlp_block = false)
+    seekstart(io)
+    model = MOF.Model(; use_nlp_block = false)
+    read!(io, model)
+    @test MOI.get(model, MOI.NLPBlock()) === nothing
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) ==
+          MOI.ScalarNonlinearFunction
+    # Test (; use_nlp_block = true)
+    seekstart(io)
+    model = MOF.Model(; use_nlp_block = true)
+    read!(io, model)
+    block = MOI.get(model, MOI.NLPBlock())
+    @test block isa MOI.NLPBlockData
+    @test block.has_objective == true
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) ==
+          MOI.ScalarAffineFunction{Float64}
     return
 end
 
