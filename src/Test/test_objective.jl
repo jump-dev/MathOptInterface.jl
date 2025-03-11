@@ -551,7 +551,7 @@ end
 function version_added(
     ::typeof(test_objective_ObjectiveSense_in_ListOfModelAttributesSet),
 )
-    v"1.12.0"
+    return v"1.12.0"
 end
 
 function test_objective_VariableIndex_in_ListOfModelAttributesSet(
@@ -572,7 +572,7 @@ end
 function version_added(
     ::typeof(test_objective_VariableIndex_in_ListOfModelAttributesSet),
 )
-    v"1.12.0"
+    return v"1.12.0"
 end
 
 function test_objective_ScalarAffineFunction_in_ListOfModelAttributesSet(
@@ -593,7 +593,7 @@ end
 function version_added(
     ::typeof(test_objective_ScalarAffineFunction_in_ListOfModelAttributesSet),
 )
-    v"1.12.0"
+    return v"1.12.0"
 end
 
 function test_objective_ScalarQuadraticFunction_in_ListOfModelAttributesSet(
@@ -616,5 +616,5 @@ function version_added(
         test_objective_ScalarQuadraticFunction_in_ListOfModelAttributesSet,
     ),
 )
-    v"1.12.0"
+    return v"1.12.0"
 end

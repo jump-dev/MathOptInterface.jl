@@ -139,7 +139,7 @@ end
 function version_added(
     ::typeof(test_multiobjective_vector_affine_function_modify),
 )
-    v"1.12.0"
+    return v"1.12.0"
 end
 
 function test_multiobjective_vector_affine_function_delete(
@@ -163,7 +163,7 @@ end
 function version_added(
     ::typeof(test_multiobjective_vector_affine_function_delete),
 )
-    v"1.12.0"
+    return v"1.12.0"
 end
 
 function test_multiobjective_vector_affine_function_delete_vector(
@@ -187,7 +187,7 @@ end
 function version_added(
     ::typeof(test_multiobjective_vector_affine_function_delete_vector),
 )
-    v"1.12.0"
+    return v"1.12.0"
 end
 
 function test_multiobjective_vector_quadratic_function(
@@ -206,7 +206,7 @@ function test_multiobjective_vector_quadratic_function(
 end
 
 function version_added(::typeof(test_multiobjective_vector_quadratic_function))
-    v"1.12.0"
+    return v"1.12.0"
 end
 
 function test_multiobjective_vector_quadratic_function_modify(
@@ -234,7 +234,7 @@ end
 function version_added(
     ::typeof(test_multiobjective_vector_quadratic_function_modify),
 )
-    v"1.12.0"
+    return v"1.12.0"
 end
 
 function test_multiobjective_vector_quadratic_function_delete(
@@ -258,7 +258,7 @@ end
 function version_added(
     ::typeof(test_multiobjective_vector_quadratic_function_delete),
 )
-    v"1.12.0"
+    return v"1.12.0"
 end
 
 function test_multiobjective_vector_quadratic_function_delete_vector(
@@ -286,7 +286,7 @@ end
 function version_added(
     ::typeof(test_multiobjective_vector_quadratic_function_delete_vector),
 )
-    v"1.12.0"
+    return v"1.12.0"
 end
 
 function test_multiobjective_vector_nonlinear(
@@ -352,7 +352,7 @@ end
 function version_added(
     ::typeof(test_multiobjective_vector_nonlinear_delete_vector),
 )
-    v"1.19.0"
+    return v"1.19.0"
 end
 
 function test_multiobjective_vector_nonlinear_modify(

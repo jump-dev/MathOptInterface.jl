@@ -1043,7 +1043,7 @@ end
 function version_added(
     ::typeof(test_modification_objective_scalarquadraticcoefficientchange),
 )
-    v"1.21.0"
+    return v"1.21.0"
 end
 
 function test_modification_constraint_scalarquadraticcoefficientchange(
@@ -1071,7 +1071,7 @@ end
 function version_added(
     ::typeof(test_modification_constraint_scalarquadraticcoefficientchange),
 )
-    v"1.21.0"
+    return v"1.21.0"
 end
 
 function test_modification_mathoptinterface_issue_2452(
@@ -1090,5 +1090,5 @@ function test_modification_mathoptinterface_issue_2452(
 end
 
 function version_added(::typeof(test_modification_mathoptinterface_issue_2452))
-    v"1.28.0"
+    return v"1.28.0"
 end

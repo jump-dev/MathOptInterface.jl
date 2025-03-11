@@ -1571,7 +1571,7 @@ end
 function version_added(
     ::typeof(test_NormSpectralCone_VectorOfVariables_without_transform),
 )
-    v"1.17.0"
+    return v"1.17.0"
 end
 
 function test_NormSpectralCone_VectorOfVariables_with_transform(
@@ -1602,7 +1602,7 @@ end
 function version_added(
     ::typeof(test_NormSpectralCone_VectorOfVariables_with_transform),
 )
-    v"1.17.0"
+    return v"1.17.0"
 end
 
 function test_NormSpectralCone_VectorAffineFunction_without_transform(
@@ -1634,7 +1634,7 @@ end
 function version_added(
     ::typeof(test_NormSpectralCone_VectorAffineFunction_without_transform),
 )
-    v"1.17.0"
+    return v"1.17.0"
 end
 
 function test_NormSpectralCone_VectorAffineFunction_with_transform(
@@ -1666,7 +1666,7 @@ end
 function version_added(
     ::typeof(test_NormSpectralCone_VectorAffineFunction_with_transform),
 )
-    v"1.17.0"
+    return v"1.17.0"
 end
 
 function test_NormNuclearCone_VectorOfVariables_without_transform(
@@ -1697,7 +1697,7 @@ end
 function version_added(
     ::typeof(test_NormNuclearCone_VectorOfVariables_without_transform),
 )
-    v"1.17.0"
+    return v"1.17.0"
 end
 
 function test_NormNuclearCone_VectorOfVariables_with_transform(
@@ -1728,7 +1728,7 @@ end
 function version_added(
     ::typeof(test_NormNuclearCone_VectorOfVariables_with_transform),
 )
-    v"1.17.0"
+    return v"1.17.0"
 end
 
 function test_NormNuclearCone_VectorAffineFunction_without_transform(
@@ -1760,7 +1760,7 @@ end
 function version_added(
     ::typeof(test_NormNuclearCone_VectorAffineFunction_without_transform),
 )
-    v"1.17.0"
+    return v"1.17.0"
 end
 
 function test_NormNuclearCone_VectorAffineFunction_with_transform(
@@ -1792,7 +1792,7 @@ end
 function version_added(
     ::typeof(test_NormNuclearCone_VectorAffineFunction_with_transform),
 )
-    v"1.17.0"
+    return v"1.17.0"
 end
 
 function test_HermitianPSDCone_basic(
@@ -1913,7 +1913,7 @@ end
 function version_added(
     ::typeof(test_DualObjectiveValue_Min_VariableIndex_GreaterThan),
 )
-    v"1.35.0"
+    return v"1.35.0"
 end
 
 function test_DualObjectiveValue_Max_VariableIndex_LessThan(
@@ -1954,7 +1954,7 @@ end
 function version_added(
     ::typeof(test_DualObjectiveValue_Max_VariableIndex_LessThan),
 )
-    v"1.35.0"
+    return v"1.35.0"
 end
 
 function test_DualObjectiveValue_Min_ScalarAffine_GreaterThan(
@@ -1996,7 +1996,7 @@ end
 function version_added(
     ::typeof(test_DualObjectiveValue_Min_ScalarAffine_GreaterThan),
 )
-    v"1.35.0"
+    return v"1.35.0"
 end
 
 function test_DualObjectiveValue_Max_ScalarAffine_LessThan(
@@ -2038,5 +2038,5 @@ end
 function version_added(
     ::typeof(test_DualObjectiveValue_Max_ScalarAffine_LessThan),
 )
-    v"1.35.0"
+    return v"1.35.0"
 end

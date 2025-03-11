@@ -1223,7 +1223,7 @@ function test_model_ListOfConstraintsWithAttributeSet(
 end
 
 function version_added(::typeof(test_model_ListOfConstraintsWithAttributeSet))
-    v"1.22.0"
+    return v"1.22.0"
 end
 
 function test_model_show(model::MOI.ModelLike, ::Config{T}) where {T}

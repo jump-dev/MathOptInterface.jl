@@ -1524,7 +1524,7 @@ function setup_test(
 end
 
 function version_added(::typeof(test_nonlinear_expression_overrides_objective))
-    v"1.17.0"
+    return v"1.17.0"
 end
 
 function test_nonlinear_expression_univariate_function(
@@ -1561,7 +1561,7 @@ function setup_test(
 end
 
 function version_added(::typeof(test_nonlinear_expression_univariate_function))
-    v"1.17.0"
+    return v"1.17.0"
 end
 
 function test_nonlinear_expression_multivariate_function(
@@ -1614,7 +1614,7 @@ end
 function version_added(
     ::typeof(test_nonlinear_expression_multivariate_function),
 )
-    v"1.17.0"
+    return v"1.17.0"
 end
 
 """
@@ -1889,7 +1889,7 @@ end
 function version_added(
     ::typeof(test_nonlinear_with_scalar_quadratic_function_with_off_diag),
 )
-    v"1.35.0"
+    return v"1.35.0"
 end
 
 function test_nonlinear_constraint_log(
@@ -2018,7 +2018,7 @@ end
 function version_added(
     ::typeof(test_nonlinear_constraint_scalar_affine_function),
 )
-    v"1.35.0"
+    return v"1.35.0"
 end
 
 function test_nonlinear_quadratic_1(

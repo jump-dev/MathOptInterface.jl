@@ -5022,7 +5022,7 @@ function version_added(
         test_conic_ScaledPositiveSemidefiniteConeTriangle_VectorAffineFunction,
     ),
 )
-    v"1.16.0"
+    return v"1.16.0"
 end
 
 """
@@ -5868,7 +5868,7 @@ function setup_test(
 end
 
 function version_added(::typeof(test_conic_PositiveSemidefiniteConeTriangle_4))
-    v"1.35.0"
+    return v"1.35.0"
 end
 
 """
