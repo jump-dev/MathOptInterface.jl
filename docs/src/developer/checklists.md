@@ -27,6 +27,7 @@ Use this checklist when making a release of the MathOptInterface repository.
        To run the action, go to:
        https://github.com/jump-dev/MathOptInterface.jl/actions/workflows/solver-tests.yml
        and click "Run workflow"
+ - [ ] If new tests were added, ensure that `MOI.Test.version_added` is implemented.
 ```
 
 ## Adding a new set
