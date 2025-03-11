@@ -112,14 +112,14 @@ struct Options
     print_compact::Bool
     warn::Bool
     differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation
-    use_nlp_block::Bool
+    use_nlp_block::Union{Bool,Nothing}
 end
 
 function get_options(m::Model)
     return get(
         m.model.ext,
         :MOF_OPTIONS,
-        Options(false, false, MOI.Nonlinear.SparseReverseMode(), true),
+        Options(false, false, MOI.Nonlinear.SparseReverseMode(), nothing),
     )
 end
 
@@ -144,7 +144,7 @@ function Model(;
     print_compact::Bool = false,
     warn::Bool = false,
     differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation = MOI.Nonlinear.SparseReverseMode(),
-    use_nlp_block::Bool = true,
+    use_nlp_block::Union{Bool,Nothing} = nothing,
 )
     model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
     model.model.ext[:MOF_OPTIONS] =

@@ -27,7 +27,15 @@ function Base.read!(io::IO, model::Model)
     read_objective(model, object, name_map)
     read_constraints(model, object, name_map)
     options = get_options(model)
-    if options.use_nlp_block
+    # We should convert to NLPBlock if...
+    #                                        |  options.use_nlp_block
+    #                                        | true    false   nothing
+    # object["has_scalar_nonlinear"] = false |   1       0        1
+    #                                = true  |   1       0        0
+    if something(
+        options.use_nlp_block,
+        !get(object, "has_scalar_nonlinear", false),
+    )
         _convert_to_nlpblock(model)
     end
     return

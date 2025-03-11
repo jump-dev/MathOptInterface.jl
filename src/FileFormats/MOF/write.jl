@@ -15,10 +15,11 @@ function Base.write(io::IO, model::Model)
     variables, constraints = NamedTuple[], NamedTuple[]
     name_map = _write_variables(variables, model)
     objective = _write_nlpblock(constraints, model, name_map)
+    has_scalar_nonlinear = false
     if objective === nothing
-        objective = _write_objective(model, name_map)
+        objective, has_scalar_nonlinear = _write_objective(model, name_map)
     end
-    _write_constraints(constraints, model, name_map)
+    has_scalar_nonlinear |= _write_constraints(constraints, model, name_map)
     object = (;
         name = "MathOptFormat Model",
         version = (
@@ -29,6 +30,9 @@ function Base.write(io::IO, model::Model)
         objective = objective,
         constraints = constraints,
     )
+    if has_scalar_nonlinear
+        object = (; has_scalar_nonlinear = true, object...)
+    end
     JSON3.write(io, object)
     return
 end
@@ -122,14 +126,15 @@ function _write_objective(
 )
     sense = MOI.get(model, MOI.ObjectiveSense())
     if sense == MOI.FEASIBILITY_SENSE
-        return (; :sense => moi_to_object(sense))
+        return (; :sense => moi_to_object(sense)), false
     end
     F = MOI.get(model, MOI.ObjectiveFunctionType())
     objective_function = MOI.get(model, MOI.ObjectiveFunction{F}())
-    return (;
+    object = (;
         :sense => moi_to_object(sense),
         :function => moi_to_object(objective_function, name_map),
     )
+    return object, (F == MOI.ScalarNonlinearFunction)
 end
 
 function _write_constraints(
@@ -137,12 +142,14 @@ function _write_constraints(
     model::Model,
     name_map::Dict{MOI.VariableIndex,String},
 )
+    has_scalar_nonlinear = false
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        has_scalar_nonlinear |= (F == MOI.ScalarNonlinearFunction)
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             push!(constraints, moi_to_object(index, model, name_map))
         end
     end
-    return
+    return has_scalar_nonlinear
 end
 
 """
