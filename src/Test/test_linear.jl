@@ -4158,7 +4158,7 @@ function setup_test(
     return
 end
 
-version_added(::typeof(test_linear_HyperRectangle_VectorOfVariables)) = v"1.7.0"
+version_added(::typeof(test_linear_HyperRectangle_VectorOfVariables)) = v"1.8.0"
 
 """
     test_linear_HyperRectangle_VectorAffinneFunction(
@@ -4209,5 +4209,5 @@ end
 function version_added(
     ::typeof(test_linear_HyperRectangle_VectorAffineFunction),
 )
-    return v"1.7.0"
+    return v"1.8.0"
 end

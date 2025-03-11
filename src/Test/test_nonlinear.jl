@@ -1244,6 +1244,8 @@ function setup_test(
     return
 end
 
+version_added(::typeof(test_nonlinear_expression_hs071)) = v"1.17.0"
+
 function test_nonlinear_expression_hs071_epigraph(
     model::MOI.ModelLike,
     config::Config{T},
@@ -1296,6 +1298,8 @@ function setup_test(
     )
     return
 end
+
+version_added(::typeof(test_nonlinear_expression_hs071_epigraph)) = v"1.17.0"
 
 function test_nonlinear_expression_hs109(
     model::MOI.ModelLike,
@@ -1361,6 +1365,8 @@ function setup_test(
     return () -> model.eval_objective_value = flag
 end
 
+version_added(::typeof(test_nonlinear_expression_hs109)) = v"1.17.0"
+
 function test_nonlinear_expression_hs110(
     model::MOI.ModelLike,
     config::Config{T},
@@ -1420,6 +1426,8 @@ function setup_test(
     return () -> model.eval_objective_value = flag
 end
 
+version_added(::typeof(test_nonlinear_expression_hs110)) = v"1.17.0"
+
 function test_nonlinear_expression_quartic(
     model::MOI.ModelLike,
     config::Config{T},
@@ -1464,6 +1472,8 @@ function setup_test(
     )
     return () -> model.eval_objective_value = flag
 end
+
+version_added(::typeof(test_nonlinear_expression_quartic)) = v"1.17.0"
 
 function test_nonlinear_expression_overrides_objective(
     model::MOI.ModelLike,
@@ -1513,6 +1523,10 @@ function setup_test(
     return () -> model.eval_objective_value = flag
 end
 
+function version_added(::typeof(test_nonlinear_expression_overrides_objective))
+    v"1.17.0"
+end
+
 function test_nonlinear_expression_univariate_function(
     model::MOI.ModelLike,
     config::Config{T},
@@ -1544,6 +1558,10 @@ function setup_test(
         mock -> MOI.Utilities.mock_optimize!(mock, config.optimal_status, [1]),
     )
     return
+end
+
+function version_added(::typeof(test_nonlinear_expression_univariate_function))
+    v"1.17.0"
 end
 
 function test_nonlinear_expression_multivariate_function(
@@ -1591,6 +1609,12 @@ function setup_test(
         ),
     )
     return
+end
+
+function version_added(
+    ::typeof(test_nonlinear_expression_multivariate_function),
+)
+    v"1.17.0"
 end
 
 """
@@ -1726,6 +1750,8 @@ function setup_test(
     end
 end
 
+version_added(::typeof(test_nonlinear_duals)) = v"1.17.0"
+
 function test_nonlinear_vector_complements(
     model::MOI.ModelLike,
     config::Config{T},
@@ -1816,6 +1842,8 @@ function setup_test(
     return
 end
 
+version_added(::typeof(test_nonlinear_vector_complements)) = v"1.19.0"
+
 function test_nonlinear_with_scalar_quadratic_function_with_off_diag(
     model::MOI.ModelLike,
     config::Config{T},
@@ -1856,6 +1884,12 @@ function setup_test(
         mock -> MOI.Utilities.mock_optimize!(mock, config.infeasible_status),
     )
     return
+end
+
+function version_added(
+    ::typeof(test_nonlinear_with_scalar_quadratic_function_with_off_diag),
+)
+    v"1.35.0"
 end
 
 function test_nonlinear_constraint_log(
@@ -1908,6 +1942,8 @@ function setup_test(
     return
 end
 
+version_added(::typeof(test_nonlinear_constraint_log)) = v"1.35.0"
+
 function test_nonlinear_constraint_uminus(
     model::MOI.ModelLike,
     config::Config{T},
@@ -1938,6 +1974,8 @@ function setup_test(
     )
     return
 end
+
+version_added(::typeof(test_nonlinear_constraint_uminus)) = v"1.35.0"
 
 function test_nonlinear_constraint_scalar_affine_function(
     model::MOI.ModelLike,
@@ -1975,6 +2013,12 @@ function setup_test(
         ),
     )
     return
+end
+
+function version_added(
+    ::typeof(test_nonlinear_constraint_scalar_affine_function),
+)
+    v"1.35.0"
 end
 
 function test_nonlinear_quadratic_1(
@@ -2025,6 +2069,8 @@ function setup_test(
     return
 end
 
+version_added(::typeof(test_nonlinear_quadratic_1)) = v"1.35.0"
+
 function test_nonlinear_quadratic_2(
     model::MOI.ModelLike,
     config::Config{T},
@@ -2073,6 +2119,8 @@ function setup_test(
     )
     return
 end
+
+version_added(::typeof(test_nonlinear_quadratic_2)) = v"1.35.0"
 
 function test_nonlinear_quadratic_3(
     model::MOI.ModelLike,
@@ -2123,6 +2171,8 @@ function setup_test(
     return
 end
 
+version_added(::typeof(test_nonlinear_quadratic_3)) = v"1.35.0"
+
 function test_nonlinear_quadratic_4(
     model::MOI.ModelLike,
     config::Config{T},
@@ -2170,3 +2220,5 @@ function setup_test(
     )
     return
 end
+
+version_added(::typeof(test_nonlinear_quadratic_4)) = v"1.35.0"

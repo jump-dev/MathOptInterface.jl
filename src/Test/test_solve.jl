@@ -1568,6 +1568,12 @@ function setup_test(
     return
 end
 
+function version_added(
+    ::typeof(test_NormSpectralCone_VectorOfVariables_without_transform),
+)
+    v"1.17.0"
+end
+
 function test_NormSpectralCone_VectorOfVariables_with_transform(
     model::MOI.ModelLike,
     config::Config,
@@ -1591,6 +1597,12 @@ function setup_test(
             MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
     )
     return
+end
+
+function version_added(
+    ::typeof(test_NormSpectralCone_VectorOfVariables_with_transform),
+)
+    v"1.17.0"
 end
 
 function test_NormSpectralCone_VectorAffineFunction_without_transform(
@@ -1619,6 +1631,12 @@ function setup_test(
     return
 end
 
+function version_added(
+    ::typeof(test_NormSpectralCone_VectorAffineFunction_without_transform),
+)
+    v"1.17.0"
+end
+
 function test_NormSpectralCone_VectorAffineFunction_with_transform(
     model::MOI.ModelLike,
     config::Config{T},
@@ -1643,6 +1661,12 @@ function setup_test(
             MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
     )
     return
+end
+
+function version_added(
+    ::typeof(test_NormSpectralCone_VectorAffineFunction_with_transform),
+)
+    v"1.17.0"
 end
 
 function test_NormNuclearCone_VectorOfVariables_without_transform(
@@ -1670,6 +1694,12 @@ function setup_test(
     return
 end
 
+function version_added(
+    ::typeof(test_NormNuclearCone_VectorOfVariables_without_transform),
+)
+    v"1.17.0"
+end
+
 function test_NormNuclearCone_VectorOfVariables_with_transform(
     model::MOI.ModelLike,
     config::Config,
@@ -1693,6 +1723,12 @@ function setup_test(
             MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
     )
     return
+end
+
+function version_added(
+    ::typeof(test_NormNuclearCone_VectorOfVariables_with_transform),
+)
+    v"1.17.0"
 end
 
 function test_NormNuclearCone_VectorAffineFunction_without_transform(
@@ -1721,6 +1757,12 @@ function setup_test(
     return
 end
 
+function version_added(
+    ::typeof(test_NormNuclearCone_VectorAffineFunction_without_transform),
+)
+    v"1.17.0"
+end
+
 function test_NormNuclearCone_VectorAffineFunction_with_transform(
     model::MOI.ModelLike,
     config::Config{T},
@@ -1745,6 +1787,12 @@ function setup_test(
             MOIU.mock_optimize!(mock, MOI.OPTIMAL, T[t; result]),
     )
     return
+end
+
+function version_added(
+    ::typeof(test_NormNuclearCone_VectorAffineFunction_with_transform),
+)
+    v"1.17.0"
 end
 
 function test_HermitianPSDCone_basic(
@@ -1783,6 +1831,8 @@ function setup_test(
     )
     return
 end
+
+version_added(::typeof(test_HermitianPSDCone_basic)) = v"1.17.0"
 
 function test_HermitianPSDCone_min_t(
     model::MOI.ModelLike,
@@ -1823,6 +1873,8 @@ function setup_test(
     return
 end
 
+version_added(::typeof(test_HermitianPSDCone_min_t)) = v"1.17.0"
+
 function test_DualObjectiveValue_Min_VariableIndex_GreaterThan(
     model::MOI.ModelLike,
     config::Config{T},
@@ -1858,6 +1910,12 @@ function setup_test(
     return
 end
 
+function version_added(
+    ::typeof(test_DualObjectiveValue_Min_VariableIndex_GreaterThan),
+)
+    v"1.35.0"
+end
+
 function test_DualObjectiveValue_Max_VariableIndex_LessThan(
     model::MOI.ModelLike,
     config::Config{T},
@@ -1891,6 +1949,12 @@ function setup_test(
         ),
     )
     return
+end
+
+function version_added(
+    ::typeof(test_DualObjectiveValue_Max_VariableIndex_LessThan),
+)
+    v"1.35.0"
 end
 
 function test_DualObjectiveValue_Min_ScalarAffine_GreaterThan(
@@ -1929,6 +1993,12 @@ function setup_test(
     return
 end
 
+function version_added(
+    ::typeof(test_DualObjectiveValue_Min_ScalarAffine_GreaterThan),
+)
+    v"1.35.0"
+end
+
 function test_DualObjectiveValue_Max_ScalarAffine_LessThan(
     model::MOI.ModelLike,
     config::Config{T},
@@ -1963,4 +2033,10 @@ function setup_test(
         ),
     )
     return
+end
+
+function version_added(
+    ::typeof(test_DualObjectiveValue_Max_ScalarAffine_LessThan),
+)
+    v"1.35.0"
 end
