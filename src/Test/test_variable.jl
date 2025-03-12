@@ -473,7 +473,7 @@ function setup_test(
 end
 
 function version_added(::typeof(test_variable_solve_ZeroOne_with_1_lower_bound))
-    return v"1.4.1"
+    return v"1.5.0"
 end
 
 """
@@ -529,7 +529,7 @@ end
 function version_added(
     ::typeof(test_variable_solve_ZeroOne_with_bounds_then_delete),
 )
-    return v"1.4.1"
+    return v"1.5.0"
 end
 
 """
@@ -591,3 +591,5 @@ function test_add_parameter(model::MOI.ModelLike, ::Config{T}) where {T}
     @test MOI.get(model, MOI.ConstraintSet(), ci) == MOI.Parameter(zero(T))
     return
 end
+
+version_added(::typeof(test_add_parameter)) = v"1.13.0"

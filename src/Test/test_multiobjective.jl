@@ -18,6 +18,8 @@ function test_multiobjective_vector_of_variables(
     return
 end
 
+version_added(::typeof(test_multiobjective_vector_of_variables)) = v"1.12.0"
+
 function test_multiobjective_vector_of_variables_delete(
     model::MOI.ModelLike,
     ::Config{T},
@@ -34,6 +36,10 @@ function test_multiobjective_vector_of_variables_delete(
     @test MOI.get(model, MOI.ObjectiveFunction{F}()) ==
           MOI.VectorOfVariables([x[2]])
     return
+end
+
+function version_added(::typeof(test_multiobjective_vector_of_variables_delete))
+    return v"1.12.0"
 end
 
 function test_multiobjective_vector_of_variables_delete_all(
@@ -58,6 +64,12 @@ function test_multiobjective_vector_of_variables_delete_all(
     return
 end
 
+function version_added(
+    ::typeof(test_multiobjective_vector_of_variables_delete_all),
+)
+    return v"1.12.0"
+end
+
 function test_multiobjective_vector_of_variables_delete_vector(
     model::MOI.ModelLike,
     ::Config{T},
@@ -79,6 +91,12 @@ function test_multiobjective_vector_of_variables_delete_vector(
     return
 end
 
+function version_added(
+    ::typeof(test_multiobjective_vector_of_variables_delete_vector),
+)
+    return v"1.12.0"
+end
+
 function test_multiobjective_vector_affine_function(
     model::MOI.ModelLike,
     ::Config{T},
@@ -93,6 +111,8 @@ function test_multiobjective_vector_affine_function(
     @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ f
     return
 end
+
+version_added(::typeof(test_multiobjective_vector_affine_function)) = v"1.12.0"
 
 function test_multiobjective_vector_affine_function_modify(
     model::MOI.ModelLike,
@@ -116,6 +136,12 @@ function test_multiobjective_vector_affine_function_modify(
     return
 end
 
+function version_added(
+    ::typeof(test_multiobjective_vector_affine_function_modify),
+)
+    return v"1.12.0"
+end
+
 function test_multiobjective_vector_affine_function_delete(
     model::MOI.ModelLike,
     ::Config{T},
@@ -132,6 +158,12 @@ function test_multiobjective_vector_affine_function_delete(
     @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈
           MOI.Utilities.operate(vcat, T, T(0), T(2) * x[2] + T(3))
     return
+end
+
+function version_added(
+    ::typeof(test_multiobjective_vector_affine_function_delete),
+)
+    return v"1.12.0"
 end
 
 function test_multiobjective_vector_affine_function_delete_vector(
@@ -152,6 +184,12 @@ function test_multiobjective_vector_affine_function_delete_vector(
     return
 end
 
+function version_added(
+    ::typeof(test_multiobjective_vector_affine_function_delete_vector),
+)
+    return v"1.12.0"
+end
+
 function test_multiobjective_vector_quadratic_function(
     model::MOI.ModelLike,
     ::Config{T},
@@ -165,6 +203,10 @@ function test_multiobjective_vector_quadratic_function(
     @test MOI.get(model, MOI.ObjectiveFunctionType()) == F
     @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ f
     return
+end
+
+function version_added(::typeof(test_multiobjective_vector_quadratic_function))
+    return v"1.12.0"
 end
 
 function test_multiobjective_vector_quadratic_function_modify(
@@ -189,6 +231,12 @@ function test_multiobjective_vector_quadratic_function_modify(
     return
 end
 
+function version_added(
+    ::typeof(test_multiobjective_vector_quadratic_function_modify),
+)
+    return v"1.12.0"
+end
+
 function test_multiobjective_vector_quadratic_function_delete(
     model::MOI.ModelLike,
     ::Config{T},
@@ -205,6 +253,12 @@ function test_multiobjective_vector_quadratic_function_delete(
     @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈
           MOI.Utilities.operate(vcat, T, T(0), T(1) * x[2] * x[2])
     return
+end
+
+function version_added(
+    ::typeof(test_multiobjective_vector_quadratic_function_delete),
+)
+    return v"1.12.0"
 end
 
 function test_multiobjective_vector_quadratic_function_delete_vector(
@@ -229,6 +283,12 @@ function test_multiobjective_vector_quadratic_function_delete_vector(
     return
 end
 
+function version_added(
+    ::typeof(test_multiobjective_vector_quadratic_function_delete_vector),
+)
+    return v"1.12.0"
+end
+
 function test_multiobjective_vector_nonlinear(
     model::MOI.ModelLike,
     ::Config{T},
@@ -246,6 +306,8 @@ function test_multiobjective_vector_nonlinear(
     @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ f
     return
 end
+
+version_added(::typeof(test_multiobjective_vector_nonlinear)) = v"1.19.0"
 
 function test_multiobjective_vector_nonlinear_delete(
     model::MOI.ModelLike,
@@ -266,6 +328,8 @@ function test_multiobjective_vector_nonlinear_delete(
     return
 end
 
+version_added(::typeof(test_multiobjective_vector_nonlinear_delete)) = v"1.19.0"
+
 function test_multiobjective_vector_nonlinear_delete_vector(
     model::MOI.ModelLike,
     ::Config{T},
@@ -283,6 +347,12 @@ function test_multiobjective_vector_nonlinear_delete_vector(
     @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ f
     @test_throws MOI.DeleteNotAllowed MOI.delete(model, x)
     return
+end
+
+function version_added(
+    ::typeof(test_multiobjective_vector_nonlinear_delete_vector),
+)
+    return v"1.19.0"
 end
 
 function test_multiobjective_vector_nonlinear_modify(
@@ -307,3 +377,5 @@ function test_multiobjective_vector_nonlinear_modify(
     )
     return
 end
+
+version_added(::typeof(test_multiobjective_vector_nonlinear_modify)) = v"1.19.0"

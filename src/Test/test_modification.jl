@@ -1040,6 +1040,12 @@ function test_modification_objective_scalarquadraticcoefficientchange(
     return
 end
 
+function version_added(
+    ::typeof(test_modification_objective_scalarquadraticcoefficientchange),
+)
+    return v"1.21.0"
+end
+
 function test_modification_constraint_scalarquadraticcoefficientchange(
     model::MOI.ModelLike,
     config::Config{T},
@@ -1062,6 +1068,12 @@ function test_modification_constraint_scalarquadraticcoefficientchange(
     return
 end
 
+function version_added(
+    ::typeof(test_modification_constraint_scalarquadraticcoefficientchange),
+)
+    return v"1.21.0"
+end
+
 function test_modification_mathoptinterface_issue_2452(
     model::MOI.ModelLike,
     config::Config{T},
@@ -1075,4 +1087,8 @@ function test_modification_mathoptinterface_issue_2452(
     MOI.set(model, MOI.ConstraintSet(), c, MOI.EqualTo(T(2)))
     @test MOI.get(model, MOI.ConstraintSet(), c) == MOI.EqualTo(T(2))
     return
+end
+
+function version_added(::typeof(test_modification_mathoptinterface_issue_2452))
+    return v"1.28.0"
 end

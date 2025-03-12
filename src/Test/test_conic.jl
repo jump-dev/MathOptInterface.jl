@@ -5017,6 +5017,14 @@ function setup_test(
     return
 end
 
+function version_added(
+    ::typeof(
+        test_conic_ScaledPositiveSemidefiniteConeTriangle_VectorAffineFunction,
+    ),
+)
+    return v"1.16.0"
+end
+
 """
 Problem SDP1 - sdo1 from MOSEK docs
 From Mosek.jl/test/mathprogtestextra.jl, under license:
@@ -5857,6 +5865,10 @@ function setup_test(
         ),
     )
     return
+end
+
+function version_added(::typeof(test_conic_PositiveSemidefiniteConeTriangle_4))
+    return v"1.35.0"
 end
 
 """

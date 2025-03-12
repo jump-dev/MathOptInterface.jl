@@ -226,6 +226,8 @@ function setup_test(
     return
 end
 
+version_added(::typeof(test_attribute_ObjectiveLimit)) = v"1.20.0"
+
 function test_attribute_SolutionLimit(model::MOI.AbstractOptimizer, ::Config)
     @requires MOI.supports(model, MOI.SolutionLimit())
     # Get the current value to restore it at the end of the test
@@ -252,6 +254,8 @@ function setup_test(
     return
 end
 
+version_added(::typeof(test_attribute_SolutionLimit)) = v"1.21.0"
+
 function test_attribute_NodeLimit(model::MOI.AbstractOptimizer, ::Config)
     @requires MOI.supports(model, MOI.NodeLimit())
     # Get the current value to restore it at the end of the test
@@ -277,6 +281,8 @@ function setup_test(
     MOI.set(model, MOI.NodeLimit(), nothing)
     return
 end
+
+version_added(::typeof(test_attribute_NodeLimit)) = v"1.32.0"
 
 """
     test_attribute_AbsoluteGapTolerance(model::MOI.AbstractOptimizer, config::Config)
@@ -311,6 +317,8 @@ function setup_test(
     return
 end
 
+version_added(::typeof(test_attribute_AbsoluteGapTolerance)) = v"1.7.0"
+
 """
     test_attribute_RelativeGapTolerance(model::MOI.AbstractOptimizer, config::Config)
 
@@ -343,6 +351,8 @@ function setup_test(
     MOI.set(model, MOI.RelativeGapTolerance(), nothing)
     return
 end
+
+version_added(::typeof(test_attribute_RelativeGapTolerance)) = v"1.7.0"
 
 """
     test_attribute_after_empty(model::MOI.AbstractOptimizer, config::Config)
@@ -381,3 +391,5 @@ function test_attribute_unsupported_constraint(model::MOI.ModelLike, ::Config)
     @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == Int64(0)
     return
 end
+
+version_added(::typeof(test_attribute_unsupported_constraint)) = v"1.9.0"

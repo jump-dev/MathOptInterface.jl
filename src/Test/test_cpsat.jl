@@ -48,6 +48,8 @@ function setup_test(
     return
 end
 
+version_added(::typeof(test_cpsat_AllDifferent)) = v"1.4.0"
+
 """
     test_cpsat_ReifiedAllDifferent(model::MOI.ModelLike, config::Config)
 
@@ -153,6 +155,8 @@ function setup_test(
     return
 end
 
+version_added(::typeof(test_cpsat_CountDistinct)) = v"1.4.0"
+
 """
     test_cpsat_CountBelongs(model::MOI.ModelLike, config::Config)
 
@@ -199,6 +203,8 @@ function setup_test(
     )
     return
 end
+
+version_added(::typeof(test_cpsat_CountBelongs)) = v"1.4.0"
 
 """
     test_cpsat_CountAtLeast(model::MOI.ModelLike, config::Config)
@@ -251,6 +257,8 @@ function setup_test(
     return
 end
 
+version_added(::typeof(test_cpsat_CountAtLeast)) = v"1.4.0"
+
 """
     test_cpsat_CountGreaterThan(model::MOI.ModelLike, config::Config)
 
@@ -301,6 +309,8 @@ function setup_test(
     )
     return
 end
+
+version_added(::typeof(test_cpsat_CountGreaterThan)) = v"1.4.0"
 
 """
     test_cpsat_BinPacking(model::MOI.ModelLike, config::Config)
@@ -353,6 +363,8 @@ function setup_test(
     )
     return
 end
+
+version_added(::typeof(test_cpsat_BinPacking)) = v"1.4.0"
 
 """
     test_cpsat_Cumulative(model::MOI.ModelLike, config::Config)
@@ -415,6 +427,8 @@ function setup_test(
     return
 end
 
+version_added(::typeof(test_cpsat_Cumulative)) = v"1.4.0"
+
 """
     test_cpsat_Table(model::MOI.ModelLike, config::Config)
 
@@ -453,6 +467,8 @@ function setup_test(
     return
 end
 
+version_added(::typeof(test_cpsat_Table)) = v"1.4.0"
+
 """
     test_cpsat_Circuit(model::MOI.ModelLike, config::Config)
 
@@ -485,6 +501,8 @@ function setup_test(
     )
     return
 end
+
+version_added(::typeof(test_cpsat_Circuit)) = v"1.4.0"
 
 """
     test_cpsat_Path(model::MOI.ModelLike, config::Config)
@@ -546,3 +564,5 @@ function setup_test(
     )
     return
 end
+
+version_added(::typeof(test_cpsat_Path)) = v"1.4.0"

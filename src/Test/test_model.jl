@@ -1205,6 +1205,8 @@ function test_model_ListOfVariablesWithAttributeSet(
     return
 end
 
+version_added(::typeof(test_model_ListOfVariablesWithAttributeSet)) = v"1.22.0"
+
 function test_model_ListOfConstraintsWithAttributeSet(
     model::MOI.ModelLike,
     ::Config{T},
@@ -1220,11 +1222,17 @@ function test_model_ListOfConstraintsWithAttributeSet(
     return
 end
 
+function version_added(::typeof(test_model_ListOfConstraintsWithAttributeSet))
+    return v"1.22.0"
+end
+
 function test_model_show(model::MOI.ModelLike, ::Config{T}) where {T}
     # We don't enforce any particular output.
     @test sprint(show, model) isa String
     return
 end
+
+version_added(::typeof(test_model_show)) = v"1.31.0"
 
 function test_model_add_constrained_variable_tuple(
     model::MOI.ModelLike,
@@ -1242,3 +1250,5 @@ function test_model_add_constrained_variable_tuple(
     @test MOI.get(model, MOI.ConstraintSet(), c_u) == set[2]
     return
 end
+
+version_added(::typeof(test_model_add_constrained_variable_tuple)) = v"1.34.0"

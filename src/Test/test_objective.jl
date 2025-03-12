@@ -548,6 +548,12 @@ function test_objective_ObjectiveSense_in_ListOfModelAttributesSet(
     return
 end
 
+function version_added(
+    ::typeof(test_objective_ObjectiveSense_in_ListOfModelAttributesSet),
+)
+    return v"1.12.0"
+end
+
 function test_objective_VariableIndex_in_ListOfModelAttributesSet(
     model::MOI.ModelLike,
     config::Config{T},
@@ -561,6 +567,12 @@ function test_objective_VariableIndex_in_ListOfModelAttributesSet(
     MOI.set(model, attr, x)
     @test (attr in MOI.get(model, MOI.ListOfModelAttributesSet())) == true
     return
+end
+
+function version_added(
+    ::typeof(test_objective_VariableIndex_in_ListOfModelAttributesSet),
+)
+    return v"1.12.0"
 end
 
 function test_objective_ScalarAffineFunction_in_ListOfModelAttributesSet(
@@ -578,6 +590,12 @@ function test_objective_ScalarAffineFunction_in_ListOfModelAttributesSet(
     return
 end
 
+function version_added(
+    ::typeof(test_objective_ScalarAffineFunction_in_ListOfModelAttributesSet),
+)
+    return v"1.12.0"
+end
+
 function test_objective_ScalarQuadraticFunction_in_ListOfModelAttributesSet(
     model::MOI.ModelLike,
     config::Config{T},
@@ -591,4 +609,12 @@ function test_objective_ScalarQuadraticFunction_in_ListOfModelAttributesSet(
     MOI.set(model, attr, one(T) * x * x + one(T))
     @test (attr in MOI.get(model, MOI.ListOfModelAttributesSet())) == true
     return
+end
+
+function version_added(
+    ::typeof(
+        test_objective_ScalarQuadraticFunction_in_ListOfModelAttributesSet,
+    ),
+)
+    return v"1.12.0"
 end
