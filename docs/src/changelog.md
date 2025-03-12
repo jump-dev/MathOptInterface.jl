@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Fixed a bug in `Utilities.operate(vcat, ) -> VectorNonlinearFunction` which
    previously did not ensure that the returned function could be mutated (#2682)
  - Fixed `get` for [`ConstraintFunction`](@ref) of
-   [`Bridges.Constraint.SplitHyperRectangleBridge`](@ref) to not add supurious
+   [`Bridges.Constraint.SplitHyperRectangleBridge`](@ref) to not add spurious
    `+0` and `-0` (#2681)
  - Fixed `test_basic_` tests to use [`Nonlinear.SymbolicAD.simplify`](@ref) when
    comparing constraint functions. This fixes some tests with
