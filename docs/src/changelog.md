@@ -7,6 +7,36 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.38.0 (March 13, 2025)
+
+### Added
+
+ - Added the `Nonlinear.SymbolicAD` submodule (#2624), (#2685)
+
+### Fixed
+
+ - Fixed a bug in `Utilities.operate(vcat, ) -> VectorNonlinearFunction` which
+   previously did not ensure that the returned function could be mutated (#2682)
+ - Fixed `get` for [`ConstraintFunction`](@ref) of
+   [`Bridges.Constraint.SplitHyperRectangleBridge`](@ref) to not add spurious
+   `+0` and `-0` (#2681)
+ - Fixed `test_basic_` tests to use [`Nonlinear.SymbolicAD.simplify`](@ref) when
+   comparing constraint functions. This fixes some tests with
+   [`VectorNonlinearFunction`](@ref) that failed because the bridge
+   reformulations were not recognized as being equivalent (#2686)
+ - Fixed [`FileFormats.MOF.Model`](@ref) to use `use_nlp_block = false` by
+   default if the model contains [`ScalarNonlinearFunction`](@ref). This change
+   could be regarded as technically breaking because writing and reading a model
+   with [`ScalarNonlinearFunction`](@ref) used to return a [`NLPBlock`](@ref),
+   but now it reads functions as the expected [`ScalarNonlinearFunction`](@ref)
+   (#2688)
+ - Fixed [`Test.version_added`](@ref) for a number of tests that were added in
+   recent versions (#2690), (#2691)
+
+### Other
+
+ - Refactor some tests in `Bridges` (#2684)
+
 ## v1.37.2 (March 4, 2025)
 
 ### Fixed
