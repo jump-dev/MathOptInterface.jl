@@ -58,7 +58,6 @@ function bridge_constraint(
     n = MOI.dimension(s)
     z = [MOI.add_constrained_variable(model, MOI.ZeroOne())[1] for _ in 1:n^2]
     Z = reshape(z, n, n)
-    MOI.add_constraint.(model, z, MOI.ZeroOne())
     equal_to = MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}[]
     for (i, x) in enumerate(MOI.Utilities.eachscalar(f))
         f_1 = MOI.ScalarAffineFunction(
