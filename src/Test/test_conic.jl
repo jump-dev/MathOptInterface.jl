@@ -7301,7 +7301,9 @@ function test_add_constrained_PositiveSemidefiniteConeTriangle_VariableName(
 end
 
 function version_added(
-    ::typeof(test_add_constrained_PositiveSemidefiniteConeTriangle_VariableName),
+    ::typeof(
+        test_add_constrained_PositiveSemidefiniteConeTriangle_VariableName,
+    ),
 )
     return v"1.38.1"
 end
@@ -7323,7 +7325,9 @@ function test_add_constrained_PositiveSemidefiniteConeTriangle_VariablePrimalSta
 end
 
 function version_added(
-    ::typeof(test_add_constrained_PositiveSemidefiniteConeTriangle_VariablePrimalStart),
+    ::typeof(
+        test_add_constrained_PositiveSemidefiniteConeTriangle_VariablePrimalStart,
+    ),
 )
     return v"1.38.1"
 end
