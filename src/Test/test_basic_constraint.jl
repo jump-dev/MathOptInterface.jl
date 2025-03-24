@@ -219,7 +219,6 @@ function _basic_constraint_test_helper(
     set = _set(T, UntypedS)
     N = MOI.dimension(set)
     x = add_variables_fn(model, N)
-
     constraint_function = _function(T, UntypedF, x)
     @assert MOI.output_dimension(constraint_function) == N
     F, S = typeof(constraint_function), typeof(set)
@@ -235,9 +234,19 @@ function _basic_constraint_test_helper(
     @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
     _test_attribute_value_type(model, MOI.NumberOfConstraints{F,S}())
     ###
+    ### Test MOI.ListOfConstraintIndices
+    ###
+    c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+    @test c_indices == [c]
+    ###
+    ### Test MOI.ListOfConstraintTypesPresent
+    ###
+    @test (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    ###
     ### Test MOI.is_valid
     ###
     @test MOI.is_valid(model, c)
+    @test !MOI.is_valid(model, typeof(c)(c.value + 1))
     ###
     ### Test MOI.ConstraintName
     ###
@@ -286,11 +295,6 @@ function _basic_constraint_test_helper(
         @test MOI.get(model, MOI.ConstraintSet(), c) == set
         _test_attribute_value_type(model, MOI.ConstraintSet(), c)
     end
-    ###
-    ### Test MOI.ListOfConstraintIndices
-    ###
-    c_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-    @test length(c_indices) == 1
     ###
     ### Test MOI.add_constraints
     ###
