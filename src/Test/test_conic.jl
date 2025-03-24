@@ -7297,7 +7297,7 @@ function test_add_constrained_PositiveSemidefiniteConeTriangle_VariableName(
     set = MOI.PositiveSemidefiniteConeTriangle(2)
     X, _ = MOI.add_constrained_variables(model, set)
     MOI.set(model, MOI.VariableName(), X[1], "x")
-    @test MOI.get(model, MOI.VariablePrimalStart(), X[1]) == "x"
+    @test MOI.get(model, MOI.VariableName(), X[1]) == "x"
     return
 end
 
