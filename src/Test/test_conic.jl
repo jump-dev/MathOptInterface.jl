@@ -7294,6 +7294,7 @@ function test_add_constrained_PositiveSemidefiniteConeTriangle_VariableName(
         MOI.PositiveSemidefiniteConeTriangle,
     )
     @requires MOI.supports(model, MOI.VariableName(), MOI.VariableIndex)
+    set = MOI.PositiveSemidefiniteConeTriangle(2)
     X, _ = MOI.add_constrained_variables(model, set)
     MOI.set(model, MOI.VariableName(), X[1], "x")
     @test MOI.get(model, MOI.VariablePrimalStart(), X[1]) == "x"
@@ -7317,6 +7318,7 @@ function test_add_constrained_PositiveSemidefiniteConeTriangle_VariablePrimalSta
         MOI.PositiveSemidefiniteConeTriangle,
     )
     @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    set = MOI.PositiveSemidefiniteConeTriangle(2)
     X, _ = MOI.add_constrained_variables(model, set)
     @test all(isnothing, MOI.get.(model, MOI.VariablePrimalStart(), X))
     MOI.set.(model, MOI.VariablePrimalStart(), X, [1.0, 0.0, 1.0])
