@@ -718,11 +718,41 @@ function _get_all_including_bridged(
     attr::MOI.ListOfVariableIndices,
 )
     list = MOI.get(b.model, attr)
-    if !isempty(Variable.bridges(b))
-        # The conversion from `keys` into a `Vector` happens inside `append!`.
-        append!(list, keys(Variable.bridges(b)))
+    # This is about to get confusing. `list` contains the variables in `.model`
+    # ordered by when they were added to the model. We need to return a list of
+    # the original user-space variables in the order that they were added. To do
+    # so, we need to undo any Variable.bridges transformations.
+    #
+    # `inner_to_outer` is going to map variable indices in `b.model` to their
+    # bridged variable indices. If the bridge adds multiple variables, we need
+    # only to map the first variable, and we can skip the rest. To mark this
+    # distinction, the tail variables are set to `nothing`.
+    inner_to_outer = Dict{MOI.VariableIndex,Union{Nothing,MOI.VariableIndex}}()
+    for (user_variable, bridge) in Variable.bridges(b)
+        variables = MOI.get(bridge, MOI.ListOfVariableIndices())
+        for bridged_variable in variables
+            inner_to_outer[bridged_variable] = nothing
+        end
+        inner_to_outer[first(variables)] = user_variable
     end
-    return list
+    ret = MOI.VariableIndex[]
+    for inner_variable in list
+        outer_variable = get(inner_to_outer, inner_variable, missing)
+        if ismissing(outer_variable)
+            # inner_variable does not exist in inner_to_outer, which means that
+            # it is not bridged. Pass through unchanged.
+            push!(ret, inner_variable)
+        elseif isnothing(outer_variable)
+            # inner_variable exists in inner_to_outer, but it is set to `nothing`
+            # which means that it is not the first variable in the bridge. Skip
+            # it because it should be hidden from the user.
+        else
+            # inner_variable exists in inner_to_outer. It must be the first
+            # variable in the bridge. Report it back to the user.
+            push!(ret, outer_variable)
+        end
+    end
+    return ret
 end
 
 function _get_all_including_bridged(
