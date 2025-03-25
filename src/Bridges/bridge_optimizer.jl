@@ -725,10 +725,13 @@ function _get_all_including_bridged(
     inner_to_outer = Dict{MOI.VariableIndex,Union{Nothing,MOI.VariableIndex}}()
     for (user_variable, bridge) in map
         variables = MOI.get(bridge, MOI.ListOfVariableIndices())
-        for bridged_variable in variables
-            inner_to_outer[bridged_variable] = nothing
+        if !isempty(variables)
+            # Some bridges, like Zeros, don't add any variables.
+            for bridged_variable in variables
+                inner_to_outer[bridged_variable] = nothing
+            end
+            inner_to_outer[first(variables)] = user_variable
         end
-        inner_to_outer[first(variables)] = user_variable
     end
     # We're about to loop over the variables in `.model`, ordered by when they
     # were added to the model. We need to return a list of the original
