@@ -717,26 +717,25 @@ function _get_all_including_bridged(
     b::AbstractBridgeOptimizer,
     attr::MOI.ListOfVariableIndices,
 )
-    list = MOI.get(b.model, attr)
-    # This is about to get confusing. `list` contains the variables in `.model`
-    # ordered by when they were added to the model. We need to return a list of
-    # the original user-space variables in the order that they were added. To do
-    # so, we need to undo any Variable.bridges transformations.
-    #
     # `inner_to_outer` is going to map variable indices in `b.model` to their
     # bridged variable indices. If the bridge adds multiple variables, we need
     # only to map the first variable, and we can skip the rest. To mark this
     # distinction, the tail variables are set to `nothing`.
+    map = Variable.bridges(b)
     inner_to_outer = Dict{MOI.VariableIndex,Union{Nothing,MOI.VariableIndex}}()
-    for (user_variable, bridge) in Variable.bridges(b)
+    for (user_variable, bridge) in map
         variables = MOI.get(bridge, MOI.ListOfVariableIndices())
         for bridged_variable in variables
             inner_to_outer[bridged_variable] = nothing
         end
         inner_to_outer[first(variables)] = user_variable
     end
+    # We're about to loop over the variables in `.model`, ordered by when they
+    # were added to the model. We need to return a list of the original
+    # user-space variables in the order that they were added. To do so, we need
+    # to undo any Variable.bridges transformations.
     ret = MOI.VariableIndex[]
-    for inner_variable in list
+    for inner_variable in MOI.get(b.model, attr)
         outer_variable = get(inner_to_outer, inner_variable, missing)
         if ismissing(outer_variable)
             # inner_variable does not exist in inner_to_outer, which means that
@@ -750,6 +749,12 @@ function _get_all_including_bridged(
             # inner_variable exists in inner_to_outer. It must be the first
             # variable in the bridge. Report it back to the user.
             push!(ret, outer_variable)
+            # `outer_variable` might represent the start of a VectorOfVariables
+            # if multiple user-variables were bridged. Add them all.
+            n = Variable.length_of_vector_of_variables(map, outer_variable)
+            for i in 1:n-1
+                push!(ret, MOI.VariableIndex(outer_variable.value - i))
+            end
         end
     end
     return ret
