@@ -736,7 +736,10 @@ function _get_all_including_bridged(
             push!(user_only_variables, user_variable)
             n = Variable.length_of_vector_of_variables(map, user_variable)
             for i in 1:n-1
-                push!(user_only_variables, MOI.VariableIndex(user_variable.value - i))
+                push!(
+                    user_only_variables,
+                    MOI.VariableIndex(user_variable.value - i),
+                )
             end
         else
             # This bridge maps `user_variable` to a list of `variables`. We need
