@@ -723,10 +723,27 @@ function _get_all_including_bridged(
     # distinction, the tail variables are set to `nothing`.
     map = Variable.bridges(b)
     inner_to_outer = Dict{MOI.VariableIndex,Union{Nothing,MOI.VariableIndex}}()
+    # These are variables which appear in `b` but do NOT appear in `b.model`.
+    # One reason might be the Zero bridge in which they are replaced by `0.0`.
+    user_only_variables = MOI.VariableIndex[]
     for (user_variable, bridge) in map
         variables = MOI.get(bridge, MOI.ListOfVariableIndices())
-        if !isempty(variables)
-            # Some bridges, like Zeros, don't add any variables.
+        if isempty(variables)
+            # This bridge maps `user_variable` to constants in `b.model`. We
+            # still need to report back `user_variable` to the user. In
+            # addition, it might represent the start of a VectorOfVariables
+            # function, so we may need to report multiple variables.
+            push!(user_only_variables, user_variable)
+            n = Variable.length_of_vector_of_variables(map, user_variable)
+            for i in 1:n-1
+                push!(user_only_variables, MOI.VariableIndex(user_variable.value - i))
+            end
+        else
+            # This bridge maps `user_variable` to a list of `variables`. We need
+            # to swap out only the `first` variable. The others can be flagged
+            # with `nothing`. To simplify the first/tail loop, we set
+            # `first(variables)` twice; first to `nothing` and then to
+            # `user_variable`.
             for bridged_variable in variables
                 inner_to_outer[bridged_variable] = nothing
             end
@@ -760,6 +777,12 @@ function _get_all_including_bridged(
             end
         end
     end
+    # Since these were replaced by constants, we don't actually know when they
+    # were added to the model. Tack them on at the end...
+    #
+    # If you, future reader, find this troublesome, come up with a better
+    # solution.
+    append!(ret, user_only_variables)
     return ret
 end
 
