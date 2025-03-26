@@ -1435,7 +1435,7 @@ results will typically be alternate solutions that the solver found during the
 search for the first result.
 
 If a (local) optimal solution is available, that is, [`TerminationStatus`](@ref)
-is [`OPTIMAL`](@ref) or [`LOCALLY_SOLVED`](@Ref), the first result must
+is [`OPTIMAL`](@ref) or [`LOCALLY_SOLVED`](@ref), the first result must
 correspond to the (locally) optimal solution. Other results may be alternative
 optimal solutions, or they may be other suboptimal solutions; use
 [`ObjectiveValue`](@ref) to distinguish between them.
