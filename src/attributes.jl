@@ -673,15 +673,16 @@ end
         HeuristicSolutionStatus
 
     An Enum of possible return values for [`submit`](@ref) with
-    [`HeuristicSolution`](@ref). This informs whether the heuristic solution was
-    accepted or rejected.
+    [`HeuristicSolution`](@ref).
+
+    This status informs whether the heuristic solution was accepted or rejected.
     """,
     HeuristicSolutionStatus,
-    "The heuristic solution was accepted",
+    "The heuristic solution was accepted.",
     HEURISTIC_SOLUTION_ACCEPTED,
-    "The heuristic solution was rejected",
+    "The heuristic solution was rejected.",
     HEURISTIC_SOLUTION_REJECTED,
-    "No information available on the acceptance",
+    "No information available on the acceptance.",
     HEURISTIC_SOLUTION_UNKNOWN,
 )
 
@@ -754,15 +755,14 @@ end
     """
         CallbackNodeStatusCode
 
-    An Enum of possible return values from calling [`get`](@ref) with
-    [`CallbackNodeStatus`](@ref).
+    An Enum for the value of the [`CallbackNodeStatus`](@ref) attribute.
     """,
     CallbackNodeStatusCode,
-    "the primal solution available from [`CallbackVariablePrimal`](@ref) is integer feasible.",
+    "The primal solution available from [`CallbackVariablePrimal`](@ref) is integer feasible.",
     CALLBACK_NODE_STATUS_INTEGER,
-    "the primal solution available from [`CallbackVariablePrimal`](@ref) is integer infeasible.",
+    "The primal solution available from [`CallbackVariablePrimal`](@ref) is integer infeasible.",
     CALLBACK_NODE_STATUS_FRACTIONAL,
-    "the primal solution available from [`CallbackVariablePrimal`](@ref) might be integer feasible or infeasible.",
+    "The status of the primal solution available from [`CallbackVariablePrimal`](@ref) is unknown.",
     CALLBACK_NODE_STATUS_UNKNOWN,
 )
 
@@ -866,7 +866,7 @@ The default value is `nothing`.
 
 The solver may stop when the [`ObjectiveValue`](@ref) is better (lower for
 minimization, higher for maximization) than the `ObjectiveLimit`. If stopped,
-the [`TerminationStatus`](@ref) should be `OBJECTIVE_LIMIT`.
+the [`TerminationStatus`](@ref) should be [`OBJECTIVE_LIMIT`](@ref).
 """
 struct ObjectiveLimit <: AbstractOptimizerAttribute end
 
@@ -888,7 +888,7 @@ The default value is `nothing`.
 
 The solver may stop when the [`ResultCount`](@ref) is larger than or equal to
 the `SolutionLimit`. If stopped because of this attribute, the
-[`TerminationStatus`](@ref) must be `SOLUTION_LIMIT`.
+[`TerminationStatus`](@ref) must be [`SOLUTION_LIMIT`](@ref).
 
 ## Solution quality
 
@@ -917,7 +917,7 @@ The default value is `nothing`.
 
 The solver may stop when the [`NodeCount`](@ref) is larger than or equal to
 the `NodeLimit`. If stopped because of this attribute, the
-[`TerminationStatus`](@ref) must be `NODE_LIMIT`.
+[`TerminationStatus`](@ref) must be [`NODE_LIMIT`](@ref).
 """
 struct NodeLimit <: AbstractOptimizerAttribute end
 
@@ -1155,14 +1155,14 @@ attribute_value_type(::Name) = String
     """
         OptimizationSense
 
-    An enum for the value of the [`ObjectiveSense`](@ref) attribute.
+    An Enum for the value of the [`ObjectiveSense`](@ref) attribute.
     """,
     OptimizationSense,
-    "the goal is to minimize the objective function",
+    "The goal is to minimize the objective function.",
     MIN_SENSE,
-    "the goal is to maximize the objective function",
+    "The goal is to maximize the objective function.",
     MAX_SENSE,
-    "the model does not have an objective function",
+    "The model does not have an objective function.",
     FEASIBILITY_SENSE,
 )
 
@@ -1170,15 +1170,16 @@ attribute_value_type(::Name) = String
     ObjectiveSense()
 
 A model attribute for the objective sense of the objective function, which
-must be an [`OptimizationSense`](@ref): `MIN_SENSE`, `MAX_SENSE`, or
-`FEASIBILITY_SENSE`. The default is `FEASIBILITY_SENSE`.
+must be an [`OptimizationSense`](@ref).
 
-## Interaction with `ObjectiveFunction`
+The default is [`FEASIBILITY_SENSE`](@ref).
 
-Setting the sense to `FEASIBILITY_SENSE` unsets the [`ObjectiveFunction`](@ref)
+## Interaction with [`ObjectiveFunction`](@ref)
+
+Setting the sense to [`FEASIBILITY_SENSE`](@ref) unsets the [`ObjectiveFunction`](@ref)
 attribute. That is, if you first set [`ObjectiveFunction`](@ref) and then set
-`ObjectiveSense` to be `FEASIBILITY_SENSE`, no objective function will be
-passed to the solver.
+`ObjectiveSense` to be [`FEASIBILITY_SENSE`](@ref), no objective function will
+be passed to the solver.
 
 In addition, some reformulations of [`ObjectiveFunction`](@ref) via bridges rely
 on the value of `ObjectiveSense`. Therefore, you should set `ObjectiveSense`
@@ -1433,17 +1434,17 @@ result (for example, an optimal solution or an infeasibility certificate). Other
 results will typically be alternate solutions that the solver found during the
 search for the first result.
 
-If a (local) optimal solution is available, that is, [`TerminationStatus`](@ref) is
-`OPTIMAL` or `LOCALLY_SOLVED`, the first result must correspond to the (locally)
-optimal solution. Other results may be alternative optimal solutions, or they
-may be other suboptimal solutions; use [`ObjectiveValue`](@ref) to distinguish
-between them.
+If a (local) optimal solution is available, that is, [`TerminationStatus`](@ref)
+is [`OPTIMAL`](@ref) or [`LOCALLY_SOLVED`](@ref), the first result must
+correspond to the (locally) optimal solution. Other results may be alternative
+optimal solutions, or they may be other suboptimal solutions; use
+[`ObjectiveValue`](@ref) to distinguish between them.
 
 If a primal or dual infeasibility certificate is available, that is,
-[`TerminationStatus`](@ref) is `INFEASIBLE` or `DUAL_INFEASIBLE` and the
-corresponding [`PrimalStatus`](@ref) or [`DualStatus`](@ref) is
-`INFEASIBILITY_CERTIFICATE`, then the first result must be a certificate. Other
-results may be alternate certificates, or infeasible points.
+[`TerminationStatus`](@ref) is [`INFEASIBLE`](@ref) or [`DUAL_INFEASIBLE`](@ref)
+and the corresponding [`PrimalStatus`](@ref) or [`DualStatus`](@ref) is
+[`INFEASIBILITY_CERTIFICATE`](@ref), then the first result must be a certificate.
+Other results may be alternate certificates, or infeasible points.
 """
 struct ResultCount <: AbstractModelAttribute end
 
@@ -1572,40 +1573,49 @@ is_set_by_optimize(::CallbackVariablePrimal) = true
     """
         BasisStatusCode
 
-    An Enum of possible values for the [`ConstraintBasisStatus`](@ref) and
+    An Enum for the value of the [`ConstraintBasisStatus`](@ref) and
     [`VariableBasisStatus`](@ref) attributes, explaining the status of a given
     element with respect to an optimal solution basis.
 
     ## Notes
 
-    * `NONBASIC_AT_LOWER` and `NONBASIC_AT_UPPER` should be used only for
-      constraints with the `Interval` set. In this case, they are necessary to
-      distinguish which side of the constraint is active. One-sided constraints
-      (for example, `LessThan` and `GreaterThan`) should use `NONBASIC` instead of the
-      `NONBASIC_AT_*` values. This restriction does not apply to [`VariableBasisStatus`](@ref),
-      which should return `NONBASIC_AT_*` regardless of whether the alternative
-      bound exists.
+    When queried as part of [`ConstraintBasisStatus`](@ref), [`NONBASIC_AT_LOWER`](@ref)
+    and [`NONBASIC_AT_UPPER`](@ref) should be returned only for constraints with
+    the [`Interval`](@ref) set. In this case, they are necessary to distinguish
+    which side of the constraint is active. One-sided constraints (for example,
+    [`LessThan`](@ref) and [`GreaterThan`](@ref)) should use [`NONBASIC`](@ref)
+    instead of the `NONBASIC_AT_*` values.
 
-    * In linear programs, `SUPER_BASIC` occurs when a variable with no bounds is not
-      in the basis.
+    This restriction does not apply to [`VariableBasisStatus`](@ref), which
+    should return `NONBASIC_AT_*` regardless of whether the alternative bound
+    exists.
     """,
     BasisStatusCode,
-    "element is in the basis",
+    "The element is in the basis.",
     BASIC,
-    "element is not in the basis",
+    "The element is not in the basis.",
     NONBASIC,
-    "element is not in the basis and is at its lower bound",
+    """
+    The element is not in the basis and is at its lower bound.
+    """,
     NONBASIC_AT_LOWER,
-    "element is not in the basis and is at its upper bound",
+    """
+    The element is not in the basis and is at its upper bound.
+    """,
     NONBASIC_AT_UPPER,
-    "element is not in the basis but is also not at one of its bounds",
+    """
+    The element is not in the basis but is also not at one of its bounds.
+
+    In a linear program, this status occurs when a variable with no bounds is
+    not in the basis, for example, because it takes the value `0.0`.
+    """,
     SUPER_BASIC,
 )
 
 """
     VariableBasisStatus(result_index::Int = 1)
 
-A variable attribute for the `BasisStatusCode` of a variable in result
+A variable attribute for the [`BasisStatusCode`](@ref) of a variable in result
 `result_index`, with respect to an available optimal solution basis.
 
 If the solver does not have a basis status for the variable because the
@@ -1874,8 +1884,8 @@ end
 """
     ConstraintFunction()
 
-A constraint attribute for the `AbstractFunction` object used to define the
-constraint.
+A constraint attribute for the [`AbstractFunction`](@ref) object used to define
+the constraint.
 
 It is guaranteed to be equivalent but not necessarily identical to the function
 provided by the user.
@@ -1919,7 +1929,7 @@ end
 """
     ConstraintSet()
 
-A constraint attribute for the `AbstractSet` object used to define the
+A constraint attribute for the [`AbstractSet`](@ref) object used to define the
 constraint.
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
@@ -1963,24 +1973,28 @@ end
     """
         ConflictParticipationStatusCode
 
-    An Enum of possible values for the [`ConstraintConflictStatus`](@ref) attribute.
+    An Enum for the value of the [`ConstraintConflictStatus`](@ref) attribute.
+
     This attribute is meant to indicate whether a given constraint participates
     or not in the last computed conflict.
     """,
     ConflictParticipationStatusCode,
-    "the constraint does not participate in the conflict",
+    "The constraint does not participate in the conflict.",
     NOT_IN_CONFLICT,
-    "the constraint participates in the conflict",
+    "The constraint participates in the conflict.",
     IN_CONFLICT,
-    "the constraint may participate in the conflict, the solver was not able to prove that the constraint can be excluded from the conflict",
-    MAYBE_IN_CONFLICT
+    """
+    The solver was not able to prove whether the constraint is required to
+    participate in the conflict.
+    """,
+    MAYBE_IN_CONFLICT,
 )
 
 """
     ConstraintConflictStatus()
 
-A constraint attribute indicating whether the constraint participates
-in the conflict. Its type is [`ConflictParticipationStatusCode`](@ref).
+A constraint attribute to query the [`ConflictParticipationStatusCode`](@ref)
+indicating whether the constraint participates in the conflict.
 """
 struct ConstraintConflictStatus <: AbstractConstraintAttribute end
 
@@ -2091,64 +2105,169 @@ struct ListOfSupportedNonlinearOperators <: AbstractOptimizerAttribute end
     """
         TerminationStatusCode
 
-    An Enum of possible values for the `TerminationStatus` attribute. This attribute
-    is meant to explain the reason why the optimizer stopped executing in the most
+    An Enum of possible values for the [`TerminationStatus`](@ref) attribute.
+
+    This attribute explains why the optimizer stopped executing in the most
     recent call to [`optimize!`](@ref).
     """,
     TerminationStatusCode,
     "The algorithm has not started.",
     OPTIMIZE_NOT_CALLED,
     # OK
-    "The algorithm found a globally optimal solution.",
+    """
+    The algorithm found a globally optimal solution.
+    """,
     OPTIMAL,
-    "The algorithm concluded that no feasible solution exists.",
+    """
+    The algorithm proved that no primal feasible solution exists.
+    """,
     INFEASIBLE,
-    "The algorithm concluded that no dual bound exists for the problem. If, additionally, a feasible (primal) solution is known to exist, this status typically implies that the problem is unbounded, with some technical exceptions.",
+    """
+    The algorithm concluded that no dual bound exists for the problem.
+
+    If the problem is a conic optimization problem (thus also a linear program), this status means the dual
+    problem is infeasible.
+
+    If a primal feasible solution exists, this status typically implies that the
+    problem is unbounded, with some technical exceptions (for example, if the
+    problem is a conic optimization problem in which strong duality does not
+    hold).
+
+    To check if the primal is unbounded, set the objective sense to
+    [`FEASIBILITY_SENSE`](@ref) and re-solve the problem. If a primal feasible
+    point exists, the original problem is unbounded. If a primal feasible point
+    does not exist, the original problem is both primal and dual infeasible.
+    """,
     DUAL_INFEASIBLE,
-    "The algorithm converged to a stationary point, local optimal solution, could not find directions for improvement, or otherwise completed its search without global guarantees.",
+    """
+    The algorithm converged to a stationary point, local optimal solution, could
+    not find directions for improvement, or otherwise completed its search
+    without global guarantees.
+    """,
     LOCALLY_SOLVED,
-    "The algorithm converged to an infeasible point or otherwise completed its search without finding a feasible solution, without guarantees that no feasible solution exists.",
+    """
+    The algorithm converged to an infeasible point or otherwise completed its
+    search without finding a feasible solution, without guarantees that no
+    feasible solution exists.
+
+    If you know a primal feasible solution exists, use
+    [`VariablePrimalStart`](@ref) to provide a feasible starting point to the
+    solver.
+    """,
     LOCALLY_INFEASIBLE,
-    "The algorithm stopped because it decided that the problem is infeasible or unbounded; this occasionally happens during MIP presolve.",
+    """
+    The algorithm stopped because it proved that the problem is infeasible or
+    unbounded, without distinguishing between the two cases.
+
+    To distinguish between the two cases, set the objective sense to
+    [`FEASIBILITY_SENSE`](@ref) and re-solve the problem. If a primal feasible
+    point exists, the original problem is unbounded. If a primal feasible point
+    does not exist, the original problem is infeasible.
+    """,
     INFEASIBLE_OR_UNBOUNDED,
     # Solved to relaxed tolerances
     "The algorithm found a globally optimal solution to relaxed tolerances.",
     ALMOST_OPTIMAL,
-    "The algorithm concluded that no feasible solution exists within relaxed tolerances.",
+    """
+    The algorithm concluded that no feasible solution exists within relaxed
+    tolerances.
+    """,
     ALMOST_INFEASIBLE,
-    "The algorithm concluded that no dual bound exists for the problem within relaxed tolerances.",
+    """
+    The algorithm concluded that no dual bound exists for the problem within
+    relaxed tolerances.
+    """,
     ALMOST_DUAL_INFEASIBLE,
-    "The algorithm converged to a stationary point, local optimal solution, or could not find directions for improvement within relaxed tolerances.",
+    """
+    The algorithm converged to a stationary point, local optimal solution, or
+    could not find directions for improvement within relaxed tolerances.
+    """,
     ALMOST_LOCALLY_SOLVED,
     # Limits
-    "An iterative algorithm stopped after conducting the maximum number of iterations.",
+    """
+    An iterative algorithm stopped after conducting the maximum number of
+    iterations.
+    """,
     ITERATION_LIMIT,
-    "The algorithm stopped after a user-specified computation time.",
+    """
+    The algorithm stopped after a user-specified computation time.
+
+    This status may be returned in relation to the [`TimeLimitSec`](@ref)
+    attribute, or some other solver-specific attribute.
+    """,
     TIME_LIMIT,
-    "A branch-and-bound algorithm stopped because it explored a maximum number of nodes in the branch-and-bound tree.",
+    """
+    A branch-and-bound algorithm stopped because it explored a maximum number of
+    nodes in the branch-and-bound tree.
+
+    This status may be returned in relation to the [`NodeLimit`](@ref)
+    attribute, or some other solver-specific attribute.
+    """,
     NODE_LIMIT,
-    "The algorithm stopped because it found the required number of solutions. This is often used in MIPs to get the solver to return the first feasible solution it encounters.",
+    """
+    The algorithm stopped because it found the required number of solutions.
+    This is often used in MIPs to get the solver to return the first feasible
+    solution it encounters.
+
+    This status may be returned in relation to the [`SolutionLimit`](@ref)
+    attribute, or some other solver-specific attribute.
+    """,
     SOLUTION_LIMIT,
     "The algorithm stopped because it ran out of memory.",
     MEMORY_LIMIT,
-    "The algorithm stopped because it found a solution better than a minimum limit set by the user.",
+    """
+    The algorithm stopped because it found a solution better than a minimum
+    limit set by the user.
+
+    This status may be returned in relation to the [`ObjectiveLimit`](@ref)
+    attribute, or some other solver-specific attribute.
+    """,
     OBJECTIVE_LIMIT,
-    "The algorithm stopped because the norm of an iterate became too large.",
+    """
+    The algorithm stopped because the norm of an iterate became too large.
+
+    This typically means that the primal problem is unbounded, but that the
+    solver could not prove so.
+    """,
     NORM_LIMIT,
-    "The algorithm stopped due to a limit not covered by one of the `_LIMIT_` statuses above.",
+    """
+    The algorithm stopped due to a limit not covered by one of the `_LIMIT_`
+    statuses above.
+    """,
     OTHER_LIMIT,
     # Problematic
-    "The algorithm stopped because it was unable to continue making progress towards the solution.",
+    """
+    The algorithm stopped because it was unable to continue making progress
+    towards the solution.
+    """,
     SLOW_PROGRESS,
-    "The algorithm stopped because it encountered unrecoverable numerical error.",
+    """
+    The algorithm stopped because it encountered unrecoverable numerical error.
+    """,
     NUMERICAL_ERROR,
-    "The algorithm stopped because the model is invalid.",
+    """
+    The algorithm stopped because the model is invalid.
+
+    The reason for this return code is solver-specific, but common causes are
+    that the problem has zero variables or constraints, or that the problem data
+    contains an invalid number such as `NaN`.
+    """,
     INVALID_MODEL,
-    "The algorithm stopped because it was provided an invalid option.",
+    """
+    The algorithm stopped because it was provided an invalid option.
+    """,
     INVALID_OPTION,
-    "The algorithm stopped because of an interrupt signal.",
+    """
+    The algorithm stopped because of an interrupt signal.
+
+    This typically means that the solver was interrupted by the user with
+    `CTRL+C`.
+    """,
     INTERRUPTED,
-    "The algorithm stopped because of an error not covered by one of the statuses defined above.",
+    """
+    The algorithm stopped because of an error not covered by one of the statuses
+    defined above. Check the solver log for further details.
+    """,
     OTHER_ERROR,
 )
 
@@ -2169,8 +2288,8 @@ end
 """
     TerminationStatus()
 
-A model attribute for the `TerminationStatusCode` explaining why the optimizer
-stopped.
+A model attribute for the [`TerminationStatusCode`](@ref) explaining why the
+optimizer stopped.
 """
 struct TerminationStatus <: AbstractModelAttribute end
 
@@ -2190,31 +2309,64 @@ attribute_value_type(::RawStatusString) = String
     """
         ResultStatusCode
 
-    An Enum of possible values for the [`PrimalStatus`](@ref) and [`DualStatus`](@ref)
-    attributes.
+    An Enum of possible values for the [`PrimalStatus`](@ref) and
+    [`DualStatus`](@ref) attributes.
 
     The values indicate how to interpret the result vector.
     """,
     ResultStatusCode,
-    "the result vector is empty.",
+    "The result vector is empty.",
     NO_SOLUTION,
-    "the result vector is a feasible point.",
+    "The result vector is a feasible point.",
     FEASIBLE_POINT,
-    "the result vector is feasible if some constraint tolerances are relaxed.",
+    "The result vector is feasible if some constraint tolerances are relaxed.",
     NEARLY_FEASIBLE_POINT,
-    "the result vector is an infeasible point.",
+    "The result vector is an infeasible point.",
     INFEASIBLE_POINT,
-    "the result vector is an infeasibility certificate. If the `PrimalStatus` is `INFEASIBILITY_CERTIFICATE`, then the primal result vector is a certificate of dual infeasibility. If the `DualStatus` is `INFEASIBILITY_CERTIFICATE`, then the dual result vector is a proof of primal infeasibility.",
+    """
+    The result vector is an infeasibility certificate.
+
+    If the [`PrimalStatus`](@ref) is `INFEASIBILITY_CERTIFICATE`, then the
+    primal result vector is a certificate of dual infeasibility.
+
+    If the [`DualStatus`](@ref) is `INFEASIBILITY_CERTIFICATE`, then the dual
+    result vector is a proof of primal infeasibility.
+    """,
     INFEASIBILITY_CERTIFICATE,
-    "the result satisfies a relaxed criterion for a certificate of infeasibility.",
+    """
+    The result satisfies a relaxed criterion for a certificate of infeasibility.
+
+    If the [`PrimalStatus`](@ref) is `NEARLY_INFEASIBILITY_CERTIFICATE`, then
+    the primal result vector is a certificate of dual infeasibility.
+
+    If the [`DualStatus`](@ref) is `NEARLY_INFEASIBILITY_CERTIFICATE`, then the
+    dual result vector is a proof of primal infeasibility.
+    """,
     NEARLY_INFEASIBILITY_CERTIFICATE,
-    "the result vector is an ill-posed certificate; see [this article](https://arxiv.org/abs/1408.4685) for details. If the `PrimalStatus` is `REDUCTION_CERTIFICATE`, then the primal result vector is a proof that the dual problem is ill-posed. If the `DualStatus` is `REDUCTION_CERTIFICATE`, then the dual result vector is a proof that the primal is ill-posed.",
+    """
+    The result vector is an ill-posed certificate; see [this article](https://arxiv.org/abs/1408.4685)
+    for details.
+
+    If the [`PrimalStatus`](@ref) is `REDUCTION_CERTIFICATE`, then the primal
+    result vector is a proof that the dual problem is ill-posed.
+
+    If the [`DualStatus`](@ref) is `REDUCTION_CERTIFICATE`, then the dual result
+    vector is a proof that the primal is ill-posed.
+    """,
     REDUCTION_CERTIFICATE,
-    "the result satisfies a relaxed criterion for an ill-posed certificate.",
+    """
+    The result satisfies a relaxed criterion for an ill-posed certificate.
+    """,
     NEARLY_REDUCTION_CERTIFICATE,
-    "the result vector contains a solution with an unknown interpretation.",
+    """
+    The result vector contains a solution with an unknown interpretation. Check
+    the solver log for more details.
+    """,
     UNKNOWN_RESULT_STATUS,
-    "the result vector contains a solution with an interpretation not covered by one of the statuses defined above",
+    """
+    The result vector contains a solution with an interpretation not covered by
+    one of the statuses defined above. Check the solver log for more details.
+    """,
     OTHER_RESULT_STATUS,
 )
 
@@ -2222,12 +2374,14 @@ attribute_value_type(::RawStatusString) = String
     PrimalStatus(result_index::Int = 1)
 
 A model attribute for the [`ResultStatusCode`](@ref) of the primal result
-`result_index`. If `result_index` is omitted, it defaults to 1.
+`result_index`.
+
+If `result_index` is omitted, it defaults to 1.
 
 See [`ResultCount`](@ref) for information on how the results are ordered.
 
 If `result_index` is larger than the value of [`ResultCount`](@ref) then
-`NO_SOLUTION` is returned.
+[`NO_SOLUTION`](@ref) is returned.
 """
 struct PrimalStatus <: AbstractModelAttribute
     result_index::Int
@@ -2239,13 +2393,15 @@ attribute_value_type(::PrimalStatus) = ResultStatusCode
 """
     DualStatus(result_index::Int = 1)
 
-A model attribute for the `ResultStatusCode` of the dual result `result_index`.
+A model attribute for the [`ResultStatusCode`](@ref) of the dual result
+`result_index`.
+
 If `result_index` is omitted, it defaults to 1.
 
 See [`ResultCount`](@ref) for information on how the results are ordered.
 
 If `result_index` is larger than the value of [`ResultCount`](@ref) then
-`NO_SOLUTION` is returned.
+[`NO_SOLUTION`](@ref) is returned.
 """
 struct DualStatus <: AbstractModelAttribute
     result_index::Int

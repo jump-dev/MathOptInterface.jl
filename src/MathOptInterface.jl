@@ -327,19 +327,24 @@ macro _documented_enum(args...)
         $(Expr(:macrocall, Symbol("@enum"), __source__, args[2:2:end]...))
     end
     main_doc, enum = args[1], args[2]
-    main_doc *= "\n## Values\n\nPossible values are:\n\n"
+    main_doc *= "\n## Values\n\n"
     for i in 3:2:length(args)
         docstr, value = args[i], args[i+1]
         doc = """
             $value::$enum
 
-        An instance of the [`$enum`](@ref) enum.\n\n`$value`: $docstr
+        An instance of the [`$enum`](@ref) enum.
+
+        ## About
+
+        $docstr
         """
         push!(
             code.args,
             Expr(:macrocall, Symbol("@doc"), __source__, doc, Meta.quot(value)),
         )
-        main_doc *= " * [`$value`](@ref): $docstr\n"
+        new_docstr = join(split(docstr, "\n"), "\n   ")
+        main_doc *= "### [`$value`](@ref)\n\n$new_docstr\n"
     end
     push!(
         code.args,
