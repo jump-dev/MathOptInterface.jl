@@ -14,6 +14,8 @@
 
 MOI.@_documented_enum(
     """
+        CachingOptimizerState
+
     A [`Utilities.CachingOptimizer`](@ref) may be in one of three possible
     states.
     """,
@@ -33,6 +35,8 @@ MOI.@_documented_enum(
 )
 MOI.@_documented_enum(
     """
+        CachingOptimizerMode
+
     A [`Utilities.CachingOptimizer`](@ref) has two modes of operation.
     """,
     CachingOptimizerMode,
@@ -47,7 +51,7 @@ MOI.@_documented_enum(
     MANUAL,
     """
     The [`Utilities.CachingOptimizer`](@ref) changes its state when necessary.
-    For example, [`optimize!`](@ref) will automatically call
+    For example, [`MOI.optimize!`](@ref) will automatically call
     [`Utilities.attach_optimizer`](@ref) (an optimizer must have been previously
     set). Attempting to add a constraint or perform a modification not supported
     by the optimizer results in a drop to the [`EMPTY_OPTIMIZER`](@ref) state.
@@ -101,8 +105,8 @@ if the type of `new_optimizer` is different from the type of `optimizer`.
 ```
 
 Creates a `CachingOptimizer` in the [`NO_OPTIMIZER`](@ref)
-[`Utilties.CachingOptimizerState`](@ref) and the
-[`Utilties.CachingOptimizerMode`](@ref) `mode`.
+[`Utilities.CachingOptimizerState`](@ref) and the
+[`Utilities.CachingOptimizerMode`](@ref) `mode`.
 
 The type of the optimizer returned is
 `CachingOptimizer{MOI.AbstractOptimizer,typeof(cache)}` so it _does_ support the

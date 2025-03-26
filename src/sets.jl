@@ -1883,7 +1883,7 @@ Base.:(==)(a::SOS2{T}, b::SOS2{T}) where {T} = a.weights == b.weights
 
 @_documented_enum(
     """
-	    ActivationCondition
+        ActivationCondition
 
     Activation condition for an indicator constraint.
 
