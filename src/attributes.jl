@@ -690,10 +690,11 @@ end
     HeuristicSolution(callback_data)
 
 Heuristically obtained feasible solution. The solution is submitted as
-`variables, values` where `values[i]` gives the value of `variables[i]`,
-similarly to [`set`](@ref). The [`submit`](@ref) call returns a
-[`HeuristicSolutionStatus`](@ref) indicating whether the provided solution
-was accepted or rejected.
+`(variables, values)::Tuple{Vector{MOI.VariableIndex},Vector{T}}`, where
+`values[i]` gives the value of `variables[i]`.
+
+The [`submit`](@ref) call returns a [`HeuristicSolutionStatus`](@ref) indicating
+whether the provided solution was accepted or rejected.
 
 This can be submitted only from the [`HeuristicCallback`](@ref). The
 field `callback_data` is a solver-specific callback type that is passed as the
@@ -710,13 +711,15 @@ end
 
 Constraint `func`-to-`set` suggested to help the solver detect the solution
 given by [`CallbackVariablePrimal`](@ref) as infeasible. The cut is submitted
-as `func, set`.
+as the tuple `(func, set)::Tuple{MOI.AbstractFunction,MOI.AbstractSet}`.
+
 Typically [`CallbackVariablePrimal`](@ref) will violate integrality constraints,
 and a cut would be of the form [`ScalarAffineFunction`](@ref)-in-[`LessThan`](@ref)
-or [`ScalarAffineFunction`](@ref)-in-[`GreaterThan`](@ref). Note that, as
-opposed to [`LazyConstraint`](@ref), the provided constraint cannot modify the
-feasible set, the constraint should be redundant, for example, it may be a consequence
-of affine and integrality constraints.
+or [`ScalarAffineFunction`](@ref)-in-[`GreaterThan`](@ref).
+
+Note that, as opposed to [`LazyConstraint`](@ref), the provided constraint
+must not modify the feasible set. The constraint should be redundant, for
+example, it may be a consequence of affine and integrality constraints.
 
 This can be submitted only from the [`UserCutCallback`](@ref). The
 field `callback_data` is a solver-specific callback type that is passed as the
@@ -758,11 +761,20 @@ end
     An Enum for the value of the [`CallbackNodeStatus`](@ref) attribute.
     """,
     CallbackNodeStatusCode,
-    "The primal solution available from [`CallbackVariablePrimal`](@ref) is integer feasible.",
+    """
+    The primal solution available from [`CallbackVariablePrimal`](@ref) is
+    integer feasible.
+    """,
     CALLBACK_NODE_STATUS_INTEGER,
-    "The primal solution available from [`CallbackVariablePrimal`](@ref) is integer infeasible.",
+    """
+    The primal solution available from [`CallbackVariablePrimal`](@ref) is
+    integer infeasible.
+    """,
     CALLBACK_NODE_STATUS_FRACTIONAL,
-    "The status of the primal solution available from [`CallbackVariablePrimal`](@ref) is unknown.",
+    """
+    The status of the primal solution available from [`CallbackVariablePrimal`](@ref)
+    is unknown.
+    """,
     CALLBACK_NODE_STATUS_UNKNOWN,
 )
 
@@ -786,15 +798,35 @@ attribute_value_type(::CallbackNodeStatus) = CallbackNodeStatusCode
 """
     ListOfOptimizerAttributesSet()
 
-An optimizer attribute for the `Vector{AbstractOptimizerAttribute}` of all
-optimizer attributes that were set.
+An [`AbstractOptimizerAttribute`](@ref) for the `Vector{AbstractOptimizerAttribute}`
+of all optimizer attributes that were set.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```
+MOI.get(
+    ::Optimizer,
+    ::MOI.ListOfOptimizerAttributesSet,
+)::Vector{MOI.AbstractOptimizerAttribute}
+```
+
+They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
 """
 struct ListOfOptimizerAttributesSet <: AbstractOptimizerAttribute end
 
 """
     SolverName()
 
-An optimizer attribute for the string identifying the solver/optimizer.
+An [`AbstractOptimizerAttribute`](@ref) for the string identifying the solver.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.SolverName)::String
+```
+They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
 """
 struct SolverName <: AbstractOptimizerAttribute end
 
@@ -803,17 +835,27 @@ attribute_value_type(::SolverName) = String
 """
     SolverVersion()
 
-An optimizer attribute for the string identifying the version of the solver.
+An [`AbstractOptimizerAttribute`](@ref) for the string identifying the version
+of the solver.
 
-!!! note
+## Versioning systems
 
-    For solvers supporting [semantic versioning](https://semver.org), the
-    `SolverVersion` should be a string of the form "vMAJOR.MINOR.PATCH", so that
-    it can be converted to a Julia `VersionNumber` (for example, `VersionNumber("v1.2.3")).
+For solvers supporting [semantic versioning](https://semver.org), the
+[`SolverVersion`](@ref) should be a string of the form "vMAJOR.MINOR.PATCH", so
+that it can be converted to a Julia `VersionNumber` (for example,
+`VersionNumber("v1.2.3")).
 
-    We do not require Semantic Versioning because some solvers use alternate
-    versioning systems. For example, CPLEX uses Calendar Versioning, so
-    `SolverVersion` will return a string like `"202001"`.
+We do not require Semantic Versioning because some solvers use alternate
+versioning systems. For example, CPLEX uses Calendar Versioning, so
+[`SolverVersion`](@ref) will return a string like `"202001"`.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.SolverVersion)::String
+```
+They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
 """
 struct SolverVersion <: AbstractOptimizerAttribute end
 
@@ -822,11 +864,20 @@ attribute_value_type(::SolverVersion) = String
 """
     Silent()
 
-An optimizer attribute for silencing the output of an optimizer. When `set`
-to `true`, it takes precedence over any other attribute controlling verbosity
-and requires the solver to produce no output. The default value is `false`
-which has no effect. In this case the verbosity is controlled by other
-attributes.
+An [`AbstractOptimizerAttribute`](@ref) for silencing the output of an
+optimizer.
+
+When `set` to `true`, this attribute takes precedence over any other attribute
+controlling verbosity and requires the optimizer to produce no output.
+
+The default value is `false` which has no effect. In this case the verbosity is
+controlled by other optimizer-specific attributes.
+
+## Value and default
+
+The provided value must be a `Bool`.
+
+The default value is `false`.
 
 ## Note
 
@@ -837,6 +888,15 @@ should be set to `0`, even if the user specifically sets a value of log level.
 If the value of `Silent` is `false` then the log level set to the solver is the
 value given by the user for this solver-specific parameter or `1` if none is
 given.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.Silent)::Bool
+MOI.set(::Optimizer, ::MOI.Silent, ::Bool)::Nothing
+MOI.supports(::Optimizer, ::MOI.Silent)::Bool
+```
 """
 struct Silent <: AbstractOptimizerAttribute end
 
@@ -845,9 +905,36 @@ attribute_value_type(::Silent) = Bool
 """
     TimeLimitSec()
 
-An optimizer attribute for setting a time limit (in seconds) for an
-optimization. When `set` to `nothing`, it deactivates the solver time limit. The
-default value is `nothing`.
+An [`AbstractOptimizerAttribute`](@ref) for setting a time limit (in seconds)
+for a call to [`optimize!`](@ref).
+
+## Value and default
+
+The provided limit must be a `Union{Nothing,Real}`.
+
+When `set` to `nothing`, it deactivates the time limit.
+
+The default value is `nothing`.
+
+## TerminationStatus
+
+The optimizer may stop when the [`SolveTimeSec`](@ref) is larger than the
+[`TimeLimitSec`](@ref). If stopped because of this limit, the
+[`TerminationStatus`](@ref) must be [`TIME_LIMIT`](@ref).
+
+Note that most optimizers do not strictly respect a time limit. Instead, they
+terminate at the first convenient time after the time limit has been exceeded.
+Thus, you may find that the [`SolveTimeSec`](@ref) exceeds the [`TimeLimitSec`](@ref)
+by a few seconds.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.TimeLimitSec)::Union{Nothing,Float64}
+MOI.set(::Optimizer, ::MOI.TimeLimitSec, ::Union{Nothing,Real})::Nothing
+MOI.supports(::Optimizer, ::MOI.TimeLimitSec)::Bool
+```
 """
 struct TimeLimitSec <: AbstractOptimizerAttribute end
 
@@ -856,27 +943,42 @@ attribute_value_type(::TimeLimitSec) = Union{Nothing,Float64}
 """
     ObjectiveLimit()
 
-An optimizer attribute for setting a limit on the objective value.
+An [`AbstractOptimizerAttribute`](@ref) for setting a limit on the objective
+value.
 
-The provided limit must be a `Union{Real,Nothing}`.
+## Value and default
+
+The provided limit must be a `Union{Nothing,Real}`.
 
 When `set` to `nothing`, the limit reverts to the solver's default.
 
 The default value is `nothing`.
 
+## TerminationStatus
+
 The solver may stop when the [`ObjectiveValue`](@ref) is better (lower for
 minimization, higher for maximization) than the `ObjectiveLimit`. If stopped,
-the [`TerminationStatus`](@ref) should be [`OBJECTIVE_LIMIT`](@ref).
+because of this limit, the [`TerminationStatus`](@ref) should be
+[`OBJECTIVE_LIMIT`](@ref).
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.ObjectiveLimit)::Union{Nothing,Float64}
+MOI.set(::Optimizer, ::MOI.ObjectiveLimit, ::Union{Nothing,Real})::Nothing
+MOI.supports(::Optimizer, ::MOI.ObjectiveLimit)::Bool
+```
 """
 struct ObjectiveLimit <: AbstractOptimizerAttribute end
 
 """
     SolutionLimit()
 
-An optimizer attribute for setting a limit on the number of available feasible
-solutions.
+An [`AbstractOptimizerAttribute`](@ref) for setting a limit on the number of
+available feasible solutions.
 
-## Default values
+## Value and default
 
 The provided limit must be a `Union{Nothing,Int}`.
 
@@ -887,13 +989,22 @@ The default value is `nothing`.
 ## Termination criteria
 
 The solver may stop when the [`ResultCount`](@ref) is larger than or equal to
-the `SolutionLimit`. If stopped because of this attribute, the
+the [`SolutionLimit`](@ref). If stopped because of this attribute, the
 [`TerminationStatus`](@ref) must be [`SOLUTION_LIMIT`](@ref).
 
 ## Solution quality
 
 The quality of the available solutions is solver-dependent. The set of resulting
 solutions is not guaranteed to contain an optimal solution.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.SolutionLimit)::Union{Nothing,Int}
+MOI.set(::Optimizer, ::MOI.SolutionLimit, ::Union{Nothing,Int})::Nothing
+MOI.supports(::Optimizer, ::MOI.SolutionLimit)::Bool
+```
 """
 struct SolutionLimit <: AbstractOptimizerAttribute end
 
@@ -902,10 +1013,10 @@ attribute_value_type(::SolutionLimit) = Union{Nothing,Int}
 """
     NodeLimit()
 
-An optimizer attribute for setting a limit on the number of branch-and-bound
-nodes explored by a mixed-integer program (MIP) solver.
+An [`AbstractOptimizerAttribute`](@ref) for setting a limit on the number of
+branch-and-bound nodes explored by a mixed-integer program (MIP) solver.
 
-## Default values
+## Value and default
 
 The provided limit must be a `Union{Nothing,Int}`.
 
@@ -916,8 +1027,17 @@ The default value is `nothing`.
 ## Termination criteria
 
 The solver may stop when the [`NodeCount`](@ref) is larger than or equal to
-the `NodeLimit`. If stopped because of this attribute, the
+the [`NodeLimit`](@ref). If stopped because of this attribute, the
 [`TerminationStatus`](@ref) must be [`NODE_LIMIT`](@ref).
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.NodeLimit)::Union{Nothing,Int}
+MOI.set(::Optimizer, ::MOI.NodeLimit, ::Union{Nothing,Int})::Nothing
+MOI.supports(::Optimizer, ::MOI.NodeLimit)::Bool
+```
 """
 struct NodeLimit <: AbstractOptimizerAttribute end
 
@@ -926,7 +1046,17 @@ attribute_value_type(::NodeLimit) = Union{Nothing,Int}
 """
     RawOptimizerAttribute(name::String)
 
-An optimizer attribute for the solver-specific parameter identified by `name`.
+An [`AbstractOptimizerAttribute`](@ref) for the solver-specific parameter
+identified by `name`.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.RawOptimizerAttribute)::Any
+MOI.set(::Optimizer, ::MOI.RawOptimizerAttribute, ::Any)::Nothing
+MOI.supports(::Optimizer, ::MOI.RawOptimizerAttribute)::Bool
+```
 """
 struct RawOptimizerAttribute <: AbstractOptimizerAttribute
     name::String
@@ -935,9 +1065,25 @@ end
 """
     NumberOfThreads()
 
-An optimizer attribute for setting the number of threads used for an
-optimization. When set to `nothing` uses solver default. Values are positive
-integers. The default value is `nothing`.
+An [`AbstractOptimizerAttribute`](@ref) for setting the number of threads used
+for an optimization.
+
+## Value and default
+
+The provided value must be `nothing` or a positive `Int`.
+
+When `set` to `nothing`, the value reverts to the solver's default.
+
+The default value is `nothing`.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.NumberOfThreads)::Union{Nothing,Int}
+MOI.set(::Optimizer, ::MOI.NumberOfThreads, ::Union{Nothing,Int})::Nothing
+MOI.supports(::Optimizer, ::MOI.NumberOfThreads)::Bool
+```
 """
 struct NumberOfThreads <: AbstractOptimizerAttribute end
 
@@ -946,32 +1092,38 @@ attribute_value_type(::NumberOfThreads) = Union{Nothing,Int}
 """
     RelativeGapTolerance()
 
-An optimizer attribute for setting the relative gap tolerance for an
-optimization. This is an _optimizer_ attribute, and should be set before calling
-[`optimize!`](@ref). When set to `nothing` (if supported), uses solver default.
+An [`AbstractOptimizerAttribute`](@ref) for setting the relative gap tolerance
+for an optimization.
 
-If you are looking for the relative gap of the current best solution, see
-[`RelativeGap`](@ref). If no limit nor issue is encountered during the
-optimization, the value of [`RelativeGap`](@ref) should be at most as large as
-`RelativeGapTolerance`.
+## Definition
 
+The mathematical definition of "relative gap" and its allowed range are
+solver-dependent. Typically, solvers expect a value between `0.0` and `1.0`.
+
+## Value and default
+
+The provided value must be a `Union{Nothing,Float64}`.
+
+When set to `nothing`, the limit reverts to the solver's default.
+
+## TerminationStatus
+
+The optimizer may stop when the [`RelativeGap`](@ref) is smaller than the
+[`RelativeGapTolerance`](@ref). If stopped because of this limit, the
+[`TerminationStatus`](@ref) may be [`OPTIMAL`](@ref).
+
+## Implementation
+
+Optimizers should implement the following methods:
 ```julia
-# Before optimizing: set relative gap tolerance
-# set 0.1% relative gap tolerance
-MOI.set(model, MOI.RelativeGapTolerance(), 1e-3)
-MOI.optimize!(model)
-
-# After optimizing (assuming all went well)
-# The relative gap tolerance has not changed...
-MOI.get(model, MOI.RelativeGapTolerance())  # returns 1e-3
-# ... and the relative gap of the obtained solution is smaller or equal to the
-# tolerance
-MOI.get(model, MOI.RelativeGap())  # should return something ≤ 1e-3
+MOI.get(::Optimizer, ::MOI.RelativeGapTolerance)::Union{Nothing,Float64}
+MOI.set(
+    ::Optimizer,
+    ::MOI.RelativeGapTolerance,
+    ::Union{Nothing,Float64},
+)::Nothing
+MOI.supports(::Optimizer, ::MOI.RelativeGapTolerance)::Bool
 ```
-
-!!! warning
-    The mathematical definition of "relative gap", and its allowed range, are
-    solver-dependent. Typically, solvers expect a value between `0.0` and `1.0`.
 """
 struct RelativeGapTolerance <: AbstractOptimizerAttribute end
 
@@ -980,19 +1132,41 @@ attribute_value_type(::RelativeGapTolerance) = Union{Nothing,Float64}
 """
     AbsoluteGapTolerance()
 
-An optimizer attribute for setting the absolute gap tolerance for an
-optimization. This is an _optimizer_ attribute, and should be set before calling
-[`optimize!`](@ref). When set to `nothing` (if supported), uses solver default.
+An [`AbstractOptimizerAttribute`](@ref) for setting the absolute gap tolerance
+for an optimization.
 
-To set a _relative_ gap tolerance, see [`RelativeGapTolerance`](@ref).
+## Definition
 
-!!! warning
-    The mathematical definition of "absolute gap", and its treatment during the
-    optimization, are solver-dependent. However, assuming no other limit nor
-    issue is encountered during the optimization, most solvers that implement
-    this attribute will stop once ``|f - b| ≤ g_{abs}``, where ``b`` is the best
-    bound, ``f`` is the best feasible objective value, and ``g_{abs}`` is the
-    absolute gap.
+The mathematical definition of "absolute gap" and its allowed range are
+solver-dependent. However, most solvers that implement this attribute will stop
+once ``|f - b| ≤ g_{abs}``, where ``b`` is the best bound, ``f`` is the best
+feasible objective value, and ``g_{abs}`` is the absolute gap.
+
+## Value and default
+
+The provided value must be a `Union{Nothing,Float64}`.
+
+When set to `nothing`, the limit reverts to the solver's default.
+
+## TerminationStatus
+
+The optimizer may stop when the absolute difference between [`ObjectiveValue`](@ref)
+and [`ObjectiveBound`](@ref) is smaller than the [`AbsoluteGapTolerance`](@ref).
+If stopped because of this limit, the [`TerminationStatus`](@ref) may be
+[`OPTIMAL`](@ref).
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.AbsoluteGapTolerance)::Union{Nothing,Float64}
+MOI.set(
+    ::Optimizer,
+    ::MOI.AbsoluteGapTolerance,
+    ::Union{Nothing,Float64},
+)::Nothing
+MOI.supports(::Optimizer, ::MOI.AbsoluteGapTolerance)::Bool
+```
 """
 struct AbsoluteGapTolerance <: AbstractOptimizerAttribute end
 
@@ -1133,7 +1307,7 @@ struct UserCutCallback <: AbstractCallback end
 """
     ListOfModelAttributesSet()
 
-A model attribute for the `Vector{AbstractModelAttribute}` of all model
+An [`AbstractModelAttribute`](@ref) for the `Vector{AbstractModelAttribute}` of all model
 attributes `attr` such that:
 
  1. `is_copyable(attr)` returns `true`, and
@@ -1144,8 +1318,18 @@ struct ListOfModelAttributesSet <: AbstractModelAttribute end
 """
     Name()
 
-A model attribute for the string identifying the model. It has a default value
-of `""` if not set`.
+An [`AbstractModelAttribute`](@ref) for the string identifying the model.
+
+It has a default value of `""` if not set.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.Name)::String
+MOI.set(::Optimizer, ::MOI.Name, ::String)::Nothing
+MOI.supports(::Optimizer, ::MOI.Name)::Bool
+```
 """
 struct Name <: AbstractModelAttribute end
 
@@ -1169,8 +1353,8 @@ attribute_value_type(::Name) = String
 """
     ObjectiveSense()
 
-A model attribute for the objective sense of the objective function, which
-must be an [`OptimizationSense`](@ref).
+An [`AbstractModelAttribute`](@ref) for the objective sense of the objective
+function, which must be an [`OptimizationSense`](@ref).
 
 The default is [`FEASIBILITY_SENSE`](@ref).
 
@@ -1182,8 +1366,17 @@ attribute. That is, if you first set [`ObjectiveFunction`](@ref) and then set
 be passed to the solver.
 
 In addition, some reformulations of [`ObjectiveFunction`](@ref) via bridges rely
-on the value of `ObjectiveSense`. Therefore, you should set `ObjectiveSense`
-before setting [`ObjectiveFunction`](@ref).
+on the value of [`ObjectiveSense`](@ref). Therefore, you should set
+[`ObjectiveSense`](@ref) before setting [`ObjectiveFunction`](@ref).
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.ObjectiveSense)::MOI.OptimizationSense
+MOI.set(::Optimizer, ::MOI.ObjectiveSense, ::MOI.OptimizationSense)::Nothing
+MOI.supports(::Optimizer, ::MOI.ObjectiveSense)::Bool
+```
 """
 struct ObjectiveSense <: AbstractModelAttribute end
 
@@ -1192,7 +1385,16 @@ attribute_value_type(::ObjectiveSense) = OptimizationSense
 """
     NumberOfVariables()
 
-A model attribute for the number of variables in the model.
+An [`AbstractModelAttribute`](@ref) for the number of variables in the model.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.NumberOfVariables)::Int64
+```
+
+They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
 """
 struct NumberOfVariables <: AbstractModelAttribute end
 
@@ -1201,18 +1403,45 @@ attribute_value_type(::NumberOfVariables) = Int64
 """
     ListOfVariableIndices()
 
-A model attribute for the `Vector{VariableIndex}` of all variable indices
-present in the model (that is, of length equal to the value of
-[`NumberOfVariables`](@ref) in the order in which they were added.
+An [`AbstractModelAttribute`](@ref) for querying the `Vector{MOI.VariableIndex}`
+of all [`MOI.VariableIndex`] present in the model.
+
+## Order
+
+The variables must be returned in the order in which they were added to the
+model.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.ListOfVariableIndices)::Vector{MOI.VariableIndex}
+```
+They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
 """
 struct ListOfVariableIndices <: AbstractModelAttribute end
 
 """
     ListOfConstraintIndices{F,S}()
 
-A model attribute for the `Vector{ConstraintIndex{F,S}}` of all constraint
-indices of type `F`-in-`S` in the model (that is, of length equal to the value of
-[`NumberOfConstraints{F,S}`](@ref)) in the order in which they were added.
+An [`AbstractModelAttribute`](@ref) for the `Vector{MOI.ConstraintIndex{F,S}}`
+of all constraint indices of type `F`-in-`S` in the model.
+
+## Order
+
+The constraints must be returned in the order in which they were added to the
+model.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+function MOI.get(
+    ::Optimizer,
+    ::MOI.ListOfConstraintIndices{F,S},
+)::Vector{MOI.ConstraintIndex{F,S}} where {F<:MOI.AbstractFunction,MOI.AbstractSet}
+```
+They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
 """
 struct ListOfConstraintIndices{F,S} <: AbstractModelAttribute end
 
@@ -1233,8 +1462,19 @@ end
 """
     NumberOfConstraints{F,S}()
 
-A model attribute for the number of constraints of the type `F`-in-`S` present
-in the model.
+An [`AbstractModelAttribute`](@ref) for querying the number of constraints of
+the type `F`-in-`S` present in the model.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+function MOI.get(
+    ::Optimizer,
+    ::MOI.NumberOfConstraints{F,S},
+)::Int64 where {F<:MOI.AbstractFunction,MOI.AbstractSet}
+```
+They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
 """
 struct NumberOfConstraints{F,S} <: AbstractModelAttribute end
 
@@ -1254,25 +1494,48 @@ end
 """
     ListOfConstraintTypesPresent()
 
-A model attribute for the list of tuples of the form `(F,S)`, where `F` is a
-function type and `S` is a set type indicating that the attribute
-[`NumberOfConstraints{F,S}`](@ref) has a value greater than zero.
+An [`AbstractModelAttribute`](@ref) for the list of tuples of the form `(F, S)`,
+indicating that the attribute [`NumberOfConstraints{F,S}`](@ref) has a value
+greater than zero.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+function MOI.get(
+    ::Optimizer,
+    ::MOI.ListOfConstraintTypesPresent,
+)::Vector{Tuple{Type,Type}}
+```
+They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
 """
 struct ListOfConstraintTypesPresent <: AbstractModelAttribute end
 
 """
     ObjectiveFunction{F<:AbstractScalarFunction}()
 
-A model attribute for the objective function which has a type
+An [`AbstractModelAttribute`](@ref) for the objective function which has a type
 `F<:AbstractScalarFunction`.
 
-`F` should be guaranteed to be equivalent but not necessarily identical to the
-function type provided by the user.
+## Implementation
 
-Throws an `InexactError` if the objective function cannot be converted to `F`,
-for example, the objective function is quadratic and `F` is
-`ScalarAffineFunction{Float64}` or it has non-integer coefficient and `F` is
-`ScalarAffineFunction{Int}`.
+Optimizers should implement the following methods:
+```julia
+function MOI.get(
+    ::Optimizer,
+    ::MOI.ObjectiveFunction{F},
+)::F where {F<:MOI.AbstractFunction}
+function MOI.set(
+    ::Optimizer,
+    ::MOI.ObjectiveFunction{F},
+    ::F,
+)::F where {F<:MOI.AbstractFunction}
+MOI.supports(::Optimizer, ::MOI.ObjectiveFunction{<:MOI.AbstractFunction})::Bool
+```
+
+When implementing `get`, `F` may to be equivalent but not necessarily identical
+to the function type set by the user. If the objective function cannot be
+converted to `F`, an `InexactError` must be thrown.
 """
 struct ObjectiveFunction{F<:AbstractFunction} <: AbstractModelAttribute end
 
@@ -1281,8 +1544,19 @@ attribute_value_type(::ObjectiveFunction{F}) where {F} = F
 """
     ObjectiveFunctionType()
 
-A model attribute for the type `F` of the objective function set using the
-[`ObjectiveFunction{F}`](@ref) attribute.
+An [`AbstractModelAttribute`](@ref) for the type `F` of the objective function
+set using the [`ObjectiveFunction{F}`](@ref) attribute.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+function MOI.get(
+    ::Optimizer,
+    ::MOI.ObjectiveFunctionType,
+)::Type{<:MOI.AbstractFunction}
+```
+They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
 
 ## Example
 
@@ -1307,17 +1581,37 @@ attribute_value_type(::ObjectiveFunctionType) = Type{<:AbstractFunction}
 """
     ObjectiveValue(result_index::Int = 1)
 
-A model attribute for the objective value of the primal solution `result_index`.
+An [`AbstractModelAttribute`](@ref) for the objective value of the primal
+solution `result_index`.
+
+## PrimalStatus
+
+Before quering this attribute you should first check [`PrimalStatus`](@ref) to
+confirm that a primal solution is avaiable.
+
+If the [`PrimalStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
+this attribute is undefined.
+
+## `result_index`
+
+The optimizer may return multiple primal solutions. See [`ResultCount`](@ref)
+for information on how the results are ordered.
 
 If the solver does not have a primal value for the objective because the
 `result_index` is beyond the available solutions (whose number is indicated by
 the [`ResultCount`](@ref) attribute), getting this attribute must throw a
-[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
-another reason (for instance, only a dual solution is available), the result is
-undefined. Users should first check [`PrimalStatus`](@ref) before accessing the
-`ObjectiveValue` attribute.
+[`ResultIndexBoundsError`](@ref).
 
-See [`ResultCount`](@ref) for information on how the results are ordered.
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+function MOI.get(
+    ::Optimizer,
+    ::MOI.ObjectiveValue,
+)::Union{T,Vector{T}} where {T<:Real}
+```
+They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
 """
 struct ObjectiveValue <: AbstractModelAttribute
     result_index::Int
@@ -1327,18 +1621,37 @@ end
 """
     DualObjectiveValue(result_index::Int = 1)
 
-A model attribute for the value of the objective function of the dual problem
-for the `result_index`th dual result.
+An [`AbstractModelAttribute`](@ref) for the value of the objective function of
+the dual solution `result_index`.
+
+## DualStatus
+
+Before quering this attribute you should first check [`DualStatus`](@ref) to
+confirm that a dual solution is avaiable.
+
+If the [`DualStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
+this attribute is undefined.
+
+## `result_index`
+
+The optimizer may return multiple dual solutions. See [`ResultCount`](@ref)
+for information on how the results are ordered.
 
 If the solver does not have a dual value for the objective because the
 `result_index` is beyond the available solutions (whose number is indicated by
 the [`ResultCount`](@ref) attribute), getting this attribute must throw a
-[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
-another reason (for instance, only a primal solution is available), the result
-is undefined. Users should first check [`DualStatus`](@ref) before accessing the
-`DualObjectiveValue` attribute.
+[`ResultIndexBoundsError`](@ref).
 
-See [`ResultCount`](@ref) for information on how the results are ordered.
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+function MOI.get(
+    ::Optimizer,
+    ::MOI.DualObjectiveValue,
+)::Union{T,Vector{T}} where {T<:Real}
+```
+They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
 """
 struct DualObjectiveValue <: AbstractModelAttribute
     result_index::Int
@@ -1348,14 +1661,14 @@ end
 """
     ObjectiveBound()
 
-A model attribute for the best known bound on the optimal objective value.
+An [`AbstractModelAttribute`](@ref) for the best known bound on the optimal objective value.
 """
 struct ObjectiveBound <: AbstractModelAttribute end
 
 """
     RelativeGap()
 
-A model attribute for the final relative optimality gap.
+An [`AbstractModelAttribute`](@ref) for the final relative optimality gap.
 
 !!! warning
     The definition of this gap is solver-dependent. However, most solvers
@@ -1370,7 +1683,7 @@ attribute_value_type(::RelativeGap) = Float64
 """
     SolveTimeSec()
 
-A model attribute for the total elapsed solution time (in seconds) as reported
+An [`AbstractModelAttribute`](@ref) for the total elapsed solution time (in seconds) as reported
 by the optimizer.
 """
 struct SolveTimeSec <: AbstractModelAttribute end
@@ -1380,7 +1693,7 @@ attribute_value_type(::SolveTimeSec) = Float64
 """
     SimplexIterations()
 
-A model attribute for the cumulative number of simplex iterations during the
+An [`AbstractModelAttribute`](@ref) for the cumulative number of simplex iterations during the
 optimization process.
 
 For a mixed-integer program (MIP), the return value is the total simplex
@@ -1393,7 +1706,7 @@ attribute_value_type(::SimplexIterations) = Int64
 """
     BarrierIterations()
 
-A model attribute for the cumulative number of barrier iterations while solving
+An [`AbstractModelAttribute`](@ref) for the cumulative number of barrier iterations while solving
 a problem.
 """
 struct BarrierIterations <: AbstractModelAttribute end
@@ -1403,7 +1716,7 @@ attribute_value_type(::BarrierIterations) = Int64
 """
     NodeCount()
 
-A model attribute for the total number of branch-and-bound nodes explored while
+An [`AbstractModelAttribute`](@ref) for the total number of branch-and-bound nodes explored while
 solving a mixed-integer program (MIP).
 """
 struct NodeCount <: AbstractModelAttribute end
@@ -1413,7 +1726,7 @@ attribute_value_type(::NodeCount) = Int64
 """
     RawSolver()
 
-A model attribute for the object that may be used to access a solver-specific
+An [`AbstractModelAttribute`](@ref) for the object that may be used to access a solver-specific
 API for this optimizer.
 """
 struct RawSolver <: AbstractModelAttribute end
@@ -1421,7 +1734,7 @@ struct RawSolver <: AbstractModelAttribute end
 """
     ResultCount()
 
-A model attribute for the number of results available.
+An [`AbstractModelAttribute`](@ref) for the number of results available.
 
 ## Order of solutions
 
@@ -1475,7 +1788,7 @@ attribute_value_type(::ResultCount) = Int
 """
     ConflictStatus()
 
-A model attribute for the [`ConflictStatusCode`](@ref) explaining why the
+An [`AbstractModelAttribute`](@ref) for the [`ConflictStatusCode`](@ref) explaining why the
 conflict refiner stopped when computing the conflict.
 """
 struct ConflictStatus <: AbstractModelAttribute end
@@ -1485,7 +1798,7 @@ attribute_value_type(::ConflictStatus) = ConflictStatusCode
 """
     ListOfVariableAttributesSet()
 
-A model attribute for the `Vector{AbstractVariableAttribute}` of all variable
+An [`AbstractModelAttribute`](@ref) for the `Vector{AbstractVariableAttribute}` of all variable
 attributes `attr` such that 1) `is_copyable(attr)` returns `true` and 2) the
 attribute was set to variables.
 """
@@ -1494,7 +1807,7 @@ struct ListOfVariableAttributesSet <: AbstractModelAttribute end
 """
     ListOfVariablesWithAttributeSet(attr::AbstractVariableAttribute)
 
-A model attribute for the `Vector{VariableIndex}` of all variables with the
+An [`AbstractModelAttribute`](@ref) for the `Vector{VariableIndex}` of all variables with the
 attribute `attr` set.
 
 The returned list may not be minimal, so some elements may have their default
@@ -1638,7 +1951,7 @@ attribute_value_type(::VariableBasisStatus) = BasisStatusCode
 """
     ListOfConstraintAttributesSet{F, S}()
 
-A model attribute for the `Vector{AbstractConstraintAttribute}` of all
+An [`AbstractModelAttribute`](@ref) for the `Vector{AbstractConstraintAttribute}` of all
 constraint attributes `attr` such that:
 
  1. `is_copyable(attr)` returns `true` and
@@ -1654,7 +1967,7 @@ struct ListOfConstraintAttributesSet{F,S} <: AbstractModelAttribute end
 """
     ListOfConstraintsWithAttributeSet{F,S}(attr:AbstractConstraintAttribute)
 
-A model attribute for the `Vector{ConstraintIndex{F,S}}` of all constraints with
+An [`AbstractModelAttribute`](@ref) for the `Vector{ConstraintIndex{F,S}}` of all constraints with
 the attribute `attr` set.
 
 The returned list may not be minimal, so some elements may have their default
@@ -2288,7 +2601,7 @@ end
 """
     TerminationStatus()
 
-A model attribute for the [`TerminationStatusCode`](@ref) explaining why the
+An [`AbstractModelAttribute`](@ref) for the [`TerminationStatusCode`](@ref) explaining why the
 optimizer stopped.
 """
 struct TerminationStatus <: AbstractModelAttribute end
@@ -2298,7 +2611,7 @@ attribute_value_type(::TerminationStatus) = TerminationStatusCode
 """
     RawStatusString()
 
-A model attribute for a solver specific string explaining why the optimizer
+An [`AbstractModelAttribute`](@ref) for a solver specific string explaining why the optimizer
 stopped.
 """
 struct RawStatusString <: AbstractModelAttribute end
@@ -2373,7 +2686,7 @@ attribute_value_type(::RawStatusString) = String
 """
     PrimalStatus(result_index::Int = 1)
 
-A model attribute for the [`ResultStatusCode`](@ref) of the primal result
+An [`AbstractModelAttribute`](@ref) for the [`ResultStatusCode`](@ref) of the primal result
 `result_index`.
 
 If `result_index` is omitted, it defaults to 1.
@@ -2393,7 +2706,7 @@ attribute_value_type(::PrimalStatus) = ResultStatusCode
 """
     DualStatus(result_index::Int = 1)
 
-A model attribute for the [`ResultStatusCode`](@ref) of the dual result
+An [`AbstractModelAttribute`](@ref) for the [`ResultStatusCode`](@ref) of the dual result
 `result_index`.
 
 If `result_index` is omitted, it defaults to 1.
