@@ -40,8 +40,10 @@ function test_NonposToNonneg()
     )
     @test MOI.get(mock, MOI.NumberOfVariables()) == 4
     @test MOI.get(bridged_mock, MOI.NumberOfVariables()) == 4
+    # Variables are ordered
+    #   x in R^1, y in R_-^1, z in R^1, s in R^1
     vis = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
-    y = vis[4]
+    y = vis[2]
     @test y.value == -1
 
     @test MOI.supports(
@@ -90,7 +92,7 @@ function test_NonposToNonneg()
     MOI.set(
         bridged_mock,
         MOI.VariableName(),
-        MOI.get(bridged_mock, MOI.ListOfVariableIndices())[4],
+        MOI.get(bridged_mock, MOI.ListOfVariableIndices())[2],
         "v",
     )
     con_v = MOI.get(

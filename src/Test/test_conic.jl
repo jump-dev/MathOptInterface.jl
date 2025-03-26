@@ -7219,3 +7219,117 @@ function setup_test(
 end
 
 version_added(::typeof(test_conic_NormCone)) = v"1.14.0"
+
+function test_add_constrained_PositiveSemidefiniteConeTriangle(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T<:Real}
+    @requires MOI.supports_add_constrained_variables(
+        model,
+        MOI.PositiveSemidefiniteConeTriangle,
+    )
+    @requires _supports(config, MOI.delete)
+    # Add a scalar
+    x = MOI.add_variable(model)
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [x]
+    @test MOI.is_valid(model, x)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+    # Add a PSD matrix
+    set = MOI.PositiveSemidefiniteConeTriangle(2)
+    X, c = MOI.add_constrained_variables(model, set)
+    F, S = MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle
+    @test (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [c]
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+    @test MOI.is_valid(model, c)
+    @test !MOI.is_valid(model, typeof(c)(c.value - 1))
+    @test !MOI.is_valid(model, typeof(c)(c.value + 1))
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [x; X]
+    @test all(MOI.is_valid.(model, [x; X]))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 4
+    # Add and delete a scalar
+    y = MOI.add_variable(model)
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [x; X; y]
+    @test all(MOI.is_valid.(model, [x; X; y]))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 5
+    MOI.delete(model, y)
+    @test !MOI.is_valid(model, y)
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [x; X]
+    @test all(MOI.is_valid.(model, [x; X]))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 4
+    # Add and delete another scalar
+    z = MOI.add_variable(model)
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [x; X; z]
+    @test all(MOI.is_valid.(model, [x; X]))
+    @test MOI.is_valid(model, z)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 5
+    MOI.delete(model, z)
+    @test !MOI.is_valid(model, y)
+    @test !MOI.is_valid(model, z)
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [x; X]
+    @test all(MOI.is_valid.(model, [x; X]))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 4
+    MOI.delete(model, x)
+    @test !MOI.is_valid(model, x)
+    @test !MOI.is_valid(model, y)
+    @test !MOI.is_valid(model, z)
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == X
+    @test all(MOI.is_valid.(model, X))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 3
+    return
+end
+
+function version_added(
+    ::typeof(test_add_constrained_PositiveSemidefiniteConeTriangle),
+)
+    return v"1.38.1"
+end
+
+function test_add_constrained_PositiveSemidefiniteConeTriangle_VariableName(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T<:Real}
+    @requires MOI.supports_add_constrained_variables(
+        model,
+        MOI.PositiveSemidefiniteConeTriangle,
+    )
+    @requires MOI.supports(model, MOI.VariableName(), MOI.VariableIndex)
+    set = MOI.PositiveSemidefiniteConeTriangle(2)
+    X, _ = MOI.add_constrained_variables(model, set)
+    MOI.set(model, MOI.VariableName(), X[1], "x")
+    @test MOI.get(model, MOI.VariableName(), X[1]) == "x"
+    return
+end
+
+function version_added(
+    ::typeof(
+        test_add_constrained_PositiveSemidefiniteConeTriangle_VariableName,
+    ),
+)
+    return v"1.38.1"
+end
+
+function test_add_constrained_PositiveSemidefiniteConeTriangle_VariablePrimalStart(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T<:Real}
+    @requires MOI.supports_add_constrained_variables(
+        model,
+        MOI.PositiveSemidefiniteConeTriangle,
+    )
+    @requires MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+    set = MOI.PositiveSemidefiniteConeTriangle(2)
+    X, _ = MOI.add_constrained_variables(model, set)
+    @test all(isnothing, MOI.get.(model, MOI.VariablePrimalStart(), X))
+    MOI.set.(model, MOI.VariablePrimalStart(), X, [1.0, 0.0, 1.0])
+    @test MOI.get.(model, MOI.VariablePrimalStart(), X) == [1.0, 0.0, 1.0]
+    return
+end
+
+function version_added(
+    ::typeof(
+        test_add_constrained_PositiveSemidefiniteConeTriangle_VariablePrimalStart,
+    ),
+)
+    return v"1.38.1"
+end

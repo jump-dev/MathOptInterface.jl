@@ -691,6 +691,8 @@ Base.keys(::EmptyMap) = MOI.Utilities.EmptyVector{MOI.VariableIndex}()
 
 Base.values(::EmptyMap) = MOI.Utilities.EmptyVector{AbstractBridge}()
 
+Base.iterate(::EmptyMap) = nothing
+
 has_bridges(::EmptyMap) = false
 
 number_of_variables(::EmptyMap) = 0
