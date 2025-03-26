@@ -1434,17 +1434,17 @@ result (for example, an optimal solution or an infeasibility certificate). Other
 results will typically be alternate solutions that the solver found during the
 search for the first result.
 
-If a (local) optimal solution is available, that is, [`TerminationStatus`](@ref) is
-`OPTIMAL` or `LOCALLY_SOLVED`, the first result must correspond to the (locally)
-optimal solution. Other results may be alternative optimal solutions, or they
-may be other suboptimal solutions; use [`ObjectiveValue`](@ref) to distinguish
-between them.
+If a (local) optimal solution is available, that is, [`TerminationStatus`](@ref)
+is [`OPTIMAL`](@ref) or [`LOCALLY_SOLVED`](@Ref), the first result must
+correspond to the (locally) optimal solution. Other results may be alternative
+optimal solutions, or they may be other suboptimal solutions; use
+[`ObjectiveValue`](@ref) to distinguish between them.
 
 If a primal or dual infeasibility certificate is available, that is,
-[`TerminationStatus`](@ref) is `INFEASIBLE` or `DUAL_INFEASIBLE` and the
-corresponding [`PrimalStatus`](@ref) or [`DualStatus`](@ref) is
-`INFEASIBILITY_CERTIFICATE`, then the first result must be a certificate. Other
-results may be alternate certificates, or infeasible points.
+[`TerminationStatus`](@ref) is [`INFEASIBLE`](@ref) or [`DUAL_INFEASIBLE`](@ref)
+and the corresponding [`PrimalStatus`](@ref) or [`DualStatus`](@ref) is
+[`INFEASIBILITY_CERTIFICATE`](@ref), then the first result must be a certificate.
+Other results may be alternate certificates, or infeasible points.
 """
 struct ResultCount <: AbstractModelAttribute end
 
@@ -1578,12 +1578,12 @@ is_set_by_optimize(::CallbackVariablePrimal) = true
 
     ## Notes
 
-    When queried as part of [`ConstraintBasisStatus`](@ref), `NONBASIC_AT_LOWER`
-    and `NONBASIC_AT_UPPER` should be returned only for constraints with the
-    [`Interval`](@ref) set. In this case, they are necessary to distinguish
+    When queried as part of [`ConstraintBasisStatus`](@ref), [`NONBASIC_AT_LOWER`](@ref)
+    and [`NONBASIC_AT_UPPER`](@ref) should be returned only for constraints with
+    the [`Interval`](@ref) set. In this case, they are necessary to distinguish
     which side of the constraint is active. One-sided constraints (for example,
-    [`LessThan`](@ref) and [`GreaterThan`](@ref)) should use `NONBASIC` instead
-    of the `NONBASIC_AT_*` values.
+    [`LessThan`](@ref) and [`GreaterThan`](@ref)) should use [`NONBASIC`](@ref)
+    instead of the `NONBASIC_AT_*` values.
 
     This restriction does not apply to [`VariableBasisStatus`](@ref), which
     should return `NONBASIC_AT_*` regardless of whether the alternative bound
@@ -1614,7 +1614,7 @@ is_set_by_optimize(::CallbackVariablePrimal) = true
 """
     VariableBasisStatus(result_index::Int = 1)
 
-A variable attribute for the `BasisStatusCode` of a variable in result
+A variable attribute for the [`BasisStatusCode`](@ref) of a variable in result
 `result_index`, with respect to an available optimal solution basis.
 
 If the solver does not have a basis status for the variable because the
@@ -1883,8 +1883,8 @@ end
 """
     ConstraintFunction()
 
-A constraint attribute for the `AbstractFunction` object used to define the
-constraint.
+A constraint attribute for the [`AbstractFunction`](@ref) object used to define
+the constraint.
 
 It is guaranteed to be equivalent but not necessarily identical to the function
 provided by the user.
@@ -1928,7 +1928,7 @@ end
 """
     ConstraintSet()
 
-A constraint attribute for the `AbstractSet` object used to define the
+A constraint attribute for the [`AbstractSet`](@ref) object used to define the
 constraint.
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
@@ -1992,8 +1992,8 @@ end
 """
     ConstraintConflictStatus()
 
-A constraint attribute indicating whether the constraint participates
-in the conflict. Its type is [`ConflictParticipationStatusCode`](@ref).
+A constraint attribute to query the [`ConflictParticipationStatusCode`](@ref)
+indicating whether the constraint participates in the conflict.
 """
 struct ConstraintConflictStatus <: AbstractConstraintAttribute end
 
@@ -2132,7 +2132,7 @@ struct ListOfSupportedNonlinearOperators <: AbstractOptimizerAttribute end
     problem is a conic optimization problem in which strong duality does not
     hold).
 
-    To check if a primal feasible solution exists, set the objective sense to
+    To check if the primal is unbounded, set the objective sense to
     [`FEASIBILITY_SENSE`](@ref) and re-solve the problem. If a primal feasible
     point exists, the original problem is unbounded. If a primal feasible point
     does not exist, the original problem is both primal and dual infeasible.
@@ -2287,8 +2287,8 @@ end
 """
     TerminationStatus()
 
-A model attribute for the `TerminationStatusCode` explaining why the optimizer
-stopped.
+A model attribute for the [`TerminationStatusCode`](@ref) explaining why the
+optimizer stopped.
 """
 struct TerminationStatus <: AbstractModelAttribute end
 
@@ -2308,31 +2308,64 @@ attribute_value_type(::RawStatusString) = String
     """
         ResultStatusCode
 
-    An Enum of possible values for the [`PrimalStatus`](@ref) and [`DualStatus`](@ref)
-    attributes.
+    An Enum of possible values for the [`PrimalStatus`](@ref) and
+    [`DualStatus`](@ref) attributes.
 
     The values indicate how to interpret the result vector.
     """,
     ResultStatusCode,
-    "the result vector is empty.",
+    "The result vector is empty.",
     NO_SOLUTION,
-    "the result vector is a feasible point.",
+    "The result vector is a feasible point.",
     FEASIBLE_POINT,
-    "the result vector is feasible if some constraint tolerances are relaxed.",
+    "The result vector is feasible if some constraint tolerances are relaxed.",
     NEARLY_FEASIBLE_POINT,
-    "the result vector is an infeasible point.",
+    "The result vector is an infeasible point.",
     INFEASIBLE_POINT,
-    "the result vector is an infeasibility certificate. If the `PrimalStatus` is `INFEASIBILITY_CERTIFICATE`, then the primal result vector is a certificate of dual infeasibility. If the `DualStatus` is `INFEASIBILITY_CERTIFICATE`, then the dual result vector is a proof of primal infeasibility.",
+    """
+    The result vector is an infeasibility certificate.
+
+    If the [`PrimalStatus`](@ref) is `INFEASIBILITY_CERTIFICATE`, then the
+    primal result vector is a certificate of dual infeasibility.
+
+    If the [`DualStatus`](@ref) is `INFEASIBILITY_CERTIFICATE`, then the dual
+    result vector is a proof of primal infeasibility.
+    """,
     INFEASIBILITY_CERTIFICATE,
-    "the result satisfies a relaxed criterion for a certificate of infeasibility.",
+    """
+    The result satisfies a relaxed criterion for a certificate of infeasibility.
+
+    If the [`PrimalStatus`](@ref) is `NEARLY_INFEASIBILITY_CERTIFICATE`, then
+    the primal result vector is a certificate of dual infeasibility.
+
+    If the [`DualStatus`](@ref) is `NEARLY_INFEASIBILITY_CERTIFICATE`, then the
+    dual result vector is a proof of primal infeasibility.
+    """,
     NEARLY_INFEASIBILITY_CERTIFICATE,
-    "the result vector is an ill-posed certificate; see [this article](https://arxiv.org/abs/1408.4685) for details. If the `PrimalStatus` is `REDUCTION_CERTIFICATE`, then the primal result vector is a proof that the dual problem is ill-posed. If the `DualStatus` is `REDUCTION_CERTIFICATE`, then the dual result vector is a proof that the primal is ill-posed.",
+    """
+    The result vector is an ill-posed certificate; see [this article](https://arxiv.org/abs/1408.4685)
+    for details.
+
+    If the [`PrimalStatus`](@ref) is `REDUCTION_CERTIFICATE`, then the primal
+    result vector is a proof that the dual problem is ill-posed.
+
+    If the [`DualStatus`](@ref) is `REDUCTION_CERTIFICATE`, then the dual result
+    vector is a proof that the primal is ill-posed.
+    """,
     REDUCTION_CERTIFICATE,
-    "the result satisfies a relaxed criterion for an ill-posed certificate.",
+    """
+    The result satisfies a relaxed criterion for an ill-posed certificate.
+    """,
     NEARLY_REDUCTION_CERTIFICATE,
-    "the result vector contains a solution with an unknown interpretation.",
+    """
+    The result vector contains a solution with an unknown interpretation. Check
+    the solver log for more details.
+    """,
     UNKNOWN_RESULT_STATUS,
-    "the result vector contains a solution with an interpretation not covered by one of the statuses defined above",
+    """
+    The result vector contains a solution with an interpretation not covered by
+    one of the statuses defined above. Check the solver log for more details.
+    """,
     OTHER_RESULT_STATUS,
 )
 
@@ -2340,12 +2373,14 @@ attribute_value_type(::RawStatusString) = String
     PrimalStatus(result_index::Int = 1)
 
 A model attribute for the [`ResultStatusCode`](@ref) of the primal result
-`result_index`. If `result_index` is omitted, it defaults to 1.
+`result_index`.
+
+If `result_index` is omitted, it defaults to 1.
 
 See [`ResultCount`](@ref) for information on how the results are ordered.
 
 If `result_index` is larger than the value of [`ResultCount`](@ref) then
-`NO_SOLUTION` is returned.
+[`NO_SOLUTION`](@ref) is returned.
 """
 struct PrimalStatus <: AbstractModelAttribute
     result_index::Int
@@ -2357,13 +2392,15 @@ attribute_value_type(::PrimalStatus) = ResultStatusCode
 """
     DualStatus(result_index::Int = 1)
 
-A model attribute for the `ResultStatusCode` of the dual result `result_index`.
+A model attribute for the [`ResultStatusCode`](@ref) of the dual result
+`result_index`.
+
 If `result_index` is omitted, it defaults to 1.
 
 See [`ResultCount`](@ref) for information on how the results are ordered.
 
 If `result_index` is larger than the value of [`ResultCount`](@ref) then
-`NO_SOLUTION` is returned.
+[`NO_SOLUTION`](@ref) is returned.
 """
 struct DualStatus <: AbstractModelAttribute
     result_index::Int
