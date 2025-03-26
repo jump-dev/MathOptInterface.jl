@@ -811,7 +811,7 @@ MOI.get(
 )::Vector{MOI.AbstractOptimizerAttribute}
 ```
 
-They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct ListOfOptimizerAttributesSet <: AbstractOptimizerAttribute end
 
@@ -826,7 +826,7 @@ Optimizers should implement the following methods:
 ```julia
 MOI.get(::Optimizer, ::MOI.SolverName)::String
 ```
-They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct SolverName <: AbstractOptimizerAttribute end
 
@@ -855,7 +855,7 @@ Optimizers should implement the following methods:
 ```julia
 MOI.get(::Optimizer, ::MOI.SolverVersion)::String
 ```
-They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct SolverVersion <: AbstractOptimizerAttribute end
 
@@ -1394,7 +1394,7 @@ Optimizers should implement the following methods:
 MOI.get(::Optimizer, ::MOI.NumberOfVariables)::Int64
 ```
 
-They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct NumberOfVariables <: AbstractModelAttribute end
 
@@ -1417,7 +1417,7 @@ Optimizers should implement the following methods:
 ```julia
 MOI.get(::Optimizer, ::MOI.ListOfVariableIndices)::Vector{MOI.VariableIndex}
 ```
-They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct ListOfVariableIndices <: AbstractModelAttribute end
 
@@ -1441,7 +1441,7 @@ function MOI.get(
     ::MOI.ListOfConstraintIndices{F,S},
 )::Vector{MOI.ConstraintIndex{F,S}} where {F<:MOI.AbstractFunction,MOI.AbstractSet}
 ```
-They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct ListOfConstraintIndices{F,S} <: AbstractModelAttribute end
 
@@ -1474,7 +1474,7 @@ function MOI.get(
     ::MOI.NumberOfConstraints{F,S},
 )::Int64 where {F<:MOI.AbstractFunction,MOI.AbstractSet}
 ```
-They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct NumberOfConstraints{F,S} <: AbstractModelAttribute end
 
@@ -1507,7 +1507,7 @@ function MOI.get(
     ::MOI.ListOfConstraintTypesPresent,
 )::Vector{Tuple{Type,Type}}
 ```
-They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct ListOfConstraintTypesPresent <: AbstractModelAttribute end
 
@@ -1556,7 +1556,7 @@ function MOI.get(
     ::MOI.ObjectiveFunctionType,
 )::Type{<:MOI.AbstractFunction}
 ```
-They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
+They should not implement [`set`](@ref) or [`supports`](@ref).
 
 ## Example
 
@@ -1611,7 +1611,7 @@ function MOI.get(
     ::MOI.ObjectiveValue,
 )::Union{T,Vector{T}} where {T<:Real}
 ```
-They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct ObjectiveValue <: AbstractModelAttribute
     result_index::Int
@@ -1651,7 +1651,7 @@ function MOI.get(
     ::MOI.DualObjectiveValue,
 )::Union{T,Vector{T}} where {T<:Real}
 ```
-They should not implement [`MOI.set`](@ref) or [`MOI.supports`](@ref).
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct DualObjectiveValue <: AbstractModelAttribute
     result_index::Int
