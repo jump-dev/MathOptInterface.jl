@@ -53,11 +53,18 @@ Utilities.struct_of_constraint_code
 
 ```@docs
 Utilities.CachingOptimizer
+Utilities.CachingOptimizerState
+Utilities.NO_OPTIMIZER
+Utilities.EMPTY_OPTIMIZER
+Utilities.ATTACHED_OPTIMIZER
+Utilities.state
+Utilities.CachingOptimizerMode
+Utilities.AUTOMATIC
+Utilities.MANUAL
+Utilities.mode
 Utilities.attach_optimizer
 Utilities.reset_optimizer
 Utilities.drop_optimizer
-Utilities.state
-Utilities.mode
 ```
 
 ## Mock optimizer

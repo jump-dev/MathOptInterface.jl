@@ -98,6 +98,9 @@ NormNuclearCone
 SOS1
 SOS2
 Indicator
+ActivationCondition
+ACTIVATE_ON_ZERO
+ACTIVATE_ON_ONE
 Complements
 HyperRectangle
 Scaled

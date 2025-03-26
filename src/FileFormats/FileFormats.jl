@@ -20,42 +20,72 @@ include("MPS/MPS.jl")
 include("NL/NL.jl")
 include("SDPA/SDPA.jl")
 
-"""
-    FileFormat
+MOI.@_documented_enum(
+    """
+        FileFormat
 
-List of accepted export formats.
-
-- `FORMAT_AUTOMATIC`: try to detect the file format based on the file name
-- `FORMAT_CBF`: the Conic Benchmark format
-- `FORMAT_LP`: the LP file format
-- `FORMAT_MOF`: the MathOptFormat file format
-- `FORMAT_MPS`: the MPS file format
-- `FORMAT_NL`: the AMPL .nl file format
-- `FORMAT_REW`: the .rew file format, which is MPS with generic names
-- `FORMAT_SDPA`: the SemiDefinite Programming Algorithm format
-"""
-@enum(
+    List of accepted export formats.
+    """,
     FileFormat,
+    """
+    Try to detect the file format based on the file name.
+    """,
     FORMAT_AUTOMATIC,
+    """
+    The Conic Benchmark format.
+
+    See [`FileFormats.CBF.Model`](@ref) for more details.
+    """,
     FORMAT_CBF,
+    """
+    The LP file format.
+
+    See [`FileFormats.LP.Model`](@ref) for more details.
+    """,
     FORMAT_LP,
+    """
+    The MathOptFormat file format.
+
+    See [`FileFormats.MOF.Model`](@ref) for more details.
+    """,
     FORMAT_MOF,
+    """
+    The MPS file format.
+
+    See [`FileFormats.MPS.Model`](@ref) for more details.
+    """,
     FORMAT_MPS,
+    """
+    The AMPL .nl file format.
+
+    See [`FileFormats.NL.Model`](@ref) for more details.
+    """,
     FORMAT_NL,
+    """
+    The .rew file format, which is equivalent to the MPS format
+    ([`FileFormats.FORMAT_MPS`](@ref)) with the `generic_names = true` keyword
+    argument set by default.
+
+    See [`FileFormats.MPS.Model`](@ref) for more details.
+    """,
     FORMAT_REW,
+    """
+    The SemiDefinite Programming Algorithm format.
+
+    See [`FileFormats.SDPA.Model`](@ref) for more details.
+    """,
     FORMAT_SDPA,
 )
 
 """
-    Model(
-        ;
+    Model(;
         format::FileFormat = FORMAT_AUTOMATIC,
         filename::Union{Nothing, String} = nothing,
         kwargs...
     )
 
-Return model corresponding to the `FileFormat` `format`, or, if
-`format == FORMAT_AUTOMATIC`, guess the format from `filename`.
+Return model corresponding to the [`FileFormats.FileFormat`](@ref) `format`, or,
+if `format == FORMAT_AUTOMATIC`, guess the format from `filename`.
 
 The `filename` argument is only needed if `format == FORMAT_AUTOMATIC`.
 

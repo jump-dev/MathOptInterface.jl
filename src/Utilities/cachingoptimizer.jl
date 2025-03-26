@@ -12,8 +12,52 @@
 # function that uses `.optimizer`. For example:
 # `MOI.supports(model.optimizer, F, S)::Bool`.
 
-@enum CachingOptimizerState NO_OPTIMIZER EMPTY_OPTIMIZER ATTACHED_OPTIMIZER
-@enum CachingOptimizerMode MANUAL AUTOMATIC
+MOI.@_documented_enum(
+    """
+        CachingOptimizerState
+
+    A [`Utilities.CachingOptimizer`](@ref) may be in one of three possible
+    states.
+    """,
+    CachingOptimizerState,
+    "The CachingOptimizer does not have any optimizer.",
+    NO_OPTIMIZER,
+    """
+    The CachingOptimizer has an optimizer. The optimizer is empty and it is not
+    synchronized with the cached model.
+    """,
+    EMPTY_OPTIMIZER,
+    """
+    The CachingOptimizer has an optimizer, and it is synchronized with the
+    cached model.
+    """,
+    ATTACHED_OPTIMIZER,
+)
+MOI.@_documented_enum(
+    """
+        CachingOptimizerMode
+
+    A [`Utilities.CachingOptimizer`](@ref) has two modes of operation.
+    """,
+    CachingOptimizerMode,
+    """
+    The only methods that change the state of the `CachingOptimizer`
+    are [`Utilities.reset_optimizer`](@ref), [`Utilities.drop_optimizer`](@ref),
+    and [`Utilities.attach_optimizer`](@ref).
+
+    Attempting to perform an operation in the incorrect state results in an
+    error.
+    """,
+    MANUAL,
+    """
+    The [`Utilities.CachingOptimizer`](@ref) changes its state when necessary.
+    For example, [`MOI.optimize!`](@ref) will automatically call
+    [`Utilities.attach_optimizer`](@ref) (an optimizer must have been previously
+    set). Attempting to add a constraint or perform a modification not supported
+    by the optimizer results in a drop to the [`EMPTY_OPTIMIZER`](@ref) state.
+    """,
+    AUTOMATIC,
+)
 
 """
     CachingOptimizer
@@ -22,57 +66,52 @@
 links it with an optimizer. It supports incremental model construction and
 modification even when the optimizer doesn't.
 
-## Constructors
+## Mode
+
+A [`Utilities.CachingOptimizer`](@ref) has two modes of operation:
+[`Utilities.AUTOMATIC`](@ref) and [`Utilities.MANUAL`](@ref). See their
+docstrings for details.
+
+Use [`Utilities.mode`](@ref) to query the mode of a
+[`Utilities.CachingOptimizer`](@ref).
+
+## State
+
+A [`Utilities.CachingOptimizer`](@ref) may be in one of three possible states:
+[`NO_OPTIMIZER`](@ref), [`Utilities.EMPTY_OPTIMIZER`](@ref), and
+[`Utilities.ATTACHED_OPTIMIZER`](@ref). See their docstrings for details.
+
+Use [`Utilities.state`](@ref) to query the state of a
+[`Utilities.CachingOptimizer`](@ref).
+
+## Constructor with optimizer
 
 ```julia
     CachingOptimizer(cache::MOI.ModelLike, optimizer::AbstractOptimizer)
 ```
 
-Creates a `CachingOptimizer` in `AUTOMATIC` mode, with the optimizer
+Creates a `CachingOptimizer` in [`AUTOMATIC`](@ref) mode, with the optimizer
 `optimizer`.
 
 The type of the optimizer returned is
-`CachingOptimizer{typeof(optimizer), typeof(cache)}` so it does not support the
-function `reset_optimizer(::CachingOptimizer, new_optimizer)` if the type of
-`new_optimizer` is different from the type of `optimizer`.
+`CachingOptimizer{typeof(optimizer),typeof(cache)}` so it does not support the
+function [`Utilities.reset_optimizer(::CachingOptimizer, new_optimizer)`](@ref)
+if the type of `new_optimizer` is different from the type of `optimizer`.
+
+## Constructor without optimizer
 
 ```julia
     CachingOptimizer(cache::MOI.ModelLike, mode::CachingOptimizerMode)
 ```
 
-Creates a `CachingOptimizer` in the `NO_OPTIMIZER` state and mode `mode`.
+Creates a `CachingOptimizer` in the [`NO_OPTIMIZER`](@ref)
+[`Utilities.CachingOptimizerState`](@ref) and the
+[`Utilities.CachingOptimizerMode`](@ref) `mode`.
 
 The type of the optimizer returned is
 `CachingOptimizer{MOI.AbstractOptimizer,typeof(cache)}` so it _does_ support the
 function `reset_optimizer(::CachingOptimizer, new_optimizer)` if the type of
 `new_optimizer` is different from the type of `optimizer`.
-
-## About the type
-
-### States
-
-A `CachingOptimizer` may be in one of three possible states
-(`CachingOptimizerState`):
-
-* `NO_OPTIMIZER`: The CachingOptimizer does not have any optimizer.
-* `EMPTY_OPTIMIZER`: The CachingOptimizer has an empty optimizer.
-  The optimizer is not synchronized with the cached model.
-* `ATTACHED_OPTIMIZER`: The CachingOptimizer has an optimizer, and it is
-  synchronized with the cached model.
-
-### Modes
-
-A `CachingOptimizer` has two modes of operation (`CachingOptimizerMode`):
-
-* `MANUAL`: The only methods that change the state of the `CachingOptimizer`
-  are [`Utilities.reset_optimizer`](@ref), [`Utilities.drop_optimizer`](@ref),
-  and [`Utilities.attach_optimizer`](@ref).
-  Attempting to perform an operation in the incorrect state results in an error.
-* `AUTOMATIC`: The `CachingOptimizer` changes its state when necessary. For
-  example, `optimize!` will automatically call `attach_optimizer` (an
-  optimizer must have been previously set). Attempting to add a constraint or
-  perform a modification not supported by the optimizer results in a drop to
-  `EMPTY_OPTIMIZER` mode.
 """
 mutable struct CachingOptimizer{O,M<:MOI.ModelLike} <: MOI.AbstractOptimizer
     optimizer::Union{Nothing,O}
@@ -154,14 +193,18 @@ end
 """
     state(m::CachingOptimizer)::CachingOptimizerState
 
-Returns the state of the CachingOptimizer `m`. See [`Utilities.CachingOptimizer`](@ref).
+Returns the state of the CachingOptimizer `m`.
+
+See [`Utilities.CachingOptimizer`](@ref).
 """
 state(m::CachingOptimizer) = m.state
 
 """
     mode(m::CachingOptimizer)::CachingOptimizerMode
 
-Returns the operating mode of the CachingOptimizer `m`. See [`Utilities.CachingOptimizer`](@ref).
+Returns the operating mode of the CachingOptimizer `m`.
+
+See [`Utilities.CachingOptimizer`](@ref).
 """
 mode(m::CachingOptimizer) = m.mode
 
