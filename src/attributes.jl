@@ -1449,26 +1449,27 @@ struct ResultCount <: AbstractModelAttribute end
 
 attribute_value_type(::ResultCount) = Int
 
-"""
-    ConflictStatusCode
+@_documented_enum(
+    """
+        ConflictStatusCode
 
-An Enum of possible values for the `ConflictStatus` attribute. This attribute
-is meant to explain the reason why the conflict finder stopped executing in the
-most recent call to [`compute_conflict!`](@ref).
+    An Enum of possible values for the [`ConflictStatus`](@ref) attribute.
 
-Possible values are:
-* `COMPUTE_CONFLICT_NOT_CALLED`: the function [`compute_conflict!`](@ref) has
-  not yet been called
-* `NO_CONFLICT_EXISTS`: there is no conflict because the problem is feasible
-* `NO_CONFLICT_FOUND`: the solver could not find a conflict
-* `CONFLICT_FOUND`: at least one conflict could be found
-"""
-@enum ConflictStatusCode begin
-    COMPUTE_CONFLICT_NOT_CALLED
-    NO_CONFLICT_EXISTS
-    NO_CONFLICT_FOUND
-    CONFLICT_FOUND
-end
+    This attribute is meant to explain the reason why the conflict finder
+    stopped executing in the most recent call to [`compute_conflict!`](@ref).
+    """,
+    ConflictStatusCode,
+    """
+    The function [`compute_conflict!`](@ref) has not yet been called.
+    """,
+    COMPUTE_CONFLICT_NOT_CALLED,
+    "There is no conflict because the problem is feasible.",
+    NO_CONFLICT_EXISTS,
+    "The solver could not find a conflict.",
+    NO_CONFLICT_FOUND,
+    "The solver found a conflict.",
+    CONFLICT_FOUND,
+)
 
 """
     ConflictStatus()

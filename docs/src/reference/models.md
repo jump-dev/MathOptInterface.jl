@@ -155,8 +155,12 @@ OTHER_RESULT_STATUS
 ```@docs
 compute_conflict!
 ConflictStatus
-ConstraintConflictStatus
 ConflictStatusCode
+COMPUTE_CONFLICT_NOT_CALLED
+NO_CONFLICT_EXISTS
+NO_CONFLICT_FOUND
+CONFLICT_FOUND
+ConstraintConflictStatus
 ConflictParticipationStatusCode
 NOT_IN_CONFLICT
 IN_CONFLICT

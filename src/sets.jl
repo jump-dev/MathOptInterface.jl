@@ -1881,27 +1881,34 @@ Base.copy(set::SOS2{T}) where {T} = SOS2{T}(copy(set.weights))
 
 Base.:(==)(a::SOS2{T}, b::SOS2{T}) where {T} = a.weights == b.weights
 
-"""
-	ActivationCondition
+@_documented_enum(
+    """
+	    ActivationCondition
 
-Activation condition for an indicator constraint.
+    Activation condition for an indicator constraint.
 
-The enum value is used as first type parameter of `Indicator{A,S}`.
-"""
-@enum ActivationCondition begin
-    ACTIVATE_ON_ZERO
-    ACTIVATE_ON_ONE
-end
+    The enum value is used as first type parameter of `Indicator{A,S}`.
+    """,
+    ActivationCondition,
+    """
+    The indicator constraint holds whhen the binary variable is zero.
+    """,
+    ACTIVATE_ON_ZERO,
+    """
+    The indicator constraint holds whhen the binary variable is one.
+    """,
+    ACTIVATE_ON_ONE,
+)
 
 """
     Indicator{A<:ActivationCondition,S<:AbstractScalarSet}(set::S)
 
 The set corresponding to an indicator constraint.
 
-When `A` is `ACTIVATE_ON_ZERO`, this means:
+When `A` is [`ACTIVATE_ON_ZERO`](@ref), this means:
 ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 0 \\implies x \\in set\\}``
 
-When `A` is `ACTIVATE_ON_ONE`, this means:
+When `A` is [`ACTIVATE_ON_ONE`](@ref), this means:
 ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 1 \\implies x \\in set\\}``
 
 ## Notes
