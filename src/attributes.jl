@@ -1436,7 +1436,7 @@ model.
 
 Optimizers should implement the following methods:
 ```julia
-function MOI.get(
+MOI.get(
     ::Optimizer,
     ::MOI.ListOfConstraintIndices{F,S},
 )::Vector{MOI.ConstraintIndex{F,S}} where {F<:MOI.AbstractFunction,MOI.AbstractSet}
@@ -1469,7 +1469,7 @@ the type `F`-in-`S` present in the model.
 
 Optimizers should implement the following methods:
 ```julia
-function MOI.get(
+MOI.get(
     ::Optimizer,
     ::MOI.NumberOfConstraints{F,S},
 )::Int64 where {F<:MOI.AbstractFunction,MOI.AbstractSet}
@@ -1502,7 +1502,7 @@ greater than zero.
 
 Optimizers should implement the following methods:
 ```julia
-function MOI.get(
+MOI.get(
     ::Optimizer,
     ::MOI.ListOfConstraintTypesPresent,
 )::Vector{Tuple{Type,Type}}
@@ -1521,11 +1521,11 @@ An [`AbstractModelAttribute`](@ref) for the objective function which has a type
 
 Optimizers should implement the following methods:
 ```julia
-function MOI.get(
+MOI.get(
     ::Optimizer,
     ::MOI.ObjectiveFunction{F},
 )::F where {F<:MOI.AbstractFunction}
-function MOI.set(
+MOI.set(
     ::Optimizer,
     ::MOI.ObjectiveFunction{F},
     ::F,
@@ -1551,7 +1551,7 @@ set using the [`ObjectiveFunction{F}`](@ref) attribute.
 
 Optimizers should implement the following methods:
 ```julia
-function MOI.get(
+MOI.get(
     ::Optimizer,
     ::MOI.ObjectiveFunctionType,
 )::Type{<:MOI.AbstractFunction}
@@ -1606,7 +1606,7 @@ the [`ResultCount`](@ref) attribute), getting this attribute must throw a
 
 Optimizers should implement the following methods:
 ```julia
-function MOI.get(
+MOI.get(
     ::Optimizer,
     ::MOI.ObjectiveValue,
 )::Union{T,Vector{T}} where {T<:Real}
@@ -1646,7 +1646,7 @@ the [`ResultCount`](@ref) attribute), getting this attribute must throw a
 
 Optimizers should implement the following methods:
 ```julia
-function MOI.get(
+MOI.get(
     ::Optimizer,
     ::MOI.DualObjectiveValue,
 )::Union{T,Vector{T}} where {T<:Real}
@@ -1693,11 +1693,19 @@ attribute_value_type(::SolveTimeSec) = Float64
 """
     SimplexIterations()
 
-An [`AbstractModelAttribute`](@ref) for the cumulative number of simplex iterations during the
-optimization process.
+An [`AbstractModelAttribute`](@ref) for the cumulative number of simplex
+iterations while solving a problem.
 
 For a mixed-integer program (MIP), the return value is the total simplex
 iterations for all nodes.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.SimplexIterations)::Int64
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct SimplexIterations <: AbstractModelAttribute end
 
@@ -1706,8 +1714,19 @@ attribute_value_type(::SimplexIterations) = Int64
 """
     BarrierIterations()
 
-An [`AbstractModelAttribute`](@ref) for the cumulative number of barrier iterations while solving
-a problem.
+An [`AbstractModelAttribute`](@ref) for the cumulative number of barrier
+iterations while solving a problem.
+
+For a mixed-integer program (MIP), the return value is the total barrier
+iterations for all nodes.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.BarrierIterations)::Int64
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct BarrierIterations <: AbstractModelAttribute end
 
@@ -1716,8 +1735,16 @@ attribute_value_type(::BarrierIterations) = Int64
 """
     NodeCount()
 
-An [`AbstractModelAttribute`](@ref) for the total number of branch-and-bound nodes explored while
-solving a mixed-integer program (MIP).
+An [`AbstractModelAttribute`](@ref) for the total number of branch-and-bound
+nodes explored while solving a mixed-integer program (MIP).
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.NodeCount)::Int64
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct NodeCount <: AbstractModelAttribute end
 
@@ -1726,8 +1753,16 @@ attribute_value_type(::NodeCount) = Int64
 """
     RawSolver()
 
-An [`AbstractModelAttribute`](@ref) for the object that may be used to access a solver-specific
-API for this optimizer.
+An [`AbstractModelAttribute`](@ref) for the object that may be used to access a
+solver-specific API for this optimizer.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.RawSolver)::Any
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct RawSolver <: AbstractModelAttribute end
 
@@ -1742,7 +1777,7 @@ A number of attributes contain an index, `result_index`, which is used to refer
 to one of the available results. Thus, `result_index` must be an integer between
 `1` and the number of available results.
 
-As a general rule, the first result (`result_index=1`) is the most important
+As a general rule, the first result (`result_index = 1`) is the most important
 result (for example, an optimal solution or an infeasibility certificate). Other
 results will typically be alternate solutions that the solver found during the
 search for the first result.
@@ -1758,6 +1793,14 @@ If a primal or dual infeasibility certificate is available, that is,
 and the corresponding [`PrimalStatus`](@ref) or [`DualStatus`](@ref) is
 [`INFEASIBILITY_CERTIFICATE`](@ref), then the first result must be a certificate.
 Other results may be alternate certificates, or infeasible points.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.ResultCount)::Int
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct ResultCount <: AbstractModelAttribute end
 
@@ -1788,8 +1831,16 @@ attribute_value_type(::ResultCount) = Int
 """
     ConflictStatus()
 
-An [`AbstractModelAttribute`](@ref) for the [`ConflictStatusCode`](@ref) explaining why the
-conflict refiner stopped when computing the conflict.
+An [`AbstractModelAttribute`](@ref) for the [`ConflictStatusCode`](@ref)
+explaining why [`compute_conflict!`] stopped when computing the conflict.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.ConflictStatus)::MOI.ConflictStatusCode
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct ConflictStatus <: AbstractModelAttribute end
 
@@ -1798,17 +1849,30 @@ attribute_value_type(::ConflictStatus) = ConflictStatusCode
 """
     ListOfVariableAttributesSet()
 
-An [`AbstractModelAttribute`](@ref) for the `Vector{AbstractVariableAttribute}` of all variable
-attributes `attr` such that 1) `is_copyable(attr)` returns `true` and 2) the
-attribute was set to variables.
+An [`AbstractModelAttribute`](@ref) for the `Vector{AbstractVariableAttribute}`
+of all variable attributes `attr` such that:
+
+ 1. `is_copyable(attr)` returns `true`
+ 2. the attribute was set for at least one variable in the model
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(
+    ::Optimizer,
+    ::MOI.ListOfVariableAttributesSet,
+)::Vector{MOI.AbstractVariableAttribute}
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct ListOfVariableAttributesSet <: AbstractModelAttribute end
 
 """
     ListOfVariablesWithAttributeSet(attr::AbstractVariableAttribute)
 
-An [`AbstractModelAttribute`](@ref) for the `Vector{VariableIndex}` of all variables with the
-attribute `attr` set.
+An [`AbstractModelAttribute`](@ref) for the `Vector{MOI.VariableIndex}` of all
+variables with the attribute `attr` set.
 
 The returned list may not be minimal, so some elements may have their default
 value set.
@@ -1817,6 +1881,17 @@ value set.
 
 This is an optional attribute to implement. The default fallback is to get
 [`ListOfVariableIndices`](@ref).
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(
+    ::Optimizer,
+    ::MOI.ListOfVariablesWithAttributeSet{<:MOI.AbstractVariableAttribute},
+)::Vector{MOI.VarialbeIndex}
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct ListOfVariablesWithAttributeSet{A} <: AbstractModelAttribute
     attr::A
@@ -1832,10 +1907,44 @@ end
 """
     VariableName()
 
-A variable attribute for a string identifying the variable. It is *valid* for
-two variables to have the same name; however, variables with duplicate names
-cannot be looked up using [`get`](@ref). It has a default value of `""` if not
-set`.
+An [`AbstractVariableAttribute`](@ref) for a `String` identifying the variable.
+
+The default name is `""` if not set by the user.
+
+## Duplicate names
+
+Two variables may have the same name; however, variables with duplicate names
+cannot be looked up using [`get`](@ref).
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(model);
+
+julia> MOI.supports(model, MOI.VariableName(), MOI.VariableIndex)
+true
+
+julia> MOI.get(model, MOI.VariableName(), x)
+""
+
+julia> MOI.set(model, MOI.VariableName(), x, "x")
+
+julia> MOI.get(model, MOI.VariableName(), x)
+"x"
+```
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.VariableName, ::MOI.VariableIndex)::String
+MOI.set(::Optimizer, ::MOI.VariableName, ::MOI.VariableIndex, ::String)::Nothing
+MOI.supports(::Optimizer, ::MOI.VariableName, ::Type{MOI.VariableIndex})::Bool
+```
 """
 struct VariableName <: AbstractVariableAttribute end
 
@@ -1844,27 +1953,73 @@ attribute_value_type(::VariableName) = String
 """
     VariablePrimalStart()
 
-A variable attribute for the initial assignment to some primal variable's value
-that the optimizer may use to warm-start the solve.
+An [`AbstractVariableAttribute`](@ref) for the initial assignment to the
+variable's primal value that the optimizer may use to warm-start the solve.
+
 May be a number or `nothing` (unset).
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}());
+
+julia> x = MOI.add_variable(model);
+
+julia> MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+true
+
+julia> MOI.get(model, MOI.VariablePrimalStart(), x)
+
+julia> MOI.set(model, MOI.VariablePrimalStart(), x, 1.0)
+
+julia> MOI.get(model, MOI.VariablePrimalStart(), x)
+1.0
+```
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.VariablePrimalStart, ::MOI.VariableIndex)::Union{Nothing,T}
+MOI.set(::Optimizer, ::MOI.VariablePrimalStart, ::MOI.VariableIndex, ::Union{Nothing,T})::Nothing
+MOI.supports(::Optimizer, ::MOI.VariablePrimalStart, ::Type{MOI.VariableIndex})::Bool
+```
 """
 struct VariablePrimalStart <: AbstractVariableAttribute end
 
 """
     VariablePrimal(result_index::Int = 1)
 
-A variable attribute for the assignment to some primal variable's value in
-result `result_index`. If `result_index` is omitted, it is 1 by default.
+An [`AbstractVariableAttribute`](@ref) for the variable's primal value in result
+`result_index`.
+
+## PrimalStatus
+
+Before quering this attribute you should first check [`PrimalStatus`](@ref) to
+confirm that a primal solution is avaiable.
+
+If the [`PrimalStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
+this attribute is undefined.
+
+## `result_index`
+
+The optimizer may return multiple primal solutions. See [`ResultCount`](@ref)
+for information on how the results are ordered.
 
 If the solver does not have a primal value for the variable because the
 `result_index` is beyond the available solutions (whose number is indicated by
 the [`ResultCount`](@ref) attribute), getting this attribute must throw a
-[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
-another reason (for instance, only a dual solution is available), the result is
-undefined. Users should first check [`PrimalStatus`](@ref) before accessing the
-`VariablePrimal` attribute.
+[`ResultIndexBoundsError`](@ref).
 
-See [`ResultCount`](@ref) for information on how the results are ordered.
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.VariablePrimal, ::MOI.VariableIndex)::T
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct VariablePrimal <: AbstractVariableAttribute
     result_index::Int
@@ -1874,8 +2029,8 @@ end
 """
     CallbackVariablePrimal(callback_data)
 
-A variable attribute for the assignment to some primal variable's value during
-the callback identified by `callback_data`.
+An [`AbstractVariableAttribute`](@ref) for the assignment to the variable's
+primal value during the callback identified by `callback_data`.
 """
 struct CallbackVariablePrimal{CallbackDataType} <: AbstractVariableAttribute
     callback_data::CallbackDataType
@@ -1928,18 +2083,34 @@ is_set_by_optimize(::CallbackVariablePrimal) = true
 """
     VariableBasisStatus(result_index::Int = 1)
 
-A variable attribute for the [`BasisStatusCode`](@ref) of a variable in result
-`result_index`, with respect to an available optimal solution basis.
+An [`AbstractVariableAttribute`](@ref) for the [`BasisStatusCode`](@ref) of the
+variable in result `result_index`, with respect to a basic solution.
 
-If the solver does not have a basis status for the variable because the
+## PrimalStatus
+
+Before quering this attribute you should first check [`PrimalStatus`](@ref) to
+confirm that a primal solution is avaiable.
+
+If the [`PrimalStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
+this attribute is undefined.
+
+## `result_index`
+
+The optimizer may return multiple primal solutions. See [`ResultCount`](@ref)
+for information on how the results are ordered.
+
+If the solver does not have a primal value for the variable because the
 `result_index` is beyond the available solutions (whose number is indicated by
 the [`ResultCount`](@ref) attribute), getting this attribute must throw a
-[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
-another reason (for instance, only a dual solution is available), the result is
-undefined. Users should first check [`PrimalStatus`](@ref) before accessing the
-`VariableBasisStatus` attribute.
+[`ResultIndexBoundsError`](@ref).
 
-See [`ResultCount`](@ref) for information on how the results are ordered.
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.VariableBasisStatus, ::MOI.VariableIndex)::MOI.BasisStatusCode
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct VariableBasisStatus <: AbstractVariableAttribute
     result_index::Int
@@ -1997,17 +2168,62 @@ end
 """
     ConstraintName()
 
-A constraint attribute for a string identifying the constraint.
+An [`AbstractConstraintAttribute`](@ref) for a `String` identifying the
+constraint.
 
-It is *valid* for constraints variables to have the same name; however,
-constraints with duplicate names cannot be looked up using [`get`](@ref),
-regardless of whether they have the same `F`-in-`S` type.
+The default name is `""` if not set by the user.
 
-`ConstraintName` has a default value of `""` if not set.
+## Duplicate names
 
-## Notes
+Two constraints may have the same name; however, constraints with duplicate
+names cannot be looked up using [`get`](@ref), regardless of whether they have
+the same `F`-in-`S` type.
 
-You should _not_ implement `ConstraintName` for `VariableIndex` constraints.
+## VariableIndex connstraints
+
+You should _not_ implement [`ConstraintName`](@ref) for [`VariableIndex`](@ref)
+constraints.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(model);
+
+julia> c = MOI.add_constraint(model, 1.0 * x, MOI.EqualTo(1.0));
+
+julia> MOI.supports(model, MOI.ConstraintName(), typeof(c))
+true
+
+julia> MOI.get(model, MOI.ConstraintName(), c)
+""
+
+julia> MOI.set(model, MOI.ConstraintName(), c, "c")
+
+julia> MOI.get(model, MOI.ConstraintName(), c)
+"c"
+
+julia> MOI.get(model, MOI.ConstraintIndex, "c")
+MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.EqualTo{Float64}}(1)
+
+julia> F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64};
+
+julia> MOI.get(model, MOI.ConstraintIndex{F,S}, "c")
+MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.EqualTo{Float64}}(1)
+```
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.ConstraintName, ::MOI.ConstraintIndex)::String
+MOI.set(::Optimizer, ::MOI.ConstraintName, ::MOI.ConstraintIndex, ::String)::Nothing
+MOI.supports(::Optimizer, ::MOI.ConstraintName, ::Type{<:MOI.ConstraintIndex})::Bool
+MOI.get(::Optimizer, ::MOI.ConstraintIndex, ::MOI.ConstraintIndex, ::String)::MOI.ConstraintIndex
+```
 """
 struct ConstraintName <: AbstractConstraintAttribute end
 
@@ -2037,8 +2253,9 @@ end
 """
     ConstraintPrimalStart()
 
-A constraint attribute for the initial assignment to some constraint's
-[`ConstraintPrimal`](@ref) that the optimizer may use to warm-start the solve.
+An [`AbstractConstraintAttribute`](@ref) for the initial assignment to the
+constraint's [`ConstraintPrimal`](@ref) that the optimizer may use to warm-start
+the solve.
 
 May be `nothing` (unset), a number for [`AbstractScalarFunction`](@ref), or a
 vector for [`AbstractVectorFunction`](@ref).
@@ -2048,8 +2265,9 @@ struct ConstraintPrimalStart <: AbstractConstraintAttribute end
 """
     ConstraintDualStart()
 
-A constraint attribute for the initial assignment to some constraint's
-[`ConstraintDual`](@ref) that the optimizer may use to warm-start the solve.
+An [`AbstractConstraintAttribute`](@ref) for the initial assignment to the
+constraint's [`ConstraintDual`](@ref) that the optimizer may use to warm-start
+the solve.
 
 May be `nothing` (unset), a number for [`AbstractScalarFunction`](@ref), or a
 vector for [`AbstractVectorFunction`](@ref).
@@ -2059,7 +2277,7 @@ struct ConstraintDualStart <: AbstractConstraintAttribute end
 """
     ConstraintPrimal(result_index::Int = 1)
 
-A constraint attribute for the assignment to some constraint's primal value in
+An [`AbstractConstraintAttribute`](@ref) for the constraint's primal value in
 result `result_index`.
 
 ## Definition
@@ -2095,12 +2313,12 @@ the [`ResultCount`](@ref) attribute), getting this attribute must throw a
 
 Optimizers should implement the following methods:
 ```julia
-function MOI.get(
+MOI.get(
     ::Optimizer,
     ::MOI.ConstraintPrimal,
     ::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction}
 )::T
-function MOI.get(
+MOI.get(
     ::Optimizer,
     ::MOI.ConstraintPrimal,
     ::MOI.ConstraintIndex{<:MOI.AbstractVectorFunction}
@@ -2116,7 +2334,7 @@ end
 """
     ConstraintDual(result_index::Int = 1)
 
-A constraint attribute for the assignment to some constraint's dual value in
+An [`AbstractConstraintAttribute`](@ref) for the constraint's dual value in
 result `result_index`.
 
 ## DualStatus
@@ -2141,12 +2359,12 @@ the [`ResultCount`](@ref) attribute), getting this attribute must throw a
 
 Optimizers should implement the following methods:
 ```julia
-function MOI.get(
+MOI.get(
     ::Optimizer,
     ::MOI.ConstraintDual,
     ::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction}
 )::T
-function MOI.get(
+MOI.get(
     ::Optimizer,
     ::MOI.ConstraintDual,
     ::MOI.ConstraintIndex{<:MOI.AbstractVectorFunction}
@@ -2162,8 +2380,8 @@ end
 """
     ConstraintBasisStatus(result_index::Int = 1)
 
-A constraint attribute for the [`BasisStatusCode`](@ref) of some constraint in
-result `result_index`, with respect to an available optimal solution basis.
+An [`AbstractConstraintAttribute`](@ref) for the [`BasisStatusCode`](@ref) of
+the constraint in result `result_index`, with respect to a basic solution.
 
 If `result_index` is omitted, it is 1 by default.
 
@@ -2206,7 +2424,7 @@ end
 """
     CanonicalConstraintFunction()
 
-A constraint attribute for a canonical representation of the
+An [`AbstractConstraintAttribute`](@ref) for a canonical representation of the
 [`AbstractFunction`](@ref) object used to define the constraint.
 
 Getting this attribute is guaranteed to return a function that is equivalent but
@@ -2280,8 +2498,8 @@ end
 """
     ConstraintFunction()
 
-A constraint attribute for the [`AbstractFunction`](@ref) object used to define
-the constraint.
+An [`AbstractConstraintAttribute`](@ref) for the [`AbstractFunction`](@ref)
+object used to define the constraint.
 
 It is guaranteed to be equivalent but not necessarily identical to the function
 provided by the user.
@@ -2366,8 +2584,8 @@ end
 """
     ConstraintSet()
 
-A constraint attribute for the [`AbstractSet`](@ref) object used to define the
-constraint.
+An [`AbstractConstraintAttribute`](@ref) for the [`AbstractSet`](@ref) object
+used to define the constraint.
 
 ## Example
 
