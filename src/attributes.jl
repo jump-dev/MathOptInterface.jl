@@ -2138,7 +2138,7 @@ struct ListOfSupportedNonlinearOperators <: AbstractOptimizerAttribute end
 
     The technical exceptions do not apply to linear programs. The combination of
     [`DUAL_INFEASIBLE`](@ref) and a primal feasible point means that the primal
-    linear program is ubounded.
+    linear program is unbounded.
     """,
     DUAL_INFEASIBLE,
     """
