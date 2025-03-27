@@ -2123,10 +2123,7 @@ struct ListOfSupportedNonlinearOperators <: AbstractOptimizerAttribute end
     """,
     INFEASIBLE,
     """
-    The algorithm concluded that no dual bound exists for the problem.
-
-    If the problem is a conic optimization problem (thus also a linear program),
-    this status means the dual problem is infeasible.
+    The algorithm proved that no dual feasible solution exists.
 
     To check if the primal problem is feasible, set the objective sense to
     [`FEASIBILITY_SENSE`](@ref) and re-solve the problem.
