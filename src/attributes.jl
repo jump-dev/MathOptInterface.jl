@@ -2062,25 +2062,51 @@ struct ConstraintDualStart <: AbstractConstraintAttribute end
 A constraint attribute for the assignment to some constraint's primal value in
 result `result_index`.
 
-If the constraint is `f(x) in S`, then in most cases the `ConstraintPrimal` is
-the value of `f`, evaluated at the corresponding [`VariablePrimal`](@ref)
+## Definition
+
+If the constraint is ``f(x) \\in S``, then in most cases the [`ConstraintPrimal`](@ref)
+is the value of ``f``, evaluated at the corresponding [`VariablePrimal`](@ref)
 solution.
 
-However, some conic solvers reformulate `b - Ax in S` to `s = b - Ax, s in S`.
-These solvers may return the value of `s` for `ConstraintPrimal`, rather than
-`b - Ax`. (Although these are constrained by an equality constraint, due to
-numerical tolerances they may not be identical.)
+However, some conic solvers reformulate ``b - Ax \\in S`` to ``s = b - Ax`` and
+``s \\in S``. These solvers may return the value of `s` for [`ConstraintPrimal`](@ref),
+rather than `b - Ax`. (Although these are constrained by an equality constraint,
+due to numerical tolerances they may not be identical.)
+
+## PrimalStatus
+
+Before quering this attribute you should first check [`PrimalStatus`](@ref) to
+confirm that a primal solution is avaiable.
+
+If the [`PrimalStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
+this attribute is undefined.
+
+## `result_index`
+
+The optimizer may return multiple primal solutions. See [`ResultCount`](@ref)
+for information on how the results are ordered.
 
 If the solver does not have a primal value for the constraint because the
 `result_index` is beyond the available solutions (whose number is indicated by
 the [`ResultCount`](@ref) attribute), getting this attribute must throw a
-[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
-another reason (for instance, only a dual solution is available), the result is
-undefined. Users should first check [`PrimalStatus`](@ref) before accessing the
-`ConstraintPrimal` attribute.
+[`ResultIndexBoundsError`](@ref).
 
-If `result_index` is omitted, it is 1 by default. See [`ResultCount`](@ref) for
-information on how the results are ordered.
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+function MOI.get(
+    ::Optimizer,
+    ::MOI.ConstraintPrimal,
+    ::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction}
+)::T
+function MOI.get(
+    ::Optimizer,
+    ::MOI.ConstraintPrimal,
+    ::MOI.ConstraintIndex{<:MOI.AbstractVectorFunction}
+)::Vector{T}
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct ConstraintPrimal <: AbstractConstraintAttribute
     result_index::Int
@@ -2091,17 +2117,42 @@ end
     ConstraintDual(result_index::Int = 1)
 
 A constraint attribute for the assignment to some constraint's dual value in
-result `result_index`. If `result_index` is omitted, it is 1 by default.
+result `result_index`.
 
-If the solver does not have a dual value for the variable because the
+## DualStatus
+
+Before quering this attribute you should first check [`DualStatus`](@ref) to
+confirm that a dual solution is avaiable.
+
+If the [`DualStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
+this attribute is undefined.
+
+## `result_index`
+
+The optimizer may return multiple dual solutions. See [`ResultCount`](@ref)
+for information on how the results are ordered.
+
+If the solver does not have a dual value for the constraint because the
 `result_index` is beyond the available solutions (whose number is indicated by
 the [`ResultCount`](@ref) attribute), getting this attribute must throw a
-[`ResultIndexBoundsError`](@ref). Otherwise, if the result is unavailable for
-another reason (for instance, only a primal solution is available), the result is
-undefined. Users should first check [`DualStatus`](@ref) before accessing the
-`ConstraintDual` attribute.
+[`ResultIndexBoundsError`](@ref).
 
-See [`ResultCount`](@ref) for information on how the results are ordered.
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+function MOI.get(
+    ::Optimizer,
+    ::MOI.ConstraintDual,
+    ::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction}
+)::T
+function MOI.get(
+    ::Optimizer,
+    ::MOI.ConstraintDual,
+    ::MOI.ConstraintIndex{<:MOI.AbstractVectorFunction}
+)::Vector{T}
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct ConstraintDual <: AbstractConstraintAttribute
     result_index::Int
@@ -2111,9 +2162,10 @@ end
 """
     ConstraintBasisStatus(result_index::Int = 1)
 
-A constraint attribute for the `BasisStatusCode` of some constraint in result
-`result_index`, with respect to an available optimal solution basis. If
-`result_index` is omitted, it is 1 by default.
+A constraint attribute for the [`BasisStatusCode`](@ref) of some constraint in
+result `result_index`, with respect to an available optimal solution basis.
+
+If `result_index` is omitted, it is 1 by default.
 
 If the solver does not have a basis status for the constraint because the
 `result_index` is beyond the available solutions (whose number is indicated by
@@ -2160,15 +2212,46 @@ A constraint attribute for a canonical representation of the
 Getting this attribute is guaranteed to return a function that is equivalent but
 not necessarily identical to the function provided by the user.
 
-By default, `MOI.get(model, MOI.CanonicalConstraintFunction(), ci)` fallbacks to
-`MOI.Utilities.canonical(MOI.get(model, MOI.ConstraintFunction(), ci))`.
+## Fallback
+
+By default, `MOI.get(model, MOI.CanonicalConstraintFunction(), ci)` falls back
+to `MOI.Utilities.canonical(MOI.get(model, MOI.ConstraintFunction(), ci))`.
+
 However, if `model` knows that the constraint function is canonical then it can
 implement a specialized method that directly return the function without calling
 [`Utilities.canonical`](@ref). Therefore, the value returned **cannot** be
 assumed to be a copy of the function stored in `model`.
+
 Moreover, [`Utilities.Model`](@ref) checks with [`Utilities.is_canonical`](@ref)
 whether the function stored internally is already canonical and if it's the case,
 then it returns the function stored internally instead of a copy.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(model);
+
+julia> c = MOI.add_constraint(model, 1.0 * x + 1.0 * x, MOI.GreaterThan(0.0));
+
+julia> MOI.get(model, MOI.CanonicalConstraintFunction(), c)
+0.0 + 2.0 MOI.VariableIndex(1)
+```
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(
+    ::Optimizer,
+    ::MOI.CanonicalConstraintFunction,
+    ::MOI.ConstraintIndex{F,S},
+)::F where {F,S}
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct CanonicalConstraintFunction <: AbstractConstraintAttribute end
 
@@ -2202,6 +2285,47 @@ the constraint.
 
 It is guaranteed to be equivalent but not necessarily identical to the function
 provided by the user.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(model);
+
+julia> c = MOI.add_constraint(model, 1.0 * x, MOI.GreaterThan(0.0));
+
+julia> MOI.get(model, MOI.ConstraintFunction(), c)
+0.0 + 1.0 MOI.VariableIndex(1)
+
+julia> MOI.set(model, MOI.ConstraintFunction(), c, 2.0 * x)
+
+julia> MOI.get(model, MOI.ConstraintFunction(), c)
+0.0 + 2.0 MOI.VariableIndex(1)
+```
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(
+    ::Optimizer,
+    ::MOI.ConstraintFunction,
+    ::MOI.ConstraintIndex{F,S},
+)::F where {F,S}
+```
+If the optimizer supports modifying an existing function, it should implement:
+```julia
+MOI.set(
+    ::Optimizer,
+    ::MOI.ConstraintFunction,
+    ::MOI.ConstraintIndex{F,S},
+    ::F,
+)::Nothing where {F,S}
+```
+It should not implement [`supports`](@ref).
 """
 struct ConstraintFunction <: AbstractConstraintAttribute end
 
@@ -2244,6 +2368,47 @@ end
 
 A constraint attribute for the [`AbstractSet`](@ref) object used to define the
 constraint.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(model);
+
+julia> c = MOI.add_constraint(model, x, MOI.GreaterThan(0.0));
+
+julia> MOI.get(model, MOI.ConstraintSet(), c)
+MathOptInterface.GreaterThan{Float64}(0.0)
+
+julia> MOI.set(model, MOI.ConstraintSet(), c, MOI.GreaterThan(1.0))
+
+julia> MOI.get(model, MOI.ConstraintSet(), c)
+MathOptInterface.GreaterThan{Float64}(1.0)
+```
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(
+    ::Optimizer,
+    ::MOI.ConstraintSet,
+    ::MOI.ConstraintIndex{F,S},
+)::S where {F,S}
+```
+If the optimizer supports modifying an existing set, it should implement:
+```julia
+MOI.set(
+    ::Optimizer,
+    ::MOI.ConstraintSet,
+    ::MOI.ConstraintIndex{F,S},
+    ::S,
+)::Nothing where {F,S}
+```
+It should not implement [`supports`](@ref).
 """
 struct ConstraintSet <: AbstractConstraintAttribute end
 
@@ -2410,7 +2575,19 @@ end
     ListOfSupportedNonlinearOperators() <: AbstractModelAttribute
 
 When queried with [`get`](@ref), return a `Vector{Symbol}` listing the operators
-supported by the model.
+supported by the model. These operators may appear in the `head` field of
+[`ScalarNonlinearFunction`](@ref).
+
+## Implementation
+
+Optimizers should implement the following methods:
+```
+MOI.get(
+    ::Optimizer,
+    ::MOI.ListOfSupportedNonlinearOperators,
+)::Vector{Symbol}
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct ListOfSupportedNonlinearOperators <: AbstractOptimizerAttribute end
 
@@ -2587,10 +2764,26 @@ struct ListOfSupportedNonlinearOperators <: AbstractOptimizerAttribute end
 """
     AutomaticDifferentiationBackend() <: AbstractOptimizerAttribute
 
-An [`AbstractOptimizerAttribute`](@ref) for setting the automatic differentiation
-backend used by the solver.
+An [`AbstractOptimizerAttribute`](@ref) for setting the automatic
+differentiation backend used by the solver.
 
 The value must be a subtype of [`Nonlinear.AbstractAutomaticDifferentiation`](@ref).
+
+## Implementation
+
+Optimizers should implement the following methods:
+```
+MOI.get(
+    ::Optimizer,
+    ::MOI.AutomaticDifferentiationBackend,
+)::MOI.Nonlinear.AbstractAutomaticDifferentiation
+MOI.set(
+    ::Optimizer,
+    ::MOI.AutomaticDifferentiationBackend,
+    ::MOI.Nonlinear.AbstractAutomaticDifferentiation,
+)::Nothing
+MOI.supports(::Optimizer, ::MOI.AutomaticDifferentiationBackend)::Bool
+```
 """
 struct AutomaticDifferentiationBackend <: AbstractOptimizerAttribute end
 
@@ -2601,8 +2794,16 @@ end
 """
     TerminationStatus()
 
-An [`AbstractModelAttribute`](@ref) for the [`TerminationStatusCode`](@ref) explaining why the
-optimizer stopped.
+An [`AbstractModelAttribute`](@ref) for the [`TerminationStatusCode`](@ref)
+explaining why the optimizer stopped.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```
+MOI.get(::Optimizer, ::MOI.TerminationStatus)::MOI.TerminationStatusCode
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct TerminationStatus <: AbstractModelAttribute end
 
@@ -2611,8 +2812,16 @@ attribute_value_type(::TerminationStatus) = TerminationStatusCode
 """
     RawStatusString()
 
-An [`AbstractModelAttribute`](@ref) for a solver specific string explaining why the optimizer
-stopped.
+An [`AbstractModelAttribute`](@ref) for a solver specific string explaining why
+the optimizer stopped.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```
+MOI.get(::Optimizer, ::MOI.RawStatusString)::MOI.String
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct RawStatusString <: AbstractModelAttribute end
 
@@ -2639,32 +2848,32 @@ attribute_value_type(::RawStatusString) = String
     """
     The result vector is an infeasibility certificate.
 
-    If the [`PrimalStatus`](@ref) is `INFEASIBILITY_CERTIFICATE`, then the
-    primal result vector is a certificate of dual infeasibility.
+    If the [`PrimalStatus`](@ref) is [`INFEASIBILITY_CERTIFICATE`](@ref), then
+    the primal result vector is a certificate of dual infeasibility.
 
-    If the [`DualStatus`](@ref) is `INFEASIBILITY_CERTIFICATE`, then the dual
-    result vector is a proof of primal infeasibility.
+    If the [`DualStatus`](@ref) is [`INFEASIBILITY_CERTIFICATE`](@ref), then the
+    dual result vector is a proof of primal infeasibility.
     """,
     INFEASIBILITY_CERTIFICATE,
     """
     The result satisfies a relaxed criterion for a certificate of infeasibility.
 
-    If the [`PrimalStatus`](@ref) is `NEARLY_INFEASIBILITY_CERTIFICATE`, then
-    the primal result vector is a certificate of dual infeasibility.
+    If the [`PrimalStatus`](@ref) is [`NEARLY_INFEASIBILITY_CERTIFICATE`](@ref),
+    then the primal result vector is a certificate of dual infeasibility.
 
-    If the [`DualStatus`](@ref) is `NEARLY_INFEASIBILITY_CERTIFICATE`, then the
-    dual result vector is a proof of primal infeasibility.
+    If the [`DualStatus`](@ref) is [`NEARLY_INFEASIBILITY_CERTIFICATE`](@ref),
+    then the dual result vector is a proof of primal infeasibility.
     """,
     NEARLY_INFEASIBILITY_CERTIFICATE,
     """
     The result vector is an ill-posed certificate; see [this article](https://arxiv.org/abs/1408.4685)
     for details.
 
-    If the [`PrimalStatus`](@ref) is `REDUCTION_CERTIFICATE`, then the primal
-    result vector is a proof that the dual problem is ill-posed.
+    If the [`PrimalStatus`](@ref) is [`REDUCTION_CERTIFICATE`](@ref), then the
+    primal result vector is a proof that the dual problem is ill-posed.
 
-    If the [`DualStatus`](@ref) is `REDUCTION_CERTIFICATE`, then the dual result
-    vector is a proof that the primal is ill-posed.
+    If the [`DualStatus`](@ref) is [`REDUCTION_CERTIFICATE`](@ref), then the
+    dual result vector is a proof that the primal is ill-posed.
     """,
     REDUCTION_CERTIFICATE,
     """
@@ -2686,8 +2895,10 @@ attribute_value_type(::RawStatusString) = String
 """
     PrimalStatus(result_index::Int = 1)
 
-An [`AbstractModelAttribute`](@ref) for the [`ResultStatusCode`](@ref) of the primal result
-`result_index`.
+An [`AbstractModelAttribute`](@ref) for the [`ResultStatusCode`](@ref) of the
+primal result `result_index`.
+
+## `result_index`
 
 If `result_index` is omitted, it defaults to 1.
 
@@ -2695,6 +2906,14 @@ See [`ResultCount`](@ref) for information on how the results are ordered.
 
 If `result_index` is larger than the value of [`ResultCount`](@ref) then
 [`NO_SOLUTION`](@ref) is returned.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```
+MOI.get(::Optimizer, ::MOI.PrimalStatus)::MOI.ResultStatusCode
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct PrimalStatus <: AbstractModelAttribute
     result_index::Int
@@ -2706,15 +2925,23 @@ attribute_value_type(::PrimalStatus) = ResultStatusCode
 """
     DualStatus(result_index::Int = 1)
 
-An [`AbstractModelAttribute`](@ref) for the [`ResultStatusCode`](@ref) of the dual result
-`result_index`.
+An [`AbstractModelAttribute`](@ref) for the [`ResultStatusCode`](@ref) of the
+dual result `result_index`.
 
-If `result_index` is omitted, it defaults to 1.
+## `result_index`
 
 See [`ResultCount`](@ref) for information on how the results are ordered.
 
 If `result_index` is larger than the value of [`ResultCount`](@ref) then
 [`NO_SOLUTION`](@ref) is returned.
+
+## Implementation
+
+Optimizers should implement the following methods:
+```
+MOI.get(::Optimizer, ::MOI.PrimalStatus)::MOI.ResultStatusCode
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct DualStatus <: AbstractModelAttribute
     result_index::Int
@@ -2764,7 +2991,8 @@ the optimization.
 
 If an attribute can be set by the user, define [`is_copyable`](@ref) instead.
 
-An attribute cannot be both [`is_copyable`](@ref) and `is_set_by_optimize`.
+An attribute cannot be both [`is_copyable`](@ref) and
+[`is_set_by_optimize`](@ref).
 
 ## Default fallback
 
@@ -2773,8 +3001,20 @@ attributes that are set by [`optimize!`](@ref).
 
 ## Undefined behavior
 
-Querying the value of the attribute that `is_set_by_optimize` before a call to
-[`optimize!`](@ref) is undefined and depends on solver-specific behavior.
+Querying the value of the attribute that [`is_set_by_optimize`](@ref) before a
+call to [`optimize!`](@ref) is undefined and depends on solver-specific behavior.
+
+## Example
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> MOI.is_set_by_optimize(MOI.ObjectiveValue())
+true
+
+julia> MOI.is_set_by_optimize(MOI.VariableName())
+false
+```
 """
 is_set_by_optimize(::AnyAttribute) = false
 
