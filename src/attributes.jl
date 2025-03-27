@@ -2125,18 +2125,23 @@ struct ListOfSupportedNonlinearOperators <: AbstractOptimizerAttribute end
     """
     The algorithm concluded that no dual bound exists for the problem.
 
-    If the problem is a conic optimization problem (thus also a linear program), this status means the dual
-    problem is infeasible.
+    If the problem is a conic optimization problem (thus also a linear program),
+    this status means the dual problem is infeasible.
+
+    To check if the primal problem is feasible, set the objective sense to
+    [`FEASIBILITY_SENSE`](@ref) and re-solve the problem.
+
+    If a primal feasible point does not exist, the original problem is both
+    primal and dual infeasible.
 
     If a primal feasible solution exists, this status typically implies that the
     problem is unbounded, with some technical exceptions (for example, if the
     problem is a conic optimization problem in which strong duality does not
     hold).
 
-    To check if the primal is unbounded, set the objective sense to
-    [`FEASIBILITY_SENSE`](@ref) and re-solve the problem. If a primal feasible
-    point exists, the original problem is unbounded. If a primal feasible point
-    does not exist, the original problem is both primal and dual infeasible.
+    The technical exceptions do not apply to linear programs. The combination of
+    [`DUAL_INFEASIBLE`](@ref) and a primal feasible point means that the primal
+    linear program is ubounded.
     """,
     DUAL_INFEASIBLE,
     """
