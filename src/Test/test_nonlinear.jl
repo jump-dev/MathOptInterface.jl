@@ -1902,6 +1902,7 @@ function test_nonlinear_constraint_log(
     x = MOI.add_variable(model)
     t = MOI.add_variable(model)
     MOI.add_constraint(model, x, MOI.LessThan(T(2)))
+    MOI.add_constraint(model, x, MOI.GreaterThan(T(1)))
     MOI.set(model, MOI.VariablePrimalStart(), x, T(1))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     f = 1.0 * t
