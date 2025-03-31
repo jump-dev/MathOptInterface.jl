@@ -110,15 +110,8 @@ jobs:
           Pkg.build(ENV["PACKAGE"])
           Pkg.test(ENV["PACKAGE"])
   test-cplex:
-    name: ${{ matrix.package }}
+    name: CPLEX
     runs-on: ubuntu-latest
-    env:
-      PACKAGE: ${{ matrix.package }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - package: 'CPLEX'
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
@@ -134,8 +127,8 @@ jobs:
         run: |
           import Pkg
           Pkg.develop(Pkg.PackageSpec(; path = pwd()))
-          Pkg.develop(ENV["PACKAGE"])
-          Pkg.test(ENV["PACKAGE"])
+          Pkg.develop("CPLEX")
+          Pkg.test("CPLEX")
   test-gurobi:
     name: Gurobi
     runs-on: ubuntu-latest
@@ -173,14 +166,14 @@ jobs:
           ARTELYS_LIC_JUMP_DEV: ${{ secrets.ARTELYS_LIC_8326_JUMP_DEV_2023_11_02 }}
         run: |
           echo "$ARTELYS_LIC_JUMP_DEV" > ~/artelys_lic.txt
-      - uses: julia-actions/julia-buildpkg@v1
+      - name: Test
+        shell: julia --color=yes {0}
         env:
           SECRET_KNITRO_URL: ${{ secrets.SECRET_KNITRO_URL }}
           SECRET_KNITRO_LIBIOMP5: ${{ secrets.SECRET_KNITRO_LIBIOMP5 }}
-      - name: Test
-        shell: julia --color=yes {0}
         run: |
           import Pkg
           Pkg.develop(Pkg.PackageSpec(; path = pwd()))
           Pkg.develop("KNITRO")
+          Pkg.build("KNITRO")
           Pkg.test("KNITRO")
