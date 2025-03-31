@@ -73,7 +73,7 @@ jobs:
           - package: 'LinearFractional'
           - package: 'Loraine'
           - package: 'MAiNGO'
-          - package: 'MathOptAI'
+          # - package: 'MathOptAI'  # Needs pytorch
           - package: 'MathOptSymbolicAD'
           - package: 'MathOptSetDistances'
           - package: 'OSQP'
