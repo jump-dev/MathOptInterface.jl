@@ -2238,6 +2238,21 @@ function test_bridge_complex_greatertoless()
     return
 end
 
+function test_issue_2696()
+    b = MOI.instantiate(StandardSDPAModel{Float64}; with_bridge_type = Float64)
+    x = MOI.add_variables(b, 2)
+    c = MOI.add_constraint(b, MOI.VectorOfVariables(x), MOI.Nonpositives(2))
+    @test MOI.is_valid(b, c)
+    F, S = MOI.VectorOfVariables, MOI.Nonpositives
+    # See MathOptInterface.jl#2696
+    d = MOI.ConstraintIndex{F,S}(c.value + 1)
+    @test_broken !MOI.is_valid(b, d)
+    @test MOI.get(b, MOI.ListOfConstraintTypesPresent()) == [(F, S)]
+    @test only(MOI.get(b, MOI.ListOfConstraintIndices{F,S}())) == c
+    @test MOI.get(b, MOI.NumberOfConstraints{F,S}()) == 1
+    return
+end
+
 end  # module
 
 TestBridgesLazyBridgeOptimizer.runtests()
