@@ -25,16 +25,18 @@ jobs:
           # - package: 'BARON'  # Requires license
           - package: 'Cbc'
           - package: 'Clp'
-          # - package: 'CPLEX'  # Requires license
+          # - package: 'CPLEX'  # See below
           - package: 'CSDP'  
           - package: 'DiffOpt'
+          - package: 'DSDP'
           - package: 'Dualization'
           - package: 'ECOS'
           - package: 'GLPK'
+          # - package: 'Gurobi'  # See below
           - package: 'HiGHS'
           - package: 'Hypatia'
           - package: 'Ipopt'
-          # - package: 'KNITRO'  # Requires license
+          # - package: 'KNITRO'  # See below
           - package: 'MiniZinc'
           - package: 'MosekTools'
           - package: 'MultiObjectiveAlgorithms'
@@ -43,6 +45,7 @@ jobs:
           - package: 'Pajarito'
           - package: 'ParametricOptInterface'
           - package: 'Pavito'
+          - package: 'PiecewiseLinearOpt'
           - package: 'PolyJuMP'
           - package: 'SCS'
           - package: 'SDPA'
@@ -55,18 +58,23 @@ jobs:
           # External packages
           - package: 'Alpine'
           - package: 'BilevelJuMP'
+          - package: 'CATrustRegionMethod'
+          # - package: 'CDCS'  # Missing CI
           - package: 'CDDLib'
           - package: 'Clarabel'
           - package: 'COPT'
           - package: 'COSMO'
           - package: 'DAQP'
           - package: 'DisjunctiveProgramming'
-          - package: 'DSDP'
           - package: 'EAGO'
+          # - package: 'GAMS'  # Requires license
           - package: 'InfiniteOpt'
           - package: 'Juniper'
           - package: 'LinearFractional'
           - package: 'Loraine'
+          - package: 'MAiNGO'
+          # - package: 'MathOptAI'  # Needs pytorch
+          - package: 'MathOptSymbolicAD'
           - package: 'MathOptSetDistances'
           - package: 'OSQP'
           - package: 'PATHSolver'
@@ -86,7 +94,7 @@ jobs:
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1'
-      - uses: julia-actions/cache@v1
+      - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - name: Test
         shell: julia --color=yes {0}
@@ -102,21 +110,14 @@ jobs:
           Pkg.build(ENV["PACKAGE"])
           Pkg.test(ENV["PACKAGE"])
   test-cplex:
-    name: ${{ matrix.package }}
+    name: CPLEX
     runs-on: ubuntu-latest
-    env:
-      PACKAGE: ${{ matrix.package }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - package: 'CPLEX'
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1'
-      - uses: julia-actions/cache@v1
+      - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - name: Test
         shell: julia --color=yes {0}
@@ -126,8 +127,8 @@ jobs:
         run: |
           import Pkg
           Pkg.develop(Pkg.PackageSpec(; path = pwd()))
-          Pkg.develop(ENV["PACKAGE"])
-          Pkg.test(ENV["PACKAGE"])
+          Pkg.develop("CPLEX")
+          Pkg.test("CPLEX")
   test-gurobi:
     name: Gurobi
     runs-on: ubuntu-latest
@@ -136,7 +137,7 @@ jobs:
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1'
-      - uses: julia-actions/cache@v1
+      - uses: julia-actions/cache@v2
       - shell: bash
         env:
           WLSLICENSE: ${{ secrets.WLSLICENSE }}
@@ -151,4 +152,28 @@ jobs:
           Pkg.develop(Pkg.PackageSpec(; path = pwd()))
           Pkg.develop("Gurobi")
           Pkg.test("Gurobi")
- 
+  test-knitro:
+    name: KNITRO
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - shell: bash
+        env:
+          ARTELYS_LIC_JUMP_DEV: ${{ secrets.ARTELYS_LIC_8326_JUMP_DEV_2023_11_02 }}
+        run: |
+          echo "$ARTELYS_LIC_JUMP_DEV" > ~/artelys_lic.txt
+      - name: Test
+        shell: julia --color=yes {0}
+        env:
+          SECRET_KNITRO_URL: ${{ secrets.SECRET_KNITRO_URL }}
+          SECRET_KNITRO_LIBIOMP5: ${{ secrets.SECRET_KNITRO_LIBIOMP5 }}
+        run: |
+          import Pkg
+          Pkg.develop(Pkg.PackageSpec(; path = pwd()))
+          Pkg.develop("KNITRO")
+          Pkg.build("KNITRO")
+          Pkg.test("KNITRO")
