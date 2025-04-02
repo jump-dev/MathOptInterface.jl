@@ -246,8 +246,12 @@ function _basic_constraint_test_helper(
     ### Test MOI.is_valid
     ###
     @test MOI.is_valid(model, c)
-    # TODO(odow): we could improve this test by checking `c.value+1` and
-    # `c.value-1` but there is a bug in `LazyBridgeOptimizer`.
+    # We could improve this test by checking these are `== true` instead of
+    # `isa Bool`, but there is a bug in `LazyBridgeOptimizer`. See
+    # MathOptInterface.jl#2696 for details. At the very least, this test checks
+    # that they do not error, and hopefully helps hit some code paths.
+    @test !MOI.is_valid(model, typeof(c)(c.value + 1)) isa Bool
+    @test !MOI.is_valid(model, typeof(c)(c.value - 1)) isa Bool
     @test !MOI.is_valid(model, typeof(c)(c.value + 12345))
     ###
     ### Test MOI.ConstraintName
