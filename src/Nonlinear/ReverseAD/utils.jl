@@ -53,11 +53,11 @@ function Base.setindex!(x::_UnsafeVectorView{T}, value::T, i::Integer) where {T}
     return value
 end
 
-function Base.setindex!(
-    x::_UnsafeVectorView{T},
-    value::T,
-    i::CartesianIndex{1},
-) where {T}
+function Base.setindex!(x::_UnsafeVectorView{T}, value, i::Integer) where {T}
+    return setindex!(x, convert(T, value), i)
+end
+
+function Base.setindex!(x::_UnsafeVectorView, value, i::CartesianIndex{1})
     return setindex!(x, value, i[1])
 end
 
