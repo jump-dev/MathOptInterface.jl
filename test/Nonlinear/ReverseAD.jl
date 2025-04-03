@@ -1339,11 +1339,11 @@ function test_eval_user_defined_operator_type_mismatch()
     ψ(x) = sin(x)
     t(x, y) = x + 3y
     function ∇t(ret, x, y)
-        ret[1] = 1      # These are intentionall the wrong type
-        ret[2] = 3 // 1 # These are intentionall the wrong type
+        ret[1] = 1      # These are intentionally the wrong type
+        ret[2] = 3 // 1 # These are intentionally the wrong type
         return
     end
-    MOI.Nonlinear.register_operator(model, :ψ, 1, ψ, x -> -cos(x))
+    MOI.Nonlinear.register_operator(model, :ψ, 1, ψ, cos)
     MOI.Nonlinear.register_operator(model, :t, 2, t, ∇t)
     MOI.Nonlinear.add_constraint(
         model,
