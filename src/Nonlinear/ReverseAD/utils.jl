@@ -42,11 +42,23 @@ struct _UnsafeVectorView{T} <: DenseVector{T}
     ptr::Ptr{T}
 end
 
-Base.getindex(x::_UnsafeVectorView, i) = unsafe_load(x.ptr, i + x.offset)
+function Base.getindex(x::_UnsafeVectorView, i::Integer)
+    return unsafe_load(x.ptr, i + x.offset)
+end
 
-function Base.setindex!(x::_UnsafeVectorView, value, i)
+Base.getindex(x::_UnsafeVectorView, i::CartesianIndex{1}) = getindex(x, i[1])
+
+function Base.setindex!(x::_UnsafeVectorView{T}, value::T, i::Integer) where {T}
     unsafe_store!(x.ptr, value, i + x.offset)
     return value
+end
+
+function Base.setindex!(
+    x::_UnsafeVectorView{T},
+    value::T,
+    i::CartesianIndex{1},
+) where {T}
+    return setindex!(x, value, i[1])
 end
 
 Base.length(v::_UnsafeVectorView) = v.len

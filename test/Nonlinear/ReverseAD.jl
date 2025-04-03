@@ -1304,6 +1304,33 @@ function test_toposort_subexpressions()
     return
 end
 
+function test_eval_user_defined_operator_ForwardDiff_gradient!()
+    model = MOI.Nonlinear.Model()
+    x = MOI.VariableIndex.(1:4)
+    p = MOI.Nonlinear.add_parameter(model, 2.0)
+    ex = MOI.Nonlinear.add_expression(model, :($p * $(x[1])))
+    ψ(x) = sin(x)
+    t(x, y) = x + 3y
+    MOI.Nonlinear.register_operator(model, :ψ, 1, ψ)
+    MOI.Nonlinear.register_operator(model, :t, 2, t)
+    MOI.Nonlinear.add_constraint(
+        model,
+        :($ex^3 + sin($(x[2])) / ψ($(x[2])) + t($(x[3]), $(x[4]))),
+        MOI.LessThan(0.0),
+    )
+    d = MOI.Nonlinear.Evaluator(model, MOI.Nonlinear.SparseReverseMode(), x)
+    MOI.initialize(d, [:Jac])
+    X = [1.1, 1.2, 1.3, 1.4]
+    g = [NaN]
+    MOI.eval_constraint(d, g, X)
+    @test only(g) ≈ 17.148
+    @test MOI.jacobian_structure(d) == [(1, 1), (1, 2), (1, 3), (1, 4)]
+    J = [NaN, NaN, NaN, NaN]
+    MOI.eval_constraint_jacobian(d, J, X)
+    @test J ≈ [2.0^3 * 3.0 * 1.1^2, 0.0, 1.0, 3.0]
+    return
+end
+
 end  # module
 
 TestReverseAD.runtests()
