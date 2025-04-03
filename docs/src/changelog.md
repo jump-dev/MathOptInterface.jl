@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Other
 
  - Improve various docstrings (#2698), (#2699), (#2700), (#2701)
- - Add support for `ForwardDiff@1` (#2703)
+ - Add support for `ForwardDiff@1` (#2703), (#2708)
  - Update `solver-tests.yml` (#2697)
  - Add a `@test_broken for issue #2696 (#2705)
 
