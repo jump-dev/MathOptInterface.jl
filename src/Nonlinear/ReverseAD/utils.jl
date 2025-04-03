@@ -42,11 +42,23 @@ struct _UnsafeVectorView{T} <: DenseVector{T}
     ptr::Ptr{T}
 end
 
-Base.getindex(x::_UnsafeVectorView, i) = unsafe_load(x.ptr, i + x.offset)
+function Base.getindex(x::_UnsafeVectorView, i::Integer)
+    return unsafe_load(x.ptr, i + x.offset)
+end
 
-function Base.setindex!(x::_UnsafeVectorView, value, i)
+Base.getindex(x::_UnsafeVectorView, i::CartesianIndex{1}) = getindex(x, i[1])
+
+function Base.setindex!(x::_UnsafeVectorView, value, i::Integer)
+    # We don't need to worry about `value` being the right type here because
+    # x.ptr is a `::Ptr{T}`, so even though it is called `unsafe_store!`, there
+    # is still a type convertion that happens so that we're not just chucking
+    # the bits of value into `x.ptr`.
     unsafe_store!(x.ptr, value, i + x.offset)
     return value
+end
+
+function Base.setindex!(x::_UnsafeVectorView, value, i::CartesianIndex{1})
+    return setindex!(x, value, i[1])
 end
 
 Base.length(v::_UnsafeVectorView) = v.len
