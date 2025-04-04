@@ -114,9 +114,11 @@ jobs:
         #
         # This is the most likely culprit.
         run: |
-          echo "SECRET_BARON_LICENSE<<EOF"
-          echo "${{ secrets.BARON_LICENSE }}" >> $GITHUB_ENV
-          echo "EOF>>" >> $GITHUB_ENV
+          {
+            echo "SECRET_BARON_LICENSE<<EOF"
+            echo "${{ secrets.BARON_LICENSE }}"
+            echo "EOF"
+          } >> $GITHUB_ENV
       # Setup CPLEX.jl
       - name: Add CPLEX secrets
         if: ${{ matrix.package == 'CPLEX' }}
