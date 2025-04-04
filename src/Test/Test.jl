@@ -173,6 +173,7 @@ version_added(::F) where {F} = v"0.10.5"  # The default for any unlabeled tests.
         warn_unsupported::Bool = false,
         exclude_tests_after::VersionNumber = v"999.0.0",
         verbose::Bool = false,
+        test_module = @__MODULE__,
     )
 
 Run all tests in `MathOptInterface.Test` on `model`.
@@ -201,6 +202,8 @@ Run all tests in `MathOptInterface.Test` on `model`.
    is released with a new test.
  * `verbose` is a `Bool` that controls whether the name of the test is printed
    before executing it. This can be helpful when debugging.
+ * `test_module` is a `Module` where all the functions starting with `test_`
+   are considered as tests.
 
 See also: [`setup_test`](@ref).
 
@@ -227,13 +230,14 @@ function runtests(
     warn_unsupported::Bool = false,
     verbose::Bool = false,
     exclude_tests_after::VersionNumber = v"999.0.0",
+    test_module = @__MODULE__,
 )
-    tests = filter(names(@__MODULE__; all = true)) do name
+    tests = filter(names(test_module; all = true)) do name
         return startswith("$name", "test_")
     end
-    tests = string.(tests)
+    test_names = string.(tests)
     for ex in exclude
-        if ex in tests && any(t -> ex != t && occursin(ex, t), tests)
+        if ex in test_names && any(t -> ex != t && occursin(ex, t), test_names)
             @warn(
                 "The exclude string \"$ex\" is ambiguous because it exactly " *
                 "matches a test, but it also partially matches another. Use " *
@@ -242,11 +246,9 @@ function runtests(
             )
         end
     end
-    for name_sym in names(@__MODULE__; all = true)
+    for name_sym in tests
         name = string(name_sym)
-        if !startswith(name, "test_")
-            continue  # All test functions start with test_
-        elseif !isempty(include) && !any(s -> occursin(s, name), include)
+        if !isempty(include) && !any(s -> occursin(s, name), include)
             continue
         elseif !isempty(exclude) && any(s -> occursin(s, name), exclude)
             continue
@@ -254,7 +256,7 @@ function runtests(
         if verbose
             @info "Running $name"
         end
-        test_function = getfield(@__MODULE__, name_sym)
+        test_function = getfield(test_module, name_sym)
         if version_added(test_function) > exclude_tests_after
             if verbose
                 println("  Skipping test because of `exclude_tests_after`")
