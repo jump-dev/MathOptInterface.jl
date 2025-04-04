@@ -91,38 +91,57 @@ jobs:
         with:
           version: '1'
       - uses: julia-actions/cache@v2
+        with:
+          key: julia-${{ matrix.package }}
       - uses: julia-actions/julia-buildpkg@v1
       # Setup BARON.jl
       - name: Add BARON secrets
-        if: ${{ matrix.package == "BARON" }}
+        if: ${{ matrix.package == 'BARON' }}
+        env:
+          SECRET_BARON_LICENSE: ${{ secrets.BARON_LICENSE }}
+        shell: bash
         run: |
-          echo "SECRET_BARON_LICENSE=${{ secrets.BARON_LICENSE }}" >> $GITHUB_ENV
+          echo "SECRET_BARON_LICENSE=$SECRET_BARON_LICENSE" >> $GITHUB_ENV
       # Setup CPLEX.jl
       - name: Add CPLEX secrets
-        if: ${{ matrix.package == "CPLEX" }}
+        if: ${{ matrix.package == 'CPLEX' }}
+        env: 
+          SECRET_CPLEX_URL_2210: ${{ secrets.CPLEX_URL_2210 }}
+        shell: bash
         run: |
+          echo "CPLEX_URL_2210=$SECRET_CPLEX_URL_2210" >> $GITHUB_ENV
           echo "CPLEX_VERSION=2210" >> $GITHUB_ENV
-          echo "CPLEX_URL_2210=${{ secrets.CPLEX_URL_2210 }}" >> $GITHUB_ENV
       # Setup Gurobi.jl
       - name: Add Gurobi secrets
-        if: ${{ matrix.package == "Gurobi" }}
+        if: ${{ matrix.package == 'Gurobi' }}
+        env: 
+          SECRET_GUROBI_LICENSE: ${{ secrets.WLSLICENSE }}
+        shell: bash
         run: |
           mkdir -p /opt/gurobi
-          echo "${{ secrets.WLSLICENSE }}" > /opt/gurobi/gurobi.lic
+          echo "$SECRET_GUROBI_LICENSE" > /opt/gurobi/gurobi.lic
       # Setup KNITRO.jl
       - name: Add KNITRO secrets
-        if: ${{ matrix.package == "KNITRO" }}
+        if: ${{ matrix.package == 'KNITRO' }}
+        env:
+          SECRET_KNITRO_LICENSE: ${{ secrets.KNITRO_LICENSE }}
+          SECRET_KNITRO_URL: ${{ secrets.KNITRO_URL }}
+          SECRET_KNITRO_LIBIOMP5: ${{ secrets.KNITRO_LIBIOMP5 }}
+        shell: bash
         run: |
-          echo "${{ secrets.KNITRO_LICENSE }}" > ~/artelys_lic.txt
-          echo "SECRET_KNITRO_URL=${{ secrets.KNITRO_URL }}" >> $GITHUB_ENV
-          echo "SECRET_KNITRO_LIBIOMP5=${{ secrets.KNITRO_LIBIOMP5 }}" >> $GITHUB_ENV
+          echo "$SECRET_KNITRO_LICENSE" > ~/artelys_lic.txt
+          echo "SECRET_KNITRO_URL=$SECRET_KNITRO_URL" >> $GITHUB_ENV
+          echo "SECRET_KNITRO_LIBIOMP5=$SECRET_KNITRO_LIBIOMP5" >> $GITHUB_ENV
       # Setup Xpress.jl
       - name: Add Xpress secrets
-        if: ${{ matrix.package == "Xpress" }}
+        if: ${{ matrix.package == 'Xpress' }}
+        env:
+          SECRET_XPRESS_LICENSE: ${{ secrets.XPRESS_LICENSE }}
+        shell: bash
         run: |
+          echo "$SECRET_XPRESS_LICENSE" > /opt/xpauth.xpr
           echo "XPRESS_JL_SKIP_LIB_CHECK=true" >> $GITHUB_ENV
           echo "XPAUTH_PATH=/opt/xpauth.xpr" >> $GITHUB_ENV
-          echo "${{ secrets.XPRESS_LICENSE }}" > /opt/xpauth.xpr
       - name: Run tests
         shell: julia --color=yes {0}
         run: |
