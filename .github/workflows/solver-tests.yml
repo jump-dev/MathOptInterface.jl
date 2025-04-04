@@ -11,10 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PACKAGE: ${{ matrix.package }}
-      XPRESS_JL_SKIP_LIB_CHECK: "true"
-      # It's okay to share this secret with other packages because it is the public
-      # community-xpauth.xpr and not something confidential to JuMP-dev.
-      XPAUTH_XPR: ${{ secrets.XPAUTH_XPR }}
     strategy:
       fail-fast: false
       matrix:
@@ -22,21 +18,21 @@ jobs:
           - package: 'JuMP'
           - package: 'Convex'
           - package: 'AmplNLWriter'
-          # - package: 'BARON'  # Requires license
+          - package: 'BARON'
           - package: 'Cbc'
           - package: 'Clp'
-          # - package: 'CPLEX'  # See below
+          - package: 'CPLEX'
           - package: 'CSDP'  
           - package: 'DiffOpt'
           - package: 'DSDP'
           - package: 'Dualization'
           - package: 'ECOS'
           - package: 'GLPK'
-          # - package: 'Gurobi'  # See below
+          - package: 'Gurobi'
           - package: 'HiGHS'
           - package: 'Hypatia'
           - package: 'Ipopt'
-          # - package: 'KNITRO'  # See below
+          - package: 'KNITRO'
           - package: 'MiniZinc'
           - package: 'MosekTools'
           - package: 'MultiObjectiveAlgorithms'
@@ -49,7 +45,7 @@ jobs:
           - package: 'PolyJuMP'
           - package: 'SCS'
           - package: 'SDPA'
-          # - package: 'SDPLR'   # Requires MATLAB
+          - package: 'SDPLR'
           # - package: 'SDPNAL'  # Requires MATLAB
           # - package: 'SDPT3'   # Requires MATLAB
           # - package: 'SeduMi'  # Requires MATLAB
@@ -96,84 +92,42 @@ jobs:
           version: '1'
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
-      - name: Test
+      # Setup BARON.jl
+      - name: Add BARON secrets
+        if: ${{ matrix.package == "BARON" }}
+        run: |
+          echo "SECRET_BARON_LICENSE=${{ secrets.BARON_LICENSE }}" >> $GITHUB_ENV
+      # Setup CPLEX.jl
+      - name: Add CPLEX secrets
+        if: ${{ matrix.package == "CPLEX" }}
+        run: |
+          echo "CPLEX_VERSION=2210" >> $GITHUB_ENV
+          echo "CPLEX_URL_2210=${{ secrets.CPLEX_URL_2210 }}" >> $GITHUB_ENV
+      # Setup Gurobi.jl
+      - name: Add Gurobi secrets
+        if: ${{ matrix.package == "Gurobi" }}
+        run: |
+          mkdir -p /opt/gurobi
+          echo "${{ secrets.WLSLICENSE }}" > /opt/gurobi/gurobi.lic
+      # Setup KNITRO.jl
+      - name: Add KNITRO secrets
+        if: ${{ matrix.package == "KNITRO" }}
+        run: |
+          echo "${{ secrets.ARTELYS_LIC_8326_JUMP_DEV_2023_11_02 }}" > ~/artelys_lic.txt
+          echo "SECRET_KNITRO_URL=${{ secrets.SECRET_KNITRO_URL }}" >> $GITHUB_ENV
+          echo "SECRET_KNITRO_LIBIOMP5=${{ secrets.SECRET_KNITRO_LIBIOMP5 }}" >> $GITHUB_ENV
+      # Setup Xpress.jl
+      - name: Add Xpress secrets
+        if: ${{ matrix.package == "Xpress" }}
+        run: |
+          echo "XPRESS_JL_SKIP_LIB_CHECK=true" >> $GITHUB_ENV
+          echo "XPAUTH_PATH=/opt/xpauth.xpr" >> $GITHUB_ENV
+          echo "${{ secrets.XPRESS_LICENSE }}" > /opt/xpauth.xpr
+      - name: Run tests
         shell: julia --color=yes {0}
         run: |
           import Pkg
           Pkg.develop(Pkg.PackageSpec(; path = pwd()))
-          if ENV["PACKAGE"] == "Xpress"
-            write("/opt/xpauth.xpr", ENV["XPAUTH_XPR"])
-            ENV["XPAUTH_PATH"] = "/opt/xpauth.xpr"
-            ENV["XPRESS_JL_SKIP_LIB_CHECK"] = true
-          end      
           Pkg.develop(ENV["PACKAGE"])
           Pkg.build(ENV["PACKAGE"])
           Pkg.test(ENV["PACKAGE"])
-  test-cplex:
-    name: CPLEX
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v2
-        with:
-          version: '1'
-      - uses: julia-actions/cache@v2
-      - uses: julia-actions/julia-buildpkg@v1
-      - name: Test
-        shell: julia --color=yes {0}
-        env:
-          CPLEX_VERSION: '2210'
-          SECRET_CPLEX_URL_2210: ${{ secrets.SECRET_CPLEX_URL_2210 }}
-        run: |
-          import Pkg
-          Pkg.develop(Pkg.PackageSpec(; path = pwd()))
-          Pkg.develop("CPLEX")
-          Pkg.test("CPLEX")
-  test-gurobi:
-    name: Gurobi
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v2
-        with:
-          version: '1'
-      - uses: julia-actions/cache@v2
-      - shell: bash
-        env:
-          WLSLICENSE: ${{ secrets.WLSLICENSE }}
-        run: |
-          mkdir -p /opt/gurobi
-          echo "$WLSLICENSE" > /opt/gurobi/gurobi.lic
-      - uses: julia-actions/julia-buildpkg@v1
-      - name: Test
-        shell: julia --color=yes {0}
-        run: |
-          import Pkg
-          Pkg.develop(Pkg.PackageSpec(; path = pwd()))
-          Pkg.develop("Gurobi")
-          Pkg.test("Gurobi")
-  test-knitro:
-    name: KNITRO
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v2
-        with:
-          version: '1'
-      - uses: julia-actions/cache@v2
-      - shell: bash
-        env:
-          ARTELYS_LIC_JUMP_DEV: ${{ secrets.ARTELYS_LIC_8326_JUMP_DEV_2023_11_02 }}
-        run: |
-          echo "$ARTELYS_LIC_JUMP_DEV" > ~/artelys_lic.txt
-      - name: Test
-        shell: julia --color=yes {0}
-        env:
-          SECRET_KNITRO_URL: ${{ secrets.SECRET_KNITRO_URL }}
-          SECRET_KNITRO_LIBIOMP5: ${{ secrets.SECRET_KNITRO_LIBIOMP5 }}
-        run: |
-          import Pkg
-          Pkg.develop(Pkg.PackageSpec(; path = pwd()))
-          Pkg.develop("KNITRO")
-          Pkg.build("KNITRO")
-          Pkg.test("KNITRO")
