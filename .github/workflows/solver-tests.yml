@@ -97,7 +97,7 @@ jobs:
         if: ${{ matrix.package == 'BARON' }}
         shell: bash
         run: |
-          echo "SECRET_BARON_LICENSE=${{ secrets.BARON_LICENSE }}" >> $GITHUB_ENV
+          echo "SECRET_BARON_LICENSE='${{ secrets.BARON_LICENSE }}'" >> $GITHUB_ENV
       # Setup CPLEX.jl
       - name: Add CPLEX secrets
         if: ${{ matrix.package == 'CPLEX' }}
