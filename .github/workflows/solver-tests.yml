@@ -113,9 +113,9 @@ jobs:
       - name: Add KNITRO secrets
         if: ${{ matrix.package == "KNITRO" }}
         run: |
-          echo "${{ secrets.ARTELYS_LIC_8326_JUMP_DEV_2023_11_02 }}" > ~/artelys_lic.txt
-          echo "SECRET_KNITRO_URL=${{ secrets.SECRET_KNITRO_URL }}" >> $GITHUB_ENV
-          echo "SECRET_KNITRO_LIBIOMP5=${{ secrets.SECRET_KNITRO_LIBIOMP5 }}" >> $GITHUB_ENV
+          echo "${{ secrets.KNITRO_LICENSE }}" > ~/artelys_lic.txt
+          echo "SECRET_KNITRO_URL=${{ secrets.KNITRO_URL }}" >> $GITHUB_ENV
+          echo "SECRET_KNITRO_LIBIOMP5=${{ secrets.KNITRO_LIBIOMP5 }}" >> $GITHUB_ENV
       # Setup Xpress.jl
       - name: Add Xpress secrets
         if: ${{ matrix.package == "Xpress" }}
