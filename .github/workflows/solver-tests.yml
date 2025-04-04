@@ -96,8 +96,27 @@ jobs:
       - name: Add BARON secrets
         if: ${{ matrix.package == 'BARON' }}
         shell: bash
+        # Writing a multiline string is hard. GitHub says:
+        # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions#multiline-strings
+        #
+        # For multiline strings, you may use a delimiter with the following syntax.
+        #
+        #   {name}<<{delimiter}
+        #   {value}
+        #   {delimiter}
+        #
+        # Their example goes on to use 'EOF' as the delimiter, which works so
+        # long as 'EOF' does not appear in the string. If you get the error:
+        #
+        #   Run echo "SECRET_BARON_LICENSE='***
+        #   Error: Unable to process file command 'env' successfully.
+        #   Error: Invalid format '***'
+        #
+        # This is the most likely culprit.
         run: |
-          echo "SECRET_BARON_LICENSE='${{ secrets.BARON_LICENSE }}'" >> $GITHUB_ENV
+          echo "SECRET_BARON_LICENSE<<EOF"
+          echo "${{ secrets.BARON_LICENSE }}" >> $GITHUB_ENV
+          echo "EOF>>" >> $GITHUB_ENV
       # Setup CPLEX.jl
       - name: Add CPLEX secrets
         if: ${{ matrix.package == 'CPLEX' }}
