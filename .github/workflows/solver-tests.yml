@@ -91,8 +91,6 @@ jobs:
         with:
           version: '1'
       - uses: julia-actions/cache@v2
-        with:
-          key: julia-${{ matrix.package }}
       - uses: julia-actions/julia-buildpkg@v1
       # Setup BARON.jl
       - name: Add BARON secrets
@@ -109,13 +107,13 @@ jobs:
           SECRET_CPLEX_URL_2210: ${{ secrets.CPLEX_URL_2210 }}
         shell: bash
         run: |
-          echo "CPLEX_URL_2210=$SECRET_CPLEX_URL_2210" >> $GITHUB_ENV
+          echo "SECRET_CPLEX_URL_2210=$SECRET_CPLEX_URL_2210" >> $GITHUB_ENV
           echo "CPLEX_VERSION=2210" >> $GITHUB_ENV
       # Setup Gurobi.jl
       - name: Add Gurobi secrets
         if: ${{ matrix.package == 'Gurobi' }}
         env: 
-          SECRET_GUROBI_LICENSE: ${{ secrets.WLSLICENSE }}
+          SECRET_GUROBI_LICENSE: ${{ secrets.GUROBI_LICENSE }}
         shell: bash
         run: |
           mkdir -p /opt/gurobi
