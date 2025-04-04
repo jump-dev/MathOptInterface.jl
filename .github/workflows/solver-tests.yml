@@ -95,11 +95,9 @@ jobs:
       # Setup BARON.jl
       - name: Add BARON secrets
         if: ${{ matrix.package == 'BARON' }}
-        env:
-          SECRET_BARON_LICENSE: ${{ secrets.BARON_LICENSE }}
         shell: bash
         run: |
-          echo "SECRET_BARON_LICENSE=$SECRET_BARON_LICENSE" >> $GITHUB_ENV
+          echo "SECRET_BARON_LICENSE=${{ secrets.BARON_LICENSE }}" >> $GITHUB_ENV
       # Setup CPLEX.jl
       - name: Add CPLEX secrets
         if: ${{ matrix.package == 'CPLEX' }}
@@ -107,7 +105,7 @@ jobs:
           SECRET_CPLEX_URL_2210: ${{ secrets.CPLEX_URL_2210 }}
         shell: bash
         run: |
-          echo "SECRET_CPLEX_URL_2210=$SECRET_CPLEX_URL_2210" >> $GITHUB_ENV
+          echo "SECRET_CPLEX_URL_2210=${SECRET_CPLEX_URL_2210}" >> $GITHUB_ENV
           echo "CPLEX_VERSION=2210" >> $GITHUB_ENV
       # Setup Gurobi.jl
       - name: Add Gurobi secrets
@@ -117,7 +115,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p /opt/gurobi
-          echo "$SECRET_GUROBI_LICENSE" > /opt/gurobi/gurobi.lic
+          echo "${SECRET_GUROBI_LICENSE}" > /opt/gurobi/gurobi.lic
       # Setup KNITRO.jl
       - name: Add KNITRO secrets
         if: ${{ matrix.package == 'KNITRO' }}
@@ -127,9 +125,9 @@ jobs:
           SECRET_KNITRO_LIBIOMP5: ${{ secrets.KNITRO_LIBIOMP5 }}
         shell: bash
         run: |
-          echo "$SECRET_KNITRO_LICENSE" > ~/artelys_lic.txt
-          echo "SECRET_KNITRO_URL=$SECRET_KNITRO_URL" >> $GITHUB_ENV
-          echo "SECRET_KNITRO_LIBIOMP5=$SECRET_KNITRO_LIBIOMP5" >> $GITHUB_ENV
+          echo "${SECRET_KNITRO_LICENSE}" > ~/artelys_lic.txt
+          echo "SECRET_KNITRO_URL=${SECRET_KNITRO_URL}" >> $GITHUB_ENV
+          echo "SECRET_KNITRO_LIBIOMP5=${SECRET_KNITRO_LIBIOMP5}" >> $GITHUB_ENV
       # Setup Xpress.jl
       - name: Add Xpress secrets
         if: ${{ matrix.package == 'Xpress' }}
@@ -137,7 +135,7 @@ jobs:
           SECRET_XPRESS_LICENSE: ${{ secrets.XPRESS_LICENSE }}
         shell: bash
         run: |
-          echo "$SECRET_XPRESS_LICENSE" > /opt/xpauth.xpr
+          echo "${SECRET_XPRESS_LICENSE}" > /opt/xpauth.xpr
           echo "XPRESS_JL_SKIP_LIB_CHECK=true" >> $GITHUB_ENV
           echo "XPAUTH_PATH=/opt/xpauth.xpr" >> $GITHUB_ENV
       - name: Run tests
