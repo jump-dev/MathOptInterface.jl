@@ -1901,7 +1901,7 @@ Base.:(==)(a::SOS2{T}, b::SOS2{T}) where {T} = a.weights == b.weights
 )
 
 """
-    Indicator{A<:ActivationCondition,S<:AbstractScalarSet}(set::S)
+    Indicator{A,S<:AbstractScalarSet}(set::S)
 
 The set corresponding to an indicator constraint.
 
