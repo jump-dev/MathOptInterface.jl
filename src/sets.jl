@@ -1891,11 +1891,11 @@ Base.:(==)(a::SOS2{T}, b::SOS2{T}) where {T} = a.weights == b.weights
     """,
     ActivationCondition,
     """
-    The indicator constraint holds whhen the binary variable is zero.
+    The indicator constraint holds when the binary variable is zero.
     """,
     ACTIVATE_ON_ZERO,
     """
-    The indicator constraint holds whhen the binary variable is one.
+    The indicator constraint holds when the binary variable is one.
     """,
     ACTIVATE_ON_ONE,
 )
@@ -1910,11 +1910,11 @@ The type parameter must be an [`ActivationCondition`](@ref).
 
 When the type parameter is [`ACTIVATE_ON_ZERO`](@ref), this means:
 
-``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 0 \\implies x \\in set\\}``
+``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R} : y = 0 \\implies x \\in set\\}``
 
 When the type parameter is [`ACTIVATE_ON_ONE`](@ref), this means:
 
-``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 1 \\implies x \\in set\\}``
+``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R} : y = 1 \\implies x \\in set\\}``
 
 ## Notes
 
