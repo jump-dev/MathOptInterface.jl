@@ -1951,7 +1951,7 @@ MathOptInterface.ConstraintIndex{MathOptInterface.VectorAffineFunction{Float64},
 ```
 
 The constraint
-``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R} : y = 0 \\implies x \\eq 0 \\}``
+``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R} : y = 0 \\implies x = 0 \\}``
 is defined as
 ```jldoctest
 julia> import MathOptInterface as MOI
