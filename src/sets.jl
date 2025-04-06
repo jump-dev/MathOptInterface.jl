@@ -1901,21 +1901,27 @@ Base.:(==)(a::SOS2{T}, b::SOS2{T}) where {T} = a.weights == b.weights
 )
 
 """
-    Indicator{A<:ActivationCondition,S<:AbstractScalarSet}(set::S)
+    Indicator{ACTIVATE_ON_ZERO}(set::AbstractScalarSet)
+    Indicator{ACTIVATE_ON_ONE}(set::AbstractScalarSet)
 
 The set corresponding to an indicator constraint.
 
-When `A` is [`ACTIVATE_ON_ZERO`](@ref), this means:
+The type parameter must be an [`ActivationCondition`](@ref).
+
+When the type parameter is [`ACTIVATE_ON_ZERO`](@ref), this means:
+
 ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 0 \\implies x \\in set\\}``
 
-When `A` is [`ACTIVATE_ON_ONE`](@ref), this means:
+When the type parameter is [`ACTIVATE_ON_ONE`](@ref), this means:
+
 ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^n : y = 1 \\implies x \\in set\\}``
 
 ## Notes
 
 Most solvers expect that the first row of the function is interpretable as a
-variable index `x_i` (for example, `1.0 * x + 0.0`). An error will be thrown if this is
-not the case.
+[`VariableIndex`](@ref) (for example, `1.0 * x + 0.0`), and that the variable is
+constrained to the [`ZeroOne`](@ref) set. An error will be thrown if this is not
+the case.
 
 ## Example
 
@@ -1927,22 +1933,11 @@ julia> import MathOptInterface as MOI
 
 julia> model = MOI.Utilities.Model{Float64}();
 
-julia> x = MOI.add_variables(model, 2)
-2-element Vector{MathOptInterface.VariableIndex}:
- MOI.VariableIndex(1)
- MOI.VariableIndex(2)
+julia> x = MOI.add_variables(model, 2);
 
-julia> y, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
-(MOI.VariableIndex(3), MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterface.ZeroOne}(3))
+julia> y, _ = MOI.add_constrained_variable(model, MOI.ZeroOne());
 
-julia> f = MOI.VectorAffineFunction(
-           [
-               MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, y)),
-               MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x[1])),
-               MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(1.0, x[2])),
-           ],
-           [0.0, 0.0],
-       )
+julia> f = MOI.Utilities.vectorize([y, 1.0 * x[1] + 1.0 * x[2]])
 ┌                                                         ┐
 │0.0 + 1.0 MOI.VariableIndex(3)                           │
 │0.0 + 1.0 MOI.VariableIndex(1) + 1.0 MOI.VariableIndex(2)│
@@ -1954,10 +1949,37 @@ MathOptInterface.Indicator{MathOptInterface.ACTIVATE_ON_ONE, MathOptInterface.Le
 julia> MOI.add_constraint(model, f, s)
 MathOptInterface.ConstraintIndex{MathOptInterface.VectorAffineFunction{Float64}, MathOptInterface.Indicator{MathOptInterface.ACTIVATE_ON_ONE, MathOptInterface.LessThan{Float64}}}(1)
 ```
+
+The constraint
+``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R} : y = 0 \\implies x \\eq 0 \\}``
+is defined as
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(model);
+
+julia> y, _ = MOI.add_constrained_variable(model, MOI.ZeroOne());
+
+julia> f = MOI.VectorOfVariables([y, x]);
+
+julia> s = MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(MOI.EqualTo(0.0))
+MathOptInterface.Indicator{MathOptInterface.ACTIVATE_ON_ZERO, MathOptInterface.EqualTo{Float64}}(MathOptInterface.EqualTo{Float64}(0.0))
+
+julia> MOI.add_constraint(model, f, s)
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.Indicator{MathOptInterface.ACTIVATE_ON_ZERO, MathOptInterface.EqualTo{Float64}}}(1)
+```
 """
 struct Indicator{A,S<:AbstractScalarSet} <: AbstractVectorSet
     set::S
-    Indicator{A}(set::S) where {A,S<:AbstractScalarSet} = new{A,S}(set)
+
+    function Indicator{ACTIVATE_ON_ONE}(set::S) where {S<:AbstractScalarSet}
+        return new{ACTIVATE_ON_ONE,S}(set)
+    end
+    function Indicator{ACTIVATE_ON_ZERO}(set::S) where {S<:AbstractScalarSet}
+        return new{ACTIVATE_ON_ZERO,S}(set)
+    end
 end
 
 dimension(::Indicator) = 2
