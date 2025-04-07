@@ -251,9 +251,11 @@ Run a series of tests that check the correctness of `Bridge`.
 `input_fn` and `output_fn` are functions such that `input_fn(model)`
 and `output_fn(model)` load the corresponding model into `model`.
 
-Set `cannot_unbridge` to `true` if the bridge is a variable bridge
-for which [`Variable.unbridged_map`](@ref) returns `nothing` so that
-the tests allow errors that can be raised due to this.
+Set `cannot_unbridge` to `true` if the bridge transformation is not invertible.
+If `Bridge` is a variable bridge this allows [`Variable.unbridged_map`](@ref)
+to returns `nothing` so that the tests allow errors that can be raised due to this.
+If `Bridge` is a constraint bridge this allows the getter of [`MOI.ConstraintFunction`](@ref)
+and [`MOI.ConstraintPrimalStart`](@ref) to throw [`MOI.GetAttributeNotAllowed`](@ref).
 
 ## Example
 
