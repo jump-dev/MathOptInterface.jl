@@ -334,7 +334,11 @@ function runtests(
                     catch err
                         # For a Constraint bridge for which the map is not invertible, the constraint primal cannot
                         # be inverted
-                        _runtests_error_handler(err, Bridge <: MOI.Bridges.Constraint.AbstractBridge && cannot_unbridge)
+                        _runtests_error_handler(
+                            err,
+                            Bridge <: MOI.Bridges.Constraint.AbstractBridge &&
+                                cannot_unbridge,
+                        )
                         continue
                     end
                     Test.@test returned_start ≈ start
