@@ -131,7 +131,7 @@ jobs:
       - name: Add Gurobi secrets
         if: ${{ matrix.package == 'Gurobi' }}
         shell: bash
-        run: echo "${{ secrets.GUROBI_LICENSE }}" > ~gurobi.lic
+        run: echo "${{ secrets.GUROBI_LICENSE }}" > ~/gurobi.lic
       # Setup KNITRO.jl
       - name: Add KNITRO secrets
         if: ${{ matrix.package == 'KNITRO' }}
@@ -143,9 +143,11 @@ jobs:
       # Setup Xpress.jl
       - name: Add Xpress secrets
         if: ${{ matrix.package == 'Xpress' }}
+        env:
+          SECRET_XPRESS_LICENSE: ${{ secrets.XPRESS_LICENSE }}
         shell: bash
         run: |
-          echo "${{ secrets.XPRESS_LICENSE }}" > /opt/xpauth.xpr
+          echo "${SECRET_XPRESS_LICENSE}" > /opt/xpauth.xpr
           echo "XPRESS_JL_SKIP_LIB_CHECK=true" >> $GITHUB_ENV
           echo "XPAUTH_PATH=/opt/xpauth.xpr" >> $GITHUB_ENV
       - name: Run tests
