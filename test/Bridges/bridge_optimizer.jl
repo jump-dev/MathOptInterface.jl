@@ -1438,7 +1438,7 @@ end
 
 function MOI.add_constrained_variables(model::Model2714, set::MOI.Nonnegatives)
     n = MOI.dimension(set)
-    x = MOI.VariableIndex(sum(model.dimensions).+(1:n))
+    x = MOI.VariableIndex(sum(model.dimensions) .+ (1:n))
     push!(model.dimensions, n)
     F, S = MOI.VectorOfVariables, MOI.Nonnegatives
     return x, MOI.ConstraintIndex{F,S}(length(model.dimensions))
