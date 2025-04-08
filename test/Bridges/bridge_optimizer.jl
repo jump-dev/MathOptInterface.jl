@@ -1422,6 +1422,36 @@ function test_fallback_delete_objective_bridge()
     return
 end
 
+struct Model2714 <: MOI.ModelLike
+    dimensions::Vector{Int}
+    Model2714() = new(Int[])
+end
+
+MOI.is_empty(model::Model2714) = isempty(model.dimensions)
+
+function MOI.supports_add_constrained_variables(
+    ::Model2714,
+    ::Type{MOI.Nonnegatives},
+)
+    return true
+end
+
+function MOI.add_constrained_variables(model::Model2714, set::MOI.Nonnegatives)
+    n = MOI.dimension(set)
+    x = MOI.VariableIndex(sum(model.dimensions).+(1:n))
+    push!(model.dimensions, n)
+    F, S = MOI.VectorOfVariables, MOI.Nonnegatives
+    return x, MOI.ConstraintIndex{F,S}(length(model.dimensions))
+end
+
+function test_issue_2714()
+    model = MOI.instantiate(Model2714; with_bridge_type = Float64)
+    t, _ = MOI.add_constrained_variable(model, MOI.LessThan(10.0))
+    @test MOI.get(model, MOI.NumberOfVariables()) == 1
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [t]
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()

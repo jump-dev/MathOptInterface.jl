@@ -760,6 +760,11 @@ function _get_all_including_bridged(
     ret = MOI.VariableIndex[]
     for inner_variable in MOI.get(b.model, attr)
         outer_variable = get(inner_to_outer, inner_variable, missing)
+        # If there is a chain of variable bridges, the `outer_variable` may need
+        # to be mapped.
+        while haskey(inner_to_outer, outer_variable)
+            outer_variable = inner_to_outer[outer_variable]
+        end
         if ismissing(outer_variable)
             # inner_variable does not exist in inner_to_outer, which means that
             # it is not bridged. Pass through unchanged.
