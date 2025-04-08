@@ -173,10 +173,10 @@ version_added(::F) where {F} = v"0.10.5"  # The default for any unlabeled tests.
         warn_unsupported::Bool = false,
         exclude_tests_after::VersionNumber = v"999.0.0",
         verbose::Bool = false,
-        test_module = @__MODULE__,
+        test_module = MathOptInterface.Test,
     )
 
-Run all tests in `MathOptInterface.Test` on `model`.
+Run all tests in `test_module`, which defaults to `MathOptInterface.Test`, on `model`.
 
 ## Configuration arguments
 
