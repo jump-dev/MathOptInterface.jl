@@ -174,7 +174,6 @@ function number_of_variables(map::Map)
                 num += length_of_vector_of_variables(map, MOI.VariableIndex(-i))
             end
         end
-        count(bridge -> bridge !== nothing, map.bridges)
     end
     return num
 end
