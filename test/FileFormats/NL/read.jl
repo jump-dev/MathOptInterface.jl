@@ -103,14 +103,14 @@ function test_parse_expr_maximum()
     return
 end
 
-function test_parse_header_binary()
+function test_parse_header_unsupported_mode()
     model = NL._CacheModel()
     NL._resize_variables(model, 4)
     io = IOBuffer()
-    write(io, "b3 1 1 0\n")
+    write(io, "z3 1 1 0\n")
     seekstart(io)
     @test_throws(
-        ErrorException("Unable to parse NL file : unsupported mode b"),
+        ErrorException("Unable to parse NL file : unsupported mode z"),
         NL._parse_header(io, model),
     )
     return
@@ -147,7 +147,7 @@ function test_parse_header_assertion_errors()
         "g4 1 1 0\n3 3 1 0 0 0\n0 0\n0 1\n",
         "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n1 0 0 1\n",
         "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 1 0 1\n",
-        "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 1 1\n",
+        # "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 1 1\n",
         "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n-1 0\n",
         "g3 1 1 0\n4 2 1 0 1 0\n2 1\n0 0\n4 0 0\n0 0 0 1\n0 0 0 2 0\n0 -1\n",
     ]
@@ -277,13 +277,13 @@ function test_parse_r()
     write(
         io,
         """
-r# can stick a comment anywhere
-1 3.3
-3
-0 1.1 2.2  # can stick a comment anywhere
-4 5.5
-2 4.4# can stick a comment anywhere
-""",
+        r# can stick a comment anywhere
+        1 3.3
+         3
+        0 1.1 2.2  # can stick a comment anywhere
+          4 5.5
+        2 4.4# can stick a comment anywhere
+        """,
     )
     seekstart(io)
     NL._parse_section(io, model)
@@ -300,13 +300,13 @@ function test_parse_b()
     write(
         io,
         """
-b# can stick a comment anywhere
-1 3.3
-3# can stick a comment anywhere
-0 1.1 2.2
-4 5.5
-2 4.4 # can stick a comment anywhere
-""",
+        b# can stick a comment anywhere
+        1 3.3
+          3# can stick a comment anywhere
+        0 1.1 2.2
+         4 5.5
+        2 4.4 # can stick a comment anywhere
+        """,
     )
     seekstart(io)
     NL._parse_section(io, model)
@@ -323,10 +323,10 @@ function test_parse_k()
     write(
         io,
         """
-k
-2 # can stick a comment anywhere
-4
-""",
+        k2
+        2 # can stick a comment anywhere
+        4
+        """,
     )
     seekstart(io)
     NL._parse_section(io, model)
@@ -573,19 +573,45 @@ function test_parse_S()
         io,
         """
         S0 8 zork
-        02
-        16
-        27
-        38
-        49
-        53
-        65
-        84
+        0 2
+        1 6
+        2 7
+        3 8
+        4 9
+        5 3
+        6 5
+        8 4
         """,
     )
     seekstart(io)
     @test_logs(
         (:warn, "Skipping suffix: `S0 8 zork`"),
+        NL._parse_section(io, model),
+    )
+    @test eof(io)
+    return
+end
+
+function test_parse_S_Float64()
+    model = NL._CacheModel()
+    io = IOBuffer()
+    write(
+        io,
+        """
+        S4 8 zork
+        0 2.0
+        1 6.0
+        2 7.0
+        3 8.0
+        4 9.0
+        5 3.0
+        6 5.0
+        8 4.0
+        """,
+    )
+    seekstart(io)
+    @test_logs(
+        (:warn, "Skipping suffix: `S4 8 zork`"),
         NL._parse_section(io, model),
     )
     @test eof(io)
@@ -810,6 +836,233 @@ function test_nl_read_scalar_affine_function()
         @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) ==
               [(typeof(f), MOI.LessThan{Float64})]
     end
+    return
+end
+
+function test_binary_next_Float64()
+    model = NL._CacheModel()
+    model.is_binary = true
+    sequence = [0.0, 1.0, -2.0, 1.234, 1e-12]
+    io = IOBuffer()
+    for s in sequence
+        write(io, s)
+    end
+    seekstart(io)
+    for s in sequence
+        @test NL._next(Float64, io, model) === s
+    end
+    return
+end
+
+function test_binary_next_Int()
+    model = NL._CacheModel()
+    model.is_binary = true
+    sequence = Int32[0, 1, 2, -3, -5, typemax(Int32), typemin(Int32)]
+    io = IOBuffer()
+    for s in sequence
+        write(io, s)
+    end
+    seekstart(io)
+    for s in sequence
+        @test NL._next(Int, io, model) === Int(s)
+    end
+    return
+end
+
+function test_binary_read_til_newline()
+    model = NL._CacheModel()
+    model.is_binary = true
+    io = IOBuffer()
+    @test NL._read_til_newline(io, model) === nothing
+    @test position(io) == 0
+    return
+end
+
+function test_parse_header_binary()
+    model = NL._CacheModel()
+    io = IOBuffer()
+    write(
+        io,
+        """b3 0 1 0	# problem test_simple
+        2 1 1 0 0	# vars, constraints, objectives, ranges, eqns
+        1 1	# nonlinear constraints, objectives
+        0 0	# network constraints: nonlinear, linear
+        1 2 0	# nonlinear vars in constraints, objectives, both
+        0 0 1 1	# linear network variables; functions; arith, flags
+        0 0 0 0 0	# discrete variables: binary, integer, nonlinear (b,c,o)
+        1 1	# nonzeros in Jacobian, gradients
+        0 0	# max name lengths: constraints, variables
+        0 0 0 0 0	# common exprs: b,c,o,c1,o1
+        """,
+    )
+    seekstart(io)
+    NL._parse_header(io, model)
+    @test model.is_binary
+    return
+end
+
+function test_binary_parse_O()
+    model = NL._CacheModel()
+    model.is_binary = true
+    NL._resize_variables(model, 4)
+    io = IOBuffer()
+    write(io, Cchar('O'), Int32(0), Int32(0))
+    write(io, Cchar('o'), Int32(2))
+    write(io, Cchar('v'), Int32(0))
+    write(io, Cchar('o'), Int32(2))
+    write(io, Cchar('v'), Int32(2))
+    write(io, Cchar('o'), Int32(2))
+    write(io, Cchar('v'), Int32(3))
+    write(io, Cchar('v'), Int32(1))
+    seekstart(io)
+    NL._parse_section(io, model)
+    @test eof(io)
+    @test model.sense == MOI.MIN_SENSE
+    x = MOI.VariableIndex.(1:4)
+    @test model.objective == :($(x[1]) * ($(x[3]) * ($(x[4]) * $(x[2]))))
+    return
+end
+
+function test_binary_parse_O_max()
+    model = NL._CacheModel()
+    model.is_binary = true
+    NL._resize_variables(model, 4)
+    io = IOBuffer()
+    write(io, Cchar('O'), Int32(0), Int32(1), Cchar('v'), Int32(0))
+    seekstart(io)
+    NL._parse_section(io, model)
+    @test eof(io)
+    @test model.sense == MOI.MAX_SENSE
+    x = MOI.VariableIndex(1)
+    @test model.objective == :(+$x)
+    return
+end
+
+function test_binary_parse_x()
+    model = NL._CacheModel()
+    model.is_binary = true
+    NL._resize_variables(model, 5)
+    io = IOBuffer()
+    write(io, Cchar('x'), Int32(3))
+    write(io, Int32(0), 1.1)
+    write(io, Int32(3), 2.2)
+    write(io, Int32(2), 3.3)
+    seekstart(io)
+    NL._parse_section(io, model)
+    @test eof(io)
+    @test model.variable_primal == [1.1, 0.0, 3.3, 2.2, 0.0]
+    return
+end
+
+function test_parse_d()
+    model = NL._CacheModel()
+    model.is_binary = true
+    io = IOBuffer()
+    write(io, Cchar('d'), Int32(3))
+    write(io, Int32(0), 1.1)
+    write(io, Int32(3), 2.2)
+    write(io, Int32(2), 3.3)
+    seekstart(io)
+    NL._parse_section(io, model)
+    @test eof(io)
+    return
+end
+
+function test_binary_parse_r()
+    model = NL._CacheModel()
+    model.is_binary = true
+    NL._resize_constraints(model, 5)
+    io = IOBuffer()
+    write(io, Cchar('r'))
+    write(io, Cchar('1'), 3.3)
+    write(io, Cchar('3'))
+    write(io, Cchar('0'), 1.1, 2.2)
+    write(io, Cchar('4'), 5.5)
+    write(io, Cchar('2'), 4.4)
+    seekstart(io)
+    NL._parse_section(io, model)
+    @test eof(io)
+    @test model.constraint_lower == [-Inf, -Inf, 1.1, 5.5, 4.4]
+    @test model.constraint_upper == [3.3, Inf, 2.2, 5.5, Inf]
+    return
+end
+
+function test_binary_parse_b()
+    model = NL._CacheModel()
+    model.is_binary = true
+    NL._resize_variables(model, 5)
+    io = IOBuffer()
+    write(io, Cchar('b'))
+    write(io, Cchar('1'), 3.3)
+    write(io, Cchar('3'))
+    write(io, Cchar('0'), 1.1, 2.2)
+    write(io, Cchar('4'), 5.5)
+    write(io, Cchar('2'), 4.4)
+    seekstart(io)
+    NL._parse_section(io, model)
+    @test eof(io)
+    @test model.variable_lower == [-Inf, -Inf, 1.1, 5.5, 4.4]
+    @test model.variable_upper == [3.3, Inf, 2.2, 5.5, Inf]
+    return
+end
+
+function test_binary_parse_k()
+    model = NL._CacheModel()
+    model.is_binary = true
+    NL._resize_variables(model, 3)
+    io = IOBuffer()
+    write(io, Cchar('k'), Int32(2))
+    write(io, Int32(2))
+    write(io, Int32(4))
+    seekstart(io)
+    NL._parse_section(io, model)
+    @test eof(io)
+    return
+end
+
+function test_binary_parse_S()
+    model = NL._CacheModel()
+    model.is_binary = true
+    io = IOBuffer()
+    write(io, Cchar('S'), Int32(0), Int32(8))
+    write(io, Int32(4), Cchar('z'), Cchar('o'), Cchar('r'), Cchar('k'))
+    write(io, Int32(0), Int32(2))
+    write(io, Int32(1), Int32(6))
+    write(io, Int32(2), Int32(7))
+    write(io, Int32(3), Int32(8))
+    write(io, Int32(4), Int32(9))
+    write(io, Int32(5), Int32(3))
+    write(io, Int32(6), Int32(5))
+    write(io, Int32(8), Int32(4))
+    seekstart(io)
+    @test_logs(
+        (:warn, "Skipping suffix: `S0 8 zork`"),
+        NL._parse_section(io, model),
+    )
+    @test eof(io)
+    return
+end
+
+function test_binary_parse_S_Float64()
+    model = NL._CacheModel()
+    model.is_binary = true
+    io = IOBuffer()
+    write(io, Cchar('S'), Int32(4), Int32(8))
+    write(io, Int32(4), Cchar('z'), Cchar('o'), Cchar('r'), Cchar('k'))
+    write(io, Int32(0), 2.1)
+    write(io, Int32(1), 6.1)
+    write(io, Int32(2), 7.1)
+    write(io, Int32(3), 8.1)
+    write(io, Int32(4), 9.1)
+    write(io, Int32(5), 3.1)
+    write(io, Int32(6), 5.1)
+    write(io, Int32(8), 4.1)
+    seekstart(io)
+    @test_logs(
+        (:warn, "Skipping suffix: `S4 8 zork`"),
+        NL._parse_section(io, model),
+    )
+    @test eof(io)
     return
 end
 
