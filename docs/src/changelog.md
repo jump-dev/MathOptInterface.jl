@@ -7,6 +7,24 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.39.0 (April 10, 2025)
+
+### Added
+
+ - Added `test_module` keyword to [`Test.runtests`](@ref) (#2710)
+ - Added support for reading the binary `b` format in `FileFormats.Nonlinear`
+   (#2718)
+
+### Fixed
+
+ - Fixed [`ListOfVariableIndices`](@ref) returned by
+   [`Bridges.LazyBridgeOptimizer`](@ref) when there is a chain of variable
+   bridges (#2716)
+
+### Other
+
+ - Updated `solver-tests.yml` (#2715)
+
 ## v1.38.1 (April 7, 2025)
 
 ### Fixed
