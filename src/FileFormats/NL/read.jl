@@ -290,8 +290,9 @@ end
 
 function _parse_header(io::IO, model::_CacheModel)
     # Line 1
-    # We don't support the binary format.
     byte = read(io, UInt8)
+    # Detect the format. We delay setting `model.is_binary` until the end of
+    # this function because the header is _not_ in binary format.
     is_binary = false
     if byte == UInt8('b')
         is_binary = true
