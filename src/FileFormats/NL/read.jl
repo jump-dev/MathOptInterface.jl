@@ -446,8 +446,8 @@ function _parse_section(io::IO, ::Val{'S'}, model::_CacheModel)
         strip(readline(io))
     end
     @warn("Skipping suffix: `S$k $n $suffix_name`")
-    # The “4” bit of k indicates whether the suﬃx is real (i.e., double) valued
-    # or integer valued: (k&4) != 0 --> real valued.
+    # The “4” bit of k indicates whether the suﬃx is real (that is, double)
+    # valued or integer valued: (k&4) != 0 --> real valued.
     T = ifelse(k & 4 != 0, Float64, Int)
     for _ in 1:n
         _ = _next(Int, io, model)
