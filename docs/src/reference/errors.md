@@ -66,6 +66,7 @@ The different [`UnsupportedError`](@ref) and [`NotAllowedError`](@ref) are the
 following errors:
 ```@docs
 UnsupportedAttribute
+GetAttributeNotAllowed
 SetAttributeNotAllowed
 AddVariableNotAllowed
 UnsupportedConstraint
