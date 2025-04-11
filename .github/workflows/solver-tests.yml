@@ -69,10 +69,13 @@ jobs:
           - package: 'Juniper'
           - package: 'LinearFractional'
           - package: 'Loraine'
+          # - package: 'MadNLP'  # TODO
           - package: 'MAiNGO'
-          # - package: 'MathOptAI'  # Needs pytorch
+          - package: 'Manopt'
+          - package: 'MathOptAI'
           - package: 'MathOptSymbolicAD'
           - package: 'MathOptSetDistances'
+          - package: 'Optim'
           - package: 'OSQP'
           - package: 'PATHSolver'
           - package: 'Percival'
@@ -83,7 +86,6 @@ jobs:
           - package: 'SDDP'
           - package: 'SetProg'
           - package: 'SparseVariables'
-          # - package: 'SDPAFamily'  # Does not work on latest Julia
           - package: 'Tulip'
           - package: 'UnitJuMP'
     steps:
@@ -94,7 +96,7 @@ jobs:
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       # Setup BARON.jl
-      - name: Add BARON secrets
+      - name: Setup BARON
         if: ${{ matrix.package == 'BARON' }}
         shell: bash
         # Writing a multiline string is hard. GitHub says:
@@ -121,27 +123,41 @@ jobs:
             echo "EOF"
           } >> $GITHUB_ENV
       # Setup CPLEX.jl
-      - name: Add CPLEX secrets
+      - name: Setup CPLEX
         if: ${{ matrix.package == 'CPLEX' }}
         shell: bash
         run: |
           echo "SECRET_CPLEX_URL_2210=${{ secrets.CPLEX_URL_2210 }}" >> $GITHUB_ENV
           echo "CPLEX_VERSION=2210" >> $GITHUB_ENV
       # Setup Gurobi.jl
-      - name: Add Gurobi secrets
+      - name: Setup Gurobi
         if: ${{ matrix.package == 'Gurobi' }}
         shell: bash
         run: echo "${{ secrets.GUROBI_LICENSE }}" > ~/gurobi.lic
       # Setup KNITRO.jl
-      - name: Add KNITRO secrets
+      - name: Setup KNITRO
         if: ${{ matrix.package == 'KNITRO' }}
         shell: bash
         run: |
           echo "${{ secrets.KNITRO_LICENSE }}" > ~/artelys_lic.txt
           echo "SECRET_KNITRO_URL=${{ secrets.KNITRO_URL }}" >> $GITHUB_ENV
           echo "SECRET_KNITRO_LIBIOMP5=${{ secrets.KNITRO_LIBIOMP5 }}" >> $GITHUB_ENV
+      # Setup MathOptAI.jl
+      - name: Install Python
+        if: ${{ matrix.package == 'MathOptAI' }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+      - name: Setup MathOptAI
+        if: ${{ matrix.package == 'MathOptAI' }}
+        shell: bash
+        run: |
+           pip3 install torch --index-url https://download.pytorch.org/whl/cpu
+           pip3 install numpy
+           echo "JULIA_CONDAPKG_BACKEND=Null" >> $GITHUB_ENV
+           echo "JULIA_PYTHONCALL_EXE=python3" >> $GITHUB_ENV
       # Setup Xpress.jl
-      - name: Add Xpress secrets
+      - name: Setup Xpress
         if: ${{ matrix.package == 'Xpress' }}
         env:
           SECRET_XPRESS_LICENSE: ${{ secrets.XPRESS_LICENSE }}
