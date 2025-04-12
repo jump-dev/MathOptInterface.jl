@@ -142,7 +142,7 @@ MOI.attribute_value_type(::ListOfNonstandardBridges) = Vector
 
 MOI.is_copyable(::ListOfNonstandardBridges) = false
 
-MOI.get_fallback(model::MOI.ModelLike, ::ListOfNonstandardBridges) = Type[]
+MOI.get_fallback(::MOI.ModelLike, ::ListOfNonstandardBridges) = Type[]
 
 function _test_structural_identical(
     a::MOI.ModelLike,
@@ -191,12 +191,8 @@ function _test_structural_identical(
             f_b = try
                 MOI.get(b, MOI.ConstraintFunction(), ci)
             catch err
-                if cannot_unbridge &&
-                   err isa MOI.GetAttributeNotAllowed{MOI.ConstraintFunction}
-                    continue
-                else
-                    rethrow(err)
-                end
+                _runtests_error_handler(err, cannot_unbridge)
+                continue
             end
             f_b = MOI.Utilities.map_indices(x_map, f_b)
             s_b = MOI.get(b, MOI.ConstraintSet(), ci)
@@ -227,7 +223,10 @@ end
 _runtests_error_handler(err, ::Bool) = rethrow(err)
 
 function _runtests_error_handler(
-    err::MOI.GetAttributeNotAllowed{MOI.ConstraintFunction},
+    err::Union{
+        MOI.GetAttributeNotAllowed{MOI.ConstraintFunction},
+        MOI.GetAttributeNotAllowed{MOI.ConstraintPrimalStart},
+    },
     cannot_unbridge::Bool,
 )
     if cannot_unbridge
@@ -252,9 +251,11 @@ Run a series of tests that check the correctness of `Bridge`.
 `input_fn` and `output_fn` are functions such that `input_fn(model)`
 and `output_fn(model)` load the corresponding model into `model`.
 
-Set `cannot_unbridge` to `true` if the bridge is a variable bridge
-for which [`Variable.unbridged_map`](@ref) returns `nothing` so that
-the tests allow errors that can be raised due to this.
+Set `cannot_unbridge` to `true` if the bridge transformation is not invertible.
+If `Bridge` is a variable bridge this allows [`Variable.unbridged_map`](@ref)
+to returns `nothing` so that the tests allow errors that can be raised due to this.
+If `Bridge` is a constraint bridge this allows the getter of [`MOI.ConstraintFunction`](@ref)
+and [`MOI.ConstraintPrimalStart`](@ref) to throw [`MOI.GetAttributeNotAllowed`](@ref).
 
 ## Example
 
@@ -328,7 +329,19 @@ function runtests(
                     Test.@test MOI.get(model, attr, ci) === nothing
                     start = _fake_start(constraint_start, set)
                     MOI.set(model, attr, ci, start)
-                    Test.@test MOI.get(model, attr, ci) ≈ start
+                    returned_start = try
+                        MOI.get(model, attr, ci)
+                    catch err
+                        # For a Constraint bridge for which the map is not invertible, the constraint primal cannot
+                        # be inverted
+                        _runtests_error_handler(
+                            err,
+                            Bridge <: MOI.Bridges.Constraint.AbstractBridge &&
+                                cannot_unbridge,
+                        )
+                        continue
+                    end
+                    Test.@test returned_start ≈ start
                 end
             end
         end
@@ -416,7 +429,7 @@ _fake_start(value, ::MOI.AbstractScalarSet) = value
 
 _fake_start(value, set::MOI.AbstractVectorSet) = fill(value, MOI.dimension(set))
 
-_fake_start(value::AbstractVector, set::MOI.AbstractVectorSet) = value
+_fake_start(value::AbstractVector, ::MOI.AbstractVectorSet) = value
 
 function _bridged_model(Bridge::Type{<:Constraint.AbstractBridge}, inner)
     return Constraint.SingleBridgeOptimizer{Bridge}(inner)

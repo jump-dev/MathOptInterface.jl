@@ -98,6 +98,15 @@ function MOI.Bridges.inverse_map_set(
     return bridge.set
 end
 
+# Otherwise, it fails Bridges.runtests for `NOT_INVERTIBLE`
+function MOI.supports(
+    ::MOI.ModelLike,
+    ::MOI.ConstraintDualStart,
+    ::Type{<:ConstraintSwapBridge},
+)
+    return false
+end
+
 const SwapBridge{T} = Union{VariableSwapBridge{T},ConstraintSwapBridge{T}}
 
 function MOI.Bridges.map_function(bridge::SwapBridge, func)
@@ -213,6 +222,22 @@ function test_runtests()
                 set = MOI.Nonnegatives(2)
                 MOI.add_constraint(model, func, set)
             end,
+        )
+        MOI.Bridges.runtests(
+            ConstraintSwapBridge,
+            model -> begin
+                x = MOI.add_variables(model, 2)
+                func = MOI.VectorOfVariables(x)
+                set = SwapSet(do_swap, NOT_INVERTIBLE)
+                MOI.add_constraint(model, func, set)
+            end,
+            model -> begin
+                x = MOI.add_variables(model, 2)
+                func = MOI.VectorOfVariables(swap(x, do_swap))
+                set = MOI.Nonnegatives(2)
+                MOI.add_constraint(model, func, set)
+            end,
+            cannot_unbridge = true,
         )
         MOI.Bridges.runtests(
             VariableSwapBridge,
