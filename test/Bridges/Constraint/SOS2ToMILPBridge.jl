@@ -144,6 +144,38 @@ function test_delete_before_final_touch()
     return
 end
 
+MOI.Utilities.@model(
+    Model2722,
+    (),
+    (MOI.EqualTo,),
+    (MOI.Zeros,),
+    (MOI.SOS2,),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (MOI.VectorOfVariables,),
+    (MOI.VectorAffineFunction,),
+)
+
+function MOI.supports_constraint(
+    ::Model2722{T},
+    ::Type{MOI.VectorAffineFunction{T}},
+    ::Type{MOI.SOS2{T}},
+) where {T}
+    return false
+end
+
+function test_bridge_does_not_apply_if_vector_slack_exists()
+    inner = Model2722{Float64}()
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
+    x = MOI.add_variables(model, 3)
+    f = MOI.Utilities.vectorize(1.0 .* x)
+    c = MOI.add_constraint(model, f, MOI.SOS2([1.0, 2.0, 3.0]))
+    @test model.constraint_map[c] isa MOI.Bridges.Constraint.VectorSlackBridge
+    F, S = MOI.VectorOfVariables, MOI.SOS2{Float64}
+    @test (F, S) in MOI.get(inner, MOI.ListOfConstraintTypesPresent())
+    return
+end
+
 end  # module
 
 TestConstraintSOS2ToMILP.runtests()

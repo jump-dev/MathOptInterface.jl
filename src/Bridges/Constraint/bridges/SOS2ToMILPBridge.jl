@@ -61,6 +61,12 @@ end
 const SOS2ToMILP{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{SOS2ToMILPBridge{T},OT}
 
+# We need to weight this bridge such that `VectorAffineFunction-in-SOS2` is
+# bridged (if possible) by `VectorSlack + VectorOfVariables-in-SOS2`.
+#
+# See MathOptInterface#2722 for details.
+MOI.Bridges.bridging_cost(::Type{<:SOS2ToMILPBridge}) = 10.0
+
 function bridge_constraint(
     ::Type{SOS2ToMILPBridge{T,F}},
     model::MOI.ModelLike,
