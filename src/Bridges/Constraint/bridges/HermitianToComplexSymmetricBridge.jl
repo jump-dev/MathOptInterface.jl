@@ -96,7 +96,9 @@ function MOI.Bridges.map_function(
                 real_scalars[real_index] = complex_scalars[real_index]
             else
                 imag_index += 1
-                real_scalars[real_index] = complex_scalars[real_index] + (one(T) * im) * complex_scalars[imag_index]
+                real_scalars[real_index] =
+                    complex_scalars[real_index] +
+                    (one(T) * im) * complex_scalars[imag_index]
             end
         end
     end
@@ -116,8 +118,12 @@ function MOI.Bridges.inverse_map_function(
     )
     n = real_set.side_dimension
     complex_set = MOI.HermitianPositiveSemidefiniteConeTriangle(n)
-    complex_scalars =
-        Vector{MA.promote_operation(real, MOI.Utilities.scalar_type(typeof(func)))}(undef, MOI.dimension(complex_set))
+    complex_scalars = Vector{
+        MA.promote_operation(real, MOI.Utilities.scalar_type(typeof(func))),
+    }(
+        undef,
+        MOI.dimension(complex_set),
+    )
     real_index = 0
     imag_index = MOI.dimension(real_set)
     for j in 1:n
