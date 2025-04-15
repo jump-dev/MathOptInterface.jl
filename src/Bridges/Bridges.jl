@@ -4,6 +4,15 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
+# !!! info "COV_EXCL_LINE"
+#
+#     The Julia coverage check is not perfect, particularly when it comes to
+#     macros that produce code that is not executed. To work around
+#     false-negatives, some lines in this file are excluded from coverage with
+#     `# COV_EXCL_LINE`. (In most of the excluded cases, the default is for the
+#     tests to pass, so the failure case of the testset macro is not executed,
+#     and so no code is executed that can be tied back to the excluded lines.
+
 module Bridges
 
 import MathOptInterface as MOI
@@ -153,11 +162,11 @@ function _test_structural_identical(
     # the variables are added in the same order to both models.
     a_x = MOI.get(a, MOI.ListOfVariableIndices())
     b_x = MOI.get(b, MOI.ListOfVariableIndices())
-    Test.@testset "Test NumberOfVariables" begin
+    Test.@testset "Test NumberOfVariables" begin                                # COV_EXCL_LINE
         Test.@test MOI.get(a, MOI.NumberOfVariables()) ==
                    MOI.get(b, MOI.NumberOfVariables())
     end
-    Test.@testset "Test length ListOfVariableIndices" begin
+    Test.@testset "Test length ListOfVariableIndices" begin                     # COV_EXCL_LINE
         Test.@test length(a_x) == length(b_x)
     end
     # A dictionary that maps things from `b`-space to `a`-space.
@@ -180,7 +189,7 @@ function _test_structural_identical(
         # have zero constraints in `a`.
         Test.@test (F, S) in b_constraint_types ||
                    MOI.get(a, MOI.NumberOfConstraints{F,S}()) == 0
-    end
+    end                                                                         # COV_EXCL_LINE
     Test.@testset "$F-in-$S" for (F, S) in b_constraint_types
         Test.@test haskey(constraints, (F, S))
         # Check that the same number of constraints are present
@@ -204,11 +213,11 @@ function _test_structural_identical(
                 return s_b == s && isapprox(f, f_b) && typeof(f) == typeof(f_b)
             end
         end
-    end
+    end                                                                         # COV_EXCL_LINE
     # Test model attributes are set, like ObjectiveSense and ObjectiveFunction.
     a_attrs = MOI.get(a, MOI.ListOfModelAttributesSet())
     b_attrs = MOI.get(b, MOI.ListOfModelAttributesSet())
-    Test.@testset "Test length ListOfModelAttributesSet" begin
+    Test.@testset "Test length ListOfModelAttributesSet" begin                  # COV_EXCL_LINE
         Test.@test length(a_attrs) == length(b_attrs)
     end
     Test.@testset "$attr" for attr in b_attrs
@@ -220,7 +229,7 @@ function _test_structural_identical(
             attr_b = MOI.Utilities.map_indices(x_map, MOI.get(b, attr))
             Test.@test isapprox(MOI.get(a, attr), attr_b)
         end
-    end
+    end                                                                         # COV_EXCL_LINE
     return
 end
 
@@ -303,7 +312,7 @@ function _runtests(
     if print_inner_model
         print(inner)
     end
-    Test.@testset "Test outer bridged model appears like the input" begin
+    Test.@testset "Test outer bridged model appears like the input" begin       # COV_EXCL_LINE
         test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
         input_fn(test)
         _test_structural_identical(
@@ -312,12 +321,12 @@ function _runtests(
             cannot_unbridge = cannot_unbridge,
         )
     end
-    Test.@testset "Test inner bridged model appears like the target" begin
+    Test.@testset "Test inner bridged model appears like the target" begin      # COV_EXCL_LINE
         target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
         output_fn(target)
         _test_structural_identical(target, inner)
     end
-    Test.@testset "Test MOI.VariablePrimalStart" begin
+    Test.@testset "Test MOI.VariablePrimalStart" begin                          # COV_EXCL_LINE
         attr = MOI.VariablePrimalStart()
         bridge_supported = all(values(Variable.bridges(model))) do bridge
             return MOI.supports(model, attr, typeof(bridge))
@@ -334,7 +343,7 @@ function _runtests(
             end
         end
     end
-    Test.@testset "Test ConstraintPrimalStart and ConstraintDualStart" begin
+    Test.@testset "Test ConstraintPrimalStart and ConstraintDualStart" begin    # COV_EXCL_LINE
         list_of_constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
         Test.@testset "$F-in-$S" for (F, S) in list_of_constraints
             for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
@@ -366,28 +375,28 @@ function _runtests(
                         continue
                     end
                     Test.@test returned_start ≈ start
-                end
+                end                                                             # COV_EXCL_LINE
             end
-        end
+        end                                                                     # COV_EXCL_LINE
     end
-    Test.@testset "Test general bridge tests" begin
-        Test.@testset "Constraint" begin
+    Test.@testset "Test general bridge tests" begin                             # COV_EXCL_LINE
+        Test.@testset "Constraint" begin                                        # COV_EXCL_LINE
             for b in values(Constraint.bridges(model))
                 _general_bridge_tests(something(b))
             end
         end
-        Test.@testset "Objective" begin
+        Test.@testset "Objective" begin                                         # COV_EXCL_LINE
             for b in values(Objective.bridges(model))
                 _general_bridge_tests(something(b))
             end
         end
-        Test.@testset "Variable" begin
+        Test.@testset "Variable" begin                                          # COV_EXCL_LINE
             for b in values(Variable.bridges(model))
                 _general_bridge_tests(something(b))
             end
         end
     end
-    Test.@testset "Test delete" begin
+    Test.@testset "Test delete" begin                                           # COV_EXCL_LINE
         _test_delete(Bridge, model, inner)
     end
     return
