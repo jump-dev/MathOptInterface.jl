@@ -43,10 +43,16 @@ end
 # Should be favored over `HermitianToSymmetricPSDBridge`
 MOI.Bridges.bridging_cost(::Type{<:HermitianToComplexSymmetricBridge}) = 0.5
 
-function _promote_complex_vcat(::Type{T}, ::Type{G}) where {T,G}
+function _promote_complex_vcat(::Type{T}, ::Type{G}) where {T<:Real,G}
     S = MOI.Utilities.scalar_type(G)
-    M = MOI.Utilities.promote_operation(*, Complex{T}, S)
-    return MOI.Utilities.promote_operation(vcat, T, M)
+    if S === T
+        M = Complex{T}
+    elseif S <: MOI.Utilities.TypedLike{T}
+        M = MOI.Utilities.similar_type(S, Complex{T})
+    else
+        M = MOI.Utilities.promote_operation(*, Complex{T}, Complex{T}, S)
+    end
+    return MOI.Utilities.promote_operation(vcat, Complex{T}, M)
 end
 
 function concrete_bridge_type(
@@ -97,7 +103,7 @@ function MOI.Bridges.map_function(
             else
                 imag_index += 1
                 real_scalars[real_index] =
-                    complex_scalars[real_index] +
+                    one(Complex{T}) * complex_scalars[real_index] +
                     (one(T) * im) * complex_scalars[imag_index]
             end
         end
