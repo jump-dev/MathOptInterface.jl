@@ -194,10 +194,10 @@ end
 # for `SetMapBridge` does not work
 function MOI.supports_constraint(
     ::Type{<:SetDotScalingBridge},
-    ::Type{<:MOI.AbstractVectorFunction},
+    F::Type{<:MOI.AbstractVectorFunction},
     S::Type{<:MOI.AbstractVectorSet},
 )
-    return MOI.is_set_dot_scaled(S)
+    return !MOI.Utilities.is_complex(F) && MOI.is_set_dot_scaled(S)
 end
 
 function MOI.supports_constraint(
