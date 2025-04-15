@@ -56,6 +56,7 @@ function add_all_bridges(model, ::Type{T}) where {T}
     end
     MOI.Bridges.add_bridge(model, GreaterToLessBridge{T})
     MOI.Bridges.add_bridge(model, HermitianToSymmetricPSDBridge{T})
+    MOI.Bridges.add_bridge(model, HermitianToComplexSymmetricBridge{T})
     MOI.Bridges.add_bridge(model, IndicatorActiveOnFalseBridge{T})
     MOI.Bridges.add_bridge(model, IndicatorGreaterToLessThanBridge{T})
     MOI.Bridges.add_bridge(model, IndicatorLessToGreaterThanBridge{T})
