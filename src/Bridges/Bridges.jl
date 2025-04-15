@@ -153,15 +153,21 @@ function _test_structural_identical(
     # the variables are added in the same order to both models.
     a_x = MOI.get(a, MOI.ListOfVariableIndices())
     b_x = MOI.get(b, MOI.ListOfVariableIndices())
-    attr = MOI.NumberOfVariables()
-    Test.@test MOI.get(a, attr) == MOI.get(b, attr)
-    Test.@test length(a_x) == length(b_x)
+    Test.@testset "Test NumberOfVariables" begin
+        Test.@test MOI.get(a, MOI.NumberOfVariables()) ==
+                   MOI.get(b, MOI.NumberOfVariables())
+    end
+    Test.@testset "Test length ListOfVariableIndices" begin
+        Test.@test length(a_x) == length(b_x)
+    end
     # A dictionary that maps things from `b`-space to `a`-space.
     x_map = Dict(bx => a_x[i] for (i, bx) in enumerate(b_x))
     # To check that the constraints, we need to first cache all of the
     # constraints in `a`.
     constraints = Dict{Any,Any}()
-    Test.@testset "$F-in-$S" for (F, S) in MOI.get(a, MOI.ListOfConstraintTypesPresent())
+    a_constraint_types = MOI.get(a, MOI.ListOfConstraintTypesPresent())
+    b_constraint_types = MOI.get(b, MOI.ListOfConstraintTypesPresent())
+    Test.@testset "get $F and $S" for (F, S) in a_constraint_types
         Test.@test MOI.supports_constraint(a, F, S)
         constraints[(F, S)] =
             map(MOI.get(a, MOI.ListOfConstraintIndices{F,S}())) do ci
@@ -170,20 +176,16 @@ function _test_structural_identical(
                     MOI.get(a, MOI.ConstraintSet(), ci),
                 )
             end
-    end
-    # Now compare the constraints in `b` with the cache in `constraints`.
-    b_constraint_types = MOI.get(b, MOI.ListOfConstraintTypesPresent())
-    # There may be constraint types reported in `a` that are not in `b`, but
-    # have zero constraints in `a`.
-    Test.@testset "$F-in-$S" for (F, S) in keys(constraints)
-        attr = MOI.NumberOfConstraints{F,S}()
-        Test.@test (F, S) in b_constraint_types || MOI.get(a, attr) == 0
+        # There may be constraint types reported in `a` that are not in `b`, but
+        # have zero constraints in `a`.
+        Test.@test (F, S) in b_constraint_types ||
+                   MOI.get(a, MOI.NumberOfConstraints{F,S}()) == 0
     end
     Test.@testset "$F-in-$S" for (F, S) in b_constraint_types
         Test.@test haskey(constraints, (F, S))
         # Check that the same number of constraints are present
-        attr = MOI.NumberOfConstraints{F,S}()
-        Test.@test MOI.get(a, attr) == MOI.get(b, attr)
+        Test.@test MOI.get(a, MOI.NumberOfConstraints{F,S}()) ==
+                   MOI.get(b, MOI.NumberOfConstraints{F,S}())
         # Check that supports_constraint is implemented
         Test.@test MOI.supports_constraint(b, F, S)
         # Check that each function in `b` matches a function in `a`
@@ -206,7 +208,9 @@ function _test_structural_identical(
     # Test model attributes are set, like ObjectiveSense and ObjectiveFunction.
     a_attrs = MOI.get(a, MOI.ListOfModelAttributesSet())
     b_attrs = MOI.get(b, MOI.ListOfModelAttributesSet())
-    Test.@test length(a_attrs) == length(b_attrs)
+    Test.@testset "Test length ListOfModelAttributesSet" begin
+        Test.@test length(a_attrs) == length(b_attrs)
+    end
     Test.@testset "$attr" for attr in b_attrs
         Test.@test attr in a_attrs
         if attr == MOI.ObjectiveSense()
@@ -259,7 +263,7 @@ and [`MOI.ConstraintPrimalStart`](@ref) to throw [`MOI.GetAttributeNotAllowed`](
 
 ## Example
 
-```jldoctest; setup=:(import MathOptInterface as MOI)
+```jldoctest; setup=:(import MathOptInterface as MOI), filter="[0-9.]+s"
 julia> MOI.Bridges.runtests(
            MOI.Bridges.Constraint.ZeroOneBridge,
            model -> MOI.add_constrained_variable(model, MOI.ZeroOne()),
@@ -268,9 +272,18 @@ julia> MOI.Bridges.runtests(
                MOI.add_constraint(model, 1.0 * x, MOI.Interval(0.0, 1.0))
            end,
        )
+Test Summary:    | Pass  Total  Time
+Bridges.runtests |   32     32  0.8s
 ```
 """
-function runtests(
+function runtests(args...; kwargs...)
+    Test.@testset "Bridges.runtests" begin
+        _runtests(args...; kwargs...)
+    end
+    return
+end
+
+function _runtests(
     Bridge::Type{<:AbstractBridge},
     input_fn::Function,
     output_fn::Function;
@@ -290,49 +303,52 @@ function runtests(
     if print_inner_model
         print(inner)
     end
-    # Load a non-bridged input model, and check that getters are the same.
-    test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
-    input_fn(test)
-    Test.@testset "Outer model" begin
+    Test.@testset "Test outer bridged model appears like the input" begin
+        test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
+        input_fn(test)
         _test_structural_identical(
             test,
             model;
             cannot_unbridge = cannot_unbridge,
         )
     end
-    # Load a bridged target model, and check that getters are the same.
-    target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
-    output_fn(target)
-    Test.@testset "Inner model" begin
+    Test.@testset "Test inner bridged model appears like the target" begin
+        target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
+        output_fn(target)
         _test_structural_identical(target, inner)
     end
-    # Test VariablePrimalStart
-    attr = MOI.VariablePrimalStart()
-    bridge_supported = all(values(Variable.bridges(model))) do bridge
-        return MOI.supports(model, attr, typeof(bridge))
-    end
-    if MOI.supports(model, attr, MOI.VariableIndex) && bridge_supported
-        x = MOI.get(model, MOI.ListOfVariableIndices())
-        MOI.set(model, attr, x, fill(nothing, length(x)))
-        Test.@test all(isnothing, MOI.get(model, attr, x))
-        primal_start = fill(variable_start, length(x))
-        MOI.set(model, attr, x, primal_start)
-        if !isempty(x)
-            # ≈ does not work if x is empty because the return of get is Any[]
-            Test.@test MOI.get(model, attr, x) ≈ primal_start
+    Test.@testset "Test MOI.VariablePrimalStart" begin
+        attr = MOI.VariablePrimalStart()
+        bridge_supported = all(values(Variable.bridges(model))) do bridge
+            return MOI.supports(model, attr, typeof(bridge))
+        end
+        if MOI.supports(model, attr, MOI.VariableIndex) && bridge_supported
+            x = MOI.get(model, MOI.ListOfVariableIndices())
+            MOI.set(model, attr, x, fill(nothing, length(x)))
+            Test.@test all(isnothing, MOI.get(model, attr, x))
+            primal_start = fill(variable_start, length(x))
+            MOI.set(model, attr, x, primal_start)
+            if !isempty(x)
+                # ≈ does not work if x is empty because the return of get is Any[]
+                Test.@test MOI.get(model, attr, x) ≈ primal_start
+            end
         end
     end
-    # Test ConstraintPrimalStart and ConstraintDualStart
-    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            set = try
-                MOI.get(model, MOI.ConstraintSet(), ci)
-            catch err
-                _runtests_error_handler(err, cannot_unbridge)
-                continue
-            end
-            for attr in (MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart())
-                if MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
+    Test.@testset "Test ConstraintPrimalStart and ConstraintDualStart" begin
+        list_of_constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        Test.@testset "$F-in-$S" for (F, S) in list_of_constraints
+            for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+                set = try
+                    MOI.get(model, MOI.ConstraintSet(), ci)
+                catch err
+                    _runtests_error_handler(err, cannot_unbridge)
+                    continue
+                end
+                attrs = (MOI.ConstraintPrimalStart(), MOI.ConstraintDualStart())
+                Test.@testset "$attr" for attr in attrs
+                    if !MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
+                        continue
+                    end
                     MOI.set(model, attr, ci, nothing)
                     Test.@test MOI.get(model, attr, ci) === nothing
                     start = _fake_start(constraint_start, set)
@@ -340,8 +356,8 @@ function runtests(
                     returned_start = try
                         MOI.get(model, attr, ci)
                     catch err
-                        # For a Constraint bridge for which the map is not invertible, the constraint primal cannot
-                        # be inverted
+                        # For a Constraint bridge for which the map is not
+                        # invertible, the constraint primal cannot be inverted
                         _runtests_error_handler(
                             err,
                             Bridge <: MOI.Bridges.Constraint.AbstractBridge &&
@@ -354,17 +370,26 @@ function runtests(
             end
         end
     end
-    # Test other bridge functions
-    for b in values(Constraint.bridges(model))
-        _general_bridge_tests(something(b))
+    Test.@testset "Test general bridge tests" begin
+        Test.@testset "Constraint" begin
+            for b in values(Constraint.bridges(model))
+                _general_bridge_tests(something(b))
+            end
+        end
+        Test.@testset "Objective" begin
+            for b in values(Objective.bridges(model))
+                _general_bridge_tests(something(b))
+            end
+        end
+        Test.@testset "Variable" begin
+            for b in values(Variable.bridges(model))
+                _general_bridge_tests(something(b))
+            end
+        end
     end
-    for b in values(Objective.bridges(model))
-        _general_bridge_tests(something(b))
+    Test.@testset "Test delete" begin
+        _test_delete(Bridge, model, inner)
     end
-    for b in values(Variable.bridges(model))
-        _general_bridge_tests(something(b))
-    end
-    _test_delete(Bridge, model, inner)
     return
 end
 
@@ -385,7 +410,7 @@ Run a series of tests that check the correctness of `Bridge`.
 
 ## Example
 
-```jldoctest; setup=:(import MathOptInterface as MOI)
+```jldoctest; setup=:(import MathOptInterface as MOI), filter="[0-9.]+s"
 julia> MOI.Bridges.runtests(
            MOI.Bridges.Constraint.ZeroOneBridge,
            \"\"\"
@@ -398,6 +423,8 @@ julia> MOI.Bridges.runtests(
            1.0 * x in Interval(0.0, 1.0)
            \"\"\",
        )
+Test Summary:    | Pass  Total  Time
+Bridges.runtests |   32     32  0.0s
 ```
 """
 function runtests(

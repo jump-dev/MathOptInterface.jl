@@ -66,7 +66,7 @@ arguments: the type of the bridge, the input model as a string, and the output
 model as a string.
 
 Here is an example:
-```jldoctest
+```jldoctest; filter="[0-9.]+s"
 julia> MOI.Bridges.runtests(
            MOI.Bridges.Constraint.GreaterToLessBridge,
            """
@@ -78,6 +78,8 @@ julia> MOI.Bridges.runtests(
            -1.0 * x <= -1.0
            """,
        )
+Test Summary:    | Pass  Total  Time
+Bridges.runtests |   29     29  0.0s
 ```
 
 There are a number of other useful keyword arguments.
@@ -98,7 +100,7 @@ There are a number of other useful keyword arguments.
 
 Here is an example:
 
-```jldoctest
+```jldoctest; filter="[0-9.]+s"
 julia> MOI.Bridges.runtests(
            MOI.Bridges.Constraint.GreaterToLessBridge,
            """
@@ -120,4 +122,6 @@ Subject to:
 
 ScalarAffineFunction{Int64}-in-LessThan{Int64}
  (0) - (1) x <= (-1)
+Test Summary:    | Pass  Total  Time
+Bridges.runtests |   29     29  0.0s
 ```
