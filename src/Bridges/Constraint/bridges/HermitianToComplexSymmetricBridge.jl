@@ -41,7 +41,7 @@ struct HermitianToComplexSymmetricBridge{T,F,G} <: SetMapBridge{
 end
 
 # Should be favored over `HermitianToSymmetricPSDBridge`
-MOI.Bridges.bridging_cost(::Type{<:SOCtoPSDBridge}) = 0.5
+MOI.Bridges.bridging_cost(::Type{<:HermitianToComplexSymmetricBridge}) = 0.5
 
 function _promote_complex_vcat(::Type{T}, ::Type{G}) where {T,G}
     S = MOI.Utilities.scalar_type(G)
