@@ -27,33 +27,8 @@ See also [`MOI.Bridges.Constraint.HermitianToSymmetricPSDBridge`](@ref).
 
   * `F` in [`MOI.PositiveSemidefiniteConeTriangle`](@ref)
 
-## Reformulation
-
-The reformulation is best described by example.
-
-The Hermitian matrix:
-```math
-\\begin{bmatrix}
-  x_{11}            & x_{12} + y_{12}im & x_{13} + y_{13}im\\\\
-  x_{12} - y_{12}im & x_{22}            & x_{23} + y_{23}im\\\\
-  x_{13} - y_{13}im & x_{23} - y_{23}im & x_{33}
-\\end{bmatrix}
-```
-is positive semidefinite if and only if the symmetric matrix:
-```math
-\\begin{bmatrix}
-    x_{11} & x_{12} & x_{13} & 0       & y_{12}  & y_{13} \\\\
-           & x_{22} & x_{23} & -y_{12} & 0       & y_{23} \\\\
-           &        & x_{33} & -y_{13} & -y_{23} & 0      \\\\
-           &        &        & x_{11}  & x_{12}  & x_{13} \\\\
-           &        &        &         & x_{22}  & x_{23} \\\\
-           &        &        &         &         & x_{33}
-\\end{bmatrix}
-```
-is positive semidefinite.
-
-The bridge achieves this reformulation by constraining the above matrix to
-belong to the `MOI.PositiveSemidefiniteConeTriangle(6)`.
+Note that if `G` is `MOI.VectorAffineFunction{T}` then `F` will be
+`MOI.VectorAffineFunction{Complex{T}}`
 """
 struct HermitianToComplexSymmetricBridge{T,F,G} <: SetMapBridge{
     T,
