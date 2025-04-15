@@ -113,6 +113,13 @@ function MOI.Bridges.map_function(
     return MOI.Utilities.vectorize(real_scalars)
 end
 
+function MOI.Bridges.inverse_adjoint_map_function(
+    BT::Type{<:HermitianToComplexSymmetricBridge},
+    func,
+)
+    return MOI.Bridges.map_function(BT, func)
+end
+
 function MOI.Bridges.inverse_map_function(
     ::Type{<:HermitianToComplexSymmetricBridge},
     func,
@@ -145,4 +152,11 @@ function MOI.Bridges.inverse_map_function(
     @assert length(real_scalars) == real_index
     @assert length(complex_scalars) == imag_index
     return MOI.Utilities.vectorize(complex_scalars)
+end
+
+function MOI.Bridges.adjoint_map_function(
+    BT::Type{<:HermitianToComplexSymmetricBridge},
+    func,
+)
+    return MOI.Bridges.inverse_map_function(BT, func)
 end
