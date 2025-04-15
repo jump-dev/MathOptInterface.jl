@@ -161,7 +161,7 @@ function _test_structural_identical(
     # To check that the constraints, we need to first cache all of the
     # constraints in `a`.
     constraints = Dict{Any,Any}()
-    for (F, S) in MOI.get(a, MOI.ListOfConstraintTypesPresent())
+    Test.@testset "$F-in-$S" for (F, S) in MOI.get(a, MOI.ListOfConstraintTypesPresent())
         Test.@test MOI.supports_constraint(a, F, S)
         constraints[(F, S)] =
             map(MOI.get(a, MOI.ListOfConstraintIndices{F,S}())) do ci
@@ -175,11 +175,11 @@ function _test_structural_identical(
     b_constraint_types = MOI.get(b, MOI.ListOfConstraintTypesPresent())
     # There may be constraint types reported in `a` that are not in `b`, but
     # have zero constraints in `a`.
-    for (F, S) in keys(constraints)
+    Test.@testset "$F-in-$S" for (F, S) in keys(constraints)
         attr = MOI.NumberOfConstraints{F,S}()
         Test.@test (F, S) in b_constraint_types || MOI.get(a, attr) == 0
     end
-    for (F, S) in b_constraint_types
+    Test.@testset "$F-in-$S" for (F, S) in b_constraint_types
         Test.@test haskey(constraints, (F, S))
         # Check that the same number of constraints are present
         attr = MOI.NumberOfConstraints{F,S}()
@@ -207,7 +207,7 @@ function _test_structural_identical(
     a_attrs = MOI.get(a, MOI.ListOfModelAttributesSet())
     b_attrs = MOI.get(b, MOI.ListOfModelAttributesSet())
     Test.@test length(a_attrs) == length(b_attrs)
-    for attr in b_attrs
+    Test.@testset "$attr" for attr in b_attrs
         Test.@test attr in a_attrs
         if attr == MOI.ObjectiveSense()
             # map_indices isn't defined for `OptimizationSense`
@@ -293,11 +293,19 @@ function runtests(
     # Load a non-bridged input model, and check that getters are the same.
     test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
     input_fn(test)
-    _test_structural_identical(test, model; cannot_unbridge = cannot_unbridge)
+    Test.@testset "Outer model" begin
+        _test_structural_identical(
+            test,
+            model;
+            cannot_unbridge = cannot_unbridge,
+        )
+    end
     # Load a bridged target model, and check that getters are the same.
     target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
     output_fn(target)
-    _test_structural_identical(target, inner)
+    Test.@testset "Inner model" begin
+        _test_structural_identical(target, inner)
+    end
     # Test VariablePrimalStart
     attr = MOI.VariablePrimalStart()
     bridge_supported = all(values(Variable.bridges(model))) do bridge
