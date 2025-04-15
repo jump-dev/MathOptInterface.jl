@@ -263,7 +263,7 @@ function runtests(
             end
             continue
         end
-        @testset "$(name)" begin
+        @testset "$(name)" begin  # COV_EXCL_LINE
             c = copy(config)
             tear_down = setup_test(test_function, model, c)
             # Make sure to empty the model before every test.
