@@ -153,7 +153,7 @@ function MOI.Bridges.map_function(
 end
 
 function MOI.Bridges.inverse_map_function(
-    BT::Type{<:HermitianToSymmetricPSDBridge},
+    ::Type{<:HermitianToSymmetricPSDBridge},
     func,
 )
     real_scalars = MOI.Utilities.eachscalar(func)
