@@ -40,6 +40,9 @@ struct HermitianToComplexSymmetricBridge{T,F,G} <: SetMapBridge{
     constraint::MOI.ConstraintIndex{F,MOI.PositiveSemidefiniteConeTriangle}
 end
 
+const HermitianToComplexSymmetric{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{HermitianToComplexSymmetricBridge{T},OT}
+
 # Should be favored over `HermitianToSymmetricPSDBridge`
 MOI.Bridges.bridging_cost(::Type{<:HermitianToComplexSymmetricBridge}) = 0.5
 
