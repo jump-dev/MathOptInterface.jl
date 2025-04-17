@@ -531,19 +531,16 @@ function distance_to_set(
     },
 ) where {T<:Real}
     _check_dimension(x, set)
-    # Let
-    # 1) `U` be the matrix of eigenvectors.
-    # 2) `λ_negative = LinearAlgebra.Diagonal(min.(zero(T), λ))`
-    # 3) `A = LinearAlgebra.Symmetric(U * λ_negative * U')`
-    # The upper bound distance is the Frobenius norm of `A` which is the square
-    # root of the sum of the squares of the negative eigenvalues.
-    # Indeed:
-    # `⟨U * λ_negative * U', U * λ_negative * U'⟩`
-    # which is equal to
-    # `⟨λ_negative * U' * U, U' * U * λ_negative⟩`
-    # Since `U'U = I` this is equal to
-    # `⟨λ_negative, λ_negative⟩`
-    # So we need the return:
+    # We should return the norm of `A` defined by:
+    # ```julia
+    # λ, U = LinearAlgebra.eigvals(_reshape(x, set))
+    # λ_negative = LinearAlgebra.Diagonal(min.(zero(T), λ))
+    # A = LinearAlgebra.Symmetric(U * λ_negative * U')
+    # ```
+    # The norm should correspond to `MOI.Utilities.set_dot`
+    # so it's the Frobenius norm.
+    # The Frobenius norm of `A` which is Euclidean
+    # norm of the vector of eigenvalues.
     return √sum(LinearAlgebra.eigvals(_reshape(x, set))) do λ
         min(λ, zero(T))^2
     end
