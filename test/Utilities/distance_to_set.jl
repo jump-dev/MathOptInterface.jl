@@ -325,7 +325,7 @@ function test_positivesemidefiniteconetriangle()
         MOI.PositiveSemidefiniteConeTriangle(2),
         [1.0, 0.0, 1.0] => 0.0,
         [1.0, -1.0, 1.0] => 0.0,
-        [1.0, -2.0, 1.0] => 1.0
+        [1.0, -2.0, 1.0] => 1.0,
         [1.0, 1.1, -2.3] => 2.6330532015051946;
         mismatch = [1.0],
     )
