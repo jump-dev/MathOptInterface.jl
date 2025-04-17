@@ -308,6 +308,28 @@ function test_sos2()
     return
 end
 
+function test_positivesemidefiniteconesquare()
+    _test_set(
+        MOI.PositiveSemidefiniteConeSquare(2),
+        [1.0, 0.0, 0.0, 1.0] => 0.0,
+        [1.0, -1.0, -1.0, 1.0] => 0.0,
+        [1.0, -2.0, -2.0, 1.0] => 1.0;
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_positivesemidefiniteconetriangle()
+    _test_set(
+        MOI.PositiveSemidefiniteConeTriangle(2),
+        [1.0, 0.0, 1.0] => 0.0,
+        [1.0, -1.0, 1.0] => 0.0,
+        [1.0, -2.0, 1.0] => 1.0;
+        mismatch = [1.0],
+    )
+    return
+end
+
 end
 
 TestFeasibilityChecker.runtests()

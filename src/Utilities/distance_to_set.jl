@@ -489,3 +489,39 @@ function distance_to_set(
     elements = [x[i] for i in eachindex(x) if !(i in pairs[k])]
     return LinearAlgebra.norm(elements, 2)
 end
+
+function _reshape(x::AbstractVector, set::MOI.PositiveSemidefiniteConeSquare)
+    n = MOI.side_dimension(set)
+    return reshape(x, (n, n))
+end
+
+function _reshape(x::AbstractVector, set::MOI.PositiveSemidefiniteConeTriangle)
+    n = MOI.side_dimension(set)
+    X = zeros(eltype(x), n, n)
+    k = 1
+    for i in 1:n
+        for j in 1:i
+            X[j,i] = X[i,j] = x[k]
+            k += 1
+        end
+    end
+    return LinearAlgebra.Symmetric(X)
+end
+
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::Union{
+        MOI.PositiveSemidefiniteConeSquare,
+        MOI.PositiveSemidefiniteConeTriangle,
+    },
+) where {T<:Real}
+    _check_dimension(x, set)
+    λ, U = LinearAlgebra.eigen(_reshape(x, set))
+    if minimum(λ) >= 0
+        return 0.0
+    end
+    λ_negative = LinearAlgebra.Diagonal(min.(zero(T), λ))
+    A = LinearAlgebra.Symmetric(U * λ_negative * U')
+    return LinearAlgebra.norm(A, 2)
+end
