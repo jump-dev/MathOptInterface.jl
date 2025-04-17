@@ -508,6 +508,20 @@ function _reshape(x::AbstractVector, set::MOI.PositiveSemidefiniteConeTriangle)
     return LinearAlgebra.Symmetric(X)
 end
 
+"""
+    distance_to_set(
+        ::ProjectionUpperBoundDistance,
+        x::AbstractVector,
+        set::Union{
+            MOI.PositiveSemidefiniteConeSquare,
+            MOI.PositiveSemidefiniteConeTriangle,
+        },
+    )
+
+Let ``X`` be `x` reshaped into the appropriate matrix. The returned distance is
+``||X - Y||_2^2`` where ``Y`` is the eigen decomposition of ``X`` with negative
+eigen values removed.
+"""
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::AbstractVector{T},
@@ -518,10 +532,11 @@ function distance_to_set(
 ) where {T<:Real}
     _check_dimension(x, set)
     λ, U = LinearAlgebra.eigen(_reshape(x, set))
-    if minimum(λ) >= 0
+    if minimum(λ) >= zero(T)
         return 0.0
     end
     λ_negative = LinearAlgebra.Diagonal(min.(zero(T), λ))
     A = LinearAlgebra.Symmetric(U * λ_negative * U')
-    return LinearAlgebra.norm(A, 2)
+    # Σ A^2 is needed to match the definition of Utilities.set_dot
+    return sum(Base.Fix2(^, 2), A)
 end
