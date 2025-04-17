@@ -501,7 +501,7 @@ function _reshape(x::AbstractVector, set::MOI.PositiveSemidefiniteConeTriangle)
     k = 1
     for i in 1:n
         for j in 1:i
-            X[j,i] = X[i,j] = x[k]
+            X[j, i] = X[i, j] = x[k]
             k += 1
         end
     end
