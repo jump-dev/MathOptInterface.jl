@@ -533,15 +533,14 @@ function distance_to_set(
     _check_dimension(x, set)
     # We should return the norm of `A` defined by:
     # ```julia
-    # λ, U = LinearAlgebra.eigvals(_reshape(x, set))
+    # λ, U = LinearAlgebra.eigen(_reshape(x, set))
     # λ_negative = LinearAlgebra.Diagonal(min.(zero(T), λ))
     # A = LinearAlgebra.Symmetric(U * λ_negative * U')
+    # LinearAlgebra.norm(A, 2)
     # ```
-    # The norm should correspond to `MOI.Utilities.set_dot`
-    # so it's the Frobenius norm.
-    # The Frobenius norm of `A` which is Euclidean
-    # norm of the vector of eigenvalues.
+    # The norm should correspond to `MOI.Utilities.set_dot` so it's the
+    # Frobenius norm, which is the Euclidean norm of the vector of eigenvalues.
     eigvals = LinearAlgebra.eigvals(_reshape(x, set))
-    neg_eigvals = min.(zero(T), eigvals)
-    return LinearAlgebra.norm(neg_eigvals, 2)
+    eigvals .= min.(zero(T), eigvals)
+    return LinearAlgebra.norm(eigvals, 2)
 end
