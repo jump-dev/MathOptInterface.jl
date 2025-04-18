@@ -542,5 +542,6 @@ function distance_to_set(
     # The Frobenius norm of `A` which is Euclidean
     # norm of the vector of eigenvalues.
     eigvals = LinearAlgebra.eigvals(_reshape(x, set))
-    return sqrt(sum(min.(zero(T), eigvals).^2))
+    neg_eigvals = min.(zero(T), eigvals)
+    return LinearAlgebra.norm(neg_eigvals, 2)
 end
