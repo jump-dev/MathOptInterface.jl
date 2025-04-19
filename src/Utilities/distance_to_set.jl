@@ -489,3 +489,58 @@ function distance_to_set(
     elements = [x[i] for i in eachindex(x) if !(i in pairs[k])]
     return LinearAlgebra.norm(elements, 2)
 end
+
+function _reshape(x::AbstractVector, set::MOI.PositiveSemidefiniteConeSquare)
+    n = MOI.side_dimension(set)
+    return reshape(x, (n, n))
+end
+
+function _reshape(x::AbstractVector, set::MOI.PositiveSemidefiniteConeTriangle)
+    n = MOI.side_dimension(set)
+    X = zeros(eltype(x), n, n)
+    k = 1
+    for i in 1:n
+        for j in 1:i
+            X[j, i] = X[i, j] = x[k]
+            k += 1
+        end
+    end
+    return LinearAlgebra.Symmetric(X)
+end
+
+"""
+    distance_to_set(
+        ::ProjectionUpperBoundDistance,
+        x::AbstractVector,
+        set::Union{
+            MOI.PositiveSemidefiniteConeSquare,
+            MOI.PositiveSemidefiniteConeTriangle,
+        },
+    )
+
+Let ``X`` be `x` reshaped into the appropriate matrix. The returned distance is
+``||X - Y||_2^2`` where ``Y`` is the eigen decomposition of ``X`` with negative
+eigen values removed.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::Union{
+        MOI.PositiveSemidefiniteConeSquare,
+        MOI.PositiveSemidefiniteConeTriangle,
+    },
+) where {T<:Real}
+    _check_dimension(x, set)
+    # We should return the norm of `A` defined by:
+    # ```julia
+    # λ, U = LinearAlgebra.eigen(_reshape(x, set))
+    # λ_negative = LinearAlgebra.Diagonal(min.(zero(T), λ))
+    # A = LinearAlgebra.Symmetric(U * λ_negative * U')
+    # LinearAlgebra.norm(A, 2)
+    # ```
+    # The norm should correspond to `MOI.Utilities.set_dot` so it's the
+    # Frobenius norm, which is the Euclidean norm of the vector of eigenvalues.
+    eigvals = LinearAlgebra.eigvals(_reshape(x, set))
+    eigvals .= min.(zero(T), eigvals)
+    return LinearAlgebra.norm(eigvals, 2)
+end

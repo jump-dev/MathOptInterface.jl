@@ -30,7 +30,7 @@ function _test_set(set, pairs...; mismatch = nothing)
         )
     end
     for (x, d) in pairs
-        @test MOI.Utilities.distance_to_set(x, set) ≈ d
+        @test ≈(MOI.Utilities.distance_to_set(x, set), d; atol = 1e-12)
     end
     return
 end
@@ -303,6 +303,30 @@ function test_sos2()
         [1.0, 1.0, 0.0] => 1.0,
         [-0.5, 0.6, 0.0] => 0.5,
         [-0.5, 1.5, 1.0] => 0.5;
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_positivesemidefiniteconesquare()
+    _test_set(
+        MOI.PositiveSemidefiniteConeSquare(2),
+        [1.0, 0.0, 0.0, 1.0] => 0.0,
+        [1.0, -1.0, -1.0, 1.0] => 0.0,
+        [1.0, -2.0, -2.0, 1.0] => 1.0,
+        [1.0, 1.1, 1.1, -2.3] => 2.633053201505194;
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_positivesemidefiniteconetriangle()
+    _test_set(
+        MOI.PositiveSemidefiniteConeTriangle(2),
+        [1.0, 0.0, 1.0] => 0.0,
+        [1.0, -1.0, 1.0] => 0.0,
+        [1.0, -2.0, 1.0] => 1.0,
+        [1.0, 1.1, -2.3] => 2.633053201505194;
         mismatch = [1.0],
     )
     return
