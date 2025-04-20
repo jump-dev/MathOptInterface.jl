@@ -239,7 +239,7 @@ function vector_of_variables_constraints(map::Map)
         Base.Iterators.Filter(
             i ->
                 map.bridges[i] !== nothing &&
-                    map.constraint_types[i][1] == MOI.VectorOfVariables,
+                map.constraint_types[i][1] == MOI.VectorOfVariables,
             eachindex(map.bridges),
         ),
     )

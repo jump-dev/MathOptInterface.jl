@@ -17,7 +17,7 @@ function _create_binary_switch(ids, exprs)
         :if,
         Expr(:call, :(<=), :id, ids[mid]),
         _create_binary_switch(ids[1:mid], exprs[1:mid]),
-        _create_binary_switch(ids[mid+1:end], exprs[mid+1:end]),
+        _create_binary_switch(ids[(mid+1):end], exprs[(mid+1):end]),
     )
 end
 

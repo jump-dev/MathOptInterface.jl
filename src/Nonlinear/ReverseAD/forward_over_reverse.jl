@@ -60,7 +60,7 @@ function _eval_hessian_inner(
     num_products = size(ex.seed_matrix, 2) # number of hessian-vector products
     num_chunks = div(num_products, CHUNK)
     @assert size(ex.seed_matrix, 1) == length(local_to_global_idx)
-    for k in 1:CHUNK:CHUNK*num_chunks
+    for k in 1:CHUNK:(CHUNK*num_chunks)
         for r in 1:length(local_to_global_idx)
             # set up directional derivatives
             @inbounds idx = local_to_global_idx[r]

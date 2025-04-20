@@ -735,7 +735,7 @@ function _get_all_including_bridged(
             # function, so we may need to report multiple variables.
             push!(user_only_variables, user_variable)
             n = Variable.length_of_vector_of_variables(map, user_variable)
-            for i in 1:n-1
+            for i in 1:(n-1)
                 push!(
                     user_only_variables,
                     MOI.VariableIndex(user_variable.value - i),
@@ -780,7 +780,7 @@ function _get_all_including_bridged(
             # `outer_variable` might represent the start of a VectorOfVariables
             # if multiple user-variables were bridged. Add them all.
             n = Variable.length_of_vector_of_variables(map, outer_variable)
-            for i in 1:n-1
+            for i in 1:(n-1)
                 push!(ret, MOI.VariableIndex(outer_variable.value - i))
             end
         end

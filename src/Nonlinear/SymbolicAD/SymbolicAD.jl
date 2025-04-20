@@ -710,7 +710,7 @@ function derivative(f::MOI.ScalarNonlinearFunction, x::MOI.VariableIndex)
         )
     elseif f.head == :min
         g = derivative(f.args[end], x)
-        for i in length(f.args)-1:-1:1
+        for i in (length(f.args)-1):-1:1
             g = MOI.ScalarNonlinearFunction(
                 :ifelse,
                 Any[
@@ -723,7 +723,7 @@ function derivative(f::MOI.ScalarNonlinearFunction, x::MOI.VariableIndex)
         return g
     elseif f.head == :max
         g = derivative(f.args[end], x)
-        for i in length(f.args)-1:-1:1
+        for i in (length(f.args)-1):-1:1
             g = MOI.ScalarNonlinearFunction(
                 :ifelse,
                 Any[
@@ -896,7 +896,7 @@ function Base.show(io::IO, n::_Node)
         print(io, "# ", reinterpret(Float64, n.data))
     else
         type, op, nargs = _operator_to_type_id_nargs(n.operator)
-        children = n.data .+ (0:nargs-1)
+        children = n.data .+ (0:(nargs-1))
         print(io, "# $type(op = $op, children = $children)")
     end
 end

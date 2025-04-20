@@ -44,8 +44,8 @@ function test_derivative()
         2.0*x+y+2.0=>2.0,
         2.0*x+y+z+2.0=>2.0,
         # derivative(f::MOI.ScalarQuadraticFunction{T}, x::MOI.VariableIndex)
-        convert(MOI.ScalarQuadraticFunction{Float64}, 1.0 * x)=>1.0,
-        convert(MOI.ScalarQuadraticFunction{Float64}, 1.0 * x + 0.0 * y)=>1.0,
+        convert(MOI.ScalarQuadraticFunction{Float64}, 1.0*x)=>1.0,
+        convert(MOI.ScalarQuadraticFunction{Float64}, 1.0*x+0.0*y)=>1.0,
         1.0*x*y=>y,
         1.0*y*x=>y,
         1.0*x*x=>2.0*x,
@@ -70,7 +70,7 @@ function test_derivative()
         sin_x=>cos_x,
         cos_x=>op(:-, sin_x),
         op(:log, x)=>op(:/, 1, x),
-        op(:log, 2.0 * x)=>op(:*, op(:/, 1, 2.0 * x), 2.0),
+        op(:log, 2.0*x)=>op(:*, op(:/, 1, 2.0*x), 2.0),
         # f.head == :+
         op(:+, sin_x, cos_x)=>op(:-, cos_x, sin_x),
         # f.head == :-
@@ -86,11 +86,7 @@ function test_derivative()
             :^,
             x,
             x,
-        )=>op(
-            :+,
-            op(:*, x, op(:^, x, x - 1)),
-            op(:*, op(:^, x, x), op(:log, x)),
-        ),
+        )=>op(:+, op(:*, x, op(:^, x, x-1)), op(:*, op(:^, x, x), op(:log, x))),
         op(:^, x, 3)=>3.0*x*x,
         # :/
         op(:/, x, 2)=>0.5,
@@ -104,7 +100,7 @@ function test_derivative()
             op(:^, op(:+, x, 1), 2),
         ),
         # :ifelse
-        op(:ifelse, z, 1.0 * x * x, x)=>op(:ifelse, z, 2.0 * x, 1.0),
+        op(:ifelse, z, 1.0*x*x, x)=>op(:ifelse, z, 2.0*x, 1.0),
         # :atan
         op(
             :atan,
@@ -119,14 +115,14 @@ function test_derivative()
         op(
             :min,
             x,
-            1.0 * x * x,
-        )=>op(:ifelse, op(:(<=), x, op(:min, x, 1.0 * x * x)), 1.0, 2.0 * x),
+            1.0*x*x,
+        )=>op(:ifelse, op(:(<=), x, op(:min, x, 1.0*x*x)), 1.0, 2.0*x),
         # :max
         op(
             :max,
             x,
-            1.0 * x * x,
-        )=>op(:ifelse, op(:(>=), x, op(:max, x, 1.0 * x * x)), 1.0, 2.0 * x),
+            1.0*x*x,
+        )=>op(:ifelse, op(:(>=), x, op(:max, x, 1.0*x*x)), 1.0, 2.0*x),
         # comparisons
         op(:(>=), x, y)=>false,
         op(:(==), x, y)=>false,
@@ -164,11 +160,8 @@ function test_variable()
         y+1.0+z=>[y, z],
         # ::QuadExpr
         zero(MOI.ScalarQuadraticFunction{Float64})=>[],
-        convert(MOI.ScalarQuadraticFunction{Float64}, 1.0 * x + 1.0)=>[x],
-        convert(
-            MOI.ScalarQuadraticFunction{Float64},
-            1.0 * x + 1.0 + y,
-        )=>[x, y],
+        convert(MOI.ScalarQuadraticFunction{Float64}, 1.0*x+1.0)=>[x],
+        convert(MOI.ScalarQuadraticFunction{Float64}, 1.0*x+1.0+y)=>[x, y],
         1.0*x*x=>[x],
         1.0*x*x+x=>[x],
         1.0*x*x+y=>[x, y],
@@ -176,7 +169,7 @@ function test_variable()
         1.0*y*x=>[x, y],
         # ::NonlinearExpr
         op(:sin, x)=>[x],
-        op(:sin, 1.0 * x + y)=>[x, y],
+        op(:sin, 1.0*x+y)=>[x, y],
         op(:*, op(:sin, x), op(:sin, y))=>[x, y],
         op(:^, op(:log, x), 2)=>[x],
     ]
@@ -716,7 +709,7 @@ function test_simplify_if_quadratic()
     for (f, ret) in Any[
         # Constants
         op(:*, 2)=>2,
-        op(:*, 2 // 3)=>2/3,
+        op(:*, 2//3)=>2/3,
         op(:*, 2, 3)=>6,
         op(:+, 2, 3)=>5,
         op(:-, 2)=>-2,
@@ -730,27 +723,27 @@ function test_simplify_if_quadratic()
         op(:+, x, x)=>2.0*x,
         op(:+, x, 2, x)=>2.0*x+2.0,
         op(:+, x, 2, op(:+, x))=>2.0*x+2.0,
-        op(:+, 1.0 * x, 1.0 * x + 2.0)=>2.0*x+2.0,
-        op(:-, 1.0 * x + 2.0)=>-1.0*x-2.0,
-        op(:*, 2, 1.0 * x + 2.0, 3)=>6.0*x+12.0,
+        op(:+, 1.0*x, 1.0*x+2.0)=>2.0*x+2.0,
+        op(:-, 1.0*x+2.0)=>-1.0*x-2.0,
+        op(:*, 2, 1.0*x+2.0, 3)=>6.0*x+12.0,
         # Quadratic
-        op(:+, 1.0 * x * x)=>1.0*x*x,
+        op(:+, 1.0*x*x)=>1.0*x*x,
         op(:*, 2, x, 3, x)=>6.0*x*x,
-        op(:*, 2, x, 3, 1.0 * x)=>6.0*x*x,
-        op(:*, 2, x, 3, 1.0 * x + 2.0)=>6.0*x*x+12.0*x,
-        op(:*, 2, 1.0 * x + 2.0, 3, x)=>6.0*x*x+12.0*x,
-        op(:*, 1.0 * x + 2.0, 1.0 * x)=>1.0*x*x+2.0*x,
-        op(:*, 1.0 * x + 2.0, 1.0 * x + 1.0)=>1.0*x*x+3.0*x+2.0,
+        op(:*, 2, x, 3, 1.0*x)=>6.0*x*x,
+        op(:*, 2, x, 3, 1.0*x+2.0)=>6.0*x*x+12.0*x,
+        op(:*, 2, 1.0*x+2.0, 3, x)=>6.0*x*x+12.0*x,
+        op(:*, 1.0*x+2.0, 1.0*x)=>1.0*x*x+2.0*x,
+        op(:*, 1.0*x+2.0, 1.0*x+1.0)=>1.0*x*x+3.0*x+2.0,
         # Power
         op(:^, x, 2)=>1.0*x*x,
-        op(:^, 1.0 * x, 2)=>1.0*x*x,
-        op(:^, 1.0 * x + 1.0, 2)=>1.0*x*x+2.0*x+1.0,
-        op(:^, -2.0 * x - 2.0, 2)=>4.0*x*x+8.0*x+4.0,
+        op(:^, 1.0*x, 2)=>1.0*x*x,
+        op(:^, 1.0*x+1.0, 2)=>1.0*x*x+2.0*x+1.0,
+        op(:^, -2.0*x-2.0, 2)=>4.0*x*x+8.0*x+4.0,
         # Divide
         op(:/, x, 2)=>0.5*x,
-        op(:/, 1.0 * x, 2)=>0.5*x,
-        op(:/, 2.0 * x, 2)=>x,
-        op(:/, 2.0 * x * x, 2)=>1.0*x*x,
+        op(:/, 1.0*x, 2)=>0.5*x,
+        op(:/, 2.0*x, 2)=>x,
+        op(:/, 2.0*x*x, 2)=>1.0*x*x,
         # Early termination because not affine
         op(:+, op(:sin, x))=>nothing,
         op(:-, op(:sin, x))=>nothing,
@@ -758,10 +751,10 @@ function test_simplify_if_quadratic()
         op(:-, x, op(:sin, x))=>nothing,
         op(:*, 2, 3, op(:sin, x))=>nothing,
         op(:log, x)=>nothing,
-        op(:+, big(1) * x * x, big(2))=>nothing,
-        op(:+, big(1) * x, big(2))=>nothing,
+        op(:+, big(1)*x*x, big(2))=>nothing,
+        op(:+, big(1)*x, big(2))=>nothing,
         op(:+, x, big(2))=>nothing,
-        op(:+, x, 1 + 2im)=>nothing,
+        op(:+, x, 1+2im)=>nothing,
     ]
         @test SymbolicAD._simplify_if_quadratic!(f) ≈ something(ret, f)
     end

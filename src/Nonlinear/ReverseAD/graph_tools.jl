@@ -258,7 +258,7 @@ function _compute_hessian_sparsity(
                 if !all(
                     i ->
                         input_linearity[children_arr[i]] == CONSTANT ||
-                            children_arr[i] == k,
+                        children_arr[i] == k,
                     sibling_idx,
                 )
                     # at least one sibling isn't constant

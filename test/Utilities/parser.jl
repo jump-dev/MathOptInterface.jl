@@ -97,7 +97,8 @@ end
 function test__separate_label()
     @test MOIU._separate_label(:(variables:x)) == (:variables, :x)
     @test MOIU._separate_label(:(variables:x, y)) == (:variables, :((x, y)))
-    @test MOIU._separate_label(:(minobjective:x+y)) == (:minobjective, :(x + y))
+    @test MOIU._separate_label(:(minobjective:(x+y))) ==
+          (:minobjective, :(x + y))
     @test MOIU._separate_label(:(con1:2x <= 1)) == (:con1, :(2x <= 1))
     @test MOIU._separate_label(:(con1:[x, y] in S)) == (:con1, :([x, y] in S))
     return

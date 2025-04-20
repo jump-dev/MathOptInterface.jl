@@ -113,14 +113,13 @@ function test_Vectorization_operate_vcat()
         Int,
     ) == MOI.VectorAffineFunction{Int}
     F = MOI.Utilities.operate(vcat, Int, w, f, v, 3, g, x, -4)
-    expected_terms =
-        MOI.VectorAffineTerm.(
-            [1, 2, 2, 3, 4, 8, 6, 9],
-            MOI.ScalarAffineTerm.(
-                [1, 2, 4, 1, 1, 5, 2, 1],
-                [w, x, z, y, w, y, x, x],
-            ),
-        )
+    expected_terms = MOI.VectorAffineTerm.(
+        [1, 2, 2, 3, 4, 8, 6, 9],
+        MOI.ScalarAffineTerm.(
+            [1, 2, 4, 1, 1, 5, 2, 1],
+            [w, x, z, y, w, y, x, x],
+        ),
+    )
     expected_constants = [0, 5, 0, 0, 3, 3, 1, 4, 0, -4]
     F = MOI.Utilities.operate(vcat, Int, w, f, v, 3, g, x, -4)
     @test F.terms == expected_terms
@@ -417,8 +416,7 @@ end
 function test_Conversion_VectorOfVariables_VectorAffineFunction()
     f = MOI.VectorAffineFunction{Int}(MOI.VectorOfVariables([z, x, y]))
     @test f isa MOI.VectorAffineFunction{Int}
-    @test f.terms ==
-          MOI.VectorAffineTerm.(
+    @test f.terms == MOI.VectorAffineTerm.(
         1:3,
         MOI.ScalarAffineTerm.(ones(Int, 3), [z, x, y]),
     )
@@ -474,16 +472,14 @@ function test_indexing_on_VectorAffineFunction()
     @test g.constant == 5
     h = it[[3, 1]]
     @test h isa MOI.VectorAffineFunction
-    @test sort(h.terms, by = t -> t.output_index) ==
-          MOI.VectorAffineTerm.(
+    @test sort(h.terms, by = t -> t.output_index) == MOI.VectorAffineTerm.(
         [1, 1, 2, 2, 2],
         MOI.ScalarAffineTerm.([2, 6, 7, 1, 4], [z, x, y, z, x]),
     )
     @test MOI.Utilities.constant_vector(h) == [5, 2]
     F = MOI.Utilities.operate(vcat, Int, it[[1, 2]], it[3])
     @test F isa MOI.VectorAffineFunction{Int}
-    @test sort(F.terms, by = t -> t.output_index) ==
-          MOI.VectorAffineTerm.(
+    @test sort(F.terms, by = t -> t.output_index) == MOI.VectorAffineTerm.(
         [1, 1, 1, 2, 2, 2, 2, 3, 3],
         MOI.ScalarAffineTerm.(
             [7, 1, 4, 1, 9, 3, 1, 2, 6],
@@ -1008,8 +1004,7 @@ function test_Vector_Affine()
         ),
     )
     @test MOI.output_dimension(f) == 2
-    @test f.terms ==
-          MOI.VectorAffineTerm.(
+    @test f.terms == MOI.VectorAffineTerm.(
         [1, 1, 2],
         MOI.ScalarAffineTerm.([2, 4, 3], [x, y, y]),
     )
@@ -1020,13 +1015,11 @@ function test_Vector_Affine()
     @test f ≈ g
     f = MOI.Utilities.modify_function(f, MOI.MultirowChange(y, [(2, 9)]))
     @test !(f ≈ g)
-    @test f.terms ==
-          MOI.VectorAffineTerm.(
+    @test f.terms == MOI.VectorAffineTerm.(
         [1, 1, 2],
         MOI.ScalarAffineTerm.([2, 4, 9], [x, y, y]),
     )
-    @test g.terms ==
-          MOI.VectorAffineTerm.(
+    @test g.terms == MOI.VectorAffineTerm.(
         [1, 1, 2],
         MOI.ScalarAffineTerm.([2, 4, 3], [x, y, y]),
     )
@@ -1055,8 +1048,7 @@ function test_Vector_Quadratic()
         f,
         MOI.MultirowChange(y, [(2, 0), (1, 1)]),
     )
-    @test f.affine_terms ==
-          MOI.VectorAffineTerm.(
+    @test f.affine_terms == MOI.VectorAffineTerm.(
         [1, 2, 1],
         MOI.ScalarAffineTerm.([3, 1, 1], [x, x, y]),
     )
@@ -1065,13 +1057,11 @@ function test_Vector_Quadratic()
         f,
         MOI.MultirowChange(x, [(1, 0), (3, 4)]),
     )
-    @test f.affine_terms ==
-          MOI.VectorAffineTerm.(
+    @test f.affine_terms == MOI.VectorAffineTerm.(
         [2, 1, 3],
         MOI.ScalarAffineTerm.([1, 1, 4], [x, y, x]),
     )
-    @test g.affine_terms ==
-          MOI.VectorAffineTerm.(
+    @test g.affine_terms == MOI.VectorAffineTerm.(
         [1, 2, 1],
         MOI.ScalarAffineTerm.([3, 1, 1], [x, x, y]),
     )

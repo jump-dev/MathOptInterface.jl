@@ -749,7 +749,7 @@ function Base.write(io::IO, model::Model)
     if n_con > 0
         println(io, "k", length(model.x) - 1)
         total = 0
-        for i in 1:length(model.order)-1
+        for i in 1:(length(model.order)-1)
             total += model.x[model.order[i]].jacobian_count
             println(io, total)
         end

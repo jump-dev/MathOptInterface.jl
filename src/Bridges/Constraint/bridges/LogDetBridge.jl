@@ -31,15 +31,15 @@ function _extract_eigenvalues(
     f_scalars = MOI.Utilities.eachscalar(f)
     tu = [f_scalars[i] for i in 1:offset]
     n = MOI.Utilities.trimap(d, d)
-    X = f_scalars[offset.+(1:n)]
+    X = f_scalars[offset .+ (1:n)]
     N = MOI.Utilities.trimap(2d, 2d)
     Δ = MOI.add_variables(model, n)
     Z = [zero(MOI.ScalarAffineFunction{T}) for i in 1:(N-n)]
     for j in 1:d
         for i in j:d
-            Z[MOI.Utilities.trimap(i, d + j)-n] = Δ[MOI.Utilities.trimap(i, j)]
+            Z[MOI.Utilities.trimap(i, d+j)-n] = Δ[MOI.Utilities.trimap(i, j)]
         end
-        Z[MOI.Utilities.trimap(d + j, d + j)-n] = Δ[MOI.Utilities.trimap(j, j)]
+        Z[MOI.Utilities.trimap(d+j, d+j)-n] = Δ[MOI.Utilities.trimap(j, j)]
     end
     Y = MOI.Utilities.operate(vcat, T, X, MOI.Utilities.vectorize(Z))
     set = MOI.PositiveSemidefiniteConeTriangle(2d)
