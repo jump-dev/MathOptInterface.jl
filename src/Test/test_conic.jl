@@ -2611,7 +2611,7 @@ function test_conic_RotatedSecondOrderCone_INFEASIBLE_2(
             @test ≈(MOI.get(model, MOI.ConstraintDual(), c1), d, config)
             @test ≈(
                 MOI.get(model, MOI.ConstraintDual(), c2),
-                T[√ub/√T(2), 1/√(2 * ub), -1],
+                T[√ub/√T(2), 1/√(2*ub), -1],
                 config,
             )
         end
@@ -2642,7 +2642,7 @@ function setup_test(
                     -√ub / 2,
                     zeros(T, n - 1),
                 ),
-                T[√ub/√T(2), 1/√(2 * ub), -1],
+                T[√ub/√T(2), 1/√(2*ub), -1],
             ],
         ),
     )
@@ -4192,7 +4192,7 @@ function _test_conic_DualPowerCone_helper(
         @test ≈(MOI.get(model, MOI.VariablePrimal(), v), v_sol, config)
         @test ≈(
             MOI.get(model, MOI.VariablePrimal(), x),
-            T[-exponent, -(1 - exponent)],
+            T[-exponent, -(1-exponent)],
             config,
         )
         @test ≈(MOI.get(model, MOI.ConstraintPrimal(), vc), v_sol, config)
@@ -4343,7 +4343,7 @@ function test_conic_RelativeEntropyCone(
         if _supports(config, MOI.ConstraintDual)
             @test ≈(
                 MOI.get(model, MOI.ConstraintDual(), relentr),
-                T[1, 2, 3//5, log(T(1 // 2))-1, log(T(5 // 3))-1],
+                T[1, 2, 3//5, log(T(1//2))-1, log(T(5//3))-1],
                 config,
             )
         end
@@ -4362,7 +4362,7 @@ function setup_test(
             mock,
             [2 * log(T(2 // 1)) + 3 * log(T(3 // 5))],
             (MOI.VectorAffineFunction{T}, MOI.RelativeEntropyCone) =>
-                [T[1, 2, 3//5, log(T(1 // 2))-1, log(T(5 // 3))-1]],
+                [T[1, 2, 3//5, log(T(1//2))-1, log(T(5//3))-1]],
         ),
     )
     return

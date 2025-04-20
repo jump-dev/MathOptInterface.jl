@@ -1419,9 +1419,11 @@ function test_integer_coefficients()
     @test MOF.moi_to_object(f, names) == (
         type = "ScalarQuadraticFunction",
         affine_terms = [(coefficient = 3, variable = "x")],
-        quadratic_terms = [
-            (coefficient = 4, variable_1 = "x", variable_2 = "x"),
-        ],
+        quadratic_terms = [(
+            coefficient = 4,
+            variable_1 = "x",
+            variable_2 = "x",
+        ),],
         constant = 4,
     )
     return

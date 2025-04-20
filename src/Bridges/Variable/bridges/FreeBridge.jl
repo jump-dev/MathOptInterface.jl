@@ -105,7 +105,7 @@ function MOI.get(
 ) where {T}
     n = div(length(bridge.variables), 2)
     primal = MOI.get(model, attr, bridge.constraint)
-    return primal[1:n] - primal[n.+(1:n)]
+    return primal[1:n] - primal[n .+ (1:n)]
 end
 
 # The transformation is x_free = [I -I] * x

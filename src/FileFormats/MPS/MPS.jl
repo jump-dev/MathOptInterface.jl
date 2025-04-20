@@ -221,7 +221,7 @@ function Base.write(io::IO, model::Model)
         FileFormats.create_unique_names(
             model;
             warn = options.warn,
-            replacements = Function[s->replace(s, ' ' => '_')],
+            replacements = Function[s->replace(s, ' '=>'_')],
         )
     end
     variables = MOI.get(model, MOI.ListOfVariableIndices())

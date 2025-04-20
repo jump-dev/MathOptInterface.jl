@@ -553,7 +553,7 @@ variables corresponding to `ci`.
 function function_for(map::Map, ci::MOI.ConstraintIndex{MOI.VectorOfVariables})
     index = map.vector_of_variables_map[-ci.value]
     variables = MOI.VariableIndex[]
-    for i in index:-1:-length(map.bridges)
+    for i in index:-1:(-length(map.bridges))
         vi = MOI.VariableIndex(i)
         if map.index_in_vector[-vi.value] == -1
             continue

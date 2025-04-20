@@ -360,7 +360,7 @@ function Base.read!(io::IO, model::Model)
                     MOI.VectorAffineTerm{Float64}(4 - l, t) for
                     l in 1:cone_dim for t in data.row_terms[row_idx+l]
                 ],
-                data.row_constants[row_idx.+(3:-1:1)],
+                data.row_constants[row_idx .+ (3:-1:1)],
             )
         else
             MOI.VectorAffineFunction(
@@ -368,7 +368,7 @@ function Base.read!(io::IO, model::Model)
                     MOI.VectorAffineTerm{Float64}(l, t) for l in 1:cone_dim
                     for t in data.row_terms[row_idx+l]
                 ],
-                data.row_constants[row_idx.+(1:cone_dim)],
+                data.row_constants[row_idx .+ (1:cone_dim)],
             )
         end
         con_set = _cbf_to_moi_cone(data, cone_str, cone_dim)
@@ -386,7 +386,7 @@ function Base.read!(io::IO, model::Model)
                 MOI.VectorAffineTerm{Float64}(l, t) for l in 1:cone_dim for
                 t in data.psd_row_terms[row_start+l]
             ],
-            data.psd_row_constants[row_start.+(1:cone_dim)],
+            data.psd_row_constants[row_start .+ (1:cone_dim)],
         )
         MOI.add_constraint(
             model,

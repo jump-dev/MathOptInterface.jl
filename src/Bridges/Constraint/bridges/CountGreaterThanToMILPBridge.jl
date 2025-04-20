@@ -214,7 +214,7 @@ function _add_unit_expansion(
     end
     unit_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
     convex_f = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T))
-    for xi in ret[1]::T:ret[2]::T
+    for xi in (ret[1]::T):(ret[2]::T)
         new_var, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
         push!(bridge.variables, new_var)
         if !haskey(S, xi)

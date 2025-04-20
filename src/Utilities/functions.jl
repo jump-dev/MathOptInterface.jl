@@ -1974,7 +1974,7 @@ function fill_variables(
     ::Int,
     func::MOI.VectorOfVariables,
 )
-    variables[offset.+(1:length(func.variables))] .= func.variables
+    variables[offset .+ (1:length(func.variables))] .= func.variables
     return
 end
 
@@ -2062,11 +2062,10 @@ function fill_terms(
     func::MOI.VectorOfVariables,
 ) where {T}
     n = number_of_affine_terms(T, func)
-    terms[offset.+(1:n)] .=
-        MOI.VectorAffineTerm.(
-            output_offset .+ (1:n),
-            MOI.ScalarAffineTerm.(one(T), func.variables),
-        )
+    terms[offset .+ (1:n)] .= MOI.VectorAffineTerm.(
+        output_offset .+ (1:n),
+        MOI.ScalarAffineTerm.(one(T), func.variables),
+    )
     return
 end
 
@@ -2077,7 +2076,7 @@ function fill_terms(
     func::Union{MOI.ScalarAffineFunction{T},MOI.VectorAffineFunction{T}},
 ) where {T}
     n = number_of_affine_terms(T, func)
-    terms[offset.+(1:n)] .= offset_term.(func.terms, output_offset)
+    terms[offset .+ (1:n)] .= offset_term.(func.terms, output_offset)
     return
 end
 
@@ -2088,7 +2087,7 @@ function fill_terms(
     func::Union{MOI.ScalarQuadraticFunction{T},MOI.VectorQuadraticFunction{T}},
 ) where {T}
     n = number_of_affine_terms(T, func)
-    terms[offset.+(1:n)] .= offset_term.(func.affine_terms, output_offset)
+    terms[offset .+ (1:n)] .= offset_term.(func.affine_terms, output_offset)
     return
 end
 
@@ -2115,7 +2114,7 @@ function fill_terms(
     func::Union{MOI.ScalarQuadraticFunction{T},MOI.VectorQuadraticFunction{T}},
 ) where {T}
     n = number_of_quadratic_terms(T, func)
-    terms[offset.+(1:n)] .= offset_term.(func.quadratic_terms, output_offset)
+    terms[offset .+ (1:n)] .= offset_term.(func.quadratic_terms, output_offset)
     return
 end
 
@@ -2173,7 +2172,7 @@ function fill_constant(
     func::Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}},
 ) where {T}
     n = MOI.output_dimension(func)
-    constant[offset.+(1:n)] .= func.constants
+    constant[offset .+ (1:n)] .= func.constants
     return
 end
 

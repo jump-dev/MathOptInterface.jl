@@ -484,7 +484,7 @@ function distance_to_set(
 ) where {T<:Real}
     _check_dimension(x, set)
     p = sortperm(set.weights)
-    pairs = collect(zip(p[1:end-1], p[2:end]))
+    pairs = collect(zip(p[1:(end-1)], p[2:end]))
     _, k = findmax([abs(x[i]) + abs(x[j]) for (i, j) in pairs])
     elements = [x[i] for i in eachindex(x) if !(i in pairs[k])]
     return LinearAlgebra.norm(elements, 2)

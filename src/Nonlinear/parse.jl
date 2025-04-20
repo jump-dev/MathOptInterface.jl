@@ -226,7 +226,7 @@ function _parse_comparison_expression(
     x::Expr,
     parent_index::Int,
 )
-    for k in 2:2:length(x.args)-1
+    for k in 2:2:(length(x.args)-1)
         @assert x.args[k] == x.args[2] # don't handle a <= b >= c
     end
     operator_id = data.operators.comparison_operator_to_id[x.args[2]]

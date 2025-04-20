@@ -56,7 +56,7 @@ function bridge_constraint(
     s::MOI.Circuit,
 ) where {T,F<:Union{MOI.VectorOfVariables,MOI.VectorAffineFunction{T}}}
     n = MOI.dimension(s)
-    z = [MOI.add_constrained_variable(model, MOI.ZeroOne())[1] for _ in 1:n^2]
+    z = [MOI.add_constrained_variable(model, MOI.ZeroOne())[1] for _ in 1:(n^2)]
     Z = reshape(z, n, n)
     equal_to = MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}[]
     for (i, x) in enumerate(MOI.Utilities.eachscalar(f))
