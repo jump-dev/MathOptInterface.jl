@@ -97,7 +97,6 @@ function _eval_hessian_chunk(
     chunk::Int,
     ::Val{CHUNK},
 ) where {CHUNK}
-    MA.operate!(zero, d.input_ϵ)
     for r in eachindex(ex.rinfo.local_indices)
         # set up directional derivatives
         @inbounds idx = ex.rinfo.local_indices[r]
@@ -107,8 +106,9 @@ function _eval_hessian_chunk(
             d.input_ϵ[(idx-1)*CHUNK+s] = ex.seed_matrix[r, offset+s-1]
         end
     end
-    MA.operate!(zero, d.output_ϵ)
+    fill!(d.output_ϵ, 0.0)
     _hessian_slice_inner(d, ex, Val(CHUNK))
+    fill!(d.input_ϵ, 0.0)
     # collect directional derivatives
     for r in eachindex(ex.rinfo.local_indices)
         @inbounds idx = ex.rinfo.local_indices[r]
