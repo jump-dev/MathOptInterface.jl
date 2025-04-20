@@ -101,7 +101,6 @@ function _eval_hessian_chunk(
             d.input_ϵ[(idx-1)*CHUNK+s] = ex.seed_matrix[r, offset+s-1]
         end
     end
-    fill!(d.output_ϵ, 0.0)
     _hessian_slice_inner(d, ex, Val(CHUNK))
     fill!(d.input_ϵ, 0.0)
     # collect directional derivatives
@@ -118,6 +117,7 @@ end
 function _hessian_slice_inner(d, ex, ::Val{CHUNK}) where {CHUNK}
     T = ForwardDiff.Partials{CHUNK,Float64}  # This is our element type.
     input_ϵ = _reinterpret_unsafe(T, d.input_ϵ)
+    fill!(d.output_ϵ, 0.0)
     output_ϵ = _reinterpret_unsafe(T, d.output_ϵ)
     subexpr_forward_values_ϵ =
         _reinterpret_unsafe(T, d.subexpression_forward_values_ϵ)
