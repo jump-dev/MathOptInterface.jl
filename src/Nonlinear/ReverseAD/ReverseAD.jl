@@ -7,6 +7,7 @@
 module ReverseAD
 
 import ForwardDiff
+import MutableArithmetics as MA
 import MathOptInterface as MOI
 import ..Nonlinear
 import SparseArrays
