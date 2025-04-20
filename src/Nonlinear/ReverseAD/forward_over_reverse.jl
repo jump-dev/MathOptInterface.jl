@@ -61,7 +61,13 @@ function _eval_hessian_inner(
     # leftover chunk
     remaining = num_products - CHUNK * num_chunks
     if remaining > 0
-        _eval_hessian_chunk(d, ex, CHUNK * num_chunks + 1, remaining, Val(CHUNK))
+        _eval_hessian_chunk(
+            d,
+            ex,
+            CHUNK * num_chunks + 1,
+            remaining,
+            Val(CHUNK),
+        )
     end
     want, got = nzcount + length(ex.hess_I), length(H)
     if want > got
