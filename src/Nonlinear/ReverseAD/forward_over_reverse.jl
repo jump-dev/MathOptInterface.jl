@@ -55,7 +55,7 @@ function _eval_hessian_inner(
     num_products = size(ex.seed_matrix, 2) # number of hessian-vector products
     num_chunks = div(num_products, CHUNK)
     @assert size(ex.seed_matrix, 1) == length(ex.rinfo.local_indices)
-    for offset in 1:CHUNK:CHUNK*num_chunks
+    for offset in 1:CHUNK:(CHUNK*num_chunks)
         _eval_hessian_chunk(d, ex, offset, CHUNK, Val(CHUNK))
     end
     # leftover chunk
