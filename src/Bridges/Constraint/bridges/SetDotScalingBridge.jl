@@ -193,11 +193,11 @@ end
 # Since the set type is not defined, the default `MOI.supports_constraint`
 # for `SetMapBridge` does not work
 function MOI.supports_constraint(
-    ::Type{<:SetDotScalingBridge},
+    ::Type{<:SetDotScalingBridge{T}},
     F::Type{<:MOI.AbstractVectorFunction},
     S::Type{<:MOI.AbstractVectorSet},
-)
-    return !MOI.Utilities.is_complex(F) && MOI.is_set_dot_scaled(S)
+) where {T}
+    return MOI.Utilities.is_coefficient_type(F, T) && MOI.is_set_dot_scaled(S)
 end
 
 function MOI.supports_constraint(

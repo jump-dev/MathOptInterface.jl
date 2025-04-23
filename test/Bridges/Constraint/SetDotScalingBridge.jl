@@ -111,6 +111,33 @@ function test_inverse_scaling_quadratic()
     return
 end
 
+function test_scaling_complex()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SetDotScalingBridge,
+        model -> begin
+            x, y, z = MOI.add_variables(model, 3)
+            MOI.add_constraint(
+                model,
+                MOI.Utilities.vectorize([(1.0 + 0im) * x, (1.0 * im) * y, (1.0 + 0im) * z]),
+                MOI.PositiveSemidefiniteConeTriangle(2),
+            )
+        end,
+        model -> begin
+            x, y, z = MOI.add_variables(model, 3)
+            MOI.add_constraint(
+                model,
+                MOI.Utilities.vectorize([(1.0 + 0im) * x, (√2 * im) * y, (1.0 + 0im) * z]),
+                MOI.ScaledPositiveSemidefiniteConeTriangle(2),
+            )
+        end,
+        eltype = ComplexF64,
+        model_eltype = Float64,
+        constraint_start = 1.2 * im
+    )
+    return
+end
+
+
 function test_set_dot_scaling_constraint_dual_start()
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     model = MOI.Bridges.Constraint.SetDotScaling{Float64}(inner)

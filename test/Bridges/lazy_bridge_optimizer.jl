@@ -2253,6 +2253,15 @@ function test_issue_2696()
     return
 end
 
+function test_wrong_coefficient()
+    model = MOI.instantiate(MOI.Utilities.Model{Float64}, with_bridge_type=Float64)
+    @test !MOI.supports_constraint(model, MOI.VectorAffineFunction{Int}, MOI.Nonnegatives)
+    @test !MOI.supports_constraint(model, MOI.VectorAffineFunction{Int}, MOI.PositiveSemidefiniteConeTriangle)
+    @test !MOI.supports_constraint(model, MOI.ScalarAffineFunction{Int}, MOI.EqualTo{Int})
+    @test !MOI.supports_constraint(model, MOI.VectorQuadraticFunction{Int}, MOI.Zeros)
+    return
+end
+
 end  # module
 
 TestBridgesLazyBridgeOptimizer.runtests()
