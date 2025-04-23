@@ -32,8 +32,6 @@ struct _SubexpressionStorage
             zeros(N),  # partials_storage,
             zeros(N),  # reverse_storage,
             Float64[],
-            Float64[],
-            Float64[],
             linearity[1],
         )
     end

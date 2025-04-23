@@ -348,7 +348,7 @@ function MOI.eval_hessian_lagrangian_product(d::NLPEvaluator, h, x, v, σ, μ)
         subexpr_forward_values_ϵ[i] = _forward_eval_ϵ(
             d,
             subexpr,
-            reinterpret(T, subexpr.storage_ϵ),
+            reinterpret(T, d.storage_ϵ),
             reinterpret(T, subexpr.partials_storage_ϵ),
             input_ϵ,
             subexpr_forward_values_ϵ,
