@@ -44,6 +44,7 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     want_hess_storage = (:HessVec in requested_features) || d.want_hess
     coloring_storage = Coloring.IndexedSet(N)
     max_expr_length = 0
+    max_expr_with_sub_length = 0
     #
     main_expressions = [c.expression.nodes for (_, c) in d.data.constraints]
     if d.data.objective !== nothing
@@ -71,6 +72,8 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
         )
         d.subexpressions[k] = subex
         d.subexpression_linearity[k] = subex.linearity
+        max_expr_with_sub_length =
+            max(max_expr_with_sub_length, length(subex.nodes))
         if d.want_hess
             empty!(coloring_storage)
             _compute_gradient_sparsity!(coloring_storage, subex.nodes)
@@ -138,10 +141,8 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     end
     # 10 is hardcoded upper bound to avoid excess memory allocation
     max_chunk = min(max_chunk, 10)
-    max_expr_with_sub_length = max(
-        max_expr_length,
-        maximum(x -> length(x.nodes), d.subexpressions; init = 0),
-    )
+    max_expr_with_sub_length =
+        max(max_expr_with_sub_length, max_expr_length)
     if d.want_hess || want_hess_storage
         d.input_ϵ = zeros(max_chunk * N)
         d.output_ϵ = zeros(max_chunk * N)
