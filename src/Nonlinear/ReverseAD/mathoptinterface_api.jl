@@ -139,8 +139,8 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     # 10 is hardcoded upper bound to avoid excess memory allocation
     max_chunk = min(max_chunk, 10)
     max_expr_with_sub_length =
-        maximum(d.subexpressions; init = max_expr_length) do subexpr
-            return length(subexpr.nodes)
+        maximum(d.subexpression_order; init = max_expr_length) do k
+            return length(d.subexpressions[k].nodes)
         end
     if d.want_hess || want_hess_storage
         d.input_ϵ = zeros(max_chunk * N)
