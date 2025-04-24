@@ -126,7 +126,7 @@ function _hessian_slice_inner(d, ex, ::Val{CHUNK}) where {CHUNK}
         subexpr_forward_values_ϵ[i] = _forward_eval_ϵ(
             d,
             subexpr,
-            _reinterpret_unsafe(T, subexpr.forward_storage_ϵ),
+            _reinterpret_unsafe(T, d.storage_ϵ),
             _reinterpret_unsafe(T, subexpr.partials_storage_ϵ),
             input_ϵ,
             subexpr_forward_values_ϵ,
@@ -136,7 +136,7 @@ function _hessian_slice_inner(d, ex, ::Val{CHUNK}) where {CHUNK}
     _forward_eval_ϵ(
         d,
         ex,
-        _reinterpret_unsafe(T, d.forward_storage_ϵ),
+        _reinterpret_unsafe(T, d.storage_ϵ),
         _reinterpret_unsafe(T, d.partials_storage_ϵ),
         input_ϵ,
         subexpr_forward_values_ϵ,
@@ -152,7 +152,7 @@ function _hessian_slice_inner(d, ex, ::Val{CHUNK}) where {CHUNK}
     _reverse_eval_ϵ(
         output_ϵ,
         ex,
-        _reinterpret_unsafe(T, d.reverse_storage_ϵ),
+        _reinterpret_unsafe(T, d.storage_ϵ),
         _reinterpret_unsafe(T, d.partials_storage_ϵ),
         d.subexpression_reverse_values,
         subexpr_reverse_values_ϵ,
@@ -165,7 +165,7 @@ function _hessian_slice_inner(d, ex, ::Val{CHUNK}) where {CHUNK}
         _reverse_eval_ϵ(
             output_ϵ,
             subexpr,
-            _reinterpret_unsafe(T, subexpr.reverse_storage_ϵ),
+            _reinterpret_unsafe(T, d.storage_ϵ),
             _reinterpret_unsafe(T, subexpr.partials_storage_ϵ),
             d.subexpression_reverse_values,
             subexpr_reverse_values_ϵ,

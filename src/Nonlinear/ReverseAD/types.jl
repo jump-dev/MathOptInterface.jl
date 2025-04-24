@@ -11,9 +11,7 @@ struct _SubexpressionStorage
     forward_storage::Vector{Float64}
     partials_storage::Vector{Float64}
     reverse_storage::Vector{Float64}
-    forward_storage_ϵ::Vector{Float64}
     partials_storage_ϵ::Vector{Float64}
-    reverse_storage_ϵ::Vector{Float64}
     linearity::Linearity
 
     function _SubexpressionStorage(
@@ -33,8 +31,6 @@ struct _SubexpressionStorage
             zeros(N),  # forward_storage,
             zeros(N),  # partials_storage,
             zeros(N),  # reverse_storage,
-            Float64[],
-            Float64[],
             Float64[],
             linearity[1],
         )
@@ -175,11 +171,10 @@ mutable struct NLPEvaluator <: MOI.AbstractNLPEvaluator
     # so the length should be multiplied by the maximum number of epsilon components
     disable_2ndorder::Bool # don't offer Hess or HessVec
     want_hess::Bool
-    forward_storage_ϵ::Vector{Float64} # (longest expression)
-    partials_storage_ϵ::Vector{Float64} # (longest expression)
-    reverse_storage_ϵ::Vector{Float64} # (longest expression)
+    partials_storage_ϵ::Vector{Float64} # (longest expression excluding subexpressions)
+    storage_ϵ::Vector{Float64} # (longest expression including subexpressions)
     input_ϵ::Vector{Float64} # (number of variables)
-    output_ϵ::Vector{Float64}# (number of variables)
+    output_ϵ::Vector{Float64} # (number of variables)
     subexpression_forward_values_ϵ::Vector{Float64} # (number of subexpressions)
     subexpression_reverse_values_ϵ::Vector{Float64} # (number of subexpressions)
     hessian_sparsity::Vector{Tuple{Int64,Int64}}
