@@ -176,7 +176,8 @@ function _test_structural_identical(
     constraints = Dict{Any,Any}()
     a_constraint_types = MOI.get(a, MOI.ListOfConstraintTypesPresent())
     b_constraint_types = MOI.get(b, MOI.ListOfConstraintTypesPresent())
-    Test.@testset "get $F and $S" for (F, S) in a_constraint_types
+    _name(F, S) = MOI.Utilities._drop_moi("$F-in-$S")
+    Test.@testset "get $(_name(F, S))" for (F, S) in a_constraint_types
         Test.@test MOI.supports_constraint(a, F, S)
         constraints[(F, S)] =
             map(MOI.get(a, MOI.ListOfConstraintIndices{F,S}())) do ci
@@ -190,7 +191,7 @@ function _test_structural_identical(
         Test.@test (F, S) in b_constraint_types ||
                    MOI.get(a, MOI.NumberOfConstraints{F,S}()) == 0
     end                                                                         # COV_EXCL_LINE
-    Test.@testset "$F-in-$S" for (F, S) in b_constraint_types
+    Test.@testset "$(_name(F, S))" for (F, S) in b_constraint_types
         Test.@test haskey(constraints, (F, S))
         # Check that the same number of constraints are present
         Test.@test MOI.get(a, MOI.NumberOfConstraints{F,S}()) ==
