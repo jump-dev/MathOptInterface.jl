@@ -18,12 +18,17 @@ struct _SubexpressionStorage
         expr::Nonlinear.Expression,
         subexpression_linearity,
         moi_index_to_consecutive_index,
+        want_hess::Bool,
     )
         nodes =
             _replace_moi_variables(expr.nodes, moi_index_to_consecutive_index)
         adj = Nonlinear.adjacency_matrix(nodes)
         N = length(nodes)
-        linearity = _classify_linearity(nodes, adj, subexpression_linearity)
+        linearity = if want_hess
+            _classify_linearity(nodes, adj, subexpression_linearity)[1]
+        else
+            NONLINEAR
+        end
         return new(
             nodes,
             adj,
