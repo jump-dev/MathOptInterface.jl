@@ -43,25 +43,18 @@ struct _SubexpressionStorage
 end
 
 struct _FunctionStorage
-    nodes::Vector{Nonlinear.Node}
-    adj::SparseArrays.SparseMatrixCSC{Bool,Int}
-    const_values::Vector{Float64}
-    forward_storage::Vector{Float64}
-    partials_storage::Vector{Float64}
-    reverse_storage::Vector{Float64}
+    expr::_SubexpressionStorage
     grad_sparsity::Vector{Int}
     # Nonzero pattern of Hessian matrix
     hess_I::Vector{Int}
     hess_J::Vector{Int}
     rinfo::Coloring.RecoveryInfo # coloring info for hessians
     seed_matrix::Matrix{Float64}
-    linearity::Linearity
     # subexpressions which this function depends on, ordered for forward pass.
     dependent_subexpressions::Vector{Int}
 
     function _FunctionStorage(
-        nodes::Vector{Nonlinear.Node},
-        const_values,
+        expr::_SubexpressionStorage,
         num_variables,
         coloring_storage::Coloring.IndexedSet,
         want_hess::Bool,
@@ -70,10 +63,7 @@ struct _FunctionStorage
         subexpression_linearity,
         subexpression_edgelist,
         subexpression_variables,
-        moi_index_to_consecutive_index,
     )
-        nodes = _replace_moi_variables(nodes, moi_index_to_consecutive_index)
-        adj = Nonlinear.adjacency_matrix(nodes)
         N = length(nodes)
         empty!(coloring_storage)
         _compute_gradient_sparsity!(coloring_storage, nodes)
@@ -102,34 +92,21 @@ struct _FunctionStorage
             )
             seed_matrix = Coloring.seed_matrix(rinfo)
             return new(
-                nodes,
-                adj,
-                const_values,
-                zeros(N),  # forward_storage,
-                zeros(N),  # partials_storage,
-                zeros(N),  # reverse_storage,
+                expr,
                 grad_sparsity,
                 hess_I,
                 hess_J,
                 rinfo,
                 seed_matrix,
-                linearity[1],
                 dependent_subexpressions,
             )
         else
             return new(
-                nodes,
-                adj,
-                const_values,
-                zeros(N),  # forward_storage,
-                zeros(N),  # partials_storage,
-                zeros(N),  # reverse_storage,
                 grad_sparsity,
                 Int[],
                 Int[],
                 Coloring.RecoveryInfo(),
                 Array{Float64}(undef, 0, 0),
-                NONLINEAR,
                 dependent_subexpressions,
             )
         end
