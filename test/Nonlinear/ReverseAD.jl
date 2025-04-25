@@ -138,19 +138,28 @@ function test_objective_quadratic_multivariate_subexpressions()
     evaluator =
         Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x, y])
     MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
-    @test MOI.eval_objective(evaluator, [1.2, 2.3]) == 1.2^2 + 1.2 * 2.3 + 2.3^2
+    val = [1.2, 2.3]
+    @test MOI.eval_objective(evaluator, val) == 1.2^2 + 1.2 * 2.3 + 2.3^2
+    @test 0 == @allocated MOI.eval_objective(evaluator, val)
     g = [NaN, NaN]
-    MOI.eval_objective_gradient(evaluator, g, [1.2, 2.3])
+    MOI.eval_objective_gradient(evaluator, g, val)
     @test g == [2 * 1.2 + 2.3, 1.2 + 2 * 2.3]
+    @test 0 == @allocated MOI.eval_objective_gradient(evaluator, g, val)
     @test MOI.hessian_objective_structure(evaluator) == [(1, 1), (2, 2), (2, 1)]
+    MOI.hessian_objective_structure(evaluator) == [(1, 1), (2, 2), (2, 1)]
     H = [NaN, NaN, NaN]
-    MOI.eval_hessian_objective(evaluator, H, [1.2, 2.3])
+    MOI.eval_hessian_objective(evaluator, H, val)
     @test H == [2.0, 2.0, 1.0]
+    @test evaluator.backend.max_chunk == 2
+    # The call of `_eval_hessian_inner` from `_eval_hessian` needs dynamic dispatch for `Val(chunk)` so it allocates.
+    # We call directly `_eval_hessian_inner` to check that the rest does not allocates.
+    @test @allocated MOI.Nonlinear.ReverseAD._eval_hessian_inner(evaluator.backend, evaluator.backend.objective, H, 1.0, 0, Val(2))
     @test MOI.hessian_lagrangian_structure(evaluator) ==
           [(1, 1), (2, 2), (2, 1)]
     H = [NaN, NaN, NaN]
-    MOI.eval_hessian_lagrangian(evaluator, H, [1.2, 2.3], 1.5, Float64[])
+    MOI.eval_hessian_lagrangian(evaluator, H, val, 1.5, Float64[])
     @test H == 1.5 .* [2.0, 2.0, 1.0]
+    MOI.eval_hessian_lagrangian(evaluator, H, val, 1.5, Float64[])
     v = [0.3, 0.4]
     hv = [NaN, NaN]
     MOI.eval_hessian_lagrangian_product(
