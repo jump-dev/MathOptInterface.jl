@@ -43,12 +43,21 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     d.want_hess = :Hess in requested_features
     want_hess_storage = (:HessVec in requested_features) || d.want_hess
     coloring_storage = Coloring.IndexedSet(N)
+    #
     max_expr_length = 0
     max_expr_with_sub_length = 0
-    #
-    main_expressions = [c.expression.nodes for (_, c) in d.data.constraints]
+    max_chunk = 1
+    main_expressions = Vector{Nonlinear.Node}[]
     if d.data.objective !== nothing
-        pushfirst!(main_expressions, something(d.data.objective).nodes)
+        objective = something(d.data.objective)
+        max_expr_length = max(max_expr_length, length(objective.nodes))
+        max_chunk = max(max_chunk, size(objective.seed_matrix, 2))
+        push!(main_expressions, objective.nodes)
+    end
+    for (_, c) in d.data.constraints
+        max_expr_length = max(max_expr_length, length(c.expression.nodes))
+        max_chunk = max(max_chunk, size(c.expression.seed_matrix, 2))
+        push!(main_expressions, c.expression.nodes)
     end
     d.subexpression_order, individual_order = _order_subexpressions(
         main_expressions,
@@ -100,11 +109,15 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
             subexpression_edgelist[k] = edgelist
         end
     end
-    max_chunk = 1
     if d.data.objective !== nothing
         objective = _FunctionStorage(
-            main_expressions[1],
-            something(d.data.objective).values,
+            _SubexpressionStorage(
+                something(d.data.objective),
+                d.data.expressions[k],
+                d.subexpression_linearity,
+                moi_index_to_consecutive_index,
+                zeros(max_chunk * length(d.data.expressions[k].nodes)),
+            )
             N,
             coloring_storage,
             d.want_hess,
@@ -113,10 +126,7 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
             d.subexpression_linearity,
             subexpression_edgelist,
             subexpression_variables,
-            moi_index_to_consecutive_index,
         )
-        max_expr_length = max(max_expr_length, length(objective.nodes))
-        max_chunk = max(max_chunk, size(objective.seed_matrix, 2))
         d.objective = objective
     end
     for (k, (_, constraint)) in enumerate(d.data.constraints)
