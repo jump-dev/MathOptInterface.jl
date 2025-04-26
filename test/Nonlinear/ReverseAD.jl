@@ -639,7 +639,8 @@ function test_linearity_no_hess()
     MOI.initialize(evaluator, [:Grad, :Jac])
     # We initialized without the need for the hessian so
     # the linearity shouldn't be computed.
-    @test only(evaluator.backend.subexpressions).linearity == ReverseAD.NONLINEAR
+    @test only(evaluator.backend.subexpressions).linearity ==
+          ReverseAD.NONLINEAR
 end
 
 function test_dual_forward()
