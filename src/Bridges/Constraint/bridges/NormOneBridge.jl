@@ -57,7 +57,7 @@ function MOI.supports_constraint(
     ::Type{MOI.NormOneCone},
 ) where {T,F<:MOI.AbstractVectorFunction}
     return MOI.Utilities.is_coefficient_type(F, T) &&
-           !MOI.Utilities.is_complex(F)       
+           !MOI.Utilities.is_complex(F)
 end
 
 function MOI.Bridges.added_constrained_variable_types(::Type{<:NormOneBridge})
