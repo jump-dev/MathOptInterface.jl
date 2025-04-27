@@ -146,7 +146,6 @@ function test_objective_quadratic_multivariate_subexpressions()
     @test g == [2 * 1.2 + 2.3, 1.2 + 2 * 2.3]
     @test 0 == @allocated MOI.eval_objective_gradient(evaluator, g, val)
     @test MOI.hessian_objective_structure(evaluator) == [(1, 1), (2, 2), (2, 1)]
-    @test MOI.hessian_objective_structure(evaluator) == [(1, 1), (2, 2), (2, 1)]
     H = [NaN, NaN, NaN]
     MOI.eval_hessian_objective(evaluator, H, val)
     @test H == [2.0, 2.0, 1.0]
