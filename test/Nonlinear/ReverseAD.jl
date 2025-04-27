@@ -641,6 +641,7 @@ function test_linearity_no_hess()
     # the linearity shouldn't be computed.
     @test only(evaluator.backend.subexpressions).linearity ==
           ReverseAD.NONLINEAR
+    return
 end
 
 function test_dual_forward()
