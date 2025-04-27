@@ -630,6 +630,20 @@ function test_linearity()
     return
 end
 
+function test_linearity_no_hess()
+    x = MOI.VariableIndex(1)
+    model = Nonlinear.Model()
+    ex = Nonlinear.add_expression(model, :($x + 1))
+    Nonlinear.set_objective(model, ex)
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Grad, :Jac])
+    # We initialized without the need for the hessian so
+    # the linearity shouldn't be computed.
+    @test only(evaluator.backend.subexpressions).linearity ==
+          ReverseAD.NONLINEAR
+    return
+end
+
 function test_dual_forward()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
