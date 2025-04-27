@@ -184,6 +184,17 @@ An abstract type for extending [`Evaluator`](@ref).
 """
 abstract type AbstractAutomaticDifferentiation end
 
+function Evaluator(
+    model::Model,
+    mode::AbstractAutomaticDifferentiation,
+    ordered_variables::Vector{MOI.VariableIndex},
+    requested_features::Vector{Symbol},
+)
+    e = Evaluator(model, mode, ordered_variables)
+    MOI.initialize(e.evaluator, requested_features)
+    return e
+end
+
 function MOI.Utilities.map_indices(
     ::F,
     backend::AbstractAutomaticDifferentiation,
@@ -283,6 +294,15 @@ reverse-mode automatic differentiation to compute derivatives. Supports all
 features in the MOI nonlinear interface.
 """
 struct SparseReverseMode <: AbstractAutomaticDifferentiation end
+
+function Evaluator(
+    model::Model,
+    ::SparseReverseMode,
+    ordered_variables::Vector{MOI.VariableIndex},
+    requested_features::Vector{Symbol},
+)
+    return Evaluator(model, ReverseAD.evaluator(model, ordered_variables, requested_features::Vector{Symbol}))
+end
 
 function Evaluator(
     model::Model,

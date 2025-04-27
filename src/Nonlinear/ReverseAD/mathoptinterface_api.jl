@@ -422,3 +422,13 @@ function MOI.eval_hessian_lagrangian_product(d::NLPEvaluator, h, x, v, σ, μ)
     end
     return
 end
+
+function evaluator(
+    model::Model,
+    ordered_variables::Vector{MOI.VariableIndex},
+    requested_features::Vector{Symbol},
+)
+    e = NLPEvaluator(model, ordered_variables)
+    MOI.initialize(e, requested_features)
+    return e
+end
