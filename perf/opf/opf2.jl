@@ -30,3 +30,5 @@ mu = rand(m)
 sigma = 0.0
 x_v = rand(n)
 @time MOI.eval_hessian_lagrangian(evaluator, H, x_v, sigma, mu)
+using BenchmarkTools
+@benchmark MOI.eval_hessian_lagrangian($evaluator, $H, $x_v, $sigma, $mu) seconds = 100
