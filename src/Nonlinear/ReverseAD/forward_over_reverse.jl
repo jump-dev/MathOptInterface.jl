@@ -6,35 +6,41 @@
 
 const TAG = :ReverseAD
 
-"""
-    _eval_hessian(
+function _generate_eval_hessian()
+    exprs = map(1:10) do chunk
+        return :(return _eval_hessian_inner(d, f, H, λ, offset, Val($chunk)))
+    end
+    return Nonlinear._create_binary_switch(1:10, exprs)
+end
+
+@eval begin
+    """
+        _eval_hessian(
+            d::NLPEvaluator,
+            f::_FunctionStorage,
+            H::AbstractVector{Float64},
+            λ::Float64,
+            offset::Int,
+        )::Int
+
+    Evaluate the hessian matrix of the function `f` and store the result, scaled by
+    `λ`, in `H`, beginning at element `offset+1`. This function assumes that
+    `_reverse_mode(d, x)` has already been called.
+
+    Returns the number of non-zeros in the computed Hessian, which will be used to
+    update the offset for the next call.
+    """
+    function _eval_hessian(
         d::NLPEvaluator,
         f::_FunctionStorage,
         H::AbstractVector{Float64},
         λ::Float64,
         offset::Int,
     )::Int
-
-Evaluate the hessian matrix of the function `f` and store the result, scaled by
-`λ`, in `H`, beginning at element `offset+1`. This function assumes that
-`_reverse_mode(d, x)` has already been called.
-
-Returns the number of non-zeros in the computed Hessian, which will be used to
-update the offset for the next call.
-"""
-function _eval_hessian(
-    d::NLPEvaluator,
-    f::_FunctionStorage,
-    H::AbstractVector{Float64},
-    λ::Float64,
-    offset::Int,
-)::Int
-    chunk = min(size(f.seed_matrix, 2), d.max_chunk)
-    # As a performance optimization, skip dynamic dispatch if the chunk is 1.
-    if chunk == 1
-        return _eval_hessian_inner(d, f, H, λ, offset, Val(1))
-    else
-        return _eval_hessian_inner(d, f, H, λ, offset, Val(chunk))
+        id = min(size(f.seed_matrix, 2), d.max_chunk)
+        # As a performance optimization, skip dynamic dispatch if the chunk is 1.
+        $(_generate_eval_hessian())
+        error("Invalid chunk `$id`. Please report this.")
     end
 end
 
