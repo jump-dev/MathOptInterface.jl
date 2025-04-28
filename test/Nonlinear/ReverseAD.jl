@@ -150,16 +150,7 @@ function test_objective_quadratic_multivariate_subexpressions()
     MOI.eval_hessian_objective(evaluator, H, val)
     @test H == [2.0, 2.0, 1.0]
     @test evaluator.backend.max_chunk == 2
-    # The call of `_eval_hessian_inner` from `_eval_hessian` needs dynamic dispatch for `Val(chunk)` so it allocates.
-    # We call directly `_eval_hessian_inner` to check that the rest does not allocates.
-    @test 0 == @allocated MOI.Nonlinear.ReverseAD._eval_hessian_inner(
-        evaluator.backend,
-        evaluator.backend.objective,
-        H,
-        1.0,
-        0,
-        Val(2),
-    )
+    @test 0 == @allocated MOI.eval_hessian_objective(evaluator, H, val)
     @test MOI.hessian_lagrangian_structure(evaluator) ==
           [(1, 1), (2, 2), (2, 1)]
     H = [NaN, NaN, NaN]

@@ -6,11 +6,13 @@
 
 const TAG = :ReverseAD
 
+const MAX_CHUNK = 10
+
 function _generate_eval_hessian()
-    exprs = map(1:10) do chunk
+    exprs = map(1:MAX_CHUNK) do chunk
         return :(return _eval_hessian_inner(d, f, H, λ, offset, Val($chunk)))
     end
-    return Nonlinear._create_binary_switch(1:10, exprs)
+    return Nonlinear._create_binary_switch(1:MAX_CHUNK, exprs)
 end
 
 @eval begin
