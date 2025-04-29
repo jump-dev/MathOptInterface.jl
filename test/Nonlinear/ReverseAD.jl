@@ -1390,7 +1390,7 @@ function test_generate_hessian_slice_inner()
     # elsewhere.
     MOI.Nonlinear.ReverseAD._generate_hessian_slice_inner()
     d = ex = nothing  # These arguments are untyped and not needed for this test
-    for id in [0, MAX_CHUNK + 1]
+    for id in [0, MOI.Nonlinear.ReverseAD.MAX_CHUNK + 1]
         @test_throws(
             ErrorException("Invalid chunk size: $id"),
             MOI.Nonlinear.ReverseAD._hessian_slice_inner(d, ex, id),
