@@ -6,6 +6,13 @@
 
 const TAG = :ReverseAD
 
+"""
+    const MAX_CHUNK::Int = 10
+
+An upper bound on the chunk sie for forward-over-reverse. Increasing this could
+improve performance at the cost of extra memory allocation. It has been 10 for a
+long time, and nobody seems to have complained.
+"""
 const MAX_CHUNK = 10
 
 """

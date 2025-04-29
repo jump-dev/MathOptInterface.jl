@@ -156,6 +156,7 @@ function test_objective_quadratic_multivariate_subexpressions()
     H = [NaN, NaN, NaN]
     μ = Float64[]
     MOI.eval_hessian_lagrangian(evaluator, H, val, 1.5, μ)
+    @test 0 == @allocated MOI.eval_hessian_lagrangian(evaluator, H, val, 1.5, μ)
     @test H == 1.5 .* [2.0, 2.0, 1.0]
     v = [0.3, 0.4]
     hv = [NaN, NaN]
