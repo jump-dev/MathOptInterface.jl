@@ -112,7 +112,7 @@ function _generate_hessian_slice_inner()
     exprs = map(1:MAX_CHUNK) do id
         return :(_hessian_slice_inner(d, ex, ForwardDiff.Partials{$id,Float64}))
     end
-    return _create_binary_switch(1:MAX_CHUNK, exprs)
+    return MOI.Nonlinear._create_binary_switch(1:MAX_CHUNK, exprs)
 end
 
 @eval function _hessian_slice_inner(d, ex, id::Int)
