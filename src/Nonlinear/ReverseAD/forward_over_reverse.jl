@@ -110,7 +110,8 @@ end
 # A wrapper function to avoid dynamic dispatch.
 function _generate_hessian_slice_inner()
     exprs = map(1:MAX_CHUNK) do id
-        return :(_hessian_slice_inner(d, ex, ForwardDiff.Partials{$id,Float64}))
+        T = ForwardDiff.Partials{id,Float64}
+        return :(return _hessian_slice_inner(d, ex, $T))
     end
     return MOI.Nonlinear._create_binary_switch(1:MAX_CHUNK, exprs)
 end
