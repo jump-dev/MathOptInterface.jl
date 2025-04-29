@@ -108,31 +108,16 @@ function _eval_hessian_chunk(
 end
 
 # A wrapper function to avoid dynamic dispatch.
-function _hessian_slice_inner(d, ex, chunk::Int)
-    @assert 1 <= chunk <= MAX_CHUNK
-    @assert MAX_CHUNK == 10
-    if chunk == 1
-        _hessian_slice_inner(d, ex, ForwardDiff.Partials{1,Float64})
-    elseif chunk == 2
-        _hessian_slice_inner(d, ex, ForwardDiff.Partials{2,Float64})
-    elseif chunk == 3
-        _hessian_slice_inner(d, ex, ForwardDiff.Partials{3,Float64})
-    elseif chunk == 4
-        _hessian_slice_inner(d, ex, ForwardDiff.Partials{4,Float64})
-    elseif chunk == 5
-        _hessian_slice_inner(d, ex, ForwardDiff.Partials{5,Float64})
-    elseif chunk == 6
-        _hessian_slice_inner(d, ex, ForwardDiff.Partials{6,Float64})
-    elseif chunk == 7
-        _hessian_slice_inner(d, ex, ForwardDiff.Partials{7,Float64})
-    elseif chunk == 8
-        _hessian_slice_inner(d, ex, ForwardDiff.Partials{8,Float64})
-    elseif chunk == 9
-        _hessian_slice_inner(d, ex, ForwardDiff.Partials{9,Float64})
-    else
-        _hessian_slice_inner(d, ex, ForwardDiff.Partials{10,Float64})
+function _generate_hessian_slice_inner()
+    exprs = map(1:MAX_CHUNK) do id
+        return :(_hessian_slice_inner(d, ex, ForwardDiff.Partials{$id,Float64}))
     end
-    return
+    return _create_binary_switch(1:MAX_CHUNK, exprs)
+end
+
+@eval function _hessian_slice_inner(d, ex, id::Int)
+    $(_generate_hessian_slice_inner())
+    return error("Invalid chunk size: $id")
 end
 
 function _hessian_slice_inner(d, ex, ::Type{T}) where {T}

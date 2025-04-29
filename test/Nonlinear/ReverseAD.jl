@@ -1385,6 +1385,20 @@ function test_eval_user_defined_operator_type_mismatch()
     return
 end
 
+function test_generate_hessian_slice_inner()
+    # Test that it evaluates without error. The code contents are tested
+    # elsewhere.
+    MOI.Nonlinear.ReverseAD._generate_hessian_slice_inner()
+    d = ex = nothing  # These arguments are untyped and not needed for this test
+    for id in [0, MAX_CHUNK + 1]
+        @test_throws(
+            ErrorException("Invalid chunk size: $id"),
+            MOI.Nonlinear.ReverseAD._hessian_slice_inner(d, ex, id),
+        )
+    end
+    return
+end
+
 end  # module
 
 TestReverseAD.runtests()
