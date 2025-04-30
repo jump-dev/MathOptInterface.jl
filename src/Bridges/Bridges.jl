@@ -300,11 +300,12 @@ function _runtests(
     variable_start = 1.2,
     constraint_start = 1.2,
     eltype = Float64,
+    model_eltype = eltype,
     print_inner_model::Bool = false,
     cannot_unbridge::Bool = false,
 )
     # Load model and bridge it
-    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{model_eltype}())
     model = _bridged_model(Bridge{eltype}, inner)
     input_fn(model)
     final_touch(model)
@@ -314,7 +315,8 @@ function _runtests(
         print(inner)
     end
     Test.@testset "Test outer bridged model appears like the input" begin       # COV_EXCL_LINE
-        test = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
+        test =
+            MOI.Utilities.UniversalFallback(MOI.Utilities.Model{model_eltype}())
         input_fn(test)
         _test_structural_identical(
             test,
@@ -323,7 +325,8 @@ function _runtests(
         )
     end
     Test.@testset "Test inner bridged model appears like the target" begin      # COV_EXCL_LINE
-        target = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{eltype}())
+        target =
+            MOI.Utilities.UniversalFallback(MOI.Utilities.Model{model_eltype}())
         output_fn(target)
         _test_structural_identical(target, inner)
     end

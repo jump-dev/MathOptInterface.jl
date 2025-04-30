@@ -282,7 +282,8 @@ function MOI.supports_constraint(
     ::Type{G},
     ::Type{<:MOI.AbstractSet},
 ) where {T,F,G<:MOI.AbstractFunction}
-    return !MOI.Utilities.is_complex(G) && isfinite(conversion_cost(F, G))
+    return MOI.Utilities.is_coefficient_type(G, T) &&
+           isfinite(conversion_cost(F, G))
 end
 
 function concrete_bridge_type(

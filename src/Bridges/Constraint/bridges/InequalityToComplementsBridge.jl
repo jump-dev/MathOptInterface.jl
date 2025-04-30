@@ -71,7 +71,8 @@ function MOI.supports_constraint(
     ::Type{F},
     ::Type{<:Union{MOI.GreaterThan{T},MOI.LessThan{T},MOI.EqualTo{T}}},
 ) where {T,F<:MOI.AbstractScalarFunction}
-    return !MOI.Utilities.is_complex(F)
+    return MOI.Utilities.is_coefficient_type(F, T) &&
+           !MOI.Utilities.is_complex(F)
 end
 
 function MOI.Bridges.added_constrained_variable_types(
