@@ -150,21 +150,13 @@ function test_objective_quadratic_multivariate_subexpressions()
     MOI.eval_hessian_objective(evaluator, H, val)
     @test H == [2.0, 2.0, 1.0]
     @test evaluator.backend.max_chunk == 2
-    # The call of `_eval_hessian_inner` from `_eval_hessian` needs dynamic dispatch for `Val(chunk)` so it allocates.
-    # We call directly `_eval_hessian_inner` to check that the rest does not allocates.
-    @test 0 == @allocated MOI.Nonlinear.ReverseAD._eval_hessian_inner(
-        evaluator.backend,
-        evaluator.backend.objective,
-        H,
-        1.0,
-        0,
-        Val(2),
-    )
+    @test 0 == @allocated MOI.eval_hessian_objective(evaluator, H, val)
     @test MOI.hessian_lagrangian_structure(evaluator) ==
           [(1, 1), (2, 2), (2, 1)]
     H = [NaN, NaN, NaN]
     μ = Float64[]
     MOI.eval_hessian_lagrangian(evaluator, H, val, 1.5, μ)
+    @test 0 == @allocated MOI.eval_hessian_lagrangian(evaluator, H, val, 1.5, μ)
     @test H == 1.5 .* [2.0, 2.0, 1.0]
     v = [0.3, 0.4]
     hv = [NaN, NaN]
@@ -1390,6 +1382,20 @@ function test_eval_user_defined_operator_type_mismatch()
     J = [NaN, NaN, NaN, NaN]
     MOI.eval_constraint_jacobian(d, J, X)
     @test J ≈ [2.0^3 * 3.0 * 1.1^2, 0.0, 1.0, 3.0]
+    return
+end
+
+function test_generate_hessian_slice_inner()
+    # Test that it evaluates without error. The code contents are tested
+    # elsewhere.
+    MOI.Nonlinear.ReverseAD._generate_hessian_slice_inner()
+    d = ex = nothing  # These arguments are untyped and not needed for this test
+    for id in [0, MOI.Nonlinear.ReverseAD.MAX_CHUNK + 1]
+        @test_throws(
+            ErrorException("Invalid chunk size: $id"),
+            MOI.Nonlinear.ReverseAD._hessian_slice_inner(d, ex, id),
+        )
+    end
     return
 end
 

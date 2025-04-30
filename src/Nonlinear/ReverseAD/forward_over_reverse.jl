@@ -7,6 +7,15 @@
 const TAG = :ReverseAD
 
 """
+    const MAX_CHUNK::Int = 10
+
+An upper bound on the chunk sie for forward-over-reverse. Increasing this could
+improve performance at the cost of extra memory allocation. It has been 10 for a
+long time, and nobody seems to have complained.
+"""
+const MAX_CHUNK = 10
+
+"""
     _eval_hessian(
         d::NLPEvaluator,
         f::_FunctionStorage,
@@ -24,45 +33,29 @@ update the offset for the next call.
 """
 function _eval_hessian(
     d::NLPEvaluator,
-    f::_FunctionStorage,
-    H::AbstractVector{Float64},
-    λ::Float64,
-    offset::Int,
-)::Int
-    chunk = min(size(f.seed_matrix, 2), d.max_chunk)
-    # As a performance optimization, skip dynamic dispatch if the chunk is 1.
-    if chunk == 1
-        return _eval_hessian_inner(d, f, H, λ, offset, Val(1))
-    else
-        return _eval_hessian_inner(d, f, H, λ, offset, Val(chunk))
-    end
-end
-
-function _eval_hessian_inner(
-    d::NLPEvaluator,
     ex::_FunctionStorage,
     H::AbstractVector{Float64},
     scale::Float64,
     nzcount::Int,
-    ::Val{CHUNK},
-) where {CHUNK}
+)::Int
     if ex.linearity == LINEAR
         @assert length(ex.hess_I) == 0
         return 0
     end
+    chunk = min(size(ex.seed_matrix, 2), d.max_chunk)
     Coloring.prepare_seed_matrix!(ex.seed_matrix, ex.rinfo)
     # Compute hessian-vector products
     num_products = size(ex.seed_matrix, 2) # number of hessian-vector products
-    num_chunks = div(num_products, CHUNK)
+    num_chunks = div(num_products, chunk)
     @assert size(ex.seed_matrix, 1) == length(ex.rinfo.local_indices)
-    for offset in 1:CHUNK:(CHUNK*num_chunks)
-        _eval_hessian_chunk(d, ex, offset, CHUNK, Val(CHUNK))
+    for offset in 1:chunk:(chunk*num_chunks)
+        _eval_hessian_chunk(d, ex, offset, chunk, chunk)
     end
     # leftover chunk
-    remaining = num_products - CHUNK * num_chunks
+    remaining = num_products - chunk * num_chunks
     if remaining > 0
-        offset = CHUNK * num_chunks + 1
-        _eval_hessian_chunk(d, ex, offset, remaining, Val(CHUNK))
+        offset = chunk * num_chunks + 1
+        _eval_hessian_chunk(d, ex, offset, remaining, chunk)
     end
     want, got = nzcount + length(ex.hess_I), length(H)
     if want > got
@@ -90,32 +83,45 @@ function _eval_hessian_chunk(
     ex::_FunctionStorage,
     offset::Int,
     chunk::Int,
-    ::Val{CHUNK},
-) where {CHUNK}
+    chunk_size::Int,
+)
     for r in eachindex(ex.rinfo.local_indices)
         # set up directional derivatives
         @inbounds idx = ex.rinfo.local_indices[r]
         # load up ex.seed_matrix[r,k,k+1,...,k+remaining-1] into input_ϵ
         for s in 1:chunk
-            # If `chunk < CHUNK`, leaves junk in the unused components
-            d.input_ϵ[(idx-1)*CHUNK+s] = ex.seed_matrix[r, offset+s-1]
+            # If `chunk < chunk_size`, leaves junk in the unused components
+            d.input_ϵ[(idx-1)*chunk_size+s] = ex.seed_matrix[r, offset+s-1]
         end
     end
-    _hessian_slice_inner(d, ex, Val(CHUNK))
+    _hessian_slice_inner(d, ex, chunk_size)
     fill!(d.input_ϵ, 0.0)
     # collect directional derivatives
     for r in eachindex(ex.rinfo.local_indices)
         @inbounds idx = ex.rinfo.local_indices[r]
         # load output_ϵ into ex.seed_matrix[r,k,k+1,...,k+remaining-1]
         for s in 1:chunk
-            ex.seed_matrix[r, offset+s-1] = d.output_ϵ[(idx-1)*CHUNK+s]
+            ex.seed_matrix[r, offset+s-1] = d.output_ϵ[(idx-1)*chunk_size+s]
         end
     end
     return
 end
 
-function _hessian_slice_inner(d, ex, ::Val{CHUNK}) where {CHUNK}
-    T = ForwardDiff.Partials{CHUNK,Float64}  # This is our element type.
+# A wrapper function to avoid dynamic dispatch.
+function _generate_hessian_slice_inner()
+    exprs = map(1:MAX_CHUNK) do id
+        T = ForwardDiff.Partials{id,Float64}
+        return :(return _hessian_slice_inner(d, ex, $T))
+    end
+    return MOI.Nonlinear._create_binary_switch(1:MAX_CHUNK, exprs)
+end
+
+@eval function _hessian_slice_inner(d, ex, id::Int)
+    $(_generate_hessian_slice_inner())
+    return error("Invalid chunk size: $id")
+end
+
+function _hessian_slice_inner(d, ex, ::Type{T}) where {T}
     fill!(d.output_ϵ, 0.0)
     output_ϵ = _reinterpret_unsafe(T, d.output_ϵ)
     subexpr_forward_values_ϵ =
