@@ -652,7 +652,6 @@ function test_eval_multivariate_hessian_prod()
     # 2-arg *
     x = [1.1, 2.2]
     H = LinearAlgebra.LowerTriangular(zeros(2, 2))
-    @test (@allocated Nonlinear.eval_multivariate_hessian(r, :*, H, x)) == 0
     @test Nonlinear.eval_multivariate_hessian(r, :*, H, x)
     @test H ≈ _hessian(x -> x[1] * x[2], x)
     # 3-arg *
@@ -663,26 +662,45 @@ function test_eval_multivariate_hessian_prod()
     return
 end
 
+function test_eval_multivariate_hessian_prod_allocated()
+    r = Nonlinear.OperatorRegistry()
+    x = [1.1, 2.2]
+    H = LinearAlgebra.LowerTriangular(zeros(2, 2))
+    Nonlinear.eval_multivariate_hessian(r, :*, H, x)  # ensure precompiled
+    @test (@allocated Nonlinear.eval_multivariate_hessian(r, :*, H, x)) == 0
+    return
+end
+
 function test_eval_multivariate_hessian_exponentiation()
     r = Nonlinear.OperatorRegistry()
     # ^1.0
     x = [1.1, 1.0]
     H = LinearAlgebra.LowerTriangular(zeros(2, 2))
-    @test (@allocated Nonlinear.eval_multivariate_hessian(r, :^, H, x)) == 0
     @test Nonlinear.eval_multivariate_hessian(r, :^, H, x)
     @test H ≈ _hessian(x -> x[1]^x[2], x)
     # ^2.0
     x = [1.1, 2.0]
     H = LinearAlgebra.LowerTriangular(zeros(2, 2))
-    @test (@allocated Nonlinear.eval_multivariate_hessian(r, :^, H, x)) == 0
     @test Nonlinear.eval_multivariate_hessian(r, :^, H, x)
     @test H ≈ _hessian(x -> x[1]^x[2], x)
     # 2-arg ^
     x = [1.1, 2.2]
     H = LinearAlgebra.LowerTriangular(zeros(2, 2))
-    @test (@allocated Nonlinear.eval_multivariate_hessian(r, :^, H, x)) == 0
     @test Nonlinear.eval_multivariate_hessian(r, :^, H, x)
     @test H ≈ _hessian(x -> x[1]^x[2], x)
+    return
+end
+
+function test_eval_multivariate_hessian_exponentiation_allocated()
+    r = Nonlinear.OperatorRegistry()
+    # ^1.0
+    x = [1.1, 1.0]
+    H = LinearAlgebra.LowerTriangular(zeros(2, 2))
+    @test Nonlinear.eval_multivariate_hessian(r, :^, H, x)
+    for x2 in [1.0, 2.0, 2.2]
+        x[2] = x2
+        @test (@allocated Nonlinear.eval_multivariate_hessian(r, :^, H, x)) == 0
+    end
     return
 end
 
@@ -691,9 +709,17 @@ function test_eval_multivariate_hessian_division()
     # 2-arg /
     x = [1.1, 2.2]
     H = LinearAlgebra.LowerTriangular(zeros(2, 2))
-    @test (@allocated Nonlinear.eval_multivariate_hessian(r, :/, H, x)) == 0
     @test Nonlinear.eval_multivariate_hessian(r, :/, H, x)
     @test H ≈ _hessian(x -> x[1] / x[2], x)
+    return
+end
+
+function test_eval_multivariate_hessian_division_allocated()
+    r = Nonlinear.OperatorRegistry()
+    x = [1.1, 2.2]
+    H = LinearAlgebra.LowerTriangular(zeros(2, 2))
+    Nonlinear.eval_multivariate_hessian(r, :/, H, x)  # ensure precompiled
+    @test (@allocated Nonlinear.eval_multivariate_hessian(r, :/, H, x)) == 0
     return
 end
 
