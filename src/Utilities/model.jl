@@ -859,8 +859,6 @@ in MOI. It is parameterized by the coefficient type.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}()
 MOIU.Model{Float64}
 ├ ObjectiveSense: FEASIBILITY_SENSE

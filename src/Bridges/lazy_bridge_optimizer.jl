@@ -24,7 +24,7 @@ and [`full_bridge_optimizer`](@ref).
 
 ## Example
 
-```jldoctest; setup=:(import MathOptInterface as MOI)
+```jldoctest
 julia> model = MOI.Bridges.LazyBridgeOptimizer(MOI.Utilities.Model{Float64}());
 
 julia> MOI.Bridges.add_bridge(model, MOI.Bridges.Variable.FreeBridge{Float64})

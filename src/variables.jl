@@ -32,8 +32,6 @@ done in the current state of the model `model`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> MOI.add_variables(model, 2)
@@ -57,8 +55,6 @@ done in the current state of the model `model`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
@@ -139,8 +135,6 @@ bounds after creation.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> set = (MOI.GreaterThan(1.0), MOI.LessThan(2.0));

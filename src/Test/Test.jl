@@ -78,8 +78,6 @@ For a nonlinear solver that finds local optima and does not support finding
 dual variables or constraint names:
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> config = MOI.Test.Config(
            Float64;
            optimal_status = MOI.LOCALLY_SOLVED,

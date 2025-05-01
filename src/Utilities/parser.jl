@@ -337,7 +337,7 @@ A utility function to aid writing tests.
 
 ## Example
 
-```jldoctest; setup=:(import MathOptInterface as MOI)
+```jldoctest
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> MOI.Utilities.loadfromstring!(model, \"\"\"

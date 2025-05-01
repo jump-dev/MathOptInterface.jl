@@ -41,7 +41,7 @@ coefficient type `T`, as well as the bridges in the list returned by the
 
 ## Example
 
-```jldoctest; setup=:(import MathOptInterface as MOI)
+```jldoctest
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> bridged_model = MOI.Bridges.full_bridge_optimizer(model, Float64);
@@ -273,7 +273,7 @@ and [`MOI.ConstraintPrimalStart`](@ref) to throw [`MOI.GetAttributeNotAllowed`](
 
 ## Example
 
-```jldoctest; setup=:(import MathOptInterface as MOI), filter=r"[0-9.]+s"
+```jldoctest; filter=r"[0-9.]+s"
 julia> MOI.Bridges.runtests(
            MOI.Bridges.Constraint.ZeroOneBridge,
            model -> MOI.add_constrained_variable(model, MOI.ZeroOne()),
@@ -423,7 +423,7 @@ Run a series of tests that check the correctness of `Bridge`.
 
 ## Example
 
-```jldoctest; setup=:(import MathOptInterface as MOI), filter=r"[0-9.]+s"
+```jldoctest; filter=r"[0-9.]+s"
 julia> MOI.Bridges.runtests(
            MOI.Bridges.Constraint.ZeroOneBridge,
            \"\"\"

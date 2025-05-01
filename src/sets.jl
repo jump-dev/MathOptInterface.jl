@@ -51,8 +51,6 @@ have to be used with the set `set`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> MOI.dimension(MOI.Reals(4))
 4
 
@@ -79,8 +77,6 @@ If the dual cone is not defined it returns an error.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> MOI.dual_set(MOI.Reals(4))
 MathOptInterface.Zeros(4)
 
@@ -102,8 +98,6 @@ Return the type of dual set of sets of type `S`, as returned by
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> MOI.dual_set_type(MOI.Reals)
 MathOptInterface.Zeros
 
@@ -155,8 +149,6 @@ The set ``[lower, \\infty) \\subseteq \\mathbb{R}``.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
@@ -180,8 +172,6 @@ The set ``(-\\infty, upper] \\subseteq \\mathbb{R}``.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
@@ -205,8 +195,6 @@ The set containing the single point ``\\{value\\} \\subseteq \\mathbb{R}``.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
@@ -240,8 +228,6 @@ and solvers should declare [`supports_add_constrained_variable`](@ref) and not
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> p, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.5))
@@ -270,8 +256,6 @@ as a one-sided interval.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
@@ -306,8 +290,6 @@ Construct an interval set from the set `set`, assuming any missing bounds are
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> MOI.Interval(MOI.GreaterThan(1.0))
 MathOptInterface.Interval{Float64}(1.0, Inf)
 
@@ -334,8 +316,6 @@ The set of integers, ``\\mathbb{Z}``.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
@@ -357,8 +337,6 @@ Variables belonging to the `ZeroOne` set are also known as "binary" variables.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
@@ -378,8 +356,6 @@ The set ``\\{0\\} \\cup [lower, upper]``.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
@@ -414,8 +390,6 @@ the nearest integers.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
@@ -447,8 +421,6 @@ dimension `dimension`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
@@ -483,8 +455,6 @@ dimension `dimension`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
@@ -519,8 +489,6 @@ non-negative dimension `dimension`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
@@ -555,8 +523,6 @@ non-negative dimension `dimension`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
@@ -593,8 +559,6 @@ The `dimension` must be at least `1`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
@@ -635,8 +599,6 @@ The `dimension` must be at least `1`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
@@ -677,8 +639,6 @@ The `dimension` must be at least `1`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
@@ -719,8 +679,6 @@ The `dimension` must be at least `2`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
@@ -768,8 +726,6 @@ The `dimension` must be at least `1`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
@@ -820,8 +776,6 @@ where `dimension = n + 1 >= 2`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
@@ -860,8 +814,6 @@ The 3-dimensional exponential cone ``\\{ (x,y,z) \\in \\mathbb{R}^3 : y \\exp (x
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
@@ -885,8 +837,6 @@ The 3-dimensional dual exponential cone ``\\{ (u,v,w) \\in \\mathbb{R}^3 : -u \\
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
@@ -911,8 +861,6 @@ with parameter `exponent`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
@@ -943,8 +891,6 @@ with parameter `exponent`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
@@ -982,8 +928,6 @@ of dimension `dimension```{}=2n+1``.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> u = MOI.add_variable(model);
@@ -1029,8 +973,6 @@ Julia's `vec` function.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
@@ -1084,8 +1026,6 @@ Julia's `vec` function.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
@@ -1453,8 +1393,6 @@ The non-negative argument `side_dimension` is the side dimension of the matrix
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
@@ -1506,8 +1444,6 @@ The non-negative argument `side_dimension` is the side dimension of the matrix
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
@@ -1563,8 +1499,6 @@ The non-negative argument `side_dimension` is the side dimension of the matrix
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
@@ -1616,8 +1550,6 @@ The non-negative argument `side_dimension` is the side dimension of the matrix
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> t = MOI.add_variable(model)
@@ -1710,8 +1642,6 @@ the set `Scaled(set)` is defined as
 
 This can be used to scale a vector of numbers
 ```jldoctest scaling
-julia> import MathOptInterface as MOI
-
 julia> set = MOI.PositiveSemidefiniteConeTriangle(2)
 MathOptInterface.PositiveSemidefiniteConeTriangle(2)
 
@@ -1818,8 +1748,6 @@ not change the set of feasible solutions.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
@@ -1857,8 +1785,6 @@ they must be adjacent in the ordering of the set.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
@@ -1929,8 +1855,6 @@ The constraint
 ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R}^2 : y = 1 \\implies x_1 + x_2 \\leq 9 \\}``
 is defined as
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 2);
@@ -1954,8 +1878,6 @@ The constraint
 ``\\{(y, x) \\in \\{0, 1\\} \\times \\mathbb{R} : y = 0 \\implies x = 0 \\}``
 is defined as
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model);
@@ -2032,8 +1954,6 @@ There are three solutions:
   3. `x = 1` with `F(x) = -7`
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x, _ = MOI.add_constrained_variable(model, MOI.Interval(-1.0, 1.0));
@@ -2056,8 +1976,6 @@ defines the complementarity problem where `0 <= x_1 ⟂ x_3 >= 0` and
 `0 <= x_2 ⟂ x_4 >= 0`.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 4);
@@ -2103,8 +2021,6 @@ called `distinct`.
 To enforce `x[1] != x[2]` AND `x[1] != x[3]` AND `x[2] != x[3]`:
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
@@ -2147,8 +2063,6 @@ This constraint is called `bin_packing` in MiniZinc.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> bins = MOI.add_variables(model, 5)
@@ -2229,8 +2143,6 @@ a (potentially sub-optimal) tour in the travelling salesperson problem.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
@@ -2271,8 +2183,6 @@ To ensure that `3` appears at least once in each of the subsets `{a, b}` and
 `{b, c}`:
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> a, _ = MOI.add_constrained_variable(model, MOI.Integer())
@@ -2330,8 +2240,6 @@ This constraint is called `among` by MiniZinc.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> n, _ = MOI.add_constrained_variable(model, MOI.Integer())
@@ -2392,8 +2300,6 @@ To model:
  * if `n == 3`, then `x[1] != x[2]`, `x[2] != x[3]` and `x[3] != x[1]`
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> n, _ = MOI.add_constrained_variable(model, MOI.Integer())
@@ -2437,8 +2343,6 @@ This constraint is called `count_gt` in MiniZinc.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> c, _ = MOI.add_constrained_variable(model, MOI.Integer())
@@ -2489,8 +2393,6 @@ This constraint is called `cumulative` in MiniZinc.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> s = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
@@ -2548,8 +2450,6 @@ This constraint is called `path` in MiniZinc.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> N, E = 4, 5
@@ -2646,8 +2546,6 @@ This constraint is called `table` in MiniZinc.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3)
@@ -2685,8 +2583,6 @@ The set ``\\{x \\in \\bar{\\mathbb{R}}^d: x_i \\in [lower_i, upper_i] \\forall i
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3)
@@ -2736,8 +2632,6 @@ The constraint ``[z; f(x)] \\in Reified(S)`` ensures that ``f(x) \\in S`` if and
 only if ``z == 1``, where ``z \\in \\{0, 1\\}``.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}());
 
 julia> z, _ = MOI.add_constrained_variable(model, MOI.ZeroOne())
@@ -2824,8 +2718,6 @@ Returns the constant term of the set `set`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> MOI.constant(MOI.GreaterThan(1.0))
 1.0
 

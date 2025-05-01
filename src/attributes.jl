@@ -1561,8 +1561,6 @@ They should not implement [`set`](@ref) or [`supports`](@ref).
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model)
@@ -1919,8 +1917,6 @@ cannot be looked up using [`get`](@ref).
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model);
@@ -1961,8 +1957,6 @@ May be a number or `nothing` (unset).
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}());
 
 julia> x = MOI.add_variable(model);
@@ -2187,8 +2181,6 @@ constraints.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model);
@@ -2447,8 +2439,6 @@ then it returns the function stored internally instead of a copy.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model);
@@ -2507,8 +2497,6 @@ provided by the user.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model);
@@ -2590,8 +2578,6 @@ used to define the constraint.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model);
@@ -2739,8 +2725,6 @@ have the form:
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> f(x, y) = x^2 + y^2
 f (generic function with 1 method)
 
@@ -3227,8 +3211,6 @@ call to [`optimize!`](@ref) is undefined and depends on solver-specific behavior
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> MOI.is_set_by_optimize(MOI.ObjectiveValue())
 true
 

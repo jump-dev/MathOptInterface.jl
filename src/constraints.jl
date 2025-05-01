@@ -34,8 +34,6 @@ An error indicating that constraints of type `F`-in-`S` are not supported by
 the model, that is, that [`supports_constraint`](@ref) returns `false`.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> showerror(stdout, MOI.UnsupportedConstraint{MOI.VariableIndex,MOI.ZeroOne}())
 UnsupportedConstraint: `MathOptInterface.VariableIndex`-in-`MathOptInterface.ZeroOne` constraints are not supported by the
 solver you have chosen, and we could not reformulate your model into a
@@ -338,8 +336,6 @@ Typically, the user should delete the constraint and add a new one.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variable(model);

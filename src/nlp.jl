@@ -25,8 +25,6 @@ It is used in [`NLPBlockData`](@ref).
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> supertype(typeof(evaluator))
@@ -47,8 +45,6 @@ objective.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}());
 
 julia> block = MOI.NLPBlockData(
@@ -73,8 +69,6 @@ If `result_index` is omitted, it is `1` by default.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> MOI.NLPBlockDual()
 MathOptInterface.NLPBlockDual(1)
 
@@ -101,8 +95,6 @@ use to warm-start the solve.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}());
 
 julia> block = MOI.NLPBlockData(
@@ -128,8 +120,6 @@ A struct holding a pair of lower and upper bounds.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> bounds = MOI.NLPBoundsPair.([25.0, 40.0], [Inf, 40.0])
 2-element Vector{MathOptInterface.NLPBoundsPair}:
  MathOptInterface.NLPBoundsPair(25.0, Inf)
@@ -170,8 +160,6 @@ Hessian-of-the-Lagrangian queries, `σ` must be set to zero.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}());
 
 julia> block = MOI.NLPBlockData(
@@ -223,8 +211,6 @@ In all cases, including when `requested_features` is empty,
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, [:Grad, :Jac])
@@ -244,8 +230,6 @@ See [`initialize`](@ref) for the list of defined features.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true, true);
 
 julia> MOI.features_available(evaluator)
@@ -275,8 +259,6 @@ need to pass a value.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, Symbol[])
@@ -313,8 +295,6 @@ For example, it may be the `view` of a vector.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, Symbol[])
@@ -356,8 +336,6 @@ For example, it may be the `view` of a vector.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, Symbol[:Grad])
@@ -400,8 +378,6 @@ Before calling this function, you must call [`initialize`](@ref) with `:Jac`.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, Symbol[:Jac])
@@ -447,8 +423,6 @@ Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, Symbol[:Hess])
@@ -493,8 +467,6 @@ Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, Symbol[:Hess])
@@ -545,8 +517,6 @@ Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, Symbol[:Hess])
@@ -588,8 +558,6 @@ Before calling this function, you must call [`initialize`](@ref) with `:Jac`.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, Symbol[:Jac])
@@ -631,8 +599,6 @@ Before calling this function, you must call [`initialize`](@ref) with `:Jac`.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, Symbol[:Jac])
@@ -681,8 +647,6 @@ Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, Symbol[:Jac])
@@ -736,8 +700,6 @@ Before calling this function, you must call [`initialize`](@ref) with `:JacVec`.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, Symbol[:Jac, :JacVec])
@@ -787,8 +749,6 @@ Before calling this function, you must call [`initialize`](@ref) with `:JacVec`.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, Symbol[:Jac, :JacVec])
@@ -843,8 +803,6 @@ Before calling this function, you must call [`initialize`](@ref) with `:HessVec`
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true, true);
 
 julia> MOI.initialize(evaluator, Symbol[:HessVec])
@@ -898,8 +856,6 @@ Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true, true);
 
 julia> MOI.initialize(evaluator, Symbol[:Hess])
@@ -952,8 +908,6 @@ Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true, true);
 
 julia> MOI.initialize(evaluator, Symbol[:Hess])
@@ -1008,8 +962,6 @@ Before calling this function, you must call [`initialize`](@ref) with `:Hess`.
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, Symbol[:Hess])
@@ -1073,8 +1025,6 @@ Before calling this function, you must call [`initialize`](@ref) with
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, [:ExprGraph])
@@ -1116,8 +1066,6 @@ Before calling this function, you must call [`initialize`](@ref) with
 This example uses the [`Test.HS071`](@ref) evaluator.
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> evaluator = MOI.Test.HS071(true);
 
 julia> MOI.initialize(evaluator, [:ExprGraph])

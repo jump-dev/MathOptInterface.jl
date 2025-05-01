@@ -251,8 +251,6 @@ Combined with `LinearAlgebra`, this vector can be used to scale
 a [`MOI.AbstractVectorFunction`](@ref).
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Utilities.Model{Float64}();
 
 julia> x = MOI.add_variables(model, 3);
