@@ -190,7 +190,7 @@ function _forward_eval_ϵ(
     partials_storage_ϵ::AbstractVector{P},
 ) where {N,T,P<:ForwardDiff.Partials{N,T}}
     storage_ϵ = _reinterpret_unsafe(P, d.storage_ϵ)
-    x_values_ϵ = reinterpret(P, d.input_ϵ)
+    x_values_ϵ = _reinterpret_unsafe(P, d.input_ϵ)
     subexpression_values_ϵ =
         _reinterpret_unsafe(P, d.subexpression_forward_values_ϵ)
     @assert length(storage_ϵ) >= length(ex.nodes)

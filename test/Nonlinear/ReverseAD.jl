@@ -1399,6 +1399,28 @@ function test_generate_hessian_slice_inner()
     return
 end
 
+function test_hessian_reinterpret_unsafe()
+    model = MOI.Nonlinear.Model()
+    x = MOI.VariableIndex.(1:5)
+    MOI.Nonlinear.add_constraint(
+        model,
+        :(($(x[1]) + $(x[2])) * $(x[3])),
+        MOI.EqualTo(0.0),
+    )
+    MOI.Nonlinear.add_constraint(model, :($(x[4]) * $(x[5])), MOI.EqualTo(1.0))
+    evaluator =
+        MOI.Nonlinear.Evaluator(model, MOI.Nonlinear.SparseReverseMode(), x)
+    MOI.initialize(evaluator, [:Hess])
+    H_s = MOI.hessian_lagrangian_structure(evaluator)
+    H = zeros(length(H_s))
+    x_v = ones(5)
+    MOI.eval_hessian_lagrangian(evaluator, H, x_v, 0.0, [1.0, 1.0])
+    @test count(isapprox.(H, 1.0; atol = 1e-8)) == 3
+    @test count(isapprox.(H, 0.0; atol = 1e-8)) == 6
+    @test sort(H_s[round.(Bool, H)]) == [(3, 1), (3, 2), (5, 4)]
+    return
+end
+
 end  # module
 
 TestReverseAD.runtests()
