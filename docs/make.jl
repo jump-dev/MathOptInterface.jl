@@ -123,11 +123,11 @@ end
 # link checking. Inn production we replace this by running the LaTeX build.
 write(joinpath(@__DIR__, "src", "MathOptInterface.pdf"), "")
 
-DocMeta.setdocmeta!(
+Documenter.DocMeta.setdocmeta!(
     MathOptInterface,
     :DocTestSetup,
     :(import MathOptInterface as MOI);
-    recursive=true,
+    recursive = true,
 )
 
 @time Documenter.makedocs(
