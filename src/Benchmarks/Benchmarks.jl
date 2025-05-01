@@ -53,8 +53,6 @@ Extra `kwargs` are based to `BenchmarkTools.run`.
 ## Example
 
 ```julia
-julia> import MathOptInterface as MOI
-
 julia> import GLPK
 
 julia> my_suite = MOI.Benchmarks.suite(() -> GLPK.Optimizer());
@@ -100,8 +98,6 @@ Extra `kwargs` are based to `BenchmarkTools.run`.
 ## Example
 
 ```julia
-julia> import MathOptInterface as MOI
-
 julia> import GLPK
 
 julia> my_suite = MOI.Benchmarks.suite(() -> GLPK.Optimizer());

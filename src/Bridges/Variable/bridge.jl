@@ -39,7 +39,7 @@ solver.
 
 ## Example
 
-```jldoctest; setup=(import MathOptInterface as MOI)
+```jldoctest
 julia> MOI.Bridges.Variable.supports_constrained_variable(
            MOI.Bridges.Variable.NonposToNonnegBridge{Float64},
            MOI.Nonpositives,
@@ -78,8 +78,6 @@ variables in [`MOI.Nonnegatives`](@ref) by the
 [`VectorizeBridge`](@ref):
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> MOI.Bridges.Variable.concrete_bridge_type(
            MOI.Bridges.Variable.VectorizeBridge{Float64},
            MOI.GreaterThan{Float64},

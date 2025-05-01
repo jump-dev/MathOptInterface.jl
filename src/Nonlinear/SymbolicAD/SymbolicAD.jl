@@ -22,8 +22,6 @@ Return a simplified copy of the function `f`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex(1)
 MOI.VariableIndex(1)
 
@@ -52,8 +50,6 @@ new object if `f` can be represented in a simpler type.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex(1)
 MOI.VariableIndex(1)
 
@@ -356,8 +352,6 @@ Return a sorted list of the `MOI.VariableIndex` present in the function `f`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex.(1:3)
 3-element Vector{MathOptInterface.VariableIndex}:
  MOI.VariableIndex(1)
@@ -463,8 +457,6 @@ simplified expression of the derivative.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex(1)
 MOI.VariableIndex(1)
 

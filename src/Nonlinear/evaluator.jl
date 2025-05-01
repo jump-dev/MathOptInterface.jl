@@ -16,8 +16,6 @@ Return the 1-indexed value of the constraint index `c` in `evaluator`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Nonlinear.Model()
 A Nonlinear.Model with:
  0 objectives

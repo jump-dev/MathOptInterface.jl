@@ -50,8 +50,6 @@ To remove the objective, pass `nothing`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Nonlinear.Model()
 A Nonlinear.Model with:
  0 objectives
@@ -90,8 +88,6 @@ Parse `expr` into a [`Expression`](@ref) and add to `model`. Returns an
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Nonlinear.Model();
 
 julia> x = MOI.VariableIndex(1);
@@ -130,8 +126,6 @@ solution information.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Nonlinear.Model();
 
 julia> x = MOI.VariableIndex(1);
@@ -165,8 +159,6 @@ Delete the constraint index `c` from `model`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Nonlinear.Model()
 A Nonlinear.Model with:
  0 objectives
@@ -220,8 +212,6 @@ and used to modify the value of the parameter.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> model = MOI.Nonlinear.Model()
 A Nonlinear.Model with:
  0 objectives

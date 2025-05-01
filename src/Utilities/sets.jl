@@ -29,8 +29,6 @@ Only define this function if it makes sense and you have implemented
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> set = MOI.Interval(-2.0, 3.0)
 MathOptInterface.Interval{Float64}(-2.0, 3.0)
 
@@ -53,8 +51,6 @@ See also [`shift_constant`](@ref).
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> MOI.Utilities.supports_shift_constant(MOI.Interval{Float64})
 true
 

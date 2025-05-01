@@ -78,8 +78,6 @@ Represents the scalar-valued term `coefficient * variable`.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex(1)
 MOI.VariableIndex(1)
 
@@ -126,8 +124,6 @@ coefficients are summed together.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex(1)
 MOI.VariableIndex(1)
 
@@ -168,8 +164,6 @@ Represents the scalar-valued term ``c x_i x_j`` where ``c`` is `coefficient`,
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex(1)
 MOI.VariableIndex(1)
 
@@ -242,8 +236,6 @@ As a rule, to represent ``a * x^2 + b * x * y``:
 To represent the function ``f(x, y) = 2 * x^2 + 3 * x * y + 4 * x + 5``, do:
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex(1);
 
 julia> y = MOI.VariableIndex(2);
@@ -333,8 +325,6 @@ when the function is first added to the model, or it may be thrown when
 To represent the function ``f(x) = sin(x)^2``, do:
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex(1)
 MOI.VariableIndex(1)
 
@@ -397,8 +387,6 @@ An error thrown by optimizers if they do not support the operator `head` in a
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> throw(MOI.UnsupportedNonlinearOperator(:black_box))
 ERROR: MathOptInterface.UnsupportedNonlinearOperator: The nonlinear operator `:black_box` is not supported by the model.
 Stacktrace:
@@ -442,8 +430,6 @@ The list of `variables` may contain duplicates.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex.(1:2)
 2-element Vector{MathOptInterface.VariableIndex}:
  MOI.VariableIndex(1)
@@ -491,8 +477,6 @@ of the vector-valued [`VectorAffineFunction`](@ref) or
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex(1);
 
 julia> MOI.VectorAffineTerm(Int64(2), MOI.ScalarAffineTerm(3.0, x))
@@ -538,8 +522,6 @@ are summed together.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex(1);
 
 julia> terms = [
@@ -591,8 +573,6 @@ appears in the `output_index` row of the vector-valued
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex(1);
 
 julia> MOI.VectorQuadraticTerm(Int64(2), MOI.ScalarQuadraticTerm(3.0, x, x))
@@ -645,8 +625,6 @@ Duplicate indices in `quadratic_terms` and `affine_terms` with the same
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex(1);
 
 julia> y = MOI.VariableIndex(2);
@@ -715,8 +693,6 @@ following:
 To represent the function ``f(x) = [sin(x)^2, x]``, do:
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex(1)
 MOI.VariableIndex(1)
 

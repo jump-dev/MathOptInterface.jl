@@ -1034,8 +1034,6 @@ The output of `canonical` can be assumed to be a copy of `f`, even for
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x, y, z = MOI.VariableIndex.(1:3);
 
 julia> f = MOI.ScalarAffineFunction(
@@ -1165,8 +1163,6 @@ want to first call [`canonical`](@ref) if that is not guaranteed.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> x = MOI.VariableIndex(1)
 MOI.VariableIndex(1)
 
@@ -2557,8 +2553,6 @@ complex-valued).
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> MOI.Utilities.is_complex(MOI.VariableIndex)
 false
 

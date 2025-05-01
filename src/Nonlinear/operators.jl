@@ -105,8 +105,6 @@ The list of univariate operators that are supported by default.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> MOI.Nonlinear.DEFAULT_UNIVARIATE_OPERATORS
 73-element Vector{Symbol}:
  :+
@@ -141,8 +139,6 @@ The list of multivariate operators that are supported by default.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> MOI.Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS
 9-element Vector{Symbol}:
  :+
@@ -550,8 +546,6 @@ If `op isa Integer`, then `op` is the index in
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> r = MOI.Nonlinear.OperatorRegistry();
 
 julia> MOI.Nonlinear.eval_univariate_function(r, :abs, -1.2)
@@ -603,8 +597,6 @@ If `op isa Integer`, then `op` is the index in
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> r = MOI.Nonlinear.OperatorRegistry();
 
 julia> MOI.Nonlinear.eval_univariate_gradient(r, :abs, -1.2)
@@ -656,8 +648,6 @@ If `op isa Integer`, then `op` is the index in
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> r = MOI.Nonlinear.OperatorRegistry();
 
 julia> MOI.Nonlinear.eval_univariate_function_and_gradient(r, :abs, -1.2)
@@ -708,8 +698,6 @@ If `op isa Integer`, then `op` is the index in
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> r = MOI.Nonlinear.OperatorRegistry();
 
 julia> MOI.Nonlinear.eval_univariate_hessian(r, :sin, 1.0)

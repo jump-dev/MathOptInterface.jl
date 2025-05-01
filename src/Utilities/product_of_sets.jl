@@ -56,8 +56,6 @@ Generate a new [`MixOfScalarSets`](@ref) subtype.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> MOI.Utilities.@mix_of_scalar_sets(
            MixedIntegerLinearProgramSets,
            MOI.GreaterThan{T},
@@ -156,8 +154,6 @@ Generate a new [`OrderedProductOfSets`](@ref) subtype.
 ## Example
 
 ```jldoctest
-julia> import MathOptInterface as MOI
-
 julia> MOI.Utilities.@product_of_sets(
            LinearOrthants,
            MOI.Zeros,
