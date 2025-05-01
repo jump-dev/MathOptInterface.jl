@@ -182,6 +182,8 @@ end.
 ## Examples
 
 ```jldoctest
+julia> import MathOptInterface as MOI
+
 julia> x = [(1, 2, 3), (4, 5, 6), (7, 8, 9)]
 3-element Vector{Tuple{Int64, Int64, Int64}}:
  (1, 2, 3)
