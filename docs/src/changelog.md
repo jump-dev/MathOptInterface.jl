@@ -23,11 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
- - `FileFormats.NL` clarify comment about binary format (#2720)
+ - Clarified comment about binary format in `FileFormats.NL` (#2720)
  - Added more packages to solver-tests.yml (#2721)
  - Removed `@show` from test of MockOptimizer (#2725)
  - Added `@testset` to [`Bridges.runtests`](@ref) (#2726), (#2734)
- - Update dJuliaFormatter to v2 (#2731)
+ - Updated JuliaFormatter to v2 (#2731)
  - Various improvements to `Nonlinear.ReverseAD` (#2730), (#2736), (#2737),
    (#2738), (#2740), (#2744), (#2745)
  - Bumped Julia version to v1.10 for documentation (#2735)
