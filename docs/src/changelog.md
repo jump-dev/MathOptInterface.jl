@@ -7,6 +7,33 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.40.0 (May 4, 2025)
+
+### Added
+
+ - Added [`Utilities.distance_to_set`](@ref) for [`PositiveSemidefiniteConeTriangle`](@ref)
+   and [`PositiveSemidefiniteConeSquare`](@ref) (#2729)
+ - Added [`Bridges.Constraint.HermitianToComplexSymmetricBridge`](@ref) (#2724)
+
+### Fixed
+
+ - Fixed Bridge tests for non-invertible constraint bridge (#2713)
+ - Fixed bridge weights for SOS(1|2)ToMILPBridge (#2723)
+ - Fixed `Bridges.Constraint.SetMapBridge` with `Complex` number types (#2733)
+
+### Other
+
+ - Clarified comment about binary format in `FileFormats.NL` (#2720)
+ - Added more packages to solver-tests.yml (#2721)
+ - Removed `@show` from test of MockOptimizer (#2725)
+ - Added `@testset` to [`Bridges.runtests`](@ref) (#2726), (#2734)
+ - Updated JuliaFormatter to v2 (#2731)
+ - Various improvements to `Nonlinear.ReverseAD` (#2730), (#2736), (#2737),
+   (#2738), (#2740), (#2744), (#2745)
+ - Bumped Julia version to v1.10 for documentation (#2735)
+ - Fixed tests on nightly (#2742)
+ - Added import MathOptInterface as MOI to DocTestSetup (#2746)
+
 ## v1.39.0 (April 10, 2025)
 
 ### Added
