@@ -18,6 +18,7 @@ struct _SubexpressionStorage
         expr::Nonlinear.Expression,
         subexpression_linearity,
         moi_index_to_consecutive_index,
+        partials_storage_ϵ::Vector{Float64},
         want_hess::Bool,
     )
         nodes =
@@ -36,7 +37,7 @@ struct _SubexpressionStorage
             zeros(N),  # forward_storage,
             zeros(N),  # partials_storage,
             zeros(N),  # reverse_storage,
-            Float64[],
+            partials_storage_ϵ,
             linearity,
         )
     end

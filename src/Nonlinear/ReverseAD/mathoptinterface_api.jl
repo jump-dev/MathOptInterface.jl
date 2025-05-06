@@ -78,6 +78,7 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
             d.data.expressions[k],
             d.subexpression_linearity,
             moi_index_to_consecutive_index,
+            zeros(max_chunk * length(d.data.expressions[k].nodes)),
             d.want_hess,
         )
         d.subexpressions[k] = subex
