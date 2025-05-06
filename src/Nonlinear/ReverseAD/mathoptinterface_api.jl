@@ -43,23 +43,13 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     d.want_hess = :Hess in requested_features
     want_hess_storage = (:HessVec in requested_features) || d.want_hess
     coloring_storage = Coloring.IndexedSet(N)
-    #
     max_expr_length = 0
     max_expr_with_sub_length = 0
-    max_chunk = 1
-    main_expressions = Vector{Nonlinear.Node}[]
+    #
+    main_expressions = [c.expression.nodes for (_, c) in d.data.constraints]
     if d.data.objective !== nothing
-        objective = something(d.data.objective)
-        max_expr_length = max(max_expr_length, length(objective.nodes))
-        max_chunk = max(max_chunk, size(objective.seed_matrix, 2))
-        push!(main_expressions, objective.nodes)
+        pushfirst!(main_expressions, something(d.data.objective).nodes)
     end
-    for (_, c) in d.data.constraints
-        max_expr_length = max(max_expr_length, length(c.expression.nodes))
-        max_chunk = max(max_chunk, size(c.expression.seed_matrix, 2))
-        push!(main_expressions, c.expression.nodes)
-    end
-    max_chunk = min(max_chunk, MAX_CHUNK)
     d.subexpression_order, individual_order = _order_subexpressions(
         main_expressions,
         [expr.nodes for expr in d.data.expressions],
@@ -79,7 +69,7 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
             d.data.expressions[k],
             d.subexpression_linearity,
             moi_index_to_consecutive_index,
-            zeros(max_chunk * length(d.data.expressions[k].nodes)),
+            Float64[],
             d.want_hess,
         )
         d.subexpressions[k] = subex
@@ -111,12 +101,12 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
             subexpression_edgelist[k] = edgelist
         end
     end
-    shared_partials_storage_ϵ = zeros(max_chunk * max_expr_length)
+    max_chunk = 1
+    shared_partials_storage_ϵ = Float64[]
     if d.data.objective !== nothing
         objective = _FunctionStorage(
             _SubexpressionStorage(
                 something(d.data.objective),
-                d.data.expressions[k],
                 d.subexpression_linearity,
                 moi_index_to_consecutive_index,
                 shared_partials_storage_ϵ,
@@ -130,6 +120,8 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
             subexpression_edgelist,
             subexpression_variables,
         )
+        max_expr_length = max(max_expr_length, length(objective.nodes))
+        max_chunk = max(max_chunk, size(objective.seed_matrix, 2))
         d.objective = objective
     end
     for (k, (_, constraint)) in enumerate(d.data.constraints)
@@ -156,11 +148,14 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
         max_expr_length = max(max_expr_length, length(d.constraints[end].nodes))
         max_chunk = max(max_chunk, size(d.constraints[end].seed_matrix, 2))
     end
+    max_chunk = min(max_chunk, MAX_CHUNK)
     max_expr_with_sub_length = max(max_expr_with_sub_length, max_expr_length)
     if d.want_hess || want_hess_storage
         d.input_ϵ = zeros(max_chunk * N)
         d.output_ϵ = zeros(max_chunk * N)
         #
+        resize!(shared_partials_storage_ϵ, max_chunk * max_expr_length)
+        fill!(shared_partials_storage_ϵ, 0.0)
         d.storage_ϵ = zeros(max_chunk * max_expr_with_sub_length)
         #
         len = max_chunk * length(d.subexpressions)

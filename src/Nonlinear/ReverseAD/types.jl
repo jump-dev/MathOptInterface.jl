@@ -61,13 +61,11 @@ struct _FunctionStorage
         want_hess::Bool,
         subexpressions::Vector{_SubexpressionStorage},
         dependent_subexpressions,
-        subexpression_linearity,
         subexpression_edgelist,
         subexpression_variables,
     )
-        N = length(nodes)
         empty!(coloring_storage)
-        _compute_gradient_sparsity!(coloring_storage, nodes)
+        _compute_gradient_sparsity!(coloring_storage, expr.nodes)
         for k in dependent_subexpressions
             _compute_gradient_sparsity!(
                 coloring_storage,
@@ -77,11 +75,10 @@ struct _FunctionStorage
         grad_sparsity = sort!(collect(coloring_storage))
         empty!(coloring_storage)
         if want_hess
-            linearity = _classify_linearity(nodes, adj, subexpression_linearity)
             edgelist = _compute_hessian_sparsity(
-                nodes,
-                adj,
-                linearity,
+                expr.nodes,
+                expr.adj,
+                expr.linearity,
                 coloring_storage,
                 subexpression_edgelist,
                 subexpression_variables,
