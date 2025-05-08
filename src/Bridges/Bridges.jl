@@ -273,7 +273,7 @@ and [`MOI.ConstraintPrimalStart`](@ref) to throw [`MOI.GetAttributeNotAllowed`](
 
 ## Example
 
-```jldoctest; filter=r"[0-9.]+s"
+```jldoctest; filter=[r"[0-9.]+s", r"\\s+Time"]
 julia> MOI.Bridges.runtests(
            MOI.Bridges.Constraint.ZeroOneBridge,
            model -> MOI.add_constrained_variable(model, MOI.ZeroOne()),
@@ -423,7 +423,7 @@ Run a series of tests that check the correctness of `Bridge`.
 
 ## Example
 
-```jldoctest; filter=r"[0-9.]+s"
+```jldoctest; filter=[r"[0-9.]+s", r"\\s+Time"]
 julia> MOI.Bridges.runtests(
            MOI.Bridges.Constraint.ZeroOneBridge,
            \"\"\"
