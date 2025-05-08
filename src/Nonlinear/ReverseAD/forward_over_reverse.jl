@@ -38,7 +38,7 @@ function _eval_hessian(
     scale::Float64,
     nzcount::Int,
 )::Int
-    if ex.linearity == LINEAR
+    if ex.expr.linearity == LINEAR
         @assert length(ex.hess_I) == 0
         return 0
     end

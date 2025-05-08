@@ -168,7 +168,7 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
                 linearity,
             ),
         )
-        max_expr_length = max(max_expr_length, length(d.constraints[end].nodes))
+        max_expr_length = max(max_expr_length, length(expr.nodes))
         max_chunk = max(max_chunk, size(d.constraints[end].seed_matrix, 2))
     end
     max_chunk = min(max_chunk, MAX_CHUNK)
@@ -210,7 +210,7 @@ function MOI.eval_objective(d::NLPEvaluator, x)
         error("No nonlinear objective.")
     end
     _reverse_mode(d, x)
-    return something(d.objective).forward_storage[1]
+    return something(d.objective).expr.forward_storage[1]
 end
 
 function MOI.eval_objective_gradient(d::NLPEvaluator, g, x)
@@ -226,7 +226,7 @@ end
 function MOI.eval_constraint(d::NLPEvaluator, g, x)
     _reverse_mode(d, x)
     for i in 1:length(d.constraints)
-        g[i] = d.constraints[i].forward_storage[1]
+        g[i] = d.constraints[i].expr.forward_storage[1]
     end
     return
 end

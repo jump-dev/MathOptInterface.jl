@@ -98,10 +98,7 @@ Forward-mode evaluation of an expression tree given in `f`.
    associate storage with each edge of the DAG.
 """
 function _forward_eval(
-    # !!! warning
-    #     This Union depends upon _FunctionStorage and _SubexpressionStorage
-    #     having similarly named fields.
-    f::Union{_FunctionStorage,_SubexpressionStorage},
+    f::_SubexpressionStorage,
     d::NLPEvaluator,
     x::AbstractVector{T},
 )::T where {T}
@@ -289,6 +286,8 @@ function _forward_eval(
     return f.forward_storage[1]
 end
 
+_forward_eval(f::_FunctionStorage, d, x) = _forward_eval(f.expr, d, x)
+
 """
     _reverse_eval(f::Union{_FunctionStorage,_SubexpressionStorage})
 
@@ -297,12 +296,7 @@ Reverse-mode evaluation of an expression tree given in `f`.
  * This function assumes `f.partials_storage` is already updated.
  * This function assumes that `f.reverse_storage` has been initialized with 0.0.
 """
-function _reverse_eval(
-    # !!! warning
-    #     This Union depends upon _FunctionStorage and _SubexpressionStorage
-    #     having similarly named fields.
-    f::Union{_FunctionStorage,_SubexpressionStorage},
-)
+function _reverse_eval(f::_SubexpressionStorage)
     @assert length(f.reverse_storage) >= length(f.nodes)
     @assert length(f.partials_storage) >= length(f.nodes)
     # f.nodes is already in order such that parents always appear before
@@ -327,6 +321,8 @@ function _reverse_eval(
     end
     return
 end
+
+_reverse_eval(f::_FunctionStorage) = _reverse_eval(f.expr)
 
 """
     _extract_reverse_pass(
@@ -361,9 +357,20 @@ end
 
 function _extract_reverse_pass_inner(
     output::AbstractVector{T},
-    # !!! warning
-    #     This Union depends upon _FunctionStorage and _SubexpressionStorage
-    #     having similarly named fields.
+    f::_FunctionStorage,
+    subexpressions::AbstractVector{T},
+    scale::T,
+) where {T}
+    return _extract_reverse_pass_inner(
+        output,
+        f.expr,
+        subexpressions,
+        scale,
+    )
+end
+
+function _extract_reverse_pass_inner(
+    output::AbstractVector{T},
     f::Union{_FunctionStorage,_SubexpressionStorage},
     subexpressions::AbstractVector{T},
     scale::T,
