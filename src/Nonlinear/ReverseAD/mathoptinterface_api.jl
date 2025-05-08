@@ -66,18 +66,11 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
         # Only load expressions which actually are used
         d.subexpression_forward_values[k] = NaN
         expr = d.data.expressions[k]
-        adj = Nonlinear.adjacency_matrix(expr.nodes)
-        linearity = if d.want_hess
-            _classify_linearity(expr.nodes, adj, d.subexpression_linearity)
-        else
-            [NONLINEAR]
-        end
-        subex = _SubexpressionStorage(
+        subex, _ = _subexpression_and_linearity(
             expr,
-            adj,
             moi_index_to_consecutive_index,
             Float64[],
-            linearity[1],
+            d,
         )
         d.subexpressions[k] = subex
         d.subexpression_linearity[k] = subex.linearity
@@ -112,20 +105,14 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     shared_partials_storage_ϵ = Float64[]
     if d.data.objective !== nothing
         expr = something(d.data.objective)
-        adj = Nonlinear.adjacency_matrix(expr.nodes)
-        linearity = if d.want_hess
-            _classify_linearity(expr.nodes, adj, d.subexpression_linearity)
-        else
-            [NONLINEAR]
-        end
+        subexpr, linearity = _subexpression_and_linearity(
+            expr,
+            moi_index_to_consecutive_index,
+            shared_partials_storage_ϵ,
+            d,
+        )
         objective = _FunctionStorage(
-            _SubexpressionStorage(
-                expr,
-                adj,
-                moi_index_to_consecutive_index,
-                shared_partials_storage_ϵ,
-                linearity[1],
-            ),
+            subexpr,
             N,
             coloring_storage,
             d.want_hess,
@@ -142,12 +129,12 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     for (k, (_, constraint)) in enumerate(d.data.constraints)
         idx = d.data.objective !== nothing ? k + 1 : k
         expr = constraint.expression
-        adj = Nonlinear.adjacency_matrix(expr.nodes)
-        linearity = if d.want_hess
-            _classify_linearity(expr.nodes, adj, d.subexpression_linearity)
-        else
-            [NONLINEAR]
-        end
+        subexpr, linearity = _subexpression_and_linearity(
+            expr,
+            moi_index_to_consecutive_index,
+            shared_partials_storage_ϵ,
+            d,
+        )
         push!(
             d.constraints,
             _FunctionStorage(

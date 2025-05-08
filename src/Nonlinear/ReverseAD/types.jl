@@ -15,19 +15,17 @@ struct _SubexpressionStorage
     linearity::Linearity
 
     function _SubexpressionStorage(
-        expr::Nonlinear.Expression,
+        nodes::Vector{Nonlinear.Node},
         adj::SparseArrays.SparseMatrixCSC{Bool,Int},
-        moi_index_to_consecutive_index,
+        const_values::Vector{Float64},
         partials_storage_ϵ::Vector{Float64},
         linearity::Linearity,
     )
-        nodes =
-            _replace_moi_variables(expr.nodes, moi_index_to_consecutive_index)
         N = length(nodes)
         return new(
             nodes,
             adj,
-            expr.values,
+            const_values,
             zeros(N),  # forward_storage,
             zeros(N),  # partials_storage,
             zeros(N),  # reverse_storage,
@@ -35,6 +33,31 @@ struct _SubexpressionStorage
             linearity,
         )
     end
+end
+
+# We don't need to store the full vector of `linearity` but we return
+# it because it is needed in `compute_hessian_sparsity`.
+function _subexpression_and_linearity(
+    expr::Nonlinear.Expression,
+    moi_index_to_consecutive_index,
+    partials_storage_ϵ::Vector{Float64},
+    d,
+)
+    nodes =
+        _replace_moi_variables(expr.nodes, moi_index_to_consecutive_index)
+    adj = Nonlinear.adjacency_matrix(nodes)
+    linearity = if d.want_hess
+        _classify_linearity(nodes, adj, d.subexpression_linearity)
+    else
+        [NONLINEAR]
+    end
+    return _SubexpressionStorage(
+        nodes,
+        adj,
+        expr.values,
+        partials_storage_ϵ,
+        linearity[1],
+    ), linearity
 end
 
 struct _FunctionStorage
@@ -78,11 +101,13 @@ struct _FunctionStorage
                 subexpression_edgelist,
                 subexpression_variables,
             )
+            @show edgelist
             hess_I, hess_J, rinfo = Coloring.hessian_color_preprocess(
                 edgelist,
                 num_variables,
                 coloring_storage,
             )
+            @show hess_I, hess_J
             seed_matrix = Coloring.seed_matrix(rinfo)
             return new(
                 expr,
