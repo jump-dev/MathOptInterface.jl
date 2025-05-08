@@ -39,20 +39,20 @@ function _reverse_mode(d::NLPEvaluator, x)
             _forward_eval(d.subexpressions[k], d, x)
     end
     if d.objective !== nothing
-        _forward_eval(d.objective::_FunctionStorage, d, x)
+        _forward_eval(something(d.objective).expr, d, x)
     end
     for con in d.constraints
-        _forward_eval(con, d, x)
+        _forward_eval(con.expr, d, x)
     end
     # Phase II
     for k in d.subexpression_order
         _reverse_eval(d.subexpressions[k])
     end
     if d.objective !== nothing
-        _reverse_eval(d.objective::_FunctionStorage)
+        _reverse_eval(something(d.objective).expr)
     end
     for con in d.constraints
-        _reverse_eval(con)
+        _reverse_eval(con.expr)
     end
     # If a JuMP model uses the legacy nonlinear interface, then JuMP constructs
     # a NLPEvaluator at the start of a call to `JuMP.optimize!` and it passes in
@@ -81,7 +81,7 @@ end
 
 """
     _forward_eval(
-        f::Union{_FunctionStorage,_SubexpressionStorage},
+        f::_SubexpressionStorage,
         d::NLPEvaluator,
         x::AbstractVector{T},
     ) where {T}
@@ -286,10 +286,8 @@ function _forward_eval(
     return f.forward_storage[1]
 end
 
-_forward_eval(f::_FunctionStorage, d, x) = _forward_eval(f.expr, d, x)
-
 """
-    _reverse_eval(f::Union{_FunctionStorage,_SubexpressionStorage})
+    _reverse_eval(f::_SubexpressionStorage)
 
 Reverse-mode evaluation of an expression tree given in `f`.
 
@@ -321,8 +319,6 @@ function _reverse_eval(f::_SubexpressionStorage)
     end
     return
 end
-
-_reverse_eval(f::_FunctionStorage) = _reverse_eval(f.expr)
 
 """
     _extract_reverse_pass(
