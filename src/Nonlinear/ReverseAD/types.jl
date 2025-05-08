@@ -43,8 +43,7 @@ function _subexpression_and_linearity(
     partials_storage_ϵ::Vector{Float64},
     d,
 )
-    nodes =
-        _replace_moi_variables(expr.nodes, moi_index_to_consecutive_index)
+    nodes = _replace_moi_variables(expr.nodes, moi_index_to_consecutive_index)
     adj = Nonlinear.adjacency_matrix(nodes)
     linearity = if d.want_hess
         _classify_linearity(nodes, adj, d.subexpression_linearity)
@@ -57,7 +56,8 @@ function _subexpression_and_linearity(
         expr.values,
         partials_storage_ϵ,
         linearity[1],
-    ), linearity
+    ),
+    linearity
 end
 
 struct _FunctionStorage

@@ -372,10 +372,8 @@ function _reverse_eval_ϵ(
     scale::T,
     scale_ϵ::ForwardDiff.Partials{N,T},
 ) where {N,T}
-    partials_storage_ϵ = _reinterpret_unsafe(
-        ForwardDiff.Partials{N,T},
-        ex.partials_storage_ϵ,
-    )
+    partials_storage_ϵ =
+        _reinterpret_unsafe(ForwardDiff.Partials{N,T}, ex.partials_storage_ϵ)
     @assert length(reverse_storage_ϵ) >= length(ex.nodes)
     @assert length(partials_storage_ϵ) >= length(ex.nodes)
     if ex.nodes[1].type == Nonlinear.NODE_VARIABLE

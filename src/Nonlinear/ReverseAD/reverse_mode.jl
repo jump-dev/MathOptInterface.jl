@@ -361,12 +361,7 @@ function _extract_reverse_pass_inner(
     subexpressions::AbstractVector{T},
     scale::T,
 ) where {T}
-    return _extract_reverse_pass_inner(
-        output,
-        f.expr,
-        subexpressions,
-        scale,
-    )
+    return _extract_reverse_pass_inner(output, f.expr, subexpressions, scale)
 end
 
 function _extract_reverse_pass_inner(
