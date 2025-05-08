@@ -138,13 +138,7 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
         push!(
             d.constraints,
             _FunctionStorage(
-                _SubexpressionStorage(
-                    expr,
-                    adj,
-                    moi_index_to_consecutive_index,
-                    shared_partials_storage_ϵ,
-                    linearity[1],
-                ),
+                subexpr,
                 N,
                 coloring_storage,
                 d.want_hess,
@@ -364,11 +358,7 @@ function MOI.eval_hessian_lagrangian_product(d::NLPEvaluator, h, x, v, σ, μ)
     subexpr_forward_values_ϵ = reinterpret(T, d.subexpression_forward_values_ϵ)
     for i in d.subexpression_order
         subexpr = d.subexpressions[i]
-        subexpr_forward_values_ϵ[i] = _forward_eval_ϵ(
-            d,
-            subexpr,
-            reinterpret(T, subexpr.partials_storage_ϵ),
-        )
+        subexpr_forward_values_ϵ[i] = _forward_eval_ϵ(d, subexpr, T)
     end
     # we only need to do one reverse pass through the subexpressions as well
     subexpr_reverse_values_ϵ = reinterpret(T, d.subexpression_reverse_values_ϵ)
@@ -377,16 +367,11 @@ function MOI.eval_hessian_lagrangian_product(d::NLPEvaluator, h, x, v, σ, μ)
     fill!(d.storage_ϵ, 0.0)
     fill!(output_ϵ, zero(T))
     if d.objective !== nothing
-        _forward_eval_ϵ(
-            d,
-            something(d.objective),
-            reinterpret(T, d.partials_storage_ϵ),
-        )
+        _forward_eval_ϵ(d, something(d.objective).expr, T)
         _reverse_eval_ϵ(
             output_ϵ,
-            something(d.objective),
-            reinterpret(T, d.storage_ϵ),
-            reinterpret(T, d.partials_storage_ϵ),
+            something(d.objective).expr,
+            _reinterpret_unsafe(T, d.storage_ϵ),
             d.subexpression_reverse_values,
             subexpr_reverse_values_ϵ,
             σ,
@@ -394,12 +379,11 @@ function MOI.eval_hessian_lagrangian_product(d::NLPEvaluator, h, x, v, σ, μ)
         )
     end
     for (i, con) in enumerate(d.constraints)
-        _forward_eval_ϵ(d, con, reinterpret(T, d.partials_storage_ϵ))
+        _forward_eval_ϵ(d, con.expr, T)
         _reverse_eval_ϵ(
             output_ϵ,
-            con,
+            con.expr,
             reinterpret(T, d.storage_ϵ),
-            reinterpret(T, d.partials_storage_ϵ),
             d.subexpression_reverse_values,
             subexpr_reverse_values_ϵ,
             μ[i],
@@ -413,7 +397,6 @@ function MOI.eval_hessian_lagrangian_product(d::NLPEvaluator, h, x, v, σ, μ)
             output_ϵ,
             subexpr,
             reinterpret(T, d.storage_ϵ),
-            reinterpret(T, subexpr.partials_storage_ϵ),
             d.subexpression_reverse_values,
             subexpr_reverse_values_ϵ,
             d.subexpression_reverse_values[j],

@@ -101,13 +101,11 @@ struct _FunctionStorage
                 subexpression_edgelist,
                 subexpression_variables,
             )
-            @show edgelist
             hess_I, hess_J, rinfo = Coloring.hessian_color_preprocess(
                 edgelist,
                 num_variables,
                 coloring_storage,
             )
-            @show hess_I, hess_J
             seed_matrix = Coloring.seed_matrix(rinfo)
             return new(
                 expr,
@@ -172,7 +170,6 @@ mutable struct NLPEvaluator <: MOI.AbstractNLPEvaluator
     # so the length should be multiplied by the maximum number of epsilon components
     disable_2ndorder::Bool # don't offer Hess or HessVec
     want_hess::Bool
-    partials_storage_ϵ::Vector{Float64} # (longest expression excluding subexpressions)
     storage_ϵ::Vector{Float64} # (longest expression including subexpressions)
     input_ϵ::Vector{Float64} # (number of variables)
     output_ϵ::Vector{Float64} # (number of variables)

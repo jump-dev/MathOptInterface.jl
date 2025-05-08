@@ -128,13 +128,9 @@ function _hessian_slice_inner(d, ex, ::Type{T}) where {T}
         _reinterpret_unsafe(T, d.subexpression_forward_values_ϵ)
     for i in ex.dependent_subexpressions
         subexpr = d.subexpressions[i]
-        subexpr_forward_values_ϵ[i] = _forward_eval_ϵ(
-            d,
-            subexpr,
-            _reinterpret_unsafe(T, subexpr.partials_storage_ϵ),
-        )
+        subexpr_forward_values_ϵ[i] = _forward_eval_ϵ(d, subexpr, T)
     end
-    _forward_eval_ϵ(d, ex, _reinterpret_unsafe(T, d.partials_storage_ϵ))
+    _forward_eval_ϵ(d, ex.expr, T)
     # do a reverse pass
     subexpr_reverse_values_ϵ =
         _reinterpret_unsafe(T, d.subexpression_reverse_values_ϵ)
@@ -144,9 +140,8 @@ function _hessian_slice_inner(d, ex, ::Type{T}) where {T}
     end
     _reverse_eval_ϵ(
         output_ϵ,
-        ex,
+        ex.expr,
         _reinterpret_unsafe(T, d.storage_ϵ),
-        _reinterpret_unsafe(T, d.partials_storage_ϵ),
         d.subexpression_reverse_values,
         subexpr_reverse_values_ϵ,
         1.0,
@@ -159,7 +154,6 @@ function _hessian_slice_inner(d, ex, ::Type{T}) where {T}
             output_ϵ,
             subexpr,
             _reinterpret_unsafe(T, d.storage_ϵ),
-            _reinterpret_unsafe(T, subexpr.partials_storage_ϵ),
             d.subexpression_reverse_values,
             subexpr_reverse_values_ϵ,
             d.subexpression_reverse_values[j],
@@ -173,8 +167,8 @@ end
     _forward_eval_ϵ(
         d::NLPEvaluator,
         ex::Union{_FunctionStorage,_SubexpressionStorage},
-        partials_storage_ϵ::AbstractVector{ForwardDiff.Partials{N,T}},
-    ) where {N,T}
+        ::Type{P},
+    ) where {N,T,P<:ForwardDiff.Partials{N,T}}
 
 Evaluate the directional derivatives of the expression tree in `ex`.
 
@@ -186,10 +180,11 @@ This assumes that `_reverse_model(d, x)` has already been called.
 """
 function _forward_eval_ϵ(
     d::NLPEvaluator,
-    ex::Union{_FunctionStorage,_SubexpressionStorage},
-    partials_storage_ϵ::AbstractVector{P},
+    ex::_SubexpressionStorage,
+    ::Type{P},
 ) where {N,T,P<:ForwardDiff.Partials{N,T}}
     storage_ϵ = _reinterpret_unsafe(P, d.storage_ϵ)
+    partials_storage_ϵ = _reinterpret_unsafe(P, ex.partials_storage_ϵ)
     x_values_ϵ = _reinterpret_unsafe(P, d.input_ϵ)
     subexpression_values_ϵ =
         _reinterpret_unsafe(P, d.subexpression_forward_values_ϵ)
@@ -370,14 +365,17 @@ end
 # to compute hessian-vector products.
 function _reverse_eval_ϵ(
     output_ϵ::AbstractVector{ForwardDiff.Partials{N,T}},
-    ex::Union{_FunctionStorage,_SubexpressionStorage},
+    ex::_SubexpressionStorage,
     reverse_storage_ϵ,
-    partials_storage_ϵ,
     subexpression_output,
     subexpression_output_ϵ,
     scale::T,
     scale_ϵ::ForwardDiff.Partials{N,T},
 ) where {N,T}
+    partials_storage_ϵ = _reinterpret_unsafe(
+        ForwardDiff.Partials{N,T},
+        ex.partials_storage_ϵ,
+    )
     @assert length(reverse_storage_ϵ) >= length(ex.nodes)
     @assert length(partials_storage_ϵ) >= length(ex.nodes)
     if ex.nodes[1].type == Nonlinear.NODE_VARIABLE
