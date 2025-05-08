@@ -25,10 +25,10 @@ MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
 
 H_struct = MOI.hessian_lagrangian_structure(evaluator)
 H = zeros(length(H_struct))
-mu = rand(m)
-sigma = 0.0
-x_v = rand(n)
-@time MOI.eval_hessian_lagrangian(evaluator, H, x_v, sigma, mu)
+μ = rand(m)
+σ = 0.0
+v = rand(n)
+@time MOI.eval_hessian_lagrangian(evaluator, H, v, σ, μ)
 
 using BenchmarkTools
-@benchmark MOI.eval_hessian_lagrangian($evaluator, $H, $x_v, $sigma, $mu) seconds = 100
+@benchmark MOI.eval_hessian_lagrangian($evaluator, $H, $v, $σ, $μ) seconds = 100
