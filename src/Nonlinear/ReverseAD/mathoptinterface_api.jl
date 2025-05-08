@@ -65,12 +65,19 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     for k in d.subexpression_order
         # Only load expressions which actually are used
         d.subexpression_forward_values[k] = NaN
+        nodes = d.data.expressions[k]
+        adj = Nonlinear.adjacency_matrix(nodes)
+        linearity = if d.want_hess
+            _classify_linearity(nodes, adj, d.subexpression_linearity)[1]
+        else
+            NONLINEAR
+        end
         subex = _SubexpressionStorage(
             d.data.expressions[k],
-            d.subexpression_linearity,
+            adj,
             moi_index_to_consecutive_index,
             Float64[],
-            d.want_hess,
+            linearity[1],
         )
         d.subexpressions[k] = subex
         d.subexpression_linearity[k] = subex.linearity
@@ -104,13 +111,20 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     max_chunk = 1
     shared_partials_storage_ϵ = Float64[]
     if d.data.objective !== nothing
+        nodes = something(d.data.objective)
+        adj = Nonlinear.adjacency_matrix(nodes)
+        linearity = if d.want_hess
+            _classify_linearity(nodes, adj, d.subexpression_linearity)[1]
+        else
+            NONLINEAR
+        end
         objective = _FunctionStorage(
             _SubexpressionStorage(
-                something(d.data.objective),
-                d.subexpression_linearity,
+                nodes,
+                adj,
                 moi_index_to_consecutive_index,
                 shared_partials_storage_ϵ,
-                d.want_hess,
+                linearity[1],
             ),
             N,
             coloring_storage,
@@ -119,6 +133,7 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
             individual_order[1],
             subexpression_edgelist,
             subexpression_variables,
+            linearity,
         )
         max_expr_length = max(max_expr_length, length(objective.nodes))
         max_chunk = max(max_chunk, size(objective.seed_matrix, 2))
@@ -126,15 +141,22 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     end
     for (k, (_, constraint)) in enumerate(d.data.constraints)
         idx = d.data.objective !== nothing ? k + 1 : k
+        nodes = main_expressions[idx]
+        adj = Nonlinear.adjacency_matrix(nodes)
+        linearity = if d.want_hess
+            _classify_linearity(nodes, adj, d.subexpression_linearity)[1]
+        else
+            NONLINEAR
+        end
         push!(
             d.constraints,
             _FunctionStorage(
                 _SubexpressionStorage(
-                    main_expressions[idx],
-                    d.subexpression_linearity,
+                    nodes,
+                    adj,
                     moi_index_to_consecutive_index,
                     shared_partials_storage_ϵ,
-                    d.want_hess,
+                    linearity[1],
                 ),
                 N,
                 coloring_storage,
@@ -143,6 +165,7 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
                 individual_order[idx],
                 subexpression_edgelist,
                 subexpression_variables,
+                linearity,
             ),
         )
         max_expr_length = max(max_expr_length, length(d.constraints[end].nodes))

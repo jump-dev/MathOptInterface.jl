@@ -16,20 +16,14 @@ struct _SubexpressionStorage
 
     function _SubexpressionStorage(
         expr::Nonlinear.Expression,
-        subexpression_linearity,
+        adj::SparseArrays.SparseMatrixCSC{Bool,Int},
         moi_index_to_consecutive_index,
         partials_storage_ϵ::Vector{Float64},
-        want_hess::Bool,
+        linearity::Linearity,
     )
         nodes =
             _replace_moi_variables(expr.nodes, moi_index_to_consecutive_index)
-        adj = Nonlinear.adjacency_matrix(nodes)
         N = length(nodes)
-        linearity = if want_hess
-            _classify_linearity(nodes, adj, subexpression_linearity)[1]
-        else
-            NONLINEAR
-        end
         return new(
             nodes,
             adj,
@@ -63,6 +57,7 @@ struct _FunctionStorage
         dependent_subexpressions,
         subexpression_edgelist,
         subexpression_variables,
+        linearity::Vector{Linearity},
     )
         empty!(coloring_storage)
         _compute_gradient_sparsity!(coloring_storage, expr.nodes)
@@ -78,7 +73,7 @@ struct _FunctionStorage
             edgelist = _compute_hessian_sparsity(
                 expr.nodes,
                 expr.adj,
-                expr.linearity,
+                linearity,
                 coloring_storage,
                 subexpression_edgelist,
                 subexpression_variables,
@@ -100,6 +95,7 @@ struct _FunctionStorage
             )
         else
             return new(
+                expr,
                 grad_sparsity,
                 Int[],
                 Int[],
