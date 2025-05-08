@@ -65,15 +65,15 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     for k in d.subexpression_order
         # Only load expressions which actually are used
         d.subexpression_forward_values[k] = NaN
-        nodes = d.data.expressions[k]
-        adj = Nonlinear.adjacency_matrix(nodes)
+        expr = d.data.expressions[k]
+        adj = Nonlinear.adjacency_matrix(expr.nodes)
         linearity = if d.want_hess
-            _classify_linearity(nodes, adj, d.subexpression_linearity)[1]
+            _classify_linearity(expr.nodes, adj, d.subexpression_linearity)
         else
-            NONLINEAR
+            [NONLINEAR]
         end
         subex = _SubexpressionStorage(
-            d.data.expressions[k],
+            expr,
             adj,
             moi_index_to_consecutive_index,
             Float64[],
@@ -111,16 +111,16 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     max_chunk = 1
     shared_partials_storage_ϵ = Float64[]
     if d.data.objective !== nothing
-        nodes = something(d.data.objective)
-        adj = Nonlinear.adjacency_matrix(nodes)
+        expr = something(d.data.objective)
+        adj = Nonlinear.adjacency_matrix(expr.nodes)
         linearity = if d.want_hess
-            _classify_linearity(nodes, adj, d.subexpression_linearity)[1]
+            _classify_linearity(expr.nodes, adj, d.subexpression_linearity)
         else
-            NONLINEAR
+            [NONLINEAR]
         end
         objective = _FunctionStorage(
             _SubexpressionStorage(
-                nodes,
+                expr,
                 adj,
                 moi_index_to_consecutive_index,
                 shared_partials_storage_ϵ,
@@ -135,24 +135,24 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
             subexpression_variables,
             linearity,
         )
-        max_expr_length = max(max_expr_length, length(objective.nodes))
+        max_expr_length = max(max_expr_length, length(expr.nodes))
         max_chunk = max(max_chunk, size(objective.seed_matrix, 2))
         d.objective = objective
     end
     for (k, (_, constraint)) in enumerate(d.data.constraints)
         idx = d.data.objective !== nothing ? k + 1 : k
-        nodes = main_expressions[idx]
-        adj = Nonlinear.adjacency_matrix(nodes)
+        expr = constraint.expression
+        adj = Nonlinear.adjacency_matrix(expr.nodes)
         linearity = if d.want_hess
-            _classify_linearity(nodes, adj, d.subexpression_linearity)[1]
+            _classify_linearity(expr.nodes, adj, d.subexpression_linearity)
         else
-            NONLINEAR
+            [NONLINEAR]
         end
         push!(
             d.constraints,
             _FunctionStorage(
                 _SubexpressionStorage(
-                    nodes,
+                    expr,
                     adj,
                     moi_index_to_consecutive_index,
                     shared_partials_storage_ϵ,
