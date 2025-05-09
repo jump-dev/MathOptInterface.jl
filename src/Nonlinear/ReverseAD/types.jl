@@ -42,6 +42,15 @@ struct _SubexpressionStorage
     end
 end
 
+function MOI.Nonlinear.expression(expr::_SubexpressionStorage)
+    return MOI.Nonlinear.Expression(
+        expr.nodes,
+        expr.const_values,
+    )
+end
+
+MOI.Nonlinear.adjacency_matrix(expr::_SubexpressionStorage) = expr.adj
+
 struct _FunctionStorage
     nodes::Vector{Nonlinear.Node}
     adj::SparseArrays.SparseMatrixCSC{Bool,Int}
@@ -135,6 +144,15 @@ struct _FunctionStorage
         end
     end
 end
+
+function MOI.Nonlinear.expression(expr::_FunctionStorage)
+    return MOI.Nonlinear.Expression(
+        expr.nodes,
+        expr.const_values,
+    )
+end
+
+MOI.Nonlinear.adjacency_matrix(expr::_FunctionStorage) = expr.adj
 
 """
     NLPEvaluator(
