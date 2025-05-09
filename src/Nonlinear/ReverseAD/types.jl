@@ -43,10 +43,7 @@ struct _SubexpressionStorage
 end
 
 function MOI.Nonlinear.expression(expr::_SubexpressionStorage)
-    return MOI.Nonlinear.Expression(
-        expr.nodes,
-        expr.const_values,
-    )
+    return MOI.Nonlinear.Expression(expr.nodes, expr.const_values)
 end
 
 MOI.Nonlinear.adjacency_matrix(expr::_SubexpressionStorage) = expr.adj
@@ -146,10 +143,7 @@ struct _FunctionStorage
 end
 
 function MOI.Nonlinear.expression(expr::_FunctionStorage)
-    return MOI.Nonlinear.Expression(
-        expr.nodes,
-        expr.const_values,
-    )
+    return MOI.Nonlinear.Expression(expr.nodes, expr.const_values)
 end
 
 MOI.Nonlinear.adjacency_matrix(expr::_FunctionStorage) = expr.adj
