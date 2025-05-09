@@ -275,6 +275,14 @@ function test_sets_dual_psdtriangle()
         MOI.ScaledPositiveSemidefiniteConeTriangle(2),
         MOI.ScaledPositiveSemidefiniteConeTriangle(3),
     )
+    _test_sets_dual_psdtriangle(
+        MOI.HermitianPositiveSemidefiniteConeTriangle(2),
+        MOI.HermitianPositiveSemidefiniteConeTriangle(3),
+    )
+    _test_sets_dual_psdtriangle(
+        MOI.Scaled(MOI.HermitianPositiveSemidefiniteConeTriangle(2)),
+        MOI.Scaled(MOI.HermitianPositiveSemidefiniteConeTriangle(3)),
+    )
     return
 end
 

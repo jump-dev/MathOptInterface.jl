@@ -1352,6 +1352,12 @@ function dimension(set::HermitianPositiveSemidefiniteConeTriangle)
     return real_nnz + imag_nnz
 end
 
+dual_set(set::HermitianPositiveSemidefiniteConeTriangle) = set
+
+function dual_set_type(::Type{HermitianPositiveSemidefiniteConeTriangle})
+    return HermitianPositiveSemidefiniteConeTriangle
+end
+
 """
     side_dimension(
         set::Union{
