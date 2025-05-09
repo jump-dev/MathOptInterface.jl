@@ -1421,6 +1421,27 @@ function test_hessian_reinterpret_unsafe()
     return
 end
 
+function test_expression_and_adjacency_matrix()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    expr = Nonlinear.add_expression(model, :($x^2 + 1))
+    Nonlinear.set_objective(model, :($expr^2))
+    con = Nonlinear.add_constraint(model, :(2 * $expr), MOI.LessThan(1.0))
+    @test Nonlinear.expression(model[con]) isa Nonlinear.Expression
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Grad])
+    d = evaluator.backend
+    @test Nonlinear.expression(d.objective) isa Nonlinear.Expression
+    A = SparseArrays.sparse([2, 3], [1, 1], Bool[1, 1], 3, 3)
+    @test Nonlinear.adjacency_matrix(d.objective) == A
+    @test Nonlinear.expression(only(d.constraints)) isa Nonlinear.Expression
+    @test Nonlinear.adjacency_matrix(only(d.constraints)) == A
+    A = SparseArrays.sparse([2, 5, 3, 4], [1, 1, 2, 2], Bool[1, 1, 1, 1], 5, 5)
+    @test Nonlinear.expression(only(d.subexpressions)) isa Nonlinear.Expression
+    @test Nonlinear.adjacency_matrix(only(d.subexpressions)) == A
+    return
+end
+
 end  # module
 
 TestReverseAD.runtests()
