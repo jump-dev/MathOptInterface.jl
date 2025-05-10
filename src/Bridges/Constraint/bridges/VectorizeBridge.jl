@@ -45,10 +45,7 @@ function bridge_constraint(
     scalar_f::G,
     set::MOI.Utilities.ScalarLinearSet{T},
 ) where {T,F,S,G}
-    scalar_const = MOI.constant(scalar_f, T)
-    if !iszero(scalar_const)
-        throw(MOI.ScalarFunctionConstantNotZero{T,G,typeof(set)}(scalar_const))
-    end
+    MOI.throw_if_scalar_and_constant_not_zero(scalar_f, typeof(set))
     set_const = MOI.constant(set)
     vector_f = MOI.Utilities.operate(
         vcat,
