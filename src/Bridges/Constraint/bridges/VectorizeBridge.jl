@@ -15,6 +15,9 @@
 
 where `T` is the coefficient type of `g(x) - a`.
 
+See also [`IntervalToHyperRectangleBridge`](@ref) for double-sided bound
+constraints.
+
 ## Source node
 
 `VectorizeBridge` supports:
