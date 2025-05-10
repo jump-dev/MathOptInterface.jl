@@ -56,7 +56,9 @@ function MOI.supports_constraint(
     return MOI.Utilities.is_coefficient_type(F, T)
 end
 
-function MOI.Bridges.added_constrained_variable_types(::Type{<:IntervalToHyperRectangleBridge})
+function MOI.Bridges.added_constrained_variable_types(
+    ::Type{<:IntervalToHyperRectangleBridge},
+)
     return Tuple{Type}[]
 end
 
@@ -89,7 +91,10 @@ function MOI.get(
     return [bridge.vector_constraint]
 end
 
-function MOI.delete(model::MOI.ModelLike, bridge::IntervalToHyperRectangleBridge)
+function MOI.delete(
+    model::MOI.ModelLike,
+    bridge::IntervalToHyperRectangleBridge,
+)
     MOI.delete(model, bridge.vector_constraint)
     return
 end
@@ -99,7 +104,11 @@ function MOI.supports(
     attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
     ::Type{IntervalToHyperRectangleBridge{T,F,G}},
 ) where {T,F,G}
-    return MOI.supports(model, attr, MOI.ConstraintIndex{F,MOI.HyperRectangle{T}})
+    return MOI.supports(
+        model,
+        attr,
+        MOI.ConstraintIndex{F,MOI.HyperRectangle{T}},
+    )
 end
 
 function MOI.get(
@@ -120,12 +129,7 @@ function MOI.set(
     bridge::IntervalToHyperRectangleBridge,
     value,
 )
-    MOI.set(
-        model,
-        attr,
-        bridge.vector_constraint,
-        [value],
-    )
+    MOI.set(model, attr, bridge.vector_constraint, [value])
     return
 end
 
@@ -199,9 +203,14 @@ function MOI.get(
     attr::MOI.ConstraintFunction,
     bridge::IntervalToHyperRectangleBridge{T,F,G},
 ) where {T,F,G}
-    return convert(G, only(MOI.Utilities.scalarize(
-        MOI.get(model, attr, bridge.vector_constraint),
-    )))
+    return convert(
+        G,
+        only(
+            MOI.Utilities.scalarize(
+                MOI.get(model, attr, bridge.vector_constraint),
+            ),
+        ),
+    )
 end
 
 function MOI.get(
