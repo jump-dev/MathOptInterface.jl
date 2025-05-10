@@ -123,8 +123,7 @@ function MOI.get(
     if x === nothing
         return nothing
     end
-    @assert length(x) == 1
-    return x[1] + bridge.set_constant
+    return only(x) + bridge.set_constant
 end
 
 function MOI.get(
@@ -133,16 +132,15 @@ function MOI.get(
     bridge::VectorizeBridge,
 )
     x = MOI.get(model, attr, bridge.vector_constraint)
-    @assert length(x) == 1
     if MOI.Utilities.is_ray(MOI.get(model, MOI.PrimalStatus(attr.result_index)))
         # If it is an infeasibility certificate, it is a ray and satisfies the
         # homogenized problem, see https://github.com/jump-dev/MathOptInterface.jl/issues/433
-        return x[1]
+        return only(x)
     else
         # Otherwise, we need to add the set constant since the ConstraintPrimal
         # is defined as the value of the function and the set_constant was
         # removed from the original function
-        return x[1] + bridge.set_constant
+        return only(x) + bridge.set_constant
     end
 end
 
@@ -180,8 +178,7 @@ function MOI.get(
     if x === nothing
         return nothing
     end
-    @assert length(x) == 1
-    return x[1]
+    return only(x)
 end
 
 function MOI.set(
@@ -235,8 +232,7 @@ function MOI.get(
         MOI.get(model, attr, bridge.vector_constraint),
         true,
     )
-    @assert length(f) == 1
-    return convert(G, f[1])
+    return convert(G, only(f))
 end
 
 function MOI.get(
