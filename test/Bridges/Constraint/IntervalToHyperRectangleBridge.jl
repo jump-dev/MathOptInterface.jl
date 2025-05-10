@@ -80,7 +80,6 @@ function test_linear_integration(T)
     return
 end
 
-
 function test_runtests(T)
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.IntervalToHyperRectangleBridge,
@@ -90,7 +89,11 @@ function test_runtests(T)
         end,
         model -> begin
             x = MOI.add_variable(model)
-            MOI.add_constraint(model, MOI.VectorOfVariables([x]), MOI.HyperRectangle(T[3], T[5]))
+            MOI.add_constraint(
+                model,
+                MOI.VectorOfVariables([x]),
+                MOI.HyperRectangle(T[3], T[5]),
+            )
         end,
         eltype = T,
     )
@@ -102,7 +105,11 @@ function test_runtests(T)
         end,
         model -> begin
             x = MOI.add_variable(model)
-            MOI.add_constraint(model, MOI.Utilities.vectorize([T(2) * x]), MOI.HyperRectangle(T[3], T[5]))
+            MOI.add_constraint(
+                model,
+                MOI.Utilities.vectorize([T(2) * x]),
+                MOI.HyperRectangle(T[3], T[5]),
+            )
         end,
         eltype = T,
     )
