@@ -39,20 +39,20 @@ function _reverse_mode(d::NLPEvaluator, x)
             _forward_eval(d.subexpressions[k], d, x)
     end
     if d.objective !== nothing
-        _forward_eval(d.objective::_FunctionStorage, d, x)
+        _forward_eval(something(d.objective).expr, d, x)
     end
     for con in d.constraints
-        _forward_eval(con, d, x)
+        _forward_eval(con.expr, d, x)
     end
     # Phase II
     for k in d.subexpression_order
         _reverse_eval(d.subexpressions[k])
     end
     if d.objective !== nothing
-        _reverse_eval(d.objective::_FunctionStorage)
+        _reverse_eval(something(d.objective).expr)
     end
     for con in d.constraints
-        _reverse_eval(con)
+        _reverse_eval(con.expr)
     end
     # If a JuMP model uses the legacy nonlinear interface, then JuMP constructs
     # a NLPEvaluator at the start of a call to `JuMP.optimize!` and it passes in
@@ -81,7 +81,7 @@ end
 
 """
     _forward_eval(
-        f::Union{_FunctionStorage,_SubexpressionStorage},
+        f::_SubexpressionStorage,
         d::NLPEvaluator,
         x::AbstractVector{T},
     ) where {T}
@@ -98,10 +98,7 @@ Forward-mode evaluation of an expression tree given in `f`.
    associate storage with each edge of the DAG.
 """
 function _forward_eval(
-    # !!! warning
-    #     This Union depends upon _FunctionStorage and _SubexpressionStorage
-    #     having similarly named fields.
-    f::Union{_FunctionStorage,_SubexpressionStorage},
+    f::_SubexpressionStorage,
     d::NLPEvaluator,
     x::AbstractVector{T},
 )::T where {T}
@@ -290,19 +287,14 @@ function _forward_eval(
 end
 
 """
-    _reverse_eval(f::Union{_FunctionStorage,_SubexpressionStorage})
+    _reverse_eval(f::_SubexpressionStorage)
 
 Reverse-mode evaluation of an expression tree given in `f`.
 
  * This function assumes `f.partials_storage` is already updated.
  * This function assumes that `f.reverse_storage` has been initialized with 0.0.
 """
-function _reverse_eval(
-    # !!! warning
-    #     This Union depends upon _FunctionStorage and _SubexpressionStorage
-    #     having similarly named fields.
-    f::Union{_FunctionStorage,_SubexpressionStorage},
-)
+function _reverse_eval(f::_SubexpressionStorage)
     @assert length(f.reverse_storage) >= length(f.nodes)
     @assert length(f.partials_storage) >= length(f.nodes)
     # f.nodes is already in order such that parents always appear before
@@ -361,9 +353,15 @@ end
 
 function _extract_reverse_pass_inner(
     output::AbstractVector{T},
-    # !!! warning
-    #     This Union depends upon _FunctionStorage and _SubexpressionStorage
-    #     having similarly named fields.
+    f::_FunctionStorage,
+    subexpressions::AbstractVector{T},
+    scale::T,
+) where {T}
+    return _extract_reverse_pass_inner(output, f.expr, subexpressions, scale)
+end
+
+function _extract_reverse_pass_inner(
+    output::AbstractVector{T},
     f::Union{_FunctionStorage,_SubexpressionStorage},
     subexpressions::AbstractVector{T},
     scale::T,

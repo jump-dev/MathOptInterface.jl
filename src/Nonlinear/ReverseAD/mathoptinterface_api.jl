@@ -65,11 +65,12 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     for k in d.subexpression_order
         # Only load expressions which actually are used
         d.subexpression_forward_values[k] = NaN
-        subex = _SubexpressionStorage(
-            d.data.expressions[k],
-            d.subexpression_linearity,
+        expr = d.data.expressions[k]
+        subex, _ = _subexpression_and_linearity(
+            expr,
             moi_index_to_consecutive_index,
-            d.want_hess,
+            Float64[],
+            d,
         )
         d.subexpressions[k] = subex
         d.subexpression_linearity[k] = subex.linearity
@@ -101,43 +102,54 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
         end
     end
     max_chunk = 1
+    shared_partials_storage_ϵ = Float64[]
     if d.data.objective !== nothing
+        expr = something(d.data.objective)
+        subexpr, linearity = _subexpression_and_linearity(
+            expr,
+            moi_index_to_consecutive_index,
+            shared_partials_storage_ϵ,
+            d,
+        )
         objective = _FunctionStorage(
-            main_expressions[1],
-            something(d.data.objective).values,
+            subexpr,
             N,
             coloring_storage,
             d.want_hess,
             d.subexpressions,
             individual_order[1],
-            d.subexpression_linearity,
             subexpression_edgelist,
             subexpression_variables,
-            moi_index_to_consecutive_index,
+            linearity,
         )
-        max_expr_length = max(max_expr_length, length(objective.nodes))
+        max_expr_length = max(max_expr_length, length(expr.nodes))
         max_chunk = max(max_chunk, size(objective.seed_matrix, 2))
         d.objective = objective
     end
     for (k, (_, constraint)) in enumerate(d.data.constraints)
         idx = d.data.objective !== nothing ? k + 1 : k
+        expr = constraint.expression
+        subexpr, linearity = _subexpression_and_linearity(
+            expr,
+            moi_index_to_consecutive_index,
+            shared_partials_storage_ϵ,
+            d,
+        )
         push!(
             d.constraints,
             _FunctionStorage(
-                main_expressions[idx],
-                constraint.expression.values,
+                subexpr,
                 N,
                 coloring_storage,
                 d.want_hess,
                 d.subexpressions,
                 individual_order[idx],
-                d.subexpression_linearity,
                 subexpression_edgelist,
                 subexpression_variables,
-                moi_index_to_consecutive_index,
+                linearity,
             ),
         )
-        max_expr_length = max(max_expr_length, length(d.constraints[end].nodes))
+        max_expr_length = max(max_expr_length, length(expr.nodes))
         max_chunk = max(max_chunk, size(d.constraints[end].seed_matrix, 2))
     end
     max_chunk = min(max_chunk, MAX_CHUNK)
@@ -146,7 +158,8 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
         d.input_ϵ = zeros(max_chunk * N)
         d.output_ϵ = zeros(max_chunk * N)
         #
-        d.partials_storage_ϵ = zeros(max_chunk * max_expr_length)
+        resize!(shared_partials_storage_ϵ, max_chunk * max_expr_length)
+        fill!(shared_partials_storage_ϵ, 0.0)
         d.storage_ϵ = zeros(max_chunk * max_expr_with_sub_length)
         #
         len = max_chunk * length(d.subexpressions)
@@ -178,7 +191,7 @@ function MOI.eval_objective(d::NLPEvaluator, x)
         error("No nonlinear objective.")
     end
     _reverse_mode(d, x)
-    return something(d.objective).forward_storage[1]
+    return something(d.objective).expr.forward_storage[1]
 end
 
 function MOI.eval_objective_gradient(d::NLPEvaluator, g, x)
@@ -194,7 +207,7 @@ end
 function MOI.eval_constraint(d::NLPEvaluator, g, x)
     _reverse_mode(d, x)
     for i in 1:length(d.constraints)
-        g[i] = d.constraints[i].forward_storage[1]
+        g[i] = d.constraints[i].expr.forward_storage[1]
     end
     return
 end
@@ -345,11 +358,7 @@ function MOI.eval_hessian_lagrangian_product(d::NLPEvaluator, h, x, v, σ, μ)
     subexpr_forward_values_ϵ = reinterpret(T, d.subexpression_forward_values_ϵ)
     for i in d.subexpression_order
         subexpr = d.subexpressions[i]
-        subexpr_forward_values_ϵ[i] = _forward_eval_ϵ(
-            d,
-            subexpr,
-            reinterpret(T, subexpr.partials_storage_ϵ),
-        )
+        subexpr_forward_values_ϵ[i] = _forward_eval_ϵ(d, subexpr, T)
     end
     # we only need to do one reverse pass through the subexpressions as well
     subexpr_reverse_values_ϵ = reinterpret(T, d.subexpression_reverse_values_ϵ)
@@ -358,16 +367,11 @@ function MOI.eval_hessian_lagrangian_product(d::NLPEvaluator, h, x, v, σ, μ)
     fill!(d.storage_ϵ, 0.0)
     fill!(output_ϵ, zero(T))
     if d.objective !== nothing
-        _forward_eval_ϵ(
-            d,
-            something(d.objective),
-            reinterpret(T, d.partials_storage_ϵ),
-        )
+        _forward_eval_ϵ(d, something(d.objective).expr, T)
         _reverse_eval_ϵ(
             output_ϵ,
-            something(d.objective),
-            reinterpret(T, d.storage_ϵ),
-            reinterpret(T, d.partials_storage_ϵ),
+            something(d.objective).expr,
+            _reinterpret_unsafe(T, d.storage_ϵ),
             d.subexpression_reverse_values,
             subexpr_reverse_values_ϵ,
             σ,
@@ -375,12 +379,11 @@ function MOI.eval_hessian_lagrangian_product(d::NLPEvaluator, h, x, v, σ, μ)
         )
     end
     for (i, con) in enumerate(d.constraints)
-        _forward_eval_ϵ(d, con, reinterpret(T, d.partials_storage_ϵ))
+        _forward_eval_ϵ(d, con.expr, T)
         _reverse_eval_ϵ(
             output_ϵ,
-            con,
+            con.expr,
             reinterpret(T, d.storage_ϵ),
-            reinterpret(T, d.partials_storage_ϵ),
             d.subexpression_reverse_values,
             subexpr_reverse_values_ϵ,
             μ[i],
@@ -394,7 +397,6 @@ function MOI.eval_hessian_lagrangian_product(d::NLPEvaluator, h, x, v, σ, μ)
             output_ϵ,
             subexpr,
             reinterpret(T, d.storage_ϵ),
-            reinterpret(T, subexpr.partials_storage_ϵ),
             d.subexpression_reverse_values,
             subexpr_reverse_values_ϵ,
             d.subexpression_reverse_values[j],

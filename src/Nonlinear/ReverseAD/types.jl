@@ -15,68 +15,75 @@ struct _SubexpressionStorage
     linearity::Linearity
 
     function _SubexpressionStorage(
-        expr::Nonlinear.Expression,
-        subexpression_linearity,
-        moi_index_to_consecutive_index,
-        want_hess::Bool,
+        nodes::Vector{Nonlinear.Node},
+        adj::SparseArrays.SparseMatrixCSC{Bool,Int},
+        const_values::Vector{Float64},
+        partials_storage_ϵ::Vector{Float64},
+        linearity::Linearity,
     )
-        nodes =
-            _replace_moi_variables(expr.nodes, moi_index_to_consecutive_index)
-        adj = Nonlinear.adjacency_matrix(nodes)
         N = length(nodes)
-        linearity = if want_hess
-            _classify_linearity(nodes, adj, subexpression_linearity)[1]
-        else
-            NONLINEAR
-        end
         return new(
             nodes,
             adj,
-            expr.values,
+            const_values,
             zeros(N),  # forward_storage,
             zeros(N),  # partials_storage,
             zeros(N),  # reverse_storage,
-            Float64[],
+            partials_storage_ϵ,
             linearity,
         )
     end
 end
 
+# We don't need to store the full vector of `linearity` but we return
+# it because it is needed in `compute_hessian_sparsity`.
+function _subexpression_and_linearity(
+    expr::Nonlinear.Expression,
+    moi_index_to_consecutive_index,
+    partials_storage_ϵ::Vector{Float64},
+    d,
+)
+    nodes = _replace_moi_variables(expr.nodes, moi_index_to_consecutive_index)
+    adj = Nonlinear.adjacency_matrix(nodes)
+    linearity = if d.want_hess
+        _classify_linearity(nodes, adj, d.subexpression_linearity)
+    else
+        [NONLINEAR]
+    end
+    return _SubexpressionStorage(
+        nodes,
+        adj,
+        expr.values,
+        partials_storage_ϵ,
+        linearity[1],
+    ),
+    linearity
+end
+
 struct _FunctionStorage
-    nodes::Vector{Nonlinear.Node}
-    adj::SparseArrays.SparseMatrixCSC{Bool,Int}
-    const_values::Vector{Float64}
-    forward_storage::Vector{Float64}
-    partials_storage::Vector{Float64}
-    reverse_storage::Vector{Float64}
+    expr::_SubexpressionStorage
     grad_sparsity::Vector{Int}
     # Nonzero pattern of Hessian matrix
     hess_I::Vector{Int}
     hess_J::Vector{Int}
     rinfo::Coloring.RecoveryInfo # coloring info for hessians
     seed_matrix::Matrix{Float64}
-    linearity::Linearity
     # subexpressions which this function depends on, ordered for forward pass.
     dependent_subexpressions::Vector{Int}
 
     function _FunctionStorage(
-        nodes::Vector{Nonlinear.Node},
-        const_values,
+        expr::_SubexpressionStorage,
         num_variables,
         coloring_storage::Coloring.IndexedSet,
         want_hess::Bool,
         subexpressions::Vector{_SubexpressionStorage},
         dependent_subexpressions,
-        subexpression_linearity,
         subexpression_edgelist,
         subexpression_variables,
-        moi_index_to_consecutive_index,
+        linearity::Vector{Linearity},
     )
-        nodes = _replace_moi_variables(nodes, moi_index_to_consecutive_index)
-        adj = Nonlinear.adjacency_matrix(nodes)
-        N = length(nodes)
         empty!(coloring_storage)
-        _compute_gradient_sparsity!(coloring_storage, nodes)
+        _compute_gradient_sparsity!(coloring_storage, expr.nodes)
         for k in dependent_subexpressions
             _compute_gradient_sparsity!(
                 coloring_storage,
@@ -86,10 +93,9 @@ struct _FunctionStorage
         grad_sparsity = sort!(collect(coloring_storage))
         empty!(coloring_storage)
         if want_hess
-            linearity = _classify_linearity(nodes, adj, subexpression_linearity)
             edgelist = _compute_hessian_sparsity(
-                nodes,
-                adj,
+                expr.nodes,
+                expr.adj,
                 linearity,
                 coloring_storage,
                 subexpression_edgelist,
@@ -102,34 +108,22 @@ struct _FunctionStorage
             )
             seed_matrix = Coloring.seed_matrix(rinfo)
             return new(
-                nodes,
-                adj,
-                const_values,
-                zeros(N),  # forward_storage,
-                zeros(N),  # partials_storage,
-                zeros(N),  # reverse_storage,
+                expr,
                 grad_sparsity,
                 hess_I,
                 hess_J,
                 rinfo,
                 seed_matrix,
-                linearity[1],
                 dependent_subexpressions,
             )
         else
             return new(
-                nodes,
-                adj,
-                const_values,
-                zeros(N),  # forward_storage,
-                zeros(N),  # partials_storage,
-                zeros(N),  # reverse_storage,
+                expr,
                 grad_sparsity,
                 Int[],
                 Int[],
                 Coloring.RecoveryInfo(),
                 Array{Float64}(undef, 0, 0),
-                NONLINEAR,
                 dependent_subexpressions,
             )
         end
@@ -176,7 +170,6 @@ mutable struct NLPEvaluator <: MOI.AbstractNLPEvaluator
     # so the length should be multiplied by the maximum number of epsilon components
     disable_2ndorder::Bool # don't offer Hess or HessVec
     want_hess::Bool
-    partials_storage_ϵ::Vector{Float64} # (longest expression excluding subexpressions)
     storage_ϵ::Vector{Float64} # (longest expression including subexpressions)
     input_ϵ::Vector{Float64} # (number of variables)
     output_ϵ::Vector{Float64} # (number of variables)
