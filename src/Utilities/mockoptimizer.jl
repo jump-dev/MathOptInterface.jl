@@ -181,12 +181,8 @@ function MOI.add_constraint(
 ) where {T}
     if !mock.add_con_allowed
         throw(MOI.AddConstraintNotAllowed{typeof(func),typeof(set)}())
-    elseif mock.scalar_function_constant_non_zero && !iszero(func.constant)
-        throw(
-            MOI.ScalarFunctionConstantNotZero{T,typeof(func),typeof(set)}(
-                func.constant,
-            ),
-        )
+    elseif mock.scalar_function_constant_non_zero
+        MOI.throw_if_scalar_and_constant_not_zero(func, typeof(set))
     end
     ci = MOI.add_constraint(mock.inner_model, xor_indices(func), set)
     return xor_index(ci)
