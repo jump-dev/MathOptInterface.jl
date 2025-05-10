@@ -1199,8 +1199,7 @@ function Base.read!(io::IO, model::Model)
         if header == HEADER_NAME
             parse_name_line(data, line)
         elseif header == HEADER_OBJSENSE
-            @assert length(items) == 1
-            sense = uppercase(items[1])
+            sense = uppercase(only(items))
             @assert sense == "MAX" || sense == "MIN"
             data.is_minimization = sense == "MIN"
         elseif header == HEADER_ROWS

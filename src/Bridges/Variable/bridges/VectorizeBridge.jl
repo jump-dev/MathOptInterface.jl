@@ -141,8 +141,7 @@ function MOI.get(
     bridge::VectorizeBridge,
 )
     x = MOI.get(model, attr, bridge.vector_constraint)
-    @assert length(x) == 1
-    y = x[1]
+    y = only(x)
     status = MOI.get(model, MOI.PrimalStatus(attr.result_index))
     if !MOI.Utilities.is_ray(status)
         # If it is an infeasibility certificate, it is a ray and satisfies the
@@ -160,9 +159,7 @@ function MOI.get(
     attr::MOI.ConstraintDual,
     bridge::VectorizeBridge,
 )
-    x = MOI.get(model, attr, bridge.vector_constraint)
-    @assert length(x) == 1
-    return x[1]
+    return only(MOI.get(model, attr, bridge.vector_constraint))
 end
 
 function MOI.get(
