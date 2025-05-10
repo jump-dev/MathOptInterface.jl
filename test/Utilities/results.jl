@@ -21,9 +21,9 @@ function runtests()
     return
 end
 
-test_hyperrectangle_Int = _test_hyperrectangle(Int)
+test_hyperrectangle_Int() = _test_hyperrectangle(Int)
 
-test_hyperrectangle_Float64 = _test_hyperrectangle(Float64)
+test_hyperrectangle_Float64() = _test_hyperrectangle(Float64)
 
 function _test_hyperrectangle(T)
     model = MOI.Utilities.MockOptimizer(
