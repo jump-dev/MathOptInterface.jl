@@ -13,15 +13,19 @@ import MathOptInterface as MOI
 function runtests()
     for name in names(@__MODULE__; all = true)
         if startswith("$(name)", "test_")
-            @testset "$(name) $T" for T in [Int, Float64]
-                getfield(@__MODULE__, name)(T)
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
             end
         end
     end
     return
 end
 
-function test_hyperrectangle(T)
+test_hyperrectangle_Int = _test_hyperrectangle(Int)
+
+test_hyperrectangle_Float64 = _test_hyperrectangle(Float64)
+
+function _test_hyperrectangle(T)
     model = MOI.Utilities.MockOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}()),
         T,
@@ -44,8 +48,9 @@ function test_hyperrectangle(T)
         MOI.DualObjectiveValue(),
         T,
     )
+    return
 end
 
-end
+end  # module TestResults
 
 TestResults.runtests()
