@@ -114,11 +114,12 @@ function _dual_objective_value(
     ::Type{T},
     result_index::Integer,
 ) where {T}
-    func_constant = MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T)
+    func_constant =
+        MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     dual = MOI.get(model, MOI.ConstraintDual(result_index), ci)
     constant = map(eachindex(func_constant)) do i
-        func_constant[i] - if dual[i] < zero(dual[i])
+        return func_constant[i] - if dual[i] < zero(dual[i])
             # The dual is negative so it is in the dual of the MOI.LessThan cone
             # hence the upper bound of the Interval set is tight
             set.upper[i]

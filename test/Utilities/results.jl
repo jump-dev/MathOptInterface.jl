@@ -39,7 +39,11 @@ function test_hyperrectangle(T)
     )
     MOI.set(model, MOI.ConstraintDual(), c1, T[4, -3])
     MOI.set(model, MOI.ConstraintDual(), c2, T[-2, 5])
-    @test -53 == @inferred MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), T)
+    @test -53 == @inferred MOI.Utilities.get_fallback(
+        model,
+        MOI.DualObjectiveValue(),
+        T,
+    )
 end
 
 end
