@@ -76,8 +76,9 @@ tree.
 struct Expression
     nodes::Vector{Node}
     values::Vector{Float64}
-    Expression() = new(Node[], Float64[])
 end
+
+Expression() = Expression(Node[], Float64[])
 
 function Base.:(==)(x::Expression, y::Expression)
     return x.nodes == y.nodes && x.values == y.values
@@ -106,6 +107,8 @@ struct Constraint
         MOI.Interval{Float64},
     }
 end
+
+expression(c::Constraint) = c.expression
 
 """
     ParameterIndex
