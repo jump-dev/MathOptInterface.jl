@@ -51,19 +51,38 @@ form).
 function operation_name end
 
 function Base.showerror(io::IO, err::NotAllowedError)
-    print(io, typeof(err), ": ", operation_name(err), " cannot be performed")
+    println(io, typeof(err), ":\n")
+    println(io, "## Cause\n")
+    print(io, operation_name(err), " cannot be performed")
     m = message(err)
-    if Base.isempty(m)
-        print(io, ".")
-    else
-        print(io, ": ", m)
+    if !isempty(m)
+        println(io, " because:\n\n", m)
     end
-    return print(
+    println(io)
+    print(
         io,
-        " You may want to use a `CachingOptimizer` in `AUTOMATIC` mode",
-        " or you may need to call `reset_optimizer` before doing this",
-        " operation if the `CachingOptimizer` is in `MANUAL` mode.",
+        """
+        ## Fixing this error
+
+        An `MOI.NotAllowedError` error occurs when you have tried to do something that
+        is not implemented by the solver.
+
+        The most common way to fix this error is to wrap the optimizer in a
+        `MOI.Utilities.CachingOptimizer`.
+
+        For example, if you are using `JuMP.Model` or `JuMP.set_optimizer`, do:
+        ```julia
+        model = JuMP.Model(optimizer; with_cache_type = Float64)
+        model = JuMP.GenericModel{T}(optimizer; with_cache_type = T)
+        JuMP.set_optimizer(model, optimizer; with_cache_type = Float64)
+        ```
+        Similarly, if you are using `MOI.instantiate`, do:
+        ```julia
+        model = MOI.instantiate(optimizer; with_cache_type = Float64)
+        ```
+        """,
     )
+    return
 end
 
 """
