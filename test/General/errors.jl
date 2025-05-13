@@ -27,12 +27,10 @@ function test_errors_fallback_AddVariableNotAllowed()
     try
         MOI.add_variable(model)
     catch err
-        @test sprint(showerror, err) ==
-              "MathOptInterface.AddVariableNotAllowed:" *
-              " Adding variables cannot be performed. You may want to use a" *
-              " `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-              " `reset_optimizer` before doing this operation if the" *
-              " `CachingOptimizer` is in `MANUAL` mode."
+        contents = sprint(showerror, err)
+        @test occursin("$(MOI.AddVariableNotAllowed)", contents)
+        @test occursin("Adding variables cannot be performed", contents)
+        @test occursin("## Fixing this error", contents)
     end
     @test_throws MOI.AddVariableNotAllowed MOI.add_variables(model, 2)
     return
@@ -104,13 +102,14 @@ function test_errors_add_constraint()
     try
         MOI.add_constraint(model, vi, MOI.EqualTo(0.0))
     catch err
-        @test sprint(showerror, err) ==
-              "$(MOI.AddConstraintNotAllowed{MOI.VariableIndex,MOI.EqualTo{Float64}}):" *
-              " Adding `$MOI.VariableIndex`-in-`$MOI.EqualTo{Float64}`" *
-              " constraints cannot be performed. You may want to use a" *
-              " `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-              " `reset_optimizer` before doing this operation if the" *
-              " `CachingOptimizer` is in `MANUAL` mode."
+        contents = sprint(showerror, err)
+        F, S = MOI.VariableIndex, MOI.EqualTo{Float64}
+        @test occursin("$(MOI.AddConstraintNotAllowed{F,S})", contents)
+        @test occursin(
+            "Adding `$F`-in-`$S` constraints cannot be performed",
+            contents,
+        )
+        @test occursin("## Fixing this error", contents)
     end
     @test_throws(
         MOI.AddConstraintNotAllowed,
@@ -139,23 +138,19 @@ function test_errors_DeleteNotAllowed()
     try
         MOI.delete(model, vi)
     catch err
-        @test sprint(showerror, err) ==
-              "$(MOI.DeleteNotAllowed{typeof(vi)}): Deleting the index $vi " *
-              "cannot be performed. You may want to use a `CachingOptimizer` " *
-              "in `AUTOMATIC` mode or you may need to call `reset_optimizer` " *
-              "before doing this operation if the `CachingOptimizer` is in " *
-              "`MANUAL` mode."
+        contents = sprint(showerror, err)
+        @test occursin("$(MOI.DeleteNotAllowed{typeof(vi)})", contents)
+        @test occursin("Deleting the index $vi cannot be performed", contents)
+        @test occursin("## Fixing this error", contents)
     end
     @test_throws MOI.DeleteNotAllowed{typeof(ci)} MOI.delete(model, ci)
     try
         MOI.delete(model, ci)
     catch err
-        @test sprint(showerror, err) ==
-              "$(MOI.DeleteNotAllowed{typeof(ci)}): Deleting the index $ci " *
-              "cannot be performed. You may want to use a `CachingOptimizer` " *
-              "in `AUTOMATIC` mode or you may need to call `reset_optimizer` " *
-              "before doing this operation if the `CachingOptimizer` is in " *
-              "`MANUAL` mode."
+        contents = sprint(showerror, err)
+        @test occursin("$(MOI.DeleteNotAllowed{typeof(ci)})", contents)
+        @test occursin("Deleting the index $ci cannot be performed", contents)
+        @test occursin("## Fixing this error", contents)
     end
     return
 end
@@ -244,14 +239,14 @@ function test_errors_ModifyNotAllowed_constraint()
     change = MOI.ScalarConstantChange(1.0)
     err = MOI.ModifyConstraintNotAllowed(ci, change)
     @test_throws err MOI.modify(model, ci, change)
-    @test sprint(showerror, err) ==
-          "$(MOI.ModifyConstraintNotAllowed{MOI.VariableIndex,MOI.EqualTo{Float64},MOI.ScalarConstantChange{Float64}}):" *
-          " Modifying the constraints $(MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}}(1))" *
-          " with MathOptInterface.ScalarConstantChange{Float64}(1.0) cannot" *
-          " be performed. You may want to use a `CachingOptimizer` in" *
-          " `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
-          " before doing this operation if the `CachingOptimizer` is in" *
-          " `MANUAL` mode."
+    contents = sprint(showerror, err)
+    @test occursin("$(typeof(err)):", contents)
+    @test occursin(
+        "Modifying the constraints $ci with $change cannot be performed",
+        contents,
+    )
+    @test occursin("## Fixing this error", contents)
+    return
 end
 
 function test_errors_ModifyNotAllowed_objective()
@@ -260,13 +255,14 @@ function test_errors_ModifyNotAllowed_objective()
     attr = MOI.ObjectiveFunction{MOI.VariableIndex}()
     err = MOI.ModifyObjectiveNotAllowed(change)
     @test_throws err MOI.modify(model, attr, change)
-    @test sprint(showerror, err) ==
-          "$(MOI.ModifyObjectiveNotAllowed{MOI.ScalarConstantChange{Float64}}):" *
-          " Modifying the objective function with $(MOI.ScalarConstantChange{Float64}(1.0))" *
-          " cannot be performed. You may want to use a `CachingOptimizer`" *
-          " in `AUTOMATIC` mode or you may need to call `reset_optimizer`" *
-          " before doing this operation if the `CachingOptimizer` is in" *
-          " `MANUAL` mode."
+    contents = sprint(showerror, err)
+    @test occursin("$(typeof(err)):", contents)
+    @test occursin(
+        "Modifying the objective function with $change cannot be performed",
+        contents,
+    )
+    @test occursin("## Fixing this error", contents)
+    return
 end
 
 function test_errors_show_SetAttributeNotAllowed()
@@ -276,26 +272,22 @@ function test_errors_show_SetAttributeNotAllowed()
     @test sprint(showerror, MOI.UnsupportedAttribute(MOI.Name(), "Message")) ==
           "$MOI.UnsupportedAttribute{$MOI.Name}:" *
           " Attribute $MOI.Name() is not supported by the model: Message"
-    @test sprint(showerror, MOI.SetAttributeNotAllowed(MOI.Name())) ==
-          "$MOI.SetAttributeNotAllowed{$MOI.Name}:" *
-          " Setting attribute $MOI.Name() cannot be performed. You may want to use" *
-          " a `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-          " `reset_optimizer` before doing this operation if the" *
-          " `CachingOptimizer` is in `MANUAL` mode."
-    @test sprint(
-              showerror,
-              MOI.SetAttributeNotAllowed(MOI.Name(), "Message"),
-          ) ==
-          "$MOI.SetAttributeNotAllowed{$MOI.Name}:" *
-          " Setting attribute $MOI.Name() cannot be performed: Message You may want" *
-          " to use a `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-          " `reset_optimizer` before doing this operation if the `CachingOptimizer`" *
-          " is in `MANUAL` mode." ==
-          "$MOI.SetAttributeNotAllowed{$MOI.Name}:" *
-          " Setting attribute $MOI.Name() cannot be performed: Message You may want" *
-          " to use a `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-          " `reset_optimizer` before doing this operation if the `CachingOptimizer`" *
-          " is in `MANUAL` mode."
+    contents = sprint(showerror, MOI.SetAttributeNotAllowed(MOI.Name()))
+    @test occursin("$MOI.SetAttributeNotAllowed{$MOI.Name}:", contents)
+    @test occursin(
+        "Setting attribute $(MOI.Name()) cannot be performed",
+        contents,
+    )
+    @test occursin("## Fixing this error", contents)
+    err = MOI.SetAttributeNotAllowed(MOI.Name(), "Message")
+    contents = sprint(showerror, err)
+    @test occursin("$(typeof(err))", contents)
+    @test occursin("Message", contents)
+    @test occursin(
+        "Setting attribute $(MOI.Name()) cannot be performed",
+        contents,
+    )
+    @test occursin("## Fixing this error", contents)
     return
 end
 
@@ -352,11 +344,13 @@ function test_get_fallback_error()
         MOI.get(model, MOI.SolveTimeSec()),
     )
     err = MOI.GetAttributeNotAllowed(MOI.SolveTimeSec(), "")
-    @test sprint(showerror, err) ==
-          "$(typeof(err)): Getting attribute $(MOI.SolveTimeSec()) cannot be " *
-          "performed. You may want to use a `CachingOptimizer` in " *
-          "`AUTOMATIC` mode or you may need to call `reset_optimizer` before " *
-          "doing this operation if the `CachingOptimizer` is in `MANUAL` mode."
+    contents = sprint(showerror, err)
+    @test occursin("$(typeof(err)):", contents)
+    @test occursin(
+        "Getting attribute $(MOI.SolveTimeSec()) cannot be performed",
+        contents,
+    )
+    @test occursin("## Fixing this error", contents)
     return
 end
 

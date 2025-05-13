@@ -356,7 +356,8 @@ function test_submit_not_allowed()
     @test MOI.SubmitNotAllowed(submit) == MOI.SubmitNotAllowed(submit, "")
     err = MOI.SubmitNotAllowed(submit, "msg")
     contents = sprint(showerror, err)
-    @test occursin("Submitting $submit cannot be performed: msg", contents)
+    @test occursin("Submitting $submit cannot be performed", contents)
+    @test occursin("msg", contents)
     return
 end
 
