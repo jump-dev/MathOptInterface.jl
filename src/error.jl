@@ -55,7 +55,9 @@ function Base.showerror(io::IO, err::NotAllowedError)
     println(io, "## Cause\n")
     print(io, operation_name(err), " cannot be performed")
     m = message(err)
-    if !isempty(m)
+    if isempty(m)
+        println(io)
+    else
         println(io, " because:\n\n", m)
     end
     println(io)

@@ -27,12 +27,10 @@ function test_errors_fallback_AddVariableNotAllowed()
     try
         MOI.add_variable(model)
     catch err
-        @test sprint(showerror, err) ==
-              "MathOptInterface.AddVariableNotAllowed:" *
-              " Adding variables cannot be performed. You may want to use a" *
-              " `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-              " `reset_optimizer` before doing this operation if the" *
-              " `CachingOptimizer` is in `MANUAL` mode."
+        contents = sprint(showerror, err)
+        @test occursin("$(MOI.AddVariableNotAllowed)", contents)
+        @test occursin("Adding variables cannot be performed", contents)
+        @test occursin("## Fixing this error", contents)
     end
     @test_throws MOI.AddVariableNotAllowed MOI.add_variables(model, 2)
     return
@@ -104,13 +102,14 @@ function test_errors_add_constraint()
     try
         MOI.add_constraint(model, vi, MOI.EqualTo(0.0))
     catch err
-        @test sprint(showerror, err) ==
-              "$(MOI.AddConstraintNotAllowed{MOI.VariableIndex,MOI.EqualTo{Float64}}):" *
-              " Adding `$MOI.VariableIndex`-in-`$MOI.EqualTo{Float64}`" *
-              " constraints cannot be performed. You may want to use a" *
-              " `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-              " `reset_optimizer` before doing this operation if the" *
-              " `CachingOptimizer` is in `MANUAL` mode."
+        contents = sprint(showerror, err)
+        F, S = MOI.VariableIndex, MOI.EqualTo{Float64}
+        @test occursin("$(MOI.AddConstraintNotAllowed{F,S})", contents)
+        @test occursin(
+            "Adding `$F`-in-`$S` constraints cannot be performed",
+            contents,
+        )
+        @test occursin("## Fixing this error", contents)
     end
     @test_throws(
         MOI.AddConstraintNotAllowed,
@@ -141,7 +140,7 @@ function test_errors_DeleteNotAllowed()
     catch err
         contents = sprint(showerror, err)
         @test occursin("$(MOI.DeleteNotAllowed{typeof(vi)})", contents)
-        @test occursin("Deleting the index $vi ", contents)
+        @test occursin("Deleting the index $vi cannot be performed", contents)
         @test occursin("## Fixing this error", contents)
     end
     @test_throws MOI.DeleteNotAllowed{typeof(ci)} MOI.delete(model, ci)
@@ -150,7 +149,7 @@ function test_errors_DeleteNotAllowed()
     catch err
         contents = sprint(showerror, err)
         @test occursin("$(MOI.DeleteNotAllowed{typeof(ci)})", contents)
-        @test occursin("Deleting the index $ci ", contents)
+        @test occursin("Deleting the index $ci cannot be performed", contents)
         @test occursin("## Fixing this error", contents)
     end
     return
@@ -242,7 +241,10 @@ function test_errors_ModifyNotAllowed_constraint()
     @test_throws err MOI.modify(model, ci, change)
     contents = sprint(showerror, err)
     @test occursin("$(typeof(err)):", contents)
-    @test occursin("Modifying the constraints $ci", contents)
+    @test occursin(
+        "Modifying the constraints $ci with $change cannot be performed",
+        contents,
+    )
     @test occursin("## Fixing this error", contents)
     return
 end
@@ -255,7 +257,10 @@ function test_errors_ModifyNotAllowed_objective()
     @test_throws err MOI.modify(model, attr, change)
     contents = sprint(showerror, err)
     @test occursin("$(typeof(err)):", contents)
-    @test occursin("Modifying the objective function with $change", contents)
+    @test occursin(
+        "Modifying the objective function with $change cannot be performed",
+        contents,
+    )
     @test occursin("## Fixing this error", contents)
     return
 end
@@ -267,26 +272,22 @@ function test_errors_show_SetAttributeNotAllowed()
     @test sprint(showerror, MOI.UnsupportedAttribute(MOI.Name(), "Message")) ==
           "$MOI.UnsupportedAttribute{$MOI.Name}:" *
           " Attribute $MOI.Name() is not supported by the model: Message"
-    @test sprint(showerror, MOI.SetAttributeNotAllowed(MOI.Name())) ==
-          "$MOI.SetAttributeNotAllowed{$MOI.Name}:" *
-          " Setting attribute $MOI.Name() cannot be performed. You may want to use" *
-          " a `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-          " `reset_optimizer` before doing this operation if the" *
-          " `CachingOptimizer` is in `MANUAL` mode."
-    @test sprint(
-              showerror,
-              MOI.SetAttributeNotAllowed(MOI.Name(), "Message"),
-          ) ==
-          "$MOI.SetAttributeNotAllowed{$MOI.Name}:" *
-          " Setting attribute $MOI.Name() cannot be performed: Message You may want" *
-          " to use a `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-          " `reset_optimizer` before doing this operation if the `CachingOptimizer`" *
-          " is in `MANUAL` mode." ==
-          "$MOI.SetAttributeNotAllowed{$MOI.Name}:" *
-          " Setting attribute $MOI.Name() cannot be performed: Message You may want" *
-          " to use a `CachingOptimizer` in `AUTOMATIC` mode or you may need to call" *
-          " `reset_optimizer` before doing this operation if the `CachingOptimizer`" *
-          " is in `MANUAL` mode."
+    contents = sprint(showerror, MOI.SetAttributeNotAllowed(MOI.Name()))
+    @test occursin("$MOI.SetAttributeNotAllowed{$MOI.Name}:", contents)
+    @test occursin(
+        "Setting attribute $(MOI.Name()) cannot be performed",
+        contents,
+    )
+    @test occursin("## Fixing this error", contents)
+    err = MOI.SetAttributeNotAllowed(MOI.Name(), "Message")
+    contents = sprint(showerror, err)
+    @test occursin("$(typeof(err))", contents)
+    @test occursin("Message", contents)
+    @test occursin(
+        "Setting attribute $(MOI.Name()) cannot be performed",
+        contents,
+    )
+    @test occursin("## Fixing this error", contents)
     return
 end
 
@@ -345,7 +346,10 @@ function test_get_fallback_error()
     err = MOI.GetAttributeNotAllowed(MOI.SolveTimeSec(), "")
     contents = sprint(showerror, err)
     @test occursin("$(typeof(err)):", contents)
-    @test occursin("Getting attribute $(MOI.SolveTimeSec())", contents)
+    @test occursin(
+        "Getting attribute $(MOI.SolveTimeSec()) cannot be performed",
+        contents,
+    )
     @test occursin("## Fixing this error", contents)
     return
 end
