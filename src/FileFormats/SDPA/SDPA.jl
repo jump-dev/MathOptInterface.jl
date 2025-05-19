@@ -302,18 +302,15 @@ function _dim_to_set(s::AbstractString)
     end
 end
 
-function _parse_dimensions(dims::AbstractString)
-    isvalid(char) = isdigit(char) || char == '-'
-    is_delimiter(char) = isspace(char) || char == ','
-    start = findfirst(isvalid, dims)
-    if start === nothing
-        return Union{MOI.PositiveSemidefiniteConeTriangle,MOI.Nonnegatives}[]
-    end
-    stop = findlast(isvalid, dims)::Int
-    s = split(dims[start:stop], is_delimiter)
-    return Union{MOI.PositiveSemidefiniteConeTriangle,MOI.Nonnegatives}[
-        _dim_to_set(dim) for dim in filter!(!isempty, s)
-    ]
+function _split(line)
+    # In some variations of SDPA, there is the comment:
+    #
+    # The special characters `,`, `(`, `)`, `{`, and `}` can be used as
+    # punctuation and are ignored.
+    #
+    # As one example, see https://github.com/vsdp/SDPLIB
+    line = replace(line, r"[,{}\(\)]"=>' ')
+    return split(line)
 end
 
 """
@@ -365,19 +362,20 @@ function Base.read!(io::IO, model::Model{T}) where {T<:Real}
             num_variables_read = true
             # According to http://plato.asu.edu/ftp/sdpa_format.txt,
             # additional text after the number of variables should be ignored.
-            scalar_vars = MOI.add_variables(model, parse(Int, split(line)[1]))
+            scalar_vars =
+                MOI.add_variables(model, parse(Int, first(_split(line))))
         elseif num_blocks === nothing
             if isempty(line)
                 continue
             end
             # According to http://plato.asu.edu/ftp/sdpa_format.txt,
             # additional text after the number of blocks should be ignored.
-            num_blocks = parse(Int, split(line)[1])
+            num_blocks = parse(Int, first(_split(line)))
         elseif !block_sets_read
             if isempty(line) && !iszero(num_blocks)
                 continue
             end
-            block_sets = _parse_dimensions(line)
+            block_sets = _dim_to_set.(_split(line))
             block_sets_read = true
             if length(block_sets) != num_blocks
                 error(
@@ -399,7 +397,7 @@ function Base.read!(io::IO, model::Model{T}) where {T<:Real}
                 continue
             end
             objective_read = true
-            c = parse.(T, split(line))
+            c = parse.(T, _split(line))
             if length(c) != num_vars
                 error(
                     "The number of variables ($num_vars) does not match the length of the list of coefficients for the objective function vector of coefficients ($(length(c))).",
@@ -416,7 +414,7 @@ function Base.read!(io::IO, model::Model{T}) where {T<:Real}
             if isempty(line)
                 continue
             end
-            values = split(line)
+            values = _split(line)
             if length(values) != 5
                 error(
                     "Invalid line specifying entry: $line. There are $(length(values)) values instead of 5.",

@@ -323,26 +323,19 @@ function test_examples()
 end
 
 # See https://github.com/jump-dev/MathOptInterface.jl/issues/1541
-function _spacer(char)
-    return [" ", "$char", " $char", "$char ", " $char "]
-end
+_spacer(char) = [" ", "$char", " $char", "$char ", " $char "]
 
 function test_dim_reader()
-    for before in _spacer('{')
-        for sep in _spacer(',')
-            for after in _spacer('}')
-                line = string(before, "-4", sep, "2", after)
-                exp = [
-                    MOI.Nonnegatives(4),
-                    MOI.PositiveSemidefiniteConeTriangle(2),
-                ]
-                @test MOI.FileFormats.SDPA._parse_dimensions(line) == exp
-                line = string(before, "2", sep, "-4", after)
-                @test MOI.FileFormats.SDPA._parse_dimensions(line) ==
-                      exp[2:-1:1]
-            end
+    fn(line) = SDPA._dim_to_set.(SDPA._split(line))
+    for (a, b) in ['{' => '}', '(' => ')']
+        for pre in _spacer(a), sep in _spacer(','), suf in _spacer(b)
+            @test fn("$(pre)-4$(sep)2$suf") ==
+                  [MOI.Nonnegatives(4), MOI.PositiveSemidefiniteConeTriangle(2)]
+            @test fn("$(pre)2$(sep)-4$suf") ==
+                  [MOI.PositiveSemidefiniteConeTriangle(2), MOI.Nonnegatives(4)]
         end
     end
+    return
 end
 
 function test_integer_before_variables()
