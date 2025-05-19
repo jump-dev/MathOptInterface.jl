@@ -7,6 +7,24 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.40.1 (May 19, 2025)
+
+### Fixed
+
+ - Fixed a missing [`dual_set`](@ref) for [`HermitianPositiveSemidefiniteConeTriangle`](@ref)
+   (#2749)
+ - Fixed [`Utilities.get_fallback`](@ref) of [`DualObjectiveValue`](@ref) with
+   [`HyperRectangle`](@ref) (#2755)
+ - Fixed reading SDPA files with `{}` punctuation (#2759)
+
+### Other
+
+ - Fixed a flakey doctest that depended on the runtime of a function (#2748)
+ - Changed to use `Base.only` when appropriate (#2751)
+ - Removed the experimental warning from Nonlinear module docstring (#2752)
+ - Changed to use `throw_if_scalar_and_constant_not_zero` when appropriate (#2753)
+ - Improved the text of `showerror` for `NotAllowedError` (#2757)
+
 ## v1.40.0 (May 4, 2025)
 
 ### Added
