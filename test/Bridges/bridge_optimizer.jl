@@ -1452,6 +1452,17 @@ function test_issue_2714()
     return
 end
 
+function test_BridgeRequiresFiniteDomainError()
+    inner = MOI.Utilities.Model{Int}()
+    model = MOI.Bridges.Constraint.SOS1ToMILP{Int}(inner)
+    x = MOI.add_variables(model, 3)
+    c = MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.SOS1([1, 2, 3]))
+    err = MOI.Bridges.BridgeRequiresFiniteDomainError(model.map[c], x[1])
+    contents = sprint(showerror, err)
+    @test occursin("To fix this error, add a lower and upper bound", contents)
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
