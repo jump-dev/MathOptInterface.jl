@@ -197,10 +197,7 @@ function MOI.Bridges.final_touch(
     fi = scalars[2]
     ret = MOI.Utilities.get_bounds(model, bounds, fi)
     if ret === nothing
-        error(
-            "Unable to use IndicatorToMILPBridge because element 2 " *
-            "in the function has a non-finite domain: $fi",
-        )
+        throw(MOI.Bridges.BridgeRequiresFiniteDomainError(bridge, fi))
     end
     if bridge.slack === nothing
         # This is the first time calling final_touch

@@ -102,12 +102,10 @@ function test_runtests_error_variable()
     inner = MOI.Utilities.Model{Int}()
     model = MOI.Bridges.Constraint.SOS2ToMILP{Int}(inner)
     x = MOI.add_variables(model, 3)
-    MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.SOS2([1, 2, 3]))
+    c = MOI.add_constraint(model, MOI.VectorOfVariables(x), MOI.SOS2([1, 2, 3]))
+    BT = typeof(model.map[c])
     @test_throws(
-        ErrorException(
-            "Unable to use SOS2ToMILPBridge because element 1 in " *
-            "the function has a non-finite domain: $(x[1])",
-        ),
+        MOI.Bridges.BridgeRequiresFiniteDomainError{BT,MOI.VariableIndex},
         MOI.Bridges.final_touch(model),
     )
     return
@@ -118,12 +116,11 @@ function test_runtests_error_affine()
     model = MOI.Bridges.Constraint.SOS2ToMILP{Int}(inner)
     x = MOI.add_variables(model, 2)
     f = MOI.Utilities.operate(vcat, Int, 2, 1 * x[1], x[2])
-    MOI.add_constraint(model, f, MOI.SOS2([1, 2, 3]))
+    c = MOI.add_constraint(model, f, MOI.SOS2([1, 2, 3]))
+    BT = typeof(model.map[c])
+    F = MOI.ScalarAffineFunction{Int}
     @test_throws(
-        ErrorException(
-            "Unable to use SOS2ToMILPBridge because element 2 in " *
-            "the function has a non-finite domain: $(1 * x[1])",
-        ),
+        MOI.Bridges.BridgeRequiresFiniteDomainError{BT,F},
         MOI.Bridges.final_touch(model),
     )
     return

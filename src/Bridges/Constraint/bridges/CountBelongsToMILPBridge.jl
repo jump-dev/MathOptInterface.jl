@@ -210,11 +210,7 @@ function _unit_expansion(
     for i in 1:length(f)
         ret = MOI.Utilities.get_bounds(model, bounds, f[i])
         if ret === nothing
-            BT = typeof(bridge)
-            error(
-                "Unable to use $BT because an element in the function has a " *
-                "non-finite domain: $(f[i])",
-            )
+            throw(MOI.Bridges.BridgeRequiresFiniteDomainError(bridge, f[i]))
         end
         if length(bridge.bounds) < i
             # This is the first time calling final_touch

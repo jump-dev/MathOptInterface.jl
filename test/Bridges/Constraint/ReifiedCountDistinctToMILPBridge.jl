@@ -136,16 +136,14 @@ function test_runtests_error_variable()
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Int}())
     model = MOI.Bridges.Constraint.ReifiedCountDistinctToMILP{Int}(inner)
     x = MOI.add_variables(model, 4)
-    MOI.add_constraint(
+    c = MOI.add_constraint(
         model,
         MOI.VectorOfVariables(x),
         MOI.Reified(MOI.CountDistinct(3)),
     )
+    BT = typeof(model.map[c])
     @test_throws(
-        ErrorException(
-            "Unable to use ReifiedCountDistinctToMILPBridge because element " *
-            "3 in the function has a non-finite domain: $(x[3])",
-        ),
+        MOI.Bridges.BridgeRequiresFiniteDomainError{BT,MOI.VariableIndex},
         MOI.Bridges.final_touch(model),
     )
     return
@@ -156,12 +154,11 @@ function test_runtests_error_affine()
     model = MOI.Bridges.Constraint.ReifiedCountDistinctToMILP{Int}(inner)
     x = MOI.add_variables(model, 3)
     f = MOI.Utilities.operate(vcat, Int, x[1], 1, x[2], x[3])
-    MOI.add_constraint(model, f, MOI.Reified(MOI.CountDistinct(3)))
+    c = MOI.add_constraint(model, f, MOI.Reified(MOI.CountDistinct(3)))
+    BT = typeof(model.map[c])
+    F = MOI.ScalarAffineFunction{Int}
     @test_throws(
-        ErrorException(
-            "Unable to use ReifiedCountDistinctToMILPBridge because element " *
-            "3 in the function has a non-finite domain: $(1 * x[2])",
-        ),
+        MOI.Bridges.BridgeRequiresFiniteDomainError{BT,F},
         MOI.Bridges.final_touch(model),
     )
     return

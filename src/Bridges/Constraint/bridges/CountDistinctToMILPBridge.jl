@@ -277,10 +277,7 @@ function _final_touch_not_equal_case(
         x = scalars[i]
         ret = MOI.Utilities.get_bounds(model, bounds, x)
         if ret === nothing
-            error(
-                "Unable to use CountDistinctToMILPBridge because element $i " *
-                "in the function has a non-finite domain: $x",
-            )
+            throw(MOI.Bridges.BridgeRequiresFiniteDomainError(bridge, x))
         end
         if length(bridge.bounds) < i - 1
             # This is the first time calling final_touch
@@ -353,10 +350,7 @@ function _final_touch_general_case(
         x = scalars[i]
         ret = MOI.Utilities.get_bounds(model, bounds, x)
         if ret === nothing
-            error(
-                "Unable to use CountDistinctToMILPBridge because element $i " *
-                "in the function has a non-finite domain: $x",
-            )
+            throw(MOI.Bridges.BridgeRequiresFiniteDomainError(bridge, x))
         end
         if length(bridge.bounds) < i - 1
             # This is the first time calling final_touch
