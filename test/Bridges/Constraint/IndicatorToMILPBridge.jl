@@ -253,16 +253,14 @@ function test_runtests_error_variable()
     model = MOI.Bridges.Constraint.IndicatorToMILP{Int}(inner)
     x = MOI.add_variables(model, 2)
     MOI.add_constraint(model, x[1], MOI.ZeroOne())
-    MOI.add_constraint(
+    c = MOI.add_constraint(
         model,
         MOI.VectorOfVariables(x),
         MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(MOI.GreaterThan(2)),
     )
+    BT = typeof(model.map[c])
     @test_throws(
-        ErrorException(
-            "Unable to use IndicatorToMILPBridge because element 2 in " *
-            "the function has a non-finite domain: $(x[2])",
-        ),
+        MOI.Bridges.BridgeRequiresFiniteDomainError{BT,MOI.VariableIndex},
         MOI.Bridges.final_touch(model),
     )
     return
@@ -273,16 +271,15 @@ function test_runtests_error_affine()
     model = MOI.Bridges.Constraint.IndicatorToMILP{Int}(inner)
     x = MOI.add_variables(model, 2)
     MOI.add_constraint(model, x[1], MOI.ZeroOne())
-    MOI.add_constraint(
+    c = MOI.add_constraint(
         model,
         MOI.Utilities.operate(vcat, Int, x[1], 2 * x[2]),
         MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(MOI.GreaterThan(2)),
     )
+    BT = typeof(model.map[c])
+    F = MOI.ScalarAffineFunction{Int}
     @test_throws(
-        ErrorException(
-            "Unable to use IndicatorToMILPBridge because element 2 in " *
-            "the function has a non-finite domain: $(2 * x[2])",
-        ),
+        MOI.Bridges.BridgeRequiresFiniteDomainError{BT,F},
         MOI.Bridges.final_touch(model),
     )
     return

@@ -203,10 +203,7 @@ function MOI.Bridges.final_touch(
     for (i, x) in enumerate(scalars)
         ret = MOI.Utilities.get_bounds(model, bounds, x)
         if ret === nothing
-            error(
-                "Unable to use SOS1ToMILPBridge because element $i " *
-                "in the function has a non-finite domain: $x",
-            )
+            throw(MOI.Bridges.BridgeRequiresFiniteDomainError(bridge, x))
         end
         if length(bridge.bounds) < i
             # This is the first time calling final_touch

@@ -512,4 +512,69 @@ function _general_bridge_tests(bridge::B) where {B<:AbstractBridge}
     return
 end
 
+"""
+    BridgeRequiresFiniteDomainError{
+        B<:AbstractBridge,
+        F<:MOI.AbstractFunction,
+    } <: Exception
+
+An error thrown when the bridge requires the input function to have a finite
+variable domain.
+"""
+struct BridgeRequiresFiniteDomainError{
+    B<:AbstractBridge,
+    F<:MOI.AbstractFunction,
+} <: Exception
+    bridge::B
+    f::F
 end
+
+function Base.showerror(io::IO, err::BridgeRequiresFiniteDomainError)
+    return print(
+        io,
+        """
+        $(typeof(err)):
+
+        There was an error reformulating your model into a form supported by the
+        solver because one of the bridges requires that all variables have a
+        finite domain.
+
+        To fix this error, add a lower and upper bound to all variables in your
+        model.
+
+        If you have double checked that all variables have finite bounds and you
+        are still encountering this issue, please open a GitHub issue at
+        https://github.com/jump-dev/MathOptInterface.jl
+
+        ## Common mistakes
+
+        A common mistake is to add the variable bounds as affine constraints. For
+        example, if you are using JuMP, do not use `@constraint` to add variable
+        bounds:
+        ```julia
+        using JuMP
+        model = Model()
+        @variable(model, x)
+        @constraint(model, x >= 0)
+        @constraint(model, x <= 1)
+        ```
+        do instead:
+        ```julia
+        using JuMP
+        model = Model()
+        @variable(model, 0 <= x <= 1)
+        ```
+
+        ## Large bound values
+
+        Do not add arbitrarily large variable bounds to fix this error. Doing so
+        will likely result in a reformulation that takes a long time to build
+        and solve. Use domain knowledge to find the tightest valid bounds.
+
+        Alternatively, use a solver that has native support for the constraint
+        types you are using so that you do not need to use the bridging system.
+        """,
+    )
+end
+
+end  # module Bridges
