@@ -1079,7 +1079,7 @@ function test_try_scalar_affine_function()
         :(($x+$x))=>2.0*x,
         :(2.0*($x+$x))=>4.0*x,
         :(($x+$x)*2.0)=>4.0*x,
-        :(($x+x)+2.0)=>2.0*x+2.0,
+        :(($x+$x)+2.0)=>2.0*x+2.0,
         :(sin($x)*($x+$x))=>nothing,
         :(($x+$x)*sin($x))=>nothing,
         :($x*$x)=>nothing,
