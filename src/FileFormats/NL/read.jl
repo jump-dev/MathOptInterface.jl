@@ -271,11 +271,15 @@ _try_scalar_affine_function(x::MOI.VariableIndex) = x
 function _try_scalar_affine_function(expr::Expr)
     if expr.args[1] == :+
         args = _try_scalar_affine_function.(expr.args[2:end])
-        if !any(isnothing, args)
-            return MOI.Utilities.operate(+, Float64, args...)
+        if any(isnothing, args)
+            return nothing
         end
+        return MOI.Utilities.operate(+, Float64, args...)
     elseif expr.args[1] == :*
         args = _try_scalar_affine_function.(expr.args[2:end])
+        if any(isnothing, args)
+            return nothing
+        end
         n_affine_terms = 0
         for arg in args
             n_affine_terms += arg isa MOI.VariableIndex

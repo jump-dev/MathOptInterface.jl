@@ -1066,6 +1066,29 @@ function test_binary_parse_S_Float64()
     return
 end
 
+function test_try_scalar_affine_function()
+    compare(::Nothing, ::Nothing) = true
+    compare(x::T, y::T) where {T} = isapprox(x, y)
+    compare(x, y) = (@show(x, y, typeof(x), typeof(y)); false)
+    x = MOI.VariableIndex(1)
+    for (expr, ret) in Any[
+        :(2.0)=>2.0,
+        :($x)=>x,
+        :(2.0*$x)=>2.0*x,
+        :($x*2.0)=>2.0*x,
+        :(($x+$x))=>2.0*x,
+        :(2.0*($x+$x))=>4.0*x,
+        :(($x+$x)*2.0)=>4.0*x,
+        :(($x+x)+2.0)=>2.0*x+2.0,
+        :(sin($x)*($x+$x))=>nothing,
+        :(($x+$x)*sin($x))=>nothing,
+        :($x*$x)=>nothing,
+    ]
+        @test compare(MOI.FileFormats.NL._try_scalar_affine_function(expr), ret)
+    end
+    return
+end
+
 end
 
 TestNonlinearRead.runtests()
