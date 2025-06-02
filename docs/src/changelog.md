@@ -7,6 +7,16 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.40.2 (June 2, 2025)
+
+### Fixed
+
+ - Fixed bug reading `.nl` files with `use_nlp_block = false` (#2766)
+
+### Other
+
+ - Improved error thrown in `ToMILPBridge` when variable is not bounded (#2764)
+
 ## v1.40.1 (May 20, 2025)
 
 ### Fixed
