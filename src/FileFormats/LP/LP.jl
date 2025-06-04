@@ -27,6 +27,8 @@ function _print_shortest(io::IO, x::Float64)
     return
 end
 
+_print_shortest(io::IO, x::Integer) = print(io, x)
+
 const _ILT1{T} = MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}
 const _IGT1{T} = MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{T}}
 const _IET1{T} = MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.EqualTo{T}}
@@ -81,7 +83,11 @@ function get_options(m::Model)
 end
 
 """
-    Model(; kwargs...)
+    Model(;
+        maximum_length::Int = 255,
+        warn::Bool = false,
+        coefficient_type::Type{T} = Float64,
+    ) where {T}
 
 Create an empty instance of FileFormats.LP.Model.
 
@@ -91,9 +97,16 @@ Keyword arguments are:
    lp_solve 5.0 allows only 16 characters, while CPLEX 12.5+ allow 255.
 
  - `warn::Bool=false`: print a warning when variables or constraints are renamed.
+
+ - `coefficient_type::Type{T} = Float64`: the supported type to use when reading
+   and writing files.
 """
-function Model(; maximum_length::Int = 255, warn::Bool = false)
-    model = Model{Float64}()
+function Model(;
+    maximum_length::Int = 255,
+    warn::Bool = false,
+    coefficient_type::Type{T} = Float64,
+) where {T}
+    model = Model{T}()
     options = Options(maximum_length, warn)
     model.ext[:LP_OPTIONS] = options
     return model
@@ -124,18 +137,18 @@ end
 function _write_function(
     io::IO,
     ::Model,
-    func::MOI.ScalarAffineFunction{Float64},
+    func::MOI.ScalarAffineFunction,
     variable_names::Dict{MOI.VariableIndex,String};
     print_one::Bool = true,
     kwargs...,
 )
     is_first_item = true
-    if !(func.constant ≈ 0.0)
+    if !iszero(func.constant)
         _print_shortest(io, func.constant)
         is_first_item = false
     end
     for term in func.terms
-        if !(term.coefficient ≈ 0.0)
+        if !iszero(term.coefficient)
             if is_first_item
                 if print_one || !isone(term.coefficient)
                     _print_shortest(io, term.coefficient)
@@ -154,18 +167,18 @@ end
 function _write_function(
     io::IO,
     ::Model,
-    func::MOI.ScalarQuadraticFunction{Float64},
+    func::MOI.ScalarQuadraticFunction,
     variable_names::Dict{MOI.VariableIndex,String};
     print_half::Bool = true,
     kwargs...,
 )
     is_first_item = true
-    if !(func.constant ≈ 0.0)
+    if !iszero(func.constant)
         _print_shortest(io, func.constant)
         is_first_item = false
     end
     for term in func.affine_terms
-        if !(term.coefficient ≈ 0.0)
+        if !iszero(term.coefficient)
             if is_first_item
                 _print_shortest(io, term.coefficient)
                 is_first_item = false
@@ -268,13 +281,6 @@ function _write_constraint(
     return
 end
 
-const _SCALAR_SETS = (
-    MOI.LessThan{Float64},
-    MOI.GreaterThan{Float64},
-    MOI.EqualTo{Float64},
-    MOI.Interval{Float64},
-)
-
 function _write_sense(io::IO, model::Model)
     if MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
         println(io, "maximize")
@@ -317,20 +323,20 @@ function _write_integrality(
     return
 end
 
-function _write_constraints(io, model, S, variable_names)
-    F = MOI.ScalarAffineFunction{Float64}
+function _write_constraints(io, model::Model{T}, S, variable_names) where {T}
+    F = MOI.ScalarAffineFunction{T}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         _write_constraint(io, model, index, variable_names; write_name = true)
     end
-    F = MOI.ScalarQuadraticFunction{Float64}
+    F = MOI.ScalarQuadraticFunction{T}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         _write_constraint(io, model, index, variable_names; write_name = true)
     end
     return
 end
 
-function _write_sos_constraints(io, model, variable_names)
-    T, F = Float64, MOI.VectorOfVariables
+function _write_sos_constraints(io, model::Model{T}, variable_names) where {T}
+    F = MOI.VectorOfVariables
     sos1_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,MOI.SOS1{T}}())
     sos2_indices = MOI.get(model, MOI.ListOfConstraintIndices{F,MOI.SOS2{T}}())
     if length(sos1_indices) + length(sos2_indices) == 0
@@ -346,15 +352,15 @@ function _write_sos_constraints(io, model, variable_names)
     return
 end
 
-_to_string(::Type{MOI.SOS1{Float64}}) = "S1::"
-_to_string(::Type{MOI.SOS2{Float64}}) = "S2::"
+_to_string(::Type{<:MOI.SOS1}) = "S1::"
+_to_string(::Type{<:MOI.SOS2}) = "S2::"
 
 function _write_constraint(
     io::IO,
     model::Model,
     index::MOI.ConstraintIndex{MOI.VectorOfVariables,S},
     variable_names::Dict{MOI.VariableIndex,String},
-) where {S<:Union{MOI.SOS1{Float64},MOI.SOS2{Float64}}}
+) where {S<:Union{MOI.SOS1,MOI.SOS2}}
     f = MOI.get(model, MOI.ConstraintFunction(), index)
     s = MOI.get(model, MOI.ConstraintSet(), index)
     name = MOI.get(model, MOI.ConstraintName(), index)
@@ -371,11 +377,11 @@ end
 
 function _write_indicator_constraints(
     io,
-    model,
+    model::Model{T},
     ::Type{S},
     variable_names,
-) where {S}
-    F = MOI.VectorAffineFunction{Float64}
+) where {T,S}
+    F = MOI.VectorAffineFunction{T}
     for A in (MOI.ACTIVATE_ON_ONE, MOI.ACTIVATE_ON_ZERO)
         Set = MOI.Indicator{A,S}
         for index in MOI.get(model, MOI.ListOfConstraintIndices{F,Set}())
@@ -430,7 +436,7 @@ end
 
 Write `model` to `io` in the LP file format.
 """
-function Base.write(io::IO, model::Model)
+function Base.write(io::IO, model::Model{T}) where {T}
     options = get_options(model)
     FileFormats.create_unique_names(
         model,
@@ -449,15 +455,19 @@ function Base.write(io::IO, model::Model)
     _write_sense(io, model)
     _write_objective(io, model, variable_names)
     println(io, "subject to")
-    for S in _SCALAR_SETS
-        _write_constraints(io, model, S, variable_names)
-        _write_indicator_constraints(io, model, S, variable_names)
-    end
+    _write_constraints(io, model, MOI.LessThan{T}, variable_names)
+    _write_indicator_constraints(io, model, MOI.LessThan{T}, variable_names)
+    _write_constraints(io, model, MOI.GreaterThan{T}, variable_names)
+    _write_indicator_constraints(io, model, MOI.GreaterThan{T}, variable_names)
+    _write_constraints(io, model, MOI.EqualTo{T}, variable_names)
+    _write_indicator_constraints(io, model, MOI.EqualTo{T}, variable_names)
+    _write_constraints(io, model, MOI.Interval{T}, variable_names)
+    _write_indicator_constraints(io, model, MOI.Interval{T}, variable_names)
     println(io, "Bounds")
     CI = MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}
     for x in MOI.get(model, MOI.ListOfVariableIndices())
-        lb, ub = MOI.Utilities.get_bounds(model, Float64, x)
-        if lb == -Inf && ub == Inf
+        lb, ub = MOI.Utilities.get_bounds(model, T, x)
+        if lb == typemin(T) && ub == typemax(T)
             if MOI.is_valid(model, CI(x.value))
                 # If a variable is binary, it should not be listed as `free` in
                 # the bounds section.
@@ -467,10 +477,10 @@ function Base.write(io::IO, model::Model)
         elseif lb == ub
             print(io, variable_names[x], " = ")
             _print_shortest(io, lb)
-        elseif lb == -Inf
+        elseif lb == typemin(T)
             print(io, "-infinity <= ", variable_names[x], " <= ")
             _print_shortest(io, ub)
-        elseif ub == Inf
+        elseif ub == typemax(T)
             print(io, variable_names[x], " >= ")
             _print_shortest(io, lb)
         else
@@ -535,22 +545,22 @@ const _KEYWORDS = Dict(
     "end" => _KW_END,
 )
 
-mutable struct _ReadCache
-    objective::MOI.ScalarAffineFunction{Float64}
-    quad_obj_terms::Vector{MOI.ScalarQuadraticTerm{Float64}}
-    constraint_function::MOI.ScalarAffineFunction{Float64}
-    quad_terms::Vector{MOI.ScalarQuadraticTerm{Float64}}
+mutable struct _ReadCache{T}
+    objective::MOI.ScalarAffineFunction{T}
+    quad_obj_terms::Vector{MOI.ScalarQuadraticTerm{T}}
+    constraint_function::MOI.ScalarAffineFunction{T}
+    quad_terms::Vector{MOI.ScalarQuadraticTerm{T}}
     constraint_name::String
     num_constraints::Int
     name_to_variable::Dict{String,MOI.VariableIndex}
     has_default_bound::Set{MOI.VariableIndex}
     indicator::Union{Nothing,Pair{MOI.VariableIndex,MOI.ActivationCondition}}
-    function _ReadCache()
+    function _ReadCache{T}() where {T}
         return new(
-            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
-            MOI.ScalarQuadraticTerm{Float64}[],
-            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 0.0),
-            MOI.ScalarQuadraticTerm{Float64}[],
+            zero(MOI.ScalarAffineFunction{T}),
+            MOI.ScalarQuadraticTerm{T}[],
+            zero(MOI.ScalarAffineFunction{T}),
+            MOI.ScalarQuadraticTerm{T}[],
             "",
             0,
             Dict{String,MOI.VariableIndex}(),
@@ -560,7 +570,11 @@ mutable struct _ReadCache
     end
 end
 
-function _get_variable_from_name(model::Model, cache::_ReadCache, name::String)
+function _get_variable_from_name(
+    model::Model{T},
+    cache::_ReadCache,
+    name::String,
+) where {T}
     current_variable = get(cache.name_to_variable, name, nothing)
     if current_variable !== nothing
         return current_variable
@@ -577,7 +591,7 @@ function _get_variable_from_name(model::Model, cache::_ReadCache, name::String)
     MOI.set(model, MOI.VariableName(), x, name)
     # By default, all variables have a lower bound of 0 unless otherwise
     # specified.
-    MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+    MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
     push!(cache.has_default_bound, x)
     cache.name_to_variable[name] = x
     return x
@@ -596,21 +610,21 @@ _tokenize(line::AbstractString) = String.(split(line, " "; keepempty = false))
     _TOKEN_QUADRATIC_OFF_DIAG,
 )
 
-function _parse_token(token::String)
+function _parse_token(::Type{T}, token::String) where {T}
     if token == "+"
-        return _TOKEN_SIGN, +1.0
+        return _TOKEN_SIGN, one(T)
     elseif token == "-"
-        return _TOKEN_SIGN, -1.0
+        return _TOKEN_SIGN, -one(T)
     elseif startswith(token, "[")
-        return _TOKEN_QUADRATIC_OPEN, +1.0
+        return _TOKEN_QUADRATIC_OPEN, zero(T)
     elseif startswith(token, "]")
-        return _TOKEN_QUADRATIC_CLOSE, 0.5
+        return _TOKEN_QUADRATIC_CLOSE, zero(T)
     elseif token == "^"
-        return _TOKEN_QUADRATIC_DIAG, +1.0
+        return _TOKEN_QUADRATIC_DIAG, zero(T)
     elseif token == "*"
-        return _TOKEN_QUADRATIC_OFF_DIAG, +1.0
+        return _TOKEN_QUADRATIC_OFF_DIAG, zero(T)
     end
-    coef = tryparse(Float64, token)
+    coef = tryparse(T, token)
     if coef === nothing
         return _TOKEN_VARIABLE, token
     else
@@ -618,8 +632,8 @@ function _parse_token(token::String)
     end
 end
 
-function _get_term(token_types, token_values, offset)
-    coef = 1.0
+function _get_term(token_types, token_values::Vector{T}, offset) where {T}
+    coef = one(T)
     if token_types[offset] == _TOKEN_SIGN
         coef = token_values[offset]
         offset += 1
@@ -657,48 +671,54 @@ function _get_term(token_types, token_values, offset)
     end
 end
 
+_half(x) = x / 2
+_half(x::Integer) = div(x, 2)
+
 function _parse_function(
-    f::MOI.ScalarAffineFunction{Float64},
+    f::MOI.ScalarAffineFunction{T},
     model::Model,
     cache::_ReadCache,
     tokens::Vector{String},
-)
+) where {T}
     N = length(tokens)
     token_types = Vector{_TokenType}(undef, N)
-    token_values = Vector{Float64}(undef, N)
+    token_values = Vector{T}(undef, N)
     for i in 1:length(tokens)
-        token_type, token = _parse_token(tokens[i])
+        token_type, token = _parse_token(T, tokens[i])
         token_types[i] = token_type
         if token_type in (_TOKEN_SIGN, _TOKEN_COEFFICIENT)
-            token_values[i] = token::Float64
+            token_values[i] = token::T
         elseif token_type in (_TOKEN_QUADRATIC_OPEN, _TOKEN_QUADRATIC_CLOSE)
-            token_values[i] = NaN
+            token_values[i] = zero(T)
         elseif token_type in (_TOKEN_QUADRATIC_DIAG, _TOKEN_QUADRATIC_OFF_DIAG)
-            token_values[i] = NaN
+            token_values[i] = zero(T)
         else
             @assert token_type == _TOKEN_VARIABLE
             x = _get_variable_from_name(model, cache, token::String)
-            # A cheat for type-stability. Store `Float64` of the variable index
-            token_values[i] = Float64(x.value)
+            # A cheat for type-stability. Store `T` of the variable index
+            token_values[i] = T(x.value)
         end
     end
     offset = 1
     while offset <= length(tokens)
         term, offset = _get_term(token_types, token_values, offset)
-        if term isa MOI.ScalarAffineTerm{Float64}
-            push!(f.terms, term::MOI.ScalarAffineTerm{Float64})
-        elseif term isa MOI.ScalarQuadraticTerm{Float64}
-            push!(cache.quad_terms, term::MOI.ScalarQuadraticTerm{Float64})
+        if term isa MOI.ScalarAffineTerm{T}
+            push!(f.terms, term::MOI.ScalarAffineTerm{T})
+        elseif term isa MOI.ScalarQuadraticTerm{T}
+            push!(cache.quad_terms, term::MOI.ScalarQuadraticTerm{T})
             if tokens[offset-1] in ("]", "]/2")
-                scale = tokens[offset-1] == "]/2" ? 0.5 : 1
+                is_half = tokens[offset-1] == "]/2"
                 for (i, term) in enumerate(cache.quad_terms)
                     x, y = term.variable_1, term.variable_2
-                    coef = scale * (x == y ? 2 : 1) * term.coefficient
+                    coef = (x == y ? 2 : 1) * term.coefficient
+                    if is_half
+                        coef = _half(coef)
+                    end
                     cache.quad_terms[i] = MOI.ScalarQuadraticTerm(coef, x, y)
                 end
             end
         else
-            f.constant += term::Float64
+            f.constant += term::T
         end
     end
     return
@@ -754,10 +774,10 @@ end
 
 function _parse_section(
     ::typeof(_KW_CONSTRAINTS),
-    model::Model,
+    model::Model{T},
     cache::_ReadCache,
     line::AbstractString,
-)
+) where {T}
     # SOS constraints should be in their own "SOS" section, but we can also
     # recognize them if they're mixed into the constraint section.
     if match(r" S([1-2])\w*:: ", line) !== nothing
@@ -799,7 +819,7 @@ function _parse_section(
     # This checks if the constaint is finishing on this line.
     constraint_set = nothing
     if length(tokens) >= 2 && tokens[end-1] in ("<", "<=", ">", ">=", "=", "==")
-        rhs = parse(Float64, pop!(tokens))
+        rhs = parse(T, pop!(tokens))
         sym = pop!(tokens)
         constraint_set = if sym in ("<", "<=")
             MOI.LessThan(rhs)
@@ -822,7 +842,7 @@ function _parse_section(
             )
         end
         if cache.indicator !== nothing
-            f = MOI.Utilities.operate(vcat, Float64, cache.indicator[1], f)
+            f = MOI.Utilities.operate(vcat, T, cache.indicator[1], f)
             constraint_set = MOI.Indicator{cache.indicator[2]}(constraint_set)
         end
         c = MOI.add_constraint(model, f, constraint_set)
@@ -830,7 +850,7 @@ function _parse_section(
         cache.num_constraints += 1
         empty!(cache.constraint_function.terms)
         empty!(cache.quad_terms)
-        cache.constraint_function.constant = 0.0
+        cache.constraint_function.constant = zero(T)
         cache.constraint_name = ""
         cache.indicator = nothing
     end
@@ -839,14 +859,14 @@ end
 
 # _KW_BOUNDS
 
-function _parse_float(token::String)
+function _parse_float(::Type{T}, token::String) where {T}
     coef = lowercase(token)
     if coef in ("-inf", "-infinity")
-        return -Inf
+        return typemin(T)
     elseif coef in ("+inf", "+infinity")
-        return Inf
+        return typemax(T)
     end
-    return tryparse(Float64, coef)
+    return tryparse(T, coef)
 end
 
 # Yes, the last elements here are really accepted by CPLEX...
@@ -856,10 +876,10 @@ _is_equal_to(token) = token in ("=", "==")
 
 function _parse_section(
     ::typeof(_KW_BOUNDS),
-    model::Model,
+    model::Model{T},
     cache::_ReadCache,
     line::AbstractString,
-)
+) where {T}
     tokens = _tokenize(line)
     if length(tokens) == 2 && lowercase(tokens[2]) == "free"
         x = _get_variable_from_name(model, cache, tokens[1])
@@ -870,16 +890,16 @@ function _parse_section(
     if length(tokens) == 5
         name = tokens[3]
         if _is_less_than(tokens[2]) && _is_less_than(tokens[4])
-            lb = _parse_float(tokens[1])::Float64
-            ub = _parse_float(tokens[5])::Float64
+            lb = _parse_float(T, tokens[1])::T
+            ub = _parse_float(T, tokens[5])::T
         elseif _is_greater_than(tokens[2]) && _is_greater_than(tokens[4])
-            lb = _parse_float(tokens[5])::Float64
-            ub = _parse_float(tokens[1])::Float64
+            lb = _parse_float(T, tokens[5])::T
+            ub = _parse_float(T, tokens[1])::T
         else
             error("Unable to parse bound due to invalid inequalities: $(line)")
         end
     elseif length(tokens) == 3
-        lhs, rhs = _parse_float(tokens[1]), _parse_float(tokens[3])
+        lhs, rhs = _parse_float(T, tokens[1]), _parse_float(T, tokens[3])
         if lhs === nothing  # name [comparison] bound
             @assert rhs !== nothing
             name = tokens[1]
@@ -922,25 +942,25 @@ function _parse_section(
             _delete_default_lower_bound_if_present(model, cache, x)
             MOI.add_constraint(model, x, MOI.EqualTo(lb))
             return
-        elseif -Inf < lb < ub < Inf
+        elseif typemin(T) < lb < ub < typemax(T)
             _delete_default_lower_bound_if_present(model, cache, x)
             # Do not add MOI.Interval constraints because we want to follow
             # JuMP's convention of adding separate lower and upper bounds.
             MOI.add_constraint(model, x, MOI.GreaterThan(lb))
             MOI.add_constraint(model, x, MOI.LessThan(ub))
             return
-        elseif lb == -Inf
+        elseif lb == typemin(T)
             _delete_default_lower_bound_if_present(model, cache, x)
-            if ub == Inf
+            if ub == typemax(T)
                 return  # Explicitly free variable
             end
         end
     end
-    if lb !== nothing && -Inf < lb
+    if lb !== nothing && typemin(T) < lb
         _delete_default_lower_bound_if_present(model, cache, x)
         MOI.add_constraint(model, x, MOI.GreaterThan(lb))
     end
-    if ub !== nothing && ub < Inf
+    if ub !== nothing && ub < typemax(T)
         if ub < 0
             # We only need to delete the default lower bound if the upper bound
             # is less than 0.
@@ -951,11 +971,15 @@ function _parse_section(
     return
 end
 
-function _delete_default_lower_bound_if_present(model, cache, x)
+function _delete_default_lower_bound_if_present(
+    model::Model{T},
+    cache,
+    x,
+) where {T}
     if !(x in cache.has_default_bound)
         return
     end
-    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}(x.value)
+    c = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{T}}(x.value)
     MOI.delete(model, c)
     delete!(cache.has_default_bound, x)
     return
@@ -985,10 +1009,10 @@ end
 
 function _parse_section(
     ::typeof(_KW_SOS),
-    model::Model,
+    model::Model{T},
     cache::_ReadCache,
     line::AbstractString,
-)
+) where {T}
     # SOS constraints can have all manner of whitespace issues with them.
     # Normalize them here before attempting to do anything else.
     line = replace(line, r"\s+:\s+" => ":")
@@ -1005,14 +1029,14 @@ function _parse_section(
     else
         error("SOS of type $(tokens[2]) not recognised")
     end
-    variables, weights = MOI.VariableIndex[], Float64[]
+    variables, weights = MOI.VariableIndex[], T[]
     for token in tokens[3:end]
         items = String.(split(token, ":"))
         if length(items) != 2
             error("Invalid token in SOS constraint: $(token)")
         end
         push!(variables, _get_variable_from_name(model, cache, items[1]))
-        push!(weights, parse(Float64, items[2]))
+        push!(weights, parse(T, items[2]))
     end
     c_ref = if tokens[2] == "S1::"
         MOI.add_constraint(model, variables, MOI.SOS1(weights))
@@ -1062,11 +1086,11 @@ This reader attempts to follow the CPLEX LP format, because others like the
 lpsolve version are very...flexible...in how they accept input. Read more about
 them here: http://lpsolve.sourceforge.net
 """
-function Base.read!(io::IO, model::Model)
+function Base.read!(io::IO, model::Model{T}) where {T}
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
     end
-    cache = _ReadCache()
+    cache = _ReadCache{T}()
     section = Val{:header}()
     peeked_line = ""
     while peeked_line !== nothing

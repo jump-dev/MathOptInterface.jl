@@ -1130,6 +1130,69 @@ function test_unsupported_variable_types()
     return
 end
 
+function _test_int_round_trip(src)
+    model = MOI.FileFormats.LP.Model()#; coefficient_type = Int)
+    io = IOBuffer()
+    write(io, src)
+    seekstart(io)
+    read!(io, model)
+    seekstart(io)
+    write(io, model)
+    seekstart(io)
+    file = read(io, String)
+    @test file == src
+    return
+end
+
+function test_int_round_trip()
+    _test_int_round_trip(
+        """
+        minimize
+        obj: 1 + 2 x
+        subject to
+        c: 3 x >= 2
+        Bounds
+        x >= 0
+        End
+        """,
+    )
+    _test_int_round_trip(
+        """
+        minimize
+        obj: 1 x + [ 1 x ^ 2 ]/2
+        subject to
+        c: [ 1 x ^ 2 ] <= 1
+        Bounds
+        x >= 0
+        End
+        """,
+    )
+    _test_int_round_trip(
+        """
+        minimize
+        obj: [ 2 x ^ 2 ]/2
+        subject to
+        c: [ 2 x ^ 2 ] <= 1
+        Bounds
+        x >= 0
+        End
+        """,
+    )
+    _test_int_round_trip(
+        """
+        minimize
+        obj: [ 3 x ^ 2 + 4 x * y + 5 y ^ 2 ]/2
+        subject to
+        c: [ 3 x ^ 2 + 4 x * y + 5 y ^ 2 ] <= 1
+        Bounds
+        x >= 0
+        y >= 1
+        End
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestLP.runtests()
