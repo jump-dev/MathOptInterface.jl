@@ -1293,7 +1293,7 @@ end
 function test_parse_int_coefficient_scalaraffineterm()
     x = MOI.VariableIndex(1)
     object = Dict{String,Any}("coefficient" => 2, "variable" => "x")
-    @test MOF.parse_scalar_affine_term(object, Dict("x" => x)) ==
+    @test MOF.parse_scalar_affine_term(Float64, object, Dict("x" => x)) ==
           MOI.ScalarAffineTerm{Float64}(2.0, x)
     return
 end
@@ -1305,7 +1305,7 @@ function test_parse_int_coefficient_scalaraffinefunction()
         "terms" => [],
         "constant" => 2,
     )
-    @test MOF.function_to_moi(object, Dict("x" => x)) ≈
+    @test MOF.function_to_moi(Float64, object, Dict("x" => x)) ≈
           MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{Float64}[], 2.0)
     return
 end
@@ -1317,7 +1317,7 @@ function test_parse_int_coefficient_scalarquadraticterm()
         "variable_1" => "x",
         "variable_2" => "x",
     )
-    @test MOF.parse_scalar_quadratic_term(object, Dict("x" => x)) ==
+    @test MOF.parse_scalar_quadratic_term(Float64, object, Dict("x" => x)) ==
           MOI.ScalarQuadraticTerm{Float64}(2.0, x, x)
     return
 end
@@ -1335,7 +1335,7 @@ function test_parse_int_coefficient_scalarquadraticfunction()
         MOI.ScalarAffineTerm{Float64}[],
         2.0,
     )
-    @test MOF.function_to_moi(object, Dict("x" => x)) ≈ f
+    @test MOF.function_to_moi(Float64, object, Dict("x" => x)) ≈ f
     return
 end
 
@@ -1434,7 +1434,7 @@ function test_ScaledPositiveSemidefiniteConeTriangle_set_to_moi()
         "type" => "ScaledPositiveSemidefiniteConeTriangle",
         "side_dimension" => 2,
     )
-    @test MOF.set_to_moi(object) ==
+    @test MOF.set_to_moi(Int, object) ==
           MOI.Scaled(MOI.PositiveSemidefiniteConeTriangle(2))
     return
 end
@@ -1456,7 +1456,7 @@ function test_nonlinear_variable_real_nodes()
         ],
     )
     f = MOI.ScalarNonlinearFunction(:^, Any[x, 2.0])
-    @test MOF.function_to_moi(object, Dict("x" => x)) ≈ f
+    @test MOF.function_to_moi(Float64, object, Dict("x" => x)) ≈ f
     return
 end
 
@@ -1477,7 +1477,7 @@ function test_nonlinear_variable_complex_nodes()
         ],
     )
     f = MOI.ScalarNonlinearFunction(:^, Any[x, 2.0+3im])
-    @test MOF.function_to_moi(object, Dict("x" => x)) ≈ f
+    @test MOF.function_to_moi(Float64, object, Dict("x" => x)) ≈ f
     return
 end
 
@@ -1589,6 +1589,22 @@ function test_use_nlp_block()
     @test block.has_objective == true
     @test MOI.get(model, MOI.ObjectiveFunctionType()) ==
           MOI.ScalarAffineFunction{Float64}
+    return
+end
+
+function test_AAA_int()
+    _test_model_equality(
+        """
+        variables: x, y
+        minobjective::Int: 2 * x + 1
+        c1::Int: x + 2 * y <= 3
+        c2::Int: 1 * x * x + 3 * x * y + 4 * y * y >= 5
+        c3::Int: [2 * x + 3, 4 * y] in MOI.SOS1([1, 2])
+        """,
+        ["x", "y"],
+        ["c1", "c2", "c3"];
+        coefficient_type = Int,
+    )
     return
 end
 
