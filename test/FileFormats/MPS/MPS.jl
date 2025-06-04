@@ -1583,6 +1583,27 @@ function test_int_round_trip()
          PL bounds    x
         ENDATA
         """,
+        """
+        NAME
+        ROWS
+         N  OBJ
+         L  c1
+        COLUMNS
+            x         c1        1
+            y         c1        1
+        RHS
+            rhs       c1        1
+        RANGES
+        BOUNDS
+         FR bounds    x
+         FR bounds    y
+        QCMATRIX   c1
+            x         x         1
+            x         y         2
+            y         x         2
+            y         y         7
+        ENDATA
+        """,
     ]
         _test_int_round_trip(src)
     end
