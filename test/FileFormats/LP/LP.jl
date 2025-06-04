@@ -1145,7 +1145,7 @@ function _test_int_round_trip(src)
 end
 
 function test_int_round_trip()
-    _test_int_round_trip(
+    for src in [
         """
         minimize
         obj: 1 + 2 x
@@ -1155,8 +1155,6 @@ function test_int_round_trip()
         x >= 0
         End
         """,
-    )
-    _test_int_round_trip(
         """
         minimize
         obj: 1 x + [ 1 x ^ 2 ]/2
@@ -1166,8 +1164,6 @@ function test_int_round_trip()
         x >= 0
         End
         """,
-    )
-    _test_int_round_trip(
         """
         minimize
         obj: [ 2 x ^ 2 ]/2
@@ -1177,8 +1173,6 @@ function test_int_round_trip()
         x >= 0
         End
         """,
-    )
-    _test_int_round_trip(
         """
         minimize
         obj: [ 3 x ^ 2 + 4 x * y + 5 y ^ 2 ]/2
@@ -1189,7 +1183,9 @@ function test_int_round_trip()
         y >= 1
         End
         """,
-    )
+    ]
+        _test_int_round_trip(src)
+    end
     return
 end
 
