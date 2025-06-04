@@ -1131,7 +1131,7 @@ function test_unsupported_variable_types()
 end
 
 function _test_int_round_trip(src)
-    model = MOI.FileFormats.LP.Model()#; coefficient_type = Int)
+    model = MOI.FileFormats.LP.Model(; coefficient_type = Int)
     io = IOBuffer()
     write(io, src)
     seekstart(io)
