@@ -572,7 +572,7 @@ end
 
 function _get_variable_from_name(
     model::Model{T},
-    cache::_ReadCache,
+    cache::_ReadCache{T},
     name::String,
 ) where {T}
     current_variable = get(cache.name_to_variable, name, nothing)
@@ -676,8 +676,8 @@ _half(x::Integer) = div(x, 2)
 
 function _parse_function(
     f::MOI.ScalarAffineFunction{T},
-    model::Model,
-    cache::_ReadCache,
+    model::Model{T},
+    cache::_ReadCache{T},
     tokens::Vector{String},
 ) where {T}
     N = length(tokens)
@@ -775,7 +775,7 @@ end
 function _parse_section(
     ::typeof(_KW_CONSTRAINTS),
     model::Model{T},
-    cache::_ReadCache,
+    cache::_ReadCache{T},
     line::AbstractString,
 ) where {T}
     # SOS constraints should be in their own "SOS" section, but we can also
@@ -877,7 +877,7 @@ _is_equal_to(token) = token in ("=", "==")
 function _parse_section(
     ::typeof(_KW_BOUNDS),
     model::Model{T},
-    cache::_ReadCache,
+    cache::_ReadCache{T},
     line::AbstractString,
 ) where {T}
     tokens = _tokenize(line)
@@ -1010,7 +1010,7 @@ end
 function _parse_section(
     ::typeof(_KW_SOS),
     model::Model{T},
-    cache::_ReadCache,
+    cache::_ReadCache{T},
     line::AbstractString,
 ) where {T}
     # SOS constraints can have all manner of whitespace issues with them.
