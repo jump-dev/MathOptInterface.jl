@@ -154,6 +154,12 @@ function test_objective()
             model,
             MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}(),
         )
+        model = SDPA.Model(; coefficient_type = T)
+        @test !MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
+        @test !MOI.supports(
+            model,
+            MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}}(),
+        )
     end
 end
 
@@ -370,6 +376,29 @@ function test_unsupported_variable_types()
         MOI.UnsupportedConstraint,
         MOI.add_constrained_variable(model, MOI.Semiinteger(2.0, 3.0)),
     )
+    return
+end
+
+function test_example_A_integer_coefficients()
+    filename = joinpath(SDPA_MODELS_DIR, "example_A_int.dat-s")
+    model = MOI.FileFormats.SDPA.Model(; coefficient_type = Int)
+    MOI.read_from_file(model, filename)
+    for xi in MOI.get(model, MOI.ListOfVariableIndices())
+        MOI.set(model, MOI.VariableName(), xi, "v$(xi.value)")
+    end
+    F, S = MOI.VectorAffineFunction{Int}, MOI.PositiveSemidefiniteConeTriangle
+    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        MOI.set(model, MOI.ConstraintName(), ci, "c$(ci.value)")
+    end
+    input = """
+    variables: v1, v2
+    minobjective::Int: 10v1 + 20v2
+    c1::Int: [v1 + -1, 0, v1 + v2 + -2] in PositiveSemidefiniteConeTriangle(2)
+    c2::Int: [5v2 + -3, 2v2, 6v2 + -4] in PositiveSemidefiniteConeTriangle(2)
+    """
+    target = MOI.Utilities.Model{Int}()
+    MOI.Utilities.loadfromstring!(target, input)
+    MOI.Test.util_test_models_equal(model, target, ["v1", "v2"], ["c1", "c2"])
     return
 end
 
