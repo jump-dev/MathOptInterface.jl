@@ -238,7 +238,7 @@ Subject to:
 VariableIndex-in-GreaterThan{Int64}
  x >= (2)
 
-julia> MOI.get(new_model, MOI.VariableIndex, "x)
+julia> MOI.get(new_model, MOI.VariableIndex, "x")
 MOI.VariableIndex(1)
 ```
 """
