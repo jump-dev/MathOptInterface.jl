@@ -1104,7 +1104,7 @@ function test_objsense_next_line()
 end
 
 function test_parse_name_line()
-    data = MPS.TempMPSModel()
+    data = MPS.TempMPSModel{Float64}()
     for (line, name) in (
         "NAME" => "",
         "NAME   " => "",
@@ -1547,6 +1547,66 @@ function test_unsupported_variable_types()
         MOI.UnsupportedConstraint,
         MOI.add_constrained_variable(model, MOI.Semiinteger(2.0, 3.0)),
     )
+    return
+end
+
+function _test_int_round_trip(src)
+    model = MOI.FileFormats.MPS.Model(; coefficient_type = Int)
+    io = IOBuffer()
+    write(io, src)
+    seekstart(io)
+    read!(io, model)
+    seekstart(io)
+    write(io, model)
+    seekstart(io)
+    file = read(io, String)
+    @test file == src
+    return
+end
+
+function test_int_round_trip()
+    for src in [
+        """
+        NAME
+        ROWS
+         N  OBJ
+         G  c
+        COLUMNS
+            x         c         3
+            x         OBJ       2
+        RHS
+            rhs       c         2
+            rhs       OBJ       -3
+        RANGES
+        BOUNDS
+         LO bounds    x         1
+         PL bounds    x
+        ENDATA
+        """,
+        """
+        NAME
+        ROWS
+         N  OBJ
+         L  c1
+        COLUMNS
+            x         c1        1
+            y         c1        1
+        RHS
+            rhs       c1        1
+        RANGES
+        BOUNDS
+         FR bounds    x
+         FR bounds    y
+        QCMATRIX   c1
+            x         x         1
+            x         y         2
+            y         x         2
+            y         y         7
+        ENDATA
+        """,
+    ]
+        _test_int_round_trip(src)
+    end
     return
 end
 

@@ -122,29 +122,42 @@ function get_options(m::Model)::Options
 end
 
 """
-    Model(; kwargs...)
+    Model(;
+        warn::Bool = false,
+        print_objsense::Bool = false,
+        generic_names::Bool = false,
+        quadratic_format::QuadraticFormat = kQuadraticFormatGurobi,
+        coefficient_type::Type{T} = Float64,
+    ) where {T}
 
 Create an empty instance of FileFormats.MPS.Model.
 
 Keyword arguments are:
 
  - `warn::Bool=false`: print a warning when variables or constraints are renamed.
+
  - `print_objsense::Bool=false`: print the OBJSENSE section when writing
+
  - `generic_names::Bool=false`: strip all names in the model and replace them
    with the generic names `C\$i` and `R\$i` for the i'th column and row
    respectively.
+
  - `quadratic_format::QuadraticFormat = kQuadraticFormatGurobi`: specify the
    solver-specific extension used when writing the quadratic components of the
    model. Options are `kQuadraticFormatGurobi`, `kQuadraticFormatCPLEX`, and
    `kQuadraticFormatMosek`.
+
+ - `coefficient_type::Type{T}=Float64`: the supported type to use when reading
+   and writing files.
 """
 function Model(;
     warn::Bool = false,
     print_objsense::Bool = false,
     generic_names::Bool = false,
     quadratic_format::QuadraticFormat = kQuadraticFormatGurobi,
-)
-    model = Model{Float64}()
+    coefficient_type::Type{T} = Float64,
+) where {T}
+    model = Model{T}()
     model.ext[:MPS_OPTIONS] =
         Options(warn, print_objsense, generic_names, quadratic_format)
     return model
@@ -291,19 +304,19 @@ end
 
 function _write_rows(
     io,
-    model,
+    model::Model{T},
     ::Type{F},
     ::Type{S},
     ::Any,
-) where {F,S<:MOI.Interval{Float64}}
+) where {T,F,S<:MOI.Interval}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         set = MOI.get(model, MOI.ConstraintSet(), index)
-        if set.lower == -Inf && set.upper == Inf
+        if set.lower == typemin(T) && set.upper == typemax(T)
             println(io, Card(f1 = "N", f2 = row_name))
-        elseif set.upper == Inf
+        elseif set.upper == typemax(T)
             println(io, Card(f1 = "G", f2 = row_name))
-        elseif set.lower == -Inf
+        elseif set.lower == typemin(T)
             println(io, Card(f1 = "L", f2 = row_name))
         else
             println(io, Card(f1 = "L", f2 = row_name))
@@ -312,26 +325,26 @@ function _write_rows(
     return
 end
 
-function write_rows(io::IO, model::Model)
+function write_rows(io::IO, model::Model{T}) where {T}
     println(io, "ROWS")
     println(io, Card(f1 = "N", f2 = "OBJ"))
-    SAF = MOI.ScalarAffineFunction{Float64}
-    SQF = MOI.ScalarQuadraticFunction{Float64}
-    _write_rows(io, model, SAF, MOI.LessThan{Float64}, "L")
-    _write_rows(io, model, SQF, MOI.LessThan{Float64}, "L")
-    _write_rows(io, model, SAF, MOI.GreaterThan{Float64}, "G")
-    _write_rows(io, model, SQF, MOI.GreaterThan{Float64}, "G")
-    _write_rows(io, model, SAF, MOI.EqualTo{Float64}, "E")
-    _write_rows(io, model, SQF, MOI.EqualTo{Float64}, "E")
-    _write_rows(io, model, SAF, MOI.Interval{Float64}, "L")
-    _write_rows(io, model, SQF, MOI.Interval{Float64}, "L")
-    VAF = MOI.VectorAffineFunction{Float64}
-    _write_rows(io, model, VAF, IndicatorLessThanTrue{Float64}, "L")
-    _write_rows(io, model, VAF, IndicatorLessThanFalse{Float64}, "L")
-    _write_rows(io, model, VAF, IndicatorGreaterThanTrue{Float64}, "G")
-    _write_rows(io, model, VAF, IndicatorGreaterThanFalse{Float64}, "G")
-    _write_rows(io, model, VAF, IndicatorEqualToTrue{Float64}, "E")
-    _write_rows(io, model, VAF, IndicatorEqualToFalse{Float64}, "E")
+    SAF = MOI.ScalarAffineFunction{T}
+    SQF = MOI.ScalarQuadraticFunction{T}
+    _write_rows(io, model, SAF, MOI.LessThan{T}, "L")
+    _write_rows(io, model, SQF, MOI.LessThan{T}, "L")
+    _write_rows(io, model, SAF, MOI.GreaterThan{T}, "G")
+    _write_rows(io, model, SQF, MOI.GreaterThan{T}, "G")
+    _write_rows(io, model, SAF, MOI.EqualTo{T}, "E")
+    _write_rows(io, model, SQF, MOI.EqualTo{T}, "E")
+    _write_rows(io, model, SAF, MOI.Interval{T}, "L")
+    _write_rows(io, model, SQF, MOI.Interval{T}, "L")
+    VAF = MOI.VectorAffineFunction{T}
+    _write_rows(io, model, VAF, IndicatorLessThanTrue{T}, "L")
+    _write_rows(io, model, VAF, IndicatorLessThanFalse{T}, "L")
+    _write_rows(io, model, VAF, IndicatorGreaterThanTrue{T}, "G")
+    _write_rows(io, model, VAF, IndicatorGreaterThanFalse{T}, "G")
+    _write_rows(io, model, VAF, IndicatorEqualToTrue{T}, "E")
+    _write_rows(io, model, VAF, IndicatorEqualToFalse{T}, "E")
     return
 end
 
@@ -362,11 +375,11 @@ end
 
 function _extract_terms(
     var_to_column::OrderedDict{MOI.VariableIndex,Int},
-    coefficients::Vector{Vector{Tuple{String,Float64}}},
+    coefficients::Vector{Vector{Tuple{String,T}}},
     row_name::String,
     func::MOI.ScalarAffineFunction,
     flip_sign::Bool = false,
-)
+) where {T}
     for term in func.terms
         column = var_to_column[term.variable]
         coef = flip_sign ? -term.coefficient : term.coefficient
@@ -377,11 +390,11 @@ end
 
 function _extract_terms(
     var_to_column::OrderedDict{MOI.VariableIndex,Int},
-    coefficients::Vector{Vector{Tuple{String,Float64}}},
+    coefficients::Vector{Vector{Tuple{String,T}}},
     row_name::String,
     func::MOI.ScalarQuadraticFunction,
     flip_sign::Bool = false,
-)
+) where {T}
     for term in func.affine_terms
         column = var_to_column[term.variable]
         coef = flip_sign ? -term.coefficient : term.coefficient
@@ -395,8 +408,8 @@ function _collect_coefficients(
     ::Type{F},
     ::Type{S},
     var_to_column::OrderedDict{MOI.VariableIndex,Int},
-    coefficients::Vector{Vector{Tuple{String,Float64}}},
-) where {F,S}
+    coefficients::Vector{Vector{Tuple{String,T}}},
+) where {T,F,S}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         func = MOI.get(model, MOI.ConstraintFunction(), index)
@@ -408,14 +421,14 @@ end
 _activation_condition(::Type{<:MOI.Indicator{A}}) where {A} = A
 
 function _collect_indicator(
-    model,
+    model::Model{T},
     ::Type{S},
     var_to_column,
     coefficients,
     indicators,
-) where {S}
+) where {T,S}
     options = get_options(model)
-    F = MOI.VectorAffineFunction{Float64}
+    F = MOI.VectorAffineFunction{T}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         func = MOI.get(model, MOI.ConstraintFunction(), index)
@@ -429,9 +442,10 @@ function _collect_indicator(
     return
 end
 
-function _get_objective(model)::MOI.ScalarQuadraticFunction{Float64}
+function _get_objective(model::Model{T}) where {T}
     F = MOI.get(model, MOI.ObjectiveFunctionType())
-    return MOI.get(model, MOI.ObjectiveFunction{F}())
+    f = MOI.get(model, MOI.ObjectiveFunction{F}())
+    return convert(MOI.ScalarQuadraticFunction{T}, f)
 end
 
 function _extract_terms_objective(model, var_to_column, coefficients, flip_obj)
@@ -453,19 +467,24 @@ function _var_name(
     end
 end
 
-function write_columns(io::IO, model::Model, flip_obj, var_to_column)
+function write_columns(
+    io::IO,
+    model::Model{T},
+    flip_obj,
+    var_to_column,
+) where {T}
     options = get_options(model)
     indicators = Tuple{String,String,MOI.ActivationCondition}[]
-    coefficients = Vector{Tuple{String,Float64}}[
-        Tuple{String,Float64}[] for _ in 1:length(var_to_column)
+    coefficients = Vector{Tuple{String,T}}[
+        Tuple{String,T}[] for _ in 1:length(var_to_column)
     ]
     # Build constraint coefficients
     # The functions and sets are given explicitly so that this function is
     # type-stable.
-    SAF = MOI.ScalarAffineFunction{Float64}
-    SQF = MOI.ScalarQuadraticFunction{Float64}
-    LT, GT = MOI.LessThan{Float64}, MOI.GreaterThan{Float64}
-    ET, IT = MOI.EqualTo{Float64}, MOI.Interval{Float64}
+    SAF = MOI.ScalarAffineFunction{T}
+    SQF = MOI.ScalarQuadraticFunction{T}
+    LT, GT = MOI.LessThan{T}, MOI.GreaterThan{T}
+    ET, IT = MOI.EqualTo{T}, MOI.Interval{T}
     _collect_coefficients(model, SAF, LT, var_to_column, coefficients)
     _collect_coefficients(model, SQF, LT, var_to_column, coefficients)
     _collect_coefficients(model, SAF, GT, var_to_column, coefficients)
@@ -476,42 +495,42 @@ function write_columns(io::IO, model::Model, flip_obj, var_to_column)
     _collect_coefficients(model, SQF, IT, var_to_column, coefficients)
     _collect_indicator(
         model,
-        IndicatorLessThanTrue{Float64},
+        IndicatorLessThanTrue{T},
         var_to_column,
         coefficients,
         indicators,
     )
     _collect_indicator(
         model,
-        IndicatorLessThanFalse{Float64},
+        IndicatorLessThanFalse{T},
         var_to_column,
         coefficients,
         indicators,
     )
     _collect_indicator(
         model,
-        IndicatorGreaterThanTrue{Float64},
+        IndicatorGreaterThanTrue{T},
         var_to_column,
         coefficients,
         indicators,
     )
     _collect_indicator(
         model,
-        IndicatorGreaterThanFalse{Float64},
+        IndicatorGreaterThanFalse{T},
         var_to_column,
         coefficients,
         indicators,
     )
     _collect_indicator(
         model,
-        IndicatorEqualToTrue{Float64},
+        IndicatorEqualToTrue{T},
         var_to_column,
         coefficients,
         indicators,
     )
     _collect_indicator(
         model,
-        IndicatorEqualToFalse{Float64},
+        IndicatorEqualToFalse{T},
         var_to_column,
         coefficients,
         indicators,
@@ -577,19 +596,19 @@ end
 
 function _write_rhs(
     io,
-    model,
+    model::Model{T},
     ::Type{F},
     ::Type{S},
-) where {F,S<:MOI.Interval{Float64}}
+) where {T,F,S<:MOI.Interval}
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         set = MOI.get(model, MOI.ConstraintSet(), index)
-        if set.lower == -Inf && set.upper == Inf
+        if set.lower == typemin(T) && set.upper == typemax(T)
             # No RHS. Free row
-        elseif set.upper == Inf
+        elseif set.upper == typemax(T)
             value = _to_string(set.lower)
             println(io, Card(f2 = "rhs", f3 = row_name, f4 = value))
-        elseif set.lower == -Inf
+        elseif set.lower == typemin(T)
             value = _to_string(set.upper)
             println(io, Card(f2 = "rhs", f3 = row_name, f4 = value))
         else
@@ -600,25 +619,25 @@ function _write_rhs(
     return
 end
 
-function write_rhs(io::IO, model::Model, obj_const)
+function write_rhs(io::IO, model::Model{T}, obj_const) where {T}
     println(io, "RHS")
-    SAF = MOI.ScalarAffineFunction{Float64}
-    SQF = MOI.ScalarQuadraticFunction{Float64}
-    _write_rhs(io, model, SAF, MOI.LessThan{Float64})
-    _write_rhs(io, model, SQF, MOI.LessThan{Float64})
-    _write_rhs(io, model, SAF, MOI.GreaterThan{Float64})
-    _write_rhs(io, model, SQF, MOI.GreaterThan{Float64})
-    _write_rhs(io, model, SAF, MOI.EqualTo{Float64})
-    _write_rhs(io, model, SQF, MOI.EqualTo{Float64})
-    _write_rhs(io, model, SAF, MOI.Interval{Float64})
-    _write_rhs(io, model, SQF, MOI.Interval{Float64})
-    VAF = MOI.VectorAffineFunction{Float64}
-    _write_rhs(io, model, VAF, IndicatorLessThanTrue{Float64})
-    _write_rhs(io, model, VAF, IndicatorLessThanFalse{Float64})
-    _write_rhs(io, model, VAF, IndicatorGreaterThanTrue{Float64})
-    _write_rhs(io, model, VAF, IndicatorGreaterThanFalse{Float64})
-    _write_rhs(io, model, VAF, IndicatorEqualToTrue{Float64})
-    _write_rhs(io, model, VAF, IndicatorEqualToFalse{Float64})
+    SAF = MOI.ScalarAffineFunction{T}
+    SQF = MOI.ScalarQuadraticFunction{T}
+    _write_rhs(io, model, SAF, MOI.LessThan{T})
+    _write_rhs(io, model, SQF, MOI.LessThan{T})
+    _write_rhs(io, model, SAF, MOI.GreaterThan{T})
+    _write_rhs(io, model, SQF, MOI.GreaterThan{T})
+    _write_rhs(io, model, SAF, MOI.EqualTo{T})
+    _write_rhs(io, model, SQF, MOI.EqualTo{T})
+    _write_rhs(io, model, SAF, MOI.Interval{T})
+    _write_rhs(io, model, SQF, MOI.Interval{T})
+    VAF = MOI.VectorAffineFunction{T}
+    _write_rhs(io, model, VAF, IndicatorLessThanTrue{T})
+    _write_rhs(io, model, VAF, IndicatorLessThanFalse{T})
+    _write_rhs(io, model, VAF, IndicatorGreaterThanTrue{T})
+    _write_rhs(io, model, VAF, IndicatorGreaterThanFalse{T})
+    _write_rhs(io, model, VAF, IndicatorEqualToTrue{T})
+    _write_rhs(io, model, VAF, IndicatorEqualToFalse{T})
     # Objective constants are added to the RHS as a negative offset.
     # https://www.ibm.com/docs/en/icos/20.1.0?topic=standard-records-in-mps-format
     if !iszero(obj_const)
@@ -644,10 +663,10 @@ end
 # the RANGE term to upper - lower.
 # ==============================================================================
 
-function _write_ranges(io::IO, model::Model, ::Type{F}) where {F}
-    cis = MOI.get(model, MOI.ListOfConstraintIndices{F,MOI.Interval{Float64}}())
+function _write_ranges(io::IO, model::Model{T}, ::Type{F}) where {T,F}
+    cis = MOI.get(model, MOI.ListOfConstraintIndices{F,MOI.Interval{T}}())
     for index in cis
-        set = MOI.get(model, MOI.ConstraintSet(), index)::MOI.Interval{Float64}
+        set = MOI.get(model, MOI.ConstraintSet(), index)::MOI.Interval{T}
         if isfinite(set.upper - set.lower)
             # We only need to write the range if the bounds are both finite
             row_name = MOI.get(model, MOI.ConstraintName(), index)
@@ -658,10 +677,10 @@ function _write_ranges(io::IO, model::Model, ::Type{F}) where {F}
     return
 end
 
-function write_ranges(io::IO, model::Model)
+function write_ranges(io::IO, model::Model{T}) where {T}
     println(io, "RANGES")
-    _write_ranges(io, model, MOI.ScalarAffineFunction{Float64})
-    _write_ranges(io, model, MOI.ScalarQuadraticFunction{Float64})
+    _write_ranges(io, model, MOI.ScalarAffineFunction{T})
+    _write_ranges(io, model, MOI.ScalarQuadraticFunction{T})
     return
 end
 
@@ -687,7 +706,13 @@ end
 #           l is the lower bound on the variable. If none set then defaults to 1
 # ==============================================================================
 
-function write_single_bound(io::IO, var_name::String, lower, upper, vtype)
+function write_single_bound(
+    io::IO,
+    var_name::String,
+    lower::T,
+    upper::T,
+    vtype,
+) where {T}
     if lower == upper
         println(
             io,
@@ -698,10 +723,10 @@ function write_single_bound(io::IO, var_name::String, lower, upper, vtype)
                 f4 = _to_string(lower),
             ),
         )
-    elseif lower == -Inf && upper == Inf
+    elseif lower == typemin(T) && upper == typemax(T)
         println(io, Card(f1 = "FR", f2 = "bounds", f3 = var_name))
     else
-        if lower == -Inf
+        if lower == typemin(T)
             println(io, Card(f1 = "MI", f2 = "bounds", f3 = var_name))
         else
             println(
@@ -714,7 +739,7 @@ function write_single_bound(io::IO, var_name::String, lower, upper, vtype)
                 ),
             )
         end
-        if upper == Inf
+        if upper == typemax(T)
             println(io, Card(f1 = "PL", f2 = "bounds", f3 = var_name))
         else
             println(
@@ -731,25 +756,15 @@ function write_single_bound(io::IO, var_name::String, lower, upper, vtype)
     return
 end
 
-function update_bounds(x::Tuple{Float64,Float64,VType}, set::MOI.GreaterThan)
-    return (max(x[1], set.lower), x[2], x[3])
-end
+update_bounds(x, set::MOI.GreaterThan) = (max(x[1], set.lower), x[2], x[3])
 
-function update_bounds(x::Tuple{Float64,Float64,VType}, set::MOI.LessThan)
-    return (x[1], min(x[2], set.upper), x[3])
-end
+update_bounds(x, set::MOI.LessThan) = (x[1], min(x[2], set.upper), x[3])
 
-function update_bounds(x::Tuple{Float64,Float64,VType}, set::MOI.Interval)
-    return (set.lower, set.upper, x[3])
-end
+update_bounds(x, set::MOI.Interval) = (set.lower, set.upper, x[3])
 
-function update_bounds(x::Tuple{Float64,Float64,VType}, set::MOI.EqualTo)
-    return (set.value, set.value, x[3])
-end
+update_bounds(x, set::MOI.EqualTo) = (set.value, set.value, x[3])
 
-function update_bounds(x::Tuple{Float64,Float64,VType}, set::MOI.ZeroOne)
-    return (x[1], x[2], VTYPE_BINARY)
-end
+update_bounds(x, set::MOI.ZeroOne) = (x[1], x[2], VTYPE_BINARY)
 
 function _collect_bounds(bounds, model, ::Type{S}, var_to_column) where {S}
     for index in
@@ -762,14 +777,17 @@ function _collect_bounds(bounds, model, ::Type{S}, var_to_column) where {S}
     return
 end
 
-function write_bounds(io::IO, model::Model, var_to_column)
+function write_bounds(io::IO, model::Model{T}, var_to_column) where {T}
     options = get_options(model)
     println(io, "BOUNDS")
-    bounds = [(-Inf, Inf, VTYPE_CONTINUOUS) for _ in 1:length(var_to_column)]
-    _collect_bounds(bounds, model, MOI.LessThan{Float64}, var_to_column)
-    _collect_bounds(bounds, model, MOI.GreaterThan{Float64}, var_to_column)
-    _collect_bounds(bounds, model, MOI.EqualTo{Float64}, var_to_column)
-    _collect_bounds(bounds, model, MOI.Interval{Float64}, var_to_column)
+    bounds = [
+        (typemin(T), typemax(T), VTYPE_CONTINUOUS) for
+        _ in 1:length(var_to_column)
+    ]
+    _collect_bounds(bounds, model, MOI.LessThan{T}, var_to_column)
+    _collect_bounds(bounds, model, MOI.GreaterThan{T}, var_to_column)
+    _collect_bounds(bounds, model, MOI.EqualTo{T}, var_to_column)
+    _collect_bounds(bounds, model, MOI.Interval{T}, var_to_column)
     _collect_bounds(bounds, model, MOI.ZeroOne, var_to_column)
     for (variable, column) in var_to_column
         var_name = _var_name(model, variable, column, options.generic_names)
@@ -780,11 +798,11 @@ function write_bounds(io::IO, model::Model, var_to_column)
             else
                 lower = max(0, lower)
                 if lower > 0
-                    lower = 1
+                    lower = one(T)
                 end
                 upper = min(1, upper)
                 if upper < 1
-                    upper = 0
+                    upper = zero(T)
                 end
                 write_single_bound(io, var_name, lower, upper, vtype)
             end
@@ -826,16 +844,16 @@ end
 
 function _write_q_matrix(
     io::IO,
-    model::Model,
+    model::Model{T},
     f::MOI.ScalarQuadraticFunction,
     var_to_column;
     flip_coef::Bool,
     generic_names::Bool,
     include_ij_and_ji::Bool,
     include_div_2::Bool,
-)
-    terms = Dict{Tuple{MOI.VariableIndex,MOI.VariableIndex},Float64}()
-    scale = flip_coef ? -1.0 : 1.0
+) where {T}
+    terms = Dict{Tuple{MOI.VariableIndex,MOI.VariableIndex},T}()
+    scale = flip_coef ? -one(T) : one(T)
     if !include_div_2
         scale /= 2
     end
@@ -871,15 +889,11 @@ end
 #   QUADRATIC CONSTRAINTS
 # ==============================================================================
 
-function write_quadcons(io::IO, model::Model, var_to_column)
+function write_quadcons(io::IO, model::Model{T}, var_to_column) where {T}
     options = get_options(model)
-    F = MOI.ScalarQuadraticFunction{Float64}
-    for S in (
-        MOI.LessThan{Float64},
-        MOI.GreaterThan{Float64},
-        MOI.EqualTo{Float64},
-        MOI.Interval{Float64},
-    )
+    F = MOI.ScalarQuadraticFunction{T}
+    for S in
+        (MOI.LessThan{T}, MOI.GreaterThan{T}, MOI.EqualTo{T}, MOI.Interval{T})
         for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
             name = MOI.get(model, MOI.ConstraintName(), ci)
             println(io, "QCMATRIX   $name")
@@ -924,14 +938,14 @@ function write_sos_constraint(io::IO, model::Model, index, var_to_column)
     end
 end
 
-function write_sos(io::IO, model::Model, var_to_column)
+function write_sos(io::IO, model::Model{T}, var_to_column) where {T}
     sos1_indices = MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.SOS1{Float64}}(),
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.SOS1{T}}(),
     )
     sos2_indices = MOI.get(
         model,
-        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.SOS2{Float64}}(),
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.SOS2{T}}(),
     )
     if length(sos1_indices) + length(sos2_indices) > 0
         println(io, "SOS")
@@ -1009,61 +1023,61 @@ function Sense(s::String)
     end
 end
 
-struct _SOSConstraint
+struct _SOSConstraint{T}
     type::Int
-    weights::Vector{Float64}
+    weights::Vector{T}
     columns::Vector{String}
 end
 
-mutable struct TempMPSModel
+mutable struct TempMPSModel{T}
     name::String
     is_minimization::Bool
     obj_name::String
-    c::Vector{Float64}
-    obj_constant::Float64
-    col_lower::Vector{Float64}
-    col_upper::Vector{Float64}
+    c::Vector{T}
+    obj_constant::T
+    col_lower::Vector{T}
+    col_upper::Vector{T}
     col_bounds_default::Vector{Bool}
-    row_lower::Vector{Float64}
-    row_upper::Vector{Float64}
+    row_lower::Vector{T}
+    row_upper::Vector{T}
     sense::Vector{Sense}
-    A::Vector{Vector{Tuple{Int,Float64}}}
+    A::Vector{Vector{Tuple{Int,T}}}
     vtype::Vector{VType}
     name_to_col::Dict{String,Int}
     col_to_name::Vector{String}
     name_to_row::Dict{String,Int}
     row_to_name::Vector{String}
     intorg_flag::Bool  # A flag used to parse COLUMNS section.
-    sos_constraints::Vector{_SOSConstraint}
-    quad_obj::Vector{Tuple{String,String,Float64}}
-    qc_matrix::Dict{String,Vector{Tuple{String,String,Float64}}}
+    sos_constraints::Vector{_SOSConstraint{T}}
+    quad_obj::Vector{Tuple{String,String,T}}
+    qc_matrix::Dict{String,Vector{Tuple{String,String,T}}}
     current_qc_matrix::String
     indicators::Dict{String,Tuple{String,MOI.ActivationCondition}}
 end
 
-function TempMPSModel()
-    return TempMPSModel(
+function TempMPSModel{T}() where {T}
+    return TempMPSModel{T}(
         "",
         true,
         "",
-        Float64[],  # c
-        0.0,        # obj_constant
-        Float64[],  # col_lower
-        Float64[],  # col_upper
-        Bool[],     # col_bounds_default
-        Float64[],  # row_lower
-        Float64[],  # row_upper
-        Sense[],   # sense
-        Vector{Tuple{Int,Float64}}[],  # A
+        T[],      # c
+        zero(T),  # obj_constant
+        T[],      # col_lower
+        T[],      # col_upper
+        Bool[],   # col_bounds_default
+        T[],      # row_lower
+        T[],      # row_upper
+        Sense[],  # sense
+        Vector{Tuple{Int,T}}[],  # A
         VType[],
         Dict{String,Int}(),
         String[],
         Dict{String,Int}(),
         String[],
         false,
-        _SOSConstraint[],
-        Tuple{String,String,Float64}[],
-        Dict{String,Vector{Tuple{String,String,Float64}}}(),
+        _SOSConstraint{T}[],
+        Tuple{String,String,T}[],
+        Dict{String,Vector{Tuple{String,String,T}}}(),
         "",
         Dict{String,Tuple{String,MOI.ActivationCondition}}(),
     )
@@ -1155,11 +1169,11 @@ end
 
 Read `io` in the MPS file format and store the result in `model`.
 """
-function Base.read!(io::IO, model::Model)
+function Base.read!(io::IO, model::Model{T}) where {T}
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
     end
-    data = TempMPSModel()
+    data = TempMPSModel{T}()
     header = HEADER_NAME
     while !eof(io) && header != HEADER_ENDATA
         raw_line = readline(io)
@@ -1186,8 +1200,7 @@ function Base.read!(io::IO, model::Model)
             @assert length(items) == 2
             data.current_qc_matrix = String(items[2])
             header = h
-            data.qc_matrix[data.current_qc_matrix] =
-                Tuple{String,String,Float64}[]
+            data.qc_matrix[data.current_qc_matrix] = Tuple{String,String,T}[]
             continue
         elseif h != HEADER_UNKNOWN
             header = h
@@ -1232,12 +1245,12 @@ function Base.read!(io::IO, model::Model)
     return
 end
 
-function bounds_to_set(lower, upper)
-    if -Inf < lower < upper < Inf
+function bounds_to_set(lower::T, upper::T) where {T}
+    if typemin(T) < lower < upper < typemax(T)
         return MOI.Interval(lower, upper)
-    elseif -Inf < lower && upper == Inf
+    elseif typemin(T) < lower && upper == typemax(T)
         return MOI.GreaterThan(lower)
-    elseif -Inf == lower && upper < Inf
+    elseif typemin(T) == lower && upper < typemax(T)
         return MOI.LessThan(upper)
     elseif lower == upper
         return MOI.EqualTo(upper)
@@ -1245,7 +1258,7 @@ function bounds_to_set(lower, upper)
     return  # free variable
 end
 
-function copy_to(model::Model, data::TempMPSModel)
+function copy_to(model::Model, data::TempMPSModel{T}) where {T}
     MOI.set(model, MOI.Name(), data.name)
     variable_map = Dict{String,MOI.VariableIndex}()
     for (i, name) in enumerate(data.col_to_name)
@@ -1255,7 +1268,7 @@ function copy_to(model::Model, data::TempMPSModel)
     for (j, c_name) in enumerate(data.row_to_name)
         set = bounds_to_set(data.row_lower[j], data.row_upper[j])
         if set === nothing
-            free_set = MOI.Interval(-Inf, Inf)
+            free_set = MOI.Interval(typemin(T), typemax(T))
             _add_constraint(model, data, variable_map, j, c_name, free_set)
         else
             _add_constraint(model, data, variable_map, j, c_name, set)
@@ -1271,7 +1284,7 @@ function copy_to(model::Model, data::TempMPSModel)
     return
 end
 
-function _add_variable(model, data, variable_map, i, name)
+function _add_variable(model::Model{T}, data, variable_map, i, name) where {T}
     x = MOI.add_variable(model)
     variable_map[name] = x
     MOI.set(model, MOI.VariableName(), x, name)
@@ -1279,8 +1292,8 @@ function _add_variable(model, data, variable_map, i, name)
     if set isa MOI.Interval
         # Do not add MOI.Interval constraints because we want to follow JuMP's
         # convention of adding separate lower and upper bounds.
-        MOI.add_constraint(model, x, MOI.GreaterThan(set.lower::Float64))
-        MOI.add_constraint(model, x, MOI.LessThan(set.upper::Float64))
+        MOI.add_constraint(model, x, MOI.GreaterThan(set.lower::T))
+        MOI.add_constraint(model, x, MOI.LessThan(set.upper::T))
     elseif set !== nothing
         MOI.add_constraint(model, x, set)
     end
@@ -1292,17 +1305,17 @@ function _add_variable(model, data, variable_map, i, name)
     return
 end
 
-function _add_objective(model, data, variable_map)
+function _add_objective(model::Model{T}, data, variable_map) where {T}
     if data.is_minimization
         MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     else
         MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     end
-    affine_terms = MOI.ScalarAffineTerm{Float64}[
+    affine_terms = MOI.ScalarAffineTerm{T}[
         MOI.ScalarAffineTerm(data.c[i], variable_map[v]) for
         (i, v) in enumerate(data.col_to_name) if !iszero(data.c[i])
     ]
-    q_terms = MOI.ScalarQuadraticTerm{Float64}[]
+    q_terms = MOI.ScalarQuadraticTerm{T}[]
     for (i, j, q) in data.quad_obj
         x = variable_map[i]
         y = variable_map[j]
@@ -1329,55 +1342,76 @@ function _add_constraint(model, data, variable_map, j, c_name, set)
     return
 end
 
-function _add_indicator_constraint(model, data, variable_map, j, c_name, set)
+function _add_indicator_constraint(
+    model::Model{T},
+    data,
+    variable_map,
+    j,
+    c_name,
+    set,
+) where {T}
     z, activate = data.indicators[c_name]
-    terms = MOI.VectorAffineTerm{Float64}[MOI.VectorAffineTerm(
+    terms = MOI.VectorAffineTerm{T}[MOI.VectorAffineTerm(
         1,
-        MOI.ScalarAffineTerm(1.0, variable_map[z]),
+        MOI.ScalarAffineTerm(one(T), variable_map[z]),
     ),]
     for (i, coef) in data.A[j]
         scalar = MOI.ScalarAffineTerm(coef, variable_map[data.col_to_name[i]])
         push!(terms, MOI.VectorAffineTerm(2, scalar))
     end
-    f = MOI.VectorAffineFunction(terms, [0.0, 0.0])
+    f = MOI.VectorAffineFunction(terms, zeros(T, 2))
     c = MOI.add_constraint(model, f, MOI.Indicator{activate}(set))
     MOI.set(model, MOI.ConstraintName(), c, c_name)
     return
 end
 
-function _add_linear_constraint(model, data, variable_map, j, c_name, set)
-    terms = MOI.ScalarAffineTerm{Float64}[
+function _add_linear_constraint(
+    model::Model{T},
+    data,
+    variable_map,
+    j,
+    c_name,
+    set,
+) where {T}
+    terms = MOI.ScalarAffineTerm{T}[
         MOI.ScalarAffineTerm(coef, variable_map[data.col_to_name[i]]) for
         (i, coef) in data.A[j]
     ]
-    c = MOI.add_constraint(model, MOI.ScalarAffineFunction(terms, 0.0), set)
+    c = MOI.add_constraint(model, MOI.ScalarAffineFunction(terms, zero(T)), set)
     MOI.set(model, MOI.ConstraintName(), c, c_name)
     return
 end
 
-function _add_quad_constraint(model, data, variable_map, j, c_name, set)
-    aff_terms = MOI.ScalarAffineTerm{Float64}[
+function _add_quad_constraint(
+    model::Model{T},
+    data,
+    variable_map,
+    j,
+    c_name,
+    set,
+) where {T}
+    aff_terms = MOI.ScalarAffineTerm{T}[
         MOI.ScalarAffineTerm(coef, variable_map[data.col_to_name[i]]) for
         (i, coef) in data.A[j]
     ]
-    quad_terms = MOI.ScalarQuadraticTerm{Float64}[]
+    quad_terms = MOI.ScalarQuadraticTerm{T}[]
     options = get_options(model)
     scale = if options.quadratic_format == kQuadraticFormatGurobi
         # Gurobi does NOT have a /2 as part of the quadratic matrix. Why oh why
         # would you break precedent with all other formats.
-        2.0
+        2
     else
         @assert in(
             options.quadratic_format,
             (kQuadraticFormatCPLEX, kQuadraticFormatMosek),
         )
-        1.0
+        1
     end
     for (x_name, y_name, q) in data.qc_matrix[c_name]
         x, y = variable_map[x_name], variable_map[y_name]
         push!(quad_terms, MOI.ScalarQuadraticTerm(scale * q, x, y))
     end
-    f = MOI.ScalarQuadraticFunction(quad_terms, aff_terms, 0.0)
+    f = MOI.ScalarQuadraticFunction(quad_terms, aff_terms, zero(T))
     c = MOI.add_constraint(model, f, set)
     MOI.set(model, MOI.ConstraintName(), c, c_name)
     return
@@ -1400,7 +1434,7 @@ end
 #   ROWS
 # ==============================================================================
 
-function parse_rows_line(data::TempMPSModel, items::Vector{String})
+function parse_rows_line(data::TempMPSModel{T}, items::Vector{String}) where {T}
     if length(items) != 2
         error("Malformed ROWS line: $(join(items, " "))")
     end
@@ -1425,21 +1459,21 @@ function parse_rows_line(data::TempMPSModel, items::Vector{String})
     row = length(data.row_to_name)
     data.name_to_row[name] = row
     push!(data.sense, sense)
-    push!(data.A, Tuple{Int,Float64}[])
+    push!(data.A, Tuple{Int,T}[])
     if sense == SENSE_G
-        push!(data.row_lower, 0.0)
-        push!(data.row_upper, Inf)
-        data.row_upper[row] = Inf
+        push!(data.row_lower, zero(T))
+        push!(data.row_upper, typemax(T))
+        data.row_upper[row] = typemax(T)
     elseif sense == SENSE_L
-        push!(data.row_lower, -Inf)
-        push!(data.row_upper, 0.0)
+        push!(data.row_lower, typemin(T))
+        push!(data.row_upper, zero(T))
     elseif sense == SENSE_E
-        push!(data.row_lower, 0.0)
-        push!(data.row_upper, 0.0)
+        push!(data.row_lower, zero(T))
+        push!(data.row_upper, zero(T))
     else
         @assert sense == SENSE_N
-        push!(data.row_lower, -Inf)
-        push!(data.row_upper, Inf)
+        push!(data.row_lower, typemin(T))
+        push!(data.row_upper, typemax(T))
     end
     return
 end
@@ -1448,12 +1482,7 @@ end
 #   COLUMNS
 # ==============================================================================
 
-function parse_single_coefficient(
-    data,
-    row_name::String,
-    column::Int,
-    value::Float64,
-)
+function parse_single_coefficient(data, row_name::String, column::Int, value)
     if row_name == data.obj_name
         data.c[column] += value
         return
@@ -1466,25 +1495,25 @@ function parse_single_coefficient(
     return
 end
 
-function _add_new_column(data, column_name)
+function _add_new_column(data::TempMPSModel{T}, column_name) where {T}
     if haskey(data.name_to_col, column_name)
         return
     end
     push!(data.col_to_name, column_name)
     data.name_to_col[column_name] = length(data.col_to_name)
-    push!(data.c, 0.0)
-    push!(data.col_lower, 0.0)
-    push!(data.col_upper, Inf)
+    push!(data.c, zero(T))
+    push!(data.col_lower, zero(T))
+    push!(data.col_upper, typemax(T))
     push!(data.col_bounds_default, true)
     push!(data.vtype, VTYPE_CONTINUOUS)
     return
 end
 
-function _set_intorg(data, column, column_name)
+function _set_intorg(data::TempMPSModel{T}, column, column_name) where {T}
     if data.intorg_flag
         data.vtype[column] = VTYPE_INTEGER
         # The default upper bound for variables in INTORG is `1`, not `Inf`...
-        data.col_upper[column] = 1.0
+        data.col_upper[column] = one(T)
     elseif data.vtype[column] != VTYPE_CONTINUOUS
         error(
             "Variable $(column_name) appeared in COLUMNS outside an " *
@@ -1494,7 +1523,10 @@ function _set_intorg(data, column, column_name)
     return
 end
 
-function parse_columns_line(data::TempMPSModel, items::Vector{String})
+function parse_columns_line(
+    data::TempMPSModel{T},
+    items::Vector{String},
+) where {T}
     if length(items) == 3
         # [column name] [row name] [value]
         column_name, row_name, value = items
@@ -1509,25 +1541,15 @@ function parse_columns_line(data::TempMPSModel, items::Vector{String})
         end
         _add_new_column(data, column_name)
         column = data.name_to_col[column_name]
-        parse_single_coefficient(data, row_name, column, parse(Float64, value))
+        parse_single_coefficient(data, row_name, column, parse(T, value))
         _set_intorg(data, column, column_name)
     elseif length(items) == 5
         # [column name] [row name] [value] [row name 2] [value 2]
         column_name, row_name_1, value_1, row_name_2, value_2 = items
         _add_new_column(data, column_name)
         column = data.name_to_col[column_name]
-        parse_single_coefficient(
-            data,
-            row_name_1,
-            column,
-            parse(Float64, value_1),
-        )
-        parse_single_coefficient(
-            data,
-            row_name_2,
-            column,
-            parse(Float64, value_2),
-        )
+        parse_single_coefficient(data, row_name_1, column, parse(T, value_1))
+        parse_single_coefficient(data, row_name_2, column, parse(T, value_2))
         _set_intorg(data, column, column_name)
     else
         error("Malformed COLUMNS line: $(join(items, " "))")
@@ -1539,12 +1561,7 @@ end
 #   RHS
 # ==============================================================================
 
-function parse_single_rhs(
-    data,
-    row_name::String,
-    value::Float64,
-    items::Vector{String},
-)
+function parse_single_rhs(data, row_name::String, value, items::Vector{String})
     if row_name == data.obj_name
         data.obj_constant = value
         return
@@ -1568,16 +1585,16 @@ function parse_single_rhs(
 end
 
 # TODO: handle multiple RHS vectors.
-function parse_rhs_line(data::TempMPSModel, items::Vector{String})
+function parse_rhs_line(data::TempMPSModel{T}, items::Vector{String}) where {T}
     if length(items) == 3
         # [rhs name] [row name] [value]
         rhs_name, row_name, value = items
-        parse_single_rhs(data, row_name, parse(Float64, value), items)
+        parse_single_rhs(data, row_name, parse(T, value), items)
     elseif length(items) == 5
         # [rhs name] [row name 1] [value 1] [row name 2] [value 2]
         rhs_name, row_name_1, value_1, row_name_2, value_2 = items
-        parse_single_rhs(data, row_name_1, parse(Float64, value_1), items)
-        parse_single_rhs(data, row_name_2, parse(Float64, value_2), items)
+        parse_single_rhs(data, row_name_1, parse(T, value_1), items)
+        parse_single_rhs(data, row_name_2, parse(T, value_2), items)
     else
         error("Malformed RHS line: $(join(items, " "))")
     end
@@ -1598,7 +1615,7 @@ end
 #         E    |      -      | rhs + range   |     rhs
 # ==============================================================================
 
-function parse_single_range(data, row_name::String, value::Float64)
+function parse_single_range(data, row_name::String, value)
     row = get(data.name_to_row, row_name, nothing)
     if row === nothing
         error("ROW name $(row_name) not recognised. Is it in the ROWS field?")
@@ -1608,7 +1625,7 @@ function parse_single_range(data, row_name::String, value::Float64)
     elseif data.sense[row] == SENSE_L
         data.row_lower[row] = data.row_upper[row] - abs(value)
     elseif data.sense[row] == SENSE_E
-        if value > 0.0
+        if value > 0
             data.row_upper[row] = data.row_lower[row] + value
         else
             data.row_lower[row] = data.row_upper[row] + value
@@ -1618,16 +1635,19 @@ function parse_single_range(data, row_name::String, value::Float64)
 end
 
 # TODO: handle multiple RANGES vectors.
-function parse_ranges_line(data::TempMPSModel, items::Vector{String})
+function parse_ranges_line(
+    data::TempMPSModel{T},
+    items::Vector{String},
+) where {T}
     if length(items) == 3
         # [rhs name] [row name] [value]
         _, row_name, value = items
-        parse_single_range(data, row_name, parse(Float64, value))
+        parse_single_range(data, row_name, parse(T, value))
     elseif length(items) == 5
         # [rhs name] [row name] [value] [row name 2] [value 2]
         _, row_name_1, value_1, row_name_2, value_2 = items
-        parse_single_range(data, row_name_1, parse(Float64, value_1))
-        parse_single_range(data, row_name_2, parse(Float64, value_2))
+        parse_single_range(data, row_name_1, parse(T, value_1))
+        parse_single_range(data, row_name_2, parse(T, value_2))
     else
         error("Malformed RANGES line: $(join(items, " "))")
     end
@@ -1638,7 +1658,11 @@ end
 #   BOUNDS
 # ==============================================================================
 
-function _parse_single_bound(data, column_name::String, bound_type::String)
+function _parse_single_bound(
+    data::TempMPSModel{T},
+    column_name::String,
+    bound_type::String,
+) where {T}
     col = get(data.name_to_col, column_name, nothing)
     if col === nothing
         error("Column name $(column_name) not found.")
@@ -1647,19 +1671,19 @@ function _parse_single_bound(data, column_name::String, bound_type::String)
         # This column was part of an INTORG...INTEND block, so it gets a default
         # bound of [0, 1]. However, since it now has a bound, it reverts to a
         # default of [0, inf).
-        data.col_upper[col] = Inf
+        data.col_upper[col] = typemax(T)
     end
     data.col_bounds_default[col] = false
     if bound_type == "PL"
-        data.col_upper[col] = Inf
+        data.col_upper[col] = typemax(T)
     elseif bound_type == "MI"
-        data.col_lower[col] = -Inf
+        data.col_lower[col] = typemin(T)
     elseif bound_type == "FR"
-        data.col_lower[col] = -Inf
-        data.col_upper[col] = Inf
+        data.col_lower[col] = typemin(T)
+        data.col_upper[col] = typemax(T)
     elseif bound_type == "BV"
-        data.col_lower[col] = -Inf
-        data.col_upper[col] = Inf
+        data.col_lower[col] = typemin(T)
+        data.col_upper[col] = typemax(T)
         data.vtype[col] = VTYPE_BINARY
     else
         error("Invalid bound type $(bound_type): $(column_name)")
@@ -1667,11 +1691,11 @@ function _parse_single_bound(data, column_name::String, bound_type::String)
 end
 
 function _parse_single_bound(
-    data,
+    data::TempMPSModel{T},
     column_name::String,
     bound_type::String,
-    value::Float64,
-)
+    value::T,
+) where {T}
     col = get(data.name_to_col, column_name, nothing)
     if col === nothing
         error("Column name $(column_name) not found.")
@@ -1680,7 +1704,7 @@ function _parse_single_bound(
         # This column was part of an INTORG...INTEND block, so it gets a default
         # bound of [0, 1]. However, since it now has a bound, it reverts to a
         # default of [0, inf).
-        data.col_upper[col] = Inf
+        data.col_upper[col] = typemax(T)
     end
     data.col_bounds_default[col] = false
     if bound_type == "FX"
@@ -1702,30 +1726,28 @@ function _parse_single_bound(
         # there are cases in MIPLIB2017 (for example, leo1 and leo2) like so:
         #  FR BOUND1    C0000001       .000000
         # In these situations, just ignore the value.
-        data.col_lower[col] = -Inf
-        data.col_upper[col] = Inf
+        data.col_lower[col] = typemin(T)
+        data.col_upper[col] = typemax(T)
     elseif bound_type == "BV"
         # A similar situation happens with BV bounds in leo1 and leo2.
-        data.col_lower[col] = -Inf
-        data.col_upper[col] = Inf
+        data.col_lower[col] = typemin(T)
+        data.col_upper[col] = typemax(T)
         data.vtype[col] = VTYPE_BINARY
     else
         error("Invalid bound type $(bound_type): $(column_name)")
     end
 end
 
-function parse_bounds_line(data::TempMPSModel, items::Vector{String})
+function parse_bounds_line(
+    data::TempMPSModel{T},
+    items::Vector{String},
+) where {T}
     if length(items) == 3
         bound_type, _, column_name = items
         _parse_single_bound(data, column_name, bound_type)
     elseif length(items) == 4
         bound_type, _, column_name, value = items
-        _parse_single_bound(
-            data,
-            column_name,
-            bound_type,
-            parse(Float64, value),
-        )
+        _parse_single_bound(data, column_name, bound_type, parse(T, value))
     else
         error("Malformed BOUNDS line: $(join(items, " "))")
     end
@@ -1736,17 +1758,17 @@ end
 #   SOS
 # ==============================================================================
 
-function parse_sos_line(data, items)
+function parse_sos_line(data::TempMPSModel{T}, items) where {T}
     if length(items) != 2
         error("Malformed SOS line: $(join(items, " "))")
     elseif items[1] == "S1"
-        push!(data.sos_constraints, _SOSConstraint(1, Float64[], String[]))
+        push!(data.sos_constraints, _SOSConstraint(1, T[], String[]))
     elseif items[1] == "S2"
-        push!(data.sos_constraints, _SOSConstraint(2, Float64[], String[]))
+        push!(data.sos_constraints, _SOSConstraint(2, T[], String[]))
     else
         sos = data.sos_constraints[end]
         push!(sos.columns, items[1])
-        push!(sos.weights, parse(Float64, items[2]))
+        push!(sos.weights, parse(T, items[2]))
     end
     return
 end
@@ -1755,11 +1777,11 @@ end
 #   QUADOBJ
 # ==============================================================================
 
-function parse_quadobj_line(data, items)
+function parse_quadobj_line(data::TempMPSModel{T}, items) where {T}
     if length(items) != 3
         error("Malformed QUADOBJ line: $(join(items, " "))")
     end
-    push!(data.quad_obj, (items[1], items[2], parse(Float64, items[3])))
+    push!(data.quad_obj, (items[1], items[2], parse(T, items[3])))
     return
 end
 
@@ -1767,14 +1789,14 @@ end
 #   QMATRIX
 # ==============================================================================
 
-function parse_qmatrix_line(data, items)
+function parse_qmatrix_line(data::TempMPSModel{T}, items) where {T}
     if length(items) != 3
         error("Malformed QMATRIX line: $(join(items, " "))")
     end
     if data.name_to_col[items[1]] <= data.name_to_col[items[2]]
         # Off-diagonals have duplicate entries. We don't need to store both
         # triangles.
-        push!(data.quad_obj, (items[1], items[2], parse(Float64, items[3])))
+        push!(data.quad_obj, (items[1], items[2], parse(T, items[3])))
     end
     return
 end
@@ -1783,7 +1805,7 @@ end
 #   QMATRIX
 # ==============================================================================
 
-function parse_qcmatrix_line(data, items)
+function parse_qcmatrix_line(data::TempMPSModel{T}, items) where {T}
     if length(items) != 3
         error("Malformed QCMATRIX line: $(join(items, " "))")
     end
@@ -1792,7 +1814,7 @@ function parse_qcmatrix_line(data, items)
         # triangles.
         push!(
             data.qc_matrix[data.current_qc_matrix],
-            (items[1], items[2], parse(Float64, items[3])),
+            (items[1], items[2], parse(T, items[3])),
         )
     end
     return
@@ -1802,16 +1824,16 @@ end
 #   QSECTION
 # ==============================================================================
 
-function parse_qsection_line(data, items)
+function parse_qsection_line(data::TempMPSModel{T}, items) where {T}
     if length(items) != 3
         error("Malformed QSECTION line: $(join(items, " "))")
     end
     if data.current_qc_matrix == "OBJ"
-        push!(data.quad_obj, (items[1], items[2], parse(Float64, items[3])))
+        push!(data.quad_obj, (items[1], items[2], parse(T, items[3])))
     else
         push!(
             data.qc_matrix[data.current_qc_matrix],
-            (items[1], items[2], parse(Float64, items[3])),
+            (items[1], items[2], parse(T, items[3])),
         )
     end
     return
