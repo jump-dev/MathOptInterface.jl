@@ -106,7 +106,7 @@ MOI.Utilities.@model(
 # Reified is handled by UniversalFallback.
 # Scaled is handled by UniversalFallback.
 
-const Model = MOI.Utilities.UniversalFallback{InnerModel{Float64}}
+const Model{T} = MOI.Utilities.UniversalFallback{InnerModel{T}}
 
 struct Options
     print_compact::Bool
@@ -124,7 +124,14 @@ function get_options(m::Model)
 end
 
 """
-    Model(; kwargs...)
+    Model(;
+        print_compact::Bool = false,
+        warn::Bool = false,
+        differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation =
+            MOI.Nonlinear.SparseReverseMode(),
+        use_nlp_block::Union{Bool,Nothing} = nothing,
+        coefficient_type::Type{T} = Float64,
+    ) where {T}
 
 Create an empty instance of FileFormats.MOF.Model.
 
@@ -132,21 +139,28 @@ Keyword arguments are:
 
  - `print_compact::Bool=false`: print the JSON file in a compact format without
    spaces or newlines.
+
  - `warn::Bool=false`: print a warning when variables or constraints are renamed
+
  - `differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation = MOI.Nonlinear.SparseReverseMode()`:
    automatic differentiation backend to use when reading models with nonlinear
    constraints and objectives.
- - `use_nlp_block::Bool=true`: if `true` parse `"ScalarNonlinearFunction"`
+
+  `use_nlp_block::Bool=true`: if `true` parse `"ScalarNonlinearFunction"`
    into an `MOI.NLPBlock`. If `false`, `"ScalarNonlinearFunction"` are parsed as
    `MOI.ScalarNonlinearFunction` functions.
+
+ - `coefficient_type::Type{T} = Float64`: the supported type to use when reading
+   and writing files.
 """
 function Model(;
     print_compact::Bool = false,
     warn::Bool = false,
     differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation = MOI.Nonlinear.SparseReverseMode(),
     use_nlp_block::Union{Bool,Nothing} = nothing,
-)
-    model = MOI.Utilities.UniversalFallback(InnerModel{Float64}())
+    coefficient_type::Type{T} = Float64,
+) where {T}
+    model = MOI.Utilities.UniversalFallback(InnerModel{T}())
     model.model.ext[:MOF_OPTIONS] =
         Options(print_compact, warn, differentiation_backend, use_nlp_block)
     return model
