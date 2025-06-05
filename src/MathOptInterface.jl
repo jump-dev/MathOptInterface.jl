@@ -151,39 +151,99 @@ function compute_conflict!(optimizer::AbstractOptimizer)
 end
 
 """
-    write_to_file(model::ModelLike, filename::String)
+    write_to_file(model::ModelLike, filename::String; kwargs...)
 
 Write the current model to the file at `filename`.
 
 Supported file types depend on the model type.
+
+Additional keyword arguments are passed to the `Model` constructor of the
+relevant file format. See, for example, [`FileFormats.LP.Model`](@ref) and
+[`FileFormats.MPS.Model`](@ref).
+
+## Example
+
+```jldoctest
+julia> model = MOI.Utilities.Model{Int}();
+
+julia> x, _ = MOI.add_constrained_variable(model, MOI.Interval(2, 3));
+
+julia> MOI.set(model, MOI.VariableName(), x, "x");
+
+julia> filename = joinpath(tempdir(), "model.lp");
+
+julia> MOI.write_to_file(model, filename; coefficient_type = Int);
+
+julia> print(read(filename, String))
+minimize
+obj:
+subject to
+Bounds
+2 <= x <= 3
+End
+```
 """
-function write_to_file(model::ModelLike, filename::String)
-    dest = FileFormats.Model(; filename = filename)
+function write_to_file(model::ModelLike, filename::String; kwargs...)
+    dest = FileFormats.Model(; filename, kwargs...)
     copy_to(dest, model)
     write_to_file(dest, filename)
     return
 end
 
 """
-    read_from_file(model::ModelLike, filename::String)
+    read_from_file(model::ModelLike, filename::String; kwargs...)
 
 Read the file `filename` into the model `model`. If `model` is non-empty, this
 may throw an error.
 
 Supported file types depend on the model type.
 
+Additional keyword arguments are passed to the `Model` constructor of the
+relevant file format. See, for example, [`FileFormats.LP.Model`](@ref) and
+[`FileFormats.MPS.Model`](@ref).
+
 ### Note
 
-Once the contents of the file are loaded into the model, users can query the
-variables via `get(model, ListOfVariableIndices())`. However, some filetypes,
-such as LP files, do not maintain an explicit ordering of the variables.
-Therefore, the returned list may be in an arbitrary order.
+Once the contents of the file are loaded into the model, you can query the
+variables via `MOI.get(model, MOI.ListOfVariableIndices())`. However, some
+filetypes, such as LP files, do not maintain an explicit ordering of the
+variables. Therefore, the returned list may be in an arbitrary order.
 
 To avoid depending on the order of the indices, look up each variable index by
-name using  `get(model, VariableIndex, "name")`.
+name using `MOI.get(model, MOI.VariableIndex, "name")`.
+
+## Example
+
+```jldoctest
+julia> model = MOI.Utilities.Model{Int}();
+
+julia> x, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(2));
+
+julia> MOI.set(model, MOI.VariableName(), x, "x");
+
+julia> filename = joinpath(tempdir(), "model.lp");
+
+julia> MOI.write_to_file(model, filename; coefficient_type = Int);
+
+julia> new_model = MOI.Utilities.Model{Int}();
+
+julia> MOI.read_from_file(new_model, filename; coefficient_type = Int);
+
+julia> print(new_model)
+Minimize ScalarAffineFunction{Int64}:
+ (0)
+
+Subject to:
+
+VariableIndex-in-GreaterThan{Int64}
+ x >= (2)
+
+julia> MOI.get(new_model, MOI.VariableIndex, "x")
+MOI.VariableIndex(1)
+```
 """
-function read_from_file(model::ModelLike, filename::String)
-    src = FileFormats.Model(; filename = filename)
+function read_from_file(model::ModelLike, filename::String; kwargs...)
+    src = FileFormats.Model(; filename, kwargs...)
     read_from_file(src, filename)
     copy_to(model, src)
     return
