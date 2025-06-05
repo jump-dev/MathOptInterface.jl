@@ -55,9 +55,9 @@ struct Options end
 get_options(m::Model) = get(m.ext, :SDPA_OPTIONS, Options())
 
 """
-    Model(; number_type::Type = Float64)
+    Model(; coefficient_type::Type{T} = Float64) where {T}
 
-Create an empty instance of `FileFormats.SDPA.Model{number_type}`.
+Create an empty instance of `FileFormats.SDPA.Model{T}`.
 
 It is important to be aware that the SDPA file format is interpreted in
 *geometric* form and not *standard conic* form.
@@ -122,8 +122,11 @@ and affine constraints will be bridged into equality constraints
 by creating a slack variable by the
 [`MOI.Bridges.Constraint.VectorSlackBridge`](@ref).
 """
-function Model(; number_type::Type = Float64)
-    model = Model{number_type}()
+function Model(;
+    number_type::Type{T} = Float64,
+    coefficient_type::Type{S} = number_type,
+) where {T,S}
+    model = Model{S}()
     model.ext[:SDPA_OPTIONS] = Options()
     return model
 end
