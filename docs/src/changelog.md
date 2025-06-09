@@ -7,6 +7,15 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.41.0 (June 9, 2025)
+
+### Added
+
+ - Added support for different number types in the various file format readers
+   and writers. By default, the files assume `Float64`. To change how the values
+   are parsed, use `; coefficient_type = T`. The supported file formats are LP,
+   MOF, MPS, and SDPA (#2768) (#2769) (#2770) (#2771) (#2772)
+
 ## v1.40.2 (June 2, 2025)
 
 ### Fixed
