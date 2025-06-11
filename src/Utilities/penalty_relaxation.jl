@@ -189,7 +189,7 @@ cannot be modified in-place.
 To modify variable bounds, rewrite them as linear constraints.
 
 If a constraint type can not be modified, a warning is logged and the
-constraint is skipped. This can be disabled by setting `warn = false`.
+constraint is skipped. The warning can be disabled by setting `warn = false`.
 
 ## Example
 
