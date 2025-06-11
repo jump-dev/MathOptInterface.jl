@@ -85,10 +85,7 @@ function test_relax_no_warn()
     model = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(model, src_str)
     @test_logs(
-        MOI.modify(
-            model,
-            MOI.Utilities.PenaltyRelaxation(no_warning_skip_constraint = true),
-        ),
+        MOI.modify(model, MOI.Utilities.PenaltyRelaxation(; warn = false)),
     )
     dest = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(dest, relaxed_str)
