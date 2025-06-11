@@ -66,15 +66,7 @@ function test_relax_bounds()
 end
 
 function test_relax_no_warn()
-    src_str = """
-    variables: x, y
-    minobjective: x + y
-    x >= 0.0
-    y <= 0.0
-    x in ZeroOne()
-    y in Integer()
-    """
-    relaxed_str = """
+    input = """
     variables: x, y
     minobjective: x + y
     x >= 0.0
@@ -83,12 +75,11 @@ function test_relax_no_warn()
     y in Integer()
     """
     model = MOI.Utilities.Model{Float64}()
-    MOI.Utilities.loadfromstring!(model, src_str)
-    @test_logs(
-        MOI.modify(model, MOI.Utilities.PenaltyRelaxation(; warn = false)),
-    )
+    MOI.Utilities.loadfromstring!(model, input)
+    relaxation = MOI.Utilities.PenaltyRelaxation(; warn = false)
+    @test_logs MOI.modify(model, relaxation)
     dest = MOI.Utilities.Model{Float64}()
-    MOI.Utilities.loadfromstring!(dest, relaxed_str)
+    MOI.Utilities.loadfromstring!(dest, input)
     MOI.Bridges._test_structural_identical(model, dest)
     return
 end
