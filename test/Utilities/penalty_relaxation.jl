@@ -65,6 +65,25 @@ function test_relax_bounds()
     return
 end
 
+function test_relax_no_warn()
+    input = """
+    variables: x, y
+    minobjective: x + y
+    x >= 0.0
+    y <= 0.0
+    x in ZeroOne()
+    y in Integer()
+    """
+    model = MOI.Utilities.Model{Float64}()
+    MOI.Utilities.loadfromstring!(model, input)
+    relaxation = MOI.Utilities.PenaltyRelaxation(; warn = false)
+    @test_logs MOI.modify(model, relaxation)
+    dest = MOI.Utilities.Model{Float64}()
+    MOI.Utilities.loadfromstring!(dest, input)
+    MOI.Bridges._test_structural_identical(model, dest)
+    return
+end
+
 function test_relax_affine_lessthan()
     _test_roundtrip(
         """

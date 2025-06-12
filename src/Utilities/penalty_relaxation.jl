@@ -142,6 +142,7 @@ end
     PenaltyRelaxation(
         penalties = Dict{MOI.ConstraintIndex,Float64}();
         default::Union{Nothing,T} = 1.0,
+        warn::Bool = true,
     )
 
 A problem modifier that, when passed to [`MOI.modify`](@ref), destructively
@@ -186,6 +187,9 @@ It does not include variable bound or integrality constraints, because these
 cannot be modified in-place.
 
 To modify variable bounds, rewrite them as linear constraints.
+
+If a constraint cannot be modified, a warning is logged and the
+constraint is skipped. The warning can be disabled by setting `warn = false`.
 
 ## Example
 
@@ -242,12 +246,14 @@ true
 mutable struct PenaltyRelaxation{T}
     default::Union{Nothing,T}
     penalties::Dict{MOI.ConstraintIndex,T}
+    warn::Bool
 
     function PenaltyRelaxation(
         p::Dict{MOI.ConstraintIndex,T};
         default::Union{Nothing,T} = one(T),
+        warn::Bool = true,
     ) where {T}
-        return new{T}(default, p)
+        return new{T}(default, p, warn)
     end
 end
 
@@ -286,7 +292,11 @@ function _modify_penalty_relaxation(
             map[ci] = MOI.modify(model, ci, ScalarPenaltyRelaxation(penalty))
         catch err
             if err isa MethodError && err.f == MOI.modify
-                @warn("Skipping PenaltyRelaxation for ConstraintIndex{$F,$S}")
+                if relax.warn
+                    @warn(
+                        "Skipping PenaltyRelaxation for ConstraintIndex{$F,$S}"
+                    )
+                end
                 return
             end
             rethrow(err)
