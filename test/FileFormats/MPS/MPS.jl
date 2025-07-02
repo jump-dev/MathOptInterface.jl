@@ -1610,6 +1610,57 @@ function test_int_round_trip()
     return
 end
 
+function test_obj_constant_min()
+    model = MOI.FileFormats.MPS.Model()
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = 1.0 * x + 2.0
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    io = IOBuffer()
+    write(io, model)
+    dest = MOI.FileFormats.MPS.Model()
+    seekstart(io)
+    read!(io, dest)
+    g = MOI.get(dest, MOI.ObjectiveFunction{typeof(f)}())
+    @test g.constant == 2.0
+    @test MOI.get(dest, MOI.ObjectiveSense()) == MOI.MIN_SENSE
+    return
+end
+
+function test_obj_constant_max_to_min()
+    model = MOI.FileFormats.MPS.Model()
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = 1.0 * x + 2.0
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    io = IOBuffer()
+    write(io, model)
+    dest = MOI.FileFormats.MPS.Model()
+    seekstart(io)
+    read!(io, dest)
+    g = MOI.get(dest, MOI.ObjectiveFunction{typeof(f)}())
+    @test g.constant == -2.0
+    @test MOI.get(dest, MOI.ObjectiveSense()) == MOI.MIN_SENSE
+    return
+end
+
+function test_obj_constant_max_to_max()
+    model = MOI.FileFormats.MPS.Model(; print_objsense = true)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = 1.0 * x + 2.0
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    io = IOBuffer()
+    write(io, model)
+    dest = MOI.FileFormats.MPS.Model()
+    seekstart(io)
+    read!(io, dest)
+    g = MOI.get(dest, MOI.ObjectiveFunction{typeof(f)}())
+    @test g.constant == 2.0
+    @test MOI.get(dest, MOI.ObjectiveSense()) == MOI.MAX_SENSE
+    return
+end
+
 end  # TestMPS
 
 TestMPS.runtests()
