@@ -229,7 +229,7 @@ function test_HS071_evaluator()
     @test MOI.constraint_expr(evaluator, 1) ==
           :($(x[1]) * $(x[2]) * $(x[3]) * $(x[4]) >= 25.0)
     @test MOI.constraint_expr(evaluator, 2) ==
-          :($(x[1])^2 + $(x[2])^2 + $(x[3])^2 + $(x[4])^2 == 40.0)
+          :($(x[1])^2.0 + $(x[2])^2.0 + $(x[3])^2.0 + $(x[4])^2.0 == 40.0)
     return
 end
 
