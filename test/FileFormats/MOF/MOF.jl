@@ -308,7 +308,7 @@ function test_nonlinear_readingwriting()
     block = MOI.get(model2, MOI.NLPBlock())
     MOI.initialize(block.evaluator, [:ExprGraph])
     @test MOI.constraint_expr(block.evaluator, 1) ==
-          :(2 * x[$x] + sin(x[$x])^2 - x[$y] == 1.0)
+          :(2.0 * x[$x] + sin(x[$x])^2.0 - x[$y] == 1.0)
     _validate(TEST_MOF_FILE)
     return
 end

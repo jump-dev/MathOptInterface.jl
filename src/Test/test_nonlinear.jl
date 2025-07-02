@@ -76,10 +76,10 @@ function MOI.constraint_expr(::HS071, i::Int)
         )
     elseif i == 2
         return :(
-            x[$(MOI.VariableIndex(1))]^2 +
-            x[$(MOI.VariableIndex(2))]^2 +
-            x[$(MOI.VariableIndex(3))]^2 +
-            x[$(MOI.VariableIndex(4))]^2 == 40.0
+            x[$(MOI.VariableIndex(1))]^2.0 +
+            x[$(MOI.VariableIndex(2))]^2.0 +
+            x[$(MOI.VariableIndex(3))]^2.0 +
+            x[$(MOI.VariableIndex(4))]^2.0 == 40.0
         )
     else
         error("Out of bounds constraint.")
