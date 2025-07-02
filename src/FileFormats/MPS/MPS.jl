@@ -451,7 +451,7 @@ end
 function _extract_terms_objective(model, var_to_column, coefficients, flip_obj)
     obj_func = _get_objective(model)
     _extract_terms(var_to_column, coefficients, "OBJ", obj_func, flip_obj)
-    return obj_func.constant
+    return flip_obj ? -obj_func.constant : obj_func.constant
 end
 
 function _var_name(
