@@ -1074,7 +1074,7 @@ julia> MOI.constraint_expr(evaluator, 1)
 :(x[MOI.VariableIndex(1)] * x[MOI.VariableIndex(2)] * x[MOI.VariableIndex(3)] * x[MOI.VariableIndex(4)] >= 25.0)
 
 julia> MOI.constraint_expr(evaluator, 2)
-:(x[MOI.VariableIndex(1)] ^ 2 + x[MOI.VariableIndex(2)] ^ 2 + x[MOI.VariableIndex(3)] ^ 2 + x[MOI.VariableIndex(4)] ^ 2 == 40.0)
+:(x[MOI.VariableIndex(1)] ^ 2.0 + x[MOI.VariableIndex(2)] ^ 2.0 + x[MOI.VariableIndex(3)] ^ 2.0 + x[MOI.VariableIndex(4)] ^ 2.0 == 40.0)
 ```
 """
 function constraint_expr end
