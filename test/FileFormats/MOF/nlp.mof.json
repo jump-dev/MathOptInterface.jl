@@ -81,7 +81,7 @@
       },
       "set": {
         "type": "GreaterThan",
-        "lower": 25
+        "lower": 25.0
       }
     },
     {
@@ -96,28 +96,28 @@
             "type": "^",
             "args": [
               "var_1",
-              2
+              2.0
             ]
           },
           {
             "type": "^",
             "args": [
               "var_2",
-              2
+              2.0
             ]
           },
           {
             "type": "^",
             "args": [
               "var_3",
-              2
+              2.0
             ]
           },
           {
             "type": "^",
             "args": [
               "var_4",
-              2
+              2.0
             ]
           },
           {
@@ -145,7 +145,7 @@
       },
       "set": {
         "type": "EqualTo",
-        "value": 40
+        "value": 40.0
       }
     },
     {
