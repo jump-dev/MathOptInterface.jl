@@ -96,8 +96,8 @@ function HS071(x::Vector{MOI.VariableIndex})
         ExprEvaluator(
             :(x[$x1] * x[$x4] * (x[$x1] + x[$x2] + x[$x3]) + x[$x3]),
             [
-                :(x[$x1] * x[$x2] * x[$x3] * x[$x4] >= 25),
-                :(x[$x1]^2 + x[$x2]^2 + x[$x3]^2 + x[$x4]^2 == 40),
+                :(x[$x1] * x[$x2] * x[$x3] * x[$x4] >= 25.0),
+                :(x[$x1]^2.0 + x[$x2]^2.0 + x[$x3]^2.0 + x[$x4]^2.0 == 40.0),
             ],
         ),
         true,
@@ -117,7 +117,9 @@ function test_HS071()
     target = read(joinpath(@__DIR__, "nlp.mof.json"), String)
     target = replace(target, r"\s" => "")
     target = replace(target, "MathOptFormatModel" => "MathOptFormat Model")
-    @test read(TEST_MOF_FILE, String) == target
+    # Normalize .0 floats and integer representations in JSON
+    normalize(x) = replace(x, ".0" => "")
+    @test normalize(read(TEST_MOF_FILE, String)) == normalize(target)
     _validate(TEST_MOF_FILE)
     return
 end
@@ -308,7 +310,7 @@ function test_nonlinear_readingwriting()
     block = MOI.get(model2, MOI.NLPBlock())
     MOI.initialize(block.evaluator, [:ExprGraph])
     @test MOI.constraint_expr(block.evaluator, 1) ==
-          :(2 * x[$x] + sin(x[$x])^2 - x[$y] == 1.0)
+          :(2.0 * x[$x] + sin(x[$x])^2.0 - x[$y] == 1.0)
     _validate(TEST_MOF_FILE)
     return
 end
