@@ -62,7 +62,7 @@ function test_parse_sin_squared()
     Nonlinear.set_objective(model, :(sin($x)^2))
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.objective_expr(evaluator) == :(sin(x[$x])^2)
+    @test MOI.objective_expr(evaluator) == :(sin(x[$x])^2.0)
     return
 end
 
@@ -72,7 +72,7 @@ function test_parse_ifelse()
     Nonlinear.set_objective(model, :(ifelse($x, 1, 2)))
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.objective_expr(evaluator) == :(ifelse(x[$x], 1, 2))
+    @test MOI.objective_expr(evaluator) == :(ifelse(x[$x], 1.0, 2.0))
     return
 end
 
@@ -83,7 +83,7 @@ function test_parse_ifelse_inequality_less()
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
     @test MOI.objective_expr(evaluator) ==
-          :(ifelse(x[$x] < 1, x[$x] - 1, x[$x] + 1))
+          :(ifelse(x[$x] < 1.0, x[$x] - 1.0, x[$x] + 1.0))
     return
 end
 
@@ -94,7 +94,7 @@ function test_parse_ifelse_inequality_greater()
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
     @test MOI.objective_expr(evaluator) ==
-          :(ifelse(x[$x] > 1, x[$x] - 1, x[$x] + 1))
+          :(ifelse(x[$x] > 1.0, x[$x] - 1.0, x[$x] + 1.0))
     return
 end
 
@@ -105,7 +105,7 @@ function test_parse_ifelse_comparison()
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
     @test MOI.objective_expr(evaluator) ==
-          :(ifelse(0 <= x[$x] <= 1, x[$x] - 1, x[$x] + 1))
+          :(ifelse(0.0 <= x[$x] <= 1.0, x[$x] - 1.0, x[$x] + 1.0))
     return
 end
 
@@ -251,7 +251,7 @@ function test_set_objective()
     @test model.objective == Nonlinear.parse_expression(model, input)
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.objective_expr(evaluator) == :(x[$x]^2 + 1)
+    @test MOI.objective_expr(evaluator) == :(x[$x]^2.0 + 1.0)
     return
 end
 
@@ -263,7 +263,7 @@ function test_set_objective_subexpression()
     Nonlinear.set_objective(model, :($expr^2))
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.objective_expr(evaluator) == :((x[$x]^2 + 1)^2)
+    @test MOI.objective_expr(evaluator) == :((x[$x]^2.0 + 1.0)^2.0)
     return
 end
 
@@ -276,7 +276,7 @@ function test_set_objective_nested_subexpression()
     Nonlinear.set_objective(model, :($expr_2^2))
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.objective_expr(evaluator) == :(((x[$x]^2 + 1)^2)^2)
+    @test MOI.objective_expr(evaluator) == :(((x[$x]^2.0 + 1.0)^2.0)^2.0)
     return
 end
 
@@ -287,7 +287,7 @@ function test_set_objective_parameter()
     Nonlinear.set_objective(model, :($x^2 + $p))
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.objective_expr(evaluator) == :(x[$x]^2 + 1.2)
+    @test MOI.objective_expr(evaluator) == :(x[$x]^2.0 + 1.2)
     return
 end
 
@@ -300,7 +300,7 @@ function test_add_constraint_less_than()
     @test model[c].set == set
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.constraint_expr(evaluator, 1) == :(x[$x]^2 + 1 <= 1.0)
+    @test MOI.constraint_expr(evaluator, 1) == :(x[$x]^2.0 + 1.0 <= 1.0)
     return
 end
 
@@ -311,7 +311,7 @@ function test_add_constraint_delete()
     _ = Nonlinear.add_constraint(model, :(sqrt($x)), MOI.LessThan(1.0))
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.constraint_expr(evaluator, 1) == :(x[$x]^2 + 1 <= 1.0)
+    @test MOI.constraint_expr(evaluator, 1) == :(x[$x]^2.0 + 1.0 <= 1.0)
     @test MOI.constraint_expr(evaluator, 2) == :(sqrt(x[$x]) <= 1.0)
     Nonlinear.delete(model, c1)
     evaluator = Nonlinear.Evaluator(model)
@@ -330,7 +330,7 @@ function test_add_constraint_greater_than()
     @test model[c].set == set
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.constraint_expr(evaluator, 1) == :(x[$x]^2 + 1 >= 1.0)
+    @test MOI.constraint_expr(evaluator, 1) == :(x[$x]^2.0 + 1.0 >= 1.0)
     return
 end
 
@@ -342,7 +342,7 @@ function test_add_constraint_equal_to()
     @test model[c].set == set
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.constraint_expr(evaluator, 1) == :(x[$x]^2 + 1 == 1.0)
+    @test MOI.constraint_expr(evaluator, 1) == :(x[$x]^2.0 + 1.0 == 1.0)
     return
 end
 
@@ -354,7 +354,7 @@ function test_add_constraint_interval()
     @test model[c].set == set
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
-    @test MOI.constraint_expr(evaluator, 1) == :(-1.0 <= x[$x]^2 + 1 <= 1.0)
+    @test MOI.constraint_expr(evaluator, 1) == :(-1.0 <= x[$x]^2.0 + 1.0 <= 1.0)
     return
 end
 

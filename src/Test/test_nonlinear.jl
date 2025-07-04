@@ -323,7 +323,7 @@ MOI.objective_expr(::FeasibilitySenseEvaluator) = :()
 
 function MOI.constraint_expr(::FeasibilitySenseEvaluator, i::Int)
     @assert i == 1
-    return :(x[$(MOI.VariableIndex(1))]^2 == 1)
+    return :(x[$(MOI.VariableIndex(1))]^2.0 == 1.0)
 end
 
 MOI.eval_objective(d::FeasibilitySenseEvaluator, x) = 0.0
@@ -1072,7 +1072,7 @@ written. External solvers can exclude this test without consequence.
 function test_nonlinear_Feasibility_internal(::MOI.ModelLike, ::Config)
     d = FeasibilitySenseEvaluator(true)
     @test MOI.objective_expr(d) == :()
-    @test MOI.constraint_expr(d, 1) == :(x[$(MOI.VariableIndex(1))]^2 == 1.0)
+    @test MOI.constraint_expr(d, 1) == :(x[$(MOI.VariableIndex(1))]^2.0 == 1.0)
     @test_throws AssertionError MOI.constraint_expr(d, 2)
     MOI.initialize(d, [:Grad, :Jac, :ExprGraph, :Hess])
     @test :Hess in MOI.features_available(d)
