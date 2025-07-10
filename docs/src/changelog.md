@@ -7,6 +7,21 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.42.0 (July 10, 2025)
+
+### Added
+
+ - Added an option to disable warnings in [`Utilities.PenaltyRelaxation`](@ref)
+   (#2774)
+
+### Fixed
+
+ - Fixed a bug writing objective constant in `MAX_SENSE` with `FileFormats.MPS`
+   (#2778)
+ - Fixed a change in how `==(::Expr, ::Expr)` works on for Julia nightly (#2780)
+ - Fixed a performance bug in the Hessian computation of `Nonlinear.ReverseAD`
+   (#2783)
+
 ## v1.41.0 (June 9, 2025)
 
 ### Added
