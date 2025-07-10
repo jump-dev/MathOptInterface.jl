@@ -92,16 +92,19 @@ function _eval_hessian_chunk(
         for s in 1:chunk
             # If `chunk < chunk_size`, leaves junk in the unused components
             d.input_ϵ[(idx-1)*chunk_size+s] = ex.seed_matrix[r, offset+s-1]
+            # Ensure the output is clear in preparation for the chunk
+            d.output_ϵ[(idx-1)*chunk_size+s] = 0.0
         end
     end
     _hessian_slice_inner(d, ex, chunk_size)
-    fill!(d.input_ϵ, 0.0)
     # collect directional derivatives
     for r in eachindex(ex.rinfo.local_indices)
         @inbounds idx = ex.rinfo.local_indices[r]
         # load output_ϵ into ex.seed_matrix[r,k,k+1,...,k+remaining-1]
         for s in 1:chunk
             ex.seed_matrix[r, offset+s-1] = d.output_ϵ[(idx-1)*chunk_size+s]
+            # Reset the input in preparation for the next chunk
+            d.input_ϵ[(idx-1)*chunk_size+s] = 0.0
         end
     end
     return
@@ -122,7 +125,6 @@ end
 end
 
 function _hessian_slice_inner(d, ex, ::Type{T}) where {T}
-    fill!(d.output_ϵ, 0.0)
     output_ϵ = _reinterpret_unsafe(T, d.output_ϵ)
     subexpr_forward_values_ϵ =
         _reinterpret_unsafe(T, d.subexpression_forward_values_ϵ)
