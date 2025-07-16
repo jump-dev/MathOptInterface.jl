@@ -2711,55 +2711,6 @@ function attribute_value_type(::ConstraintConflictStatus)
 end
 
 """
-    ListOfConstraintIndicesInConflict(conflict_index::Int = 1)
-
-An [`AbstractModelAttribute`](@ref) for the `Vector{ConstraintIndex}` of all
-constraints that participate in the conflict with index `conflict_index`.
-
-The `conflict_index` is 1 by default, but it can be set to any value between
-1 and the number of conflicts found by the solver, as indicated by
-[`ConflictCount`](@ref).
-
-## Implementation
-Optimizers may implement the following methods:
-```julia
-MOI.get(
-    ::Optimizer,
-    ::MOI.ListOfConstraintIndicesInConflict,
-)::Vector{MOI.ConstraintIndex}
-```
-A ineficient fallback is available for `get`.
-They should not implement [`set`](@ref) or [`supports`](@ref).
-"""
-struct ListOfConstraintIndicesInConflict <: MOI.AbstractModelAttribute
-    conflict_index::Int
-    ListOfConstraintIndicesInConflict(conflict_index = 1) = new(conflict_index)
-end
-
-function attribute_value_type(::ListOfConstraintIndicesInConflict)
-    return Vector{ConstraintIndex}
-end
-
-function get(
-    model::ModelLike,
-    attr::ListOfConstraintIndicesInConflict,
-)::Vector{ConstraintIndex}
-    result = Vector{ConstraintIndex}()
-    conflict_index = attr.conflict_index
-    constraint_types = get(model, ListOfConstraintTypesPresent())
-    for (F, S) in constraint_types
-        constraints = MOI.get(model, ListOfConstraintIndices{F,S}())
-        for con in constraints
-            status = get(model, ConstraintConflictStatus(conflict_index), con)
-            if status == NOT_IN_CONFLICT
-                push!(result, con)
-            end
-        end
-    end
-    return result
-end
-
-"""
     UserDefinedFunction(name::Symbol, arity::Int) <: AbstractModelAttribute
 
 Set this attribute to register a user-defined function by the name of `name`
