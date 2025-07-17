@@ -59,6 +59,7 @@ jobs:
           # - package: 'CDCS'  # Missing CI
           - package: 'CDDLib'
           - package: 'Clarabel'
+          - package: 'Coluna'
           - package: 'COPT'
           - package: 'COSMO'
           - package: 'DAQP'
