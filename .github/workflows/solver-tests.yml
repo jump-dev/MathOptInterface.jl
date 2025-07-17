@@ -35,6 +35,8 @@ jobs:
           - package: 'KNITRO'
           - package: 'MiniZinc'
           - package: 'MosekTools'
+          - package: 'MathOptAnalyzer'
+          - package: 'MathOptIIS'
           - package: 'MultiObjectiveAlgorithms'
           - package: 'NEOSServer'
           - package: 'NLopt'
@@ -124,6 +126,13 @@ jobs:
             echo "${{ secrets.BARON_LICENSE }}"
             echo "EOF"
           } >> $GITHUB_ENV
+      # Setup Coluna.jl
+      - name: Setup Coluna
+        if: ${{ matrix.package == 'Coluna' }}
+        shell: julia --color=yes --project=. {0}
+        run: |
+          using Pkg
+          Pkg.add(; url="https://github.com/atoptima/ColunaDemos.jl.git")
       # Setup CPLEX.jl
       - name: Setup CPLEX
         if: ${{ matrix.package == 'CPLEX' }}
