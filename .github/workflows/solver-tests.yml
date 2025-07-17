@@ -54,6 +54,7 @@ jobs:
           # External packages
           - package: 'Alpine'
           - package: 'BilevelJuMP'
+          - package: 'BlockDecomposition'
           - package: 'CATrustRegionMethod'
           # - package: 'CDCS'  # Missing CI
           - package: 'CDDLib'
