@@ -1661,6 +1661,20 @@ function test_obj_constant_max_to_max()
     return
 end
 
+function test_duplicate_coefficient()
+    model = MPS.Model()
+    MOI.read_from_file(model, joinpath(@__DIR__, "duplicate_coefficient.mps"))
+    dest = MOI.Utilities.Model{Float64}()
+    MOI.copy_to(dest, model)
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
+    x = only(MOI.get(dest, MOI.ListOfVariableIndices()))
+    c = only(MOI.get(dest, MOI.ListOfConstraintIndices{F,S}()))
+    f = MOI.get(dest, MOI.ConstraintFunction(), c)
+    @test isapprox(f, 2.0 * x)
+    @test MOI.get(dest, MOI.ConstraintSet(), c) == MOI.EqualTo(1.0)
+    return
+end
+
 end  # TestMPS
 
 TestMPS.runtests()
