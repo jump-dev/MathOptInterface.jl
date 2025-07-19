@@ -140,7 +140,7 @@ The list of multivariate operators that are supported by default.
 
 ```jldoctest
 julia> MOI.Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS
-9-element Vector{Symbol}:
+10-element Vector{Symbol}:
  :+
  :-
  :*
@@ -150,10 +150,12 @@ julia> MOI.Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS
  :atan
  :min
  :max
+ :vect
+ :dot
 ```
 """
 const DEFAULT_MULTIVARIATE_OPERATORS =
-    [:+, :-, :*, :^, :/, :ifelse, :atan, :min, :max]
+    [:+, :-, :*, :^, :/, :ifelse, :atan, :min, :max, :vect, :dot]
 
 """
     OperatorRegistry()
@@ -764,7 +766,7 @@ function eval_multivariate_function(
     registry::OperatorRegistry,
     op::Symbol,
     x::AbstractVector{T},
-)::T where {T}
+) where {T}
     if op == :+
         return sum(x; init = zero(T))
     elseif op == :-
@@ -790,6 +792,8 @@ function eval_multivariate_function(
         return minimum(x)
     elseif op == :max
         return maximum(x)
+    elseif op == :vect
+        return x
     end
     id = registry.multivariate_operator_to_id[op]
     offset = id - registry.multivariate_user_operator_start
