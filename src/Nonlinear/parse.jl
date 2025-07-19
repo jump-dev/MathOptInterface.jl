@@ -123,8 +123,9 @@ function _parse_expression(stack, data, expr, x, parent_index)
         _parse_splat_expression(stack, data, expr, x, parent_index)
     elseif Meta.isexpr(x, :&&) || Meta.isexpr(x, :||)
         _parse_logic_expression(stack, data, expr, x, parent_index)
+    elseif Meta.isexpr(x, :vect)
+        _parse_vect_expression(stack, data, expr, x, parent_index)
     else
-        error("Unsupported expression: $x")
     end
 end
 
@@ -249,6 +250,22 @@ function _parse_logic_expression(
     parent_var = length(expr.nodes)
     push!(stack, (parent_var, x.args[2]))
     push!(stack, (parent_var, x.args[1]))
+    return
+end
+
+function _parse_vect_expression(
+    stack::Vector{Tuple{Int,Any}},
+    data::Model,
+    expr::Expression,
+    x::Expr,
+    parent_index::Int,
+)
+    @assert Meta.isexpr(x, :vect)
+    id = get(data.operators.multivariate_operator_to_id, :vect, nothing)
+    push!(expr.nodes, Node(NODE_CALL_MULTIVARIATE, id, parent_index))
+    for i in length(x.args):-1:1
+        push!(stack, (length(expr.nodes), x.args[i]))
+    end
     return
 end
 
