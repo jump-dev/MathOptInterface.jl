@@ -40,26 +40,26 @@ function _extract_subexpression!(expr::Expression, root::Int)
     n = length(expr.nodes)
     # The whole subexpression is continuous in the tape
     first_out = findfirst((root+1):n) do i
-        expr.nodes[i].parent < root
+        return expr.nodes[i].parent < root
     end
     if isnothing(first_out)
         I = root:n
     else
-        I = root .+ (0:(first_out - 1))
+        I = root .+ (0:(first_out-1))
     end
     first_value = findfirst(I) do i
-        expr.nodes[i].type == NODE_VALUE
+        return expr.nodes[i].type == NODE_VALUE
     end
     if isnothing(first_value)
         V = nothing
     else
         last_value = findlast(I) do i
-            expr.nodes[i].type == NODE_VALUE
+            return expr.nodes[i].type == NODE_VALUE
         end
         V = expr.nodes[I[first_value]].index:expr.nodes[I[last_value]].index
     end
     if !isnothing(first_out)
-        for i in last(I)+1:n
+        for i in (last(I)+1):n
             node = expr.nodes[i]
             index = node.index
             if node.type == NODE_VALUE && !isnothing(V)
@@ -80,7 +80,8 @@ end
 function _extract_subexpression!(data::Model, expr::Expression, root::Int)
     parent = expr.nodes[root].parent
     I, V = _extract_subexpression!(expr, root)
-    subexpr = Expression(expr.nodes[I], isnothing(V) ? Float64[] : expr.values[V])
+    subexpr =
+        Expression(expr.nodes[I], isnothing(V) ? Float64[] : expr.values[V])
     push!(data.expressions, subexpr)
     index = ExpressionIndex(length(data.expressions))
     expr.nodes[root] = Node(NODE_SUBEXPRESSION, index.value, parent)
@@ -119,7 +120,8 @@ function parse_expression(
                             _parent_node = stack[i][1]
                             if _parent_node > first(I)
                                 @assert _parent_node > last(I)
-                                stack[i] = (_parent_node - length(I) + 1, stack[i][2])
+                                stack[i] =
+                                    (_parent_node - length(I) + 1, stack[i][2])
                             end
                         end
                     end
@@ -128,15 +130,27 @@ function parse_expression(
                             __expr, __node = val
                             if _expr === __expr && __node > first(I)
                                 @assert __node > last(I)
-                                data.cache[key] = (__expr, __node - length(I) + 1)
+                                data.cache[key] =
+                                    (__expr, __node - length(I) + 1)
                             end
                         end
                     end
                     data.cache[arg] = subexpr
                 end
-                parse_expression(data, expr, subexpr::ExpressionIndex, parent_node)
+                parse_expression(
+                    data,
+                    expr,
+                    subexpr::ExpressionIndex,
+                    parent_node,
+                )
             else
-                _parse_without_recursion_inner(stack, data, expr, arg, parent_node)
+                _parse_without_recursion_inner(
+                    stack,
+                    data,
+                    expr,
+                    arg,
+                    parent_node,
+                )
                 data.cache[arg] = (expr, length(expr.nodes))
             end
         else

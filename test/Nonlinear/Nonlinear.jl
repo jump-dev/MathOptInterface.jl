@@ -1498,14 +1498,8 @@ function test_extract_subexpression()
     # Test that the objective function gets rewritten as we reuse `h`
     # Also test that we don't change the parents in the stack of `h`
     # by creating a long stack
-    prod = MOI.ScalarNonlinearFunction(
-        :*,
-        [h, x],
-    )
-    sum = MOI.ScalarNonlinearFunction(
-        :*,
-        [x, x, x, x, prod],
-    )
+    prod = MOI.ScalarNonlinearFunction(:*, [h, x])
+    sum = MOI.ScalarNonlinearFunction(:*, [x, x, x, x, prod])
     expr = Nonlinear.parse_expression(model, sum)
     @test isempty(model.objective.values)
     @test model.objective.nodes == [
@@ -1513,12 +1507,18 @@ function test_extract_subexpression()
         Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
         Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 2, 1),
     ]
-    @test model.expressions == [expected_sub, Nonlinear.Expression([
-        Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 3, 1),
-        Nonlinear.Node(Nonlinear.NODE_VALUE, 1, 3),
-        Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 3),
-        Nonlinear.Node(Nonlinear.NODE_VALUE, 2, 3),
-    ], [2.0, 1.0])]
+    @test model.expressions == [
+        expected_sub,
+        Nonlinear.Expression(
+            [
+                Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 3, 1),
+                Nonlinear.Node(Nonlinear.NODE_VALUE, 1, 3),
+                Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 3),
+                Nonlinear.Node(Nonlinear.NODE_VALUE, 2, 3),
+            ],
+            [2.0, 1.0],
+        ),
+    ]
     @test isempty(expr.values)
     @test expr.nodes == [
         Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 3, -1),

@@ -167,7 +167,10 @@ mutable struct Model
     # This is a private field, used only to increment the ConstraintIndex.
     last_constraint_index::Int64
     # This is a private field, used to detect common subexpressions.
-    cache::Dict{MOI.ScalarNonlinearFunction,Union{ExpressionIndex,Tuple{Expression,Int}}}
+    cache::Dict{
+        MOI.ScalarNonlinearFunction,
+        Union{ExpressionIndex,Tuple{Expression,Int}},
+    }
     function Model()
         return new(
             nothing,
@@ -176,7 +179,10 @@ mutable struct Model
             Float64[],
             OperatorRegistry(),
             0,
-            Dict{MOI.ScalarNonlinearFunction,Union{ExpressionIndex,Tuple{Expression,Int}}}(),
+            Dict{
+                MOI.ScalarNonlinearFunction,
+                Union{ExpressionIndex,Tuple{Expression,Int}},
+            }(),
         )
     end
 end
