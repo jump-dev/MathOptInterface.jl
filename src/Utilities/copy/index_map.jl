@@ -107,9 +107,6 @@ function Base.iterate(map::IndexMap, args...)
     return iterate(Base.Iterators.flatten((map.var_map, map.con_map)), args...)
 end
 
-function map_indices(
-    index_map::IndexMap,
-    f::MOI.ScalarNonlinearFunction,
-)
+function map_indices(index_map::IndexMap, f::MOI.ScalarNonlinearFunction)
     return map_indices(Base.Fix1(getindex, index_map), f, index_map.nl_cache)
 end
