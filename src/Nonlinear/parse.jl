@@ -56,7 +56,8 @@ function _extract_subexpression!(expr::Expression, root::Int)
             end
             index -= first_value - 1
         end
-        expr.nodes[i] = Node(node.type, index, i == root ? -1 : node.parent - root + 1)
+        expr.nodes[i] =
+            Node(node.type, index, i == root ? -1 : node.parent - root + 1)
     end
     if isnothing(first_out)
         I = root:n
@@ -140,7 +141,10 @@ function parse_expression(
                             __expr, __node = val
                             if _expr === __expr && __node > first(I)
                                 if __node <= last(I)
-                                    data.cache[key] = (data.expressions[subexpr.value], __node - first(I) + 1)
+                                    data.cache[key] = (
+                                        data.expressions[subexpr.value],
+                                        __node - first(I) + 1,
+                                    )
                                 else
                                     data.cache[key] =
                                         (__expr, __node - length(I) + 1)
