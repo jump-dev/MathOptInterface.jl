@@ -1449,3 +1449,22 @@ end
 end  # TestNonlinear
 
 TestNonlinear.runtests()
+
+using Revise, Test
+import MathOptInterface as MOI
+
+model = MOI.Nonlinear.Model()
+x = MOI.VariableIndex(1)
+sub = MOI.ScalarNonlinearFunction(:^, Any[x, 3])
+func = MOI.ScalarNonlinearFunction(:+, Any[sub, sub])
+expr = MOI.Nonlinear.parse_expression(model, func)
+
+func = MOI.ScalarNonlinearFunction(:+, Any[sub, sub])
+g = MOI.ScalarNonlinearFunction(:+, Any[
+    sub,
+    MOI.ScalarNonlinearFunction(
+        :*,
+        Any[1, sub]
+    ),
+])
+expr = MOI.Nonlinear.parse_expression(model, g)

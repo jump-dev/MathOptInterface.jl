@@ -1054,6 +1054,8 @@ function canonical(f::MOI.AbstractFunction)
     return g
 end
 
+canonical(f::MOI.ScalarNonlinearFunction) = f
+
 canonicalize!(f::Union{MOI.VectorOfVariables,MOI.VariableIndex}) = f
 
 """
