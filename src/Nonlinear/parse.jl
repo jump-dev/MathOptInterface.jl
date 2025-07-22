@@ -37,46 +37,62 @@ function parse_expression(::Model, ::Expression, x::Any, ::Int)
 end
 
 function _extract_subexpression!(expr::Expression, root::Int)
-    nodes_idx = [root]
-    values_idx = Int[]
-    for i in (root+1):length(expr.nodes)
-        node = expr.nodes[i]
-        j = searchsortedlast(nodes_idx, node.parent)
-        if j == 0
-            continue
+    n = length(expr.nodes)
+    # The whole subexpression is continuous in the tape
+    first_out = findfirst((root+1):n) do i
+        expr.nodes[i].parent < root
+    end
+    if isnothing(first_out)
+        I = root:n
+    else
+        I = root .+ (0:(first_out - 1))
+    end
+    first_value = findfirst(I) do i
+        expr.nodes[i].type == NODE_VALUE
+    end
+    if isnothing(first_value)
+        V = nothing
+    else
+        last_value = findlast(I) do i
+            expr.nodes[i].type == NODE_VALUE
         end
-        if node.parent == nodes_idx[j]
-            push!(nodes_idx, i)
+        V = expr.nodes[I[first_value]].index:expr.nodes[I[last_value]].index
+    end
+    if !isnothing(first_out)
+        for i in last(I)+1:n
+            node = expr.nodes[i]
             index = node.index
-            if node.type == NODE_VALUE
-                push!(values_idx, node.index)
-                index = length(values_idx)
+            if node.type == NODE_VALUE && !isnothing(V)
+                @assert index >= last(V)
+                index -= length(V)
             end
-            expr.nodes[i] = Node(node.type, node.index, j)
-        else
-            index = node.index
-            if node.type == NODE_VALUE
-                # We use the fact that values of `node.index` are increasing
-                # along the nodes of `expr.nodes` for which `node.type` is `NODE_VALUE`
-                index -= length(values_idx)
+            parent = node.parent
+            if parent > root
+                @assert parent > last(I)
+                parent -= length(I) - 1
             end
-            expr.nodes[i] = Node(node.type, index, node.parent - j)
+            expr.nodes[i] = Node(node.type, index, parent)
         end
     end
-    subexpr = Expression(expr.nodes[nodes_idx], expr.values[values_idx])
-    deleteat!(expr.nodes, nodes_idx)
-    deleteat!(expr.values, values_idx)
-    return subexpr
+    return I, V
 end
 
 function _extract_subexpression!(data::Model, expr::Expression, root::Int)
     parent = expr.nodes[root].parent
-    push!(data.expressions, _extract_subexpression!(expr, root))
+    I, V = _extract_subexpression!(expr, root)
+    subexpr = Expression(expr.nodes[I], isnothing(V) ? Float64[] : expr.values[V])
+    push!(data.expressions, subexpr)
     index = ExpressionIndex(length(data.expressions))
-    if parent != 0
-        push!(expr.nodes, Node(NODE_SUBEXPRESSION, index.value, parent))
+    expr.nodes[root] = Node(NODE_SUBEXPRESSION, index.value, parent)
+    if length(I) > 1
+        deleteat!(expr.nodes, I[2:end])
+        if !isnothing(V)
+            deleteat!(expr.values, V)
+        end
+    else
+        @assert isnothing(V)
     end
-    return index
+    return index, I
 end
 
 function parse_expression(
@@ -92,7 +108,31 @@ function parse_expression(
             if haskey(data.cache, arg)
                 subexpr = data.cache[arg]
                 if subexpr isa Tuple{Expression,Int}
-                    subexpr = _extract_subexpression!(data, subexpr...)
+                    _expr, _node = subexpr
+                    subexpr, I = _extract_subexpression!(data, _expr, _node)
+                    if expr === _expr
+                        if parent_node > first(I)
+                            @assert parent_node > last(I)
+                            parent_node -= length(I) - 1
+                        end
+                        for i in eachindex(stack)
+                            _parent_node = stack[i][1]
+                            if _parent_node > first(I)
+                                @assert _parent_node > last(I)
+                                stack[i] = (_parent_node - length(I) + 1, stack[i][2])
+                            end
+                        end
+                    end
+                    for (key, val) in data.cache
+                        if val isa Tuple{Expression,Int}
+                            __expr, __node = val
+                            if _expr === __expr && __node > first(I)
+                                @assert __node > last(I)
+                                data.cache[key] = (__expr, __node - length(I) + 1)
+                            end
+                        end
+                    end
+                    data.cache[arg] = subexpr
                 end
                 parse_expression(data, expr, subexpr::ExpressionIndex, parent_node)
             else
